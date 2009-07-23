@@ -1,0 +1,131 @@
+[Config]
+Compilator.SaveAll=0
+Compilator.Capture=0
+Compilator.HideOutput=0
+Compilator.LogType=0
+DefaultCPIndex=0
+LogtoEnd=1
+DontOpen=0
+AbsolutePath=0
+FileFormat=0
+ProjectFilesOnly=0
+[Project tree]
+kEzer-ys2
+	-comp
+		comp.css
+		comp.php
+	-doc
+		wiki\todo.wiki
+	+ezer2
+		+client
+			ezer2\client\app.js
+			ezer2\client\dbg.css
+			ezer2\client\ezer.js
+			ezer2\client\lib.js
+		+client f
+			app.html
+			ezer2\client\appf.css
+			appf.html
+			dbg.html
+			dbg2appf.html
+			ezer2\client\ezer_fdom1.js
+			ezer2\client\ezer_fdom2.js
+			ezer2\client\natdocs.css
+		+server
+			ezer2\server\ae_slib.php
+			ezer2\server\comp2.php
+			ezer2\server\comp2def.php
+			ezer2\server\comp2tab.php
+			ezer2\server\ezer2.php
+			ezer2\server\init.php
+			ezer2\server\reference.php
+			ezer2\server\session.php
+			ezer2\server\sys_doc.php
+		-wiki
+			ezer2\wiki\guide.wiki
+			ezer2\wiki\meta.wiki
+			ezer2\wiki\todo.wiki
+	-system
+		..\..\..\..\WINDOWS\system32\drivers\etc\hosts
+		..\..\..\Apache\conf\extra\httpd-vhosts-ezer.conf
+		..\..\..\Apache\logs\ys2-error.log
+	+ys2
+		appl\$.ezer
+		anser.html
+		anser_dbg.html
+		config.php
+		dbg.html
+		appl\ys.kasa.ezer
+		appl\ys.lide.ezer
+		appl\ys.ucet.ezer
+		appl\ys_fce.php
+		appl\ys_lide.php
+		appl\ys_ucet.php
+[Open project files]
+0=config.php
+1=anser.html
+2=ezer2\server\comp2.php
+3=ezer2\server\ezer2.php
+4=..\..\..\Apache\logs\ys2-error.log
+5=ezer2\client\app.js
+6=comp.php
+7=ezer2\client\ezer.js
+8=appl\$.ezer
+9=appl\ys.lide.ezer
+10=appl\ys.ucet.ezer
+11=appl\ys.kasa.ezer
+12=appl\ys_ucet.php
+13=appl\ys_fce.php
+14=appl\ys_lide.php
+15=ezer2\server\sys_doc.php
+[Selected Project Files]
+Main=
+Selected=ezer2\server\sys_doc.php
+[config.php]
+TopLine=1
+Caret=17,32
+[anser.html]
+TopLine=1
+Caret=32,46
+[ezer2\server\comp2.php]
+TopLine=1
+Caret=26,1
+[ezer2\server\ezer2.php]
+TopLine=425
+Caret=1,476
+[..\..\..\Apache\logs\ys2-error.log]
+TopLine=4
+Caret=326,18
+[ezer2\client\app.js]
+TopLine=358
+Caret=1,384
+[comp.php]
+TopLine=1
+Caret=20,15
+[ezer2\client\ezer.js]
+TopLine=602
+Caret=9,621
+[appl\$.ezer]
+TopLine=1
+Caret=12,4
+[appl\ys.lide.ezer]
+TopLine=1
+Caret=11,22
+[appl\ys.ucet.ezer]
+TopLine=1
+Caret=1,1
+[appl\ys.kasa.ezer]
+TopLine=1
+Caret=1,1
+[appl\ys_ucet.php]
+TopLine=1
+Caret=1,1
+[appl\ys_fce.php]
+TopLine=1
+Caret=38,10
+[appl\ys_lide.php]
+TopLine=1
+Caret=9,12
+[ezer2\server\sys_doc.php]
+TopLine=1
+Caret=13,36

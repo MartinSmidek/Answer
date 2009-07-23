@@ -1,2 +1,11 @@
 * text=auto !eol
+/anser.html -text
+/anser_dbg.html -text
 appl/ys_lide.php -text
+/comp.css -text
+/comp.php -text
+/dbg.html -text
+/favicon.ico -text
+/kEzer-ys2.ppr -text
+wiki/dokumentace.wiki -text
+wiki/todo.wiki -text
