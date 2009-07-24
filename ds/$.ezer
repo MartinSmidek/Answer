@@ -1,0 +1,26 @@
+panel ds {
+  use u: form f
+#   proc onstart() {
+#     u.b.browse_load
+#   }
+}
+form f {
+  label [0,0,100,] { title:'ahoj' }
+#   browse b [0,30,500,300] { rows:10
+#     show uid    [,,50,] { title:'id', data:tx_gnalberice_room.uid }
+#     show number [,,50,] { title:'num', data:tx_gnalberice_room.number  }
+#     show note   [,,150,] { title:'note', data:tx_gnalberice_room.note  }
+#   }
+}
+
+table tx_gnalberice_room { db:'setkani', key_id:'uid'
+  number uid
+  number deleted
+  number hidden
+  number number
+  text category
+  number bads
+  number addbeds
+  number etage
+  text note
+}

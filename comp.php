@@ -1,12 +1,4 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD XHTML 4.01 Strict">
-<html>
-<head>
-  <meta http-equiv="content-type" content="text/html; charset=utf-8">
-  <title>Compiler Ezer2</title>
-  <link rel="stylesheet" href="./comp.css" type="text/css" media="screen" charset="utf-8"><title>Comp2</title>
-</head>
-<body>
-<?php
+<?php # (c) 2008 Martin Smidek <martin@smidek.eu>
   $root= $_GET['root'];
   if ( !$root )
     die("chybí parametr root určující jméno hlavního modulu, složky a objektu");
@@ -16,6 +8,19 @@
   global $display, $trace, $json, $ezer_path_serv, $ezer_path_appl, $ezer_path_code, $ezer_root;
   if ( $root!=$ezer_root )
     die("parametr root určující jméno hlavního modulu, složky a objektu je různý od uvedeného v $root.php");
+    
+  echo <<<__EOF
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD XHTML 4.01 Strict">
+<html>
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+  <link rel="shortcut icon" href="./$root/img/$root.png" />
+  <title>kompilace $root</title>
+  <link rel="stylesheet" href="./comp.css" type="text/css" media="screen" charset="utf-8">
+</head>
+<body>
+__EOF
+;
 
   require_once("$ezer_path_serv/comp2.php");
   require_once("$ezer_path_serv/comp2def.php");
