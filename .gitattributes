@@ -1,7 +1,5 @@
 * text=auto !eol
-/anser.html -text
 /anser_dbg.html -text
-appl/ys_lide.php -text
 /comp.css -text
 /comp.php -text
 /dbg.html -text
@@ -9,3 +7,5 @@ appl/ys_lide.php -text
 /kEzer-ys2.ppr -text
 wiki/dokumentace.wiki -text
 wiki/todo.wiki -text
+/ys.html -text
+ys/ys_lide.php -text

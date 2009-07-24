@@ -23,11 +23,8 @@ kEzer-ys2
 			ezer2\client\ezer.js
 			ezer2\client\lib.js
 		+client f
-			app.html
 			ezer2\client\appf.css
-			appf.html
 			dbg.html
-			dbg2appf.html
 			ezer2\client\ezer_fdom1.js
 			ezer2\client\ezer_fdom2.js
 			ezer2\client\natdocs.css
@@ -49,7 +46,7 @@ kEzer-ys2
 		..\..\..\..\WINDOWS\system32\drivers\etc\hosts
 		..\..\..\Apache\conf\extra\httpd-vhosts-ezer.conf
 		..\..\..\Apache\logs\ys2-error.log
-	+ys2
+	-ys2
 		appl\$.ezer
 		anser.html
 		anser_dbg.html
@@ -61,6 +58,8 @@ kEzer-ys2
 		appl\ys_fce.php
 		appl\ys_lide.php
 		appl\ys_ucet.php
+	+ds
+		ds\$.ezer
 [Open project files]
 0=config.php
 1=anser.html
@@ -69,63 +68,43 @@ kEzer-ys2
 4=..\..\..\Apache\logs\ys2-error.log
 5=ezer2\client\app.js
 6=comp.php
-7=ezer2\client\ezer.js
-8=appl\$.ezer
-9=appl\ys.lide.ezer
-10=appl\ys.ucet.ezer
-11=appl\ys.kasa.ezer
-12=appl\ys_ucet.php
-13=appl\ys_fce.php
-14=appl\ys_lide.php
-15=ezer2\server\sys_doc.php
+7=ezer2\client\ezer_fdom1.js
+8=ezer2\client\ezer.js
+9=ezer2\client\ezer_fdom2.js
+10=ds\$.ezer
 [Selected Project Files]
 Main=
-Selected=ezer2\server\sys_doc.php
+Selected=ezer2\client\ezer_fdom2.js
 [config.php]
 TopLine=1
-Caret=17,32
+Caret=33,7
 [anser.html]
 TopLine=1
-Caret=32,46
+Caret=25,24
 [ezer2\server\comp2.php]
 TopLine=1
 Caret=26,1
 [ezer2\server\ezer2.php]
-TopLine=425
-Caret=1,476
+TopLine=1
+Caret=1,28
 [..\..\..\Apache\logs\ys2-error.log]
 TopLine=4
-Caret=326,18
+Caret=99,46
 [ezer2\client\app.js]
-TopLine=358
-Caret=1,384
+TopLine=191
+Caret=40,225
 [comp.php]
 TopLine=1
 Caret=20,15
+[ezer2\client\ezer_fdom1.js]
+TopLine=1
+Caret=1,1
 [ezer2\client\ezer.js]
-TopLine=602
+TopLine=415
 Caret=9,621
-[appl\$.ezer]
-TopLine=1
-Caret=12,4
-[appl\ys.lide.ezer]
-TopLine=1
-Caret=11,22
-[appl\ys.ucet.ezer]
+[ezer2\client\ezer_fdom2.js]
 TopLine=1
 Caret=1,1
-[appl\ys.kasa.ezer]
+[ds\$.ezer]
 TopLine=1
-Caret=1,1
-[appl\ys_ucet.php]
-TopLine=1
-Caret=1,1
-[appl\ys_fce.php]
-TopLine=1
-Caret=38,10
-[appl\ys_lide.php]
-TopLine=1
-Caret=9,12
-[ezer2\server\sys_doc.php]
-TopLine=1
-Caret=13,36
+Caret=76,8

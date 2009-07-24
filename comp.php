@@ -7,9 +7,16 @@
 </head>
 <body>
 <?php
-  require_once("config.php");
+  $root= $_GET['root'];
+  if ( !$root )
+    die("chybí parametr root určující jméno hlavního modulu, složky a objektu");
+  if ( !file_exists("$root.php" ) )
+    die("$root.php neexistuje");
+  require_once("$root.php");
+  global $display, $trace, $json, $ezer_path_serv, $ezer_path_appl, $ezer_path_code, $ezer_root;
+  if ( $root!=$ezer_root )
+    die("parametr root určující jméno hlavního modulu, složky a objektu je různý od uvedeného v $root.php");
 
-  global $display, $trace, $json, $ezer_path_serv, $ezer_path_appl, $ezer_path_code;
   require_once("$ezer_path_serv/comp2.php");
   require_once("$ezer_path_serv/comp2def.php");
   require_once("$ezer_path_serv/ae_slib.php");
@@ -34,19 +41,21 @@
     closedir($dh);
   }
   ksort($files);
+  //
+  echo "<h1>Manuální kompilace modulů aplikace '$root'</h1>";
   // zobrazení složky
   $menu= "<table>";
   foreach($files as $name=>$status) {
     $clr= $status=='ok' ? '#afa' : '#faa';
     $menu.= "<tr>
-        <td style='background-color:$clr'><a href='comp.php?module=$name'>$name</a></td>
+        <td style='background-color:$clr'><a href='comp.php?root=$root&module=$name'>$name</a></td>
         <td>$status</td>
       </tr>";
   }
   $menu.= "</table>";
   // kompilace
   if ( $name= $_GET['module'] ) {
-    $txt= comp_module($name);
+    $txt= comp_module($name,$ezer_root);
     echo $display;
   }
   echo "<table><tr>
@@ -55,14 +64,10 @@
     <td valign='top'>$txt</td>
   </tr></table>";
 
-function comp_module($name) {
+function comp_module($name,$root='') {
   global $display, $trace, $json, $ezer_path_appl, $ezer_path_code;
-  if ( !$name ) {
-    $name= "m.q";
-//     $name= "$";
-  }
   global $code;
-  $state= comp_file($name);
+  $state= comp_file($name,$root);
   $src= file_get_contents("$ezer_path_appl/$name.ezer");
   $src= str_replace(' ','&nbsp;',$src);
   $src= nl2br($src);
