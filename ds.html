@@ -5,15 +5,23 @@
   <link rel="shortcut icon" href="./ds/img/ds.png" />
   <title>Dům setkání</title>
   <script type="text/javascript">
-    var dbg= false;
     var Ezer= {};
+    Ezer.parm= location.hash.split(',');
     Ezer.fce= {};
     Ezer.str= {};
     Ezer.root= 'ds';
+    var dbg= Ezer.parm[0]!='#';
     Ezer.options= {
-//       mini_debug:false, status_bar:false,
+      debug:dbg, mini_debug:dbg, status_bar:dbg, to_trace:dbg,
       must_log_in:false, uname:'dum', pword:'setkani'
     };
+    function ondomready() {
+      if ( !dbg ) {
+        $('stred').setStyles({top:0});
+        $('horni').setStyles({display:'none'});
+        $('status').setStyles({display:'none'});
+      }
+    }
   </script>
   <script src="./ezer2/client/licensed/clientcide.js" type="text/javascript" charset="utf-8"></script>
   <script src="./ezer2/client/lib.js" type="text/javascript" charset="utf-8"></script>
@@ -26,15 +34,12 @@
   <link rel="stylesheet" href="./ds/ds.css.css" type="text/css" media="screen" charset="utf-8" />
 </head>
 <body id="body" class='nogrid'>
-<!-- menu a submenu -->
+<!-- bez menu a submenu -->
   <div id='horni' class="MainBar">
-    <div id="appl">Dům</div>
-    <img id="StatusIcon" src="./ezer2/client/img/$logo.gif" />
-    <ul id="menu" class="MainMenu"></ul>
-    <ul id="submenu" class="MainTabs"></ul>
+    <div id="StatusIcon">Dům setkání</div>
   </div>
 <!-- pracovní plocha -->
-  <div id="stred">
+  <div id="stred" style="top:35px">
     <div id="shield"></div>
     <div id="work"></div>
   </div>
@@ -44,7 +49,7 @@
     <div id="paticka">
       <div id="error"></div>
     </div>
-    <table width=100%>
+    <table id="status" width=100%>
       <tr id="status_bar">
         <td align='left'>
           <div style="float:left;" id='status_left'></div>

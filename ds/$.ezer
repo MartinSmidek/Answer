@@ -1,26 +1,79 @@
 panel ds {
+  var uid: number
   use u: form f
-#   proc onstart() {
-#     u.b.browse_load
-#   }
-}
-form f {
-  label [0,0,100,] { title:'ahoj' }
-#   browse b [0,30,500,300] { rows:10
-#     show uid    [,,50,] { title:'id', data:tx_gnalberice_room.uid }
-#     show number [,,50,] { title:'num', data:tx_gnalberice_room.number  }
-#     show note   [,,150,] { title:'note', data:tx_gnalberice_room.note  }
-#   }
-}
+  proc onstart() {
+    uid.set(ask('ds_uid'));
+#     u.new.set(conc('uid=',uid.get));
+    u.load(uid.get)
+#     u.old.set(ask('ds_test',uid.get))
+  }
+  form f {
+    label       [ 50,  0,100,] { title:'stav objednávky' }
+    select      [ 50, 20,150,] { type:'map', data:tx_gnalberice_order.state, options:ds_stav.hodnota }
+    label       [ 50, 50,200,] { title:'poznámka k objednávce' }
+    field pozn  [ 50, 70,200,] { data:tx_gnalberice_order.note  }
+    label       [ 50,100, 70,] { title:'příjezd' }
+    field       [ 50,120, 70,] { data:tx_gnalberice_order.fromday }
+    label       [130,100, 70,] { title:'odjezd' }
+    field       [130,120, 70,] { data:tx_gnalberice_order.untilday }
+    label       [210,100,150,] { title:'seznam pokojů' }
+    field       [210,120,150,] { data:tx_gnalberice_order.rooms }
+    label       [ 50,150, 50,] { title:'dospělých' }
+    field       [ 50,170, 50,] { data:tx_gnalberice_order.adults }
+    label       [110,150, 50,] { title:'dětí 10-15' }
+    field       [110,170, 50,] { data:tx_gnalberice_order.kids_10_15 }
+    label       [170,150, 50,] { title:'dětí 3-9' }
+    field       [170,170, 50,] { data:tx_gnalberice_order.kids_3_9 }
+    label       [230,150, 50,] { title:'dětí do 3' }
+    field       [230,170, 50,] { data:tx_gnalberice_order.kids_3 }
+    label       [ 50,200,100,] { title:'typ stravy' }
+    select      [ 50,220,150,] { type:'map', data:tx_gnalberice_order.board, options:ds_strava.hodnota }
+    button [220,220,100,18] { title:'opravit údaje', type:'submit'
+      proc onclick() { form.save; form.load }
+    }
+    button [330,220,100,18] { title:'ne' }
+  }
 
 table tx_gnalberice_room { db:'setkani', key_id:'uid'
   number uid
   number deleted
   number hidden
   number number
-  text category
+  text   category
   number bads
   number addbeds
   number etage
-  text note
+  text   note         { sql_pipe:'wu' }
+}
+table tx_gnalberice_order { db:'setkani', key_id:'uid'
+  number uid
+  number crdate       { sql_pipe:'dt' }
+  number deleted
+  number hidden
+  text   name         { sql_pipe:'wu' }
+  number room
+  number fromday      { sql_pipe:'dt' }
+  number untilday     { sql_pipe:'dt' }
+  number confirmed
+  number state
+  text   note         { sql_pipe:'wu' }
+  text   rooms        { sql_pipe:'wu' }
+  number adults
+  number kids_10_15
+  number kids_3_9
+  number kids_3
+  number board
+  text   address      { sql_pipe:'wu' }
+  text   zip
+  text   city         { sql_pipe:'wu' }
+  text   telephone
+  text   email
+  number fe_user_id
+}
+table _cis { key_id:'id_cis'
+# -------------------------------------------------------------------------------------------------- číselníky
+  number id_cis, text druh, text data, text hodnota, text zkratka, number poradi, text barva
+}
+map ds_stav:   table _cis {where:"druh='ds_stav'", order:'poradi', key_id:'data'}
+map ds_strava: table _cis {where:"druh='ds_strava'", order:'poradi', key_id:'data'}
 }

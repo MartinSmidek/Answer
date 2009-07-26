@@ -2,7 +2,9 @@
 
 $mysql_db= 'ezer_test';
 $ezer_db= array(
-  'setkani' => array('192.168.1.203','proglas','pr0gl8s'),
+//   'setkani' => array('192.168.1.203','proglas','pr0gl8s'),
+//   'setkani' => array('192.168.1.203','setkani','alberice'),
+  'setkani' => array('localhost','gandi',''),
   'ezer_test' => array('localhost','gandi','')
 );
 
