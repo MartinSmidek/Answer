@@ -1,13 +1,8 @@
 <?php # (c) 2009 Martin Smidek <martin@smidek.eu>
 
-$mysql_host= 'localhost';
-$mysql_user= 'gandi';
-$mysql_pass= '';
-$mysql_db= 'ezer_test';
-
 $ezer_db= array(
-  'setkani' => array('192.168.1.203','proglas','pr0gl8s'),
-  'ezer_test' => array('localhost','gandi','')
+  'ezer_test' => array(0,'localhost','gandi','','utf8'),
+  'setkani' => array('192.168.1.203','proglas','pr0gl8s')
 );
 
 $ezer_mysql_cp= 'UTF8';

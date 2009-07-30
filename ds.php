@@ -2,10 +2,10 @@
 
 $mysql_db= 'ezer_test';
 $ezer_db= array(
-//   'setkani' => array('192.168.1.203','proglas','pr0gl8s'),
-//   'setkani' => array('192.168.1.203','setkani','alberice'),
-  'setkani' => array('localhost','gandi',''),
-  'ezer_test' => array('localhost','gandi','')
+  'ezer_test' => array(0,'localhost','gandi','','utf8')
+//   'setkani' => array(0,'192.168.1.203','proglas','pr0gl8s'),
+//   'setkani' => array(0,'192.168.1.203','setkani','alberice'),
+  ,'setkani' => array(0,'localhost','gandi','','latin1')
 );
 
 $ezer_mysql_cp= 'UTF8';
