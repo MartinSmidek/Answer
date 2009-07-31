@@ -1,0 +1,6 @@
+const x=0; y=0; xf=300
+use u: form f [300,200,,]
+form f [,,100,80] {
+  label a [x,y,300,17] { title:'A' }
+#   label b [x,a.b,30,17] { title:'B' }
+}

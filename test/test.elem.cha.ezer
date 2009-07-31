@@ -1,0 +1,12 @@
+use v: form f [10,10,,]
+proc onstart() { v.focus }
+form f [,,110,30] {
+  label l [0,0,150,20] {title:'test chat'}
+  chat c [0,30,200,100] {  divide:50 }
+  button [300,20,50,] { title:'set(ahoj)'
+    proc onclick() { c.set('já|ahoj|on|nazdar') }
+  }
+  button [300,50,50,] { title:'get'
+    proc onclick() { alert('{get:',c.get,'}') }
+  }
+}

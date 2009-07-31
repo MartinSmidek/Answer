@@ -1,0 +1,85 @@
+#pragma names,group,attrs,syntax,prefix,get,box
+use cmd: form _test_cmd [10,10,,]
+var pozn: text
+proc onstart() {
+  pozn.set(' postupně se prodlužující text ');
+  doklad.report_init
+}
+proc cmd.a0.onclick () {
+  doklad.report_init;
+  doklad.report_check;
+  doklad.cislo.set('P0001');
+  doklad.suma.celkem.set('1.000');
+  cmd.x.set(doklad.get_html(100,0));
+  stop  }
+proc cmd.a1.onclick () { doklad.report_init; doklad.report_check; cmd.x.set(doklad.get_html(100,1)); stop  }
+proc cmd.a2.onclick () { doklad.report_init; doklad.report_check; cmd.x.set(doklad.get_html(100,2)); stop  }
+proc cmd.b.onclick () {
+  doklad.org.set('Radio Proglas s.r.o.<br>Barvičova 85, 60200 Brno<br>DIČ: CZ49435001');
+  doklad.radek.dalsi.ucel.graft('neznámý účel');
+  doklad.radek.dalsi.castka.graft(pozn.get);
+  doklad.suma.komu.graft('někomu');
+  doklad.report_check;
+  cmd.x.set(doklad.get_html(1));
+  stop }
+proc cmd.b2.onclick () {
+  pozn.set(conc(pozn.get,pozn.get));
+  doklad.suma.komu.graft(pozn.get);
+  doklad.report_check;
+  cmd.x.set(doklad.get_html(1));
+  stop }
+proc cmd.d.onclick () { doklad.report_check; doklad.report_debug; stop }
+proc cmd.t.onclick () { doklad.report_check; doklad.print(1); stop }
+
+form _test_cmd [,,500,200] {
+  label  x  [100,  0,800,750] { title:'empty' }
+  button a0 [10, 10,70,17] { title:'ukaž 0'  },
+  button a1 [10, 35,70,17] { title:'ukaž 1'  },
+  button a2 [10, 60,70,17] { title:'ukaž 2'  },
+
+  button t [10,110,70,17] { title:'tisk' },
+  button b [10,135,70,17] { title:'+ řádek' },
+  button b2 [10,160,70,17] { title:'+ dlouhý' },
+  button d [10,185,70,17] { title:'debug' },
+}
+
+report doklad [10,10,180,267] { format:'A4'
+  const P= 3.4, const Q= 56, const W= 132, const W3= 44,
+  const A= 15, const B= 13,
+  const H= 5,
+
+  box        [ 0,  0, 20, H] { css:'text', title:'Organizace' },
+  box typ    [ Q,  0, 70, H] { css:'bold', title:'PŘÍJMOVÝ POKLADNÍ DOKLAD' },
+  box org    [ 0,  4, 40,  H+H] { css:'org', title:'firma' },
+  box        [ Q,  H,  6, H] { css:'text', title:'č.:' },
+  box cislo  [ ^,  ~, 10, H] { css:'bold', title:'Pnnnn' },
+  box        [ Q,  ^, 12, H] { css:'text', title:'Ze dne' },
+  box datum  [ ^,  ~, 23, H] { css:'bold', title:'dd.mm.rrrr' },
+  box        [ ^,  ~, 19, H] { css:'text', title:'Přílohy:' },
+  box priloh [ ^,  ~,  7, H] { css:'bold', title:'nn' },
+  box suma   [ 0, A, W, $] { css:'O', xactive,
+    box        [ P, 2, 19, H] { css:'text', title:'Přijato Kč' },
+    box celkem [ ^, ~, 23, H] { css:'bold', title:'kkkkk.hh' },
+    box        [ Q, ~, 13, H] { css:'text', title:'Slovy:' },
+    box slovy  [ ^, ~, 60, H] { css:'bold', title:'k.........cettisíck......setk.....' },
+    box        [ P, ^+2, 55, H] { css:'text', title:'Přijato od (jméno a adresa)' },
+    box komu   [ Q, ~, 73, *] { css:'bold' },
+  }
+  box radek  [ 0, ^, W, $+4] { css:'U', xactive
+    box        [ P, 2+^,100, H] { css:'text', title:'Účel' },
+    box        [ ^, ~, 25, H] { css:'numb', title:'Částka' },
+    box dalsi  [ 0, ^, W, $] {
+      box ucel   [ P, ^,100, H] { css:'bold', title:'Účel' },
+      box castka [ ^, ~, 25, H] { css:'br', title:'Částka' },
+    }
+  }
+  box dole1  [ 0, ^, W3,  B] { css:'U', xactive
+    box schvalil [ P, 2, 40, H] { css:'text', title:'Schválil' },
+  }
+  box dole2  [ ^, ~, W3,  B] { css:'_', xactive
+    box prijem [ P, 2, 20, H] { css:'text', title:'Podpis příjemce' },
+  }
+  box        [ ^, ~, W3,  B] { css:'U', xactive
+    box        [ P, 2, 20, H] { css:'text', title:'Podpis pokladníka' },
+  }
+}

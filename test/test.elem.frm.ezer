@@ -1,0 +1,63 @@
+use u: form g [20,10,,]
+use v: form f [250,10,,]
+proc v.b.onclick() { echo('jo') }
+proc onstart() { v.focus }
+form f [,,100,80] {
+  label l [5,5,50,17] { title:'<b>ahoj</b>' }
+  field e [50,5,50,17]
+  edit ed [150,5,100,100] { /*value:"a\nb"*/ }
+  button b [0,45,,] { title:'?'
+    proc onclick() { echo('? ') }
+  }
+  button b1 [35,45,,] { title:'cancel'
+    proc onclick() { ukaz('ne ') }
+    proc ukaz(x) { echo(x,e.get) }
+  }
+  button b2 [100,45,,] { type:'submit', title:'OK'
+    proc onclick() { echo('ano ',e.get) }
+  }
+  button d [0,100,,] { title:'form_same'
+    proc onclick() { echo('form_same=',form.form_same) }
+  }
+}
+form g [,,100,100] {
+  field fi [5,5,50,17] { data:t.id_t, value:'1' }
+  field fx [5,35,50,17] { data:t.tx, help:'qg|nápověda' }
+  button b [5,65,,] { title:'load'
+    proc onclick() { g.load(g.fi.get) }
+  }
+  button c [60,65,,] { title:'save'
+    proc onclick() { g.save }
+  }
+  button del [120,65,,] { title:'delete'
+    proc onclick() { t.record_delete(conc('id_t=',g.fi.get)) }
+  }
+  button d [5,100,,] { title:'form_same'
+    proc onclick() { echo('form_same=',form.same) }
+  }
+  button mk1 [5,135,,] { title:'form_make ... load'
+    proc onclick() { form.make('t_load','load:fx',g.fi.get) }
+  }
+  button mk2 [5,170,,] { title:'form_make ... insert'
+    proc onclick() { form.make('t_insert','save:fi,fx') }
+  }
+  button tst [5,205,,] { title:'test podle potřeby'
+    proc onclick() {
+#       g.form_load(g.fi.get);echo('je')|echo('není')
+      echo(form.fi.get)
+    }
+  }
+  button e [5,270,,] { title:'set_cookie'
+    proc onclick() { set_cookie('test','',this(2),'fi,fx') }
+  }
+  button f [100,270,,] { title:'get_cookie'
+    proc onclick() { echo(get_cookie('test','',this(2),'fi,fx')) }
+  }
+  button f2 [100,300,,] { title:'get_cooki?'
+    proc onclick() { echo(get_cookie('test','','fi,fx')) }
+  }
+}
+table t {
+  number id_t
+  text tx
+}

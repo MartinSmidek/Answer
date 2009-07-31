@@ -1,0 +1,21 @@
+# (c)2009,MartinŠmídek
+
+#                                                                                                   SKUPINKY
+panel Skupinky [,,,543] { title:'Skupinky'
+  menu {type:'left',
+    menu {title:'Podklady pro skupinky',type:'group'
+      item {title:'Seznam účastníků'           ,par:°{rok:'2009'}
+        proc onclick () { u.x.set(ask('lide_kurs',2009)) }
+      }
+      item {title:'Rozbor starých skupinek'    ,par:°{s:'u-show',c:'2009'}
+        proc onclick () { u.x.set(ask('lide_spolu',2009)) }
+      }
+    },
+  }
+  use u: form f [12,4,,],
+}
+#                                                                                             ---   _TOUCH
+form f [,,700,500] {
+  label x [0,0,700,600] { title:'', style:'backgroundColor:#fff;' }
+}
+

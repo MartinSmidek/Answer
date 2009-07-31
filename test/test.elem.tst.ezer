@@ -1,0 +1,41 @@
+use v: form f [10,10,,]
+var w: text
+# proc v.b.onclick() { v.a.set(echo('baf')) }
+form f [,,100,100] {
+  field a [5,5,90,]
+  button b [105,5,90,] { title:"click!"
+    proc onclick() {
+      p('jeden','dva'); echo('tři')
+    }
+    proc p(x,y) {
+      q(x,y)
+    }
+    proc q(x,y) {
+      a.set(x); a.set(echo(x,y))
+    }
+  }
+  button [105,45,90,] { title:"if-THEN-else"
+    proc onclick() {
+      echo('if'); if(1,echo('then'),echo('else')); echo('fi')
+    }
+  }
+  button [105,80,90,] { title:"if-then-ELSE"
+    proc onclick() {
+      echo('if'); if(0,echo('then'),echo('else')); echo('fi')
+    }
+  }
+  button [105,115,90,] { title:"echo(if-then-else)"
+    proc onclick() {
+      echo(if(v.a.get,'then','else'))
+    }
+  }
+  button [300,115,90,] { title:"echo(switch-case)"
+    proc onclick() {
+      px(v.a.get)
+    }
+    proc px(x) {
+      [echo(x)];
+      echo(switch(x,0,'nula',1,'jedna','default'))
+    }
+  }
+}

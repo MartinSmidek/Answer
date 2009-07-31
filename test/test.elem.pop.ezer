@@ -1,0 +1,18 @@
+#pragma prefix
+use u: form g [10,10,,]
+proc u.on.onclick () { p.popup(150,20) }
+proc u.off.onclick () { p.hide }
+proc u.mod.onclick () { echo('value=',p.panel_modal(200,20)); echo('pokračování') }
+panel p [,,200,40] { type:'popup', title:'Dialog'
+  use v: form f [0,0,,]
+  form f [,,100,40] {
+    label [5,5,,17] { title:'ahoj' }
+    field [100,5,50,] { value:'volal' }
+    button [5,30,,] { title:'ok', proc onclick() { panel.hide('x') }}
+  }
+}
+form g [,,100,80] {
+  button on [5,5,,] { title:'popup' }
+  button off [5,30,,] { title:'hide'}
+  button mod [5,55,,] { title:'modal'}
+}

@@ -1,25 +1,7 @@
-/* EZER2/DS verze 0, (c) Martin Smidek <martin@smidek.eu>, 2009 */
+/* EZER/YS verze 0, (c) Martin Smidek <martin@smidek.eu>, 2009 */
 
 /* úpravy standardu */
-.nogrid {
-  background:#e9ddc4; }
-.Label, .Check {
-  font-size:8pt; color:#8b4513; }
-.Field {
-  font-size:9pt; height:15px; }
-.FieldDate input {
-  font-size:9pt; height:14px; }
-.Select input  {
-  font-size:9pt; height:14px; }
-.Edit {
-  font-size:9pt; }
-input.Button {
-  font-size:9pt; }
-.Browse thead th span {
-  font-size:8pt; font-weight:normal; /*color:#8b4513;*/ }
-.Browse td {
-  font-size:9pt !important; }
-
+.ae_inp         { position:absolute; }
 /* prvky v akordeon-menu */
 .zIndex1        { z-index:1; }
 .info           { min-height:545px; height:100%; }

@@ -1,0 +1,11 @@
+use u: form g [20,10,,]
+form g [,,100,100] {
+  field fi [5,5,50,17] { data:t.id_t, value:'1' }
+  button del [120,65,,] { title:'delete'
+    proc onclick() { t.delete_record(conc('id_t=',g.fi.get)) }
+  }
+}
+table t {
+  number id_t
+  text tx
+}

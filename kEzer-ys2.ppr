@@ -11,7 +11,7 @@ FileFormat=0
 ProjectFilesOnly=0
 [Project tree]
 kEzer-ys2
-	+comp
+	-comp
 		comp.css
 		comp.php
 	-doc
@@ -48,6 +48,9 @@ kEzer-ys2
 		..\..\..\Apache\logs\ys2-error.log
 	+test
 		..\www-test\appl\test.elem.sel.ezer
+		test.html
+		test_dbg.html
+		test.php
 	+ys
 		ys\$.ezer
 		ys\ys.kasa.ezer
@@ -83,9 +86,15 @@ kEzer-ys2
 13=ds\$.ezer
 14=ys\ys_fce.php
 15=ezer2\server\licensed\xls\formula-excel.php
+16=test.html
+17=test_dbg.html
+18=ys.php
+19=ys.html
+20=test.php
+21=dbg.html
 [Selected Project Files]
 Main=
-Selected=ds\$.ezer
+Selected=dbg.html
 [ezer2\server\comp2.php]
 TopLine=26
 Caret=23,44
@@ -104,8 +113,8 @@ Caret=2,22
 TopLine=1
 Caret=53,10
 [ezer2\client\app.js]
-TopLine=210
-Caret=68,237
+TopLine=1
+Caret=98,15
 [ezer2\client\ezer.js]
 TopLine=62
 Caret=71,80
@@ -118,11 +127,11 @@ Mark5=1,1806
 TopLine=478
 Caret=17,516
 [..\..\..\Apache\logs\ys2-error.log]
-TopLine=525
-Caret=159,233
+TopLine=569
+Caret=148,247
 [ds\ds.css.css]
 TopLine=1
-Caret=45,14
+Caret=63,17
 [ds.php]
 TopLine=1
 Caret=1,1
@@ -133,7 +142,7 @@ Caret=18,15
 TopLine=38
 Caret=65,51
 [ds\$.ezer]
-TopLine=78
+TopLine=48
 Caret=77,96
 [ys\ys_fce.php]
 TopLine=235
@@ -141,3 +150,21 @@ Caret=12,259
 [ezer2\server\licensed\xls\formula-excel.php]
 TopLine=1
 Caret=56,1
+[test.html]
+TopLine=1
+Caret=17,12
+[test_dbg.html]
+TopLine=1
+Caret=30,11
+[ys.php]
+TopLine=1
+Caret=1,12
+[ys.html]
+TopLine=1
+Caret=1,14
+[test.php]
+TopLine=1
+Caret=53,25
+[dbg.html]
+TopLine=1
+Caret=1,1

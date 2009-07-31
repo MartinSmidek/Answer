@@ -1,0 +1,17 @@
+// test ošetření chybových stavů
+use u: form f [20,10,,]
+form f [,,100,80] {
+  button a [5,5,,] { title:'source'
+    proc onclick() {
+      source(this)
+    }
+  }
+  button b [5,45,,] { title:'test'
+    proc onclick() {
+      b.owner().get
+#       echo(1);
+#       ask('a',3)
+#       this.set(2).get(4).owner
+    }
+  }
+}
