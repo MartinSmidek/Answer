@@ -13,6 +13,8 @@ ds/img/ds.png -text
 libr/ys_fce.php -text
 libr/ys_lide.php -text
 libr/ys_ucet.php -text
+/test.html -text
+/test.php -text
 test/$.ezer -text
 test/test.doc.ezer -text
 test/test.elem.bro.ezer -text
@@ -45,6 +47,7 @@ test/ys_lide.php -text
 test/ys_pokladna.ezer -text
 test/ys_ucetnictvi.ezer -text
 test/ys_ucetnictvi.php -text
+/test_dbg.html -text
 wiki/dokumentace.wiki -text
 wiki/todo.wiki -text
 /ys.html -text
@@ -57,6 +60,7 @@ ys/ys.doc.ezer -text
 ys/ys.info.ezer -text
 ys/ys.kasa.ezer -text
 ys/ys.lide.ezer -text
+ys/ys.syst.ezer -text
 ys/ys.ucet.ezer -text
 ys/ys_fce.php -text
 ys/ys_lide.php -text

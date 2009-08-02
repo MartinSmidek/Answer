@@ -1,0 +1,88 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en" dir="ltr">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+  <title>test</title>
+  <script type="text/javascript">
+    var Ezer= {};
+    Ezer.fce= {};
+    Ezer.str= {};
+    Ezer.root= 'test';
+    Ezer.options= {
+      must_log_in: false, uname:'test', pword:'test',
+      debug:false, mini_debug:true, status_bar:true, to_trace:true
+    };
+  </script>
+  <script src="./ezer2/client/licensed/clientcide.js" type="text/javascript" charset="utf-8"></script>
+  <script src="./ezer2/client/lib.js" type="text/javascript" charset="utf-8"></script>
+  <script src="./ezer2/client/ezer_fdom1.js" type="text/javascript" charset="utf-8"></script>
+  <script src="./ezer2/client/ezer.js" type="text/javascript" charset="utf-8"></script>
+  <script src="./ezer2/client/ezer_report.js" type="text/javascript" charset="utf-8"></script>
+  <script src="./ezer2/client/ezer_fdom2.js" type="text/javascript" charset="utf-8"></script>
+  <script src="./ezer2/client/app.js" type="text/javascript" charset="utf-8"></script>
+  <link rel="stylesheet" href="./ezer2/client/appf.css" type="text/css" media="screen" charset="utf-8" />
+  <link rel="stylesheet" href="./ezer2/client/natdocs.css" type="text/css" media="screen" charset="utf-8" />
+  <link rel="stylesheet" href="./test/ys.css.css" type="text/css" media="screen" charset="utf-8" />
+</head>
+<body id="body" class='nogrid'>
+<!-- menu a submenu -->
+  <div id='horni' class="MainBar">
+    <div id="appl">Test</div>
+    <img id="StatusIcon" src="./ezer2/client/img/$logo.gif" />
+    <ul id="menu" class="MainMenu"></ul>
+    <ul id="submenu" class="MainTabs"></ul>
+  </div>
+<!-- login -->
+  <div id="login" style="display:none">
+    <div id="login_1">
+      <h1>Přihlášení ...</h1>
+      <div class="login_a">
+        <form  method="post" onsubmit="return false;">
+          <span>uživatelské jméno</span><br />
+          <input id="name" type="text" tabindex="1" title="jméno" name="name" value="" /><br />
+          <span>heslo</span><br />
+          <input id="pass" type="password" tabindex="2" title="heslo" name="pass"  value="" /><br />
+          <span id="login_msg"></span><br />
+          <input id="login_on" type="submit" tabindex="3" value="Přihlásit se" />
+          <input id="login_no" type="button" tabindex="4" value="... ne, děkuji" />
+        </form>
+      </div>
+    </div>
+    <div id="login_2">
+      <h1>... informace</h1>
+      <div class="login_a">
+        Přeji příjemnou práci
+      </div>
+    </div>
+  </div>
+<!-- pracovní plocha -->
+  <div id="stred">
+    <div id="shield"></div>
+    <div id="work"></div>
+  </div>
+<!-- paticka -->
+  <div id="dolni">
+    <div id="kuk_err"></div>
+    <div id="paticka">
+      <div id="error"></div>
+    </div>
+    <table width=100%>
+      <tr id="status_bar">
+        <td align='left'>
+          <div style="float:left;" id='status_left'></div>
+          <div style="float:left;">|&nbsp;zatížení počítače:&nbsp;</div>
+          <div style="float:left;" id='ajax_bar'></div>
+        </td>
+        <td align='center'>
+          <div id='status_center'>.</div>
+        </td>
+        <td align='right'>
+          <div id='status_right'></div>
+        </td>
+      </tr>
+    </table>
+    <pre id="kuk"></pre>
+  </div>
+  <div id="report" class="report"></div>
+</body>
+</html>
