@@ -26,7 +26,7 @@ panel gen {title:'Generování'
     }
     menu refr {title:'obnovit',type:'group'
       item a {title:'dokumentace z komentářů'
-        proc onclick () { u.result.set(ask('i_doc','javascript','app,ezer,ezer_fdom1,ezer_fdom2'));
+        proc onclick () { u.result.set(ask('i_doc','javascript','app,ezer,ezer_report,ezer_fdom1,ezer_fdom2'));
 #         proc onclick () { u.result.set(ask('i_doc','javascript','ezer'));
 #         proc onclick () { u.result.set(ask('i_doc','javascript','app'));
           ref.m.attach_code(ask('i_doc_menu','reference','',''))

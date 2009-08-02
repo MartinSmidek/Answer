@@ -8,6 +8,17 @@ menu ys { type:'main'
   tabs doc  {title:"Nápověda",  include:'onclick' }
 }
 
+table _cis { key_id:'id_cis'
+  number id_cis
+  text druh,
+  text data,
+  text zkratka,
+  number poradi,
+  text hodnota,
+  text popis,
+  text barva,
+}
+
 table ms_druhakce {
   text nazev
   number akce

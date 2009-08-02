@@ -16,10 +16,12 @@ module SYSTEM [0,0,0,0] { active:Ciselnik, units:'px'
     proc onclick () {
       stop }
     proc reload_keys () {
-      klice.list.browse_load(druh_cond.get); klice.list.raise('onrowclick'); klice.list.browse_focus }
+      klice.list.browse_load(druh_cond.get); klice.list.raise('onrowclick');
+      klice.list.browse_focus }
     proc klice.list.onsubmit () {
       eq(klice.list.druh.get,'_meta_');
-      druh_cond.set(conc("druh='",klice.list.zkratka.get,"'")); cis_druh.set(klice.list.zkratka.get);
+      druh_cond.set(conc("druh='",klice.list.zkratka.get,"'"));
+      cis_druh.set(klice.list.zkratka.get);
       reload_keys }
     proc klice.list.onrowclick () {
       reload_key }
@@ -27,36 +29,34 @@ module SYSTEM [0,0,0,0] { active:Ciselnik, units:'px'
       klic.key_load }
   },
 #                                                                                                    AKTIVITY
-  panel Activity [,,,543] { title:'Aktivita', type:'panel', skill:'m'
-    use touch: group _touch [12,4,,],
-    proc onstart () { touch.group_add; stop}
-    proc onclick () { touch.volby.menu_fill2('sys_activity_menu','informace','',''); stop}
-  }
+#   panel Activity [,,,543] { title:'Aktivita', type:'panel', skill:'m'
+#     use touch: form _touch [12,4,,],
+#     proc onstart () { touch.volby.menu_fill2('sys_activity_menu','informace','',''); stop}
+#   }
 #                                                                                                    UŽIVATELÉ
   panel Users [,,,543] { title:'Uživatelé', type:'panel', skill:'m|m'
     var novy: number,
     use uzivatele: form users [48,29,0,467],
-    use uzivatel: group user [494,40,0,428],
+    use uzivatel: form user [494,40,0,428],
     use cmd: form butt [242,498,0,45],
-    proc onstart () { uzivatel.group_add }
-    proc onclick () {
-      uzivatele.list.browse_load(1); uzivatele.list.raise('onrowclick')}
+    proc onstart () {
+      uzivatele.list.browse_load; uzivatele.list.raise('onrowclick')}
     proc uzivatele.list.onrowclick () {
-      uzivatel.form_load(uzivatele.list.user.get)}
+      uzivatel.load(uzivatele.list.user.get)}
     proc cmd.vytvor_clena.onclick () {
-      uzivatele.list.browse_blur; uzivatel.form_init; uzivatel.kdo.set(sys('user_id'));
+      uzivatele.list.browse_blur; uzivatel.init; uzivatel.kdo.set(sys('user_id'));
       uzivatel.kdy.set(now); stop}
     proc cmd.uloz_clena.onclick () { u_uloz }
     proc uzivatel.onsubmit () { u_uloz }
     proc u_uloz () {
-      uzivatel.form_same; stop
+      uzivatel.same; stop
     | uzivatel.kdo.set(sys('user_id')); uzivatel.kdo.change; uzivatel.kdy.set(now);
-      uzivatel.kdy.change; uzivatel.form_key; uzivatel.form_save; uzivatel.form_load;
-      uzivatel.form_browse(uzivatele.list.self)
-    | uzivatel.form_insert; novy.set(uzivatel.form_key); uzivatel.form_load;
-      uzivatele.list.browse_load(1); uzivatele.list.raise('onrowclick',novy.get)}
+      uzivatel.kdy.change; uzivatel.key; uzivatel.save; uzivatel.load;
+      uzivatele.list.browse_seek
+    | uzivatel.insert; novy.set(uzivatel.key); uzivatel.load;
+      uzivatele.list.browse_load; uzivatele.list.raise('onrowclick',novy.get)}
     proc cmd.zpet_clena.onclick () {
-      uzivatel.form_key; uzivatel.form_load
+      uzivatel.key; uzivatel.load
     | stop}
   },
 
@@ -88,10 +88,11 @@ module SYSTEM [0,0,0,0] { active:Ciselnik, units:'px'
     stop }
 #   proc onready () { alert('jsem ready') }
   proc the_formsave (f,b) {
-     _call(f,'form_same'); stop
-   | _call(f,'form_key'); _ajax(f,'form_save'); _ajax(f,'form_load'); _call(f,'form_browse',b)
-   | _ajax(f,'form_insert'); _ajax(f,'form_load');
-     _call(b,'raise','onrowclick',_ajax(b,'browse_seek',conc(_call(f,'form_key_id'),'=',_call(f,'form_key')))) }
+    f.same; stop
+  | f.key; f.save; f.load; b.browse_seek
+  | f.insert; f.load;
+    b.raise('onrowclick',b.browse_seek(conc(f.key_id,'=',f.key)))
+  }
 }
 # ------------------------------------------------------------------------------------------------- _touch
 form _touch [,,700,50] {
@@ -169,9 +170,10 @@ form _key [0,0,200,200] {
   proc key_novy () {
     form_init; kdruh.set(druh_self.get); kdruh.change; stop}
   proc key_load () {
-    form_load(id_self.get) }
-  proc key_uloz () { form_same; alert('nebyla provedena žádná změna'); brow_self.browse_focus
-    | the_formsave(form_self,brow_self.get); brow_self.browse_focus }
+    form_load(id_self.get.get) }
+  proc key_uloz () {
+    form_same; alert('nebyla provedena žádná změna'); brow_self.browse_focus
+  | the_formsave(form,brow_self.get); brow_self.browse_focus }
   proc key_smaz () {
     _cis.delete_record(conc("id_cis=",id.get)); reload_keys }
   # události
@@ -269,13 +271,3 @@ table _user {
   date zmena_kdy {  },
 }
 
-table _cis {
-  number id_cis { key:'primary' },
-  text druh,
-  text data,
-  text zkratka,
-  number poradi,
-  text hodnota,
-  text popis,
-  text barva,
-}

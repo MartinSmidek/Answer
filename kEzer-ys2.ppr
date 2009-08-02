@@ -1,4 +1,5 @@
 [Config]
+Relative path=1
 Compilator.SaveAll=0
 Compilator.Capture=0
 Compilator.HideOutput=0
@@ -6,9 +7,7 @@ Compilator.LogType=0
 DefaultCPIndex=0
 LogtoEnd=1
 DontOpen=0
-AbsolutePath=0
 FileFormat=0
-ProjectFilesOnly=0
 [Project tree]
 kEzer-ys2
 	-comp
@@ -44,7 +43,7 @@ kEzer-ys2
 			ezer2\wiki\guide.wiki
 			ezer2\wiki\meta.wiki
 			ezer2\wiki\todo.wiki
-	-system
+	+system
 		..\..\..\..\WINDOWS\system32\drivers\etc\hosts
 		..\..\..\Apache\conf\extra\httpd-vhosts-ezer.conf
 		..\..\..\Apache\logs\ys2-error.log
@@ -68,7 +67,9 @@ kEzer-ys2
 		ys.html
 		ys_dbg.html
 		ys\ys.css.css
-	+ds
+		ys\ys.syst.ezer
+		ys\ys.doc.ezer
+	-ds
 		ds\$.ezer
 		ds\ds.css.css
 		ds.php
@@ -79,34 +80,28 @@ kEzer-ys2
 1=ezer2\server\ae_slib.php
 2=ezer2\server\ezer2.php
 3=comp.php
-4=ezer2\client\ezer_fdom1.js
-5=ezer2\client\app.js
-6=ezer2\client\dbg.js
-7=ezer2\client\ezer.js
-8=ezer2\client\ezer_fdom2.js
-9=..\..\..\Apache\logs\ys2-error.log
-10=test.php
-11=test.html
-12=dbg.html
-13=ezer2\client\dbg.css
-14=test\$.ezer
-15=test\test.elem.con.ezer
-16=ds.php
-17=ds.html
-18=ds\$.ezer
-19=ys.html
-20=ys\ys_fce.php
-21=ys.php
-22=ys\$.ezer
-23=ys\ys.info.ezer
-24=ys\ys.kasa.ezer
-25=ys\ys.lide.ezer
+4=..\..\..\Apache\logs\ys2-error.log
+5=ezer2\client\ezer_fdom1.js
+6=ezer2\client\app.js
+7=ezer2\client\dbg.js
+8=ezer2\client\ezer.js
+9=ezer2\client\ezer_fdom2.js
+10=ys.html
+11=ys\ys_fce.php
+12=ys.php
+13=ys\$.ezer
+14=ys\ys.info.ezer
+15=ys\ys.kasa.ezer
+16=ys\ys.lide.ezer
+17=ys\ys.syst.ezer
+18=ezer2\server\reference.php
+19=ys\ys.doc.ezer
 [Selected Project Files]
 Main=
-Selected=ys\ys.info.ezer
+Selected=ezer2\client\ezer.js
 [ezer2\server\comp2.php]
-TopLine=1308
-Caret=39,1339
+TopLine=318
+Caret=1,342
 Mark1=74,109
 Mark2=1,852
 Mark3=55,1021
@@ -119,6 +114,9 @@ Caret=49,252
 [comp.php]
 TopLine=36
 Caret=41,67
+[..\..\..\Apache\logs\ys2-error.log]
+TopLine=1
+Caret=28,12
 [ezer2\client\ezer_fdom1.js]
 TopLine=1
 Caret=53,10
@@ -126,11 +124,11 @@ Caret=53,10
 TopLine=41
 Caret=31,55
 [ezer2\client\dbg.js]
-TopLine=129
+TopLine=155
 Caret=59,187
 [ezer2\client\ezer.js]
-TopLine=646
-Caret=47,677
+TopLine=2088
+Caret=8,2106
 Mark1=1,563
 Mark2=31,752
 Mark3=46,46
@@ -138,36 +136,6 @@ Mark3=46,46
 TopLine=360
 Caret=67,383
 Mark1=1,401
-[..\..\..\Apache\logs\ys2-error.log]
-TopLine=645
-Caret=328,317
-[test.php]
-TopLine=1
-Caret=93,24
-[test.html]
-TopLine=1
-Caret=1,20
-[dbg.html]
-TopLine=1
-Caret=62,16
-[ezer2\client\dbg.css]
-TopLine=1
-Caret=1,1
-[test\$.ezer]
-TopLine=1
-Caret=38,4
-[test\test.elem.con.ezer]
-TopLine=1
-Caret=35,7
-[ds.php]
-TopLine=1
-Caret=1,1
-[ds.html]
-TopLine=1
-Caret=63,17
-[ds\$.ezer]
-TopLine=1
-Caret=73,1
 [ys.html]
 TopLine=1
 Caret=43,29
@@ -176,16 +144,25 @@ TopLine=57
 Caret=26,72
 [ys.php]
 TopLine=1
-Caret=30,34
+Caret=3,24
 [ys\$.ezer]
 TopLine=1
-Caret=1,7
+Caret=3,20
 [ys\ys.info.ezer]
 TopLine=1
 Caret=30,20
 [ys\ys.kasa.ezer]
 TopLine=141
-Caret=1,141
+Caret=10,148
 [ys\ys.lide.ezer]
 TopLine=1
 Caret=1,1
+[ys\ys.syst.ezer]
+TopLine=188
+Caret=47,198
+[ezer2\server\reference.php]
+TopLine=1
+Caret=1,1
+[ys\ys.doc.ezer]
+TopLine=26
+Caret=86,29

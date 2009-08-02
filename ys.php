@@ -1,5 +1,6 @@
 <?php # (c) 2009 Martin Smidek <martin@smidek.eu>
 
+$mysql_db= 'ezer_test';
 $ezer_db= array(
   'ezer_test' => array(0,'localhost','gandi','','utf8'),
   'setkani' => array('192.168.1.203','proglas','pr0gl8s')
