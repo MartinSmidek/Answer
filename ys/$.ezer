@@ -1,9 +1,11 @@
 menu ys { type:'main'
   var global: text,
-  tabs lide {title:"Lidé",  include:'onclick' }
+  tabs info {title:"Informace",  include:'onclick' }
   tabs kasa {title:"Pokladna",  include:'onclick' }
   tabs ucet {title:"Účetnictví",  include:'onclick' }
-  tabs doc {title:"Dokumentace",  include:'onclick' }
+  tabs lide {title:"Lidé",  include:'onclick' }
+  tabs syst {title:"Systém",  include:'onclick' }
+  tabs doc  {title:"Nápověda",  include:'onclick' }
 }
 
 table ms_druhakce {

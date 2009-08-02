@@ -12,7 +12,7 @@ $ezer_root= 'ys';                             // jméno adresáře a hlavního o
 
 // cesty
 $ezer_path_appl= "C:/Apache/htdocs/ezer/www-ys2/$ezer_root";
-$ezer_path_libr= "C:/Apache/htdocs/ezer/www-ys2/libr";
+$ezer_path_libr= "C:/Apache/htdocs/ezer/www-ys2/ys";
 $ezer_path_docs= "C:/Apache/htdocs/ezer/www-ys2/docs";
 $ezer_path_code= "C:/Apache/htdocs/ezer/www-ys2/$ezer_root/code";
 $ezer_path_serv= "C:/Apache/htdocs/ezer/www-ys2/ezer2/server";
@@ -30,6 +30,9 @@ $EZER->options->web= 'www.setkani.org';
 $EZER->options->mail= 'martin@smidek.eu';
 $EZER->activity->touch_limit= 50; // počet dotyků (ae_hits) po kterých je uskutečněn zápis do _touch
 $EZER->activity->colors= "80:#f0d7e4,40:#e0d7e4,20:#dce7f4,0:#e7e7e7"; // viz system.php::sys_table
+// $EZER->options->docs_path= "C:/YMCA-kopie";
+$EZER->options->docs_path= "C:/Apache/htdocs/ezer/www-ys2/docs";
+$EZER->options->docs_ref= "./docs";
 
 // require_once("./init.php");
 

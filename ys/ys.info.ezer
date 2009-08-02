@@ -1,0 +1,81 @@
+#pragma names,group,attrs,syntax,prefix,get,box
+# (c) 2009, Martin Šmídek
+module SOUBORY [0,0,30,12] { active:Posta, units:'px'
+  var P_info: text,
+  var K_info: text,
+  #                                                                                                 POŠTA
+  panel Posta [,,,543] { title:'Pošta', type:'panel', style:'width:670'
+    menu {type:'left',
+      menu {title:'2009',type:'group'
+        item {title:'Došlá pošta'       ,par:°{s:'dosla_posta',c:'2009'} },
+        item {title:'Došlé faktury'     ,par:°{s:'dosle_faktury',c:'2009'} },
+        item {title:'Vystavené faktury' ,par:°{s:'vystavene_faktury',c:'2009'} },
+        item {title:'Výpisy a poukázky' ,par:°{s:'banka_vypisy',c:'2009'} },
+        item {title:'Odeslaná pošta'    ,par:°{s:'odeslana_posta',c:'2009'} },
+        item {title:'Cestovní příkazy'  ,par:°{s:'cestovni_prikazy',c:'2009'} },
+        item {title:'Pokladní doklady'  ,par:°{s:'pokladna',c:'2009'} },
+        item {title:'Mzdy, DPP, DPČ'    ,par:°{s:'mzdy,dpp',c:'2009'} }
+      }
+      proc onclick (m) { P_menu (m.par.s,m.par.c) }
+    }
+    use P_touch: form _touch [12,4,,],
+    proc P_menu (s,c) {
+      P_info.set(ask('sou_lst','posta',s,c));
+      P_touch.result.set(conc("<div id='info' class='info'>",P_info.get('html'),"</div>"));
+      P_touch.flist.browse_load(P_info.get('path')) }
+    proc P_show (x,info) {
+      P_touch.result.set(conc("<div id='info' class='info'>",P_info.get('html'),x
+      ," <a target='view' href='",P_info.get('ref'),'/',x,"'>stáhnout</a></div>"));
+      P_touch.finfo.set(info); stop }
+    proc P_touch.flist.onrowclick () {
+      P_show(P_touch.flist.fid.get,P_touch.flist.finfo.get); stop }
+    proc P_oprav (info) { ask('sou_upd_info',P_info.get('path'),P_touch.flist.fid.get,info);
+      P_touch.flist.browse_seek  }
+  }
+  #                                                                                                 KALENDÁŘ
+  panel Kalendar [,,,543] { title:'Kalendář', type:'panel'
+    menu {type:'left',
+      menu {title:'Kalendáře',type:'group'
+        item {title:'YS-kalendar'    ,par:°{s:'kalendar',c:'ys'} },
+        item {title:'martin.smidek'  ,par:°{s:'kalendar',c:'ms'} }
+      }
+      proc onclick (m) { K_menu (m.par.s,m.par.c) }
+    }
+    use K_touch: form _google [12,4,,],
+    proc K_menu (s,c) {
+      K_info.set(ask('sou_kal','kalendare',s,c));
+      K_touch.result.set(conc("<div id='info' class='info'>",K_info.get('html'),"</div>"));
+      stop }
+  }
+  proc onstart () {
+    set_cookie(conc(sys('system'),'_modul'),conc(sys('system'),'_',sys('module')));
+    stop }
+}
+#                                                                                             ---   _TOUCH
+form _touch [,,500,50] {
+  label result [0,0,635,600] { title:'' },
+  field finfo [330,50,300,17] { /*css:'zIndex1'*/
+    proc onchanged() { P_oprav(finfo.get); finfo.plain }
+  },
+  button opravit [580,15,50,16] { title:'Ulož', type:'submit', /*css:'zIndex1'*/
+    proc onclick () { P_oprav(finfo.get); finfo.plain }
+  },
+  browse flist [0,80,600,200] { rows:24, qry_rows:1
+    show fid [,,0,] { data:_file_.fid },
+    show fdate [,,80,] { title:'datum', data:_file_.fdate, format:'s-q' },
+    show fname [,,200,] { title:'název', data:_file_.fname, format:'s' },
+    show ftype[,,20,] { title:'typ', data:_file_.ftype, format:'s' },
+    show finfo [,,300,] { title:'info', data:_file_.finfo, format:'s' },
+  }
+}
+#                                                                                             ---   _GOOGLE
+form _google [,,700,50] {
+  label result [0,0,700,600] { title:'' },
+}
+table _file_ {
+  text fid
+  date fdate
+  text fname
+  text ftype
+  text finfo
+}

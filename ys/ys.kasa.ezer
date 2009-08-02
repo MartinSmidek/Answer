@@ -569,8 +569,8 @@ form _p_cmd [,,300,20] {
 }
 
 map p_ucel: table _cis {where:"druh='p_ucel'", order:'poradi'/*, key:'data'*/}
-map p_typ: table _cis {where:"druh='p_typ'", order:'poradi', key:'data'}
-map pokl: table pokladna {where:"1", key:'id_pokladna' }
+map p_typ: table _cis {where:"druh='p_typ'", order:'poradi', key_id:'data'}
+map pokl: table pokladna {where:"1", key_id:'id_pokladna' }
 
 table _cis {
   number id_cis { key:'primary' },

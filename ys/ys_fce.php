@@ -55,29 +55,6 @@ function psc ($psc,$user2sql=0) {
   return $text;
 }
 # ================================================================================================== SOUBORY
-# -------------------------------------------------------------------------------------------------- sou_lst_menu
-# vygeneruje menu
-function sou_lst_menu($k1,$k2,$k3) {
-  global $y, $json;
-  $y->values= $json->decode(win2utf(<<<__END
-    [
-      {group:'2009',entries:[
-        {title:'Došlá pošta'            ,entry:'posta',keys:['dosla_posta','2009']},
-        {title:'Došlé faktury'          ,entry:'posta',keys:['dosle_faktury','2009']},
-        {title:'Výpisy a poukázky'      ,entry:'posta',keys:['banka_vypisy','2009']},
-        {title:'Odeslaná pošta'         ,entry:'posta',keys:['odeslana_posta','2009']},
-        {title:'Cestovní příkazy'         ,entry:'posta',keys:['cestovni_prikazy','2009']}
-//       ]},
-//       {group:'2008',entries:[
-//         {title:'Došlá pošta'            ,entry:'posta',keys:['dosla_posta','2008']},
-//         {title:'Došlé faktury'          ,entry:'posta',keys:['dosle_faktury','2008']},
-//         {title:'Výpisy a poukázky'      ,entry:'posta',keys:['banka_vypisy','2008']}
-      ]}
-    ]
-__END
-  ));
-  $y->selected= array($k2,$k3);
-}
 # -------------------------------------------------------------------------------------------------- sou_lst
 # obsluha menu
 function sou_lst($k1,$k2,$k3) {
@@ -88,11 +65,12 @@ function sou_lst($k1,$k2,$k3) {
   switch ( $k1 ) {
   case 'posta':                                                                     // SOUBORY
     $path= "{$EZER->options->docs_path}/$k3/$k2";
+    $ref= "{$EZER->options->docs_ref}/$k3/$k2";
     break;
   }
   $html= "<div class='CSection CMenu'><h3 class='CTitle'>$title</h3>$html</div>";
-  $result= (object)array('html'=>$html,'path'=>$path);
-  return json_encode($result);
+  $result= (object)array('html'=>$html,'path'=>$path,'ref'=>$ref);
+  return $result;
 }
 # -------------------------------------------------------------------------------------------------- sou_upd_info
 # obsluha menu
@@ -100,21 +78,6 @@ function sou_upd_info($dir,$file,$info) {
                                                 display("sou_upd_info($dir,$file,$info)=$dir/$file.info");
   $length= file_put_contents("$dir/$file.info",$info);
   return $length;
-}
-# -------------------------------------------------------------------------------------------------- sou_kal_menu
-# vygeneruje menu
-function sou_kal_menu($k1,$k2,$k3) {
-  global $y, $json;
-  $y->values= $json->decode(win2utf(<<<__END
-    [
-      {group:'Kalendáře',entries:[
-        {title:'YS-kalendar'            ,entry:'posta',keys:['kalendar','ys']},
-        {title:'martin.smidek'          ,entry:'posta',keys:['kalendar','ms']}
-      ]}
-    ]
-__END
-  ));
-  $y->selected= array($k2,$k3);
 }
 # -------------------------------------------------------------------------------------------------- sou_kal
 # obsluha menu
@@ -132,7 +95,7 @@ function sou_kal($k1,$k2,$k3) {
   }
   $html= "<div class='CSection CMenu'><h3 class='CTitle'>$title</h3>$html</div>";
   $result= (object)array('html'=>$html,'path'=>$path);
-  return json_encode($result);
+  return $result;
 }
 # ================================================================================================================ KASA
 # -------------------------------------------------------------------------------------------------- p_pdenik_vytisten

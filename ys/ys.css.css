@@ -2,9 +2,10 @@
 
 /* úpravy standardu */
 .ae_inp         { position:absolute; }
+/*.inAccordion    { width:670px; }*/
 /* prvky v akordeon-menu */
 .zIndex1        { z-index:1; }
-.info           { min-height:545px; height:100%; }
+.info           { min-height:545px; height:100%; z-index:0; }
 /* rámečky formulářů */
 .ae_work        { background-color:#93b3de; -moz-border-radius:5px; z-index:0; }
 .ae_parm        { border:1px solid #f5f5f5; background-color:#ffeed6; -moz-border-radius:5px; z-index:0; }
