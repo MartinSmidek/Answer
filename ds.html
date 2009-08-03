@@ -12,7 +12,8 @@
     Ezer.root= 'ds';
     var dbg= Ezer.parm[0]!='#';
     Ezer.options= {
-      debug:false, mini_debug:dbg, status_bar:dbg, to_trace:dbg,
+      debug:window.parent!=window,      // je nadřazený frame - dbg.html
+      mini_debug:dbg, status_bar:dbg, to_trace:dbg,
       must_log_in:false, uname:'dum', pword:'setkani'
     };
     function ondomready() {

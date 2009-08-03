@@ -10,7 +10,8 @@
     Ezer.str= {};
     Ezer.root= 'ys';
     Ezer.options= {
-      debug:false, mini_debug:true, status_bar:true, to_trace:true
+      debug:window.parent!=window,      // je nadřazený frame - dbg.html
+      mini_debug:true, status_bar:true, to_trace:true
     };
   </script>
   <script src="./ezer2/client/licensed/clientcide.js" type="text/javascript" charset="utf-8"></script>

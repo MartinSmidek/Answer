@@ -10,6 +10,7 @@ ds/ds_fce.php -text
 ds/img/ds.png -text
 /favicon.ico -text
 /kEzer-ys2.ppr -text
+/libr.php -text
 libr/ys_fce.php -text
 libr/ys_lide.php -text
 libr/ys_ucet.php -text
@@ -47,7 +48,6 @@ test/ys_lide.php -text
 test/ys_pokladna.ezer -text
 test/ys_ucetnictvi.ezer -text
 test/ys_ucetnictvi.php -text
-/test_dbg.html -text
 wiki/dokumentace.wiki -text
 wiki/todo.wiki -text
 /ys.html -text
@@ -65,4 +65,3 @@ ys/ys.ucet.ezer -text
 ys/ys_fce.php -text
 ys/ys_lide.php -text
 ys/ys_ucet.php -text
-/ys_dbg.html -text

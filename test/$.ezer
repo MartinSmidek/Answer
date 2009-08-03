@@ -19,6 +19,7 @@ menu test { type:'main'
   }
   tabs fce {title:"Balíky",  include:'onclick' }
   tabs doc {title:"Dokumentace",  include:'onclick' }
+  tabs url {title:"Url",  where:'http://ys2.ezer/ys.html' }
   tabs ys_lide {title:"YS-lidé",  include:'onclick' }
   tabs ys_ucetnictvi {title:"YS-účetnictví",  include:'onclick' }
   tabs ys_pokladna {title:"YS-pokladna",  include:'onclick' }

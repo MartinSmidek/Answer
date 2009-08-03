@@ -1,6 +1,8 @@
 <?php # (c) 2009 Martin Smidek <martin@smidek.eu>
 
-$ezer_root= 'test';                           // jméno adresáře a hlavního objektu aplikace
+
+$ezer_root= 'libr';                           // jméno adresáře a hlavního objektu aplikace
+$ezer_name= 'libr';                           // jméno aplikace
 
 $mysql_db= 'ezer_test';
 $ezer_db= array(
@@ -24,8 +26,8 @@ define('TRACE_FB', 1);
 // parametrizace standardních modulů
 $EZER= (object)array();
 $EZER->options->root= $ezer_root;
-$EZER->options->app= 'test';
-$EZER->options->index= 'test.html';
+$EZER->options->app= $ezer_name;
+$EZER->options->index= "$ezer_name.html";
 $EZER->options->web= 'www.proglas.cz';
 $EZER->options->mail= 'smidek@proglas.cz';
 $EZER->activity->touch_limit= 50; // počet dotyků (ae_hits) po kterých je uskutečněn zápis do _touch

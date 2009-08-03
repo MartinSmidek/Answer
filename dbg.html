@@ -1,15 +1,23 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
-<html>
-<head>
-  <title>DBG</title>
-  <script src="./ezer2/client/licensed/jx/jxlib10.js" type="text/javascript" charset="utf-8"></script>
-  <script src="./ezer2/client/lib.js" type="text/javascript" charset="utf-8"></script>
-  <script src="./ezer2/client/dbg.js" type="text/javascript" charset="utf-8"></script>
-  <link rel="stylesheet" href="./ezer2/client/licensed/jx/themes/delicious/jxtheme.css" type="text/css" media="screen" charset="utf-8">
-  <link rel="stylesheet" href="./ezer2/client/dbg.css" type="text/css" media="screen" charset="utf-8">
-  <!-- IE specific style sheets --><!--[if lte IE 6]><link rel="stylesheet" href="./ezer2/client/licensed/jx/themes/delicious/ie6.css" type="text/css" media="screen" charset="utf-8"><![endif]--><!--[if IE 7]><link rel="stylesheet" href="./ezer2/client/licensed/jx/themes/delicious/ie7.css" type="text/css" media="screen" charset="utf-8"><![endif]-->
-</head>
-<body>
-<div id="app" class="splitterBox"></div>
-</body>
-</html>
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Frameset//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-frameset.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+    <title>DBG</title>
+    <script type="text/javascript">
+      // zjištění hodnoty parametru v url
+      // see http://www.netlobo.com/url_query_string_javascript.html
+      function get_url_param(name) {
+        name= name.replace(/[\[]/,"\\\[").replace(/[\]]/,"\\\]");
+        var regexS= "[\\?&]"+name+"=([^&#]*)";
+        var regex= new RegExp( regexS );
+        var results= regex.exec( window.location.href );
+        if( results == null )
+          return "";
+        else
+          return results[1];
+      }
+      document.write('  <frameset cols="30%,*"><frame id="dbg" src="./ezer2/client/dbgf.html"  name="dbg" />'
+      +'<frame id="app" name="app" src="'+get_url_param("app")+'.html" /></'+'frameset>');
+    </script>
+
