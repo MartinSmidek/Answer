@@ -4,8 +4,8 @@ menu ys { type:'main'
   tabs kasa {title:"Pokladna",  include:'onclick' }
   tabs ucet {title:"Účetnictví",  include:'onclick' }
   tabs lide {title:"Lidé",  include:'onclick' }
-  tabs syst {title:"Systém",  include:'onclick' }
-  tabs doc  {title:"Nápověda",  include:'onclick' }
+  tabs syst {title:"Systém",  include:'onclick,libr.syst' }
+  tabs doc  {title:"Nápověda",  include:'onclick,libr.help' }
   tabs test {title:"Test",  where:'http://ys2.ezer/test.html' }
   tabs ys1  {title:"Pokladna/1",  where:'http://ys.ezer/anser.php?modul=ys_pokladna' }
 }

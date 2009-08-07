@@ -14,11 +14,12 @@ $ezer_html_cp= 'UTF-8';
 $ezer_root= 'ds';                             // jméno adresáře a hlavního objektu aplikace
 
 // cesty
-$ezer_path_appl= "C:/Apache/htdocs/ezer/www-ys2/$ezer_root";
-$ezer_path_libr= "C:/Apache/htdocs/ezer/www-ys2/libr";
-$ezer_path_docs= "C:/Apache/htdocs/ezer/www-ys2/docs";
-$ezer_path_code= "C:/Apache/htdocs/ezer/www-ys2/$ezer_root/code";
-$ezer_path_serv= "C:/Apache/htdocs/ezer/www-ys2/ezer2/server";
+$ezer_path_root= "C:/Apache/htdocs/ezer/www-ys2";
+$ezer_path_appl= "$ezer_path_root/$ezer_root";
+$ezer_path_libr= "$ezer_path_root/libr";
+$ezer_path_docs= "$ezer_path_root/docs";
+$ezer_path_code= "$ezer_path_root/$ezer_root/code";
+$ezer_path_serv= "$ezer_path_root/ezer2/server";
 
 // definice ladícího prostředí
 define('TRACE_FB', 1);

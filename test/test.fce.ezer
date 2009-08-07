@@ -1,5 +1,4 @@
 // testy funkcí
-panel inc { title:'Include' include:'onclick,libr.syst' }
 panel m { title:'Menu'
   menu {type:'left',
     menu {title:'funkce',type:'group'

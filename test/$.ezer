@@ -17,12 +17,14 @@ menu test { type:'main'
     panel men {title:"Menu", include:'onclick'}
     panel err {title:"Error", include:'onclick'}
   }
+  tabs sys { title:'Systém' include:'onclick,libr.syst' }
+  tabs hlp {title:"Nápověda",  include:'onclick,libr.help' }
   tabs fce {title:"Balíky",  include:'onclick' }
-  tabs doc {title:"Dokumentace",  include:'onclick' }
+#   tabs doc {title:"Dokumentace",  include:'onclick' }
   tabs url {title:"Url",  where:'http://ys2.ezer/ys.html' }
-  tabs ys_lide {title:"YS-lidé",  include:'onclick' }
-  tabs ys_ucetnictvi {title:"YS-účetnictví",  include:'onclick' }
-  tabs ys_pokladna {title:"YS-pokladna",  include:'onclick' }
+#   tabs ys_lide {title:"YS-lidé",  include:'onclick' }
+#   tabs ys_ucetnictvi {title:"YS-účetnictví",  include:'onclick' }
+#   tabs ys_pokladna {title:"YS-pokladna",  include:'onclick' }
   tabs stx {title:"Syntax", include:'onclick'}
 
   map m: table t {where:'1', order:'id_t'}

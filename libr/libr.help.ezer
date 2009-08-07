@@ -1,3 +1,4 @@
+#pragma library
 panel apl {title:'Dokumentace'
   menu m {type:'left'
     proc onclick(x) {
