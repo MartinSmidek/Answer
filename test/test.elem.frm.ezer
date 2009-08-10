@@ -23,7 +23,7 @@ form f [,,100,80] {
 form g [,,100,100] {
   field fi [5,5,50,17] { data:t.id_t, value:'1' }
   field fx [5,35,50,17] { data:t.tx, help:'qg|nápověda' }
-  button b [5,65,,] { title:'load'
+  button b [5,65,,] { title:'load', help:'přečte záznam se zadaným klíčem'
     proc onclick() { g.load(g.fi.get) }
   }
   button c [60,65,,] { title:'save'

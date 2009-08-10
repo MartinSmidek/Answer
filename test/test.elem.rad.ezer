@@ -2,11 +2,11 @@
 use v: form f [200,10,,]
 form f [,,100,80] {
   radio r [50,5,90,45] {
-    case r1 [0,3,*,] { title:'líbí', expr:'1' }
-    case r2 [0,23,*,] { title:'nelíbí', expr:'2' }
-    proc onchange () { echo('radio=',r.get) }
+    case r1 [0,3,80,] { title:'líbí', expr:'1' }
+#     case r2 [0,23,80,] { title:'nelíbí', expr:'2' }
+#     proc onchange () { echo('radio=',r.get) }
   }
-  button [150,5,90,] { title:"ano" proc onclick() {r.set(1)} }
-  button [150,35,90,] { title:"ne" proc onclick() {r.set(2)} }
-  button [150,65,90,] { title:"alert(get)" proc onclick() {alert(r.get)} }
+#   button [150,5,90,] { title:"ano" proc onclick() {r.set(1)} }
+#   button [150,35,90,] { title:"ne" proc onclick() {r.set(2)} }
+#   button [150,65,90,] { title:"alert(get)" proc onclick() {alert(r.get)} }
 }

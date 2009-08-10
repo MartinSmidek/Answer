@@ -3,10 +3,11 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
   <head>
     <meta http-equiv="content-type" content="text/html; charset=utf-8" />
-    <title>DBG</title>
     <script type="text/javascript">
       // zjištění hodnoty parametru v url
       // see http://www.netlobo.com/url_query_string_javascript.html
+      var parms= window.location.href.split('#');
+      parms= parms.length==2 ? '#'+parms[1] : '';
       function get_url_param(name) {
         name= name.replace(/[\[]/,"\\\[").replace(/[\]]/,"\\\]");
         var regexS= "[\\?&]"+name+"=([^&#]*)";
@@ -17,7 +18,8 @@
         else
           return results[1];
       }
+      document.write('  <title>DBG '+get_url_param("app")+'</title>');
       document.write('  <frameset cols="30%,*"><frame id="dbg" src="./ezer2/client/dbgf.html"  name="dbg" />'
-      +'<frame id="app" name="app" src="'+get_url_param("app")+'.html" /></'+'frameset>');
+      +'<frame id="app" name="app" src="'+get_url_param("app")+'.html'+parms+'" /></'+'frameset>');
     </script>
 
