@@ -8,14 +8,23 @@ module UCETNICTVI [0,0,30,12] { active:Denik, units:'px'
   #                                                                                                 DENÍK
   panel Denik [,,,543] { title:'Deník a rozbory', type:'panel'
     menu {type:'left',
-      menu vla {title:'Účetní deník',type:'group'
+      menu {title:'Účetní deník',type:'group'
         item {title:'Rok 2008'                   ,par:°{s:'u-show',c:'2008'}}
         item {title:'Rok 2009'                   ,par:°{s:'u-show',c:'2009'}}
         item {title:'Import deníku, akcí, osnovy',par:°{s:'u-load',c:''}}
       },
+      menu {title:'Účetní odhady',type:'group'
+        item {title:'Rok 2008'                   ,par:°{s:'e-show',c:'2008'}}
+        item {title:'Rok 2009'                   ,par:°{s:'e-show',c:'2009'}}
+      },
       menu {title:'Projekty',type:'group'
-        item {title:'Rok 2008'                   ,par:°{s:'u-proj',c:'2008'}},
-        item {title:'Rok 2009'                   ,par:°{s:'u-proj',c:'2009'}}
+        item {title:'Rok 2008'                   ,par:°{s:'u-proj',c:'2008',od:'1',do:'12'}}
+        item {title:'Rok 2008 - 1.pololetí'      ,par:°{s:'u-proj',c:'2008',od:'1',do:'6'}}
+        item {title:'Rok 2008 - 2.pololetí'      ,par:°{s:'u-proj',c:'2008',od:'7',do:'12'}}
+        item {title:'Rok 2009'                   ,par:°{s:'u-proj',c:'2009',od:'1',do:'12'}}
+        item {title:'Rok 2009 - 1.pololetí'      ,par:°{s:'u-proj',c:'2009',od:'1',do:'6'}}
+        item {title:'Rok 2009 - 1.pololetí+odhad',par:°{s:'u-proj',c:'2009',od:'1',do:'6',odhad:'12'}}
+        item {title:'Rok 2009 - jen odhad'       ,par:°{s:'u-proj',c:'2009',od:'1',do:'0',odhad:'12'}}
       },
       menu {title:'Přehledy',type:'group'
         item {title:'náklady a výnosy akcí'      ,par:°{s:'u-akce',c:'1'}},
@@ -51,30 +60,35 @@ module UCETNICTVI [0,0,30,12] { active:Denik, units:'px'
         item {title:'příjmy DH vers. loni'       ,par:°{s:'u+mesice',c:'+DH'}},
         item {title:'nezařazené vers. loni'      ,par:°{s:'u+mesice',c:'+x'}}
       }
-      proc onclick (i) { D_menu(i.par.s,i.par.c) }
+      proc onclick (i) { D_menu(i.par.s,i.par.c,i.par) }
     }
     use D_touch: group _touch [12,4,,],
     proc onstart () { D_touch.group_add; D_cond2.set(''); stop}
     proc onclick () { D_touch.volby.menu_fill2('ucet_menu','','',''); stop}
-    proc D_menu (s,c) { D_show.panel_hide; D_show_load.panel_hide; D_show_surv.panel_hide;
+    proc D_menu (s,c,par) { E_show.panel_hide; D_show.panel_hide; D_show_load.panel_hide; D_show_surv.panel_hide;
       eq(s,'u-show');
       D_info.set(ask('ucet_todo','',s,c));
       D_touch.result.set(conc("<div id='info' class='info'>",D_info.get('html'),"</div>"));
       D_cond.set(D_info.get('cond'));
       D_show.popup(12,20)
+    | eq(s,'e-show');
+      D_info.set(ask('ucet_todo','',s,c));
+      D_touch.result.set(conc("<div id='info' class='info'>",D_info.get('html'),"</div>"));
+      D_cond.set(D_info.get('cond'));
+      E_show.popup(12,20)
     | eq(s,'u-load');
       D_info.set(ask('ucet_todo','',s,c));
       D_touch.result.set(conc("<div id='info' class='info'>",D_info.get('html'),"</div>"));
       D_cond.set(D_info.get('cond'));
       D_show_load.popup(12,20)
     | eq(s,'u-surv','u-akce','msds','u-mesice','u+mesice','u-proj','u-srov');
-      D_info.set(ask('ucet_todo','',s,c));
+      D_info.set(ask('ucet_todo','',s,c,par));
       D_touch.result.set(conc("<div id='info' class='info'>",D_info.get('html'),"</div>"));
       D_cond.set(D_info.get('cond'));
 #       D_show_surv.popup(236,80)
       stop
     }
-  # popups
+  # deník
   panel D_show [0,0,645,620] { type:'right'
     var obrat: text,
     use d: form _denik [0,0,,],
@@ -95,11 +109,24 @@ module UCETNICTVI [0,0,30,12] { active:Denik, units:'px'
       d.naklad.set(obrat.get('naklad')); d.vynos.set(obrat.get('vynos'));
       d.penize.set(obrat.get('penize')); d.obrat.set(obrat.get('obrat')) }
   }
+  # odhad
+  panel E_show [0,0,645,620] { type:'right'
+    use e: form _odhad [0,0,,],
+    proc onfocus () { E_zmena_check; stop }
+    proc E_zmena_check () {
+      e.odhad.browse_load(D_cond.get)
+    }
+  }
   panel D_show_load [0,0,645,520] { type:'right'
     use dl: form _cmd [0,0,,],
     var dl_info: text
     proc dl.import_denik.onclick () {
       dl_info.set(ask('ucet_load_denik',D_info.get('year')));
+      dl.result.set(dl_info.get('html'));
+      stop
+    }
+    proc dl.import_odhad.onclick () {
+      dl_info.set(ask('ucet_load_odhad',D_info.get('year')));
       dl.result.set(dl_info.get('html'));
       stop
     }
@@ -133,15 +160,16 @@ module UCETNICTVI [0,0,30,12] { active:Denik, units:'px'
 #                                                                                             ---   _CMD
 form _cmd [,,500,200] {
   button import_denik [0,0,100,20] { title:'import deníku' }
-  button import_osnova [150,0,100,20] { title:'import osnovy' }
-  button import_akce [300,0,100,20] { title:'import akcí' }
+  button import_odhad [150,0,100,20] { title:'import odhadu' }
+  button import_osnova [300,0,100,20] { title:'import osnovy' }
+  button import_akce [450,0,100,20] { title:'import akcí' }
   label result [0,30,700,600] { title:'...' },
 }
 form _cmds [,,500,200] {
   button surv1 [0,0,100,20] { title:'účty' }
   label result [0,30,700,600] { title:'...' },
 }
-#                                                                                             ---   _DOCS
+#                                                                                             ---   _DENIK
 form _denik [,,700,500] {
   check u5 [0,0,100,14] { title:'náklady', format:'t', proc onchange () { D_zmena_check } }
   field naklad [73,0,70,17] { format:'r' }
@@ -163,6 +191,17 @@ form _denik [,,700,500] {
     show akce   [,, 30,] { title:'akce',   data:udenik.Cinnost,         format:'rsq' },
     show dotace [,, 60,] { title:'dotace', data:udenik.Stredisko,       format:'sq' },
     show co     [,, 20,] { title:'co',     data:udenik.Zakazka,         format:'sq' },
+  }
+}
+#                                                                                             ---   _ODHAD
+form _odhad [,,700,500] {
+  browse odhad [0,0,700,500] { rows:24, qry_rows:2
+    show id     [,,  0,] {                 data:uodhad.id_uodhad },
+    show datum  [,, 70,] { title:'datum',  data:uodhad.datum,           format:'s-q' },
+    show md     [,, 50,] { title:'MD',     data:uodhad.md,              format:'rsq' },
+    show castka [,, 70,] { title:'částka', data:uodhad.castka,          format:'rsq' },
+    show dotace [,, 60,] { title:'dotace', data:uodhad.Stredisko,       format:'sq' },
+    show co     [,,100,] { title:'poznámka',data:uodhad.poznamka,       format:'sq' },
   }
 }
 #                                                                                             ---   _TOUCH
@@ -187,4 +226,14 @@ table udenik {
   text RefCin
   text Cinnost
   text Zakazka
+}
+
+table uodhad {
+  number id_uodhad { key:'primary' }
+  date datum
+  number castka
+  text md
+  text Zakazka
+  text Stredisko
+  text poznamka
 }

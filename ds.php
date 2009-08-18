@@ -16,7 +16,7 @@ $ezer_root= 'ds';                             // jméno adresáře a hlavního o
 // cesty
 $ezer_path_root= "C:/Apache/htdocs/ezer/www-ys2";
 $ezer_path_appl= "$ezer_path_root/$ezer_root";
-$ezer_path_libr= "$ezer_path_root/libr";
+$ezer_path_libr= "$ezer_path_root/$ezer_root";
 $ezer_path_docs= "$ezer_path_root/docs";
 $ezer_path_code= "$ezer_path_root/$ezer_root/code";
 $ezer_path_serv= "$ezer_path_root/ezer2/server";
@@ -36,8 +36,8 @@ $EZER->activity->touch_limit= 50; // počet dotyků (ae_hits) po kterých je usk
 $EZER->activity->colors= "80:#f0d7e4,40:#e0d7e4,20:#dce7f4,0:#e7e7e7"; // viz system.php::sys_table
 
 // obecné moduly
-require_once("$ezer_path_libr/ys_fce.php");
+// require_once("$ezer_path_libr/ys_fce.php");
 
 // moduly aplikace
-require_once("$ezer_path_appl/ds_fce.php");
+require_once("$ezer_path_libr/ds_fce.php");
 ?>

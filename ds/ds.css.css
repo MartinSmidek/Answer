@@ -19,6 +19,8 @@ input.Button {
   font-size:8pt; font-weight:normal; /*color:#8b4513;*/ }
 .Browse td {
   font-size:9pt !important; }
+.Check input {
+  position:absolute; top:10px; left:-3px; }
 
 /* prvky v akordeon-menu */
 .zIndex1        { z-index:1; }

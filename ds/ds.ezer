@@ -1,0 +1,210 @@
+
+  var the_order: number
+  use popis: form popisky [0,0,,]
+  use obj: form objednavka [10,30,,]
+  use fak: form fakturace [380,30,,]
+  use akc: form akce [10,280,,]
+  use per: form osoba [380,280,,]
+
+  proc onstart() {
+    the_order.set(ask('ds_uid'));
+    order_load(the_order.get)
+  }
+  
+# -------------------------------------------------------------------------------------------------- objednávka
+  // zobrazení objednávky
+  proc order_load () {
+    obj.load(the_order.get);
+    fak.load(the_order.get);
+    obj.faktura.display(0);
+    akc.seznam.browse_load(conc('id_order=',the_order.get))
+  }
+  // účast objednatele na pobytu
+  proc objednavatel_save(ucast,changed) {
+    fak.save; fak.load;
+    echo('objednavatel_save:',ucast,':',changed);
+    [ changed; ucast; echo(ask('ds_ucast_objednatele',the_order.get,ucast)) ];
+    akc.seznam.browse_seek
+  }
+  // vystavení faktur pro rodiny na objednávce
+  proc faktury_make () {
+    obj.faktura.set(ask('ds_faktura',the_order.get));
+    obj.faktura.display(1)
+  }
+# -------------------------------------------------------------------------------------------------- účastníci
+  // zobrazení účastníka
+  proc osoba_load (id_osoba) {
+    per.load(id_osoba)
+  }
+  // vložení nového účastníka
+  proc osoba_new () {
+    per.init; per.id_order.set(the_order.get); per.insert;
+    akc.seznam.browse_seek
+  }
+  // vložení nového dítěte účastníka
+  proc osoba_new_child (id_osoba) {
+    per.init; per.id_order.set(the_order.get);
+    per.rodina.set(akc.seznam.rodina.get);
+    per.prijmeni.set(akc.seznam.prijmeni.get);
+    per.ulice.set(akc.seznam.ulice.get);
+    per.psc.set(akc.seznam.psc.get);
+    per.obec.set(akc.seznam.obec.get);
+    per.insert;
+    akc.seznam.browse_seek
+  }
+  // zápis opravy účastníka
+  proc osoba_save () {
+    per.save; per.load;
+    akc.seznam.browse_seek
+  }
+  // zrušení účastníka
+  proc osoba_del (id_osoba) {
+    confirm(conc('Opravdu smazat ',akc.seznam.prijmeni.get,' ',akc.seznam.jmeno.get,' ze seznamu?'));
+    ds_osoba.delete_record(conc('id_osoba=',id_osoba));
+    akc.seznam.browse_seek
+  }
+
+  form popisky {
+    label [ 10,  0,300,] { title:'<h3>Objednávka pobytu</h3>' }
+    label [380,  0,300,] { title:'<h3>Fakturační adresa objednavatele</h3>' }
+    label [ 10,240,694,] { title:'<hr>' }
+    label [ 10,250,300,] { title:'<h3>Seznam účastníků pobytu</h3>' }
+    label [380,250,300,] { title:'<h3>Údaje vybraného účastníka</h3>' }
+  }
+# -------------------------------------------------------------------------------------------------- OBJEDNÁVKA
+  form objednavka {
+    const PL=10; PT=90,
+    label       [  0,  0,100,] { title:'stav objednávky' }
+    select      [  0, 15,150,] { type:'map', data:tx_gnalberice_order.state, options:ds_stav.hodnota }
+    label       [180,  0,200,] { title:'poznámka k objednávce' }
+    edit        [180,15,150,57] { data:tx_gnalberice_order.note  }
+    label       [  0, 40, 70,] { title:'příjezd' }
+    field       [  0, 55, 80,] { type:'date', data:tx_gnalberice_order.fromday }
+    label       [ 90, 40, 70,] { title:'odjezd' }
+    field       [ 90, 55, 80,] { type:'date', data:tx_gnalberice_order.untilday }
+    label       [  0, 80,150,] { title:'seznam pokojů:' }
+    check   p1  [PL+  0, PT,14,] { title:'1',  format:'c', help:"1 - 2 lůžka jednoduchá (V podkrovní pokojíček se střešním oknem)" }
+    check   p2  [PL+ 20, PT,14,] { title:'2',  format:'c', help:"2 - 2 lůžka jako patrová postel (V pokojíček vedle sprchy, má svoje umyvadlo)" }
+    check   p3  [PL+ 40, PT,14,] { title:'3',  format:'c', help:"3 - 2 lůžka jednoduchá (JZ pokojíček v rohu)" }
+    check   p4  [PL+ 60, PT,14,] { title:'4',  format:'c', help:"4 - 2 lůžka jednoduchá a 2 lůžka jako patrová postel (Z pokoj se dvěma okny)" }
+    check   p5  [PL+ 80, PT,14,] { title:'5',  format:'c', help:"5 - 1 lůžko jednoduché a 2 lůžka jako patrová postel (Z pokoj s jedním oknem)" }
+    check   p6  [PL+100, PT,14,] { title:'6',  format:'c', help:"6 - 2 lůžka jednoduchá a 4 lůžka jako patrová postel (S pokoj velký)" }
+    check   p7  [PL+120, PT,14,] { title:'7',  format:'c', help:"7 - palanda a lůžko, nový pokoj vedle koupelny" }
+    check   p8  [PL+140, PT,14,] { title:'8',  format:'c', help:"8 - komfortní pokoj se sprchou a WC, dvoulůžko" }
+    check   p9  [PL+160, PT,14,] { title:'9',  format:'c', help:"9 - komfortní pokoj se sprchou a WC, dvoulůžko" }
+    check   p10 [PL+180, PT,14,] { title:'10', format:'c', help:"10 - 2 postele jednoduché (Z pokoj mezi kaplí a sprchami)" }
+    check   p11 [PL+200, PT,14,] { title:'11', format:'c', help:"11 - 2 jednoduché postele a 2 patrové postele a 1 rozkládací gauč (S pokoj velký)" }
+    check   p12 [PL+220, PT,14,] { title:'12', format:'c', help:"12 - 4 lůžka jednoduchá (SZ pokoj s vlastním umyvadlem a el.průtokovým ohřívačem)" }
+    check   p13 [PL+240, PT,14,] { title:'13', format:'c', help:"13 - komfortní pokoj se sprchou a WC, 2 samostatné postele" }
+    check   p14 [PL+260, PT,14,] { title:'14', format:'c', help:"14 - komfortní pokoj se sprchou a WC, 2 samostatné postele" }
+    check   p15 [PL+280, PT,14,] { title:'15', format:'c', help:"15 - apartmán; 2 místnosti a sociálka bezbariérová: 2 lůžka jednoduchá" }
+    check   p16 [PL+300, PT,14,] { title:'16', format:'c', help:"16 - apartmán; 2 místnosti a sociálka bezbariérová: 1 lůžko jednoduché a 2 lůžka jako patrová postel" }
+#     field       [  0, 95,210,] { data:tx_gnalberice_order.rooms }
+    label       [  0,120, 50,] { title:'dospělých' }
+    field       [0,135,30,] { data:tx_gnalberice_order.adults, format:'r' }
+    label       [ 60,120, 50,] { title:'dětí 10-15' }
+    field       [ 60,135, 30,] { data:tx_gnalberice_order.kids_10_15, format:'r' }
+    label       [120,120, 20,] { title:'dětí 3-9' }
+    field       [120,135, 30,] { data:tx_gnalberice_order.kids_3_9, format:'r' }
+    label       [180,120, 50,] { title:'dětí do 3' }
+    field       [180,135, 30,] { data:tx_gnalberice_order.kids_3, format:'r' }
+    button      [240,175,100,18] { title:'vystavit faktury'
+      proc onclick() { faktury_make() } }
+    label faktura [240,158,120,] { title:'...' }
+    label       [0,162,100,] { title:'typ stravy' }
+    select      [0,177,100,] { type:'map', data:tx_gnalberice_order.board, options:ds_strava.hodnota }
+    button      [120,175,100,18] { title:'zapsat změny', type:'submit'
+      proc onclick() { form.save; form.load } }
+  }
+# -------------------------------------------------------------------------------------------------- FAKTURACE
+  form fakturace {
+    label       [  0,  0,210,] { title:'název organizace (plátce faktury)' }
+    field       [  0, 15,210,] { data:tx_gnalberice_order.org }
+    label       [220,  0, 80,] { title:'IČ' }
+    field       [220, 15, 80,] { data:tx_gnalberice_order.ic }
+    label       [  0, 40,100,] { title:'příjmení' }
+    field       [  0, 55,120,] { data:tx_gnalberice_order.name }
+    label       [130, 40,100,] { title:'jméno' }
+    field       [130, 55, 80,] { data:tx_gnalberice_order.firstname }
+    label       [220, 40, 80,] { title:'účastní se' }
+    check ucast [218, 54, 80,] { title:'pobytu', data:tx_gnalberice_order.ucast }
+    label       [  0, 80,200,] { title:'e-mail' }
+    field       [  0, 95,210,] { data:tx_gnalberice_order.email  }
+    label       [220, 80,100,] { title:'telefon' }
+    field       [220, 95, 80,] { data:tx_gnalberice_order.telephone}
+    label       [  0,120, 70,] { title:'ulice' }
+    field       [0,135,210,] { data:tx_gnalberice_order.address }
+    label       [  0,160, 70,] { title:'psč' }
+    field       [  0,175, 50,] { data:tx_gnalberice_order.zip}
+    label       [ 60,160, 70,] { title:'obec' }
+    field       [ 60,175,150,] { data:tx_gnalberice_order.city}
+    button      [220,174,100,18] { title:'zapsat změny'
+      proc onclick() { objednavatel_save(ucast.get,ucast.changed) } }
+  }
+# -------------------------------------------------------------------------------------------------- AKCE
+  form akce {
+    button [  0,0,100,18] { title:'přidat účastníka'
+      proc onclick () {osoba_new} }
+    button [122,0,100,18] { title:'přidat dítě'
+      proc onclick () {osoba_new_child} }
+    button [210,0,100,18] { title:'odebrat účastníka'
+      proc onclick () {osoba_del(seznam.id_osoba.get)} }
+    browse seznam [0,30,,] { rows:14
+      show rodina [,,20,] { title:'rod', data:ds_osoba.rodina, format:'s+' }
+      show prijmeni [,,90,] { title:'příjmení', data:ds_osoba.prijmeni, format:'s' }
+      show jmeno    [,,50,]  { title:'jméno', data:ds_osoba.jmeno, format:'s' }
+      show [,,20,]  { title:'pok.', data:ds_osoba.pokoj, format:'rs' }
+      show [,,20,]  { title:'lůž.', data:ds_osoba.luzko, /*map_pipe:ds_luzko.hodnota,*/ format:'rs' }
+      show [,,20,]  { title:'str.', data:ds_osoba.strava, format:'rs' }
+      show [,,40,]  { title:'od', data:ds_osoba.fromday, format:'s' }
+      show [,,40,]  { title:'do', data:ds_osoba.untilday, format:'s' }
+      // nezobrazené
+      show id_osoba { data:ds_osoba.id_osoba }
+      show ulice { data:ds_osoba.ulice }
+      show psc { data:ds_osoba.psc }
+      show obec { data:ds_osoba.obec }
+      proc onrowclick() { osoba_load(id_osoba.get) }
+    }
+  }
+# -------------------------------------------------------------------------------------------------- OSOBA
+  form osoba {
+    field id_osoba { data:ds_osoba.id_osoba }
+    field id_order { data:ds_osoba.id_order }
+    // zobrazení
+    label       [  0,  0, 40,] { title:'rodina' }
+    field rodina   [  0, 15, 40,] { data:ds_osoba.rodina }
+    label       [ 50,  0, 70,] { title:'příjmení' }
+    field prijmeni [ 50, 15, 70,] { data:ds_osoba.prijmeni }
+    label       [130,  0,100,] { title:'jméno' }
+    field       [130, 15, 80,] { data:ds_osoba.jmeno }
+    label       [220,  0,100,] { title:'rodné číslo' }
+    field       [220, 15, 80,] { data:ds_osoba.rodcis }
+    label       [  0, 40,200,] { title:'e-mail' }
+    field       [  0, 55,210,] { data:ds_osoba.email  }
+    label       [220, 40,100,] { title:'telefon' }
+    field       [220, 55, 80,] { data:ds_osoba.telefon}
+    label       [  0, 80, 70,] { title:'ulice' }
+    field ulice [  0, 95,210,] { data:ds_osoba.ulice}
+    label       [  0,120, 70,] { title:'psč' }
+    field psc [  0,135, 50,] { data:ds_osoba.psc}
+    label       [ 60,120, 70,] { title:'obec' }
+    field obec [ 60,135,150,] { data:ds_osoba.obec}
+    label       [  0,160,300,] { title:'--- <i>upřesnění údajů o pobytu</i>' }
+    label pokoj [  0,175, 70,] { title:'pokoj' }
+    field       [  0,190, 50,] { data:ds_osoba.pokoj }
+    label       [ 60,175, 70,] { title:'typ lůžka' }
+    select      [ 60,190,150,] { type:'map', data:ds_osoba.luzko, options:ds_luzko.hodnota }
+    label       [  0,215,300,] { title:'--- <i>údaje o pobytu, pokud se liší od údajů v objednávce</i>' }
+    label       [  0,230, 70,] { title:'příjezd' }
+    field       [  0,245, 70,] { type:'date', data:ds_osoba.fromday }
+    label       [ 80,230, 70,] { title:'odjezd' }
+    field       [ 80,245, 70,] { type:'date', data:ds_osoba.untilday }
+    label       [160,230,100,] { title:'typ stravy' }
+    select      [160,245,150,] { type:'map', data:ds_osoba.strava, options:ds_strava.hodnota }
+    label       [  0,270, 70,] { title:'poznámka' }
+    field       [  0,285,210,] { data:ds_osoba.pozn }
+    button      [220,284,100,18] { title:'zapsat změny', proc onclick() { osoba_save } }
+  }
+
+
+

@@ -46,6 +46,7 @@ table.stat      { border-collapse:collapse; font-size:8pt; }
 #proj td        { border:1px solid #aaa;font:x-small Arial;color:#777;padding:0 3px;}
 #proj td.title  { color:#33a;}
 #proj td.label  { color:#a33;}
+.odhad          { background-color:#ffdab9 !important; }
 
 /* ajax bar */
 #bar_box        { width:300px; height:16px; }

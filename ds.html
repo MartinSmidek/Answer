@@ -12,7 +12,7 @@
     Ezer.root= 'ds';
     var dbg= Ezer.parm[0]!='#';
     Ezer.options= {
-      debug:window.parent!=window,      // je nadřazený frame - dbg.html
+      debug:window.parent!=window && dbg,      // je nadřazený frame - dbg.html
       mini_debug:dbg, status_bar:dbg, to_trace:dbg,
       must_log_in:false, uname:'dum', pword:'setkani'
     };
@@ -21,6 +21,7 @@
         $('stred').setStyles({top:0});
         $('horni').setStyles({display:'none'});
         $('status').setStyles({display:'none'});
+        $('drag').setStyles({display:'none'});
       }
     }
   </script>
@@ -34,7 +35,7 @@
   <link rel="stylesheet" href="./ezer2/client/natdocs.css" type="text/css" media="screen" charset="utf-8" />
   <link rel="stylesheet" href="./ds/ds.css.css" type="text/css" media="screen" charset="utf-8" />
 </head>
-<body id="body" class='nogrid'>
+<body id="body" class='nogrid' onload='ondomready();'>
 <!-- bez menu a submenu -->
   <div id='horni' class="MainBar">
     <div id="StatusIcon">Dům setkání</div>

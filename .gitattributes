@@ -6,6 +6,7 @@
 /ds.php -text
 ds/$.ezer -text
 ds/ds.css.css -text
+ds/ds.ezer -text
 ds/ds_fce.php -text
 ds/img/ds.png -text
 /favicon.ico -text

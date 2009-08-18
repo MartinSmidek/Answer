@@ -14,7 +14,7 @@ $ezer_root= 'ys';                             // jméno adresáře a hlavního o
 // cesty
 $ezer_path_root= "C:/Apache/htdocs/ezer/www-ys2";
 $ezer_path_appl= "$ezer_path_root/$ezer_root";
-$ezer_path_libr= "$ezer_path_root/libr";
+$ezer_path_libr= "$ezer_path_root/$ezer_root";
 $ezer_path_docs= "$ezer_path_root/docs";
 $ezer_path_code= "$ezer_path_root/$ezer_root/code";
 $ezer_path_serv= "$ezer_path_root/ezer2/server";

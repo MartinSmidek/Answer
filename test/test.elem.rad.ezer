@@ -1,9 +1,10 @@
 // block radio+case
-use v: form f [200,10,,]
-form f [,,100,80] {
-  radio r [50,5,90,45] {
+use v: form f [16,12,,]
+const x=20
+form f [,,103,84] {
+  radio r [5,5,90,45]{
     case r1 [0,3,80,] { title:'líbí', expr:'1' }
-#     case r2 [0,23,80,] { title:'nelíbí', expr:'2' }
+    case r2 [0,x+1,80,] { title:'nelíbí', expr:'2' }
 #     proc onchange () { echo('radio=',r.get) }
   }
 #   button [150,5,90,] { title:"ano" proc onclick() {r.set(1)} }

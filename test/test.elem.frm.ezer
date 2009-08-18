@@ -1,4 +1,4 @@
-use u: form g [20,10,,]
+use u: form g [18,10,,]
 use v: form f [250,10,,]
 proc v.b.onclick() { echo('jo') }
 proc onstart() { v.focus }
@@ -41,7 +41,7 @@ form g [,,100,100] {
   button mk2 [5,170,,] { title:'form_make ... insert'
     proc onclick() { form.make('t_insert','save:fi,fx') }
   }
-  button tst [5,205,,] { title:'test podle potřeby'
+  button tst [4,217,,] { title:'test podle potřeby'
     proc onclick() {
 #       g.form_load(g.fi.get);echo('je')|echo('není')
       echo(form.fi.get)
