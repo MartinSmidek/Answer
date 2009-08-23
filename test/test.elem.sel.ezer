@@ -1,14 +1,19 @@
-#pragma attrs
-var x: number
+//#pragma attrs
+# var x: number
 use v: form ff [200,10,,]
+proc onstart() {
+  v.si.selects('a,b,c')
+}
 form ff [,,100,80] {
   view w: table t
   select s [50,5,90,17] { type:'map', options:m.tx, data:w.tx
-    proc onchange() { echo(this.get) }
+#     proc onchange() { echo(this.get) }
   }
 #   button [150,5,90,] { title:"set('sedm')" proc onclick() {s.set('sedm')} }
 #   button [150,35,90,] { title:"set('dva')" proc onclick() {s.set('dva')} }
 #   button [150,65,90,] { title:"echo(get)" proc onclick() {echo(s.get)} }
 #   button [150,95,90,] { title:"echo(select_key)" proc onclick() {echo(s.select_key)} }
 #   button [150,125,90,] { title:"echo(m.get)" proc onclick() {echo('m.get(7)=',m.get(7,'tx'))} }
+
+  select si [50,45,90,17]
 }

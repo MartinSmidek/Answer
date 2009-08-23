@@ -21,6 +21,10 @@ input.Button {
   font-size:9pt !important; }
 .Check input {
   position:absolute; top:10px; left:-3px; }
+.CheckR {
+  position:absolute; display:block; }
+.CheckR input {
+  vertical-align:bottom; position:relative; top:2px; _top:-2px; }
 
 /* prvky v akordeon-menu */
 .zIndex1        { z-index:1; }

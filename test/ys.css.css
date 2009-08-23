@@ -2,6 +2,13 @@
 
 /* úpravy standardu */
 .ae_inp         { position:absolute; }
+
+.MyCheck {
+  margin-left:3px; }
+.MyCheck input {
+  position:absolute; top:12px; left:-3px; }
+
+
 /* prvky v akordeon-menu */
 .zIndex1        { z-index:1; }
 .info           { min-height:545px; height:100%; }

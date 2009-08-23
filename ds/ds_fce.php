@@ -25,8 +25,85 @@ function dt($x,$user2sql=0) { #trace();
   }
   return $y;
 }
-# -------------------------------------------------------------------------------------------------- ds_faktura
-function ds_faktura($order) {  #trace();
+# -------------------------------------------------------------------------------------------------- sql2stamp
+# na datum na stránce z timestamp v tabulce
+function sql2stamp($ymd) { #trace();
+  if ( $ymd=='0000-00-00' )
+    $t= 0;
+  else {
+    $y= 0+substr($ymd,0,4);
+    $m= 0+substr($ymd,5,2);
+    $d= 0+substr($ymd,8,2);
+    $t= mktime(0,0,0,$m,$d,$y)+1;
+  }
+  return $t;
+}
+# -------------------------------------------------------------------------------------------------- ds_compare
+function ds_compare($order) {  #trace();
+  ezer_connect('setkani');
+  // údaje z objednávky
+  $qry= "SELECT * FROM setkani.tx_gnalberice_order WHERE uid=$order";
+  $res= mysql_qry($qry);
+  if ( !$res ) fce_error("$order není platné èíslo objednávky");
+  $o= mysql_fetch_object($res);
+  // projití seznamu
+  $qry= "SELECT * FROM setkani.ds_osoba WHERE id_order=$order ";
+  $reso= mysql_qry($qry);
+  $n= $n_0= $n_3= $n_9= $n_15= $n_a= $noroom= 0;
+  while ( $reso && $u= mysql_fetch_object($reso) ) {
+    // rozdìlení podle vìku
+    $n++;
+    if ( $u->narozeni=='0000-00-00' )
+      $vek= -1;
+    else {
+      $vek= $o->fromday-sql2stamp($u->narozeni);
+      $vek= $vek/(60*60*24*365);
+    }
+    if ( $vek>15 ) $n_a++;
+    elseif ( $vek>9 ) $n_15++;
+    elseif ( $vek>3 ) $n_9++;
+    elseif ( $vek>0 ) $n_3++;
+    else $n_0++;
+    // kdo nebydlí?
+    if ( !$u->pokoj ) $noroom++;
+  }
+  // posouzení poètù
+  $no= $o->adults + $o->kids_10_15 + $o->kids_3_9 + $o->kids_3;
+  $ok= $n_a==$o->adults && $n_15==$o->kids_10_15 && $n_9==$o->kids_3_9 && $n_3==$o->kids_3;
+  // textová zpráva
+  $html= '';
+  $html.= $n!=$no ? "Seznam úèastníkù není úplný. " : '';
+  $html.= $noroom ? "Jsou zde neubytovaní hosté. " : '';
+  $html.= $n_0 ? "Nìkteøí hosté nemají vyplnìno datum narození. " : '';
+  $html.= !$ok ? "Stáøí hostù se liší od pøedpokladù objednávky." : '';
+  if ( !$html )$html= "Seznam úèastníkù odpovídá objednávce.";
+  $form= (object)array('adults'=>$n_a,'kids_10_15'=>$n_15,'kids_3_9'=>$n_9,'kids_3'=>$n_3,
+    'nevek'=>$n_0, 'noroom'=>$noroom);
+  $result= (object)array('html'=>wu($html),'form'=>$form);
+  return $result;
+}
+# -------------------------------------------------------------------------------------------------- ds_zaloha
+function ds_zaloha($order) {  #trace();
+  ezer_connect('setkani');
+  // kontrola objednávky
+  $qry= "SELECT * FROM setkani.tx_gnalberice_order WHERE uid=$order";
+  $res= mysql_qry($qry);
+  if ( $res && $obj= mysql_fetch_object($res) ) {
+    // založení faktury
+    $table= "zaloha_$order";
+    $wb= xls_workbook($table,&$f);
+    $zaloha= $wb->add_worksheet('zaloha');
+    $zaloha->write_string(0,0,"Záloha objednávky è.$order",$f->tit);
+    xls_header($zaloha,2,0,'rodina:10,poèet:20',$f->hd);
+    $wb->close();
+    $html= "<a href='$table.xls'>zaloha akce $order</a>";
+  }
+  else
+    $html= "neúplná objednávka $order";
+  return $html;
+}
+# -------------------------------------------------------------------------------------------------- ds_faktury
+function ds_faktury($order) {  #trace();
   ezer_connect('setkani');
   // kontrola objednávky
   $qry= "SELECT * FROM setkani.tx_gnalberice_order WHERE uid=$order";
@@ -55,14 +132,14 @@ function ds_faktura($order) {  #trace();
       $sez= $wb->add_worksheet("$rod");
       $sez->write_string(0,0,"Seznam úèastníkù pod znaèkou $rod",$f->tit);
       $qry= "SELECT * FROM setkani.ds_osoba
-             WHERE id_order=$order AND rodina='{$fs->rodina}' ORDER BY rodcis DESC";
+             WHERE id_order=$order AND rodina='{$fs->rodina}' ORDER BY narozeni DESC";
       $reso= mysql_qry($qry);
       xls_header($sez,$or=2,0,'pøíjmení a jméno:20,adresa:40,narození:10,telefon:10,email:30',$f->hd);
       while ( $reso && $xo= mysql_fetch_object($reso) ) {
         $or++; $oc= 0;
         $sez->write_string($or,$oc++,"{$xo->prijmeni} {$xo->jmeno}");
         $sez->write_string($or,$oc++,"{$xo->ulice}, {$xo->psc} {$xo->obec}");
-        $sez->write_string($or,$oc++,yymmdd2date($xo->rodcis));
+        $sez->write_number($or,$oc++,$xo->narozeni,'d.m.y');
         $sez->write_string($or,$oc++,$xo->telefon);
         $sez->write_string($or,$oc++,$xo->email);
       }

@@ -21,6 +21,10 @@ $ezer_path_docs= "$ezer_path_root/docs";
 $ezer_path_code= "$ezer_path_root/$ezer_root/code";
 $ezer_path_serv= "$ezer_path_root/ezer2/server";
 
+// moduly zahrnuté do aplikace - budou zpracovány i reference.i_doc pro tabulky kompilátoru
+$ezer_comp_ezer= "app,ezer,ezer_report,ezer_fdom1,ezer_fdom2";
+$ezer_comp_root= "ds/fce";
+
 // definice ladícího prostředí
 define('TRACE_FB', 1);
 

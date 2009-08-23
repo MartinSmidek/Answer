@@ -1,13 +1,7 @@
 #pragma library
 //(c) 2009 Martin Šmídek
 #                                                                                                    ČÍSELNÍKY
-map user_state: table _cis {where:"druh='user_state'", key_id:'id_cis'}
-
-map user_level: table _cis {where:"druh='user_level'"}
-
-map druhy: table _cis {where:"druh='_meta_'", order:"zkratka"}
-
-panel Ciselnik [,,,474] { title:'Číselníky', skill:'ys|ys'
+panel Ciselnik [,,,474] { title:'Číselníky', //skill:'ys|ys'
   var druh_cond: text
   use klice: form keys [20,7,0,467],
   use klic: form _key [525,13,0,392],
@@ -131,7 +125,6 @@ form _touch [,,700,50] {
   label result [200,0,700,600] { title:'' },
 }
 
-
 #                                                                                                    uživatelé
 form users [0,0,200,200] {
   view u: table _user,
@@ -181,6 +174,12 @@ form butt [0,0,200,50] {
   button zrus_clena [265,8,50,37] { title:'Smazat' },
   button obnov_clena [341,9,50,15] { title:'Obnovit ' },
 }
+
+map user_state: table _cis {where:"druh='user_state'", key_id:'id_cis'}
+
+map user_level: table _cis {where:"druh='user_level'"}
+
+map druhy: table _cis {where:"druh='_meta_'", order:"zkratka"}
 
 table _cis { key_id:'id_cis'
   number id_cis
