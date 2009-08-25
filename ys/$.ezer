@@ -3,7 +3,7 @@ menu ys { type:'main'
   tabs info {title:"Informace",  include:'onclick' }
   tabs kasa {title:"Pokladna",  include:'onclick' }
   tabs ucet {title:"Účetnictví",  include:'onclick' }
-  tabs ds {title:"Dům"  panel dum { title:"Objednávky", include:'onclick,ds.dum' } }
+#   tabs ds {title:"Dům"  panel dum { title:"Objednávky", include:'onclick,ds.dum' } }
   tabs lide {title:"Lidé",  include:'onclick' }
   tabs syst {title:"Systém",  include:'onclick,libr.syst' }
   tabs doc  {title:"Nápověda",  include:'onclick,libr.help' }
