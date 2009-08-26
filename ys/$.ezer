@@ -3,12 +3,24 @@ menu ys { type:'main'
   tabs info {title:"Informace",  include:'onclick' }
   tabs kasa {title:"Pokladna",  include:'onclick' }
   tabs ucet {title:"Účetnictví",  include:'onclick' }
-#   tabs ds {title:"Dům"  panel dum { title:"Objednávky", include:'onclick,ds.dum' } }
-  tabs lide {title:"Lidé",  include:'onclick' }
-  tabs syst {title:"Systém",  include:'onclick,libr.syst' }
+  tabs ds {title:"Dům"
+    panel dum { title:"Objednávky", include:'onload,ds'
+      menu {type:'left',
+        menu {title:'Příklady objednávek',type:'group'
+          item {title:'711'                   ,par:°{no:'711'}}
+          item {title:'771'                   ,par:°{no:'771'}}
+        }
+        proc onclick (i) { the_order.set(i.par.no); show_order(i.par.no) }
+      }
+      var the_order: text
+      proc show_order (o) { echo('nic') }
+    }
+  }
+#   tabs lide {title:"Lidé",  include:'onclick' }
+#   tabs syst {title:"Systém",  include:'onclick,libr.syst' }
   tabs doc  {title:"Nápověda",  include:'onclick,libr.help' }
-  tabs test {title:"Test",  where:'http://ys2.ezer/test.html' }
-  tabs ys1  {title:"Pokladna/1",  where:'http://ys.ezer/anser.php?modul=ys_pokladna' }
+#   tabs test {title:"Test",  where:'http://ys2.ezer/test.html' }
+#   tabs ys1  {title:"Pokladna/1",  where:'http://ys.ezer/anser.php?modul=ys_pokladna' }
 }
 
 table _cis { key_id:'id_cis'

@@ -1,7 +1,7 @@
 menu test { type:'main'
   var global: text,
   tabs elem {title:"Testy",
-    panel grp {title:"Group", include:'onclick'}
+    panel grp {title:"Group", include:'onload'}
     panel con {title:"Const", include:'onclick'}
     panel tst {title:"Test", include:'onclick'}
     panel ski {title:"Skill", include:'onclick'}

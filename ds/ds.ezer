@@ -1,5 +1,9 @@
 #pragma library
-group dum { include:'onload' }
+var the_order: number
+proc show_order (ord) { echo('order No.',ord); the_order.set(ord); echo('set'); dum.order_load (ord); echo('loaded') }
+group dum { include:'onload,ds.dum'
+  proc order_load (ord) { echo('nic2') }
+}
 
 # -------------------------------------------------------------------------------------------------- tabulky
 table ds_osoba { db:'setkani', key_id:'id_osoba'

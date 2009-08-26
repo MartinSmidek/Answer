@@ -3,7 +3,8 @@
 $mysql_db= 'ezer_test';
 $ezer_db= array(
   'ezer_test' => array(0,'localhost','gandi','','utf8'),
-  'setkani' => array('192.168.1.203','proglas','pr0gl8s')
+//   'setkani' => array('192.168.1.203','proglas','pr0gl8s')
+  'setkani' => array(0,'localhost','gandi','','latin1')
 );
 
 $ezer_mysql_cp= 'UTF8';

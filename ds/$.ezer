@@ -1,5 +1,5 @@
 // pro ostrou aplikaci je hlavním blokem panel
-panel ds { include:'onload,ds.dum' }
+panel ds { include:'onload' }
 
 // pro ladění je hlavním blokem menu
 # menu ds { type:'main'
