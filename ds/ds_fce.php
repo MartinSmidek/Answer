@@ -72,10 +72,11 @@ function ds_compare($order) {  #trace();
   $ok= $n_a==$o->adults && $n_15==$o->kids_10_15 && $n_9==$o->kids_3_9 && $n_3==$o->kids_3;
   // textová zpráva
   $html= '';
-  $html.= $n!=$no ? "Seznam úèastníkù není úplný. " : '';
+  $html.= $n==0 ? "Seznam úèastníkù je prázdný. " : '';
+  $html.= $n>0 && $n!=$no ? "Seznam úèastníkù není úplný. " : '';
   $html.= $noroom ? "Jsou zde neubytovaní hosté. " : '';
   $html.= $n_0 ? "Nìkteøí hosté nemají vyplnìno datum narození. " : '';
-  $html.= !$ok ? "Stáøí hostù se liší od pøedpokladù objednávky." : '';
+  $html.= $n>0 && !$ok ? "Stáøí hostù se liší od pøedpokladù objednávky." : '';
   if ( !$html )$html= "Seznam úèastníkù odpovídá objednávce.";
   $form= (object)array('adults'=>$n_a,'kids_10_15'=>$n_15,'kids_3_9'=>$n_9,'kids_3'=>$n_3,
     'nevek'=>$n_0, 'noroom'=>$noroom);

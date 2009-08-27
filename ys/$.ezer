@@ -8,7 +8,7 @@ menu ys { type:'main'
       menu {type:'left',
         menu {title:'Příklady objednávek',type:'group'
           item {title:'711'                   ,par:°{no:'711'}}
-          item {title:'771'                   ,par:°{no:'771'}}
+#           item {title:'771'                   ,par:°{no:'771'}}
         }
         proc onclick (i) { the_order.set(i.par.no); show_order(i.par.no) }
       }
