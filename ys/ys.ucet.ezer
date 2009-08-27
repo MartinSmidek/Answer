@@ -60,7 +60,7 @@ module UCETNICTVI [0,0,30,12] { active:Denik, units:'px'
         item {title:'příjmy DH vers. loni'       ,par:°{s:'u+mesice',c:'+DH'}},
         item {title:'nezařazené vers. loni'      ,par:°{s:'u+mesice',c:'+x'}}
       }
-      proc onclick (i) { D_menu(i.par.s,i.par.c,i.par) }
+      proc onclick (i) { D_menu(i.par.s,i.par.c,i.par.get) }
     }
     use D_touch: group _touch [12,4,,],
     proc onstart () { D_touch.group_add; D_cond2.set(''); stop}

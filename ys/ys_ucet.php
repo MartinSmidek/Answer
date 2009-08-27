@@ -67,7 +67,7 @@ function ucet_note() {
   return $html;
 }
 # -------------------------------------------------------------------------------------------------- ucet_todo
-function ucet_todo($k1,$k2,$k3,$par=null) {
+function ucet_todo($k1,$k2,$k3=2009,$par=null) {
   global $mesice, $mesice_attr;
   global $tisice;
   $tisice= true;

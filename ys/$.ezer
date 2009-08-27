@@ -1,6 +1,6 @@
 menu ys { type:'main'
   var global: text,
-  tabs info {title:"Informace",  include:'onclick' }
+  tabs info {title:"Informace",  include:'onload' }
   tabs kasa {title:"Pokladna",  include:'onclick' }
   tabs ucet {title:"Účetnictví",  include:'onclick' }
   tabs ds {title:"Dům"
