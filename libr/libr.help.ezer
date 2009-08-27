@@ -39,12 +39,12 @@ panel gen {title:'Generování'
         }
       }
       item c {title:'dokumentace Ezer'
-        proc onclick () { u.result.set(ask('i_doc','reference','../wiki/*.wiki'));
+        proc onclick () { u.result.set(ask('i_doc','reference','ezer2/wiki/*.wiki'));
           ref.m.attach_code(ask('i_doc_menu','reference','',''))
         }
       }
       item d {title:'dokumentace aplikace'
-        proc onclick () { u.result.set(ask('i_doc','application','../../wiki/*.wiki'));
+        proc onclick () { u.result.set(ask('i_doc','application','wiki/*.wiki'));
           apl.m.attach_code(ask('i_doc_menu','application','',''))
         }
       }
