@@ -1,0 +1,16 @@
+// #pragma using,test/test.elem.grp.ezer
+use u: form g [0,0,,]
+proc show_label(o) {
+  echo('test.elem.grp.sub',o)
+  ;
+  u.l.set(o)
+}
+proc onstart() {
+  echo('group 2 started!')
+#   ;
+#   echo(u.l.get,1)
+#   echo(v.l.get,2)
+}
+# form f [,,100,100] {
+#   label l [0,0,100,]  { title:"ahoj" }
+# }

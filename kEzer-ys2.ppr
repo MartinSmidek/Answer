@@ -54,13 +54,15 @@ kEzer-ys2
 		libr\libr.syst.ezer
 		libr\libr.help.ezer
 		libr\$.ezer
-	-test
+	+test
 		test\$.ezer
 		test\test.elem.bro.ezer
 		test\test.elem.con.ezer
 		test\test.elem.dat.ezer
 		test\test.elem.err.ezer
 		test\test.elem.frm.ezer
+		test\test.elem.grp.ezer
+		test\test.elem.grp.sub.ezer
 		test\test.elem.cha.ezer
 		test\test.elem.chk.ezer
 		test\test.elem.men.ezer
@@ -129,12 +131,14 @@ kEzer-ys2
 21=..\..\setkani\www\fileadmin\template\setkani.5.css
 22=ys\ys.ucet.ezer
 23=ys\ys_ucet.php
+24=test\test.elem.grp.sub.ezer
+25=test\test.elem.grp.ezer
 [Selected Project Files]
 Main=
-Selected=ys\ys_ucet.php
+Selected=test\test.elem.grp.ezer
 [ezer2\server\comp2.php]
-TopLine=1587
-Caret=69,1622
+TopLine=154
+Caret=19,169
 Mark1=27,150
 Mark2=60,233
 Mark3=1,90
@@ -215,8 +219,14 @@ Caret=60,541
 TopLine=31
 Caret=32,85
 [ys\ys_ucet.php]
-TopLine=443
+TopLine=1
 Caret=60,468
 Mark1=28,416
 Mark2=29,531
 Mark3=23,754
+[test\test.elem.grp.sub.ezer]
+TopLine=1
+Caret=1,1
+[test\test.elem.grp.ezer]
+TopLine=1
+Caret=51,10

@@ -1,7 +1,17 @@
 menu test { type:'main'
   var global: text,
   tabs elem {title:"Testy",
-    panel grp {title:"Group", include:'onload'}
+    panel grp {title:"Group", include:'onload'
+      menu {type:'left',
+        menu {title:'Příklady objednávek',type:'group'
+          item {title:'711'                   ,par:°{no:'711'}}
+          item {title:'771'                   ,par:°{no:'771'}}
+        }
+        proc onclick (i) { the_order.set(i.par.no); show_order(i.par.no) }
+      }
+      var the_order: text
+      proc show_order (o) { echo('$:',o) }
+    }
     panel con {title:"Const", include:'onclick'}
     panel tst {title:"Test", include:'onclick'}
     panel ski {title:"Skill", include:'onclick'}

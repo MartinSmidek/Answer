@@ -6,8 +6,10 @@
 /ds.php -text
 ds/$.ezer -text
 ds/ds.css.css -text
+ds/ds.dum.ezer -text
 ds/ds.ezer -text
 ds/ds_fce.php -text
+ds/fce.js -text
 ds/img/ds.png -text
 /favicon.ico -text
 /kEzer-ys2.ppr -text
@@ -31,6 +33,8 @@ test/test.elem.con.ezer -text
 test/test.elem.dat.ezer -text
 test/test.elem.err.ezer -text
 test/test.elem.frm.ezer -text
+test/test.elem.grp.ezer -text
+test/test.elem.grp.sub.ezer -text
 test/test.elem.men.ezer -text
 test/test.elem.pop.ezer -text
 test/test.elem.rad.ezer -text
@@ -57,7 +61,6 @@ test/ys_ucetnictvi.php -text
 wiki/dokumentace.wiki -text
 wiki/todo.wiki -text
 /ys.html -text
-/ys.php -text
 ys/$.ezer -text
 ys/img/-logo.gif -text
 ys/img/ys-logo.gif -text
