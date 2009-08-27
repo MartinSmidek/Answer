@@ -3,7 +3,6 @@
 /comp.php -text
 /dbg.html -text
 /ds.html -text
-/ds.php -text
 ds/$.ezer -text
 ds/ds.css.css -text
 ds/ds.dum.ezer -text
@@ -22,7 +21,6 @@ libr/ys_fce.php -text
 libr/ys_lide.php -text
 libr/ys_ucet.php -text
 /test.html -text
-/test.php -text
 test/$.ezer -text
 test/img/test.png -text
 test/test.doc.ezer -text
