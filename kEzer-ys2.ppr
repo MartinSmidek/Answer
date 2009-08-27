@@ -81,7 +81,7 @@ kEzer-ys2
 		test\test.ys_ucetnictvi.ezer
 		test\test.ysp.ezer
 		test\ys.css.css
-	-ys
+	+ys
 		ys\$.ezer
 		ys\ys.css.css
 		ys\ys.doc.ezer
@@ -94,7 +94,7 @@ kEzer-ys2
 		ys\ys_fce.php
 		ys\ys_lide.php
 		ys\ys_ucet.php
-	+ds
+	-ds
 		ds\$.ezer
 		ds\ds.css.css
 		ds.php
@@ -127,9 +127,11 @@ kEzer-ys2
 19=ds\ds.css.css
 20=..\..\setkani\prog\alberice.php
 21=..\..\setkani\www\fileadmin\template\setkani.5.css
+22=ys\ys.ucet.ezer
+23=ys\ys_ucet.php
 [Selected Project Files]
 Main=
-Selected=ys\$.ezer
+Selected=ys\ys_ucet.php
 [ezer2\server\comp2.php]
 TopLine=1587
 Caret=69,1622
@@ -193,10 +195,10 @@ TopLine=1
 Caret=57,41
 [ds\ds.ezer]
 TopLine=1
-Caret=49,8
+Caret=18,19
 [ds\ds.dum.ezer]
-TopLine=114
-Caret=1,147
+TopLine=96
+Caret=92,101
 [ys\ys.css.css]
 TopLine=1
 Caret=19,19
@@ -209,3 +211,12 @@ Caret=24,1128
 [..\..\setkani\www\fileadmin\template\setkani.5.css]
 TopLine=530
 Caret=60,541
+[ys\ys.ucet.ezer]
+TopLine=31
+Caret=32,85
+[ys\ys_ucet.php]
+TopLine=443
+Caret=60,468
+Mark1=28,416
+Mark2=29,531
+Mark3=23,754

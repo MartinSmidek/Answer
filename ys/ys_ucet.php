@@ -412,18 +412,21 @@ function naklad_vzor($rok,$vzor,$clmn_tab) { #trace();
 function ucet_mesic($rok,$co='%',$presnost=3,$md='5',$dal='') { #trace();
   $tab= array();
   if ( $md )
-    $qry= "SELECT left(md,$presnost) as ucet,sum(castka) as suma,month(datum) as mesic
-           FROM udenik WHERE md LIKE '$md%' AND id_udenik BETWEEN {$rok}00000 AND {$rok}99999
+    $qry= "SELECT left(md,$presnost) as ucet,sum(castka) as suma,month(datum) as mesic, nazev
+           FROM udenik JOIN uosnova AS u ON ucet=md AND rok=$rok
+           WHERE md LIKE '$md%' AND id_udenik BETWEEN {$rok}00000 AND {$rok}99999
            AND zakazka LIKE '$co'
            GROUP BY left(md,$presnost),month(datum)";
   else
     $qry= "SELECT left(dal,$presnost) as ucet,sum(castka) as suma,month(datum) as mesic
-           FROM udenik WHERE dal LIKE '$dal%' AND id_udenik BETWEEN {$rok}00000 AND {$rok}99999
+           FROM udenik JOIN uosnova AS u ON ucet=md AND rok=$rok
+           WHERE dal LIKE '$dal%' AND id_udenik BETWEEN {$rok}00000 AND {$rok}99999
            AND zakazka LIKE '$co'
            GROUP BY left(md,$presnost),month(datum)";
   $res= mysql_qry($qry);
   while ( $res && $u= mysql_fetch_object($res) ) {
     $tab[$u->ucet][$u->mesic]= $u->suma;
+    $tab[$u->ucet]['nazev']= $u->nazev;
     $tab['*celkem'][$u->mesic]+= $u->suma;
   }
   ksort($tab);
@@ -456,7 +459,13 @@ function naklady_mesic($rok,$co='%',$presnost=6) { #trace();
   $tab= ucet_mesic($rok,$co,$presnost,'5');
   $tab_class= array();
   naklady_mesic_odhad($rok,$co,$presnost,$tab,$tab_class);
-  $html= tab_show($tab,'výdaje'.substr($rok,-2,2),$mesice,$mesice_attr,'stat',$tab_class);
+  if ( $presnost==6 ) {
+    $sloupce= array_merge($mesice,array('nazev'=>'účet'));
+    $sloupce_attr= array_merge($mesice_attr,array('nazev'=>'th'));
+    $html= tab_show($tab,'výdaje'.substr($rok,-2,2),$sloupce,$sloupce_attr,'stat',$tab_class);
+  }
+  else
+    $html= tab_show($tab,'výdaje'.substr($rok,-2,2),$mesice,$mesice_attr,'stat',$tab_class);
   return $html;
 }
 # ================================================================================================== BILANCE
