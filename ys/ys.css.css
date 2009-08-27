@@ -1,6 +1,10 @@
 /* EZER/YS verze 0, (c) Martin Smidek <martin@smidek.eu>, 2009 */
 
 /* úpravy standardu */
+.ds_form .Label, .ds_form .Check {
+  font-size:8pt;  }
+
+
 .CheckT input {
   position:absolute; top:10px; left:-3px; }
 .ae_inp         { position:absolute; }

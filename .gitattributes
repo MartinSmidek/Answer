@@ -58,7 +58,6 @@ test/ys_ucetnictvi.ezer -text
 test/ys_ucetnictvi.php -text
 wiki/dokumentace.wiki -text
 wiki/todo.wiki -text
-/ys.html -text
 ys/$.ezer -text
 ys/img/-logo.gif -text
 ys/img/ys-logo.gif -text

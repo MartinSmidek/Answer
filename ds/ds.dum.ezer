@@ -87,7 +87,7 @@
   }
 
 # -------------------------------------------------------------------------------------------------- POPISKY
-  form popisky {
+  form popisky { css:'ds_form'
     label [ 10,  0,300,] { title:'<h3>Objednávka pobytu</h3>' }
     label [380,  0,300,] { title:'<h3>Fakturační adresa objednavatele</h3>' }
     label [ 10,240,694,] { title:'<hr>' }
@@ -95,7 +95,7 @@
     label [380,250,300,] { title:'<h3>Údaje vybraného účastníka</h3>' }
   }
 # -------------------------------------------------------------------------------------------------- OBJEDNÁVKA
-  form objednavka {
+  form objednavka { css:'ds_form'
     const PL=0; PT=90,
     label       [  0,  0,100,] { title:'stav objednávky' }
     select      [  0, 15,150,] { type:'map', data:tx_gnalberice_order.state, options:ds_stav.hodnota }
@@ -148,7 +148,7 @@
     proc onsave () { check_rooms(rooms,form,'p') }
   }
 # -------------------------------------------------------------------------------------------------- FAKTURACE
-  form fakturace {
+  form fakturace { css:'ds_form'
     label       [  0,  0,210,] { title:'název organizace (plátce faktury)' }
     field       [  0, 15,210,] { data:tx_gnalberice_order.org }
     label       [220,  0, 80,] { title:'IČ' }
@@ -178,7 +178,7 @@
       proc onclick() { objednavatel_save(ucast.get,ucast.changed) } }
   }
 # -------------------------------------------------------------------------------------------------- AKCE
-  form akce {
+  form akce { css:'ds_form'
     button [  0,0,100,18] { title:'přidat účastníka'
       proc onclick () {osoba_new} }
     button [122,0,100,18] { title:'přidat dítě'
@@ -205,7 +205,7 @@
     }
   }
 # -------------------------------------------------------------------------------------------------- OSOBA
-  form osoba {
+  form osoba { css:'ds_form'
     field id_osoba { data:ds_osoba.id_osoba }
     field id_order { data:ds_osoba.id_order }
     // zobrazení
