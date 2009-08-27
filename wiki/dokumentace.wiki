@@ -1,7 +1,18 @@
-= Dokumentace/1 =
+= Systém Ans(w)er/1 =
 
-Dokument
 
-== Dokumentace ==
+== Dům setkání ==
 
-Text bude dopsán
+=== Uživatel a správce ===
+na adrese [http://www.setkani.org/gn_index.php?id=106 www.setkani.org/gn_index.php] je přístup na alfa-verzi nového objednávkového systému - to je zejména pro uživatele.
+Moje představa je taková, že zpočátku se bude nabízet jen horní polovina pro vyplnění rámce objednávky a fakturační adresy (spodní se seznamem bude zatím skrytá). Tlačítkem (vystavit zálohu) se vygeneruje Excelovský sešit (zatím jen náčrt) se zálohovou fakturou.
+
+Až správce potvrdí závaznost objednávky pošle v mailu přísypový kód (náhodné šesticiferné číslo), které poslouží objednateli jako klíč k otevření spodní poloviny formuláře. Tam objednatel postupně vyplní všechny údaje o hostech. Tlačítko (lze fakturovat?) slouží ke zjištění úplnosti zadaných údajů (už funguje - lze vyzkoušet). Tlačítkem (vystavit fakturu) se vygeneruje Excelovský sešit s fakturami (zatím je to jen náčrt, zapisují se tam jen seznamy fakturovaných hostů).
+
+Tlačítko (zapsat změny) zapíše pozměněné (červeně orámované) údaje. Narození je rozumné vypisovat ručně, interaktivní voba se hodí např pro odjezd/příjezd.
+
+=== Správce a ekonom ===
+V systému [https://net2.proglas.cz:8070/2/ys.html Ans<nowiki><sub>w</sub></nowiki>er] v záložce Dům je ukázán přístup ke stejným údajům (zatím se tam zobrazuje objednávka č.711) - zde bude možnost dělat přehledy o fakturovaných resp. zaplacených objednávkách apod. Nastavil jsem zde přístupové jmeno dum s heslem setkani (časem bude pochopitelně něco tajnějšího).
+
+''Pozor''
+Oba programy pracují s ostrými daty. Takže bude asi nejlepší si udělat nějakou objednávku v dubnu příštího roku a hrát si s ní ... a pak ji smažeme.
