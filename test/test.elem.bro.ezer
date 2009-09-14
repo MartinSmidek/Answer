@@ -4,7 +4,7 @@ proc v.b.onrowclick(i) { echo('klíč:',i,' tx=',v.b.tx.get) }
 form f [,,110,30] {
   label l [0,0,150,] {title:'test browse'}
   browse b [0,20,100,15] { rows:3, qry_rows:1, css_rows:'id,7:blue'
-    show id [,,40,] { title:'ID', data:t.id_t, format:'rs', map_pipe:m.tx }
+    show id [,,40,] { title:'ID', data:t.id_t, format:'rs', map_pipe:mm.m.tx }
     show tx [,,0,] { title:'TX', data:t.tx, format:'q*s-' }
     show dt [,,80,] { title:'DT', data:t.datum, format:'q*s-', css_cell:'id,1:green' }
     show nic [,,0,] { data:t.tx  }

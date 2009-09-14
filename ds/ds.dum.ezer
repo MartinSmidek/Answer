@@ -82,7 +82,7 @@
   // zrušení účastníka
   proc osoba_del (id_osoba) {
     confirm(conc('Opravdu smazat ',akc.seznam.prijmeni.get,' ',akc.seznam.jmeno.get,' ze seznamu?'));
-    ds_osoba.delete_record(conc('id_osoba=',id_osoba));
+    tab.ds_osoba.delete_record(conc('id_osoba=',id_osoba));
     akc.seznam.browse_seek
   }
 
@@ -98,13 +98,13 @@
   form objednavka { css:'ds_form'
     const PL=0; PT=90,
     label       [  0,  0,100,] { title:'stav objednávky' }
-    select      [  0, 15,150,] { type:'map', data:tx_gnalberice_order.state, options:ds_stav.hodnota }
+    select      [  0, 15,150,] { type:'map', data:tab.tx_gnalberice_order.state, options:tab.ds_stav.hodnota }
     label       [180,  0,200,] { title:'poznámka k objednávce' }
-    edit        [180,15,164,57] { data:tx_gnalberice_order.note  }
+    edit        [180,15,164,57] { data:tab.tx_gnalberice_order.note  }
     label       [  0, 40, 70,] { title:'příjezd' }
-    field       [  0, 55, 80,] { type:'date', data:tx_gnalberice_order.fromday }
+    field       [  0, 55, 80,] { type:'date', data:tab.tx_gnalberice_order.fromday }
     label       [ 90, 40, 70,] { title:'odjezd' }
-    field       [ 90, 55, 80,] { type:'date', data:tx_gnalberice_order.untilday }
+    field       [ 90, 55, 80,] { type:'date', data:tab.tx_gnalberice_order.untilday }
     label       [  0, 80,150,] { title:'seznam pokojů:' }
     check   p1  [PL+  0, PT,14,] { title:'1',  format:'c', css:'CheckT', help:"1 - 2 lůžka jednoduchá (V podkrovní pokojíček se střešním oknem)" }
     check   p2  [PL+ 20, PT,14,] { title:'2',  format:'c', css:'CheckT', help:"2 - 2 lůžka jako patrová postel (V pokojíček vedle sprchy, má svoje umyvadlo)" }
@@ -123,23 +123,23 @@
     check   p15 [PL+280, PT,14,] { title:'15', format:'c', css:'CheckT', help:"15 - apartmán; 2 místnosti a sociálka bezbariérová: 2 lůžka jednoduchá" }
     check   p16 [PL+300, PT,14,] { title:'16', format:'c', css:'CheckT', help:"16 - apartmán; 2 místnosti a sociálka bezbariérová: 1 lůžko jednoduché a 2 lůžka jako patrová postel" }
     field noroom [PL+330,PT+5,17,] { format:'dr:e' }
-    field rooms { data:tx_gnalberice_order.rooms }
+    field rooms { data:tab.tx_gnalberice_order.rooms }
     label       [  0,120, 50,] { title:'dospělí' }
-    field       [0,135,17,] { data:tx_gnalberice_order.adults, format:'r:e' }
+    field       [0,135,17,] { data:tab.tx_gnalberice_order.adults, format:'r:e' }
     field adults [24,135,17,] { format:'dr:e' }
     label       [54,120,50,] { title:'děti 10-15' }
-    field       [54,135,17,] { data:tx_gnalberice_order.kids_10_15, format:'r:e' }
+    field       [54,135,17,] { data:tab.tx_gnalberice_order.kids_10_15, format:'r:e' }
     field kids_10_15 [78,135,17,] { format:'dr:e' }
     label       [110,120,40,] { title:'děti 3-9' }
-    field       [111,135,17,] { data:tx_gnalberice_order.kids_3_9, format:'r:e' }
+    field       [111,135,17,] { data:tab.tx_gnalberice_order.kids_3_9, format:'r:e' }
     field kids_3_9 [135,135,17,] { format:'dr:e' }
     label       [165,120,50,] { title:'děti do 3' }
-    field       [165,135,17,] { data:tx_gnalberice_order.kids_3, format:'r:e' }
+    field       [165,135,17,] { data:tab.tx_gnalberice_order.kids_3, format:'r:e' }
     field kids_3 [190,135,17,] { format:'dr:e' }
     label       [220,120,17,] { title:'??' }
     field nevek [220,135,17,] { format:'dr:e' }
     label       [252,120,100,] { title:'typ stravy' }
-    select      [250,135,100,] { type:'map', data:tx_gnalberice_order.board, options:ds_strava.hodnota }
+    select      [250,135,100,] { type:'map', data:tab.tx_gnalberice_order.board, options:tab.ds_strava.hodnota }
     button      [249,160,100,18] { title:'lze fakturovat?'
       proc onclick() { compare } }
     button save [249,186,100,18] { title:'zapsat změny', type:'submit' }
@@ -150,25 +150,25 @@
 # -------------------------------------------------------------------------------------------------- FAKTURACE
   form fakturace { css:'ds_form'
     label       [  0,  0,210,] { title:'název organizace (plátce faktury)' }
-    field       [  0, 15,210,] { data:tx_gnalberice_order.org }
+    field       [  0, 15,210,] { data:tab.tx_gnalberice_order.org }
     label       [220,  0, 80,] { title:'IČ' }
-    field       [220, 15, 80,] { data:tx_gnalberice_order.ic }
+    field       [220, 15, 80,] { data:tab.tx_gnalberice_order.ic }
     label       [  0, 40,100,] { title:'příjmení' }
-    field       [  0, 55,120,] { data:tx_gnalberice_order.name }
+    field       [  0, 55,120,] { data:tab.tx_gnalberice_order.name }
     label       [130, 40,100,] { title:'jméno' }
-    field       [130, 55, 80,] { data:tx_gnalberice_order.firstname }
+    field       [130, 55, 80,] { data:tab.tx_gnalberice_order.firstname }
     label       [220, 40, 80,] { title:'účastní se' }
-    check ucast [218, 54, 80,] { title:'pobytu', data:tx_gnalberice_order.ucast }
+    check ucast [218, 54, 80,] { title:'pobytu', data:tab.tx_gnalberice_order.ucast }
     label       [  0, 80,200,] { title:'e-mail' }
-    field       [  0, 95,210,] { data:tx_gnalberice_order.email  }
+    field       [  0, 95,210,] { data:tab.tx_gnalberice_order.email  }
     label       [220, 80,100,] { title:'telefon' }
-    field       [220, 95, 80,] { data:tx_gnalberice_order.telephone}
+    field       [220, 95, 80,] { data:tab.tx_gnalberice_order.telephone}
     label       [  0,120, 70,] { title:'ulice' }
-    field       [0,135,210,] { data:tx_gnalberice_order.address }
+    field       [0,135,210,] { data:tab.tx_gnalberice_order.address }
     label       [  0,160, 70,] { title:'psč' }
-    field       [  0,175, 50,] { data:tx_gnalberice_order.zip}
+    field       [  0,175, 50,] { data:tab.tx_gnalberice_order.zip}
     label       [ 60,160, 70,] { title:'obec' }
-    field       [ 60,175,150,] { data:tx_gnalberice_order.city}
+    field       [ 60,175,150,] { data:tab.tx_gnalberice_order.city}
     label faktura [223,119,120,] { title:'...' }
     button      [220,132,100,18] { title:'vystavit zálohu'
       proc onclick() { make_zaloha } }
@@ -186,62 +186,62 @@
     button [210,0,100,18] { title:'odebrat účastníka'
       proc onclick () {osoba_del(seznam.id_osoba.get)} }
     browse seznam [0,30,,] { rows:14
-      show rodina [,,20,] { title:'rod', data:ds_osoba.rodina, format:'s+' }
-      show prijmeni [,,70,] { title:'příjmení', data:ds_osoba.prijmeni, format:'s' }
-      show jmeno    [,,50,]  { title:'jméno', data:ds_osoba.jmeno, format:'s' }
+      show rodina [,,20,] { title:'rod', data:tab.ds_osoba.rodina, format:'s+' }
+      show prijmeni [,,70,] { title:'příjmení', data:tab.ds_osoba.prijmeni, format:'s' }
+      show jmeno    [,,50,]  { title:'jméno', data:tab.ds_osoba.jmeno, format:'s' }
       show vek  [,,20,]  { title:'věk', expr:"if(ds_osoba.narozeni,year(now())-year(ds_osoba.narozeni),'??')", format:'r' }
-      show [,,20,]  { title:'pok.', data:ds_osoba.pokoj, format:'rs:e' }  // :e zobrazí 0 jako nic
-      show [,,20,]  { title:'lůž.', data:ds_osoba.luzko, map_pipe:ds_luzko.zkratka, format:'rs' }
-      show [,,20,]  { title:'str.', data:ds_osoba.strava, map_pipe:ds_strava.zkratka, format:'rs' }
-      show [,,30,]  { title:'od', data:ds_osoba.fromday, format:'s:d.m' }
-      show [,,30,]  { title:'do', data:ds_osoba.untilday, format:'s:d.m' }
-      show [,,20,]  { title:'?', data:ds_osoba.pozn, format:'s' }
+      show [,,20,]  { title:'pok.', data:tab.ds_osoba.pokoj, format:'rs:e' }  // :e zobrazí 0 jako nic
+      show [,,20,]  { title:'lůž.', data:tab.ds_osoba.luzko, map_pipe:tab.ds_luzko.zkratka, format:'rs' }
+      show [,,20,]  { title:'str.', data:tab.ds_osoba.strava, map_pipe:tab.ds_strava.zkratka, format:'rs' }
+      show [,,30,]  { title:'od', data:tab.ds_osoba.fromday, format:'s:d.m' }
+      show [,,30,]  { title:'do', data:tab.ds_osoba.untilday, format:'s:d.m' }
+      show [,,20,]  { title:'?', data:tab.ds_osoba.pozn, format:'s' }
       // nezobrazené
-      show id_osoba { data:ds_osoba.id_osoba }
-      show ulice { data:ds_osoba.ulice }
-      show psc { data:ds_osoba.psc }
-      show obec { data:ds_osoba.obec }
+      show id_osoba { data:tab.ds_osoba.id_osoba }
+      show ulice { data:tab.ds_osoba.ulice }
+      show psc { data:tab.ds_osoba.psc }
+      show obec { data:tab.ds_osoba.obec }
       proc onrowclick() { osoba_load(id_osoba.get) }
     }
   }
 # -------------------------------------------------------------------------------------------------- OSOBA
   form osoba { css:'ds_form'
-    field id_osoba { data:ds_osoba.id_osoba }
-    field id_order { data:ds_osoba.id_order }
+    field id_osoba { data:tab.ds_osoba.id_osoba }
+    field id_order { data:tab.ds_osoba.id_order }
     // zobrazení
     label       [  0,  0, 40,] { title:'rodina' }
-    field rodina   [  0, 15, 40,] { data:ds_osoba.rodina }
+    field rodina   [  0, 15, 40,] { data:tab.ds_osoba.rodina }
     label       [ 50,  0, 70,] { title:'příjmení' }
-    field prijmeni [ 50, 15, 70,] { data:ds_osoba.prijmeni }
+    field prijmeni [ 50, 15, 70,] { data:tab.ds_osoba.prijmeni }
     label       [130,  0,100,] { title:'jméno' }
-    field       [130, 15, 80,] { data:ds_osoba.jmeno }
+    field       [130, 15, 80,] { data:tab.ds_osoba.jmeno }
     label       [220,  0,100,] { title:'narozen/a' }
-    field       [220,15,86,] { type:'date', data:ds_osoba.narozeni }
+    field       [220,15,86,] { type:'date', data:tab.ds_osoba.narozeni }
     label       [  0, 40,200,] { title:'e-mail' }
-    field       [  0, 55,210,] { data:ds_osoba.email  }
+    field       [  0, 55,210,] { data:tab.ds_osoba.email  }
     label       [220, 40,100,] { title:'telefon' }
-    field       [220, 55, 80,] { data:ds_osoba.telefon}
+    field       [220, 55, 80,] { data:tab.ds_osoba.telefon}
     label       [  0, 80, 70,] { title:'ulice' }
-    field ulice [  0, 95,210,] { data:ds_osoba.ulice}
+    field ulice [  0, 95,210,] { data:tab.ds_osoba.ulice}
     label       [  0,120, 70,] { title:'psč' }
-    field psc [  0,135, 50,] { data:ds_osoba.psc}
+    field psc [  0,135, 50,] { data:tab.ds_osoba.psc}
     label       [ 60,120, 70,] { title:'obec' }
-    field obec [ 60,135,150,] { data:ds_osoba.obec}
+    field obec [ 60,135,150,] { data:tab.ds_osoba.obec}
     label       [  0,160,300,] { title:'--- <i>upřesnění údajů o pobytu</i>' }
     label       [  0,175, 70,] { title:'pokoj' }
-    select pokoj [  0,190, 50,] { data:ds_osoba.pokoj, format:':e' }
+    select pokoj [  0,190, 50,] { data:tab.ds_osoba.pokoj, format:':e' }
     label       [ 60,175, 70,] { title:'typ lůžka' }
-    select      [ 60,190,150,] { type:'map', data:ds_osoba.luzko, options:ds_luzko.hodnota }
+    select      [ 60,190,150,] { type:'map', data:tab.ds_osoba.luzko, options:tab.ds_luzko.hodnota }
     label       [  0,215, 70,] { title:'poznámka' }
-    field       [  0,230,210,] { data:ds_osoba.pozn }
+    field       [  0,230,210,] { data:tab.ds_osoba.pozn }
     button      [220,229,100,18] { title:'zapsat změny',
       proc onclick() { osoba_save } }
     // specifické údaje
     label       [0,255,327,] { title:'--- <i>údaje o pobytu (jen pokud se liší od údajů v objednávce)</i> ---' }
     label       [0,272,70,] { title:'příjezd' }
-    field   od  [0,287,83,] { type:'date', data:ds_osoba.fromday }
+    field   od  [0,287,83,] { type:'date', data:tab.ds_osoba.fromday }
     label       [90,272,70,] { title:'odjezd' }
-    field   do  [90,287,83,] { type:'date', data:ds_osoba.untilday }
+    field   do  [90,287,83,] { type:'date', data:tab.ds_osoba.untilday }
     label       [181,272,97,] { title:'typ stravy' }
-    select      [181,287,133,] { type:'map', data:ds_osoba.strava, options:ds_strava.hodnota }
+    select      [181,287,133,] { type:'map', data:tab.ds_osoba.strava, options:tab.ds_strava.hodnota }
   }

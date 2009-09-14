@@ -1,7 +1,7 @@
 menu test { type:'main'
   var global: text,
   tabs elem {title:"Testy",
-    panel grp {title:"Group", include:'onload'
+    panel grp {title:"Group", include:'onclick'
       menu {type:'left',
         menu {title:'Příklady objednávek',type:'group'
           item {title:'711'                   ,par:°{no:'711'}}
@@ -10,7 +10,7 @@ menu test { type:'main'
         proc onclick (i) { the_order.set(i.par.no); show_order(i.par.no) }
       }
       var the_order: text
-      proc show_order (o) { echo('$:',o) }
+      proc show_order (o) { echo('show_order z $:',o) }
     }
     panel con {title:"Const", include:'onclick'}
     panel tst {title:"Test", include:'onclick'}
@@ -38,7 +38,9 @@ menu test { type:'main'
 #   tabs ys_pokladna {title:"YS-pokladna",  include:'onclick' }
   tabs stx {title:"Syntax", include:'onclick'}
 
-  map m: table t {where:'1', order:'id_t'}
+  group mm {
+    map m: table t {where:'1', order:'id_t'}
+  }
   table t {
     number id_t { key:'primary' }
     text tx

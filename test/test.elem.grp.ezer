@@ -1,6 +1,6 @@
-#pragma library
+# spragma library
 var the_order: text
-proc show_order (o) { echo('test.elem.grp:',o); sub.show_label(o) }
+proc show_order (o) { echo('show_order z test.elem.grp:',o); sub.show_label(o) }
 group sub  {  include:'onload'
   proc show_label(o) { echo('test.elem.grp',o) }
 }

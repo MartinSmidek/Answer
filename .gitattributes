@@ -7,6 +7,7 @@ ds/$.ezer -text
 ds/ds.css.css -text
 ds/ds.dum.ezer -text
 ds/ds.ezer -text
+ds/ds.tab.ezer -text
 ds/ds_fce.php -text
 ds/fce.js -text
 ds/img/ds.png -text
@@ -64,6 +65,8 @@ ys/img/ys-logo.gif -text
 ys/img/ys.png -text
 ys/test.php -text
 ys/ys.css.css -text
+ys/ys.ds.kl.ezer -text
+ys/ys.ds.tab.ezer -text
 ys/ys.info.ezer -text
 ys/ys.kasa.ezer -text
 ys/ys.lide.ezer -text

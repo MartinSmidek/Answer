@@ -14,9 +14,11 @@ kEzer-ys2
 	-comp
 		comp.css
 		comp.php
-	-doc
+	+doc
 		wiki\todo.wiki
-	+ezer2
+		wiki\dokumentace.wiki
+		docs\2008_ciselnik_akci.txt
+	-ezer2
 		+client
 			ezer2\client\app.js
 			ezer2\client\dbg.css
@@ -54,7 +56,7 @@ kEzer-ys2
 		libr\libr.syst.ezer
 		libr\libr.help.ezer
 		libr\$.ezer
-	+test
+	-test
 		test\$.ezer
 		test\test.elem.bro.ezer
 		test\test.elem.con.ezer
@@ -87,6 +89,7 @@ kEzer-ys2
 		ys\$.ezer
 		ys\ys.css.css
 		ys\ys.doc.ezer
+		ys\ys.ds.kl.ezer
 		ys.html
 		ys\ys.kasa.ezer
 		ys\ys.lide.ezer
@@ -96,7 +99,8 @@ kEzer-ys2
 		ys\ys_fce.php
 		ys\ys_lide.php
 		ys\ys_ucet.php
-	-ds
+		ys\ys.info.ezer
+	+ds
 		ds\$.ezer
 		ds\ds.css.css
 		ds.php
@@ -106,6 +110,7 @@ kEzer-ys2
 		ds\fce.js
 		ds\ds.dum.ezer
 		ds\ds.ezer
+		ds\ds.tab.ezer
 [Open project files]
 0=ezer2\server\comp2.php
 1=ezer2\server\ae_slib.php
@@ -120,25 +125,24 @@ kEzer-ys2
 10=ezer2\client\ezer_fdom2.js
 11=ds.html
 12=ds_test.html
-13=ds\ds_fce.php
-14=ds\fce.js
-15=ys\$.ezer
-16=ds\ds.ezer
-17=ds\ds.dum.ezer
-18=ys\ys.css.css
-19=ds\ds.css.css
-20=..\..\setkani\prog\alberice.php
-21=..\..\setkani\www\fileadmin\template\setkani.5.css
-22=ys\ys.ucet.ezer
-23=ys\ys_ucet.php
-24=test\test.elem.grp.sub.ezer
-25=test\test.elem.grp.ezer
+13=ds\fce.js
+14=ys\$.ezer
+15=ys\ys.info.ezer
+16=ys\ys.ucet.ezer
+17=ys\ys_ucet.php
+18=ds\ds_fce.php
+19=ds\ds.ezer
+20=ys\ys.ds.kl.ezer
+21=ds\ds.tab.ezer
+22=ds\ds.dum.ezer
+23=ys.html
+24=ys.php
 [Selected Project Files]
 Main=
-Selected=test\test.elem.grp.ezer
+Selected=ys\$.ezer
 [ezer2\server\comp2.php]
-TopLine=154
-Caret=19,169
+TopLine=670
+Caret=43,689
 Mark1=27,150
 Mark2=60,233
 Mark3=1,90
@@ -157,7 +161,7 @@ TopLine=36
 Caret=41,67
 [..\..\..\Apache\logs\ys2-error.log]
 TopLine=1186
-Caret=512,1186
+Caret=1,1196
 [ezer2\client\appf.css]
 TopLine=263
 Caret=16,289
@@ -165,68 +169,65 @@ Caret=16,289
 TopLine=138
 Caret=1,138
 [ezer2\client\app.js]
-TopLine=256
-Caret=54,272
-Mark1=29,302
-Mark2=26,248
+TopLine=265
+Caret=1,312
+Mark1=69,299
 [ezer2\client\dbg.js]
 TopLine=303
 Caret=40,311
 [ezer2\client\ezer.js]
-TopLine=250
-Caret=51,264
-Mark1=60,1621
-Mark2=1,875
+TopLine=251
+Caret=86,3659
+Mark1=42,798
+Mark2=59,2283
+Mark3=75,3079
 [ezer2\client\ezer_fdom2.js]
-TopLine=545
-Caret=28,595
+TopLine=1521
+Caret=16,1545
 Mark1=47,939
 Mark2=25,1032
 [ds.html]
 TopLine=1
-Caret=1,34
+Caret=1,17
 [ds_test.html]
 TopLine=1
 Caret=39,31
-[ds\ds_fce.php]
-TopLine=163
-Caret=12,202
 [ds\fce.js]
 TopLine=1
 Caret=21,25
 [ys\$.ezer]
 TopLine=1
-Caret=57,41
-[ds\ds.ezer]
+Caret=12,5
+[ys\ys.info.ezer]
 TopLine=1
-Caret=18,19
-[ds\ds.dum.ezer]
-TopLine=96
-Caret=92,101
-[ys\ys.css.css]
-TopLine=1
-Caret=19,19
-[ds\ds.css.css]
-TopLine=1
-Caret=34,11
-[..\..\setkani\prog\alberice.php]
-TopLine=1116
-Caret=24,1128
-[..\..\setkani\www\fileadmin\template\setkani.5.css]
-TopLine=530
-Caret=60,541
+Caret=1,28
 [ys\ys.ucet.ezer]
-TopLine=31
-Caret=32,85
+TopLine=58
+Caret=17,85
 [ys\ys_ucet.php]
-TopLine=1
-Caret=60,468
+TopLine=64
+Caret=1,78
 Mark1=28,416
 Mark2=29,531
 Mark3=23,754
-[test\test.elem.grp.sub.ezer]
+[ds\ds_fce.php]
+TopLine=34
+Caret=55,50
+[ds\ds.ezer]
 TopLine=1
-Caret=1,1
-[test\test.elem.grp.ezer]
+Caret=30,10
+[ys\ys.ds.kl.ezer]
 TopLine=1
-Caret=51,10
+Caret=18,17
+[ds\ds.tab.ezer]
+TopLine=1
+Caret=49,37
+[ds\ds.dum.ezer]
+TopLine=1
+Caret=70,194
+[ys.html]
+TopLine=1
+Caret=53,14
+[ys.php]
+TopLine=1
+Caret=24,32

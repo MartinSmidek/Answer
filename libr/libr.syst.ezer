@@ -1,5 +1,8 @@
 #pragma library
 //(c) 2009 Martin Šmídek
+
+map user_state: table _cis {where:"druh='user_state'", key_id:'id_cis'}
+
 #                                                                                                    ČÍSELNÍKY
 panel Ciselnik [,,,474] { title:'Číselníky', //skill:'ys|ys'
   var druh_cond: text
@@ -83,6 +86,7 @@ panel Ciselnik [,,,474] { title:'Číselníky', //skill:'ys|ys'
 }
 
 #                                                                                                    UŽIVATELÉ
+
 panel Users [,,,543] { title:'Uživatelé', skill:'m|m'
   var novy: number,
   use uzivatele: form users [48,29,0,467],
@@ -108,7 +112,7 @@ panel Users [,,,543] { title:'Uživatelé', skill:'m|m'
     uzivatel.key; uzivatel.load
   | stop}
 }
-
+#
 proc the_formsave (f,b) {
   f.same; stop
 | f.key; f.save; f.load; b.browse_seek
@@ -175,7 +179,7 @@ form butt [0,0,200,50] {
   button obnov_clena [341,9,50,15] { title:'Obnovit ' },
 }
 
-map user_state: table _cis {where:"druh='user_state'", key_id:'id_cis'}
+# map user_state: table _cis {where:"druh='user_state'", key_id:'id_cis'}
 
 map user_level: table _cis {where:"druh='user_level'"}
 
