@@ -29,11 +29,13 @@ function dt($x,$user2sql=0) { #trace();
 function ds_compare_list($orders) {  #trace();
   $errs= 0;
   $html= "<dl>";
-  foreach (explode(',',$orders) as $order) {
-    $x= ds_compare($order);
-    $html.= wu("<dt>Objednávka <b>$order</b>".($x->neco?" - aspoò nìco":" - nic")."</dt>");
-    $html.= "<dd>{$x->html}</dd>";
-    $errs+= $x->err;
+  if ( $orders ) {
+    foreach (explode(',',$orders) as $order) {
+      $x= ds_compare($order);
+      $html.= wu("<dt>Objednávka <b>$order</b>".($x->neco?" - aspoò nìco":" - nic")."</dt>");
+      $html.= "<dd>{$x->html}</dd>";
+      $errs+= $x->err;
+    }
   }
   $html.= "</dl>";
   $msg= $errs ? "Celkem $errs objednávek tohoto období obsahuje chyby."
@@ -357,12 +359,14 @@ function ds_old ($uid) {
 # urèující je datum zahájení pobytu v objednávce
 function ds_obj_menu() {
   global $mysql_db;
-  ezer_connect('setkani');
+  $stav= map_cis('ds_stav');
+//                                                                 debug($stav,'ds_obj_menu');
   $mesice= array(1=>'leden','únor','bøezen','duben','kvìten','èerven',
     'èervenec','srpen','záøí','øíjen','listopad','prosinec');
   $mn= (object)array('type'=>'menu.left'
       ,'options'=>(object)array(),'part'=>(object)array());
   $letos= date('Y');
+  ezer_connect('setkani');
   for ($y= 0; $y<=0; $y++) {
     for ($m= 1; $m<=12; $m++) {
       $mm= sprintf('%02d',$m);
@@ -374,23 +378,18 @@ function ds_obj_menu() {
       
       $from= mktime(0,0,0,$m,1,$yyyy);
       $until= mktime(0,0,0,$m+1,1,$yyyy);
-      $qry= "SELECT uid,fromday,untilday,state,name, zkratka FROM tx_gnalberice_order
-             JOIN $mysql_db._cis ON druh='ds_stav' AND data=state
+      $qry= "/*ds_obj_menu*/SELECT uid,fromday,untilday,state,name,state FROM setkani.tx_gnalberice_order
              WHERE  NOT deleted AND NOT hidden AND untilday>=$from AND $until>fromday";
+//              JOIN ezer_ys._cis ON druh='ds_stav' AND data=state
       $res= mysql_qry($qry);
       while ( $res && $o= mysql_fetch_object($res) ) {
         $iid= $o->uid;
+        $zkratka= $stav[$o->state];
         $par= (object)array('uid'=>$iid);
-        $tit= wu("$iid - {$o->zkratka} - {$o->name}");
+        $tit= wu("$iid - ").$zkratka.wu(" - {$o->name}");
         $tm= (object)array('type'=>'item','options'=>(object)array('title'=>$tit,'par'=>$par));
         $gr->part->$iid= $tm;
       }
-
-//       $od= "$group-".sprintf('%02d',$m)."-01";
-//       $do= "$group-".sprintf('%02d',$m)."-".date('t',mktime(0,0,0,$m,1,$group));
-//       $par= (object)array('od'=>$od,'do'=>$do);
-//       $tm= (object)array('type'=>'item','options'=>(object)array('title'=>wu($mesice[$m]),'par'=>$par));
-//       $gr->part->$m= $tm;
     }
   }
   return $mn;
@@ -416,21 +415,21 @@ function ds_kli_menu() {
       $do= "$group-".sprintf('%02d',$m)."-".date('t',mktime(0,0,0,$m,1,$group));
       $from= mktime(0,0,0,$m,1,$yyyy);
       $until= mktime(0,0,0,$m+1,1,$yyyy);
-      $qry= "SELECT GROUP_CONCAT(uid) as uids,count(*) as objednavek,sum(adults+kids_10_15+kids_3_9+kids_3) as celkem
+      $uids= ''; $del= ''; $objednavek= $klientu= 0;
+      $qry= "SELECT uid,(adults+kids_10_15+kids_3_9+kids_3) as celkem
              FROM tx_gnalberice_order
              WHERE  NOT deleted AND NOT hidden AND untilday>=$from AND $until>fromday";
       $res= mysql_qry($qry);
-      $uids= ''; $objednavek= $klientu= 0;
-      if ( $res && $o= mysql_fetch_object($res) ) {
-        $uids= $o->uids;
-        $objednavek= $o->objednavek;
-        $celkem= $o->celkem;
-        $qry= "SELECT count(*) as klientu FROM ds_osoba
-               WHERE  FIND_IN_SET(id_order,'$uids')";
-        $res= mysql_qry($qry);
-        if ( $res && $o= mysql_fetch_object($res) ) {
-          $klientu= $o->klientu;
-        }
+      while ( $res && $o= mysql_fetch_object($res) ) {
+        $uids.= "$del{$o->uid}"; $del= ',';
+        $objednavek++;
+        $celkem+= $o->celkem;
+      }
+      $qryp= "SELECT count(*) as klientu FROM ds_osoba
+             WHERE  FIND_IN_SET(id_order,'$uids')";
+      $resp= mysql_qry($qryp);
+      if ( $resp && $op= mysql_fetch_object($resp) ) {
+        $klientu= $op->klientu;
       }
       $tit= wu($mesice[$m])." - $celkem ($klientu)";
       $par= (object)array('od'=>$od,'do'=>$do,'celkem'=>$celkem,'klientu'=>$klientu,'objednavek'=>$objednavek,'uids'=>$uids);

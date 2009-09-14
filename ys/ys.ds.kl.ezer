@@ -4,7 +4,6 @@ menu m {type:'left'
   var info: text
   var href: text
   proc onclick(x) {
-    echo(x.owner._id,x._id,':',x.par.od,'...',x.par.do);
     u.tit.set(tit(conc('Přehled ',x.par.celkem,' klientů v období od ',sql2date(x.par.od),' do ',sql2date(x.par.do))));
     [ u.seznam.browse_load(conc("FIND_IN_SET(id_order,'",x.par.uids,"')"),"id_order,rodina,narozeni DESC") ];
     // zpráva o objednávkách daného období
