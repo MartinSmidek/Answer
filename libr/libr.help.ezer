@@ -1,5 +1,5 @@
 #pragma library
-panel apl {title:'Dokumentace'
+panel apl {title:'Dokumentace', _sys:'dok'
   menu m {type:'left'
     proc onclick(x) {
       u.result.set(ask('i_doc_show','application',x.owner._id,x._id))
@@ -9,7 +9,7 @@ panel apl {title:'Dokumentace'
   use u: form f [0,0,,]
   proc onstart() { m.attach_code(ask('i_doc_menu','application','','')) }
 }
-panel ref {title:'Reference'
+panel ref {title:'Reference', _sys:'ref'
   menu m {type:'left'
     proc onclick(x) {
       u.result.set(ask('i_doc_show','reference',x.owner._id,x._id))
@@ -18,7 +18,7 @@ panel ref {title:'Reference'
   use u: form f [0,0,,]
   proc onstart() { m.attach_code(ask('i_doc_menu','reference','','')) }
 }
-panel gen {title:'Generování'
+panel gen {title:'Generování', _sys:'gen'
   menu m {type:'left'
     menu stav {title:'stav',type:'group'
       item a {title:'přehled'
@@ -59,7 +59,7 @@ panel gen {title:'Generování'
   }
   use u: form f [0,0,,]
 }
-panel nov {title:'Novinky'
+panel nov {title:'Novinky', _sys:'new'
   menu {type:'left', /*active:vla.stare*/
     menu vla {title:'Vlastnosti Ezer2',type:'group'
       item nove {title:'Nové' }

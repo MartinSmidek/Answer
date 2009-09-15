@@ -4,7 +4,7 @@ module POKLADNA [0,0,0,0] { active:Denik, units:'px'
   var d_cond: text,
   var d_day: text,
 #                                                                                                    deník
-  panel Denik [0,0,270,555] { title:'Deník', type:'panel'
+  panel Denik [0,0,270,555] { title:'Deník', _sys:'den', type:'panel'
     var printed: number, var pocet: number,  var dokl: text, // json
     use dd: form _d_denik [11,0,,],
     use dv: group _d_vyber [695,10,,],
@@ -144,15 +144,15 @@ module POKLADNA [0,0,0,0] { active:Denik, units:'px'
     proc dc.ucely.oncancel () { panel_close(0); stop}
   },
 #                                                                                                    informace
-  panel informace [0,0,270,604] { title:'Informace', type:'panel'
+  panel informace [0,0,270,604] { title:'Informace', _sys:'inf', type:'panel'
 #     proc onstart () { i.group_add; stop}
     menu {type:'left',
-      menu {title:'Stavy pokladen',type:'group'
+      menu {title:'Stavy pokladen',type:'group', _sys:'akt'
         item {title:'Aktuální stav pokladen', par:°{s:'stav',c:'aktualne'} }
         item {title:'Stav pokladen k datu aktuálního řádku', par:°{s:'stav',c:'k_datu'} }
         item {title:'Stav podle nastaveného filtru', par:°{s:'stav',c:'s_filtrem'} }
       }
-      menu {title:'Exporty',type:'group'
+      menu {title:'Exporty',type:'group', _sys:'exp'
         item {title:'Letošní pokladní deník', par:°{s:'export',c:'letos'} }
       }
       proc onclick (m) {
@@ -163,7 +163,7 @@ module POKLADNA [0,0,0,0] { active:Denik, units:'px'
     use i: form _i_info [12,4,,],
   },
 #                                                                                                    nastaveni
-  panel nastaveni [0,0,270,553] { title:'Nastavení', type:'panel', skill:'yp+|yp+'
+  panel nastaveni [0,0,270,553] { title:'Nastavení', _sys:'nas', type:'panel', skill:'yp+|yp+'
     use os: form _o_seznam [12,4,,],
     use oc: form _o_cmd [6,142,,],
     use zs: form _z_seznam [12,181,,],

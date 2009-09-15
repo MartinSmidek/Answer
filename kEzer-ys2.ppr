@@ -18,7 +18,7 @@ kEzer-ys2
 		wiki\todo.wiki
 		wiki\dokumentace.wiki
 		docs\2008_ciselnik_akci.txt
-	-ezer2
+	+ezer2
 		+client
 			ezer2\client\app.js
 			ezer2\client\dbg.css
@@ -107,11 +107,11 @@ kEzer-ys2
 		ds.php
 		ds.html
 		ds\ds_fce.php
-		..\..\setkani\prog\alberice.php
 		ds\fce.js
 		ds\ds.dum.ezer
 		ds\ds.ezer
 		ds\ds.tab.ezer
+		..\..\setkani\prog\alberice.php
 [Open project files]
 0=ezer2\server\comp2.php
 1=ezer2\server\ae_slib.php
@@ -143,9 +143,10 @@ kEzer-ys2
 27=libr\libr_fce.php
 28=ds.php
 29=ys\ys_fce.php
+30=..\..\setkani\prog\alberice.php
 [Selected Project Files]
 Main=
-Selected=ys\ys_ucet.php
+Selected=..\..\setkani\prog\alberice.php
 [ezer2\server\comp2.php]
 TopLine=670
 Caret=43,689
@@ -159,8 +160,8 @@ Mark6=36,550
 TopLine=100
 Caret=1,100
 [ezer2\server\ezer2.php]
-TopLine=588
-Caret=1,650
+TopLine=184
+Caret=47,226
 Mark1=6,482
 [comp.php]
 TopLine=36
@@ -208,7 +209,7 @@ Caret=67,17
 TopLine=1
 Caret=107,54
 [ys\ys.ucet.ezer]
-TopLine=1
+TopLine=15
 Caret=17,85
 [ys\ys_ucet.php]
 TopLine=179
@@ -229,11 +230,11 @@ Caret=18,17
 TopLine=1
 Caret=49,37
 [ds\ds.dum.ezer]
-TopLine=1
+TopLine=124
 Caret=70,194
 [ys.html]
-TopLine=1
-Caret=61,15
+TopLine=11
+Caret=66,13
 [libr\libr.help.ezer]
 TopLine=1
 Caret=35,5
@@ -244,11 +245,14 @@ Caret=76,98
 TopLine=1
 Caret=33,34
 [libr\libr_fce.php]
-TopLine=107
+TopLine=9
 Caret=10,137
 [ds.php]
 TopLine=2
 Caret=1,34
 [ys\ys_fce.php]
+TopLine=1
+Caret=1,1
+[..\..\setkani\prog\alberice.php]
 TopLine=1
 Caret=1,1

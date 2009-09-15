@@ -18,6 +18,7 @@ libr/$.ezer -text
 libr/libr.help.ezer -text
 libr/libr.syst.ezer -text
 libr/libr.try.ezer -text
+libr/libr_fce.php -text
 libr/ys_fce.php -text
 libr/ys_lide.php -text
 libr/ys_ucet.php -text

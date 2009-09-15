@@ -6,18 +6,18 @@ module UCETNICTVI [0,0,30,12] { active:Denik, units:'px'
   var D_cond: text,
   var D_suma: text, var D_cond2: text,
   #                                                                                                 DENÍK
-  panel Denik [,,,543] { title:'Deník a rozbory', type:'panel'
+  panel Denik [,,,543] { title:'Deník a rozbory', type:'panel',_sys:'den'
     menu {type:'left',
-      menu {title:'Účetní deník',type:'group'
+      menu {title:'Účetní deník',type:'group',_sys:'den'
         item {title:'Rok 2008'                   ,par:°{s:'u-show',c:'2008'}}
         item {title:'Rok 2009'                   ,par:°{s:'u-show',c:'2009'}}
         item {title:'Import deníku, akcí, osnovy',par:°{s:'u-load',c:''}}
       },
-      menu {title:'Účetní odhady',type:'group'
+      menu {title:'Účetní odhady',type:'group',_sys:'odh'
         item {title:'Rok 2008'                   ,par:°{s:'e-show',c:'2008'}}
         item {title:'Rok 2009'                   ,par:°{s:'e-show',c:'2009'}}
       },
-      menu {title:'Projekty',type:'group'
+      menu {title:'Projekty',type:'group',_sys:'pro'
         item {title:'Rok 2008'                   ,par:°{s:'u-proj',c:'2008',od:'1',do:'12'}}
         item {title:'Rok 2008 - 1.pololetí'      ,par:°{s:'u-proj',c:'2008',od:'1',do:'6'}}
         item {title:'Rok 2008 - 2.pololetí'      ,par:°{s:'u-proj',c:'2008',od:'7',do:'12'}}
@@ -26,7 +26,7 @@ module UCETNICTVI [0,0,30,12] { active:Denik, units:'px'
         item {title:'Rok 2009 - 1.pololetí+odhad',par:°{s:'u-proj',c:'2009',od:'1',do:'6',odhad:'12'}}
         item {title:'Rok 2009 - jen odhad'       ,par:°{s:'u-proj',c:'2009',od:'1',do:'0',odhad:'12'}}
       },
-      menu {title:'Přehledy',type:'group'
+      menu {title:'Přehledy',type:'group',_sys:'pre'
         item {title:'náklady a výnosy akcí'      ,par:°{s:'u-akce',c:'1'}},
         item {title:'celková bilance'            ,par:°{s:'u-surv',c:'1'}},
 #         item {title:'náklady a výnosy (2)'       ,par:°{s:'u-surv',c:'2'}},
@@ -36,7 +36,7 @@ module UCETNICTVI [0,0,30,12] { active:Denik, units:'px'
         item {title:'náklady a výnosy s osnovou' ,par:°{s:'u-surv',c:'6'}},
         item {title:'... loni a letos'           ,par:°{s:'u-srov',c:'6'}}
       },
-      menu {title:'Měsíční náklady',type:'group'
+      menu {title:'Měsíční náklady',type:'group',_sys:'mna'
         item {title:'celkové náklady'            ,par:°{s:'u-mesice',c:'%'}},
         item {title:'náklady MS'                 ,par:°{s:'u-mesice',c:'MS'}},
         item {title:'náklady DS'                 ,par:°{s:'u-mesice',c:'DS'}},
@@ -48,7 +48,7 @@ module UCETNICTVI [0,0,30,12] { active:Denik, units:'px'
         item {title:'náklady DH vers. loni'      ,par:°{s:'u-mesice',c:'+DH'}},
         item {title:'nezařazené vers. loni'      ,par:°{s:'u-mesice',c:'+x'}}
       },
-      menu {title:'Měsíční příjmy',type:'group'
+      menu {title:'Měsíční příjmy',type:'group',_sys:'mpr'
         item {title:'celkové příjmy'             ,par:°{s:'u+mesice',c:'%'}},
         item {title:'příjmy MS'                  ,par:°{s:'u+mesice',c:'MS'}},
         item {title:'příjmy DS'                  ,par:°{s:'u+mesice',c:'DS'}},

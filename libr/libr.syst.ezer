@@ -4,7 +4,7 @@
 map user_state: table _cis {where:"druh='user_state'", key_id:'id_cis'}
 
 #                                                                                                    ČÍSELNÍKY
-panel Ciselnik [,,,474] { title:'Číselníky', //skill:'ys|ys'
+panel Ciselnik [,,,474] { title:'Číselníky', _sys:'cis', //skill:'ys|ys'
   var druh_cond: text
   use klice: form keys [20,7,0,467],
   use klic: form _key [525,13,0,392],
@@ -28,7 +28,7 @@ panel Ciselnik [,,,474] { title:'Číselníky', //skill:'ys|ys'
     reload_key }
   proc reload_key () {
     klic.key_load }
-  #                                                                                                    číselník
+
   form keys [0,0,200,200] {
     button meta [0,1,50,20] { title:'Číselníky',
       proc onclick () {
@@ -78,7 +78,7 @@ panel Ciselnik [,,,474] { title:'Číselníky', //skill:'ys|ys'
       _cis.delete_record(conc("id_cis=",id.get)); reload_keys }
     # události
     proc onsubmit () { key_uloz }
-    button save [11,435,50,15] { type:'submit', title:'Uložit', proc onclick () { key_uloz } },
+    button save [11,435,50,15] { type:'submit',_sys:'ulo', title:'Uložit', proc onclick () { key_uloz } },
     button cancel [101,435,50,11] { title:'Zpět', proc onclick () { key_load } },
     button create [182,435,50,26] { title:'Nový', proc onclick () { key_novy } },
     button delete [262,435,50,26] { title:'Smazat', proc onclick () { key_smaz } },
@@ -87,7 +87,7 @@ panel Ciselnik [,,,474] { title:'Číselníky', //skill:'ys|ys'
 
 #                                                                                                    AKTIVITY
 
-panel Activity [,,,543] { title:'Aktivita', skill:'m|m'
+panel Activity [,,,543] { title:'Aktivita', _sys:'akt', skill:'m|m'
   menu { type:'left'
     menu { title:'Aktivní uživatelé',type:'group'
       item { title:'dnes'               par:°{s:'uzivatele',c:'dnes'}}
@@ -121,7 +121,7 @@ panel Activity [,,,543] { title:'Aktivita', skill:'m|m'
 
 #                                                                                                    UŽIVATELÉ
 
-panel Users [,,,543] { title:'Uživatelé', skill:'m|m'
+panel Users [,,,543] { title:'Uživatelé', _sys:'uzi', skill:'m|m'
   var novy: number,
   use uzivatele: form users [48,29,0,467],
   use uzivatel: form user [494,40,0,428],
@@ -146,6 +146,14 @@ panel Users [,,,543] { title:'Uživatelé', skill:'m|m'
     uzivatel.key; uzivatel.load
   | stop}
 }
+
+#                                                                                                    CHYBA
+
+panel Chyba [,,,543] { title:'Chyba', _sys:'chy', skill:'m|m'
+  proc onfocus() { echo('chyba focus'); error('volání z ezerscriptu') }
+  proc onblur() { echo('chyba blur') }
+}
+
 #
 proc the_formsave (f,b) {
   f.same; stop

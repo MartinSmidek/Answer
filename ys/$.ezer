@@ -1,10 +1,10 @@
 menu ys { type:'main'
   var global: text,
-  tabs info {title:"Informace",  include:'onload' }
-  tabs kasa {title:"Pokladna",  include:'onclick' }
-  tabs ucet {title:"Účetnictví",  include:'onclick' }
-  tabs ds {title:"Dům"
-    panel dum { title:"Objednávky", include:'onload,ds' // musí být onload aby se natáhla knihovna
+  tabs info {title:"Informace", _sys:'inf',  include:'onload' }
+  tabs kasa {title:"Pokladna", _sys:'pok',  include:'onclick' }
+  tabs ucet {title:"Účetnictví", _sys:'uce',  include:'onclick' }
+  tabs ds {title:"Dům", _sys:'dum'
+    panel dum { title:"Objednávky", _sys:'obj', include:'onload,ds' // musí být onload aby se natáhla knihovna
       menu m {type:'left'
         proc onclick(x) { the_order.set(x.par.uid); show_order(x.par.uid) }
       }
@@ -13,11 +13,11 @@ menu ys { type:'main'
       proc show_order (o) { echo('nic') }
     }
     group tab { include:'onload' }
-    panel kl { title:"Klienti", include:'onload' }
+    panel kl { title:"Klienti", _sys:'kli', include:'onload' }
   }
 //#   tabs lide {title:"Lidé",  include:'onclick' }
-  tabs syst {title:"Systém",  include:'onclick,libr.syst' }
-  tabs doc  {title:"Nápověda",  include:'onclick,libr.help' }
+  tabs syst {title:"Systém", _sys:'sys',  include:'onclick,libr.syst' }
+  tabs doc  {title:"Nápověda", _sys:'nap',  include:'onclick,libr.help' }
 //#   tabs test {title:"Test",  where:'http://ys2.ezer/test.html' }
 //#   tabs ys1  {title:"Pokladna/1",  where:'http://ys.ezer/anser.php?modul=ys_pokladna' }
 }
