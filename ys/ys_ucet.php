@@ -118,7 +118,7 @@ function ucet_todo($k1,$k2,$k3=2009,$par=null) {
     else {
       global $ucet_month_min, $ucet_month_max, $ucet_month_max_odhad;
       $ucet_month_min= 1;
-      $ucet_month_max= 6;
+      $ucet_month_max= 8;
       $ucet_month_max_odhad= 12;
       $html.= "<h3 class='CTitle'>Měsíční přehledy výdajů roku $rok</h3>";
       $html.= naklady_mesic($rok,$k3);

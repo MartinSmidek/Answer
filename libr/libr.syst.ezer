@@ -85,6 +85,40 @@ panel Ciselnik [,,,474] { title:'Číselníky', //skill:'ys|ys'
   }
 }
 
+#                                                                                                    AKTIVITY
+
+panel Activity [,,,543] { title:'Aktivita', skill:'m|m'
+  menu { type:'left'
+    menu { title:'Aktivní uživatelé',type:'group'
+      item { title:'dnes'               par:°{s:'uzivatele',c:'dnes'}}
+      item { title:'včera'              par:°{s:'uzivatele',c:'vcera'}}
+      //item { title:'beze mne...'        par:°{s:'uzivatele',c:'all'}}
+    }
+    menu { title:'Aktivní moduly',type:'group'
+      item { title:'dnes'               par:°{s:'moduly',c:'dnes'}}
+      item { title:'včera'              par:°{s:'moduly',c:'vcera'}}
+      //item { title:'beze mne...'        par:°{s:'moduly',c:'all'}}
+    }
+    menu { title:'Chyby',type:'group'
+      item { title:'dnes'               par:°{s:'chyby',c:'dnes'}}
+      item { title:'včera'              par:°{s:'chyby',c:'vcera'}}
+      item { title:'týden'              par:°{s:'chyby',c:'tyden'}}
+      item { title:'měsíc'              par:°{s:'chyby',c:'mesic'}}
+      item { title:'všechna hlášení'    par:°{s:'chyby',c:'vsechny'}}
+      item { title:'čekající BUGs'      par:°{s:'chyby',c:'BUG1'}}
+      item { title:'vyřešené BUGs'      par:°{s:'chyby',c:'BUG2'}}
+      //item { title:'beze mne...'        par:°{s:'chyby',c:'all'}}
+    }
+    proc onclick (m) {
+      u.result.set(conc("<div id='info'>",ask('sys_activity','informace',m.par.s,m.par.c),"</div>"))
+    }
+  }
+  use u: form _touch [12,4,,],
+  form _touch [,,700,50] {
+    label result [0,0,700,600] { title:'' },
+  }
+}
+
 #                                                                                                    UŽIVATELÉ
 
 panel Users [,,,543] { title:'Uživatelé', skill:'m|m'
@@ -118,15 +152,6 @@ proc the_formsave (f,b) {
 | f.key; f.save; f.load; b.browse_seek
 | f.insert; f.load;
   b.raise('onrowclick',b.browse_seek(conc(f.key_id,'=',f.key)))
-}
-
-# ------------------------------------------------------------------------------------------------- _touch
-form _touch [,,700,50] {
-  label volby [0,0,200,600] { title:''
-    proc onmenuclick (s,c) {
-      result.set(conc("<div id='info'>",ask('sys_activity','informace',s,c),"</div>"))}
-  },
-  label result [200,0,700,600] { title:'' },
 }
 
 #                                                                                                    uživatelé
