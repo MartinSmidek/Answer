@@ -182,6 +182,12 @@ function ds_zaloha($order) {  #trace();
     $html= "neúplná objednávka $order";
   return $html;
 }
+# -------------------------------------------------------------------------------------------------- xls_faktura
+# položka,poèet osob,poèet nocí,poèet nocolùžek,cena jednotková,celkem,DPH 9%,DPH 19%,základ
+# *ubytování
+function xls_faktura($ws,$desc) {  #trace();
+
+}
 # -------------------------------------------------------------------------------------------------- ds_faktury
 function ds_faktury($order) {  #trace();
   ezer_connect('setkani');
@@ -209,12 +215,14 @@ function ds_faktury($order) {  #trace();
       $faktury->write_number($fr,1,$fs->pocet);
       $fr++;
       // listy pro jednu rodinu
-      $sez= $wb->add_worksheet("$rod");
+      // seznam
+      $sez= $wb->add_worksheet("$rod-seznam");
       $sez->write_string(0,0,"Seznam úèastníkù pod znaèkou $rod",$f->tit);
       $qry= "SELECT * FROM setkani.ds_osoba
              WHERE id_order=$order AND rodina='{$fs->rodina}' ORDER BY narozeni DESC";
       $reso= mysql_qry($qry);
-      xls_header($sez,$or=2,0,'pøíjmení a jméno:20,adresa:40,narození:10,telefon:10,email:30',$f->hd);
+      xls_header($sez,$or=2,0,'pøíjmení a jméno:20,adresa:40,narození:10,telefon:10,email:30,'
+        .'záloha:10,pokoj:5,lùžko:5,strava:5,poznámka:20',$f->hd);
       while ( $reso && $xo= mysql_fetch_object($reso) ) {
         $or++; $oc= 0;
         $sez->write_string($or,$oc++,"{$xo->prijmeni} {$xo->jmeno}");
@@ -222,7 +230,14 @@ function ds_faktury($order) {  #trace();
         $sez->write_number($or,$oc++,$xo->narozeni,'d.m.y');
         $sez->write_string($or,$oc++,$xo->telefon);
         $sez->write_string($or,$oc++,$xo->email);
+        $sez->write_string($or,$oc++,'');                       // záloha
+        $sez->write_string($or,$oc++,$xo->pokoj);               // pokoj
+        $sez->write_string($or,$oc++,$xo->luzko);
+        $sez->write_string($or,$oc++,$xo->strava ? $xo->strava : $obj->board);
+        $sez->write_string($or,$oc++,$xo->pozn);
       }
+      // faktura
+      $sez= $wb->add_worksheet("$rod-faktura");
     }
     // souèty titulní stránky
     $faktury->write_string($fr,0,'celkem',$f->tit);

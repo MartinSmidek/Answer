@@ -54,7 +54,7 @@ module SOUBORY [0,0,30,12] { active:Posta, units:'px'
 #                                                                                             ---   _TOUCH
 form _touch [,,500,50] {
   label result [0,0,635,600] { title:'' },
-  field finfo [330,50,300,17] { /*css:'zIndex1'*/
+  field finfo [323,50,313,17] { /*css:'zIndex1'*/
     proc onchanged() { P_oprav(finfo.get); finfo.plain }
   },
   button opravit [580,15,50,16] { title:'Ulož', type:'submit', /*css:'zIndex1'*/

@@ -1,0 +1,10 @@
+    panel dum { title:"Objednávky", _sys:'obj', include:'onload,ds' // musí být onload aby se natáhla knihovna
+      menu m {type:'left'
+        proc onclick(x) { the_order.set(x.par.uid); show_order(x.par.uid) }
+      }
+      proc onstart() { m.attach_code(ask('ds_obj_menu')) }
+      var the_order: text
+      proc show_order (o) { echo('nic') }
+    }
+    group tab { include:'onload' }
+    panel kl { title:"Klienti", _sys:'kli', include:'onload' }

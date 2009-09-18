@@ -2,18 +2,19 @@
 // ================================================================================================= AKTIVITY
 # -------------------------------------------------------------------------------------------------- sys_activity
 # vygeneruje přehled aktivit podle menu
-function sys_activity($k1,$k2,$k3) {
+function sys_activity($k) {
+//                                                                 debug($k,'sys_activity');
   global $json, $user_options, $APLIKACE, $USER;
   $user_options= $_SESSION['user_options'];
   $stav_moduly= $user_options->sys_moduly_all ? '' : "bez {$USER->abbr}";
 //   $stav_uzivatele= $user_options->sys_uzivatele_all ? '' : "bez {$USER->abbr}";
   $stav_chyby= $user_options->sys_chyby_all ? '' : "bez {$USER->abbr}";
   $html= "<div class='CSection CMenu'>";
-  switch ( "$k2 $k3" ) {
+  switch ( "{$k->s} {$k->c}" ) {
   case 'moduly all':
   case 'uzivatele all':
   case 'chyby all':
-    $ioptions= "sys_{$k2}_all";
+    $ioptions= "sys_{$k->s}_all";
     if (!isset($user_options->$ioptions) ) $user_options->$ioptions= 0;
     $stav= ($user_options->$ioptions ? 'bez ' : 'včetně ' ).$USER->abbr;
     $user_options->$ioptions= $user_options->$ioptions ? 0 : 1;
@@ -24,25 +25,25 @@ function sys_activity($k1,$k2,$k3) {
     $day= date('j.n.Y');
     $day_mysql= date('Y-m-d');
     $html.= "<h3 class='CTitle'>Aktuální stav užívání $APLIKACE $day $stav_modules</h3>";
-    $html.= sys_day_modules($day_mysql);
+    $html.= sys_day_modules($day_mysql,$k->short);
     break;
   case 'moduly vcera':
     $day= date('j.n.Y',mktime(0,0,0,date("m"),date("d")-1,date("Y")));
     $day_mysql= date('Y-m-d',mktime(0,0,0,date("m"),date("d")-1,date("Y")));
     $html.= "<h3 class='CTitle'>Stav užívání $APLIKACE $day $stav_modules</h3>";
-    $html.= sys_day_modules($day_mysql);
+    $html.= sys_day_modules($day_mysql,$k->short);
     break;
   case 'uzivatele dnes':
     $day= date('j.n.Y');
     $day_mysql= date('Y-m-d');
     $html.= "<h3 class='CTitle'>Aktuální stav užívání $APLIKACE $day $stav_uzivatele</h3>";
-    $html.= sys_day_users($day_mysql);
+    $html.= sys_day_users($day_mysql,$k->short);
     break;
   case 'uzivatele vcera':
     $day= date('j.n.Y',mktime(0,0,0,date("m"),date("d")-1,date("Y")));
     $day_mysql= date('Y-m-d',mktime(0,0,0,date("m"),date("d")-1,date("Y")));
     $html.= "<h3 class='CTitle'>Stav užívání $APLIKACE $day</h3>";
-    $html.= sys_day_users($day_mysql);
+    $html.= sys_day_users($day_mysql,$k->short);
     break;
   case 'chyby dnes':
     $day= date('j.n.Y');
@@ -86,7 +87,7 @@ function sys_activity($k1,$k2,$k3) {
 }
 # -------------------------------------------------------------------------------------------------- sys_day_modules
 # vygeneruje podrobný přehled aktivit pro daný den
-function sys_day_modules($day) {
+function sys_day_modules($day,$short=false) {
   global $user_options, $USER;
   $touch= array();
   $hours= array();
@@ -101,16 +102,21 @@ function sys_day_modules($day) {
     $hours[$hour]= true;
     $module= $row['module'];
     $menu= $row['menu'];
+    if ( $short ) {
+      $ids= explode('.',$menu);
+      $menu= $ids[0];
+    }
     $c= $row['c'];
     if ( !$touch[$menu] ) $touch[$menu]= array(array());
-    $touch[$menu][$hour][0].= " $user";
+    if ( strpos($touch[$menu][$hour][0],$user)==false )
+      $touch[$menu][$hour][0].= " $user";
   }
   $html= sys_table($touch,$hours,'module','#dce7f4');
   return $html;
 }
 # -------------------------------------------------------------------------------------------------- sys_day_users
 # vygeneruje přehled aktivit pro daný den
-function sys_day_users($day) {
+function sys_day_users($day,$short=false) {
   global $user_options, $USER;
   $touch= array();
   $hours= array();
@@ -124,6 +130,11 @@ function sys_day_users($day) {
     $hours[$hour]= true;
     $module= $row['module'];
     $menu= $row['menu'];
+    if ( $short ) {
+      $ids= explode('.',$menu);
+      $menu= $ids[0];
+      $menu= strtr($menu,array("login"=>'&lt',"timeout"=>'&gt'));
+    }
     $c= $row['c'];
     $h= $row['h'];
 //     if ( $module  ) {
@@ -300,7 +311,7 @@ function sys_table($touch,$hours,$type,$color,$config_colors=false) { #trace();
         case 'user':
           if ( $activity[$h] ) {
             $act= implode(' ',array_keys($activity[$h]['touch']));
-            $act= str_replace('LOGIN',"<font color='#ff3333'>LOGIN</font>",$act);
+            $act= str_replace('LOGIN',"<font color='#ff3333'>login</font>",$act);
             $hit= array_sum($activity[$h]['touch']);
             $tit= '';
             foreach ($activity[$h]['touch'] as $menu => $menu_hit ) {

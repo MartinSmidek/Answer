@@ -90,13 +90,17 @@ panel Ciselnik [,,,474] { title:'Číselníky', _sys:'cis', //skill:'ys|ys'
 panel Activity [,,,543] { title:'Aktivita', _sys:'akt', skill:'m|m'
   menu { type:'left'
     menu { title:'Aktivní uživatelé',type:'group'
-      item { title:'dnes'               par:°{s:'uzivatele',c:'dnes'}}
-      item { title:'včera'              par:°{s:'uzivatele',c:'vcera'}}
+      item { title:'dnes'               par:°{s:'uzivatele',c:'dnes',short:'1'}}
+      item { title:'... podrobně'        par:°{s:'uzivatele',c:'dnes',short:'0'}}
+      item { title:'včera'              par:°{s:'uzivatele',c:'vcera',short:'1'}}
+      item { title:'... podrobně'       par:°{s:'uzivatele',c:'dnes',short:'0'}}
       //item { title:'beze mne...'        par:°{s:'uzivatele',c:'all'}}
     }
     menu { title:'Aktivní moduly',type:'group'
-      item { title:'dnes'               par:°{s:'moduly',c:'dnes'}}
-      item { title:'včera'              par:°{s:'moduly',c:'vcera'}}
+      item { title:'dnes'               par:°{s:'moduly',c:'dnes',short:'1'}}
+      item { title:'... podrobně'       par:°{s:'moduly',c:'dnes',short:'0'}}
+      item { title:'včera'              par:°{s:'moduly',c:'vcera',short:'1'}}
+      item { title:'... podrobně'       par:°{s:'moduly',c:'vcera',short:'0'}}
       //item { title:'beze mne...'        par:°{s:'moduly',c:'all'}}
     }
     menu { title:'Chyby',type:'group'
@@ -110,7 +114,7 @@ panel Activity [,,,543] { title:'Aktivita', _sys:'akt', skill:'m|m'
       //item { title:'beze mne...'        par:°{s:'chyby',c:'all'}}
     }
     proc onclick (m) {
-      u.result.set(conc("<div id='info'>",ask('sys_activity','informace',m.par.s,m.par.c),"</div>"))
+      u.result.set(conc("<div id='info'>",ask('sys_activity',m.par),"</div>"))
     }
   }
   use u: form _touch [12,4,,],
