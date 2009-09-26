@@ -1,4 +1,13 @@
 * text=auto !eol
+ch/$.ezer -text
+ch/ch.css.css -text
+ch/ch.ezer -text
+ch/ch_fce.php -text
+ch/code/comp2tab.php -text
+ch/img/+logo.gif -text
+ch/img/-logo.gif -text
+ch/img/ch-logo.gif -text
+ch/img/ch.png -text
 /comp.css -text
 /comp.php -text
 /dbg.html -text
@@ -61,6 +70,7 @@ test/ys_ucetnictvi.php -text
 wiki/dokumentace.wiki -text
 wiki/todo.wiki -text
 ys/$.ezer -text
+ys/img/+logo.gif -text
 ys/img/-logo.gif -text
 ys/img/ys-logo.gif -text
 ys/img/ys.png -text

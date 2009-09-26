@@ -93,7 +93,9 @@ panel Activity [,,,543] { title:'Aktivita', _sys:'akt', skill:'m|m'
       item { title:'dnes'               par:°{s:'uzivatele',c:'dnes',short:'1'}}
       item { title:'... podrobně'        par:°{s:'uzivatele',c:'dnes',short:'0'}}
       item { title:'včera'              par:°{s:'uzivatele',c:'vcera',short:'1'}}
-      item { title:'... podrobně'       par:°{s:'uzivatele',c:'dnes',short:'0'}}
+      item { title:'... podrobně'       par:°{s:'uzivatele',c:'vcera',short:'0'}}
+      item { title:'týden'              par:°{s:'uzivatele',c:'dny',days:'7'}}
+      item { title:'měsíc'              par:°{s:'uzivatele',c:'dny',days:'30'}}
       //item { title:'beze mne...'        par:°{s:'uzivatele',c:'all'}}
     }
     menu { title:'Aktivní moduly',type:'group'
@@ -101,6 +103,8 @@ panel Activity [,,,543] { title:'Aktivita', _sys:'akt', skill:'m|m'
       item { title:'... podrobně'       par:°{s:'moduly',c:'dnes',short:'0'}}
       item { title:'včera'              par:°{s:'moduly',c:'vcera',short:'1'}}
       item { title:'... podrobně'       par:°{s:'moduly',c:'vcera',short:'0'}}
+      item { title:'týden'              par:°{s:'moduly',c:'dny',days:'7'}}
+      item { title:'měsíc'              par:°{s:'moduly',c:'dny',days:'30'}}
       //item { title:'beze mne...'        par:°{s:'moduly',c:'all'}}
     }
     menu { title:'Chyby',type:'group'

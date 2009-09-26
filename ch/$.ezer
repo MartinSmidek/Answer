@@ -1,0 +1,73 @@
+menu ch { type:'main'
+  tabs {title:"MROP"
+    panel [,,,543] {title:"Seznamy", _sys:'den'
+      menu {type:'left',
+        menu {title:'Iniciovaní',type:'group',_sys:'den'
+          item {title:'Seznam (Ivan)'
+            proc onclick() {
+              rm.info.set(msg('Seznam iniciovaných',''));
+              seznam.popup(5,5)
+            }
+          }
+          item {title:'... import'
+            var loaded: text
+            proc onclick() {
+              confirm('opravdu nahradit starý seznam novým importem?');
+              seznam.hide;
+              loaded.set(ask('ch_load_ivan'));
+              rm.info.set(msg('Import iniciovaných',loaded.get('html')))
+            }
+          }
+          item {title:'Seznam (setkani.org)'
+            proc onclick() {
+              seznam.hide;
+              rm.info.set(msg('Seznam uživatelů ve skupině MROP',''))
+            }
+          }
+        }
+      }
+      proc msg (x,y) {
+        return(conc("<div class='CSection CMenu'><h3 class='CTitle'>",x,"</h3></div>",y))
+      }
+      use rm: form right [12,4,,]
+      panel seznam [0,0,645,520] { type:'right'
+        use sz: form _seznam [0,0,,],
+        proc onfocus () {
+          sz.lst.browse_load;
+          sz.lst.browse_focus; sz.lst.raise('onrowclick',1)
+        }
+        form _seznam [,,700,200] {
+          browse lst [11,3,300,100] { rows:26, qry_rows:1
+            show id [,,0,] { data:mrop.id_mrop },
+            show [,,120,] { title:'jméno', data:mrop.jmeno, format:'sq*' },
+            show [,,40,] { title:'psč', data:mrop.psc, format:'sq*' },
+            show [,,80,] { title:'město', data:mrop.mesto, format:'sq*' },
+            show [,,100,] { title:'adresa', data:mrop.adresa, format:'sq*' },
+            show [,,80,] { title:'telefon', data:mrop.telefon, format:'sq*' },
+            show [,,200,] { title:'email', data:mrop.email, format:'sq*' },
+            show [,,40,] { title:'ročník', data:mrop.rocnik, format:'sq*' },
+          }
+        }
+      }
+    }
+  }
+  tabs www {title:"chlapi.setkani.org"  }
+  tabs syst {title:"Systém",  include:'onclick,libr.syst' }
+  tabs doc  {title:"Nápověda",  include:'onclick,libr.help' }
+}
+// univerzální formulář pro levostranné menu
+form right [,,700,50] {
+  label info [0,0,700,600]
+}
+
+// tabulky
+table mrop { key_id:'id_mrop'
+  number id_mrop
+  text jmeno
+  text psc
+  text mesto
+  text adresa
+  text telefon
+  text email
+  number rocnik
+}

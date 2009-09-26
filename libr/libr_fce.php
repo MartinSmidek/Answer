@@ -33,11 +33,23 @@ function sys_activity($k) {
     $html.= "<h3 class='CTitle'>Stav užívání $APLIKACE $day $stav_modules</h3>";
     $html.= sys_day_modules($day_mysql,$k->short);
     break;
+  case 'moduly dny':
+    $day= date('j.n.Y');
+    $day_mysql= date('Y-m-d');
+    $html.= "<h3 class='CTitle'>Historie užívání modulů $APLIKACE $stav_uzivatele</h3>";
+    $html.= sys_days_modules($day_mysql,$k->days,true);
+    break;
   case 'uzivatele dnes':
     $day= date('j.n.Y');
     $day_mysql= date('Y-m-d');
     $html.= "<h3 class='CTitle'>Aktuální stav užívání $APLIKACE $day $stav_uzivatele</h3>";
     $html.= sys_day_users($day_mysql,$k->short);
+    break;
+  case 'uzivatele dny':
+    $day= date('j.n.Y');
+    $day_mysql= date('Y-m-d');
+    $html.= "<h3 class='CTitle'>Historie aktivity uživatelů $APLIKACE $stav_uzivatele</h3>";
+    $html.= sys_days_users($day_mysql,$k->days,true);
     break;
   case 'uzivatele vcera':
     $day= date('j.n.Y',mktime(0,0,0,date("m"),date("d")-1,date("Y")));
@@ -86,14 +98,14 @@ function sys_activity($k) {
   return $html;
 }
 # -------------------------------------------------------------------------------------------------- sys_day_modules
-# vygeneruje podrobný přehled aktivit pro daný den
+# vygeneruje podrobný přehled aktivity modulů pro daný den
 function sys_day_modules($day,$short=false) {
   global $user_options, $USER;
   $touch= array();
   $hours= array();
 //   $and= $user_options->sys_moduly_all ? '' : " AND user!='{$USER->abbr}'";
   $qry= "SELECT day,hour(time) as hour,user,module,menu,count(*) as c FROM _touch
-        WHERE day='$day' AND user!='' AND module='block' $and
+        WHERE day='$day' AND user!='' /*AND module='block'*/ $and
         GROUP BY module,menu,user,hour(time) ORDER BY module,menu";
   $res= mysql_qry($qry);
   while ( $res &&$row= mysql_fetch_assoc($res) ) {
@@ -114,8 +126,40 @@ function sys_day_modules($day,$short=false) {
   $html= sys_table($touch,$hours,'module','#dce7f4');
   return $html;
 }
+# -------------------------------------------------------------------------------------------------- sys_days_modules
+# vygeneruje podrobný přehled aktivity modulů pro dané období (počátek a délka)
+function sys_days_modules($day,$ndays,$short=false) {
+  global $user_options, $USER;
+  $touch= array();
+  $days= array();
+//   $and= $user_options->sys_moduly_all ? '' : " AND user!='{$USER->abbr}'";
+  $qry= "SELECT day,user,module,menu,count(*) as c FROM _touch
+         WHERE day BETWEEN '$day'-INTERVAL $ndays DAY AND '$day' AND user!='' /*AND module='block'*/ $and
+         GROUP BY module,menu,user,day ORDER BY module,menu";
+  $res= mysql_qry($qry);
+  while ( $res &&$row= mysql_fetch_assoc($res) ) {
+    $user= $row['user'];
+    $day= $row['day'];
+    $days[$day]= true;
+    $module= $row['module'];
+    $menu= $row['menu'];
+    if ( $short ) {
+      $ids= explode('.',$menu);
+      $menu= $ids[0];
+    }
+//                                                 display("den=$day");
+    $c= $row['c'];
+    if ( !$touch[$menu] ) $touch[$menu]= array();
+    if ( !$touch[$menu][$day] ) $touch[$menu][$day]= array();
+    if ( strpos($touch[$menu][$day][0],$user)==false )
+      $touch[$menu][$day][0].= " $user";
+  }
+//                                                 debug($touch,'$touch');
+  $html= sys_days_table($touch,$days,'module','#dce7f4');
+  return $html;
+}
 # -------------------------------------------------------------------------------------------------- sys_day_users
-# vygeneruje přehled aktivit pro daný den
+# vygeneruje přehled aktivit uživatelů pro daný den
 function sys_day_users($day,$short=false) {
   global $user_options, $USER;
   $touch= array();
@@ -143,13 +187,43 @@ function sys_day_users($day,$short=false) {
       if ( !isset($touch[$user][$hour]['touch'][$menu]) )
         $touch[$user][$hour]['touch'][$menu]= 1;
       $touch[$user][$hour]['touch'][$menu]+= $h;
-//       if ( !isset($touch[$user][$hour]['module'][$module]) )
-//         $touch[$user][$hour]['module'][$module]+= $h;
-//       if ( !isset($touch[$user][$hour]['menu']["$module.$menu"]) )
-//         $touch[$user][$hour]['menu']["$module.$menu"]+= $h;
-//     }
   }
   $html= sys_table($touch,$hours,'user','#e7e7e7',true); // použít tabulku barev, je-li v config
+  return $html;
+}
+# -------------------------------------------------------------------------------------------------- sys_days_users
+# vygeneruje přehled aktivit uživatelů pro dané období (počátek a délka)
+function sys_days_users($day,$ndays,$short=false) {
+  global $user_options, $USER;
+  $touch= array();
+  $days= array();
+//   $and= $user_options->sys_uzivatele_all ? '' : " AND user!='{$USER->abbr}'";
+  $qry= "SELECT day,user,module,menu,count(*) as c,sum(hits) as h FROM _touch
+         WHERE day BETWEEN '$day'-INTERVAL $ndays DAY AND '$day' AND user!='' $and
+         GROUP BY user,module,menu,day ORDER BY user,day";
+  $res= mysql_qry($qry);
+  while ( $res &&$row= mysql_fetch_assoc($res) ) {
+    $user= $row['user'];
+    $day= $row['day'];
+    $days[$day]= true;
+    $module= $row['module'];
+    $menu= $row['menu'];
+    if ( $short ) {
+      $ids= explode('.',$menu);
+      $menu= $ids[0];
+      $menu= strtr($menu,array("login"=>'&lt',"timeout"=>'&gt'));
+    }
+    $c= $row['c'];
+    $h= $row['h'];
+//     if ( $module  ) {
+      if ( !$touch[$user] ) $touch[$user]= array();
+      if ( !$touch[$user][$day] ) $touch[$user][$day]= array();
+      if ( !isset($touch[$user][$day]['touch'][$menu]) )
+        $touch[$user][$day]['touch'][$menu]= 1;
+      $touch[$user][$day]['touch'][$menu]+= $h;
+  }
+//                                                 debug($touch,'$touch');
+  $html= sys_days_table($touch,$days,'user','#e7e7e7',true); // použít tabulku barev, je-li v config
   return $html;
 }
 # -------------------------------------------------------------------------------------------------- sys_bugs
@@ -311,7 +385,6 @@ function sys_table($touch,$hours,$type,$color,$config_colors=false) { #trace();
         case 'user':
           if ( $activity[$h] ) {
             $act= implode(' ',array_keys($activity[$h]['touch']));
-            $act= str_replace('LOGIN',"<font color='#ff3333'>login</font>",$act);
             $hit= array_sum($activity[$h]['touch']);
             $tit= '';
             foreach ($activity[$h]['touch'] as $menu => $menu_hit ) {
@@ -338,6 +411,83 @@ function sys_table($touch,$hours,$type,$color,$config_colors=false) { #trace();
     }
     $tab.= "</table>";
   }
+  return $tab;
+}
+# -------------------------------------------------------------------------------------------------- sys_days_table
+# zobrazí přehled aktivit pro období, pokud není uvedeno $color, použije se definice barev
+# z config.php $EZER->activity->colors= "80:#f0d7e4,40:#e0d7e4,20:#dce7f4,0:#e7e7e7"; (sestupně)
+# (pokud je h>hi použije se jako podklad colori)
+# $type= user|module
+function sys_days_table($touch,$days,$type,$color,$config_colors=false) { #trace();
+//                                                 display("sys_table($touch,$hours,$color,$config_colors)");
+  $tab= '';
+  // tabulka barev pro hit>0
+  global $EZER;
+  $colors= array();
+  if ( $config_colors ) {
+    foreach ( explode(',',$EZER->activity->colors) as $mezclr) {
+      list($mez,$clr)= explode(':',$mezclr);
+      $colors[$mez]= $clr;
+    }
+  }
+  $colors[0]= '#e7e7e7';  // zarážka nakonec
+//                                                 debug($colors);
+  $xdays= array();
+  foreach ( $touch as $user => $activity ) {
+    foreach ($activity as $day => $desc ) {
+      if ( !$xdays[$day] ) {
+        $date= mktime(0,0,0,substr($day,5,2),substr($day,8,2),substr($day,0,4));
+        $xdays[$day]= $date;
+      }
+    }
+  }
+  krsort($xdays);
+  // vykreslení tabulky
+  $wt= '100%';
+  $wt= '';
+  $wh= 100/count($xdays).'%';
+  $wh= 50;
+  // čas
+  $tab.= "<table width='$wt'><tr><th width='50'></th>";
+  foreach ($xdays as $day=>$date) $tab.= "<th width='$wh'>".date('d/m',$date)."</th>";
+  $tab.= "</tr>";
+  foreach ( $touch as $user => $activity ) {
+    $tab.= "<tr><td>$user</td>";
+    foreach ($xdays as $h=>$disp) {
+      switch ( $type ) {
+      case 'module':
+        $act= $activity[$h][0] ? $activity[$h][0] : "";
+        $bg= $act ? "bgcolor='$color'" : '';
+        $tab.= "<td $bg>$act</td>";
+        break;
+      case 'user':
+        if ( $activity[$h] ) {
+          $act= implode(' ',array_keys($activity[$h]['touch']));
+          $hit= array_sum($activity[$h]['touch']);
+          $tit= '';
+          foreach ($activity[$h]['touch'] as $menu => $menu_hit ) {
+            $tit.= " $menu_hit*$menu ";
+          }
+          $bg= '';
+          if ( $act ) {
+            // volba barvy
+            foreach ($colors as $mez => $clr) {
+              if ( $hit>=$mez ) {
+                $bg= "bgcolor='$clr'";
+                break;
+              }
+            }
+          }
+          $tab.= "<td $bg title='$tit, celkem $hit'>$act</td>";
+        }
+        else
+          $tab.= "<td></td>";
+        break;
+      }
+    }
+    $tab.= "</tr>";
+  }
+  $tab.= "</table>";
   return $tab;
 }
 ?>

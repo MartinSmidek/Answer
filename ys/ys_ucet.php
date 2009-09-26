@@ -224,6 +224,8 @@ function proj_export($rok,$co) { #trace();
              "tisk materiálů" => (object)array(    'i'=>'n_tis',   't'=>5182, 'u'=>array('518281|518280')),
              "ubytování a stravování" => (object)array(
                                                    'i'=>'n_uby',   't'=>5189, 'u'=>array('518900|518901')),
+             "ubytování a stravování" => (object)array(
+                                                   'i'=>'n_uby',   't'=>5189, 'u'=>array('518900|518901')),
              "svoz odpadu" => (object)array(       'i'=>'n_odpad', 't'=>5182, 'u'=>array('518271|518270')),
              "jiné služby" => (object)array(       'i'=>'n_slu',   't'=>5182, 'u'=>array('518200|518202|518201'))
            ),

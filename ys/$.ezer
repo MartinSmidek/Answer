@@ -4,9 +4,10 @@ menu ys { type:'main'
   tabs kasa {title:"Pokladna", _sys:'pok',  include:'onclick' }
   tabs ucet {title:"Účetnictví", _sys:'uce',  include:'onclick' }
   tabs ds {title:"Dům", _sys:'dum', include:'onclick' }
+  tabs chl {title:"Chlapi",  include:'onclick' }
 //#   tabs lide {title:"Lidé",  include:'onclick' }
-  tabs syst {title:"Systém", _sys:'sys',  include:'onclick,libr.syst' }
-  tabs doc  {title:"Nápověda", _sys:'nap',  include:'onclick,libr.help' }
+  tabs syst {title:"Systém", _sys:'sys',  include:'onclick,ezer2.syst' }
+  tabs doc  {title:"Nápověda", _sys:'nap',  include:'onclick,ezer2.help' }
 //#   tabs test {title:"Test",  where:'http://ys2.ezer/test.html' }
 //#   tabs ys1  {title:"Pokladna/1",  where:'http://ys.ezer/anser.php?modul=ys_pokladna' }
 }
