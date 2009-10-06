@@ -1,51 +1,103 @@
 menu ch { type:'main'
-  tabs {title:"MROP"
-    panel [,,,543] {title:"Seznamy", _sys:'den'
+  tabs mro {title:"MROP", active:mro.sez
+    panel mai [,,,543] {title:"Maily", _sys:'mai'
+      menu m {type:'left', active:m.testy.a
+        menu testy {title:'Test',type:'group',_sys:'tst'
+          item a {title:'test'
+            proc onclick(i) {
+              tm.info.set(msg('mail na smidek@prglas.cz',ask('ch_smtp','one')))
+            }
+          }
+          item c {title:'clear'
+            proc onclick(i) {
+              tm.info.set(msg('cleared',''))
+            }
+          }
+        }
+      }
+      use tm: form right [12,4,,]
+    }
+    panel sez [,,,543] {title:"Seznamy", _sys:'den'
+      var result:text
       menu {type:'left',
         menu {title:'Iniciovaní',type:'group',_sys:'den'
-          item {title:'Seznam (Ivan)'
-            proc onclick() {
-              rm.info.set(msg('Seznam iniciovaných',''));
-              seznam.popup(5,5)
+          item {title:'Oficiální seznam (Ivan)'
+            proc onclick(i) {
+              www.hide; rm.info.set(msg('Seznam iniciovaných','')); ofic.popup(5,5)
             }
           }
           item {title:'... import'
             var loaded: text
             proc onclick() {
               confirm('opravdu nahradit starý seznam novým importem?');
-              seznam.hide;
-              loaded.set(ask('ch_load_ivan'));
+              www.hide; ofic.hide; loaded.set(ask('ch_load_ivan'));
               rm.info.set(msg('Import iniciovaných',loaded.get('html')))
             }
           }
-          item {title:'Seznam (setkani.org)'
+          item {title:'... duplicita mailu'
             proc onclick() {
-              seznam.hide;
-              rm.info.set(msg('Seznam uživatelů ve skupině MROP',''))
+              www.hide; ofic.hide; result.set(ask('ch_duplicita_ivan'));
+              rm.info.set(msg('Seznam duplicit mailů',result.get('html')))
+            }
+          }
+          item {title:'Seznam na chlapi.setkani.org'
+            proc onclick() {
+              ofic.hide; rm.info.set(msg('Seznam uživatelů ve skupině MROP','')); www.popup(5,5)
+            }
+          }
+          item {title:'... kód pro doplnění o letošní'
+            var navrhy:text
+            proc onclick() {
+              ofic.hide; www.hide; navrhy.set(ask('ch_kod'));
+              rm.info.set(msg('uživatelská jména',navrhy.get('html')))
+            }
+          }
+          item {title:'... duplicita jména'
+            proc onclick() {
+              www.hide; ofic.hide; result.set(ask('ch_duplicita_www'));
+              rm.info.set(msg('Seznam duplicit jmen',result.get('html')))
             }
           }
         }
       }
-      proc msg (x,y) {
-        return(conc("<div class='CSection CMenu'><h3 class='CTitle'>",x,"</h3></div>",y))
-      }
       use rm: form right [12,4,,]
-      panel seznam [0,0,645,520] { type:'right'
-        use sz: form _seznam [0,0,,],
+      panel ofic [0,0,645,520] { type:'right'
+        use so: form _ofic [0,0,,]
         proc onfocus () {
-          sz.lst.browse_load;
-          sz.lst.browse_focus; sz.lst.raise('onrowclick',1)
+          so.lst.browse_load; so.lst.browse_focus; so.lst.raise('onrowclick',1)
         }
-        form _seznam [,,700,200] {
+        form _ofic [,,700,200] {
+          view user: table fe_users { join_type:'LEFT', join:"ON mrop.email=user.email && mrop.email!=''" }
           browse lst [11,3,300,100] { rows:26, qry_rows:1
-            show id [,,0,] { data:mrop.id_mrop },
-            show [,,120,] { title:'jméno', data:mrop.jmeno, format:'sq*' },
-            show [,,40,] { title:'psč', data:mrop.psc, format:'sq*' },
-            show [,,80,] { title:'město', data:mrop.mesto, format:'sq*' },
-            show [,,100,] { title:'adresa', data:mrop.adresa, format:'sq*' },
-            show [,,80,] { title:'telefon', data:mrop.telefon, format:'sq*' },
-            show [,,200,] { title:'email', data:mrop.email, format:'sq*' },
-            show [,,40,] { title:'ročník', data:mrop.rocnik, format:'sq*' },
+            show id [,,30,] { title:'id', data:mrop.id_mrop, format:'rsq*' },
+            show wu [,,60,] { title:'www', data:user.username, format:'sq*' },
+            show mu [,,60,] { title:'návrh', data:mrop.username, format:'sq*' },
+            show j [,,120,] { title:'jméno', data:mrop.jmeno, format:'sq*' },
+            show p [,,40,] { title:'psč', data:mrop.psc, format:'sq*' },
+            show m [,,80,] { title:'město', data:mrop.mesto, format:'sq*' },
+#             show a [,,100,] { title:'adresa', data:mrop.adresa, format:'sq*' },
+#             show t [,,80,] { title:'telefon', data:mrop.telefon, format:'sq*' },
+            show e [,,200,] { title:'email', data:mrop.email, format:'sq*' },
+            show r [,,40,] { title:'ročník', data:mrop.rocnik, format:'sq*' },
+          }
+        }
+      }
+      panel www [0,0,645,520] { type:'right'
+        use sw: form _www [0,0,,],
+        proc onfocus () {
+          sw.lst.browse_load;
+          sw.lst.browse_focus; sw.lst.raise('onrowclick',1)
+        }
+        form _www [,,700,200] {
+          browse lst [11,3,300,100] { rows:26, qry_rows:1
+            show id [,,30,] { title:'id', data:fe_users.uid, format:'rsq*' },
+            show [,,60,] { title:'user', data:fe_users.username, format:'sq*' },
+            show [,,80,] { title:'pass', data:fe_users.password, format:'sq*' },
+            show [,,80,] { title:'příjmení', data:fe_users.name, format:'sq*' },
+            show [,,80,] { title:'jméno', data:fe_users.firstname, format:'sq*' },
+            show [,,50,] { title:'skupiny', data:fe_users.usergroup, format:'sq*' },
+            show [,,150,] { title:'email', data:fe_users.email, format:'sq*' },
+            show [,,80,] { title:'poznámka', data:fe_users.note, format:'sq*' },
           }
         }
       }
@@ -54,6 +106,10 @@ menu ch { type:'main'
   tabs www {title:"chlapi.setkani.org"  }
   tabs syst {title:"Systém",  include:'onclick,libr.syst' }
   tabs doc  {title:"Nápověda",  include:'onclick,libr.help' }
+  // obecné procedury
+  proc msg (x,y) {
+    return(conc("<div class='CSection CMenu'><h3 class='CTitle'>",x,"</h3></div>",y))
+  }
 }
 // univerzální formulář pro levostranné menu
 form right [,,700,50] {
@@ -63,6 +119,7 @@ form right [,,700,50] {
 // tabulky
 table mrop { key_id:'id_mrop'
   number id_mrop
+  text www_user         // username v fe_users
   text jmeno
   text psc
   text mesto
@@ -70,4 +127,21 @@ table mrop { key_id:'id_mrop'
   text telefon
   text email
   number rocnik
+}
+table fe_users { db:'setkani', key_id:'uid'
+  number uid
+  text username         { sql_pipe:'wu' }
+  text password         { sql_pipe:'wu' }
+  text usergroup        { sql_pipe:'wu' }
+  text telephone        { sql_pipe:'wu' }
+  text addressup        { sql_pipe:'wu' }
+  text email            { sql_pipe:'wu' }
+  text zip              { sql_pipe:'wu' }
+  text city             { sql_pipe:'wu' }
+  text country          { sql_pipe:'wu' }
+  text firstname        { sql_pipe:'wu' }
+  text name             { sql_pipe:'wu' }
+  number lastlogin
+  number userlevel
+  text note             { sql_pipe:'wu' }
 }

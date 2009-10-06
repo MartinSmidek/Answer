@@ -11,43 +11,27 @@ FileFormat=0
 ProjectFilesOnly=0
 [Project tree]
 kEzer-ys2
-	+ch
-		-data
-			ch\data\iniciace_adresare.csv
-		ch\$.ezer
-		ch.html
-		ch.php
-		ch\ch.ezer
-		ch\ch.css.css
-		ch\ch_fce.php
-	-comp
-		comp.css
-		comp.php
-	-doc
-		wiki\todo.wiki
-		wiki\dokumentace.wiki
-		docs\2008_ciselnik_akci.txt
 	-ezer2
 		+libr
 			ezer2\$.ezer
 			ezer2\ezer2.help.ezer
 			ezer2\ezer2.syst.ezer
 			ezer2\ezer2_fce.php
-		-client
+		+client
 			ezer2\client\app.js
 			ezer2\client\dbg.css
 			ezer2\client\ezer.js
 			ezer2\client\lib.js
 			ezer2\client\dbg.js
 			ezer2\client\ezer_report.js
-		-client f
+		+client f
 			ezer2\client\appf.css
 			dbg.html
 			ezer2\client\dbgf.html
 			ezer2\client\ezer_fdom1.js
 			ezer2\client\ezer_fdom2.js
 			ezer2\client\natdocs.css
-		-server
+		+server
 			ezer2\server\ae_slib.php
 			ezer2\server\comp2.php
 			ezer2\server\comp2def.php
@@ -61,7 +45,14 @@ kEzer-ys2
 			ezer2\wiki\guide.wiki
 			ezer2\wiki\meta.wiki
 			ezer2\wiki\todo.wiki
-	+system
+	-comp
+		comp.css
+		comp.php
+	-doc
+		wiki\todo.wiki
+		wiki\dokumentace.wiki
+		docs\2008_ciselnik_akci.txt
+	-system
 		..\..\..\..\WINDOWS\system32\drivers\etc\hosts
 		..\..\..\Apache\conf\extra\httpd-vhosts-ezer.conf
 		..\..\..\Apache\logs\ys2-error.log
@@ -94,7 +85,7 @@ kEzer-ys2
 		test\test.ys_ucetnictvi.ezer
 		test\test.ysp.ezer
 		test\ys.css.css
-	+ys
+	-ys
 		ys\$.ezer
 		ys\ys.css.css
 		ys\ys.doc.ezer
@@ -120,194 +111,87 @@ kEzer-ys2
 		ds\ds.ezer
 		ds\ds.tab.ezer
 		..\..\setkani\prog\alberice.php
+	+ch
+		+ms.liskutin.cz
+			..\www-ms\kenegdo.php
+		+www.setkani.org
+			..\..\setkani\prog\switch.php
+			..\..\setkani\prog\site.php
+		-data
+			ch\data\iniciace_adresare.csv
+		ch\$.ezer
+		ch.html
+		ch.php
+		ch\ch.ezer
+		ch\ch.css.css
+		ch\ch_fce.php
 [Open project files]
 0=ezer2\server\comp2.php
-1=ezer2\server\ae_slib.php
-2=ezer2\server\ezer2.php
-3=comp.php
-4=..\..\..\Apache\logs\ys2-error.log
-5=ezer2\client\appf.css
-6=ezer2\client\ezer_fdom1.js
-7=ezer2\client\app.js
-8=ezer2\client\dbg.js
-9=ezer2\client\ezer.js
-10=ezer2\client\ezer_fdom2.js
-11=ds.html
-12=ds_test.html
-13=ds\fce.js
-14=ys\$.ezer
-15=ys\ys.info.ezer
-16=ys\ys.ucet.ezer
-17=ys\ys_ucet.php
-18=ds\ds_fce.php
-19=ds\ds.ezer
-20=ys\ys.ds.kl.ezer
-21=ds\ds.tab.ezer
-22=ds\ds.dum.ezer
-23=ys.html
-24=ys.php
-25=ds.php
-26=ys\ys_fce.php
-27=..\..\setkani\prog\alberice.php
-28=ezer2\server\comp2def.php
-29=ezer2\client\ezer_report.js
-30=ys\ys.kasa.ezer
-31=test.html
-32=ezer2\client\lib.js
-33=ys\ys.css.css
-34=ezer2\server\session.php
-35=ezer2\ezer2.syst.ezer
-36=ch\$.ezer
-37=ch\ch.ezer
-38=ch.php
-39=ch.html
-40=ch\ch_fce.php
+1=ezer2\server\ezer2.php
+2=..\..\..\Apache\logs\ys2-error.log
+3=ezer2\client\app.js
+4=ezer2\client\ezer_fdom1.js
+5=ezer2\client\ezer.js
+6=ezer2\client\ezer_fdom2.js
+7=ch.php
+8=ch\$.ezer
+9=ch\ch_fce.php
+10=..\www-ms\kenegdo.php
+11=ezer2\server\ae_slib.php
+12=..\..\setkani\prog\switch.php
+13=..\..\setkani\prog\site.php
 [Selected Project Files]
 Main=
-Selected=ch\$.ezer
+Selected=..\..\setkani\prog\switch.php
 [ezer2\server\comp2.php]
-TopLine=925
-Caret=21,946
-Mark1=27,150
-Mark2=60,233
-Mark3=1,90
-Mark4=115,562
-Mark5=29,358
-Mark6=36,550
-[ezer2\server\ae_slib.php]
-TopLine=378
-Caret=1,423
+TopLine=1103
+Caret=90,1136
+Mark1=19,1130
+Mark2=33,1408
+Mark3=69,1426
 [ezer2\server\ezer2.php]
-TopLine=18
-Caret=11,46
-Mark1=6,544
-Mark2=31,66
-[comp.php]
-TopLine=36
-Caret=41,67
+TopLine=932
+Caret=1,966
+Mark1=6,578
+Mark2=31,83
 [..\..\..\Apache\logs\ys2-error.log]
-TopLine=1427
-Caret=10,1451
-[ezer2\client\appf.css]
-TopLine=320
-Caret=18,335
+TopLine=3324
+Caret=11,1506
+[ezer2\client\app.js]
+TopLine=1
+Caret=1,1
 [ezer2\client\ezer_fdom1.js]
-TopLine=188
+TopLine=212
 Caret=13,212
 Mark1=5,220
 Mark2=5,20
-[ezer2\client\app.js]
-TopLine=80
-Caret=69,87
-Mark1=69,309
-Mark2=1,94
-[ezer2\client\dbg.js]
-TopLine=303
-Caret=40,311
 [ezer2\client\ezer.js]
-TopLine=1603
-Caret=1,1620
-Mark1=42,798
-Mark2=59,2283
-Mark3=24,3814
-Mark4=32,2916
+TopLine=397
+Caret=92,433
+Mark1=1,563
+Mark2=74,487
 [ezer2\client\ezer_fdom2.js]
-TopLine=265
-Caret=1,265
-Mark1=47,946
-Mark2=25,1039
-Mark3=1,473
-[ds.html]
-TopLine=1
-Caret=1,17
-[ds_test.html]
-TopLine=1
-Caret=39,31
-[ds\fce.js]
-TopLine=1
-Caret=65,25
-[ys\$.ezer]
-TopLine=1
-Caret=11,7
-[ys\ys.info.ezer]
-TopLine=1
-Caret=51,10
-[ys\ys.ucet.ezer]
-TopLine=88
-Caret=1,136
-[ys\ys_ucet.php]
-TopLine=697
-Caret=95,728
-Mark1=28,418
-Mark2=29,533
-Mark3=23,756
-[ds\ds_fce.php]
-TopLine=369
-Caret=1,394
-[ds\ds.ezer]
-TopLine=1
-Caret=30,10
-[ys\ys.ds.kl.ezer]
-TopLine=1
-Caret=1,25
-[ds\ds.tab.ezer]
-TopLine=1
-Caret=49,37
-[ds\ds.dum.ezer]
-TopLine=1
-Caret=1,1
-[ys.html]
-TopLine=1
-Caret=54,17
-[ys.php]
-TopLine=1
-Caret=1,50
-[ds.php]
-TopLine=1
-Caret=69,28
-[ys\ys_fce.php]
-TopLine=1
-Caret=1,1
-[..\..\setkani\prog\alberice.php]
-TopLine=1073
-Caret=10,1095
-Mark1=50,1135
-[ezer2\server\comp2def.php]
-TopLine=240
-Caret=1,270
-[ezer2\client\ezer_report.js]
-TopLine=445
-Caret=1,483
-[ys\ys.kasa.ezer]
-TopLine=441
-Caret=51,484
-[test.html]
-TopLine=16
-Caret=48,75
-[ezer2\client\lib.js]
-TopLine=18
-Caret=41,56
-[ys\ys.css.css]
-TopLine=1
-Caret=50,1
-[ezer2\server\session.php]
-TopLine=76
-Caret=19,92
-[ezer2\ezer2.syst.ezer]
-TopLine=112
-Caret=71,132
-[ch\$.ezer]
-TopLine=1
-Caret=20,13
-[ch\ch.ezer]
-TopLine=1
-Caret=1,1
+TopLine=479
+Caret=33,508
+Mark1=69,254
 [ch.php]
 TopLine=1
-Caret=1,50
-[ch.html]
+Caret=1,39
+[ch\$.ezer]
 TopLine=1
-Caret=103,38
+Caret=8,8
 [ch\ch_fce.php]
-TopLine=9
-Caret=35,62
+TopLine=1
+Caret=5,8
+[..\www-ms\kenegdo.php]
+TopLine=1
+Caret=24,8
+[ezer2\server\ae_slib.php]
+TopLine=1
+Caret=1,1
+[..\..\setkani\prog\switch.php]
+TopLine=538
+Caret=23,549
+[..\..\setkani\prog\site.php]
+TopLine=1
+Caret=1,1

@@ -1,21 +1,28 @@
-menu {type:'left',
+menu m {type:'left'//, active:m.vla.r09
   menu vla {title:'Účetní deník',type:'group'
     item r08 {title:'Rok 2008', par:°{rok:2008} }
     item r09 {title:'Rok 2009', par:°{rok:2009} }
   }
+  menu x {title:'x',type:'group'
+    item y {title:'Rok 2010', par:°{rok:2010} }
+  }
   proc onclick (i) {
-     r.hide;
+#      r.hide;
      echo(i._id,':',i.par.rok);
-     { eq(i._id,'r09'); r.popup()}
+     u.result.set(i._id,':',i.par.rok);
+#      { eq(i._id,'r09'); r.popup()}
+  }
+  proc onstart () {
+    x.y.click
   }
 }
-  panel r { type:'right'
-    use v: form g [0,0,,]
-  }
+# panel r { type:'right'
+#   use v: form g [0,0,,]
+# }
 use u: form f [0,0,,]
 form f {
   label result [0,0,600,] { title:'--' }
 }
-form g {
-  label neco [0,0,600,] { title:'POZNAMKA ...' }
-}
+# form g {
+#   label neco [0,0,600,] { title:'POZNAMKA ...' }
+# }

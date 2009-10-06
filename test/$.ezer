@@ -1,6 +1,6 @@
-menu test { type:'main'
+menu test { type:'main', active:*
   var global: text,
-  tabs elem {title:"Testy",
+  tabs elem {title:"Testy" //, active:*
     panel grp {title:"Group", include:'onclick'
       menu {type:'left',
         menu {title:'Příklady objednávek',type:'group'
@@ -14,7 +14,7 @@ menu test { type:'main'
     }
     panel con {title:"Const", include:'onclick'}
     panel tst {title:"Test", include:'onclick'}
-    panel ski {title:"Skill", include:'onclick'}
+    panel ski {title:"Skill", skill:'XXL', include:'onclick'}
     panel sel {title:"Select", include:'onclick'}
     panel bro {title:"Browse", include:'onclick'}
     panel tab {title:"Table", include:'onclick'}
@@ -27,16 +27,18 @@ menu test { type:'main'
     panel dat {title:"Date", include:'onclick'}
     panel men {title:"Menu", include:'onclick'}
     panel err {title:"Error", include:'onclick'}
+    proc onstart() {
+    }
   }
-  tabs sys { title:'Systém' include:'onclick,libr.syst' }
-  tabs hlp {title:"Nápověda",  include:'onclick,libr.help' }
-  tabs fce {title:"Balíky",  include:'onclick' }
+  tabs sys { title:'Systém' include:'onclick,libr.syst' active:* }
+  tabs hlp {title:"Nápověda",  include:'onload,libr.help' active:* }
+  tabs fce {title:"Balíky",  include:'onclick' active:* }
 #   tabs doc {title:"Dokumentace",  include:'onclick' }
-  tabs url {title:"Url",  where:'http://ys2.ezer/ys.html' }
+  tabs url {title:"Url",  where:'http://ys2.ezer/ys.html' active:* }
 #   tabs ys_lide {title:"YS-lidé",  include:'onclick' }
 #   tabs ys_ucetnictvi {title:"YS-účetnictví",  include:'onclick' }
 #   tabs ys_pokladna {title:"YS-pokladna",  include:'onclick' }
-  tabs stx {title:"Syntax", include:'onclick'}
+  tabs stx {title:"Syntax", include:'onclick' active:* }
 
   group mm {
     map m: table t {where:'1', order:'id_t'}
@@ -46,6 +48,10 @@ menu test { type:'main'
     text tx
     date datum
   }
+#   proc onstart() {
+#     elem.focus;
+#     elem.men.focus;
+#   }
 }
 
 

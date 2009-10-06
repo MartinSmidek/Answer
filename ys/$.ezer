@@ -4,7 +4,7 @@ menu ys { type:'main'
   tabs kasa {title:"Pokladna", _sys:'pok',  include:'onclick' }
   tabs ucet {title:"Účetnictví", _sys:'uce',  include:'onclick' }
   tabs ds {title:"Dům", _sys:'dum', include:'onclick' }
-  tabs chl {title:"Chlapi",  include:'onclick' }
+#   tabs chl {title:"Chlapi",  include:'onclick' }
 //#   tabs lide {title:"Lidé",  include:'onclick' }
   tabs syst {title:"Systém", _sys:'sys',  include:'onclick,ezer2.syst' }
   tabs doc  {title:"Nápověda", _sys:'nap',  include:'onclick,ezer2.help' }
