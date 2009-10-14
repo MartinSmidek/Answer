@@ -13,7 +13,12 @@ menu m {type:'left'
     u.htm.set(info.get('html'))
   }
 }
-proc onstart() { m.attach_code(ask('ds_kli_menu')) }
+var mn: text
+proc onstart() {
+  mn.set(ask('ds_kli_menu'));
+  m.attach_code(mn.get('code'));
+  m.part(mn.get('the')).click
+}
 
 proc tit (x) { return(conc("<div class='CSection CMenu'><h3 class='CTitle'>",x,"</h3></div>")) }
 

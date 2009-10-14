@@ -1,6 +1,6 @@
-menu test { type:'main', active:*
+menu test { type:'main', active:* //test.inc
   var global: text,
-  tabs elem {title:"Testy" //, active:*
+  tabs elem {title:"Testy", active:*
     panel grp {title:"Group", include:'onclick'
       menu {type:'left',
         menu {title:'Příklady objednávek',type:'group'
@@ -30,16 +30,13 @@ menu test { type:'main', active:*
     proc onstart() {
     }
   }
-  tabs sys { title:'Systém' include:'onclick,libr.syst' active:* }
-  tabs hlp {title:"Nápověda",  include:'onload,libr.help' active:* }
+  tabs inc {title:"Include", include:'onclick'}
+  tabs lib {title:"IncludeLib", include:'onload,ttt'}
+  tabs sys {title:'Systém' include:'onclick,ezer2.syst' active:* }
+  tabs hlp {title:"Nápověda",  include:'onclick,ezer2.help' active:* }
   tabs fce {title:"Balíky",  include:'onclick' active:* }
-#   tabs doc {title:"Dokumentace",  include:'onclick' }
   tabs url {title:"Url",  where:'http://ys2.ezer/ys.html' active:* }
-#   tabs ys_lide {title:"YS-lidé",  include:'onclick' }
-#   tabs ys_ucetnictvi {title:"YS-účetnictví",  include:'onclick' }
-#   tabs ys_pokladna {title:"YS-pokladna",  include:'onclick' }
   tabs stx {title:"Syntax", include:'onclick' active:* }
-
   group mm {
     map m: table t {where:'1', order:'id_t'}
   }
@@ -48,12 +45,7 @@ menu test { type:'main', active:*
     text tx
     date datum
   }
-#   proc onstart() {
-#     elem.focus;
-#     elem.men.focus;
-#   }
 }
-
 
 table ms_druhakce {
   text nazev
@@ -187,5 +179,3 @@ table ms_deti {
   number rodcislo
   text poznamka
 }
-
-

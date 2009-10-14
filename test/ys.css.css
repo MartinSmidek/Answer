@@ -2,6 +2,7 @@
 
 /* úpravy standardu */
 .ae_inp         { position:absolute; }
+#kuk            { height:350px !important; }
 
 .MyCheck {
   margin-left:3px; }

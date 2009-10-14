@@ -1,5 +1,0 @@
-menu libr { type:'main'
-  tabs syst {title:"Systém",  include:'onclick' }
-  tabs help {title:"Dokumentace",  include:'onclick' }
-}
-

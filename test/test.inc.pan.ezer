@@ -1,0 +1,4 @@
+var x:number
+  proc onstart() {
+    echo('2')
+  }

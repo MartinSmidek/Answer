@@ -118,11 +118,16 @@ function ucet_todo($k1,$k2,$k3=2009,$par=null) {
     else {
       global $ucet_month_min, $ucet_month_max, $ucet_month_max_odhad;
       $ucet_month_min= 1;
-      $ucet_month_max= 8;
-      $ucet_month_max_odhad= 12;
+      $ucet_month_max= 12;
+      if ( $_SESSION['rok']==date('Y') ) {
+        $ucet_month_max= 8;
+        $ucet_month_max_odhad= 12;
+      }
       $html.= "<h3 class='CTitle'>Měsíční přehledy výdajů roku $rok</h3>";
       $html.= naklady_mesic($rok,$k3);
-      $html.= ucet_note();
+      if ( $ucet_month_max<12 ) {
+        $html.= ucet_note();
+      }
     }
     break;
   case 'u+mesice':
@@ -132,8 +137,8 @@ function ucet_todo($k1,$k2,$k3=2009,$par=null) {
       $html.= prijmy_mesic_diff($rok,$loni,substr($k3,1));
     }
     else {
-      $html.= "<h3 class='CTitle'>Měsíční přehledy výdajů roku $rok</h3>";
-      $html.= prijmy_mesic($rok,$k3);
+      $html.= "<h3 class='CTitle'>Měsíční přehledy příjmů roku $rok</h3>";
+      $html.= prijmy_mesic($rok,$k3,6);
     }
     break;
   case 'u*mesice':
@@ -420,11 +425,11 @@ function ucet_mesic($rok,$co='%',$presnost=3,$md='5',$dal='') { #trace();
            AND zakazka LIKE '$co'
            GROUP BY left(md,$presnost),month(datum)";
   else
-    $qry= "SELECT left(dal,$presnost) as ucet,sum(castka) as suma,month(datum) as mesic
-           FROM udenik JOIN uosnova AS u ON ucet=md AND rok=$rok
+    $qry= "SELECT left(dal,$presnost) as ucet,sum(castka) as suma,month(datum) as mesic, nazev
+           FROM udenik JOIN uosnova AS u ON ucet=dal AND rok=$rok
            WHERE dal LIKE '$dal%' AND id_udenik BETWEEN {$rok}00000 AND {$rok}99999
            AND zakazka LIKE '$co'
-           GROUP BY left(md,$presnost),month(datum)";
+           GROUP BY left(dal,$presnost),month(datum)";
   $res= mysql_qry($qry);
   while ( $res && $u= mysql_fetch_object($res) ) {
     $tab[$u->ucet][$u->mesic]= $u->suma;
@@ -462,8 +467,10 @@ function naklady_mesic($rok,$co='%',$presnost=6) { #trace();
   $tab_class= array();
   naklady_mesic_odhad($rok,$co,$presnost,$tab,$tab_class);
   if ( $presnost==6 ) {
-    $sloupce= array_merge($mesice,array('nazev'=>'účet'));
-    $sloupce_attr= array_merge($mesice_attr,array('nazev'=>'th'));
+    $sloupce= $mesice;
+    $sloupce['nazev']= 'účet';
+    $sloupce_attr= $mesice_attr;
+    $sloupce_attr['nazev']= 'th';
     $html= tab_show($tab,'výdaje'.substr($rok,-2,2),$sloupce,$sloupce_attr,'stat',$tab_class);
   }
   else
@@ -476,7 +483,15 @@ function naklady_mesic($rok,$co='%',$presnost=6) { #trace();
 function prijmy_mesic($rok,$co='%',$presnost=3) { #trace();
   global $mesice, $mesice_attr;
   $tab= ucet_mesic($rok,$co,$presnost,'','6');
-  $html= tab_show($tab,'příjmy'.substr($rok,-2,2),$mesice,$mesice_attr,'stat');
+  if ( $presnost==6 ) {
+    $sloupce= $mesice;
+    $sloupce['nazev']= 'účet';
+    $sloupce_attr= $mesice_attr;
+    $sloupce_attr['nazev']= 'th';
+    $html= tab_show($tab,'příjmy'.substr($rok,-2,2),$sloupce,$sloupce_attr,'stat');
+  }
+  else
+    $html= tab_show($tab,'příjmy'.substr($rok,-2,2),$mesice,$mesice_attr,'stat');
   return $html;
 }
 # -------------------------------------------------------------------------------------------------- naklady_mesic_diff

@@ -1,0 +1,8 @@
+
+group tab { include:'onload,ttt.tab'
+  var xx: number
+}
+var x:number
+proc onstart() {
+  x.set(5); echo('4',x.get)
+}

@@ -39,7 +39,7 @@ __EOF
       if ( substr($file,-5)=='.ezer' ) {
         $name= substr($file,0,strlen($file)-5);
         $etime= @filemtime("$ezer_path_appl/$name.ezer");
-        $ctime= @filemtime("$ezer_path_code/$name.code"); if ( !$ctime) $ctime= 0;
+        $ctime= @filemtime("$ezer_path_code/$name.json"); if ( !$ctime) $ctime= 0;
         $files[$name]= !$ctime || $ctime<$etime || $ctime<$xtime ? "old" : "ok";
       }
     }

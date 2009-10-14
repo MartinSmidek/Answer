@@ -68,23 +68,15 @@
     <div id="paticka">
       <div id="error"></div>
     </div>
-    <table width=100%>
-      <tr id="status_bar">
-        <td align='left'>
-          <div style="float:left;" id='status_left'></div>
-          <div style="float:left;">|&nbsp;zatížení počítače:&nbsp;</div>
-        </td>
-        <td align='center'>
-          <div id='status_center'>.</div>
-        </td>
-        <td align='right'>
-          <div id='status_right'></div>
-        </td>
-      </tr>
-    </table>
+    <div id="status_bar" style="width:100%;height:16px;padding: 1px 0pt 0pt;">
+      <div id='status_left' style="float:left;"></div>
+      <div id='status_center' style="float:left;">zpráva</div>
+      <div id='status_right' style="float:right;"></div>
+    </div>
     <pre id="kuk"></pre>
   </div>
   <div id="report" class="report"></div>
-  <input id="drag" type="button" style="left:0px;top:-9px;width:1px;height:1px;position:absolute;"/>
+  <form><input id="drag" type="button" style="left:0px;top:-9px;width:1px;height:1px;position:absolute;"/></form>
+<!-- konec -->
 </body>
 </html>

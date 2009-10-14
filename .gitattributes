@@ -23,14 +23,6 @@ ds/img/ds.png -text
 /favicon.ico -text
 /kEzer-ys2.ppr -text
 /libr.php -text
-libr/$.ezer -text
-libr/libr.help.ezer -text
-libr/libr.syst.ezer -text
-libr/libr.try.ezer -text
-libr/libr_fce.php -text
-libr/ys_fce.php -text
-libr/ys_lide.php -text
-libr/ys_ucet.php -text
 /test.html -text
 test/$.ezer -text
 test/img/test.png -text
@@ -53,6 +45,9 @@ test/test.elem.ski.ezer -text
 test/test.elem.tab.ezer -text
 test/test.elem.tst.ezer -text
 test/test.fce.ezer -text
+test/test.inc.ezer -text
+test/test.inc.pan.ezer -text
+test/test.inc.qan.ezer -text
 test/test.php -text
 test/test.stx.ezer -text
 test/test.ys.ezer -text

@@ -1,17 +1,17 @@
-menu ys { type:'main'
+menu ys { type:'main', active:*
   var global: text,
-  tabs info {title:"Informace", _sys:'inf',  include:'onload' }
-  tabs kasa {title:"Pokladna", _sys:'pok',  include:'onclick' }
-  tabs ucet {title:"Účetnictví", _sys:'uce',  include:'onclick' }
-  tabs ds {title:"Dům", _sys:'dum', include:'onclick' }
-#   tabs chl {title:"Chlapi",  include:'onclick' }
+  tabs info {title:"Informace", _sys:'inf',  include:'onclick', active:* }
+  tabs kasa {title:"Pokladna", _sys:'pok',  include:'onclick', active:* }
+  tabs ucet {title:"Účetnictví", _sys:'uce',  include:'onclick', active:* }
+  tabs ds {title:"Dům", _sys:'dum', include:'onclick', active:* }
+##  tabs chl {title:"Chlapi",  include:'onclick' }
 //#   tabs lide {title:"Lidé",  include:'onclick' }
-  tabs syst {title:"Systém", _sys:'sys',  include:'onclick,ezer2.syst' }
-  tabs doc  {title:"Nápověda", _sys:'nap',  include:'onclick,ezer2.help' }
+  tabs syst {title:"Systém", _sys:'sys',  include:'onclick,ezer2.syst', active:* }
+  tabs doc  {title:"Nápověda", _sys:'nap',  include:'onclick,ezer2.help', active:* }
 //#   tabs test {title:"Test",  where:'http://ys2.ezer/test.html' }
 //#   tabs ys1  {title:"Pokladna/1",  where:'http://ys.ezer/anser.php?modul=ys_pokladna' }
 }
-
+/*
 table _cis { key_id:'id_cis'
   number id_cis
   text druh,
@@ -156,4 +156,4 @@ table ms_deti {
   text poznamka
 }
 
-
+*/

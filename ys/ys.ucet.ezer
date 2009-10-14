@@ -10,7 +10,7 @@ module UCETNICTVI [0,0,30,12] { active:Denik, units:'px'
     menu {type:'left',
       menu {title:'Účetní deník',type:'group',_sys:'den'
         item {title:'Rok 2008'                   ,par:°{s:'u-show',c:'2008'}}
-        item {title:'Rok 2009'                   ,par:°{s:'u-show',c:'2009'}}
+        item a {title:'Rok 2009'                   ,par:°{s:'u-show',c:'2009'}}
         item {title:'Import deníku, akcí, osnovy',par:°{s:'u-load',c:''}}
       },
       menu {title:'Účetní odhady',type:'group',_sys:'odh'
@@ -63,7 +63,7 @@ module UCETNICTVI [0,0,30,12] { active:Denik, units:'px'
       proc onclick (i) { D_menu(i.par.s,i.par.c,i.par) }
     }
     use D_touch: group _touch [12,4,,],
-    proc onstart () { D_touch.group_add; D_cond2.set(''); stop}
+    proc onstart () { D_touch.group_add; D_cond2.set(''); a.click }
     proc onclick () { D_touch.volby.menu_fill2('ucet_menu','','',''); stop}
     proc D_menu (s,c,par) { E_show.panel_hide; D_show.panel_hide; D_show_load.panel_hide; D_show_surv.panel_hide;
       eq(s,'u-show');

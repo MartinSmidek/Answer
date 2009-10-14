@@ -1,0 +1,13 @@
+panel pan { title:"Panel", include:'onload'
+  menu mo {type:'left'
+    proc onclick(x) { }
+  }
+  proc onstart() {
+    echo('1')
+  }
+}
+panel qan { title:"Qanel", include:'onload,test.inc.qan'
+  proc onstart() {
+    echo('3')
+  }
+}

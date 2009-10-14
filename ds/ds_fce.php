@@ -375,12 +375,14 @@ function ds_old ($uid) {
 function ds_obj_menu() {
   global $mysql_db;
   $stav= map_cis('ds_stav');
+  $the= '';                     // první objednávka v tomto mìsíci èi pozdìji
 //                                                                 debug($stav,'ds_obj_menu');
   $mesice= array(1=>'leden','únor','bøezen','duben','kvìten','èerven',
     'èervenec','srpen','záøí','øíjen','listopad','prosinec');
   $mn= (object)array('type'=>'menu.left'
       ,'options'=>(object)array(),'part'=>(object)array());
   $letos= date('Y');
+  $ted= date('Ym');
   ezer_connect('setkani');
   for ($y= 0; $y<=0; $y++) {
     for ($m= 1; $m<=12; $m++) {
@@ -404,16 +406,22 @@ function ds_obj_menu() {
         $tit= wu("$iid - ").$zkratka.wu(" - {$o->name}");
         $tm= (object)array('type'=>'item','options'=>(object)array('title'=>$tit,'par'=>$par));
         $gr->part->$iid= $tm;
+        if ( !$the && $group>=$ted ) {
+          $the= "$group.$iid";
+        }
       }
     }
   }
-  return $mn;
+  $result= (object)array('the'=>$the,'code'=>$mn);
+  return $result;
 }
 # -------------------------------------------------------------------------------------------------- ds_kli_menu
 # vygeneruje menu pro loòský, letošní a pøíští rok ve tvaru objektu pro ezer2 pro zobrazení klientù
 # urèující je datum zahájení pobytu v objednávce
 function ds_kli_menu() {
   ezer_connect('setkani');
+  $the= '';                     // první v tomto mìsíci èi pozdìji
+  $ted= date('Ym');
   $mesice= array(1=>'leden','únor','bøezen','duben','kvìten','èerven',
     'èervenec','srpen','záøí','øíjen','listopad','prosinec');
   $mn= (object)array('type'=>'menu.left'
@@ -426,11 +434,13 @@ function ds_kli_menu() {
       ,'options'=>(object)array('title'=>$group),'part'=>(object)array());
     $mn->part->$group= $gr;
     for ($m= 1; $m<=12; $m++) {
+      $mm= sprintf('%02d',$m);
+      $yyyymm= "$yyyy$mm";
       $od= "$group-".sprintf('%02d',$m)."-01";
       $do= "$group-".sprintf('%02d',$m)."-".date('t',mktime(0,0,0,$m,1,$group));
       $from= mktime(0,0,0,$m,1,$yyyy);
       $until= mktime(0,0,0,$m+1,1,$yyyy);
-      $uids= ''; $del= ''; $objednavek= $klientu= 0;
+      $uids= ''; $del= ''; $celkem= $objednavek= $klientu= 0;
       $qry= "SELECT uid,(adults+kids_10_15+kids_3_9+kids_3) as celkem
              FROM tx_gnalberice_order
              WHERE  NOT deleted AND NOT hidden AND untilday>=$from AND $until>fromday";
@@ -450,8 +460,12 @@ function ds_kli_menu() {
       $par= (object)array('od'=>$od,'do'=>$do,'celkem'=>$celkem,'klientu'=>$klientu,'objednavek'=>$objednavek,'uids'=>$uids);
       $tm= (object)array('type'=>'item','options'=>(object)array('title'=>$tit,'par'=>$par));
       $gr->part->$m= $tm;
+      if ( !$the && $yyyymm>=$ted ) {
+        $the= "$group.$m";
+      }
     }
   }
-  return $mn;
+  $result= (object)array('the'=>$the,'code'=>$mn);
+  return $result;
 }
 ?>

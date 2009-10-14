@@ -1,13 +1,16 @@
 
   use popis: form popisky [0,0,,]
+  
+
+  
   use obj: form objednavka [10,30,,]
   use fak: form fakturace [380,30,,]
   use akc: form akce [10,280,,]
   use per: form osoba [380,280,,]
 
   proc onstart() {
-    the_order.set(ask('ds_uid'));
-    order_load(the_order.get)
+#     the_order.set(ask('ds_uid'));
+#     order_load(the_order.get)
   }
   
 # -------------------------------------------------------------------------------------------------- objednávka
