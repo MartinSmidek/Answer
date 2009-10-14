@@ -148,7 +148,7 @@ module POKLADNA [0,0,0,0] { active:Denik, units:'px'
 #     proc onstart () { i.group_add; stop}
     menu {type:'left',
       menu {title:'Stavy pokladen',type:'group', _sys:'akt'
-        item {title:'Aktuální stav pokladen', par:°{s:'stav',c:'aktualne'} }
+        item a {title:'Aktuální stav pokladen', par:°{s:'stav',c:'aktualne'} }
         item {title:'Stav pokladen k datu aktuálního řádku', par:°{s:'stav',c:'k_datu'} }
         item {title:'Stav podle nastaveného filtru', par:°{s:'stav',c:'s_filtrem'} }
       }
@@ -160,6 +160,7 @@ module POKLADNA [0,0,0,0] { active:Denik, units:'px'
           m.par.s,m.par.c,d_cond.get,d_day.get),"</div>"))
       }
     }
+    proc onstart() { a.click }
     use i: form _i_info [12,4,,],
   },
 #                                                                                                    nastaveni

@@ -7,15 +7,16 @@ module SOUBORY [0,0,30,12] { active:Posta, units:'px'
   panel Posta [,,,543] { title:'Pošta',_sys:'pos', type:'panel', style:'width:670'
     menu {type:'left',
       menu {title:'2009',type:'group'
-        item {title:'Došlá pošta'       ,_sys:'dop',par:°{s:'dosla_posta',c:'2009'} },
-        item {title:'Došlé faktury'     ,_sys:'dof',par:°{s:'dosle_faktury',c:'2009'} },
+        item a {title:'Došlá pošta'       ,_sys:'dop',par:°{s:'dosla_posta',c:'2009'} },
+        item f {title:'Došlé faktury'     ,_sys:'dof',par:°{s:'dosle_faktury',c:'2009'} },
         item {title:'Vystavené faktury' ,_sys:'vys',par:°{s:'vystavene_faktury',c:'2009'} },
         item {title:'Výpisy a poukázky' ,_sys:'vyp',par:°{s:'banka_vypisy',c:'2009'} },
         item {title:'Odeslaná pošta'    ,_sys:'ode',par:°{s:'odeslana_posta',c:'2009'} },
         item {title:'Cestovní příkazy'  ,_sys:'ces',par:°{s:'cestovni_prikazy',c:'2009'} },
         item {title:'Pokladní doklady'  ,_sys:'pok',par:°{s:'pokladna',c:'2009'} },
-        item {title:'Mzdy, DPP, DPČ'    ,_sys:'mzd',par:°{s:'mzdy,dpp',c:'2009'} }
+#         item {title:'Mzdy, DPP, DPČ'    ,_sys:'mzd',par:°{s:'mzdy,dpp',c:'2009'} }
       }
+      proc onstart () { a.click }
       proc onclick (m) { P_menu (m.par.s,m.par.c) }
     }
     use P_touch: form _touch [12,4,,],

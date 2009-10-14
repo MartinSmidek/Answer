@@ -18,14 +18,8 @@ kde
 <p class="todo_plus">tento text se čte z todo.wiki</p>
 <p class="podpis">Buďte opatrní, Gándí</p>
 ++todo
-| 01.03.2009 | GAN | vlastnost |            |+vyvinout novou verzi systému Ezer
+| 01.08.2007 | MVY | vlastnost |            | systém objednávek pro Dům setkání (k používání od 1.12.2009)
+| 13.10.2009 | JLN | vlastnost |            | doplnit přehledy o rozdělení MS/DS
 ++done
-|            |     |           | 28.05.2009 | funkční popup panely
-|            |     |           | 20.05.2009 | funkční Browse, tabulky kompilátoru z dokumentace
-|            |     |           | 15.05.2009 | zobrazení Browse pro: FF, IE, Chrome
-|            |     |           | 29.04.2009 | Select typu map
-|            |     |           | 23.04.2009 | revize dokumentačního modulu, autodokumentace
-|            |     |           | 22.04.2009 | blok Map, startovací sekvence map_load+onstart
-|            |     |           | 21.04.2009 | atribut MenuLeft.active, dynamické zavádění MenuLeft
-|            |     |           | 20.04.2009 |+zobrazení tohoto souboru, ...
+|            |     |           | 14.10.2009 |+převedení Ans(w)er pod systém Ezer2: moduly Informace, Pokladna, Účetnictví, Dům
 
