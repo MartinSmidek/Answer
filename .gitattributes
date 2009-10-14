@@ -65,6 +65,7 @@ test/ys_ucetnictvi.php -text
 wiki/dokumentace.wiki -text
 wiki/todo.wiki -text
 ys/$.ezer -text
+ys/code/comp2tab.php -text
 ys/img/+logo.gif -text
 ys/img/-logo.gif -text
 ys/img/ys-logo.gif -text
