@@ -3,7 +3,8 @@
 /* úpravy standardu */
 .ds_form .Label, .ds_form .Check {
   font-size:8pt;  }
-
+.inAccordion {
+  width:670px; }
 
 .CheckT input {
   position:absolute; top:10px; left:-3px; }

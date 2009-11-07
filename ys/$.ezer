@@ -1,13 +1,16 @@
-menu ys { type:'main', active:*
+# Systém Ans(w)er
+# (c) 2008-2010 Martin Šmídek <martin@smidek.eu>
+
+menu ys { type:'main', active:ys.kasa
   var global: text,
-  tabs info {title:"Informace", _sys:'inf',  include:'onclick', active:* }
-  tabs kasa {title:"Pokladna", _sys:'pok',  include:'onclick', active:* }
+  tabs info {title:"Informace", _sys:'inf',  include:'onload', active:* }
+  tabs pok {title:"Pokladna", _sys:'pok',  include:'onclick', active:* }
   tabs ucet {title:"Účetnictví", _sys:'uce',  include:'onclick', active:* }
   tabs ds {title:"Dům", _sys:'dum', include:'onclick', active:* }
 ##  tabs chl {title:"Chlapi",  include:'onclick' }
 //#   tabs lide {title:"Lidé",  include:'onclick' }
   tabs syst {title:"Systém", _sys:'sys',  include:'onclick,ezer2.syst', active:* }
-  tabs doc  {title:"Nápověda", _sys:'nap',  include:'onclick,ezer2.help', active:* }
+  tabs doc  {title:"Nápověda", _sys:'nap',  include:'onclick,ezer2.help' }
 
   tabs off  {title:"Odhlásit", _sys:'off'
     panel { title:"Odhlásit"
@@ -19,6 +22,15 @@ menu ys { type:'main', active:*
 //#   tabs test {title:"Test",  where:'http://ys2.ezer/test.html' }
 //#   tabs ys1  {title:"Pokladna/1",  where:'http://ys.ezer/anser.php?modul=ys_pokladna' }
 }
+
+table _file_ {
+  text fid
+  date fdate
+  text fname
+  text ftype
+  text finfo
+}
+
 /*
 table _cis { key_id:'id_cis'
   number id_cis

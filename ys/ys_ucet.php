@@ -177,6 +177,7 @@ function proj_export($rok,$co) { #trace();
                   ,'DS/A1P2A'=>'MŠ'
                   ,'DH/'=>'DH'
                   ,'DS/'=>'DS'
+                  ,'DS/Racek'=>'DS/Racek'
                   ,'x/'=>'');
   $ucty_tab= array();
   $proj_tab= array(

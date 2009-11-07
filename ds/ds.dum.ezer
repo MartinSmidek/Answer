@@ -1,104 +1,96 @@
+var the_order: number
+var authorized: number
+var ds_web: number
 
-  use popis: form popisky [0,0,,]
-  
+proc order_load (ord) {
+  echo("ord=",ord); the_order.set(ord); pobyt.precti; ucastnici.precti
+}
 
-  
+proc onstart () {
+  ds_web.set(sys('ezer','options','ds_web'));
+  { ds_web.get; authorized.set(0);  ucastnici.to_show.set(0); cast;
+    the_order.set(javascript("Ezer.parm[1]")); pobyt.precti
+  | ucastnici.to_show.set(1); ucastnici.formular
+  }
+}
+
+proc autorizace {
+  authorized.set(p.modal(200,20)); echo('authorized=',authorized.get);
+}
+
+panel p [,,200,70] { type:'popup', title:'Dialog'
+  use v: form f [0,0,,]
+  form f [,,200,70] {
+    label [0,10,200,40] { title:"Napište prosím PIN, který Vám byl pro tuto akci zaslaný správcem Domu setkání při potvrzení objednávky:" }
+    field pin [0,55,50,] { value:'6' }
+    button [100,55,80,17] { title:'Pokračovat',
+      proc onclick() { panel.hide(ask('pin_test',the_order.get,pin.get)) }
+    }
+  }
+}
+
+proc cast { ds_web.get; javascript("window.resizeTo(720,330);",1) }
+
+proc cely { ds_web.get; javascript("window.resizeTo(720,680);",1); pobyt.popis.ukaz.display(0); }
+
+// ================================================================================================= pobyt
+// ukáže a obslouží horní polovinu formuláře
+group pobyt {
+
+  use popis: form zahlavi [0,0,,]
   use obj: form objednavka [10,30,,]
   use fak: form fakturace [380,30,,]
-  use akc: form akce [10,280,,]
-  use per: form osoba [380,280,,]
-
-  proc onstart() {
-#     the_order.set(ask('ds_uid'));
-#     order_load(the_order.get)
-  }
-  
-# -------------------------------------------------------------------------------------------------- objednávka
   // zobrazení objednávky
-  proc order_load (ord) {
-    the_order.set(ord);
-    obj.load(ord);
-#     obj.info.set('');
-    per.pokoj.selects(conc('0,',obj.rooms.get));
-    fak.load(ord);
-    fak.faktura.display(0);
-    akc.seznam.browse_load(conc('id_order=',ord));
-    akc.seznam.raise('onrowclick')
+  proc precti  {
+    popis.tit.set(conc('<h3>Objednávka číslo ',the_order.get,'</h3>')); obj.load(the_order.get);
+    fak.load(the_order.get); fak.faktura.display(0); ucastnici.precti(obj.rooms.get)
   }
   proc obj.save.onclick() {
-    obj.save;
-    order_load(the_order.get)
-#     obj.load; per.pokoj.selects(obj.rooms.get)
+    obj.save; order_load(the_order.get)
   }
   // účast objednatele na pobytu
   proc objednavatel_save(ucast,changed) {
-    fak.save; fak.load;
-    echo('objednavatel_save:',ucast,':',changed);
+    fak.save; fak.load; echo('objednavatel_save:',ucast,':',changed);
     [ changed; ucast; echo(ask('ds_ucast_objednatele',the_order.get,ucast)) ];
-    akc.seznam.browse_seek
+    ucastnici.obnova
   }
   // vystavení zálohy na objednávku
   proc make_zaloha () {
-    fak.faktura.set(ask('ds_zaloha',the_order.get));
-    fak.faktura.display(1)
+    fak.faktura.set(ask('ds_zaloha',the_order.get)); fak.faktura.display(1)
   }
   // vystavení faktur pro rodiny na objednávce
   proc make_faktury () {
-    fak.faktura.set(ask('ds_faktury',the_order.get));
-    fak.faktura.display(1)
+    fak.faktura.set(ask('ds_faktury',the_order.get)); fak.faktura.display(1)
   }
   // porovnání objednávky se seznamem účastníků
   var comp: text
   var fields: text
   proc compare () {
-    comp.set(ask('ds_compare',the_order.get));
-    debug(comp.get,'compare');
-    form_set(obj.get,comp.get('form'));
-    obj.info.set(comp.get('html'))
+    comp.set(ask('ds_compare',the_order.get)); debug(comp.get,'compare');
+    form_set(obj.get,comp.get('form')); obj.info.set(comp.get('html'))
   }
-# -------------------------------------------------------------------------------------------------- účastníci
-  // zobrazení účastníka
-  proc osoba_load (id_osoba) {
-    per.load(id_osoba)
+  proc ukaz_spodek {
+    ucastnici.to_show.get
+  | ucastnici.to_show.set(1); ucastnici.formular; ucastnici.precti(obj.rooms.get)
   }
-  // vložení nového účastníka
-  proc osoba_new () {
-    per.init; per.id_order.set(the_order.get); per.insert;
-    akc.seznam.browse_seek
-  }
-  // vložení nového dítěte účastníka
-  proc osoba_new_child (id_osoba) {
-    per.init; per.id_order.set(the_order.get);
-    per.rodina.set(akc.seznam.rodina.get);
-    per.prijmeni.set(akc.seznam.prijmeni.get);
-    per.ulice.set(akc.seznam.ulice.get);
-    per.psc.set(akc.seznam.psc.get);
-    per.obec.set(akc.seznam.obec.get);
-    per.insert;
-    akc.seznam.browse_seek
-  }
-  // zápis opravy účastníka
-  proc osoba_save () {
-    per.save; per.load;
-    akc.seznam.browse_seek
-  }
-  // zrušení účastníka
-  proc osoba_del (id_osoba) {
-    confirm(conc('Opravdu smazat ',akc.seznam.prijmeni.get,' ',akc.seznam.jmeno.get,' ze seznamu?'));
-    tab.ds_osoba.delete_record(conc('id_osoba=',id_osoba));
-    akc.seznam.browse_seek
-  }
-
-# -------------------------------------------------------------------------------------------------- POPISKY
-  form popisky { css:'ds_form'
-    label [ 10,  0,300,] { title:'<h3>Objednávka pobytu</h3>' }
+  // ------------------------------------------------------------------ záhlaví
+  form zahlavi [,,600,30] { css:'ds_form'
+    label tit [ 10,  0,300,] { title:'<h3>Objednávka pobytu</h3>' }
+    button pin [180,2,50,18] { title:'pin',  skill:'yd|yd', help:'zobrazí PIN umožňující objednateli zapsat a opravovat účastníky',
+      proc onclick() {
+        alert(ask('pin_make',the_order.get))
+      }
+    }
+    button ukaz [245,2,50,18] { title:'zobraz účastníky', help:'umožní zapsat a opravit seznam účastníků'
+      proc onclick() {
+        autorizace; authorized.get; cely; ukaz_spodek
+      | alert("Bohužel, toto není správný PIN")
+      }
+    }
     label [380,  0,300,] { title:'<h3>Fakturační adresa objednavatele</h3>' }
-    label [ 10,240,694,] { title:'<hr>' }
-    label [ 10,250,300,] { title:'<h3>Seznam účastníků pobytu</h3>' }
-    label [380,250,300,] { title:'<h3>Údaje vybraného účastníka</h3>' }
   }
-# -------------------------------------------------------------------------------------------------- OBJEDNÁVKA
-  form objednavka { css:'ds_form'
+  // ------------------------------------------------------------------ OBJEDNÁVKA
+  form objednavka [,,300,100] { css:'ds_form'
     const PL=0; PT=90,
     label       [  0,  0,100,] { title:'stav objednávky' }
     select      [  0, 15,150,] { type:'map', data:tab.tx_gnalberice_order.state, options:tab.ds_stav.hodnota }
@@ -143,15 +135,15 @@
     field nevek [220,135,17,] { format:'dr:e' }
     label       [252,120,100,] { title:'typ stravy' }
     select      [250,135,100,] { type:'map', data:tab.tx_gnalberice_order.board, options:tab.ds_strava.hodnota }
-    button      [249,160,100,18] { title:'lze fakturovat?'
+    button      [250,160,100,18] { title:'lze fakturovat?'
       proc onclick() { compare } }
     button save [249,186,100,18] { title:'zapsat změny', type:'submit' }
     label info  [1,159,238,53] { title:'' }
     proc onload () { rooms_check(rooms,form,'p') }
     proc onsave () { check_rooms(rooms,form,'p') }
   }
-# -------------------------------------------------------------------------------------------------- FAKTURACE
-  form fakturace { css:'ds_form'
+  // ------------------------------------------------------------------ FAKTURACE
+  form fakturace [,,300,100] { css:'ds_form'
     label       [  0,  0,210,] { title:'název organizace (plátce faktury)' }
     field       [  0, 15,210,] { data:tab.tx_gnalberice_order.org }
     label       [220,  0, 80,] { title:'IČ' }
@@ -180,14 +172,81 @@
     button      [220,185,100,18] { title:'zapsat změny'
       proc onclick() { objednavatel_save(ucast.get,ucast.changed) } }
   }
-# -------------------------------------------------------------------------------------------------- AKCE
-  form akce { css:'ds_form'
+}
+
+// ================================================================================================= účastníci
+// ukáže a obslouží spodní polovinu formuláře tj. zobrazení účastníků akce
+// vnější proměnná the_order obsahuje číslo objednávky
+
+group ucastnici {
+
+  var to_show: number                           // 1 => zobrazovat
+  var akc: form
+  var per: form
+#   use per: form osoba [380,280,,]
+
+  // zobrazení formuláře účastníků
+  proc formular {
+#     to_show.get; akc.set(new_form(akce,10,280)); //per.set(new_form(osoba,380,280));
+    to_show.get; akc.set(new_form(akce,10,280)); per.set(new_form(osoba,380,280));
+    new_form(zahlavi,0,240)
+  }
+
+  proc precti (pokoje) {
+    to_show.get; per.pokoj.selects(conc('0,',pokoje));
+    akc.seznam.browse_load(conc('id_order=',the_order.get));
+    akc.seznam.raise('onrowclick')
+  }
+
+  // obnoví seznam po vnější změně
+  proc obnova {
+    akc.seznam.browse_seek
+  }
+
+  // zobrazení účastníka
+  proc osoba_load (id_osoba) {
+    per.load(id_osoba)
+  }
+  // vložení nového účastníka
+  proc osoba_new {
+    per.init; per.id_order.set(the_order.get); per.insert;
+    akc.seznam.browse_seek
+  }
+  // vložení nového dítěte účastníka
+  proc osoba_new_child (id_osoba) {
+    per.init; per.id_order.set(the_order.get);
+    per.rodina.set(akc.seznam.rodina.get);
+    per.prijmeni.set(akc.seznam.prijmeni.get);
+    per.ulice.set(akc.seznam.ulice.get);
+    per.psc.set(akc.seznam.psc.get);
+    per.obec.set(akc.seznam.obec.get);
+    per.insert;
+    akc.seznam.browse_seek
+  }
+  // zápis opravy účastníka
+  proc osoba_save {
+    per.save; per.load; akc.seznam.browse_seek
+  }
+  // zrušení účastníka
+  proc osoba_del (id_osoba) {
+    confirm(conc('Opravdu smazat ',akc.seznam.prijmeni.get,' ',akc.seznam.jmeno.get,' ze seznamu?'));
+    tab.ds_osoba.delete_record(conc('id_osoba=',id_osoba));
+    akc.seznam.browse_seek
+  }
+  // ------------------------------------------------------------------ záhlaví
+  form zahlavi [,,600,30] { css:'ds_form'
+    label [ 10,0,694,] { title:'<hr>' }
+    label [ 10,10,300,] { title:'<h3>Seznam účastníků pobytu</h3>' }
+    label [380,10,300,] { title:'<h3>Údaje vybraného účastníka</h3>' }
+  }
+  // ------------------------------------------------------------------ AKCE
+  form akce [,,300,100] { css:'ds_form'
     button [  0,0,100,18] { title:'přidat účastníka'
-      proc onclick () {osoba_new} }
+      proc onclick () { osoba_new} }
     button [122,0,100,18] { title:'přidat dítě'
-      proc onclick () {osoba_new_child} }
+      proc onclick () { osoba_new_child} }
     button [210,0,100,18] { title:'odebrat účastníka'
-      proc onclick () {osoba_del(seznam.id_osoba.get)} }
+      proc onclick () { osoba_del(seznam.id_osoba.get)} }
     browse seznam [0,30,,] { rows:14
       show rodina [,,20,] { title:'rod', data:tab.ds_osoba.rodina, format:'s+' }
       show prijmeni [,,70,] { title:'příjmení', data:tab.ds_osoba.prijmeni, format:'s' }
@@ -207,8 +266,8 @@
       proc onrowclick() { osoba_load(id_osoba.get) }
     }
   }
-# -------------------------------------------------------------------------------------------------- OSOBA
-  form osoba { css:'ds_form'
+  // ------------------------------------------------------------------ OSOBA
+  form osoba [,,300,100] { css:'ds_form'
     field id_osoba { data:tab.ds_osoba.id_osoba }
     field id_order { data:tab.ds_osoba.id_order }
     // zobrazení
@@ -234,7 +293,7 @@
     label       [  0,175, 70,] { title:'pokoj' }
     select pokoj [  0,190, 50,] { data:tab.ds_osoba.pokoj, format:':e' }
     label       [ 60,175, 70,] { title:'typ lůžka' }
-    select      [ 60,190,150,] { type:'map', data:tab.ds_osoba.luzko, options:tab.ds_luzko.hodnota }
+    select luzka [ 60,190,150,] { type:'map', data:tab.ds_osoba.luzko, options:tab.ds_luzko.hodnota }
     label       [  0,215, 70,] { title:'poznámka' }
     field       [  0,230,210,] { data:tab.ds_osoba.pozn }
     button      [220,229,100,18] { title:'zapsat změny',
@@ -248,3 +307,4 @@
     label       [181,272,97,] { title:'typ stravy' }
     select      [181,287,133,] { type:'map', data:tab.ds_osoba.strava, options:tab.ds_strava.hodnota }
   }
+}

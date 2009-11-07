@@ -468,4 +468,20 @@ function ds_kli_menu() {
   $result= (object)array('the'=>$the,'code'=>$mn);
   return $result;
 }
+# -------------------------------------------------------------------------------------------------- pin_make
+# vytvoø PIN k èíslu x
+function pin_make ($x) {
+  // jediná kolize pro èísla 1..2000
+  $str= str_pad($x,6,'0',STR_PAD_LEFT);
+  $pin= substr(sprintf("%u",crc32(strrev($str))),-6);
+  return $pin;
+}
+# -------------------------------------------------------------------------------------------------- pin_test
+# test PIN - doplníme ho nulami zleva
+function pin_test ($x,$pin) {
+  $str= str_pad($x,6,'0',STR_PAD_LEFT);
+  $strpin= str_pad($pin,6,'0',STR_PAD_LEFT);
+  $xpin= substr(sprintf("%u",crc32(strrev($str))),-6);
+  return $strpin==$xpin?1:0;
+}
 ?>
