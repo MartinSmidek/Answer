@@ -23,7 +23,7 @@ ds/img/ds.png -text
 /favicon.ico -text
 /kEzer-ys2.ppr -text
 /libr.php -text
-/test.html -text
+/test.php -text
 test/$.ezer -text
 test/img/test.png -text
 test/test.doc.ezer -text
@@ -64,6 +64,7 @@ test/ys_ucetnictvi.ezer -text
 test/ys_ucetnictvi.php -text
 wiki/dokumentace.wiki -text
 wiki/todo.wiki -text
+/ys.php -text
 ys/$.ezer -text
 ys/code/comp2tab.php -text
 ys/img/+logo.gif -text
