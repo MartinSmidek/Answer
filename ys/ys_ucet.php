@@ -161,10 +161,247 @@ function ucet_todo($k1,$k2,$k3=2009,$par=null) {
     $html.= "<h3 class='CTitle'>Tabulka nákladů jednotlivých projektů v roce $rok</h3>";
     $html.= proj_export($rok,$cast);
     break;
+  case 'naklad':
+    global $ucet_month_min, $ucet_month_max, $ucet_month_max_odhad;
+    $ucet_month_min= $par->od;
+    $ucet_month_max= $par->do;
+    $ucet_month_max_odhad= $par->odhad ? $par->odhad : 0;
+    $html.= "<h3 class='CTitle'>Tabulka nákladů v roce $rok</h3>";
+    $html.= rok_naklad($par);
+    break;
   }
   $html.= "</div>";
   $result= (object)array('html'=>$html,'cond'=>$cond,'year'=>$_SESSION['rok']);
   return $result;
+}
+# ================================================================================================== ODHADY
+# -------------------------------------------------------------------------------------------------- rok_naklad
+function rok_naklad($par) { #trace();
+  global $proj_tab, $ucty_tab, $tisice, $ucet_month_min, $ucet_month_max, $ucet_month_max_odhad;
+  $rok= $par->c;
+  $clmn_tab= array('MS/*'=>'MS','DS/*'=>'DS','DH/*'=>'DH','*/*'=>'?');
+  $ucty_tab= array();
+  $proj_tab= array(
+//
+    "celkový objem" => array(
+      "" => (object)array(),
+      "a) osobní náklady" => array(
+         "mzdové náklady" => array(
+           "hrubé mzdy" => (object)array(          'i'=>'o_mzdy',  't'=>5212, 'u'=>array('521201|521202|521200')),
+           "OON na DPČ" => (object)array(          'i'=>'o_dpc',   't'=>5212, 'u'=>array('')),
+           "OON na DPP" => (object)array(          'i'=>'o_dpp',   't'=>5212, 'u'=>array('521221|521222|521220')),
+           "jiné mzdové náklady" => (object)array(                 't'=>5212, 'u'=>array())
+         ),
+         "odvody soc.,zdrav. poj." => array(
+           "pojistné ke mzdám" => (object)array(   'i'=>'o_pmzdy', 't'=>5242, 'u'=>array('524201|524221|524202|524222|524200|524220')),
+           "pojistné k DPČ" => (object)array(      'i'=>'o_pdpc',  't'=>5242, 'u'=>array()),
+           "jiné pojistné" => (object)array(                       't'=>5242, 'u'=>array('527220'))
+         ),
+         "ostatní osobní náklady" => /*array (
+             "" =>*/ (object)array(                                't'=>52,   'u'=>array()/*)*/
+         )
+      ),
+      "b) provozní náklady" => array(
+         "materiálové náklady" => array(
+           "potraviny" => (object)array(           'i'=>'m_potr',  't'=>5012, 'u'=>array('501220|501221')),
+           "kancelářské potřeby" => (object)array( 'i'=>'m_kanc',  't'=>5012, 'u'=>array('501241|501240|501242')),
+           "vyb. DDHM do 40 tKč" => (object)array( 'i'=>'m_ddhm',  't'=>5012, 'u'=>array('501231|501232|501230')),
+           "pohonné hmoty" => (object)array(       'i'=>'m_phm',   't'=>5012, 'u'=>array('501251|501261|501250|501252|501260')),
+           "výtvarný materiál" => (object)array(   'i'=>'m_vytv',  't'=>5012, 'u'=>array('501204')),
+           "jiný materiál" => (object)array(       'i'=>'m_jiny',  't'=>5012, 'u'=>array('501200|501203'))
+         ),
+         "nemateriálové náklady" => array(
+           "energie" => /*array(
+             "" =>*/ (object)array(                'i'=>'n_eng',   't'=>5022, 'u'=>array('502211|502210')/*)*/
+           ),
+           "opravy a udržování" => /*array(
+             "" =>*/ (object)array(                'i'=>'n_opr',   't'=>5112, 'u'=>array('511201|511211|511210|511221|511213|511200|511220')/*),*/
+           ),
+           "cestovné" => array(
+             "cestovné zaměstnanců" => (object)array(),
+             "jiné cestovné" => (object)array(     'i'=>'n_ces',   't'=>5122, 'u'=>array('512201|512202|512200'))
+           ),
+           "ostatní služby" => array(
+             "spoje celkem" => (object)array(      'i'=>'n_spo',   't'=>5182, 'u'=>array('518214|518261|518215|518260|518210|518218')),
+             "nájemné" => (object)array(           'i'=>'n_naj',   't'=>5182, 'u'=>array('518212|518216|518211|518217')),
+             "právní a ek. služby"=> (object)array('i'=>'n_eko',   't'=>5182, 'u'=>array('518241|518242|518240|518243')),
+             "školení a kurzy" => (object)array(   'i'=>'n_sko',   't'=>5182, 'u'=>array('518291|518290')),
+             "pořízení DNM do 60 tKč" => (object)array(
+                                                   'i'=>'n_dnm',   't'=>5182, 'u'=>array('518231')),
+             "tisk materiálů" => (object)array(    'i'=>'n_tis',   't'=>5182, 'u'=>array('518281|518280')),
+             "ubytování a stravování" => (object)array(
+                                                   'i'=>'n_uby',   't'=>5189, 'u'=>array('518900|518901')),
+             "ubytování a stravování" => (object)array(
+                                                   'i'=>'n_uby',   't'=>5189, 'u'=>array('518900|518901')),
+             "svoz odpadu" => (object)array(       'i'=>'n_odpad', 't'=>5182, 'u'=>array('518271|518270')),
+             "jiné služby" => (object)array(       'i'=>'n_slu',   't'=>5182, 'u'=>array('518200|518202|518201'))
+           ),
+           "ostatní náklady" => array(
+             "jiné ostatní náklady" => (object)array(
+                                                   'i'=>'n_ost',   't'=>5,    'u'=>array('538200|549200|531100|532200|544100|549000|549300|581300|549999')),
+             "odpisy" =>  (object)array(           'i'=>'n_odpis', 't'=>5512, 'u'=>array('551200'))
+           )
+         )
+      )
+    )
+  );
+//   $html.= "Prázdná tabulka:";;
+//   $html.= "<div id='proj'>".debugx($proj_tab)."</div>";
+  // vyplnění tabulky
+  $sum= proj_make_x($rok,&$proj_tab,$clmn_tab);
+//                                         $html.= "<div id='proj'>".debugx($proj_tab)."</div>";
+  // celkový objem
+  $v= 0;
+  foreach ($proj_tab["celkový objem"]['']->xu as $clmn) {
+    $v+= $clmn;
+  }
+  $v= number_format($tisice ? $v/1000 : $v, 0, '.', ' ');
+  // tisk tabulky
+  $width= ""; //"style='width:700px'";
+  $html.= "<table class='stat' $width><tr><th style='text-align:right'>$v</th><th>tř.</th>";
+  // hlavička
+  foreach($clmn_tab as $clmn)
+    $html.= "<th style='width:40px;text-align:right'>$clmn</th>";
+  $html.= "<th style='width:40px;text-align:right'>součet</th>";
+  $html.= "</tr>";
+  // tělo
+  $html.= proj_print_x($proj_tab);
+  $html.= "</table>";
+  $html.= ucet_note();
+  return $html;
+}
+# -------------------------------------------------------------------------------------------------- proj_make_x
+# když účty jsou skalár a sloupce jsou tvořeny podle zakazka/stredisko=clmn_tab
+function proj_make_x($rok,&$tab,$clmn_tab) { trace();
+  global $proj_tab, $ucty_tab;
+  $out= (object)array();
+  if ( is_object($tab) ) {
+    if ( $tab->u ) {
+      // projdi skupinu účtů pro všechny kombinace clmn_tab
+      $out->xu= $tab->xu= naklad_vzor_x($rok,$tab->u[0],$clmn_tab);
+      // kontrola účtů
+      $us= explode('|',$tab->u[0]);
+      foreach($us as $u) {
+        if ( isset($ucty_tab[$u]) ) fce_error("duplicita pro $u");
+        $ucty_tab[$u]= 1;
+      }
+    }
+    if ( $tab->i ) {
+      // přidej odhad za zbývající měsíce
+//       $out->xu[1]= $tab->xu[1]= 1000;
+    }
+  }
+  else if ( is_array($tab) ) {
+    $n= 0; $m= 0;
+    $xu= array();
+    foreach($tab as $name=>$line) {
+      $line_out= proj_make_x($rok,&$tab[$name],$clmn_tab);
+      $n++;
+      $m= max($m,count($line_out->xu));
+      foreach ($clmn_tab as $i=>$ii) {
+        if ( !isset($xu[$i]) ) $xu[$i]= 0;
+        $xu[$i]+= $line_out->xu[$i] ? $line_out->xu[$i] : 0;
+      }
+    }
+    if ( !isset($tab[""]) ) $tab[""]= (object)array('xu'=>array());
+    foreach ($clmn_tab as $i=>$ii) {
+      $tab[""]->xu[$i]= $xu[$i];
+      $out->xu[$i]= $xu[$i];
+    }
+  }
+  return $out;
+}
+# -------------------------------------------------------------------------------------------------- naklad_vzor_x
+# výše nákladu definovaná pomocí rexpr nad MD a zakázkou
+# Stredisko=MPSV-$co
+# $clmn_tab= array('MS/MPSV-MS','MS','DS/MPSV-DS','DS','DH','x') nebo
+# $clmn_tab= array('*/*')
+function naklad_vzor_x($rok,$vzor,$clmn_tab) { #trace();
+  global $ucet_month_min, $ucet_month_max, $ucet_month_max_odhad;
+  foreach ($clmn_tab as $indx=>$ii) $suma[$indx]= 0;
+  if ( $vzor ) {
+    $qry= "SELECT sum(castka) as suma,Zakazka,Stredisko,
+           min(month(datum)) as _od, max(month(datum)) as _do
+           FROM udenik WHERE md RLIKE '$vzor' AND id_udenik BETWEEN {$rok}00000 AND {$rok}99999
+           AND month(datum)<=$ucet_month_max AND month(datum)>=$ucet_month_min
+           GROUP BY Zakazka,Stredisko";
+    $res= mysql_qry($qry);
+    while ( $res && $u= mysql_fetch_object($res) ) {
+      $z= $u->Zakazka;
+      $s= $u->Stredisko;
+      if ( isset($suma["$z/$s"]) )
+        $suma["$z/$s"]+= $u->suma;
+      elseif ( isset($suma["*/$s"]) )
+        $suma["*/$s"]+= $u->suma;
+      elseif ( isset($suma["$z/*"]) )
+        $suma["$z/*"]+= $u->suma;
+      elseif ( isset($suma["*/*"]) )
+        $suma["*/*"]+= $u->suma;
+      else
+        fce_error("kombinace Zakazka/Stredisko=$s/$z - s tím se nepočítá/a");
+    }
+    // přidej odhady
+    if ( $ucet_month_max_odhad > $ucet_month_max ) {
+      $ucet_month_min_odhad= $ucet_month_min;
+      $qry= "SELECT sum(castka) as suma,Zakazka,Stredisko,
+             min(month(datum)) as _od, max(month(datum)) as _do
+             FROM uodhad WHERE md RLIKE '$vzor'
+             AND month(datum)<=$ucet_month_max_odhad AND month(datum)>=$ucet_month_min_odhad
+             GROUP BY Zakazka,Stredisko";
+      $res= mysql_qry($qry);
+      while ( $res && $u= mysql_fetch_object($res) ) {
+        $indx= "{$u->Zakazka}/{$u->Stredisko}";
+        if ( !isset($suma[$indx]) )
+           fce_error("kombinace Zakazka/Stredisko=$indx - s tím se nepočítá/b");
+        $suma[$indx]+= $u->suma;
+      }
+    }
+//                                                 debug($suma,"$vzor/$co");
+  }
+  return $suma;
+}
+# -------------------------------------------------------------------------------------------------- proj_print_x
+# tisk těla tabulky - poslední sloupec je suma
+function proj_print_x($tab,$depth=0) { #trace();
+  global $tisice;
+  $htm= "";
+  $ind= str_repeat(' &tilde; ',$depth);
+  if ( is_array($tab) ) {
+    foreach($tab as $name=>$line) if ( $name ) {
+      if ( is_object($line) && $line->xu ) {
+        $htm.= "<tr><th>$ind$name</th><th>{$line->t}</th>";
+        $s= 0;
+        foreach ($line->xu as $v) {
+          $v= $tisice ? $v/1000 : $v;
+          $s+= $v;
+          $v= number_format($v, 0, '.', ' ');
+          $v= str_replace(' ','&nbsp;',$v);
+          $htm.= "<td align='right'>$v</td>";
+        }
+        $s= number_format($s, 0, '.', ' ');
+        $htm.= "<td align='right'><i>$s</i></td>";
+        $htm.= "</tr>";
+      }
+      else {
+        if ( is_array($line) && $line[''] && $line['']->xu ) {
+          $htm.= "<tr><th>$ind$name</th><th>{$line->t}</th>";
+          $s= 0;
+          foreach ($line['']->xu as $v) {
+            $v= $tisice ? $v/1000 : $v;
+            $s+= $v;
+            $v= number_format($v, 0, '.', ' ');
+            $v= str_replace(' ','&nbsp;',$v);
+            $htm.= "<th style='text-align:right'>$v</th>";
+          }
+          $s= number_format($s, 0, '.', ' ');
+          $htm.= "<th style='text-align:right'><i>$s</i></th>";
+          $htm.= "</tr>";
+        }
+        $htm.= proj_print_x($line,$depth+1);
+      }
+    }
+  }
+  return $htm;
 }
 # ================================================================================================== PROJEKT
 # -------------------------------------------------------------------------------------------------- proj_export
@@ -256,7 +493,8 @@ function proj_export($rok,$co) { #trace();
   }
   $v= number_format($tisice ? $v/1000 : $v, 0, '.', ' ');
   // tisk tabulky
-  $html.= "<table class='stat' style='width:700px'><tr><th style='text-align:right'>$v</th><th>tř.</th>";
+  $width= ""; //"style='width:700px'";
+  $html.= "<table class='stat' $width><tr><th style='text-align:right'>$v</th><th>tř.</th>";
   foreach($clmn_tab as $clmn)
     $html.= "<th style='width:40px;text-align:right'>$clmn</th>";
   $html.= "</tr>";
@@ -267,7 +505,7 @@ function proj_export($rok,$co) { #trace();
 }
 # -------------------------------------------------------------------------------------------------- proj_make
 # když účty jsou skalár a sloupce jsou tvořeny podle zakazka/stredisko=clmn_tab
-function proj_make($rok,&$tab,$clmn_tab) { #trace();
+function proj_make($rok,&$tab,$clmn_tab) { trace();
   global $proj_tab, $ucty_tab;
   $out= (object)array();
   if ( is_object($tab) ) {
@@ -377,7 +615,8 @@ function proj_print($tab,$depth=0) { #trace();
 # -------------------------------------------------------------------------------------------------- naklad_vzor
 # výše nákladu definovaná pomocí rexpr nad MD a zakázkou
 # Stredisko=MPSV-$co
-# $clmn_tab= array('MS/MPSV-MS','MS','DS/MPSV-DS','DS','DH','x');
+# $clmn_tab= array('MS/MPSV-MS','MS','DS/MPSV-DS','DS','DH','x') nebo
+# $clmn_tab= array('*/*'
 function naklad_vzor($rok,$vzor,$clmn_tab) { #trace();
   global $ucet_month_min, $ucet_month_max, $ucet_month_max_odhad;
   foreach ($clmn_tab as $indx=>$ii) $suma[$indx]= 0;
@@ -391,7 +630,7 @@ function naklad_vzor($rok,$vzor,$clmn_tab) { #trace();
     while ( $res && $u= mysql_fetch_object($res) ) {
       $indx= "{$u->Zakazka}/{$u->Stredisko}";
       if ( !isset($suma[$indx]) )
-         fce_error("kombinace Zakazka/Stredisko=$indx - s tím se nepočítá");
+         fce_error("kombinace Zakazka/Stredisko=$indx - s tím se nepočítá/a");
       $suma[$indx]= $u->suma;
     }
     // přidej odhady
@@ -406,7 +645,7 @@ function naklad_vzor($rok,$vzor,$clmn_tab) { #trace();
       while ( $res && $u= mysql_fetch_object($res) ) {
         $indx= "{$u->Zakazka}/{$u->Stredisko}";
         if ( !isset($suma[$indx]) )
-           fce_error("kombinace Zakazka/Stredisko=$indx - s tím se nepočítá");
+           fce_error("kombinace Zakazka/Stredisko=$indx - s tím se nepočítá/b");
         $suma[$indx]+= $u->suma;
       }
     }

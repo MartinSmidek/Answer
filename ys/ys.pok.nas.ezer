@@ -1,0 +1,146 @@
+# Systém Ans(w)er - modul Pokladna.Nastavení
+# (c) 2008-2010 Martin Šmídek <martin@smidek.eu>
+
+# ================================================================================================== nas - Nastavení
+
+use os: form _o_seznam [12,4,,]
+use oc: form _o_cmd [6,142,,]
+use zs: form _z_seznam [12,181,,]
+use zc: form _z_cmd [7,508,,]
+
+proc onstart () {
+  os.seznam.browse_load; os.seznam.raise('onrowclick');
+  zs.seznam.browse_load; zs.seznam.raise('onrowclick')
+}
+# -------------------------------------------------------------------------------------------------- _d_denik
+form _o_seznam [,,348,164] { css:'ae_parm'
+  browse seznam [9,27,200,200] { rows:4
+    show nazev [,,100,] { title:'Název', data:pokladna.nazev, format:'s' },
+    show abbr [,,30,] { title:'Org', data:pokladna.abbr, format:'s' },
+    show ic [,,80,] { title:'IČ', data:pokladna.ic, format:'s' },
+    show dic [,,80,] { title:'DIČ', data:pokladna.dic, format:'s' },
+    show id [,,0,] { data:pokladna.id_pokladna },
+    proc onsubmit () { o_oprava.modal(300,100) }
+  },
+  label [6,6,267,17] { title:'<b>Seznam organizací a jejich pokladen</b>' },
+}
+# -------------------------------------------------------------------------------------------------- _o_cmd
+form _o_cmd [,,300,20] {
+  button oprav [18,1,100,16] { type:'submit', title:'Opravit'
+    proc onclick () { o_oprava.modal(300,100) }
+  }
+  button novy [214,1,50,17] { title:'Nová'
+    proc onclick () { o_novy.modal(300,100) }
+  }
+  button smazat [272,1,50,17] { title:'Smazat'
+    proc onclick () {
+      confirm(conc('Opravdu smazat pokladnu ',os.seznam.abbr.get,'?'));
+      pokladna.delete_record(conc('id_pokladna=',os.seznam.id.get));
+      os.seznam.raise('onrowclick',os.seznam.browse_seek(1))
+    }
+  }
+}
+# -------------------------------------------------------------------------------------------------- _z_seznam
+form _z_seznam [,,708,354] { css:'ae_parm'
+  browse seznam [11,29,200,200] { rows:14, qry_rows:1
+    show abbr [,,30,] { title:'Org', data:person.abbr, format:'rqs' },
+    show jmeno [,,200,] { title:'Příjmení a jméno',
+      expr:"concat(trim(person.prijmeni),' ',trim(person.jmeno))", format:'qs' },
+    show titul [,,50,] { title:'Titul', data:person.titul, format:'qs' },
+    show ulice [,,100,] { title:'Ulice', data:person.ulice, format:'qs' },
+    show psc [,,60,] { title:'Psč', data:person.psc, format:'rqs' },
+    show obec [,,100,] { title:'Obec', data:person.obec, format:'qs' },
+    show rodcis [,,100,] { title:'Rodné číslo', data:person.rodcis, format:'rqs' },
+    show id [,,0,] { data:person.id_person },
+    proc onsubmit () { z_oprava.modal(300,100) }
+  },
+  label [8,8,153,17] { title:'<b>Seznam zaměstnanců</b>' },
+}
+# -------------------------------------------------------------------------------------------------- _z_cmd
+form _z_cmd [,,300,20] {
+  button oprav [18,0,100,16] { type:'submit', title:'Opravit'
+    proc onclick () {
+      z_oprava.modal(300,100);
+    }
+  }
+  button novy [214,0,50,17] { title:'Nový'
+    proc onclick () {
+      z_novy.modal(300,100)
+    }
+  }
+  button smazat [272,1,50,17] { title:'Smazat'
+    proc onclick () {
+      confirm(conc('Opravdu smazat zaměstnance ',zs.seznam.jmeno.get,'?'));
+      person.delete_record(conc('id_person=',zs.seznam.id.get));
+      zs.seznam.raise('onrowclick',zs.seznam.browse_seek(1))
+    }
+  }
+}
+# ================================================================================================== o_oprava
+panel o_oprava [0,0,400,160] { title:'oprava organizace', type:'popup', css:'dialog'
+  use o: form _o_org [2,19,,],
+  proc onfocus() { o_load(os.seznam.id.get); }
+  proc o_load (id) { o.load(id) }
+}
+# ================================================================================================== o_novy
+panel o_novy [0,0,400,160] { title:'nová organizace', type:'popup', css:'dialog'
+  use o: form _o_org [1,1,,],
+}
+# -------------------------------------------------------------------------------------------------- _o_org
+form _o_org [,,300,100] {
+  label [12,20,30,20] { title:'Označení' },
+  label [134,81,30,17] { title:'IČ' },
+  field [74,18,15,17] { data:pokladna.abbr },
+  field [170,18,207,17] { data:pokladna.nazev },
+  field [170,38,208,17] { data:pokladna.ulice },
+  field [170,58,65,17] { data:pokladna.psc },
+  field [297,59,81,17] { data:pokladna.obec },
+  label [131,22,30,17] { title:'Název' },
+  label [131,41,30,17] { title:'Ulice' },
+  label [132,62,30,17] { title:'Psč' },
+  label [253,61,30,17] { title:'Město' },
+  label [255,79,30,17] { title:'DIČ' },
+  field [172,78,65,17] { data:pokladna.ic },
+  field [297,79,81,17] { data:pokladna.dic },
+  button save [337,108,45,20] { type:'submit', title:'OK', help:'uložit změny',
+    proc onclick () {   the_formsave(form,os.seznam); panel.hide(form.key); stop }
+  },
+  button cancel [242,109,45,20] { title:'Storno', help:'zadané údaje neukládat, vrátit se zpět'
+    proc onclick () { panel.hide(0) }
+  },
+}
+# ================================================================================================== z_oprava
+panel z_oprava [0,0,300,156] { title:'oprava zaměstnance', type:'popup', css:'dialog'
+  use z: form _z_zam [1,9,,],
+  proc onfocus() { z_load(zs.seznam.id.get); }
+  proc z_load (id) { z.load(id) }
+}
+# ================================================================================================== z_novy
+panel z_novy [0,0,300,155] { title:'nový zaměstnanec', type:'popup', css:'dialog'
+  use z: form _z_zam [1,9,,],
+}
+# -------------------------------------------------------------------------------------------------- _z_zam
+form _z_zam [,,300,100] {
+  label [178,19,30,17] { title:'Titul' },
+  field [208,16,65,17] { data:person.titul },
+  label [15,20,30,17] { title:'Příjmení' },
+  field [68,17,99,17] { data:person.prijmeni },
+  label [16,40,30,17] { title:'Jméno' },
+  field [68,37,99,17] { data:person.jmeno },
+  label [15,59,30,17] { title:'Rod.čís.' },
+  field [68,57,99,17] { data:person.rodcis },
+  label [178,59,30,17] { title:'Organizace' },
+  field [256,57,20,17] { data:person.abbr },
+  label [16,79,30,17] { title:'Ulice' },
+  field [68,77,208,17] { data:person.ulice },
+  label [17,99,30,17] { title:'Psč' },
+  field [68,97,65,17] { data:person.psc },
+  label [145,100,30,17] { title:'Obec' },
+  field [187,97,89,17] { data:person.obec },
+  button save [240,124,45,20] { type:'submit', title:'OK', help:'uložit změny',
+    proc onclick () { the_formsave(form,zs.seznam); panel.hide(form.key) }
+  }
+  button cancel [143,124,45,20] { title:'Storno', help:'zadané údaje neukládat, vrátit se zpět'
+    proc onclick () { panel.hide(0) }
+  }
+}

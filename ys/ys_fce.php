@@ -4,8 +4,6 @@
 //   require_once("ext/system.php");       // funkce pro modul  Systém
 //   require_once("ext/login.php");        // funkce pro moduly Doc,Login
   // specifická rozšíření
-  require_once("ys_ucet.php");    // funkce pro modul  Ucetnictvi
-  require_once("ys_lide.php");          // funkce pro modul Lidé
 // # -------------------------------------------------------------------------------------------------- make_get
 // # převzetí parametrů od funkce form_make - je v server.php
 // function make_get (&$set,&$select,&$fields) {

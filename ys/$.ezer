@@ -1,7 +1,7 @@
 # Systém Ans(w)er
 # (c) 2008-2010 Martin Šmídek <martin@smidek.eu>
 
-menu ys { type:'main', active:ys.pok
+menu ys { type:'main', active:* //ys.pok
   var global: text,
   tabs info {title:"Informace", _sys:'inf',  include:'onload', active:* }
   tabs pok {title:"Pokladna", _sys:'pok',  include:'onclick', active:* }

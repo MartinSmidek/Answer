@@ -17,6 +17,10 @@ panel Denik [,,,543] { title:'Deník a rozbory',_sys:'den'
     menu {title:'Účetní odhady',type:'group',_sys:'odh'
       item {title:'Rok 2008'                   ,par:°{s:'e-show',c:'2008'}}
       item {title:'Rok 2009'                   ,par:°{s:'e-show',c:'2009'}}
+      item {title:'agregované náklady 2008'    ,par:°{s:'naklad',c:'2008',od:'1',do:'12'}}
+      item {title:'agregované náklady 2008/10-12',par:°{s:'naklad',c:'2008',od:'10',do:'12'}}
+      item {title:'agregované náklady 2009'    ,par:°{s:'naklad',c:'2009',od:'1',do:'12'}}
+      item {title:'agregované náklady 2009/1-9',par:°{s:'naklad',c:'2009',od:'1',do:'9'}}
     },
     menu {title:'Projekty',type:'group',_sys:'pro'
       item {title:'Rok 2008'                   ,par:°{s:'u-proj',c:'2008',od:'1',do:'12'}}
@@ -84,7 +88,7 @@ panel Denik [,,,543] { title:'Deník a rozbory',_sys:'den'
       D_touch.result.set(conc("<div id='info' class='info'>",D_info.get('html'),"</div>"));
       D_cond.set(D_info.get('cond'));
       D_show_load.popup(12,20)
-    | eq(s,'u-surv','u-akce','msds','u-mesice','u+mesice','u-proj','u-srov');
+    | eq(s,'u-surv','u-akce','msds','u-mesice','u+mesice','u-proj','u-srov','naklad');
       D_info.set(ask('ucet_todo','',s,c,par));
       D_touch.result.set(conc("<div id='info' class='info'>",D_info.get('html'),"</div>"));
       D_cond.set(D_info.get('cond'))
