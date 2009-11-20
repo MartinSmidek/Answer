@@ -1,6 +1,0 @@
-use v: form f [20,10,,]
-form f [,,100,80] {
-  field d [50,5,90,17] { type:'date', data:t.datum }
-  button [250,5,90,] { title:"set(now)" proc onclick() {d.set(now)} }
-  button [250,35,90,] { title:"alert(get)" proc onclick() {alert(d.get)} }
-}
