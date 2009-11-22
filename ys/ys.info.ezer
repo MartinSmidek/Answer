@@ -4,7 +4,7 @@
 var P_info: text
 var K_info: text
 # ================================================================================================== POŠTA
-panel Posta [,,670,543] { title:'Pošta',_sys:'pos', style:'width:670'
+panel Posta [,,670,543] {type:'right', title:'Pošta',_sys:'pos', style:'width:670'
   menu {type:'left', active:*
     menu {title:'2009',type:'group'
       item {title:'Došlá pošta'       ,_sys:'dop',par:°{s:'dosla_posta',c:'2009'} },
@@ -20,7 +20,7 @@ panel Posta [,,670,543] { title:'Pošta',_sys:'pos', style:'width:670'
   use P_touch: form _touch [12,4,,],
   proc P_menu (s,c) {
     P_info.set(ask('sou_lst','posta',s,c));
-    P_touch.flist.browse_load(P_info.get('path'));
+    [ P_touch.flist.browse_load(P_info.get('path')) ];
     P_touch.result.set(conc("<div id='info' class='info'>",P_info.get('html'),"</div>"));
     panel.property(°{height:'*',min_height:500})
   }
@@ -56,8 +56,8 @@ panel Posta [,,670,543] { title:'Pošta',_sys:'pos', style:'width:670'
   }
 }
 # ================================================================================================== KALENDÁŘ
-panel Kalendar [,,,543] { title:'Kalendář',_sys:'kal'
-  menu {type:'left',
+panel Kalendar [,,,543] {type:'right', title:'Kalendář',_sys:'kal'
+  menu {type:'left', active:*
     menu {title:'Kalendáře',type:'group'
       item {title:'YS-kalendar'    ,par:°{s:'kalendar',c:'ys'} },
       item {title:'martin.smidek'  ,par:°{s:'kalendar',c:'ms'} }

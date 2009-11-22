@@ -1,6 +1,8 @@
 /* EZER/YS verze 0, (c) Martin Smidek <martin@smidek.eu>, 2009 */
 
 /* úpravy standardu */
+#kuk {
+  height:120px; }
 .ds_form .Label, .ds_form .Check {
   font-size:8pt;  }
 .inAccordion {

@@ -6,9 +6,9 @@
 var d_cond: text
 var d_day: text
 
-panel den {title:"Deník", _sys:'den',  include:'onclick' }
+panel den {type:'plain', title:"Deník", _sys:'den',  include:'onclick' }
 
-panel inf {title:"Informace", _sys:'inf'
+panel inf {type:'right', title:"Informace", _sys:'inf'
   menu {type:'left', active:*
     menu {title:'Stavy pokladen',type:'group', _sys:'akt'
       item {title:'Aktuální stav pokladen',                     par:°{s:'stav',c:'aktualne'} }
@@ -33,7 +33,7 @@ panel inf {title:"Informace", _sys:'inf'
   }
 }
 
-panel nas {title:"Nastavení", _sys:'nas',   skill:'yp+|yp+', include:'onclick' }
+panel nas {type:'plain', title:"Nastavení", _sys:'nas',   skill:'yp+|yp+', include:'onclick' }
 
 proc the_formsave (f,b) {
    f.same; stop

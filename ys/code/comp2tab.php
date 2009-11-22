@@ -33,7 +33,7 @@ $names= array(
  'copy' => (object)array('op'=>'fm'),
  'cset' => (object)array('op'=>'ff'),
  'css' => (object)array('op'=>'os'),
- 'css_cells' => (object)array('op'=>'os'),
+ 'css_cell' => (object)array('op'=>'os'),
  'css_rows' => (object)array('op'=>'os'),
  'data' => (object)array('op'=>'oi'),
  'date2sql' => (object)array('op'=>'ff'),

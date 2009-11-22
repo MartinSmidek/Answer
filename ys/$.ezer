@@ -13,7 +13,7 @@ menu ys { type:'main', active:* //ys.pok
   tabs doc  {title:"Nápověda", _sys:'nap',  include:'onclick,ezer2.help' }
 
   tabs off  {title:"Odhlásit", _sys:'off'
-    panel { title:"Odhlásit"
+    panel {type:'plain', title:"Odhlásit"
       proc onfocus() {
         touch('logout')
       }

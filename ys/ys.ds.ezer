@@ -1,4 +1,4 @@
-panel dum { title:"Objednávky", _sys:'obj', include:'onload,ds' // musí být onload aby se natáhla knihovna
+panel dum {type:'right', title:"Objednávky", _sys:'obj', include:'onload,ds' // musí být onload aby se natáhla knihovna
   menu mo {type:'left'
     proc onclick(x) { show_order(x.par.uid) }
   }
@@ -11,5 +11,5 @@ panel dum { title:"Objednávky", _sys:'obj', include:'onload,ds' // musí být o
   }
   proc show_order (o) { echo('nic') }
 }
-group tab { include:'onload' }
-panel kl { title:"Klienti", _sys:'kli', include:'onload' }
+# group tab { include:'onload' }
+# panel kl {type:'right', title:"Klienti", _sys:'kli', include:'onload' }
