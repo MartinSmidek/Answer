@@ -303,7 +303,7 @@ form _d_doklad [,,419,354] {
   label [9,112,50,17] { title:'Účel' },
   label [6,161,50,17] { title:'Poznámka' },
   label [277,315,50,17] { title:'Příloh' },
-  field datum [74,19,95,17] { data:pdenik.datum },
+  field datum [74,19,95,17] { type:'date', data:pdenik.datum },
   field typ [74,38,13,17] { format:'d' },
   field cislo [90,38,79,17] { data:pdenik.cislo, format:'d' },
   select org [253,20,61,17] { type:'map', data:pdenik.org, options:pokl.abbr, map_pipe:pokl.abbr }

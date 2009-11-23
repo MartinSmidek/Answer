@@ -1,60 +1,4 @@
 <?php # (c) 2007-2009 Martin Smidek <martin@smidek.eu>
-# -------------------------------------------------------------------------------------------------- ucet_menu
-function ucet_menu($k1,$k2,$k3) {
-  return menu_definition($k1,$k2,$k3,<<<__END
-    [
-      {group:'Účetní deník',entries:[
-        {title:'Rok 2008'                   ,entry:'aktivni',keys:['u-show','2008']},
-        {title:'Rok 2009'                   ,entry:'aktivni',keys:['u-show','2009']},
-        {title:'Import deníku a osnovy'     ,entry:'aktivni',keys:['u-load',''],skill:'yui'}
-      ]},
-      {group:'Projekty MPSV',entries:[
-        {title:'MS 2008'                    ,entry:'aktivni',keys:['u-proj','2008,MS']},
-        {title:'DS 2009'                    ,entry:'aktivni',keys:['u-proj','2008,DS']},
-        {title:'MS 2008'                    ,entry:'aktivni',keys:['u-proj','2009,MS']},
-        {title:'DS 2009'                    ,entry:'aktivni',keys:['u-proj','2009,DS']}
-      ]},
-      {group:'Přehledy',entries:[
-        {title:'náklady a výnosy akcí'      ,entry:'aktivni',keys:['u-akce','1']},
-        {title:'náklady a výnosy (1)'       ,entry:'aktivni',keys:['u-surv','1']},
-        {title:'náklady a výnosy (2)'       ,entry:'aktivni',keys:['u-surv','2']},
-        {title:'náklady a výnosy (3)'       ,entry:'aktivni',keys:['u-surv','3']},
-        {title:'náklady a výnosy (4)'       ,entry:'aktivni',keys:['u-surv','4']},
-        {title:'náklady a výnosy (5)'       ,entry:'aktivni',keys:['u-surv','5']},
-        {title:'náklady a výnosy s osnovou' ,entry:'aktivni',keys:['u-surv','6']},
-        {title:'-"- loni a letos'           ,entry:'aktivni',keys:['u-srov','6']}
-//       ]},
-//       {group:'MS & DS',entries:[
-//         {title:'bilance MS & DS'         ,entry:'aktivni',keys:['msds','1']}
-      ]},
-      {group:'Měsíční náklady',entries:[
-        {title:'celkové náklady'            ,entry:'aktivni',keys:['u-mesice','%']},
-        {title:'náklady MS'                 ,entry:'aktivni',keys:['u-mesice','MS']},
-        {title:'náklady DS'                 ,entry:'aktivni',keys:['u-mesice','DS']},
-        {title:'náklady DH'                 ,entry:'aktivni',keys:['u-mesice','DH']},
-        {title:'náklady nezařazené'         ,entry:'aktivni',keys:['u-mesice','x']},
-        {title:'celkové náklady vers. loni' ,entry:'aktivni',keys:['u-mesice','+%']},
-        {title:'náklady MS vers. loni'      ,entry:'aktivni',keys:['u-mesice','+MS']},
-        {title:'náklady DS vers. loni'      ,entry:'aktivni',keys:['u-mesice','+DS']},
-        {title:'náklady DH vers. loni'      ,entry:'aktivni',keys:['u-mesice','+DH']},
-        {title:'nezařazené vers. loni'      ,entry:'aktivni',keys:['u-mesice','+x']}
-      ]},
-      {group:'Měsíční příjmy',entries:[
-        {title:'celkové příjmy'             ,entry:'aktivni',keys:['u+mesice','%']},
-        {title:'příjmy MS'                  ,entry:'aktivni',keys:['u+mesice','MS']},
-        {title:'příjmy DS'                  ,entry:'aktivni',keys:['u+mesice','DS']},
-        {title:'příjmy DH'                  ,entry:'aktivni',keys:['u+mesice','DH']},
-        {title:'příjmy nezařazené'          ,entry:'aktivni',keys:['u+mesice','x']},
-        {title:'celkové příjmy vers. loni'  ,entry:'aktivni',keys:['u+mesice','+%']},
-        {title:'příjmy MS vers. loni'       ,entry:'aktivni',keys:['u+mesice','+MS']},
-        {title:'příjmy DS vers. loni'       ,entry:'aktivni',keys:['u+mesice','+DS']},
-        {title:'příjmy DH vers. loni'       ,entry:'aktivni',keys:['u+mesice','+DH']},
-        {title:'nezařazené vers. loni'      ,entry:'aktivni',keys:['u+mesice','+x']}
-      ]}
-    ]
-__END
-  );
-}
 # -------------------------------------------------------------------------------------------------- ucet_note
 function ucet_note() {
   global $ucet_month_min, $ucet_month_max, $ucet_month_max_odhad;
@@ -105,14 +49,14 @@ function ucet_todo($k1,$k2,$k3=2009,$par=null) {
 //     $html.= "<h3 class='CTitle'>bilance MS & DS roku $rok</h3>";
 //     $html.= ucet_surv($rok,"5","6",6,'Cinnost');
 //     break;
-  case 'u-akce':
-    $html.= "<h3 class='CTitle'>Účetní přehledy akcí roku $rok</h3>";
-    $html.= ucet_akce($rok);
-    break;
+//   case 'u-akce':
+//     $html.= "<h3 class='CTitle'>Účetní přehledy akcí roku $rok</h3>";
+//     $html.= ucet_akce($rok);
+//     break;
   case 'u-mesice':
     if ( substr($k3,0,1)=='+' ) {
       $loni= $rok-1;
-      $html.= "<h3 class='CTitle'>Měsíční přehledy výdajů roku $rok oproti $loni</h3>";
+      $html.= "<h3 class='CTitle'>Měsíční přehledy nákladů roku $rok oproti $loni</h3>";
       $html.= naklady_mesic_diff($rok,$loni,substr($k3,1));
     }
     else {
@@ -123,7 +67,7 @@ function ucet_todo($k1,$k2,$k3=2009,$par=null) {
         $ucet_month_max= 8;
         $ucet_month_max_odhad= 12;
       }
-      $html.= "<h3 class='CTitle'>Měsíční přehledy výdajů roku $rok</h3>";
+      $html.= "<h3 class='CTitle'>Měsíční přehledy nákladů roku $rok</h3>";
       $html.= naklady_mesic($rok,$k3);
       if ( $ucet_month_max<12 ) {
         $html.= ucet_note();
@@ -133,11 +77,11 @@ function ucet_todo($k1,$k2,$k3=2009,$par=null) {
   case 'u+mesice':
     if ( substr($k3,0,1)=='+' ) {
       $loni= $rok-1;
-      $html.= "<h3 class='CTitle'>Měsíční přehledy příjmů roku $rok oproti $loni</h3>";
+      $html.= "<h3 class='CTitle'>Měsíční přehledy výnosů roku $rok oproti $loni</h3>";
       $html.= prijmy_mesic_diff($rok,$loni,substr($k3,1));
     }
     else {
-      $html.= "<h3 class='CTitle'>Měsíční přehledy příjmů roku $rok</h3>";
+      $html.= "<h3 class='CTitle'>Měsíční přehledy výnosů roku $rok</h3>";
       $html.= prijmy_mesic($rok,$k3,6);
     }
     break;
@@ -148,7 +92,7 @@ function ucet_todo($k1,$k2,$k3=2009,$par=null) {
       $html.= bilance_mesic_diff($rok,$loni,substr($k3,1));
     }
     else {
-      $html.= "<h3 class='CTitle'>Měsíční přehledy výdajů roku $rok</h3>";
+      $html.= "<h3 class='CTitle'>Měsíční přehledy nákladů roku $rok</h3>";
       $html.= bilance_mesic($rok,$k3);
     }
     break;
@@ -173,6 +117,93 @@ function ucet_todo($k1,$k2,$k3=2009,$par=null) {
   $html.= "</div>";
   $result= (object)array('html'=>$html,'cond'=>$cond,'year'=>$_SESSION['rok']);
   return $result;
+}
+# ================================================================================================== STRUKTURA
+# -------------------------------------------------------------------------------------------------- rok_struktura
+function rok_struktura($par) { #trace();
+  $rok= $par->rok;
+  $prijmy= $par->prijmy==1;
+  $html= "";
+  $ratio= 3000;
+  $elem= 130;
+  $bottom= 600;
+  $r= array(                                     //rgb
+    's' => (object)array('L'=>0,'W'=>5,'H'=>0, C=>'aaa','Bx'=>'',     N=>'společné'),
+    'dp'=> (object)array('L'=>0,'W'=>2,'H'=>0, C=>'ff8','Bx'=>'s',    N=>'DS režie'),
+    'dh'=> (object)array('L'=>0,'W'=>1,'H'=>0, C=>'bfb','Bx'=>'s,dp', N=>'DS hosté'),
+    'da'=> (object)array('L'=>1,'W'=>1,'H'=>0, C=>'6f6','Bx'=>'s,dp', N=>'DS akce'),
+    'a' => (object)array('L'=>2,'W'=>1,'H'=>0, C=>'aff','Bx'=>'s',    N=>'akce'),
+    'v' => (object)array('L'=>3,'W'=>2,'H'=>0, C=>'ff0','Bx'=>'s',    N=>'VPS'),
+    'p' => (object)array('L'=>3,'W'=>1,'H'=>0, C=>'fa6','Bx'=>'s,v',  N=>'pečouni'),
+    'ml'=> (object)array('L'=>3,'W'=>1,'H'=>0, C=>'f66','Bx'=>'s,v,p',N=>'letní kurz'),
+    'mo'=> (object)array('L'=>4,'W'=>1,'H'=>0, C=>'aaf','Bx'=>'s,v',  N=>'obnovy')
+  );
+  $and= $prijmy ? "AND left(DAL,1)='6' " : "AND left(MD,1)='5' AND md!='551200'";
+  $ucel= $prijmy ?
+   "(CASE WHEN left(dal,2)='69' THEN 'dotace'
+          WHEN LEFT(dal,2)='68' THEN 'dary'
+          ELSE 'ostatní' END) " :
+   "(CASE WHEN left(md,2)='52' THEN 'mzdy'
+          WHEN (LEFT(md,4)='5122' OR LEFT(md,5)='50125') THEN 'cesty'
+          WHEN LEFT(md,4)='5182' THEN 'služby'
+          WHEN LEFT(md,5)='50122' THEN 'potraviny'
+          WHEN LEFT(md,5)='50221' THEN 'energie'
+          WHEN LEFT(md,4)='5112' THEN 'opravy'
+          ELSE 'ostatní' END) ";
+  $qry= "SELECT a.kapitola as kap, $ucel as ucel,
+    /*count(*) as pocet,*/
+    sum(Castka) as castka
+    /*,group_concat(distinct md) as ucty,
+    group_concat(distinct o.nazev) as nazvy*/
+    FROM ezer_test.udenik AS d
+    LEFT JOIN uosnova AS o ON ucet=md AND o.rok=left(id_udenik,4)
+    LEFT JOIN uakce AS a ON a.rok=left(id_udenik,4) AND akce=d.Cinnost
+    WHERE id_udenik BETWEEN {$rok}00000 AND {$rok}99999 $and
+    GROUP BY kapitola,ucel";
+  $res= mysql_qry($qry);
+  while ( $res && $u= mysql_fetch_object($res) ) {
+    if ( isset($r[$u->kap]) ) {
+      if ( $prijmy ) {
+        if ( $u->ucel=='dary' || $u->ucel=='ostatní' )
+          $r[$u->kap]->H+= round($u->castka,0);
+        elseif ( $u->ucel=='dotace' )
+          $r[$u->kap]->M= round($u->castka,0);
+        else fce_error("{$u->ucel} je neznámý účel");
+      }
+      else {
+        $r[$u->kap]->H+= round($u->castka,0);
+        if ( $u->ucel=='mzdy' )
+          $r[$u->kap]->M= round($u->castka,0);
+      }
+    }
+    else fce_error("{$u->kap} je neznámá kapitola");
+  }
+  // doplnění B podle Bx
+  foreach ($r as $i=>$d) {
+    $b= 0;
+    if ( $d->Bx ) foreach(explode(',',$d->Bx) as $x) {
+      $b+= $r[$x]->H/$r[$x]->W;
+    }
+    $r[$i]->B= $b;
+  }
+                                                debug($r,'r');
+  // nakreslení grafu
+  $graf= "<div style='position:absolute;height:{$bottom}px;'>";
+  foreach ($r as $i=>$d) {
+    $l= $elem*$d->L;
+    $b= round($d->B/$ratio,0);
+    $w= $elem*$d->W;
+    $h= round(($d->H/$ratio)/$d->W,0);
+    $c= $d->C;
+    $tkc= round($d->H/1000,0);
+    $mtkc= round($d->M/1000,0);
+    $t= " title=' $tkc'";
+    $lwbh= "left:{$l}px;width:{$w}px;bottom:{$b}px;height:{$h}px";
+    $graf.= "<div class='dia' $t style='$lwbh;background-color:#{$c};'>$tkc ($mtkc) {$d->N}/$i</div>";
+  }
+  $graf.= "</div>";
+  $html.= $graf;
+  return $html;
 }
 # ================================================================================================== ODHADY
 # -------------------------------------------------------------------------------------------------- rok_naklad
@@ -680,7 +711,7 @@ function ucet_mesic($rok,$co='%',$presnost=3,$md='5',$dal='') { #trace();
   return $tab;
 }
 # -------------------------------------------------------------------------------------------------- naklady_mesic_odhad
-# měsíční přehled odhadu výdajů daného roku
+# měsíční přehled odhadu nákladů daného roku
 function naklady_mesic_odhad($rok,$co='%',$presnost=3,&$tab,&$tab_class) { #trace();
   global $ucet_month_min, $ucet_month_max, $ucet_month_max_odhad;
   if ( $ucet_month_max_odhad > $ucet_month_max ) {
@@ -711,15 +742,15 @@ function naklady_mesic($rok,$co='%',$presnost=6) { #trace();
     $sloupce['nazev']= 'účet';
     $sloupce_attr= $mesice_attr;
     $sloupce_attr['nazev']= 'th';
-    $html= tab_show($tab,'výdaje'.substr($rok,-2,2),$sloupce,$sloupce_attr,'stat',$tab_class);
+    $html= tab_show($tab,"náklady $rok",$sloupce,$sloupce_attr,'stat',$tab_class);
   }
   else
-    $html= tab_show($tab,'výdaje'.substr($rok,-2,2),$mesice,$mesice_attr,'stat',$tab_class);
+    $html= tab_show($tab,"náklady $rok",$mesice,$mesice_attr,'stat',$tab_class);
   return $html;
 }
 # ================================================================================================== BILANCE
 # -------------------------------------------------------------------------------------------------- prijmy_mesic
-# měsíční přehled příjmů
+# měsíční přehled výnosů
 function prijmy_mesic($rok,$co='%',$presnost=3) { #trace();
   global $mesice, $mesice_attr;
   $tab= ucet_mesic($rok,$co,$presnost,'','6');
@@ -728,10 +759,10 @@ function prijmy_mesic($rok,$co='%',$presnost=3) { #trace();
     $sloupce['nazev']= 'účet';
     $sloupce_attr= $mesice_attr;
     $sloupce_attr['nazev']= 'th';
-    $html= tab_show($tab,'příjmy'.substr($rok,-2,2),$sloupce,$sloupce_attr,'stat');
+    $html= tab_show($tab,"výnosy $rok",$sloupce,$sloupce_attr,'stat');
   }
   else
-    $html= tab_show($tab,'příjmy'.substr($rok,-2,2),$mesice,$mesice_attr,'stat');
+    $html= tab_show($tab,"výnosy $rok",$mesice,$mesice_attr,'stat');
   return $html;
 }
 # -------------------------------------------------------------------------------------------------- naklady_mesic_diff
@@ -743,7 +774,7 @@ function naklady_mesic_diff($rok1,$rok2,$co='%',$presnost=3) { #trace();
   return $html;
 }
 # -------------------------------------------------------------------------------------------------- prijmy_mesic_diff
-# měsíční přehled příjmů dvou roků
+# měsíční přehled výnosů dvou roků
 function prijmy_mesic_diff($rok1,$rok2,$co='%',$presnost=3) { #trace();
   $html= prijmy_mesic($rok1,$co,$presnost);
   $html.= "<br><br>";
@@ -754,21 +785,22 @@ function prijmy_mesic_diff($rok1,$rok2,$co='%',$presnost=3) { #trace();
 # součet částek
 function ucet_suma($rok,$cond,$query) { #trace();
   $where= $cond . ($query ? " AND $query " : '')." AND id_udenik BETWEEN {$rok}00000 AND {$rok}99999";
+  $join= " LEFT JOIN uakce AS a ON a.rok=left(id_udenik,4) AND akce=d.Cinnost";
   // náklady
-  $qry= "SELECT sum(castka) as s FROM udenik WHERE $where AND left(md,1)='5' ";
+  $qry= "SELECT sum(castka) as s FROM udenik AS d $join WHERE $where AND left(md,1)='5' ";
   $row= mysql_row($qry);
   $nak= $row['s'];
   $naklad= number_format($s= $nak, 0, '.', ' ');
   // výnosy
-  $qry= "SELECT sum(castka) as s FROM udenik WHERE $where AND left(dal,1)='6' ";
+  $qry= "SELECT sum(castka) as s FROM udenik AS d $join WHERE $where AND left(dal,1)='6' ";
   $row= mysql_row($qry);
   $vyn= $row['s'];
   $vynos= number_format($s= $vyn, 0, '.', ' ');
   // peníze
-  $qry= "SELECT sum(castka) as s FROM udenik WHERE $where AND left(dal,1)='2' ";
+  $qry= "SELECT sum(castka) as s FROM udenik AS d $join WHERE $where AND left(dal,1)='2' ";
   $row= mysql_row($qry);
   $plus= $row['s'];
-  $qry= "SELECT sum(castka) as s FROM udenik WHERE $where AND left(md,1)='2' AND dal!=961000";
+  $qry= "SELECT sum(castka) as s FROM udenik AS d $join WHERE $where AND left(md,1)='2' AND dal!=961000";
   $row= mysql_row($qry);
   $minus= $row['s'];
   $penize= number_format($s= $plus-$minus, 0, '.', ' ');

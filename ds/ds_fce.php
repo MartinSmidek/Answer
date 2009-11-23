@@ -32,7 +32,7 @@ function ds_compare_list($orders) {  #trace();
   if ( $orders ) {
     foreach (explode(',',$orders) as $order) {
       $x= ds_compare($order);
-      $html.= wu("<dt>Objednávka <b>$order</b>".($x->neco?" - aspoò nìco":" - nic")."</dt>");
+      $html.= wu("<dt>Objednávka <b>$order</b> {$x->pozn}</dt>");
       $html.= "<dd>{$x->html}</dd>";
       $errs+= $x->err;
     }
@@ -84,10 +84,16 @@ function ds_compare($order) {  #trace();
   $html.= $noroom ? "Jsou zde neubytovaní hosté. " : '';
   $html.= $n_0 ? "Nìkteøí hosté nemají vyplnìno datum narození. " : '';
   $html.= $n>0 && !$age ? "Stáøí hostù se liší od pøedpokladù objednávky." : '';
-  if ( !$html )$html= "Seznam úèastníkù odpovídá objednávce.";
+  if ( !$html ) {
+    $html= "Seznam úèastníkù odpovídá objednávce.";
+    $pozn= " - <b style='color:green'>ok</b> ";
+  }
+  else {
+    $pozn= $n ? " - aspoò nìco" : " - nic";
+  }
   $form= (object)array('adults'=>$n_a,'kids_10_15'=>$n_15,'kids_3_9'=>$n_9,'kids_3'=>$n_3,
     'nevek'=>$n_0, 'noroom'=>$noroom);
-  $result= (object)array('html'=>wu($html),'form'=>$form,'err'=>$err,'neco'=>$n?1:0);
+  $result= (object)array('html'=>wu($html),'form'=>$form,'err'=>$err,'pozn'=>$pozn);
   return $result;
 }
 # ================================================================================================== EXPORT EXCEL

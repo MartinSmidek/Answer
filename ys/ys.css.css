@@ -1,12 +1,20 @@
 /* EZER/YS verze 0, (c) Martin Smidek <martin@smidek.eu>, 2009 */
 
+.dia {
+  position:absolute; text-align:center; }
+
+
 /* úpravy standardu */
 #kuk {
-  height:120px; }
+  height:220px; }
 .ds_form .Label, .ds_form .Check {
   font-size:8pt;  }
-.inAccordion {
-  width:670px; }
+.PanelRight {
+  width:700px; }
+.Browse td {
+  padding:0 2px; }
+.Label {
+  margin-top:2px; }
 
 .CheckT input {
   position:absolute; top:10px; left:-3px; }

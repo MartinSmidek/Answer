@@ -3,9 +3,9 @@
 
 menu ys { type:'main', active:* //ys.pok
   var global: text,
-  tabs info {title:"Informace", _sys:'inf',  include:'onload', active:* }
-  tabs pok {title:"Pokladna", _sys:'pok',  include:'onclick', active:* }
-  tabs ucet {title:"Účetnictví", _sys:'uce',  include:'onclick', active:* }
+  tabs info {title:"Informace", _sys:'inf',  include:'onclick', active:* }
+  tabs pok {title:"Pokladna", _sys:'*',  include:'onclick', active:* }
+  tabs eko {title:"Ekonomika", _sys:'*',  include:'onclick', active:* }
   tabs ds {title:"Dům", _sys:'dum', include:'onclick', active:* }
 ##  tabs chl {title:"Chlapi",  include:'onclick' }
 //#   tabs lide {title:"Lidé",  include:'onclick' }
@@ -21,6 +21,19 @@ menu ys { type:'main', active:* //ys.pok
   }
 //#   tabs test {title:"Test",  where:'http://ys2.ezer/test.html' }
 //#   tabs ys1  {title:"Pokladna/1",  where:'http://ys.ezer/anser.php?modul=ys_pokladna' }
+  // univerzální procedury
+  proc the_formsave (f,b) {
+    f.same; stop
+  | f.key; f.save; f.load; b.browse_seek
+  | f.insert; f.load;
+    b.raise('onrowclick',b.browse_seek(conc(f.key_id,'=',f.key)))
+  }
+}
+
+// univerzální formulář pro levostranné menu
+form right [,,700,50] {
+  label info [0,0,700,600]
+  proc fill(x,y) { info.set(conc("<div class='CSection CMenu'><h3 class='CTitle'>",x,"</h3>",y,"</div>")); }
 }
 
 table _file_ {

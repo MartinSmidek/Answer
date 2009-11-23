@@ -3,7 +3,7 @@ var authorized: number
 var ds_web: number
 
 proc order_load (ord) {
-  echo("ord=",ord); the_order.set(ord); pobyt.precti; ucastnici.precti
+  echo("ord=",ord); the_order.set(ord); pobyt.precti; pobyt.compare
 }
 
 proc onstart () {
@@ -43,7 +43,7 @@ group pobyt {
   // zobrazení objednávky
   proc precti  {
     popis.tit.set(conc('<h3>Objednávka číslo ',the_order.get,'</h3>')); obj.load(the_order.get);
-    fak.load(the_order.get); fak.faktura.display(0); ucastnici.precti(obj.rooms.get)
+    fak.load(the_order.get); fak.faktura.display(0); ucastnici.cti(obj.rooms.get)
   }
   proc obj.save.onclick() {
     obj.save; order_load(the_order.get)
@@ -52,7 +52,7 @@ group pobyt {
   proc objednavatel_save(ucast,changed) {
     fak.save; fak.load; echo('objednavatel_save:',ucast,':',changed);
     [ changed; ucast; echo(ask('ds_ucast_objednatele',the_order.get,ucast)) ];
-    ucastnici.obnova
+    ucastnici.obnova; pobyt.compare
   }
   // vystavení zálohy na objednávku
   proc make_zaloha () {
@@ -71,7 +71,7 @@ group pobyt {
   }
   proc ukaz_spodek {
     ucastnici.to_show.get
-  | ucastnici.to_show.set(1); ucastnici.formular; ucastnici.precti(obj.rooms.get)
+  | ucastnici.to_show.set(1); ucastnici.formular; ucastnici.cti(obj.rooms.get)
   }
   // ------------------------------------------------------------------ záhlaví
   form zahlavi [,,600,30] { css:'ds_form'
@@ -117,26 +117,26 @@ group pobyt {
     check   p14 [PL+260, PT,14,] { title:'14', format:'c', css:'CheckT', help:"14 - komfortní pokoj se sprchou a WC, 2 samostatné postele" }
     check   p15 [PL+280, PT,14,] { title:'15', format:'c', css:'CheckT', help:"15 - apartmán; 2 místnosti a sociálka bezbariérová: 2 lůžka jednoduchá" }
     check   p16 [PL+300, PT,14,] { title:'16', format:'c', css:'CheckT', help:"16 - apartmán; 2 místnosti a sociálka bezbariérová: 1 lůžko jednoduché a 2 lůžka jako patrová postel" }
-    field noroom [PL+330,PT+5,17,] { format:'dr:e' }
+    field noroom [PL+330,PT+5,17,] { format:'or:e', help:'?|počet neubytovaných podle seznamu' }
     field rooms { data:tab.tx_gnalberice_order.rooms }
     label       [  0,120, 50,] { title:'dospělí' }
     field       [0,135,17,] { data:tab.tx_gnalberice_order.adults, format:'r:e' }
-    field adults [24,135,17,] { format:'dr:e' }
+    field adults [24,135,17,] { format:'or:e', help:'?|počet dospělých podle seznamu' }
     label       [54,120,50,] { title:'děti 10-15' }
     field       [54,135,17,] { data:tab.tx_gnalberice_order.kids_10_15, format:'r:e' }
-    field kids_10_15 [78,135,17,] { format:'dr:e' }
+    field kids_10_15 [78,135,17,] { format:'or:e', help:'?|počet dětí podle seznamu' }
     label       [110,120,40,] { title:'děti 3-9' }
     field       [111,135,17,] { data:tab.tx_gnalberice_order.kids_3_9, format:'r:e' }
-    field kids_3_9 [135,135,17,] { format:'dr:e' }
+    field kids_3_9 [135,135,17,] { format:'or:e', help:'?|počet dětí ve věku 3-9 let podle seznamu' }
     label       [165,120,50,] { title:'děti do 3' }
     field       [165,135,17,] { data:tab.tx_gnalberice_order.kids_3, format:'r:e' }
-    field kids_3 [190,135,17,] { format:'dr:e' }
+    field kids_3 [190,135,17,] { format:'or:e', help:'?|počet dětí do 3 let podle seznamu'  }
     label       [220,120,17,] { title:'??' }
-    field nevek [220,135,17,] { format:'dr:e' }
+    field nevek [220,135,17,] { format:'or:e', help:'?|počet osob v seznamu bez udaného věku' }
     label       [252,120,100,] { title:'typ stravy' }
     select      [250,135,100,] { type:'map', data:tab.tx_gnalberice_order.board, options:tab.ds_strava.hodnota }
-    button      [250,160,100,18] { title:'lze fakturovat?'
-      proc onclick() { compare } }
+    //button      [250,160,100,18] { title:'lze fakturovat?'
+    //  proc onclick() { compare } }
     button save [249,186,100,18] { title:'zapsat změny', type:'submit' }
     label info  [1,159,238,53] { title:'' }
     proc onload () { rooms_check(rooms,form,'p') }
@@ -192,8 +192,8 @@ group ucastnici {
     new_form(zahlavi,0,240)
   }
 
-  proc precti (pokoje) {
-    to_show.get; per.pokoj.selects(conc('0,',pokoje));
+  proc cti (pokoje) {
+    to_show.get; per.pokoj.selects(conc('0,',sort(pokoje,',','n')));
     akc.seznam.browse_load(conc('id_order=',the_order.get));
     akc.seznam.raise('onrowclick')
   }
@@ -210,7 +210,7 @@ group ucastnici {
   // vložení nového účastníka
   proc osoba_new {
     per.init; per.id_order.set(the_order.get); per.insert;
-    akc.seznam.browse_seek
+    akc.seznam.browse_seek; pobyt.compare
   }
   // vložení nového dítěte účastníka
   proc osoba_new_child (id_osoba) {
@@ -221,17 +221,17 @@ group ucastnici {
     per.psc.set(akc.seznam.psc.get);
     per.obec.set(akc.seznam.obec.get);
     per.insert;
-    akc.seznam.browse_seek
+    akc.seznam.browse_seek; pobyt.compare
   }
   // zápis opravy účastníka
   proc osoba_save {
-    per.save; per.load; akc.seznam.browse_seek
+    per.save; per.load; akc.seznam.browse_seek; pobyt.compare
   }
   // zrušení účastníka
   proc osoba_del (id_osoba) {
     confirm(conc('Opravdu smazat ',akc.seznam.prijmeni.get,' ',akc.seznam.jmeno.get,' ze seznamu?'));
     tab.ds_osoba.delete_record(conc('id_osoba=',id_osoba));
-    akc.seznam.browse_seek
+    akc.seznam.browse_seek; pobyt.compare
   }
   // ------------------------------------------------------------------ záhlaví
   form zahlavi [,,600,30] { css:'ds_form'

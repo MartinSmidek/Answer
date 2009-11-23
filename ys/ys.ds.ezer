@@ -1,4 +1,5 @@
-panel dum {type:'right', title:"Objednávky", _sys:'obj', include:'onload,ds' // musí být onload aby se natáhla knihovna
+panel dum {type:'right', title:"Objednávky", _sys:'obj',
+        include:'onload,ds' // musí být onload aby se natáhla knihovna
   menu mo {type:'left'
     proc onclick(x) { show_order(x.par.uid) }
   }
@@ -7,9 +8,9 @@ panel dum {type:'right', title:"Objednávky", _sys:'obj', include:'onload,ds' //
   proc onstart() {
     mn.set(ask('ds_obj_menu')); //debug(mn.get);
     mo.attach_code(mn.get('code'));
-    mo.part(mn.get('the')).click
+    mo.part(mn.get('the')).click(1)
   }
   proc show_order (o) { echo('nic') }
 }
-# group tab { include:'onload' }
-# panel kl {type:'right', title:"Klienti", _sys:'kli', include:'onload' }
+group tab { include:'onload' }
+panel kl {type:'right', title:"Hosté", _sys:'kli', include:'onload' }

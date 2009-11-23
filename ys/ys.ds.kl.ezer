@@ -4,12 +4,12 @@ menu m {type:'left'
   var info: text
   var href: text
   proc onclick(x) {
-    u.tit.set(tit(conc('Přehled ',x.par.celkem,' klientů v období od ',sql2date(x.par.od),' do ',sql2date(x.par.do))));
+    u.tit.set(tit(conc('Přehled ',x.par.celkem,' hostů v období od ',sql2date(x.par.od),' do ',sql2date(x.par.do))));
     [ u.seznam.browse_load(conc("FIND_IN_SET(id_order,'",x.par.uids,"')"),"id_order,rodina,narozeni DESC") ];
     // zpráva o objednávkách daného období
     info.set(ask('ds_compare_list',x.par.uids));
     href.set(ask('xls_klienti',x.par.uids,conc(x.par.od,'-',x.par.do)));
-    u.msg.set(conc(info.get('msg'),' Seznam klientů je v ',href.get));
+    u.msg.set(conc(info.get('msg'),' Seznam hostů je v ',href.get));
     u.htm.set(info.get('html'))
   }
 }
@@ -17,14 +17,14 @@ var mn: text
 proc onstart() {
   mn.set(ask('ds_kli_menu'));
   m.attach_code(mn.get('code'));
-  m.part(mn.get('the')).click
+  m.part(mn.get('the')).click(1)
 }
 
 proc tit (x) { return(conc("<div class='CSection CMenu'><h3 class='CTitle'>",x,"</h3></div>")) }
 
 use u: form f [0,0,,]
 form f [,,720,500] {
-  label tit [10,0,700,] { title:'Přehled klientů' }
+  label tit [10,0,700,] { title:'Přehled hostů' }
   label msg [10,50,700,] { title:'msg' }
   label htm [360,78,350,] { title:'html' }
   browse seznam [10,76,,] { rows:30
