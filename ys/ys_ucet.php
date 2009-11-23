@@ -155,7 +155,7 @@ function rok_struktura($par) { #trace();
     sum(Castka) as castka
     /*,group_concat(distinct md) as ucty,
     group_concat(distinct o.nazev) as nazvy*/
-    FROM ezer_test.udenik AS d
+    FROM udenik AS d
     LEFT JOIN uosnova AS o ON ucet=md AND o.rok=left(id_udenik,4)
     LEFT JOIN uakce AS a ON a.rok=left(id_udenik,4) AND akce=d.Cinnost
     WHERE id_udenik BETWEEN {$rok}00000 AND {$rok}99999 $and

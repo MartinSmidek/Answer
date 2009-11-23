@@ -68,4 +68,4 @@ table _cis { key_id:'id_cis'
 map ds_stav:   table _cis {where:"druh='ds_stav'", order:'poradi', key_id:'data'}
 map ds_strava: table _cis {where:"druh='ds_strava'", order:'poradi', key_id:'data'}
 map ds_luzko:  table _cis {where:"druh='ds_luzko'", order:'poradi', key_id:'data'}
-map ds_pokoj:  table tx_gnalberice_room {key_id:'uid'}
+# map ds_pokoj:  table tx_gnalberice_room {key_id:'uid'}
