@@ -1,7 +1,7 @@
 # Systém Ans(w)er - modul Ekonomika
 # (c) 2008-2010 Martin Šmídek <martin@smidek.eu>
 
-const KAPITOLY = "Kapitoly: a=akce, da=DS akce, dh=DS hosté, dp= DS režie, ml=MS léto, mo=MS obnovy, s=YS"
+const KAPITOLY = "Kapitoly: a=akce, da=DS akce, dh=DS hosté, dp= DS režie, ml=MS léto, mo=MS obnovy, s=YS.<br />Údaje jsou graficky zobrazeny OBSAHEM obdélníku, ne výškou."
 
 var D_info: text
 var D_cond: text
@@ -211,7 +211,7 @@ panel roz [,,,543] {type:'right', title:'Kapitoly',_sys:'*'
       proc onclick (i) {
         E_show.hide; D_show2.hide;
         rp.fill(conc("Struktura nákladů v roce ",i.par.rok),conc(KAPITOLY.get,
-          "<br />Údaje jsou v tisících Kč (v závorce jsou mzdové náklady z celku)",ask("rok_struktura",i.par)));
+          "<br />Číselné údaje jsou v tisících Kč (v závorce jsou mzdové náklady z celku)",ask("rok_struktura",i.par)));
       }
     }
     menu {title:'Struktura výnosů',type:'group',_sys:'odh'
@@ -220,7 +220,7 @@ panel roz [,,,543] {type:'right', title:'Kapitoly',_sys:'*'
       proc onclick (i) {
         E_show.hide; D_show2.hide;
         rp.fill(conc("Struktura nákladů v roce ",i.par.rok),conc(KAPITOLY.get,
-          "<br />Údaje jsou v tisících Kč. Nejsou zobrazeny státní dotace (ale jsou uvedeny v závorce jako nezobrazený výnos)",
+          "<br />Číselné údaje jsou v tisících Kč. Nejsou zobrazeny státní dotace (ale jsou uvedeny v závorce jako nezobrazený výnos)",
           ask("rok_struktura",i.par)));
       }
     }
