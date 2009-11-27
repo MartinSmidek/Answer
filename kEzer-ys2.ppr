@@ -156,7 +156,7 @@ kEzer-ys2
 20=ds\ds.tab.ezer
 [Selected Project Files]
 Main=
-Selected=ds\ds.tab.ezer
+Selected=ys\ys_ucet.php
 [ezer2\server\comp2def.php]
 TopLine=161
 Caret=79,193
@@ -190,8 +190,8 @@ Mark1=11,854
 Mark2=57,2031
 Mark3=30,3262
 [ezer2\client\ezer_fdom2.js]
-TopLine=1028
-Caret=54,1078
+TopLine=641
+Caret=9,645
 Mark1=13,602
 Mark2=22,813
 Mark3=64,1078
@@ -202,8 +202,8 @@ Caret=144,44
 TopLine=34
 Caret=105,84
 [ys\ys_ucet.php]
-TopLine=114
-Caret=75,162
+TopLine=1127
+Caret=52,1172
 Mark1=33,162
 Mark2=1,360
 [ys\$.ezer]
@@ -213,7 +213,7 @@ Caret=53,9
 TopLine=1
 Caret=37,16
 [ys\ys.pok.nas.ezer]
-TopLine=81
+TopLine=91
 Caret=1,146
 [ds\ds.ezer]
 TopLine=1
@@ -227,12 +227,10 @@ Mark3=70,46
 Mark4=8,207
 Mark5=93,255
 [ys\ys.eko.ezer]
-TopLine=151
-Caret=34,185
+TopLine=183
+Caret=30,223
 Mark1=81,164
-Mark2=81,164
-Mark3=81,164
-Mark4=8,104
+Mark2=8,104
 [ys\ys.css.css]
 TopLine=1
 Caret=3,4
@@ -243,5 +241,5 @@ Caret=1,115
 TopLine=1
 Caret=1,28
 [ds\ds.tab.ezer]
-TopLine=11
+TopLine=1
 Caret=91,22

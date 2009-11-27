@@ -652,7 +652,7 @@ function naklad_vzor($rok,$vzor,$clmn_tab) { #trace();
   global $ucet_month_min, $ucet_month_max, $ucet_month_max_odhad;
   foreach ($clmn_tab as $indx=>$ii) $suma[$indx]= 0;
   if ( $vzor ) {
-    $qry= "SELECT sum(castka) as suma,Zakazka,Stredisko,
+    $qry= "SELECT sum(castka) as suma,Zakazka,Stredisko,min(id_udenik) as id,
            min(month(datum)) as _od, max(month(datum)) as _do
            FROM udenik WHERE md RLIKE '$vzor' AND id_udenik BETWEEN {$rok}00000 AND {$rok}99999
            AND month(datum)<=$ucet_month_max AND month(datum)>=$ucet_month_min
@@ -661,7 +661,7 @@ function naklad_vzor($rok,$vzor,$clmn_tab) { #trace();
     while ( $res && $u= mysql_fetch_object($res) ) {
       $indx= "{$u->Zakazka}/{$u->Stredisko}";
       if ( !isset($suma[$indx]) )
-         fce_error("kombinace Zakazka/Stredisko=$indx - s tím se nepočítá/a");
+         fce_error("kombinace Zakazka/Stredisko=$indx - s tím se nepočítá (id_udenik={$u->id})/c");
       $suma[$indx]= $u->suma;
     }
     // přidej odhady
@@ -676,7 +676,7 @@ function naklad_vzor($rok,$vzor,$clmn_tab) { #trace();
       while ( $res && $u= mysql_fetch_object($res) ) {
         $indx= "{$u->Zakazka}/{$u->Stredisko}";
         if ( !isset($suma[$indx]) )
-           fce_error("kombinace Zakazka/Stredisko=$indx - s tím se nepočítá/b");
+           fce_error("kombinace Zakazka/Stredisko=$indx - s tím se nepočítá/d");
         $suma[$indx]+= $u->suma;
       }
     }
