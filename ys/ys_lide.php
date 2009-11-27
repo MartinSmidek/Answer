@@ -46,7 +46,7 @@ function lide_cleni_kurs($rok,$export=0) { trace();
       $prijmeni= substr($u->rodcislo,2,1)>4 ? $u->prijmeni_z : $u->prijmeni_m;
       $line[]= (object)array(
         'p'=>$prijmeni,'j'=>$u->jmeno_d,'u'=>$u->adresa,'m'=>$u->mesto,'ps'=>$u->psc,
-        'rc'=>$u->rodcislo,'r'=>$roky);
+        'rc'=>$u->rodcislo,'r'=>$roky,'c'=>'b');
     }
   }
                                                         debug($line);

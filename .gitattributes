@@ -24,6 +24,9 @@ ds/img/ds.png -text
 /favicon.ico -text
 /kEzer-ys2.ppr -text
 /libr.php -text
+sql/ms_mysql.PRG -text
+sql/ms_mysql.bat -text
+sql/mysql.bat -text
 /test.php -text
 wiki/dokumentace.wiki -text
 wiki/todo.wiki -text
