@@ -1,21 +1,57 @@
-# (c)2009,MartinŠmídek
+# Systém Ans(w)er - modul Lidi
+# (c) 2008-2010 Martin Šmídek <martin@smidek.eu>
 
-#                                                                                                   SKUPINKY
-panel Skupinky [,,,543] { title:'Skupinky'
+# ================================================================================================== SKUPINKY
+var rok: number
+proc onstart() { rok.set(2009) }
+
+panel Skupinky [,,,543] {type:'right', title:'Skupinky'
   menu {type:'left',
+    menu {title:'Volba roku',type:'group'
+      item {title:'2009',par:°{rok:'2009'} }
+      item {title:'2008',par:°{rok:'2008'} }
+      item {title:'2007',par:°{rok:'2007'} }
+      proc onclick (i) { rok.set(i.par.rok) }
+    }
+    menu {title:'Členská základna',type:'group'
+      item {title:'Členové - účastníci letního kurzu'
+        proc onclick (i) {
+          info.fill(conc(i.title,' roku ',rok.get),ask('lide_cleni_kurs',rok.get));
+          info.export.display(1);
+        }
+      }
+    }
     menu {title:'Podklady pro skupinky',type:'group'
-      item {title:'Seznam účastníků'           ,par:°{rok:'2009'}
-        proc onclick () { u.x.set(ask('lide_kurs',2009)) }
+      item {title:'Seznam účastníků LK'
+        proc onclick (i) {
+          info.export.display(0);
+          info.fill(conc(i.title,' roku ',rok.get),ask('lide_kurs',rok.get))
+        }
       }
-      item {title:'Rozbor starých skupinek'    ,par:°{s:'u-show',c:'2009'}
-        proc onclick () { u.x.set(ask('lide_spolu',2009)) }
+      item {title:'Rozbor starých skupinek LK'
+        proc onclick (i) {
+          info.export.display(0);
+          info.fill(conc(i.title,' roku ',rok.get),ask('lide_spolu',rok.get))
+        }
       }
-    },
+    }
   }
-  use u: form f [12,4,,],
+  use info: form right [12,4,,],
 }
-#                                                                                             ---   _TOUCH
-form f [,,700,500] {
-  label x [0,0,700,600] { title:'', style:'backgroundColor:#fff;' }
+# -------------------------------------------------------------------------------------------------- right
+# formulář pro levostranné menu s permanentním nadpisem
+form right [,,640,50] {
+  button export [620,18,100,16] { title:'Export', style:'display:none;zIndex:2'
+    proc onclick() {
+      note.set(ask('lide_cleni_kurs',rok.get,1));
+    }
+  }
+  label info [0,0,680,600] { title:'' }
+  label head [0,0,680,50]  { title:'' }
+  label note [0,50,680,550] { title:'' }
+  proc fill(x,y) {
+    [ x; head.set(conc("<div class='CSection CMenu'><h3 class='CTitle'>",x,"</h3></div>")) ];
+    [ y; note.set(y) ]
+  }
 }
 

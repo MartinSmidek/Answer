@@ -8,7 +8,7 @@ menu ys { type:'main', active:* //ys.pok
   tabs eko {title:"Ekonomika", _sys:'*',  include:'onclick', active:* }
   tabs ds {title:"Dům", _sys:'dum', include:'onclick', active:* }
 ##  tabs chl {title:"Chlapi",  include:'onclick' }
-//#   tabs lide {title:"Lidé",  include:'onclick' }
+  tabs lide {title:"Lidé",  include:'onclick' }
   tabs syst {title:"Systém", _sys:'sys',  include:'onclick,ezer2.syst', active:* }
   tabs doc  {title:"Nápověda", _sys:'nap',  include:'onclick,ezer2.help' }
 

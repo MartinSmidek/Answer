@@ -11,6 +11,9 @@ FileFormat=0
 ProjectFilesOnly=0
 [Project tree]
 kEzer-ys2
+	+konverze
+		sql\ms_mysql.PRG
+		sql\mysql.bat
 	-ezer2
 		+libr
 			ezer2\ezer2.help.ezer
@@ -108,7 +111,7 @@ kEzer-ys2
 		ys\ys_fce.php
 		ys\ys_lide.php
 		ys\ys_ucet.php
-	+ds
+	-ds
 		ds\ds.css.css
 		ds\ds.dum.ezer
 		ds\ds.ezer
@@ -142,21 +145,14 @@ kEzer-ys2
 6=ezer2\client\ezer.js
 7=ezer2\client\ezer_fdom2.js
 8=..\..\..\Apache\logs\ys2-error.log
-9=ds\ds_fce.php
-10=ys\ys_ucet.php
+9=ys\ys_ucet.php
+10=ys\ys_lide.php
 11=ys\$.ezer
-12=ys\ys.ds.ezer
-13=ys\ys.pok.nas.ezer
-14=ds\ds.ezer
-15=ds\ds.dum.ezer
-16=ys\ys.eko.ezer
-17=ys\ys.css.css
-18=ys\ys.pok.den.ezer
-19=graf.php
-20=ds\ds.tab.ezer
+12=ys\ys.lide.ezer
+13=..\..\..\..\G\MS\MS\PROGS\ms.prg
 [Selected Project Files]
 Main=
-Selected=ys\ys_ucet.php
+Selected=ys\ys_lide.php
 [ezer2\server\comp2def.php]
 TopLine=161
 Caret=79,193
@@ -197,49 +193,21 @@ Mark2=22,813
 Mark3=64,1078
 [..\..\..\Apache\logs\ys2-error.log]
 TopLine=43
-Caret=144,44
-[ds\ds_fce.php]
-TopLine=34
-Caret=105,84
+Caret=205,47
 [ys\ys_ucet.php]
 TopLine=1127
 Caret=52,1172
 Mark1=33,162
 Mark2=1,360
+[ys\ys_lide.php]
+TopLine=1
+Caret=15,39
 [ys\$.ezer]
 TopLine=1
-Caret=53,9
-[ys\ys.ds.ezer]
+Caret=1,11
+[ys\ys.lide.ezer]
 TopLine=1
-Caret=37,16
-[ys\ys.pok.nas.ezer]
-TopLine=91
-Caret=1,146
-[ds\ds.ezer]
-TopLine=1
-Caret=1,2
-[ds\ds.dum.ezer]
-TopLine=93
-Caret=81,120
-Mark1=49,195
-Mark2=61,74
-Mark3=70,46
-Mark4=8,207
-Mark5=93,255
-[ys\ys.eko.ezer]
-TopLine=183
-Caret=30,223
-Mark1=81,164
-Mark2=8,104
-[ys\ys.css.css]
-TopLine=1
-Caret=3,4
-[ys\ys.pok.den.ezer]
-TopLine=108
-Caret=1,115
-[graf.php]
-TopLine=1
-Caret=1,28
-[ds\ds.tab.ezer]
-TopLine=1
-Caret=91,22
+Caret=61,42
+[..\..\..\..\G\MS\MS\PROGS\ms.prg]
+TopLine=691
+Caret=86,739
