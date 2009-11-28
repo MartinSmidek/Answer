@@ -19,7 +19,7 @@ function lide_cleni_kurs($rok,$export=0) { trace();
          JOIN ms_deti USING(cislo)
          WHERE druh=1
          HAVING rok=$rok
-         ORDER BY cislo";
+         ORDER BY cislo,rodcislo";
   $res= mysql_qry($qry);
   $par= 0;
   $line= array();
@@ -49,8 +49,12 @@ function lide_cleni_kurs($rok,$export=0) { trace();
         'rc'=>$u->rodcislo,'r'=>$roky,'c'=>'b');
     }
   }
-                                                        debug($line);
-  $html= "<i>Celkem se účastnilo $rodin rodin s $deti dětmi</i><br />$html";
+//                                                         debug($line);
+  $note= "Seznam účastníků letního kurzu roku $rok včetně dětí, doplněný věkem.
+          <br />Seznam je možné vyexportovat do Excelu spolu s doplňujícími údaji pro
+          přehled o členské základně.";
+  $note.= "<br />Letního kurzu se účastnilo celkem $rodin rodin s $deti dětmi.";
+  $html= "<p><i>$note</i></p>$html";
   if ( $export ) {
     // export
     $html= lide_export($line,"clenove_$rok",$rok);
@@ -62,7 +66,7 @@ function vek ($rc) {
   if ( $rc ) {
     $yy_rc= substr($rc,0,2);
     $yy= date('y');
-    $let= $yy_rc<$yy ? $yy-$yy_rc : $yy+(100-$yy_rc);
+    $let= $yy_rc==$yy ? 1 : ( $yy_rc<$yy ? $yy-$yy_rc : $yy+(100-$yy_rc) );
   }
   return $let;
 }
@@ -207,14 +211,17 @@ function lide_spolu($rok) { trace();
       $html.= "<dt><b>$ucastnik</b></dt><dd>$ucasti</dd>";
   }
   $html.= "</dl>";
-  return $html;
+  $note= "Abecední seznam účastníků letního kurzu roku $rok doplněný seznamem členů jeho starších
+          skupinek na letních kurzech. Ve skupinkách jsou uvedení jen účastníci
+          kurzu roku $rok.";
+  return "<p><i>$note</i></p>$html";
 }
 # -------------------------------------------------------------------------------------------------- lide_kurs
 # přehled
 function lide_kurs($rok) { trace();
   $html= "";
   // letošní účastníci
-  $qry= "SELECT cislo,akce,skupina,jmeno,mesto,nazev,year(datum_od) as rok
+  $qry= "SELECT cislo,akce,skupina,jmeno,mesto,nazev,year(datum_od) as rok, jmeno_m, jmeno_z
           FROM ms_kurs
           JOIN ms_pary USING (cislo)
           JOIN ms_druhakce USING(akce)
@@ -223,8 +230,10 @@ function lide_kurs($rok) { trace();
           ORDER BY jmeno";
   $res= mysql_qry($qry);
   while ( $res && ($u= mysql_fetch_object($res)) ) {
-    $html.= "<br>{$u->jmeno} {$s->mesto}  ({$u->cislo})";
+    $html.= "<br><b>{$u->jmeno}</b> {$u->jmeno_m} a {$u->jmeno_z} - {$u->mesto}";
   }
+  $note= "Abecední seznam účastníků letního kurzu roku $rok.";
+  return "<p><i>$note</i></p>$html";
   return $html;
 }
 ?>
