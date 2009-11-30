@@ -14,12 +14,19 @@ $js= array(
   'ezer2/client/ezer_report.js',
   'ezer2/client/ezer_fdom2.js',
   'ezer2/client/app.js',
-  'ds/fce.js'
+  'ds/fce.js',
+  'ezer2/client/licensed/mootools/asset.js',
+//   'ezer2/client/licensed/fancyupload/source/Swiff.Uploader.js',
+//   'ezer2/client/licensed/fancyupload/source/Fx.ProgressBar.js',
+//   'ezer2/client/licensed/fancyupload/source/FancyUpload2.js',
+//  'ezer2/client/licensed/fancyupload/source/FancyUpload3.Attach.js',
+  'test/fce.js'
 );
 $css= array(
   './ezer2/client/appf.css',
   './ezer2/client/natdocs.css',
-  './test/ys.css.css'
+  './ezer2/client/licensed/fancyupload.css',
+  './test/test.css'
 );
 $dbg= $_GET['dbg'];
 $matous= $_SERVER["DOCUMENT_ROOT"]=='/home/www/';

@@ -13,7 +13,7 @@ panel Skupinky [,,,543] {type:'right', title:'Skupinky'
       item {title:'2007',par:°{rok:'2007'} }
       proc onclick (i) { rok.set(i.par.rok) }
     }
-    menu {title:'Členská základna',type:'group'
+    menu {title:'Členská základna',_sys:'cle',type:'group'
       item {title:'Členové - účastníci letního kurzu'
         proc onclick (i) {
           info.fill(conc(i.title,' roku ',rok.get),ask('lide_cleni_kurs',rok.get));

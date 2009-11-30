@@ -38,6 +38,15 @@ function lide_cleni_kurs($rok,$export=0) { trace();
       $line[]= (object)array(
         'p'=>$u->prijmeni_z,'j'=>$u->jmeno_z,'u'=>$u->adresa,'m'=>$u->mesto,'ps'=>$u->psc,
         'rc'=>$u->rodcislo_z,'r'=>$roky_z,'c'=>$u->funkce?'č':'b');
+      if ( $u->jmeno_d ) {
+        $deti++;
+        $roky= vek($u->rodcislo);
+        $html.= ", {$u->jmeno_d}/$roky";
+        $prijmeni= substr($u->rodcislo,2,1)>4 ? $u->prijmeni_z : $u->prijmeni_m;
+        $line[]= (object)array(
+          'p'=>$prijmeni,'j'=>$u->jmeno_d,'u'=>$u->adresa,'m'=>$u->mesto,'ps'=>$u->psc,
+          'rc'=>$u->rodcislo,'r'=>$roky,'c'=>'b');
+      }
     }
     else {
       $deti++;
