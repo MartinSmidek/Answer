@@ -1,3 +1,6 @@
+# Systém Ans(w)er - modul Dům
+# (c) 2008-2010 Martin Šmídek <martin@smidek.eu>
+
 var the_order: number
 var authorized: number
 var ds_web: number
@@ -52,15 +55,15 @@ group pobyt {
   proc objednavatel_save(ucast,changed) {
     fak.save; fak.load; echo('objednavatel_save:',ucast,':',changed);
     [ changed; ucast; echo(ask('ds_ucast_objednatele',the_order.get,ucast)) ];
-    ucastnici.obnova; pobyt.compare
+    ucastnici.obnova; compare
   }
   // vystavení zálohy na objednávku
   proc make_zaloha () {
-    fak.faktura.set(ask('ds_zaloha',the_order.get)); fak.faktura.display(1)
+    fak.faktura.set(ask('ds_xls_zaloha',the_order.get)); fak.faktura.display(1)
   }
   // vystavení faktur pro rodiny na objednávce
   proc make_faktury () {
-    fak.faktura.set(ask('ds_faktury',the_order.get)); fak.faktura.display(1)
+    fak.faktura.set(ask('ds_xls_faktury',the_order.get)); fak.faktura.display(1)
   }
   // porovnání objednávky se seznamem účastníků
   var comp: text
@@ -91,7 +94,7 @@ group pobyt {
   }
   // ------------------------------------------------------------------ OBJEDNÁVKA
   form objednavka [,,300,100] { css:'ds_form'
-    const PL=0; PT=90,
+    const PL=0; PT=94,
     label       [  0,  0,100,] { title:'stav objednávky' }
     select      [  0, 15,150,] { type:'map', data:tab.tx_gnalberice_order.state, options:tab.ds_stav.hodnota }
     label       [180,  0,200,] { title:'poznámka k objednávce' }
@@ -135,6 +138,9 @@ group pobyt {
     field nevek [220,135,17,] { format:'or:e', help:'?|počet osob v seznamu bez udaného věku' }
     label       [252,120,100,] { title:'typ stravy' }
     select      [250,135,100,] { type:'map', data:tab.tx_gnalberice_order.board, options:tab.ds_strava.hodnota }
+    label       [280,160,30,] { title:'sleva' }
+    field sleva [310,160,20,] { data:tab.tx_gnalberice_order.sleva }
+    label       [335,160,10,] { title:'%' }
     //button      [250,160,100,18] { title:'lze fakturovat?'
     //  proc onclick() { compare } }
     button save [249,186,100,18] { title:'zapsat změny', type:'submit' }
@@ -164,7 +170,7 @@ group pobyt {
     field       [  0,175, 50,] { data:tab.tx_gnalberice_order.zip}
     label       [ 60,160, 70,] { title:'obec' }
     field       [ 60,175,150,] { data:tab.tx_gnalberice_order.city}
-    label faktura [223,119,120,] { title:'...' }
+    label faktura [223,117,120,] { title:'...' }
     button      [220,132,100,18] { title:'vystavit zálohu'
       proc onclick() { make_zaloha } }
     button      [220,159,100,18] { title:'vystavit faktury'
@@ -251,10 +257,14 @@ group ucastnici {
       show rodina [,,20,] { title:'rod', data:tab.ds_osoba.rodina, format:'s+' }
       show prijmeni [,,70,] { title:'příjmení', data:tab.ds_osoba.prijmeni, format:'s' }
       show jmeno    [,,50,]  { title:'jméno', data:tab.ds_osoba.jmeno, format:'s' }
-      show vek  [,,20,]  { title:'věk', expr:"if(ds_osoba.narozeni,year(now())-year(ds_osoba.narozeni),'??')", format:'r' }
-      show [,,20,]  { title:'pok.', data:tab.ds_osoba.pokoj, format:'rs:e' }  // :e zobrazí 0 jako nic
-      show [,,20,]  { title:'lůž.', data:tab.ds_osoba.luzko, map_pipe:tab.ds_luzko.zkratka, format:'rs' }
-      show [,,20,]  { title:'str.', data:tab.ds_osoba.strava, map_pipe:tab.ds_strava.zkratka, format:'rs' }
+      show vek  [,,20,]  { title:'věk',
+        expr:"if(ds_osoba.narozeni,year(now())-year(ds_osoba.narozeni),'??')", format:'r' }
+      show [,,20,]  { title:'pok.',
+        data:tab.ds_osoba.pokoj, format:'rs:e' }  // :e zobrazí 0 jako nic
+      show [,,20,]  { title:'lůž.',
+        data:tab.ds_osoba.luzko, map_pipe:tab.ds_luzko.zkratka, format:'rs' }
+      show [,,20,]  { title:'str.',
+        data:tab.ds_osoba.strava, map_pipe:tab.ds_strava.zkratka, format:'rs' }
       show [,,30,]  { title:'od', data:tab.ds_osoba.fromday, format:'s:d.m' }
       show [,,30,]  { title:'do', data:tab.ds_osoba.untilday, format:'s:d.m' }
       show [,,20,]  { title:'?', data:tab.ds_osoba.pozn, format:'s' }

@@ -1,15 +1,19 @@
 # group tab { include:'onload' }
 
+var klienti_mesic_rok: text
+var klienti_uids: text
+var href: text
+var info: text
 menu m {type:'left'
-  var info: text
-  var href: text
   proc onclick(x) {
-    u.tit.set(tit(conc('Přehled ',x.par.celkem,' hostů v období od ',sql2date(x.par.od),' do ',sql2date(x.par.do))));
-    [ u.seznam.browse_load(conc("FIND_IN_SET(id_order,'",x.par.uids,"')"),"id_order,rodina,narozeni DESC") ];
+    klienti_mesic_rok.set(x.par.mesic_rok);
+    klienti_uids.set(x.par.uids);
+    u.tit.set(tit(conc('Přehled ',x.par.celkem,' hostů v období ',x.par.mesic_rok)));
+    [ u.seznam.browse_load(conc("FIND_IN_SET(id_order,'",klienti_uids.get,"')"),
+        "id_order,rodina,narozeni DESC") ];
     // zpráva o objednávkách daného období
-    info.set(ask('ds_compare_list',x.par.uids));
-    href.set(ask('xls_klienti',x.par.uids,conc(x.par.od,'-',x.par.do)));
-    u.msg.set(conc(info.get('msg'),' Seznam hostů je v ',href.get));
+    info.set(ask('ds_compare_list',klienti_uids.get));
+    u.msg.set(info.get('msg'));
     u.htm.set(info.get('html'))
   }
 }
@@ -24,7 +28,12 @@ proc tit (x) { return(conc("<div class='CSection CMenu'><h3 class='CTitle'>",x,"
 
 use u: form f [0,0,,]
 form f [,,720,500] {
-  label tit [10,0,700,] { title:'Přehled hostů' }
+  label tit [10,0,680,] { title:'Přehled hostů' }
+  button [620,18,60,20] {title:'Export'
+    proc onclick() {
+      href.set(ask('ds_xls_hoste',klienti_uids.get,klienti_mesic_rok.get));
+      msg.set(conc(info.get('msg'),href.get));
+  } }
   label msg [10,50,700,] { title:'msg' }
   label htm [360,78,350,] { title:'html' }
   browse seznam [10,76,,] { rows:30

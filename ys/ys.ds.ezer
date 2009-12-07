@@ -1,3 +1,7 @@
+# Systém Ans(w)er - modul Dům
+# (c) 2008-2010 Martin Šmídek <martin@smidek.eu>
+
+# ================================================================================================== OBJEDNÁVKY
 panel dum {type:'right', title:"Objednávky", _sys:'obj',
         include:'onload,ds' // musí být onload aby se natáhla knihovna
   menu mo {type:'left'
@@ -13,4 +17,80 @@ panel dum {type:'right', title:"Objednávky", _sys:'obj',
   proc show_order (o) { echo('nic') }
 }
 group tab { include:'onload' }
+# ================================================================================================== HOSTÉ
 panel kl {type:'right', title:"Hosté", _sys:'kli', include:'onload' }
+# ================================================================================================== CENY
+var rok: number
+panel cen [,,,543] {type:'right', title:'Ceny'
+  menu {type:'left', active:*
+    menu m {title:'Ceny roku ',type:'group'
+      item {title:'2009',par:°{rok:'2009'} }
+      item {title:'2008',par:°{rok:'2008'} }
+      item {title:'2007',par:°{rok:'2007'} }
+      proc onclick (i) {
+        rok.set(i.par.rok);
+        info.fill(conc(m.title,i.title),'');
+        info.ceny.browse_load(conc("rok=",rok.get));
+      }
+    }
+  }
+  use info: form right [12,4,,],
+  # ------------------------------------------------------------------------------------------------ right
+  # formulář pro levostranné menu s permanentním nadpisem
+  form right [,,640,50] {
+  #   button export [620,18,100,16] { title:'Export', style:'display:none;zIndex:2'
+  #     proc onclick() {
+  #       note.set(ask('lide_cleni_kurs',rok.get,1));
+  #     }
+  #   }
+    label info [0,0,680,600] { title:'' }
+    label head [0,0,680,50]  { title:'' }
+    label note [0,50,680,550] { title:'' }
+    proc fill(x,y) {
+      [ x; head.set(conc("<div class='CSection CMenu'><h3 class='CTitle'>",x,"</h3></div>")) ];
+      [ y; note.set(y) ]
+    }
+    browse ceny [10,76,,] { rows:30
+      show id [,,0,] { data:tab.ds_cena.id_cena }
+      show rok [,,0,] { data:tab.ds_cena.rok }
+      show [,,300,] {title:'položka ceníku',  data:tab.ds_cena.polozka }
+      show [,,60,] {title:'typ',  data:tab.ds_cena.typ format:'s+'}
+      show [,,60,] {title:'od vč.',  data:tab.ds_cena.od, format:'r' }
+      show [,,60,] {title:'do nevč.',  data:tab.ds_cena.do, format:'r' }
+      show [,,100,] {title:'cena vč.DPH',  data:tab.ds_cena.cena, format:'r' }
+      show [,,40,] {title:'DPH',  data:tab.ds_cena.dph, format:'r' }
+      proc onsubmit (id) {
+        oprava.modal(300,100)
+      }
+    }
+  }
+  # ================================================================================================ z_oprava
+  panel oprava [0,0,300,120] { title:'oprava položky ceníku', type:'popup', css:'dialog'
+    use f: form formular [1,9,,],
+    proc onfocus() { f.load(info.ceny.id.get); }
+  }
+  # ================================================================================================ z_novy
+  panel novy [0,0,300,125] { title:'nová položka ceníku', type:'popup', css:'dialog'
+    use z: form formular [1,9,,],
+  }
+  # ------------------------------------------------------------------------------------------------ formular
+  form formular [,,300,100] {
+    label [  0,10, 80,17] { title:'položka', format:'r' },
+    field [ 90,10,200,17] { data:tab.ds_cena.polozka },
+    label [  0,35, 80,17] { title:'věkové pásmo', format:'r' },
+    field [ 90,35, 40,17] { data:tab.ds_cena.od, format:'r'  },
+    field [140,35, 40,17] { data:tab.ds_cena.do, format:'r'  },
+    label [190,35, 20,17] { title:'typ', format:'r' },
+    field [220,35, 70,17] { data:tab.ds_cena.typ },
+    label [  0,60, 80,17] { title:'cena', format:'r' },
+    field [ 90,60, 40,17] { data:tab.ds_cena.cena, format:'r'  },
+    label [190,60, 20,17] { title:'DPH', format:'r' },
+    field [220,60, 40,17] { data:tab.ds_cena.dph, format:'r'  },
+    button save [90,90,45,20] { type:'submit', title:'Uložit', help:'uložit změny',
+      proc onclick () { the_formsave(form,info.ceny); panel.hide(form.key) }
+    }
+    button cancel [150,90,45,20] { title:'Zpět', help:'zadané údaje neukládat, vrátit se zpět'
+      proc onclick () { panel.hide(0) }
+    }
+  }
+}

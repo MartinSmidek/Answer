@@ -1,17 +1,4 @@
 <?php # (c) 2009 Martin Smidek <martin@smidek.eu>
-# -------------------------------------------------------------------------------------------------- wu
-# na UTF8 na stránce win1250 v tabulce
-function wu($x,$user2sql=0) { #trace();
-  if ( $user2sql ) {
-    // pøeveï uživatelskou podobu na sql tvar
-    $y= utf2win($x,true);
-  }
-  else {
-    // pøeveï sql tvar na uživatelskou podobu (default)
-    $y= win2utf($x,true);
-  }
-  return $y;
-}
 # -------------------------------------------------------------------------------------------------- dt
 # na datum na stránce z timestamp v tabulce
 function dt($x,$user2sql=0) { #trace();
@@ -29,17 +16,19 @@ function dt($x,$user2sql=0) { #trace();
 function ds_compare_list($orders) {  #trace();
   $errs= 0;
   $html= "<dl>";
+  $n= 0;
   if ( $orders ) {
     foreach (explode(',',$orders) as $order) {
       $x= ds_compare($order);
       $html.= wu("<dt>Objednávka <b>$order</b> {$x->pozn}</dt>");
       $html.= "<dd>{$x->html}</dd>";
       $errs+= $x->err;
+      $n++;
     }
   }
   $html.= "</dl>";
-  $msg= $errs ? "Celkem $errs objednávek tohoto období obsahuje chyby."
-    : "Všechny objednávky v tomto období jsou úplné." ;
+  $msg= "V tomto období je celkem $n objednávek";
+  $msg.= $errs ? ", z toho $errs neúplné." : "." ;
   $result= (object)array('html'=>$html,'msg'=>wu($msg));
   return $result;
 }
@@ -58,12 +47,7 @@ function ds_compare($order) {  #trace();
   while ( $reso && $u= mysql_fetch_object($reso) ) {
     // rozdìlení podle vìku
     $n++;
-    if ( $u->narozeni=='0000-00-00' )
-      $vek= -1;
-    else {
-      $vek= $o->fromday-sql2stamp($u->narozeni);
-      $vek= $vek/(60*60*24*365);
-    }
+    $vek= ds_vek($u->narozeni,$o->fromday);
     if ( $vek>15 ) $n_a++;
     elseif ( $vek>9 ) $n_15++;
     elseif ( $vek>3 ) $n_9++;
@@ -96,337 +80,14 @@ function ds_compare($order) {  #trace();
   $result= (object)array('html'=>wu($html),'form'=>$form,'err'=>$err,'pozn'=>$pozn);
   return $result;
 }
-# ================================================================================================== EXPORT EXCEL
-# -------------------------------------------------------------------------------------------------- xls_workbook
-function xls_workbook($table,&$formats) {  #trace();
-  require_once('./licensed/xls/OLEwriter.php');
-  require_once('./licensed/xls/BIFFwriter.php');
-  require_once('./licensed/xls/Worksheet.php');
-  require_once('./licensed/xls/Workbook.php');
-  $wb= new Workbook("../../$table.xls");
-  // formáty
-  $formats= (object)array();
-  $formats->tit= $wb->add_format();
-  $formats->tit->set_bold();
-  $formats->hd= $wb->add_format();
-  $formats->hd->set_bold();
-  $formats->hd->set_pattern();
-  $formats->hd->set_fg_color('silver');
-  $formats->dec= $wb->add_format();
-  $formats->dec->set_num_format("# ##0.00");
-  $formats->dmy= $wb->add_format();
-  $formats->dmy->set_num_format("d.m.yyyy");
-  $formats->dm= $wb->add_format();
-  $formats->dm->set_num_format("d.m");
-  $formats->right= $wb->add_format();
-  $formats->right->set_align("right");
-  return $wb;
-}
-# -------------------------------------------------------------------------------------------------- xls_workbook
-function xls_header($ws,$r,$c,$desc,$format) {  #trace();
-  // hlavièka
-  $fields= explode(',',$desc);
-  foreach ($fields as $dc => $fa) {
-    list($title,$width)= explode(':',$fa);
-    $ws->set_column($c+$dc,$c+$dc,$width);
-    $ws->write_string($r,$c+$dc,$title,$format);
-  }
-}
-# -------------------------------------------------------------------------------------------------- xls_klienti
-# vytvoøí seznam klientù
-function xls_klienti($orders,$obdobi) {  #trace();
-  ezer_connect('setkani');
-  $table= "klienti_$obdobi";
-  $wb= xls_workbook($table,&$f);
-  $ws= $wb->add_worksheet('klienti');
-  $ws->write_string(0,0,"Seznam klientù zahajujících pobyt v období $obdobi",$f->tit);
-  xls_header($ws,$or=2,0,"jméno:10,pøíjmení:13,adresa:40,datum narození:14,telefon:13,email:26,"
-    ."termín:10,rekreaèní poplatek:15",$f->hd);
-  // zjištìní klientù zahajujících pobyt v daném období
-  $qry= "SELECT *,o.fromday as _of,o.untilday as _ou,
-         p.fromday as _pf,p.untilday as _pu
-         FROM setkani.ds_osoba AS p
-         JOIN tx_gnalberice_order AS o ON uid=id_order
-         WHERE FIND_IN_SET(id_order,'$orders') ORDER BY id_order,rodina,narozeni DESC";
-  $res= mysql_qry($qry);
-  while ( $res && $xo= mysql_fetch_object($res) ) {
-    // pøipsání øádku
-    $or++; $oc= 0;
-    $ws->write_string($or,$oc++,"{$xo->jmeno}");
-    $ws->write_string($or,$oc++,"{$xo->prijmeni}");
-    $ws->write_string($or,$oc++,"{$xo->ulice}, {$xo->psc} {$xo->obec}");
-    $dat= $xo->narozeni ? sql_date1($xo->narozeni): '';
-    $ws->write_string($or,$oc++,$dat,$f->right);
-    $ws->write_string($or,$oc++,$xo->telefon);
-    $ws->write_string($or,$oc++,$xo->email);
-    $pf= sql2stamp($xo->_pf); $pu= sql2stamp($xo->_pu);
-    $od= $pf ? date('j.n',$pf) : date('j.n',$xo->_of);
-    $do= $pu ? date('j.n',$pu) : date('j.n',$xo->_ou);
-    $ws->write_string($or,$oc++,"$od - $do");
-  }
-  $wb->close();
-  $html= " <a href='$table.xls'>seznam klientù</a>";
-  return wu($html);
-}
-# -------------------------------------------------------------------------------------------------- ds_zaloha
-function ds_zaloha($order) {  #trace();
-  ezer_connect('setkani');
-  // kontrola objednávky
-  $qry= "SELECT * FROM setkani.tx_gnalberice_order WHERE uid=$order";
-  $res= mysql_qry($qry);
-  if ( $res && $obj= mysql_fetch_object($res) ) {
-    // založení faktury
-    $table= "zaloha_$order";
-    $wb= xls_workbook($table,&$f);
-    $zaloha= $wb->add_worksheet('zaloha');
-    $zaloha->write_string(0,0,"Záloha objednávky è.$order",$f->tit);
-    xls_header($zaloha,2,0,'rodina:10,poèet:20',$f->hd);
-    $wb->close();
-    $html= "<a href='$table.xls'>zaloha akce $order</a>";
-  }
-  else
-    $html= "neúplná objednávka $order";
-  return $html;
-}
-# -------------------------------------------------------------------------------------------------- xls_faktura
-# položka,poèet osob,poèet nocí,poèet nocolùžek,cena jednotková,celkem,DPH 9%,DPH 19%,základ
-# *ubytování
-function xls_faktura($ws,$desc) {  #trace();
-
-}
-# -------------------------------------------------------------------------------------------------- ds_faktury
-function ds_faktury($order) {  #trace();
-  ezer_connect('setkani');
-  // kontrola objednávky
-  $qry= "SELECT * FROM setkani.tx_gnalberice_order WHERE uid=$order";
-  $res= mysql_qry($qry);
-  if ( $res && $obj= mysql_fetch_object($res) ) {
-    // založení faktury
-    $table= "faktury_$order";
-    $wb= xls_workbook($table,&$f);
-    // zjištìní poètu faktur za akci
-    $faktury= $wb->add_worksheet('faktury');
-    $qry= "SELECT rodina,count(*) as pocet FROM setkani.ds_osoba
-           WHERE id_order=$order GROUP BY rodina ORDER BY rodina";
-    $res= mysql_qry($qry);
-    $faktury->write_string(0,0,"Fakturace objednávky è.$order",$f->tit);
-    xls_header($faktury,2,0,'rodina:10,poèet:20',$f->hd);
-    $fr= 3;
-    while ( $res && $fs= mysql_fetch_object($res) ) {
-                                                                debug($fs,'rod');
-      // seznam faktur
-      $rod= $fs->rodina ? $fs->rodina : $order;
-      $rod_tit= $fs->rodina ? $fs->rodina : 'neoznaèené';
-      $faktury->write_string($fr,0,$rod_tit);
-      $faktury->write_number($fr,1,$fs->pocet);
-      $fr++;
-      // listy pro jednu rodinu
-      // seznam
-      $sez= $wb->add_worksheet("$rod-seznam");
-      $sez->write_string(0,0,"Seznam úèastníkù pod znaèkou $rod",$f->tit);
-      $qry= "SELECT * FROM setkani.ds_osoba
-             WHERE id_order=$order AND rodina='{$fs->rodina}' ORDER BY narozeni DESC";
-      $reso= mysql_qry($qry);
-      xls_header($sez,$or=2,0,'pøíjmení a jméno:20,adresa:40,narození:10,telefon:10,email:30,'
-        .'záloha:10,pokoj:5,lùžko:5,strava:5,poznámka:20',$f->hd);
-      while ( $reso && $xo= mysql_fetch_object($reso) ) {
-        $or++; $oc= 0;
-        $sez->write_string($or,$oc++,"{$xo->prijmeni} {$xo->jmeno}");
-        $sez->write_string($or,$oc++,"{$xo->ulice}, {$xo->psc} {$xo->obec}");
-        $sez->write_number($or,$oc++,$xo->narozeni,'d.m.y');
-        $sez->write_string($or,$oc++,$xo->telefon);
-        $sez->write_string($or,$oc++,$xo->email);
-        $sez->write_string($or,$oc++,'');                       // záloha
-        $sez->write_string($or,$oc++,$xo->pokoj);               // pokoj
-        $sez->write_string($or,$oc++,$xo->luzko);
-        $sez->write_string($or,$oc++,$xo->strava ? $xo->strava : $obj->board);
-        $sez->write_string($or,$oc++,$xo->pozn);
-      }
-      // faktura
-      $sez= $wb->add_worksheet("$rod-faktura");
-    }
-    // souèty titulní stránky
-    $faktury->write_string($fr,0,'celkem',$f->tit);
-    $faktury->write_formula($fr,1,"= SUM(B3:B$fr)");
-    $wb->close();
-    $html= "<a href='$table.xls'>fakturace akce $order</a>";
-  }
-  else
-    $html= "neúplná objednávka $order";
-  return $html;
-}
-# -------------------------------------------------------------------------------------------------- yymmdd2date
-function yymmdd2date($yymmdd) {  trace();
-  $date= '';
-  if ( $yymmdd ) {
-    $y= substr($yymmdd,0,2);
-    $m= substr($yymmdd,2,2);
-    $d= substr($yymmdd,4,2);
-    $y= $y<20 ? "20$y" : "19$y";
-    $date= "$d.$m.$y";
-  }
-  return $date;
-}
-# -------------------------------------------------------------------------------------------------- ds_uid
-function ds_uid() {  #trace();
-  global $x;
-  $i_uid= 1;
-  $uid= $x->parm->$i_uid;
-  if ( !$uid ) $uid= 711;
-  return $uid;
-}
-# -------------------------------------------------------------------------------------------------- ds_server
-function ds_server($db) {  #trace();
-  return $server;
-}
-# -------------------------------------------------------------------------------------------------- ds_ucast_objednatele
-function ds_ucast_objednatele($id_order,$ano) {  #trace();
-  global $x;
-  if ( $ano ) {
-    ezer_connect('setkani');
-    $qry= "SELECT * FROM setkani.tx_gnalberice_order WHERE uid=$id_order";
-    $res= mysql_qry($qry);
-    if ( $res && $o= mysql_fetch_object($res) ) {
-      if ( $jmeno= $o->firstname ) $prijmeni= $o->name;
-      else list($jmeno,$prijmeni)= explode(' ',$o->name);
-      if ( !$prijmeni ) { $prijmeni= $jmeno; $jmeno= ''; }
-      $qry= "INSERT INTO setkani.ds_osoba (
-        id_order,rodina,prijmeni,jmeno,psc,obec,ulice,email,telefon) VALUES (
-        $id_order,'','$prijmeni','$jmeno',
-        '{$o->zip}','{$o->city}','{$o->address}','{$o->email}','{$o->telephone}')";
-      $res= mysql_qry($qry);
-    }
-  }
-  return $ano;
-}
-# -------------------------------------------------------------------------------------------------- ds_old
-function ds_old ($uid) {
-    $res= mysql_qry("SELECT * FROM setkani.tx_gnalberice_order WHERE  NOT deleted AND NOT hidden AND uid=$uid");
-    $row= mysql_fetch_assoc($res);
-//                                                         $html.= debug($row,"$uid",1);
-    // vyzvednuti a transformace hodnot o objednavce
-    $state= $row['state'];
-//     $state_str= $this->TCA_state_config_items[$state];// $this->TCA['state']['config']['items'][$state][0];
-    $note= $row['note'];
-    $rooms= $row['rooms'];
-    $fromday= date('d.m.Y',$row['fromday']);
-    $untilday= date('d.m.Y',$row['untilday']);
-    $adults= $row['adults'];
-    $kids_10_15= $row['kids_10_15'];
-    $kids_3_9= $row['kids_3_9'];
-    $kids_3= $row['kids_3'];
-    $board= $row['board'];
-//     $board_str= $this->TCA_board_config_items[$board]; // $this->TCA['board']['config']['items'][$board][0];
-    $ze_dne= date("j.n.Y", $row['crdate']);
-    // osobni data
-    $name= $row['name'];
-    $address= $row['address'];
-    $zip= $row['zip'];
-    $city= $row['city'];
-    $telephone= $row['telephone'];
-    $email= $row['email'];
-//     // editacni tlacitka - pouze kdyz je autor ze skupiny "spravce alberic"
-//     $season= "from={$this->from}&until={$this->until}";
-//     if ( $this->spravce_alberic ) {
-//       $o_ref= "{$gn->index}?id=$pid&$season";
-//       $o= "<span class=ven_ox><a href=$o_ref&form=$uid>&nbsp;o&nbsp;</a></span>";
-//       $x= "<span class=ven_ox><a href=$o_ref&conf=$uid>&nbsp;x&nbsp;</a></span>";
-//       $ox= "<table align=right><tr><td valign=top>$o&nbsp;$x</td></tr></table>";
-//     }
-//     else {
-//       $ox= '';
-//     }
-    // vytvoreni formulare
-    $html.= "
-      <p>
-      <div class=venture><div class=text_d>
-        <h3  class=alberice>Objednávka è. $uid ze dne $ze_dne</h3>
-        <table>
-          <tr><td style='border-right:1px darkgreen solid'>
-            <table width=250>
-              <tr>
-                <td class=alberice><span class=form_popis>stav objednávky</span><br>$state_str</td>
-              </tr><tr>
-                <td class=alberice><span class=form_popis>poznámka k objednávce</span><br>$note</td>
-              </tr>
-              <tr><td><table><tr>
-                <td width=60 class=alberice><span class=form_popis>pøíjezd</span><br>$fromday</td>
-                <td width=60 class=alberice><span class=form_popis>odjezd</span><br>$untilday</td>
-                <td class=alberice><span class=form_popis>seznam pokojù</span><br>$rooms</td>
-              </tr></table></td></tr>
-              <tr><td><table><tr>
-                <td class=alberice><span class=form_popis>dospìlých</span><br>$adults</td>
-                <td class=alberice><span class=form_popis>dìti 10-15</span><br>$kids_10_15</td>
-                <td class=alberice><span class=form_popis>dìti 3-9</span><br>$kids_3_9</td>
-                <td class=alberice><span class=form_popis>dìti do 3 let</span><br>$kids_3</td>
-              </tr></table></td></tr>
-              <tr>
-                <td class=alberice><span class=form_popis>typ stravy</span><br>$board_str</td>
-                <td><span class=form_popis></span><br></td>
-              </tr>
-            </table>
-          </td><td valign=top>
-            <table width=250>
-              <tr valign=top><td class=alberice colspan=2><span class=form_popis>jméno a pøíjmení</span><br>$name</td>
-           </table>
-          </td></tr>
-        </table>
-      </div></div>
-      ";
-   return $html;
-}
-# -------------------------------------------------------------------------------------------------- ds_obj_menu
-# vygeneruje menu pro loòský, letošní a pøíští rok ve tvaru objektu pro ezer2 pro zobrazení objednávek
-# urèující je datum zahájení pobytu v objednávce
-function ds_obj_menu() {
-  global $mysql_db;
-  $stav= map_cis('ds_stav');
-  $the= '';                     // první objednávka v tomto mìsíci èi pozdìji
-//                                                                 debug($stav,'ds_obj_menu');
-  $mesice= array(1=>'leden','únor','bøezen','duben','kvìten','èerven',
-    'èervenec','srpen','záøí','øíjen','listopad','prosinec');
-  $mn= (object)array('type'=>'menu.left'
-      ,'options'=>(object)array(),'part'=>(object)array());
-  $letos= date('Y');
-  $ted= date('Ym');
-  ezer_connect('setkani');
-  for ($y= 0; $y<=0; $y++) {
-    for ($m= 1; $m<=12; $m++) {
-      $mm= sprintf('%02d',$m);
-      $yyyy= $letos+$y;
-      $group= "$yyyy$mm";
-      $gr= (object)array('type'=>'menu.group'
-        ,'options'=>(object)array('title'=>wu($mesice[$m])." $yyyy"),'part'=>(object)array());
-      $mn->part->$group= $gr;
-      
-      $from= mktime(0,0,0,$m,1,$yyyy);
-      $until= mktime(0,0,0,$m+1,1,$yyyy);
-      $qry= "/*ds_obj_menu*/SELECT uid,fromday,untilday,state,name,state FROM setkani.tx_gnalberice_order
-             WHERE  NOT deleted AND NOT hidden AND untilday>=$from AND $until>fromday";
-//              JOIN ezer_ys._cis ON druh='ds_stav' AND data=state
-      $res= mysql_qry($qry);
-      while ( $res && $o= mysql_fetch_object($res) ) {
-        $iid= $o->uid;
-        $zkratka= $stav[$o->state];
-        $par= (object)array('uid'=>$iid);
-        $tit= wu("$iid - ").$zkratka.wu(" - {$o->name}");
-        $tm= (object)array('type'=>'item','options'=>(object)array('title'=>$tit,'par'=>$par));
-        $gr->part->$iid= $tm;
-        if ( !$the && $group>=$ted ) {
-          $the= "$group.$iid";
-        }
-      }
-    }
-  }
-  $result= (object)array('the'=>$the,'code'=>$mn);
-  return $result;
-}
+# ================================================================================================== HOSTÉ
 # -------------------------------------------------------------------------------------------------- ds_kli_menu
 # vygeneruje menu pro loòský, letošní a pøíští rok ve tvaru objektu pro ezer2 pro zobrazení klientù
 # urèující je datum zahájení pobytu v objednávce
 function ds_kli_menu() {
   ezer_connect('setkani');
   $the= '';                     // první v tomto mìsíci èi pozdìji
+  $rok= date('Y');
   $ted= date('Ym');
   $mesice= array(1=>'leden','únor','bøezen','duben','kvìten','èerven',
     'èervenec','srpen','záøí','øíjen','listopad','prosinec');
@@ -463,11 +124,60 @@ function ds_kli_menu() {
         $klientu= $op->klientu;
       }
       $tit= wu($mesice[$m])." - $celkem ($klientu)";
-      $par= (object)array('od'=>$od,'do'=>$do,'celkem'=>$celkem,'klientu'=>$klientu,'objednavek'=>$objednavek,'uids'=>$uids);
+      $par= (object)array('od'=>$od,'do'=>$do,
+        'celkem'=>$celkem,'klientu'=>$klientu,'objednavek'=>$objednavek,'uids'=>$uids,
+        'mesic_rok'=>wu($mesice[$m])." $rok");
       $tm= (object)array('type'=>'item','options'=>(object)array('title'=>$tit,'par'=>$par));
       $gr->part->$m= $tm;
       if ( !$the && $yyyymm>=$ted ) {
         $the= "$group.$m";
+      }
+    }
+  }
+  $result= (object)array('the'=>$the,'code'=>$mn);
+  return $result;
+}
+# ================================================================================================== OBJEDNÁVKY
+# -------------------------------------------------------------------------------------------------- ds_obj_menu
+# vygeneruje menu pro loòský, letošní a pøíští rok ve tvaru objektu pro ezer2 pro zobrazení objednávek
+# urèující je datum zahájení pobytu v objednávce
+function ds_obj_menu() {
+  global $mysql_db;
+  $stav= map_cis('ds_stav');
+  $the= '';                     // první objednávka v tomto mìsíci èi pozdìji
+//                                                                 debug($stav,'ds_obj_menu');
+  $mesice= array(1=>'leden','únor','bøezen','duben','kvìten','èerven',
+    'èervenec','srpen','záøí','øíjen','listopad','prosinec');
+  $mn= (object)array('type'=>'menu.left'
+      ,'options'=>(object)array(),'part'=>(object)array());
+  $letos= date('Y');
+  $ted= date('Ym');
+  ezer_connect('setkani');
+  for ($y= 0; $y<=0; $y++) {
+    for ($m= 1; $m<=12; $m++) {
+      $mm= sprintf('%02d',$m);
+      $yyyy= $letos+$y;
+      $group= "$yyyy$mm";
+      $gr= (object)array('type'=>'menu.group'
+        ,'options'=>(object)array('title'=>wu($mesice[$m])." $yyyy"),'part'=>(object)array());
+      $mn->part->$group= $gr;
+
+      $from= mktime(0,0,0,$m,1,$yyyy);
+      $until= mktime(0,0,0,$m+1,1,$yyyy);
+      $qry= "/*ds_obj_menu*/SELECT uid,fromday,untilday,state,name,state FROM setkani.tx_gnalberice_order
+             WHERE  NOT deleted AND NOT hidden AND untilday>=$from AND $until>fromday";
+//              JOIN ezer_ys._cis ON druh='ds_stav' AND data=state
+      $res= mysql_qry($qry);
+      while ( $res && $o= mysql_fetch_object($res) ) {
+        $iid= $o->uid;
+        $zkratka= $stav[$o->state];
+        $par= (object)array('uid'=>$iid);
+        $tit= wu("$iid - ").$zkratka.wu(" - {$o->name}");
+        $tm= (object)array('type'=>'item','options'=>(object)array('title'=>$tit,'par'=>$par));
+        $gr->part->$iid= $tm;
+        if ( !$the && $group>=$ted ) {
+          $the= "$group.$iid";
+        }
       }
     }
   }
@@ -489,5 +199,651 @@ function pin_test ($x,$pin) {
   $strpin= str_pad($pin,6,'0',STR_PAD_LEFT);
   $xpin= substr(sprintf("%u",crc32(strrev($str))),-6);
   return $strpin==$xpin?1:0;
+}
+# -------------------------------------------------------------------------------------------------- ds_ucast_objednatele
+function ds_ucast_objednatele($id_order,$ano) {  #trace();
+  global $x;
+  if ( $ano ) {
+    ezer_connect('setkani');
+    $qry= "SELECT * FROM setkani.tx_gnalberice_order WHERE uid=$id_order";
+    $res= mysql_qry($qry);
+    if ( $res && $o= mysql_fetch_object($res) ) {
+      if ( $jmeno= $o->firstname ) $prijmeni= $o->name;
+      else list($jmeno,$prijmeni)= explode(' ',$o->name);
+      if ( !$prijmeni ) { $prijmeni= $jmeno; $jmeno= ''; }
+      $qry= "INSERT INTO setkani.ds_osoba (
+        id_order,rodina,prijmeni,jmeno,psc,obec,ulice,email,telefon) VALUES (
+        $id_order,'','$prijmeni','$jmeno',
+        '{$o->zip}','{$o->city}','{$o->address}','{$o->email}','{$o->telephone}')";
+      $res= mysql_qry($qry);
+    }
+  }
+  return $ano;
+}
+# ================================================================================================== EXPORTY DO EXCELU
+# -------------------------------------------------------------------------------------------------- ds_xls_hoste
+# definice Excelovského listu - seznam hostù
+function ds_xls_hoste($orders,$mesic_rok) {  #trace();
+  $x= ds_hoste($orders,substr($mesic_rok,-4));
+  $name= cz2ascii("hoste_$mesic_rok");
+  $mesic_rok= uw($mesic_rok);
+  $xls= <<<__XLS
+    |open $name
+    |sheet hoste
+    |columns A=10,B=13,C=40,D=15,E=13,F=30,G=12,H=12
+    |A1 Seznam hostù zahajujících pobyt v období $mesic_rok ::bold size=14
+    |A3 jméno |B3 pøíjmení |C3 adresa  |D3 datum narození ::right |E3 telefon
+    |F3 email |G3 termín   |H3 rekr.popl. ::right
+    |A3:H3 bcolor=ffaaaaaa
+__XLS;
+  $n= 4;
+  foreach ($x->hoste as $host) {
+    list($jmeno,$prijmeni,$adresa,$narozeni,$telefon,$email,$termin,$poplatek)= (array)$host;
+    $xls.= <<<__XLS
+      |A$n $jmeno |B$n $prijmeni       |C$n $adresa   |D$n $narozeni ::right date |E$n $telefon
+      |F$n $email |G$n $termin ::right |H$n $poplatek
+      |A$n:H$n border=,,h,
+__XLS;
+    $n++;
+  }
+  $xls.= <<<__XLS
+    |close
+__XLS;
+//                                                                 display(wu($xls));
+  $inf= Excel5(wu($xls),1);
+  if ( $inf ) {
+    $html= " se nepodaøilo vygenerovat - viz zaèátek chybové hlášky";
+    fce_error($inf);
+  }
+  else
+    $html= " Byl vygenerován seznam hostù ve formátu <a href='$name.xls' target='xls'>Excel</a>.";
+  return wu($html);
+}
+# -------------------------------------------------------------------------------------------------- ds_hoste
+# vytvoøí seznam hostù
+# ceník beer podle pøedaného roku
+# {table:id,obdobi:str,hoste:[[jmeno,prijmeni,adresa,narozeni,telefon,email,termin,poplatek]...]}
+function ds_hoste($orders,$rok) {  #trace();
+  global $ds_cena;
+  ds_cenik($rok);
+  ezer_connect('setkani');
+  $x= (object)array();
+  $x->table= "klienti_$obdobi";
+  $x->hoste= array();
+  // zjištìní klientù zahajujících pobyt v daném období
+  $qry= "SELECT *,o.fromday as _of,o.untilday as _ou,
+         p.fromday as _pf,p.untilday as _pu
+         FROM setkani.ds_osoba AS p
+         JOIN tx_gnalberice_order AS o ON uid=id_order
+         WHERE FIND_IN_SET(id_order,'$orders') ORDER BY id_order,rodina,narozeni DESC";
+  $res= mysql_qry($qry);
+  while ( $res && $h= mysql_fetch_object($res) ) {
+    $pf= sql2stamp($h->_pf); $pu= sql2stamp($h->_pu);
+    $od= $pf ? date('j.n',$pf) : date('j.n',$h->_of);
+    $do= $pu ? date('j.n',$pu) : date('j.n',$h->_ou);
+    $vek= ds_vek($h->narozeni,$h->fromday);
+    $narozeni= $h->narozeni ? sql_date1($h->narozeni): '';
+//     $rok_nar= substr($h->narozeni,0,4);
+//     $vek= $rok_nar=='0000' ? -1 : $rok-$rok_nar;
+    $popl= $vek>18 ? $ds_cena['obec_C']->cena : 0;
+    // pøipsání øádku
+    $host= array();
+    $host[]= $h->jmeno;
+    $host[]= $h->prijmeni;
+    $host[]= "{$h->ulice}, {$h->psc} {$h->obec}";
+    $host[]= $narozeni;
+    $host[]= $h->telefon;
+    $host[]= $h->email;
+    $host[]= "$od - $do";
+    $host[]= $popl;
+    $x->hoste[]= $host;
+  }
+//                                                                 debug($x,'hoste',(object)array('win1250'=>1));
+  return $x;
+}
+# ================================================================================================== ZÁLOHOVÁ FAKTURA
+# -------------------------------------------------------------------------------------------------- ds_xls_zaloha
+# definice Excelovského listu - zálohové faktury
+function ds_xls_zaloha($order) {  #trace();
+  global $ezer_path_serv;
+  $name= "zal_$order";
+  // vytvoøení sešitu s fakturou
+  $xls= "|open  $name|";
+  $x= ds_zaloha($order);
+  $xls.= ds_faktura('faktura','ZÁLOHOVÁ FAKTURA',$order,$x->polozky,$x->platce,50,
+    "Tìšíme se na Váš pobyt v Domì setkání");
+  $xls.= "|close|";
+  $inf= Excel5(wu($xls),1);
+  if ( $inf ) {
+    $html= " nastala chyba";
+    fce_error($inf);
+  }
+  else
+    $html= " <a href='$name.xls' target='xls'>zálohová faktura</a>.";
+  return wu($html);
+}
+# -------------------------------------------------------------------------------------------------- ds_zaloha
+# data zálohové faktury
+# {objednavka:n,
+#  platce:[nazev,adresa,telefon,ic]
+#  polozky:[[nazev,cena,dph,pocet]...]
+# }
+function ds_zaloha($order) {  #trace();
+  global $ds_cena;
+  $x= (object)array();
+  // zjištìní údajù objednávky
+  ezer_connect('setkani');
+  $qry= "SELECT * FROM tx_gnalberice_order WHERE uid=$order";
+  $res= mysql_qry($qry);
+  if ( $res && $o= mysql_fetch_object($res) ) {
+    // pøeètení ceníku daného roku
+    ds_cenik(date('Y',$o->fromday));
+    // údaje o plátci: $ic,$dic,$adresa
+    $platce= array();
+    $platce[]= $o->ic ? $o->ic : '';
+    $platce[]= $o->dic ? $o->dic : '';
+    $platce[]= ($o->org ? "{$o->org}{}" : '')."{$o->firstname} {$o->name}{}".
+              "{$o->address}{}{$o->zip} {$o->city}";
+    $x->platce= $platce;
+    // položky zálohové faktury
+    // ubytování mùže mít slevu
+    $polozky= array();
+    $sleva= $o->sleva ? $o->sleva/100 : '';
+    $x->polozky[]= ds_c('noc_L',$o->adults+$o->kids_10_15+$o->kids_3_9,$sleva);
+    $x->polozky[]= ds_c('noc_B',$o->kids_3,$sleva);
+    switch ( $o->board ) {
+    case 1:     // penze
+      $x->polozky[]= ds_c('strava_CC',$o->adults+$o->kids_10_15);
+      $x->polozky[]= ds_c('strava_CD',$o->kids_3_9);
+      break;
+    case 2:     // polopenze
+      $x->polozky[]= ds_c('strava_PC',$o->adults+$o->kids_10_15);
+      $x->polozky[]= ds_c('strava_PD',$o->kids_3_9);
+      break;
+    }
+//     $x->polozky[]= ds_c('ubyt_C',$o->adults);
+//     $x->polozky[]= ds_c('ubyt_S',$o->adults);
+//     $x->polozky[]= ds_c('ubyt_P',$o->adults+$o->kids_10_15+$o->kids_3_9);
+//                                                                 debug($x,'zaloha',(object)array('win1250'=>1));
+  }
+  return $x;
+}
+# ================================================================================================== KONEÈNÁ FAKTURA
+# -------------------------------------------------------------------------------------------------- ds_xls_faktury
+# definice Excelovského listu - faktury podle seznamu úèastníkù
+# položka,poèet osob,poèet nocí,poèet nocolùžek,cena jednotková,celkem,DPH 9%,DPH 19%,základ
+# *ubytování
+function ds_xls_faktury($order) {  #trace();
+  global $ds_cena;
+  $x= ds_faktury($order);
+  $ds_cena['zzz_zzz']= 0;
+  ksort($ds_cena);
+//                                                                 debug($ds_cena,'ds_cena',(object)array('win1250'=>1));
+//                                                                 debug($x,'faktura',(object)array('win1250'=>1));
+//   return 'test';
+  // barvy
+  $c_edit= "ffffffaa";
+  // úvodní list
+  $xls= '';
+  $nf= 3;
+  $faktury= "";
+  foreach ($x->rodiny as $r=>$hoste) {
+    $nf++;
+    $rod= $x->faktury[$r];
+    list($rodina,$pocet,$sleva)= $rod;
+    $prefix= count($x->rodiny)==1 ? '' : ($rodina=='' ? 'ostatni-' : "$rodina-");
+    $sheet_rodina=  "{$prefix}hoste";
+    $sheet_faktura= "{$prefix}faktura";
+    $faktury.= "|A$nf:D$nf border=,,h,";
+    $faktury.= "|A$nf $rodina|B$nf $pocet|C$nf $sleva::proc bcolor=$c_edit|D$nf =";
+    $An_sleva= "'rodiny'!C$nf";
+    # ---------------------------------------------------------------- èlenové rodiny a položky faktury
+    $i= 0;
+    $clmn= "A=10,B=13,C=-30,D=-15,E=4,F=-20,G=-30,H=20,I=5,J=6";
+    $tit= "|A3 jméno |B3 pøíjmení |C3 adresa |D3 narozen/a ::right |E3 vìk |F3 telefon "
+         ."|G3 email |H3 pobyt od-do ::right |I3 noci ::right| J3 pokoj ::right|";
+    $lc= ord('J')-ord('A');
+    $n= 3;
+    $druh0= '';
+    $soucty= ''; $ns= $n+count($hoste)+1; $ns1= $ns-1;
+    foreach($ds_cena as $dc=>$cena) {
+      list($druh,$cast)= explode('_',$dc);
+                                                                display("$lc,$i,$druh,$druh0,$cast");
+      if ( $druh!=$druh0 ) {
+        if ( $i ) {
+          if ( $druh0=='noc' ) {
+            $lc++;
+            $A= Excel5_n2col($lc);
+            $clmn.= ",$A=6";
+            $tit.= "|$A$n sleva ::vert";
+          }
+          $lc++;
+          $B= Excel5_n2col($lc);
+          $clmn.= ",$B=12";
+          $tit.= "|$B$n cena ::right";
+        }
+        $druh0= $druh;
+      }
+      if ( $cena ) {
+        $lc++;
+        $A= Excel5_n2col($lc);
+        $clmn.= ",$A=4";
+        $tit.= "|$A$n {$cena->polozka} ::vert";
+        $soucty.= "|$A$ns =SUM({$A}4:$A$ns1)";
+        $cena->pocet= "='$sheet_rodina'!$A$ns";
+      }
+      else {
+        $lc++;
+        $B= Excel5_n2col($lc);
+        $clmn.= ",$B=12";
+        $tit.= "|$B$n celkem ::right bold";
+        $soucty.= "|$B$ns =SUM({$B}4:$B$ns1) ::kc bold";
+        $faktury.= "'$sheet_rodina'!$B$ns ::kc";
+      }
+      $i++;
+      // souèty
+    }
+    $tit.= "|A$n:$B$n bcolor=ffaaaaaa |";
+    $xls.= "|sheet $sheet_rodina;;L;page|columns $clmn |$tit |";
+    $skupiny= count($x->rodiny)==1 ? '' : ($rodina=='' ? "neoznaèených hostù" : "hostù oznaèených '$rodina'");
+    $xls.= "|A1 Koneèné vyúètování $skupiny v rámci objednávky $order ::bold size=14|";
+    $n= 4;
+    foreach ($hoste as $host) {
+      list($rodina,$jmeno,$prijmeni,$ulice,$psc_mesto,$narozeni,$vek,$telefon,$email,$od,$do)= $host->host;
+      $termin= "$od - $do";
+      $c= $host->cena;
+      $xls.= <<<__XLS
+        |A$n $jmeno |B$n $prijmeni |C$n $ulice, $psc_mesto |D$n $narozeni ::right date |E$n $vek
+        |F$n $telefon |G$n $email |H$n $termin ::right
+        |I$n {$c->noci}
+        |J$n {$c->pokoj}
+__XLS;
+      // položky
+      $lc= ord('J')-ord('A');
+      $row= '';
+      $i= 0;
+      $druh0= '';
+      $suma= '0';
+      $celkem= '=0';
+      foreach($ds_cena as $dc=>$cena) {
+        list($druh,$cast)= explode('_',$dc);
+        if ( $druh!=$druh0 ) {
+          if ( $i ) {
+            if ( $druh0=='noc' ) {
+              $lc++;
+              $A= Excel5_n2col($lc);
+              $row.= "|$A$n =$An_sleva::proc";
+            }
+            $lc++;
+            $B= Excel5_n2col($lc);
+            $row.= "|$B$n =(1-$A$n)*($suma) ::kc";
+            $suma= '0';
+            $celkem.= "+$B$n";
+          }
+          $druh0= $druh;
+        }
+        if ( $cena ) {
+          $lc++;
+          $A= Excel5_n2col($lc);
+          $val= isset($c->$dc) ? $c->$dc : '';
+          $suma.= "+$A$n*{$cena->cena}";
+          $row.= "|$A$n $val::bcolor=$c_edit";
+        }
+        else {
+          $lc++;
+          $B= Excel5_n2col($lc);
+          $row.= "|$B$n $celkem ::kc bold";
+        }
+        $i++;
+      }
+//                                                                 debug($host,'host',(object)array('win1250'=>1));
+      $xls.= "$row|A$n:$B$n border=,,h,|$soucty|";
+      $n++;
+    }
+    $xls.= "|$soucty|";
+    # ---------------------------------------------------------------- faktura
+    # platce= [nazev,adresa,telefon,ic]
+    # polozky= [[nazev,cena,dph,pocet]...]
+    if ( $rodina=='' ) {
+      list($rodina,$jmeno,$prijmeni,$ulice,$psc_mesto)= $hoste[0]->host;
+      $platce= array();
+      $platce[]= '';
+      $platce[]= '';
+      $platce[]= "$jmeno $prijmeni{}$ulice{}$psc_mesto";
+    }
+    else {
+      $platce= $x->platce;
+    }
+    // položky faktury
+    $polozky= array();
+    foreach($ds_cena as $dc=>$cena) {
+      list($druh,$cast)= explode('_',$dc);
+      $sleva= $druh=='noc' ? "=$An_sleva" : '';
+      $polozky[]= ds_c($dc,$cena->pocet,$sleva);        // id,pocet => název,cena,dph%,pocet
+    }
+    // vytvoøení listu
+    $xls.= ds_faktura($sheet_faktura,'FAKTURA',$order,$polozky,$platce,100,
+      "Tìšíme se na Váš další pobyt v Domì setkání");
+  }
+  // ------------------------------------------------------------------ ceník
+//                                                                 debug($ds_cena,'ds_cena',(object)array('win1250'=>1));
+  $xls.= <<<__XLS
+    |sheet cenik;;P;page
+    |columns A=35,B=20,C=20
+    |A1 Seznam úètovatelných položek ::bold size=14
+    |A3 položka |B3 cena vè.DPH ::right |C3 DPH ::right proc
+    |A3:C3 bcolor=ffaaaaaa
+__XLS;
+  $n= 4;
+  foreach ($ds_cena as $i=>$cena) {
+    $dph= $cena->dph/100;
+    $xls.= <<<__XLS
+      |A$n {$cena->polozka} |B$n {$cena->cena} :: kc |C$n $dph :: proc
+      |A$n:C$n border=,,h,
+__XLS;
+    $n++;
+  }
+  # ------------------------------------------------------------------ seznam rodin (jako první)
+  $nf1= $nf+1;
+  $name= "fak_$order";
+  $final_xls= <<<__XLS
+    |open $name
+    |sheet rodiny;;L;page
+    |columns A=20,B=13,C=10,D=16
+    |A1 Seznam rodin (skupin), kterým fakturujeme pobyt v rámci objednávky $order ::bold size=14
+    |A3 rodina (skupina)|B3 osob ::right |C3 sleva ::right |D3 cena ::right
+    |A3:D3 bcolor=ffaaaaaa
+    |$faktury
+    |A$nf1 CELKEM ::right bold|B$nf1 =SUM(B4:B$nf) ::bold|D$nf1 =SUM(D4:B$nf) ::kc bold
+    |$xls|close 1
+__XLS;
+                                                                display("rodiny=$faktury");
+//                                                                 display(nl2br(wu($xls)));
+  $inf= Excel5(wu($final_xls),1);
+  if ( $inf ) {
+    $html= " nastala chyba";
+    fce_error($inf);
+  }
+  else
+    $html= " <a href='$name.xls' target='xls'>koneèná faktura</a>.";
+  return wu($html);
+}
+# -------------------------------------------------------------------------------------------------- ds_faktury
+# podklady k fakturaci objednávky
+# {platce:[ic,dic,adresa],faktury:[[rodina,poèet,sleva]...],rodiny:[<host>...],<ceník>,<chyby>}
+#    <host> :: {host:[jmeno,prijmeni,adresa1,adresa2,narozeni,vek,telefon,email,od,do,<ubyt>],
+#               cena:{<ubyt>,<strava>,<spec>,<popl>}
+#    <ubyt> :: noci:n,pokoj:1..16,pokoj_typ:P|S|B,luzko_typ:L|P|B
+#  <strava> :: CC:n,CP:n,PC:n,PP:n
+#    <spec> :: postylka:n,zvire_noci:n
+#    <popl> :: popl:CS|P
+#   <ceník> :: cenik:... viz global $ds_cena
+#   <chyby> :: chyby:[[text,...]...]
+#
+function ds_faktury($order) {  #trace();
+  global $ds_cena;
+  $x= (object)array('faktury'=>array(),'rodiny'=>array());
+  ezer_connect('setkani');
+  // èíselníky
+  $luzko_pokoje= array(0=>'?',1=>'L','L','L','L','L','L','L','A','A','L','L','L','A','A','B','B');
+  $cena_pokoje= array('?'=>'?','P'=>'noc_L','A'=>'noc_A','B'=>'noc_B');
+  $ds_luzko=  map_cis('ds_luzko','zkratka');  $ds_luzko[0]=  '?';
+  $ds_strava= map_cis('ds_strava','zkratka'); $ds_strava[0]= '?';
+//                                                         debug($ds_strava);
+  // kontrola objednávky
+  $qry= "SELECT * FROM setkani.tx_gnalberice_order WHERE uid=$order";
+  $res= mysql_qry($qry);
+  if ( $res && $o= mysql_fetch_object($res) ) {
+    // údaje o plátci: $ic,$dic,$adresa
+    $platce= array();
+    $platce[]= $o->ic ? $o->ic : '';
+    $platce[]= $o->dic ? $o->dic : '';
+    $platce[]= ($o->org ? "{$o->org}{}" : '')."{$o->firstname} {$o->name}{}".
+              "{$o->address}{}{$o->zip} {$o->city}";
+    $x->platce= $platce;
+    // pøeètení ceníku daného roku
+    ds_cenik(date('Y',$o->fromday));
+    // zjištìní poètu faktur za akci
+    $qry= "SELECT rodina,count(*) as pocet FROM setkani.ds_osoba
+           WHERE id_order=$order GROUP BY rodina ORDER BY if(rodina='','zzzzzz',rodina)";
+    $res= mysql_qry($qry);
+    while ( $res && $r= mysql_fetch_object($res) ) {
+      // seznam faktur
+      $rid= $r->rodina ? $r->rodina : 'ostatni';
+      $x->faktury[]= array($rid,$r->pocet,$o->sleva/100);
+      // èlenové jedné rodiny s údaji
+      $hoste= array();
+      $err= array();
+      $qry= "SELECT * FROM setkani.ds_osoba
+             WHERE id_order=$order AND rodina='{$r->rodina}' ORDER BY narozeni DESC";
+      $reso= mysql_qry($qry);
+      while ( $reso && $h= mysql_fetch_object($reso) ) {
+        $vek= ds_vek($h->narozeni,$o->fromday);
+        $hf= sql2stamp($h->fromday); $hu= sql2stamp($h->untilday);
+        $od_ts= $hf ? $hf : $o->fromday;  $od= date('j.n',$od_ts);
+        $do_ts= $hu ? $hu : $o->untilday; $do= date('j.n',$do_ts);
+        $vek= ds_vek($h->narozeni,$o->fromday);
+        $narozeni= $h->narozeni ? sql_date1($h->narozeni): '';
+        $strava= $h->strava ? $h->strava : $o->board;
+        // pøipsání øádku
+        $host= array();
+        $host[]= $h->rodina;
+        $host[]= $h->jmeno;
+        $host[]= $h->prijmeni;
+        $host[]= $h->ulice;
+        $host[]= "{$h->psc} {$h->obec}";
+        $host[]= $narozeni;
+        $host[]= $vek;
+        $host[]= $h->telefon;
+        $host[]= $h->email;
+        $host[]= $od;
+        $host[]= $do;
+        // položky hosta
+        $pol= (object)array();
+        $pol->test= "{$h->strava} : {$o->board} - $strava = {$ds_strava[$strava]}";
+        $noci= round(($do_ts-$od_ts)/(60*60*24));
+        $pol->vek= $vek;
+        $pol->noci= $noci;
+        $pol->pokoj= $h->pokoj;
+        // ubytování
+        $luzko= trim($ds_luzko[$h->luzko]);     // L|P|B
+        if ( $luzko=='L' )
+          $luzko= $luzko_pokoje[$h->pokoj];
+        if ( $luzko )
+          $pol->{"noc_$luzko"}= $noci;
+        // strava
+        $pol->strava_CC= $ds_strava[$strava]=='C' && $vek>=$ds_cena['strava_CC']->od ? $noci : '';
+        $pol->strava_CD= $ds_strava[$strava]=='C' && $vek>=$ds_cena['strava_CD']->od
+                                                  && $vek< $ds_cena['strava_CD']->do ? $noci : '';
+        $pol->strava_PC= $ds_strava[$strava]=='P' && $vek>=$ds_cena['strava_PC']->od ? $noci : '';
+        $pol->strava_PD= $ds_strava[$strava]=='P' && $vek>=$ds_cena['strava_PD']->od
+                                                  && $vek< $ds_cena['strava_PD']->do ? $noci : '';
+        // poplatky
+        if ( $vek>=18 ) {
+          $pol->ubyt_C= $noci;
+          $pol->ubyt_S= $noci;
+        }
+        else {
+          $pol->ubyt_P= $noci;
+        }
+        $hoste[]= (object)array('host'=>$host,'cena'=>$pol);
+      }
+      $x->rodiny[]= $hoste;
+      $x->chyby[]= $err;
+    }
+  }
+  else
+    $html= "neúplná objednávka $order";
+//                                                                 debug($ds_cena,'ds_cena',(object)array('win1250'=>1));
+//                                                                 debug($x,'faktura',(object)array('win1250'=>1));
+  return $x;
+}
+# ================================================================================================== FAKTURA OBECNÌ
+# -------------------------------------------------------------------------------------------------- ds_faktura
+# definice faktury
+# typ = Zálohová | ''
+# zaloha = 0..100  -- pokud je 100 negeneruje se øádek Záloha ...
+# data zálohové faktury
+# platce= [nazev,adresa,telefon,ic]
+# polozky= [[nazev,cena,dph,pocet,sleva]...]
+# }
+function ds_faktura($list,$typ,$order,$polozky,$platce,$zaloha=100,$pata='') {  #trace();
+  list($ic,$dic,$adresa)= $platce;
+  $vystaveno= Excel5_date(mktime());
+  $ymca_setkani= "YMCA Setkání, obèanské sdružení{}Talichova 53, 62300 Brno{}".
+                 "Zaregistrované MV ÈR 25.4.2001{}pod è.j. VS/1-1/46 887/01-R{}".
+                 "IÈ: 26531135  DIÈ: CZ26531135";
+  $dum_setkani=  "Dolní Albeøice 1, 542 26 Horní Maršov{}".
+                 "telefon: 499 874 152, 736 537 122{}dum@setkani.org";
+  // pojmenované øádky (P,Q,R,S)
+  $P= 20;               // výèet položek
+  $Q= 34;               // poslední položka
+  $R= 37;               // rozpis DPH
+  $S= 43;               // poslední øádek
+  // parametrizace
+  $L7_ic= $ic ? "L7 IÈ $ic" : '';
+  $c_okraj= "ff6495ed";
+  // vytvoøení listu s fakturou
+  $xls= <<<__XLS
+    |sheet $list;B2:N$S;P;page
+    |columns A=3,B=0.6,C=16,D=3,E=22,F=6,G=1,H=10,I=4,J=6,K=6,L:M=16,N=1,O=3
+    |rows 1=18,2:44=15,6=75,9=96,11=35,19=30,20:36=19,37=30,38:41=19,$S=30
+    |A1:O44 bcolor=$c_okraj |B2:N$S bcolor=ffffffff |//B2:N$S border=h
+
+    |image img/husy.png,80,C2,10,0
+    |D2 Dùm setkání :: bold size=14
+    |D3 $dum_setkani
+    |D3:H5 merge italic top wrap
+
+    |J4 =CONCATENATE("$typ ",TEXT(E16,"0"),"/",TEXT(YEAR(M15),"0")) :: bold size=16
+    |J4:M5 merge right
+
+    |C7 Dodavatel ::bold
+    |C9 $ymca_setkani
+    |C9:F9 merge top wrap
+
+    |I7 Odbìratel ::bold         |$L7_ic
+    |I8:M10 border=h
+    |J9 $adresa  |J9:M9 merge middle wrap size=14
+
+    |C13 Penìžní ústav           |E13 Raiffeisenbank, a.s.
+    |C14 Èíslo úètu       ::bold |E14 514048001/5500 ::bold
+    |C15 Konstantní symbol       |E15 558 ::left
+    |C16 Variabilní symbol       |E16 215 ::left bcolor=ffffffaa
+    |C17 Specifický symbol       |E17 412 ::left bcolor=ffffffaa
+
+    |L12 Objednávka èíslo ::bold |M12 $order  ::size=14 bold
+    |L13 Dodací a platební podmínky: s daní
+    |L14 Forma úhrady            |M14 pøevodem
+    |L14 Datum vystavení         |M14 $vystaveno ::date bcolor=ffffffaa
+    |L15 Datum zúètování         |M15 =M14       ::date
+    |L16 Datum splatnosti ::bold |M16 =M14+14    ::date bold
+__XLS;
+  $n= $P-1;
+  $xls.= <<<__XLS
+    |C$n Položka              ::wrap middle       |C$n:E$n merge bold border=h
+    |F$n Poèet                ::wrap middle right |F$n:G$n merge bold border=h
+    |H$n Cena položky vè. DPH ::wrap middle right |H$n:I$n merge bold border=h
+    |J$n Sleva %              ::wrap middle right |J$n:J$n       bold border=h
+    |K$n Sazba DPH            ::wrap middle right |K$n:K$n       bold border=h
+    |L$n DPH                  ::wrap middle right |L$n:L$n       bold border=h
+    |M$n Cena bez DPH         ::wrap middle right |M$n:M$n       bold border=h
+__XLS;
+  // øádky $P-$Q -- položky
+  $n= $P;
+  $sazby_dph= array();
+  foreach ($polozky as $i=>$polozka) {
+    list($nazev,$cena,$dph,$pocet,$sleva)= $polozka;
+    if (!in_array($dph,$sazby_dph) ) $sazby_dph[]= $dph;
+    if ( $pocet ) {
+      $xls.= <<<__XLS
+        |C$n $nazev                |C$n:E$n merge
+        |F$n $pocet                |F$n:G$n merge
+        |H$n $cena         ::kc    |H$n:I$n merge
+        |J$n $sleva        ::proc
+        |K$n $dph          ::proc
+        |L$n =O$n-M$n      ::kc
+        |M$n =O$n/(1+K$n)  ::kc
+        |O$n =F$n*H$n*(1-J$n) ::kc color=$c_okraj
+__XLS;
+      $n++;
+    }
+  }
+  $xls.= <<<__XLS
+    |C$P:E$Q border=h    |F$P:G$Q border=h    |H$P:I$Q border=h
+    |J$P:J$Q border=h    |K$P:K$Q border=h    |L$P:L$Q border=h    |M$P:M$Q border=h
+__XLS;
+  // celková cena
+  $n= $Q+1;
+  $xls.= <<<__XLS
+    |H$n Celková cena s DPH ::middle bold |H$n:K$n merge right
+    |L$n =SUM(L$P:M$Q)      ::middle kc   |L$n:M$n merge border=h
+__XLS;
+  if ( $zaloha<100 ) {
+    $n++;
+    $xls.= <<<__XLS
+      |H$n Záloha $zaloha%             ::middle bold |H$n:K$n merge right
+      |L$n =SUM(L$P:M$Q)*($zaloha/100) ::middle kc   |L$n:M$n merge border=h
+__XLS;
+  }
+  // øádky R... -- rozpis DPH
+  $n= $R+1;
+  $xls.= <<<__XLS
+    |K$R Rozpis DPH ::bold
+    |K$n Sazba::middle bold border=h right
+    |L$n Základ  ::middle bold border=h right
+    |M$n Daò     ::middle bold border=h right
+__XLS;
+  sort($sazby_dph);
+  foreach($sazby_dph as $sazba) {
+    $n++;
+    $xls.= <<<__XLS
+      |K$n $sazba                                    ::proc border=h right
+      |L$n =SUMIF(K$P:K$Q;K$n;M$P:M$Q)*($zaloha/100) ::kc   border=h right
+      |M$n =SUMIF(K$P:K$Q;K$n;L$P:L$Q)*($zaloha/100) ::kc   border=h right
+__XLS;
+  }
+  // øádky R,S (viz výše) -- spodek faktury
+  $n= $R+1;
+  $xls.= <<<__XLS
+    |C$R vyøizuje ::bold
+    |C$n Josef Náprstek, správce Domu setkání
+    |C$S:M$S border=h,,,
+    |C$S $pata | C$S:M$S merge middle center wrap
+__XLS;
+  return $xls;
+}
+# -------------------------------------------------------------------------------------------------- ds_cenik
+# naètení ceníku pro daný rok
+function ds_cenik($rok) {  #trace();
+  global $ds_cena;
+  $ds_cena= array();
+  ezer_connect('setkani');
+  $qry2= "SELECT * FROM ds_cena WHERE rok=$rok";
+  $res2= mysql_qry($qry2);
+  while ( $res2 && $c= mysql_fetch_object($res2) ) {
+    $ds_cena[$c->typ]= $c;
+  }
+//                                                 debug($cena,'cena',(object)array('win1250'=>1));
+}
+# -------------------------------------------------------------------------------------------------- ds_c
+# položka faktury
+# id,pocet => název,cena,dph%,pocet
+function ds_c ($id,$pocet,$sleva='') {
+  global $ds_cena;
+  $c= array($ds_cena[$id]->polozka,$ds_cena[$id]->cena,$ds_cena[$id]->dph/100,$pocet);
+  if ( $sleva ) $c[]= $sleva;
+  return $c;
+}
+# -------------------------------------------------------------------------------------------------- ds_vek
+# zjištìní vìku v dobì zahájení akce
+function ds_vek($narozeni,$fromday) {
+  if ( $narozeni=='0000-00-00' )
+    $vek= -1;
+  else {
+    $vek= $fromday-sql2stamp($narozeni);
+    $vek= round($vek/(60*60*24*365),1);
+  }
+  return $vek;
 }
 ?>

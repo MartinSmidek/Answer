@@ -1,8 +1,8 @@
 <?php # (c) 2007-2009 Martin Smidek <martin@smidek.eu>
 
 $minify= false;
-$root= 'ys';
-$title= "Ans(w)er";
+$root= 'ds';
+$title= "Dům setkání";
 $js= array(
   'ezer2/client/licensed/clientcide.js',
   'ezer2/client/lib.js',
@@ -16,21 +16,19 @@ $js= array(
 $css= array(
   './ezer2/client/appf.css',
   './ezer2/client/natdocs.css',
-  './ys/ys.css.css'
+  './ds/ds.css.css'
 );
 $dbg= $_GET['dbg'];
 $matous= $_SERVER["DOCUMENT_ROOT"]=='/home/www/';
 $options= $matous ? <<<__EOD
-    debug:window.parent!=window,      // je nadřazený frame - dbg.html
-    login_interval:600,
-    must_log_in:true,
-    mini_debug:false, status_bar:true, to_trace:true
+    debug:window.parent!=window && dbg,      // je nadřazený frame - dbg.html
+    mini_debug:dbg, status_bar:dbg, to_trace:dbg,
+    must_log_in:false, uname:'dum', pword:'setkani'
 __EOD
 : <<<__EOD
-    debug:window.parent!=window,      // je nadřazený frame - dbg.html
-    login_interval:600,
-    must_log_in:false, uname:'gandi', pword:'radost',
-    mini_debug:true, status_bar:true, to_trace:true
+    debug:window.parent!=window && dbg,      // je nadřazený frame - dbg.html
+    mini_debug:dbg, status_bar:dbg, to_trace:dbg, ae_trace:'TUL*',show_trace:true,
+    must_log_in:false, uname:'dum', pword:'setkani'
 __EOD;
 if ( $matous) $title.= "/Ezer2";
 
@@ -71,47 +69,36 @@ echo <<<__EOD
   <title>$title</title>
   <script type="text/javascript">
     var Ezer= {};
+    Ezer.parm= location.hash.split(',');
     Ezer.fce= {};
     Ezer.str= {};
     Ezer.root= '$root';
+    var dbg= Ezer.parm[0]!='#';
     Ezer.options= {
       $options
     };
+    function ondomready() {
+      if ( !dbg ) {
+        $('stred').setStyles({top:0});
+        $('horni').setStyles({display:'none'});
+        $('status_bar').setStyles({display:'none'});
+        //$('status').setStyles({display:'none'});
+        //$('drag').setStyles({display:'none'});
+      }
+    }
   </script>
   $head
 </head>
-<body id="body" class='nogrid'>
-<!-- menu a submenu -->
+<body id="body" class='nogrid' onload='ondomready();'>
+<!-- bez menu a submenu -->
   <div id='horni' class="MainBar">
-    <div id="appl">$title</div>
-    <img class="StatusIcon" id="StatusIcon_idle" src="./$root/img/-logo.gif" />
-    <img class="StatusIcon" id="StatusIcon_server" src="./$root/img/+logo.gif" />
-    <ul id="menu" class="MainMenu"></ul>
-    <ul id="submenu" class="MainTabs"></ul>
+    <div id="StatusIcon">$title</div>
   </div>
   <div id='ajax_bar'></div>
-<!-- login -->
-  <div id="login" style="display:none">
-    <div id="login_1">
-      <h1>Přihlášení ...</h1>
-      <div class="login_a">
-        <form  method="post" onsubmit="return false;">
-          <span>uživatelské jméno</span><br />
-          <input id="name" type="text" tabindex="1" title="jméno" name="name" value="" /><br />
-          <span>heslo</span><br />
-          <input id="pass" type="password" tabindex="2" title="heslo" name="pass"  value="" /><br />
-          <span id="login_msg"></span><br />
-          <input id="login_on" type="submit" tabindex="3" value="Přihlásit se" />
-          <input id="login_no" type="button" tabindex="4" value="... ne, děkuji" />
-        </form>
-      </div>
-    </div>
-    <div id="login_2">
-      <h1>... informace</h1>
-      <div class="login_a">
-        Přeji příjemnou práci
-      </div>
-    </div>
+<!-- pracovní plocha -->
+  <div id="stred" style="top:35px">
+    <div id="shield"></div>
+    <div id="work"></div>
   </div>
 <!-- pracovní plocha -->
   <div id="stred">
@@ -131,8 +118,6 @@ echo <<<__EOD
     </div>
     <pre id="kuk"></pre>
   </div>
-  <div id="report" class="report"></div>
-  <form><input id="drag" type="button" /></form>
 <!-- konec -->
 </body>
 </html>

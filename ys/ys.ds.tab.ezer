@@ -1,4 +1,14 @@
 # -------------------------------------------------------------------------------------------------- tabulky
+table ds_cena {  db:'setkani', key_id:'id_cena'
+  number id_cena
+  number rok
+  text polozka         { sql_pipe:'wu' }
+  text typ             { sql_pipe:'wu' }
+  number od
+  number do
+  number cena
+  number dph
+}
 table ds_osoba { db:'setkani', key_id:'id_osoba'
   number id_osoba
   number id_order       // tx_gnalberice_order.uid

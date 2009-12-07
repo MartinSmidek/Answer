@@ -21,5 +21,7 @@ kde
 | 01.08.2007 | MVY | vlastnost |            | systém objednávek pro Dům setkání (k používání od 1.12.2009)
 | 13.10.2009 | JLN | vlastnost |            | doplnit přehledy o rozdělení MS/DS
 ++done
+|            |     |           | 27.11.2009 | modul Lidé, export účastníků s dětmi pro Statistický list YMCA
+|            |     |           | 24.11.2009 | zpřehlednění modulu Ekonomika (dříve Účetnictví), záložka Kapitoly poskytuje grafický obraz hospodaření s možností obdobně strukturovaného pohledu do účetního deníku
 |            |     |           | 14.10.2009 |+převedení Ans(w)er pod systém Ezer2: moduly Informace, Pokladna, Účetnictví, Dům
 
