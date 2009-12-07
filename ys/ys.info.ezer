@@ -37,6 +37,14 @@ panel Posta [,,670,543] {type:'right', title:'Pošta',_sys:'pos', style:'width:6
     ask('sou_upd_info',P_info.get('path'),P_touch.flist.fid.get,info);
     P_touch.flist.browse_seek
   }
+#   const doc= 'Dokumenty (*.pdf, *.doc, *.xls)|*.pdf; *.doc; *.xls'
+#   const img= 'Obrázky (*.jpg, *.gif, *.png)|*.jpg; *.gif; *.png'
+#   form f {
+#     button [50,10,,] {type:'upload', title:'Upload', par:°{path:'alfa',mask:img}}
+#     button [500,10,,] {type:'upload', title:'Upload', format:'r',par:°{path:'docs',mask:doc}
+#       proc onload() { echo('loaded'); }
+#     }
+#   }
 # -------------------------------------------------------------------------------------------------- _touch
   form _touch [,,500,50] {
     label result [0,0,635,600] { title:'' },
