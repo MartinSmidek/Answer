@@ -229,7 +229,7 @@ function ds_xls_hoste($orders,$mesic_rok) {  #trace();
   $mesic_rok= uw($mesic_rok);
   $xls= <<<__XLS
     |open $name
-    |sheet hoste
+    |sheet hoste;;L;page
     |columns A=10,B=13,C=40,D=15,E=13,F=30,G=12,H=12
     |A1 Seznam hostù zahajujících pobyt v období $mesic_rok ::bold size=14
     |A3 jméno |B3 pøíjmení |C3 adresa  |D3 datum narození ::right |E3 telefon
@@ -476,7 +476,7 @@ __XLS;
             }
             $lc++;
             $B= Excel5_n2col($lc);
-            $row.= "|$B$n =(1-$A$n)*($suma) ::kc";
+            $row.= $druh0=='noc' ? "|$B$n =(1-$A$n)*($suma) ::kc" : "|$B$n =$suma ::kc";
             $suma= '0';
             $celkem.= "+$B$n";
           }
