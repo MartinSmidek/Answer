@@ -5,6 +5,7 @@ $root= 'ys';
 $title= "Ans(w)er";
 $js= array(
   'ezer2/client/licensed/clientcide.js',
+  'ezer2/client/licensed/mootools/asset.js',
   'ezer2/client/lib.js',
   'ezer2/client/ezer_fdom1.js',
   'ezer2/client/ezer.js',
@@ -16,6 +17,7 @@ $js= array(
 $css= array(
   './ezer2/client/appf.css',
   './ezer2/client/natdocs.css',
+  './ezer2/client/licensed/fancyupload.css',
   './ys/ys.css.css'
 );
 $dbg= $_GET['dbg'];

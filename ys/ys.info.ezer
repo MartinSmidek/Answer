@@ -3,10 +3,14 @@
 
 var P_info: text
 var K_info: text
+const doc= 'Dokumenty (*.pdf, *.doc, *.xls)|*.pdf; *.doc; *.xls'
+const img= 'Obrázky (*.jpg, *.gif, *.png)|*.jpg; *.gif; *.png'
 # ================================================================================================== POŠTA
 panel Posta [,,670,543] {type:'right', title:'Pošta',_sys:'pos', style:'width:670'
+  use P_touch: form _touch [12,4,,],
   menu {type:'left', active:*
     menu {title:'2009',type:'group'
+#       item {title:'TEST'              ,_sys:'dop',par:°{s:'_test_',c:'2009'} },
       item {title:'Došlá pošta'       ,_sys:'dop',par:°{s:'dosla_posta',c:'2009'} },
       item {title:'Došlé faktury'     ,_sys:'dof',par:°{s:'dosle_faktury',c:'2009'} },
       item {title:'Vystavené faktury' ,_sys:'vys',par:°{s:'vystavene_faktury',c:'2009'} },
@@ -15,14 +19,15 @@ panel Posta [,,670,543] {type:'right', title:'Pošta',_sys:'pos', style:'width:6
       item {title:'Cestovní příkazy'  ,_sys:'ces',par:°{s:'cestovni_prikazy',c:'2009'} },
       item {title:'Pokladní doklady'  ,_sys:'pok',par:°{s:'pokladna',c:'2009'} },
     }
-    proc onclick (m) { P_menu (m.par.s,m.par.c) }
-  }
-  use P_touch: form _touch [12,4,,],
-  proc P_menu (s,c) {
-    P_info.set(ask('sou_lst','posta',s,c));
-    [ P_touch.flist.browse_load(P_info.get('path')) ];
-    P_touch.result.set(conc("<div id='info' class='info'>",P_info.get('html'),"</div>"));
-    panel.property(°{height:'*',min_height:500})
+    proc onclick (m) {
+      P_touch.finfo.set('');
+      P_info.set(ask('sou_lst','posta',m.par.s,m.par.c));
+      P_touch.upload.set_attrib('par.path',conc(m.par.c,'/',m.par.s));
+      P_touch.upload.set_attrib('par.root',sys('ezer','options','docs_path'));
+      [ P_touch.flist.browse_load(P_info.get('path')); P_touch.flist.raise('onrowclick') ];
+      P_touch.result.set(conc("<div id='info' class='info'>",P_info.get('html'),"</div>"));
+      panel.property(°{height:'*',min_height:500})
+    }
   }
   proc P_show (x,info) {
     P_touch.result.set(conc("<div id='info' class='info'>",P_info.get('html'),x
@@ -34,31 +39,31 @@ panel Posta [,,670,543] {type:'right', title:'Pošta',_sys:'pos', style:'width:6
     P_show(P_touch.flist.fid.get,P_touch.flist.finfo.get)
   }
   proc P_oprav (info) {
-    ask('sou_upd_info',P_info.get('path'),P_touch.flist.fid.get,info);
-    P_touch.flist.browse_seek
   }
-#   const doc= 'Dokumenty (*.pdf, *.doc, *.xls)|*.pdf; *.doc; *.xls'
-#   const img= 'Obrázky (*.jpg, *.gif, *.png)|*.jpg; *.gif; *.png'
-#   form f {
-#     button [50,10,,] {type:'upload', title:'Upload', par:°{path:'alfa',mask:img}}
-#     button [500,10,,] {type:'upload', title:'Upload', format:'r',par:°{path:'docs',mask:doc}
-#       proc onload() { echo('loaded'); }
-#     }
-#   }
 # -------------------------------------------------------------------------------------------------- _touch
   form _touch [,,500,50] {
     label result [0,0,635,600] { title:'' },
+    button upload [500,18,50,16] {type:'upload', title:'Upload', format:'r',
+        par:°{root:'',path:'docs',mask:doc,move:'upload_ymd'}
+      proc onload() {
+        flist.browse_seek;
+      }
+    }
+    button opravit [580,18,50,16] { title:'Ulož', type:'submit', /*css:'zIndex1'*/
+      proc onclick () {
+        ask('sou_upd_info',P_info.get('path'),flist.fid.get,finfo.get);
+        flist.browse_seek;
+        finfo.plain
+      }
+    }
     field finfo [323,50,313,17] { /*css:'zIndex1'*/
       proc onchanged() { P_oprav(finfo.get); finfo.plain }
     }
-    button opravit [580,15,50,16] { title:'Ulož', type:'submit', /*css:'zIndex1'*/
-      proc onclick () { P_oprav(finfo.get); finfo.plain }
-    }
     browse flist [0,80,600,200] { rows:24, qry_rows:1
       show fid [,,0,] { title:'fid', data:_file_.fid },
-      show fdate [,,80,] { title:'datum', data:_file_.fdate, format:'s-q' },
+      show fdate [,,70,] { title:'datum', data:_file_.fdate, format:'s-q' },
       show fname [,,200,] { title:'název', data:_file_.fname, format:'s' },
-      show ftype[,,20,] { title:'typ', data:_file_.ftype, format:'s' },
+      show ftype[,,30,] { title:'typ', data:_file_.ftype, format:'s' },
       show finfo [,,300,] { title:'info', data:_file_.finfo, format:'s' },
     }
   }

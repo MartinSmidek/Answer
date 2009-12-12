@@ -1,6 +1,10 @@
+/*.xls
 /\#
+/docs
 /ds.php
 ds/code
+ds/code/*.json
+/logs
 /sql
 /test.inc
 /test.php
@@ -8,3 +12,4 @@ ds/code
 /ys.inc
 /ys.php
 ys/code
+ys/code/*.json
