@@ -12,13 +12,13 @@ menu ys { type:'main', active:* //ys.pok
   tabs syst {title:"Systém", _sys:'sys',  include:'onclick,ezer2.syst', active:* }
   tabs doc  {title:"Nápověda", _sys:'nap',  include:'onclick,ezer2.help' }
 
-  tabs off  {title:"Odhlásit", _sys:'off'
-    panel {type:'plain', title:"Odhlásit"
-      proc onfocus() {
-        touch('logout')
-      }
-    }
-  }
+#   tabs off  {title:"Odhlásit", _sys:'off'
+#     panel {type:'plain', title:"Odhlásit"
+#       proc onfocus() {
+#         touch('logout')
+#       }
+#     }
+#   }
 //#   tabs test {title:"Test",  where:'http://ys2.ezer/test.html' }
 //#   tabs ys1  {title:"Pokladna/1",  where:'http://ys.ezer/anser.php?modul=ys_pokladna' }
   // univerzální procedury
