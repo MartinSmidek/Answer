@@ -49,7 +49,7 @@ kEzer-ys2
 			ezer2\wiki\guide.wiki
 			ezer2\wiki\meta.wiki
 			ezer2\wiki\todo.wiki
-	-comp
+	+comp
 		ezer2\comp.php
 		ezer2\comp.css
 	+doc
@@ -148,24 +148,26 @@ kEzer-ys2
 7=ezer2\client\ezer_fdom2.js
 8=ys\ys_ucet.php
 9=ys\ys_lide.php
-10=test\$.ezer
-11=ys\ys.ds.kl.ezer
-12=..\..\..\Apache\logs\ys2-error.log
-13=ds\ds_fce.php
-14=ds\ds.dum.ezer
-15=test.php
+10=ys\ys.ds.kl.ezer
+11=..\..\..\Apache\logs\ys2-error.log
+12=ds\ds_fce.php
+13=ds\ds.dum.ezer
+14=test.php
+15=ys\$.ezer
 16=ys.inc
 17=ys\ys.info.ezer
 18=ys\ys_fce.php
+19=ezer2\ezer2.syst.ezer
+20=ezer2\comp.php
 [Selected Project Files]
 Main=
-Selected=ds\ds.dum.ezer
+Selected=ys.inc
 [ezer2\server\comp2def.php]
 TopLine=181
 Caret=89,202
 [ezer2\server\comp2.php]
-TopLine=1153
-Caret=60,1160
+TopLine=1097
+Caret=25,1110
 Mark1=47,1288
 Mark2=60,1597
 Mark3=60,1359
@@ -208,9 +210,6 @@ Mark2=1,360
 [ys\ys_lide.php]
 TopLine=7
 Caret=73,51
-[test\$.ezer]
-TopLine=1
-Caret=26,22
 [ys\ys.ds.kl.ezer]
 TopLine=1
 Caret=33,9
@@ -231,9 +230,12 @@ Caret=80,52
 [test.php]
 TopLine=1
 Caret=1,28
+[ys\$.ezer]
+TopLine=1
+Caret=49,20
 [ys.inc]
-TopLine=22
-Caret=73,37
+TopLine=26
+Caret=57,63
 [ys\ys.info.ezer]
 TopLine=11
 Caret=87,27
@@ -241,3 +243,9 @@ Mark1=46,26
 [ys\ys_fce.php]
 TopLine=46
 Caret=86,64
+[ezer2\ezer2.syst.ezer]
+TopLine=187
+Caret=26,212
+[ezer2\comp.php]
+TopLine=1
+Caret=40,65

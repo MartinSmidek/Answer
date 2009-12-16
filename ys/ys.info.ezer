@@ -3,7 +3,7 @@
 
 var P_info: text
 var K_info: text
-const doc= 'Dokumenty (*.pdf, *.doc, *.xls)|*.pdf; *.doc; *.xls'
+const doc= 'Dokumenty (*.pdf, *.doc, *.xls, *.tif, *.jpg)|*.pdf;*.doc;*.xls;*.tif;*.jpg'
 const img= 'Obrázky (*.jpg, *.gif, *.png)|*.jpg; *.gif; *.png'
 # ================================================================================================== POŠTA
 panel Posta [,,670,543] {type:'right', title:'Pošta',_sys:'pos', style:'width:670'
