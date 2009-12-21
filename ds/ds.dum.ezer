@@ -274,14 +274,14 @@ group ucastnici {
     var novi: object
     button [  0,0,50,18] { title:'+ rodina'
       proc onclick () { novi.set(Rodina.modal(550,250)); echo(novi.get); } }
-    button [ 70,0,50,18] { title:'+ účastník'
+    button [ 72,0,50,18] { title:'+ účastník'
       proc onclick () { osoba_new} }
     button [155,0,50,18] { title:'+ dítě účastníka'
       proc onclick () { osoba_new_child} }
-    button [265,0,50,18] { title:'- účastník'
+    button [267,0,50,18] { title:'- účastník'
       proc onclick () { osoba_del(seznam.id_osoba.get)} }
     browse seznam [0,30,,] { rows:14
-      show rodina [,,20,] { title:'rod', data:tab.ds_osoba.rodina, format:'s+' }
+      show rodina [,,30,] { title:'rod', data:tab.ds_osoba.rodina, format:'s+' }
       show prijmeni [,,70,] { title:'příjmení', data:tab.ds_osoba.prijmeni, format:'s' }
       show jmeno    [,,50,]  { title:'jméno', data:tab.ds_osoba.jmeno, format:'s' }
       show vek  [,,20,]  { title:'věk',

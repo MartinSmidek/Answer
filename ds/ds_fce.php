@@ -254,7 +254,7 @@ function rodina($cislo) {  #trace();
     $roky= rc2roky($p->rodcislo_m);
     $narozeni= rc2dmy($p->rodcislo_m);
     rodina_add(&$rod,$p->prijmeni_m,$p->jmeno_m,$roky,$narozeni,$p->telefon,$p->email,$p);
-//                                                         display("{$p->prijmeni_m}:{$p->rodcislo_m}:$narozeni");
+                                                        display("{$p->prijmeni_m}:{$p->rodcislo_m}:$narozeni");
     $roky= rc2roky($p->rodcislo_z);
     $narozeni= rc2dmy($p->rodcislo_z);
     rodina_add(&$rod,$p->prijmeni_z,$p->jmeno_z,$roky,$narozeni,$p->telefon,$p->email,$p);
@@ -268,7 +268,7 @@ function rodina($cislo) {  #trace();
     $narozeni= rc2dmy($d->rodcislo);
     rodina_add(&$rod,$prijmeni,$d->jmeno,$roky,$narozeni,' ',' ',$p);
   }
-//                                                         debug($rod,$cislo);
+                                                        debug($rod,$cislo);
   return $rod;
 }
 function rodina_add(&$rod,$prijmeni,$jmeno,$roky,$narozeni,$telefon,$email,$p) { trace();
