@@ -52,9 +52,8 @@ group pobyt {
     obj.save; order_load(the_order.get)
   }
   // účast objednatele na pobytu
-  proc objednavatel_save(ucast,changed) {
-    fak.save; fak.load; echo('objednavatel_save:',ucast,':',changed);
-    [ changed; ucast; echo(ask('ds_ucast_objednatele',the_order.get,ucast)) ];
+  proc objednavatel_save() {
+    fak.save; fak.load;
     ucastnici.obnova; compare
   }
   // vystavení zálohy na objednávku
@@ -69,7 +68,8 @@ group pobyt {
   var comp: text
   var fields: text
   proc compare () {
-    comp.set(ask('ds_compare',the_order.get)); debug(comp.get,'compare');
+    comp.set(ask('ds_compare',the_order.get));
+#     debug(comp.get,'compare');
     form_set(obj.get,comp.get('form')); obj.info.set(comp.get('html'))
   }
   proc ukaz_spodek {
@@ -158,8 +158,8 @@ group pobyt {
     field       [  0, 55,120,] { data:tab.tx_gnalberice_order.name }
     label       [130, 40,100,] { title:'jméno' }
     field       [130, 55, 80,] { data:tab.tx_gnalberice_order.firstname }
-    label       [220, 40, 80,] { title:'účastní se' }
-    check ucast [218, 54, 80,] { title:'pobytu', data:tab.tx_gnalberice_order.ucast }
+    label       [220, 40, 80,] { title:'DIČ' }
+    field       [220, 55, 80,] { data:tab.tx_gnalberice_order.dic }
     label       [  0, 80,200,] { title:'e-mail' }
     field       [  0, 95,210,] { data:tab.tx_gnalberice_order.email  }
     label       [220, 80,100,] { title:'telefon' }
@@ -176,7 +176,7 @@ group pobyt {
     button      [220,159,100,18] { title:'vystavit faktury'
       proc onclick() { make_faktury } }
     button      [220,185,100,18] { title:'zapsat změny'
-      proc onclick() { objednavatel_save(ucast.get,ucast.changed) } }
+      proc onclick() { objednavatel_save } }
   }
 }
 
@@ -213,6 +213,29 @@ group ucastnici {
   proc osoba_load (id_osoba) {
     per.load(id_osoba)
   }
+  // vložení nové rodiny
+  var znacka_rodiny: text
+  proc rodina_add(seznam) {
+    each(seznam,rodina_add1);
+  }
+  var pall: object
+  proc rodina_add1(p) {
+    p.chck.get; //echo("rodina=",p.info.get);
+    pall.set(p.all.get); //echo('-----------------',pall.get('jmeno'));
+    per.init;
+    per.id_order.set(the_order.get);
+    per.rodina.set(znacka_rodiny.get);
+    per.jmeno.set(pall.get('jmeno'));
+    per.prijmeni.set(pall.get('prijmeni'));
+    per.ulice.set(pall.get('ulice'));
+    per.psc.set(pall.get('psc'));
+    per.obec.set(pall.get('mesto'));
+    per.telefon.set(pall.get('telefon'));
+    per.email.set(pall.get('email'));
+    per.narozeni.set(pall.get('narozeni'));
+    per.insert;
+    akc.seznam.browse_seek; pobyt.compare
+  }
   // vložení nového účastníka
   proc osoba_new {
     per.init; per.id_order.set(the_order.get); per.insert;
@@ -220,7 +243,8 @@ group ucastnici {
   }
   // vložení nového dítěte účastníka
   proc osoba_new_child (id_osoba) {
-    per.init; per.id_order.set(the_order.get);
+    per.init;
+    per.id_order.set(the_order.get);
     per.rodina.set(akc.seznam.rodina.get);
     per.prijmeni.set(akc.seznam.prijmeni.get);
     per.ulice.set(akc.seznam.ulice.get);
@@ -247,11 +271,14 @@ group ucastnici {
   }
   // ------------------------------------------------------------------ AKCE
   form akce [,,300,100] { css:'ds_form'
-    button [  0,0,100,18] { title:'přidat účastníka'
+    var novi: object
+    button [  0,0,50,18] { title:'+ rodina'
+      proc onclick () { novi.set(Rodina.modal(550,250)); echo(novi.get); } }
+    button [ 70,0,50,18] { title:'+ účastník'
       proc onclick () { osoba_new} }
-    button [122,0,100,18] { title:'přidat dítě'
+    button [155,0,50,18] { title:'+ dítě účastníka'
       proc onclick () { osoba_new_child} }
-    button [210,0,100,18] { title:'odebrat účastníka'
+    button [265,0,50,18] { title:'- účastník'
       proc onclick () { osoba_del(seznam.id_osoba.get)} }
     browse seznam [0,30,,] { rows:14
       show rodina [,,20,] { title:'rod', data:tab.ds_osoba.rodina, format:'s+' }
@@ -275,6 +302,48 @@ group ucastnici {
       show obec { data:tab.ds_osoba.obec }
       proc onrowclick() { osoba_load(id_osoba.get) }
     }
+    // ================================================================ Rodina
+    panel Rodina [,,320,300] {type:'popup', title:'Výběr členů rodiny z databáze MS'
+      use fl: form _fl [12,10,,]
+      form _fl [,,300,200] {
+        var last: number
+        var rod: object
+        var popis: text
+        field znacka [0,225,50,16]
+        label [55,225,200,16] {title:'značka rodiny na fakturách'}
+        button [0,250,50,16] { title:'přidat do účastníků', proc onclick() {
+          znacka_rodiny.set(znacka.get);
+          rodina_add(L) } }
+        button [130,250,50,16] { title:'jiná rodina', proc onclick() {
+          vyber.init; vse.init; znacka.init; L.init } }
+        button [220,250,50,16] { title:'konec', proc onclick() {
+          vyber.init; vse.init; znacka.init; L.init; panel.hide(0) } }
+        select vyber [100,0,200,17] { type:'auto', /*title:'rodina',*/ par:°{fce:'pary'},// format:'t'
+          proc onchanged() {
+            rod.set(ask('rodina',this.key));
+            znacka.init;
+            each(rod.get,rodina);
+          }
+          proc rodina(p) {
+            last.set(L.add);
+            [ eq(znacka.get,''); znacka.set(substr(p.prijmeni,0,3)) ];
+            popis.set(conc(p.prijmeni,' ',p.jmeno,', ',p.mesto,', ',p.stari));
+            L.part(last.get).part('info').set(popis.get);
+            L.part(last.get).part('all').set(p);
+          }
+        }
+        // nastavení výběru
+        check vse [4,0,80,16] { title:'všichni', format:'t'
+          proc onchange() { each(L,nastav) }
+          proc nastav (x) { x.chck.set(form.vse.get) }
+        }
+        list L [0,23,300,200] {rows:22      // anonymní group
+          check chck [4,0,50,16] { title:' ', format:'t'  /*, proc onchange() { echo('jo/ne') }*/ }
+          label info [23,4,300,16]
+          var all: object
+        }
+      }
+    }
   }
   // ------------------------------------------------------------------ OSOBA
   form osoba [,,300,100] { css:'ds_form'
@@ -286,13 +355,13 @@ group ucastnici {
     label       [ 50,  0, 70,] { title:'příjmení' }
     field prijmeni [ 50, 15, 70,] { data:tab.ds_osoba.prijmeni }
     label       [130,  0,100,] { title:'jméno' }
-    field       [130, 15, 80,] { data:tab.ds_osoba.jmeno }
+    field jmeno [130, 15, 80,] { data:tab.ds_osoba.jmeno }
     label       [220,  0,100,] { title:'narozen/a' }
-    field       [220,15,86,] { type:'date', data:tab.ds_osoba.narozeni }
+    field narozeni [220,15,86,] { type:'date', data:tab.ds_osoba.narozeni }
     label       [  0, 40,200,] { title:'e-mail' }
-    field       [  0, 55,210,] { data:tab.ds_osoba.email  }
+    field email [  0, 55,210,] { data:tab.ds_osoba.email  }
     label       [220, 40,100,] { title:'telefon' }
-    field       [220, 55, 80,] { data:tab.ds_osoba.telefon}
+    field telefon [220, 55, 80,] { data:tab.ds_osoba.telefon}
     label       [  0, 80, 70,] { title:'ulice' }
     field ulice [  0, 95,210,] { data:tab.ds_osoba.ulice}
     label       [  0,120, 70,] { title:'psč' }

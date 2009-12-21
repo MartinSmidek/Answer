@@ -69,6 +69,7 @@ table tx_gnalberice_order { db:'setkani', key_id:'uid'
   text   firstname    { sql_pipe:'wu' }
   text   org          { sql_pipe:'wu' }
   number ic
+  text   dic
   number ucast        // 1 => účastní se pobytu
   number sleva        { help:'%|případná sleva v procentech' }
 }

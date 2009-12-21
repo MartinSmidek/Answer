@@ -220,6 +220,72 @@ function ds_ucast_objednatele($id_order,$ano) {  #trace();
   }
   return $ano;
 }
+# ================================================================================================== RODINA
+# -------------------------------------------------------------------------------------------------- pary
+# test autocomplete
+function pary($patt) {  #trace();
+  $a= (object)array();
+  $limit= 10;
+  $n= 0;
+  // rodièe
+  $qry= "SELECT cislo AS _key,concat(jmeno,' ',jmeno_m,' a ',jmeno_z,' - ',mesto) AS _value
+         FROM ms_pary
+         WHERE jmeno LIKE '$patt%' ORDER BY jmeno LIMIT $limit";
+  $res= mysql_qry($qry);
+  while ( $res && $t= mysql_fetch_object($res) ) {
+    if ( ++$n==$limit ) break;
+    $a->{$t->_key}= $t->_value;
+  }
+  // obecné položky
+  if ( !$n )
+    $a->{0}= "... nic nezaèíná $patt";
+  elseif ( $n==$limit )
+    $a->{999999}= "... a další";
+  return $a;
+}
+# -------------------------------------------------------------------------------------------------- rodina
+# test autocomplete
+function rodina($cislo) {  #trace();
+  $rod= array();
+  // rodièe
+  $qry= "SELECT * FROM ms_pary WHERE cislo=$cislo";
+  $res= mysql_qry($qry);
+  if ( $res && $p= mysql_fetch_object($res) ) {
+    $roky= rc2roky($p->RODCISLO_M);
+    $narozeni= rc2dmy($p->RODCISLO_M);
+    rodina_add(&$rod,$p->PRIJMENI_M,$p->JMENO_M,$roky,$narozeni,$p->TELEFON,$p->EMAIL,$p);
+//                                                         display("{$p->PRIJMENI_M}:{$p->RODCISLO_M}:$narozeni");
+    $roky= rc2roky($p->RODCISLO_Z);
+    $narozeni= rc2dmy($p->RODCISLO_Z);
+    rodina_add(&$rod,$p->PRIJMENI_Z,$p->JMENO_Z,$roky,$narozeni,$p->TELEFON,$p->EMAIL,$p);
+  }
+  // dìti
+  $qry= "SELECT * FROM ms_deti WHERE cislo=$cislo";
+  $res= mysql_qry($qry);
+  while ( $res && $d= mysql_fetch_object($res) ) {
+    $prijmeni= rc2man($d->RODCISLO) ? $p->PRIJMENI_M : $p->PRIJMENI_Z;
+    $roky= rc2roky($d->RODCISLO);
+    $narozeni= rc2dmy($d->RODCISLO);
+    rodina_add(&$rod,$prijmeni,$d->JMENO,$roky,$narozeni,' ',' ',$p);
+  }
+//                                                         debug($rod,$cislo);
+  return $rod;
+}
+function rodina_add(&$rod,$prijmeni,$jmeno,$roky,$narozeni,$telefon,$email,$p) { trace();
+  if ( $prijmeni || $jmeno ) {
+    $roky= $roky ? roku($roky) : '?';
+    $rod[]= (object)array('prijmeni'=>$prijmeni,'jmeno'=>$jmeno,'stari'=>$roky,
+      'psc'=>$p->PSC,'mesto'=>$p->MESTO,'ulice'=>$p->ADRESA,
+      'telefon'=>$telefon,'email'=>$email,'narozeni'=>$narozeni);
+  }
+}
+function roku($r) {
+  $r0= 0+$r;
+  $roku= $r0 == 1      ? "rok" : (
+         ($r0 % 10)==1 ? "let" : (
+         $r0<=4        ? "roky" : "roku" ));
+  return "$r $roku";
+}
 # ================================================================================================== EXPORTY DO EXCELU
 # -------------------------------------------------------------------------------------------------- ds_xls_hoste
 # definice Excelovského listu - seznam hostù
