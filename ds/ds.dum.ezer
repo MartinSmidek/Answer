@@ -318,7 +318,7 @@ group ucastnici {
           vyber.init; vse.init; znacka.init; L.init } }
         button [220,250,50,16] { title:'konec', proc onclick() {
           vyber.init; vse.init; znacka.init; L.init; panel.hide(0) } }
-        select vyber [100,0,200,17] { type:'auto', /*title:'rodina',*/ par:°{fce:'pary'},// format:'t'
+        select vyber [100,0,200,17] { type:'auto', /*title:'rodina',*/ par:°{fce:'pary'}, format:'t'
           proc onchanged() {
             rod.set(ask('rodina',this.key));
             znacka.init;
