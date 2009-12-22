@@ -238,9 +238,9 @@ function pary($patt) {  #trace();
   }
   // obecné položky
   if ( !$n )
-    $a->{0}= "... nic nezaèíná $patt";
+    $a->{0}= wu("... žádné jméno nezaèíná '")."$patt'";
   elseif ( $n==$limit )
-    $a->{999999}= "... a další";
+    $a->{999999}= wu("... a další");
   return $a;
 }
 # -------------------------------------------------------------------------------------------------- rodina
@@ -251,40 +251,36 @@ function rodina($cislo) {  #trace();
   $qry= "SELECT * FROM ms_pary WHERE cislo=$cislo";
   $res= mysql_qry($qry);
   if ( $res && $p= mysql_fetch_object($res) ) {
-    $roky= rc2roky($p->rodcislo_m);
-    $narozeni= rc2dmy($p->rodcislo_m);
-    rodina_add(&$rod,$p->prijmeni_m,$p->jmeno_m,$roky,$narozeni,$p->telefon,$p->email,$p);
-                                                        display("{$p->prijmeni_m}:{$p->rodcislo_m}:$narozeni");
-    $roky= rc2roky($p->rodcislo_z);
-    $narozeni= rc2dmy($p->rodcislo_z);
-    rodina_add(&$rod,$p->prijmeni_z,$p->jmeno_z,$roky,$narozeni,$p->telefon,$p->email,$p);
+    rodina_add(&$rod,$p->prijmeni_m,$p->jmeno_m,$p->rodcislo_m,$p->telefon,$p->email,$p);
+//                                                         display("{$p->prijmeni_m}:{$p->rodcislo_m}:$narozeni");
+    rodina_add(&$rod,$p->prijmeni_z,$p->jmeno_z,$p->rodcislo_z,$p->telefon,$p->email,$p);
   }
   // dìti
   $qry= "SELECT * FROM ms_deti WHERE cislo=$cislo";
   $res= mysql_qry($qry);
   while ( $res && $d= mysql_fetch_object($res) ) {
     $prijmeni= rc2man($d->rodcislo) ? $p->prijmeni_m : $p->prijmeni_z;
-    $roky= rc2roky($d->rodcislo);
-    $narozeni= rc2dmy($d->rodcislo);
-    rodina_add(&$rod,$prijmeni,$d->jmeno,$roky,$narozeni,' ',' ',$p);
+    rodina_add(&$rod,$prijmeni,$d->jmeno,$d->rodcislo,' ',' ',$p);
   }
                                                         debug($rod,$cislo);
   return $rod;
 }
-function rodina_add(&$rod,$prijmeni,$jmeno,$roky,$narozeni,$telefon,$email,$p) { trace();
+function rodina_add(&$rod,$prijmeni,$jmeno,$rc,$telefon,$email,$p) { trace();
   if ( $prijmeni || $jmeno ) {
-    $roky= $roky ? roku($roky) : '?';
+    $roky= roku($rc);
+    $narozeni= rc2dmy($rc);
     $rod[]= (object)array('prijmeni'=>$prijmeni,'jmeno'=>$jmeno,'stari'=>$roky,
       'psc'=>$p->psc,'mesto'=>$p->mesto,'ulice'=>$p->adresa,
       'telefon'=>$telefon,'email'=>$email,'narozeni'=>$narozeni);
   }
 }
-function roku($r) {
-  $r0= 0+$r;
-  $roku= $r0 == 1      ? "rok" : (
-         ($r0 % 10)==1 ? "let" : (
-         $r0<=4        ? "roky" : "roku" ));
-  return "$r $roku";
+function roku($rc) {
+  $r= rc2roky($rc);
+  $roku= !$r          ? "?" : (
+         $r==1        ? "rok" : (
+         ($r % 10)==1 ? "let" : (
+         $r<=4        ? "roky" : "rokù" )));
+  return wu("$r $roku, rè:$rc");
 }
 # ================================================================================================== EXPORTY DO EXCELU
 # -------------------------------------------------------------------------------------------------- ds_xls_hoste
