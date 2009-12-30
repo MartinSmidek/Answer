@@ -1,10 +1,10 @@
 <?php # (c) 2009 Martin Smidek <martin@smidek.eu>
-# -------------------------------------------------------------------------------------------------- dt
-# na datum na stránce z timestamp v tabulce
+// # -------------------------------------------------------------------------------------------------- dt
+// # na datum na stránce z timestamp v tabulce
 function dt($x,$user2sql=0) { #trace();
   if ( $user2sql ) {
     // pøeveï uživatelskou podobu na sql tvar
-    $y= win2utf($x,true);
+    $y= sql2stamp($x);
   }
   else {
     // pøeveï sql tvar na uživatelskou podobu (default)
@@ -640,6 +640,8 @@ __XLS;
     |$xls|close 1";
 //                                                                 display("rodiny=$faktury");
 //                                                                 display(nl2br(wu($xls)));
+  if ( $test )
+    file_put_contents("xls.txt",$final_xls);
   $inf= Excel5(wu($final_xls),1);
   if ( $inf ) {
     $html= " nastala chyba";
@@ -648,8 +650,6 @@ __XLS;
   else
     $html= " <a href='$name.xls' target='xls'>koneèná faktura</a>.";
   // pøípadný testovací výpis
-  if ( $test )
-    file_put_contents("xls.txt",$final_xls);
   return wu($html);
 }
 # -------------------------------------------------------------------------------------------------- ds_faktury

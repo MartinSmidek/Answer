@@ -100,9 +100,9 @@ group pobyt {
     label       [180,  0,200,] { title:'poznámka k objednávce' }
     edit        [180,15,164,57] { data:tab.tx_gnalberice_order.note  }
     label       [  0, 40, 70,] { title:'příjezd' }
-    field       [  0, 55, 80,] { type:'date', data:tab.tx_gnalberice_order.fromday }
+    field       [  0, 55, 85,] { type:'date', data:tab.tx_gnalberice_order.fromday }
     label       [ 90, 40, 70,] { title:'odjezd' }
-    field       [ 90, 55, 80,] { type:'date', data:tab.tx_gnalberice_order.untilday }
+    field       [ 90, 55, 85,] { type:'date', data:tab.tx_gnalberice_order.untilday }
     label       [  0, 80,150,] { title:'seznam pokojů:' }
     check   p1  [PL+  0, PT,14,] { title:'1',  format:'c', css:'CheckT', help:"1 - 2 lůžka jednoduchá (V podkrovní pokojíček se střešním oknem)" }
     check   p2  [PL+ 20, PT,14,] { title:'2',  format:'c', css:'CheckT', help:"2 - 2 lůžka jako patrová postel (V pokojíček vedle sprchy, má svoje umyvadlo)" }

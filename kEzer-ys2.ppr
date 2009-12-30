@@ -115,7 +115,7 @@ kEzer-ys2
 		ys\ys_fce.php
 		ys\ys_lide.php
 		ys\ys_ucet.php
-	-ds
+	+ds
 		ds\ds.css.css
 		ds\ds.dum.ezer
 		ds\ds.ezer
@@ -153,13 +153,12 @@ kEzer-ys2
 10=ds\ds_fce.php
 11=test\$.ezer
 12=test\test.fce.ezer
-13=test\test.inc.ezer
-14=test\test.inc.pan.ezer
-15=test\test.inc.qan.ezer
-16=test\test.stx.ezer
+13=test\test.elem.frm.ezer
+14=ds\ds.dum.ezer
+15=ds\ds.tab.ezer
 [Selected Project Files]
 Main=
-Selected=test\test.stx.ezer
+Selected=ds\ds.dum.ezer
 [ezer2\server\comp2def.php]
 TopLine=169
 Caret=66,195
@@ -179,8 +178,9 @@ Mark1=60,1009
 Mark2=32,1020
 Mark3=60,995
 [ezer2\server\ae_slib.php]
-TopLine=250
-Caret=25,285
+TopLine=515
+Caret=42,534
+Mark1=10,336
 [ezer2\client\dbg.js]
 TopLine=320
 Caret=26,352
@@ -207,8 +207,8 @@ Caret=16,74
 TopLine=73
 Caret=92,99
 [ds\ds_fce.php]
-TopLine=866
-Caret=41,887
+TopLine=4
+Caret=86,9
 Mark1=22,588
 Mark2=25,800
 Mark3=56,706
@@ -220,15 +220,12 @@ Caret=73,7
 [test\test.fce.ezer]
 TopLine=32
 Caret=69,67
-[test\test.inc.ezer]
-TopLine=1
-Caret=100,9
-[test\test.inc.pan.ezer]
-TopLine=1
-Caret=61,7
-[test\test.inc.qan.ezer]
-TopLine=1
-Caret=47,9
-[test\test.stx.ezer]
-TopLine=1
-Caret=28,13
+[test\test.elem.frm.ezer]
+TopLine=15
+Caret=35,70
+[ds\ds.dum.ezer]
+TopLine=75
+Caret=35,104
+[ds\ds.tab.ezer]
+TopLine=24
+Caret=37,47

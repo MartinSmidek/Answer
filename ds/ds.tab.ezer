@@ -44,13 +44,13 @@ table tx_gnalberice_room { db:'setkani', key_id:'uid'
 }
 table tx_gnalberice_order { db:'setkani', key_id:'uid'
   number uid
-  number crdate       { sql_pipe:'dt' }
+  number crdate       { sql_pipe:'stamp_date' }
   number deleted
   number hidden
   text   name         { sql_pipe:'wu' }
   number room
-  number fromday      { sql_pipe:'dt' }
-  number untilday     { sql_pipe:'dt' }
+  number fromday      { sql_pipe:'stamp_date' }
+  number untilday     { sql_pipe:'stamp_date' }
   number confirmed
   number state
   text   note         { sql_pipe:'wu' }
