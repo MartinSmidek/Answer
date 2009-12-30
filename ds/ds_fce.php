@@ -839,6 +839,7 @@ __XLS;
 __XLS;
   // øádky D... -- rozpis podle druhù
   $n= $D;
+  if ( count($druhy) )
   foreach($druhy as $druh=>$dph) {
     $xls.= <<<__XLS
       |H$n $druh::right                |H$n:J$n merge right
