@@ -3,6 +3,7 @@ table ds_cena {  db:'setkani', key_id:'id_cena'
   number id_cena
   number rok
   text polozka         { sql_pipe:'wu' }
+  text druh            { sql_pipe:'wu' }
   text typ             { sql_pipe:'wu' }
   number od
   number do

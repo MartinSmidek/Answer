@@ -17,11 +17,11 @@ menu m {type:'left'
     u.htm.set(info.get('html'))
   }
 }
-var mn: text
 proc onstart() {
+  var mn: text
   mn.set(ask('ds_kli_menu'));
-  m.attach_code(mn.get('code'));
-  m.part(mn.get('the')).click(1)
+  m.attach_code(mn.cd.get);
+  m.part(mn.th.get).click(1)
 }
 
 proc tit (x) { return(conc("<div class='CSection CMenu'><h3 class='CTitle'>",x,"</h3></div>")) }

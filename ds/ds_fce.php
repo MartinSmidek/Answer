@@ -134,7 +134,7 @@ function ds_kli_menu() {
       }
     }
   }
-  $result= (object)array('the'=>$the,'code'=>$mn);
+  $result= (object)array('th'=>$the,'cd'=>$mn);
   return $result;
 }
 # ================================================================================================== OBJEDNÁVKY
@@ -181,7 +181,7 @@ function ds_obj_menu() {
       }
     }
   }
-  $result= (object)array('the'=>$the,'code'=>$mn);
+  $result= (object)array('th'=>$the,'cd'=>$mn);
   return $result;
 }
 # -------------------------------------------------------------------------------------------------- pin_make
@@ -262,7 +262,7 @@ function rodina($cislo) {  #trace();
     $prijmeni= rc2man($d->rodcislo) ? $p->prijmeni_m : $p->prijmeni_z;
     rodina_add(&$rod,$prijmeni,$d->jmeno,$d->rodcislo,' ',' ',$p);
   }
-                                                        debug($rod,$cislo);
+//                                                         debug($rod,$cislo);
   return $rod;
 }
 function rodina_add(&$rod,$prijmeni,$jmeno,$rc,$telefon,$email,$p) { trace();
@@ -437,8 +437,9 @@ function ds_zaloha($order) {  #trace();
 # *ubytování
 function ds_xls_faktury($order) {  #trace();
   global $ds_cena;
+  $test= 1;
   $x= ds_faktury($order);
-  $ds_cena['zzz_zzz']= 0;
+  $ds_cena['zzz_zzz']= 0;    // pøidání prázdného øádku
   ksort($ds_cena);
 //                                                                 debug($ds_cena,'ds_cena',(object)array('win1250'=>1));
 //                                                                 debug($x,'faktura',(object)array('win1250'=>1));
@@ -455,10 +456,12 @@ function ds_xls_faktury($order) {  #trace();
     list($rodina,$pocet,$sleva)= $rod;
     $prefix= count($x->rodiny)==1 ? '' : ($rodina=='' ? 'ostatni-' : "$rodina-");
     $sheet_rodina=  "{$prefix}hoste";
+    $sheet_rozpis= "{$prefix}rozpis";
     $sheet_faktura= "{$prefix}faktura";
-    $faktury.= "|A$nf:D$nf border=,,h,";
-    $faktury.= "|A$nf $rodina|B$nf $pocet|C$nf $sleva::proc bcolor=$c_edit|D$nf =";
+    $faktury.= "|A$nf:F$nf border=,,h,|A$nf $rodina|B$nf $pocet|F$nf =D$nf-E$nf ::kc";
+    $faktury.= "|C$nf $sleva::proc bcolor=$c_edit|E$nf ::kc bcolor=$c_edit|D$nf =";
     $An_sleva= "'rodiny'!C$nf";
+    $An_zaloha= "'rodiny'!E$nf";
     # ---------------------------------------------------------------- èlenové rodiny a položky faktury
     $i= 0;
     $clmn= "A=10,B=13,C=-30,D=-15,E=4,F=-20,G=-30,H=20,I=5,J=6";
@@ -506,7 +509,7 @@ function ds_xls_faktury($order) {  #trace();
       // souèty
     }
     $tit.= "|A$n:$B$n bcolor=ffaaaaaa |";
-    $xls.= "|sheet $sheet_rodina;;L;page|columns $clmn |$tit |";
+    $xls.= "\n\n|sheet $sheet_rodina;;L;page|columns $clmn |$tit |";
     $skupiny= count($x->rodiny)==1 ? '' : ($rodina=='' ? "neoznaèených hostù" : "hostù oznaèených '$rodina'");
     $xls.= "|A1 Koneèné vyúètování $skupiny v rámci objednávky $order ::bold size=14|";
     $n= 4;
@@ -579,18 +582,22 @@ __XLS;
     // položky faktury
     $polozky= array();
     foreach($ds_cena as $dc=>$cena) {
-      list($druh,$cast)= explode('_',$dc);
-      $sleva= $druh=='noc' ? "=$An_sleva" : '';
-      $polozky[]= ds_c($dc,$cena->pocet,$sleva);        // id,pocet => název,cena,dph%,pocet
+      if ( $cena ) {    // bez prázdného øádku
+        list($druh,$cast)= explode('_',$dc);
+        $sleva= $druh=='noc' ? "=$An_sleva" : '';
+        $zaloha= "=$An_zaloha";
+        $polozky[]= ds_c($dc,$cena->pocet,$sleva,$zaloha);        // id,pocet => název,cena,dph%,pocet,druh
+      }
     }
     // vytvoøení listu
-    $xls.= ds_faktura($sheet_faktura,'FAKTURA',$order,$polozky,$platce,100,
-      "Tìšíme se na Váš další pobyt v Domì setkání");
+    $xls.= ds_rozpis_faktura($sheet_rozpis,$sheet_faktura,'FAKTURA',$order,$x,$polozky,$platce,100,
+      "Tìšíme se na Váš další pobyt v Domì setkání",$zaloha,&$suma);
+    $faktury.= "";
   }
   // ------------------------------------------------------------------ ceník
 //                                                                 debug($ds_cena,'ds_cena',(object)array('win1250'=>1));
   $xls.= <<<__XLS
-    |sheet cenik;;P;page
+  \n\n|sheet cenik;;P;page
     |columns A=35,B=20,C=20
     |A1 Seznam úètovatelných položek ::bold size=14
     |A3 položka |B3 cena vè.DPH ::right |C3 DPH ::right proc
@@ -598,28 +605,40 @@ __XLS;
 __XLS;
   $n= 4;
   foreach ($ds_cena as $i=>$cena) {
-    $dph= $cena->dph/100;
-    $xls.= <<<__XLS
-      |A$n {$cena->polozka} |B$n {$cena->cena} :: kc |C$n $dph :: proc
-      |A$n:C$n border=,,h,
+    if ( $cena ) {    // bez prázdného øádku
+      $dph= $cena->dph/100;
+      $xls.= <<<__XLS
+        |A$n {$cena->polozka} |B$n {$cena->cena} :: kc |C$n $dph :: proc
+        |A$n:C$n border=,,h,
 __XLS;
-    $n++;
+      $n++;
+    }
   }
   # ------------------------------------------------------------------ seznam rodin (jako první)
   $nf1= $nf+1;
   $name= "fak_$order";
   $final_xls= <<<__XLS
-    |open $name
-    |sheet rodiny;;L;page
-    |columns A=20,B=13,C=10,D=16
+  \n|open $name
+  \n\n|sheet rodiny;;L;page
+    |columns A=20,B=13,C=10,D:F=16
     |A1 Seznam rodin (skupin), kterým fakturujeme pobyt v rámci objednávky $order ::bold size=14
-    |A3 rodina (skupina)|B3 osob ::right |C3 sleva ::right |D3 cena ::right
-    |A3:D3 bcolor=ffaaaaaa
+    |A3 rodina (skupina)|B3 osob ::right |C3 sleva ::right |D3 celková cena ::right
+    |E3 záloha ::right|F3 doplatit ::right
+    |A3:F3 bcolor=ffaaaaaa
     |$faktury
-    |A$nf1 CELKEM ::right bold|B$nf1 =SUM(B4:B$nf) ::bold|D$nf1 =SUM(D4:B$nf) ::kc bold
-    |$xls|close 1
+    |A$nf1 CELKEM ::right bold|B$nf1 =SUM(B4:B$nf) ::bold|D$nf1 =SUM(D4:D$nf) ::kc bold
+    |E$nf1 =SUM(E4:E$nf) ::kc bold|F$nf1 =SUM(F4:F$nf) ::kc bold
 __XLS;
-                                                                display("rodiny=$faktury");
+  // vysvìtlivky
+  $n= $nf1+3;
+  $final_xls.= "|A$n Upozornìní: v tomto sešitu je možné upravovat pouze žlutì podložená políèka, ".
+    "zmìny jiných políèek pravdìpodobnì poškodí výpoèet cen a DPH. Pokud je tøeba mìnit údaje, ".
+    "které nejsou žlutì podloženy, je potøeba to udìlat v systému Ans(w)er a znovy vygenerovat tento ".
+    "sešit.";
+  $final_xls.= "|A$n:F$n merge italic top wrap
+    |rows $n=60
+    |$xls|close 1";
+//                                                                 display("rodiny=$faktury");
 //                                                                 display(nl2br(wu($xls)));
   $inf= Excel5(wu($final_xls),1);
   if ( $inf ) {
@@ -628,6 +647,9 @@ __XLS;
   }
   else
     $html= " <a href='$name.xls' target='xls'>koneèná faktura</a>.";
+  // pøípadný testovací výpis
+  if ( $test )
+    file_put_contents("xls.txt",$final_xls);
   return wu($html);
 }
 # -------------------------------------------------------------------------------------------------- ds_faktury
@@ -662,6 +684,8 @@ function ds_faktury($order) {  #trace();
     $platce[]= $o->dic ? $o->dic : '';
     $platce[]= ($o->org ? "{$o->org}{}" : '')."{$o->firstname} {$o->name}{}".
               "{$o->address}{}{$o->zip} {$o->city}";
+    $obdobi= date('j.n',$o->fromday).' - '.date('j.n.Y',$o->untilday);
+    $x->objednavka= array($obdobi);
     $x->platce= $platce;
     // pøeètení ceníku daného roku
     ds_cenik(date('Y',$o->fromday));
@@ -741,6 +765,189 @@ function ds_faktury($order) {  #trace();
   return $x;
 }
 # ================================================================================================== FAKTURA OBECNÌ
+# -------------------------------------------------------------------------------------------------- ds_rozpis_faktura
+# definice faktury
+# typ = Zálohová | ''
+# zaloha = 0..100  -- pokud je 100 negeneruje se øádek Záloha ...
+# data zálohové faktury
+# platce= [nazev,adresa,telefon,ic]
+# polozky= [[nazev,cena,dph,pocet,sleva]...]
+# }
+function ds_rozpis_faktura($listr,$listf,$typ,$order,$x,$polozky,$platce,$zaloha=100,$pata,$zaloha,&$suma) {  #trace();
+  list($ic,$dic,$adresa)= $platce;
+  $vystaveno= Excel5_date(mktime());
+  list($obdobi)= $x->objednavka;
+  $ymca_setkani= "YMCA Setkání, obèanské sdružení{}Talichova 53, 62300 Brno{}".
+                 "Zaregistrované MV ÈR 25.4.2001{}pod è.j. VS/1-1/46 887/01-R{}".
+                 "IÈ: 26531135  DIÈ: CZ26531135";
+  $dum_setkani=  "Dolní Albeøice 1, 542 26 Horní Maršov{}".
+                 "telefon: 499 874 152, 736 537 122{}dum@setkani.org";
+  // ------------------------------------------------------------------- vytvoøení listu s rozpisem
+  // pojmenované øádky (P,Q,R,S)
+  $P= 10;               // výèet položek
+  $Q= 24;               // poslední položka
+  $D= 26;               // rozpis podle druhù
+  $S= 32;               // poslední øádek
+  // parametrizace
+  $L7_ic= $ic ? "L7 IÈ $ic" : '';
+  $c_okraj= "ff6495ed";    $S1= $S+1;
+  $xls= <<<__XLS
+  \n\n|sheet $listr;B2:N$S;P;page
+    |columns A=3,B=0.6,C=16,D=3,E=22,F=6,G=16,H=10,I=4,J=6,K=6,L=16,M=0,N=1,O=3
+    |rows 1=18,2:44=15,7=75,9=30,10:30=20,$S=30
+    |A1:O$S1 bcolor=$c_okraj |B2:N$S bcolor=ffffffff |//B2:N$S border=h
+
+    |image img/YMCA.png,80,C2,10,0
+    |D2 Dùm setkání :: bold size=14
+    |D3 $dum_setkani
+    |D3:H5 merge italic top wrap
+    |B7 Rozpis ceny za pobyt v Domì setkání ve dnech $obdobi ::bold size=16|B7:L7 merge
+__XLS;
+  $n= $P-1;
+  $xls.= <<<__XLS
+    |C$n Položka              ::wrap middle       |C$n:E$n merge bold border=h
+    |F$n Poèet                ::wrap middle right |F$n:F$n       bold border=h
+    |G$n Druh                 ::wrap middle right |G$n:G$n       bold border=h
+    |H$n Cena položky s DPH   ::wrap middle right |H$n:I$n merge bold border=h
+    |J$n Sleva %              ::wrap middle right |J$n:J$n       bold border=h
+    |K$n Sazba DPH            ::wrap middle right |K$n:K$n       bold border=h
+    |L$n Cena s DPH           ::wrap middle right |L$n:L$n       bold border=h
+__XLS;
+  // øádky $P-$Q -- položky
+  $n= $P;
+  $sazby_dph= array();
+  foreach ($polozky as $i=>$polozka) {
+    list($nazev,$cena,$dph,$pocet,$druh,$sleva)= $polozka;
+    if (!in_array($dph,$sazby_dph) ) $sazby_dph[]= $dph;
+    if (!isset($druhy[$druh]) ) $druhy[$druh]= $dph;
+    if ( $pocet ) {
+      $xls.= <<<__XLS
+        |C$n $nazev                |C$n:E$n merge
+        |F$n $pocet
+        |G$n $druh
+        |H$n $cena         ::kc    |H$n:I$n merge
+        |J$n $sleva        ::proc
+        |K$n $dph          ::proc
+        |L$n =F$n*H$n*(1-J$n) ::kc
+__XLS;
+      $n++;
+    }
+  }
+  $xls.= <<<__XLS
+    |C$P:E$Q border=h    |F$P:F$Q border=h    |G$P:G$Q border=h    |H$P:I$Q border=h
+    |J$P:J$Q border=h    |K$P:K$Q border=h    |L$P:L$Q border=h
+__XLS;
+  // øádky D... -- rozpis podle druhù
+  $n= $D;
+  foreach($druhy as $druh=>$dph) {
+    $xls.= <<<__XLS
+      |H$n $druh::right                |H$n:J$n merge right
+      |K$n $dph                        ::proc border=h right
+      |L$n =SUMIF(G$P:G$Q;H$n;L$P:L$Q) ::kc   border=h right
+__XLS;
+    $n++;
+  }
+  // ------------------------------------------------------------------- vytvoøení listu s fakturou
+  // pojmenované øádky (P,Q,R,S)
+  $P= 22;               // výèet položek
+  $Q= 34;               // poslední položka
+  $R= 31;               // vyøizuje
+  $S= 37;               // poslední øádek
+  // parametrizace
+  $L7_ic= $ic ? "L7 IÈ $ic" : '';
+  $c_okraj= "ff6495ed";
+  $S1= $S+1;
+  $xls.= <<<__XLS
+  \n\n|sheet $listf;B2:N$S;P;page
+    |columns A=3,B=0.6,C=16,D=3,E=22,F=6,G=1,H=10,I=4,J=6,K=6,L:M=16,N=1,O=3
+    |rows 1=18,2:44=15,6=75,9=96,11=35,19=30,20:36=19,37=30,38:41=19,$S=30
+    |A1:O$S1 bcolor=$c_okraj |B2:N$S bcolor=ffffffff |//B2:N$S border=h
+
+    |image img/YMCA.png,80,C2,10,0
+    |D2 Dùm setkání :: bold size=14
+    |D3 $dum_setkani
+    |D3:H5 merge italic top wrap
+
+    |J4 =CONCATENATE("$typ ",TEXT(E16,"0"),"/",TEXT(YEAR(M15),"0")) :: bold size=16
+    |J4:M5 merge right
+
+    |C7 Dodavatel ::bold
+    |C9 $ymca_setkani
+    |C9:F9 merge top wrap
+
+    |I7 Odbìratel ::bold         |$L7_ic
+    |I8:M10 border=h
+    |J9 $adresa  |J9:M9 merge middle wrap size=14
+
+    |C13 Penìžní ústav           |E13 Raiffeisenbank, a.s.
+    |C14 Èíslo úètu       ::bold |E14 514048001/5500 ::bold
+    |C15 Konstantní symbol       |E15 558 ::left
+    |C16 Variabilní symbol       |E16 215 ::left bcolor=ffffffaa
+    |C17 Specifický symbol       |E17 412 ::left bcolor=ffffffaa
+
+    |L12 Objednávka èíslo ::bold |M12 $order  ::size=14 bold
+    |L13 Dodací a platební podmínky: s daní
+    |L14 Datum vystavení         |M14 $vystaveno ::date bcolor=ffffffaa
+    |L15 Datum zúètování         |M15 =M14       ::date bcolor=ffffffaa
+    |L16 Datum splatnosti ::bold |M16 =M14+14    ::date bcolor=ffffffaa bold
+    
+    |C19 Za pobyt v Domì setkání ve dnech $obdobi Vám fakturujeme: |C19:M19 merge
+__XLS;
+  $n= $P-1;
+  $xls.= <<<__XLS
+    |C$n Položka              ::wrap middle       |C$n:G$n merge bold border=h
+    |H$n Cena s DPH           ::wrap middle right |H$n:J$n merge bold border=h
+    |K$n Sazba DPH            ::wrap middle right |K$n:K$n       bold border=h
+    |L$n DPH                  ::wrap middle right |L$n:L$n       bold border=h
+    |M$n Cena bez DPH         ::wrap middle right |M$n:M$n       bold border=h
+__XLS;
+  // øádky $P-$Q -- položky
+  $n= $P;
+  $d= $D;
+  for ($i= 0; $i<count($druhy); $i++ ) {
+    $xls.= <<<__XLS
+      |C$n ='$listr'!H$d          |C$n:G$n merge
+      |H$n ='$listr'!L$d   ::kc   |H$n:J$n merge
+      |K$n ='$listr'!K$d   ::proc
+      |L$n =H$n-M$n        ::kc
+      |M$n =H$n/(1+K$n)    ::kc
+__XLS;
+    $n++; $d++;
+  }
+  $xls.= <<<__XLS
+    |C$P:G$n border=h    |H$P:J$n border=h
+    |K$P:K$n border=h    |L$P:L$n border=h    |M$P:M$n border=h
+__XLS;
+  // celková cena
+  $d= $n;
+  $n++;
+  $suma= "'$listf'!L$n";
+  $xls.= <<<__XLS
+    |H$n Celková cena s DPH ::middle bold |H$n:K$n merge right
+    |L$n =SUM(L$P:M$d)      ::kc          |L$n:M$n merge border=h
+__XLS;
+  $c= $n;
+  $n++;
+  $xls.= <<<__XLS
+    |H$n Zaplaceno zálohou  ::middle bold |H$n:K$n merge right
+    |L$n $zaloha            ::kc          |L$n:M$n merge border=h
+__XLS;
+  $z= $n;
+  $n++;
+  $xls.= <<<__XLS
+    |H$n Zbývá k zaplacení  ::middle bold |H$n:K$n merge right
+    |L$n =L$c-L$z           ::kc          |L$n:M$n merge border=h
+__XLS;
+  // øádky R,S (viz výše) -- spodek faktury
+  $n= $R+1;
+  $xls.= <<<__XLS
+    |C$R vyøizuje ::bold
+    |C$n Josef Náprstek, správce Domu setkání
+    |C$S:M$S border=h,,,
+    |C$S $pata | C$S:M$S merge middle center wrap
+__XLS;
+  return $xls;
+}
 # -------------------------------------------------------------------------------------------------- ds_faktura
 # definice faktury
 # typ = Zálohová | ''
@@ -772,7 +979,7 @@ function ds_faktura($list,$typ,$order,$polozky,$platce,$zaloha=100,$pata='') {  
     |rows 1=18,2:44=15,6=75,9=96,11=35,19=30,20:36=19,37=30,38:41=19,$S=30
     |A1:O44 bcolor=$c_okraj |B2:N$S bcolor=ffffffff |//B2:N$S border=h
 
-    |image img/husy.png,80,C2,10,0
+    |image img/YMCA.png,80,C2,10,0
     |D2 Dùm setkání :: bold size=14
     |D3 $dum_setkani
     |D3:H5 merge italic top wrap
@@ -798,8 +1005,8 @@ function ds_faktura($list,$typ,$order,$polozky,$platce,$zaloha=100,$pata='') {  
     |L13 Dodací a platební podmínky: s daní
     |L14 Forma úhrady            |M14 pøevodem
     |L14 Datum vystavení         |M14 $vystaveno ::date bcolor=ffffffaa
-    |L15 Datum zúètování         |M15 =M14       ::date
-    |L16 Datum splatnosti ::bold |M16 =M14+14    ::date bold
+    |L15 Datum zúètování         |M15 =M14       ::date bcolor=ffffffaa
+    |L16 Datum splatnosti ::bold |M16 =M14+14    ::date bcolor=ffffffaa bold
 __XLS;
   $n= $P-1;
   $xls.= <<<__XLS
@@ -815,7 +1022,7 @@ __XLS;
   $n= $P;
   $sazby_dph= array();
   foreach ($polozky as $i=>$polozka) {
-    list($nazev,$cena,$dph,$pocet,$sleva)= $polozka;
+    list($nazev,$cena,$dph,$pocet,$druh,$sleva)= $polozka;
     if (!in_array($dph,$sazby_dph) ) $sazby_dph[]= $dph;
     if ( $pocet ) {
       $xls.= <<<__XLS
@@ -893,7 +1100,7 @@ function ds_cenik($rok) {  #trace();
 # id,pocet => název,cena,dph%,pocet
 function ds_c ($id,$pocet,$sleva='') {
   global $ds_cena;
-  $c= array($ds_cena[$id]->polozka,$ds_cena[$id]->cena,$ds_cena[$id]->dph/100,$pocet);
+  $c= array($ds_cena[$id]->polozka,$ds_cena[$id]->cena,$ds_cena[$id]->dph/100,$pocet,trim($ds_cena[$id]->druh));
   if ( $sleva ) $c[]= $sleva;
   return $c;
 }

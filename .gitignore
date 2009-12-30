@@ -7,6 +7,10 @@ ds/code
 ds/code/*.json
 /logs
 /sql
+sql/*.FXP
+sql/ms-lida
+sql/ms-milos
+sql/sql
 /test.inc
 /test.php
 /ys.html

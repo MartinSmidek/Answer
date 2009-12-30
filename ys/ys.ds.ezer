@@ -7,12 +7,11 @@ panel dum {type:'right', title:"Objednávky", _sys:'obj',
   menu mo {type:'left'
     proc onclick(x) { show_order(x.par.uid) }
   }
-  var mn: text
-  var it: text
   proc onstart() {
+    var mn: object
     mn.set(ask('ds_obj_menu')); //debug(mn.get);
-    mo.attach_code(mn.get('code'));
-    mo.part(mn.get('the')).click(1)
+    mo.attach_code(mn.cd.get);
+    mo.part(mn.th.get).click(1)
   }
   proc show_order (o) { echo('nic') }
 }
@@ -53,11 +52,12 @@ panel cen [,,,543] {type:'right', title:'Ceny'
     browse ceny [10,76,,] { rows:30
       show id [,,0,] { data:tab.ds_cena.id_cena }
       show rok [,,0,] { data:tab.ds_cena.rok }
-      show [,,300,] {title:'položka ceníku',  data:tab.ds_cena.polozka }
+      show [,,240,] {title:'položka ceníku',  data:tab.ds_cena.polozka }
+      show [,,100,] {title:'druh',  data:tab.ds_cena.druh format:'s+'}
       show [,,60,] {title:'typ',  data:tab.ds_cena.typ format:'s+'}
-      show [,,60,] {title:'od vč.',  data:tab.ds_cena.od, format:'r' }
-      show [,,60,] {title:'do nevč.',  data:tab.ds_cena.do, format:'r' }
-      show [,,100,] {title:'cena vč.DPH',  data:tab.ds_cena.cena, format:'r' }
+      show [,,50,] {title:'od vč.',  data:tab.ds_cena.od, format:'r' }
+      show [,,50,] {title:'do nevč.',  data:tab.ds_cena.do, format:'r' }
+      show [,,80,] {title:'cena s DPH',  data:tab.ds_cena.cena, format:'r' }
       show [,,40,] {title:'DPH',  data:tab.ds_cena.dph, format:'r' }
       proc onsubmit (id) {
         oprava.modal(300,100)
@@ -65,7 +65,7 @@ panel cen [,,,543] {type:'right', title:'Ceny'
     }
   }
   # ================================================================================================ z_oprava
-  panel oprava [0,0,300,120] { title:'oprava položky ceníku', type:'popup', css:'dialog'
+  panel oprava [0,0,300,135] { title:'oprava položky ceníku', type:'popup', css:'dialog'
     use f: form formular [1,9,,],
     proc onfocus() { f.load(info.ceny.id.get); }
   }
@@ -74,22 +74,24 @@ panel cen [,,,543] {type:'right', title:'Ceny'
     use z: form formular [1,9,,],
   }
   # ------------------------------------------------------------------------------------------------ formular
-  form formular [,,300,100] {
+  form formular [,,300,125] {
     label [  0,10, 80,17] { title:'položka', format:'r' },
     field [ 90,10,200,17] { data:tab.ds_cena.polozka },
     label [  0,35, 80,17] { title:'věkové pásmo', format:'r' },
     field [ 90,35, 40,17] { data:tab.ds_cena.od, format:'r'  },
     field [140,35, 40,17] { data:tab.ds_cena.do, format:'r'  },
-    label [190,35, 20,17] { title:'typ', format:'r' },
-    field [220,35, 70,17] { data:tab.ds_cena.typ },
-    label [  0,60, 80,17] { title:'cena', format:'r' },
-    field [ 90,60, 40,17] { data:tab.ds_cena.cena, format:'r'  },
-    label [190,60, 20,17] { title:'DPH', format:'r' },
-    field [220,60, 40,17] { data:tab.ds_cena.dph, format:'r'  },
-    button save [90,90,45,20] { type:'submit', title:'Uložit', help:'uložit změny',
+    label [  0,60, 80,17] { title:'druh', format:'r' },
+    field [ 90,60, 90,17] { data:tab.ds_cena.druh },
+    label [190,60, 20,17] { title:'typ', format:'r' },
+    field [220,60, 70,17] { data:tab.ds_cena.typ },
+    label [  0,85, 80,17] { title:'cena', format:'r' },
+    field [ 90,85, 40,17] { data:tab.ds_cena.cena, format:'r'  },
+    label [190,85, 20,17] { title:'DPH', format:'r' },
+    field [220,85, 40,17] { data:tab.ds_cena.dph, format:'r'  },
+    button save [90,115,45,20] { type:'submit', title:'Uložit', help:'uložit změny',
       proc onclick () { the_formsave(form,info.ceny); panel.hide(form.key) }
     }
-    button cancel [150,90,45,20] { title:'Zpět', help:'zadané údaje neukládat, vrátit se zpět'
+    button cancel [150,115,45,20] { title:'Zpět', help:'zadané údaje neukládat, vrátit se zpět'
       proc onclick () { panel.hide(0) }
     }
   }
