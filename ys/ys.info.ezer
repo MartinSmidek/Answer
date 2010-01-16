@@ -9,8 +9,16 @@ const img= 'Obrázky (*.jpg, *.gif, *.png)|*.jpg; *.gif; *.png'
 panel Posta [,,670,543] {type:'right', title:'Pošta',_sys:'pos', style:'width:670'
   use P_touch: form _touch [12,4,,],
   menu {type:'left', active:*
+    menu {title:'2010',type:'group'
+      item {title:'Došlá pošta'       ,_sys:'dop',par:°{s:'dosla_posta',c:'2010'} },
+      item {title:'Došlé faktury'     ,_sys:'dof',par:°{s:'dosle_faktury',c:'2010'} },
+      item {title:'Vystavené faktury' ,_sys:'vys',par:°{s:'vystavene_faktury',c:'2010'} },
+      item {title:'Výpisy a poukázky' ,_sys:'vyp',par:°{s:'banka_vypisy',c:'2010'} },
+      item {title:'Odeslaná pošta'    ,_sys:'ode',par:°{s:'odeslana_posta',c:'2010'} },
+      item {title:'Cestovní příkazy'  ,_sys:'ces',par:°{s:'cestovni_prikazy',c:'2010'} },
+      item {title:'Pokladní doklady'  ,_sys:'pok',par:°{s:'pokladna',c:'2010'} },
+    }
     menu {title:'2009',type:'group'
-#       item {title:'TEST'              ,_sys:'dop',par:°{s:'_test_',c:'2009'} },
       item {title:'Došlá pošta'       ,_sys:'dop',par:°{s:'dosla_posta',c:'2009'} },
       item {title:'Došlé faktury'     ,_sys:'dof',par:°{s:'dosle_faktury',c:'2009'} },
       item {title:'Vystavené faktury' ,_sys:'vys',par:°{s:'vystavene_faktury',c:'2009'} },
