@@ -53,6 +53,7 @@ table tx_gnalberice_order { db:'setkani', key_id:'uid'
   number untilday     { sql_pipe:'stamp_date' }
   number confirmed
   number state
+  number akce         { help:"akce|číslo akce z číselníku akcí" }
   text   note         { sql_pipe:'wu' }
   text   rooms        { sql_pipe:'wu' }
   number adults       { help:'?|počet dospělých podle objednávky' }

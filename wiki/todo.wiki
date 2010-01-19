@@ -21,6 +21,7 @@ kde
 | 01.08.2007 | MVY | vlastnost |            | systém objednávek pro Dům setkání (k používání od 1.12.2009)
 | 13.10.2009 | JLN | vlastnost |            | doplnit přehledy o rozdělení MS/DS
 ++done
+|            |     |           | 16.01.2010 | rok 2010 pro Informace, upload souborů k dnešnímu dni
 |            |     |           | 30.12.2009 | upravený tvar faktur
 |            |     |           | 21.12.2009 | přidávání rodin do seznamu účastníků
 |            |     |           | 08.12.2009 | exporty pro Dům do Excelu: kniha hostů, zálohová faktura, konečná faktura

@@ -21,7 +21,7 @@ $css= array(
   './ys/ys.css.css'
 );
 $dbg= $_GET['dbg'];
-$matous= $_SERVER["DOCUMENT_ROOT"]=='/home/www/';
+$matous= $_SERVER["DOCUMENT_ROOT"]=='/home/www/ezer/www-ys';
 $options= $matous ? <<<__EOD
     debug:window.parent!=window,      // je nadřazený frame - dbg.html
     login_interval:600,
@@ -64,11 +64,17 @@ __EOD;
 }
 
 // HTML template
+echo "\xEF\xBB\xBF";    // DOM pro UTF-8
 echo <<<__EOD
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en" dir="ltr">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="cs-CZ" lang="cs-CZ" dir="ltr">
 <head>
-  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+  <meta http-equiv="content-language" content="cs" />
+  <meta name="robots" content="noindex,nofollow">
+  <meta name="author" content="Martin Šmídek" />
+  <meta name="copyright" content="Copyright © 2010" />
+  <meta name="generator" content="Ezer" />
   <link rel="shortcut icon" href="./$root/img/$root.png" />
   <title>$title</title>
   <script type="text/javascript">

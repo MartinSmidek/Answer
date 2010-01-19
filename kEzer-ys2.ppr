@@ -11,9 +11,10 @@ FileFormat=0
 ProjectFilesOnly=0
 [Project tree]
 kEzer-ys2
-	-konverze
+	+konverze
 		sql\ms_mysql.PRG
 		sql\mysql.bat
+		sql\backup_setkani.bat
 	-ezer2
 		+libr
 			ezer2\ezer2.help.ezer
@@ -52,11 +53,11 @@ kEzer-ys2
 	+comp
 		ezer2\comp.php
 		ezer2\comp.css
-	-doc
+	+doc
 		wiki\todo.wiki
 		wiki\dokumentace.wiki
 		docs\2008_ciselnik_akci.txt
-	-system
+	+system
 		..\..\..\..\WINDOWS\system32\drivers\etc\hosts
 		..\..\..\Apache\conf\extra\httpd-vhosts-ezer.conf
 		..\..\..\Apache\logs\ys2-error.log
@@ -96,7 +97,7 @@ kEzer-ys2
 		test\test.ys_ucetnictvi.ezer
 		test\test.ysp.ezer
 		test\test_fce.php
-	-ys
+	+ys
 		ys\$.ezer
 		ys\ys.css.css
 		ys\ys.doc.ezer
@@ -115,7 +116,7 @@ kEzer-ys2
 		ys\ys_fce.php
 		ys\ys_lide.php
 		ys\ys_ucet.php
-	+ds
+	-ds
 		ds\ds.css.css
 		ds\ds.dum.ezer
 		ds\ds.ezer
@@ -151,26 +152,28 @@ kEzer-ys2
 8=ezer2\client\ezer_fdom2.js
 9=..\..\..\Apache\logs\ys2-error.log
 10=ds\ds_fce.php
-11=test\$.ezer
-12=test\test.fce.ezer
-13=test\test.elem.frm.ezer
-14=ds\ds.dum.ezer
-15=ds\ds.tab.ezer
+11=ys\$.ezer
+12=ys\ys.ds.ezer
+13=ds\ds.dum.ezer
+14=ys\ys.ds.kl.ezer
+15=ezer2\server\licensed\xls2\Classes\PHPExcel\Style\NumberFormat.php
 [Selected Project Files]
 Main=
-Selected=ds\ds.dum.ezer
+Selected=ezer2\server\ae_slib.php
 [ezer2\server\comp2def.php]
 TopLine=169
 Caret=66,195
 [ezer2\server\comp2.php]
-TopLine=1086
-Caret=92,1089
-Mark1=13,578
-Mark2=10,777
-Mark3=69,899
-Mark4=20,1107
-Mark5=1,812
-Mark6=19,922
+TopLine=716
+Caret=73,770
+Mark1=10,785
+Mark2=69,907
+Mark3=20,1115
+Mark4=1,820
+Mark5=19,930
+Mark6=25,369
+Mark7=61,651
+Mark8=73,702
 [ezer2\server\ezer2.php]
 TopLine=963
 Caret=50,983
@@ -178,8 +181,8 @@ Mark1=60,1009
 Mark2=32,1020
 Mark3=60,995
 [ezer2\server\ae_slib.php]
-TopLine=515
-Caret=42,534
+TopLine=933
+Caret=35,939
 Mark1=10,336
 [ezer2\client\dbg.js]
 TopLine=320
@@ -187,45 +190,50 @@ Caret=26,352
 Mark1=10,34
 Mark2=99,46
 [ezer2\client\app.js]
-TopLine=350
-Caret=67,363
+TopLine=106
+Caret=78,379
 Mark1=88,363
 [ezer2\client\ezer_fdom1.js]
 TopLine=1
 Caret=1,1
 [ezer2\client\ezer.js]
-TopLine=3358
-Caret=1,3396
-Mark1=15,3946
-Mark2=33,4522
-Mark3=46,3230
-Mark4=29,3381
+TopLine=3129
+Caret=1,3150
+Mark1=12,2910
+Mark2=17,2686
+Mark3=1,3149
 [ezer2\client\ezer_fdom2.js]
-TopLine=45
-Caret=16,74
+TopLine=2004
+Caret=1,2034
+Mark1=1,1045
+Mark2=38,1435
+Mark3=26,1515
+Mark4=15,1461
+Mark5=35,1552
 [..\..\..\Apache\logs\ys2-error.log]
-TopLine=73
-Caret=92,99
+TopLine=165
+Caret=37,106
 [ds\ds_fce.php]
-TopLine=4
-Caret=86,9
-Mark1=22,588
-Mark2=25,800
-Mark3=56,706
-Mark4=55,585
-Mark5=105,1076
-[test\$.ezer]
+TopLine=318
+Caret=1,340
+Mark1=22,595
+Mark2=25,807
+Mark3=56,713
+Mark4=55,592
+Mark5=105,1083
+Mark6=49,348
+[ys\$.ezer]
 TopLine=1
-Caret=73,7
-[test\test.fce.ezer]
-TopLine=32
-Caret=69,67
-[test\test.elem.frm.ezer]
-TopLine=15
-Caret=35,70
+Caret=1,1
+[ys\ys.ds.ezer]
+TopLine=37
+Caret=6,19
 [ds\ds.dum.ezer]
-TopLine=75
-Caret=35,104
-[ds\ds.tab.ezer]
-TopLine=24
-Caret=37,47
+TopLine=1
+Caret=1,1
+[ys\ys.ds.kl.ezer]
+TopLine=19
+Caret=98,48
+[ezer2\server\licensed\xls2\Classes\PHPExcel\Style\NumberFormat.php]
+TopLine=30
+Caret=81,55
