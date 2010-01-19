@@ -26,6 +26,7 @@ table ds_osoba { db:'setkani', key_id:'id_osoba'
   // ubytování
   number pokoj
   number luzko          // L|P|B|DP
+  number postylka       // 0|1
   number strava         // L|P|B|DP
   date   fromday        { sql_pipe:'sql_date1' }
   date   untilday       { sql_pipe:'sql_date1' }

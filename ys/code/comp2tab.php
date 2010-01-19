@@ -22,6 +22,7 @@ $names= array(
  'browse_map' => (object)array('op'=>'fx'),
  'browse_seek' => (object)array('op'=>'fx'),
  'browse_select' => (object)array('op'=>'fx'),
+ 'call' => (object)array('op'=>'fm'),
  'castka_slovy' => (object)array('op'=>'ff'),
  'cconc' => (object)array('op'=>'ff'),
  'clear' => (object)array('op'=>'ff'),
@@ -141,6 +142,7 @@ $names= array(
  'title' => (object)array('op'=>'os'),
  'to_trace' => (object)array('op'=>'on'),
  'touch' => (object)array('op'=>'ff'),
+ 'upload' => (object)array('op'=>'ff'),
  'value' => (object)array('op'=>'os'),
  'where' => (object)array('op'=>'os'),
 );

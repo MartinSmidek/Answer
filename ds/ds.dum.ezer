@@ -282,16 +282,18 @@ group ucastnici {
     button [267,0,50,18] { title:'- účastník'
       proc onclick () { osoba_del(seznam.id_osoba.get)} }
     browse seznam [0,30,,] { rows:14
-      show rodina [,,30,] { title:'rod', data:tab.ds_osoba.rodina, format:'s+' }
+      show rodina [,,25,] { title:'rod', data:tab.ds_osoba.rodina, format:'s+' }
       show prijmeni [,,70,] { title:'příjmení', data:tab.ds_osoba.prijmeni, format:'s' }
       show jmeno    [,,50,]  { title:'jméno', data:tab.ds_osoba.jmeno, format:'s' }
       show vek  [,,20,]  { title:'věk',
         expr:"if(ds_osoba.narozeni,year(now())-year(ds_osoba.narozeni),'??')", format:'r' }
-      show [,,20,]  { title:'pok.',
+      show [,,20,]  { title:'P',
         data:tab.ds_osoba.pokoj, format:'rs:e' }  // :e zobrazí 0 jako nic
-      show [,,20,]  { title:'lůž.',
+      show [,,15,]  { title:'L',
         data:tab.ds_osoba.luzko, map_pipe:tab.ds_luzko.zkratka, format:'rs' }
-      show [,,20,]  { title:'str.',
+      show [,,10,]  { title:'p',
+        data:tab.ds_osoba.postylka, format:'rs:e' }
+      show [,,15,]  { title:'S',
         data:tab.ds_osoba.strava, map_pipe:tab.ds_strava.zkratka, format:'rs' }
       show [,,35,]  { title:'od', data:tab.ds_osoba.fromday, format:'s:d.m' }
       show [,,35,]  { title:'do', data:tab.ds_osoba.untilday, format:'s:d.m' }
@@ -374,6 +376,7 @@ group ucastnici {
     select pokoj [  0,190, 50,] { data:tab.ds_osoba.pokoj, format:':e' }
     label       [ 60,175, 70,] { title:'typ lůžka' }
     select luzka [ 60,190,150,] { type:'map', data:tab.ds_osoba.luzko, options:tab.ds_luzko.hodnota }
+    check postylka [220,180,150,] { title:'postýlka', css:'CheckT', data:tab.ds_osoba.postylka }
     label       [  0,215, 70,] { title:'poznámka' }
     field       [  0,230,210,] { data:tab.ds_osoba.pozn }
     button      [220,229,100,18] { title:'zapsat změny',

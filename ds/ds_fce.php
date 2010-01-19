@@ -475,7 +475,7 @@ function ds_xls_faktury($order) {  trace('','win1250');
   $ds_cena['zzz_zzz']= 0;    // pøidání prázdného øádku
   ksort($ds_cena);
 
-//                                                                 debug($ds_cena,'ds_cena',(object)array('win1250'=>1));
+                                                                debug($ds_cena,'ds_cena',(object)array('win1250'=>1));
 //                                                                 debug($x,'faktura',(object)array('win1250'=>1));
   // barvy
   $c_edit= "ffffffaa";
@@ -688,7 +688,7 @@ __XLS;
   return wu($html);
 }
 # -------------------------------------------------------------------------------------------------- ds_faktury
-# podklady k fakturaci objednávky
+# podklady ke koneèné fakturaci
 # {platce:[ic,dic,adresa,akce],faktury:[[rodina,poèet,sleva]...],rodiny:[<host>...],<ceník>,<chyby>}
 #    <host> :: {host:[jmeno,prijmeni,adresa1,adresa2,narozeni,vek,telefon,email,od,do,<ubyt>],
 #               cena:{<ubyt>,<strava>,<spec>,<popl>}
@@ -704,8 +704,7 @@ function ds_faktury($order) {  trace('','win1250');
   $x= (object)array('faktury'=>array(),'rodiny'=>array());
   ezer_connect('setkani');
   // èíselníky                    1   2   3   4   5   6   7   8   9   10  11  12  13  14  15  16
-  $luzko_pokoje= array(0=>'?',1=>'L','L','L','L','L','L','L','A','A','L','L','L','A','A','B','B');
-  $cena_pokoje= array('?'=>'?','P'=>'noc_L','A'=>'noc_A','B'=>'noc_B');
+  $luzko_pokoje= array(0=>'?',1=>'L','L','L','L','L','L','L','S','S','L','L','L','S','S','A','A');
   $ds_luzko=  map_cis('ds_luzko','zkratka');  $ds_luzko[0]=  '?';
   $ds_strava= map_cis('ds_strava','zkratka'); $ds_strava[0]= '?';
 //                                                                 debug($ds_strava,(object)array('win1250'=>1));
@@ -769,6 +768,7 @@ function ds_faktury($order) {  trace('','win1250');
         $pol->pokoj= $h->pokoj;
         // ubytování
         $luzko= trim($ds_luzko[$h->luzko]);     // L|P|B
+                                                                debug($ds_luzko,"ds_luzko {$luzko_pokoje[$h->pokoj]}",(object)array('win1250'=>1));
         if ( $luzko=='L' )
           $luzko= $luzko_pokoje[$h->pokoj];
         if ( $luzko )
@@ -780,6 +780,10 @@ function ds_faktury($order) {  trace('','win1250');
         $pol->strava_PC= $ds_strava[$strava]=='P' && $vek>=$ds_cena['strava_PC']->od ? $noci : '';
         $pol->strava_PD= $ds_strava[$strava]=='P' && $vek>=$ds_cena['strava_PD']->od
                                                   && $vek< $ds_cena['strava_PD']->do ? $noci : '';
+        // pobyt
+        if ( $h->postylka ) {
+          $pol->pobyt_P= 1;
+        }
         // poplatky
         if ( $vek>=18 ) {
           $pol->ubyt_C= $noci;
@@ -898,7 +902,7 @@ __XLS;
   $xls.= <<<__XLS
   \n\n|sheet $listf;B2:N$S;P;page
     |columns A=3,B=0.6,C=16,D=3,E=22,F=6,G=1,H=10,I=4,J=6,K=6,L:M=16,N=1,O=3
-    |rows 1=18,2:44=15,5=30,6=45,9=96,11=35,19=30,20:36=19,37=30,38:41=19,$S=30
+    |rows 1=18,2:44=15,5=30,6=45,9=96,11=35,19=30,20:36=19,21=30,37=30,38:41=19,$S=30
     |A1:O$S1 bcolor=$c_okraj |B2:N$S bcolor=ffffffff |//B2:N$S border=h
 
     |image img/YMCA.png,80,C2,10,0
