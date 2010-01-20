@@ -1,6 +1,6 @@
 <?php # (c) 2009 Martin Smidek <martin@smidek.eu>
-// # -------------------------------------------------------------------------------------------------- dt
-// # na datum na stránce z timestamp v tabulce
+# -------------------------------------------------------------------------------------------------- dt
+# na datum na stránce z timestamp v tabulce
 function dt($x,$user2sql=0) { #trace('','win1250');
   if ( $user2sql ) {
     // pøeveï uživatelskou podobu na sql tvar
@@ -432,7 +432,7 @@ function ds_zaloha($order) {  #trace('','win1250');
     $dnu= ($o->untilday-$o->fromday)/(60*60*24);
 //                                                         display("pocet dnu=$dnu");
     // pøeètení ceníku daného roku
-    ds_cenik(date('Y',$o->fromday));
+    ds_cenik(date('Y',$o->untilday));
     // údaje o plátci: $ic,$dic,$adresa,$akce
     $platce= array();
     $platce[]= $o->ic ? $o->ic : '';
@@ -475,7 +475,7 @@ function ds_xls_faktury($order) {  trace('','win1250');
   $ds_cena['zzz_zzz']= 0;    // pøidání prázdného øádku
   ksort($ds_cena);
 
-                                                                debug($ds_cena,'ds_cena',(object)array('win1250'=>1));
+//                                                                 debug($ds_cena,'ds_cena',(object)array('win1250'=>1));
 //                                                                 debug($x,'faktura',(object)array('win1250'=>1));
   // barvy
   $c_edit= "ffffffaa";
@@ -724,7 +724,7 @@ function ds_faktury($order) {  trace('','win1250');
     $x->objednavka= array($obdobi);
     $x->platce= $platce;
     // pøeètení ceníku daného roku
-    ds_cenik(date('Y',$o->fromday));
+    ds_cenik(date('Y',$o->untilday));
     // zjištìní poètu faktur za akci
     $qry= "SELECT rodina,count(*) as pocet FROM setkani.ds_osoba
            WHERE id_order=$order GROUP BY rodina ORDER BY if(rodina='','zzzzzz',rodina)";
@@ -768,7 +768,7 @@ function ds_faktury($order) {  trace('','win1250');
         $pol->pokoj= $h->pokoj;
         // ubytování
         $luzko= trim($ds_luzko[$h->luzko]);     // L|P|B
-                                                                debug($ds_luzko,"ds_luzko {$luzko_pokoje[$h->pokoj]}",(object)array('win1250'=>1));
+//                                                                 debug($ds_luzko,"ds_luzko {$luzko_pokoje[$h->pokoj]}",(object)array('win1250'=>1));
         if ( $luzko=='L' )
           $luzko= $luzko_pokoje[$h->pokoj];
         if ( $luzko )
@@ -801,7 +801,7 @@ function ds_faktury($order) {  trace('','win1250');
   else
     fce_error(wu("neúplná objednávka $order"));
 //                                                                 debug($ds_cena,'ds_cena',(object)array('win1250'=>1));
-                                                                debug($x,'faktura',(object)array('win1250'=>1));
+//                                                                 debug($x,'faktura',(object)array('win1250'=>1));
   return $x;
 }
 # ================================================================================================== FAKTURA OBECNÌ

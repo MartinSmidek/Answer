@@ -256,6 +256,7 @@ group ucastnici {
   }
   // zápis opravy účastníka
   proc osoba_save {
+    per.rodina.set(ask('cz2ascii',per.rodina.get)); per.rodina.change;
     per.save; per.load; akc.seznam.browse_seek; pobyt.compare
   }
   // zrušení účastníka
@@ -313,9 +314,9 @@ group ucastnici {
         var rod: object
         var popis: text
         field znacka [0,225,50,16]
-        label [55,225,200,16] {title:'značka rodiny na fakturách'}
+        label [55,225,300,16] {title:'značka rodiny na fakturách (bez diakritiky)'}
         button [0,250,50,16] { title:'přidat do účastníků', proc onclick() {
-          znacka_rodiny.set(znacka.get);
+          znacka_rodiny.set(ask('cz2ascii',znacka.get));
           rodina_add(L) } }
         button [130,250,50,16] { title:'jiná rodina', proc onclick() {
           vyber.init; vse.init; znacka.init; L.init } }
@@ -329,7 +330,7 @@ group ucastnici {
           }
           proc rodina(p) {
             last.set(L.add);
-            [ eq(znacka.get,''); znacka.set(substr(p.prijmeni,0,3)) ];
+            [ eq(znacka.get,''); znacka.set(ask('cz2ascii',substr(p.prijmeni,0,3))) ];
             popis.set(conc(p.prijmeni,' ',p.jmeno,', ',p.mesto,', ',p.stari));
             L.part(last.get).part('info').set(popis.get);
             L.part(last.get).part('all').set(p);

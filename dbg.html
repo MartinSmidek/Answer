@@ -2,6 +2,7 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Frameset//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-frameset.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
   <head>
+    <link rel="shortcut icon" href="./Ezer2/client/img/dbg.ico" />
     <meta http-equiv="content-type" content="text/html; charset=utf-8" />
     <script type="text/javascript">
       // zjištění hodnoty parametru v url
@@ -18,8 +19,8 @@
         else
           return results[1];
       }
-      document.write('  <title>DBG '+get_url_param("app")+'</title>');
-      document.write('  <frameset cols="30%,*"><frame id="dbg" src="./ezer2/client/dbgf.html"  name="dbg" />'
+      document.write('  <title>DBG '+get_url_param("app")+'</'+'title>');
+      document.write('  <frameset cols="138,*"><frame id="dbg" src="./ezer2/client/dbgf.html"  name="dbg" />'
       +'<frame id="app" name="app" src="'+get_url_param("app")+'.php'+parms+'" /></'+'frameset>');
     </script>
   </head>
