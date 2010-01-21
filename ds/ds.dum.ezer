@@ -294,10 +294,10 @@ group ucastnici {
         data:tab.ds_osoba.luzko, map_pipe:tab.ds_luzko.zkratka, format:'rs' }
       show [,,10,]  { title:'p',
         data:tab.ds_osoba.postylka, format:'rs:e' }
-      show [,,15,]  { title:'S',
+      show [,,20,]  { title:'S',
         data:tab.ds_osoba.strava, map_pipe:tab.ds_strava.zkratka, format:'rs' }
-      show [,,35,]  { title:'od', data:tab.ds_osoba.fromday, format:'s:d.m' }
-      show [,,35,]  { title:'do', data:tab.ds_osoba.untilday, format:'s:d.m' }
+      show [,,35,]  { title:'od', data:tab.ds_osoba.fromday, format:'rs:d.m' }
+      show [,,35,]  { title:'do', data:tab.ds_osoba.untilday, format:'rs:d.m' }
       show [,,20,]  { title:'?', data:tab.ds_osoba.pozn, format:'s' }
       // nezobrazené
       show id_osoba { data:tab.ds_osoba.id_osoba }
@@ -314,7 +314,7 @@ group ucastnici {
         var rod: object
         var popis: text
         field znacka [0,225,50,16]
-        label [55,225,300,16] {title:'značka rodiny na fakturách (bez diakritiky)'}
+        label [55,225,300,16] {title:'značka rodiny na fakturách (bude bez diakritiky)'}
         button [0,250,50,16] { title:'přidat do účastníků', proc onclick() {
           znacka_rodiny.set(ask('cz2ascii',znacka.get));
           rodina_add(L) } }
@@ -326,11 +326,12 @@ group ucastnici {
           proc onchanged() {
             rod.set(ask('rodina',this.key));
             znacka.init;
-            each(rod.get,rodina);
+            each(rod.get,rodina); // nesmí volat asynchronní operace
+            znacka.set(ask('cz2ascii',znacka.get))
           }
           proc rodina(p) {
             last.set(L.add);
-            [ eq(znacka.get,''); znacka.set(ask('cz2ascii',substr(p.prijmeni,0,3))) ];
+            [ eq(znacka.get,''); znacka.set(substr(p.prijmeni,0,3)) ];
             popis.set(conc(p.prijmeni,' ',p.jmeno,', ',p.mesto,', ',p.stari));
             L.part(last.get).part('info').set(popis.get);
             L.part(last.get).part('all').set(p);

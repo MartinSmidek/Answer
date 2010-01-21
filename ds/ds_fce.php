@@ -224,31 +224,35 @@ function ds_ucast_objednatele($id_order,$ano) {  #trace('','win1250');
 # -------------------------------------------------------------------------------------------------- pary
 # test autocomplete
 function pary($patt) {  #trace('','win1250');
-  $a= (object)array();
+  $a= array();
   $limit= 10;
   $n= 0;
   // rodièe
-  $qry= "SELECT cislo AS _key,concat(jmeno,' ',jmeno_m,' a ',jmeno_z,' - ',mesto) AS _value
+  $qry= "SELECT source,cislo AS _key,concat(jmeno,' ',jmeno_m,' a ',jmeno_z,' - ',mesto) AS _value
          FROM ms_pary
          WHERE jmeno LIKE '$patt%' ORDER BY jmeno LIMIT $limit";
   $res= mysql_qry($qry);
   while ( $res && $t= mysql_fetch_object($res) ) {
     if ( ++$n==$limit ) break;
-    $a->{$t->_key}= $t->_value;
+    $key= "{$t->_key}".($t->source=='L'?0:1);
+    $a[$key]= "{$t->source}:{$t->_value}";
   }
   // obecné položky
   if ( !$n )
-    $a->{0}= wu("... žádné jméno nezaèíná '")."$patt'";
+    $a[0]= wu("... žádné jméno nezaèíná '")."$patt'";
   elseif ( $n==$limit )
-    $a->{999999}= wu("... a další");
+    $a[-999999]= wu("... a další");
+                                                                debug($a,$patt,(object)array('win1250'=>1));
   return $a;
 }
 # -------------------------------------------------------------------------------------------------- rodina
 # test autocomplete
-function rodina($cislo) {  #trace('','win1250');
+function rodina($xcislo) {  #trace('','win1250');
   $rod= array();
   // rodièe
-  $qry= "SELECT * FROM ms_pary WHERE cislo=$cislo";
+  $source= $xcislo % 2 ? 'M' : 'L';
+  $cislo= round($xcislo/10);
+  $qry= "SELECT * FROM ms_pary WHERE source='$source' AND cislo=$cislo";
   $res= mysql_qry($qry);
   if ( $res && $p= mysql_fetch_object($res) ) {
     rodina_add(&$rod,$p->prijmeni_m,$p->jmeno_m,$p->rodcislo_m,$p->telefon,$p->email,$p);
@@ -256,7 +260,7 @@ function rodina($cislo) {  #trace('','win1250');
     rodina_add(&$rod,$p->prijmeni_z,$p->jmeno_z,$p->rodcislo_z,$p->telefon,$p->email,$p);
   }
   // dìti
-  $qry= "SELECT * FROM ms_deti WHERE cislo=$cislo";
+  $qry= "SELECT * FROM ms_deti WHERE source='$source' AND cislo=$cislo";
   $res= mysql_qry($qry);
   while ( $res && $d= mysql_fetch_object($res) ) {
     $prijmeni= rc2man($d->rodcislo) ? $p->prijmeni_m : $p->prijmeni_z;
@@ -344,10 +348,10 @@ function ds_hoste($orders,$rok) {  #trace('','win1250');
   require_once "$ezer_path_serv/licensed/xls2/Classes/PHPExcel/Calculation/Functions.php";
   ds_cenik($rok);
 //                                                                 debug($ds_cena,'ds_cena',(object)array('win1250'=>1));
-  ezer_connect('setkani');
   $x= (object)array();
   $x->table= "klienti_$obdobi";
   $x->hoste= array();
+  ezer_connect('setkani');
   // zjištìní klientù zahajujících pobyt v daném období
   $qry= "SELECT *,o.fromday as _of,o.untilday as _ou,p.email as p_email,
          p.fromday as _pf,p.untilday as _pu,akce
@@ -702,13 +706,13 @@ __XLS;
 function ds_faktury($order) {  trace('','win1250');
   global $ds_cena;
   $x= (object)array('faktury'=>array(),'rodiny'=>array());
-  ezer_connect('setkani');
   // èíselníky                    1   2   3   4   5   6   7   8   9   10  11  12  13  14  15  16
   $luzko_pokoje= array(0=>'?',1=>'L','L','L','L','L','L','L','S','S','L','L','L','S','S','A','A');
   $ds_luzko=  map_cis('ds_luzko','zkratka');  $ds_luzko[0]=  '?';
   $ds_strava= map_cis('ds_strava','zkratka'); $ds_strava[0]= '?';
 //                                                                 debug($ds_strava,(object)array('win1250'=>1));
   // kontrola objednávky
+  ezer_connect('setkani');
   $qry= "SELECT * FROM setkani.tx_gnalberice_order WHERE uid=$order";
   $res= mysql_qry($qry);
   if ( $res && $o= mysql_fetch_object($res) ) {
@@ -762,6 +766,7 @@ function ds_faktury($order) {  trace('','win1250');
         // položky hosta
         $pol= (object)array();
         $pol->test= "{$h->strava} : {$o->board} - $strava = {$ds_strava[$strava]}";
+                                                display(wu("{$h->jmeno} {$h->prijmeni} $pol->test}"));
         $noci= round(($do_ts-$od_ts)/(60*60*24));
         $pol->vek= $vek;
         $pol->noci= $noci;

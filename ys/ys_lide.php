@@ -14,10 +14,10 @@ function lide_cleni_kurs($rok,$export=0) { trace();
            year(datum_od) as rok,
            ms_deti.jmeno as jmeno_d,rodcislo
          FROM ms_kurs
-         JOIN ms_pary USING (cislo)
-         JOIN ms_druhakce USING(akce)
-         JOIN ms_deti USING(cislo)
-         WHERE druh=1
+         JOIN ms_pary USING (cislo,source)
+         JOIN ms_druhakce USING(akce,source)
+         JOIN ms_deti USING(cislo,source)
+         WHERE druh=1 AND ms_kurs.source='L'
          HAVING rok=$rok
          ORDER BY cislo,rodcislo";
   $res= mysql_qry($qry);
@@ -153,9 +153,9 @@ function lide_spolu($rok) { trace();
   $letos= array();
   $qry= "SELECT cislo,akce,skupina,jmeno,mesto,nazev,year(datum_od) as rok
           FROM ms_kurs
-          JOIN ms_pary USING (cislo)
-          JOIN ms_druhakce USING(akce)
-          WHERE druh=1
+          JOIN ms_pary USING (cislo,source)
+          JOIN ms_druhakce USING(akce,source)
+          WHERE druh=1 AND ms_kurs.source='L'
           HAVING rok=$rok
           ORDER BY jmeno";
   $res= mysql_qry($qry);
@@ -168,9 +168,10 @@ function lide_spolu($rok) { trace();
   $qry= "
         SELECT jmeno,count(jmeno) as xx, group_concat(cislo) as cisla, group_concat(mesto) as mesta
         FROM ms_kurs
-        JOIN ms_pary USING (cislo)
+        JOIN ms_pary USING (cislo,source)
         JOIN ms_druhakce USING(akce)
-        WHERE druh=1 and year(datum_od)=2009 GROUP BY jmeno HAVING xx>1
+        WHERE druh=1 and year(datum_od)=2009 AND ms_kurs.source='L'
+        GROUP BY jmeno HAVING xx>1
         ORDER BY jmeno
     ";
   $res= mysql_qry($qry);
@@ -190,8 +191,8 @@ function lide_spolu($rok) { trace();
     $qry= "
             SELECT akce,skupina,nazev,year(datum_od) as rok
             FROM ms_kurs
-            JOIN ms_druhakce USING(akce)
-            WHERE druh=1 and cislo={$par} and skupina>0
+            JOIN ms_druhakce USING(akce,source)
+            WHERE druh=1 and cislo={$par} and skupina>0 AND ms_kurs.source='L'
             ORDER BY datum_od DESC
         ";
     $res= mysql_qry($qry);
@@ -201,9 +202,10 @@ function lide_spolu($rok) { trace();
       $qry_s= "
             SELECT akce, cislo, skupina,funkce,jmeno,mesto,nazev,year(datum_od)
             FROM ms_kurs
-            JOIN ms_pary USING (cislo)
-            JOIN ms_druhakce USING(akce)
+            JOIN ms_pary USING (cislo,source)
+            JOIN ms_druhakce USING(akce,source)
             WHERE akce={$r->akce} and skupina={$r->skupina} and find_in_set(cislo,'$letosni')
+              AND ms_kurs.source='L'
             ORDER BY datum_od DESC
         ";
       $res_s= mysql_qry($qry_s);
@@ -232,9 +234,9 @@ function lide_kurs($rok) { trace();
   // letošní účastníci
   $qry= "SELECT cislo,akce,skupina,jmeno,mesto,nazev,year(datum_od) as rok, jmeno_m, jmeno_z
           FROM ms_kurs
-          JOIN ms_pary USING (cislo)
-          JOIN ms_druhakce USING(akce)
-          WHERE druh=1
+          JOIN ms_pary USING (cislo,source)
+          JOIN ms_druhakce USING(akce,source)
+          WHERE druh=1 AND ms_kurs.source='L'
           HAVING rok=$rok
           ORDER BY jmeno";
   $res= mysql_qry($qry);

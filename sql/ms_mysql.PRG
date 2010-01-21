@@ -4,16 +4,46 @@
 * mysql -u user -ppassword database < dbf-filename-no-ext.sql 
 
 set deleted on
+public all_in_one,mimporthandle
+all_in_one= .t.
 
-mysql_export("DETI")
-mysql_export("DRUHAKCE")
-mysql_export("KURS")
-mysql_export("KURSDETI")
-mysql_export("KURSPECE")
-mysql_export("PARY")
-mysql_export("PECE")
-mysql_export("PORAAKCE")
-mysql_export("SESTAVY")
+if all_in_one
+  mexportfile = "c:\apache\htdocs\ezer\www-ys2\sql\sql\all.sql"
+  delete file &mexportfile
+  if file(mexportfile) && Does file exist?
+    mimporthandle = fopen(mexportfile,11) && If so, open write only
+  else
+    mimporthandle = fcreate(mexportfile) && If not, create it
+  endif
+  if mimporthandle < 1
+    messagebox("could not open output file")
+    cancel
+  endif
+endif
+
+mysql_export(1,"ms-lida","L","DETI")
+mysql_export(1,"ms-lida","L","DRUHAKCE")
+mysql_export(1,"ms-lida","L","KURS")
+mysql_export(1,"ms-lida","L","KURSDETI")
+mysql_export(1,"ms-lida","L","KURSPECE")
+mysql_export(1,"ms-lida","L","PARY")
+mysql_export(1,"ms-lida","L","PECE")
+mysql_export(1,"ms-lida","L","PORAAKCE")
+mysql_export(1,"ms-lida","L","SESTAVY")
+
+mysql_export(0,"ms-milos","M","PORAAKCE")
+mysql_export(0,"ms-milos","M","DRUHAKCE")
+mysql_export(0,"ms-milos","M","KURS")
+mysql_export(0,"ms-milos","M","KURSDETI")
+mysql_export(0,"ms-milos","M","KURSPECE")
+mysql_export(0,"ms-milos","M","PARY")
+mysql_export(0,"ms-milos","M","PECE")
+mysql_export(0,"ms-milos","M","PORAAKCE")
+mysql_export(0,"ms-milos","M","SESTAVY")
+
+if all_in_one
+  fclose(mimporthandle)
+endif
 
 *c:\apache\mysql\bin\mysql -ugandi db_ms < c:\apache\htdocs\ezer\www-ys2\sql\sql\deti.sql
 *c:\apache\mysql\bin\mysql -ugandi db_ms < c:\apache\htdocs\ezer\www-ys2\sql\sql\druhakce.sql
@@ -25,34 +55,37 @@ mysql_export("SESTAVY")
 *c:\apache\mysql\bin\mysql -ugandi db_ms < c:\apache\htdocs\ezer\www-ys2\sql\sql\sestavy.sql
 
 procedure mysql_export
-  parameters mdbf
+  parameters to_create,folder,source,mdbf
+  public all_in_one,mimporthandle
 
   mdbf = lower(mdbf)
   mdbffile = mdbf + ".dbf"
-  * where you want mysqldump files to go
-  mexportfile = "c:\apache\htdocs\ezer\www-ys2\sql\sql\" + mdbf + ".sql"
-  * where dbf files are
-  set default to c:\apache\htdocs\ezer\www-ys2\sql\ms-lida\data
-  if !file(mdbffile)
-    messagebox("not a valid file")
-    cancel
+  if not all_in_one
+    * where you want mysqldump files to go
+    mexportfile = "c:\apache\htdocs\ezer\www-ys2\sql\sql\" + folder + "\" + mdbf + ".sql"
+    * where dbf files are
+    set default to "c:\apache\htdocs\ezer\www-ys2\sql\" + folder + "\data"
+    if !file(mdbffile)
+      messagebox("not a valid file")
+      cancel
+    endif
+    * open/create file to hold sql commands
+    * target is a linux box so only lf "chr(10)" at end of line
+    *delete sql dump file if exists (important)
+    delete file &mexportfile
+    if file(mexportfile) && Does file exist?
+      mimporthandle = fopen(mexportfile,11) && If so, open write only
+    else
+      mimporthandle = fcreate(mexportfile) && If not, create it
+    endif
+    if mimporthandle < 1
+      messagebox("could not open output file")
+      cancel
+    endif
   endif
   set century on
   set hours to 24
   mjunk = 0
-  * open/create file to hold sql commands
-  * target is a linux box so only lf "chr(10)" at end of line
-  *delete sql dump file if exists (important)
-  delete file &mexportfile
-  if file(mexportfile) && Does file exist?
-    mimporthandle = fopen(mexportfile,11) && If so, open write only
-  else
-    mimporthandle = fcreate(mexportfile) && If not, create it
-  endif
-  if mimporthandle < 1
-    messagebox("could not open output file")
-    cancel
-  endif
   use &mdbf
 *!*    set safety off
 *!*    *remove deleted records
@@ -60,66 +93,68 @@ procedure mysql_export
   go top
   * setup array to hold field attributes
   mfield_cnt = afields(marray) && Create array
-  * Create text to build create table commands
-  mtext = "DROP TABLE IF EXISTS `ms_" + mdbf + "`;" + chr(10)
-  mjunk = fwrite(mimporthandle, mtext)
-  mtext = "CREATE TABLE IF NOT EXISTS `ms_" + mdbf + "`(" + chr(10)
-  mjunk = fwrite(mimporthandle, mtext)
-  for nCount = 1 to mfield_cnt
-    mtext = ""
-    mtext = "`" + lower(marray(nCount,1)) + "` " && field name
-    f_id= mdbf + "." + lower(marray(nCount,1))
-    if (f_id=='pary.rodcislo_m') or (f_id=='pary.rodcislo_z') or (f_id=='deti.rodcislo')
-      mtext = mtext + "varchar(10) "
-    else
-      do case
-      case marray(nCount,2) = "C"
-        mtext = mtext + "varchar(" + alltrim(str(marray(nCount,3))) + ") COLLATE utf8_czech_ci "
-      case marray(nCount,2) = "N" AND  marray(nCount,4) = 0			&&g070831
-        mtext = mtext + "int(" + alltrim(str(marray(nCount,3))) + ") "		&&g070831
-      case inlist(marray(nCount,2), 'N', 'F', 'B')
-        mtext = mtext + "decimal(" + alltrim(str(marray(nCount,3))) + "," + alltrim(str(marray(nCount,4))) + ") "
-      case marray(nCount,2) = "D"
-        mtext = mtext + "date "
-      case marray(nCount,2) = "L"
-        mtext = mtext + "tinyint(1) "
-      case marray(nCount,2) = "I"
-        mtext = mtext + "int(" + alltrim(str(marray(nCount,3))) + ") "
-      case marray(nCount,2) = "T"
-        mtext = mtext + "datetime "
-      case marray(nCount,2) = "M"
-        mtext = mtext + "text COLLATE utf8_czech_ci "
-      otherwise
-        mtext = mtext + "unknown data type "
-      endcase
-    endif
-
-    if !marray(nCount, 5)
-      mtext = mtext + "NOT NULL "
-    endif
-
-    if nCount < mfield_cnt
-      mtext = mtext + "," + chr(10)
-    else
-      mtext = mtext + chr(10)
-    endif
-*!*      if nCount < mfield_cnt
-*!*        mtext = mtext + "default '" + marray(nCount,9) + "'," + chr(10)
-*!*      else
-*!*        mtext = mtext + "default '" + marray(nCount,9) + "'" + chr(10)
-*!*      endif
-
+  if to_create=1
+    * Create text to build create table commands
+    mtext = "DROP TABLE IF EXISTS `ms_" + mdbf + "`;" + chr(10)
     mjunk = fwrite(mimporthandle, mtext)
+    mtext = "CREATE TABLE IF NOT EXISTS `ms_" + mdbf + "`(" + chr(10) + "`source` char(1) NOT NULL," + chr(10)
+    mjunk = fwrite(mimporthandle, mtext)
+    for nCount = 1 to mfield_cnt
+      mtext = ""
+      mtext = "`" + lower(marray(nCount,1)) + "` " && field name
+      f_id= mdbf + "." + lower(marray(nCount,1))
+      if (f_id=='pary.rodcislo_m') or (f_id=='pary.rodcislo_z') or (f_id=='deti.rodcislo')
+        mtext = mtext + "varchar(10) "
+      else
+        do case
+        case marray(nCount,2) = "C"
+          mtext = mtext + "varchar(" + alltrim(str(marray(nCount,3))) + ") COLLATE utf8_czech_ci "
+        case marray(nCount,2) = "N" AND  marray(nCount,4) = 0			&&g070831
+          mtext = mtext + "int(" + alltrim(str(marray(nCount,3))) + ") "		&&g070831
+        case inlist(marray(nCount,2), 'N', 'F', 'B')
+          mtext = mtext + "decimal(" + alltrim(str(marray(nCount,3))) + "," + alltrim(str(marray(nCount,4))) + ") "
+        case marray(nCount,2) = "D"
+          mtext = mtext + "date "
+        case marray(nCount,2) = "L"
+          mtext = mtext + "tinyint(1) "
+        case marray(nCount,2) = "I"
+          mtext = mtext + "int(" + alltrim(str(marray(nCount,3))) + ") "
+        case marray(nCount,2) = "T"
+          mtext = mtext + "datetime "
+        case marray(nCount,2) = "M"
+          mtext = mtext + "text COLLATE utf8_czech_ci "
+        otherwise
+          mtext = mtext + "unknown data type "
+        endcase
+      endif
 
-  endfor
+      if !marray(nCount, 5)
+        mtext = mtext + "NOT NULL "
+      endif
 
-  *
-  * final line for create table section
-  *
+      if nCount < mfield_cnt
+        mtext = mtext + "," + chr(10)
+      else
+        mtext = mtext + chr(10)
+      endif
+  *!*      if nCount < mfield_cnt
+  *!*        mtext = mtext + "default '" + marray(nCount,9) + "'," + chr(10)
+  *!*      else
+  *!*        mtext = mtext + "default '" + marray(nCount,9) + "'" + chr(10)
+  *!*      endif
 
-  mtext = ")TYPE=MyISAM DEFAULT CHARSET=utf8 COLLATE utf8_czech_ci COMMENT='" + mdbf + "';" + chr(10) + chr(10)
-  mjunk = fwrite(mimporthandle, mtext)
+      mjunk = fwrite(mimporthandle, mtext)
 
+    endfor
+
+    *
+    * final line for create table section
+    *
+
+    mtext = ")TYPE=MyISAM DEFAULT CHARSET=utf8 COLLATE utf8_czech_ci COMMENT='" + mdbf + "';" + chr(10) + chr(10)
+    mjunk = fwrite(mimporthandle, mtext)
+  endif
+  
   go top
 
   *
@@ -133,7 +168,7 @@ procedure mysql_export
     *
     *beginning of line
     *
-    mtext = "INSERT INTO ms_" + mdbf + " VALUES ("
+    mtext = "INSERT INTO ms_" + mdbf + " VALUES ('" + source + "',"
 
     for nCount = 1 to mfield_cnt
       f_id= mdbf + "." + lower(marray(nCount,1))
@@ -232,8 +267,10 @@ procedure mysql_export
   enddo
 
   use
-  fclose(mimporthandle)
-  return
+  if not all_in_one
+    fclose(mimporthandle)
+  endif
+return
 
 proc u
   para str
