@@ -15,6 +15,7 @@ kEzer-ys2
 		sql\ms_mysql.PRG
 		sql\mysql.bat
 		sql\backup_setkani.bat
+		sql\sql\ms-milos\indexy.sql
 	-ezer2
 		+libr
 			ezer2\ezer2.help.ezer
@@ -97,7 +98,7 @@ kEzer-ys2
 		test\test.ys_ucetnictvi.ezer
 		test\test.ysp.ezer
 		test\test_fce.php
-	-ys
+	+ys
 		ys\$.ezer
 		ys\ys.css.css
 		ys\ys.doc.ezer
@@ -161,9 +162,10 @@ kEzer-ys2
 17=sql\ms_mysql.PRG
 18=sql\sql\ms-milos\indexy.sql
 19=sql\mysql.bat
+20=ys\ys_lide.php
 [Selected Project Files]
 Main=
-Selected=sql\mysql.bat
+Selected=sql\ms_mysql.PRG
 [ezer2\server\comp2def.php]
 TopLine=169
 Caret=66,195
@@ -201,28 +203,29 @@ Mark1=88,363
 TopLine=1
 Caret=1,1
 [ezer2\client\ezer.js]
-TopLine=4046
-Caret=69,4057
+TopLine=1195
+Caret=87,1195
 Mark1=76,2319
 Mark2=11,183
 [ezer2\client\ezer_fdom2.js]
-TopLine=1587
-Caret=102,1587
+TopLine=1522
+Caret=58,1586
 Mark1=1,1045
 Mark2=38,1435
 Mark3=26,1505
 Mark4=15,1461
 Mark5=35,1542
+Mark6=24,1566
 [..\..\..\Apache\logs\ys2-error.log]
 TopLine=100
 Caret=37,106
 [ds\ds_fce.php]
-TopLine=731
-Caret=34,752
-Mark1=1,471
-Mark2=32,702
-Mark3=91,498
-Mark4=31,1021
+TopLine=226
+Caret=22,247
+Mark1=1,475
+Mark2=32,706
+Mark3=91,502
+Mark4=31,1025
 [ys\$.ezer]
 TopLine=1
 Caret=1,1
@@ -230,8 +233,8 @@ Caret=1,1
 TopLine=81
 Caret=39,114
 [ds\ds.dum.ezer]
-TopLine=31
-Caret=25,59
+TopLine=298
+Caret=42,314
 Mark1=37,381
 Mark2=1,259
 [ys\ys.ds.kl.ezer]
@@ -244,11 +247,14 @@ Caret=79,12
 TopLine=53
 Caret=64,57
 [sql\ms_mysql.PRG]
-TopLine=66
-Caret=75,96
+TopLine=1
+Caret=15,8
 [sql\sql\ms-milos\indexy.sql]
 TopLine=1
-Caret=42,10
+Caret=60,8
 [sql\mysql.bat]
 TopLine=1
 Caret=40,23
+[ys\ys_lide.php]
+TopLine=137
+Caret=58,155

@@ -274,13 +274,21 @@ group ucastnici {
   // ------------------------------------------------------------------ AKCE
   form akce [,,300,100] { css:'ds_form'
     var novi: object
-    button [  0,0,50,18] { title:'+ rodina'
-      proc onclick () { novi.set(Rodina.modal(550,250)); echo(novi.get); } }
-    button [ 72,0,50,18] { title:'+ účastník'
+    button [  0,0,50,18] { title:'+ rodina', help:'výběr rodiny z databází MS'
+      proc onclick () {
+        Rodina.fl.rodiny.display(1); Rodina.fl.klienti.display(0);
+        novi.set(Rodina.modal(550,250)); echo(novi.get);
+    } }
+    button [ 72,0,50,18] { title:'+ hosté', help:'výběr hostů z objednávek DS'
+      proc onclick () {
+        Rodina.fl.rodiny.display(0); Rodina.fl.klienti.display(1);
+        novi.set(Rodina.modal(550,250)); echo(novi.get);
+    } }
+    button [138,0,50,18] { title:'+ 1 účastník', help:'přidání zcela nového hosta'
       proc onclick () { osoba_new} }
-    button [155,0,50,18] { title:'+ dítě účastníka'
+    button [230,0,50,18] { title:'+ dítě', help:'přidání hosta se stejným příjmením a bydlištěm'
       proc onclick () { osoba_new_child} }
-    button [267,0,50,18] { title:'- účastník'
+    button [287,0,50,18] { title:'- účastník', help:'odebrání hosta označeného oranžovou šipkou'
       proc onclick () { osoba_del(seznam.id_osoba.get)} }
     browse seznam [0,30,,] { rows:14
       show rodina [,,25,] { title:'rod', data:tab.ds_osoba.rodina, format:'s+' }
@@ -319,23 +327,33 @@ group ucastnici {
           znacka_rodiny.set(ask('cz2ascii',znacka.get));
           rodina_add(L) } }
         button [130,250,50,16] { title:'jiná rodina', proc onclick() {
-          vyber.init; vse.init; znacka.init; L.init } }
+          rodiny.init; klienti.init; vse.init; znacka.init; L.init } }
         button [220,250,50,16] { title:'konec', proc onclick() {
-          vyber.init; vse.init; znacka.init; L.init; panel.hide(0) } }
-        select vyber [100,0,200,17] { type:'auto', /*title:'rodina',*/ par:°{fce:'pary'}, format:'t'
+          rodiny.init; klienti.init; vse.init; znacka.init; L.init; panel.hide(0) } }
+        // výběr z databáze MS
+        select rodiny [100,0,200,17] { type:'auto', par:°{fce:'lide_ms'}, format:'t'
           proc onchanged() {
             rod.set(ask('rodina',this.key));
             znacka.init;
             each(rod.get,rodina); // nesmí volat asynchronní operace
             znacka.set(ask('cz2ascii',znacka.get))
           }
-          proc rodina(p) {
-            last.set(L.add);
-            [ eq(znacka.get,''); znacka.set(substr(p.prijmeni,0,3)) ];
-            popis.set(conc(p.prijmeni,' ',p.jmeno,', ',p.mesto,', ',p.stari));
-            L.part(last.get).part('info').set(popis.get);
-            L.part(last.get).part('all').set(p);
+        }
+        // výběr z databáze DS
+        select klienti [100,0,200,17] { type:'auto', par:°{fce:'lide_ds'}, format:'t'
+          proc onchanged() {
+            rod.set(ask('klienti',this.key));
+            znacka.init;
+            each(rod.get,rodina); // nesmí volat asynchronní operace
+            znacka.set(ask('cz2ascii',znacka.get))
           }
+        }
+        proc rodina(p) {
+          last.set(L.add);
+          [ eq(znacka.get,''); znacka.set(substr(p.prijmeni,0,3)) ];
+          popis.set(conc(p.prijmeni,' ',p.jmeno,', ',p.mesto,', ',p.stari));
+          L.part(last.get).part('info').set(popis.get);
+          L.part(last.get).part('all').set(p);
         }
         // nastavení výběru
         check vse [4,0,80,16] { title:'všichni', format:'t'

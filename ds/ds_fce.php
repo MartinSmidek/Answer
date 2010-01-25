@@ -221,9 +221,9 @@ function ds_ucast_objednatele($id_order,$ano) {  #trace('','win1250');
   return $ano;
 }
 # ================================================================================================== RODINA
-# -------------------------------------------------------------------------------------------------- pary
-# test autocomplete
-function pary($patt) {  #trace('','win1250');
+# -------------------------------------------------------------------------------------------------- lide_ms
+# SELECT autocomplete - výbìr z databází MS (Miloš, Lída)
+function lide_ms($patt) {  #trace('','win1250');
   $a= array();
   $limit= 10;
   $n= 0;
@@ -246,7 +246,7 @@ function pary($patt) {  #trace('','win1250');
   return $a;
 }
 # -------------------------------------------------------------------------------------------------- rodina
-# test autocomplete
+# formátování autocomplete
 function rodina($xcislo) {  #trace('','win1250');
   $rod= array();
   // rodièe
@@ -285,6 +285,60 @@ function roku($rc) {
          ($r % 10)==1 ? "let" : (
          $r<=4        ? "roky" : "rokù" )));
   return wu("$r $roku, rè:$rc");
+}
+# -------------------------------------------------------------------------------------------------- lide_ds
+# SELECT autocomplete - výbìr z databáze DS
+function lide_ds($patt) {  #trace('','win1250');
+  $a= array();
+  $limit= 10;
+  $n= 0;
+  $patt= strtolower($patt);
+  // výbìr ze starých dobrých klientù
+  ezer_connect('setkani');
+  $qry= "SELECT id_osoba AS _key,concat(prijmeni,' ',jmeno,' - ',obec,'/',id_order) AS _value
+         FROM ds_osoba
+         WHERE lower(prijmeni) LIKE '$patt%'
+         GROUP BY _value
+         ORDER BY prijmeni
+         LIMIT $limit";
+  $res= mysql_qry($qry);
+  while ( $res && $t= mysql_fetch_object($res) ) {
+    if ( ++$n==$limit ) break;
+    $key= $t->_key;
+    $a[$key]= wu("D:{$t->_value}");
+  }
+  // obecné položky
+  if ( !$n )
+    $a[0]= wu("... žádné jméno nezaèíná '")."$patt'";
+  elseif ( $n==$limit )
+    $a[-999999]= wu("... a další");
+//                                                                 debug($a,$patt,(object)array('win1250'=>1));
+  return $a;
+}
+# -------------------------------------------------------------------------------------------------- rodina
+# formátování autocomplete
+function klienti($id_osoba) {  #trace('','win1250');
+  $rod= array();
+  // rodièe
+  ezer_connect('setkani');
+  $qry= "SELECT * FROM ds_osoba WHERE id_osoba=$id_osoba";
+  $res= mysql_qry($qry);
+  if ( $res && $p= mysql_fetch_object($res) ) {
+    $cond= "id_order={$p->id_order} AND obec='{$p->obec}' AND ulice='{$p->ulice}'";
+    // vybereme se stejným oznaèením rodiny
+    $qry= "SELECT * FROM ds_osoba WHERE $cond
+           ORDER BY narozeni";
+    $res= mysql_qry($qry);
+    while ( $res && $o= mysql_fetch_object($res) ) {
+    $vek= ds_vek($o->narozeni,time());
+    $narozeni= sql_date1($o->narozeni);
+    $rod[]= (object)array('prijmeni'=>wu($o->prijmeni),'jmeno'=>wu($o->jmeno),'stari'=>$vek,
+      'psc'=>$o->psc,'mesto'=>wu($o->obec),'ulice'=>wu($o->ulice),
+      'telefon'=>$o->telefon,'email'=>$o->email,'narozeni'=>$narozeni);
+    }
+  }
+                                                                debug($rod,$id_osoba,(object)array('win1250'=>1));
+  return $rod;
 }
 # ================================================================================================== CENY
 # -------------------------------------------------------------------------------------------------- ds_xls_hoste
@@ -937,7 +991,8 @@ __XLS;
     |L14 Datum vystavení         |M14 $vystaveno ::date bcolor=ffffffaa
     |L15 Datum zúètování         |M15 =M14       ::date bcolor=ffffffaa
     |L16 Datum splatnosti ::bold |M16 =M14+14    ::date bcolor=ffffffaa bold
-    
+    |L18 Zpùsob platby           |M18 pøevod/hotovost ::bcolor=ffffffaa
+
     |C19 Za pobyt v Domì setkání ve dnech $obdobi Vám fakturujeme: |C19:M19 merge
 __XLS;
   $n= $P-1;
@@ -1055,6 +1110,7 @@ function ds_faktura($list,$typ,$order,$polozky,$platce,$zaloha=100,$pata='') {  
     |L14 Datum vystavení         |M14 $vystaveno ::date bcolor=ffffffaa
     |L15 Datum zúètování         |M15 =M14       ::date bcolor=ffffffaa
     |L16 Datum splatnosti ::bold |M16 =M14+14    ::date bcolor=ffffffaa bold
+    |L18 Zpùsob platby           |M18 pøevod/hotovost ::bcolor=ffffffaa
     |C19 Fakturujeme vám zálohu na pobyt ve dnech $obdobi: |C19:M19 merge
 __XLS;
   $n= $P-1;

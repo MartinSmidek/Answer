@@ -9,12 +9,12 @@ all_in_one= .t.
 
 if all_in_one
   mexportfile = "c:\apache\htdocs\ezer\www-ys2\sql\sql\all.sql"
-  delete file &mexportfile
-  if file(mexportfile) && Does file exist?
-    mimporthandle = fopen(mexportfile,11) && If so, open write only
-  else
+*   delete file &mexportfile
+*   if file(mexportfile) && Does file exist?
+*     mimporthandle = fopen(mexportfile,11) && If so, open write only
+*   else
     mimporthandle = fcreate(mexportfile) && If not, create it
-  endif
+*   endif
   if mimporthandle < 1
     messagebox("could not open output file")
     cancel
@@ -29,9 +29,9 @@ mysql_export(1,"ms-lida","L","KURSPECE")
 mysql_export(1,"ms-lida","L","PARY")
 mysql_export(1,"ms-lida","L","PECE")
 mysql_export(1,"ms-lida","L","PORAAKCE")
-mysql_export(1,"ms-lida","L","SESTAVY")
+*mysql_export(1,"ms-lida","L","SESTAVY")
 
-mysql_export(0,"ms-milos","M","PORAAKCE")
+mysql_export(0,"ms-milos","M","DETI")
 mysql_export(0,"ms-milos","M","DRUHAKCE")
 mysql_export(0,"ms-milos","M","KURS")
 mysql_export(0,"ms-milos","M","KURSDETI")
@@ -39,7 +39,7 @@ mysql_export(0,"ms-milos","M","KURSPECE")
 mysql_export(0,"ms-milos","M","PARY")
 mysql_export(0,"ms-milos","M","PECE")
 mysql_export(0,"ms-milos","M","PORAAKCE")
-mysql_export(0,"ms-milos","M","SESTAVY")
+*mysql_export(0,"ms-milos","M","SESTAVY")
 
 if all_in_one
   fclose(mimporthandle)
@@ -59,7 +59,7 @@ procedure mysql_export
   public all_in_one,mimporthandle
 
   mdbf = lower(mdbf)
-  mdbffile = mdbf + ".dbf"
+  mdbffile = "c:\apache\htdocs\ezer\www-ys2\sql\" + folder + "\data\" + mdbf + ".dbf"
   if not all_in_one
     * where you want mysqldump files to go
     mexportfile = "c:\apache\htdocs\ezer\www-ys2\sql\sql\" + folder + "\" + mdbf + ".sql"
@@ -86,7 +86,7 @@ procedure mysql_export
   set century on
   set hours to 24
   mjunk = 0
-  use &mdbf
+  use &mdbffile
 *!*    set safety off
 *!*    *remove deleted records
 *!*    pack
