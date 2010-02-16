@@ -30,8 +30,8 @@ panel Posta [,,670,543] {type:'right', title:'Pošta',_sys:'pos', style:'width:6
     proc onclick (m) {
       P_touch.finfo.set('');
       P_info.set(ask('sou_lst','posta',m.par.s,m.par.c));
-      P_touch.upload.set_attrib('par.path',conc(m.par.c,'/',m.par.s));
-      P_touch.upload.set_attrib('par.root',sys('ezer','options','docs_path'));
+      P_touch.uploads.set_attrib('par.path',conc(m.par.c,'/',m.par.s));
+      P_touch.uploads.set_attrib('par.root',sys('ezer','options','docs_path'));
       [ P_touch.flist.browse_load(P_info.get('path')); P_touch.flist.raise('onrowclick') ];
       P_touch.result.set(conc("<div id='info' class='info'>",P_info.get('html'),"</div>"));
       panel.property(°{height:'*',min_height:500})
@@ -51,13 +51,13 @@ panel Posta [,,670,543] {type:'right', title:'Pošta',_sys:'pos', style:'width:6
 # -------------------------------------------------------------------------------------------------- _touch
   form _touch [,,500,50] {
     label result [0,0,635,600] { title:'' },
-    button upload [500,18,50,16] {type:'upload', title:'Upload', format:'r',
+    button uploads [500,10,50,16] {type:'upload', title:'Upload', format:'r',
         par:°{root:'',path:'docs',mask:doc,move:'upload_ymd'}
       proc onload() {
         flist.browse_seek;
       }
     }
-    button opravit [580,18,50,16] { title:'Ulož', type:'submit', /*css:'zIndex1'*/
+    button opravit [580,10,50,16] { title:'Ulož', type:'submit', /*css:'zIndex1'*/
       proc onclick () {
         ask('sou_upd_info',P_info.get('path'),flist.fid.get,finfo.get);
         flist.browse_seek;

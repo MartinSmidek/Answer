@@ -448,18 +448,6 @@ table uodhad { key_id:'id_uodhad'
   text poznamka
 }
 
-table uakce { key_id:'id_uakce'
-  number id_uakce
-  number rok
-  text akce
-  text nazev_akce
-  date datum { sql_pipe:'sql_date1' }
-  number dnu
-  number osob
-  number typ
-  text kapitola
-}
-
 table uosnova {
   number rok
   text ucet

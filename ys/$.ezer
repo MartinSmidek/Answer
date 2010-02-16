@@ -8,17 +8,11 @@ menu ys { type:'main', active:* //ys.pok
   tabs eko {title:"Ekonomika", _sys:'*',  include:'onclick', active:* }
   tabs ds {title:"Dům", _sys:'dum', include:'onclick', active:* }
 ##  tabs chl {title:"Chlapi",  include:'onclick' }
+  tabs akce {title:"Akce", _sys:'akc', include:'onclick', active:* }
   tabs lide {title:"Lidé", _sys:'lid', include:'onclick' }
   tabs syst {title:"Systém", _sys:'sys',  include:'onclick,ezer2.syst', active:* }
   tabs doc  {title:"Nápověda", _sys:'nap',  include:'onclick,ezer2.help' }
-
-#   tabs off  {title:"Odhlásit", _sys:'off'
-#     panel {type:'plain', title:"Odhlásit"
-#       proc onfocus() {
-#         touch('logout')
-#       }
-#     }
-#   }
+  tabs off  {title:"Odhlásit", type:'logoff' }
 //#   tabs test {title:"Test",  where:'http://ys2.ezer/test.html' }
 //#   tabs ys1  {title:"Pokladna/1",  where:'http://ys.ezer/anser.php?modul=ys_pokladna' }
   // univerzální procedury
@@ -44,7 +38,20 @@ table _file_ {
   text finfo
 }
 
-/*
+table uakce { key_id:'id_uakce'
+  number id_uakce
+  text ms_source
+  number ms_akce
+  number rok
+  text akce
+  text nazev_akce
+  date datum { sql_pipe:'sql_date1' }
+  number dnu
+  number osob
+  number typ
+  text kapitola
+}
+
 table _cis { key_id:'id_cis'
   number id_cis
   text druh,
@@ -66,7 +73,46 @@ table ms_druhakce {
   text misto
 }
 
-table ms_pary {
+table ms_kurs { key_id:'id_kurs'
+  number id_kurs
+  number cislo
+  number skupina
+  number funkce
+  text aktivita
+  date datplatby
+  number zpusobplat
+  text budova
+  text pokoj
+  number luzka
+  number strava_cel
+  number strava_pol
+  number kocarek
+  text pecovatel
+  text poznamka
+  number pristylky
+  number pocetdnu
+  number svp
+  number dorazil
+  number pouze
+  number akce
+  number platba
+  text cstrava_cel
+  text cstrava_pol
+  number platba1
+  number platba2
+  number platba3
+  number platba4
+}
+
+table ms_kursdeti { key_id:'id_kursdeti'
+  number id_kursdeti
+  number cislo
+  text jmeno
+  number skupina
+  number akce
+}
+
+table ms_pary { key_id:'cislo'
   number cislo
   number cislo_z
   text jmeno
@@ -75,7 +121,7 @@ table ms_pary {
   text mesto
   text telefon
   text spz
-  date datsvatba
+  date datsvatba { sql_pipe:'sql_date1'}
   number svatba
   text poznamka
   text jmeno_m
@@ -109,25 +155,11 @@ table ms_pary {
   number lxx1
 }
 
-table ms_pece {
+table ms_deti { key_id:'cislo'
   number cislo
   text jmeno
-  text krestni
-  text adresa
-  text psc
-  text mesto
-  text telefon
-  text poznamka
   number rodcislo
-  text obcanka
-  number zamestnani
-  number kategorie
-  number cirkev
-  text ccirkev
-  number cislo_y
-  number kod
-  number clen
-  text email
+  text poznamka
 }
 
 table ms_poraakce {
@@ -135,58 +167,34 @@ table ms_poraakce {
   text jmeno
 }
 
-table ms_kurs {
-  number cislo
-  number skupina
-  number funkce
-  text aktivita
-  date datplatby
-  number zpusobplat
-  text budova
-  text pokoj
-  number luzka
-  number strava_cel
-  number strava_pol
-  number kocarek
-  text pecovatel
-  text poznamka
-  number pristylky
-  number pocetdnu
-  number svp
-  number dorazil
-  number pouze
-  number akce
-  number platba
-  text cstrava_cel
-  text cstrava_pol
-  number platba1
-  number platba2
-  number platba3
-  number platba4
-}
+# table ms_pece {
+#   number cislo
+#   text jmeno
+#   text krestni
+#   text adresa
+#   text psc
+#   text mesto
+#   text telefon
+#   text poznamka
+#   number rodcislo
+#   text obcanka
+#   number zamestnani
+#   number kategorie
+#   number cirkev
+#   text ccirkev
+#   number cislo_y
+#   number kod
+#   number clen
+#   text email
+# }
+#
+# table ms_kurspece {
+#   number cislo
+#   number skupina
+#   text budova
+#   text pokoj
+#   number dorazil
+#   number akce
+#   text poznamka
+# }
 
-table ms_kursdeti {
-  number cislo
-  text jmeno
-  number skupina
-  number akce
-}
-
-table ms_kurspece {
-  number cislo
-  number skupina
-  text budova
-  text pokoj
-  number dorazil
-  number akce
-  text poznamka
-}
-
-table ms_deti {
-  number cislo
-  text jmeno
-  number rodcislo
-  text poznamka
-}
-
-*/

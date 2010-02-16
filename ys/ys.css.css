@@ -3,7 +3,6 @@
 .dia {
   position:absolute; text-align:center; }
 
-
 /* úpravy standardu */
 #kuk {
   height:220px; }
@@ -15,6 +14,8 @@
   padding:0 2px; }
 .Label {
   margin-top:2px; }
+.CMenu .CTitle {
+  margin-top:7px; }
 
 .CheckT input {
   position:absolute; top:10px; left:-3px; }

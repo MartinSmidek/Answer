@@ -1,24 +1,4 @@
 <?php # (c) 2007-2008 Martin Smidek <martin@smidek.eu>
-  define("NOE",0);
-  // standardní rozšíření
-//   require_once("ext/system.php");       // funkce pro modul  Systém
-//   require_once("ext/login.php");        // funkce pro moduly Doc,Login
-  // specifická rozšíření
-// # -------------------------------------------------------------------------------------------------- make_get
-// # převzetí parametrů od funkce form_make - je v server.php
-// function make_get (&$set,&$select,&$fields) {
-//   global $x,$y;
-//   foreach (get_object_vars($x->save) as $fld => $tfv) {
-//     $val= utf2win($tfv->val);
-//     if ( ($pipe= $tfv->pip) ) $val= $pipe($val,1);
-//     $set[$tfv->tbl][]= "{$tfv->fld}='$val'";
-//     $y->plain->$fld= 1;
-//   }
-//   foreach (get_object_vars($x->load) as $fld => $tf) {
-//     $select[]= $tf->exp ? "{$tf->exp} AS $fld": "{$tf->tbl}.{$tf->fld} AS $fld";
-//     $fields[]= $fld;
-//   }
-// }
 # -------------------------------------------------------------------------------------------------- pipe_pdenik_typ
 // 0=V 1=P
 function pipe_pdenik_typ ($x,$save=0) {

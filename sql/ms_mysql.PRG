@@ -21,25 +21,23 @@ if all_in_one
   endif
 endif
 
-mysql_export(1,"ms-lida","L","DETI")
-mysql_export(1,"ms-lida","L","DRUHAKCE")
-mysql_export(1,"ms-lida","L","KURS")
-mysql_export(1,"ms-lida","L","KURSDETI")
-mysql_export(1,"ms-lida","L","KURSPECE")
+* mysql_export(1,"ms-lida","L","DETI")
+* mysql_export(1,"ms-lida","L","DRUHAKCE")
+* mysql_export(1,"ms-lida","L","KURS")
+* mysql_export(1,"ms-lida","L","KURSDETI")
+* mysql_export(1,"ms-lida","L","KURSPECE")
 mysql_export(1,"ms-lida","L","PARY")
-mysql_export(1,"ms-lida","L","PECE")
-mysql_export(1,"ms-lida","L","PORAAKCE")
-*mysql_export(1,"ms-lida","L","SESTAVY")
-
-mysql_export(0,"ms-milos","M","DETI")
-mysql_export(0,"ms-milos","M","DRUHAKCE")
-mysql_export(0,"ms-milos","M","KURS")
-mysql_export(0,"ms-milos","M","KURSDETI")
-mysql_export(0,"ms-milos","M","KURSPECE")
-mysql_export(0,"ms-milos","M","PARY")
-mysql_export(0,"ms-milos","M","PECE")
-mysql_export(0,"ms-milos","M","PORAAKCE")
-*mysql_export(0,"ms-milos","M","SESTAVY")
+* mysql_export(1,"ms-lida","L","PECE")
+* mysql_export(1,"ms-lida","L","PORAAKCE")
+*
+* mysql_export(0,"ms-milos","M","DETI")
+* mysql_export(0,"ms-milos","M","DRUHAKCE")
+* mysql_export(0,"ms-milos","M","KURS")
+* mysql_export(0,"ms-milos","M","KURSDETI")
+* mysql_export(0,"ms-milos","M","KURSPECE")
+* mysql_export(0,"ms-milos","M","PARY")
+* mysql_export(0,"ms-milos","M","PECE")
+* mysql_export(0,"ms-milos","M","PORAAKCE")
 
 if all_in_one
   fclose(mimporthandle)
@@ -97,7 +95,14 @@ procedure mysql_export
     * Create text to build create table commands
     mtext = "DROP TABLE IF EXISTS `ms_" + mdbf + "`;" + chr(10)
     mjunk = fwrite(mimporthandle, mtext)
-    mtext = "CREATE TABLE IF NOT EXISTS `ms_" + mdbf + "`(" + chr(10) + "`source` char(1) NOT NULL," + chr(10)
+    klic = ''
+    do case
+    case mdbf == 'kurs'
+      klic = chr(10) + "`id_kurs` int(11) NOT NULL AUTO_INCREMENT,"
+    case mdbf == 'kursdeti'
+      klic = chr(10) + "`id_kursdeti` int(11) NOT NULL AUTO_INCREMENT,"
+    endcase
+    mtext = "CREATE TABLE IF NOT EXISTS `ms_" + mdbf + "`(" + klic + chr(10) + "`source` char(1) NOT NULL," + chr(10)
     mjunk = fwrite(mimporthandle, mtext)
     for nCount = 1 to mfield_cnt
       mtext = ""
@@ -146,12 +151,20 @@ procedure mysql_export
       mjunk = fwrite(mimporthandle, mtext)
 
     endfor
-
+    
     *
-    * final line for create table section
+    *  KLíče a konec deklarace
     *
 
-    mtext = ")TYPE=MyISAM DEFAULT CHARSET=utf8 COLLATE utf8_czech_ci COMMENT='" + mdbf + "';" + chr(10) + chr(10)
+    mtext = ''
+    do case
+    case mdbf == 'kurs'
+      mtext = "," + chr(10) + "PRIMARY KEY (`id_" + mdbf + "`)" + chr(10)
+    case mdbf == 'kursdeti'
+      mtext = "," + chr(10) + "PRIMARY KEY (`id_" + mdbf + "`)" + chr(10)
+    endcase
+
+    mtext = mtext + ")TYPE=MyISAM DEFAULT CHARSET=utf8 COLLATE utf8_czech_ci COMMENT='" + mdbf + "';" + chr(10) + chr(10)
     mjunk = fwrite(mimporthandle, mtext)
   endif
   
@@ -168,7 +181,14 @@ procedure mysql_export
     *
     *beginning of line
     *
-    mtext = "INSERT INTO ms_" + mdbf + " VALUES ('" + source + "',"
+    klic = ''
+    do case
+    case mdbf == 'kurs'
+      klic = "DEFAULT, "
+    case mdbf == 'kursdeti'
+      klic = "DEFAULT, "
+    endcase
+    mtext = "INSERT INTO ms_" + mdbf + " VALUES (" + klic + "'" + source + "',"
 
     for nCount = 1 to mfield_cnt
       f_id= mdbf + "." + lower(marray(nCount,1))
@@ -181,10 +201,64 @@ procedure mysql_export
         mtext = mtext + ", "
       endif
 
-      if (f_id=='pary.rodcislo_m') or (f_id=='pary.rodcislo_z') or (f_id=='deti.rodcislo')
+      do case
+      case (f_id=='pary.rodcislo_m') or (f_id=='pary.rodcislo_z') or (f_id=='deti.rodcislo')
         * transformace rodného čísla aby se neztratila nula na začátku
         mtext = mtext + "'" + padl(alltrim(str(&marray(nCount,1))),10,'0') + "'"
-      else
+      case (f_id=='pary.cislo') or (f_id=='kurs.cislo') or (f_id=='kursdeti.cislo') or (f_id=='deti.cislo')
+          * transformace klíče přidáním '0' pro source='L' a '1' pro source='M'
+          mtext = mtext + "'" + alltrim(str(&marray(nCount,1))) + iif(source=='L','0','1') + "'"
+      case (f_id=='pary.cirkev_m') or (f_id=='pary.cirkev_z')
+        * církve
+        *SELECT count(*),left(group_concat(distinct cirkev_m),50),ccirkev_m FROM `ms_pary`
+        *WHERE source='L'
+        *GROUP BY ccirkev_m ORDER BY cirkev_m
+        cc= u(&marray(nCount+2,1))
+        c= 0
+        do case
+        case cc==""
+          c= 0
+        case cc="katolická"
+          c= 1
+        case cc="evangelická"
+          c= 2
+        case cc="bez přísluš"
+          c= 3
+        case cc="apoštolská"
+          c= 4
+        case cc="adventistic"
+          c= 5
+        case cc="CČE"
+          c= 6
+        case cc="bratrská"
+          c= 7
+        case cc="KS - Praha"
+          c= 8
+        case cc="KS"
+          c= 8
+        case cc="př.na křest"
+          c= 9
+        case cc="kat-nepřesv"
+          c= 10
+        case cc= "bapt-neprak"
+          c= 12
+        case cc="Hn.Gr.sekta"
+          c= 13
+        case cc="řecko-kato"
+          c= 14
+        case cc="CASD"
+          c= 15
+        case cc="nevěřící"
+          c= 16
+        case cc="kat.pasiv."
+          c= 17
+        case cc="br.jed.bap"
+          c= 18
+        case cc="ČSH"
+          c= 19
+        endcase
+        mtext = mtext + "'" + alltrim(str(c)) + "'"
+      otherwise
         do case
         case marray(nCount,2) = "C" && characters
           if !isnull(&marray(nCount,1))
@@ -251,7 +325,7 @@ procedure mysql_export
         otherwise
           mtext = mtext + "unknown data type "
         endcase
-      endif
+      endcase
       if isnull(mtext)
         set step on
       endif
@@ -276,4 +350,9 @@ proc u
   para str
   str= chrtran(str,'"',"'")
   str= strconv(allt(str),9,1029)
+return str
+
+proc n
+  para str
+  str= strconv(allt(str),11,1029)
 return str

@@ -8,6 +8,7 @@ proc onstart() { rok.set(2009) }
 panel Skupinky [,,,543] {type:'right', title:'Skupinky'
   menu {type:'left',
     menu {title:'Volba roku',type:'group'
+      item {title:'2010',par:°{rok:'2010'} }
       item {title:'2009',par:°{rok:'2009'} }
       item {title:'2008',par:°{rok:'2008'} }
       item {title:'2007',par:°{rok:'2007'} }

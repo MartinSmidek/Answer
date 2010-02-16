@@ -18,14 +18,17 @@ kde
 <p class="todo_plus">tento text se čte z todo.wiki</p>
 <p class="podpis">Buďte opatrní, Gándí</p>
 ++todo
-| 01.08.2007 | MVY | vlastnost |            | systém objednávek pro Dům setkání (k používání od 1.12.2009)
+| 08.02.2010 | MVY | vlastnost |            | automatické zaslání hlášky definovaným adresátům o přidání dokumentu (zatím hlavně v poště a fakturách)
 | 13.10.2009 | JLN | vlastnost |            | doplnit přehledy o rozdělení MS/DS
 ++done
-|            |     |           | 16.01.2010 | rok 2010 pro Informace, upload souborů k dnešnímu dni
-|            |     |           | 30.12.2009 | upravený tvar faktur
-|            |     |           | 21.12.2009 | přidávání rodin do seznamu účastníků
-|            |     |           | 08.12.2009 | exporty pro Dům do Excelu: kniha hostů, zálohová faktura, konečná faktura
-|            |     |           | 27.11.2009 | modul Lidé, export účastníků s dětmi pro Statistický list YMCA
-|            |     |           | 24.11.2009 | zpřehlednění modulu Ekonomika (dříve Účetnictví), záložka Kapitoly poskytuje grafický obraz hospodaření s možností obdobně strukturovaného pohledu do účetního deníku
-|            |     |           | 14.10.2009 |+převedení Ans(w)er pod systém Ezer2: moduly Informace, Pokladna, Účetnictví, Dům
+|            | MSM |           | 09.02.2010 | odhlašování ze systému, info při přihlášení
+|            | MSM |           | 25.01.2010 | rok 2010 pro Informace, upload souborů k dnešnímu dni
+|            | MSM |           | 25.01.2010 | Dům/Objednávky - přidání výběru ze starých objednávek
+| 01.08.2007 | MVY | vlastnost | 22.01.2010 |+předání modulu Dům do užívání
+|            | MSM |           | 30.12.2009 | upravený tvar faktur
+|            | MSM |           | 21.12.2009 | přidávání rodin do seznamu účastníků
+|            | MSM |           | 08.12.2009 | exporty pro Dům do Excelu: kniha hostů, zálohová faktura, konečná faktura
+|            | MSM |           | 27.11.2009 | modul Lidé, export účastníků s dětmi pro Statistický list YMCA
+|            | MSM |           | 24.11.2009 | zpřehlednění modulu Ekonomika (dříve Účetnictví), záložka Kapitoly poskytuje grafický obraz hospodaření s možností obdobně strukturovaného pohledu do účetního deníku
+|            | MSM |           | 14.10.2009 |+převedení Ans(w)er pod systém Ezer2: moduly Informace, Pokladna, Účetnictví, Dům
 

@@ -3,6 +3,8 @@
 $minify= false;
 $root= 'ys';
 $title= "Ans(w)er";
+require "$root.inc";
+
 $js= array(
   'ezer2/client/licensed/clientcide.js',
   'ezer2/client/licensed/mootools/asset.js',
@@ -12,6 +14,7 @@ $js= array(
   'ezer2/client/ezer_report.js',
   'ezer2/client/ezer_fdom2.js',
   'ezer2/client/app.js',
+  'ys/ys_fce.js',
   'ds/fce.js'
 );
 $css= array(
@@ -31,6 +34,7 @@ __EOD
 : <<<__EOD
     debug:window.parent!=window,      // je nadřazený frame - dbg.html
     login_interval:600,
+//     must_log_in:true,
     must_log_in:false, uname:'gandi', pword:'radost',
     mini_debug:true, status_bar:true, to_trace:true
 __EOD;
@@ -61,6 +65,30 @@ else {
   <script src="$root.js" type="text/javascript" charset="utf-8"></script>
   <link rel="stylesheet" href="$root.css" type="text/css" media="screen" charset="utf-8" />
 __EOD;
+}
+
+// obsah informačního okna - prioritu má zpráva z fis.inc označená z proměnné $ezer_info
+global $ezer_path_todo, $ezer_path_serv, $ezer_info;
+require_once("$ezer_path_serv/ae_slib.php");
+require_once("$ezer_path_serv/reference.php");
+require_once("$ezer_path_serv/sys_doc.php");
+$kontakt= "
+    Pokud byste narazili na problém, kontaktujte mě prosím ihned na<br/>
+    Skype martin_smidek nebo na <br/>
+    mobil 603 150 565<br/>
+    Děkuji za spolupráci, Gándí
+";
+if ( $ezer_info )
+  $info= "<div class='login_a_msg'>$ezer_info</div>";
+else {
+  $dnu= 30;
+  $info= doc_todo_show('++done','',0,$dnu,$ezer_path_todo);
+  if ( !$info )
+    $info= "<div class='login_a_msg'>
+      Během posledních $dnu dnů<br/>nedošlo v systému<br/>k podstatným změnám.<br/><br/>
+      $kontakt</div>";
+  else
+    $info.= "<hr/>$kontakt";
 }
 
 // HTML template
@@ -115,9 +143,9 @@ echo <<<__EOD
       </div>
     </div>
     <div id="login_2">
-      <h1>... informace</h1>
+      <h1 style='text-align:right'>... informace</h1>
       <div class="login_a">
-        Přeji příjemnou práci
+        $info
       </div>
     </div>
   </div>
