@@ -1,0 +1,212 @@
+# Systém Ans(w)er - modul Akce
+# (c) 2008-2010 Martin Šmídek <martin@smidek.eu>
+
+var the_akce: number
+var the_akce_ms: number
+var the_akce_ma: number
+proc onstart() {
+  the_akce.set(0);
+  // pro ladění
+  Vyber.focus; Vyber.akce_roku(2009); Vyber.info.seznam.browse_seek("akce=413");
+  Vyber.info.volba.onclick; Ucastnici.focus;
+}
+# ================================================================================================== VÝBĚR
+panel Vyber [,,,543] {type:'right', title:'Výběr akce'
+  use info: form _akce [12,4,,],
+  menu m {type:'left', // active:m.rok.loni
+    menu rok {title:'Volba roku',type:'group'
+      item letos {title:'2010',par:°{rok:'2010'} }
+      item loni {title:'2009',par:°{rok:'2009'} }
+      item {title:'2008',par:°{rok:'2008'} }
+      item {title:'2007',par:°{rok:'2007'} }
+      proc onclick (i) {
+        info.seznam.selected('clear'); the_akce.set(0); the_akce_ms.set(''); the_akce_ma.set(0);
+        akce_roku(i.par.rok)
+      }
+    }
+  }
+  proc akce_roku(rok){
+    info.seznam.browse_load(conc('rok=',rok,' AND akce BETWEEN 301 AND 598'));
+    info.fill('Vyber akci ...','')
+  }
+  # ------------------------------------------------------------------------------------------------ _akce
+  # formulář pro výběr akce pro další práci
+  form _akce [,,640,50] {
+    button volba [550,10,100,16] { title:'Zapamatovat akci', style:'display:block;zIndex:2',
+      proc onclick() {
+        seznam.browse_key; the_akce.set(seznam.browse_key);
+        set_cookie("ys_akce_id",the_akce.get);
+        the_akce_ma.set(seznam.ms_akce.get); the_akce_ms.set(seznam.ms_source.get);
+        seznam.selected('clear'); seznam.selected('set',the_akce.get);
+        Vyber.info.fill(conc('Akce ',seznam.akce.get,' roku ',seznam.rok.get,' - ',seznam.nazev.get),'');
+    }}
+    browse seznam [0,50,200,500] { rows:30, qry_rows:1,
+      show id [,,30,] {data:uakce.id_uakce}
+      show rok {data:uakce.rok}
+      show ms_source [,,10,] {data:uakce.ms_source}
+      show ms_akce [,,30,] {data:uakce.ms_akce}
+      show akce [,,30,] {title:'akce', data:uakce.akce, format:'rs+q*'}
+      show nazev [,,170,] {title:'název', data:uakce.nazev_akce, format:'sq*'}
+      proc onsubmit() { volba.onclick() }
+    }
+    label head [0,0,680,50] { title:'' }
+    label note [200,50,480,550] { title:'' }
+    proc fill(x,y) {
+      [ x; head.set(conc("<div class='CSection CMenu'><h3 class='CTitle'>",x,"</h3></div>")) ];
+      [ y; note.set(y) ]
+    }
+  }
+}
+# ================================================================================================== VÝBĚR
+panel Ucastnici [,,,543] {type:'plain', title:'Účastníci'
+  use u: form _ucast [4,0,,],
+#   use p: form _par [240,50,,],
+  proc onfocus(){
+    u.head.set(Vyber.info.head.get);
+    u.b.browse_load(conc("mk.source='",the_akce_ms.get,"' AND mk.akce=",the_akce_ma.get));
+    u.b.browse_focus; u.b.raise('onrowclick')
+  }
+  proc u.b.onrowclick() {
+    copy_by_name(u.b,u); u.d.browse_fill(u.b.deti.get); u.s.browse_fill(u.b.skup.get);
+  }
+  proc u.ulozit.onclick() {
+    var zmena_jmen: number
+    [ zmena_jmen.set(0); or(u.jmeno.changed,u.jmeno_m.changed,u.jmeno_z.changed); zmena_jmen.set(1) ];
+    u.mk.key(u.b.key_kurs.get); [ u.mk.save; u.mk.load ];
+    u.mp.key(u.b.key_pary.get); [ u.mp.save; u.mp.load ];
+    zmena_jmen.get; u.b.browse_seek
+  | copy_by_name(u,u.b)
+  }
+  # ------------------------------------------------------------------------------------------------ _ucast
+  form _ucast [,,200,50] { css:'ds_form'
+    label head [0,0,890,50]  { title:'' }
+    label [53,48,,] {title:"<img src='img/ms1.png'>"}
+    view mk:  table ms_kurs
+    view mp:  table ms_pary {join:'ON mp.source=mk.source AND mp.cislo=mk.cislo'}
+    view md:  table ms_deti {join:'ON md.source=mk.source AND md.cislo=mp.cislo'}
+    view mkd: table ms_kursdeti {join_type:'LEFT', join:'ON mkd.source=mk.source AND mkd.cislo=mp.cislo AND mkd.akce=mk.akce'}
+    view mks: table ms_kurs {join_type:'LEFT',
+      join:'ON mks.source=mk.source AND mks.akce=mk.akce AND mks.skupina=mk.skupina AND mks.cislo!=mk.cislo'}
+    view mps: table ms_pary {join:'ON mps.source=mks.source AND mps.cislo=mks.cislo'}
+    browse d [610,244,200,200] { rows:5
+      show id_deti
+      show jmeno  [,,90,] {title:'Děti'}
+      show rodcis [,,80,]
+    }
+    browse s [610,360,200,200] { rows:3
+      show sislo
+      show jmeno [,,170,] {title:'Skupinka'}
+    }
+    browse b [0,50,200,500] { rows:20, qry_rows:1, group_by:'mp.cislo'
+      // klíče
+      show key_kurs {data:mk.id_kurs}
+      show key_pary {data:mp.cislo}
+      show key_skup {data:mks.cislo}
+      // zobrazení
+#       show skupina [,,40,] {title:'skup', data:mk.skupina, format:'sq=r'}
+      show [,,200,] {title:'jméno', expr:"CONCAT(mp.jmeno,' ',mp.jmeno_m,' a ',mp.jmeno_z)", format:'s+q*'}
+#       show jmeno_m [,,50,] {title:'jméno', data:mp.jmeno_m}
+      // pary - načtené a nezobrazené položky
+      show jmeno      {data:mp.jmeno}                   show jmeno_m    {data:mp.jmeno_m}
+      show jmeno_z    {data:mp.jmeno_z}                 show svatba     {data:mp.svatba}
+      show adresa     {data:mp.adresa}                  show psc        {data:mp.psc}
+      show mesto      {data:mp.mesto}                   show telefon    {data:mp.telefon}
+      show email      {data:mp.email}                   show poznamka   {data:mp.poznamka}
+      show datsvatba  {data:mp.datsvatba}               show spz        {data:mp.spz}
+      show prijmeni_m {data:mp.prijmeni_m}              show prijmeni_z {data:mp.prijmeni_z}
+      show rodcislo_m {data:mp.rodcislo_m}              show rodcislo_z {data:mp.rodcislo_z}
+      show clen_m     {data:mp.clen_m}                  show clen_z     {data:mp.clen_z}
+      show cirkev_m   {data:mp.cirkev_m}                show cirkev_z   {data:mp.cirkev_z}
+      show vzdelani_m {data:mp.vzdelani_m}              show vzdelani_z {data:mp.vzdelani_z}
+      show zamest_m   {data:mp.zamest_m}                show zamest_z   {data:mp.zamest_z}
+      show zajmy_m    {data:mp.zajmy_m}                 show zajmy_z    {data:mp.zajmy_z}
+      show jazyk_m    {data:mp.jazyk_m}                 show jazyk_z    {data:mp.jazyk_z}
+      show aktivita_m {data:mp.aktivita_m}              show aktivita_z {data:mp.aktivita_z}
+      // kurs - načtené a nezobrazené položky
+      show funkce     {data:mk.funkce}                  show skupina    {data:mk.skupina}
+      show skup       {expr:"GROUP_CONCAT(DISTINCT mps.cislo,'|',mps.jmeno SEPARATOR '|')"}
+      // děti - načtené a nezobrazené položky
+      show deti       {expr:"GROUP_CONCAT(DISTINCT md.id_deti,'|',md.jmeno,'|',md.rodcislo SEPARATOR '|')"}
+      show kursdeti   {expr:"GROUP_CONCAT(DISTINCT mkd.id_kursdeti,'|',mkd.jmeno SEPARATOR '|')"}
+    }
+    label             [240,50,100,] {title:'Příjmení páru'}
+    field jmeno       [240,65,100,] {data:mp.jmeno}
+    label             [353,50,100,] {title:'Jméno muže'}
+    field jmeno_m     [353,65,100,] {data:mp.jmeno_m}
+    label             [465,50,100,] {title:'Jméno ženy'}
+    field jmeno_z     [464,65,100,] {data:mp.jmeno_z}
+    label             [576,50,26,] {title:'Muž'}
+    field _vek_m      [582,65,19,] {format:'o'}
+    label             [604,50,11,] {title:'Žena'}
+    field _vek_z      [608,65,20,] {format:'o'}
+    label             [634,50,28,] {title:'Spolu'}
+    field _spolu      [641,65,26,] {format:'o'}
+    label             [668,50,38,] {title:'Svatba'}
+    field svatba      [668,65,36,] {data:mp.svatba}
+    label             [715,50,38,] {title:'Funkce'}
+    select funkce     [715,65,50,] {type:'map', data:mk.funkce, options:ms_akce_funkce.zkratka }
+    label             [771,50,38,] {title:'Skup.'}
+    field skupina     [770,65,35,] {data:mk.skupina, format:'r'}
+    label             [240,83,100,] {title:'Ulice'}
+    field adresa      [240,98,126,] {data:mp.adresa}
+    label             [373,83,36,] {title:'Psč'}
+    field psc         [373,98,36,] {data:mp.psc}
+    label             [416,83,100,] {title:'Město'}
+    field mesto       [415,98,114,] {data:mp.mesto}
+    label             [240,122,37,] {title:'Telefon'}
+    field telefon     [281,121,525,] {data:mp.telefon}
+    label             [240,146,33,] {title:'e-mail'}
+    field email       [281,146,525,] {data:mp.email}
+    label             [240,166,33,] {title:'Poznámka'}
+    edit poznamka     [241,181,491,52] {data:mp.poznamka}
+    label             [746,169,66,] {title:'Datum svatby'}
+    field datsvatba   [745,184,63,] {data:mp.datsvatba}
+    label             [745,204,38,] {title:'Spz'}
+    field spz         [746,219,62,] {data:mp.spz}
+    label             [287,245,44,] {title:'Muž'}
+    field prijmeni_m  [329,244,108,] {data:mp.prijmeni_m}
+    label             [449,245,31,] {title:'Žena'}
+    field prijmeni_z  [493,244,108,] {data:mp.prijmeni_z}
+    label             [240,267,44,] {title:'Rodné č.'}
+    field rodcislo_m  [286,266,73,] {data:mp.rodcislo_m}
+    label             [363,267,37,] {title:'YMCA'}
+    check clen_m      [407,264,36,] {title:' ', data:mp.clen_m}
+    field rodcislo_z  [451,266,73,] {data:mp.rodcislo_z}
+    check clen_z      [571,264,28,] {title:' ', data:mp.clen_z}
+    label             [240,288,44,] {title:'Církev'}
+    select cirkev_m   [286,287,152,] {type:'map', data:mp.cirkev_m, options:ms_akce_cirkev.zkratka}
+    select cirkev_z   [451,287,152,] {type:'map', data:mp.cirkev_z, options:ms_akce_cirkev.zkratka}
+    label             [240,309,44,] {title:'Vzdělání'}
+    select vzdelani_m [286,308,152,] {type:'map', data:mp.vzdelani_m, options:ms_akce_vzdelani.zkratka}
+    select vzdelani_z [451,308,152,] {type:'map', data:mp.vzdelani_z, options:ms_akce_vzdelani.zkratka}
+    label             [240,330,44,] {title:'Zaměst.'}
+    field zamest_m    [286,329,152,] {data:mp.zamest_m}
+    field zamest_z    [451,329,152,] {data:mp.zamest_z}
+    label             [240,351,44,] {title:'Zájmy'}
+    field zajmy_m     [286,350,152,] {data:mp.zajmy_m}
+    field zajmy_z     [451,350,152,] {data:mp.zajmy_z}
+    label             [240,372,44,] {title:'Jazyk'}
+    field jazyk_m     [286,371,152,] {data:mp.jazyk_m}
+    field jazyk_z     [451,371,152,] {data:mp.jazyk_z}
+    label             [240,393,44,] {title:'Aktivita'}
+    field aktivita_m  [286,392,152,] {data:mp.aktivita_m}
+    field aktivita_z  [451,392,152,] {data:mp.aktivita_z}
+    // příkazy
+    button ulozit     [756,476,,] {title:'Uložit'}
+    // stavový řádek
+    label             [600,12,50,] {title:'pár:'}
+    field key_pary    [640,12,50,] {data:mp.cislo}
+    label             [710,12,50,] {title:'kurs:'}
+    field key_kurs    [750,12,50,] {data:mk.id_kurs}
+    // počítané položky
+    proc onload() {
+      _vek_m.set(rc2roky(rodcislo_m.get));
+      _vek_z.set(rc2roky(rodcislo_z.get));
+      _spolu.set(roku(datsvatba.get,svatba.get));
+    }
+  }
+}
+# ================================================================================================== MAPS
+map ms_akce_funkce:   table _cis {where:"druh='ms_akce_funkce'",   order:'poradi', key_id:'data'}
+map ms_akce_cirkev:   table _cis {where:"druh='ms_akce_cirkev'",   order:'poradi', key_id:'data'}
+map ms_akce_vzdelani: table _cis {where:"druh='ms_akce_vzdelani'", order:'poradi', key_id:'data'}

@@ -8,7 +8,7 @@ menu ys { type:'main', active:* //ys.pok
   tabs eko {title:"Ekonomika", _sys:'*',  include:'onclick', active:* }
   tabs ds {title:"Dům", _sys:'dum', include:'onclick', active:* }
 ##  tabs chl {title:"Chlapi",  include:'onclick' }
-  tabs akce {title:"Akce", _sys:'akc', include:'onclick', active:* }
+  tabs akce {title:"Akce", _sys:'akc', include:'onclick', active:*, skill:'ya' }
   tabs lide {title:"Lidé", _sys:'lid', include:'onclick' }
   tabs syst {title:"Systém", _sys:'sys',  include:'onclick,ezer2.syst', active:* }
   tabs doc  {title:"Nápověda", _sys:'nap',  include:'onclick,ezer2.help' }
@@ -155,7 +155,8 @@ table ms_pary { key_id:'cislo'
   number lxx1
 }
 
-table ms_deti { key_id:'cislo'
+table ms_deti { key_id:'id_deti'
+  number id_deti
   number cislo
   text jmeno
   number rodcislo

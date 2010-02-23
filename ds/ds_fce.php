@@ -881,7 +881,7 @@ function ds_rozpis_faktura($listr,$listf,$typ,$order,$x,$polozky,$platce,$zaloha
                  "Zaregistrované MV ÈR 25.4.2001{}pod è.j. VS/1-1/46 887/01-R{}".
                  "IÈ: 26531135  DIÈ: CZ26531135";
   $dum_setkani=  "Dolní Albeøice 1, 542 26 Horní Maršov{}".
-                 "telefon: 499 874 152, 736 537 122{}dum@setkani.org{}www.setkani.alberice.org";
+                 "telefon: 499 874 152, 736 537 122{}dum@setkani.org{}www.alberice.setkani.org";
   // ------------------------------------------------------------------- vytvoøení listu s rozpisem
   // pojmenované øádky (P,Q,R,S)
   $P= 10;               // výèet položek
@@ -1065,7 +1065,7 @@ function ds_faktura($list,$typ,$order,$polozky,$platce,$zaloha=100,$pata='') {  
                  "Zaregistrované MV ÈR 25.4.2001{}pod è.j. VS/1-1/46 887/01-R{}".
                  "IÈ: 26531135  DIÈ: CZ26531135";
   $dum_setkani=  "Dolní Albeøice 1, 542 26 Horní Maršov{}".
-                 "telefon: 499 874 152, 736 537 122{}dum@setkani.org{}www.setkani.alberice.org";
+                 "telefon: 499 874 152, 736 537 122{}dum@setkani.org{}www.alberice.setkani.org";
   // pojmenované øádky (P,Q,R,S)
   $P= 22;               // výèet položek
   $Q= 36;               // poslední položka

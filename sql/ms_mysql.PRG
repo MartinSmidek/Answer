@@ -21,12 +21,12 @@ if all_in_one
   endif
 endif
 
-* mysql_export(1,"ms-lida","L","DETI")
+mysql_export(1,"ms-lida","L","DETI")
 * mysql_export(1,"ms-lida","L","DRUHAKCE")
 * mysql_export(1,"ms-lida","L","KURS")
 * mysql_export(1,"ms-lida","L","KURSDETI")
 * mysql_export(1,"ms-lida","L","KURSPECE")
-mysql_export(1,"ms-lida","L","PARY")
+* mysql_export(1,"ms-lida","L","PARY")
 * mysql_export(1,"ms-lida","L","PECE")
 * mysql_export(1,"ms-lida","L","PORAAKCE")
 *
@@ -99,6 +99,8 @@ procedure mysql_export
     do case
     case mdbf == 'kurs'
       klic = chr(10) + "`id_kurs` int(11) NOT NULL AUTO_INCREMENT,"
+    case mdbf == 'deti'
+      klic = chr(10) + "`id_deti` int(11) NOT NULL AUTO_INCREMENT,"
     case mdbf == 'kursdeti'
       klic = chr(10) + "`id_kursdeti` int(11) NOT NULL AUTO_INCREMENT,"
     endcase
@@ -160,6 +162,8 @@ procedure mysql_export
     do case
     case mdbf == 'kurs'
       mtext = "," + chr(10) + "PRIMARY KEY (`id_" + mdbf + "`)" + chr(10)
+    case mdbf == 'deti'
+      mtext = "," + chr(10) + "PRIMARY KEY (`id_" + mdbf + "`)" + chr(10)
     case mdbf == 'kursdeti'
       mtext = "," + chr(10) + "PRIMARY KEY (`id_" + mdbf + "`)" + chr(10)
     endcase
@@ -184,6 +188,8 @@ procedure mysql_export
     klic = ''
     do case
     case mdbf == 'kurs'
+      klic = "DEFAULT, "
+    case mdbf == 'deti'
       klic = "DEFAULT, "
     case mdbf == 'kursdeti'
       klic = "DEFAULT, "
@@ -210,9 +216,8 @@ procedure mysql_export
           mtext = mtext + "'" + alltrim(str(&marray(nCount,1))) + iif(source=='L','0','1') + "'"
       case (f_id=='pary.cirkev_m') or (f_id=='pary.cirkev_z')
         * církve
-        *SELECT count(*),left(group_concat(distinct cirkev_m),50),ccirkev_m FROM `ms_pary`
-        *WHERE source='L'
-        *GROUP BY ccirkev_m ORDER BY cirkev_m
+        *   SELECT count(*),left(group_concat(distinct cirkev_m),50),ccirkev_m FROM `ms_pary`
+        *   WHERE source='L' GROUP BY ccirkev_m ORDER BY cirkev_m
         cc= u(&marray(nCount+2,1))
         c= 0
         do case

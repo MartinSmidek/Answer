@@ -149,15 +149,16 @@ function rok_struktura($par) { #trace();
           WHEN LEFT(md,5)='50122' THEN 'potraviny'
           WHEN LEFT(md,5)='50221' THEN 'energie'
           WHEN LEFT(md,4)='5112' THEN 'opravy'
+          WHEN LEFT(md,3)='546' THEN 'dary'
           ELSE 'ostatní' END) ";
-  $qry= "SELECT a.kapitola as kap, $ucel as ucel,
+  $qry= "SELECT a.kapitola as kap, $ucel as ucel,akce,id_udenik,
     /*count(*) as pocet,*/
     sum(Castka) as castka
     /*,group_concat(distinct md) as ucty,
     group_concat(distinct o.nazev) as nazvy*/
     FROM udenik AS d
-    LEFT JOIN uosnova AS o ON ucet=md AND o.rok=left(id_udenik,4)
-    LEFT JOIN uakce AS a ON a.rok=left(id_udenik,4) AND akce=d.Cinnost
+    /*LEFT*/ JOIN uosnova AS o ON ucet=md AND o.rok=left(id_udenik,4)
+    /*LEFT*/ JOIN uakce AS a ON a.rok=left(id_udenik,4) AND akce=d.Cinnost
     WHERE id_udenik BETWEEN {$rok}00000 AND {$rok}99999 $and
     GROUP BY kapitola,ucel";
   $res= mysql_qry($qry);
@@ -176,7 +177,7 @@ function rok_struktura($par) { #trace();
           $r[$u->kap]->M= round($u->castka,0);
       }
     }
-    else fce_error("{$u->kap} je neznámá kapitola");
+    else fce_error("{$u->kap} je neznámá kapitola (akce={$u->akce},denik={$u->id_udenik})");
   }
   // doplnění B podle Bx
   foreach ($r as $i=>$d) {
@@ -438,8 +439,11 @@ function proj_print_x($tab,$depth=0) { #trace();
 # -------------------------------------------------------------------------------------------------- proj_export
 function proj_export($rok,$co) { #trace();
   global $proj_tab, $ucty_tab, $tisice, $ucet_month_min, $ucet_month_max, $ucet_month_max_odhad;
+  global $clmn_tab_subst;
   $clmn_tab= array('MS/MPSV-MS'=>'MPSV'
                   ,'MS/A1P1'=>'MŠ1','MS/A1P2A'=>'MŠ2a','MS/A1P2T'=>'MŠ2t','MS/A1P3'=>'MŠ3'
+                  ,'MS/A1A'=>'MS.MŠ','MS/A1P'=>'MS.MŠ','MS/A1T'=>'MS.MŠ','MS/A1V'=>'MS.MŠ'
+                  ,'DS/A1A'=>'DS.MŠ','DS/A1P'=>'DS.MŠ','DS/A1T'=>'DS.MŠ','DS/A1V'=>'DS.MŠ'
                   ,'MS/'=>'MS'
                   ,'DS/MPSV-DS'=>'DS.MPSV'
                   ,'DS/A1P2A'=>'MŠ'
@@ -447,6 +451,21 @@ function proj_export($rok,$co) { #trace();
                   ,'DS/'=>'DS'
                   ,'DS/Racek'=>'DS/Racek'
                   ,'x/'=>'');
+  $clmn_tab= array('MS/MPSV-MS'=>'MPSV'
+                  ,'MS/MŠ'=>'MS.MŠ'
+                  ,'DS/MŠ'=>'DS.MŠ'
+                  ,'MS/'=>'MS'
+                  ,'DS/MPSV-DS'=>'DS.MPSV'
+                  ,'DH/'=>'DH'
+                  ,'DS/'=>'DS'
+                  ,'DS/Racek'=>'DS/Racek'
+                  ,'x/'=>'');
+  $clmn_tab_subst= array(
+                   'MS/A1P1'=>'MS/MŠ','MS/A1P2A'=>'MS/MŠ','MS/A1P2T'=>'MS/MŠ','MS/A1P3'=>'MS/MŠ'
+                  ,'DS/A1P2A'=>'DS/MŠ'
+                  ,'MS/A1A'=>'MS/MŠ','MS/A1P'=>'MS/MŠ','MS/A1T'=>'MS/MŠ','MS/A1V'=>'MS/MŠ'
+                  ,'DS/A1A'=>'DS/MŠ','DS/A1P'=>'DS/MŠ','DS/A1T'=>'DS/MŠ','DS/A1V'=>'DS/MŠ'
+                  );
   $ucty_tab= array();
   $proj_tab= array(
 //
@@ -650,6 +669,7 @@ function proj_print($tab,$depth=0) { #trace();
 # $clmn_tab= array('*/*'
 function naklad_vzor($rok,$vzor,$clmn_tab) { #trace();
   global $ucet_month_min, $ucet_month_max, $ucet_month_max_odhad;
+  global $clmn_tab_subst;
   foreach ($clmn_tab as $indx=>$ii) $suma[$indx]= 0;
   if ( $vzor ) {
     $qry= "SELECT sum(castka) as suma,Zakazka,Stredisko,min(id_udenik) as id,
@@ -659,7 +679,7 @@ function naklad_vzor($rok,$vzor,$clmn_tab) { #trace();
            GROUP BY Zakazka,Stredisko";
     $res= mysql_qry($qry);
     while ( $res && $u= mysql_fetch_object($res) ) {
-      $indx= "{$u->Zakazka}/{$u->Stredisko}";
+      $indx= strtr("{$u->Zakazka}/{$u->Stredisko}",$clmn_tab_subst);
       if ( !isset($suma[$indx]) )
          fce_error("kombinace Zakazka/Stredisko=$indx - s tím se nepočítá (id_udenik={$u->id})/c");
       $suma[$indx]= $u->suma;

@@ -15,6 +15,7 @@ $names= array(
  'blur' => (object)array('op'=>'fm'),
  'browse_active' => (object)array('op'=>'fm'),
  'browse_count' => (object)array('op'=>'fm'),
+ 'browse_fill' => (object)array('op'=>'fm'),
  'browse_focus' => (object)array('op'=>'fm'),
  'browse_init' => (object)array('op'=>'fm'),
  'browse_key' => (object)array('op'=>'fm'),
