@@ -68,7 +68,7 @@ table ms_druhakce {
   number akce
   number druh
   number poradatel
-  date datum_od
+  date datum_od        // SQL tvar se používá v ys.akce
   date datum_do
   text misto
 }
@@ -79,7 +79,7 @@ table ms_kurs { key_id:'id_kurs'
   number skupina
   number funkce
   text aktivita
-  date datplatby
+  date datplatby        { sql_pipe:'sql_date1'}
   number zpusobplat
   text budova
   text pokoj
@@ -96,7 +96,7 @@ table ms_kurs { key_id:'id_kurs'
   number pouze
   number akce
   number platba
-  text cstrava_cel
+  text cstrava_cel      // číslice jsou seřazeny jako počty snídaní,obědů,večeří po dnech
   text cstrava_pol
   number platba1
   number platba2

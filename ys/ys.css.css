@@ -3,6 +3,12 @@
 .dia {
   position:absolute; text-align:center; }
 
+/* obecné barvy písma */
+.cervena { color:#f00; }
+.zelena  { color:#0f0; }
+.modra   { color:#00f; }
+.cerna   { color:#000; }
+
 /* úpravy standardu */
 #kuk {
   height:220px; }

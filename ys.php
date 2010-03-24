@@ -8,6 +8,7 @@ require "$root.inc";
 $js= array(
   'ezer2/client/licensed/clientcide.js',
   'ezer2/client/licensed/mootools/asset.js',
+  'ezer2/client/licensed/mootools/slider.js',
   'ezer2/client/lib.js',
   'ezer2/client/ezer_fdom1.js',
   'ezer2/client/ezer.js',

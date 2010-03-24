@@ -220,7 +220,7 @@ group ucastnici {
     each(seznam,rodina_add1);
   }
   var pall: object
-  proc rodina_add1(p) {
+  proc rodina_add1(p,i) {
     p.chck.get; //echo("rodina=",p.info.get);
     pall.set(p.all.get); //echo('-----------------',pall.get('jmeno'));
     per.init;
@@ -348,7 +348,7 @@ group ucastnici {
             znacka.set(ask('cz2ascii',znacka.get))
           }
         }
-        proc rodina(p) {
+        proc rodina(p,i) {
           last.set(L.add);
           [ eq(znacka.get,''); znacka.set(substr(p.prijmeni,0,3)) ];
           popis.set(conc(p.prijmeni,' ',p.jmeno,', ',p.mesto,', ',p.stari));
@@ -358,7 +358,7 @@ group ucastnici {
         // nastavení výběru
         check vse [4,0,80,16] { title:'všichni', format:'t'
           proc onchange() { each(L,nastav) }
-          proc nastav (x) { x.chck.set(form.vse.get) }
+          proc nastav (x,i) { x.chck.set(form.vse.get) }
         }
         list L [0,23,300,200] {rows:22      // anonymní group
           check chck [4,0,50,16] { title:' ', format:'t'  /*, proc onchange() { echo('jo/ne') }*/ }

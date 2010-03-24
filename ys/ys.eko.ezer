@@ -101,7 +101,7 @@ panel den [,,,543] {type:'right', title:'Účetní deník',_sys:'den'
     field penize [561,0,70,17] { format:'r' }
     view d: table udenik,
     view a: table uakce {join_type:'left', join:'ON a.rok=left(id_udenik,4) AND akce=d.Cinnost'},
-    browse denik [0,25,700,500] { rows:24, qry_rows:2
+    browse denik [0,25,700,500] { type:'smart', rows:24, qry_rows:2
       show id     [,,  0,] {                 data:d.id_udenik },
       show datum  [,, 70,] { title:'datum',  data:d.Datum,           format:'rs-q' },
       show kap    [,, 20,] { title:'kap',    data:a.kapitola,        format:'sq' },
@@ -380,7 +380,7 @@ panel akc [,,,543] {type:'right', title:'Akce',_sys:'*'
     proc onfocus () { a.seznam.browse_load(conc('rok=',akce_rok.get)) }
     # ---------------------------------------------------------------------------------------------- _akce
     form _akce [,,700,500] {
-      browse seznam [0,0,700,500] { rows:24, qry_rows:2
+      browse seznam [0,0,700,500] { type:'smart', rows:24, qry_rows:2
         show id     [,,  0,] {                data:uakce.id_uakce },
         show rok    [,,  0,] {                data:uakce.rok },
         show typ    [,, 30,] { title:'typ',   data:uakce.typ,        format:'rsq' },
