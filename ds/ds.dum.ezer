@@ -290,7 +290,7 @@ group ucastnici {
       proc onclick () { osoba_new_child} }
     button [287,0,50,18] { title:'- účastník', help:'odebrání hosta označeného oranžovou šipkou'
       proc onclick () { osoba_del(seznam.id_osoba.get)} }
-    browse seznam [0,30,,] { rows:14
+    browse seznam [0,30,,] { /*type:'smart',*/ rows:14
       show rodina [,,25,] { title:'rod', data:tab.ds_osoba.rodina, format:'s+' }
       show prijmeni [,,70,] { title:'příjmení', data:tab.ds_osoba.prijmeni, format:'s' }
       show jmeno    [,,50,]  { title:'jméno', data:tab.ds_osoba.jmeno, format:'s' }
