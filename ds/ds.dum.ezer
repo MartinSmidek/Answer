@@ -362,7 +362,7 @@ group ucastnici {
         }
         list L [0,23,300,200] {rows:22      // anonymní group
           check chck [4,0,50,16] { title:' ', format:'t'  /*, proc onchange() { echo('jo/ne') }*/ }
-          label info [23,4,300,16]
+          label info [23,4,300,16] {style:'white-space:nowrap'}
           var all: object
         }
       }
