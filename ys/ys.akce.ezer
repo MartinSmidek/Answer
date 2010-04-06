@@ -86,7 +86,8 @@ panel Ucastnici [,,,543] {type:'plain', title:'Účastníci'
   # ------------------------------------------------------------------------------------------------ _ucast
   form _ucast [,,200,50] { css:'ds_form'
     label head [0,0,890,50]  { title:'' }
-    label [53,48,,] {title:"<img src='img/ms1.png'>"}
+    label [0,40,820,465] { css:'ae_work'}
+    label [51,48,,] {title:"<img src='img/ms1.png'>" }
     view mk:  table ms_kurs
     view ma:  table ms_druhakce {join:'ON ma.akce=mk.akce'}
     view mp:  table ms_pary {join:'ON mp.source=mk.source AND mp.cislo=mk.cislo'}
@@ -107,7 +108,7 @@ panel Ucastnici [,,,543] {type:'plain', title:'Účastníci'
 #         b.browse_seek(conc('mp.cislo=',cislo.get))
       }
     }
-    browse b [0,50,200,500] {type:'smart', buf_rows:120, rows:19, qry_rows:1, group_by:'mp.cislo'
+    browse b [4,50,200,500] {type:'smart', buf_rows:120, rows:19, qry_rows:1, group_by:'mp.cislo'
       proc onclick() {
         xfunkce.width; xfunkce.width(0);  skupina.width(33);
       | skupina.width; xfunkce.width(33); skupina.width(0);
@@ -196,7 +197,7 @@ panel Ucastnici [,,,543] {type:'plain', title:'Účastníci'
     field prijmeni_m  [329,244,108,] {data:mp.prijmeni_m}
     label             [449,245,31,] {title:'Žena'}
     field prijmeni_z  [493,244,108,] {data:mp.prijmeni_z}
-    label             [240,267,44,] {title:'Rodné č.'}
+    label             [240,267,50,] {title:'Rodné č.'}
     field rodcislo_m  [286,266,73,] {data:mp.rodcislo_m}
     label             [363,267,37,] {title:'YMCA'}
     field cislo_m     [394,265,42,] {data:mp.cislo_m, format:'r'}
@@ -224,7 +225,7 @@ panel Ucastnici [,,,543] {type:'plain', title:'Účastníci'
     select clen_z     [512,414,57,] {type:'map', data:mp.clen_z, options:ms_akce_clen.zkratka}
     // provoz kurzu
     select pouze      [400,414,96,] {type:'map', data:mk.pouze, options:ms_akce_pouze.zkratka}
-    label [50,432,100,] {title:'Lůž Přis Dnů Koč'}
+    label [47,432,100,] {title:'Lůž. Při. Dnů Koč'}
     field luzka       [53,447,11,] {data:mk.luzka}
     field pristylky   [73,447,11,] {data:mk.pristylky}
     field pocetdnu    [94,447,11,] {data:mk.pocetdnu}
