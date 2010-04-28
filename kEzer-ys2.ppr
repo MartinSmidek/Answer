@@ -11,11 +11,11 @@ FileFormat=0
 ProjectFilesOnly=0
 [Project tree]
 kEzer-ys2
-	+konverze
+	-konverze
 		sql\backup_setkani.bat
 		sql\sql\ms-milos\indexy.sql
 		sql\ms_mysql.PRG
-	+ezer2
+	-ezer2
 		+libr
 			ezer2\ezer2.help.ezer
 			ezer2\ezer2.syst.ezer
@@ -50,10 +50,10 @@ kEzer-ys2
 			ezer2\wiki\guide.wiki
 			ezer2\wiki\meta.wiki
 			ezer2\wiki\todo.wiki
-	-comp
+	+comp
 		ezer2\comp.php
 		ezer2\comp.css
-	+doc
+	-doc
 		wiki\todo.wiki
 		wiki\dokumentace.wiki
 		docs\2008_ciselnik_akci.txt
@@ -61,7 +61,7 @@ kEzer-ys2
 		..\..\..\..\WINDOWS\system32\drivers\etc\hosts
 		..\..\..\Apache\conf\extra\httpd-vhosts-ezer.conf
 		..\..\..\Apache\logs\ys2-error.log
-	+test
+	-test
 		test\$.ezer
 		test\test.css
 		test\test.elem.bro.ezer
@@ -102,6 +102,7 @@ kEzer-ys2
 	+ys
 		ys\$.ezer
 		ys\ys.akce.ezer
+		ys\ys.akce.tisk.ezer
 		ys\ys.css.css
 		ys\ys.doc.ezer
 		ys\ys.ds.ezer
@@ -121,7 +122,7 @@ kEzer-ys2
 		ys\ys_fce.php
 		ys\ys_lide.php
 		ys\ys_ucet.php
-	+ds
+	-ds
 		ds\ds.css.css
 		ds\ds.dum.ezer
 		ds\ds.ezer
@@ -160,46 +161,40 @@ kEzer-ys2
 11=ys\ys_ucet.php
 12=ys\ys_fce.php
 13=ys\ys_akce.php
-14=ys\ys_fce.js
-15=ys\$.ezer
-16=ds\fce.js
-17=ys\ys.akce.ezer
-18=ys\ys.eko.ezer
-19=ezer2\client\appf.css
-20=ds\ds.dum.ezer
-21=ys.inc
-22=ezer2\wiki\todo.wiki
-23=\\192.168.1.205\www\ezer\www-ys\2\ys.inc
+14=ys\$.ezer
+15=ys\ys.akce.ezer
+16=ys\ys.akce.tisk.ezer
+17=test\test.elem.ezer
 [Selected Project Files]
 Main=
-Selected=ezer2\server\ezer2.php
+Selected=ezer2\server\comp2.php
 [ezer2\server\comp2def.php]
-TopLine=203
-Caret=36,216
+TopLine=190
+Caret=85,218
 [ezer2\server\comp2.php]
-TopLine=1072
-Caret=85,1112
-BookMark1=22,1118
-Mark1=10,790
-Mark2=69,912
-Mark3=20,1126
-Mark4=1,825
-Mark5=19,935
-Mark6=25,369
-Mark7=61,656
-Mark8=73,707
-Mark9=51,514
+TopLine=97
+Caret=64,133
+BookMark2=1,1210
+BookMark8=1,547
+Mark1=15,1343
+Mark2=1,1212
+Mark3=11,1370
+Mark4=8,1201
+BookMark3=15,1342
+Mark5=1,290
+Mark6=1,320
+BookMark1=26,930
 [ezer2\server\ezer2.php]
 TopLine=196
-Caret=17,230
+Caret=16,237
 Mark1=60,1093
 Mark2=32,1104
 Mark3=60,1079
 Mark4=37,218
 [ezer2\server\ae_slib.php]
-TopLine=1039
-Caret=89,1080
-Mark1=10,350
+TopLine=127
+Caret=107,188
+Mark1=10,357
 [ezer2\client\dbg.js]
 TopLine=320
 Caret=26,352
@@ -210,77 +205,49 @@ TopLine=402
 Caret=93,431
 Mark1=88,363
 [ezer2\client\ezer_fdom1.js]
-TopLine=1
-Caret=1,1
+TopLine=124
+Caret=61,153
 [ezer2\client\ezer.js]
-TopLine=3649
-Caret=12,3705
-BookMark3=41,5325
-BookMark4=14,3542
-Mark1=30,4100
-Mark2=17,4120
-Mark3=17,4130
-Mark4=96,3779
-Mark5=57,3550
-Mark6=43,3585
-Mark7=21,3412
-Mark8=43,3677
-Mark9=21,3473
-Mark10=22,4557
-BookMark1=1,3002
-BookMark2=15,3684
+TopLine=5470
+Caret=1,5502
+BookMark1=38,4528
+BookMark3=3,4994
+BookMark2=54,4980
 [ezer2\client\ezer_fdom2.js]
-TopLine=1566
-Caret=1,1618
+TopLine=2602
+Caret=1,2619
 BookMark1=43,1605
 BookMark2=27,1040
 [..\..\..\Apache\logs\ys2-error.log]
 TopLine=100
-Caret=37,106
+Caret=83,139
 [ds\ds_fce.php]
-TopLine=240
-Caret=1,251
+TopLine=230
+Caret=59,256
 Mark1=65,337
 [ys\ys_ucet.php]
 TopLine=439
 Caret=41,445
 Mark1=41,180
 [ys\ys_fce.php]
-TopLine=178
+TopLine=143
 Caret=1,204
 [ys\ys_akce.php]
 TopLine=1
-Caret=68,22
-[ys\ys_fce.js]
-TopLine=1
-Caret=23,37
+Caret=53,30
 [ys\$.ezer]
-TopLine=22
-Caret=14,76
-[ds\fce.js]
+TopLine=1
+Caret=38,11
+[ys\ys.akce.ezer]
+TopLine=541
+Caret=69,585
+Mark1=9,270
+Mark2=1,84
+Mark3=33,308
+Mark4=64,134
+[ys\ys.akce.tisk.ezer]
+TopLine=1
+Caret=47,15
+[test\test.elem.ezer]
 TopLine=1
 Caret=1,1
-[ys\ys.akce.ezer]
-TopLine=35
-Caret=29,89
-Mark1=27,226
-[ys\ys.eko.ezer]
-TopLine=117
-Caret=39,124
-[ezer2\client\appf.css]
-TopLine=258
-Caret=53,312
-[ds\ds.dum.ezer]
-TopLine=309
-Caret=64,365
-BookMark1=29,335
-BookMark2=55,326
-[ys.inc]
-TopLine=1
-Caret=14,40
-[ezer2\wiki\todo.wiki]
-TopLine=1
-Caret=100,58
-[\\192.168.1.205\www\ezer\www-ys\2\ys.inc]
-TopLine=1
-Caret=63,6

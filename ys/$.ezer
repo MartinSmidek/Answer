@@ -8,16 +8,32 @@ menu ys { type:'main', active:* //ys.pok
   tabs eko {title:"Ekonomika", _sys:'*',  include:'onclick', active:* }
   tabs ds {title:"Dům", _sys:'dum', include:'onclick', active:* }
 ##  tabs chl {title:"Chlapi",  include:'onclick' }
-  tabs akce {title:"Akce", _sys:'akc', include:'onclick', active:*, skill:'ya' }
+  tabs akce {title:"Akce", _sys:'akce', include:'onclick', active:*, skill:'ya' }
   tabs lide {title:"Lidé", _sys:'lid', include:'onclick' }
-  tabs syst {title:"Systém", _sys:'sys',  include:'onclick,ezer2.syst', active:* }
+  tabs syst {title:"Systém", _sys:'sys',  include:'onclick,ezer2.syst', active:*, skill:'a'
+    panel nas {type:'right', title:'Nastavení', _sys:'nas', skill:'m'
+      menu {type:'left', active:*
+        menu {title:'Opravy dat',type:'group', _sys:'*'
+          item {title:'---', proc onclick (i) {
+            info.fill(conc(i.owner.title,' - ',i.title),' ');
+          }}
+          item {title:'Dokončení převodu z FoxPro', proc onclick (i) {
+            info.fill(conc(i.owner.title,' - ',i.title),' ');
+            confirm("Opravdu dokončit transformaci dat z FoxPro? Klíče 'id_pary' a 'id_akce' mohou být přepsány!");
+            info.fill('',ask('akce_foxpro_data'));
+          }}
+        }
+      }
+      use info: form right [12,4,,]
+    }
+  }
   tabs doc  {title:"Nápověda", _sys:'nap',  include:'onclick,ezer2.help' }
   tabs off  {title:"Odhlásit", type:'logoff' }
 //#   tabs test {title:"Test",  where:'http://ys2.ezer/test.html' }
 //#   tabs ys1  {title:"Pokladna/1",  where:'http://ys.ezer/anser.php?modul=ys_pokladna' }
   // univerzální procedury
   proc the_formsave (f,b) {
-    f.same; stop
+    f.same
   | f.key; f.save; f.load; b.browse_seek
   | f.insert; f.load;
     b.raise('onrowclick',b.browse_seek(conc(f.key_id,'=',f.key)))
@@ -26,8 +42,13 @@ menu ys { type:'main', active:* //ys.pok
 
 // univerzální formulář pro levostranné menu
 form right [,,700,50] {
-  label info [0,0,700,600]
-  proc fill(x,y) { info.set(conc("<div class='CSection CMenu'><h3 class='CTitle'>",x,"</h3>",y,"</div>")); }
+  label info [0,0,680,600] { title:'' }
+  label head [0,0,680,50]  { title:'' }
+  label note [0,50,680,550] { title:'' }
+  proc fill(x,y) {
+    [ x; head.set(conc("<div class='CSection CMenu'><h3 class='CTitle'>",x,"</h3></div>")) ];
+    [ y; note.set(y) ]
+  }
 }
 
 table _file_ {
@@ -40,6 +61,7 @@ table _file_ {
 
 table uakce { key_id:'id_uakce'
   number id_uakce
+  number id_akce
   text ms_source
   number ms_akce
   number rok
@@ -64,6 +86,7 @@ table _cis { key_id:'id_cis'
 }
 
 table ms_druhakce {
+  number id_akce
   text nazev
   number akce
   number druh
@@ -75,6 +98,8 @@ table ms_druhakce {
 
 table ms_kurs { key_id:'id_kurs'
   number id_kurs
+  number id_pary
+  number id_akce
   number cislo
   number skupina
   number funkce
@@ -106,13 +131,17 @@ table ms_kurs { key_id:'id_kurs'
 
 table ms_kursdeti { key_id:'id_kursdeti'
   number id_kursdeti
-  number cislo
-  text jmeno
+  number id_pary        //-
+  number id_akce
+  number id_deti
+  number cislo          //-
+  text jmeno            //-
   number skupina
-  number akce
+  number akce           //-
 }
 
-table ms_pary { key_id:'cislo'
+table ms_pary { key_id:'id_pary'
+  number id_pary
   number cislo
   number cislo_z
   text jmeno
@@ -157,6 +186,7 @@ table ms_pary { key_id:'cislo'
 
 table ms_deti { key_id:'id_deti'
   number id_deti
+  number id_pary
   number cislo
   text jmeno
   number rodcislo

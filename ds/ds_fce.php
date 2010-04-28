@@ -632,7 +632,12 @@ __XLS;
             }
             $lc++;
             $B= Excel5_n2col($lc);
-            $row.= $druh0=='noc' ? "|$B$n =(1-$A$n)*($suma) ::kc" : "|$B$n =$suma ::kc";
+            if ( $druh0=='noc' ) {
+              $row.= "|$B$n =(1-$A$n)*($suma) ::kc";
+            }
+            else {
+              $row.= "|$B$n =$suma ::kc";
+            }
             $suma= '0';
             $celkem.= "+$B$n";
           }
@@ -783,6 +788,9 @@ function ds_faktury($order) {  trace('','win1250');
     $x->platce= $platce;
     // pøeètení ceníku daného roku
     ds_cenik(date('Y',$o->untilday));
+    // úprava ceny programu na této akci
+    $ds_cena['prog_C']->cena= $o->prog_cely;
+    $ds_cena['prog_P']->cena= $o->prog_polo;
     // zjištìní poètu faktur za akci
     $qry= "SELECT rodina,count(*) as pocet FROM setkani.ds_osoba
            WHERE id_order=$order GROUP BY rodina ORDER BY if(rodina='','zzzzzz',rodina)";
@@ -851,6 +859,10 @@ function ds_faktury($order) {  trace('','win1250');
         else {
           $pol->ubyt_P= $noci;
         }
+        // program
+        $pol->prog_C= $vek>=$ds_cena['prog_C']->od  ? 1 : 0;
+        $pol->prog_P= $vek>=$ds_cena['prog_P']->od && $vek<$ds_cena['prog_P']->do ? 1 : 0;
+        // konec
         $hoste[]= (object)array('host'=>$host,'cena'=>$pol);
       }
       $x->rodiny[]= $hoste;
@@ -860,7 +872,7 @@ function ds_faktury($order) {  trace('','win1250');
   else
     fce_error(wu("neúplná objednávka $order"));
 //                                                                 debug($ds_cena,'ds_cena',(object)array('win1250'=>1));
-//                                                                 debug($x,'faktura',(object)array('win1250'=>1));
+                                                                debug($x,'faktura',(object)array('win1250'=>1));
   return $x;
 }
 # ================================================================================================== FAKTURA OBECNÌ
@@ -885,15 +897,15 @@ function ds_rozpis_faktura($listr,$listf,$typ,$order,$x,$polozky,$platce,$zaloha
   // ------------------------------------------------------------------- vytvoøení listu s rozpisem
   // pojmenované øádky (P,Q,R,S)
   $P= 10;               // výèet položek
-  $Q= 24;               // poslední položka
-  $D= 26;               // rozpis podle druhù
-  $S= 32;               // poslední øádek
+  $Q= 26;               // poslední položka
+  $D= 28;               // rozpis podle druhù
+  $S= 34;               // poslední øádek
   // parametrizace
   $c_okraj= "ff6495ed";    $S1= $S+1;
   $xls= <<<__XLS
   \n\n|sheet $listr;B2:N$S;P;page
     |columns A=3,B=0.6,C=16,D=3,E=22,F=6,G=16,H=10,I=4,J=6,K=6,L=16,M=0,N=1,O=3
-    |rows 1=18,2:44=15,5=30,7=45,9=30,10:30=20,$S=30
+    |rows 1=18,2:44=15,5=30,7=45,9=30,10:32=20,$S=30
     |A1:O$S1 bcolor=$c_okraj |B2:N$S bcolor=ffffffff |//B2:N$S border=h
 
     |image img/YMCA.png,80,C2,10,0
@@ -986,12 +998,12 @@ __XLS;
     |C16 Variabilní symbol       |E16 <èíslo faktury> ::left bcolor=ffffffaa
     |C17 Specifický symbol       |E17 $akce ::left bcolor=ffffffaa
 
-    |L12 Objednávka èíslo ::bold |M12 $order  ::size=14 bold
-    |L13 Dodací a platební podmínky: s daní
-    |L14 Datum vystavení         |M14 $vystaveno ::date bcolor=ffffffaa
-    |L15 Datum zúètování         |M15 =M14       ::date bcolor=ffffffaa
-    |L16 Datum splatnosti ::bold |M16 =M14+14    ::date bcolor=ffffffaa bold
-    |L18 Zpùsob platby           |M18 pøevod/hotovost ::bcolor=ffffffaa
+    |J12 Objednávka èíslo ::bold |M12 $order  ::size=14 bold
+    |J13 Dodací a platební podmínky: s daní
+    |J14 Datum vystavení           |M14 $vystaveno ::date bcolor=ffffffaa
+    |J15 Datum zdanitelného plnìní |M15 =M14       ::date bcolor=ffffffaa
+    |J16 Datum splatnosti ::bold   |M16 =M14+14    ::date bcolor=ffffffaa bold
+    |J18 Zpùsob platby             |M18 pøevod/hotovost ::bcolor=ffffffaa
 
     |C19 Za pobyt v Domì setkání ve dnech $obdobi Vám fakturujeme: |C19:M19 merge
 __XLS;
@@ -1104,13 +1116,13 @@ function ds_faktura($list,$typ,$order,$polozky,$platce,$zaloha=100,$pata='') {  
     |C16 Variabilní symbol       |E16 <èíslo faktury> ::left bcolor=ffffffaa
     |C17 Specifický symbol       |E17 $akce ::left bcolor=ffffffaa
 
-    |L12 Objednávka èíslo ::bold |M12 $order  ::size=14 bold
-    |L13 Dodací a platební podmínky: s daní
-    |L14 Forma úhrady            |M14 pøevodem
-    |L14 Datum vystavení         |M14 $vystaveno ::date bcolor=ffffffaa
-    |L15 Datum zúètování         |M15 =M14       ::date bcolor=ffffffaa
-    |L16 Datum splatnosti ::bold |M16 =M14+14    ::date bcolor=ffffffaa bold
-    |L18 Zpùsob platby           |M18 pøevod/hotovost ::bcolor=ffffffaa
+    |J12 Objednávka èíslo ::bold |M12 $order  ::size=14 bold
+    |J13 Dodací a platební podmínky: s daní
+    |J14 Forma úhrady              |M14 pøevodem
+    |J14 Datum vystavení           |M14 $vystaveno ::date bcolor=ffffffaa
+    |J15 Datum zdanitelného plnìní |M15 =M14       ::date bcolor=ffffffaa
+    |J16 Datum splatnosti ::bold   |M16 =M14+14    ::date bcolor=ffffffaa bold
+    |J18 Zpùsob platby             |M18 pøevod/hotovost ::bcolor=ffffffaa
     |C19 Fakturujeme vám zálohu na pobyt ve dnech $obdobi: |C19:M19 merge
 __XLS;
   $n= $P-1;

@@ -48,7 +48,7 @@ group pobyt {
     popis.tit.set(conc('<h3>Objednávka číslo ',the_order.get,'</h3>')); obj.load(the_order.get);
     fak.load(the_order.get); fak.faktura.display(0); ucastnici.cti(obj.rooms.get)
   }
-  proc obj.save.onclick() {
+  proc obj.save_pobyt.onclick() {
     obj.save; order_load(the_order.get)
   }
   // účast objednatele na pobytu
@@ -94,7 +94,7 @@ group pobyt {
   }
   // ------------------------------------------------------------------ OBJEDNÁVKA
   form objednavka [,,300,100] { css:'ds_form'
-    const PL=0; PT=94,
+    const PL=0; PT=92,
     label       [  0,  0,100,] { title:'stav objednávky' }
     select      [  0, 15,120,] { type:'map', data:tab.tx_gnalberice_order.state, options:tab.ds_stav.hodnota }
     label       [130,  0,100,] { title:'akce' }
@@ -105,7 +105,10 @@ group pobyt {
     field       [  0, 55, 85,] { type:'date', data:tab.tx_gnalberice_order.fromday }
     label       [ 90, 40, 70,] { title:'odjezd' }
     field       [ 90, 55, 85,] { type:'date', data:tab.tx_gnalberice_order.untilday }
-    label       [  0, 80,150,] { title:'seznam pokojů:' }
+    label       [  0, 78,150,] { title:'seznam pokojů:' }
+    label       [291,75,30,] { title:'sleva' }
+    field sleva [321,75,20,] { data:tab.tx_gnalberice_order.sleva, format:'r' }
+    label       [344,75,5,] { title:'%' }
     check   p1  [PL+  0, PT,14,] { title:'1',  format:'c', css:'CheckT', help:"1 - 2 lůžka jednoduchá (V podkrovní pokojíček se střešním oknem)" }
     check   p2  [PL+ 20, PT,14,] { title:'2',  format:'c', css:'CheckT', help:"2 - 2 lůžka jako patrová postel (V pokojíček vedle sprchy, má svoje umyvadlo)" }
     check   p3  [PL+ 40, PT,14,] { title:'3',  format:'c', css:'CheckT', help:"3 - 2 lůžka jednoduchá (JZ pokojíček v rohu)" }
@@ -122,31 +125,34 @@ group pobyt {
     check   p14 [PL+260, PT,14,] { title:'14', format:'c', css:'CheckT', help:"14 - komfortní pokoj se sprchou a WC, 2 samostatné postele" }
     check   p15 [PL+280, PT,14,] { title:'15', format:'c', css:'CheckT', help:"15 - apartmán; 2 místnosti a sociálka bezbariérová: 2 lůžka jednoduchá" }
     check   p16 [PL+300, PT,14,] { title:'16', format:'c', css:'CheckT', help:"16 - apartmán; 2 místnosti a sociálka bezbariérová: 1 lůžko jednoduché a 2 lůžka jako patrová postel" }
-    field noroom [PL+330,PT+5,17,] { format:'or:e', help:'?|počet neubytovaných podle seznamu' }
+    label       [344,101,5,] { title:'?' }
+    field noroom [PL+324,PT+9,17,] { format:'or:e', help:'?|počet neubytovaných podle seznamu' }
     field rooms { data:tab.tx_gnalberice_order.rooms }
-    label       [  0,120, 50,] { title:'dospělí' }
+    label       [0,120,50,] { title:'dospělí' }
     field       [0,135,17,] { data:tab.tx_gnalberice_order.adults, format:'r:e' }
-    field adults [24,135,17,] { format:'or:e', help:'?|počet dospělých podle seznamu' }
+    field adults [24,136,17,] { format:'or:e', help:'?|počet dospělých podle seznamu' }
     label       [54,120,50,] { title:'děti 10-15' }
     field       [54,135,17,] { data:tab.tx_gnalberice_order.kids_10_15, format:'r:e' }
-    field kids_10_15 [78,135,17,] { format:'or:e', help:'?|počet dětí podle seznamu' }
+    field kids_10_15 [78,136,17,] { format:'or:e', help:'?|počet dětí podle seznamu' }
     label       [110,120,40,] { title:'děti 3-9' }
     field       [111,135,17,] { data:tab.tx_gnalberice_order.kids_3_9, format:'r:e' }
-    field kids_3_9 [135,135,17,] { format:'or:e', help:'?|počet dětí ve věku 3-9 let podle seznamu' }
+    field kids_3_9 [135,136,17,] { format:'or:e', help:'?|počet dětí ve věku 3-9 let podle seznamu' }
     label       [165,120,50,] { title:'děti do 3' }
     field       [165,135,17,] { data:tab.tx_gnalberice_order.kids_3, format:'r:e' }
-    field kids_3 [190,135,17,] { format:'or:e', help:'?|počet dětí do 3 let podle seznamu'  }
+    field kids_3 [190,136,17,] { format:'or:e', help:'?|počet dětí do 3 let podle seznamu'  }
     label       [220,120,17,] { title:'??' }
     field nevek [220,135,17,] { format:'or:e', help:'?|počet osob v seznamu bez udaného věku' }
     label       [252,120,100,] { title:'typ stravy' }
     select      [250,135,100,] { type:'map', data:tab.tx_gnalberice_order.board, options:tab.ds_strava.hodnota }
-    label       [280,160,30,] { title:'sleva' }
-    field sleva [310,160,20,] { data:tab.tx_gnalberice_order.sleva }
-    label       [335,160,10,] { title:'%' }
     //button      [250,160,100,18] { title:'lze fakturovat?'
     //  proc onclick() { compare } }
-    button save [249,186,100,18] { title:'zapsat změny', type:'submit' }
+    button save_pobyt [249,191,100,18] { title:'zapsat změny', type:'submit' }
     label info  [1,159,238,53] { title:'' }
+    label       [245,153,112,] { title:'program: dospělý / dítě' }
+    field prog_cely [251,169,30,] { data:tab.tx_gnalberice_order.prog_cely, format:'r', help:'cena programu na akci pro dospělého' }
+    label       [290,170,5,] { title:'/' }
+    field prog_dite [302,169,30,] { data:tab.tx_gnalberice_order.prog_polo, format:'r', help:'cena programu na akci pro dítě' }
+    label       [338,169,5,] { title:'Kč' }
     proc onload () { rooms_check(rooms,form,'p') }
     proc onsave () { check_rooms(rooms,form,'p') }
   }
@@ -224,46 +230,52 @@ group ucastnici {
     p.chck.get; //echo("rodina=",p.info.get);
     pall.set(p.all.get); //echo('-----------------',pall.get('jmeno'));
     per.init;
-    per.id_order.set(the_order.get);
-    per.rodina.set(znacka_rodiny.get);
-    per.jmeno.set(pall.get('jmeno'));
-    per.prijmeni.set(pall.get('prijmeni'));
-    per.ulice.set(pall.get('ulice'));
-    per.psc.set(pall.get('psc'));
-    per.obec.set(pall.get('mesto'));
-    per.telefon.set(pall.get('telefon'));
-    per.email.set(pall.get('email'));
-    per.narozeni.set(pall.get('narozeni'));
+    per.id_order.set(the_order.get);            per.id_order.change;
+    per.rodina.set(znacka_rodiny.get);          per.rodina.change;
+    per.jmeno.set(pall.get('jmeno'));           per.jmeno.change;
+    per.prijmeni.set(pall.get('prijmeni'));     per.prijmeni.change;
+    per.ulice.set(pall.get('ulice'));           per.ulice.change;
+    per.psc.set(pall.get('psc'));               per.psc.change;
+    per.obec.set(pall.get('mesto'));            per.obec.change;
+    per.telefon.set(pall.get('telefon'));       per.telefon.change;
+    per.email.set(pall.get('email'));           per.email.change;
+    per.narozeni.set(pall.get('narozeni'));     per.narozeni.change;
     per.insert;
-    akc.seznam.browse_seek; pobyt.compare
+    akc.seznam.browse_seek(conc('id_osoba=',per.key));
+    akc.seznam.browse_focus; pobyt.compare
   }
   // vložení nového účastníka
   proc osoba_new {
-    per.init; per.id_order.set(the_order.get); per.insert;
-    akc.seznam.browse_seek; pobyt.compare
+    per.init; per.id_order.set(the_order.get); per.id_order.change;
+    per.insert;
+    akc.seznam.browse_seek(conc('id_osoba=',per.key));
+    akc.seznam.browse_focus; pobyt.compare
   }
   // vložení nového dítěte účastníka
   proc osoba_new_child (id_osoba) {
     per.init;
-    per.id_order.set(the_order.get);
-    per.rodina.set(akc.seznam.rodina.get);
-    per.prijmeni.set(akc.seznam.prijmeni.get);
-    per.ulice.set(akc.seznam.ulice.get);
-    per.psc.set(akc.seznam.psc.get);
-    per.obec.set(akc.seznam.obec.get);
+    per.id_order.set(the_order.get);            per.id_order.change;
+    per.rodina.set(akc.seznam.rodina.get);      per.rodina.change;
+    per.prijmeni.set(akc.seznam.prijmeni.get);  per.prijmeni.change;
+    per.ulice.set(akc.seznam.ulice.get);        per.ulice.change;
+    per.psc.set(akc.seznam.psc.get);            per.psc.change;
+    per.obec.set(akc.seznam.obec.get);          per.obec.change;
     per.insert;
-    akc.seznam.browse_seek; pobyt.compare
+    akc.seznam.browse_seek(conc('id_osoba=',per.key));
+    akc.seznam.browse_focus; pobyt.compare
   }
   // zápis opravy účastníka
   proc osoba_save {
     per.rodina.set(ask('cz2ascii',per.rodina.get)); per.rodina.change;
-    per.save; per.load; akc.seznam.browse_seek; pobyt.compare
+    per.save; per.load; akc.seznam.browse_seek;
+    akc.seznam.browse_focus; pobyt.compare
   }
   // zrušení účastníka
   proc osoba_del (id_osoba) {
-    confirm(conc('Opravdu smazat ',akc.seznam.prijmeni.get,' ',akc.seznam.jmeno.get,' ze seznamu?'));
+    confirm('Opravdu smazat ',akc.seznam.prijmeni.get,' ',akc.seznam.jmeno.get,' ze seznamu?');
     tab.ds_osoba.delete_record(conc('id_osoba=',id_osoba));
-    akc.seznam.browse_seek; pobyt.compare
+    akc.seznam.browse_load(conc('id_order=',the_order.get));
+    akc.seznam.browse_focus; pobyt.compare
   }
   // ------------------------------------------------------------------ záhlaví
   form zahlavi [,,600,30] { css:'ds_form'
@@ -290,7 +302,7 @@ group ucastnici {
       proc onclick () { osoba_new_child} }
     button [287,0,50,18] { title:'- účastník', help:'odebrání hosta označeného oranžovou šipkou'
       proc onclick () { osoba_del(seznam.id_osoba.get)} }
-    browse seznam [0,30,,] { /*type:'smart',*/ rows:14
+    browse seznam [0,30,,] { type:'smart', rows:14
       show rodina [,,25,] { title:'rod', data:tab.ds_osoba.rodina, format:'s+' }
       show prijmeni [,,70,] { title:'příjmení', data:tab.ds_osoba.prijmeni, format:'s' }
       show jmeno    [,,50,]  { title:'jméno', data:tab.ds_osoba.jmeno, format:'s' }
@@ -298,9 +310,9 @@ group ucastnici {
         expr:"if(ds_osoba.narozeni,year(now())-year(ds_osoba.narozeni),'??')", format:'r' }
       show [,,20,]  { title:'P',
         data:tab.ds_osoba.pokoj, format:'rs:e' }  // :e zobrazí 0 jako nic
-      show [,,15,]  { title:'L',
+      show [,,20,]  { title:'L',
         data:tab.ds_osoba.luzko, map_pipe:tab.ds_luzko.zkratka, format:'rs' }
-      show [,,10,]  { title:'p',
+      show [,,20,]  { title:'p',
         data:tab.ds_osoba.postylka, format:'rs:e' }
       show [,,20,]  { title:'S',
         data:tab.ds_osoba.strava, map_pipe:tab.ds_strava.zkratka, format:'rs' }
@@ -312,7 +324,7 @@ group ucastnici {
       show ulice { data:tab.ds_osoba.ulice }
       show psc { data:tab.ds_osoba.psc }
       show obec { data:tab.ds_osoba.obec }
-      proc onrowclick() { osoba_load(id_osoba.get) }
+      proc onrowclick() { osoba_load(id_osoba.get); echo('click=',akc.seznam.browse_key); }
     }
     // ================================================================ Rodina
     panel Rodina [,,320,300] {type:'popup', title:'Výběr členů rodiny z databáze MS'

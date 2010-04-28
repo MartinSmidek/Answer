@@ -60,6 +60,8 @@ table tx_gnalberice_order { db:'setkani', key_id:'uid'
   number kids_3_9
   number kids_3
   number board
+  number prog_cely
+  number prog_polo
   text   address      { sql_pipe:'wu' }
   text   zip
   text   city         { sql_pipe:'wu' }

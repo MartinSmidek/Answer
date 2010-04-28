@@ -1,7 +1,9 @@
-*
-* export pro MySQL podle http://forums.mysql.com/read.php?126,2051,112501#msg-112501
-* to import into mySql
-* mysql -u user -ppassword database < dbf-filename-no-ext.sql 
+* Transformace dat pro YMCA SETKANI do systému Ans(w)er (MySQL) ze systému Say (Foxpro)
+*   podle http://forums.mysql.com/read.php?126,2051,112501#msg-112501
+* import into mySql
+*   mysql -u user -ppassword database < dbf-filename-no-ext.sql
+* po importu je třeba provést fukci ys_akce.php/akce_data
+* (c) 2010, Martin Šmídek
 
 set deleted on
 public all_in_one,mimporthandle
@@ -21,8 +23,8 @@ if all_in_one
   endif
 endif
 
-mysql_export(1,"ms-lida","L","DETI")
-* mysql_export(1,"ms-lida","L","DRUHAKCE")
+* mysql_export(1,"ms-lida","L","DETI")
+mysql_export(1,"ms-lida","L","DRUHAKCE")
 * mysql_export(1,"ms-lida","L","KURS")
 * mysql_export(1,"ms-lida","L","KURSDETI")
 * mysql_export(1,"ms-lida","L","KURSPECE")
@@ -31,7 +33,7 @@ mysql_export(1,"ms-lida","L","DETI")
 * mysql_export(1,"ms-lida","L","PORAAKCE")
 *
 * mysql_export(0,"ms-milos","M","DETI")
-* mysql_export(0,"ms-milos","M","DRUHAKCE")
+mysql_export(0,"ms-milos","M","DRUHAKCE")
 * mysql_export(0,"ms-milos","M","KURS")
 * mysql_export(0,"ms-milos","M","KURSDETI")
 * mysql_export(0,"ms-milos","M","KURSPECE")
@@ -55,7 +57,7 @@ endif
 procedure mysql_export
   parameters to_create,folder,source,mdbf
   public all_in_one,mimporthandle
-
+  * ------------------------------------------------------------------------------------------------ STRUCTURE
   mdbf = lower(mdbf)
   mdbffile = "c:\apache\htdocs\ezer\www-ys2\sql\" + folder + "\data\" + mdbf + ".dbf"
   if not all_in_one
@@ -97,12 +99,20 @@ procedure mysql_export
     mjunk = fwrite(mimporthandle, mtext)
     klic = ''
     do case
+    case mdbf == 'druhakce'
+      klic = chr(10) + "`id_akce` int(11) NOT NULL AUTO_INCREMENT,"
+    case mdbf == 'pary'
+      klic = chr(10) + "`id_pary` int(11) NOT NULL AUTO_INCREMENT,"
     case mdbf == 'kurs'
       klic = chr(10) + "`id_kurs` int(11) NOT NULL AUTO_INCREMENT,"
+      klic = klic + chr(10) + "`id_pary` int(11),"
+      klic = klic + chr(10) + "`id_akce` int(11),"
     case mdbf == 'deti'
       klic = chr(10) + "`id_deti` int(11) NOT NULL AUTO_INCREMENT,"
     case mdbf == 'kursdeti'
       klic = chr(10) + "`id_kursdeti` int(11) NOT NULL AUTO_INCREMENT,"
+      klic = klic + chr(10) + "`id_pary` int(11),"
+      klic = klic + chr(10) + "`id_akce` int(11),"
     endcase
     mtext = "CREATE TABLE IF NOT EXISTS `ms_" + mdbf + "`(" + klic + chr(10) + "`source` char(1) NOT NULL," + chr(10)
     mjunk = fwrite(mimporthandle, mtext)
@@ -153,13 +163,13 @@ procedure mysql_export
       mjunk = fwrite(mimporthandle, mtext)
 
     endfor
-    
-    *
-    *  KLíče a konec deklarace
-    *
-
+  * ------------------------------------------------------------------------------------------------ KEYS
     mtext = ''
     do case
+    case mdbf == 'druhakce'
+      mtext = "," + chr(10) + "PRIMARY KEY (`id_akce`)" + chr(10)
+    case mdbf == 'pary'
+      mtext = "," + chr(10) + "PRIMARY KEY (`id_" + mdbf + "`)" + chr(10)
     case mdbf == 'kurs'
       mtext = "," + chr(10) + "PRIMARY KEY (`id_" + mdbf + "`)" + chr(10)
     case mdbf == 'deti'
@@ -173,20 +183,16 @@ procedure mysql_export
   endif
   
   go top
-
-  *
-  * start data loading section
-  *
-
+  * ------------------------------------------------------------------------------------------------ DATA
   do while !eof()
     if DELETED()
       skip 
     endif  
-    *
     *beginning of line
-    *
     klic = ''
     do case
+    case mdbf == 'druhakce'
+      klic = "DEFAULT, "
     case mdbf == 'kurs'
       klic = "DEFAULT, "
     case mdbf == 'deti'
@@ -198,11 +204,7 @@ procedure mysql_export
 
     for nCount = 1 to mfield_cnt
       f_id= mdbf + "." + lower(marray(nCount,1))
-
-      *
       *build values
-      *
-
       if nCount > 1 && don't put a comma in the first time
         mtext = mtext + ", "
       endif
@@ -212,8 +214,8 @@ procedure mysql_export
         * transformace rodného čísla aby se neztratila nula na začátku
         mtext = mtext + "'" + padl(alltrim(str(&marray(nCount,1))),10,'0') + "'"
       case (f_id=='pary.cislo') or (f_id=='kurs.cislo') or (f_id=='kursdeti.cislo') or (f_id=='deti.cislo')
-          * transformace klíče přidáním '0' pro source='L' a '1' pro source='M'
-          mtext = mtext + "'" + alltrim(str(&marray(nCount,1))) + iif(source=='L','0','1') + "'"
+        * transformace klíče přidáním '0' pro source='L' a '1' pro source='M'
+        mtext = mtext + "'" + alltrim(str(&marray(nCount,1))) + iif(source=='L','0','1') + "'"
       case (f_id=='pary.cirkev_m') or (f_id=='pary.cirkev_z')
         * církve
         *   SELECT count(*),left(group_concat(distinct cirkev_m),50),ccirkev_m FROM `ms_pary`
@@ -334,9 +336,7 @@ procedure mysql_export
       if isnull(mtext)
         set step on
       endif
-      *
       *end of data load line
-      *
     endfor
 
     mtext = mtext + ");" + chr(10)
@@ -350,7 +350,7 @@ procedure mysql_export
     fclose(mimporthandle)
   endif
 return
-
+  * ------------------------------------------------------------------------------------------------ UTF-8
 proc u
   para str
   str= chrtran(str,'"',"'")

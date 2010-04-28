@@ -62,6 +62,8 @@ table tx_gnalberice_order { db:'setkani', key_id:'uid'
   number kids_3_9     { help:'?|počet dětí ve věku 3-9 let podle objednávky' }
   number kids_3       { help:'?|počet dětí do 3 let podle objednávky' }
   number board
+  number prog_cely
+  number prog_polo
   text   address      { sql_pipe:'wu' }
   text   zip
   text   city         { sql_pipe:'wu' }
