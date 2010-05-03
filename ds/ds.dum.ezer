@@ -106,9 +106,10 @@ group pobyt {
     label       [ 90, 40, 70,] { title:'odjezd' }
     field       [ 90, 55, 85,] { type:'date', data:tab.tx_gnalberice_order.untilday }
     label       [  0, 78,150,] { title:'seznam pokojů:' }
+    check skoleni [218,72,59,9] { title:'školení', data:tab.tx_gnalberice_order.skoleni, value:'0', help:"účastníci školení neplatí rekreační poplatek" }
     label       [291,75,30,] { title:'sleva' }
     field sleva [321,75,20,] { data:tab.tx_gnalberice_order.sleva, format:'r' }
-    label       [344,75,5,] { title:'%' }
+    label       [344,77,5,] { title:'%' }
     check   p1  [PL+  0, PT,14,] { title:'1',  format:'c', css:'CheckT', help:"1 - 2 lůžka jednoduchá (V podkrovní pokojíček se střešním oknem)" }
     check   p2  [PL+ 20, PT,14,] { title:'2',  format:'c', css:'CheckT', help:"2 - 2 lůžka jako patrová postel (V pokojíček vedle sprchy, má svoje umyvadlo)" }
     check   p3  [PL+ 40, PT,14,] { title:'3',  format:'c', css:'CheckT', help:"3 - 2 lůžka jednoduchá (JZ pokojíček v rohu)" }

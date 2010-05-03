@@ -2,12 +2,12 @@
 # (c) 2008-2010 Martin Šmídek <martin@smidek.eu>
 
 var the_akce: number
-var the_akce_id: number
+var the_rok: number
 proc onstart() {
   the_akce.set(0);
   // pro ladění
-  Vyber.focus; Vyber.akce_roku(2009); Vyber.info.seznam.browse_seek("akce=413");
-  Vyber.info.volba.onclick; Ucastnici.focus;
+#   Vyber.focus; Vyber.akce_roku(2009); Vyber.info.seznam.browse_seek("akce=413");
+#   Vyber.info.volba.onclick; Ucastnici.focus;
 }
 # ================================================================================================== VÝBĚR
 panel Vyber [,,,543] {type:'right', title:'Výběr akce'
@@ -16,13 +16,19 @@ panel Vyber [,,,543] {type:'right', title:'Výběr akce'
     menu rok {title:'Volba roku',type:'group'
       item letos {title:'2010',par:°{rok:'2010'} }
       item loni {title:'2009',par:°{rok:'2009'} }
-      item {title:'2008',par:°{rok:'2008'} }
-      item {title:'2007',par:°{rok:'2007'} }
+#       item {title:'2008',par:°{rok:'2008'} }
+#       item {title:'2007',par:°{rok:'2007'} }
       proc onclick (i) {
-        info.seznam.selected('clear'); the_akce.set(0); the_akce_id.set(0);
-        akce_roku(i.par.rok)
+        info.seznam.selected('clear'); the_akce.set(0); the_rok.set(i.par.rok);
+#         akce_roku(i.par.rok)
+        akce_roku_2(i.par.rok)
       }
     }
+  }
+  # získání seznamu akcí z docs.google.com pomocí API spredsheet
+  proc akce_roku_2(rok){
+    info.seznam.browse_fill(ask('akce_roku',rok));
+    info.fill('Vyber akci ...','')
   }
   proc akce_roku(rok){
     info.seznam.browse_load(conc('rok=',rok,' AND akce BETWEEN 301 AND 598'));
@@ -33,18 +39,21 @@ panel Vyber [,,,543] {type:'right', title:'Výběr akce'
   form _akce [,,640,50] {
     button volba [550,10,100,16] { title:'Zapamatovat akci', style:'display:block;zIndex:2',
       proc onclick() {
-        seznam.browse_key; the_akce.set(seznam.browse_key);
         set_cookie("ys_akce_id",the_akce.get);
-        the_akce_id.set(seznam.id_akce.get);
-        seznam.selected('clear'); seznam.selected('set',the_akce.get);
-        Vyber.info.fill(conc('Akce ',seznam.akce.get,' roku ',seznam.rok.get,' - ',seznam.nazev.get),'');
+        the_akce.set(seznam.id_akce.get);
+        seznam.selected('clear');
+        { and(the_akce.get,not(eq(the_akce.get,'0')));
+          seznam.selected('set',the_akce.get);
+          Vyber.info.fill(conc('Akce ',seznam.akce.get,' roku ',seznam.rok.get,' - ',seznam.nazev.get),'');
+        | the_akce.set(DefIdAkce.modal(500,200));
+          ask('akce_roku_id',seznam.akce.get,the_rok.get,the_akce.get);
+        }
     }}
-    browse seznam [0,50,200,500] { rows:30, qry_rows:1,
-      show id [,,30,] {data:uakce.id_uakce}
+    browse seznam [0,50,200,500] { type:'smart', rows:30, qry_rows:1, buf_rows:120,
+      show id_akce [,,30,] {data:uakce.id_akce, format:'rsq'}
       show rok {data:uakce.rok}
-      show id_akce [,,30,] {data:uakce.id_akce}
       show akce [,,30,] {title:'akce', data:uakce.akce, format:'rs+q*'}
-      show nazev [,,170,] {title:'název', data:uakce.nazev_akce, format:'sq*'}
+      show nazev [,,300,] {title:'název', data:uakce.nazev_akce, format:'sq*'}
       proc onsubmit() { volba.onclick() }
     }
     label head [0,0,680,50] { title:'' }
@@ -52,6 +61,17 @@ panel Vyber [,,,543] {type:'right', title:'Výběr akce'
     proc fill(x,y) {
       [ x; head.set(conc("<div class='CSection CMenu'><h3 class='CTitle'>",x,"</h3></div>")) ];
       [ y; note.set(y) ]
+    }
+  }
+  # ================================================================================================ definice akce
+  panel DefIdAkce [,,220,60] {type:'popup', title:'Zapsání id_akce'
+    use f: form _id_akce [12,10,,]
+    form _id_akce [,,100,50] {
+      label [10,10,50,] { title:'id_akce' }
+      field id [60,10,50,]
+      button [120,10,,] { type:'submit', title:'Zapiš', proc onclick() {
+        panel.hide(id.get)
+      } }
     }
   }
 }
@@ -62,7 +82,7 @@ panel Ucastnici [,,,543] {type:'plain', title:'Účastníci'
     u.head.set(Vyber.info.head.get); reload(0)
   }
   proc reload(id_paru) {
-    u.b.browse_load(conc("mk.id_akce=",the_akce_id.get));
+    u.b.browse_load(conc("mk.id_akce=",the_akce.get));
     u.b.browse_focus;
     { id_paru; u.b.raise('onrowclick',id_paru)
     | u.b.raise('onrowclick') }
@@ -72,8 +92,8 @@ panel Ucastnici [,,,543] {type:'plain', title:'Účastníci'
     p.chck.get;
     pall.set(p.all.get);
     u.init;
-    u.key_pary.set(pall.get('id_pary'));        u.key_pary.change;
-    u.key_akce.set(the_akce_id.get);            u.key_akce.change;
+    u.key_pary.set(pall.get('id_pary'));     u.key_pary.change;
+    u.key_akce.set(the_akce.get);            u.key_akce.change;
     u.mk.insert;
   }
   # ------------------------------------------------------------------------------------------------ _ucast
@@ -320,7 +340,7 @@ panel Ucastnici [,,,543] {type:'plain', title:'Účastníci'
         b.browse_focus; b.focus
       | // přidání
         mp.insert; echo('mp=',mp.key);
-        key_pary.set(mp.key); key_pary.change; key_akce.set(the_akce_id.get); key_akce.change;
+        key_pary.set(mp.key); key_pary.change; key_akce.set(the_akce.get); key_akce.change;
         mk.insert; echo('mk=',mk.key);
         reload(mk.key);
     } }
@@ -382,7 +402,7 @@ panel Ucastnici [,,,543] {type:'plain', title:'Účastníci'
       }}
       proc dite_na_kurs() {
         ask('query',conc('INSERT INTO ms_kursdeti (id_akce,id_deti) VALUES (',
-          the_akce_id.get,',',key_deti.get,')'));
+          the_akce.get,',',key_deti.get,')'));
       }
     }
   }

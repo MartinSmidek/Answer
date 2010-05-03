@@ -92,6 +92,7 @@ group tab { /*include:'static'*/
     text   org          { sql_pipe:'wu' }
     number ic
     number ucast        // 1 => účastní se pobytu
+    number skoleni      // 1 => školení, neplatí se rekreační poplatek
   }
   table _cis { key_id:'id_cis'
   # ------------------------------------------------------------------------------------------------ číselníky,mapy

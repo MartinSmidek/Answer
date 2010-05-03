@@ -776,6 +776,7 @@ function ds_faktury($order) {  trace('','win1250');
   $res= mysql_qry($qry);
   if ( $res && $o= mysql_fetch_object($res) ) {
     $obdobi= date('j.n',$o->fromday).' - '.date('j.n.Y',$o->untilday);
+    $skoleni= $o->skoleni;
     // údaje o plátci: $ic,$dic,$adresa
     $platce= array();
     $platce[]= $o->ic ? $o->ic : '';
@@ -853,8 +854,8 @@ function ds_faktury($order) {  trace('','win1250');
         }
         // poplatky
         if ( $vek>=18 ) {
-          $pol->ubyt_C= $noci;
           $pol->ubyt_S= $noci;
+          if ( !$skoleni ) $pol->ubyt_C= $noci;   // rekreaèní poplatek se neplatí za školení
         }
         else {
           $pol->ubyt_P= $noci;

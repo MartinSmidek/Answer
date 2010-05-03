@@ -23,23 +23,23 @@ if all_in_one
   endif
 endif
 
-* mysql_export(1,"ms-lida","L","DETI")
+mysql_export(1,"ms-lida","L","DETI")
 mysql_export(1,"ms-lida","L","DRUHAKCE")
-* mysql_export(1,"ms-lida","L","KURS")
-* mysql_export(1,"ms-lida","L","KURSDETI")
-* mysql_export(1,"ms-lida","L","KURSPECE")
-* mysql_export(1,"ms-lida","L","PARY")
-* mysql_export(1,"ms-lida","L","PECE")
-* mysql_export(1,"ms-lida","L","PORAAKCE")
+mysql_export(1,"ms-lida","L","KURS")
+mysql_export(1,"ms-lida","L","KURSDETI")
+mysql_export(1,"ms-lida","L","KURSPECE")
+mysql_export(1,"ms-lida","L","PARY")
+mysql_export(1,"ms-lida","L","PECE")
+mysql_export(1,"ms-lida","L","PORAAKCE")
 *
-* mysql_export(0,"ms-milos","M","DETI")
+mysql_export(0,"ms-milos","M","DETI")
 mysql_export(0,"ms-milos","M","DRUHAKCE")
-* mysql_export(0,"ms-milos","M","KURS")
-* mysql_export(0,"ms-milos","M","KURSDETI")
-* mysql_export(0,"ms-milos","M","KURSPECE")
-* mysql_export(0,"ms-milos","M","PARY")
-* mysql_export(0,"ms-milos","M","PECE")
-* mysql_export(0,"ms-milos","M","PORAAKCE")
+mysql_export(0,"ms-milos","M","KURS")
+mysql_export(0,"ms-milos","M","KURSDETI")
+mysql_export(0,"ms-milos","M","KURSPECE")
+mysql_export(0,"ms-milos","M","PARY")
+mysql_export(0,"ms-milos","M","PECE")
+mysql_export(0,"ms-milos","M","PORAAKCE")
 
 if all_in_one
   fclose(mimporthandle)
@@ -109,10 +109,12 @@ procedure mysql_export
       klic = klic + chr(10) + "`id_akce` int(11),"
     case mdbf == 'deti'
       klic = chr(10) + "`id_deti` int(11) NOT NULL AUTO_INCREMENT,"
+      klic = klic + chr(10) + "`id_pary` int(11),"
     case mdbf == 'kursdeti'
       klic = chr(10) + "`id_kursdeti` int(11) NOT NULL AUTO_INCREMENT,"
-      klic = klic + chr(10) + "`id_pary` int(11),"
       klic = klic + chr(10) + "`id_akce` int(11),"
+      klic = klic + chr(10) + "`id_deti` int(11),"
+      klic = klic + chr(10) + "`id_pary` int(11),"
     endcase
     mtext = "CREATE TABLE IF NOT EXISTS `ms_" + mdbf + "`(" + klic + chr(10) + "`source` char(1) NOT NULL," + chr(10)
     mjunk = fwrite(mimporthandle, mtext)
@@ -189,18 +191,20 @@ procedure mysql_export
       skip 
     endif  
     *beginning of line
-    klic = ''
+    klice = ''
     do case
     case mdbf == 'druhakce'
-      klic = "DEFAULT, "
+      klice = "DEFAULT, "
+    case mdbf == 'pary'
+      klice = "DEFAULT, "
     case mdbf == 'kurs'
-      klic = "DEFAULT, "
+      klice = "DEFAULT,0,0, "
     case mdbf == 'deti'
-      klic = "DEFAULT, "
+      klice = "DEFAULT,0, "
     case mdbf == 'kursdeti'
-      klic = "DEFAULT, "
+      klice = "DEFAULT,0,0,0, "
     endcase
-    mtext = "INSERT INTO ms_" + mdbf + " VALUES (" + klic + "'" + source + "',"
+    mtext = "INSERT INTO ms_" + mdbf + " VALUES (" + klice + "'" + source + "',"
 
     for nCount = 1 to mfield_cnt
       f_id= mdbf + "." + lower(marray(nCount,1))

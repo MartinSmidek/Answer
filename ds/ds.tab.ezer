@@ -77,6 +77,7 @@ table tx_gnalberice_order { db:'setkani', key_id:'uid'
   text   dic
   number ucast        // 1 => účastní se pobytu
   number sleva        { help:'%|případná sleva v procentech' }
+  number skoleni      // 1 => školení, neplatí se rekreační poplatek
 }
 table _cis { key_id:'id_cis'
 # -------------------------------------------------------------------------------------------------- číselníky,mapy

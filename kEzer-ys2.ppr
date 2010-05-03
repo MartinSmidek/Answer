@@ -11,10 +11,12 @@ FileFormat=0
 ProjectFilesOnly=0
 [Project tree]
 kEzer-ys2
+	+GData
+		_\ZendGdata-1.10.4\demos\Zend\Gdata\Docs.php
 	-konverze
 		sql\backup_setkani.bat
-		sql\sql\ms-milos\indexy.sql
 		sql\ms_mysql.PRG
+		sql\sql\indexy.sql
 	-ezer2
 		+libr
 			ezer2\ezer2.help.ezer
@@ -50,7 +52,7 @@ kEzer-ys2
 			ezer2\wiki\guide.wiki
 			ezer2\wiki\meta.wiki
 			ezer2\wiki\todo.wiki
-	+comp
+	-comp
 		ezer2\comp.php
 		ezer2\comp.css
 	-doc
@@ -61,7 +63,7 @@ kEzer-ys2
 		..\..\..\..\WINDOWS\system32\drivers\etc\hosts
 		..\..\..\Apache\conf\extra\httpd-vhosts-ezer.conf
 		..\..\..\Apache\logs\ys2-error.log
-	-test
+	+test
 		test\$.ezer
 		test\test.css
 		test\test.elem.bro.ezer
@@ -99,7 +101,7 @@ kEzer-ys2
 		test\test.ys_ucetnictvi.ezer
 		test\test.ysp.ezer
 		test\test_fce.php
-	+ys
+	-ys
 		ys\$.ezer
 		ys\ys.akce.ezer
 		ys\ys.akce.tisk.ezer
@@ -165,25 +167,30 @@ kEzer-ys2
 15=ys\ys.akce.ezer
 16=ys\ys.akce.tisk.ezer
 17=test\test.elem.ezer
+18=sql\ms_mysql.PRG
+19=_\ZendGdata-1.10.4\demos\Zend\Gdata\Docs.php
+20=test\$.ezer
+21=test\test.fce.ezer
+22=test\test_fce.php
 [Selected Project Files]
 Main=
-Selected=ezer2\server\comp2.php
+Selected=ys\ys.akce.ezer
 [ezer2\server\comp2def.php]
 TopLine=190
 Caret=85,218
 [ezer2\server\comp2.php]
-TopLine=97
-Caret=64,133
+TopLine=1
+Caret=40,4
+BookMark1=26,930
 BookMark2=1,1210
+BookMark3=15,1342
 BookMark8=1,547
 Mark1=15,1343
 Mark2=1,1212
 Mark3=11,1370
 Mark4=8,1201
-BookMark3=15,1342
 Mark5=1,290
 Mark6=1,320
-BookMark1=26,930
 [ezer2\server\ezer2.php]
 TopLine=196
 Caret=16,237
@@ -211,8 +218,8 @@ Caret=61,153
 TopLine=5470
 Caret=1,5502
 BookMark1=38,4528
-BookMark3=3,4994
 BookMark2=54,4980
+BookMark3=3,4994
 [ezer2\client\ezer_fdom2.js]
 TopLine=2602
 Caret=1,2619
@@ -230,24 +237,45 @@ TopLine=439
 Caret=41,445
 Mark1=41,180
 [ys\ys_fce.php]
-TopLine=143
-Caret=1,204
-[ys\ys_akce.php]
 TopLine=1
-Caret=53,30
+Caret=1,1
+[ys\ys_akce.php]
+TopLine=21
+Caret=1,48
 [ys\$.ezer]
 TopLine=1
 Caret=38,11
 [ys\ys.akce.ezer]
-TopLine=541
-Caret=69,585
-Mark1=9,270
-Mark2=1,84
-Mark3=33,308
-Mark4=64,134
+TopLine=34
+Caret=24,59
+Mark1=9,290
+Mark2=1,104
+Mark3=33,328
+Mark4=64,154
+Mark5=48,85
+Mark6=44,96
+Mark7=69,343
+Mark8=17,43
 [ys\ys.akce.tisk.ezer]
 TopLine=1
 Caret=47,15
 [test\test.elem.ezer]
 TopLine=1
 Caret=1,1
+[sql\ms_mysql.PRG]
+TopLine=1
+Caret=1,1
+[_\ZendGdata-1.10.4\demos\Zend\Gdata\Docs.php]
+TopLine=260
+Caret=53,308
+BookMark1=47,234
+BookMark2=59,292
+[test\$.ezer]
+TopLine=1
+Caret=24,4
+[test\test.fce.ezer]
+TopLine=1
+Caret=10,7
+[test\test_fce.php]
+TopLine=18
+Caret=1,64
