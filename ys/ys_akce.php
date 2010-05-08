@@ -39,6 +39,124 @@ function akce_foxpro_data() {  #trace('');
   $html.= "<br>Do tabulky ms_kursdeti byly {$n}x přidány hodnoty klíče id_deti";
   return $html;
 }
+# ================================================================================================== VÝPISY
+# -------------------------------------------------------------------------------------------------- akce_sestava
+# generování sestavy pro účastníky $akce
+#   $typ = jeden | par
+#   $fld = seznam položek s prefixem
+#   $cnd = podmínka
+function akce_sestava($akce,$par) {
+  $typ= $par->typ;
+  $tit= $par->tit;
+  $fld= $par->fld;
+  $cnd= $par->cnd;
+  $html= '';
+  $href= '';
+  $n= 0;
+  // dekódování parametrů
+  $tits= explode(',',$tit);
+  $join= "JOIN ms_pary AS mp ON mp.id_pary=mk.id_pary ";
+  $group= '';
+  $fields= ",CONCAT(jmeno_m,' a ',jmeno_z) AS jmena";
+  $order= 'mp.jmeno';
+  switch ($typ) {
+  case 'j':                             // jednotlivci
+    $fn= explode(';',$fld);
+    $flds= array(explode(',',$fn[0]),explode(',',$fn[1]));
+    break;
+  case 'p':                             // páry
+    $flds= explode(',',$fld);
+    break;
+  case 'd':                             // děti
+    $fields= ",md.jmeno AS jmeno_d";
+    $join.= "JOIN ms_deti AS md ON md.id_pary=mp.id_pary
+             JOIN ms_kursdeti AS mkd ON mkd.id_deti=md.id_deti AND mkd.id_akce=mk.id_akce ";
+//     $group= "GROUP BY mp.id_pary";
+    $flds= explode(',',$fld);
+    break;
+  }
+  $cond= 1;
+  switch ($cnd) {
+  case 'vps':                           // jen VPS
+    $cond= 'funkce=1';
+    break;
+  case 2:                               // nikoliv VPS
+    $cond= 'funkce=0';
+    break;
+  }
+  // získání dat - podle $kdo
+  $clmn= array();
+//   $qry= "SELECT *
+//          FROM ms_kurs AS mk
+//          JOIN ms_druhakce AS ma ON ma.id_akce=mk.id_akce
+//          JOIN ms_pary AS mp ON mp.id_pary=mk.id_pary
+//          LEFT JOIN ms_kurs AS mks ON mks.id_akce=mk.id_akce AND mks.skupina=mk.skupina
+//          JOIN ms_pary AS mps ON mps.id_pary=mks.id_pary
+//          LEFT JOIN ms_deti AS md ON md.id_pary=mp.id_pary
+//          LEFT JOIN ms_kursdeti AS mkd ON mkd.id_deti=md.id_deti AND mkd.id_akce=mk.id_akce
+//          WHERE mk.id_akce=$akce
+//          GROUP BY mp.id_pary
+//          ORDER BY mp.jmeno";
+  // páry kurzu
+  $qry= "SELECT * $fields
+         FROM ms_kurs AS mk
+         $join
+         WHERE mk.id_akce=$akce AND $cond
+         $group
+         ORDER BY $order";
+  $res= mysql_qry($qry);
+  while ( $res && ($x= mysql_fetch_object($res)) ) {
+    switch ($typ) {
+    case 'j':                             // jednotlivci
+      $n++;
+      $clmn[$n]= array();
+      foreach($flds[0] as $f) {
+        $clmn[$n][$f]= $x->$f;
+      }
+      $n++;
+      $clmn[$n]= array();
+      foreach($flds[1] as $f) {
+        $clmn[$n][$f]= $x->$f;
+      }
+      break;
+    case 'p':                             // páry
+      $n++;
+      $clmn[$n]= array();
+      foreach($flds as $f) {
+        $clmn[$n][$f]= $x->$f;
+      }
+      break;
+    case 'd':                             // děti
+      $n++;
+      $clmn[$n]= array();
+      $x->rodcislo_d= $x->rodcislo;
+      $holka= $x->rodcislo_d && substr($x->rodcislo_d,2,1)>4 ? 1 : 0;
+      $x->jmeno_d= $x->jmeno;
+      $x->prijmeni_d= $holka ? $x->prijmeni_z : $x->prijmeni_m;
+      foreach($flds as $f) {
+        $clmn[$n][$f]= $x->$f;
+      }
+      break;
+    }
+  }
+                                        debug($clmn,"sestava pro $akce,$typ,$fld,$cnd");
+  // zobrazení tabulkou
+  $tab= '';
+  $thd= '';
+  // titulky
+  foreach ($tits as $id) {
+    $ths.= "<th>$id</th>";
+  }
+  foreach ($clmn as $i=>$c) {
+    $tab.= "<tr>";
+    foreach ($c as $id=>$val) {
+      $tab.= "<td>$val</td>";
+    }
+    $tab.= "</tr>";
+  }
+  $html.= "<table class='stat'><tr>$ths</tr>$tab</table>";
+  return (object)array(html=>$html,href=>$href);
+}
 # ================================================================================================== GOOGLE
 # -------------------------------------------------------------------------------------------------- akce_roku_id
 # definuj klíč dané akce
@@ -47,6 +165,72 @@ function akce_roku_id($akce,$rok,$id_akce) {
     mysql_qry("UPDATE ms_druhakce SET ciselnik_akce=$akce,ciselnik_rok=$rok WHERE id_akce=$id_akce");
   }
   return 1;
+}
+# -------------------------------------------------------------------------------------------------- akce_roku_update
+# přečtení listu $rok z tabulky ciselnik_akci a zapsání dat do tabulky
+# načítají se jen řádky ve kterých typ='a'
+function akce_roku_update($rok) {  trace();
+  $n= 0;
+  require_once 'Zend/Loader.php';
+  Zend_Loader::loadClass('Zend_Http_Client');
+  Zend_Loader::loadClass('Zend_Gdata');
+  Zend_Loader::loadClass('Zend_Gdata_ClientLogin');
+  Zend_Loader::loadClass('Zend_Gdata_Spreadsheets');
+  // autentizace
+  $authService= Zend_Gdata_Spreadsheets::AUTH_SERVICE_NAME;
+  $httpClient= Zend_Gdata_ClientLogin::getHttpClient('martin@smidek.eu', 'radost', $authService);
+//   $httpClient= Zend_Gdata_ClientLogin::getHttpClient('web@setkani.org', 'radost', $authService);
+  // nalezení tabulky ciselnik_akci
+  $gdClient= new Zend_Gdata_Spreadsheets($httpClient);
+  $feed= $gdClient->getSpreadsheetFeed();
+  $table= firstFeed($feed,"ciselnik_akci");
+  if ( $table ) {
+    // pokud tabulka existuje
+    $table_id= split('/', $table->id->text);
+    $table_key= $table_id[5];
+    // listy
+    $query= new Zend_Gdata_Spreadsheets_DocumentQuery();
+    $query->setSpreadsheetKey($table_key);
+    $feed= $gdClient->getWorksheetFeed($query);
+    $ws= firstFeed($feed,$rok);
+  }
+  if ( $table && $ws ) {
+    // pokud list tabulky existuje
+    $ws_id= split('/', $ws->id->text);
+    $ws_key= $ws_id[8];
+    // načti buňky
+    $query= new Zend_Gdata_Spreadsheets_CellQuery();
+    $query->setSpreadsheetKey($table_key);
+    $query->setWorksheetId($ws_key);
+    $feed= $gdClient->getCellFeed($query);
+    $max_n= 0;
+    foreach($feed->entries as $entry) {
+      if ($entry instanceof Zend_Gdata_Spreadsheets_CellEntry) {
+        $An= $entry->title->text;
+        $A= substr($An,0,1); $n= substr($An,1); $max_n= max($max_n,$n);
+        $cells[$A][$n]= $entry->content->text;
+      }
+    }
+//                                                 debug($cells,"akce $rok");
+    // zrušení daného roku v GAKCE
+    $qry= "DELETE FROM gakce WHERE grok=$rok";
+    $res= mysql_qry($qry);
+    // výběr a-záznamů a zápis do GAKCE
+    $values= ''; $del= '';
+    for ($i= 1; $i<$max_n; $i++) {
+      if ( $cells['A'][$i]=='a' ) {
+        $n++;
+        $akce= $cells['B'][$i];
+        $nazev= mysql_real_escape_string($cells['C'][$i]);
+        $values.= "$del($rok,$akce,\"$nazev\")";
+        $del= ',';
+      }
+    }
+    $qry= "INSERT INTO gakce (grok,gakce,gnazev) VALUES $values";
+    $res= mysql_qry($qry);
+  }
+  // konec
+  return $n;
 }
 # -------------------------------------------------------------------------------------------------- akce_roku
 # přečtení listu $rok z tabulky ciselnik_akci ve formátu pro browse_fill

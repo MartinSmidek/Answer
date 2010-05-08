@@ -198,6 +198,13 @@ table ms_poraakce {
   text jmeno
 }
 
+table gakce { key_id:'id_gakce'
+  number id_gakce
+  number grok
+  number gakce
+  text gnazev
+}
+
 # table ms_pece {
 #   number cislo
 #   text jmeno
