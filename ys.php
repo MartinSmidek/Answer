@@ -1,9 +1,15 @@
 <?php # (c) 2007-2009 Martin Smidek <martin@smidek.eu>
 
+global $ezer_root;
 $minify= false;
-$root= 'ys';
+$ezer_root= 'ys';
 $title= "Ans(w)er";
-require "$root.inc";
+
+session_start();
+$_SESSION['skin']= $skin;
+$refresh= $_SESSION[$ezer_root]['sess_state']=='on' ? 'true' : 'false';
+
+require "$ezer_root.inc";
 
 $js= array(
   'ezer2/client/licensed/clientcide.js',
@@ -30,6 +36,9 @@ $options= $matous ? <<<__EOD
     debug:window.parent!=window,      // je nadřazený frame - dbg.html
     login_interval:600,
     must_log_in:true,
+    skin:'$skin',
+    $menu
+    refresh: $refresh,
     mini_debug:false, status_bar:true, to_trace:true
 __EOD
 : <<<__EOD
@@ -37,9 +46,12 @@ __EOD
     login_interval:600,
 //     must_log_in:true,
     must_log_in:false, uname:'gandi', pword:'radost',
+    skin:'$skin',
+    $menu
+    refresh: $refresh,
     mini_debug:true, status_bar:true, to_trace:true
 __EOD;
-if ( $matous) $title.= "/Ezer2";
+if ( !$matous) $title.= "/local";
 
 if ( $dbg || !$minify ) {
   // header pro běh s laděním
@@ -59,12 +71,12 @@ else {
   $minifyJS= new Minify(TYPE_JS);
   $minifyCSS->addFile($css);
   $minifyJS->addFile($js);
-  file_put_contents("$root.css",$css= $minifyCSS->combine());
-  file_put_contents("$root.js",$js= $minifyJS->combine());
+  file_put_contents("$ezer_root.css",$css= $minifyCSS->combine());
+  file_put_contents("$ezer_root.js",$js= $minifyJS->combine());
   // header pro běh bez laděni
   $head= <<<__EOD
-  <script src="$root.js" type="text/javascript" charset="utf-8"></script>
-  <link rel="stylesheet" href="$root.css" type="text/css" media="screen" charset="utf-8" />
+  <script src="$ezer_root.js" type="text/javascript" charset="utf-8"></script>
+  <link rel="stylesheet" href="$ezer_root.css" type="text/css" media="screen" charset="utf-8" />
 __EOD;
 }
 
@@ -104,25 +116,33 @@ echo <<<__EOD
   <meta name="author" content="Martin Šmídek" />
   <meta name="copyright" content="Copyright © 2010" />
   <meta name="generator" content="Ezer" />
-  <link rel="shortcut icon" href="./$root/img/$root.png" />
+  <link rel="shortcut icon" href="./$ezer_root/img/$ezer_root.png" />
   <title>$title</title>
   <script type="text/javascript">
     var Ezer= {};
     Ezer.fce= {};
     Ezer.str= {};
-    Ezer.root= '$root';
+    Ezer.root= '$ezer_root';
     Ezer.options= {
       $options
     };
   </script>
   $head
 </head>
-<body id="body" class='nogrid'>
+<body id="body" class='nogrid' onclick="$('DbgMenu').setStyle('display','none');">
 <!-- menu a submenu -->
   <div id='horni' class="MainBar">
     <div id="appl">$title</div>
-    <img class="StatusIcon" id="StatusIcon_idle" src="./$root/img/-logo.gif" />
-    <img class="StatusIcon" id="StatusIcon_server" src="./$root/img/+logo.gif" />
+    <div id='logo' oncontextmenu="$('DbgMenu').setStyle('display','block');return false;">
+      <img class="StatusIcon" id="StatusIcon_idle" src="./$ezer_root/img/-logo.gif" />
+      <img class="StatusIcon" id="StatusIcon_server" src="./$ezer_root/img/+logo.gif" />
+      <ul id='DbgMenu' class="ContextMenu" style="position:absolute; top:5px; display:none; left:15px; z-index:2000; visibility:visible; opacity:1;">
+        <li onclick="Ezer.app.reload();$('DbgMenu').setStyle('display','none');" style="border-bottom:1px solid #AAAAAA"><a>recompile</a></li>
+        <li onclick="Cookie.dispose('PHPSESSID',{path: '/'});alert('Obnovte prosím svoje přihlášení do systému...');window.location.href= window.location.href;"><a>relogin</a></li>
+        <li onclick="Ezer.dbg.stop=true;$('DbgMenu').setStyle('display','none');"><a>stop</a></li>
+        <li onclick="Ezer.dbg.stop=false;$('DbgMenu').setStyle('display','none');"><a>continue</a></li>
+      </ul>
+    </div>
     <ul id="menu" class="MainMenu"></ul>
     <ul id="submenu" class="MainTabs"></ul>
   </div>
