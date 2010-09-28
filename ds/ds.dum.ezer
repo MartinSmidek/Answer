@@ -304,22 +304,22 @@ group ucastnici {
     button [287,0,50,18] { title:'- účastník', help:'odebrání hosta označeného oranžovou šipkou'
       proc onclick () { osoba_del(seznam.id_osoba.get)} }
     browse seznam [0,30,,] { type:'smart', rows:14
-      show rodina [,,25,] { title:'rod', data:tab.ds_osoba.rodina, format:'s+' }
-      show prijmeni [,,70,] { title:'příjmení', data:tab.ds_osoba.prijmeni, format:'s' }
-      show jmeno    [,,50,]  { title:'jméno', data:tab.ds_osoba.jmeno, format:'s' }
-      show vek  [,,20,]  { title:'věk',
+      show rodina [,,24,] { title:'rod', data:tab.ds_osoba.rodina, format:'s+' }
+      show prijmeni [,,69,] { title:'příjmení', data:tab.ds_osoba.prijmeni, format:'s' }
+      show jmeno    [,,49,]  { title:'jméno', data:tab.ds_osoba.jmeno, format:'s' }
+      show vek  [,,19,]  { title:'věk',
         expr:"if(ds_osoba.narozeni,year(now())-year(ds_osoba.narozeni),'??')", format:'r' }
-      show [,,20,]  { title:'P',
+      show [,,19,]  { title:'P',
         data:tab.ds_osoba.pokoj, format:'rs:e' }  // :e zobrazí 0 jako nic
-      show [,,20,]  { title:'L',
+      show [,,19,]  { title:'L',
         data:tab.ds_osoba.luzko, map_pipe:tab.ds_luzko.zkratka, format:'rs' }
-      show [,,20,]  { title:'p',
+      show [,,19,]  { title:'p',
         data:tab.ds_osoba.postylka, format:'rs:e' }
-      show [,,20,]  { title:'S',
+      show [,,19,]  { title:'S',
         data:tab.ds_osoba.strava, map_pipe:tab.ds_strava.zkratka, format:'rs' }
-      show [,,35,]  { title:'od', data:tab.ds_osoba.fromday, format:'rs:d.m' }
-      show [,,35,]  { title:'do', data:tab.ds_osoba.untilday, format:'rs:d.m' }
-      show [,,20,]  { title:'?', data:tab.ds_osoba.pozn, format:'s' }
+      show [,,34,]  { title:'od', data:tab.ds_osoba.fromday, format:'rs:d.m' }
+      show [,,34,]  { title:'do', data:tab.ds_osoba.untilday, format:'rs:d.m' }
+      show [,,19,]  { title:'?', data:tab.ds_osoba.pozn, format:'s' }
       // nezobrazené
       show id_osoba { data:tab.ds_osoba.id_osoba }
       show ulice { data:tab.ds_osoba.ulice }
