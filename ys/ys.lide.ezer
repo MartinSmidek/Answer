@@ -12,26 +12,35 @@ panel Skupinky [,,,543] {type:'right', title:'Skupinky'
       item {title:'2009',par:°{rok:'2009'} }
       item {title:'2008',par:°{rok:'2008'} }
       item {title:'2007',par:°{rok:'2007'} }
-      proc onclick (i) { rok.set(i.par.rok) }
+      proc onclick (i) {
+        rok.set(i.par.rok);
+        info.fill(i.owner.title,conc("Byl nastaven rok ",i.par.rok));
+      }
     }
     menu {title:'Členská základna',_sys:'cle',type:'group'
       item {title:'Členové - účastníci letního kurzu'
         proc onclick (i) {
           info.fill(conc(i.title,' roku ',rok.get),ask('lide_cleni_kurs',rok.get));
-          info.export.display(1);
+          info.export.display(1); info.export2.display(0);
         }
       }
     }
     menu {title:'Podklady pro skupinky',type:'group'
       item {title:'Seznam účastníků LK'
         proc onclick (i) {
-          info.export.display(0);
+          info.export.display(0); info.export2.display(0);
           info.fill(conc(i.title,' roku ',rok.get),ask('lide_kurs',rok.get))
+        }
+      }
+      item {title:'Vytvoření "plachty"'
+        proc onclick (i) {
+          info.export.display(0); info.export2.display(1);
+          info.fill(conc(i.title,' roku ',rok.get),ask('lide_plachta',rok.get))
         }
       }
       item {title:'Rozbor starých skupinek LK'
         proc onclick (i) {
-          info.export.display(0);
+          info.export.display(0); info.export2.display(0);
           info.fill(conc(i.title,' roku ',rok.get),ask('lide_spolu',rok.get))
         }
       }
@@ -43,9 +52,10 @@ panel Skupinky [,,,543] {type:'right', title:'Skupinky'
 # formulář pro levostranné menu s permanentním nadpisem
 form right [,,640,50] {
   button export [620,18,100,16] { title:'Export', style:'display:none;zIndex:2'
-    proc onclick() {
-      note.set(ask('lide_cleni_kurs',rok.get,1));
-    }
+    proc onclick() { note.set(ask('lide_cleni_kurs',rok.get,1)); }
+  }
+  button export2 [620,18,100,16] { title:'Export', style:'display:none;zIndex:2'
+    proc onclick() { note.set(ask('lide_plachta',rok.get,1)); }
   }
   label info [0,0,680,600] { title:'' }
   label head [0,0,680,50]  { title:'' }

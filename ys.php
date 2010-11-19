@@ -1,6 +1,7 @@
 <?php # (c) 2007-2009 Martin Smidek <martin@smidek.eu>
 
 global $ezer_root;
+
 $minify= false;
 $ezer_root= 'ys';
 $title= "Ans(w)er";
@@ -25,13 +26,13 @@ $js= array(
   'ds/fce.js'
 );
 $css= array(
-  './ezer2/client/appf.css',
+  './ezer2/client/ezer.css.php',
   './ezer2/client/natdocs.css',
   './ezer2/client/licensed/fancyupload.css',
   './ys/ys.css.css'
 );
 $dbg= $_GET['dbg'];
-$matous= $_SERVER["DOCUMENT_ROOT"]=='/home/www/ezer/www-ys';
+$matous= $_SERVER["DOCUMENT_ROOT"]=='/home/www/ezer/www-ys/2';
 $options= $matous ? <<<__EOD
     debug:window.parent!=window,      // je nadřazený frame - dbg.html
     login_interval:600,

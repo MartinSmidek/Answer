@@ -113,7 +113,7 @@ proc d_browse_seek (k) {
 form _d_denik [,,539,510] {
   view v: table pdenik,
   view p: table pokladna {join:'ON id_pokladna=pdenik.org'},
-  browse seznam [3,10,200,200] { rows:24, qry_rows:2, css_rows:'vytisten,0:kas_1'
+  browse seznam [3,10,200,200] { rows:24, qry_rows:2, optimize:°{qry:'noseek'}, css_rows:'vytisten,0:kas_1'
     show ident [,,80,] { title:'ident', data:pdenik.ident, format:'sq*' },
     show cislo [,,30,] { title:'číslo', data:pdenik.cislo, format:'rsq/' },
     show datum [,,70,] { title:'datum', data:pdenik.datum, format:'rsq/'  },

@@ -159,7 +159,7 @@ function akce_sestava($akce,$par) {
 }
 # ================================================================================================== GOOGLE
 # -------------------------------------------------------------------------------------------------- akce_roku_id
-# definuj klíč dané akce
+# definuj klíč dané akce jeko klíč akce z aplikace MS.EXE
 function akce_roku_id($akce,$rok,$id_akce) {
   if ( $id_akce ) {
     mysql_qry("UPDATE ms_druhakce SET ciselnik_akce=$akce,ciselnik_rok=$rok WHERE id_akce=$id_akce");

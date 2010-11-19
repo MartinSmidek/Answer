@@ -92,7 +92,7 @@ panel Vyber [,,,543] {type:'right', title:'Výběr akce'
     use f: form _id_akce [12,10,,]
     form _id_akce [,,100,50] {
       label [10,10,50,] { title:'id_akce' }
-      field id [60,10,50,]
+      field id [60,10,50,] { help:'číslo akce z programu MS.EXE'}
       button [120,10,,] { type:'submit', title:'Zapiš', proc onclick() {
         panel.hide(id.get)
       } }

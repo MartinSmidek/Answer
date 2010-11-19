@@ -187,7 +187,7 @@ function lide_spolu($rok) { trace();
   foreach ($letos as $par=>$info) {
     $ze= isset($odkud[$par]) ? $odkud[$par] : '';
     $ucastnik= "{$info->jmeno} $ze";
-    // minulé účasto
+    // minulé účasti
     $qry= "
             SELECT akce,skupina,nazev,year(datum_od) as rok
             FROM ms_kurs
@@ -245,6 +245,149 @@ function lide_kurs($rok) { trace();
   }
   $note= "Abecední seznam účastníků letního kurzu roku $rok.";
   return "<p><i>$note</i></p>$html";
+  return $html;
+}
+# -------------------------------------------------------------------------------------------------- lide_plachta
+# podklad pro tvorbu skupinek
+function lide_plachta($rok,$export=0) { trace();
+  // číselníky
+  $c_vzdelani= map_cis('ms_akce_vzdelani','zkratka');  $c_vzdelani[0]= '?';
+  $c_cirkev= map_cis('ms_akce_cirkev','zkratka');      $c_cirkev[0]= '?';  $c_cirkev[1]= 'kat';
+  $letos= date('Y');
+  $html= "";
+  $excel= array();
+//   $html.= "<table class='vypis'>";
+  // letošní účastníci
+  $qry= "SELECT cislo,akce,skupina,jmeno,mesto,nazev,year(datum_od) as rok, jmeno_m, jmeno_z,
+            svatba, funkce, vzdelani_m, vzdelani_z, cirkev_m, cirkev_z, rodcislo_m, rodcislo_z,
+            aktivita_m, aktivita_z, zajmy_m, zajmy_z, zamest_m, zamest_z
+          FROM ms_kurs
+          JOIN ms_pary USING (cislo,source)
+          JOIN ms_druhakce USING(akce,source)
+          WHERE druh=1 AND ms_kurs.source='L'
+                                                        /*AND ms_pary.id_pary=1439*/
+          HAVING rok=$rok
+          ORDER BY jmeno ";
+  $res= mysql_qry($qry);
+  while ( $res && ($u= mysql_fetch_object($res)) ) {
+    // minulé účasti
+    $rqry= " SELECT COUNT(*) AS _pocet /*GROUP_CONCAT(RIGHT(year(datum_od),2)) as _ucast*/
+            FROM ms_kurs
+            JOIN ms_druhakce USING(akce,source)
+            WHERE druh=1 and cislo={$u->cislo} and skupina>0 AND ms_kurs.source='L'
+            ORDER BY datum_od DESC ";
+    $rres= mysql_qry($rqry);
+    while ( $rres && ($r= mysql_fetch_object($rres)) ) {
+      $u->ucasti= $r->_pocet ? "  {$r->_pocet}x" : '';
+    }
+    // počet dětí
+    $dqry= "SELECT COUNT(*) as _pocet
+           FROM ms_deti
+           WHERE cislo={$u->cislo} AND source='L'";
+    $dres= mysql_qry($dqry);
+    while ( $dres && ($d= mysql_fetch_object($dres)) ) {
+      $u->deti= $d->_pocet;
+    }
+//                                                         debug($u);
+    // věk
+    $vek_m= rc2roky($u->rodcislo_m);
+    $vek_z= rc2roky($u->rodcislo_z);
+    $vek= abs($vek_m-$vek_z)<5 ? $vek_m : "$vek_m/$vek_z";
+    // spolu
+    $spolu= $u->svatba ? $letos-$u->svatba : '?';
+    // děti
+    $deti= $u->deti;
+    // vzdělání
+    $vzdelani_muze= mb_substr($c_vzdelani[$u->vzdelani_m],0,2,"UTF-8");
+    $vzdelani_zeny= mb_substr($c_vzdelani[$u->vzdelani_z],0,2,"UTF-8");
+    $vzdelani= $vzdelani_muze==$vzdelani_zeny ? $vzdelani_muze : "$vzdelani_muze/$vzdelani_zeny";
+//                                                         display("$vek_m/$vek_z=$vek");
+    // konfese
+    $cirkev= $u->cirkev_m==$u->cirkev_z
+      ? ($u->cirkev_m==1 ? '' : ", {$c_cirkev[$u->cirkev_m]}")
+      : ", {$c_cirkev[$u->cirkev_m]}/{$c_cirkev[$u->cirkev_z]}";
+    // agregace
+    $r1= ($u->funkce==1 ? '* ' : '')."{$u->jmeno} {$u->jmeno_m} a {$u->jmeno_z} {$u->ucasti}";
+    $r2= "věk:$vek, spolu:$spolu, dětí:$deti, {$u->mesto}, $vzdelani $cirkev";
+    // atributy
+    $r31= $u->aktivita_m;
+    $r32= $u->aktivita_z;
+    $r41= $u->zajmy_m;
+    $r42= $u->zajmy_z;
+    $r51= $u->zamest_m;
+    $r52= $u->zamest_z;
+    // listing
+    $html.= "<table class='vypis' style='width:300px'>";
+    $html.= "<tr><td colspan=2><b>$r1</b></td></tr>";
+    $html.= "<tr><td colspan=2>$r2</td></tr>";
+    $html.= "<tr><td>$r31</td><td>$r32</td></tr>";
+    $html.= "<tr><td>$r41</td><td>$r42</td></tr>";
+    $html.= "<tr><td>$r51</td><td>$r52</td></tr>";
+    $html.= "</table><br/>";
+//     $html.= "<tr><td>$r1</td><td>$r2</td><td>$r31</td><td>$r32</td>";
+//     $html.= "<td>$r41</td><td>$r42</td>";
+//     $html.= "<td>$r51</td><td>$r52</td></tr>";
+    if ( $export ) {
+      $excel[]= array($r1,$r2,$r31,$r41,$r51,$r32,$r42,$r52,$vzdelani_muze,$vek_m);
+    }
+  }
+                                                debug($excel);
+//   $html.= "</table";
+    if ( $export ) {
+      $html= lide_plachta_export($excel,'plachta');
+    }
+  return $html;
+}
+# -------------------------------------------------------------------------------------------------- lide_plachta_export
+function lide_plachta_export($line,$file) { trace();
+  require_once('./ezer2/server/licensed/xls/OLEwriter.php');
+  require_once('./ezer2/server/licensed/xls/BIFFwriter.php');
+  require_once('./ezer2/server/licensed/xls/Worksheet.php');
+  require_once('./ezer2/server/licensed/xls/Workbook.php');
+  global $ezer_path_root;
+  chdir($ezer_path_root);
+  $table= "$file.xls";
+  try {
+    $wb= new Workbook($table);
+    // formáty
+    $format_hd= $wb->add_format();
+    $format_hd->set_bold();
+    $format_hd->set_pattern();
+    $format_hd->set_fg_color('silver');
+    $format_dec= $wb->add_format();
+    $format_dec->set_num_format("# ##0.00");
+    $format_dat= $wb->add_format();
+    $format_dat->set_num_format("d.m.yyyy");
+    // list LK
+    $ws= $wb->add_worksheet("LK $rok");
+    // hlavička
+    $fields= explode(',','r1:20,r2:20,r31:20,r41:20,r51:20,r32:20,r42:20,r52:20,skola:8,vek:8');
+    $sy= 0;
+    foreach ($fields as $sx => $fa) {
+      list($title,$width)= explode(':',$fa);
+      $ws->set_column($sx,$sx,$width);
+      $ws->write_string($sy,$sx,utf2win_sylk($title,true),$format_hd);
+    }
+    // data
+    foreach($line as $x) {
+      $sy++; $sx= 0;
+      $ws->write_string($sy,$sx++,utf2win_sylk($x[0],true));
+      $ws->write_string($sy,$sx++,utf2win_sylk($x[1],true));
+      $ws->write_string($sy,$sx++,utf2win_sylk($x[2],true));
+      $ws->write_string($sy,$sx++,utf2win_sylk($x[3],true));
+      $ws->write_string($sy,$sx++,utf2win_sylk($x[4],true));
+      $ws->write_string($sy,$sx++,utf2win_sylk($x[5],true));
+      $ws->write_string($sy,$sx++,utf2win_sylk($x[6],true));
+      $ws->write_string($sy,$sx++,utf2win_sylk($x[7],true));
+      $ws->write_string($sy,$sx++,utf2win_sylk($x[8],true));
+      $ws->write_number($sy,$sx++,$x[9]);
+    }
+    $wb->close();
+    $html.= "Byl vygenerován soubor pro Excel: <a href='$table'>$table</a>";
+  }
+  catch (Exception $e) {
+    $html.= nl2br("Chyba: ".$e->getMessage()." na ř.".$e->getLine());
+  }
   return $html;
 }
 ?>

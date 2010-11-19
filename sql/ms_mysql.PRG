@@ -101,6 +101,8 @@ procedure mysql_export
     do case
     case mdbf == 'druhakce'
       klic = chr(10) + "`id_akce` int(11) NOT NULL AUTO_INCREMENT,"
+      klic = klic + chr(10) + "`ciselnik_akce` smallint(6) NOT NULL,"
+      klic = klic + chr(10) + "`ciselnik_rok` smallint(6) NOT NULL,"
     case mdbf == 'pary'
       klic = chr(10) + "`id_pary` int(11) NOT NULL AUTO_INCREMENT,"
     case mdbf == 'kurs'
@@ -194,7 +196,7 @@ procedure mysql_export
     klice = ''
     do case
     case mdbf == 'druhakce'
-      klice = "DEFAULT, "
+      klice = "DEFAULT,0,0, "
     case mdbf == 'pary'
       klice = "DEFAULT, "
     case mdbf == 'kurs'
