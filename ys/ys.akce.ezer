@@ -633,7 +633,7 @@ panel Ucastnici [,,,543] {type:'plain', title:'Účastníci'
 # ================================================================================================== TISK
 panel tisk [,,,543] {type:'right', title:'Výpisy', include:'onclick'}
 # ================================================================================================== MAIL
-panel mail [,,,543] {type:'right', title:'Maily', include:'onclick'}
+panel mail [,,,543] {type:'right', title:'Maily', skill:'yam', include:'onclick'}
 # ================================================================================================== MAPS
 map ms_akce_clen:     table _cis {where:"druh='ms_akce_clen'",     order:'poradi', key_id:'data'}
 map ms_akce_pouze:    table _cis {where:"druh='ms_akce_pouze'",    order:'poradi', key_id:'data'}

@@ -9,7 +9,7 @@ var dopis_id: text
 use ii: form right [12,4,,]
 
 menu {type:'left',
-  menu {title:'Rozesílání skupinových mailů',skill:'y',type:'group'
+  menu {title:'Rozesílání skupinových mailů', type:'group'
     item {title:'Vytváření a editace'
       proc onclick (i) {
         ii.fill("Příprava skupinových emailů"," ");
@@ -23,7 +23,7 @@ menu {type:'left',
       }
     }
   }
-  menu {title:'Kontrola speciálních skupin',skill:'y',type:'group'
+  menu {title:'Kontrola speciálních skupin', skill:'yams',type:'group'
     item {title:'Sponzoři Vánoce 2010',  par:°{skupina:'vanoce2010'} }
     item {title:'Výbor YMCA Setkání',    par:°{skupina:'vybor'} }
     item {title:'TEST',                  par:°{skupina:'martin'} }
@@ -99,23 +99,24 @@ form _etext [0,0,180,267] {
   field id_davka [0,0,0,0] { data:dopis.id_davka },
   field druh [0,0,0,0] { data:dopis.druh },
   label [300,0,100,17] { title:'datum odeslání' }
-  field datum [300,20,80,17] { data:dopis.datum, help:'datum|datum emailu', skill:'y|y' },
+  field datum [300,20,80,17] { data:dopis.datum, help:'datum|datum emailu', skill:'yam|yams' },
   label [400,0,100,17] { title:'výběr adresátů' }
   select komu  [400,20,150,17] { type:'map', options:map_dm_komu.zkratka, data:dopis.komu,
-    help:'komu|skupina adresátů', skill:'y|y' },
+    help:'komu|skupina adresátů', skill:'yam|yams' },
   label [300,50,100,17] { title:'předmět mailu' }
-  field predmet [300,70,340,17] { data:dopis.nazev, help:'předmět|předmět emailu', skill:'y|y' },
+  field predmet [300,70,340,17] { data:dopis.nazev, help:'předmět|předmět emailu', skill:'yam|yams' },
   label [300,100,300,17] { title:'případné přílohy (uložené ve složce docs)' }
-  field prilohy [300,120,340,17] { data:dopis.prilohy, help:'přílohy|přílohy emailu oddělené čárkami', skill:'y|y' },
-  button uloz [300,160,45,17] { type:'submit', title:'Uložit', help:'uložit opravené hodnoty', skill:'y|y' }
-  button novy [364,160,45,17] { title:'Nový', help:'vytvořit nový e-mail', skill:'y|y' }
-  button oprav [427,160,45,17] { title:'Opravit text', help:'opravit text mailu', skill:'y|y' }
-  button smaz [525,160,45,17] { title:'Smazat', help:'smazat mail a jeho rozesílání', skill:'y|y' }
-  button poslat [300,190,45,17] { title:'Vygenerovat rozesílací seznam', help:'připravit rozesílání', skill:'y|y' }
+  field prilohy [300,120,340,17] { data:dopis.prilohy, help:'přílohy|přílohy emailu oddělené čárkami', skill:'yam|yams' },
+  button uloz [300,160,45,17] { type:'submit', title:'Uložit', help:'uložit opravené hodnoty', skill:'yam|yams' }
+  button novy [364,160,45,17] { title:'Nový', help:'vytvořit nový e-mail', skill:'yam|yams' }
+  button oprav [427,160,45,17] { title:'Opravit text', help:'opravit text mailu', skill:'yam|yams' }
+  button smaz [525,160,45,17] { title:'Smazat', help:'smazat mail a jeho rozesílání', skill:'yam|yams' }
+  button poslat [300,190,45,17] { title:'Vygenerovat rozesílací seznam', help:'připravit rozesílání',
+    skill:'yam|yams' }
   label obsah [0,250,645,200] { title:'zobrazení předmětu a textu mailu' }
 }
 # ================================================================================================== E_dopis
-panel E_dopis [0,0,645,520] { title:' Úprava textu mailu', type:'popup', css:'dialog', skill:'y'
+panel E_dopis [0,0,645,520] { title:' Úprava textu mailu', type:'popup', css:'dialog', skill:'yams'
   use mail: form _edopis [0,0,,],
   proc onfocus () {
     dopis_id.get; mail.load(dopis_id.get);
@@ -188,16 +189,22 @@ form _esady [,,500,200] {
     show pocet [,,30,] { title:'#', data:etd.pocet, format:'rs' },
   }
   label [0,255,100,17] { title:'<b>Odeslat ...</b>' }
-  button test [0,280,100,17] { title:'1 mail sobě', help:'pro kontrolu - posílá se na adresu klub@proglas.cz' }
-  field davka [105,281,30,17] { format:'rt', value:'10' }
-  button send [150,280,100,17] { title:'10 ještě neposlaných', help:'pošle další dávku - počet lze měnit políčkem vlevo' }
+  button test [0,280,100,17] { title:'1 mail sobě', skill:'yam|yams',
+    help:'pro kontrolu - posílá se na adresu martin@smidek.eu' }
+  field davka [105,281,30,17] { format:'rt', value:'10', skill:'yam|yams' }
+  button send [150,280,100,17] { title:'10 ještě neposlaných', skill:'yam|yams',
+    help:'pošle další dávku - počet lze měnit políčkem vlevo' }
   label msg [0,310,300,50]
   label info [0,370,300,100]
   browse maily [320,0,120,200] { rows:24, qry_rows:1, css_rows:'stav,3:zluty,4:zeleny,5:cerveny'
     show stav    [,,20,]  { title:'s.', data:mail.stav, format:'rsq' },
     show id_clen [,,50,]  { title:'člen', data:mail.id_clen, format:'rs+q' },
     show email   [,,180,] { title:'email', data:mail.email, format:'sq' },
-    show msg     [,,50,]  { title:'chyba', data:mail.msg, format:'sq' },
+    show msg     [,,50,]  { title:'chyba', data:mail.msg, format:'sq' }
+    show id_mail          { data:mail.id_mail }
+    proc onsubmit() {
+      ask('dop_mai_stav',id_mail.get,cconc(eq(stav.get,5),3,5)); this.browse_row
+    }
   }
 }
 
