@@ -746,23 +746,24 @@ function dop_mai_skupina($skupina) { trace();
     }
     $html.= "<h3>$n je v JARDA i KONF</h3>".implode('<br>',$in_jk);
     $html.= "<h3>$nj není v JARDA</h3>".implode('<br>',$not_in_j);
-//     $nk= 0;
-//     foreach($j as $adr) {
-//       if ( $adr[0]!= '-' && emailIsValid($adr) ) {
-//         if ( !in_array($adr,$k) ) {
-//           $not_in_k[]= $ok.$adr;
-//           $nk++;
-//         }
-//       }
-//       else {
-//         $nx++;
-//       }
-//     }
-//     $html.= "<h3>$nk není v KONF</h3>".implode('<br>',$not_in_k);
+    $nk= 0;
+    foreach($j as $adr) {
+      if ( $adr[0]!= '-' && emailIsValid($adr) ) {
+        if ( !in_array($adr,$k) ) {
+          $not_in_k[]= $ok.$adr;
+          $nk++;
+        }
+      }
+      else {
+        $nx++;
+      }
+    }
+    $html.= "<h3>$nk není v KONF</h3>".implode('<br>',$not_in_k);
     $html.= "<h3>$nx bylo vyřazeno</h3>";
-    $adresy= array_merge($in_jk,$not_in_j);
+    $adresy= array_merge($in_jk,$not_in_j,$not_in_k);
   }
   // zápis pole $adresa
+  $adresy= array_unique($adresy);
   sort($adresy);
   $html= "<h3>".count($adresy)." adres bude použito jako '$skupina'</h3>".implode('<br>',$adresy);
   $result->_html= $html;
@@ -831,7 +832,9 @@ $dop_mai_v2010= array(
   "smidek@proglas.cz",
   "martin.smidek@gmail.com",
   "gandi@volny.cz",
+  "martin.smidek@gmail.com",
   "error@smidek.eu",
+  "martin.smidek@gmail.com",
   "martin@smidek.eu"
 ),
 'vybor'=> array(
@@ -1193,10 +1196,10 @@ $dop_mai_v2010= array(
   "michalec.zdenek@inset.com",
   "mika@diamo.cz",
   "mila.havrdova@seznam.cz",
-  "milada.barotova@racek.org",
+  "---milada.barotova@racek.org",
   "milada.n@centrum.cz",
   "milan.barot@gmail.com",
-  "milan.barot@racek.org",
+  "---milan.barot@racek.org",
   "milan.bily@volny.cz",
   "milan.duben@gist.cz",
   "milan.jebavy@tiscali.cz",
@@ -1503,7 +1506,6 @@ $dop_mai_v2010= array(
   "bohca@post.cz",
   "bohunka_jirka@volny.cz",
   "bonaventura@kapucini.cz",
-  "bonaventura@kapucini.cz",
   "Bortel@alve.cz",
   "brothanek@seznam.cz",
   "btriska@zpmvcr.cz",
@@ -1628,7 +1630,6 @@ $dop_mai_v2010= array(
   "ivanpodest@seznam.cz",
   "ivo.kalvinsky@seznam.cz",
   "j.babicek@seznam.cz",
-  "j.baletka@gmail.com",
   "j.baletka@kvapil-elektro.cz",
   "j.brauner@volny.cz",
   "j.fidrmuc@volny.cz",
@@ -1942,7 +1943,6 @@ $dop_mai_v2010= array(
   "petra@doffek.cz",
   "petra@ibp.cz",
   "petrkvetak@seznam.cz",
-  "petrmatula@atlas.cz",
   "petrmatula@atlas.cz",
   "petrprokop@seznam.cz",
   "Petsti@email.cz",

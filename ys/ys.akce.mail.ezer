@@ -26,6 +26,7 @@ menu {type:'left',
   menu {title:'Kontrola speciálních skupin',skill:'y',type:'group'
     item {title:'Sponzoři Vánoce 2010',  par:°{skupina:'vanoce2010'} }
     item {title:'Výbor YMCA Setkání',    par:°{skupina:'vybor'} }
+    item {title:'TEST',                  par:°{skupina:'martin'} }
     proc onclick (i) {
       var res: object
       res.set(ask('dop_mai_skupina',i.par.skupina));
