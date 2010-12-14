@@ -40,8 +40,11 @@ ys/img/+logo.gif -text
 ys/img/-logo.gif -text
 ys/img/ys-logo.gif -text
 ys/img/ys.png -text
+ys/img/ys_local.png -text
 ys/test.php -text
 ys/ys.akce.ezer -text
+ys/ys.akce.mail.ezer -text
+ys/ys.akce.tisk.ezer -text
 ys/ys.css.css -text
 ys/ys.ds.ezer -text
 ys/ys.ds.kl.ezer -text

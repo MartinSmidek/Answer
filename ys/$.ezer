@@ -236,3 +236,37 @@ table gakce { key_id:'id_gakce'
 #   text poznamka
 # }
 
+table mail { key_id:'id_mail'
+  number id_mail { key:'primary' },
+  number id_dopis { help:'mail|index mailu' }, // nepoužívá se pro dopisy s druh!='@'
+  number id_davka
+  number id_znacka                             // nepoužívá se pro dopisy s druh=='@'
+  number id_clen
+  text znacka
+  text email
+  number stav
+  text msg
+  text body
+}
+
+table dopis { key_id:'id_dopis'
+  number id_dopis { key:'primary' },
+  number id_davka { help:'dávka|číslo rozesílání dávky dopisů' },
+  text nazev
+  text prilohy
+  text druh { help:'druh|D-dopis, S-samolepka,legitimace, N-nesamostatná složka' },
+  text typ { help:'typ|značka dopisu' },
+  number nw
+  number nh
+  number komu     // pouze pro maily
+  number pocet    // pouze pro maily
+  text report { help:'vzor|identifikátor reportu' },
+  number aktualni { help:'aktualni|text dopisu je připraven k tisku' },
+  date datum { help:'datum|vročení dopisu', sql_pipe:'sql_date1' },
+  text obsah { help:'obsah|text dopisu' },
+  text var_list { help:'seznam proměnných'}
+  text post_vars { help:'seznam proměnných počítaných po generování'}
+  text nest_list { help:'seznam složek (druh=N)'}
+  text add_list
+}
+

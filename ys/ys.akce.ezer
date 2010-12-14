@@ -24,7 +24,7 @@ proc onstart() {
   Vyber.info.seznam.browse_focus;
 }
 # ================================================================================================== VÝBĚR
-panel Vyber [,,,543] {type:'right', title:'Výběr akce'
+panel Vyber {type:'right', title:'Výběr akce'
   use info: form _akce [12,4,,],
   menu m {type:'left'
     menu rok {title:'Volba roku',type:'group'
@@ -155,7 +155,8 @@ panel Ucastnici [,,,543] {type:'plain', title:'Účastníci'
       proc onsubmit () {
       }
     }
-    browse b [8,50,200,490] {type:'smart', buf_rows:120, rows:19, qry_rows:1, group_by:'mp.id_pary'
+    browse b [8,50,200,490] {type:'smart', buf_rows:120, rows:19, qry_rows:1, group_by:'mp.id_pary',
+      optimize:°{qry:'noseek'}
       proc onclick() {
         xfunkce.width; xfunkce.width(0);  skupina.width(33);
       | skupina.width; xfunkce.width(33); skupina.width(0);
@@ -629,8 +630,10 @@ panel Ucastnici [,,,543] {type:'plain', title:'Účastníci'
     }
   }
 }
-# ================================================================================================== VÝBĚR
+# ================================================================================================== TISK
 panel tisk [,,,543] {type:'right', title:'Výpisy', include:'onclick'}
+# ================================================================================================== MAIL
+panel mail [,,,543] {type:'right', title:'Maily', include:'onclick'}
 # ================================================================================================== MAPS
 map ms_akce_clen:     table _cis {where:"druh='ms_akce_clen'",     order:'poradi', key_id:'data'}
 map ms_akce_pouze:    table _cis {where:"druh='ms_akce_pouze'",    order:'poradi', key_id:'data'}

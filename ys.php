@@ -1,10 +1,50 @@
-<?php # (c) 2007-2009 Martin Smidek <martin@smidek.eu>
+<?php # Systém FiS/Ezer2, (c) 2008-2010 Martin Šmídek <martin@smidek.eu>
 
 global $ezer_root;
 
-$minify= false;
+# příkazový řádek
+#
+#  menu=m[.s[.l.g.i]]   -- tabs, panel, menu.left, menu.group, menu.item
+#  trace=ssxxxx         -- ++UTu
+#  theight=x            -- výška trasovacího pruhu v px
+#  skin                 -- ck|blue
+#  session=1            -- zobrazení $_SESSION v informačním přihlašovacím okně
+
+$menu=    $_GET['menu'] ? "start:'{$_GET['menu']}'," : '';
+$xtrace=  $_GET['trace'] ? "to_trace:1,show_trace:1,ae_trace:'{$_GET['trace']}'," : '';
+$skin=    $_GET['skin']=='blind' ? 'blind' : 'default';
+$theight= $_GET['theight']?$_GET['theight']:240;
+
+# identifikace ostrého serveru
+$local= $_SERVER["SERVER_NAME"]=='ys2.ezer';
+
+# parametrizace
+#       minify          -- true dovoluje kompresi CSS a JS do souborů v kořenu
+#       root            -- složka se zdrojovými texty
+#       skin            -- jméno skinu nebo null
+#       title           -- bude použito na více místech jako název aplikace
+#       session         -- ezer|php (default)
+
+$minify= false;          // true pokud je povolená minifikace
 $ezer_root= 'ys';
 $title= "Ans(w)er";
+$session= "php";
+
+$title_right= $local ? "<span style='color:#ef7f13'>$title</span>" : $title;
+$favicon= $local ? "{$ezer_root}_local.png" : "{$ezer_root}.png";
+session_start();
+require "$ezer_root.inc";
+$_SESSION['trace_height']= $theight;
+$_SESSION[$ezer_root]['skin']= $skin;
+$refresh= $_SESSION[$ezer_root]['sess_state']=='on' ? 'true' : 'false';
+
+# identifikace prohlížeče
+$browser=
+  preg_match('/MSIE/',$_SERVER['HTTP_USER_AGENT'])?'IE':(
+  preg_match('/Opera/',$_SERVER['HTTP_USER_AGENT'])?'OP':(
+  preg_match('/Firefox/',$_SERVER['HTTP_USER_AGENT'])?'FF':(
+  preg_match('/Chrome/',$_SERVER['HTTP_USER_AGENT'])?'CH':(
+  '?'))));
 
 session_start();
 $_SESSION['skin']= $skin;
@@ -13,6 +53,7 @@ $refresh= $_SESSION[$ezer_root]['sess_state']=='on' ? 'true' : 'false';
 require "$ezer_root.inc";
 
 $js= array(
+  'ezer2/client/licensed/ckeditor/ckeditor.js',
   'ezer2/client/licensed/clientcide.js',
   'ezer2/client/licensed/mootools/asset.js',
   'ezer2/client/licensed/mootools/slider.js',
@@ -31,41 +72,43 @@ $css= array(
   './ezer2/client/licensed/fancyupload.css',
   './ys/ys.css.css'
 );
+
 $dbg= $_GET['dbg'];
-$matous= $_SERVER["DOCUMENT_ROOT"]=='/home/www/ezer/www-ys/2';
-$options= $matous ? <<<__EOD
+
+# pro ladění a ostrý server je možné nastavit odlišné výchozí podmínky zde
+# skill: oprávnění, který uživatel musí mít, aby aplikaci vůbec spustil
+# ? autoskill: oprávnění, které dostává automaticky ten, kdo aplikaci spustí
+
+$options= $local
+? /* lokálně */<<<__EOD
     debug:window.parent!=window,      // je nadřazený frame - dbg.html
     login_interval:600,
     must_log_in:true,
     skin:'$skin',
+    skill:'y',
+    autoskill:'!y',
     $menu
+    $xtrace
     refresh: $refresh,
-    mini_debug:false, status_bar:true, to_trace:true
+    mini_debug:true, status_bar:true, to_trace:true
 __EOD
 : <<<__EOD
     debug:window.parent!=window,      // je nadřazený frame - dbg.html
     login_interval:600,
-//     must_log_in:true,
-    must_log_in:false, uname:'gandi', pword:'radost',
+    must_log_in:true,
     skin:'$skin',
+    skill:'y',
+    autoskill:'!y',
     $menu
+    $xtrace
     refresh: $refresh,
-    mini_debug:true, status_bar:true, to_trace:true
+    mini_debug:false, status_bar:true, to_trace:true
 __EOD;
-if ( !$matous) $title.= "/local";
 
-if ( $dbg || !$minify ) {
-  // header pro běh s laděním
-  $head= "";
-  foreach($js as $x) {
-    $head.= "\n  <script src='$x' type='text/javascript' charset='utf-8'></script>";
-  }
-  foreach($css as $x) {
-    $head.= "\n  <link rel='stylesheet' href='$x' type='text/css' media='screen' charset='utf-8' />";
-  }
-}
-else {
-  if ( $matous) define('MINIFY_BASE_DIR','/home/www/ezer/www-fis/2');
+# spojení všech CSS a JS do jediného souboru pokud je $minify==true a $_GET['dbg'] je prázdné
+
+if ( $minify && !$dbg ) {
+  if ( !$local ) define('MINIFY_BASE_DIR','/home/www/ezer/www-fis/2');
 //   define('MINIFY_USE_CACHE', false);
   require_once('ezer2/server/licensed/minify.php');
   $minifyCSS= new Minify(TYPE_CSS);
@@ -80,6 +123,16 @@ else {
   <link rel="stylesheet" href="$ezer_root.css" type="text/css" media="screen" charset="utf-8" />
 __EOD;
 }
+else {
+  // header pro běh s laděním
+  $head= "";
+  foreach($js as $x) {
+    $head.= "\n  <script src='$x' type='text/javascript' charset='utf-8'></script>";
+  }
+  foreach($css as $x) {
+    $head.= "\n  <link rel='stylesheet' href='$x' type='text/css' media='screen' charset='utf-8' />";
+  }
+}
 
 // obsah informačního okna - prioritu má zpráva z fis.inc označená z proměnné $ezer_info
 global $ezer_path_todo, $ezer_path_serv, $ezer_info;
@@ -89,23 +142,28 @@ require_once("$ezer_path_serv/sys_doc.php");
 $kontakt= "
     Pokud byste narazili na problém, kontaktujte mě prosím ihned na<br/>
     Skype martin_smidek nebo na <br/>
-    mobil 603 150 565<br/>
-    Děkuji za spolupráci, Gándí
+    mobil 603 150 565 nebo mi napište na martin@smidek.eu<br/>
+    <br/>Děkuji za spolupráci, Gándí
 ";
-if ( $ezer_info )
+if ( $_GET['session'] ) {
+  // zobraz stav session
+  $info= "<div class='dbg'>".debugx($_SESSION,'$_SESSION:')."</div>";
+}
+else if ( $ezer_info )
   $info= "<div class='login_a_msg'>$ezer_info</div>";
 else {
-  $dnu= 30;
-  $info= doc_todo_show('++done','',0,$dnu,$ezer_path_todo);
+  ezer_connect();
+  $dnu= 12;
+  $info= doc_todo_show("cast!=1 AND SUBDATE(NOW(),$dnu)<=kdy_skoncil AND kdy_skoncil!='0000-00-00' ");
   if ( !$info )
     $info= "<div class='login_a_msg'>
-      Během posledních $dnu dnů<br/>nedošlo v systému<br/>k podstatným změnám.<br/><br/>
+      Během posledních $dnu dnů nedošlo v&nbsp;systému k&nbsp;podstatným změnám.<br/><br/>
       $kontakt</div>";
   else
     $info.= "<hr/>$kontakt";
 }
 
-// HTML template
+# template HTML stránky typické aplikace
 echo "\xEF\xBB\xBF";    // DOM pro UTF-8
 echo <<<__EOD
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
@@ -117,7 +175,7 @@ echo <<<__EOD
   <meta name="author" content="Martin Šmídek" />
   <meta name="copyright" content="Copyright © 2010" />
   <meta name="generator" content="Ezer" />
-  <link rel="shortcut icon" href="./$ezer_root/img/$ezer_root.png" />
+  <link rel="shortcut icon" href="./$ezer_root/img/$favicon" />
   <title>$title</title>
   <script type="text/javascript">
     var Ezer= {};
@@ -127,21 +185,30 @@ echo <<<__EOD
     Ezer.options= {
       $options
     };
+    Ezer.browser= '$browser';
   </script>
   $head
 </head>
-<body id="body" class='nogrid' onclick="$('DbgMenu').setStyle('display','none');">
+<body id="body" class='nogrid' onclick="$('DbgMenu').setStyle('display','none');/*Ezer.app.bodyClick();*/">
 <!-- menu a submenu -->
   <div id='horni' class="MainBar">
-    <div id="appl">$title</div>
+    <div id="appl">$title_right</div>
     <div id='logo' oncontextmenu="$('DbgMenu').setStyle('display','block');return false;">
       <img class="StatusIcon" id="StatusIcon_idle" src="./$ezer_root/img/-logo.gif" />
       <img class="StatusIcon" id="StatusIcon_server" src="./$ezer_root/img/+logo.gif" />
       <ul id='DbgMenu' class="ContextMenu" style="position:absolute; top:5px; display:none; left:15px; z-index:2000; visibility:visible; opacity:1;">
-        <li onclick="Ezer.app.reload();$('DbgMenu').setStyle('display','none');" style="border-bottom:1px solid #AAAAAA"><a>recompile</a></li>
-        <li onclick="Cookie.dispose('PHPSESSID',{path: '/'});alert('Obnovte prosím svoje přihlášení do systému...');window.location.href= window.location.href;"><a>relogin</a></li>
-        <li onclick="Ezer.dbg.stop=true;$('DbgMenu').setStyle('display','none');"><a>stop</a></li>
-        <li onclick="Ezer.dbg.stop=false;$('DbgMenu').setStyle('display','none');"><a>continue</a></li>
+        <li onclick="Ezer.app.reload();$('DbgMenu').setStyle('display','none');" style="border-bottom:1px solid #AAAAAA">
+          <a>recompile</a></li>
+        <li onclick="Ezer.run.$.dragBlock(true,false);$('DbgMenu').setStyle('display','none');">
+          <a>drag</a></li>
+        <li onclick="Ezer.App.save_drag();$('DbgMenu').setStyle('display','none');" style="border-bottom:1px solid #AAAAAA">
+          <a>save</a></li>
+        <li onclick="Cookie.dispose('PHPSESSID',{path: '/'});alert('Obnovte prosím svoje přihlášení do systému...');window.location.href= window.location.href;">
+          <a>relogin</a></li>
+        <li onclick="Ezer.dbg.stop=true;$('DbgMenu').setStyle('display','none');">
+          <a>stop</a></li>
+        <li onclick="Ezer.dbg.stop=false;$('DbgMenu').setStyle('display','none');">
+          <a>continue</a></li>
       </ul>
     </div>
     <ul id="menu" class="MainMenu"></ul>
@@ -178,6 +245,7 @@ echo <<<__EOD
   </div>
 <!-- paticka -->
   <div id="dolni">
+    <div id="warning"></div>
     <div id="kuk_err"></div>
     <div id="paticka">
       <div id="error"></div>
@@ -191,6 +259,10 @@ echo <<<__EOD
   </div>
   <div id="report" class="report"></div>
   <form><input id="drag" type="button" /></form>
+  <form id="drag_form" class="ContextMenu" style="display:none;position:absolute;width:200px">
+    <input id="drag_title" type="text" style="float:right;width:165px" />
+    <div style="padding:3px 0 0 2px;width:30px">title:</div>
+  </form>
 <!-- konec -->
 </body>
 </html>

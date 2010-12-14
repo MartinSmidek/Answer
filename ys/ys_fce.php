@@ -172,12 +172,13 @@ function kasa_menu_show($k1,$k2,$k3,$cond=1,$day='') {
 # -------------------------------------------------------------------------------------------------- kasa_export
 function kasa_export($cond,$file) {
                                                 display("kasa_export($cond,$file)");
-  require_once('./licensed/xls/OLEwriter.php');
-  require_once('./licensed/xls/BIFFwriter.php');
-  require_once('./licensed/xls/Worksheet.php');
-  require_once('./licensed/xls/Workbook.php');
+  global $ezer_path_serv, $ezer_path_docs;
+  require_once("$ezer_path_serv/licensed/xls/OLEwriter.php");
+  require_once("$ezer_path_serv/licensed/xls/BIFFwriter.php");
+  require_once("$ezer_path_serv/licensed/xls/Worksheet.php");
+  require_once("$ezer_path_serv/licensed/xls/Workbook.php");
   $table= "$file.xls";
-  $wb= new Workbook("../../$table");
+  $wb= new Workbook("docs/$table");
   $qry_p= "SELECT * FROM pokladna ";
   $res_p= mysql_qry($qry_p);
   while ( $res_p && $p= mysql_fetch_object($res_p) ) {
@@ -228,7 +229,7 @@ function kasa_export($cond,$file) {
     $ws->write_formula($sy+1,4,"=SUM(E2:E$sy)",$format_dec);
   }
   $wb->close();
-  $html.= "Byl vygenerován soubor pro Excel: <a href='$table'>$table</a>";
+  $html.= "Byl vygenerován soubor pro Excel: <a href='docs/$table'>$table</a>";
   return $html;
 }
 # -------------------------------------------------------------------------------------------------- kasa_menu_comp

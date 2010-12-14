@@ -94,7 +94,7 @@ function ds_kli_menu() {
   $mn= (object)array('type'=>'menu.left'
       ,'options'=>(object)array(),'part'=>(object)array());
   $letos= date('Y');
-  for ($y= 0; $y<=0; $y++) {
+  for ($y= 0; $y<=1; $y++) {
     $yyyy= $letos+$y;
     $group= $letos+$y;
     $gr= (object)array('type'=>'menu.group'
@@ -153,7 +153,7 @@ function ds_obj_menu() {
   $letos= date('Y');
   $ted= date('Ym');
   ezer_connect('setkani');
-  for ($y= 0; $y<=0; $y++) {
+  for ($y= 0; $y<=1; $y++) {
     for ($m= 1; $m<=12; $m++) {
       $mm= sprintf('%02d',$m);
       $yyyy= $letos+$y;
@@ -347,10 +347,32 @@ function klienti($id_osoba) {  #trace('','win1250');
 #   .op='kopie'
 #   .z=starý rok
 #   .na=nový rok
-function ds_ceny_uprava($par) { #trace('','win1250');
+function ds_ceny_uprava($par) { trace('','win1250');
   $html= "";
   if ( $par->op=='kopie' ) {
-    $html.= "Zkopirovano";
+    ezer_connect('setkani');
+    // kontrola prázdnosti nového ceníku
+    $qry= "SELECT count(*) as pocet FROM setkani.ds_cena  WHERE rok={$par->na} ";
+    $res= mysql_qry($qry);
+    if ( $res && $c= mysql_fetch_object($res) ) {
+      if ( $c->pocet>0 )
+        $html= "Cenik pro rok {$par->na} byl jiz zrejme vygenerovan. Operace prerusena.";
+    }
+    if ( !$html ) {
+      // kopie ceníku
+      $qry= "SELECT * FROM ds_cena WHERE rok={$par->z} ORDER BY typ";
+      $res= mysql_qry($qry);
+      $ok= 1; $n= 0;
+      while ( $res && $c= mysql_fetch_object($res) ) {
+        $ins= "INSERT INTO ds_cena (rok,polozka,druh,typ,od,do,cena,dph)
+               VALUES ({$par->na},'{$c->polozka}','{$c->druh}','{$c->typ}',{$c->od},{$c->do},{$c->cena},{$c->dph})";
+        display(wu($ins));
+        $n++;
+        $ires= mysql_qry($ins);
+        $ok&= mysql_affected_rows()==1 ? 1 : 0;
+      }
+      $html.= $ok&&$n ? "Zkopirovano" : "Kopie ceniku se nezdarila. Kontaktuj Martina Smidka";
+    }
   }
   return $html;
 }

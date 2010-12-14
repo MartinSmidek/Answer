@@ -1,0 +1,62 @@
+# Systém Ans(w)er - modul Akce.Tisk
+# (c) 2008-2010 Martin Šmídek <martin@smidek.eu>
+
+# ================================================================================================== Tisk
+use info: form right [12,4,,]
+proc onstart() {
+#   m.n.vps.click
+}
+menu m {type:'left',
+  menu n {title:'Adresář',type:'group',_sys:'*'
+    item {title:'základní'        ,par:°{typ:'p'
+                                        ,tit:'příjmení,jména,obec,psč,ulice'
+                                        ,fld:'jmeno,jmena,mesto,psc,adresa',cnd:'1'}}
+    item {title:'základní, spojení',par:°{typ:'p'
+                                        ,tit:'příjmení,jména,obec,psč,ulice,telefon,e-mail'
+                                        ,fld:'jmeno,jmena,mesto,psc,adresa,telefon,email',cnd:'1'}}
+    item {title:'základní, RČ'    ,par:°{typ:'j'
+                                        ,tit:'příjmení,jméno,rod.číslo,obec,psč,ulice'
+                                        ,fld:'prijmeni_m,jmeno_m,rodcislo_m,mesto,psc,adresa;prijmeni_z,jmeno_z,rodcislo_z,mesto,psc,adresa',cnd:'1'}}
+  }
+  menu   {title:'Seznam',type:'group',_sys:'*'
+    item {title:'účastníci'       ,par:°{typ:'p'
+                                        ,tit:'příjmení,jména'
+                                        ,fld:'jmeno,jmena',cnd:'1'}}
+    item {title:'účastníci, skupinka, pokoj',par:°{typ:'p'
+                                        ,tit:'příjmení,jména,skupinka,pokoj'
+                                        ,fld:'jmeno,jmena,skupina,pokoj',cnd:'1'}}
+  }
+  menu   {title:'Jmenovky',type:'group',_sys:'*'
+    item {title:'VPS'             ,par:°{typ:'j'
+                                        ,tit:'příjmení,jméno'
+                                        ,fld:'prijmeni_m,jmeno_m;prijmeni_z,jmeno_z',cnd:'vps'}}
+    item {title:'páry bez VPS'    ,par:°{typ:'j'
+                                        ,tit:'příjmení,jméno'
+                                        ,fld:'jmeno_m,prijmeni_m;jmeno_z,prijmeni_z',cnd:'nevps'}}
+  }
+  menu   {title:'Děti',type:'group',_sys:'*'
+    item {title:'adresář'         ,par:°{typ:'d'
+                                        ,tit:'příjmení,jméno,rod.číslo,obec,psč,ulice'
+                                        ,fld:'prijmeni_d,jmeno_d,rodcislo_d,mesto,psc,adresa',cnd:'1'}}
+    item {title:'seznam'          ,par:°{typ:'d'
+                                        ,tit:'příjmení,jméno,rod.číslo,poznámka'
+                                        ,fld:'prijmeni_d,jmeno_d,rodcislo_d,poznamka',cnd:'1'}}
+    item {title:'jmenovky'        ,par:°{typ:'d'
+                                        ,tit:'příjmení,jméno'
+                                        ,fld:'prijmeni_d,jmeno_d',cnd:'1'}}
+  }
+  var x: object
+  proc onclick (i) {
+    info.fill(conc(i.owner.title,' - ',i.title),' ');
+    x.set(ask('akce_sestava',the_akce.get,i.par));
+    info.fill('',x.get('html'));
+  }
+}
+form right [,,700,50] {
+  label head [0,0,680,50]  { title:'' }
+  label note [0,50,680,550] { title:'' }
+  proc fill(x,y) {
+    [ x; head.set(conc("<div class='CSection CMenu'><h3 class='CTitle'>",x,"</h3></div>")) ];
+    [ y; note.set(y) ]
+  }
+}
