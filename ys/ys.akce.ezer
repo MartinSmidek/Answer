@@ -100,7 +100,7 @@ panel Vyber {type:'right', title:'Výběr akce'
   }
 }
 # ================================================================================================== VÝBĚR
-panel Ucastnici [,,,543] {type:'plain', title:'Účastníci'
+panel Ucastnici [,,,543] {type:'plain', title:'Účastníci akce'
   use u: form _ucast [4,0,,],
 #   proc onfocus() {
 #     u.head.set(Vyber.info.head.get); reload(0)
@@ -631,7 +631,9 @@ panel Ucastnici [,,,543] {type:'plain', title:'Účastníci'
   }
 }
 # ================================================================================================== TISK
-panel tisk [,,,543] {type:'right', title:'Výpisy', include:'onclick'}
+panel tisk [,,,543] {type:'right', title:'Výpisy akce', include:'onclick'}
+# ================================================================================================== VSICHNI
+panel vse [,,,543] {type:'plain', title:'Všichni', include:'onclick'}
 # ================================================================================================== MAIL
 panel mail [,,,543] {type:'right', title:'Maily', skill:'yam', include:'onclick'}
 # ================================================================================================== MAPS

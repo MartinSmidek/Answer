@@ -21,12 +21,10 @@ ds/ds.tab.ezer -text
 ds/ds_fce.php -text
 ds/fce.js -text
 ds/img/ds.png -text
-/favicon.ico -text
 img/YMCA.png -text
 img/husy.png -text
 img/ms1.png -text
 /kEzer-ys2.ppr -text
-/libr.php -text
 sql/ms_mysql.PRG -text
 sql/ms_mysql.bat -text
 sql/mysql.bat -text
@@ -46,6 +44,7 @@ ys/test.php -text
 ys/ys.akce.ezer -text
 ys/ys.akce.mail.ezer -text
 ys/ys.akce.tisk.ezer -text
+ys/ys.akce.vse.ezer -text
 ys/ys.css.css -text
 ys/ys.ds.ezer -text
 ys/ys.ds.kl.ezer -text

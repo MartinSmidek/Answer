@@ -1,5 +1,38 @@
 <?php
 
+  $app=      'test';
+  $app_name= 'Test/Ans(w)er';
+  $skin=     'default';
+
+  require_once("$app.inc");
+  require_once("ezer2/server/ae_slib.php");
+
+  $js= array(
+    'ezer2/client/licensed/ckeditor/ckeditor.js',
+    'ezer2/client/licensed/clientcide.js',
+    'ezer2/client/licensed/mootools/asset.js',
+    'ezer2/client/licensed/mootools/slider.js',
+    'ezer2/client/ezer_fdom1.js',
+    'ezer2/client/ezer.js',
+    'ezer2/client/ezer_report.js',
+    'ezer2/client/ezer_fdom2.js',
+    'ezer2/client/app.js',
+    'ds/fce.js',
+    'test/fce.js',
+    'ezer2/client/lib.js'
+  );
+  $css= array(
+    './ezer2/client/ezer.css.php',
+    './ezer2/client/natdocs.css',
+    './ezer2/client/licensed/fancyupload.css',
+    './test/test.css'
+  );
+  $options= (object)array(
+    'login_interval' => 60
+  );
+  root_php($app,$app_name,'test',$skin,$options,$js,$css);
+
+/*
 global $ezer_root;
 
 // url-parametr má tvar name=m[.s[.l.g.i]] tedy 1, 2 nebo 5 jmen oddělených tečkou
@@ -180,4 +213,5 @@ echo <<<__EOD
 </body>
 </html>
 __EOD;
+*/
 ?>

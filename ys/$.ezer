@@ -144,6 +144,7 @@ table ms_pary { key_id:'id_pary'
   number id_pary
   number cislo
   number cislo_z
+  text source
   text jmeno
   text adresa
   text psc

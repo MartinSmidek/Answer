@@ -106,6 +106,7 @@ kEzer-ys2
 		ys\ys.akce.ezer
 		ys\ys.akce.mail.ezer
 		ys\ys.akce.tisk.ezer
+		ys\ys.akce.vse.ezer
 		ys\ys.css.css
 		ys\ys.doc.ezer
 		ys\ys.ds.ezer
@@ -125,7 +126,7 @@ kEzer-ys2
 		ys\ys_fce.php
 		ys\ys_lide.php
 		ys\ys_ucet.php
-	+ds
+	-ds
 		ds\ds.css.css
 		ds\ds.dum.ezer
 		ds\ds.ezer
@@ -168,14 +169,11 @@ kEzer-ys2
 15=ys.php
 16=ys.inc
 17=ys\$.ezer
-18=ys\ys.lide.ezer
-19=ys\ys.akce.ezer
-20=ys\ys.akce.mail.ezer
-21=ys\ys.css.css
-22=ch\$.ezer
+18=ys\ys.akce.ezer
+19=ys\ys.akce.vse.ezer
 [Selected Project Files]
 Main=
-Selected=ys.inc
+Selected=ys\ys.akce.vse.ezer
 [ezer2\server\comp2def.php]
 TopLine=190
 Caret=85,218
@@ -200,9 +198,9 @@ Mark2=32,1108
 Mark3=60,1083
 Mark4=37,218
 [ezer2\server\ae_slib.php]
-TopLine=964
-Caret=26,997
-Mark1=10,357
+TopLine=497
+Caret=43,505
+Mark1=10,359
 [ezer2\client\dbg.js]
 TopLine=320
 Caret=26,352
@@ -216,12 +214,12 @@ Mark1=88,363
 TopLine=124
 Caret=61,153
 [ezer2\client\ezer.js]
-TopLine=2736
-Caret=1,2763
-BookMark1=25,2763
+TopLine=4043
+Caret=79,4092
 BookMark3=25,4848
 Mark1=31,4468
 Mark2=61,403
+BookMark1=25,2017
 [ezer2\client\ezer_fdom2.js]
 TopLine=1080
 Caret=24,1114
@@ -257,26 +255,16 @@ Caret=1,331
 BookMark1=35,309
 [ys.php]
 TopLine=1
-Caret=31,36
+Caret=27,31
 [ys.inc]
-TopLine=1
-Caret=1,1
+TopLine=52
+Caret=1,67
 [ys\$.ezer]
-TopLine=22
-Caret=1,35
-[ys\ys.lide.ezer]
-TopLine=19
-Caret=1,69
+TopLine=86
+Caret=53,144
 [ys\ys.akce.ezer]
-TopLine=603
-Caret=61,636
-[ys\ys.akce.mail.ezer]
-TopLine=156
-Caret=51,189
-Mark1=5,196
-[ys\ys.css.css]
 TopLine=1
-Caret=32,3
-[ch\$.ezer]
-TopLine=7
-Caret=36,7
+Caret=6,8
+[ys\ys.akce.vse.ezer]
+TopLine=1
+Caret=43,30
