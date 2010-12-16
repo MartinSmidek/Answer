@@ -28,6 +28,8 @@
   padding:0 2px; }
 .Label {
   margin-top:2px; }
+.Label h1 {
+  font-size:12pt; margin:0; padding:0 }
 .CMenu .CTitle {
   margin-top:7px; }
 

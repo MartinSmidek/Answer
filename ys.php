@@ -27,8 +27,8 @@
     './ys/ys.css.css'
   );
   $options= (object)array(
-    'skill'      => 'y',
-    'autoskill'  => '!y',
+    'skill'      => "'y'",
+    'autoskill'  => "'!y'",
   );
   root_php($app,$app_name,'news',$skin,$options,$js,$css);
 

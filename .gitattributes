@@ -33,6 +33,7 @@ sql/mysql.bat -text
 /test.php -text
 wiki/dokumentace.wiki -text
 wiki/todo.wiki -text
+/ys.inc -text
 /ys.php -text
 ys/$.ezer -text
 ys/code/comp2tab.php -text
