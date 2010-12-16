@@ -28,6 +28,7 @@ img/ms1.png -text
 sql/ms_mysql.PRG -text
 sql/ms_mysql.bat -text
 sql/mysql.bat -text
+/test.inc -text
 /test.php -text
 wiki/dokumentace.wiki -text
 wiki/todo.wiki -text
