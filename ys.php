@@ -3,6 +3,7 @@
   $app=      'ys';
   $app_name= 'Ans(w)er';
   $skin=     'default';
+  $ip=       true;                      // povolit přístup jen ze známých IP adres
 
   require_once("$app.inc");
   require_once("ezer2/server/ae_slib.php");
@@ -30,6 +31,6 @@
     'skill'      => "'y'",
     'autoskill'  => "'!y'",
   );
-  root_php($app,$app_name,'news',$skin,$options,$js,$css);
+  root_php($app,$app_name,'news',$skin,$options,$js,$css,$ip);
 
 ?>

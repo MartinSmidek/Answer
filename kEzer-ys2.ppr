@@ -17,7 +17,7 @@ kEzer-ys2
 		sql\backup_setkani.bat
 		sql\ms_mysql.PRG
 		sql\sql\indexy.sql
-	-ezer2
+	+ezer2
 		+libr
 			ezer2\ezer2.help.ezer
 			ezer2\ezer2.syst.ezer
@@ -40,6 +40,7 @@ kEzer-ys2
 			ezer2\client\natdocs.css
 		+server
 			ezer2\server\ae_slib.php
+			ezer2\comp.php
 			ezer2\server\comp2.php
 			ezer2\server\comp2def.php
 			ezer2\server\comp2tab.php
@@ -101,7 +102,7 @@ kEzer-ys2
 		test\test.ys_ucetnictvi.ezer
 		test\test.ysp.ezer
 		test\test_fce.php
-	+ys
+	-ys
 		ys\$.ezer
 		ys\ys.akce.ezer
 		ys\ys.akce.mail.ezer
@@ -171,9 +172,10 @@ kEzer-ys2
 17=ys\$.ezer
 18=ys\ys.akce.ezer
 19=ys\ys.akce.vse.ezer
+20=ezer2\comp.php
 [Selected Project Files]
 Main=
-Selected=ys\ys.akce.vse.ezer
+Selected=ezer2\comp.php
 [ezer2\server\comp2def.php]
 TopLine=190
 Caret=85,218
@@ -258,7 +260,7 @@ TopLine=1
 Caret=27,31
 [ys.inc]
 TopLine=52
-Caret=1,67
+Caret=1,63
 [ys\$.ezer]
 TopLine=86
 Caret=53,144
@@ -268,3 +270,6 @@ Caret=6,8
 [ys\ys.akce.vse.ezer]
 TopLine=1
 Caret=43,30
+[ezer2\comp.php]
+TopLine=1
+Caret=1,1
