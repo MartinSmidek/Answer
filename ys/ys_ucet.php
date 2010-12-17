@@ -43,7 +43,8 @@ function ucet_todo($k1,$k2,$k3=2009,$par=null) {
     break;
   case 'u-srov':
     $html.= "<h3 class='CTitle'>Účetní přehledy více let</h3>";
-    $html.= ucet_surv_diff(2008,2009);
+    $letos= date('Y');
+    $html.= ucet_surv_diff($letos-1,$letos);
     break;
 //   case 'msds':
 //     $html.= "<h3 class='CTitle'>bilance MS & DS roku $rok</h3>";
@@ -1147,7 +1148,7 @@ function ucet_load_akce($rok) {  #trace();
     if ( $res ) {
       $html.= "starý číselník akcí smazán<br>";
       // vložení nového
-      $qry= "INSERT INTO uakce VALUES $values;";
+      $qry= "INSERT INTO uakce (rok,akce,nazev_akce,datum,dnu,osob,typ) VALUES $values;";
       $res= mysql_qry($qry);
       $n= mysql_affected_rows();
       if ( $res ) $html.= "vloženo $n popisů akcí<br>";
