@@ -33,6 +33,78 @@ function psc ($psc,$user2sql=0) {
   return $text;
 }
 # ================================================================================================== SOUBORY
+# -------------------------------------------------------------------------------------------------- google_sheet
+# přečtení listu $list z tabulky $sheet uživatele $user do pole $cell
+# $cells['dim']= array($max_A,$max_n)
+function google_sheet($list,$sheet,$user='answer@smidek.eu') {  trace();
+  $n= 0;
+  $cells= null;
+  require_once 'Zend/Loader.php';
+  Zend_Loader::loadClass('Zend_Http_Client');
+  Zend_Loader::loadClass('Zend_Gdata');
+  Zend_Loader::loadClass('Zend_Gdata_ClientLogin');
+  Zend_Loader::loadClass('Zend_Gdata_Spreadsheets');
+  // autentizace
+  $pass= array('answer@smidek.eu'=>'8nswer','martin@smidek.eu'=>'radost');
+  if ( $pass[$user] ) {
+    $authService= Zend_Gdata_Spreadsheets::AUTH_SERVICE_NAME;
+    $httpClient= Zend_Gdata_ClientLogin::getHttpClient($user,$pass[$user], $authService);
+    // nalezení tabulky
+    $gdClient= new Zend_Gdata_Spreadsheets($httpClient);
+    $feed= $gdClient->getSpreadsheetFeed();
+    $table= getFirstFeed($feed,$sheet);
+    if ( $table ) {
+      // pokud tabulka existuje
+      $table_id= split('/', $table->id->text);
+      $table_key= $table_id[5];
+      // najdi list
+      $query= new Zend_Gdata_Spreadsheets_DocumentQuery();
+      $query->setSpreadsheetKey($table_key);
+      $feed= $gdClient->getWorksheetFeed($query);
+      $ws= getFirstFeed($feed,$list);
+    }
+    if ( $table && $ws ) {
+      $cells= array();
+      // pokud list tabulky existuje
+      $ws_id= split('/', $ws->id->text);
+      $ws_key= $ws_id[8];
+      // načti buňky
+      $query= new Zend_Gdata_Spreadsheets_CellQuery();
+      $query->setSpreadsheetKey($table_key);
+      $query->setWorksheetId($ws_key);
+      $feed= $gdClient->getCellFeed($query);
+      $max_n= 0;
+      foreach($feed->entries as $entry) {
+        if ($entry instanceof Zend_Gdata_Spreadsheets_CellEntry) {
+          $An= $entry->title->text;
+          $A= substr($An,0,1); $n= substr($An,1);
+          $cells[$A][$n]= $entry->content->text;
+          $max_A= max($max_A,$A);
+          $max_n= max($max_n,$n);
+        }
+      }
+      $cells['dim']= array($max_A,$max_n);
+    }
+  }
+  return $cells;
+}
+# --------------------
+function getFirstFeed($feed,$id=null) {
+  $entry= null;
+  foreach($feed->entries as $e) {
+    if ( $id ) {
+      if ( $e->title->text==$id ) {
+        $entry= $e;
+        break;
+      }
+    }
+    else {
+      $entry= $e;
+      break;
+    }
+  }
+  return $entry;
+}
 # -------------------------------------------------------------------------------------------------- sou_lst
 # obsluha menu
 function sou_lst($k1,$k2,$k3) {
@@ -75,7 +147,7 @@ function sou_kal($k1,$k2,$k3) {
   $result= (object)array('html'=>$html,'path'=>$path);
   return $result;
 }
-# ================================================================================================================ KASA
+# ================================================================================================== KASA
 # -------------------------------------------------------------------------------------------------- p_pdenik_vytisten
 # ask
 # doklad je označen jako vytištěný

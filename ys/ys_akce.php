@@ -171,47 +171,10 @@ function akce_roku_id($akce,$rok,$id_akce) {
 # načítají se jen řádky ve kterých typ='a'
 function akce_roku_update($rok) {  trace();
   $n= 0;
-  require_once 'Zend/Loader.php';
-  Zend_Loader::loadClass('Zend_Http_Client');
-  Zend_Loader::loadClass('Zend_Gdata');
-  Zend_Loader::loadClass('Zend_Gdata_ClientLogin');
-  Zend_Loader::loadClass('Zend_Gdata_Spreadsheets');
-  // autentizace
-  $authService= Zend_Gdata_Spreadsheets::AUTH_SERVICE_NAME;
-  $httpClient= Zend_Gdata_ClientLogin::getHttpClient('martin@smidek.eu', 'radost', $authService);
-//   $httpClient= Zend_Gdata_ClientLogin::getHttpClient('web@setkani.org', 'radost', $authService);
-  // nalezení tabulky ciselnik_akci
-  $gdClient= new Zend_Gdata_Spreadsheets($httpClient);
-  $feed= $gdClient->getSpreadsheetFeed();
-  $table= firstFeed($feed,"ciselnik_akci");
-  if ( $table ) {
-    // pokud tabulka existuje
-    $table_id= split('/', $table->id->text);
-    $table_key= $table_id[5];
-    // listy
-    $query= new Zend_Gdata_Spreadsheets_DocumentQuery();
-    $query->setSpreadsheetKey($table_key);
-    $feed= $gdClient->getWorksheetFeed($query);
-    $ws= firstFeed($feed,$rok);
-  }
-  if ( $table && $ws ) {
-    // pokud list tabulky existuje
-    $ws_id= split('/', $ws->id->text);
-    $ws_key= $ws_id[8];
-    // načti buňky
-    $query= new Zend_Gdata_Spreadsheets_CellQuery();
-    $query->setSpreadsheetKey($table_key);
-    $query->setWorksheetId($ws_key);
-    $feed= $gdClient->getCellFeed($query);
-    $max_n= 0;
-    foreach($feed->entries as $entry) {
-      if ($entry instanceof Zend_Gdata_Spreadsheets_CellEntry) {
-        $An= $entry->title->text;
-        $A= substr($An,0,1); $n= substr($An,1); $max_n= max($max_n,$n);
-        $cells[$A][$n]= $entry->content->text;
-      }
-    }
-//                                                 debug($cells,"akce $rok");
+  $cells= google_sheet($rok,"ciselnik_akci",'answer@smidek.eu');
+  if ( $cells ) {
+    list($max_A,$max_n)= $cells['dim'];
+                                                debug($cells,"akce $rok");
     // zrušení daného roku v GAKCE
     $qry= "DELETE FROM gakce WHERE grok=$rok";
     $res= mysql_qry($qry);
@@ -231,91 +194,6 @@ function akce_roku_update($rok) {  trace();
   }
   // konec
   return $n;
-}
-# -------------------------------------------------------------------------------------------------- akce_roku
-# přečtení listu $rok z tabulky ciselnik_akci ve formátu pro browse_fill
-# načítají se jen řádky ve kterých typ='a'
-function akce_roku($rok) {  trace();
-  $fill= '';
-  require_once 'Zend/Loader.php';
-  Zend_Loader::loadClass('Zend_Http_Client');
-  Zend_Loader::loadClass('Zend_Gdata');
-  Zend_Loader::loadClass('Zend_Gdata_ClientLogin');
-  Zend_Loader::loadClass('Zend_Gdata_Spreadsheets');
-  // autentizace
-  $authService= Zend_Gdata_Spreadsheets::AUTH_SERVICE_NAME;
-  $httpClient= Zend_Gdata_ClientLogin::getHttpClient('martin@smidek.eu', 'radost', $authService);
-//   $httpClient= Zend_Gdata_ClientLogin::getHttpClient('web@setkani.org', 'radost', $authService);
-  // nalezení tabulky ciselnik_akci
-  $gdClient= new Zend_Gdata_Spreadsheets($httpClient);
-  $feed= $gdClient->getSpreadsheetFeed();
-  $table= firstFeed($feed,"ciselnik_akci");
-  if ( $table ) {
-    // pokud tabulka existuje
-    $table_id= split('/', $table->id->text);
-    $table_key= $table_id[5];
-    // listy
-    $query= new Zend_Gdata_Spreadsheets_DocumentQuery();
-    $query->setSpreadsheetKey($table_key);
-    $feed= $gdClient->getWorksheetFeed($query);
-    $ws= firstFeed($feed,$rok);
-  }
-  if ( $table && $ws ) {
-    // pokud list tabulky existuje
-    $ws_id= split('/', $ws->id->text);
-    $ws_key= $ws_id[8];
-    // načti buňky
-    $query= new Zend_Gdata_Spreadsheets_CellQuery();
-    $query->setSpreadsheetKey($table_key);
-    $query->setWorksheetId($ws_key);
-    $feed= $gdClient->getCellFeed($query);
-    $max_n= 0;
-    foreach($feed->entries as $entry) {
-      if ($entry instanceof Zend_Gdata_Spreadsheets_CellEntry) {
-        $An= $entry->title->text;
-        $A= substr($An,0,1); $n= substr($An,1); $max_n= max($max_n,$n);
-        $cells[$A][$n]= $entry->content->text;
-      }
-    }
-    // spojení s tabulkou ms_druhakce
-    $ids_akce= array();
-    $qry= "SELECT id_akce,ciselnik_akce FROM ms_druhakce
-           WHERE ciselnik_rok=$rok ";
-    $res= mysql_qry($qry);
-    while ( $res && $a= mysql_fetch_object($res) ) {
-      $ids_akce[$a->ciselnik_akce]= $a->id_akce;
-    }
-    // výběr a-záznamů a doplnění id_akce
-    $del= '';
-    for ($i= 1; $i<$max_n; $i++) {
-      if ( $cells['A'][$i]=='a' ) {
-        $akce= $cells['B'][$i];
-        $id_akce= isset($ids_akce[$akce]) ? $ids_akce[$akce] : 0;
-        //$id_uakce= $rok==2009 && $akce==413 ? 74 : 0;
-        $fill.= "$del$id_akce|$rok|$akce|{$cells['C'][$i]}";
-        $del= "|";
-      }
-    }
-  }
-  // konec
-  return $fill;
-}
-# --------------------
-function firstFeed($feed,$id=null) {
-  $entry= null;
-  foreach($feed->entries as $e) {
-    if ( $id ) {
-      if ( $e->title->text==$id ) {
-        $entry= $e;
-        break;
-      }
-    }
-    else {
-      $entry= $e;
-      break;
-    }
-  }
-  return $entry;
 }
 # ================================================================================================== ÚČASTNÍCI
 # -------------------------------------------------------------------------------------------------- akce_strava_denne

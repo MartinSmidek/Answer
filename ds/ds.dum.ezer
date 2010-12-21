@@ -219,7 +219,8 @@ group ucastnici {
   }
   // zobrazení účastníka
   proc osoba_load (id_osoba) {
-    per.load(id_osoba)
+    per.load(id_osoba);
+    per.pokoj.selects(conc('0,',sort(pobyt.obj.rooms.get,',','n')));
   }
   // vložení nové rodiny
   var znacka_rodiny: text
@@ -253,7 +254,7 @@ group ucastnici {
     akc.seznam.browse_focus; pobyt.compare
   }
   // vložení nového dítěte účastníka
-  proc osoba_new_child (id_osoba) {
+  proc osoba_new_child () {
     per.init;
     per.id_order.set(the_order.get);            per.id_order.change;
     per.rodina.set(akc.seznam.rodina.get);      per.rodina.change;

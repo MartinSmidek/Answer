@@ -1,7 +1,7 @@
 # Systém Ans(w)er - modul Ekonomika
 # (c) 2008-2010 Martin Šmídek <martin@smidek.eu>
 
-const KAPITOLY = "Kapitoly: a=akce, da=DS akce, dh=DS hosté, dp= DS režie, ml=MS léto, mo=MS obnovy, s=YS.<br />Údaje jsou graficky zobrazeny OBSAHEM obdélníku, ne výškou."
+const KAPITOLY = "Kapitoly: a=akce, da=DS akce, dh=DS hosté, dp= DS režie, ml=MS léto, mo=MS obnovy, s=YS, x=účetně nerozlišeno.<br />Údaje jsou graficky zobrazeny OBSAHEM obdélníku, ne výškou."
 
 var D_info: text
 var D_cond: text
@@ -13,7 +13,7 @@ proc onstart () {
 }
 
 # ================================================================================================== Deník
-panel den [,,,700] {type:'right', title:'Účetní deník',_sys:'den'
+panel den [,,,750] {type:'right', title:'Účetní deník',_sys:'den'
   menu d {type:'left', active:d.m.a
     menu m {title:'Účetní deník',type:'group',_sys:'den', active:m.a
       item {title:'Rok 2008'                   ,par:°{s:'u-show',c:'2008'}}
@@ -69,7 +69,7 @@ panel den [,,,700] {type:'right', title:'Účetní deník',_sys:'den'
   }
   # ------------------------------------------------------------------------------------------------ D_show
   # deník
-  panel D_show [0,0,645,620] {
+  panel D_show [0,0,645,750] {
     var obrat: text,
     use d: form _denik [0,0,,],
     proc onfocus () { D_zmena_check }
@@ -118,7 +118,7 @@ panel den [,,,700] {type:'right', title:'Účetní deník',_sys:'den'
     }
   }
   # ================================================================================================ D_show_load
-  panel D_show_load [0,0,645,520] {
+  panel D_show_load [0,0,645,750] {
     use dl: form _cmd [0,0,,],
     var dl_info: text
     proc dl.import_denik.onclick () {
@@ -137,6 +137,10 @@ panel den [,,,700] {type:'right', title:'Účetní deník',_sys:'den'
       dl_info.set(ask('ucet_load_akce',D_info.get('year')));
       dl.result.set(dl_info.get('html'))
     }
+    proc dl.import_akce2.onclick () {
+      dl_info.set(ask('ucet_load_akce2',D_info.get('year')));
+      dl.result.set(dl_info.get('html'))
+    }
   }
   # ------------------------------------------------------------------------------------------------ _CMD
   form _cmd [,,500,200] {
@@ -144,6 +148,7 @@ panel den [,,,700] {type:'right', title:'Účetní deník',_sys:'den'
     button import_odhad [150,0,100,20] { title:'import odhadu' }
     button import_osnova [300,0,100,20] { title:'import osnovy' }
     button import_akce [450,0,100,20] { title:'import akcí' }
+    button import_akce2 [550,0,100,20] { title:'import akcí 2010' }
     label result [0,30,700,600] { title:'...' },
   }
   # ------------------------------------------------------------------------------------------------ D_show_surv
@@ -163,7 +168,7 @@ panel den [,,,700] {type:'right', title:'Účetní deník',_sys:'den'
 }
 
 # ================================================================================================== Projekty
-panel proj [,,,543] {type:'right', title:'Projekty',_sys:'*'
+panel proj [,,,750] {type:'right', title:'Projekty',_sys:'*'
   menu {type:'left', active:*
     menu {title:'Projekty',type:'group',_sys:'pro'
       item {title:'Rok 2008'                   ,par:°{s:'u-proj',c:'2008',od:'1',do:'12'}}
@@ -205,7 +210,7 @@ panel proj [,,,543] {type:'right', title:'Projekty',_sys:'*'
   use rp: form right [12,4,,]
 }
 # ================================================================================================== Rozbory
-panel roz [,,,700] {type:'right', title:'Kapitoly',_sys:'*'
+panel roz [,,,750] {type:'right', title:'Kapitoly',_sys:'*'
   var d_rok: text
   var d_prijmy: number
   menu {type:'left', active:*
@@ -226,8 +231,9 @@ panel roz [,,,700] {type:'right', title:'Kapitoly',_sys:'*'
       item {title:'Rok 2010'                   ,par:°{rok:'2010',prijmy:'1'}}
       proc onclick (i) {
         E_show.hide; D_show2.hide;
-        rp.fill(conc("Struktura nákladů v roce ",i.par.rok),conc(KAPITOLY.get,
-          "<br />Číselné údaje jsou v tisících Kč. Nejsou zobrazeny státní dotace (ale jsou uvedeny v závorce jako nezobrazený výnos)",
+        rp.fill(conc("Struktura výnosů v roce ",i.par.rok),conc(KAPITOLY.get,
+          "<br />Číselné údaje jsou v tisících Kč včetně rozdělených dotací ",
+          "(dotace jsou uvedeny v závorce)",
           ask("rok_struktura",i.par)));
       }
     }
@@ -334,9 +340,9 @@ panel roz [,,,700] {type:'right', title:'Kapitoly',_sys:'*'
         proc onrowclick () {
           { d_prijmy.get;
             d2.denik.browse_load(conc("id_udenik BETWEEN ",d_rok.get,"00000 AND ",d_rok.get,"99999 ",
-            " AND FIND_IN_SET(dal,'",ucty.get,"') AND a.kapitola='",kap.get,"'"));
+            " AND FIND_IN_SET(dal,'",ucty.get,"') AND (ISNULL(a.kapitola) OR a.kapitola='",kap.get,"')"));
           | d2.denik.browse_load(conc("id_udenik BETWEEN ",d_rok.get,"00000 AND ",d_rok.get,"99999 ",
-            " AND FIND_IN_SET(md,'",ucty.get,"') AND a.kapitola='",kap.get,"'"));
+            " AND FIND_IN_SET(md,'",ucty.get,"') AND (ISNULL(a.kapitola) OR a.kapitola='",kap.get,"')"));
           };
           nazvys.set(conc(KAPITOLY.get,"<br />",nazvy.get))
         }
@@ -364,7 +370,7 @@ panel roz [,,,700] {type:'right', title:'Kapitoly',_sys:'*'
   }
 }
 # ================================================================================================== Akce
-panel akc [,,,700] {type:'right', title:'Akce',_sys:'*'
+panel akc [,,,750] {type:'right', title:'Akce',_sys:'*'
   var akce_rok: number
   menu {type:'left', active:*
     menu {title:'Přehledy',type:'group',_sys:'*'
@@ -379,7 +385,7 @@ panel akc [,,,700] {type:'right', title:'Akce',_sys:'*'
     menu {title:'Číselník',type:'group',_sys:'*'
       item {title:'číselník akcí 2008'      ,par:°{rok:'2008'}}
       item {title:'číselník akcí 2009'      ,par:°{rok:'2009'}}
-      item {title:'číselník akcí 2010'      ,par:°{rok:'2010'}}
+      item {title:'číselník akcí 2010 (intranet)',par:°{rok:'2010',zdroj:'intranet'}}
       proc onclick (i) {
         akce_rok.set(i.par.rok); rp.fill(i.title,' '); Akce.popup(12,50)
       }
@@ -388,7 +394,7 @@ panel akc [,,,700] {type:'right', title:'Akce',_sys:'*'
   use rp: form right [12,4,,]
   # ------------------------------------------------------------------------------------------------ Akce
   # číselník akcí
-  panel Akce [0,0,645,620] {
+  panel Akce [0,0,645,750] {
     use a: form _akce [0,0,,],
     proc onfocus () { a.seznam.browse_load(conc('rok=',akce_rok.get)) }
     # ---------------------------------------------------------------------------------------------- _akce

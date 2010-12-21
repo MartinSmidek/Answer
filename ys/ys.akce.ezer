@@ -74,7 +74,7 @@ panel Vyber {type:'right', title:'Výběr akce'
       proc onsubmit() { volba.onclick() }
     }
     label head [0,0,680,50] { title:'' }
-    label note [200,50,480,550] { title:'' }
+    label note [550,50,480,200] { title:'' }
     button [400,50,100,] { title:'Obnovit z intranetu', help:"obnoví akce roku z http://intranet.setkani.org"
       # získání seznamu akcí z docs.google.com pomocí API spredsheet
       proc onclick() {

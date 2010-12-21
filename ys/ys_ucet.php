@@ -122,22 +122,25 @@ function ucet_todo($k1,$k2,$k3=2009,$par=null) {
 # ================================================================================================== STRUKTURA
 # -------------------------------------------------------------------------------------------------- rok_struktura
 function rok_struktura($par) { #trace();
+  $result= (object)array();
   $rok= $par->rok;
   $prijmy= $par->prijmy==1;
   $html= "";
-  $ratio= 3000;
+  $ratio= 5000;
   $elem= 130;
   $bottom= 600;
+  $suma= $msuma= 0;
   $r= array(                                     //rgb
-    's' => (object)array('L'=>0,'W'=>5,'H'=>0, C=>'aaa','Bx'=>'',     N=>'společné'),
-    'dp'=> (object)array('L'=>0,'W'=>2,'H'=>0, C=>'ff8','Bx'=>'s',    N=>'DS režie'),
-    'dh'=> (object)array('L'=>0,'W'=>1,'H'=>0, C=>'bfb','Bx'=>'s,dp', N=>'DS hosté'),
-    'da'=> (object)array('L'=>1,'W'=>1,'H'=>0, C=>'6f6','Bx'=>'s,dp', N=>'DS akce'),
-    'a' => (object)array('L'=>2,'W'=>1,'H'=>0, C=>'aff','Bx'=>'s',    N=>'akce'),
-    'v' => (object)array('L'=>3,'W'=>2,'H'=>0, C=>'ff0','Bx'=>'s',    N=>'VPS'),
-    'p' => (object)array('L'=>3,'W'=>1,'H'=>0, C=>'fa6','Bx'=>'s,v',  N=>'pečouni'),
-    'ml'=> (object)array('L'=>3,'W'=>1,'H'=>0, C=>'f66','Bx'=>'s,v,p',N=>'letní kurz'),
-    'mo'=> (object)array('L'=>4,'W'=>1,'H'=>0, C=>'aaf','Bx'=>'s,v',  N=>'obnovy')
+    '?' => (object)array('L'=>0,'W'=>5,'H'=>0, C=>'f00','Bx'=>'',       N=>'neurčené'),
+    's' => (object)array('L'=>0,'W'=>5,'H'=>0, C=>'aaa','Bx'=>'?',      N=>'společné'),
+    'dp'=> (object)array('L'=>0,'W'=>2,'H'=>0, C=>'ff8','Bx'=>'?,s',    N=>'DS režie'),
+    'dh'=> (object)array('L'=>0,'W'=>1,'H'=>0, C=>'bfb','Bx'=>'?,s,dp', N=>'DS hosté'),
+    'da'=> (object)array('L'=>1,'W'=>1,'H'=>0, C=>'6f6','Bx'=>'?,s,dp', N=>'DS akce'),
+    'a' => (object)array('L'=>2,'W'=>1,'H'=>0, C=>'aff','Bx'=>'?,s',    N=>'akce'),
+    'v' => (object)array('L'=>3,'W'=>2,'H'=>0, C=>'ff0','Bx'=>'?,s',    N=>'VPS'),
+    'p' => (object)array('L'=>3,'W'=>1,'H'=>0, C=>'fa6','Bx'=>'?,s,v',  N=>'pečouni'),
+    'ml'=> (object)array('L'=>3,'W'=>1,'H'=>0, C=>'f66','Bx'=>'?,s,v,p',N=>'letní kurz'),
+    'mo'=> (object)array('L'=>4,'W'=>1,'H'=>0, C=>'aaf','Bx'=>'?,s,v',  N=>'obnovy')
   );
   $and= $prijmy ? "AND left(DAL,1)='6' " : "AND left(MD,1)='5' AND md!='551200'";
   $ucel= $prijmy ?
@@ -158,24 +161,31 @@ function rok_struktura($par) { #trace();
     /*,group_concat(distinct md) as ucty,
     group_concat(distinct o.nazev) as nazvy*/
     FROM udenik AS d
-    /*LEFT*/ JOIN uosnova AS o ON ucet=md AND o.rok=left(id_udenik,4)
-    /*LEFT*/ JOIN uakce AS a ON a.rok=left(id_udenik,4) AND akce=d.Cinnost
+    LEFT JOIN uosnova AS o ON ucet=md AND o.rok=left(id_udenik,4)
+    LEFT JOIN uakce AS a ON a.rok=left(id_udenik,4) AND akce=d.Cinnost
     WHERE id_udenik BETWEEN {$rok}00000 AND {$rok}99999 $and
     GROUP BY kapitola,ucel";
   $res= mysql_qry($qry);
   while ( $res && $u= mysql_fetch_object($res) ) {
-    if ( isset($r[$u->kap]) ) {
+    $castka= round($u->castka,0);
+    $kap= $u->kap ? $u->kap : '?';
+    $suma+= $castka;
+    if ( isset($r[$kap]) ) {
       if ( $prijmy ) {
         if ( $u->ucel=='dary' || $u->ucel=='ostatní' )
-          $r[$u->kap]->H+= round($u->castka,0);
-        elseif ( $u->ucel=='dotace' )
-          $r[$u->kap]->M= round($u->castka,0);
+          $r[$kap]->H+= $castka;
+        elseif ( $u->ucel=='dotace' ) {
+          $r[$kap]->M+= $castka;
+          $msuma+= $castka;
+        }
         else fce_error("{$u->ucel} je neznámý účel");
       }
       else {
-        $r[$u->kap]->H+= round($u->castka,0);
-        if ( $u->ucel=='mzdy' )
-          $r[$u->kap]->M= round($u->castka,0);
+        $r[$kap]->H+= $castka;
+        if ( $u->ucel=='mzdy' ) {
+          $r[$kap]->M+= $castka;
+          $msuma+= $castka;
+        }
       }
     }
     else fce_error("{$u->kap} je neznámá kapitola (akce={$u->akce},denik={$u->id_udenik})");
@@ -184,7 +194,8 @@ function rok_struktura($par) { #trace();
   foreach ($r as $i=>$d) {
     $b= 0;
     if ( $d->Bx ) foreach(explode(',',$d->Bx) as $x) {
-      $b+= $r[$x]->H/$r[$x]->W;
+//       $b+= $r[$x]->H/$r[$x]->W;
+      $b+= ($r[$x]->H+$r[$x]->M)/$r[$x]->W;
     }
     $r[$i]->B= $b;
   }
@@ -195,7 +206,8 @@ function rok_struktura($par) { #trace();
     $l= $elem*$d->L;
     $b= round($d->B/$ratio,0);
     $w= $elem*$d->W;
-    $h= round(($d->H/$ratio)/$d->W,0);
+//     $h= round(($d->H/$ratio)/$d->W,0);
+    $h= round((($d->H+$d->M)/$ratio)/$d->W,0);
     $c= $d->C;
     $tkc= round($d->H/1000,0);
     $mtkc= round($d->M/1000,0);
@@ -205,6 +217,9 @@ function rok_struktura($par) { #trace();
   }
   $graf.= "</div>";
   $html.= $graf;
+  $tkc= round($suma/1000,0);
+  $mtkc= round($msuma/1000,0);
+  $html.= "<br/></br>Celkem $tkc ($mtkc)";
   return $html;
 }
 # ================================================================================================== ODHADY
@@ -1127,7 +1142,7 @@ function ucet_load_osnova($rok) { #trace();
   return $result;
 }
 # -------------------------------------------------------------------------------------------------- ucet_load_akce
-# import číselníku akcí
+# import číselníku akcí ze souboru (před rokem 2010)
 function ucet_load_akce($rok) {  #trace();
   global $ezer_path_docs;
   $fname= "$ezer_path_docs/{$rok}_ciselnik_akci.txt";
@@ -1156,6 +1171,54 @@ function ucet_load_akce($rok) {  #trace();
   }
   else fce_error("importní soubor $fname neexistuje");
 //   $html.= nl2br("<br>qry=\n$qry<br>");
+  $result= (object)array('html'=>$html);
+  return $result;
+}
+# -------------------------------------------------------------------------------------------------- ucet_load_akce2
+# import číselníku akcí z intranetu (od roku 2010)
+function ucet_load_akce2($rok) {  #trace();
+  $n= 0;
+  $cells= google_sheet($rok,"ciselnik_akci",'answer@smidek.eu');
+  if ( $cells ) {
+    list($max_A,$max_n)= $cells['dim'];
+//                                                 debug($cells,"akce $rok");
+    // zrušení daného roku v UAKCE
+    $qry= "DELETE FROM uakce WHERE rok=$rok";
+    $res= mysql_qry($qry);
+    if ( $res ) {
+      $html.= "starý číselník akcí smazán<br>";
+      // výběr a-záznamů a zápis do GAKCE
+      $values= ''; $del= '';
+      for ($i= 1; $i<$max_n; $i++) {
+        $x= $cells['A'][$i];
+        if ( strpos(' aru',$x) ) {
+          $n++;
+          $od= $dnu= $typ= $kap= '';
+          $akce= $cells['B'][$i];
+          $nazev= mysql_real_escape_string($cells['C'][$i]);
+          if ( $cells['D'][$i] ) {
+            $od= $cells['D'][$i];
+            if ( $do= $cells['E'][$i] ) {
+              $dt1= stamp_date($od,1);
+              $dt2= stamp_date($do,1);
+              $dnu= ($dt2-$dt1)/(60*60*24);
+//                                         display("$od=$dt1,$do=$dt2,$dnu=".($dt2-$dt1));
+            }
+            $od= sql_date1($od,1);
+          }
+          $typ= $cells['G'][$i];
+          $kap= $cells['H'][$i];
+          $values.= "$del('$akce','$rok',\"$nazev\",'$od','$dnu','$typ','$kap')";
+          $del= ',';
+        }
+      }
+      $qry= "INSERT INTO uakce (akce,rok,nazev_akce,datum,dnu,typ,kapitola) VALUES $values";
+      $res= mysql_qry($qry);
+      $n= mysql_affected_rows();
+      if ( $res ) $html.= "vloženo $n popisů akcí<br>";
+    }
+  }
+  else fce_error("číselník akcí pro rok $rok nelze na intranetu najít");
   $result= (object)array('html'=>$html);
   return $result;
 }

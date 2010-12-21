@@ -1,0 +1,103 @@
+// Systém FiS - panel osobního nastavení
+// (c) 2010 Martin Šmídek <martin@smidek.eu>
+
+menu m {type:'left', active:m.g.i
+  menu g { title:"Přehled osobních nastavení", type:'group'
+    item i { title:"osobní záznam"              ,par:°{typ:'oso'} }
+    item   { title:"a: zobrazení funkce sys"    ,par:°{typ:'sys'}, skill:'a' }
+    item   { title:"a: zobrazení Ezer.options"  ,par:°{typ:'opt'}, skill:'a' }
+    item   { title:"a: zobrazení _SESSION"      ,par:°{typ:'ses'}, skill:'a' }
+    item   { title:"a: zobrazení USER"          ,par:°{typ:'use'}, skill:'a' }
+    item   { title:"a: zobrazení EZER"          ,par:°{typ:'eze'}, skill:'a' }
+    proc onclick(i) {
+      rp.fill(conc(i.owner.title,' - ',i.title),' ');
+      ch.get.display(0); msg.get.display(1);
+      switch(i.par.typ,
+      'oso',{msg.txt.set(ask('fis_user_record'))},
+      'sys',{msg.txt.set(debug(sys))},
+      'opt',{msg.txt.set(debug(javascript('Ezer.options')))},
+      'use',{msg.txt.set(ask('sys_user'))},
+      'eze',{msg.txt.set(ask('sys_ezer'))},
+      'ses',{msg.txt.set(ask('sys_session'))}) }
+  }
+  menu {title:"Změna osobního nastavení", type:'group', _sys:'jm'
+    item { title:"změna textu 'vyřizuje'"     ,par:°{typ:'opt',fld:'vyrizuje'} }
+    item { title:"m: změna options 'to_trace'",par:°{typ:'oop',fld:'to_trace'}, skill:'m' }
+    item { title:"změna stylu zobrazení"      ,par:°{typ:'opt',fld:'css'} }
+    item { title:"změna hesla"                ,par:°{typ:'pas'} }
+    item { title:"změna přihlašovacího jména" ,par:°{typ:'fld',fld:'username'} }
+    item { title:"m: změna položky 'state'"   ,par:°{typ:'fld',fld:'state'}, skill:'m' }
+  }
+  proc onclick (i) {
+    ch.get.display(1); msg.get.display(0);
+    rp.fill(conc(i.owner.title,' - ',i.title),' ');
+    ch._load(i,i.par);
+  }
+}
+proc onfocus () { m.g.i.click }
+use rp: form right [12,4,,]
+use ch: form _chng [12,70,,]
+use msg: form _msg [12,70,,]
+# -------------------------------------------------------------------------------------------------- _msg
+# formulář pro zprávu
+form _msg [,,700,500] {
+  label txt [0,0,690,500]
+}
+# -------------------------------------------------------------------------------------------------- _chng
+# formulář pro změnu jedné položky
+form _chng [,,700,120] { style:'z-index:2'
+  var the_itm: object
+  var the_par: object
+  proc onchanged () { _form_state('bc','bn') }
+  label     [0,2,100,]    { tag:'!', title:'stará hodnota:', format:'r' }
+  label     [0,32,100,]   { tag:'!', title:'nová hodnota:', format:'r' }
+  field ops [110,0,200,]  { tag:'p', format:'pnt' }
+  field old [110,0,200,]  { tag:'o', format:'o' }
+  field new [110,30,200,] { tag:'o', format:'' }
+  field nps [110,30,200,] { tag:'p', format:'np' }
+  label     [285,32,100,] { tag:'p', title:'opakovaně:', format:'r' }
+  field rep [390,30,200,] { tag:'p', format:'np' }
+  # procedury
+  proc _form_state(on,off) { form.enable(1,on); form.enable(0,off); }
+  proc _form_show(on,off) { form.display(1,on); form.display(0,off); }
+  proc _init() { _form_state('bn','bc'); new.init }
+  proc _load(i,par) { the_itm.set(i); _init;
+    the_par.set(par);
+    switch(par.typ,
+    'fld',{ _form_show('o','p'); old.set(sys('user',par.fld)) },
+    'opt',{ _form_show('o','p'); old.set(sys('user','options',par.fld)) },
+    'oop',{ _form_show('o','p'); old.set(sys('user','options','options',par.fld)) },
+    'pas',{ _form_show('p','o') },
+    {stop}) }
+  # tlačítka
+  proc _init() { _form_state('bn','bc'); form.init }
+  button    [20,70,100,16]  { tag:'bc', title:'Uložit změnu',
+    help:'zapsat novou hodnotu do osobního nastavení'
+    proc onclick () {
+      var t: text var f: text
+      t.set(the_par.get('typ')); f.set(the_par.get('fld'));
+      switch(t,
+      'fld',{ _form_show('o','p'); rp.fill('',ask('fis_user_change',t,f,new.get)); new.plain },
+      'opt',{ _form_show('o','p'); rp.fill('',ask('fis_user_change',t,f,new.get)); new.plain },
+      'oop',{ _form_show('o','p'); rp.fill('',ask('fis_user_change',t,f,new.get)); new.plain },
+      'pas',{ _form_show('p','o'); rp.fill('',ask('fis_user_change',t,'',nps.get,ops.get,rep.get));
+              _init });
+  } }
+  button    [110,70,100,16] { tag:'bc', title:' Zpět ',
+    help:'ponechat starou hodnotu osobního nastavení'
+    proc onclick () { the_itm.click } }
+}
+# -------------------------------------------------------------------------------------------------- rightf
+# formulář pro levostranné menu s postupným zápisem
+form right [,,750,50] {
+  label head [0,0,690,50]  { title:' ' }
+  label note [0,170,690,550] { title:' ' }
+  proc fill(h,n) {
+    [ h; head.set(conc("<div class='CSection CMenu'><h3 class='CTitle'>",h,"</h3></div>")) ];
+    [ n; note.set(n) ]
+  }
+  proc append(n) {
+    note.set(conc(note.get,n))
+  }
+}
+
