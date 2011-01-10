@@ -150,13 +150,13 @@ function ds_obj_menu() {
     'èervenec','srpen','záøí','øíjen','listopad','prosinec');
   $mn= (object)array('type'=>'menu.left'
       ,'options'=>(object)array(),'part'=>(object)array());
-  $letos= date('Y');
+  $start= date('m') <= 6 ? date('Y')-1 : date('Y');
   $ted= date('Ym');
   ezer_connect('setkani');
   for ($y= 0; $y<=1; $y++) {
     for ($m= 1; $m<=12; $m++) {
       $mm= sprintf('%02d',$m);
-      $yyyy= $letos+$y;
+      $yyyy= $start+$y;
       $group= "$yyyy$mm";
       $gr= (object)array('type'=>'menu.group'
         ,'options'=>(object)array('title'=>wu($mesice[$m])." $yyyy"),'part'=>(object)array());
