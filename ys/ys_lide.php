@@ -1,4 +1,208 @@
 <?php # (c) 2007-2009 Martin Smidek <martin@smidek.eu>
+# ================================================================================================== LIDÉ-UNIFY
+# -------------------------------------------------------------------------------------------------- lide_duplo
+# redukce duplicit v M a L záznamech
+#      0 -- nic
+#      1 -- jméno a příjmení muže
+#      2 -- bydliště
+#      3 -- telefon
+#      4 -- email
+#      5 -- karta muže
+#      6 -- karta ženy
+#      7 -- poznámka
+#      8 -- datum svatby
+#      9 -- spz
+#    512 -- akce
+function lide_duplo($par) { trace();
+  $html= "";
+  $n= 0;
+  switch ( $par->fce ) {
+  // ------------------------------------------------------------- MS_DRUHAKCE, DU_AKCE
+  // inicializace tabulky DU_AKCE => 0
+  case 'akce_init':
+    $qry= "TRUNCATE TABLE du_akce";
+    $res= mysql_qry($qry);
+    $qry= "UPDATE ms_druhakce SET id_duakce=0";
+    $res= mysql_qry($qry);
+    $qry= "UPDATE du_kurs SET id_duakce=0";
+    $res= mysql_qry($qry);
+    $html.= "byla inicializována tabulka zjištěných duplicit akcí";
+    break;
+  // seskupení stejných názvů a zahájení => 10
+  case 'akce_nazev':
+    $qry= "SELECT GROUP_CONCAT(id_akce) AS _ids, count(*) AS _pocet FROM ms_druhakce
+           GROUP BY nazev,datum_od ORDER BY datum_od, nazev DESC";
+    $res= mysql_qry($qry);
+    while ( $res && ($p= mysql_fetch_object($res)) ) {
+      $ids= $p->_ids;
+      if ( $p->_pocet>0 ) {
+        $qryd= "INSERT INTO du_akce (typ) VALUES (10)";
+        $resd= mysql_qry($qryd);
+        $id_duakce= mysql_insert_id();
+        $qryu= "UPDATE ms_druhakce SET id_duakce=$id_duakce WHERE id_akce IN ($ids)";
+        $resu= mysql_qry($qryu);
+        $n++;
+      }
+    }
+    $html.= "bylo nalezeno $n záznamů M/L se shodou názvů";
+    break;
+  // seskupení stejných údajů => 12345679
+  case 'akce_udaje':
+    $matches= array(
+    //"10,název,nazev:datum_od",
+      "02,údaje,ciselnik_akce:ciselnik_rok:poradatel:datum_do:misto"
+    );
+    $qryd= "SELECT id_duakce FROM du_akce WHERE typ=10 ORDER BY id_duakce /*LIMIT 1*/";
+    $resd= mysql_qry($qryd);
+    while ( $resd && ($d= mysql_fetch_object($resd)) ) {
+      $id_duakce= $d->id_duakce;
+      foreach ($matches as $match) {
+        list($incr,$name,$flds)= explode(',',$match);
+        $ask= "CONCAT(".str_replace(":",",':',",$flds).")";
+        $qryp= "SELECT $ask AS _ask,id_akce FROM ms_druhakce WHERE id_duakce=$id_duakce LIMIT 1";
+        $resp= mysql_qry($qryp);
+        if ( $resp && $p= mysql_fetch_object($resp) ) {
+          $id_akce= $p->id_akce;
+          $ans= mysql_real_escape_string($p->_ask);
+          $qryu= "UPDATE du_akce JOIN ms_druhakce USING(id_duakce)
+                  SET typ=typ+$incr WHERE id_duakce=$id_duakce AND id_akce!=$id_akce AND $ask='$ans'";
+          $resu= mysql_qry($qryu);
+          $n+= mysql_affected_rows();
+        }
+      }
+    }
+    $html.= "bylo doplněno $n shod ve sledovaných položkách";
+    break;
+  // ------------------------------------------------------------- MS_PARY, DU_PARY
+  // inicializace tabulky DU_PARY => 0
+  case 'pary_init':
+    $qry= "TRUNCATE TABLE du_pary";
+    $res= mysql_qry($qry);
+    $qry= "UPDATE ms_pary SET id_dupary=0";
+    $res= mysql_qry($qry);
+    $qry= "UPDATE du_kurs SET id_dupary=0";
+    $res= mysql_qry($qry);
+    $html.= "byla inicializována tabulka zjištěných duplicit párů";
+    break;
+  // seskupení stejných jmen => 100000000
+  case 'pary_jmena':
+    $qry= "SELECT GROUP_CONCAT(id_pary) AS _ids, count(*) AS _pocet FROM ms_pary
+           GROUP BY jmeno,prijmeni_m,jmeno_m,prijmeni_z,jmeno_z ";
+    $res= mysql_qry($qry);
+    while ( $res && ($p= mysql_fetch_object($res)) ) {
+      $ids= $p->_ids;
+      $typ= $p->_pocet>1 ? 100000000 : 123456789;
+      if ( $p->_pocet>0 ) {
+        $qryd= "INSERT INTO du_pary (typ) VALUES ($typ)";
+        $resd= mysql_qry($qryd);
+        $id_dupary= mysql_insert_id();
+        $qryu= "UPDATE ms_pary SET id_dupary=$id_dupary WHERE id_pary IN ($ids)";
+        $resu= mysql_qry($qryu);
+        $n++;
+      }
+    }
+    $html.= "bylo nalezeno $n záznamů M/L se shodou jmen";
+    break;
+  // seskupení stejných údajů => 12345679
+  case 'pary_udaje':
+    $matches= array(
+    //"100000000,jména,jmeno:prijmeni_m:jmeno_m:prijmeni_z:jmeno_z",
+      "020000000,bydliště,adresa:psc:mesto",
+      "003000000,telefon,telefon",
+      "000400000,email,email",
+      "000050000,karta muže,rodcislo_m:cirkev_m:vzdelani_m:zamest_m:zajmy_m:jazyk_m:aktivita_m:cislo_m:clen_m",
+      "000006000,karta ženy,rodcislo_z:cirkev_z:vzdelani_z:zamest_z:zajmy_z:jazyk_z:aktivita_z:cislo_z:clen_z",
+      "000000700,poznámka,poznamka",
+      "000000080,datum svatby,datsvatba",
+      "000000009,spz,spz");
+    $qryd= "SELECT id_dupary FROM du_pary WHERE typ=100000000 ORDER BY id_dupary /*LIMIT 1*/";
+    $resd= mysql_qry($qryd);
+    while ( $resd && ($d= mysql_fetch_object($resd)) ) {
+      $id_dupary= $d->id_dupary;
+      foreach ($matches as $match) {
+        list($incr,$name,$flds)= explode(',',$match);
+        $ask= "CONCAT(".str_replace(":",",':',",$flds).")";
+        $qryp= "SELECT $ask AS _ask,id_pary FROM ms_pary WHERE id_dupary=$id_dupary LIMIT 1";
+        $resp= mysql_qry($qryp);
+        if ( $resp && $p= mysql_fetch_object($resp) ) {
+          $id_pary= $p->id_pary;
+          $ans= mysql_real_escape_string($p->_ask);
+          $qryu= "UPDATE du_pary JOIN ms_pary USING(id_dupary)
+                  SET typ=typ+$incr WHERE id_dupary=$id_dupary AND id_pary!=$id_pary AND $ask='$ans'";
+          $resu= mysql_qry($qryu);
+          $n+= mysql_affected_rows();
+        }
+      }
+    }
+    $html.= "bylo doplněno $n shod ve sledovaných položkách";
+    break;
+  // ------------------------------------------------------------- MS_KURS, DU_KURS
+  // inicializace tabulky DU_KURS => 0
+  case 'kurs_init':
+    $qry= "TRUNCATE TABLE du_kurs";
+    $res= mysql_qry($qry);
+    $qry= "UPDATE ms_kurs SET id_dukurs=0";
+    $res= mysql_qry($qry);
+    $html.= "byla inicializována tabulka účastí";
+    break;
+  // seskupení účastí na akcích do DU_KURS => nastavení jen pro 10000
+  case 'kurs_duplo':
+    $qryk= "SELECT id_dupary,id_duakce,GROUP_CONCAT(id_kurs) AS _ids,du_pary.typ
+            FROM ms_kurs
+            LEFT JOIN ms_pary USING(id_pary)
+            LEFT JOIN du_pary USING(id_dupary)
+            LEFT JOIN ms_druhakce USING(id_akce)
+            LEFT JOIN du_akce USING(id_duakce)
+            WHERE /*du_pary.typ=123456789 AND*/ NOT ISNULL(id_duakce)
+            GROUP BY ms_pary.id_dupary,ms_druhakce.id_duakce,du_pary.typ";
+    $resk= mysql_qry($qryk);
+    while ( $resk && ($k= mysql_fetch_object($resk)) ) {
+      $ids= $k->_ids;
+      $id_dupary= $k->id_dupary;
+      $id_duakce= $k->id_duakce;
+      $typ= $k->typ;
+      $qryd= "INSERT INTO du_kurs (id_dupary,id_duakce,typ) VALUES ($id_dupary,$id_duakce,$typ)";
+      $resd= mysql_qry($qryd);
+      $id_dukurs= mysql_insert_id();
+      $qryu= "UPDATE ms_kurs SET id_dukurs=$id_dukurs WHERE id_kurs IN ($ids)";
+      $resu= mysql_qry($qryu);
+      $n++;
+    }
+    $html.= "bylo naplněno $n neduplicitních účastí";
+    break;
+  // seskupení stejných údajů => 12345
+  case 'kurs_udaje':
+    $matches= array(
+    //"10000,jména,jmeno:prijmeni_m:jmeno_m:prijmeni_z:jmeno_z",
+      "02000,účast,skupina:funkce:aktivita:dorazil",
+      "00300,bydlení,budova:pokoj:kocarek:pecovatel:poznamka:pristylky:pocetdnu:svp:pouze",
+      "00040,jídlo,strava_cel:strava_pol,cstrava_cel:cstrava_pol",
+      "00005,prachy,platba:platba1:platba2:platba3:platba4"
+    );
+    $qryd= "SELECT id_dukurs FROM du_kurs WHERE typ=10000 ORDER BY id_dukurs /*LIMIT 1*/";
+    $resd= mysql_qry($qryd);
+    while ( $resd && ($d= mysql_fetch_object($resd)) ) {
+      $id_dukurs= $d->id_dukurs;
+      foreach ($matches as $match) {
+        list($incr,$name,$flds)= explode(',',$match);
+        $ask= "CONCAT(".str_replace(":",",':',",$flds).")";
+        $qryp= "SELECT $ask AS _ask,id_kurs FROM ms_kurs WHERE id_dukurs=$id_dukurs LIMIT 1";
+        $resp= mysql_qry($qryp);
+        if ( $resp && $p= mysql_fetch_object($resp) ) {
+          $id_kurs= $p->id_kurs;
+          $ans= mysql_real_escape_string($p->_ask);
+          $qryu= "UPDATE du_kurs JOIN ms_kurs USING(id_dukurs)
+                  SET typ=typ+$incr WHERE id_dukurs=$id_dukurs AND id_kurs!=$id_kurs AND $ask='$ans'";
+          $resu= mysql_qry($qryu);
+          $n+= mysql_affected_rows();
+        }
+      }
+    }
+    $html.= "byly definováno $n ohodnocení rozdílů v duplicitách účastí";
+  }
+  return $html;
+}
+# ================================================================================================== LIDÉ
 # -------------------------------------------------------------------------------------------------- lide_cleni_kurs
 # přehled
 function lide_cleni_kurs($rok,$export=0) { trace();

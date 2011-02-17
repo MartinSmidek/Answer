@@ -3,7 +3,7 @@
 
 menu ys { type:'main', active:* //ys.pok
   var global: text,
-  tabs info {title:"Informace", _sys:'inf',  include:'onclick', active:* }
+  tabs info {title:"Archiv", _sys:'inf',  include:'onclick', active:* }
   tabs pok {title:"Pokladna", _sys:'*',  include:'onclick', active:* }
   tabs eko {title:"Ekonomika", _sys:'*',  include:'onclick', active:* }
   tabs ds {title:"Dům", _sys:'dum', include:'onclick', active:* }
@@ -50,6 +50,7 @@ form right [,,700,50] {
     [ x; head.set(conc("<div class='CSection CMenu'><h3 class='CTitle'>",x,"</h3></div>")) ];
     [ y; note.set(y) ]
   }
+  proc append(x) { note.get; note.set(conc(note.get,'<br>',x)) | note.set(x) }
 }
 
 table _file_ {
@@ -86,8 +87,14 @@ table _cis { key_id:'id_cis'
   text barva,
 }
 
+table du_akce { key_id:'id_duakce'
+  number id_duakce
+  number typ
+}
+
 table ms_druhakce {
   number id_akce
+  text source
   text nazev
   number akce
   number druh
@@ -97,10 +104,17 @@ table ms_druhakce {
   text misto
 }
 
+table du_kurs { key_id:'id_dukurs'
+  number id_dukurs
+  number typ
+}
+
 table ms_kurs { key_id:'id_kurs'
   number id_kurs
+  text source
   number id_pary
   number id_akce
+  number id_dupary
   number cislo
   number skupina
   number funkce
@@ -130,6 +144,11 @@ table ms_kurs { key_id:'id_kurs'
   number platba4
 }
 
+table du_kurs { key_id:'id_dukursdeti'
+  number id_dukursdeti
+  number typ
+}
+
 table ms_kursdeti { key_id:'id_kursdeti'
   number id_kursdeti
   number id_pary        //-
@@ -139,6 +158,11 @@ table ms_kursdeti { key_id:'id_kursdeti'
   text jmeno            //-
   number skupina
   number akce           //-
+}
+
+table du_pary { key_id:'id_dupary'
+  number id_dupary
+  number typ
 }
 
 table ms_pary { key_id:'id_pary'
@@ -200,11 +224,23 @@ table ms_poraakce {
   text jmeno
 }
 
-table gakce { key_id:'id_gakce'
+table join_akce { // spojení číselníku akcí s MS
+  number g_rok     { help:"rok akce podle číselníku akcí" }
+  number g_kod     { help:"kód akce podle číselníku akcí" }
+  text   source    { help:"L:Lídino M:Milošovo MS.EXE" }
+  number akce      { help:"staré číslo akce podle MS.EXE" }
+}
+
+table g_akce { key_id:'id_gakce' // kopie číselníku akcí z intranetu
   number id_gakce
-  number grok
-  number gakce
-  text gnazev
+  number g_rok     { help:"rok akce podle číselníku akcí" }
+  number g_kod     { help:"kód akce podle číselníku akcí" }
+  text   g_nazev   { help:"název akce z číselníku akcí" }
+  date   g_od      { help:"začátek akce z číselníku akcí", sql_pipe:'sql_date1' }
+  date   g_do      { help:"ukončení akce z číselníku akcí", sql_pipe:'sql_date1' }
+  number g_ucast   { help:"počet účastníků akce z číselníku akcí" }
+  text   g_typ     { help:"typ akce z číselníku akcí" }
+  text   g_kap     { help:"účetní kapitola akce z číselníku akcí" }
 }
 
 # table ms_pece {
@@ -272,3 +308,9 @@ table dopis { key_id:'id_dopis'
   text add_list
 }
 
+map ms_akce_clen:     table _cis {where:"druh='ms_akce_clen'",     order:'poradi', key_id:'data'}
+map ms_akce_pouze:    table _cis {where:"druh='ms_akce_pouze'",    order:'poradi', key_id:'data'}
+map ms_akce_funkce:   table _cis {where:"druh='ms_akce_funkce'",   order:'poradi', key_id:'data'}
+map ms_akce_cirkev:   table _cis {where:"druh='ms_akce_cirkev'",   order:'poradi', key_id:'data'}
+map ms_akce_vzdelani: table _cis {where:"druh='ms_akce_vzdelani'", order:'poradi', key_id:'data'}
+map ms_akce_platba:   table _cis {where:"druh='ms_akce_platba'",   order:'poradi', key_id:'data'}

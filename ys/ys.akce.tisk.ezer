@@ -3,19 +3,19 @@
 
 # ================================================================================================== Tisk
 use info: form right [12,4,,]
-proc onstart() {
-#   m.n.vps.click
+proc onfirstfocus() {
+  m.n.i.click
 }
 menu m {type:'left',
   menu n {title:'Adresář',type:'group',_sys:'*'
-    item {title:'základní'        ,par:°{typ:'p'
-                                        ,tit:'příjmení,jména,obec,psč,ulice'
+    item i {title:'základní'       ,par:°{typ:'p'
+                                        ,tit:'příjmení:15,jména:20,obec:25,psč:7,ulice:25'
                                         ,fld:'jmeno,jmena,mesto,psc,adresa',cnd:'1'}}
     item {title:'základní, spojení',par:°{typ:'p'
-                                        ,tit:'příjmení,jména,obec,psč,ulice,telefon,e-mail'
+                                        ,tit:'příjmení:15,jména:20,obec:25,psč:7,ulice:25,telefon:40,e-mail:60'
                                         ,fld:'jmeno,jmena,mesto,psc,adresa,telefon,email',cnd:'1'}}
     item {title:'základní, RČ'    ,par:°{typ:'j'
-                                        ,tit:'příjmení,jméno,rod.číslo,obec,psč,ulice'
+                                        ,tit:'příjmení:15,jméno:12,rod.číslo:12,obec:25,psč:7,ulice:25'
                                         ,fld:'prijmeni_m,jmeno_m,rodcislo_m,mesto,psc,adresa;prijmeni_z,jmeno_z,rodcislo_z,mesto,psc,adresa',cnd:'1'}}
   }
   menu   {title:'Seznam',type:'group',_sys:'*'
@@ -45,18 +45,30 @@ menu m {type:'left',
                                         ,tit:'příjmení,jméno'
                                         ,fld:'prijmeni_d,jmeno_d',cnd:'1'}}
   }
-  var x: object
+  var the_par: object
+  var the_vypis: text
   proc onclick (i) {
-    info.fill(conc(i.owner.title,' - ',i.title),' ');
-    x.set(ask('akce_sestava',the_akce.get,i.par));
-    info.fill('',x.get('html'));
+    var x: object
+    the_par.set(i.par);
+    the_vypis.set(conc(i.owner.title,' - ',i.title));
+    info.fill(conc(the_title.get,' / ',the_vypis.get),' ');
+    x.set(ask('akce_sestava',the_akce.get,i.par,the_title.get,the_vypis.get));
+    info.fill('',x.html);
   }
 }
 form right [,,700,50] {
   label head [0,0,680,50]  { title:'' }
-  label note [0,50,680,550] { title:'' }
+  label msg  [0,45,680,20] { title:'' }
+  label note [0,65,680,550] { title:'' }
   proc fill(x,y) {
     [ x; head.set(conc("<div class='CSection CMenu'><h3 class='CTitle'>",x,"</h3></div>")) ];
     [ y; note.set(y) ]
+  }
+  button [550,10,100,16] { title:'Excel', style:'display:block;zIndex:2',
+    proc onclick() {
+      var res: object
+      res.set(ask('akce_vyp_excel',the_akce.get,m.the_par.get,the_title.get,m.the_vypis.get));
+      msg.set(res.html);
+    }
   }
 }

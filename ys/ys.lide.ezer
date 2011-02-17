@@ -1,6 +1,288 @@
 # Systém Ans(w)er - modul Lidi
 # (c) 2008-2010 Martin Šmídek <martin@smidek.eu>
 
+# ================================================================================================== UNIFIKACE
+panel uni [,,,543] {type:'plain', title:'Unifikace'
+  use u: form _ucast [4,0,,]
+  proc onstart() {
+    ask('query','SET group_concat_max_len=10000');
+    u.fill("Všichni účastnící akcí YMCA Setkání");
+    u.pary.browse_load;
+  }
+  # ------------------------------------------------------------------------------------------------ _ucast
+  form _ucast [,,200,50] { css:'ds_form'
+    proc fill(x) {
+      head.set(conc("<div class='CSection CMenu'><h3 class='CTitle'>",x,"</h3></div>"))
+    }
+    // hlavička
+    label head [0,0,818,50]  { title:'' }
+    label [0,40,820,465] { css:'ae_work'}
+    label [51,48,,] {title:"<img src='img/ms1.png'>" }
+    // seznam
+    view smk: table ms_kurs
+    view smp: table ms_pary {join:'USING(id_pary)'}
+    view sma: table ms_druhakce {join:'USING(id_akce)'}
+    view smd: table du_pary {join_type:'LEFT', join:'ON smp.id_dupary=smd.id_dupary'}
+    browse pary [8,50,200,447] {type:'smart', rows:22, qry_rows:2,
+      optimize:°{qry:'noseek'},group_by:'smp.id_pary'
+      show id_pary {data:smk.id_pary }
+      show ucasti  {expr:"GROUP_CONCAT(CONCAT(sma.nazev,' ',YEAR(sma.datum_od)) ORDER BY sma.datum_od DESC SEPARATOR '\n')"}
+      show [,,10,] {title:'?', data:smp.source, format:'sq*' }
+      show [,,150,] {title:'jméno', expr:"CONCAT(smp.jmeno,' ',smp.jmeno_m,' a ',smp.jmeno_z)",format:'q*s+'}
+      show [,,15,] {title:'n', expr:"COUNT(smk.id_pary)", format:'rs'}
+      show [,,15,] {title:'du_pary', data:smd.typ, format:'rsq/'}
+      proc onrowclick() {
+        form.load(id_pary.get);
+        akce.set(ucasti.get);
+      }
+    }
+    // účastník
+    view mp:  table ms_pary
+    label             [240,50,100,] {title:'Příjmení páru'}
+    field jmeno       [240,65,100,] {data:mp.jmeno, help:'příjmení'}
+    label             [352,50,100,] {title:'Jméno muže'}
+    field jmeno_m     [352,65,100,] {data:mp.jmeno_m}
+    label             [465,50,100,] {title:'Jméno ženy'}
+    field jmeno_z     [464,65,100,] {data:mp.jmeno_z}
+    label             [576,50,26,] {title:'Muž'}
+    field _vek_m      [582,65,19,] {format:'o', value:'?'}
+    label             [604,50,11,] {title:'Žena'}
+    field _vek_z      [608,65,20,] {format:'o', value:'?'}
+    label             [634,50,28,] {title:'Spolu'}
+    field _spolu      [641,65,26,] {format:'o', value:'?'}
+    label             [668,50,38,] {title:'Svatba'}
+    field svatba      [668,65,36,] {data:mp.svatba}
+    label             [240,83,100,] {title:'Ulice'}
+    field adresa      [240,98,126,] {data:mp.adresa}
+    label             [376,83,36,] {title:'Psč'}
+    field psc         [376,98,36,] {data:mp.psc}
+    label             [423,83,100,] {title:'Město'}
+    field mesto       [422,98,114,] {data:mp.mesto}
+    label             [240,124,37,] {title:'Telefon'}
+    field telefon     [281,123,525,] {data:mp.telefon}
+    label             [240,148,33,] {title:'e-mail'}
+    field email       [281,148,525,] {data:mp.email}
+    label             [240,166,33,] {title:'Poznámka'}
+    edit poznamka     [241,181,491,52] {data:mp.poznamka}
+    label             [746,50,66,] {title:'Datum svatby'}
+    field datsvatba   [745,65,63,] {data:mp.datsvatba}
+    label             [745,85,38,] {title:'Spz'}
+    field spz         [746,100,62,] {data:mp.spz}
+    label             [287,245,44,] {title:'Muž'}
+    field prijmeni_m  [329,244,108,] {data:mp.prijmeni_m}
+    label             [449,245,31,] {title:'Žena'}
+    field prijmeni_z  [492,244,108,] {data:mp.prijmeni_z}
+    label             [240,267,50,] {title:'Rodné č.'}
+    field rodcislo_m  [286,266,73,] {data:mp.rodcislo_m}
+    label             [363,267,37,] {title:'YMCA'}
+    field cislo_m     [394,265,42,] {data:mp.cislo_m, format:'r'}
+    field rodcislo_z  [448,266,73,] {data:mp.rodcislo_z}
+    field cislo_z     [557,265,42,] {data:mp.cislo_z, format:'r'}
+    label             [240,288,44,] {title:'Církev'}
+    select cirkev_m   [286,287,152,] {type:'map', data:mp.cirkev_m, options:ms_akce_cirkev.zkratka}
+    select cirkev_z   [448,287,152,] {type:'map', data:mp.cirkev_z, options:ms_akce_cirkev.zkratka}
+    label             [240,309,44,] {title:'Vzdělání'}
+    select vzdelani_m [286,308,152,] {type:'map', data:mp.vzdelani_m, options:ms_akce_vzdelani.zkratka}
+    select vzdelani_z [448,308,152,] {type:'map', data:mp.vzdelani_z, options:ms_akce_vzdelani.zkratka}
+    label             [240,330,44,] {title:'Zaměst.'}
+    field zamest_m    [286,329,152,] {data:mp.zamest_m}
+    field zamest_z    [448,329,152,] {data:mp.zamest_z}
+    label             [240,351,44,] {title:'Zájmy'}
+    field zajmy_m     [286,350,152,] {data:mp.zajmy_m}
+    field zajmy_z     [448,350,152,] {data:mp.zajmy_z}
+    label             [240,372,44,] {title:'Jazyk'}
+    field jazyk_m     [286,371,152,] {data:mp.jazyk_m}
+    field jazyk_z     [448,371,152,] {data:mp.jazyk_z}
+    label             [240,393,44,] {title:'Aktivita'}
+    field aktivita_m  [286,392,152,] {data:mp.aktivita_m}
+    field aktivita_z  [448,392,152,] {data:mp.aktivita_z}
+    select clen_m     [314,414,58,] {type:'map', data:mp.clen_m, options:ms_akce_clen.zkratka}
+    select clen_z     [512,414,57,] {type:'map', data:mp.clen_z, options:ms_akce_clen.zkratka}
+    label             [781,224,27,] {title:'Akce'}
+    edit akce         [613,242,195,259] {data:mp.poznamka}
+    // počítané položky
+    proc onload() {
+      _vek_m.set(rc2roky(rodcislo_m.get));
+      _vek_z.set(rc2roky(rodcislo_z.get));
+      _spolu.set(cconc(svatba.get,roku(datsvatba.get,svatba.get),' '));
+    }
+  }
+}
+# ================================================================================================== PŘEHLED
+panel preh [,,,532] {type:'right', title:'Přehled'
+  menu m {type:'left', active:m.g.i
+    menu g {title:'Seznam všech známých',type:'group'
+      proc onfirstfocus() {
+        zname.lide.browse_load;
+        zname.lide.raise('onrowclick') }
+      item i {title:'Doplnění vlastností' }
+      proc onclick (i) {
+        du_akce.display(0); du_pary.display(0); zname.display(1); zname.fill(i.title)
+      }
+    }
+    menu  {title:'Unifikace MS_DRUHAKCE',type:'group'
+      proc onstart() {
+        du_akce.akce.browse_load; }
+      item i {title:'Zobrazení duplicit akcí',  par:°{fce:''} }
+      item  {title:'0. inicializace DU_AKCE',   par:°{fce:'akce_init'} }
+      item  {title:'1. stejný název a rok',     par:°{fce:'akce_nazev'} }
+      item  {title:'2. ... údaje',              par:°{fce:'akce_udaje'} }
+      proc onclick (i) {
+        zname.display(0); du_akce.display(1); du_pary.display(0); info.display(0);
+        du_akce.fill(conc(i.owner.title,' - ',i.title));
+        [ i.par.fce | du_akce.info.set('0=nic, 1=název a datum_od, 2=ostatní údaje<hr>') ];
+        i.par.fce; du_akce.append(ask('lide_duplo',i.par));
+        du_akce.akce.browse_load;
+      }
+    }
+    menu h {title:'Unifikace MS_PARY',type:'group'
+      proc onstart() {
+        du_pary.pary.browse_load; }
+      item i {title:'Zobrazení duplicit párů',  par:°{fce:''} }
+      item  {title:'0. inicializace DU_PARY',   par:°{fce:'pary_init'} }
+      item  {title:'1. stejná jména',           par:°{fce:'pary_jmena'} }
+      item  {title:'2. ... údaje',              par:°{fce:'pary_udaje'} }
+      proc onclick (i) {
+        zname.display(0); du_akce.display(0); du_pary.display(1); info.display(0);
+        du_pary.fill(conc(i.owner.title,' - ',i.title));
+        [ i.par.fce | du_pary.info.set(
+        '0=nic, 1=jména, 2=bydliště, 3=telefon, 4=email, 5=muž, 6=žena, 7=poznámka, 8=svatba, 9=spz<hr>') ];
+        i.par.fce; du_pary.append(ask('lide_duplo',i.par));
+        du_pary.pary.browse_load;
+      }
+    }
+    menu {title:'Unifikace MS_KURS', type:'group'
+      item  {title:'Zobrazení duplicit účastí', par:°{fce:''} }
+      item  {title:'inicializace DU_KURS',      par:°{fce:'kurs_init'} }
+      item  {title:'naplnění DU_KURS',          par:°{fce:'kurs_duplo'} }
+      item  {title:'porovnání DU_KURS',         par:°{fce:'kurs_udaje'} }
+      proc onclick (i) {
+        zname.display(0); du_akce.display(0); du_pary.display(0); info.display(1);
+        info.fill(conc(i.owner.title,' - ',i.title),'');
+        [ i.par.fce | info.fill('','0=nic, 1=shoda, 2=rozdíl<hr>') ];
+        i.par.fce; info.append(ask('lide_duplo',i.par));
+      }
+    }
+  }
+  use zname: form _zname [12,4,,],
+  use du_pary: form _du_pary [12,4,,],
+  use du_akce: form _du_akce [12,4,,],
+  use info: form right [12,4,,],
+  # ------------------------------------------------------------------------------------------------ _du_akce
+  form _du_akce [,,200,50] {
+    proc fill(x) { head.set(conc("<div class='CSection CMenu'><h3 class='CTitle'>",x,"</h3></div>"))}
+    proc append(x) { info.get; info.set(conc(info.get,'<br>',x)) | info.set(x) }
+    // hlavička
+    label head [0,0,675,50]  { title:'' }
+    // seznam
+    view a: table ms_druhakce
+    view d: table du_akce {join_type:'LEFT', join:'USING(id_duakce)'}
+    browse akce [0,50,200,447] {type:'smart', rows:22, qry_rows:1, optimize:°{qry:'noseek'}
+      show id_akce {data:a.id_akce }
+      show [,,15,] {title:'tab', data:a.source, format:'q*s' }
+      show [,,40,] {title:'id_akce', data:a.id_akce, format:'rq=s' }
+      show [,,100,] {title:'název', data:a.nazev,format:'q*s'}
+      show [,,30,] {title:'název', expr:"YEAR(a.datum_od)",format:'q*s'}
+      show [,,30,] {title:'id_duakce', data:d.id_duakce, format:'rq=s-'}
+      show [,,70,] {title:'typ', data:d.typ, format:'rq*s'}
+    }
+    label info [330,50,345,444]
+  }
+  # ------------------------------------------------------------------------------------------------ _du_pary
+  form _du_pary [,,200,50] {
+    proc fill(x) { head.set(conc("<div class='CSection CMenu'><h3 class='CTitle'>",x,"</h3></div>"))}
+    proc append(x) { info.get; info.set(conc(info.get,'<br>',x)) | info.set(x) }
+    // hlavička
+    label head [0,0,675,50]  { title:'' }
+    // seznam
+    view p: table ms_pary
+    view d: table du_pary {join_type:'LEFT', join:'USING(id_dupary)'}
+    browse pary [0,50,200,447] {type:'smart', rows:22, qry_rows:1, optimize:°{qry:'noseek'}
+      show id_pary {data:p.id_pary }
+      show [,,15,] {title:'tab', data:p.source, format:'q*s' }
+      show [,,40,] {title:'id_pary', data:p.id_pary, format:'rq=s' }
+      show [,,130,] {title:'jméno', expr:"CONCAT(p.jmeno,' ',p.jmeno_m,' a ',p.jmeno_z)",format:'q*s+'}
+      show [,,30,] {title:'id_dupary', data:d.id_dupary, format:'rq=s'}
+      show [,,70,] {title:'typ', data:d.typ, format:'rq*s'}
+    }
+    label info [330,50,345,444]
+  }
+  # ------------------------------------------------------------------------------------------------ _zname
+  form _zname [,,200,50] {
+    proc fill(x) {
+      head.set(conc("<div class='CSection CMenu'><h3 class='CTitle'>",x,"</h3></div>"))
+    }
+    // hlavička
+    label head [0,0,675,50]  { title:'' }
+    label [0,40,675,465] { css:'ae_work'}
+    field vzor [8,50,500,] { format:'t' }
+    button hledej [520,50,,] { title:'Hledej'
+      proc onclick() {
+        { vzor.get;
+          [ lide.browse_load(conc("CONCAT(IFNULL(umi,''),' ',info) LIKE '%",vzor.get,"%'"))
+          | form.init ]
+        | lide.browse_load(1) };
+        lide.raise('onrowclick')
+    }}
+    // seznam
+    view o: table osoba // to je opravdu pohled
+    view ov: table atributy {join_type:'LEFT', join:'USING(id_osoba)'}
+    browse lide [8,80,200,447] {rows:20, qry_rows:2  //, optimize:°{qry:'noseek'}
+      show id_osoba {data:o.id_osoba }
+      show ov_osoba {data:ov.id_osoba }
+      show [,,20,] {title:'tabulka', data:o.tab, format:'sq*' }
+      show [,,170,] {title:'jméno', expr:"CONCAT(o.prijmeni,' ',o.jmeno)",format:'q*s+'}
+      proc onrowclick() {
+        echo('id_osoba=',id_osoba.get);
+        form.key(id_osoba.get);
+        form.load;
+      }
+    }
+    // účastník
+#     field v_osoba {data:v.id_osoba }
+    label             [240,80,100,] {title:'Příjmení '}
+    field prijmeni    [240,95,100,] {data:o.prijmeni, format:'d' }
+    label             [352,80,100,] {title:'Jméno '}
+    field jmeno       [352,95,100,] {data:o.jmeno, format:'d' }
+    label             [240,113,100,] {title:'Ulice'}
+    field adresa      [240,128,126,] {data:o.ulice, format:'d' }
+    label             [376,113,36,] {title:'Psč'}
+    field psc         [376,128,36,] {data:o.psc, format:'d' }
+    label             [423,113,100,] {title:'Město'}
+    field mesto       [422,128,114,] {data:o.obec, format:'d' }
+    label             [240,154,37,] {title:'Telefon'}
+    field telefon     [281,153,325,] {data:o.telefon, format:'d' }
+    label             [240,178,33,] {title:'e-mail'}
+    field email       [281,178,325,] {data:o.email, format:'d' }
+#     field v_osoba  {data:v.id_osoba }
+    field ov_osoba {data:ov.id_osoba }
+    label             [240,203,200,] {title:'znalosti, zkušenosti, vlastnosti'}
+    edit  info        [240,220,400,100] {data:o.info, format:'d' }
+    label             [240,328,200,] {title:'vztah k YMCA Setkání'}
+    edit  umi         [240,350,400,100] {data:ov.umi }
+    button uloz [240,470,,] { title:'Ulož změněnou hodnotu vztahu'
+      proc onclick() {
+        ov_osoba.get; ov.save
+      | ov_osoba.set(lide.id_osoba.get); ov_osoba.change; ov.insert
+    }}
+  }
+  table osoba { key_id:'id_osoba' // je to pohled
+    number id_osoba
+    text tab
+    text jmeno
+    text prijmeni
+    text ulice
+    text psc
+    text obec
+    text telefon
+    text email
+    text info
+  }
+  table atributy { key_id:'id_osoba' // tabulka vlastností osob
+    number id_osoba
+    text umi
+  }
+}
 # ================================================================================================== SKUPINKY
 var rok: number
 proc onstart() { rok.set(2009) }
@@ -8,6 +290,7 @@ proc onstart() { rok.set(2009) }
 panel Skupinky [,,,543] {type:'right', title:'Skupinky'
   menu {type:'left',
     menu {title:'Volba roku',type:'group'
+      item {title:'2011',par:°{rok:'2011'} }
       item {title:'2010',par:°{rok:'2010'} }
       item {title:'2009',par:°{rok:'2009'} }
       item {title:'2008',par:°{rok:'2008'} }
@@ -64,5 +347,6 @@ form right [,,640,50] {
     [ x; head.set(conc("<div class='CSection CMenu'><h3 class='CTitle'>",x,"</h3></div>")) ];
     [ y; note.set(y) ]
   }
+  proc append(x) { note.get; note.set(conc(note.get,'<br>',x)) | note.set(x) }
 }
 

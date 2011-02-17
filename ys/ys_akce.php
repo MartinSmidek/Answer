@@ -45,7 +45,8 @@ function akce_foxpro_data() {  #trace('');
 #   $typ = jeden | par
 #   $fld = seznam položek s prefixem
 #   $cnd = podmínka
-function akce_sestava($akce,$par) {
+function akce_sestava($akce,$par,$title,$vypis,$export=false) {
+  $result= (object)array();
   $typ= $par->typ;
   $tit= $par->tit;
   $fld= $par->fld;
@@ -143,26 +144,35 @@ function akce_sestava($akce,$par) {
   // zobrazení tabulkou
   $tab= '';
   $thd= '';
-  // titulky
-  foreach ($tits as $id) {
-    $ths.= "<th>$id</th>";
+  if ( $export ) {
+    $result->tits= $tits;
+    $result->clmn= $clmn;
   }
-  foreach ($clmn as $i=>$c) {
-    $tab.= "<tr>";
-    foreach ($c as $id=>$val) {
-      $tab.= "<td>$val</td>";
+  else {
+    // titulky
+    foreach ($tits as $idw) {
+      list($id)= explode(':',$idw);
+      $ths.= "<th>$id</th>";
     }
-    $tab.= "</tr>";
+    foreach ($clmn as $i=>$c) {
+      $tab.= "<tr>";
+      foreach ($c as $id=>$val) {
+        $tab.= "<td style='text-align:left'>$val</td>";
+      }
+      $tab.= "</tr>";
+    }
+    $result->html= "<table class='stat'><tr>$ths</tr>$tab</table>";
+    $result->href= $href;
   }
-  $html.= "<table class='stat'><tr>$ths</tr>$tab</table>";
-  return (object)array(html=>$html,href=>$href);
+  return $result;
 }
 # ================================================================================================== GOOGLE
 # -------------------------------------------------------------------------------------------------- akce_roku_id
 # definuj klíč dané akce jeko klíč akce z aplikace MS.EXE
-function akce_roku_id($akce,$rok,$id_akce) {
-  if ( $id_akce ) {
-    mysql_qry("UPDATE ms_druhakce SET ciselnik_akce=$akce,ciselnik_rok=$rok WHERE id_akce=$id_akce");
+function akce_roku_id($kod,$rok,$source,$akce) {
+  if ( $akce ) {
+    mysql_qry("INSERT join_akce (source,akce,g_kod,g_rok) VALUES ('$source',$akce,$kod,$rok)");
+    mysql_qry("UPDATE ms_druhakce SET ciselnik_akce=$kod,ciselnik_rok=$rok WHERE source='$source' AND akce=$akce");
   }
   return 1;
 }
@@ -176,20 +186,26 @@ function akce_roku_update($rok) {  trace();
     list($max_A,$max_n)= $cells['dim'];
                                                 debug($cells,"akce $rok");
     // zrušení daného roku v GAKCE
-    $qry= "DELETE FROM gakce WHERE grok=$rok";
+    $qry= "DELETE FROM g_akce WHERE g_rok=$rok";
     $res= mysql_qry($qry);
     // výběr a-záznamů a zápis do GAKCE
     $values= ''; $del= '';
     for ($i= 1; $i<$max_n; $i++) {
       if ( $cells['A'][$i]=='a' ) {
         $n++;
-        $akce= $cells['B'][$i];
+        $kod= $cells['B'][$i];
+        $id= 1000*rok+$kod;
         $nazev= mysql_real_escape_string($cells['C'][$i]);
-        $values.= "$del($rok,$akce,\"$nazev\")";
+        $od= sql_date($cells['D'][$i],1);
+        $do= sql_date($cells['E'][$i],1);
+        $uc= $cells['F'][$i];
+        $typ= $cells['G'][$i];
+        $kap= $cells['H'][$i];
+        $values.= "$del($id,$rok,$kod,\"$nazev\",'$od','$do','$uc','$typ','$kap')";
         $del= ',';
       }
     }
-    $qry= "INSERT INTO gakce (grok,gakce,gnazev) VALUES $values";
+    $qry= "INSERT INTO g_akce (id_gakce,g_rok,g_kod,g_nazev,g_od,g_do,g_ucast,g_typ,g_kap) VALUES $values";
     $res= mysql_qry($qry);
   }
   // konec
@@ -317,6 +333,65 @@ function akce_auto_ucast($id_akce) {  #trace();
   }
 //                                                                 debug($pary,$id_akce);
   return $pary;
+}
+# ================================================================================================== VYPISY
+# obsluha různých forem výpisů
+# -------------------------------------------------------------------------------------------------- akce_vyp_excel
+# přečtení mailu
+function akce_vyp_excel($akce,$par,$title,$vypis) {  trace();
+  $result= (object)array('_error'=>0);
+  $html= '';
+  // získání dat
+  $tab= akce_sestava($akce,$par,$title,$vypis,true);
+  // vlastní export do Excelu
+  $name= cz2ascii("vypis_").date("Ymd_Hi");
+  $xls= <<<__XLS
+    |open $name
+    |sheet vypis;;L;page
+    |A1 $title ::bold size=14 |A2 $vypis ::bold size=12
+__XLS;
+  // titulky
+  $n= 4;
+  $lc= 0;
+  $clmns= $del= '';
+  foreach ($tab->tits as $idw) {
+    $A= Excel5_n2col($lc);
+    list($id,$w)= explode(':',$idw);
+    $xls.= "|$A$n $id";
+    if ( $w ) {
+      $clmns.= "$del$A=$w";
+      $del= ',';
+    }
+    $lc++;
+  }
+  if ( $clmns ) $xls.= "\n|columns $clmns ";
+  $xls.= "\n|A$n:$A$n bcolor=ffaaaaaa \n";
+  $n= 5;
+  // datové řádky
+  foreach ($tab->clmn as $i=>$c) {
+    $lc= 0;
+    foreach ($c as $id=>$val) {
+      $A= Excel5_n2col($lc);
+      $xls.= "|$A$n $val";
+      $lc++;
+    }
+    $n++;
+  }
+  $xls.= <<<__XLS
+    |close
+__XLS;
+  // výstup
+                                                                display($xls);
+  $inf= Excel5($xls,1);
+  if ( $inf ) {
+    $html= " se nepodařilo vygenerovat - viz začátek chybové hlášky";
+    fce_error($inf);
+  }
+  else {
+    $html= " Výpis byl vygenerován ve formátu <a href='docs/$name.xls' target='xls'>Excel</a>.";
+  }
+  $result->html= $html;
+  return $result;
 }
 # ================================================================================================== EMAILY
 # jednotlivé maily posílané v sadách příložitostně skupinám

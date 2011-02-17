@@ -3,7 +3,7 @@
 
 var the_akce: number
 var the_rok: number
-var the_title: number
+var the_title: text
 
 proc onstart() {
   the_akce.set(get_cookie("ys_akce_id",0));
@@ -13,23 +13,31 @@ proc onstart() {
   Vyber.info.fill(the_title.get,'');
   not(the_akce.get);
   // v cookie není akce
-  Vyber.focus;
-  Vyber.m.rok.letos.click
+  #Vyber.focus; až onfirstfocus
+/*
 | // v cookie je akce
-  Vyber.m.rok.part('item',0,'title',the_rok.get).click;
+  #Vyber.m.rok.part('item',0,'title',the_rok.get).click; -- to nelze
   the_akce.set(get_cookie("ys_akce_id",0));
   Ucastnici.focus;
   Ucastnici.reload(0);
   Vyber.info.seznam.browse_seek(conc("id_akce=",the_akce.get));
   Vyber.info.seznam.browse_focus;
+*/
 }
 # ================================================================================================== VÝBĚR
 panel Vyber {type:'right', title:'Výběr akce'
+  proc onfirstfocus() {
+    echo('výběr');
+    the_akce.get;
+    m.rok.part('item',0,'title',the_rok.get).click;
+  | m.rok.loni.click
+  }
   use info: form _akce [12,4,,],
   menu m {type:'left'
     menu rok {title:'Volba roku',type:'group'
-      item letos {title:'2010',par:°{rok:'2010'} }
-      item loni {title:'2009',par:°{rok:'2009'} }
+      item letos {title:'2011',par:°{rok:'2011'} }
+      item loni  {title:'2010',par:°{rok:'2010'} }
+      item       {title:'2009',par:°{rok:'2009'} }
 #       item {title:'2008',par:°{rok:'2008'} }
 #       item {title:'2007',par:°{rok:'2007'} }
       proc onclick (i) {
@@ -39,7 +47,7 @@ panel Vyber {type:'right', title:'Výběr akce'
     }
   }
   proc akce_roku(rok){
-    info.seznam.browse_load(conc('grok=',rok));
+    info.seznam.browse_load(conc('g_rok=',rok));
     info.fill('Vyber akci ...','');
     set_cookie('ys_akce_rok',rok);
   }
@@ -54,28 +62,37 @@ panel Vyber {type:'right', title:'Výběr akce'
         seznam.selected('clear');
         { and(the_akce.get,not(eq(the_akce.get,'0')));
           seznam.selected('set',the_akce.get);
-          the_title.set(conc('Akce ',seznam.akce.get,' roku ',seznam.rok.get,' - ',seznam.nazev.get));
+          the_title.set(conc('Akce ',seznam.kod.get,' roku ',seznam.rok.get,' - ',seznam.nazev.get));
           Vyber.info.fill(the_title.get,'');
           set_cookie("ys_akce_title",the_title.get);
           Ucastnici.u.fill(the_title.get);
           Ucastnici.reload(0)
-        | the_akce.set(DefIdAkce.modal(500,200));
-          ask('akce_roku_id',seznam.akce.get,the_rok.get,the_akce.get);
+        | DefIdAkce.modal(500,200);
+          ask('akce_roku_id',seznam.kod.get,the_rok.get,DefIdAkce.f.lm.get,DefIdAkce.f.id.get);
+          seznam.browse_row
         }
     }}
-    view ga:  table gakce
-    view msa:  table ms_druhakce {join_type:'LEFT',join:'ON ciselnik_akce=ga.gakce AND ciselnik_rok=ga.grok'}
+    view ga: table g_akce
+    view ja: table join_akce {join_type:'LEFT',join:'USING(g_rok,g_kod)'}
+    view ma: table ms_druhakce {join_type:'LEFT',join:'ON ciselnik_akce=ga.g_kod AND ciselnik_rok=ga.g_rok'}
     browse seznam [0,50,200,500] { type:'smart', rows:30, qry_rows:1, buf_rows:120,
       show id_gakce {data:ga.id_gakce}
-      show rok {data:ga.grok}
-      show id_akce [,,30,] {title:'klíč', data:msa.id_akce, format:'rsq'}
-      show akce [,,30,] {title:'akce', data:ga.gakce, format:'rs+q*'}
-      show nazev [,,300,] {title:'název', data:ga.gnazev, format:'sq*'}
+      show rok {data:ga.g_rok}
+      show id_akce       {title:'klíč', data:ma.id_akce, format:'rsq'}
+      show kod   [,,30,] {title:'kód', data:ga.g_kod, format:'rs+q*'}
+      show nazev [,,300,] {title:'název', data:ga.g_nazev, format:'sq*'}
+      show       [,,80,] {title:'od', data:ga.g_od, format:'rsq*'}
+      show       [,,80,] {title:'do', data:ga.g_do, format:'rsq*'}
+#       show       [,,40,] {title:'účast', data:ga.g_ucast, format:'sq*'}
+      show       [,,15,] {title:'source', data:ja.source, format:'rsq'}
+      show       [,,30,] {title:'akce', data:ja.akce, format:'rsq'}
+      show       [,,30,] {title:'typ', data:ga.g_typ, format:'sq*'}
+      show       [,,30,] {title:'kap', data:ga.g_kap, format:'sq*'}
       proc onsubmit() { volba.onclick() }
     }
     label head [0,0,680,50] { title:'' }
     label note [550,50,480,200] { title:'' }
-    button [400,50,100,] { title:'Obnovit z intranetu', help:"obnoví akce roku z http://intranet.setkani.org"
+    button [400,10,100,] { title:'Obnovit rok z intranetu', help:"obnoví akce roku z http://intranet.setkani.org"
       # získání seznamu akcí z docs.google.com pomocí API spredsheet
       proc onclick() {
         alert('bylo obnoveno ',ask('akce_roku_update',the_rok.get),' záznamů o akcích');
@@ -91,9 +108,10 @@ panel Vyber {type:'right', title:'Výběr akce'
   panel DefIdAkce [,,220,60] {type:'popup', title:'Zapsání id_akce'
     use f: form _id_akce [12,10,,]
     form _id_akce [,,100,50] {
-      label [10,10,50,] { title:'id_akce' }
-      field id [60,10,50,] { help:'číslo akce z programu MS.EXE'}
-      button [120,10,,] { type:'submit', title:'Zapiš', proc onclick() {
+      label [10,10,50,] { title:'L|M akce' }
+      field lm [60,10,10,] { help:'L|M na rozlišení verze MS.EXE'}
+      field id [80,10,40,] { help:'číslo akce z programu MS.EXE'}
+      button [140,8,,] { type:'submit', title:'Zapiš', proc onclick() {
         panel.hide(id.get)
       } }
     }
@@ -101,6 +119,9 @@ panel Vyber {type:'right', title:'Výběr akce'
 }
 # ================================================================================================== VÝBĚR
 panel Ucastnici [,,,543] {type:'plain', title:'Účastníci akce'
+  proc onfirstfocus() {
+    echo('účastníci');
+  }
   use u: form _ucast [4,0,,],
 #   proc onfocus() {
 #     u.head.set(Vyber.info.head.get); reload(0)
@@ -636,6 +657,7 @@ panel tisk [,,,543] {type:'right', title:'Výpisy akce', include:'onclick'}
 panel vse [,,,543] {type:'plain', title:'Všichni', include:'onclick'}
 # ================================================================================================== MAIL
 panel mail [,,,543] {type:'right', title:'Maily', skill:'yam', include:'onclick'}
+/*
 # ================================================================================================== MAPS
 map ms_akce_clen:     table _cis {where:"druh='ms_akce_clen'",     order:'poradi', key_id:'data'}
 map ms_akce_pouze:    table _cis {where:"druh='ms_akce_pouze'",    order:'poradi', key_id:'data'}
@@ -643,3 +665,4 @@ map ms_akce_funkce:   table _cis {where:"druh='ms_akce_funkce'",   order:'poradi
 map ms_akce_cirkev:   table _cis {where:"druh='ms_akce_cirkev'",   order:'poradi', key_id:'data'}
 map ms_akce_vzdelani: table _cis {where:"druh='ms_akce_vzdelani'", order:'poradi', key_id:'data'}
 map ms_akce_platba:   table _cis {where:"druh='ms_akce_platba'",   order:'poradi', key_id:'data'}
+*/

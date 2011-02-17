@@ -1,17 +1,21 @@
 <?php # (c) 2009-2010 Martin Smidek <martin@smidek.eu>
 
+  $ezer_local= preg_match('/^\w+\.ezer/',$_SERVER["SERVER_NAME"]); // identifikace ladícího serveru
+
   require_once("ezer2/server/ae_slib.php");
 
   // OBECNÉ PARAMETRY
 
   // parametry s první hodnotou pro server a druhou (pøípadnì) pro local
-  $db= array('ezer_ys','ezer_test');
+  $db= array('ezer_ys','ezer_ys');
   $dbs= array(
     array(
       'ezer_ys' =>      array(0,'localhost','gandi','r8d0st','utf8'),
+      'ezer_system' =>  array(0,'localhost','gandi','r8d0st','utf8','ezer_ys'),
       'setkani' =>      array(0,'192.168.1.146','gandi','','cp1250')),
     array(
-      'ezer_test' =>    array(0,'localhost','gandi','','utf8'),
+      'ezer_ys' =>      array(0,'localhost','gandi','','utf8'),
+      'ezer_system' =>  array(0,'localhost','gandi','','utf8','ezer_ys'),
       'setkani' =>      array(0,'localhost','gandi','','cp1250'))
   );
   // koøeny cest

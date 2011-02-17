@@ -2,7 +2,6 @@
 # (c) 2008-2010 Martin Šmídek <martin@smidek.eu>
 
 # ================================================================================================== VSICHNI
-#   use p: form _pary [4,0,,]
   use u: form _ucast [4,0,,]
   proc onstart() {
     ask('query','SET group_concat_max_len=10000');
@@ -29,8 +28,6 @@
       show [,,10,] {title:'?', data:smp.source, format:'sq*' }
       show [,,150,] {title:'jméno', expr:"CONCAT(smp.jmeno,' ',smp.jmeno_m,' a ',smp.jmeno_z)",format:'q*s+'}
       show [,,30,] {title:'n', expr:"COUNT(smk.id_pary)", format:'rs'}
-#       show [,,40,] {title:'od', expr:"MIN(IF(YEAR(sma.datum_do)=0,9999,YEAR(sma.datum_do)))", format:'rs'}
-#       show [,,40,] {title:'do', expr:"MAX(YEAR(sma.datum_od))", format:'rs'}
       proc onrowclick() {
         form.load(id_pary.get);
         akce.set(ucasti.get);
