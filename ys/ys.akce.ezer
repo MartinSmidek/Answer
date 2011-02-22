@@ -54,7 +54,7 @@ panel Vyber {type:'right', title:'Výběr akce'
   # ------------------------------------------------------------------------------------------------ _akce
   # formulář pro výběr akce pro další práci
   form _akce [,,640,50] {
-    button volba [550,10,100,16] { title:'Zapamatovat akci', style:'display:block;zIndex:2',
+    button volba [564,17,100,16] { title:'Zapamatovat akci', style:'display:block;zIndex:2',
       proc onclick() {
         the_akce.set(seznam.id_akce.get);
         set_cookie("ys_akce_id",the_akce.get);
@@ -89,10 +89,11 @@ panel Vyber {type:'right', title:'Výběr akce'
       show       [,,30,] {title:'typ', data:ga.g_typ, format:'sq*'}
       show       [,,30,] {title:'kap', data:ga.g_kap, format:'sq*'}
       proc onsubmit() { volba.onclick() }
+      proc onrowclick() { echo('id_akce=',id_akce.get);}
     }
     label head [0,0,680,50] { title:'' }
     label note [550,50,480,200] { title:'' }
-    button [400,10,100,] { title:'Obnovit rok z intranetu', help:"obnoví akce roku z http://intranet.setkani.org"
+    button [414,17,100,] { title:'Obnovit rok z intranetu', help:"obnoví akce roku z http://intranet.setkani.org"
       # získání seznamu akcí z docs.google.com pomocí API spredsheet
       proc onclick() {
         alert('bylo obnoveno ',ask('akce_roku_update',the_rok.get),' záznamů o akcích');
@@ -127,10 +128,10 @@ panel Ucastnici [,,,543] {type:'plain', title:'Účastníci akce'
 #     u.head.set(Vyber.info.head.get); reload(0)
 #   }
   proc reload(id_paru) {
-    u.b.browse_load(conc("mk.id_akce=",the_akce.get));
+  [ u.b.browse_load(conc("mk.id_akce=",the_akce.get));
     u.b.browse_focus;
     { id_paru; u.b.raise('onrowclick',id_paru)
-    | u.b.raise('onrowclick') }
+    | u.b.raise('onrowclick') } ]
   }
   var pall: object
   proc pary_add(p,i) {  // používají panely PridatJmenem a PridatAkce
@@ -150,12 +151,12 @@ panel Ucastnici [,,,543] {type:'plain', title:'Účastníci akce'
     label [0,40,820,465] { css:'ae_work'}
     label [51,48,,] {title:"<img src='img/ms1.png'>" }
     view mk:  table ms_kurs
-    view ma:  table ms_druhakce {join:'ON ma.id_akce=mk.id_akce'}
     view mp:  table ms_pary {join:'ON mp.id_pary=mk.id_pary'}
     view md:  table ms_deti {join_type:'LEFT',join:'ON md.id_pary=mp.id_pary'}
-    view mkd: table ms_kursdeti {join_type:'LEFT',join:'ON mkd.id_deti=md.id_deti AND mkd.id_akce=mk.id_akce'}
-    view mks: table ms_kurs {join_type:'LEFT',join:'ON mks.id_akce=mk.id_akce AND mks.skupina=mk.skupina'}
-    view mps: table ms_pary {join:'ON mps.id_pary=mks.id_pary'}
+    view mkd: table ms_kursdeti {join_type:'LEFT',join:'ON mkd.id_pary=mk.id_pary AND mkd.id_akce=mk.id_akce'}
+    view mks: table ms_kurs {join_type:'LEFT',join:'ON mks.id_akce=mk.id_akce AND mks.skupina=mk.skupina AND mks.skupina!=0'}
+    view mps: table ms_pary {join_type:'LEFT',join:'ON mps.id_pary=mks.id_pary'}
+    view ma:  table ms_druhakce {join:'ON ma.id_akce=mk.id_akce'}
     browse d [610,244,200,200] {type:'smart', rows:4, css_rows:'id_kursdeti,0:nic,:nakursu'
       show id_deti
       show id_kursdeti
@@ -185,16 +186,17 @@ panel Ucastnici [,,,543] {type:'plain', title:'Účastníci akce'
       proc onrowclick() {
         #echo('tab_act=',browse_active,', key=',browse_key,', jmeno=',jmeno.get,', funkce=',funkce.get);
         copy_by_name(b,form); mk.key(key_kurs.get); mp.key(key_pary.get);
-        d.browse_fill(deti.get); s.browse_fill(skup.get);
+#         d.browse_fill(deti.get);
+        s.browse_fill(skup.get);
         // obarvení tlačítka [Str.pol]
         { or(cstrava_cel.get,cstrava_pol.get); stravy.set_css('cervena','cerna')
         | stravy.set_css('cerna','cervena') };
       }
       // klíče
       show key_kurs {data:mk.id_kurs}
-      show key_akce {data:ma.id_akce}
       show key_pary {data:mp.id_pary}
       show key_skup {data:mks.id_pary}
+      show key_akce {data:ma.id_akce}
       // akce
       show dnu      {expr:"DATEDIFF(ma.datum_do,ma.datum_od)+1"}
       show datum_od {data:ma.datum_od}
@@ -234,9 +236,11 @@ panel Ucastnici [,,,543] {type:'plain', title:'Účastníci akce'
       show zpusobplat {data:mk.zpusobplat}              show datplatby  {data:mk.datplatby}
       show budova     {data:mk.budova}                  show pokoj      {data:mk.pokoj}
       show k_poznamka {data:mk.poznamka}                show pouze      {data:mk.pouze}
-      // děti - načtené a nezobrazené položky
-      show deti       {expr:
-        "GROUP_CONCAT(DISTINCT md.id_deti,'|',IF(ISNULL(mkd.id_kursdeti),0,mkd.id_kursdeti),'|',md.jmeno,'|',md.rodcislo,'|',md.rodcislo,'|',md.poznamka ORDER BY mkd.id_deti DESC SEPARATOR '|')"}
+#       // děti - načtené a nezobrazené položky
+#       show deti       {expr:
+#         "GROUP_CONCAT(DISTINCT md.id_deti,'|',IF(ISNULL(mkd.id_kursdeti),0,mkd.id_kursdeti),'|',md.jmeno,'|',md.rodcislo,'|',md.rodcislo,'|',md.poznamka ORDER BY mkd.id_deti DESC SEPARATOR '|')"}
+#       show deti       {expr:
+#         "(SELECT GROUP_CONCAT(DISTINCT md.id_deti,'|',IF(ISNULL(mkd.id_kursdeti),0,mkd.id_kursdeti),'|',md.jmeno,'|',md.rodcislo,'|',md.rodcislo,'|',md.poznamka ORDER BY mkd.id_deti DESC SEPARATOR '|') as deti FROM ms_deti AS md LEFT JOIN ms_kursdeti AS mkd ON mkd.id_deti=md.id_deti AND mkd.id_akce=190 WHERE md.id_pary=mp.id_pary)"}
     }
     label             [240,50,100,] {title:'Příjmení páru'}
     field jmeno       [240,65,100,] {data:mp.jmeno, help:'příjmení'}
@@ -394,10 +398,10 @@ panel Ucastnici [,,,543] {type:'plain', title:'Účastníci akce'
         reload(mk.key);
     } }
     // stavový řádek
-    label             [600,12,50,] {title:'pár:'}
-    field key_pary    [640,12,50,] {data:mk.id_pary}
-    label             [710,12,50,] {title:'kurs:'}
-    field key_kurs    [750,12,50,] {data:mk.id_kurs}
+    label             [622,21,31,] {title:'pár:'}
+    field key_pary    [648,18,50,] {data:mk.id_pary}
+    label             [728,21,31,] {title:'kurs:'}
+    field key_kurs    [758,18,50,] {data:mk.id_kurs}
     field key_akce                 {data:mk.id_akce}
     // počítané položky
     proc onload() {

@@ -5,7 +5,7 @@
   $app=      'ys';
   $app_name= 'Ans(w)er';
   $skin=     'default';
-//   $skin=     'ck';
+  $skin=     'ck';
 
   require_once("$app.inc");
   require_once("ezer2/server/ae_slib.php");
@@ -27,7 +27,7 @@
   $css= array(
     './ezer2/client/ezer.css.php',
     './ezer2/client/licensed/fancyupload.css',
-    './ys/ys.css.css'
+    './ys/ys.css.php'
   );
   $options= (object)array(
     'skill'      => "'y'",

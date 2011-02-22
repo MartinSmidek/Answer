@@ -9,11 +9,11 @@
   // parametry s první hodnotou pro server a druhou (pøípadnì) pro local
   $db= array('ezer_ys','ezer_ys');
   $dbs= array(
-    array(
+    array( /* ostré */
       'ezer_ys' =>      array(0,'localhost','gandi','r8d0st','utf8'),
       'ezer_system' =>  array(0,'localhost','gandi','r8d0st','utf8','ezer_ys'),
       'setkani' =>      array(0,'192.168.1.146','gandi','','cp1250')),
-    array(
+    array( /* lokální */
       'ezer_ys' =>      array(0,'localhost','gandi','','utf8'),
       'ezer_system' =>  array(0,'localhost','gandi','','utf8','ezer_ys'),
       'setkani' =>      array(0,'localhost','gandi','','cp1250'))

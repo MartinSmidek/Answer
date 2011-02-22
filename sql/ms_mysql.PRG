@@ -95,34 +95,45 @@ procedure mysql_export
   mfield_cnt = afields(marray) && Create array
   if to_create=1
     * Create text to build create table commands
-    mtext = "DROP TABLE IF EXISTS `ms_" + mdbf + "`;" + chr(10)
-    mjunk = fwrite(mimporthandle, mtext)
     klic = ''
     do case
     case mdbf == 'druhakce'
-      klic = chr(10) + "`id_akce` int(11) NOT NULL AUTO_INCREMENT,"
-      klic = klic + chr(10) + "`ciselnik_akce` smallint(6) NOT NULL,"
-      klic = klic + chr(10) + "`ciselnik_rok` smallint(6) NOT NULL,"
+      klic = chr(10) + "id_akce int(11) NOT NULL AUTO_INCREMENT,"
+      klic = klic + chr(10) + "du_akce int(11),"
+      klic = klic + chr(10) + "ciselnik_akce smallint(6) NOT NULL,"
+      klic = klic + chr(10) + "ciselnik_rok smallint(6) NOT NULL,"
+      mdbf= 'akce'
     case mdbf == 'pary'
-      klic = chr(10) + "`id_pary` int(11) NOT NULL AUTO_INCREMENT,"
+      klic = chr(10) + "id_pary int(11) NOT NULL AUTO_INCREMENT,"
+      klic = klic + chr(10) + "du_pary int(11),"
     case mdbf == 'kurs'
-      klic = chr(10) + "`id_kurs` int(11) NOT NULL AUTO_INCREMENT,"
-      klic = klic + chr(10) + "`id_pary` int(11),"
-      klic = klic + chr(10) + "`id_akce` int(11),"
+      klic = chr(10) + "id_kurs int(11) NOT NULL AUTO_INCREMENT,"
+      klic = klic + chr(10) + "du_kurs int(11),"
+      klic = klic + chr(10) + "id_pary int(11),"
+      klic = klic + chr(10) + "du_pary int(11),"
+      klic = klic + chr(10) + "id_akce int(11),"
+      klic = klic + chr(10) + "du_akce int(11),"
     case mdbf == 'deti'
-      klic = chr(10) + "`id_deti` int(11) NOT NULL AUTO_INCREMENT,"
-      klic = klic + chr(10) + "`id_pary` int(11),"
+      klic = chr(10) + "id_deti int(11) NOT NULL AUTO_INCREMENT,"
+      klic = klic + chr(10) + "du_deti int(11),"
+      klic = klic + chr(10) + "id_pary int(11),"
+      klic = klic + chr(10) + "du_pary int(11),"
     case mdbf == 'kursdeti'
-      klic = chr(10) + "`id_kursdeti` int(11) NOT NULL AUTO_INCREMENT,"
-      klic = klic + chr(10) + "`id_akce` int(11),"
-      klic = klic + chr(10) + "`id_deti` int(11),"
-      klic = klic + chr(10) + "`id_pary` int(11),"
+      klic = chr(10) + "id_kursdeti int(11) NOT NULL AUTO_INCREMENT,"
+      klic = klic + chr(10) + "du_kursdeti int(11),"
+      klic = klic + chr(10) + "id_akce int(11),"
+      klic = klic + chr(10) + "du_akce int(11),"
+      klic = klic + chr(10) + "id_deti int(11),"
+      klic = klic + chr(10) + "du_deti int(11),"
+      klic = klic + chr(10) + "id_pary int(11),"
     endcase
-    mtext = "CREATE TABLE IF NOT EXISTS `ms_" + mdbf + "`(" + klic + chr(10) + "`source` char(1) NOT NULL," + chr(10)
+    mtext = "DROP TABLE IF EXISTS ms_" + mdbf + ";" + chr(10)
+    mjunk = fwrite(mimporthandle, mtext)
+    mtext = "CREATE TABLE IF NOT EXISTS ms_" + mdbf + "(" + klic + chr(10) + "source char(1) NOT NULL," + chr(10)
     mjunk = fwrite(mimporthandle, mtext)
     for nCount = 1 to mfield_cnt
       mtext = ""
-      mtext = "`" + lower(marray(nCount,1)) + "` " && field name
+      mtext = "" + lower(marray(nCount,1)) + " " && field name
       f_id= mdbf + "." + lower(marray(nCount,1))
       if (f_id=='pary.rodcislo_m') or (f_id=='pary.rodcislo_z') or (f_id=='deti.rodcislo')
         mtext = mtext + "varchar(10) "
@@ -170,19 +181,25 @@ procedure mysql_export
   * ------------------------------------------------------------------------------------------------ KEYS
     mtext = ''
     do case
-    case mdbf == 'druhakce'
-      mtext = "," + chr(10) + "PRIMARY KEY (`id_akce`)" + chr(10)
+*     case mdbf == 'druhakce'
+    case mdbf == 'akce'
+      mtext = "," + chr(10) + "PRIMARY KEY (id_akce)" + chr(10)
+      mtext = mtext + "," + chr(10) + "INDEX (du_akce)" + chr(10)
     case mdbf == 'pary'
-      mtext = "," + chr(10) + "PRIMARY KEY (`id_" + mdbf + "`)" + chr(10)
+      mtext = "," + chr(10) + "PRIMARY KEY (id_" + mdbf + ")" + chr(10)
+      mtext = mtext + "," + chr(10) + "INDEX (du_" + mdbf + ")" + chr(10)
     case mdbf == 'kurs'
-      mtext = "," + chr(10) + "PRIMARY KEY (`id_" + mdbf + "`)" + chr(10)
+      mtext = "," + chr(10) + "PRIMARY KEY (id_" + mdbf + ")" + chr(10)
+      mtext = mtext + "," + chr(10) + "INDEX (du_" + mdbf + ")" + chr(10)
     case mdbf == 'deti'
-      mtext = "," + chr(10) + "PRIMARY KEY (`id_" + mdbf + "`)" + chr(10)
+      mtext = "," + chr(10) + "PRIMARY KEY (id_" + mdbf + ")" + chr(10)
+      mtext = mtext + "," + chr(10) + "INDEX (du_" + mdbf + ")" + chr(10)
     case mdbf == 'kursdeti'
-      mtext = "," + chr(10) + "PRIMARY KEY (`id_" + mdbf + "`)" + chr(10)
+      mtext = "," + chr(10) + "PRIMARY KEY (id_" + mdbf + ")" + chr(10)
+      mtext = mtext + "," + chr(10) + "INDEX (du_" + mdbf + ")" + chr(10)
     endcase
 
-    mtext = mtext + ")TYPE=MyISAM DEFAULT CHARSET=utf8 COLLATE utf8_czech_ci COMMENT='" + mdbf + "';" + chr(10) + chr(10)
+    mtext = mtext + ") TYPE=MyISAM DEFAULT CHARSET=utf8 COLLATE utf8_czech_ci COMMENT='" + mdbf + "';" + chr(10) + chr(10)
     mjunk = fwrite(mimporthandle, mtext)
   endif
   
@@ -193,18 +210,22 @@ procedure mysql_export
       skip 
     endif  
     *beginning of line
+    if mdbf == 'druhakce'
+      mdbf= 'akce'
+    endif
     klice = ''
     do case
-    case mdbf == 'druhakce'
-      klice = "DEFAULT,0,0, "
-    case mdbf == 'pary'
-      klice = "DEFAULT, "
-    case mdbf == 'kurs'
-      klice = "DEFAULT,0,0, "
-    case mdbf == 'deti'
-      klice = "DEFAULT,0, "
-    case mdbf == 'kursdeti'
+*     case mdbf == 'druhakce'
+    case mdbf == 'akce'
       klice = "DEFAULT,0,0,0, "
+    case mdbf == 'pary'
+      klice = "DEFAULT,0, "
+    case mdbf == 'kurs'
+      klice = "DEFAULT,0,0,0,0,0, "
+    case mdbf == 'deti'
+      klice = "DEFAULT,0,0,0, "
+    case mdbf == 'kursdeti'
+      klice = "DEFAULT,0,0,0,0,0,0, "
     endcase
     mtext = "INSERT INTO ms_" + mdbf + " VALUES (" + klice + "'" + source + "',"
 
@@ -224,7 +245,7 @@ procedure mysql_export
         mtext = mtext + "'" + alltrim(str(&marray(nCount,1))) + iif(source=='L','0','1') + "'"
       case (f_id=='pary.cirkev_m') or (f_id=='pary.cirkev_z')
         * církve
-        *   SELECT count(*),left(group_concat(distinct cirkev_m),50),ccirkev_m FROM `ms_pary`
+        *   SELECT count(*),left(group_concat(distinct cirkev_m),50),ccirkev_m FROM ms_pary
         *   WHERE source='L' GROUP BY ccirkev_m ORDER BY cirkev_m
         cc= u(&marray(nCount+2,1))
         c= 0

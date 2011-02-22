@@ -1,19 +1,33 @@
 // Systém FiS - panel osobního nastavení
 // (c) 2010 Martin Šmídek <martin@smidek.eu>
 
-menu m {type:'left', active:m.g.i
+var the_user: number
+var last_item: object
+
+use rp: form right [12,4,,]
+use ch: form _chng [12,70,,]
+use msg: form _msg [12,70,,]
+
+proc onfirstfocus () {
+  echo('ONFIRSTFOCUS'); the_user.set(sys('user','id_user')); m.g.i.click; }
+proc onstart() {
+  echo('ONSTART'); the_user.set(sys('user','id_user'));
+  has_skill('a'); rp.id_user.key(the_user.get); }
+
+menu m {type:'left',
   menu g { title:"Přehled osobních nastavení", type:'group'
     item i { title:"osobní záznam"              ,par:°{typ:'oso'} }
-    item   { title:"a: zobrazení funkce sys"    ,par:°{typ:'sys'}, skill:'a' }
-    item   { title:"a: zobrazení Ezer.options"  ,par:°{typ:'opt'}, skill:'a' }
-    item   { title:"a: zobrazení _SESSION"      ,par:°{typ:'ses'}, skill:'a' }
-    item   { title:"a: zobrazení USER"          ,par:°{typ:'use'}, skill:'a' }
-    item   { title:"a: zobrazení EZER"          ,par:°{typ:'eze'}, skill:'a' }
+    item   { title:"m: zobrazení funkce sys"    ,par:°{typ:'sys'}, skill:'m' }
+    item   { title:"m: zobrazení Ezer.options"  ,par:°{typ:'opt'}, skill:'m' }
+    item   { title:"m: zobrazení _SESSION"      ,par:°{typ:'ses'}, skill:'m' }
+    item   { title:"m: zobrazení USER"          ,par:°{typ:'use'}, skill:'m' }
+    item   { title:"m: zobrazení EZER"          ,par:°{typ:'eze'}, skill:'m' }
     proc onclick(i) {
+      last_item.set(i);
       rp.fill(conc(i.owner.title,' - ',i.title),' ');
       ch.get.display(0); msg.get.display(1);
       switch(i.par.typ,
-      'oso',{msg.txt.set(ask('fis_user_record'))},
+      'oso',{msg.txt.set(ask('fis_user_record',the_user.get))},
       'sys',{msg.txt.set(debug(sys))},
       'opt',{msg.txt.set(debug(javascript('Ezer.options')))},
       'use',{msg.txt.set(ask('sys_user'))},
@@ -22,6 +36,7 @@ menu m {type:'left', active:m.g.i
   }
   menu {title:"Změna osobního nastavení", type:'group', _sys:'jm'
     item { title:"změna textu 'vyřizuje'"     ,par:°{typ:'opt',fld:'vyrizuje'} }
+    item { title:"změna textu 'potvrzuje'"    ,par:°{typ:'opt',fld:'potvrzuje'} }
     item { title:"m: změna options 'to_trace'",par:°{typ:'oop',fld:'to_trace'}, skill:'m' }
     item { title:"změna stylu zobrazení"      ,par:°{typ:'opt',fld:'css'} }
     item { title:"změna hesla"                ,par:°{typ:'pas'} }
@@ -29,15 +44,12 @@ menu m {type:'left', active:m.g.i
     item { title:"m: změna položky 'state'"   ,par:°{typ:'fld',fld:'state'}, skill:'m' }
   }
   proc onclick (i) {
+    last_item.set(i);
     ch.get.display(1); msg.get.display(0);
     rp.fill(conc(i.owner.title,' - ',i.title),' ');
     ch._load(i,i.par);
   }
 }
-proc onfocus () { m.g.i.click }
-use rp: form right [12,4,,]
-use ch: form _chng [12,70,,]
-use msg: form _msg [12,70,,]
 # -------------------------------------------------------------------------------------------------- _msg
 # formulář pro zprávu
 form _msg [,,700,500] {
@@ -61,13 +73,18 @@ form _chng [,,700,120] { style:'z-index:2'
   proc _form_state(on,off) { form.enable(1,on); form.enable(0,off); }
   proc _form_show(on,off) { form.display(1,on); form.display(0,off); }
   proc _init() { _form_state('bn','bc'); new.init }
-  proc _load(i,par) { the_itm.set(i); _init;
+  proc _load(i,par) {
+    the_itm.set(i); _init;
     the_par.set(par);
     switch(par.typ,
-    'fld',{ _form_show('o','p'); old.set(sys('user',par.fld)) },
-    'opt',{ _form_show('o','p'); old.set(sys('user','options',par.fld)) },
-    'oop',{ _form_show('o','p'); old.set(sys('user','options','options',par.fld)) },
+    'fld',{ _form_show('o','p'); old.set(ask('fis_user_get',the_user.get,par.typ,par.fld)) },
+    'opt',{ _form_show('o','p'); old.set(ask('fis_user_get',the_user.get,par.typ,par.fld)) },
+    'oop',{ _form_show('o','p'); old.set(ask('fis_user_get',the_user.get,par.typ,par.fld)) },
     'pas',{ _form_show('p','o') },
+#     'fld',{ _form_show('o','p'); old.set(sys('user',par.fld)) },
+#     'opt',{ _form_show('o','p'); old.set(sys('user','options',par.fld)) },
+#     'oop',{ _form_show('o','p'); old.set(sys('user','options','options',par.fld)) },
+#     'pas',{ _form_show('p','o') },
     {stop}) }
   # tlačítka
   proc _init() { _form_state('bn','bc'); form.init }
@@ -77,10 +94,10 @@ form _chng [,,700,120] { style:'z-index:2'
       var t: text var f: text
       t.set(the_par.get('typ')); f.set(the_par.get('fld'));
       switch(t,
-      'fld',{ _form_show('o','p'); rp.fill('',ask('fis_user_change',t,f,new.get)); new.plain },
-      'opt',{ _form_show('o','p'); rp.fill('',ask('fis_user_change',t,f,new.get)); new.plain },
-      'oop',{ _form_show('o','p'); rp.fill('',ask('fis_user_change',t,f,new.get)); new.plain },
-      'pas',{ _form_show('p','o'); rp.fill('',ask('fis_user_change',t,'',nps.get,ops.get,rep.get));
+      'fld',{ _form_show('o','p'); rp.fill('',ask('sys_user_change',the_user.get,t,f,new.get)); new.plain },
+      'opt',{ _form_show('o','p'); rp.fill('',ask('sys_user_change',the_user.get,t,f,new.get)); new.plain },
+      'oop',{ _form_show('o','p'); rp.fill('',ask('sys_user_change',the_user.get,t,f,new.get)); new.plain },
+      'pas',{ _form_show('p','o'); rp.fill('',ask('sys_user_change',the_user.get,t,'',nps.get,ops.get,rep.get));
               _init });
   } }
   button    [110,70,100,16] { tag:'bc', title:' Zpět ',
@@ -91,6 +108,13 @@ form _chng [,,700,120] { style:'z-index:2'
 # formulář pro levostranné menu s postupným zápisem
 form right [,,750,50] {
   label head [0,0,690,50]  { title:' ' }
+  select id_user [584,19,100,20] { type:'map', options:user.surname, format:'xt', skill:'a|a'
+    help:'výběr uživatele'
+    proc onchange () {
+      echo('vybráno:',id_user.get,',',id_user.key);
+      the_user.set(id_user.key);
+      last_item.click
+  } }
   label note [0,170,690,550] { title:' ' }
   proc fill(h,n) {
     [ h; head.set(conc("<div class='CSection CMenu'><h3 class='CTitle'>",h,"</h3></div>")) ];
@@ -101,3 +125,4 @@ form right [,,750,50] {
   }
 }
 
+map user:  table _user { where:'1', order:'surname', key_id:'id_user', db:'ezer_system'}

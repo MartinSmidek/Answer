@@ -14,10 +14,11 @@ kEzer-ys2
 	-GData
 		_\ZendGdata-1.10.4\demos\Zend\Gdata\Docs.php
 	+konverze
-		sql\backup_setkani.bat
-		sql\ms_mysql.PRG
+		sql\backup_ys_setkani.bat
 		sql\sql\indexy.sql
-	-ezer2
+		sql\ms_mysql.PRG
+		sql\mysql_all.bat
+	+ezer2
 		+libr
 			ezer2\ezer2.help.ezer
 			ezer2\ezer2.syst.ezer
@@ -32,7 +33,7 @@ kEzer-ys2
 			ezer2\client\licensed\fancyupload.css
 			ezer2\client\licensed\fancyupload.js
 			ezer2\client\lib.js
-		+client f
+		-client f
 			ezer2\client\appf.css
 			dbg.html
 			ezer2\client\dbgf.html
@@ -50,7 +51,7 @@ kEzer-ys2
 			ezer2\server\reference.php
 			ezer2\server\session.php
 			ezer2\server\sys_doc.php
-		+wiki
+		-wiki
 			ezer2\wiki\guide.wiki
 			ezer2\wiki\meta.wiki
 			ezer2\wiki\todo.wiki
@@ -104,31 +105,41 @@ kEzer-ys2
 		test\test.ysp.ezer
 		test\test_fce.php
 	+ys
-		ys\$.ezer
-		ys\ys.akce.ezer
-		ys\ys.akce.mail.ezer
-		ys\ys.akce.tisk.ezer
-		ys\ys.akce.vse.ezer
-		ys\ys.css.css
+		+$
+			ys\$.ezer
+			skins\colors.php
+			ys\ys.css.css
+			ys\ys.css.php
+			ys.inc
+			ys.php
+			ys\ys_fce.js
+			ys\ys_fce.php
+		-akce
+			ys\ys.akce.ezer
+			ys\ys.akce.mail.ezer
+			ys\ys.akce.tisk.ezer
+			ys\ys.akce.vse.ezer
+			ys\ys_akce.php
+		-ds
+			ys\ys.ds.ezer
+			ys\ys.ds.kl.ezer
+			ys\ys.ds.tab.ezer
+		-eko
+			ys\ys.eko.ezer
+			ys\ys_ucet.php
+		-lide
+			ys\ys.info.ezer
+			ys\ys.lide.ezer
+			ys\ys_lide.php
+		-pokladna
+			ys\ys.pok.den.ezer
+			ys\ys.pok.ezer
+			ys\ys.pok.nas.ezer
+		+syst
+			ys\ys.syst.ezer
+			ys\ys.syst.oso.ezer
 		ys\ys.doc.ezer
-		ys\ys.ds.ezer
-		ys\ys.ds.kl.ezer
-		ys\ys.ds.tab.ezer
-		ys\ys.eko.ezer
-		ys.inc
-		ys\ys.info.ezer
-		ys\ys.lide.ezer
-		ys.php
-		ys\ys.pok.den.ezer
-		ys\ys.pok.ezer
-		ys\ys.pok.nas.ezer
-		ys\ys.syst.ezer
-		ys\ys_akce.php
-		ys\ys_fce.js
-		ys\ys_fce.php
-		ys\ys_lide.php
-		ys\ys_ucet.php
-	+ds
+	-ds
 		ds\ds.css.css
 		ds\ds.dum.ezer
 		ds\ds.ezer
@@ -184,9 +195,19 @@ kEzer-ys2
 28=ys\ys.akce.ezer
 29=ys\ys.akce.tisk.ezer
 30=ds.inc
+31=ys\ys.css.css
+32=ezer2\client\ezer.css.php
+33=ys\ys.css.php
+34=skins\colors.php
+35=ys\ys.syst.oso.ezer
+36=ezer2\ezer2_fce.php
+37=ezer2\ezer2.syst.ezer
+38=ys\ys.akce.mail.ezer
+39=sql\backup_ys_setkani.bat
+40=sql\mysql_all.bat
 [Selected Project Files]
 Main=
-Selected=ys\ys_akce.php
+Selected=sql\mysql_all.bat
 [ezer2\server\comp2def.php]
 TopLine=3
 Caret=1,15
@@ -221,20 +242,22 @@ Caret=26,352
 Mark1=10,34
 Mark2=99,46
 [ezer2\client\app.js]
-TopLine=378
-Caret=93,431
-Mark1=88,363
+TopLine=1
+Caret=38,24
+BookMark1=1,384
+Mark1=88,364
 [ezer2\client\ezer_fdom1.js]
 TopLine=38
 Caret=6,67
 [ezer2\client\ezer.js]
-TopLine=984
-Caret=103,1058
+TopLine=909
+Caret=75,925
 BookMark1=31,320
-BookMark3=25,4864
-Mark1=31,4484
+BookMark2=1,5008
+BookMark3=25,4868
+Mark1=31,4488
 Mark2=61,408
-Mark3=14,1070
+Mark3=14,1074
 [ezer2\client\ezer_fdom2.js]
 TopLine=214
 Caret=29,244
@@ -250,16 +273,16 @@ Caret=85,60
 BookMark1=19,252
 [ys.php]
 TopLine=1
-Caret=99,32
+Caret=55,14
 [ys.inc]
 TopLine=1
-Caret=23,17
+Caret=41,5
 [ys\$.ezer]
-TopLine=201
-Caret=31,243
+TopLine=1
+Caret=11,21
 [ezer2\comp.php]
-TopLine=251
-Caret=1,284
+TopLine=1
+Caret=66,14
 Mark1=3,72
 [ys\ys.eko.ezer]
 TopLine=338
@@ -277,8 +300,8 @@ Caret=28,12
 TopLine=1
 Caret=46,14
 [ys\ys.akce.vse.ezer]
-TopLine=32
-Caret=1,106
+TopLine=40
+Caret=25,62
 [ys\ys_lide.php]
 TopLine=127
 Caret=101,157
@@ -291,7 +314,7 @@ TopLine=1
 Caret=9,34
 [sql\ms_mysql.PRG]
 TopLine=1
-Caret=1,1
+Caret=33,1
 [ezer2\server\sys_doc.php]
 TopLine=298
 Caret=8,331
@@ -303,20 +326,50 @@ Mark1=65,337
 [ys\ys_akce.php]
 TopLine=144
 Caret=43,151
+BookMark1=15,394
+BookMark2=1,48
 Mark1=41,791
 Mark2=12,735
 Mark3=91,470
 Mark4=26,664
 Mark5=22,577
-BookMark1=15,394
-BookMark2=1,48
 Mark6=29,144
 [ys\ys.akce.ezer]
-TopLine=1
-Caret=20,65
+TopLine=625
+Caret=1,659
 [ys\ys.akce.tisk.ezer]
-TopLine=68
+TopLine=38
 Caret=69,38
 [ds.inc]
-TopLine=1
+TopLine=3
 Caret=11,5
+[ys\ys.css.css]
+TopLine=1
+Caret=1,45
+[ezer2\client\ezer.css.php]
+TopLine=1
+Caret=76,22
+[ys\ys.css.php]
+TopLine=32
+Caret=26,33
+[skins\colors.php]
+TopLine=1
+Caret=1,1
+[ys\ys.syst.oso.ezer]
+TopLine=1
+Caret=1,1
+[ezer2\ezer2_fce.php]
+TopLine=141
+Caret=29,174
+[ezer2\ezer2.syst.ezer]
+TopLine=383
+Caret=66,423
+[ys\ys.akce.mail.ezer]
+TopLine=1
+Caret=1,26
+[sql\backup_ys_setkani.bat]
+TopLine=1
+Caret=61,3
+[sql\mysql_all.bat]
+TopLine=1
+Caret=74,3

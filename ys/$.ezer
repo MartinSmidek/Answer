@@ -4,12 +4,12 @@
 menu ys { type:'main', active:* //ys.pok
   var global: text,
   tabs info {title:"Archiv", _sys:'inf',  include:'onclick', active:* }
-  tabs pok {title:"Pokladna", _sys:'*',  include:'onclick', active:* }
-  tabs eko {title:"Ekonomika", _sys:'*',  include:'onclick', active:* }
-  tabs ds {title:"Dům", _sys:'dum', include:'onclick', active:* }
+  tabs pok {title:"Pokladna", _sys:'*',  include:'onclick', active:*, skill:'yp' }
+  tabs eko {title:"Ekonomika", _sys:'*',  include:'onclick', active:*, skill:'ye' }
+  tabs ds {title:"Dům", _sys:'dum', include:'onclick', active:*, skill:'yd' }
 ##  tabs chl {title:"Chlapi",  include:'onclick' }
   tabs akce {title:"Akce", _sys:'akce', include:'onclick', active:*, skill:'ya' }
-  tabs lide {title:"Lidé", _sys:'lid', include:'onclick' }
+  tabs lide {title:"Lidé", _sys:'lid', include:'onclick', skill:'yl' }
   tabs syst {title:"Systém", _sys:'sys',  include:'onclick,ezer2.syst', active:*, skill:'a'
     panel oso {type:'right', title:'Osobní nastavení', _sys:'*', include:'onclick' }
     panel nas {type:'right', title:'Nastavení', _sys:'nas', skill:'m'
@@ -306,6 +306,26 @@ table dopis { key_id:'id_dopis'
   text post_vars { help:'seznam proměnných počítaných po generování'}
   text nest_list { help:'seznam složek (druh=N)'}
   text add_list
+}
+
+table _user { key_id:'id_user', db:'ezer_system'
+  number id_user
+  text deleted,
+  text abbr,
+  text skills,
+  text options { help:'privátní nastavení|ve formátu JSON' }
+  text username,
+  text password,
+  number state,
+  text forename,
+  text surname,
+  text login,
+  text history,
+  text sess_id,
+  text sess_time,
+  text sess_data,
+  number zmena_kdo,
+  date zmena_kdy {  },
 }
 
 map ms_akce_clen:     table _cis {where:"druh='ms_akce_clen'",     order:'poradi', key_id:'data'}

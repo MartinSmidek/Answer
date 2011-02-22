@@ -196,12 +196,18 @@ function akce_roku_update($rok) {  trace();
         $kod= $cells['B'][$i];
         $id= 1000*rok+$kod;
         $nazev= mysql_real_escape_string($cells['C'][$i]);
-        $od= sql_date($cells['D'][$i],1);
-        $do= sql_date($cells['E'][$i],1);
+        // data akce - jen je-li syntax ok
+        $od= $do= '';
+        $x= $cells['D'][$i];
+        if ( preg_match("/\d+\.\d+\.\d+/",$x) )
+          $od= sql_date($x,1);
+        $x= $cells['E'][$i];
+        if ( preg_match("/\d+\.\d+\.\d+/",$x) )
+          $do= sql_date($x,1);
         $uc= $cells['F'][$i];
         $typ= $cells['G'][$i];
         $kap= $cells['H'][$i];
-        $values.= "$del($id,$rok,$kod,\"$nazev\",'$od','$do','$uc','$typ','$kap')";
+        $values.= "$del($id,$rok,'$kod',\"$nazev\",'$od','$do','$uc','$typ','$kap')";
         $del= ',';
       }
     }
