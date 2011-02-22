@@ -22,7 +22,7 @@ function lide_duplo($par) { trace();
   case 'akce_init':
     $qry= "TRUNCATE TABLE du_akce";
     $res= mysql_qry($qry);
-    $qry= "UPDATE ms_druhakce SET id_duakce=0";
+    $qry= "UPDATE ms_akce SET id_duakce=0";
     $res= mysql_qry($qry);
     $qry= "UPDATE du_kurs SET id_duakce=0";
     $res= mysql_qry($qry);
@@ -30,7 +30,7 @@ function lide_duplo($par) { trace();
     break;
   // seskupení stejných názvů a zahájení => 10
   case 'akce_nazev':
-    $qry= "SELECT GROUP_CONCAT(id_akce) AS _ids, count(*) AS _pocet FROM ms_druhakce
+    $qry= "SELECT GROUP_CONCAT(id_akce) AS _ids, count(*) AS _pocet FROM ms_akce
            GROUP BY nazev,datum_od ORDER BY datum_od, nazev DESC";
     $res= mysql_qry($qry);
     while ( $res && ($p= mysql_fetch_object($res)) ) {
@@ -39,7 +39,7 @@ function lide_duplo($par) { trace();
         $qryd= "INSERT INTO du_akce (typ) VALUES (10)";
         $resd= mysql_qry($qryd);
         $id_duakce= mysql_insert_id();
-        $qryu= "UPDATE ms_druhakce SET id_duakce=$id_duakce WHERE id_akce IN ($ids)";
+        $qryu= "UPDATE ms_akce SET id_duakce=$id_duakce WHERE id_akce IN ($ids)";
         $resu= mysql_qry($qryu);
         $n++;
       }
@@ -59,12 +59,12 @@ function lide_duplo($par) { trace();
       foreach ($matches as $match) {
         list($incr,$name,$flds)= explode(',',$match);
         $ask= "CONCAT(".str_replace(":",",':',",$flds).")";
-        $qryp= "SELECT $ask AS _ask,id_akce FROM ms_druhakce WHERE id_duakce=$id_duakce LIMIT 1";
+        $qryp= "SELECT $ask AS _ask,id_akce FROM ms_akce WHERE id_duakce=$id_duakce LIMIT 1";
         $resp= mysql_qry($qryp);
         if ( $resp && $p= mysql_fetch_object($resp) ) {
           $id_akce= $p->id_akce;
           $ans= mysql_real_escape_string($p->_ask);
-          $qryu= "UPDATE du_akce JOIN ms_druhakce USING(id_duakce)
+          $qryu= "UPDATE du_akce JOIN ms_akce USING(id_duakce)
                   SET typ=typ+$incr WHERE id_duakce=$id_duakce AND id_akce!=$id_akce AND $ask='$ans'";
           $resu= mysql_qry($qryu);
           $n+= mysql_affected_rows();
@@ -151,10 +151,10 @@ function lide_duplo($par) { trace();
             FROM ms_kurs
             LEFT JOIN ms_pary USING(id_pary)
             LEFT JOIN du_pary USING(id_dupary)
-            LEFT JOIN ms_druhakce USING(id_akce)
+            LEFT JOIN ms_akce USING(id_akce)
             LEFT JOIN du_akce USING(id_duakce)
             WHERE /*du_pary.typ=123456789 AND*/ NOT ISNULL(id_duakce)
-            GROUP BY ms_pary.id_dupary,ms_druhakce.id_duakce,du_pary.typ";
+            GROUP BY ms_pary.id_dupary,ms_akce.id_duakce,du_pary.typ";
     $resk= mysql_qry($qryk);
     while ( $resk && ($k= mysql_fetch_object($resk)) ) {
       $ids= $k->_ids;
@@ -219,7 +219,7 @@ function lide_cleni_kurs($rok,$export=0) { trace();
            ms_deti.jmeno as jmeno_d,rodcislo
          FROM ms_kurs
          JOIN ms_pary USING (cislo,source)
-         JOIN ms_druhakce USING(akce,source)
+         JOIN ms_akce USING(akce,source)
          JOIN ms_deti USING(cislo,source)
          WHERE druh=1 AND ms_kurs.source='L'
          HAVING rok=$rok
@@ -358,7 +358,7 @@ function lide_spolu($rok) { trace();
   $qry= "SELECT cislo,akce,skupina,jmeno,mesto,nazev,year(datum_od) as rok
           FROM ms_kurs
           JOIN ms_pary USING (cislo,source)
-          JOIN ms_druhakce USING(akce,source)
+          JOIN ms_akce USING(akce,source)
           WHERE druh=1 AND ms_kurs.source='L'
           HAVING rok=$rok
           ORDER BY jmeno";
@@ -373,7 +373,7 @@ function lide_spolu($rok) { trace();
         SELECT jmeno,count(jmeno) as xx, group_concat(cislo) as cisla, group_concat(mesto) as mesta
         FROM ms_kurs
         JOIN ms_pary USING (cislo,source)
-        JOIN ms_druhakce USING(akce)
+        JOIN ms_akce USING(akce)
         WHERE druh=1 and year(datum_od)=2009 AND ms_kurs.source='L'
         GROUP BY jmeno HAVING xx>1
         ORDER BY jmeno
@@ -395,7 +395,7 @@ function lide_spolu($rok) { trace();
     $qry= "
             SELECT akce,skupina,nazev,year(datum_od) as rok
             FROM ms_kurs
-            JOIN ms_druhakce USING(akce,source)
+            JOIN ms_akce USING(akce,source)
             WHERE druh=1 and cislo={$par} and skupina>0 AND ms_kurs.source='L'
             ORDER BY datum_od DESC
         ";
@@ -407,7 +407,7 @@ function lide_spolu($rok) { trace();
             SELECT akce, cislo, skupina,funkce,jmeno,mesto,nazev,year(datum_od)
             FROM ms_kurs
             JOIN ms_pary USING (cislo,source)
-            JOIN ms_druhakce USING(akce,source)
+            JOIN ms_akce USING(akce,source)
             WHERE akce={$r->akce} and skupina={$r->skupina} and find_in_set(cislo,'$letosni')
               AND ms_kurs.source='L'
             ORDER BY datum_od DESC
@@ -439,7 +439,7 @@ function lide_kurs($rok) { trace();
   $qry= "SELECT cislo,akce,skupina,jmeno,mesto,nazev,year(datum_od) as rok, jmeno_m, jmeno_z
           FROM ms_kurs
           JOIN ms_pary USING (cislo,source)
-          JOIN ms_druhakce USING(akce,source)
+          JOIN ms_akce USING(akce,source)
           WHERE druh=1 AND ms_kurs.source='L'
           HAVING rok=$rok
           ORDER BY jmeno";
@@ -467,7 +467,7 @@ function lide_plachta($rok,$export=0) { trace();
             aktivita_m, aktivita_z, zajmy_m, zajmy_z, zamest_m, zamest_z
           FROM ms_kurs
           JOIN ms_pary USING (cislo,source)
-          JOIN ms_druhakce USING(akce,source)
+          JOIN ms_akce USING(akce,source)
           WHERE druh=1 AND ms_kurs.source='L'
                                                         /*AND ms_pary.id_pary=1439*/
           HAVING rok=$rok
@@ -477,7 +477,7 @@ function lide_plachta($rok,$export=0) { trace();
     // minulé účasti
     $rqry= " SELECT COUNT(*) AS _pocet /*GROUP_CONCAT(RIGHT(year(datum_od),2)) as _ucast*/
             FROM ms_kurs
-            JOIN ms_druhakce USING(akce,source)
+            JOIN ms_akce USING(akce,source)
             WHERE druh=1 and cislo={$u->cislo} and skupina>0 AND ms_kurs.source='L'
             ORDER BY datum_od DESC ";
     $rres= mysql_qry($rqry);

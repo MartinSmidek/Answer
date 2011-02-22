@@ -184,19 +184,19 @@ procedure mysql_export
 *     case mdbf == 'druhakce'
     case mdbf == 'akce'
       mtext = "," + chr(10) + "PRIMARY KEY (id_akce)" + chr(10)
-      mtext = mtext + "," + chr(10) + "INDEX (du_akce)" + chr(10)
+      mtext = mtext + "," + chr(10) + "INDEX (id_duakce)" + chr(10)
     case mdbf == 'pary'
       mtext = "," + chr(10) + "PRIMARY KEY (id_" + mdbf + ")" + chr(10)
-      mtext = mtext + "," + chr(10) + "INDEX (du_" + mdbf + ")" + chr(10)
+      mtext = mtext + "," + chr(10) + "INDEX (id_du" + mdbf + ")" + chr(10)
     case mdbf == 'kurs'
       mtext = "," + chr(10) + "PRIMARY KEY (id_" + mdbf + ")" + chr(10)
-      mtext = mtext + "," + chr(10) + "INDEX (du_" + mdbf + ")" + chr(10)
+      mtext = mtext + "," + chr(10) + "INDEX (id_du" + mdbf + ")" + chr(10)
     case mdbf == 'deti'
       mtext = "," + chr(10) + "PRIMARY KEY (id_" + mdbf + ")" + chr(10)
-      mtext = mtext + "," + chr(10) + "INDEX (du_" + mdbf + ")" + chr(10)
+      mtext = mtext + "," + chr(10) + "INDEX (id_du" + mdbf + ")" + chr(10)
     case mdbf == 'kursdeti'
       mtext = "," + chr(10) + "PRIMARY KEY (id_" + mdbf + ")" + chr(10)
-      mtext = mtext + "," + chr(10) + "INDEX (du_" + mdbf + ")" + chr(10)
+      mtext = mtext + "," + chr(10) + "INDEX (id_du" + mdbf + ")" + chr(10)
     endcase
 
     mtext = mtext + ") TYPE=MyISAM DEFAULT CHARSET=utf8 COLLATE utf8_czech_ci COMMENT='" + mdbf + "';" + chr(10) + chr(10)

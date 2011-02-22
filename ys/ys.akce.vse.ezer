@@ -20,7 +20,7 @@
     // seznam
     view smk: table ms_kurs
     view smp: table ms_pary {join:'USING(id_pary)'}
-    view sma: table ms_druhakce {join:'USING(id_akce)'}
+    view sma: table ms_akce {join:'USING(id_akce)'}
     browse pary [8,50,200,447] {type:'smart', rows:22, qry_rows:2,
       optimize:°{qry:'noseek'},group_by:'smp.id_pary'
       show id_pary {data:smk.id_pary }

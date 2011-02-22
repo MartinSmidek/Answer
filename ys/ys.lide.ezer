@@ -1,6 +1,8 @@
 # Systém Ans(w)er - modul Lidi
 # (c) 2008-2010 Martin Šmídek <martin@smidek.eu>
 
+# ================================================================================================== VSICHNI
+panel vse [,,,543] {type:'plain', title:'Všichni', include:'onclick,ys.akce.vse'}
 # ================================================================================================== UNIFIKACE
 panel uni [,,,543] {type:'plain', title:'Unifikace'
   use u: form _ucast [4,0,,]
@@ -21,7 +23,7 @@ panel uni [,,,543] {type:'plain', title:'Unifikace'
     // seznam
     view smk: table ms_kurs
     view smp: table ms_pary {join:'USING(id_pary)'}
-    view sma: table ms_druhakce {join:'USING(id_akce)'}
+    view sma: table ms_akce {join:'USING(id_akce)'}
     view smd: table du_pary {join_type:'LEFT', join:'ON smp.id_dupary=smd.id_dupary'}
     browse pary [8,50,200,447] {type:'smart', rows:22, qry_rows:2,
       optimize:°{qry:'noseek'},group_by:'smp.id_pary'
@@ -175,7 +177,7 @@ panel preh [,,,532] {type:'right', title:'Přehled'
     // hlavička
     label head [0,0,675,50]  { title:'' }
     // seznam
-    view a: table ms_druhakce
+    view a: table ms_akce
     view d: table du_akce {join_type:'LEFT', join:'USING(id_duakce)'}
     browse akce [0,50,200,447] {type:'smart', rows:22, qry_rows:1, optimize:°{qry:'noseek'}
       show id_akce {data:a.id_akce }

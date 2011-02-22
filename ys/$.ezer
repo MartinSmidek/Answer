@@ -87,23 +87,6 @@ table _cis { key_id:'id_cis'
   text barva,
 }
 
-table du_akce { key_id:'id_duakce'
-  number id_duakce
-  number typ
-}
-
-table ms_druhakce {
-  number id_akce
-  text source
-  text nazev
-  number akce
-  number druh
-  number poradatel
-  date datum_od        // SQL tvar se používá v ys.akce
-  date datum_do
-  text misto
-}
-
 table du_kurs { key_id:'id_dukurs'
   number id_dukurs
   number typ
@@ -144,7 +127,7 @@ table ms_kurs { key_id:'id_kurs'
   number platba4
 }
 
-table du_kurs { key_id:'id_dukursdeti'
+table du_kursdeti { key_id:'id_dukursdeti'
   number id_dukursdeti
   number typ
 }
@@ -229,6 +212,23 @@ table join_akce { // spojení číselníku akcí s MS
   number g_kod     { help:"kód akce podle číselníku akcí" }
   text   source    { help:"L:Lídino M:Milošovo MS.EXE" }
   number akce      { help:"staré číslo akce podle MS.EXE" }
+}
+
+table du_akce { key_id:'id_duakce'
+  number id_duakce
+  number typ
+}
+
+table ms_akce { key_id:'id_akce'  // Sey
+  number id_akce
+  text source
+  text nazev
+  number akce
+  number druh
+  number poradatel
+  date datum_od        // SQL tvar se používá v ys.akce
+  date datum_do
+  text misto
 }
 
 table g_akce { key_id:'id_gakce' // kopie číselníku akcí z intranetu

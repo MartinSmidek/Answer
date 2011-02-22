@@ -17,7 +17,7 @@ function akce_foxpro_data() {  #trace('');
   $html= "Do tabulek ms_kurs, ms_deti, ms_kursdeti byly {$n}x přidány hodnoty klíče id_pary";
   // přidání id_akce
   $n= 0;
-  $qry= "SELECT id_akce,source,akce FROM ms_druhakce ";
+  $qry= "SELECT id_akce,source,akce FROM ms_akce ";
   $res= mysql_qry($qry);
   while ( $res && ($x= mysql_fetch_object($res)) ) {
     $n++;
@@ -89,7 +89,7 @@ function akce_sestava($akce,$par,$title,$vypis,$export=false) {
   $clmn= array();
 //   $qry= "SELECT *
 //          FROM ms_kurs AS mk
-//          JOIN ms_druhakce AS ma ON ma.id_akce=mk.id_akce
+//          JOIN ms_akce AS ma ON ma.id_akce=mk.id_akce
 //          JOIN ms_pary AS mp ON mp.id_pary=mk.id_pary
 //          LEFT JOIN ms_kurs AS mks ON mks.id_akce=mk.id_akce AND mks.skupina=mk.skupina
 //          JOIN ms_pary AS mps ON mps.id_pary=mks.id_pary
@@ -172,7 +172,7 @@ function akce_sestava($akce,$par,$title,$vypis,$export=false) {
 function akce_roku_id($kod,$rok,$source,$akce) {
   if ( $akce ) {
     mysql_qry("INSERT join_akce (source,akce,g_kod,g_rok) VALUES ('$source',$akce,$kod,$rok)");
-    mysql_qry("UPDATE ms_druhakce SET ciselnik_akce=$kod,ciselnik_rok=$rok WHERE source='$source' AND akce=$akce");
+    mysql_qry("UPDATE ms_akce SET ciselnik_akce=$kod,ciselnik_rok=$rok WHERE source='$source' AND akce=$akce");
   }
   return 1;
 }
@@ -310,7 +310,7 @@ function akce_auto_akce($patt) {  #trace();
   $n= 0;
   // rodiče
   $qry= "SELECT id_akce AS _key,concat(nazev,' - ',YEAR(datum_od)) AS _value
-         FROM ms_druhakce
+         FROM ms_akce
          WHERE nazev LIKE '$patt%' ORDER BY datum_od DESC LIMIT $limit";
   $res= mysql_qry($qry);
   while ( $res && $t= mysql_fetch_object($res) ) {

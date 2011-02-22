@@ -61,12 +61,13 @@ panel Vyber {type:'right', title:'Výběr akce'
 #         set_cookie("ys_akce_title",'');
         seznam.selected('clear');
         { and(the_akce.get,not(eq(the_akce.get,'0')));
-          seznam.selected('set',the_akce.get);
-          the_title.set(conc('Akce ',seznam.kod.get,' roku ',seznam.rok.get,' - ',seznam.nazev.get));
-          Vyber.info.fill(the_title.get,'');
-          set_cookie("ys_akce_title",the_title.get);
-          Ucastnici.u.fill(the_title.get);
-          Ucastnici.reload(0)
+          [ seznam.selected('set',the_akce.get);
+            the_title.set(conc('Akce ',seznam.kod.get,' roku ',seznam.rok.get,' - ',seznam.nazev.get));
+            Vyber.info.fill(the_title.get,'');
+            set_cookie("ys_akce_title",the_title.get);
+            Ucastnici.u.fill(the_title.get);
+            Ucastnici.reload(0)
+          ]
         | DefIdAkce.modal(500,200);
           ask('akce_roku_id',seznam.kod.get,the_rok.get,DefIdAkce.f.lm.get,DefIdAkce.f.id.get);
           seznam.browse_row
@@ -74,11 +75,10 @@ panel Vyber {type:'right', title:'Výběr akce'
     }}
     view ga: table g_akce
     view ja: table join_akce {join_type:'LEFT',join:'USING(g_rok,g_kod)'}
-    view ma: table ms_druhakce {join_type:'LEFT',join:'ON ciselnik_akce=ga.g_kod AND ciselnik_rok=ga.g_rok'}
+    view ma: table ms_akce {join_type:'LEFT',join:'USING(source,akce)'}
     browse seznam [0,50,200,500] { type:'smart', rows:30, qry_rows:1, buf_rows:120,
       show id_gakce {data:ga.id_gakce}
       show rok {data:ga.g_rok}
-      show id_akce       {title:'klíč', data:ma.id_akce, format:'rsq'}
       show kod   [,,30,] {title:'kód', data:ga.g_kod, format:'rs+q*'}
       show nazev [,,300,] {title:'název', data:ga.g_nazev, format:'sq*'}
       show       [,,80,] {title:'od', data:ga.g_od, format:'rsq*'}
@@ -86,6 +86,7 @@ panel Vyber {type:'right', title:'Výběr akce'
 #       show       [,,40,] {title:'účast', data:ga.g_ucast, format:'sq*'}
       show       [,,15,] {title:'source', data:ja.source, format:'rsq'}
       show       [,,30,] {title:'akce', data:ja.akce, format:'rsq'}
+      show id_akce [,,30,] {title:'klíč', data:ma.id_akce, format:'rsq'}
       show       [,,30,] {title:'typ', data:ga.g_typ, format:'sq*'}
       show       [,,30,] {title:'kap', data:ga.g_kap, format:'sq*'}
       proc onsubmit() { volba.onclick() }
@@ -156,7 +157,7 @@ panel Ucastnici [,,,543] {type:'plain', title:'Účastníci akce'
     view mkd: table ms_kursdeti {join_type:'LEFT',join:'ON mkd.id_pary=mk.id_pary AND mkd.id_akce=mk.id_akce'}
     view mks: table ms_kurs {join_type:'LEFT',join:'ON mks.id_akce=mk.id_akce AND mks.skupina=mk.skupina AND mks.skupina!=0'}
     view mps: table ms_pary {join_type:'LEFT',join:'ON mps.id_pary=mks.id_pary'}
-    view ma:  table ms_druhakce {join:'ON ma.id_akce=mk.id_akce'}
+    view ma:  table ms_akce {join:'ON ma.id_akce=mk.id_akce'}
     browse d [610,244,200,200] {type:'smart', rows:4, css_rows:'id_kursdeti,0:nic,:nakursu'
       show id_deti
       show id_kursdeti
