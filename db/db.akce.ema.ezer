@@ -1,0 +1,211 @@
+# Systém Ans(w)er - modul Akce.Maily
+# (c) 2008-2010 Martin Šmídek <martin@smidek.eu>
+
+# ================================================================================================== MAIL
+# rozesílání jednotlivých dopisů
+
+var E_info: text
+var dopis_id: text
+use ii: form right [12,4,,]
+
+menu {type:'left',
+  menu {title:'Rozesílání skupinových mailů', type:'group'
+    item {title:'Vytváření a editace'
+      proc onclick (i) {
+        ii.fill("Příprava skupinových emailů"," ");
+        E_send.hide; E_text.popup(10,60);
+      }
+    }
+    item {title:'Rozesílání připravených'
+      proc onclick (i) {
+        ii.fill("Vánoce 2010 - prosba"," ");
+        E_text.hide; E_send.popup(10,60);
+      }
+    }
+  }
+  menu {title:'Kontrola speciálních skupin', skill:'yams',type:'group'
+    item {title:'Sponzoři Vánoce 2010',  par:°{skupina:'vanoce2010'} }
+    item {title:'Výbor YMCA Setkání',    par:°{skupina:'vybor'} }
+    item {title:'TEST',                  par:°{skupina:'martin'} }
+    proc onclick (i) {
+      var res: object
+      res.set(ask('dop_mai_skupina',i.par.skupina));
+      ii.fill(i.title,res._html.get);
+      E_text.hide; E_send.hide;
+    }
+  }
+}
+
+# ================================================================================================== E_text
+panel E_text [0,0,645,520] { title:' maily'
+  var et_prazdy: number
+  use et: form _etext [0,0,,],
+  proc onfocus () {
+    et.texty.browse_load("etd.id_davka=1 AND druh='@'"); //et.texty.browse_focus;
+    dopis_id.get; et.texty.raise('onrowclick',dopis_id.get) | et.texty.raise('onrowclick')
+  }
+  proc et.texty.onrowclick () {
+    dopis_id.set(et.texty.id_dopis.get);
+    et.load(dopis_id.get);
+    et.obsah.set(ask('dop_mai_text',dopis_id.get)); stop
+  }
+  proc et.novy.onclick () {
+    et.init;
+    et.datum.set(now); et.datum.change;
+    et.id_davka.set(1); et.id_davka.change;
+    et.druh.set('@'); et.druh.change
+  }
+  proc et.uloz.onclick () {
+    et.same
+  | et.key; et.save; et.load; et.texty.browse_seek;
+    et.texty.browse_focus; stop
+  | et.insert; et.load;
+    et.texty.raise('onrowclick',et.texty.browse_seek(conc(et.id_key,'=',et.key))); stop
+  }
+  proc et.smaz.onclick () {
+    confirm(conc("Opravdu smazat mail '",et.texty.predmet.get,"' a jeho rozesílací seznam?"));
+    ask('dop_mai_smaz',et.texty.id_dopis.get); et.texty.browse_seek; stop
+  }
+  proc et.poslat.onclick () {
+    prazdny; et_prazdy.get;
+    E_info.set(ask('dop_mai_pocet',dopis_id.get));
+    confirm(E_info.get('_html'));
+    E_info.get('_count'); ask('dop_mai_posli',dopis_id.get,E_info.get);
+    et.texty.browse_seek; et.texty.browse_focus; stop
+  }
+  proc prazdny () {
+    E_info.set(ask('dop_mai_prazdny',et.texty.id_dopis.get));
+    et_prazdy.set(E_info.get('_prazdny')); et_prazdy.get
+  | et_prazdy.set(confirm(E_info.get('_html')))
+  }
+  proc et.oprav.onclick () {
+    E_dopis.modal(10,10); et.texty.raise('onrowclick',dopis_id.get)
+  }
+}
+# -------------------------------------------------------------------------------------------------- _etext
+form _etext [0,0,180,267] {
+  view etd: table dopis
+  view etm: table mail {join_type:'LEFT' join:'USING(id_dopis)'}
+  browse texty [0,0,150,200] { rows:10, qry_rows:1, group_by:'id_dopis', css_rows:'stav1,3:zluty,4:zeleny,5:cerveny'
+    show id_dopis [,,0,] { data:etd.id_dopis },
+    show x [,,0,] { data:etm.id_davka },
+    show datum [,,60,] { title:'datum', data:etd.datum, format:'s-' },
+    show predmet [,,100,] { title:'předmět', data:etd.nazev, format:'sq', css_cell:'stav2,3:zluty,4:zeleny,5:cerveny' },
+    show komu [,,60,] { title:'komu' , data:etd.komu, format:'s', map_pipe:map_dm_komu.zkratka },
+    show stav1 [,,0,] { expr:'min(etm.stav)', format:'rsq' },
+    show stav2 [,,0,] { expr:'max(etm.stav)', format:'rsq' },
+    show pocet [,,30,] { title:'#', data:etd.pocet, format:'rs' },
+  }
+  field id_davka [0,0,0,0] { data:dopis.id_davka },
+  field druh [0,0,0,0] { data:dopis.druh },
+  label [300,0,100,17] { title:'datum odeslání' }
+  field datum [300,20,80,17] { data:dopis.datum, help:'datum|datum emailu', skill:'yam|yams' },
+  label [400,0,100,17] { title:'výběr adresátů' }
+  select komu  [400,20,150,17] { type:'map', options:map_dm_komu.zkratka, data:dopis.komu,
+    help:'komu|skupina adresátů', skill:'yam|yams' },
+  label [300,50,100,17] { title:'předmět mailu' }
+  field predmet [300,70,340,17] { data:dopis.nazev, help:'předmět|předmět emailu', skill:'yam|yams' },
+  label [300,100,300,17] { title:'případné přílohy (uložené ve složce docs)' }
+  field prilohy [300,120,340,17] { data:dopis.prilohy, help:'přílohy|přílohy emailu oddělené čárkami', skill:'yam|yams' },
+  button uloz [300,160,45,17] { type:'submit', title:'Uložit', help:'uložit opravené hodnoty', skill:'yam|yams' }
+  button novy [364,160,45,17] { title:'Nový', help:'vytvořit nový e-mail', skill:'yam|yams' }
+  button oprav [427,160,45,17] { title:'Opravit text', help:'opravit text mailu', skill:'yam|yams' }
+  button smaz [525,160,45,17] { title:'Smazat', help:'smazat mail a jeho rozesílání', skill:'yam|yams' }
+  button poslat [300,190,45,17] { title:'Vygenerovat rozesílací seznam', help:'připravit rozesílání',
+    skill:'yam|yams' }
+  label obsah [0,250,645,200] { title:'zobrazení předmětu a textu mailu' }
+}
+# ================================================================================================== E_dopis
+panel E_dopis [0,0,645,520] { title:' Úprava textu mailu', type:'popup', css:'dialog', skill:'yams'
+  use mail: form _edopis [0,0,,],
+  proc onfocus () {
+    dopis_id.get; mail.load(dopis_id.get);
+  | error('nedefinovaný dopis')
+  }
+}
+# -------------------------------------------------------------------------------------------------- _edopis
+# oprava textu, data, předmětu a adresátů mailu v popup menu
+form _edopis [10,10,600,460] {
+  label [0,12,60,20] { title:'Předmět:' }
+  field nazev [50,10,480,20] { data:dopis.nazev },
+  button  [540,9,45,20] { title:'Uložit', help:'ukončit editor a uložit změny'
+    proc onclick() {
+      form.save; panel.hide(1);
+    }
+  }
+  button  [600,9,45,20] { title:'Zpět', help:'ukončit editor bez uložení změn'
+    proc onclick() {
+      panel.hide(0);
+    }
+  }
+  edit [0,40,645,480] {type:'html', data:dopis.obsah, par:°{toolbar:'EzerMail'} },
+}
+# ================================================================================================== E_send
+panel E_send [0,0,645,520] { title:' maily'
+  use es: form _esady [0,0,,],
+  proc onstart () { es.davka.init(1) }
+  proc onfocus () {
+    es.msg.set('');
+    es.texty.browse_load("etd.id_davka=1 AND druh='@'"); //et.texty.browse_focus;
+    dopis_id.get; es.texty.raise('onrowclick',dopis_id.get) | es.texty.raise('onrowclick')
+  }
+  proc es.texty.onrowclick () {
+    dopis_id.set(es.texty.id_dopis.get);
+    es.maily.browse_load(conc("id_dopis=",dopis_id.get));
+  }
+  proc es.davka.onchange () {
+    es.send.set(conc(es.davka.get,'  ještě neposlaných'));
+  }
+  proc es.maily.onrowclick () {
+    es.info.set(ask('dop_mai_info',es.maily.id_clen.get,es.maily.email.get));
+  }
+  proc es.test.onclick () {
+    es.msg.set('');
+    confirm('Poslat zkušební mail na martin@smidek.eu ?');
+    E_info.set(ask('dop_mai_send',dopis_id.get,0));
+    es.msg.set(E_info.get('_html'));
+  }
+  proc es.send.onclick () {
+    es.msg.set('');
+    confirm(conc('Opravdu poslat dalších ',es.davka.get,' mailů?'));
+    E_info.set(ask('dop_mai_send',dopis_id.get,es.davka.get));
+    es.msg.set(E_info.get('_html'));
+    es.maily.browse_seek; es.texty.browse_seek;
+  }
+}
+# -------------------------------------------------------------------------------------------------- _esady
+# rozesílání připraveného mailu - zakládání, aktualizace a rušení - obsluha front s maily
+form _esady [,,500,200] {
+  view etd: table dopis
+  view etm: table mail {join_type:'LEFT' join:'USING(id_dopis)'}
+  browse texty [0,0,150,200] { rows:10, qry_rows:1, group_by:'id_dopis', css_rows:'stav1,3:zluty,4:zeleny,5:cerveny'
+    show id_dopis [,,0,] { data:etd.id_dopis },
+    show x [,,0,] { data:etm.id_davka },
+    show datum [,,60,] { title:'datum', data:etd.datum, format:'s-' },
+    show predmet [,,100,] { title:'předmět', data:etd.nazev, format:'sq', css_cell:'stav2,3:zluty,4:zeleny,5:cerveny' },
+    show komu [,,60,] { title:'komu' , data:etd.komu, format:'s', map_pipe:map_dm_komu.zkratka },
+    show stav1 [,,0,] { expr:'min(etm.stav)', format:'rsq' },
+    show stav2 [,,0,] { expr:'max(etm.stav)', format:'rsq' },
+    show pocet [,,30,] { title:'#', data:etd.pocet, format:'rs' },
+  }
+  label [0,255,100,17] { title:'<b>Odeslat ...</b>' }
+  button test [0,280,100,17] { title:'1 mail sobě', skill:'yam|yams',
+    help:'pro kontrolu - posílá se na adresu martin@smidek.eu' }
+  field davka [105,281,30,17] { format:'rt', value:'10', skill:'yam|yams' }
+  button send [150,280,100,17] { title:'10 ještě neposlaných', skill:'yam|yams',
+    help:'pošle další dávku - počet lze měnit políčkem vlevo' }
+  label msg [0,310,300,50]
+  label info [0,370,300,100]
+  browse maily [320,0,120,200] { rows:24, qry_rows:1, css_rows:'stav,3:zluty,4:zeleny,5:cerveny'
+    show stav    [,,20,]  { title:'s.', data:mail.stav, format:'rsq' },
+    show id_clen [,,50,]  { title:'člen', data:mail.id_clen, format:'rs+q' },
+    show email   [,,180,] { title:'email', data:mail.email, format:'sq' },
+    show msg     [,,50,]  { title:'chyba', data:mail.msg, format:'sq' }
+    show id_mail          { data:mail.id_mail }
+    proc onsubmit() {
+      ask('dop_mai_stav',id_mail.get,cconc(eq(stav.get,5),3,5)); this.browse_row
+    }
+  }
+}
+
+map map_dm_komu: table _cis {where:"druh='am_komu'", order:'poradi', key_id:'data'}

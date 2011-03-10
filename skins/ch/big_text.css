@@ -1,0 +1,25 @@
+/* EZER verze 2.1, (c) Martin Smidek <martin@smidek.eu>, 2010
+   úpravy základního stylu pro velké písmo a malou obrazovku */
+
+#horni {
+  padding-top:0px }
+
+#stred {
+  top:57px }
+
+#work {
+  height:100% }
+
+#dolni {
+  height:0 }
+
+body {
+  overflow-y:scroll !important }
+
+.BrowseSmart td, .Browse td,
+.Button, .ButtonSubmit,
+input, body {
+  font-size:10pt; }
+
+.MGroup, .MGroupContent {
+  font-size:9pt; }
