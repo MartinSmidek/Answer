@@ -1,0 +1,74 @@
+# Systém Ans(w)er - modul Akce.Tisk
+# (c) 2008-2010 Martin Šmídek <martin@smidek.eu>
+
+# ================================================================================================== Tisk
+use info: form right [12,4,,] {
+#   var y:text
+  button [633,18,100,16] { title:'Excel', style:'display:block;zIndex:2',
+    proc onclick() {
+#       [y.get];
+#       tisk.x.get;
+#       vse.z.get;
+#       the_akce.get;
+#       Ucastnici.pall.get;
+      var res: object
+      res.set(ask('akce_vyp_excel',the_akce.get,tisk.m.the_par.get,the_title.get,tisk.m.the_vypis.get));
+      form.msg.set(res.html);
+    }
+  }
+}
+# var x:text
+
+proc onfirstfocus() {
+  m.n.i.click
+}
+menu m {type:'left',
+  menu n {title:'Adresář',type:'group',_sys:'*'
+    item i {title:'základní'       ,par:°{typ:'p'
+                                        ,tit:'příjmení:15,jména:20,obec:25,psč:7,ulice:25'
+                                        ,fld:'jmeno,jmena,mesto,psc,adresa',cnd:'1'}}
+    item {title:'základní, spojení',par:°{typ:'p'
+                                        ,tit:'příjmení:15,jména:20,obec:25,psč:7,ulice:25,telefon:40,e-mail:60'
+                                        ,fld:'jmeno,jmena,mesto,psc,adresa,telefon,email',cnd:'1'}}
+    item {title:'základní, RČ'    ,par:°{typ:'j'
+                                        ,tit:'příjmení:15,jméno:12,rod.číslo:12,obec:25,psč:7,ulice:25'
+                                        ,fld:'prijmeni_m,jmeno_m,rodcislo_m,mesto,psc,adresa;prijmeni_z,jmeno_z,rodcislo_z,mesto,psc,adresa',cnd:'1'}}
+  }
+  menu   {title:'Seznam',type:'group',_sys:'*'
+    item {title:'účastníci'       ,par:°{typ:'p'
+                                        ,tit:'příjmení,jména'
+                                        ,fld:'jmeno,jmena',cnd:'1'}}
+    item {title:'účastníci, skupinka, pokoj',par:°{typ:'p'
+                                        ,tit:'příjmení,jména,skupinka,pokoj'
+                                        ,fld:'jmeno,jmena,skupina,pokoj',cnd:'1'}}
+  }
+  menu   {title:'Jmenovky',type:'group',_sys:'*'
+    item {title:'VPS'             ,par:°{typ:'j'
+                                        ,tit:'příjmení,jméno'
+                                        ,fld:'prijmeni_m,jmeno_m;prijmeni_z,jmeno_z',cnd:'vps'}}
+    item {title:'páry bez VPS'    ,par:°{typ:'j'
+                                        ,tit:'příjmení,jméno'
+                                        ,fld:'jmeno_m,prijmeni_m;jmeno_z,prijmeni_z',cnd:'nevps'}}
+  }
+  menu   {title:'Děti',type:'group',_sys:'*'
+    item {title:'adresář'         ,par:°{typ:'d'
+                                        ,tit:'příjmení,jméno,rod.číslo,obec,psč,ulice'
+                                        ,fld:'prijmeni_d,jmeno_d,rodcislo_d,mesto,psc,adresa',cnd:'1'}}
+    item {title:'seznam'          ,par:°{typ:'d'
+                                        ,tit:'příjmení,jméno,rod.číslo,poznámka'
+                                        ,fld:'prijmeni_d,jmeno_d,rodcislo_d,poznamka',cnd:'1'}}
+    item {title:'jmenovky'        ,par:°{typ:'d'
+                                        ,tit:'příjmení,jméno'
+                                        ,fld:'prijmeni_d,jmeno_d',cnd:'1'}}
+  }
+  var the_par: object
+  var the_vypis: text
+  proc onclick (i) {
+    var x: object
+    the_par.set(i.par);
+    the_vypis.set(conc(i.owner.title,' - ',i.title));
+    info.fill(conc(the_title.get,' / ',the_vypis.get),' ');
+    x.set(ask('akce_sestava',the_akce.get,i.par,the_title.get,the_vypis.get));
+    info.fill('',x.html);
+  }
+}

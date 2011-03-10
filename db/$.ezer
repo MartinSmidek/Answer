@@ -1,0 +1,9 @@
+#pragma library
+
+# Systém Ans(w)er
+# (c) 2008-2011 Martin Šmídek <martin@smidek.eu>
+
+menu db { type:'main'
+  tabs akce {title:"Akce", _sys:'akce', include:'onclick', active:*, skill:'ya' }
+}
+

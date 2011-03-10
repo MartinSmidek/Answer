@@ -1,0 +1,129 @@
+# Systém Ans(w)er - modul Akce
+# (c) 2008-2011 Martin Šmídek <martin@smidek.eu>
+
+proc onstart() {
+  info.fill(the_title.get,'');
+  info.rok.selects(javascript("var x='';for(i=2011;i>=1990;i--){x+=i+',';};x+='0'"));
+}
+
+proc onfirstfocus() {
+  echo('výběr');
+  the_akce.get;
+  info.rok.set(the_rok.get)
+| info.rok.set(2011);
+}
+use info: form _akce [12,4,,]
+menu {type:'left'
+  menu {title:'Výběr akce ',type:'group'
+    item {title:'z číselníku akcí na intranetu'
+      proc onclick (i) {
+        info.google.display(1); info.sey.display(0); the_source.set('google'); akce_roku
+      }
+    }
+    item {title:'ze Seyova programu'
+      proc onclick (i) {
+        info.sey.display(1); info.google.display(0); the_source.set('sey'); akce_roku
+      }
+    }
+  }
+}
+proc akce_roku() {
+  the_akce.set(0); the_rok.set(info.rok.get);
+  [info.google.browse_load(conc('g_rok=',the_rok.get))];
+  [info.sey.browse_load(conc('YEAR(datum_od)=',the_rok.get))];
+  info.fill(' &nbsp; Vyber akci ...','');
+  set_cookie('ys_akce_rok',the_rok.get);
+}
+# -------------------------------------------------------------------------------------------------- _akce
+# formulář pro výběr akce pro další práci
+form _akce [,,640,50] {
+  select rok [4,19,50,] { format:'t'
+    proc onchange() { akce_roku }
+  }
+  button volba [564,17,100,16] { title:'Zapamatovat akci', style:'display:block;zIndex:2',
+    proc onclick() {
+      the_akce.set(if(eq(the_source.get,'google'),google.id_akce.get,sey.id_akce.get));
+      set_cookie("ys_akce_id",the_akce.get);
+#         set_cookie("ys_akce_title",'');
+#         google.selected('clear');
+      { and(the_akce.get,not(eq(the_akce.get,'0')));
+        [ /*google.selected('set',the_akce.get);*/
+          the_title.set(if(eq(the_source.get,'google'),
+            conc(' Akce ',google.kod.get,' roku ',google.rok.get,' - ',google.nazev.get),
+            conc('&nbsp;',sey.nazev.get)
+          ));
+          lst.info.fill(the_title.get,'');
+          set_cookie("ys_akce_title",the_title.get);
+          ucast.init_ucast
+#           ucast.u.fill(the_title.get);
+#           ucast.reload(0)
+        ]
+#         | DefIdAkce.modal(500,200);
+#           ask('akce_roku_id',google.kod.get,the_rok.get,DefIdAkce.f.lm.get,DefIdAkce.f.id.get);
+#           google.browse_row
+      }
+  }}
+  view ga: table g_akce
+  view ja: table join_akce {join_type:'LEFT',join:'USING(g_rok,g_kod)'}
+  view ma: table ms_akce   {join_type:'LEFT',join:'USING(source,akce)'}
+  browse google [0,50,200,500] { type:'smart', rows:30, qry_rows:1, buf_rows:120,
+    show id_gakce {data:ga.id_gakce}
+    show rok {data:ga.g_rok}
+    show kod   [,,30,] {title:'kód', data:ga.g_kod, format:'rs+q*'}
+    show nazev [,,300,] {title:'název', data:ga.g_nazev, format:'sq*'}
+    show       [,,80,] {title:'od', data:ga.g_od, format:'rsq*'}
+    show       [,,80,] {title:'do', data:ga.g_do, format:'rsq*'}
+    show source [,,15,] {title:'source', data:ja.source, format:'rsqu', css_cell:'source,0:yellow'}
+    show akce  [,,30,] {title:'akce', data:ja.akce, format:'rsqu', css_cell:'akce,0:yellow'}
+    show id_akce [,,30,] {title:'klíč', data:ma.id_akce, format:'rsq'}
+    show       [,,30,] {title:'typ', data:ga.g_typ, format:'sq*'}
+    show       [,,30,] {title:'kap', data:ga.g_kap, format:'sq*'}
+    proc onsubmit() { volba.onclick() }
+    proc onrowclick() { echo('id_akce=',id_akce.get);}
+  }
+  view ma2: table ms_akce
+  view ja2: table join_akce {join_type:'LEFT',join:'USING(source,akce)'}
+  view ga2: table g_akce    {join_type:'LEFT',join:'USING(g_rok,g_kod)'}
+  browse sey [0,50,200,500] { type:'smart', rows:30, qry_rows:1, buf_rows:120,
+    show id_akce {data:ma2.id_akce}
+    show  {data:ja2.akce}
+    show  {data:ga2.id_gakce}
+    show  {data:ga2.g_rok}
+    show kod   [,,30,] {title:'kód', data:ga2.g_kod, format:'rs+q*u', css_cell:'kod,0:yellow'}
+    show nazev [,,300,] {title:'název', expr:"CONCAT(ma2.nazev,' ',ma2.misto)", format:'sq*'}
+    show       [,,80,] {title:'od', data:ma2.datum_od, format:'rsq*'}
+    show       [,,80,] {title:'do', data:ma2.datum_do, format:'rsq*'}
+    show       [,,15,] {title:'source', data:ma2.source, format:'rsq'}
+    show       [,,30,] {title:'akce', data:ma2.akce, format:'rsq'}
+    show       [,,30,] {title:'klíč', data:ma2.id_akce, format:'rsq'}
+    show       [,,30,] {title:'typ', data:ga2.g_typ, format:'sq*'}
+    show       [,,30,] {title:'kap', data:ga2.g_kap, format:'sq*'}
+    proc onsubmit() { volba.onclick() }
+    proc onrowclick() { echo('id_akce=',id_akce.get);}
+  }
+  label head [0,0,680,50] { title:'' }
+  label note [550,50,480,200] { title:'' }
+  button [414,17,100,] { title:'Obnovit rok z intranetu', help:"obnoví akce roku z http://intranet.setkani.org"
+    # získání seznamu akcí z docs.google.com pomocí API spredsheet
+    proc onclick() {
+      alert('bylo obnoveno ',ask('akce_roku_update',the_rok.get),' záznamů o akcích');
+      google.browse_seek;
+    }
+  }
+  proc fill(x,y) {
+    [ x; head.set(conc("<div class='CSection CMenu'><h3 class='CTitle'>",x,"</h3></div>")) ];
+    [ y; note.set(y) ]
+  }
+}
+# ================================================================================================== definice akce
+panel DefIdAkce [,,220,60] {type:'popup', title:'Zapsání id_akce'
+  use f: form _id_akce [12,10,,]
+  form _id_akce [,,100,50] {
+    label [10,10,50,] { title:'L|M akce' }
+    field lm [60,10,10,] { help:'L|M na rozlišení verze MS.EXE'}
+    field id [80,10,40,] { help:'číslo akce z programu MS.EXE'}
+    button [140,8,,] { type:'submit', title:'Zapiš', proc onclick() {
+      panel.hide(id.get)
+    } }
+  }
+}

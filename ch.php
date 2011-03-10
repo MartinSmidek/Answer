@@ -2,10 +2,9 @@
 
   $ezer_local= preg_match('/^\w+\.ezer/',$_SERVER["SERVER_NAME"]); // identifikace ladícího serveru
 
-  $app=      'ys';
-  $app_name= 'Ans(w)er';
-  $skin=     'default';
-  $skin=     'ck';
+  $app=      'ch';
+  $app_name= 'Chlapi';
+  $skin=     'ch';
 
   require_once("$app.inc");
   require_once("ezer2/server/ae_slib.php");
@@ -21,8 +20,8 @@
     'ezer2/client/ezer_report.js',
     'ezer2/client/ezer_fdom2.js',
     'ezer2/client/app.js',
-    'ys/ys_fce.js',
-    'ds/fce.js'
+    'db/db_fce.js'
+//     'ds/fce.js'
   );
   $css= array(
     './ezer2/client/ezer.css.php',
