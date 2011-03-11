@@ -39,7 +39,7 @@
       . ($EZER->options->skype ? "nebo použijte Skype&nbsp;<a href='skype:{$EZER->options->skype}?chat'>{$EZER->options->skype}</a>" : '')
       . "<br/><br/>Za spolupráci děkuje <br/>{$EZER->options->author}";
   $pars= (object)array(
-    'watch_ip' => false,                // true = povolit přístup jen ze známých IP adres
+    'watch_ip' => true,                // true = povolit přístup jen ze známých IP adres
     'title_right' => $ezer_local ? "<span style='color:#ef7f13'>$app_name</span>" : $app_name,
     'contact' => $kontakt
   );
