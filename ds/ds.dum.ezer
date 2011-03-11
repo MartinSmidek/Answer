@@ -106,7 +106,7 @@ group pobyt {
     label       [ 90, 40, 70,] { title:'odjezd' }
     field       [ 90, 55, 85,] { type:'date', data:tab.tx_gnalberice_order.untilday }
     label       [  0, 78,150,] { title:'seznam pokojů:' }
-    check skoleni [218,72,59,9] { title:'školení', data:tab.tx_gnalberice_order.skoleni, value:'0', help:"účastníci školení neplatí rekreační poplatek" }
+    check skoleni [218,72,65,9] { title:'školení', data:tab.tx_gnalberice_order.skoleni, value:'0', help:"účastníci školení neplatí rekreační poplatek" }
     label       [291,75,30,] { title:'sleva' }
     field sleva [321,75,20,] { data:tab.tx_gnalberice_order.sleva, format:'r' }
     label       [344,77,5,] { title:'%' }
@@ -132,10 +132,10 @@ group pobyt {
     label       [0,120,50,] { title:'dospělí' }
     field       [0,135,17,] { data:tab.tx_gnalberice_order.adults, format:'r:e' }
     field adults [24,136,17,] { format:'or:e', help:'?|počet dospělých podle seznamu' }
-    label       [54,120,50,] { title:'děti 10-15' }
+    label       [50,120,55,] { title:'děti 10-15' }
     field       [54,135,17,] { data:tab.tx_gnalberice_order.kids_10_15, format:'r:e' }
     field kids_10_15 [78,136,17,] { format:'or:e', help:'?|počet dětí podle seznamu' }
-    label       [110,120,40,] { title:'děti 3-9' }
+    label       [110,120,45,] { title:'děti 3-9' }
     field       [111,135,17,] { data:tab.tx_gnalberice_order.kids_3_9, format:'r:e' }
     field kids_3_9 [135,136,17,] { format:'or:e', help:'?|počet dětí ve věku 3-9 let podle seznamu' }
     label       [165,120,50,] { title:'děti do 3' }
@@ -149,7 +149,7 @@ group pobyt {
     //  proc onclick() { compare } }
     button save_pobyt [249,191,100,18] { title:'zapsat změny', type:'submit' }
     label info  [1,159,238,53] { title:'' }
-    label       [245,153,112,] { title:'program: dospělý / dítě' }
+    label       [239,154,128,] { title:'program: dospělý / dítě' }
     field prog_cely [251,169,30,] { data:tab.tx_gnalberice_order.prog_cely, format:'r', help:'cena programu na akci pro dospělého' }
     label       [290,170,5,] { title:'/' }
     field prog_dite [302,169,30,] { data:tab.tx_gnalberice_order.prog_polo, format:'r', help:'cena programu na akci pro dítě' }
@@ -416,7 +416,7 @@ group ucastnici {
     button      [220,229,100,18] { title:'zapsat změny',
       proc onclick() { osoba_save } }
     // specifické údaje
-    label       [0,255,327,] { title:'--- <i>údaje o pobytu (jen pokud se liší od údajů v objednávce)</i> ---' }
+    label       [0,255,330,] { title:'--- <i>údaje o pobytu (pokud se liší od údajů v objednávce)</i> ---' }
     label       [0,272,70,] { title:'příjezd' }
     field   od  [0,287,83,] { type:'date', data:tab.ds_osoba.fromday }
     label       [90,272,70,] { title:'odjezd' }

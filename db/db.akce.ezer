@@ -27,7 +27,7 @@ proc onstart() {
 */
 }
 # ================================================================================================== OSOBY
-panel oso {type:'right', title:'Lidi', include:'onclick,db.akce.oso' }
+panel oso {type:'plain', title:'Lidi', include:'onclick,db.akce.oso' }
 # ================================================================================================== VÝBĚR
 panel lst {type:'right', title:'Akce', include:'onclick,db.akce.lst' }
 # ================================================================================================== ÚČAST
