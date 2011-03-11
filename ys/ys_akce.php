@@ -161,7 +161,7 @@ function akce_sestava($akce,$par,$title,$vypis,$export=false) {
       }
       $tab.= "</tr>";
     }
-    $result->html= "<table class='stat'><tr>$ths</tr>$tab</table>";
+    $result->html= "OLD<table class='stat'><tr>$ths</tr>$tab</table>";
     $result->href= $href;
   }
   return $result;
