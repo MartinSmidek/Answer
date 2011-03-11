@@ -16,6 +16,7 @@ db/code/comp2tab.php -text
 db/db.akce.ema.ezer -text
 db/db.akce.ezer -text
 db/db.akce.lst.ezer -text
+db/db.akce.oso.ezer -text
 db/db.akce.tisk.ezer -text
 db/db.akce.ucast.ezer -text
 db/db.akce.vse.ezer -text

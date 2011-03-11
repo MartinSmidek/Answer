@@ -4,7 +4,7 @@
 # ================================================================================================== Tisk
 use info: form right [12,4,,] {
 #   var y:text
-  button [633,18,100,16] { title:'Excel', style:'display:block;zIndex:2',
+  button [-20,18,100,16] { title:'Excel', style:'display:block;zIndex:2',
     proc onclick() {
 #       [y.get];
 #       tisk.x.get;
