@@ -26,10 +26,12 @@ proc onstart() {
   lst.info.seznam.browse_focus;
 */
 }
+# ================================================================================================== OSOBY
+panel oso {type:'right', title:'Lidi', include:'onclick,db.akce.oso' }
 # ================================================================================================== VÝBĚR
-panel lst {type:'right', title:'Výběr akce', include:'onclick,db.akce.lst' }
+panel lst {type:'right', title:'Akce', include:'onclick,db.akce.lst' }
 # ================================================================================================== ÚČAST
-panel ucast {type:'plain', title:'Účastníci akce', include:'onclick,db.akce.ucast'
+panel ucast {type:'plain', title:'Účastníci', include:'onclick,db.akce.ucast'
   proc init_ucast() { }
 }
 # ================================================================================================== TISK
@@ -40,10 +42,10 @@ panel vse [,,,543] {type:'plain', title:'Všichni', include:'onclick,db.akce.vse
 panel ema [,,,543] {type:'right', title:'Maily', skill:'yam', include:'onclick,db.akce.ema' }
 # ================================================================================================== COMMON
 
-form right [,,700,50] {
-  label head [0,0,680,50]  { title:'' }
-  label msg  [0,45,680,20] { title:'' }
-  label note [0,65,680,550] { title:'' }
+form right [,,*,50] {
+  label head [0,0,*,50]  { title:'' }
+  label msg  [0,45,*,20] { title:'' }
+  label note [0,65,*,550] { title:'' }
   proc fill(x,y) {
     [ x; head.set(conc("<div class='CSection CMenu'><h3 class='CTitle'>",x,"</h3></div>")) ];
     [ y; note.set(y) ]
@@ -56,6 +58,22 @@ table _file_ {
   text fname
   text ftype
   text finfo
+}
+
+table $osoba { key_id:'id_osoba'
+  number id_osoba
+  text tab
+  number id
+  text prijmeni
+  text jmeno
+  text rodcis
+  date narozeni
+  text ulice
+  text psc
+  text obec
+  text telefon
+  text email
+  text info
 }
 
 table uakce { key_id:'id_uakce'

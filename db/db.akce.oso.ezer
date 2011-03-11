@@ -1,0 +1,47 @@
+# Systém Ans(w)er - modul Akce.oso - správa pohledu osoba
+# (c) 2011 Martin Šmídek <martin@smidek.eu>
+
+# ================================================================================================== VSICHNI
+  use os: form _osoby [4,0,,]
+  proc onstart() {
+    ask('query','SET group_concat_max_len=10000');
+    os.fill("Dostupné osobní informace");
+    os.osoby.browse_load;
+  }
+  # ------------------------------------------------------------------------------------------------ _osoby
+  form _osoby [,,200,50] { css:'ds_form'
+    proc fill(x) {
+      head.set(conc("<div class='CSection CMenu'><h3 class='CTitle'>",x,"</h3></div>"))
+    }
+    // hlavička
+    label head [0,0,818,50]  { title:'' }
+    label [0,40,820,465] { css:'ae_work'}
+    // osoby
+    view oy: table $osoba
+    browse osoby [8,50,200,447] { rows:22, qry_rows:2, optimize:°{qry:'noseek'}
+      show id_osoba {data:oy.id_osoba }
+      show [,,10,] {title:'?', data:oy.tab, format:'sq$' }
+      show [,,150,] {title:'jméno', expr:"CONCAT(oy.prijmeni,' ',oy.jmeno)",format:'q$s+'}
+      proc onrowclick() {
+        form.load(id_osoba.get);
+      }
+    }
+    // osoba
+    view oa: table $osoba
+    label          [240,50,100,] {title:'příjmení'}
+    field prijmeni [240,65,100,] {data:oa.prijmeni, help:'příjmení'}
+    label          [352,50,100,] {title:'jméno'}
+    field jmeno    [352,65,100,] {data:oa.jmeno}
+    label          [240,83,100,] {title:'ulice'}
+    field ulice    [240,98,126,] {data:oa.ulice}
+    label          [376,83,36,] {title:'psč'}
+    field psc      [376,98,36,] {data:oa.psc}
+    label          [423,83,100,] {title:'Město'}
+    field obec     [422,98,114,] {data:oa.obec}
+    label          [240,124,37,] {title:'telefon'}
+    field telefon  [281,123,525,] {data:oa.telefon}
+    label          [240,148,33,] {title:'e-mail'}
+    field email    [281,148,525,] {data:oa.email}
+    label          [240,166,33,] {title:'poznámka'}
+    edit info      [241,181,491,52] {data:oa.info}
+  }
