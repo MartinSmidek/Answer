@@ -21,7 +21,7 @@
     'ezer2/client/ezer_report.js',
     'ezer2/client/ezer_fdom2.js',
     'ezer2/client/app.js',
-    'ys/ys_fce.js',
+    'db/db_fce.js',
     'ds/fce.js'
   );
   $css= array(

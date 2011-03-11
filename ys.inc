@@ -50,7 +50,7 @@
     "ys/ys_fce.php",
     "ys/ys_ucet.php",
     "ys/ys_lide.php",
-    "ys/ys_akce.php",
+    "db/db_akce.php",
     "ds/ds_fce.php"
   );
 
