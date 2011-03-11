@@ -159,6 +159,7 @@ skins/colors.php -text
 sql/ms_mysql.PRG -text
 sql/ms_mysql.bat -text
 sql/mysql.bat -text
+sql/pohled_osoba.sql -text
 /test.inc -text
 /test.php -text
 wiki/dokumentace.wiki -text
