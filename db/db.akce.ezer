@@ -26,6 +26,8 @@ proc onstart() {
   lst.info.seznam.browse_focus;
 */
 }
+# ================================================================================================== CHLAPI
+panel chl {type:'right', title:'Chlapi', include:'onclick,db.akce.chl' }
 # ================================================================================================== OSOBY
 panel oso {type:'plain', title:'Lidi', include:'onclick,db.akce.oso' }
 # ================================================================================================== VÝBĚR
@@ -74,6 +76,21 @@ table $osoba { key_id:'id_osoba'
   text telefon
   text email
   text info
+}
+
+table chlapi { key_id:'id_chlapi'
+  number id_chlapi
+  text prijmeni
+  text jmeno
+  text rodcis
+  date narozeni
+  text ulice
+  text psc
+  text obec
+  text telefon
+  text email
+  number iniciace
+  text pozn
 }
 
 table uakce { key_id:'id_uakce'

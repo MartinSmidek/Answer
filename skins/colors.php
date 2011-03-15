@@ -3,7 +3,7 @@
 # jméno skinu je i jménem podsložky s obrázky pro CSS
 global $skin, $path, $c, $b, $ab, $c_appl,
   $c_menu, $b_menu, $c_main, $b_main,
-  $c_group, $b_group, $s_group, $c_item, $b_item, $fb_item, $fc_item, $s_item, $s2_item,
+  $c_group, $b_group, $s_group, $c_item, $b_item, $bd_item, $fb_item, $fc_item, $s_item, $s2_item,
   $b_brow, $b2_brow, $b3_brow, $b4_brow, $b5_brow, $b6_brow, $c_brow, $s1_brow, $s2_brow,
   $c_kuk, $c2_kuk, $b_kuk, $s_kuk, $b_doc_modul, $b_doc_menu, $b_doc_form;
 # c_=color, b_=background-color, a?_=aktivní, f?_=focus, s_=speciál
@@ -21,7 +21,7 @@ case 'ck': // --------------------------------------------------------- ck: barv
   $c_menu= $bila; $b_menu= $seda;
   $c_main= $zelena; $b_main= $seda;
   $c_group= $bila; $b_group= $nazelenala; $s_group= $seda;
-  $c_item= $seda; $b_item= $zelenkava; $fb_item= $oranzova; $fc_item= $bila;
+  $c_item= $seda; $b_item= $zelenkava; $bd_item= '#bbb'; $fb_item= $oranzova; $fc_item= $bila;
     $s_item= $s2_item= $seda;
 //   $b_brow= '#ccc'; $b2_brow= $lososova; $b3_brow= $bila; $b4_brow= $zelenkava;
   $b_brow= '#ccc'; $b2_brow= $bila; $b3_brow= $bila; $b4_brow= $nasedla;
@@ -47,7 +47,7 @@ case 'ch': // --------------------------------------------------------- ch: barv
   $c_menu= $bila; $b_menu= $seda;
   $c_main= $zelena; $b_main= $seda;
   $c_group= $bila; $b_group= $nazelenala; $s_group= $seda;
-  $c_item= $seda; $b_item= $zelenkava; $fb_item= $oranzova; $fc_item= $bila;
+  $c_item= $seda; $b_item= $zelenkava; $bd_item= '#bbb'; $fb_item= $oranzova; $fc_item= $bila;
     $s_item= $s2_item= $seda;
 //   $b_brow= '#ccc'; $b2_brow= $lososova; $b3_brow= $bila; $b4_brow= $zelenkava;
   $b_brow= '#ccc'; $b2_brow= $bila; $b3_brow= $bila; $b4_brow= $nasedla;
@@ -69,7 +69,7 @@ case 'default': // ---------------------------------------------------- default 
   $c_menu= 'navy'; $b_menu= $seda;
   $c_main= $cerna; $b_main= $bila;
   $c_group= $bila; $b_group= '#7389ae'; $s_group= '#5e708e';
-  $c_item= '#333'; $b_item= '#cde'; $fb_item= '#3e4043'; $fc_item= '#faec8f';
+  $c_item= '#333'; $b_item= '#cde'; $bd_item= '#ccc'; $fb_item= '#3e4043'; $fc_item= '#faec8f';
     $s_item= '#9ab'; $s2_item= '#303234';
   $b_brow= '#ccc'; $b2_brow= '#f2f8ff'; $b3_brow= '#E5E5E6'; $b4_brow= '#d1e4ff';
     $b5_brow= '#f0f0f0'; $b6_brow= '#f2f8ff'; $b7_brow= '#d1e4ff'; $b8_brow= '#effdf1';
