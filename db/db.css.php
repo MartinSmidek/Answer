@@ -4,7 +4,7 @@ session_start();
 $skin= $_SESSION['skin'] ? $_SESSION['skin'] : 'default';
 global $skin, $path, $c, $b, $ab, $c_appl,
   $c_menu, $b_menu, $c_main, $b_main,
-  $c_group, $b_group, $s_group, $c_item, $b_item, $fb_item, $fc_item, $s_item, $s2_item,
+  $c_group, $b_group, $s_group, $c_item, $b_item, $bd_item, $fb_item, $fc_item, $s_item, $s2_item,
   $b_brow, $b2_brow, $b3_brow, $b4_brow, $b5_brow, $b6_brow, $c_brow, $s1_brow, $s2_brow,
   $c_kuk, $c2_kuk, $b_kuk, $s_kuk, $b_doc_modul, $b_doc_menu, $b_doc_form,
   $b_parm, $b_work;

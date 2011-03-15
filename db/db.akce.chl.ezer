@@ -1,0 +1,97 @@
+# Systém Ans(w)er - modul Akce.ch - jednoduchá správa databáze chlapů
+# (c) 2011 Martin Šmídek <martin@smidek.eu>
+
+# ================================================================================================== CHLAPI
+use info: form _info [4,4,,]
+use ch: form _chlapi [4,35,,]
+var the_akce: number
+var the_akce_nazev: text
+proc onstart() {
+  ch.all.browse_load("iniciace!=0");
+  the_akce.set(0);
+}
+proc onfirstfocus() {
+  m.os.inic.click
+}
+menu m {type:'left'
+  menu {title:'Volba akce',type:'group'
+    item {title:'MROP - minulé iniciace', format:'d'  }
+    item {title:'MROP - přihlášky', par:°{id_akce:2} }
+    item {title:'GloTraCh - přihlášky', par:°{id_akce:2} }
+    item {title:'všechny akce - minulé', format:'d' }
+    item {title:'všechny akce - přihlášky', format:'d' }
+    proc onclick(i) {
+      the_akce.set(i.par.id_akce);
+      ch.get.display(0);
+      info.fill(conc(i.owner.title,' ',i.title),'Zatím registrováno přihlášek');
+      the_akce_nazev.set(i.title);
+    }
+  }
+  menu os {title:'Osobní údaje',type:'group'
+    item {title:'účastníků zvolené akce'
+      proc onclick(i) {
+        the_akce.get;
+        info.fill(conc('Seznam pro ',the_akce_nazev.get),' ');
+        ch.get.display(1);
+      | ch.get.display(0);
+        info.fill('Účastníci akce','Nebyla zvolena akce');
+      }
+    }
+    item inic {title:'všech iniciovaných chlapů' }
+    item {title:'všech známých chlapů', format:'d'  }
+    proc onclick(i) {
+      info.fill(conc(i.owner.title,' ',i.title),' ');
+      ch.get.display(1);
+    }
+  }
+}
+# -------------------------------------------------------------------------------------------------- _info
+# univerzální formulář pro levostranné menu
+form _info [,,*,50] { css:'ds_form'
+  label head [0,0,*,50]  { title:'' }
+  label note [0,35,,550] { title:'' }
+  proc fill(x,y) {
+    [ x; head.set(conc("<div class='CSection CMenu'><h3 class='CTitle' style='margin:0'>",
+        x,"</h3></div>")) ];
+    [ y; note.set(y) ]
+  }
+  proc append(x) { note.get; note.set(conc(note.get,'<br>',x)) | note.set(x) }
+}
+# -------------------------------------------------------------------------------------------------- _chlapi
+form _chlapi [,,*,50] { css:'ds_form'
+  label [0,0,*,465] { css:'ae_work'}
+  // osoby
+  view cs: table chlapi
+  browse all [8,10,200,447] { rows:23, qry_rows:1, optimize:°{qry:'noseek'}
+    show id_chlapi {data:cs.id_chlapi }
+    show [,,15,] {title:'?', expr:"'C'", format:'sq*', help:"značka databáze" }
+    show [,,120,] {title:'jméno', expr:"CONCAT(cs.prijmeni,' ',cs.jmeno)", format:'q*s',
+                  help:"příjmení a jméno" }
+    show [,,45,] {title:'mrop', data:cs.iniciace, format:'rs+q', help:"rok iniciace"}
+    proc onrowclick() {
+      form.load(id_chlapi.get);
+    }
+  }
+  // osoba
+  const L=240
+  const F=10
+  view c: table chlapi
+  label          [L+0,F+0,100,] {title:'příjmení'}
+  field prijmeni [L+0,F+15,100,] {data:c.prijmeni, help:'příjmení'}
+  label          [L+112,F+0,100,] {title:'jméno'}
+  field jmeno    [L+112,F+15,100,] {data:c.jmeno}
+  label          [L+318,F+0,35,] {title:'MROP'}
+  field iniciace [L+318,F+15,36,] {data:c.iniciace}
+  label          [L+0,F+39,100,] {title:'ulice'}
+  field ulice    [L+0,F+54,162,] {data:c.ulice}
+  label          [L+175,F+39,36,] {title:'psč'}
+  field psc      [L+175,F+54,36,] {data:c.psc}
+  label          [L+225,F+39,100,] {title:'obec'}
+  field obec     [L+224,F+54,131,] {data:c.obec}
+  label          [L+0,F+79,37,] {title:'telefon'}
+  field telefon  [L+0,F+95,357,] {data:c.telefon}
+  label          [L+0,F+123,33,] {title:'e-mail'}
+  field email    [L+0,F+139,357,] {data:c.email}
+  label          [L+0,F+164,33,] {title:'poznámka'}
+  edit pozn      [L+0,F+179,357,52] {data:c.pozn}
+}
