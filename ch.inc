@@ -23,7 +23,7 @@
   $path_pspad= array(null,"C:/Program Files (x86)/PSPad editor/Syntax");
   // ostatní parametry
   $tracking= '_track';
-  $tracked= ',clen,dar,ka,davka,_user,';
+  $tracked= ',chlapi,_user,';
   root_inc($db,$dbs,$tracking,$tracked,$path_root,$path_pspad);
 
   // PARAMETRY SPECIFICKÉ PRO APLIKACI

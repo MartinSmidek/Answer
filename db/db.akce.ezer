@@ -90,6 +90,17 @@ table _user { key_id:'id_user', db:'ezer_system'
   number zmena_kdo,
   date zmena_kdy {  },
 }
+table _track { key_id:'id_track'
+  number id_track { key:'primary' },
+  date kdy { help:'datum změny' },
+  text kdo { help:'pachatel' },
+  text kde { help:'tabulka' },
+  number klic { help:'klíč' },
+  text fld { help:'položka' },
+  text op { help:'operace' },
+  text old { help:'původní hodnota' },
+  text val { help:'původní hodnota' },
+}
 # ------------------------------------------------------------------ chlapi
 table chlapi { key_id:'id_chlapi'
   number id_chlapi
