@@ -53,7 +53,7 @@ form right [,,*,50] {
     [ y; note.set(y) ]
   }
 }
-
+# ------------------------------------------------------------------ obecné tabulky
 table _file_ {
   text fid
   date fdate
@@ -61,7 +61,65 @@ table _file_ {
   text ftype
   text finfo
 }
+table _cis { key_id:'id_cis'
+  number id_cis
+  text druh,
+  text data,
+  text zkratka,
+  number poradi,
+  text hodnota,
+  text popis,
+  text barva,
+}
+table _user { key_id:'id_user', db:'ezer_system'
+  number id_user
+  text deleted,
+  text abbr,
+  text skills,
+  text options { help:'privátní nastavení|ve formátu JSON' }
+  text username,
+  text password,
+  number state,
+  text forename,
+  text surname,
+  text login,
+  text history,
+  text sess_id,
+  text sess_time,
+  text sess_data,
+  number zmena_kdo,
+  date zmena_kdy {  },
+}
+# ------------------------------------------------------------------ chlapi
+table chlapi { key_id:'id_chlapi'
+  number id_chlapi
+  text prijmeni
+  text jmeno
+  text rodcis
+  date narozeni
+  text ulice
+  text psc
+  text obec
+  text telefon
+  text email
+  number iniciace
+  text pozn
+}
+table ch_ucast { key_id:'id_ucast'
+  number id_ucast
+  number id_chlapi
+  number id_akce
+  number stupen   { help:"vztah k akci" }
+}
+table ch_akce { key_id:'id_akce'
+  number id_akce
+  text nazev
+  date datum_od
+  date datum_do
+}
+map akce_ucast: table _cis {where:"druh='akce_ucast'", order:'poradi', key_id:'data'}
 
+# ------------------------------------------------------------------ pohledy
 table $osoba { key_id:'id_osoba'
   number id_osoba
   text tab
@@ -77,22 +135,7 @@ table $osoba { key_id:'id_osoba'
   text email
   text info
 }
-
-table chlapi { key_id:'id_chlapi'
-  number id_chlapi
-  text prijmeni
-  text jmeno
-  text rodcis
-  date narozeni
-  text ulice
-  text psc
-  text obec
-  text telefon
-  text email
-  number iniciace
-  text pozn
-}
-
+# ------------------------------------------------------------------ Sey
 table uakce { key_id:'id_uakce'
   number id_uakce
   number id_akce
@@ -106,17 +149,6 @@ table uakce { key_id:'id_uakce'
   number osob
   number typ
   text kapitola
-}
-
-table _cis { key_id:'id_cis'
-  number id_cis
-  text druh,
-  text data,
-  text zkratka,
-  number poradi,
-  text hodnota,
-  text popis,
-  text barva,
 }
 
 table du_kurs { key_id:'id_dukurs'
@@ -338,26 +370,6 @@ table dopis { key_id:'id_dopis'
   text post_vars { help:'seznam proměnných počítaných po generování'}
   text nest_list { help:'seznam složek (druh=N)'}
   text add_list
-}
-
-table _user { key_id:'id_user', db:'ezer_system'
-  number id_user
-  text deleted,
-  text abbr,
-  text skills,
-  text options { help:'privátní nastavení|ve formátu JSON' }
-  text username,
-  text password,
-  number state,
-  text forename,
-  text surname,
-  text login,
-  text history,
-  text sess_id,
-  text sess_time,
-  text sess_data,
-  number zmena_kdo,
-  date zmena_kdy {  },
 }
 
 map ms_akce_clen:     table _cis {where:"druh='ms_akce_clen'",     order:'poradi', key_id:'data'}
