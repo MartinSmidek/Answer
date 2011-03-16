@@ -15,33 +15,62 @@ form _osoby [,,20,50] { css:'ds_form'
   }
   // hlavička
   label head [0,0,818,50]  { title:'' }
-  label [0,40,820,465] { css:'ae_work'}
+  label [0,40,818,445] { css:'ae_work'}
   // osoby
   view oy: table $osoba
-  browse osoby [8,50,200,447] { rows:22, qry_rows:2, optimize:°{qry:'noseek'}
+  browse osoby [8,50,200,447] { rows:22, qry_rows:1, optimize:°{qry:'noseek'}
     show id_osoba {data:oy.id_osoba }
-    show [,,10,] {title:'?', data:oy.tab, format:'sq$' }
-    show [,,150,] {title:'jméno', expr:"CONCAT(oy.prijmeni,' ',oy.jmeno)",format:'q$s+'}
+    show [,,15,] {title:'?', data:oy.tab, format:'sq$' }
+    show [,,150,] {title:'jméno', expr:"CONCAT(oy.prijmeni,' ',oy.jmeno)",format:'q*s+'}
+    show [,,120,] {title:'ulice', data:oy.ulice, format:'q$s'}
+    show [,,100,] {title:'obec', data:oy.obec, format:'q$s'}
     proc onrowclick() {
       form.load(id_osoba.get);
     }
   }
   // osoba
-  view oa: table $osoba
-  label          [240,50,100,] {title:'příjmení'}
-  field prijmeni [240,65,100,] {data:oa.prijmeni, help:'příjmení'}
-  label          [352,50,100,] {title:'jméno'}
-  field jmeno    [352,65,100,] {data:oa.jmeno}
-  label          [240,83,100,] {title:'ulice'}
-  field ulice    [240,98,126,] {data:oa.ulice}
-  label          [376,83,36,] {title:'psč'}
-  field psc      [376,98,36,] {data:oa.psc}
-  label          [423,83,100,] {title:'Město'}
-  field obec     [422,98,114,] {data:oa.obec}
-  label          [240,124,37,] {title:'telefon'}
-  field telefon  [281,123,525,] {data:oa.telefon}
-  label          [240,148,33,] {title:'e-mail'}
-  field email    [281,148,525,] {data:oa.email}
-  label          [240,166,33,] {title:'poznámka'}
-  edit info      [241,181,491,52] {data:oa.info}
+  view c: table $osoba
+
+  # --------------------------------------------------  OSOBA
+  const L=440
+  const T=50
+  label  [L+0,T+9,367,296] { css:'ae_part' }
+  label  [L+8,T+0,74,] { title:'osobní údaje', css:'ae_part_label' }
+  label          [L+5,T+15,100,] {title:'příjmení'}
+  field prijmeni [L+5,T+30,100,] {data:c.prijmeni, help:'příjmení'}
+  label          [L+117,T+15,100,] {title:'jméno'}
+  field jmeno    [L+117,T+30,100,] {data:c.jmeno}
+#   label          [L+323,T+15,35,] {title:'MROP'}
+#   field iniciace [L+323,T+30,36,] {data:c.iniciace, format:'r:e'}
+  label          [L+5,T+54,100,] {title:'ulice'}
+  field ulice    [L+5,T+69,162,] {data:c.ulice}
+  label          [L+180,T+54,36,] {title:'psč'}
+  field psc      [L+180,T+69,36,] {data:c.psc}
+  label          [L+230,T+54,100,] {title:'obec'}
+  field obec     [L+229,T+69,131,] {data:c.obec}
+  label          [L+5,T+94,37,] {title:'telefon'}
+  field telefon  [L+5,T+110,357,] {data:c.telefon}
+  label          [L+5,T+138,33,] {title:'e-mail'}
+  field email    [L+5,T+154,357,] {data:c.email}
+  label          [L+5,T+179,33,] {title:'poznámka'}
+  edit pozn      [L+5,T+194,357,107] {data:c.info}
+
+#
+#
+#   label          [240,50,100,] {title:'příjmení'}
+#   field prijmeni [240,65,100,] {data:oa.prijmeni, help:'příjmení'}
+#   label          [352,50,100,] {title:'jméno'}
+#   field jmeno    [352,65,100,] {data:oa.jmeno}
+#   label          [240,83,100,] {title:'ulice'}
+#   field ulice    [240,98,126,] {data:oa.ulice}
+#   label          [376,83,36,] {title:'psč'}
+#   field psc      [376,98,36,] {data:oa.psc}
+#   label          [423,83,100,] {title:'Město'}
+#   field obec     [422,98,114,] {data:oa.obec}
+#   label          [240,124,37,] {title:'telefon'}
+#   field telefon  [281,123,525,] {data:oa.telefon}
+#   label          [240,148,33,] {title:'e-mail'}
+#   field email    [281,148,525,] {data:oa.email}
+#   label          [240,166,33,] {title:'poznámka'}
+#   edit info      [241,181,491,52] {data:oa.info}
 }

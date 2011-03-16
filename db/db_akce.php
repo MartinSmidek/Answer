@@ -262,7 +262,81 @@ function akce_strava_denne_save($id_kurs,$dnu,$cela,$cela_def,$cela_str,$polo,$p
                                                 display("akce_strava_denne_save(($id_kurs,$dnu,$cela,$cela_def,$polo,$polo_def) $set");
   return 1;
 }
+# ================================================================================================== CHLAPI AKCE
+# funkce pro kartu CHLAPI
+# -------------------------------------------------------------------------------------------------- akce_auto_jmena
+# souhrn akce
+function chlapi_akce_prehled($id_akce) {  #trace();
+  $html= '';
+  $tab= '';
+  $n= 0;
+  $qry= "SELECT zkratka AS _x, count(*) AS _n
+         FROM ch_ucast
+         JOIN chlapi USING(id_chlapi)
+         JOIN _cis ON druh='akce_ucast' AND data=stupen
+         WHERE id_akce='$id_akce'
+         GROUP BY stupen";
+  $res= mysql_qry($qry);
+  while ( $res && $a= mysql_fetch_object($res) ) {
+    $n+= $a->_n;
+    $tab.= "<tr><td>{$a->_x}</td><td>{$a->_n}</td></tr>";
+  }
+  $html.= "Celkem $n účastníků, z toho:</b>";
+  $html.= "<table>$tab</table>";
+  return $html;
+}
 # ================================================================================================== PRIDEJ JMENEM
+# funkce pro spolupráci se select
+# -------------------------------------------------------------------------------------------------- chlapi_auto_jmena
+# kontrola, zda chlap ještě na akci není
+function chlapi_auto_not_yet($id_akce,$id_chlapi) {
+  $qry= "SELECT count(*) AS _pocet
+         FROM ch_ucast
+         WHERE id_akce='$id_akce' AND id_chlapi='$id_chlapi' ";
+  $res= mysql_qry($qry);
+  $t= mysql_fetch_object($res);
+  return $t->_pocet ? 0 : 1;
+}
+# -------------------------------------------------------------------------------------------------- chlapi_auto_jmena
+# SELECT autocomplete - výběr z akcí
+function chlapi_auto_jmena($patt) {  #trace();
+  $a= array();
+  $limit= 20;
+  $n= 0;
+  // rodiče
+  $qry= "SELECT id_chlapi AS _key,CONCAT(prijmeni,' ',jmeno) AS _value
+         FROM chlapi
+         WHERE prijmeni LIKE '$patt%' ORDER BY prijmeni,jmeno LIMIT $limit";
+  $res= mysql_qry($qry);
+  while ( $res && $t= mysql_fetch_object($res) ) {
+    if ( ++$n==$limit ) break;
+    $key= $t->_key;
+    $a[$key]= $t->_value;
+  }
+  // obecné položky
+  if ( !$n )
+    $a[0]= "... žádné jméno nezačíná '$patt'";
+  elseif ( $n==$limit )
+    $a[-999999]= "... a další";
+//                                                                 debug($a,$patt);
+  return $a;
+}
+# -------------------------------------------------------------------------------------------------- chlapi_auto_jmenovci
+# formátování autocomplete
+function chlapi_auto_jmenovci($id_pary) {  #trace();
+  $a= array();
+  // páry na akci
+  $qry= "SELECT * FROM chlapi WHERE id_chlapi=$id_pary ORDER BY prijmeni";
+  $res= mysql_qry($qry);
+  while ( $res && $p= mysql_fetch_object($res) ) {
+    $nazev= "{$p->prijmeni} {$p->jmeno}, {$p->obec} ({$p->id_chlapi})";
+    $a[]= (object)array('id_chlapi'=>$p->id_chlapi,'nazev'=>$nazev);
+  }
+//                                                                 debug($a,$id_chlapi);
+  return $a;
+}
+# ================================================================================================== PRIDEJ JMENEM
+# funkce pro spolupráci se select
 # -------------------------------------------------------------------------------------------------- akce_auto_jmena
 # SELECT autocomplete - výběr z akcí
 function akce_auto_jmena($patt) {  #trace();

@@ -21,7 +21,7 @@ case 'ck': // --------------------------------------------------------- ck: barv
   $c_menu= $bila; $b_menu= $seda;
   $c_main= $zelena; $b_main= $seda;
   $c_group= $bila; $b_group= $nazelenala; $s_group= $seda;
-  $c_item= $seda; $b_item= $zelenkava; $bd_item= '#bbb'; $fb_item= $oranzova; $fc_item= $bila;
+  $c_item= $seda; $b_item= $zelenkava; $bd_item= '#ddd'; $fb_item= $oranzova; $fc_item= $bila;
     $s_item= $s2_item= $seda;
 //   $b_brow= '#ccc'; $b2_brow= $lososova; $b3_brow= $bila; $b4_brow= $zelenkava;
   $b_brow= '#ccc'; $b2_brow= $bila; $b3_brow= $bila; $b4_brow= $nasedla;
@@ -30,7 +30,7 @@ case 'ck': // --------------------------------------------------------- ck: barv
   $c_kuk= $zelena; $c2_kuk= $bila; $c3_kuk= $cerna; $b_kuk= $oranzova; $s_kuk= $oranzova;
   $b_warn= $s_kuk; $c_warn= '#000000';
   $b_doc_modul= $oranzova; $b_doc_menu= $zelena; $b_doc_form= $zelena;
-  $b_parm= $oranzova; $b_work= $zelenkava;
+  $b_parm= $oranzova; $b_part= $zelenkava; $b_work= $zelenkava;
   // úpravy ezer.css.php
   $w_right= 750;        // šířka panel.right
   break;
@@ -47,7 +47,7 @@ case 'ch': // --------------------------------------------------------- ch: barv
   $c_menu= $bila; $b_menu= $seda;
   $c_main= $zelena; $b_main= $seda;
   $c_group= $bila; $b_group= $nazelenala; $s_group= $seda;
-  $c_item= $seda; $b_item= $zelenkava; $bd_item= '#bbb'; $fb_item= $oranzova; $fc_item= $bila;
+  $c_item= $seda; $b_item= $zelenkava; $bd_item= '#ddd'; $fb_item= $oranzova; $fc_item= $bila;
     $s_item= $s2_item= $seda;
 //   $b_brow= '#ccc'; $b2_brow= $lososova; $b3_brow= $bila; $b4_brow= $zelenkava;
   $b_brow= '#ccc'; $b2_brow= $bila; $b3_brow= $bila; $b4_brow= $nasedla;
@@ -56,7 +56,7 @@ case 'ch': // --------------------------------------------------------- ch: barv
   $c_kuk= $zelena; $c2_kuk= $bila; $c3_kuk= $cerna; $b_kuk= $oranzova; $s_kuk= $oranzova;
   $b_warn= $s_kuk; $c_warn= '#000000';
   $b_doc_modul= $oranzova; $b_doc_menu= $zelena; $b_doc_form= $zelena;
-  $b_parm= $oranzova; $b_work= $zelenkava;
+  $b_parm= $oranzova; $b_part= $zelenkava; $b_work= $zelenkava;
   // úpravy ezer.css.php
   $w_right= 750;        // šířka panel.right
   break;
@@ -77,7 +77,7 @@ case 'default': // ---------------------------------------------------- default 
   $c_kuk= 'navy'; $c2_kuk= $c_kuk; $b_kuk= '#fb6'; $s_kuk= '#FBC84F';
   $b_warn= $s_kuk; $c_warn= '#000000';
   $b_doc_modul= '#c17878'; $b_doc_menu= '#7389ae'; $b_doc_form= '#80a2cf';
-  $b_parm= '#ffeed6'; $b_work= '#93b3de';
+  $b_parm= '#ffeed6'; $b_part= '#93b3de'; $b_work= '#93b3de';
   break;
 }
 ?>

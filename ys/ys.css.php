@@ -14,8 +14,8 @@ require_once("../skins/colors.php");
 
 echo <<<__EOD
 /* úpravy standardu */
-/*.BrowseSmart td.BrowseQry input {
-  background-color:#effdf1; }*/
+.BrowseSmart td.BrowseQry input {
+  background-color:#effdf1; }
 .SelectDrop li {
   white-space:normal !important; }
 .Label, .Check {
@@ -50,16 +50,10 @@ echo <<<__EOD
 .ae_work        {
   background-color:$b_work; z-index:0; /*behavior:url(ck/border-radius-ie8.htc);*/
   -moz-border-radius:5px; -webkit-border-radius:5px; -khtml-border-radius:5px; }
-.ae_part        {
-  background-color:$b_part; border:1px solid $s1_brow; z-index:0;  /*behavior:url(ck/border-radius-ie8.htc);*/
-  /*-moz-border-radius:5px; -webkit-border-radius:5px; -khtml-border-radius:5px;*/  }
-.ae_part_label {
-  background-color:$b_part; color:$s1_brow; padding:0 5px; z-index:0; }
 .ae_parm        {
   background-color:$b_parm; border:1px solid #f5f5f5; z-index:0;  /*behavior:url(ck/border-radius-ie8.htc);*/
   -moz-border-radius:5px; -webkit-border-radius:5px; -khtml-border-radius:5px;  }
 /* barvení řádků browse */
-.nakursu        { background-color:#dfa66f !important; }
 .fis_red        { background-color:#933; }
 .kas_1          { background-color:#ff6 !important; }
 .dar_1          { background-color:#fbb !important; }
@@ -93,8 +87,7 @@ table.dary      { width:200px; }
 .fis_kat        { font-family:Courier; font-weight:bold; }
 .button_small   { width:20px; height:20px; font-size:x-small; }
 /* = = = = = = = = = = = = = = = = = = = = = = statistika */
-div.stat        { padding-right:15px; }
-table.stat      { border-collapse:collapse; font-size:8pt; width:100%; }
+table.stat      { border-collapse:collapse; font-size:8pt; width:690px; }
 .stat td        { border:1px solid #777; background-color:#fff; padding:0 3px;}
 .stat th        { border:1px solid #777; background-color:$b_item; }
 .stat dt        { margin:10px 0 0 0; }

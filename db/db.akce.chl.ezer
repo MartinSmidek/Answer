@@ -2,46 +2,52 @@
 # (c) 2011 Martin Šmídek <martin@smidek.eu>
 
 # ================================================================================================== CHLAPI
-use info: form _info [4,4,,]
-use ch: form _chlapi [4,35,,]
+use info: form _info [10,10,,]
+use chs: form _chlapi [10,40,,]
+use ch: form _chlap [10,40,,]
 var the_akce: number
 var the_akce_nazev: text
 proc onstart() {
-  ch.all.browse_load("iniciace!=0");
-  the_akce.set(0);
+  chs.reset('mrop'); ch.reset('mrop');
+  chs.reload(0);
 }
 proc onfirstfocus() {
-  m.os.inic.click
+#   m.g.i.click; m.os.a.click;
+  m.os.inic.click;
 }
 menu m {type:'left'
-  menu {title:'Volba akce',type:'group'
-    item {title:'MROP - minulé iniciace', format:'d'  }
+  menu g {title:'Volba akce',type:'group'
+#     item {title:'MROP - minulé iniciace', format:'d'  }
     item {title:'MROP - přihlášky', par:°{id_akce:2} }
-    item {title:'GloTraCh - přihlášky', par:°{id_akce:2} }
+    item i {title:'GloTraCh - přihlášky', par:°{id_akce:1} }
     item {title:'všechny akce - minulé', format:'d' }
     item {title:'všechny akce - přihlášky', format:'d' }
     proc onclick(i) {
       the_akce.set(i.par.id_akce);
-      ch.get.display(0);
-      info.fill(conc(i.owner.title,' ',i.title),'Zatím registrováno přihlášek');
+      ch.get.display(0); chs.get.display(0);
+      info.fill(conc(i.owner.title,' ',i.title),ask('chlapi_akce_prehled',the_akce.get));
       the_akce_nazev.set(i.title);
     }
   }
   menu os {title:'Osobní údaje',type:'group'
-    item {title:'účastníků zvolené akce'
+    item a {title:'účastníků zvolené akce'
       proc onclick(i) {
+        chs.reset('akce'); ch.reset('akce');
         the_akce.get;
         info.fill(conc('Seznam pro ',the_akce_nazev.get),' ');
-        ch.get.display(1);
-      | ch.get.display(0);
+        ch.get.display(1); chs.get.display(1);
+        [ chs.reload(0) ]
+      | ch.get.display(0); chs.get.display(0);
         info.fill('Účastníci akce','Nebyla zvolena akce');
       }
     }
     item inic {title:'všech iniciovaných chlapů' }
     item {title:'všech známých chlapů', format:'d'  }
     proc onclick(i) {
+      chs.reset('mrop'); ch.reset('mrop');
       info.fill(conc(i.owner.title,' ',i.title),' ');
-      ch.get.display(1);
+      ch.get.display(1); chs.get.display(1);
+      chs.reload(0);
     }
   }
 }
@@ -58,40 +64,211 @@ form _info [,,*,50] { css:'ds_form'
   proc append(x) { note.get; note.set(conc(note.get,'<br>',x)) | note.set(x) }
 }
 # -------------------------------------------------------------------------------------------------- _chlapi
-form _chlapi [,,*,50] { css:'ds_form'
-  label [0,0,*,465] { css:'ae_work'}
+form _chlapi [,,*,50] {
+  var mode: text        // mrop|akce
+  // funkce
+  proc reset(m) {
+    mode.set(m);
+    eq(mode.get,'mrop');
+    mrop.display(1); all.display(0);
+  | mrop.display(0); all.display(1);
+  }
+  proc reload(id) {
+    eq(mode.get,'mrop');
+    [ mrop.browse_load("cc.iniciace!=0",'iniciace,id_chlapi');
+      mrop.browse_focus;
+      { id; mrop.raise('onrowclick',id)
+      | mrop.raise('onrowclick') } ]
+  | [ all.browse_load(conc("us.id_akce=",the_akce.get));
+      all.browse_focus;
+      { id; all.raise('onrowclick',id)
+      | all.raise('onrowclick') } ]
+  }
+  proc reload_row() {
+    eq(mode.get,'mrop'); chs.mrop.browse_row | chs.all.browse_row
+  }
+  # --------------------------------------------------  OSOBY
   // osoby
-  view cs: table chlapi
+  view cc: table chlapi
+  browse mrop [8,10,200,447] { rows:23, qry_rows:1, optimize:°{qry:'noseek'}
+    show id_chlapi {data:cc.id_chlapi }
+    show [,,136,] {title:'jméno', expr:"CONCAT(cc.prijmeni,' ',cc.jmeno)", format:'q*s',
+                  help:"příjmení a jméno" }
+    show [,,45,] {title:'mrop', data:cc.iniciace, format:'rs+q', help:"rok iniciace"}
+    proc onrowclick() {
+      ch.c.load(id_chlapi.get);
+      ch.c.key(id_chlapi.get);
+    }
+  }
+  # --------------------------------------------------  OSOBY NA AKCI
+  // osoby
+  view us: table ch_ucast
+  view cs: table chlapi { join:'USING(id_chlapi)' }
   browse all [8,10,200,447] { rows:23, qry_rows:1, optimize:°{qry:'noseek'}
+    show id_ucast {data:us.id_ucast }
+    show id_akce {data:us.id_akce }
     show id_chlapi {data:cs.id_chlapi }
-    show [,,15,] {title:'?', expr:"'C'", format:'sq*', help:"značka databáze" }
+    show stupen {data:us.stupen }
+    show [,,15,] {title:'?', data:us.stupen, format:'sq*', map_pipe:akce_ucast.ikona }
     show [,,120,] {title:'jméno', expr:"CONCAT(cs.prijmeni,' ',cs.jmeno)", format:'q*s',
                   help:"příjmení a jméno" }
     show [,,45,] {title:'mrop', data:cs.iniciace, format:'rs+q', help:"rok iniciace"}
     proc onrowclick() {
-      form.load(id_chlapi.get);
+      ch.load(id_ucast.get);
+      ch.c.key(id_chlapi.get);
+      ch.u.key(id_ucast.get);
     }
   }
-  // osoba
+}
+# -------------------------------------------------------------------------------------------------- _chlap
+form _chlap [,,*,50] {
+  var mode: text        // mrop|akce
+  // funkce
+  proc reset(m) {
+    mode.set(m);
+    eq(mode.get,'mrop');
+    form.display(0,'akce');
+  | form.display(1,'akce');
+  }
+  # --------------------------------------------------  data
+  view u: table ch_ucast
+  view a: table ch_akce { join:'USING(id_akce)' }
+  view c: table chlapi { join:'USING(id_chlapi)' }
+  field id_ucast { data:u.id_ucast }
+  field id_akce { data:a.id_akce }
+  field nazev { data:a.nazev }
+  field id_chlapi { data:c.id_chlapi }
+  # --------------------------------------------------  VZTAH k AKCI pro mode='akce'
+  const Lu=240
+  const Tu=270
+  label  [Lu+0,Tu+9,222,30] { tag:'akce', css:'ae_part' }
+  label  [Lu+9,Tu+0,77,] { tag:'akce', title:'způsob účasti', css:'ae_part_label' }
+  select stupen [Lu+5,Tu+15,98,] { tag:'akce', type:'map', data:u.stupen, options:akce_ucast.zkratka }
+  button [Lu+108,Tu+13,,] { tag:'akce', title:'Vyřadit z této akce',
+      help:'Vyřazení účastníka z účasti na této akci'
+    proc onclick() {
+      confirm('Opravdu vyřadit ',prijmeni.get,' ',jmeno.get,' z akce ',nazev.get,'?');
+      ch_ucast.delete_record(conc('id_ucast=',id_ucast.get));
+      chs.reload(0);
+  } }
+  # --------------------------------------------------  PŘIDÁVÁNÍ Z JINÝCH ZDROJŮ pro mode='akce'
+  label  [Lu+241,Tu+8,109,70] { tag:'akce', css:'ae_parm' }
+  button [Lu+247,Tu+13,,] { tag:'akce', title:'Přidat z MROP',
+      help:'Nalezení účastníka podle jména a přidání na akci'
+    proc onclick() {
+      PridaniJmenem.modal(240,50)
+  } }
+  button [Lu+247,Tu+44,,] { tag:'akce', title:'Přidat z MS', format:'d',
+      help:'Nalezení účastníka podle jména a přidání na akci' }
+  # --------------------------------------------------  OSOBA
   const L=240
-  const F=10
-  view c: table chlapi
-  label          [L+0,F+0,100,] {title:'příjmení'}
-  field prijmeni [L+0,F+15,100,] {data:c.prijmeni, help:'příjmení'}
-  label          [L+112,F+0,100,] {title:'jméno'}
-  field jmeno    [L+112,F+15,100,] {data:c.jmeno}
-  label          [L+318,F+0,35,] {title:'MROP'}
-  field iniciace [L+318,F+15,36,] {data:c.iniciace}
-  label          [L+0,F+39,100,] {title:'ulice'}
-  field ulice    [L+0,F+54,162,] {data:c.ulice}
-  label          [L+175,F+39,36,] {title:'psč'}
-  field psc      [L+175,F+54,36,] {data:c.psc}
-  label          [L+225,F+39,100,] {title:'obec'}
-  field obec     [L+224,F+54,131,] {data:c.obec}
-  label          [L+0,F+79,37,] {title:'telefon'}
-  field telefon  [L+0,F+95,357,] {data:c.telefon}
-  label          [L+0,F+123,33,] {title:'e-mail'}
-  field email    [L+0,F+139,357,] {data:c.email}
-  label          [L+0,F+164,33,] {title:'poznámka'}
-  edit pozn      [L+0,F+179,357,52] {data:c.pozn}
+  const T=10
+  label  [L+0,T+9,367,241] { css:'ae_part' }
+  label  [L+8,T+0,74,] { title:'osobní údaje', css:'ae_part_label' }
+  label          [L+5,T+15,100,] {title:'příjmení'}
+  field prijmeni [L+5,T+30,100,] {data:c.prijmeni, help:'příjmení'}
+  label          [L+117,T+15,100,] {title:'jméno'}
+  field jmeno    [L+117,T+30,100,] {data:c.jmeno}
+  label          [L+323,T+15,35,] {title:'MROP'}
+  field iniciace [L+323,T+30,36,] {data:c.iniciace, format:'r:e'}
+  label          [L+5,T+54,100,] {title:'ulice'}
+  field ulice    [L+5,T+69,162,] {data:c.ulice}
+  label          [L+180,T+54,36,] {title:'psč'}
+  field psc      [L+180,T+69,36,] {data:c.psc}
+  label          [L+230,T+54,100,] {title:'obec'}
+  field obec     [L+229,T+69,131,] {data:c.obec}
+  label          [L+5,T+94,37,] {title:'telefon'}
+  field telefon  [L+5,T+110,357,] {data:c.telefon}
+  label          [L+5,T+138,33,] {title:'e-mail'}
+  field email    [L+5,T+154,357,] {data:c.email}
+  label          [L+5,T+179,33,] {title:'poznámka'}
+  edit pozn      [L+5,T+194,357,52] {data:c.pozn}
+  # --------------------------------------------------  TLAČÍTKA
+  const Lt=240
+  const Tt=320
+  // - opravy
+  label  [Lt+0,Tt+0,98,30] { css:'ae_parm' }
+  button [Lt+6,Tt+5,,] {title:'Uložit', help:'Uložení změněných osobních údajů'
+    proc onclick() {
+      var zmena_browse: number
+      c.key;
+      // oprava
+      [ c.save; c.load ];
+      [ eq(mode.get,'akce'); u.save; u.load ];
+      chs.reload_row()
+    | // přidání
+      c.insert;
+      [ eq(mode.get,'akce'); ch_ucast.insert_record(
+        object('id_akce',the_akce.get,'id_chlapi',c.key,'stupen',stupen.key)) ];
+      chs.reload(c.key);
+  }}
+  button [Lt+55,Tt+5,,] {title:'Zpět', help:'Změny nebudou uloženy'
+    proc onclick() {
+      chs.reload(0);
+  }}
+  # --------------------------------------------------  VYTVÁŘENÍ A MAZÁNÍ
+  label  [Lt+114,Tt+0,109,30] { css:'ae_parm' }
+  button [Lt+119,Tt+5,,] {title:'Nový', help:'Založení nového účastníka'
+    proc onclick() {
+      form.init(1); chs.all.blur(1);
+      prijmeni.change; jmeno.change; ulice.change; psc.change; obec.change;
+      stupen.key(1); stupen.change; id_akce.set(the_akce.get); id_akce.change;
+      c.key(0); u.key(0);
+  } }
+  button [Lt+162,Tt+5,,] {title:'Vymazat', help:'Vymazání osobních informací z evidence'
+    proc onclick() {
+      confirm('Opravdu vyřadit ',prijmeni.get,' ',jmeno.get,' z databáze?');
+      alert('zatím nerealizováno');
+#       ms_kurs.delete_record(conc('id_kurs=',key_kurs.get));
+#       ms_pary.delete_record(conc('id_pary=',key_pary.get));
+#       reload(0);
+  } }
+}
+# ================================================================================================== Přidání jménem
+var pall: object
+proc ucast_add(p,i) {  // používají panely PridatJmenem a PridatAkce
+  p.chck.get;
+  pall.set(p.all.get);
+  { ask('chlapi_auto_not_yet',the_akce.get,pall.get('id_chlapi'));
+    ch_ucast.insert_record(
+      object('id_akce',the_akce.get,'id_chlapi',pall.get('id_chlapi'),'stupen',1));
+  | warning(pall.get('nazev'),' už na akci je') }
+}
+panel PridaniJmenem [,,320,280] {type:'popup', title:'Přidání známých osob jménem'
+  use fl: form _fl [12,10,,]
+  form _fl [,,300,200] {
+    var last: number
+    var rod: object
+    var popis: text
+    button [0,250,50,16] { title:'přidat do účastníků', proc onclick() {
+      each(L,ucast_add); chs.reload(0);
+    } }
+    button [130,250,50,16] { title:'jiná jména', proc onclick() {
+      jmena.init; vse.init; L.init } }
+    button [220,250,50,16] { title:'konec', proc onclick() {
+      jmena.init; vse.init; L.init; panel.hide(0) } }
+    // výběr z databáze chlapů
+    select jmena [100,0,200,17] { type:'auto', par:°{fce:'chlapi_auto_jmena'}, format:'t'
+      proc onchanged() {
+        rod.set(ask('chlapi_auto_jmenovci',this.key));
+        each(rod.get,jmenovci); // nesmí volat asynchronní operace
+      }
+    }
+    proc jmenovci(p,i) {
+      last.set(L.add);
+      popis.set(p.nazev);
+      L.part(last.get).part('info').set(popis.get);
+      L.part(last.get).part('all').set(p);
+    }
+    // nastavení výběru
+    check vse [4,0,80,16] { title:'všichni', format:'t'
+      proc onchange() { each(L,nastav) }
+      proc nastav (x,i) { x.chck.set(form.vse.get) }
+    }
+    list L [0,23,300,200] {rows:22
+      check chck [4,0,50,16] { title:' ', format:'t' }
+      label info [23,4,300,16] {style:'white-space:nowrap'}
+      var all: object
+    }
+  }
 }

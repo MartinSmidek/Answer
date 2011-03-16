@@ -169,6 +169,7 @@ wiki/todo.wiki -text
 /ys.php -text
 ys/$.ezer -text
 ys/code/comp2tab.php -text
+ys/comp.css -text
 ys/img/+logo.gif -text
 ys/img/-logo.gif -text
 ys/img/ys-logo.gif -text
@@ -176,6 +177,7 @@ ys/img/ys.png -text
 ys/img/ys_local.png -text
 ys/test.php -text
 ys/ys.css.css -text
+ys/ys.css.php -text
 ys/ys.ds.ezer -text
 ys/ys.ds.kl.ezer -text
 ys/ys.ds.tab.ezer -text
