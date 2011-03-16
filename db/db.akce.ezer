@@ -27,21 +27,21 @@ proc onstart() {
 */
 }
 # ================================================================================================== CHLAPI
-panel chl {type:'right', title:'Chlapi', include:'onclick,db.akce.chl' }
+panel chl {type:'right', title:'Chlapi', include:'onclick,db.akce.chl',skill:'yac' }
 # ================================================================================================== OSOBY
-panel oso {type:'plain', title:'Lidi', include:'onclick,db.akce.oso' }
+panel oso {type:'plain', title:'Lidi', include:'onclick,db.akce.oso',skill:'yac' }
 # ================================================================================================== VÝBĚR
-panel lst {type:'right', title:'Akce', include:'onclick,db.akce.lst' }
+panel lst {type:'right', title:'Akce', include:'onclick,db.akce.lst',skill:'yaa' }
 # ================================================================================================== ÚČAST
-panel ucast {type:'plain', title:'Účastníci', include:'onclick,db.akce.ucast'
+panel ucast {type:'plain', title:'Účastníci', include:'onclick,db.akce.ucast',skill:'yaa'
   proc init_ucast() { }
 }
 # ================================================================================================== TISK
-panel tisk [,,,] {type:'right', title:'Výpisy akce', include:'onclick,db.akce.tisk' }
+panel tisk [,,,] {type:'right', title:'Výpisy akce', include:'onclick,db.akce.tisk',skill:'yaa'  }
 # ================================================================================================== VSICHNI
-panel vse [,,,543] {type:'plain', title:'Všichni', include:'onclick,db.akce.vse' }
+panel vse [,,,543] {type:'plain', title:'Všichni', include:'onclick,db.akce.vse',skill:'yaa'  }
 # ================================================================================================== MAIL
-panel ema [,,,543] {type:'right', title:'Maily', skill:'yam', include:'onclick,db.akce.ema' }
+panel ema [,,,543] {type:'right', title:'Maily', skill:'yam', include:'onclick,db.akce.ema',skill:'yaa'  }
 # ================================================================================================== COMMON
 
 form right [,,*,50] {
