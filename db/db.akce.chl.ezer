@@ -74,6 +74,7 @@ form _chlapi [,,*,50] {
   | mrop.display(0); all.display(1);
   }
   proc reload(id) {
+    ch.init;
     eq(mode.get,'mrop');
     [ mrop.browse_load("cc.iniciace!=0",'iniciace,id_chlapi');
       mrop.browse_focus;
@@ -85,7 +86,7 @@ form _chlapi [,,*,50] {
       | all.raise('onrowclick') } ]
   }
   proc reload_row() {
-    eq(mode.get,'mrop'); chs.mrop.browse_row | chs.all.browse_row
+    eq(mode.get,'mrop'); chs.mrop.browse_seek | chs.all.browse_seek
   }
   # --------------------------------------------------  OSOBY
   // osoby
@@ -99,6 +100,7 @@ form _chlapi [,,*,50] {
       ch.c.load(id_chlapi.get);
       ch.c.key(id_chlapi.get);
     }
+    proc onchange () { mrop.browse_count | ch.init }
   }
   # --------------------------------------------------  OSOBY NA AKCI
   // osoby
@@ -118,10 +120,11 @@ form _chlapi [,,*,50] {
       ch.c.key(id_chlapi.get);
       ch.u.key(id_ucast.get);
     }
+    proc onchange () { all.browse_count | ch.init }
   }
 }
 # -------------------------------------------------------------------------------------------------- _chlap
-form _chlap [,,*,50] {
+form _chlap [,,*,460] {
   var mode: text        // mrop|akce
   // funkce
   proc reset(m) {
@@ -219,10 +222,13 @@ form _chlap [,,*,50] {
     proc onclick() {
       confirm('Opravdu vyřadit ',prijmeni.get,' ',jmeno.get,' z databáze?');
       alert('zatím nerealizováno');
-#       ms_kurs.delete_record(conc('id_kurs=',key_kurs.get));
-#       ms_pary.delete_record(conc('id_pary=',key_pary.get));
-#       reload(0);
   } }
+  # --------------------------------------------------  KONTEXTOVÉ MENU
+  menu { type:'context'
+    item back { title:'ukázat všechny změny'
+      proc onclick () { Ctrack.CT_tab.set('chlapi'); Ctrack.CT_load(c.key) }
+    }
+  }
 }
 # ================================================================================================== Přidání jménem
 var pall: object
@@ -269,6 +275,45 @@ panel PridaniJmenem [,,320,280] {type:'popup', title:'Přidání známých osob 
       check chck [4,0,50,16] { title:' ', format:'t' }
       label info [23,4,300,16] {style:'white-space:nowrap'}
       var all: object
+    }
+  }
+}
+# ================================================================================================== BackTrace
+# --- back_track
+panel Ctrack [,,572,564] { title:'Korekce oprav databáze', type:'popup', css:'dialog'
+  use CT_track: form _back [0,16,,] { tabindex:20 },
+  proc CT_load (id) {
+    Ctrack.popup(0,1);
+    CT_track.list.browse_load(conc("kde='",CT_tab.get,"' AND klic=",id),"kdy DESC");
+    CT_track.list.raise('onrowclick')
+  }
+  var CT_tab:text
+  var CT_fld_id:text
+  var CT_fld:object
+  proc CT_track.list.onsubmit () {
+    eq(CT_track.list.op.get,'c','d','p','a');
+    alert('změny v historii nelze vracet - pouze ručně opravit')
+  | eq(CT_tab.get,'chlapi');
+    CT_fld_id.set(CT_track.list.fld.get); CT_fld_id.get;
+    CT_fld.set(ch.part(CT_fld_id.get)); CT_fld.get;
+    ch.part(CT_track.list.fld.get).set(CT_track.list.old.get);
+    CT_fld.change
+  | alert('Položka ',CT_fld_id.get,' není dostupná, vraťte prosím změnu ručně')
+  }
+  # ------------------------------------------------------------------------------------------------- BACK
+  # id_track,kdy,kdo,kde,klic,zmena:fld,op,val,old
+  form _back [,,570,570] {
+    browse list [8,8,150,100] { rows:27,
+      show kdy [,,100,] { title:'kdy', data:_track.kdy },
+      show kdn [,,30,] { title:'kdn', data:_track.kdo },
+      show op [,,10,] { title:'?', data:_track.op },
+      show fld [,,60,] { title:'položka', data:_track.fld },
+      show old [,,200,] { title:'původní hodnota', data:_track.old, format:'t' },
+      show val [,,110,] { title:'změněná hodnota', data:_track.val, format:'t' },
+      show id_track [,,0,] { data:_track.id_track },
+    },
+    button zpet [500,515,80,20] { title:'Zpět'
+      proc onclick() { panel.close(0) }
     }
   }
 }
