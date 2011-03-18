@@ -172,6 +172,13 @@ form _chlap [,,*,460] {
   field prijmeni [L+5,T+30,100,] {data:c.prijmeni, help:'příjmení'}
   label          [L+117,T+15,100,] {title:'jméno'}
   field jmeno    [L+117,T+30,100,] {data:c.jmeno}
+
+  radio sex [L+225,T+15,50,35] { data:c.sex
+    case [0,2,50,] { title:'muž', expr:'1' }
+    case [0,17,50,] { title:'žena', expr:'2' }
+    proc onchange() { echo('sex=',this.get) }
+  }
+
   label          [L+323,T+15,35,] {title:'MROP'}
   field iniciace [L+323,T+30,36,] {data:c.iniciace, format:'r:e'}
   label          [L+5,T+54,100,] {title:'ulice'}
@@ -181,7 +188,11 @@ form _chlap [,,*,460] {
   label          [L+230,T+54,100,] {title:'obec'}
   field obec     [L+229,T+69,131,] {data:c.obec}
   label          [L+5,T+94,37,] {title:'telefon'}
-  field telefon  [L+5,T+110,357,] {data:c.telefon}
+  field telefon  [L+5,T+110,211,] {data:c.telefon}
+  label          [L+230,T+94,33,] {title:'narození'}
+  field narozeni [L+229,T+110,85,] {type:'date', data:c.narozeni, format:'rR:e'}
+  label          [L+324,T+94,41,] {title:'nnnn rč'}
+  field rodne    [L+323,T+110,37,] {data:c.rc_xxxx, format:'r:e'}
   label          [L+5,T+138,33,] {title:'e-mail'}
   field email    [L+5,T+154,357,] {data:c.email}
   label          [L+5,T+179,33,] {title:'poznámka'}
