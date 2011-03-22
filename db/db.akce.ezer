@@ -108,7 +108,7 @@ table chlapi { key_id:'id_chlapi'
   text jmeno
   number sex
   date narozeni  { sql_pipe:'sql_date1' }
-  number rc_xxxx {help:'4 rozlišovací číslice rodného čísla'}
+  text rc_xxxx {help:'3-4 rozlišovací číslice rodného čísla'}
   text ulice
   text psc
   text obec
