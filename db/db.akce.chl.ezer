@@ -76,7 +76,7 @@ form _chlapi [,,*,50] {
   proc reload(id) {
     ch.init;
     eq(mode.get,'mrop');
-    [ mrop.browse_load("cc.iniciace!=0",'iniciace,id_chlapi');
+    [ mrop.browse_load("deleted='' && cc.iniciace!=0",'iniciace,id_chlapi');
       mrop.browse_focus;
       { id; mrop.raise('onrowclick',id)
       | mrop.raise('onrowclick') } ]
@@ -124,7 +124,7 @@ form _chlapi [,,*,50] {
   }
 }
 # -------------------------------------------------------------------------------------------------- _chlap
-form _chlap [,,*,460] {
+form _chlap [,,*,466] {
   var mode: text        // mrop|akce
   // funkce
   proc reset(m) {
@@ -166,14 +166,14 @@ form _chlap [,,*,460] {
   # --------------------------------------------------  OSOBA
   const L=240
   const T=10
-  label  [L+0,T+9,367,241] { css:'ae_part' }
+  label  [L+0,T+9,367,249] { css:'ae_part' }
   label  [L+8,T+0,74,] { title:'osobní údaje', css:'ae_part_label' }
   label          [L+5,T+15,100,] {title:'příjmení'}
   field prijmeni [L+5,T+30,100,] {data:c.prijmeni, help:'příjmení'}
   label          [L+117,T+15,100,] {title:'jméno'}
-  field jmeno    [L+117,T+30,100,] {data:c.jmeno}
+  field jmeno    [L+117,T+30,101,] {data:c.jmeno}
 
-  radio sex [L+225,T+15,50,35] { data:c.sex
+  radio sex [L+225,T+15,50,35] { data:c.sex, value:'1'
     case [0,2,50,] { title:'muž', expr:'1' }
     case [0,17,50,] { title:'žena', expr:'2' }
     proc onchange() { echo('sex=',this.get) }
@@ -184,19 +184,19 @@ form _chlap [,,*,460] {
   label          [L+5,T+54,100,] {title:'ulice'}
   field ulice    [L+5,T+69,162,] {data:c.ulice}
   label          [L+180,T+54,36,] {title:'psč'}
-  field psc      [L+180,T+69,36,] {data:c.psc}
+  field psc      [L+180,T+69,37,] {data:c.psc}
   label          [L+230,T+54,100,] {title:'obec'}
   field obec     [L+229,T+69,131,] {data:c.obec}
   label          [L+5,T+94,37,] {title:'telefon'}
-  field telefon  [L+5,T+110,211,] {data:c.telefon}
+  field telefon  [L+5,T+110,212,] {data:c.telefon}
   label          [L+230,T+94,33,] {title:'narození'}
   field narozeni [L+229,T+110,85,] {type:'date', data:c.narozeni, format:'rR:e'}
   label          [L+324,T+94,41,] {title:'nnnn rč'}
   field rodne    [L+323,T+110,37,] {data:c.rc_xxxx, format:'r:e'}
   label          [L+5,T+138,33,] {title:'e-mail'}
-  field email    [L+5,T+154,357,] {data:c.email}
+  field email    [L+5,T+154,355,] {data:c.email}
   label          [L+5,T+179,33,] {title:'poznámka'}
-  edit pozn      [L+5,T+194,357,52] {data:c.pozn}
+  edit  pozn     [L+5,T+194,355,60] {data:c.pozn}
   # --------------------------------------------------  TLAČÍTKA
   const Lt=240
   const Tt=320
@@ -225,14 +225,17 @@ form _chlap [,,*,460] {
   button [Lt+119,Tt+5,,] {title:'Nový', help:'Založení nového účastníka'
     proc onclick() {
       form.init(1); chs.all.blur(1);
-      prijmeni.change; jmeno.change; ulice.change; psc.change; obec.change;
+      prijmeni.change; jmeno.change; ulice.change; psc.change; obec.change; sex.change;
       stupen.key(1); stupen.change; id_akce.set(the_akce.get); id_akce.change;
       c.key(0); u.key(0);
   } }
   button [Lt+162,Tt+5,,] {title:'Vymazat', help:'Vymazání osobních informací z evidence'
     proc onclick() {
+      var ans: text
       confirm('Opravdu vyřadit ',prijmeni.get,' ',jmeno.get,' z databáze?');
-      alert('zatím nerealizováno');
+      ans.set(ask('chlapi_delete',c.key));
+      ans.get; alert(ans.get)
+    | chs.reload(0)
   } }
   # --------------------------------------------------  KONTEXTOVÉ MENU
   menu { type:'context'

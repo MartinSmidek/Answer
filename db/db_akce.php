@@ -264,6 +264,30 @@ function akce_strava_denne_save($id_kurs,$dnu,$cela,$cela_def,$cela_str,$polo,$p
 }
 # ================================================================================================== CHLAPI AKCE
 # funkce pro kartu CHLAPI
+# -------------------------------------------------------------------------------------------------- chlapi_delete
+# bezpečné smazání chlapa s kontrolou, zda není zařazen v nějaké akci
+function chlapi_delete($id_chlapi) {  #trace();
+  $ans= '';
+  $qry= "SELECT GROUP_CONCAT(nazev) AS _a, prijmeni, jmeno
+         FROM ch_ucast
+         JOIN ch_akce USING(id_akce)
+         JOIN chlapi USING(id_chlapi)
+         WHERE id_chlapi='$id_chlapi' ";
+  $res= mysql_qry($qry);
+  if ( $res && $a= mysql_fetch_object($res) ) {
+    $ans= $a->_a
+      ? "Nelze smazat, protože '{$a->prijmeni} {$a->jmeno}' se se zúčastní těchto akcí: {$a->_a}"
+      : '';
+  }
+  if ( $res && !$ans ) {
+    // vymaž ho
+    global $USER;
+    $dnes= date('Y-m-d');
+    $zmeny= array((object)array('fld'=>'deleted','op'=>'u','val'=>"D {$USER->abbr} $dnes"));
+    $ok= ezer_qry("UPDATE",'chlapi',$id_chlapi,$zmeny,'id_chlapi');
+  }
+  return $ans;
+}
 # -------------------------------------------------------------------------------------------------- akce_auto_jmena
 # souhrn akce
 function chlapi_akce_prehled($id_akce) {  #trace();
