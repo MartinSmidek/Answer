@@ -1,5 +1,46 @@
-<?php # (c) 2007-2009 Martin Smidek <martin@smidek.eu>
+<?php # (c) 2007-2011 Martin Smidek <martin@smidek.eu>
 
+  $ezer_local= preg_match('/^\w+\.ezer/',$_SERVER["SERVER_NAME"]); // identifikace ladícího serveru
+
+  $app=      'ds';
+  $app_name= 'Ans(w)er';
+  $skin=     'default';
+  $skin=     'ds';
+
+  require_once("$app.inc");
+  require_once("ezer2/server/ae_slib.php");
+
+  $js= array(
+    'ezer2/client/licensed/ckeditor/ckeditor.js',
+    'ezer2/client/licensed/clientcide.js',
+    'ezer2/client/licensed/mootools/asset.js',
+    'ezer2/client/licensed/mootools/slider.js',
+    'ezer2/client/lib.js',
+    'ezer2/client/ezer_fdom1.js',
+    'ezer2/client/ezer.js',
+    'ezer2/client/ezer_report.js',
+    'ezer2/client/ezer_fdom2.js',
+    'ezer2/client/app.js',
+    'ds/fce.js'
+  );
+  $css= array(
+    './ezer2/client/ezer.css.php',
+    './ezer2/client/licensed/fancyupload.css',
+    './ds/ds.css.css'
+  );
+  $options= (object)array(
+    'skill'      => "'y'",
+    'autoskill'  => "'!y'",
+    'must_log_in'=> 'false',
+    'user_record'=> 'false',            // nejsou známy uživatelské údaje
+  );
+  $pars= (object)array(
+    'watch_ip' => false,                // true = povolit přístup jen ze známých IP adres
+    'template' => 'panel'
+  );
+  root_php($app,$app_name,'news',$skin,$options,$js,$css,$pars);
+
+/*
 $minify= false;
 $root= 'ds';
 $title= "Dům setkání";
@@ -107,6 +148,7 @@ echo <<<__EOD
   </div>
 <!-- paticka -->
   <div id="dolni">
+    <div id="warning"></div>
     <div id="kuk_err"></div>
     <div id="paticka">
       <div id="error"></div>
@@ -122,4 +164,5 @@ echo <<<__EOD
 </body>
 </html>
 __EOD;
+*/
 ?>

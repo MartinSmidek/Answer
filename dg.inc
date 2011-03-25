@@ -1,4 +1,10 @@
-<?php # (c) 2009-2011 Martin Smidek <martin@smidek.eu>
+<?php
+# ------------------------------------------------------------------------------------------------ #
+# Dialogy pro práci s informacemi z Answer volatelné z www.setkani.org                             #
+#                                                                                                  #
+#                                                                                                  #
+#                                                   (c) 2007-2011 Martin Šmídek <martin@smidek.eu> #
+# ------------------------------------------------------------------------------------------------ #
 
   $ezer_local= preg_match('/^\w+\.ezer/',$_SERVER["SERVER_NAME"]); // identifikace ladícího serveru
 
@@ -23,18 +29,16 @@
   $path_pspad= array(null,"C:/Program Files (x86)/PSPad editor/Syntax");
   // ostatní parametry
   $tracking= '_track';
-  $tracked= ',clen,dar,ka,davka,_user,';
+  $tracked= ',_user,';
   root_inc($db,$dbs,$tracking,$tracked,$path_root,$path_pspad);
 
   // PARAMETRY SPECIFICKÉ PRO APLIKACI
 
   // moduly interpreta zahrnuté do aplikace - budou zpracovány i reference.i_doc pro tabulky kompilátoru
   $ezer_comp_ezer= "app,ezer,ezer_report,ezer_fdom1,ezer_fdom2";
-  $ezer_comp_root= "ds/fce,ys/ys_fce";
+  $ezer_comp_root= "";
   // moduly v Ezerscriptu mimo složku aplikace
   $ezer_ezer= array(
-    "ds/ds.dum",
-    "ds/ds.tab"
   );
   // standardní moduly v PHP obsažené v $ezer_path_root/ezer2 - vynechané v dokumentaci
   $ezer_php_libr= array(
@@ -47,11 +51,6 @@
   );
   // uživatelské i knihovní moduly v PHP obsažené v $ezer_path_root
   $ezer_php= array(
-    "ys/ys_fce.php",
-    "ys/ys_ucet.php",
-    "ys/ys_lide.php",
-    "db/db_akce.php",
-    "ds/ds_fce.php"
   );
 
   // parametrizace $EZER
@@ -68,5 +67,4 @@
   foreach($ezer_php as $php) {
     require_once("$ezer_path_root/$php");
   }
-
 ?>

@@ -264,6 +264,8 @@ procedure mysql_export
           c= 5
         case cc="CČE"
           c= 6
+        case cc="ČCE"
+          c= 6
         case cc="bratrská"
           c= 7
         case cc="KS - Praha"
