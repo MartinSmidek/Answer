@@ -10,10 +10,10 @@ panel dg {type:'main'
     switch(typ.get
       ,'#1',{Klub.modal}
       ,'#2',{Test.modal}
-      ,{alert(typ.get);javascript(conc("Ezer.stop('ko:nezapsáno ",typ.get,"');"));}
+      ,{alert(typ.get);javascript(conc("Ezer.stop('ko:neznámý dialog ",typ.get,"');"));}
     );
   }
-  # ----------------------------------------------------------------- Klub
+  # ------------------------------------------------------------------------- Klub
   panel Klub [0,0,200,100] {type:'popup', par:°{close:'no'}, title:"Přihláška do Klubu"
     use u: form f [10,10,,]
     form f {
@@ -27,7 +27,7 @@ panel dg {type:'main'
       proc back(stav,val) { javascript(conc("Ezer.stop('",stav,":",val,"');")); panel.close; }
     }
   }
-  # ----------------------------------------------------------------- test
+  # ------------------------------------------------------------------------- test
   panel Test [0,0,200,100] {type:'popup', par:°{close:'no'}, title:"Test"
     use u: form f [10,10,,]
     form f {
