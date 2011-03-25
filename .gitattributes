@@ -25,6 +25,12 @@ db/db.css.php -text
 db/db_akce.php -text
 db/db_fce.js -text
 /dbg.html -text
+/dg.inc -text
+/dg.php -text
+dg/$.ezer -text
+dg/dg.css.css -text
+dg/img/dg.png -text
+dg/img/dg_local.png -text
 /ds.inc -text
 /ds.php -text
 ds/$.ezer -text

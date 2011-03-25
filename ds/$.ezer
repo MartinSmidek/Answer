@@ -3,6 +3,9 @@
 # var one:number
 panel ds {type:'main', include:'onload,ds'
 }
+# proc onstart() {
+#   ds.modal(0,0)
+# }
 
 // pro ladění je hlavním blokem menu
 # menu ds { type:'main'
