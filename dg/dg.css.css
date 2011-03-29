@@ -8,7 +8,7 @@
 
 /* úpravy standardu */
 .Label, .Check {
-  font-size:8pt; color:#8b4513; }
+  font-size:8pt; }
 .Field {
   font-size:9pt; height:15px; }
 .FieldDate input {
