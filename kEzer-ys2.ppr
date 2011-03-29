@@ -13,7 +13,7 @@ ProjectFilesOnly=0
 kEzer-ys2
 	-skins
 		skins\colors.php
-	-db
+	+db
 		db\$.ezer
 		db\db.akce.ema.ezer
 		db\db.akce.ezer
@@ -210,7 +210,7 @@ kEzer-ys2
 33=dg\dg.css.css
 [Selected Project Files]
 Main=
-Selected=dg\dg.css.css
+Selected=dg\$.ezer
 [ezer2\server\ezer2.php]
 TopLine=299
 Caret=69,328
@@ -220,12 +220,12 @@ Mark2=32,1110
 Mark3=60,1085
 Mark4=37,218
 [ezer2\server\ae_slib.php]
-TopLine=237
-Caret=10,260
-BookMark2=25,1728
-Mark1=37,106
-Mark2=10,623
-BookMark1=34,336
+TopLine=35
+Caret=59,59
+BookMark2=25,1731
+Mark1=37,109
+Mark2=10,626
+BookMark1=34,339
 [ezer2\client\dbg.js]
 TopLine=320
 Caret=26,352
@@ -270,7 +270,7 @@ Caret=85,24
 TopLine=1
 Caret=57,28
 [db\db.akce.tisk.ezer]
-TopLine=35
+TopLine=1
 Caret=28,71
 [db\db.akce.ucast.ezer]
 TopLine=48
@@ -288,7 +288,7 @@ TopLine=1
 Caret=26,12
 [db\db.akce.chl.ezer]
 TopLine=156
-Caret=26,169
+Caret=1,176
 [db\db_akce.php]
 TopLine=237
 Caret=93,286
@@ -328,13 +328,13 @@ TopLine=15
 Caret=19,15
 [dg.php]
 TopLine=1
-Caret=13,34
+Caret=24,45
 [dg.inc]
 TopLine=1
-Caret=21,39
+Caret=3,10
 [dg\$.ezer]
-TopLine=1
-Caret=49,14
+TopLine=19
+Caret=25,48
 [dg\dg.css.css]
 TopLine=1
-Caret=1,1
+Caret=18,13
