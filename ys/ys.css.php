@@ -87,10 +87,11 @@ table.dary      { width:200px; }
 .fis_kat        { font-family:Courier; font-weight:bold; }
 .button_small   { width:20px; height:20px; font-size:x-small; }
 /* = = = = = = = = = = = = = = = = = = = = = = statistika */
-table.stat      { border-collapse:collapse; font-size:8pt; width:690px; }
+table.stat      { border-collapse:collapse; font-size:8pt; /*width:690px;*/ }
 .stat td        { border:1px solid #777; background-color:#fff; padding:0 3px;}
 .stat th        { border:1px solid #777; background-color:$b_item; }
 .stat dt        { margin:10px 0 0 0; }
+td.r, th.r      { text-align:right; }
 #proj table     { border-collapse:collapse; }
 #proj td        { border:1px solid #aaa;font:x-small Arial;color:#777;padding:0 3px;}
 #proj td.title  { color:#33a;}

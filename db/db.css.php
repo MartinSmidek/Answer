@@ -94,7 +94,7 @@ table.dary      { width:200px; }
 .button_small   { width:20px; height:20px; font-size:x-small; }
 /* = = = = = = = = = = = = = = = = = = = = = = statistika */
 div.stat        { padding-right:15px; }
-table.stat      { border-collapse:collapse; font-size:8pt; width:100%; }
+table.stat      { border-collapse:collapse; font-size:8pt; /*width:100%;*/ }
 .stat td        { border:1px solid #777; background-color:#fff; padding:0 3px;}
 .stat th        { border:1px solid #777; background-color:$b_item; }
 .stat dt        { margin:10px 0 0 0; }

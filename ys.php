@@ -27,6 +27,7 @@
   $css= array(
     './ezer2/client/ezer.css.php',
     './ezer2/client/licensed/fancyupload.css',
+    './ys/ys.css.php',
     './db/db.css.php'
   );
   $options= (object)array(

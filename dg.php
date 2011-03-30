@@ -42,8 +42,8 @@
   );
   $pars= (object)array(
     'watch_ip' => false,                // false = povolit přístup ze všech IP adres
-    'template' => 'menu',
-    'mini_dbg' => 'true',
+    'template' => 'panel',
+//     'mini_dbg' => 'true',
     'post_server' => array("http://www.setkani.org","http://setkani.ezer")
   );
   root_php($app,$app_name,'news',$skin,$options,$js,$css,$pars);
