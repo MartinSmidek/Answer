@@ -41,7 +41,7 @@ panel tisk [,,,] {type:'right', title:'Výpisy akce', include:'onclick,db.akce.t
 # ================================================================================================== VSICHNI
 panel vse [,,,543] {type:'plain', title:'Všichni', include:'onclick,db.akce.vse',skill:'yaa'  }
 # ================================================================================================== MAIL
-panel ema [,,,543] {type:'right', title:'Maily', skill:'yam', include:'onclick,db.akce.ema',skill:'yaa'  }
+panel ema [,,,543] {type:'right', title:'Maily', skill:'yam', include:'onclick,db.akce.ema'  }
 # ================================================================================================== COMMON
 
 form right [,,*,50] {
@@ -302,8 +302,8 @@ table ms_akce { key_id:'id_akce'  // Sey
   number akce
   number druh
   number poradatel
-  date datum_od        // SQL tvar se používá v ys.akce
-  date datum_do
+  date datum_od    { sql_pipe:'sql_date1'}    // SQL tvar se používá v ys.akce
+  date datum_do    { sql_pipe:'sql_date1'}
   text misto
 }
 

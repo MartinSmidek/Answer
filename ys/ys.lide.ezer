@@ -2,7 +2,7 @@
 # (c) 2008-2010 Martin Šmídek <martin@smidek.eu>
 
 # ================================================================================================== VSICHNI
-panel vse [,,,543] {type:'plain', title:'Všichni', include:'onclick,ys.akce.vse'}
+# panel vse [,,,543] {type:'plain', title:'Všichni', include:'onclick,db.akce.vse'}
 # ================================================================================================== UNIFIKACE
 panel uni [,,,543] {type:'plain', title:'Unifikace'
   use u: form _ucast [4,0,,]
@@ -111,15 +111,21 @@ panel uni [,,,543] {type:'plain', title:'Unifikace'
   }
 }
 # ================================================================================================== PŘEHLED
-panel preh [,,,532] {type:'right', title:'Přehled'
+panel preh [,,*,*] {type:'right', title:'Přehled'
   menu m {type:'left', active:m.g.i
     menu g {title:'Seznam všech známých',type:'group'
       proc onfirstfocus() {
         zname.lide.browse_load;
         zname.lide.raise('onrowclick') }
-      item i {title:'Doplnění vlastností' }
+      item  {title:'Doplnění vlastností' }
       proc onclick (i) {
-        du_akce.display(0); du_pary.display(0); zname.display(1); zname.fill(i.title)
+        du_akce.display(0); du_pary.display(0); du_deti.display(0); zname.display(1); zname.fill(i.title)
+      }
+      item i {title:'přehled zpracování'
+        proc onclick() {
+          du_akce.display(0); du_pary.display(0); du_deti.display(0); zname.display(0); info.display(1);
+          info.fill(i.title,ask('lide_survey'))
+        }
       }
     }
     menu  {title:'Unifikace MS_DRUHAKCE',type:'group'
@@ -128,9 +134,10 @@ panel preh [,,,532] {type:'right', title:'Přehled'
       item i {title:'Zobrazení duplicit akcí',  par:°{fce:''} }
       item  {title:'0. inicializace DU_AKCE',   par:°{fce:'akce_init'} }
       item  {title:'1. stejný název a rok',     par:°{fce:'akce_nazev'} }
-      item  {title:'2. ... údaje',              par:°{fce:'akce_udaje'} }
+#       item  {title:'2. ... údaje',              par:°{fce:'akce_udaje'} }
+      item  {title:'2. kopie do db_akce',par:°{fce:'akce_new'} }
       proc onclick (i) {
-        zname.display(0); du_akce.display(1); du_pary.display(0); info.display(0);
+        zname.display(0); du_akce.display(1); du_pary.display(0); du_deti.display(0); info.display(0);
         du_akce.fill(conc(i.owner.title,' - ',i.title));
         [ i.par.fce | du_akce.info.set('0=nic, 1=název a datum_od, 2=ostatní údaje<hr>') ];
         i.par.fce; du_akce.append(ask('lide_duplo',i.par));
@@ -144,13 +151,31 @@ panel preh [,,,532] {type:'right', title:'Přehled'
       item  {title:'0. inicializace DU_PARY',   par:°{fce:'pary_init'} }
       item  {title:'1. stejná jména',           par:°{fce:'pary_jmena'} }
       item  {title:'2. ... údaje',              par:°{fce:'pary_udaje'} }
+      item  {title:'3. transformace',           par:°{fce:'pary_new'} }
       proc onclick (i) {
-        zname.display(0); du_akce.display(0); du_pary.display(1); info.display(0);
+        zname.display(0); du_akce.display(0); du_pary.display(1); du_deti.display(0); info.display(0);
         du_pary.fill(conc(i.owner.title,' - ',i.title));
         [ i.par.fce | du_pary.info.set(
         '0=nic, 1=jména, 2=bydliště, 3=telefon, 4=email, 5=muž, 6=žena, 7=poznámka, 8=svatba, 9=spz<hr>') ];
         i.par.fce; du_pary.append(ask('lide_duplo',i.par));
         du_pary.pary.browse_load;
+      }
+    }
+    menu  {title:'Unifikace MS_DETI',type:'group'
+      proc onstart() {
+        du_deti.pary.browse_load; }
+      item i {title:'Zobrazení duplicit dětí',  par:°{fce:''} }
+      item  {title:'0. inicializace DU_DETI',   par:°{fce:'deti_init'} }
+      item  {title:'1. stejná jména',           par:°{fce:'deti_jmena'} }
+      item  {title:'2. ... údaje',              par:°{fce:'deti_udaje'} }
+      item  {title:'3. transformace',           par:°{fce:'deti_new'} }
+      proc onclick (i) {
+        zname.display(0); du_akce.display(0); du_pary.display(0); du_deti.display(1); info.display(0);
+        du_deti.fill(conc(i.owner.title,' - ',i.title));
+        [ i.par.fce | du_deti.info.set(
+        '0=nic, 1=jméno, 2=rodcislo, 3=poznamka<hr>') ];
+        i.par.fce; du_deti.append(ask('lide_duplo',i.par));
+        du_deti.pary.browse_load;
       }
     }
     menu {title:'Unifikace MS_KURS', type:'group'
@@ -159,7 +184,7 @@ panel preh [,,,532] {type:'right', title:'Přehled'
       item  {title:'naplnění DU_KURS',          par:°{fce:'kurs_duplo'} }
       item  {title:'porovnání DU_KURS',         par:°{fce:'kurs_udaje'} }
       proc onclick (i) {
-        zname.display(0); du_akce.display(0); du_pary.display(0); info.display(1);
+        zname.display(0); du_akce.display(0); du_pary.display(0); du_deti.display(0); info.display(1);
         info.fill(conc(i.owner.title,' - ',i.title),'');
         [ i.par.fce | info.fill('','0=nic, 1=shoda, 2=rozdíl<hr>') ];
         i.par.fce; info.append(ask('lide_duplo',i.par));
@@ -168,6 +193,7 @@ panel preh [,,,532] {type:'right', title:'Přehled'
   }
   use zname: form _zname [12,4,,],
   use du_pary: form _du_pary [12,4,,],
+  use du_deti: form _du_deti [12,4,,],
   use du_akce: form _du_akce [12,4,,],
   use info: form right [12,4,,],
   # ------------------------------------------------------------------------------------------------ _du_akce
@@ -206,6 +232,28 @@ panel preh [,,,532] {type:'right', title:'Přehled'
       show [,,130,] {title:'jméno', expr:"CONCAT(p.jmeno,' ',p.jmeno_m,' a ',p.jmeno_z)",format:'q*s+'}
       show [,,30,] {title:'id_dupary', data:d.id_dupary, format:'rq=s'}
       show [,,70,] {title:'typ', data:d.typ, format:'rq*s'}
+    }
+    label info [330,50,345,444]
+  }
+  # ------------------------------------------------------------------------------------------------ _du_deti
+  form _du_deti [,,200,50] {
+    proc fill(x) { head.set(conc("<div class='CSection CMenu'><h3 class='CTitle'>",x,"</h3></div>"))}
+    proc append(x) { info.get; info.set(conc(info.get,'<br>',x)) | info.set(x) }
+    // hlavička
+    label head [0,0,675,50]  { title:'' }
+    // seznam
+    view p: table ms_deti
+    view d: table du_deti {join_type:'LEFT', join:'USING(id_dudeti)'}
+    browse pary [0,50,200,447] {type:'smart', rows:22, qry_rows:1, optimize:°{qry:'noseek'}
+      show id_deti {data:p.id_deti }
+      show [,,15,] {title:'tab', data:p.source, format:'q*s' }
+      show [,,40,] {title:'id_deti', data:p.id_deti, format:'rq=s' }
+      show [,,30,] {title:'id_dudeti', data:d.id_dudeti, format:'rq=s'}
+      show [,,10,] {title:'*', expr:"IF(d.id_deti=p.id_deti,'*','')", format:'rq=s'}
+      show [,,50,] {title:'jméno', data:p.jmeno, format:'q*s+'}
+      show [,,70,] {title:'rč', data:p.rodcislo, format:'q*s+'}
+      show [,,40,] {title:'pozn', data:p.poznamka, format:'q*s+'}
+      show [,,30,] {title:'typ', data:d.typ, format:'rq*s'}
     }
     label info [330,50,345,444]
   }
@@ -335,16 +383,16 @@ panel Skupinky [,,,543] {type:'right', title:'Skupinky'
 }
 # -------------------------------------------------------------------------------------------------- right
 # formulář pro levostranné menu s permanentním nadpisem
-form right [,,640,50] {
+form right [,,*,50] {
   button export [620,18,100,16] { title:'Export', style:'display:none;zIndex:2'
     proc onclick() { note.set(ask('lide_cleni_kurs',rok.get,1)); }
   }
   button export2 [620,18,100,16] { title:'Export', style:'display:none;zIndex:2'
     proc onclick() { note.set(ask('lide_plachta',rok.get,1)); }
   }
-  label info [0,0,680,600] { title:'' }
-  label head [0,0,680,50]  { title:'' }
-  label note [0,50,680,550] { title:'' }
+  label info [0,0,*,600] { title:'' }
+  label head [0,0,*,50]  { title:'' }
+  label note [0,50,*,550] { title:'' }
   proc fill(x,y) {
     [ x; head.set(conc("<div class='CSection CMenu'><h3 class='CTitle'>",x,"</h3></div>")) ];
     [ y; note.set(y) ]

@@ -28,6 +28,7 @@ menu ys { type:'main', active:* //ys.pok
       }
       use info: form right [12,4,,]
     }
+    panel dat {type:'right', title:"Zálohování", _sys:'*', skill:'m', include:'onclick' }
   }
   tabs doc  {title:"Nápověda", _sys:'nap',  include:'onclick,ezer2.help' }
   tabs off  {title:"Odhlásit", type:'logoff' }
@@ -194,9 +195,18 @@ table ms_pary { key_id:'id_pary'
   number lxx1
 }
 
+table du_deti { key_id:'id_dudeti'
+  number id_dudeti
+  number id_dupary
+  number id_deti
+  number typ
+  number pocet
+}
+
 table ms_deti { key_id:'id_deti'
   number id_deti
   number id_pary
+  text source
   number cislo
   text jmeno
   number rodcislo

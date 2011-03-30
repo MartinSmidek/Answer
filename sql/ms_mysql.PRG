@@ -99,28 +99,28 @@ procedure mysql_export
     do case
     case mdbf == 'druhakce'
       klic = chr(10) + "id_akce int(11) NOT NULL AUTO_INCREMENT,"
-      klic = klic + chr(10) + "du_akce int(11),"
+      klic = klic + chr(10) + "id_duakce int(11),"
       klic = klic + chr(10) + "ciselnik_akce smallint(6) NOT NULL,"
       klic = klic + chr(10) + "ciselnik_rok smallint(6) NOT NULL,"
       mdbf= 'akce'
     case mdbf == 'pary'
       klic = chr(10) + "id_pary int(11) NOT NULL AUTO_INCREMENT,"
-      klic = klic + chr(10) + "du_pary int(11),"
+      klic = klic + chr(10) + "id_dupary int(11),"
     case mdbf == 'kurs'
       klic = chr(10) + "id_kurs int(11) NOT NULL AUTO_INCREMENT,"
-      klic = klic + chr(10) + "du_kurs int(11),"
+      klic = klic + chr(10) + "id_dukurs int(11),"
       klic = klic + chr(10) + "id_pary int(11),"
       klic = klic + chr(10) + "du_pary int(11),"
       klic = klic + chr(10) + "id_akce int(11),"
       klic = klic + chr(10) + "du_akce int(11),"
     case mdbf == 'deti'
       klic = chr(10) + "id_deti int(11) NOT NULL AUTO_INCREMENT,"
-      klic = klic + chr(10) + "du_deti int(11),"
+      klic = klic + chr(10) + "id_dudeti int(11),"
       klic = klic + chr(10) + "id_pary int(11),"
       klic = klic + chr(10) + "du_pary int(11),"
     case mdbf == 'kursdeti'
       klic = chr(10) + "id_kursdeti int(11) NOT NULL AUTO_INCREMENT,"
-      klic = klic + chr(10) + "du_kursdeti int(11),"
+      klic = klic + chr(10) + "id_dukursdeti int(11),"
       klic = klic + chr(10) + "id_akce int(11),"
       klic = klic + chr(10) + "du_akce int(11),"
       klic = klic + chr(10) + "id_deti int(11),"
@@ -264,7 +264,7 @@ procedure mysql_export
           c= 5
         case cc="CČE"
           c= 6
-        case cc="ČCE"
+        case cc="ČCE"           && správně
           c= 6
         case cc="bratrská"
           c= 7

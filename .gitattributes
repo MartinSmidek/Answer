@@ -167,6 +167,7 @@ sql/ms_mysql.PRG -text
 sql/ms_mysql.bat -text
 sql/mysql.bat -text
 sql/pohled_osoba.sql -text
+sql/unifikace_2011.sql -text
 /test.inc -text
 /test.php -text
 wiki/dokumentace.wiki -text
@@ -198,3 +199,4 @@ ys/ys_fce.js -text
 ys/ys_fce.php -text
 ys/ys_lide.php -text
 ys/ys_ucet.php -text
+/zaloha.php -text
