@@ -122,9 +122,15 @@ panel preh [,,*,*] {type:'right', title:'Přehled'
         du_akce.display(0); du_pary.display(0); du_deti.display(0); zname.display(1); zname.fill(i.title)
       }
       item i {title:'přehled zpracování'
-        proc onclick() {
+        proc onclick(i) {
           du_akce.display(0); du_pary.display(0); du_deti.display(0); zname.display(0); info.display(1);
           info.fill(i.title,ask('lide_survey'))
+        }
+      }
+      item {title:'zpracované/nezpracované'
+        proc onclick(i) {
+          du_akce.display(0); du_pary.display(0); du_deti.display(0); zname.display(0); info.display(1);
+          info.fill(i.title,'DOPLNIT!')
         }
       }
     }
@@ -178,11 +184,20 @@ panel preh [,,*,*] {type:'right', title:'Přehled'
         du_deti.pary.browse_load;
       }
     }
+    menu  {title:'SIMPLIFIKACE',type:'group'
+      item  {title:'zrušení jednoprvkových rodin',  par:°{fce:'elim_nerodiny'} }
+      proc onclick (i) {
+        zname.display(0); du_akce.display(0); du_pary.display(0); du_deti.display(0); info.display(1);
+        info.fill(conc(i.owner.title,' - ',i.title),' ');
+        info.append(ask('lide_duplo',i.par));
+      }
+    }
     menu {title:'Unifikace MS_KURS', type:'group'
       item  {title:'Zobrazení duplicit účastí', par:°{fce:''} }
-      item  {title:'inicializace DU_KURS',      par:°{fce:'kurs_init'} }
-      item  {title:'naplnění DU_KURS',          par:°{fce:'kurs_duplo'} }
-      item  {title:'porovnání DU_KURS',         par:°{fce:'kurs_udaje'} }
+      item  {title:'0. inicializace DU_KURS',      par:°{fce:'kurs_init'} }
+      item  {title:'1. naplnění DU_KURS',          par:°{fce:'kurs_duplo'} }
+      item  {title:'2. ... údaje',                 par:°{fce:'kurs_udaje'} }
+      item  {title:'3. transformace',              par:°{fce:'kurs_new'} }
       proc onclick (i) {
         zname.display(0); du_akce.display(0); du_pary.display(0); du_deti.display(0); info.display(1);
         info.fill(conc(i.owner.title,' - ',i.title),'');

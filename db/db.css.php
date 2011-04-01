@@ -13,6 +13,10 @@ global $skin, $path, $c, $b, $ab, $c_appl,
 require_once("../skins/colors.php");
 
 echo <<<__EOD
+/* specifické */
+.title_ref { color:#ffffff !important; }
+.title_ref a { color:#ffffff !important; }
+
 /* úpravy standardu */
 /*.BrowseSmart td.BrowseQry input {
   background-color:#effdf1; }*/

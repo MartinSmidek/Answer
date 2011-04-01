@@ -34,14 +34,14 @@ kEzer-ys2
 		sql\ms_mysql.PRG
 		sql\mysql_all.bat
 		sql\pohled_osoba.sql
-	-ezer2
-		+libr
+	+ezer2
+		-libr
 			ezer2\$.ezer
 			ezer2\ezer2.help.ezer
 			ezer2\ezer2.pers.ezer
 			ezer2\ezer2.syst.ezer
 			ezer2\ezer2_fce.php
-		+client
+		-client
 			ezer2\client\app.js
 			ezer2\client\dbg.css
 			ezer2\client\dbg.js
@@ -51,7 +51,7 @@ kEzer-ys2
 			ezer2\client\licensed\fancyupload.css
 			ezer2\client\licensed\fancyupload.js
 			ezer2\client\lib.js
-		+client f
+		-client f
 			ezer2\client\appf.css
 			dbg.html
 			ezer2\client\dbgf.html
@@ -122,12 +122,12 @@ kEzer-ys2
 		test\test.ys_ucetnictvi.ezer
 		test\test.ysp.ezer
 		test\test_fce.php
-	+dg
+	-dg
 		dg\$.ezer
 		dg\dg.css.css
 		dg.inc
 		dg.php
-	-ys
+	+ys
 		+$
 			ys\$.ezer
 			skins\colors.php
@@ -144,7 +144,7 @@ kEzer-ys2
 		-eko
 			ys\ys.eko.ezer
 			ys\ys_ucet.php
-		-lide
+		+lide
 			ys\ys.info.ezer
 			ys\ys.lide.ezer
 			ys\ys_lide.php
@@ -152,11 +152,12 @@ kEzer-ys2
 			ys\ys.pok.den.ezer
 			ys\ys.pok.ezer
 			ys\ys.pok.nas.ezer
-		-syst
+		+syst
+			ys\ys.syst.dat.ezer
 			ys\ys.syst.ezer
 			ys\ys.syst.oso.ezer
 		ys\ys.doc.ezer
-	+ds
+	-ds
 		ds\ds.css.css
 		ds\ds.dum.ezer
 		ds\ds.ezer
@@ -208,24 +209,32 @@ kEzer-ys2
 31=dg.inc
 32=dg\$.ezer
 33=dg\dg.css.css
+34=db\$.ezer
+35=ezer2\ezer2_fce.php
+36=ys\ys.syst.dat.ezer
+37=zaloha.php
+38=sql\unifikace_2011.sql
+39=ys\ys.lide.ezer
+40=ys\ys_lide.php
+41=ys\ys.css.php
 [Selected Project Files]
 Main=
-Selected=dg\$.ezer
+Selected=ys\ys_lide.php
 [ezer2\server\ezer2.php]
-TopLine=299
-Caret=69,328
+TopLine=1
+Caret=1,13
 BookMark3=51,631
 Mark1=60,1099
 Mark2=32,1110
 Mark3=60,1085
 Mark4=37,218
 [ezer2\server\ae_slib.php]
-TopLine=35
-Caret=59,59
+TopLine=96
+Caret=1,129
+BookMark1=34,339
 BookMark2=25,1731
 Mark1=37,109
 Mark2=10,626
-BookMark1=34,339
 [ezer2\client\dbg.js]
 TopLine=320
 Caret=26,352
@@ -234,8 +243,8 @@ Mark2=99,46
 [ezer2\client\app.js]
 TopLine=1
 Caret=79,8
-Mark1=88,364
 BookMark1=1,229
+Mark1=88,364
 [ezer2\client\ezer_fdom1.js]
 TopLine=315
 Caret=1,360
@@ -246,38 +255,38 @@ Mark1=39,1050
 [ezer2\client\ezer_fdom2.js]
 TopLine=633
 Caret=23,643
+BookMark1=36,646
 Mark1=95,439
 Mark2=3,264
-BookMark1=36,646
 [ys.php]
 TopLine=1
-Caret=1,46
+Caret=23,30
 [ys.inc]
 TopLine=1
-Caret=22,1
+Caret=45,6
 [ys\$.ezer]
-TopLine=17
-Caret=1,56
+TopLine=148
+Caret=1,210
 [db\db.akce.ezer]
-TopLine=38
-Caret=95,45
+TopLine=145
+Caret=36,175
 BookMark1=1,34
 BookMark4=6,40
 [db\db.akce.oso.ezer]
 TopLine=7
 Caret=85,24
 [db\db.akce.lst.ezer]
-TopLine=1
+TopLine=59
 Caret=57,28
 [db\db.akce.tisk.ezer]
-TopLine=1
+TopLine=20
 Caret=28,71
 [db\db.akce.ucast.ezer]
-TopLine=48
-Caret=10,71
+TopLine=47
+Caret=77,75
 BookMark1=3,29
 Mark1=24,131
-Mark2=24,132
+Mark2=24,133
 Mark3=24,133
 Mark4=24,134
 [db\db.akce.ema.ezer]
@@ -294,8 +303,8 @@ TopLine=237
 Caret=93,286
 BookMark1=38,293
 [db\db.css.php]
-TopLine=18
-Caret=83,55
+TopLine=53
+Caret=75,97
 [ezer2\client\ezer.css.php]
 TopLine=187
 Caret=28,223
@@ -318,8 +327,8 @@ Caret=65,92
 TopLine=37
 Caret=87,45
 [sql\ms_mysql.PRG]
-TopLine=237
-Caret=18,267
+TopLine=89
+Caret=101,95
 [ds\$.ezer]
 TopLine=1
 Caret=31,8
@@ -328,13 +337,39 @@ TopLine=15
 Caret=19,15
 [dg.php]
 TopLine=1
-Caret=24,45
+Caret=36,11
 [dg.inc]
 TopLine=1
-Caret=3,10
+Caret=1,11
 [dg\$.ezer]
-TopLine=19
-Caret=25,48
+TopLine=1
+Caret=1,5
 [dg\dg.css.css]
 TopLine=1
 Caret=18,13
+[db\$.ezer]
+TopLine=1
+Caret=30,12
+[ezer2\ezer2_fce.php]
+TopLine=252
+Caret=1,260
+[ys\ys.syst.dat.ezer]
+TopLine=1
+Caret=73,20
+[zaloha.php]
+TopLine=1
+Caret=66,25
+[sql\unifikace_2011.sql]
+TopLine=1
+Caret=35,3
+[ys\ys.lide.ezer]
+TopLine=194
+Caret=79,230
+[ys\ys_lide.php]
+TopLine=463
+Caret=1,496
+BookMark3=30,302
+Mark1=29,369
+[ys\ys.css.php]
+TopLine=65
+Caret=76,90

@@ -23,7 +23,7 @@ menu m {type:'left'
     item {title:'všechny akce - minulé', format:'d' }
     item {title:'všechny akce - přihlášky', format:'d' }
     proc onclick(i) {
-      the_akce.set(i.par.id_akce);
+      the_akce.set(i.par.id_akce); info.get.display(0,'ex');
       ch.get.display(0); chs.get.display(0);
       info.fill(conc(i.owner.title,' ',i.title),ask('chlapi_akce_prehled',the_akce.get));
       the_akce_nazev.set(i.title);
@@ -33,6 +33,7 @@ menu m {type:'left'
     item a {title:'účastníků zvolené akce'
       proc onclick(i) {
         chs.reset('akce'); ch.reset('akce');
+        info.get.display(1,'ex');                         // umožníme export
         the_akce.get;
         info.fill(conc('Seznam pro ',the_akce_nazev.get),' ');
         ch.get.display(1); chs.get.display(1);
@@ -44,7 +45,7 @@ menu m {type:'left'
     item inic {title:'všech iniciovaných chlapů' }
     item {title:'všech známých chlapů', format:'d'  }
     proc onclick(i) {
-      chs.reset('mrop'); ch.reset('mrop');
+      chs.reset('mrop'); ch.reset('mrop'); info.get.display(0,'ex');
       info.fill(conc(i.owner.title,' ',i.title),' ');
       ch.get.display(1); chs.get.display(1);
       chs.reload(0);
@@ -55,6 +56,10 @@ menu m {type:'left'
 # univerzální formulář pro levostranné menu
 form _info [,,*,50] { css:'ds_form'
   label head [0,0,*,50]  { title:'' }
+  button [-22,3,50,] { tag:'ex', title:"Export"
+    proc onclick() { ref.set(ask('chlapi_akce_export',the_akce.get,the_akce_nazev.get)) }
+  }
+  label ref [-80,7,200,]  { tag:'ex', format:'r', css:'title_ref' }
   label note [0,35,,550] { title:'' }
   proc fill(x,y) {
     [ x; head.set(conc("<div class='CSection CMenu'><h3 class='CTitle' style='margin:0'>",
@@ -143,7 +148,7 @@ form _chlap [,,*,466] {
   field id_chlapi { data:c.id_chlapi }
   # --------------------------------------------------  VZTAH k AKCI pro mode='akce'
   const Lu=240
-  const Tu=270
+  const Tu=290
   label  [Lu+0,Tu+9,222,30] { tag:'akce', css:'ae_part' }
   label  [Lu+9,Tu+0,77,] { tag:'akce', title:'způsob účasti', css:'ae_part_label' }
   select stupen [Lu+5,Tu+15,98,] { tag:'akce', type:'map', data:u.stupen, options:akce_ucast.zkratka }
@@ -199,7 +204,7 @@ form _chlap [,,*,466] {
   edit  pozn     [L+5,T+194,355,60] {data:c.pozn}
   # --------------------------------------------------  TLAČÍTKA
   const Lt=240
-  const Tt=320
+  const Tt=340
   // - opravy
   label  [Lt+0,Tt+0,98,30] { css:'ae_parm' }
   button [Lt+6,Tt+5,,] {title:'Uložit', help:'Uložení změněných osobních údajů'
