@@ -264,6 +264,39 @@ function akce_strava_denne_save($id_kurs,$dnu,$cela,$cela_def,$cela_str,$polo,$p
 }
 # ================================================================================================== CHLAPI AKCE
 # funkce pro kartu CHLAPI
+# -------------------------------------------------------------------------------------------------- chlapi_akce_export
+# export účastníků akce do Excelu
+function chlapi_akce_export($id_akce,$nazev) {  #trace();
+  global $ezer_path_docs;
+  // zahájení exportu
+  $ymd= date('Ymd');
+  $dnes= date('j. n. Y');
+  $t= "$nazev, stav ke dni $dnes";
+  $file= "akce_{$id_akce}_$ymd";
+  $type= 'xls';
+  $par= (object)array('file'=>$file,'type'=>$type,'title'=>$t,'color'=>'aac0cae2');
+  $fields= "prijmeni,jmeno,narozeni,ulice,psc,obec,email,telefon,iniciace,pozn";
+  $clmns= explode(',',$fields);
+  $pipe= array('narozeni'=>'sql_date1');
+  export_head($par,$fields);
+  $qry= "SELECT $fields
+         FROM ch_ucast JOIN chlapi USING(id_chlapi) WHERE id_akce=$id_akce ";
+  $res= mysql_qry($qry);
+  // projití záznamů
+  $values= array();
+  while ( $res && $row= mysql_fetch_assoc($res) ) {
+    foreach ($row as $f => $val) {
+      $a= $val;
+      if ( isset($pipe[$f]) ) $a= $pipe[$f]($a);
+      $values[$f]= $a;
+    }
+    export_row($values);
+  }
+  export_tail();
+  // odkaz pro stáhnutí
+  $ref= "seznam ve formátu <a href='docs/$file.$type'>Excel</a>";
+  return $ref;
+}
 # -------------------------------------------------------------------------------------------------- chlapi_delete
 # bezpečné smazání chlapa s kontrolou, zda není zařazen v nějaké akci
 function chlapi_delete($id_chlapi) {  #trace();
