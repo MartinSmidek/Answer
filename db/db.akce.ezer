@@ -36,6 +36,9 @@ panel lst {type:'right', title:'Akce', include:'onclick,db.akce.lst',skill:'yaa'
 panel ucast {type:'plain', title:'Účastníci', include:'onclick,db.akce.ucast',skill:'yaa'
   proc init_ucast() { }
 }
+panel lidi {type:'plain', title:'Účast NEW', include:'onclick,db.akce.lidi',skill:'yaa'
+  proc init_ucast() { }
+}
 # ================================================================================================== TISK
 panel tisk [,,,] {type:'right', title:'Výpisy akce', include:'onclick,db.akce.tisk',skill:'yaa'  }
 # ================================================================================================== VSICHNI
@@ -99,9 +102,9 @@ table _track { key_id:'id_track'
   text fld { help:'položka' },
   text op { help:'operace' },
   text old { help:'původní hodnota' },
-  text val { help:'původní hodnota' },
+  text val { help:'nová hodnota' },
 }
-# ------------------------------------------------------------------ chlapi
+# ================================================================================================== CHLAPI
 table chlapi { key_id:'id_chlapi'
   number id_chlapi
   text prijmeni
@@ -121,11 +124,16 @@ table ch_ucast { key_id:'id_ucast'
   number id_ucast
   number id_chlapi
   number id_akce
-  number stupen   { help:"vztah k akci" }
+  number stupen    { help:"vztah k akci" }
+  number cena      { help:"cena akce pro účastníka" }
+  number uctem     { help:"zaplaceno převodem" }
+  number pokladnou { help:"zaplaceno v hotovosti" }
+  text pozn
 }
 table ch_akce { key_id:'id_akce'
   number id_akce
   text nazev
+  number cena      { help:"cena akce" }
   date datum_od
   date datum_do
 }
@@ -147,7 +155,99 @@ table $osoba { key_id:'id_osoba'
   text email
   text info
 }
-# ------------------------------------------------------------------ Sey
+# ================================================================================================== NEW
+table pobyt { key_id:'id_pobyt'
+  number id_pobyt
+  number id_akce
+  number id_osoba
+  number skupina
+  number funkce
+  text aktivita
+  date datplatby        { sql_pipe:'sql_date1'}
+  number zpusobplat
+  text budova
+  text pokoj
+  number luzka
+  number strava_cel
+  number strava_pol
+  text cstrava_cel      // číslice jsou seřazeny jako počty snídaní,obědů,večeří po dnech
+  text cstrava_pol
+  number kocarek
+  text pecovatel
+  text poznamka
+  number pristylky
+  number pocetdnu
+  number svp
+  number dorazil
+  number pouze
+  number akce
+  number platba
+  number platba1
+  number platba2
+  number platba3
+  number platba4
+}
+
+table bydli { key_id:'id_bydli'
+  number id_bydli
+  number id_pobyt
+  number id_osoba
+}
+
+table osoba { key_id:'id_osoba'
+  number id_osoba
+  number id_dupary
+  number id_dudeti
+  text jmeno
+  text prijmeni
+  number sex
+  text ulice
+  text psc
+  text obec
+  text email
+  text telefon
+  text spz
+  date narozeni { sql_pipe:'sql_date1'}
+  text rc_xxxx
+  date umrti { sql_pipe:'sql_date1'}
+  text poznamka
+  text obcanka
+  number vzdelani
+  text zamest
+  text zajmy
+  text jazyk
+  number cirkev
+  text aktivita
+  number clen
+  text note
+  text origin
+  text historie
+}
+
+table tvori { key_id:'id_tvori'
+  number id_tvori
+  number id_osoba
+  number id_rodina
+  number role
+}
+
+table rodina { key_id:'id_rodina'
+  number id_rodina
+  number id_dupary
+  text nazev
+  text ulice
+  text psc
+  text obec
+  text telefony
+  text emaily
+  text spz
+  number svatba
+  date datsvatba { sql_pipe:'sql_date1'}
+  text note
+  text origin
+  text historie
+}
+# ================================================================================================== Sey
 table uakce { key_id:'id_uakce'
   number id_uakce
   number id_akce

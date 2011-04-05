@@ -275,12 +275,21 @@ function chlapi_akce_export($id_akce,$nazev) {  #trace();
   $file= "akce_{$id_akce}_$ymd";
   $type= 'xls';
   $par= (object)array('file'=>$file,'type'=>$type,'title'=>$t,'color'=>'aac0cae2');
-  $fields= "prijmeni,jmeno,narozeni,ulice,psc,obec,email,telefon,iniciace,pozn";
-  $clmns= explode(',',$fields);
+  $clmns= "prijmeni:příjmení,jmeno:jméno,narozeni:narození,ulice,psc:psč,obec,email,telefon,
+           iniciace,c.pozn AS c_pozn:poznámka,u.pozn:... k akci,u.cena:cena,
+           u.uctem:účtem,u.pokladnou:pokladnou";
+  $titles= $fields= $del= '';
+  foreach (explode(',',$clmns) as $clmn) {
+    list($field,$title)= explode(':',trim($clmn));
+    $title= $title ? $title : $field;
+    $titles.= "$del$title";
+    $fields.= "$del$field";
+    $del= ',';
+  }
   $pipe= array('narozeni'=>'sql_date1');
-  export_head($par,$fields);
+  export_head($par,$titles);
   $qry= "SELECT $fields
-         FROM ch_ucast JOIN chlapi USING(id_chlapi) WHERE id_akce=$id_akce ";
+         FROM ch_ucast AS u JOIN chlapi AS c USING(id_chlapi) WHERE id_akce=$id_akce ";
   $res= mysql_qry($qry);
   // projití záznamů
   $values= array();
@@ -292,7 +301,8 @@ function chlapi_akce_export($id_akce,$nazev) {  #trace();
     }
     export_row($values);
   }
-  export_tail();
+   export_tail();
+//                                                 display(export_tail(1));
   // odkaz pro stáhnutí
   $ref= "seznam ve formátu <a href='docs/$file.$type'>Excel</a>";
   return $ref;
@@ -327,19 +337,34 @@ function chlapi_akce_prehled($id_akce) {  #trace();
   $html= '';
   $tab= '';
   $n= 0;
-  $qry= "SELECT zkratka AS _x, count(*) AS _n
-         FROM ch_ucast
-         JOIN chlapi USING(id_chlapi)
-         JOIN _cis ON druh='akce_ucast' AND data=stupen
-         WHERE id_akce='$id_akce'
-         GROUP BY stupen";
+  // základní údaje
+  $qry= "SELECT * FROM ch_akce WHERE id_akce='$id_akce' ";
+  $res= mysql_qry($qry);
+  $x= mysql_fetch_object($res);
+  $od= sql_date1($x->datum_od);
+  $do= sql_date1($x->datum_do);
+  $html.= "<h3>{$x->nazev}, $od - $do</h3>";
+  // účastníci
+  $qry= "SELECT zkratka AS _x, count(*) AS _n FROM ch_ucast JOIN chlapi USING(id_chlapi)
+         JOIN _cis ON druh='akce_ucast' AND data=stupen WHERE id_akce='$id_akce' GROUP BY stupen";
   $res= mysql_qry($qry);
   while ( $res && $a= mysql_fetch_object($res) ) {
     $n+= $a->_n;
     $tab.= "<tr><td>{$a->_x}</td><td>{$a->_n}</td></tr>";
   }
-  $html.= "Celkem $n účastníků, z toho:</b>";
-  $html.= "<table>$tab</table>";
+  $html.= "<b>Celkem $n účastníků, z toho:</b>";
+  $html.= "<br/><br/><table>$tab</table>";
+  // cena
+  $qry= "SELECT sum(cena) AS c, sum(uctem) AS u, sum(pokladnou) AS p
+         FROM ch_ucast WHERE id_akce='$id_akce' ";
+  $res= mysql_qry($qry);
+  $c= mysql_fetch_object($res);
+  $html.= "<br/><b>Cena akce pro účastníky: {$x->cena}</b>";
+  $html.= "<br/><br/><table>";
+  $html.= "<tr><td>celkem předepsaná cena:</td><td>{$c->c}</td></tr>";
+  $html.= "<tr><td>zatím zaplaceno účtem:</td><td>{$c->u}</td></tr>";
+  $html.= "<tr><td>zatím zaplaceno pokladnou:</td><td>{$c->p}</td></tr>";
+  $html.= "</table>";
   return $html;
 }
 # ================================================================================================== PRIDEJ JMENEM

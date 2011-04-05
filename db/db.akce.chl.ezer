@@ -7,6 +7,7 @@ use chs: form _chlapi [10,40,,]
 use ch: form _chlap [10,40,,]
 var the_akce: number
 var the_akce_nazev: text
+var the_akce_cena: number
 proc onstart() {
   chs.reset('mrop'); ch.reset('mrop');
   chs.reload(0);
@@ -27,6 +28,7 @@ menu m {type:'left'
       ch.get.display(0); chs.get.display(0);
       info.fill(conc(i.owner.title,' ',i.title),ask('chlapi_akce_prehled',the_akce.get));
       the_akce_nazev.set(i.title);
+      [ the_akce.get; the_akce_cena.set(ask('select','cena','ch_akce',conc('id_akce=',the_akce.get))) ]
     }
   }
   menu os {title:'Osobní údaje',type:'group'
@@ -148,11 +150,20 @@ form _chlap [,,*,466] {
   field id_chlapi { data:c.id_chlapi }
   # --------------------------------------------------  VZTAH k AKCI pro mode='akce'
   const Lu=240
-  const Tu=290
-  label  [Lu+0,Tu+9,222,30] { tag:'akce', css:'ae_part' }
-  label  [Lu+9,Tu+0,77,] { tag:'akce', title:'způsob účasti', css:'ae_part_label' }
-  select stupen [Lu+5,Tu+15,98,] { tag:'akce', type:'map', data:u.stupen, options:akce_ucast.zkratka }
-  button [Lu+108,Tu+13,,] { tag:'akce', title:'Vyřadit z této akce',
+  const Tu=280
+  label  [Lu+2,Tu+9,365,101] { tag:'akce', css:'ae_part' }
+  label  [Lu+9,Tu+0,90,] { tag:'akce', title:'údaje k této akci', css:'ae_part_label' }
+  select stupen [Lu+7,Tu+17,106,] { tag:'akce', type:'map', data:u.stupen, options:akce_ucast.zkratka }
+  label  [Lu+255,Tu+20,56,]   { tag:'akce', title:'cena akce' }
+  field cena [Lu+315,Tu+17,44,]   { tag:'akce', format:'r', data:u.cena }
+  label  [Lu+306,Tu+42,33,16] { tag:'akce', title:'zaplaceno'}
+  label  [Lu+278,Tu+64,33,]   { tag:'akce', title:'účtem' }
+  field  [Lu+315,Tu+60,44,]   { tag:'akce', format:'r', data:u.uctem }
+  label  [Lu+285,Tu+88,26,]   { tag:'akce', title:'pokl.' }
+  field  [Lu+315,Tu+85,44,]   { tag:'akce', format:'r', data:u.pokladnou }
+  label  [Lu+7,Tu+42,98,16]   { tag:'akce', title:'poznámka k akci'}
+  edit   [Lu+7,Tu+58,258,48]  { tag:'akce', data:u.pozn }
+  button [Lu+118,Tu+15,,] { tag:'akce', title:'Vyřadit z této akce',
       help:'Vyřazení účastníka z účasti na této akci'
     proc onclick() {
       confirm('Opravdu vyřadit ',prijmeni.get,' ',jmeno.get,' z akce ',nazev.get,'?');
@@ -160,13 +171,13 @@ form _chlap [,,*,466] {
       chs.reload(0);
   } }
   # --------------------------------------------------  PŘIDÁVÁNÍ Z JINÝCH ZDROJŮ pro mode='akce'
-  label  [Lu+241,Tu+8,109,70] { tag:'akce', css:'ae_parm' }
-  button [Lu+247,Tu+13,,] { tag:'akce', title:'Přidat z MROP',
+  label  [Lu+256,Tu+125,109,51] { tag:'akce', css:'ae_parm' }
+  button [Lu+262,Tu+128,,29] { tag:'akce', title:'Přidat z MROP',
       help:'Nalezení účastníka podle jména a přidání na akci'
     proc onclick() {
       PridaniJmenem.modal(240,50)
   } }
-  button [Lu+247,Tu+44,,] { tag:'akce', title:'Přidat z MS', format:'d',
+  button [Lu+262,Tu+152,,] { tag:'akce', title:'Přidat z MS', format:'d',
       help:'Nalezení účastníka podle jména a přidání na akci' }
   # --------------------------------------------------  OSOBA
   const L=240
@@ -188,8 +199,8 @@ form _chlap [,,*,466] {
   field iniciace [L+323,T+30,36,] {data:c.iniciace, format:'r:e'}
   label          [L+5,T+54,100,] {title:'ulice'}
   field ulice    [L+5,T+69,162,] {data:c.ulice}
-  label          [L+180,T+54,36,] {title:'psč'}
-  field psc      [L+180,T+69,37,] {data:c.psc}
+  label          [L+179,T+54,39,] {title:'psč'}
+  field psc      [L+179,T+69,40,] {data:c.psc}
   label          [L+230,T+54,100,] {title:'obec'}
   field obec     [L+229,T+69,131,] {data:c.obec}
   label          [L+5,T+94,37,] {title:'telefon'}
@@ -206,8 +217,8 @@ form _chlap [,,*,466] {
   const Lt=240
   const Tt=340
   // - opravy
-  label  [Lt+0,Tt+0,98,30] { css:'ae_parm' }
-  button [Lt+6,Tt+5,,] {title:'Uložit', help:'Uložení změněných osobních údajů'
+  label  [Lt+0,Tt+86,98,30] { css:'ae_parm' }
+  button [Lt+6,Tt+91,,] {title:'Uložit', help:'Uložení změněných osobních údajů'
     proc onclick() {
       var zmena_browse: number
       c.key;
@@ -218,23 +229,24 @@ form _chlap [,,*,466] {
     | // přidání
       c.insert;
       [ eq(mode.get,'akce'); ch_ucast.insert_record(
-        object('id_akce',the_akce.get,'id_chlapi',c.key,'stupen',stupen.key)) ];
+        object('id_akce',the_akce.get,'id_chlapi',c.key,'stupen',stupen.key,'cena',cena.get)) ];
       chs.reload(c.key);
   }}
-  button [Lt+55,Tt+5,,] {title:'Zpět', help:'Změny nebudou uloženy'
+  button [Lt+55,Tt+91,,] {title:'Zpět', help:'Změny nebudou uloženy'
     proc onclick() {
       chs.reload(0);
   }}
   # --------------------------------------------------  VYTVÁŘENÍ A MAZÁNÍ
-  label  [Lt+114,Tt+0,109,30] { css:'ae_parm' }
-  button [Lt+119,Tt+5,,] {title:'Nový', help:'Založení nového účastníka'
+  label  [Lt+122,Tt+86,109,30] { css:'ae_parm' }
+  button [Lt+127,Tt+91,,] {title:'Nový', help:'Založení nového účastníka'
     proc onclick() {
       form.init(1); chs.all.blur(1);
       prijmeni.change; jmeno.change; ulice.change; psc.change; obec.change; sex.change;
       stupen.key(1); stupen.change; id_akce.set(the_akce.get); id_akce.change;
+      cena.set(the_akce_cena.get); cena.change;
       c.key(0); u.key(0);
   } }
-  button [Lt+162,Tt+5,,] {title:'Vymazat', help:'Vymazání osobních informací z evidence'
+  button [Lt+170,Tt+91,,] {title:'Vymazat', help:'Vymazání osobních informací z evidence'
     proc onclick() {
       var ans: text
       confirm('Opravdu vyřadit ',prijmeni.get,' ',jmeno.get,' z databáze?');
@@ -252,11 +264,13 @@ form _chlap [,,*,466] {
 # ================================================================================================== Přidání jménem
 var pall: object
 proc ucast_add(p,i) {  // používají panely PridatJmenem a PridatAkce
+  var rec: number
   p.chck.get;
   pall.set(p.all.get);
   { ask('chlapi_auto_not_yet',the_akce.get,pall.get('id_chlapi'));
-    ch_ucast.insert_record(
-      object('id_akce',the_akce.get,'id_chlapi',pall.get('id_chlapi'),'stupen',1));
+    rec.set(ch_ucast.insert_record(
+      object('id_akce',the_akce.get,'id_chlapi',pall.get('id_chlapi'),'stupen',1,'cena',the_akce_cena.get)));
+    [ chs.all.browse_seek(conc('id_ucast=',rec)) ]
   | warning(pall.get('nazev'),' už na akci je') }
 }
 panel PridaniJmenem [,,320,280] {type:'popup', title:'Přidání známých osob jménem'
