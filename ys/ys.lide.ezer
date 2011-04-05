@@ -192,10 +192,10 @@ panel preh [,,*,*] {type:'right', title:'Přehled'
         info.append(ask('lide_duplo',i.par));
       }
     }
-    menu {title:'Unifikace MS_KURS', type:'group'
+    menu {title:'Unifikace MS_KURS,MS_KURSDETI', type:'group'
       item  {title:'Zobrazení duplicit účastí', par:°{fce:''} }
-      item  {title:'0. inicializace DU_KURS',      par:°{fce:'kurs_init'} }
-      item  {title:'1. naplnění DU_KURS',          par:°{fce:'kurs_duplo'} }
+      item  {title:'0. inicializace DU_KURS,DETI',      par:°{fce:'kurs_init'} }
+      item  {title:'1. naplnění DU_KURS,DETI',          par:°{fce:'kurs_duplo'} }
       item  {title:'2. ... údaje',                 par:°{fce:'kurs_udaje'} }
       item  {title:'3. transformace',              par:°{fce:'kurs_new'} }
       proc onclick (i) {

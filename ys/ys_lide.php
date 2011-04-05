@@ -4,7 +4,7 @@
 # přehled zpracování
 function lide_survey() { trace();
   $html= "<table class='stat'>";
-  $tabs= array('ms_akce','ms_pary','ms_deti','ms_kurs','ms_kursdeti');
+$tabs= array('ms_akce','ms_pary','ms_deti','ms_kurs','ms_kursdeti');
   $sources= array('L','M','Y');
   // napisy
   $html.= "<tr><th></th>";
@@ -72,14 +72,16 @@ function lide_duplo($par) { trace();
     $res= mysql_qry($qry);
     while ( $res && ($p= mysql_fetch_object($res)) ) {
       $ids= $p->_ids;
-      //if ( $p->_pocet>0 ) {
-        $qryd= "INSERT INTO du_akce (typ) VALUES (10)";
-        $resd= mysql_qry($qryd);
-        $id_duakce= mysql_insert_id();
-        $qryu= "UPDATE ms_akce SET id_duakce=$id_duakce WHERE id_akce IN ($ids)";
-        $resu= mysql_qry($qryu);
-        $n++;
-      //}
+      $qryd= "INSERT INTO du_akce (typ) VALUES (10)";
+      $resd= mysql_qry($qryd);
+      $id_duakce= mysql_insert_id();
+      $qryu= "UPDATE ms_akce SET id_duakce=$id_duakce WHERE id_akce IN ($ids)";
+      $resu= mysql_qry($qryu);
+      $qryu= "UPDATE ms_kurs SET id_duakce=$id_duakce WHERE id_akce IN ($ids)";
+      $resu= mysql_qry($qryu);
+      $qryu= "UPDATE ms_kursdeti SET id_duakce=$id_duakce WHERE id_akce IN ($ids)";
+      $resu= mysql_qry($qryu);
+      $n++;
     }
     $html.= "bylo nalezeno $n záznamů M/L se shodou názvů";
     break;
@@ -223,79 +225,83 @@ function lide_duplo($par) { trace();
         // jen jeden výskyt
         $qryp= "SELECT * FROM ms_pary WHERE id_dupary={$d->id_dupary}";
         $resp= mysql_qry($qryp);
+                                                        display("$resp:$qryp");
         while ( $resp && $p= mysql_fetch_assoc($resp) ) {
+                                                        display("$resp:call");
           $r= rodina_insert($p);
-          if ( $p['jmeno_m'] ) {
-            $o= osoba_insert($p,'_m','p');
-            tvori_insert($r,$o,'m');
-          }
-          if ( $p['jmeno_z'] ) {
-            $o= osoba_insert($p,'_z','p');
-            tvori_insert($r,$o,'m');
-          }
-          if ( !$p['jmeno_m'] && !$p['jmeno_z'] )        // 7 případů
-            $html.= "neosoba id_pary={$p['id_pary']}, ";
+//           if ( $p['jmeno_m'] ) {
+//             $o= osoba_insert($p,1,'_m','p');
+//             tvori_insert($r,$o,'m');
+//           }
+//           if ( $p['jmeno_z'] ) {
+//             $o= osoba_insert($p,2,'_z','p');
+//             tvori_insert($r,$o,'m');
+//           }
+//           if ( !$p['jmeno_m'] && !$p['jmeno_z'] )        // 7 případů
+//             $html.= "neosoba id_pary={$p['id_pary']}, ";
+                                                        break; //!!!!!!!!!!!!!!!!!!
         }
         $n1++;
       }
-      else if ( $d->typ=='123456789' ) {
-        // jednoduché duplicity - vezmeme prvního
-        $qryp= "SELECT * FROM ms_pary WHERE id_dupary={$d->id_dupary}";
-        $resp= mysql_qry($qryp);
-        if ( $resp && $p= mysql_fetch_assoc($resp) ) {
-          $r= rodina_insert($p);
-          if ( $p['jmeno_m'] ) {
-            $o= osoba_insert($p,'_m','p');
-            tvori_insert($r,$o,'m');
-          }
-          if ( $p['jmeno_z'] ) {
-            $o= osoba_insert($p,'_z','p');
-            tvori_insert($r,$o,'m');
-          }
-          if ( !$p['jmeno'] )                               // nenastává
-            $html.= "nerodina id_pary={$p['id_pary']}, ";
-          if ( !$p['jmeno_m'] && !$p['jmeno_z'] )           // nenastává
-            $html.= "neosoba id_pary={$p['id_pary']}, ";
-        }
-        $n2++;
-      }
-      else {
-        // složité duplicity - vezmeme jako základ ten nejnovější (du_pary.id_pary)
-        if ( !$d->id_pary ) {
-          // pokud nešel určit (pár nebyl použit v ms_kurs)
-          $d->id_pary= select("id_pary","ms_pary","id_dupary={$d->id_dupary}");
-        }
-        $r= $om= $oz= 0;
-        $qryp= "SELECT * FROM ms_pary WHERE id_pary={$d->id_pary}";
-        $resp= mysql_qry($qryp);
-        if ( $resp && $p= mysql_fetch_assoc($resp) ) {
-          $r= rodina_insert($p) ;
-          if ( $p['jmeno_m'] ) {
-            $om= osoba_insert($p,'_m','p');
-            tvori_insert($r,$om,'m');
-          }
-          if ( $p['jmeno_z'] ) {
-            $oz= osoba_insert($p,'_z','p');
-            tvori_insert($r,$oz,'m');
-          }
-          if ( !$p['jmeno'] )                               // nenastává
-            $html.= "nerodina id_pary={$p['id_pary']}, ";
-          if ( !$p['jmeno_m'] && !$p['jmeno_z'] )           // nenastává
-            $html.= "neosoba id_pary={$p['id_pary']}, ";
-        }
-        else fce_error("složité duplicity:{$d->id_dupary}.{$d->id_pary}");
-        // a ostatní přidáme do poznámky
-        $qryp= "SELECT * FROM ms_pary WHERE id_dupary={$d->id_dupary} AND id_pary!={$d->id_pary}";
-        $resp= mysql_qry($qryp);
-        while ( $resp && $p= mysql_fetch_assoc($resp) ) {
-          rodina_update($r,$p) ;
-          if ( $om )
-            osoba_update($om,$p,'_m');
-          if ( $oz )
-            osoba_update($oz,$p,'_z');
-        }
-        $n3++;
-      }
+                                                        break; //!!!!!!!!!!!!!!!!!!
+//       else if ( $d->typ=='123456789' ) {
+//         // jednoduché duplicity - vezmeme prvního
+//         $qryp= "SELECT * FROM ms_pary WHERE id_dupary={$d->id_dupary}";
+//         $resp= mysql_qry($qryp);
+//         if ( $resp && $p= mysql_fetch_assoc($resp) ) {
+//           $r= rodina_insert($p);
+//           if ( $p['jmeno_m'] ) {
+//             $o= osoba_insert($p,1,'_m','p');
+//             tvori_insert($r,$o,'m');
+//           }
+//           if ( $p['jmeno_z'] ) {
+//             $o= osoba_insert($p,2,'_z','p');
+//             tvori_insert($r,$o,'m');
+//           }
+//           if ( !$p['jmeno'] )                               // nenastává
+//             $html.= "nerodina id_pary={$p['id_pary']}, ";
+//           if ( !$p['jmeno_m'] && !$p['jmeno_z'] )           // nenastává
+//             $html.= "neosoba id_pary={$p['id_pary']}, ";
+//         }
+//         $n2++;
+//       }
+//       else {
+//         // složité duplicity - vezmeme jako základ ten nejnovější (du_pary.id_pary)
+//         if ( !$d->id_pary ) {
+//           // pokud nešel určit (pár nebyl použit v ms_kurs)
+//           $d->id_pary= select("id_pary","ms_pary","id_dupary={$d->id_dupary}");
+//         }
+//         $r= $om= $oz= 0;
+//         $qryp= "SELECT * FROM ms_pary WHERE id_pary={$d->id_pary}";
+//         $resp= mysql_qry($qryp);
+//         if ( $resp && $p= mysql_fetch_assoc($resp) ) {
+//           $r= rodina_insert($p) ;
+//           if ( $p['jmeno_m'] ) {
+//             $om= osoba_insert($p,1,'_m','p');
+//             tvori_insert($r,$om,'m');
+//           }
+//           if ( $p['jmeno_z'] ) {
+//             $oz= osoba_insert($p,2,'_z','p');
+//             tvori_insert($r,$oz,'m');
+//           }
+//           if ( !$p['jmeno'] )                               // nenastává
+//             $html.= "nerodina id_pary={$p['id_pary']}, ";
+//           if ( !$p['jmeno_m'] && !$p['jmeno_z'] )           // nenastává
+//             $html.= "neosoba id_pary={$p['id_pary']}, ";
+//         }
+//         else fce_error("složité duplicity:{$d->id_dupary}.{$d->id_pary}");
+//         // a ostatní přidáme do poznámky
+//         $qryp= "SELECT * FROM ms_pary WHERE id_dupary={$d->id_dupary} AND id_pary!={$d->id_pary}";
+//         $resp= mysql_qry($qryp);
+//         while ( $resp && $p= mysql_fetch_assoc($resp) ) {
+//           rodina_update($r,$p) ;
+//           if ( $om )
+//             osoba_update($om,$p,'_m');
+//           if ( $oz )
+//             osoba_update($oz,$p,'_z');
+//         }
+//         $n3++;
+//       }
     }
     $html.= "<br>$n1, $n2, $n3";
     break;
@@ -332,6 +338,8 @@ function lide_duplo($par) { trace();
         $resd= mysql_qry($qryd);
         $id_dudeti= mysql_insert_id();
         $qryu= "UPDATE ms_deti SET id_dudeti=$id_dudeti WHERE id_deti IN ($ids)";
+        $resu= mysql_qry($qryu);
+        $qryu= "UPDATE ms_kursdeti SET id_dudeti=$id_dudeti WHERE id_deti IN ($ids)";
         $resu= mysql_qry($qryu);
         $n++;
       }
@@ -429,17 +437,19 @@ function lide_duplo($par) { trace();
   // =============================================================================================== MS_KURS, DU_KURS
   // inicializace tabulky DU_KURS => 0
   case 'kurs_init':
-    $qry= "TRUNCATE TABLE du_kurs";
-    $res= mysql_qry($qry);
-    $qry= "UPDATE ms_kurs SET id_dukurs=0";
-    $res= mysql_qry($qry);
-    $qry= "DELETE FROM ms_kurs WHERE id_kurs IN (20293,20294,20295,20296,20297,20298,20299,
-             20300,20301,20302,20303)";
-    $res= mysql_qry($qry);
-    $html.= "byla inicializována tabulka účastí, smazány chybné údaje";
+    mysql_qry("TRUNCATE TABLE du_kurs");
+    mysql_qry("TRUNCATE TABLE du_kursdeti");
+    mysql_qry("UPDATE ms_kurs SET id_dukurs=0");
+    $res= mysql_qry("DELETE FROM ms_kurs WHERE id_kurs IN
+             (20293,20294,20295,20296,20297,20298,20299,20300,20301,20302,20303)");
+    $k= mysql_affected_rows();
+    $res= mysql_qry("DELETE FROM ms_kursdeti WHERE id_akce=0 OR id_deti=0");
+    $d= mysql_affected_rows();
+    $html.= "byla inicializována tabulka účastí, smazáno $k údajů o kurzech, a $d o dětech ";
     break;
   // ----------------------------- seskupení účastí na akcích do DU_KURS => nastavení jen pro 10000
   case 'kurs_duplo':
+    $n= 0;
     $qryk= "SELECT ms_pary.id_dupary,ms_akce.id_duakce,GROUP_CONCAT(id_kurs) AS _ids,
               count(*) AS _pocet
             FROM ms_kurs
@@ -460,7 +470,36 @@ function lide_duplo($par) { trace();
       $resu= mysql_qry($qryu);
       $n++;
     }
-    $html.= "bylo naplněno $n neduplicitních účastí";
+    $qryk= "SELECT id_dupary,GROUP_CONCAT(id_pary) AS _ids FROM ms_pary GROUP BY id_dupary";
+    $resk= mysql_qry($qryk);
+    while ( $resk && ($k= mysql_fetch_object($resk)) ) {
+      $qryu= "UPDATE ms_kurs SET id_dupary={$k->id_dupary} WHERE id_pary IN ({$k->_ids})";
+      $resu= mysql_qry($qryu);
+    }
+    $html.= "<br>bylo naplněno $n neduplicitních účastí dospělých";
+    // děti
+    $n= 0;
+    $qryk= "SELECT ms_deti.id_dudeti,ms_akce.id_duakce,GROUP_CONCAT(id_kursdeti) AS _ids,
+              count(*) AS _pocet
+            FROM ms_kursdeti
+            LEFT JOIN ms_deti USING(id_deti)
+            LEFT JOIN ms_akce USING(id_akce)
+            GROUP BY ms_deti.id_dudeti,ms_akce.id_duakce";
+    $resk= mysql_qry($qryk);
+    while ( $resk && ($k= mysql_fetch_object($resk)) ) {
+      $ids= $k->_ids;
+      $id_dudeti= $k->id_dudeti;
+      $id_duakce= $k->id_duakce;
+      $typ= $k->_pocet==1 ? 12 : 10;
+      $qryd= "INSERT INTO du_kursdeti (id_dudeti,id_duakce,typ,pocet) VALUES
+                ($id_dudeti,$id_duakce,$typ,{$k->_pocet})";
+      $resd= mysql_qry($qryd);
+      $id_dukursdeti= mysql_insert_id();
+      $qryu= "UPDATE ms_kursdeti SET id_dukursdeti=$id_dukursdeti WHERE id_kursdeti IN ($ids)";
+      $resu= mysql_qry($qryu);
+      $n++;
+    }
+    $html.= "<br>bylo naplněno $n neduplicitních účastí dětí";
     break;
   // ----------------------------- seskupení stejných údajů => 12345
   case 'kurs_udaje':
@@ -501,19 +540,59 @@ function lide_duplo($par) { trace();
     // vytvoření nové
     $n1= $n2= 0;
     $qryd= "SELECT * FROM du_kurs ";
+//     $qryd.= "WHERE id_dukurs=14047";
     $resd= mysql_qry($qryd);
     while ( $resd && $d= mysql_fetch_object($resd) ) {
       $qryk= "SELECT * FROM ms_kurs WHERE id_dukurs={$d->id_dukurs} LIMIT 1";
       $resk= mysql_qry($qryk);
       if ( $resk && $k= mysql_fetch_object($resk) ) {
-        $qryp= "INSERT INTO pobyt (id_dukurs,skupina,funkce,aktivita,
-                  datplatby,zpusobplat,platba,platba,platba,platba,platba,platba,
+        $ids= $vals= ''; $del= '';
+        foreach(explode(',',"id_dukurs,skupina,funkce,aktivita,
+                  datplatby,zpusobplat,platba,platba1,platba2,platba3,platba4,
                   budova,pokoj,luzka,strava_cel,cstrava_cel,strava_pol,cstrava_pol,
-                  kocarek,pecovatel,poznamka,pristylky,pocetdnu,svp,dorazil,pouze,akce,
-                  ) VALUES (
-           $typ,$p->_pocet,$id_L)";
+                  kocarek,pecovatel,poznamka,pristylky,pocetdnu,svp,dorazil,pouze") as $id) {
+          $id= trim($id);
+          $ids.= "$del$id";
+          $vals.= "$del'{$k->$id}'";
+          $del= ',';
+        }
+        $qryp= "INSERT INTO pobyt ($ids,id_akce) VALUES ($vals,{$k->id_duakce})";
         $resp= mysql_qry($qryp);
+        $id_pobyt= mysql_insert_id();
+        // doplnění "spolubydlících" manželů - podle položky ms_kurs.pouze
+        switch ($k->pouze) {
+        case 0: // oba
+          $o= select("id_osoba","osoba","id_dupary={$d->id_dupary} AND sex=1");
+          if ( $o )
+            bydli_insert($id_pobyt,$o);
+          else
+            $html.= "<br>spor v pouze pro id_dukurs={$d->id_dukurs} /oba-muž není";
+          $o= select("id_osoba","osoba","id_dupary={$d->id_dupary} AND sex=2");
+          if ( $o )
+            bydli_insert($id_pobyt,$o);
+          else
+            $html.= "<br>spor v pouze pro id_dukurs={$d->id_dukurs} /oba-žena není";
+          break;
+        case 1: // jen muž
+        case 2: // jen žena
+          $o= select("id_osoba","osoba","id_dupary={$d->id_dupary} AND sex={$k->pouze}");
+          if ( $o )
+            bydli_insert($id_pobyt,$o);
+          else
+            $html.= "<br>spor v pouze pro id_dukurs={$d->id_dukurs} ";
+          break;
+        }
+        // doplnění "spolubydlících" dětí z ms_kursdeti
+        $qryo= "SELECT id_osoba FROM du_kursdeti
+                JOIN du_deti as d USING(id_dudeti)
+                JOIN osoba USING(id_dudeti)
+                WHERE id_duakce={$k->id_duakce} AND d.id_dupary={$d->id_dupary} ";
+        $reso= mysql_qry($qryo);
+        while ( $reso && $o= mysql_fetch_object($reso) ) {
+          bydli_insert($id_pobyt,$o->id_osoba);
+        }
       }
+//       break;
     }
     break;
   }
@@ -533,6 +612,11 @@ function rc2ymd($rodcis) {
   }
   return $ymd;
 }
+# ------------------------------------------------------------- bydli_insert
+function bydli_insert($p,$o) {
+  $qryo= "INSERT INTO bydli (id_pobyt,id_osoba) VALUES ($p,$o)";
+  $reso= mysql_qry($qryo);
+}
 # ------------------------------------------------------------- tvori_insert
 function tvori_insert($r,$o,$role) {
   $qryo= "INSERT INTO tvori (id_rodina,id_osoba,role)
@@ -540,20 +624,40 @@ function tvori_insert($r,$o,$role) {
   $reso= mysql_qry($qryo);
 }
 # ------------------------------------------------------------- rodina_insert
-function rodina_insert($p) {
+function rodina_insert($p) {  trace();
   $id_dupary=$p["id_dupary"];
   $nazev=    $p["jmeno"];
+  $ulice   = strtr($p["adresa"],"'","’");
+  $psc     = $p["psc"];
+  $os=       $p["mesto"];
+  list($o,$s)= explode(',',$os);
+  switch(trim($s)) {
+  case 'Slovensko':
+  case 'Sloven.':
+  case 'Slov.':
+  case 'SR':
+  case 'SK':         $obec= $o;  $stat= 'SK';  break;
+  case 'Finland':    $obec= $o;  $stat= 'FIN'; break;
+  case 'Ukrajina':   $obec= $o;  $stat= 'UA';  break;
+  case 'Bulharsko':  $obec= $o;  $stat= 'BG';  break;
+  case 'Polsko':     $obec= $o;  $stat= 'PL';  break;
+  case 'Holland':    $obec= $o;  $stat= 'NL';  break;
+  case 'Canada ON':  $obec= $o;  $stat= 'CDN'; break;
+  default:           $obec= $os; $stat= 'CZ';  break;
+  }
   $telefony= $p["telefon"];
   $emaily=   $p["email"];
   $spz=      $p["spz"];
   $datsvatba=$p["datsvatba"];
   $svatba=   $p["svatba"];
   $note=     strtr($p["poznamka"],"'","’");
-  $qryo= "INSERT INTO rodina (
+  $qryo= "INSERT INTO rodina (ulice,psc,obec,stat,
           id_dupary,nazev,telefony,emaily,spz,datsvatba,svatba,origin,note) VALUES (
+          '$ulice','$psc','$obec','$stat',
           '$id_dupary','$nazev','$telefony','$emaily','$spz','$datsvatba','$svatba','p','$note')";
-  $reso= mysql_qry($qryo);
-  return mysql_insert_id();
+                                display("$reso:$qryo");
+//   $reso= mysql_qry($qryo);
+//   return mysql_insert_id();
 }
 # ------------------------------------------------------------- rodina_update
 function rodina_update($r,$p) {
@@ -565,6 +669,10 @@ function rodina_update($r,$p) {
   // vytvoření změn
   $set= '';
   if ( $x["nazev"]!=    $p["jmeno"]     ) $set.= "$tag:jmeno|{$p["jmeno"]}|";
+  $ulice= strtr($p["adresa"],"'","’");
+  if ( $x["ulice"]   != $ulice          ) $set.= "$tag:ulice|{$ulice}|";
+  if ( $x["psc"]     != $p["psc"]       ) $set.= "$tag:psc|{$p["psc"]}|";
+  if ( $x["obec"]    != $p["mesto"]     ) $set.= "$tag:obec|{$p["mesto"]}|";
   if ( $x["telefony"]!= $p["telefon"]   ) $set.= "$tag:telefon|{$p["telefon"]}|";
   if ( $x["emaily"]!=   $p["email"]     ) $set.= "$tag:email|{$p["email"]}|";
   if ( $x["spz"]!=      $p["spz"]       ) $set.= "$tag:spz|{$p["spz"]}|";
@@ -579,7 +687,7 @@ function rodina_update($r,$p) {
 }
 # ------------------------------------------------------------- dite_insert
 function dite_insert($p) {
-  $id_dupary=$p["id_dupary"];
+  $id_dudeti=$p["id_dudeti"];
   $jmeno=    $p["jmeno"];
   $rc=       $p["rodcislo"];
   $narozeni= rc2ymd($rc);
@@ -587,8 +695,8 @@ function dite_insert($p) {
   $poznamka= strtr($p["poznamka"],"'","’");
   $historie= '';
   $qryo= "INSERT INTO osoba (
-          id_dupary,jmeno,note,origin,historie) VALUES (
-          '$id_dupary','$jmeno','$poznamka','d','$historie')";
+          id_dudeti,jmeno,note,origin,historie) VALUES (
+          '$id_dudeti','$jmeno','$poznamka','d','$historie')";
   $reso= mysql_qry($qryo);
   return mysql_insert_id();
 }
@@ -614,7 +722,7 @@ function dite_update($o,$p) {
   }
 }
 # ------------------------------------------------------------- osoba_insert
-function osoba_insert($p,$_m,$orig) {
+function osoba_insert($p,$sex,$_m,$orig) {
   $id_dupary=$p["id_dupary"];
   $jmeno=    $p["jmeno$_m"];
   $prijmeni= $p["prijmeni$_m"] ? $p["prijmeni$_m"] : $p["jmeno"];
@@ -650,10 +758,10 @@ function osoba_insert($p,$_m,$orig) {
   $historie= '';
   $qryo= "INSERT INTO osoba (
           id_dupary,jmeno,prijmeni,ulice,psc,obec,stat,narozeni,rc_xxxx,
-          obcanka,vzdelani,zamest,zajmy,jazyk,cirkev,aktivita,clen,origin,historie) VALUES (
+          obcanka,vzdelani,zamest,zajmy,jazyk,cirkev,aktivita,clen,origin,historie,sex) VALUES (
           '$id_dupary','$jmeno','$prijmeni','$ulice','$psc','$obec','$stat','$narozeni','$rc_xxxx',
           '$obcanka','$vzdelani','$zamest','$zajmy','$jazyk','$cirkev','$aktivita',
-          '$clen','$orig','$historie')";
+          '$clen','$orig','$historie',$sex)";
   $reso= mysql_qry($qryo);
   return mysql_insert_id();
 }
