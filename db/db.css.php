@@ -13,6 +13,10 @@ global $skin, $path, $c, $b, $ab, $c_appl,
 require_once("../skins/colors.php");
 
 echo <<<__EOD
+/* ladění */
+.nogrid {
+  background:$b url($path/ezer_layout.png) !important; }
+
 /* specifické */
 .title_ref { color:#ffffff !important; }
 .title_ref a { color:#ffffff !important; }
@@ -20,8 +24,10 @@ echo <<<__EOD
 /* úpravy standardu */
 /*.BrowseSmart td.BrowseQry input {
   background-color:#effdf1; }*/
-.SelectDrop li {
-  white-space:normal !important; }
+.Panel {
+  width:100%; }
+/*.SelectDrop li {
+  white-space:normal !important; }*/
 .Label, .Check {
   color:#456; }
 .Label h1 {

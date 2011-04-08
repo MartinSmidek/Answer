@@ -33,6 +33,9 @@ panel oso {type:'plain', title:'Lidi', include:'onclick,db.akce.oso',skill:'yac'
 # ================================================================================================== VÝBĚR
 panel lst {type:'right', title:'Akce', include:'onclick,db.akce.lst',skill:'yaa' }
 # ================================================================================================== ÚČAST
+panel ducast {type:'plain', title:'Dúčastníci', include:'onclick,db.akce.ducast',skill:'yaa'
+  proc init_ucast() { }
+}
 panel ucast {type:'plain', title:'Účastníci', include:'onclick,db.akce.ucast',skill:'yaa'
   proc init_ucast() { }
 }
@@ -160,6 +163,7 @@ table pobyt { key_id:'id_pobyt'
   number id_pobyt
   number id_akce
   number id_osoba
+  number typ            // 10,11,20,21
   number skupina
   number funkce
   text aktivita
@@ -188,8 +192,8 @@ table pobyt { key_id:'id_pobyt'
   number platba4
 }
 
-table bydli { key_id:'id_bydli'
-  number id_bydli
+table spolu { key_id:'id_spolu'
+  number id_spolu
   number id_pobyt
   number id_osoba
 }
@@ -204,6 +208,7 @@ table osoba { key_id:'id_osoba'
   text ulice
   text psc
   text obec
+  text stat
   text email
   text telefon
   text spz
@@ -234,10 +239,12 @@ table tvori { key_id:'id_tvori'
 table rodina { key_id:'id_rodina'
   number id_rodina
   number id_dupary
+  number typ            // 10,11,20,21
   text nazev
   text ulice
   text psc
   text obec
+  text stat
   text telefony
   text emaily
   text spz
@@ -490,3 +497,5 @@ map ms_akce_funkce:   table _cis {where:"druh='ms_akce_funkce'",   order:'poradi
 map ms_akce_cirkev:   table _cis {where:"druh='ms_akce_cirkev'",   order:'poradi', key_id:'data'}
 map ms_akce_vzdelani: table _cis {where:"druh='ms_akce_vzdelani'", order:'poradi', key_id:'data'}
 map ms_akce_platba:   table _cis {where:"druh='ms_akce_platba'",   order:'poradi', key_id:'data'}
+map ms_akce_sex:      table _cis {where:"druh='ms_akce_sex'",      order:'poradi', key_id:'data'}
+map ms_akce_ucastnik: table _cis {where:"druh='ms_akce_ucastnik'", order:'poradi', key_id:'data'}

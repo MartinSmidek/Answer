@@ -16,8 +16,8 @@ echo <<<__EOD
 /* úpravy standardu */
 .BrowseSmart td.BrowseQry input {
   background-color:#effdf1; }
-.SelectDrop li {
-  white-space:normal !important; }
+/*.SelectDrop li {
+  white-space:normal !important; }*/
 .Label, .Check {
   color:#456; }
 .Label h1 {
