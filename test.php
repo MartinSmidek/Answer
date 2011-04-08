@@ -1,5 +1,7 @@
 <?php
 
+  $ezer_local= preg_match('/^\w+\.ezer/',$_SERVER["SERVER_NAME"]); // identifikace ladícího serveru
+
   $app=      'test';
   $app_name= 'Test/Ans(w)er';
   $skin=     'default';
