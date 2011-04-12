@@ -17,9 +17,27 @@ echo <<<__EOD
 .nogrid {
   background:$b url($path/ezer_layout.png) !important; }
 
+/* obecné barvy písma */
+.cervena { color:#f00; }
+.zelena  { color:#0f0; }
+.modra   { color:#00f; }
+.cerna   { color:#000; }
+.nic     { }
+
+/* obecné barvy pozadí */
+.sedy           { background-color:#777777 !important; }
+.zluty          { background-color:#ffff77 !important; }
+.cerveny        { background-color:#ff7777 !important; }
+.zeleny         { background-color:#77ff77 !important; }
+.modry          { background-color:#7389ae !important; }
+
 /* specifické */
 .title_ref { color:#ffffff !important; }
 .title_ref a { color:#ffffff !important; }
+
+.karta {
+  background:$b_group url($path/doc_menu.gif) no-repeat left center; color:$c_menu;
+  font-size:14px; font-weight:bold; margin:2px 0; padding:5px 50px; clear:both; }
 
 /* úpravy standardu */
 /*.BrowseSmart td.BrowseQry input {
@@ -29,7 +47,7 @@ echo <<<__EOD
 /*.SelectDrop li {
   white-space:normal !important; }*/
 .Label, .Check {
-  color:#456; }
+  color:#456; font-size:11px; }
 .Label h1 {
   font-size:12pt; margin:0; padding:0 }
 #Content, #Index {

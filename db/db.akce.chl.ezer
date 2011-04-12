@@ -64,8 +64,7 @@ form _info [,,*,50] { css:'ds_form'
   label ref [-80,7,200,]  { tag:'ex', format:'r', css:'title_ref' }
   label note [0,35,,550] { title:'' }
   proc fill(x,y) {
-    [ x; head.set(conc("<div class='CSection CMenu'><h3 class='CTitle' style='margin:0'>",
-        x,"</h3></div>")) ];
+    [ x; head.set(conc("<div class='karta'>",x,"</div>")) ];
     [ y; note.set(y) ]
   }
   proc append(x) { note.get; note.set(conc(note.get,'<br>',x)) | note.set(x) }

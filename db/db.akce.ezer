@@ -29,25 +29,25 @@ proc onstart() {
 # ================================================================================================== CHLAPI
 panel chl {type:'right', title:'Chlapi', include:'onclick,db.akce.chl',skill:'yac' }
 # ================================================================================================== OSOBY
-panel oso {type:'plain', title:'Lidi', include:'onclick,db.akce.oso',skill:'yac' }
+# panel oso {type:'plain', title:'Lidi', include:'onclick,db.akce.oso',skill:'yac' }
 # ================================================================================================== VÝBĚR
 panel lst {type:'right', title:'Akce', include:'onclick,db.akce.lst',skill:'yaa' }
 # ================================================================================================== ÚČAST
-panel ducast {type:'plain', title:'Dúčastníci', include:'onclick,db.akce.ducast',skill:'yaa'
+panel ducast {type:'plain', title:'Účastníci', include:'onclick,db.akce.ducast',skill:'yaa'
   proc init_ucast() { }
 }
-panel ucast {type:'plain', title:'Účastníci', include:'onclick,db.akce.ucast',skill:'yaa'
-  proc init_ucast() { }
-}
-panel lidi {type:'plain', title:'Účast NEW', include:'onclick,db.akce.lidi',skill:'yaa'
-  proc init_ucast() { }
-}
+# panel ucast {type:'plain', title:'Účastníci', include:'onclick,db.akce.ucast',skill:'yaa'
+#   proc init_ucast() { }
+# }
+# panel lidi {type:'plain', title:'Účast NEW', include:'onclick,db.akce.lidi',skill:'yaa'
+#   proc init_ucast() { }
+# }
 # ================================================================================================== TISK
-panel tisk [,,,] {type:'right', title:'Výpisy akce', include:'onclick,db.akce.tisk',skill:'yaa'  }
+# panel tisk [,,,] {type:'right', title:'Výpisy akce', include:'onclick,db.akce.tisk',skill:'yaa'  }
 # ================================================================================================== VSICHNI
-panel vse [,,,543] {type:'plain', title:'Všichni', include:'onclick,db.akce.vse',skill:'yaa'  }
+# panel vse [,,,543] {type:'plain', title:'Všichni', include:'onclick,db.akce.vse',skill:'yaa'  }
 # ================================================================================================== MAIL
-panel ema [,,,543] {type:'right', title:'Maily', skill:'yam', include:'onclick,db.akce.ema'  }
+# panel ema [,,,543] {type:'right', title:'Maily', skill:'yam', include:'onclick,db.akce.ema'  }
 # ================================================================================================== COMMON
 
 form right [,,*,50] {
@@ -159,6 +159,18 @@ table $osoba { key_id:'id_osoba'
   text info
 }
 # ================================================================================================== NEW
+table akce { key_id:'id_duakce'
+  number id_duakce
+  number typ
+  text nazev
+  number cena
+  date datum_od    { sql_pipe:'sql_date1'}    // SQL tvar se používá v ys.akce
+  date datum_do    { sql_pipe:'sql_date1'}
+  number ciselnik_akce
+  number ciselnik_rok
+  text note
+}
+
 table pobyt { key_id:'id_pobyt'
   number id_pobyt
   number id_akce
@@ -395,11 +407,6 @@ table join_akce { // spojení číselníku akcí s MS
   number g_kod     { help:"kód akce podle číselníku akcí" }
   text   source    { help:"L:Lídino M:Milošovo MS.EXE" }
   number akce      { help:"staré číslo akce podle MS.EXE" }
-}
-
-table du_akce { key_id:'id_duakce'
-  number id_duakce
-  number typ
 }
 
 table ms_akce { key_id:'id_akce'  // Sey

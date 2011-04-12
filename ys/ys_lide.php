@@ -18,13 +18,13 @@ $tabs= array('ms_akce','ms_pary','ms_deti','ms_kurs','ms_kursdeti');
       $html.= "<td class='r'>$n</td>";
     }
   }
-  $html.= "<tr><th class='r'>du_</th>";
-  foreach ($tabs as $tab) {
-    $ab= substr($tab,3);
-    $n= select("count(*)","du_$ab",1);
-    $html.= "<td class='r'>$n</td>";
-  }
-  $html.= "</table>";
+//   $html.= "<tr><th class='r'>du_</th>";
+//   foreach ($tabs as $tab) {
+//     $ab= substr($tab,3);
+//     $n= select("count(*)","du_$ab",1);
+//     $html.= "<td class='r'>$n</td>";
+//   }
+//   $html.= "</table>";
   return $html;
 }
 # -------------------------------------------------------------------------------------------------- lide_duplo
@@ -47,7 +47,7 @@ function lide_duplo($par) { trace();
   // ========================================================================== MS_DRUHAKCE, DU_AKCE
   // inicializace tabulky DU_AKCE => 0
   case 'akce_init':
-    $qry= "TRUNCATE TABLE du_akce";
+    $qry= "TRUNCATE TABLE akce";
     $res= mysql_qry($qry);
     $qry= "UPDATE ms_akce SET id_duakce=0";
     $res= mysql_qry($qry);
@@ -72,7 +72,7 @@ function lide_duplo($par) { trace();
     $res= mysql_qry($qry);
     while ( $res && ($p= mysql_fetch_object($res)) ) {
       $ids= $p->_ids;
-      $qryd= "INSERT INTO du_akce (typ) VALUES (10)";
+      $qryd= "INSERT INTO akce (typ) VALUES (10)";
       $resd= mysql_qry($qryd);
       $id_duakce= mysql_insert_id();
       $qryu= "UPDATE ms_akce SET id_duakce=$id_duakce WHERE id_akce IN ($ids)";
@@ -85,14 +85,14 @@ function lide_duplo($par) { trace();
     }
     $html.= "bylo nalezeno $n záznamů M/L se shodou názvů";
     break;
-  // ----------------------------- naplnění du_akce
+  // ----------------------------- naplnění akce
   case 'akce_new':
     $qryp= "SELECT m.id_duakce,m.datum_od,m.datum_do,m.nazev,m.ciselnik_rok,m.ciselnik_akce,
             CONCAT (m.source,',',m.akce,',',m.misto) AS _note
-            FROM du_akce AS d JOIN ms_akce AS m USING(id_duakce)";
+            FROM akce AS d JOIN ms_akce AS m USING(id_duakce)";
     $resp= mysql_qry($qryp);
     while ( $resp && $p= mysql_fetch_object($resp) ) {
-      $qryu= "UPDATE du_akce SET nazev='{$p->nazev}',note='{$p->_note}',
+      $qryu= "UPDATE akce SET nazev='{$p->nazev}',note='{$p->_note}',
                 datum_od='{$p->datum_od}',datum_do='{$p->datum_do}',
                 ciselnik_akce='{$p->ciselnik_akce}',ciselnik_rok='{$p->ciselnik_rok}'
               WHERE id_duakce={$p->id_duakce}";
@@ -105,7 +105,7 @@ function lide_duplo($par) { trace();
 //     //"10,název,nazev:datum_od",
 //       "02,údaje,ciselnik_akce:ciselnik_rok:poradatel:datum_do:misto"
 //     );
-//     $qryd= "SELECT id_duakce FROM du_akce WHERE typ=10 ORDER BY id_duakce /*LIMIT 1*/";
+//     $qryd= "SELECT id_duakce FROM akce WHERE typ=10 ORDER BY id_duakce /*LIMIT 1*/";
 //     $resd= mysql_qry($qryd);
 //     while ( $resd && ($d= mysql_fetch_object($resd)) ) {
 //       $id_duakce= $d->id_duakce;
@@ -117,7 +117,7 @@ function lide_duplo($par) { trace();
 //         if ( $resp && $p= mysql_fetch_object($resp) ) {
 //           $id_akce= $p->id_akce;
 //           $ans= mysql_real_escape_string($p->_ask);
-//           $qryu= "UPDATE du_akce JOIN ms_akce USING(id_duakce)
+//           $qryu= "UPDATE akce JOIN ms_akce USING(id_duakce)
 //                   SET typ=typ+$incr WHERE id_duakce=$id_duakce AND id_akce!=$id_akce AND $ask='$ans'";
 //           $resu= mysql_qry($qryu);
 //           $n+= mysql_affected_rows();
@@ -698,8 +698,8 @@ function dite_insert($p) {
   $poznamka= strtr($p["poznamka"],"'","’");
   $historie= '';
   $qryo= "INSERT INTO osoba (
-          id_dudeti,jmeno,note,origin,historie) VALUES (
-          '$id_dudeti','$jmeno','$poznamka','d','$historie')";
+          id_dudeti,jmeno,narozeni,rc_xxxx,note,origin,historie) VALUES (
+          '$id_dudeti','$jmeno','$narozeni','$rc_xxxx','$poznamka','d','$historie')";
   $reso= mysql_qry($qryo);
   return mysql_insert_id();
 }

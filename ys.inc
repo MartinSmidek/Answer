@@ -1,47 +1,47 @@
 <?php # (c) 2009-2011 Martin Smidek <martin@smidek.eu>
 
-  $ezer_local= preg_match('/^\w+\.ezer/',$_SERVER["SERVER_NAME"]); // identifikace ladícího serveru
+  $ezer_local= preg_match('/^\w+\.ezer/',$_SERVER["SERVER_NAME"]); // identifikace ladÃ­cÃ­ho serveru
 
   require_once("ezer2/server/ae_slib.php");
 
-  // OBECNÉ PARAMETRY
+  // OBECNÃ‰ PARAMETRY
 
-  // parametry s první hodnotou pro server a druhou (pøípadnì) pro local
+  // parametry s prvnÃ­ hodnotou pro server a druhou (pÅ™Ã­padnÄ›) pro local
   $db= array('ezer_ys','ezer_ys');
   $dbs= array(
-    array( /* ostré */
+    array( /* ostrÃ© */
       'ezer_ys' =>      array(0,'localhost','gandi','r8d0st','utf8'),
       'ezer_system' =>  array(0,'localhost','gandi','r8d0st','utf8','ezer_ys'),
       'setkani' =>      array(0,'192.168.1.146','gandi','','cp1250')),
-    array( /* lokální */
+    array( /* lokÃ¡lnÃ­ */
       'ezer_ys' =>      array(0,'localhost','gandi','','utf8'),
       'ezer_system' =>  array(0,'localhost','gandi','','utf8','ezer_ys'),
       'setkani' =>      array(0,'localhost','gandi','','cp1250'))
   );
-  // koøeny cest
+  // koÅ™eny cest
   $path_root=  array("/home/www/ezer/www-ys/2","C:/Apache/htdocs/ezer/www-ys2");
   $path_pspad= array(null,"C:/Program Files (x86)/PSPad editor/Syntax");
-  // cesty pro zálohy
+  // cesty pro zÃ¡lohy
   $path_backup= array("---","C:/Apache/htdocs/ezer/www-ys2/zalohy");
-  $path_backup= $path_backup[$ezer_local?1:0];          // složka záloh databází
+  $path_backup= $path_backup[$ezer_local?1:0];          // sloÅ¾ka zÃ¡loh databÃ¡zÃ­
   $ezer_mysql_path= array("---","c:/apache/mysql/bin");
-  $ezer_mysql_path= $ezer_mysql_path[$ezer_local?1:0];  // cesta k utilitì mysql
-  // ostatní parametry
+  $ezer_mysql_path= $ezer_mysql_path[$ezer_local?1:0];  // cesta k utilitÄ› mysql
+  // ostatnÃ­ parametry
   $tracking= '_track';
-  $tracked= ',clen,dar,ka,davka,_user,';
+  $tracked= ',akce,pobyt,spolu,osoba,tvori,rodina,_user,';
   root_inc($db,$dbs,$tracking,$tracked,$path_root,$path_pspad);
 
-  // PARAMETRY SPECIFICKÉ PRO APLIKACI
+  // PARAMETRY SPECIFICKÃ‰ PRO APLIKACI
 
-  // moduly interpreta zahrnuté do aplikace - budou zpracovány i reference.i_doc pro tabulky kompilátoru
+  // moduly interpreta zahrnutÃ© do aplikace - budou zpracovÃ¡ny i reference.i_doc pro tabulky kompilÃ¡toru
   $ezer_comp_ezer= "app,ezer,ezer_report,ezer_fdom1,ezer_fdom2";
   $ezer_comp_root= "ds/fce,ys/ys_fce";
-  // moduly v Ezerscriptu mimo složku aplikace
+  // moduly v Ezerscriptu mimo sloÅ¾ku aplikace
   $ezer_ezer= array(
     "ds/ds.dum",
     "ds/ds.tab"
   );
-  // standardní moduly v PHP obsažené v $ezer_path_root/ezer2 - vynechané v dokumentaci
+  // standardnÃ­ moduly v PHP obsaÅ¾enÃ© v $ezer_path_root/ezer2 - vynechanÃ© v dokumentaci
   $ezer_php_libr= array(
     'server/session.php',
     'server/ae_slib.php',
@@ -50,7 +50,7 @@
     'server/sys_doc.php',
     'server/ezer2.php'
   );
-  // uživatelské i knihovní moduly v PHP obsažené v $ezer_path_root
+  // uÅ¾ivatelskÃ© i knihovnÃ­ moduly v PHP obsaÅ¾enÃ© v $ezer_path_root
   $ezer_php= array(
     "ys/ys_fce.php",
     "ys/ys_ucet.php",
@@ -67,9 +67,9 @@
   $EZER->options->skype=  'martin_smidek';
   $EZER->activity->skip=  'GAN';      // viz system.php::sys_table
 
-  // knihovní moduly
+  // knihovnÃ­ moduly
   require_once("$ezer_path_root/ezer2/ezer2_fce.php");
-  // vložení modulù
+  // vloÅ¾enÃ­ modulÅ¯
   foreach($ezer_php as $php) {
     require_once("$ezer_path_root/$php");
   }
