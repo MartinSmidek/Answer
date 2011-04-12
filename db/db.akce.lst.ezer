@@ -1,5 +1,8 @@
-# Systém Ans(w)er - modul Akce
-# (c) 2008-2011 Martin Šmídek <martin@smidek.eu>
+# ------------------------------------------------------------------------------------------------ #
+# Karta pro výběr akce                                                                             #
+#                                                                                                  #
+# Ans(w)er/Ezer                                     (c) 2007-2011 Martin Šmídek <martin@smidek.eu> #
+# ------------------------------------------------------------------------------------------------ #
 
 proc onstart() {
   info.fill(the_title.get,'');
@@ -7,20 +10,20 @@ proc onstart() {
 }
 
 proc onfirstfocus() {
-  echo('výběr');
-  the_akce.get;
-  info.rok.set(the_rok.get)
-| info.rok.set(2011);
+  { the_akce.get;
+    info.rok.set(the_rok.get)
+  | info.rok.set(2011) };
+  m.g.sey.click
 }
 use info: form _akce [12,4,,]
-menu {type:'left'
-  menu {title:'Výběr akce ',type:'group'
+menu m {type:'left'
+  menu g {title:'Výběr akce ',type:'group'
     item {title:'z číselníku akcí na intranetu'
       proc onclick (i) {
         info.google.display(1); info.sey.display(0); the_source.set('google'); akce_roku
       }
     }
-    item {title:'ze Seyova programu'
+    item sey {title:'ze Seyova programu'
       proc onclick (i) {
         info.sey.display(1); info.google.display(0); the_source.set('sey'); akce_roku
       }
@@ -36,11 +39,11 @@ proc akce_roku() {
 }
 # -------------------------------------------------------------------------------------------------- _akce
 # formulář pro výběr akce pro další práci
-form _akce [,,640,50] {
-  select rok [4,19,50,] { format:'t'
+form _akce [,,*,50] {
+  select rok [4,5,50,] { format:'t'
     proc onchange() { akce_roku }
   }
-  button volba [564,17,100,16] { title:'Zapamatovat akci', style:'display:block;zIndex:2',
+  button volba [-20,3,100,16] { title:'Zapamatovat akci', style:'display:block;zIndex:2',
     proc onclick() {
       the_akce.set(if(eq(the_source.get,'google'),google.id_akce.get,sey.id_akce.get));
       set_cookie("ys_akce_id",the_akce.get);
@@ -54,7 +57,8 @@ form _akce [,,640,50] {
           ));
           lst.info.fill(the_title.get,'');
           set_cookie("ys_akce_title",the_title.get);
-          ucast.init_ucast
+#           ucast.init_ucast;
+          ducast.init_ucast;
 #           ucast.u.fill(the_title.get);
 #           ucast.reload(0)
         ]
@@ -66,7 +70,7 @@ form _akce [,,640,50] {
   view ga: table g_akce
   view ja: table join_akce {join_type:'LEFT',join:'USING(g_rok,g_kod)'}
   view ma: table ms_akce   {join_type:'LEFT',join:'USING(source,akce)'}
-  browse google [0,50,200,500] { type:'smart', rows:30, qry_rows:1, buf_rows:120,
+  browse google [0,36,200,500] { type:'smart', rows:27, qry_rows:1, buf_rows:120,
     show id_gakce {data:ga.id_gakce}
     show rok {data:ga.g_rok}
     show kod   [,,30,] {title:'kód', data:ga.g_kod, format:'rs+q*'}
@@ -84,7 +88,7 @@ form _akce [,,640,50] {
   view ma2: table ms_akce
   view ja2: table join_akce {join_type:'LEFT',join:'USING(source,akce)'}
   view ga2: table g_akce    {join_type:'LEFT',join:'USING(g_rok,g_kod)'}
-  browse sey [0,50,200,500] { type:'smart', rows:30, qry_rows:1, buf_rows:120,
+  browse sey [0,36,200,500] { type:'smart', rows:27, qry_rows:1, buf_rows:120,
     show id_akce {data:ma2.id_akce}
     show  {data:ja2.akce}
     show  {data:ga2.id_gakce}
@@ -101,9 +105,9 @@ form _akce [,,640,50] {
     proc onsubmit() { volba.onclick() }
     proc onrowclick() { echo('id_akce=',id_akce.get);}
   }
-  label head [0,0,680,50] { title:'' }
+  label head [0,0,*,50] { title:'' }
   label note [550,50,480,200] { title:'' }
-  button [414,17,100,] { title:'Obnovit rok z intranetu', help:"obnoví akce roku z http://intranet.setkani.org"
+  button [-140,3,100,] { title:'Obnovit rok z intranetu', help:"obnoví akce roku z http://intranet.setkani.org"
     # získání seznamu akcí z docs.google.com pomocí API spredsheet
     proc onclick() {
       alert('bylo obnoveno ',ask('akce_roku_update',the_rok.get),' záznamů o akcích');
@@ -111,7 +115,7 @@ form _akce [,,640,50] {
     }
   }
   proc fill(x,y) {
-    [ x; head.set(conc("<div class='CSection CMenu'><h3 class='CTitle'>",x,"</h3></div>")) ];
+    [ x; head.set(conc("<div class='karta'>",x,"</div>")) ];
     [ y; note.set(y) ]
   }
 }

@@ -219,7 +219,7 @@ panel preh [,,*,*] {type:'right', title:'Přehled'
     label head [0,0,675,50]  { title:'' }
     // seznam
     view a: table ms_akce
-    view d: table du_akce {join_type:'LEFT', join:'USING(id_duakce)'}
+    view d: table akce {join_type:'LEFT', join:'USING(id_duakce)'}
     browse akce [0,50,200,447] {type:'smart', rows:22, qry_rows:1, optimize:°{qry:'noseek'}
       show id_akce {data:a.id_akce }
       show [,,15,] {title:'tab', data:a.source, format:'q*s' }

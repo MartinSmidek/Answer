@@ -28,7 +28,7 @@ case 'ck': // --------------------------------------------------------- ck: barv
     $b5_brow= $nasedla; $b6_brow= $nasedla; $b7_brow= $zelenkava;
     $c_brow= $seda; $s1_brow= $nazelenala; $s2_brow= $cervena;
   $c_kuk= $zelena; $c2_kuk= $bila; $c3_kuk= $cerna; $b_kuk= $oranzova; $s_kuk= $oranzova;
-  $b_warn= $s_kuk; $c_warn= '#000000';
+  $b_warn= '#adff2f'; $c_warn= '#000000';
   $b_doc_modul= $oranzova; $b_doc_menu= $zelena; $b_doc_form= $zelena;
   $b_parm= $oranzova; $b_part= $zelenkava; $b_work= $zelenkava;
   // úpravy ezer.css.php
@@ -54,7 +54,7 @@ case 'ch': // --------------------------------------------------------- ch: barv
     $b5_brow= $nasedla; $b6_brow= $nasedla; $b7_brow= $zelenkava; $b8_brow= '#e0e5ef';
     $c_brow= $seda; $s1_brow= $nazelenala; $s2_brow= $cervena;
   $c_kuk= $zelena; $c2_kuk= $bila; $c3_kuk= $cerna; $b_kuk= $oranzova; $s_kuk= $oranzova;
-  $b_warn= $s_kuk; $c_warn= '#000000';
+  $b_warn= '#eef2ae'; $c_warn= '#000000';
   $b_doc_modul= $oranzova; $b_doc_menu= $zelena; $b_doc_form= $zelena;
   $b_parm= $oranzova; $b_part= $zelenkava; $b_work= $zelenkava;
   // úpravy ezer.css.php

@@ -225,7 +225,7 @@ table join_akce { // spojení číselníku akcí s MS
   number akce      { help:"staré číslo akce podle MS.EXE" }
 }
 
-table du_akce { key_id:'id_duakce'
+table akce { key_id:'id_duakce'
   number id_duakce
   number typ
 }

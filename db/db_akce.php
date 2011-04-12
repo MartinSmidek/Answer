@@ -243,7 +243,7 @@ function akce_strava_denne($od,$dnu,$cela,$polo) {  #trace('');
 }
 # -------------------------------------------------------------------------------------------------- akce_strava_denne_save
 # zapsání výjimek z providelné stravy - pokud není výjimka zapíše prázdný string
-function akce_strava_denne_save($id_kurs,$dnu,$cela,$cela_def,$cela_str,$polo,$polo_def,$polo_str) {  trace('');
+function akce_strava_denne_save($id_pobyt,$dnu,$cela,$cela_def,$cela_str,$polo,$polo_def,$polo_str) {  #trace('');
   $cela_ruzna= $polo_ruzna= 0;
   for ($i= 2; $i<3*$dnu-1; $i++) {
     if ( substr($cela,$i,1)!=$cela_def ) $cela_ruzna= 1;
@@ -256,10 +256,10 @@ function akce_strava_denne_save($id_kurs,$dnu,$cela,$cela_def,$cela_str,$polo,$p
   if ( $cela!=$cela_str ) $set.= "cstrava_cel='$cela'";
   if ( $polo!=$polo_str ) $set.= ($set?',':'')."cstrava_pol='$polo'";
   if ( $set ) {
-    $qry= "UPDATE ms_kurs SET $set WHERE id_kurs=$id_kurs";
+    $qry= "UPDATE pobyt SET $set WHERE id_pobyt=$id_pobyt";
     $res= mysql_qry($qry);
   }
-                                                display("akce_strava_denne_save(($id_kurs,$dnu,$cela,$cela_def,$polo,$polo_def) $set");
+//                                                 display("akce_strava_denne_save(($id_pobyt,$dnu,$cela,$cela_def,$polo,$polo_def) $set");
   return 1;
 }
 # ================================================================================================== CHLAPI AKCE
@@ -419,21 +419,29 @@ function chlapi_auto_jmenovci($id_pary) {  #trace();
 }
 # ================================================================================================== PRIDEJ JMENEM
 # funkce pro spolupráci se select
-# -------------------------------------------------------------------------------------------------- akce_auto_jmena
-# SELECT autocomplete - výběr z akcí
-function akce_auto_jmena($patt) {  #trace();
+# -------------------------------------------------------------------------------------------------- akce_auto_jmena2
+# SELECT autocomplete - výběr z párů
+function akce_auto_jmena2($patt) {  #trace();
   $a= array();
   $limit= 20;
   $n= 0;
-  // rodiče
-  $qry= "SELECT id_pary AS _key,CONCAT(jmeno,' ',jmeno_m,' a ',jmeno_z) AS _value
-         FROM ms_pary
-         WHERE jmeno LIKE '$patt%' ORDER BY jmeno,jmeno_m,jmeno_z LIMIT $limit";
+  $is= strpos($patt,' ');
+  $patt= $is ? substr($patt,0,$is) : $patt;
+  // páry
+  $qry= "SELECT nazev, r.obec, id_rodina AS _key,
+           GROUP_CONCAT(DISTINCT IF(t.role='a',o.jmeno,'') SEPARATOR '') AS _muz,
+           GROUP_CONCAT(DISTINCT IF(t.role='b',o.jmeno,'') SEPARATOR '') AS _zena
+         FROM rodina AS r
+         JOIN tvori AS t USING(id_rodina)
+         JOIN osoba AS o USING(id_osoba)
+         WHERE nazev LIKE '$patt%'
+         GROUP BY id_rodina HAVING _muz!='' AND _zena!=''
+         ORDER BY nazev,_muz,_zena LIMIT $limit";
   $res= mysql_qry($qry);
   while ( $res && $t= mysql_fetch_object($res) ) {
     if ( ++$n==$limit ) break;
     $key= $t->_key;
-    $a[$key]= $t->_value;
+    $a[$key]= "{$t->nazev} {$t->_muz} a {$t->_zena}";
   }
   // obecné položky
   if ( !$n )
@@ -443,16 +451,84 @@ function akce_auto_jmena($patt) {  #trace();
 //                                                                 debug($a,$patt);
   return $a;
 }
-# -------------------------------------------------------------------------------------------------- akce_auto_jmenovci
+# --------------------------------------- akce_auto_jmena2L
 # formátování autocomplete
-function akce_auto_jmenovci($id_pary) {  #trace();
+function akce_auto_jmena2L($id_rodina) {  #trace();
   $pary= array();
-  // páry na akci
-  $qry= "SELECT * FROM ms_pary WHERE id_pary=$id_pary ORDER BY jmeno";
+  // páry
+  $qry= "SELECT nazev,
+           IFNULL(r.nazev,o.prijmeni) as _nazev,
+           GROUP_CONCAT(DISTINCT IF(t.role='a',o.jmeno,'')    SEPARATOR '') AS _muz,
+           GROUP_CONCAT(DISTINCT IF(t.role='a',o.prijmeni,'') SEPARATOR '') AS _muzp,
+           GROUP_CONCAT(DISTINCT IF(t.role='a',o.id_osoba,'') SEPARATOR '') AS _muz_id,
+           GROUP_CONCAT(DISTINCT IF(t.role='b',o.jmeno,'')    SEPARATOR '') AS _zena,
+           GROUP_CONCAT(DISTINCT IF(t.role='b',o.prijmeni,'') SEPARATOR '') AS _zenap,
+           GROUP_CONCAT(DISTINCT IF(t.role='b',o.id_osoba,'') SEPARATOR '') AS _zena_id,
+           r.obec
+         FROM rodina AS r
+         LEFT JOIN tvori AS t USING(id_rodina)
+         LEFT JOIN osoba AS o USING(id_osoba)
+         WHERE id_rodina='$id_rodina'
+	 GROUP BY id_rodina ORDER BY nazev";
   $res= mysql_qry($qry);
   while ( $res && $p= mysql_fetch_object($res) ) {
-    $nazev= "{$p->jmeno} {$p->jmeno_m} a {$p->jmeno_z}, {$p->mesto} ({$p->id_pary})";
-    $pary[]= (object)array('id_pary'=>$p->id_pary,'nazev'=>$nazev);
+    $nazev= $p->_muz && $p->_zena
+      ? "{$p->_nazev} {$p->_muz} a {$p->_zena}"
+      : ( $p->_muz ? "{$p->_muzp} {$p->_muz}" : "{$p->_zenap} {$p->_zena}" );
+    $nazev.= ", {$p->obec}";
+    $pary[]= (object)array('nazev'=>$nazev,'muz'=>$p->_muz_id,'zen'=>$p->_zena_id);
+  }
+//                                                                 debug($pary,$id_akce);
+  return $pary;
+}
+# -------------------------------------------------------------------------------------------------- akce_auto_jmena1
+# SELECT autocomplete - výběr z dospělých jednotlivců
+function akce_auto_jmena1($patt) {  #trace();
+  $a= array();
+  $limit= 20;
+  $n= 0;
+  $is= strpos($patt,' ');
+  $patt= $is ? substr($patt,0,$is) : $patt;
+  // páry
+  $qry= "SELECT prijmeni, jmeno, id_osoba AS _key
+         FROM osoba
+         WHERE prijmeni LIKE '$patt%'
+         ORDER BY prijmeni,jmeno LIMIT $limit";
+  $res= mysql_qry($qry);
+  while ( $res && $t= mysql_fetch_object($res) ) {
+    if ( ++$n==$limit ) break;
+    $key= $t->_key;
+    $a[$key]= "{$t->prijmeni} {$t->jmeno}";
+  }
+  // obecné položky
+  if ( !$n )
+    $a[0]= "... žádné příjmení nezačíná '$patt'";
+  elseif ( $n==$limit )
+    $a[-999999]= "... a další";
+//                                                                 debug($a,$patt);
+  return $a;
+}
+# --------------------------------------- akce_auto_jmena1L
+# formátování autocomplete
+function akce_auto_jmena1L($id_osoba) {  #trace();
+  $pary= array();
+  // páry
+  $qry= "SELECT prijmeni, jmeno, id_osoba, r.obec,
+           GROUP_CONCAT(DISTINCT IF(t.role='a',o.jmeno,'')    SEPARATOR '') AS _muz,
+           GROUP_CONCAT(DISTINCT IF(t.role='a',o.prijmeni,'') SEPARATOR '') AS _muzp,
+           GROUP_CONCAT(DISTINCT IF(t.role='a',o.id_osoba,'') SEPARATOR '') AS _muz_id,
+           GROUP_CONCAT(DISTINCT IF(t.role='b',o.jmeno,'')    SEPARATOR '') AS _zena,
+           GROUP_CONCAT(DISTINCT IF(t.role='b',o.prijmeni,'') SEPARATOR '') AS _zenap,
+           GROUP_CONCAT(DISTINCT IF(t.role='b',o.id_osoba,'') SEPARATOR '') AS _zena_id
+         FROM osoba AS o
+         LEFT JOIN tvori AS t USING(id_osoba)
+         LEFT JOIN rodina AS r USING(id_rodina)
+         WHERE id_osoba='$id_osoba' ";
+  $res= mysql_qry($qry);
+  while ( $res && $p= mysql_fetch_object($res) ) {
+    $nazev= "{$p->prijmeni} {$p->jmeno}";
+    $nazev.= ", {$p->obec}";
+    $pary[]= (object)array('nazev'=>$nazev,'muz'=>$p->_muz_id,'zen'=>$p->_zena_id);
   }
 //                                                                 debug($pary,$id_akce);
   return $pary;
@@ -463,10 +539,11 @@ function akce_auto_jmenovci($id_pary) {  #trace();
 function akce_auto_akce($patt) {  #trace();
   $a= array();
   $limit= 20;
+  $patt= substr($patt,-7,2)==' (' && substr($patt,-1)==')' ? substr($patt,0,-7) : $patt;
   $n= 0;
   // rodiče
-  $qry= "SELECT id_akce AS _key,concat(nazev,' - ',YEAR(datum_od)) AS _value
-         FROM ms_akce
+  $qry= "SELECT id_duakce AS _key,concat(nazev,' (',YEAR(datum_od),')') AS _value
+         FROM akce
          WHERE nazev LIKE '$patt%' ORDER BY datum_od DESC LIMIT $limit";
   $res= mysql_qry($qry);
   while ( $res && $t= mysql_fetch_object($res) ) {
@@ -479,19 +556,38 @@ function akce_auto_akce($patt) {  #trace();
     $a[0]= "... žádná jméno akce nezačíná '$patt'";
   elseif ( $n==$limit )
     $a[-999999]= "... a další";
-//                                                                 debug($a,$patt);
+//                                                                 debug($a,$qry);
   return $a;
 }
-# -------------------------------------------------------------------------------------------------- akce_auto_ucast
+# ---------------------------------------- akce_auto_akceL
 # formátování autocomplete
-function akce_auto_ucast($id_akce) {  #trace();
+function akce_auto_akceL($id_akce) {  #trace();
   $pary= array();
   // páry na akci
-  $qry= "SELECT * FROM ms_kurs JOIN ms_pary USING(id_pary) WHERE id_akce=$id_akce ORDER BY jmeno";
+  $qry= "SELECT
+           IFNULL(r.nazev,o.prijmeni) as _nazev,
+           GROUP_CONCAT(DISTINCT IF(tx.role='a',ox.jmeno,'')    SEPARATOR '') AS _muz,
+           GROUP_CONCAT(DISTINCT IF(tx.role='a',ox.prijmeni,'') SEPARATOR '') AS _muzp,
+           GROUP_CONCAT(DISTINCT IF(tx.role='a',ox.id_osoba,'') SEPARATOR '') AS _muz_id,
+           GROUP_CONCAT(DISTINCT IF(tx.role='b',ox.jmeno,'')    SEPARATOR '') AS _zena,
+           GROUP_CONCAT(DISTINCT IF(tx.role='b',ox.prijmeni,'') SEPARATOR '') AS _zenap,
+           GROUP_CONCAT(DISTINCT IF(tx.role='b',ox.id_osoba,'') SEPARATOR '') AS _zena_id,
+           r.obec
+         FROM pobyt AS p
+         JOIN spolu AS s ON p.id_pobyt=s.id_pobyt
+         JOIN osoba AS o ON s.id_osoba=o.id_osoba
+         LEFT JOIN tvori AS t ON t.id_osoba=o.id_osoba AND t.role!='d'
+         LEFT JOIN rodina AS r USING(id_rodina)
+         LEFT JOIN tvori AS tx ON r.id_rodina=tx.id_rodina
+         LEFT JOIN osoba AS ox ON tx.id_osoba=ox.id_osoba
+         WHERE id_akce=$id_akce
+	 GROUP BY p.id_pobyt ORDER BY _nazev";
   $res= mysql_qry($qry);
   while ( $res && $p= mysql_fetch_object($res) ) {
-    $nazev= "{$p->jmeno} {$p->jmeno_m} a {$p->jmeno_z}, {$p->mesto}";
-    $pary[]= (object)array('id_pary'=>$p->id_pary,'nazev'=>$nazev);
+    $nazev= $p->_muz && $p->_zena
+      ? "{$p->_nazev} {$p->_muz} a {$p->_zena}"
+      : ( $p->_muz ? "{$p->_muzp} {$p->_muz}" : "{$p->_zenap} {$p->_zena}" );
+    $pary[]= (object)array('nazev'=>$nazev,'muz'=>$p->_muz_id,'zen'=>$p->_zena_id);
   }
 //                                                                 debug($pary,$id_akce);
   return $pary;
