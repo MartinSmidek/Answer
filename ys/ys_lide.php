@@ -88,7 +88,7 @@ function lide_duplo($par) { trace();
   // ----------------------------- naplnění akce
   case 'akce_new':
     $qryp= "SELECT m.id_duakce,m.datum_od,m.datum_do,m.nazev,m.ciselnik_rok,m.ciselnik_akce,
-            CONCAT (m.source,',',m.akce,',',m.misto) AS _note
+            CONCAT(m.source,',',m.akce,',',m.misto) AS _note
             FROM akce AS d JOIN ms_akce AS m USING(id_duakce)";
     $resp= mysql_qry($qryp);
     while ( $resp && $p= mysql_fetch_object($resp) ) {
