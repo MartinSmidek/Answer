@@ -15,7 +15,7 @@ require_once("../skins/colors.php");
 echo <<<__EOD
 /* ladění */
 .nogrid {
-  background:$b url($path/ezer_layout.png) !important; }
+  background:$b /*url($path/ezer_layout.png)*/ !important; }
 
 /* obecné barvy písma */
 .cervena { color:#f00; }

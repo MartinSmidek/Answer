@@ -36,9 +36,9 @@ panel lst {type:'right', title:'Akce', include:'onclick,db.akce.lst',skill:'yaa'
 panel ducast {type:'plain', title:'Účastníci', include:'onclick,db.akce.ducast',skill:'yaa'
   proc init_ucast() { }
 }
-# panel ducast2 {type:'plain', title:'Účastníci2', include:'onclick,db.akce.ducast2',skill:'m'
-#   proc init_ucast() { }
-# }
+panel ducast2 {type:'plain', title:'Účastníci2', include:'onclick,db.akce.ducast2',skill:'m'
+  proc init_ucast() { }
+}
 # panel ucast {type:'plain', title:'Účastníci', include:'onclick,db.akce.ucast',skill:'yaa'
 #   proc init_ucast() { }
 # }
