@@ -10,7 +10,7 @@ var the_pobyt: number
 proc onstart() {
   header.fill(the_title.get);
   reload(0);
-  layout.tags(layout.evid,'z','h|o');
+  page.tags(page.evd,'z','h|o');
 }
 
 proc init_ucast() {
@@ -18,14 +18,16 @@ proc init_ucast() {
   reload(0)
 }
 
-use header:form _header [  4,0,,]
-use u:     form _ucast  [  6,40,,]
-use layout:form _layout [400,10,,]
-use rod:   form _rodina [400,0,,]
-use muz:   form _muz    [400,0,,]
-use zen:   form _zena   [400,0,,]
-use pob:   form _pobyt  [400,0,,]
-use cmd:   form _cmd    [400,0,,]
+use header:form _header  [  4,0,,]
+use u:     form _ucast   [  6,40,,]
+use page:  form _page    [400,10,,]
+# podkarta evidence
+use evid:  form _evidence[400,10,,]
+use rod:   form _rodina  [400,0,,]
+use muz:   form _muz     [400,0,,]
+use zen:   form _zena    [400,0,,]
+use pob:   form _pobyt   [400,0,,]
+use cmd:   form _cmd     [400,0,,]
 
 proc reload(id_pobyt) {
   var id_duakce: number
@@ -63,24 +65,36 @@ form _header [,,380,50] {
   }
   label head [0,2,*,50]  { title:'' }
 }
-# -------------------------------------------------------------------------------------------------- _layout
-form _layout { //[,,*,500] {
+# -------------------------------------------------------------------------------------------------- _page
+form _page { //[,,*,500] {
   # --------------------------- záložky
   proc tags(a,on,off) {
     form.set_css('ae_butt_off','ae_butt_on','p');
     a.set_css('ae_butt_on','ae_butt_off');
 #     form.display(1,on); form.display(0,off);
   }
-  label evid [ 12,0,120,20] {tag:'p', title:'<b>Evidenční karta</b>', format:'c', css:'ae_butt_on'
-    proc onclick() { tags(this,'z','h|o'); }
+  label evd [ 12,0,120,20] {tag:'p', title:'<b>Evidenční karta</b>', format:'c', css:'ae_butt_on'
+    proc onclick() { tags(this,'z','h|o');
+      evid.display(1); cmd.display(1);
+      rod.display(1); muz.display(1); zen.display(1); pob.display(1);
+    }
   }
-  label plat [152,0,120,20] {tag:'p', title:'<b>Platba za akci</b>', format:'c',
-    proc onclick() { tags(this,'h','z|o'); }
+  label plt [152,0,120,20] {tag:'p', title:'<b>Platba za akci</b>', format:'c',
+    proc onclick() { tags(this,'h','z|o');
+      evid.display(0); cmd.display(0);
+      rod.display(0); muz.display(0); zen.display(0); pob.display(0);
+    }
   }
-  label jine [292,0,120,20] {tag:'p', title:'<b>Přehled aktivit</b>', format:'c',
-    proc onclick() { tags(this,'o','z|h'); }
+  label jin [292,0,120,20] {tag:'p', title:'<b>Přehled aktivit</b>', format:'c',
+    proc onclick() { tags(this,'o','z|h');
+      evid.display(0); cmd.display(0);
+      rod.display(0); muz.display(0); zen.display(0); pob.display(0);
+    }
   }
   label [0,16,582,530] { css:'ae_work'}
+}
+# -------------------------------------------------------------------------------------------------- _evidence
+form _evidence {
   # --------------------------- kontextové_menu
   menu { type:'context'
     item back { title:'ukázat všechny změny'
@@ -123,7 +137,7 @@ form _layout { //[,,*,500] {
   label [213,466,100,] {title:'Poznámka k akci'}
 }
 # -------------------------------------------------------------------------------------------------- _rodina
-form _rodina { //[,,200,500] {
+form _rodina {
   field nazev       [4,44,100,] {data:rodina.nazev, help:'příjmení'}
   field _spolu      [403,45,23,] {format:'o', value:'?'}
   field svatba      [432,44,36,] {data:rodina.svatba}
@@ -137,7 +151,7 @@ form _rodina { //[,,200,500] {
   field spz         [510,198,62,] {data:rodina.spz}
 }
 # -------------------------------------------------------------------------------------------------- _muz
-form _muz { //[,,200,500] {
+form _muz {
   field id_spolu_m  // id_spolu nebo 0, pokud není na akci
   field jmeno_m     [117,45,100,] {data:osoba.jmeno}
   field _vek_m      [345,46,19,] {format:'o', value:'?'}
@@ -153,7 +167,7 @@ form _muz { //[,,200,500] {
   select clen_m     [79,394,58,] {type:'map', data:osoba.clen, options:ms_akce_clen.zkratka}
 }
 # -------------------------------------------------------------------------------------------------- _zena
-form _zena { //[,,200,500] {
+form _zena {
   field id_spolu_z  // id_spolu nebo 0, pokud není na akci
   field jmeno_z     [229,45,100,] {data:osoba.jmeno}
   field _vek_z      [373,46,20,] {format:'o', value:'?'}
@@ -169,7 +183,7 @@ form _zena { //[,,200,500] {
   select clen_z     [277,394,57,] {type:'map', data:osoba.clen, options:ms_akce_clen.zkratka}
 }
 # -------------------------------------------------------------------------------------------------- _pobyt
-form _pobyt { //[,,201,506] {
+form _pobyt {
   field id_akce                  {data:pobyt.id_akce}
   select funkce     [480,45,50,] {type:'map', data:pobyt.funkce, options:ms_akce_funkce.zkratka }
   field skupina     [535,45,35,] {data:pobyt.skupina, format:'r'}
@@ -388,7 +402,7 @@ form _cmd [,,200,] { css:'ds_form'
   button [484,525,,] {title:'Zpět',  help:'Neměnit změněná data', proc onclick() {
       #echo('ZPĚT: tab_act=',u.b.browse_active,', key=',u.b.browse_key,', nazev=',u.b.nazev.get);
     // potlačení ochrany proti neuložené změně
-    rod.init; pob.init; muz.init; zen.init;
+    rod.plain; pob.plain; muz.plain; zen.plain;
     b_display(1);
     reload(u.b.browse_key);
   } }
@@ -397,10 +411,10 @@ form _cmd [,,200,] { css:'ds_form'
       var ok: number
       the_pobyt.get;
       // oprava
-      [ rod.same | rod.save; rod.init ];
+      [ rod.same | rod.save; rod.plain ];
       [ pob.same
       | eq(u.b.pouze.get,pob.pouze.key);
-        pob.save; pob.init
+        pob.save; pob.plain
       | // došlo ke změně počtu dospělých účastníků - nutno opravit spojku 'spolu'
         [ eq(u.b.pouze.get,2); eq(pob.pouze.key,1,0);   // +m
           spolu.insert_record(object('id_osoba',muz.key,'id_pobyt',the_pobyt.get)) ];
@@ -410,7 +424,7 @@ form _cmd [,,200,] { css:'ds_form'
           spolu.delete_record(conc('id_spolu=',muz.id_spolu_m.get)) ];
         [ eq(u.b.pouze.get,0,2); eq(pob.pouze.key,1);   // -z
           spolu.delete_record(conc('id_spolu=',zen.id_spolu_z.get)) ];
-        pob.save; pob.init
+        pob.save; pob.plain
       ];
       [ muz.same | osoba_ulozit(muz,'a',rod.key) ];
       [ zen.same | osoba_ulozit(zen,'b',rod.key) ];
@@ -426,16 +440,17 @@ form _cmd [,,200,] { css:'ds_form'
       rod.insert; pob.insert; the_pobyt.set(pob.key);
       osoba_ulozit(muz,'a',rod.key);
       osoba_ulozit(zen,'b',rod.key);
+      rod.plain; pob.plain;
       reload(the_pobyt.get);
       b_display(1);
     }
     proc osoba_ulozit(frm,role,rod_key) {
       frm.get.same
-    | frm.get.key;
-      frm.get.save
+    | frm.get.key; frm.get.save; frm.get.plain
     | frm.get.insert;
       tvori.insert_record(object('id_osoba',frm.get.key,'id_rodina',rod_key,'role',role));
       spolu.insert_record(object('id_osoba',frm.get.key,'id_pobyt',the_pobyt.get));
+      frm.get.plain
     }
   }
   // PŘIDAT z AKCE

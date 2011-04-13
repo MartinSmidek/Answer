@@ -436,7 +436,9 @@ function akce_auto_jmena2($patt) {  #trace();
          JOIN osoba AS o USING(id_osoba)
          WHERE nazev LIKE '$patt%'
          GROUP BY id_rodina HAVING _muz!='' AND _zena!=''
-         ORDER BY nazev,_muz,_zena LIMIT $limit";
+         ORDER BY nazev,_muz,_zena
+         GROUP BY id_rodina
+         LIMIT $limit";
   $res= mysql_qry($qry);
   while ( $res && $t= mysql_fetch_object($res) ) {
     if ( ++$n==$limit ) break;
@@ -523,7 +525,8 @@ function akce_auto_jmena1L($id_osoba) {  #trace();
          FROM osoba AS o
          LEFT JOIN tvori AS t USING(id_osoba)
          LEFT JOIN rodina AS r USING(id_rodina)
-         WHERE id_osoba='$id_osoba' ";
+         WHERE id_osoba='$id_osoba'
+         GROUP BY id_rodina";
   $res= mysql_qry($qry);
   while ( $res && $p= mysql_fetch_object($res) ) {
     $nazev= "{$p->prijmeni} {$p->jmeno}";
