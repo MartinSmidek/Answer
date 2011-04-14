@@ -29,16 +29,16 @@ proc onstart() {
 */
 }
 # ================================================================================================== CHLAPI
-panel chl {type:'right', title:'Chlapi', include:'onclick,db.akce.chl',skill:'yac' }
+panel chl {type:'right', _sys:'*', title:'Chlapi', include:'onclick,db.akce.chl',skill:'yac' }
 # ================================================================================================== OSOBY
 # panel oso {type:'plain', title:'Lidi', include:'onclick,db.akce.oso',skill:'yac' }
 # ================================================================================================== VÝBĚR
-panel lst {type:'right', title:'Akce', include:'onclick,db.akce.lst',skill:'yaa' }
+panel lst {type:'right', _sys:'*', title:'Akce', include:'onclick,db.akce.lst',skill:'yaa' }
 # ================================================================================================== ÚČAST
-panel ducast {type:'plain', title:'Účastníci', include:'onclick,db.akce.ducast',skill:'yaa'
+panel ducast {type:'plain', _sys:'*', title:'Účastníci', include:'onclick,db.akce.ducast',skill:'yaa'
   proc init_ucast() { }
 }
-panel ducast2 {type:'plain', title:'Účastníci2', include:'onclick,db.akce.ducast2',skill:'m'
+panel ducast2 {type:'plain', _sys:'*', title:'Účastníci2', include:'onclick,db.akce.ducast2',skill:'m'
   proc init_ucast() { }
 }
 # panel ucast {type:'plain', title:'Účastníci', include:'onclick,db.akce.ucast',skill:'yaa'
@@ -48,7 +48,7 @@ panel ducast2 {type:'plain', title:'Účastníci2', include:'onclick,db.akce.duc
 #   proc init_ucast() { }
 # }
 # ================================================================================================== TISK
-panel tisk [,,,] {type:'right', title:'Výpisy akce', include:'onclick,db.akce.tisk',skill:'yaa'  }
+panel tisk [,,,] {type:'right', _sys:'*', title:'Výpisy akce', include:'onclick,db.akce.tisk',skill:'yaa'  }
 # ================================================================================================== VSICHNI
 # panel vse [,,,543] {type:'plain', title:'Všichni', include:'onclick,db.akce.vse',skill:'yaa'  }
 # ================================================================================================== MAIL
