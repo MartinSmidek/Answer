@@ -198,6 +198,8 @@ panel preh [,,*,*] {type:'right', title:'Přehled'
       item  {title:'1. naplnění DU_KURS,DETI',          par:°{fce:'kurs_duplo'} }
       item  {title:'2. ... údaje',                 par:°{fce:'kurs_udaje'} }
       item  {title:'3. transformace',              par:°{fce:'kurs_new'} }
+      item  {title:'4. zjisti příjmení,sex dětí',      par:°{fce:'kurs_deti_test'} }
+      item  {title:'5. doplň příjmení,sex dětí',      par:°{fce:'kurs_deti_fill'} }
       proc onclick (i) {
         zname.display(0); du_akce.display(0); du_pary.display(0); du_deti.display(0); info.display(1);
         info.fill(conc(i.owner.title,' - ',i.title),'');

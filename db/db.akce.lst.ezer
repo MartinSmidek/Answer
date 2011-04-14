@@ -46,6 +46,7 @@ form _akce [,,*,50] {
   button volba [-20,3,100,16] { title:'Zapamatovat akci', style:'display:block;zIndex:2',
     proc onclick() {
       the_akce.set(if(eq(the_source.get,'google'),google.id_akce.get,sey.id_akce.get));
+      the_duakce.set(ask('select','id_duakce','ms_akce',conc('id_akce=',the_akce.get)));
       set_cookie("ys_akce_id",the_akce.get);
 #         set_cookie("ys_akce_title",'');
 #         google.selected('clear');
