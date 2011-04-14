@@ -48,24 +48,15 @@ form _akce [,,*,50] {
       the_akce.set(if(eq(the_source.get,'google'),google.id_akce.get,sey.id_akce.get));
       the_duakce.set(ask('select','id_duakce','ms_akce',conc('id_akce=',the_akce.get)));
       set_cookie("ys_akce_id",the_akce.get);
-#         set_cookie("ys_akce_title",'');
-#         google.selected('clear');
       { and(the_akce.get,not(eq(the_akce.get,'0')));
-        [ /*google.selected('set',the_akce.get);*/
-          the_title.set(if(eq(the_source.get,'google'),
+        [ the_title.set(if(eq(the_source.get,'google'),
             conc(' Akce ',google.kod.get,' roku ',google.rok.get,' - ',google.nazev.get),
-            conc('&nbsp;',sey.nazev.get)
+            conc('&nbsp;',conc(sey.nazev.get,', ',the_rok.get))
           ));
           lst.info.fill(the_title.get,'');
           set_cookie("ys_akce_title",the_title.get);
-#           ucast.init_ucast;
           ducast.init_ucast;
-#           ucast.u.fill(the_title.get);
-#           ucast.reload(0)
         ]
-#         | DefIdAkce.modal(500,200);
-#           ask('akce_roku_id',google.kod.get,the_rok.get,DefIdAkce.f.lm.get,DefIdAkce.f.id.get);
-#           google.browse_row
       }
   }}
   view ga: table g_akce

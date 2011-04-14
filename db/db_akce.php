@@ -44,11 +44,12 @@ function akce_foxpro_data() {  #trace('');
 # ================================================================================================== VÝPISY
 # -------------------------------------------------------------------------------------------------- akce_sestava2
 # generování sestav
-#   $typ = j | p
-function akce_sestava2($akce,$par,$title,$vypis,$export=false) {
-  return $par->typ=='p'
-    ? akce_sestava_pary($akce,$par,$title,$vypis,$export)
-    : akce_sestava_lidi($akce,$par,$title,$vypis,$export);
+#   $typ = j | p | vp
+function akce_sestava($akce,$par,$title,$vypis,$export=false) {
+  return $par->typ=='p'  ? akce_sestava_pary($akce,$par,$title,$vypis,$export)
+     : ( $par->typ=='j'  ? akce_sestava_lidi($akce,$par,$title,$vypis,$export)
+     : ( $par->typ=='vp' ? akce_vyuctov_pary($akce,$par,$title,$vypis,$export)
+                         : "N.Y.I." ));
 }
 # -------------------------------------------------------------------------------------------------- akce_sestava_lidi
 # generování sestavy pro účastníky $akce - jednotlivce
@@ -190,6 +191,162 @@ function akce_sestava_pary($akce,$par,$title,$vypis,$export=false) { trace();
   }
   return $result;
 }
+# ================================================================================================== VYÚČTOVÁNÍ
+# -------------------------------------------------------------------------------------------------- akce_vyuctov_pary
+# generování sestavy vyúčtování pro účastníky $akce - páry
+#   $fld = seznam položek s prefixem
+#   $cnd = podmínka
+# počítané položky
+#   manzele = rodina.nazev muz a zena
+# generované vzorce
+#   platit = součet předepsaných plateb
+function akce_vyuctov_pary($akce,$par,$title,$vypis,$export=false) { trace();
+  $result= (object)array();
+  $tit= "Manželé:30"
+      . ",pokoj:5,dětí:5,lůžka:5,přistýlky:5,kočárek:5,nocí:5,str. celá:5,str. pol.:5"
+      . ",platba ubyt.,platba strava,platba režie,sleva,mp3,celkem,převodem,datum platby:10:d"
+      . ",nedopl.,pokladna,přepl.,poznámka:50"
+      . ",ubyt.,DPH,strava,DPH,režie,zaplaceno,dotace,nedoplatek,dar"
+      . "";
+  $fld= "manzele"
+      . ",pokoj,_deti,luzka,pristylky,kocarek,pocetdnu,strava_cel,strava_pol"
+      . ",platba1,platba2,platba3,platba4,mp3,=platit,platba,datplatby"
+      . ",=nedoplatek,=pokladna,=preplatek,poznamka"
+      . ",=ubyt,=ubytDPH,=strava,=stravaDPH,=rezie,=zaplaceno,=dotace,=nedopl,=dar"
+      . "";
+  $cnd= 1;
+  $html= '';
+  $href= '';
+  $n= 0;
+  // dekódování parametrů
+  $tits= explode(',',$tit);
+  $flds= explode(',',$fld);
+  $cond= 1;
+  // získání dat - podle $kdo
+  $clmn= array();       // pro hodnoty
+  $expr= array();       // pro výrazy
+  // data akce
+  $qry=  "SELECT
+          p.pouze,pokoj,luzka,pristylky,kocarek,pocetdnu,strava_cel,strava_pol,
+            platba1,platba2,platba3,platba4,platba,datplatby,
+          p.poznamka,
+          r.nazev as nazev,r.ulice,r.psc,r.obec,r.telefony,r.emaily,
+          SUM(IF(t.role='d',1,0)) as _deti,
+          GROUP_CONCAT(DISTINCT IF(t.role='a',o.prijmeni,'') SEPARATOR '') as prijmeni_m,
+          GROUP_CONCAT(DISTINCT IF(t.role='a',o.jmeno,'')    SEPARATOR '') as jmeno_m,
+          GROUP_CONCAT(DISTINCT IF(t.role='a',o.narozeni,'') SEPARATOR '') as narozeni_m,
+          GROUP_CONCAT(DISTINCT IF(t.role='a',o.rc_xxxx,'')  SEPARATOR '') as rc_xxxx_m,
+          GROUP_CONCAT(DISTINCT IF(t.role='b',o.prijmeni,'') SEPARATOR '') as prijmeni_z,
+          GROUP_CONCAT(DISTINCT IF(t.role='b',o.jmeno,'')    SEPARATOR '') as jmeno_z,
+          GROUP_CONCAT(DISTINCT IF(t.role='b',o.narozeni,'') SEPARATOR '') as narozeni_z,
+          GROUP_CONCAT(DISTINCT IF(t.role='b',o.rc_xxxx,'')  SEPARATOR '') as rc_xxxx_z
+          FROM ezer_ys.pobyt AS p
+          JOIN spolu AS s USING(id_pobyt)
+          JOIN osoba AS o ON s.id_osoba=o.id_osoba
+          LEFT JOIN tvori AS t ON t.id_osoba=o.id_osoba
+          LEFT JOIN rodina AS r USING(id_rodina)
+          WHERE p.id_akce='$akce' AND $cond
+          GROUP BY id_pobyt
+          ORDER BY nazev,prijmeni_m,prijmeni_z";
+//   $qry.=  " LIMIT 10";
+  $res= mysql_qry($qry);
+  while ( $res && ($x= mysql_fetch_object($res)) ) {
+//                                         debug($x,"hodnoty");
+    $n++;
+    $clmn[$n]= array();
+    $DPH1= 0.1;
+    $DPH2= 0.2;
+    foreach($flds as $f) {
+      $exp= '';
+      if ( substr($f,0,1)=='=' ) {
+        //            ubyt.         strava        režie         sleva
+        $predpis= $x->platba1 + $x->platba2 + $x->platba3 + $x->platba4;
+        $preplatek= $x->platba > $predpis ? $x->platba - $predpis : '';
+        $nedoplatek= $x->platba < $predpis ? $predpis - $x->platba : '';
+        switch ($f) {
+        case '=platit':     $val= $predpis;
+                            $exp= "=[platba1,0]+[platba2,0]+[platba3,0]+[platba4,0]"; break;
+        case '=preplatek':  $val= $preplatek;
+                            $exp= "=IF([platba,0]>[=platit,0],[platba,0]-[=platit,0],0)"; break;
+        case '=nedoplatek': $val= $nedoplatek; break;
+                            $exp= "=IF([platba,0]<[=platit,0],[=platit,0]-[platba,0],0)"; break;
+        case '=pokladna':   $val= ''; break;
+        case '=ubyt':       $val= round($x->platba1/(1+$DPH1));
+                            $exp= "=ROUND([platba1,0]/(1+$DPH1),0)"; break;
+        case '=ubytDPH':    $val= round($x->platba1*$DPH1/(1+$DPH1));
+                            $exp= "=[platba1,0]-[=ubyt,0]"; break;
+        case '=strava':     $val= round($x->platba2/(1+$DPH2));
+                            $exp= "=ROUND([platba2,0]/(1+$DPH2),0)"; break;
+        case '=stravaDPH':  $val= round($x->platba2*$DPH2/(1+$DPH2));
+                            $exp= "=[platba2,0]-[=strava,0]"; break;
+        case '=rezie':      $val= 0+$x->platba3;
+                            $exp= "=[platba3,0]"; break;
+        case '=zaplaceno':  $val= 0+$x->platba;
+                            $exp= "=[platba,0]+[=pokladna,0]"; break;
+        case '=dotace':     $val= -$x->platba4;
+                            $exp= "=-[platba4,0]"; break;
+        case '=nedopl':     $val= $nedoplatek;
+                            $exp= "=IF([=zaplaceno,0]<[=platit,0],[=platit,0]-[=zaplaceno,0],0)"; break;
+        case '=dar':        $val= $preplatek;
+                            $exp= "=IF([=zaplaceno,0]>[=platit,0],[=zaplaceno,0]-[=platit,0],0)"; break;
+        default:            $val= '???'; break;
+        }
+        $clmn[$n][$f]= $val;
+        if ( $exp ) $expr[$n][$f]= $exp;
+      }
+      else {
+        switch ($f) {
+        case 'manzele':
+          $val= $x->pouze==1 ? "{$x->prijmeni_m} {$x->jmeno_m}"
+             : ($x->pouze==2 ? "{$x->prijmeni_z} {$x->jmeno_z}"
+             : "{$x->nazev} {$x->jmeno_m} a {$x->jmeno_z}");
+          break;
+        case 'jmena':
+          $val= $x->pouze==1
+              ? $x->jmeno_m : ($x->pouze==2 ? $x->jmeno_z : "{$x->jmeno_m} a {$x->jmeno_z}");
+          break;
+        case 'prijmeni':
+          $val= $x->pouze==1 ? $x->prijmeni_m : ($x->pouze==2 ? $x->prijmeni_z : $x->nazev);
+          break;
+        default:
+          $val= $f ? $x->$f : '';
+          break;
+        }
+        if ( $f ) $clmn[$n][$f]= $val; else $clmn[$n][]= $val;
+      }
+    }
+//     break;
+  }
+//                                         debug($clmn,"sestava pro $akce,$typ,$fld,$cnd");
+                                        debug($expr,"vzorce pro $akce,$typ,$fld,$cnd");
+  // zobrazení tabulkou
+  $tab= '';
+  $thd= '';
+  if ( $export ) {
+    $result->tits= $tits;
+    $result->flds= $flds;
+    $result->clmn= $clmn;
+    $result->expr= $expr;
+  }
+  else {
+    // titulky
+    foreach ($tits as $idw) {
+      list($id)= explode(':',$idw);
+      $ths.= "<th>$id</th>";
+    }
+    foreach ($clmn as $i=>$c) {
+      $tab.= "<tr>";
+      foreach ($c as $id=>$val) {
+        $tab.= "<td style='text-align:left'>$val</td>";
+      }
+      $tab.= "</tr>";
+    }
+    $result->html= "<div class='stat'><table class='stat'><tr>$ths</tr>$tab</table></div>";
+    $result->href= $href;
+  }
+  return $result;
+}
+/*
 # -------------------------------------------------------------------------------------------------- akce_sestava OLD
 # generování sestavy pro účastníky $akce
 #   $typ = jeden | par
@@ -316,6 +473,7 @@ function akce_sestava($akce,$par,$title,$vypis,$export=false) {
   }
   return $result;
 }
+*/
 # ================================================================================================== GOOGLE
 # -------------------------------------------------------------------------------------------------- akce_roku_id
 # definuj klíč dané akce jeko klíč akce z aplikace MS.EXE
@@ -750,11 +908,12 @@ function akce_auto_akceL($id_akce) {  #trace();
 # -------------------------------------------------------------------------------------------------- akce_vyp_excel
 # generování tabulky do excelu
 function akce_vyp_excel($akce,$par,$title,$vypis) {  trace();
+  global $xA, $xn;
   $result= (object)array('_error'=>0);
   $html= '';
   // získání dat
   $title= str_replace('&nbsp;',' ',$title);
-  $tab= akce_sestava2($akce,$par,$title,$vypis,true);
+  $tab= akce_sestava($akce,$par,$title,$vypis,true);
   // vlastní export do Excelu
   $name= cz2ascii("vypis_").date("Ymd_Hi");
   $xls= <<<__XLS
@@ -762,13 +921,24 @@ function akce_vyp_excel($akce,$par,$title,$vypis) {  trace();
     |sheet vypis;;L;page
     |A1 $title ::bold size=14 |A2 $vypis ::bold size=12
 __XLS;
-  // titulky
+  // titulky a sběr formátů
+  $fmt= array();
   $n= 4;
   $lc= 0;
   $clmns= $del= '';
+  $xA= array();                                 // překladová tabulka: název sloupce => písmeno
+  foreach ($tab->flds as $f) {
+    $A= Excel5_n2col($lc);
+    $xA[$f]= $A;
+    $lc++;
+  }
+  $lc= 0;
   foreach ($tab->tits as $idw) {
     $A= Excel5_n2col($lc);
-    list($id,$w)= explode(':',$idw);
+    list($id,$w,$f)= explode(':',$idw);
+    if ( $f ) {
+      $fmt[$A]= $f;
+    }
     $xls.= "|$A$n $id";
     if ( $w ) {
       $clmns.= "$del$A=$w";
@@ -777,20 +947,40 @@ __XLS;
     $lc++;
   }
   if ( $clmns ) $xls.= "\n|columns $clmns ";
-  $xls.= "\n|A$n:$A$n bcolor=ffaaaaaa \n";
+  $xls.= "\n|A$n:$A$n bcolor=ffaaaaaa wrap\n";
   $n= 5;
   // datové řádky
   foreach ($tab->clmn as $i=>$c) {
+    $xls.= "\n";
     $lc= 0;
     foreach ($c as $id=>$val) {
       $A= Excel5_n2col($lc);
-      $xls.= "|$A$n $val";
+      $format= '';
+      if (isset($tab->expr[$i][$id]) ) {
+        // buňka obsahuje vzorec
+        $val= $tab->expr[$i][$id];
+        $format.= ' bcolor=ffcccccc';
+        $xn= $n;
+        $val= preg_replace_callback("/\[([^,]*),([^\]]*)\]/","akce_vyp_subst",$val);
+        //$val= str_replace('[=ubyt,0]','B5',$val);
+      }
+      else {
+        // buňka obsahuje hodnotu
+        if ( isset($fmt[$A]) ) {
+          switch ($fmt[$A]) {
+          // aplikace formátů
+          case 'd': $val= sql2xls($val); $format.= ' right date'; break;
+          }
+        }
+      }
+      $format= $format ? "::$format" : '';
+      $xls.= "|$A$n $val $format";
       $lc++;
     }
     $n++;
   }
   $xls.= <<<__XLS
-    |close
+    \n|close
 __XLS;
   // výstup
                                                                 display($xls);
@@ -804,6 +994,28 @@ __XLS;
   }
   $result->html= $html;
   return $result;
+}
+function akce_vyp_subst($matches) { trace();
+  global $xA, $xn;
+//                                                 debug($xA);
+//                                                 debug($matches);
+  if ( !isset($xA[$matches[1]]) ) fce_error("akce_vyp_excel: chybný název sloupce '{$matches[1]}'");
+  $A= $xA[$matches[1]];
+  $n= $xn+$matches[2];
+  return "$A$n";
+}
+# ---------------------------------------------------- sql2xls
+// datum bez dne v týdnu
+function sql2xls($datum) {
+  // převeď sql tvar na uživatelskou podobu (default)
+  $text= ''; $del= '.';
+  if ( $datum && substr($datum,0,10)!='0000-00-00' ) {
+    $y=substr($datum,0,4);
+    $m=substr($datum,5,2);
+    $d=substr($datum,8,2);
+    $text.= date("j{$del}n{$del}Y",strtotime($datum));
+  }
+  return $text;
 }
 # ================================================================================================== EMAILY
 # jednotlivé maily posílané v sadách příložitostně skupinám
