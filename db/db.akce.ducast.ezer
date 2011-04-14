@@ -223,7 +223,6 @@ form _pobyt {
     show rc_xxxx
     show note [,,80,] { title:'poznámka' }
     proc onsubmit() {
-      copy_by_name(d,Dite.dite);
       Dite.key_dite.set(id_osoba.get); Dite.key_spolu.set(id_spolu.get);
       Dite.modal(260,240)
     }
@@ -481,7 +480,6 @@ form _cmd [,,200,] { css:'ds_form'
   // PŘIDAT DÍTĚ
   button dite       [271,525,,] {title:'Přidat dítě', help:'Přidání dalšího dítěte do rodiny'
     proc onclick() {
-      Dite.dite.init(2);
       Dite.key_dite.set(0); Dite.key_spolu.set(0);
       Dite.modal(260,240)
   } }
@@ -489,28 +487,49 @@ form _cmd [,,200,] { css:'ds_form'
   proc b_display(on) { u.b.display(on); pob.d.display(on); pob.s.display(on); }
 }
 # ================================================================================================== Dítě
-panel Dite [,,300,115] {type:'popup', title:'Úprava dětí'
-  use dite: form _dite [12,10,,]
+panel Dite [,,370,280] {type:'popup', title:'Úprava dětí'
+  use dite: form _dite [0,10,,]
   var key_dite: number
   var key_spolu: number
   proc onfocus() {
+    { key_dite.get; dite.load(key_dite.get) | dite.init(2) };
     dite.sebou.set(cconc(key_spolu.get,1,0))
   }
   form _dite [,,200,50] { css:'ds_form'
+    # --------------------------------------------------  OSOBA
+    const L=0
+    const T=0
     view d: table osoba
-    field id_osoba                 { data:d.id_osoba }
-    label [0,0,,] { title:'je na akci' }
-    check sebou    [0,10,90,17]
-    label [60,0,,] { title:'křestní jméno' }
-    field jmeno    [61,12,90,17]   { data:d.jmeno }
-    label [161,0,,] { title:'narození' }
-    field narozeni [161,12,80,17] { type:'date', data:d.narozeni }
-    label [252,0,,] { title:'/rč' }
-    field rc_xxxx  [250,12,40,17] { data:d.rc_xxxx }
-    label [2,40,,] { title:'trvalá poznámka k dítěti' }
-    field note     [1,52,288,17]  { data:d.note }
+    label          [L+65,T+0,69,] {title:'příjmení'}
+    field prijmeni [L+65,T+15,118,] {data:d.prijmeni, help:'příjmení'}
+    label          [L+198,T+0,100,] {title:'jméno'}
+    field jmeno    [L+198,T+15,101,] {data:d.jmeno}
+    radio sex [L+306,T+0,50,35] { data:d.sex,
+      case [0,2,50,] { title:'muž', expr:'1' }
+      case [0,17,50,] { title:'žena', expr:'2' }
+      proc onchange() { echo('sex=',this.get) }
+    }
+    field id_osoba { data:d.id_osoba }
+    label [0,0,,]  { title:'je na akci' }
+    check sebou    [3,9,33,17]
+    label          [L+5,T+38,100,] {title:'ulice'}
+    field ulice    [L+5,T+53,162,] {data:d.ulice}
+    label          [L+179,T+38,39,] {title:'psč'}
+    field psc      [L+179,T+53,40,] {data:d.psc}
+    label          [L+230,T+38,100,] {title:'obec'}
+    field obec     [L+229,T+53,131,] {data:d.obec}
+    label          [L+5,T+78,37,] {title:'telefon'}
+    field telefon  [L+5,T+94,212,] {data:d.telefon}
+    label          [L+230,T+78,33,] {title:'narození'}
+    field narozeni [L+229,T+94,85,] {type:'date', data:d.narozeni, format:'rR:e'}
+    label          [L+324,T+78,41,] {title:'nnnn rč'}
+    field rodne    [L+323,T+94,37,] {data:d.rc_xxxx, format:'r:e'}
+    label          [L+5,T+122,33,] {title:'e-mail'}
+    field email    [L+5,T+138,355,] {data:d.email}
+    label          [L+5,T+163,33,] {title:'poznámka'}
+    edit  note     [L+5,T+178,355,60] {data:d.note}
     // ukončení
-    button [1,87,,] { title:'Vyřadit z evidence', help:'Vyřadit toto dítě z evidence', proc onclick() {
+    button [5,249,,] { title:'Vyřadit z evidence', help:'Vyřadit toto dítě z evidence', proc onclick() {
       confirm("Opravdu zrušit všechny informace o ",jmeno.get,"?");
       // případně vyjmout z kurzu
       [ spolu.delete_record(conc('id_osoba=',id_osoba.get),9999) ];
@@ -519,10 +538,11 @@ panel Dite [,,300,115] {type:'popup', title:'Úprava dětí'
       reload(u.b.browse_key);
       panel.hide(1)
     }}
-    button [196,87,,] { title:'Zpět', proc onclick() {
+    label  [260,245,98,30] { css:'ae_parm' }
+    button [266,250,,] { title:'Zpět', proc onclick() {
       panel.hide(0)
     }}
-    button [248,87,,] { type:'submit', title:'Uložit', proc onclick() {
+    button [312,250,,] { type:'submit', title:'Uložit', proc onclick() {
       { key_dite.get;
         // oprava
         d.key(key_dite.get); [ d.save ];
