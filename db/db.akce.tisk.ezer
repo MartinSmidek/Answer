@@ -4,15 +4,10 @@
 # ================================================================================================== Tisk
 use info: form right [12,4,,] {
 #   var y:text
-  button [-20,18,100,16] { title:'Excel', style:'display:block;zIndex:2',
+  button [-20,4,100,16] { title:'Excel', style:'display:block;zIndex:2',
     proc onclick() {
-#       [y.get];
-#       tisk.x.get;
-#       vse.z.get;
-#       the_akce.get;
-#       Ucastnici.pall.get;
       var res: object
-      res.set(ask('akce_vyp_excel',the_akce.get,tisk.m.the_par.get,the_title.get,tisk.m.the_vypis.get));
+      res.set(ask('akce_vyp_excel',the_duakce.get,tisk.m.the_par.get,the_title.get,tisk.m.the_vypis.get));
       form.msg.set(res.html);
     }
   }
@@ -23,16 +18,27 @@ proc onfirstfocus() {
   m.n.i.click
 }
 menu m {type:'left',
-  menu n {title:'Adresář',type:'group',_sys:'*'
-    item i {title:'základní'       ,par:°{typ:'p'
-                                        ,tit:'příjmení:15,jména:20,obec:25,psč:7,ulice:25'
-                                        ,fld:'jmeno,jmena,mesto,psc,adresa',cnd:'1'}}
-    item {title:'základní, spojení',par:°{typ:'p'
-                                        ,tit:'příjmení:15,jména:20,obec:25,psč:7,ulice:25,telefon:40,e-mail:60'
-                                        ,fld:'jmeno,jmena,mesto,psc,adresa,telefon,email',cnd:'1'}}
-    item {title:'základní, RČ'    ,par:°{typ:'j'
-                                        ,tit:'příjmení:15,jméno:12,rod.číslo:12,obec:25,psč:7,ulice:25'
-                                        ,fld:'prijmeni_m,jmeno_m,rodcislo_m,mesto,psc,adresa;prijmeni_z,jmeno_z,rodcislo_z,mesto,psc,adresa',cnd:'1'}}
+  menu n {title:'Adresář NEW',type:'group',_sys:'*'
+    item {title:'základní pro páry'             ,par:°{typ:'p',cnd:'1'
+                                      ,tit:'příjmení:15,jména:20,obec:25,psč:7,ulice:25'
+                                      ,fld:'prijmeni,jmena,obec,psc,ulice'}}
+    item {title:'základní pro páry + spojení'   ,par:°{typ:'p',cnd:'1'
+                                      ,tit:'příjmení:15,jména:20,obec:25,psč:7,ulice:25,telefon:40,e-mail:60'
+                                      ,fld:'prijmeni,jmena,obec,psc,ulice,telefony,emaily'}}
+    item i {title:'jednotlivci bez dětí'          ,par:°{typ:'j',cnd:"role!='d'"
+                                        ,tit:'příjmení:15,jméno:12,narození:12,/rč:5,obec:25,psč:7,ulice:25'
+                                        ,fld:'prijmeni,jmeno,narozeni,rc_xxxx,obec,psc,ulice'}}
+    item {title:'jednotlivci vč. dětí'          ,par:°{typ:'j',cnd:'1'
+                                        ,tit:'příjmení:15,jméno:12,narození:12,/rč:5,obec:25,psč:7,ulice:25'
+                                        ,fld:'prijmeni,jmeno,narozeni,rc_xxxx,obec,psc,ulice'}}
+    proc onclick (i) {
+      var x: object
+      the_par.set(i.par);
+      the_vypis.set(conc(i.owner.title,' - ',i.title));
+      info.fill(conc(the_title.get,' / ',the_vypis.get),' ');
+      x.set(ask('akce_sestava2',the_duakce.get,i.par,the_title.get,the_vypis.get));
+      info.fill('',x.html);
+    }
   }
   menu   {title:'Seznam',type:'group',_sys:'*'
     item {title:'účastníci'       ,par:°{typ:'p'

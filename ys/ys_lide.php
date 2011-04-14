@@ -597,6 +597,89 @@ function lide_duplo($par) { trace();
 //       break;
     }
     break;
+  // ----------------------------- test příjmení, pohlaví dětí
+  case 'kurs_deti_test':
+    // projdeme osoby-děti bez příjmení a sexu a doplníme
+    $n= $k= $h= $jm1= $jm2= $x1= $x2= 0;
+    $lst1= $lst2= '';
+    $qryd="SELECT
+          o.id_osoba,o.id_dudeti,rodcislo,o.prijmeni,o.jmeno,o.narozeni,o.sex AS o_sex,j.sex AS j_sex,
+          GROUP_CONCAT(DISTINCT IF(tx.role='a',ox.prijmeni,'') SEPARATOR '') as prijmeni_m,
+          GROUP_CONCAT(DISTINCT IF(tx.role='b',ox.prijmeni,'') SEPARATOR '') as prijmeni_z
+          FROM osoba AS o
+          JOIN tvori AS t ON t.id_osoba=o.id_osoba
+          JOIN rodina AS r USING(id_rodina)
+          JOIN ms_deti USING(id_dudeti)
+          LEFT JOIN tvori AS tx ON tx.id_rodina=r.id_rodina
+          LEFT JOIN osoba AS ox ON ox.id_osoba=tx.id_osoba
+          LEFT JOIN _jmena AS j ON j.jmeno=o.jmeno
+          WHERE t.role='d' AND (o.prijmeni='' OR o.sex=0)
+          GROUP BY o.id_osoba
+          ORDER BY o.id_osoba DESC";
+    $resd= mysql_qry($qryd);
+    while ( $resd && $d= mysql_fetch_object($resd) ) {
+      $n++;
+      $x= 0;
+      if ( substr($d->rodcislo,2,1)>4 ) { $h++; $x= 2; }
+      elseif ( substr($d->rodcislo,2,2)!='00' ) { $k++; $x= 1; }
+      if ( $d->j_sex==2 ) {
+        $jm2++;
+        if ( $x==1 ) { $x2++; $lst1.= "<br>{$d->jmeno} & {$d->rodcislo}"; }
+        if ( $d->prijmeni_z=='' ) $p2++;
+      }
+      if ( $d->j_sex==1 ) {
+        $jm1++;
+        if ( $x==2 ) { $x1++; $lst2.= "<br>{$d->jmeno} & {$d->rodcislo}"; }
+        if ( $d->prijmeni_m=='' ) $p1++;
+      }
+    }
+    $x= $n-$h-$k;
+    $y= $n-$jm1-$jm2;
+    $html.= "<br>Nalezeno $n dětí s neúplnými údaji <br>podle RČ je to $k kluků a $h holek ($x nevím),
+        <br>podle jména je to $jm1 kluků a $jm2 holek ($y nevím)<br>kolize: $x1 a $x2 ";
+    $html.= "<br>Nelze najít příjmení u $p1 a $p2";
+//     $html.= "<hr>$lst1<hr>$lst2";
+    break;
+  // ----------------------------- doplnění příjmení, pohlaví dětí
+  case 'kurs_deti_fill':
+    // projdeme osoby-děti bez příjmení a sexu a doplníme
+    $n= $k= $h= $jm1= $jm2= $x1= $x2= $p1= $p2= 0;
+    $lst1= $lst2= '';
+    $qryd="SELECT
+          o.id_osoba,o.id_dudeti,rodcislo,o.prijmeni,o.jmeno,o.narozeni,o.sex AS o_sex,j.sex AS j_sex,
+          GROUP_CONCAT(DISTINCT IF(tx.role='a',ox.prijmeni,'') SEPARATOR '') as prijmeni_m,
+          GROUP_CONCAT(DISTINCT IF(tx.role='b',ox.prijmeni,'') SEPARATOR '') as prijmeni_z
+          FROM osoba AS o
+          JOIN tvori AS t ON t.id_osoba=o.id_osoba
+          JOIN rodina AS r USING(id_rodina)
+          JOIN ms_deti USING(id_dudeti)
+          LEFT JOIN tvori AS tx ON tx.id_rodina=r.id_rodina
+          LEFT JOIN osoba AS ox ON ox.id_osoba=tx.id_osoba
+          LEFT JOIN _jmena AS j ON j.jmeno=o.jmeno
+          WHERE t.role='d' AND (o.prijmeni='' OR o.sex=0)
+          GROUP BY o.id_osoba
+          ORDER BY o.id_osoba DESC";
+    $resd= mysql_qry($qryd);
+    while ( $resd && $d= mysql_fetch_object($resd) ) {
+      $n++;
+      $set= array();
+      if ( $d->o_sex==0 && $d->j_sex==1 )               $set[]= "sex=1";
+      if ( $d->prijmeni=='' && $d->prijmeni_m!='' && $d->j_sex==1)
+                                                        $set[]= "prijmeni='{$d->prijmeni_m}'";
+      if ( $d->o_sex==0 && $d->j_sex==2 )               $set[]= "sex=2";
+      if ( $d->prijmeni=='' && $d->prijmeni_z!='' && $d->j_sex==2 )
+                                                        $set[]= "prijmeni='{$d->prijmeni_z}'";
+      if ( count($set)>0 ) {
+        $s= implode(',',$set);
+        $q= "UPDATE osoba SET $s WHERE id_osoba={$d->id_osoba}";
+        $reso= mysql_qry($q);
+//                         display($q);
+        $k++;
+//         break;
+      }
+    }
+    $html.= "<br>Nalezeno $n dětí s neúplnými údaji - provedeno $k doplnění";
+    break;
   }
   return $html;
 }

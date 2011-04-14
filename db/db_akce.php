@@ -3,6 +3,7 @@
 # -------------------------------------------------------------------------------------------------- akce_foxpro_data
 # dokončení transformace z my_mysql.prg naplněním id_pary
 function akce_foxpro_data() {  #trace('');
+/*
   $n= 0;
   // přidání id_pary
   $qry= "SELECT id_pary,cislo FROM ms_pary ";
@@ -38,9 +39,158 @@ function akce_foxpro_data() {  #trace('');
   }
   $html.= "<br>Do tabulky ms_kursdeti byly {$n}x přidány hodnoty klíče id_deti";
   return $html;
+*/
 }
 # ================================================================================================== VÝPISY
-# -------------------------------------------------------------------------------------------------- akce_sestava
+# -------------------------------------------------------------------------------------------------- akce_sestava2
+# generování sestav
+#   $typ = j | p
+function akce_sestava2($akce,$par,$title,$vypis,$export=false) {
+  return $par->typ=='p'
+    ? akce_sestava_pary($akce,$par,$title,$vypis,$export)
+    : akce_sestava_lidi($akce,$par,$title,$vypis,$export);
+}
+# -------------------------------------------------------------------------------------------------- akce_sestava_lidi
+# generování sestavy pro účastníky $akce - jednotlivce
+#   $fld = seznam položek s prefixem
+#   $cnd = podmínka
+function akce_sestava_lidi($akce,$par,$title,$vypis,$export=false) { trace();
+  $result= (object)array();
+  $typ= $par->typ;
+  $tit= $par->tit;
+  $fld= $par->fld;
+  $cnd= $par->cnd;
+  $html= '';
+  $href= '';
+  $n= 0;
+  // dekódování parametrů
+  $tits= explode(',',$tit);
+  $flds= explode(',',$fld);
+  // získání dat - podle $kdo
+  $clmn= array();
+  // data akce
+  $qry=  "SELECT
+          p.pouze,p.poznamka,
+          o.prijmeni,o.jmeno,o.narozeni,o.rc_xxxx,
+          r.ulice,r.psc,r.obec,r.telefony,r.emaily
+          FROM ezer_ys.pobyt AS p
+          JOIN spolu AS s USING(id_pobyt)
+          JOIN osoba AS o ON o.id_osoba=s.id_osoba
+          JOIN tvori AS t ON t.id_osoba=o.id_osoba
+          JOIN rodina AS r USING(id_rodina)
+          WHERE p.id_akce='$akce' AND $cnd
+          ORDER BY prijmeni,jmeno";
+  $res= mysql_qry($qry);
+  while ( $res && ($x= mysql_fetch_object($res)) ) {
+    $n++;
+    $clmn[$n]= array();
+    foreach($flds as $f) {
+      $clmn[$n][$f]= $x->$f;
+    }
+  }
+                                        debug($clmn,"sestava pro $akce,$typ,$fld,$cnd");
+  // zobrazení tabulkou
+  $tab= '';
+  $thd= '';
+  if ( $export ) {
+    $result->tits= $tits;
+    $result->clmn= $clmn;
+  }
+  else {
+    // titulky
+    foreach ($tits as $idw) {
+      list($id)= explode(':',$idw);
+      $ths.= "<th>$id</th>";
+    }
+    foreach ($clmn as $i=>$c) {
+      $tab.= "<tr>";
+      foreach ($c as $id=>$val) {
+        $tab.= "<td style='text-align:left'>$val</td>";
+      }
+      $tab.= "</tr>";
+    }
+    $result->html= "<div class='stat'><table class='stat'><tr>$ths</tr>$tab</table></div>";
+    $result->href= $href;
+  }
+  return $result;
+}
+# -------------------------------------------------------------------------------------------------- akce_sestava_pary
+# generování sestavy pro účastníky $akce - páry
+#   $fld = seznam položek s prefixem
+#   $cnd = podmínka
+function akce_sestava_pary($akce,$par,$title,$vypis,$export=false) { trace();
+  $result= (object)array();
+  $typ= $par->typ;
+  $tit= $par->tit;
+  $fld= $par->fld;
+  $cnd= $par->cnd;
+  $html= '';
+  $href= '';
+  $n= 0;
+  // dekódování parametrů
+  $tits= explode(',',$tit);
+  $flds= explode(',',$fld);
+  $cond= 1;
+  // získání dat - podle $kdo
+  $clmn= array();
+  // data akce
+  $qry=  "SELECT
+          r.nazev as nazev,p.pouze as pouze,
+          GROUP_CONCAT(DISTINCT IF(t.role='a',o.prijmeni,'') SEPARATOR '') as prijmeni_m,
+          GROUP_CONCAT(DISTINCT IF(t.role='a',o.jmeno,'')    SEPARATOR '') as jmeno_m,
+          GROUP_CONCAT(DISTINCT IF(t.role='a',o.narozeni,'') SEPARATOR '') as narozeni_m,
+          GROUP_CONCAT(DISTINCT IF(t.role='a',o.rc_xxxx,'')  SEPARATOR '') as rc_xxxx_m,
+          GROUP_CONCAT(DISTINCT IF(t.role='b',o.prijmeni,'') SEPARATOR '') as prijmeni_z,
+          GROUP_CONCAT(DISTINCT IF(t.role='b',o.jmeno,'')    SEPARATOR '') as jmeno_z,
+          GROUP_CONCAT(DISTINCT IF(t.role='b',o.narozeni,'') SEPARATOR '') as narozeni_z,
+          GROUP_CONCAT(DISTINCT IF(t.role='b',o.rc_xxxx,'')  SEPARATOR '') as rc_xxxx_z,
+          r.ulice,r.psc,r.obec,r.telefony,r.emaily,p.poznamka
+          FROM ezer_ys.pobyt AS p
+          JOIN spolu AS s USING(id_pobyt)
+          JOIN osoba AS o ON s.id_osoba=o.id_osoba
+          LEFT JOIN tvori AS t ON t.id_osoba=o.id_osoba
+          LEFT JOIN rodina AS r USING(id_rodina)
+          WHERE p.id_akce='$akce' AND $cond
+          GROUP BY id_pobyt
+          ORDER BY nazev,prijmeni_m,prijmeni_z";
+  $res= mysql_qry($qry);
+  while ( $res && ($x= mysql_fetch_object($res)) ) {
+    $x->prijmeni= $x->pouze==1 ? $x->prijmeni_m : ($x->pouze==2 ? $x->prijmeni_z : $x->nazev);
+    $x->jmena=    $x->pouze==1 ? $x->jmeno_m    : ($x->pouze==2 ? $x->jmeno_z : "{$x->jmeno_m} a {$x->jmeno_z}");
+    $n++;
+    $clmn[$n]= array();
+    foreach($flds as $f) {
+      $clmn[$n][$f]= $x->$f;
+    }
+//     break;
+  }
+//                                         debug($clmn,"sestava pro $akce,$typ,$fld,$cnd");
+  // zobrazení tabulkou
+  $tab= '';
+  $thd= '';
+  if ( $export ) {
+    $result->tits= $tits;
+    $result->clmn= $clmn;
+  }
+  else {
+    // titulky
+    foreach ($tits as $idw) {
+      list($id)= explode(':',$idw);
+      $ths.= "<th>$id</th>";
+    }
+    foreach ($clmn as $i=>$c) {
+      $tab.= "<tr>";
+      foreach ($c as $id=>$val) {
+        $tab.= "<td style='text-align:left'>$val</td>";
+      }
+      $tab.= "</tr>";
+    }
+    $result->html= "<div class='stat'><table class='stat'><tr>$ths</tr>$tab</table></div>";
+    $result->href= $href;
+  }
+  return $result;
+}
+# -------------------------------------------------------------------------------------------------- akce_sestava OLD
 # generování sestavy pro účastníky $akce
 #   $typ = jeden | par
 #   $fld = seznam položek s prefixem
@@ -598,12 +748,13 @@ function akce_auto_akceL($id_akce) {  #trace();
 # ================================================================================================== VYPISY
 # obsluha různých forem výpisů
 # -------------------------------------------------------------------------------------------------- akce_vyp_excel
-# přečtení mailu
+# generování tabulky do excelu
 function akce_vyp_excel($akce,$par,$title,$vypis) {  trace();
   $result= (object)array('_error'=>0);
   $html= '';
   // získání dat
-  $tab= akce_sestava($akce,$par,$title,$vypis,true);
+  $title= str_replace('&nbsp;',' ',$title);
+  $tab= akce_sestava2($akce,$par,$title,$vypis,true);
   // vlastní export do Excelu
   $name= cz2ascii("vypis_").date("Ymd_Hi");
   $xls= <<<__XLS

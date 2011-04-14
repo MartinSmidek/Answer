@@ -3,6 +3,7 @@
 # Systém Ans(w)er - modul Akce
 # (c) 2008-2010 Martin Šmídek <martin@smidek.eu>
 
+var the_duakce: number
 var the_akce: number
 var the_rok: number
 var the_title: text
@@ -10,6 +11,7 @@ var the_source: text // google|sey
 
 proc onstart() {
   the_akce.set(get_cookie("ys_akce_id",0));
+  the_duakce.set(ask('select','id_duakce','ms_akce',conc('id_akce=',the_akce.get)));
   the_title.set(get_cookie("ys_akce_title",'Vyber akci ...'));
   the_rok.set(get_cookie('ys_akce_rok',0));
 #   ucast.u.fill(the_title.get);
@@ -55,10 +57,10 @@ panel tisk [,,,] {type:'right', title:'Výpisy akce', include:'onclick,db.akce.t
 
 form right [,,*,50] {
   label head [0,0,*,50]  { title:'' }
-  label msg  [0,45,*,20] { title:'' }
-  label note [0,65,*,550] { title:'' }
+  label msg  [0,35,*,20] { title:'' }
+  label note [0,55,*,550] { title:'' }
   proc fill(x,y) {
-    [ x; head.set(conc("<div class='CSection CMenu'><h3 class='CTitle'>",x,"</h3></div>")) ];
+    [ x; head.set(conc("<div class='karta'>",x,"</div>")) ];
     [ y; note.set(y) ]
   }
 }

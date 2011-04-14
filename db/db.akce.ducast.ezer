@@ -4,7 +4,6 @@
 # Ans(w)er/Ezer                                     (c) 2007-2011 Martin Šmídek <martin@smidek.eu> #
 # ------------------------------------------------------------------------------------------------ #
 
-var the_duakce: number
 var the_pobyt: number
 
 proc onstart() {
@@ -30,11 +29,8 @@ use pob:   form _pobyt   [400,0,,]
 use cmd:   form _cmd     [400,0,,]
 
 proc reload(id_pobyt) {
-  var id_duakce: number
   cmd.b_display(1);
-  id_duakce.set(ask('select','id_duakce','ms_akce',conc('id_akce=',the_akce.get)));
-  the_duakce.set(id_duakce);
-  [ u.b.browse_load(conc("p.id_akce=",id_duakce),'','','','','',conc('SET @akce:=',id_duakce));
+  [ u.b.browse_load(conc("p.id_akce=",the_duakce.get),'','','','','',conc('SET @akce:=',the_duakce.get));
     u.b.browse_focus;
     { id_pobyt; u.b.raise('onrowclick',id_pobyt)
     | u.b.raise('onrowclick') } ]
