@@ -49,7 +49,7 @@ function akce_sestava($akce,$par,$title,$vypis,$export=false) {
   return $par->typ=='p'  ? akce_sestava_pary($akce,$par,$title,$vypis,$export)
      : ( $par->typ=='j'  ? akce_sestava_lidi($akce,$par,$title,$vypis,$export)
      : ( $par->typ=='vp' ? akce_vyuctov_pary($akce,$par,$title,$vypis,$export)
-                         : "N.Y.I." ));
+                         : fce_error("akce_sestava: N.Y.I.") ));
 }
 # -------------------------------------------------------------------------------------------------- akce_sestava_lidi
 # generování sestavy pro účastníky $akce - jednotlivce
@@ -95,7 +95,9 @@ function akce_sestava_lidi($akce,$par,$title,$vypis,$export=false) { trace();
   $thd= '';
   if ( $export ) {
     $result->tits= $tits;
+    $result->flds= $flds;
     $result->clmn= $clmn;
+    $result->expr= $expr;
   }
   else {
     // titulky
@@ -318,7 +320,7 @@ function akce_vyuctov_pary($akce,$par,$title,$vypis,$export=false) { trace();
 //     break;
   }
 //                                         debug($clmn,"sestava pro $akce,$typ,$fld,$cnd");
-                                        debug($expr,"vzorce pro $akce,$typ,$fld,$cnd");
+//                                         debug($expr,"vzorce pro $akce,$typ,$fld,$cnd");
   // zobrazení tabulkou
   $tab= '';
   $thd= '';
@@ -477,13 +479,22 @@ function akce_sestava($akce,$par,$title,$vypis,$export=false) {
 # ================================================================================================== GOOGLE
 # -------------------------------------------------------------------------------------------------- akce_roku_id
 # definuj klíč dané akce jeko klíč akce z aplikace MS.EXE
-function akce_roku_id($kod,$rok,$source,$akce) {
-  if ( $akce ) {
-    mysql_qry("INSERT join_akce (source,akce,g_kod,g_rok) VALUES ('$source',$akce,$kod,$rok)");
-    mysql_qry("UPDATE ms_akce SET ciselnik_akce=$kod,ciselnik_rok=$rok WHERE source='$source' AND akce=$akce");
-  }
-  return 1;
+function akce_roku_id($id_akce,$kod,$rok) {
+  // smazání starých spojek
+  $r1= mysql_qry("DELETE FROM join_akce WHERE g_rok=$rok AND g_kod=$kod ");
+  // vložení nové
+  $r2= mysql_qry("INSERT join_akce (id_akce,g_rok,g_kod) VALUES ('$id_akce',$rok,$kod) ");
+  return "$r1,$r2";
 }
+// # -------------------------------------------------------------------------------------------------- akce_roku_id
+// # definuj klíč dané akce jeko klíč akce z aplikace MS.EXE
+// function akce_roku_id($kod,$rok,$source,$akce) {
+//   if ( $akce ) {
+//     mysql_qry("INSERT join_akce (source,akce,g_kod,g_rok) VALUES ('$source',$akce,$kod,$rok)");
+//     mysql_qry("UPDATE ms_akce SET ciselnik_akce=$kod,ciselnik_rok=$rok WHERE source='$source' AND akce=$akce");
+//   }
+//   return 1;
+// }
 # -------------------------------------------------------------------------------------------------- akce_roku_update
 # přečtení listu $rok z tabulky ciselnik_akci a zapsání dat do tabulky
 # načítají se jen řádky ve kterých typ='a'
@@ -745,7 +756,6 @@ function akce_auto_jmena2($patt) {  #trace();
          WHERE nazev LIKE '$patt%'
          GROUP BY id_rodina HAVING _muz!='' AND _zena!=''
          ORDER BY nazev,_muz,_zena
-         GROUP BY id_rodina
          LIMIT $limit";
   $res= mysql_qry($qry);
   while ( $res && $t= mysql_fetch_object($res) ) {
@@ -903,6 +913,45 @@ function akce_auto_akceL($id_akce) {  #trace();
 //                                                                 debug($pary,$id_akce);
   return $pary;
 }
+# ================================================================================================== INFORMACE
+# výpisy informací o akci
+# -------------------------------------------------------------------------------------------------- akce_vyp_excel
+# základní informace a obsazenost
+function akce_info($id_akce) {  trace();
+  $html= '';
+  $dosp= $deti= 0;
+  $akce= '';
+  $qry= "SELECT nazev, COUNT(DISTINCT p.id_pobyt) AS _rodin, datum_od, datum_do, now() as _ted,
+           SUM(IF(t.role='a',1,0)) AS _muzu,
+           SUM(IF(t.role='b',1,0)) AS _zen,
+           SUM(IF(t.role='d',1,0)) AS _deti
+         FROM akce AS a
+         JOIN pobyt AS p ON a.id_duakce=p.id_akce
+         JOIN spolu AS s ON p.id_pobyt=s.id_pobyt
+         JOIN osoba AS o ON s.id_osoba=o.id_osoba
+         LEFT JOIN tvori AS t ON t.id_osoba=o.id_osoba
+         WHERE id_duakce='$id_akce' ";
+  $res= mysql_qry($qry);
+  if ( $res && $p= mysql_fetch_object($res) ) {
+    $dosp= $p->_muzu + $p->_zen;
+    $deti= $p->_deti;
+    $rod= $p->_rodin;
+    $akce= $p->nazev;
+    $cas1= $p->_ted>$p->datum_od ? "byla" : "bude";
+    $cas2= $p->_ted>$p->datum_od ? "Akce se zúčastnilo" : "Na akci je přihlášeno";
+    $od= sql_date1($p->datum_od);
+    $do= sql_date1($p->datum_do);
+    $dne= $p->datum_od==$p->datum_do ? "dne $od" : "ve dnech $od do $do";
+  }
+  $html= "Akce <b>$akce</b>
+          <br>$cas1 $dne
+          <br>
+          <br>$cas2
+          <br>$dosp dospělých a
+          <br>$deti dětí, tvořících
+          <br>$rod rodin";
+  return $html;
+}
 # ================================================================================================== VYPISY
 # obsluha různých forem výpisů
 # -------------------------------------------------------------------------------------------------- akce_vyp_excel
@@ -914,6 +963,7 @@ function akce_vyp_excel($akce,$par,$title,$vypis) {  trace();
   // získání dat
   $title= str_replace('&nbsp;',' ',$title);
   $tab= akce_sestava($akce,$par,$title,$vypis,true);
+//                                         debug($tab,"akce_sestava($akce,...)"); return;
   // vlastní export do Excelu
   $name= cz2ascii("vypis_").date("Ymd_Hi");
   $xls= <<<__XLS

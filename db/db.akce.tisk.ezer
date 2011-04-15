@@ -19,7 +19,7 @@ proc onfirstfocus() {
   m.n.i.click
 }
 menu m {type:'left',
-  menu  {title:'adresář',type:'group',_sys:'*'
+  menu n {title:'adresář',type:'group',_sys:'*'
     item {title:'základní pro páry'             ,par:°{typ:'p',cnd:'1'
                                       ,tit:'příjmení:15,jména:20,obec:25,psč:7,ulice:25'
                                       ,fld:'prijmeni,jmena,obec,psc,ulice'}}
@@ -33,7 +33,7 @@ menu m {type:'left',
                                         ,tit:'příjmení:15,jméno:12,narození:12,/rč:5,obec:25,psč:7,ulice:25'
                                         ,fld:'prijmeni,jmeno,narozeni,rc_xxxx,obec,psc,ulice'}}
   }
-  menu n {title:'vyúčtování',type:'group',_sys:'*'
+  menu {title:'vyúčtování',type:'group',_sys:'*'
     item i {title:'MS kurs, obnovy'               ,par:°{typ:'vp'}}
   }
   proc onclick (i) {
@@ -44,41 +44,4 @@ menu m {type:'left',
     x.set(ask('akce_sestava',the_duakce.get,i.par,the_title.get,the_vypis.get));
     info.fill('',x.html);
   }
-/*
-  menu   {title:'OLD Seznam',type:'group',_sys:'*', skill:'m'
-    item {title:'účastníci'       ,par:°{typ:'p'
-                                        ,tit:'příjmení,jména'
-                                        ,fld:'jmeno,jmena',cnd:'1'}}
-    item {title:'účastníci, skupinka, pokoj',par:°{typ:'p'
-                                        ,tit:'příjmení,jména,skupinka,pokoj'
-                                        ,fld:'jmeno,jmena,skupina,pokoj',cnd:'1'}}
-  }
-  menu   {title:'OLD Jmenovky ',type:'group',_sys:'*', skill:'m'
-    item {title:'VPS'             ,par:°{typ:'j'
-                                        ,tit:'příjmení,jméno'
-                                        ,fld:'prijmeni_m,jmeno_m;prijmeni_z,jmeno_z',cnd:'vps'}}
-    item {title:'páry bez VPS'    ,par:°{typ:'j'
-                                        ,tit:'příjmení,jméno'
-                                        ,fld:'jmeno_m,prijmeni_m;jmeno_z,prijmeni_z',cnd:'nevps'}}
-  }
-  menu   {title:'OLD Děti',type:'group',_sys:'*', skill:'m'
-    item {title:'adresář'         ,par:°{typ:'d'
-                                        ,tit:'příjmení,jméno,rod.číslo,obec,psč,ulice'
-                                        ,fld:'prijmeni_d,jmeno_d,rodcislo_d,mesto,psc,adresa',cnd:'1'}}
-    item {title:'seznam'          ,par:°{typ:'d'
-                                        ,tit:'příjmení,jméno,rod.číslo,poznámka'
-                                        ,fld:'prijmeni_d,jmeno_d,rodcislo_d,poznamka',cnd:'1'}}
-    item {title:'jmenovky'        ,par:°{typ:'d'
-                                        ,tit:'příjmení,jméno'
-                                        ,fld:'prijmeni_d,jmeno_d',cnd:'1'}}
-  }
-  proc onclick (i) {
-    var x: object
-    the_par.set(i.par);
-    the_vypis.set(conc(i.owner.title,' - ',i.title));
-    info.fill(conc(the_title.get,' / ',the_vypis.get),' ');
-    x.set(ask('akce_sestava',the_akce.get,i.par,the_title.get,the_vypis.get));
-    info.fill('',x.html);
-  }
-*/
 }

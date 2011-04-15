@@ -4,29 +4,14 @@
 # (c) 2008-2010 Martin Šmídek <martin@smidek.eu>
 
 var the_duakce: number
-var the_akce: number
 var the_rok: number
 var the_title: text
 var the_source: text // google|sey
 
-proc onstart() {
-  the_akce.set(get_cookie("ys_akce_id",0));
-  the_duakce.set(ask('select','id_duakce','ms_akce',conc('id_akce=',the_akce.get)));
+proc onstart() {  echo('db.akce.onstart');
+  the_duakce.set(get_cookie("ys_akce_id",0));
   the_title.set(get_cookie("ys_akce_title",'Vyber akci ...'));
   the_rok.set(get_cookie('ys_akce_rok',0));
-#   ucast.u.fill(the_title.get);
-  not(the_akce.get);
-  // v cookie není akce
-  #lst.focus; až onfirstfocus
-/*
-| // v cookie je akce
-  #lst.m.rok.part('item',0,'title',the_rok.get).click; -- to nelze
-  the_akce.set(get_cookie("ys_akce_id",0));
-  ucast.focus;
-  ucast.reload(0);
-  lst.info.seznam.browse_seek(conc("id_akce=",the_akce.get));
-  lst.info.seznam.browse_focus;
-*/
 }
 # ================================================================================================== CHLAPI
 panel chl {type:'right', _sys:'*', title:'Chlapi', include:'onclick,db.akce.chl',skill:'yac' }
@@ -163,10 +148,11 @@ table $osoba { key_id:'id_osoba'
   text email
   text info
 }
-# ================================================================================================== NEW
+# ================================================================================================== AKCE
 table akce { key_id:'id_duakce'
   number id_duakce
   number typ
+  number spec   // 1 znamená ne-akci, starý způsob příležitostných seznamů
   text nazev
   number cena
   date datum_od    { sql_pipe:'sql_date1'}    // SQL tvar se používá v ys.akce
@@ -408,6 +394,7 @@ table ms_poraakce {
 }
 
 table join_akce { // spojení číselníku akcí s MS
+  number id_akce   { help:"klíč akce v tabulce akce" }
   number g_rok     { help:"rok akce podle číselníku akcí" }
   number g_kod     { help:"kód akce podle číselníku akcí" }
   text   source    { help:"L:Lídino M:Milošovo MS.EXE" }

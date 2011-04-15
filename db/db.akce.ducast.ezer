@@ -153,7 +153,7 @@ form _muz {
   field _vek_m      [345,46,19,] {format:'o', value:'?'}
   field prijmeni_m  [94,224,108,] {data:osoba.prijmeni}
   field narozeni_m  [51,246,93,] {type:'date', data:osoba.narozeni, sql_pipe:'sql_date1'}
-  field rc_xxxx_m   [169,245,32,] {data:osoba.rc_xxxx, format:'r'}
+  field rc_xxxx_m   [169,245,32,] {data:osoba.rc_xxxx, format:'r', help:'4 cifry za lomítkem rodného čísla' }
   select cirkev_m   [51,267,152,] {type:'map', data:osoba.cirkev, options:ms_akce_cirkev.zkratka}
   select vzdelani_m [51,288,152,] {type:'map', data:osoba.vzdelani, options:ms_akce_vzdelani.zkratka}
   field zamest_m    [51,309,152,] {data:osoba.zamest}
@@ -169,7 +169,7 @@ form _zena {
   field _vek_z      [373,46,20,] {format:'o', value:'?'}
   field prijmeni_z  [257,224,108,] {data:osoba.prijmeni}
   field narozeni_z  [213,246,93,] {type:'date', data:osoba.narozeni, sql_pipe:'sql_date1'}
-  field rc_xxxx_z   [332,245,32,] {data:osoba.rc_xxxx, format:'r'}
+  field rc_xxxx_z   [332,245,32,] {data:osoba.rc_xxxx, format:'r', help:'4 cifry za lomítkem rodného čísla'}
   select cirkev_z   [213,267,152,] {type:'map', data:osoba.cirkev, options:ms_akce_cirkev.zkratka}
   select vzdelani_z [213,288,152,] {type:'map', data:osoba.vzdelani, options:ms_akce_vzdelani.zkratka}
   field zamest_z    [213,309,152,] {data:osoba.zamest}
