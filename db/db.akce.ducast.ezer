@@ -108,7 +108,7 @@ form _aktivity {
     show fce  [,, 30,] { title:'fce', data:p.funkce, map_pipe:ms_akce_funkce.zkratka, format:'q*s' }
   }
   proc ucasti(id_osoba) {
-    id_osoba; akc.browse_load(conc('s.id_osoba=',id_osoba),"datum_od DESC")
+    id_osoba; akc.browse_load(conc('a.spec=0 AND s.id_osoba=',id_osoba),"datum_od DESC")
   | akc.browse_init
   }
 }
