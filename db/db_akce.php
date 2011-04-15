@@ -923,38 +923,43 @@ function akce_auto_akceL($id_akce) {  #trace();
 # základní informace a obsazenost
 function akce_info($id_akce) {  trace();
   $html= '';
-  $dosp= $deti= 0;
-  $akce= '';
-  $qry= "SELECT nazev, COUNT(DISTINCT p.id_pobyt) AS _rodin, datum_od, datum_do, now() as _ted,
-           SUM(IF(t.role='a',1,0)) AS _muzu,
-           SUM(IF(t.role='b',1,0)) AS _zen,
-           SUM(IF(t.role='d',1,0)) AS _deti
-         FROM akce AS a
-         JOIN pobyt AS p ON a.id_duakce=p.id_akce
-         JOIN spolu AS s ON p.id_pobyt=s.id_pobyt
-         JOIN osoba AS o ON s.id_osoba=o.id_osoba
-         LEFT JOIN tvori AS t ON t.id_osoba=o.id_osoba
-         WHERE id_duakce='$id_akce'
-         GROUP BY id_duakce ";
-  $res= mysql_qry($qry);
-  if ( $res && $p= mysql_fetch_object($res) ) {
-    $dosp= $p->_muzu + $p->_zen;
-    $deti= $p->_deti;
-    $rod= $p->_rodin;
-    $akce= $p->nazev;
-    $cas1= $p->_ted>$p->datum_od ? "byla" : "bude";
-    $cas2= $p->_ted>$p->datum_od ? "Akce se zúčastnilo" : "Na akci je přihlášeno";
-    $od= sql_date1($p->datum_od);
-    $do= sql_date1($p->datum_do);
-    $dne= $p->datum_od==$p->datum_do ? "dne $od" : "ve dnech $od do $do";
+  if ( $id_akce ) {
+      $dosp= $deti= 0;
+      $akce= '';
+      $qry= "SELECT nazev, COUNT(DISTINCT p.id_pobyt) AS _rodin, datum_od, datum_do, now() as _ted,
+               SUM(IF(t.role='a',1,0)) AS _muzu,
+               SUM(IF(t.role='b',1,0)) AS _zen,
+               SUM(IF(t.role='d',1,0)) AS _deti
+             FROM akce AS a
+             JOIN pobyt AS p ON a.id_duakce=p.id_akce
+             JOIN spolu AS s ON p.id_pobyt=s.id_pobyt
+             JOIN osoba AS o ON s.id_osoba=o.id_osoba
+             LEFT JOIN tvori AS t ON t.id_osoba=o.id_osoba
+             WHERE id_duakce='$id_akce'
+             GROUP BY id_duakce ";
+      $res= mysql_qry($qry);
+      if ( $res && $p= mysql_fetch_object($res) ) {
+        $dosp= $p->_muzu + $p->_zen;
+        $deti= $p->_deti;
+        $rod= $p->_rodin;
+        $akce= $p->nazev;
+        $cas1= $p->_ted>$p->datum_od ? "byla" : "bude";
+        $cas2= $p->_ted>$p->datum_od ? "Akce se zúčastnilo" : "Na akci je přihlášeno";
+        $od= sql_date1($p->datum_od);
+        $do= sql_date1($p->datum_do);
+        $dne= $p->datum_od==$p->datum_do ? "dne $od" : "ve dnech $od do $do";
+      }
+      $html= $rod>0
+       ? "Akce <b>$akce</b><br>$cas1 $dne<br><br>$cas2
+         <br>$dosp dospělých a<br>$deti dětí, tvořících<br>$rod rodin"
+       : "Akce byla vložena do databáze<br>ale nemá zatím žádné účastníky";
   }
-  $html= "Akce <b>$akce</b>
-          <br>$cas1 $dne
-          <br>
-          <br>$cas2
-          <br>$dosp dospělých a
-          <br>$deti dětí, tvořících
-          <br>$rod rodin";
+  else {
+    $html= "Tato akce ještě nebyla
+            <br>vložena do databáze
+            <br><br>Vložení se provádí dvojklikem
+            <br>na řádek s akcí";
+  }
   return $html;
 }
 # ================================================================================================== VYPISY
