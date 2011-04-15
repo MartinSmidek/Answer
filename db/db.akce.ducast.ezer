@@ -5,28 +5,30 @@
 # ------------------------------------------------------------------------------------------------ #
 
 var the_pobyt: number
+var zalozka: text           // evid | plat | akce
 
-proc onstart() {
-  header.fill(the_title.get);
-  reload(0);
-  page.tags(page.evd,'z','h|o');
-}
-
+proc onstart() { echo('db.akce.ducast2.onstart'); init_ucast }
+proc onfocus() { init_ucast }
 proc init_ucast() {
+  zalozka.set('evid');
   header.fill(the_title.get);
-  reload(0)
+  [ reload(0) ];
+  page.evd.onclick
 }
 
 use header:form _header  [  4,0,,]
 use u:     form _ucast   [  6,40,,]
 use page:  form _page    [400,10,,]
-# podkarta evidence
+# záložka evidence
 use evid:  form _evidence[400,10,,]
 use rod:   form _rodina  [400,0,,]
 use muz:   form _muz     [400,0,,]
 use zen:   form _zena    [400,0,,]
 use pob:   form _pobyt   [400,0,,]
 use cmd:   form _cmd     [400,0,,]
+# záložka aktivity
+use a_muz: form _aktivity[420,10,,]
+use a_zen: form _aktivity[700,10,,]
 
 proc reload(id_pobyt) {
   cmd.b_display(1);
@@ -62,7 +64,7 @@ form _header [,,380,50] {
   label head [0,2,*,50]  { title:'' }
 }
 # -------------------------------------------------------------------------------------------------- _page
-form _page { //[,,*,500] {
+form _page {
   # --------------------------- záložky
   proc tags(a,on,off) {
     form.set_css('ae_butt_off','ae_butt_on','p');
@@ -71,23 +73,44 @@ form _page { //[,,*,500] {
   }
   label evd [ 12,0,120,20] {tag:'p', title:'<b>Evidenční karta</b>', format:'c', css:'ae_butt_on'
     proc onclick() { tags(this,'z','h|o');
-      evid.display(1); cmd.display(1);
-      rod.display(1); muz.display(1); zen.display(1); pob.display(1);
+      zalozka.set('evid'); u.b.reload_pobyt;
+      evid.display(1); cmd.display(1); rod.display(1); muz.display(1); zen.display(1); pob.display(1);
+      a_muz.display(0); a_zen.display(0);
     }
   }
   label plt [152,0,120,20] {tag:'p', title:'<b>Platba za akci</b>', format:'c',
     proc onclick() { tags(this,'h','z|o');
-      evid.display(0); cmd.display(0);
-      rod.display(0); muz.display(0); zen.display(0); pob.display(0);
+      zalozka.set('plat'); u.b.reload_pobyt;
+      evid.display(0); cmd.display(0); rod.display(0); muz.display(0); zen.display(0); pob.display(0);
+      a_muz.display(0); a_zen.display(0);
     }
   }
   label jin [292,0,120,20] {tag:'p', title:'<b>Přehled aktivit</b>', format:'c',
     proc onclick() { tags(this,'o','z|h');
-      evid.display(0); cmd.display(0);
-      rod.display(0); muz.display(0); zen.display(0); pob.display(0);
+      zalozka.set('akce'); u.b.reload_pobyt;
+      evid.display(0); cmd.display(0); rod.display(0); muz.display(0); zen.display(0); pob.display(0);
+      a_muz.display(1); a_zen.display(1);
     }
   }
   label [0,16,582,530] { css:'ae_work'}
+}
+# -------------------------------------------------------------------------------------------------- _aktivity
+form _aktivity {
+  field id_osoba
+  field jme [10,34,200,] { format:'o' }
+  view a: table akce
+  view p: table pobyt { join:'ON a.id_duakce=p.id_akce' }
+  view s: table spolu { join:'USING(id_pobyt)' }
+  browse akc [ 0,60,,] { rows:25, qry_rows:1
+    show { data:a.id_duakce }
+    show rok  [,, 30,] { title:'rok', expr:"YEAR(a.datum_od)", format:'q*s-' }
+    show akce [,,150,] { title:'název', data:a.nazev, format:'q*s' }
+    show fce  [,, 30,] { title:'fce', data:p.funkce, map_pipe:ms_akce_funkce.zkratka, format:'q*s' }
+  }
+  proc ucasti(id_osoba) {
+    id_osoba; akc.browse_load(conc('s.id_osoba=',id_osoba),"datum_od DESC")
+  | akc.browse_init
+  }
 }
 # -------------------------------------------------------------------------------------------------- _evidence
 form _evidence {
@@ -345,28 +368,42 @@ form _ucast [,,400,] { css:'ds_form'
     show k_poznamka { data:p.poznamka}
     show pouze      { data:p.pouze}
     // změna
-    proc onrowclick() {
-      // ochrana proti neuložené změně
-      rod.same; pob.same; muz.same; zen.same;
-      // přechod na jiný pobyt
-      the_pobyt.set(key_pobyt.get);
-      // načtou se všichni, ale ukážou se jen účastníci akce (pouze: 0=oba, 1=muž, 2=žena)
-      copy_by_name(b,muz.get); muz.key(id_m.get); muz.get.display(eq(pouze.get,0,1));
-      copy_by_name(b,zen.get); zen.key(id_z.get); zen.get.display(eq(pouze.get,0,2));
-      copy_by_name(b,rod.get); rod.key(key_rodina.get);
-      copy_by_name(b,pob.get); pob.key(key_pobyt.get);
-      // počítané položky
-      muz._vek_m.set(roku(narozeni_m.get));
-      zen._vek_z.set(roku(narozeni_z.get));
-      rod._spolu.set(cconc(svatba.get,roku(datsvatba.get,svatba.get),' '));
-      pob.d.browse_fill(deti.get);
-      pob.s.browse_fill(skup.get);
-      // obarvení tlačítka [Str.pol]
-      { or(cstrava_cel.get,cstrava_pol.get); cmd.stravy.set_css('cervena','cerna')
-      | cmd.stravy.set_css('cerna','cervena') };
-    | // varování při pokusu neuložit změny
-      warning('neuložené změny'); u.b.raise('onrowclick',the_pobyt.get)
-    }
+    proc reload_pobyt() {
+      b.browse_count;
+      switch(zalozka.get,
+      'evid', {
+        // ochrana proti neuložené změně
+        rod.same; pob.same; muz.same; zen.same;
+        // přechod na jiný pobyt
+        the_pobyt.set(key_pobyt.get);
+        // načtou se všichni, ale ukážou se jen účastníci akce (pouze: 0=oba, 1=muž, 2=žena)
+        copy_by_name(b,muz.get); muz.key(id_m.get); muz.get.display(eq(pouze.get,0,1));
+        copy_by_name(b,zen.get); zen.key(id_z.get); zen.get.display(eq(pouze.get,0,2));
+        copy_by_name(b,rod.get); rod.key(key_rodina.get);
+        copy_by_name(b,pob.get); pob.key(key_pobyt.get);
+        // počítané položky
+        muz._vek_m.set(roku(narozeni_m.get));
+        zen._vek_z.set(roku(narozeni_z.get));
+        rod._spolu.set(cconc(svatba.get,roku(datsvatba.get,svatba.get),' '));
+        pob.d.browse_fill(deti.get);
+        pob.s.browse_fill(skup.get);
+        // obarvení tlačítka [Str.pol]
+        { or(cstrava_cel.get,cstrava_pol.get); cmd.stravy.set_css('cervena','cerna')
+        | cmd.stravy.set_css('cerna','cervena') };
+      | // varování při pokusu neuložit změny
+        warning('neuložené změny'); u.b.raise('onrowclick',the_pobyt.get)
+      },
+      'plat',{
+        echo('platby');
+      },
+      'akce',{
+        [ id_m.get; a_muz.jme.set(conc(prijmeni_m.get,' ',jmeno_m.get)) | a_muz.jme.init ];
+        a_muz.ucasti(id_m.get);
+        [ id_z.get; a_zen.jme.set(conc(prijmeni_z.get,' ',jmeno_z.get)) | a_zen.jme.init ];
+        a_zen.ucasti(id_z.get);
+      }
+    )}
+    proc onrowclick() { reload_pobyt }
   }
 }
 # -------------------------------------------------------------------------------------------------- _cmd
