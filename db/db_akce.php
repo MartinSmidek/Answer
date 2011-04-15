@@ -69,6 +69,7 @@ function akce_sestava_lidi($akce,$par,$title,$vypis,$export=false) { trace();
   $flds= explode(',',$fld);
   // získání dat - podle $kdo
   $clmn= array();
+  $expr= array();       // pro výrazy
   // data akce
   $qry=  "SELECT
           p.pouze,p.poznamka,
@@ -136,6 +137,7 @@ function akce_sestava_pary($akce,$par,$title,$vypis,$export=false) { trace();
   $cond= 1;
   // získání dat - podle $kdo
   $clmn= array();
+  $expr= array();       // pro výrazy
   // data akce
   $qry=  "SELECT
           r.nazev as nazev,p.pouze as pouze,
@@ -173,7 +175,9 @@ function akce_sestava_pary($akce,$par,$title,$vypis,$export=false) { trace();
   $thd= '';
   if ( $export ) {
     $result->tits= $tits;
+    $result->flds= $flds;
     $result->clmn= $clmn;
+    $result->expr= $expr;
   }
   else {
     // titulky
@@ -930,7 +934,8 @@ function akce_info($id_akce) {  trace();
          JOIN spolu AS s ON p.id_pobyt=s.id_pobyt
          JOIN osoba AS o ON s.id_osoba=o.id_osoba
          LEFT JOIN tvori AS t ON t.id_osoba=o.id_osoba
-         WHERE id_duakce='$id_akce' ";
+         WHERE id_duakce='$id_akce'
+         GROUP BY id_duakce ";
   $res= mysql_qry($qry);
   if ( $res && $p= mysql_fetch_object($res) ) {
     $dosp= $p->_muzu + $p->_zen;
