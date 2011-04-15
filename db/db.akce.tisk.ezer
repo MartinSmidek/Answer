@@ -15,9 +15,12 @@ use info: form right [12,4,,] {
   }
 }
 
-proc onfirstfocus() {
+proc onfocus() {
+  info.msg.set('');
+  info.fill(conc(the_title.get,' / ',the_vypis.get),' ');
   m.n.i.click
 }
+
 menu m {type:'left',
   menu n {title:'adresář',type:'group',_sys:'*'
     item {title:'základní pro páry'             ,par:°{typ:'p',cnd:'1'
@@ -41,6 +44,7 @@ menu m {type:'left',
     the_par.set(i.par);
     the_vypis.set(conc(i.owner.title,' - ',i.title));
     info.fill(conc(the_title.get,' / ',the_vypis.get),' ');
+    info.msg.set('');
     x.set(ask('akce_sestava',the_duakce.get,i.par,the_title.get,the_vypis.get));
     info.fill('',x.html);
   }
