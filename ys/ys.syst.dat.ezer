@@ -1,0 +1,19 @@
+# Systém Ans(w)er - import dat
+# (c) 2010-2011 Martin Šmídek <martin@smidek.eu>
+
+var x:object
+menu zaloha {type:'left',
+  menu tento {title:'Záloha databáze', type:'group'
+    item { title:"kontrola dnešní zálohy" ,par:°{typ:'kontrola'} }
+    item den { title:"pravidelná záloha"  ,par:°{typ:'kaskada'} }
+    item { title:"zálohuj teď"            ,par:°{typ:'special'}, skill:'m' }
+    item { title:"přehled záloh"          ,par:°{typ:'listing'} }
+    item { title:"obnova ze zálohy"       ,par:°{typ:'restore'}, skill:'m' }
+    proc onclick(i) {
+      u.fill(conc(i.owner.title,' - ',i.title),' ');
+      u.append(ask('sys_backup_make',i.par));
+    }
+  }
+}
+proc onstart() { zaloha.tento.den.click }
+use u: form right [12,4,,]
