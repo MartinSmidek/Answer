@@ -10,7 +10,7 @@ var zalozka: text           // evid | plat | akce
 proc onstart() { echo('db.akce.ducast2.onstart'); init_ucast }
 proc onfocus() { init_ucast }
 proc init_ucast() {
-  zalozka.set('evid');
+  page.page_init;
   header.fill(the_title.get);
   [ reload(0) ];
   page.evd.onclick
@@ -71,6 +71,10 @@ form _page {
     a.set_css('ae_butt_on','ae_butt_off');
 #     form.display(1,on); form.display(0,off);
   }
+  proc page_init() {
+    zalozka.set('evid');
+    a_muz.display(0); a_zen.display(0);
+  }
   label evd [ 12,0,120,20] {tag:'p', title:'<b>Evidenční karta</b>', format:'c', css:'ae_butt_on'
     proc onclick() { tags(this,'z','h|o');
       zalozka.set('evid'); u.b.reload_pobyt;
@@ -119,7 +123,7 @@ form _evidence {
     item back { title:'ukázat všechny změny'
       proc onclick () { BackTrace.back_load(pob.key,muz.key,zen.key,rod.key) }
   } }
-  label [  1,17,723,495] {title:"<img src='img/ms2.png'>" }
+  label [2,17,723,495] {title:"<img src='img/ms2.png'>" }
   label [  6,20,100,] {title:'Příjmení páru'}
   label [118,20,100,] {title:'Jméno muže'}
   label [231,20,100,] {title:'Jméno ženy'}
@@ -149,11 +153,11 @@ form _evidence {
   label [  6,342,44,] {title:'Jazyk'}
   label [  6,363,44,] {title:'Aktivita'}
   label [3,431,100,] {title:'Lůž. Při. Dnů Koč'}
-  label [134,431,100,] {title:'Svp  Platba'}
-  label [209,431,100,] {title:'Způsob platby'}
-  label [300,431,100,] {title:'Dne'}
-  label [391,431,100,] {title:'Budova Pokoj'}
-  label [213,466,100,] {title:'Poznámka k akci'}
+  label [134,431,81,] {title:'Svp CD Platba'}
+  label [231,431,71,] {title:'Způsob platby'}
+  label [322,431,51,] {title:'Dne'}
+  label [410,431,100,] {title:'Budova Pokoj'}
+  label [232,466,100,] {title:'Poznámka k akci'}
 }
 # -------------------------------------------------------------------------------------------------- _rodina
 form _rodina {
@@ -218,16 +222,17 @@ form _pobyt {
   field strava_cel  [94,456,11,] {data:pobyt.strava_cel}
   field strava_pol  [112,456,11,] {data:pobyt.strava_pol}
   field svp         [136,456,11,] {data:pobyt.svp}
-  field platba      [154,456,50,] {data:pobyt.platba}
-  select zpusobplat [211,456,86,] {type:'map', data:pobyt.zpusobplat, options:ms_akce_platba.zkratka, format:'u'}
-  field datplatby   [302,456,84,] {type:'date', data:pobyt.datplatby}
-  field budova      [393,456,32,] {data:pobyt.budova}
-  field pokoj       [433,456,40,] {data:pobyt.pokoj}
-  field k_poznamka  [214,491,359,] {data:pobyt.poznamka}
-  field platba1     [10,491,47,] {data:pobyt.platba1}
-  field platba2     [60,491,47,] {data:pobyt.platba2}
-  field platba3     [110,491,47,] {data:pobyt.platba3}
-  field platba4     [160,491,47,] {data:pobyt.platba4}
+  check cd          [151,453,11,] {data:pobyt.cd}
+  field platba      [173,456,50,] {data:pobyt.platba}
+  select zpusobplat [230,456,86,] {type:'map', data:pobyt.zpusobplat, options:ms_akce_platba.zkratka, format:'u'}
+  field datplatby   [321,456,84,] {type:'date', data:pobyt.datplatby}
+  field budova      [412,456,32,] {data:pobyt.budova}
+  field pokoj       [452,456,40,] {data:pobyt.pokoj}
+  field k_poznamka  [233,491,340,] {data:pobyt.poznamka}
+  field platba1     [29,491,47,] {data:pobyt.platba1}
+  field platba2     [79,491,47,] {data:pobyt.platba2}
+  field platba3     [129,491,47,] {data:pobyt.platba3}
+  field platba4     [179,491,47,] {data:pobyt.platba4}
   // skupinka
   browse s [375,335,,] {type:'smart', rows:4
     show id_pobyt
@@ -356,6 +361,7 @@ form _ucast [,,400,] { css:'ds_form'
     show cstrava_cel{ data:p.cstrava_cel}
     show cstrava_pol{ data:p.cstrava_pol}
     show svp        { data:p.svp}
+    show cd         { data:p.cd}
     show platba     { data:p.platba}
     show platba1    { data:p.platba1}
     show platba2    { data:p.platba2}

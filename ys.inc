@@ -22,7 +22,7 @@
   $path_root=  array("/home/www/ezer/www-ys/2","C:/Apache/htdocs/ezer/www-ys2");
   $path_pspad= array(null,"C:/Program Files (x86)/PSPad editor/Syntax");
   // cesty pro zálohy
-  $path_backup= array("{$path_root[0]}/","C:/Apache/htdocs/ezer/www-ys2/zalohy");
+  $path_backup= array("{$path_root[0]}/zalohy","C:/Apache/htdocs/ezer/www-ys2/zalohy");
   $path_backup= $path_backup[$ezer_local?1:0];          // složka záloh databází
   $ezer_mysql_path= array("","c:/apache/mysql/bin/");
   $ezer_mysql_path= $ezer_mysql_path[$ezer_local?1:0];  // cesta k utilitě mysql (i s lomítkem)
