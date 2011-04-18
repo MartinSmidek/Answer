@@ -47,6 +47,7 @@ ds/img/ds.png -text
 img/YMCA.png -text
 img/husy.png -text
 img/ms1.png -text
+img/ms2.png -text
 /kEzer-ys2.ppr -text
 skins/ch/$logo.gif -text
 skins/ch/big_text.css -text
@@ -195,6 +196,7 @@ ys/ys.lide.ezer -text
 ys/ys.pok.den.ezer -text
 ys/ys.pok.ezer -text
 ys/ys.pok.nas.ezer -text
+ys/ys.syst.dat.ezer -text
 ys/ys.syst.oso.ezer -text
 ys/ys_fce.js -text
 ys/ys_fce.php -text

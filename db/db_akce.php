@@ -208,16 +208,18 @@ function akce_sestava_pary($akce,$par,$title,$vypis,$export=false) { trace();
 #   platit = součet předepsaných plateb
 function akce_vyuctov_pary($akce,$par,$title,$vypis,$export=false) { trace();
   $result= (object)array();
-  $tit= "Manželé:30"
-      . ",pokoj:5,dětí:5,lůžka:5,přistýlky:5,kočárek:5,nocí:5,str. celá:5,str. pol.:5"
-      . ",platba ubyt.,platba strava,platba režie,sleva,mp3,celkem,převodem,datum platby:10:d"
-      . ",nedopl.,pokladna,přepl.,poznámka:50"
-      . ",ubyt.,DPH,strava,DPH,režie,zaplaceno,dotace,nedoplatek,dar"
+  $tit= "Manželé:25"
+      . ",pokoj:7,dětí:5,lůžka:5::s,přis týlky:5::s,kočá rek:5::s,nocí:5::s,str. celá:5::S,str. pol.:5::s"
+      . ",platba ubyt.:6::s,platba strava:6::s,platba režie:6::s,sleva:7::s,CD:6::s,celkem:7::s"
+      . ",na účet:7::s,datum platby:10:d"
+      . ",nedopl.:6::s,pokladna:6::s,přepl.:6::s,poznámka:50,.:7"
+      . ",ubyt.:7::s,DPH:6::s,strava:7::s,DPH:6::s,režie:7::s,zapla ceno:7::s"
+      . ",dota ce:6::s,nedo platek:6::s,dar:7::s"
       . "";
   $fld= "manzele"
       . ",pokoj,_deti,luzka,pristylky,kocarek,pocetdnu,strava_cel,strava_pol"
-      . ",platba1,platba2,platba3,platba4,mp3,=platit,platba,datplatby"
-      . ",=nedoplatek,=pokladna,=preplatek,poznamka"
+      . ",platba1,platba2,platba3,platba4,=cd,=platit,platba,datplatby"
+      . ",=nedoplatek,=pokladna,=preplatek,poznamka,"
       . ",=ubyt,=ubytDPH,=strava,=stravaDPH,=rezie,=zaplaceno,=dotace,=nedopl,=dar"
       . "";
   $cnd= 1;
@@ -234,8 +236,7 @@ function akce_vyuctov_pary($akce,$par,$title,$vypis,$export=false) { trace();
   // data akce
   $qry=  "SELECT
           p.pouze,pokoj,luzka,pristylky,kocarek,pocetdnu,strava_cel,strava_pol,
-            platba1,platba2,platba3,platba4,platba,datplatby,
-          p.poznamka,
+            platba1,platba2,platba3,platba4,platba,datplatby,cd,p.poznamka,
           r.nazev as nazev,r.ulice,r.psc,r.obec,r.telefony,r.emaily,
           SUM(IF(t.role='d',1,0)) as _deti,
           GROUP_CONCAT(DISTINCT IF(t.role='a',o.prijmeni,'') SEPARATOR '') as prijmeni_m,
@@ -277,6 +278,7 @@ function akce_vyuctov_pary($akce,$par,$title,$vypis,$export=false) { trace();
         case '=nedoplatek': $val= $nedoplatek; break;
                             $exp= "=IF([platba,0]<[=platit,0],[=platit,0]-[platba,0],0)"; break;
         case '=pokladna':   $val= ''; break;
+        case '=cd':         $val= 100.00*$x->cd; break;
         case '=ubyt':       $val= round($x->platba1/(1+$DPH1));
                             $exp= "=ROUND([platba1,0]/(1+$DPH1),0)"; break;
         case '=ubytDPH':    $val= round($x->platba1*$DPH1/(1+$DPH1));
@@ -333,6 +335,12 @@ function akce_vyuctov_pary($akce,$par,$title,$vypis,$export=false) { trace();
     $result->flds= $flds;
     $result->clmn= $clmn;
     $result->expr= $expr;
+    $result->DPH= array(
+      "základ","=[=ubyt,s]+[=strava,s]+[=rezie,s]"
+     ,"DPH ".($DPH2*100)."%","=[=stravaDPH,s]"
+     ,"DPH ".($DPH1*100)."%","=[=ubytDPH,s]"
+     ,"předpis celkem","=[=ubyt,s]+[=strava,s]+[=rezie,s]+[=stravaDPH,s]+[=ubytDPH,s]"
+   );
   }
   else {
     // titulky
@@ -982,7 +990,7 @@ function akce_vyp_excel($akce,$par,$title,$vypis) {  trace();
     |A1 $title ::bold size=14 |A2 $vypis ::bold size=12
 __XLS;
   // titulky a sběr formátů
-  $fmt= array();
+  $fmt= $sum= array();
   $n= 4;
   $lc= 0;
   $clmns= $del= '';
@@ -995,10 +1003,9 @@ __XLS;
   $lc= 0;
   foreach ($tab->tits as $idw) {
     $A= Excel5_n2col($lc);
-    list($id,$w,$f)= explode(':',$idw);
-    if ( $f ) {
-      $fmt[$A]= $f;
-    }
+    list($id,$w,$f,$s)= explode(':',$idw);      // název sloupce : šířka : formát : suma
+    if ( $f ) $fmt[$A]= $f;
+    if ( $s ) $sum[$A]= true;
     $xls.= "|$A$n $id";
     if ( $w ) {
       $clmns.= "$del$A=$w";
@@ -1007,8 +1014,8 @@ __XLS;
     $lc++;
   }
   if ( $clmns ) $xls.= "\n|columns $clmns ";
-  $xls.= "\n|A$n:$A$n bcolor=ffaaaaaa wrap\n";
-  $n= 5;
+  $xls.= "\n|A$n:$A$n bcolor=ffc0e2c2 wrap border=+h|A$n:$A$n border=t\n";
+  $n1= $n= 5;                                   // první řádek dat (pro sumy)
   // datové řádky
   foreach ($tab->clmn as $i=>$c) {
     $xls.= "\n";
@@ -1019,10 +1026,9 @@ __XLS;
       if (isset($tab->expr[$i][$id]) ) {
         // buňka obsahuje vzorec
         $val= $tab->expr[$i][$id];
-        $format.= ' bcolor=ffcccccc';
+        $format.= ' bcolor=ffdddddd';
         $xn= $n;
         $val= preg_replace_callback("/\[([^,]*),([^\]]*)\]/","akce_vyp_subst",$val);
-        //$val= str_replace('[=ubyt,0]','B5',$val);
       }
       else {
         // buňka obsahuje hodnotu
@@ -1039,6 +1045,36 @@ __XLS;
     }
     $n++;
   }
+  $n--;
+  $xls.= "\n|A$n1:$A$n border=+h|A$n1:$A$n border=t";
+  // sumy sloupců
+  if ( count($sum) ) {
+    $xls.= "\n";
+    $nn= $n;
+    $ns= $n+2;
+    foreach ($sum as $A=>$x) {
+      $xls.= "|$A$ns =SUM($A$n1:$A$nn) :: bcolor=ffdddddd";
+    }
+  }
+  // tabulka DPH, pokud je
+  if ( $tab->DPH ) {
+    $n+= 3;
+    $nd1= $n;
+    $xls.= "\n|A$n Tabulka DPH :: bcolor=ffc0e2c2 |A$n:B$n merge center\n";
+    $n++;
+    $nd= $n;
+    for($i= 0; $i<count($tab->DPH); $i+= 2) {
+      $lab= $tab->DPH[$i];
+      $exp= $tab->DPH[$i+1];
+      $xn= $ns;
+      $exp= preg_replace_callback("/\[([^,]*),([^\]]*)\]/","akce_vyp_subst",$exp);
+      $xls.= "|A$n $lab ::right|B$n $exp :: bcolor=ffdddddd";
+      $n++;
+    }
+    $n--;
+    $xls.= "\n|A$nd:B$n border=+h|A$nd1:B$n border=t";
+  }
+  // konec
   $xls.= <<<__XLS
     \n|close
 __XLS;

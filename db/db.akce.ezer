@@ -185,6 +185,7 @@ table pobyt { key_id:'id_pobyt'
   number pristylky
   number pocetdnu
   number svp
+  number cd
   number dorazil
   number pouze
   number akce
