@@ -153,10 +153,12 @@ form _evidence {
   label [  6,342,44,] {title:'Jazyk'}
   label [  6,363,44,] {title:'Aktivita'}
   label [3,431,100,] {title:'Lůž. Při. Dnů Koč'}
-  label [134,431,81,] {title:'Svp CD Platba'}
+  label [134,431,27,] {title:'Svp'}
+  label [175,431,33,] {title:'Platba'}
   label [231,431,71,] {title:'Způsob platby'}
   label [322,431,51,] {title:'Dne'}
-  label [410,431,100,] {title:'Budova Pokoj'}
+  label [410,431,74,] {title:'Budova Pokoj'}
+  label [521,431,54,] {title:'CD z akce'}
   label [232,466,100,] {title:'Poznámka k akci'}
 }
 # -------------------------------------------------------------------------------------------------- _rodina
@@ -222,12 +224,12 @@ form _pobyt {
   field strava_cel  [94,456,11,] {data:pobyt.strava_cel}
   field strava_pol  [112,456,11,] {data:pobyt.strava_pol}
   field svp         [136,456,11,] {data:pobyt.svp}
-  check cd          [151,453,11,] {data:pobyt.cd}
   field platba      [173,456,50,] {data:pobyt.platba}
   select zpusobplat [230,456,86,] {type:'map', data:pobyt.zpusobplat, options:ms_akce_platba.zkratka, format:'u'}
   field datplatby   [321,456,84,] {type:'date', data:pobyt.datplatby}
   field budova      [412,456,32,] {data:pobyt.budova}
   field pokoj       [452,456,40,] {data:pobyt.pokoj}
+  check cd          [555,453,11,] {data:pobyt.cd}
   field k_poznamka  [233,491,340,] {data:pobyt.poznamka}
   field platba1     [29,491,47,] {data:pobyt.platba1}
   field platba2     [79,491,47,] {data:pobyt.platba2}
@@ -361,7 +363,6 @@ form _ucast [,,400,] { css:'ds_form'
     show cstrava_cel{ data:p.cstrava_cel}
     show cstrava_pol{ data:p.cstrava_pol}
     show svp        { data:p.svp}
-    show cd         { data:p.cd}
     show platba     { data:p.platba}
     show platba1    { data:p.platba1}
     show platba2    { data:p.platba2}
@@ -372,6 +373,7 @@ form _ucast [,,400,] { css:'ds_form'
     show budova     { data:p.budova}
     show pokoj      { data:p.pokoj}
     show k_poznamka { data:p.poznamka}
+    show cd         { data:p.cd}
     show pouze      { data:p.pouze}
     // změna
     proc reload_pobyt() {

@@ -4,12 +4,14 @@
 #                                                   (c) 2007-2011 Martin Šmídek <martin@smidek.eu> #
 # ------------------------------------------------------------------------------------------------ #
 panel dg {type:'main'
-  var typ: number
+  var typ: text
   proc onstart() {
     typ.set(javascript("Ezer.parm[0]"));
+    Klub.u.url.set(javascript("Ezer.parm[1]"));
     switch(typ.get
       ,'#1',{Klub.modal(20,20)}
       ,'#2',{Test.modal}
+      ,'#3',{Klub.confirmation}
       ,{alert(typ.get);javascript(conc("Ezer.stop('ko:neznámý dialog ",typ.get,"');"));}
     );
   }
@@ -17,42 +19,67 @@ panel dg {type:'main'
   panel Klub [0,0,400,200] {type:'popup', par:°{close:'no'},
       title:"On-line přihláška do Klubu přátel YMCA Setkání"
     use u: form f [10,10,,]
-    form [,,342,]    form f {
-      label [10,14,,] { title:"Přihlašuji se jako " }
-      radio [100,10,201,20] { value:'1'
+    proc confirmation() {
+      alert(ask('db_mail_confirm_yes',javascript("Ezer.parm[1]"),javascript("Ezer.parm[2]")));
+    }
+    # ---------------------------------------------------------- f
+    form f [,,340,200] {
+      var url: text
+      view w: table webform
+      label [10,14,,] { title:"Přihlašuji se jako *" }
+      radio typ_osoby [100,10,201,20] { data:w.typ_osoby, value:'1'
         case [0,0,80,] { title:'jednotlivec', expr:'1' }
         case [80,0,61,] { title:'rodina', expr:'2' }
         case [144,0,48,] { title:'firma', expr:'3' }
       }
-      label [10,40,,] { title:"Osobní údaje" }
+      label x [10,40,,] { title:"Osobní údaje" }
       // osobní
       const To=60; Tof=74
       label [9,To+0,,] { title:"titul" }
       field [9,Tof+0,34,]
-      label [59,To+0,,] { title:"jméno" }
-      field [57,Tof+0,80,]
-      label [147,To+0,,] { title:"příjmení" }
-      field [148,Tof+0,115,]
+      label [59,To+0,,]    { title:"* jméno" }
+      field jmeno [57,Tof+0,80,] { data:w.jmeno, value:'M' }
+      label [147,To+0,,] { title:"* příjmení" }
+      field prijmeni [148,Tof+0,115,] { data:w.prijmeni, value:'Š' }
       label [277,To+0,,] { title:"narození" }
-      field [274,Tof+0,80,] { type:'date' }
+      field [274,Tof+0,80,] { data:w.narozeni, type:'date' }
       // adresa
       const Ta=100; Taf=114
       label [9,Ta+0,,] { title:"ulice" }
-      field [9,Taf+0,126,]
+      field [9,Taf+0,126,] { data:w.ulice }
       label [148,Ta+0,,] { title:"PSČ" }
-      field [146,Taf+0,44,]
-      label [205,Ta+0,,] { title:"město" }
-      field [206,Taf+0,149,]
+      field [146,Taf+0,44,] { data:w.psc }
+      label [205,Ta+0,,] { title:"obec" }
+      field [206,Taf+0,149,] { data:w.obec }
       // kontakt
       const Tk=140; Tkf=154
-      label [9,Ta+0,,] { title:"ulice" }
-      field [9,Taf+0,126,]
-      label [148,Ta+0,,] { title:"PSČ" }
-      field [146,Taf+0,44,]
+      label [9,Tk+0,,] { title:"* email" }
+      field email [9,Tkf+0,126,] { data:w.email, value:'martin@smidek.eu' }
+      label [148,Tk+0,,] { title:"telefon" }
+      field [146,Tkf+0,44,]
+      edit msg [205,Tkf+0,150,]
 
       // operace
+      proc test_email(x) {
+        var ok: number
+        ok.set(javascript(conc(
+          "/^([A-Za-z0-9_\-\.])+\@([A-Za-z0-9_\-\.])+\.([A-Za-z]{2,4})$/.test('",x,"')")));
+        return(ok);
+      }
       button [10,172,,] { title:"Zapiš"
-        proc onclick() { back('ok','přihláška byla zapsána'); } }
+        proc onclick() {
+          var indx: number
+          jmeno.change; prijmeni.change; email.change;
+          typ_osoby.get; jmeno.get; prijmeni.get; email.get;    // jsou zadány povinné položky?
+          { test_email(email.get);                              // je zadán korektní email?
+            indx.set(form.insert);                              // zaznamenej přihlášku
+            msg.set(ask('db_mail_confirm_ask',indx,url.get));  // zašli email
+            alert("na uvedený mail byla zaslána žádost o potvrzení");
+            back('ok',conc('přihláška je evidována pod číslem:',indx,' potvrďte ji prosím v zaslaném mailu'));
+          | alert('Uveďte prosím korektní emailovou adresu') }
+        | alert('Vyplňte prosím všechny údaje označené hvězdičkou');
+        }
+      }
       button [90,173,,] { title:"Zpět"
         proc onclick() { back('ko','hodnoty nebyly uloženy'); } }
       // navrácení stavu a hodnoty
@@ -74,5 +101,40 @@ panel dg {type:'main'
     }
   }
 }
-
-
+# ================================================================================================== TABULKY
+table _cis { key_id:'id_cis'
+  number id_cis
+  text druh,
+  text data,
+  text zkratka,
+  number poradi,
+  text hodnota,
+  text popis,
+  text barva,
+}
+# -------------------------------------------------------------------------- webform
+table webform { key_id:'id_webform'
+  number id_webform
+  number id_osoba       { help:"int(11)	přiřazená osoba (u firmy kontaktní)" }
+  number typ_osoby      { help:"1:jednotlivec, 2:rodina, 3:firma" }
+  number id_rodina      { help:"přiřazená rodina, pokud typ=2" }
+  text firma_nazev      { help:"jméno firmy pokud typ_osoby=3" }
+  number firma_ic       { help:"" }
+  text jmeno
+  text prijmeni
+  number sex
+  text ulice
+  text psc
+  text obec
+  text stat
+  text email
+  text telefon
+  date narozeni         { sql_pipe:'sql_date1'}
+  text rc_xxxx
+  text zamest
+  number dary_frekvence { help:"předpokládaná frekvence darů" } // db_dary_frek
+  number dary_potvrzeni { help:"potřebuje potvrzení pro daňový odečet" }
+  number potvrzeno      { help:"bylo kliknuto na URL zaslané mailem" }
+  text historie
+}
+map db_dary_frek:     table _cis {where:"druh='db_dary_frek'",  order:'poradi', key_id:'data'}

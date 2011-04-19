@@ -1,0 +1,78 @@
+# ------------------------------------------------------------------------------------------------ #
+# Karta pro evidenci členů                                                                         #
+#                                                                                                  #
+# Ans(w)er/Ezer                                     (c) 2007-2011 Martin Šmídek <martin@smidek.eu> #
+# ------------------------------------------------------------------------------------------------ #
+
+use info: form right [10,10,,]
+use prih: form _prih [10,44,,]
+use f: form _f [390,44,,]
+
+proc onfirstfocus() {
+  m.g.i.click;
+  prih.b.browse_load
+}
+
+menu m {type:'left'
+  menu g {title:'Klub přátel YMCA Setkání',type:'group'
+    item i {title:'přihlášky z www.setkani.org' }
+    item   {title:'seznam členů' }
+    proc onclick (i) {
+      info.fill(conc(i.owner.title,' - ',i.title),' ');
+    }
+  }
+}
+# ---------------------------------------------------------------------- _prih
+form _prih {
+  view ws: table webform
+  browse b [0,0,,] { rows:28
+    show id { data:ws.id_webform }
+    show [,,70,] { data:ws.prijmeni, title:'příjmení', format:'q*s' }
+    show [,,60,] { data:ws.jmeno, title:'jméno', format:'q*s' }
+    show [,,100,] { data:ws.email, title:'email', format:'q*s' }
+    show [,,120,] { data:ws.potvrzeno, title:'potvrzeno', format:'q*s' }
+    proc onrowclick() {
+      f.load(id.get);
+    }
+  }
+}
+    # ---------------------------------------------------------- f
+    form _f [,,340,200] {
+      var url: text
+      view w: table webform
+      label [10,14,,] { title:"Přihlašuji se jako *" }
+      radio typ_osoby [100,10,201,20] { data:w.typ_osoby, value:'1'
+        case [0,0,80,] { title:'jednotlivec', expr:'1' }
+        case [80,0,61,] { title:'rodina', expr:'2' }
+        case [144,0,48,] { title:'firma', expr:'3' }
+      }
+      label x [10,40,,] { title:"Osobní údaje" }
+      // osobní
+      const To=60; Tof=74
+      label [9,To+0,,] { title:"titul" }
+      field [9,Tof+0,34,]
+      label [59,To+0,,]    { title:"* jméno" }
+      field jmeno [57,Tof+0,80,] { data:w.jmeno, value:'M' }
+      label [147,To+0,,] { title:"* příjmení" }
+      field prijmeni [148,Tof+0,115,] { data:w.prijmeni, value:'Š' }
+      label [277,To+0,,] { title:"narození" }
+      field [274,Tof+0,80,] { data:w.narozeni, type:'date' }
+      // adresa
+      const Ta=100; Taf=114
+      label [9,Ta+0,,] { title:"ulice" }
+      field [9,Taf+0,126,] { data:w.ulice }
+      label [148,Ta+0,,] { title:"PSČ" }
+      field [146,Taf+0,44,] { data:w.psc }
+      label [205,Ta+0,,] { title:"obec" }
+      field [206,Taf+0,149,] { data:w.obec }
+      // kontakt
+      const Tk=140; Tkf=154
+      label [9,Tk+0,,] { title:"* email" }
+      field email [9,Tkf+0,126,] { data:w.email, value:'martin@smidek.eu' }
+      label [148,Tk+0,,] { title:"telefon" }
+      field [146,Tkf+0,44,]
+      // potvrzení
+      const Tp=450
+      label [9,Tp+0,,] { title:'potvrzeno zpětným mailem' }
+      edit msg [9,Tp+14,300,] { data:w.potvrzeno }
+    }

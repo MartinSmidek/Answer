@@ -209,12 +209,13 @@ function akce_sestava_pary($akce,$par,$title,$vypis,$export=false) { trace();
 function akce_vyuctov_pary($akce,$par,$title,$vypis,$export=false) { trace();
   $result= (object)array();
   $tit= "Manželé:25"
-      . ",pokoj:7,dětí:5,lůžka:5::s,přis týlky:5::s,kočá rek:5::s,nocí:5::s,str. celá:5::S,str. pol.:5::s"
-      . ",platba ubyt.:6::s,platba strava:6::s,platba režie:6::s,sleva:7::s,CD:6::s,celkem:7::s"
-      . ",na účet:7::s,datum platby:10:d"
-      . ",nedopl.:6::s,pokladna:6::s,přepl.:6::s,poznámka:50,.:7"
-      . ",ubyt.:7::s,DPH:6::s,strava:7::s,DPH:6::s,režie:7::s,zapla ceno:7::s"
-      . ",dota ce:6::s,nedo platek:6::s,dar:7::s"
+      . ",pokoj:7,dětí:5:r,lůžka:5:r:s,přis týlky:5:r:s,kočá rek:5:r:s,nocí:5:r:s"
+      . ",str. celá:5:r:S,str. pol.:5:r:s"
+      . ",platba ubyt.:6:r:s,platba strava:6:r:s,platba režie:6:r:s,sleva:7:r:s,CD:6:r:s,celkem:7:r:s"
+      . ",na účet:7:r:s,datum platby:10:d"
+      . ",nedopl.:6:r:s,pokladna:6:r:s,přepl.:6:r:s,poznámka:50,.:7"
+      . ",ubyt.:7:r:s,DPH:6:r:s,strava:7:r:s,DPH:6:r:s,režie:7:r:s,zapla ceno:7:r:s"
+      . ",dota ce:6:r:s,nedo platek:6:r:s,dar:7:r:s"
       . "";
   $fld= "manzele"
       . ",pokoj,_deti,luzka,pristylky,kocarek,pocetdnu,strava_cel,strava_pol"
@@ -233,6 +234,15 @@ function akce_vyuctov_pary($akce,$par,$title,$vypis,$export=false) { trace();
   // získání dat - podle $kdo
   $clmn= array();       // pro hodnoty
   $expr= array();       // pro výrazy
+  $suma= array();       // pro sumy sloupců id:::s
+  $fmts= array();       // pro formáty sloupců id::f:
+  for ($i= 0; $i<count($tits); $i++) {
+    $idw= $tits[$i];
+    $fld= $flds[$i];
+    list($id,$w,$f,$sum)= explode(':',$idw);
+    if ( $sum=='s' ) $suma[$fld]= 0;
+    if ( isset($f) ) $fmts[$fld]= $f;
+  }
   // data akce
   $qry=  "SELECT
           p.pouze,pokoj,luzka,pristylky,kocarek,pocetdnu,strava_cel,strava_pol,
@@ -264,7 +274,7 @@ function akce_vyuctov_pary($akce,$par,$title,$vypis,$export=false) { trace();
     $DPH1= 0.1;
     $DPH2= 0.2;
     foreach($flds as $f) {
-      $exp= '';
+      $exp= ''; $val= 0;
       if ( substr($f,0,1)=='=' ) {
         //            ubyt.         strava        režie         sleva
         $predpis= $x->platba1 + $x->platba2 + $x->platba3 + $x->platba4;
@@ -276,7 +286,7 @@ function akce_vyuctov_pary($akce,$par,$title,$vypis,$export=false) { trace();
         case '=preplatek':  $val= $preplatek;
                             $exp= "=IF([platba,0]>[=platit,0],[platba,0]-[=platit,0],0)"; break;
         case '=nedoplatek': $val= $nedoplatek; break;
-                            $exp= "=IF([platba,0]<[=platit,0],[=platit,0]-[platba,0],0)"; break;
+                            $exp= "=IF([=zaplaceno,0]<[=platit,0],[=platit,0]-[=zaplaceno,0],0)"; break;
         case '=pokladna':   $val= ''; break;
         case '=cd':         $val= 100.00*$x->cd; break;
         case '=ubyt':       $val= round($x->platba1/(1+$DPH1));
@@ -322,11 +332,15 @@ function akce_vyuctov_pary($akce,$par,$title,$vypis,$export=false) { trace();
         }
         if ( $f ) $clmn[$n][$f]= $val; else $clmn[$n][]= $val;
       }
+      // případný výpočet sumy
+      if ( isset($suma[$f]) ) {
+         $suma[$f]+= $val;
+      }
     }
-//     break;
   }
 //                                         debug($clmn,"sestava pro $akce,$typ,$fld,$cnd");
 //                                         debug($expr,"vzorce pro $akce,$typ,$fld,$cnd");
+//                                         debug($suma,"sumy pro $akce B");
   // zobrazení tabulkou
   $tab= '';
   $thd= '';
@@ -348,17 +362,41 @@ function akce_vyuctov_pary($akce,$par,$title,$vypis,$export=false) { trace();
       list($id)= explode(':',$idw);
       $ths.= "<th>$id</th>";
     }
+    // data
     foreach ($clmn as $i=>$c) {
       $tab.= "<tr>";
       foreach ($c as $id=>$val) {
-        $tab.= "<td style='text-align:left'>$val</td>";
+        $style= akce_sestava_td_style($fmts[$id]);
+        $tab.= "<td$style>$val</td>";
       }
       $tab.= "</tr>";
     }
-    $result->html= "<div class='stat'><table class='stat'><tr>$ths</tr>$tab</table></div>";
+    // sumy
+    $sum= '';
+    if ( count($suma)>0 ) {
+      $sum.= "<tr>";
+      foreach ($flds as $f) {
+        $val= isset($suma[$f]) ? $suma[$f] : '';
+        $sum.= "<th style='text-align:right'>$val</th>";
+      }
+      $sum.= "</tr>";
+    }
+    $result->html= "<div class='stat'><table class='stat'><tr>$ths</tr>$sum$tab</table></div>";
+    $result->html.= "</br>";
     $result->href= $href;
   }
   return $result;
+}
+# ----------------------------------------------------- akce_sestava_td_style
+# $fmt= r|d
+function akce_sestava_td_style($fmt) {
+  $style= array();
+  switch ($fmt) {
+  case 'r': $style[]= 'text-align:right'; break;
+  case 'd': $style[]= 'text-align:right'; break;
+  }
+  return count($style)
+    ? " style='".implode(';',$style)."'" : '';
 }
 /*
 # -------------------------------------------------------------------------------------------------- akce_sestava OLD
@@ -1112,6 +1150,95 @@ function sql2xls($datum) {
     $text.= date("j{$del}n{$del}Y",strtotime($datum));
   }
   return $text;
+}
+# ================================================================================================== EMAILY
+# podpora přihlášek do Klubu
+# -------------------------------------------------------------------------------------------------- db_mail_confirm_yes
+# ASK
+# přijetí potvrzení kliknutím na $url&conf=$id_webform&veri=md5
+function db_mail_confirm_yes($id_webform,$md5) {  trace();
+  // vyzvednutí údajů z přihlášky
+  $potvrzeno= '?';
+  $qry= "SELECT * FROM webform WHERE id_webform='$id_webform' ";
+  $res= mysql_qry($qry);
+  if ( $res && ($w= mysql_fetch_object($res)) ) {
+    // kontrola vyplněných položek
+    $kod= md5($id_webform.$w->jmeno.$w->prijmeni.$w->email);
+    $potvrzeno= $w->potvrzeno;
+    $potvrzeno.= date("d.m.Y H:i ").($kod==$md5 ? "ok" : "?");
+    $qryu= "UPDATE webform SET potvrzeno='$potvrzeno|' WHERE id_webform='$id_webform' ";
+    $resr= mysql_qry($qryu);
+  }
+  return "$potvrzeno ($id_webform,$md5)";
+}
+# -------------------------------------------------------------------------------------------------- db_mail_confirm_ask
+# ASK
+# zaslání emailu s žádostí o potvrzení kliknutím na $url&conf=$id_webform&veri=md5
+function db_mail_confirm_ask($id_webform,$url) {  trace();
+  $from= "cerny.vavrovice@seznam.cz";
+  $from= "martin@smidek.eu";
+  // vyzvednutí údajů z přihlášky
+  $qry= "SELECT * FROM webform WHERE id_webform='$id_webform' ";
+  $res= mysql_qry($qry);
+  if ( $res && ($w= mysql_fetch_object($res)) ) {
+    // rekapitulace vyplněných položek
+    $flds= "Jméno: {$w->title} {$w->jmeno} {$w->prijmeni}";
+    if ( $w->ulice || $w->psc || $w->obec )
+      $flds.="<br>Bydliště: {$w->ulice} {$w->psc} {$w->obec}";
+    if ( $w->email || $w->telefon )
+      $flds.="<br>Kontakt: {$w->email}; {$w->telefon}";
+    // vytvoření potvrzující adresy
+    global $path_url;
+    $kod= md5($id_webform.$w->jmeno.$w->prijmeni.$w->email);
+    $url= "$url&conf=$id_webform&veri=$kod";
+    // kompozice těla mailu
+    $text= <<<__EOD
+    <html><body>
+      <p>Děkujeme Vám za vyplnění přihlášky do <i>Klubu přátel YMCA Setkání</i></p>
+      Potvrďte prosím správnost uvedených údajů
+      <blockquote>$flds</blockquote>
+      <br>kliknutím na tento odkaz: $url
+      <br>Tím bude vaše přihláška po formální stránce ukončena.
+      <p>Těšíme se na naši další spolupráci</p>
+    </body></html>
+__EOD;
+    $obj= db_mail_send($from,$w->email,"Přihláška do Klubu přátel YMCA Setkání",$text);
+    $html= $obj->_html;
+  }
+  else {
+    $html= "Nebyly nalezeny údaje ...";
+  }
+  return $html;
+}
+# -------------------------------------------------------------------------------------------------- db_mail_send
+# ASK
+# odešli dávku $kolik mailů ($kolik=0 znamená testovací poslání)
+function db_mail_send($from,$to,$subj,$text) { trace();
+  global $ezer_path_serv;
+  require_once("$ezer_path_serv/licensed/phpmailer/class.phpmailer.php");
+  $result= (object)array('_error'=>0);
+  $html= '';
+  // napojení na mailer
+  $mail= new PHPMailer;
+  $mail->Host= "192.168.1.1";
+  $mail->CharSet = "utf-8";
+  $mail->From= $from;
+  $mail->AddReplyTo($from);
+  $mail->FromName= "YMCA Setkání";
+  $mail->AddAddress($to);
+  $mail->Subject= $subj;
+  $mail->Body= $text;
+  $mail->IsHTML(true);
+  $mail->Mailer= "smtp";
+  if ( $mail->Send() )
+    $html.= "<br><b><font color='#070'>Byl odeslán mail pro $to - je zapotřebí zkontrolovat obsah</font></b>";
+  else {
+    $html.= "<br><b><font color='#700'Při odesílání mailu došlo k chybě: {$mail->ErrorInfo}</font></b>";
+    $result->_error= 1;
+  }
+  // zpráva o výsledku
+  $result->_html= $html;
+  return $result;
 }
 # ================================================================================================== EMAILY
 # jednotlivé maily posílané v sadách příložitostně skupinám

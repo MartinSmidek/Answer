@@ -17,6 +17,7 @@ kEzer-ys2
 		db\$.ezer
 		db\db.akce.ducast.ezer
 		db\db.akce.ema.ezer
+		db\db.akce.evi.ezer
 		db\db.akce.ezer
 		db\db.akce.chl.ezer
 		db\db.akce.lidi.ezer
@@ -30,13 +31,14 @@ kEzer-ys2
 		db\db_fce.js
 	-GData
 		_\ZendGdata-1.10.4\demos\Zend\Gdata\Docs.php
-	+sql,konverze
+	-sql,konverze
 		sql\backup_ys_setkani.bat
 		sql\sql\indexy.sql
 		sql\ms_mysql.PRG
 		sql\mysql_all.bat
 		sql\pohled_osoba.sql
-	+ezer2
+		zaloha.php
+	-ezer2
 		+libr
 			ezer2\$.ezer
 			ezer2\ezer2.help.ezer
@@ -83,7 +85,7 @@ kEzer-ys2
 		wiki\dokumentace.wiki
 		doc\poznamky.txt
 		wiki\todo.wiki
-	-system
+	+system
 		..\..\..\..\WINDOWS\system32\drivers\etc\hosts
 		..\..\..\Apache\conf\extra\httpd-vhosts-ezer.conf
 		..\..\..\Apache\logs\ys2-error.log
@@ -125,7 +127,7 @@ kEzer-ys2
 		test\test.ys_ucetnictvi.ezer
 		test\test.ysp.ezer
 		test\test_fce.php
-	-dg
+	+dg
 		dg\$.ezer
 		dg\dg.css.css
 		dg.inc
@@ -151,7 +153,7 @@ kEzer-ys2
 			ys\ys.info.ezer
 			ys\ys.lide.ezer
 			ys\ys_lide.php
-		-pokladna
+		+pokladna
 			ys\ys.pok.den.ezer
 			ys\ys.pok.ezer
 			ys\ys.pok.nas.ezer
@@ -160,7 +162,7 @@ kEzer-ys2
 			ys\ys.syst.ezer
 			ys\ys.syst.oso.ezer
 		ys\ys.doc.ezer
-	+ds
+	-ds
 		ds\ds.css.css
 		ds\ds.dum.ezer
 		ds\ds.ezer
@@ -208,9 +210,22 @@ kEzer-ys2
 27=ezer2\ezer2.syst.ezer
 28=ezer2\client\ezer.css.php
 29=db\db.css.php
+30=ys.php
+31=ys.inc
+32=ezer2\ezer2_fce.php
+33=test\test.elem.frm.ezer
+34=ys\ys.pok.nas.ezer
+35=ys\ys.pok.ezer
+36=zaloha.php
+37=dg\$.ezer
+38=dg.php
+39=dg.inc
+40=dg\dg.css.css
+41=Novy1.txt
+42=db\db.akce.evi.ezer
 [Selected Project Files]
 Main=
-Selected=db\db.akce.ducast.ezer
+Selected=db\db.akce.evi.ezer
 [ezer2\server\ezer2.php]
 TopLine=507
 Caret=40,528
@@ -221,10 +236,10 @@ Mark3=60,1095
 Mark4=37,218
 Mark5=44,570
 [ezer2\server\ae_slib.php]
-TopLine=1424
-Caret=10,1447
+TopLine=148
+Caret=1,161
 BookMark1=34,339
-BookMark2=25,1782
+BookMark2=25,1785
 Mark1=37,109
 Mark2=10,626
 [ezer2\client\dbg.js]
@@ -241,10 +256,11 @@ Mark1=88,364
 TopLine=315
 Caret=1,360
 [ezer2\client\ezer.js]
-TopLine=5912
-Caret=1,5953
+TopLine=4199
+Caret=66,4224
 BookMark1=61,2513
 BookMark2=15,1782
+Mark1=39,1986
 [ezer2\client\ezer_fdom2.js]
 TopLine=2282
 Caret=79,2310
@@ -266,12 +282,12 @@ Caret=41,622
 BookMark2=15,233
 Mark1=29,374
 [db\db.akce.ezer]
-TopLine=141
-Caret=84,161
-BookMark1=1,21
-BookMark4=6,33
+TopLine=7
+Caret=82,34
+BookMark1=1,19
+BookMark4=6,30
 [db\db.akce.lst.ezer]
-TopLine=33
+TopLine=1
 Caret=77,69
 BookMark1=69,88
 [db\db.akce.chl.ezer]
@@ -289,14 +305,14 @@ Mark1=24,131
 Mark2=24,133
 Mark3=24,134
 [db\db.akce.ducast.ezer]
-TopLine=802
-Caret=50,810
-BookMark1=49,868
+TopLine=816
+Caret=2,841
+BookMark1=49,876
 [db\db.akce.ducast2.ezer]
-TopLine=802
-Caret=43,808
-BookMark1=21,399
-BookMark2=1,98
+TopLine=816
+Caret=94,841
+BookMark1=21,407
+BookMark2=1,102
 [db\db.akce.lidi.ezer]
 TopLine=455
 Caret=1,485
@@ -307,36 +323,75 @@ TopLine=175
 Caret=82,235
 [db\db_fce.js]
 TopLine=1
-Caret=24,21
+Caret=18,25
 [db\db_akce.php]
-TopLine=910
-Caret=74,955
-BookMark1=1,217
-BookMark2=58,965
+TopLine=1127
+Caret=54,1169
+BookMark1=31,1181
+BookMark2=1,1436
 [db\db.akce.tisk.ezer]
 TopLine=1
 Caret=1,23
 [db\$.ezer]
 TopLine=1
-Caret=1,1
+Caret=10,12
 [ys\ys_fce.php]
 TopLine=314
 Caret=1,1
 [ds\ds_fce.php]
-TopLine=364
-Caret=48,393
+TopLine=899
+Caret=64,932
 [db\db.akce.vse.ezer]
 TopLine=1
 Caret=1,1
 [db\db.akce.oso.ezer]
-TopLine=8
+TopLine=1
 Caret=1,1
 [ezer2\ezer2.syst.ezer]
-TopLine=209
-Caret=22,253
+TopLine=1
+Caret=1,11
 [ezer2\client\ezer.css.php]
 TopLine=454
 Caret=82,479
 [db\db.css.php]
+TopLine=78
+Caret=1,143
+[ys.php]
 TopLine=1
-Caret=55,42
+Caret=1,37
+[ys.inc]
+TopLine=1
+Caret=1,62
+[ezer2\ezer2_fce.php]
+TopLine=323
+Caret=13,375
+[test\test.elem.frm.ezer]
+TopLine=1
+Caret=43,15
+[ys\ys.pok.nas.ezer]
+TopLine=74
+Caret=97,108
+[ys\ys.pok.ezer]
+TopLine=15
+Caret=73,38
+[zaloha.php]
+TopLine=1
+Caret=21,27
+[dg\$.ezer]
+TopLine=27
+Caret=45,76
+[dg.php]
+TopLine=1
+Caret=37,42
+[dg.inc]
+TopLine=11
+Caret=21,57
+[dg\dg.css.css]
+TopLine=1
+Caret=31,7
+[Novy1.txt]
+TopLine=1
+Caret=39,12
+[db\db.akce.evi.ezer]
+TopLine=1
+Caret=1,1

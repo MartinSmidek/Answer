@@ -15,11 +15,8 @@ proc onstart() {  echo('db.akce.onstart');
 }
 # ================================================================================================== CHLAPI
 panel chl {type:'right', _sys:'*', title:'Chlapi', include:'onclick,db.akce.chl',skill:'yac' }
-# ================================================================================================== OSOBY
-# panel oso {type:'plain', title:'Lidi', include:'onclick,db.akce.oso',skill:'yac' }
-# ================================================================================================== VÝBĚR
-panel lst {type:'right', _sys:'*', title:'Akce', include:'onclick,db.akce.lst',skill:'yaa' }
-# ================================================================================================== ÚČAST
+# ================================================================================================== AKCE
+panel lst {type:'right', _sys:'*', title:'AKCE', include:'onclick,db.akce.lst',skill:'yaa' }
 panel ducast {type:'plain', _sys:'*', title:'Účastníci', include:'onclick,db.akce.ducast',skill:'yaa'
   proc init_ucast() { }
 }
@@ -32,14 +29,13 @@ panel ducast2 {type:'plain', _sys:'*', title:'Účastníci2', include:'onclick,d
 # panel lidi {type:'plain', title:'Účast NEW', include:'onclick,db.akce.lidi',skill:'yaa'
 #   proc init_ucast() { }
 # }
-# ================================================================================================== TISK
 panel tisk [,,,] {type:'right', _sys:'*', title:'Výpisy akce', include:'onclick,db.akce.tisk',skill:'yaa'  }
-# ================================================================================================== VSICHNI
+# ================================================================================================== EVIDENCE
+panel evi {type:'right', _sys:'*', title:'EVIDENCE', include:'onclick,db.akce.evi',skill:'yak' }
 # panel vse [,,,543] {type:'plain', title:'Všichni', include:'onclick,db.akce.vse',skill:'yaa'  }
-# ================================================================================================== MAIL
 # panel ema [,,,543] {type:'right', title:'Maily', skill:'yam', include:'onclick,db.akce.ema'  }
-# ================================================================================================== COMMON
 
+# ================================================================================================== COMMON
 form right [,,*,50] {
   label head [0,0,*,50]  { title:'' }
   label msg  [0,35,*,20] { title:'' }
@@ -258,6 +254,32 @@ table rodina { key_id:'id_rodina'
   text origin
   text historie
 }
+# -------------------------------------------------------------------------- webform
+table webform { key_id:'id_webform'
+  number id_webform
+  number id_osoba       { help:"int(11)	přiřazená osoba (u firmy kontaktní)" }
+  number typ_osoby      { help:"1:jednotlivec, 2:rodina, 3:firma" }
+  number id_rodina      { help:"přiřazená rodina, pokud typ=2" }
+  text firma_nazev      { help:"jméno firmy pokud typ_osoby=3" }
+  number firma_ic       { help:"" }
+  text jmeno
+  text prijmeni
+  number sex
+  text ulice
+  text psc
+  text obec
+  text stat
+  text email
+  text telefon
+  date narozeni         { sql_pipe:'sql_date1'}
+  text rc_xxxx
+  text zamest
+  number dary_frekvence { help:"předpokládaná frekvence darů" } // db_dary_frek
+  number dary_potvrzeni { help:"potřebuje potvrzení pro daňový odečet" }
+  number potvrzeno      { help:"bylo kliknuto na URL zaslané mailem" }
+  text historie
+}
+map db_dary_frek:  table _cis {where:"druh='db_dary_frek'",  order:'poradi', key_id:'data'}
 # ================================================================================================== Sey
 table uakce { key_id:'id_uakce'
   number id_uakce

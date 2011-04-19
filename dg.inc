@@ -27,6 +27,9 @@
   // koøeny cest
   $path_root=  array("/home/www/ezer/www-ys/2","C:/Apache/htdocs/ezer/www-ys2");
   $path_pspad= array(null,"C:/Program Files (x86)/PSPad editor/Syntax");
+  // cesty pro zadávání url
+  $path_url= array("http://answer.setkani.org/dg.php","http://ys2.ezer/dg.php");
+  $path_url= $path_url[$ezer_local?1:0];                // prefix url
   // ostatní parametry
   $tracking= '_track';
   $tracked= ',_user,';
@@ -51,6 +54,7 @@
   );
   // uživatelské i knihovní moduly v PHP obsažené v $ezer_path_root
   $ezer_php= array(
+    'db/db_akce.php'
   );
 
   // parametrizace $EZER

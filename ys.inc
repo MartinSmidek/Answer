@@ -26,6 +26,9 @@
   $path_backup= $path_backup[$ezer_local?1:0];          // složka záloh databází
   $ezer_mysql_path= array("","c:/apache/mysql/bin/");
   $ezer_mysql_path= $ezer_mysql_path[$ezer_local?1:0];  // cesta k utilitě mysql (i s lomítkem)
+  // cesty pro zadávání url
+  $path_url= array("http://answer.setkani.org/ys.php","http://ys2.ezer/ys.php");
+  $path_url= $path_url[$ezer_local?1:0];                // prefix url
   // ostatní parametry
   $tracking= '_track';
   $tracked= ',akce,pobyt,spolu,osoba,tvori,rodina,_user,';
