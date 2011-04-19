@@ -36,10 +36,11 @@ panel inf {type:'right', title:"Informace", _sys:'inf'
 panel nas {type:'plain', title:"Nastavení", _sys:'nas',   skill:'yp+|yp+', include:'onclick' }
 
 proc the_formsave (f,b) {
-   f.same; stop
- | f.key; f.save; f.load; b.browse_seek
- | f.insert; f.load;
-   b.raise('onrowclick',b.browse_seek(conc(f.id_key),'=',f.key)) }
+  f.same
+| f.key; f.save; { b.browse_seek; f.load | f.init }
+| f.insert; f.load;
+  b.raise('onrowclick',b.browse_seek(conc(f.id_key,'=',f.key)))
+}
 
 map p_ucel: table _cis {where:"druh='p_ucel'", order:'poradi'/*, key:'data'*/}
 map p_typ: table _cis {where:"druh='p_typ'", order:'poradi', key_id:'data'}

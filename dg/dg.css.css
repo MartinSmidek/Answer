@@ -4,7 +4,7 @@
 #body {
   background-color:transparent !important; /*width:100px !important; height:100px !important;*/ }
 #shield {
-  background-color:#777 !important; }
+  background-color:transparent !important; }
 
 /* úpravy standardu */
 .Label, .Check {

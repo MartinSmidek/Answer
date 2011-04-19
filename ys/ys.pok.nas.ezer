@@ -85,6 +85,7 @@ panel o_oprava [0,0,400,160] { title:'oprava organizace', type:'popup', css:'dia
 # ================================================================================================== o_novy
 panel o_novy [0,0,400,160] { title:'nová organizace', type:'popup', css:'dialog'
   use o: form _o_org [1,1,,],
+  proc onfocus() { o.init }
 }
 # -------------------------------------------------------------------------------------------------- _o_org
 form _o_org [,,300,100] {
@@ -118,6 +119,7 @@ panel z_oprava [0,0,300,156] { title:'oprava zaměstnance', type:'popup', css:'d
 # ================================================================================================== z_novy
 panel z_novy [0,0,300,155] { title:'nový zaměstnanec', type:'popup', css:'dialog'
   use z: form _z_zam [1,9,,],
+  proc onfocus() { z.init }
 }
 # -------------------------------------------------------------------------------------------------- _z_zam
 form _z_zam [,,300,100] {

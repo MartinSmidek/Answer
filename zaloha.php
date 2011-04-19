@@ -17,7 +17,9 @@ require_once("ezer2/ezer2_fce.php");
     $path= "$path_backup/$subpath";
     list($dws,$n,$file)= explode('/',$subpath);
     if ( $dws=='special' ) $file= $n;
-    $db= substr($file,0,-18);
+    list($file,$ext)= explode('.',$file);       // oddělení přípony
+    list($file,$note)= explode('-',$file);      // oddělení poznámky (serveru)
+    $db= substr($file,0,-14);
     $dbi= $dbs[$ezer_local?1:0][$db];
     $host= $dbi[1]=='localhost' ? '' : "--host={$dbi[1]}";
     if ( isset($dbi) ) {
@@ -28,7 +30,7 @@ require_once("ezer2/ezer2_fce.php");
       $html.= "<br><br>soubor $path_backup/{$_GET['restore']} byl zpracován s výsledkem: '$status'";
     }
     else
-      $html= "chyba: $path";
+      $html= "chyba: $path; databáze $db není přístupná";
   }
 # zaloha.php?typ=
 #   listing  - přehled existujících záloh
