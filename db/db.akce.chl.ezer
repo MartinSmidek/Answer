@@ -99,12 +99,18 @@ form _chlapi [,,*,50] {
   view cc: table chlapi
   browse mrop [8,10,200,447] { rows:23, qry_rows:1, optimize:°{qry:'noseek'}
     show id_chlapi {data:cc.id_chlapi }
-    show [,,136,] {title:'jméno', expr:"CONCAT(cc.prijmeni,' ',cc.jmeno)", format:'q*s',
+    show [,,136,] {title:'jméno', expr:"CONCAT(cc.prijmeni,' ',cc.jmeno)", format:'q*s+',
                   help:"příjmení a jméno" }
-    show [,,45,] {title:'mrop', data:cc.iniciace, format:'rs+q', help:"rok iniciace"}
+    show mr [,,45,] {title:'mrop', data:cc.iniciace, format:'rsq', help:"rok iniciace"}
+    show vs [,,0,] {title:'VS', format:'rsq:e', help:"VS utvořený z data narození",
+      expr:"DATE_FORMAT(cc.narozeni,'%y%m%d')" }
     proc onrowclick() {
       ch.c.load(id_chlapi.get);
       ch.c.key(id_chlapi.get);
+    }
+    proc onclick() {
+      mr.width; mr.width(0); vs.width(45)
+    | mr.width(45); vs.width(0)
     }
     proc onchange () { mrop.browse_count | ch.init }
   }
@@ -112,19 +118,28 @@ form _chlapi [,,*,50] {
   // osoby
   view us: table ch_ucast
   view cs: table chlapi { join:'USING(id_chlapi)' }
-  browse all [8,10,200,447] { rows:23, qry_rows:1, optimize:°{qry:'noseek'}
+  browse all [8,10,200,447] { rows:23, qry_rows:1 /*optimize:°{qry:'noseek'}*/
     show id_ucast {data:us.id_ucast }
     show id_akce {data:us.id_akce }
     show id_chlapi {data:cs.id_chlapi }
     show stupen {data:us.stupen }
     show [,,15,] {title:'?', data:us.stupen, format:'sq*', map_pipe:akce_ucast.ikona }
-    show [,,120,] {title:'jméno', expr:"CONCAT(cs.prijmeni,' ',cs.jmeno)", format:'q*s',
+    show [,,120,] {title:'jméno', expr:"CONCAT(cs.prijmeni,' ',cs.jmeno)", format:'q*s+',
                   help:"příjmení a jméno" }
-    show [,,45,] {title:'mrop', data:cs.iniciace, format:'rs+q', help:"rok iniciace"}
+    show mr [,,45,] {title:'mrop', data:cs.iniciace, format:'rsq', help:"rok iniciace"}
+    show vs [,,0,] {title:'VS', format:'rsq:e', help:"VS utvořený z data narození",
+      expr:"DATE_FORMAT(cs.narozeni,'%y%m%d')" }
+    show dl [,,0,] {title:'dluh', format:'rsq:e', help:"dlužná částka",
+      expr:"us.cena-us.uctem-us.pokladnou" }
     proc onrowclick() {
       ch.load(id_ucast.get);
       ch.c.key(id_chlapi.get);
       ch.u.key(id_ucast.get);
+    }
+    proc onclick() {
+      mr.width; mr.width(0); vs.width(45); dl.width(0);
+    | vs.width; mr.width(0); vs.width(0); dl.width(45);
+    | mr.width(45); vs.width(0); dl.width(0);
     }
     proc onchange () { all.browse_count | ch.init }
   }
@@ -248,7 +263,7 @@ form _chlap [,,*,466] {
   button [Lt+170,Tt+91,,] {title:'Vymazat', help:'Vymazání osobních informací z evidence'
     proc onclick() {
       var ans: text
-      confirm('Opravdu vyřadit ',prijmeni.get,' ',jmeno.get,' z databáze?');
+      confirm('Opravdu vymazat všechny údaje o ',prijmeni.get,' ',jmeno.get,' z databáze?');
       ans.set(ask('chlapi_delete',c.key));
       ans.get; alert(ans.get)
     | chs.reload(0)

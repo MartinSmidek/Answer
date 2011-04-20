@@ -7,6 +7,7 @@
 use info: form right [10,10,,]
 use prih: form _prih [10,44,,]
 use f: form _f [390,44,,]
+use g: form _g [390,44,,]
 
 proc onfirstfocus() {
   m.g.i.click;
@@ -18,7 +19,28 @@ menu m {type:'left'
     item i {title:'přihlášky z www.setkani.org' }
     item   {title:'seznam členů' }
     proc onclick (i) {
+      f.display(1); g.display(0);
       info.fill(conc(i.owner.title,' - ',i.title),' ');
+    }
+  }
+  menu {title:'Evidence YMCA Setkání',type:'group'
+    item {title:'všechny kontakty' }
+    proc onclick (i) {
+      f.display(0); g.display(1);
+      info.fill(conc(i.owner.title,' - ',i.title),' ');
+    }
+}
+# ---------------------------------------------------------------------- _g
+form _f {
+  view os: table webform
+  browse b [0,0,,] { rows:28
+    show id { data:ws.id_webform }
+    show [,,70,] { data:ws.prijmeni, title:'příjmení', format:'q*s' }
+    show [,,60,] { data:ws.jmeno, title:'jméno', format:'q*s' }
+    show [,,100,] { data:ws.email, title:'email', format:'q*s' }
+    show [,,120,] { data:ws.potvrzeno, title:'potvrzeno', format:'q*s' }
+    proc onrowclick() {
+      f.load(id.get);
     }
   }
 }

@@ -684,7 +684,7 @@ function chlapi_delete($id_chlapi) {  #trace();
          FROM ch_ucast
          JOIN ch_akce USING(id_akce)
          JOIN chlapi USING(id_chlapi)
-         WHERE id_chlapi='$id_chlapi' ";
+         WHERE id_chlapi='$id_chlapi' GROUP BY id_chlapi ";
   $res= mysql_qry($qry);
   if ( $res && $a= mysql_fetch_object($res) ) {
     $ans= $a->_a
