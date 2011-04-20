@@ -116,6 +116,7 @@ table ch_ucast { key_id:'id_ucast'
   number stupen    { help:"vztah k akci" }
   number cena      { help:"cena akce pro účastníka" }
   number uctem     { help:"zaplaceno převodem" }
+  date uctem_dne   { help:"datum převodu", sql_pipe:'sql_date1' }
   number pokladnou { help:"zaplaceno v hotovosti" }
   text pozn
 }
@@ -123,8 +124,8 @@ table ch_akce { key_id:'id_akce'
   number id_akce
   text nazev
   number cena      { help:"cena akce" }
-  date datum_od
-  date datum_do
+  date datum_od    { sql_pipe:'sql_date1' }
+  date datum_do    { sql_pipe:'sql_date1' }
 }
 map akce_ucast: table _cis {where:"druh='akce_ucast'", order:'poradi', key_id:'data'}
 
