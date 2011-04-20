@@ -13,7 +13,7 @@ proc onstart() {
   chs.reload(0);
 }
 proc onfirstfocus() {
-#   m.g.i.click; m.os.a.click;
+#   m.g.i.click;
   m.os.inic.click;
 }
 menu m {type:'left'
@@ -21,6 +21,7 @@ menu m {type:'left'
 #     item {title:'MROP - minulé iniciace', format:'d'  }
     item {title:'MROP - přihlášky', par:°{id_akce:2} }
     item i {title:'GloTraCh - přihlášky', par:°{id_akce:1} }
+    item {title:'Jordán - přihlášky', par:°{id_akce:3} }
     item {title:'všechny akce - minulé', format:'d' }
     item {title:'všechny akce - přihlášky', format:'d' }
     proc onclick(i) {
@@ -165,7 +166,7 @@ form _chlap [,,*,466] {
   # --------------------------------------------------  VZTAH k AKCI pro mode='akce'
   const Lu=240
   const Tu=280
-  label  [Lu+2,Tu+9,365,101] { tag:'akce', css:'ae_part' }
+  label  [Lu+2,Tu+9,448,101] { tag:'akce', css:'ae_part' }
   label  [Lu+9,Tu+0,90,] { tag:'akce', title:'údaje k této akci', css:'ae_part_label' }
   select stupen [Lu+7,Tu+17,106,] { tag:'akce', type:'map', data:u.stupen, options:akce_ucast.zkratka }
   label  [Lu+255,Tu+20,56,]   { tag:'akce', title:'cena akce' }
@@ -173,6 +174,7 @@ form _chlap [,,*,466] {
   label  [Lu+306,Tu+42,33,16] { tag:'akce', title:'zaplaceno'}
   label  [Lu+278,Tu+64,33,]   { tag:'akce', title:'účtem' }
   field  [Lu+315,Tu+60,44,]   { tag:'akce', format:'r', data:u.uctem }
+  field  [Lu+368,Tu+60,85,]   { type:'date', tag:'akce', format:'rUR', data:u.uctem_dne }
   label  [Lu+285,Tu+88,26,]   { tag:'akce', title:'pokl.' }
   field  [Lu+315,Tu+85,44,]   { tag:'akce', format:'r', data:u.pokladnou }
   label  [Lu+7,Tu+42,98,16]   { tag:'akce', title:'poznámka k akci'}

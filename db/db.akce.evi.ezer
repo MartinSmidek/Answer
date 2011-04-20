@@ -5,47 +5,123 @@
 # ------------------------------------------------------------------------------------------------ #
 
 use info: form right [10,10,,]
-use prih: form _prih [10,44,,]
-use f: form _f [390,44,,]
-use g: form _g [390,44,,]
+use prihlasky: form _prihlasky [10,44,,]
+use prihlaska: form _prihlaska [390,44,,]
+use osoby: form _osoby [10,44,,]
+use osoba: form _osoba [290,44,,]
 
 proc onfirstfocus() {
   m.g.i.click;
-  prih.b.browse_load
+  osoby.b.browse_load
 }
 
 menu m {type:'left'
-  menu g {title:'Klub přátel YMCA Setkání',type:'group'
-    item i {title:'přihlášky z www.setkani.org' }
-    item   {title:'seznam členů' }
+  menu {title:'Klub přátel YMCA Setkání',type:'group'
+    item {title:'přihlášky z www.setkani.org'
+      proc onclick (i) {
+        prihlasky.display(1); prihlaska.display(1);
+        osoby.display(0); osoba.display(0);
+        info.fill(conc(i.owner.title,' - ',i.title),' ');
+      }
+    }
+    item   {title:'seznam členů'
+      proc onclick (i) {
+        prihlasky.display(0); prihlaska.display(0);
+        osoby.display(1); osoba.display(1);
+        info.fill(conc(i.owner.title,' - ',i.title),' ');
+      }
+    }
+  }
+  menu g {title:'Evidence YMCA Setkání',type:'group'
+    item i {title:'všechny kontakty' }
     proc onclick (i) {
-      f.display(1); g.display(0);
+      prihlasky.display(0); prihlaska.display(0);
+      osoby.display(1); osoba.display(1);
       info.fill(conc(i.owner.title,' - ',i.title),' ');
     }
   }
-  menu {title:'Evidence YMCA Setkání',type:'group'
-    item {title:'všechny kontakty' }
-    proc onclick (i) {
-      f.display(0); g.display(1);
-      info.fill(conc(i.owner.title,' - ',i.title),' ');
-    }
 }
-# ---------------------------------------------------------------------- _g
-form _f {
-  view os: table webform
-  browse b [0,0,,] { rows:28
-    show id { data:ws.id_webform }
-    show [,,70,] { data:ws.prijmeni, title:'příjmení', format:'q*s' }
-    show [,,60,] { data:ws.jmeno, title:'jméno', format:'q*s' }
-    show [,,100,] { data:ws.email, title:'email', format:'q*s' }
-    show [,,120,] { data:ws.potvrzeno, title:'potvrzeno', format:'q*s' }
+# ---------------------------------------------------------------------- _osoby
+form _osoby {
+  view os: table osoba
+  view ot: table tvori { join:"ON os.id_osoba=ot.id_osoba" }
+  view or: table rodina { join:"ON or.rodina=ot.id_rodina" }
+  view oc: table tvori { join_type:'LEFT', join:"ON os.id_osoba=oc.id_osoba AND oc.id_rodina=1" }
+  browse b [0,0,,] { rows:28, qry_rows:1
+    show id { data:os.id_osoba }
+    show [,,70,] { data:os.prijmeni, title:'příjmení', format:'q*s' }
+    show [,,60,] { data:os.jmeno, title:'jméno', format:'q*s' }
+    show [,,60,] { title:'obec', data:os.obec, format:'q*s' }
+    show [,,20,] { data:oc.role, title:'YMCA', format:'q*s' }
     proc onrowclick() {
-      f.load(id.get);
+      osoba.load(id.get);
     }
   }
 }
-# ---------------------------------------------------------------------- _prih
-form _prih {
+# ---------------------------------------------------------------------- _osoba
+form _osoba {
+  view o: table osoba
+  view t: table tvori { join:"ON o.id_osoba=t.id_osoba" }
+  view r: table rodina { join:"ON r.id_rodina=t.id_rodina" }
+  # --------------------------------------------------  OSOBA
+  const L=0; T=10
+  field  { data:o.id_osoba }
+  field  { data:t.id_tvori }
+  field  { data:r.id_rodina }
+  label  [L+0,T+9,367,249] { css:'ae_part' }
+  label  [L+8,T+0,74,] { title:'osobní údaje', css:'ae_part_label' }
+  label          [L+5,T+15,100,] {title:'příjmení'}
+  field prijmeni [L+5,T+30,100,] {data:o.prijmeni, help:'příjmení'}
+  label          [L+117,T+15,100,] {title:'jméno'}
+  field jmeno    [L+117,T+30,101,] {data:o.jmeno}
+  radio sex [L+225,T+15,50,35] { data:o.sex, value:'1'
+    case [0,2,50,] { title:'muž', expr:'1' }
+    case [0,17,50,] { title:'žena', expr:'2' }
+    proc onchange() { echo('sex=',this.get) }
+  }
+  label          [L+5,T+54,100,] {title:'ulice'}
+  field ulice    [L+5,T+69,162,] {data:o.ulice}
+  label          [L+179,T+54,39,] {title:'psč'}
+  field psc      [L+179,T+69,40,] {data:o.psc}
+  label          [L+230,T+54,100,] {title:'obec'}
+  field obec     [L+229,T+69,131,] {data:o.obec}
+  label          [L+5,T+94,37,] {title:'telefon'}
+  field telefon  [L+5,T+110,212,] {data:o.telefon}
+  label          [L+230,T+94,33,] {title:'narození'}
+  field narozeni [L+229,T+110,85,] {type:'date', data:o.narozeni, format:'rR:e'}
+  label          [L+324,T+94,41,] {title:'nnnn rč'}
+  field rodne    [L+323,T+110,37,] {data:o.rc_xxxx, format:'r:e'}
+  label          [L+5,T+138,33,] {title:'e-mail'}
+  field email    [L+5,T+154,355,] {data:o.email}
+  label          [L+5,T+179,33,] {title:'poznámka'}
+  edit  pozn     [L+5,T+194,355,60] {data:o.note}
+  # --------------------------------------------------  RODINA
+  const Lr= 0; Tr= 280
+  label  [Lr+0,Tr+9,367,249] { css:'ae_part' }
+  label  [Lr+8,Tr+0,74,] { title:'rodinné údaje', css:'ae_part_label' }
+  label          [Lr+5,Tr+15,100,] {title:'společné příjmení'}
+  label          [Lr+181,Tr+15,75,] {title:'svatba'}
+  label          [Lr+297,Tr+15,43,] {title:'SPZ'}
+  label          [Lr+5,Tr+54,100,] {title:'ulice'}
+  label          [Lr+179,Tr+54,39,] {title:'psč'}
+  label          [Lr+230,Tr+54,100,] {title:'obec'}
+  label          [Lr+5,Tr+94,37,] {title:'telefon'}
+  label          [Lr+5,Tr+138,33,] {title:'e-mail'}
+  label          [Lr+5,Tr+179,33,] {title:'poznámka'}
+  field nazev       [Lr+4,Tr+30,100,] {data:r.nazev, help:'příjmení'}
+  field _spolu      [Lr+149,Tr+32,23,] {format:'o', value:'?'}
+  field svatba      [Lr+178,Tr+31,36,] {data:r.svatba}
+  field ulice_r       [Lr+4,Tr+69,162,] {data:r.ulice}
+  field psc_r         [Lr+179,Tr+69,39,] {data:r.psc}
+  field obec_r        [Lr+228,Tr+69,129,] {data:r.obec}
+  field telefony    [Lr+5,Tr+109,353,] {data:r.telefony}
+  field emaily      [Lr+5,Tr+153,354,] {data:r.emaily}
+  edit  note        [Lr+5,Tr+192,355,60] {data:r.note}
+  field datsvatba   [Lr+220,Tr+31,63,] {data:r.datsvatba}
+  field spz         [Lr+297,Tr+31,62,] {data:r.spz}
+}
+# ---------------------------------------------------------------------- _prihlasky
+form _prihlasky {
   view ws: table webform
   browse b [0,0,,] { rows:28
     show id { data:ws.id_webform }
@@ -54,12 +130,12 @@ form _prih {
     show [,,100,] { data:ws.email, title:'email', format:'q*s' }
     show [,,120,] { data:ws.potvrzeno, title:'potvrzeno', format:'q*s' }
     proc onrowclick() {
-      f.load(id.get);
+      prihlaska.load(id.get);
     }
   }
 }
-    # ---------------------------------------------------------- f
-    form _f [,,340,200] {
+    # ---------------------------------------------------------- _prihlaska
+    form _prihlaska [,,340,200] {
       var url: text
       view w: table webform
       label [10,14,,] { title:"Přihlašuji se jako *" }
@@ -70,15 +146,15 @@ form _prih {
       }
       label x [10,40,,] { title:"Osobní údaje" }
       // osobní
-      const To=60; Tof=74
-      label [9,To+0,,] { title:"titul" }
-      field [9,Tof+0,34,]
-      label [59,To+0,,]    { title:"* jméno" }
-      field jmeno [57,Tof+0,80,] { data:w.jmeno, value:'M' }
-      label [147,To+0,,] { title:"* příjmení" }
-      field prijmeni [148,Tof+0,115,] { data:w.prijmeni, value:'Š' }
-      label [277,To+0,,] { title:"narození" }
-      field [274,Tof+0,80,] { data:w.narozeni, type:'date' }
+      const Tp=60; Tpf=74
+      label [9,Tp+0,,] { title:"titul" }
+      field [9,Tpf+0,34,]
+      label [59,Tp+0,,]    { title:"* jméno" }
+      field jmeno [57,Tpf+0,80,] { data:w.jmeno, value:'M' }
+      label [147,Tp+0,,] { title:"* příjmení" }
+      field prijmeni [148,Tpf+0,115,] { data:w.prijmeni, value:'Š' }
+      label [277,Tp+0,,] { title:"narození" }
+      field [274,Tpf+0,80,] { data:w.narozeni, type:'date' }
       // adresa
       const Ta=100; Taf=114
       label [9,Ta+0,,] { title:"ulice" }
@@ -94,7 +170,7 @@ form _prih {
       label [148,Tk+0,,] { title:"telefon" }
       field [146,Tkf+0,44,]
       // potvrzení
-      const Tp=450
-      label [9,Tp+0,,] { title:'potvrzeno zpětným mailem' }
-      edit msg [9,Tp+14,300,] { data:w.potvrzeno }
+      const Tc=450
+      label [9,Tc+0,,] { title:'potvrzeno zpětným mailem' }
+      edit msg [9,Tc+14,300,] { data:w.potvrzeno }
     }
