@@ -41,7 +41,7 @@ menu m {type:'left'
 } } } }
 proc akce_roku() {
   the_rok.set(info.rok.get);
-  [ gt(the_rok.get,2010); info.google.browse_load(conc('g_rok=',the_rok.get))
+  [ gt(the_rok.get,2010); info.google.browse_load(conc("g_kat='a' AND g_rok=",the_rok.get))
   | info.google.browse_init];
   [ info.sey.browse_load(conc('YEAR(da2.datum_od)=',the_rok.get," AND spec=0")) ];
   set_cookie('ys_akce_rok',the_rok.get);

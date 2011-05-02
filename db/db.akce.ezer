@@ -32,6 +32,8 @@ panel ducast2 {type:'plain', _sys:'*', title:'Účastníci2', include:'onclick,d
 panel tisk [,,,] {type:'right', _sys:'*', title:'Výpisy akce', include:'onclick,db.akce.tisk',skill:'yaa'  }
 # ================================================================================================== EVIDENCE
 panel evi {type:'right', _sys:'*', title:'EVIDENCE', include:'onclick,db.akce.evi',skill:'yak' }
+panel rod {type:'plain', title:'Rodiny', include:'onclick,db.akce.rod', skill:'m'  }
+panel jed {type:'plain', title:'Jednotlivci', skill:'m'  }
 # panel vse [,,,543] {type:'plain', title:'Všichni', include:'onclick,db.akce.vse',skill:'yaa'  }
 # panel ema [,,,543] {type:'right', title:'Maily', skill:'yam', include:'onclick,db.akce.ema'  }
 
@@ -254,6 +256,23 @@ table rodina { key_id:'id_rodina'
   text note
   text origin
   text historie
+}
+
+table platba { key_id:'id_platba'
+  number id_platba
+  number id_osoba
+  number id_rodina
+  number id_duakce
+  number id_pokl
+  number ucel
+  number castka
+  date   datum          { sql_pipe:'sql_date1'}
+  text   poznamka
+  number zpusob
+  text   ucet_nazev
+  text   vs
+  text   ks
+  text   ss
 }
 # -------------------------------------------------------------------------- webform
 table webform { key_id:'id_webform'
