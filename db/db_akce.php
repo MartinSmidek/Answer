@@ -791,9 +791,11 @@ function akce_strava_denne($od,$dnu,$cela,$polo) {  #trace('');
 }
 # -------------------------------------------------------------------------------------------------- akce_strava_denne_save
 # zapsání výjimek z providelné stravy - pokud není výjimka zapíše prázdný string
-function akce_strava_denne_save($id_pobyt,$dnu,$cela,$cela_def,$cela_str,$polo,$polo_def,$polo_str) {  #trace('');
+#   $prvni - kód první stravy na akci
+function akce_strava_denne_save($id_pobyt,$dnu,$cela,$cela_def,$cela_str,$polo,$polo_def,$polo_str,$prvni) {  #trace('');
   $cela_ruzna= $polo_ruzna= 0;
-  for ($i= 2; $i<3*$dnu-1; $i++) {
+  $i0= $prvni=='s' ? 0 : ($prvni=='o' ? 1 : ($prvni=='v' ? 2 : 2));
+  for ($i= $i0; $i<3*$dnu-1; $i++) {
     if ( substr($cela,$i,1)!=$cela_def ) $cela_ruzna= 1;
     if ( substr($polo,$i,1)!=$polo_def ) $polo_ruzna= 1;
   }
@@ -801,8 +803,8 @@ function akce_strava_denne_save($id_pobyt,$dnu,$cela,$cela_def,$cela_str,$polo,$
   if ( !$polo_ruzna ) $polo= '';
   // příprava update
   $set= '';
-  if ( $cela!=$cela_str ) $set.= "cstrava_cel='$cela'";
-  if ( $polo!=$polo_str ) $set.= ($set?',':'')."cstrava_pol='$polo'";
+  if ( ";$cela"!=";$cela_str" ) $set.= "cstrava_cel='$cela'";           // ; jako ochrana pro pochopení jako čísla
+  if ( ";$polo"!=";$polo_str" ) $set.= ($set?',':'')."cstrava_pol='$polo'";
   if ( $set ) {
     $qry= "UPDATE pobyt SET $set WHERE id_pobyt=$id_pobyt";
     $res= mysql_qry($qry);

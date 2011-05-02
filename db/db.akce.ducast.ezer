@@ -32,7 +32,8 @@ use a_zen: form _aktivity[700,10,,]
 
 proc reload(id_pobyt) {
   cmd.b_display(1);
-  [ u.b.browse_load(conc("p.id_akce=",the_duakce.get),'','','','','',conc('SET @akce:=',the_duakce.get));
+  [ u.b.browse_load(conc("p.id_akce=",the_duakce.get),'IF(funkce<=1,1,funkce)','','','','',
+      conc('SET @akce:=',the_duakce.get));
     u.b.browse_focus;
     { id_pobyt; u.b.raise('onrowclick',id_pobyt)
     | u.b.raise('onrowclick') } ]
@@ -292,7 +293,7 @@ form _ucast [,,400,] { css:'ds_form'
             ELSE r.nazev END" }
     show _jmena [,,180,] { title:'jméno/a', format:'ts',
       expr:"GROUP_CONCAT(DISTINCT IF(pouze=1 AND t.role='b','',IF(pouze=2 AND t.role='a','',o.jmeno)) ORDER BY t.role SEPARATOR ' ')" }
-    show xfunkce [,,40,] { title:'fce', data:p.funkce, format:'rqs', map_pipe:ms_akce_funkce.zkratka}
+    show xfunkce [,,40,] { title:'fce', data:p.funkce, format:'rq#s', map_pipe:ms_akce_funkce.zkratka}
     show skupina [,,30,] { title:'sk.', data:p.skupina, format:'rqs'}
     #show dluh    [,,40,] { title:'dluh', expr:"0", format:'rqs'}
     // muž - načte se, i když není na akci
