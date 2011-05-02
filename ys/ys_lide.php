@@ -687,16 +687,16 @@ function lide_duplo($par) { trace();
 # ------------------------------------------------------------- rc2ymd
 # převod rodného čísla na datum narození ve formátu d.m.Y s opravou chyb
 # (zjednodušené)
-function rc2ymd($rodcis) {
-  $dmy= '0000-00-00';
-  if ( (int)$rodcis!=0 && preg_match('~^([0-9]{2})([0-9]{2})([0-9]{2})~', $rodcis, $match)) {
-    $y= ($match[1] >= 12 ? "19" : "20") . $match[1];
-    $m= $match[2] % 50; $m= $m=='00' ? '01' : $m;
-    $d= $match[3];      $d= $d=='00' ? '01' : $d;
-    $ymd= "$y-$m-$d";
-  }
-  return $ymd;
-}
+// function rc2ymd($rodcis) {
+//   $dmy= '0000-00-00';
+//   if ( (int)$rodcis!=0 && preg_match('~^([0-9]{2})([0-9]{2})([0-9]{2})~', $rodcis, $match)) {
+//     $y= ($match[1] >= 12 ? "19" : "20") . $match[1];
+//     $m= $match[2] % 50; $m= $m=='00' ? '01' : $m;
+//     $d= $match[3];      $d= $d=='00' ? '01' : $d;
+//     $ymd= "$y-$m-$d";
+//   }
+//   return $ymd;
+// }
 # ------------------------------------------------------------- bydli_insert
 function bydli_insert($p,$o) {
   $qryo= "INSERT INTO spolu (id_pobyt,id_osoba) VALUES ($p,$o)";

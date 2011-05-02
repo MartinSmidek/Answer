@@ -1,0 +1,11 @@
+= Systém Ans(w)er/2 =
+
+
+== Databáze ==
+
+=== Chlapi ===
+
+Zjednodušená aplikace pro evidenci akcí pro chlapy (bez dětí), se zřetelem na ty, co prošli MROP.
+
+
+

@@ -4,11 +4,14 @@
 # Ans(w)er/Ezer                                     (c) 2007-2011 Martin Šmídek <martin@smidek.eu> #
 # ------------------------------------------------------------------------------------------------ #
 
-use info: form right [10,10,,]
-use prihlasky: form _prihlasky [10,44,,]
-use prihlaska: form _prihlaska [390,44,,]
-use osoby: form _osoby [10,44,,]
-use osoba: form _osoba [290,44,,]
+use info: form right [5,5,,]
+use prihlasky: form _prihlasky [10,44,,]  { tag:'app' }
+use prihlaska: form _prihlaska [390,44,,] { tag:'app' }
+use osoby:  form _osoby [10,44,,]         { tag:'pers' }
+use osoba:  form _osoba [290,36,,]        { tag:'pers' }
+use rodina: form _rodina [290,36,,]       { tag:'pers' }
+use platby: form _platby [10,64,,]        { tag:'bank' }
+use platba: form _platba [10,300,,]       { tag:'bank' }
 
 proc onfirstfocus() {
   m.g.i.click;
@@ -19,47 +22,97 @@ menu m {type:'left'
   menu {title:'Klub přátel YMCA Setkání',type:'group'
     item {title:'přihlášky z www.setkani.org'
       proc onclick (i) {
-        prihlasky.display(1); prihlaska.display(1);
-        osoby.display(0); osoba.display(0);
+        panel.display(0,'bank|pers'); panel.display(1,'app');
         info.fill(conc(i.owner.title,' - ',i.title),' ');
       }
     }
     item   {title:'seznam členů'
       proc onclick (i) {
-        prihlasky.display(0); prihlaska.display(0);
-        osoby.display(1); osoba.display(1);
+        panel.display(0,'bank|app'); panel.display(1,'pers');
         info.fill(conc(i.owner.title,' - ',i.title),' ');
       }
     }
   }
-  menu g {title:'Evidence YMCA Setkání',type:'group'
-    item i {title:'všechny kontakty' }
+  menu g {title:'Evidence YMCA Setkání',type:'group', skill:'m'
+    item {title:'všechny kontakty' }
     proc onclick (i) {
-      prihlasky.display(0); prihlaska.display(0);
-      osoby.display(1); osoba.display(1);
+      panel.display(0,'bank|app'); panel.display(1,'pers');
       info.fill(conc(i.owner.title,' - ',i.title),' ');
     }
+    item   {title:'import členů z Googlu'
+      proc onclick (i) {
+        panel.display(0,'bank|app|pers');
+        info.fill(conc(i.owner.title,' - ',i.title),ask('akce_google_cleni'));
+      }
+    }
+    item i {title:'import plateb z RB'
+      proc onclick (i) {
+        panel.display(0,'pers|app'); panel.display(1,'bank');
+        info.fill(conc(i.owner.title,' - ',i.title),' ');
+        info.msg.set(ask('akce_rb_platby'));
+#         info.fill(conc(i.owner.title,' - ',i.title),'staré info');
+        platby.b.browse_load
+      }
+    }
   }
+}
+# ---------------------------------------------------------------------- _platby
+form _platby {
+  view p: table platba
+  browse b [0,0,,] { rows:10, qry_rows:1
+    show id_platba { data:p.id_platba }
+#     number id_osoba
+#     number id_rodina
+#     number id_duakce
+#     number id_pokl
+#     number ucel
+#     number zpusob
+    show datum  [,,65,] { title:'datum', data:p.datum, format:'s-r' }
+    show castka [,,60,] { title:'částka', data:p.castka, format:'sq*r' }
+    show poznamka [,,180,] { title:'poznámka', data:p.poznamka, format:'tsq*' }
+    show ucet_nazev [,,160,] { title:'název účtu', data:p.ucet_nazev, format:'tsq*' }
+    show vs [,,75,] { title:'VS', data:p.vs, format:'sq*r' }
+    show ks [,,30,] { title:'KS', data:p.ks, format:'sq*r' }
+    show ss [,,30,] { title:'SS', data:p.ss, format:'sq*r' }
+    proc onrowclick() { copy_by_name(b,platba.get); }
+  }
+}
+# ---------------------------------------------------------------------- _platba
+form _platba {
+  view p: table platba
+  label  [0,9,367,249] { css:'ae_part' }
+  label  [8,0,87,] { title:'zpracování platby', css:'ae_part_label' }
+  field vs [9,36,75,] { format:'ro' }
+  button [80,36,75,] { title:'urči platbu'
+    proc onclick() { var res:object
+      res.set(ask('akce_urci',vs.get,ss.get));
+      info.set(res.html);
+    }
+  }
+  label info [8,60,200,100]
+  field ss [9,70,75,] { format:'ro' }
 }
 # ---------------------------------------------------------------------- _osoby
 form _osoby {
   view os: table osoba
-  view ot: table tvori { join:"ON os.id_osoba=ot.id_osoba" }
+  view ot: table tvori { join:"ON os.id_osoba=ot.id_osoba AND ot.id_rodina!=1" }
   view or: table rodina { join:"ON or.rodina=ot.id_rodina" }
   view oc: table tvori { join_type:'LEFT', join:"ON os.id_osoba=oc.id_osoba AND oc.id_rodina=1" }
   browse b [0,0,,] { rows:28, qry_rows:1
-    show id { data:os.id_osoba }
+    show id_o { data:os.id_osoba }
+    show id_r { data:ot.id_rodina }
     show [,,70,] { data:os.prijmeni, title:'příjmení', format:'q*s' }
     show [,,60,] { data:os.jmeno, title:'jméno', format:'q*s' }
     show [,,60,] { title:'obec', data:os.obec, format:'q*s' }
     show [,,20,] { data:oc.role, title:'YMCA', format:'q*s' }
     proc onrowclick() {
-      osoba.load(id.get);
+      osoba.load(id_o.get);
+      rodina.load(id_r.get);
     }
   }
 }
 # ---------------------------------------------------------------------- _osoba
-form _osoba {
+form _osoba { tag:'a'
   view o: table osoba
   view t: table tvori { join:"ON o.id_osoba=t.id_osoba" }
   view r: table rodina { join:"ON r.id_rodina=t.id_rodina" }
@@ -95,6 +148,10 @@ form _osoba {
   field email    [L+5,T+154,355,] {data:o.email}
   label          [L+5,T+179,33,] {title:'poznámka'}
   edit  pozn     [L+5,T+194,355,60] {data:o.note}
+}
+# ---------------------------------------------------------------------- _rodina
+form _rodina {
+  view r: table rodina
   # --------------------------------------------------  RODINA
   const Lr= 0; Tr= 280
   label  [Lr+0,Tr+9,367,249] { css:'ae_part' }
@@ -134,43 +191,43 @@ form _prihlasky {
     }
   }
 }
-    # ---------------------------------------------------------- _prihlaska
-    form _prihlaska [,,340,200] {
-      var url: text
-      view w: table webform
-      label [10,14,,] { title:"Přihlašuji se jako *" }
-      radio typ_osoby [100,10,201,20] { data:w.typ_osoby, value:'1'
-        case [0,0,80,] { title:'jednotlivec', expr:'1' }
-        case [80,0,61,] { title:'rodina', expr:'2' }
-        case [144,0,48,] { title:'firma', expr:'3' }
-      }
-      label x [10,40,,] { title:"Osobní údaje" }
-      // osobní
-      const Tp=60; Tpf=74
-      label [9,Tp+0,,] { title:"titul" }
-      field [9,Tpf+0,34,]
-      label [59,Tp+0,,]    { title:"* jméno" }
-      field jmeno [57,Tpf+0,80,] { data:w.jmeno, value:'M' }
-      label [147,Tp+0,,] { title:"* příjmení" }
-      field prijmeni [148,Tpf+0,115,] { data:w.prijmeni, value:'Š' }
-      label [277,Tp+0,,] { title:"narození" }
-      field [274,Tpf+0,80,] { data:w.narozeni, type:'date' }
-      // adresa
-      const Ta=100; Taf=114
-      label [9,Ta+0,,] { title:"ulice" }
-      field [9,Taf+0,126,] { data:w.ulice }
-      label [148,Ta+0,,] { title:"PSČ" }
-      field [146,Taf+0,44,] { data:w.psc }
-      label [205,Ta+0,,] { title:"obec" }
-      field [206,Taf+0,149,] { data:w.obec }
-      // kontakt
-      const Tk=140; Tkf=154
-      label [9,Tk+0,,] { title:"* email" }
-      field email [9,Tkf+0,126,] { data:w.email, value:'martin@smidek.eu' }
-      label [148,Tk+0,,] { title:"telefon" }
-      field [146,Tkf+0,44,]
-      // potvrzení
-      const Tc=450
-      label [9,Tc+0,,] { title:'potvrzeno zpětným mailem' }
-      edit msg [9,Tc+14,300,] { data:w.potvrzeno }
-    }
+# ---------------------------------------------------------------------- _prihlaska
+form _prihlaska [,,340,200] {
+  var url: text
+  view w: table webform
+  label [10,14,,] { title:"Přihlašuji se jako *" }
+  radio typ_osoby [100,10,201,20] { data:w.typ_osoby, value:'1'
+    case [0,0,80,] { title:'jednotlivec', expr:'1' }
+    case [80,0,61,] { title:'rodina', expr:'2' }
+    case [144,0,48,] { title:'firma', expr:'3' }
+  }
+  label x [10,40,,] { title:"Osobní údaje" }
+  // osobní
+  const Tp=60; Tpf=74
+  label [9,Tp+0,,] { title:"titul" }
+  field [9,Tpf+0,34,]
+  label [59,Tp+0,,]    { title:"* jméno" }
+  field jmeno [57,Tpf+0,80,] { data:w.jmeno, value:'M' }
+  label [147,Tp+0,,] { title:"* příjmení" }
+  field prijmeni [148,Tpf+0,115,] { data:w.prijmeni, value:'Š' }
+  label [277,Tp+0,,] { title:"narození" }
+  field [274,Tpf+0,80,] { data:w.narozeni, type:'date' }
+  // adresa
+  const Ta=100; Taf=114
+  label [9,Ta+0,,] { title:"ulice" }
+  field [9,Taf+0,126,] { data:w.ulice }
+  label [148,Ta+0,,] { title:"PSČ" }
+  field [146,Taf+0,44,] { data:w.psc }
+  label [205,Ta+0,,] { title:"obec" }
+  field [206,Taf+0,149,] { data:w.obec }
+  // kontakt
+  const Tk=140; Tkf=154
+  label [9,Tk+0,,] { title:"* email" }
+  field email [9,Tkf+0,126,] { data:w.email, value:'martin@smidek.eu' }
+  label [148,Tk+0,,] { title:"telefon" }
+  field [146,Tkf+0,44,]
+  // potvrzení
+  const Tc=450
+  label [9,Tc+0,,] { title:'potvrzeno zpětným mailem' }
+  edit msg [9,Tc+14,300,] { data:w.potvrzeno }
+}

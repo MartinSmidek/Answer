@@ -23,21 +23,26 @@ proc onfocus() {
 
 menu m {type:'left',
   menu n {title:'adresář',type:'group',_sys:'*'
-    item {title:'základní pro páry'             ,par:°{typ:'p',cnd:'1'
-                                      ,tit:'příjmení:15,jména:20,obec:25,psč:7,ulice:25'
-                                      ,fld:'prijmeni,jmena,obec,psc,ulice'}}
+    item {title:'základní pro páry'     ,par:°{typ:'p',cnd:'1'
+                                        ,tit:'příjmení:15,jména:20,obec:25,psč:7,ulice:25'
+                                        ,fld:'prijmeni,jmena,obec,psc,ulice'}}
     item {title:'základní pro páry + spojení'   ,par:°{typ:'p',cnd:'1'
-                                      ,tit:'příjmení:15,jména:20,obec:25,psč:7,ulice:25,telefon:40,e-mail:60'
-                                      ,fld:'prijmeni,jmena,obec,psc,ulice,telefony,emaily'}}
-    item i {title:'jednotlivci bez dětí'          ,par:°{typ:'j',cnd:"role!='d'"
+                                        ,tit:'příjmení:15,jména:20,obec:25,psč:7,ulice:25,telefon:40,e-mail:60'
+                                        ,fld:'prijmeni,jmena,obec,psc,ulice,telefony,emaily'}}
+    item i {title:'jednotlivci bez dětí',par:°{typ:'j',cnd:"role!='d'"
                                         ,tit:'příjmení:15,jméno:12,narození:12,/rč:5,obec:25,psč:7,ulice:25'
                                         ,fld:'prijmeni,jmeno,narozeni,rc_xxxx,obec,psc,ulice'}}
-    item {title:'jednotlivci vč. dětí'          ,par:°{typ:'j',cnd:'1'
+    item {title:'jednotlivci vč. dětí'  ,par:°{typ:'j',cnd:'1'
+                                        ,tit:'příjmení:15,jméno:12,narození:12,/rč:5,obec:25,psč:7,ulice:25'
+                                        ,fld:'prijmeni,jmeno,narozeni,rc_xxxx,obec,psc,ulice'}}
+  }
+  menu {title:'seznam',type:'group',_sys:'*'
+    item {title:'Děti na akci'          ,par:°{typ:'j',cnd:"role='d'",ord:"narozeni"
                                         ,tit:'příjmení:15,jméno:12,narození:12,/rč:5,obec:25,psč:7,ulice:25'
                                         ,fld:'prijmeni,jmeno,narozeni,rc_xxxx,obec,psc,ulice'}}
   }
   menu {title:'vyúčtování',type:'group',_sys:'*'
-    item i {title:'MS kurs, obnovy'               ,par:°{typ:'vp'}}
+    item i {title:'MS kurs, obnovy'     ,par:°{typ:'vp'}}
   }
   proc onclick (i) {
     var x: object

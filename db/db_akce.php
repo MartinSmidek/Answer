@@ -61,6 +61,7 @@ function akce_sestava_lidi($akce,$par,$title,$vypis,$export=false) { trace();
   $tit= $par->tit;
   $fld= $par->fld;
   $cnd= $par->cnd;
+  $ord= $par->ord ? $par->ord : "prijmeni,jmeno";
   $html= '';
   $href= '';
   $n= 0;
@@ -81,7 +82,7 @@ function akce_sestava_lidi($akce,$par,$title,$vypis,$export=false) { trace();
           JOIN tvori AS t ON t.id_osoba=o.id_osoba
           JOIN rodina AS r USING(id_rodina)
           WHERE p.id_akce='$akce' AND $cnd
-          ORDER BY prijmeni,jmeno";
+          ORDER BY $ord";
   $res= mysql_qry($qry);
   while ( $res && ($x= mysql_fetch_object($res)) ) {
     $n++;
@@ -526,7 +527,182 @@ function akce_sestava($akce,$par,$title,$vypis,$export=false) {
   return $result;
 }
 */
+# ================================================================================================== BANKA
+# -------------------------------------------------------------------------------------------------- akce_rb_urci
+# pokus o určení plátce a účelu platby
+function akce_urci($vs,$ss) {  trace();
+  $result= (object)array();
+  $tipy= array();
+  $presne= false;
+  $narozeni= rc2ymd($vs);
+  $rc_xxxx= strlen($vs)==10 ? substr($vs,6,4) : '0000';
+  $AND= strlen($vs)==10 ? " AND rc_xxxx='".substr($vs,6,4)."'" : '';
+  $qry= "SELECT id_osoba,prijmeni,jmeno,rc_xxxx FROM osoba
+         WHERE narozeni='$narozeni' ";
+  $res= mysql_qry($qry);
+  $n= mysql_num_rows($res);
+  if ( !$n ) {
+    $html.= "plátce nenalezen";
+  }
+  else {
+    while ( $res && $o= mysql_fetch_object($res) ) {
+      if ( $o->rc_xxxx==$rc_xxxx ) {
+        $presne= true;
+        $html.= " {$o->prijmeni} {$o->jmeno} - {$o->rc_xxxx}";
+        break;
+      }
+      $tipy[]= $o;
+    }
+    if ( !$presne ) {
+      foreach($tipy as $o) {
+        $html.= " {$o->prijmeni} {$o->jmeno} - {$o->rc_xxxx}";
+      }
+    }
+  }
+  $result->html= $html;
+  return $result;
+}
+# -------------------------------------------------------------------------------------------------- akce_rb_platby
+# přečtení pohybů na transparentním účtu RB
+function akce_rb_platby() {  trace();
+  $n= 0;
+  $html= '';
+  $dom= new DOMDocument();
+  $ok= @$dom->loadHTML("http://www.rb.cz/firemni-finance/transparentni-ucty/?root=firemni-finance"
+     . "&item1=transparentni-ucty&tr_acc=vypis&account_number=514048001",LIBXML_NOWARNING );
+  if ( $ok ) {
+    // kontrola hlavičky
+    $thead= $dom->getElementsByTagName('thead');                // DOMNodeList
+    if ( $thead->length ) {
+      $trs= $thead->item(0)->getElementsByTagName('tr');        // DOMNode DOMNodeList
+      for ($i= 0; $i < $trs->length; $i++) {
+        $tds= $trs->item($i)->getElementsbyTagName('th');       // DOMNode DOMNodeList
+        for ($j= 0; $j < $tds->length; $j++) {
+          $typ= $tds->item($j)->nodeType;                       // DOMNode
+          $wh[$i][$j]= dom_shownode($tds->item($j));
+        }
+      }
+      // test hlavičky
+      $head= array("Datum|Čas","Poznámky|název účtu","Datum odepsání|valuta|typ",
+        "Variabilní symbol|konstantní symbol|specifický symbol","|částka|","Poplatek|směna|zpráva");
+      $ok= true;
+      for ($j= 0; $j<count($head); $j++) {
+        if ($wh[0][$j]!=$head[$j] ) $ok= false;
+      }
+      if ( !$ok ) fce_warning("změna formátu hlavička tabulky");
+    }
+    else fce_warning("chybí hlavička tabulky");
+  }
+  if ( $ok ) {
+    // datové řádky
+    $tbody= $dom->getElementsByTagName('tbody');
+    if ( $tbody->length ) {
+      $trs= $tbody->item(0)->getElementsByTagName('tr');
+      for ($i= 0; $i < $trs->length; $i++) {
+        $n++;
+        $tds= $trs->item($i)->getElementsbyTagName('td');
+        for ($j= 0; $j < $tds->length; $j++) {
+          $wh[$i+1][$j].= dom_shownode($tds->item($j));
+        }
+//                                                 break;
+      }
+    }
+    else fce_warning("chybí tabulka");
+//                                                 debug($wh,"platby",(object)array('html'=>1));
+  }
+  if ( $ok ) {
+    $nove= 0; $lst= '';
+    // zpracování tabulky
+    for ($i= 1; $i<=$n; $i++) {
+      list($datum,$cas)=                explode('|',$wh[$i][0]);
+      list($pozn,$ucet)=                explode('|',$wh[$i][1]);
+      list($datum2,$valuta,$typ)=       explode('|',$wh[$i][2]);
+      list($vs,$ks,$ss)=                explode('|',$wh[$i][3]);
+      list($castka)=                    explode('|',$wh[$i][4]);
+      list($poplatek,$smena,$zprava)=   explode('|',$wh[$i][5]);
+      // transformace
+      $datum= substr($datum,0,10);
+      // výběr informace
+      if ( $castka>0 ) {
+        // vložení nových informací do tabulky PLATBA - datum,castka,ucet,vs,ks,ss
+        $qry= "SELECT * FROM platba
+               WHERE datum='$datum' AND castka='$castka' AND ucet_nazev='$ucet'
+                 AND vs='$vs' AND ks='$ks' AND ss='$ss'";
+        $res= mysql_qry($qry);
+        if ( !mysql_num_rows($res) ) {
+          // vložení nové platby
+          $qryu= "INSERT INTO platba (
+            castka,datum,poznamka,zpusob,ucet_nazev,vs,ks,ss) VALUES (
+            '$castka','$datum','$pozn',1,'$ucet','$vs','$ks','$ss')";
+          $resu= mysql_qry($qryu);
+          $nove++;
+          $lst.= "<br>$castka $pozn $ucet";
+        }
+      }
+    }
+    $html.= $nove ? "Vloženo $nove nových plateb:<br>$lst" : "Nepřišly nové platby";
+  }
+  if ( !$ok ) {
+    $html.= "Při zpracování plateb došlo k chybě";
+  }
+  return $html;
+}
+# ---------------------------------------------------------------- xml funkce
+function dom_shownode($x) {
+  $txt= '';
+  foreach ($x->childNodes as $p)
+    if ( dom_hasChild($p) ) {
+      $txt.= dom_shownode($p);
+    }
+    elseif ($p->nodeType == XML_ELEMENT_NODE)
+      $txt.= "|";
+    elseif ($p->nodeType == XML_TEXT_NODE)
+      $txt.= trim($p->nodeValue);
+  return $txt;
+}
+function dom_hasChild($p) {
+  if ($p->hasChildNodes()) {
+    foreach ($p->childNodes as $c) {
+      if ($c->nodeType == XML_ELEMENT_NODE)
+        return true;
+    }
+  }
+  return false;
+}
 # ================================================================================================== GOOGLE
+# -------------------------------------------------------------------------------------------------- akce_google_cleni
+# přečtení listu "Kroměříž 10" z tabulky "ČlenovéYS_2010-2011"
+# načítají se jen řádky ve kterých typ je číslo
+function akce_google_cleni() {  trace();
+  $n= 0;
+  $html= '';
+  $cells= google_sheet($ws="Kroměříž 10",$wt="ČlenovéYS_2010-2011",'answer@smidek.eu');
+  if ( $cells ) {
+    list($max_A,$max_n)= $cells['dim'];
+//                                                 debug($cells,"přehled členů");
+    for ($i= 1; $i<$max_n; $i++) {
+      if ( is_numeric($cells['A'][$i]) ) {
+        $par= $cells['B'][$i];
+        $vps= $cells['C'][$i];
+        $platba= $cells['G'][$i];
+        $dne= $cells['H'][$i];
+        $pozn= $cells['I'][$i];
+        $qry= "SELECT id_dupary,CONCAT(jmeno,' ',jmeno_m,' a ',jmeno_z) AS _jm,count(*) AS _pocet
+               FROM du_pary JOIN ms_pary USING(id_dupary)
+               WHERE CONCAT(jmeno,' ',jmeno_m,' a ',jmeno_z)='$par' GROUP BY id_dupary";
+        $res= mysql_qry($qry);
+        if ( !mysql_num_rows($res) ) {
+          $html.= "<br>{$par} nenalezen";
+        }
+        elseif ( $res && $p= mysql_fetch_object($res) ) {
+          $html.= "<br>{$p->_jm} mají {$p->_pocet} id_dupary={$p->id_dupary} $vps $platba $dne $pozn";
+        }
+                                                break;
+      }
+    }
+  }
+  return "Přečtena tabulka $wt.$ws jako A1:$max_A{$max_n}<br>$html";
+}
 # -------------------------------------------------------------------------------------------------- akce_roku_id
 # definuj klíč dané akce jeko klíč akce z aplikace MS.EXE
 function akce_roku_id($id_akce,$kod,$rok) {
@@ -560,7 +736,9 @@ function akce_roku_update($rok) {  trace();
     // výběr a-záznamů a zápis do GAKCE
     $values= ''; $del= '';
     for ($i= 1; $i<$max_n; $i++) {
-      if ( $cells['A'][$i]=='a' ) {
+      $kat= $cells['A'][$i];
+      if ( strpos(' au',$kat) ) {
+//       if ( strpos(' a',$kat) ) {
         $n++;
         $kod= $cells['B'][$i];
         $id= 1000*rok+$kod;
@@ -576,11 +754,12 @@ function akce_roku_update($rok) {  trace();
         $uc= $cells['F'][$i];
         $typ= $cells['G'][$i];
         $kap= $cells['H'][$i];
-        $values.= "$del($id,$rok,'$kod',\"$nazev\",'$od','$do','$uc','$typ','$kap')";
+        $values.= "$del($id,$rok,'$kod',\"$nazev\",'$od','$do','$uc','$typ','$kap','$kat')";
         $del= ',';
       }
     }
-    $qry= "INSERT INTO g_akce (id_gakce,g_rok,g_kod,g_nazev,g_od,g_do,g_ucast,g_typ,g_kap) VALUES $values";
+    $qry= "INSERT INTO g_akce (id_gakce,g_rok,g_kod,g_nazev,g_od,g_do,g_ucast,g_typ,g_kap,g_kat)
+           VALUES $values";
     $res= mysql_qry($qry);
   }
   // konec
