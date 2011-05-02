@@ -16,7 +16,9 @@ proc onstart() {  echo('db.akce.onstart');
 # ================================================================================================== CHLAPI
 panel chl {type:'right', _sys:'*', title:'Chlapi', include:'onclick,db.akce.chl',skill:'yac' }
 # ================================================================================================== AKCE
-panel lst {type:'right', _sys:'*', title:'AKCE', include:'onclick,db.akce.lst',skill:'yaa' }
+panel lst {type:'right', _sys:'*', title:'AKCE', include:'onclick,db.akce.lst',skill:'yaa'
+  use the_akce: form _the_akce         // zatím nezobrazená data nastavené akce s klíčem id_duakce
+}
 panel ducast {type:'plain', _sys:'*', title:'Účastníci', include:'onclick,db.akce.ducast',skill:'yaa'
   proc init_ucast() { }
 }
@@ -38,6 +40,16 @@ panel jed {type:'plain', title:'Jednotlivci', skill:'m'  }
 # panel ema [,,,543] {type:'right', title:'Maily', skill:'yam', include:'onclick,db.akce.ema'  }
 
 # ================================================================================================== COMMON
+# ------------------------------------------------------------------ _the_akce
+# zatím nezobrazená data nastavené akce s klíčem id_duakce
+form _the_akce {
+  field id_duakce   { data:akce.id_duakce }
+  field nazev       { data:akce.nazev }
+  field datum_od    { data:akce.datum_od }
+  field datum_do    { data:akce.datum_do }
+  field strava_oddo { data:akce.strava_oddo }
+}
+# ------------------------------------------------------------------ right
 form right [,,*,50] {
   label head [0,0,*,50]  { title:'' }
   label msg  [0,35,*,20] { title:'' }
@@ -156,6 +168,7 @@ table akce { key_id:'id_duakce'
   number cena
   date datum_od    { sql_pipe:'sql_date1'}    // SQL tvar se používá v ys.akce
   date datum_do    { sql_pipe:'sql_date1'}
+  text strava_oddo { help:'2 písmena označující první a poslední stravu (sov)' }
   number ciselnik_akce
   number ciselnik_rok
   text note
