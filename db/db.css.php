@@ -35,9 +35,6 @@ echo <<<__EOD
 .title_ref { color:#ffffff !important; }
 .title_ref a { color:#ffffff !important; }
 
-.karta {
-  background:$b_group url($path/doc_menu.gif) no-repeat left center; color:$c_menu;
-  font-size:14px; font-weight:bold; margin:2px 0; padding:5px 50px; clear:both; }
 .page {
   font-size:9pt !important; padding:10px; line-height:13pt; }
 

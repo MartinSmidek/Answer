@@ -32,7 +32,10 @@ use a_zen: form _aktivity[700,10,,]
 
 proc reload(id_pobyt) {
   cmd.b_display(1);
-  [ u.b.browse_load(conc("p.id_akce=",the_duakce.get),'IF(funkce<=1,1,funkce)','','','','',
+  lst.the_akce.load(the_duakce.get);
+  [ u.b.browse_load(conc("p.id_akce=",the_duakce.get),
+      "IF(funkce<=1,1,funkce),IF(pouze=0,r.nazev,o.prijmeni)",
+      '','','','',
       conc('SET @akce:=',the_duakce.get));
     u.b.browse_focus;
     { id_pobyt; u.b.raise('onrowclick',id_pobyt)
@@ -121,9 +124,12 @@ form _aktivity {
 form _evidence {
   # --------------------------- kontextové_menu
   menu { type:'context'
-    item back { title:'ukázat všechny změny'
-      proc onclick () { BackTrace.back_load(pob.key,muz.key,zen.key,rod.key) }
-  } }
+    item { title:'ukázat všechny změny'
+      proc onclick () { BackTrace.back_load(pob.key,muz.key,zen.key,rod.key) } }
+    item { title:'m: ECHO hodnoty klíčů', skill:'m'
+      proc onclick () { echo('KLÍČE: akce=',the_duakce.get,', pobyt=',u.b.key_pobyt.get,
+        ', strava=',lst.the_akce.strava_oddo.get ) } }
+  }
   label [2,17,723,495] {title:"<img src='img/ms2.png'>" }
   label [  6,20,100,] {title:'Příjmení páru'}
   label [118,20,100,] {title:'Jméno muže'}
@@ -287,10 +293,7 @@ form _ucast [,,400,] { css:'ds_form'
     show dnu      {expr:"DATEDIFF(a.datum_do,a.datum_od)+1"}
     show datum_od {data:a.datum_od, sql_pipe:'' }
     // zobrazení
-    show _nazev [,,100,] { title:'rodina', format:'s+q*',
-      expr:"CASE WHEN pouze=1 THEN GROUP_CONCAT(DISTINCT IF(t.role='a',o.prijmeni,'') SEPARATOR '')
-                 WHEN pouze=2 THEN GROUP_CONCAT(DISTINCT IF(t.role='b',o.prijmeni,'') SEPARATOR '')
-            ELSE r.nazev END" }
+    show _nazev [,,100,] { title:'rodina', format:'s+q*', expr:"IF(pouze=0,r.nazev,o.prijmeni)" }
     show _jmena [,,180,] { title:'jméno/a', format:'ts',
       expr:"GROUP_CONCAT(DISTINCT IF(pouze=1 AND t.role='b','',IF(pouze=2 AND t.role='a','',o.jmeno)) ORDER BY t.role SEPARATOR ' ')" }
     show xfunkce [,,40,] { title:'fce', data:p.funkce, format:'rq#s', map_pipe:ms_akce_funkce.zkratka}
@@ -731,10 +734,12 @@ panel PridaniAkce [,,320,280] {type:'popup', title:'Přidání účastníků zn�
 panel Strava [,,320,280] {type:'popup', title:'Nastavení nestandardního počtu strav'
   var dnu: number
   var arr: object
+  var prvni: text       // první strava na akci
   use n: form nastaveni [5,5,,]
   proc onfocus() {
     var cela: text  // řetězec strav: sov.... po dnech
     var polo: text  // řetězec strav: sov.... po dnech
+    prvni.set(substr(lst.the_akce.strava_oddo.get,0,1));    // první strava akce
     [ cela.set(u.b.cstrava_cel.get); cela.get | cela.set(strava_def(u.b.strava_cel.get)) ];
     [ polo.set(u.b.cstrava_pol.get); polo.get | polo.set(strava_def(u.b.strava_pol.get)) ];
     n.L.init;
@@ -743,10 +748,11 @@ panel Strava [,,320,280] {type:'popup', title:'Nastavení nestandardního počtu
     each(arr.get,den);
   }
   proc strava_def(strav) {
-    return(conc('0','0',strav,
-      repeat(strav,multiply(3,sum(dnu.get,minus(2)))),
+    return(conc('0',if(eq(prvni.get,'o'),strav,'0'),strav,
+      repeat(strav,multiply(3,sum(dnu.get,-2))),
       strav,strav,'0'))
   }
+  # přidání řádku pro i-tý den
   proc den (p,i) {
     [ n.L.add ];
     n.L.part(i).part('den').set(p.den);
@@ -757,10 +763,12 @@ panel Strava [,,320,280] {type:'popup', title:'Nastavení nestandardního počtu
     strava_set(i,'vc',p.vc,n.cele.get);
     strava_set(i,'vp',p.vp,n.polo.get);
   }
+  # zobrazení stravy s pro i-tý den
   proc strava_set(i,s,val,norm) {
     var s1:text
     s1.set(substr(s,0,1));
-    { or(and(eq(i,0),eq(s1,'s','o')),and(eq(i,sum(dnu.get,minus(1))),eq(s1,'v')));
+    { or(and(eq(i,0),if(eq(prvni.get,'o'),eq(s1,'s'),eq(s1,'s','o')))   // první den
+        ,and(eq(i,sum(dnu.get,-1)),eq(s1,'v')));                        // poslední den
       n.L.part(i).part(s).enable(0);
     | n.L.part(i).part(s).set(val);
       not(eq(val,norm));
@@ -829,10 +837,9 @@ panel Strava [,,320,280] {type:'popup', title:'Nastavení nestandardního počtu
       each(L,save_den);
       ask('akce_strava_denne_save',u.b.key_pobyt.get,dnu.get,
         scele.get,u.b.strava_cel.get,u.b.cstrava_cel.get,
-        spolo.get,u.b.strava_pol.get,u.b.cstrava_pol.get);
+        spolo.get,u.b.strava_pol.get,u.b.cstrava_pol.get,prvni.get);
       panel.hide(0);
-      u.b.browse_seek;
-      u.b.browse_focus; u.b.focus
+      reload(the_pobyt.get);
     }}
     proc save_den (p,i) {
       scele.set(conc(scele.get,pocet_strav(i,'sc'),pocet_strav(i,'oc'),pocet_strav(i,'vc')));

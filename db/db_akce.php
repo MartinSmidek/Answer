@@ -61,7 +61,7 @@ function akce_sestava_lidi($akce,$par,$title,$vypis,$export=false) { trace();
   $tit= $par->tit;
   $fld= $par->fld;
   $cnd= $par->cnd;
-  $ord= $par->ord ? $par->ord : "prijmeni,jmeno";
+  $ord= $par->ord ? $par->ord : "IF(funkce<=1,1,funkce),IF(pouze=0,r.nazev,o.prijmeni)";
   $html= '';
   $href= '';
   $n= 0;
@@ -129,6 +129,7 @@ function akce_sestava_pary($akce,$par,$title,$vypis,$export=false) { trace();
   $tit= $par->tit;
   $fld= $par->fld;
   $cnd= $par->cnd;
+  $ord= $par->ord ? $par->ord : "IF(funkce<=1,1,funkce),IF(pouze=0,r.nazev,o.prijmeni)";
   $html= '';
   $href= '';
   $n= 0;
@@ -158,7 +159,7 @@ function akce_sestava_pary($akce,$par,$title,$vypis,$export=false) { trace();
           LEFT JOIN rodina AS r USING(id_rodina)
           WHERE p.id_akce='$akce' AND $cond
           GROUP BY id_pobyt
-          ORDER BY nazev,prijmeni_m,prijmeni_z";
+          ORDER BY $ord";
   $res= mysql_qry($qry);
   while ( $res && ($x= mysql_fetch_object($res)) ) {
     $x->prijmeni= $x->pouze==1 ? $x->prijmeni_m : ($x->pouze==2 ? $x->prijmeni_z : $x->nazev);
@@ -208,6 +209,7 @@ function akce_sestava_pary($akce,$par,$title,$vypis,$export=false) { trace();
 # generované vzorce
 #   platit = součet předepsaných plateb
 function akce_vyuctov_pary($akce,$par,$title,$vypis,$export=false) { trace();
+  $ord= $par->ord ? $par->ord : "IF(funkce<=1,1,funkce),IF(pouze=0,r.nazev,o.prijmeni)";
   $result= (object)array();
   $tit= "Manželé:25"
       . ",pokoj:7,dětí:5:r,lůžka:5:r:s,přis týlky:5:r:s,kočá rek:5:r:s,nocí:5:r:s"
@@ -265,7 +267,7 @@ function akce_vyuctov_pary($akce,$par,$title,$vypis,$export=false) { trace();
           LEFT JOIN rodina AS r USING(id_rodina)
           WHERE p.id_akce='$akce' AND $cond
           GROUP BY id_pobyt
-          ORDER BY nazev,prijmeni_m,prijmeni_z";
+          ORDER BY $ord";
 //   $qry.=  " LIMIT 10";
   $res= mysql_qry($qry);
   while ( $res && ($x= mysql_fetch_object($res)) ) {
