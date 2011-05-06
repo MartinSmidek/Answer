@@ -30,7 +30,7 @@ menu m {type:'left',
       }
     }
   }
-  menu {title:'Kontrola speciálních skupin', skill:'yams',type:'group'
+  menu {title:'Kontrola speciálních skupin', skill:'yams+',type:'group'
     item {title:'Sponzoři Vánoce 2010',  par:°{skupina:'vanoce2010'} }
     item {title:'Výbor YMCA Setkání',    par:°{skupina:'vybor'} }
     item {title:'TEST',                  par:°{skupina:'martin'} }
