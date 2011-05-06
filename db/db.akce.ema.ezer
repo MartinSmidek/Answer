@@ -6,11 +6,19 @@
 
 var E_info: text
 var dopis_id: text
+
+proc onfirstfocus() { m.g.i.click }
+
 use ii: form right [12,4,,]
 
-menu {type:'left',
-  menu {title:'Rozesílání skupinových mailů', type:'group'
-    item {title:'Vytváření a editace'
+menu m {type:'left',
+  menu g {title:'Rozesílání mailů skupině', type:'group'
+#     item {title:'Definice adresátů', skill:'m'
+#       proc onclick (i) {
+#         ii.fill("Definice SQL dotazů"," ");
+#       }
+#     }
+    item i {title:'Vytváření a editace mailů'
       proc onclick (i) {
         ii.fill("Příprava skupinových emailů"," ");
         E_send.hide; E_text.popup(10,60);
@@ -18,7 +26,6 @@ menu {type:'left',
     }
     item {title:'Rozesílání připravených'
       proc onclick (i) {
-        ii.fill("Vánoce 2010 - prosba"," ");
         E_text.hide; E_send.popup(10,60);
       }
     }
@@ -152,23 +159,39 @@ panel E_send [0,0,645,520] { title:' maily'
   proc es.texty.onrowclick () {
     dopis_id.set(es.texty.id_dopis.get);
     es.maily.browse_load(conc("id_dopis=",dopis_id.get));
+    ii.fill(conc("Rozesílání mailů pro ",es.texty.predmet.get)," ");
+    switch(es.texty.cond.get,
+    'setkani',{
+      es.zkus.set('martin@smidek.eu');
+      es.from.set('sekretar@setkani.org');
+      es.name.set('YMCA Setkání');
+    },
+    'chlapi',{
+      es.zkus.set('michalec.zdenek@inset.com');
+      es.from.set('michalec.zdenek@inset.com');
+      es.name.set('Zdeněk Michalec');
+    },{
+      es.zkus.set('martin@smidek.eu');
+      es.from.set('sekretar@setkani.org');
+      es.name.set('YMCA Setkání');
+    });
   }
   proc es.davka.onchange () {
     es.send.set(conc(es.davka.get,'  ještě neposlaných'));
   }
   proc es.maily.onrowclick () {
-    es.info.set(ask('dop_mai_info',es.maily.id_clen.get,es.maily.email.get));
+    es.info.set(ask('dop_mai_info',es.maily.id_clen.get,es.maily.email.get,es.texty.cond.get));
   }
   proc es.test.onclick () {
     es.msg.set('');
-    confirm('Poslat zkušební mail na martin@smidek.eu ?');
-    E_info.set(ask('dop_mai_send',dopis_id.get,0));
+    confirm('Poslat zkušební mail na ',es.zkus.get,' ?');
+    E_info.set(ask('dop_mai_send',dopis_id.get,0,es.from.get,es.name.get,es.zkus.get));
     es.msg.set(E_info.get('_html'));
   }
   proc es.send.onclick () {
     es.msg.set('');
-    confirm(conc('Opravdu poslat dalších ',es.davka.get,' mailů?'));
-    E_info.set(ask('dop_mai_send',dopis_id.get,es.davka.get));
+    confirm(conc('Opravdu poslat dalších ',es.davka.get,' mailů "z adresy" ',es.from.get,'?'));
+    E_info.set(ask('dop_mai_send',dopis_id.get,es.davka.get,es.from.get,es.name.get));
     es.msg.set(E_info.get('_html'));
     es.maily.browse_seek; es.texty.browse_seek;
   }
@@ -178,19 +201,24 @@ panel E_send [0,0,645,520] { title:' maily'
 form _esady [,,500,200] {
   view etd: table dopis
   view etm: table mail {join_type:'LEFT' join:'USING(id_dopis)'}
-  browse texty [0,0,150,200] { rows:10, qry_rows:1, group_by:'id_dopis', css_rows:'stav1,3:zluty,4:zeleny,5:cerveny'
+  browse texty [0,0,150,200] { rows:9, qry_rows:1, group_by:'id_dopis', css_rows:'stav1,3:zluty,4:zeleny,5:cerveny'
     show id_dopis [,,0,] { data:etd.id_dopis },
     show x [,,0,] { data:etm.id_davka },
     show datum [,,60,] { title:'datum', data:etd.datum, format:'s-' },
     show predmet [,,100,] { title:'předmět', data:etd.nazev, format:'sq', css_cell:'stav2,3:zluty,4:zeleny,5:cerveny' },
     show komu [,,60,] { title:'komu' , data:etd.komu, format:'s', map_pipe:map_dm_komu.zkratka },
+    show cond { data:etd.komu, map_pipe:map_dm_komu.hodnota },
     show stav1 [,,0,] { expr:'min(etm.stav)', format:'rsq' },
     show stav2 [,,0,] { expr:'max(etm.stav)', format:'rsq' },
     show pocet [,,30,] { title:'#', data:etd.pocet, format:'rs' },
   }
-  label [0,255,100,17] { title:'<b>Odeslat ...</b>' }
-  button test [0,280,100,17] { title:'1 mail sobě', skill:'yam|yams',
-    help:'pro kontrolu - posílá se na adresu martin@smidek.eu' }
+  label [12,214,92,17] { title:'Testovací adresa:' }
+  label [35,247,66,17] { title:'Odeslat jako:' }
+  field zkus [105,210,200,17] { skill:'yam|yams', value:'martin@smidek.eu' }
+  field from [105,236,200,17] { skill:'yam|yams', value:'sekretar@setkani.org'  }
+  field name [105,255,200,17] { skill:'yam|yams', value:'YMCA Setkání'  }
+  button test [0,280,100,17] { title:'1 mail testovací', skill:'yam|yams',
+    help:'pro kontrolu - posílá se na testovací adresu' }
   field davka [105,281,30,17] { format:'rt', value:'10', skill:'yam|yams' }
   button send [150,280,100,17] { title:'10 ještě neposlaných', skill:'yam|yams',
     help:'pošle další dávku - počet lze měnit políčkem vlevo' }
