@@ -170,7 +170,7 @@ form _evidence {
 }
 # -------------------------------------------------------------------------------------------------- _rodina
 form _rodina {
-  field nazev       [4,44,100,] {data:rodina.nazev, help:'příjmení'}
+  field nazev       [4,44,100,] {data:rodina.nazev, help:'společné příjmení', format:':F' }
   field _spolu      [403,45,23,] {format:'o', value:'?'}
   field svatba      [432,44,36,] {data:rodina.svatba}
   field ulice       [4,77,126,] {data:rodina.ulice}
@@ -181,6 +181,8 @@ form _rodina {
   edit  note        [5,163,491,52] {data:rodina.note}
   field datsvatba   [509,163,63,] {data:rodina.datsvatba}
   field spz         [510,198,62,] {data:rodina.spz}
+  label             [390,557,,] {title:'rodina - alternativní údaje', skill:'yaah'}
+  chat  historie    [388,570,185,106] { divide:100, skill:'yaah' }
 }
 # -------------------------------------------------------------------------------------------------- _muz
 form _muz {
@@ -197,6 +199,8 @@ form _muz {
   field jazyk_m     [51,351,152,] {data:osoba.jazyk}
   field aktivita_m  [51,372,152,] {data:osoba.aktivita}
   select clen_m     [79,394,58,] {type:'map', data:osoba.clen, options:ms_akce_clen.zkratka}
+  label             [10,557,,] {title:'muž - alternativní údaje', skill:'yaah' }
+  chat  historie_m  [8,570,185,106] { divide:100, skill:'yaah' }
 }
 # -------------------------------------------------------------------------------------------------- _zena
 form _zena {
@@ -213,6 +217,8 @@ form _zena {
   field jazyk_z     [213,351,152,] {data:osoba.jazyk}
   field aktivita_z  [213,372,152,] {data:osoba.aktivita}
   select clen_z     [277,394,57,] {type:'map', data:osoba.clen, options:ms_akce_clen.zkratka}
+  label             [200,557,,] {title:'žena - alternativní údaje', skill:'yaah' }
+  chat  historie_z  [198,570,185,106] { divide:100, skill:'yaah' }
 }
 # -------------------------------------------------------------------------------------------------- _pobyt
 form _pobyt {
@@ -313,6 +319,7 @@ form _ucast [,,400,] { css:'ds_form'
     show aktivita_m { expr:"GROUP_CONCAT(DISTINCT IF(tx.role='a',ox.aktivita,'') SEPARATOR '')" }
     show cirkev_m   { expr:"GROUP_CONCAT(DISTINCT IF(tx.role='a',ox.cirkev,'')   SEPARATOR '')" }
     show clen_m     { expr:"GROUP_CONCAT(DISTINCT IF(tx.role='a',ox.clen,'')     SEPARATOR '')" }
+    show historie_z { expr:"GROUP_CONCAT(DISTINCT IF(tx.role='a',ox.historie,'') SEPARATOR '')", skill:'yaah' }
     // žena - načte se, i když není na akci
     show id_spolu_z { expr:"GROUP_CONCAT(DISTINCT IF(t.role='b',s.id_spolu,'') SEPARATOR '')" }
     show id_z       { expr:"GROUP_CONCAT(DISTINCT IF(tx.role='b',ox.id_osoba,'') SEPARATOR '')" }
@@ -327,6 +334,7 @@ form _ucast [,,400,] { css:'ds_form'
     show aktivita_z { expr:"GROUP_CONCAT(DISTINCT IF(tx.role='b',ox.aktivita,'') SEPARATOR '')" }
     show cirkev_z   { expr:"GROUP_CONCAT(DISTINCT IF(tx.role='b',ox.cirkev,'')   SEPARATOR '')" }
     show clen_z     { expr:"GROUP_CONCAT(DISTINCT IF(tx.role='b',ox.clen,'')     SEPARATOR '')" }
+    show historie_z { expr:"GROUP_CONCAT(DISTINCT IF(tx.role='b',ox.historie,'') SEPARATOR '')", skill:'yaah' }
     // rodina
     show nazev      { data:r.nazev }
     show svatba     { data:r.svatba}
@@ -338,6 +346,7 @@ form _ucast [,,400,] { css:'ds_form'
     show note       { data:r.note}
     show datsvatba  { data:r.datsvatba}
     show spz        { data:r.spz}
+    show historie   { data:r.historie, skill:'yaah' }
     // skupinka
     show skup       { expr:"IF(p.skupina=0,'',(
         SELECT GROUP_CONCAT(DISTINCT pobyt.id_pobyt,'|',nazev SEPARATOR '|')
@@ -616,12 +625,13 @@ panel Dite [,,370,280] {type:'popup', title:'Úprava dětí'
 # ================================================================================================== Přidání jménem 1
 panel PridaniJmenem1 [,,320,280] {type:'popup', title:'Přidání známých dospělých jménem'
   use fl: form _fl [12,10,,]
+  proc onfocus() { fl.jmena.focus }
   form _fl [,,300,200] {
     var last: number
     var rod: object
     var popis: text
     button [0,250,50,16] { title:'přidat do účastníků', proc onclick() {
-      each(L,pary_add); reload(0);
+      each(L,pary_add); reload(0); panel.hide(0)
     } }
     button [130,250,50,16] { title:'jiná jména', proc onclick() {
       jmena.init; vse.init; L.init } }
@@ -646,7 +656,7 @@ panel PridaniJmenem1 [,,320,280] {type:'popup', title:'Přidání známých dosp
       proc nastav (x,i) { x.chck.set(form.vse.get) }
     }
     list L [0,23,300,200] {rows:22      // anonymní group
-      check chck [4,0,50,16] { title:' ', format:'t'  /*, proc onchange() { echo('jo/ne') }*/ }
+      check chck [4,0,50,16] { title:' ', format:'t', value:'1'  /*, proc onchange() { echo('jo/ne') }*/ }
       label info [23,4,300,16] {style:'white-space:nowrap'}
       var all: object
     }
