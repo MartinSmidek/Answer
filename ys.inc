@@ -42,7 +42,13 @@
   // moduly v Ezerscriptu mimo složku aplikace
   $ezer_ezer= array(
     "ds/ds.dum",
-    "ds/ds.tab"
+    "ds/ds.tab",
+    "db/db.akce",
+    "db/db.akce.chl",
+    "db/db.akce.lst",
+    "db/db.akce.ducast",
+    "db/db.akce.evi",
+    "db/db.akce.ema"
   );
   // standardní moduly v PHP obsažené v $ezer_path_root/ezer2 - vynechané v dokumentaci
   $ezer_php_libr= array(
