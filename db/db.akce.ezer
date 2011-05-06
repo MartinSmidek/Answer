@@ -37,7 +37,7 @@ panel evi {type:'right', _sys:'*', title:'EVIDENCE', include:'onclick,db.akce.ev
 panel rod {type:'plain', title:'Rodiny', include:'onclick,db.akce.rod', skill:'m'  }
 panel jed {type:'plain', title:'Jednotlivci', skill:'m'  }
 # panel vse [,,,543] {type:'plain', title:'Všichni', include:'onclick,db.akce.vse',skill:'yaa'  }
-panel ema [,,,543] {type:'right', title:'MAILY', skill:'yam', include:'onclick,db.akce.ema'  }
+panel ema {type:'right', title:'MAILY', skill:'yam', include:'onclick,db.akce.ema'  }
 
 # ================================================================================================== COMMON
 # ------------------------------------------------------------------ _the_akce

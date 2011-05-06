@@ -214,9 +214,9 @@ form _esady [,,500,200] {
   }
   label [12,214,92,17] { title:'Testovací adresa:' }
   label [35,247,66,17] { title:'Odeslat jako:' }
-  field zkus [105,210,200,17] { skill:'yam|yams', value:'martin@smidek.eu' }
-  field from [105,236,200,17] { skill:'yam|yams', value:'sekretar@setkani.org'  }
-  field name [105,255,200,17] { skill:'yam|yams', value:'YMCA Setkání'  }
+  field zkus [105,210,200,17] { skill:'yam|yams', value:'martin@smidek.eu', format:'t' }
+  field from [105,236,200,17] { skill:'yam|yams', value:'sekretar@setkani.org', format:'t'  }
+  field name [105,255,200,17] { skill:'yam|yams', value:'YMCA Setkání', format:'t'  }
   button test [0,280,100,17] { title:'1 mail testovací', skill:'yam|yams',
     help:'pro kontrolu - posílá se na testovací adresu' }
   field davka [105,281,30,17] { format:'rt', value:'10', skill:'yam|yams' }

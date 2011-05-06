@@ -1512,7 +1512,7 @@ function dop_mai_pocet($id_dopis) {  trace();
              FROM ch_ucast
              JOIN chlapi USING(id_chlapi)
              JOIN ch_akce USING(id_akce)
-             WHERE id_akce={$d->_akce}";
+             WHERE id_akce={$d->_akce} ";
       $resc= mysql_qry($qryc);
       while ( $resc && ($c= mysql_fetch_object($resc)) ) {
         $n++;
@@ -1554,7 +1554,7 @@ function dop_mai_pocet($id_dopis) {  trace();
       if ( $res ) $count= mysql_num_rows($res);
     }
     $result->_html= $count>0
-      ? "Opravdu rozeslat mail '{$d->nazev}' na $count adres?"
+      ? "Opravdu vygenerovat seznam pro rozeslání\n'{$d->nazev}'\nna $count adres?"
       : "Mail '{$d->nazev}' nemá žádného adresáta, stiskni ZRUŠIT";
     $result->_html.= "\n\n$html";
     $result->_count= $count;
@@ -1662,7 +1662,7 @@ function dop_mai_stav($id_mail,$stav) {  trace();
 # odešli dávku $kolik mailů ($kolik=0 znamená testovací poslání)
 # $from,$fromname = From,ReplyTo
 # $test = 1 mail na tuto adresu (pokud je $kolik=0)
-function dop_mai_send($id_dopis,$kolik,$from,$fromname,$test) { trace();
+function dop_mai_send($id_dopis,$kolik,$from,$fromname,$test='') { trace();
   global $ezer_path_serv;
   require_once("$ezer_path_serv/licensed/phpmailer/class.phpmailer.php");
   $result= (object)array('_error'=>0);
