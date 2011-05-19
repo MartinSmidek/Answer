@@ -5,9 +5,11 @@
 use info: form _info [10,10,,]
 use chs: form _chlapi [10,40,,]
 use ch: form _chlap [10,40,,]
+
 var the_akce: number
 var the_akce_nazev: text
 var the_akce_cena: number
+
 proc onstart() {
   chs.reset('mrop'); ch.reset('mrop');
   chs.reload(0);
@@ -132,15 +134,18 @@ form _chlapi [,,*,50] {
       expr:"DATE_FORMAT(cs.narozeni,'%y%m%d')" }
     show dl [,,0,] {title:'dluh', format:'rsq:e', help:"dlužná částka",
       expr:"us.cena-us.uctem-us.pokladnou" }
+    show ob [,,0,] {title:'obec', format:'sq', help:"obec bydliště",
+      data:cs.obec }
     proc onrowclick() {
       ch.load(id_ucast.get);
       ch.c.key(id_chlapi.get);
       ch.u.key(id_ucast.get);
     }
     proc onclick() {
-      mr.width; mr.width(0); vs.width(45); dl.width(0);
-    | vs.width; mr.width(0); vs.width(0); dl.width(45);
-    | mr.width(45); vs.width(0); dl.width(0);
+      mr.width; mr.width(0); vs.width(45);
+    | vs.width; vs.width(0); dl.width(45);
+    | dl.width; dl.width(0); ob.width(45);
+    | ob.width(0); mr.width(45);
     }
     proc onchange () { all.browse_count | ch.init }
   }
@@ -166,11 +171,12 @@ form _chlap [,,*,466] {
   # --------------------------------------------------  VZTAH k AKCI pro mode='akce'
   const Lu=240
   const Tu=280
-  label  [Lu+2,Tu+9,448,101] { tag:'akce', css:'ae_part' }
+  label  [Lu+2,Tu+9,454,101] { tag:'akce', css:'ae_part' }
   label  [Lu+9,Tu+0,90,] { tag:'akce', title:'údaje k této akci', css:'ae_part_label' }
   select stupen [Lu+7,Tu+17,106,] { tag:'akce', type:'map', data:u.stupen, options:akce_ucast.zkratka }
   label  [Lu+255,Tu+20,56,]   { tag:'akce', title:'cena akce' }
-  field cena [Lu+315,Tu+17,44,]   { tag:'akce', format:'r', data:u.cena }
+  field cena [Lu+315,Tu+17,44,]  { tag:'akce', format:'r', data:u.cena }
+  check avizo [Lu+361,Tu+17,50,] { tag:'akce', title:'avízo', format:'r', data:u.avizo }
   label  [Lu+306,Tu+42,33,16] { tag:'akce', title:'zaplaceno'}
   label  [Lu+278,Tu+64,33,]   { tag:'akce', title:'účtem' }
   field  [Lu+315,Tu+60,44,]   { tag:'akce', format:'r', data:u.uctem }

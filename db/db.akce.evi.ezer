@@ -8,8 +8,8 @@ use info: form right [5,5,,]
 use prihlasky: form _prihlasky [10,44,,]  { tag:'app' }
 use prihlaska: form _prihlaska [390,44,,] { tag:'app' }
 use osoby:  form _osoby [10,44,,]         { tag:'pers' }
-use osoba:  form _osoba [290,36,,]        { tag:'pers' }
-use rodina: form _rodina [290,36,,]       { tag:'pers' }
+use osoba:  form _osoba [390,36,,]        { tag:'pers' }
+use rodina: form _rodina [390,36,,]       { tag:'pers' }
 use platby: form _platby [10,64,,]        { tag:'bank' }
 use platba: form _platba [10,300,,]       { tag:'bank' }
 
@@ -30,6 +30,14 @@ menu m {type:'left'
       proc onclick (i) {
         panel.display(0,'bank|app'); panel.display(1,'pers');
         info.fill(conc(i.owner.title,' - ',i.title),' ');
+        osoby.b.browse_load("oc.id_rodina=1 AND oc.role!=''");
+      }
+    }
+    item   {title:'seznam aktivních členů'
+      proc onclick (i) {
+        panel.display(0,'bank|app'); panel.display(1,'pers');
+        info.fill(conc(i.owner.title,' - ',i.title),' ');
+        osoby.b.browse_load("oc.id_rodina=1 AND oc.role='a'");
       }
     }
   }
@@ -38,6 +46,7 @@ menu m {type:'left'
     proc onclick (i) {
       panel.display(0,'bank|app'); panel.display(1,'pers');
       info.fill(conc(i.owner.title,' - ',i.title),' ');
+      osoby.b.browse_load(1);
     }
     item   {title:'import členů z Googlu'
       proc onclick (i) {
@@ -96,15 +105,18 @@ form _platba {
 form _osoby {
   view os: table osoba
   view ot: table tvori { join:"ON os.id_osoba=ot.id_osoba AND ot.id_rodina!=1" }
-  view or: table rodina { join:"ON or.rodina=ot.id_rodina" }
+  view ox: table rodina { join:"ON ox.id_rodina=ot.id_rodina" }
   view oc: table tvori { join_type:'LEFT', join:"ON os.id_osoba=oc.id_osoba AND oc.id_rodina=1" }
   browse b [0,0,,] { rows:28, qry_rows:1
     show id_o { data:os.id_osoba }
     show id_r { data:ot.id_rodina }
-    show [,,70,] { data:os.prijmeni, title:'příjmení', format:'q*s' }
-    show [,,60,] { data:os.jmeno, title:'jméno', format:'q*s' }
-    show [,,60,] { title:'obec', data:os.obec, format:'q*s' }
-    show [,,20,] { data:oc.role, title:'YMCA', format:'q*s' }
+    show id_c { data:oc.id_tvori }
+    show [,,80,] { data:os.prijmeni, title:'příjmení', format:'q*s' }
+    show [,,70,] { data:os.jmeno, title:'jméno', format:'q*s' }
+    show [,,95,] { title:'obec', data:os.obec, format:'q*s' }
+    show [,,80,] { title:'telefon', expr:"CONCAT(os.telefon,', ',ox.telefony)", format:'q*s' }
+    show [,,20,] { data:oc.role, title:'YMCA', format:'uq*s'
+      proc onsubmit() { this.save } }
     proc onrowclick() {
       osoba.load(id_o.get);
       rodina.load(id_r.get);

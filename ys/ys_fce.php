@@ -45,7 +45,7 @@ function google_sheet($list,$sheet,$user='answer@smidek.eu') {  trace();
   Zend_Loader::loadClass('Zend_Gdata_ClientLogin');
   Zend_Loader::loadClass('Zend_Gdata_Spreadsheets');
   // autentizace
-  $pass= array('answer@smidek.eu'=>'8nswer','martin@smidek.eu'=>'radost');
+  $pass= array('answer@smidek.eu'=>'8nswer','martin@smidek.eu'=>'radost2010');
   if ( $pass[$user] ) {
     $authService= Zend_Gdata_Spreadsheets::AUTH_SERVICE_NAME;
     $httpClient= Zend_Gdata_ClientLogin::getHttpClient($user,$pass[$user], $authService);
