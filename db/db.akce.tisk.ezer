@@ -6,11 +6,19 @@ var the_par: object
 var the_vypis: text
 
 use info: form right [12,4,,] {
-  button [-20,4,100,16] { title:'Excel', style:'display:block;zIndex:2',
+  button export [-20,4,100,16] { title:'Excel', style:'display:block;zIndex:2',
     proc onclick() {
       var res: object
-      res.set(ask('akce_vyp_excel',the_duakce.get,the_par.get,the_title.get,the_vypis.get));
-      form.msg.set(res.html);
+      switch(export.get,
+      'Excel',{
+        res.set(ask('akce_vyp_excel',the_duakce.get,the_par.get,the_title.get,the_vypis.get));
+        form.msg.set(res.html);
+      },
+      'PDF',{
+        sti_A.report_init; sti_A.report_check;
+        res.set(ask('akce_pdf_stitky',1,conc("p.id_akce=",the_duakce.get),sti_A.get_json));
+        form.msg.set(res.html);
+      })
     }
   }
 }
@@ -23,23 +31,33 @@ proc onfocus() {
 
 menu m {type:'left',
   menu n {title:'adresář',type:'group',_sys:'*'
-    item {title:'základní pro páry'     ,par:°{typ:'p',cnd:'1'
+    item {title:'základní pro páry'     ,par:°{typ:'p',exp:'Excel',cnd:'1'
                                         ,tit:'příjmení:15,jména:20,obec:25,psč:7,ulice:25'
                                         ,fld:'prijmeni,jmena,obec,psc,ulice'}}
-    item {title:'základní pro páry + spojení'   ,par:°{typ:'p',cnd:'1'
+    item {title:'základní pro páry + spojení'
+                                        ,par:°{typ:'p',exp:'Excel',cnd:'1'
                                         ,tit:'příjmení:15,jména:20,obec:25,psč:7,ulice:25,telefon:40,e-mail:60'
                                         ,fld:'prijmeni,jmena,obec,psc,ulice,telefony,emaily'}}
-    item i {title:'jednotlivci bez dětí',par:°{typ:'j',cnd:"role!='d'"
+    item i {title:'jednotlivci bez dětí',par:°{typ:'j',exp:'Excel',cnd:"role!='d'"
                                         ,tit:'příjmení:15,jméno:12,narození:12,/rč:5,obec:25,psč:7,ulice:25'
                                         ,fld:'prijmeni,jmeno,narozeni,rc_xxxx,obec,psc,ulice'}}
-    item {title:'jednotlivci vč. dětí'  ,par:°{typ:'j',cnd:'1'
+    item {title:'jednotlivci vč. dětí'  ,par:°{typ:'j',exp:'Excel',cnd:'1'
                                         ,tit:'příjmení:15,jméno:12,narození:12,/rč:5,obec:25,psč:7,ulice:25'
                                         ,fld:'prijmeni,jmeno,narozeni,rc_xxxx,obec,psc,ulice'}}
   }
   menu {title:'seznam',type:'group',_sys:'*'
-    item {title:'Děti na akci'          ,par:°{typ:'j',cnd:"role='d'",ord:"narozeni"
+    item {title:'Děti na akci'          ,par:°{typ:'j',exp:'Excel',cnd:"role='d'",ord:"narozeni"
                                         ,tit:'příjmení:15,jméno:12,narození:12,/rč:5,obec:25,psč:7,ulice:25'
                                         ,fld:'prijmeni,jmeno,narozeni,rc_xxxx,obec,psc,ulice'}}
+    item {title:'Děti na akci s poznámkami'
+                                        ,par:°{typ:'j',exp:'Excel',cnd:"role='d'",ord:"narozeni"
+                                        ,tit:'příjmení:15,jméno:12,narození:12,/rč:5,obec:25,psč:7,ulice:25,poznámka:100'
+                                        ,fld:'prijmeni,jmeno,narozeni,rc_xxxx,obec,psc,ulice,note'}}
+  }
+  menu {title:'tisky do PDF',type:'group',_sys:'*'
+    item {title:'Adresní štítky'        ,par:°{typ:'p',exp:'PDF',cnd:'1'
+                                        ,tit:'příjmení:15,jména:20,obec:25,psč:7,ulice:25,stát:10'
+                                        ,fld:'prijmeni,jmena,obec,psc,ulice,stat'}}
   }
   menu {title:'vyúčtování',type:'group',_sys:'*'
     item i {title:'MS kurs, obnovy'     ,par:°{typ:'vp'}}
@@ -48,9 +66,14 @@ menu m {type:'left',
     var x: object
     the_par.set(i.par);
     the_vypis.set(conc(i.owner.title,' - ',i.title));
+    info.export.set(i.par.exp);
     info.fill(conc(the_title.get,' / ',the_vypis.get),' ');
     info.msg.set('');
     x.set(ask('akce_sestava',the_duakce.get,i.par,the_title.get,the_vypis.get));
     info.fill('',x.html);
   }
+}
+# -------------------------   stitek_A
+report sti_A [0,0,200,287] { format:'A4:5,6,70,41',
+  box adresa    [  2.6, 11.0, 60.0, 27.3] { style:'12,L',      title:'{jmeno_postovni}<br>{adresa_postovni}' }
 }

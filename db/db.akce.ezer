@@ -8,36 +8,34 @@ var the_rok: number
 var the_title: text
 var the_source: text // google|sey
 
+var obj_akce: object    // všechny informace o nastavené akci
+
 proc onstart() {  echo('db.akce.onstart');
-  the_duakce.set(get_cookie("ys_akce_id",0));
-  the_title.set(get_cookie("ys_akce_title",'Vyber akci ...'));
-  the_rok.set(get_cookie('ys_akce_rok',0));
+  the_duakce.set(get_cookie(conc(sys('root'),'_akce_id'),0));
+  the_title.set(get_cookie(conc(sys('root'),'_akce_title'),'Vyber akci ...'));
+  the_rok.set(get_cookie(conc(sys('root'),'_akce_rok'),0));
 }
 # ================================================================================================== CHLAPI
 panel chl {type:'right', _sys:'*', title:'Chlapi', include:'onclick,db.akce.chl',skill:'yac' }
 # ================================================================================================== AKCE
-panel lst {type:'right', _sys:'*', title:'AKCE', include:'onclick,db.akce.lst',skill:'yaa'
+panel lst {type:'right', _sys:'*', title:'AKCE', include:'onclick,db.akce.lst',skill:'yaa;faa'
   use the_akce: form _the_akce         // zatím nezobrazená data nastavené akce s klíčem id_duakce
 }
-panel ducast {type:'plain', _sys:'*', title:'Účastníci', include:'onclick,db.akce.ducast',skill:'yaa'
+panel ducast {type:'plain', _sys:'*', title:'Účastníci', include:'onclick,db.akce.ducast',skill:'yaa;faa'
   proc init_ucast() { }
 }
-panel ducast2 {type:'plain', _sys:'*', title:'Účastníci2', include:'onclick,db.akce.ducast2',skill:'m'
-  proc init_ucast() { }
-}
-# panel ucast {type:'plain', title:'Účastníci', include:'onclick,db.akce.ucast',skill:'yaa'
+# panel ducast2 {type:'plain', _sys:'*', title:'Účastníci2', include:'onclick,db.akce.ducast2',skill:'md' //martin doma
 #   proc init_ucast() { }
 # }
 # panel lidi {type:'plain', title:'Účast NEW', include:'onclick,db.akce.lidi',skill:'yaa'
 #   proc init_ucast() { }
 # }
-panel tisk [,,,] {type:'right', _sys:'*', title:'Výpisy akce', include:'onclick,db.akce.tisk',skill:'yaa'  }
+panel tisk [,,,] {type:'right', _sys:'*', title:'Výpisy akce', include:'onclick,db.akce.tisk',skill:'yaa;faa'  }
 # ================================================================================================== EVIDENCE
-panel evi {type:'right', _sys:'*', title:'EVIDENCE', include:'onclick,db.akce.evi',skill:'yak' }
-panel rod {type:'plain', title:'Rodiny', include:'onclick,db.akce.rod', skill:'m'  }
-panel jed {type:'plain', title:'Jednotlivci', skill:'m'  }
-# panel vse [,,,543] {type:'plain', title:'Všichni', include:'onclick,db.akce.vse',skill:'yaa'  }
-panel ema {type:'right', title:'MAILY', skill:'yam', include:'onclick,db.akce.ema'  }
+panel evi {type:'right', _sys:'*', title:'EVIDENCE', include:'onclick,db.akce.evi', skill:'yae;fae' }
+panel rod {type:'plain', title:'Rodiny', include:'onclick,db.akce.rod', skill:'yae;fae'  }
+panel jed {type:'plain', title:'Jednotlivci', skill:'yae;fae'  }
+panel mai {type:'right', title:'MAILY', include:'onclick,db.akce.mai', skill:'yam;fam'  }
 
 # ================================================================================================== COMMON
 # ------------------------------------------------------------------ _the_akce
@@ -129,6 +127,7 @@ table ch_ucast { key_id:'id_ucast'
   number id_akce
   number stupen    { help:"vztah k akci" }
   number cena      { help:"cena akce pro účastníka" }
+  number avizo     { help:"přišlo potvrzení o platbě" }
   number uctem     { help:"zaplaceno převodem" }
   date uctem_dne   { help:"datum převodu", sql_pipe:'sql_date1' }
   number pokladnou { help:"zaplaceno v hotovosti" }
@@ -165,6 +164,9 @@ table akce { key_id:'id_duakce'
   number typ
   number spec   // 1 znamená ne-akci, starý způsob příležitostných seznamů
   text nazev
+  text misto
+  number druh
+  number poradatel
   number cena
   date datum_od    { sql_pipe:'sql_date1'}    // SQL tvar se používá v ys.akce
   date datum_do    { sql_pipe:'sql_date1'}
@@ -530,6 +532,8 @@ table dopis { key_id:'id_dopis'
   number id_davka { help:'dávka|číslo rozesílání dávky dopisů' },
   text nazev
   text prilohy
+  number id_duakce   // pouze pro maily: id akce
+  number cis_skupina // pouze pro maily: _cis.data položky se SQL (_cis.druh='db_maily_sql')
   text druh { help:'druh|D-dopis, S-samolepka,legitimace, N-nesamostatná složka' },
   text typ { help:'typ|značka dopisu' },
   number nw
@@ -546,6 +550,7 @@ table dopis { key_id:'id_dopis'
   text add_list
 }
 
+map ms_akce_typ:      table _cis {where:"druh='ms_akce_typ'",      order:'poradi', key_id:'data'}
 map ms_akce_clen:     table _cis {where:"druh='ms_akce_clen'",     order:'poradi', key_id:'data'}
 map ms_akce_pouze:    table _cis {where:"druh='ms_akce_pouze'",    order:'poradi', key_id:'data'}
 map ms_akce_funkce:   table _cis {where:"druh='ms_akce_funkce'",   order:'poradi', key_id:'data'}
@@ -554,3 +559,4 @@ map ms_akce_vzdelani: table _cis {where:"druh='ms_akce_vzdelani'", order:'poradi
 map ms_akce_platba:   table _cis {where:"druh='ms_akce_platba'",   order:'poradi', key_id:'data'}
 map ms_akce_sex:      table _cis {where:"druh='ms_akce_sex'",      order:'poradi', key_id:'data'}
 map ms_akce_ucastnik: table _cis {where:"druh='ms_akce_ucastnik'", order:'poradi', key_id:'data'}
+map ms_akce_poradatel:table _cis {where:"druh='ms_akce_poradatel'", order:'poradi', key_id:'data'}

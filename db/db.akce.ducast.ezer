@@ -267,7 +267,7 @@ form _pobyt {
     show note [,,80,] { title:'poznámka' }
     proc onsubmit() {
       Dite.key_dite.set(id_osoba.get); Dite.key_spolu.set(id_spolu.get);
-      Dite.modal(260,240)
+      Dite.modal(260,130)
     }
   }
 }
@@ -319,7 +319,7 @@ form _ucast [,,400,] { css:'ds_form'
     show aktivita_m { expr:"GROUP_CONCAT(DISTINCT IF(tx.role='a',ox.aktivita,'') SEPARATOR '')" }
     show cirkev_m   { expr:"GROUP_CONCAT(DISTINCT IF(tx.role='a',ox.cirkev,'')   SEPARATOR '')" }
     show clen_m     { expr:"GROUP_CONCAT(DISTINCT IF(tx.role='a',ox.clen,'')     SEPARATOR '')" }
-    show historie_z { expr:"GROUP_CONCAT(DISTINCT IF(tx.role='a',ox.historie,'') SEPARATOR '')", skill:'yaah' }
+    show historie_m { expr:"GROUP_CONCAT(DISTINCT IF(tx.role='a',ox.historie,'') SEPARATOR '')", skill:'yaah' }
     // žena - načte se, i když není na akci
     show id_spolu_z { expr:"GROUP_CONCAT(DISTINCT IF(t.role='b',s.id_spolu,'') SEPARATOR '')" }
     show id_z       { expr:"GROUP_CONCAT(DISTINCT IF(tx.role='b',ox.id_osoba,'') SEPARATOR '')" }
@@ -539,18 +539,19 @@ form _cmd [,,200,] { css:'ds_form'
   button dite       [271,525,,] {title:'Přidat dítě', help:'Přidání dalšího dítěte do rodiny'
     proc onclick() {
       Dite.key_dite.set(0); Dite.key_spolu.set(0);
-      Dite.modal(260,240)
+      Dite.modal(260,130)
   } }
   // procedury
   proc b_display(on) { u.b.display(on); pob.d.display(on); pob.s.display(on); }
 }
 # ================================================================================================== Dítě
-panel Dite [,,370,280] {type:'popup', title:'Úprava dětí'
+panel Dite [,,360,360] {type:'popup', title:'Úprava dětí'
   use dite: form _dite [0,10,,]
   var key_dite: number
   var key_spolu: number
   proc onfocus() {
     { key_dite.get; dite.load(key_dite.get) | dite.init(2) };
+    dite.vyradit.enable(eq(dite.ucasti.get,''));
     dite.sebou.set(cconc(key_spolu.get,1,0))
   }
   form _dite [,,200,50] { css:'ds_form'
@@ -567,7 +568,7 @@ panel Dite [,,370,280] {type:'popup', title:'Úprava dětí'
       case [0,17,50,] { title:'žena', expr:'2' }
       proc onchange() { echo('sex=',this.get) }
     }
-    field id_osoba { data:d.id_osoba }
+    field the_osoba { data:d.id_osoba }
     label [0,0,,]  { title:'je na akci' }
     check sebou    [3,9,33,17]
     label          [L+5,T+38,100,] {title:'ulice'}
@@ -586,21 +587,28 @@ panel Dite [,,370,280] {type:'popup', title:'Úprava dětí'
     field email    [L+5,T+138,355,] {data:d.email}
     label          [L+5,T+163,33,] {title:'poznámka'}
     edit  note     [L+5,T+178,355,60] {data:d.note}
+    label          [L+5,T+243,,] {title:'účast na akcích'}
+    edit  ucasti   [L+5,T+255,355,60] { expr:"
+                        (SELECT GROUP_CONCAT(nazev) FROM spolu JOIN pobyt USING(id_pobyt)
+                        JOIN akce ON akce.id_duakce=pobyt.id_akce WHERE spolu.id_osoba=the_osoba)"
+                     format:'o' }
     // ukončení
-    button [5,249,,] { title:'Vyřadit z evidence', help:'Vyřadit toto dítě z evidence', proc onclick() {
-      confirm("Opravdu zrušit všechny informace o ",jmeno.get,"?");
-      // případně vyjmout z kurzu
-      [ spolu.delete_record(conc('id_osoba=',id_osoba.get),9999) ];
-      [ tvori.delete_record(conc('id_osoba=',id_osoba.get),9999) ];
-      [ osoba.delete_record(conc('id_osoba=',id_osoba.get)) ];
-      reload(u.b.browse_key);
-      panel.hide(1)
-    }}
-    label  [260,245,98,30] { css:'ae_parm' }
-    button [266,250,,] { title:'Zpět', proc onclick() {
+    button vyradit [5,330,,] { title:'Vyřadit z evidence',
+      help:'Vyřadit toto dítě z evidence - jen pokud nebylo na žádné akci',
+      proc onclick() {
+        confirm("Opravdu zrušit všechny informace o ",jmeno.get,"?");
+        // případně vyjmout z kurzu
+        [ spolu.delete_record(conc('id_osoba=',the_osoba.get),9999) ];
+        [ tvori.delete_record(conc('id_osoba=',the_osoba.get),9999) ];
+        [ osoba.delete_record(conc('id_osoba=',the_osoba.get)) ];
+        reload(u.b.browse_key);
+        panel.hide(1)
+    } }
+    label  [260,326,98,30] { css:'ae_parm' }
+    button [266,330,,] { title:'Zpět', proc onclick() {
       panel.hide(0)
     }}
-    button [312,250,,] { type:'submit', title:'Uložit', proc onclick() {
+    button [312,330,,] { type:'submit', title:'Uložit', proc onclick() {
       { key_dite.get;
         // oprava
         d.key(key_dite.get); [ d.save ];

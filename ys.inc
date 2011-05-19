@@ -65,6 +65,7 @@
     "ys/ys_ucet.php",
     "ys/ys_lide.php",
     "db/db_akce.php",
+    "fis/fis_tcpdf.php",
     "ds/ds_fce.php"
   );
 
@@ -78,6 +79,9 @@
 
   // knihovní moduly
   require_once("$ezer_path_root/ezer2/ezer2_fce.php");
+  // PDF knihovny
+  require_once('tcpdf/config/lang/eng.php');
+  require_once('tcpdf/tcpdf.php');
   // vložení modulů
   foreach($ezer_php as $php) {
     require_once("$ezer_path_root/$php");
