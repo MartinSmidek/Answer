@@ -4,7 +4,7 @@
 # Ans(w)er/Ezer                                     (c) 2007-2011 Martin Šmídek <martin@smidek.eu> #
 # ------------------------------------------------------------------------------------------------ #
 
-use info: form right [5,5,,]
+use info: form right [5,5,,]              { tag:'inf' }
 use prihlasky: form _prihlasky [10,44,,]  { tag:'app' }
 use prihlaska: form _prihlaska [390,44,,] { tag:'app' }
 use osoby:  form _osoby [10,44,,]         { tag:'pers' }
@@ -12,6 +12,13 @@ use osoba:  form _osoba [390,36,,]        { tag:'pers' }
 use rodina: form _rodina [390,36,,]       { tag:'pers' }
 use platby: form _platby [10,64,,]        { tag:'bank' }
 use platba: form _platba [10,300,,]       { tag:'bank' }
+
+use jmena:  form _osoby [10,44,,]         { tag:'names' }
+use page:  form _page    [400,10,,]
+# záložka evidence
+use p_oso:  form _osoba [390,36,,]        { tag:'pers' }
+use p_rod:  form _rodina [390,36,,]       { tag:'pers' }
+
 
 proc onfirstfocus() {
   m.g.i.click;
@@ -42,6 +49,12 @@ menu m {type:'left'
     }
   }
   menu g {title:'Evidence YMCA Setkání',type:'group', skill:'m'
+    item i {title:'všechny kontakty II'
+      proc onclick (i) {
+        panel.display(0,'bank|app|pers|inf'); panel.display(1,'names');
+        page.page_show;
+      }
+    }
     item {title:'všechny kontakty' }
     proc onclick (i) {
       panel.display(0,'bank|app'); panel.display(1,'pers');
@@ -54,7 +67,7 @@ menu m {type:'left'
         info.fill(conc(i.owner.title,' - ',i.title),ask('akce_google_cleni'));
       }
     }
-    item i {title:'import plateb z RB'
+    item {title:'import plateb z RB'
       proc onclick (i) {
         panel.display(0,'pers|app'); panel.display(1,'bank');
         info.fill(conc(i.owner.title,' - ',i.title),' ');
@@ -64,6 +77,46 @@ menu m {type:'left'
       }
     }
   }
+}
+# -------------------------------------------------------------------------------------------------- _page
+form _page {
+  var zalozka: text           // oso | rod | cle
+  proc page_show() {  }
+  # --------------------------- záložky
+  proc tags(a,on,off) {
+    form.set_css('ae_butt_off','ae_butt_on','p');
+    a.set_css('ae_butt_on','ae_butt_off');
+#     form.display(1,on); form.display(0,off);
+  }
+  proc page_init() {
+    zalozka.set('oso');
+#     a_muz.display(0); a_zen.display(0);
+  }
+  label oso [ 12,0,120,20] {tag:'p', title:'<b>Osoba</b>', format:'c', css:'ae_butt_on'
+    proc onclick() { tags(this,'z','h|o');
+      zalozka.set('oso');
+#       u.b.reload_pobyt;
+#       evid.display(1); cmd.display(1); rod.display(1); muz.display(1); zen.display(1); pob.display(1);
+#       a_muz.display(0); a_zen.display(0);
+    }
+  }
+  label rod [152,0,120,20] {tag:'p', title:'<b>Rodina</b>', format:'c',
+    proc onclick() { tags(this,'h','z|o');
+      zalozka.set('rod');
+#       u.b.reload_pobyt;
+#       evid.display(0); cmd.display(0); rod.display(0); muz.display(0); zen.display(0); pob.display(0);
+#       a_muz.display(0); a_zen.display(0);
+    }
+  }
+  label cle [292,0,120,20] {tag:'p', title:'<b>Členové</b>', format:'c',
+    proc onclick() { tags(this,'o','z|h');
+      zalozka.set('cle');
+#       u.b.reload_pobyt;
+#       evid.display(0); cmd.display(0); rod.display(0); muz.display(0); zen.display(0); pob.display(0);
+#       a_muz.display(1); a_zen.display(1);
+    }
+  }
+  label [0,16,582,530] { css:'ae_work'}
 }
 # ---------------------------------------------------------------------- _platby
 form _platby {

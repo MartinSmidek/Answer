@@ -45,6 +45,8 @@ ds/ds_fce.php -text
 ds/fce.js -text
 ds/img/ds.png -text
 /ezer2.inc -text
+/fa.inc -text
+/fa.php -text
 img/YMCA.png -text
 img/husy.png -text
 img/ms1.png -text
