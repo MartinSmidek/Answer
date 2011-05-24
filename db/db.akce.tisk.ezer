@@ -62,8 +62,9 @@ menu m {type:'left',
                                         ,tit:'příjmení:15,jména:20,obec:25,psč:7,ulice:25,stát:10'
                                         ,fld:'prijmeni,jmena,obec,psc,ulice,stat'}}
   }
-  menu {title:'vyúčtování',type:'group',_sys:'*'
-    item i {title:'MS kurs, obnovy'     ,par:°{typ:'vp'}}
+  menu {title:'přehledy, vyúčtování',type:'group',_sys:'*'
+    item   {title:'platby vč.DPH (jen MS)'      ,par:°{typ:'vp',exp:'Excel',cnd:'1'}}
+    item i {title:'počty strav'                 ,par:°{typ:'vs',exp:'Excel',cnd:'1'}}
   }
   proc onclick (i) {
     var x: object

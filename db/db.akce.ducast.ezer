@@ -6,14 +6,30 @@
 
 var the_pobyt: number
 var zalozka: text           // evid | plat | akce
+var dirty: number
+var back: object
 
-proc onstart() { echo('db.akce.ducast2.onstart'); init_ucast }
-proc onfocus() { init_ucast }
-proc init_ucast() {
+proc onstart() { dirty.get | echo('db.akce.ducast2.onstart'); init_ucast }
+proc onfirstfocus() { dirty.get | echo('onfirstfocus ',the_title.get); init_ucast }
+proc init_ucast() { echo('init_ucast ',the_title.get);
+  dirty.set(1);
   page.page_init;
   header.fill(the_title.get);
   [ reload(0) ];
   page.evd.onclick
+}
+proc akce_show(xakce,xpobyt,xnadpis) {  echo('akce_show ',xakce,' ',xpobyt,' ',xnadpis);
+  back.set(object('ida',the_duakce.get,'idp',u.b.key_pobyt.get,'tit',the_title.get));
+  header.zpet.display(1);
+  panel.focus(1); // bez vyvolání onfocus
+  the_duakce.set(xakce);
+  header.fill(xnadpis);
+  reload(xpobyt);
+}
+proc akce_back() {
+  the_duakce.set(back.get('ida'));
+  the_title.set(back.get('tit')); header.fill(the_title.get);
+  reload(back.get('idp'));
 }
 
 use header:form _header  [  4,0,,]
@@ -26,11 +42,12 @@ use muz:   form _muz     [400,0,,]
 use zen:   form _zena    [400,0,,]
 use pob:   form _pobyt   [400,0,,]
 use cmd:   form _cmd     [400,0,,]
+use pla:   form _platba  [400,0,,]
 # záložka aktivity
 use a_muz: form _aktivity[420,10,,]
 use a_zen: form _aktivity[700,10,,]
 
-proc reload(id_pobyt) {
+proc reload(id_pobyt) { echo('reload ',the_title.get);
   cmd.b_display(1);
   lst.the_akce.load(the_duakce.get);
   [ u.b.browse_load(conc("p.id_akce=",the_duakce.get),
@@ -38,7 +55,8 @@ proc reload(id_pobyt) {
       '','','','',
       conc('SET @akce:=',the_duakce.get));
     u.b.browse_focus;
-    { id_pobyt; u.b.raise('onrowclick',id_pobyt)
+    { id_pobyt; { u.b.raise('onrowclick',id_pobyt)
+                | u.b.browse_seek(conc('p.id_pobyt=',id_pobyt)) }
     | u.b.raise('onrowclick') } ]
 }
 var pall: object
@@ -66,6 +84,9 @@ form _header [,,380,50] {
     head.set(conc("<div class='karta'>",x,"</div>"))
   }
   label head [0,2,*,50]  { title:'' }
+  button zpet [-2,6,,] { title:'Zpět', help:'Navrátí zobrazení účastníků původní akce', format:'n'
+    proc onclick() { this.display(0); akce_back }
+  }
 }
 # -------------------------------------------------------------------------------------------------- _page
 form _page {
@@ -77,27 +98,27 @@ form _page {
   }
   proc page_init() {
     zalozka.set('evid');
-    a_muz.display(0); a_zen.display(0);
+    a_muz.display(0); a_zen.display(0); pla.display(0);
   }
   label evd [ 12,0,120,20] {tag:'p', title:'<b>Evidenční karta</b>', format:'c', css:'ae_butt_on'
     proc onclick() { tags(this,'z','h|o');
       zalozka.set('evid'); u.b.reload_pobyt;
       evid.display(1); cmd.display(1); rod.display(1); muz.display(1); zen.display(1); pob.display(1);
-      a_muz.display(0); a_zen.display(0);
+      a_muz.display(0); a_zen.display(0); pla.display(0);
     }
   }
   label plt [152,0,120,20] {tag:'p', title:'<b>Platba za akci</b>', format:'c',
     proc onclick() { tags(this,'h','z|o');
       zalozka.set('plat'); u.b.reload_pobyt;
       evid.display(0); cmd.display(0); rod.display(0); muz.display(0); zen.display(0); pob.display(0);
-      a_muz.display(0); a_zen.display(0);
+      a_muz.display(0); a_zen.display(0); pla.display(1);
     }
   }
   label jin [292,0,120,20] {tag:'p', title:'<b>Přehled aktivit</b>', format:'c',
     proc onclick() { tags(this,'o','z|h');
       zalozka.set('akce'); u.b.reload_pobyt;
       evid.display(0); cmd.display(0); rod.display(0); muz.display(0); zen.display(0); pob.display(0);
-      a_muz.display(1); a_zen.display(1);
+      a_muz.display(1); a_zen.display(1); pla.display(0);
     }
   }
   label [0,16,582,530] { css:'ae_work'}
@@ -110,15 +131,22 @@ form _aktivity {
   view p: table pobyt { join:'ON a.id_duakce=p.id_akce' }
   view s: table spolu { join:'USING(id_pobyt)' }
   browse akc [ 0,60,,] { rows:25, qry_rows:1
-    show { data:a.id_duakce }
+    show ida { data:a.id_duakce }
+    show idp { data:p.id_pobyt }
     show rok  [,, 30,] { title:'rok', expr:"YEAR(a.datum_od)", format:'q*s-' }
     show akce [,,150,] { title:'název', data:a.nazev, format:'q*s' }
     show fce  [,, 30,] { title:'fce', data:p.funkce, map_pipe:ms_akce_funkce.zkratka, format:'q*s' }
+    proc onsubmit() {
+      akce_show(ida.get,idp.get,conc('<i>AKTIVITA:',akce.get,' ',rok.get,'</i>')) }
   }
   proc ucasti(id_osoba) {
     id_osoba; akc.browse_load(conc('a.spec=0 AND s.id_osoba=',id_osoba),"datum_od DESC")
   | akc.browse_init
   }
+}
+# -------------------------------------------------------------------------------------------------- _platba
+form _platba {
+  label [10,50,,] { title:'tady bude rozpis ceny akce podle cenového vzorce akce a přehled příchozích plateb' }
 }
 # -------------------------------------------------------------------------------------------------- _evidence
 form _evidence {
@@ -273,6 +301,9 @@ form _pobyt {
 }
 # -------------------------------------------------------------------------------------------------- _ucast
 form _ucast [,,400,] { css:'ds_form'
+  label         [4,516,,] {title:'pobyt - vývojářské údaje', skill:'m'}
+  label develop [0,530,380,106] { skill:'m', style:'border:1px solid #bbb;padding:3px' }
+  // definice pohledů
   view p: table pobyt
   view a: table akce{ join:'ON a.id_duakce=p.id_akce' }
   view s: table spolu  { join:'USING(id_pobyt)' }
@@ -290,6 +321,7 @@ form _ucast [,,400,] { css:'ds_form'
 #     | _jmena.width(89); xfunkce.width(33);  skupina.width(0);
 #     }
     // klíče
+    show key_akce  {data:p.id_akce, skill:'m' }
     show key_pobyt {data:p.id_pobyt}
     show key_spolu {data:s.id_spolu}
     show key_osoba {data:o.id_osoba}
@@ -371,6 +403,7 @@ form _ucast [,,400,] { css:'ds_form'
     show pristylky  { data:p.pristylky}
     show pocetdnu   { data:p.pocetdnu}
     show kocarek    { data:p.kocarek}
+    show strava_oddo{ data:a.strava_oddo}
     show strava_cel { data:p.strava_cel}
     show strava_pol { data:p.strava_pol}
     show cstrava_cel{ data:p.cstrava_cel}
@@ -391,6 +424,14 @@ form _ucast [,,400,] { css:'ds_form'
     // změna
     proc reload_pobyt() {
       b.browse_count;
+      [ has_skill('m'); develop.set(conc(
+           'id_akce=',key_akce.get,', id_pobyt=',key_pobyt.get
+          ,'<br>m: id_spolu=', id_spolu_m.get, ', id_osoba=', id_m.get
+          ,'<br>z: id_spolu=', id_spolu_z.get, ', id_osoba=', id_z.get
+          ,'<br>strava=', strava_oddo.get,', strava_cel=', strava_cel.get,', strava_pol=', strava_pol.get
+          ,'<br>cstrava_cel=', cstrava_cel.get
+          ,'<br>cstrava_pol=', cstrava_pol.get
+      ))];
       switch(zalozka.get,
       'evid', {
         // ochrana proti neuložené změně

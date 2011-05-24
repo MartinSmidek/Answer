@@ -18,11 +18,12 @@ proc onstart() {  echo('db.akce.onstart');
 # ================================================================================================== CHLAPI
 panel chl {type:'right', _sys:'*', title:'Chlapi', include:'onclick,db.akce.chl',skill:'yac' }
 # ================================================================================================== AKCE
-panel lst {type:'right', _sys:'*', title:'AKCE', include:'onclick,db.akce.lst',skill:'yaa;faa'
+panel lst {type:'right', _sys:'*', title:'AKCE', include:'onload,db.akce.lst',skill:'yaa;faa'
   use the_akce: form _the_akce         // zatím nezobrazená data nastavené akce s klíčem id_duakce
 }
-panel ducast {type:'plain', _sys:'*', title:'Účastníci', include:'onclick,db.akce.ducast',skill:'yaa;faa'
-  proc init_ucast() { }
+panel ducast {type:'plain', _sys:'*', title:'Účastníci', include:'onload,db.akce.ducast',skill:'yaa;faa'
+  proc init_ucast() { alert('napřed klikni na Databáze|Účastníci') }
+  proc akce_show() { alert('napřed klikni na Databáze|Účastníci') }
 }
 # panel ducast2 {type:'plain', _sys:'*', title:'Účastníci2', include:'onclick,db.akce.ducast2',skill:'md' //martin doma
 #   proc init_ucast() { }

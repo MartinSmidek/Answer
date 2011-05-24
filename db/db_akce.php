@@ -161,12 +161,13 @@ function akce_foxpro_data() {  #trace('');
 # ================================================================================================== VÝPISY
 # -------------------------------------------------------------------------------------------------- akce_sestava2
 # generování sestav
-#   $typ = j | p | vp
+#   $typ = j | p | vp | vs
 function akce_sestava($akce,$par,$title,$vypis,$export=false) {
   return $par->typ=='p'  ? akce_sestava_pary($akce,$par,$title,$vypis,$export)
      : ( $par->typ=='j'  ? akce_sestava_lidi($akce,$par,$title,$vypis,$export)
      : ( $par->typ=='vp' ? akce_vyuctov_pary($akce,$par,$title,$vypis,$export)
-                         : fce_error("akce_sestava: N.Y.I.") ));
+     : ( $par->typ=='vs' ? akce_strava_pary($akce,$par,$title,$vypis,$export)
+                         : fce_error("akce_sestava: N.Y.I.") )));
 }
 # -------------------------------------------------------------------------------------------------- akce_sestava_lidi
 # generování sestavy pro účastníky $akce - jednotlivce
@@ -317,6 +318,157 @@ function akce_sestava_pary($akce,$par,$title,$vypis,$export=false) { trace();
   return $result;
 }
 # ================================================================================================== VYÚČTOVÁNÍ
+# -------------------------------------------------------------------------------------------------- akce_strava_pary
+# generování sestavy přehledu strav pro účastníky $akce - páry
+#   $fld = seznam položek s prefixem
+#   $cnd = podmínka
+# počítané položky
+#   manzele = rodina.nazev muz a zena
+# generované vzorce
+#   platit = součet předepsaných plateb
+function akce_strava_pary($akce,$par,$title,$vypis,$export=false) { trace();
+  $ord= $par->ord ? $par->ord : "IF(funkce<=1,1,funkce),IF(pouze=0,r.nazev,o.prijmeni)";
+  $result= (object)array();
+  $cnd= 1;
+  $html= '';
+  $href= '';
+  $n= 0;
+  // zjištění sloupců (0=ne)
+  $tit= "Manželé:25";
+  $fld= "manzele";
+  $dny= array('ne','po','út','st','čt','pá','so');
+  $dny= array('n','p','ú','s','č','p','s');
+  $qrya= "SELECT strava_oddo,datum_od,datum_do,DATEDIFF(datum_do,datum_od) AS _dnu
+            ,DAYOFWEEK(datum_od)-1 AS _den1
+          FROM akce WHERE id_duakce=$akce ";
+  $resa= mysql_qry($qrya);
+  if ( $resa && ($a= mysql_fetch_object($resa)) ) {
+                                                        debug($a,"akce {$a->_dnu}");
+    $oo= $a->strava_oddo ? $a->strava_oddo : 'vo';
+    $nd= $a->_dnu;
+    for ($i= 0; $i<=$nd; $i++) {
+      $den= $dny[($a->den1+$i)%7].date('d',sql2stamp($a->datum_od)+$i*60*60*24).' ';
+      if ( $i>0 || $oo[0]=='s' ) {
+        $tit.= ",{$den}sc:4:r:s";
+        $tit.= ",{$den}sp:4:r:s";
+        $fld.= ",{$den}sc,{$den}sp";
+      }
+      if ( $i>0 && $i<$nd
+        || $i==0   && ($oo[0]=='s' || $oo[0]=='o')
+        || $i==$nd && ($oo[1]=='o' || $oo[1]=='v') ) {
+        $tit.= ",{$den}oc:4:r:s";
+        $tit.= ",{$den}op:4:r:s";
+        $fld.= ",{$den}oc,{$den}op";
+      }
+      if ( $i<$nd || $oo[1]=='v' ) {
+        $tit.= ",{$den}vc:4:r:s";
+        $tit.= ",{$den}vp:4:r:s";
+        $fld.= ",{$den}vc,{$den}vp";
+      }
+    }
+                                                        display($tit);
+  }
+  // dekódování parametrů
+  $tits= explode(',',$tit);
+  $flds= explode(',',$fld);
+  $cond= $cnd;
+  // získání dat - podle $kdo
+  $clmn= array();       // pro hodnoty
+  $expr= array();       // pro výrazy
+  $suma= array();       // pro sumy sloupců id:::s
+  $fmts= array();       // pro formáty sloupců id::f:
+  for ($i= 0; $i<count($tits); $i++) {
+    $idw= $tits[$i];
+    $fld= $flds[$i];
+    list($id,$w,$f,$sum)= explode(':',$idw);
+    if ( $sum=='s' ) $suma[$fld]= 0;
+    if ( isset($f) ) $fmts[$fld]= $f;
+  }
+  // data akce
+  $qry=  "SELECT r.nazev as nazev,strava_cel,strava_pol,cstrava_cel,cstrava_pol,p.pouze,
+            GROUP_CONCAT(DISTINCT IF(t.role='a',o.prijmeni,'') SEPARATOR '') as prijmeni_m,
+            GROUP_CONCAT(DISTINCT IF(t.role='a',o.jmeno,'')    SEPARATOR '') as jmeno_m,
+            GROUP_CONCAT(DISTINCT IF(t.role='b',o.prijmeni,'') SEPARATOR '') as prijmeni_z,
+            GROUP_CONCAT(DISTINCT IF(t.role='b',o.jmeno,'')    SEPARATOR '') as jmeno_z
+          FROM pobyt AS p
+          JOIN spolu AS s USING(id_pobyt)
+          JOIN osoba AS o ON s.id_osoba=o.id_osoba
+          LEFT JOIN tvori AS t ON t.id_osoba=o.id_osoba
+          LEFT JOIN rodina AS r USING(id_rodina)
+          WHERE p.id_akce='$akce' AND $cond
+          GROUP BY id_pobyt
+          ORDER BY $ord";
+//   $qry.=  " LIMIT 5";
+  $res= mysql_qry($qry);
+  while ( $res && ($x= mysql_fetch_object($res)) ) {
+                                                        debug($x,"hodnoty");
+    $n++;
+    $clmn[$n]= array();
+    $clmn[$n]['manzele']=
+          $x->pouze==1 ? "{$x->prijmeni_m} {$x->jmeno_m}"
+       : ($x->pouze==2 ? "{$x->prijmeni_z} {$x->jmeno_z}"
+       : "{$x->nazev} {$x->jmeno_m} a {$x->jmeno_z}");
+    // stravy
+    $sc= $x->strava_cel;
+    $sp= $x->strava_pol;
+    $csc= $x->cstrava_cel;
+    $csp= $x->cstrava_pol;
+    $k= 0;
+    for ($i= 0; $i<=$nd; $i++) {
+      if ( $i>0 || $oo[0]=='s' ) {
+        $k++; $suma[$flds[$k]]+= $clmn[$n][$flds[$k]]= $csc ? $csc[3*$i+0] : $sc;
+        $k++; $suma[$flds[$k]]+= $clmn[$n][$flds[$k]]= $csp ? $csp[3*$i+0] : $sp;
+      }
+      if ( $i>0 && $i<$nd
+        || $i==0   && ($oo[0]=='s' || $oo[0]=='o')
+        || $i==$nd && ($oo[1]=='o' || $oo[1]=='v') ) {
+        $k++; $suma[$flds[$k]]+= $clmn[$n][$flds[$k]]= $csc ? $csc[3*$i+1] : $sc;
+        $k++; $suma[$flds[$k]]+= $clmn[$n][$flds[$k]]= $csp ? $csp[3*$i+1] : $sp;
+      }
+      if ( $i<$nd || $oo[1]=='v' ) {
+        $k++; $suma[$flds[$k]]+= $clmn[$n][$flds[$k]]= $csc ? $csc[3*$i+2] : $sc;
+        $k++; $suma[$flds[$k]]+= $clmn[$n][$flds[$k]]= $csp ? $csp[3*$i+2] : $sp;
+      }
+    }
+  }
+                                                        debug($suma,"sumy");
+  if ( $export ) {
+    $result->tits= $tits;
+    $result->flds= $flds;
+    $result->clmn= $clmn;
+    $result->expr= $expr;
+  }
+  else {
+    // titulky
+    foreach ($tits as $idw) {
+      list($id)= explode(':',$idw);
+      $ths.= "<th>$id</th>";
+    }
+    // data
+    foreach ($clmn as $i=>$c) {
+      $tab.= "<tr>";
+      foreach ($c as $id=>$val) {
+        $style= akce_sestava_td_style($fmts[$id]);
+        $tab.= "<td$style>$val</td>";
+      }
+      $tab.= "</tr>";
+    }
+    // sumy
+    $sum= '';
+    if ( count($suma)>0 ) {
+      $sum.= "<tr>";
+      foreach ($flds as $f) {
+        $val= isset($suma[$f]) ? $suma[$f] : '';
+        $sum.= "<th style='text-align:right'>$val</th>";
+      }
+      $sum.= "</tr>";
+    }
+    $result->html= "<div class='stat'><table class='stat'><tr>$ths</tr>$sum$tab</table></div>";
+    $result->html.= "</br>";
+    $result->href= $href;
+  }
+  return $result;
+}
 # -------------------------------------------------------------------------------------------------- akce_vyuctov_pary
 # generování sestavy vyúčtování pro účastníky $akce - páry
 #   $fld = seznam položek s prefixem
@@ -514,6 +666,7 @@ function akce_sestava_td_style($fmt) {
   switch ($fmt) {
   case 'r': $style[]= 'text-align:right'; break;
   case 'd': $style[]= 'text-align:right'; break;
+  case '!': $style[]= 'color:red'; break;
   }
   return count($style)
     ? " style='".implode(';',$style)."'" : '';

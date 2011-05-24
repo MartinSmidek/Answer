@@ -5,27 +5,32 @@
 # ------------------------------------------------------------------------------------------------ #
 
 use info: form right [5,5,,]              { tag:'inf' }
+/*
 use prihlasky: form _prihlasky [10,44,,]  { tag:'app' }
 use prihlaska: form _prihlaska [390,44,,] { tag:'app' }
-use osoby:  form _osoby [10,44,,]         { tag:'pers' }
 use osoba:  form _osoba [390,36,,]        { tag:'pers' }
 use rodina: form _rodina [390,36,,]       { tag:'pers' }
 use platby: form _platby [10,64,,]        { tag:'bank' }
 use platba: form _platba [10,300,,]       { tag:'bank' }
-
-use jmena:  form _osoby2 [10,44,,]        { tag:'names' }
-use page:  form _page    [400,10,,]
+*/
+use osoby:  form _osoby  [10,10,,]        { tag:'list' }
+use page:   form _page   [355,10,,]
 # záložka evidence
-use p_oso:  form _osoba [390,36,,]        { tag:'pers' }
-use p_rod:  form _rodina [390,36,,]       { tag:'pers' }
+use p_oso:  form _osoba  [360,10,,]       { tag:'p_oso' }
+use p_rod:  form _rodina [360,10,,]       { tag:'p_rod' }
+use p_cle:  form _rcleni [360,10,,]       { tag:'p_cle' }
+use p_fir:  form _firma  [360,10,,]       { tag:'p_fir' }
+use p_akc:  form _oakce  [360,10,,]       { tag:'p_akc' }
 
 
 proc onfirstfocus() {
+  osoby.b.browse_load;
+  page.oso.onclick;
   m.g.i.click;
-  osoby.b.browse_load
 }
 
 menu m {type:'left'
+/*
   menu {title:'Klub přátel YMCA Setkání',type:'group'
     item {title:'přihlášky z www.setkani.org'
       proc onclick (i) {
@@ -48,13 +53,15 @@ menu m {type:'left'
       }
     }
   }
+*/
   menu g {title:'Evidence YMCA Setkání',type:'group', skill:'m'
     item i {title:'všechny kontakty II'
       proc onclick (i) {
-        panel.display(0,'bank|app|pers|inf'); panel.display(1,'names');
+        panel.display(0,'bank|app|pers|inf'); panel.display(1,'list');
         page.page_show;
       }
     }
+/*
     item {title:'všechny kontakty' }
     proc onclick (i) {
       panel.display(0,'bank|app'); panel.display(1,'pers');
@@ -76,50 +83,57 @@ menu m {type:'left'
         platby.b.browse_load
       }
     }
+*/
   }
 }
 # -------------------------------------------------------------------------------------------------- _page
-form _page {
+form _page { style:'z-index:1'
   var zalozka: text           // oso | rod | cle
   proc page_show() {  }
   # --------------------------- záložky
   proc tags(a,on,off) {
+    zalozka.set(on);
     form.set_css('ae_butt_off','ae_butt_on','p');
     a.set_css('ae_butt_on','ae_butt_off');
-#     form.display(1,on); form.display(0,off);
+    panel.display(1,on); panel.display(0,off);
+    reload
+  }
+  proc reload() {
+    switch(zalozka.get,
+    'p_oso',{ p_oso.load(osoby.b.id_o.get) },
+    'p_rod',{ p_rod.load(osoby.b.id_r.get) },
+    'p_cle',{ p_cle.b.browse_load(conc('ox.id_rodina=',osoby.b.id_r.get)) },
+    'p_akc',{ p_akc.ucasti(osoby.b.id_o.get) },
+    { stop });
   }
   proc page_init() {
     zalozka.set('oso');
 #     a_muz.display(0); a_zen.display(0);
   }
-  label oso [ 12,0,120,20] {tag:'p', title:'<b>Osoba</b>', format:'c', css:'ae_butt_on'
-    proc onclick() { tags(this,'z','h|o');
-      zalozka.set('oso');
-#       u.b.reload_pobyt;
-#       evid.display(1); cmd.display(1); rod.display(1); muz.display(1); zen.display(1); pob.display(1);
-#       a_muz.display(0); a_zen.display(0);
+  label oso [ 10,0,60,20] {tag:'p', title:'<b>Osoba</b>', format:'c', css:'ae_butt_on'
+    proc onclick() { tags(this,'p_oso','p_rod|p_cle|p_fir|p_akc');
     }
   }
-  label rod [152,0,120,20] {tag:'p', title:'<b>Rodina</b>', format:'c',
-    proc onclick() { tags(this,'h','z|o');
-      zalozka.set('rod');
-#       u.b.reload_pobyt;
-#       evid.display(0); cmd.display(0); rod.display(0); muz.display(0); zen.display(0); pob.display(0);
-#       a_muz.display(0); a_zen.display(0);
+  label rod [ 90,0,60,20] {tag:'p', title:'<b>Rodina</b>', format:'c',
+    proc onclick() { tags(this,'p_rod','p_oso|p_cle|p_fir|p_akc');
     }
   }
-  label cle [292,0,120,20] {tag:'p', title:'<b>Členové</b>', format:'c',
-    proc onclick() { tags(this,'o','z|h');
-      zalozka.set('cle');
-#       u.b.reload_pobyt;
-#       evid.display(0); cmd.display(0); rod.display(0); muz.display(0); zen.display(0); pob.display(0);
-#       a_muz.display(1); a_zen.display(1);
+  label cle [170,0,60,20] {tag:'p', title:'<b>Členové</b>', format:'c',
+    proc onclick() { tags(this,'p_cle','p_oso|p_rod|p_fir|p_akc');
     }
   }
-  label [0,16,582,530] { css:'ae_work'}
+  label fir [250,0,60,20] {tag:'p', title:'<b>Firma</b>', format:'c',
+    proc onclick() { tags(this,'p_fir','p_oso|p_rod|p_cle|p_akc');
+    }
+  }
+  label akc [330,0,60,20] {tag:'p', title:'<b>Akce</b>', format:'c',
+    proc onclick() { tags(this,'p_akc','p_oso|p_rod|p_cle|p_fir');
+    }
+  }
+  label [0,16,400,260] { css:'ae_work'}
 }
-# ---------------------------------------------------------------------- _osoby2
-form _osoby2 {
+# ---------------------------------------------------------------------- _osoby
+form _osoby {
   view os: table osoba
   view ot: table tvori { join:"ON os.id_osoba=ot.id_osoba AND ot.id_rodina!=1" }
   view ox: table rodina { join:"ON ox.id_rodina=ot.id_rodina" }
@@ -130,16 +144,123 @@ form _osoby2 {
     show id_c { data:oc.id_tvori }
     show [,,80,] { data:os.prijmeni, title:'příjmení', format:'q*s' }
     show [,,70,] { data:os.jmeno, title:'jméno', format:'q*s' }
-#     show [,,95,] { title:'obec', data:os.obec, format:'q*s' }
+    show [,,95,] { title:'obec', data:os.obec, format:'q*s' }
 #     show [,,80,] { title:'telefon', expr:"CONCAT(os.telefon,', ',ox.telefony)", format:'q*s' }
-    show [,,40,] { data:oc.role, title:'YS', help:'vztah k YMCA Setkání', format:'uq*s'
+    show [,,65,] { data:oc.role, title:'YS', help:'vztah k YMCA Setkání', format:'uq*s'
       proc onsubmit() { this.save } }
-    proc onrowclick() {
-      osoba.load(id_o.get);
-      rodina.load(id_r.get);
+    proc onrowclick() { echo('osoba=',id_o.get,', rodina=',id_r.get); page.reload }
+  }
+}
+# ---------------------------------------------------------------------- _osoba
+form _osoba { tag:'a'
+  view o: table osoba
+  view t: table tvori { join:"ON o.id_osoba=t.id_osoba" }
+  view r: table rodina { join:"ON r.id_rodina=t.id_rodina" }
+  # --------------------------------------------------  OSOBA
+  const L=0; T=10
+  field  { data:o.id_osoba }
+  field  { data:t.id_tvori }
+  field  { data:r.id_rodina }
+#   label  [L+0,T+9,367,249] { css:'ae_part' }
+#   label  [L+8,T+0,74,] { title:'osobní údaje', css:'ae_part_label' }
+  label          [L+5,T+15,100,] {title:'příjmení'}
+  field prijmeni [L+5,T+30,100,] {data:o.prijmeni, help:'příjmení'}
+  label          [L+117,T+15,100,] {title:'jméno'}
+  field jmeno    [L+117,T+30,101,] {data:o.jmeno}
+  radio sex [L+225,T+15,50,35] { data:o.sex, value:'1'
+    case [0,2,50,] { title:'muž', expr:'1' }
+    case [0,17,50,] { title:'žena', expr:'2' }
+    proc onchange() { echo('sex=',this.get) }
+  }
+  label          [L+5,T+54,100,] {title:'ulice'}
+  field ulice    [L+5,T+69,162,] {data:o.ulice}
+  label          [L+179,T+54,39,] {title:'psč'}
+  field psc      [L+179,T+69,40,] {data:o.psc}
+  label          [L+230,T+54,100,] {title:'obec'}
+  field obec     [L+229,T+69,131,] {data:o.obec}
+  label          [L+5,T+94,37,] {title:'telefon'}
+  field telefon  [L+5,T+110,212,] {data:o.telefon}
+  label          [L+230,T+94,33,] {title:'narození'}
+  field narozeni [L+229,T+110,85,] {type:'date', data:o.narozeni, format:'rR:e'}
+  label          [L+324,T+94,41,] {title:'nnnn rč'}
+  field rodne    [L+323,T+110,37,] {data:o.rc_xxxx, format:'r:e'}
+  label          [L+5,T+138,33,] {title:'e-mail'}
+  field email    [L+5,T+154,355,] {data:o.email}
+  label          [L+5,T+179,33,] {title:'poznámka'}
+  edit  pozn     [L+5,T+194,355,60] {data:o.note}
+}
+# ---------------------------------------------------------------------- _rodina
+form _rodina {
+  view r: table rodina
+  # --------------------------------------------------  RODINA
+  const Lr= 0; Tr= 10
+#   label  [Lr+0,Tr+9,367,249] { css:'ae_part' }
+#   label  [Lr+8,Tr+0,74,] { title:'rodinné údaje', css:'ae_part_label' }
+  label          [Lr+5,Tr+15,100,] {title:'společné příjmení'}
+  label          [Lr+181,Tr+15,75,] {title:'svatba'}
+  label          [Lr+297,Tr+15,43,] {title:'SPZ'}
+  label          [Lr+5,Tr+54,100,] {title:'ulice'}
+  label          [Lr+179,Tr+54,39,] {title:'psč'}
+  label          [Lr+230,Tr+54,100,] {title:'obec'}
+  label          [Lr+5,Tr+94,37,] {title:'telefon'}
+  label          [Lr+5,Tr+138,33,] {title:'e-mail'}
+  label          [Lr+5,Tr+179,33,] {title:'poznámka'}
+  field nazev       [Lr+4,Tr+30,100,] {data:r.nazev, help:'příjmení'}
+  field _spolu      [Lr+149,Tr+32,23,] {format:'o', value:'?'}
+  field svatba      [Lr+178,Tr+31,36,] {data:r.svatba}
+  field ulice_r       [Lr+4,Tr+69,162,] {data:r.ulice}
+  field psc_r         [Lr+179,Tr+69,39,] {data:r.psc}
+  field obec_r        [Lr+228,Tr+69,129,] {data:r.obec}
+  field telefony    [Lr+5,Tr+109,353,] {data:r.telefony}
+  field emaily      [Lr+5,Tr+153,354,] {data:r.emaily}
+  edit  note        [Lr+5,Tr+192,355,60] {data:r.note}
+  field datsvatba   [Lr+220,Tr+31,63,] {data:r.datsvatba}
+  field spz         [Lr+297,Tr+31,62,] {data:r.spz}
+}
+# ---------------------------------------------------------------------- _rcleni
+form _rcleni {
+  view ox: table rodina
+  view ot: table tvori { join:"ON ox.id_rodina=ot.id_rodina AND ot.id_rodina!=1" }
+  view os: table osoba { join:"USING(id_osoba)" }
+  browse b [10,30,,] { rows:10, buf_rows:20, qry_rows:1
+    show id_r { data:ox.id_rodina }
+    show id_t { data:ot.id_tvori }
+    show id_o { data:os.id_osoba }
+    show [,,80,] { data:os.prijmeni, title:'příjmení', format:'q*s' }
+    show [,,70,] { data:os.jmeno, title:'jméno', format:'q*s' }
+    show [,,30,] { data:ot.role, title:'vztah', help:'vztah k rodině', format:'q*s' }
+    proc onrowclick() { echo('onrowclick: osoba=',id_o.get,', rodina=',id_r.get) }
+    proc onsubmit() { echo('onsubmit: osoba=',id_o.get,', rodina=',id_r.get);
+      osoby.b.raise('onrowclick',id_o.get);
+    | osoby.b.browse_seek(conc('os.id_osoba=',id_o.get));
     }
   }
 }
+# ---------------------------------------------------------------------- _oakce
+form _oakce {
+  view a: table akce
+  view p: table pobyt { join:'ON a.id_duakce=p.id_akce' }
+  view s: table spolu { join:'USING(id_pobyt)' }
+  browse akc [10,30,,] { rows:10, qry_rows:1
+    show ida { data:a.id_duakce }
+    show idp { data:p.id_pobyt }
+    show rok  [,, 30,] { title:'rok', expr:"YEAR(a.datum_od)", format:'q*s-' }
+    show akce [,,150,] { title:'název', data:a.nazev, format:'q*s' }
+    show fce  [,, 30,] { title:'fce', data:p.funkce, map_pipe:ms_akce_funkce.zkratka, format:'q*s' }
+    proc onsubmit() {
+      ducast.akce_show(ida.get,idp.get,conc('<i>EVIDENCE:',akce.get,' ',rok.get,'</i>')) }
+  }
+  proc ucasti(id_osoba) {
+    id_osoba; akc.browse_load(conc('a.spec=0 AND s.id_osoba=',id_osoba),"datum_od DESC")
+  | akc.browse_init
+  }
+}
+# ---------------------------------------------------------------------- _firma
+form _firma {
+  label [10,50,,] { title:'tady bude informace o firmě, pokud se mají dary psát na ni' }
+}
+
+/*
 # ---------------------------------------------------------------------- _platby
 form _platby {
   view p: table platba
@@ -176,94 +297,6 @@ form _platba {
   label info [8,60,200,100]
   field ss [9,70,75,] { format:'ro' }
 }
-# ---------------------------------------------------------------------- _osoby
-form _osoby {
-  view os: table osoba
-  view ot: table tvori { join:"ON os.id_osoba=ot.id_osoba AND ot.id_rodina!=1" }
-  view ox: table rodina { join:"ON ox.id_rodina=ot.id_rodina" }
-  view oc: table tvori { join_type:'LEFT', join:"ON os.id_osoba=oc.id_osoba AND oc.id_rodina=1" }
-  browse b [0,0,,] { rows:28, qry_rows:1
-    show id_o { data:os.id_osoba }
-    show id_r { data:ot.id_rodina }
-    show id_c { data:oc.id_tvori }
-    show [,,80,] { data:os.prijmeni, title:'příjmení', format:'q*s' }
-    show [,,70,] { data:os.jmeno, title:'jméno', format:'q*s' }
-    show [,,95,] { title:'obec', data:os.obec, format:'q*s' }
-    show [,,80,] { title:'telefon', expr:"CONCAT(os.telefon,', ',ox.telefony)", format:'q*s' }
-    show [,,20,] { data:oc.role, title:'YMCA', format:'uq*s'
-      proc onsubmit() { this.save } }
-    proc onrowclick() {
-      osoba.load(id_o.get);
-      rodina.load(id_r.get);
-    }
-  }
-}
-# ---------------------------------------------------------------------- _osoba
-form _osoba { tag:'a'
-  view o: table osoba
-  view t: table tvori { join:"ON o.id_osoba=t.id_osoba" }
-  view r: table rodina { join:"ON r.id_rodina=t.id_rodina" }
-  # --------------------------------------------------  OSOBA
-  const L=0; T=10
-  field  { data:o.id_osoba }
-  field  { data:t.id_tvori }
-  field  { data:r.id_rodina }
-  label  [L+0,T+9,367,249] { css:'ae_part' }
-  label  [L+8,T+0,74,] { title:'osobní údaje', css:'ae_part_label' }
-  label          [L+5,T+15,100,] {title:'příjmení'}
-  field prijmeni [L+5,T+30,100,] {data:o.prijmeni, help:'příjmení'}
-  label          [L+117,T+15,100,] {title:'jméno'}
-  field jmeno    [L+117,T+30,101,] {data:o.jmeno}
-  radio sex [L+225,T+15,50,35] { data:o.sex, value:'1'
-    case [0,2,50,] { title:'muž', expr:'1' }
-    case [0,17,50,] { title:'žena', expr:'2' }
-    proc onchange() { echo('sex=',this.get) }
-  }
-  label          [L+5,T+54,100,] {title:'ulice'}
-  field ulice    [L+5,T+69,162,] {data:o.ulice}
-  label          [L+179,T+54,39,] {title:'psč'}
-  field psc      [L+179,T+69,40,] {data:o.psc}
-  label          [L+230,T+54,100,] {title:'obec'}
-  field obec     [L+229,T+69,131,] {data:o.obec}
-  label          [L+5,T+94,37,] {title:'telefon'}
-  field telefon  [L+5,T+110,212,] {data:o.telefon}
-  label          [L+230,T+94,33,] {title:'narození'}
-  field narozeni [L+229,T+110,85,] {type:'date', data:o.narozeni, format:'rR:e'}
-  label          [L+324,T+94,41,] {title:'nnnn rč'}
-  field rodne    [L+323,T+110,37,] {data:o.rc_xxxx, format:'r:e'}
-  label          [L+5,T+138,33,] {title:'e-mail'}
-  field email    [L+5,T+154,355,] {data:o.email}
-  label          [L+5,T+179,33,] {title:'poznámka'}
-  edit  pozn     [L+5,T+194,355,60] {data:o.note}
-}
-# ---------------------------------------------------------------------- _rodina
-form _rodina {
-  view r: table rodina
-  # --------------------------------------------------  RODINA
-  const Lr= 0; Tr= 280
-  label  [Lr+0,Tr+9,367,249] { css:'ae_part' }
-  label  [Lr+8,Tr+0,74,] { title:'rodinné údaje', css:'ae_part_label' }
-  label          [Lr+5,Tr+15,100,] {title:'společné příjmení'}
-  label          [Lr+181,Tr+15,75,] {title:'svatba'}
-  label          [Lr+297,Tr+15,43,] {title:'SPZ'}
-  label          [Lr+5,Tr+54,100,] {title:'ulice'}
-  label          [Lr+179,Tr+54,39,] {title:'psč'}
-  label          [Lr+230,Tr+54,100,] {title:'obec'}
-  label          [Lr+5,Tr+94,37,] {title:'telefon'}
-  label          [Lr+5,Tr+138,33,] {title:'e-mail'}
-  label          [Lr+5,Tr+179,33,] {title:'poznámka'}
-  field nazev       [Lr+4,Tr+30,100,] {data:r.nazev, help:'příjmení'}
-  field _spolu      [Lr+149,Tr+32,23,] {format:'o', value:'?'}
-  field svatba      [Lr+178,Tr+31,36,] {data:r.svatba}
-  field ulice_r       [Lr+4,Tr+69,162,] {data:r.ulice}
-  field psc_r         [Lr+179,Tr+69,39,] {data:r.psc}
-  field obec_r        [Lr+228,Tr+69,129,] {data:r.obec}
-  field telefony    [Lr+5,Tr+109,353,] {data:r.telefony}
-  field emaily      [Lr+5,Tr+153,354,] {data:r.emaily}
-  edit  note        [Lr+5,Tr+192,355,60] {data:r.note}
-  field datsvatba   [Lr+220,Tr+31,63,] {data:r.datsvatba}
-  field spz         [Lr+297,Tr+31,62,] {data:r.spz}
-}
 # ---------------------------------------------------------------------- _prihlasky
 form _prihlasky {
   view ws: table webform
@@ -279,7 +312,7 @@ form _prihlasky {
   }
 }
 # ---------------------------------------------------------------------- _prihlaska
-form _prihlaska [,,340,200] {
+form _prihlaska {
   var url: text
   view w: table webform
   label [10,14,,] { title:"Přihlašuji se jako *" }
@@ -318,3 +351,4 @@ form _prihlaska [,,340,200] {
   label [9,Tc+0,,] { title:'potvrzeno zpětným mailem' }
   edit msg [9,Tc+14,300,] { data:w.potvrzeno }
 }
+*/
