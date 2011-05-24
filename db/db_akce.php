@@ -3,7 +3,7 @@
 # -------------------------------------------------------------------------------------------------- akce_pdf_stitky
 # vygenerování PDF se samolepkami - adresními štítky
 #   $the_json obsahuje  title:'{jmeno_postovni}<br>{adresa_postovni}'
-function akce_pdf_stitky($pary,$cond,$report_json) { trace();
+function akce_pdf_stitky($cond,$report_json) { trace();
   global $json, $ezer_path_docs;
   $result= (object)array('_error'=>0);
   // projdi požadované adresy rodin
@@ -44,10 +44,10 @@ function akce_pdf_stitky($pary,$cond,$report_json) { trace();
     $n++;
   }
   // předání k tisku
-  $fname= cz2ascii('stitky_').date("Ymd_Hi");
+  $fname= 'stitky_'.date("Ymd_Hi");
   $fpath= "$ezer_path_docs/$fname.pdf";
   dop_rep_ids($report_json,$parss,$fpath);
-  $result->html= " Výpis byl vygenerován ve formátu <a href='docs/$name.pdf' target='pdf'>PDF</a>.";
+  $result->html= " Výpis byl vygenerován ve formátu <a href='docs/$fname.pdf' target='pdf'>PDF</a>.";
   return $result;
 }
 # -------------------------------------------------------------------------------------------------- dop_rep_ids
@@ -253,7 +253,7 @@ function akce_sestava_pary($akce,$par,$title,$vypis,$export=false) { trace();
   // dekódování parametrů
   $tits= explode(',',$tit);
   $flds= explode(',',$fld);
-  $cond= 1;
+  $cond= $cnd;
   // získání dat - podle $kdo
   $clmn= array();
   $expr= array();       // pro výrazy
@@ -1483,6 +1483,50 @@ function sql2xls($datum) {
     $text.= date("j{$del}n{$del}Y",strtotime($datum));
   }
   return $text;
+}
+# ================================================================================================== EMAILY - SQL
+# vytváření a testování SQL dotazů pro definici mailů
+# -------------------------------------------------------------------------------------------------- db_mail_sql_new
+# ASK - vytvoření SQL dotazů pro definici mailů
+# vrací {id_cis,data,query}
+function db_mail_sql_new() {  #trace();
+  $id= select("max(id_cis)","_cis","druh='db_maily_sql'");
+  $data= select("max(data)","_cis","druh='db_maily_sql'");
+  $result= (object)array(
+    'id'=>$id+1, 'data'=>$data+1,
+    'qry'=>"SELECT id_... AS _id,prijmeni,jmeno,ulice,psc,obec,email,telefon FROM ...");
+  return $result;
+}
+# -------------------------------------------------------------------------------------------------- db_mail_sql_try
+# ASK - vytvoření SQL dotazů pro definici mailů
+# vrací {id_cis,data,query}
+function db_mail_sql_try($qry) {  trace();
+  $html= '';
+  try {
+    $time_start= getmicrotime();
+    $res= @mysql_query($qry);
+    $time= round(getmicrotime() - $time_start,4);
+    if ( !$res ) {
+      $html.= "<span style='color:darkred'>ERROR ".mysql_error()."</span>";
+    }
+    else {
+      $nmax= 15;
+      $num= mysql_num_rows($res);
+      $html.= "výběr obsahuje <b>$num</b> emailových adresátů, nalezených během $time ms, ";
+      $html.= $num>$nmax ? "následuje prvních $nmax adresátů" : "následují všichni adresáti";
+      $html.= "<br><br><table>";
+      $n= $nmax;
+      while ( $n && ($c= mysql_fetch_object($res)) ) {
+        $html.= "<tr><td>{$c->email}</td><td>{$c->telefon}</td><td>{$c->prijmeni} {$c->jmeno}
+                 </td><td>{$c->ulice} {$c->psc} {$c->obec}</td></tr>";
+        $n--;
+      }
+      $html.= "</table>";
+      $html.= $num>$nmax ? "..." : "";
+    }
+  }
+  catch (Exception $e) { $html.= "<span style='color:red'>FATAL ".mysql_error()."</span>";  }
+  return $html;
 }
 # ================================================================================================== EMAILY
 # podpora přihlášek do Klubu

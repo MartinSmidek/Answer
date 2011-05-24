@@ -16,7 +16,7 @@ use info: form right [12,4,,] {
       },
       'PDF',{
         sti_A.report_init; sti_A.report_check;
-        res.set(ask('akce_pdf_stitky',1,conc("p.id_akce=",the_duakce.get),sti_A.get_json));
+        res.set(ask('akce_pdf_stitky',conc("p.id_akce=",the_duakce.get," AND ",the_par.get('cnd')),sti_A.get_json));
         form.msg.set(res.html);
       })
     }
@@ -55,7 +55,10 @@ menu m {type:'left',
                                         ,fld:'prijmeni,jmeno,narozeni,rc_xxxx,obec,psc,ulice,note'}}
   }
   menu {title:'tisky do PDF',type:'group',_sys:'*'
-    item {title:'Adresní štítky'        ,par:°{typ:'p',exp:'PDF',cnd:'1'
+    item {title:'Adresní štítky rodin'  ,par:°{typ:'p',exp:'PDF',cnd:'1'
+                                        ,tit:'příjmení:15,jména:20,obec:25,psč:7,ulice:25,stát:10'
+                                        ,fld:'prijmeni,jmena,obec,psc,ulice,stat'}}
+    item {title:'Adresní štítky rodin bez mailu'  ,par:°{typ:'p',exp:'PDF',cnd:"r.emaily=''"
                                         ,tit:'příjmení:15,jména:20,obec:25,psč:7,ulice:25,stát:10'
                                         ,fld:'prijmeni,jmena,obec,psc,ulice,stat'}}
   }
