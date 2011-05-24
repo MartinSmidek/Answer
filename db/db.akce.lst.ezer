@@ -99,9 +99,9 @@ form _page [,,285,500] {
   field [118,133,83,] { tag:'cor', type:'date', data:akce.datum_do }
   label [41,173,,] { tag:'cor', title:'typ akce *' }
   select [94,169,139,] { tag:'cor', type:'map', data:akce.druh, options:ms_akce_typ.zkratka }
-  check [150,200,83,] { tag:'cor', title:'jen seznam', data:akce.spec, format:'r' }
-  label [14,202,,] { tag:'cor', title:'účetní symbol' }
-  field [96,202,47,] { tag:'cor', data:akce.ciselnik_akce }
+  check [205,129,83,] { tag:'cor', title:'jen seznam', data:akce.spec, format:'r' }
+  label [14,202,,] { tag:'cor', title:'účetní symbol:', skill:'faa|faa' }
+  field [96,202,47,] { tag:'cor', data:akce.ciselnik_akce, skill:'faa|faa' }
   // Zpět a Uložit
   label  [144,236,98,30] { tag:'cor', css:'ae_parm', style:'z-index:1' }
   button [150,241,,] { tag:'cor', title:'Zpět',  help:'Neměnit změněná data', proc onclick() {
@@ -183,9 +183,10 @@ form _akce [,,*,50] {
 #     show kod   [,,30,] {title:'kód', data:ga2.g_kod, format:'rs+q*u', css_cell:'kod,0:yellow'
 #       proc onsubmit() { echo(ask('akce_roku_id',id_akce.get,kod.get,the_rok.get)) }
 #     }
-/**/show druh  [,,70,] {title:'druh',   data:da2.druh, map_pipe:ms_akce_typ.zkratka, format:'sq#'}
+/**/show druh  [,,60,] {title:'druh',   data:da2.druh, map_pipe:ms_akce_typ.zkratka, format:'sq#'}
+    show kod   [,,30,] {title:'účet',  expr:"IF(ga2.g_kod,ga2.g_kod,da2.ciselnik_akce)", format:'rs+q*' }
     show nazev [,,120,] {title:'název', data:da2.nazev, format:'sq*'}
-    show misto [,,80,] {title:'místo', data:da2.misto, format:'sq*'}
+    show misto [,,60,] {title:'místo', data:da2.misto, format:'sq*'}
     show od    [,,65,] {title:'od',     data:da2.datum_od, format:'rsq*'}
     show do    [,,65,] {title:'do',     data:da2.datum_do, format:'rsq*'}
 #     show strava[,,20,] {title:'str',    data:da2.strava_oddo, format:'rsq*'}
