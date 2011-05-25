@@ -33,9 +33,11 @@ panel ducast {type:'plain', _sys:'*', title:'Účastníci', include:'onload,db.a
 # }
 panel tisk [,,,] {type:'right', _sys:'*', title:'Výpisy akce', include:'onclick,db.akce.tisk',skill:'yaa;faa'  }
 # ================================================================================================== EVIDENCE
-panel evi {type:'right', _sys:'*', title:'EVIDENCE', include:'onclick,db.akce.evi', skill:'yae;fae' }
-panel rod {type:'plain', title:'Rodiny', include:'onclick,db.akce.rod', skill:'yae;fae'  }
-panel jed {type:'plain', title:'Jednotlivci', skill:'yae;fae'  }
+panel evi {type:'right', _sys:'*', title:'EVIDENCE', include:'onclick,db.akce.evi', skill:'yae;fae'
+#   proc evid_show() { alert('napřed klikni na Databáze|EVIDENCE') }
+}
+# panel rod {type:'plain', title:'Rodiny', include:'onclick,db.akce.rod', skill:'yae;fae'  }
+# panel jed {type:'plain', title:'Jednotlivci', skill:'yae;fae'  }
 panel mai {type:'right', title:'MAILY', include:'onclick,db.akce.mai', skill:'yam;fam'  }
 
 # ================================================================================================== COMMON

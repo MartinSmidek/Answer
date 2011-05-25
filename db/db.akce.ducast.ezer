@@ -18,18 +18,21 @@ proc init_ucast() { echo('init_ucast ',the_title.get);
   [ reload(0) ];
   page.evd.onclick
 }
-proc akce_show(xakce,xpobyt,xnadpis) {  echo('akce_show ',xakce,' ',xpobyt,' ',xnadpis);
-  back.set(object('ida',the_duakce.get,'idp',u.b.key_pobyt.get,'tit',the_title.get));
+proc akce_show(xakce,xpobyt,xnadpis,xback) {  echo('akce_show ',xakce,' ',xpobyt,' ',xnadpis);
+  back.set(object('ida',the_duakce.get,'idp',u.b.key_pobyt.get,'tit',the_title.get,'bck',xback));
   header.zpet.display(1);
   panel.focus(1); // bez vyvolání onfocus
   the_duakce.set(xakce);
-  header.fill(xnadpis);
+  header.fill(conc('<i>',xback,': ',xnadpis,'</i>'));
   reload(xpobyt);
 }
 proc akce_back() {
   the_duakce.set(back.get('ida'));
   the_title.set(back.get('tit')); header.fill(the_title.get);
   reload(back.get('idp'));
+  switch(back.get('bck'),
+  'AKTIVITA',{ page.jin.onclick },
+  'EVIDENCE',{ evi.focus(1) });
 }
 
 use header:form _header  [  4,0,,]
@@ -49,6 +52,7 @@ use a_zen: form _aktivity[700,10,,]
 
 proc reload(id_pobyt) { echo('reload ',the_title.get);
   cmd.b_display(1);
+  the_duakce.get;
   lst.the_akce.load(the_duakce.get);
   [ u.b.browse_load(conc("p.id_akce=",the_duakce.get),
       "IF(funkce<=1,1,funkce),IF(pouze=0,r.nazev,o.prijmeni)",
@@ -137,7 +141,7 @@ form _aktivity {
     show akce [,,150,] { title:'název', data:a.nazev, format:'q*s' }
     show fce  [,, 30,] { title:'fce', data:p.funkce, map_pipe:ms_akce_funkce.zkratka, format:'q*s' }
     proc onsubmit() {
-      akce_show(ida.get,idp.get,conc('<i>AKTIVITA:',akce.get,' ',rok.get,'</i>')) }
+      akce_show(ida.get,idp.get,conc(akce.get,' ',rok.get),'AKTIVITA') }
   }
   proc ucasti(id_osoba) {
     id_osoba; akc.browse_load(conc('a.spec=0 AND s.id_osoba=',id_osoba),"datum_od DESC")
