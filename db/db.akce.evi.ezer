@@ -28,6 +28,8 @@ proc onfirstfocus() {
   page.oso.onclick;
   m.g.i.click;
 }
+# proc evid_show() {  }
+
 
 menu m {type:'left'
 /*
@@ -248,7 +250,7 @@ form _oakce {
     show akce [,,150,] { title:'název', data:a.nazev, format:'q*s' }
     show fce  [,, 30,] { title:'fce', data:p.funkce, map_pipe:ms_akce_funkce.zkratka, format:'q*s' }
     proc onsubmit() {
-      ducast.akce_show(ida.get,idp.get,conc('<i>EVIDENCE:',akce.get,' ',rok.get,'</i>')) }
+      ducast.akce_show(ida.get,idp.get,conc(akce.get,' ',rok.get),'EVIDENCE') }
   }
   proc ucasti(id_osoba) {
     id_osoba; akc.browse_load(conc('a.spec=0 AND s.id_osoba=',id_osoba),"datum_od DESC")

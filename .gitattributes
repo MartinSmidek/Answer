@@ -19,10 +19,7 @@ db/db.akce.evi.ezer -text
 db/db.akce.ezer -text
 db/db.akce.lst.ezer -text
 db/db.akce.mai.ezer -text
-db/db.akce.oso.ezer -text
 db/db.akce.tisk.ezer -text
-db/db.akce.ucast.ezer -text
-db/db.akce.vse.ezer -text
 db/db.css.php -text
 db/db_akce.php -text
 db/db_fce.js -text
