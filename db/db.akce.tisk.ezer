@@ -46,6 +46,9 @@ menu m {type:'left',
                                         ,fld:'prijmeni,jmeno,narozeni,rc_xxxx,obec,psc,ulice'}}
   }
   menu {title:'seznam',type:'group',_sys:'*'
+    item {title:'VPS na akci'           ,par:°{typ:'p',exp:'Excel',cnd:"funkce=1",ord:"prijmeni"
+                                        ,tit:'příjmení:15,jména:20,obec:25'
+                                        ,fld:'prijmeni,jmena,obec'}}
     item {title:'Děti na akci'          ,par:°{typ:'j',exp:'Excel',cnd:"role='d'",ord:"narozeni"
                                         ,tit:'příjmení:15,jméno:12,narození:12,/rč:5,obec:25,psč:7,ulice:25'
                                         ,fld:'prijmeni,jmeno,narozeni,rc_xxxx,obec,psc,ulice'}}
@@ -53,6 +56,26 @@ menu m {type:'left',
                                         ,par:°{typ:'j',exp:'Excel',cnd:"role='d'",ord:"narozeni"
                                         ,tit:'příjmení:15,jméno:12,narození:12,/rč:5,obec:25,psč:7,ulice:25,poznámka:100'
                                         ,fld:'prijmeni,jmeno,narozeni,rc_xxxx,obec,psc,ulice,note'}}
+  }
+  menu {title:'jmenovky na akci',type:'group',_sys:'*'
+    item {title:'účastníci bez funkce'  ,par:°{typ:'j',exp:'Excel',cnd:"role!='d' AND funkce=0",ord:"prijmeni"
+                                        ,tit:'jméno:20, příjmení:15'
+                                        ,fld:'jmeno,prijmeni'}}
+    item {title:'děti'                  ,par:°{typ:'j',exp:'Excel',cnd:"role='d'",ord:"prijmeni"
+                                        ,tit:'jméno:20, příjmení:15'
+                                        ,fld:'jmeno,prijmeni'}}
+    item {title:'VPS'                   ,par:°{typ:'j',exp:'Excel',cnd:"role!='d' AND funkce=1",ord:"prijmeni"
+                                        ,tit:'jméno:20, příjmení:15'
+                                        ,fld:'jmeno,prijmeni'}}
+    item {title:'kněží'                 ,par:°{typ:'j',exp:'Excel',cnd:"role!='d' AND funkce=3",ord:"prijmeni"
+                                        ,tit:'jméno:20, příjmení:15'
+                                        ,fld:'jmeno,prijmeni'}}
+    item {title:'psychologové'          ,par:°{typ:'j',exp:'Excel',cnd:"role!='d' AND funkce=4",ord:"prijmeni"
+                                        ,tit:'jméno:20, příjmení:15'
+                                        ,fld:'jmeno,prijmeni'}}
+    item {title:'hospodáři'             ,par:°{typ:'j',exp:'Excel',cnd:"role!='d' AND funkce=5",ord:"prijmeni"
+                                        ,tit:'jméno:20, příjmení:15'
+                                        ,fld:'jmeno,prijmeni'}}
   }
   menu {title:'tisky do PDF',type:'group',_sys:'*'
     item {title:'Adresní štítky rodin'  ,par:°{typ:'p',exp:'PDF',cnd:'1'

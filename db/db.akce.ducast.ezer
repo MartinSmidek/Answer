@@ -9,10 +9,13 @@ var zalozka: text           // evid | plat | akce
 var dirty: number
 var back: object
 
-proc onstart() { dirty.get | echo('db.akce.ducast2.onstart'); init_ucast }
+proc onstart() { dirty.get
+| echo('db.akce.ducast2.onstart');
+  init_ucast }
 proc onfirstfocus() { dirty.get | echo('onfirstfocus ',the_title.get); init_ucast }
 proc init_ucast() { echo('init_ucast ',the_title.get);
   dirty.set(1);
+  akce_onstart();
   page.page_init;
   header.fill(the_title.get);
   [ reload(0) ];

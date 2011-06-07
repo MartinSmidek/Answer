@@ -956,9 +956,13 @@ function akce_google_cleni() {  trace();
       if ( is_numeric($cells['A'][$i]) ) {
         $par= $cells['B'][$i];
         $vps= $cells['C'][$i];
-        $platba= $cells['G'][$i];
-        $dne= $cells['H'][$i];
-        $pozn= $cells['I'][$i];
+        $castka= $cells['G'][$i];
+        list($m,$d,$y)= explode('/',$cells['H'][$i]);
+        $dne= "$d.$m.$y";
+        $do_dne= "31.12.$y";
+        $note= $cells['I'][$i];
+//                                                 display("dne=$dne,platba=$platba");
+//                                                 break;
         $qry= "SELECT r.nazev,
                GROUP_CONCAT(DISTINCT IF(t.role='a',o.jmeno,'')    SEPARATOR '') as jmeno_m,
                GROUP_CONCAT(DISTINCT IF(t.role='a',o.id_osoba,'') SEPARATOR '') as id_m,
@@ -981,7 +985,7 @@ function akce_google_cleni() {  trace();
           elseif ( $p= mysql_fetch_object($res) ) {
             $id_m= $p->id_m;
             $id_z= $p->id_z;
-            $clen= $vps ? 'a' : 'c';
+            $clen= $vps ? 'c' : 'b';
             $qryo= "SELECT o.id_osoba
                FROM osoba AS o
                JOIN tvori AS t ON t.id_osoba=o.id_osoba AND id_rodina=1
@@ -989,10 +993,21 @@ function akce_google_cleni() {  trace();
             $reso= mysql_qry($qryo);
             if ( $reso && !mysql_num_rows($reso) ) {
               // přidej mezi členy
-              $qryu= "INSERT tvori(id_osoba,id_rodina,role,od) VALUES
-                      ('$id_m',1,'c','2011-01-01'),('$id_z',1,'c','2011-01-01')";
+              $qryu= "INSERT dar(id_osoba,ukon,dat_od,note) VALUES
+                      ('$id_m','$clen','2011-01-01','$note'),('$id_z','$clen','2011-01-01','$note')";
               $resu= mysql_qry($qryu);
-              $html.= "<br>{$par} přidáni mezi členy";
+//               $html.= "<br>{$par} přidáni mezi členy";
+              if ( $castka ) {
+              // vlož platbu členského příspěvku
+                $sql_dne= sql_date($dne,1);
+                $sql_do_dne= sql_date($do_dne,1);
+                $castka2= $castka/2;
+                $qryu= "INSERT dar(id_osoba,ukon,castka,dat_od,dat_do,note) VALUES
+                        ('$id_m','p',$castka2,'$sql_dne','$sql_do_dne','$note')
+                       ,('$id_z','p',$castka2,'$sql_dne','$sql_do_dne','$note')";
+                $resu= mysql_qry($qryu);
+//                 $html.= "<br>{$par} příspěvek";
+              }
 //                                                 break;
             }
             else {
