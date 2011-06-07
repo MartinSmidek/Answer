@@ -7,21 +7,25 @@ var the_duakce: number
 var the_rok: number
 var the_title: text
 var the_source: text // google|sey
+var dirty: number
 
 var obj_akce: object    // všechny informace o nastavené akci
 
-proc onstart() {  echo('db.akce.onstart');
+proc onstart() { akce_onstart }
+proc akce_onstart() { dirty.get
+| echo('db.akce.onstart');
   the_duakce.set(get_cookie(conc(sys('root'),'_akce_id'),0));
   the_title.set(get_cookie(conc(sys('root'),'_akce_title'),'Vyber akci ...'));
   the_rok.set(get_cookie(conc(sys('root'),'_akce_rok'),0));
+  dirty.set(1);
 }
 # ================================================================================================== CHLAPI
 panel chl {type:'right', _sys:'*', title:'Chlapi', include:'onclick,db.akce.chl',skill:'yac' }
 # ================================================================================================== AKCE
-panel lst {type:'right', _sys:'*', title:'AKCE', include:'onload,db.akce.lst',skill:'yaa;faa'
+panel lst {type:'right', _sys:'*', title:'AKCE', include:'onclick,db.akce.lst',skill:'yaa;faa'
   use the_akce: form _the_akce         // zatím nezobrazená data nastavené akce s klíčem id_duakce
 }
-panel ducast {type:'plain', _sys:'*', title:'Účastníci', include:'onclick,db.akce.ducast',skill:'yaa;faa'
+panel ducast {type:'plain', _sys:'*', title:'Účastníci', include:'onload,db.akce.ducast',skill:'yaa;faa'
   proc init_ucast() { alert('napřed klikni na Databáze|Účastníci') }
   proc akce_show() { alert('napřed klikni na Databáze|Účastníci') }
 }
@@ -223,6 +227,7 @@ table osoba { key_id:'id_osoba'
   number id_osoba
   number id_dupary
   number id_dudeti
+  text   deleted     { help:'ok|prázdné nebo D=značka smazání osoby' },
   text jmeno
   text prijmeni
   number sex
@@ -255,6 +260,19 @@ table tvori { key_id:'id_tvori'
   number id_osoba
   number id_rodina
   number role
+}
+
+table dar { key_id:'id_dar'
+  number id_dar
+  number id_osoba
+  number id_rodina
+  text   deleted{ help:'ok|prázdné nebo D=značka smazání daru' },
+  text   ukon   { help:'b-člen běžný,c-člen činný,d-dar,p-členský příspěvek' }
+  text   zpusob { help:'b-banka,s-složenka,p-pokladna' }
+  number castka
+  date   dat_od { sql_pipe:'sql_date1', help:'datum darování nebo vzniku členství' }
+  date   dat_do { sql_pipe:'sql_date1', help:'datum zaslání potvrzení nebo datum pokrytí členství příspěvkem nebo datum zániku členství' }
+  text   note
 }
 
 table rodina { key_id:'id_rodina'
