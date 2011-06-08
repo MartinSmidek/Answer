@@ -103,11 +103,13 @@ form _page [,,285,500] {
   label [14,202,,] { tag:'cor', title:'účetní symbol:', skill:'faa|faa' }
   field [96,202,47,] { tag:'cor', data:akce.ciselnik_akce, skill:'faa|faa' }
   // Zpět a Uložit
-  label  [144,236,98,30] { tag:'cor', css:'ae_parm', style:'z-index:1' }
-  button [150,241,,] { tag:'cor', title:'Zpět',  help:'Neměnit změněná data', proc onclick() {
-    form.load(page.a_akce.get);
+  label  [144,236,98,30] { tag:'cor', css:'ae_parm', style:'z-index:1', skill:'yaa+;faa+' }
+  button [150,241,,] { tag:'cor', title:'Zpět', skill:'yaa+|yaa+;faa+|faa+'
+    help:'Neměnit změněná data'
+    proc onclick() { form.load(page.a_akce.get);
   }}
-  button [196,241,,] { tag:'cor', title:'Uložit',  help:'Uložit změněná data',
+  button [196,241,,] { tag:'cor', title:'Uložit', skill:'yaa+|yaa+;faa+|faa+'
+    help:'Uložit změněná data',
     proc onclick() {
       form.same
     | // oprava
