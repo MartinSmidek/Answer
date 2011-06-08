@@ -441,10 +441,11 @@ form _ucast [,,400,] { css:'ds_form'
           ,'<br>cstrava_cel=', cstrava_cel.get
           ,'<br>cstrava_pol=', cstrava_pol.get
       ))];
-      switch(zalozka.get,
+      // ochrana proti neuložené změně, pokud je možné údaje měnit
+      has_skill('yaa+;faa+'); not(and(rod.same,pob.same,muz.same,zen.same));
+      warning('neuložené změny pro účastníka <b>',rod.nazev.get,'</b> použij [Zpět] nebo [Uložit]');
+    | switch(zalozka.get,
       'evid', {
-        // ochrana proti neuložené změně
-        rod.same; pob.same; muz.same; zen.same;
         // přechod na jiný pobyt
         the_pobyt.set(key_pobyt.get);
         // načtou se všichni, ale ukážou se jen účastníci akce (pouze: 0=oba, 1=muž, 2=žena)
@@ -461,8 +462,6 @@ form _ucast [,,400,] { css:'ds_form'
         // obarvení tlačítka [Str.pol]
         { or(cstrava_cel.get,cstrava_pol.get); cmd.stravy.set_css('cervena','cerna')
         | cmd.stravy.set_css('cerna','cervena') };
-      | // varování při pokusu neuložit změny
-        warning('neuložené změny'); u.b.raise('onrowclick',the_pobyt.get)
       },
       'plat',{
         echo('platby');
@@ -472,7 +471,8 @@ form _ucast [,,400,] { css:'ds_form'
         a_muz.ucasti(id_m.get);
         [ id_z.get; a_zen.jme.set(conc(prijmeni_z.get,' ',jmeno_z.get)) | a_zen.jme.init ];
         a_zen.ucasti(id_z.get);
-      }
+      },
+      {stop}
     )}
     proc onrowclick() { reload_pobyt }
   }
@@ -487,7 +487,7 @@ form _cmd [,,200,] { css:'ds_form'
       Strava.modal(240,50)
   } }
   // Nový
-  button [6,525,,] {title:'Nový',
+  button [6,525,,] {title:'Nový', skill:'yaa+|yaa+;faa+|faa+',
     help:'Vytvoření nového jednotlivce (na akce muž) nebo páru (na akci oba) a vložení jako účastníka'
     proc onclick() {   // založení páru a jeho zařazení na akci
       var a_pouze: number
@@ -501,15 +501,16 @@ form _cmd [,,200,] { css:'ds_form'
       pob.pouze.key(a_pouze.get); pob.pouze.change;
   } }
   // Zpět a Uložit
-  label  [478,520,98,30] { css:'ae_parm' }
-  button [484,525,,] {title:'Zpět',  help:'Neměnit změněná data', proc onclick() {
+  label  [478,520,98,30] { css:'ae_parm', skill:'yaa+;faa+' }
+  button [484,525,,] {title:'Zpět',  help:'Neměnit změněná data', skill:'yaa+|yaa+;faa+|faa+'
+    proc onclick() {
       #echo('ZPĚT: tab_act=',u.b.browse_active,', key=',u.b.browse_key,', nazev=',u.b.nazev.get);
-    // potlačení ochrany proti neuložené změně
-    rod.plain; pob.plain; muz.plain; zen.plain;
-    b_display(1);
-    reload(u.b.browse_key);
+      // potlačení ochrany proti neuložené změně
+      rod.plain; pob.plain; muz.plain; zen.plain;
+      b_display(1);
+      reload(u.b.browse_key);
   } }
-  button [530,525,,] {title:'Uložit',  help:'Uložit změněná data',
+  button [530,525,,] {title:'Uložit',  help:'Uložit změněná data', skill:'yaa+|yaa+;faa+|faa+'
     proc onclick() {
       var ok: number
       the_pobyt.get;
@@ -557,36 +558,42 @@ form _cmd [,,200,] { css:'ds_form'
     }
   }
   // PŘIDAT z AKCE
-  button pridat_a   [69,525,,] {title:'Přidat: z akce', help:'Přidání účastníky jiných akcí'
+  button pridat_a   [69,525,,] {title:'Přidat: z akce', skill:'yaa+|yaa+;faa+|faa+',
+    help:'Přidání účastníky jiných akcí'
     proc onclick() {
       PridaniAkce.modal(240,50)
   } }
   // PŘIDAT z JEDNOTLIVCU
-  button pridat_1   [155,525,,] {title:'... jménem', help:'Přidání účastníka podle jména'
+  button pridat_1   [155,525,,] {title:'... jménem', skill:'yaa+|yaa+;faa+|faa+',
+    help:'Přidání účastníka podle jména'
     proc onclick() {
       PridaniJmenem1.modal(240,50)
   } }
   // PŘIDAT z PARU
-  button pridat_2   [226,525,,] {title:'... pár', help:'Přidání manželského páru podle jména'
+  button pridat_2   [226,525,,] {title:'... pár', skill:'yaa+|yaa+;faa+|faa+',
+    help:'Přidání manželského páru podle jména'
     proc onclick() {
       PridaniJmenem2.modal(240,50)
   } }
   // VYŘADIT a VYMAZAT
-  button [357,525,,] {title:'Vyřadit', help:'Vyřazení účastníka nebo páru z účasti na akci'
+  button [357,525,,] {title:'Vyřadit', skill:'yaa+|yaa+;faa+|faa+',
+    help:'Vyřazení účastníka nebo páru z účasti na akci'
     proc onclick() {
       confirm("Opravdu vyřadit ",u.b._nazev.get,' (',u.b._jmena.get,") z této akce?");
       spolu.delete_record(conc('id_pobyt=',u.b.key_pobyt.get),9999);
       pobyt.delete_record(conc('id_pobyt=',u.b.key_pobyt.get));
       reload(0);
   } }
-  button [409,525,,] {title:'Vymazat', help:'Vymazání informací o páru z evidence'
+  button [409,525,,] {title:'Vymazat', skill:'yaa+|yaa+;faa+|faa+',
+    help:'Vymazání informací o páru z evidence'
     proc onclick() {
       confirm("Opravdu vymazat z evidence ",u.b._nazev.get,' (',u.b._jmena.get,") s celou rodinou?");
       alert('není hotovo - tady bude ještě jedno varování s výčtem rodiny a akcí, kterých se zúčastnila');
       reload(0);
   } }
   // PŘIDAT DÍTĚ
-  button dite       [271,525,,] {title:'Přidat dítě', help:'Přidání dalšího dítěte do rodiny'
+  button dite       [271,525,,] {title:'Přidat dítě', skill:'yaa+|yaa+;faa+|faa+',
+    help:'Přidání dalšího dítěte do rodiny'
     proc onclick() {
       Dite.key_dite.set(0); Dite.key_spolu.set(0);
       Dite.modal(260,130)
@@ -601,7 +608,7 @@ panel Dite [,,360,360] {type:'popup', title:'Úprava dětí'
   var key_spolu: number
   proc onfocus() {
     { key_dite.get; dite.load(key_dite.get) | dite.init(2) };
-    dite.vyradit.enable(eq(dite.ucasti.get,''));
+    [ has_skill('yaa+;faa+'); dite.vyradit.enable(eq(dite.ucasti.get,'')) ];
     dite.sebou.set(cconc(key_spolu.get,1,0))
   }
   form _dite [,,200,50] { css:'ds_form'
@@ -643,7 +650,7 @@ panel Dite [,,360,360] {type:'popup', title:'Úprava dětí'
                         JOIN akce ON akce.id_duakce=pobyt.id_akce WHERE spolu.id_osoba=the_osoba)"
                      format:'o' }
     // ukončení
-    button vyradit [5,330,,] { title:'Vyřadit z evidence',
+    button vyradit [5,330,,] { title:'Vyřadit z evidence', skill:'yaa+|yaa+;faa+|faa+',
       help:'Vyřadit toto dítě z evidence - jen pokud nebylo na žádné akci',
       proc onclick() {
         confirm("Opravdu zrušit všechny informace o ",jmeno.get,"?");
@@ -654,11 +661,12 @@ panel Dite [,,360,360] {type:'popup', title:'Úprava dětí'
         reload(u.b.browse_key);
         panel.hide(1)
     } }
-    label  [260,326,98,30] { css:'ae_parm' }
-    button [266,330,,] { title:'Zpět', proc onclick() {
-      panel.hide(0)
+    label  [260,326,98,30] { css:'ae_parm', skill:'yaa+;faa+' }
+    button [266,330,,] { title:'Zpět', skill:'yaa+|yaa+;faa+|faa+',
+      proc onclick() { panel.hide(0)
     }}
-    button [312,330,,] { type:'submit', title:'Uložit', proc onclick() {
+    button [312,330,,] { type:'submit', title:'Uložit', skill:'yaa+|yaa+;faa+|faa+'
+      proc onclick() {
       { key_dite.get;
         // oprava
         d.key(key_dite.get); [ d.save ];
@@ -895,19 +903,20 @@ panel Strava [,,320,280] {type:'popup', title:'Nastavení nestandardního počtu
       field vp  [289,0,15,] {format:':e' }
     }
     // ukončení
-    button [205,255,,] { title:'Zpět', proc onclick() {
-      panel.hide(0)
+    button [205,255,,] { title:'Zpět', skill:'yaa+|yaa+;faa+|faa+',
+      proc onclick() { panel.hide(0)
     }}
     var scele: text
     var spolo: text
-    button [264,255,,] { type:'submit', title:'OK', proc onclick() {
-      scele.set(''); spolo.set('');
-      each(L,save_den);
-      ask('akce_strava_denne_save',u.b.key_pobyt.get,dnu.get,
-        scele.get,u.b.strava_cel.get,u.b.cstrava_cel.get,
-        spolo.get,u.b.strava_pol.get,u.b.cstrava_pol.get,prvni.get);
-      panel.hide(0);
-      reload(the_pobyt.get);
+    button [264,255,,] { type:'submit', title:'OK', skill:'yaa+|yaa+;faa+|faa+',
+      proc onclick() {
+        scele.set(''); spolo.set('');
+        each(L,save_den);
+        ask('akce_strava_denne_save',u.b.key_pobyt.get,dnu.get,
+          scele.get,u.b.strava_cel.get,u.b.cstrava_cel.get,
+          spolo.get,u.b.strava_pol.get,u.b.cstrava_pol.get,prvni.get);
+        panel.hide(0);
+        reload(the_pobyt.get);
     }}
     proc save_den (p,i) {
       scele.set(conc(scele.get,pocet_strav(i,'sc'),pocet_strav(i,'oc'),pocet_strav(i,'vc')));
