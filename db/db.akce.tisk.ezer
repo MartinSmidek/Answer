@@ -57,6 +57,9 @@ menu m {type:'left',
                                         ,tit:'příjmení:15,jméno:12,narození:12,/rč:5,obec:25,psč:7,ulice:25,poznámka:100'
                                         ,fld:'prijmeni,jmeno,narozeni,rc_xxxx,obec,psc,ulice,note'}}
   }
+  menu {title:'informace o akci',type:'group',_sys:'*'
+    item {title:'narozeniny, výročí'    ,par:°{typ:'vv',cnd:'1'}}
+  }
   menu {title:'jmenovky na akci',type:'group',_sys:'*'
     item {title:'účastníci bez funkce'  ,par:°{typ:'j',exp:'Excel',cnd:"role!='d' AND funkce=0",ord:"prijmeni"
                                         ,tit:'jméno:20, příjmení:15'
@@ -85,9 +88,10 @@ menu m {type:'left',
                                         ,tit:'příjmení:15,jména:20,obec:25,psč:7,ulice:25,stát:10'
                                         ,fld:'prijmeni,jmena,obec,psc,ulice,stat'}}
   }
-  menu {title:'přehledy, vyúčtování',type:'group',_sys:'*'
-    item   {title:'platby vč.DPH (jen MS)'      ,par:°{typ:'vp',exp:'Excel',cnd:'1'}}
-    item i {title:'počty strav'                 ,par:°{typ:'vs',exp:'Excel',cnd:'1'}}
+  menu {title:'MS: přehledy, vyúčtování',type:'group',_sys:'*'
+    item {title:'platby vč.DPH (jen MS)',par:°{typ:'vp',exp:'Excel',cnd:'1'}}
+    item {title:'počty strav'           ,par:°{typ:'vs',exp:'Excel',cnd:'1'}}
+    item {title:'člověkolůžka'          ,par:°{typ:'vn',exp:'Excel',cnd:'1'}}
   }
   proc onclick (i) {
     var x: object

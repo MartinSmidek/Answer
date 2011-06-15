@@ -51,7 +51,7 @@ kEzer-ys2
 		sql\mysql_all.bat
 		sql\pohled_osoba.sql
 		zaloha.php
-	+ezer2
+	-ezer2
 		+libr
 			ezer2\$.ezer
 			ezer2\ezer2.help.ezer
@@ -102,7 +102,7 @@ kEzer-ys2
 		..\..\..\..\WINDOWS\system32\drivers\etc\hosts
 		..\..\..\Apache\conf\extra\httpd-vhosts-ezer.conf
 		..\..\..\Apache\logs\ys2-error.log
-	-test
+	+test
 		test\$.ezer
 		test\test.css
 		test\test.elem.bro.ezer
@@ -186,7 +186,7 @@ kEzer-ys2
 		ds\fce.js
 		ds\$.ezer
 		ds.inc
-	+ch
+	-ch
 		ch\$.ezer
 		ch\ch.css.css
 		ch\ch.ezer
@@ -226,9 +226,13 @@ kEzer-ys2
 29=fa\fa_fce.js
 30=ys.php
 31=ys\ys_fce.php
+32=test\test.elem.bro2.ezer
+33=test\test.elem.bro.ezer
+34=test\test.elem.ezer
+35=test\$.ezer
 [Selected Project Files]
 Main=
-Selected=db\db.akce.tisk.ezer
+Selected=db\db.akce.lst.ezer
 [ezer2\server\ezer2.php]
 TopLine=249
 Caret=18,273
@@ -264,18 +268,18 @@ Caret=30,444
 BookMark1=1,230
 Mark1=88,365
 [ezer2\client\ezer_fdom1.js]
-TopLine=315
+TopLine=318
 Caret=1,360
 [ezer2\client\ezer.js]
-TopLine=2707
-Caret=72,2713
-BookMark1=38,2737
-BookMark2=27,3675
-BookMark3=67,4787
+TopLine=6435
+Caret=69,6463
+BookMark1=60,5758
+BookMark2=1,421
+BookMark3=18,2541
 BookMark4=56,5228
 [ezer2\client\ezer_fdom2.js]
-TopLine=1613
-Caret=30,1687
+TopLine=1710
+Caret=36,1752
 BookMark1=30,518
 BookMark2=9,617
 Mark1=95,439
@@ -297,22 +301,22 @@ Caret=21,5
 BookMark2=15,233
 Mark1=29,374
 [db\db.akce.ezer]
-TopLine=240
-Caret=73,249
+TopLine=16
+Caret=45,28
 BookMark1=1,25
 BookMark4=6,36
 [db\db.akce.evi.ezer]
-TopLine=1
-Caret=68,50
+TopLine=33
+Caret=52,53
 BookMark1=75,315
 [db\db.akce.lst.ezer]
-TopLine=1
-Caret=1,1
-BookMark1=36,187
+TopLine=39
+Caret=84,45
+BookMark1=36,189
 [db\db.akce.ducast.ezer]
-TopLine=199
-Caret=9,232
-BookMark1=96,67
+TopLine=74
+Caret=20,116
+BookMark1=43,504
 BookMark2=11,325
 [db\db.akce.mai.ezer]
 TopLine=73
@@ -331,14 +335,14 @@ Mark1=51,169
 TopLine=1
 Caret=53,7
 [db\db.akce.tisk.ezer]
-TopLine=23
-Caret=67,50
+TopLine=21
+Caret=10,29
 BookMark1=20,49
 [db\db.akce.rod.ezer]
 TopLine=1
 Caret=75,15
 [ys.inc]
-TopLine=21
+TopLine=27
 Caret=1,69
 [fa.php]
 TopLine=1
@@ -366,5 +370,17 @@ Caret=86,16
 TopLine=1
 Caret=32,18
 [ys\ys_fce.php]
-TopLine=33
+TopLine=39
 Caret=15,81
+[test\test.elem.bro2.ezer]
+TopLine=1
+Caret=11,41
+[test\test.elem.bro.ezer]
+TopLine=1
+Caret=33,4
+[test\test.elem.ezer]
+TopLine=1
+Caret=1,1
+[test\$.ezer]
+TopLine=1
+Caret=1,19
