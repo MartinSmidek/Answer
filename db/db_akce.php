@@ -161,13 +161,15 @@ function akce_foxpro_data() {  #trace('');
 # ================================================================================================== VÝPISY
 # -------------------------------------------------------------------------------------------------- akce_sestava2
 # generování sestav
-#   $typ = j | p | vp | vs
+#   $typ = j | p | vp | vs | vn | vv
 function akce_sestava($akce,$par,$title,$vypis,$export=false) {
   return $par->typ=='p'  ? akce_sestava_pary($akce,$par,$title,$vypis,$export)
      : ( $par->typ=='j'  ? akce_sestava_lidi($akce,$par,$title,$vypis,$export)
      : ( $par->typ=='vp' ? akce_vyuctov_pary($akce,$par,$title,$vypis,$export)
      : ( $par->typ=='vs' ? akce_strava_pary($akce,$par,$title,$vypis,$export)
-                         : fce_error("akce_sestava: N.Y.I.") )));
+     : ( $par->typ=='vn' ? akce_sestava_noci($akce,$par,$title,$vypis,$export)
+     : ( $par->typ=='vv' ? akce_text_vyroci($akce,$par,$title,$vypis,$export)
+                         : fce_error("akce_sestava: N.Y.I.") )))));
 }
 # -------------------------------------------------------------------------------------------------- akce_sestava_lidi
 # generování sestavy pro účastníky $akce - jednotlivce
@@ -317,10 +319,151 @@ function akce_sestava_pary($akce,$par,$title,$vypis,$export=false) { trace();
   }
   return $result;
 }
-# ================================================================================================== VYÚČTOVÁNÍ
+# ================================================================================================== TEXTY
+# -------------------------------------------------------------------------------------------------- akce_text_vyroci
+#
+# ================================================================================================== VYÚČTOVÁNÍ ETC.
+# -------------------------------------------------------------------------------------------------- akce_sestava_noci
+# generování sestavy přehledu člověkonocí pro účastníky $akce - páry
+#   $cnd = podmínka
+# počítané položky
+#   manzele = rodina.nazev muz a zena
+# generované vzorce
+#   člověkolůžka, člověkopřistýlky
+function akce_sestava_noci($akce,$par,$title,$vypis,$export=false) { trace();
+  // definice sloupců
+  $tit= "Manželé:25,pokoj:8:r,dnů:5:r,nocí:5:r,lůžek:5:r:s,lůžko nocí:5:r:s,přis týlek:5:r:s,přis týlko nocí:5:r:s";
+  $fld= "manzele,pokoj,pocetdnu,=noci,luzka,=luzkonoci,pristylky,=pristylkonoci";
+  $ord= $par->ord ? $par->ord : "IF(funkce<=1,1,funkce),IF(pouze=0,r.nazev,o.prijmeni)";
+  $cnd= $par->cnd;
+  $html= '';
+  $href= '';
+  $n= 0;
+  // dekódování parametrů
+  $tits= explode(',',$tit);
+  $flds= explode(',',$fld);
+  $cond= 1;
+  // získání dat - podle $kdo
+  $clmn= array();       // pro hodnoty
+  $expr= array();       // pro výrazy
+  $suma= array();       // pro sumy sloupců id:::s
+  $fmts= array();       // pro formáty sloupců id::f:
+  for ($i= 0; $i<count($tits); $i++) {
+    $idw= $tits[$i];
+    $fld= $flds[$i];
+    list($id,$w,$f,$sum)= explode(':',$idw);
+    if ( $sum=='s' ) $suma[$fld]= 0;
+    if ( isset($f) ) $fmts[$fld]= $f;
+  }
+  // data akce
+  $qry=  "SELECT
+            pokoj,luzka,pristylky,pocetdnu,
+            GROUP_CONCAT(DISTINCT IF(t.role='a',o.prijmeni,'') SEPARATOR '') as prijmeni_m,
+            GROUP_CONCAT(DISTINCT IF(t.role='a',o.jmeno,'')    SEPARATOR '') as jmeno_m,
+            GROUP_CONCAT(DISTINCT IF(t.role='b',o.prijmeni,'') SEPARATOR '') as prijmeni_z,
+            GROUP_CONCAT(DISTINCT IF(t.role='b',o.jmeno,'')    SEPARATOR '') as jmeno_z,
+            p.pouze,r.nazev as nazev
+          FROM pobyt AS p
+          JOIN spolu AS s USING(id_pobyt)
+          JOIN osoba AS o ON s.id_osoba=o.id_osoba
+          LEFT JOIN tvori AS t ON t.id_osoba=o.id_osoba
+          LEFT JOIN rodina AS r USING(id_rodina)
+          WHERE p.id_akce='$akce' AND $cond
+          GROUP BY id_pobyt
+          ORDER BY $ord";
+//   $qry.=  " LIMIT 1";
+  $res= mysql_qry($qry);
+  while ( $res && ($x= mysql_fetch_object($res)) ) {
+                                        debug($x,"hodnoty");
+    $n++;
+    $clmn[$n]= array();
+    foreach($flds as $f) {
+      $exp= ''; $val= 0;
+      if ( substr($f,0,1)=='=' ) {
+        switch ($f) {
+        case '=noci':         $val= max(0,$x->pocetdnu-1);
+                              $exp= "=max(0,[pocetdnu,0]-1)"; break;
+        case '=luzkonoci':    $val= ($x->pocetdnu-1)*$x->luzka;
+                              $exp= "=[=noci,0]*[luzka,0]"; break;
+        case '=pristylkonoci':$val= ($x->pocetdnu-1)*$x->pristylky;
+                              $exp= "=[=noci,0]*[pristylky,0]"; break;
+        default:              $val= '???'; break;
+        }
+        $clmn[$n][$f]= $val;
+        if ( $exp ) $expr[$n][$f]= $exp;
+      }
+      else {
+        switch ($f) {
+        case 'manzele':
+          $val= $x->pouze==1 ? "{$x->prijmeni_m} {$x->jmeno_m}"
+             : ($x->pouze==2 ? "{$x->prijmeni_z} {$x->jmeno_z}"
+             : "{$x->nazev} {$x->jmeno_m} a {$x->jmeno_z}");
+          break;
+        case 'jmena':
+          $val= $x->pouze==1
+              ? $x->jmeno_m : ($x->pouze==2 ? $x->jmeno_z : "{$x->jmeno_m} a {$x->jmeno_z}");
+          break;
+        case 'prijmeni':
+          $val= $x->pouze==1 ? $x->prijmeni_m : ($x->pouze==2 ? $x->prijmeni_z : $x->nazev);
+          break;
+        default:
+          $val= $f ? $x->$f : '';
+          break;
+        }
+        if ( $f ) $clmn[$n][$f]= $val; else $clmn[$n][]= $val;
+      }
+      // případný výpočet sumy
+      if ( isset($suma[$f]) ) {
+         $suma[$f]+= $val;
+      }
+    }
+  }
+
+                                        debug($clmn,"sestava pro $akce,$typ,$fld,$cnd");
+                                        debug($expr,"vzorce pro $akce,$typ,$fld,$cnd");
+                                        debug($suma,"sumy pro $akce B");
+  // zobrazení tabulkou
+  $tab= '';
+  $thd= '';
+  if ( $export ) {
+    $result->tits= $tits;
+    $result->flds= $flds;
+    $result->clmn= $clmn;
+    $result->expr= $expr;
+  }
+  else {
+    // titulky
+    foreach ($tits as $idw) {
+      list($id)= explode(':',$idw);
+      $ths.= "<th>$id</th>";
+    }
+    // data
+    foreach ($clmn as $i=>$c) {
+      $tab.= "<tr>";
+      foreach ($c as $id=>$val) {
+        $style= akce_sestava_td_style($fmts[$id]);
+        $tab.= "<td$style>$val</td>";
+      }
+      $tab.= "</tr>";
+    }
+    // sumy
+    $sum= '';
+    if ( count($suma)>0 ) {
+      $sum.= "<tr>";
+      foreach ($flds as $f) {
+        $val= isset($suma[$f]) ? $suma[$f] : '';
+        $sum.= "<th style='text-align:right'>$val</th>";
+      }
+      $sum.= "</tr>";
+    }
+    $result->html= "<div class='stat'><table class='stat'><tr>$ths</tr>$sum$tab</table></div>";
+    $result->html.= "</br>";
+    $result->href= $href;
+  }
+  return $result;
+}
 # -------------------------------------------------------------------------------------------------- akce_strava_pary
 # generování sestavy přehledu strav pro účastníky $akce - páry
-#   $fld = seznam položek s prefixem
 #   $cnd = podmínka
 # počítané položky
 #   manzele = rodina.nazev muz a zena
