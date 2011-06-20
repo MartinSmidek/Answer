@@ -11,12 +11,10 @@
   $dbs= array(
     array( /* ostré */
       'ezer_fa' =>      array(0,'localhost','gandi','r8d0st','utf8'),
-      'ezer_system' =>  array(0,'localhost','gandi','r8d0st','utf8','ezer_fa'),
-      'setkani' =>      array(0,'192.168.1.146','gandi','','cp1250')),
+      'ezer_system' =>  array(0,'localhost','gandi','r8d0st','utf8','ezer_fa')),
     array( /* lokální */
       'ezer_fa' =>      array(0,'localhost','gandi','','utf8'),
-      'ezer_system' =>  array(0,'localhost','gandi','','utf8','ezer_fa'),
-      'setkani' =>      array(0,'localhost','gandi','','cp1250'))
+      'ezer_system' =>  array(0,'localhost','gandi','','utf8','ezer_fa'))
   );
   // kořeny cest
   $path_root=  array("/home/www/ezer/www-ys/2","C:/Apache/htdocs/ezer/www-ys2");

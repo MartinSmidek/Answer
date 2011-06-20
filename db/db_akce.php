@@ -1,4 +1,66 @@
 <?php # (c) 2009-2010 Martin Smidek <martin@smidek.eu>
+# ================================================================================================== KONTROLY
+# -------------------------------------------------------------------------------------------------- akce_kontrola_dat
+# kontrola dat
+#  -  nulové klíče
+function akce_kontrola_dat($par) { trace();
+  $html= '';
+  $n= 0;
+  $opravit= $par->opravit ? true : false;
+  // kontrola nenulovosti klíčů ve spojovacích záznamech
+  // tabulka SPOLU
+  $msg= '';
+  $cond= "id_pobyt=0 OR spolu.id_osoba=0 ";
+  $qry=  "SELECT id_spolu,spolu.id_osoba,spolu.id_pobyt,a.nazev,prijmeni,jmeno
+          FROM spolu
+          LEFT JOIN pobyt AS p USING(id_pobyt)
+          LEFT JOIN akce  AS a ON a.id_duakce=p.id_akce
+          LEFT JOIN osoba AS o ON o.id_osoba=p.id_osoba
+          WHERE $cond";
+  $res= mysql_qry($qry);
+  while ( $res && ($x= mysql_fetch_object($res)) ) {
+    $n++;
+    if ( $opravit ) {
+      $ok= mysql_qry("DELETE FROM spolu WHERE id_spolu={$x->id_spolu} AND ($cond)",1)
+         ? " = SMAZÁNO" : ' !!!!!CHYBA při mazání' ;
+    }
+    if ( !$x->id_pobyt && !$x->id_osoba )
+      $msg.= "<dd>záznam spolu={$x->id_spolu} je nulový$ok</dd>";
+    if ( !$x->id_osoba )
+      $msg.= "<dd>osoba=0 v záznamu spolu={$x->id_spolu} pobytu={$x->id_pobyt} akce {$x->nazev}$ok</dd>";
+    if ( !$x->id_pobyt )
+      $msg.= "<dd>pobyt=0 v záznamu spolu={$x->id_spolu} osoby {$x->prijmeni} {$x->jmeno}$ok</dd>";
+  }
+  $html.= "<dt style='margin-top:5px'>tabulka <b>spolu</b>".($msg?$msg:"<dd>ok</dd>")."</dt>";
+  // tabulka TVORI
+  $msg= '';
+  $cond= "tvori.id_rodina=0 OR tvori.id_osoba=0 ";
+  $qry=  "SELECT id_tvori,role,tvori.id_osoba,tvori.id_rodina,r.nazev,prijmeni,jmeno
+          FROM tvori
+          LEFT JOIN rodina AS r USING(id_rodina)
+          LEFT JOIN osoba AS o ON o.id_osoba=tvori.id_osoba
+          WHERE $cond ";
+  $res= mysql_qry($qry);
+  while ( $res && ($x= mysql_fetch_object($res)) ) {
+    $n++;
+    if ( $opravit ) {
+      mysql_qry("DELETE FROM tvori WHERE id_tvori={$x->id_tvori} AND ($cond)",1)
+         ? " = SMAZÁNO" : ' !!!!!CHYBA při mazání' ;
+    }
+    if ( !$x->id_pobyt && !$x->id_osoba )
+      $msg.= "<dd>záznam tvori={$x->id_tvori} je nulový</dd>";
+    if ( !$x->id_osoba )
+      $msg.= "<dd>osoba=0 v záznamu tvori={$x->id_spolu} rodiny={$x->id_rodina} {$x->nazev}$ok</dd>";
+    if ( !$x->id_pobyt )
+      $msg.= "<dd>rodina=0 v záznamu tvori={$x->id_tvori} osoby {$x->prijmeni} {$x->jmeno}$ok</dd>";
+  }
+  $html.= "<dt style='margin-top:5px'>tabulka <b>tvori</b>".($msg?$msg:"<dd>ok</dd>")."</dt>";
+  // konec
+  $html= $n
+    ? "<h3>Nalezeno $n inkonzistencí v datech</h3><dl>$html</dl>"
+    : "<h3>Následující tabulky jsou konzistentní</h3>$html";
+  return $html;
+}
 # ================================================================================================== PDF
 # -------------------------------------------------------------------------------------------------- akce_pdf_stitky
 # vygenerování PDF se samolepkami - adresními štítky
@@ -1496,16 +1558,19 @@ function akce_auto_jmena2L($id_rodina) {  #trace();
 }
 # -------------------------------------------------------------------------------------------------- akce_auto_jmena1
 # SELECT autocomplete - výběr z dospělých jednotlivců
-function akce_auto_jmena1($patt) {  #trace();
+function akce_auto_jmena1($patt,$par) {  #trace();
   $a= array();
   $limit= 20;
   $n= 0;
-  $is= strpos($patt,' ');
-  $patt= $is ? substr($patt,0,$is) : $patt;
+  if ( $par->patt!='whole' ) {
+    $is= strpos($patt,' ');
+    $patt= $is ? substr($patt,0,$is) : $patt;
+  }
   // páry
   $qry= "SELECT prijmeni, jmeno, id_osoba AS _key
          FROM osoba
-         WHERE prijmeni LIKE '$patt%'
+         JOIN tvori USING(id_osoba)
+         WHERE concat(trim(prijmeni),' ',jmeno) LIKE '$patt%' AND prijmeni!='' AND role!='d'
          ORDER BY prijmeni,jmeno LIMIT $limit";
   $res= mysql_qry($qry);
   while ( $res && $t= mysql_fetch_object($res) ) {

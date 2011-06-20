@@ -389,8 +389,9 @@ form _ucast [,,400,] { css:'ds_form'
     show spz        { data:r.spz}
     show historie   { data:r.historie, skill:'yaah' }
     // skupinka
-    show skup       { expr:"IF(p.skupina=0,'',(
-        SELECT GROUP_CONCAT(DISTINCT pobyt.id_pobyt,'|',nazev SEPARATOR '|')
+    show skup       { expr:"
+      IF(p.skupina=0,'',
+       (SELECT GROUP_CONCAT(DISTINCT pobyt.id_pobyt,'|',nazev SEPARATOR '|')
         FROM rodina
         JOIN tvori ON rodina.id_rodina=tvori.id_rodina
         JOIN osoba ON osoba.id_osoba=tvori.id_osoba
@@ -398,10 +399,11 @@ form _ucast [,,400,] { css:'ds_form'
         JOIN pobyt ON pobyt.id_pobyt=spolu.id_pobyt
         WHERE pobyt.id_akce=@akce AND skupina=p.skupina))" }
     // všechny děti: (id_osoba, jsou na akci?id_spolu:0, jmeno, narozeni, note)
-    show deti       {expr:"(
-        SELECT GROUP_CONCAT(CONCAT(osoba.id_osoba,'|',
+    show deti       {expr:"
+       (SELECT GROUP_CONCAT(CONCAT(osoba.id_osoba,'|',
           (IFNULL((SELECT id_spolu FROM osoba LEFT JOIN spolu USING(id_osoba)
-                   WHERE id_pobyt=p.id_pobyt AND id_osoba=tvori.id_osoba),0))
+                   WHERE id_pobyt=p.id_pobyt AND id_osoba=tvori.id_osoba
+                   GROUP BY id_osoba),0))
            ,'|',jmeno,'|',narozeni,'|',narozeni,'|',rc_xxxx,'|',note)
            ORDER BY osoba.id_osoba DESC SEPARATOR '|')
         FROM osoba JOIN tvori USING(id_osoba)
@@ -704,7 +706,7 @@ panel PridaniJmenem1 [,,320,280] {type:'popup', title:'Přidání známých dosp
     button [220,250,50,16] { title:'konec', proc onclick() {
       jmena.init; vse.init; L.init; panel.hide(0) } }
     // výběr z databáze MS
-    select jmena [100,0,200,17] { type:'auto', par:°{fce:'akce_auto_jmena1'}, format:'t'
+    select jmena [100,0,200,17] { type:'auto', par:°{fce:'akce_auto_jmena1',patt:'whole'}, format:'t'
       proc onchanged() {
         rod.set(ask('akce_auto_jmena1L',this.key));
         each(rod.get,jmenovci); // nesmí volat asynchronní operace

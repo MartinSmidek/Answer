@@ -16,14 +16,17 @@ menu ys { type:'main', active:* //ys.pok
     panel nas {type:'right', title:'Nastavení', _sys:'nas', skill:'m'
       menu {type:'left', active:*
         menu {title:'Opravy dat',type:'group', _sys:'*'
-          item {title:'---', proc onclick (i) {
-            info.fill(conc(i.owner.title,' - ',i.title),' ');
-          }}
-          item {title:'Dokončení převodu z FoxPro', proc onclick (i) {
-            info.fill(conc(i.owner.title,' - ',i.title),' ');
-            confirm("Opravdu dokončit transformaci dat z FoxPro? Klíče 'id_pary' a 'id_akce' mohou být přepsány!");
-            info.fill('',ask('akce_foxpro_data'));
-          }}
+          item {title:'kontroly databáze'               ,par:°{opravit:0}}
+          item {title:'kontroly databáze s opravou'     ,par:°{opravit:1}}
+          proc onclick (i) {
+            info.fill(conc(i.owner.title,' - ',i.title),' ... probíhá kontrola dat ...');
+            info.fill('',ask('akce_kontrola_dat',i.par));
+          }
+#           item {title:'Dokončení převodu z FoxPro', proc onclick (i) {
+#             info.fill(conc(i.owner.title,' - ',i.title),' ');
+#             confirm("Opravdu dokončit transformaci dat z FoxPro? Klíče 'id_pary' a 'id_akce' mohou být přepsány!");
+#             info.fill('',ask('akce_foxpro_data'));
+#           }}
         }
       }
       use info: form right [12,4,,]
