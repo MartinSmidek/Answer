@@ -45,8 +45,10 @@ echo <<<__EOD
   width:100%; }
 /*.SelectDrop li {
   white-space:normal !important; }*/
-.Label, .Check {
+.Label, .Check, .Case {
   color:#456; font-size:11px; }
+.Case input {
+  vertical-align:bottom; }
 .Label h1 {
   font-size:12pt; margin:0; padding:0 }
 #Content, #Index {

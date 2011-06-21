@@ -174,31 +174,31 @@ form _osoba { tag:'a'
   field  { data:r.id_rodina }
 #   label  [L+0,T+9,367,249] { css:'ae_part' }
 #   label  [L+8,T+0,74,] { title:'osobní údaje', css:'ae_part_label' }
-  label          [L+5,T+15,100,] {title:'příjmení'}
-  field prijmeni [L+5,T+30,100,] {data:o.prijmeni, help:'příjmení'}
-  label          [L+117,T+15,100,] {title:'jméno'}
-  field jmeno    [L+117,T+30,101,] {data:o.jmeno}
-  radio sex [L+225,T+15,50,35] { data:o.sex, value:'1'
+  label          [L+5,T+15,89,] {title:'příjmení'}
+  field prijmeni [L+5,T+30,89,] {data:o.prijmeni, help:'příjmení'}
+  label          [L+109,T+15,78,] {title:'jméno'}
+  field jmeno    [L+109,T+30,79,] {data:o.jmeno}
+  radio sex [L+200,T+15,50,35] { data:o.sex, value:'1'
     case [0,2,50,] { title:'muž', expr:'1' }
     case [0,17,50,] { title:'žena', expr:'2' }
     proc onchange() { echo('sex=',this.get) }
   }
+  label          [L+256,T+16,33,] {title:'narození'}
+  field narozeni [L+255,T+32,85,] {type:'date', data:o.narozeni, format:'rR:e'}
+  label          [L+346,T+16,41,] {title:'nnnn rč'}
+  field rodne    [L+345,T+32,37,] {data:o.rc_xxxx, format:'r:e'}
   label          [L+5,T+54,100,] {title:'ulice'}
   field ulice    [L+5,T+69,162,] {data:o.ulice}
   label          [L+179,T+54,39,] {title:'psč'}
   field psc      [L+179,T+69,40,] {data:o.psc}
   label          [L+230,T+54,100,] {title:'obec'}
   field obec     [L+229,T+69,131,] {data:o.obec}
-  label          [L+5,T+94,37,] {title:'telefon'}
-  field telefon  [L+5,T+110,212,] {data:o.telefon}
-  label          [L+230,T+94,33,] {title:'narození'}
-  field narozeni [L+229,T+110,85,] {type:'date', data:o.narozeni, format:'rR:e'}
-  label          [L+324,T+94,41,] {title:'nnnn rč'}
-  field rodne    [L+323,T+110,37,] {data:o.rc_xxxx, format:'r:e'}
-  label          [L+5,T+138,33,] {title:'e-mail'}
-  field email    [L+5,T+154,355,] {data:o.email}
-  label          [L+5,T+179,33,] {title:'poznámka'}
-  edit  pozn     [L+5,T+194,355,60] {data:o.note}
+  label          [L+13,T+101,33,] {title:'telefon'}
+  field telefon  [L+51,T+97,212,] {data:o.telefon}
+  label          [L+16,T+128,30,] {title:'e-mail'}
+  field email    [L+52,T+124,330,] {data:o.email}
+  label          [L+0,T+152,48,] {title:'poznámka'}
+  edit  pozn     [L+52,T+151,329,60] {data:o.note}
 }
 # ---------------------------------------------------------------------- _rodina
 form _rodina {
