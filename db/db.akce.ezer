@@ -13,11 +13,11 @@ var obj_akce: object    // všechny informace o nastavené akci
 
 proc onstart() { akce_onstart }
 proc akce_onstart() { dirty.get
-| echo('db.akce.onstart');
+| dirty.set(1);
+  echo('db.akce.onstart');
   the_duakce.set(get_cookie(conc(sys('root'),'_akce_id'),0));
   the_title.set(get_cookie(conc(sys('root'),'_akce_title'),'Vyber akci ...'));
   the_rok.set(get_cookie(conc(sys('root'),'_akce_rok'),0));
-  dirty.set(1);
 }
 # ================================================================================================== CHLAPI
 panel chl {type:'right', _sys:'*', title:'Chlapi', include:'onclick,db.akce.chl',skill:'yac' }
@@ -28,6 +28,10 @@ panel lst {type:'right', _sys:'*', title:'AKCE', include:'onclick,db.akce.lst',s
 panel ducast {type:'plain', _sys:'*', title:'Účastníci', include:'onload,db.akce.ducast',skill:'yaa;faa'
   proc init_ucast() { alert('napřed klikni na Databáze|Účastníci') }
   proc akce_show() { alert('napřed klikni na Databáze|Účastníci') }
+}
+panel pece {type:'plain', _sys:'*', title:'Pečouni', include:'onload,db.akce.pece',skill:'faa'
+  proc init_pece() { alert('napřed klikni na Databáze|Pečouni') }
+  proc akce_show() { alert('napřed klikni na Databáze|Pečouni') }
 }
 # panel ducast2 {type:'plain', _sys:'*', title:'Účastníci2', include:'onclick,db.akce.ducast2',skill:'md' //martin doma
 #   proc init_ucast() { }
@@ -221,6 +225,8 @@ table spolu { key_id:'id_spolu'
   number id_spolu
   number id_pobyt
   number id_osoba
+  number skupinka
+  text poznamka
 }
 
 table osoba { key_id:'id_osoba'

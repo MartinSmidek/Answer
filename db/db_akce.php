@@ -383,7 +383,75 @@ function akce_sestava_pary($akce,$par,$title,$vypis,$export=false) { trace();
 }
 # ================================================================================================== TEXTY
 # -------------------------------------------------------------------------------------------------- akce_text_vyroci
-#
+function akce_text_vyroci($akce,$par,$title,$vypis,$export=false) { trace();
+  $html= '';
+  // data akce
+  $vyroci= array();
+  // narozeniny
+  $qry=  "SELECT
+          prijmeni,jmeno,narozeni,role
+          FROM akce AS a
+          JOIN pobyt AS p ON a.id_duakce=p.id_akce
+          JOIN spolu AS s USING(id_pobyt)
+          JOIN osoba AS o ON s.id_osoba=o.id_osoba
+          LEFT JOIN tvori AS t ON t.id_osoba=o.id_osoba
+          WHERE a.id_duakce='$akce' AND
+            CONCAT(YEAR(datum_od),SUBSTR(narozeni,5,6)) BETWEEN datum_od AND datum_do
+          ORDER BY SUBSTR(narozeni,5,6) ";
+  $res= mysql_qry($qry);
+  while ( $res && ($x= mysql_fetch_object($res)) ) {
+    $vyroci[$x->role=='d'?'d':'a'][]= "{$x->prijmeni} {$x->jmeno}|".sql_date1($x->narozeni);
+  }
+  // výročí
+  $qry=  "SELECT
+            r.nazev,datsvatba,
+            GROUP_CONCAT(DISTINCT IF(t.role='a',o.jmeno,'')    SEPARATOR '') as jmeno_m,
+            GROUP_CONCAT(DISTINCT IF(t.role='b',o.jmeno,'')    SEPARATOR '') as jmeno_z
+          FROM akce AS a
+          JOIN pobyt AS p ON a.id_duakce=p.id_akce
+          JOIN spolu AS s USING(id_pobyt)
+          JOIN osoba AS o ON s.id_osoba=o.id_osoba
+          LEFT JOIN tvori AS t ON t.id_osoba=o.id_osoba
+          LEFT JOIN rodina AS r USING(id_rodina)
+          WHERE a.id_duakce='$akce' AND pouze=0 AND
+            CONCAT(YEAR(datum_od),SUBSTR(datsvatba,5,6)) BETWEEN datum_od AND datum_do
+          GROUP BY id_pobyt
+          ORDER BY SUBSTR(datsvatba,5,6) ";
+  $res= mysql_qry($qry);
+  while ( $res && ($x= mysql_fetch_object($res)) ) {
+    $vyroci['s'][]= "{$x->nazev} {$x->jmeno_m} a {$x->jmeno_z}|".sql_date1($x->datsvatba);
+  }
+  // redakce
+  if ( count($vyroci['a']) ) {
+    $html.= "<h3>Narozeniny dopělých na akci</h3><table>";
+    foreach($vyroci['a'] as $txt) {
+      list($kdo,$kdy)= explode('|',$txt);
+      $html.= "<tr><td>$kdy</td><td>$kdo</td></tr>";
+    }
+    $html.= "</table>";
+  }
+  else $html.= "<h3>Na akci nemá žádný dospělý účastník narozeniny</h3>";
+  if ( count($vyroci['d']) ) {
+    $html.= "<h3>Narozeniny dětí na akci</h3><table>";
+    foreach($vyroci['d'] as $txt) {
+      list($kdo,$kdy)= explode('|',$txt);
+      $html.= "<tr><td>$kdy</td><td>$kdo</td></tr>";
+    }
+    $html.= "</table>";
+  }
+  else $html.= "<h3>Na akci nemá žádné dítě narozeniny</h3>";
+  if ( count($vyroci['s']) ) {
+    $html.= "<h3>Výročí svatby během akce</h3><table>";
+    foreach($vyroci['s'] as $txt) {
+      list($kdo,$kdy)= explode('|',$txt);
+      $html.= "<tr><td>$kdy</td><td>$kdo</td></tr>";
+    }
+    $html.= "</table>";
+  }
+  else $html.= "<h3>Na akci nemá žádný pár výročí svatby</h3>";
+  $result->html= $html;
+  return $result;
+}
 # ================================================================================================== VYÚČTOVÁNÍ ETC.
 # -------------------------------------------------------------------------------------------------- akce_sestava_noci
 # generování sestavy přehledu člověkonocí pro účastníky $akce - páry

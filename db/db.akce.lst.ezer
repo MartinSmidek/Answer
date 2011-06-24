@@ -139,6 +139,7 @@ form _akce [,,*,50] {
         lst.info.fill(the_title.get);
         set_cookie(conc(sys('root'),'_akce_title'),the_title.get);
         ducast.init_ucast;
+#         pece.init_pece;
       ]
     };
     // vložení informací o akci do proměnné obj_akce

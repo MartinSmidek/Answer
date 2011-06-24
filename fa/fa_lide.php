@@ -183,13 +183,13 @@ function lide_family($par) { trace();
       }
 
       // doplnění "spolubydlících" dětí z ms_kursdeti
-      $qryo= "SELECT id_osoba FROM ms_kursdeti
+      $qryo= "SELECT id_osoba,skupina FROM ms_kursdeti
               JOIN ms_deti as d USING(id_deti)
               JOIN osoba ON osoba.id_dudeti=d.id_deti
               WHERE id_akce={$k->id_akce} AND d.id_pary={$k->id_pary} ";
       $reso= mysql_qry($qryo);
       while ( $reso && $o= mysql_fetch_object($reso) ) {
-        bydli_insert($id_pobyt,$o->id_osoba);
+        bydli_insert($id_pobyt,$o->id_osoba,$o->skupina);
         $ns++;
       }
 //                                                         if ($np==10) break;
@@ -197,6 +197,99 @@ function lide_family($par) { trace();
 
     $html.= "<br>pobyt - $np záznamů";
     $html.= "<br>spolu - $ns záznamů";
+    break;
+  // ----------------------------- doplnění příjmení, pohlaví dětí
+  case 5: // 'kurs_deti_fill':
+    // projdeme osoby-děti bez příjmení a sexu a doplníme
+    $n= $k= $h= $jm1= $jm2= $x1= $x2= $p1= $p2= 0;
+    $lst1= $lst2= '';
+    $qryd="SELECT
+          o.id_osoba,o.id_dudeti,rodcislo,o.prijmeni,o.jmeno,o.narozeni,o.sex AS o_sex,j.sex AS j_sex,
+          GROUP_CONCAT(DISTINCT IF(tx.role='a',ox.prijmeni,'') SEPARATOR '') as prijmeni_m,
+          GROUP_CONCAT(DISTINCT IF(tx.role='b',ox.prijmeni,'') SEPARATOR '') as prijmeni_z
+          FROM osoba AS o
+          JOIN tvori AS t ON t.id_osoba=o.id_osoba
+          JOIN rodina AS r USING(id_rodina)
+          LEFT JOIN ms_deti ON o.id_dudeti=ms_deti.id_deti
+          LEFT JOIN tvori AS tx ON tx.id_rodina=r.id_rodina
+          LEFT JOIN osoba AS ox ON ox.id_osoba=tx.id_osoba
+          LEFT JOIN _jmena AS j ON j.jmeno=o.jmeno
+          WHERE t.role='d' AND (o.prijmeni='' OR o.sex=0)
+          GROUP BY o.id_osoba
+          ORDER BY o.id_osoba DESC";
+    $resd= mysql_qry($qryd);
+    while ( $resd && $d= mysql_fetch_object($resd) ) {
+      $n++;
+      $set= array();
+      if ( $d->o_sex==0 && $d->j_sex==1 )               $set[]= "sex=1";
+      if ( $d->prijmeni=='' && $d->prijmeni_m!='' && $d->j_sex==1)
+                                                        $set[]= "prijmeni='{$d->prijmeni_m}'";
+      if ( $d->o_sex==0 && $d->j_sex==2 )               $set[]= "sex=2";
+      if ( $d->prijmeni=='' && $d->prijmeni_z!='' && $d->j_sex==2 )
+                                                        $set[]= "prijmeni='{$d->prijmeni_z}'";
+      if ( count($set)>0 ) {
+        $s= implode(',',$set);
+        $q= "UPDATE osoba SET $s WHERE id_osoba={$d->id_osoba}";
+        $reso= mysql_qry($q);
+//                         display($q);
+        $k++;
+//         break;
+      }
+    }
+    $html.= "<br>Nalezeno $n dětí s neúplnými údaji - provedeno $k doplnění";
+    break;
+  // ----------------------------- doplnění pečounů do osob a pobytu na kurzu
+  case 6:
+    // zrušení staré verze
+    $no= 0;
+    $qry= "DELETE FROM osoba WHERE origin='c'"; $res= mysql_qry($qry); $no+= mysql_affected_rows();
+    $qry= "DELETE spolu FROM spolu JOIN pobyt USING(id_pobyt) WHERE origin='c'"; $res= mysql_qry($qry); $no+= mysql_affected_rows();
+    $qry= "DELETE FROM pobyt WHERE origin='c'"; $res= mysql_qry($qry); $no+= mysql_affected_rows();
+    $html.= "zrušeno $no záznamů<hr>";
+    // ms_pece
+    $cislo2osoba= array();
+    $no= 0;
+    $qryc= "SELECT * FROM ms_pece ";  //     $qryc.= "WHERE LEFT(jmeno,1)='A' ";
+    $resc= mysql_qry($qryc);
+    while ( $resc && $c= mysql_fetch_assoc($resc) ) {
+      $o= pecoun_insert($c);
+      $cislo2osoba[$c['cislo']]= $o;
+      $no++;
+    }
+    $html.= "<br>pečouni: osoba - $no záznamů";
+    // doplnění záznamů pro pečouny do relevantních kurzů s pobyt.origin='c'
+    $akce2pobyt= array();
+    $n= 0;
+    $qryc= "SELECT id_akce,akce FROM ms_kurspece JOIN ms_akce USING(akce) GROUP BY akce";
+    $resc= mysql_qry($qryc);
+    while ( $resc && $c= mysql_fetch_object($resc) ) {
+      $id_akce= $c->id_akce;
+      $akce= $c->akce;
+      $qryu= "INSERT INTO pobyt (id_akce,funkce,origin) VALUES ($id_akce,99,'c')";
+      $resu= mysql_qry($qryu);
+      $akce2pobyt[$akce]= mysql_insert_id();
+      $n+= mysql_affected_rows();
+    }
+                                                debug($akce2pobyt,"akce2pobyt");
+    $html.= "<br>pečouni: pobyt - $n záznamů";
+    // doplnění záznamů o účasti pro jednotlivé pečouny
+    $n= 0;
+    $qryc= "SELECT cislo,akce,skupina,poznamka FROM ms_kurspece ";
+    $resc= mysql_qry($qryc);
+    while ( $resc && $c= mysql_fetch_object($resc) ) {
+      $id_pobyt= $akce2pobyt[$c->akce];
+      $id_osoba= $cislo2osoba[$c->cislo];
+      $qryu= "INSERT INTO spolu (id_pobyt,id_osoba,skupinka) VALUES ($id_pobyt,$id_osoba,{$c->skupina})";
+      $resu= mysql_qry($qryu);
+      $n+= mysql_affected_rows();
+    }
+    $html.= "<br>pečouni: pobyt - $n záznamů";
+    break;
+  // ----------------------------- doplnění pečounských skupinek
+  case 7: // 'kurs_deti_fill':
+//     $qry= "UPDATE spolu SET skupinka=0 "; $res= mysql_qry($qry); $no+= mysql_affected_rows();
+//     $html.= "zrušeno $no záznamů<hr>";
+    $html.= "netřeba";
     break;
   }
   return $html;
@@ -783,7 +876,7 @@ function lide_duplo($par) { trace();
           FROM osoba AS o
           JOIN tvori AS t ON t.id_osoba=o.id_osoba
           JOIN rodina AS r USING(id_rodina)
-          JOIN ms_deti USING(id_dudeti)
+          LEFT JOIN ms_deti ON o.id_dudeti=ms_deti.id_deti
           LEFT JOIN tvori AS tx ON tx.id_rodina=r.id_rodina
           LEFT JOIN osoba AS ox ON ox.id_osoba=tx.id_osoba
           LEFT JOIN _jmena AS j ON j.jmeno=o.jmeno
@@ -826,7 +919,7 @@ function lide_duplo($par) { trace();
           FROM osoba AS o
           JOIN tvori AS t ON t.id_osoba=o.id_osoba
           JOIN rodina AS r USING(id_rodina)
-          JOIN ms_deti USING(id_dudeti)
+          LEFT JOIN ms_deti ON o.id_dudeti=ms_deti.id_deti
           LEFT JOIN tvori AS tx ON tx.id_rodina=r.id_rodina
           LEFT JOIN osoba AS ox ON ox.id_osoba=tx.id_osoba
           LEFT JOIN _jmena AS j ON j.jmeno=o.jmeno
@@ -872,8 +965,8 @@ function lide_duplo($par) { trace();
 //   return $ymd;
 // }
 # ------------------------------------------------------------- bydli_insert
-function bydli_insert($p,$o) {
-  $qryo= "INSERT INTO spolu (id_pobyt,id_osoba) VALUES ($p,$o)";
+function bydli_insert($p,$o,$s=0) {
+  $qryo= "INSERT INTO spolu (id_pobyt,id_osoba,skupinka) VALUES ($p,$o,$s)";
   $reso= mysql_qry($qryo);
 }
 # ------------------------------------------------------------- tvori_insert
@@ -883,7 +976,7 @@ function tvori_insert($r,$o,$role) {
   $reso= mysql_qry($qryo);
 }
 # ------------------------------------------------------------- rodina_insert
-function rodina_insert($p) {  trace();
+function rodina_insert($p,$origin='p') {  trace();
   $id_dupary=$p["id_dupary"];
   $nazev=    mysql_real_escape_string($p["jmeno"]);
   $ulice   = strtr($p["adresa"],"'","’");
@@ -914,7 +1007,7 @@ function rodina_insert($p) {  trace();
           ulice,psc,obec,stat,
           id_dupary,nazev,telefony,emaily,spz,datsvatba,svatba,origin,note) VALUES (
           '$ulice','$psc','$obec','$stat',
-          '$id_dupary','$nazev','$telefony','$emaily','$spz','$datsvatba','$svatba','p','$note')";
+          '$id_dupary','$nazev','$telefony','$emaily','$spz','$datsvatba','$svatba','$origin','$note')";
                                 display("$reso:$qryo");
   $reso= mysql_qry($qryo);
   return mysql_insert_id();
@@ -954,8 +1047,9 @@ function dite_insert($p) {
   $rc_xxxx = strlen($rc)>6 ? substr($rc,6) : '';
   $poznamka= strtr($p["poznamka"],"'","’");
   $historie= '';
-  $qryo= "INSERT INTO osoba (
+  $qryo= "INSERT INTO osoba (id_dupary,
           id_dudeti,jmeno,narozeni,rc_xxxx,note,origin,historie) VALUES (
+          '{$p['id_dupary']}',
           '$id_dudeti','$jmeno','$narozeni','$rc_xxxx','$poznamka','d','$historie')";
   $reso= mysql_qry($qryo);
   return mysql_insert_id();
@@ -980,6 +1074,48 @@ function dite_update($o,$p) {
     $qryo= "UPDATE osoba SET historie=CONCAT(historie,'$set') WHERE id_osoba=$o";
     $reso= mysql_qry($qryo);
   }
+}
+# ------------------------------------------------------------- pecoun_insert
+function pecoun_insert($p,$sex=0,$orig='c') {
+  $id_dupary=$p["id_dupary"];
+  $jmeno=    mysql_real_escape_string($p["krestni"]);
+  $prijmeni= mysql_real_escape_string($p["jmeno"]);
+  $ulice   = strtr($p["adresa"],"'","’");
+  $psc     = $p["psc"];
+  $os=       $p["mesto"];
+  list($o,$s)= explode(',',$os);
+  switch(trim($s)) {
+  case 'Slovensko':
+  case 'Sloven.':
+  case 'Slov.':
+  case 'SR':
+  case 'SK':         $obec= $o;  $stat= 'SK';  break;
+  case 'Finland':    $obec= $o;  $stat= 'FIN'; break;
+  case 'Ukrajina':   $obec= $o;  $stat= 'UA';  break;
+  case 'Bulharsko':  $obec= $o;  $stat= 'BG';  break;
+  case 'Polsko':     $obec= $o;  $stat= 'PL';  break;
+  case 'Holland':    $obec= $o;  $stat= 'NL';  break;
+  case 'Canada ON':  $obec= $o;  $stat= 'CDN'; break;
+  default:           $obec= $os; $stat= 'CZ';  break;
+  }
+  $rc=       $p["rodcislo"];
+  $narozeni= rc2ymd($rc);
+  $rc_xxxx = strlen($rc)>6 ? substr($rc,6) : '';
+  $obcanka = $p["obcanka"];
+  $zamest  = mysql_real_escape_string($p["zamestnani"]);
+  $cirkev  = $p["cirkev"];
+  $historie= '';
+  $email= $p["email"];
+  $telefon= $p["telefon"];
+  $qryo= "INSERT INTO osoba (
+          email,telefon,
+          id_dupary,jmeno,prijmeni,ulice,psc,obec,stat,narozeni,rc_xxxx,
+          obcanka,zamest,cirkev,origin,historie,sex) VALUES (
+          '$email','$telefon',
+          '$id_dupary','$jmeno','$prijmeni','$ulice','$psc','$obec','$stat','$narozeni','$rc_xxxx',
+          '$obcanka','$zamest','$cirkev','$orig','$historie',$sex)";
+  $reso= mysql_qry($qryo);
+  return mysql_insert_id();
 }
 # ------------------------------------------------------------- osoba_insert
 function osoba_insert($p,$sex,$_m,$orig) {

@@ -141,6 +141,9 @@ panel preh [,,*,*] {type:'right', title:'Přehled'
       item {title:'krok 2 - páry:osoba,tvori,rodina',   par:°{fce:'2'} }
       item {title:'krok 3 - děti:osoba,tvori,rodina',   par:°{fce:'3'} }
       item {title:'krok 4 - pobyt,spolu',               par:°{fce:'4'} }
+      item {title:'krok 5 - + příjmení,sex u dětí',     par:°{fce:'5'} }
+      item {title:'krok 6 - pečouni:osoba,pobyt,spolu', par:°{fce:'6'} }
+      item {title:'krok 7 - pečouni,děti:skupinky',     par:°{fce:'7'} }
       proc onclick (i) {
         zname.display(0); du_akce.display(0); du_pary.display(0); du_deti.display(0); info.display(1);
         info.fill(conc(i.owner.title,' - ',i.title),' ');
