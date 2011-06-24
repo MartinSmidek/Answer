@@ -44,7 +44,7 @@ proc onfirstfocus() {
 
 
 menu m {type:'left'
-  menu g {title:'Evidence YMCA Setkání',type:'group', skill:'m'
+  menu g {title:'Evidence YMCA Setkání',type:'group', skill:'yae'
    item i{title:'všechny kontakty'
           par:°{cond:"1"} }
     item {title:'pouze členové'
@@ -53,7 +53,7 @@ menu m {type:'left'
     item {title:'pouze činní členové'
           par:°{cond:"od.ukon='c'
                       AND NOW()>=od.dat_od AND (NOW()<=od.dat_do OR od.dat_do='0000-00-00') "} }
-    item {title:'pouze členové - dlužníci'
+    item {title:'pouze členové - dlužníci', format:'d'
           par:°{cond:"od.ukon=IN ('b','c')
                       AND NOW()>=od.dat_od AND (NOW()<=od.dat_do OR od.dat_do='0000-00-00') "} }
     item {title:'pouze dárci'

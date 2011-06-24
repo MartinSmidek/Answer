@@ -168,42 +168,42 @@ form _evidence {
         ', strava=',lst.the_akce.strava_oddo.get ) } }
   }
   label [2,17,723,495] {title:"<img src='img/ms2.png'>" }
-  label [  6,20,100,] {title:'Příjmení páru'}
-  label [118,20,100,] {title:'Jméno muže'}
-  label [231,20,100,] {title:'Jméno ženy'}
-  label [342,20,26,] {title:'Muž'}
-  label [370,20,11,] {title:'Žena'}
-  label [400,20,28,] {title:'Spolu'}
-  label [434,20,38,] {title:'Svatba'}
-  label [481,20,38,] {title:'Funkce'}
-  label [537,20,38,] {title:'Skup.'}
-  label [6,54,100,] {title:'Ulice'}
-  label [142,54,36,] {title:'Psč'}
-  label [191,54,50,] {title:'Obec'}
-  label [  6, 94,37,] {title:'Telefon'}
-  label [  6,118,33,] {title:'E-mail'}
-  label [6,139,33,] {title:'Poznámka'}
-  label [512,139,68,] {title:'Datum svatby'}
-  label [511,174,38,] {title:'Spz'}
+  label [  6,20,100,] {title:'příjmení páru'}
+  label [118,20,100,] {title:'jméno muže'}
+  label [231,20,100,] {title:'jméno ženy'}
+  label [342,20,26,] {title:'muž'}
+  label [370,20,11,] {title:'žena'}
+  label [400,20,28,] {title:'spolu'}
+  label [434,20,38,] {title:'svatba'}
+  label [481,20,38,] {title:'funkce'}
+  label [537,20,38,] {title:'skup.'}
+  label [6,54,100,] {title:'ulice'}
+  label [142,54,36,] {title:'PSČ'}
+  label [191,54,50,] {title:'obec'}
+  label [  6, 94,37,] {title:'telefon'}
+  label [  6,118,33,] {title:'email'}
+  label [6,139,33,] {title:'poznámka'}
+  label [512,139,68,] {title:'datum svatby'}
+  label [511,174,38,] {title:'SPZ'}
   label [50,215,26,] {title:'Muž'}
   label [215,215,31,] {title:'Žena'}
-  label [  6,237,50,] {title:'Narození'}
+  label [  6,237,50,] {title:'narození'}
   label [151,237,17,] {title:'/rč:'}
   label [314,237,17,] {title:'/rč:'}
-  label [  6,258,44,] {title:'Církev'}
-  label [  6,279,44,] {title:'Vzdělání'}
-  label [  6,300,44,] {title:'Zaměst.'}
-  label [6,321,44,] {title:'Zájmy'}
-  label [  6,342,44,] {title:'Jazyk'}
-  label [  6,363,44,] {title:'Aktivita'}
-  label [3,431,100,] {title:'Lůž. Při. Dnů Koč'}
-  label [134,431,27,] {title:'Svp'}
-  label [175,431,33,] {title:'Platba'}
-  label [231,431,71,] {title:'Způsob platby'}
-  label [322,431,51,] {title:'Dne'}
-  label [410,431,74,] {title:'Budova Pokoj'}
+  label [  6,258,44,] {title:'církev'}
+  label [  6,279,44,] {title:'vzdělání'}
+  label [  6,300,44,] {title:'zaměst.'}
+  label [6,321,44,] {title:'zájmy'}
+  label [  6,342,44,] {title:'jazyk'}
+  label [  6,363,44,] {title:'aktivita'}
+  label [3,431,100,] {title:'lůž. při. dnů koč'}
+  label [134,431,27,] {title:'SVP'}
+  label [175,431,33,] {title:'platba'}
+  label [231,431,71,] {title:'způsob platby'}
+  label [322,431,51,] {title:'dne'}
+  label [410,431,74,] {title:'budova pokoj'}
   label [521,431,54,] {title:'CD z akce'}
-  label [232,466,100,] {title:'Poznámka k akci'}
+  label [232,466,100,] {title:'poznámka k akci'}
 }
 # -------------------------------------------------------------------------------------------------- _rodina
 form _rodina {
