@@ -1680,6 +1680,53 @@ function akce_auto_jmena1L($id_osoba) {  #trace();
 //                                                                 debug($pary,$id_akce);
   return $pary;
 }
+# -------------------------------------------------------------------------------------------------- akce_auto_jmena3
+# SELECT autocomplete - výběr z pečounů
+function akce_auto_jmena3($patt,$par) {  #trace();
+  $a= array();
+  $limit= 20;
+  $n= 0;
+  if ( $par->patt!='whole' ) {
+    $is= strpos($patt,' ');
+    $patt= $is ? substr($patt,0,$is) : $patt;
+  }
+  // páry
+  $qry= "SELECT prijmeni, jmeno, osoba.id_osoba AS _key
+         FROM osoba
+         JOIN spolu USING(id_osoba)
+         JOIN pobyt USING(id_pobyt)
+         WHERE concat(trim(prijmeni),' ',jmeno) LIKE '$patt%' AND prijmeni!='' AND funkce=99
+         ORDER BY prijmeni,jmeno LIMIT $limit";
+  $res= mysql_qry($qry);
+  while ( $res && $t= mysql_fetch_object($res) ) {
+    if ( ++$n==$limit ) break;
+    $key= $t->_key;
+    $a[$key]= "{$t->prijmeni} {$t->jmeno}";
+  }
+  // obecné položky
+  if ( !$n )
+    $a[0]= "... žádné příjmení nezačíná '$patt'";
+  elseif ( $n==$limit )
+    $a[-999999]= "... a další";
+//                                                                 debug($a,$patt);
+  return $a;
+}
+# --------------------------------------- akce_auto_jmena3L
+# formátování autocomplete
+function akce_auto_jmena3L($id_osoba) {  #trace();
+  $pecouni= array();
+  // páry
+  $qry= "SELECT id_osoba, prijmeni, jmeno, obec
+         FROM osoba AS o
+         WHERE id_osoba='$id_osoba' ";
+  $res= mysql_qry($qry);
+  while ( $res && $p= mysql_fetch_object($res) ) {
+    $nazev= "{$p->prijmeni} {$p->jmeno}, {$p->obec}";
+    $pecouni[]= (object)array('nazev'=>$nazev,'id'=>$p->id_osoba);
+  }
+                                                                debug($pecouni,$id_akce);
+  return $pecouni;
+}
 # ================================================================================================== PRIDEJ z AKCE
 # -------------------------------------------------------------------------------------------------- akce_auto_akce
 # SELECT autocomplete - výběr z akcí
@@ -1688,10 +1735,11 @@ function akce_auto_akce($patt) {  #trace();
   $limit= 20;
   $patt= substr($patt,-7,2)==' (' && substr($patt,-1)==')' ? substr($patt,0,-7) : $patt;
   $n= 0;
-  // rodiče
+  // výběr akce
   $qry= "SELECT id_duakce AS _key,concat(nazev,' (',YEAR(datum_od),')') AS _value
          FROM akce
-         WHERE nazev LIKE '$patt%' ORDER BY datum_od DESC LIMIT $limit";
+         WHERE nazev LIKE '$patt%'
+         ORDER BY datum_od DESC LIMIT $limit";
   $res= mysql_qry($qry);
   while ( $res && $t= mysql_fetch_object($res) ) {
     if ( ++$n==$limit ) break;
@@ -1738,6 +1786,52 @@ function akce_auto_akceL($id_akce) {  #trace();
   }
 //                                                                 debug($pary,$id_akce);
   return $pary;
+}
+# -------------------------------------------------------------------------------------------------- akce_auto_pece
+# SELECT autocomplete - výběr z akcí na kterých byli pečouni
+function akce_auto_pece($patt) {  #trace();
+  $a= array();
+  $limit= 20;
+  $patt= substr($patt,-7,2)==' (' && substr($patt,-1)==')' ? substr($patt,0,-7) : $patt;
+  $n= 0;
+  // výběr akce
+  $qry= "SELECT id_duakce AS _key,concat(nazev,' (',YEAR(datum_od),')') AS _value
+         FROM akce
+         JOIN pobyt ON akce.id_duakce=pobyt.id_akce
+         WHERE nazev LIKE '$patt%' AND funkce=99
+         ORDER BY datum_od DESC LIMIT $limit";
+  $res= mysql_qry($qry);
+  while ( $res && $t= mysql_fetch_object($res) ) {
+    if ( ++$n==$limit ) break;
+    $key= $t->_key;
+    $a[$key]= $t->_value;
+  }
+  // obecné položky
+  if ( !$n )
+    $a[0]= "... žádná jméno akce nezačíná '$patt'";
+  elseif ( $n==$limit )
+    $a[-999999]= "... a další";
+                                                                debug($a,$qry);
+  return $a;
+}
+# ---------------------------------------- akce_pece_akceL
+# formátování výběru pečounů dané akce
+function akce_auto_peceL($id_akce) {  #trace();
+  $pecouni= array();
+  // páry na akci
+  $qry= "SELECT o.id_osoba,jmeno,prijmeni,obec
+         FROM pobyt AS p
+         JOIN spolu AS s ON p.id_pobyt=s.id_pobyt
+         JOIN osoba AS o ON s.id_osoba=o.id_osoba
+         WHERE id_akce=$id_akce AND p.funkce=99
+	 ORDER BY prijmeni,jmeno";
+  $res= mysql_qry($qry);
+  while ( $res && $p= mysql_fetch_object($res) ) {
+    $nazev= "{$p->prijmeni} {$p->jmeno}, {$p->obec}";
+    $pecouni[]= (object)array('nazev'=>$nazev,'id'=>$p->id_osoba);
+  }
+                                                                debug($pecouni,$id_akce);
+  return $pecouni;
 }
 # ================================================================================================== INFORMACE
 # výpisy informací o akci

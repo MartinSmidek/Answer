@@ -297,13 +297,15 @@ form _pobyt {
   browse d [375,224,,] {type:'smart', rows:4, css_rows:'id_spolu,0:nic,:nakursu'
     show id_osoba
     show id_spolu
-    show jmeno    [,,70,] { title:'Děti' }
+    show skupinka [,,20,] { title:'skupinka', format:'r:e' }
+    show jmeno    [,,70,] { title:'Děti', format:'t' }
     show vek      [,,20,] { title:'věk', js_pipe:'roku', format:'r' }
     show narozeni
     show rc_xxxx
-    show note [,,80,] { title:'poznámka' }
+    show note     [,,60,] { title:'poznámka' }
     proc onsubmit() {
       Dite.key_dite.set(id_osoba.get); Dite.key_spolu.set(id_spolu.get);
+      Dite.key_pobyt.set(u.b.key_pobyt.get);
       Dite.modal(260,130)
     }
   }
@@ -401,9 +403,9 @@ form _ucast [,,400,] { css:'ds_form'
     // všechny děti: (id_osoba, jsou na akci?id_spolu:0, jmeno, narozeni, note)
     show deti       {expr:"
        (SELECT GROUP_CONCAT(CONCAT(osoba.id_osoba,'|',
-          (IFNULL((SELECT id_spolu FROM osoba LEFT JOIN spolu USING(id_osoba)
+          (IFNULL((SELECT CONCAT(id_spolu,'|',skupinka) FROM osoba LEFT JOIN spolu USING(id_osoba)
                    WHERE id_pobyt=p.id_pobyt AND id_osoba=tvori.id_osoba
-                   GROUP BY id_osoba),0))
+                   GROUP BY id_osoba),'0|0'))
            ,'|',jmeno,'|',narozeni,'|',narozeni,'|',rc_xxxx,'|',note)
            ORDER BY osoba.id_osoba DESC SEPARATOR '|')
         FROM osoba JOIN tvori USING(id_osoba)
@@ -597,7 +599,7 @@ form _cmd [,,200,] { css:'ds_form'
   button dite       [271,525,,] {title:'Přidat dítě', skill:'yaa+|yaa+;faa+|faa+',
     help:'Přidání dalšího dítěte do rodiny'
     proc onclick() {
-      Dite.key_dite.set(0); Dite.key_spolu.set(0);
+      Dite.key_dite.set(0); Dite.key_spolu.set(0); Dite.key_pobyt.set(u.b.key_pobyt.get);
       Dite.modal(260,130)
   } }
   // procedury
@@ -608,8 +610,12 @@ panel Dite [,,360,360] {type:'popup', title:'Úprava dětí'
   use dite: form _dite [0,10,,]
   var key_dite: number
   var key_spolu: number
+  var key_pobyt: number
+  var dite_spolu: number
   proc onfocus() {
-    { key_dite.get; dite.load(key_dite.get) | dite.init(2) };
+    { key_dite.get;
+      dite.s.set_attrib('join',conc('ON d.id_osoba=s.id_osoba AND s.id_pobyt=',key_pobyt.get));
+      dite.load(key_dite.get) | dite.init(2) };
     [ has_skill('yaa+;faa+'); dite.vyradit.enable(eq(dite.ucasti.get,'')) ];
     dite.sebou.set(cconc(key_spolu.get,1,0))
   }
@@ -618,18 +624,23 @@ panel Dite [,,360,360] {type:'popup', title:'Úprava dětí'
     const L=0
     const T=0
     view d: table osoba
-    label          [L+65,T+0,69,] {title:'příjmení'}
-    field prijmeni [L+65,T+15,118,] {data:d.prijmeni, help:'příjmení'}
-    label          [L+198,T+0,100,] {title:'jméno'}
-    field jmeno    [L+198,T+15,101,] {data:d.jmeno}
-    radio sex [L+306,T+0,50,35] { data:d.sex,
-      case [0,2,50,] { title:'muž', expr:'1' }
-      case [0,17,50,] { title:'žena', expr:'2' }
+    view s: table spolu { join_type:'LEFT', join:'USING(id_osoba)' }
+    field {data:d.id_osoba}
+    field id_spolu {data:s.id_spolu}
+    label          [L+44,T+0,,] {title:'skup.'}
+    field skupinka [L+44,T+15,30,] {data:s.skupinka, help:'skupinka'}
+    label          [L+85,T+0,,] {title:'příjmení'}
+    field prijmeni [L+85,T+15,109,] {data:d.prijmeni, help:'příjmení'}
+    label          [L+205,T+0,,] {title:'jméno'}
+    field jmeno    [L+205,T+15,101,] {data:d.jmeno}
+    radio sex [L+313,T+0,50,35] { data:d.sex,
+      case [2,2,50,] { title:'muž', expr:'1' }
+      case [2,17,50,] { title:'žena', expr:'2' }
       proc onchange() { echo('sex=',this.get) }
     }
     field the_osoba { data:d.id_osoba }
-    label [0,0,,]  { title:'je na akci' }
-    check sebou    [3,9,33,17]
+    label [0,0,,]  { title:'na akci' }
+    check sebou    [3,11,24,17]
     label          [L+5,T+38,100,] {title:'ulice'}
     field ulice    [L+5,T+53,162,] {data:d.ulice}
     label          [L+179,T+38,39,] {title:'psč'}
@@ -670,10 +681,12 @@ panel Dite [,,360,360] {type:'popup', title:'Úprava dětí'
     button [312,330,,] { type:'submit', title:'Uložit', skill:'yaa+|yaa+;faa+|faa+'
       proc onclick() {
       { key_dite.get;
+        dite_spolu.set(id_spolu.get);
         // oprava
         d.key(key_dite.get); [ d.save ];
         [ and(key_spolu.get,not(sebou.get)); // vyjmout z kurzu
-          spolu.delete_record(conc('id_spolu=',key_spolu.get))
+          spolu.delete_record(conc('id_spolu=',key_spolu.get));
+          dite_spolu.set(0)
         | and(not(key_spolu.get),sebou.get); // přidat na kurz
           dite_na_kurs
         ];
@@ -682,11 +695,12 @@ panel Dite [,,360,360] {type:'popup', title:'Úprava dětí'
         tvori.insert_record(object('id_osoba',key_dite.get,'id_rodina',u.b.key_rodina.get,'role','d'));
         dite_na_kurs
       };
+      [ skupinka.changed; dite_spolu.get; s.key(dite_spolu.get); s.save ];
       reload(u.b.browse_key);
       panel.hide(1)
     }}
     proc dite_na_kurs() {
-      spolu.insert_record(object('id_pobyt',u.b.key_pobyt.get,'id_osoba',key_dite.get));
+      dite_spolu.set(spolu.insert_record(object('id_pobyt',u.b.key_pobyt.get,'id_osoba',key_dite.get)));
     }
   }
 }
