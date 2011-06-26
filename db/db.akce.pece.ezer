@@ -4,13 +4,15 @@
 # Ans(w)er/Ezer                                     (c) 2007-2011 Martin Šmídek <martin@smidek.eu> #
 # ------------------------------------------------------------------------------------------------ #
 
-var zalozka: text           // evid | plat | akce
+var zalozka: text               // evid | plat | akce
 var dirty: number
+var the_pobyt: number           // klíč společného pobytu pečounů
 
 use header: form _header   [  4,0,,]
 use up:     form _pece     [  6,40,,]
 use page:   form _page     [400,10,,]
 use p_oso:  form _osoba    [400,10,,]       { tag:'p_oso' }
+use cmd:    form _cmd      [400, 0,,]       { tag:'p_oso' }
 use p_act:  form _aktivity [400,10,,]       { tag:'p_act' }
 use p_pla:  form _platba   [400,10,,]       { tag:'p_pla' }
 
@@ -31,6 +33,9 @@ proc init_pece() { echo('init_pece ',the_title.get);
 proc reload() { echo('reload ',the_title.get);
   the_duakce.get;
 #   lst.the_akce.load(the_duakce.get);
+  the_pobyt.set(ask('select','id_pobyt','pobyt',conc("funkce=99 AND id_akce=",the_duakce.get)));
+  [ the_pobyt.get
+  | the_pobyt.set(pobyt.insert_record(object('id_akce',the_duakce.get,'funkce',99))) ];
   up.b.browse_load(conc("p.funkce=99 AND p.id_akce=",the_duakce.get));
 #   up.b.browse_load(conc("p.funkce=99 AND p.id_akce=",the_duakce.get),
 #     '',
@@ -38,6 +43,19 @@ proc reload() { echo('reload ',the_title.get);
 #     conc('SET @akce:=',the_duakce.get));
   up.b.browse_focus;
   up.b.raise('onrowclick');
+| p_oso.init; p_oso.d.browse_init;
+  p_oso.o.key(0); p_oso.s.key(0);
+}
+var pall: object
+proc pecouni_add(p,i) {  // používají panely PridaniJmenem a PridaniAkce
+  var pk: number
+  var id: number
+  var pou: number
+  p.chck.get;
+  pall.set(p.all.get); id.set(pall.get('id'));
+  // přidání pečouna na akci
+  spolu.insert_record(object('id_osoba',id.get,'id_pobyt',the_pobyt.get));
+  reload;
 }
 # -------------------------------------------------------------------------------------------------- _header
 form _header [,,380,50] {
@@ -117,10 +135,12 @@ form _osoba { tag:'a'
   edit  pozn     [L+5,T+145,216,84] {data:o.note}
   # ------------------------ akce
   view s: table spolu
-  label           [L+229,T+132,,] {title:'poznámka k pobytu na této akci'}
+  label           [L+220,T+132,,] {title:'/ poznámka k pobytu na této akci'}
   edit  pozn_akce [L+229,T+145,329,84] {data:s.poznamka}
   // děti
-  browse d [L+5,T+240,,] {type:'smart', rows:12
+  label           [L+5,T+240,,] {title:'skupinka č.'}
+  field skupinka  [L+70,T+237,30,] {data:s.skupinka, format:'r:e'}
+  browse d [L+5,T+260,,] {type:'smart', rows:12
     show id_osoba
     show id_spolu
     show prijmeni [,,80,] { title:'příjmení' }
@@ -128,7 +148,7 @@ form _osoba { tag:'a'
     show vek      [,,30,] { title:'věk', js_pipe:'roku', format:'r' }
     show narozeni
     show rc_xxxx
-    show note     [,,350,] { title:'poznámka' }
+    show note     [,,350,] { title:'poznámka / poznámka k akci' }
 #     proc onsubmit() {
 #       Dite.key_dite.set(id_osoba.get); Dite.key_spolu.set(id_spolu.get);
 #       Dite.modal(260,130)
@@ -165,16 +185,18 @@ form _pece [,,400,] { css:'ds_form'
     show telefon  { data:o.telefon }
     show email    { data:o.email }
     show pozn     { data:o.note }
-#     show pozn_akce { data:s.poznamka }
+    show pozn_akce { data:s.poznamka }
     // zobrazení
-    show _nazev [,,150,] { title:'příjmení jméno', format:'s+q*', expr:"CONCAT(o.prijmeni,' ',o.jmeno)" }
-    show skupina [,,30,] { title:'sk.', data:s.skupinka, format:'rqs'}
-    show pozn_akce [,,170,] { title:'poznámka', data:s.poznamka, format:'qs'}
+    show _nazev    [,,150,] { title:'příjmení jméno', format:'s+q*', expr:"CONCAT(o.prijmeni,' ',o.jmeno)" }
+    show skupinka  [,,30,] { title:'sk.', data:s.skupinka, format:'rqs:e'}
+    show           [,,170,] { title:'poznámka / k akci', format:'qs',
+      expr:"IF(o.note='' AND s.poznamka='','',CONCAT(o.note,' / ',s.poznamka))" }
     // skupinka
     show skup     { expr:"
       IF(s.skupinka=0,'',
-       (SELECT GROUP_CONCAT(osoba.id_osoba,'|',id_spolu,'|',prijmeni,'|',jmeno,'|',
-          narozeni,'|',narozeni,'|',rc_xxxx,'|',note
+         (SELECT GROUP_CONCAT(osoba.id_osoba,'|',id_spolu,'|',prijmeni,'|',jmeno,'|',
+            narozeni,'|',narozeni,'|',rc_xxxx,'|',
+            IF(note='' AND spolu.poznamka='','',CONCAT(note,' / ',spolu.poznamka))
           ORDER BY IF(pobyt.funkce=99,0,1),prijmeni SEPARATOR '|')
         FROM osoba
         JOIN spolu USING(id_osoba)
@@ -195,10 +217,12 @@ form _pece [,,400,] { css:'ds_form'
       // ochrana proti neuložené změně, pokud je možné údaje měnit
       has_skill('yaa+;faa+'); not(and(p_oso.same));
       warning('neuložené změny pro pečouna <b>',p_oso.prijmeni.get,'</b> použij [Zpět] nebo [Uložit]');
+    | not(b.browse_count);
+      p_oso.init; p_oso.d.browse_init
     | switch(zalozka.get,
       'evid', {
         // přechod na jiného pečouna
-        copy_by_name(b,p_oso.get);
+        copy_by_name(b,p_oso.get); p_oso.o.key(key_osoba.get); p_oso.s.key(key_spolu.get);
         p_oso.d.browse_fill(skup.get);
       },
       'plat',{
@@ -217,7 +241,7 @@ form _cmd [,,200,] { css:'ds_form'
   button [6,525,,] {title:'Nový', skill:'yaa+|yaa+;faa+|faa+',
     help:'Vytvoření nového pečouna a vložení jako účastníka'
     proc onclick() {   // založení
-      p_oso.init(1);
+      p_oso.init(1); p_oso.d.browse_init; p_oso.o.key(0); p_oso.s.key(0);
       b_display(0);
   } }
   // Zpět a Uložit
@@ -233,11 +257,16 @@ form _cmd [,,200,] { css:'ds_form'
       var ok: number
       p_oso.same
       // oprava
-    | p_oso.key; p_oso.save; p_oso.plain
+    | p_oso.o.key;
+      [ p_oso.o.save ];
+      [ p_oso.s.save ];
+      p_oso.plain;
+      up.b.browse_row; up.b.reload_pecoun
     | // přidání
       p_oso.insert;
       spolu.insert_record(object('id_osoba',p_oso.key,'id_pobyt',up.b.key_pobyt.get));
       p_oso.plain;
+      b_display(1);
       reload;
     }
   }
@@ -245,20 +274,20 @@ form _cmd [,,200,] { css:'ds_form'
   button pridat_a   [69,525,,] {title:'Přidat: z akce', skill:'yaa+|yaa+;faa+|faa+',
     help:'Přidání účastníky jiných akcí'
     proc onclick() {
-#       PridaniAkce.modal(240,50)
+      PridaniAkce.modal(240,50)
   } }
-  // PŘIDAT z JEDNOTLIVCU
+  // PŘIDAT z pečounů
   button pridat_1   [155,525,,] {title:'... jménem', skill:'yaa+|yaa+;faa+|faa+',
-    help:'Přidání účastníka podle jména'
+    help:'Přidání pečouna podle jména'
     proc onclick() {
-#       PridaniJmenem1.modal(240,50)
+      PridaniJmenem3.modal(240,50)
   } }
   // VYŘADIT a VYMAZAT
   button [357,525,,] {title:'Vyřadit', skill:'yaa+|yaa+;faa+|faa+',
     help:'Vyřazení pečouna z účasti na akci'
     proc onclick() {
       confirm("Opravdu vyřadit ",up.b.prijmeni.get,' (',up.b.jmeno.get,") z této akce?");
-      spolu.delete_record(conc('id_pobyt=',up.b.key_pobyt.get),9999);
+      spolu.delete_record(conc('id_spolu=',up.b.key_spolu.get),1);
       reload;
   } }
   button [409,525,,] {title:'Vymazat', skill:'yaa+|yaa+;faa+|faa+',
@@ -268,15 +297,95 @@ form _cmd [,,200,] { css:'ds_form'
       alert('není hotovo - tady bude ještě jedno varování s výčtem akcí, kterých se zúčastnil');
       reload;
   } }
-  // PŘIDAT DÍTĚ
-  button dite       [271,525,,] {title:'Přidat dítě', skill:'yaa+|yaa+;faa+|faa+',
-    help:'Přidání dalšího dítěte do skupiny'
-    proc onclick() {
+#   // PŘIDAT DÍTĚ
+#   button dite       [225,525,,] {title:'... dítě do skupinky', skill:'yaa+|yaa+;faa+|faa+',
+#     help:'Přidání dalšího dítěte do skupiny'
+#     proc onclick() {
 #       Dite.key_dite.set(0); Dite.key_spolu.set(0);
 #       Dite.modal(260,130)
-  } }
+#   } }
   // procedury
   proc b_display(on) { up.b.display(on);  }
+}
+# ================================================================================================== Přidání jménem 3
+panel PridaniJmenem3 [,,320,280] {type:'popup', title:'Přidání známých pečounů jménem'
+  use fl: form _fl [12,10,,]
+  proc onfocus() { fl.jmena.init; fl.vse.init; fl.L.init; fl.jmena.focus }
+  form _fl [,,300,200] {
+    var last: number
+    var rod: object
+    var popis: text
+    button [0,250,50,16] { title:'přidat do pečounů akce', proc onclick() {
+      each(L,pecouni_add); reload; panel.hide(0)
+    } }
+    button [140,250,50,16] { title:'jiná jména', proc onclick() {
+      jmena.init; vse.init; L.init } }
+    button [230,250,50,16] { title:'konec', proc onclick() {
+      jmena.init; vse.init; L.init; panel.hide(0) } }
+    // výběr z databáze MS
+    select jmena [100,0,200,17] { type:'auto', par:°{fce:'akce_auto_jmena3',patt:'whole'}, format:'t'
+      proc onchanged() {
+        rod.set(ask('akce_auto_jmena3L',this.key));
+        each(rod.get,jmenovci); // nesmí volat asynchronní operace
+      }
+    }
+    proc jmenovci(p,i) {
+      last.set(L.add);
+      popis.set(p.nazev);
+      L.part(last.get).part('info').set(popis.get);
+      L.part(last.get).part('all').set(p);
+    }
+    // nastavení výběru
+    check vse [4,0,80,16] { title:'všichni', format:'t'
+      proc onchange() { each(L,nastav) }
+      proc nastav (x,i) { x.chck.set(form.vse.get) }
+    }
+    list L [0,23,300,200] {rows:22      // anonymní group
+      check chck [4,0,50,16] { title:' ', format:'t', value:'1'  /*, proc onchange() { echo('jo/ne') }*/ }
+      label info [23,4,300,16] {style:'white-space:nowrap'}
+      var all: object
+    }
+  }
+}
+# ================================================================================================== Přidání akce
+panel PridaniAkce [,,320,280] {type:'popup', title:'Přidání pečounů známých z jiných akcí'
+  use fl: form _fl [12,10,,]
+  proc onfocus() { fl.akce.init; fl.vse.init; fl.L.init; fl.akce.focus }
+  form _fl [,,300,200] {
+    var last: number
+    var pary: object
+    var popis: text
+    button [0,250,50,16] { title:'přidat mezi pečouny', proc onclick() {
+      each(L,pecouni_add); reload;
+    } }
+    button [130,250,50,16] { title:'jiná akce', proc onclick() {
+      akce.init; vse.init; L.init } }
+    button [220,250,50,16] { title:'konec', proc onclick() {
+      akce.init; vse.init; L.init; panel.hide(0) } }
+    // výběr z akcí
+    select akce [100,0,200,17] { type:'auto', par:°{fce:'akce_auto_pece'}, format:'t'
+      proc onchanged() {
+        pary.set(ask('akce_auto_peceL',this.key));
+        each(pary.get,ucastnici); // nesmí volat asynchronní operace
+      }
+    }
+    proc ucastnici(p,i) {
+      last.set(L.add);
+      popis.set(p.nazev);
+      L.part(last.get).part('info').set(popis.get);
+      L.part(last.get).part('all').set(p);
+    }
+    // nastavení výběru
+    check vse [4,0,80,16] { title:'všichni', format:'t'
+      proc onchange() { each(L,nastav) }
+      proc nastav (x,i) { x.chck.set(form.vse.get) }
+    }
+    list L [0,23,300,200] {rows:22      // anonymní group
+      check chck [4,0,50,16] { title:' ', format:'t'  /*, proc onchange() { echo('jo/ne') }*/ }
+      label info [23,4,300,16] {style:'white-space:nowrap'}
+      var all: object
+    }
+  }
 }
 # ================================================================================================== BackTrace
 # přehled provedených změn

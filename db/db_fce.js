@@ -38,6 +38,9 @@ Ezer.fce.roku= function (dat,rok) {
       roku= roku<10 ? Math.round(10*roku)/10 : Math.round(roku);
       if ( !roku ) roku= 1;       // první rok počítej i načatý
     }
+    else if ( dat=='0000-00-00' ) {
+      roku= '';
+    }
     else {
       m= dat.split('-');        // sql-formát
       if ( m.length==3 ) {
