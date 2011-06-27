@@ -14,6 +14,11 @@ use info: form right [12,4,,] {
         res.set(ask('akce_vyp_excel',the_duakce.get,the_par.get,the_title.get,the_vypis.get));
         form.msg.set(res.html);
       },
+      'Excel-plachta',{
+        res.set(ask('akce_plachta',the_duakce.get,the_par.get,the_title.get,the_vypis.get,1));
+        form.note.set('');
+        form.msg.set(res.href);
+      },
       'PDF',{
         sti_A.report_init; sti_A.report_check;
         res.set(ask('akce_pdf_stitky',conc("p.id_akce=",the_duakce.get," AND ",the_par.get('cnd')),sti_A.get_json));
@@ -92,6 +97,8 @@ menu m {type:'left',
     item {title:'platby vč.DPH (jen MS)',par:°{typ:'vp',exp:'Excel',cnd:'1'}}
     item {title:'počty strav'           ,par:°{typ:'vs',exp:'Excel',cnd:'1'}}
     item {title:'člověkolůžka'          ,par:°{typ:'vn',exp:'Excel',cnd:'1'}}
+    item {title:'skupinky - plachta'    ,par:°{typ:'sk',exp:'Excel-plachta',cnd:'1',fce:'plachta'}}
+    item {title:'skupinky - přehled'    ,par:°{typ:'sk',exp:'Excel',cnd:'1',fce:'prehled'}}
   }
   proc onclick (i) {
     var x: object

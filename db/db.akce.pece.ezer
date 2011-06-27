@@ -207,12 +207,12 @@ form _pece [,,400,] { css:'ds_form'
     // změna
     proc reload_pecoun() {
       [ has_skill('m');
-        b.browse_count;
+        { b.browse_count;
         develop.set(conc(
            'id_akce=',key_akce.get,', id_pobyt=',key_pobyt.get
           ,'<br>m: id_spolu=', key_spolu.get, ', id_osoba=', key_osoba.get
         ))
-      | develop.set('');
+        | develop.set('') }
       ];
       // ochrana proti neuložené změně, pokud je možné údaje měnit
       has_skill('yaa+;faa+'); not(and(p_oso.same));
