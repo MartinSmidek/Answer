@@ -29,7 +29,7 @@ panel ducast {type:'plain', _sys:'*', title:'Účastníci', include:'onload,db.a
   proc init_ucast() { alert('napřed klikni na Databáze|Účastníci') }
   proc akce_show() { alert('napřed klikni na Databáze|Účastníci') }
 }
-panel pece {type:'plain', _sys:'*', title:'Pečouni', include:'onload,db.akce.pece',skill:'faa'
+panel pece {type:'plain', _sys:'*', title:'Pečouni', include:'onload,db.akce.pece',skill:'yaa;faa'
   proc init_pece() { alert('napřed klikni na Databáze|Pečouni') }
   proc akce_show() { alert('napřed klikni na Databáze|Pečouni') }
 }

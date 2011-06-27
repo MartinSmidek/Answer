@@ -231,7 +231,8 @@ function akce_sestava($akce,$par,$title,$vypis,$export=false) {
      : ( $par->typ=='vs' ? akce_strava_pary($akce,$par,$title,$vypis,$export)
      : ( $par->typ=='vn' ? akce_sestava_noci($akce,$par,$title,$vypis,$export)
      : ( $par->typ=='vv' ? akce_text_vyroci($akce,$par,$title,$vypis,$export)
-                         : fce_error("akce_sestava: N.Y.I.") )))));
+     : ( $par->typ=='sk' ? akce_skupinky($akce,$par,$title,$vypis,$export)
+                         : fce_error("akce_sestava: N.Y.I.") ))))));
 }
 # -------------------------------------------------------------------------------------------------- akce_sestava_lidi
 # generování sestavy pro účastníky $akce - jednotlivce
@@ -944,134 +945,183 @@ function akce_sestava_td_style($fmt) {
   return count($style)
     ? " style='".implode(';',$style)."'" : '';
 }
-/*
-# -------------------------------------------------------------------------------------------------- akce_sestava OLD
-# generování sestavy pro účastníky $akce
-#   $typ = jeden | par
-#   $fld = seznam položek s prefixem
-#   $cnd = podmínka
-function akce_sestava($akce,$par,$title,$vypis,$export=false) {
-  $result= (object)array();
-  $typ= $par->typ;
-  $tit= $par->tit;
-  $fld= $par->fld;
-  $cnd= $par->cnd;
-  $html= '';
-  $href= '';
-  $n= 0;
-  // dekódování parametrů
-  $tits= explode(',',$tit);
-  $join= "JOIN ms_pary AS mp ON mp.id_pary=mk.id_pary ";
-  $group= '';
-  $fields= ",CONCAT(jmeno_m,' a ',jmeno_z) AS jmena";
-  $order= 'mp.jmeno';
-  switch ($typ) {
-  case 'j':                             // jednotlivci
-    $fn= explode(';',$fld);
-    $flds= array(explode(',',$fn[0]),explode(',',$fn[1]));
-    break;
-  case 'p':                             // páry
-    $flds= explode(',',$fld);
-    break;
-  case 'd':                             // děti
-    $fields= ",md.jmeno AS jmeno_d";
-    $join.= "JOIN ms_deti AS md ON md.id_pary=mp.id_pary
-             JOIN ms_kursdeti AS mkd ON mkd.id_deti=md.id_deti AND mkd.id_akce=mk.id_akce ";
-//     $group= "GROUP BY mp.id_pary";
-    $flds= explode(',',$fld);
-    break;
-  }
-  $cond= 1;
-  switch ($cnd) {
-  case 'vps':                           // jen VPS
-    $cond= 'funkce=1';
-    break;
-  case 2:                               // nikoliv VPS
-    $cond= 'funkce=0';
-    break;
-  }
-  // získání dat - podle $kdo
-  $clmn= array();
-//   $qry= "SELECT *
-//          FROM ms_kurs AS mk
-//          JOIN ms_akce AS ma ON ma.id_akce=mk.id_akce
-//          JOIN ms_pary AS mp ON mp.id_pary=mk.id_pary
-//          LEFT JOIN ms_kurs AS mks ON mks.id_akce=mk.id_akce AND mks.skupina=mk.skupina
-//          JOIN ms_pary AS mps ON mps.id_pary=mks.id_pary
-//          LEFT JOIN ms_deti AS md ON md.id_pary=mp.id_pary
-//          LEFT JOIN ms_kursdeti AS mkd ON mkd.id_deti=md.id_deti AND mkd.id_akce=mk.id_akce
-//          WHERE mk.id_akce=$akce
-//          GROUP BY mp.id_pary
-//          ORDER BY mp.jmeno";
-  // páry kurzu
-  $qry= "SELECT * $fields
-         FROM ms_kurs AS mk
-         $join
-         WHERE mk.id_akce=$akce AND $cond
-         $group
-         ORDER BY $order";
+# ================================================================================================== VÝPISY SPECIÁLNÍ
+# -------------------------------------------------------------------------------------------------- akce_skupinky
+# generování pomocných sestav pro tvorbu skupinek
+#   $par->fce = plachta | prehled
+function akce_skupinky($akce,$par,$title,$vypis,$export=false) {
+  return $par->fce=='plachta'  ? akce_plachta($akce,$par,$title,$vypis,$export)
+                               : fce_error("akce_skupinky: {$par->fce} N.Y.I.") ;
+}
+# -------------------------------------------------------------------------------------------------- akce_plachta
+# podklad pro tvorbu skupinek
+function akce_plachta($akce,$par,$title,$vypis,$export=0) { trace();
+  // číselníky
+  $c_vzdelani= map_cis('ms_akce_vzdelani','zkratka');  $c_vzdelani[0]= '?';
+  $c_cirkev= map_cis('ms_akce_cirkev','zkratka');      $c_cirkev[0]= '?';  $c_cirkev[1]= 'kat';
+  $letos= date('Y');
+  $html= "";
+  $excel= array();
+//   $html.= "<table class='vypis'>";
+  // letošní účastníci
+  $qry=  "SELECT
+          r.nazev as jmeno,p.pouze as pouze,r.obec as mesto,svatba,p.funkce as funkce,
+          GROUP_CONCAT(DISTINCT IF(t.role='a',o.id_osoba,'') SEPARATOR '') as id_osoba_m,
+          GROUP_CONCAT(DISTINCT IF(t.role='a',o.prijmeni,'') SEPARATOR '') as prijmeni_m,
+          GROUP_CONCAT(DISTINCT IF(t.role='a',o.jmeno,'')    SEPARATOR '') as jmeno_m,
+          GROUP_CONCAT(DISTINCT IF(t.role='a',o.narozeni,'') SEPARATOR '') as narozeni_m,
+          GROUP_CONCAT(DISTINCT IF(t.role='a',o.vzdelani,'') SEPARATOR '') as vzdelani_m,
+          GROUP_CONCAT(DISTINCT IF(t.role='a',o.cirkev,'')   SEPARATOR '') as cirkev_m,
+          GROUP_CONCAT(DISTINCT IF(t.role='a',o.aktivita,'') SEPARATOR '') as aktivita_m,
+          GROUP_CONCAT(DISTINCT IF(t.role='a',o.zajmy,'')    SEPARATOR '') as zajmy_m,
+          GROUP_CONCAT(DISTINCT IF(t.role='a',o.zamest,'')   SEPARATOR '') as zamest_m,
+          GROUP_CONCAT(DISTINCT IF(t.role='b',o.id_osoba,'') SEPARATOR '') as id_osoba_z,
+          GROUP_CONCAT(DISTINCT IF(t.role='b',o.prijmeni,'') SEPARATOR '') as prijmeni_z,
+          GROUP_CONCAT(DISTINCT IF(t.role='b',o.jmeno,'')    SEPARATOR '') as jmeno_z,
+          GROUP_CONCAT(DISTINCT IF(t.role='b',o.narozeni,'') SEPARATOR '') as narozeni_z,
+          GROUP_CONCAT(DISTINCT IF(t.role='b',o.vzdelani,'') SEPARATOR '') as vzdelani_z,
+          GROUP_CONCAT(DISTINCT IF(t.role='b',o.cirkev,'')   SEPARATOR '') as cirkev_z,
+          GROUP_CONCAT(DISTINCT IF(t.role='b',o.aktivita,'') SEPARATOR '') as aktivita_z,
+          GROUP_CONCAT(DISTINCT IF(t.role='b',o.zajmy,'')    SEPARATOR '') as zajmy_z,
+          GROUP_CONCAT(DISTINCT IF(t.role='b',o.zamest,'')   SEPARATOR '') as zamest_z,
+          ( SELECT COUNT(*)
+            FROM osoba JOIN tvori USING(id_osoba)
+            WHERE id_rodina=t.id_rodina AND role='d' ) AS deti
+          FROM pobyt AS p
+          JOIN spolu AS s USING(id_pobyt)
+          JOIN osoba AS o ON s.id_osoba=o.id_osoba
+          LEFT JOIN tvori AS t ON t.id_osoba=o.id_osoba
+          LEFT JOIN rodina AS r USING(id_rodina)
+          WHERE id_akce=$akce AND p.funkce IN (0,1,5)
+          GROUP BY id_pobyt
+          ORDER BY IF(pouze=0,r.nazev,o.prijmeni) ";
+//   $qry.= " LIMIT 1";
   $res= mysql_qry($qry);
-  while ( $res && ($x= mysql_fetch_object($res)) ) {
-    switch ($typ) {
-    case 'j':                             // jednotlivci
-      $n++;
-      $clmn[$n]= array();
-      foreach($flds[0] as $f) {
-        $clmn[$n][$f]= $x->$f;
-      }
-      $n++;
-      $clmn[$n]= array();
-      foreach($flds[1] as $f) {
-        $clmn[$n][$f]= $x->$f;
-      }
-      break;
-    case 'p':                             // páry
-      $n++;
-      $clmn[$n]= array();
-      foreach($flds as $f) {
-        $clmn[$n][$f]= $x->$f;
-      }
-      break;
-    case 'd':                             // děti
-      $n++;
-      $clmn[$n]= array();
-      $x->rodcislo_d= $x->rodcislo;
-      $holka= $x->rodcislo_d && substr($x->rodcislo_d,2,1)>4 ? 1 : 0;
-      $x->jmeno_d= $x->jmeno;
-      $x->prijmeni_d= $holka ? $x->prijmeni_z : $x->prijmeni_m;
-      foreach($flds as $f) {
-        $clmn[$n][$f]= $x->$f;
-      }
-      break;
+  while ( $res && ($u= mysql_fetch_object($res)) ) {
+    $muz= $u->id_osoba_m;
+    // minulé účasti
+    $rqry= "SELECT count(*) as _pocet
+            FROM ezer_ys.akce AS a
+            JOIN pobyt AS p ON a.id_duakce=p.id_akce
+            JOIN spolu AS s USING(id_pobyt)
+            WHERE a.druh=1 AND s.id_osoba=$muz AND p.id_akce!=$akce";
+    $rres= mysql_qry($rqry);
+    while ( $rres && ($r= mysql_fetch_object($rres)) ) {
+      $u->ucasti= $r->_pocet ? "  {$r->_pocet}x" : '';
+    }
+    // věk
+    $vek_m= sql2roku($u->narozeni_m);
+    $vek_z= sql2roku($u->narozeni_z);
+    $vek= abs($vek_m-$vek_z)<5 ? $vek_m : "$vek_m/$vek_z";
+    // spolu
+    $spolu= $u->svatba ? $letos-$u->svatba : '?';
+    // děti
+    $deti= $u->deti;
+    // vzdělání
+    $vzdelani_muze= mb_substr($c_vzdelani[$u->vzdelani_m],0,2,"UTF-8");
+    $vzdelani_zeny= mb_substr($c_vzdelani[$u->vzdelani_z],0,2,"UTF-8");
+    $vzdelani= $vzdelani_muze==$vzdelani_zeny ? $vzdelani_muze : "$vzdelani_muze/$vzdelani_zeny";
+//                                                         display("$vek_m/$vek_z=$vek");
+    // konfese
+    $cirkev= $u->cirkev_m==$u->cirkev_z
+      ? ($u->cirkev_m==1 ? '' : ", {$c_cirkev[$u->cirkev_m]}")
+      : ", {$c_cirkev[$u->cirkev_m]}/{$c_cirkev[$u->cirkev_z]}";
+    // agregace
+    $r1= ($u->funkce==1 ? '* ' : '')."{$u->jmeno} {$u->jmeno_m} a {$u->jmeno_z} {$u->ucasti}";
+    $r2= "věk:$vek, spolu:$spolu, dětí:$deti, {$u->mesto}, $vzdelani $cirkev";
+    // atributy
+    $r31= $u->aktivita_m;
+    $r32= $u->aktivita_z;
+    $r41= $u->zajmy_m;
+    $r42= $u->zajmy_z;
+    $r51= $u->zamest_m;
+    $r52= $u->zamest_z;
+    // listing
+    $html.= "<table class='vypis' style='width:300px'>";
+    $html.= "<tr><td colspan=2><b>$r1</b></td></tr>";
+    $html.= "<tr><td colspan=2>$r2</td></tr>";
+    $html.= "<tr><td>$r31</td><td>$r32</td></tr>";
+    $html.= "<tr><td>$r41</td><td>$r42</td></tr>";
+    $html.= "<tr><td>$r51</td><td>$r52</td></tr>";
+    $html.= "</table><br/>";
+    if ( $export ) {
+      $excel[]= array($r1,$r2,$r31,$r41,$r51,$r32,$r42,$r52,$vzdelani_muze,$vek_m);
     }
   }
-                                        debug($clmn,"sestava pro $akce,$typ,$fld,$cnd");
-  // zobrazení tabulkou
-  $tab= '';
-  $thd= '';
+                                                debug($excel);
   if ( $export ) {
-    $result->tits= $tits;
-    $result->clmn= $clmn;
+    $result->href= akce_plachta_export($excel,'plachta');
   }
-  else {
-    // titulky
-    foreach ($tits as $idw) {
-      list($id)= explode(':',$idw);
-      $ths.= "<th>$id</th>";
-    }
-    foreach ($clmn as $i=>$c) {
-      $tab.= "<tr>";
-      foreach ($c as $id=>$val) {
-        $tab.= "<td style='text-align:left'>$val</td>";
-      }
-      $tab.= "</tr>";
-    }
-    $result->html= "<div class='stat'><table class='stat'><tr>$ths</tr>$tab</table></div>";
-    $result->href= $href;
-  }
+  $result->html= $html;
   return $result;
 }
-*/
+// ---------------------------------------------- roku
+// vrací zaokrouhlený počet roku od narození poteď
+function sql2roku($narozeni) {
+  $roku= '';
+  if ( $narozeni && $narozeni!='0000-00-00' ) {
+    list($y,$m,$d)= explode('-',$narozeni);
+    $now= time();
+    $nar= mktime(0,0,0,$m,$d,$y)+1;
+    $roku= floor(($now-$nar)/(60*60*24*365.24));
+  }
+  return $roku;
+};
+# -------------------------------------------------------------------------------------------------- akce_plachta_export
+function akce_plachta_export($line,$file) { trace();
+  require_once('./ezer2/server/licensed/xls/OLEwriter.php');
+  require_once('./ezer2/server/licensed/xls/BIFFwriter.php');
+  require_once('./ezer2/server/licensed/xls/Worksheet.php');
+  require_once('./ezer2/server/licensed/xls/Workbook.php');
+  global $ezer_path_root;
+  chdir($ezer_path_root);
+  $name= cz2ascii("vypis_").date("Ymd_Hi");
+  $table= "docs/$name.xls";
+  try {
+    $wb= new Workbook($table);
+    // formáty
+    $format_hd= $wb->add_format();
+    $format_hd->set_bold();
+    $format_hd->set_pattern();
+    $format_hd->set_fg_color('silver');
+    $format_dec= $wb->add_format();
+    $format_dec->set_num_format("# ##0.00");
+    $format_dat= $wb->add_format();
+    $format_dat->set_num_format("d.m.yyyy");
+    // list LK
+    $ws= $wb->add_worksheet("Hodnoty");
+    // hlavička
+    $fields= explode(',','r1:20,r2:20,r31:20,r41:20,r51:20,r32:20,r42:20,r52:20,skola:8,vek:8');
+    $sy= 0;
+    foreach ($fields as $sx => $fa) {
+      list($title,$width)= explode(':',$fa);
+      $ws->set_column($sx,$sx,$width);
+      $ws->write_string($sy,$sx,utf2win_sylk($title,true),$format_hd);
+    }
+    // data
+    foreach($line as $x) {
+      $sy++; $sx= 0;
+      $ws->write_string($sy,$sx++,utf2win_sylk($x[0],true));
+      $ws->write_string($sy,$sx++,utf2win_sylk($x[1],true));
+      $ws->write_string($sy,$sx++,utf2win_sylk($x[2],true));
+      $ws->write_string($sy,$sx++,utf2win_sylk($x[3],true));
+      $ws->write_string($sy,$sx++,utf2win_sylk($x[4],true));
+      $ws->write_string($sy,$sx++,utf2win_sylk($x[5],true));
+      $ws->write_string($sy,$sx++,utf2win_sylk($x[6],true));
+      $ws->write_string($sy,$sx++,utf2win_sylk($x[7],true));
+      $ws->write_string($sy,$sx++,utf2win_sylk($x[8],true));
+      $ws->write_number($sy,$sx++,$x[9]);
+    }
+    $wb->close();
+    $html= " Výpis byl vygenerován ve formátu <a href='docs/$name.xls' target='xls'>Excel</a>.";
+    $html.= " <br>Vygenerovaným listem <b>Hodnoty</b> je třeba nahradit stejnojmenný list v sešitu";
+    $html.= " <b>doc/plachta11.xls</b> a dále postupovat podle návodu v listu <b>Návod</b>.";
+  }
+  catch (Exception $e) {
+    $html.= nl2br("Chyba: ".$e->getMessage()." na ř.".$e->getLine());
+  }
+  return $html;
+}
 # ================================================================================================== BANKA
 # -------------------------------------------------------------------------------------------------- akce_rb_urci
 # pokus o určení plátce a účelu platby
