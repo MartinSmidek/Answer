@@ -50,7 +50,7 @@ menu m {type:'left',
                                         ,tit:'příjmení:15,jméno:12,narození:12,/rč:5,obec:25,psč:7,ulice:25'
                                         ,fld:'prijmeni,jmeno,narozeni,rc_xxxx,obec,psc,ulice'}}
   }
-  menu {title:'seznam',type:'group',_sys:'*'
+  menu {title:'seznamy',type:'group',_sys:'*'
     item {title:'VPS na akci'           ,par:°{typ:'p',exp:'Excel',cnd:"funkce=1",ord:"prijmeni"
                                         ,tit:'příjmení:15,jména:20,obec:25'
                                         ,fld:'prijmeni,jmena,obec'}}
@@ -72,7 +72,7 @@ menu m {type:'left',
     item {title:'děti'                  ,par:°{typ:'j',exp:'Excel',cnd:"role='d'",ord:"prijmeni"
                                         ,tit:'jméno:20, příjmení:15'
                                         ,fld:'jmeno,prijmeni'}}
-    item {title:'VPS'                   ,par:°{typ:'j',exp:'Excel',cnd:"role!='d' AND funkce=1",ord:"prijmeni"
+    item {title:'VPS'                   ,par:°{typ:'j',exp:'Excel',cnd:"role!='d' AND funkce IN (1,2)",ord:"prijmeni"
                                         ,tit:'jméno:20, příjmení:15'
                                         ,fld:'jmeno,prijmeni'}}
     item {title:'kněží'                 ,par:°{typ:'j',exp:'Excel',cnd:"role!='d' AND funkce=3",ord:"prijmeni"
@@ -93,12 +93,13 @@ menu m {type:'left',
                                         ,tit:'příjmení:15,jména:20,obec:25,psč:7,ulice:25,stát:10'
                                         ,fld:'prijmeni,jmena,obec,psc,ulice,stat'}}
   }
-  menu {title:'MS: přehledy, vyúčtování',type:'group',_sys:'*'
+  menu {title:'MS: letní kurs, obnovy',type:'group',_sys:'*'
     item {title:'platby vč.DPH (jen MS)',par:°{typ:'vp',exp:'Excel',cnd:'1'}}
     item {title:'počty strav'           ,par:°{typ:'vs',exp:'Excel',cnd:'1'}}
     item {title:'člověkolůžka'          ,par:°{typ:'vn',exp:'Excel',cnd:'1'}}
     item {title:'skupinky - plachta'    ,par:°{typ:'sk',exp:'Excel-plachta',cnd:'1',fce:'plachta'}}
-    item {title:'skupinky - přehled'    ,par:°{typ:'sk',exp:'Excel',cnd:'1',fce:'prehled'}}
+    item {title:'skupinky - přehled historie' ,par:°{typ:'sk',exp:'Excel',cnd:'1',fce:'prehled'}}
+    item {title:'skupinky - tisk'       ,par:°{typ:'sk',exp:'Excel',cnd:'1',fce:'tisk'}}
   }
   proc onclick (i) {
     var x: object

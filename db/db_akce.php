@@ -89,7 +89,7 @@ function akce_pdf_stitky($cond,$report_json) { trace();
           LEFT JOIN rodina AS r USING(id_rodina)
           WHERE $cond
           GROUP BY id_pobyt
-          ORDER BY IF(funkce<=1,1,funkce),IF(pouze=0,r.nazev,o.prijmeni)";
+          ORDER BY IF(funkce<=2,1,funkce),IF(pouze=0,r.nazev,o.prijmeni)";
   $res= mysql_qry($qry);
   while ( $res && ($x= mysql_fetch_object($res)) ) {
     $x->prijmeni= $x->pouze==1 ? $x->prijmeni_m : ($x->pouze==2 ? $x->prijmeni_z : $x->nazev);
@@ -244,7 +244,7 @@ function akce_sestava_lidi($akce,$par,$title,$vypis,$export=false) { trace();
   $tit= $par->tit;
   $fld= $par->fld;
   $cnd= $par->cnd;
-  $ord= $par->ord ? $par->ord : "IF(funkce<=1,1,funkce),IF(pouze=0,r.nazev,o.prijmeni)";
+  $ord= $par->ord ? $par->ord : "IF(funkce<=2,1,funkce),IF(pouze=0,r.nazev,o.prijmeni)";
   $html= '';
   $href= '';
   $n= 0;
@@ -312,7 +312,7 @@ function akce_sestava_pary($akce,$par,$title,$vypis,$export=false) { trace();
   $tit= $par->tit;
   $fld= $par->fld;
   $cnd= $par->cnd;
-  $ord= $par->ord ? $par->ord : "IF(funkce<=1,1,funkce),IF(pouze=0,r.nazev,o.prijmeni)";
+  $ord= $par->ord ? $par->ord : "IF(funkce<=2,1,funkce),IF(pouze=0,r.nazev,o.prijmeni)";
   $html= '';
   $href= '';
   $n= 0;
@@ -465,7 +465,7 @@ function akce_sestava_noci($akce,$par,$title,$vypis,$export=false) { trace();
   // definice sloupců
   $tit= "Manželé:25,pokoj:8:r,dnů:5:r,nocí:5:r,lůžek:5:r:s,lůžko nocí:5:r:s,přis týlek:5:r:s,přis týlko nocí:5:r:s";
   $fld= "manzele,pokoj,pocetdnu,=noci,luzka,=luzkonoci,pristylky,=pristylkonoci";
-  $ord= $par->ord ? $par->ord : "IF(funkce<=1,1,funkce),IF(pouze=0,r.nazev,o.prijmeni)";
+  $ord= $par->ord ? $par->ord : "IF(funkce<=2,1,funkce),IF(pouze=0,r.nazev,o.prijmeni)";
   $cnd= $par->cnd;
   $html= '';
   $href= '';
@@ -601,7 +601,7 @@ function akce_sestava_noci($akce,$par,$title,$vypis,$export=false) { trace();
 # generované vzorce
 #   platit = součet předepsaných plateb
 function akce_strava_pary($akce,$par,$title,$vypis,$export=false) { trace();
-  $ord= $par->ord ? $par->ord : "IF(funkce<=1,1,funkce),IF(pouze=0,r.nazev,o.prijmeni)";
+  $ord= $par->ord ? $par->ord : "IF(funkce<=2,1,funkce),IF(pouze=0,r.nazev,o.prijmeni)";
   $result= (object)array();
   $cnd= 1;
   $html= '';
@@ -752,7 +752,7 @@ function akce_strava_pary($akce,$par,$title,$vypis,$export=false) { trace();
 # generované vzorce
 #   platit = součet předepsaných plateb
 function akce_vyuctov_pary($akce,$par,$title,$vypis,$export=false) { trace();
-  $ord= $par->ord ? $par->ord : "IF(funkce<=1,1,funkce),IF(pouze=0,r.nazev,o.prijmeni)";
+  $ord= $par->ord ? $par->ord : "IF(funkce<=2,1,funkce),IF(pouze=0,r.nazev,o.prijmeni)";
   $result= (object)array();
   $tit= "Manželé:25"
       . ",pokoj:7,dětí:5:r,lůžka:5:r:s,přis týlky:5:r:s,kočá rek:5:r:s,nocí:5:r:s"
@@ -945,13 +945,230 @@ function akce_sestava_td_style($fmt) {
   return count($style)
     ? " style='".implode(';',$style)."'" : '';
 }
-# ================================================================================================== VÝPISY SPECIÁLNÍ
+# ================================================================================================== SKUPINKY
 # -------------------------------------------------------------------------------------------------- akce_skupinky
 # generování pomocných sestav pro tvorbu skupinek
 #   $par->fce = plachta | prehled
 function akce_skupinky($akce,$par,$title,$vypis,$export=false) {
   return $par->fce=='plachta'  ? akce_plachta($akce,$par,$title,$vypis,$export)
-                               : fce_error("akce_skupinky: {$par->fce} N.Y.I.") ;
+     : ( $par->fce=='prehled'  ? akce_skup_hist($akce,$par,$title,$vypis,$export)
+     : ( $par->fce=='tisk'     ? akce_skup_tisk($akce,$par,$title,$vypis,$export)
+                               : (object)array('html'=>'sestava ještě není hotova') ));
+}
+# -------------------------------------------------------------------------------------------------- akce_skup_check
+# zjištění konzistence skupinek podle příjmení VPS
+function akce_skup_check($akce) {
+  return akce_skup_get($akce,1,$err);
+}
+# -------------------------------------------------------------------------------------------------- akce_skup_get
+# zjištění skupinek podle příjmení VPS
+function akce_skup_get($akce,$kontrola,&$err) { trace();
+  $msg= array();
+  $skupiny= array();
+  $celkem= select('count(*)','pobyt',"id_akce=$akce AND funkce IN (0,1,2)");
+  $n= 0;
+  $err= 0;
+  $order= array();
+  $qry= "
+      SELECT skupina,
+        SUM(IF(funkce=2,1,0)) as _n_svps,
+        SUM(IF(funkce=1,1,0)) as _n_vps,
+        GROUP_CONCAT(DISTINCT IF(funkce=2,id_pobyt,'') SEPARATOR '') as _svps,
+        GROUP_CONCAT(DISTINCT IF(funkce=1,id_pobyt,'') SEPARATOR '') as _vps,
+        GROUP_CONCAT(DISTINCT id_pobyt) as _skupina
+      FROM akce AS a
+      JOIN pobyt AS p ON a.id_duakce=p.id_akce
+      WHERE p.id_akce=$akce AND skupina!=0
+      GROUP BY skupina ";
+  $res= mysql_qry($qry);
+  while ( $res && ($s= mysql_fetch_object($res)) ) {
+    if ( $s->_n_svps==1 || $s->_n_vps==1 ) {
+      $skupina= array();
+      $qryu= "
+          SELECT p.id_pobyt,skupina,nazev,pokoj,
+            GROUP_CONCAT(DISTINCT IF(t.role='a',o.jmeno,'')    SEPARATOR '') as jmeno_m,
+            GROUP_CONCAT(DISTINCT IF(t.role='b',o.jmeno,'')    SEPARATOR '') as jmeno_z
+          FROM pobyt AS p
+          JOIN spolu AS s USING(id_pobyt)
+          JOIN osoba AS o ON s.id_osoba=o.id_osoba
+          LEFT JOIN tvori AS t ON t.id_osoba=o.id_osoba
+          LEFT JOIN rodina AS r USING(id_rodina)
+          WHERE p.id_pobyt IN ({$s->_skupina})
+          GROUP BY id_pobyt
+          ORDER BY funkce DESC, nazev";
+      $resu= mysql_qry($qryu);
+      while ( $resu && ($u= mysql_fetch_object($resu)) ) {
+        $u->_nazev= "{$u->nazev} {$u->jmeno_m} a {$u->jmeno_z}";
+        $skupina[$u->id_pobyt]= $u;
+        $n++;
+      }
+      $vps= $s->_svps ? $s->_svps : $s->_vps;
+      $skupiny[$vps]= $skupina;
+      $order[$vps]= utf2win($skupina[$vps]->_nazev,1);
+    }
+    elseif ( $s->_vps || $s->_vps ) {
+      $msg[]= "skupinka {$s->skupina} má nejednoznačnou VPS";
+      $err+= 2;
+    }
+    else {
+      $msg[]= "skupinka {$s->skupina} nemá VPS";
+      $err+= 4;
+    }
+  }
+  SetLocale(LC_ALL,"cs_CZ");
+  asort($order,SORT_LOCALE_STRING);
+//                                                         debug($order,"order",(object)array('win1250'=>1));
+//                                                         debug($skupiny,"celkem=$celkem, zařazených=$n");
+  // redakce chyb
+  if ( $celkem!=$n ) {
+    $msg[]= ($celkem-$n)." účastníků není zařazeno do skupinek";
+    $err+= 1;
+  }
+  if ( count($msg) && !$kontrola )
+    fce_warning(implode(",<br>",$msg));
+  elseif ( !count($msg) && $kontrola )
+    $msg[]= "Vše je ok";
+  // konec
+  return $kontrola ? implode(",<br>",$msg) : $skupiny;
+}
+# -------------------------------------------------------------------------------------------------- akce_skup_renum
+# přečíslování skupinek podle příjmení VPS
+function akce_skup_renum($akce) {
+  $err= 0;
+  $msg= '';
+  $skupiny= akce_skup_get($akce,0,$err);
+  if ( $err>1 ) {
+    $msg= "skupinky nejsou dobře navrženy - ještě je nelze přečíslovat";
+  }
+  else {
+    $n= 1;
+//     foreach($order as $i=>$x) {
+//       $skupina= $skupiny[$i];
+    foreach($skupiny as $ivps=>$skupina) {
+      $cleni= implode(',',array_keys($skupina));
+      $qryu= "UPDATE pobyt SET skupina=$n WHERE id_pobyt IN ($cleni) ";
+      $resu= mysql_qry($qryu);
+//                                                         display("$n: $ivps - $cleni");
+      $n++;
+    }
+    $msg= "bylo přečíslováno $n skupinek";
+  }
+  return $msg;
+}
+# -------------------------------------------------------------------------------------------------- akce_skup_tisk
+# tisk skupinek akce
+function akce_skup_tisk($akce) {
+  $html= "<table>";
+  $skupiny= akce_skup_get($akce,0,$err);
+  $n= 0;
+  foreach ($skupiny as $i=>$s) {
+    $tab= "<table>";
+    foreach ($s as $c) {
+      if ( $i==$c->id_pobyt )
+        $tab.= "<tr><th>{$c->skupina}</th><th>{$c->_nazev}</th><th>{$c->pokoj}</th></tr>";
+      else
+        $tab.= "<tr><td></td><td>{$c->_nazev}</td><td></td></tr>";
+    }
+    $tab.= "</table>";
+    if ( $n%2==0 )
+      $html.= "<tr><td>&nbsp;</td></tr><tr><td valign='top'>$tab</td>";
+    else
+      $html.= "<td valign='top'>$tab</td></tr>";
+    $n++;
+  }
+  if ( $n%2==1 )
+    $html.= "<td></td></tr>";
+  $html.= "</table>";
+  return (object)array('html'=>$html);
+}
+# -------------------------------------------------------------------------------------------------- akce_skup_hist
+# přehled starých skupinek letního kurzu MS účastníků této akce
+function akce_skup_hist($akce,$par,$title,$vypis,$export) { trace();
+  $result= (object)array();
+  $html= "<dl>";
+  // letošní účastníci
+  $letos= array();
+  $qry=  "SELECT skupina,r.nazev,r.obec,year(datum_od) as rok,p.funkce as funkce,
+            GROUP_CONCAT(DISTINCT IF(t.role='a',o.id_osoba,'') SEPARATOR '') as id_osoba_m,
+            GROUP_CONCAT(DISTINCT IF(t.role='a',o.jmeno,'')    SEPARATOR '') as jmeno_m,
+            GROUP_CONCAT(DISTINCT IF(t.role='b',o.jmeno,'')    SEPARATOR '') as jmeno_z,
+            id_pobyt
+          FROM pobyt AS p
+          JOIN akce  AS a ON a.id_duakce=p.id_akce
+          JOIN spolu AS s USING(id_pobyt)
+          JOIN osoba AS o ON s.id_osoba=o.id_osoba
+          LEFT JOIN tvori AS t ON t.id_osoba=o.id_osoba
+          LEFT JOIN rodina AS r USING(id_rodina)
+          WHERE id_akce=$akce AND p.funkce IN (0,1,2,5)
+          GROUP BY id_pobyt
+          ORDER BY IF(pouze=0,r.nazev,o.prijmeni) ";
+  $res= mysql_qry($qry);
+  while ( $res && ($u= mysql_fetch_object($res)) ) {
+    $muz= $u->id_osoba_m;
+    $letos[$muz]= $u;
+    $letos[$muz]->_nazev= $u->nazev;
+    $rok= $u->rok;
+  }
+//                                                         debug($letos);
+  $letosni= implode(',',array_keys($letos));
+  // doplnění nejednoznačných příjmení o město
+  $old= 0; $old_nazev= '';
+  foreach ($letos as $muz=>$info) {
+    if ( $old_nazev==$info->_nazev ) {
+      $letos[$old]->_nazev= $letos[$old]->nazev.' '.$letos[$old]->jmeno_m.' '.$letos[$old]->jmeno_z;
+      $letos[$muz]->_nazev= $letos[$muz]->nazev.' '.$letos[$muz]->jmeno_m.' '.$letos[$muz]->jmeno_z;
+    }
+    $old= $muz;
+    $old_nazev= $info->_nazev;
+  }
+//                                                         debug($odkud);
+  // tisk
+  foreach ($letos as $muz=>$info) {
+    // minulé účasti
+    $qry= " SELECT p.id_akce,skupina,year(datum_od) as rok
+            FROM ezer_ys.akce AS a
+            JOIN pobyt AS p ON a.id_duakce=p.id_akce
+            JOIN spolu AS s USING(id_pobyt)
+            WHERE a.druh=1 AND s.id_osoba='$muz' AND p.id_akce!=$akce AND skupina!=0
+            ORDER BY datum_od DESC ";
+    $res= mysql_qry($qry);
+    $ucasti= '';
+    while ( $res && ($r= mysql_fetch_object($res)) ) {
+      // minulé skupinky
+      $qry_s= "
+            SELECT
+              GROUP_CONCAT(DISTINCT IF(t.role='a',o.id_osoba,'') SEPARATOR '') as id_osoba_m
+            FROM ezer_ys.akce AS a
+            JOIN pobyt AS p ON a.id_duakce=p.id_akce
+            JOIN spolu AS s USING(id_pobyt)
+            JOIN osoba AS o ON s.id_osoba=o.id_osoba
+            LEFT JOIN tvori AS t ON t.id_osoba=o.id_osoba
+            WHERE p.id_akce={$r->id_akce} AND skupina={$r->skupina}
+            GROUP BY id_pobyt HAVING FIND_IN_SET(id_osoba_m,'$letosni')
+            ORDER BY datum_od DESC
+        ";
+      $res_s= mysql_qry($qry_s);
+      $spolu= ''; $del= '';
+      while ( $res_s && ($s= mysql_fetch_object($res_s)) ) if ( $s->id_osoba_m!=$muz ) {
+        $spolu.= "$del{$letos[$s->id_osoba_m]->_nazev}";
+        $del= ', ';
+      }
+      if ( $spolu ) {
+        $ucasti.= " <u>{$r->rok}</u>: $spolu";
+      }
+    }
+    if ( $ucasti )
+      $html.= "<dt><b>{$info->_nazev}</b></dt><dd>$ucasti</dd>";
+    else
+      $html.= "<dt><b>{$info->_nazev}</b> - poprvé</dt>";
+  }
+  $html.= "</dl>";
+  $note= "Abecední seznam účastníků letního kurzu roku $rok doplněný seznamem členů jeho starších
+          skupinek na letních kurzech. <br>Ve skupinkách jsou uvedení jen účastníci
+          kurzu roku $rok.";
+  $html= "<i>$note</i><br>$html";
+  $result->html= $html;
+  return $result;
 }
 # -------------------------------------------------------------------------------------------------- akce_plachta
 # podklad pro tvorbu skupinek
@@ -992,7 +1209,7 @@ function akce_plachta($akce,$par,$title,$vypis,$export=0) { trace();
           JOIN osoba AS o ON s.id_osoba=o.id_osoba
           LEFT JOIN tvori AS t ON t.id_osoba=o.id_osoba
           LEFT JOIN rodina AS r USING(id_rodina)
-          WHERE id_akce=$akce AND p.funkce IN (0,1,5)
+          WHERE id_akce=$akce AND p.funkce IN (0,1,2,5)
           GROUP BY id_pobyt
           ORDER BY IF(pouze=0,r.nazev,o.prijmeni) ";
 //   $qry.= " LIMIT 1";
@@ -1027,7 +1244,7 @@ function akce_plachta($akce,$par,$title,$vypis,$export=0) { trace();
       ? ($u->cirkev_m==1 ? '' : ", {$c_cirkev[$u->cirkev_m]}")
       : ", {$c_cirkev[$u->cirkev_m]}/{$c_cirkev[$u->cirkev_z]}";
     // agregace
-    $r1= ($u->funkce==1 ? '* ' : '')."{$u->jmeno} {$u->jmeno_m} a {$u->jmeno_z} {$u->ucasti}";
+    $r1= ($u->funkce==1||$u->funkce==2 ? '* ' : '')."{$u->jmeno} {$u->jmeno_m} a {$u->jmeno_z} {$u->ucasti}";
     $r2= "věk:$vek, spolu:$spolu, dětí:$deti, {$u->mesto}, $vzdelani $cirkev";
     // atributy
     $r31= $u->aktivita_m;
