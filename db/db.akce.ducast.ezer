@@ -41,7 +41,7 @@ proc akce_back() {
 }
 
 use header:form _header  [  4,0,,]
-use u:     form _ucast   [  6,40,,]
+use u:     form _ucast   [  6,20,,]
 use page:  form _page    [400,10,,]
 # záložka evidence
 use evid:  form _evidence[400,10,,]
@@ -59,8 +59,8 @@ proc reload(id_pobyt) { echo('reload ',the_title.get);
   cmd.b_display(1);
   the_duakce.get;
   lst.the_akce.load(the_duakce.get);
-  [ u.b.browse_load(conc("p.id_akce=",the_duakce.get),
-      "IF(funkce<=1,1,funkce),IF(pouze=0,r.nazev,o.prijmeni)",
+  [ u.b.browse_load(cconc(u.jen.get,"funkce IN (0,1,2) AND ",1,conc("p.id_akce=",the_duakce.get)),
+      "IF(funkce<=2,1,funkce),IF(pouze=0,r.nazev,o.prijmeni)",
       '','','','',
       conc('SET @akce:=',the_duakce.get));
     u.b.browse_focus;
@@ -161,6 +161,10 @@ form _platba {
 form _evidence {
   # --------------------------- kontextové_menu
   menu { type:'context'
+    item { title:'zkontrolovat skupinky', skill:'yaa+;faa+',
+      proc onclick () { alert(ask('akce_skup_check',the_duakce.get)) } }
+    item { title:'přečíslovat skupinky podle VPS', skill:'yaa+;faa+',
+      proc onclick () { alert(ask('akce_skup_renum',the_duakce.get)) } }
     item { title:'ukázat všechny změny'
       proc onclick () { BackTrace.back_load(pob.key,muz.key,zen.key,rod.key) } }
     item { title:'m: ECHO hodnoty klíčů', skill:'m'
@@ -312,11 +316,13 @@ form _pobyt {
 }
 # -------------------------------------------------------------------------------------------------- _ucast
 form _ucast [,,400,] { css:'ds_form'
-  label         [4,516,,] {title:'pobyt - vývojářské údaje', skill:'m'}
-  label develop [0,530,380,106] { skill:'m', style:'border:1px solid #bbb;padding:3px' }
+  label         [4,537,,] {title:'pobyt - vývojářské údaje', skill:'m'}
+  label develop [0,550,380,106] { skill:'m', style:'border:1px solid #bbb;padding:3px' }
+  // omezení browse
+  check jen [293,7,83,15] { title:'jen účastníci', format:'t', proc onchange() { reload(0) }}
   // definice pohledů
   view p: table pobyt
-  view a: table akce{ join:'ON a.id_duakce=p.id_akce' }
+  view a: table akce   { join:'ON a.id_duakce=p.id_akce' }
   view s: table spolu  { join:'USING(id_pobyt)' }
   view o: table osoba  { join:'ON s.id_osoba=o.id_osoba' }
   view t: table tvori  { join_type:'LEFT', join:'ON t.id_osoba=o.id_osoba' }
@@ -324,7 +330,7 @@ form _ucast [,,400,] { css:'ds_form'
   view tx:table tvori  { join_type:'LEFT', join:'USING(id_rodina)' }
   view ox:table osoba  { join:'ON tx.id_osoba=ox.id_osoba' }
   // seznam účastníků
-  browse b [0,0,,] {type:'smart', buf_rows:120, rows:27, qry_rows:1, group_by:'id_pobyt',
+  browse b [0,26,,] {type:'smart', buf_rows:120, rows:27, qry_rows:1, group_by:'id_pobyt',
     optimize:°{qry:'noseek'}
 #     proc onclick() {
 #       xfunkce.width; xfunkce.width(0);  skupina.width(33); _jmena.width(89);
@@ -345,8 +351,12 @@ form _ucast [,,400,] { css:'ds_form'
     show _nazev [,,100,] { title:'rodina', format:'s+q*', expr:"IF(pouze=0,r.nazev,o.prijmeni)" }
     show _jmena [,,180,] { title:'jméno/a', format:'ts',
       expr:"GROUP_CONCAT(DISTINCT IF(pouze=1 AND t.role='b','',IF(pouze=2 AND t.role='a','',o.jmeno)) ORDER BY t.role SEPARATOR ' ')" }
-    show xfunkce [,,40,] { title:'fce', data:p.funkce, format:'rq#s', map_pipe:ms_akce_funkce.zkratka}
-    show skupina [,,30,] { title:'sk.', data:p.skupina, format:'rqs'}
+    show _vek     [,,0,] { expr:"GROUP_CONCAT(DISTINCT IF(tx.role='a',ox.narozeni,'') SEPARATOR '')",
+                           js_pipe:'roku', format:'rs', help:'stáří muže' }
+    show _vzd     [,,0,] { expr:"GROUP_CONCAT(DISTINCT IF(tx.role='a',ox.vzdelani,'') SEPARATOR '')",
+                           map_pipe:ms_akce_vzdelani.zkratka, help:'vzdělání muže' }
+    show xfunkce [,,40,] { title:'fce', data:p.funkce, format:'rq#s', map_pipe:ms_akce_funkce.zkratka, help:'funkce na akci'}
+    show skupina [,,30,] { title:'sk.', data:p.skupina, format:'rqs:e', help:'číslo skupinky'}
     #show dluh    [,,40,] { title:'dluh', expr:"0", format:'rqs'}
     // muž - načte se, i když není na akci
     show id_spolu_m { expr:"GROUP_CONCAT(DISTINCT IF(t.role='a',s.id_spolu,'') SEPARATOR '')" }
@@ -479,12 +489,17 @@ form _ucast [,,400,] { css:'ds_form'
       {stop}
     )}
     proc onrowclick() { reload_pobyt }
+    proc onclick() {
+      _vek.width; _vek.width(0);  _vzd.width(0);  _jmena.width(180);
+    |             _vek.width(20); _vzd.width(20); _jmena.width(138);
+    }
   }
 }
 # -------------------------------------------------------------------------------------------------- _cmd
 form _cmd [,,200,] { css:'ds_form'
   // příkazy
-  button stravy     [89,437,37,] {title:'Str Po', style:'font-size:10px;height:19px;width:40px'
+  button stravy     [89,437,37,] {title:'Str Po', style:'font-size:10px;height:19px;width:40px',
+    skill:'yaa+|yaa+;faa+|faa+',
     proc onclick() {
       Strava.dnu.set(u.b.dnu.get); // pokud jsou definovány výjimky z pravidelné stravy
       lt(Strava.dnu.get,15);       // 15 je maximálně možný počet řádků vyjímek ze stravy
