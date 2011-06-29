@@ -796,16 +796,16 @@ function akce_vyuctov_pary($akce,$par,$title,$vypis,$export=false) { trace();
   $tit= "Manželé:25"
       . ",pokoj:7,dětí:5:r,lůžka:5:r:s,přis týlky:5:r:s,kočá rek:5:r:s,nocí:5:r:s"
       . ",str. celá:5:r:S,str. pol.:5:r:s"
-      . ",platba ubyt.:6:r:s,platba strava:6:r:s,platba režie:6:r:s,sleva:7:r:s,CD:6:r:s,celkem:7:r:s"
+      . ",platba ubyt.:7:r:s,platba strava:7:r:s,platba režie:7:r:s,sleva:7:r:s,CD:6:r:s,celkem:7:r:s"
       . ",na účet:7:r:s,datum platby:10:d"
-      . ",nedopl.:6:r:s,pokladna:6:r:s,přepl.:6:r:s,poznámka:50,.:7"
-      . ",ubyt.:7:r:s,DPH:6:r:s,strava:7:r:s,DPH:6:r:s,režie:7:r:s,zapla ceno:7:r:s"
+      . ",nedo platek:6:r:s,pokladna:6:r:s,přepl.:6:r:s,poznámka:50,SPZ:9,.:7"
+      . ",ubyt.:8:r:s,DPH:6:r:s,strava:8:r:s,DPH:6:r:s,režie:8:r:s,zapla ceno:8:r:s"
       . ",dota ce:6:r:s,nedo platek:6:r:s,dar:7:r:s"
       . "";
   $fld= "manzele"
-      . ",pokoj,_deti,luzka,pristylky,kocarek,pocetdnu,strava_cel,strava_pol"
+      . ",pokoj,_deti,luzka,pristylky,kocarek,=pocetnoci,strava_cel,strava_pol"
       . ",platba1,platba2,platba3,platba4,=cd,=platit,platba,datplatby"
-      . ",=nedoplatek,=pokladna,=preplatek,poznamka,"
+      . ",=nedoplatek,=pokladna,=preplatek,poznamka,spz,"
       . ",=ubyt,=ubytDPH,=strava,=stravaDPH,=rezie,=zaplaceno,=dotace,=nedopl,=dar"
       . "";
   $cnd= 1;
@@ -832,7 +832,7 @@ function akce_vyuctov_pary($akce,$par,$title,$vypis,$export=false) { trace();
   $qry=  "SELECT
           p.pouze,pokoj,luzka,pristylky,kocarek,pocetdnu,strava_cel,strava_pol,
             platba1,platba2,platba3,platba4,platba,datplatby,cd,p.poznamka,
-          r.nazev as nazev,r.ulice,r.psc,r.obec,r.telefony,r.emaily,
+          r.nazev as nazev,r.ulice,r.psc,r.obec,r.telefony,r.emaily,r.spz,
           SUM(IF(t.role='d',1,0)) as _deti,
           GROUP_CONCAT(DISTINCT IF(t.role='a',o.prijmeni,'') SEPARATOR '') as prijmeni_m,
           GROUP_CONCAT(DISTINCT IF(t.role='a',o.jmeno,'')    SEPARATOR '') as jmeno_m,
@@ -866,6 +866,8 @@ function akce_vyuctov_pary($akce,$par,$title,$vypis,$export=false) { trace();
         $preplatek= $x->platba > $predpis ? $x->platba - $predpis : '';
         $nedoplatek= $x->platba < $predpis ? $predpis - $x->platba : '';
         switch ($f) {
+        case '=pocetnoci':  $val= max(0,$x->pocetdnu-1);
+                            break;
         case '=platit':     $val= $predpis;
                             $exp= "=[platba1,0]+[platba2,0]+[platba3,0]+[platba4,0]"; break;
         case '=preplatek':  $val= $preplatek;
@@ -1111,29 +1113,50 @@ function akce_skup_renum($akce) {
 }
 # -------------------------------------------------------------------------------------------------- akce_skup_tisk
 # tisk skupinek akce
-function akce_skup_tisk($akce) {
+function akce_skup_tisk($akce,$par,$title,$vypis,$export) {
+  $result= (object)array();
   $html= "<table>";
   $skupiny= akce_skup_get($akce,0,$err);
   $n= 0;
-  foreach ($skupiny as $i=>$s) {
-    $tab= "<table>";
-    foreach ($s as $c) {
-      if ( $i==$c->id_pobyt )
-        $tab.= "<tr><th>{$c->skupina}</th><th>{$c->_nazev}</th><th>{$c->pokoj}</th></tr>";
-      else
-        $tab.= "<tr><td></td><td>{$c->_nazev}</td><td></td></tr>";
+  if ( $export ) {
+    $clmn= array();
+    foreach ($skupiny as $i=>$s) {
+      foreach ($s as $c) {
+        $clmn[$n]['skupina']= $i==$c->id_pobyt ? $c->skupina : '';
+        $clmn[$n]['jmeno']= $c->_nazev;
+        $clmn[$n]['pokoj']= $i==$c->id_pobyt ? $c->pokoj : '';
+        $n++;
+      }
+      $clmn[$n]['skupina']= $clmn[$n]['jmeno']= $clmn[$n]['pokoj']= '';
+      $n++;
     }
-    $tab.= "</table>";
-    if ( $n%2==0 )
-      $html.= "<tr><td>&nbsp;</td></tr><tr><td valign='top'>$tab</td>";
-    else
-      $html.= "<td valign='top'>$tab</td></tr>";
-    $n++;
+    $result->tits= explode(',',"skupinka:10,jméno:30,pokoj VPS:10:r");
+    $result->flds= explode(',',"skupina,jmeno,pokoj");
+    $result->clmn= $clmn;
+    $result->expr= null;
   }
-  if ( $n%2==1 )
-    $html.= "<td></td></tr>";
-  $html.= "</table>";
-  return (object)array('html'=>$html);
+  else {
+    foreach ($skupiny as $i=>$s) {
+      $tab= "<table>";
+      foreach ($s as $c) {
+        if ( $i==$c->id_pobyt )
+          $tab.= "<tr><th>{$c->skupina}</th><th>{$c->_nazev}</th><th>{$c->pokoj}</th></tr>";
+        else
+          $tab.= "<tr><td></td><td>{$c->_nazev}</td><td></td></tr>";
+      }
+      $tab.= "</table>";
+      if ( $n%2==0 )
+        $html.= "<tr><td>&nbsp;</td></tr><tr><td valign='top'>$tab</td>";
+      else
+        $html.= "<td valign='top'>$tab</td></tr>";
+      $n++;
+    }
+    if ( $n%2==1 )
+      $html.= "<td></td></tr>";
+    $html.= "</table>";
+    $result->html= $html;
+  }
+  return $result;
 }
 # -------------------------------------------------------------------------------------------------- akce_skup_hist
 # přehled starých skupinek letního kurzu MS účastníků této akce
