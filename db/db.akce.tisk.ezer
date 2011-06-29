@@ -19,9 +19,14 @@ use info: form right [12,4,,] {
         form.note.set('');
         form.msg.set(res.href);
       },
-      'PDF',{
+      'PDF-adresy',{
         sti_A.report_init; sti_A.report_check;
         res.set(ask('akce_pdf_stitky',conc("p.id_akce=",the_duakce.get," AND ",the_par.get('cnd')),sti_A.get_json));
+        form.msg.set(res.html);
+      },
+      'PDF-prijem',{
+        sti_B.report_init; sti_B.report_check;
+        res.set(ask('akce_pdf_prijem',the_duakce.get,the_par.get,sti_B.get_json));
         form.msg.set(res.html);
       })
     }
@@ -86,12 +91,15 @@ menu m {type:'left',
                                         ,fld:'jmeno,prijmeni'}}
   }
   menu {title:'tisky do PDF',type:'group',_sys:'*'
-    item {title:'Adresní štítky rodin'  ,par:°{typ:'p',exp:'PDF',cnd:'1'
+    item {title:'Adresní štítky rodin'  ,par:°{typ:'p',exp:'PDF-adresy',cnd:'1'
                                         ,tit:'příjmení:15,jména:20,obec:25,psč:7,ulice:25,stát:10'
                                         ,fld:'prijmeni,jmena,obec,psc,ulice,stat'}}
-    item {title:'Adresní štítky rodin bez mailu'  ,par:°{typ:'p',exp:'PDF',cnd:"r.emaily=''"
+    item {title:'Adresní štítky rodin bez mailu'  ,par:°{typ:'p',exp:'PDF-adresy',cnd:"r.emaily=''"
                                         ,tit:'příjmení:15,jména:20,obec:25,psč:7,ulice:25,stát:10'
                                         ,fld:'prijmeni,jmena,obec,psc,ulice,stat'}}
+    item {title:'Štítky na obálku účastníka' ,par:°{typ:'p',exp:'PDF-prijem',cnd:"1"
+                                        ,tit:'příjmení:15,jména:20,_deti:7,skupinka:7,pokoj:12,lůžka:7,kočárek:7,přistýlky:7,strava celá:7,poloviční:7'
+                                        ,fld:'prijmeni,jmena,_deti,skupina,pokoj,luzka,kocarek,pristylky,strava_cel,strava_pol'}}
   }
   menu {title:'MS: letní kurs, obnovy',type:'group',_sys:'*'
     item {title:'platby vč.DPH (jen MS)',par:°{typ:'vp',exp:'Excel',cnd:'1'}}
@@ -115,4 +123,8 @@ menu m {type:'left',
 # -------------------------   stitek_A
 report sti_A [0,0,200,287] { format:'A4:5,6,70,41',
   box adresa    [  2.6, 11.0, 60.0, 27.3] { style:'12,L',      title:'{jmeno_postovni}<br>{adresa_postovni}' }
+}
+# -------------------------   stitek_B
+report sti_B [0,0,200,287] { format:'A4:5,6,70,41',
+  box lines     [  2.6, 11.0, 60.0, 27.3] { style:'12,L',      title:'{line1}<br>{line2}<br>{line3}<br>{line4}' }
 }

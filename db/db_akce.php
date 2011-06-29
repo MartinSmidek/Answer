@@ -62,6 +62,43 @@ function akce_kontrola_dat($par) { trace();
   return $html;
 }
 # ================================================================================================== PDF
+# -------------------------------------------------------------------------------------------------- akce_pdf_prijem
+# generování tabulky do excelu
+function akce_pdf_prijem($akce,$par,$report_json) {  trace();
+  global $json, $ezer_path_docs;
+  $result= (object)array('_error'=>0);
+  $html= '';
+  // získání dat
+  $tab= akce_sestava($akce,$par,$title,$vypis,true);
+//                                         debug($tab,"akce_sestava($akce,...)"); //return;
+  // projdi vygenerované záznamy
+  $n= 0;
+  $parss= array();
+  foreach ( $tab->clmn as $xa ) {
+    // definice pole substitucí
+    $x= (object)$xa;
+    $parss[$n]= (object)array();
+    $parss[$n]->line1= "<b>{$x->prijmeni} {$x->jmena}</b>";
+    $parss[$n]->line2= ($x->skupina?"skupinka <b>{$x->skupina}</b> ":'')
+                     . ($x->pokoj?"pokoj <b>{$x->pokoj}</b>":'');
+    $parss[$n]->line3= $x->luzka || $x->pristylky || $x->kocarek ? (
+                       ($x->luzka?"lůžka <b>{$x->luzka}</b> ":'')
+                     . ($x->pristylky?"přistýlky <b>{$x->pristylky} </b>":'')
+                     . ($x->kocarek?"kočárek <b>{$x->kocarek}</b>":'')
+                       ) : "bez ubytování";
+    $parss[$n]->line4= $x->strava_cel || $x->strava_pol ? ( "strava: "
+                     . ($x->strava_cel?"celá <b>{$x->strava_cel}</b> ":'')
+                     . ($x->strava_pol?"poloviční <b>{$x->strava_pol}</b>":'')
+                       ) : "bez stravy";
+    $n++;
+  }
+  // předání k tisku
+  $fname= 'stitky_'.date("Ymd_Hi");
+  $fpath= "$ezer_path_docs/$fname.pdf";
+  dop_rep_ids($report_json,$parss,$fpath);
+  $result->html= " Výpis byl vygenerován ve formátu <a href='docs/$fname.pdf' target='pdf'>PDF</a>.";
+  return $result;
+}
 # -------------------------------------------------------------------------------------------------- akce_pdf_stitky
 # vygenerování PDF se samolepkami - adresními štítky
 #   $the_json obsahuje  title:'{jmeno_postovni}<br>{adresa_postovni}'
@@ -325,16 +362,18 @@ function akce_sestava_pary($akce,$par,$title,$vypis,$export=false) { trace();
   $expr= array();       // pro výrazy
   // data akce
   $qry=  "SELECT
-          r.nazev as nazev,p.pouze as pouze,
-          GROUP_CONCAT(DISTINCT IF(t.role='a',o.prijmeni,'') SEPARATOR '') as prijmeni_m,
-          GROUP_CONCAT(DISTINCT IF(t.role='a',o.jmeno,'')    SEPARATOR '') as jmeno_m,
-          GROUP_CONCAT(DISTINCT IF(t.role='a',o.narozeni,'') SEPARATOR '') as narozeni_m,
-          GROUP_CONCAT(DISTINCT IF(t.role='a',o.rc_xxxx,'')  SEPARATOR '') as rc_xxxx_m,
-          GROUP_CONCAT(DISTINCT IF(t.role='b',o.prijmeni,'') SEPARATOR '') as prijmeni_z,
-          GROUP_CONCAT(DISTINCT IF(t.role='b',o.jmeno,'')    SEPARATOR '') as jmeno_z,
-          GROUP_CONCAT(DISTINCT IF(t.role='b',o.narozeni,'') SEPARATOR '') as narozeni_z,
-          GROUP_CONCAT(DISTINCT IF(t.role='b',o.rc_xxxx,'')  SEPARATOR '') as rc_xxxx_z,
-          r.ulice,r.psc,r.obec,r.telefony,r.emaily,p.poznamka
+            r.nazev as nazev,p.pouze as pouze,
+            GROUP_CONCAT(DISTINCT IF(t.role='a',o.prijmeni,'') SEPARATOR '') as prijmeni_m,
+            GROUP_CONCAT(DISTINCT IF(t.role='a',o.jmeno,'')    SEPARATOR '') as jmeno_m,
+            GROUP_CONCAT(DISTINCT IF(t.role='a',o.narozeni,'') SEPARATOR '') as narozeni_m,
+            GROUP_CONCAT(DISTINCT IF(t.role='a',o.rc_xxxx,'')  SEPARATOR '') as rc_xxxx_m,
+            GROUP_CONCAT(DISTINCT IF(t.role='b',o.prijmeni,'') SEPARATOR '') as prijmeni_z,
+            GROUP_CONCAT(DISTINCT IF(t.role='b',o.jmeno,'')    SEPARATOR '') as jmeno_z,
+            GROUP_CONCAT(DISTINCT IF(t.role='b',o.narozeni,'') SEPARATOR '') as narozeni_z,
+            GROUP_CONCAT(DISTINCT IF(t.role='b',o.rc_xxxx,'')  SEPARATOR '') as rc_xxxx_z,
+            SUM(IF(t.role='d',1,0)) as _deti,
+            r.ulice,r.psc,r.obec,r.telefony,r.emaily,p.poznamka,
+            p.skupina,p.pokoj,p.luzka,p.kocarek,p.pristylky,p.strava_cel,p.strava_pol
           FROM pobyt AS p
           JOIN spolu AS s USING(id_pobyt)
           JOIN osoba AS o ON s.id_osoba=o.id_osoba
@@ -968,7 +1007,7 @@ function akce_skup_get($akce,$kontrola,&$err) { trace();
   $celkem= select('count(*)','pobyt',"id_akce=$akce AND funkce IN (0,1,2)");
   $n= 0;
   $err= 0;
-  $order= array();
+  $order= $all= array();
   $qry= "
       SELECT skupina,
         SUM(IF(funkce=2,1,0)) as _n_svps,
@@ -1004,7 +1043,7 @@ function akce_skup_get($akce,$kontrola,&$err) { trace();
       }
       $vps= $s->_svps ? $s->_svps : $s->_vps;
       $skupiny[$vps]= $skupina;
-      $order[$vps]= utf2win($skupina[$vps]->_nazev,1);
+      $all[]= $vps;
     }
     elseif ( $s->_vps || $s->_vps ) {
       $msg[]= "skupinka {$s->skupina} má nejednoznačnou VPS";
@@ -1015,10 +1054,27 @@ function akce_skup_get($akce,$kontrola,&$err) { trace();
       $err+= 4;
     }
   }
-  SetLocale(LC_ALL,"cs_CZ");
-  asort($order,SORT_LOCALE_STRING);
-//                                                         debug($order,"order",(object)array('win1250'=>1));
-//                                                         debug($skupiny,"celkem=$celkem, zařazených=$n");
+  // řazení - v PHP nelze udělat
+  $qryo= "SELECT GROUP_CONCAT(DISTINCT CONCAT(id_pobyt,'|',nazev) ORDER BY nazev) as _o
+          FROM pobyt AS p
+          JOIN spolu AS s USING(id_pobyt)
+          JOIN osoba AS o ON s.id_osoba=o.id_osoba
+          LEFT JOIN tvori AS t ON t.id_osoba=o.id_osoba
+          LEFT JOIN rodina AS r USING(id_rodina)
+          WHERE id_pobyt IN (".implode(',',$all).") ";
+  $reso= mysql_qry($qryo);
+  while ( $reso && ($o= mysql_fetch_object($reso)) ) {
+    foreach (explode(',',$o->_o) as $pair) {
+      list($id,$name)= explode('|',$pair);
+      $order[$id]= $name;
+    }
+  }
+//                                                         debug($order,"order");
+  $skup= array();
+  foreach($order as $i=>$nam) {
+    $skup[$i]= $skupiny[$i];
+  }
+//                                                         debug($skup,"skupiny");
   // redakce chyb
   if ( $celkem!=$n ) {
     $msg[]= ($celkem-$n)." účastníků není zařazeno do skupinek";
@@ -1029,7 +1085,7 @@ function akce_skup_get($akce,$kontrola,&$err) { trace();
   elseif ( !count($msg) && $kontrola )
     $msg[]= "Vše je ok";
   // konec
-  return $kontrola ? implode(",<br>",$msg) : $skupiny;
+  return $kontrola ? implode(",<br>",$msg) : $skup;
 }
 # -------------------------------------------------------------------------------------------------- akce_skup_renum
 # přečíslování skupinek podle příjmení VPS
@@ -1042,13 +1098,11 @@ function akce_skup_renum($akce) {
   }
   else {
     $n= 1;
-//     foreach($order as $i=>$x) {
-//       $skupina= $skupiny[$i];
     foreach($skupiny as $ivps=>$skupina) {
       $cleni= implode(',',array_keys($skupina));
       $qryu= "UPDATE pobyt SET skupina=$n WHERE id_pobyt IN ($cleni) ";
       $resu= mysql_qry($qryu);
-//                                                         display("$n: $ivps - $cleni");
+//                                                         display("$n: $qryu");
       $n++;
     }
     $msg= "bylo přečíslováno $n skupinek";
