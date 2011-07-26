@@ -1003,7 +1003,7 @@ function akce_skup_check($akce) {
 }
 # -------------------------------------------------------------------------------------------------- akce_skup_get
 # zjištění skupinek podle příjmení VPS
-function akce_skup_get($akce,$kontrola,&$err) { trace();
+function akce_skup_get($akce,$kontrola,&$err,$par=null) { trace();
   $msg= array();
   $skupiny= array();
   $celkem= select('count(*)','pobyt',"id_akce=$akce AND funkce IN (0,1,2)");
@@ -1027,6 +1027,7 @@ function akce_skup_get($akce,$kontrola,&$err) { trace();
       $skupina= array();
       $qryu= "
           SELECT p.id_pobyt,skupina,nazev,pokoj,
+            GROUP_CONCAT(DISTINCT IF(t.role='a',o.id_osoba,'') SEPARATOR '') as id_osoba_m,
             GROUP_CONCAT(DISTINCT IF(t.role='a',o.jmeno,'')    SEPARATOR '') as jmeno_m,
             GROUP_CONCAT(DISTINCT IF(t.role='b',o.jmeno,'')    SEPARATOR '') as jmeno_z
           FROM pobyt AS p
@@ -1039,7 +1040,22 @@ function akce_skup_get($akce,$kontrola,&$err) { trace();
           ORDER BY funkce DESC, nazev";
       $resu= mysql_qry($qryu);
       while ( $resu && ($u= mysql_fetch_object($resu)) ) {
-        $u->_nazev= "{$u->nazev} {$u->jmeno_m} a {$u->jmeno_z}";
+        $mark= '';
+        if ( $par && $par->mark=='novic' ) {
+          // minulé účasti
+          $muz= $u->id_osoba_m;
+          $rqry= "SELECT count(*) as _pocet
+                  FROM ezer_ys.akce AS a
+                  JOIN pobyt AS p ON a.id_duakce=p.id_akce
+                  JOIN spolu AS s USING(id_pobyt)
+                  WHERE a.druh=1 AND s.id_osoba=$muz AND p.id_akce!=$akce";
+          $rres= mysql_qry($rqry);
+          if ( $rres && ($r= mysql_fetch_object($rres)) ) {
+            $mark= $r->_pocet;
+          }
+          $mark= $mark==0 ? '* ' : '';
+        }
+        $u->_nazev= "$mark {$u->nazev} {$u->jmeno_m} a {$u->jmeno_z}";
         $skupina[$u->id_pobyt]= $u;
         $n++;
       }
@@ -1116,7 +1132,7 @@ function akce_skup_renum($akce) {
 function akce_skup_tisk($akce,$par,$title,$vypis,$export) {
   $result= (object)array();
   $html= "<table>";
-  $skupiny= akce_skup_get($akce,0,$err);
+  $skupiny= akce_skup_get($akce,0,$err,$par);
   $n= 0;
   if ( $export ) {
     $clmn= array();
