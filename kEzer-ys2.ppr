@@ -296,10 +296,12 @@ Mark2=3,264
 TopLine=1
 Caret=27,7
 [db\db_akce.php]
-TopLine=33
-Caret=65,72
-BookMark1=50,74
-BookMark2=1,2178
+TopLine=1014
+Caret=39,1056
+BookMark3=1,358
+BookMark4=19,2288
+BookMark2=1,1185
+BookMark1=35,1042
 [ys\ys.lide.ezer]
 TopLine=329
 Caret=67,329
@@ -329,7 +331,7 @@ Caret=69,167
 BookMark1=45,165
 BookMark2=18,354
 [db\db.akce.pece.ezer]
-TopLine=172
+TopLine=174
 Caret=21,228
 BookMark1=5,235
 BookMark2=16,195
@@ -351,8 +353,8 @@ Mark1=51,169
 TopLine=17
 Caret=1,59
 [db\db.akce.tisk.ezer]
-TopLine=1
-Caret=37,29
+TopLine=83
+Caret=14,96
 BookMark1=20,59
 [db\db.akce.rod.ezer]
 TopLine=1
