@@ -163,7 +163,9 @@ form _evidence {
   menu { type:'context'
     item { title:'zkontrolovat skupinky', skill:'yaa+;faa+',
       proc onclick () { alert(ask('akce_skup_check',the_duakce.get)) } }
-    item { title:'přečíslovat skupinky podle VPS', skill:'yaa+;faa+',
+    item { title:'přečíslovat skupinky podle VPS', skill:'yaa+',
+      proc onclick () { alert(ask('akce_skup_renum',the_duakce.get)) } }
+    item { title:'přečíslovat skupinky podle PPS', skill:'faa+',
       proc onclick () { alert(ask('akce_skup_renum',the_duakce.get)) } }
     item { title:'ukázat všechny změny'
       proc onclick () { BackTrace.back_load(pob.key,muz.key,zen.key,rod.key) } }

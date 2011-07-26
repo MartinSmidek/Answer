@@ -5,6 +5,7 @@
   require_once("ezer2/server/ae_slib.php");
 
   // OBECNÉ PARAMETRY
+  $VPS= 'PPS';
 
   // parametry s první hodnotou pro server a druhou (případně) pro local
   $db= array('ezer_fa','ezer_fa');
