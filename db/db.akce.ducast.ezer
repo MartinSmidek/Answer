@@ -472,7 +472,7 @@ form _ucast [,,400,] { css:'ds_form'
         // počítané položky
         muz._vek_m.set(roku(narozeni_m.get));
         zen._vek_z.set(roku(narozeni_z.get));
-        rod._spolu.set(cconc(svatba.get,roku(datsvatba.get,svatba.get),' '));
+        rod._spolu.set(cconc(or(svatba.get,datsvatba.get),roku(datsvatba.get,svatba.get),' '));
         pob.d.browse_fill(deti.get);
         pob.s.browse_fill(skup.get);
         // obarvení tlačítka [Str.pol]
