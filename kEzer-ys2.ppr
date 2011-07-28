@@ -14,7 +14,7 @@ kEzer-ys2
 	-fis - θαst
 		fis\fis_pdf.php
 		fis\fis_tcpdf.php
-	+fa
+	-fa
 		fa\$.ezer
 		fa.inc
 		fa\fa.lide.ezer
@@ -42,7 +42,7 @@ kEzer-ys2
 		db\db_fce.js
 	-GData
 		_\ZendGdata-1.10.4\demos\Zend\Gdata\Docs.php
-	+sql,konverze
+	-sql,konverze
 		sql\backup_ys_setkani.bat
 		sql\fa_mysql.bat
 		sql\fa_mysql.PRG
@@ -240,7 +240,7 @@ kEzer-ys2
 42=ys\ys_ucet.php
 [Selected Project Files]
 Main=
-Selected=db\db_akce.php
+Selected=ys\ys_ucet.php
 [ezer2\server\ezer2.php]
 TopLine=249
 Caret=18,273
@@ -259,8 +259,8 @@ Caret=45,181
 TopLine=1750
 Caret=58,1769
 [ezer2\server\ae_slib.php]
-TopLine=1177
-Caret=45,1203
+TopLine=1145
+Caret=35,1186
 BookMark1=34,339
 BookMark2=25,1798
 Mark1=37,109
@@ -296,12 +296,11 @@ Mark2=3,264
 TopLine=1
 Caret=27,7
 [db\db_akce.php]
-TopLine=1014
-Caret=39,1056
-BookMark3=1,358
-BookMark4=19,2288
-BookMark2=1,1185
-BookMark1=35,1042
+TopLine=1369
+Caret=36,1402
+BookMark1=40,1201
+BookMark2=31,1068
+BookMark4=19,2450
 [ys\ys.lide.ezer]
 TopLine=329
 Caret=67,329
@@ -311,8 +310,8 @@ Caret=41,1118
 BookMark2=15,233
 Mark1=29,374
 [db\db.akce.ezer]
-TopLine=1
-Caret=99,31
+TopLine=9
+Caret=89,40
 BookMark1=1,25
 BookMark4=6,40
 [db\db.akce.evi.ezer]
@@ -326,13 +325,13 @@ TopLine=92
 Caret=53,122
 BookMark1=36,190
 [db\db.akce.ducast.ezer]
-TopLine=136
-Caret=69,167
+TopLine=275
+Caret=55,308
 BookMark1=45,165
-BookMark2=18,354
+BookMark2=18,356
 [db\db.akce.pece.ezer]
-TopLine=174
-Caret=21,228
+TopLine=128
+Caret=66,202
 BookMark1=5,235
 BookMark2=16,195
 BookMark4=29,16
@@ -353,21 +352,21 @@ Mark1=51,169
 TopLine=17
 Caret=1,59
 [db\db.akce.tisk.ezer]
-TopLine=83
-Caret=14,96
+TopLine=1
+Caret=1,1
 BookMark1=20,59
 [db\db.akce.rod.ezer]
 TopLine=1
 Caret=57,19
 [ys.inc]
-TopLine=27
-Caret=1,69
+TopLine=1
+Caret=11,8
 [fa.php]
 TopLine=1
 Caret=25,35
 [fa.inc]
 TopLine=1
-Caret=14,11
+Caret=1,8
 [fa\fa_fce.php]
 TopLine=39
 Caret=1,39
@@ -384,8 +383,8 @@ BookMark1=17,125
 BookMark2=1,289
 BookMark3=21,192
 [fa\fa_fce.js]
-TopLine=1
-Caret=86,16
+TopLine=15
+Caret=1,47
 [ys.php]
 TopLine=1
 Caret=32,18
@@ -411,10 +410,10 @@ Caret=3,23
 TopLine=1
 Caret=27,51
 [ds\ds_fce.php]
-TopLine=556
-Caret=39,581
+TopLine=271
+Caret=14,280
 [ezer2\ezer2_fce.php]
-TopLine=927
+TopLine=903
 Caret=1,961
 [ezer2\server\sys_doc.php]
 TopLine=226
