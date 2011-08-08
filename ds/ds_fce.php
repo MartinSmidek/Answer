@@ -1,4 +1,26 @@
 <?php # (c) 2009 Martin Smidek <martin@smidek.eu>
+# -------------------------------------------------------------------------------------------------- test_020811
+function test_020811() { #trace('','win1250');
+  $qry= <<<__EOQ
+
+SELECT setkani.ds_osoba.rodina as rodina,
+/*IF(setkani.ds_osoba.ys_osoba,ys.prijmeni,ds_osoba.prijmeni) as y,*/
+ys.prijmeni AS p1,
+ds_osoba.prijmeni AS p2,
+CONVERT(ds_osoba.prijmeni USING cp1250) AS p3,
+setkani.ds_osoba.jmeno as jmeno,setkani.ds_osoba.id_osoba as id_osoba
+FROM setkani.ds_osoba
+LEFT JOIN ezer_ys.osoba AS ys ON ys_osoba=ys.id_osoba
+WHERE id_order=1042
+ORDER BY rodina DESC,id_osoba LIMIT 0,14
+
+__EOQ;
+  $res= mysql_qry($qry);
+  while ($u= mysql_fetch_object($res)) {
+                                                debug($u,"$res:qry",(object)array('win1250'=>1));
+  }
+  return 1;
+}
 # -------------------------------------------------------------------------------------------------- dt
 # na datum na stránce z timestamp v tabulce
 function dt($x,$user2sql=0) { #trace('','win1250');

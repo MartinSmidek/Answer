@@ -203,7 +203,7 @@ group ucastnici {
   // zobrazení formuláře účastníků
   proc formular {
 #     to_show.get; akc.set(new_form(akce,10,280)); //per.set(new_form(osoba,380,280));
-    to_show.get; akc.set(new_form(akce,10,280)); per.set(new_form(osoba,380,280));
+    to_show.get; akc.set(new_form(akce,10,280)); per.set(new_form(_osoba,380,280));
     new_form(zahlavi,0,240)
   }
   // zobrazí spodní formuláře
@@ -284,6 +284,10 @@ group ucastnici {
     label [ 10,0,694,] { title:'<hr>' }
     label [ 10,10,300,] { title:'<h3>Seznam účastníků pobytu</h3>' }
     label [380,10,300,] { title:'<h3>Údaje vybraného účastníka</h3>' }
+
+    button [200,10,,] { title:'TEST', skill:'m|m'
+      proc onclick () { ask('test_020811') }
+    }
   }
   // ------------------------------------------------------------------ AKCE
   form akce [,,300,100] { css:'ds_form'
@@ -304,9 +308,16 @@ group ucastnici {
       proc onclick () { osoba_new_child} }
     button [287,0,50,18] { title:'- účastník', help:'odebrání hosta označeného oranžovou šipkou'
       proc onclick () { osoba_del(seznam.id_osoba.get)} }
-    browse seznam [0,30,,] { type:'smart', rows:14
+#     view ys: table osoba { join_type:'LEFT', join:'ON ys_osoba=ys.id_osoba' }
+    browse seznam [0,30,,] { type:'smart', rows:14, //css_rows:'ys_osoba,0:nic,:zelenkavy'
       show rodina [,,24,] { title:'rod', data:tab.ds_osoba.rodina, format:'s+' }
       show prijmeni [,,69,] { title:'příjmení', data:tab.ds_osoba.prijmeni, format:'s' }
+#       show prijmeni [,,69,] { title:'příjmení', expr:"IF(ys_osoba,ys.prijmeni,setkani.ds_osoba.prijmeni)", format:'s' }
+#       show prijmeni [,,69,] { title:'příjmení', format:'s'
+#       expr:"IF(setkani.ds_osoba.ys_osoba,ys_osoba/*ys.prijmeni*/,CONVERT(ds_osoba.prijmeni USING utf8))"
+#       expr:"IF(setkani.ds_osoba.ys_osoba,CONVERT(ys.prijmeni USING utf8),CONVERT(ds_osoba.prijmeni USING utf8))"
+#       expr:"CONVERT(ys.prijmeni USING utf8)"
+#       }
       show jmeno    [,,49,]  { title:'jméno', data:tab.ds_osoba.jmeno, format:'s' }
       show vek  [,,19,]  { title:'věk',
         expr:"if(ds_osoba.narozeni,year(now())-year(ds_osoba.narozeni),'??')", format:'r' }
@@ -319,13 +330,18 @@ group ucastnici {
       show [,,19,]  { title:'S',
         data:tab.ds_osoba.strava, map_pipe:tab.ds_strava.zkratka, format:'rs' }
       show [,,34,]  { title:'od', data:tab.ds_osoba.fromday, format:'rs:d.m' }
-      show [,,34,]  { title:'do', data:tab.ds_osoba.untilday, format:'rs:d.m' }
-      show [,,19,]  { title:'?', data:tab.ds_osoba.pozn, format:'s' }
+      show pob_until [,,34,]  { title:'do', data:tab.ds_osoba.untilday, format:'rs:d.m' }
+      show pob_pozn [,,19,]  { title:'?', data:tab.ds_osoba.pozn, format:'ts' }
+#       show ys_osoba [,,0,]  { title:'ID osoby', data:tab.ds_osoba.ys_osoba, format:'s' }
       // nezobrazené
       show id_osoba { data:tab.ds_osoba.id_osoba }
       show ulice { data:tab.ds_osoba.ulice }
       show psc { data:tab.ds_osoba.psc }
       show obec { data:tab.ds_osoba.obec }
+#       proc onclick () {
+#         pob_until.width; pob_until.width(0); pob_pozn.width(0); ys_osoba.width(53);
+#       |                  pob_until.width(34); pob_pozn.width(19); ys_osoba.width(0);
+#       }
       proc onrowclick() { osoba_load(id_osoba.get); echo('click=',akc.seznam.browse_key); }
     }
     // ================================================================ Rodina
@@ -383,7 +399,7 @@ group ucastnici {
     }
   }
   // ------------------------------------------------------------------ OSOBA
-  form osoba [,,300,100] { css:'ds_form'
+  form _osoba [,,300,100] { css:'ds_form'
     field id_osoba { data:tab.ds_osoba.id_osoba }
     field id_order { data:tab.ds_osoba.id_order }
     // zobrazení
@@ -425,3 +441,34 @@ group ucastnici {
     select      [181,287,133,] { type:'map', data:tab.ds_osoba.strava, options:tab.ds_strava.hodnota }
   }
 }
+# table osoba { key_id:'id_osoba', db:'ezer_ys'
+#   number id_osoba
+#   number id_dupary
+#   number id_dudeti
+#   text   deleted     { help:'ok|prázdné nebo D=značka smazání osoby' },
+#   text jmeno
+#   text prijmeni
+#   number sex
+#   text ulice
+#   text psc
+#   text obec
+#   text stat
+#   text email
+#   text telefon
+#   text spz
+#   date narozeni { sql_pipe:'sql_date1'}
+#   text rc_xxxx
+#   date umrti { sql_pipe:'sql_date1'}
+#   text poznamka
+#   text obcanka
+#   number vzdelani
+#   text zamest
+#   text zajmy
+#   text jazyk
+#   number cirkev
+#   text aktivita
+#   number clen
+#   text note
+#   text origin
+#   text historie
+# }
