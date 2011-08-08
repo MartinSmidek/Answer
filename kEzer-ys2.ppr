@@ -24,7 +24,7 @@ kEzer-ys2
 		fa\fa_lide.php
 	-skins
 		skins\colors.php
-	+db
+	-db
 		db\$.ezer
 		db\db.akce.ducast.ezer
 		db\db.akce.evi.ezer
@@ -177,7 +177,7 @@ kEzer-ys2
 			ys\ys.syst.ezer
 			ys\ys.syst.oso.ezer
 		ys\ys.doc.ezer
-	-ds
+	+ds
 		ds\ds.css.css
 		ds\ds.dum.ezer
 		ds\ds.ezer
@@ -238,9 +238,13 @@ kEzer-ys2
 40=ezer2\ezer2_fce.php
 41=ezer2\server\sys_doc.php
 42=ys\ys_ucet.php
+43=ds\ds.dum.ezer
+44=ds\ds.tab.ezer
+45=ds\ds.ezer
+46=Novy1.ezer
 [Selected Project Files]
 Main=
-Selected=ys\ys_ucet.php
+Selected=Novy1.ezer
 [ezer2\server\ezer2.php]
 TopLine=249
 Caret=18,273
@@ -279,8 +283,8 @@ Mark1=88,365
 TopLine=318
 Caret=1,360
 [ezer2\client\ezer.js]
-TopLine=3833
-Caret=38,3852
+TopLine=1717
+Caret=1,1720
 BookMark1=33,3838
 BookMark2=1,3554
 BookMark3=33,6567
@@ -310,8 +314,8 @@ Caret=41,1118
 BookMark2=15,233
 Mark1=29,374
 [db\db.akce.ezer]
-TopLine=9
-Caret=89,40
+TopLine=234
+Caret=1,262
 BookMark1=1,25
 BookMark4=6,40
 [db\db.akce.evi.ezer]
@@ -325,12 +329,12 @@ TopLine=92
 Caret=53,122
 BookMark1=36,190
 [db\db.akce.ducast.ezer]
-TopLine=275
-Caret=55,308
+TopLine=294
+Caret=1,303
 BookMark1=45,165
 BookMark2=18,356
 [db\db.akce.pece.ezer]
-TopLine=128
+TopLine=159
 Caret=66,202
 BookMark1=5,235
 BookMark2=16,195
@@ -372,19 +376,19 @@ TopLine=39
 Caret=1,39
 [fa\$.ezer]
 TopLine=1
-Caret=58,13
+Caret=1,1
 [fa\fa.lide.ezer]
 TopLine=132
 Caret=45,164
 [fa\fa_lide.php]
-TopLine=246
+TopLine=238
 Caret=58,266
 BookMark1=17,125
 BookMark2=1,289
 BookMark3=21,192
 [fa\fa_fce.js]
 TopLine=15
-Caret=1,47
+Caret=16,40
 [ys.php]
 TopLine=1
 Caret=32,18
@@ -405,15 +409,15 @@ TopLine=1
 Caret=1,19
 [ys\ys.css.css]
 TopLine=1
-Caret=3,23
+Caret=82,12
 [db\db.css.php]
-TopLine=1
+TopLine=8
 Caret=27,51
 [ds\ds_fce.php]
-TopLine=271
-Caret=14,280
+TopLine=1
+Caret=45,24
 [ezer2\ezer2_fce.php]
-TopLine=903
+TopLine=918
 Caret=1,961
 [ezer2\server\sys_doc.php]
 TopLine=226
@@ -421,3 +425,17 @@ Caret=1,254
 [ys\ys_ucet.php]
 TopLine=712
 Caret=74,736
+[ds\ds.dum.ezer]
+TopLine=286
+Caret=55,312
+BookMark1=8,221
+BookMark2=37,345
+[ds\ds.tab.ezer]
+TopLine=67
+Caret=1,93
+[ds\ds.ezer]
+TopLine=1
+Caret=1,1
+[Novy1.ezer]
+TopLine=1
+Caret=30,35

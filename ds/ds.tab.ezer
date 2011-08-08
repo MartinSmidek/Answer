@@ -14,6 +14,7 @@ table ds_cena {  db:'setkani', key_id:'id_cena'
 table ds_osoba { db:'setkani', key_id:'id_osoba'
   number id_osoba
   number id_order       // tx_gnalberice_order.uid
+  number ys_osoba       // ezer_ys.id_osoba
   text   rodina         { sql_pipe:'wu' }
   text   prijmeni       { sql_pipe:'wu' }
   text   jmeno          { sql_pipe:'wu' }
@@ -83,7 +84,9 @@ table _cis { key_id:'id_cis'
 # -------------------------------------------------------------------------------------------------- číselníky,mapy
   number id_cis, text druh, text data, text hodnota, text zkratka, number poradi, text barva
 }
+
 map ds_stav:   table _cis {where:"druh='ds_stav'", order:'poradi', key_id:'data'}
 map ds_strava: table _cis {where:"druh='ds_strava'", order:'poradi', key_id:'data'}
 map ds_luzko:  table _cis {where:"druh='ds_luzko'", order:'poradi', key_id:'data'}
 # map ds_pokoj:  table tx_gnalberice_room {key_id:'uid'}
+
