@@ -33,7 +33,7 @@
     'login_interval' => 60
   );
   $pars= (object)array(
-    'no_local' => true,                // true = nezohledňovat lokální přístup pro watch_key,watch_ip
+//     'no_local' => true,                // true = nezohledňovat lokální přístup pro watch_key,watch_ip
     'watch_key' => true,               // true = povolit přístup jen po vložení klíče
     'watch_ip' => true,                // true = povolit přístup jen ze známých IP adres
     'title_right' => $ezer_local ? "<span style='color:#ef7f13'>$app_name</span>" : $app_name
