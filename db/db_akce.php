@@ -453,6 +453,7 @@ function akce_sestava_pary($akce,$par,$title,$vypis,$export=false) { trace();
   while ( $res && ($x= mysql_fetch_object($res)) ) {
     $x->prijmeni= $x->pouze==1 ? $x->prijmeni_m : ($x->pouze==2 ? $x->prijmeni_z : $x->nazev);
     $x->jmena=    $x->pouze==1 ? $x->jmeno_m    : ($x->pouze==2 ? $x->jmeno_z : "{$x->jmeno_m} a {$x->jmeno_z}");
+    $x->_pocet= ($x->pouze?" 1":" 2").($x->_deti?"+{$x->_deti}":'');
     $n++;
     $clmn[$n]= array();
     foreach($flds as $f) {
