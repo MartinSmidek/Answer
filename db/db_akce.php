@@ -1,5 +1,25 @@
 <?php # (c) 2009-2010 Martin Smidek <martin@smidek.eu>
 # ================================================================================================== KONTROLY
+# -------------------------------------------------------------------------------------------------- akce_data_note_pece
+# doplnění poznámek z ms_pece do osoba
+function akce_data_note_pece($par) { trace();
+  $html= '';
+  $qry= "SELECT id_osoba,cislo,krestni,ms_pece.jmeno,poznamka,note FROM ms_pece
+         JOIN osoba ON origin='c' AND prijmeni=ms_pece.jmeno AND osoba.jmeno=krestni
+         WHERE cislo NOT IN (504,505,473) AND ms_pece.jmeno!=''  ";
+  $res= mysql_qry($qry);
+  while ( $res && ($x= mysql_fetch_object($res)) ) {
+    $set= "id_dupary={$x->cislo}";
+    if ( $x->poznamka ) {
+      $pozn= $x->note ? "{$x->poznamka}, {$x->note}" : $x->poznamka;
+      $pozn= mysql_real_escape_string($x->poznamka);
+      $set.= ",note='$pozn'";
+    }
+    mysql_qry("UPDATE osoba SET $set WHERE id_osoba={$x->id_osoba} ");
+  }
+  $html.= "hotovo";
+  return $html;
+}
 # -------------------------------------------------------------------------------------------------- akce_kontrola_dat
 # kontrola dat
 #  -  nulové klíče
