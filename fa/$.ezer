@@ -10,6 +10,11 @@ menu fa { type:'main', active:* //ys.pok
     panel nas {type:'right', title:'Nastavení', _sys:'nas', skill:'m'
       menu {type:'left', active:*
         menu {title:'Opravy dat',type:'group', _sys:'*'
+          item {title:'poznámky pečounům'               ,par:°{opravit:0}
+            proc onclick (i) {
+              info.fill(conc(i.owner.title,' - ',i.title),' ... čekej ...');
+              info.fill('',ask('akce_data_note_pece',i.par));
+          }}
           item {title:'kontroly databáze'               ,par:°{opravit:0}}
           item {title:'kontroly databáze s opravou'     ,par:°{opravit:1}}
           proc onclick (i) {
