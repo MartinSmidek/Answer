@@ -124,9 +124,15 @@ form _osoby {
     show prijmeni [,,80,] { data:os.prijmeni, title:'příjmení', format:'q*s' }
     show jmeno [,,70,] { data:os.jmeno, title:'jméno', format:'q*s' }
     show [,,95,] { title:'obec', data:os.obec, format:'q*s' }
-    show [,,65,] { expr:"GROUP_CONCAT(DISTINCT od.ukon ORDER BY od.ukon SEPARATOR '')", title:'YS',
+    show nar [,,65,] { title:'rrmmdd', data:os.narozeni, sql_pipe:'sql_yymmdd', format:'q@s'
+      help:'datum narození ve tvaru rrmmdd'}
+    show rel [,,0,] { expr:"GROUP_CONCAT(DISTINCT od.ukon ORDER BY od.ukon SEPARATOR '')", title:'YS',
       help:'vztah k YMCA Setkání', format:'s' }
     proc onrowclick() { evid.reload; dary.reload }
+    proc onclick() {
+      rel.width; rel.width(0);  nar.width(65);
+    |            rel.width(65); nar.width(0);
+    }
   }
 }
 # -------------------------------------------------------------------------------------------------- _evid
