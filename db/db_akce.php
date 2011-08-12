@@ -632,7 +632,7 @@ function akce_sestava_noci($akce,$par,$title,$vypis,$export=false) { trace();
 //   $qry.=  " LIMIT 1";
   $res= mysql_qry($qry);
   while ( $res && ($x= mysql_fetch_object($res)) ) {
-                                        debug($x,"hodnoty");
+//                                         debug($x,"hodnoty");
     $n++;
     $clmn[$n]= array();
     foreach($flds as $f) {
@@ -677,9 +677,9 @@ function akce_sestava_noci($akce,$par,$title,$vypis,$export=false) { trace();
     }
   }
 
-                                        debug($clmn,"sestava pro $akce,$typ,$fld,$cnd");
-                                        debug($expr,"vzorce pro $akce,$typ,$fld,$cnd");
-                                        debug($suma,"sumy pro $akce B");
+//                                         debug($clmn,"sestava pro $akce,$typ,$fld,$cnd");
+//                                         debug($expr,"vzorce pro $akce,$typ,$fld,$cnd");
+//                                         debug($suma,"sumy pro $akce B");
   // zobrazení tabulkou
   $tab= '';
   $thd= '';
@@ -744,7 +744,7 @@ function akce_strava_pary($akce,$par,$title,$vypis,$export=false) { trace();
           FROM akce WHERE id_duakce=$akce ";
   $resa= mysql_qry($qrya);
   if ( $resa && ($a= mysql_fetch_object($resa)) ) {
-                                                        debug($a,"akce {$a->_dnu}");
+//                                                         debug($a,"akce {$a->_dnu}");
     $oo= $a->strava_oddo ? $a->strava_oddo : 'vo';
     $nd= $a->_dnu;
     for ($i= 0; $i<=$nd; $i++) {
@@ -802,7 +802,7 @@ function akce_strava_pary($akce,$par,$title,$vypis,$export=false) { trace();
 //   $qry.=  " LIMIT 5";
   $res= mysql_qry($qry);
   while ( $res && ($x= mysql_fetch_object($res)) ) {
-                                                        debug($x,"hodnoty");
+//                                                         debug($x,"hodnoty");
     $n++;
     $clmn[$n]= array();
     $clmn[$n]['manzele']=
@@ -832,7 +832,7 @@ function akce_strava_pary($akce,$par,$title,$vypis,$export=false) { trace();
       }
     }
   }
-                                                        debug($suma,"sumy");
+//                                                         debug($suma,"sumy");
   if ( $export ) {
     $result->tits= $tits;
     $result->flds= $flds;
@@ -1100,7 +1100,7 @@ function akce_skup_deti($akce,$par,$title,$vypis,$export) {
          GROUP BY id_duakce ";
   $res= mysql_qry($qry);
   $pocet= mysql_fetch_object($res);
-                                                        debug($pocet,"počty");
+//                                                         debug($pocet,"počty");
   // zjištění skupinek
   $skupiny= array();   // [ skupinka => [{fce,příjmení,jméno},....], ...]
   $qry="SELECT id_pobyt,skupinka,funkce,prijmeni,jmeno,narozeni,rc_xxxx,datum_od
@@ -1115,23 +1115,25 @@ function akce_skup_deti($akce,$par,$title,$vypis,$export) {
     $o->_vek= narozeni2roky_sql($o->narozeni,$o->datum_od);
     $skupiny[$o->skupinka][]= $o;
   }
-                                                        debug($skupiny,"skupiny");
+//                                                         debug($skupiny,"skupiny");
   $n= 0;
   $deti_in= $pecouni_in= 0;
   if ( $export ) {
     $clmn= array();
     foreach ($skupiny as $i=>$s) {
       foreach ($s as $c) {
-        $clmn[$n]['skupina']= $i==$c->id_pobyt ? $c->skupina : '';
-        $clmn[$n]['jmeno']= $c->_nazev;
-        $clmn[$n]['vek']= $i==$c->id_pobyt ? $c->pokoj : '';
+//                                                         debug($c,"$i");
+        $clmn[$n]['skupinka']= $c->funkce==99 ? $c->skupinka : '';
+        $clmn[$n]['prijmeni']= $c->prijmeni;
+        $clmn[$n]['jmeno']= $c->jmeno;
+        $clmn[$n]['vek']= $c->_vek;
         $n++;
       }
-      $clmn[$n]['skupina']= $clmn[$n]['jmeno']= $clmn[$n]['vek']= '';
+      $clmn[$n]['skupinka']= $clmn[$n]['jmeno']= $clmn[$n]['prijmeni']= $clmn[$n]['vek']= '';
       $n++;
     }
-    $result->tits= explode(',',"skupinka:10,jméno:30,věk:3:r");
-    $result->flds= explode(',',"skupina,jmeno,vek");
+    $result->tits= explode(',',"skupinka:10,příjmení:20,jméno:20,věk:4:r");
+    $result->flds= explode(',',"skupinka,prijmeni,jmeno,vek");
     $result->clmn= $clmn;
     $result->expr= null;
   }
@@ -1160,7 +1162,7 @@ function akce_skup_deti($akce,$par,$title,$vypis,$export) {
     $msg.= $pecouni_out>0 ? "<br>Celkem $pecouni_out pečounů není zařazeno do skupinek<br><br>": '';
     $result->html= "$msg$tab";
   }
-                                                        debug($result,"result");
+//                                                         debug($result,"result");
   return $result;
 }
 # ================================================================================================== SKUPINKY
@@ -1541,7 +1543,7 @@ function akce_plachta($akce,$par,$title,$vypis,$export=0) { trace();
       $excel[]= array($r1,$r2,$r31,$r41,$r51,$r32,$r42,$r52,$vzdelani_muze,$vek_m);
     }
   }
-                                                debug($excel);
+//                                                 debug($excel);
   if ( $export ) {
     $result->href= akce_plachta_export($excel,'plachta');
   }
@@ -1863,7 +1865,7 @@ function akce_roku_update($rok) {  trace();
   $cells= google_sheet($rok,"ciselnik_akci",'answer@smidek.eu');
   if ( $cells ) {
     list($max_A,$max_n)= $cells['dim'];
-                                                debug($cells,"akce $rok");
+//                                                 debug($cells,"akce $rok");
     // zrušení daného roku v GAKCE
     $qry= "DELETE FROM g_akce WHERE g_rok=$rok";
     $res= mysql_qry($qry);
@@ -2267,7 +2269,7 @@ function akce_auto_jmena3L($id_osoba) {  #trace();
     $nazev= "{$p->prijmeni} {$p->jmeno}, {$p->obec}";
     $pecouni[]= (object)array('nazev'=>$nazev,'id'=>$p->id_osoba);
   }
-                                                                debug($pecouni,$id_akce);
+//                                                                 debug($pecouni,$id_akce);
   return $pecouni;
 }
 # ================================================================================================== PRIDEJ z AKCE
@@ -2354,7 +2356,7 @@ function akce_auto_pece($patt) {  #trace();
     $a[0]= "... žádná jméno akce nezačíná '$patt'";
   elseif ( $n==$limit )
     $a[-999999]= "... a další";
-                                                                debug($a,$qry);
+//                                                                 debug($a,$qry);
   return $a;
 }
 # ---------------------------------------- akce_pece_akceL
@@ -2373,7 +2375,7 @@ function akce_auto_peceL($id_akce) {  #trace();
     $nazev= "{$p->prijmeni} {$p->jmeno}, {$p->obec}";
     $pecouni[]= (object)array('nazev'=>$nazev,'id'=>$p->id_osoba);
   }
-                                                                debug($pecouni,$id_akce);
+//                                                                 debug($pecouni,$id_akce);
   return $pecouni;
 }
 # ================================================================================================== INFORMACE
@@ -2727,7 +2729,7 @@ function dop_mai_text($id_dopis) {  trace();
       }
     }
   }
-                                                        debug($d,"dop_mai_text($id_dopis)");
+//                                                         debug($d,"dop_mai_text($id_dopis)");
   return $html;
 }
 # -------------------------------------------------------------------------------------------------- dop_mai_prazdny
@@ -2925,7 +2927,7 @@ function dop_mai_pocet($id_dopis,$dopis_var) {  trace();
     : "Mail '$nazev' nemá žádného adresáta, stiskni ZRUŠIT";
   $result->_html.= "\n\n$html";
   $result->_count= $nt;
-                                                debug($result,"dop_mai_pocet.result");
+//                                                 debug($result,"dop_mai_pocet.result");
   return $result;
 }
 # -------------------------------------------------------------------------------------------------- dop_mai_posli
