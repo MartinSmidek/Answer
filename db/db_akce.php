@@ -1109,7 +1109,7 @@ function akce_skup_deti($akce,$par,$title,$vypis,$export) {
         JOIN pobyt AS p USING(id_pobyt)
         JOIN akce  AS a ON id_duakce='$akce'
         WHERE  id_akce='$akce' AND skupinka!=0
-        ORDER BY skupinka,funkce DESC ";
+        ORDER BY skupinka,IF(funkce=99,0,1),prijmeni,jmeno ";
   $res= mysql_qry($qry);
   while ( $res && ($o= mysql_fetch_object($res)) ) {
     $o->_vek= narozeni2roky_sql($o->narozeni,$o->datum_od);
