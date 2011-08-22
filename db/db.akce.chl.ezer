@@ -22,6 +22,7 @@ menu m {type:'left'
   menu g {title:'Volba akce',type:'group'
 #     item {title:'MROP - minulé iniciace', format:'d'  }
     item {title:'MROP - přihlášky', par:°{id_akce:2} }
+    item {title:'MROP - závěr', par:°{id_akce:4} }
     item i {title:'GloTraCh - přihlášky', par:°{id_akce:1} }
     item {title:'Jordán - přihlášky', par:°{id_akce:3} }
     item {title:'všechny akce - minulé', format:'d' }
