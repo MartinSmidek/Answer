@@ -37,6 +37,12 @@ menu m {type:'left',
         vy.fill(the_title.get);
       }
     }
+#     item {title:'účastníkům chlapské akce', skill:''
+#       proc onclick (i) {
+#         ini(i,'et','U','akce','skup');
+#         vy.fill(the_title.get);
+#       }
+#     }
     item {title:'členům skupiny'
       proc onclick (i) {
         ini(i,'et','Q','skup','akce');

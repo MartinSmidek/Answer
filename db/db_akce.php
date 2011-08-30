@@ -1863,9 +1863,9 @@ function akce_roku_id($id_akce,$kod,$rok) {
 function akce_roku_update($rok) {  trace();
   $n= 0;
   $cells= google_sheet($rok,"ciselnik_akci",'answer@smidek.eu');
+                                                debug($cells,"akce $rok");
   if ( $cells ) {
     list($max_A,$max_n)= $cells['dim'];
-//                                                 debug($cells,"akce $rok");
     // zrušení daného roku v GAKCE
     $qry= "DELETE FROM g_akce WHERE g_rok=$rok";
     $res= mysql_qry($qry);
