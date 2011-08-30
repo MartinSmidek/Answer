@@ -200,7 +200,7 @@ form _akce [,,*,50] {
     proc onrowclick() { page.show_akce(id_akce.get); }
   }
   label head [0,0,*,30] { title:'' }
-  button [-20,3,100,] { title:'Obnovit rok z intranetu', skill:'y'
+  button [-20,3,100,] { title:'Obnovit rok z intranetu', skill:'y|yaa+'
     help:"obnoví akce roku z http://intranet.setkani.org"
     # získání seznamu akcí z docs.google.com pomocí API spredsheet
     proc onclick() {

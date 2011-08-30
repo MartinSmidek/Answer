@@ -19,7 +19,7 @@ proc init_ucast() { echo('init_ucast ',the_title.get);
   page.page_init;
   header.fill(the_title.get);
   [ reload(0) ];
-  page.evd.onclick
+  [ u.b.browse_count; page.evd.onclick ]
 }
 proc akce_show(xakce,xpobyt,xnadpis,xback) {  echo('akce_show ',xakce,' ',xpobyt,' ',xnadpis);
   back.set(object('ida',the_duakce.get,
