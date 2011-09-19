@@ -317,7 +317,7 @@ form _esady  {
     }
   }
   field davka [105,281,30,17] { format:'rt', value:'10', skill:'yam|yams;fam|fams',
-    proc davka.onchange () {
+    proc onchange () {
       send.set(conc(davka.get,'  ještě neposlaných'));
     }
   }
