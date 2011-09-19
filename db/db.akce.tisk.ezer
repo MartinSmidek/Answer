@@ -30,6 +30,11 @@ use info: form right [12,4,,] {
         sti_B.report_init; sti_B.report_check;
         res.set(ask('akce_pdf_prijem',the_duakce.get,the_par.get,sti_B.get_json));
         form.msg.set(res.html);
+      },
+      'PDF-stravenky',{
+        sti_B.report_init; sti_B.report_check;
+        res.set(ask('akce_pdf_stravenky',the_duakce.get,the_par.get,sti_B.get_json));
+        form.msg.set(res.html);
       })
     }
   }
@@ -117,6 +122,7 @@ menu m {type:'left',
     item {title:'Štítky na obálku účastníka' ,par:°{typ:'p',exp:'PDF-prijem',cnd:"1"
                                         ,tit:'příjmení:15,jména:20,_deti:7,skupinka:7,pokoj:12,lůžka:7,kočárek:7,přistýlky:7,strava celá:7,poloviční:7'
                                         ,fld:'prijmeni,jmena,_deti,skupina,pokoj,luzka,kocarek,pristylky,strava_cel,strava_pol'}}
+    item {title:'Stravenky'             ,par:°{typ:'vj',exp:'PDF-stravenky',cnd:"id_pobyt IN (9370,14138)"}}
   }
   menu {title:'MS: letní kurs, obnovy',type:'group',_sys:'*'
     item {title:'Pečouni'               ,par:°{typ:'d',exp:'Excel',cnd:'1'
