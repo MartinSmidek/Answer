@@ -1,4 +1,122 @@
 <?php # (c) 2009-2010 Martin Smidek <martin@smidek.eu>
+# ================================================================================================== ALBUM
+# -------------------------------------------------------------------------------------------------- album_set
+# přidá fotografii do alba
+function album_set($id_rodina,$fileinfo,$nazev) {
+  global $ezer_path_root;
+  // nalezení rodiny a poznamenání názvu fotky
+//   $nazev= select('nazev','rodina',"id_rodina=$id_rodina");
+  $nazev= utf2ascii($nazev);
+  $name= "$nazev.{$fileinfo->name}";
+  query("UPDATE rodina SET fotka='$name' WHERE id_rodina=$id_rodina");
+  // uložení fotky
+  $path= "$ezer_path_root/fotky/$name";
+  $data= $fileinfo->text;
+  $data= base64_decode("$data==");
+//                          debug($fileinfo,"album_set ".strlen($fileinfo->text)."/".strlen($data));
+  $bytes= file_put_contents($path,$data);
+  return $name;
+}
+# -------------------------------------------------------------------------------------------------- album_delete
+# zruší fotografii z alba
+function album_delete($id_rodina) { trace();
+  global $ezer_path_root;
+  $ok= 0;
+  // nalezení rodiny a poznamenání názvu fotky
+  $name= select('fotka','rodina',"id_rodina=$id_rodina");
+                                        display("name=$name");
+  if ( $name ) {
+    query("UPDATE rodina SET fotka='' WHERE id_rodina=$id_rodina");
+    // smazání fotky
+    $ok= unlink("$ezer_path_root/fotky/$name");
+                                        display("unlink('$ezer_path_root/fotky/$name')=$ok");
+    $ok&= unlink("$ezer_path_root/fotky/copy/$name");
+                                        display("unlink('$ezer_path_root/fotky/copy/$name')=$ok");
+  }
+  return $ok;
+}
+# -------------------------------------------------------------------------------------------------- album_get
+# zobrazí fotografii z alba
+function album_get($name,$w,$h) { trace();
+  global $ezer_path_root;
+  if ( $name ) {
+    $dest= "$ezer_path_root/fotky/copy/$name";
+    $orig= "$ezer_path_root/fotky/$name";
+    if ( !file_exists($dest) ) {
+      // zmenšení na požadovanou velikost
+      $ok= album_resample($orig,$dest,$w,$h,0,1);
+    }
+    $src= "fotky/copy/$name";
+    $html= "<a href='fotky/$name' target='_album'><img src='fotky/copy/$name' /></a>";
+  //   $data= "iVBORw0"."KGgoAAAANSUhEUgAAACAAAAAFCAYAAAAkG+5xAAAABGdBTUEAANbY1E9YMgAAABl0RVh0U29mdHdhcm"
+  //        . "UAQWRvYmUgSW1hZ2VSZWFkeXHJZTwAAABTSURBVHjarJJRCgAgCEM9nHfy+K+fKBKzjATBDZUxFUAuU5mhnWPT"
+  //        . "SzK7YCkkQR3tsM5bImjgVwE3HIED6vFvB4w17CC4dILdD5AIwvX5OW0CDAAH+Qok/eTdBgAAAABJRU5E"."rkJggg";
+  //   $html= "<img alt='Embedded Image' src='data:image/png;base64,$data' />";
+  }
+  else {
+    $html.= "Fotografie ještě není k dispozici - lze ji sem přidat myší";
+  }
+  return $html;
+}
+# -------------------------------------------------------------------------------------------------- album_resample
+function album_resample($source, $dest, &$width, &$height,$copy_bigger=0,$copy_smaller=1) { trace();
+  global $CONST;
+  $maxWidth= $width;
+  $maxHeight= $height;
+  $ok= 1;
+  // zjistime puvodni velikost obrazku a jeho typ: 1 = GIF, 2 = JPG, 3 = PNG
+  list($origWidth, $origHeight, $type)=@ getimagesize($source);
+//                                                 debug(array($origWidth, $origHeight, $type),"album_resample($source, $dest, &$width, &$height,$copy_bigger)");
+  if ( !$type ) $ok= 0;
+  if ( $ok ) {
+    if ( !$maxWidth ) $maxWidth= $origWidth;
+    if ( !$maxHeight ) $maxHeight= $origHeight;
+    // nyni vypocitam pomer změny
+    $pw= $maxWidth / $origWidth;
+    $ph= $maxHeight / $origHeight;
+    $p= min($pw, $ph);
+    // vypocitame vysku a sirku změněného obrazku - vrátíme ji do výstupních parametrů
+    $newWidth = (int)($origWidth * $p);
+    $newHeight = (int)($origHeight * $p);
+    $width= $newWidth;
+    $height= $newHeight;
+                                                display("p=$p, copy_smaller=$copy_smaller");
+    if ( ($pw == 1 && $ph == 1) || ($copy_bigger && $p<1) || ($copy_smaller && $p>1) ) {
+                                                display("kopie");
+      // jenom zkopírujeme
+      copy($source,$dest);
+    }
+    else {
+                                                display("úprava");
+      // zjistíme velikost cíle - abychom nedělali zbytečnou práci
+      $destWidth= $destHeight= -1; $ok= 2; // ok=2 -- nic se nedělalo
+      if ( file_exists($dest) ) list($destWidth, $destHeight)= getimagesize($dest);
+      if ( $destWidth!=$newWidth || $destHeight!=$newHeight ) {
+        // vytvorime novy obrazek pozadovane vysky a sirky
+        $image_p= ImageCreateTrueColor($newWidth, $newHeight);
+        // otevreme puvodni obrazek se souboru
+        switch ($type) {
+        case 1: $image= ImageCreateFromGif($source); break;
+        case 2: $image= ImageCreateFromJpeg($source); break;
+        case 3: $image= ImageCreateFromPng($source); break;
+        }
+        // okopirujeme zmenseny puvodni obrazek do noveho
+        if ( $maxWidth || $maxHeight )
+          ImageCopyResampled($image_p, $image, 0, 0, 0, 0, $newWidth, $newHeight, $origWidth, $origHeight);
+        else
+          $image_p= $image;
+        // ulozime
+        $ok= 0;
+        switch ($type) {
+        case 1: /*ImageColorTransparent($image_p);*/ $ok= ImageGif($image_p, $dest);  break;
+        case 2: $ok= ImageJpeg($image_p, $dest);  break;
+        case 3: $ok= ImagePng($image_p, $dest);  break;
+        }
+      }
+    }
+  }
+  return $ok;
+}
 # ================================================================================================== KONTROLY
 # -------------------------------------------------------------------------------------------------- akce_data_note_pece
 # doplnění poznámek z ms_pece do osoba
