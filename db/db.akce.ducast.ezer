@@ -51,6 +51,7 @@ use zen:   form _zena    [400,0,,]
 use pob:   form _pobyt   [400,0,,]
 use cmd:   form _cmd     [400,0,,]
 use pla:   form _platba  [400,0,,]
+use alb:   form _album   [400,0,,]
 # záložka aktivity
 use a_muz: form _aktivity[420,10,,]
 use a_zen: form _aktivity[700,10,,]
@@ -110,27 +111,65 @@ form _page {
     a_muz.display(0); a_zen.display(0); pla.display(0);
   }
   label evd [ 12,0,120,20] {tag:'p', title:'<b>Evidenční karta</b>', format:'c', css:'ae_butt_on'
-    proc onclick() { tags(this,'z','h|o');
+    proc onclick() { tags(this,'z','h|o|f');
       zalozka.set('evid'); u.b.reload_pobyt;
       evid.display(1); cmd.display(1); rod.display(1); muz.display(1); zen.display(1); pob.display(1);
-      a_muz.display(0); a_zen.display(0); pla.display(0);
+      a_muz.display(0); a_zen.display(0); pla.display(0); alb.display(0);
     }
   }
   label plt [152,0,120,20] {tag:'p', title:'<b>Platba za akci</b>', format:'c',
-    proc onclick() { tags(this,'h','z|o');
+    proc onclick() { tags(this,'h','z|o|f');
       zalozka.set('plat'); u.b.reload_pobyt;
       evid.display(0); cmd.display(0); rod.display(0); muz.display(0); zen.display(0); pob.display(0);
-      a_muz.display(0); a_zen.display(0); pla.display(1);
+      a_muz.display(0); a_zen.display(0); pla.display(1); alb.display(0);
     }
   }
   label jin [292,0,120,20] {tag:'p', title:'<b>Přehled aktivit</b>', format:'c',
-    proc onclick() { tags(this,'o','z|h');
+    proc onclick() { tags(this,'o','z|h|f');
       zalozka.set('akce'); u.b.reload_pobyt;
       evid.display(0); cmd.display(0); rod.display(0); muz.display(0); zen.display(0); pob.display(0);
-      a_muz.display(1); a_zen.display(1); pla.display(0);
+      a_muz.display(1); a_zen.display(1); pla.display(0); alb.display(0);
+    }
+  }
+  label fot [432,0,120,20] {tag:'p', title:'<b>Fotky</b>', format:'c', skill:'a'
+    proc onclick() { tags(this,'f','o|z|h');
+      zalozka.set('foto'); u.b.reload_pobyt;
+      evid.display(0); cmd.display(0); rod.display(0); muz.display(0); zen.display(0); pob.display(0);
+      a_muz.display(0); a_zen.display(0); pla.display(0); alb.display(1);
     }
   }
   label [0,16,582,530] { css:'ae_work'}
+}
+# -------------------------------------------------------------------------------------------------- _album
+form _album {
+  label drop [38,35,500,45] { format:'c' }
+  label foto [38,85,500,400] { format:'c' }
+  button smazat [250,500,,] { title:'Odstranit fotografii', format:'n'
+    proc onclick() {
+      ask('album_delete',u.b.key_rodina.get); u.b.fotka.let('');
+    | warning("fotografii nebylo možné smazat");
+  }}
+  proc ondrop(fileinfo) {
+    var name: text
+    echo('ondrop beg ',fileinfo.name);
+    drop.set_css('','drop_area drop_area_hover');
+    name.set(ask('album_set',u.b.key_rodina.get,fileinfo,
+      conc(u.b._nazev.get,' ',u.b.jmeno_m.get,' ',u.b.jmeno_z.get)));
+    u.b.fotka.let(name); echo('name=',u.b.fotka.get,' ? ',name);
+    smazat.display(1);
+    foto.set(ask('album_get',name,500,400));
+    drop.set_css('','drop_area drop_area_hover drop_area_run');
+    echo('ondrop end ',fileinfo.name);
+    drop_init;
+  }
+  proc drop_init() {
+    echo('dropinit beg ');
+    form.file_drop(drop,°{css_hover:'drop_area_hover',css_run:'drop_area_run',handler:'ondrop'});
+    echo('dropinit end ');
+  }
+  proc drop_set() {
+    foto.set(ask('album_get',u.b.fotka.get,500,400));
+  }
 }
 # -------------------------------------------------------------------------------------------------- _aktivity
 form _aktivity {
@@ -353,6 +392,7 @@ form _ucast [,,400,] { css:'ds_form'
     show _nazev [,,100,] { title:'rodina', format:'s+q*', expr:"IF(pouze=0,r.nazev,o.prijmeni)" }
     show _jmena [,,180,] { title:'jméno/a', format:'ts',
       expr:"GROUP_CONCAT(DISTINCT IF(pouze=1 AND t.role='b','',IF(pouze=2 AND t.role='a','',o.jmeno)) ORDER BY t.role SEPARATOR ' ')" }
+    show fotka    [,,0,] { data:r.fotka, format:'rsq*', help:'soubor s fotografií' }
     show _vek     [,,0,] { expr:"GROUP_CONCAT(DISTINCT IF(tx.role='a',ox.narozeni,'') SEPARATOR '')",
                            js_pipe:'roku', format:'rs', help:'stáří muže' }
     show _vzd     [,,0,] { expr:"GROUP_CONCAT(DISTINCT IF(tx.role='a',ox.vzdelani,'') SEPARATOR '')",
@@ -450,7 +490,7 @@ form _ucast [,,400,] { css:'ds_form'
     proc reload_pobyt() {
       b.browse_count;
       [ has_skill('m'); develop.set(conc(
-           'id_akce=',key_akce.get,', id_pobyt=',key_pobyt.get
+           'id_akce=',key_akce.get,', id_pobyt=',key_pobyt.get,', id_rodina=',key_rodina.get
           ,'<br>m: id_spolu=', id_spolu_m.get, ', id_osoba=', id_m.get
           ,'<br>z: id_spolu=', id_spolu_z.get, ', id_osoba=', id_z.get
           ,'<br>strava=', strava_oddo.get,', strava_cel=', strava_cel.get,', strava_pol=', strava_pol.get
@@ -488,12 +528,26 @@ form _ucast [,,400,] { css:'ds_form'
         [ id_z.get; a_zen.jme.set(conc(prijmeni_z.get,' ',jmeno_z.get)) | a_zen.jme.init ];
         a_zen.ucasti(id_z.get);
       },
+      'foto',{
+        echo('fotky');
+        { u.b.fotka.get; echo("u.b.fotka='",u.b.fotka.get,"'");
+          // známe fotku
+          alb.drop.set("<br>Fotografii můžeš nahradit přetažením myší ze složky svého počítače sem");
+          alb.smazat.display(1);
+          alb.drop_set; alb.drop_init
+        | // není žádná fotka
+          alb.smazat.display(0);
+          alb.drop.set("<br>Sem můžeš přidat fotografii přetažením myší ze složky svého počítače");
+          alb.drop.set_css('drop_area',''); alb.foto.set(''); alb.drop_init
+        | echo('file_drop nelze zahájit')
+        }
+      },
       {stop}
     )}
     proc onrowclick() { reload_pobyt }
     proc onclick() {
-      _vek.width; _vek.width(0);  _vzd.width(0);  _jmena.width(180);
-    |             _vek.width(20); _vzd.width(20); _jmena.width(138);
+      _vek.width; _vek.width(0);  _vzd.width(0);  fotka.width(0);  _jmena.width(180);
+    |             _vek.width(20); _vzd.width(20); fotka.width(20); _jmena.width(117);
     }
   }
 }

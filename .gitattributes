@@ -61,6 +61,7 @@ img/ms1.png -text
 img/ms2.png -text
 /kEzer-ys2.ppr -text
 skins/ch/$logo.gif -text
+skins/ch/ajax_wait.gif -text
 skins/ch/big_text.css -text
 skins/ch/body_bg.png -text
 skins/ch/browse_handle_act.png -text
@@ -116,6 +117,7 @@ skins/ch/sort_n.png -text
 skins/ch/submenu_bg.png -text
 skins/ch/tree.png -text
 skins/ck/$logo.gif -text
+skins/ck/ajax_wait.gif -text
 skins/ck/big_text.css -text
 skins/ck/body_bg.png -text
 skins/ck/browse_handle.png -text

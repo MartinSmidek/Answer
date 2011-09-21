@@ -286,6 +286,7 @@ table rodina { key_id:'id_rodina'
   number id_dupary
   number typ            // 10,11,20,21
   text nazev
+  text fotka
   text ulice
   text psc
   text obec
