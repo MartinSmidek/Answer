@@ -131,7 +131,7 @@ form _page {
       a_muz.display(1); a_zen.display(1); pla.display(0); alb.display(0);
     }
   }
-  label fot [432,0,120,20] {tag:'p', title:'<b>Fotky</b>', format:'c', skill:'a'
+  label fot [432,0,120,20] {tag:'p', title:'<b>Fotky</b>', format:'c', /*skill:'a'*/
     proc onclick() { tags(this,'f','o|z|h');
       zalozka.set('foto'); u.b.reload_pobyt;
       evid.display(0); cmd.display(0); rod.display(0); muz.display(0); zen.display(0); pob.display(0);
@@ -146,26 +146,28 @@ form _album {
   label foto [38,85,500,400] { format:'c' }
   button smazat [250,500,,] { title:'Odstranit fotografii', format:'n'
     proc onclick() {
-      ask('album_delete',u.b.key_rodina.get); u.b.fotka.let('');
-    | warning("fotografii nebylo možné smazat");
+      confirm("Opravdu odstranit tuto fotografii?");
+      { ask('album_delete',u.b.key_rodina.get); u.b.fotka.let(''); foto.set('');
+      | warning("fotografii nebylo možné smazat");
+      }
   }}
   proc ondrop(fileinfo) {
     var name: text
-    echo('ondrop beg ',fileinfo.name);
+    //echo('ondrop beg ',fileinfo.name);
     drop.set_css('','drop_area drop_area_hover');
     name.set(ask('album_set',u.b.key_rodina.get,fileinfo,
       conc(u.b._nazev.get,' ',u.b.jmeno_m.get,' ',u.b.jmeno_z.get)));
-    u.b.fotka.let(name); echo('name=',u.b.fotka.get,' ? ',name);
+    u.b.fotka.let(name); //echo('name=',u.b.fotka.get,' ? ',name);
     smazat.display(1);
     foto.set(ask('album_get',name,500,400));
     drop.set_css('','drop_area drop_area_hover drop_area_run');
-    echo('ondrop end ',fileinfo.name);
+    //echo('ondrop end ',fileinfo.name);
     drop_init;
   }
   proc drop_init() {
-    echo('dropinit beg ');
+    //echo('dropinit beg ');
     form.file_drop(drop,°{css_hover:'drop_area_hover',css_run:'drop_area_run',handler:'ondrop'});
-    echo('dropinit end ');
+    //echo('dropinit end ');
   }
   proc drop_set() {
     foto.set(ask('album_get',u.b.fotka.get,500,400));
@@ -530,16 +532,19 @@ form _ucast [,,400,] { css:'ds_form'
       },
       'foto',{
         echo('fotky');
-        { u.b.fotka.get; echo("u.b.fotka='",u.b.fotka.get,"'");
-          // známe fotku
-          alb.drop.set("<br>Fotografii můžeš nahradit přetažením myší ze složky svého počítače sem");
-          alb.smazat.display(1);
-          alb.drop_set; alb.drop_init
-        | // není žádná fotka
-          alb.smazat.display(0);
-          alb.drop.set("<br>Sem můžeš přidat fotografii přetažením myší ze složky svého počítače");
-          alb.drop.set_css('drop_area',''); alb.foto.set(''); alb.drop_init
-        | echo('file_drop nelze zahájit')
+        { has_skill("yaa+;faa+");
+          { u.b.fotka.get; //echo("u.b.fotka='",u.b.fotka.get,"'");
+            // známe fotku
+            alb.drop.set("<br>Fotografii můžeš nahradit přetažením myší ze složky svého počítače sem");
+            alb.smazat.display(1);
+            alb.drop_set; alb.drop_init
+          | // není žádná fotka
+            alb.smazat.display(0);
+            alb.drop.set("<br>Sem můžeš přidat fotografii přetažením myší ze složky svého počítače");
+            alb.drop.set_css('drop_area',''); alb.foto.set(''); alb.drop_init
+          | echo('file_drop nelze zahájit')
+          }
+        | u.b.fotka.get; alb.drop_set
         }
       },
       {stop}
@@ -555,8 +560,9 @@ form _ucast [,,400,] { css:'ds_form'
 form _cmd [,,200,] { css:'ds_form'
   // příkazy
   button stravy     [89,437,37,] {title:'Str Po', style:'font-size:10px;height:19px;width:40px',
-    skill:'yaa+|yaa+;faa+|faa+',
+    //skill:'yaa+|yaa+;faa+|faa+',
     proc onclick() {
+      has_skill("yaa+;faa+");
       Strava.dnu.set(u.b.dnu.get); // pokud jsou definovány výjimky z pravidelné stravy
       lt(Strava.dnu.get,15);       // 15 je maximálně možný počet řádků vyjímek ze stravy
       Strava.modal(240,50)

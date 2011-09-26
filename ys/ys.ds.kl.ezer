@@ -2,7 +2,7 @@
 
 var klienti_mesic_rok: text
 var klienti_uids: text
-var href: text
+var xhref: text
 var info: text
 menu m {type:'left'
   proc onclick(x) {
@@ -31,8 +31,8 @@ form f [,,720,500] {
   label tit [10,0,680,] { title:'Přehled hostů' }
   button [620,10,60,20] {title:'Export'
     proc onclick() {
-      href.set(ask('ds_xls_hoste',klienti_uids.get,klienti_mesic_rok.get));
-      msg.set(conc(info.get('msg'),href.get));
+      xhref.set(ask('ds_xls_hoste',klienti_uids.get,klienti_mesic_rok.get));
+      msg.set(conc(info.get('msg'),xhref.get));
   } }
   label msg [10,50,700,] { title:'msg' }
   label htm [400,78,300,] { title:'html' }

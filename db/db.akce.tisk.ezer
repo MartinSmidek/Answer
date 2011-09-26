@@ -19,7 +19,7 @@ use info: form right [12,4,,] {
       'Excel-plachta',{
         res.set(ask('akce_plachta',the_duakce.get,the_par.get,the_title.get,the_vypis.get,1));
         form.note.set('');
-        form.msg.set(res.href);
+        form.msg.set(res.xhref);
       },
       'PDF-adresy',{
         sti_A.report_init; sti_A.report_check;
