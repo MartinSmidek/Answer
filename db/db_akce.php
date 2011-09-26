@@ -1851,7 +1851,7 @@ function akce_plachta($akce,$par,$title,$vypis,$export=0) { trace();
   }
 //                                                 debug($excel);
   if ( $export ) {
-    $result->href= akce_plachta_export($excel,'plachta');
+    $result->xhref= akce_plachta_export($excel,'plachta');
   }
   $result->html= $html;
   return $result;
