@@ -4,40 +4,46 @@
 # přidá fotografii do alba
 function album_set($id_rodina,$fileinfo,$nazev) {
   global $ezer_path_root;
-  // nalezení rodiny a poznamenání názvu fotky
-//   $nazev= select('nazev','rodina',"id_rodina=$id_rodina");
   $nazev= utf2ascii($nazev);
   $name= "$nazev.{$fileinfo->name}";
-  query("UPDATE rodina SET fotka='$name' WHERE id_rodina=$id_rodina");
-  // uložení fotky
   $path= "$ezer_path_root/fotky/$name";
   $data= $fileinfo->text;
-  $data= base64_decode("$data==");
+//                         $bytes= file_put_contents("$path.dmp",$data);  // debug info
+  // test korektnosti fotky
+  if ( substr($data,0,23)=="data:image/jpeg;base64," ) {
+    // uložení fotky
+    $data= base64_decode(substr("$data==",23));
 //                          debug($fileinfo,"album_set ".strlen($fileinfo->text)."/".strlen($data));
-  $bytes= file_put_contents($path,$data);
+    $bytes= file_put_contents($path,$data);
+    // nalezení rodiny a poznamenání názvu fotky
+    query("UPDATE rodina SET fotka='$name' WHERE id_rodina=$id_rodina");
+  }
+  else {
+    $name= '';          // tiché oznámení chyby
+  }
   return $name;
 }
 # -------------------------------------------------------------------------------------------------- album_delete
 # zruší fotografii z alba
-function album_delete($id_rodina) { trace();
+function album_delete($id_rodina) { #trace();
   global $ezer_path_root;
   $ok= 0;
   // nalezení rodiny a poznamenání názvu fotky
   $name= select('fotka','rodina',"id_rodina=$id_rodina");
-                                        display("name=$name");
+//                                         display("name=$name");
   if ( $name ) {
     query("UPDATE rodina SET fotka='' WHERE id_rodina=$id_rodina");
     // smazání fotky
     $ok= unlink("$ezer_path_root/fotky/$name");
-                                        display("unlink('$ezer_path_root/fotky/$name')=$ok");
+//                                         display("unlink('$ezer_path_root/fotky/$name')=$ok");
     $ok&= unlink("$ezer_path_root/fotky/copy/$name");
-                                        display("unlink('$ezer_path_root/fotky/copy/$name')=$ok");
+//                                         display("unlink('$ezer_path_root/fotky/copy/$name')=$ok");
   }
   return $ok;
 }
 # -------------------------------------------------------------------------------------------------- album_get
 # zobrazí fotografii z alba
-function album_get($name,$w,$h) { trace();
+function album_get($name,$w,$h) { #trace();
   global $ezer_path_root;
   if ( $name ) {
     $dest= "$ezer_path_root/fotky/copy/$name";
@@ -59,7 +65,7 @@ function album_get($name,$w,$h) { trace();
   return $html;
 }
 # -------------------------------------------------------------------------------------------------- album_resample
-function album_resample($source, $dest, &$width, &$height,$copy_bigger=0,$copy_smaller=1) { trace();
+function album_resample($source, $dest, &$width, &$height,$copy_bigger=0,$copy_smaller=1) { #trace();
   global $CONST;
   $maxWidth= $width;
   $maxHeight= $height;
@@ -80,9 +86,9 @@ function album_resample($source, $dest, &$width, &$height,$copy_bigger=0,$copy_s
     $newHeight = (int)($origHeight * $p);
     $width= $newWidth;
     $height= $newHeight;
-                                                display("p=$p, copy_smaller=$copy_smaller");
+//                                                 display("p=$p, copy_smaller=$copy_smaller");
     if ( ($pw == 1 && $ph == 1) || ($copy_bigger && $p<1) || ($copy_smaller && $p>1) ) {
-                                                display("kopie");
+//                                                 display("kopie");
       // jenom zkopírujeme
       copy($source,$dest);
     }

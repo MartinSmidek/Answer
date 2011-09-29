@@ -166,7 +166,8 @@ form _album {
   }
   proc drop_init() {
     //echo('dropinit beg ');
-    form.file_drop(drop,°{css_hover:'drop_area_hover',css_run:'drop_area_run',handler:'ondrop'});
+    form.file_drop(drop,°{css_hover:'drop_area_hover',css_run:'drop_area_run',handler:'ondrop',
+      max_width:1200,max_height:960});
     //echo('dropinit end ');
   }
   proc drop_set() {
