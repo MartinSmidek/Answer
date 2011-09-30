@@ -15,7 +15,9 @@ Ezer.Label.implement({
         switch (filter) {
         case 'gray':    data.hueSaturation(-1,-1); break;
         case 'sepia':   data.sepia(1);             break;
-        case 'sharpen': data.unsharpMask(3,0.5);   break;
+        case 'sharpen': var radius= 1, strength= 1;
+                        data.unsharpMask(radius,strength);
+                        break;
         }
         data.update();
         // replace the image with the canvas
@@ -23,6 +25,7 @@ Ezer.Label.implement({
         image.parentNode.removeChild(image);
       })
     }
+    return 1;
   }
 });
 // ================================================================================================= Ezer.fce

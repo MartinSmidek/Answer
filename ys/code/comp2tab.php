@@ -88,6 +88,7 @@ $names= array(
  'check_rooms' => (object)array('op'=>'ff'),
  'id_key' => (object)array('op'=>'fm'),
  'if' => (object)array('op'=>'fs'),
+ 'image_filter' => (object)array('op'=>'fm'),
  'include' => (object)array('op'=>'os'),
  'init' => (object)array('op'=>'fm'),
  'init_queries' => (object)array('op'=>'fm'),
