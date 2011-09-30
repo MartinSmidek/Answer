@@ -39,7 +39,7 @@
 
   // moduly interpreta zahrnuté do aplikace - budou zpracovány i reference.i_doc pro tabulky kompilátoru
   $ezer_comp_ezer= "app,ezer,ezer_report,ezer_fdom1,ezer_fdom2";
-  $ezer_comp_root= "ds/fce,ys/ys_fce";
+  $ezer_comp_root= "ds/fce,db/db_fce";
   // moduly v Ezerscriptu mimo složku aplikace
   $ezer_ezer= array(
     "ds/ds.dum",

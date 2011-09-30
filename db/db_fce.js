@@ -1,4 +1,31 @@
 // uživatelské funkce aplikace YS
+// ================================================================================================= Ezer.Label
+// ------------------------------------------------------------------------------------ image_filter
+//fm: Label.image_filter (filter)
+//      aplikuje zadaný filtr na obsažené obrázky, povolené hodnoty jsou: gray, sepia, sharpen
+Ezer.Label.implement({
+  image_filter: function(filter) {
+    if ( !Ezer.canvas ) try {
+      Ezer.canvas= fx.canvas();         // volání fce knihovny glfx.js
+    } catch(e) { Ezer.canvas= null; };
+    if ( Ezer.canvas && ['gray','sepia','sharpen'].contains(filter) ) {
+      this.DOM_Block.getElements('img').each(function(image){
+        var texture= Ezer.canvas.texture(image);
+        var data= Ezer.canvas.draw(texture);
+        switch (filter) {
+        case 'gray':    data.hueSaturation(-1,-1); break;
+        case 'sepia':   data.sepia(1);             break;
+        case 'sharpen': data.unsharpMask(3,0.5);   break;
+        }
+        data.update();
+        // replace the image with the canvas
+        image.parentNode.insertBefore(Ezer.canvas, image);
+        image.parentNode.removeChild(image);
+      })
+    }
+  }
+});
+// ================================================================================================= Ezer.fce
 // ------------------------------------------------------------------------------------------------- rc2roky
 //ff: ys.rc2roky (rodcis)
 //      vrací věk, zjištěný z rodného čísla

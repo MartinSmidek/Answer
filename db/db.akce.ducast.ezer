@@ -159,7 +159,7 @@ form _album {
       conc(u.b._nazev.get,' ',u.b.jmeno_m.get,' ',u.b.jmeno_z.get)));
     u.b.fotka.let(name); //echo('name=',u.b.fotka.get,' ? ',name);
     smazat.display(1);
-    foto.set(ask('album_get',name,500,400));
+    drop_set;
     drop.set_css('','drop_area drop_area_hover drop_area_run');
     //echo('ondrop end ',fileinfo.name);
     drop_init;
@@ -172,6 +172,7 @@ form _album {
   }
   proc drop_set() {
     foto.set(ask('album_get',u.b.fotka.get,500,400));
+    foto.image_filter('sharpen');
   }
 }
 # -------------------------------------------------------------------------------------------------- _aktivity
