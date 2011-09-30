@@ -53,7 +53,8 @@ function album_get($name,$w,$h) { #trace();
       $ok= album_resample($orig,$dest,$w,$h,0,1);
     }
     $src= "fotky/copy/$name";
-    $html= "<a href='fotky/$name' target='_album'><img src='fotky/copy/$name' /></a>";
+    $html= "<a href='fotky/$name' target='_album'><img src='fotky/copy/$name'
+      onload='var x=arguments[0];img_filter(x.target,\"sharpen\");'/></a>";
   //   $data= "iVBORw0"."KGgoAAAANSUhEUgAAACAAAAAFCAYAAAAkG+5xAAAABGdBTUEAANbY1E9YMgAAABl0RVh0U29mdHdhcm"
   //        . "UAQWRvYmUgSW1hZ2VSZWFkeXHJZTwAAABTSURBVHjarJJRCgAgCEM9nHfy+K+fKBKzjATBDZUxFUAuU5mhnWPT"
   //        . "SzK7YCkkQR3tsM5bImjgVwE3HIED6vFvB4w17CC4dILdD5AIwvX5OW0CDAAH+Qok/eTdBgAAAABJRU5E"."rkJggg";
@@ -93,7 +94,7 @@ function album_resample($source, $dest, &$width, &$height,$copy_bigger=0,$copy_s
       copy($source,$dest);
     }
     else {
-                                                display("úprava");
+//                                                 display("úprava");
       // zjistíme velikost cíle - abychom nedělali zbytečnou práci
       $destWidth= $destHeight= -1; $ok= 2; // ok=2 -- nic se nedělalo
       if ( file_exists($dest) ) list($destWidth, $destHeight)= getimagesize($dest);

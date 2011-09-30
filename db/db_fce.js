@@ -28,6 +28,31 @@ Ezer.Label.implement({
     return 1;
   }
 });
+// ------------------------------------------------------------------------------------ img_filter
+// pomocná funkce aplikuje zadaný filtr na obsažené obrázky, povolené hodnoty jsou: gray, sepia, sharpen
+function img_filter (image,filter) {
+  if ( !Ezer.canvas ) try {
+    Ezer.canvas= fx.canvas();         // volání fce knihovny glfx.js
+  } catch(e) { Ezer.canvas= null; };
+  if ( Ezer.canvas && ['gray','sepia','sharpen'].contains(filter) ) {
+    var texture= Ezer.canvas.texture(image);
+    var data= Ezer.canvas.draw(texture);
+    switch (filter) {
+    case 'gray':    data.hueSaturation(-1,-1); break;
+    case 'sepia':   data.sepia(1);             break;
+    case 'sharpen': var radius= 1, strength= 1;
+                    data.unsharpMask(radius,strength);
+                    break;
+    }
+    data.update();
+    // replace the image with the canvas
+    if ( image.parentNode ) {
+      image.parentNode.insertBefore(Ezer.canvas, image);
+      image.parentNode.removeChild(image);
+    }
+  }
+  return 1;
+}
 // ================================================================================================= Ezer.fce
 // ------------------------------------------------------------------------------------------------- rc2roky
 //ff: ys.rc2roky (rodcis)

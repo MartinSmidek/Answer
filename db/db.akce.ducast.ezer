@@ -168,7 +168,7 @@ form _album {
   }
   proc drop_set(sharp) {
     foto.set(ask('album_get',u.b.fotka.get,500,400));
-    [ sharp; foto.image_filter('sharpen') ]
+#     [ sharp; foto.image_filter('sharpen') ]
   }
 }
 # -------------------------------------------------------------------------------------------------- _aktivity
@@ -529,7 +529,6 @@ form _ucast [,,400,] { css:'ds_form'
         a_zen.ucasti(id_z.get);
       },
       'foto',{
-        echo('fotky');
         { has_skill("yaa+;faa+");
           { u.b.fotka.get; //echo("u.b.fotka='",u.b.fotka.get,"'");
             // známe fotku
