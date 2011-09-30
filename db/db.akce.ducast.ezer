@@ -153,26 +153,22 @@ form _album {
   }}
   proc ondrop(fileinfo) {
     var name: text
-    //echo('ondrop beg ',fileinfo.name);
     drop.set_css('','drop_area drop_area_hover');
     name.set(ask('album_set',u.b.key_rodina.get,fileinfo,
       conc(u.b._nazev.get,' ',u.b.jmeno_m.get,' ',u.b.jmeno_z.get)));
-    u.b.fotka.let(name); //echo('name=',u.b.fotka.get,' ? ',name);
+    u.b.fotka.let(name);
     smazat.display(1);
-    drop_set;
+    drop_set(0);
     drop.set_css('','drop_area drop_area_hover drop_area_run');
-    //echo('ondrop end ',fileinfo.name);
     drop_init;
   }
   proc drop_init() {
-    //echo('dropinit beg ');
     form.file_drop(drop,°{css_hover:'drop_area_hover',css_run:'drop_area_run',handler:'ondrop',
       max_width:1200,max_height:960});
-    //echo('dropinit end ');
   }
-  proc drop_set() {
+  proc drop_set(sharp) {
     foto.set(ask('album_get',u.b.fotka.get,500,400));
-    foto.image_filter('sharpen');
+    [ sharp; foto.image_filter('sharpen') ]
   }
 }
 # -------------------------------------------------------------------------------------------------- _aktivity
@@ -539,14 +535,14 @@ form _ucast [,,400,] { css:'ds_form'
             // známe fotku
             alb.drop.set("<br>Fotografii můžeš nahradit přetažením myší ze složky svého počítače sem");
             alb.smazat.display(1);
-            alb.drop_set; alb.drop_init
+            alb.drop_set(1); alb.drop_init
           | // není žádná fotka
             alb.smazat.display(0);
             alb.drop.set("<br>Sem můžeš přidat fotografii přetažením myší ze složky svého počítače");
             alb.drop.set_css('drop_area',''); alb.foto.set(''); alb.drop_init
           | echo('file_drop nelze zahájit')
           }
-        | u.b.fotka.get; alb.drop_set
+        | u.b.fotka.get; alb.drop_set(1)
         }
       },
       {stop}
