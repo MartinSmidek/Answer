@@ -40,9 +40,10 @@ function img_filter (image,filter) {
     switch (filter) {
     case 'gray':    data.hueSaturation(-1,-1); break;
     case 'sepia':   data.sepia(1);             break;
-    case 'sharpen': var radius= 1, strength= 1;
-                    data.unsharpMask(radius,strength);
-                    break;
+    case 'sharpen':
+      var radius= arguments[2]||1, strength= arguments[3]||1;
+      data.unsharpMask(radius,strength);
+      break;
     }
     data.update();
     // replace the image with the canvas
