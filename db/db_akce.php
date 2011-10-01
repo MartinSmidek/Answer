@@ -54,7 +54,7 @@ function album_get($name,$w,$h) { #trace();
     }
     $src= "fotky/copy/$name";
     $html= "<a href='fotky/$name' target='_album'><img src='fotky/copy/$name'
-      onload='var x=arguments[0];img_filter(x.target,\"sharpen\");'/></a>";
+      onload='var x=arguments[0];img_filter(x.target,\"sharpen\",1,2);'/></a>";
   //   $data= "iVBORw0"."KGgoAAAANSUhEUgAAACAAAAAFCAYAAAAkG+5xAAAABGdBTUEAANbY1E9YMgAAABl0RVh0U29mdHdhcm"
   //        . "UAQWRvYmUgSW1hZ2VSZWFkeXHJZTwAAABTSURBVHjarJJRCgAgCEM9nHfy+K+fKBKzjATBDZUxFUAuU5mhnWPT"
   //        . "SzK7YCkkQR3tsM5bImjgVwE3HIED6vFvB4w17CC4dILdD5AIwvX5OW0CDAAH+Qok/eTdBgAAAABJRU5E"."rkJggg";
