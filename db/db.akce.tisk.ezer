@@ -123,8 +123,8 @@ menu m {type:'left',
     item {title:'Štítky na obálku účastníka' ,par:°{typ:'p',exp:'PDF-prijem',cnd:"1"
                                         ,tit:'příjmení:15,jména:20,_deti:7,skupinka:7,pokoj:12,lůžka:7,kočárek:7,přistýlky:7,strava celá:7,poloviční:7'
                                         ,fld:'prijmeni,jmena,_deti,skupina,pokoj,luzka,kocarek,pristylky,strava_cel,strava_pol'}}
-    item {title:'Stravenky - test LK'   ,par:°{typ:'vj',exp:'PDF-stravenky',cnd:"id_pobyt IN (14139)"}}
-    item {title:'Stravenky - test PO'   ,par:°{typ:'vj',exp:'PDF-stravenky',cnd:"id_pobyt IN (17384,17405)",ord:"r.nazev DESC"}}
+#     item {title:'Stravenky - test LK'   ,par:°{typ:'vj',exp:'PDF-stravenky',cnd:"id_pobyt IN (14139)"}}
+#     item {title:'Stravenky - test PO'   ,par:°{typ:'vj',exp:'PDF-stravenky',cnd:"id_pobyt IN (17384,17405)",ord:"r.nazev DESC"}}
     item {title:'Stravenky'             ,par:°{typ:'vj',exp:'PDF-stravenky',cnd:"1"}}
   }
   menu {title:'MS: letní kurs, obnovy',type:'group',_sys:'*'
