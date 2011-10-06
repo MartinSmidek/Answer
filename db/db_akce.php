@@ -210,11 +210,68 @@ function akce_kontrola_dat($par) { trace();
 # -------------------------------------------------------------------------------------------------- akce_pdf_stravenky
 # generování štítků se stravenkami pro rodinu účastníka do PDF
 function akce_pdf_stravenky($akce,$par,$report_json) {  trace();
-  global $json, $ezer_path_docs;
+  global $json, $ezer_path_docs, $EZER;
   $result= (object)array('_error'=>0);
   $html= '';
   // získání dat
+  $x= akce_sestava($akce,$par,$title,$vypis,true);
+  $header= "{$EZER->options->org}, {$x->akce->misto} {$x->akce->rok}";
+  $sob= array('s'=>'snídaně','o'=>'oběd','v'=>'večeře');
+  $cp=  array('c'=>'1','p'=>'1/2');
+  // projdi vygenerované záznamy
+  $n= 0;
+  $parss= array();
+  foreach ( $x->tab as $jmeno=>$dny ) {
+    // vynechání prázdných míst, aby jméno bylo v prvním sloupci ze 4
+    $k= 4*ceil($n/4)-$n;
+    for ($i= 0; $i<$k; $i++) {
+      $parss[$n]= (object)array();
+      $parss[$n]->header= $parss[$n]->line1= $parss[$n]->line2= $parss[$n]->rect= $parss[$n]->ram= '';
+      $n++;
+    }
+    // stravenky pro účastníka
+    list($prijmeni,$jmena)= explode('|',$jmeno);
+    $parss[$n]= (object)array();
+    $parss[$n]->header= $header;
+    $parss[$n]->line1= "<b>$prijmeni</b>";
+    $parss[$n]->line2= "$jmena";
+    $parss[$n]->rect= '';
+    $parss[$n]->ram= ' ';
+    $n++;
+    foreach ( $dny as $den=>$jidla ) {
+      // stravenky na jeden den
+      foreach ( $jidla as $jidlo=>$porce ) {
+        // denní jídlo
+        foreach ( $porce as $velikost=>$pocet ) {
+          // porce
+          for ($i= 1; $i<=$pocet; $i++) {
+            // na začátku stránky dej příznak pokračování
+            if ( ($n % (4*12) )==0 ) {
+              $parss[$n]= (object)array();
+              $parss[$n]->header= $header;
+              $parss[$n]->line1= "<b>... $prijmeni</b>";
+              $parss[$n]->line2= "... $jmena";
+              $parss[$n]->rect= $parss[$n]->ram= '';
+              $n++;
+            }
+            // text stravenky na jedno jídlo
+            $parss[$n]= (object)array();
+            $parss[$n]->header= $header;
+            $parss[$n]->line1= "$den";
+            $parss[$n]->line2= "<b>{$sob[$jidlo]}</b>";
+            $parss[$n]->rect=  "<b>{$cp[$velikost]}</b>";
+            $parss[$n]->ram= '';
+            $n++;
+          }
+        }
+      }
+    }
+  }
   // předání k tisku
+                                        debug($parss,"akce_pdf_stravenky");
+  $fname= 'stravenky_'.date("Ymd_Hi");
+  $fpath= "$ezer_path_docs/$fname.pdf";
+  dop_rep_ids($report_json,$parss,$fpath);
   $result->html= " Výpis byl vygenerován ve formátu <a href='docs/$fname.pdf' target='pdf'>PDF</a>.";
   return $result;
 }
@@ -333,6 +390,7 @@ function dop_rep_ids($report_json,$parss,$fname) { trace();
       $texty[$i]->$id= strtr($box->txt,$subst[$i]);
     }
   }
+                                                        debug($texty,'dop_rep_ids');
   tc_report($report,$texty,$fname);
 }
 # ================================================================================================== SYSTEM-DATA
@@ -416,7 +474,7 @@ function akce_foxpro_data() {  #trace('');
 # ================================================================================================== VÝPISY
 # -------------------------------------------------------------------------------------------------- akce_sestava2
 # generování sestav
-#   $typ = j | p | vp | vs | vn | vv
+#   $typ = j | p | vp | vs | vn | vv | vj | sk | sd | d | fs
 function akce_sestava($akce,$par,$title,$vypis,$export=false) {
   return $par->typ=='p'  ? akce_sestava_pary($akce,$par,$title,$vypis,$export)
      : ( $par->typ=='j'  ? akce_sestava_lidi($akce,$par,$title,$vypis,$export)
@@ -428,7 +486,110 @@ function akce_sestava($akce,$par,$title,$vypis,$export=false) {
      : ( $par->typ=='sk' ? akce_skupinky($akce,$par,$title,$vypis,$export)
      : ( $par->typ=='sd' ? akce_skup_deti($akce,$par,$title,$vypis,$export)
      : ( $par->typ=='d'  ? akce_sestava_pecouni($akce,$par,$title,$vypis,$export)
-                         : fce_error("akce_sestava: N.Y.I.") )))))))));
+     : ( $par->typ=='fs' ? akce_fotoseznam($akce,$par,$title,$vypis,$export)
+                         : fce_error("akce_sestava: N.Y.I.") ))))))))));
+}
+# -------------------------------------------------------------------------------------------------- akce_fotoseznam
+# generování HTML kódu pro zobrazování fotek na CD akce
+function akce_fotoseznam($akce,$par,$title,$vypis,$export=false) { trace();
+  global $ezer_path_root;
+  $result= (object)array();
+  $cnd= $par->cnd;
+  $ord= $par->ord ? $par->ord : "IF(funkce<=2,1,funkce),IF(pouze=0,r.nazev,o.prijmeni)";
+  $fotky= "";
+  // získání seznamu fotek a jmen
+  $qry=  "SELECT
+            p.pouze as pouze, r.nazev AS nazev,
+            GROUP_CONCAT(DISTINCT IF(t.role='a',o.prijmeni,'') SEPARATOR '') as prijmeni_m,
+            GROUP_CONCAT(DISTINCT IF(t.role='a',o.jmeno,'')    SEPARATOR '') as jmeno_m,
+            GROUP_CONCAT(DISTINCT IF(t.role='b',o.prijmeni,'') SEPARATOR '') as prijmeni_z,
+            GROUP_CONCAT(DISTINCT IF(t.role='b',o.jmeno,'')    SEPARATOR '') as jmeno_z,
+            r.fotka
+          FROM pobyt AS p
+          JOIN spolu AS s USING(id_pobyt)
+          JOIN osoba AS o ON s.id_osoba=o.id_osoba
+          LEFT JOIN tvori AS t ON t.id_osoba=o.id_osoba
+          LEFT JOIN rodina AS r USING(id_rodina)
+          WHERE p.id_akce='$akce' AND $cnd AND fotka!=''
+          GROUP BY id_pobyt
+          ORDER BY $ord";
+  $res= mysql_qry($qry);
+  while ( $res && ($x= mysql_fetch_object($res)) ) {
+    $prijmeni= $x->pouze==1 ? $x->prijmeni_m : ($x->pouze==2 ? $x->prijmeni_z : $x->nazev);
+    $jmena=    $x->pouze==1 ? $x->jmeno_m    : ($x->pouze==2 ? $x->jmeno_z : "{$x->jmeno_m} a {$x->jmeno_z}");
+    $fotka=    $x->fotka;
+    $fotky.= "\n      '$fotka','$prijmeni $jmena',";
+  }
+  // generování skriptu
+  $script= <<<__EOD
+    <script language='JavaScript'>
+      var portrety= [
+        $fotky
+        0
+      ];
+      var portret= portrety.length/2;
+      function showNextP() {
+        if (portret<portrety.length-2) portret+= 2;
+        showPortret(portret);
+      }
+      function showPrevP() {
+        if (portret>0) portret-= 2;
+        showPortret(portret);
+      }
+      function showPortret(f) {
+        portret= f; image= portrety[f]; text= portrety[f+1];
+        portret_img.src="fotky/" + image;
+        portret_title.innerHTML= "<b><big>" + text + "</big></b>";
+        portret_number.innerHTML= "<b>" + (1+f/2) + "/" + (portrety.length/2) + "</b>";
+        portret_prior.src= "img/left.gif"; portret_next.src= "img/right.gif";
+        if (portret==0) portret_prior.src= 'img/clear.gif';
+        if (portret==portrety.length-2) portret_next.src= 'img/clear.gif' ;
+      }
+      function showThumbP(f) {
+        image= portrety[f];
+        text= "<font color=#d0b090>" + portrety[f+1] + "</font>";
+        document.write("<img border=0  src='fotky/copy/" + image + "' "
+        + " onClick=\"showPortret(" + f + ");\" "
+        + "  style='cursor:pointer;' title='klikni pro zvětšení'><div style='width:120px;text-align:center'>"
+        + text+"</div>");
+      }
+    </script>
+    <table height=640 border=0 style="background-color:#aa6633;color:#004080">
+     <tr>
+      <td width=165 align=center>
+        <div style="overflow:auto;height:630px;width:155px;background-image:url('img/film120b.gif')">
+          <script><!--
+            for (f=0;f<portrety.length;f+=2) showThumbP(f);
+          --></script>
+        </div>
+      </td>
+      <td width=820 valign=top>
+        <table width=820 style='color:#004080;font-weight:bold;' border=0>
+         <tr>
+          <td width=420 id='portret_title'></td>
+          <td width=30><img  id=portret_prior src='img/left.gif' style="cursor:pointer"
+            onClick="javascript:showPrevP();"></td>
+          <td width=60 id=portret_number align=center>n/m</td>
+          <td width=30><img  id=portret_next src='img/right.gif' style="cursor:pointer"
+            onClick="javascript:showNextP();"></td>
+         </tr>
+         <tr>
+          <td width=540 colspan=4>
+            <a href=#><img border=0 name='portret_img' class=image></a>
+            <script>showPortret(portret);</script>
+          </td>
+         </tr>
+        </table>
+      </td>
+     </tr>
+    </table>
+__EOD;
+  $fname= 'fotoseznam'.date("-Ymd_Hi").'.htm';
+  $path= "$ezer_path_root/docs/$fname";
+  file_put_contents($path,$script);
+  $result->html= "Tento skript lze stáhnout <a href='docs/$fname' target='fotoseznam'>zde</a>.
+    Fotky je třeba resamplovat na velikost 800x600 a miniatury na 120x90 <br><br> $script";
+  return $result;
 }
 # -------------------------------------------------------------------------------------------------- akce_sestava_pecouni
 # generování sestavy pro účastníky $akce - pečouny
@@ -864,7 +1025,8 @@ function akce_sestava_noci($akce,$par,$title,$vypis,$export=false) { trace();
 #   manzele = rodina.nazev muz, zena a děti
 # generované vzorce
 #   platit = součet předepsaných plateb
-function akce_stravenky($akce,$par,$title,$vypis,$export=false) { trace();
+function akce_stravenky($akce,$par,$title,$vypis,$export=false) { #trace();
+//                                                         debug($par,"akce_stravenky($akce,,$title,$vypis,$export)");
   $ord= $par->ord ? $par->ord : "IF(funkce<=2,1,funkce),IF(pouze=0,r.nazev,o.prijmeni)";
   $result= (object)array();
   $cnd= $par->cnd;
@@ -925,13 +1087,16 @@ function akce_stravenky($akce,$par,$title,$vypis,$export=false) { trace();
     if ( isset($f) ) $fmts[$fld]= $f;
   }
   // data akce
+  $akce_data= (object)array();
+  $dny= array('ne','po','út','st','čt','pá','so');
   $qry=  "SELECT r.nazev as nazev,strava_cel,strava_pol,cstrava_cel,cstrava_pol,p.pouze,
             GROUP_CONCAT(DISTINCT IF(t.role='a',o.prijmeni,'') SEPARATOR '') as prijmeni_m,
             GROUP_CONCAT(DISTINCT IF(t.role='a',o.jmeno,'')    SEPARATOR '') as jmeno_m,
             GROUP_CONCAT(DISTINCT IF(t.role='b',o.prijmeni,'') SEPARATOR '') as prijmeni_z,
             GROUP_CONCAT(DISTINCT IF(t.role='b',o.jmeno,'')    SEPARATOR '') as jmeno_z,
-            GROUP_CONCAT(DISTINCT IF(t.role='d',o.jmeno,'')    SEPARATOR '') as jmena_d
+            a.nazev AS akce_nazev, YEAR(a.datum_od) AS akce_rok, a.misto AS akce_misto
           FROM pobyt AS p
+          JOIN akce  AS a ON p.id_akce=a.id_duakce
           JOIN spolu AS s USING(id_pobyt)
           JOIN osoba AS o ON s.id_osoba=o.id_osoba
           LEFT JOIN tvori AS t ON t.id_osoba=o.id_osoba
@@ -947,9 +1112,12 @@ function akce_stravenky($akce,$par,$title,$vypis,$export=false) { trace();
   $jidlo= array('s','o','v');
   $xjidlo= array('s'=>0,'o'=>1,'v'=>2);
   $jidlo_1= $xjidlo[$oo[0]];
-  $jidlo_n= $xjidlo[$oo[2]];
+  $jidlo_n= $xjidlo[$oo[1]];
   while ( $res && ($x= mysql_fetch_object($res)) ) {
     $n++;
+    $akce_data->nazev= $x->akce_nazev;
+    $akce_data->rok=   $x->akce_rok;
+    $akce_data->misto= $x->akce_misto;
     $str_kdo= array();
     $clmn[$n]= array();
     $clmn[$n]['manzele']=
@@ -978,59 +1146,64 @@ function akce_stravenky($akce,$par,$title,$vypis,$export=false) { trace();
       else
         fce_error("Tisk stravenek selhal: chybné meze stravování v nastavení akce: $j0-$jn");
       if ( $i>0 || $oo[0]=='s' ) {
+        // snídaně od druhého dne pobytu nebo začíná-li pobyt snídaní
         $k++; $suma[$flds[$k]]+= $clmn[$n][$flds[$k]]= $csc ? $csc[3*$i+0] : $sc;
         $k++; $suma[$flds[$k]]+= $clmn[$n][$flds[$k]]= $csp ? $csp[3*$i+0] : $sp;
       }
       if ( $i>0 && $i<$nd
         || $i==0   && ($oo[0]=='s' || $oo[0]=='o')
         || $i==$nd && ($oo[1]=='o' || $oo[1]=='v') ) {
+        // obědy od druhého do předposledního dne akce nebo prvního či posledního dne
         $k++; $suma[$flds[$k]]+= $clmn[$n][$flds[$k]]= $csc ? $csc[3*$i+1] : $sc;
         $k++; $suma[$flds[$k]]+= $clmn[$n][$flds[$k]]= $csp ? $csp[3*$i+1] : $sp;
       }
       if ( $i<$nd || $oo[1]=='v' ) {
+        // večeře do předposledního dne akce nebo končí-li pobyt večeří
         $k++; $suma[$flds[$k]]+= $clmn[$n][$flds[$k]]= $csc ? $csc[3*$i+2] : $sc;
         $k++; $suma[$flds[$k]]+= $clmn[$n][$flds[$k]]= $csp ? $csp[3*$i+2] : $sp;
       }
       if ( count($str_den) ) {
-        $den= date("j.n.Y",mktime(0, 0, 0, date("n", $den1), date("j", $den1)+$i, date("Y", $den1)));
+        $mkden= mktime(0, 0, 0, date("n", $den1), date("j", $den1)+$i, date("Y", $den1));
+        $den= "<b>{$dny[date('w',$mkden)]}</b> ".date("j.n",$mkden);
         $str_kdo[$den]= $str_den;
       }
     }
-    $kdo= ($x->pouze==1 ? "{$x->prijmeni_m} {$x->jmeno_m}"
-        : ($x->pouze==2 ? "{$x->prijmeni_z} {$x->jmeno_z}"
-        : "{$x->nazev} {$x->jmeno_m}, {$x->jmeno_z}")).($x->jmena_d ? " a {$x->jmena_d}" : '');
+    $kdo= ($x->pouze==1 ? "{$x->prijmeni_m}|{$x->jmeno_m}"
+        : ($x->pouze==2 ? "{$x->prijmeni_z}|{$x->jmeno_z}"
+        : "{$x->nazev}|{$x->jmeno_m} a {$x->jmeno_z}"));
     $str[$kdo]= $str_kdo;
   }
                                                         debug($str,"stravenky");
 //                                                         debug($suma,"sumy");
-    // titulky
-    foreach ($tits as $idw) {
-      list($id)= explode(':',$idw);
-      $ths.= "<th>$id</th>";
+  // titulky
+  foreach ($tits as $idw) {
+    list($id)= explode(':',$idw);
+    $ths.= "<th>$id</th>";
+  }
+  // data
+  foreach ($clmn as $i=>$c) {
+    $tab.= "<tr>";
+    foreach ($c as $id=>$val) {
+      $style= akce_sestava_td_style($fmts[$id]);
+      $tab.= "<td$style>$val</td>";
     }
-    // data
-    foreach ($clmn as $i=>$c) {
-      $tab.= "<tr>";
-      foreach ($c as $id=>$val) {
-        $style= akce_sestava_td_style($fmts[$id]);
-        $tab.= "<td$style>$val</td>";
-      }
-      $tab.= "</tr>";
+    $tab.= "</tr>";
+  }
+  // sumy
+  $sum= '';
+  if ( count($suma)>0 ) {
+    $sum.= "<tr>";
+    foreach ($flds as $f) {
+      $val= isset($suma[$f]) ? $suma[$f] : '';
+      $sum.= "<th style='text-align:right'>$val</th>";
     }
-    // sumy
-    $sum= '';
-    if ( count($suma)>0 ) {
-      $sum.= "<tr>";
-      foreach ($flds as $f) {
-        $val= isset($suma[$f]) ? $suma[$f] : '';
-        $sum.= "<th style='text-align:right'>$val</th>";
-      }
-      $sum.= "</tr>";
-    }
-    $result->html= "<div class='stat'><table class='stat'><tr>$ths</tr>$sum$tab</table></div>";
-    $result->html.= "</br>";
-    $result->href= $href;
-
+    $sum.= "</tr>";
+  }
+  $result->html= "<div class='stat'><table class='stat'><tr>$ths</tr>$sum$tab</table></div>";
+  $result->html.= "</br>";
+  $result->href= $href;
+  $result->tab= $str;
+  $result->akce= $akce_data;
   return $result;
 }
 # -------------------------------------------------------------------------------------------------- akce_strava_pary

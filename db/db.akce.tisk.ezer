@@ -32,8 +32,8 @@ use info: form right [12,4,,] {
         form.msg.set(res.html);
       },
       'PDF-stravenky',{
-        sti_B.report_init; sti_B.report_check;
-        res.set(ask('akce_pdf_stravenky',the_duakce.get,the_par.get,sti_B.get_json));
+        sti_C.report_init; sti_C.report_check;
+        res.set(ask('akce_pdf_stravenky',the_duakce.get,the_par.get,sti_C.get_json));
         form.msg.set(res.html);
       })
     }
@@ -85,6 +85,7 @@ menu m {type:'left',
     item i {title:'Účastníci, skupinky a pokoje'   ,par:°{typ:'p',exp:'Excel',cnd:"1",ord:"prijmeni"
                                         ,tit:'příjmení:15,jména:20,pokoj:10,skupinka:10'
                                         ,fld:'prijmeni,jmena,pokoj,skupina'}}
+    item {title:'Seznam s fotkami'      ,par:°{typ:'fs',cnd:"1",ord:"prijmeni"}}
   }
   menu {title:'informace o akci',type:'group',_sys:'*'
     item {title:'Narozeniny, výročí'    ,par:°{typ:'vv',cnd:'1'}}
@@ -122,7 +123,9 @@ menu m {type:'left',
     item {title:'Štítky na obálku účastníka' ,par:°{typ:'p',exp:'PDF-prijem',cnd:"1"
                                         ,tit:'příjmení:15,jména:20,_deti:7,skupinka:7,pokoj:12,lůžka:7,kočárek:7,přistýlky:7,strava celá:7,poloviční:7'
                                         ,fld:'prijmeni,jmena,_deti,skupina,pokoj,luzka,kocarek,pristylky,strava_cel,strava_pol'}}
-    item {title:'Stravenky'             ,par:°{typ:'vj',exp:'PDF-stravenky',cnd:"id_pobyt IN (9370,14138)"}}
+    item {title:'Stravenky - test LK'   ,par:°{typ:'vj',exp:'PDF-stravenky',cnd:"id_pobyt IN (14139)"}}
+    item {title:'Stravenky - test PO'   ,par:°{typ:'vj',exp:'PDF-stravenky',cnd:"id_pobyt IN (17384,17405)",ord:"r.nazev DESC"}}
+    item {title:'Stravenky'             ,par:°{typ:'vj',exp:'PDF-stravenky',cnd:"1"}}
   }
   menu {title:'MS: letní kurs, obnovy',type:'group',_sys:'*'
     item {title:'Pečouni'               ,par:°{typ:'d',exp:'Excel',cnd:'1'
@@ -151,11 +154,18 @@ menu m {type:'left',
     info.fill('',x.html);
   }
 }
-# -------------------------   stitek_A
+# -------------------------   stitek_A - adresní štítek 3x7
 report sti_A [0,0,200,287] { format:'A4:5,6,70,41',
   box adresa    [  2.6, 11.0, 60.0, 27.3] { style:'12,L',      title:'{jmeno_postovni}<br>{adresa_postovni}' }
 }
-# -------------------------   stitek_B
+# -------------------------   stitek_B - obálka účastníka 3x7
 report sti_B [0,0,200,287] { format:'A4:5,6,70,41',
   box lines     [  2.6, 11.0, 60.0, 27.3] { style:'12,L',      title:'{line1}<br>{line2}<br>{line3}<br>{line4}' }
+}
+# -------------------------   stitek_C - stravenky
+report sti_C [0,0,200,287] { format:'A4:5,6,52,24',
+  box ram       [  1,  1, 50, 22] { style:'8,L,LRTB',           title:'{ram}' }
+  box header    [  2,  4, 45,  4] { style:'8,L',                title:'{header}' }
+  box lines     [  2,  8, 50, 16] { style:'14,L',               title:'{line1}<br>{line2}' }
+  box rect      [ 25, 10, 20, 14] { style:'20,R',               title:'{rect}' }
 }

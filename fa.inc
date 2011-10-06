@@ -69,6 +69,7 @@
   );
 
   // parametrizace $EZER
+  $EZER->options->org=    'YMCA Familia';
   $EZER->options->web=    'www.setkani.org';
   $EZER->options->author= 'Martin';
   $EZER->options->mail=   'martin@smidek.eu';
