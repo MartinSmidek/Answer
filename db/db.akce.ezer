@@ -545,6 +545,7 @@ table g_akce { key_id:'id_gakce' // kopie číselníku akcí z intranetu
 table mail { key_id:'id_mail'
   number id_mail { key:'primary' },
   number id_dopis { help:'mail|index mailu' }, // nepoužívá se pro dopisy s druh!='@'
+  number id_pobyt { help:'pobyt|ID pobytu na akci' } // jen pro maily 'U' = účastníkům akce
   number id_davka
   number id_znacka                             // nepoužívá se pro dopisy s druh=='@'
   number id_clen

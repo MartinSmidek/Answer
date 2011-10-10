@@ -11,21 +11,27 @@ var dopis_akce: number          // id_akce|0
 var karta: text                 // et|es
 
 use ii: form right [12,4,,]
-use vy: form _vyber [10,40,,]
-use et: form _etext [10,40,,]
-use es: form _esady [10,74,,]
-use sq: form _esql [10,34,,]
+use vy: form _vyber [10,40,,]   // výběr skupiny | zobrazené akce
+use et: form _etext [10,40,,]   // editace mailu
+use sq: form _esql [10,34,,]    // správa SQL
+use es: form _esady [10,74,,]   // rozesílání
 
-proc onfirstfocus() { m.g.i.click }
+proc onfirstfocus() { m.g.i.click; onfocus }
 
+proc onfocus() { m.g.i.enable(the_title.get); }
+
+proc init_ucast() { echo('mai:init_ucast ',the_title.get);
+  vy.fill(the_title.get);
+}
 proc ini(i,k,uq,on,off) {
   ii.fill(conc(i.owner.title,' - ',i.title),' ');
   vy.get.display(1,on); vy.get.display(0,off);
   dopis_var.set(uq); karta.set(k); dopis_id.set(0); dopis_akce.set(the_duakce.get);
+  et.form_init;
   switch(k,
-  'et',{et.get.display(1); es.get.display(0); sq.get.display(0); et.reload},
-  'sq',{et.get.display(0); es.get.display(0); sq.get.display(1); sq.reload},
-  'es',{et.get.display(0); es.get.display(1); sq.get.display(0); es.reload},
+  'et',{et.get.display(1); es.get.display(0); sq.get.display(0); vy.popis.display(0); et.reload},
+  'sq',{et.get.display(0); es.get.display(0); sq.get.display(1); vy.popis.display(0); sq.reload},
+  'es',{et.get.display(0); es.get.display(1); sq.get.display(0); vy.popis.display(1); es.reload},
        {et.get.display(0); es.get.display(0)});
 }
 
@@ -46,6 +52,7 @@ menu m {type:'left',
     item {title:'členům skupiny'
       proc onclick (i) {
         ini(i,'et','Q','skup','akce');
+        [ echo('vy.komu_Q.key=',vy.komu_Q.key); vy.komu_Q.key | et.get.enable(0,'n') ]
       }
     }
     item {title:'Definice skupin (SQL)', skill:'m'
@@ -58,6 +65,7 @@ menu m {type:'left',
     item {title:'účastníkům této akce',
       proc onclick (i) {
         ini(i,'es','U','akce','skup');
+        vy.fill(the_title.get);
       }
     }
     item {title:'členům skupin',
@@ -79,8 +87,14 @@ form _vyber {
     help:'komu|výběr skupiny adresátů'
     proc onchange() { switch(karta.get,'et',{et.reload},'es',{es.reload},'sq',{sq.reload}) }
   }
+  label popis [391,9,400,19] { format:'n', title:"
+    <span class='zeleny'> posláno </span>&nbsp;&nbsp;
+    <span class='cerveny'> chyba (oprav mail účastníka, pak dvojklik) </span>&nbsp;&nbsp;
+    <span class='zluty'> poslat znovu </span>
+   "}
 }
 # -------------------------------------------------------------------------------------------------- _esql
+# správa SQL dotazů
 form _esql {
   var new_sql: object
   view c: table _cis
@@ -128,8 +142,18 @@ form _esql {
   }
 }
 # -------------------------------------------------------------------------------------------------- _etext
+# správa mailů
 form _etext  {
   var adopis: number
+  # obslužné procedury stavu tlačítek
+  proc form_init() {
+    texty.browse_init; form.init; form_state('n','u|z|s'); }
+  proc form_state(on,off) {
+    echo('form_state(',on,',',off,')');
+    form.enable(1,on); form.enable(0,off); }
+  proc onchanged () {
+    or(uloz.enable,oprav.enable); form_state('u|z','n|s')
+  }
   # --------------------------- seznam mailů
   view etd: table dopis
   view etm: table mail {join_type:'LEFT' join:'USING(id_dopis)'}
@@ -152,6 +176,7 @@ form _etext  {
       form.load(dopis_id.get);
       obsah.set(ask('dop_mai_text',dopis_id.get));
       adopis.set(id_dopis.get);
+      form_state('n|s','u|z');
     }
   }
   # nezobrazené údaje mailu
@@ -169,29 +194,40 @@ form _etext  {
   label [L+10,120,300,17] { title:'případné přílohy (uložené ve složce docs)' }
   field prilohy [L+10,140,340,17] { data:dopis.prilohy, help:'přílohy|přílohy emailu oddělené čárkami', skill:'yam|yams;fam|fams' },
   # příkazy 1
-  label  [L+0,180,190,58] { css:'ae_parm' }
-  button uloz [L+8,186,45,17] { type:'submit', title:'Uložit', help:'uložit opravené hodnoty', skill:'yam|yams;fam|fams'
+  label  [L+0,180,195,58] { css:'ae_parm' }
+  button uloz [L+8,186,45,17] { tag:'u', type:'submit', title:'Uložit',
+    help:'uložit opravené hodnoty', skill:'yam|yams;fam|fams'
     proc onclick () {
       form.same
-    | form.key; form.save; form.load; texty.browse_seek;
-      texty.browse_focus;
-    | form.insert; form.load;
+    | // oprava
+      form.key; form.save; form.load; texty.browse_seek;
+      form_state('n|s','u|z'); texty.browse_focus;
+    | // přidání
+      form.insert; form.load;
       texty.raise('onrowclick',texty.browse_seek(conc(form.id_key,'=',form.key)));
+      form_state('n|s','u|z');
     }
   }
-  button [L+64,186,45,17] { title:'Zpět', help:'neukládat hodnoty', skill:'yam|yams;fam|fams'
-    proc onclick () { form.load(adopis.get); texty.browse_focus }
-  }
-  button oprav [L+113,186,45,17] { title:'Opravit text', help:'opravit text mailu', skill:'yam|yams;fam|fams'
+  button [L+64,186,45,17] { tag:'z', title:'Zpět', help:'neukládat hodnoty', skill:'yam|yams;fam|fams'
     proc onclick () {
-      E_dopis.modal(10,10); texty.raise('onrowclick',dopis_id.get)
+      adopis.get; form.load(adopis.get); form_state('n|s','u|z'); texty.browse_focus
+    | form.init; form_state('n','u|z|s')
+    }
+  }
+  button oprav [L+113,186,45,17] { tag:'s', title:'Opravit text', help:'opravit text mailu',
+    skill:'yam|yams;fam|fams'
+    proc onclick () {
+      gt(texty.stav2.get,2); not(confirm("Tento dopis již byl rozesílán, opravdu chceš opravit jeho text?"))
+    | E_dopis.modal(10,10); texty.raise('onrowclick',dopis_id.get)
     }
   }
   # příkazy 2
   label  [L+246,178,120,32] { css:'ae_parm' }
-  button novy [L+254,184,45,17] { title:'Nový', help:'vytvořit nový e-mail', skill:'yam|yams;fam|fams'
+  button novy [L+254,184,45,17] { tag:'n', title:'Nový', help:'vytvořit nový e-mail',
+    skill:'yam|yams;fam|fams'
     proc onclick () {
-      form.init; texty.blur(1);
+      form.init; form_state('u|z','n|s');
+      texty.blur(1); adopis.set(0);
       datum.set(now); datum.change; id_davka.set(1); id_davka.change; druh.set('@'); druh.change;
       switch(dopis_var.get,
       'U',{ id_duakce.set(dopis_akce.get); id_duakce.change; cis_skupina.init; cis_skupina.change },
@@ -199,15 +235,17 @@ form _etext  {
       );
     }
   }
-  button smaz [L+303,184,45,17] { title:'Smazat', help:'smazat mail a jeho rozesílání', skill:'yam|yams;fam|fams'
+  button smaz [L+303,184,45,17] { tag:'s', title:'Smazat', help:'smazat mail a jeho rozesílání',
+    skill:'yam|yams;fam|fams'
     proc onclick () {
       confirm(conc("Opravdu smazat mail '",texty.predmet.get,"' a jeho rozesílací seznam?"));
-      ask('dop_mai_smaz',texty.id_dopis.get); texty.browse_seek;
+      ask('dop_mai_smaz',texty.id_dopis.get);
+      reload
     }
   }
   var et_prazdy: number
-  button generovat [L+8,211,45,17] { title:'Vygenerovat rozesílací seznam', help:'připravit rozesílání',
-    skill:'yam|yams;fam|fams'
+  button generovat [L+8,211,45,17] { tag:'s', title:'Vygenerovat rozesílací seznam',
+    help:'připravit rozesílání', skill:'yam|yams;fam|fams'
     proc onclick () {
       prazdny; et_prazdy.get;
       E_info.set(ask('dop_mai_pocet',dopis_id.get,dopis_var.get));
@@ -231,8 +269,10 @@ form _etext  {
     },
     'Q',{ texty.komu_U.width(0); texty.komu_Q.width(100);
           vy.komu_Q.key;
-          texty.browse_load(conc("etd.id_duakce=0 AND etd.cis_skupina=",vy.komu_Q.key));
-        | texty.browse_init
+          form_state('n','s|u|z');
+          [ texty.browse_load(conc("etd.id_duakce=0 AND etd.cis_skupina=",vy.komu_Q.key)) ]
+        | texty.browse_init;
+          form_state('','n|s|u|z');
     });
     reload2
   }
@@ -288,25 +328,29 @@ form _esady  {
       dopis_id.set(0);
     | dopis_id.set(id_dopis.get);
       maily.browse_load(conc("id_dopis=",dopis_id.get));
-      switch(dopis_var.get,
-      'U',{
-        vy.fill(komu_U.get);
-        zkus.set('martin@smidek.eu');
-        from.set('sekretar@setkani.org');
-        name.set('YMCA Setkání');
-      },
-      'Q',{
-        zkus.set('michalec.zdenek@inset.com');
-        from.set('michalec.zdenek@inset.com');
-        name.set('Zdeněk Michalec');
-      });
+      zkus.set(sys('user','options','email'));
+      from.set(sys('user','options','email'));
+      name.set(sys('user','options','vyrizuje'));
+      davka.set(20);
+#       switch(dopis_var.get,
+#       'U',{
+#         vy.fill(komu_U.get);
+#         zkus.set('martin@smidek.eu');
+#         from.set('sekretar@setkani.org');
+#         name.set('YMCA Setkání');
+#       },
+#       'Q',{
+#         zkus.set('michalec.zdenek@inset.com');
+#         from.set('michalec.zdenek@inset.com');
+#         name.set('Zdeněk Michalec');
+#       });
     }
   }
   label [12,214,92,17] { title:'Testovací adresa:' }
   label [35,247,66,17] { title:'Odeslat jako:' }
-  field zkus [105,210,200,17] { skill:'yam|yams;fam|fams', value:'martin@smidek.eu', format:'t' }
-  field from [105,236,200,17] { skill:'yam|yams;fam|fams', value:'sekretar@setkani.org', format:'t'  }
-  field name [105,255,200,17] { skill:'yam|yams;fam|fams', value:'YMCA Setkání', format:'t'  }
+  field zkus [105,210,200,17] { skill:'yam|yams;fam|fams', help:'email z osobního nastavení', format:'t' }
+  field from [105,236,200,17] { skill:'yam|yams;fam|fams', help:'email z osobního nastavení', format:'t'  }
+  field name [105,255,200,17] { skill:'yam|yams;fam|fams', help:"'vyřizuje' z osobního nastavení", format:'t'  }
   button test [0,280,100,17] { title:'1 mail testovací', skill:'yam|yams;fam|fams',
     help:'pro kontrolu - posílá se na testovací adresu'
     proc onclick () {
@@ -318,10 +362,10 @@ form _esady  {
   }
   field davka [105,281,30,17] { format:'rt', value:'10', skill:'yam|yams;fam|fams',
     proc onchange () {
-      send.set(conc(davka.get,'  ještě neposlaných'));
+      send.set(conc('až ',davka.get,'  ještě neposlaných'));
     }
   }
-  button send [150,280,100,17] { title:'10 ještě neposlaných', skill:'yam|yams;fam|fams',
+  button send [150,280,100,17] { title:'xx ještě neposlaných', skill:'yam|yams;fam|fams',
     help:'pošle další dávku - počet lze měnit políčkem vlevo'
     proc onclick () {
       msg.set('');
@@ -338,11 +382,13 @@ form _esady  {
   browse maily [390,0,120,200] { rows:24, qry_rows:1, css_rows:'stav,3:zluty,4:zeleny,5:cerveny'
     show stav    [,,20,]  { title:'s.', data:mail.stav, format:'rsq' },
     show id_clen [,,50,]  { title:'člen', data:mail.id_clen, format:'rs+q' },
-    show email   [,,180,] { title:'email', data:mail.email, format:'sq' },
-    show msg     [,,50,]  { title:'chyba', data:mail.msg, format:'sq' }
+    show email   [,,180,] { title:'email', data:mail.email, format:'tsq' },
+    show msg     [,,50,]  { title:'chyba', data:mail.msg, format:'tsq' }
     show id_mail          { data:mail.id_mail }
     proc onsubmit() {
-      ask('dop_mai_stav',id_mail.get,cconc(eq(stav.get,5),3,5)); this.browse_row
+      ask('dop_mai_stav',id_mail.get,cconc(eq(stav.get,5),3,5));
+      [ eq(dopis_var.get,'U');
+      this.browse_row
     }
     proc onrowclick () {
       info.set(ask('dop_mai_info',id_clen.get,email.get,dopis_id.get,dopis_var.get));
@@ -350,7 +396,8 @@ form _esady  {
   }
   # --------------------- načtení celé karty
   proc reload() {
-    form.init; msg.set(''); info.set(''); maily.browse_init; texty.browse_init;
+    form.init; davka.set(20); davka.change; msg.set(''); info.set('');
+    maily.browse_init; texty.browse_init;
     switch(dopis_var.get,
     'U',{ texty.browse_load(conc("etd.id_duakce='",dopis_akce.get,"'"));
           texty.komu_U.width(100); texty.komu_Q.width(0);
@@ -366,8 +413,7 @@ form _esady  {
     texty.browse_count;
     { dopis_id.get; texty.raise('onrowclick',dopis_id.get) | texty.raise('onrowclick') }
   }
-  proc onstart () { davka.init(1) }
 }
 
-map map_dm_komu: table _cis {where:"druh='am_komu'", order:'poradi', key_id:'data'}
+map map_dm_komu:      table _cis {where:"druh='am_komu'",      order:'poradi',  key_id:'data'}
 map map_db_maily_sql: table _cis {where:"druh='db_maily_sql'", order:'zkratka', key_id:'data'}
