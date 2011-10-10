@@ -3176,10 +3176,11 @@ function db_mail_send($from,$to,$subj,$text) { trace();
   $mail->Body= $text;
   $mail->IsHTML(true);
   $mail->Mailer= "smtp";
-  if ( $mail->Send() )
-    $html.= "<br><b><font color='#070'>Byl odeslán mail pro $to - je zapotřebí zkontrolovat obsah</font></b>";
+  try { $ok= $mail->Send(); } catch(Exception $e) { $ok= false; }
+  if ( $ok  )
+    $html.= "<br><b style='color:#070'>Byl odeslán mail pro $to - je zapotřebí zkontrolovat obsah</b>";
   else {
-    $html.= "<br><b><font color='#700'Při odesílání mailu došlo k chybě: {$mail->ErrorInfo}</font></b>";
+    $html.= "<br><b style='color:#700'>Při odesílání mailu došlo k chybě: {$mail->ErrorInfo}</b>";
     $result->_error= 1;
   }
   // zpráva o výsledku
@@ -3259,10 +3260,11 @@ function dop_mai_qry($komu) {  trace();
 #   'U' - rozeslat účastníkům akce dopis.id_duakce ukazující do akce
 #   'Q' - rozeslat na adresy vygenerované dopis.cis_skupina => hodnota
 # pokud _cis.data=9999 jde o speciální seznam definovaný funkcí dop_mai_skupina - DEPRECATED
-function dop_mai_pocet($id_dopis,$dopis_var) {  trace();
+# $cond = dodatečná podmínka POUZE pro volání z dop_mai_stav
+function dop_mai_pocet($id_dopis,$dopis_var,$cond='') {  trace();
   $result= (object)array('_error'=>0, '_count'=> 0, '_cond'=>false);
   $result->_html= 'Rozesílání mailu nemá určené adresáty, stiskni ZRUŠIT';
-  $emaily= $ids= $jmena= array();
+  $emaily= $ids= $jmena= $pobyty= array();
   $spatne= $nema= '';
   $n= $ns= $nt= $nx= 0;
   $dels= $deln= '';
@@ -3294,11 +3296,12 @@ function dop_mai_pocet($id_dopis,$dopis_var) {  trace();
     break;
   // účastníci akce
   case 'U':
+    $AND= $cond ? "AND $cond" : '';
     // využívá se toho, že role rodičů 'a','b' jsou před dětskou 'd', takže v seznamech
     // GROUP_CONCAT jsou rodiče, byli-li na akci. Emaily se ale vezmou ode všech
-    $qry= "SELECT a.nazev,
-           GROUP_CONCAT(o.id_osoba ORDER BY t.role) AS _id,
-           GROUP_CONCAT(CONCAT(prijmeni,' ',jmeno) ORDER BY t.role) AS _jm,
+    $qry= "SELECT a.nazev,id_pobyt,
+           GROUP_CONCAT(DISTINCT o.id_osoba ORDER BY t.role) AS _id,
+           GROUP_CONCAT(DISTINCT CONCAT(prijmeni,' ',jmeno) ORDER BY t.role) AS _jm,
            GROUP_CONCAT(DISTINCT o.email) AS email, GROUP_CONCAT(DISTINCT r.emaily) AS emaily
            FROM dopis AS d
            JOIN akce AS a ON d.id_duakce=a.id_duakce
@@ -3307,13 +3310,14 @@ function dop_mai_pocet($id_dopis,$dopis_var) {  trace();
            JOIN osoba AS o ON s.id_osoba=o.id_osoba
            JOIN tvori AS t ON t.id_osoba=o.id_osoba
            JOIN rodina AS r USING (id_rodina)
-           WHERE id_dopis=$id_dopis GROUP BY id_pobyt";
+           WHERE id_dopis=$id_dopis $AND GROUP BY id_pobyt";
     $res= mysql_qry($qry);
     while ( $res && ($d= mysql_fetch_object($res)) ) {
       $n++;
       $nazev= "Účastníků {$d->nazev}";
       if ( $d->email!='' || $d->emaily!='' ) {
         $emaily[]= "{$d->email},{$d->emaily}";
+        $pobyty[]= $d->id_pobyt;
         list($ids[])= explode(',',$d->_id);
         list($jmena[])= explode(',',$d->_jm);
       }
@@ -3343,11 +3347,12 @@ function dop_mai_pocet($id_dopis,$dopis_var) {  trace();
     }
     else {                                      // žádný nebyl ok
       $spatne.= "$dels{$jmena[$i]}"; $dels= ', ';
-      unset($emaily[$i],$ids[$i],$jmena[$i]);
+      unset($emaily[$i],$ids[$i],$jmena[$i],$pobyty[$i]);
       $ns++;
     }
   }
   $result->_adresy= $emaily;
+  $result->_pobyty= $pobyty;
   $result->_ids= $ids;
   $html.= "$nazev je $n celkem\n";
   $html.= $ns ? "$ns má chybný mail ($spatne)\n" : '';
@@ -3428,7 +3433,7 @@ function dop_mai_pocet($id_dopis,$dopis_var) {  trace();
 # $info = {_adresy,_ids[,_cond]}   _cond
 function dop_mai_posli($id_dopis,$info) {  trace();
   $num= 0;
-//                                                         debug($info);
+                                                        debug($info);
   // smaž starý seznam
   $qry= "DELETE FROM mail WHERE id_dopis=$id_dopis ";
   $res= mysql_qry($qry);
@@ -3441,10 +3446,13 @@ function dop_mai_posli($id_dopis,$info) {  trace();
     // pokud jsou přímo známy adresy, pošli na ně
     $ids= array();
     foreach($info->_ids as $i=>$id) $ids[$i]= $id;
+    foreach($info->_pobyty as $i=>$pobyt) $pobyty[$i]= $pobyt;
     foreach ($info->_adresy as $i=>$email) {
       $id= $ids[$i];
       // vlož do MAIL
-      $qr= "INSERT mail (id_davka,znacka,stav,id_dopis,id_clen,email) VALUE (1,'@',0,$id_dopis,$id,'$email')";
+      $pobyt= $pobyty[$i];
+      $qr= "INSERT mail (id_davka,znacka,stav,id_dopis,id_clen,id_pobyt,email)
+            VALUE (1,'@',0,$id_dopis,$id,$pobyt,'$email')";
 //                                         display("$i:$qr");
       $rs= mysql_qry($qr);
       $num+= mysql_affected_rows();
@@ -3531,8 +3539,18 @@ function dop_mai_smaz($id_dopis) {  trace();
 }
 # -------------------------------------------------------------------------------------------------- dop_mai_stav
 # úprava stavu mailové adresy
+# včetně znovuzískání mailové adresy s karty účastníka
 function dop_mai_stav($id_mail,$stav) {  trace();
-  $qry= "UPDATE mail SET stav=$stav WHERE id_mail=$id_mail ";
+
+  list($id_dopis,$id_pobyt)= select("id_dopis,id_pobyt","mail","id_mail=$id_mail");
+  $novy_mail= '';
+  if ( $id_pobyt) {
+    $oprava= dop_mai_pocet($id_dopis,'U',$cond="id_pobyt=$id_pobyt");
+    $emaily= $oprava->_adresy[0];
+    $novy_mail= ",email='$emaily'";
+                                                  debug($oprava,"dop_mai_stav:$emaily.");
+  }
+  $qry= "UPDATE mail SET stav=$stav$novy_mail WHERE id_mail=$id_mail ";
   $res= mysql_qry($qry);
   if ( !$res ) fce_error("dop_mai_stav: změna stavu mailu No.'$id_mail' se nepovedla");
   return true;
@@ -3542,15 +3560,16 @@ function dop_mai_stav($id_mail,$stav) {  trace();
 # odešli dávku $kolik mailů ($kolik=0 znamená testovací poslání)
 # $from,$fromname = From,ReplyTo
 # $test = 1 mail na tuto adresu (pokud je $kolik=0)
-function dop_mai_send($id_dopis,$kolik,$from,$fromname,$test='') { trace();
+function dop_mai_send($id_dopis,$kolik,$from,$fromname,$test='') { #trace();
   global $ezer_path_serv;
-  require_once("$ezer_path_serv/licensed/phpmailer/class.phpmailer.php");
+  $phpmailer_path= "$ezer_path_serv/licensed/phpmailer";
+  require_once("$phpmailer_path/class.phpmailer.php");
   $result= (object)array('_error'=>0);
   // přečtení rozesílaného mailu
   $qry= "SELECT * FROM dopis WHERE id_dopis=$id_dopis ";
   $res= mysql_qry($qry,1,null,1);
   $d= mysql_fetch_object($res);
-  // napojní na mailer
+  // napojení na mailer
   $html= '';
 //   $klub= "klub@proglas.cz";
   $martin= "martin@smidek.eu";
@@ -3558,6 +3577,7 @@ function dop_mai_send($id_dopis,$kolik,$from,$fromname,$test='') { trace();
 //   $jarda= $martin;
   // poslání mailů
   $mail= new PHPMailer;
+  $mail->SetLanguage('cz',"$phpmailer_path/language/");
   $mail->Host= "192.168.1.1";
   $mail->CharSet = "utf-8";
   $mail->From= $from;
@@ -3578,17 +3598,21 @@ function dop_mai_send($id_dopis,$kolik,$from,$fromname,$test='') { trace();
     // testovací poslání sobě
     $mail->AddAddress($test);   // pošli sám sobě
     // pošli
-    if ( $mail->Send() )
-      $html.= "<br><b><font color='#070'>Byl odeslán mail na $test - je zapotřebí zkontrolovat obsah</font></b>";
+//     try { $ok= $mail->Send(); } catch(Exception $e) { $ok= false; }
+    $ok= $mail->Send();
+    if ( $ok  )
+      $html.= "<br><b style='color:#070'>Byl odeslán mail na $test - je zapotřebí zkontrolovat obsah</b>";
     else {
-      $html.= "<br><b><font color='#700'Při odesílání mailu došlo k chybě: {$mail->ErrorInfo}</font></b>";
+      $err= $mail->ErrorInfo;
+      $html.= "<br><b style='color:#700'>Při odesílání mailu došlo k chybě: $err</b>";
+//                                                 display($html);
       $result->_error= 1;
     }
   }
   else {
     // poslání dávky $kolik mailů
     $n= $nko= 0;
-    $qry= "SELECT * FROM mail WHERE id_dopis=$id_dopis AND stav=0";
+    $qry= "SELECT * FROM mail WHERE id_dopis=$id_dopis AND stav IN (0,3)";
     $res= mysql_qry($qry);
     while ( $res && ($z= mysql_fetch_object($res)) ) {
       // posílej mail za mailem
@@ -3605,10 +3629,11 @@ function dop_mai_send($id_dopis,$kolik,$from,$fromname,$test='') { trace();
       }
 //       $mail->AddBCC($klub);
       // zkus poslat mail
-      if ( !($ok= $mail->Send()) ) {
+      try { $ok= $mail->Send(); } catch(Exception $e) { $ok= false; }
+      if ( !$ok  ) {
         $ident= $z->id_clen ? $z->id_clen : $adresa;
-        $html.= "<br><b><font color='#700'Při odesílání mailu pro $ident došlo k chybě: "
-          . "{$mail->ErrorInfo}</font></b>";
+        $err= $mail->ErrorInfo;
+        $html.= "<br><b style='color:#700'Při odesílání mailu pro $ident došlo k chybě: $err</b>";
         $result->_error= 1;
         $nko++;
       }
@@ -3618,12 +3643,13 @@ function dop_mai_send($id_dopis,$kolik,$from,$fromname,$test='') { trace();
       $qry1= "UPDATE mail SET stav=$stav,msg=\"$msg\" WHERE id_mail={$z->id_mail}";
       $res1= mysql_qry($qry1);
     }
-    $html.= "<br><b><font color='#070'>Bylo odesláno $n emailů ";
+    $html.= "<br><b style='color:#070'>Bylo odesláno $n emailů ";
     $html.= $nko ? "s $nko chybami " : "bez chyb";
-    $html.= "</font></b>";
+    $html.= "</b>";
   }
   // zpráva o výsledku
   $result->_html= $html;
+//                                                 debug($result,"dop_mai_send");
   return $result;
 }
 # -------------------------------------------------------------------------------------------------- dop_mai_skupina

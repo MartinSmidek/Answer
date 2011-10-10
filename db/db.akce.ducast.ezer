@@ -13,6 +13,7 @@ proc onstart() { dirty.get
 | echo('db.akce.ducast2.onstart');
   init_ucast }
 proc onfirstfocus() { dirty.get | echo('onfirstfocus ',the_title.get); init_ucast }
+# proc onfocus() { dirty.get | echo('onfirstfocus ',the_title.get); init_ucast }
 proc init_ucast() { echo('init_ucast ',the_title.get);
   dirty.set(1);
   akce_onstart();
@@ -41,7 +42,7 @@ proc akce_back() {
 }
 
 use header:form _header  [  4,0,,]
-use u:     form _ucast   [  6,20,,]
+use u:     form _ucast   [  6,20,,]     // seznam účastníků
 use page:  form _page    [400,10,,]
 # záložka evidence
 use evid:  form _evidence[400,10,,]
@@ -56,10 +57,15 @@ use alb:   form _album   [400,0,,]
 use a_muz: form _aktivity[420,10,,]
 use a_zen: form _aktivity[700,10,,]
 
+proc page_clear() {
+  muz.init(1); zen.init(1); rod.init(1); pob.init(1); pob.s.browse_init; pob.d.browse_init;
+  [ has_skill('m'); u.develop.set('') ];
+}
 proc reload(id_pobyt) { echo('reload ',the_title.get);
   cmd.b_display(1);
   the_duakce.get;
   lst.the_akce.load(the_duakce.get);
+  page_clear;
   [ u.b.browse_load(cconc(u.jen.get,"funkce IN (0,1,2) AND ",1,conc("p.id_akce=",the_duakce.get)),
       "IF(funkce<=2,1,funkce),IF(pouze=0,r.nazev,o.prijmeni)",
       '','','','',
@@ -500,7 +506,8 @@ form _ucast [,,400,] { css:'ds_form'
       // ochrana proti neuložené změně, pokud je možné údaje měnit
       has_skill('yaa+;faa+'); not(and(rod.same,pob.same,muz.same,zen.same));
       warning('neuložené změny pro účastníka <b>',rod.nazev.get,'</b> použij [Zpět] nebo [Uložit]');
-    | switch(zalozka.get,
+    | b.browse_count;
+      switch(zalozka.get,
       'evid', {
         // přechod na jiný pobyt
         the_pobyt.set(key_pobyt.get);
@@ -569,9 +576,9 @@ form _cmd [,,200,] { css:'ds_form'
     help:'Vytvoření nového jednotlivce (na akce muž) nebo páru (na akci oba) a vložení jako účastníka'
     proc onclick() {   // založení páru a jeho zařazení na akci
       var a_pouze: number
-      a_pouze.set(u.b.pouze.get);
+      { u.b.browse_count; a_pouze.set(u.b.pouze.get) | a_pouze.set(0) };
       the_pobyt.set(0);
-      muz.init(1); zen.init(1); pob.init(1); rod.init(1);
+      page_clear;
       b_display(0);
       // naplnění základních (strukturotvorných) položek pro pár nebo jednotlivce podle předchozího
       pob.id_akce.set(the_duakce.get); pob.id_akce.change;
