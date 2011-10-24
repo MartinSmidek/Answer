@@ -355,7 +355,8 @@ form _pobyt {
     show rc_xxxx
     show note     [,,60,] { title:'poznámka' }
     proc onsubmit() {
-      Dite.key_dite.set(id_osoba.get); Dite.key_spolu.set(id_spolu.get);
+      neni_ulozeno // warning
+    | Dite.key_dite.set(id_osoba.get); Dite.key_spolu.set(id_spolu.get);
       Dite.key_pobyt.set(u.b.key_pobyt.get);
       Dite.modal(260,130)
     }
@@ -503,9 +504,7 @@ form _ucast [,,400,] { css:'ds_form'
           ,'<br>cstrava_cel=', cstrava_cel.get
           ,'<br>cstrava_pol=', cstrava_pol.get
       ))];
-      // ochrana proti neuložené změně, pokud je možné údaje měnit
-      has_skill('yaa+;faa+'); not(and(rod.same,pob.same,muz.same,zen.same));
-      warning('neuložené změny pro účastníka <b>',rod.nazev.get,'</b> použij [Zpět] nebo [Uložit]');
+      neni_ulozeno // warning
     | b.browse_count;
       switch(zalozka.get,
       'evid', {
@@ -559,6 +558,16 @@ form _ucast [,,400,] { css:'ds_form'
     |             _vek.width(20); _vzd.width(20); fotka.width(20); _jmena.width(117);
     }
   }
+}
+# ----------------------------------------------------- neni_ulozeno
+# ochrana proti neuložené změně, (selže, pokud jsou uloženy)
+proc neni_ulozeno() {
+  var ok: number
+  //has_skill('yaa+;faa+');
+  ok.set(not(and(rod.same,pob.same,muz.same,zen.same)));
+  [ ok;
+    warning('neuložené změny pro účastníka <b>',rod.nazev.get,'</b> použij [Zpět] nebo [Uložit]') ];
+  return(ok)
 }
 # -------------------------------------------------------------------------------------------------- _cmd
 form _cmd [,,200,] { css:'ds_form'
