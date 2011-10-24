@@ -117,28 +117,36 @@ form _page {
     a_muz.display(0); a_zen.display(0); pla.display(0);
   }
   label evd [ 12,0,120,20] {tag:'p', title:'<b>Evidenční karta</b>', format:'c', css:'ae_butt_on'
-    proc onclick() { tags(this,'z','h|o|f');
+    proc onclick() {
+      neni_ulozeno // warning
+    | tags(this,'z','h|o|f');
       zalozka.set('evid'); u.b.reload_pobyt;
       evid.display(1); cmd.display(1); rod.display(1); muz.display(1); zen.display(1); pob.display(1);
       a_muz.display(0); a_zen.display(0); pla.display(0); alb.display(0);
     }
   }
   label plt [152,0,120,20] {tag:'p', title:'<b>Platba za akci</b>', format:'c',
-    proc onclick() { tags(this,'h','z|o|f');
+    proc onclick() {
+      neni_ulozeno // warning
+    | tags(this,'h','z|o|f');
       zalozka.set('plat'); u.b.reload_pobyt;
       evid.display(0); cmd.display(0); rod.display(0); muz.display(0); zen.display(0); pob.display(0);
       a_muz.display(0); a_zen.display(0); pla.display(1); alb.display(0);
     }
   }
   label jin [292,0,120,20] {tag:'p', title:'<b>Přehled aktivit</b>', format:'c',
-    proc onclick() { tags(this,'o','z|h|f');
+    proc onclick() {
+      neni_ulozeno // warning
+    | tags(this,'o','z|h|f');
       zalozka.set('akce'); u.b.reload_pobyt;
       evid.display(0); cmd.display(0); rod.display(0); muz.display(0); zen.display(0); pob.display(0);
       a_muz.display(1); a_zen.display(1); pla.display(0); alb.display(0);
     }
   }
   label fot [432,0,120,20] {tag:'p', title:'<b>Fotky</b>', format:'c', /*skill:'a'*/
-    proc onclick() { tags(this,'f','o|z|h');
+    proc onclick() {
+      neni_ulozeno // warning
+    | tags(this,'f','o|z|h');
       zalozka.set('foto'); u.b.reload_pobyt;
       evid.display(0); cmd.display(0); rod.display(0); muz.display(0); zen.display(0); pob.display(0);
       a_muz.display(0); a_zen.display(0); pla.display(0); alb.display(1);
@@ -585,7 +593,8 @@ form _cmd [,,200,] { css:'ds_form'
     help:'Vytvoření nového jednotlivce (na akce muž) nebo páru (na akci oba) a vložení jako účastníka'
     proc onclick() {   // založení páru a jeho zařazení na akci
       var a_pouze: number
-      { u.b.browse_count; a_pouze.set(u.b.pouze.get) | a_pouze.set(0) };
+      neni_ulozeno // warning
+    | { u.b.browse_count; a_pouze.set(u.b.pouze.get) | a_pouze.set(0) };
       the_pobyt.set(0);
       page_clear;
       b_display(0);
@@ -655,25 +664,29 @@ form _cmd [,,200,] { css:'ds_form'
   button pridat_a   [69,525,,] {title:'Přidat: z akce', skill:'yaa+|yaa+;faa+|faa+',
     help:'Přidání účastníky jiných akcí'
     proc onclick() {
-      PridaniAkce.modal(240,50)
+      neni_ulozeno // warning
+    | PridaniAkce.modal(240,50)
   } }
   // PŘIDAT z JEDNOTLIVCU
   button pridat_1   [155,525,,] {title:'... jménem', skill:'yaa+|yaa+;faa+|faa+',
     help:'Přidání účastníka podle jména'
     proc onclick() {
-      PridaniJmenem1.modal(240,50)
+      neni_ulozeno // warning
+    | PridaniJmenem1.modal(240,50)
   } }
   // PŘIDAT z PARU
   button pridat_2   [226,525,,] {title:'... pár', skill:'yaa+|yaa+;faa+|faa+',
     help:'Přidání manželského páru podle jména'
     proc onclick() {
-      PridaniJmenem2.modal(240,50)
+      neni_ulozeno // warning
+    | PridaniJmenem2.modal(240,50)
   } }
   // VYŘADIT a VYMAZAT
   button [357,525,,] {title:'Vyřadit', skill:'yaa+|yaa+;faa+|faa+',
     help:'Vyřazení účastníka nebo páru z účasti na akci'
     proc onclick() {
-      confirm("Opravdu vyřadit ",u.b._nazev.get,' (',u.b._jmena.get,") z této akce?");
+      neni_ulozeno // warning
+    | confirm("Opravdu vyřadit ",u.b._nazev.get,' (',u.b._jmena.get,") z této akce?");
       spolu.delete_record(conc('id_pobyt=',u.b.key_pobyt.get),9999);
       pobyt.delete_record(conc('id_pobyt=',u.b.key_pobyt.get));
       reload(0);
@@ -681,7 +694,8 @@ form _cmd [,,200,] { css:'ds_form'
   button [409,525,,] {title:'Vymazat', skill:'yaa+|yaa+;faa+|faa+',
     help:'Vymazání informací o páru z evidence'
     proc onclick() {
-      confirm("Opravdu vymazat z evidence ",u.b._nazev.get,' (',u.b._jmena.get,") s celou rodinou?");
+      neni_ulozeno // warning
+    | confirm("Opravdu vymazat z evidence ",u.b._nazev.get,' (',u.b._jmena.get,") s celou rodinou?");
       alert('není hotovo - tady bude ještě jedno varování s výčtem rodiny a akcí, kterých se zúčastnila');
       reload(0);
   } }
@@ -689,7 +703,8 @@ form _cmd [,,200,] { css:'ds_form'
   button dite       [271,525,,] {title:'Přidat dítě', skill:'yaa+|yaa+;faa+|faa+',
     help:'Přidání dalšího dítěte do rodiny'
     proc onclick() {
-      Dite.key_dite.set(0); Dite.key_spolu.set(0); Dite.key_pobyt.set(u.b.key_pobyt.get);
+      neni_ulozeno // warning
+    | Dite.key_dite.set(0); Dite.key_spolu.set(0); Dite.key_pobyt.set(u.b.key_pobyt.get);
       Dite.modal(260,130)
   } }
   // procedury
