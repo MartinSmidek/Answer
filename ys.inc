@@ -78,6 +78,9 @@
   $EZER->options->phone=  '603150565';
   $EZER->options->skype=  'martin_smidek';
   $EZER->activity->skip=  'GAN';      // viz system.php::sys_table
+  $EZER->todo->notify=     "new";                // poslat mail o novém požadavku
+  $EZER->todo->cond_browse= "m:1;sp:cast>1";     // viz ezer2.syst.ezer panel needs
+  $EZER->todo->cond_select= "m:1;sp:data>1";     // vybere se 1. vhodné
 
   // knihovní moduly
   require_once("$ezer_path_root/ezer2/ezer2_fce.php");
