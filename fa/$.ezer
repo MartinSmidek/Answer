@@ -7,25 +7,26 @@ menu fa { type:'main', active:* //ys.pok
   tabs lide {title:"Lidé", _sys:'lid', include:'onclick', skill:'a' }
   tabs syst {title:"Systém", _sys:'sys',  include:'onclick,ezer2.syst', active:*
     panel oso {type:'right', title:'Osobní nastavení', _sys:'*', include:'onclick,ezer2.pers' }
-    panel nas {type:'right', title:'Nastavení', _sys:'nas', skill:'m'
+    panel nas {type:'right', title:'Nastavení', _sys:'nas', skill:'a'
       menu {type:'left', active:*
-        menu {title:'Opravy dat',type:'group', _sys:'*'
+        menu {title:'Kontrola a opravy dat',type:'group', _sys:'*'
 #           item {title:'poznámky pečounům'               ,par:°{opravit:0}
 #             proc onclick (i) {
 #               info.fill(conc(i.owner.title,' - ',i.title),' ... čekej ...');
 #               info.fill('',ask('akce_data_note_pece',i.par));
 #           }}
           item {title:'kontroly databáze'               ,par:°{opravit:0}}
-          item {title:'kontroly databáze s opravou'     ,par:°{opravit:1}}
+          item {title:'kontroly databáze s opravou'     ,par:°{opravit:1}, skill:'m'}
           proc onclick (i) {
             info.fill(conc(i.owner.title,' - ',i.title),' ... probíhá kontrola dat ...');
             info.fill('',ask('akce_kontrola_dat',i.par));
           }
-          item {title:'Dokončení převodu z FoxPro', proc onclick (i) {
-            info.fill(conc(i.owner.title,' - ',i.title),' ');
-            confirm("Opravdu dokončit transformaci dat z FoxPro? Klíče 'id_pary' a 'id_akce' mohou být přepsány!");
-            info.fill('',ask('akce_foxpro_data'));
-          }}
+#           item {title:'Dokončení převodu z FoxPro', skill:'m',
+#           proc onclick (i) {
+#             info.fill(conc(i.owner.title,' - ',i.title),' ');
+#             confirm("Opravdu dokončit transformaci dat z FoxPro? Klíče 'id_pary' a 'id_akce' mohou být přepsány!");
+#             info.fill('',ask('akce_foxpro_data'));
+#           }}
         }
       }
       use info: form right [12,4,,]
