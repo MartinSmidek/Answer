@@ -153,7 +153,7 @@ function akce_kontrola_dat($par) { trace();
   $n= 0;
   $opravit= $par->opravit ? true : false;
   // kontrola nenulovosti klíčů ve spojovacích záznamech
-  // tabulka SPOLU
+  // tabulka SPOLU I
   $msg= '';
   $cond= "id_pobyt=0 OR spolu.id_osoba=0 ";
   $qry=  "SELECT id_spolu,spolu.id_osoba,spolu.id_pobyt,a.nazev,prijmeni,jmeno
@@ -176,8 +176,26 @@ function akce_kontrola_dat($par) { trace();
     if ( !$x->id_pobyt )
       $msg.= "<dd>pobyt=0 v záznamu spolu={$x->id_spolu} osoby {$x->prijmeni} {$x->jmeno}$ok</dd>";
   }
+  // tabulka SPOLU II
+  $qry=  "SELECT id_spolu,count(*) AS _pocet_,s.id_osoba,o.id_osoba,nazev,prijmeni,jmeno
+          FROM spolu AS s
+          LEFT JOIN pobyt AS p USING(id_pobyt)
+          LEFT JOIN akce  AS a ON a.id_duakce=p.id_akce
+          LEFT JOIN osoba AS o ON o.id_osoba=s.id_osoba
+          GROUP BY s.id_osoba,id_pobyt HAVING _pocet_>1
+          ORDER BY id_akce";
+  $res= mysql_qry($qry);
+  while ( $res && ($x= mysql_fetch_object($res)) ) {
+    $n++;
+    if ( $opravit ) {
+      $ok= mysql_qry("DELETE FROM spolu WHERE id_spolu={$x->id_spolu}",1)
+         ? " = SMAZÁNO" : ' !!!!!CHYBA při mazání' ;
+    }
+    $msg.= "<dd>násobný pobyt záznamem spolu={$x->id_spolu} na akci {$x->nazev}
+      osoby {$x->prijmeni} {$x->jmeno} $ok</dd>";
+  }
   $html.= "<dt style='margin-top:5px'>tabulka <b>spolu</b>".($msg?$msg:"<dd>ok</dd>")."</dt>";
-  // tabulka TVORI
+  // tabulka TVORI I
   $msg= '';
   $cond= "tvori.id_rodina=0 OR tvori.id_osoba=0 ";
   $qry=  "SELECT id_tvori,role,tvori.id_osoba,tvori.id_rodina,r.nazev,prijmeni,jmeno
@@ -198,6 +216,24 @@ function akce_kontrola_dat($par) { trace();
       $msg.= "<dd>osoba=0 v záznamu tvori={$x->id_spolu} rodiny={$x->id_rodina} {$x->nazev}$ok</dd>";
     if ( !$x->id_pobyt )
       $msg.= "<dd>rodina=0 v záznamu tvori={$x->id_tvori} osoby {$x->prijmeni} {$x->jmeno}$ok</dd>";
+  }
+  // tabulka TVORI II
+  $qry=  "SELECT id_tvori,count(*) AS _pocet_,GROUP_CONCAT(role) AS _role_,
+            tvori.id_osoba,tvori.id_rodina,r.nazev,prijmeni,jmeno
+          FROM tvori
+          LEFT JOIN rodina AS r USING(id_rodina)
+          LEFT JOIN osoba AS o ON o.id_osoba=tvori.id_osoba
+          GROUP BY id_osoba,id_rodina HAVING _pocet_>1
+          ORDER BY id_rodina ";
+  $res= mysql_qry($qry);
+  while ( $res && ($x= mysql_fetch_object($res)) ) {
+    $n++;
+    if ( $opravit && strlen($x->_role_)==1 ) {
+      mysql_qry("DELETE FROM tvori WHERE id_tvori={$x->id_tvori} AND ($cond)",1)
+         ? " = SMAZÁNO" : ' !!!!!CHYBA při mazání' ;
+    }
+    $msg.= "<dd>násobné členství záznamem tvori={$x->id_tvori} v rodině {$x->nazev}
+      osoby {$x->prijmeni} {$x->jmeno} v roli {$x->_role} $ok</dd>";
   }
   $html.= "<dt style='margin-top:5px'>tabulka <b>tvori</b>".($msg?$msg:"<dd>ok</dd>")."</dt>";
   // konec
