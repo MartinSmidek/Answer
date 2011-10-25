@@ -13,11 +13,11 @@ menu ys { type:'main', active:* //ys.pok
   tabs lide {title:"Lidé", _sys:'lid', include:'onclick', skill:'yl' }
   tabs syst {title:"Systém", _sys:'sys',  include:'onclick,ezer2.syst', active:*
     panel oso {type:'right', title:'Osobní nastavení', _sys:'*', include:'onclick,ezer2.pers' }
-    panel nas {type:'right', title:'Nastavení', _sys:'nas', skill:'m'
+    panel nas {type:'right', title:'Nastavení', _sys:'nas', skill:'a'
       menu {type:'left', active:*
         menu {title:'Opravy dat',type:'group', _sys:'*'
           item {title:'kontroly databáze'               ,par:°{opravit:0}}
-          item {title:'kontroly databáze s opravou'     ,par:°{opravit:1}}
+          item {title:'kontroly databáze s opravou'     ,par:°{opravit:1}, skill:'m'}
           proc onclick (i) {
             info.fill(conc(i.owner.title,' - ',i.title),' ... probíhá kontrola dat ...');
             info.fill('',ask('akce_kontrola_dat',i.par));
