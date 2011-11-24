@@ -3372,6 +3372,7 @@ function dop_mai_pocet($id_dopis,$dopis_var,$cond='') {  trace();
     foreach(preg_split('/\s*[,;]\s*/',$emaily[$i],0,PREG_SPLIT_NO_EMPTY) as $adr) {
 //                                                 debug(preg_split('/\s*[,;]\s*/',$emaily[$i],0,PREG_SPLIT_NO_EMPTY),$emaily[$i]); break;
       $chyba= '';
+                                        display("$adr");
       if ( emailIsValid($adr,$chyba) ) {
         $email.= $del.$adr;                     // první dobrý bude adresou
         $del= ',';                              // zbytek pro CC
@@ -3482,11 +3483,11 @@ function dop_mai_posli($id_dopis,$info) {  trace();
     // pokud jsou přímo známy adresy, pošli na ně
     $ids= array();
     foreach($info->_ids as $i=>$id) $ids[$i]= $id;
-    foreach($info->_pobyty as $i=>$pobyt) $pobyty[$i]= $pobyt;
+    if ( $info->_pobyty ) foreach($info->_pobyty as $i=>$pobyt) $pobyty[$i]= $pobyt;
     foreach ($info->_adresy as $i=>$email) {
       $id= $ids[$i];
       // vlož do MAIL
-      $pobyt= $pobyty[$i];
+      $pobyt= isset($pobyty[$i]) ? $pobyty[$i] : 0;
       $qr= "INSERT mail (id_davka,znacka,stav,id_dopis,id_clen,id_pobyt,email)
             VALUE (1,'@',0,$id_dopis,$id,$pobyt,'$email')";
 //                                         display("$i:$qr");
@@ -3539,7 +3540,12 @@ function dop_mai_info($id,$email,$id_dopis,$zdroj) {  trace();
     if ( $resQ && ($q= mysql_fetch_object($resQ)) ) {
       // SELECT vrací (_id,prijmeni,jmeno,ulice,psc,obec,email,telefon)
       $qry= $q->hodnota;
-      $qry.= " GROUP BY _id HAVING _id=$id ";
+      if ( strpos($qry,"GROUP BY") ) {
+        $qry= str_replace("GROUP BY","GROUP BY",$qry);
+      }
+      else {
+        $qry.= " GROUP BY _id HAVING _id=$id ";
+      }
       $res= mysql_qry($qry);
       while ( $res && ($c= mysql_fetch_object($res)) ) {
         $html.= "{$c->prijmeni} {$c->jmeno}<br>";
