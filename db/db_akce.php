@@ -3005,18 +3005,21 @@ function evid_sestava($par,$title,$export=false) {
         }
         $clmn[$n][$f]= $e;
         break;
+      case '_rok': break;                       // rokd posledního členského příspěvku ... viz níže
       case '_prisp':                            // poslední členský příspěvek
-        $p= '';
+        $p= $r= '';
         if ( $x->_dar ) {
           foreach(explode('|',$x->_dar) as $udc) {
             list($u,$d,$c)= explode(':',$udc);
             if ( $u=='p' ) {
               $p= $c;
+              $r= substr($d,0,4);
               break;
             }
           }
         }
         $clmn[$n][$f]= $p;
+        if ( in_array('_rok',$flds) ) $clmn[$n]['_rok']= $r;
         break;
       case '_clen':                             // druh členství
         $clmn[$n][$f]= strpos($x->rel,'c')!==false ? 'č' : (
