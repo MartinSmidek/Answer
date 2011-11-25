@@ -7,8 +7,11 @@
   $skin=     'default';
   $skin=     'ck';
 
+  // Ans(w)er rozeznává tyto doplňkové parametry v URL
+  //   dbs=db_name:other_db_name,...    -- záměna MySQL tabulek za jiné (je zpracováváno ve fis.ini)
   require_once("$app.inc");
   require_once("ezer2/server/ae_slib.php");
+  $app_name.= $EZER->options->mysql ? " - {$EZER->options->mysql}" : '';
 
   $js= array(
     'ezer2/client/licensed/ckeditor/ckeditor.js',
