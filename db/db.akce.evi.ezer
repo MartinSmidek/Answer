@@ -4,17 +4,10 @@
 # Ans(w)er/Ezer                                     (c) 2007-2011 Martin Šmídek <martin@smidek.eu> #
 # ------------------------------------------------------------------------------------------------ #
 
-var osoby_vyber: text         // výběrová podmínka
+var osoby_vyber: text           // výběrová podmínka
+var the_par: object             // parametr běžného itemu menu
+var the_title: text             // text běžného itemu menu
 
-use info: form right [5,5,,]              { tag:'inf' }
-/*
-use prihlasky: form _prihlasky [10,44,,]  { tag:'app' }
-use prihlaska: form _prihlaska [390,44,,] { tag:'app' }
-use osoba:  form _osoba [390,36,,]        { tag:'pers' }
-use rodina: form _rodina [390,36,,]       { tag:'pers' }
-use platby: form _platby [10,64,,]        { tag:'bank' }
-use platba: form _platba [10,300,,]       { tag:'bank' }
-*/
 use osoby:  form _osoby  [10,10,,]        { tag:'list' }
 use evid:   form _evid   [355,10,,]       { tag:'evid' }
 use dary:   form _dary   [355,300,,]      { tag:'dary', format:'n' }
@@ -31,6 +24,19 @@ use d_cle:  form _dcleni [360,300,,]      { tag:'d_cle', format:'n' }
 use d_pri:  form _dpris  [360,300,,]      { tag:'d_pri', format:'n' }
 use d_dar:  form _ddary  [360,300,,]      { tag:'d_dar', format:'n' }
 
+use info: form right [12,4,,] {             tag:'inf'
+  button export [-20,4,100,16] { title:'Excel', style:'display:block;zIndex:2',
+    proc onclick() {
+      var res: object
+      switch(export.get,
+      'Excel',{
+        res.set(ask('evid_vyp_excel',the_par.get,the_title.get));
+        form.msg.set(res.html);
+      })
+    }
+  }
+}
+
 proc onstart () {
   osoby_vyber.set(1);
 }
@@ -40,8 +46,6 @@ proc onfirstfocus() {
   evid.oso.onclick;
   m.g.i.click;
 }
-# proc evid_show() {  }
-
 
 menu m {type:'left'
   menu g {title:'Evidence YMCA Setkání',type:'group', skill:'yae'
@@ -61,15 +65,31 @@ menu m {type:'left'
     item {title:'pouze dárci bez potvrzení'
           par:°{cond:"od.ukon='d' AND od.dat_do='0000-00-00'"} }
     proc onclick (i) {
-      panel.display(0,'inf'); panel.display(1,'evid|list|dary');
+      panel.display(0,'inf'); panel.display(1,'evid|list|dary|p_.*|d_.*');
       evid.page_init; dary.page_init;
       osoby.b.browse_load(conc("os.deleted='' AND ",i.par.cond));
       evid.page_show; dary.page_show;
       osoby.b.raise('onrowclick');
     }
   }
-  menu  {title:'Výpisy a exporty',type:'group', skill:'yae'
-    item i {title:'všechny kontakty' par:°{cond:"1"} }
+  menu {title:'Výpisy a exporty',type:'group', skill:'yae'
+    item {title:'Členové YMCA Setkání',
+          par:°{typ:'j',exp:'Excel',cnd:1, hav:"rel RLIKE 'b|c'",
+                tit:'příjmení:15,jméno:10,ulice:20,obec:20,psč:7,datum nar.:10,čl.:3,přísp.:6,KČ:13,e-mail:30',
+                fld:'prijmeni,jmeno,ulice,obec,psc,_naroz,_clen,_prisp,_kc,_email'}}
+    item {title:'Činní členové YMCA Setkání',
+          par:°{typ:'j',exp:'Excel',cnd:1, hav:"rel RLIKE 'c'",
+                tit:'příjmení:15,jméno:10,ulice:20,obec:20,psč:7,datum nar.:10,čl.:3,přísp.:6,KČ:13,e-mail:30',
+                fld:'prijmeni,jmeno,ulice,obec,psc,_naroz,_clen,_prisp,_kc,_email'}}
+    proc onclick (i) {
+      var x: object
+      panel.display(1,'inf'); panel.display(0,'evid|list|dary|p_.*|d_.*');
+      the_par.set(i.par); the_title.set(i.title); info.export.set(i.par.exp);
+      info.fill(conc(i.owner.title,' - ',i.title),' ');
+      info.msg.set('');
+      x.set(ask('evid_sestava',i.par,the_title.get));
+      info.fill('',x.html);
+    }
   }
 #   menu {title:'Administrace evidence',type:'group', skill:'m'
 #     item   {title:'zrušení členství, příspěvků a darů'
@@ -312,7 +332,7 @@ form _dary { style:'z-index:1'
   label [0,16,400,225] { css:'ae_work'}
 }
 # ---------------------------------------------------------------------- _dcleni
-form _dcleni {
+form _dcleni [,,400,245] {
   view da: table dar
   view do: table osoba { join:"USING(id_osoba)" }
   browse b [10,30,,] { rows:8, qry_rows:1
@@ -386,7 +406,7 @@ form _dcleni {
   }}
 }
 # ---------------------------------------------------------------------- _dpris
-form _dpris {
+form _dpris [,,400,245] {
   view da: table dar
   view do: table osoba { join:"USING(id_osoba)" }
   browse b [10,30,,] { rows:8, qry_rows:1
@@ -411,7 +431,7 @@ form _dpris {
   label        [Lp,datum.t+-14,,] {title:'příspěvek přijat dne'}
   field platnost[Lp,110,85,] {type:'date', data:da.dat_do, help:'zaplaceno do', format:'xRUr'}
   label        [Lp,platnost.t+-14,,] {title:'zaplaceno do ...'}
-  field pozn   [Lp,145,100,] {data:da.note, help:'poznámka'}
+  field pozn   [Lp,145,100,] {data:da.note, help:'poznámka', format:'x'}
   label        [Lp,pozn.t+-14,,] {title:'poznámka'}
   # --------------------------- fixované údaje
   var _dar_fixovan: number
@@ -466,7 +486,7 @@ form _dpris {
   }}
 }
 # ---------------------------------------------------------------------- _ddary
-form _ddary {
+form _ddary [,,400,245] {
   # seznam darů
   view da: table dar
   view do: table osoba { join:"USING(id_osoba)" }
@@ -492,7 +512,7 @@ form _ddary {
   label        [Ld,datum.t+-14,,] {title:'dar přijat dne'}
   field potvrz [Ld,110,85,] {type:'date', data:da.dat_do, help:'datum zaslání potvrzení', format:'RUr'}
   label        [Ld,potvrz.t+-14,,] {title:'potvrzení zasláno dne'}
-  field pozn   [Ld,145,100,] {data:da.note, help:'poznámka'}
+  field pozn   [Ld,145,100,] {data:da.note, help:'poznámka', format:'x'}
   label        [Ld,pozn.t+-14,,] {title:'poznámka'}
   # --------------------------- fixované údaje
   var _dar_fixovan: number
