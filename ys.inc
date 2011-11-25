@@ -19,6 +19,21 @@
       'ezer_system' =>  array(0,'localhost','gandi','','utf8','ezer_ys'),
       'setkani' =>      array(0,'localhost','gandi','','cp1250'))
   );
+  // modifikace tabulky případným nastavením $_GET[dbs] přeneseným do $_SESSION[$ezer_root][dbs]
+  // dbs=db_name:other_db_name,...
+  $subst= '';
+  if ( ($subst= $_GET['dbs']) || ($subst= $_SESSION['ys']['GET']['dbs']) ) {
+    foreach(explode(',',$subst) as $pair) {
+      list($old,$new)= explode(':',$pair);
+      if ( isset($dbs[0][$old]) && $dbs[1][$old] ) {
+        $dbs[0][$old][5]= $new;
+        $dbs[1][$old][5]= $new;
+      }
+      else {
+        $subst= "substituci $subst nelze provést";
+      }
+    }
+  }
   // kořeny cest
   $path_root=  array("/home/www/ezer/www-ys/2","C:/Apache/htdocs/ezer/www-ys2");
   $path_pspad= array(null,"C:/Program Files (x86)/PSPad editor/Syntax");
@@ -71,6 +86,8 @@
   );
 
   // parametrizace $EZER
+  $EZER->options->local= $ezer_local;
+  $EZER->options->mysql= $subst;            // dbs=db_name:other_db_name,... NEBO nic NEBO chyba
   $EZER->options->org=    'YMCA Setkání';
   $EZER->options->web=    'www.setkani.org';
   $EZER->options->author= 'Martin';
