@@ -508,6 +508,7 @@ function akce_foxpro_data() {  #trace('');
   return $html;
 }
 # ================================================================================================== VÝPISY
+# výběr generátoru sestavy
 # -------------------------------------------------------------------------------------------------- akce_sestava2
 # generování sestav
 #   $typ = j | p | vp | vs | vn | vv | vj | sk | sd | d | fs
@@ -2945,17 +2946,131 @@ function akce_info($id_akce) {  trace();
   }
   return $html;
 }
-# ================================================================================================== VYPISY
-# obsluha různých forem výpisů
+# ================================================================================================== VYPISY EVIDENCE
+# obsluha různých forem výpisů karty EVIDENCE
+# -------------------------------------------------------------------------------------------------- evid_vyp_excel
+# generování tabulky do excelu
+function evid_vyp_excel($par,$title) {  trace();
+  $tab= evid_sestava($par,$title,true);
+  $subtitle= "ke dni ".date("d. m. Y");
+  return akce_vyp_excel("",$par,$title,$subtitle,$tab);
+}
+# -------------------------------------------------------------------------------------------------- evid_sestava
+# generování dat sestavy - zatím jen jednotlivci  $par->typ = j
+#   $fld = seznam položek s prefixem
+#   $cnd = podmínka
+function evid_sestava($par,$title,$export=false) {
+  $result= (object)array();
+  $tit= $par->tit;
+  $fld= $par->fld;
+  $cnd= $par->cnd;
+  $hav= $par->hav;
+  $html= '';
+  $href= '';
+  $n= 0;
+  // dekódování parametrů
+  $tits= explode(',',$tit);
+  $flds= explode(',',$fld);
+  // získání dat - podle $kdo
+  $clmn= array();
+  $expr= array();       // pro výrazy
+  // data akce
+  // AND od.ukon IN ('b','c') AND NOW()>=od.dat_od AND (NOW()<=od.dat_do OR od.dat_do='0000-00-00')
+  $qry= "SELECT
+           os.prijmeni,os.jmeno,os.narozeni,os.sex,
+           os.obec,os.ulice,os.psc,os.email,r.emaily,
+           GROUP_CONCAT(DISTINCT od.ukon ORDER BY od.ukon SEPARATOR '') as rel,
+           GROUP_CONCAT(CONCAT(ukon,':',dat_od,':',castka) ORDER BY dat_od DESC SEPARATOR '|') AS _dar
+         FROM ezer_ys.osoba AS os
+         JOIN tvori AS ot ON os.id_osoba=ot.id_osoba
+         JOIN rodina AS r USING(id_rodina)
+         LEFT JOIN dar AS od ON os.id_osoba=od.id_osoba AND od.deleted=''
+         WHERE os.deleted='' AND $cnd
+         GROUP BY os.id_osoba HAVING $hav
+         ORDER BY os.id_osoba";
+  $res= mysql_qry($qry);
+  while ( $res && ($x= mysql_fetch_object($res)) ) {
+    $n++;
+    $clmn[$n]= array();
+    foreach($flds as $f) {
+      switch ( $f ) {
+      case '_kc':                               // kolektivní člen
+        $clmn[$n][$f]= 'YMCA Setkání';
+        break;
+      case '_email':                            // osobní mail nebo první rodinný
+        $e= $x->email;
+        if ( !$e ) {
+          list($em,$ez)= preg_split('/[,;]/',$x->emaily);
+          $e= trim($x->sex==1 ? $em : $ez);
+        }
+        $clmn[$n][$f]= $e;
+        break;
+      case '_prisp':                            // poslední členský příspěvek
+        $p= '';
+        if ( $x->_dar ) {
+          foreach(explode('|',$x->_dar) as $udc) {
+            list($u,$d,$c)= explode(':',$udc);
+            if ( $u=='p' ) {
+              $p= $c;
+              break;
+            }
+          }
+        }
+        $clmn[$n][$f]= $p;
+        break;
+      case '_clen':                             // druh členství
+        $clmn[$n][$f]= strpos($x->rel,'c')!==false ? 'č' : (
+                       strpos($x->rel,'b')!==false ? 'b' : (
+                       strpos($x->rel,'k')!==false ? 'k' : '-'));
+        break;
+      case '_naroz':                            // narozeni yymmdd
+        $clmn[$n][$f]= substr($x->narozeni,2,2).substr($x->narozeni,5,2).substr($x->narozeni,8,2);
+        break;
+      default:
+        $clmn[$n][$f]= $x->$f;
+      }
+    }
+  }
+//                                         debug($clmn,"sestava pro $fld,$cnd");
+  // zobrazení tabulkou
+  $tab= '';
+  $thd= '';
+  if ( $export ) {
+    $result->tits= $tits;
+    $result->flds= $flds;
+    $result->clmn= $clmn;
+    $result->expr= $expr;
+  }
+  else {
+    // titulky
+    foreach ($tits as $idw) {
+      list($id)= explode(':',$idw);
+      $ths.= "<th>$id</th>";
+    }
+    foreach ($clmn as $i=>$c) {
+      $tab.= "<tr>";
+      foreach ($c as $id=>$val) {
+        $tab.= "<td style='text-align:left'>$val</td>";
+      }
+      $tab.= "</tr>";
+    }
+    $result->html= "<div class='stat'><table class='stat'><tr>$ths</tr>$tab</table></div>";
+    $result->href= $href;
+  }
+  return $result;
+}
+# ================================================================================================== VYPISY AKCE
+# obsluha různých forem výpisů karet AKCE
 # -------------------------------------------------------------------------------------------------- akce_vyp_excel
 # generování tabulky do excelu
-function akce_vyp_excel($akce,$par,$title,$vypis) {  trace();
+function akce_vyp_excel($akce,$par,$title,$vypis,$tab=null) {  trace();
   global $xA, $xn;
   $result= (object)array('_error'=>0);
   $html= '';
   // získání dat
   $title= str_replace('&nbsp;',' ',$title);
-  $tab= akce_sestava($akce,$par,$title,$vypis,true);
+  if ( !$tab )
+    $tab= akce_sestava($akce,$par,$title,$vypis,true);
 //                                         debug($tab,"akce_sestava($akce,...)"); return;
   // vlastní export do Excelu
   $name= cz2ascii("vypis_").date("Ymd_Hi");
