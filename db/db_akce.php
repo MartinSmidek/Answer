@@ -2948,45 +2948,171 @@ function akce_info($id_akce) {  trace();
 }
 # ================================================================================================== VYPISY EVIDENCE
 # obsluha různých forem výpisů karty EVIDENCE
+# -------------------------------------------------------------------------------------------------- evid_sestava
+# generování sestav
+#   $typ = e-j | e-vps
+function evid_sestava($par,$title,$export=false) {
+  return $par->typ=='e-j' ? evid_sestava_j($par,$title,$export)
+     : ( $par->typ=='e-v' ? evid_sestava_v($par,$title,$export)
+     : ( $par->typ=='e-s' ? evid_sestava_s($par,$title,$export)
+                          : fce_error("evid_sestava: N.Y.I.") ));
+}
 # -------------------------------------------------------------------------------------------------- evid_vyp_excel
 # generování tabulky do excelu
 function evid_vyp_excel($par,$title) {  trace();
   $tab= evid_sestava($par,$title,true);
   $subtitle= "ke dni ".date("d. m. Y");
-  return akce_vyp_excel("",$par,$title,$subtitle,$tab);
+//                                                         debug($tab,"evid_vyp_excel");
+  return akce_vyp_excel("",$tab->par,$title,$subtitle,$tab);
 }
-# -------------------------------------------------------------------------------------------------- evid_sestava
+# -------------------------------------------------------------------------------------------------- evid_table
+function evid_table($par,$tits,$flds,$clmn,$export=false) {
+  $result= (object)array('par'=>$par);
+  // zobrazení tabulkou
+  $tab= '';
+  $thd= '';
+  $n= 0;
+  if ( $export ) {
+    $result->tits= $tits;
+    $result->flds= $flds;
+    $result->clmn= $clmn;
+  }
+  else {
+    // titulky
+    foreach ($tits as $idw) {
+      list($id)= explode(':',$idw);
+      $ths.= "<th>$id</th>";
+    }
+    foreach ($clmn as $i=>$c) {
+      $tab.= "<tr>";
+      foreach ($flds as $f) {
+        $tab.= "<td style='text-align:left'>{$c[$f]}</td>";
+      }
+      $tab.= "</tr>";
+      $n++;
+    }
+    $result->html= "<div class='stat'><table class='stat'><tr>$ths</tr>$tab</table>$n řádků</div>";
+  }
+  return $result;
+}
+# -------------------------------------------------------------------------------------------------- evid_sestava_s
+# tabulka struktury kurzu (noví,podruhé,vícekrát,odpočívající VPS,VPS)
+function evid_sestava_s($par,$title,$export=false) {
+  $par->fld= 'nazev';
+  $par->tit= 'nazev';
+  $tab= evid_sestava_v($par,$title,true);
+//                                                         debug($tab,"evid_sestava_v(,$title,$export)");
+  $clmn= array();
+  $tit= "rok,u nás noví,podruhé,vícekrát,vps odpočívá,ve službě";
+  $tits= explode(',',$tit);
+  $fld= "rr,n,p,v,vo,vs";
+  $flds= explode(',',$fld);
+  for ($rrrr=1990;$rrrr<=date('Y');$rrrr++) {
+    $rr= substr($rrrr,-2);
+    $clmn[$rr]= array('rr'=>$rr);
+    $rows= count($tab->clmn);
+    for ($n= 1; $n<=$rows; $n++) {
+      if ( $xrr= $tab->clmn[$n][$rr] ) {
+        $vps= 0;
+        $ucast= 0;
+        for ($yyyy= $rrrr; $yyyy>=1990; $yyyy--) {
+          $yy= substr($yyyy,-2);
+          if ( $tab->clmn[$n][$yy] ) $ucast++;
+          if ( $tab->clmn[$n][$yy]=='v' ) $vps++;
+        }
+        // zhodnocení minulosti
+        $clmn[$rr]['n']+= !$vps && $ucast==1 ? 1 : 0;
+        $clmn[$rr]['p']+= !$vps && $ucast==2 ? 1 : 0;
+        $clmn[$rr]['v']+= !$vps && $ucast>2  ? 1 : 0;
+        $clmn[$rr]['vo']+= $vps && $xrr=='o' ? 1 : 0;
+        $clmn[$rr]['vs']+= $vps && $xrr=='v' ? 1 : 0;
+      }
+    }
+  }
+//                                                         debug($clmn,"evid_sestava_s:$tit;$fld");
+  $par->tit= $tit;
+  $par->fld= $fld;
+  return evid_table($par,$tits,$flds,$clmn,$export);
+}
+# -------------------------------------------------------------------------------------------------- evid_sestava_v
+# generování přehledu akčnosti VPS
+function evid_sestava_v($par,$title,$export=false) {
+  // dekódování parametrů
+  $roky= '';
+  for ($r=1990;$r<=date('Y');$r++) {
+    $roky.= ','.substr($r,-2);
+    $froky.= ','.substr($r,-2).':3';
+  }
+  $tits= explode(',',$tit= $par->tit.$froky);
+  $flds= explode(',',$fld= $par->fld.$roky);
+  $HAVING= $par->hav ? "HAVING {$par->hav}" : '';
+  $fce= "ovxkphmx";
+  // získání dat
+  $n= 0;
+  $clmn= array();
+  $expr= array();       // pro výrazy
+  $qry="SELECT COUNT(*) AS _ucasti, r.nazev,r.obec,
+          SUM(p.funkce) AS _vps,
+          GROUP_CONCAT(DISTINCT CONCAT(YEAR(a.datum_od),':',p.funkce) ORDER BY datum_od SEPARATOR '|') AS _x,
+          GROUP_CONCAT(DISTINCT IF(t.role='a',o.jmeno,'') SEPARATOR '') AS jmeno_m,
+          GROUP_CONCAT(DISTINCT IF(t.role='b',o.jmeno,'') SEPARATOR '') AS jmeno_z
+        FROM pobyt AS p
+        JOIN spolu AS s USING(id_pobyt)
+        JOIN osoba AS o ON s.id_osoba=o.id_osoba
+        LEFT JOIN tvori AS t ON t.id_osoba=o.id_osoba
+        LEFT JOIN rodina AS r USING(id_rodina)
+        JOIN akce AS a ON a.id_duakce=p.id_akce
+        WHERE a.druh=1 AND p.pouze=0  /* AND LEFT(r.nazev,3)='Šmí' */
+        GROUP BY r.id_rodina $HAVING
+        ORDER BY r.nazev
+        ";
+  $res= mysql_qry($qry);
+  while ( $res && ($x= mysql_fetch_object($res)) ) {
+    $n++;
+    $clmn[$n]= array();
+    foreach($flds as $f) {
+      switch ( $f ) {
+      case '_jmeno':                            // kolektivní člen
+        $clmn[$n][$f]= "{$x->nazev} {$x->jmeno_m} a {$x->jmeno_z}";
+        break;
+      default:
+        $clmn[$n][$f]= $x->$f;
+      }
+    }
+    // rozbor let
+    foreach(explode('|',$x->_x) as $rf) {
+      list($xr,$xf)= explode(':',$rf);
+      $clmn[$n][substr($xr,-2)]= $xf < strlen($fce) ? substr($fce,$xf,1) : '?';
+    }
+  }
+//                                                 debug($clmn,"clmn");
+  $par->tit= $tit;
+  $par->fld= $fld;
+  return evid_table($par,$tits,$flds,$clmn,$export);
+}
+# -------------------------------------------------------------------------------------------------- evid_sestava_j
 # generování dat sestavy - zatím jen jednotlivci  $par->typ = j
 #   $fld = seznam položek s prefixem
 #   $cnd = podmínka
-function evid_sestava($par,$title,$export=false) {
-  $result= (object)array();
-  $tit= $par->tit;
-  $fld= $par->fld;
-  $cnd= $par->cnd;
-  $hav= $par->hav;
-  $html= '';
-  $href= '';
-  $n= 0;
+function evid_sestava_j($par,$title,$export=false) {
   // dekódování parametrů
-  $tits= explode(',',$tit);
-  $flds= explode(',',$fld);
-  // získání dat - podle $kdo
+  $tits= explode(',',$par->tit);
+  $flds= explode(',',$par->fld);
+  // získání dat
+  $n= 0;
   $clmn= array();
   $expr= array();       // pro výrazy
-  // data akce
-  // AND od.ukon IN ('b','c') AND NOW()>=od.dat_od AND (NOW()<=od.dat_do OR od.dat_do='0000-00-00')
   $qry= "SELECT
            os.prijmeni,os.jmeno,os.narozeni,os.sex,
            os.obec,os.ulice,os.psc,os.email,r.emaily,
            GROUP_CONCAT(DISTINCT od.ukon ORDER BY od.ukon SEPARATOR '') as rel,
            GROUP_CONCAT(CONCAT(ukon,':',dat_od,':',castka) ORDER BY dat_od DESC SEPARATOR '|') AS _dar
-         FROM ezer_ys.osoba AS os
+         FROM osoba AS os
          JOIN tvori AS ot ON os.id_osoba=ot.id_osoba
          JOIN rodina AS r USING(id_rodina)
          LEFT JOIN dar AS od ON os.id_osoba=od.id_osoba AND od.deleted=''
-         WHERE os.deleted='' AND $cnd
-         GROUP BY os.id_osoba HAVING $hav
+         WHERE os.deleted='' AND {$par->cnd}
+         GROUP BY os.id_osoba HAVING {$par->hav}
          ORDER BY os.id_osoba";
   $res= mysql_qry($qry);
   while ( $res && ($x= mysql_fetch_object($res)) ) {
@@ -3034,33 +3160,7 @@ function evid_sestava($par,$title,$export=false) {
       }
     }
   }
-//                                         debug($clmn,"sestava pro $fld,$cnd");
-  // zobrazení tabulkou
-  $tab= '';
-  $thd= '';
-  if ( $export ) {
-    $result->tits= $tits;
-    $result->flds= $flds;
-    $result->clmn= $clmn;
-    $result->expr= $expr;
-  }
-  else {
-    // titulky
-    foreach ($tits as $idw) {
-      list($id)= explode(':',$idw);
-      $ths.= "<th>$id</th>";
-    }
-    foreach ($clmn as $i=>$c) {
-      $tab.= "<tr>";
-      foreach ($c as $id=>$val) {
-        $tab.= "<td style='text-align:left'>$val</td>";
-      }
-      $tab.= "</tr>";
-    }
-    $result->html= "<div class='stat'><table class='stat'><tr>$ths</tr>$tab</table></div>";
-    $result->href= $href;
-  }
-  return $result;
+  return evid_table($par,$tits,$flds,$clmn);
 }
 # ================================================================================================== VYPISY AKCE
 # obsluha různých forem výpisů karet AKCE
@@ -3233,15 +3333,17 @@ function db_mail_sql_try($qry) {  trace();
       $html.= "<span style='color:darkred'>ERROR ".mysql_error()."</span>";
     }
     else {
-      $nmax= 15;
+      $nmax= 20;
       $num= mysql_num_rows($res);
       $html.= "výběr obsahuje <b>$num</b> emailových adresátů, nalezených během $time ms, ";
       $html.= $num>$nmax ? "následuje prvních $nmax adresátů" : "následují všichni adresáti";
-      $html.= "<br><br><table>";
+      $html.= "<br><br><table class='stat'>";
+      $html.= "<tr><th>prijmeni jmeno</th><th>email</th><th>telefon</th>
+        <th>ulice psc obec</th><th>x</th></tr>";
       $n= $nmax;
       while ( $n && ($c= mysql_fetch_object($res)) ) {
-        $html.= "<tr><td>{$c->email}</td><td>{$c->telefon}</td><td>{$c->prijmeni} {$c->jmeno}
-                 </td><td>{$c->ulice} {$c->psc} {$c->obec}</td></tr>";
+        $html.= "<tr><td>{$c->prijmeni} {$c->jmeno}</td><td>{$c->email}</td><td>{$c->telefon}</td>
+          <td>{$c->ulice} {$c->psc} {$c->obec}</td><td>{$c->_x}</td></tr>";
         $n--;
       }
       $html.= "</table>";
