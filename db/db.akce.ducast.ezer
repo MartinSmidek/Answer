@@ -405,7 +405,7 @@ form _ucast [,,400,] { css:'ds_form'
     show datum_od {data:a.datum_od, sql_pipe:'' }
     // zobrazení
     show _nazev [,,100,] { title:'rodina', format:'s+q*', expr:"IF(pouze=0,r.nazev,o.prijmeni)" }
-    show _jmena [,,180,] { title:'jméno/a', format:'ts',
+    show _jmena [,,180,] { title:'jméno/a', format:'tsq%',
       expr:"GROUP_CONCAT(DISTINCT IF(pouze=1 AND t.role='b','',IF(pouze=2 AND t.role='a','',o.jmeno)) ORDER BY t.role SEPARATOR ' ')" }
     show fotka    [,,0,] { data:r.fotka, format:'rsq*', help:'soubor s fotografií' }
     show _vek     [,,0,] { expr:"GROUP_CONCAT(DISTINCT IF(tx.role='a',ox.narozeni,'') SEPARATOR '')",
