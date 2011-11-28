@@ -55,7 +55,7 @@ function google_sheet($list,$sheet,$user='answer@smidek.eu') {  trace();
     $table= getFirstFeed($feed,$sheet);
     if ( $table ) {
       // pokud tabulka existuje
-      $table_id= split('/', $table->id->text);
+      $table_id= explode('/', $table->id->text);
       $table_key= $table_id[5];
       // najdi list
       $query= new Zend_Gdata_Spreadsheets_DocumentQuery();
@@ -66,7 +66,7 @@ function google_sheet($list,$sheet,$user='answer@smidek.eu') {  trace();
     if ( $table && $ws ) {
       $cells= array();
       // pokud list tabulky existuje
-      $ws_id= split('/', $ws->id->text);
+      $ws_id= explode('/', $ws->id->text);
       $ws_key= $ws_id[8];
       // načti buňky
       $query= new Zend_Gdata_Spreadsheets_CellQuery();
