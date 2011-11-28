@@ -128,6 +128,14 @@ menu m {type:'left',
     item {title:'Stravenky'             ,par:°{typ:'vj',exp:'PDF-stravenky',cnd:"1"}}
   }
   menu {title:'MS: letní kurs, obnovy',type:'group',_sys:'*'
+    item {title:'noví účastníci'        ,par:°{typ:'p',exp:'Excel'
+                                        ,cnd:"p.funkce IN (0,1,2)",hav:"_ucasti=1",ord:"prijmeni"
+                                        ,tit:'příjmení:15,jména:20,obec:25'
+                                        ,fld:'prijmeni,jmena,obec'}, skill:'y'}
+    item {title:'účastníci podruhé'     ,par:°{typ:'p',exp:'Excel'
+                                        ,cnd:"p.funkce IN (0,1,2)",hav:"_ucasti=2",ord:"prijmeni"
+                                        ,tit:'příjmení:15,jména:20,obec:25'
+                                        ,fld:'prijmeni,jmena,obec'}, skill:'y'}
     item {title:'Pečouni'               ,par:°{typ:'d',exp:'Excel',cnd:'1'
                                         ,tit:'příjmení:15,jméno:15,narození:12,/rč:5,obec:25,psč:7,ulice:25,telefon:20,e-mail:30'
                                         ,fld:'prijmeni,jmeno,narozeni,rc_xxxx,obec,psc,ulice,telefon,email'}}

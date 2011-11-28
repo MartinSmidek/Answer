@@ -526,6 +526,36 @@ function akce_sestava($akce,$par,$title,$vypis,$export=false) {
      : ( $par->typ=='fs' ? akce_fotoseznam($akce,$par,$title,$vypis,$export)
                          : fce_error("akce_sestava: N.Y.I.") ))))))))));
 }
+# -------------------------------------------------------------------------------------------------- akce_table
+function akce_table($tits,$flds,$clmn,$export=false) {
+  $result= (object)array();
+  // zobrazení tabulkou
+  $tab= '';
+  $thd= '';
+  $n= 0;
+  if ( $export ) {
+    $result->tits= $tits;
+    $result->flds= $flds;
+    $result->clmn= $clmn;
+  }
+  else {
+    // titulky
+    foreach ($tits as $idw) {
+      list($id)= explode(':',$idw);
+      $ths.= "<th>$id</th>";
+    }
+    foreach ($clmn as $i=>$c) {
+      $tab.= "<tr>";
+      foreach ($flds as $f) {
+        $tab.= "<td style='text-align:left'>{$c[$f]}</td>";
+      }
+      $tab.= "</tr>";
+      $n++;
+    }
+    $result->html= "<div class='stat'><table class='stat'><tr>$ths</tr>$tab</table>$n řádků</div>";
+  }
+  return $result;
+}
 # -------------------------------------------------------------------------------------------------- akce_fotoseznam
 # generování HTML kódu pro zobrazování fotek na CD akce
 function akce_fotoseznam($akce,$par,$title,$vypis,$export=false) { trace();
@@ -666,32 +696,7 @@ function akce_sestava_pecouni($akce,$par,$title,$vypis,$export=false) { trace();
     }
   }
 //                                         debug($clmn,"sestava pro $akce,$typ,$fld,$cnd");
-  // zobrazení tabulkou
-  $tab= '';
-  $thd= '';
-  if ( $export ) {
-    $result->tits= $tits;
-    $result->flds= $flds;
-    $result->clmn= $clmn;
-    $result->expr= $expr;
-  }
-  else {
-    // titulky
-    foreach ($tits as $idw) {
-      list($id)= explode(':',$idw);
-      $ths.= "<th>$id</th>";
-    }
-    foreach ($clmn as $i=>$c) {
-      $tab.= "<tr>";
-      foreach ($c as $id=>$val) {
-        $tab.= "<td style='text-align:left'>$val</td>";
-      }
-      $tab.= "</tr>";
-    }
-    $result->html= "<div class='stat'><table class='stat'><tr>$ths</tr>$tab</table></div>";
-    $result->href= $href;
-  }
-  return $result;
+  return akce_table($tits,$flds,$clmn,$export);
 }
 # -------------------------------------------------------------------------------------------------- akce_sestava_lidi
 # generování sestavy pro účastníky $akce - jednotlivce
@@ -734,32 +739,7 @@ function akce_sestava_lidi($akce,$par,$title,$vypis,$export=false) { trace();
     }
   }
 //                                         debug($clmn,"sestava pro $akce,$typ,$fld,$cnd");
-  // zobrazení tabulkou
-  $tab= '';
-  $thd= '';
-  if ( $export ) {
-    $result->tits= $tits;
-    $result->flds= $flds;
-    $result->clmn= $clmn;
-    $result->expr= $expr;
-  }
-  else {
-    // titulky
-    foreach ($tits as $idw) {
-      list($id)= explode(':',$idw);
-      $ths.= "<th>$id</th>";
-    }
-    foreach ($clmn as $i=>$c) {
-      $tab.= "<tr>";
-      foreach ($c as $id=>$val) {
-        $tab.= "<td style='text-align:left'>$val</td>";
-      }
-      $tab.= "</tr>";
-    }
-    $result->html= "<div class='stat'><table class='stat'><tr>$ths</tr>$tab</table></div>";
-    $result->href= $href;
-  }
-  return $result;
+  return akce_table($tits,$flds,$clmn,$export);
 }
 # -------------------------------------------------------------------------------------------------- akce_sestava_pary
 # generování sestavy pro účastníky $akce - páry
@@ -770,7 +750,8 @@ function akce_sestava_pary($akce,$par,$title,$vypis,$export=false) { trace();
   $typ= $par->typ;
   $tit= $par->tit;
   $fld= $par->fld;
-  $cnd= $par->cnd;
+  $cnd= $par->cnd ? $par->cnd : 1;
+  $hav= $par->hav ? "HAVING {$par->hav}" : '';
   $ord= $par->ord ? $par->ord : "IF(funkce<=2,1,funkce),IF(pouze=0,r.nazev,o.prijmeni)";
   $html= '';
   $href= '';
@@ -793,6 +774,13 @@ function akce_sestava_pary($akce,$par,$title,$vypis,$export=false) { trace();
             GROUP_CONCAT(DISTINCT IF(t.role='b',o.jmeno,'')    SEPARATOR '') as jmeno_z,
             GROUP_CONCAT(DISTINCT IF(t.role='b',o.narozeni,'') SEPARATOR '') as narozeni_z,
             GROUP_CONCAT(DISTINCT IF(t.role='b',o.rc_xxxx,'')  SEPARATOR '') as rc_xxxx_z,
+            ( SELECT count(DISTINCT cp.id_pobyt) FROM pobyt AS cp
+              JOIN akce AS ca ON ca.id_duakce=cp.id_akce
+              JOIN spolu AS cs ON cp.id_pobyt=cs.id_pobyt
+              JOIN osoba AS co ON cs.id_osoba=co.id_osoba
+              LEFT JOIN tvori AS ct ON ct.id_osoba=co.id_osoba
+              LEFT JOIN rodina AS cr ON cr.id_rodina=ct.id_rodina
+              WHERE ca.druh=1 AND cr.id_rodina=r.id_rodina ) AS _ucasti,
             SUM(IF(t.role='d',1,0)) as _deti,
             r.ulice,r.psc,r.obec,r.telefony,r.emaily,p.poznamka,
             p.skupina,p.pokoj,p.luzka,p.kocarek,p.pristylky,p.strava_cel,p.strava_pol
@@ -801,8 +789,8 @@ function akce_sestava_pary($akce,$par,$title,$vypis,$export=false) { trace();
           JOIN osoba AS o ON s.id_osoba=o.id_osoba
           LEFT JOIN tvori AS t ON t.id_osoba=o.id_osoba
           LEFT JOIN rodina AS r USING(id_rodina)
-          WHERE p.id_akce='$akce' AND $cond
-          GROUP BY id_pobyt
+          WHERE p.id_akce='$akce' AND $cnd
+          GROUP BY id_pobyt $hav
           ORDER BY $ord";
   $res= mysql_qry($qry);
   while ( $res && ($x= mysql_fetch_object($res)) ) {
@@ -817,32 +805,7 @@ function akce_sestava_pary($akce,$par,$title,$vypis,$export=false) { trace();
 //     break;
   }
 //                                         debug($clmn,"sestava pro $akce,$typ,$fld,$cnd");
-  // zobrazení tabulkou
-  $tab= '';
-  $thd= '';
-  if ( $export ) {
-    $result->tits= $tits;
-    $result->flds= $flds;
-    $result->clmn= $clmn;
-    $result->expr= $expr;
-  }
-  else {
-    // titulky
-    foreach ($tits as $idw) {
-      list($id)= explode(':',$idw);
-      $ths.= "<th>$id</th>";
-    }
-    foreach ($clmn as $i=>$c) {
-      $tab.= "<tr>";
-      foreach ($c as $id=>$val) {
-        $tab.= "<td style='text-align:left'>$val</td>";
-      }
-      $tab.= "</tr>";
-    }
-    $result->html= "<div class='stat'><table class='stat'><tr>$ths</tr>$tab</table></div>";
-    $result->href= $href;
-  }
-  return $result;
+  return akce_table($tits,$flds,$clmn,$export);
 }
 # ================================================================================================== TEXTY
 # -------------------------------------------------------------------------------------------------- akce_text_vyroci
