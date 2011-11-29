@@ -109,6 +109,7 @@ skins/ch/menu_on2.png -text
 skins/ch/menu_on3.png -text
 skins/ch/menu_on_hover.png -text
 skins/ch/method.png -text
+skins/ch/pixel.png -text
 skins/ch/select.gif -text
 skins/ch/select_auto.gif -text
 skins/ch/sort_a.png -text
@@ -169,6 +170,7 @@ skins/ck/menu_on2.png -text
 skins/ck/menu_on3.png -text
 skins/ck/menu_on_hover.png -text
 skins/ck/method.png -text
+skins/ck/pixel.png -text
 skins/ck/select.gif -text
 skins/ck/select_auto.gif -text
 skins/ck/sort_a.png -text
