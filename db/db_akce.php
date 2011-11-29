@@ -3123,7 +3123,7 @@ function evid_sestava_j($par,$title,$export=false) {
       }
     }
   }
-  return evid_table($par,$tits,$flds,$clmn);
+  return evid_table($par,$tits,$flds,$clmn,$export);
 }
 # ================================================================================================== VYPISY AKCE
 # obsluha různých forem výpisů karet AKCE
