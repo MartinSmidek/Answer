@@ -2929,8 +2929,14 @@ function evid_vyp_excel($par,$title) {  trace();
   return akce_vyp_excel("",$tab->par,$title,$subtitle,$tab);
 }
 # -------------------------------------------------------------------------------------------------- evid_table
+# pokud je $par->grf= a:b,c,... pak se zobrazí grafy normalizované podle sloupce a
+# pokud je $par->txt doplní se pod tabulku
 function evid_table($par,$tits,$flds,$clmn,$export=false) {
   $result= (object)array('par'=>$par);
+  if ( $par->grf ) {
+    list($norm,$grf)= explode(':',$par->grf);
+  }
+  $skin= $_SESSION['skin'];
   // zobrazení tabulkou
   $tab= '';
   $thd= '';
@@ -2949,12 +2955,21 @@ function evid_table($par,$tits,$flds,$clmn,$export=false) {
     foreach ($clmn as $i=>$c) {
       $tab.= "<tr>";
       foreach ($flds as $f) {
-        $tab.= "<td style='text-align:left'>{$c[$f]}</td>";
+        // přidání grafu
+        $g= '';
+        if ( strpos(",$grf,",",$f,")!==false ) {
+          $g= round(100*($c[$f]/$c[$norm]),0);
+          $g= "<img src='skins/$skin/pixel.png'
+            style='height:4px;width:{$g}px;float:left;margin-top:5px'>";
+        }
+        $align= is_numeric($c[$f]) ? "right" : "left";
+        $tab.= "<td style='text-align:$align'>{$c[$f]}$g</td>";
       }
       $tab.= "</tr>";
       $n++;
     }
-    $result->html= "<div class='stat'><table class='stat'><tr>$ths</tr>$tab</table>$n řádků</div>";
+    $result->html= "<div class='stat'><table class='stat'><tr>$ths</tr>$tab</table>
+      $n řádků<br><br>{$par->txt}</div>";
   }
   return $result;
 }
@@ -2965,14 +2980,15 @@ function evid_sestava_s($par,$title,$export=false) {
   $par->tit= 'nazev';
   $tab= evid_sestava_v($par,$title,true);
 //                                                         debug($tab,"evid_sestava_v(,$title,$export)");
-  $clmn= array();
-  $tit= "rok,u nás noví,podruhé,vícekrát,vps odpočívá,ve službě";
+  $clmn= $suma= array();
+  $tit= "rok,párů,u nás - noví,podruhé,vícekrát,vps - odpočívající,ve službě,dětí na kurzu";
   $tits= explode(',',$tit);
-  $fld= "rr,n,p,v,vo,vs";
+  $fld= "rr,x,n,p,v,vo,vs,d";
   $flds= explode(',',$fld);
+  $flds_rr= explode(',',substr($fld,3));
   for ($rrrr=1990;$rrrr<=date('Y');$rrrr++) {
     $rr= substr($rrrr,-2);
-    $clmn[$rr]= array('rr'=>$rr);
+    $clmn[$rr]= array('rr'=>$rr,'x'=>0);
     $rows= count($tab->clmn);
     for ($n= 1; $n<=$rows; $n++) {
       if ( $xrr= $tab->clmn[$n][$rr] ) {
@@ -2991,10 +3007,35 @@ function evid_sestava_s($par,$title,$export=false) {
         $clmn[$rr]['vs']+= $vps && $xrr=='v' ? 1 : 0;
       }
     }
+    // přepočty v daném roce
+    $suma[$rr]= 0;
+    foreach($flds_rr as $fld) {
+      $suma[$rr]+= $clmn[$rr][$fld];
+    }
   }
+  // doplnění počtů dětí
+  $qry= "SELECT YEAR(datum_od) AS _rok,id_akce,count(DISTINCT id_pobyt) AS _pary,
+           SUM(IF(role='d',1,0)) AS _deti
+         FROM pobyt AS p
+         JOIN spolu AS s USING(id_pobyt)
+         JOIN osoba AS o ON o.id_osoba=s.id_osoba
+         JOIN tvori AS t ON t.id_osoba=o.id_osoba
+         JOIN akce AS a ON a.id_duakce=p.id_akce
+         WHERE a.druh=1 AND p.funkce IN (0,1)
+         GROUP BY id_akce";
+  $res= mysql_qry($qry);
+  while ( $res && ($x= mysql_fetch_object($res)) ) {
+    $rr= substr($x->_rok,-2);
+    $clmn[$rr]['d']+= $x->_deti;
+    $clmn[$rr]['x']+= $x->_pary;
+  }
+                                        debug($suma,"součty");
 //                                                         debug($clmn,"evid_sestava_s:$tit;$fld");
   $par->tit= $tit;
   $par->fld= $fld;
+  $par->grf= "x:n,p,v,vo,vs,d";
+  $par->txt= "Pozn. Graficky je znázorněn relativní počet vzhledem k počtu párů.;
+    <br>Pokud v nějakém roce bylo více běhů je zobrazen jejich součet.";
   return evid_table($par,$tits,$flds,$clmn,$export);
 }
 # -------------------------------------------------------------------------------------------------- evid_sestava_v
@@ -3025,7 +3066,7 @@ function evid_sestava_v($par,$title,$export=false) {
         LEFT JOIN tvori AS t ON t.id_osoba=o.id_osoba
         LEFT JOIN rodina AS r USING(id_rodina)
         JOIN akce AS a ON a.id_duakce=p.id_akce
-        WHERE a.druh=1 AND p.pouze=0  /* AND LEFT(r.nazev,3)='Šmí' */
+        WHERE a.druh=1 AND p.funkce IN (0,1)  /* AND LEFT(r.nazev,3)='Šmí' */
         GROUP BY r.id_rodina $HAVING
         ORDER BY r.nazev
         ";
@@ -3276,8 +3317,8 @@ function sql2xls($datum) {
 # ASK - vytvoření SQL dotazů pro definici mailů
 # vrací {id_cis,data,query}
 function db_mail_sql_new() {  #trace();
-  $id= select("max(id_cis)","_cis","druh='db_maily_sql'");
-  $data= select("max(data)","_cis","druh='db_maily_sql'");
+  $id= select("MAX(0+id_cis)","_cis","druh='db_maily_sql'");
+  $data= select("MAX(0+data)","_cis","druh='db_maily_sql'");
   $result= (object)array(
     'id'=>$id+1, 'data'=>$data+1,
     'qry'=>"SELECT id_... AS _id,prijmeni,jmeno,ulice,psc,obec,email,telefon FROM ...");
