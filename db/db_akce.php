@@ -3348,7 +3348,8 @@ function db_mail_sql_new() {  #trace();
 # ASK - vytvoření SQL dotazů pro definici mailů
 # vrací {id_cis,data,query}
 function db_mail_sql_try($qry) {  trace();
-  $html= '';
+  $html= $head= $tail= '';
+  $emails= array();
   try {
     $time_start= getmicrotime();
     $res= @mysql_query($qry);
@@ -3359,22 +3360,32 @@ function db_mail_sql_try($qry) {  trace();
     else {
       $nmax= 20;
       $num= mysql_num_rows($res);
-      $html.= "výběr obsahuje <b>$num</b> emailových adresátů, nalezených během $time ms, ";
-      $html.= $num>$nmax ? "následuje prvních $nmax adresátů" : "následují všichni adresáti";
-      $html.= "<br><br><table class='stat'>";
-      $html.= "<tr><th>prijmeni jmeno</th><th>email</th><th>telefon</th>
+      $head.= "Výběr obsahuje <b>$num</b> emailových adresátů, nalezených během $time ms, ";
+      $head.= $num>$nmax ? "následuje prvních $nmax adresátů" : "následují všichni adresáti";
+      $tail.= "<br><br><table class='stat'>";
+      $tail.= "<tr><th>prijmeni jmeno</th><th>email</th><th>telefon</th>
         <th>ulice psc obec</th><th>x</th></tr>";
       $n= $nmax;
-      while ( $n && ($c= mysql_fetch_object($res)) ) {
-        $html.= "<tr><td>{$c->prijmeni} {$c->jmeno}</td><td>{$c->email}</td><td>{$c->telefon}</td>
-          <td>{$c->ulice} {$c->psc} {$c->obec}</td><td>{$c->_x}</td></tr>";
-        $n--;
+      while ( $res && ($c= mysql_fetch_object($res)) ) {
+        if ( $n ) {
+          $tail.= "<tr><td>{$c->prijmeni} {$c->jmeno}</td><td>{$c->_email}</td><td>{$c->telefon}</td>
+            <td>{$c->ulice} {$c->psc} {$c->obec}</td><td>{$c->_x}</td></tr>";
+          $n--;
+        }
+        // počítání mailů
+        $es= preg_split('/[,;]/',str_replace(' ','',$c->_email));
+        foreach($es as $e) {
+          if ( $e!='' && !in_array($e,$emails) ) $emails[]= $e;
+        }
       }
-      $html.= "</table>";
-      $html.= $num>$nmax ? "..." : "";
+      $tail.= "</table>";
+      $tail.= $num>$nmax ? "..." : "";
     }
   }
   catch (Exception $e) { $html.= "<span style='color:red'>FATAL ".mysql_error()."</span>";  }
+  $head.= "<br>Adresáti mají <b>".count($emails)."</b> různých emailových adres";
+  $html= $head.$tail;
+                                                debug($emails,"db_mail_sql_try");
   return $html;
 }
 # ================================================================================================== EMAILY
