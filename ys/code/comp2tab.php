@@ -75,6 +75,7 @@ $names= array(
  'get_json' => (object)array('op'=>'fm'),
  'get_page' => (object)array('op'=>'fm'),
  'get_query' => (object)array('op'=>'fm'),
+ 'google_maps' => (object)array('op'=>'ff'),
  'graft' => (object)array('op'=>'fm'),
  'grayscale' => (object)array('op'=>'fm'),
  'group_by' => (object)array('op'=>'os'),
