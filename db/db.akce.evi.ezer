@@ -55,28 +55,25 @@ proc status() {
       'osoby: id_osoba=',osoby.b.id_o.get,', id_rodina=',osoby.b.id_r.get
   ))];
 }
-
+const LETOS = "NOW()>=od.dat_od AND (NOW()<=od.dat_do OR od.dat_do='0000-00-00')"
 menu m {type:'left'
   menu g {title:'Evidence YMCA Setkání',type:'group', skill:'yae'
     item i {title:'všechny kontakty'
-          par:°{cond:"1"} }
-    item {title:'pouze členové'
-          par:°{cond:"od.ukon IN ('b','c')
-                      AND NOW()>=od.dat_od AND (NOW()<=od.dat_do OR od.dat_do='0000-00-00') "} }
-    item {title:'pouze činní členové'
-          par:°{cond:"od.ukon='c'
-                      AND NOW()>=od.dat_od AND (NOW()<=od.dat_do OR od.dat_do='0000-00-00') "} }
-    item {title:'pouze členové - dlužníci', format:'d'
-          par:°{cond:"od.ukon=IN ('b','c')
-                      AND NOW()>=od.dat_od AND (NOW()<=od.dat_do OR od.dat_do='0000-00-00') "} }
-    item {title:'pouze dárci'
-          par:°{cond:"od.ukon='d'"} }
-    item {title:'pouze dárci bez potvrzení'
-          par:°{cond:"od.ukon='d' AND od.dat_do='0000-00-00'"} }
+          par:°{cnd:"1",hav:"1"} }
+    item {title:'letošní členové'
+          par:°{cnd:LETOS,hav:"LOCATE('b',rel)>0 OR LOCATE('c',rel)>0"} }
+    item {title:'letošní činní členové'
+          par:°{cnd:LETOS,hav:"LOCATE('c',rel)>0"} }
+    item {title:'letošní č.členové - dlužníci'
+          par:°{cnd:LETOS,hav:"LOCATE('c',rel)>0 AND NOT LOCATE('p',rel)>0"} }
+    item {title:'letošní  dárci'
+          par:°{cnd:LETOS,hav:"LOCATE('d',rel)>0"} }
+    item {title:'letošní dárci bez potvrzení', format:'d'
+          par:°{cnd:"1",hav:"LOCATE('d',rel)>0"} }
     proc onclick (i) {
       panel.display(0,'inf'); panel.display(1,'evid|list|dary|p_.*|d_.*');
       evid.page_init; dary.page_init;
-      osoby.b.browse_load(conc("os.deleted='' AND ",i.par.cond));
+      osoby.b.browse_load(conc("os.deleted='' AND ",i.par.cnd),"",i.par.hav);
       evid.page_show; dary.page_show;
       osoby.b.raise('onrowclick');
     }
