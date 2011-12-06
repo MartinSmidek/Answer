@@ -23,7 +23,8 @@
     'ezer2/client/ezer_fdom2.js',
     'ezer2/client/app.js',
     'db/db_fce.js',
-    'ds/fce.js'
+    'ds/fce.js',
+    'http://maps.googleapis.com/maps/api/js?sensor=false'
   );
   $css= array(
     './ezer2/client/ezer.css.php',

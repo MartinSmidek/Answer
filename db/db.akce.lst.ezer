@@ -189,7 +189,7 @@ form _akce [,,*,50] {
 #     }
 /**/show druh  [,,60,] {title:'druh',   data:da2.druh, map_pipe:ms_akce_typ.zkratka, format:'sq#'}
     show kod   [,,30,] {title:'účet',  expr:"IF(ga2.g_kod,ga2.g_kod,da2.ciselnik_akce)", format:'rs+q*' }
-    show nazev [,,120,] {title:'název', data:da2.nazev, format:'sq*'}
+    show nazev [,,120,] {title:'název', expr:"IF(da2.nazev='',ga2.g_nazev,da2.nazev)", format:'sq*'}
     show misto [,,60,] {title:'místo', data:da2.misto, format:'sq*'}
     show od    [,,65,] {title:'od',     data:da2.datum_od, format:'rsq*'}
     show do    [,,65,] {title:'do',     data:da2.datum_do, format:'rsq*'}
@@ -209,7 +209,30 @@ form _akce [,,*,50] {
       google.browse_seek;
     }
   }
+  button [-160,3,100,] { title:'Mapa', skill:'m|m'
+    help:"mapa s bydlišti účastníků akcí"
+    proc onclick() {
+      mapa.ukaz_psc;
+      mapa.modal(20,100);
+    }
+  }
   proc fill(x) {
     [ x; head.set(conc("<div class='karta' style='padding-left:60px'>",x,"</div>")) ];
+  }
+}
+// ------------------------------------------- mapa
+panel mapa [,,640,400] { type:'popup'
+  proc onfirstfocus() {
+    google_maps('mapa_cr',object('label',f.cr));
+  }
+  proc ukaz_psc() {
+    var ret: object
+    google_maps('mark_new');
+    ret.set(ask('akce_mapa',the_duakce.get));
+    google_maps('mark_put',object('mark',ret.mark));
+  }
+  use f: form _f [0,10,,]
+  form _f [,,700,400] {
+    label cr [0,0,640,400]
   }
 }

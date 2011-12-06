@@ -2387,6 +2387,26 @@ function akce_roku_update($rok) {  trace();
   // konec
   return $n;
 }
+# -------------------------------------------------------------------------------------------------- akce_mapa
+# získání seznamu souřadnic bydlišť účastníků akce
+function akce_mapa($akce) {  trace();
+  // dotaz
+  $marks= $del= ''; $n= 0;
+  $qry=  "SELECT psc,lat,lng
+          FROM pobyt AS p
+          JOIN spolu AS s USING(id_pobyt)
+          JOIN osoba AS o ON o.id_osoba=s.id_osoba
+          JOIN uir_adr.psc_axy USING(psc)
+          WHERE p.id_akce='$akce'";
+  $res= mysql_qry($qry);
+  while ( $res && ($s= mysql_fetch_object($res)) ) {
+    $n++;
+    $marks.= "$del{$s->lat},{$s->lng}"; $del= ';';
+  }
+  $ret= (object)array('mark'=>$marks,'n'=>$n);
+                                                debug($ret,"mapa_akce");
+  return $ret;
+}
 # ================================================================================================== ÚČASTNÍCI
 # -------------------------------------------------------------------------------------------------- akce_strava_denne
 # vrácení výjimek z providelné stravy jako pole

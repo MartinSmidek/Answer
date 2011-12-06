@@ -1,4 +1,83 @@
 // uživatelské funkce aplikace YS
+// ================================================================================================= Google
+Ezer.obj= {};
+// ------------------------------------------------------------------------------------------------- google_maps
+//ff: test.google_maps (fce,label[,options])
+Ezer.obj.google_maps= {};                       // obsahuje: poly,mark
+Ezer.fce.google_maps= function (fce,options) {
+  ret= 1;
+  switch (fce) {
+  case 'mapa_cr':                                       // zobrazí prázdnou mapu ČR
+    var stredCR= new google.maps.LatLng(49.8, 15.6);
+    var g_options= {zoom:7, center:stredCR, mapTypeId:google.maps.MapTypeId.TERRAIN};
+    Ezer.obj.google_maps.map= new google.maps.Map(options.label.DOM_Block,g_options);
+    Ezer.obj.google_maps.poly= null;
+    Ezer.obj.google_maps.mark= [];
+    break;
+  case 'mark_new':                                      // vymaže všechny markery
+    if ( Ezer.obj.google_maps.mark )
+      Ezer.obj.google_maps.mark.each(function(m){m.setMap(null)});
+    Ezer.obj.google_maps.mark= [];
+    break;
+  case 'mark_put':                                      // přidá markery podle textu x,y;..
+    options.mark.split(';').map(function(xy) {
+      var x_y= xy.split(',');
+      var ll= new google.maps.LatLng(x_y[0],x_y[1]);
+      Ezer.obj.google_maps.mark.push(
+        new google.maps.Marker({position:ll,map:Ezer.obj.google_maps.map}));
+    });
+    break;
+  case 'poly_new':                                      // vymaže všechny polygony
+    if ( Ezer.obj.google_maps.poly )
+      Ezer.obj.google_maps.poly.setMap(null);
+    Ezer.obj.google_maps.poly= null;
+    break;
+  case 'poly_spec':                                     // umožní editaci, je-li options.edit:1
+    if ( Ezer.obj.google_maps.poly )
+      Ezer.obj.google_maps.poly.setEditable(options.edit?true:false);
+    break;
+  case 'poly_put':                                      // přidá polygony podle textu x,y;..|..
+    // transformace z textu na LatLng
+    if ( typeof(options.poly)=='string' ) {
+      options.poly.split('|').each(function(poly) {
+        var coords= poly.split(';').map(function(xy) {
+          var ll= xy.split(',');
+          return new google.maps.LatLng(ll[0],ll[1]);
+        });
+        if ( Ezer.obj.google_maps.poly ) {
+          // přidej k existující
+          var paths= Ezer.obj.google_maps.poly.getPaths();
+          paths.push(new google.maps.MVCArray(coords));
+          Ezer.obj.google_maps.poly.setPaths(paths);
+        }
+        else {
+          // vytvoř první
+          Ezer.obj.google_maps.poly= new google.maps.Polygon({paths:coords,strokeColor:"#FF0000",
+            strokeOpacity:0.8,strokeWeight:3,fillColor:"#FF0000",fillOpacity:0.35,editable:false});
+        }
+      });
+      Ezer.obj.google_maps.poly.setMap(Ezer.obj.google_maps.map);
+    }
+    break;
+  case 'poly_get':                                      // vrátí textovou formu polygonů x,y;..|..
+    var ret= '', del= '';
+    if ( Ezer.obj.google_maps.poly ) {
+      var paths= Ezer.obj.google_maps.poly.getPaths();
+      for (var n= 0; n < paths.length; n++) {
+        var vertices= paths.getAt(n);
+        for (var i= 0; i < vertices.length; i++) {
+          ret+= del+vertices.getAt(i).toUrlValue();
+          del= ';';
+        }
+        del= '|'
+      }
+    }
+    break;
+  default:
+    Ezer.error("ve funkci google_maps byla použita neznámá podfunkce '"+fce+"'");
+  }
+  return ret;
+}
 // ================================================================================================= Ezer.Label
 // ------------------------------------------------------------------------------------ image_filter
 //fm: Label.image_filter (filter)

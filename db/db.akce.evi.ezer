@@ -36,6 +36,8 @@ use info: form right [12,4,,] {             tag:'inf'
     }
   }
 }
+# systémové informace
+use stav: form _stav [0,550,,] { skill:'m' }
 
 proc onstart () {
   osoby_vyber.set(1);
@@ -45,6 +47,13 @@ proc onfirstfocus() {
   osoby.b.browse_load;
   evid.oso.onclick;
   m.g.i.click;
+}
+
+proc status() {
+  [ has_skill('m'); stav.klice.set(conc(
+    // osoby
+      'osoby: id_osoba=',osoby.b.id_o.get,', id_rodina=',osoby.b.id_r.get
+  ))];
 }
 
 menu m {type:'left'
@@ -107,47 +116,10 @@ menu m {type:'left'
     x.set(ask('evid_sestava',i.par,the_title.get));
     info.fill('',x.html);
   }
-#   menu {title:'Administrace evidence',type:'group', skill:'m'
-#     item   {title:'zrušení členství, příspěvků a darů'
-#       proc onclick (i) {
-#         confirm('opravdu?');
-#         panel.display(0,'list|evid|p_oso|p_rod|p_cle|p_fir|p_akc|dary|d_cle|d_dar|d_pri');
-#         panel.display(1,'inf');
-#         info.fill(conc(i.owner.title,' - ',i.title),ask('query',"TRUNCATE dar "));
-#       }
-#     }
-#     item   {title:'vymazání všech členství a příspěvků'
-#       proc onclick (i) {
-#         confirm('opravdu?');
-#         panel.display(0,'list|evid|p_oso|p_rod|p_cle|p_fir|p_akc|dary|d_cle|d_dar|d_pri');
-#         panel.display(1,'inf');
-#         info.fill(conc(i.owner.title,' - ',i.title),ask('query',"DELETE FROM dar WHERE ukon IN ('a','c','p')"));
-#       }
-#     }
-#     item   {title:'import členů z Googlu'
-#       proc onclick (i) {
-#         panel.display(0,'list|evid|p_oso|p_rod|p_cle|p_fir|p_akc|dary|d_cle|d_dar|d_pri');
-#         panel.display(1,'inf');
-#         info.fill(conc(i.owner.title,' - ',i.title),ask('akce_google_cleni'));
-#       }
-#     }
-#   }
-#   menu {title:'Klub přátel YMCA Setkání',type:'group'
-#     item {title:'přihlášky z www.setkani.org'
-#       proc onclick (i) {
-#         panel.display(0,'bank|pers'); panel.display(1,'app');
-#         info.fill(conc(i.owner.title,' - ',i.title),' ');
-#       }
-#     }
-#     item {title:'import plateb z RB'
-#       proc onclick (i) {
-#         panel.display(0,'pers|app'); panel.display(1,'bank');
-#         info.fill(conc(i.owner.title,' - ',i.title),' ');
-#         info.msg.set(ask('akce_rb_platby'));
-#  #         info.fill(conc(i.owner.title,' - ',i.title),'staré info');
-#         platby.b.browse_load
-#       }
-#     }
+}
+# -------------------------------------------------------------------------------------------------- _stav
+form _stav [,,380,106] {
+  label klice [0,0,380,106] { skill:'m', style:'border:1px solid #bbb;padding:3px' }
 }
 # -------------------------------------------------------------------------------------------------- _osoby
 form _osoby {
@@ -165,7 +137,7 @@ form _osoby {
       help:'datum narození ve tvaru rrmmdd'}
     show rel [,,0,] { expr:"GROUP_CONCAT(DISTINCT od.ukon ORDER BY od.ukon SEPARATOR '')", title:'YS',
       help:'b,c=běžný či činný člen, d=dar, p=příspěvek', format:'q%s' }
-    proc onrowclick() { evid.reload; dary.reload }
+    proc onrowclick() { evid.reload; dary.reload; status }
     proc onclick() {
       rel.width; rel.width(0);  nar.width(65);
     |            rel.width(65); nar.width(0);
@@ -185,7 +157,7 @@ form _evid { style:'z-index:1'
   }
   proc reload() {
     switch(zalozka.get,
-    'p_oso',{ p_oso.load(osoby.b.id_o.get) },
+    'p_oso',{ p_oso.key(osoby.b.id_o.get); p_oso.reload },
     'p_rod',{ p_rod.load(osoby.b.id_r.get) },
     'p_cle',{ p_cle.b.browse_load(conc('ox.id_rodina=',osoby.b.id_r.get)) },
     'p_akc',{ p_akc.ucasti(osoby.b.id_o.get) },
@@ -210,6 +182,8 @@ form _osoba { tag:'a'
   view o: table osoba
   view t: table tvori { join:"ON o.id_osoba=t.id_osoba" }
   view r: table rodina { join:"ON r.id_rodina=t.id_rodina" }
+  # --------------------------------------------------  PROCEDURY
+  proc reload() { o.key(form.key); o.load }
   # --------------------------------------------------  OSOBA
   const L=0; T=10
   field  { data:o.id_osoba }
@@ -242,10 +216,44 @@ form _osoba { tag:'a'
   field email    [L+52,T+124,330,] {data:o.email}
   label          [L+0,T+152,48,] {title:'poznámka'}
   edit  pozn     [L+52,T+151,329,60] {data:o.note}
+  # --------------------------------------------------  OPRAVA
+  const Lt=55
+  const Tt=240
+  label  [Lt+0,Tt+0,98,30] { css:'ae_parm', style:'z-index:1'  }
+  button [Lt+6,Tt+5,,] {title:'Uložit', help:'Uložení změněných osobních údajů'
+    proc onclick() {
+      o.key;
+      // oprava
+      [ o.save; reload ];
+      osoby.b.browse_row
+    | // přidání
+      error('o.insert');
+  }}
+  button [Lt+55,Tt+5,,] {title:'Zpět', help:'Změny nebudou uloženy'
+    proc onclick() {
+      evid.reload;
+  }}
+  # --------------------------------------------------  VYTVÁŘENÍ A MAZÁNÍ
+  label  [Lt+122,Tt+0,109,30] { css:'ae_parm', style:'z-index:1'  }
+  button [Lt+127,Tt+5,,] {title:'Nový', help:'Založení nového kontaktu na osobu', format:'d'
+    proc onclick() {  } }
+  button [Lt+170,Tt+5,,] {title:'Vymazat', help:'Vymazání osobních informací z evidence', format:'d'
+    proc onclick() {
+      var ans: text
+      confirm('Opravdu vymazat všechny údaje o ',prijmeni.get,' ',jmeno.get,' z databáze?');
+  } }
+  # --------------------------------------------------  KONTEXTOVÉ MENU
+  menu { type:'context'
+    item back { title:'ukázat všechny změny'
+      proc onclick () { Ctrack.CT_tab.set('osoba'); Ctrack.CT_load(o.key) }
+    }
+  }
 }
 # ---------------------------------------------------------------------- _rodina
 form _rodina {
   view r: table rodina
+  # --------------------------------------------------  PROCEDURY
+  proc reload() { form.load }
   # --------------------------------------------------  RODINA
   const Lr= 0; Tr= 10
 #   label  [Lr+0,Tr+9,367,249] { css:'ae_part' }
@@ -256,20 +264,52 @@ form _rodina {
   label          [Lr+5,Tr+54,100,] {title:'ulice'}
   label          [Lr+179,Tr+54,39,] {title:'psč'}
   label          [Lr+230,Tr+54,100,] {title:'obec'}
-  label          [Lr+5,Tr+94,37,] {title:'telefon'}
-  label          [Lr+5,Tr+138,33,] {title:'e-mail'}
-  label          [Lr+5,Tr+179,33,] {title:'poznámka'}
-  field nazev     [Lr+4,Tr+30,100,] {data:r.nazev, help:'příjmení'}
-  field _spolu    [Lr+149,Tr+32,23,] {format:'o', value:'?'}
-  field svatba    [Lr+178,Tr+31,36,] {data:r.svatba}
-  field ulice_r   [Lr+4,Tr+69,162,] {data:r.ulice}
-  field psc_r     [Lr+179,Tr+69,39,] {data:r.psc}
-  field obec_r    [Lr+228,Tr+69,129,] {data:r.obec}
-  field telefony  [Lr+5,Tr+109,353,] {data:r.telefony}
-  field emaily    [Lr+5,Tr+153,354,] {data:r.emaily}
-  edit  note      [Lr+5,Tr+192,355,60] {data:r.note}
-  field datsvatba [Lr+220,Tr+31,63,] {data:r.datsvatba}
-  field spz       [Lr+297,Tr+31,62,] {data:r.spz}
+  field nazev    [Lr+4,Tr+30,100,] {data:r.nazev, help:'příjmení'}
+  field _spolu   [Lr+149,Tr+32,23,] {format:'o', value:'?'}
+  field svatba   [Lr+178,Tr+31,36,] {data:r.svatba}
+  field ulice_r  [Lr+4,Tr+69,162,] {data:r.ulice}
+  field psc_r    [Lr+179,Tr+69,39,] {data:r.psc}
+  field obec_r   [Lr+228,Tr+69,129,] {data:r.obec}
+  field datsvatba[Lr+220,Tr+31,63,] {data:r.datsvatba}
+  field spz      [Lr+297,Tr+31,62,] {data:r.spz}
+  label          [Lr+13,Tr+101,33,] {title:'telefon'}
+  field telefony [Lr+51,Tr+97,212,] {data:r.telefony}
+  label          [Lr+16,Tr+128,30,] {title:'e-mail'}
+  field emaily   [Lr+52,Tr+124,330,] {data:r.emaily}
+  label          [Lr+0, Tr+152,48,] {title:'poznámka'}
+  edit  note     [Lr+52,Tr+151,329,60] {data:r.note}
+  # --------------------------------------------------  OPRAVA
+  const Lrb=55
+  const Trb=240
+  label  [Lrb+0,Trb+0,98,30] { css:'ae_parm', style:'z-index:1'  }
+  button [Lrb+6,Trb+5,,] {title:'Uložit', help:'Uložení změněných rodinných údajů'
+    proc onclick() {
+      form.key;
+      // oprava
+      [ form.save; reload ];
+      osoby.b.browse_row
+    | // přidání
+      error('r.insert');
+  }}
+  button [Lrb+55,Trb+5,,] {title:'Zpět', help:'Změny nebudou uloženy'
+    proc onclick() {
+      evid.reload;
+  }}
+  # --------------------------------------------------  VYTVÁŘENÍ A MAZÁNÍ
+  label  [Lrb+122,Trb+0,109,30] { css:'ae_parm', style:'z-index:1'  }
+  button [Lrb+127,Trb+5,,] {title:'Nový', help:'Založení nového rodiny', format:'d'
+    proc onclick() {  } }
+  button [Lrb+170,Trb+5,,] {title:'Vymazat', help:'Vymazání rodinných informací z evidence', format:'d'
+    proc onclick() {
+      var ans: text
+      confirm('Opravdu vymazat všechny údaje o ',nazev.get,' z databáze?');
+  } }
+  # --------------------------------------------------  KONTEXTOVÉ MENU
+  menu { type:'context'
+    item back { title:'ukázat všechny změny'
+      proc onclick () { Ctrack.CT_tab.set('rodina'); Ctrack.CT_load(form.key) }
+    }
+  }
 }
 # ---------------------------------------------------------------------- _rcleni
 form _rcleni {
@@ -675,3 +715,83 @@ form _prihlaska {
   edit msg [9,Tc+14,300,] { data:w.potvrzeno }
 }
 */
+# ================================================================================================== BackTrace
+# --- back_track
+panel Ctrack [,,572,564] { title:'Korekce oprav databáze', type:'popup', css:'dialog'
+  use CT_track: form _back [0,16,,] { tabindex:20 },
+  proc CT_load (id) {
+    Ctrack.popup(0,1);
+    CT_track.list.browse_load(conc("kde='",CT_tab.get,"' AND klic=",id),"kdy DESC");
+    CT_track.list.raise('onrowclick')
+  }
+  var CT_tab:text
+  var CT_fld_id:text
+  var CT_fld:object
+#   proc CT_track.list.onsubmit () {
+#     eq(CT_track.list.op.get,'c','d','p','a');
+#     alert('změny v historii nelze vracet - pouze ručně opravit')
+#   | eq(CT_tab.get,'chlapi');
+#     CT_fld_id.set(CT_track.list.fld.get); CT_fld_id.get;
+#     CT_fld.set(ch.part(CT_fld_id.get)); CT_fld.get;
+#     ch.part(CT_track.list.fld.get).set(CT_track.list.old.get);
+#     CT_fld.change
+#   | alert('Položka ',CT_fld_id.get,' není dostupná, vraťte prosím změnu ručně')
+#   }
+  # ------------------------------------------------------------------------------------------------- BACK
+  # id_track,kdy,kdo,kde,klic,zmena:fld,op,val,old
+  form _back [,,570,570] {
+    browse list [8,8,150,100] { rows:27,
+      show kdy [,,100,] { title:'kdy', data:_track.kdy },
+      show kdn [,,30,] { title:'kdn', data:_track.kdo },
+      show op [,,10,] { title:'?', data:_track.op },
+      show fld [,,60,] { title:'položka', data:_track.fld },
+      show old [,,200,] { title:'původní hodnota', data:_track.old, format:'t' },
+      show val [,,110,] { title:'změněná hodnota', data:_track.val, format:'t' },
+      show id_track [,,0,] { data:_track.id_track },
+    },
+    button zpet [500,515,80,20] { title:'Zpět'
+      proc onclick() { panel.close(0) }
+    }
+  }
+}
+#   menu {title:'Administrace evidence',type:'group', skill:'m'
+#     item   {title:'zrušení členství, příspěvků a darů'
+#       proc onclick (i) {
+#         confirm('opravdu?');
+#         panel.display(0,'list|evid|p_oso|p_rod|p_cle|p_fir|p_akc|dary|d_cle|d_dar|d_pri');
+#         panel.display(1,'inf');
+#         info.fill(conc(i.owner.title,' - ',i.title),ask('query',"TRUNCATE dar "));
+#       }
+#     }
+#     item   {title:'vymazání všech členství a příspěvků'
+#       proc onclick (i) {
+#         confirm('opravdu?');
+#         panel.display(0,'list|evid|p_oso|p_rod|p_cle|p_fir|p_akc|dary|d_cle|d_dar|d_pri');
+#         panel.display(1,'inf');
+#         info.fill(conc(i.owner.title,' - ',i.title),ask('query',"DELETE FROM dar WHERE ukon IN ('a','c','p')"));
+#       }
+#     }
+#     item   {title:'import členů z Googlu'
+#       proc onclick (i) {
+#         panel.display(0,'list|evid|p_oso|p_rod|p_cle|p_fir|p_akc|dary|d_cle|d_dar|d_pri');
+#         panel.display(1,'inf');
+#         info.fill(conc(i.owner.title,' - ',i.title),ask('akce_google_cleni'));
+#       }
+#     }
+#   }
+#   menu {title:'Klub přátel YMCA Setkání',type:'group'
+#     item {title:'přihlášky z www.setkani.org'
+#       proc onclick (i) {
+#         panel.display(0,'bank|pers'); panel.display(1,'app');
+#         info.fill(conc(i.owner.title,' - ',i.title),' ');
+#       }
+#     }
+#     item {title:'import plateb z RB'
+#       proc onclick (i) {
+#         panel.display(0,'pers|app'); panel.display(1,'bank');
+#         info.fill(conc(i.owner.title,' - ',i.title),' ');
+#         info.msg.set(ask('akce_rb_platby'));
+#  #         info.fill(conc(i.owner.title,' - ',i.title),'staré info');
+#         platby.b.browse_load
+#       }
+#     }
