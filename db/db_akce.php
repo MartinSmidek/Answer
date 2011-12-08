@@ -3573,10 +3573,16 @@ function dop_mai_pocet($id_dopis,$dopis_var,$cond='') {  trace();
       while ( $res && ($d= mysql_fetch_object($res)) ) {
         $n++;
         $nazev= "Členů {$q->zkratka}";
-        if ( $d->email!='' || $d->emaily!='' ) {
-          $emaily[]= "{$d->email},{$d->emaily}";
-          $ids[]= $d->_id;
-          $jmena[]= "{$d->prijmeni} {$d->jmeno}";
+        if ( $d->_email ) {
+          // přidej každý mail zvlášť do seznamu
+          foreach(preg_split('/\s*[,;]\s*/',trim($d->_email,",; \n\r"),0,PREG_SPLIT_NO_EMPTY) as $adr) {
+            // pokud tam ještě není
+            if ( $adr && !in_array($adr,$emaily) ) {
+              $emaily[]= $adr;
+              $ids[]= $d->_id;
+              $jmena[]= "{$d->prijmeni} {$d->jmeno}";
+            }
+          }
         }
         else {
           $nema.= "$deln{$d->prijmeni} {$d->jmeno}"; $deln= ', ';
@@ -3796,7 +3802,10 @@ function dop_mai_info($id,$email,$id_dopis,$zdroj) {  trace();
       // SELECT vrací (_id,prijmeni,jmeno,ulice,psc,obec,email,telefon)
       $qry= $q->hodnota;
       if ( strpos($qry,"GROUP BY") ) {
-        $qry= str_replace("GROUP BY","GROUP BY",$qry);
+        if ( strpos($qry,"HAVING") )
+          $qry= str_replace("HAVING","HAVING _id=$id AND ",$qry);
+        else
+          $qry= str_replace("GROUP BY","GROUP BY _id HAVING _id=$id AND ",$qry);
       }
       else {
         $qry.= " GROUP BY _id HAVING _id=$id ";

@@ -14,7 +14,7 @@ kEzer-ys2
 	-fis - θαst
 		fis\fis_pdf.php
 		fis\fis_tcpdf.php
-	-fa
+	+fa
 		fa\$.ezer
 		fa.inc
 		fa\fa.lide.ezer
@@ -96,7 +96,7 @@ kEzer-ys2
 	-comp
 		ezer2\comp.php
 		ezer2\comp.css
-	-doc
+	+doc
 		docs\2008_ciselnik_akci.txt
 		wiki\dokumentace.wiki
 		doc\poznamky.txt
@@ -161,22 +161,22 @@ kEzer-ys2
 			ys.php
 			ys\ys_fce.js
 			ys\ys_fce.php
-		+ds
+		-ds
 			ys\ys.ds.ezer
 			ys\ys.ds.kl.ezer
 			ys\ys.ds.tab.ezer
 		-eko
 			ys\ys.eko.ezer
 			ys\ys_ucet.php
-		+lide
+		-lide
 			ys\ys.info.ezer
 			ys\ys.lide.ezer
 			ys\ys_lide.php
-		+pokladna
+		-pokladna
 			ys\ys.pok.den.ezer
 			ys\ys.pok.ezer
 			ys\ys.pok.nas.ezer
-		+syst
+		-syst
 			ys\ys.syst.dat.ezer
 			ys\ys.syst.ezer
 			ys\ys.syst.oso.ezer
@@ -191,7 +191,7 @@ kEzer-ys2
 		ds\fce.js
 		ds\$.ezer
 		ds.inc
-	-ch
+	+ch
 		ch\$.ezer
 		ch\ch.css.css
 		ch\ch.ezer
@@ -210,23 +210,22 @@ kEzer-ys2
 8=ezer2\client\ezer_fdom2.js
 9=ys\$.ezer
 10=db\db.akce.ducast.ezer
-11=ezer2\client\lib.js
-12=db\db.akce.tisk.ezer
-13=ys\ys.lide.ezer
-14=fis\fis_tcpdf.php
-15=ys.inc
-16=fa.inc
-17=db\db_akce.php
-18=db\db.akce.evi.ezer
-19=sql\maily_vybery.sql
-20=ys\ys_fce.php
-21=test\test.gug.ezer
-22=test\test_fce.php
-23=ys.php
-24=skins\colors.php
+11=db\db.akce.tisk.ezer
+12=db\db_akce.php
+13=db\db.akce.evi.ezer
+14=db\db.akce.chl.ezer
+15=db\db.akce.ezer
+16=ezer2\ezer2.syst.ezer
+17=ezer2\ezer2_fce.php
+18=ys.inc
+19=ys.php
+20=db\db_fce.js
+21=db\db.akce.lst.ezer
+22=fa.php
+23=doc\poznamky.txt
 [Selected Project Files]
 Main=
-Selected=db\db_akce.php
+Selected=db\db.akce.lst.ezer
 [ezer2\server\ezer2.php]
 TopLine=802
 Caret=110,836
@@ -245,12 +244,12 @@ Caret=1,14
 TopLine=1344
 Caret=27,1371
 [ezer2\server\ae_slib.php]
-TopLine=34
-Caret=20,75
+TopLine=1
+Caret=27,543
 BookMark1=34,370
-BookMark2=25,1878
+BookMark2=25,1881
 Mark1=37,112
-Mark2=10,657
+Mark2=10,660
 [ezer2\client\dbg.js]
 TopLine=35
 Caret=60,46
@@ -268,8 +267,8 @@ Caret=103,727
 BookMark1=1,498
 BookMark2=1,733
 [ezer2\client\ezer.js]
-TopLine=4812
-Caret=28,4827
+TopLine=4732
+Caret=19,4771
 BookMark1=35,4884
 BookMark2=30,3758
 BookMark3=99,6412
@@ -286,59 +285,56 @@ Mark2=3,269
 TopLine=1
 Caret=69,16
 [db\db.akce.ducast.ezer]
-TopLine=381
-Caret=29,421
+TopLine=470
+Caret=1,515
 BookMark1=11,516
 BookMark2=5,572
 Mark1=9,67
 Mark2=7,599
-[ezer2\client\lib.js]
-TopLine=488
-Caret=19,534
 [db\db.akce.tisk.ezer]
 TopLine=89
 Caret=80,136
 BookMark2=1,176
-[ys\ys.lide.ezer]
-TopLine=1
-Caret=1,10
-[fis\fis_tcpdf.php]
-TopLine=154
-Caret=95,175
-[ys.inc]
-TopLine=1
-Caret=49,28
-[fa.inc]
-TopLine=43
-Caret=1,82
 [db\db_akce.php]
-TopLine=2965
-Caret=67,2984
-BookMark3=1,2940
-Mark1=20,3195
-BookMark1=41,777
+TopLine=3350
+Caret=58,3374
+BookMark3=1,2960
+Mark1=20,3215
 Mark2=22,742
 Mark3=21,530
+BookMark1=22,2409
 [db\db.akce.evi.ezer]
-TopLine=74
-Caret=28,107
-BookMark1=10,166
-BookMark3=43,484
-[sql\maily_vybery.sql]
-TopLine=10
-Caret=15,32
-[ys\ys_fce.php]
-TopLine=17
-Caret=41,22
-[test\test.gug.ezer]
+TopLine=58
+Caret=61,69
+Mark1=51,137
+BookMark1=25,76
+[db\db.akce.chl.ezer]
+TopLine=302
+Caret=75,327
+[db\db.akce.ezer]
+TopLine=16
+Caret=100,48
+[ezer2\ezer2.syst.ezer]
+TopLine=518
+Caret=59,546
+[ezer2\ezer2_fce.php]
+TopLine=1097
+Caret=18,1099
+[ys.inc]
 TopLine=1
-Caret=48,15
-[test\test_fce.php]
-TopLine=11
-Caret=11,34
+Caret=29,46
 [ys.php]
 TopLine=1
-Caret=39,53
-[skins\colors.php]
+Caret=1,31
+[db\db_fce.js]
 TopLine=1
-Caret=14,10
+Caret=40,34
+[db\db.akce.lst.ezer]
+TopLine=189
+Caret=50,212
+[fa.php]
+TopLine=1
+Caret=17,26
+[doc\poznamky.txt]
+TopLine=223
+Caret=113,229
