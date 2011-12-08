@@ -209,7 +209,7 @@ form _akce [,,*,50] {
       google.browse_seek;
     }
   }
-  button [-160,3,100,] { title:'Mapa', skill:'m|m'
+  button [-160,3,100,] { title:'Mapa', skill:'a|a'
     help:"mapa s bydlišti účastníků akcí"
     proc onclick() {
       mapa.ukaz_psc;
