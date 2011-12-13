@@ -122,22 +122,27 @@ form _stav [,,380,106] {
 form _osoby {
   view os: table osoba
   view ot: table tvori { join:"ON os.id_osoba=ot.id_osoba" }
+  view of: table rodina { join:"USING(id_rodina)" }
   view od: table dar { join_type:'LEFT', join:"ON os.id_osoba=od.id_osoba AND od.deleted=''" }
   browse b [0,0,,] { rows:28, qry_rows:1, group_by:'os.id_osoba'
     show id_o { data:os.id_osoba }
-    show id_r { data:ot.id_rodina }
+    show id_t { data:ot.id_tvori }
+    show id_r { data:of.id_rodina }
     show id_d { data:od.id_dar }
     show prijmeni [,,80,] { data:os.prijmeni, title:'příjmení', format:'q*s' }
     show jmeno [,,70,] { data:os.jmeno, title:'jméno', format:'q*s' }
-    show [,,95,] { title:'obec', data:os.obec, format:'q*s' }
-    show nar [,,65,] { title:'rrmmdd', data:os.narozeni, sql_pipe:'sql_yymmdd', format:'q@s'
-      help:'datum narození ve tvaru rrmmdd'}
-    show rel [,,0,] { expr:"GROUP_CONCAT(DISTINCT od.ukon ORDER BY od.ukon SEPARATOR '')", title:'YS',
+    show [,,60,] { title:'obec', data:os.obec, format:'q*s' }
+    show rel [,,100,] { expr:"GROUP_CONCAT(DISTINCT od.ukon ORDER BY od.ukon SEPARATOR '')", title:'YS',
       help:'b,c=běžný či činný člen, d=dar, p=příspěvek', format:'q%s' }
+    show nar [,,0,] { title:'rrmmdd', data:os.narozeni, sql_pipe:'sql_yymmdd', format:'q@s'
+      help:'datum narození ve tvaru rrmmdd'}
+    show mail [,,0,] { expr:"CONCAT(email,IF(email='','',','),emaily)", title:'emaily',
+      help:'osobní i  rodinné emaily', format:'tq%s' }
     proc onrowclick() { evid.reload; dary.reload; status }
     proc onclick() {
-      rel.width; rel.width(0);  nar.width(65);
-    |            rel.width(65); nar.width(0);
+      rel.width; rel.width(0);   nar.width(100);
+    | nar.width; nar.width(0);   mail.width(100);
+    |            rel.width(100); mail.width(0);
     }
   }
 }
