@@ -109,6 +109,7 @@ var rok: number
 panel cen [,,,543] {type:'right', title:'Ceny'
   menu {type:'left', active:*
     menu m {title:'Ceny roku ',type:'group'
+      item {title:'2012',par:°{rok:'2012'} }
       item {title:'2011',par:°{rok:'2011'} }
       item {title:'2010',par:°{rok:'2010'} }
       item {title:'2009',par:°{rok:'2009'} }
@@ -121,7 +122,7 @@ panel cen [,,,543] {type:'right', title:'Ceny'
       }
     }
     menu {title:'Ceník dalšího roku ',type:'group'
-      item {title:'kopie 2010 => 2011',par:°{op:'kopie',z:'2010',na:'2011'} }
+      item {title:'kopie 2011 => 2012',par:°{op:'kopie',z:'2011',na:'2012'} }
       proc onclick (i) {
         confirm("Ceník roku ",i.par.na," bude nahrazen kopií ceníku roku ",i.par.z,". Pokračovat?");
         info.fill(conc(i.owner.title,i.title),ask('ds_ceny_uprava',i.par));
