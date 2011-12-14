@@ -227,7 +227,7 @@ form _osoba { tag:'a'
       o.key;
       // oprava
       [ o.save; reload ];
-      osoby.b.browse_row
+      [ osoby.b.browse_row | osoby.b.browse_init ]
     | // přidání
       error('o.insert');
   }}
@@ -289,7 +289,7 @@ form _rodina {
       form.key;
       // oprava
       [ form.save; reload ];
-      osoby.b.browse_row
+      [ osoby.b.browse_seek | osoby.b.browse_init ]
     | // přidání
       error('r.insert');
   }}
@@ -441,12 +441,13 @@ form _dcleni [,,400,245] {
       form.same
     | // oprava
       form.key; form.save; form.load;
-      b.browse_seek; form_state('n|s','u|z'); osoby.b.browse_row
+      [ b.browse_seek; form_state('n|s','u|z') ];
+      [ osoby.b.browse_row | osoby.b.browse_init ]
     | // přidání
       id_o.get;
       form.insert; form.load;
       b.raise('onrowclick',b.browse_seek(conc('id_dar=',form.key))); form_state('n|s','u|z');
-      osoby.b.browse_row
+      [ osoby.b.browse_row | osoby.b.browse_init ]
     | error('chyba při vkládání členství - nenastavený člen')
   }}
   # Zpět
@@ -460,7 +461,8 @@ form _dcleni [,,400,245] {
     proc onclick() {
       confirm("opravdu zrušit členství ",osoby.b.jmeno.get,' ',osoby.b.prijmeni.get,"?");
       del.set(conc('D ',sys('user','abbr'),' ',now)); del.change; form.save;
-      dary.reload; osoby.b.browse_row
+      dary.reload;
+      [ osoby.b.browse_row | osoby.b.browse_init ]
   }}
 }
 # ---------------------------------------------------------------------- _dpris
@@ -521,12 +523,13 @@ form _dpris [,,400,245] {
     proc onclick() {
       form.same
     | // oprava
-      form.key; form.save; form.load; b.browse_seek; form_state('n|s','u|z');
+      form.key; form.save; form.load;
+      [ b.browse_seek; form_state('n|s','u|z') ]
     | // přidání
       id_o.get;
       form.insert; form.load;
       b.raise('onrowclick',b.browse_seek(conc('id_dar=',form.key))); form_state('n|s','u|z');
-      osoby.b.browse_row
+      [ osoby.b.browse_row | osoby.b.browse_init ]
     | error('chyba při vkládání příspěvku - nenastavený člen')
   }}
   # -------------------------- Zpět
@@ -602,12 +605,13 @@ form _ddary [,,400,245] {
     proc onclick() {
       form.same
     | // oprava
-      form.key; form.save; form.load; b.browse_seek; form_state('n|s','u|z');
+      form.key; form.save; form.load;
+      [ b.browse_seek; form_state('n|s','u|z') ]
     | // přidání
       id_o.get;
       form.insert; form.load;
       b.raise('onrowclick',b.browse_seek(conc('id_dar=',form.key))); form_state('n|s','u|z');
-      osoby.b.browse_row
+      [ osoby.b.browse_row | osoby.b.browse_init ]
     | error('chyba při vkládání daru - nenastavený člen')
   }}
   # -------------------------- Zpět
