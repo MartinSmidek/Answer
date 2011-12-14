@@ -2456,6 +2456,46 @@ function akce_strava_denne_save($id_pobyt,$dnu,$cela,$cela_def,$cela_str,$polo,$
 }
 # ================================================================================================== CHLAPI AKCE
 # funkce pro kartu CHLAPI
+# -------------------------------------------------------------------------------------------------- chlapi_mrop_export
+# export iniciovaných chlapů do Excelu
+function chlapi_mrop_export() {  #trace();
+  global $ezer_path_docs;
+  // zahájení exportu
+  $ymd= date('Ymd');
+  $dnes= date('j. n. Y');
+  $t= "Iniciovaní chlapi, stav ke dni $dnes";
+  $file= "mrop_$ymd";
+  $type= 'xls';
+  $par= (object)array('file'=>$file,'type'=>$type,'title'=>$t,'color'=>'aac0cae2');
+  $clmns= "prijmeni:příjmení,jmeno:jméno,ulice,psc:psč,obec,iniciace";
+  $titles= $fields= $del= '';
+  foreach (explode(',',$clmns) as $clmn) {
+    list($field,$title)= explode(':',trim($clmn));
+    $title= $title ? $title : $field;
+    $titles.= "$del$title";
+    $fields.= "$del$field";
+    $del= ',';
+  }
+  $pipe= array('narozeni'=>'sql_date1');
+  export_head($par,$titles);
+  $qry= "SELECT $fields FROM chlapi WHERE iniciace!='' ";
+  $res= mysql_qry($qry);
+  // projití záznamů
+  $values= array();
+  while ( $res && $row= mysql_fetch_assoc($res) ) {
+    foreach ($row as $f => $val) {
+      $a= $val;
+      if ( isset($pipe[$f]) ) $a= $pipe[$f]($a);
+      $values[$f]= $a;
+    }
+    export_row($values);
+  }
+   export_tail();
+//                                                 display(export_tail(1));
+  // odkaz pro stáhnutí
+  $ref= "seznam ve formátu <a href='docs/$file.$type'>Excel</a>";
+  return $ref;
+}
 # -------------------------------------------------------------------------------------------------- chlapi_akce_export
 # export účastníků akce do Excelu
 function chlapi_akce_export($id_akce,$nazev) {  #trace();
