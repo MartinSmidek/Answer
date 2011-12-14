@@ -39,7 +39,7 @@ menu m {type:'left'
     item a {title:'účastníků zvolené akce'
       proc onclick(i) {
         chs.reset('akce'); ch.reset('akce');
-        info.get.display(1,'ex');                         // umožníme export
+        info.get.display(1,'ex'); info.export_type.set('akce');  // umožníme export
         the_akce.get;
         info.fill(conc('Seznam pro ',the_akce_nazev.get),' ');
         ch.get.display(1); chs.get.display(1);
@@ -49,9 +49,10 @@ menu m {type:'left'
       }
     }
     item inic {title:'všech iniciovaných chlapů' }
-    item {title:'všech známých chlapů', format:'d'  }
+#     item {title:'všech známých chlapů', format:'d'  }
     proc onclick(i) {
-      chs.reset('mrop'); ch.reset('mrop'); info.get.display(0,'ex');
+      chs.reset('mrop'); ch.reset('mrop');
+      info.get.display(1,'ex'); info.export_type.set('mrop');  // umožníme export
       info.fill(conc(i.owner.title,' ',i.title),' ');
       ch.get.display(1); chs.get.display(1);
       chs.reload(0);
@@ -61,9 +62,15 @@ menu m {type:'left'
 # -------------------------------------------------------------------------------------------------- _info
 # univerzální formulář pro levostranné menu
 form _info [,,*,50] { css:'ds_form'
+  var export_type: text
   label head [0,0,*,50]  { title:'' }
   button [-22,3,50,] { tag:'ex', title:"Export"
-    proc onclick() { ref.set(ask('chlapi_akce_export',the_akce.get,the_akce_nazev.get)) }
+    proc onclick() {
+      switch(export_type.get,
+      'akce',{ ref.set(ask('chlapi_akce_export',the_akce.get,the_akce_nazev.get))},
+      'mrop',{ ref.set(ask('chlapi_mrop_export'))}
+      )
+    }
   }
   label ref [-80,7,200,]  { tag:'ex', format:'r', css:'title_ref' }
   label note [0,35,,550] { title:'' }
