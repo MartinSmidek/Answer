@@ -213,13 +213,14 @@ form _chlap [,,*,466] {
   } }
   # --------------------------------------------------  PŘIDÁVÁNÍ Z JINÝCH ZDROJŮ pro mode='akce'
   label  [Lu+256,Tu+125,109,51] { tag:'akce', css:'ae_parm' }
-  button [Lu+262,Tu+128,,29] { tag:'akce', title:'Přidat z MROP',
-      help:'Nalezení účastníka podle jména a přidání na akci'
+  button [Lu+262,Tu+128,,29] { tag:'akce', title:'Přidat z akcí',
+    help:'Nalezení účastníka podle jména a přidání na akci'
     proc onclick() {
       PridaniJmenem.modal(240,50)
   } }
   button [Lu+262,Tu+152,,] { tag:'akce', title:'Přidat z MS', format:'d',
-      help:'Nalezení účastníka podle jména a přidání na akci' }
+      help:'Nalezení účastníka podle jména a přidání na akci'
+  }
   # --------------------------------------------------  OSOBA
   const L=240
   const T=10
@@ -229,13 +230,11 @@ form _chlap [,,*,466] {
   field prijmeni [L+5,T+30,100,] {data:c.prijmeni, help:'příjmení'}
   label          [L+117,T+15,100,] {title:'jméno'}
   field jmeno    [L+117,T+30,101,] {data:c.jmeno}
-
   radio sex [L+225,T+15,50,35] { data:c.sex, value:'1'
     case [0,2,50,] { title:'muž', expr:'1' }
     case [0,17,50,] { title:'žena', expr:'2' }
     proc onchange() { echo('sex=',this.get) }
   }
-
   label          [L+323,T+15,35,] {title:'MROP'}
   field iniciace [L+323,T+30,36,] {data:c.iniciace, format:'r:e'}
   label          [L+5,T+54,100,] {title:'ulice'}
