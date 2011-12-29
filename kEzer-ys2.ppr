@@ -24,7 +24,7 @@ kEzer-ys2
 		fa\fa_lide.php
 	-skins
 		skins\colors.php
-	-db
+	+db
 		db\$.ezer
 		db\db.akce.ducast.ezer
 		db\db.akce.evi.ezer
@@ -105,7 +105,7 @@ kEzer-ys2
 		..\..\..\..\WINDOWS\system32\drivers\etc\hosts
 		..\..\..\Apache\conf\extra\httpd-vhosts-ezer.conf
 		..\..\..\Apache\logs\ys2-error.log
-	+test
+	-test
 		test\$.ezer
 		test\fce.js
 		test\test.css
@@ -151,8 +151,8 @@ kEzer-ys2
 		dg\dg.css.css
 		dg.inc
 		dg.php
-	-ys
-		-$
+	+ys
+		+$
 			ys\$.ezer
 			skins\colors.php
 			ys\ys.css.css
@@ -161,14 +161,14 @@ kEzer-ys2
 			ys.php
 			ys\ys_fce.js
 			ys\ys_fce.php
-		+ds
+		-ds
 			ys\ys.ds.ezer
 			ys\ys.ds.kl.ezer
 			ys\ys.ds.tab.ezer
 		-eko
 			ys\ys.eko.ezer
 			ys\ys_ucet.php
-		-lide
+		+lide
 			ys\ys.info.ezer
 			ys\ys.lide.ezer
 			ys\ys_lide.php
@@ -234,7 +234,7 @@ kEzer-ys2
 32=test\test.gug.ezer
 [Selected Project Files]
 Main=
-Selected=db\db.akce.evi.ezer
+Selected=db\db.akce.chl.ezer
 [ezer2\server\ezer2.php]
 TopLine=5
 Caret=27,13
@@ -318,8 +318,8 @@ Caret=38,43
 BookMark1=25,76
 Mark1=51,150
 [db\db.akce.chl.ezer]
-TopLine=38
-Caret=48,71
+TopLine=16
+Caret=37,33
 [db\db.akce.ezer]
 TopLine=16
 Caret=100,48
