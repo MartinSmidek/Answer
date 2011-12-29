@@ -2144,8 +2144,9 @@ function akce_rb_platby() {  trace();
   $n= 0;
   $html= '';
   $dom= new DOMDocument();
-  $ok= @$dom->loadHTML("http://www.rb.cz/firemni-finance/transparentni-ucty/?root=firemni-finance"
-     . "&item1=transparentni-ucty&tr_acc=vypis&account_number=514048001",LIBXML_NOWARNING );
+  $page= file_get_contents("http://www.rb.cz/firemni-finance/transparentni-ucty/?root=firemni-finance"
+     . "&item1=transparentni-ucty&tr_acc=vypis&account_number=514048001" );
+  $ok= @$dom->loadHTML($page);
   if ( $ok ) {
     // kontrola hlavičky
     $thead= $dom->getElementsByTagName('thead');                // DOMNodeList

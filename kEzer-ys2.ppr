@@ -14,7 +14,7 @@ kEzer-ys2
 	-fis - θαst
 		fis\fis_pdf.php
 		fis\fis_tcpdf.php
-	+fa
+	-fa
 		fa\$.ezer
 		fa.inc
 		fa\fa.lide.ezer
@@ -24,7 +24,7 @@ kEzer-ys2
 		fa\fa_lide.php
 	-skins
 		skins\colors.php
-	+db
+	-db
 		db\$.ezer
 		db\db.akce.ducast.ezer
 		db\db.akce.evi.ezer
@@ -96,7 +96,7 @@ kEzer-ys2
 	-comp
 		ezer2\comp.php
 		ezer2\comp.css
-	+doc
+	-doc
 		docs\2008_ciselnik_akci.txt
 		wiki\dokumentace.wiki
 		doc\poznamky.txt
@@ -105,7 +105,7 @@ kEzer-ys2
 		..\..\..\..\WINDOWS\system32\drivers\etc\hosts
 		..\..\..\Apache\conf\extra\httpd-vhosts-ezer.conf
 		..\..\..\Apache\logs\ys2-error.log
-	-test
+	+test
 		test\$.ezer
 		test\fce.js
 		test\test.css
@@ -151,8 +151,8 @@ kEzer-ys2
 		dg\dg.css.css
 		dg.inc
 		dg.php
-	+ys
-		+$
+	-ys
+		-$
 			ys\$.ezer
 			skins\colors.php
 			ys\ys.css.css
@@ -161,7 +161,7 @@ kEzer-ys2
 			ys.php
 			ys\ys_fce.js
 			ys\ys_fce.php
-		-ds
+		+ds
 			ys\ys.ds.ezer
 			ys\ys.ds.kl.ezer
 			ys\ys.ds.tab.ezer
@@ -191,7 +191,7 @@ kEzer-ys2
 		ds\fce.js
 		ds\$.ezer
 		ds.inc
-	+ch
+	-ch
 		ch\$.ezer
 		ch\ch.css.css
 		ch\ch.ezer
@@ -225,9 +225,16 @@ kEzer-ys2
 23=doc\poznamky.txt
 24=db\db.akce.mai.ezer
 25=ezer2\server\licensed\phpmailer\class.phpmailer.php
+26=ys\ys.ds.tab.ezer
+27=ys\ys.ds.ezer
+28=ds\ds_fce.php
+29=..\www-ck\zaloha.js
+30=..\..\..\..\WINDOWS\system32\drivers\etc\hosts
+31=test\test.ys.ezer
+32=test\test.gug.ezer
 [Selected Project Files]
 Main=
-Selected=db\db_akce.php
+Selected=db\db.akce.evi.ezer
 [ezer2\server\ezer2.php]
 TopLine=5
 Caret=27,13
@@ -269,8 +276,8 @@ Caret=103,727
 BookMark1=1,498
 BookMark2=1,733
 [ezer2\client\ezer.js]
-TopLine=4732
-Caret=19,4771
+TopLine=3884
+Caret=1,3890
 BookMark1=35,4884
 BookMark2=30,3758
 BookMark3=99,6412
@@ -298,21 +305,21 @@ TopLine=89
 Caret=80,136
 BookMark2=1,176
 [db\db_akce.php]
-TopLine=3606
-Caret=31,3641
-BookMark3=1,2960
-Mark1=20,3215
+TopLine=2170
+Caret=10,2192
+BookMark1=1,3617
+BookMark3=1,3001
+Mark1=20,3256
 Mark2=22,742
 Mark3=21,530
-BookMark1=1,3576
 [db\db.akce.evi.ezer]
-TopLine=58
-Caret=61,69
+TopLine=20
+Caret=38,43
 BookMark1=25,76
-Mark1=51,137
+Mark1=51,150
 [db\db.akce.chl.ezer]
-TopLine=302
-Caret=75,327
+TopLine=38
+Caret=48,71
 [db\db.akce.ezer]
 TopLine=16
 Caret=100,48
@@ -324,7 +331,7 @@ TopLine=1097
 Caret=18,1099
 [ys.inc]
 TopLine=1
-Caret=29,46
+Caret=60,14
 [ys.php]
 TopLine=1
 Caret=1,31
@@ -346,3 +353,24 @@ Caret=35,359
 [ezer2\server\licensed\phpmailer\class.phpmailer.php]
 TopLine=1058
 Caret=101,1083
+[ys\ys.ds.tab.ezer]
+TopLine=1
+Caret=1,1
+[ys\ys.ds.ezer]
+TopLine=87
+Caret=55,118
+[ds\ds_fce.php]
+TopLine=350
+Caret=1,372
+[..\www-ck\zaloha.js]
+TopLine=1
+Caret=25,29
+[..\..\..\..\WINDOWS\system32\drivers\etc\hosts]
+TopLine=1
+Caret=70,10
+[test\test.ys.ezer]
+TopLine=1
+Caret=1,1
+[test\test.gug.ezer]
+TopLine=1
+Caret=1,1

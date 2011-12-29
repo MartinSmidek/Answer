@@ -19,14 +19,25 @@ proc onfirstfocus() {
   m.os.inic.click;
 }
 menu m {type:'left'
-  menu g {title:'Volba akce',type:'group'
-#     item {title:'MROP - minulé iniciace', format:'d'  }
-    item {title:'MROP - přihlášky', par:°{id_akce:2} }
+  menu g {title:'rok 2012',type:'group'
+    item {title:'MROP - přihlášky', par:°{id_akce:6} }
+    item {title:'MROP - závěr', par:°{id_akce:7} }
+    item i {title:'Křižanov - přihlášky', par:°{id_akce:5} }
+    proc onclick(i) {
+      the_akce.set(i.par.id_akce); info.get.display(0,'ex');
+      ch.get.display(0); chs.get.display(0);
+      info.fill(conc(i.owner.title,' ',i.title),ask('chlapi_akce_prehled',the_akce.get));
+      the_akce_nazev.set(i.title);
+      [ the_akce.get; the_akce_cena.set(ask('select','cena','ch_akce',conc('id_akce=',the_akce.get))) ]
+    }
+  }
+  menu {title:'rok 2011',type:'group'
+    item {title:'MROP', par:°{id_akce:2} }
     item {title:'MROP - závěr', par:°{id_akce:4} }
-    item i {title:'GloTraCh - přihlášky', par:°{id_akce:1} }
-    item {title:'Jordán - přihlášky', par:°{id_akce:3} }
-    item {title:'všechny akce - minulé', format:'d' }
-    item {title:'všechny akce - přihlášky', format:'d' }
+    item i {title:'GloTraCh', par:°{id_akce:1} }
+    item {title:'Jordán', par:°{id_akce:3} }
+#     item {title:'všechny akce - minulé', format:'d' }
+#     item {title:'všechny akce - přihlášky', format:'d' }
     proc onclick(i) {
       the_akce.set(i.par.id_akce); info.get.display(0,'ex');
       ch.get.display(0); chs.get.display(0);
