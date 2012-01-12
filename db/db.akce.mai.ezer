@@ -16,9 +16,14 @@ use et: form _etext [10,40,,]   // editace mailu
 use sq: form _esql [10,34,,]    // správa SQL
 use es: form _esady [10,74,,]   // rozesílání
 
-proc onfirstfocus() { m.g.i.click; onfocus }
+proc onfirstfocus() {
+  m.g.i.click; onfocus;
+}
 
-proc onfocus() { m.g.i.enable(the_title.get); }
+proc onfocus() {
+  m.g.i.enable(the_title.get);
+  sq.get.display(cconc(has_skill('m'),1,0),'def');
+}
 
 proc init_ucast() { echo('mai:init_ucast ',the_title.get);
   vy.fill(the_title.get);
@@ -55,7 +60,7 @@ menu m {type:'left',
         [ echo('vy.komu_Q.key=',vy.komu_Q.key); vy.komu_Q.key | et.get.enable(0,'n') ]
       }
     }
-    item {title:'Definice skupin (SQL)', skill:'m'
+    item {title:'Definice skupin (SQL)',
       proc onclick (i) {
         ini(i,'sq','','skup','akce');
       }
@@ -106,23 +111,23 @@ form _esql {
   edit query [0,130,750,200]  { data:c.hodnota }
   label anwer [0,340,750,200]
   # příkazy
-  label  [400,5,205,30] { css:'ae_parm' }
-  button qry_save [408,9,,] {title:'Uložit',  help:'Uložit filtr skupiny', proc onclick() {
+  label  [400,5,205,30] { tag:'def', css:'ae_parm' }
+  button qry_save [408,9,,] { tag:'def',title:'Uložit',  help:'Uložit filtr skupiny', proc onclick() {
     form.same
   | form.key; form.save;
     [ zkratka.changed; vy.komu_Q.selects(dat.get) ];
     form.load
   | form.insert; form.load(id_cis.get); vy.komu_Q.selects(dat.get) // obnov výběrové hodnoty
   } }
-  button [456,9,,] {title:'Zpět',  help:'Neuložit změny', proc onclick() { form.load } }
-  button [504,9,,] {title:'Nový',  help:'Nový filtr skupiny', proc onclick() {
+  button [456,9,,] { tag:'def', title:'Zpět',  help:'Neuložit změny', proc onclick() { form.load } }
+  button [504,9,,] { tag:'def', title:'Nový',  help:'Nový filtr skupiny', proc onclick() {
     form.init; vy.komu_Q.init;
     new_sql.set(ask('db_mail_sql_new'));
     dat.set(new_sql.get('data')); dat.change;
     id_cis.set(new_sql.get('id')); id_cis.change; zkratka.init(2); druh.init(2);
     query.set(new_sql.get('qry'))
   } }
-  button [546,9,,] { title:'Smazat', help:'smazat SQL definici skupiny', proc onclick() {
+  button [546,9,,] { tag:'def', title:'Smazat', help:'smazat SQL definici skupiny', proc onclick() {
     id_cis.get; confirm("opravdu smazat dotaz pojmenovaný '",zkratka.get,"'?");
     _cis.delete_record(conc("id_cis=",id_cis.get," AND druh='db_maily_sql' AND data=",vy.komu_Q.key));
     form.init; vy.komu_Q.init; vy.komu_Q.selects // obnov výběrové hodnoty
@@ -130,7 +135,8 @@ form _esql {
   # test
   label  [620,5,52,30] { css:'ae_parm' }
   button [627,9,,] {title:'Test',  help:'Uložit změny a otestovat dotaz', proc onclick() {
-    qry_save.onclick; anwer.set(ask('db_mail_sql_try',query.get))
+    { has_skill('m'); qry_save.onclick | form.same | alert('pro změnu SQL dotazu nemáš oprávnění') };
+    anwer.set(ask('db_mail_sql_try',query.get))
   } }
   proc reload() {
     var akey:number
