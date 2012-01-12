@@ -11,12 +11,7 @@ FileFormat=0
 ProjectFilesOnly=0
 [Project tree]
 kEzer-ys2
-	+ezer2.2
-		ezer2.2\server\ae_slib.php
-		ezer2.2\client\app.js
-		ezer2.2\server\licensed\phpmailer\class.phpmailer.php
-		ezer2.2\server\licensed\phpmailer\class.smtp.php
-	+rr
+	-rr
 		rr\$.ezer
 		myslenky.php
 		robots.txt
@@ -36,7 +31,7 @@ kEzer-ys2
 		fa\fa_lide.php
 	-skins
 		skins\colors.php
-	-db
+	+db
 		db\$.ezer
 		db\db.akce.ducast.ezer
 		db\db.akce.evi.ezer
@@ -66,48 +61,48 @@ kEzer-ys2
 		sql\mysql_all.bat
 		sql\pohled_osoba.sql
 		zaloha.php
-	-ezer2
+	-ezer2.2
 		+libr
-			ezer2\$.ezer
-			ezer2\ezer2.help.ezer
-			ezer2\ezer2.pers.ezer
-			ezer2\ezer2.syst.ezer
-			ezer2\ezer2_fce.php
+			ezer2.2\$.ezer
+			ezer2.2\ezer2.help.ezer
+			ezer2.2\ezer2.pers.ezer
+			ezer2.2\ezer2.syst.ezer
+			ezer2.2\ezer2_fce.php
 		+client
-			ezer2\client\app.js
-			ezer2\client\dbg.css
-			ezer2\client\dbg.js
-			ezer2\client\ezer.css.php
-			ezer2\client\ezer.js
-			ezer2\client\ezer_report.js
-			ezer2\client\licensed\fancyupload.css
-			ezer2\client\licensed\fancyupload.js
-			ezer2\client\lib.js
+			ezer2.2\client\app.js
+			ezer2.2\client\dbg.css
+			ezer2.2\client\dbg.js
+			ezer2.2\client\ezer.css.php
+			ezer2.2\client\ezer.js
+			ezer2.2\client\ezer_report.js
+			ezer2.2\client\licensed\fancyupload.css
+			ezer2.2\client\licensed\fancyupload.js
+			ezer2.2\client\lib.js
 		+client f
-			ezer2\client\appf.css
+			ezer2.2\client\appf.css
 			dbg.html
-			ezer2\client\dbgf.html
-			ezer2\client\ezer_fdom1.js
-			ezer2\client\ezer_fdom2.js
-			ezer2\client\natdocs.css
+			ezer2.2\client\dbgf.html
+			ezer2.2\client\ezer_fdom1.js
+			ezer2.2\client\ezer_fdom2.js
+			ezer2.2\client\natdocs.css
 		+server
-			ezer2\server\ae_slib.php
-			ezer2\comp.php
-			ezer2\server\comp2.php
-			ezer2\server\comp2def.php
-			ezer2\server\comp2tab.php
-			ezer2\server\ezer2.php
-			ezer2\server\init.php
-			ezer2\server\reference.php
-			ezer2\server\session.php
-			ezer2\server\sys_doc.php
+			ezer2.2\server\ae_slib.php
+			ezer2.2\comp.php
+			ezer2.2\server\comp2.php
+			ezer2.2\server\comp2def.php
+			ezer2.2\server\comp2tab.php
+			ezer2.2\server\ezer2.php
+			ezer2.2\server\init.php
+			ezer2.2\server\reference.php
+			ezer2.2\server\session.php
+			ezer2.2\server\sys_doc.php
 		-wiki
-			ezer2\wiki\guide.wiki
-			ezer2\wiki\meta.wiki
-			ezer2\wiki\todo.wiki
+			ezer2.2\wiki\guide.wiki
+			ezer2.2\wiki\meta.wiki
+			ezer2.2\wiki\todo.wiki
 	-comp
-		ezer2\comp.php
-		ezer2\comp.css
+		ezer2.2\comp.php
+		ezer2.2\comp.css
 	-doc
 		docs\2008_ciselnik_akci.txt
 		wiki\dokumentace.wiki
@@ -180,7 +175,7 @@ kEzer-ys2
 		-eko
 			ys\ys.eko.ezer
 			ys\ys_ucet.php
-		+lide
+		-lide
 			ys\ys.info.ezer
 			ys\ys.lide.ezer
 			ys\ys_lide.php
@@ -211,142 +206,34 @@ kEzer-ys2
 		ch.php
 		ch\ch_fce.php
 [Open project files]
-0=ezer2\server\ezer2.php
-1=ezer2\server\comp2def.php
-2=ezer2\server\comp2.php
-3=ezer2\server\ae_slib.php
-4=ezer2\client\dbg.js
-5=ezer2\client\app.js
-6=ezer2\client\ezer_fdom1.js
-7=ezer2\client\ezer.js
-8=ezer2\client\ezer_fdom2.js
-9=test\$.ezer
-10=test\test.ys.ezer
-11=test\test_fce.php
-12=db\db.akce.evi.ezer
-13=..\..\www-ms\php-ms\work\ms.php
-14=test.inc
-15=test.php
-16=rr\$.ezer
-17=rr.inc
-18=rr.php
-19=rr\rr_fce.php
-20=ezer2.2\server\ae_slib.php
-21=ezer2.2\client\app.js
-22=ezer2\wiki\guide.wiki
-23=ezer2.2\server\licensed\phpmailer\class.smtp.php
-24=ezer2.2\server\licensed\phpmailer\class.phpmailer.php
-25=myslenky.php
-26=robots.txt
+0=ezer2.2\client\app.js
+1=ezer2.2\server\ezer2.php
+2=ezer2.2\server\ae_slib.php
+3=ezer2.2\client\ezer_fdom1.js
+4=ezer2.2\client\ezer.js
+5=ezer2.2\client\ezer_fdom2.js
+6=db\db.akce.mai.ezer
 [Selected Project Files]
 Main=
-Selected=rr\$.ezer
-[ezer2\server\ezer2.php]
-TopLine=5
-Caret=27,13
-BookMark1=22,794
-BookMark2=16,295
-BookMark3=51,652
-Mark1=60,1125
-Mark2=32,1136
-Mark3=60,1111
-Mark4=37,218
-Mark5=44,583
-[ezer2\server\comp2def.php]
-TopLine=1
-Caret=1,14
-[ezer2\server\comp2.php]
-TopLine=1344
-Caret=27,1371
-[ezer2\server\ae_slib.php]
-TopLine=511
-Caret=1,538
-BookMark1=34,370
-BookMark2=25,1882
-Mark1=37,112
-Mark2=10,661
-[ezer2\client\dbg.js]
-TopLine=35
-Caret=60,46
-Mark1=10,34
-Mark2=99,46
-[ezer2\client\app.js]
-TopLine=113
-Caret=1,123
-BookMark1=1,232
-BookMark2=12,462
-Mark1=88,367
-[ezer2\client\ezer_fdom1.js]
-TopLine=716
-Caret=103,727
-BookMark1=1,498
-BookMark2=1,733
-[ezer2\client\ezer.js]
-TopLine=7137
-Caret=29,7162
-BookMark1=35,4884
-BookMark2=30,3758
-BookMark3=99,6412
-[ezer2\client\ezer_fdom2.js]
-TopLine=2430
-Caret=65,2466
-BookMark1=26,129
-BookMark2=1,606
-BookMark3=1,257
-BookMark4=30,384
-Mark1=95,448
-Mark2=3,269
-[test\$.ezer]
-TopLine=1
-Caret=1,5
-[test\test.ys.ezer]
-TopLine=1
-Caret=35,11
-[test\test_fce.php]
-TopLine=7
-Caret=68,18
-[db\db.akce.evi.ezer]
-TopLine=1
-Caret=5,27
-[..\..\www-ms\php-ms\work\ms.php]
-TopLine=80
-Caret=76,83
-[test.inc]
-TopLine=6
-Caret=98,71
-[test.php]
-TopLine=1
-Caret=27,33
-[rr\$.ezer]
-TopLine=1
-Caret=1,35
-[rr.inc]
-TopLine=11
-Caret=36,19
-[rr.php]
-TopLine=1
-Caret=67,13
-[rr\rr_fce.php]
-TopLine=3
-Caret=55,26
-[ezer2.2\server\ae_slib.php]
-TopLine=528
-Caret=33,567
+Selected=db\db.akce.mai.ezer
 [ezer2.2\client\app.js]
-TopLine=77
-Caret=1,87
-[ezer2\wiki\guide.wiki]
 TopLine=1
-Caret=14,8
-[ezer2.2\server\licensed\phpmailer\class.smtp.php]
-TopLine=111
-Caret=26,144
-[ezer2.2\server\licensed\phpmailer\class.phpmailer.php]
-TopLine=82
-Caret=16,109
-[myslenky.php]
+Caret=1,1
+[ezer2.2\server\ezer2.php]
 TopLine=1
-Caret=62,4
-[robots.txt]
+Caret=1,1
+[ezer2.2\server\ae_slib.php]
 TopLine=1
-Caret=48,2
+Caret=1,1
+[ezer2.2\client\ezer_fdom1.js]
+TopLine=1
+Caret=1,1
+[ezer2.2\client\ezer.js]
+TopLine=1
+Caret=1,1
+[ezer2.2\client\ezer_fdom2.js]
+TopLine=1
+Caret=1,1
+[db\db.akce.mai.ezer]
+TopLine=1
+Caret=58,16
