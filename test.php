@@ -30,7 +30,7 @@
     './test/test.css'
   );
   $options= (object)array(
-    'login_interval' => 60
+    'login_interval' => 120
   );
   $pars= (object)array(
 //     'no_local' => true,                // true = nezohledňovat lokální přístup pro watch_key,watch_ip

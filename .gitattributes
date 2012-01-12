@@ -60,6 +60,16 @@ img/husy.png -text
 img/ms1.png -text
 img/ms2.png -text
 /kEzer-ys2.ppr -text
+/rr.inc -text
+/rr.php -text
+rr/$.ezer -text
+rr/code/comp2tab.php -text
+rr/img/+logo.gif -text
+rr/img/-logo.gif -text
+rr/img/ch-logo.gif -text
+rr/img/ch.png -text
+rr/img/ch_local.png -text
+rr/rr_fce.php -text
 skins/ch/$logo.gif -text
 skins/ch/ajax_wait.gif -text
 skins/ch/big_text.css -text

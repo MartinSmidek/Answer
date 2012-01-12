@@ -1,0 +1,35 @@
+menu rr { type:'main', active:rr.richard
+  tabs richard {title:"Rozesílání", _sys:'*'
+    panel rohr {type:'right', title:'Myšlenky'
+      menu myslenka {type:'left'
+        menu ukazat {title:'Zobrazení',type:'group'
+          item dnesni {title:'dnešní myšlenky', par:°{den:0,poslat:0} }
+          item {title:'včerejší myšlenky', par:°{den:-1,poslat:0} }
+        }
+        menu poslat {title:'Rozeslání',type:'group'
+          item dnesni {title:'dnešní myšlenky', par:°{den:0,poslat:1,opakovat:0} }
+          item {title:' ... znovu', par:°{den:0,poslat:1,opakovat:1} }
+          item {title:'včerejší myšlenky', par:°{den:-1,poslat:1,opakovat:0} }
+          item {title:' ... znovu', par:°{den:-1,poslat:1,opakovat:1} }
+        }
+        proc onclick (i) {
+          info.fill(conc(i.owner.title,' - ',i.title),' ');
+          info.msg.set('');
+          info.fill('',ask('rr_send',i.par));
+        }
+      }
+      use info: form right [12,4,,]
+    }
+  }
+}
+// univerzální formulář pro levostranné menu
+# ------------------------------------------------------------------ right
+form right [,,*,50] {
+  label head [0,0,*,50]  { title:'' }
+  label msg  [0,35,*,20] { title:'' }
+  label note [0,55,*,550] { title:'' }
+  proc fill(x,y) {
+    [ x; head.set(conc("<div class='karta'>",x,"</div>")) ];
+    [ y; note.set(y) ]
+  }
+}
