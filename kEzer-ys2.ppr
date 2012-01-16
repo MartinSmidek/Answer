@@ -11,7 +11,7 @@ FileFormat=0
 ProjectFilesOnly=0
 [Project tree]
 kEzer-ys2
-	-rr
+	+rr
 		rr\$.ezer
 		myslenky.php
 		robots.txt
@@ -31,7 +31,7 @@ kEzer-ys2
 		fa\fa_lide.php
 	-skins
 		skins\colors.php
-	+db
+	-db
 		db\$.ezer
 		db\db.akce.ducast.ezer
 		db\db.akce.evi.ezer
@@ -213,15 +213,22 @@ kEzer-ys2
 4=ezer2.2\client\ezer.js
 5=ezer2.2\client\ezer_fdom2.js
 6=db\db.akce.mai.ezer
+7=ys.inc
+8=ys.php
+9=rr.php
+10=rr\rr_fce.php
+11=rr\$.ezer
+12=rr.inc
+13=myslenky.php
 [Selected Project Files]
 Main=
-Selected=db\db.akce.mai.ezer
+Selected=rr\rr_fce.php
 [ezer2.2\client\app.js]
 TopLine=1
 Caret=1,1
 [ezer2.2\server\ezer2.php]
-TopLine=1
-Caret=1,1
+TopLine=229
+Caret=31,286
 [ezer2.2\server\ae_slib.php]
 TopLine=1
 Caret=1,1
@@ -229,11 +236,32 @@ Caret=1,1
 TopLine=1
 Caret=1,1
 [ezer2.2\client\ezer.js]
-TopLine=1
-Caret=1,1
+TopLine=353
+Caret=92,420
 [ezer2.2\client\ezer_fdom2.js]
 TopLine=1
 Caret=1,1
 [db\db.akce.mai.ezer]
+TopLine=105
+Caret=64,109
+[ys.inc]
+TopLine=69
+Caret=49,106
+[ys.php]
 TopLine=1
-Caret=58,16
+Caret=15,53
+[rr.php]
+TopLine=1
+Caret=45,17
+[rr\rr_fce.php]
+TopLine=1
+Caret=70,53
+[rr\$.ezer]
+TopLine=1
+Caret=55,8
+[rr.inc]
+TopLine=1
+Caret=54,31
+[myslenky.php]
+TopLine=1
+Caret=96,2
