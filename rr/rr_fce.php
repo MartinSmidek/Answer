@@ -4,11 +4,15 @@
 # $par = {den:ode dneška,poslat: 0/1}
 function rr_send($par) {
   global $EZER;
-  $dnes_mysql= date('Y-m-d');
-  $offset= $par->den ? $par->den : '';
-//     $row= $this->select("SELECT * FROM rr WHERE datum=curdate()$offset ");
+  $offset= $par->den<0 ? $par->den : ($par->den>0 ? "+{$par->den}" : '');
+  $plus= $par->den ? $par->den : 0;
+  $dnes= date('j/n/Y',mktime(0,0,0,date('n'),date('j')+$plus,date('Y')));
+  $html= "neni pro $dnes nastaveno! ($offset)";
+  //return $html;
+  ezer_connect();
   $qry= "SELECT * FROM rr WHERE datum=curdate()$offset ";
   $res= mysql_qry($qry);
+                                                $html.= "<br>$res=$qry";
   while ( $res && ($o= mysql_fetch_object($res)) ) {
 //     $html= $o->text_cz;
     $day_n= $o->day_n;
@@ -35,19 +39,19 @@ function rr_send($par) {
     $body.= "<td valign='top' width='50%'><b>$title_en</b><br>$text_en<div align='right'>$from_en</div></td>";
     $body.= "</tr></table>";
     $html= "<h1>$subj</h1>$body";
-    if ( $par->poslat ) {
-      if ( $state=='prepared' || $par->opakovat ) {
+    if ( $par->poslat  ) {
+      if ( $state=='prepared' || $par->opakovat || $_GET['again']=='yes' ) {
         // odeslání a ochrana proti zdvojení
-        $email= 'chlapi-myslenky@googlegroups.com';
+        $email= $_GET['email'] ? $_GET['email'] : 'chlapi-myslenky@googlegroups.com';
         $html.= "<hr/>zaslání na <i>$email</i> skončilo se stavem ";
         $ok= send_simple_mail($subj,$body,'smidek@proglas.cz',$email,'Richard Rohr');
         $html.= $ok;
         //$html.= $mail->sendHtmlMail('smidek@proglas.cz',$email,'','',$subj,$body,'Richard Rohr');
-        if ( $ok ) {
+        if ( $ok && !isset($_GET['email']) ) {
           query("UPDATE rr SET state='sent' WHERE day_n=$day_n ");
         }
       }
-      else $html= "Pozor! Už bylo jednou zasláno<hr/>$html";
+      else $html= "Pozor! Už bylo jednou zasláno, lze vynutit klíčem again=yes<hr/>$html";
     }
   }
   return $html;

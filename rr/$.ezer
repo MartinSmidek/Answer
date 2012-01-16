@@ -5,6 +5,7 @@ menu rr { type:'main', active:rr.richard
         menu ukazat {title:'Zobrazení',type:'group'
           item dnesni {title:'dnešní myšlenky', par:°{den:0,poslat:0} }
           item {title:'včerejší myšlenky', par:°{den:-1,poslat:0} }
+          item {title:'zítřejší myšlenky', par:°{den:1,poslat:0} }
         }
         menu poslat {title:'Rozeslání',type:'group'
           item dnesni {title:'dnešní myšlenky', par:°{den:0,poslat:1,opakovat:0} }
