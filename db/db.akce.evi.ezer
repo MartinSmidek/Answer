@@ -204,6 +204,7 @@ form _rodiny {
     proc sep_mail(typ) {
       confirm(ask('evid_separ_emaily',id_r.get,typ,'confirm'));
       ask('evid_separ_emaily',id_r.get,typ,'change');
+      evid.reload
     }
   }
 }
