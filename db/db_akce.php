@@ -2977,7 +2977,7 @@ function akce_info($id_akce) {  trace();
 #   $typ = M | MZ | MMZ | Z
 #   $op  = confirm | change
 function evid_separ_emaily($id_rodina,$typ,$op='confirm') { trace();
-  $html= '';
+  $html= 'ok';
   $r= sql_query(
     "SELECT emaily,
        GROUP_CONCAT(DISTINCT IF(t.role='a',o.jmeno,'')    SEPARATOR '') AS _muz,
@@ -3007,9 +3007,9 @@ function evid_separ_emaily($id_rodina,$typ,$op='confirm') { trace();
     $html= "Mám rozdělit maily takto?\n\n{$r->_muz}:\n$muz$me\n\n{$r->_zena}:\n$zena$ze\n";
   }
   elseif ( $op=='change' ) {
-    if ( $r->_emaily != '' )
-    ezer_qry("UPDATE",'rodina',$id_rodina,array((object)array(
-      'fld'=>'emaily','op'=>'u','val'=>'','old'=>$r->emaily)));
+    if ( $r->emaily != '' )
+      ezer_qry("UPDATE",'rodina',$id_rodina,array((object)array(
+        'fld'=>'emaily','op'=>'u','val'=>'','old'=>$r->emaily)));
     if ( $r->_muz_email != $muz )
       ezer_qry("UPDATE",'osoba',$r->_muz_id,array((object)array(
         'fld'=>'email','op'=>'u','val'=>$muz,'old'=>$r->_muz_email)));
