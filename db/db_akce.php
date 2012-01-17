@@ -2970,6 +2970,55 @@ function akce_info($id_akce) {  trace();
   }
   return $html;
 }
+# ================================================================================================== EVIDENCE
+# obsluha karet EVIDENCE
+# -------------------------------------------------------------------------------------------------- evid_separ_emaily
+# separace emailů
+#   $typ = M | MZ | MMZ | Z
+#   $op  = confirm | change
+function evid_separ_emaily($id_rodina,$typ,$op='confirm') { trace();
+  $html= '';
+  $r= sql_query(
+    "SELECT emaily,
+       GROUP_CONCAT(DISTINCT IF(t.role='a',o.jmeno,'')    SEPARATOR '') AS _muz,
+       GROUP_CONCAT(DISTINCT IF(t.role='a',o.id_osoba,'') SEPARATOR '') AS _muz_id,
+       GROUP_CONCAT(DISTINCT IF(t.role='a',o.email,'')    SEPARATOR '') AS _muz_email,
+       GROUP_CONCAT(DISTINCT IF(t.role='b',o.jmeno,'')    SEPARATOR '') AS _zena,
+       GROUP_CONCAT(DISTINCT IF(t.role='b',o.id_osoba,'') SEPARATOR '') AS _zena_id,
+       GROUP_CONCAT(DISTINCT IF(t.role='b',o.email,'')    SEPARATOR '') AS _zena_email
+     FROM rodina AS r
+     LEFT JOIN tvori AS t USING(id_rodina)
+     LEFT JOIN osoba AS o USING(id_osoba)
+     WHERE id_rodina=$id_rodina
+     GROUP BY id_rodina ");
+  $emaily= trim($r->emaily,"\n\r\t ,;");
+  $muz_email= trim($r->_muz_email,"\n\r\t ,;");
+  $zena_email= trim($r->_zena_email,"\n\r\t ,;");
+  $m= preg_split("/\s*,\s*|\s*;\s*/",$emaily);
+  switch($typ) {
+  case 'M':   $muz= $emaily; $zena= ''; break;
+  case 'MZ':  $muz= $m[0]; $zena= $m[1]; break;
+  case 'MMZ': $muz= "{$m[0]},{$m[1]}"; $zena= $m[2]; break;
+  case 'Z':   $muz= ''; $zena= $emaily; break;
+  }
+  if ( $op=='confirm' ) {
+    $me= $muz_email ? "\nmá: $muz_email" : '';
+    $ze= $zena_email ? "\nmá: $zena_email" : '';
+    $html= "Mám rozdělit maily takto?\n\n{$r->_muz}:\n$muz$me\n\n{$r->_zena}:\n$zena$ze\n";
+  }
+  elseif ( $op=='change' ) {
+    if ( $r->_emaily != '' )
+    ezer_qry("UPDATE",'rodina',$id_rodina,array((object)array(
+      'fld'=>'emaily','op'=>'u','val'=>'','old'=>$r->emaily)));
+    if ( $r->_muz_email != $muz )
+      ezer_qry("UPDATE",'osoba',$r->_muz_id,array((object)array(
+        'fld'=>'email','op'=>'u','val'=>$muz,'old'=>$r->_muz_email)));
+    if ( $r->_zena_email != $zena )
+      ezer_qry("UPDATE",'osoba',$r->_zena_id,array((object)array(
+        'fld'=>'email','op'=>'u','val'=>$zena,'old'=>$r->_zena_email)));
+  }
+  return $html;
+}
 # ================================================================================================== VYPISY EVIDENCE
 # obsluha různých forem výpisů karty EVIDENCE
 # -------------------------------------------------------------------------------------------------- evid_sestava
