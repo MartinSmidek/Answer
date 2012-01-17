@@ -1,5 +1,7 @@
 <?php # (c) 2009-2011 Martin Smidek <martin@smidek.eu>
 
+  $ezer_root= 'ys';             // jméno adresáře a hlavního objektu aplikace
+
   // nastavení verze jádra
   $EZER= (object)array();
   $EZER->version= $_GET['ezer'] ? "ezer{$_GET['ezer']}" : 'ezer2.2';

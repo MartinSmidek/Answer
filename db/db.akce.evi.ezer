@@ -93,6 +93,9 @@ menu m {type:'left'
       panel.display(0,'inf|list'); panel.display(1,'rodi');
       evid.page_init; dary.page_init;
       rodiny.b.browse_load(i.par.cnd,"",i.par.hav);
+      // experimentální přepnutí podle osoby
+#       [ oboby.b.id_r.get; rodiny.b.browse_load(i.par.cnd,"",i.par.hav)
+#       | rodiny.b.browse_load(i.par.cnd,"",i.par.hav) ]
     }
   }
   menu {title:'Přehledy a statistiky',type:'group', skill:'yae'

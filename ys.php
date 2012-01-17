@@ -53,7 +53,7 @@
 
   $css= array(
     "./$client/ezer.css.php",
-    "./$client/licensed/fancyupload.css",
+//     "./$client/licensed/fancyupload.css",
     "./ys/ys.css.php",
     "./db/db.css.php"
   );

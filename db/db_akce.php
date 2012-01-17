@@ -3821,7 +3821,7 @@ function dop_mai_pocet($id_dopis,$dopis_var,$cond='') {  trace();
 # $info = {_adresy,_ids[,_cond]}   _cond
 function dop_mai_posli($id_dopis,$info) {  trace();
   $num= 0;
-                                                        debug($info);
+//                                                         debug($info);
   // smaž starý seznam
   $qry= "DELETE FROM mail WHERE id_dopis=$id_dopis ";
   $res= mysql_qry($qry);

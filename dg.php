@@ -30,7 +30,7 @@
   );
   $css= array(
     './ezer2/client/ezer.css.php',
-    './ezer2/client/licensed/fancyupload.css',
+//     './ezer2/client/licensed/fancyupload.css',
     './dg/dg.css.css'
   );
   $options= (object)array(
