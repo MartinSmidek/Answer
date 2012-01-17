@@ -28,7 +28,7 @@
   );
   $css= array(
     './ezer2/client/ezer.css.php',
-    './ezer2/client/licensed/fancyupload.css',
+//     './ezer2/client/licensed/fancyupload.css',
     './fa/fa.css.php',
     './db/db.css.php'
   );
