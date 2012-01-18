@@ -3642,7 +3642,7 @@ function dop_mai_qry($komu) {  trace();
 #   'Q' - rozeslat na adresy vygenerované dopis.cis_skupina => hodnota
 # pokud _cis.data=9999 jde o speciální seznam definovaný funkcí dop_mai_skupina - DEPRECATED
 # $cond = dodatečná podmínka POUZE pro volání z dop_mai_stav
-function dop_mai_pocet($id_dopis,$dopis_var,$cond='') {  trace();
+function dop_mai_pocet($id_dopis,$dopis_var,$cond='',$recall=false) {  trace();
   $result= (object)array('_error'=>0, '_count'=> 0, '_cond'=>false);
   $result->_html= 'Rozesílání mailu nemá určené adresáty, stiskni ZRUŠIT';
   $emaily= $ids= $jmena= $pobyty= array();
@@ -3745,73 +3745,17 @@ function dop_mai_pocet($id_dopis,$dopis_var,$cond='') {  trace();
   $html.= "$nazev je $n celkem\n";
   $html.= $ns ? "$ns má chybný mail ($spatne)\n" : '';
   $html.= $nx ? "$nx nemají mail ($nema)" : '';
-/*
-  case 'C':
-  case 'Q':
-    // zjisti výběrovou podmínku
-    $qry= "SELECT _cis.hodnota AS _cond,data,zkratka,nazev,_cis.ikona AS _akce
-           FROM dopis
-           JOIN _cis ON _cis.data=komu AND _cis.druh='am_komu'
-           WHERE id_dopis=$id_dopis ";
-    $res= mysql_qry($qry);
-    if ( $res && ($d= mysql_fetch_object($res)) && $d->_cond ) {
-      if ( $d->_cond=='chlapi' ) {
-        // akce chlapi - tabulky chlapi,ch_akce,ch_ucast
-        $n= $nt= $nx= $nm= 0;
-        $adresy= $ids= $bad= $nema= array();
-        $qryc= "SELECT id_chlapi,prijmeni,jmeno,email
-               FROM ch_ucast
-               JOIN chlapi USING(id_chlapi)
-               JOIN ch_akce USING(id_akce)
-               WHERE id_akce={$d->_akce} ";
-        $resc= mysql_qry($qryc);
-        while ( $resc && ($c= mysql_fetch_object($resc)) ) {
-          $n++;
-          // projdi adresy
-          list($adr)= explode(',',$c->email);
-          $adr= trim($adr);
-          if ( $adr=='' ) {
-            $nema[]= "{$c->prijmeni} {$c->jmeno}";
-            $nm++;
-          }
-          elseif ( emailIsValid($adr) ) {
-            $adresy[]= $adr;
-            $ids[]= $c->id_chlapi;
-            $nt++;
-          }
-          else {
-            $bad[]= $adr;
-            $nx++;
-          }
-        }
-        $count= count($adresy);
-        $result->_adresy= $adresy;
-        $result->_ids= $ids;
-        $html.= "Účastníků $skupina je $n celkem, maily má $nt";
-        $html.= $nx ? ", z toho je $nx chybných (".implode(', ',$bad). ")" : '';
-        $html.= $nema ? ", $nm nemají mail (".implode(', ',$nema).")" : '';
-      }
-      elseif ( substr($d->zkratka,0,5)=='spec.' ) {
-        // zjisti počet funkcí dop_mai_skupina
-        $res= dop_mai_skupina($d->_cond);
-        $count= count($res->adresy);
-        $result->_adresy= $res->adresy;
-      }
-      else {
-        // zjisti počet pole výběrové podmínky
-        $result->_cond= $d->_cond;
-        $qry= dop_mai_qry($result->_cond);
-        $res= mysql_qry($qry);
-        if ( $res ) $count= mysql_num_rows($res);
-      }
-      break;
-    }
-*/
   $result->_html= $nt>0
     ? "Opravdu vygenerovat seznam pro rozeslání\n'$nazev'\nna $nt adres?"
     : "Mail '$nazev' nemá žádného adresáta, stiskni ZRUŠIT";
   $result->_html.= "\n\n$html";
   $result->_count= $nt;
+  if ( !$recall ) {
+    // pro delší seznamy
+    $result->_dopis_var= $dopis_var;
+    $result->_cond= $cond ? $cond : '';
+    $result->_adresy= array();
+  }
 //                                                 debug($result,"dop_mai_pocet.result");
   return $result;
 }
@@ -3819,18 +3763,20 @@ function dop_mai_pocet($id_dopis,$dopis_var,$cond='') {  trace();
 # do tabulky MAIL dá seznam emailových adres pro rozeslání (je volána po dop_mai_pocet)
 # $id_dopis => dopis(&pocet)
 # $info = {_adresy,_ids[,_cond]}   _cond
-function dop_mai_posli($id_dopis,$info) {  trace();
+function dop_mai_posli($id_dopis,$info) {  #trace();
   $num= 0;
-//                                                         debug($info);
+                                                        debug($info);
   // smaž starý seznam
   $qry= "DELETE FROM mail WHERE id_dopis=$id_dopis ";
+                                                        fce_log("dop_mai_posli: $qry");
   $res= mysql_qry($qry);
   if ( !$res ) fce_error("dop_mai_smaz: mazání rozesílání mailu No.'$id_dopis' se nepovedlo");
+
+  if ( $info->_dopis_var ) {
+    $result= dop_mai_pocet($id_dopis,$info->_dopis_var,$info->_cond,true);
+    $info->_adresy= $result->_adresy;
+  }
   if ( $info->_adresy ) {
-//     $adrs= (array)$info->_adresy;
-//     $ids= $info->_ids ? (array)$info->_ids : null;
-//                                         debug($ids,"ids=".is_array($ids).','.count($ids).','.$ids[0]);
-//                                         debug($adrs,"adrs:".is_array($adrs).','.count($adrs));
     // pokud jsou přímo známy adresy, pošli na ně
     $ids= array();
     foreach($info->_ids as $i=>$id) $ids[$i]= $id;
@@ -3860,6 +3806,7 @@ function dop_mai_posli($id_dopis,$info) {  trace();
   }
   // oprav počet v DOPIS
   $qr= "UPDATE dopis SET pocet=$num WHERE id_dopis=$id_dopis";
+                                                        fce_log("dop_mai_posli: UPDATE");
   $rs= mysql_qry($qr);
   return true;
 }
