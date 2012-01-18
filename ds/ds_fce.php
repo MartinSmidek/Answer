@@ -116,7 +116,7 @@ function ds_kli_menu() {
   $mn= (object)array('type'=>'menu.left'
       ,'options'=>(object)array(),'part'=>(object)array());
   $letos= date('Y');
-  for ($y= 0; $y<=1; $y++) {
+  for ($y= -1; $y<=1; $y++) {
     $yyyy= $letos+$y;
     $group= $letos+$y;
     $gr= (object)array('type'=>'menu.group'
@@ -428,6 +428,9 @@ __XLS;
     |close
 __XLS;
 //                                                                 display(wu($xls));
+  $test= 1;
+  if ( $test )
+    file_put_contents("xls.txt",$xls);
   $inf= Excel5(wu($xls),1);
   if ( $inf ) {
     $html= " se nepodaøilo vygenerovat - viz zaèátek chybové hlášky";
@@ -507,6 +510,9 @@ function ds_xls_zaloha($order) {  #trace('','win1250');
   $xls.= ds_faktura('zalohova_faktura','ZÁLOHOVÁ FAKTURA',$order,$x->polozky,$x->platce,50,
     "Tìšíme se na Váš pobyt v Domì setkání");
   $xls.= "|close|";
+  $test= 1;
+  if ( $test )
+    file_put_contents("xls.txt",$xls);
   $inf= Excel5(wu($xls),1);
   if ( $inf ) {
     $html= " nastala chyba";
@@ -780,6 +786,7 @@ __XLS;
     |$xls|close 1";
 //                                                                 display("rodiny=$faktury");
 //                                                                 display(nl2br(wu($xls)));
+  $test= 1;
   if ( $test )
     file_put_contents("xls.txt",$final_xls);
   time_mark('ds_xls_faktury Excel5');
@@ -1000,7 +1007,7 @@ __XLS;
     $xls.= <<<__XLS
       |H$n $druh::right                |H$n:J$n merge right
       |K$n $dph                        ::proc border=h right
-      |L$n =SUMIF(G$P:G$Q;H$n;L$P:L$Q) ::kc   border=h right
+      |L$n =SUMIF(G$P:G$Q,H$n,L$P:L$Q) ::kc   border=h right
 __XLS;
     $n++;
   }
@@ -1230,8 +1237,8 @@ __XLS;
     $n++;
     $xls.= <<<__XLS
       |K$n $sazba                                    ::proc border=h right
-      |L$n =SUMIF(K$P:K$Q;K$n;M$P:M$Q)*($zaloha/100) ::kc   border=h right
-      |M$n =SUMIF(K$P:K$Q;K$n;L$P:L$Q)*($zaloha/100) ::kc   border=h right
+      |L$n =SUMIF(K$P:K$Q,K$n,M$P:M$Q)*($zaloha/100) ::kc   border=h right
+      |M$n =SUMIF(K$P:K$Q,K$n,L$P:L$Q)*($zaloha/100) ::kc   border=h right
 __XLS;
   }
   // øádky R,S (viz výše) -- spodek faktury
