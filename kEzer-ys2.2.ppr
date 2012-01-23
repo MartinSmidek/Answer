@@ -61,7 +61,7 @@ kEzer-ys2
 		sql\mysql_all.bat
 		sql\pohled_osoba.sql
 		zaloha.php
-	-ezer2.2
+	+ezer2.2
 		+libr
 			ezer2.2\$.ezer
 			ezer2.2\ezer2.help.ezer
@@ -112,7 +112,7 @@ kEzer-ys2
 		..\..\..\..\WINDOWS\system32\drivers\etc\hosts
 		..\..\..\Apache\conf\extra\httpd-vhosts-ezer.conf
 		..\..\..\Apache\logs\ys2-error.log
-	+test
+	-test
 		test\$.ezer
 		test\fce.js
 		test\test.css
@@ -212,12 +212,14 @@ kEzer-ys2
 3=ezer2.2\client\ezer_fdom1.js
 4=ezer2.2\client\ezer.js
 5=ezer2.2\client\ezer_fdom2.js
-6=test\test.gug.ezer
-7=test\test_fce.php
-8=db\db_akce.php
+6=db\db.akce.evi.ezer
+7=test\test.elem.grp.ezer
+8=db\db.akce.ducast.ezer
+9=ds\ds.dum.ezer
+10=ds\ds_fce.php
 [Selected Project Files]
 Main=
-Selected=test\test_fce.php
+Selected=ezer2.2\client\ezer.js
 [ezer2.2\client\app.js]
 TopLine=1
 Caret=1,1
@@ -231,17 +233,24 @@ Caret=16,1606
 TopLine=1
 Caret=1,1
 [ezer2.2\client\ezer.js]
-TopLine=5543
-Caret=7,5570
+TopLine=166
+Caret=36,198
 [ezer2.2\client\ezer_fdom2.js]
 TopLine=823
 Caret=1,845
-[test\test.gug.ezer]
-TopLine=1
-Caret=42,9
-[test\test_fce.php]
-TopLine=50
-Caret=45,73
-[db\db_akce.php]
-TopLine=2104
-Caret=52,2140
+[db\db.akce.evi.ezer]
+TopLine=3
+Caret=50,3
+[test\test.elem.grp.ezer]
+TopLine=4
+Caret=1,4
+[db\db.akce.ducast.ezer]
+TopLine=828
+Caret=1,845
+[ds\ds.dum.ezer]
+TopLine=190
+Caret=1,207
+[ds\ds_fce.php]
+TopLine=950
+Caret=43,964
+Mark1=46,780
