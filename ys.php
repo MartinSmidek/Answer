@@ -51,11 +51,10 @@
 //     'http://maps.googleapis.com/maps/api/js?sensor=false'
 //   );
 
-  $css= array(
-    "./$client/ezer.css.php",
-//     "./$client/licensed/fancyupload.css",
-    "./ys/ys.css.php",
-    "./db/db.css.php"
+  $css= array_merge(
+    array("./$client/ezer.css.php","./ys/ys.css.php","./db/db.css.php"),
+    /* pro verzi 2.2 */ $EZER->version=='ezer2.2'
+    ? array("$licensed/datepicker/datepicker_vista/datepicker_vista.css"):array()
   );
   $options= (object)array(
     'skill'      => "'y'",
