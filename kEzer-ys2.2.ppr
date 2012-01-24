@@ -61,7 +61,7 @@ kEzer-ys2
 		sql\mysql_all.bat
 		sql\pohled_osoba.sql
 		zaloha.php
-	+ezer2.2
+	-ezer2.2
 		+libr
 			ezer2.2\$.ezer
 			ezer2.2\ezer2.help.ezer
@@ -158,7 +158,7 @@ kEzer-ys2
 		dg\dg.css.css
 		dg.inc
 		dg.php
-	-ys
+	+ys
 		+$
 			ys\$.ezer
 			skins\colors.php
@@ -217,9 +217,10 @@ kEzer-ys2
 8=db\db.akce.ducast.ezer
 9=ds\ds.dum.ezer
 10=ds\ds_fce.php
+11=ys.php
 [Selected Project Files]
 Main=
-Selected=ezer2.2\client\ezer.js
+Selected=ys.php
 [ezer2.2\client\app.js]
 TopLine=1
 Caret=1,1
@@ -254,3 +255,6 @@ Caret=1,207
 TopLine=950
 Caret=43,964
 Mark1=46,780
+[ys.php]
+TopLine=3
+Caret=1,58
