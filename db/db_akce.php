@@ -3648,6 +3648,7 @@ function dop_mai_qry($komu) {  trace();
 # zjistí počet adresátů pro rozesílání a sestaví dotaz pro confirm
 # $dopis_var určuje zdroj adres
 #   'U' - rozeslat účastníkům akce dopis.id_duakce ukazující do akce
+#         do seznamu se dostanou pouze účastnící s funkcí < 3 (-,VPS,SVPS)
 #   'Q' - rozeslat na adresy vygenerované dopis.cis_skupina => hodnota
 # pokud _cis.data=9999 jde o speciální seznam definovaný funkcí dop_mai_skupina - DEPRECATED
 # $cond = dodatečná podmínka POUZE pro volání z dop_mai_stav
@@ -3706,7 +3707,7 @@ function dop_mai_pocet($id_dopis,$dopis_var,$cond='',$recall=false) {  trace();
            JOIN osoba AS o ON s.id_osoba=o.id_osoba
            JOIN tvori AS t ON t.id_osoba=o.id_osoba
            JOIN rodina AS r USING (id_rodina)
-           WHERE id_dopis=$id_dopis $AND GROUP BY id_pobyt";
+           WHERE id_dopis=$id_dopis AND p.funkce<3 $AND GROUP BY id_pobyt";
     $res= mysql_qry($qry);
     while ( $res && ($d= mysql_fetch_object($res)) ) {
       $n++;
