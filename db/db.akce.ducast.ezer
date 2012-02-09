@@ -195,6 +195,7 @@ form _aktivity {
   browse akc [ 0,60,,] { rows:25, qry_rows:1
     show ida { data:a.id_duakce }
     show idp { data:p.id_pobyt }
+    show ids { data:s.id_spolu }
     show rok  [,, 30,] { title:'rok', expr:"YEAR(a.datum_od)", format:'q*s-' }
     show akce [,,150,] { title:'název', data:a.nazev, format:'q*s' }
     show fce  [,, 30,] { title:'fce', data:p.funkce, map_pipe:ms_akce_funkce.zkratka, format:'q*s' }
