@@ -153,7 +153,7 @@ form _etext  {
   var adopis: number
   # obslužné procedury stavu tlačítek
   proc form_init() {
-    texty.browse_init; form.init; form_state('n','u|z|s'); }
+    texty.browse_init; form.init; drop.set(''); form_state('n','u|z|s'); }
   proc form_state(on,off) {
     echo('form_state(',on,',',off,')');
     form.enable(1,on); form.enable(0,off); }
@@ -180,6 +180,8 @@ form _etext  {
       echo(dopis_id.get,'-',id_dopis.get);
       dopis_id.set(id_dopis.get);
       form.load(dopis_id.get);
+      { attach.get; drop.set(ask('dop_mai_refs',attach.get)) | drop.set('') };
+      drop_init;
       obsah.set(ask('dop_mai_text',dopis_id.get));
       adopis.set(id_dopis.get);
       form_state('n|s','u|z');
@@ -195,10 +197,34 @@ form _etext  {
   label [L+0,20,365,150] { css:'ae_work' }
   label [L+10,25,100,17] { title:'datum odeslání' }
   field datum [L+10,40,80,17] { data:dopis.datum, help:'datum|datum emailu', skill:'yam|yams;fam|fams' }
-  label [L+10,70,100,17] { title:'předmět mailu' }
-  field predmet [L+10,90,340,17] { data:dopis.nazev, help:'předmět|předmět emailu', skill:'yam|yams;fam|fams' }
-  label [L+10,120,300,17] { title:'případné přílohy (uložené ve složce docs)' }
-  field prilohy [L+10,140,340,17] { data:dopis.prilohy, help:'přílohy|přílohy emailu oddělené čárkami', skill:'yam|yams;fam|fams' },
+  label [L+10,65,100,17] { title:'předmět mailu' }
+  field predmet [L+10,80,340,17] { data:dopis.nazev, help:'předmět|předmět emailu', skill:'yam|yams;fam|fams' }
+
+  // přílohy - je třeba aby bylo provedeno
+  // při onfocus ap.: drop_init
+  // při nový záznam: drop.set('')
+  // při onrowclick:  { attach.get; drop.set(ask('dop_mai_refs',attach.get)) | drop.set('') };
+  label [L+10,100,,] {title:'přílohy'}                  // nadpis na vnějším obalem
+  label [L+10,115,340,45] {css:'drop_envelope'}         // vnější obal drop boxu
+  field attach {data:dopis.prilohy}                     // datové pole se seznamem příloh
+  label drop [L+15,119,335,41] {                        // vlastní drop box se signalizací dragu
+    menu { type:'context'
+      item { title:'odstranit přílohy', proc onclick() {
+          ask('dop_mai_detach',form.key);               // odstraní všechny přílohy
+          texty.raise('onrowclick',dopis_id.get);       // obnova zabrazení bez příloh
+  } } } }
+  proc ondrop(fileinfo) {                               // obsluha dropu souboru
+    drop.set(ask('dop_mai_attach',form.key,fileinfo));  // update a sofistikované zobrazení položky
+    texty.raise('onrowclick',dopis_id.get);             // obnova zabrazení s novou přílohou
+    drop_init;                                          // reinicializace
+  }
+  proc drop_init() {                                    // inicializace - je třeba na začátku
+    form.file_drop(drop,°{                              // vazba na drop box
+      css_hover:'drop_area_hover',                      // styl aktivace při dragu
+      css_run:'drop_area_run',                          // styl komunikace se serverem po dropu
+      transfer:'base64'});                              // binární přenos - jiné viz help
+  }
+
   # příkazy 1
   label  [L+0,180,195,58] { css:'ae_parm' }
   button uloz [L+8,186,45,17] { tag:'u', type:'submit', title:'Uložit',
@@ -217,7 +243,7 @@ form _etext  {
   button [L+64,186,45,17] { tag:'z', title:'Zpět', help:'neukládat hodnoty', skill:'yam|yams;fam|fams'
     proc onclick () {
       adopis.get; form.load(adopis.get); form_state('n|s','u|z'); texty.browse_focus
-    | form.init; form_state('n','u|z|s')
+    | form.init; drop.set(''); form_state('n','u|z|s')
     }
   }
   button oprav [L+113,186,45,17] { tag:'s', title:'Opravit text', help:'opravit text mailu',
@@ -232,7 +258,7 @@ form _etext  {
   button novy [L+254,184,45,17] { tag:'n', title:'Nový', help:'vytvořit nový e-mail',
     skill:'yam|yams;fam|fams'
     proc onclick () {
-      form.init; form_state('u|z','n|s');
+      form.init; drop.set(''); form_state('u|z','n|s'); drop_init;
       texty.blur(1); adopis.set(0);
       datum.set(now); datum.change; id_davka.set(1); id_davka.change; druh.set('@'); druh.change;
       switch(dopis_var.get,
@@ -283,7 +309,7 @@ form _etext  {
     reload2
   }
   proc reload2() {
-    texty.browse_count;
+    texty.browse_count; drop.set(''); drop_init;
     { dopis_id.get; texty.raise('onrowclick',dopis_id.get) | texty.raise('onrowclick') }
   }
   # text mailu
