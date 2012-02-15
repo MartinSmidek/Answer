@@ -264,6 +264,8 @@ form _evidence {
   label [123,40,28,] {title:'spolu'}
   label [118,382,38,] {title:'funkce'}
   label [48,382,55,] {title:'č.skupinky'}
+  label [382,42,31,] {title:'křestní'}
+  label [382,63,31,] {title:'příjmení'}
   label [382,112,31,] {title:'telefon'}
   label [385,137,26,] {title:'email'}
   label [383,310,48,] {title:'osobní pozn.'}

@@ -30,7 +30,7 @@ panel ducast {type:'plain', _sys:'*', title:'Evidence', include:'onload,db.akce.
   proc akce_show() { alert('napřed klikni na Databáze|Účastníci') }
 }
 panel ucast {type:'plain', _sys:'*',
-    title:"<img src='img/icon_new.gif' style='float:left;margin-top:-5px;padding-right:5px;'>Evidence",
+    title:"<img src='img/icon_new.gif' style='float:left;margin-top:-5px;padding-right:5px;'>Účastníci",
     include:'onload,db.akce.ucast',skill:'yaa'
   proc init_ucast2() { alert('napřed klikni na Databáze|Účastníci') }
   proc akce_show() { alert('napřed klikni na Databáze|Účastníci') }
