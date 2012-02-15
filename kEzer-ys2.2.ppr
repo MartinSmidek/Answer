@@ -21,7 +21,7 @@ kEzer-ys2
 	-fis - θαst
 		fis\fis_pdf.php
 		fis\fis_tcpdf.php
-	-fa
+	+fa
 		fa\$.ezer
 		fa.inc
 		fa\fa.lide.ezer
@@ -219,6 +219,10 @@ kEzer-ys2
 10=db\db.akce.ucast.ezer
 11=db\db.akce.ducast.ezer
 12=db\db.akce.ezer
+13=db\db.akce.lst.ezer
+14=db\db.akce.evi.ezer
+15=fa.php
+16=fa.inc
 [Selected Project Files]
 Main=
 Selected=db\db.akce.ucast.ezer
@@ -235,11 +239,11 @@ Caret=68,1887
 TopLine=752
 Caret=1,809
 [ezer2.2\client\ezer.js]
-TopLine=166
-Caret=36,198
+TopLine=1408
+Caret=35,1425
 [ezer2.2\client\ezer_fdom2.js]
-TopLine=823
-Caret=1,845
+TopLine=1198
+Caret=39,1233
 [ys.php]
 TopLine=27
 Caret=27,63
@@ -253,14 +257,26 @@ Caret=16,3460
 TopLine=1
 Caret=1,1
 [db\db.akce.ucast.ezer]
-TopLine=130
-Caret=84,151
-BookMark1=8,347
-BookMark2=1,210
-BookMark3=12,549
+TopLine=394
+Caret=77,64
+BookMark2=1,211
+BookMark3=12,557
+BookMark1=42,67
 [db\db.akce.ducast.ezer]
-TopLine=122
-Caret=1,156
+TopLine=1
+Caret=1,14
 [db\db.akce.ezer]
-TopLine=13
-Caret=53,54
+TopLine=1
+Caret=54,28
+[db\db.akce.lst.ezer]
+TopLine=114
+Caret=1,143
+[db\db.akce.evi.ezer]
+TopLine=380
+Caret=93,390
+[fa.php]
+TopLine=1
+Caret=1,1
+[fa.inc]
+TopLine=1
+Caret=28,6
