@@ -771,11 +771,13 @@ function akce_sestava_pary($akce,$par,$title,$vypis,$export=false) { trace();
             GROUP_CONCAT(DISTINCT IF(t.role='a',o.narozeni,'') SEPARATOR '') as narozeni_m,
             GROUP_CONCAT(DISTINCT IF(t.role='a',o.rc_xxxx,'')  SEPARATOR '') as rc_xxxx_m,
             GROUP_CONCAT(DISTINCT IF(t.role='a',o.email,'')    SEPARATOR '') as email_m,
+            GROUP_CONCAT(DISTINCT IF(t.role='a',o.telefon,'')  SEPARATOR '') as telefon_m,
             GROUP_CONCAT(DISTINCT IF(t.role='b',o.prijmeni,'') SEPARATOR '') as prijmeni_z,
             GROUP_CONCAT(DISTINCT IF(t.role='b',o.jmeno,'')    SEPARATOR '') as jmeno_z,
             GROUP_CONCAT(DISTINCT IF(t.role='b',o.narozeni,'') SEPARATOR '') as narozeni_z,
             GROUP_CONCAT(DISTINCT IF(t.role='b',o.rc_xxxx,'')  SEPARATOR '') as rc_xxxx_z,
             GROUP_CONCAT(DISTINCT IF(t.role='b',o.email,'')    SEPARATOR '') as email_z,
+            GROUP_CONCAT(DISTINCT IF(t.role='b',o.telefon,'')  SEPARATOR '') as telefon_z,
             ( SELECT count(DISTINCT cp.id_pobyt) FROM pobyt AS cp
               JOIN akce AS ca ON ca.id_duakce=cp.id_akce
               JOIN spolu AS cs ON cp.id_pobyt=cs.id_pobyt
@@ -799,6 +801,7 @@ function akce_sestava_pary($akce,$par,$title,$vypis,$export=false) { trace();
     $x->prijmeni= $x->pouze==1 ? $x->prijmeni_m : ($x->pouze==2 ? $x->prijmeni_z : $x->nazev);
     $x->jmena=    $x->pouze==1 ? $x->jmeno_m    : ($x->pouze==2 ? $x->jmeno_z : "{$x->jmeno_m} a {$x->jmeno_z}");
     $x->_pocet= ($x->pouze?" 1":" 2").($x->_deti?"+{$x->_deti}":'');
+    // emaily
     $a_emaily_m= preg_split("/,\s*|;\s*/",trim($x->email_m ? $x->email_m : $x->emaily," ,;"));
     $a_emaily_z= preg_split("/,\s*|;\s*/",trim($x->email_z ? $x->email_z : $x->emaily," ,;"));
     $a_emaily= preg_split("/,\s*|;\s*/",trim($x->emaily," ,;"));
@@ -806,6 +809,16 @@ function akce_sestava_pary($akce,$par,$title,$vypis,$export=false) { trace();
     $emaily_m= implode(';',$a_emaily_m);
     $emaily_z= implode(';',$a_emaily_z);
     $x->emaily= $x->pouze==1 ? $emaily_m  : ($x->pouze==2 ? $emaily_z : $emaily);
+    $x->emaily.= $x->emaily ? ';' : '';
+    // telefony
+    $a_telefony_m= preg_split("/,\s*|;\s*/",trim($x->telefon_m ? $x->telefon_m : $x->telefony," ,;"));
+    $a_telefony_z= preg_split("/,\s*|;\s*/",trim($x->telefon_z ? $x->telefon_z : $x->telefony," ,;"));
+    $a_telefony= preg_split("/,\s*|;\s*/",trim($x->telefony," ,;"));
+    $telefony= implode(';',array_diff(array_unique(array_merge($a_telefony,$a_telefony_m,$a_telefony_z)),array('')));
+    $telefony_m= implode(';',$a_telefony_m);
+    $telefony_z= implode(';',$a_telefony_z);
+    $x->telefony= $x->pouze==1 ? $telefony_m  : ($x->pouze==2 ? $telefony_z : $telefony);
+    // další
     $n++;
     $clmn[$n]= array();
     foreach($flds as $f) {
