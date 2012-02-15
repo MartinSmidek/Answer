@@ -4018,6 +4018,39 @@ function dop_mai_send($id_dopis,$kolik,$from,$fromname,$test='') { #trace();
 //                                                 debug($result,"dop_mai_send");
   return $result;
 }
+# -------------------------------------------------------------------------------------------------- dop_mai_attach
+# přidá přílohu k mailu jako odkaz, soubor bude v docs
+function dop_mai_attach($id_dopis,$fileinfo) { trace();
+  global $ezer_path_root;
+  $f= pathinfo($fileinfo->name);
+  $name= utf2ascii($f['filename']).'.'.utf2ascii($f['extension']);
+  $path= "$ezer_path_root/docs/$name";
+  // uložení souboru
+  $data= base64_decode($fileinfo->text);
+  $bytes= file_put_contents($path,$data);
+  // nalezení záznamu v tabulce a přidání názvu souboru
+  $names= select('prilohy','dopis',"id_dopis=$id_dopis");
+  $names= $names ? "$names,$name" : $name;
+  query("UPDATE dopis SET prilohy='$names' WHERE id_dopis=$id_dopis");
+  $refs= dop_mai_refs($names);
+  return $refs;
+}
+# -------------------------------------------------------------------------------------------------- dop_mai_detach
+# odstraní všechny odkazy na přílohy mailu
+function dop_mai_detach($id_dopis) { trace();
+  query("UPDATE dopis SET prilohy='' WHERE id_dopis=$id_dopis");
+  return 1;
+}
+# -------------------------------------------------------------------------------------------------- dop_mai_refs
+# převede seznam jmen na odkazy
+function dop_mai_refs($names) {
+  $refs= array();
+  foreach(explode(',',$names) as $name) {
+    $ref= "<a href='docs/$name' title='$name' target='priloha'>$name</a>";
+    $refs[]= $ref;
+  }
+  return implode(' &nbsp; ',$refs);
+}
 # -------------------------------------------------------------------------------------------------- dop_mai_skupina
 # ASK
 # připrav mailové adresy dané skupiny
