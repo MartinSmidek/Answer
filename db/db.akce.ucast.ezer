@@ -293,17 +293,18 @@ form _evidence {
 form _rodina {
   field nazev       [10,48,100,] {data:rodina.nazev, help:'společné příjmení', format:':F' }
   field _spolu      [159,49,23,] {format:'o', value:'?'}
-  field svatba      [81,187,36,] {data:rodina.svatba}
   field ulice       [11,72,191,] {data:rodina.ulice}
   field psc         [11,96,39,] {data:rodina.psc}
   field obec        [59,96,142,] {data:rodina.obec}
   field telefony    [11,120,161,] {type:'list', data:rodina.telefony}
   field emaily      [11,144,161,] {type:'list', data:rodina.emaily}
-  edit  note        [10,319,196,44] {data:rodina.note}
   field datsvatba   [55,166,63,] {data:rodina.datsvatba}
+  field svatba      [81,187,36,] {data:rodina.svatba}
   field spz         [152,187,55,] {data:rodina.spz}
-  label             [390,557,,] {title:'rodina - alternativní údaje', skill:'yaah'}
-  chat  historie    [388,570,185,106] { divide:100, skill:'yaah' }
+  edit  note        [10,319,196,44] {data:rodina.note}
+  // pod čarou
+  label             [10,557,,] {title:'rodina - alternativní údaje', skill:'yaah'}
+  chat  historie    [8,570,185,106] { divide:100, skill:'yaah' }
 }
 # -------------------------------------------------------------------------------------------------- _muz
 form _muz {
@@ -311,6 +312,7 @@ form _muz {
   field jmeno_m     [225,48,83,22] {data:osoba.jmeno}
   field _vek_m      [354,50,19,] {format:'o', value:'?'}
   field prijmeni_m  [225,71,86,] {data:osoba.prijmeni}
+  select clen_m     [318,72,57,] {type:'map', data:osoba.clen, options:ms_akce_clen.zkratka}
   field telefon_m   [224,119,151,] {type:'list', data:osoba.telefon}
   field email_m     [224,143,151,] {type:'list', data:osoba.email}
   field narozeni_m  [224,167,93,] {type:'date', data:osoba.narozeni, sql_pipe:'sql_date1'}
@@ -321,10 +323,10 @@ form _muz {
   field zajmy_m     [224,251,152,] {data:osoba.zajmy}
   field jazyk_m     [224,272,152,] {data:osoba.jazyk}
   field aktivita_m  [224,293,152,] {data:osoba.aktivita}
-  select clen_m     [318,72,57,] {type:'map', data:osoba.clen, options:ms_akce_clen.zkratka}
   edit  note_m      [224,319,150,44] {data:osoba.note}
-  label             [10,557,,] {title:'muž - alternativní údaje', skill:'yaah' }
-  chat  historie_m  [8,570,185,106] { divide:100, skill:'yaah' }
+  // pod čarou
+  label             [200,557,,] {title:'muž - alternativní údaje', skill:'yaah' }
+  chat  historie_m  [198,570,185,106] { divide:100, skill:'yaah' }
 }
 # -------------------------------------------------------------------------------------------------- _zena
 form _zena {
@@ -332,6 +334,7 @@ form _zena {
   field jmeno_z     [421,49,85,] {data:osoba.jmeno}
   field _vek_z      [549,50,20,] {format:'o', value:'?'}
   field prijmeni_z  [420,71,86,] {data:osoba.prijmeni}
+  select clen_z     [515,72,56,] {type:'map', data:osoba.clen, options:ms_akce_clen.zkratka}
   field telefon_z   [420,119,151,] {type:'list', data:osoba.telefon}
   field email_z     [420,143,151,] {type:'list', data:osoba.email}
   field narozeni_z  [420,167,93,] {type:'date', data:osoba.narozeni, sql_pipe:'sql_date1'}
@@ -342,24 +345,24 @@ form _zena {
   field zajmy_z     [420,251,152,] {data:osoba.zajmy}
   field jazyk_z     [420,272,152,] {data:osoba.jazyk}
   field aktivita_z  [420,293,152,] {data:osoba.aktivita}
-  select clen_z     [515,72,56,] {type:'map', data:osoba.clen, options:ms_akce_clen.zkratka}
   edit  note_z      [420,319,149,44] {data:osoba.note}
-  label             [200,557,,] {title:'žena - alternativní údaje', skill:'yaah' }
-  chat  historie_z  [198,570,185,106] { divide:100, skill:'yaah' }
+  // pod čarou
+  label             [390,557,,] {title:'žena - alternativní údaje', skill:'yaah' }
+  chat  historie_z  [389,570,185,106] { divide:100, skill:'yaah' }
 }
 # -------------------------------------------------------------------------------------------------- _pobyt
 form _pobyt {
-  field id_akce                  {data:pobyt.id_akce}
-  select funkce     [155,389,50,] {type:'map', data:pobyt.funkce, options:ms_akce_funkce.zkratka }
-  field skupina     [7,388,35,] {data:pobyt.skupina, format:'r'}
+  field id_akce     {data:pobyt.id_akce}
   select pouze      [254,371,96,] {type:'map', data:pobyt.pouze, options:ms_akce_pouze.zkratka
     proc onchange() {
       { eq(pouze.key,0,1); muz.get.display(1) | muz.get.display(0) };
       { eq(pouze.key,0,2); zen.get.display(1) | zen.get.display(0) };
   }}
-  check cd          [446,409,20,] {data:pobyt.cd}
-  field budova      [350,409,32,] {data:pobyt.budova}
+  field skupina     [7,388,35,] {data:pobyt.skupina, format:'r'}
+  select funkce     [155,389,50,] {type:'map', data:pobyt.funkce, options:ms_akce_funkce.zkratka }
   field pokoj       [253,410,40,] {data:pobyt.pokoj}
+  field budova      [350,409,32,] {data:pobyt.budova}
+  check cd          [446,409,20,] {data:pobyt.cd}
   edit k_poznamka   [214,462,355,50] {data:pobyt.poznamka}
   // skupinka
   browse s [7,409,,] {type:'smart', rows:4
@@ -746,6 +749,7 @@ panel Dite [,,360,360] {type:'popup', title:'Úprava dětí'
     view s: table spolu { join_type:'LEFT', join:'USING(id_osoba)' }
     field {data:d.id_osoba}
     field id_spolu {data:s.id_spolu}
+    check sebou    [3,11,24,17]
     label          [L+44,T+0,,] {title:'skup.'}
     field skupinka [L+44,T+15,30,] {data:s.skupinka, help:'skupinka'}
     label          [L+85,T+0,,] {title:'příjmení'}
@@ -759,7 +763,6 @@ panel Dite [,,360,360] {type:'popup', title:'Úprava dětí'
     }
     field the_osoba { data:d.id_osoba }
     label [0,0,,]  { title:'na akci' }
-    check sebou    [3,11,24,17]
     label          [L+5,T+38,100,] {title:'ulice'}
     field ulice    [L+5,T+53,162,] {data:d.ulice}
     label          [L+179,T+38,39,] {title:'psč'}
