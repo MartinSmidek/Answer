@@ -3464,7 +3464,7 @@ function db_mail_sql_try($qry) {  trace();
   $emails= array();
   try {
     $time_start= getmicrotime();
-    $res= @mysql_query($qry);
+    $res= mysql_query($qry);
     $time= round(getmicrotime() - $time_start,4);
     if ( !$res ) {
       $html.= "<span style='color:darkred'>ERROR ".mysql_error()."</span>";
@@ -3496,7 +3496,7 @@ function db_mail_sql_try($qry) {  trace();
   }
   catch (Exception $e) { $html.= "<span style='color:red'>FATAL ".mysql_error()."</span>";  }
   $head.= "<br>Adresáti mají <b>".count($emails)."</b> různých emailových adres";
-  $html= $head.$tail;
+  $html= $html ? $html : $head.$tail;
                                                 debug($emails,"db_mail_sql_try");
   return $html;
 }
