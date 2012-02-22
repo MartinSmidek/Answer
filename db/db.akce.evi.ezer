@@ -719,32 +719,32 @@ form _ddary [,,400,245] {
 # ---------------------------------------------------------------------- _platby
 form _platby {
   // operace
-  button [610,5,,] { title:'automatické párování'
+  button [615,5,,] { title:'automatické párování'
     proc onclick() { var res:object
       res.set(ask('akce_rb_urci',b.vs.get,b.ss.get,date2sql(b.datum.get)));
       echo(res.html);
       [ res.id_osoba; id_osoba.set(res.id_osoba); id_osoba.change; form.save; b.browse_row;
-        osoby.b.browse_seek(conc("os.id_osoba=",res.id_osoba)); b.raise('onrowclick') ];
+        osoby.b.browse_seek(conc("os.id_osoba=",res.id_osoba)); ];
       [ res.id_duakce; id_duakce.set(res.id_duakce); id_duakce.change; form.save; b.browse_row ];
       [ res.tipy; t.browse_fill(res.tipy); t.raise('onrowclick') ]
     }
   }
   // tipy
-  label [610,33,,] { title:"tipnutí plátci:" }
-  browse t [610,50,,] { rows:3
+  label [615,33,,] { title:"tipnutí plátci:" }
+  browse t [615,50,,] { rows:3
     show id_osoba
     show jmena [,,100,]
     proc onrowclick() {
-      id_osoba.get; osoby.b.browse_seek(conc("os.id_osoba=",id_osoba.get)); b.raise('onrowclick');
+      id_osoba.get; osoby.b.browse_seek(conc("os.id_osoba=",id_osoba.get));
     }
   }
-  button [610,155,,] { title:'spáruj nastavené'
+  button [615,155,,] { title:'spáruj nastavené'
     proc onclick() {
       form.load; id_osoba.set(osoby.b.id_o.get); id_osoba.change;
       confirm("Opravdu je ",osoby.b.prijmeni.get," ",osoby.b.jmeno.get," plátcem ",b.castka.get,"Kč?");
       form.save; b.browse_row;
   } }
-  button [610,180,,] { title:'rozpoj spárované'
+  button [615,180,,] { title:'rozpoj spárované'
     proc onclick() {
       form.load; id_osoba.set(0); id_osoba.change;
       form.save; b.browse_row;
@@ -762,7 +762,8 @@ form _platby {
 #     number id_pokl
 #     number ucel
 #     number zpusob
-    show datum  [,,65,] { title:'datum', data:p.datum, format:'s-r' }
+    show ucet   [,,10,] { title:'b', data:p.ucet, format:'sq=' }
+    show datum  [,,65,] { title:'datum', data:p.datum, format:'s-q*r' }
     show castka [,,60,] { title:'částka', data:p.castka, format:'sq*r' }
     show poznamka [,,160,] { title:'poznámka', data:p.poznamka, format:'tsq*' }
     show ucet_nazev [,,140,] { title:'název účtu', data:p.ucet_nazev, format:'tsq*' }
@@ -772,7 +773,7 @@ form _platby {
     proc onrowclick() {
       t.browse_init;
       form.key(id_platba.get); form.load;
-      id_osoba.get; osoby.b.browse_seek(conc("os.id_osoba=",id_osoba.get)); b.raise('onrowclick');
+      id_osoba.get; osoby.b.browse_seek(conc("os.id_osoba=",id_osoba.get));
     }
   }
 }

@@ -31,7 +31,7 @@ kEzer-ys2
 		fa\fa_lide.php
 	-skins
 		skins\colors.php
-	+db
+	-db
 		db\$.ezer
 		db\db.akce.ducast.ezer
 		db\db.akce.evi.ezer
@@ -61,7 +61,7 @@ kEzer-ys2
 		sql\mysql_all.bat
 		sql\pohled_osoba.sql
 		zaloha.php
-	-ezer2.2
+	+ezer2.2
 		+libr
 			ezer2.2\$.ezer
 			ezer2.2\ezer2.help.ezer
@@ -188,7 +188,7 @@ kEzer-ys2
 			ys\ys.syst.ezer
 			ys\ys.syst.oso.ezer
 		ys\ys.doc.ezer
-	-ds
+	+ds
 		ds\ds.css.css
 		ds\ds.dum.ezer
 		ds\ds.ezer
@@ -213,18 +213,12 @@ kEzer-ys2
 4=ezer2.2\client\ezer.js
 5=ezer2.2\client\ezer_fdom2.js
 6=db\db.akce.mai.ezer
-7=ys.php
-8=ys.inc
-9=db\db_akce.php
-10=ys\$.ezer
-11=db\db.akce.ucast.ezer
-12=db\db.akce.ducast.ezer
-13=db\db.akce.ezer
-14=db\db.akce.lst.ezer
-15=db\db.akce.evi.ezer
-16=fa.php
-17=fa.inc
-18=ezer2.2\client\ezer.css.php
+7=db\db_akce.php
+8=db\db.akce.ucast.ezer
+9=db\db.akce.ducast.ezer
+10=db\db.akce.ezer
+11=db\db.akce.lst.ezer
+12=db\db.akce.evi.ezer
 [Selected Project Files]
 Main=
 Selected=db\db_akce.php
@@ -241,54 +235,39 @@ Caret=68,1887
 TopLine=752
 Caret=1,809
 [ezer2.2\client\ezer.js]
-TopLine=320
-Caret=1,337
+TopLine=4718
+Caret=59,4789
 BookMark2=25,343
+BookMark9=75,4235
 [ezer2.2\client\ezer_fdom2.js]
-TopLine=1198
-Caret=39,1233
+TopLine=2181
+Caret=53,2199
 [db\db.akce.mai.ezer]
-TopLine=100
-Caret=35,139
+TopLine=135
+Caret=1,175
 BookMark1=13,221
 BookMark3=35,312
-[ys.php]
-TopLine=27
-Caret=27,63
-[ys.inc]
-TopLine=25
-Caret=78,35
 [db\db_akce.php]
-TopLine=3458
-Caret=26,3499
-BookMark1=1,4021
-[ys\$.ezer]
-TopLine=1
-Caret=1,1
+TopLine=2169
+Caret=34,2188
+BookMark1=3,2185
 [db\db.akce.ucast.ezer]
-TopLine=322
-Caret=1,366
-BookMark1=42,67
-BookMark2=1,211
-BookMark3=12,562
+TopLine=196
+Caret=57,234
+BookMark2=1,213
+BookMark3=12,570
+BookMark1=14,743
 [db\db.akce.ducast.ezer]
 TopLine=1
 Caret=1,14
 [db\db.akce.ezer]
-TopLine=1
-Caret=103,33
+TopLine=285
+Caret=34,326
 [db\db.akce.lst.ezer]
 TopLine=114
 Caret=1,143
 [db\db.akce.evi.ezer]
-TopLine=380
-Caret=93,390
-[fa.php]
-TopLine=1
-Caret=1,1
-[fa.inc]
-TopLine=1
-Caret=28,6
-[ezer2.2\client\ezer.css.php]
-TopLine=33
-Caret=56,64
+TopLine=739
+Caret=77,776
+BookMark1=22,773
+BookMark2=108,162
