@@ -3791,7 +3791,7 @@ function dop_mai_posli($id_dopis,$info) {  #trace();
                                                         debug($info);
   // smaž starý seznam
   $qry= "DELETE FROM mail WHERE id_dopis=$id_dopis ";
-                                                        fce_log("dop_mai_posli: $qry");
+//                                                         fce_log("dop_mai_posli: $qry");
   $res= mysql_qry($qry);
   if ( !$res ) fce_error("dop_mai_smaz: mazání rozesílání mailu No.'$id_dopis' se nepovedlo");
 
@@ -3829,7 +3829,7 @@ function dop_mai_posli($id_dopis,$info) {  #trace();
   }
   // oprav počet v DOPIS
   $qr= "UPDATE dopis SET pocet=$num WHERE id_dopis=$id_dopis";
-                                                        fce_log("dop_mai_posli: UPDATE");
+//                                                         fce_log("dop_mai_posli: UPDATE");
   $rs= mysql_qry($qr);
   return true;
 }

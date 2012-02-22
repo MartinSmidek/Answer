@@ -227,7 +227,7 @@ kEzer-ys2
 18=ezer2.2\client\ezer.css.php
 [Selected Project Files]
 Main=
-Selected=db\db.akce.mai.ezer
+Selected=db\db_akce.php
 [ezer2.2\client\app.js]
 TopLine=1
 Caret=1,1
@@ -248,8 +248,8 @@ BookMark2=25,343
 TopLine=1198
 Caret=39,1233
 [db\db.akce.mai.ezer]
-TopLine=180
-Caret=1,216
+TopLine=100
+Caret=35,139
 BookMark1=13,221
 BookMark3=35,312
 [ys.php]
@@ -259,8 +259,8 @@ Caret=27,63
 TopLine=25
 Caret=78,35
 [db\db_akce.php]
-TopLine=4008
-Caret=17,4035
+TopLine=3458
+Caret=26,3499
 BookMark1=1,4021
 [ys\$.ezer]
 TopLine=1
