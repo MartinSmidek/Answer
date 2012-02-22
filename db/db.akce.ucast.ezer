@@ -221,6 +221,15 @@ form _platba {
       lt(Strava.dnu.get,15);       // 15 je maximálně možný počet řádků vyjímek ze stravy
       Strava.modal(240,50)
   } }
+  button ucet [10,100,,] { title:"Aktualizace bankovních výpisů"
+    proc onclick() {
+      var msg: text
+      // aktualizace tabulky PLATBA
+      msg.set(ask('akce_rb_platby'));
+      [ eq(msg,'Nepřišly nové platby') | alert(msg) ];
+    }
+  }
+  // data
   field luzka       [10,456,11,] {data:pobyt.luzka}
   field pristylky   [30,456,11,] {data:pobyt.pristylky}
   field pocetdnu    [51,456,11,] {data:pobyt.pocetdnu}

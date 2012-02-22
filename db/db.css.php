@@ -104,6 +104,7 @@ echo <<<__EOD
 .cerveny        { background-color:#ff7777 !important; }
 .zeleny         { background-color:#77ff77 !important; }
 .modry          { background-color:#7389ae !important; }
+.bily           { background-color:#ffffff !important; }
 /* */
 .aktivni        { background-color:#ffeed6 !important; border:1px solid #ffeed6 !important; }
 .pasivni        { background-color:#f5f5f5 !important; border:1px solid #f5f5f5 !important; }

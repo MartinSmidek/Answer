@@ -209,7 +209,7 @@ group ucastnici {
   // zobrazí spodní formuláře
   proc cti (pokoje) {
     to_show.get; per.init;
-    per.pokoj.selects(conc('0,',sort(pokoje,',','n')));
+    per.spokoj.selects(conc('0,',sort(pokoje,',','n')));
     akc.seznam.browse_load(conc('id_order=',the_order.get));
     akc.seznam.raise('onrowclick')
   }
@@ -220,7 +220,7 @@ group ucastnici {
   // zobrazení účastníka
   proc osoba_load (id_osoba) {
     per.load(id_osoba);
-    per.pokoj.selects(conc('0,',sort(pobyt.obj.rooms.get,',','n')));
+    per.spokoj.selects(conc('0,',sort(pobyt.obj.rooms.get,',','n')));
   }
   // vložení nové rodiny
   var znacka_rodiny: text
@@ -423,7 +423,7 @@ group ucastnici {
     field obec [ 60,135,150,] { data:tab.ds_osoba.obec}
     label       [  0,160,300,] { title:'--- <i>upřesnění údajů o pobytu</i>' }
     label       [  0,175, 70,] { title:'pokoj' }
-    select pokoj [  0,190, 50,] { data:tab.ds_osoba.pokoj, format:':e' }
+    select spokoj [  0,190, 50,] { data:tab.ds_osoba.pokoj, format:':e' }
     label       [ 60,175, 70,] { title:'typ lůžka' }
     select luzka [ 60,190,150,] { type:'map', data:tab.ds_osoba.luzko, options:tab.ds_luzko.hodnota }
     check postylka [220,180,150,] { title:'postýlka', css:'CheckT', data:tab.ds_osoba.postylka }

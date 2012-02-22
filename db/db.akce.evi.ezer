@@ -13,6 +13,7 @@ use osoby:  form _osoby  [10,10,,]        { tag:'list' }
 use rodiny: form _rodiny [10,10,,]        { tag:'rodi' }
 use evid:   form _evid   [355,10,,]       { tag:'evid' }
 use dary:   form _dary   [355,300,,]      { tag:'dary', format:'n' }
+use platby: form _platby [10,550,,]       { tag:'plat', format:'n' }
 
 # záložky evidence
 use p_oso:  form _osoba  [360,10,,]       { tag:'p_oso' }
@@ -39,7 +40,7 @@ use info: form right [12,4,,] {             tag:'inf'
   }
 }
 # systémové informace
-use stav: form _stav [0,550,,] { skill:'m' }
+use stav: form _stav [0,550,,] { tag:'syst', skill:'m' }
 
 proc onstart () {
   mode.set('o'); osoby_vyber.set(1);
@@ -77,7 +78,7 @@ menu m {type:'left'
           par:°{cnd:"1",hav:"LOCATE('d',rel)>0"} }
     proc onclick (i) {
       mode.set('o');
-      panel.display(0,'inf|rodi'); panel.display(1,'evid|list|p_.*');
+      panel.display(0,'inf|rodi|plat'); panel.display(1,'evid|list|syst|p_.*');
       evid.page_init; dary.page_init;
       osoby.b.browse_load(conc("os.deleted='' AND ",i.par.cnd),"",i.par.hav);
       evid.page_show; dary.page_show;
@@ -90,7 +91,7 @@ menu m {type:'left'
     item {title:'... s více telefony' par:°{cnd:"TRIM(telefony) REGEXP ',[^$]|;[^$]'",hav:"1"} }
     proc onclick (i) {
       mode.set('r');
-      panel.display(0,'inf|list'); panel.display(1,'rodi');
+      panel.display(0,'inf|list|plat'); panel.display(1,'rodi|syst');
       evid.page_init; dary.page_init;
       rodiny.b.browse_load(i.par.cnd,"",i.par.hav);
       // experimentální přepnutí podle osoby
@@ -123,19 +124,24 @@ menu m {type:'left'
           par:°{typ:'e-j',exp:'Excel',cnd:1, hav:"rel RLIKE 'c'",
                 tit:'příjmení:15,jméno:10,ulice:20,obec:20,psč:7,datum nar.:10,čl.:3,přísp.:6,rok:6,KČ:13,e-mail:30',
                 fld:'prijmeni,jmeno,ulice,obec,psc,_naroz,_clen,_prisp,_rok,_kc,_email'}}
-    item {title:'import plateb z RB', skill:'m'
+  }
+  menu {title:'Zpracování bankovních výpisů',type:'group', skill:'yae'
+    item {title:'import plateb z RB', //skill:'m'
       proc onclick (i) {
-        panel.display(1,'inf'); panel.display(0,'evid|list|dary|p_.*|d_.*');
+        alert(ask('akce_rb_platby'));
+      }
+    }
+    item {title:'zpracování plateb z RB', //skill:'m'
+      proc onclick (i) {
+        panel.display(1,'plat'); panel.display(0,'syst');
         info.fill(conc(i.owner.title,' - ',i.title),' ');
-        info.msg.set(ask('akce_rb_platby'));
-#         info.fill(conc(i.owner.title,' - ',i.title),'staré info');
-#         platby.b.browse_load
+        platby.b.browse_load
       }
     }
   }
   proc onclick (i) {
     var x: object
-    panel.display(1,'inf'); panel.display(0,'evid|list|dary|p_.*|d_.*');
+    panel.display(1,'inf'); panel.display(0,'evid|list|dary|plat|p_.*|d_.*');
     the_par.set(i.par); the_title.set(i.title); info.export.set(i.par.exp);
     info.fill(conc(i.owner.title,' - ',i.title),' ');
     info.msg.set('');
@@ -710,28 +716,67 @@ form _ddary [,,400,245] {
   }}
 }
 
-/*
 # ---------------------------------------------------------------------- _platby
 form _platby {
+  // operace
+  button [610,5,,] { title:'automatické párování'
+    proc onclick() { var res:object
+      res.set(ask('akce_rb_urci',b.vs.get,b.ss.get,date2sql(b.datum.get)));
+      echo(res.html);
+      [ res.id_osoba; id_osoba.set(res.id_osoba); id_osoba.change; form.save; b.browse_row;
+        osoby.b.browse_seek(conc("os.id_osoba=",res.id_osoba)); b.raise('onrowclick') ];
+      [ res.id_duakce; id_duakce.set(res.id_duakce); id_duakce.change; form.save; b.browse_row ];
+      [ res.tipy; t.browse_fill(res.tipy); t.raise('onrowclick') ]
+    }
+  }
+  // tipy
+  label [610,33,,] { title:"tipnutí plátci:" }
+  browse t [610,50,,] { rows:3
+    show id_osoba
+    show jmena [,,100,]
+    proc onrowclick() {
+      id_osoba.get; osoby.b.browse_seek(conc("os.id_osoba=",id_osoba.get)); b.raise('onrowclick');
+    }
+  }
+  button [610,155,,] { title:'spáruj nastavené'
+    proc onclick() {
+      form.load; id_osoba.set(osoby.b.id_o.get); id_osoba.change;
+      confirm("Opravdu je ",osoby.b.prijmeni.get," ",osoby.b.jmeno.get," plátcem ",b.castka.get,"Kč?");
+      form.save; b.browse_row;
+  } }
+  button [610,180,,] { title:'rozpoj spárované'
+    proc onclick() {
+      form.load; id_osoba.set(0); id_osoba.change;
+      form.save; b.browse_row;
+  } }
+  // přehled všech plateb
   view p: table platba
-  browse b [0,0,,] { rows:10, qry_rows:1
+  field id_platba {data:p.id_platba}
+  field id_osoba {data:p.id_osoba}
+  field id_duakce {data:p.id_duakce}
+  browse b [0,0,,] { rows:9, qry_rows:1, key_id:'id_platba'
     show id_platba { data:p.id_platba }
-#     number id_osoba
-#     number id_rodina
-#     number id_duakce
+    show id_osoba { data:p.id_osoba }
+    show id_rodina { data:p.id_rodina }
+    show id_duakce { data:p.id_duakce }
 #     number id_pokl
 #     number ucel
 #     number zpusob
     show datum  [,,65,] { title:'datum', data:p.datum, format:'s-r' }
     show castka [,,60,] { title:'částka', data:p.castka, format:'sq*r' }
-    show poznamka [,,180,] { title:'poznámka', data:p.poznamka, format:'tsq*' }
-    show ucet_nazev [,,160,] { title:'název účtu', data:p.ucet_nazev, format:'tsq*' }
-    show vs [,,75,] { title:'VS', data:p.vs, format:'sq*r' }
+    show poznamka [,,160,] { title:'poznámka', data:p.poznamka, format:'tsq*' }
+    show ucet_nazev [,,140,] { title:'název účtu', data:p.ucet_nazev, format:'tsq*' }
+    show vs [,,75,] { title:'VS', data:p.vs, format:'sq*r', css_cell:'id_osoba,0:,:zeleny' }
+    show ss [,,30,] { title:'SS', data:p.ss, format:'sq*r', css_cell:'id_duakce,0:,:zeleny' }
     show ks [,,30,] { title:'KS', data:p.ks, format:'sq*r' }
-    show ss [,,30,] { title:'SS', data:p.ss, format:'sq*r' }
-    proc onrowclick() { copy_by_name(b,platba.get); }
+    proc onrowclick() {
+      t.browse_init;
+      form.key(id_platba.get); form.load;
+      id_osoba.get; osoby.b.browse_seek(conc("os.id_osoba=",id_osoba.get)); b.raise('onrowclick');
+    }
   }
 }
+/*
 # ---------------------------------------------------------------------- _platba
 form _platba {
   view p: table platba
