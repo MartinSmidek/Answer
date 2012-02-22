@@ -2181,13 +2181,24 @@ function akce_rb_urci($vs,$ss,$datum) {  trace();
   return $result;
 }
 # -------------------------------------------------------------------------------------------------- akce_rb_platby
-# přečtení pohybů na transparentním účtu RB
+# přečtení pohybů na transparentních účtech RB
 function akce_rb_platby() {  trace();
+  $html= '';
+  $html.= akce_rb_ucet("514048001","M");
+  $html.= "<br>";
+  $html.= akce_rb_ucet("514048044","D");
+//   $html.= "<br>";
+//   $html.= akce_rb_ucet("514048052","D");
+  return $html;
+}
+# -------------------------------------------------------------------------------------------------- akce_rb_ucet
+# přečtení pohybů na transparentním účtu RB
+function akce_rb_ucet($cislo,$nazev) {  trace();
   $n= 0;
   $html= '';
   $dom= new DOMDocument();
   $page= file_get_contents("http://www.rb.cz/firemni-finance/transparentni-ucty/?root=firemni-finance"
-     . "&item1=transparentni-ucty&tr_acc=vypis&account_number=514048001" );
+     . "&item1=transparentni-ucty&tr_acc=vypis&account_number=$cislo" );
   $ok= @$dom->loadHTML($page);
   if ( $ok ) {
     // kontrola hlavičky
@@ -2245,24 +2256,24 @@ function akce_rb_platby() {  trace();
       if ( $castka>0 ) {
         // vložení nových informací do tabulky PLATBA - datum,castka,ucet,vs,ks,ss
         $qry= "SELECT * FROM platba
-               WHERE datum='$datum' AND castka='$castka' AND ucet_nazev='$ucet'
+               WHERE ucet='$nazev' AND datum='$datum' AND castka='$castka' AND ucet_nazev='$ucet'
                  AND vs='$vs' AND ks='$ks' AND ss='$ss'";
         $res= mysql_qry($qry);
         if ( !mysql_num_rows($res) ) {
           // vložení nové platby
           $qryu= "INSERT INTO platba (
-            castka,datum,poznamka,zpusob,ucet_nazev,vs,ks,ss) VALUES (
-            '$castka','$datum','$pozn',1,'$ucet','$vs','$ks','$ss')";
+            ucet,castka,datum,poznamka,zpusob,ucet_nazev,vs,ks,ss) VALUES (
+            '$nazev','$castka','$datum','$pozn',1,'$ucet','$vs','$ks','$ss')";
           $resu= mysql_qry($qryu);
           $nove++;
           $lst.= "<br>$castka $pozn $ucet";
         }
       }
     }
-    $html.= $nove ? "Vloženo $nove nových plateb:<br>$lst" : "Nepřišly nové platby";
+    $html.= $nove ? "Vloženo $nove nových plateb z $ucet:<br>$lst" : "Na $cislo nepřišly nové platby";
   }
   if ( !$ok ) {
-    $html.= "Při zpracování plateb došlo k chybě";
+    $html.= "Při zpracování plateb účtu $cislo došlo k chybě";
   }
   return $html;
 }

@@ -309,6 +309,7 @@ table rodina { key_id:'id_rodina'
 
 table platba { key_id:'id_platba'
   number id_platba
+  text   ucet           // M=514048001, D=514048044
   number id_osoba
   number id_rodina
   number id_duakce
@@ -322,6 +323,7 @@ table platba { key_id:'id_platba'
   text   vs
   text   ks
   text   ss
+  text   tipy           // vytipované možnosti plátce
 }
 # -------------------------------------------------------------------------- webform
 table webform { key_id:'id_webform'
