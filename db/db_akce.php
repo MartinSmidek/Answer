@@ -2128,14 +2128,16 @@ function akce_plachta_export($line,$file) { trace();
 # ================================================================================================== BANKA
 # -------------------------------------------------------------------------------------------------- akce_rb_urci
 # pokus o určení plátce a účelu platby
-function akce_urci($vs,$ss) {  trace();
-  $result= (object)array();
+function akce_rb_urci($vs,$ss,$datum) {  trace();
+  $result= (object)array('id_rodina'=>0,'id_osoba'=>0,'tipy'=>'');
+  // určení osoby a rodiny
   $tipy= array();
   $presne= false;
   $narozeni= rc2ymd($vs);
   $rc_xxxx= strlen($vs)==10 ? substr($vs,6,4) : '0000';
   $AND= strlen($vs)==10 ? " AND rc_xxxx='".substr($vs,6,4)."'" : '';
-  $qry= "SELECT id_osoba,prijmeni,jmeno,rc_xxxx FROM osoba
+  $qry= "SELECT id_osoba,id_rodina,prijmeni,jmeno,rc_xxxx FROM osoba
+         LEFT JOIN tvori AS t USING(id_osoba)
          WHERE narozeni='$narozeni' ";
   $res= mysql_qry($qry);
   $n= mysql_num_rows($res);
@@ -2147,17 +2149,35 @@ function akce_urci($vs,$ss) {  trace();
       if ( $o->rc_xxxx==$rc_xxxx ) {
         $presne= true;
         $html.= " {$o->prijmeni} {$o->jmeno} - {$o->rc_xxxx}";
+        $result->id_rodina= $o->id_rodina;
+        $result->id_osoba= $o->id_osoba;
         break;
       }
       $tipy[]= $o;
     }
     if ( !$presne ) {
       foreach($tipy as $o) {
-        $html.= " {$o->prijmeni} {$o->jmeno} - {$o->rc_xxxx}";
+        $result->tipy.= "{$o->id_osoba}|{$o->prijmeni} {$o->jmeno}|";
+        $html.= "<br>{$o->id_osoba}:{$o->prijmeni} {$o->jmeno} - {$o->rc_xxxx}";
       }
     }
   }
+  // určení akce podle SS a roku (zjednodušení)
+  $rok= substr($datum,0,4);
+  $qa= "SELECT id_duakce,g_kod,g_rok
+        FROM ezer_ys.akce AS da2
+        LEFT JOIN join_akce AS ja2 ON ja2.id_akce=da2.id_duakce
+        LEFT JOIN g_akce AS ga2 USING(g_rok,g_kod)
+        WHERE g_rok=$rok AND g_kod='$ss' ";
+  $ra= mysql_qry($qa);
+  $n= mysql_num_rows($ra);
+  if ( $n==1 ) {
+    $a= mysql_fetch_object($ra);
+    $result->id_duakce= $a->id_duakce;
+  }
+  // konec
   $result->html= $html;
+                                                debug($result,"akce_rb_urci($vs,$ss)");
   return $result;
 }
 # -------------------------------------------------------------------------------------------------- akce_rb_platby
