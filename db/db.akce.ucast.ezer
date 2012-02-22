@@ -51,8 +51,10 @@ use muz:   form _muz     [400,0,,]
 use zen:   form _zena    [400,0,,]
 use pob:   form _pobyt   [400,0,,]
 use cmd:   form _cmd     [400,0,,]
-use pla:   form _platba  [400,0,,]
 use alb:   form _album   [400,0,,]
+# záložka plateb
+use pla:   form _platba  [400,0,,]
+use cmdp:  form _cmd_p   [400,0,,]
 # záložka aktivity
 use a_muz: form _aktivity[420,10,,]
 use a_zen: form _aktivity[700,10,,]
@@ -114,7 +116,7 @@ form _page {
   }
   proc page_init() {
     zalozka.set('evid');
-    a_muz.display(0); a_zen.display(0); pla.display(0);
+    a_muz.display(0); a_zen.display(0); pla.display(0); cmdp.display(0);
   }
   label evd [ 12,0,120,20] {tag:'p', title:'<b>Evidenční karta</b>', format:'c', css:'ae_butt_on'
     proc onclick() {
@@ -122,7 +124,7 @@ form _page {
     | tags(this,'z','h|o|f');
       zalozka.set('evid'); u.b.reload_pobyt;
       evid.display(1); cmd.display(1); rod.display(1); muz.display(1); zen.display(1); pob.display(1);
-      a_muz.display(0); a_zen.display(0); pla.display(0); alb.display(0);
+      a_muz.display(0); a_zen.display(0); pla.display(0); cmdp.display(0); alb.display(0);
     }
   }
   label plt [152,0,120,20] {tag:'p', title:'<b>Platba za akci</b>', format:'c',
@@ -131,7 +133,7 @@ form _page {
     | tags(this,'h','z|o|f');
       zalozka.set('plat'); u.b.reload_pobyt;
       evid.display(0); cmd.display(0); rod.display(0); muz.display(0); zen.display(0); pob.display(0);
-      a_muz.display(0); a_zen.display(0); pla.display(1); alb.display(0);
+      a_muz.display(0); a_zen.display(0); pla.display(1); cmdp.display(1); alb.display(0);
     }
   }
   label jin [292,0,120,20] {tag:'p', title:'<b>Přehled aktivit</b>', format:'c',
@@ -140,7 +142,7 @@ form _page {
     | tags(this,'o','z|h|f');
       zalozka.set('akce'); u.b.reload_pobyt;
       evid.display(0); cmd.display(0); rod.display(0); muz.display(0); zen.display(0); pob.display(0);
-      a_muz.display(1); a_zen.display(1); pla.display(0); alb.display(0);
+      a_muz.display(1); a_zen.display(1); pla.display(0); cmdp.display(0); alb.display(0);
     }
   }
   label fot [432,0,120,20] {tag:'p', title:'<b>Fotky</b>', format:'c', /*skill:'a'*/
@@ -149,7 +151,7 @@ form _page {
     | tags(this,'f','o|z|h');
       zalozka.set('foto'); u.b.reload_pobyt;
       evid.display(0); cmd.display(0); rod.display(0); muz.display(0); zen.display(0); pob.display(0);
-      a_muz.display(0); a_zen.display(0); pla.display(0); alb.display(1);
+      a_muz.display(0); a_zen.display(0); pla.display(0); cmdp.display(0); alb.display(1);
     }
   }
   label [0,16,582,530] { css:'ae_work'}
@@ -555,12 +557,12 @@ form _ucast [,,400,] { css:'ds_form'
         rod._spolu.set(cconc(or(svatba.get,datsvatba.get),roku(datsvatba.get,svatba.get),' '));
         pob.d.browse_fill(deti.get);
         pob.s.browse_fill(skup.get);
-        // obarvení tlačítka [Str.pol]
-        { or(cstrava_cel.get,cstrava_pol.get); pla.stravy.set_css('cervena','cerna')
-        | pla.stravy.set_css('cerna','cervena') };
       },
       'plat',{
         copy_by_name(b,pla.get); pla.key(key_pobyt.get);
+        // obarvení tlačítka [Str.pol]
+        { or(cstrava_cel.get,cstrava_pol.get); pla.stravy.set_css('cervena','cerna')
+        | pla.stravy.set_css('cerna','cervena') };
       },
       'akce',{
         [ id_m.get; a_muz.jme.set(conc(prijmeni_m.get,' ',jmeno_m.get)) | a_muz.jme.init ];
@@ -726,6 +728,27 @@ form _cmd [,,200,] { css:'ds_form'
   } }
   // procedury
   proc b_display(on) { u.b.display(on); pob.d.display(on); pob.s.display(on); }
+}
+# -------------------------------------------------------------------------------------------------- _cmd_p
+# uložení změn v platbách
+form _cmd_p [,,200,] { css:'ds_form'
+  // Zpět a Uložit
+  label  [473,520,102,30] { css:'ae_parm', skill:'yaa+;faa+' }
+  button [479,525,,] {title:'Zpět',  help:'Neměnit změněné platby', skill:'yaa+|yaa+;faa+|faa+'
+    proc onclick() {
+      // potlačení ochrany proti neuložené změně
+      pla.plain;
+      reload(u.b.browse_key);
+  } }
+  button [525,525,,] {title:'Uložit',  help:'Uložit změny v platbách', skill:'yaa+|yaa+;faa+|faa+'
+    proc onclick() {
+      var ok: number
+      the_pobyt.get;
+      // oprava
+      [ pla.same | pla.save; pla.plain ];
+      reload(the_pobyt.get);
+    }
+  }
 }
 # ================================================================================================== Dítě
 panel Dite [,,360,360] {type:'popup', title:'Úprava dětí'
