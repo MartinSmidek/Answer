@@ -297,16 +297,21 @@ function akce_vzorec($id_pobyt) {  trace();
   }
   else {
     while ( $ra && ($a= mysql_fetch_object($ra)) ) {
+      $txt= $a->polozka;
+      $c= $a->cena;
+      $j= $a->za ? $jidel->{$a->za} : '';
+      $nl= $x->nocoluzka;
+      $u= $ucastniku;
       switch ($a->za) {
-      case '':   $cena[$a->polozka]= ''; break;
-      case 'P':  $cena[$a->polozka]= $a->cena * $ucastniku; break;
-      case 'N':  $cena[$a->polozka]= $a->cena * $x->nocoluzka;    break;
-      case 'sc': $cena[$a->polozka]= $a->cena * $jidel->{$a->za}; break;
-      case 'sp': $cena[$a->polozka]= $a->cena * $jidel->{$a->za}; break;
-      case 'oc': $cena[$a->polozka]= $a->cena * $jidel->{$a->za}; break;
-      case 'op': $cena[$a->polozka]= $a->cena * $jidel->{$a->za}; break;
-      case 'vc': $cena[$a->polozka]= $a->cena * $jidel->{$a->za}; break;
-      case 'vp': $cena[$a->polozka]= $a->cena * $jidel->{$a->za}; break;
+      case '':   $cena[$txt]= ''; break;
+      case 'P':  $cena[$txt]= $c * $u; break;
+      case 'N':  $cena["$txt ($nl*$c)"]= $nl * $c; break;
+      case 'sc': $cena["$txt ($j*$c)"]= $j * $c; break;
+      case 'sp': $cena["$txt ($j*$c)"]= $j * $c; break;
+      case 'oc': $cena["$txt ($j*$c)"]= $j * $c; break;
+      case 'op': $cena["$txt ($j*$c)"]= $j * $c; break;
+      case 'vc': $cena["$txt ($j*$c)"]= $j * $c; break;
+      case 'vp': $cena["$txt ($j*$c)"]= $j * $c; break;
       }
     }
     // přidání sumy
