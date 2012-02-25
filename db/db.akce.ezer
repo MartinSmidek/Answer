@@ -325,6 +325,19 @@ table platba { key_id:'id_platba'
   text   ss
   text   tipy           // vytipované možnosti plátce
 }
+
+table cenik { key_id:'id_cenik'
+  number id_cenik
+  number id_akce
+  number poradi
+  text   polozka
+  text   za             // N: noc, S:snídaně, O:oběd, V:večeře, P:pobyt
+  number od
+  number do
+  number cena
+  number dph
+}
+
 # -------------------------------------------------------------------------- webform
 table webform { key_id:'id_webform'
   number id_webform

@@ -243,6 +243,82 @@ function akce_kontrola_dat($par) { trace();
   return $html;
 }
 # ================================================================================================== PDF
+# -------------------------------------------------------------------------------------------------- akce_platby
+# výpočet platby za pobyt na akci
+function akce_platby($id_pobyt) {  trace();
+  $suma= 0;
+  $html.= '';
+  $id_akce= select("id_akce","pobyt","id_pobyt=$id_pobyt");
+  // procházení osob
+  $qo= "SELECT id_osoba FROM spolu WHERE id_pobyt=$id_pobyt";
+  $ro= mysql_qry($qo);
+  while ( $ro && ($o= mysql_fetch_object($ro)) ) {
+    // hledání plateb této osoby
+    $qp= "SELECT * FROM platba WHERE id_duakce=$id_akce AND id_osoba={$o->id_osoba}";
+    $rp= mysql_qry($qp);
+    while ( $rp && ($p= mysql_fetch_object($rp)) ) {
+      $den= sql_date1($p->datum);
+      $html.= "$den {$p->castka}Kč: {$p->poznamka}, {$p->ucet_nazev}";
+      $suma+= $p->castka;
+    }
+  }
+  return $html;
+}
+# -------------------------------------------------------------------------------------------------- akce_vzorec
+# výpočet platby za pobyt na akci
+function akce_vzorec($id_pobyt) {  trace();
+  $cena= array();
+  $id_akce= 0;
+  // sumace nákladů na pobyt
+  $x= (object)array();
+  $qp= "SELECT * FROM pobyt WHERE id_pobyt=$id_pobyt";
+  $rp= mysql_qry($qp);
+  while ( $rp && ($p= mysql_fetch_object($rp)) ) {
+    $id_akce= $p->id_akce;
+    $x->nocoluzka+= $p->luzka * $p->pocetdnu;
+    $ucastniku= 2;                                      // !!!!!!!!!!!!!!!!!!!! dopsat
+  }
+//                                                         debug($x,"pobyt");
+  // zpracování strav
+  $strava= akce_strava_pary($id_akce,'','','',true,$id_pobyt);
+                                                        debug($strava->suma,"strava");
+  $jidel= (object)array();
+  foreach ($strava->suma as $den_jidlo=>$pocet) {
+    list($den,$jidlo)= explode(' ',$den_jidlo);
+    $jidel->$jidlo+= $pocet;
+  }
+//                                                         debug($jidel,"strava");
+  // zpracování podle ceníku
+  $qa= "SELECT * FROM cenik WHERE id_akce=$id_akce ORDER BY poradi";
+  $ra= mysql_qry($qa);
+  $n= $ra ? mysql_num_rows($ra) : 0;
+  if ( !$n ) {
+    $html.= "akce {$pobyt->id_akce} nemá cenový vzorec";
+  }
+  else {
+    while ( $ra && ($a= mysql_fetch_object($ra)) ) {
+      switch ($a->za) {
+      case '':   $cena[$a->polozka]= ''; break;
+      case 'P':  $cena[$a->polozka]= $a->cena * $ucastniku; break;
+      case 'N':  $cena[$a->polozka]= $a->cena * $x->nocoluzka;    break;
+      case 'sc': $cena[$a->polozka]= $a->cena * $jidel->{$a->za}; break;
+      case 'sp': $cena[$a->polozka]= $a->cena * $jidel->{$a->za}; break;
+      case 'oc': $cena[$a->polozka]= $a->cena * $jidel->{$a->za}; break;
+      case 'op': $cena[$a->polozka]= $a->cena * $jidel->{$a->za}; break;
+      case 'vc': $cena[$a->polozka]= $a->cena * $jidel->{$a->za}; break;
+      case 'vp': $cena[$a->polozka]= $a->cena * $jidel->{$a->za}; break;
+      }
+    }
+    // přidání sumy
+    $suma= 0;
+    foreach ($cena as $s) $suma+= $s;
+    $cena['CELKEM']= $suma;
+//                                                         debug($cena,"cena");
+  }
+  $html.= debugx($cena,"Cena za pobyt");
+  return $html;
+}
+# ================================================================================================== PDF
 # -------------------------------------------------------------------------------------------------- akce_pdf_stravenky
 # generování štítků se stravenkami pro rodinu účastníka do PDF
 function akce_pdf_stravenky($akce,$par,$report_json) {  trace();
@@ -1231,11 +1307,12 @@ function akce_stravenky($akce,$par,$title,$vypis,$export=false) { #trace();
 # -------------------------------------------------------------------------------------------------- akce_strava_pary
 # generování sestavy přehledu strav pro účastníky $akce - páry
 #   $cnd = podmínka
+#   $id_pobyt -- je-li udáno, počítá se jen pro tento jeden pobyt (jedněch účastníků)
 # počítané položky
 #   manzele = rodina.nazev muz a zena
 # generované vzorce
 #   platit = součet předepsaných plateb
-function akce_strava_pary($akce,$par,$title,$vypis,$export=false) { trace();
+function akce_strava_pary($akce,$par,$title,$vypis,$export=false,$id_pobyt=0) { trace();
   $ord= $par->ord ? $par->ord : "IF(funkce<=2,1,funkce),IF(pouze=0,r.nazev,o.prijmeni)";
   $result= (object)array();
   $cnd= 1;
@@ -1294,6 +1371,8 @@ function akce_strava_pary($akce,$par,$title,$vypis,$export=false) { trace();
     if ( isset($f) ) $fmts[$fld]= $f;
   }
   // data akce
+  if ( $id_pobyt )
+    $cond.= " AND id_pobyt=$id_pobyt";
   $qry=  "SELECT r.nazev as nazev,strava_cel,strava_pol,cstrava_cel,cstrava_pol,p.pouze,
             GROUP_CONCAT(DISTINCT IF(t.role='a',o.prijmeni,'') SEPARATOR '') as prijmeni_m,
             GROUP_CONCAT(DISTINCT IF(t.role='a',o.jmeno,'')    SEPARATOR '') as jmeno_m,
@@ -1346,6 +1425,7 @@ function akce_strava_pary($akce,$par,$title,$vypis,$export=false) { trace();
     $result->flds= $flds;
     $result->clmn= $clmn;
     $result->expr= $expr;
+    $result->suma= $suma;
   }
   else {
     // titulky
