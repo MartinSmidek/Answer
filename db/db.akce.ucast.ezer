@@ -221,13 +221,30 @@ form _platba {
       lt(Strava.dnu.get,15);       // 15 je maximálně možný počet řádků vyjímek ze stravy
       Strava.modal(240,50)
   } }
-  button ucet [10,100,,] { title:"Aktualizace bankovních výpisů"
+  button [10,100,,] { title:"Aktualizace bankovních výpisů"
     proc onclick() {
       var msg: text
       // aktualizace tabulky PLATBA
       msg.set(ask('akce_rb_platby'));
       [ eq(msg,'Nepřišly nové platby') | alert(msg) ];
     }
+  }
+  // platby
+  button [10,130,,] { title:"Návrh ceny"
+    proc onclick() {
+      navrh.set(ask('akce_vzorec',the_pobyt.get));
+    }
+  }
+  label navrh [10,160,300,200]
+  button [300,130,,] { title:"Došlé platby"
+    proc onclick() {
+      doslo.set(ask('akce_platby',the_pobyt.get));
+    }
+  }
+  label doslo [300,160,300,200]
+  // funkce
+  proc nove() {
+    navrh.set(''); doslo.set('');
   }
   // data
   field luzka       [10,456,11,] {data:pobyt.luzka}
@@ -551,10 +568,10 @@ form _ucast [,,400,] { css:'ds_form'
       ))];
       neni_ulozeno // warning
     | b.browse_count;
+      // přechod na jiný pobyt
+      the_pobyt.set(key_pobyt.get);
       switch(zalozka.get,
       'evid', {
-        // přechod na jiný pobyt
-        the_pobyt.set(key_pobyt.get);
         // načtou se všichni, ale ukážou se jen účastníci akce (pouze: 0=oba, 1=muž, 2=žena)
         copy_by_name(b,muz.get); muz.key(id_m.get); muz.get.display(eq(pouze.get,0,1));
         copy_by_name(b,zen.get); zen.key(id_z.get); zen.get.display(eq(pouze.get,0,2));
@@ -568,7 +585,7 @@ form _ucast [,,400,] { css:'ds_form'
         pob.s.browse_fill(skup.get);
       },
       'plat',{
-        copy_by_name(b,pla.get); pla.key(key_pobyt.get);
+        pla.nove; copy_by_name(b,pla.get); pla.key(key_pobyt.get);
         // obarvení tlačítka [Str.pol]
         { or(cstrava_cel.get,cstrava_pol.get); pla.stravy.set_css('cervena','cerna')
         | pla.stravy.set_css('cerna','cervena') };
@@ -609,7 +626,7 @@ form _ucast [,,400,] { css:'ds_form'
 proc neni_ulozeno() {
   var ok: number
   //has_skill('yaa+;faa+');
-  ok.set(not(and(rod.same,pob.same,muz.same,zen.same)));
+  ok.set(not(and(rod.same,pob.same,muz.same,zen.same,pla.same)));
   [ ok;
     warning('neuložené změny pro účastníka <b>',rod.nazev.get,'</b> použij [Zpět] nebo [Uložit]') ];
   return(ok)

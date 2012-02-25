@@ -774,6 +774,7 @@ form _platby {
       t.browse_init;
       form.key(id_platba.get); form.load;
       id_osoba.get; osoby.b.browse_seek(conc("os.id_osoba=",id_osoba.get));
+      evid.reload; dary.reload;
     }
   }
 }

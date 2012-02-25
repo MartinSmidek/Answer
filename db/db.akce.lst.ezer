@@ -62,15 +62,19 @@ form _page [,,285,500] {
     a.set_css('ae_butt_on','ae_butt_off');
     form.display(1,on); form.display(0,off);
   }
-  label inf [ 12,0,80,20] {tag:'p', title:'<b>Informace</b>', format:'c', css:'ae_butt_on'
-    proc onclick() { tags(this,'inf','cor'); zalozka.set('inf'); show_akce(a_akce.get)
+  label inf [ 12,0,80,20] {tag:'p', title:'<b>Info</b>', format:'c', css:'ae_butt_on'
+    proc onclick() { tags(this,'inf','cor|cen'); zalozka.set('inf'); show_akce(a_akce.get)
   } }
   label cor [100,0,80,20] {tag:'p', title:'<b>Úprava</b>', format:'c'
-    proc onclick() { tags(this,'cor','inf'); zalozka.set('cor'); show_akce(a_akce.get)
+    proc onclick() { tags(this,'cor','inf|cen'); zalozka.set('cor'); show_akce(a_akce.get)
   } }
-  // je pro YF, YS akce přidává přes definici na intranetu
-  label new [188,0,80,20] {tag:'p', title:'<b>Nová akce</b>', format:'c', skill:'faan;yaan'
-    proc onclick() { tags(this,'cor','inf'); zalozka.set('new'); show_akce(a_akce.get)
+  // jen pro YF - přidání akce
+  label new [188,0,80,20] {tag:'p', title:'<b>Nová akce</b>', format:'c', skill:'faan'
+    proc onclick() { tags(this,'cor','inf|cen'); zalozka.set('new'); show_akce(a_akce.get)
+  } }
+  // je pro YS - ceník akce
+  label cen [188,0,80,20] {tag:'p', title:'<b>Ceník</b>', format:'c', skill:'yaan'
+    proc onclick() { tags(this,'cen','inf|cor'); zalozka.set('cen'); show_akce(a_akce.get)
   } }
   proc show_akce(id_akce) {
     page.a_akce.set(id_akce);
@@ -84,8 +88,43 @@ form _page [,,285,500] {
     'new',{
       form.init; info.sey.blur(1)
     },
+    'cen',{
+      form.init; c.browse_load(conc("id_akce=",id_akce));
+    },
     { stop}
   )}
+  # --------------------------- ceník
+  browse c [10,25,,] { tag:'cen', rows:10, qry_rows:1
+    show id_cenik { data:cenik.id_cenik }
+    show id_akce  { data:cenik.id_akce }
+    show poradi [,,25,] { title:'N', help:'pořadí ve faktuře', data:cenik.poradi, format:'ruq*s+'
+      proc onsubmit() { this.save } }
+    show polozka [,,125,] { title:'položka', help:'... do faktury', data:cenik.polozka, format:'uq*s'
+      proc onsubmit() { this.save } }
+    show za [,,27,] { title:'za', data:cenik.za, format:'urq=s',
+      help:'noc:N, strava:(s=snídaně/o=oběd/v=večeře)(c=celá/p=poloviční), pobyt:P'
+      proc onsubmit() { this.save } }
+#     show od [,,29,] { title:'od', help:'od věku - včetně', data:cenik.od, format:'urq=s'
+#       proc onsubmit() { this.save } }
+#     show do [,,29,] { title:'do', help:'do věku - nevčetně', data:cenik.do, format:'urq=s'
+#       proc onsubmit() { this.save } }
+    show cena [,,42,] { title:'cena', help:'cena v Kč', data:cenik.cena, format:'urq=s'
+      proc onsubmit() { this.save } }
+    show dph [,,35,] { title:'dph', help:'DPH v Kč', data:cenik.dph, format:'urq=s'
+      proc onsubmit() { this.save } }
+    menu { type:'context'
+      item { title:'přidat nový řádek', skill:'a|a'
+        proc onclick() {
+          c.browse_seek(conc('id_cenik=',cenik.insert_record(
+            object('id_akce',a_akce.get,'polozka','?'))));
+      } }
+      item { title:'odebrat běžný řádek', skill:'a|a'
+        proc onclick() { confirm('opravdu odebrat položku ',polozka.get,'?');
+          cenik.delete_record(conc('id_cenik=',id_cenik.get));
+          c.browse_load
+      } }
+    }
+  }
   # --------------------------- informace
   label note [10,25,270,460] { tag:'inf', title:'', style:'color:black;font-size:12px' }
   # --------------------------- položky akce

@@ -221,7 +221,7 @@ kEzer-ys2
 12=db\db.akce.evi.ezer
 [Selected Project Files]
 Main=
-Selected=db\db_akce.php
+Selected=db\db.akce.evi.ezer
 [ezer2.2\client\app.js]
 TopLine=1
 Caret=1,1
@@ -254,9 +254,9 @@ BookMark1=3,2185
 [db\db.akce.ucast.ezer]
 TopLine=196
 Caret=57,234
+BookMark1=14,743
 BookMark2=1,213
 BookMark3=12,570
-BookMark1=14,743
 [db\db.akce.ducast.ezer]
 TopLine=1
 Caret=1,14
@@ -267,7 +267,7 @@ Caret=34,326
 TopLine=114
 Caret=1,143
 [db\db.akce.evi.ezer]
-TopLine=739
-Caret=77,776
+TopLine=736
+Caret=33,777
 BookMark1=22,773
 BookMark2=108,162
