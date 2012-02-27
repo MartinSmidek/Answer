@@ -61,7 +61,7 @@ kEzer-ys2
 		sql\mysql_all.bat
 		sql\pohled_osoba.sql
 		zaloha.php
-	+ezer2.2
+	-ezer2.2
 		+libr
 			ezer2.2\$.ezer
 			ezer2.2\ezer2.help.ezer
@@ -158,7 +158,7 @@ kEzer-ys2
 		dg\dg.css.css
 		dg.inc
 		dg.php
-	-ys
+	+ys
 		+$
 			ys\$.ezer
 			skins\colors.php
@@ -219,12 +219,16 @@ kEzer-ys2
 10=db\db.akce.ezer
 11=db\db.akce.lst.ezer
 12=db\db.akce.evi.ezer
+13=ezer2.2\client\licensed\clientcide.js
+14=ys.php
+15=ezer2.2\server\reference.php
+16=ezer2.2\client\ezer.css.php
 [Selected Project Files]
 Main=
-Selected=db\db.akce.evi.ezer
+Selected=ezer2.2\client\ezer.css.php
 [ezer2.2\client\app.js]
-TopLine=1
-Caret=1,1
+TopLine=33
+Caret=14,34
 [ezer2.2\server\ezer2.php]
 TopLine=1592
 Caret=1,1628
@@ -240,11 +244,11 @@ Caret=59,4789
 BookMark2=25,343
 BookMark9=75,4235
 [ezer2.2\client\ezer_fdom2.js]
-TopLine=2181
-Caret=53,2199
+TopLine=2731
+Caret=1,2787
 [db\db.akce.mai.ezer]
-TopLine=135
-Caret=1,175
+TopLine=125
+Caret=20,147
 BookMark1=13,221
 BookMark3=35,312
 [db\db_akce.php]
@@ -268,6 +272,19 @@ TopLine=114
 Caret=1,143
 [db\db.akce.evi.ezer]
 TopLine=736
-Caret=33,777
+Caret=45,745
 BookMark1=22,773
 BookMark2=108,162
+[ezer2.2\client\licensed\clientcide.js]
+TopLine=7067
+Caret=2,7094
+BookMark1=19,8046
+[ys.php]
+TopLine=1
+Caret=1,1
+[ezer2.2\server\reference.php]
+TopLine=242
+Caret=11,248
+[ezer2.2\client\ezer.css.php]
+TopLine=579
+Caret=32,585

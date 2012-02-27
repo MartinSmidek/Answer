@@ -3206,7 +3206,7 @@ function evid_table($par,$tits,$flds,$clmn,$export=false) {
         // přidání grafu
         $g= '';
         if ( strpos(",$grf,",",$f,")!==false ) {
-          $g= round(100*($c[$f]/$c[$norm]),0);
+          $g= $c[$norm] ? round(100*($c[$f]/$c[$norm]),0) : 0;
           $g= "<img src='skins/$skin/pixel.png'
             style='height:4px;width:{$g}px;float:left;margin-top:5px'>";
         }

@@ -104,7 +104,7 @@ menu m {type:'left'
           par:°{typ:'e-v',exp:'Excel',cnd:1, hav:"_vps>0",tit:'jméno:20,obec:20',fld:'_jmeno,obec'}}
     item {title:'Přehled všech od 1990',
           par:°{typ:'e-v',exp:'Excel',cnd:1, hav:"1",tit:'jméno:20,obec:20',fld:'_jmeno,obec'}}
-    item {title:'Struktura kurzů',
+    item {title:'Struktura letních kurzů MS',
           par:°{typ:'e-s',exp:'Excel'}}
   }
   menu {title:'Výpisy a exporty',type:'group', skill:'yae'
