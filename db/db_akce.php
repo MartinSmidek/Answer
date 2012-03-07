@@ -3894,6 +3894,7 @@ function dop_mai_pocet($id_dopis,$dopis_var,$cond='',$recall=false) {  trace();
     $result->_dopis_var= $dopis_var;
     $result->_cond= $cond ? $cond : '';
     $result->_adresy= array();
+    $result->_ids= array();
   }
 //                                                 debug($result,"dop_mai_pocet.result");
   return $result;
