@@ -3785,9 +3785,9 @@ function dop_mai_pocet($id_dopis,$dopis_var,$cond='',$recall=false) {  trace();
   $result= (object)array('_error'=>0, '_count'=> 0, '_cond'=>false);
   $result->_html= 'Rozesílání mailu nemá určené adresáty, stiskni ZRUŠIT';
   $emaily= $ids= $jmena= $pobyty= array();
-  $spatne= $nema= '';
-  $n= $ns= $nt= $nx= 0;
-  $dels= $deln= '';
+  $spatne= $nema= $mimo= '';
+  $n= $ns= $nt= $nx= $mx= 0;
+  $dels= $deln= $delm= '';
   $nazev= '';
   switch ($dopis_var) {
   // obecný dotaz
@@ -3807,9 +3807,15 @@ function dop_mai_pocet($id_dopis,$dopis_var,$cond='',$recall=false) {  trace();
           foreach(preg_split('/\s*[,;]\s*/',trim($d->_email,",; \n\r"),0,PREG_SPLIT_NO_EMPTY) as $adr) {
             // pokud tam ještě není
             if ( $adr && !in_array($adr,$emaily) ) {
-              $emaily[]= $adr;
-              $ids[]= $d->_id;
-              $jmena[]= "{$d->prijmeni} {$d->jmeno}";
+              if ( $adr[0]=='*' ) {
+                // vyřazený mail
+                $mimo.= "$delm{$d->prijmeni} {$d->jmeno}"; $delm= ', '; $mx++;
+              }
+              else {
+                $emaily[]= $adr;
+                $ids[]= $d->_id;
+                $jmena[]= "{$d->prijmeni} {$d->jmeno}";
+              }
             }
           }
         }
@@ -3842,7 +3848,12 @@ function dop_mai_pocet($id_dopis,$dopis_var,$cond='',$recall=false) {  trace();
       $n++;
       $nazev= "Účastníků {$d->nazev}";
       if ( $d->email!='' || $d->emaily!='' ) {
-        $emaily[]= "{$d->email},{$d->emaily}";
+        $em= "{$d->email},{$d->emaily}";
+        if ( strpos($em,'*')!==false ) {
+          // vyřazený mail
+          $mimo.= "$delm$jm"; $delm= ', '; $mx++;
+        }
+        $emaily[]= $em;
         $pobyty[]= $d->id_pobyt;
         list($ids[])= explode(',',$d->_id);
         list($jmena[])= explode(',',$d->_jm);
@@ -3862,7 +3873,7 @@ function dop_mai_pocet($id_dopis,$dopis_var,$cond='',$recall=false) {  trace();
     foreach(preg_split('/\s*[,;]\s*/',$emaily[$i],0,PREG_SPLIT_NO_EMPTY) as $adr) {
 //                                                 debug(preg_split('/\s*[,;]\s*/',$emaily[$i],0,PREG_SPLIT_NO_EMPTY),$emaily[$i]); break;
       $chyba= '';
-                                        display("$adr");
+//                                                 display("$adr");
       if ( emailIsValid($adr,$chyba) ) {
         $email.= $del.$adr;                     // první dobrý bude adresou
         $del= ',';                              // zbytek pro CC
@@ -3884,6 +3895,7 @@ function dop_mai_pocet($id_dopis,$dopis_var,$cond='',$recall=false) {  trace();
   $html.= "$nazev je $n celkem\n";
   $html.= $ns ? "$ns má chybný mail ($spatne)\n" : '';
   $html.= $nx ? "$nx nemají mail ($nema)" : '';
+  $html.= $mx ? "$mx mají mail označený '*' jako nedostupný ($mimo)" : '';
   $result->_html= $nt>0
     ? "Opravdu vygenerovat seznam pro rozeslání\n'$nazev'\nna $nt adres?"
     : "Mail '$nazev' nemá žádného adresáta, stiskni ZRUŠIT";
@@ -3903,33 +3915,36 @@ function dop_mai_pocet($id_dopis,$dopis_var,$cond='',$recall=false) {  trace();
 # do tabulky MAIL dá seznam emailových adres pro rozeslání (je volána po dop_mai_pocet)
 # $id_dopis => dopis(&pocet)
 # $info = {_adresy,_ids[,_cond]}   _cond
-function dop_mai_posli($id_dopis,$info) {  #trace();
+function dop_mai_posli($id_dopis,$info) {  trace();
   $num= 0;
-                                                        debug($info);
+//                                                         debug($info);
   // smaž starý seznam
   $qry= "DELETE FROM mail WHERE id_dopis=$id_dopis ";
 //                                                         fce_log("dop_mai_posli: $qry");
   $res= mysql_qry($qry);
   if ( !$res ) fce_error("dop_mai_smaz: mazání rozesílání mailu No.'$id_dopis' se nepovedlo");
 
-  if ( $info->_dopis_var ) {
-    $result= dop_mai_pocet($id_dopis,$info->_dopis_var,$info->_cond,true);
-    $info->_adresy= $result->_adresy;
+  if ( isset($info->_dopis_var) ) {
+    // přepočítej adresy
+    $info= dop_mai_pocet($id_dopis,$info->_dopis_var,$info->_cond,true);
+//     $info->_adresy= $result->_adresy;
   }
-  if ( $info->_adresy ) {
+  if ( isset($info->_adresy) ) {
     // pokud jsou přímo známy adresy, pošli na ně
     $ids= array();
     foreach($info->_ids as $i=>$id) $ids[$i]= $id;
     if ( $info->_pobyty ) foreach($info->_pobyty as $i=>$pobyt) $pobyty[$i]= $pobyt;
     foreach ($info->_adresy as $i=>$email) {
       $id= $ids[$i];
-      // vlož do MAIL
-      $pobyt= isset($pobyty[$i]) ? $pobyty[$i] : 0;
-      $qr= "INSERT mail (id_davka,znacka,stav,id_dopis,id_clen,id_pobyt,email)
-            VALUE (1,'@',0,$id_dopis,$id,$pobyt,'$email')";
+      // vlož do MAIL - pokud nezačíná *
+      if ( $email[0]!='*' ) {
+        $pobyt= isset($pobyty[$i]) ? $pobyty[$i] : 0;
+        $qr= "INSERT mail (id_davka,znacka,stav,id_dopis,id_clen,id_pobyt,email)
+              VALUE (1,'@',0,$id_dopis,$id,$pobyt,'$email')";
 //                                         display("$i:$qr");
-      $rs= mysql_qry($qr);
-      $num+= mysql_affected_rows();
+        $rs= mysql_qry($qr);
+        $num+= mysql_affected_rows();
+      }
     }
   }
   else {
@@ -3938,10 +3953,12 @@ function dop_mai_posli($id_dopis,$info) {  #trace();
     $res= mysql_qry($qry);
     while ( $res && $c= mysql_fetch_object($res) ) {
       // vlož do MAIL
-      $qr= "INSERT mail (id_davka,znacka,stav,id_dopis,id_clen,email)
-            VALUE (1,'@',0,$id_dopis,{$c->id_clen},'{$c->email}')";
-      $rs= mysql_qry($qr);
-      $num+= mysql_affected_rows();
+      if ( $c->email[0]!='*' ) {
+        $qr= "INSERT mail (id_davka,znacka,stav,id_dopis,id_clen,email)
+              VALUE (1,'@',0,$id_dopis,{$c->id_clen},'{$c->email}')";
+        $rs= mysql_qry($qr);
+        $num+= mysql_affected_rows();
+      }
     }
   }
   // oprav počet v DOPIS
