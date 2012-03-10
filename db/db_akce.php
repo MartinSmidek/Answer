@@ -3586,7 +3586,7 @@ function db_mail_sql_try($qry) {  trace();
       $html.= "<span style='color:darkred'>ERROR ".mysql_error()."</span>";
     }
     else {
-      $nmax= 100;
+      $nmax= 200;
       $num= mysql_num_rows($res);
       $head.= "Výběr obsahuje <b>$num</b> emailových adresátů, nalezených během $time ms, ";
       $head.= $num>$nmax ? "následuje prvních $nmax adresátů" : "následují všichni adresáti";
