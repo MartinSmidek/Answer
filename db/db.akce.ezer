@@ -225,6 +225,8 @@ table pobyt { key_id:'id_pobyt'
   number platba2
   number platba3
   number platba4
+  number sleva
+  number vzorec //#
 }
 
 table spolu { key_id:'id_spolu'
@@ -600,13 +602,14 @@ table dopis { key_id:'id_dopis'
   text add_list
 }
 
-map ms_akce_typ:      table _cis {where:"druh='ms_akce_typ'",      order:'poradi', key_id:'data'}
-map ms_akce_clen:     table _cis {where:"druh='ms_akce_clen'",     order:'poradi', key_id:'data'}
-map ms_akce_pouze:    table _cis {where:"druh='ms_akce_pouze'",    order:'poradi', key_id:'data'}
-map ms_akce_funkce:   table _cis {where:"druh='ms_akce_funkce'",   order:'poradi', key_id:'data'}
-map ms_akce_cirkev:   table _cis {where:"druh='ms_akce_cirkev'",   order:'poradi', key_id:'data'}
-map ms_akce_vzdelani: table _cis {where:"druh='ms_akce_vzdelani'", order:'poradi', key_id:'data'}
-map ms_akce_platba:   table _cis {where:"druh='ms_akce_platba'",   order:'poradi', key_id:'data'}
-map ms_akce_sex:      table _cis {where:"druh='ms_akce_sex'",      order:'poradi', key_id:'data'}
-map ms_akce_ucastnik: table _cis {where:"druh='ms_akce_ucastnik'", order:'poradi', key_id:'data'}
+map ms_akce_typ:      table _cis {where:"druh='ms_akce_typ'",       order:'poradi', key_id:'data'}
+map ms_akce_clen:     table _cis {where:"druh='ms_akce_clen'",      order:'poradi', key_id:'data'}
+map ms_akce_pouze:    table _cis {where:"druh='ms_akce_pouze'",     order:'poradi', key_id:'data'}
+map ms_akce_funkce:   table _cis {where:"druh='ms_akce_funkce'",    order:'poradi', key_id:'data'}
+map ms_akce_cirkev:   table _cis {where:"druh='ms_akce_cirkev'",    order:'poradi', key_id:'data'}
+map ms_akce_vzdelani: table _cis {where:"druh='ms_akce_vzdelani'",  order:'poradi', key_id:'data'}
+map ms_akce_platba:   table _cis {where:"druh='ms_akce_platba'",    order:'poradi', key_id:'data'}
+map ms_akce_sex:      table _cis {where:"druh='ms_akce_sex'",       order:'poradi', key_id:'data'}
+map ms_akce_ucastnik: table _cis {where:"druh='ms_akce_ucastnik'",  order:'poradi', key_id:'data'}
 map ms_akce_poradatel:table _cis {where:"druh='ms_akce_poradatel'", order:'poradi', key_id:'data'}
+map ms_cena_vzorec:   table _cis {where:"druh='ms_cena_vzorec'",    order:'poradi', key_id:'data'}

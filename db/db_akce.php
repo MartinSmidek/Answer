@@ -267,60 +267,127 @@ function akce_platby($id_pobyt) {  trace();
 # -------------------------------------------------------------------------------------------------- akce_vzorec
 # výpočet platby za pobyt na akci
 function akce_vzorec($id_pobyt) {  trace();
-  $cena= array();
   $id_akce= 0;
-  // sumace nákladů na pobyt
+  $ok= true;
+  // parametry pobytu
   $x= (object)array();
   $qp= "SELECT * FROM pobyt WHERE id_pobyt=$id_pobyt";
   $rp= mysql_qry($qp);
-  while ( $rp && ($p= mysql_fetch_object($rp)) ) {
+  if ( $rp && ($p= mysql_fetch_object($rp)) ) {
     $id_akce= $p->id_akce;
     $x->nocoluzka+= $p->luzka * $p->pocetdnu;
-    $ucastniku= 2;                                      // !!!!!!!!!!!!!!!!!!!! dopsat
+    $ucastniku= $p->pouze ? 1 : 2;
+    $vzorec= $p->vzorec;
+    $sleva= $p->sleva;
   }
 //                                                         debug($x,"pobyt");
   // zpracování strav
   $strava= akce_strava_pary($id_akce,'','','',true,$id_pobyt);
-                                                        debug($strava->suma,"strava");
+//                                                         debug($strava->suma,"strava");
   $jidel= (object)array();
   foreach ($strava->suma as $den_jidlo=>$pocet) {
     list($den,$jidlo)= explode(' ',$den_jidlo);
     $jidel->$jidlo+= $pocet;
   }
 //                                                         debug($jidel,"strava");
-  // zpracování podle ceníku
+  // načtení cenového vzorce a ceníku
+  $vzor= array();
+  $qry= "SELECT * FROM _cis WHERE druh='ms_cena_vzorec' AND data=$vzorec";
+  $res= mysql_qry($qry);
+  if ( $res && $c= mysql_fetch_object($res) ) {
+    $vzor= $c;
+    $vzor->slevy= json_decode($vzor->ikona);
+  }
+//                                                         debug($vzor);
   $qa= "SELECT * FROM cenik WHERE id_akce=$id_akce ORDER BY poradi";
   $ra= mysql_qry($qa);
   $n= $ra ? mysql_num_rows($ra) : 0;
   if ( !$n ) {
     $html.= "akce {$pobyt->id_akce} nemá cenový vzorec";
+    $ok= false;
   }
   else {
+    $cenik= array();
     while ( $ra && ($a= mysql_fetch_object($ra)) ) {
-      $txt= $a->polozka;
-      $c= $a->cena;
-      $j= $a->za ? $jidel->{$a->za} : '';
-      $nl= $x->nocoluzka;
-      $u= $ucastniku;
+      $cc= (object)array();
+      $cc->txt= $a->polozka;
+      $cc->za= $a->za;
+      $cc->c= $a->cena;
+      $cc->j= $a->za ? $jidel->{$a->za} : '';
+      $cenik[]= $cc;
+    }
+  }
+  // výpočty
+  if ( $ok ) {
+    $nl= $x->nocoluzka;
+    $u= $ucastniku;
+    $cena= 0;
+    $html.= "<table>";
+    // ubytování
+    $html.= "<tr><th>ubytování</th></tr>";
+    if ( $vzorec && $vzor->slevy->ubytovani===0 ) {
+      $html.= "<tr><td>zdarma</td><td align='right'>0</td></tr>";
+    }
+    else {
+      foreach ($cenik as $a) {
       switch ($a->za) {
-      case '':   $cena[$txt]= ''; break;
-      case 'P':  $cena[$txt]= $c * $u; break;
-      case 'N':  $cena["$txt ($nl*$c)"]= $nl * $c; break;
-      case 'sc': $cena["$txt ($j*$c)"]= $j * $c; break;
-      case 'sp': $cena["$txt ($j*$c)"]= $j * $c; break;
-      case 'oc': $cena["$txt ($j*$c)"]= $j * $c; break;
-      case 'op': $cena["$txt ($j*$c)"]= $j * $c; break;
-      case 'vc': $cena["$txt ($j*$c)"]= $j * $c; break;
-      case 'vp': $cena["$txt ($j*$c)"]= $j * $c; break;
+        case 'N':
+          $cc= $nl * $a->c;
+          $cena+= $cc;
+          $html.= "<tr><td>{$a->txt} ($nl*{$a->c})</td><td align='right'>$cc</td></tr>";
+          break;
+        }
       }
     }
-    // přidání sumy
-    $suma= 0;
-    foreach ($cena as $s) $suma+= $s;
-    $cena['CELKEM']= $suma;
-//                                                         debug($cena,"cena");
+    // strava
+    $html.= "<tr><th>strava</th></tr>";
+    if ( $vzorec && $vzor->slevy->strava===0 ) {
+      $html.= "<tr><td>zdarma</td><td align='right'>0</td></tr>";
+    }
+    else {
+      foreach ($cenik as $a) {
+        if ( $a->j ) switch ($a->za) {
+        case 'sc': case 'sp': case 'oc':
+        case 'op': case 'vc': case 'vp':
+          $cc= $a->j * $a->c;
+          $cena+= $cc;
+          $html.= "<tr><td>{$a->txt} ({$a->j}*{$a->c})</td><td align='right'>$cc</td></tr>";
+          break;
+        }
+      }
+    }
+    // program
+    $html.= "<tr><th>program</th></tr>";
+    if ( $vzorec && $vzor->slevy->program===0 ) {
+      $html.= "<tr><td>program</td><td align='right'>0</td></tr>";
+    }
+    else {
+      foreach ($cenik as $a) {
+        switch ($a->za) {
+        case 'P':
+          $cc= $a->c * $u;
+          $cena+= $cc;
+          $html.= "<tr><td>{$a->txt}</td><td align='right'>$cc</td></tr>";
+          break;
+        }
+      }
+    }
+    // případné slevy
+    if ( $sleva!=0 || isset($vzor->slevy->procenta) ) {
+      $html.= "<tr><th>slevy</th></tr>";
+      if ( $sleva!=0 ) {
+        $cena-= $sleva;
+        $html.= "<tr><td>sleva z ceny</td><td align='right'>$sleva</td></tr>";
+      }
+      if ( isset($vzor->slevy->procenta) ) {
+        $cc= $cena * $vzor->slevy->procenta/100;
+        $cena-= $cc;
+        $html.= "<tr><td>{$vzor->zkratka} {$vzor->slevy->procenta}%</td><td align='right'>$cc</td></tr>";
+      }
+    }
+    $html.= "<tr><th>celková platba</th><td>$cena</td></tr>";
+    $html.= "</table>";
   }
-  $html.= debugx($cena,"Cena za pobyt");
   return $html;
 }
 # ================================================================================================== PDF

@@ -94,15 +94,16 @@ form _page [,,285,500] {
     { stop}
   )}
   # --------------------------- ceník
-  browse c [10,25,,] { tag:'cen', rows:10, qry_rows:1
+  browse c [10,25,,] { tag:'cen', rows:14, qry_rows:1, css_rows:"barva,1:grey"
     show id_cenik { data:cenik.id_cenik }
     show id_akce  { data:cenik.id_akce }
     show poradi [,,25,] { title:'N', help:'pořadí ve faktuře', data:cenik.poradi, format:'ruq*s+'
       proc onsubmit() { this.save } }
+    show barva { expr:"IF(LEFT(polozka,1)='-',1,0)" }
     show polozka [,,125,] { title:'položka', help:'... do faktury', data:cenik.polozka, format:'uq*s'
       proc onsubmit() { this.save } }
     show za [,,27,] { title:'za', data:cenik.za, format:'urq=s',
-      help:'noc:N, strava:(s=snídaně/o=oběd/v=večeře)(c=celá/p=poloviční), pobyt:P'
+      help:'noc:N, strava:(s=snídaně/o=oběd/v=večeře)(c=celá/p=poloviční), pobyt:P, slevy:S'
       proc onsubmit() { this.save } }
 #     show od [,,29,] { title:'od', help:'od věku - včetně', data:cenik.od, format:'urq=s'
 #       proc onsubmit() { this.save } }
