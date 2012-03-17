@@ -23,6 +23,7 @@ menu m {type:'left'
     item {title:'MROP - přihlášky', par:°{id_akce:6} }
     item {title:'MROP - závěr', par:°{id_akce:7} }
     item i {title:'Křižanov - přihlášky', par:°{id_akce:5} }
+    item {title:'Cross - přihlášky', par:°{id_akce:8} }
     proc onclick(i) {
       the_akce.set(i.par.id_akce); info.get.display(0,'ex');
       ch.get.display(0); chs.get.display(0);

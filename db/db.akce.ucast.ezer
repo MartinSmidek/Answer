@@ -211,7 +211,7 @@ form _aktivity {
 }
 # -------------------------------------------------------------------------------------------------- _platba
 form _platba {
-  label [2,27,723,495] {title:"<img src='img/ms2p.png'>" }
+  label [2,27,579,495] {title:"<img src='img/ms2p.png'>" }
   // příkazy
   button stravy     [89,437,37,] {title:'Str Po', style:'font-size:10px;height:19px;width:40px',
     //skill:'yaa+|yaa+;faa+|faa+',
@@ -232,16 +232,23 @@ form _platba {
   // platby
   button [10,130,,] { title:"Návrh ceny"
     proc onclick() {
-      navrh.set(ask('akce_vzorec',the_pobyt.get));
+      or(vzorec.changed,sleva.changed); alert("před výpočtem ceny ulož změny")
+    | navrh.set(ask('akce_vzorec',the_pobyt.get));
     }
   }
-  label navrh [10,160,300,200]
-  button [300,130,,] { title:"Došlé platby"
+  label [92,136,,] { title:"sleva:" }
+  field sleva [125,133,50,] { data:pobyt.sleva, help:"Slevy pro účastníka ve finanční tísni",
+    format:'r' }
+  label [187,136,,] { title:"cena pro:" }
+  select vzorec [240,134,198,] { type:'map0', data:pobyt.vzorec, help:"výběr vzorce pro organizátory",
+    options:ms_cena_vzorec.zkratka }
+  label navrh [10,160,280,200]
+  button [491,130,,] { title:"Došlé platby"
     proc onclick() {
       doslo.set(ask('akce_platby',the_pobyt.get));
     }
   }
-  label doslo [300,160,300,200]
+  label doslo [300,160,281,200]
   // funkce
   proc nove() {
     navrh.set(''); doslo.set('');
@@ -555,6 +562,8 @@ form _ucast [,,400,] { css:'ds_form'
     show k_poznamka { data:p.poznamka}
     show cd         { data:p.cd}
     show pouze      { data:p.pouze}
+    show sleva      { data:p.sleva}
+    show vzorec     { data:p.vzorec}
     // změna
     proc reload_pobyt() {
       b.browse_count;
