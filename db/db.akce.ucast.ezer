@@ -214,18 +214,20 @@ form _platba {
   var cena: object
   label [2,27,527,495] {title:"<img src='img/ms2p.png'>" }
   proc ini() {
-    // výpočet součtu cen
-    celkem.set(sum(c_nocleh.get,c_strava.get,c_program.get,c_sleva.get));
+    // výpočet součtu cen a rozpis
+    rozpis_ceny; celkem.set(sum(c_nocleh.get,c_strava.get,c_program.get,c_sleva.get));
     // obarvení tlačítka [Str.pol]
     or(u.b.cstrava_cel.get,u.b.cstrava_pol.get); stravy.set_css('cervena','cerna')
   | stravy.set_css('cerna','cervena')
   }
+  proc rozpis_ceny() {
+    or(vzorec.changed,sleva.changed); alert("před výpočtem ceny ulož změny")
+  | cena.set(ask('akce_vzorec',the_pobyt.get)); navrh.set(cena.get('navrh'))
+  }
   // rozpis a zápis ceny
   button [10,69,,] { title:"Rozpis ceny"
-    proc onclick() {
-      or(vzorec.changed,sleva.changed); alert("před výpočtem ceny ulož změny")
-    | cena.set(ask('akce_vzorec',the_pobyt.get)); navrh.set(cena.get('navrh'))
-  } }
+    proc onclick() { rozpis_ceny }
+  }
   button [10,94,,] { title:"Zapsat cenu"
     proc onclick() {
       or(vzorec.changed,sleva.changed); alert("před výpočtem ceny ulož změny")

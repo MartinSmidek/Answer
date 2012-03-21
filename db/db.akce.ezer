@@ -325,6 +325,7 @@ table platba { key_id:'id_platba'
   text   vs
   text   ks
   text   ss
+  text   ss2            // ručně opravený SS
   text   tipy           // vytipované možnosti plátce
 }
 
