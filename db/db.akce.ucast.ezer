@@ -217,12 +217,17 @@ form _platba {
     // výpočet součtu cen a rozpis
     rozpis_ceny; celkem.set(sum(c_nocleh.get,c_strava.get,c_program.get,c_sleva.get));
     // obarvení tlačítka [Str.pol]
-    or(u.b.cstrava_cel.get,u.b.cstrava_pol.get); stravy.set_css('cervena','cerna')
+    or(u.b.cstrava_cel.get,u.b.cstrava_pol.get); stravy.set_css('cervena','cerna');
+    // došlé platby
+    dosle_platby
   | stravy.set_css('cerna','cervena')
   }
   proc rozpis_ceny() {
     or(vzorec.changed,sleva.changed); alert("před výpočtem ceny ulož změny")
   | cena.set(ask('akce_vzorec',the_pobyt.get)); navrh.set(cena.get('navrh'))
+  }
+  proc dosle_platby() {
+    doslo.set(ask('akce_platby',the_pobyt.get));
   }
   // rozpis a zápis ceny
   button [10,69,,] { title:"Rozpis ceny"
@@ -249,9 +254,8 @@ form _platba {
       [ eq(msg,'Nepřišly nové platby') | alert(substr(msg,0,300),' ...') ];
   } }
   button [491,70,,] { title:"Došlé platby"
-    proc onclick() {
-      doslo.set(ask('akce_platby',the_pobyt.get));
-  } }
+    proc onclick() { dosle_platby }
+  }
   label doslo [300,99,281,250] { style:"border-left:2px solid grey" }
   // nestandardní strava
   button stravy     [89,437,37,] {title:'Str Po', style:'font-size:10px;height:19px;width:40px',
