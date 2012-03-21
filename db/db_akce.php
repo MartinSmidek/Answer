@@ -269,6 +269,7 @@ function akce_platby($id_pobyt) {  trace();
 function akce_vzorec($id_pobyt) {  trace();
   $id_akce= 0;
   $ok= true;
+  $ret= (object)array('navrh'=>'cenu nelze spočítat');
   // parametry pobytu
   $x= (object)array();
   $qp= "SELECT * FROM pobyt WHERE id_pobyt=$id_pobyt";
@@ -325,6 +326,7 @@ function akce_vzorec($id_pobyt) {  trace();
     $html.= "<table>";
     // ubytování
     $html.= "<tr><th>ubytování</th></tr>";
+    $ret->c_nocleh= 0;
     if ( $vzorec && $vzor->slevy->ubytovani===0 ) {
       $html.= "<tr><td>zdarma</td><td align='right'>0</td></tr>";
     }
@@ -334,13 +336,16 @@ function akce_vzorec($id_pobyt) {  trace();
         case 'N':
           $cc= $nl * $a->c;
           $cena+= $cc;
+          $ret->c_nocleh+= $cc;
           $html.= "<tr><td>{$a->txt} ($nl*{$a->c})</td><td align='right'>$cc</td></tr>";
           break;
         }
       }
+      $html.= "<tr><td></td><td></td><th align='right'>{$ret->c_nocleh}</th></tr>";
     }
     // strava
     $html.= "<tr><th>strava</th></tr>";
+    $ret->c_strava= 0;
     if ( $vzorec && $vzor->slevy->strava===0 ) {
       $html.= "<tr><td>zdarma</td><td align='right'>0</td></tr>";
     }
@@ -351,13 +356,16 @@ function akce_vzorec($id_pobyt) {  trace();
         case 'op': case 'vc': case 'vp':
           $cc= $a->j * $a->c;
           $cena+= $cc;
+          $ret->c_strava+= $cc;
           $html.= "<tr><td>{$a->txt} ({$a->j}*{$a->c})</td><td align='right'>$cc</td></tr>";
           break;
         }
       }
+      $html.= "<tr><td></td><td></td><th align='right'>{$ret->c_strava}</th></tr>";
     }
     // program
     $html.= "<tr><th>program</th></tr>";
+    $ret->c_program= 0;
     if ( $vzorec && $vzor->slevy->program===0 ) {
       $html.= "<tr><td>program</td><td align='right'>0</td></tr>";
     }
@@ -367,28 +375,35 @@ function akce_vzorec($id_pobyt) {  trace();
         case 'P':
           $cc= $a->c * $u;
           $cena+= $cc;
+          $ret->c_program+= $cc;
           $html.= "<tr><td>{$a->txt}</td><td align='right'>$cc</td></tr>";
           break;
         }
       }
+      $html.= "<tr><td></td><td></td><th align='right'>{$ret->c_program}</th></tr>";
     }
     // případné slevy
+    $ret->c_sleva= 0;
     if ( $sleva!=0 || isset($vzor->slevy->procenta) ) {
       $html.= "<tr><th>slevy</th></tr>";
       if ( $sleva!=0 ) {
         $cena-= $sleva;
+        $ret->c_sleva-= $sleva;
         $html.= "<tr><td>sleva z ceny</td><td align='right'>$sleva</td></tr>";
       }
       if ( isset($vzor->slevy->procenta) ) {
-        $cc= $cena * $vzor->slevy->procenta/100;
-        $cena-= $cc;
+        $cc= -round($cena * $vzor->slevy->procenta/100,-1);
+        $cena+= $cc;
+        $ret->c_sleva+= $cc;
         $html.= "<tr><td>{$vzor->zkratka} {$vzor->slevy->procenta}%</td><td align='right'>$cc</td></tr>";
       }
+      $html.= "<tr><td></td><td></td><th align='right'>{$ret->c_sleva}</th></tr>";
     }
-    $html.= "<tr><th>celková platba</th><td>$cena</td></tr>";
+    $html.= "<tr><th>celková platba</th><td></td><th align='right'>$cena</th></tr>";
     $html.= "</table>";
+    $ret->navrh= $html;
   }
-  return $html;
+  return $ret;
 }
 # ================================================================================================== PDF
 # -------------------------------------------------------------------------------------------------- akce_pdf_stravenky

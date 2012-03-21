@@ -211,8 +211,47 @@ form _aktivity {
 }
 # -------------------------------------------------------------------------------------------------- _platba
 form _platba {
-  label [2,27,579,495] {title:"<img src='img/ms2p.png'>" }
-  // příkazy
+  var cena: object
+  label [2,27,527,495] {title:"<img src='img/ms2p.png'>" }
+  proc ini() {
+    // výpočet součtu cen
+    celkem.set(sum(c_nocleh.get,c_strava.get,c_program.get,c_sleva.get));
+    // obarvení tlačítka [Str.pol]
+    or(u.b.cstrava_cel.get,u.b.cstrava_pol.get); stravy.set_css('cervena','cerna')
+  | stravy.set_css('cerna','cervena')
+  }
+  // rozpis a zápis ceny
+  button [10,69,,] { title:"Rozpis ceny"
+    proc onclick() {
+      or(vzorec.changed,sleva.changed); alert("před výpočtem ceny ulož změny")
+    | cena.set(ask('akce_vzorec',the_pobyt.get)); navrh.set(cena.get('navrh'))
+  } }
+  button [10,94,,] { title:"Zapsat cenu"
+    proc onclick() {
+      or(vzorec.changed,sleva.changed); alert("před výpočtem ceny ulož změny")
+    | cena.set(ask('akce_vzorec',the_pobyt.get)); copy_by_name(cena.get,form);
+      c_nocleh.change; c_strava.change; c_program.change; c_sleva.change; ini
+  } }
+  label [110,99,,] { title:"sleva:" }
+  field sleva [143,96,50,] { data:pobyt.sleva, help:"Slevy pro potřebné účastníky", format:'r' }
+  label [93,75,,] { title:"cena pro:" }
+  select vzorec [143,73,148,] { type:'map0', data:pobyt.vzorec, help:"výběr vzorce pro organizátory",
+    options:ms_cena_vzorec.zkratka }
+  label navrh [10,124,280,280] { css:'karta_info' }
+  // platby
+  button [307,70,,] { title:"Aktualizace bankovních výpisů"
+    proc onclick() {
+      var msg: text
+      // aktualizace tabulky PLATBA
+      msg.set(ask('akce_rb_platby'));
+      [ eq(msg,'Nepřišly nové platby') | alert(substr(msg,0,300),' ...') ];
+  } }
+  button [491,70,,] { title:"Došlé platby"
+    proc onclick() {
+      doslo.set(ask('akce_platby',the_pobyt.get));
+  } }
+  label doslo [300,99,281,250] { style:"border-left:2px solid grey" }
+  // nestandardní strava
   button stravy     [89,437,37,] {title:'Str Po', style:'font-size:10px;height:19px;width:40px',
     //skill:'yaa+|yaa+;faa+|faa+',
     proc onclick() {
@@ -221,34 +260,6 @@ form _platba {
       lt(Strava.dnu.get,15);       // 15 je maximálně možný počet řádků vyjímek ze stravy
       Strava.modal(240,50)
   } }
-  button [10,100,,] { title:"Aktualizace bankovních výpisů"
-    proc onclick() {
-      var msg: text
-      // aktualizace tabulky PLATBA
-      msg.set(ask('akce_rb_platby'));
-      [ eq(msg,'Nepřišly nové platby') | alert(msg) ];
-    }
-  }
-  // platby
-  button [10,130,,] { title:"Návrh ceny"
-    proc onclick() {
-      or(vzorec.changed,sleva.changed); alert("před výpočtem ceny ulož změny")
-    | navrh.set(ask('akce_vzorec',the_pobyt.get));
-    }
-  }
-  label [92,136,,] { title:"sleva:" }
-  field sleva [125,133,50,] { data:pobyt.sleva, help:"Slevy pro účastníka ve finanční tísni",
-    format:'r' }
-  label [187,136,,] { title:"cena pro:" }
-  select vzorec [240,134,198,] { type:'map0', data:pobyt.vzorec, help:"výběr vzorce pro organizátory",
-    options:ms_cena_vzorec.zkratka }
-  label navrh [10,160,280,200]
-  button [491,130,,] { title:"Došlé platby"
-    proc onclick() {
-      doslo.set(ask('akce_platby',the_pobyt.get));
-    }
-  }
-  label doslo [300,160,281,200]
   // funkce
   proc nove() {
     navrh.set(''); doslo.set('');
@@ -261,20 +272,29 @@ form _platba {
   field strava_cel  [94,456,11,] {data:pobyt.strava_cel}
   field strava_pol  [112,456,11,] {data:pobyt.strava_pol}
   field svp         [136,456,11,] {data:pobyt.svp}
-  field platba      [173,456,50,] {data:pobyt.platba}
-  select zpusobplat [230,456,86,] {type:'map', data:pobyt.zpusobplat, options:ms_akce_platba.zkratka, format:'u'}
-  field datplatby   [321,456,84,] {type:'date', data:pobyt.datplatby}
-  field platba1     [29,491,47,] {data:pobyt.platba1}
-  field platba2     [79,491,47,] {data:pobyt.platba2}
-  field platba3     [129,491,47,] {data:pobyt.platba3}
-  field platba4     [179,491,47,] {data:pobyt.platba4}
+  field celkem      [173,456,50,] {format:'dr'}
+  field c_nocleh    [29,491,47,] {data:pobyt.platba1, format:'r'}
+  field c_strava    [79,491,47,] {data:pobyt.platba2, format:'r'}
+  field c_program   [129,491,47,] {data:pobyt.platba3, format:'r'}
+  field c_sleva     [179,491,47,] {data:pobyt.platba4, format:'r'}
+  field platba      [327,456,50,] {data:pobyt.platba, format:'r'}
+  select zpusobplat [383,456,86,] {type:'map', data:pobyt.zpusobplat,
+                                   options:ms_akce_platba.zkratka, format:'u'}
+  field datplatby   [474,456,84,] {type:'date', data:pobyt.datplatby}
   // pevné texty
-  label [10,50,,] { title:'tady bude rozpis ceny akce podle cenového vzorce akce a přehled příchozích plateb' }
+  label [10,40,,]   { title:'Rozpis ceny akce podle cenového vzorce akce a přehled příchozích plateb' }
+  label [10,410,,]  { title:'Cena zapsaná v evidenční kartě (použitá pro export do Excelu)',
+                      style:"border-top:2px solid grey" }
   label [3,441,100,] {title:'lůž. při. dnů koč'}
   label [134,441,27,] {title:'SVP'}
-  label [175,441,33,] {title:'platba'}
-  label [231,441,71,] {title:'způsob platby'}
-  label [322,441,51,] {title:'dne'}
+  label [175,441,33,] {title:'cena'}
+  label [327,441,33,] {title:'platba'}
+  label [384,441,71,] {title:'způsob platby'}
+  label [475,441,51,] {title:'dne'}
+  label [29,510,,] {title:'nocleh'}
+  label [79,510,,] {title:'strava'}
+  label [129,510,,] {title:'program'}
+  label [179,510,,] {title:'sleva'}
 }
 # -------------------------------------------------------------------------------------------------- _evidence
 form _evidence {
@@ -551,10 +571,10 @@ form _ucast [,,400,] { css:'ds_form'
     show cstrava_pol{ data:p.cstrava_pol}
     show svp        { data:p.svp}
     show platba     { data:p.platba}
-    show platba1    { data:p.platba1}
-    show platba2    { data:p.platba2}
-    show platba3    { data:p.platba3}
-    show platba4    { data:p.platba4}
+    show c_nocleh   { data:p.platba1}
+    show c_strava   { data:p.platba2}
+    show c_program  { data:p.platba3}
+    show c_sleva    { data:p.platba4}
     show zpusobplat { data:p.zpusobplat}
     show datplatby  { data:p.datplatby}
     show budova     { data:p.budova}
@@ -594,10 +614,7 @@ form _ucast [,,400,] { css:'ds_form'
         pob.s.browse_fill(skup.get);
       },
       'plat',{
-        pla.nove; copy_by_name(b,pla.get); pla.key(key_pobyt.get);
-        // obarvení tlačítka [Str.pol]
-        { or(cstrava_cel.get,cstrava_pol.get); pla.stravy.set_css('cervena','cerna')
-        | pla.stravy.set_css('cerna','cervena') };
+        pla.nove; copy_by_name(b,pla.get); pla.key(key_pobyt.get); pla.ini
       },
       'akce',{
         [ id_m.get; a_muz.jme.set(conc(prijmeni_m.get,' ',jmeno_m.get)) | a_muz.jme.init ];

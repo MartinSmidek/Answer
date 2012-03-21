@@ -14,7 +14,7 @@ case 'ck': // --------------------------------------------------------- ck: barv
   // barvy specifické pro styl
   $nasedla= '#e6e6e6'; $seda= '#4d4d4d';
   $cervena= '#a90533'; $oranzova= '#ef7f13';  $lososova= '#F0E2C2';
-  $zelena= '#2c8931'; $nazelenala= '#56a15a'; $zelenkava= '#C0E2C2';
+  $zelena= '#2c8931'; $nazelenala= '#56a15a'; $zelenkava= '#C0E2C2'; $zelenoucka= '#EFFDF1';
   // prvky - musí být v global
   $c= $cerna; $b= $nasedla; $ab= $bila;
   $c_appl= $zelena;
@@ -25,7 +25,7 @@ case 'ck': // --------------------------------------------------------- ck: barv
     $s_item= $s2_item= $seda;
 //   $b_brow= '#ccc'; $b2_brow= $lososova; $b3_brow= $bila; $b4_brow= $zelenkava;
   $b_brow= '#ccc'; $b2_brow= $bila; $b3_brow= $bila; $b4_brow= $nasedla;
-    $b5_brow= $nasedla; $b6_brow= $nasedla; $b7_brow= $zelenkava;
+    $b5_brow= $nasedla; $b6_brow= $nasedla; $b7_brow= $zelenkava; $b8_brow= $zelenoucka;
     $c_brow= $seda; $s1_brow= $nazelenala; $s2_brow= $cervena;
   $c_kuk= $zelena; $c2_kuk= $bila; $c3_kuk= $cerna; $b_kuk= $oranzova; $s_kuk= $oranzova;
   $b_warn= '#adff2f'; $c_warn= '#000000';
@@ -40,7 +40,7 @@ case 'ch': // --------------------------------------------------------- ch: barv
   // barvy specifické pro styl
   $nasedla= '#e6e6e6'; $seda= '#4d4d4d';
   $cervena= '#a90533'; $oranzova= '#ef7f13';  $lososova= '#F0E2C2';
-  $zelena= '#2c4989'; $nazelenala= '#365faf' /*'#475e8f'*/; $zelenkava= '#c0cae2';
+  $zelena= '#2c4989'; $nazelenala= '#365faf'; $zelenkava= '#c0cae2'; $zelenoucka= '#EFF1FD';
   // prvky - musí být v global
   $c= $cerna; $b= $nasedla; $ab= $bila;
   $c_appl= $zelena;
@@ -51,7 +51,7 @@ case 'ch': // --------------------------------------------------------- ch: barv
     $s_item= $s2_item= $seda;
 //   $b_brow= '#ccc'; $b2_brow= $lososova; $b3_brow= $bila; $b4_brow= $zelenkava;
   $b_brow= '#ccc'; $b2_brow= $bila; $b3_brow= $bila; $b4_brow= $nasedla;
-    $b5_brow= $nasedla; $b6_brow= $nasedla; $b7_brow= $zelenkava; $b8_brow= '#e0e5ef';
+    $b5_brow= $nasedla; $b6_brow= $nasedla; $b7_brow= $zelenkava; $b8_brow= $zelenoucka;
     $c_brow= $seda; $s1_brow= $nazelenala; $s2_brow= $cervena;
   $c_kuk= $zelena; $c2_kuk= $bila; $c3_kuk= $cerna; $b_kuk= $oranzova; $s_kuk= $oranzova;
   $b_warn= '#eef2ae'; $c_warn= '#000000';
