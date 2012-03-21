@@ -397,6 +397,12 @@ function akce_vzorec($id_pobyt) {  trace();
         $ret->c_sleva+= $cc;
         $html.= "<tr><td>{$vzor->zkratka} {$vzor->slevy->procenta}%</td><td align='right'>$cc</td></tr>";
       }
+      if ( isset($vzor->slevy->castka) ) {
+        $cc= -$vzor->slevy->castka;
+        $cena+= $cc;
+        $ret->c_sleva+= $cc;
+        $html.= "<tr><td>{$vzor->zkratka} {$vzor->slevy->castka},-</td><td align='right'>$cc</td></tr>";
+      }
       $html.= "<tr><td></td><td></td><th align='right'>{$ret->c_sleva}</th></tr>";
     }
     $html.= "<tr><th>celková platba</th><td></td><th align='right'>$cena</th></tr>";
