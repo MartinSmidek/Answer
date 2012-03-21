@@ -34,6 +34,8 @@ echo <<<__EOD
 /* specifické */
 .title_ref { color:#ffffff !important; }
 .title_ref a { color:#ffffff !important; }
+.karta_info {
+  background-color:$b8_brow; overflow: auto; }
 
 .page {
   font-size:9pt !important; padding:10px; line-height:13pt; }
