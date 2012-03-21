@@ -718,25 +718,30 @@ form _ddary [,,400,245] {
 
 # ---------------------------------------------------------------------- _platby
 form _platby {
+  // funkce
+  proc paruj() {
+    var res:object
+    res.set(ask('akce_rb_urci',b.vs.get,cconc(b.ss2.get,b.ss2.get,b.ss.get),date2sql(b.datum.get)));
+    echo(res.html);
+    [ res.id_osoba; id_osoba.set(res.id_osoba); id_osoba.change;
+      osoby.b.browse_seek(conc("os.id_osoba=",res.id_osoba)); ];
+    [ res.id_duakce; id_duakce.set(res.id_duakce); id_duakce.change ];
+    [ or(id_osoba.changed,id_duakce.change); form.save; b.browse_row ];
+    [ res.tipy; t.browse_fill(res.tipy) ]
+  }
+  proc ukaz_osobu() {
+    id_osoba.get; osoby.b.browse_seek(conc("os.id_osoba=",id_osoba.get));
+  }
   // operace
   button [615,5,,] { title:'automatické párování'
-    proc onclick() { var res:object
-      res.set(ask('akce_rb_urci',b.vs.get,b.ss.get,date2sql(b.datum.get)));
-      echo(res.html);
-      [ res.id_osoba; id_osoba.set(res.id_osoba); id_osoba.change; form.save; b.browse_row;
-        osoby.b.browse_seek(conc("os.id_osoba=",res.id_osoba)); ];
-      [ res.id_duakce; id_duakce.set(res.id_duakce); id_duakce.change; form.save; b.browse_row ];
-      [ res.tipy; t.browse_fill(res.tipy); t.raise('onrowclick') ]
-    }
+    proc onclick() { paruj }
   }
   // tipy
   label [615,33,,] { title:"tipnutí plátci:" }
   browse t [615,50,,] { rows:3
     show id_osoba
     show jmena [,,100,]
-    proc onrowclick() {
-      id_osoba.get; osoby.b.browse_seek(conc("os.id_osoba=",id_osoba.get));
-    }
+    proc onrowclick() { form.id_osoba.set(id_osoba.get); ukaz_osobu }
   }
   button [615,155,,] { title:'spáruj nastavené'
     proc onclick() {
@@ -751,25 +756,24 @@ form _platby {
   } }
   // přehled všech plateb
   view p: table platba
-  field id_platba {data:p.id_platba}
-  field id_osoba {data:p.id_osoba}
-  field id_duakce {data:p.id_duakce}
+  field id_platba {data:platba.id_platba}
+  field id_osoba {data:platba.id_osoba}
+  field id_duakce {data:platba.id_duakce}
   browse b [0,0,,] { rows:9, qry_rows:1, key_id:'id_platba'
-    show id_platba { data:p.id_platba }
-    show id_osoba { data:p.id_osoba }
-    show id_rodina { data:p.id_rodina }
-    show id_duakce { data:p.id_duakce }
-#     number id_pokl
-#     number ucel
-#     number zpusob
-    show ucet   [,,10,] { title:'b', data:p.ucet, format:'sq=' }
-    show datum  [,,65,] { title:'datum', data:p.datum, format:'s-q*r' }
-    show castka [,,60,] { title:'částka', data:p.castka, format:'sq*r' }
-    show poznamka [,,160,] { title:'poznámka', data:p.poznamka, format:'tsq*' }
-    show ucet_nazev [,,140,] { title:'název účtu', data:p.ucet_nazev, format:'tsq*' }
-    show vs [,,75,] { title:'VS', data:p.vs, format:'sq*r', css_cell:'id_osoba,0:,:zeleny' }
-    show ss [,,30,] { title:'SS', data:p.ss, format:'sq*r', css_cell:'id_duakce,0:,:zeleny' }
-    show ks [,,30,] { title:'KS', data:p.ks, format:'sq*r' }
+    show id_platba { data:platba.id_platba }
+    show id_osoba { data:platba.id_osoba }
+    show id_rodina { data:platba.id_rodina }
+    show id_duakce { data:platba.id_duakce }
+    show ucet   [,,10,] { title:'b', data:platba.ucet, format:'sq=' }
+    show datum  [,,65,] { title:'datum', data:platba.datum, format:'s-q*r' }
+    show castka [,,60,] { title:'částka', data:platba.castka, format:'sq*r' }
+    show poznamka [,,160,] { title:'poznámka', data:platba.poznamka, format:'tsq*' }
+    show ucet_nazev [,,140,] { title:'název účtu', data:platba.ucet_nazev, format:'tsq*' }
+    show vs [,,75,] { title:'VS', data:platba.vs, format:'sq*r', css_cell:'id_osoba,0:,:zeleny' }
+    show ss [,,30,] { title:'SS', data:platba.ss, format:'sq*r', css_cell:'id_duakce,0:,:zeleny' }
+    show ss2 [,,30,] { title:'oprava', data:platba.ss2, format:'sq*ru', css_cell:'id_duakce,0:,:zeleny'
+      proc onsubmit() { this.save } }
+    proc onsubmit() { paruj }
     proc onrowclick() {
       t.browse_init;
       form.key(id_platba.get); form.load;
