@@ -462,7 +462,7 @@ form _ucast [,,400,] { css:'ds_form'
   view ox:table osoba  { join:'ON tx.id_osoba=ox.id_osoba' }
   // seznam účastníků
   browse b [0,26,,] {type:'smart', buf_rows:120, rows:27, qry_rows:1, group_by:'id_pobyt',
-    optimize:°{qry:'noseek'}
+    optimize:°{qry:'noseek'}, css_rows:"dluh,1:yellow,2:blue"
 #     proc onclick() {
 #       xfunkce.width; xfunkce.width(0);  skupina.width(33); _jmena.width(89);
 #     | skupina.width; xfunkce.width(0);  skupina.width(0);  _jmena.width(123);
@@ -482,14 +482,21 @@ form _ucast [,,400,] { css:'ds_form'
     show _nazev [,,100,] { title:'rodina', format:'s+q*', expr:"IF(pouze=0,r.nazev,o.prijmeni)" }
     show _jmena [,,180,] { title:'jméno/a', format:'tsq%',
       expr:"GROUP_CONCAT(DISTINCT IF(pouze=1 AND t.role='b','',IF(pouze=2 AND t.role='a','',o.jmeno)) ORDER BY t.role SEPARATOR ' ')" }
-    show fotka    [,,0,] { data:r.fotka, format:'rsq*', help:'soubor s fotografií' }
-    show _vek     [,,0,] { expr:"GROUP_CONCAT(DISTINCT IF(tx.role='a',ox.narozeni,'') SEPARATOR '')",
-                           js_pipe:'roku', format:'rs', help:'stáří muže' }
-    show _vzd     [,,0,] { expr:"GROUP_CONCAT(DISTINCT IF(tx.role='a',ox.vzdelani,'') SEPARATOR '')",
-                           map_pipe:ms_akce_vzdelani.zkratka, help:'vzdělání muže' }
+    # varianta A
+    # varianta B na úkor _jmena
+    show c_suma  [,,0,] { title:'platba', expr:"p.platba1+p.platba2+p.platba3+p.platba4", format:"rsq" }
+    show platba  [,,0,] { title:'cena', data:p.platba, format:"rsq" }
+    # varianta C na úkor _jmena
+    show fotka   [,,0,] { data:r.fotka, format:'rsq*', help:'soubor s fotografií' }
+    show _vek    [,,0,] { expr:"GROUP_CONCAT(DISTINCT IF(tx.role='a',ox.narozeni,'') SEPARATOR '')",
+                          js_pipe:'roku', format:'rs', help:'stáří muže' }
+    show _vzd    [,,0,] { expr:"GROUP_CONCAT(DISTINCT IF(tx.role='a',ox.vzdelani,'') SEPARATOR '')",
+                          map_pipe:ms_akce_vzdelani.zkratka, help:'vzdělání muže' }
+    # je vždy vidět
     show xfunkce [,,40,] { title:'fce', data:p.funkce, format:'rq#s', map_pipe:ms_akce_funkce.zkratka, help:'funkce na akci'}
     show skupina [,,30,] { title:'sk.', data:p.skupina, format:'rqs:e', help:'číslo skupinky'}
-    #show dluh    [,,40,] { title:'dluh', expr:"0", format:'rqs'}
+    // barvení
+    show dluh       { expr:"IF(p.platba1+p.platba2+p.platba3+p.platba4=0,2,IF(p.platba1+p.platba2+p.platba3+p.platba4>platba,1,0))" }
     // muž - načte se, i když není na akci
     show id_spolu_m { expr:"GROUP_CONCAT(DISTINCT IF(t.role='a',s.id_spolu,'') SEPARATOR '')" }
     show id_m       { expr:"GROUP_CONCAT(DISTINCT IF(tx.role='a',ox.id_osoba,'') SEPARATOR '')" }
@@ -570,7 +577,6 @@ form _ucast [,,400,] { css:'ds_form'
     show cstrava_cel{ data:p.cstrava_cel}
     show cstrava_pol{ data:p.cstrava_pol}
     show svp        { data:p.svp}
-    show platba     { data:p.platba}
     show c_nocleh   { data:p.platba1}
     show c_strava   { data:p.platba2}
     show c_program  { data:p.platba3}
@@ -642,8 +648,10 @@ form _ucast [,,400,] { css:'ds_form'
     )}
     proc onrowclick() { reload_pobyt }
     proc onclick() {
-      _vek.width; _vek.width(0);  _vzd.width(0);  fotka.width(0);  _jmena.width(180);
-    |             _vek.width(20); _vzd.width(20); fotka.width(20); _jmena.width(117);
+      _vek.width;   _vek.width(0); _vzd.width(0); fotka.width(0);
+                    platba.width(50); c_suma.width(50); _jmena.width(78)
+    | platba.width; platba.width(0); c_suma.width(0); _jmena.width(180)
+    | _vek.width(20); _vzd.width(20); fotka.width(20); _jmena.width(117)
     }
   }
 }
