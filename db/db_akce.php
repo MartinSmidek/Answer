@@ -431,7 +431,8 @@ function akce_pdf_stravenky($akce,$par,$report_json) {  trace();
     $k= 4*ceil($n/4)-$n;
     for ($i= 0; $i<$k; $i++) {
       $parss[$n]= (object)array();
-      $parss[$n]->header= $parss[$n]->line1= $parss[$n]->line2= $parss[$n]->rect= $parss[$n]->ram= '';
+      $parss[$n]->header= $parss[$n]->line1= $parss[$n]->line2= '';
+      $parss[$n]->rect= $parss[$n]->ram= $parss[$n]->end= '';
       $n++;
     }
     // stravenky pro účastníka
@@ -442,6 +443,7 @@ function akce_pdf_stravenky($akce,$par,$report_json) {  trace();
     $parss[$n]->line2= "$jmena";
     $parss[$n]->rect= '';
     $parss[$n]->ram= ' ';
+    $parss[$n]->end= '';
     $n++;
     foreach ( $dny as $den=>$jidla ) {
       // stravenky na jeden den
@@ -456,7 +458,7 @@ function akce_pdf_stravenky($akce,$par,$report_json) {  trace();
               $parss[$n]->header= $header;
               $parss[$n]->line1= "<b>... $prijmeni</b>";
               $parss[$n]->line2= "... $jmena";
-              $parss[$n]->rect= $parss[$n]->ram= '';
+              $parss[$n]->rect= $parss[$n]->ram= $parss[$n]->end= '';
               $n++;
             }
             // text stravenky na jedno jídlo
@@ -465,12 +467,20 @@ function akce_pdf_stravenky($akce,$par,$report_json) {  trace();
             $parss[$n]->line1= "$den";
             $parss[$n]->line2= "<b>{$sob[$jidlo]}</b>";
             $parss[$n]->rect=  "<b>{$cp[$velikost]}</b>";
-            $parss[$n]->ram= '';
+            $parss[$n]->ram= $parss[$n]->end= '';
             $n++;
           }
         }
       }
     }
+    // na konec dej koncovou značku
+    $parss[$n]= (object)array();
+    $parss[$n]->header= $header;
+    $parss[$n]->line1= "<b>$prijmeni</b>";
+    $parss[$n]->line2= "(konec stravenek)";
+    $parss[$n]->rect= $parss[$n]->ram= '';
+    $parss[$n]->end= ' ';
+    $n++;
   }
   // předání k tisku
                                         debug($parss,"akce_pdf_stravenky");

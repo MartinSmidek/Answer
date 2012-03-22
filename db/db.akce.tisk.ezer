@@ -172,7 +172,8 @@ report sti_B [0,0,200,287] { format:'A4:5,6,70,41',
 }
 # -------------------------   stitek_C - stravenky
 report sti_C [0,0,210,297] { format:'A4:5,5,50,24',
-  box ram       [  1,  1, 48, 22] { style:'8,L,LRTB',           title:'{ram}' }
+  box ram       [  1,  1, 48, 22] { style:'8,L,LT',             title:'{ram}' }
+  box end       [  1,  1, 48, 22] { style:'8,L,RB',             title:'{end}' }
   box header    [  2,  4, 45,  4] { style:'8,L',                title:'{header}' }
   box lines     [  2,  8, 48, 16] { style:'14,L',               title:'{line1}<br>{line2}' }
   box rect      [ 25, 10, 20, 14] { style:'20,R',               title:'{rect}' }
