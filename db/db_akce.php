@@ -1125,7 +1125,7 @@ function akce_sestava_noci($akce,$par,$title,$vypis,$export=false) { trace();
           JOIN osoba AS o ON s.id_osoba=o.id_osoba
           LEFT JOIN tvori AS t ON t.id_osoba=o.id_osoba
           LEFT JOIN rodina AS r USING(id_rodina)
-          WHERE p.id_akce='$akce' AND $cond
+          WHERE p.id_akce='$akce' AND funkce NOT IN (9,10) AND $cond
           GROUP BY id_pobyt
           ORDER BY $ord";
 //   $qry.=  " LIMIT 1";
@@ -1486,7 +1486,7 @@ function akce_strava_pary($akce,$par,$title,$vypis,$export=false,$id_pobyt=0) { 
           JOIN osoba AS o ON s.id_osoba=o.id_osoba
           LEFT JOIN tvori AS t ON t.id_osoba=o.id_osoba
           LEFT JOIN rodina AS r USING(id_rodina)
-          WHERE p.id_akce='$akce' AND $cond
+          WHERE p.id_akce='$akce' AND funkce NOT IN (9,10) AND $cond
           GROUP BY id_pobyt
           ORDER BY $ord";
 //   $qry.=  " LIMIT 5";
