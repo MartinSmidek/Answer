@@ -280,6 +280,7 @@ function akce_vzorec($id_pobyt) {  trace();
     $ucastniku= $p->pouze ? 1 : 2;
     $vzorec= $p->vzorec;
     $sleva= $p->sleva;
+    $neprijel= $p->funkce==10;
   }
 //                                                         debug($x,"pobyt");
   // zpracování strav
@@ -330,6 +331,9 @@ function akce_vzorec($id_pobyt) {  trace();
     if ( $vzorec && $vzor->slevy->ubytovani===0 ) {
       $html.= "<tr><td>zdarma</td><td align='right'>0</td></tr>";
     }
+    elseif ( $neprijel ) {
+      $html.= "<tr><td>storno</td><td align='right'>0</td></tr>";
+    }
     else {
       foreach ($cenik as $a) {
       switch ($a->za) {
@@ -369,6 +373,9 @@ function akce_vzorec($id_pobyt) {  trace();
     if ( $vzorec && $vzor->slevy->program===0 ) {
       $html.= "<tr><td>program</td><td align='right'>0</td></tr>";
     }
+    elseif ( $neprijel ) {
+      $html.= "<tr><td>storno</td><td align='right'>0</td></tr>";
+    }
     else {
       foreach ($cenik as $a) {
         switch ($a->za) {
@@ -384,7 +391,7 @@ function akce_vzorec($id_pobyt) {  trace();
     }
     // případné slevy
     $ret->c_sleva= 0;
-    if ( $sleva!=0 || isset($vzor->slevy->procenta) ) {
+    if ( !$neprijel && ($sleva!=0 || isset($vzor->slevy->procenta)) ) {
       $html.= "<tr><th>slevy</th></tr>";
       if ( $sleva!=0 ) {
         $cena-= $sleva;
@@ -1138,11 +1145,13 @@ function akce_sestava_noci($akce,$par,$title,$vypis,$export=false) { trace();
       $exp= ''; $val= 0;
       if ( substr($f,0,1)=='=' ) {
         switch ($f) {
-        case '=noci':         $val= max(0,$x->pocetdnu-1);
-                              $exp= "=max(0,[pocetdnu,0]-1)"; break;
-        case '=luzkonoci':    $val= ($x->pocetdnu-1)*$x->luzka;
+        case '=noci':         $val= $x->pocetdnu;
+                              $exp= "=[pocetdnu,0]"; break;
+//         case '=noci':         $val= max(0,$x->pocetdnu-1);
+//                               $exp= "=max(0,[pocetdnu,0]-1)"; break;
+        case '=luzkonoci':    $val= ($x->pocetdnu)*$x->luzka;
                               $exp= "=[=noci,0]*[luzka,0]"; break;
-        case '=pristylkonoci':$val= ($x->pocetdnu-1)*$x->pristylky;
+        case '=pristylkonoci':$val= ($x->pocetdnu)*$x->pristylky;
                               $exp= "=[=noci,0]*[pristylky,0]"; break;
         default:              $val= '???'; break;
         }
@@ -1486,7 +1495,7 @@ function akce_strava_pary($akce,$par,$title,$vypis,$export=false,$id_pobyt=0) { 
           JOIN osoba AS o ON s.id_osoba=o.id_osoba
           LEFT JOIN tvori AS t ON t.id_osoba=o.id_osoba
           LEFT JOIN rodina AS r USING(id_rodina)
-          WHERE p.id_akce='$akce' AND funkce NOT IN (9,10) AND $cond
+          WHERE p.id_akce='$akce' AND funkce NOT IN (9) AND $cond
           GROUP BY id_pobyt
           ORDER BY $ord";
 //   $qry.=  " LIMIT 5";
