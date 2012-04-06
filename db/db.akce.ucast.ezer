@@ -215,7 +215,9 @@ form _platba {
   label [2,27,527,495] {title:"<img src='img/ms2p.png'>" }
   proc ini() {
     // výpočet součtu cen a rozpis, došlé platby
-    dosle_platby; rozpis_ceny; celkem.set(sum(c_nocleh.get,c_strava.get,c_program.get,c_sleva.get));
+    [ has_skill("faa");
+    | dosle_platby; rozpis_ceny;
+      celkem.set(sum(c_nocleh.get,c_strava.get,c_program.get,c_sleva.get)) ];
     // obarvení tlačítka [Str.pol]
     or(u.b.cstrava_cel.get,u.b.cstrava_pol.get); stravy.set_css('cervena','cerna');
   | stravy.set_css('cerna','cervena')
@@ -244,14 +246,14 @@ form _platba {
     options:ms_cena_vzorec.zkratka }
   label navrh [10,124,280,280] { css:'karta_info' }
   // platby
-  button [307,70,,] { title:"Aktualizace bankovních výpisů"
+  button [307,70,,] { title:"Aktualizace bankovních výpisů", skill:'yaa'
     proc onclick() {
       var msg: text
       // aktualizace tabulky PLATBA
       msg.set(ask('akce_rb_platby'));
       [ eq(msg,'Nepřišly nové platby') | alert(substr(msg,0,300),' ...') ];
   } }
-  button [491,70,,] { title:"Došlé platby"
+  button [491,70,,] { title:"Došlé platby", skill:'yaa'
     proc onclick() { dosle_platby }
   }
   label doslo [300,99,281,250] { style:"border-left:2px solid grey" }

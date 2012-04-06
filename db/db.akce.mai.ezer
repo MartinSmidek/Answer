@@ -409,7 +409,8 @@ form _esady  {
   }
   # ------------------- informace
   label msg [0,310,300,50]
-  label info [0,370,300,100]
+  label info [0,372,367,90]   { style:"overflow:auto;border:1px solid grey;padding:5px" }
+  label obsah [0,473,716,246] { style:"overflow:auto;border:1px solid grey;padding:5px" }
   # ------------------- seznam adres
   browse maily [390,0,120,200] { rows:24, qry_rows:1, css_rows:'stav,3:zluty,4:zeleny,5:cerveny'
     show stav    [,,20,]  { title:'s.', data:mail.stav, format:'rsq' },
@@ -417,13 +418,15 @@ form _esady  {
     show email   [,,180,] { title:'email', data:mail.email, format:'tsq' },
     show msg     [,,50,]  { title:'chyba', data:mail.msg, format:'tsq' }
     show id_mail          { data:mail.id_mail }
+    show body             { data:mail.body }
     proc onsubmit() {
       ask('dop_mai_stav',id_mail.get,cconc(eq(stav.get,5),3,5));
-      [ eq(dopis_var.get,'U');
-      this.browse_row
+#       [ eq(dopis_var.get,'U');
+      this.browse_row;
     }
     proc onrowclick () {
       info.set(ask('dop_mai_info',id_clen.get,email.get,dopis_id.get,dopis_var.get));
+      [ body.get; obsah.set(body.get) | obsah.set('nepersonifikovaný mail') ]
     }
   }
   # --------------------- načtení celé karty

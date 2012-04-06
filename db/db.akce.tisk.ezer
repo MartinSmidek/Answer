@@ -150,6 +150,7 @@ menu m {type:'left',
     item {title:'Skupinky (* noví)'     ,par:°{typ:'sk',exp:'Excel',cnd:'1',fce:'tisk',mark:'novic'}}
     item {title:'Skupinky - přehled historie' ,par:°{typ:'sk',exp:'Excel',cnd:'1',fce:'prehled'}}
     item {title:'Skupinky - plachta'    ,par:°{typ:'sk',exp:'Excel-plachta',cnd:'1',fce:'plachta'}}
+#     item {title:'Skupinky - tisk+'      ,par:°{typ:'sk',exp:'Excel',cnd:'1',fce:'tisk',mark:'novic'}}
   }
   proc onclick (i) {
     var x: object
