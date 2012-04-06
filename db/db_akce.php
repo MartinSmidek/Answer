@@ -4037,6 +4037,11 @@ function dop_mai_posli($id_dopis,$info) {  trace();
 //     $info->_adresy= $result->_adresy;
   }
   if ( isset($info->_adresy) ) {
+    // zjisti text dopisu a jestli obsahuje proměnné
+    $obsah= select('obsah','dopis',"id_dopis=$id_dopis");
+    $is_vars= preg_match_all("/[\{]([^}]+)[}]/",$obsah,$list);
+    $vars= $list[1];
+                                                                debug($vars);
     // pokud jsou přímo známy adresy, pošli na ně
     $ids= array();
     foreach($info->_ids as $i=>$id) $ids[$i]= $id;
@@ -4045,9 +4050,11 @@ function dop_mai_posli($id_dopis,$info) {  trace();
       $id= $ids[$i];
       // vlož do MAIL - pokud nezačíná *
       if ( $email[0]!='*' ) {
-        $pobyt= isset($pobyty[$i]) ? $pobyty[$i] : 0;
-        $qr= "INSERT mail (id_davka,znacka,stav,id_dopis,id_clen,id_pobyt,email)
-              VALUE (1,'@',0,$id_dopis,$id,$pobyt,'$email')";
+        $id_pobyt= isset($pobyty[$i]) ? $pobyty[$i] : 0;
+        // pokud dopis obsahuje proměnné, personifikuj obsah
+        $body= $is_vars ? dop_mail_personify($obsah,$vars,$id_pobyt) : '';
+        $qr= "INSERT mail (id_davka,znacka,stav,id_dopis,id_clen,id_pobyt,email,body)
+              VALUE (1,'@',0,$id_dopis,$id,$id_pobyt,'$email','$body')";
 //                                         display("$i:$qr");
         $rs= mysql_qry($qr);
         $num+= mysql_affected_rows();
@@ -4073,6 +4080,24 @@ function dop_mai_posli($id_dopis,$info) {  trace();
 //                                                         fce_log("dop_mai_posli: UPDATE");
   $rs= mysql_qry($qr);
   return true;
+}
+# -------------------------------------------------------------------------------------------------- dop_mail_personify
+# spočítá proměnné podle id_pobyt a dosadí do textu dopisu
+# vrátí celý text
+function dop_mail_personify($obsah,$vars,$id_pobyt) {
+  $text= $obsah;
+  foreach($vars as $var) {
+    $val= '';
+    switch ($var) {
+    case 'akce_cena':
+      $ret= akce_vzorec($id_pobyt);
+      $val= $ret->navrh;
+      break;
+    }
+    $text= str_replace('{'.$var.'}',$val,$text);
+  }
+  $text= mysql_real_escape_string($text);
+  return $text;
 }
 # -------------------------------------------------------------------------------------------------- dop_mai_info
 # informace o členovi
@@ -4167,7 +4192,8 @@ function dop_mai_stav($id_mail,$stav) {  trace();
 # odešli dávku $kolik mailů ($kolik=0 znamená testovací poslání)
 # $from,$fromname = From,ReplyTo
 # $test = 1 mail na tuto adresu (pokud je $kolik=0)
-function dop_mai_send($id_dopis,$kolik,$from,$fromname,$test='') { #trace();
+# pokud je definováno $id_mail s definovaným text MAIL.body, použije se - jinak DOPIS.obsah
+function dop_mai_send($id_dopis,$kolik,$from,$fromname,$test='',$id_mail=0) { #trace();
   global $ezer_path_serv;
   $phpmailer_path= "$ezer_path_serv/licensed/phpmailer";
   require_once("$phpmailer_path/class.phpmailer.php");
@@ -4176,6 +4202,15 @@ function dop_mai_send($id_dopis,$kolik,$from,$fromname,$test='') { #trace();
   $qry= "SELECT * FROM dopis WHERE id_dopis=$id_dopis ";
   $res= mysql_qry($qry,1,null,1);
   $d= mysql_fetch_object($res);
+  $obsah= $d->obsah;
+  if ( $id_mail ) {
+    // přečtení personifikace rozesílaného mailu
+    $qry= "SELECT * FROM mail WHERE id_mail=$id_mail ";
+    $res= mysql_qry($qry,1,null,1);
+    $m= mysql_fetch_object($res);
+    if ( $m->body )
+      $obsah= $m->body;
+  }
   // napojení na mailer
   $html= '';
 //   $klub= "klub@proglas.cz";
@@ -4192,7 +4227,7 @@ function dop_mai_send($id_dopis,$kolik,$from,$fromname,$test='') { #trace();
 //   $mail->ConfirmReadingTo= $jarda;
   $mail->FromName= "$fromname";
   $mail->Subject= $d->nazev;
-  $mail->Body= $d->obsah;
+  $mail->Body= $obsah;
   $mail->IsHTML(true);
   $mail->Mailer= "smtp";
   if ( $d->prilohy ) {
