@@ -41,6 +41,10 @@ proc akce_back() {
   'EVIDENCE',{ evi.focus(1) });
 }
 
+proc akce_evidence(id_osoba) {
+  evi.evid_show(id_osoba);
+  evi.focus(1);
+}
 use header:form _header  [  4,0,,]
 use u:     form _ucast   [  6,20,,]     // seznam účastníků
 use page:  form _page    [400,10,,]
@@ -189,8 +193,12 @@ form _album {
 }
 # -------------------------------------------------------------------------------------------------- _aktivity
 form _aktivity {
-  field id_osoba
+#   field id_osoba
+  var ido: number
   field jme [10,34,200,] { format:'o' }
+  button [160,20,,] { title:'^evidence'
+    proc onclick() { akce_evidence(ido.get) }
+  }
   view a: table akce
   view p: table pobyt { join:'ON a.id_duakce=p.id_akce' }
   view s: table spolu { join:'USING(id_pobyt)' }
@@ -205,7 +213,8 @@ form _aktivity {
       akce_show(ida.get,idp.get,conc(akce.get,' ',rok.get),'AKTIVITA') }
   }
   proc ucasti(id_osoba) {
-    id_osoba; akc.browse_load(conc('a.spec=0 AND s.id_osoba=',id_osoba),"datum_od DESC")
+    id_osoba; ido.set(id_osoba);
+    akc.browse_load(conc('a.spec=0 AND s.id_osoba=',id_osoba),"datum_od DESC")
   | akc.browse_init
   }
 }
