@@ -388,7 +388,7 @@ form _esady  {
     proc onclick () {
       msg.set('');
       confirm('Poslat zkušební mail na ',zkus.get,' ?');
-      E_info.set(ask('dop_mai_send',dopis_id.get,0,from.get,name.get,zkus.get));
+      E_info.set(ask('dop_mai_send',dopis_id.get,0,from.get,name.get,zkus.get,maily.id_mail.get));
       msg.set(E_info.get('_html'));
     }
   }
@@ -408,8 +408,8 @@ form _esady  {
     }
   }
   # ------------------- informace
-  label msg [0,310,300,50]
-  label info [0,372,367,90]   { style:"overflow:auto;border:1px solid grey;padding:5px" }
+  label msg [0,305,377,67]
+  label info [0,373,367,90]   { style:"overflow:auto;border:1px solid grey;padding:5px" }
   label obsah [0,473,716,246] { style:"overflow:auto;border:1px solid grey;padding:5px" }
   # ------------------- seznam adres
   browse maily [390,0,120,200] { rows:24, qry_rows:1, css_rows:'stav,3:zluty,4:zeleny,5:cerveny'

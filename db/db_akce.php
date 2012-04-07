@@ -415,6 +415,7 @@ function akce_vzorec($id_pobyt) {  trace();
     $html.= "<tr><th>celková platba</th><td></td><th align='right'>$cena</th></tr>";
     $html.= "</table>";
     $ret->navrh= $html;
+    $ret->mail= "<div style='background-color:#eeeeee;margin-left:15px'>$html</div>";
   }
   return $ret;
 }
@@ -4091,7 +4092,7 @@ function dop_mail_personify($obsah,$vars,$id_pobyt) {
     switch ($var) {
     case 'akce_cena':
       $ret= akce_vzorec($id_pobyt);
-      $val= $ret->navrh;
+      $val= $ret->mail;
       break;
     }
     $text= str_replace('{'.$var.'}',$val,$text);
@@ -4193,11 +4194,12 @@ function dop_mai_stav($id_mail,$stav) {  trace();
 # $from,$fromname = From,ReplyTo
 # $test = 1 mail na tuto adresu (pokud je $kolik=0)
 # pokud je definováno $id_mail s definovaným text MAIL.body, použije se - jinak DOPIS.obsah
-function dop_mai_send($id_dopis,$kolik,$from,$fromname,$test='',$id_mail=0) { #trace();
+function dop_mai_send($id_dopis,$kolik,$from,$fromname,$test='',$id_mail=0) { trace();
   global $ezer_path_serv;
   $phpmailer_path= "$ezer_path_serv/licensed/phpmailer";
   require_once("$phpmailer_path/class.phpmailer.php");
   $result= (object)array('_error'=>0);
+  $pro= '';
   // přečtení rozesílaného mailu
   $qry= "SELECT * FROM dopis WHERE id_dopis=$id_dopis ";
   $res= mysql_qry($qry,1,null,1);
@@ -4210,6 +4212,7 @@ function dop_mai_send($id_dopis,$kolik,$from,$fromname,$test='',$id_mail=0) { #t
     $m= mysql_fetch_object($res);
     if ( $m->body )
       $obsah= $m->body;
+      $pro= "s personifikací pro {$m->email}";
   }
   // napojení na mailer
   $html= '';
@@ -4240,16 +4243,15 @@ function dop_mai_send($id_dopis,$kolik,$from,$fromname,$test='',$id_mail=0) { #t
     // testovací poslání sobě
     $mail->AddAddress($test);   // pošli sám sobě
     // pošli
-//     try { $ok= $mail->Send(); } catch(Exception $e) { $ok= false; }
     $ok= $mail->Send();
     if ( $ok  )
-      $html.= "<br><b style='color:#070'>Byl odeslán mail na $test - je zapotřebí zkontrolovat obsah</b>";
+      $html.= "<br><b style='color:#070'>Byl odeslán mail na $test $pro - je zapotřebí zkontrolovat obsah</b>";
     else {
       $err= $mail->ErrorInfo;
       $html.= "<br><b style='color:#700'>Při odesílání mailu došlo k chybě: $err</b>";
-//                                                 display($html);
       $result->_error= 1;
     }
+//                                                 display($html);
   }
   else {
     // poslání dávky $kolik mailů
