@@ -48,7 +48,7 @@ panel pece {type:'plain', _sys:'*', title:'Pečouni!', include:'onload,db.akce.p
 panel tisk [,,,] {type:'right', _sys:'*', title:'Výpisy akce', include:'onclick,db.akce.tisk',skill:'yaa;faa'  }
 # ================================================================================================== EVIDENCE
 panel evi {type:'right', _sys:'*', title:'EVIDENCE', include:'onclick,db.akce.evi', skill:'yae;fae'
-#   proc evid_show() { alert('napřed klikni na Databáze|EVIDENCE') }
+  proc evid_show() { alert('napřed klikni na Databáze|EVIDENCE') }
 }
 # panel rod {type:'plain', title:'Rodiny', include:'onclick,db.akce.rod', skill:'yae;fae'  }
 # panel jed {type:'plain', title:'Jednotlivci', skill:'yae;fae'  }
