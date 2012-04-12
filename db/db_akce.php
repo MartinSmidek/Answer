@@ -3669,6 +3669,41 @@ function sql2xls($datum) {
 }
 # ================================================================================================== EMAILY - SQL
 # vytváření a testování SQL dotazů pro definici mailů
+# -------------------------------------------------------------------------------------------------- db_mail_copy_ds
+# ASK - kopie tabulky SETKANI.DS_OSOBA do EZER_YS.DS_OSOBA_COPY
+# vrací {id_cis,data,query}
+function db_mail_copy_ds() {  trace();
+  global $ezer_db;
+  $html= 'kopie se nepovedla';
+  // smazání staré kopie
+  $qry= "TRUNCATE TABLE ezer_ys.ds_osoba_copy ";
+  $ok= mysql_qry($qry);
+  if ( $ok ) {
+    $html= "inicializace ds_osoba_copy ok";
+    ezer_connect('setkani');
+    $qrs= "SELECT * FROM setkani.ds_osoba WHERE email!='' ";
+    $res= mysql_qry($qrs);
+    while ( $res && ($s= mysql_fetch_object($res)) ) {
+//                                                         debug($s,'s',(object)array('win1250'=>1));
+      $ids= $vals= $del= '';
+      foreach($s as $id=>$val) {
+        $ids.= "$del$id";
+        $vals.= "$del'".mysql_real_escape_string(wu($val))."'";
+        $del= ',';
+      }
+      $qry= "INSERT INTO ezer_ys.ds_osoba_copy ($ids) VALUES ($vals)";
+      $ok= mysql_query($qry,$ezer_db['ezer_ys'][0]);
+                                                        display("$ok:$qry");
+      if ( !$ok ) {
+        $html.= "\nPROBLEM ".mysql_error();
+      }
+    }
+    if ( $ok ) {
+      $html.= "\nkopie do ds_osoba_copy ok";
+    }
+  }
+  return $html;
+}
 # -------------------------------------------------------------------------------------------------- db_mail_sql_new
 # ASK - vytvoření SQL dotazů pro definici mailů
 # vrací {id_cis,data,query}
@@ -3683,18 +3718,18 @@ function db_mail_sql_new() {  #trace();
 # -------------------------------------------------------------------------------------------------- db_mail_sql_try
 # ASK - vytvoření SQL dotazů pro definici mailů
 # vrací {id_cis,data,query}
-function db_mail_sql_try($qry) {  trace();
+function db_mail_sql_try($qry,$vsechno=0) {  trace();
   $html= $head= $tail= '';
   $emails= array();
   try {
     $time_start= getmicrotime();
-    $res= mysql_query($qry);
+    $res= mysql_qry($qry);
     $time= round(getmicrotime() - $time_start,4);
     if ( !$res ) {
       $html.= "<span style='color:darkred'>ERROR ".mysql_error()."</span>";
     }
     else {
-      $nmax= 200;
+      $nmax= $vsechno ? 99999 : 200;
       $num= mysql_num_rows($res);
       $head.= "Výběr obsahuje <b>$num</b> emailových adresátů, nalezených během $time ms, ";
       $head.= $num>$nmax ? "následuje prvních $nmax adresátů" : "následují všichni adresáti";
