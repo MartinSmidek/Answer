@@ -65,6 +65,11 @@ menu m {type:'left',
         ini(i,'sq','','skup','akce');
       }
     }
+    item {title:'Kopie emailů z Domu setkání',
+      proc onclick (i) {
+        alert(ask('db_mail_copy_ds'));
+      }
+    }
   }
   menu {title:'Rozesílání mailů ', type:'group'
     item {title:'účastníkům této akce',
@@ -133,11 +138,12 @@ form _esql {
     form.init; vy.komu_Q.init; vy.komu_Q.selects // obnov výběrové hodnoty
   }}
   # test
-  label  [620,5,52,30] { css:'ae_parm' }
+  label  [620,5,131,30] { css:'ae_parm' }
   button [627,9,,] {title:'Test',  help:'Uložit změny a otestovat dotaz', proc onclick() {
     { has_skill('m'); qry_save.onclick | form.same | alert('pro změnu SQL dotazu nemáš oprávnění') };
-    anwer.set(ask('db_mail_sql_try',query.get))
+    anwer.set(ask('db_mail_sql_try',query.get,vsechno.get))
   } }
+  check vsechno [670,9,80,15] {title:'zobraz vše', format:'t'}
   proc reload() {
     var akey:number
     vy.komu_Q.key;
