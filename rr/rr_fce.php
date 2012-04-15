@@ -1,5 +1,19 @@
 <?php # (c) 2007-2012 Martin Smidek <martin@smidek.eu>
 # ================================================================================================== RR
+# -------------------------------------------------------------------------------------------------- rr_nastav
+# $par = {den:ode dneška,poslat: 0/1}
+function rr_nastav($den,$datum,$pocet) {  trace();
+  $nastaveno= 0;
+  $dat= sql_date1($datum,1);
+  $ndat0= sql2stamp($dat);
+  for ($d= 0; $d<$pocet; $d++) {
+    $day_n= $den+$d;
+    $ndatum= date('Y-m-d',$ndat0+$d*60*60*24);
+    query("UPDATE rr SET datum='$ndatum',state='prepared' WHERE day_n=$day_n");
+    $nastaveno+= mysql_affected_rows();
+  }
+  return "nastaveno $nastaveno dnů od $dat po $ndatum";
+}
 # -------------------------------------------------------------------------------------------------- rr_send
 # $par = {den:ode dneška,poslat: 0/1}
 function rr_send($par) {

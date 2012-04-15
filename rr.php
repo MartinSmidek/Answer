@@ -37,8 +37,10 @@
         "$licensed/zeroclipboard/ZeroClipboard.js")
       // uživatelské skripty
     );
-    $css= array(
-      "./$client/ezer.css.php"
+    $css= array_merge(
+      array("./$client/ezer.css.php"),
+      /* pro verzi 2.2 */ $EZER->version=='ezer2.2'
+      ? array("$licensed/datepicker/datepicker_vista/datepicker_vista.css"):array()
     );
     $options= (object)array(
       'must_log_in'    => 'false',

@@ -69,7 +69,7 @@ proc status() {
 }
 const LETOS = "NOW()>=od.dat_od AND (NOW()<=od.dat_do OR od.dat_do='0000-00-00')"
 menu m {type:'left'
-  menu g {title:'Evidence jednotlivců',type:'group', skill:'yae'
+  menu g {title:'Evidence jednotlivců',type:'group', skill:'yae;fae'
     item i {title:'všechny kontakty'
           par:°{cnd:"1",hav:"1"} }
     item {title:'letošní členové'
@@ -78,9 +78,9 @@ menu m {type:'left'
           par:°{cnd:LETOS,hav:"LOCATE('c',rel)>0"} }
     item {title:'letošní č.členové - dlužníci'
           par:°{cnd:LETOS,hav:"LOCATE('c',rel)>0 AND NOT LOCATE('p',rel)>0"} }
-    item {title:'letošní  dárci'
+    item {title:'letošní  dárci', skill:'yae'
           par:°{cnd:LETOS,hav:"LOCATE('d',rel)>0"} }
-    item {title:'letošní dárci bez potvrzení', format:'d'
+    item {title:'letošní dárci bez potvrzení', format:'d', skill:'yae'
           par:°{cnd:"1",hav:"LOCATE('d',rel)>0"} }
     proc onclick (i) {
       mode.set('o');
@@ -91,10 +91,10 @@ menu m {type:'left'
       osoby.b.raise('onrowclick');
     }
   }
-  menu {title:'Evidence rodin',type:'group', skill:'yae'
+  menu {title:'Evidence rodin',type:'group', skill:'yae;fae'
     item {title:'všechny rodiny'   par:°{cnd:"1",hav:"1"} }
-    item {title:'... s více maily' par:°{cnd:"TRIM(emaily) REGEXP ',[^$]|;[^$]'",hav:"1"} }
-    item {title:'... s více telefony' par:°{cnd:"TRIM(telefony) REGEXP ',[^$]|;[^$]'",hav:"1"} }
+    item {title:'... s více maily' par:°{cnd:"TRIM(emaily) REGEXP ',[^$]|;[^$]'",hav:"1"}, skill:'yae' }
+    item {title:'... s více telefony' par:°{cnd:"TRIM(telefony) REGEXP ',[^$]|;[^$]'",hav:"1"}, skill:'yae' }
     proc onclick (i) {
       mode.set('r');
       panel.display(0,'inf|list|plat'); panel.display(1,'rodi|syst');

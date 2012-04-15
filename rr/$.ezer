@@ -1,6 +1,6 @@
 menu rr { type:'main', active:rr.richard
-  tabs richard {title:"Rozesílání", _sys:'*'
-    panel rohr {type:'right', title:'Myšlenky'
+  tabs richard {title:"Myšlenky", _sys:'*'
+    panel rohr {type:'right', title:'Rozesílání'
       menu myslenka {type:'left'
         menu ukazat {title:'Zobrazení',type:'group'
           item dnesni {title:'dnešní myšlenky', par:°{den:0,poslat:0} }
@@ -20,6 +20,52 @@ menu rr { type:'main', active:rr.richard
         }
       }
       use info: form right [12,4,,]
+    }
+    panel plan {type:'right', title:'Příprava'
+      menu nastav {type:'left'
+        menu obdobi {title:'Období',type:'group'
+          item od {title:'Nastavení', par:°{den:0,poslat:0}
+          }
+        }
+      }
+      use f: form _f [12,4,,]
+      proc onfirstfocus() {
+        f.b.browse_load
+      }
+      form _f [,,*,500] {
+        browse b { rows:24, qry_rows:1
+          show id_rr { data:rr.id_rr, format:'qs' }
+          show [,,30,] { title:'pořadí', data:rr.day_n, format:'qs' }
+          show [,,40,] { title:'den', data:rr.day, format:'qs' }
+          show [,,20,] { title:'ps', data:rr.state, format:'qs' }
+          show [,,70,] { title:'datum', data:rr.datum, format:'qs' }
+          show [,,140,] { title:'název', data:rr.subject, format:'qs' }
+        }
+        label [340,10,,] { title:"Nastav pořadové číslo dne, počáteční datum a počet dnů" }
+        field den [340,40,30,]
+        field datum [380,40,80,] { type:'date' }
+        field pocet [470,40,40,]
+        button [530,38,,] { title:'nastav'
+          proc onclick() {
+            msg.set(ask('rr_nastav',den.get,datum.get,pocet.get));
+            f.b.browse_load;
+          }
+        }
+        label msg [340,70,300,200]
+      }
+      table rr {
+        number id_rr
+        number day_n
+        text day
+        date datum
+        text state /* prepared|sent */
+        text subject
+        text title_cz
+        text text_cz
+        text title_en
+        text text_en
+        text from_en
+      }
     }
   }
 }

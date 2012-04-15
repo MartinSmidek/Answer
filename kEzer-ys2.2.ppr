@@ -11,7 +11,7 @@ FileFormat=0
 ProjectFilesOnly=0
 [Project tree]
 kEzer-ys2
-	-rr
+	+rr
 		rr\$.ezer
 		myslenky.php
 		robots.txt
@@ -29,9 +29,9 @@ kEzer-ys2
 		fa\fa_fce.js
 		fa\fa_fce.php
 		fa\fa_lide.php
-	+skins
+	-skins
 		skins\colors.php
-	+db
+	-db
 		db\$.ezer
 		db\db.akce.ducast.ezer
 		db\db.akce.evi.ezer
@@ -61,7 +61,7 @@ kEzer-ys2
 		sql\mysql_all.bat
 		sql\pohled_osoba.sql
 		zaloha.php
-	-ezer2.2
+	+ezer2.2
 		+libr
 			ezer2.2\$.ezer
 			ezer2.2\ezer2.help.ezer
@@ -158,7 +158,7 @@ kEzer-ys2
 		dg\dg.css.css
 		dg.inc
 		dg.php
-	+ys
+	-ys
 		+$
 			ys\$.ezer
 			skins\colors.php
@@ -217,27 +217,36 @@ kEzer-ys2
 9=db\db.akce.ezer
 10=db\db.akce.lst.ezer
 11=db\db.akce.evi.ezer
-12=ys.php
-13=db\$.ezer
-14=db\db.akce.chl.ezer
-15=ch\ch.ezer
-16=db\db.css.php
-17=skins\colors.php
-18=ys\ys.css.php
-19=db\db.akce.tisk.ezer
-20=Novy1.ezer
+12=db\$.ezer
+13=db\db.akce.chl.ezer
+14=ch\ch.ezer
+15=db\db.css.php
+16=skins\colors.php
+17=ys\ys.css.php
+18=db\db.akce.tisk.ezer
+19=fa\$.ezer
+20=db\db.akce.ducast.ezer
+21=fa.inc
+22=fa.php
+23=ys.inc
+24=ys.php
+25=ds\ds_fce.php
+26=rr\$.ezer
+27=rr.php
+28=rr.inc
+29=rr\rr_fce.php
 [Selected Project Files]
 Main=
-Selected=Novy1.ezer
+Selected=db\db.akce.mai.ezer
 [ezer2.2\client\app.js]
 TopLine=33
 Caret=14,34
 [ezer2.2\server\ezer2.php]
-TopLine=1
-Caret=54,10
+TopLine=243
+Caret=1,273
 [ezer2.2\server\ae_slib.php]
-TopLine=795
-Caret=1,830
+TopLine=1905
+Caret=10,1934
 [ezer2.2\client\ezer_fdom1.js]
 TopLine=752
 Caret=1,809
@@ -251,41 +260,40 @@ BookMark9=75,4241
 TopLine=2556
 Caret=61,2566
 [db\db.akce.mai.ezer]
-TopLine=367
-Caret=35,405
-BookMark1=13,221
-BookMark3=35,312
+TopLine=111
+Caret=58,119
+BookMark1=33,434
+BookMark3=35,318
+Mark1=35,397
 [db\db_akce.php]
-TopLine=378
-Caret=25,390
-BookMark1=3,2290
+TopLine=3700
+Caret=33,3732
+BookMark3=10,420
+BookMark4=15,4130
 [db\db.akce.ucast.ezer]
-TopLine=166
-Caret=71,231
-BookMark1=14,779
-BookMark2=1,213
-BookMark3=12,609
+TopLine=20
+Caret=1,45
+BookMark1=7,200
+BookMark2=19,40
+BookMark3=12,620
 [db\db.akce.ezer]
-TopLine=14
-Caret=51,55
+TopLine=21
+Caret=1,51
 BookMark1=20,229
 [db\db.akce.lst.ezer]
 TopLine=1
 Caret=1,1
 [db\db.akce.evi.ezer]
-TopLine=715
-Caret=44,724
-BookMark1=22,777
-BookMark2=108,162
-Mark1=31,730
-[ys.php]
-TopLine=1
-Caret=1,1
+TopLine=21
+Caret=27,40
+BookMark1=22,44
+BookMark2=108,168
+Mark1=31,736
 [db\$.ezer]
 TopLine=1
 Caret=1,1
 [db\db.akce.chl.ezer]
-TopLine=1
+TopLine=144
 Caret=21,203
 [ch\ch.ezer]
 TopLine=1
@@ -300,8 +308,38 @@ Caret=75,54
 TopLine=1
 Caret=26,17
 [db\db.akce.tisk.ezer]
-TopLine=126
-Caret=53,149
-[Novy1.ezer]
 TopLine=1
-Caret=27,23
+Caret=18,40
+[fa\$.ezer]
+TopLine=1
+Caret=1,1
+[db\db.akce.ducast.ezer]
+TopLine=1
+Caret=1,1
+[fa.inc]
+TopLine=1
+Caret=1,3
+[fa.php]
+TopLine=17
+Caret=78,32
+[ys.inc]
+TopLine=1
+Caret=48,14
+[ys.php]
+TopLine=22
+Caret=1,59
+[ds\ds_fce.php]
+TopLine=59
+Caret=15,59
+[rr\$.ezer]
+TopLine=18
+Caret=85,23
+[rr.php]
+TopLine=9
+Caret=1,45
+[rr.inc]
+TopLine=1
+Caret=31,17
+[rr\rr_fce.php]
+TopLine=1
+Caret=22,8
