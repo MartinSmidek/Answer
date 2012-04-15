@@ -23,7 +23,8 @@
     array( /* lokální */
       'ezer_ys' =>      array(0,'localhost','gandi','','utf8'),
       'ezer_system' =>  array(0,'localhost','gandi','','utf8','ezer_ys'),
-      'setkani' =>      array(0,'localhost','gandi','','cp1250'))
+//       'setkani' =>      array(0,'localhost','gandi','','cp1250'))
+      'setkani' =>      array(0,'localhost','gandi','','utf8'))
   );
   // modifikace tabulky případným nastavením $_GET[dbs] přeneseným do $_SESSION[$ezer_root][dbs]
   // dbs=db_name:other_db_name,...

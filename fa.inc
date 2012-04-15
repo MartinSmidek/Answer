@@ -1,8 +1,14 @@
 <?php # (c) 2009-2011 Martin Smidek <martin@smidek.eu>
 
+  $ezer_root= 'fa';             // jméno adresáře a hlavního objektu aplikace
+
+  // nastavení verze jádra
+  $EZER= (object)array();
+  $EZER->version= $_GET['ezer'] ? "ezer{$_GET['ezer']}" : 'ezer2.2';
+
   $ezer_local= preg_match('/^\w+\.ezer/',$_SERVER["SERVER_NAME"]); // identifikace ladícího serveru
 
-  require_once("ezer2/server/ae_slib.php");
+  require_once("{$EZER->version}/server/ae_slib.php");
 
   // OBECNÉ PARAMETRY
   $VPS= 'PPS';
@@ -81,7 +87,7 @@
   $EZER->todo->cond_select= "m:1;sp:data>1";     // vybere se 1. vhodné
 
   // knihovní moduly
-  require_once("$ezer_path_root/ezer2/ezer2_fce.php");
+  require_once("$ezer_path_root/{$EZER->version}/ezer2_fce.php");
   // PDF knihovny
   require_once('tcpdf/config/lang/eng.php');
   require_once('tcpdf/tcpdf.php');

@@ -10,7 +10,7 @@ menu ys { type:'main', active:* //ys.pok
 ##  tabs chl {title:"Chlapi",  include:'onclick' }
 #   tabs akce {title:"Akce", _sys:'akce', include:'onclick', active:*, skill:'ya' }
   tabs db {title:"Databáze", _sys:'db', include:'onclick,db.akce', active:*, skill:'ya' }
-  tabs lide {title:"Lidé", _sys:'lid', include:'onclick', skill:'yl' }
+#   tabs lide {title:"Lidé", _sys:'lid', include:'onclick', skill:'yl' }
   tabs syst {title:"Systém", _sys:'sys',  include:'onclick,ezer2.syst', active:*
     panel oso {type:'right', title:'Osobní nastavení', _sys:'*', include:'onclick,ezer2.pers' }
     panel nas {type:'right', title:'Nastavení', _sys:'nas', skill:'a'

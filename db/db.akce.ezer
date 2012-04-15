@@ -25,10 +25,10 @@ panel chl {type:'right', _sys:'*', title:'Chlapi', include:'onclick,db.akce.chl'
 panel lst {type:'right', _sys:'*', title:'AKCE', include:'onclick,db.akce.lst',skill:'yaa;faa'
   use the_akce: form _the_akce         // zatím nezobrazená data nastavené akce s klíčem id_duakce
 }
-panel ducast {type:'plain', _sys:'*', title:'Evidence', include:'onload,db.akce.ducast',skill:'faa'
-  proc init_ucast() { alert('napřed klikni na Databáze|Účastníci') }
-  proc akce_show() { alert('napřed klikni na Databáze|Účastníci') }
-}
+# panel ducast {type:'plain', _sys:'*', title:'Evidence', include:'onload,db.akce.ducast',skill:'faa'
+#   proc init_ucast() { alert('napřed klikni na Databáze|Účastníci') }
+#   proc akce_show() { alert('napřed klikni na Databáze|Účastníci') }
+# }
 panel ucast {type:'plain', _sys:'*',
     title:"<img src='img/icon_new.gif' style='float:left;margin-top:-5px;padding-right:5px;'>Účastníci",
     include:'onload,db.akce.ucast',skill:'yaa'

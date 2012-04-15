@@ -65,7 +65,7 @@ menu m {type:'left',
         ini(i,'sq','','skup','akce');
       }
     }
-    item {title:'Kopie emailů z Domu setkání',
+    item {title:'Kopie emailů z Domu setkání', skill:'yae'
       proc onclick (i) {
         alert(ask('db_mail_copy_ds'));
       }
