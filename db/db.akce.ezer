@@ -31,7 +31,7 @@ panel lst {type:'right', _sys:'*', title:'AKCE', include:'onclick,db.akce.lst',s
 # }
 panel ucast {type:'plain', _sys:'*',
     title:"<img src='img/icon_new.gif' style='float:left;margin-top:-5px;padding-right:5px;'>Účastníci",
-    include:'onload,db.akce.ucast',skill:'yaa'
+    include:'onload,db.akce.ucast',skill:'yaa;faa'
   proc init_ucast2() { alert('napřed klikni na Databáze|Účastníci') }
   proc akce_show() { alert('napřed klikni na Databáze|Účastníci') }
 }
