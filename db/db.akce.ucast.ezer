@@ -249,8 +249,8 @@ form _platba {
       vzorec.change; luzka.change; pocetdnu.change;
       strava_cel.change; strava_pol.change; kocarek.change;
       navrh.set("pro zobrazení ceny je třeba
-        <br>1. upravit a uložit navržené hodnoty,
-        <br>2. dát <b>Zapsat cenu<b> <br>3. uložit");
+        <br>1. upravit (je-li třeba) a uložit navržené hodnoty,
+        <br>2. dát <b>Zapsat cenu</b> <br>3. uložit");
     }
   }
 #   button [10,69,,] { title:"Rozpis ceny"
