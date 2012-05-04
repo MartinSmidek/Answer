@@ -137,9 +137,14 @@ form _page [,,285,500] {
   field [18,133,83,] { tag:'cor', type:'date', data:akce.datum_od }
   label [118,116,64,] { tag:'cor', title:'ukončení' }
   field [118,133,83,] { tag:'cor', type:'date', data:akce.datum_do }
-  label [41,173,,] { tag:'cor', title:'typ akce *' }
-  select [94,169,139,] { tag:'cor', type:'map', data:akce.druh, options:ms_akce_typ.zkratka }
-  check [205,129,83,] { tag:'cor', title:'jen seznam', data:akce.spec, format:'r' }
+  check [205,166,83,] { tag:'cor', title:'jen seznam', data:akce.spec, format:'r' }
+  label [18,173,,]     { tag:'cor', title:'typ akce *' }
+  select [71,169,139,] { tag:'cor', type:'map', data:akce.druh, options:ms_akce_typ.zkratka }
+  radio [213,117,86,35] { tag:'cor', data:akce.strava_oddo, value:'vo'
+    case [0,2,83,] { title:'večeře-oběd', expr:'vo' }
+    case [0,17,76,] { title:'oběd-oběd', expr:'oo' }
+    proc onchange() { echo('strava=',this.get) }
+  }
   label [14,202,,] { tag:'cor', title:'účetní symbol:', skill:'faa|faa' }
   field [96,202,47,] { tag:'cor', data:akce.ciselnik_akce, skill:'faa|faa' }
   // Zpět a Uložit
