@@ -244,7 +244,7 @@ function akce_kontrola_dat($par) { trace();
 }
 # ================================================================================================== PDF
 # -------------------------------------------------------------------------------------------------- akce_platby
-# výpočet platby za pobyt na akci
+# nalezení platby za pobyt na akci
 function akce_platby($id_pobyt) {  trace();
   $suma= 0;
   $html.= '';
@@ -264,6 +264,37 @@ function akce_platby($id_pobyt) {  trace();
   }
   return $html;
 }
+# -------------------------------------------------------------------------------------------------- akce_pobyt_default
+# definice položek v POBYT podle počtu a věku účastníků
+function akce_pobyt_default($id_pobyt,$zapsat=0) {  trace();
+  // projítí společníků v pobytu
+  $dosp= $deti= $koje= $noci= $sleva= $fce= 0;
+  $msg= '';
+  $qo= "SELECT o.jmeno,o.narozeni,a.datum_od,DATEDIFF(datum_do,datum_od) AS _noci,p.funkce
+        FROM spolu AS s
+        JOIN osoba AS o USING(id_osoba)
+        JOIN pobyt AS p USING(id_pobyt)
+        JOIN akce AS a ON p.id_akce=a.id_duakce WHERE id_pobyt=$id_pobyt";
+  $ro= mysql_qry($qo);
+  while ( $ro && ($o= mysql_fetch_object($ro)) ) {
+    $noci= $o->_noci;
+    $fce= $o->funkce;
+    $vek= narozeni2roky(sql2stamp($o->narozeni),sql2stamp($o->datum_od));
+    $msg.= " {$o->jmeno}:$vek";
+    if     ( $vek<3  ) $koje++;
+    elseif ( $vek<10 ) $deti++;
+    else               $dosp++;
+  }
+  // zápis do pobytu
+  if ( $zapsat ) {
+    query("UPDATE pobyt SET luzka=".($dosp+$deti).",kocarek=$koje,strava_cel=$dosp,strava_pol=$deti,
+             pocetdnu=$noci WHERE id_pobyt=$id_pobyt");
+  }
+  $ret= (object)array('luzka'=>$dosp+$deti,'kocarek'=>$koje,'pocetdnu'=>$noci,
+                      'strava_cel'=>$dosp,'strava_pol'=>$deti,'vzorec'=>$fce);
+                                                debug($ret,"osob:$koje,$deti,$dosp $msg fce=$fce");
+  return $ret;
+}
 # -------------------------------------------------------------------------------------------------- akce_vzorec
 # výpočet platby za pobyt na akci
 function akce_vzorec($id_pobyt) {  trace();
@@ -272,7 +303,8 @@ function akce_vzorec($id_pobyt) {  trace();
   $ret= (object)array('navrh'=>'cenu nelze spočítat');
   // parametry pobytu
   $x= (object)array();
-  $qp= "SELECT * FROM pobyt WHERE id_pobyt=$id_pobyt";
+  $qp= "SELECT * FROM pobyt AS p
+        JOIN akce AS a ON p.id_akce=a.id_duakce WHERE id_pobyt=$id_pobyt";
   $rp= mysql_qry($qp);
   if ( $rp && ($p= mysql_fetch_object($rp)) ) {
     $id_akce= $p->id_akce;
@@ -281,11 +313,28 @@ function akce_vzorec($id_pobyt) {  trace();
     $vzorec= $p->vzorec;
     $sleva= $p->sleva;
     $neprijel= $p->funkce==10;
+    $datum_od= $p->datum_od;
+  }
+  // podrobné parametry
+  $deti= $koje= 0;
+  $qo= "SELECT o.jmeno,o.narozeni,p.funkce,t.role
+        FROM spolu AS s
+        JOIN osoba AS o ON s.id_osoba=o.id_osoba
+        JOIN pobyt AS p USING(id_pobyt)
+        LEFT JOIN tvori AS t ON t.id_osoba=o.id_osoba
+        WHERE id_pobyt=$id_pobyt";
+  $ro= mysql_qry($qo);
+  while ( $ro && ($o= mysql_fetch_object($ro)) ) {
+    if ( $o->role=='d' ) {
+      $vek= narozeni2roky(sql2stamp($o->narozeni),sql2stamp($datum_od));
+      if     ( $vek<3  ) $koje++;
+      elseif ( $vek<10 ) $deti++;
+    }
   }
 //                                                         debug($x,"pobyt");
   // zpracování strav
   $strava= akce_strava_pary($id_akce,'','','',true,$id_pobyt);
-//                                                         debug($strava->suma,"strava");
+                                                        debug($strava,"strava");
   $jidel= (object)array();
   foreach ($strava->suma as $den_jidlo=>$pocet) {
     list($den,$jidlo)= explode(' ',$den_jidlo);
@@ -385,6 +434,22 @@ function akce_vzorec($id_pobyt) {  trace();
           $ret->c_program+= $cc;
           $html.= "<tr><td>{$a->txt}</td><td align='right'>$cc</td></tr>";
           break;
+        case 'Pd':
+          if ( $deti ) {
+            $cc= $a->c * $deti;
+            $cena+= $cc;
+            $ret->c_program+= $cc;
+            $html.= "<tr><td>{$a->txt}</td><td align='right'>$cc</td></tr>";
+          }
+          break;
+        case 'Pk':
+          if ( $koje ) {
+            $cc= $a->c * $koje;
+            $cena+= $cc;
+            $ret->c_program+= $cc;
+            $html.= "<tr><td>{$a->txt}</td><td align='right'>$cc</td></tr>";
+          }
+          break;
         }
       }
       $html.= "<tr><td></td><td></td><th align='right'>{$ret->c_program}</th></tr>";
@@ -412,7 +477,7 @@ function akce_vzorec($id_pobyt) {  trace();
       }
       $html.= "<tr><td></td><td></td><th align='right'>{$ret->c_sleva}</th></tr>";
     }
-    $html.= "<tr><th>celková platba</th><td></td><th align='right'>$cena</th></tr>";
+    $html.= "<tr><th>celková cena</th><td></td><th align='right'>$cena</th></tr>";
     $html.= "</table>";
     $ret->navrh= $html;
     $ret->mail= "<div style='background-color:#eeeeee;margin-left:15px'>$html</div>";

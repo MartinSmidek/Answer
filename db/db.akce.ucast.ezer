@@ -232,37 +232,52 @@ form _platba {
   | stravy.set_css('cerna','cervena')
   }
   proc rozpis_ceny() {
-    or(vzorec.changed,sleva.changed); alert("před výpočtem ceny ulož změny")
-  | cena.set(ask('akce_vzorec',the_pobyt.get)); navrh.set(cena.get('navrh'))
+    form.same;
+    cena.set(ask('akce_vzorec',the_pobyt.get));
+    navrh.set(cena.get('navrh'))
+#   | alert("před rozpisem ceny ulož změny")
   }
   proc dosle_platby() {
     doslo.set(ask('akce_platby',the_pobyt.get));
   }
   // rozpis a zápis ceny
-  button [10,69,,] { title:"Rozpis ceny"
-    proc onclick() { rozpis_ceny }
-  }
-  button [10,94,,] { title:"Zapsat cenu"
+  button [10,47,,] { title:"Návrh ceny", help:"zapíše počet lůžek a strav"
+    var ret: object
     proc onclick() {
-      or(vzorec.changed,sleva.changed); alert("před výpočtem ceny ulož změny")
-    | cena.set(ask('akce_vzorec',the_pobyt.get)); copy_by_name(cena.get,form);
+      ret.set(ask('akce_pobyt_default',the_pobyt.get));
+      copy_by_name(ret,form);
+      vzorec.change; luzka.change; pocetdnu.change;
+      strava_cel.change; strava_pol.change; kocarek.change;
+      navrh.set("pro zobrazení ceny je třeba
+        <br>1. upravit a uložit navržené hodnoty,
+        <br>2. dát <b>Zapsat cenu<b> <br>3. uložit");
+    }
+  }
+#   button [10,69,,] { title:"Rozpis ceny"
+#     proc onclick() { rozpis_ceny }
+#   }
+  button [10,72,,] { title:"Zapsat cenu"
+    proc onclick() {
+      or(u.b.cstrava_cel.get,u.b.cstrava_pol.get);
+      alert("Pozor - jsou vyplněny speciální stravy")
+   |  cena.set(ask('akce_vzorec',the_pobyt.get)); copy_by_name(cena.get,form);
       c_nocleh.change; c_strava.change; c_program.change; c_sleva.change; ini
   } }
-  label [110,99,,] { title:"sleva:" }
-  field sleva [143,96,50,] { data:pobyt.sleva, help:"Slevy pro potřebné účastníky", format:'r' }
-  label [93,75,,] { title:"cena pro:" }
-  select vzorec [143,73,148,] { type:'map0', data:pobyt.vzorec, help:"výběr vzorce pro organizátory",
+  label [110,77,,] { title:"sleva:" }
+  field sleva [143,74,50,] { data:pobyt.sleva, help:"Slevy pro potřebné účastníky", format:'r' }
+  label [93,53,,] { title:"cena pro:" }
+  select vzorec [143,51,148,] { type:'map0', data:pobyt.vzorec, help:"výběr vzorce pro organizátory",
     options:ms_cena_vzorec.zkratka }
-  label navrh [10,124,280,280] { css:'karta_info' }
+  label navrh [10,100,280,331] { css:'karta_info' }
   // platby
-  button [307,70,,] { title:"Aktualizace bankovních výpisů", skill:'yaa'
+  button [307,70,,] { title:"Aktualizace bankovních výpisů", skill:'yaa|yaa'
     proc onclick() {
       var msg: text
       // aktualizace tabulky PLATBA
       msg.set(ask('akce_rb_platby'));
       [ eq(msg,'Nepřišly nové platby') | alert(substr(msg,0,300),' ...') ];
   } }
-  button [491,70,,] { title:"Došlé platby", skill:'yaa'
+  button [491,70,,] { title:"Došlé platby", skill:'yaa|yaa'
     proc onclick() { dosle_platby }
   }
   label doslo [300,99,281,250] { style:"border-left:2px solid grey" }
@@ -280,6 +295,9 @@ form _platba {
     navrh.set(''); doslo.set('');
   }
   // data
+#   field key_akce                 {data:pobyt.id_akce}
+#   field funkce                   {data:pobyt.funkce}
+#   field pouze                    {data:pobyt.pouze}
   field luzka       [10,456,11,] {data:pobyt.luzka}
   field pristylky   [30,456,11,] {data:pobyt.pristylky}
   field pocetdnu    [51,456,11,] {data:pobyt.pocetdnu}
@@ -297,10 +315,10 @@ form _platba {
                                    options:ms_akce_platba.zkratka, format:'u'}
   field datplatby   [474,456,84,] {type:'date', data:pobyt.datplatby}
   // pevné texty
-  label [10,40,,]   { title:'Rozpis ceny akce podle cenového vzorce akce a přehled příchozích plateb' }
-  label [10,410,,]  { title:'Cena zapsaná v evidenční kartě (použitá pro export do Excelu)',
+  label [13,32,,]   { title:'Rozpis ceny akce podle cenového vzorce akce a přehled příchozích plateb' }
+  label [5,528,,]  { title:'Cena zapsaná v evidenční kartě (použitá pro export do Excelu)',
                       style:"border-top:2px solid grey" }
-  label [3,441,100,] {title:'lůž. při. dnů koč'}
+  label [3,441,100,] {title:'lůž. při. nocí koč.', help:'počet lůžek, přistýlek, nocí a kočárků'}
   label [134,441,27,] {title:'SVP'}
   label [175,441,33,] {title:'cena'}
   label [327,441,33,] {title:'platba'}
@@ -464,6 +482,11 @@ form _pobyt {
 form _ucast [,,400,] { css:'ds_form'
   label         [4,537,,] {title:'pobyt - vývojářské údaje', skill:'m'}
   label develop [0,550,380,106] { skill:'m', style:'border:1px solid #bbb;padding:3px' }
+  // legenda
+  label legenda [114,12,150,11] { title:"
+    <span class='blue'> nestanovena cena </span>&nbsp;&nbsp;
+    <span class='yellow'> dlužník </span>
+   "}
   // omezení browse
   check jen [293,7,83,15] { title:'jen účastníci', format:'t', proc onchange() { reload(0) }}
   // definice pohledů
