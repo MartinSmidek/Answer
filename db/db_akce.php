@@ -282,7 +282,7 @@ function akce_pobyt_default($id_pobyt,$zapsat=0) {  trace();
     $vek= narozeni2roky(sql2stamp($o->narozeni),sql2stamp($o->datum_od));
     $msg.= " {$o->jmeno}:$vek";
     if     ( $vek<3  ) $koje++;
-    elseif ( $vek<10 ) $deti++;
+    elseif ( $vek<12 ) $deti++;
     else               $dosp++;
   }
   // zápis do pobytu
@@ -327,8 +327,8 @@ function akce_vzorec($id_pobyt) {  trace();
   while ( $ro && ($o= mysql_fetch_object($ro)) ) {
     if ( $o->role=='d' ) {
       $vek= narozeni2roky(sql2stamp($o->narozeni),sql2stamp($datum_od));
-      if     ( $vek<3  ) $koje++;
-      elseif ( $vek<10 ) $deti++;
+      if ( $vek<3 ) $koje++;
+      else $deti++;
     }
   }
 //                                                         debug($x,"pobyt");
