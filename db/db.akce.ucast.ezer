@@ -258,8 +258,10 @@ form _platba {
 #   }
   button [10,72,,] { title:"Zapsat cenu"
     proc onclick() {
-      or(u.b.cstrava_cel.get,u.b.cstrava_pol.get);
-      confirm("Pozor - jsou vyplněny speciální stravy. Pokračovat?");
+      { not(or(u.b.cstrava_cel.get,u.b.cstrava_pol.get))
+      | or(u.b.cstrava_cel.get,u.b.cstrava_pol.get);
+        confirm("Pozor - jsou vyplněny speciální stravy. Pokračovat?")
+      };
       cena.set(ask('akce_vzorec',the_pobyt.get)); copy_by_name(cena.get,form);
       c_nocleh.change; c_strava.change; c_program.change; c_sleva.change; ini
   } }
