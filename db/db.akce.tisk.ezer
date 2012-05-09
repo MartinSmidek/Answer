@@ -89,6 +89,7 @@ menu m {type:'left',
   }
   menu {title:'informace o akci',type:'group',_sys:'*'
     item {title:'Narozeniny, výročí'    ,par:°{typ:'vv',cnd:'1'}}
+    item {title:'Přehled o akci'        ,par:°{typ:'vi',cnd:'1'}}
   }
   menu {title:'jmenovky na akci',type:'group',_sys:'*'
     item {title:'Účastníci bez funkce'  ,par:°{typ:'j',exp:'Excel',cnd:"role!='d' AND funkce=0",ord:"prijmeni"
