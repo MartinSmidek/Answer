@@ -4304,16 +4304,6 @@ function dop_mai_send($id_dopis,$kolik,$from,$fromname,$test='',$id_mail=0) { tr
   $qry= "SELECT * FROM dopis WHERE id_dopis=$id_dopis ";
   $res= mysql_qry($qry,1,null,1);
   $d= mysql_fetch_object($res);
-  $obsah= $d->obsah;
-  if ( $id_mail ) {
-    // přečtení personifikace rozesílaného mailu
-    $qry= "SELECT * FROM mail WHERE id_mail=$id_mail ";
-    $res= mysql_qry($qry,1,null,1);
-    $m= mysql_fetch_object($res);
-    if ( $m->body )
-      $obsah= $m->body;
-      $pro= "s personifikací pro {$m->email}";
-  }
   // napojení na mailer
   $html= '';
 //   $klub= "klub@proglas.cz";
@@ -4330,7 +4320,6 @@ function dop_mai_send($id_dopis,$kolik,$from,$fromname,$test='',$id_mail=0) { tr
 //   $mail->ConfirmReadingTo= $jarda;
   $mail->FromName= "$fromname";
   $mail->Subject= $d->nazev;
-  $mail->Body= $obsah;
   $mail->IsHTML(true);
   $mail->Mailer= "smtp";
   if ( $d->prilohy ) {
@@ -4341,6 +4330,16 @@ function dop_mai_send($id_dopis,$kolik,$from,$fromname,$test='',$id_mail=0) { tr
   }
   if ( $kolik==0 ) {
     // testovací poslání sobě
+    if ( $id_mail ) {
+      // přečtení personifikace rozesílaného mailu
+      $qry= "SELECT * FROM mail WHERE id_mail=$id_mail ";
+      $res= mysql_qry($qry,1,null,1);
+      $m= mysql_fetch_object($res);
+      if ( $m->body )
+        $obsah= $m->body;
+        $pro= "s personifikací pro {$m->email}";
+    }
+    $mail->Body= $obsah;
     $mail->AddAddress($test);   // pošli sám sobě
     // pošli
     $ok= $mail->Send();
@@ -4365,6 +4364,15 @@ function dop_mai_send($id_dopis,$kolik,$from,$fromname,$test='',$id_mail=0) { tr
       $i= 0;
       $mail->ClearAddresses();
       $mail->ClearCCs();
+      if ( $z->body ) {
+        // pokud má mail definován obsah (personifikovaný mail) ber z MAIL
+        $obsah= $z->body;
+      }
+      else {
+        // jinak obecný z DOPIS
+        $obsah= $d->obsah;
+      }
+      $mail->Body= $obsah;
       foreach(explode(',',$z->email) as $adresa) {
         if ( !$i++ )
           $mail->AddAddress($adresa);   // pošli na 1. adresu
