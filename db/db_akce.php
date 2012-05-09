@@ -4272,17 +4272,17 @@ function dop_mai_smaz($id_dopis) {  trace();
 }
 # -------------------------------------------------------------------------------------------------- dop_mai_stav
 # úprava stavu mailové adresy
-# včetně znovuzískání mailové adresy s karty účastníka
+# ZATIM BEZ: (maže maily - nutné zohlednit i id_clen==id_osoba aj.) včetně znovuzískání mailové adresy s karty účastníka
 function dop_mai_stav($id_mail,$stav) {  trace();
 
   list($id_dopis,$id_pobyt)= select("id_dopis,id_pobyt","mail","id_mail=$id_mail");
   $novy_mail= '';
-  if ( $id_pobyt) {
-    $oprava= dop_mai_pocet($id_dopis,'U',$cond="id_pobyt=$id_pobyt");
-    $emaily= $oprava->_adresy[0];
-    $novy_mail= ",email='$emaily'";
-                                                  debug($oprava,"dop_mai_stav:$emaily.");
-  }
+//   if ( $id_pobyt) {
+//     $oprava= dop_mai_pocet($id_dopis,'U',$cond="id_pobyt=$id_pobyt");
+//     $emaily= $oprava->_adresy[0];
+//     $novy_mail= ",email='$emaily'";
+//                                                   debug($oprava,"dop_mai_stav:$emaily.");
+//   }
   $qry= "UPDATE mail SET stav=$stav$novy_mail WHERE id_mail=$id_mail ";
   $res= mysql_qry($qry);
   if ( !$res ) fce_error("dop_mai_stav: změna stavu mailu No.'$id_mail' se nepovedla");
