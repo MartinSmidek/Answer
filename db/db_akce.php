@@ -772,11 +772,12 @@ function akce_sestava($akce,$par,$title,$vypis,$export=false) {
      : ( $par->typ=='vj' ? akce_stravenky($akce,$par,$title,$vypis,$export)
      : ( $par->typ=='vn' ? akce_sestava_noci($akce,$par,$title,$vypis,$export)
      : ( $par->typ=='vv' ? akce_text_vyroci($akce,$par,$title,$vypis,$export)
+     : ( $par->typ=='vi' ? akce_text_prehled($akce,$par,$title,$vypis,$export)
      : ( $par->typ=='sk' ? akce_skupinky($akce,$par,$title,$vypis,$export)
      : ( $par->typ=='sd' ? akce_skup_deti($akce,$par,$title,$vypis,$export)
      : ( $par->typ=='d'  ? akce_sestava_pecouni($akce,$par,$title,$vypis,$export)
      : ( $par->typ=='fs' ? akce_fotoseznam($akce,$par,$title,$vypis,$export)
-                         : fce_error("akce_sestava: N.Y.I.") ))))))))));
+                         : fce_error("akce_sestava: N.Y.I.") )))))))))));
 }
 # -------------------------------------------------------------------------------------------------- akce_table
 function akce_table($tits,$flds,$clmn,$export=false) {
@@ -1082,6 +1083,37 @@ function akce_sestava_pary($akce,$par,$title,$vypis,$export=false) { trace();
   return akce_table($tits,$flds,$clmn,$export);
 }
 # ================================================================================================== TEXTY
+# -------------------------------------------------------------------------------------------------- akce_text_prehled
+function akce_text_prehled($akce,$par,$title,$vypis,$export=false) { trace();
+  $html= '';
+  // data akce
+  $veky= array();
+  // histogram věku dětí
+  $qo=  "SELECT prijmeni,jmeno,narozeni,role,a.datum_od
+         FROM akce AS a
+         JOIN pobyt AS p ON a.id_duakce=p.id_akce
+         JOIN spolu AS s USING(id_pobyt)
+         JOIN osoba AS o ON s.id_osoba=o.id_osoba
+         LEFT JOIN tvori AS t ON t.id_osoba=o.id_osoba
+         WHERE a.id_duakce='$akce' AND t.role='d' ";
+  $ro= mysql_qry($qo);
+  while ( $ro && ($o= mysql_fetch_object($ro)) ) {
+    $vek= narozeni2roky_sql($o->narozeni,$o->datum_od);
+    $veky[$vek]++;
+//     $html.= " $vek";
+  }
+  ksort($veky);
+                                                        debug($veky);
+  // formátování výsledku
+  $html.= "<h3>Počet dětí na akci podle stáří (v době začátku akce)</h3>";
+  $html.= "<table class='stat'><tr><th>věk</th><th>počet</th></tr>";
+  foreach($veky as $v=>$n) {
+    $html.= "<tr><td align='right'>$v</td><td align='right'>$n</td></tr>";
+  }
+  $html.= "</table>";
+  $result->html= $html;
+  return $result;
+}
 # -------------------------------------------------------------------------------------------------- akce_text_vyroci
 function akce_text_vyroci($akce,$par,$title,$vypis,$export=false) { trace();
   $html= '';
