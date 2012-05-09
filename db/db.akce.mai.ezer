@@ -99,7 +99,7 @@ form _vyber {
   }
   label popis [391,9,400,19] { format:'n', title:"
     <span class='zeleny'> posláno </span>&nbsp;&nbsp;
-    <span class='cerveny'> chyba (oprav mail účastníka, pak dvojklik) </span>&nbsp;&nbsp;
+    <span class='cerveny'> chyba resp. neposílat </span>&nbsp;&nbsp;
     <span class='zluty'> poslat znovu </span>
    "}
 }
