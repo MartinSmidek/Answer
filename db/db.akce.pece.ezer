@@ -238,21 +238,21 @@ form _pece [,,400,] { css:'ds_form'
 # -------------------------------------------------------------------------------------------------- _cmd
 form _cmd [,,200,] { css:'ds_form'
   // Nový
-  button [6,525,,] {title:'Nový', skill:'yaa+|yaa+;faa+|faa+',
+  button [6,525,,] {title:'Nový', skill:'yaap+|yaap+;faa+|faa+',
     help:'Vytvoření nového pečouna a vložení jako účastníka'
     proc onclick() {   // založení
       p_oso.init(1); p_oso.d.browse_init; p_oso.o.key(0); p_oso.s.key(0);
       b_display(0);
   } }
   // Zpět a Uložit
-  label  [478,520,98,30] { css:'ae_parm', skill:'yaa+;faa+' }
-  button [484,525,,] {title:'Zpět',  help:'Neměnit změněná data', skill:'yaa+|yaa+;faa+|faa+'
+  label  [478,520,98,30] { css:'ae_parm', skill:'yaap+;faa+' }
+  button [484,525,,] {title:'Zpět',  help:'Neměnit změněná data', skill:'yaap+|yaap+;faa+|faa+'
     proc onclick() {
       p_oso.plain;
       b_display(1);
       reload //(up.b.browse_key);
   } }
-  button [530,525,,] {title:'Uložit',  help:'Uložit změněná data', skill:'yaa+|yaa+;faa+|faa+'
+  button [530,525,,] {title:'Uložit',  help:'Uložit změněná data', skill:'yaap+|yaap+;faa+|faa+'
     proc onclick() {
       var ok: number
       p_oso.same
@@ -271,26 +271,26 @@ form _cmd [,,200,] { css:'ds_form'
     }
   }
   // PŘIDAT z AKCE
-  button pridat_a   [69,525,,] {title:'Přidat: z akce', skill:'yaa+|yaa+;faa+|faa+',
+  button pridat_a   [69,525,,] {title:'Přidat: z akce', skill:'yaap+|yaap+;faa+|faa+',
     help:'Přidání účastníky jiných akcí'
     proc onclick() {
       PridaniAkce.modal(240,50)
   } }
   // PŘIDAT z pečounů
-  button pridat_1   [155,525,,] {title:'... jménem', skill:'yaa+|yaa+;faa+|faa+',
+  button pridat_1   [155,525,,] {title:'... jménem', skill:'yaap+|yaap+;faa+|faa+',
     help:'Přidání pečouna podle jména'
     proc onclick() {
       PridaniJmenem3.modal(240,50)
   } }
   // VYŘADIT a VYMAZAT
-  button [357,525,,] {title:'Vyřadit', skill:'yaa+|yaa+;faa+|faa+',
+  button [357,525,,] {title:'Vyřadit', skill:'yaap+|yaap+;faa+|faa+',
     help:'Vyřazení pečouna z účasti na akci'
     proc onclick() {
       confirm("Opravdu vyřadit ",up.b.prijmeni.get,' (',up.b.jmeno.get,") z této akce?");
       spolu.delete_record(conc('id_spolu=',up.b.key_spolu.get),1);
       reload;
   } }
-  button [409,525,,] {title:'Vymazat', skill:'yaa+|yaa+;faa+|faa+',
+  button [409,525,,] {title:'Vymazat', skill:'yaap+|yaap+;faa+|faa+',
     help:'Vymazání informací o pečounovi z evidence'
     proc onclick() {
       confirm("Opravdu vymazat z evidence ",up.b.prijmeni.get,' ',up.b.jmeno.get,"z evidence?");
@@ -298,7 +298,7 @@ form _cmd [,,200,] { css:'ds_form'
       reload;
   } }
 #   // PŘIDAT DÍTĚ
-#   button dite       [225,525,,] {title:'... dítě do skupinky', skill:'yaa+|yaa+;faa+|faa+',
+#   button dite       [225,525,,] {title:'... dítě do skupinky', skill:'yaap+|yaap+;faa+|faa+',
 #     help:'Přidání dalšího dítěte do skupiny'
 #     proc onclick() {
 #       Dite.key_dite.set(0); Dite.key_spolu.set(0);
