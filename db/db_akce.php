@@ -309,6 +309,7 @@ function akce_vzorec($id_pobyt) {  trace();
   if ( $rp && ($p= mysql_fetch_object($rp)) ) {
     $id_akce= $p->id_akce;
     $x->nocoluzka+= $p->luzka * $p->pocetdnu;
+    $x->nocoprist+= $p->pristylky * $p->pocetdnu;
     $ucastniku= $p->pouze ? 1 : 2;
     $vzorec= $p->vzorec;
     $sleva= $p->sleva;
@@ -371,6 +372,7 @@ function akce_vzorec($id_pobyt) {  trace();
   // výpočty
   if ( $ok ) {
     $nl= $x->nocoluzka;
+    $np= $x->nocoprist;
     $u= $ucastniku;
     $cena= 0;
     $html.= "<table>";
@@ -386,8 +388,14 @@ function akce_vzorec($id_pobyt) {  trace();
     else {
       foreach ($cenik as $a) {
       switch ($a->za) {
-        case 'N':
+        case 'Nl':
           $cc= $nl * $a->c;
+          $cena+= $cc;
+          $ret->c_nocleh+= $cc;
+          $html.= "<tr><td>{$a->txt} ($nl*{$a->c})</td><td align='right'>$cc</td></tr>";
+          break;
+        case 'Np':
+          $cc= $np * $a->c;
           $cena+= $cc;
           $ret->c_nocleh+= $cc;
           $html.= "<tr><td>{$a->txt} ($nl*{$a->c})</td><td align='right'>$cc</td></tr>";
