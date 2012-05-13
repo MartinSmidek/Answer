@@ -3,7 +3,7 @@
 
 menu ys { type:'main', active:* //ys.pok
   var global: text,
-  tabs info {title:"Archiv", _sys:'inf',  include:'onclick', active:* }
+  tabs info {title:"Archiv", _sys:'inf',  include:'onclick', active:*, skill:'yc' }
   tabs pok {title:"Pokladna", _sys:'*',  include:'onclick', active:*, skill:'yp' }
   tabs eko {title:"Ekonomika", _sys:'*',  include:'onclick', active:*, skill:'ye' }
   tabs ds {title:"Dům", _sys:'dum', include:'onclick', active:*, skill:'yd' }
