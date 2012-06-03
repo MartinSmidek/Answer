@@ -290,7 +290,7 @@ function akce_pobyt_default($id_pobyt,$zapsat=0) {  trace();
     query("UPDATE pobyt SET luzka=".($dosp+$deti).",kocarek=$koje,strava_cel=$dosp,strava_pol=$deti,
              pocetdnu=$noci WHERE id_pobyt=$id_pobyt");
   }
-  $ret= (object)array('luzka'=>$dosp+$deti,'kocarek'=>$koje,'pocetdnu'=>$noci,
+  $ret= (object)array('luzka'=>$dosp+$deti,'kocarek'=>$koje,';'=>$noci,
                       'strava_cel'=>$dosp,'strava_pol'=>$deti,'vzorec'=>$fce);
                                                 debug($ret,"osob:$koje,$deti,$dosp $msg fce=$fce");
   return $ret;
@@ -398,7 +398,7 @@ function akce_vzorec($id_pobyt) {  trace();
           $cc= $np * $a->c;
           $cena+= $cc;
           $ret->c_nocleh+= $cc;
-          $html.= "<tr><td>{$a->txt} ($nl*{$a->c})</td><td align='right'>$cc</td></tr>";
+          $html.= "<tr><td>{$a->txt} ($np*{$a->c})</td><td align='right'>$cc</td></tr>";
           break;
         }
       }
@@ -4273,16 +4273,18 @@ function dop_mai_info($id,$email,$id_dopis,$zdroj) {  trace();
           $qry= str_replace("HAVING","HAVING _id=$id AND ",$qry);
         else
           $qry= str_replace("GROUP BY","GROUP BY _id HAVING _id=$id AND ",$qry);
+        // zatém jen pro tuto větev
+        $res= mysql_qry($qry);
+        while ( $res && ($c= mysql_fetch_object($res)) ) {
+          $html.= "{$c->prijmeni} {$c->jmeno}<br>";
+          $html.= "{$c->ulice}, {$c->psc} {$c->obec}<br><br>";
+          if ( $c->telefon )
+            $html.= "Telefon: {$c->telefon}<br>";
+        }
       }
       else {
-        $qry.= " GROUP BY _id HAVING _id=$id ";
-      }
-      $res= mysql_qry($qry);
-      while ( $res && ($c= mysql_fetch_object($res)) ) {
-        $html.= "{$c->prijmeni} {$c->jmeno}<br>";
-        $html.= "{$c->ulice}, {$c->psc} {$c->obec}<br><br>";
-        if ( $c->telefon )
-          $html.= "Telefon: {$c->telefon}<br>";
+        // způsobuje chybu  GROUP BY vyžaduje nějakou agragační funkci
+//         $qry.= " GROUP BY _id HAVING _id=$id ";
       }
     }
     break;
@@ -4375,9 +4377,15 @@ function dop_mai_send($id_dopis,$kolik,$from,$fromname,$test='',$id_mail=0) { tr
       $qry= "SELECT * FROM mail WHERE id_mail=$id_mail ";
       $res= mysql_qry($qry,1,null,1);
       $m= mysql_fetch_object($res);
-      if ( $m->body )
+      if ( $m->body ) {
         $obsah= $m->body;
         $pro= "s personifikací pro {$m->email}";
+      }
+      else {
+        // jinak obecný z DOPIS
+        $obsah= $d->obsah;
+        $pro= '';
+      }
     }
     $mail->Body= $obsah;
     $mail->AddAddress($test);   // pošli sám sobě
