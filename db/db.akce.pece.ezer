@@ -264,11 +264,15 @@ form _cmd [,,200,] { css:'ds_form'
       up.b.browse_row; up.b.reload_pecoun
     | // přidání
       p_oso.insert;
-      spolu.insert_record(object('id_osoba',p_oso.key,'id_pobyt',up.b.key_pobyt.get));
+      spolu.insert_record(object('id_osoba',p_oso.key,'id_pobyt',pobyt_pecounu));
       p_oso.plain;
       b_display(1);
       reload;
     }
+  }
+  proc pobyt_pecounu() {
+    [ the_pobyt.get | the_pobyt.set(pobyt.insert_record(object('id_akce',the_duakce.get))) ];
+    return(the_pobyt.get);
   }
   // PŘIDAT z AKCE
   button pridat_a   [69,525,,] {title:'Přidat: z akce', skill:'yaap+|yaap+;faa+|faa+',
