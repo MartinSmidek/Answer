@@ -943,7 +943,7 @@ function akce_sestava_pecouni($akce,$par,$title,$vypis,$export=false) { trace();
   $qry= " SELECT o.prijmeni,o.jmeno,o.narozeni,o.rc_xxxx,o.ulice,o.psc,o.obec,o.telefon,o.email,
             s.skupinka as skupinka,
             IF(o.note='' AND s.poznamka='','',CONCAT(o.note,' / ',s.poznamka)) AS _poznamky
-          FROM ezer_fa.pobyt AS p
+          FROM pobyt AS p
           JOIN spolu AS s USING(id_pobyt)
           JOIN osoba AS o ON s.id_osoba=o.id_osoba
           WHERE p.funkce=99 AND p.id_akce='$akce' AND $cnd
