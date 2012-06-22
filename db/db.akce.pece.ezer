@@ -140,6 +140,7 @@ form _osoba { tag:'a'
   // děti
   label           [L+5,T+240,,] {title:'skupinka č.'}
   field skupinka  [L+70,T+237,30,] {data:s.skupinka, format:'r:e'}
+  check s_rodici  [L+226,T+232,303,] {data:s.s_rodici, title:'stravenky mají rodiče - účastníci akce' }
   browse d [L+5,T+260,,] {type:'smart', rows:12
     show id_osoba
     show id_spolu
@@ -186,6 +187,7 @@ form _pece [,,400,] { css:'ds_form'
     show email    { data:o.email }
     show pozn     { data:o.note }
     show pozn_akce { data:s.poznamka }
+    show s_rodici { data:s.s_rodici }
     // zobrazení
     show _nazev    [,,150,] { title:'příjmení jméno', format:'s+q*', expr:"CONCAT(o.prijmeni,' ',o.jmeno)" }
     show skupinka  [,,30,] { title:'sk.', data:s.skupinka, format:'rqs:e'}

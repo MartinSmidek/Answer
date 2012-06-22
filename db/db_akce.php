@@ -1505,7 +1505,7 @@ function akce_stravenky($akce,$par,$title,$vypis,$export=false) { trace();
           JOIN akce  AS a ON p.id_akce=a.id_duakce
           JOIN spolu AS s USING(id_pobyt)
           JOIN osoba AS o ON s.id_osoba=o.id_osoba
-          WHERE p.id_akce='$akce' AND p.funkce=99
+          WHERE p.id_akce='$akce' AND p.funkce=99 AND s_rodici=0
           ORDER BY o.prijmeni,o.jmeno";
   else
     $qry="SELECT r.nazev as nazev,strava_cel,strava_pol,cstrava_cel,cstrava_pol,p.pouze,
