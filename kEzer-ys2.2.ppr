@@ -11,7 +11,7 @@ FileFormat=0
 ProjectFilesOnly=0
 [Project tree]
 kEzer-ys2
-	-rr
+	+rr
 		rr\$.ezer
 		myslenky.php
 		robots.txt
@@ -157,7 +157,7 @@ kEzer-ys2
 		dg\dg.css.css
 		dg.inc
 		dg.php
-	+ys
+	-ys
 		+$
 			ys\$.ezer
 			skins\colors.php
@@ -225,11 +225,11 @@ kEzer-ys2
 18=db\db.akce.tisk.ezer
 19=ys\$.ezer
 20=db\db.akce.pece.ezer
-21=Novy1.php
-22=Novy2.php
+21=rr\$.ezer
+22=rr.inc
 [Selected Project Files]
 Main=
-Selected=Novy1.php
+Selected=db\db_akce.php
 [ezer2.2\client\app.js]
 TopLine=33
 Caret=14,34
@@ -258,23 +258,23 @@ BookMark1=33,434
 BookMark3=35,318
 Mark1=35,397
 [db\db_akce.php]
-TopLine=4375
-Caret=85,4379
+TopLine=926
+Caret=47,940
 BookMark1=19,1109
 BookMark3=1,1921
 [db\db.akce.ucast.ezer]
-TopLine=232
-Caret=57,259
+TopLine=1
+Caret=68,62
 BookMark1=60,246
 BookMark2=19,40
 BookMark3=12,645
 [db\db.akce.ezer]
 TopLine=1
-Caret=1,65
+Caret=5,6
 BookMark1=20,229
 [db\db.akce.lst.ezer]
-TopLine=9
-Caret=1,1
+TopLine=1
+Caret=15,16
 [db\db.akce.evi.ezer]
 TopLine=63
 Caret=45,75
@@ -306,11 +306,12 @@ Caret=81,69
 TopLine=1
 Caret=81,5
 [db\db.akce.pece.ezer]
-TopLine=242
-Caret=80,264
-[Novy1.php]
-TopLine=25
-Caret=59,35
-[Novy2.php]
+TopLine=240
+Caret=88,274
+BookMark1=66,267
+[rr\$.ezer]
 TopLine=1
-Caret=1,11
+Caret=1,1
+[rr.inc]
+TopLine=1
+Caret=1,1

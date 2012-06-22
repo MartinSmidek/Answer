@@ -1,6 +1,6 @@
 // uživatelské funkce aplikace YS
 // ================================================================================================= Google
-Ezer.obj= {};
+// Ezer.obj= {};        -- je definováno v ezer.js
 // ------------------------------------------------------------------------------------------------- google_maps
 //ff: test.google_maps (fce,label[,options])
 Ezer.obj.google_maps= {};                       // obsahuje: poly,mark
