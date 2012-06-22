@@ -1131,9 +1131,10 @@ function akce_text_eko($akce,$par,$title,$vypis,$export=false) { trace();
   }
 //                                                         debug($prijem,"EKONOMIKA AKCE celkem");
   // formátování odpovědi dle ceníku akce
-  $html.= "<h3>Ceny a platby za akci podle aktuální skladby účastníků</h3>";
-  $html.= "Pozn. zatím se uvažují pouze procentní slevy (např. VPS)<br><br>";
-  $html.= "<table class='stat'><td>položky</td><th>cena bez slev</th><th>platba po slevě</th></tr>";
+  $prijmy= 0;
+  $html.= "<h3>Příjmy za akci podle aktuální skladby účastníků</h3>";
+  $html.= "Pozn. pro přehled se počítá také cena s uplatněnou procentní slevou (např. VPS)<br><br>";
+  $html.= "<table class='stat'><td>položky</td><th>cena bez slev</th><th>cena po slevě</th></tr>";
   $qc= "SELECT GROUP_CONCAT(polozka) AS polozky, za
         FROM ezer_ys.cenik
         WHERE id_akce='$akce' AND za!=''
@@ -1142,8 +1143,11 @@ function akce_text_eko($akce,$par,$title,$vypis,$export=false) { trace();
   while ( $rc && ($c= mysql_fetch_object($rc)) ) {
     if ( $prijem[$c->za]->vzorec ) {
       $cena= $platba= '';
-      if ( $prijem[$c->za]->vzorec ) $cena= number_format($prijem[$c->za]->vzorec, 0, '.', ' ');
-      if ( $prijem[$c->za]->platba ) $platba= number_format($prijem[$c->za]->platba, 0, '.', ' ');
+      if ( $prijem[$c->za]->vzorec ) $cena= $prijem[$c->za]->vzorec;
+      if ( $prijem[$c->za]->platba ) $platba= $prijem[$c->za]->platba;
+      if ( $c->za != 'P' ) $prijmy+= $cena;
+      $cena= number_format($cena, 0, '.', ' ');
+      $platba= number_format($platba, 0, '.', ' ');
       $html.= "<tr><th>{$c->polozky}</th><td align='right'>$cena</td><td align='right'>$platba</td></tr>";
     }
   }
@@ -1154,10 +1158,12 @@ function akce_text_eko($akce,$par,$title,$vypis,$export=false) { trace();
 //                                                         debug($ret->tab);
   $ham= array('sc'=>0,'oc'=>0,'vc'=>0);
   $pecounu= 0;
+  $noci= -1;
   foreach ($ret->tab as $jmeno=>$dny) {
 //                                                         debug($dny,"DNY");
     $pecounu++;
     foreach ( $dny as $den=>$jidla ) {
+      if ( $pecounu==1 ) $noci++;
       foreach ( $jidla as $jidlo=>$porce ) {
         foreach ( $porce as $velikost=>$pocet ) {
           $ham["$jidlo$velikost"]+= $pocet;
@@ -1166,18 +1172,33 @@ function akce_text_eko($akce,$par,$title,$vypis,$export=false) { trace();
     }
   }
 //                                                         debug($ham);
-  $html.= "<h3>Cena jídel pro $pecounu pečounů</h3>";
+  $html.= "<h3>Výdaje za stravu a ubytování pro $pecounu pečovatelů ($noci nocí)</h3>";
+  $html.= "V tomto počtu nejsou zahrnuti pomocní pečovatelé, jejichž náklady hradí jejich rodiče<br>";
+  $html.= "(to je třeba v evidenční kartě pečovatele zapsat zaškrtnutím políčka pod poznámkou)<br><br>";
   $html.= "<table class='stat'><td>položky</td><th>cena</td></tr>";
   $qc= "SELECT GROUP_CONCAT(polozka) AS polozky, za, SUM(cena) AS _cena_
         FROM ezer_ys.cenik
-        WHERE id_akce='$akce' AND za IN ('sc','oc','vc')
+        WHERE id_akce='$akce' AND za IN ('sc','oc','vc','Np')
         GROUP BY za ORDER BY poradi ASC";
   $rc= mysql_qry($qc);
+  $vydaje= 0;
   while ( $rc && ($c= mysql_fetch_object($rc)) ) {
-    $cena= number_format($ham[$c->za] * $c->_cena_, 0, '.', ' ');
+    $cena= $c->za=='Np'
+      ? $noci * $pecounu * $c->_cena_
+      : $ham[$c->za] * $c->_cena_;
+    $vydaje+= $cena;
+    $cena= number_format($cena, 0, '.', ' ');
     $html.= "<tr><th>{$c->polozky}</th><td align='right'>$cena</td></tr>";
   }
   $html.= "</table>";
+  $html.= "<h3>Shrnutí pro pečovatele</h3>";
+  $obrat= $prijmy - $vydaje;
+  $prijmy= number_format($prijmy, 0, '.', ' ')."&nbsp;Kč";
+  $vydaje= number_format($vydaje, 0, '.', ' ')."&nbsp;Kč";
+  $obrat= number_format($obrat, 0, '.', ' ')."&nbsp;Kč";
+  $html.= "Účastníci přispějí na pečovatele částkou $prijmy, přímé náklady na pobyt a stravu
+    činí $vydaje, <br>celkem $obrat je tedy možné použít na programové výdaje
+    pečovatelů na akci a během roku.";
   // předání výsledku
   $result->html= $html;
   return $result;
