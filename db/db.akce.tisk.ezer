@@ -132,11 +132,11 @@ menu m {type:'left',
     item {title:'Stravenky - prázdné'   ,par:°{exp:''}
       proc onclick(i) {
         var res: object
+        info.export.display(0);
         info.fill(conc(i.owner.title,' - ',i.title),' ');
         sti_C.report_init; sti_C.report_check;
         res.set(ask('akce_pdf_stravenky0',the_duakce.get,the_par.get,sti_C.get_json));
         info.fill('',res.html);
-        info.export.display(0);
       }
     }
   }
@@ -169,7 +169,7 @@ menu m {type:'left',
     var x: object
     the_par.set(i.par);
     the_vypis.set(conc(i.owner.title,' - ',i.title));
-    info.export.set(i.par.exp);
+    info.export.display(1); info.export.set(i.par.exp);
     info.fill(conc(the_title.get,' / ',the_vypis.get),' ');
     info.msg.set('');
     x.set(ask('akce_sestava',the_duakce.get,i.par,the_title.get,the_vypis.get));
