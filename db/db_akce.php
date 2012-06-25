@@ -1133,7 +1133,8 @@ function akce_text_eko($akce,$par,$title,$vypis,$export=false) { trace();
   // formátování odpovědi dle ceníku akce
   $prijmy= 0;
   $html.= "<h3>Příjmy za akci podle aktuální skladby účastníků</h3>";
-  $html.= "Pozn. pro přehled se počítá také cena s uplatněnou procentní slevou (např. VPS)<br><br>";
+  $html.= "Pozn. pro přehled se počítá také cena s uplatněnou procentní slevou (např. VPS)<br>";
+  $html.= "(příjmy pro pečovatele se počítají s plné tzn. vyšší ceny)<br><br>";
   $html.= "<table class='stat'><td>položky</td><th>cena bez slev</th><th>cena po slevě</th></tr>";
   $qc= "SELECT GROUP_CONCAT(polozka) AS polozky, za
         FROM ezer_ys.cenik
@@ -1197,7 +1198,7 @@ function akce_text_eko($akce,$par,$title,$vypis,$export=false) { trace();
   $vydaje= number_format($vydaje, 0, '.', ' ')."&nbsp;Kč";
   $obrat= number_format($obrat, 0, '.', ' ')."&nbsp;Kč";
   $html.= "Účastníci přispějí na pečovatele částkou $prijmy, přímé náklady na pobyt a stravu
-    činí $vydaje, <br>celkem $obrat je tedy možné použít na programové výdaje
+    činí $vydaje, <br>celkem <b>$obrat</b> je tedy možné použít na programové výdaje
     pečovatelů na akci a během roku.";
   // předání výsledku
   $result->html= $html;
@@ -2392,7 +2393,7 @@ function akce_plachta($akce,$par,$title,$vypis,$export=0) { trace();
 //   $html.= "<table class='vypis'>";
   // letošní účastníci
   $qry=  "SELECT
-          r.nazev as jmeno,p.pouze as pouze,r.obec as mesto,svatba,p.funkce as funkce,
+          r.nazev as jmeno,p.pouze as pouze,r.obec as mesto,svatba,datsvatba,p.funkce as funkce,
           GROUP_CONCAT(DISTINCT IF(t.role='a',o.id_osoba,'') SEPARATOR '') as id_osoba_m,
           GROUP_CONCAT(DISTINCT IF(t.role='a',o.prijmeni,'') SEPARATOR '') as prijmeni_m,
           GROUP_CONCAT(DISTINCT IF(t.role='a',o.jmeno,'')    SEPARATOR '') as jmeno_m,
@@ -2413,7 +2414,13 @@ function akce_plachta($akce,$par,$title,$vypis,$export=0) { trace();
           GROUP_CONCAT(DISTINCT IF(t.role='b',o.zamest,'')   SEPARATOR '') as zamest_z,
           ( SELECT COUNT(*)
             FROM osoba JOIN tvori USING(id_osoba)
-            WHERE id_rodina=t.id_rodina AND role='d' ) AS deti
+            WHERE id_rodina=t.id_rodina AND role='d' ) AS deti,
+          ( SELECT MIN(narozeni)
+            FROM osoba JOIN tvori USING(id_osoba)
+            WHERE id_rodina=t.id_rodina AND role='d' ) AS maxdeti,
+          ( SELECT MAX(narozeni)
+            FROM osoba JOIN tvori USING(id_osoba)
+            WHERE id_rodina=t.id_rodina AND role='d' ) AS mindeti
           FROM pobyt AS p
           JOIN spolu AS s USING(id_pobyt)
           JOIN osoba AS o ON s.id_osoba=o.id_osoba
@@ -2441,9 +2448,25 @@ function akce_plachta($akce,$par,$title,$vypis,$export=0) { trace();
     $vek_z= sql2roku($u->narozeni_z);
     $vek= abs($vek_m-$vek_z)<5 ? $vek_m : "$vek_m/$vek_z";
     // spolu
-    $spolu= $u->svatba ? $letos-$u->svatba : '?';
+    $spolu= '?';
+    if ( $u->datsvatba ) {
+      $spolu= sql2roku($u->datsvatba);
+    }
+    elseif ( $u->svatba ) {
+      $spolu= $letos-$u->svatba;
+    }
     // děti
     $deti= $u->deti;
+    if ( $deti ) {
+      if ( $u->mindeti!='0000-00-00' && $u->maxdeti!='0000-00-00' ) {
+        $deti.= "(".sql2roku($u->mindeti);
+        if ( $deti>1 )
+          $deti.= "-".sql2roku($u->maxdeti);
+        $deti.= ")";
+      }
+      else
+        $deti.= "(?)";
+    }
     // vzdělání
     $vzdelani_muze= mb_substr($c_vzdelani[$u->vzdelani_m],0,2,"UTF-8");
     $vzdelani_zeny= mb_substr($c_vzdelani[$u->vzdelani_z],0,2,"UTF-8");
@@ -2490,7 +2513,8 @@ function sql2roku($narozeni) {
     list($y,$m,$d)= explode('-',$narozeni);
     $now= time();
     $nar= mktime(0,0,0,$m,$d,$y)+1;
-    $roku= floor(($now-$nar)/(60*60*24*365.24));
+//     $roku= ($now-$nar)/(60*60*24*365.24);
+    $roku= ceil(($now-$nar)/(60*60*24*365.24));
   }
   return $roku;
 };
