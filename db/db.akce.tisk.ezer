@@ -129,6 +129,16 @@ menu m {type:'left',
 #     item {title:'Stravenky - test PO'   ,par:°{typ:'vj',exp:'PDF-stravenky',cnd:"id_pobyt IN (17384,17405)",ord:"r.nazev DESC"}}
     item {title:'Stravenky - rodiny'    ,par:°{typ:'vj',exp:'PDF-stravenky',cnd:"1"}}
     item {title:'Stravenky - pečouni'   ,par:°{typ:'vjp',exp:'PDF-stravenky',cnd:"1"}}
+    item {title:'Stravenky - prázdné'   ,par:°{exp:''}
+      proc onclick(i) {
+        var res: object
+        info.fill(conc(i.owner.title,' - ',i.title),' ');
+        sti_C.report_init; sti_C.report_check;
+        res.set(ask('akce_pdf_stravenky0',the_duakce.get,the_par.get,sti_C.get_json));
+        info.fill('',res.html);
+        info.export.display(0);
+      }
+    }
   }
   menu {title:'MS: letní kurs, obnovy',type:'group',_sys:'*'
     item {title:'noví účastníci'        ,par:°{typ:'p',exp:'Excel'

@@ -498,6 +498,40 @@ function akce_vzorec($id_pobyt) {  trace();
   return $ret;
 }
 # ================================================================================================== PDF
+# -------------------------------------------------------------------------------------------------- akce_pdf_stravenky0
+# generování stránky stravenek pro ruční vyplnění do PDF
+function akce_pdf_stravenky0($akce,$par,$report_json) {  trace();
+  global $json, $ezer_path_docs, $EZER;
+  $result= (object)array('_error'=>0);
+  $html= '';
+  // získání dat o akci
+  $qa="SELECT nazev, YEAR(datum_od) AS akce_rok, misto
+       FROM akce WHERE id_duakce='$akce' ";
+  $ra= mysql_qry($qa);
+  $a= mysql_fetch_object($ra);
+  $header= "{$EZER->options->org}, {$a->misto} {$a->akce_rok}";
+  // projdi vygenerované záznamy
+  $n= 0;
+  $parss= array();
+  $pocet= 4*12;
+  for ($i= 1; $i<=$pocet; $i++) {
+    // text stravenky na jedno jídlo
+    $parss[$n]= (object)array();
+    $parss[$n]->header= $header;
+    $parss[$n]->line1= "$den";
+    $parss[$n]->line2= "<b>{$sob[$jidlo]}</b>";
+    $parss[$n]->rect=  "<b>{$cp[$velikost]}</b>";
+    $parss[$n]->ram= $parss[$n]->end= '';
+    $n++;
+  }
+  // předání k tisku
+                                        debug($parss,"akce_pdf_stravenky");
+  $fname= 'stravenky_'.date("Ymd_Hi");
+  $fpath= "$ezer_path_docs/$fname.pdf";
+  dop_rep_ids($report_json,$parss,$fpath);
+  $result->html= " Výpis byl vygenerován ve formátu <a href='docs/$fname.pdf' target='pdf'>PDF</a>.";
+  return $result;
+}
 # -------------------------------------------------------------------------------------------------- akce_pdf_stravenky
 # generování štítků se stravenkami pro rodinu účastníka a pro pečouny do PDF
 # pomocí akce_sestava se do objektu $x->tab vygeneruje pole s elementy pro tisk stravenky
