@@ -50,17 +50,17 @@ proc onfocus() {
 
 menu m {type:'left',
   menu {title:'adresář',type:'group',_sys:'*'
-    item {title:'Základní pro páry'     ,par:°{typ:'p',exp:'Excel',cnd:'1'
+    item {title:'Základní pro páry'     ,par:°{typ:'p',exp:'Excel',cnd:'funkce!=99'
                                         ,tit:'příjmení:15,jména:20,obec:25,psč:7,ulice:25'
                                         ,fld:'prijmeni,jmena,obec,psc,ulice'}}
     item {title:'Základní pro páry + spojení'
-                                        ,par:°{typ:'p',exp:'Excel',cnd:'1'
+                                        ,par:°{typ:'p',exp:'Excel',cnd:'funkce!=99'
                                         ,tit:'příjmení:15,jména:20,obec:25,psč:7,ulice:25,telefon:40,e-mail:60'
                                         ,fld:'prijmeni,jmena,obec,psc,ulice,telefony,emaily'}}
-    item i {title:'Jednotlivci bez dětí',par:°{typ:'j',exp:'Excel',cnd:"role!='d'"
+    item i {title:'Jednotlivci bez dětí',par:°{typ:'j',exp:'Excel',cnd:"funkce!=99 AND role!='d'"
                                         ,tit:'příjmení:15,jméno:12,narození:12,/rč:5,obec:25,psč:7,ulice:25'
                                         ,fld:'prijmeni,jmeno,narozeni,rc_xxxx,obec,psc,ulice'}}
-    item {title:'Jednotlivci vč. dětí'  ,par:°{typ:'j',exp:'Excel',cnd:'1'
+    item {title:'Jednotlivci vč. dětí'  ,par:°{typ:'j',exp:'Excel',cnd:'funkce!=99'
                                         ,tit:'příjmení:15,jméno:12,narození:12,/rč:5,obec:25,psč:7,ulice:25'
                                         ,fld:'prijmeni,jmeno,narozeni,rc_xxxx,obec,psc,ulice'}}
   }
@@ -75,17 +75,17 @@ menu m {type:'left',
                                         ,tit:'příjmení:15,jméno:12,narození:12,/rč:5,obec:25,psč:7,ulice:25'
                                         ,fld:'prijmeni,jmeno,narozeni,rc_xxxx,obec,psc,ulice'}}
     item {title:'Účastníci akce s poznámkami'
-                                        ,par:°{typ:'p',exp:'Excel',cnd:1
+                                        ,par:°{typ:'p',exp:'Excel',cnd:"funkce!=99"
                                         ,tit:'příjmení:15,jména:12,obec:25,počet:5,poznámka:100'
                                         ,fld:'prijmeni,jmena,obec,_pocet,poznamka'}}
     item {title:'Děti na akci s poznámkami'
                                         ,par:°{typ:'j',exp:'Excel',cnd:"role='d'",ord:"narozeni"
                                         ,tit:'příjmení:15,jméno:12,narození:12,/rč:5,obec:25,psč:7,ulice:25,poznámka:100'
                                         ,fld:'prijmeni,jmeno,narozeni,rc_xxxx,obec,psc,ulice,note'}}
-    item i {title:'Účastníci, skupinky a pokoje'   ,par:°{typ:'p',exp:'Excel',cnd:"1",ord:"prijmeni"
+    item i {title:'Účastníci, skupinky a pokoje'   ,par:°{typ:'p',exp:'Excel',cnd:"funkce!=99",ord:"prijmeni"
                                         ,tit:'příjmení:15,jména:20,pokoj:10,skupinka:10'
                                         ,fld:'prijmeni,jmena,pokoj,skupina'}}
-    item {title:'Seznam s fotkami'      ,par:°{typ:'fs',cnd:"1",ord:"prijmeni"}}
+    item {title:'Seznam s fotkami'      ,par:°{typ:'fs',cnd:"funkce!=99",ord:"prijmeni"}}
   }
   menu {title:'informace o akci',type:'group',_sys:'*'
     item {title:'Narozeniny, výročí'    ,par:°{typ:'vv',cnd:'1'}}
@@ -97,6 +97,9 @@ menu m {type:'left',
                                         ,tit:'jméno:20, příjmení:15'
                                         ,fld:'jmeno,prijmeni'}}
     item {title:'Děti'                  ,par:°{typ:'j',exp:'Excel',cnd:"role='d'",ord:"prijmeni"
+                                        ,tit:'jméno:20, příjmení:15'
+                                        ,fld:'jmeno,prijmeni'}}
+    item {title:'Pečouni' format:'d'    ,par:°{typ:'j',exp:'Excel',cnd:"AND funkce=99",ord:"prijmeni"
                                         ,tit:'jméno:20, příjmení:15'
                                         ,fld:'jmeno,prijmeni'}}
     item {title:'VPS'                   ,par:°{typ:'j',exp:'Excel',cnd:"role!='d' AND funkce IN (1,2)",ord:"prijmeni"
@@ -116,18 +119,18 @@ menu m {type:'left',
                                         ,fld:'jmeno,prijmeni'}}
   }
   menu {title:'tisky do PDF',type:'group',_sys:'*'
-    item {title:'Adresní štítky rodin'  ,par:°{typ:'p',exp:'PDF-adresy',cnd:'1'
+    item {title:'Adresní štítky rodin'  ,par:°{typ:'p',exp:'PDF-adresy',cnd:'funkce!=99'
                                         ,tit:'příjmení:15,jména:20,obec:25,psč:7,ulice:25,stát:10'
                                         ,fld:'prijmeni,jmena,obec,psc,ulice,stat'}}
-    item {title:'Adresní štítky rodin bez mailu'  ,par:°{typ:'p',exp:'PDF-adresy',cnd:"r.emaily=''"
+    item {title:'Adresní štítky rodin bez mailu'  ,par:°{typ:'p',exp:'PDF-adresy',cnd:"funkce!=99 AND r.emaily=''"
                                         ,tit:'příjmení:15,jména:20,obec:25,psč:7,ulice:25,stát:10'
                                         ,fld:'prijmeni,jmena,obec,psc,ulice,stat'}}
-    item {title:'Štítky na obálku účastníka' ,par:°{typ:'p',exp:'PDF-prijem',cnd:"1"
+    item {title:'Štítky na obálku účastníka' ,par:°{typ:'p',exp:'PDF-prijem',cnd:"funkce!=99"
                                         ,tit:'příjmení:15,jména:20,_deti:7,skupinka:7,pokoj:12,lůžka:7,kočárek:7,přistýlky:7,strava celá:7,poloviční:7'
                                         ,fld:'prijmeni,jmena,_deti,skupina,pokoj,luzka,kocarek,pristylky,strava_cel,strava_pol'}}
 #     item {title:'Stravenky - test LK'   ,par:°{typ:'vj',exp:'PDF-stravenky',cnd:"id_pobyt IN (14139)"}}
 #     item {title:'Stravenky - test PO'   ,par:°{typ:'vj',exp:'PDF-stravenky',cnd:"id_pobyt IN (17384,17405)",ord:"r.nazev DESC"}}
-    item {title:'Stravenky - rodiny'    ,par:°{typ:'vj',exp:'PDF-stravenky',cnd:"1"}}
+    item {title:'Stravenky - rodiny'    ,par:°{typ:'vj',exp:'PDF-stravenky',cnd:"funkce!=99"}}
     item {title:'Stravenky - pečouni'   ,par:°{typ:'vjp',exp:'PDF-stravenky',cnd:"1"}}
     item {title:'Stravenky - prázdné'   ,par:°{exp:''}
       proc onclick(i) {
