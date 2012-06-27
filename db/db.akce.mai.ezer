@@ -6,7 +6,7 @@
 
 var E_info: text
 var dopis_id: text
-var dopis_var: text             // typ rozesílání: U - účastníci akce, Q - query
+var dopis_var: text             // typ rozesílání: U/U2 - účastníci akce, Q - query
 var dopis_akce: number          // id_akce|0
 var karta: text                 // et|es
 
@@ -42,18 +42,10 @@ proc ini(i,k,uq,on,off) {
 
 menu m {type:'left',
   menu g {title:'Příprava mailů ', type:'group'
-    item i {title:'účastníkům této akce'
-      proc onclick (i) {
-        ini(i,'et','U','akce','skup');
-        vy.fill(the_title.get);
-      }
-    }
-#     item {title:'účastníkům chlapské akce', skill:''
-#       proc onclick (i) {
-#         ini(i,'et','U','akce','skup');
-#         vy.fill(the_title.get);
-#       }
-#     }
+    item i {title:'všem účastníkům této akce'
+      proc onclick (i) { ini(i,'et','U','akce','skup'); vy.fill(the_title.get); } }
+    item {title:'... VPS,SVPS,hospodářům akce'
+      proc onclick (i) { ini(i,'et','U2','akce','skup'); vy.fill(the_title.get); } }
     item {title:'členům skupiny'
       proc onclick (i) {
         ini(i,'et','Q','skup','akce');
@@ -61,28 +53,17 @@ menu m {type:'left',
       }
     }
     item {title:'Definice skupin (SQL)',
-      proc onclick (i) {
-        ini(i,'sq','','skup','akce');
-      }
-    }
+      proc onclick (i) { ini(i,'sq','','skup','akce'); } }
     item {title:'Kopie emailů z Domu setkání', skill:'yae'
-      proc onclick (i) {
-        alert(ask('db_mail_copy_ds'));
-      }
-    }
+      proc onclick (i) { alert(ask('db_mail_copy_ds')); } }
   }
   menu {title:'Rozesílání mailů ', type:'group'
-    item {title:'účastníkům této akce',
-      proc onclick (i) {
-        ini(i,'es','U','akce','skup');
-        vy.fill(the_title.get);
-      }
-    }
+    item {title:'všem účastníkům této akce',
+      proc onclick (i) { ini(i,'es','U','akce','skup'); vy.fill(the_title.get); } }
+    item {title:'... VPS,SVPS,hospodářům akce'
+      proc onclick (i) { ini(i,'es','U2','akce','skup'); vy.fill(the_title.get); } }
     item {title:'členům skupin',
-      proc onclick (i) {
-        ini(i,'es','Q','skup','akce');
-      }
-    }
+      proc onclick (i) { ini(i,'es','Q','skup','akce'); } }
   }
 }
 # -------------------------------------------------------------------------------------------------- _vyber
@@ -197,6 +178,7 @@ form _etext  {
   field druh    { data:dopis.druh }
   field id_duakce { data:dopis.id_duakce }
   field cis_skupina  { data:dopis.cis_skupina }
+  field komu  { data:dopis.komu }       // 0:všem, 1:VPS...
   # společné údaje mailu
   const L=390
   field id_davka { data:dopis.id_davka }
@@ -268,8 +250,11 @@ form _etext  {
       texty.blur(1); adopis.set(0);
       datum.set(now); datum.change; id_davka.set(1); id_davka.change; druh.set('@'); druh.change;
       switch(dopis_var.get,
-      'U',{ id_duakce.set(dopis_akce.get); id_duakce.change; cis_skupina.init; cis_skupina.change },
-      'Q',{ id_duakce.init; id_duakce.change; cis_skupina.set(vy.komu_Q.key); cis_skupina.change }
+      'U', { id_duakce.set(dopis_akce.get); id_duakce.change; cis_skupina.init; cis_skupina.change;
+             komu.set(0); komu.change },
+      'U2',{ id_duakce.set(dopis_akce.get); id_duakce.change; cis_skupina.init; cis_skupina.change;
+             komu.set(1); komu.change },
+      'Q', { id_duakce.init; id_duakce.change; cis_skupina.set(vy.komu_Q.key); cis_skupina.change }
       );
     }
   }
@@ -302,9 +287,15 @@ form _etext  {
     form.init;
     obsah.set(''); texty.browse_init;
     switch(dopis_var.get,
-    'U',{ texty.browse_load(conc("etd.id_duakce='",dopis_akce.get,"'"));
+    // účastnící akce  (dopis.komu=0)
+    'U',{ texty.browse_load(conc("etd.id_duakce='",dopis_akce.get,"'"," AND etd.komu=0"));
           texty.komu_U.width(100); texty.komu_Q.width(0);
     },
+    // organizátoři akce (dopis.komu=1)
+    'U2',{ texty.browse_load(conc("etd.id_duakce='",dopis_akce.get,"'"," AND etd.komu=1"));
+          texty.komu_U.width(100); texty.komu_Q.width(0);
+    },
+    // SQL
     'Q',{ texty.komu_U.width(0); texty.komu_Q.width(100);
           vy.komu_Q.key;
           form_state('n','s|u|z');
@@ -370,18 +361,6 @@ form _esady  {
       from.set(sys('user','options','email'));
       name.set(sys('user','options','vyrizuje'));
       davka.set(20);
-#       switch(dopis_var.get,
-#       'U',{
-#         vy.fill(komu_U.get);
-#         zkus.set('martin@smidek.eu');
-#         from.set('sekretar@setkani.org');
-#         name.set('YMCA Setkání');
-#       },
-#       'Q',{
-#         zkus.set('michalec.zdenek@inset.com');
-#         from.set('michalec.zdenek@inset.com');
-#         name.set('Zdeněk Michalec');
-#       });
     }
   }
   label [12,214,92,17] { title:'Testovací adresa:' }
@@ -427,7 +406,6 @@ form _esady  {
     show body             { data:mail.body }
     proc onsubmit() {
       ask('dop_mai_stav',id_mail.get,cconc(eq(stav.get,5),3,5));
-#       [ eq(dopis_var.get,'U');
       this.browse_row;
     }
     proc onrowclick () {
@@ -440,9 +418,15 @@ form _esady  {
     form.init; davka.set(20); davka.change; msg.set(''); info.set('');
     maily.browse_init; texty.browse_init;
     switch(dopis_var.get,
-    'U',{ texty.browse_load(conc("etd.id_duakce='",dopis_akce.get,"'"));
+    // účastnící akce  (dopis.komu=0)
+    'U',{ texty.browse_load(conc("etd.id_duakce='",dopis_akce.get,"'"," AND etd.komu=0"));
           texty.komu_U.width(100); texty.komu_Q.width(0);
     },
+    // organizátoři akce (dopis.komu=1)
+    'U2',{ texty.browse_load(conc("etd.id_duakce='",dopis_akce.get,"'"," AND etd.komu=1"));
+          texty.komu_U.width(100); texty.komu_Q.width(0);
+    },
+    // SQL
     'Q',{ texty.komu_U.width(0); texty.komu_Q.width(100);
           vy.komu_Q.key;
           texty.browse_load(conc("etd.id_duakce=0 AND etd.cis_skupina=",vy.komu_Q.key));
