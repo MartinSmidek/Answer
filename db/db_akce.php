@@ -3837,13 +3837,13 @@ __XLS;
   $lc= 0;
   $clmns= $del= '';
   $xA= array();                                 // překladová tabulka: název sloupce => písmeno
-  foreach ($tab->flds as $f) {
+  if ( $tab->flds ) foreach ($tab->flds as $f) {
     $A= Excel5_n2col($lc);
     $xA[$f]= $A;
     $lc++;
   }
   $lc= 0;
-  foreach ($tab->tits as $idw) {
+  if ( $tab->tits ) foreach ($tab->tits as $idw) {
     $A= Excel5_n2col($lc);
     list($id,$w,$f,$s)= explode(':',$idw);      // název sloupce : šířka : formát : suma
     if ( $f ) $fmt[$A]= $f;
@@ -3859,7 +3859,7 @@ __XLS;
   $xls.= "\n|A$n:$A$n bcolor=ffc0e2c2 wrap border=+h|A$n:$A$n border=t\n";
   $n1= $n= 5;                                   // první řádek dat (pro sumy)
   // datové řádky
-  foreach ($tab->clmn as $i=>$c) {
+  if ( $tab->clmn ) foreach ($tab->clmn as $i=>$c) {
     $xls.= "\n";
     $lc= 0;
     foreach ($c as $id=>$val) {
@@ -4209,7 +4209,9 @@ function dop_mai_qry($komu) {  trace();
 # zjistí počet adresátů pro rozesílání a sestaví dotaz pro confirm
 # $dopis_var určuje zdroj adres
 #   'U' - rozeslat účastníkům akce dopis.id_duakce ukazující do akce
-#         do seznamu se dostanou pouze účastnící s funkcí < 3 (-,VPS,SVPS)
+#         do seznamu se dostanou pouze účastnící s funkcí:0,1,2,6 (-,VPS,SVPS,hospodář)
+#   'U2'- rozeslat účastníkům akce dopis.id_duakce ukazující do akce
+#         do seznamu se dostanou pouze organizující účastnící s funkcí:1,2,6 (VPS,SVPS,hospodář)
 #   'Q' - rozeslat na adresy vygenerované dopis.cis_skupina => hodnota
 # pokud _cis.data=9999 jde o speciální seznam definovaný funkcí dop_mai_skupina - DEPRECATED
 # $cond = dodatečná podmínka POUZE pro volání z dop_mai_stav
@@ -4259,8 +4261,10 @@ function dop_mai_pocet($id_dopis,$dopis_var,$cond='',$recall=false) {  trace();
     }
     break;
   // účastníci akce
+  case 'U2':
   case 'U':
     $AND= $cond ? "AND $cond" : '';
+    $AND.= $dopis_var=='U' ? " AND p.funkce IN (0,1,2,5)" :  " AND p.funkce IN (1,2,5)";
     // využívá se toho, že role rodičů 'a','b' jsou před dětskou 'd', takže v seznamech
     // GROUP_CONCAT jsou rodiče, byli-li na akci. Emaily se ale vezmou ode všech
     $qry= "SELECT a.nazev,id_pobyt,
@@ -4274,7 +4278,7 @@ function dop_mai_pocet($id_dopis,$dopis_var,$cond='',$recall=false) {  trace();
            JOIN osoba AS o ON s.id_osoba=o.id_osoba
            JOIN tvori AS t ON t.id_osoba=o.id_osoba
            JOIN rodina AS r USING (id_rodina)
-           WHERE id_dopis=$id_dopis AND p.funkce<3 $AND GROUP BY id_pobyt";
+           WHERE id_dopis=$id_dopis $AND GROUP BY id_pobyt";
     $res= mysql_qry($qry);
     while ( $res && ($d= mysql_fetch_object($res)) ) {
       $n++;
@@ -4428,7 +4432,7 @@ function dop_mail_personify($obsah,$vars,$id_pobyt) {
 # informace o členovi
 # $id - klíč osoby nebo chlapa
 # $zdroj určuje zdroj adres
-#   'U' - rozeslat účastníkům akce dopis.id_duakce ukazující do akce
+#   'U','U2' - rozeslat účastníkům akce dopis.id_duakce ukazující do akce
 #   'C' - rozeslat účastníkům akce dopis.id_duakce ukazující do ch_ucast
 #   'Q' - rozeslat na adresy vygenerované dopis.cis_skupina => hodnota
 function dop_mai_info($id,$email,$id_dopis,$zdroj) {  trace();
@@ -4473,6 +4477,7 @@ function dop_mai_info($id,$email,$id_dopis,$zdroj) {  trace();
     }
     break;
   case 'U':                     // účastníci akce
+  case 'U2':                    // sloužící účastníci akce
     $qry= "SELECT * FROM osoba WHERE id_osoba=$id ";
     $res= mysql_qry($qry);
     if ( $res && $c= mysql_fetch_object($res) ) {
