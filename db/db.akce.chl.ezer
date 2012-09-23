@@ -60,14 +60,23 @@ menu m {type:'left'
         info.fill('Účastníci akce','Nebyla zvolena akce');
       }
     }
-    item inic {title:'všech iniciovaných chlapů' }
-#     item {title:'všech známých chlapů', format:'d'  }
-    proc onclick(i) {
-      chs.reset('mrop'); ch.reset('mrop');
-      info.get.display(1,'ex'); info.export_type.set('mrop');  // umožníme export
-      info.fill(conc(i.owner.title,' ',i.title),' ');
-      ch.get.display(1); chs.get.display(1);
-      chs.reload(0);
+    item inic {title:'všech iniciovaných chlapů'
+      proc onclick(i) {
+        chs.reset('mrop'); ch.reset('mrop');
+        info.get.display(1,'ex'); info.export_type.set('mrop');  // umožníme export
+        info.fill(conc(i.owner.title,' ',i.title),' ');
+        ch.get.display(1); chs.get.display(1);
+        chs.reload(0);
+      }
+    }
+    item {title:'všech známých chlapů'
+      proc onclick(i) {
+        chs.reset('all'); ch.reset('all');
+        info.get.display(1,'ex'); info.export_type.set('mrop');  // umožníme export
+        info.fill(conc(i.owner.title,' ',i.title),' ');
+        ch.get.display(1); chs.get.display(1);
+        chs.reload(0);
+      }
     }
   }
 }
@@ -94,11 +103,11 @@ form _info [,,*,50] { css:'ds_form'
 }
 # -------------------------------------------------------------------------------------------------- _chlapi
 form _chlapi [,,*,50] {
-  var mode: text        // mrop|akce
+  var mode: text        // mrop|akce|all
   // funkce
   proc reset(m) {
     mode.set(m);
-    eq(mode.get,'mrop');
+    eq(mode.get,'mrop','all');
     mrop.display(1); all.display(0);
   | mrop.display(0); all.display(1);
   }
@@ -109,13 +118,18 @@ form _chlapi [,,*,50] {
       mrop.browse_focus;
       { id; mrop.raise('onrowclick',id)
       | mrop.raise('onrowclick') } ]
+  | eq(mode.get,'all');
+    [ mrop.browse_load("deleted=''",'iniciace,id_chlapi');
+      mrop.browse_focus;
+      { id; mrop.raise('onrowclick',id)
+      | mrop.raise('onrowclick') } ]
   | [ all.browse_load(conc("us.id_akce=",the_akce.get));
       all.browse_focus;
       { id; all.raise('onrowclick',id)
       | all.raise('onrowclick') } ]
   }
   proc reload_row() {
-    eq(mode.get,'mrop'); chs.mrop.browse_seek | chs.all.browse_seek
+    eq(mode.get,'mrop','all'); chs.mrop.browse_seek | chs.all.browse_seek
   }
   # --------------------------------------------------  OSOBY
   // osoby
@@ -176,7 +190,7 @@ form _chlap [,,*,466] {
   // funkce
   proc reset(m) {
     mode.set(m);
-    eq(mode.get,'mrop');
+    eq(mode.get,'mrop','all');
     form.display(0,'akce');
   | form.display(1,'akce');
   }
