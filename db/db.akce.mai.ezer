@@ -92,7 +92,7 @@ form _esql {
   field id_cis { data:c.id_cis }
   field dat { data:c.data }
   field druh { data:c.druh, value:'db_maily_sql' }
-  field zkratka  [0,40,750,]  { data:c.zkratka, value:'' }
+  field zkratka  [0,40,606,]  { data:c.zkratka, value:'' }
   edit note  [0,70,750,50]    { data:c.popis }
   edit query [0,130,750,200]  { data:c.hodnota }
   label anwer [0,340,750,200]
@@ -119,12 +119,15 @@ form _esql {
     form.init; vy.komu_Q.init; vy.komu_Q.selects // obnov výběrové hodnoty
   }}
   # test
-  label  [620,5,131,30] { css:'ae_parm' }
+  label  [620,5,131,55] { css:'ae_parm' }
   button [627,9,,] {title:'Test',  help:'Uložit změny a otestovat dotaz', proc onclick() {
     { has_skill('m'); qry_save.onclick | form.same | alert('pro změnu SQL dotazu nemáš oprávnění') };
     anwer.set(ask('db_mail_sql_try',query.get,vsechno.get))
   } }
   check vsechno [670,9,80,15] {title:'zobraz vše', format:'t'}
+  button [627,34,,] {title:'Možné parametry',  help:'Ukázat seznam možných parametrů', proc onclick() {
+    alert(ask('db_mail_sql_subst'));
+  } }
   proc reload() {
     var akey:number
     vy.komu_Q.key;
