@@ -4004,6 +4004,32 @@ function db_mail_sql_new() {  #trace();
     'qry'=>"SELECT id_... AS _id,prijmeni,jmeno,ulice,psc,obec,email,telefon FROM ...");
   return $result;
 }
+# -------------------------------------------------------------------------------------------------- db_mail_sql_subst
+# ASK - parametrizace SQL dotazů pro definici mailů, vrací modifikovaný dotaz
+# nebo pokud je prázdný tak přehled možných parametrizací dotazu
+function db_mail_sql_subst($qry='') {  trace();
+  // parametry
+  $parms= array (
+   'letos' => array (date('Y'),'letošní rok'),
+   'vloni' => array (date('Y')-1,'loňský rok'),
+   'pred5' => array (date('Y')-5,'před 5 lety')
+  );
+  if ( $qry=='' ) {
+    // help
+    $del= '';
+    foreach ($parms as $parm=>$value) {
+      $qry.= "$del\$$parm = {$value[1]} ({$value[0]})";
+      $del= '<br>';
+    }
+  }
+  else {
+    // substituce
+    foreach ($parms as $parm=>$value) {
+      $qry= str_replace("\$$parm",$value[0],$qry);
+    }
+  }
+  return $qry;
+}
 # -------------------------------------------------------------------------------------------------- db_mail_sql_try
 # ASK - vytvoření SQL dotazů pro definici mailů
 # vrací {id_cis,data,query}
@@ -4011,6 +4037,9 @@ function db_mail_sql_try($qry,$vsechno=0) {  trace();
   $html= $head= $tail= '';
   $emails= array();
   try {
+    // substituce
+    $qry= db_mail_sql_subst($qry);
+    // dotaz
     $time_start= getmicrotime();
     $res= mysql_qry($qry);
     $time= round(getmicrotime() - $time_start,4);
