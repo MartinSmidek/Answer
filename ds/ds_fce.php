@@ -17,7 +17,7 @@ ORDER BY rodina DESC,id_osoba LIMIT 0,14
 __EOQ;
   $res= mysql_qry($qry);
   while ($u= mysql_fetch_object($res)) {
-                                                debug($u,"$res:qry",(object)array('win1250'=>1));
+//                                                 debug($u,"$res:qry",(object)array('win1250'=>1));
   }
   return 1;
 }
@@ -264,7 +264,7 @@ function lide_ms($patt) {  #trace('','win1250');
     $a[0]= wu("... žádné jméno nezaèíná '")."$patt'";
   elseif ( $n==$limit )
     $a[-999999]= wu("... a další");
-                                                                debug($a,$patt,(object)array('win1250'=>1));
+//                                                                 debug($a,$patt,(object)array('win1250'=>1));
   return $a;
 }
 # -------------------------------------------------------------------------------------------------- rodina
@@ -359,7 +359,7 @@ function klienti($id_osoba) {  #trace('','win1250');
       'telefon'=>$o->telefon,'email'=>$o->email,'narozeni'=>$narozeni);
     }
   }
-                                                                debug($rod,$id_osoba,(object)array('win1250'=>1));
+//                                                                 debug($rod,$id_osoba,(object)array('win1250'=>1));
   return $rod;
 }
 # ================================================================================================== CENY
@@ -880,7 +880,7 @@ function ds_faktury($order) {  trace('','win1250');
         // položky hosta
         $pol= (object)array();
         $pol->test= "{$h->strava} : {$o->board} - $strava = {$ds_strava[$strava]}";
-                                                display(wu("{$h->jmeno} {$h->prijmeni} $pol->test}"));
+//                                                 display(wu("{$h->jmeno} {$h->prijmeni} $pol->test}"));
         $noci= round(($do_ts-$od_ts)/(60*60*24));
         $pol->vek= $vek;
         $pol->noci= $noci;
@@ -924,7 +924,7 @@ function ds_faktury($order) {  trace('','win1250');
   else
     fce_error(wu("neúplná objednávka $order"));
 //                                                                 debug($ds_cena,'ds_cena',(object)array('win1250'=>1));
-                                                                debug($x,'faktura',(object)array('win1250'=>1));
+//                                                                 debug($x,'faktura',(object)array('win1250'=>1));
   return $x;
 }
 # ================================================================================================== FAKTURA OBECNÌ

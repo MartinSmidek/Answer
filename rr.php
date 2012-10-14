@@ -24,7 +24,7 @@
     $licensed= "$client/licensed";
     $js= array_merge(
       // ckeditor and mootools
-      array(/*"$licensed/ckeditor/ckeditor.js",*/"$licensed/clientcide.js"),
+      array("$licensed/ckeditor/ckeditor.js","$licensed/clientcide.js"),
       // pro verzi 2.1
       $EZER->version=='ezer2'
       ? array("$licensed/mootools/asset.js","$licensed/mootools/slider.js"):array(),
@@ -63,7 +63,7 @@
       'CKEditor' => "{
         Minimal:{toolbar:[['Bold','Italic','Source']]},
         IntranetSlim:{
-          toolbar:[['Bold','Italic','-','Subscript','Superscript','-','SpecialChar','Link','Unlink','-','Source']],
+          toolbar:[['Bold','Italic','-','Subscript','Superscript','-','SpecialChar','Link','Unlink','-','Source','RemoveFormat']],
           removePlugins:'wsc,elementspath,scayt'
         }
       }"

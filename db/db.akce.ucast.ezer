@@ -373,6 +373,7 @@ form _evidence {
   label [384,245,29,] {title:'zájmy'}
   label [385,265,26,] {title:'jazyk'}
   label [383,287,32,] {title:'aktivita'}
+  label [400,381,,] {title:'přednáší:'}
   label [470,403,99,] {title:'objednal CD z akce'}
   label [10,361,149,] {title:'<b>údaje k účasti na této akci</b>'}
   label [215,437,162,] {title:'poznámka k účasti na této akci'}
@@ -450,6 +451,7 @@ form _pobyt {
   }}
   field skupina     [7,388,35,] {data:pobyt.skupina, format:'r'}
   select funkce     [155,389,50,] {type:'map', data:pobyt.funkce, options:ms_akce_funkce.zkratka }
+  select prednasi   [450,389,122,] {type:'map', data:pobyt.prednasi, options:ms_akce_prednasi.zkratka }
   field pokoj       [253,410,40,] {data:pobyt.pokoj}
   field budova      [350,409,32,] {data:pobyt.budova}
   check cd          [446,409,20,] {data:pobyt.cd}
@@ -607,6 +609,7 @@ form _ucast [,,400,] { css:'ds_form'
         WHERE id_rodina=t.id_rodina AND role='d')"}
     // pobyt
     show funkce     { data:p.funkce}
+    show prednasi   { data:p.prednasi}
     show luzka      { data:p.luzka}
     show pristylky  { data:p.pristylky}
     show pocetdnu   { data:p.pocetdnu}
