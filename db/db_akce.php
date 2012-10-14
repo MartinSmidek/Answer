@@ -4053,12 +4053,12 @@ function db_mail_sql_try($qry,$vsechno=0) {  trace();
       $head.= $num>$nmax ? "následuje prvních $nmax adresátů" : "následují všichni adresáti";
       $tail.= "<br><br><table class='stat'>";
       $tail.= "<tr><th>prijmeni jmeno</th><th>email</th><th>telefon</th>
-        <th>ulice psc obec</th><th>x</th></tr>";
+        <th>ulice psc obec</th><th>x</th><th>y</th><th>z</th></tr>";
       $n= $nmax;
       while ( $res && ($c= mysql_fetch_object($res)) ) {
         if ( $n ) {
           $tail.= "<tr><td>{$c->prijmeni} {$c->jmeno}</td><td>{$c->_email}</td><td>{$c->telefon}</td>
-            <td>{$c->ulice} {$c->psc} {$c->obec}</td><td>{$c->_x}</td></tr>";
+            <td>{$c->ulice} {$c->psc} {$c->obec}</td><td>{$c->_x}</td><td>{$c->_y}</td><td>{$c->_z}</td></tr>";
           $n--;
         }
         // počítání mailů
@@ -4241,6 +4241,8 @@ function dop_mai_qry($komu) {  trace();
 #         do seznamu se dostanou pouze účastnící s funkcí:0,1,2,6 (-,VPS,SVPS,hospodář)
 #   'U2'- rozeslat účastníkům akce dopis.id_duakce ukazující do akce
 #         do seznamu se dostanou pouze organizující účastnící s funkcí:1,2,6 (VPS,SVPS,hospodář)
+#   'U3'- rozeslat účastníkům akce dopis.id_duakce ukazující do akce
+#         do seznamu se dostanou pouze dlužníci
 #   'Q' - rozeslat na adresy vygenerované dopis.cis_skupina => hodnota
 # pokud _cis.data=9999 jde o speciální seznam definovaný funkcí dop_mai_skupina - DEPRECATED
 # $cond = dodatečná podmínka POUZE pro volání z dop_mai_stav
@@ -4261,6 +4263,7 @@ function dop_mai_pocet($id_dopis,$dopis_var,$cond='',$recall=false) {  trace();
     $resQ= mysql_qry($qryQ);
     if ( $resQ && ($q= mysql_fetch_object($resQ)) ) {
       $qry= $q->hodnota;
+      $qry= db_mail_sql_subst($qry);
       $res= mysql_qry($qry);
       while ( $res && ($d= mysql_fetch_object($res)) ) {
         $n++;
@@ -4290,10 +4293,14 @@ function dop_mai_pocet($id_dopis,$dopis_var,$cond='',$recall=false) {  trace();
     }
     break;
   // účastníci akce
-  case 'U2':
+  case 'U3':    // dlužníci
+  case 'U2':    // sloužící
   case 'U':
     $AND= $cond ? "AND $cond" : '';
-    $AND.= $dopis_var=='U' ? " AND p.funkce IN (0,1,2,5)" :  " AND p.funkce IN (1,2,5)";
+    $AND.= $dopis_var=='U'  ? " AND p.funkce IN (0,1,2,5)" : (
+           $dopis_var=='U2' ? " AND p.funkce IN (1,2,5)"   : (
+           $dopis_var=='U3' ? " AND p.funkce IN (0,1,2,5) AND p.platba1+p.platba2+p.platba3+p.platba4>platba"
+         : " --- chybné komu --- " ));
     // využívá se toho, že role rodičů 'a','b' jsou před dětskou 'd', takže v seznamech
     // GROUP_CONCAT jsou rodiče, byli-li na akci. Emaily se ale vezmou ode všech
     $qry= "SELECT a.nazev,id_pobyt,
@@ -4461,7 +4468,7 @@ function dop_mail_personify($obsah,$vars,$id_pobyt) {
 # informace o členovi
 # $id - klíč osoby nebo chlapa
 # $zdroj určuje zdroj adres
-#   'U','U2' - rozeslat účastníkům akce dopis.id_duakce ukazující do akce
+#   'U','U2','U3' - rozeslat účastníkům akce dopis.id_duakce ukazující do akce
 #   'C' - rozeslat účastníkům akce dopis.id_duakce ukazující do ch_ucast
 #   'Q' - rozeslat na adresy vygenerované dopis.cis_skupina => hodnota
 function dop_mai_info($id,$email,$id_dopis,$zdroj) {  trace();
@@ -4478,21 +4485,16 @@ function dop_mai_info($id,$email,$id_dopis,$zdroj) {  trace();
     }
     break;
   case 'Q':                     // číselník
-    $qryQ= "SELECT _cis.hodnota,_cis.zkratka FROM dopis
+    $qryQ= "SELECT _cis.hodnota,_cis.zkratka,_cis.barva FROM dopis
            JOIN _cis ON _cis.data=dopis.cis_skupina AND _cis.druh='db_maily_sql'
            WHERE id_dopis=$id_dopis ";
     $resQ= mysql_qry($qryQ);
     if ( $resQ && ($q= mysql_fetch_object($resQ)) ) {
-      // SELECT vrací (_id,prijmeni,jmeno,ulice,psc,obec,email,telefon)
-      $qry= $q->hodnota;
-      if ( strpos($qry,"GROUP BY") ) {
-        if ( strpos($qry,"HAVING") )
-          $qry= str_replace("HAVING","HAVING _id=$id AND ",$qry);
-        else
-          $qry= str_replace("GROUP BY","GROUP BY _id HAVING _id=$id AND ",$qry);
-        // zatém jen pro tuto větev
+      if ( $q->barva ) {
+        // databáze CHLAPI
+        $qry= "SELECT * FROM chlapi WHERE id_chlapi=$id ";
         $res= mysql_qry($qry);
-        while ( $res && ($c= mysql_fetch_object($res)) ) {
+        if ( $res && $c= mysql_fetch_object($res) ) {
           $html.= "{$c->prijmeni} {$c->jmeno}<br>";
           $html.= "{$c->ulice}, {$c->psc} {$c->obec}<br><br>";
           if ( $c->telefon )
@@ -4500,13 +4502,34 @@ function dop_mai_info($id,$email,$id_dopis,$zdroj) {  trace();
         }
       }
       else {
-        // způsobuje chybu  GROUP BY vyžaduje nějakou agragační funkci
-//         $qry.= " GROUP BY _id HAVING _id=$id ";
+        // databáze MS
+        // SELECT vrací (_id,prijmeni,jmeno,ulice,psc,obec,email,telefon)
+        $qry= $q->hodnota;
+        $qry= db_mail_sql_subst($qry);
+        if ( strpos($qry,"GROUP BY") ) {
+          if ( strpos($qry,"HAVING") )
+            $qry= str_replace("HAVING","HAVING _id=$id AND ",$qry);
+          else
+            $qry= str_replace("GROUP BY","GROUP BY _id HAVING _id=$id AND ",$qry);
+          // zatém jen pro tuto větev
+          $res= mysql_qry($qry);
+          while ( $res && ($c= mysql_fetch_object($res)) ) {
+            $html.= "{$c->prijmeni} {$c->jmeno}<br>";
+            $html.= "{$c->ulice}, {$c->psc} {$c->obec}<br><br>";
+            if ( $c->telefon )
+              $html.= "Telefon: {$c->telefon}<br>";
+          }
+        }
+        else {
+          // způsobuje chybu  GROUP BY vyžaduje nějakou agregační funkci
+//           $qry.= " GROUP BY _id HAVING _id=$id ";
+        }
       }
     }
     break;
   case 'U':                     // účastníci akce
   case 'U2':                    // sloužící účastníci akce
+  case 'U3':                    // dlužníci
     $qry= "SELECT * FROM osoba WHERE id_osoba=$id ";
     $res= mysql_qry($qry);
     if ( $res && $c= mysql_fetch_object($res) ) {

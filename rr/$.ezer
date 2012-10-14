@@ -21,19 +21,52 @@ menu rr { type:'main', active:rr.richard
       }
       use info: form right [12,4,,]
     }
-    panel plan {type:'right', title:'Příprava'
+    panel plan {type:'right', title:'Opravy'
+      use f: form _f [12,4,,]
+      use g: form _g [12,4,,]
       menu nastav {type:'left'
-        menu obdobi {title:'Období',type:'group'
-          item od {title:'Nastavení', par:°{den:0,poslat:0}
+        menu obdobi {title:'Opravy',type:'group'
+          item od {title:'Nastavení období'
+            proc onclick (i) {
+              f.display(1);
+              g.display(0);
+            }
+          }
+          item {title:'Oprava překladu'
+            proc onclick (i) {
+              f.display(0);
+              g.display(1);
+            }
           }
         }
       }
-      use f: form _f [12,4,,]
       proc onfirstfocus() {
-        f.b.browse_load
+        f.b.browse_load;
+        g.b.browse_load
+      }
+      form _g [,,*,100] {
+        browse b [0,0,,] { rows:7, qry_rows:1, css_rows:'barva,1:yellow'
+          show id_rr { data:rr.id_rr, format:'qs' }
+          show [,,40,] { title:'den', data:rr.day, format:'qrs' }
+          show [,,70,] { title:'datum', data:rr.datum, format:'qs' }
+          show [,,270,] { title:'název', data:rr.subject, format:'qs' }
+          show barva { expr:"IF(errata='',0,1)" }
+          proc onrowclick () { nacti }
+          proc nacti() { g.load(id_rr.get) } }
+        button [725,6,438,77] { title:'Dnes' proc onclick() {
+          b.browse_seek(conc("datum='",now_sql(),"'"));
+          b.nacti
+        } }
+        field czt [0,181,404,] { data:rr.title_cz }
+        field ent [422,181,401,] { data:rr.title_en }
+        button [778,6,,] { title:'Uložit' proc onclick() { g.save; g.load } }
+        edit cz [0,209,405,548] { type:'html', data:rr.text_cz, par:°{toolbar:'IntranetSlim'} }
+        edit en [421,209,405,548] { type:'html', data:rr.text_en, par:°{toolbar:'IntranetSlim'} }
+        label [423,19,,] { title:'Důvod pozměnění překladu' }
+        edit errata [421,39,402,131] { data:rr.errata }
       }
       form _f [,,*,500] {
-        browse b { rows:24, qry_rows:1
+        browse b [0,0,,] { rows:24, qry_rows:1
           show id_rr { data:rr.id_rr, format:'qs' }
           show [,,30,] { title:'pořadí', data:rr.day_n, format:'qs' }
           show [,,40,] { title:'den', data:rr.day, format:'qs' }
@@ -53,20 +86,22 @@ menu rr { type:'main', active:rr.richard
         }
         label msg [340,70,300,200]
       }
-      table rr {
-        number id_rr
-        number day_n
-        text day
-        date datum
-        text state /* prepared|sent */
-        text subject
-        text title_cz
-        text text_cz
-        text title_en
-        text text_en
-        text from_en
-      }
     }
+  }
+  # ------------------------------------------------------------------ rr
+  table rr {
+    number id_rr
+    number day_n
+    text day
+    date datum
+    text state /* prepared|sent */
+    text subject
+    text title_cz
+    text text_cz
+    text title_en
+    text text_en
+    text from_en
+    text errata
   }
 }
 // univerzální formulář pro levostranné menu
