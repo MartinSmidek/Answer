@@ -223,7 +223,8 @@ form _etext  {
   }
 
   # příkazy 1
-  label  [L+0,180,195,58] { css:'ae_parm' }
+  label  [L+0,180,200,78] { css:'ae_parm' }
+  label [L+8,232,184,] { title:"přegenerováním jsou také přepočteny všechny {proměnné}" }
   button uloz [L+8,186,45,17] { tag:'u', type:'submit', title:'Uložit',
     help:'uložit opravené hodnoty', skill:'yam|yams;fam|fams'
     proc onclick () {
