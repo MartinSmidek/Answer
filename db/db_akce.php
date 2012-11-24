@@ -2926,13 +2926,15 @@ function akce_roku_update($rok) {  trace();
 # -------------------------------------------------------------------------------------------------- akce_mapa
 # získání seznamu souřadnic bydlišť účastníků akce
 function akce_mapa($akce) {  trace();
+  global $ezer_root;
+  $uir_adr= $ezer_root=='cpr' ? '' : 'uir_adr.';        // pro CPR/Endora je tabulka psc_axy zkopírovaná
   // dotaz
   $marks= $del= ''; $n= 0;
   $qry=  "SELECT psc,lat,lng
           FROM pobyt AS p
           JOIN spolu AS s USING(id_pobyt)
           JOIN osoba AS o ON o.id_osoba=s.id_osoba
-          JOIN uir_adr.psc_axy USING(psc)
+          JOIN {$uir_adr}psc_axy USING(psc)
           WHERE p.id_akce='$akce'";
   $res= mysql_qry($qry);
   while ( $res && ($s= mysql_fetch_object($res)) ) {

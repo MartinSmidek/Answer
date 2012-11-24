@@ -76,6 +76,10 @@ form _page [,,285,500] {
   label cen [188,0,80,20] {tag:'p', title:'<b>Ceník</b>', format:'c', skill:'yaan'
     proc onclick() { tags(this,'cen','inf|cor'); zalozka.set('cen'); show_akce(a_akce.get)
   } }
+  // je pro CPR - ceník akce
+  label  [280,0,30,20] {tag:'p', title:'<b>C..</b>', format:'c', skill:'caan'
+    proc onclick() { tags(this,'cen','inf|cor'); zalozka.set('cen'); show_akce(a_akce.get)
+  } }
   proc show_akce(id_akce) {
     page.a_akce.set(id_akce);
     switch(zalozka.get,

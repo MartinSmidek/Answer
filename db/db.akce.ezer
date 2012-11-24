@@ -51,6 +51,7 @@ panel tisk [,,,] {type:'right', _sys:'*', title:'Výpisy akce', include:'onclick
 panel evi {type:'right', _sys:'*', title:'EVIDENCE', include:'onclick,db.akce.evi', skill:'yae;fae'
   proc evid_show() { alert('napřed klikni na Databáze|EVIDENCE') }
 }
+panel dup {type:'right', _sys:'*', title:'(duplicity)', include:'onclick,db.akce.dup', skill:'m+' }
 # panel rod {type:'plain', title:'Rodiny', include:'onclick,db.akce.rod', skill:'yae;fae'  }
 # panel jed {type:'plain', title:'Jednotlivci', skill:'yae;fae'  }
 panel mai {type:'right', title:'MAILY', _sys:'*', include:'onclick,db.akce.mai', skill:'yam;fam'  }
@@ -201,6 +202,7 @@ table pobyt { key_id:'id_pobyt'
   number typ            // 10,11,20,21
   number skupina
   number funkce
+  number prednasi      // číselník ms_akce_prednasi
   text aktivita
   date datplatby        { sql_pipe:'sql_date1'}
   number zpusobplat
@@ -609,6 +611,7 @@ map ms_akce_typ:      table _cis {where:"druh='ms_akce_typ'",       order:'porad
 map ms_akce_clen:     table _cis {where:"druh='ms_akce_clen'",      order:'poradi', key_id:'data'}
 map ms_akce_pouze:    table _cis {where:"druh='ms_akce_pouze'",     order:'poradi', key_id:'data'}
 map ms_akce_funkce:   table _cis {where:"druh='ms_akce_funkce'",    order:'poradi', key_id:'data'}
+map ms_akce_prednasi: table _cis {where:"druh='ms_akce_prednasi'",  order:'poradi', key_id:'data'}
 map ms_akce_cirkev:   table _cis {where:"druh='ms_akce_cirkev'",    order:'poradi', key_id:'data'}
 map ms_akce_vzdelani: table _cis {where:"druh='ms_akce_vzdelani'",  order:'poradi', key_id:'data'}
 map ms_akce_platba:   table _cis {where:"druh='ms_akce_platba'",    order:'poradi', key_id:'data'}
