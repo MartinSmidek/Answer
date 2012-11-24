@@ -53,9 +53,9 @@ proc onstart () {
 }
 
 proc onfirstfocus() {
-  evid.page_init; dary.page_init;
-  osoby.b.browse_load;
-  evid.oso.onclick;
+#   evid.page_init; dary.page_init;
+#   osoby.b.browse_load;
+#   evid.oso.onclick;
   m.g.i.click;
 }
 
