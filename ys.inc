@@ -59,6 +59,10 @@
 
   // PARAMETRY SPECIFICKÉ PRO APLIKACI
 
+  // specifické cesty
+  $bank= $ezer_local ? "C:/Apache/htdocs/ezer/www-ys2" : "/home/www/ezer/www-ys/2";
+  $path_banka['5500']= "$bank/banky/5500/";
+
   // moduly interpreta zahrnuté do aplikace - budou zpracovány i reference.i_doc pro tabulky kompilátoru
   $ezer_comp_ezer= "app,ezer,ezer_report,ezer_fdom1,ezer_fdom2";
   $ezer_comp_root= "ds/fce,db/db_fce";
@@ -87,6 +91,7 @@
     "ys/ys_fce.php",
     "ys/ys_ucet.php",
     "ys/ys_lide.php",
+    "ys/ys.ban.php",
     "db/db_akce.php",
     "fis/fis_tcpdf.php",
     "ds/ds_fce.php"

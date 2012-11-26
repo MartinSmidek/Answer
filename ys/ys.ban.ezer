@@ -1,0 +1,80 @@
+// Systém FiS - modul Klub
+// (c) 2008-2010 Martin Šmídek <martin@smidek.eu> */
+
+var b_vypis_filter: text
+var b_prevod_filter: text
+
+# panel uct {type:'plain', title:"Účty", _sys:'uct',  include:'onclick' }
+
+panel vyp {type:'plain', title:"Výpisy", _sys:'ban',  include:'onclick', skill:'yb+' }
+
+panel pre {type:'plain', title:"Převody", _sys:'ban',  include:'onclick' }
+
+# panel hle {type:'plain', title:"Hledání", _sys:'hle',  include:'onclick' }
+#
+# panel vis {type:'plain', title:"VISA...", _sys:'vis',  include:'onclick', skill:'m' }
+
+# panel pri {title:"Příkazy", _sys:'pri',  include:'onclick' }
+
+# panel inf [,,770,] {type:'right', title:"Informace", _sys:'inf'
+#   menu {type:'left', active:*
+#     menu {title:'Stavy účtů',type:'group', _sys:'*'
+#       item {title:'Aktuální stav účtů',                 par:°{s:'stav',c:'aktualne'} }
+#     }
+#     menu {title:'Kontroly letos',type:'group', _sys:'*'
+#       item {title:'obrat výpisu & součet převodů',      par:°{s:'letos',c:'obraty'} }
+#       item {title:'úplnost výpisů',                     par:°{s:'letos',c:'rady'} }
+#     }
+#     menu {title:'Kontroly vloni',type:'group', _sys:'*'
+#       item {title:'obrat výpisu & součet převodů',      par:°{s:'loni',c:'obraty'} }
+#       item {title:'úplnost výpisů',                     par:°{s:'loni',c:'rady'} }
+#     }
+#     proc onclick(i) {
+#       rm.info.set(conc("<div class='info'>",ask('bank_menu_show',i.par.s,i.par.c),"</div>"));
+# //       panel.property(°{height:'*',min_height:500})
+#     }
+#   }
+#   use rm: form right [12,4,,]
+# }
+
+table vypis { key_id:'id_vypis'
+  number id_vypis { key:'primary' },
+  text ident { help:'ident' },
+  number vypis1 { help:'výpis|pořadí výpisu' },
+  number ucet { help:'náš účet' },
+  date datum { help:'datum', sql_pipe:'sql_date1' },
+  text soubor { help:'soubor' },
+  number stav { help:'stav' },
+  number stav_poc { help:'stav' },
+}
+
+table prevod { key_id:'id_prevod'
+  number id_prevod { key:'primary' },
+  text ident { help:'ident|Uyy_nnniii' },
+  number vypis { help:'výpis|pořadí výpisu' },
+  number ucet { help:'náš účet' },
+  text popis { help:'popis' },
+  number clen { help:'člen|dárce' },
+  number dar { help:'dar' },
+  number typ { help:'typ' },
+  number castka { help:'částka' },
+  text protiucet { help:'protiúčet' },
+  text banka { help:'banka' },
+  date splatnost { help:'splatnost', sql_pipe:'sql_date1' },
+  text ksym { help:'KS' },
+  text vsym { help:'VS' },
+  text ssym { help:'SS' },
+  text poznamka { help:'poznámka' },
+  text kat { help:'kat' },
+}
+
+table ucet {
+  text protiucet { help:'protiúčet' },
+  text banka { help:'banka' },
+  text ksym { help:'KS' },
+  text vsym { help:'VS' },
+  text ssym { help:'SS' },
+  text jmeno { help:'jméno účtu' },
+  text nazev { help:'náš název účtu' },
+}
+

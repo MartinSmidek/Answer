@@ -40,7 +40,7 @@ kEzer-ys2
 		fa\fa_lide.php
 	-skins
 		skins\colors.php
-	+db
+	-db
 		db\$.ezer
 		db\db.akce.dup.ezer
 		db\db.akce.evi.ezer
@@ -168,6 +168,10 @@ kEzer-ys2
 		dg.inc
 		dg.php
 	+ys
+		+banka
+			ys\ys.ban.ezer
+			ys\ys.ban.php
+			ys\ys.ban.vyp.ezer
 		+$
 			ys\$.ezer
 			skins\colors.php
@@ -244,9 +248,13 @@ kEzer-ys2
 27=cpr.inc
 28=db\code\comp2tab.php
 29=db\db.akce.evi.ezer
+30=ys\$.ezer
+31=ys\ys.ban.php
+32=ys\ys.ban.ezer
+33=ys\ys.ban.vyp.ezer
 [Selected Project Files]
 Main=
-Selected=ys.inc
+Selected=ys\ys.ban.php
 [ezer2.2\client\app.js]
 TopLine=33
 Caret=14,34
@@ -296,7 +304,7 @@ Caret=33,214
 BookMark1=17,327
 BookMark2=3,152
 [fa\$.ezer]
-TopLine=218
+TopLine=225
 Caret=70,283
 [ys\ys.css.php]
 TopLine=1
@@ -346,3 +354,15 @@ Caret=89,75
 [db\db.akce.evi.ezer]
 TopLine=91
 Caret=34,137
+[ys\$.ezer]
+TopLine=1
+Caret=77,8
+[ys\ys.ban.php]
+TopLine=1
+Caret=1,1
+[ys\ys.ban.ezer]
+TopLine=1
+Caret=1,1
+[ys\ys.ban.vyp.ezer]
+TopLine=1
+Caret=1,1
