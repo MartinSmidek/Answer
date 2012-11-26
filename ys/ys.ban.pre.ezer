@@ -1,0 +1,113 @@
+# Systém FiS - modul Banka.Výpisy
+# (c) 2008-2010 Martin Šmídek <martin@smidek.eu>
+
+# ================================================================================================== vyp - Výpisy
+
+var v_id: number
+var d_kat: text
+
+use pr: form _prevody [8,50,,]
+use v: form _b_vyber [0,7,,]
+use d: form _b_detail [624,10,,]
+
+proc onstart () {
+  b_prevod_filter.set(get_cookie("b_prevody_filter",'56789'));
+  v.obdobi.key(get_cookie("b_prevody_obdobi",1401));
+  v.b_init;
+}
+
+proc pzmena0 () {
+  pr.prevody.browse_load(conc("ident LIKE 'M",
+    sum(fdate('Y'),minus(2000),minus(v.obdobi.get)),"%' AND LOCATE(TYP,' ",b_prevod_filter.get,"')"));
+  pr.prevody.browse_focus;
+| pr.prevody.browse_init; d.init;
+}
+
+proc the_formsave (f,b) {
+   f.same
+ | f.key; f.save; f.load; b.browse_seek
+ | f.insert; f.load;
+   b.raise('onrowclick',b.browse_seek(conc(f.id_key,'=',f.key)))
+ }
+
+# -------------------------------------------------------------------------------------------------- _prevody
+form _prevody [,,578,400] { tabindex:1000
+  browse prevody [0,0,300,200] {type:'smart', buf_rows:100, rows:26, qry_rows:2
+    show ident [,,80,] { title:'ident', data:prevod.ident, format:'q*s-' },
+    show typ [,,20,] { title:'typ', data:prevod.typ, format:'qs/r' },
+    show ss [,,75,] { title:'ssym', data:prevod.ssym, format:'q@sr', sql_pipe:'sql_banksymb' },
+    show kat [,,30,] { title:'kat', data:prevod.kat, format:'q*sr' },
+    show popis [,,125,] { title:'popis', data:prevod.popis, format:'q*s' },
+    show poznamka [,,150,] { title:'poznamka', data:prevod.poznamka, format:'q*s' },
+    show castka [,,80,] { title:'částka', data:prevod.castka, format:'q/sr' },
+    show id [,,0,] { data:prevod.id_prevod },
+    proc onrowclick () { }
+  },
+  proc dzmena () {
+    pr.prevody.browse_active; d.load(pr.prevody.id.get)
+  }
+  proc onready () { dzmena }
+}
+# -------------------------------------------------------------------------------------------------- _b_vyber
+form _b_vyber [,,600,50] { tabindex:5000,
+  label [5,2,596,30] { title:'', css:'ae_parm' }
+  label [10,11,177,17] { title:'<b>Omezení zobrazených převodů</b>' },
+  select obdobi [201,8,102,17] { type:'map', map_pipe:omezeni2.hodnota, options:omezeni2.zkratka,
+      format:'t', help:'omezení|výběr zobrazeného období'
+    proc onchange () { vzmena }
+  }
+  check chIn [447,7,63,17] { title:'příjmy', format:'t'
+    proc onchange () {
+      b_prevod_filter.set(cconc(v.chOut.get,'1234',v.chIn.get,'56789'));
+      set_cookie("b_prevody_filter",b_prevod_filter.get); pzmena0
+    }
+  }
+  check chOut [520,7,69,17] { title:'výdaje', format:'t'
+    proc onchange () {
+      b_prevod_filter.set(cconc(v.chOut.get,'1234',v.chIn.get,'56789'));
+      set_cookie("b_prevody_filter",b_prevod_filter.get); pzmena0
+    }
+  }
+	proc b_init () {
+	  cset(b_prevod_filter.get,v.chOut,'1234',v.chIn,'56789');
+	  vzmena
+	}
+	proc vzmena () {
+	  set_cookie("b_prevody_obdobi",v.obdobi.key);
+    pzmena0;
+	}
+}
+# -------------------------------------------------------------------------------------------------- _b_detail
+form _b_detail [,,282,197] { tabindex:2000,
+  view dp: table prevod,
+  view dpu: table ucet {join_type:'LEFT', join:'ON dpu.protiucet=dp.protiucet AND dpu.banka=dp.banka'},
+  label [0,24,337,69] { title:'', css:'ae_info' }
+  field clen [111,30,120,17] { data:dp.clen, format:'ro' },
+  field splatnost [234,30,94,17] { data:dp.splatnost, format:'o' },
+  field vsym [111,50,78,17] { data:dp.vsym, format:'ro' },
+  field ksym [192,50,52,17] { data:dp.ksym, format:'ro' },
+  field ssym [247,50,81,17] { data:dp.ssym, format:'ro' },
+  field castka [111,70,60,17] { data:dp.castka, format:'ro' },
+  field protiucet [174,70,120,17] { data:dp.protiucet, format:'ro' },
+  field banka [295,70,33,17] { data:dp.banka, format:'ro' },
+  label [0,103,335,112] { title:'', css:'ae_info' }
+  field nazev [109,112,216,17] { data:dpu.nazev, format:'o' },
+  field popis [109,132,216,17] { data:dp.popis, format:'o'  },
+  field poznamka [109,152,216,17] { data:dp.poznamka, format:'o'  },
+  field kat [230,172,77,17] { data:dp.kat },
+  select [230,192,98,17] { data:dp.typ, options:b_typ.hodnota, type:'map' },
+  label [29,31,77,17] { title:'dárce, datum' },
+  label [36,53,72,17] { title:'VS, KS, SS' },
+  label [35,74,77,17] { title:'částka, účet' },
+  label [18,113,92,17] { title:'náš název účtu' },
+  label [41,133,92,17] { title:'název účtu' },
+  label [44,153,62,17] { title:'poznámka' },
+  label [37,173,190,17] { title:'zařazení převodu podle kategorií' },
+  label [2,4,222,17] { title:'<b>Detail nastaveného převodu</b>' },
+  label [47,192,208,17] { title:'klasifikace převodu podle typu' },
+}
+# ==================================================================================================
+
+map omezeni2: table _cis {where:"druh='b_omezeni2'", order:'poradi'}
+
+map b_typ: table _cis {where:"druh='b_typ'", order:'poradi', key_id:'zkratka'}

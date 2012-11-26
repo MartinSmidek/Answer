@@ -223,6 +223,10 @@ ys/img/ys-logo.gif -text
 ys/img/ys.png -text
 ys/img/ys_local.png -text
 ys/test.php -text
+ys/ys.ban.ezer -text
+ys/ys.ban.php -text
+ys/ys.ban.pre.ezer -text
+ys/ys.ban.vyp.ezer -text
 ys/ys.css.css -text
 ys/ys.css.php -text
 ys/ys.ds.ezer -text
