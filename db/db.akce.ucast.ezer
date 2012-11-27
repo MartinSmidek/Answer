@@ -852,6 +852,20 @@ form _cmd_p [,,200,] { css:'ds_form'
       reload(the_pobyt.get);
     }
   }
+  # uhrazení členského příspěvku na akci do pokladny
+  label  [333,520,122,30] { css:'ae_parm', skill:'yaa+' }
+  button [339,525,,] {title:'členský příspěvek',  help:'pokladna: zaplatit členský příspěvek',
+    skill:'yaa+|yaa+'
+    proc onclick() {
+      var ret: object
+      ret.set(ask('akce_platba_prispevek1',the_pobyt.get));
+      ret.platit;
+      [ confirm(ret.msg," - zaplatí nyní na akci do pokladny?");
+        ret.set(ask('akce_platba_prispevek2',the_pobyt.get));
+        warning(ret.msg); ]
+    | alert(ret.msg);
+    }
+  }
 }
 # ================================================================================================== Dítě
 panel Dite [,,360,360] {type:'popup', title:'Úprava dětí'
