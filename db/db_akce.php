@@ -3462,6 +3462,80 @@ function akce_auto_peceL($id_akce) {  #trace();
 //                                                                 debug($pecouni,$id_akce);
   return $pecouni;
 }
+# ================================================================================================== PLATBY
+# záložka Platba za akci
+# -------------------------------------------------------------------------------------------------- akce_platba_prispevek1
+# členské příspěvky - zjištění zda jsou dospělí co jsou na pobytu členy a mají-li zaplaceno
+function akce_platba_prispevek1($id_pobyt) {  trace();
+  $ret= (object)array('msg'=>'nejsou členy','platit'=>0);
+  // jsou členy?
+  $cleni= 0;
+  $qp= "SELECT COUNT(*) AS _jsou, GROUP_CONCAT(jmeno) AS _jmena
+        FROM pobyt AS p
+        JOIN spolu AS s USING(id_pobyt)
+        JOIN osoba AS o ON o.id_osoba=s.id_osoba
+        LEFT JOIN dar AS d ON d.id_osoba=o.id_osoba
+        WHERE id_pobyt=$id_pobyt AND ukon='c'
+        GROUP BY id_pobyt ";
+  $rp= mysql_qry($qp);
+  if ( $rp && $p= mysql_fetch_object($rp) ) {
+    $cleni= $p->_jsou;
+    $ret->platit= 1;
+    $ret->msg= $p->_jmena." jsou členy ";
+  }
+  if ( $cleni ) {
+    $qp= "SELECT COUNT(*) AS _maji, MAX(dat_do) AS _do
+          FROM pobyt AS p
+          JOIN spolu AS s USING(id_pobyt)
+          JOIN osoba AS o ON o.id_osoba=s.id_osoba
+          LEFT JOIN dar AS d ON d.id_osoba=o.id_osoba
+          WHERE id_pobyt=$id_pobyt AND ukon='p' AND YEAR(dat_do)>=YEAR(NOW()) ";
+    $rp= mysql_qry($qp);
+    if ( $rp && $p= mysql_fetch_object($rp)) {
+      if ( $p->_maji ) {
+        $ret->platit= 0;
+        $ret->msg.= "a mají zaplaceno do ".sql_date1($p->_do);
+      }
+      else
+        $ret->msg.= "a nemají letos zaplaceno";
+    }
+  }
+  return $ret;
+}
+# -------------------------------------------------------------------------------------------------- akce_platba_prispevek
+# členské příspěvky vložení platby do dar
+function akce_platba_prispevek2($id_pobyt) {  trace();
+  $ret= (object)array('msg'=>'');
+  $osoby= array();
+  $prispevek= 100;
+  $nazev= $rok= '';
+  $values= $del= $jmena= '';
+  $celkem= 0;
+  $qp= "SELECT o.id_osoba,a.nazev,datum_do,YEAR(datum_do) AS _rok,jmeno
+          FROM pobyt AS p
+          JOIN akce AS a ON a.id_duakce=p.id_akce
+          JOIN spolu AS s ON p.id_pobyt=s.id_pobyt
+          JOIN osoba AS o ON s.id_osoba=o.id_osoba
+          LEFT JOIN tvori AS t ON t.id_osoba=o.id_osoba
+          WHERE p.id_pobyt=$id_pobyt AND t.role IN ('a','b') ";
+  $rp= mysql_qry($qp);
+  while ( $rp && $p= mysql_fetch_object($rp) ) {
+    $osoba= $p->id_osoba;
+    $rok= $p->_rok;
+    $datum= $p->datum_do;
+    $nazev= "$rok - {$p->nazev}";
+    $values.= "$del($osoba,'p',$prispevek,'$datum','$rok-12-31','$nazev')";
+    $jmena.= "$del{$p->jmeno}";
+    $del= ', ';
+    $celkem+= $prispevek;
+  }
+//                                                         display($values);
+  $qi= "INSERT dar (id_osoba,ukon,castka,dat_od,dat_do,note) VALUES $values";
+  $ri= mysql_qry($qi);
+  // odpověď
+  $ret->msg= "Za členy $jmena je potřeba vložit do pokladny $celkem,- Kč";
+  return $ret;
+}
 # ================================================================================================== INFORMACE
 # výpisy informací o akci
 # -------------------------------------------------------------------------------------------------- akce_info
