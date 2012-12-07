@@ -2,10 +2,10 @@
 
   $ezer_local= preg_match('/^\w+\.ezer/',$_SERVER["SERVER_NAME"]); // identifikace ladícího serveru
 
-  $app=      'fa';
-  $app_name= 'Ans(w)er - Familia';
+  $app=      'cr';
+  $app_name= 'Ans(w)er - Centrum pro rodinu';
   $skin=     'default';
-  $skin=     'ch';
+  $skin=     'ck';
 
   require_once("$app.inc");
   require_once("{$EZER->version}/server/ae_slib.php");
@@ -51,7 +51,7 @@
 
 
   $css= array_merge(
-    array("./$client/ezer.css.php","./fa/fa.css.php","./db/db.css.php"),
+    array("./$client/ezer.css.php","./cr/cr.css.php","./db/db.css.php"),
     /* pro verzi 2.2 */ $EZER->version=='ezer2.2'
     ? array("$licensed/datepicker/datepicker_vista/datepicker_vista.css"):array()
   );
@@ -64,8 +64,8 @@
 //   );
 
   $options= (object)array(
-    'skill'      => "'f'",
-    'autoskill'  => "'!f'",
+    'skill'      => "'c'",
+    'autoskill'  => "'!c'",
   );
   $kontakt= " V případě zjištění problému nebo <br/>potřeby konzultace mi prosím napište<br/>
         na mail&nbsp;<a href='mailto:{$EZER->options->mail}{$EZER->options->mail_subject}'>{$EZER->options->mail}</a> "

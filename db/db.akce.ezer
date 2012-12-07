@@ -3,10 +3,12 @@
 # Systém Ans(w)er - modul Akce
 # (c) 2008-2010 Martin Šmídek <martin@smidek.eu>
 
-var the_duakce: number
-var the_rok: number
-var the_title: text
-var the_source: text // google|sey
+var the_duakce: number          // nastavená akce: id_akce (id_dukace)
+var the_rok: number             // nastavená akce: rok
+var the_title: text             // nastavená akce: název do titulků
+var the_cenik: text             // nastavená akce: má (mít) ceník
+
+var the_source: text    // google|sey
 var dirty: number
 
 var obj_akce: object    // všechny informace o nastavené akci
@@ -16,27 +18,24 @@ proc akce_onstart() { dirty.get
 | dirty.set(1);
   echo('db.akce.onstart');
   the_duakce.set(get_cookie(conc(sys('root'),'_akce_id'),0));
+  the_cenik.set(get_cookie(conc(sys('root'),'_akce_cenik'),0));
   the_title.set(get_cookie(conc(sys('root'),'_akce_title'),'Vyber akci ...'));
   the_rok.set(get_cookie(conc(sys('root'),'_akce_rok'),0));
 }
 # ================================================================================================== CHLAPI
 panel chl {type:'right', _sys:'*', title:'Chlapi', include:'onclick,db.akce.chl',skill:'yac' }
 # ================================================================================================== AKCE
-panel lst {type:'right', _sys:'*', title:'AKCE', include:'onclick,db.akce.lst',skill:'yaa;faa'
+panel lst {type:'right', _sys:'*', title:'AKCE', include:'onclick,db.akce.lst',skill:'yaa;faa;caa'
   use the_akce: form _the_akce         // zatím nezobrazená data nastavené akce s klíčem id_duakce
 }
-# panel ducast {type:'plain', _sys:'*', title:'Evidence', include:'onload,db.akce.ducast',skill:'faa'
-#   proc init_ucast() { alert('napřed klikni na Databáze|Účastníci') }
-#   proc akce_show() { alert('napřed klikni na Databáze|Účastníci') }
-# }
 panel ucast {type:'plain', _sys:'*',
   /*title:"<img src='img/icon_new.gif' style='float:left;margin-top:-5px;padding-right:5px;'>Účastníci",*/
     title:"Účastníci",
-    include:'onload,db.akce.ucast',skill:'yaa;faa'
+    include:'onload,db.akce.ucast',skill:'yaa;faa;caa'
   proc init_ucast2() { alert('napřed klikni na Databáze|Účastníci') }
   proc akce_show() { alert('napřed klikni na Databáze|Účastníci') }
 }
-panel pece {type:'plain', _sys:'*', title:'Pečouni', include:'onload,db.akce.pece',skill:'yaa;faa'
+panel pece {type:'plain', _sys:'*', title:'Pečouni', include:'onload,db.akce.pece',skill:'yaa;faa;caa'
   proc init_pece() { alert('napřed klikni na Databáze|Pečouni') }
   proc akce_show() { alert('napřed klikni na Databáze|Pečouni') }
 }
@@ -46,15 +45,15 @@ panel pece {type:'plain', _sys:'*', title:'Pečouni', include:'onload,db.akce.pe
 # panel lidi {type:'plain', title:'Účast NEW', include:'onclick,db.akce.lidi',skill:'yaa'
 #   proc init_ucast() { }
 # }
-panel tisk [,,,] {type:'right', _sys:'*', title:'Výpisy akce', include:'onclick,db.akce.tisk',skill:'yaa;faa'  }
+panel tisk [,,,] {type:'right', _sys:'*', title:'Výpisy akce', include:'onclick,db.akce.tisk',skill:'yaa;faa;caa'  }
 # ================================================================================================== EVIDENCE
-panel evi {type:'right', _sys:'*', title:'EVIDENCE', include:'onclick,db.akce.evi', skill:'yae;fae'
+panel evi {type:'right', _sys:'*', title:'EVIDENCE', include:'onclick,db.akce.evi', skill:'yae;fae;caa'
   proc evid_show() { alert('napřed klikni na Databáze|EVIDENCE') }
 }
 panel dup {type:'right', _sys:'*', title:'(duplicity)', include:'onclick,db.akce.dup', skill:'m+' }
 # panel rod {type:'plain', title:'Rodiny', include:'onclick,db.akce.rod', skill:'yae;fae'  }
 # panel jed {type:'plain', title:'Jednotlivci', skill:'yae;fae'  }
-panel mai {type:'right', title:'MAILY', _sys:'*', include:'onclick,db.akce.mai', skill:'yam;fam'  }
+panel mai {type:'right', title:'MAILY', _sys:'*', include:'onclick,db.akce.mai', skill:'yam;fam;cam'  }
 
 # ================================================================================================== COMMON
 # ------------------------------------------------------------------ _the_akce
@@ -181,12 +180,12 @@ table $osoba { key_id:'id_osoba'
 table akce { key_id:'id_duakce'
   number id_duakce
   number typ
-  number spec   // 1 znamená ne-akci, starý způsob příležitostných seznamů
+  number ma_cenik  // 1 znamená, že bereme v úvahu tabulku cenik
+  number spec      // 1 znamená ne-akci, starý způsob příležitostných seznamů
   text nazev
   text misto
   number druh
   number poradatel
-  number cena
   date datum_od    { sql_pipe:'sql_date1'}    // SQL tvar se používá v ys.akce
   date datum_do    { sql_pipe:'sql_date1'}
   text strava_oddo { help:'2 písmena označující první a poslední stravu (sov)' }
@@ -208,6 +207,7 @@ table pobyt { key_id:'id_pobyt'
   number zpusobplat
   text budova
   text pokoj
+  number ubytovani      // číselník ms_akce_ubytovan
   number luzka
   number strava_cel
   number strava_pol
@@ -372,140 +372,140 @@ table webform { key_id:'id_webform'
 }
 map db_dary_frek:  table _cis {where:"druh='db_dary_frek'",  order:'poradi', key_id:'data'}
 # ================================================================================================== Sey
-table uakce { key_id:'id_uakce'
-  number id_uakce
-  number id_akce
-  text ms_source
-  number ms_akce
-  number rok
-  text akce
-  text nazev_akce
-  date datum { sql_pipe:'sql_date1' }
-  number dnu
-  number osob
-  number typ
-  text kapitola
-}
+# table uakce { key_id:'id_uakce'
+#   number id_uakce
+#   number id_akce
+#   text ms_source
+#   number ms_akce
+#   number rok
+#   text akce
+#   text nazev_akce
+#   date datum { sql_pipe:'sql_date1' }
+#   number dnu
+#   number osob
+#   number typ
+#   text kapitola
+# }
+#
+# table du_kurs { key_id:'id_dukurs'
+#   number id_dukurs
+#   number typ
+# }
 
-table du_kurs { key_id:'id_dukurs'
-  number id_dukurs
-  number typ
-}
+# table ms_kurs { key_id:'id_kurs'
+#   number id_kurs
+#   text source
+#   number id_pary
+#   number id_akce
+#   number id_dupary
+#   number cislo
+#   number skupina
+#   number funkce
+#   text aktivita
+#   date datplatby        { sql_pipe:'sql_date1'}
+#   number zpusobplat
+#   text budova
+#   text pokoj
+#   number luzka
+#   number strava_cel
+#   number strava_pol
+#   number kocarek
+#   text pecovatel
+#   text poznamka
+#   number pristylky
+#   number pocetdnu
+#   number svp
+#   number dorazil
+#   number pouze
+#   number akce
+#   number platba
+#   text cstrava_cel      // číslice jsou seřazeny jako počty snídaní,obědů,večeří po dnech
+#   text cstrava_pol
+#   number platba1
+#   number platba2
+#   number platba3
+#   number platba4
+# }
 
-table ms_kurs { key_id:'id_kurs'
-  number id_kurs
-  text source
-  number id_pary
-  number id_akce
-  number id_dupary
-  number cislo
-  number skupina
-  number funkce
-  text aktivita
-  date datplatby        { sql_pipe:'sql_date1'}
-  number zpusobplat
-  text budova
-  text pokoj
-  number luzka
-  number strava_cel
-  number strava_pol
-  number kocarek
-  text pecovatel
-  text poznamka
-  number pristylky
-  number pocetdnu
-  number svp
-  number dorazil
-  number pouze
-  number akce
-  number platba
-  text cstrava_cel      // číslice jsou seřazeny jako počty snídaní,obědů,večeří po dnech
-  text cstrava_pol
-  number platba1
-  number platba2
-  number platba3
-  number platba4
-}
+# table du_kursdeti { key_id:'id_dukursdeti'
+#   number id_dukursdeti
+#   number typ
+# }
 
-table du_kursdeti { key_id:'id_dukursdeti'
-  number id_dukursdeti
-  number typ
-}
+# table ms_kursdeti { key_id:'id_kursdeti'
+#   number id_kursdeti
+#   number id_pary        //-
+#   number id_akce
+#   number id_deti
+#   number cislo          //-
+#   text jmeno            //-
+#   number skupina
+#   number akce           //-
+# }
+#
+# table du_pary { key_id:'id_dupary'
+#   number id_dupary
+#   number typ
+# }
 
-table ms_kursdeti { key_id:'id_kursdeti'
-  number id_kursdeti
-  number id_pary        //-
-  number id_akce
-  number id_deti
-  number cislo          //-
-  text jmeno            //-
-  number skupina
-  number akce           //-
-}
+# table ms_pary { key_id:'id_pary'
+#   number id_pary
+#   number cislo
+#   number cislo_z
+#   text source
+#   text jmeno
+#   text adresa
+#   text psc
+#   text mesto
+#   text telefon
+#   text spz
+#   date datsvatba { sql_pipe:'sql_date1'}
+#   number svatba
+#   text poznamka
+#   text jmeno_m
+#   text jmeno_z
+#   text prijmeni_m
+#   text prijmeni_z
+#   number rodcislo_m
+#   number rodcislo_z
+#   text obcanka_m
+#   text obcanka_z
+#   number vzdelani_m
+#   number vzdelani_z
+#   text zamest_m
+#   text zamest_z
+#   text zajmy_m
+#   text zajmy_z
+#   text jazyk_m
+#   text jazyk_z
+#   number cirkev_m
+#   number cirkev_z
+#   text ccirkev_m
+#   text ccirkev_z
+#   text aktivita_m
+#   text aktivita_z
+#   number cislo_m
+#   number clen_m
+#   number clen_z
+#   text vyloucen
+#   text email
+#   number nfoto
+#   number lxx1
+# }
 
-table du_pary { key_id:'id_dupary'
-  number id_dupary
-  number typ
-}
-
-table ms_pary { key_id:'id_pary'
-  number id_pary
-  number cislo
-  number cislo_z
-  text source
-  text jmeno
-  text adresa
-  text psc
-  text mesto
-  text telefon
-  text spz
-  date datsvatba { sql_pipe:'sql_date1'}
-  number svatba
-  text poznamka
-  text jmeno_m
-  text jmeno_z
-  text prijmeni_m
-  text prijmeni_z
-  number rodcislo_m
-  number rodcislo_z
-  text obcanka_m
-  text obcanka_z
-  number vzdelani_m
-  number vzdelani_z
-  text zamest_m
-  text zamest_z
-  text zajmy_m
-  text zajmy_z
-  text jazyk_m
-  text jazyk_z
-  number cirkev_m
-  number cirkev_z
-  text ccirkev_m
-  text ccirkev_z
-  text aktivita_m
-  text aktivita_z
-  number cislo_m
-  number clen_m
-  number clen_z
-  text vyloucen
-  text email
-  number nfoto
-  number lxx1
-}
-
-table ms_deti { key_id:'id_deti'
-  number id_deti
-  number id_pary
-  number cislo
-  text jmeno
-  number rodcislo
-  text poznamka
-}
-
-table ms_poraakce {
-  number poradatel
-  text jmeno
-}
+# table ms_deti { key_id:'id_deti'
+#   number id_deti
+#   number id_pary
+#   number cislo
+#   text jmeno
+#   number rodcislo
+#   text poznamka
+# }
+#
+# table ms_poraakce {
+#   number poradatel
+#   text jmeno
+# }
 
 table join_akce { // spojení číselníku akcí s MS
   number id_akce   { help:"klíč akce v tabulce akce" }
@@ -617,5 +617,5 @@ map ms_akce_vzdelani: table _cis {where:"druh='ms_akce_vzdelani'",  order:'porad
 map ms_akce_platba:   table _cis {where:"druh='ms_akce_platba'",    order:'poradi', key_id:'data'}
 map ms_akce_sex:      table _cis {where:"druh='ms_akce_sex'",       order:'poradi', key_id:'data'}
 map ms_akce_ucastnik: table _cis {where:"druh='ms_akce_ucastnik'",  order:'poradi', key_id:'data'}
-map ms_akce_poradatel:table _cis {where:"druh='ms_akce_poradatel'", order:'poradi', key_id:'data'}
 map ms_cena_vzorec:   table _cis {where:"druh='ms_cena_vzorec'",    order:'poradi', key_id:'data'}
+map ms_akce_ubytovan: table _cis {where:"druh='ms_akce_ubytovan'",  order:'poradi', key_id:'data'}

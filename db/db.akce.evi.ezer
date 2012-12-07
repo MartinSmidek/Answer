@@ -69,7 +69,7 @@ proc status() {
 }
 const LETOS = "NOW()>=od.dat_od AND (NOW()<=od.dat_do OR od.dat_do='0000-00-00')"
 menu m {type:'left'
-  menu g {title:'Evidence jednotlivců',type:'group', skill:'yae;fae'
+  menu g {title:'Evidence jednotlivců',type:'group', skill:'yae;fae;cae'
     item i {title:'všechny kontakty'
           par:°{cnd:"1",hav:"1"} }
     item {title:'letošní členové'
@@ -91,7 +91,7 @@ menu m {type:'left'
       osoby.b.raise('onrowclick');
     }
   }
-  menu {title:'Evidence rodin',type:'group', skill:'yae;fae'
+  menu {title:'Evidence rodin',type:'group', skill:'yae;fae;cae'
     item {title:'všechny rodiny'   par:°{cnd:"1",hav:"1"} }
     item {title:'... s více maily' par:°{cnd:"TRIM(emaily) REGEXP ',[^$]|;[^$]'",hav:"1"}, skill:'yae' }
     item {title:'... s více telefony' par:°{cnd:"TRIM(telefony) REGEXP ',[^$]|;[^$]'",hav:"1"}, skill:'yae' }

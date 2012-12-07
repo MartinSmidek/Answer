@@ -11,15 +11,16 @@ FileFormat=0
 ProjectFilesOnly=0
 [Project tree]
 kEzer-ys2
-	-cpr
-		cpr\$.ezer
-		cpr\cpr.css.php
-		cpr.inc
-		cpr\cpr.lide.ezer
-		cpr.php
-		cpr\cpr_fce.js
-		cpr\cpr_fce.php
-		cpr\cpr_lide.php
+	+cr
+		cr\$.ezer
+		.htaccess
+		cr\cr.css.php
+		cr.inc
+		cr\cr.lide.ezer
+		cr.php
+		cr\cr_fce.js
+		cr\cr_fce.php
+		cr\cr_lide.php
 	-rr
 		rr\$.ezer
 		myslenky.php
@@ -167,10 +168,11 @@ kEzer-ys2
 		dg\dg.css.css
 		dg.inc
 		dg.php
-	+ys
-		+banka
+	-ys
+		-banka
 			ys\ys.ban.ezer
 			ys\ys.ban.php
+			ys\ys.ban.pre.ezer
 			ys\ys.ban.vyp.ezer
 		+$
 			ys\$.ezer
@@ -224,37 +226,28 @@ kEzer-ys2
 3=ezer2.2\client\ezer_fdom1.js
 4=ezer2.2\client\ezer.js
 5=ezer2.2\client\ezer_fdom2.js
-6=db\$.ezer
-7=db\db.akce.dup.ezer
+6=db\db.akce.ezer
+7=db\db.akce.lst.ezer
 8=db\db.akce.ucast.ezer
-9=db\db_akce.php
-10=db\db.akce.ezer
-11=db\db.akce.lst.ezer
-12=db\db.akce.mai.ezer
-13=fa\$.ezer
-14=ys\ys.css.php
-15=ys.php
-16=ys.inc
-17=rr.php
-18=rr.inc
-19=ds\ds_fce.php
-20=cpr\$.ezer
-21=cpr\cpr_lide.php
-22=cpr\cpr.lide.ezer
-23=cpr\cpr_fce.php
-24=cpr\cpr.css.php
-25=cpr\cpr_fce.js
-26=cpr.php
-27=cpr.inc
-28=db\code\comp2tab.php
-29=db\db.akce.evi.ezer
-30=ys\$.ezer
-31=ys\ys.ban.php
-32=ys\ys.ban.ezer
-33=ys\ys.ban.vyp.ezer
+9=db\db.akce.pece.ezer
+10=db\db.akce.mai.ezer
+11=db\db.akce.tisk.ezer
+12=db\db.akce.evi.ezer
+13=db\db_akce.php
+14=cr.inc
+15=cr\cr_fce.php
+16=cr.php
+17=cr\$.ezer
+18=fa\$.ezer
+19=db\$.ezer
+20=db\db.akce.dup.ezer
+21=ezer2.2\ezer2.syst.ezer
+22=ys.php
+23=fa.php
+24=.htaccess
 [Selected Project Files]
 Main=
-Selected=ys\ys.ban.php
+Selected=db\db.akce.pece.ezer
 [ezer2.2\client\app.js]
 TopLine=33
 Caret=14,34
@@ -262,107 +255,75 @@ Caret=14,34
 TopLine=784
 Caret=46,804
 [ezer2.2\server\ae_slib.php]
-TopLine=438
-Caret=15,467
+TopLine=1100
+Caret=10,1112
 [ezer2.2\client\ezer_fdom1.js]
 TopLine=236
 Caret=59,242
 [ezer2.2\client\ezer.js]
-TopLine=2499
-Caret=17,2499
+TopLine=433
+Caret=1,465
 [ezer2.2\client\ezer_fdom2.js]
 TopLine=834
 Caret=89,839
+[db\db.akce.ezer]
+TopLine=1
+Caret=63,43
+[db\db.akce.lst.ezer]
+TopLine=279
+Caret=56,297
+BookMark1=18,188
+[db\db.akce.ucast.ezer]
+TopLine=1
+Caret=42,15
+BookMark2=27,382
+BookMark1=28,37
+[db\db.akce.pece.ezer]
+TopLine=73
+Caret=123,88
+[db\db.akce.mai.ezer]
+TopLine=177
+Caret=83,193
+[db\db.akce.tisk.ezer]
+TopLine=1
+Caret=136,63
+[db\db.akce.evi.ezer]
+TopLine=66
+Caret=64,94
+[db\db_akce.php]
+TopLine=1
+Caret=1,1
+BookMark1=69,2329
+[cr.inc]
+TopLine=1
+Caret=61,3
+[cr\cr_fce.php]
+TopLine=81
+Caret=65,93
+[cr.php]
+TopLine=11
+Caret=21,29
+[cr\$.ezer]
+TopLine=1
+Caret=36,23
+[fa\$.ezer]
+TopLine=3
+Caret=1,6
 [db\$.ezer]
 TopLine=1
-Caret=1,1
+Caret=84,9
 [db\db.akce.dup.ezer]
-TopLine=45
-Caret=37,84
-Mark1=27,177
-Mark2=2,168
-[db\db.akce.ucast.ezer]
-TopLine=255
-Caret=21,259
-[db\db_akce.php]
-TopLine=2667
-Caret=42,2692
-BookMark1=27,4302
-BookMark4=116,1682
-Mark1=8,1557
-Mark2=8,1647
-[db\db.akce.ezer]
-TopLine=181
-Caret=78,186
-[db\db.akce.lst.ezer]
-TopLine=34
-Caret=9,80
-Mark1=32,146
-[db\db.akce.mai.ezer]
-TopLine=185
-Caret=33,214
-BookMark1=17,327
-BookMark2=3,152
-[fa\$.ezer]
-TopLine=225
-Caret=70,283
-[ys\ys.css.php]
-TopLine=1
-Caret=65,28
+TopLine=24
+Caret=61,58
+[ezer2.2\ezer2.syst.ezer]
+TopLine=350
+Caret=40,374
 [ys.php]
-TopLine=7
-Caret=58,40
-[ys.inc]
-TopLine=5
-Caret=70,27
-[rr.php]
 TopLine=1
-Caret=70,39
-[rr.inc]
-TopLine=22
-Caret=49,65
-[ds\ds_fce.php]
-TopLine=419
-Caret=25,430
-[cpr\$.ezer]
+Caret=87,5
+[fa.php]
 TopLine=1
-Caret=51,31
-[cpr\cpr_lide.php]
+Caret=21,29
+[.htaccess]
 TopLine=1
-Caret=1,1
-[cpr\cpr.lide.ezer]
-TopLine=1
-Caret=1,1
-[cpr\cpr_fce.php]
-TopLine=1
-Caret=1,1
-[cpr\cpr.css.php]
-TopLine=1
-Caret=1,1
-[cpr\cpr_fce.js]
-TopLine=1
-Caret=1,1
-[cpr.php]
-TopLine=7
-Caret=27,18
-[cpr.inc]
-TopLine=1
-Caret=1,42
-[db\code\comp2tab.php]
-TopLine=21
-Caret=89,75
-[db\db.akce.evi.ezer]
-TopLine=91
-Caret=34,137
-[ys\$.ezer]
-TopLine=1
-Caret=77,8
-[ys\ys.ban.php]
-TopLine=1
-Caret=1,1
-[ys\ys.ban.ezer]
-TopLine=1
-Caret=1,1
-[ys\ys.ban.vyp.ezer]
-TopLine=1
-Caret=1,1
+Caret=39,9
