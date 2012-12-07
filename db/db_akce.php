@@ -54,7 +54,7 @@ function album_get($name,$w,$h) { #trace();
     }
     $src= "fotky/copy/$name";
     $html= "<a href='fotky/$name' target='_album'><img src='fotky/copy/$name'
-      onload='var x=arguments[0];img_filter(x.target,\"sharpen\",1,2);'/></a>";
+      onload='var x=arguments[0];img_filter(x.target,\"sharpen\",1,1);'/></a>";
   //   $data= "iVBORw0"."KGgoAAAANSUhEUgAAACAAAAAFCAYAAAAkG+5xAAAABGdBTUEAANbY1E9YMgAAABl0RVh0U29mdHdhcm"
   //        . "UAQWRvYmUgSW1hZ2VSZWFkeXHJZTwAAABTSURBVHjarJJRCgAgCEM9nHfy+K+fKBKzjATBDZUxFUAuU5mhnWPT"
   //        . "SzK7YCkkQR3tsM5bImjgVwE3HIED6vFvB4w17CC4dILdD5AIwvX5OW0CDAAH+Qok/eTdBgAAAABJRU5E"."rkJggg";
@@ -1059,6 +1059,8 @@ function akce_sestava_pary($akce,$par,$title,$vypis,$export=false) { trace();
   $html= '';
   $href= '';
   $n= 0;
+  // číselníky
+  $c_ubytovani= map_cis('ms_akce_ubytovan','zkratka');  $c_ubytovani[0]= '?';
   // dekódování parametrů
   $tits= explode(',',$tit);
   $flds= explode(',',$fld);
@@ -1089,8 +1091,9 @@ function akce_sestava_pary($akce,$par,$title,$vypis,$export=false) { trace();
               LEFT JOIN rodina AS cr ON cr.id_rodina=ct.id_rodina
               WHERE ca.druh=1 AND cr.id_rodina=r.id_rodina ) AS _ucasti,
             SUM(IF(t.role='d',1,0)) as _deti,
-            r.ulice,r.psc,r.obec,r.telefony,r.emaily,p.poznamka,
-            p.skupina,p.pokoj,p.luzka,p.kocarek,p.pristylky,p.strava_cel,p.strava_pol
+            r.ulice,r.psc,r.obec,r.telefony,r.emaily,p.poznamka,p.skupina,
+            p.ubytovani,p.budova,p.pokoj,
+            p.luzka,p.kocarek,p.pristylky,p.strava_cel,p.strava_pol
           FROM pobyt AS p
           JOIN spolu AS s USING(id_pobyt)
           JOIN osoba AS o ON s.id_osoba=o.id_osoba
@@ -1121,6 +1124,8 @@ function akce_sestava_pary($akce,$par,$title,$vypis,$export=false) { trace();
     $telefony_m= implode(';',$a_telefony_m);
     $telefony_z= implode(';',$a_telefony_z);
     $x->telefony= $x->pouze==1 ? $telefony_m  : ($x->pouze==2 ? $telefony_z : $telefony);
+    // podle číselníku
+    $x->ubytovani= $c_ubytovani[$x->ubytovani];
     // další
     $n++;
     $clmn[$n]= array();
@@ -2405,7 +2410,7 @@ function akce_skup_hist($akce,$par,$title,$vypis,$export) { trace();
     elseif ( $n )
       $html.= "<dt><b>{$info->_nazev}</b> $n&times;</dt>";
     else
-      $html.= "<dt><b>{$info->_nazev}</b> poprvé</dt>";
+      $html.= "<dt><b>{$info->_nazev}</b> - bude poprvé</dt>";
   }
   $html.= "</dl>";
   $note= "Abecední seznam účastníků letního kurzu roku $rok doplněný seznamem členů jeho starších
@@ -2927,7 +2932,7 @@ function akce_roku_update($rok) {  trace();
 # získání seznamu souřadnic bydlišť účastníků akce
 function akce_mapa($akce) {  trace();
   global $ezer_root;
-  $uir_adr= $ezer_root=='cpr' ? '' : 'uir_adr.';        // pro CPR/Endora je tabulka psc_axy zkopírovaná
+  $uir_adr= $ezer_root=='cr' ? '' : 'uir_adr.';        // pro CPR/Endora je tabulka psc_axy zkopírovaná
   // dotaz
   $marks= $del= ''; $n= 0;
   $qry=  "SELECT psc,lat,lng

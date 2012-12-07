@@ -4,8 +4,8 @@
 # Ans(w)er/Ezer                                     (c) 2007-2011 Martin Šmídek <martin@smidek.eu> #
 # ------------------------------------------------------------------------------------------------ #
 
+var the_duakce_local: number    // zobrazená akce - pokud se liší od the_duakce, je třeba překreslit
 var zalozka: text               // evid | plat | akce
-var dirty: number
 var the_pobyt: number           // klíč společného pobytu pečounů
 
 use header: form _header   [  4,0,,]
@@ -16,14 +16,13 @@ use cmd:    form _cmd      [400, 0,,]       { tag:'p_oso' }
 use p_act:  form _aktivity [400,10,,]       { tag:'p_act' }
 use p_pla:  form _platba   [400,10,,]       { tag:'p_pla' }
 
-# proc onstart() { dirty.get
-# | echo('db.akce.pece.onstart');
-#   init_pece }
-# proc onfirstfocus() { dirty.get | echo('onfirstfocus ',the_title.get); init_pece }
-proc onfocus() { init_pece }
+proc onfocus() {
+  [ the_duakce.get | akce_onstart ];
+  eq(the_duakce_local.get,the_duakce.get)
+| init_pece;
+  the_duakce_local.set(the_duakce.get)
+}
 proc init_pece() { echo('init_pece ',the_title.get);
-  dirty.set(1);
-  akce_onstart;
   page.page_init;
   header.fill(the_title.get);
   reload;
@@ -101,9 +100,9 @@ form _platba {
   label [10,50,,] { title:'tady bude rozpis ceny akce podle cenového vzorce akce a přehled příchozích plateb' }
 }
 # ---------------------------------------------------------------------- _osoba
-form _osoba { tag:'a'
+form _osoba { tag:'a',
   # ------------------------ osoba
-  view o: table osoba
+  view o: table osoba,
   const L=0; T=5
   field  { data:o.id_osoba }
   label          [L+5,T+15,89,] {title:'příjmení'}
@@ -240,21 +239,21 @@ form _pece [,,400,] { css:'ds_form'
 # -------------------------------------------------------------------------------------------------- _cmd
 form _cmd [,,200,] { css:'ds_form'
   // Nový
-  button [6,525,,] {title:'Nový', skill:'yaap+|yaap+;faa+|faa+',
+  button [6,525,,] {title:'Nový', skill:'yaap+|yaap+;faa+|faa+;caa+|caa+',
     help:'Vytvoření nového pečouna a vložení jako účastníka'
     proc onclick() {   // založení
       p_oso.init(1); p_oso.d.browse_init; p_oso.o.key(0); p_oso.s.key(0);
       b_display(0);
   } }
   // Zpět a Uložit
-  label  [478,520,98,30] { css:'ae_parm', skill:'yaap+;faa+' }
-  button [484,525,,] {title:'Zpět',  help:'Neměnit změněná data', skill:'yaap+|yaap+;faa+|faa+'
+  label  [478,520,98,30] { css:'ae_parm', skill:'yaap+;faa+;caa+' }
+  button [484,525,,] {title:'Zpět',  help:'Neměnit změněná data', skill:'yaap+|yaap+;faa+|faa+;caa+|caa+'
     proc onclick() {
       p_oso.plain;
       b_display(1);
       reload //(up.b.browse_key);
   } }
-  button [530,525,,] {title:'Uložit',  help:'Uložit změněná data', skill:'yaap+|yaap+;faa+|faa+'
+  button [530,525,,] {title:'Uložit',  help:'Uložit změněná data', skill:'yaap+|yaap+;faa+|faa+;caa+|caa+'
     proc onclick() {
       var ok: number
       p_oso.same
@@ -277,26 +276,26 @@ form _cmd [,,200,] { css:'ds_form'
     return(the_pobyt.get);
   }
   // PŘIDAT z AKCE
-  button pridat_a   [69,525,,] {title:'Přidat: z akce', skill:'yaap+|yaap+;faa+|faa+',
+  button pridat_a   [69,525,,] {title:'Přidat: z akce', skill:'yaap+|yaap+;faa+|faa+;caa+|caa+',
     help:'Přidání účastníky jiných akcí'
     proc onclick() {
       PridaniAkce.modal(240,50)
   } }
   // PŘIDAT z pečounů
-  button pridat_1   [155,525,,] {title:'... jménem', skill:'yaap+|yaap+;faa+|faa+',
+  button pridat_1   [155,525,,] {title:'... jménem', skill:'yaap+|yaap+;faa+|faa+;caa+|caa+',
     help:'Přidání pečouna podle jména'
     proc onclick() {
       PridaniJmenem3.modal(240,50)
   } }
   // VYŘADIT a VYMAZAT
-  button [357,525,,] {title:'Vyřadit', skill:'yaap+|yaap+;faa+|faa+',
+  button [357,525,,] {title:'Vyřadit', skill:'yaap+|yaap+;faa+|faa+;caa|caa+',
     help:'Vyřazení pečouna z účasti na akci'
     proc onclick() {
       confirm("Opravdu vyřadit ",up.b.prijmeni.get,' (',up.b.jmeno.get,") z této akce?");
       spolu.delete_record(conc('id_spolu=',up.b.key_spolu.get),1);
       reload;
   } }
-  button [409,525,,] {title:'Vymazat', skill:'yaap+|yaap+;faa+|faa+',
+  button [409,525,,] {title:'Vymazat', skill:'yaap+|yaap+;faa+|faa+;caa+|caa+',
     help:'Vymazání informací o pečounovi z evidence'
     proc onclick() {
       confirm("Opravdu vymazat z evidence ",up.b.prijmeni.get,' ',up.b.jmeno.get,"z evidence?");
@@ -304,7 +303,7 @@ form _cmd [,,200,] { css:'ds_form'
       reload;
   } }
 #   // PŘIDAT DÍTĚ
-#   button dite       [225,525,,] {title:'... dítě do skupinky', skill:'yaap+|yaap+;faa+|faa+',
+#   button dite       [225,525,,] {title:'... dítě do skupinky', skill:'yaap+|yaap+;faa+|faa+;caa+|caa+',
 #     help:'Přidání dalšího dítěte do skupiny'
 #     proc onclick() {
 #       Dite.key_dite.set(0); Dite.key_spolu.set(0);

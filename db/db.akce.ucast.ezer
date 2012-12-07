@@ -4,23 +4,36 @@
 # Ans(w)er/Ezer                                     (c) 2007-2012 Martin Šmídek <martin@smidek.eu> #
 # ------------------------------------------------------------------------------------------------ #
 
+var the_duakce_local: number    // zobrazená akce - pokud se liší od the_duakce, je třeba překreslit
 var the_pobyt: number
 var zalozka: text           // evid | plat | akce
-var dirty: number
 var back: object
 
-proc onstart() { dirty.get
-| echo('db.akce.ucast.onstart');
-  init_ucast2 }
-proc onfirstfocus() { dirty.get | echo('onfirstfocus ',the_title.get); init_ucast2 }
-# proc onfocus() { dirty.get | echo('onfirstfocus ',the_title.get); init_ucast2 }
+proc onstart() {
+  the_duakce_local.set(0);
+}
+proc onfirstfocus() { onfocus; init_forms }
+proc onfocus() {
+  [ the_duakce.get | akce_onstart ];
+  eq(the_duakce_local.get,the_duakce.get)
+| u.legenda.display(the_cenik.get);
+  init_ucast2;
+  the_duakce_local.set(the_duakce.get)
+}
+# úpravy formulářů pro y;f;c
+proc init_forms() {
+  [ has_skill('c');
+    evid.get.display(0,'rc');
+    muz.get.display(0,'rc');
+    zen.get.display(0,'rc');
+    Dite.dite.get.display(0,'rc');
+]}
 proc init_ucast2() { echo('init_ucast2 ',the_title.get);
-  dirty.set(1);
   akce_onstart();
   page.page_init;
   header.fill(the_title.get);
   [ reload(0) ];
-  [ u.b.browse_count; page.evd.onclick ]
+  [ u.b.browse_count; page.evd.onclick ];
 }
 proc akce_show(xakce,xpobyt,xnadpis,xback) {  echo('akce_show ',xakce,' ',xpobyt,' ',xnadpis);
   back.set(object('ida',the_duakce.get,
@@ -138,6 +151,7 @@ form _page {
       zalozka.set('plat'); u.b.reload_pobyt;
       evid.display(0); cmd.display(0); rod.display(0); muz.display(0); zen.display(0); pob.display(0);
       a_muz.display(0); a_zen.display(0); pla.display(1); cmdp.display(1); alb.display(0);
+      pla.get.display(the_cenik.get,'cenik'); // omezení výpisu pokud není definován ceník
     }
   }
   label jin [292,0,120,20] {tag:'p', title:'<b>Přehled aktivit</b>', format:'c',
@@ -224,8 +238,7 @@ form _platba {
   label [2,27,527,495] {title:"<img src='img/ms2p.png'>" }
   proc ini() {
     // výpočet součtu cen a rozpis, došlé platby
-    [ has_skill("faa");
-    | dosle_platby; rozpis_ceny;
+    [ has_skill("yaa"); dosle_platby; rozpis_ceny;
       celkem.set(sum(c_nocleh.get,c_strava.get,c_program.get,c_sleva.get)) ];
     // obarvení tlačítka [Str.pol]
     or(u.b.cstrava_cel.get,u.b.cstrava_pol.get); stravy.set_css('cervena','cerna');
@@ -241,7 +254,7 @@ form _platba {
     doslo.set(ask('akce_platby',the_pobyt.get));
   }
   // rozpis a zápis ceny
-  button [10,47,,] { title:"Návrh ceny", help:"zapíše počet lůžek a strav"
+  button [10,47,,] { tag:'cenik', title:"Návrh ceny", help:"zapíše počet lůžek a strav"
     var ret: object
     proc onclick() {
       ret.set(ask('akce_pobyt_default',the_pobyt.get));
@@ -256,7 +269,7 @@ form _platba {
 #   button [10,69,,] { title:"Rozpis ceny"
 #     proc onclick() { rozpis_ceny }
 #   }
-  button [10,72,,] { title:"Zapsat cenu"
+  button [10,72,,] { tag:'cenik', title:"Zapsat cenu"
     proc onclick() {
       { not(or(u.b.cstrava_cel.get,u.b.cstrava_pol.get))
       | or(u.b.cstrava_cel.get,u.b.cstrava_pol.get);
@@ -265,12 +278,12 @@ form _platba {
       cena.set(ask('akce_vzorec',the_pobyt.get)); copy_by_name(cena.get,form);
       c_nocleh.change; c_strava.change; c_program.change; c_sleva.change; ini
   } }
-  label [110,77,,] { title:"sleva:" }
-  field sleva [143,74,50,] { data:pobyt.sleva, help:"Slevy pro potřebné účastníky", format:'r' }
-  label [93,53,,] { title:"cena pro:" }
-  select vzorec [143,51,148,] { type:'map0', data:pobyt.vzorec, help:"výběr vzorce pro organizátory",
+  label [110,77,,] { tag:'cenik', title:"sleva:" }
+  field sleva [143,74,50,] { tag:'cenik', data:pobyt.sleva, help:"Slevy pro potřebné účastníky", format:'r' }
+  label [93,53,,] { tag:'cenik', title:"cena pro:" }
+  select vzorec [143,51,148,] { tag:'cenik', type:'map0', data:pobyt.vzorec, help:"výběr vzorce pro organizátory",
     options:ms_cena_vzorec.zkratka }
-  label navrh [10,100,280,331] { css:'karta_info' }
+  label navrh [10,100,280,331] { tag:'cenik', css:'karta_info' }
   // platby
   button [307,70,,] { title:"Aktualizace bankovních výpisů", skill:'yaa|yaa'
     proc onclick() {
@@ -317,7 +330,7 @@ form _platba {
                                    options:ms_akce_platba.zkratka, format:'u'}
   field datplatby   [474,456,84,] {type:'date', data:pobyt.datplatby}
   // pevné texty
-  label [13,32,,]   { title:'Rozpis ceny akce podle cenového vzorce akce a přehled příchozích plateb' }
+  label [13,32,,]   { tag:'cenik', title:'Rozpis ceny akce podle cenového vzorce akce a přehled příchozích plateb' }
   label [5,528,,]  { title:'Cena zapsaná v evidenční kartě (použitá pro export do Excelu)',
                       style:"border-top:2px solid grey" }
   label [3,441,100,] {title:'lůž. při. nocí koč.', help:'počet lůžek, přistýlek, nocí a kočárků'}
@@ -335,9 +348,9 @@ form _platba {
 form _evidence {
   # --------------------------- kontextové_menu
   menu { type:'context'
-    item { title:'zkontrolovat skupinky', skill:'yaa+;faa+',
+    item { title:'zkontrolovat skupinky', skill:'yaa+;faa+;caa+',
       proc onclick () { alert(ask('akce_skup_check',the_duakce.get)) } }
-    item { title:'přečíslovat skupinky podle VPS', skill:'yaa+',
+    item { title:'přečíslovat skupinky podle VPS', skill:'yaa+;caa+',
       proc onclick () { alert(ask('akce_skup_renum',the_duakce.get)) } }
     item { title:'přečíslovat skupinky podle PPS', skill:'faa+',
       proc onclick () { alert(ask('akce_skup_renum',the_duakce.get)) } }
@@ -365,8 +378,8 @@ form _evidence {
   label [225,21,127,] {title:'<b>osobní údaje muže</b>'}
   label [422,22,119,] {title:'<b>osobní údaje ženy</b>'}
   label [379,160,37,] {title:'narození'}
-  label [324,158,17,] {title:'/rč:'}
-  label [529,158,17,] {title:'/rč:'}
+  label [324,160,17,] {tag:'rc', title:'/rč:'}
+  label [521,159,17,] {tag:'rc', title:'/rč:'}
   label [382,181,31,] {title:'církev'}
   label [378,202,41,] {title:'vzdělání'}
   label [380,223,37,] {title:'zaměst.'}
@@ -374,11 +387,12 @@ form _evidence {
   label [385,265,26,] {title:'jazyk'}
   label [383,287,32,] {title:'aktivita'}
   label [400,381,,] {title:'přednáší:'}
-  label [470,403,99,] {title:'objednal CD z akce'}
+  label [470,435,99,] {title:'objednal CD z akce'}
   label [10,361,149,] {title:'<b>údaje k účasti na této akci</b>'}
   label [215,437,162,] {title:'poznámka k účasti na této akci'}
-  label [215,402,31,] {title:'pokoj'}
-  label [306,402,38,] {title:'budova'}
+  label [215,409,31,] {title:'pokoj'}
+  label [295,409,38,] {title:'budova'}
+  label [375,409,38,] {title:'typ', skill:'c' }
 }
 # -------------------------------------------------------------------------------------------------- _rodina
 form _rodina {
@@ -407,7 +421,7 @@ form _muz {
   field telefon_m   [224,119,151,] {type:'list', data:osoba.telefon}
   field email_m     [224,143,151,] {type:'list', data:osoba.email}
   field narozeni_m  [224,167,93,] {type:'date', data:osoba.narozeni, sql_pipe:'sql_date1'}
-  field rc_xxxx_m   [342,166,32,] {data:osoba.rc_xxxx, format:'r', help:'4 cifry za lomítkem rodného čísla' }
+  field rc_xxxx_m   [342,166,32,] {tag:'rc', data:osoba.rc_xxxx, format:'r', help:'4 cifry za lomítkem rodného čísla' }
   select cirkev_m   [224,189,152,] {type:'map', data:osoba.cirkev, options:ms_akce_cirkev.zkratka}
   select vzdelani_m [224,209,152,] {type:'map', data:osoba.vzdelani, options:ms_akce_vzdelani.zkratka}
   field zamest_m    [224,230,152,] {data:osoba.zamest}
@@ -429,7 +443,7 @@ form _zena {
   field telefon_z   [420,119,151,] {type:'list', data:osoba.telefon}
   field email_z     [420,143,151,] {type:'list', data:osoba.email}
   field narozeni_z  [420,167,93,] {type:'date', data:osoba.narozeni, sql_pipe:'sql_date1'}
-  field rc_xxxx_z   [539,166,32,] {data:osoba.rc_xxxx, format:'r', help:'4 cifry za lomítkem rodného čísla'}
+  field rc_xxxx_z   [539,166,32,] {tag:'rc', data:osoba.rc_xxxx, format:'r', help:'4 cifry za lomítkem rodného čísla'}
   select cirkev_z   [420,188,152,] {type:'map', data:osoba.cirkev, options:ms_akce_cirkev.zkratka}
   select vzdelani_z [420,209,152,] {type:'map', data:osoba.vzdelani, options:ms_akce_vzdelani.zkratka}
   field zamest_z    [420,230,152,] {data:osoba.zamest}
@@ -452,9 +466,10 @@ form _pobyt {
   field skupina     [7,388,35,] {data:pobyt.skupina, format:'r'}
   select funkce     [155,389,50,] {type:'map', data:pobyt.funkce, options:ms_akce_funkce.zkratka }
   select prednasi   [450,389,122,] {type:'map', data:pobyt.prednasi, options:ms_akce_prednasi.zkratka }
-  field pokoj       [253,410,40,] {data:pobyt.pokoj}
-  field budova      [350,409,32,] {data:pobyt.budova}
-  check cd          [446,409,20,] {data:pobyt.cd}
+  field pokoj       [244,417,39,] {data:pobyt.pokoj}
+  field budova      [335,416,32,] {data:pobyt.budova}
+  select ubytovani  [395,416,60,] {type:'map', data:pobyt.ubytovani, options:ms_akce_ubytovan.zkratka, skill:'c|c'}
+  check cd          [446,441,20,] {data:pobyt.cd}
   edit k_poznamka   [214,462,355,50] {data:pobyt.poznamka}
   // skupinka
   browse s [7,409,,] {type:'smart', rows:4
@@ -538,7 +553,7 @@ form _ucast [,,400,] { css:'ds_form'
     show xfunkce [,,40,] { title:'fce', data:p.funkce, format:'rq#s', map_pipe:ms_akce_funkce.zkratka, help:'funkce na akci'}
     show skupina [,,30,] { title:'sk.', data:p.skupina, format:'rqs:e', help:'číslo skupinky'}
     // barvení
-    show dluh       { expr:"IF(p.platba1+p.platba2+p.platba3+p.platba4=0,2,IF(p.platba1+p.platba2+p.platba3+p.platba4>platba,1,0))" }
+    show dluh       { expr:"IF(a.ma_cenik,IF(p.platba1+p.platba2+p.platba3+p.platba4=0,2,IF(p.platba1+p.platba2+p.platba3+p.platba4>platba,1,0)),0)" }
     // muž - načte se, i když není na akci
     show id_spolu_m { expr:"GROUP_CONCAT(DISTINCT IF(t.role='a',s.id_spolu,'') SEPARATOR '')" }
     show id_m       { expr:"GROUP_CONCAT(DISTINCT IF(tx.role='a',ox.id_osoba,'') SEPARATOR '')" }
@@ -628,6 +643,7 @@ form _ucast [,,400,] { css:'ds_form'
     show datplatby  { data:p.datplatby}
     show budova     { data:p.budova}
     show pokoj      { data:p.pokoj}
+    show ubytovani  { data:p.ubytovani}
     show k_poznamka { data:p.poznamka}
     show cd         { data:p.cd}
     show pouze      { data:p.pouze}
@@ -672,7 +688,7 @@ form _ucast [,,400,] { css:'ds_form'
         a_zen.ucasti(id_z.get);
       },
       'foto',{
-        { has_skill("yaa+;faa+");
+        { has_skill("yaa+;faa+;caa+");
           { u.b.fotka.get; //echo("u.b.fotka='",u.b.fotka.get,"'");
             // známe fotku
             alb.drop.set("<br>Fotografii můžeš nahradit přetažením myší ze složky svého počítače sem");
@@ -702,7 +718,6 @@ form _ucast [,,400,] { css:'ds_form'
 # ochrana proti neuložené změně, (selže, pokud jsou uloženy)
 proc neni_ulozeno() {
   var ok: number
-  //has_skill('yaa+;faa+');
   ok.set(not(and(rod.same,pob.same,muz.same,zen.same,pla.same)));
   [ ok;
     warning('neuložené změny pro účastníka <b>',rod.nazev.get,'</b> použij [Zpět] nebo [Uložit]') ];
@@ -711,7 +726,7 @@ proc neni_ulozeno() {
 # -------------------------------------------------------------------------------------------------- _cmd
 form _cmd [,,200,] { css:'ds_form'
   // Nový
-  button [6,525,,] {title:'Nový', skill:'yaa+|yaa+;faa+|faa+',
+  button [6,525,,] {title:'Nový', skill:'yaa+|yaa+;faa+|faa+;caa+|caa+',
     help:'Vytvoření nového jednotlivce (na akce muž) nebo páru (na akci oba) a vložení jako účastníka'
     proc onclick() {   // založení páru a jeho zařazení na akci
       var a_pouze: number
@@ -726,8 +741,8 @@ form _cmd [,,200,] { css:'ds_form'
       pob.pouze.key(a_pouze.get); pob.pouze.change;
   } }
   // Zpět a Uložit
-  label  [473,520,102,30] { css:'ae_parm', skill:'yaa+;faa+' }
-  button [479,525,,] {title:'Zpět',  help:'Neměnit změněná data', skill:'yaa+|yaa+;faa+|faa+'
+  label  [473,520,102,30] { css:'ae_parm', skill:'yaa+;faa+;caa+' }
+  button [479,525,,] {title:'Zpět',  help:'Neměnit změněná data', skill:'yaa+|yaa+;faa+|faa+;caa+|caa+'
     proc onclick() {
       #echo('ZPĚT: tab_act=',u.b.browse_active,', key=',u.b.browse_key,', nazev=',u.b.nazev.get);
       // potlačení ochrany proti neuložené změně
@@ -735,7 +750,7 @@ form _cmd [,,200,] { css:'ds_form'
       b_display(1);
       reload(u.b.browse_key);
   } }
-  button [525,525,,] {title:'Uložit',  help:'Uložit změněná data', skill:'yaa+|yaa+;faa+|faa+'
+  button [525,525,,] {title:'Uložit',  help:'Uložit změněná data', skill:'yaa+|yaa+;faa+|faa+;caa+|caa+'
     proc onclick() {
       var ok: number
       the_pobyt.get;
@@ -783,28 +798,28 @@ form _cmd [,,200,] { css:'ds_form'
     }
   }
   // PŘIDAT z AKCE
-  button pridat_a   [69,525,,] {title:'Přidat: z akce', skill:'yaa+|yaa+;faa+|faa+',
+  button pridat_a   [69,525,,] {title:'Přidat: z akce', skill:'yaa+|yaa+;faa+|faa+;caa+|caa+',
     help:'Přidání účastníky jiných akcí'
     proc onclick() {
       neni_ulozeno // warning
     | PridaniAkce.modal(240,50)
   } }
   // PŘIDAT z JEDNOTLIVCU
-  button pridat_1   [155,525,,] {title:'... jménem', skill:'yaa+|yaa+;faa+|faa+',
+  button pridat_1   [155,525,,] {title:'... jménem', skill:'yaa+|yaa+;faa+|faa+;caa+|caa+',
     help:'Přidání účastníka podle jména'
     proc onclick() {
       neni_ulozeno // warning
     | PridaniJmenem1.modal(240,50)
   } }
   // PŘIDAT z PARU
-  button pridat_2   [226,525,,] {title:'... pár', skill:'yaa+|yaa+;faa+|faa+',
+  button pridat_2   [226,525,,] {title:'... pár', skill:'yaa+|yaa+;faa+|faa+;caa+|caa+',
     help:'Přidání manželského páru podle jména'
     proc onclick() {
       neni_ulozeno // warning
     | PridaniJmenem2.modal(240,50)
   } }
   // VYŘADIT a VYMAZAT
-  button [354,525,,] {title:'Vyřadit', skill:'yaa+|yaa+;faa+|faa+',
+  button [354,525,,] {title:'Vyřadit', skill:'yaa+|yaa+;faa+|faa+;caa+|caa+',
     help:'Vyřazení účastníka nebo páru z účasti na akci'
     proc onclick() {
       neni_ulozeno // warning
@@ -813,7 +828,7 @@ form _cmd [,,200,] { css:'ds_form'
       pobyt.delete_record(conc('id_pobyt=',u.b.key_pobyt.get));
       reload(0);
   } }
-  button [406,525,,] {title:'Vymazat', skill:'yaa+|yaa+;faa+|faa+',
+  button [406,525,,] {title:'Vymazat', skill:'yaa+|yaa+;faa+|faa+;caa+|caa+',
     help:'Vymazání informací o páru z evidence'
     proc onclick() {
       neni_ulozeno // warning
@@ -822,7 +837,7 @@ form _cmd [,,200,] { css:'ds_form'
       reload(0);
   } }
   // PŘIDAT DÍTĚ
-  button dite       [271,525,,] {title:'Přidat dítě', skill:'yaa+|yaa+;faa+|faa+',
+  button dite       [271,525,,] {title:'Přidat dítě', skill:'yaa+|yaa+;faa+|faa+;caa+|caa+',
     help:'Přidání dalšího dítěte do rodiny'
     proc onclick() {
       neni_ulozeno // warning
@@ -836,14 +851,14 @@ form _cmd [,,200,] { css:'ds_form'
 # uložení změn v platbách
 form _cmd_p [,,200,] { css:'ds_form'
   // Zpět a Uložit
-  label  [473,520,102,30] { css:'ae_parm', skill:'yaa+;faa+' }
-  button [479,525,,] {title:'Zpět',  help:'Neměnit změněné platby', skill:'yaa+|yaa+;faa+|faa+'
+  label  [473,520,102,30] { css:'ae_parm', skill:'yaa+;faa+;caa+' }
+  button [479,525,,] {title:'Zpět',  help:'Neměnit změněné platby', skill:'yaa+|yaa+;faa+|faa+;caa+|caa+'
     proc onclick() {
       // potlačení ochrany proti neuložené změně
       pla.plain;
       reload(u.b.browse_key);
   } }
-  button [525,525,,] {title:'Uložit',  help:'Uložit změny v platbách', skill:'yaa+|yaa+;faa+|faa+'
+  button [525,525,,] {title:'Uložit',  help:'Uložit změny v platbách', skill:'yaa+|yaa+;faa+|faa+;caa+|caa+'
     proc onclick() {
       var ok: number
       the_pobyt.get;
@@ -878,7 +893,7 @@ panel Dite [,,360,360] {type:'popup', title:'Úprava dětí'
     { key_dite.get;
       dite.s.set_attrib('join',conc('ON d.id_osoba=s.id_osoba AND s.id_pobyt=',key_pobyt.get));
       dite.load(key_dite.get) | dite.init(2) };
-    [ has_skill('yaa+;faa+'); dite.vyradit.enable(eq(dite.ucasti.get,'')) ];
+    [ has_skill('yaa+;faa+;caa+'); dite.vyradit.enable(eq(dite.ucasti.get,'')) ];
     dite.sebou.set(cconc(key_spolu.get,1,0))
   }
   form _dite [,,200,50] { css:'ds_form'
@@ -913,8 +928,8 @@ panel Dite [,,360,360] {type:'popup', title:'Úprava dětí'
     field telefon  [L+5,T+94,212,] {data:d.telefon}
     label          [L+230,T+78,33,] {title:'narození'}
     field narozeni [L+229,T+94,85,] {type:'date', data:d.narozeni, format:'rR:e'}
-    label          [L+324,T+78,41,] {title:'nnnn rč'}
-    field rodne    [L+323,T+94,37,] {data:d.rc_xxxx, format:'r:e'}
+    label          [L+324,T+78,41,] {tag:'rc', title:'nnnn rč'}
+    field rodne    [L+323,T+94,37,] {tag:'rc', data:d.rc_xxxx, format:'r:e'}
     label          [L+5,T+122,33,] {title:'e-mail'}
     field email    [L+5,T+138,355,] {data:d.email}
     label          [L+5,T+163,33,] {title:'poznámka'}
@@ -925,7 +940,7 @@ panel Dite [,,360,360] {type:'popup', title:'Úprava dětí'
                         JOIN akce ON akce.id_duakce=pobyt.id_akce WHERE spolu.id_osoba=the_osoba)"
                      format:'o' }
     // ukončení
-    button vyradit [5,330,,] { title:'Vyřadit z evidence', skill:'yaa+|yaa+;faa+|faa+',
+    button vyradit [5,330,,] { title:'Vyřadit z evidence', skill:'yaa+|yaa+;faa+|faa+;caa+|caa+',
       help:'Vyřadit toto dítě z evidence - jen pokud nebylo na žádné akci',
       proc onclick() {
         confirm("Opravdu zrušit všechny informace o ",jmeno.get,"?");
@@ -936,11 +951,11 @@ panel Dite [,,360,360] {type:'popup', title:'Úprava dětí'
         reload(u.b.browse_key);
         panel.hide(1)
     } }
-    label  [260,326,98,30] { css:'ae_parm', skill:'yaa+;faa+' }
-    button [266,330,,] { title:'Zpět', skill:'yaa+|yaa+;faa+|faa+',
+    label  [260,326,98,30] { css:'ae_parm', skill:'yaa+;faa+;caa+' }
+    button [266,330,,] { title:'Zpět', skill:'yaa+|yaa+;faa+|faa+;caa+|caa+',
       proc onclick() { panel.hide(0)
     }}
-    button [312,330,,] { type:'submit', title:'Uložit', skill:'yaa+|yaa+;faa+|faa+'
+    button [312,330,,] { type:'submit', title:'Uložit', skill:'yaa+|yaa+;faa+|faa+;caa+|caa+'
       proc onclick() {
       { key_dite.get;
         dite_spolu.set(id_spolu.get);
@@ -1181,12 +1196,12 @@ panel Strava [,,320,280] {type:'popup', title:'Nastavení nestandardního počtu
       field vp  [289,0,15,] {format:':e' }
     }
     // ukončení
-    button [205,255,,] { title:'Zpět', skill:'yaa+|yaa+;faa+|faa+',
+    button [205,255,,] { title:'Zpět', skill:'yaa+|yaa+;faa+|faa+;caa+|caa+',
       proc onclick() { panel.hide(0)
     }}
     var scele: text
     var spolo: text
-    button [264,255,,] { type:'submit', title:'OK', skill:'yaa+|yaa+;faa+|faa+',
+    button [264,255,,] { type:'submit', title:'OK', skill:'yaa+|yaa+;faa+|faa+;caa+|caa+',
       proc onclick() {
         scele.set(''); spolo.set('');
         each(L,save_den);
