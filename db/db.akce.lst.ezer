@@ -149,7 +149,7 @@ form _page [,,285,500] {
   label [118,116,64,] { tag:'cor', title:'ukončení' }
   field [118,133,83,] { tag:'cor', type:'date', data:akce.datum_do }
   check [205,166,83,] { tag:'cor', title:'jen seznam', data:akce.spec, format:'r' }
-  check [206,189,69,] { tag:'cor', title:'má ceník', data:akce.ma_cenik, format:'r', skill:'yaa' }
+  check [206,189,69,] { tag:'cor', title:'má ceník', data:akce.ma_cenik, format:'r', skill:'yaa;yaa' }
   label [18,173,,]     { tag:'cor', title:'typ akce *' }
   select [71,169,139,] { tag:'cor', type:'map', data:akce.druh, options:ms_akce_typ.zkratka }
   radio [213,117,86,35] { tag:'cor', data:akce.strava_oddo, value:'vo'
