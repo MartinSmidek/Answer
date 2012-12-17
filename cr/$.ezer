@@ -3,7 +3,7 @@
 
 menu fa { type:'main', active:* //ys.pok
   var global: text,
-  tabs db {title:"Databáze", _sys:'db', include:'onclick,db.akce', active:*, skill:'ca' }
+  tabs db {title:"Databáze MS", _sys:'db', include:'onclick,db.akce', active:*, skill:'ca' }
 #   tabs lide {title:"Lidé", _sys:'lid', include:'onclick', skill:'a' }
   tabs syst {title:"Systém", _sys:'sys',  include:'onclick,ezer2.syst', active:*
     panel oso {type:'right', title:'Osobní nastavení', _sys:'*', include:'onclick,ezer2.pers' }
@@ -11,7 +11,8 @@ menu fa { type:'main', active:* //ys.pok
       menu {type:'left', active:*
         menu {title:'Centrum pro rodinu ...',type:'group', _sys:'*'
           item {title:'přehled dat',                          par:°{cmd:'survey'}, skill:'m' }
-          item {title:'import dat MS 1995-2012',              par:°{cmd:'MS'}, skill:'m' }
+          item {title:'import účastníků MS',                  par:°{cmd:'MS-ucast'}, skill:'m' }
+          item {title:'import skupinek MS',                   par:°{cmd:'MS-skup'}, skill:'m' }
           item {title:'výmaz osoba,tvori,rodina,pobyt,spolu', par:°{cmd:'clear'}, skill:'m' }
           proc onclick (i) {
             info.fill(conc(i.owner.title,' - ',i.title),' ... probíhá import dat ...');

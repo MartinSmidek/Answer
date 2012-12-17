@@ -518,7 +518,7 @@ form _ucast [,,400,] { css:'ds_form'
   view tx:table tvori  { join_type:'LEFT', join:'USING(id_rodina)' }
   view ox:table osoba  { join:'ON tx.id_osoba=ox.id_osoba' }
   // seznam účastníků
-  browse b [0,26,,] {type:'smart', buf_rows:120, rows:27, qry_rows:1, group_by:'id_pobyt',
+  browse b [0,26,,] {type:'smart', buf_rows:200, rows:27, qry_rows:1, group_by:'id_pobyt',
     optimize:°{qry:'noseek'}, css_rows:"dluh,1:yellow,2:blue"
 #     proc onclick() {
 #       xfunkce.width; xfunkce.width(0);  skupina.width(33); _jmena.width(89);
