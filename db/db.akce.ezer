@@ -20,7 +20,7 @@ proc akce_onstart() { dirty.get
   the_duakce.set(get_cookie(conc(sys('root'),'_akce_id'),0));
   the_cenik.set(get_cookie(conc(sys('root'),'_akce_cenik'),0));
   the_title.set(get_cookie(conc(sys('root'),'_akce_title'),'Vyber akci ...'));
-  the_rok.set(get_cookie(conc(sys('root'),'_akce_rok'),0));
+  the_rok.set(get_cookie(conc(sys('root'),'_akce_rok'),fdate('Y')));
 }
 # ================================================================================================== CHLAPI
 panel chl {type:'right', _sys:'*', title:'Chlapi', include:'onclick,db.akce.chl',skill:'yac' }

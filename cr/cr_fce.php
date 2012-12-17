@@ -37,21 +37,21 @@ function psc ($psc,$user2sql=0) {
 # import dat pro CPR podle $par->cmd==
 # 'clear' -- výmaz tabulek OSOBA, TVORI, RODINA, POBYT, SPOLU
 # 'MS'    -- EXPORT-ucastnici_1995-2012.csv => naplnění akcí "Letní kurz MS" účastníky
-function cr_import_dat($par) {  trace();
+function cr_import_dat($opt) {  trace();
   global $ezer_path_root;
   $msg= $err= '';
-  switch ($par->cmd) {
+  switch ($opt->cmd) {
   case 'survey':
     $msg= 'zatím není';
     break;
-  case 'clear':
+  case 'clear': // --------------------------------------------------------------------------- clear
     foreach(array('OSOBA', 'TVORI', 'RODINA', 'POBYT', 'SPOLU') as $db) {
       $qt= "TRUNCATE $db";
       $rt= mysql_qry($qt); if ( !$rt ) { $err= "tabulka $db"; goto end; }
       $msg= "tabulky OSOBA, TVORI, RODINA, POBYT, SPOLU vyprázdněny";
     }
     break;
-  case 'MS':
+  case 'MS-ucast': // -------------------------------------------------------------------- účastníci
     $fname= "$ezer_path_root/cr/data/EXPORT-ucastnici_1995-2012.csv";
     $f= fopen($fname, "r");
     if ( !$f ) { $err= "importní soubor $fname neexistuje"; goto end; }
@@ -152,6 +152,81 @@ function cr_import_dat($par) {  trace();
       }
     }
     $msg.= "<br><br>vloženo $r rodin, $o osoba, $t tvori, $p pobyt, $s spolu";
+    fclose($f);
+    break;
+  case 'MS-skup': // ----------------------------------------------------------------- skupinky, vps
+    $fname= "$ezer_path_root/cr/data/EXPORT-skupinky.csv";
+    $f= fopen($fname, "r");
+    if ( !$f ) { $err= "importní soubor $fname neexistuje"; goto end; }
+    // načtení kurzů
+    $kurz= array();
+    for ($rok= 1995; $rok<=2012; $rok++) {
+      $qa= "SELECT id_duakce,YEAR(datum_od) AS _rok FROM akce WHERE YEAR(datum_od)=$rok";
+      $ra= mysql_qry($qa); if ( !$ra ) { $err= "tabulka akcí"; goto end; }
+      $oa= mysql_fetch_object($ra);
+      $kurz[$oa->_rok]= $oa->id_duakce;
+    }
+//                                                         debug($kurz);
+    // importní soubor
+    $msg.= "Import ze souboru $fname ... ";
+    $line= 0;
+    $values= ''; $del= '';
+    $o= $t= $r= $p= $s= 0;
+    $skup= 0;
+    while (($d= fgetcsv($f, 1000, ";")) !== false) {
+      $line++;
+      if ( $line<0 ) continue; // vynechání hlaviček
+//       if ( $line>3 ) break;
+      // 0   1   2
+      // Rok;No.;[skupinka ]jméno páru
+      $rok= trim($d[0]);
+      $akce= $kurz[$rok];
+      $no= trim($d[1]);
+      $skup_par= preg_match("/(\d*)\s*([\pL]+)\s([\pL]+)\s(a)\s([\pL]+)/u",trim($d[2]),$m);
+      $vps= $m[1] ? 1 : 0;
+      if ( $vps ) $skup= $m[1];
+      $par= $m[2];
+      $par= mb_strtolower($m[2], 'UTF-8');
+      $par= mb_convert_case($m[2],MB_CASE_TITLE,'UTF-8');
+      $muz= $m[3];
+      $a= $m[4];
+      $zena= $m[5];
+//                                                 debug($m,"{$d[2]}/$skup_par::$skup:$par");
+      $n_a+= $a=='a' ? 0 : 1;
+      $n_s+= $skup ? 1 : 0;
+      // nalezení páru
+      $qp= "SELECT r.nazev AS nazev,p.id_pobyt,
+              GROUP_CONCAT(DISTINCT IF(t.role='a',o.prijmeni,'') SEPARATOR '') as prijmeni_m,
+              GROUP_CONCAT(DISTINCT IF(t.role='a',o.jmeno,'')    SEPARATOR '') as jmeno_m,
+              GROUP_CONCAT(DISTINCT IF(t.role='b',o.prijmeni,'') SEPARATOR '') as prijmeni_z,
+              GROUP_CONCAT(DISTINCT IF(t.role='b',o.jmeno,'')    SEPARATOR '') as jmeno_z
+            FROM pobyt AS p
+            JOIN spolu AS s USING(id_pobyt)
+            JOIN osoba AS o ON s.id_osoba=o.id_osoba
+            LEFT JOIN tvori AS t ON t.id_osoba=o.id_osoba
+            LEFT JOIN rodina AS r USING(id_rodina)
+            WHERE p.id_akce='$akce' AND r.nazev='$par'
+            GROUP BY id_pobyt HAVING jmeno_m='$muz' AND jmeno_z='$zena'";
+      $rp= mysql_qry($qp); if ( !$rp ) { $err= "CHYBA pár $par/$rok"; goto end; }
+      if ( mysql_num_rows($rp)==0 ) {
+        $n_e1++;
+        $msg2.= "<br>NENALEZEN: $par/$rok/$no  ({$m[0]})";
+      }
+      elseif ( mysql_num_rows($rp)>1 ) {
+        $n_e2++;
+        $msg2.= "<br>NEJEDNOZNAČNÉ: $par/$rok/$no  ({$m[0]})";
+      }
+      else {
+        $op= mysql_fetch_object($rp);
+        $n_u++;
+        // vložení informace do tabulek
+        $qu= "UPDATE pobyt SET funkce=$vps,skupina=$skup WHERE id_pobyt={$op->id_pobyt}";
+        $ru= mysql_qry($qu); if ( !$ru ) { $err= "CHYBA vložení $par/$rok"; goto end; }
+      }
+    }
+    $msg.= "<br><br>Bylo importováno $n_s skupinek, bylo nalezeno $n_u účastníků z $line.";
+    $msg.= "<br><br>Nepovedlo se najít $n_e1 vůbec a $n_e2 je víceznačných, $n_a není pár.";
+    $msg.= "<br>$msg2";
     fclose($f);
     break;
   }
