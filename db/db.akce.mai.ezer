@@ -94,10 +94,11 @@ form _esql {
   field id_cis { data:c.id_cis }
   field dat { data:c.data }
   field druh { data:c.druh, value:'db_maily_sql' }
-  field zkratka  [0,40,490,]  { data:c.zkratka, value:'' }
+  field zkratka  [0,40,486,]  { data:c.zkratka, value:'' }
   edit note  [0,70,750,50]    { data:c.popis }
   edit query [0,130,750,200]  { data:c.hodnota }
-  check druh [546,40,55,]    { title:"chlapi", data:c.barva, value:'0' }
+#   check druh [546,40,55,]    { title:"chlapi", data:c.barva, value:'0' }
+  select druh  [498,40,100,17] { type:'map', data:c.barva, options:map_db_maily_tab.zkratka, help:'mail pro ...' }
   label anwer [0,340,750,200]
   # příkazy
   label  [400,5,205,30] { tag:'def', css:'ae_parm' }
@@ -356,6 +357,7 @@ form _esady  {
   view eta: table akce  {join_type:'LEFT' join:'USING(id_duakce)'}
   view etc: table _cis  {join_type:'LEFT' join:"ON etd.cis_skupina=etc.data AND etc.druh='db_maily_sql'"}
   view eto: table osoba {join_type:'LEFT' join:'ON id_clen=eto.id_osoba'}
+  view etr: table rodina {join_type:'LEFT' join:'ON id_clen=etr.id_rodina'}
   browse texty [0,0,150,200] { rows:9, qry_rows:1, group_by:'id_dopis', css_rows:'stav1,3:zluty,4:zeleny,5:cerveny'
     show id_dopis  { data:etd.id_dopis },
     show id_duakce { data:etd.id_duakce }
@@ -363,6 +365,7 @@ form _esady  {
     show datum [,,60,] { title:'datum', data:etd.datum, format:'s-' },
     show komu_U [,,100,] { title:'účastníkům' , data:eta.nazev, format:'s' },
     show komu_Q [,,0,] { title:'skupině' , data:etc.zkratka, format:'s' },
+    show komu_Qn       { data:etc.barva },
     show predmet [,,160,] { title:'předmět', data:etd.nazev, format:'sq', css_cell:'stav2,3:zluty,4:zeleny,5:cerveny' },
     show stav1 [,,0,] { expr:'min(etm.stav)', format:'rsq' },
     show stav2 [,,0,] { expr:'max(etm.stav)', format:'rsq' },
@@ -371,7 +374,7 @@ form _esady  {
       eq(this.browse_count,0);
       dopis_id.set(0);
     | dopis_id.set(id_dopis.get);
-      maily.browse_load(conc("id_dopis=",dopis_id.get));
+      maily.browse_load(conc("etmm.id_dopis=",dopis_id.get));
       zkus.set(sys('user','options','email'));
       from.set(sys('user','options','email'));
       name.set(sys('user','options','vyrizuje'));
@@ -412,14 +415,23 @@ form _esady  {
   label info [0,373,367,90]   { style:"overflow:auto;border:1px solid grey;padding:5px" }
   label obsah [0,473,716,246] { style:"overflow:auto;border:1px solid grey;padding:5px" }
   # ------------------- seznam adres
+  view etmm: table mail
+  view etmo: table osoba  {join_type:'LEFT' join:'ON id_clen=etmo.id_osoba'}
+  view etmr: table rodina {join_type:'LEFT' join:'ON id_clen=etmr.id_rodina'}
+  view etmd: table dopis  {join_type:'LEFT' join:'USING(id_dopis)'}
+  view etmc: table _cis   {join_type:'LEFT' join:"ON etmd.cis_skupina=etmc.data AND etmc.druh='db_maily_sql'"}
   browse maily [390,0,120,200] { rows:24, qry_rows:1, css_rows:'stav,3:zluty,4:zeleny,5:cerveny'
-    show stav    [,,20,]  { title:'s.', data:mail.stav, format:'rsq' },
-    show id_clen [,,50,]  { title:'člen', data:mail.id_clen, format:'rsq' },
-    show prijmeni [,,50,] { title:'příjmení', data:eto.prijmeni, format:'s+q' },
-    show email   [,,180,] { title:'email', data:mail.email, format:'tsq' },
-    show msg     [,,50,]  { title:'chyba', data:mail.msg, format:'tsq' }
-    show id_mail          { data:mail.id_mail }
-    show body             { data:mail.body }
+    show id_mail          { data:etmm.id_mail }
+    show                  { data:etmo.id_osoba }
+    show                  { data:etmr.id_rodina }
+    show                  { data:etmd.id_dopis }
+    show                  { data:etmc.id_cis }
+    show stav    [,,20,]  { title:'s.', data:etmm.stav, format:'rsq' },
+    show id_clen [,,50,]  { title:'člen', data:etmm.id_clen, format:'rsq' },
+    show prijmeni [,,50,] { title:'příjmení', expr:"'-'", format:'s+q' },  // nastavuje se dynamicky v reload
+    show email   [,,180,] { title:'email', data:etmm.email, format:'tsq' },
+    show msg     [,,50,]  { title:'chyba', data:etmm.msg, format:'tsq' }
+    show body             { data:etmm.body }
     proc onsubmit() {
       ask('dop_mai_stav',id_mail.get,cconc(eq(stav.get,5),3,5));
       this.browse_row;
@@ -432,24 +444,32 @@ form _esady  {
   # --------------------- načtení celé karty
   proc reload() {
     form.init; davka.set(20); davka.change; msg.set(''); info.set('');
-    maily.browse_init; texty.browse_init;
+    maily.prijmeni.set_attrib('expr',"'*'");
+    maily.browse_init;
+    texty.browse_init;
     switch(dopis_var.get,
     // účastnící akce  (dopis.komu=0)
     'U',{ texty.browse_load(conc("etd.id_duakce='",dopis_akce.get,"'"," AND etd.komu=0"));
+          maily.prijmeni.set_attrib('expr',"etmo.prijmeni");
           texty.komu_U.width(100); texty.komu_Q.width(0);
     },
     // organizátoři akce (dopis.komu=1)
     'U2',{ texty.browse_load(conc("etd.id_duakce='",dopis_akce.get,"'"," AND etd.komu=1"));
+          maily.prijmeni.set_attrib('expr',"etmo.prijmeni");
           texty.komu_U.width(100); texty.komu_Q.width(0);
     },
     // dlužníci akce (dopis.komu=2)
     'U3',{ texty.browse_load(conc("etd.id_duakce='",dopis_akce.get,"'"," AND etd.komu=2"));
+          maily.prijmeni.set_attrib('expr',"etmo.prijmeni");
           texty.komu_U.width(100); texty.komu_Q.width(0);
     },
     // SQL
     'Q',{ texty.komu_U.width(0); texty.komu_Q.width(100);
+          maily.prijmeni.set_attrib('expr',
+            "IF(etmc.barva=1,'chlap',IF(etmc.barva=4,'DS',IF(etmc.barva=3,etmr.nazev,IF(etmc.barva=2,etmo.prijmeni,'?'))))");
           vy.komu_Q.key;
           texty.browse_load(conc("etd.id_duakce=0 AND etd.cis_skupina=",vy.komu_Q.key));
+          maily.prijmeni.set_attrib('title',texty.komu_Qn.get);
         | texty.browse_init
     });
     reload2
@@ -462,3 +482,4 @@ form _esady  {
 
 map map_dm_komu:      table _cis {where:"druh='am_komu'",      order:'poradi',  key_id:'data'}
 map map_db_maily_sql: table _cis {where:"druh='db_maily_sql'", order:'zkratka', key_id:'data'}
+map map_db_maily_tab: table _cis {where:"druh='db_maily_tab'", order:'zkratka', key_id:'data'}

@@ -4571,9 +4571,31 @@ function dop_mai_info($id,$email,$id_dopis,$zdroj) {  trace();
            WHERE id_dopis=$id_dopis ";
     $resQ= mysql_qry($qryQ);
     if ( $resQ && ($q= mysql_fetch_object($resQ)) ) {
-      if ( $q->barva ) {
+      if ( $q->barva==1 ) {
         // databáze CHLAPI
         $qry= "SELECT * FROM chlapi WHERE id_chlapi=$id ";
+        $res= mysql_qry($qry);
+        if ( $res && $c= mysql_fetch_object($res) ) {
+          $html.= "{$c->prijmeni} {$c->jmeno}<br>";
+          $html.= "{$c->ulice}, {$c->psc} {$c->obec}<br><br>";
+          if ( $c->telefon )
+            $html.= "Telefon: {$c->telefon}<br>";
+        }
+      }
+      elseif ( $q->barva==4 ) {
+        // kopie databáze DS = ds_osoba_copy
+        $qry= "SELECT * FROM ds_osoba_copy WHERE id_osoba=$id ";
+        $res= mysql_qry($qry);
+        if ( $res && $c= mysql_fetch_object($res) ) {
+          $html.= "{$c->prijmeni} {$c->jmeno}<br>";
+          $html.= "{$c->ulice}, {$c->psc} {$c->obec}<br><br>";
+          if ( $c->telefon )
+            $html.= "Telefon: {$c->telefon}<br>";
+        }
+      }
+      elseif ( $q->barva==2 ) {
+        // databáze osob
+        $qry= "SELECT * FROM osoba WHERE id_osoba=$id ";
         $res= mysql_qry($qry);
         if ( $res && $c= mysql_fetch_object($res) ) {
           $html.= "{$c->prijmeni} {$c->jmeno}<br>";
