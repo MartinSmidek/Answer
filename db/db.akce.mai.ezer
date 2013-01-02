@@ -418,12 +418,16 @@ form _esady  {
   view etmm: table mail
   view etmo: table osoba  {join_type:'LEFT' join:'ON id_clen=etmo.id_osoba'}
   view etmr: table rodina {join_type:'LEFT' join:'ON id_clen=etmr.id_rodina'}
+  view etmx: table chlapi {join_type:'LEFT' join:'ON id_clen=etmx.id_chlapi'}
+  view etms: table ds_osoba_copy {join_type:'LEFT' join:'ON id_clen=etms.id_osoba'}
   view etmd: table dopis  {join_type:'LEFT' join:'USING(id_dopis)'}
   view etmc: table _cis   {join_type:'LEFT' join:"ON etmd.cis_skupina=etmc.data AND etmc.druh='db_maily_sql'"}
   browse maily [390,0,120,200] { rows:24, qry_rows:1, css_rows:'stav,3:zluty,4:zeleny,5:cerveny'
     show id_mail          { data:etmm.id_mail }
     show                  { data:etmo.id_osoba }
     show                  { data:etmr.id_rodina }
+    show                  { data:etmx.id_chlapi }
+    show                  { data:etms.id_osoba }
     show                  { data:etmd.id_dopis }
     show                  { data:etmc.id_cis }
     show stav    [,,20,]  { title:'s.', data:etmm.stav, format:'rsq' },
@@ -466,7 +470,7 @@ form _esady  {
     // SQL
     'Q',{ texty.komu_U.width(0); texty.komu_Q.width(100);
           maily.prijmeni.set_attrib('expr',
-            "IF(etmc.barva=1,'chlap',IF(etmc.barva=4,'DS',IF(etmc.barva=3,etmr.nazev,IF(etmc.barva=2,etmo.prijmeni,'?'))))");
+            "IF(etmc.barva=1,etmx.prijmeni,IF(etmc.barva=4,etms.prijmeni,IF(etmc.barva=3,etmr.nazev,IF(etmc.barva=2,etmo.prijmeni,'?'))))");
           vy.komu_Q.key;
           texty.browse_load(conc("etd.id_duakce=0 AND etd.cis_skupina=",vy.komu_Q.key));
           maily.prijmeni.set_attrib('title',texty.komu_Qn.get);
