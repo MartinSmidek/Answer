@@ -176,6 +176,12 @@ table $osoba { key_id:'id_osoba'
   text email
   text info
 }
+
+table ds_osoba_copy { key_id:'id_osoba'
+  number id_osoba
+  text prijmeni
+}
+
 # ================================================================================================== AKCE
 table akce { key_id:'id_duakce'
   number id_duakce
@@ -248,6 +254,7 @@ table osoba { key_id:'id_osoba'
   text   deleted     { help:'ok|prázdné nebo D=značka smazání osoby' },
   text jmeno
   text prijmeni
+  text rodne
   number sex
   text ulice
   text psc
@@ -589,6 +596,8 @@ table dopis { key_id:'id_dopis'
   number id_davka { help:'dávka|číslo rozesílání dávky dopisů' },
   text nazev
   text prilohy
+  number potvrzeni { help:"potvrzení|vyžádat zaslání potvrzení o přečtení" }
+  number kopie	{ help:"poslat slepou kopii 'odesílateli'" }
   number id_duakce   // pouze pro maily: id akce
   number cis_skupina // pouze pro maily: _cis.data položky se SQL (_cis.druh='db_maily_sql')
   text druh { help:'druh|D-dopis, S-samolepka,legitimace, N-nesamostatná složka' },
