@@ -448,23 +448,20 @@ form _esady  {
   # --------------------- načtení celé karty
   proc reload() {
     form.init; davka.set(20); davka.change; msg.set(''); info.set('');
-    maily.prijmeni.set_attrib('expr',"'*'");
+    maily.prijmeni.set_attrib('expr',"etmo.prijmeni");
     maily.browse_init;
     texty.browse_init;
     switch(dopis_var.get,
     // účastnící akce  (dopis.komu=0)
     'U',{ texty.browse_load(conc("etd.id_duakce='",dopis_akce.get,"'"," AND etd.komu=0"));
-          maily.prijmeni.set_attrib('expr',"etmo.prijmeni");
           texty.komu_U.width(100); texty.komu_Q.width(0);
     },
     // organizátoři akce (dopis.komu=1)
     'U2',{ texty.browse_load(conc("etd.id_duakce='",dopis_akce.get,"'"," AND etd.komu=1"));
-          maily.prijmeni.set_attrib('expr',"etmo.prijmeni");
           texty.komu_U.width(100); texty.komu_Q.width(0);
     },
     // dlužníci akce (dopis.komu=2)
     'U3',{ texty.browse_load(conc("etd.id_duakce='",dopis_akce.get,"'"," AND etd.komu=2"));
-          maily.prijmeni.set_attrib('expr',"etmo.prijmeni");
           texty.komu_U.width(100); texty.komu_Q.width(0);
     },
     // SQL
