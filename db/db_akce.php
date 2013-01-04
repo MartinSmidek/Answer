@@ -3021,7 +3021,7 @@ function chlapi_mrop_export() {  #trace();
   }
   $pipe= array('narozeni'=>'sql_date1');
   export_head($par,$titles);
-  $qry= "SELECT $fields FROM chlapi WHERE iniciace!='' ";
+  $qry= "SELECT $fields FROM ezer_ys.chlapi WHERE iniciace!='' ";
   $res= mysql_qry($qry);
   // projití záznamů
   $values= array();
@@ -3064,7 +3064,7 @@ function chlapi_akce_export($id_akce,$nazev) {  #trace();
   $pipe= array('narozeni'=>'sql_date1');
   export_head($par,$titles);
   $qry= "SELECT $fields
-         FROM ch_ucast AS u JOIN chlapi AS c USING(id_chlapi) WHERE id_akce=$id_akce ";
+         FROM ezer_ys.ch_ucast AS u JOIN ezer_ys.chlapi AS c USING(id_chlapi) WHERE id_akce=$id_akce ";
   $res= mysql_qry($qry);
   // projití záznamů
   $values= array();
@@ -3087,9 +3087,9 @@ function chlapi_akce_export($id_akce,$nazev) {  #trace();
 function chlapi_delete($id_chlapi) {  #trace();
   $ans= '';
   $qry= "SELECT GROUP_CONCAT(nazev) AS _a, prijmeni, jmeno
-         FROM ch_ucast
-         JOIN ch_akce USING(id_akce)
-         JOIN chlapi USING(id_chlapi)
+         FROM ezer_ys.ch_ucast
+         JOIN ezer_ys.ch_akce USING(id_akce)
+         JOIN ezer_ys.chlapi USING(id_chlapi)
          WHERE id_chlapi='$id_chlapi' GROUP BY id_chlapi ";
   $res= mysql_qry($qry);
   if ( $res && $a= mysql_fetch_object($res) ) {
@@ -3102,7 +3102,7 @@ function chlapi_delete($id_chlapi) {  #trace();
     global $USER;
     $dnes= date('Y-m-d');
     $zmeny= array((object)array('fld'=>'deleted','op'=>'u','val'=>"D {$USER->abbr} $dnes"));
-    $ok= ezer_qry("UPDATE",'chlapi',$id_chlapi,$zmeny,'id_chlapi');
+    $ok= ezer_qry("UPDATE",'ezer_ys.chlapi',$id_chlapi,$zmeny,'id_chlapi');
   }
   return $ans;
 }
@@ -3113,14 +3113,14 @@ function chlapi_akce_prehled($id_akce) {  #trace();
   $tab= '';
   $n= 0;
   // základní údaje
-  $qry= "SELECT * FROM ch_akce WHERE id_akce='$id_akce' ";
+  $qry= "SELECT * FROM ezer_ys.ch_akce WHERE id_akce='$id_akce' ";
   $res= mysql_qry($qry);
   $x= mysql_fetch_object($res);
   $od= sql_date1($x->datum_od);
   $do= sql_date1($x->datum_do);
   $html.= "<h3>{$x->nazev}, $od - $do</h3>";
   // účastníci
-  $qry= "SELECT zkratka AS _x, count(*) AS _n FROM ch_ucast JOIN chlapi USING(id_chlapi)
+  $qry= "SELECT zkratka AS _x, count(*) AS _n FROM ezer_ys.ch_ucast JOIN ezer_ys.chlapi USING(id_chlapi)
          JOIN _cis ON druh='akce_ucast' AND data=stupen WHERE id_akce='$id_akce' GROUP BY stupen";
   $res= mysql_qry($qry);
   while ( $res && $a= mysql_fetch_object($res) ) {
@@ -3131,7 +3131,7 @@ function chlapi_akce_prehled($id_akce) {  #trace();
   $html.= "<br/><br/><table>$tab</table>";
   // cena
   $qry= "SELECT sum(cena) AS c, sum(IF(avizo,cena,0)) AS a, sum(uctem) AS u, sum(pokladnou) AS p
-         FROM ch_ucast WHERE id_akce='$id_akce' ";
+         FROM ezer_ys.ch_ucast WHERE id_akce='$id_akce' ";
   $res= mysql_qry($qry);
   $c= mysql_fetch_object($res);
   $html.= "<br/><b>Cena akce pro účastníky: {$x->cena}</b>";

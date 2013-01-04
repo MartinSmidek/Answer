@@ -29,7 +29,7 @@ menu m {type:'left'
       ch.get.display(0); chs.get.display(0);
       info.fill(conc(i.owner.title,' ',i.title),ask('chlapi_akce_prehled',the_akce.get));
       the_akce_nazev.set(i.title);
-      [ the_akce.get; the_akce_cena.set(ask('select','cena','ch_akce',conc('id_akce=',the_akce.get))) ]
+      [ the_akce.get; the_akce_cena.set(ask('select','cena','ezer_ys.ch_akce',conc('id_akce=',the_akce.get))) ]
     }
   }
   menu {title:'rok 2011',type:'group'
@@ -44,7 +44,7 @@ menu m {type:'left'
       ch.get.display(0); chs.get.display(0);
       info.fill(conc(i.owner.title,' ',i.title),ask('chlapi_akce_prehled',the_akce.get));
       the_akce_nazev.set(i.title);
-      [ the_akce.get; the_akce_cena.set(ask('select','cena','ch_akce',conc('id_akce=',the_akce.get))) ]
+      [ the_akce.get; the_akce_cena.set(ask('select','cena','ezer_ys.ch_akce',conc('id_akce=',the_akce.get))) ]
     }
   }
   menu os {title:'Osobní údaje',type:'group'
