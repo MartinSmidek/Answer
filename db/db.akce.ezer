@@ -124,7 +124,7 @@ table _track { key_id:'id_track'
   text val { help:'nová hodnota' },
 }
 # ================================================================================================== CHLAPI
-table chlapi { key_id:'id_chlapi'
+table chlapi { key_id:'id_chlapi', db:'ezer_ys'
   number id_chlapi
   text prijmeni
   text jmeno
@@ -139,7 +139,7 @@ table chlapi { key_id:'id_chlapi'
   number iniciace
   text pozn
 }
-table ch_ucast { key_id:'id_ucast'
+table ch_ucast { key_id:'id_ucast', db:'ezer_ys'
   number id_ucast
   number id_chlapi
   number id_akce
@@ -151,7 +151,7 @@ table ch_ucast { key_id:'id_ucast'
   number pokladnou { help:"zaplaceno v hotovosti" }
   text pozn
 }
-table ch_akce { key_id:'id_akce'
+table ch_akce { key_id:'id_akce', db:'ezer_ys'
   number id_akce
   text nazev
   number cena      { help:"cena akce" }
