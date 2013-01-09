@@ -35,35 +35,139 @@ function psc ($psc,$user2sql=0) {
 # ================================================================================================== SYSTEM
 # -------------------------------------------------------------------------------------------------- cr_import_dat
 # import dat pro CPR podle $par->cmd==
-# 'clear' -- výmaz tabulek OSOBA, TVORI, RODINA, POBYT, SPOLU
-# 'MS'    -- EXPORT-ucastnici_1995-2012.csv => naplnění akcí "Letní kurz MS" účastníky
+# 'clear-all' -- výmaz tabulek OSOBA, TVORI, RODINA, POBYT, SPOLU
+# 'MS-ucast'  -- EXPORT-ucastnici_1995-2012.csv => naplnění akcí "Letní kurz MS" účastníky
+# 'MS-skup'   -- EXPORT-skupinky.csv => naplnění akcí "Letní kurz MS" skupinkami a VPS
+# 'MS-pec'    -- EXPORT-pecouni.csv => naplnění OSOBA pečovateli a zařazení na kurz
 function cr_import_dat($opt) {  trace();
+  # funkce načtení kurzů
+  function kurzy(&$err,&$msg,$yy=false) {
+    $kurz= array();
+    for ($rok= 1995; $rok<=2012; $rok++) {
+      $qa= "SELECT id_duakce,YEAR(datum_od) AS _rok FROM akce WHERE YEAR(datum_od)=$rok";
+      $ra= mysql_qry($qa); if ( !$ra ) { $err= "tabulka akcí"; goto end; }
+      $oa= mysql_fetch_object($ra);
+      $kurz[$yy ? substr($oa->_rok,-2) : $oa->_rok]= $oa->id_duakce;
+    }
+  end:
+    if ( $err ) {
+      $msg.= "<br><br>CHYBA: $err";
+    }
+    return $kurz;
+  }
   global $ezer_path_root;
   $msg= $err= '';
+  mb_internal_encoding('UTF-8');
   switch ($opt->cmd) {
   case 'survey':
-    $msg= 'zatím není';
+    foreach(array('osoba', 'tvori', 'rodina', 'pobyt', 'spolu') as $db) {
+      $qt= "SELECT COUNT(*) AS _pocet_ FROM $db";
+      $rt= mysql_qry($qt); if ( !$rt ) { $err= "tabulka $db"; goto end; }
+      $ot= mysql_fetch_object($rt);
+      $msg.= "tabulka $db má {$ot->_pocet_} záznamů<br>";
+    }
     break;
-  case 'clear': // --------------------------------------------------------------------------- clear
-    foreach(array('OSOBA', 'TVORI', 'RODINA', 'POBYT', 'SPOLU') as $db) {
+  case 'clear-all': // ----------------------------------------------------------------------- clear
+    foreach(array('osoba', 'tvori', 'rodina', 'pobyt', 'spolu') as $db) {
       $qt= "TRUNCATE $db";
       $rt= mysql_qry($qt); if ( !$rt ) { $err= "tabulka $db"; goto end; }
       $msg= "tabulky OSOBA, TVORI, RODINA, POBYT, SPOLU vyprázdněny";
     }
+    break;
+  case 'MS-pec': // ------------------------------------------------------------------------ pečouni
+    $fname= "$ezer_path_root/cr/data/EXPORT-pecouni.csv";
+    $f= fopen($fname, "r");
+    if ( !$f ) { $err= "importní soubor $fname neexistuje"; goto end; }
+    // načtení kurzů
+    $kurz= kurzy($err,$msg); if ( $err ) goto end;
+    // importní soubor
+    $poradatel= "CR";
+//     $poradatel= "YS";
+    $msg.= "Import ze souboru $fname pro $poradatel";
+    $rok0= 0;
+    $line= 0;
+    $values= ''; $del= '';
+    $o= $n= 0;
+//     $min= 122;                    // ladění !!!!!!!!!! od kterého importovat
+//     $max= 999;                    // ladění !!!!!!!!!! kolik maximálně importovat
+    while (($d= fgetcsv($f, 1000, ";")) !== false) {
+      $line++;
+      if ( $line<2 ) continue; // vynechání hlaviček
+//       if ( $line<$min ) continue; // ladění !!!!!!!!!!
+      // 0        1     2     3    4   5  6        7    8   9      10      11
+      // příjmení;jméno;ulice;obec;psč;rč;narození;kurz;rok;funkce;telefon;email
+      // určení akce, je-li tohoto pořadatele
+      if ( $poradatel!=$d[7] ) continue;
+//       $n++;                     // ladění !!!!!!!!!!
+//       if ( $n>$max ) break;     // ladění !!!!!!!!!!
+      $rok= trim($d[8]);
+      if ( $rok0!=$rok ) {
+        $msg.= "<hr>rok $rok";
+        $rok0= $rok;
+        $akce= $kurz[$rok];
+        // vložení POBYT typu 99 pro pečouny
+        $qp= "INSERT INTO pobyt (id_akce,funkce) VALUES ($akce,99)";
+        $rp= @mysql_qry($qp); if ( !$rp ) { $err= "insert POBYT $rok"; goto end; }
+        $pobyt= mysql_insert_id();
+      }
+      // osobní údaje
+      $prijmeni= trim($d[0]);
+      $jmeno= trim($d[1]);
+      $ulice= trim($d[2]);
+      $obec= trim($d[3]);
+      // psč a stát
+      list($stat,$psc)= explode('-',str_replace(" ",'',$d[4]));
+      if ( !$psc ) { $psc= $stat; $stat= ''; }
+      // rč, narozeni, sex
+      $narozeni= $sex= '';
+      if ( $d[5] ) {
+        list($rc,$xxxx)= explode('/',$d[5]);
+        $narozeni= datum_rc(trim($d[5]));
+      }
+      elseif ( $d[6] ) {
+        $narozeni= sql_date(trim($d[6]),true);
+      }
+      if ( !$sex ) {
+        $sex= mb_substr($prijmeni,-1)=='á' ? 2 : 1;
+      }
+      // telefon, email
+      $telefon= str_replace(" ",'',$d[10]);
+      $email= str_replace(" ",'',$d[11]);
+      // funkce
+      $funkce= trim($d[9]);
+      if ( $funkce ) $funkce= "Personál: $funkce";
+      // hledání v OSOBA
+      $qo= "SELECT id_osoba,jmeno,prijmeni FROM osoba WHERE narozeni='$narozeni'";
+      $ro= mysql_qry($qo); if ( !$ro ) { $err= "CHYBA $jmeno $prijmeni"; goto end; }
+      $oo= mysql_fetch_object($ro);
+      if ( $oo ) {
+        $o++;
+        $osoba= $oo->id_osoba;
+        $msg.= "<br>NALEZENO: $jmeno $prijmeni jako {$oo->jmeno} {$oo->prijmeni}";
+      }
+      else {
+        // vložení do OSOBA
+        $qi= "INSERT INTO osoba (jmeno,prijmeni,sex,ulice,psc,obec,stat,telefon,email,narozeni,rc_xxxx)
+              VALUES ('$jmeno','$prijmeni',$sex,'$ulice','$psc','$obec','$stat','$telefon','$email',"
+                    ."'$narozeni','$xxxx')";
+  //                                         display($qi);
+        $ri= @mysql_qry($qi); if ( !$ri ) { $err= "insert OSOBA $prijmeni"; goto end; }
+        $n++;
+        $osoba= mysql_insert_id();
+      }
+      $qi= "INSERT INTO spolu (id_osoba,id_pobyt,poznamka) VALUES ($osoba,$pobyt,'$funkce')";
+      $ri= @mysql_qry($qi); if ( !$ri ) { $err= "insert SPOLU "; goto end; }
+      $t++;
+    }
+    $msg.= "<br><br>vloženo $n pečounů z toho $o bylo nalezeno";
+    fclose($f);
     break;
   case 'MS-ucast': // -------------------------------------------------------------------- účastníci
     $fname= "$ezer_path_root/cr/data/EXPORT-ucastnici_1995-2012.csv";
     $f= fopen($fname, "r");
     if ( !$f ) { $err= "importní soubor $fname neexistuje"; goto end; }
     // načtení kurzů
-    $kurz= array();
-    for ($rok= 1995; $rok<=2012; $rok++) {
-      $qa= "SELECT id_duakce,YEAR(datum_od) AS _rok FROM akce WHERE YEAR(datum_od)=$rok";
-      $ra= mysql_qry($qa); if ( !$ra ) { $err= "tabulka akcí"; goto end; }
-      $oa= mysql_fetch_object($ra);
-      $kurz[substr($oa->_rok,-2)]= $oa->id_duakce;
-    }
-//                                                         debug($kurz);
+    $kurz= kurzy($err,$msg,true); if ( $err ) goto end;
     // importní soubor
     $msg.= "Import ze souboru $fname ... ";
     $line= 0;
@@ -72,7 +176,11 @@ function cr_import_dat($opt) {  trace();
     while (($d= fgetcsv($f, 1000, ";")) !== false) {
       $line++;
       if ( $line<2 ) continue; // vynechání hlaviček
-//       if ( $line>10 ) break;
+
+//       $x= 150;       // od kolikátého
+//       if ( $line<$x ) continue; // omezení importu pro test
+//       if ( $line>$x+50 ) break;    // omezení importu pro test
+
       // 0        1     2             3             4   5     6     7  8         9         10
       // Příjmení;Jména;Dat. nar. Muž;Dat.nar. Žena;PSČ;Město;Ulice;MS;Telefon 1;Telefon 2;email
       list($stat,$psc)= explode('-',str_replace(" ",'',$d[4]));
@@ -81,6 +189,56 @@ function cr_import_dat($opt) {  trace();
       $nazev= trim($d[0]);
       $ulice= trim($d[6]);
       $obec= trim($d[5]);
+      $prm= $prz= '';
+      // příjmení muže a ženy
+      if ( mb_strpos($nazev,'/',0) ) {
+        list($prm,$prz)= explode('/',$nazev);
+      }
+      elseif ( mb_substr($nazev,-3)=='ovi') {
+        // žena je jasná
+        $prz= mb_substr($nazev,0,-3).'ová';
+        // muž je problém
+        $p= mb_substr($nazev,0,-3);
+        $p1= mb_substr($p,0,-1); $p_1= mb_substr($p,-1,1);
+        $p2= mb_substr($p,0,-2); $p_2= mb_substr($p,-2,1); $p12= mb_substr($p,-2,2);
+        $p3= mb_substr($p,0,-3); $p_3= mb_substr($p,-3,1);
+//                         debug(array($p1=>$p_1,$p2=>$p_2,$p3=>$p_3));
+        // třídy
+        if     ( $p12=='ch' || $p12=='yn' || $p12=='ík' || $p12=='ák' || $p12=='dl'
+              || $p12=='ok' || $p12=='zd' )
+          $prm= $p;
+        elseif ( mb_strpos(' aáeéěiíoóuúů',$p_2,0) && mb_strpos(' k',$p_1,0) )
+          $prm= "$p2{$p_2}e{$p_1}";
+        elseif ( mb_strpos(' njlčb',$p_2,0) && mb_strpos(' kc',$p_1,0) )
+          $prm= "$p2{$p_2}e{$p_1}";
+        elseif ( !mb_strpos(' aáeéěiíoóuúů',$p_2,0) && !mb_strpos(' aáeéěiíoóuúů',$p_1,0))
+          $prm= $p.'a';
+        elseif ( $p12=='up' || $p12=='al'  || $p12=='ív' )
+          $prm= $p.'a';
+        elseif ( mb_strpos(' aáeéěiíoóuúů',$p_2,0)  )
+          $prm= $p;
+      }
+      elseif (mb_substr($nazev,-3)=='čtí') {
+        $prz= mb_substr($nazev,0,-3).'cká';
+        $prm= mb_substr($nazev,0,-3).'cký';
+      }
+      elseif (mb_substr($nazev,-3)=='ští') {
+        $prz= mb_substr($nazev,0,-3).'ská';
+        $prm= mb_substr($nazev,0,-3).'ský';
+      }
+      elseif (mb_substr($nazev,-2)=='cí') {
+        $prz= mb_substr($nazev,0,-2).'ká';
+        $prm= mb_substr($nazev,0,-2).'ký';
+      }
+      elseif (mb_substr($nazev,-1)=='í') {
+        $prz= mb_substr($nazev,0,-1).'á';
+        $prm= mb_substr($nazev,0,-1).'ý';
+      }
+      else {
+        $prz= $nazev;
+        $prm= $nazev;
+      }
+                                        $msg.= "<br>$nazev ==&gt; $prz + $prm";
       // emaily
       $er= $em= $ez= '';
       $emaily= preg_split("/[\s]*[,;][\s]*/",str_replace(" ",'',$d[10]));
@@ -117,7 +275,7 @@ function cr_import_dat($opt) {  trace();
       // OSOBA - muž, TVORI - manžel
       $narozeni= sql_date(trim($d[2]),true);
       $qi= "INSERT INTO osoba (jmeno,prijmeni,sex,ulice,psc,obec,stat,telefon,email,narozeni)
-            VALUES ('{$jmeno[0]}','$nazev',1,'$ulice','$psc','$obec','$stat','$tm','$em','$narozeni')";
+            VALUES ('{$jmeno[0]}','$prm',1,'$ulice','$psc','$obec','$stat','$tm','$em','$narozeni')";
       $ri= @mysql_qry($qi); if ( !$ri ) { $err= "insert OSOBA/muž $nazev"; goto end; }
       $o++;
       $muz= mysql_insert_id();
@@ -127,7 +285,7 @@ function cr_import_dat($opt) {  trace();
       // OSOBA - žena, TVORI - manželka
       $narozeni= sql_date(trim($d[3]),true);
       $qi= "INSERT INTO osoba (jmeno,prijmeni,sex,ulice,psc,obec,stat,telefon,email,narozeni)
-            VALUES ('{$jmeno[1]}','$nazev',2,'$ulice','$psc','$obec','$stat','$tz','$ez','$narozeni')";
+            VALUES ('{$jmeno[1]}','$prz',2,'$ulice','$psc','$obec','$stat','$tz','$ez','$narozeni')";
       $ri= @mysql_qry($qi); if ( !$ri ) { $err= "insert OSOBA/muž $nazev"; goto end; }
       $o++;
       $zena= mysql_insert_id();
@@ -139,7 +297,7 @@ function cr_import_dat($opt) {  trace();
       foreach($mss as $ms) {
         $akce= $kurz[$ms];
         if ( !isset($akce) )  { $err= "insert POBYT $nazev nezname '$ms'"; goto end; }
-        $qp= "INSERT INTO pobyt (id_akce,id_osoba,pouze) VALUES ($akce,$muz,0)";
+        $qp= "INSERT INTO pobyt (id_akce,pouze) VALUES ($akce,0)";
         $rp= @mysql_qry($qp); if ( !$rp ) { $err= "insert POBYT $nazev"; goto end; }
         $p++;
         $pobyt= mysql_insert_id();
@@ -159,14 +317,7 @@ function cr_import_dat($opt) {  trace();
     $f= fopen($fname, "r");
     if ( !$f ) { $err= "importní soubor $fname neexistuje"; goto end; }
     // načtení kurzů
-    $kurz= array();
-    for ($rok= 1995; $rok<=2012; $rok++) {
-      $qa= "SELECT id_duakce,YEAR(datum_od) AS _rok FROM akce WHERE YEAR(datum_od)=$rok";
-      $ra= mysql_qry($qa); if ( !$ra ) { $err= "tabulka akcí"; goto end; }
-      $oa= mysql_fetch_object($ra);
-      $kurz[$oa->_rok]= $oa->id_duakce;
-    }
-//                                                         debug($kurz);
+    $kurz= kurzy($err,$msg); if ( $err ) goto end;
     // importní soubor
     $msg.= "Import ze souboru $fname ... ";
     $line= 0;
@@ -229,6 +380,8 @@ function cr_import_dat($opt) {  trace();
     $msg.= "<br>$msg2";
     fclose($f);
     break;
+  default:
+    $msg= "není ještě implementováno";
   }
 end:
   if ( $err ) {

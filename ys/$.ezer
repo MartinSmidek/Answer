@@ -29,6 +29,15 @@ menu ys { type:'main', active:* //ys.pok
 #             info.fill('',ask('akce_foxpro_data'));
 #           }}
         }
+        menu {title:'Importy ...',type:'group', _sys:'*'
+          item {title:'přehled dat',                          par:°{cmd:'survey'}, skill:'m' }
+          item {title:'import pečovatelů MS',                 par:°{cmd:'MS-pec'}, skill:'m' }
+#           item {title:'výmaz osoba/pečoun', par:°{cmd:'clear-pec'}, skill:'m' }
+          proc onclick (i) {
+            info.fill(conc(i.owner.title,' - ',i.title),' ... probíhá import dat ...');
+            info.fill('',ask('ys_import_dat',i.par));
+          }
+        }
       }
       use info: form right [12,4,,]
     }
@@ -98,129 +107,129 @@ table du_kurs { key_id:'id_dukurs'
   number typ
 }
 
-table ms_kurs { key_id:'id_kurs'
-  number id_kurs
-  text source
-  number id_pary
-  number id_akce
-  number id_dupary
-  number cislo
-  number skupina
-  number funkce
-  text aktivita
-  date datplatby        { sql_pipe:'sql_date1'}
-  number zpusobplat
-  text budova
-  text pokoj
-  number luzka
-  number strava_cel
-  number strava_pol
-  number kocarek
-  text pecovatel
-  text poznamka
-  number pristylky
-  number pocetdnu
-  number svp
-  number dorazil
-  number pouze
-  number akce
-  number platba
-  text cstrava_cel      // číslice jsou seřazeny jako počty snídaní,obědů,večeří po dnech
-  text cstrava_pol
-  number platba1
-  number platba2
-  number platba3
-  number platba4
-}
-
-table du_kursdeti { key_id:'id_dukursdeti'
-  number id_dukursdeti
-  number typ
-}
-
-table ms_kursdeti { key_id:'id_kursdeti'
-  number id_kursdeti
-  number id_pary        //-
-  number id_akce
-  number id_deti
-  number cislo          //-
-  text jmeno            //-
-  number skupina
-  number akce           //-
-}
-
-table du_pary { key_id:'id_dupary'
-  number id_dupary
-  number typ
-}
-
-table ms_pary { key_id:'id_pary'
-  number id_pary
-  number cislo
-  number cislo_z
-  text source
-  text jmeno
-  text adresa
-  text psc
-  text mesto
-  text telefon
-  text spz
-  date datsvatba { sql_pipe:'sql_date1'}
-  number svatba
-  text poznamka
-  text jmeno_m
-  text jmeno_z
-  text prijmeni_m
-  text prijmeni_z
-  number rodcislo_m
-  number rodcislo_z
-  text obcanka_m
-  text obcanka_z
-  number vzdelani_m
-  number vzdelani_z
-  text zamest_m
-  text zamest_z
-  text zajmy_m
-  text zajmy_z
-  text jazyk_m
-  text jazyk_z
-  number cirkev_m
-  number cirkev_z
-  text ccirkev_m
-  text ccirkev_z
-  text aktivita_m
-  text aktivita_z
-  number cislo_m
-  number clen_m
-  number clen_z
-  text vyloucen
-  text email
-  number nfoto
-  number lxx1
-}
-
-table du_deti { key_id:'id_dudeti'
-  number id_dudeti
-  number id_dupary
-  number id_deti
-  number typ
-  number pocet
-}
-
-table ms_deti { key_id:'id_deti'
-  number id_deti
-  number id_pary
-  text source
-  number cislo
-  text jmeno
-  number rodcislo
-  text poznamka
-}
-
-table ms_poraakce {
-  number poradatel
-  text jmeno
-}
+# table ms_kurs { key_id:'id_kurs'
+#   number id_kurs
+#   text source
+#   number id_pary
+#   number id_akce
+#   number id_dupary
+#   number cislo
+#   number skupina
+#   number funkce
+#   text aktivita
+#   date datplatby        { sql_pipe:'sql_date1'}
+#   number zpusobplat
+#   text budova
+#   text pokoj
+#   number luzka
+#   number strava_cel
+#   number strava_pol
+#   number kocarek
+#   text pecovatel
+#   text poznamka
+#   number pristylky
+#   number pocetdnu
+#   number svp
+#   number dorazil
+#   number pouze
+#   number akce
+#   number platba
+#   text cstrava_cel      // číslice jsou seřazeny jako počty snídaní,obědů,večeří po dnech
+#   text cstrava_pol
+#   number platba1
+#   number platba2
+#   number platba3
+#   number platba4
+# }
+#
+# table du_kursdeti { key_id:'id_dukursdeti'
+#   number id_dukursdeti
+#   number typ
+# }
+#
+# table ms_kursdeti { key_id:'id_kursdeti'
+#   number id_kursdeti
+#   number id_pary        //-
+#   number id_akce
+#   number id_deti
+#   number cislo          //-
+#   text jmeno            //-
+#   number skupina
+#   number akce           //-
+# }
+#
+# table du_pary { key_id:'id_dupary'
+#   number id_dupary
+#   number typ
+# }
+#
+# table ms_pary { key_id:'id_pary'
+#   number id_pary
+#   number cislo
+#   number cislo_z
+#   text source
+#   text jmeno
+#   text adresa
+#   text psc
+#   text mesto
+#   text telefon
+#   text spz
+#   date datsvatba { sql_pipe:'sql_date1'}
+#   number svatba
+#   text poznamka
+#   text jmeno_m
+#   text jmeno_z
+#   text prijmeni_m
+#   text prijmeni_z
+#   number rodcislo_m
+#   number rodcislo_z
+#   text obcanka_m
+#   text obcanka_z
+#   number vzdelani_m
+#   number vzdelani_z
+#   text zamest_m
+#   text zamest_z
+#   text zajmy_m
+#   text zajmy_z
+#   text jazyk_m
+#   text jazyk_z
+#   number cirkev_m
+#   number cirkev_z
+#   text ccirkev_m
+#   text ccirkev_z
+#   text aktivita_m
+#   text aktivita_z
+#   number cislo_m
+#   number clen_m
+#   number clen_z
+#   text vyloucen
+#   text email
+#   number nfoto
+#   number lxx1
+# }
+#
+# table du_deti { key_id:'id_dudeti'
+#   number id_dudeti
+#   number id_dupary
+#   number id_deti
+#   number typ
+#   number pocet
+# }
+#
+# table ms_deti { key_id:'id_deti'
+#   number id_deti
+#   number id_pary
+#   text source
+#   number cislo
+#   text jmeno
+#   number rodcislo
+#   text poznamka
+# }
+#
+# table ms_poraakce {
+#   number poradatel
+#   text jmeno
+# }
 
 table join_akce { // spojení číselníku akcí s MS
   number g_rok     { help:"rok akce podle číselníku akcí" }
@@ -307,6 +316,8 @@ table dopis { key_id:'id_dopis'
   number id_davka { help:'dávka|číslo rozesílání dávky dopisů' },
   text nazev
   text prilohy
+  number potvrzeni { help:"potvrzení|vyžádat zaslání potvrzení o přečtení" }
+  number kopie	{ help:"poslat slepou kopii 'odesílateli'" }
   text druh { help:'druh|D-dopis, S-samolepka,legitimace, N-nesamostatná složka' },
   text typ { help:'typ|značka dopisu' },
   number nw

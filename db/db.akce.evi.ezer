@@ -281,6 +281,7 @@ form _osoba { tag:'a'
 #   label  [L+8,T+0,74,] { title:'osobní údaje', css:'ae_part_label' }
   label          [L+5,T+15,89,] {title:'příjmení'}
   field prijmeni [L+5,T+30,89,] {data:o.prijmeni, help:'příjmení'}
+  field rodne    [L+5,T+52,89,] {data:o.rodne, help:'rodné příjmení'}
   label          [L+109,T+15,78,] {title:'jméno'}
   field jmeno    [L+109,T+30,79,] {data:o.jmeno}
   radio sex [L+200,T+15,50,35] { data:o.sex, value:'1'
@@ -291,19 +292,19 @@ form _osoba { tag:'a'
   label          [L+256,T+16,33,] {title:'narození'}
   field narozeni [L+255,T+32,85,] {type:'date', data:o.narozeni, format:'rR:e'}
   label          [L+346,T+16,41,] {title:'nnnn rč'}
-  field rodne    [L+345,T+32,37,] {data:o.rc_xxxx, format:'r:e'}
-  label          [L+5,T+54,100,] {title:'ulice'}
-  field ulice    [L+5,T+69,162,] {data:o.ulice}
-  label          [L+179,T+54,39,] {title:'psč'}
-  field psc      [L+179,T+69,40,] {data:o.psc}
-  label          [L+230,T+54,100,] {title:'obec'}
-  field obec     [L+229,T+69,131,] {data:o.obec}
-  label          [L+13,T+101,33,] {title:'telefon'}
-  field telefon  [L+51,T+97,212,] {type:'list', data:o.telefon}
-  label          [L+16,T+128,30,] {title:'e-mail'}
-  field email    [L+52,T+124,330,] {type:'list', data:o.email}
-  label          [L+0,T+152,48,] {title:'poznámka'}
-  edit  pozn     [L+52,T+151,329,60] {data:o.note}
+  field rodnexxxx[L+345,T+32,37,] {data:o.rc_xxxx, format:'r:e'}
+  label          [L+5,T+75,100,] {title:'ulice'}
+  field ulice    [L+5,T+90,162,] {data:o.ulice}
+  label          [L+179,T+75,39,] {title:'psč'}
+  field psc      [L+179,T+90,40,] {data:o.psc}
+  label          [L+230,T+75,100,] {title:'obec'}
+  field obec     [L+229,T+90,131,] {data:o.obec}
+  label          [L+13,T+119,33,] {title:'telefon'}
+  field telefon  [L+51,T+115,212,] {type:'list', data:o.telefon}
+  label          [L+16,T+144,30,] {title:'e-mail'}
+  field email    [L+52,T+140,330,] {type:'list', data:o.email}
+  label          [L+0,T+165,48,] {title:'poznámka'}
+  edit  pozn     [L+52,T+164,329,60] {data:o.note}
   # --------------------------------------------------  OPRAVA
   const Lt=55
   const Tt=240

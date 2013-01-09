@@ -14,10 +14,10 @@ proc onstart() {
 }
 proc onfirstfocus() { onfocus; init_forms }
 proc onfocus() {
+  u.legenda.display(the_cenik.get);
   [ the_duakce.get | akce_onstart ];
   eq(the_duakce_local.get,the_duakce.get)
-| u.legenda.display(the_cenik.get);
-  init_ucast2;
+| init_ucast2;
   the_duakce_local.set(the_duakce.get)
 }
 # úpravy formulářů pro y;f;c
@@ -369,6 +369,7 @@ form _evidence {
   label [48,382,55,] {title:'č.skupinky'}
   label [382,42,31,] {title:'křestní'}
   label [382,63,31,] {title:'příjmení'}
+  label [385,84,31,] {title:'rodné'}
   label [382,112,31,] {title:'telefon'}
   label [385,137,26,] {title:'email'}
   label [383,310,48,] {title:'osobní pozn.'}
@@ -417,6 +418,7 @@ form _muz {
   field jmeno_m     [225,48,83,22] {data:osoba.jmeno}
   field _vek_m      [354,50,19,] {format:'o', value:'?'}
   field prijmeni_m  [225,71,86,] {data:osoba.prijmeni}
+  field rodne_m     [225,94,86,] {data:osoba.rodne}
   select clen_m     [318,72,57,] {type:'map', data:osoba.clen, options:ms_akce_clen.zkratka}
   field telefon_m   [224,119,151,] {type:'list', data:osoba.telefon}
   field email_m     [224,143,151,] {type:'list', data:osoba.email}
@@ -439,6 +441,7 @@ form _zena {
   field jmeno_z     [421,49,85,] {data:osoba.jmeno}
   field _vek_z      [549,50,20,] {format:'o', value:'?'}
   field prijmeni_z  [420,71,86,] {data:osoba.prijmeni}
+  field rodne_z     [420,94,86,] {data:osoba.rodne}
   select clen_z     [515,72,56,] {type:'map', data:osoba.clen, options:ms_akce_clen.zkratka}
   field telefon_z   [420,119,151,] {type:'list', data:osoba.telefon}
   field email_z     [420,143,151,] {type:'list', data:osoba.email}
@@ -555,10 +558,11 @@ form _ucast [,,400,] { css:'ds_form'
     // barvení
     show dluh       { expr:"IF(a.ma_cenik,IF(p.platba1+p.platba2+p.platba3+p.platba4=0,2,IF(p.platba1+p.platba2+p.platba3+p.platba4>platba,1,0)),0)" }
     // muž - načte se, i když není na akci
-    show id_spolu_m { expr:"GROUP_CONCAT(DISTINCT IF(t.role='a',s.id_spolu,'') SEPARATOR '')" }
+    show id_spolu_m { expr:"GROUP_CONCAT(DISTINCT IF(t.role='a',s.id_spolu,'')   SEPARATOR '')" }
     show id_m       { expr:"GROUP_CONCAT(DISTINCT IF(tx.role='a',ox.id_osoba,'') SEPARATOR '')" }
     show jmeno_m    { expr:"GROUP_CONCAT(DISTINCT IF(tx.role='a',ox.jmeno,'')    SEPARATOR '')" }
     show prijmeni_m { expr:"GROUP_CONCAT(DISTINCT IF(tx.role='a',ox.prijmeni,'') SEPARATOR '')" }
+    show rodne_m    { expr:"GROUP_CONCAT(DISTINCT IF(tx.role='a',ox.rodne,'')    SEPARATOR '')" }
     show narozeni_m { expr:"GROUP_CONCAT(DISTINCT IF(tx.role='a',ox.narozeni,'') SEPARATOR '')", sql_pipe:'sql_date1' }
     show rc_xxxx_m  { expr:"GROUP_CONCAT(DISTINCT IF(tx.role='a',ox.rc_xxxx,'')  SEPARATOR '')" }
     show telefon_m  { expr:"GROUP_CONCAT(DISTINCT IF(tx.role='a',ox.telefon,'')  SEPARATOR '')" }
@@ -573,10 +577,11 @@ form _ucast [,,400,] { css:'ds_form'
     show clen_m     { expr:"GROUP_CONCAT(DISTINCT IF(tx.role='a',ox.clen,'')     SEPARATOR '')" }
     show historie_m { expr:"GROUP_CONCAT(DISTINCT IF(tx.role='a',ox.historie,'') SEPARATOR '')", skill:'yaah' }
     // žena - načte se, i když není na akci
-    show id_spolu_z { expr:"GROUP_CONCAT(DISTINCT IF(t.role='b',s.id_spolu,'') SEPARATOR '')" }
+    show id_spolu_z { expr:"GROUP_CONCAT(DISTINCT IF(t.role='b',s.id_spolu,'')   SEPARATOR '')" }
     show id_z       { expr:"GROUP_CONCAT(DISTINCT IF(tx.role='b',ox.id_osoba,'') SEPARATOR '')" }
     show jmeno_z    { expr:"GROUP_CONCAT(DISTINCT IF(tx.role='b',ox.jmeno,'')    SEPARATOR '')" }
     show prijmeni_z { expr:"GROUP_CONCAT(DISTINCT IF(tx.role='b',ox.prijmeni,'') SEPARATOR '')" }
+    show rodne_z    { expr:"GROUP_CONCAT(DISTINCT IF(tx.role='b',ox.rodne,'')    SEPARATOR '')" }
     show narozeni_z { expr:"GROUP_CONCAT(DISTINCT IF(tx.role='b',ox.narozeni,'') SEPARATOR '')", sql_pipe:'sql_date1' }
     show rc_xxxx_z  { expr:"GROUP_CONCAT(DISTINCT IF(tx.role='b',ox.rc_xxxx,'')  SEPARATOR '')" }
     show telefon_z  { expr:"GROUP_CONCAT(DISTINCT IF(tx.role='b',ox.telefon,'')  SEPARATOR '')" }

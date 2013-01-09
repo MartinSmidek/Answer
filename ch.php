@@ -7,27 +7,55 @@
   $skin=     'ch';
 
   require_once("$app.inc");
-  require_once("ezer2/server/ae_slib.php");
+  require_once("{$EZER->version}/server/ae_slib.php");
+  $app_name.= $EZER->options->mysql ? " - {$EZER->options->mysql}" : '';
 
-  $js= array(
-    'ezer2/client/licensed/ckeditor/ckeditor.js',
-    'ezer2/client/licensed/clientcide.js',
-    'ezer2/client/licensed/mootools/asset.js',
-    'ezer2/client/licensed/mootools/slider.js',
-    'ezer2/client/lib.js',
-    'ezer2/client/ezer_fdom1.js',
-    'ezer2/client/ezer.js',
-    'ezer2/client/ezer_report.js',
-    'ezer2/client/ezer_fdom2.js',
-    'ezer2/client/app.js',
-    'db/db_fce.js'
-//     'ds/fce.js'
+  $client= "{$EZER->version}/client";
+  $licensed= "$client/licensed";
+  $js= array_merge(
+    // ckeditor a mootools
+    array("$licensed/ckeditor/ckeditor.js","$licensed/clientcide.js"),
+    // pro verzi 2.1
+    $EZER->version=='ezer2'
+    ? array("$licensed/mootools/asset.js","$licensed/mootools/slider.js"):array(),
+    // pro verzi 2.2
+    $EZER->version=='ezer2.2'
+    ? array("$licensed/datepicker.js"):array(),
+    // jádro Ezer
+    array("$client/lib.js","$client/ezer_fdom1.js","$client/ezer.js","$client/ezer_report.js",
+      "$client/ezer_fdom2.js","$client/app.js","$licensed/zeroclipboard/ZeroClipboard.js"),
+    // další knihovny
+    array("$licensed/glfx.js","http://maps.googleapis.com/maps/api/js?sensor=false"),
+    // uživatelské skripty
+    array("db/db_fce.js","ds/fce.js")
   );
-  $css= array(
-    './ezer2/client/ezer.css.php',
-//     './ezer2/client/licensed/fancyupload.css',
-    './db/db.css.php'
+
+//   $js= array(
+//     'ezer2/client/licensed/ckeditor/ckeditor.js',
+//     'ezer2/client/licensed/clientcide.js',
+//     'ezer2/client/licensed/mootools/asset.js',
+//     'ezer2/client/licensed/mootools/slider.js',
+//     'ezer2/client/lib.js',
+//     'ezer2/client/ezer_fdom1.js',
+//     'ezer2/client/ezer.js',
+//     'ezer2/client/ezer_report.js',
+//     'ezer2/client/ezer_fdom2.js',
+//     'ezer2/client/app.js',
+//     'db/db_fce.js'
+// //     'ds/fce.js'
+//   );
+
+  $css= array_merge(
+    array("./$client/ezer.css.php","./fa/fa.css.php","./db/db.css.php"),
+    /* pro verzi 2.2 */ $EZER->version=='ezer2.2'
+    ? array("$licensed/datepicker/datepicker_vista/datepicker_vista.css"):array()
   );
+
+//   $css= array(
+//     './ezer2/client/ezer.css.php',
+// //     './ezer2/client/licensed/fancyupload.css',
+//     './db/db.css.php'
+//   );
   $options= (object)array(
     'skill'      => "'y'",
     'autoskill'  => "'!y'",

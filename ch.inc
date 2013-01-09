@@ -1,8 +1,12 @@
 <?php # (c) 2009-2010 Martin Smidek <martin@smidek.eu>
 
+  // nastavení verze jádra
+  $EZER= (object)array();
+  $EZER->version= $_GET['ezer'] ? "ezer{$_GET['ezer']}" : 'ezer2.2';
+
   $ezer_local= preg_match('/^\w+\.ezer/',$_SERVER["SERVER_NAME"]); // identifikace ladícího serveru
 
-  require_once("ezer2/server/ae_slib.php");
+  require_once("{$EZER->version}/server/ae_slib.php");
 
   // OBECNÉ PARAMETRY
 
@@ -63,7 +67,7 @@
   $EZER->activity->skip=  'GAN';      // viz system.php::sys_table
 
   // knihovní moduly
-  require_once("$ezer_path_root/ezer2/ezer2_fce.php");
+//   require_once("$ezer_path_root/ezer2/ezer2_fce.php");
   // vložení modulù
   foreach($ezer_php as $php) {
     require_once("$ezer_path_root/$php");

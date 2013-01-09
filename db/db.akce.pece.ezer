@@ -164,14 +164,17 @@ form _pece [,,400,] { css:'ds_form'
   view a: table akce{ join:'ON a.id_duakce=p.id_akce' }
   view s: table spolu  { join:'USING(id_pobyt)' }
   view o: table osoba  { join:'ON s.id_osoba=o.id_osoba' }
+  view t: table tvori  { join_type:'LEFT', join:'ON t.id_osoba=o.id_osoba' }
 #   // seznam účastníků
   browse b [0,0,,] {type:'smart', buf_rows:120, rows:27, qry_rows:1,
     optimize:°{qry:'noseek'}
 #     // klíče
-    show key_akce  {data:p.id_akce}
-    show key_pobyt {data:p.id_pobyt}
-    show key_spolu {data:s.id_spolu}
-    show key_osoba {data:o.id_osoba}
+    show key_akce   {data:p.id_akce}
+    show key_pobyt  {data:p.id_pobyt}
+    show key_spolu  {data:s.id_spolu}
+    show key_osoba  {data:o.id_osoba}
+    show key_rodina {data:t.id_rodina}
+    show role       {data:t.role}
     // data
     show prijmeni { data:o.prijmeni }
     show jmeno    { data:o.jmeno }
@@ -212,6 +215,7 @@ form _pece [,,400,] { css:'ds_form'
         develop.set(conc(
            'id_akce=',key_akce.get,', id_pobyt=',key_pobyt.get
           ,'<br>m: id_spolu=', key_spolu.get, ', id_osoba=', key_osoba.get
+          , ', id_rodina=', key_rodina.get, '/', role.get
         ))
         | develop.set('') }
       ];

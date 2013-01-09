@@ -47,7 +47,7 @@ function rr_send($par) {
       , 'První'=>'první', 'Druhá'=>'druhou', 'Čtvrtá'=>'čtvrtou', 'Pátá'=>'pátou'
       , 'Šestá'=>'šestou', 'Sedmá' => 'sedmou'
       ));
-    $subj= "Richard na $subject - $title_cz";
+    $subj= "Richard Rohr na $subject - $title_cz";
     $body= "<table cellpadding='10'><tr>";
     $body.= "<td valign='top' width='50%'><b>$title_cz</b><br>$text_cz</td>";
     $body.= "<td valign='top' width='50%'><b>$title_en</b><br>$text_en<div align='right'>$from_en</div></td>";

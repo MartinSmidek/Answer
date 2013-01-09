@@ -13,7 +13,9 @@ menu fa { type:'main', active:* //ys.pok
           item {title:'přehled dat',                          par:°{cmd:'survey'}, skill:'m' }
           item {title:'import účastníků MS',                  par:°{cmd:'MS-ucast'}, skill:'m' }
           item {title:'import skupinek MS',                   par:°{cmd:'MS-skup'}, skill:'m' }
-          item {title:'výmaz osoba,tvori,rodina,pobyt,spolu', par:°{cmd:'clear'}, skill:'m' }
+          item {title:'import pečovatelů MS',                 par:°{cmd:'MS-pec'}, skill:'m' }
+          item {title:'výmaz osoba,tvori,rodina,pobyt,spolu', par:°{cmd:'clear-all'}, skill:'m' }
+#           item {title:'výmaz osoba/pečoun', par:°{cmd:'clear-pec'}, skill:'m' }
           proc onclick (i) {
             info.fill(conc(i.owner.title,' - ',i.title),' ... probíhá import dat ...');
             info.fill('',ask('cr_import_dat',i.par));
@@ -314,6 +316,8 @@ table dopis { key_id:'id_dopis'
   number id_davka { help:'dávka|číslo rozesílání dávky dopisů' },
   text nazev
   text prilohy
+  number potvrzeni { help:"potvrzení|vyžádat zaslání potvrzení o přečtení" }
+  number kopie	{ help:"poslat slepou kopii 'odesílateli'" }
   text druh { help:'druh|D-dopis, S-samolepka,legitimace, N-nesamostatná složka' },
   text typ { help:'typ|značka dopisu' },
   number nw

@@ -288,6 +288,8 @@ table dopis { key_id:'id_dopis'
   number id_davka { help:'dávka|číslo rozesílání dávky dopisů' },
   text nazev
   text prilohy
+  number potvrzeni { help:"potvrzení|vyžádat zaslání potvrzení o přečtení" }
+  number kopie	{ help:"poslat slepou kopii 'odesílateli'" }
   text druh { help:'druh|D-dopis, S-samolepka,legitimace, N-nesamostatná složka' },
   text typ { help:'typ|značka dopisu' },
   number nw

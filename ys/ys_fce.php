@@ -32,6 +32,156 @@ function psc ($psc,$user2sql=0) {
   }
   return $text;
 }
+# ================================================================================================== SYSTEM
+# -------------------------------------------------------------------------------------------------- ys_import_dat
+# import dat pro YS podle $par->cmd==
+# 'survay'    -- počty záznamů tabulek OSOBA, TVORI, RODINA, POBYT, SPOLU
+# 'MS-pec'    -- EXPORT-pecouni.csv => naplnění OSOBA pečovateli a zařazení na kurz
+function ys_import_dat($opt) {  trace();
+  # funkce načtení kurzů
+  function kurzy(&$err,&$msg,$yy=false,$od_roku=1995) {
+    $kurz= array();
+    for ($rok= $od_roku; $rok<=2012; $rok++) {
+      $qa= "SELECT id_duakce,YEAR(datum_od) AS _rok FROM akce
+            WHERE YEAR(datum_od)=$rok AND druh=1";
+      $ra= mysql_qry($qa); if ( !$ra ) { $err= "tabulka akcí"; goto end; }
+      if ( mysql_num_rows($ra)!=1 ) { $err= "kurz $rok není jednoznačný"; goto end; }
+      $oa= mysql_fetch_object($ra);
+      $kurz[$yy ? substr($oa->_rok,-2) : $oa->_rok]= $oa->id_duakce;
+    }
+  end:
+    if ( $err ) {
+      $msg.= "<br><br>CHYBA: $err";
+    }
+    return $kurz;
+  }
+  global $ezer_path_root;
+  $msg= $err= '';
+  mb_internal_encoding('UTF-8');
+  switch ($opt->cmd) {
+  case 'survey':
+    foreach(array('OSOBA', 'TVORI', 'RODINA', 'POBYT', 'SPOLU') as $db) {
+      $qt= "SELECT COUNT(*) AS _pocet_ FROM $db";
+      $rt= mysql_qry($qt); if ( !$rt ) { $err= "tabulka $db"; goto end; }
+      $ot= mysql_fetch_object($rt);
+      $msg.= "tabulka $db má {$ot->_pocet_} záznamů<br>";
+    }
+    break;
+  case 'MS-pec': // ------------------------------------------------------------------------ pečouni
+    $fname= "$ezer_path_root/cr/data/EXPORT-pecouni.csv";
+    $f= fopen($fname, "r");
+    if ( !$f ) { $err= "importní soubor $fname neexistuje"; goto end; }
+    // načtení kurzů
+    $kurz= kurzy($err,$msg,false,2000); if ( $err ) goto end;
+    // importní soubor
+    $msg.= "Import ze souboru $fname ... ";
+//     $poradatel= "CR";
+    $poradatel= "YS";
+    $line= 0;
+    $values= ''; $del= '';
+    $akce= 0;
+    $o= $n= $p= $i= 0;
+//     $min= 1;                    // ladění !!!!!!!!!! od kterého importovat
+//     $max= 1;                    // ladění !!!!!!!!!! kolik maximálně importovat
+    while (($d= fgetcsv($f, 1000, ";")) !== false) {
+      $line++;
+      if ( $line<2 ) continue;
+//       if ( $line<$min ) continue; // ladění !!!!!!!!!!
+      // 0        1     2     3    4   5  6        7    8   9      10      11
+      // příjmení;jméno;ulice;obec;psč;rč;narození;kurz;rok;funkce;telefon;email
+      // určení akce, je-li tohoto pořadatele
+      if ( $poradatel!=$d[7] ) continue;
+//       if ( $n>$max ) break;     // ladění !!!!!!!!!!
+      $n++;
+      // zjištění akce a společného pobytu pečovatelů
+      if ( $akce!=$kurz[$d[8]] ) {
+        $akce= $kurz[$d[8]];
+        $qp= "SELECT id_pobyt FROM pobyt WHERE id_akce=$akce AND funkce=99";
+        $rp= @mysql_qry($qp,0,'-'); if ( !$rp ) { $err= "select pobyt"; goto end; }
+        if ( mysql_num_rows($rp)==0 ) {
+          // vytvoření pobytu
+          $qi= "INSERT INTO pobyt (id_akce,funkce) VALUES ($akce,99)";
+          $ri= @mysql_qry($qi,0,'-'); if ( !$ri ) { $err= "insert POBYT"; goto end; }
+          $p++;
+          $pobyt= mysql_insert_id();
+        }
+        else {
+          $op= mysql_fetch_object($rp);
+          $pobyt= $op->id_pobyt;
+        }
+      }
+      // osobní údaje
+      $prijmeni= trim($d[0]);
+      $jmeno= trim($d[1]);
+      $ulice= trim($d[2]);
+      $obec= trim($d[3]);
+      // psč a stát
+      list($stat,$psc)= explode('-',str_replace(" ",'',$d[4]));
+      if ( !$psc ) { $psc= $stat; $stat= ''; }
+      // rč, narozeni, sex
+      $narozeni= $sex= '';
+      if ( $d[5] ) {
+        list($rc,$xxxx)= explode('/',$d[5]);
+        $narozeni= datum_rc(trim($d[5]));
+      }
+      elseif ( $d[6] ) {
+        $narozeni= sql_date(trim($d[6]),true);
+      }
+      if ( !$sex ) {
+        $sex= mb_substr($prijmeni,-1)=='á' ? 2 : 1;
+      }
+      // telefon, email
+      $telefon= str_replace(" ",'',$d[10]);
+      $email= str_replace(" ",'',$d[11]);
+      // funkce
+      $funkce= trim($d[9]);
+      if ( $funkce ) $funkce= "Personál: $funkce";
+      // nalezení v OSOBA
+      $qo= "SELECT id_osoba,jmeno,prijmeni FROM osoba
+            WHERE narozeni='$narozeni' AND jmeno='$jmeno'";
+      $ro= mysql_qry($qo); if ( !$ro ) { $err= "CHYBA $jmeno $prijmeni"; goto end; }
+      $oo= mysql_fetch_object($ro);
+      if ( $oo ) {
+        $o++;
+        $msg.= "<br>NALEZEN: $jmeno $prijmeni jako {$oo->jmeno} {$oo->prijmeni}";
+        if ( $prijmeni!=$oo->prijmeni && levenshtein($prijmeni,$oo->prijmeni)>2 )
+          $msg.= " --- ROZENÁ: $prijmeni (".levenshtein($prijmeni,$oo->prijmeni).")";
+        $osoba= $oo->id_osoba;
+        $msg.= " -osoba=$osoba";
+        // přidání starého příjmení jako rodného
+        $qu= "UPDATE osoba SET rodne='$prijmeni' WHERE id_osoba=$osoba";
+        $ru= mysql_qry($qu);
+      }
+      else {
+        // vložení do OSOBA, RODINA, TVORI
+        $qi= "INSERT INTO osoba (jmeno,prijmeni,sex,ulice,psc,obec,stat,telefon,email,narozeni,rc_xxxx)
+              VALUES ('$jmeno','$prijmeni',$sex,'$ulice','$psc','$obec','$stat','$telefon','$email',"
+                    ."'$narozeni','$xxxx')";
+        $ri= mysql_qry($qi,0,'-'); if ( !$ri ) { $err= "insert OSOBA $jmeno $prijmeni"; goto end; }
+        $i++;
+        $osoba= mysql_insert_id();
+        $msg.= "<br>VLOŽEN: $jmeno $prijmeni ";
+        $msg.= " +osoba=$osoba";
+      }
+      // vložení SPOLU
+      $qi= "INSERT INTO spolu (id_pobyt,id_osoba) VALUES ($pobyt,$osoba)";
+      $ri= mysql_qry($qi,0,'-'); if ( !$ri ) { $err= "insert SPOLU $jmeno $prijmeni"; goto end; }
+      $spolu= mysql_insert_id();
+      $msg.= " spolu=$spolu";
+    }
+    $msg.= "<br><br>zpracováno $n účastí pečounů z toho $o bylo nalezeno $i vloženo";
+    $msg.= "<br><br>vloženo $p pobytů";
+    fclose($f);
+    break;
+  default:
+    $msg= "není ještě implementováno";
+  }
+end:
+  if ( $err ) {
+    $msg.= "<br><br>CHYBA: $err";
+  }
+  return $msg;
+}
 # ================================================================================================== SOUBORY
 # -------------------------------------------------------------------------------------------------- google_sheet
 # přečtení listu $list z tabulky $sheet uživatele $user do pole $cell
