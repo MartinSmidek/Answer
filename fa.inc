@@ -18,9 +18,11 @@
   $dbs= array(
     array( /* ostré */
       'ezer_fa' =>      array(0,'localhost','gandi','r8d0st','utf8'),
+      'ezer_ys' =>      array(0,'localhost','gandi','r8d0st','utf8'),
       'ezer_system' =>  array(0,'localhost','gandi','r8d0st','utf8','ezer_fa')),
     array( /* lokální */
       'ezer_fa' =>      array(0,'localhost','gandi','','utf8'),
+      'ezer_ys' =>      array(0,'localhost','gandi','','utf8'),
       'ezer_system' =>  array(0,'localhost','gandi','','utf8','ezer_fa'))
   );
   // kořeny cest
