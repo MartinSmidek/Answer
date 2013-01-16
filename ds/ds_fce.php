@@ -310,11 +310,23 @@ function roku($rc) {
 }
 # -------------------------------------------------------------------------------------------------- lide_ds
 # SELECT autocomplete - výbìr z databáze DS
-function lide_ds($patt) {  #trace('','win1250');
+function lide_ds($patt0) {  #trace('','win1250');
+  global $ezer_local;
+//   function strToHex($string) {
+//     $hex='';
+//     for ($i=0; $i < strlen($string); $i++) {
+//       $hex .= dechex(ord($string[$i]));
+//     }
+//     return $hex;
+//   }
   $a= array();
   $limit= 10;
   $n= 0;
-  $patt= strtolower($patt);
+  $patt= $patt0;
+  $patt= mb_strtolower($patt,'UTF-8');
+  if ( !$ezer_local )
+    $patt= utf2win($patt,true);             // POZOR - je urèeno jen pro použití na ostrém serveru
+//   $info= strToHex($patt);
   // výbìr ze starých dobrých klientù
   ezer_connect('setkani');
   $qry= "SELECT id_osoba AS _key,concat(prijmeni,' ',jmeno,' - ',obec,'/',id_order) AS _value
@@ -331,9 +343,9 @@ function lide_ds($patt) {  #trace('','win1250');
   }
   // obecné položky
   if ( !$n )
-    $a[0]= wu("... žádné jméno nezaèíná '")."$patt'";
+    $a[0]= wu("... žádné jméno nezaèíná '")."$patt0'";//."INFO='$info'";
   elseif ( $n==$limit )
-    $a[-999999]= wu("... a další");
+    $a[-999999]= wu("... a další");//."INFO='$info0'";
 //                                                                 debug($a,$patt,(object)array('win1250'=>1));
   return $a;
 }

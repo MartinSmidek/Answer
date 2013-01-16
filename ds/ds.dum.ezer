@@ -93,7 +93,7 @@ group pobyt {
     label [380,  0,300,] { title:'<h3>Fakturační adresa objednavatele</h3>' }
   }
   // ------------------------------------------------------------------ OBJEDNÁVKA
-  form objednavka [,,300,100] { css:'ds_form'
+  form objednavka /*[,,300,100]*/ { css:'ds_form'
     const PL=0; PT=92,
     label       [  0,  0,100,] { title:'stav objednávky' }
     select      [  0, 15,120,] { type:'map', data:tab.tx_gnalberice_order.state, options:tab.ds_stav.hodnota }
@@ -158,7 +158,7 @@ group pobyt {
     proc onsave () { check_rooms(rooms,form,'p') }
   }
   // ------------------------------------------------------------------ FAKTURACE
-  form fakturace [,,300,100] { css:'ds_form'
+  form fakturace /*[,,300,100]*/ { css:'ds_form'
     label       [  0,  0,210,] { title:'název organizace (plátce faktury)' }
     field       [  0, 15,210,] { data:tab.tx_gnalberice_order.org }
     label       [220,  0, 80,] { title:'IČ' }
@@ -282,15 +282,15 @@ group ucastnici {
   // ------------------------------------------------------------------ záhlaví
   form zahlavi [,,600,30] { css:'ds_form'
     label [ 10,0,694,] { title:'<hr>' }
-    label [ 10,10,300,] { title:'<h3>Seznam účastníků pobytu</h3>' }
-    label [380,10,300,] { title:'<h3>Údaje vybraného účastníka</h3>' }
+    label [ 10,20,300,] { title:"<h3 style='margin:0'>Seznam účastníků pobytu</h3>"  }
+    label [380,20,300,] { title:"<h3 style='margin:0'>Údaje vybraného účastníka</h3>" }
 
     button [200,10,,] { title:'TEST', skill:'m|m'
       proc onclick () { ask('test_020811') }
     }
   }
   // ------------------------------------------------------------------ AKCE
-  form akce [,,300,100] { css:'ds_form'
+  form akce /*[,,300,100]*/ { css:'ds_form'
     var novi: object
     button [  0,0,50,18] { title:'+ rodina', help:'výběr rodiny z databází MS'
       proc onclick () {
@@ -399,7 +399,7 @@ group ucastnici {
     }
   }
   // ------------------------------------------------------------------ OSOBA
-  form _osoba [,,300,100] { css:'ds_form'
+  form _osoba /*[,,300,100]*/ { css:'ds_form'
     field id_osoba { data:tab.ds_osoba.id_osoba }
     field id_order { data:tab.ds_osoba.id_order }
     // zobrazení

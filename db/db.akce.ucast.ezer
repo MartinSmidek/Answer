@@ -35,7 +35,8 @@ proc init_ucast2() { echo('init_ucast2 ',the_title.get);
   [ reload(0) ];
   [ u.b.browse_count; page.evd.onclick ];
 }
-proc akce_show(xakce,xpobyt,xnadpis,xback) {  echo('akce_show ',xakce,' ',xpobyt,' ',xnadpis);
+proc akce_show(xakce,xpobyt,xnadpis,xback) {
+  page.page_init;
   back.set(object('ida',the_duakce.get,
     'idp',if(u.b.browse_count,u.b.key_pobyt.get,0),
     'tit',the_title.get,'bck',xback));
@@ -85,7 +86,9 @@ proc reload(id_pobyt) { echo('reload ',the_title.get);
   the_duakce.get;
   lst.the_akce.load(the_duakce.get);
   page_clear;
-  [ u.b.browse_load(cconc(u.jen.get,"funkce IN (0,1,2,5) AND ",1,conc("p.id_akce=",the_duakce.get)),
+  [ u.b.browse_load(cconc(
+        u.jen.get,"funkce IN (0,1,2,5) AND ",
+        1,conc("funkce!=99 AND p.id_akce=",the_duakce.get)),
       "IF(funkce<=2,1,funkce),IF(pouze=0,r.nazev,o.prijmeni)",
       '','','','',
       conc('SET @akce:=',the_duakce.get));
@@ -132,7 +135,7 @@ form _page {
 #     form.display(1,on); form.display(0,off);
   }
   proc page_init() {
-    zalozka.set('evid');
+    zalozka.set('evid'); tags(evd,'z','h|o|f');
     a_muz.display(0); a_zen.display(0); pla.display(0); cmdp.display(0);
   }
   label evd [ 12,0,120,20] {tag:'p', title:'<b>Evidenční karta</b>', format:'c', css:'ae_butt_on'

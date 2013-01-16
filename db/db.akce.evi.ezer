@@ -59,13 +59,15 @@ proc onfirstfocus() {
   m.g.i.click;
 }
 
-proc status() {
+proc status(on) {
   has_skill('m');
+  on; stav.klice.display(1);
   switch(mode.get,
   'o',{ stav.klice.set(conc('osoby: id_osoba=',osoby.b.id_o.get,', id_rodina=',osoby.b.id_r.get)) },
   'r',{ stav.klice.set(conc('rodiny: id_rodina=',rodiny.b.id_r.get)) },
       { stav.klice.set('') }
-  )
+  ); echo('x')
+| stav.klice.display(0)
 }
 const LETOS = "NOW()>=od.dat_od AND (NOW()<=od.dat_do OR od.dat_do='0000-00-00')"
 menu m {type:'left'
@@ -84,7 +86,7 @@ menu m {type:'left'
           par:°{cnd:"1",hav:"LOCATE('d',rel)>0"} }
     proc onclick (i) {
       mode.set('o');
-      panel.display(0,'inf|rodi|plat'); panel.display(1,'evid|list|syst|p_.*');
+      panel.display(0,'inf|rodi|plat'); panel.display(1,'evid|list|syst|p_.*'); status(0);
       evid.page_init; dary.page_init;
       osoby.b.browse_load(conc("os.deleted='' AND ",i.par.cnd),"",i.par.hav);
       evid.page_show; dary.page_show;
@@ -97,7 +99,7 @@ menu m {type:'left'
     item {title:'... s více telefony' par:°{cnd:"TRIM(telefony) REGEXP ',[^$]|;[^$]'",hav:"1"}, skill:'yae' }
     proc onclick (i) {
       mode.set('r');
-      panel.display(0,'inf|list|plat'); panel.display(1,'rodi|syst');
+      panel.display(0,'inf|list|plat'); panel.display(1,'rodi|syst'); status(0);
       evid.page_init; dary.page_init;
       rodiny.b.browse_load(i.par.cnd,"",i.par.hav);
       // experimentální přepnutí podle osoby
@@ -105,24 +107,24 @@ menu m {type:'left'
 #       | rodiny.b.browse_load(i.par.cnd,"",i.par.hav) ]
     }
   }
-  menu {title:'Přehledy a statistiky',type:'group', skill:'yae'
-    item {title:'Přehled VPS od 1990',
+  menu {title:'Přehledy a statistiky',type:'group',                             skill:'yae;fae;cae'
+    item {title:'Přehled VPS od 1990',                                          skill:'yae'
           par:°{typ:'e-v',exp:'Excel',cnd:1, hav:"_vps>0",tit:'jméno:20,obec:20',fld:'_jmeno,obec'}}
-    item {title:'Přehled všech od 1990',
+    item {title:'Přehled všech od 1990',                                        skill:'yae'
           par:°{typ:'e-v',exp:'Excel',cnd:1, hav:"1",tit:'jméno:20,obec:20',fld:'_jmeno,obec'}}
-    item {title:'Struktura letních kurzů MS',
-          par:°{typ:'e-s',exp:'Excel'}}
+    item {title:'Struktura letních kurzů MS',   par:°{typ:'e-s',exp:'Excel'}    skill:'yae'}
+    item {title:'Akce s pečouny',               par:°{typ:'e-p',exp:'Excel'}    skill:'yae;cae;fae'}
   }
   menu {title:'Výpisy a exporty',type:'group', skill:'yae'
-    item {title:'Členové YMCA Setkání',
+    item {title:'Členové YMCA Setkání'
           par:°{typ:'e-j',exp:'Excel',cnd:1, hav:"rel RLIKE 'b|c'",
                 tit:'příjmení:15,jméno:10,ulice:20,obec:20,psč:7,datum nar.:10,čl.:3,přísp.:6,KČ:13,e-mail:30',
                 fld:'prijmeni,jmeno,ulice,obec,psc,_naroz,_clen,_prisp,_kc,_email'}}
-    item {title:'Činní členové YMCA Setkání',
+    item {title:'Činní členové YMCA Setkání'
           par:°{typ:'e-j',exp:'Excel',cnd:1, hav:"rel RLIKE 'c'",
                 tit:'příjmení:15,jméno:10,ulice:20,obec:20,psč:7,datum nar.:10,čl.:3,přísp.:6,KČ:13,e-mail:30',
                 fld:'prijmeni,jmeno,ulice,obec,psc,_naroz,_clen,_prisp,_kc,_email'}}
-    item {title:'Členové YS podrobně',
+    item {title:'Členové YS podrobně'
           par:°{typ:'e-j',exp:'Excel',cnd:1, hav:"rel RLIKE 'b|c'",
                 tit:'příjmení:15,jméno:10,ulice:20,obec:20,psč:7,datum nar.:10,čl.:3,přísp.:6,rok:6,KČ:13,e-mail:30',
                 fld:'prijmeni,jmeno,ulice,obec,psc,_naroz,_clen,_prisp,_rok,_kc,_email'}}
@@ -134,12 +136,12 @@ menu m {type:'left'
   menu {title:'Zpracování bankovních výpisů',type:'group', skill:'yae'
     item {title:'import plateb z RB', //skill:'m'
       proc onclick (i) {
-        alert(ask('akce_rb_platby'));
+        alert(ask('akce_rb_platby')); status(0);
       }
     }
     item {title:'zpracování plateb z RB', //skill:'m'
       proc onclick (i) {
-        panel.display(1,'plat'); panel.display(0,'syst');
+        panel.display(1,'plat'); panel.display(0,'syst'); status(0);
         info.fill(conc(i.owner.title,' - ',i.title),' ');
         platby.b.browse_load
       }
@@ -147,7 +149,7 @@ menu m {type:'left'
   }
   proc onclick (i) {
     var x: object
-    panel.display(1,'inf'); panel.display(0,'evid|list|dary|plat|p_.*|d_.*');
+    panel.display(1,'inf'); panel.display(0,'evid|list|dary|plat|p_.*|d_.*'); status(0);
     the_par.set(i.par); the_title.set(i.title); info.export.set(i.par.exp);
     info.fill(conc(i.owner.title,' - ',i.title),' ');
     info.msg.set('');
@@ -162,8 +164,8 @@ form _stav [,,380,106] {
 # -------------------------------------------------------------------------------------------------- _osoby
 form _osoby {
   view os: table osoba
-  view ot: table tvori { join:"ON os.id_osoba=ot.id_osoba" }
-  view of: table rodina { join:"USING(id_rodina)" }
+  view ot: table tvori { join_type:'LEFT', join:"ON os.id_osoba=ot.id_osoba" }
+  view of: table rodina { join_type:'LEFT', join:"USING(id_rodina)" }
   view od: table dar { join_type:'LEFT', join:"ON os.id_osoba=od.id_osoba AND od.deleted=''" }
   browse b [0,0,,] { rows:28, qry_rows:1, group_by:'os.id_osoba'
     show id_o { data:os.id_osoba }
@@ -179,7 +181,7 @@ form _osoby {
       help:'datum narození ve tvaru rrmmdd'}
     show mail [,,0,] { expr:"CONCAT(email,IF(email='','',','),emaily)", title:'emaily',
       help:'osobní i  rodinné emaily', format:'tq%s' }
-    proc onrowclick() { evid.reload; dary.reload; status }
+    proc onrowclick() { evid.reload; dary.reload; status(1) }
     proc onclick() {
       rel.width; rel.width(0);   nar.width(100);
     | nar.width; nar.width(0);   mail.width(100);
@@ -205,7 +207,7 @@ form _rodiny {
     show _jmena [,,160,] { title:'jméno/a', format:'tsq%',
       expr:"GROUP_CONCAT(DISTINCT o.jmeno ORDER BY t.role SEPARATOR ' ')" }
     show [,,60,] { title:'obec', data:r.obec, format:'q*s' }
-    proc onrowclick() { evid.reload; status }
+    proc onrowclick() { evid.reload; status(1) }
     # --------------------------------------------------  KONTEXTOVÉ MENU
     menu { type:'context'
       item { title:'všechny emaily jsou muže',          proc onclick() { sep_mail('M') } }
@@ -237,10 +239,19 @@ form _evid { style:'z-index:1'
   proc reload() {
     var rid: number
     eq(mode.get,'o');
+    // zajisti správnou viditelnost záložek
+    [ osoby.b.id_r.get;
+      rod.enable(1); cle.enable(1)
+    | rod.enable(0); cle.enable(0);
+      eq(zalozka.get,'p_rod','p_cle');
+      tags(oso,'p_oso','p_rod|p_cle|p_fir|p_akc');
+    ];
+    // zobraz data aktivní záložky
     switch(zalozka.get,
     'p_oso',{ p_oso.key(osoby.b.id_o.get); p_oso.reload },
-    'p_rod',{ p_rod.load(osoby.b.id_r.get) },
-    'p_cle',{ p_cle.b.browse_load(conc('ox.id_rodina=',osoby.b.id_r.get)) },
+    // rodina a tedy ani členové nemusí být definovány
+    'p_rod',{ osoby.b.id_r.get; p_rod.load(osoby.b.id_r.get) | p_rod.init},
+    'p_cle',{ osoby.b.id_r.get; p_cle.b.browse_load(conc('ox.id_rodina=',osoby.b.id_r.get)) },
     'p_akc',{ p_akc.ucasti(osoby.b.id_o.get) },
     { stop })
   | eq(mode.get,'r');
@@ -428,12 +439,16 @@ form _oakce {
     show ida { data:a.id_duakce }
     show idp { data:p.id_pobyt }
     show ids { data:s.id_spolu }
+    show fce { data:p.funkce }
     show rok  [,, 30,] { title:'rok', expr:"YEAR(a.datum_od)", format:'q*s-' }
     show akce [,,150,] { title:'název', data:a.nazev, format:'q*s' }
-    show fce  [,, 30,] { title:'fce', data:p.funkce, map_pipe:ms_akce_funkce.zkratka, format:'q*s' }
+    show      [,, 30,] { title:'fce', data:p.funkce, map_pipe:ms_akce_funkce.zkratka, format:'q*s' }
     proc onsubmit() {
-      has_skill('yaa');
-      ucast.akce_show(ida.get,idp.get,conc(akce.get,' ',rok.get),'EVIDENCE') }
+      has_skill('yaa;faa;caa');
+      [ eq(fce.get,99);
+        pece.akce_show(ida.get,ids.get,conc(akce.get,' ',rok.get),'EVIDENCE')
+      | ucast.akce_show(ida.get,idp.get,conc(akce.get,' ',rok.get),'EVIDENCE')
+    ] }
   }
   proc ucasti(id_osoba) {
     id_osoba; akc.browse_load(conc('a.spec=0 AND s.id_osoba=',id_osoba),"datum_od DESC")
