@@ -14,22 +14,26 @@
   $VPS= 'VPS';
 
   // parametry s první hodnotou pro server a druhou (případně) pro local
-  $db= array('ezercpr','ezer_cr');
+//   $db= array('ezercpr','ezer_cr');
+  $db= array('ezer_cr','ezer_cr');
   $dbs= array(
     array( /* ostré */
-      'ezercpr' =>       array(0,'localhost','gandi','radost','utf8'),
-      'ezer_system' =>   array(0,'localhost','gandi','radost','utf8','ezercpr')),
+      'ezer_cr' =>      array(0,'localhost','gandi','r8d0st','utf8'),
+      'ezer_system' =>  array(0,'localhost','gandi','r8d0st','utf8','ezer_cr')),
+//       'ezercpr' =>       array(0,'localhost','gandi','radost','utf8'),                           = endora
+//       'ezer_system' =>   array(0,'localhost','gandi','radost','utf8','ezercpr')),                = endora
     array( /* lokální */
       'ezer_cr' =>      array(0,'localhost','gandi','','utf8'),
       'ezer_system' =>  array(0,'localhost','gandi','','utf8','ezer_cr'))
   );
   // kořeny cest
-  $path_root=  array("/home/users/gandi/smidek.eu/web/ezer","C:/Apache/htdocs/ezer/www-ys2");
+//   $path_root=  array("/home/users/gandi/smidek.eu/web/ezer","C:/Apache/htdocs/ezer/www-ys2");    = endora
+  $path_root=  array("/home/www/ezer/www-ys/2","C:/Apache/htdocs/ezer/www-ys2");
   $path_pspad= array(null,"C:/Program Files (x86)/PSPad editor/Syntax");
   // cesty pro zálohy
   $path_backup= array("{$path_root[0]}/zalohy","C:/Apache/htdocs/ezer/www-ys2/zalohy");
   $path_backup= $path_backup[$ezer_local?1:0];          // složka záloh databází
-  $ezer_mysql_path= array("","c:/apache/mysql/bin/");
+  $ezer_mysql_path= array("/usr/bin/","c:/apache/mysql/bin/");
   $ezer_mysql_path= $ezer_mysql_path[$ezer_local?1:0];  // cesta k utilitě mysql (i s lomítkem)
   // cesty pro zadávání url
   $path_url= array("http://answer.setkani.org/cr.php","http://answer.ezer/cr.php");

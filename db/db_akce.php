@@ -3644,7 +3644,12 @@ function evid_sestava($par,$title,$export=false) {
   return $par->typ=='e-j' ? evid_sestava_j($par,$title,$export)
      : ( $par->typ=='e-v' ? evid_sestava_v($par,$title,$export)
      : ( $par->typ=='e-s' ? evid_sestava_s($par,$title,$export)
-                          : fce_error("evid_sestava: N.Y.I.") ));
+     : ( $par->typ=='e-p' ? evid_sestava_Q($par,$title,$export,
+         "SELECT nazev AS `název akce`,YEAR(datum_od) AS rok,count(*) AS pečounů
+          FROM spolu JOIN pobyt USING (id_pobyt) JOIN akce ON id_akce=id_duakce
+          WHERE funkce=99
+          GROUP BY id_akce ORDER BY datum_od DESC")
+     : fce_error("evid_sestava: N.Y.I.") )));
 }
 # -------------------------------------------------------------------------------------------------- evid_vyp_excel
 # generování tabulky do excelu
@@ -3697,6 +3702,7 @@ function evid_table($par,$tits,$flds,$clmn,$export=false) {
     $result->html= "<div class='stat'><table class='stat'><tr>$ths</tr>$tab</table>
       $n řádků<br><br>{$par->txt}</div>";
   }
+                                                debug($result);
   return $result;
 }
 # -------------------------------------------------------------------------------------------------- evid_sestava_s
@@ -3890,6 +3896,32 @@ function evid_sestava_j($par,$title,$export=false) {
       }
     }
   }
+  return evid_table($par,$tits,$flds,$clmn,$export);
+}
+# -------------------------------------------------------------------------------------------------- evid_sestava_Q
+# generování obecné sestavy zobrazující SQL dotaz
+function evid_sestava_Q($par,$title,$export,$qry) {
+  // dekódování parametrů
+  // získání dat
+  $n= 0;
+  $clmn= array();
+  $expr= array();       // pro výrazy
+  $tits= $flds= array();
+  $res= mysql_qry($qry);
+  while ( $res && ($x= mysql_fetch_object($res)) ) {
+    if ( $n==0 ) foreach($x as $f=>$v) {
+      $tits[]= $f;
+      $flds[]= $f;
+    }
+    $n++;
+    $clmn[$n]= array();
+    foreach($x as $f=>$v) {
+      $clmn[$n][$f]= $v;
+    }
+  }
+//                                                 debug(array('par'=>$par,'tits'=>$tits,'flds'=>$flds,'clmn'=>$clmn,'export'=>$export),"evid_table");
+  $par->tit= $tit;
+  $par->fld= $fld;
   return evid_table($par,$tits,$flds,$clmn,$export);
 }
 # ================================================================================================== VYPISY AKCE
