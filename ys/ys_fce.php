@@ -58,9 +58,10 @@ function ys_import_dat($opt) {  trace();
   global $ezer_path_root;
   $msg= $err= '';
   mb_internal_encoding('UTF-8');
+  setlocale(LC_ALL, 'en_US.UTF-8');
   switch ($opt->cmd) {
   case 'survey':
-    foreach(array('OSOBA', 'TVORI', 'RODINA', 'POBYT', 'SPOLU') as $db) {
+    foreach(array('osoba', 'tvori', 'rodina', 'pobyt', 'spolu') as $db) {
       $qt= "SELECT COUNT(*) AS _pocet_ FROM $db";
       $rt= mysql_qry($qt); if ( !$rt ) { $err= "tabulka $db"; goto end; }
       $ot= mysql_fetch_object($rt);
@@ -144,10 +145,12 @@ function ys_import_dat($opt) {  trace();
       $funkce= trim($d[9]);
       if ( $funkce ) $funkce= "Personál: $funkce";
       // nalezení v OSOBA
-      $qo= "SELECT id_osoba,jmeno,prijmeni,rodne,telefon,email,ulice,psc,obec FROM osoba
-            WHERE narozeni='$narozeni' AND jmeno='$jmeno'";
+      $qo= "SELECT count(*) AS _pocet,id_osoba,jmeno,prijmeni,rodne,telefon,email,ulice,psc,obec
+            FROM osoba LEFT JOIN spolu USING(id_osoba)
+            WHERE narozeni='$narozeni' AND jmeno='$jmeno'
+            GROUP BY id_osoba ORDER BY _pocet DESC";
       $ro= mysql_qry($qo); if ( !$ro ) { $err= "CHYBA $jmeno $prijmeni"; goto end; }
-      if ( $ro && mysql_num_rows($ro)==1 ) {
+      if ( $ro && mysql_num_rows($ro)>=1 ) {
         $oo= mysql_fetch_object($ro);
         $o++;
         $msg.= "<br>NALEZEN: $jmeno $prijmeni jako {$oo->jmeno} {$oo->prijmeni}";
