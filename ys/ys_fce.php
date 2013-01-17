@@ -68,7 +68,7 @@ function ys_import_dat($opt) {  trace();
     }
     break;
   case 'MS-pec': // ------------------------------------------------------------------------ pečouni
-    $fname= "$ezer_path_root/cr/data/EXPORT-pecouni.csv";
+    $fname= "$ezer_path_root/ys/data/EXPORT-pecouni.csv";
     $f= fopen($fname, "r");
     if ( !$f ) { $err= "importní soubor $fname neexistuje"; goto end; }
     // načtení kurzů
@@ -121,9 +121,12 @@ function ys_import_dat($opt) {  trace();
       if ( !$psc ) { $psc= $stat; $stat= ''; }
       // rč, narozeni, sex
       $narozeni= $sex= '';
-      if ( $d[5] ) {
-        list($rc,$xxxx)= explode('/',$d[5]);
-        $narozeni= datum_rc(trim($d[5]));
+      $rc0= trim($d[5]);
+      if ( $rc0 ) {
+        if ( strlen($rc0)==10 )
+          $rc0= substr($rc0,0,6).'/'.substr($rc0,6,4);
+        list($rc,$xxxx)= explode('/',$rc0);
+        $narozeni= datum_rc($rc0);
         if ( $rc[2]=='5'||$rc[2]=='6' ) $sex= 2;
                                                         display("narozeni1=$narozeni, rc=$xxxx, sex=$sex");
       }
@@ -141,7 +144,7 @@ function ys_import_dat($opt) {  trace();
       $funkce= trim($d[9]);
       if ( $funkce ) $funkce= "Personál: $funkce";
       // nalezení v OSOBA
-      $qo= "SELECT id_osoba,jmeno,prijmeni,telefon,email,ulice,psc,obec FROM osoba
+      $qo= "SELECT id_osoba,jmeno,prijmeni,rodne,telefon,email,ulice,psc,obec FROM osoba
             WHERE narozeni='$narozeni' AND jmeno='$jmeno'";
       $ro= mysql_qry($qo); if ( !$ro ) { $err= "CHYBA $jmeno $prijmeni"; goto end; }
       if ( $ro && mysql_num_rows($ro)==1 ) {
@@ -152,23 +155,28 @@ function ys_import_dat($opt) {  trace();
           $msg.= " --- ROZENÁ: $prijmeni (".levenshtein($prijmeni,$oo->prijmeni).")";
         $osoba= $oo->id_osoba;
         $msg.= " -osoba=$osoba";
-        $set= "rodne='$prijmeni'";
-        // přidání případných chybějících údajů (telefonu, mailu, ...)
-        if ( $telefon && !$oo->telefon ) ", telefon='$telefon'";
-        if ( $email && !$oo->email ) ", email='$email'";
-        if ( $ulice && !$oo->ulice ) ", ulice='$ulice'";
-        if ( $psc && !$oo->psc ) ", psc='$psc'";
-        if ( $obec && !$oo->obec ) ", obec='$obec'";
-        // přidání starého příjmení jako rodného
-        $qu= "UPDATE osoba SET $set WHERE id_osoba=$osoba";
-        $ru= mysql_qry($qu);
+        $set= array();
+        // přidání případných chybějících údajů (rodné,telefon, mail, ...)
+        if ( $prijmeni!=$oo->prijmeni && !$oo->rodne ) $set[]= "rodne='$prijmeni'";
+        if ( $telefon && !$oo->telefon )        $set[]= "telefon='$telefon'";
+        if ( $email && !$oo->email )            $set[]= "email='$email'";
+        if ( $ulice && !$oo->ulice )            $set[]= "ulice='$ulice'";
+        if ( $psc && !$oo->psc )                $set[]= "psc='$psc'";
+        if ( $obec && !$oo->obec )              $set[]= "obec='$obec'";
+        // přidání informací
+                                                        debug($set,"$prijmeni $jmeno");
+        if ( count($set) ) {
+          $set= implode(",",$set);
+          $qu= "UPDATE osoba SET $set WHERE id_osoba=$osoba";
+          $ru= mysql_qry($qu);
+        }
       }
       else {
         // vložení do OSOBA, RODINA, TVORI
         $qi= "INSERT INTO osoba (jmeno,prijmeni,sex,ulice,psc,obec,stat,telefon,email,narozeni,rc_xxxx)
               VALUES ('$jmeno','$prijmeni',$sex,'$ulice','$psc','$obec','$stat','$telefon','$email',"
                     ."'$narozeni','$xxxx')";
-        $ri= mysql_qry($qi,0,'-'); if ( !$ri ) { $err= "insert OSOBA $jmeno $prijmeni"; goto end; }
+        $ri= mysql_qry($qi,0,'-'); if ( !$ri ) { $err= "insert OSOBA $jmeno $prijmeni:$qi"; goto end; }
         $i++;
         $osoba= mysql_insert_id();
         $msg.= "<br>VLOŽEN: $jmeno $prijmeni ";

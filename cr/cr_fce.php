@@ -76,7 +76,7 @@ function cr_import_dat($opt) {  trace();
     }
     break;
   case 'MS-pec': // ------------------------------------------------------------------------ pečouni
-    $fname= "$ezer_path_root/cr/data/EXPORT-pecouni.csv";
+    $fname= "$ezer_path_root/ys/data/EXPORT-pecouni.csv";
     $f= fopen($fname, "r");
     if ( !$f ) { $err= "importní soubor $fname neexistuje"; goto end; }
     // načtení kurzů
@@ -94,6 +94,7 @@ function cr_import_dat($opt) {  trace();
     while (($d= fgetcsv($f, 1000, ";")) !== false) {
       $line++;
       if ( $line<2 ) continue;
+                                                        debug($d,$line);
 //       if ( $line<$min ) continue; // ladění !!!!!!!!!!
       // 0        1     2     3    4   5  6        7    8   9      10      11
       // příjmení;jméno;ulice;obec;psč;rč;narození;kurz;rok;funkce;telefon;email
@@ -128,12 +129,18 @@ function cr_import_dat($opt) {  trace();
       if ( !$psc ) { $psc= $stat; $stat= ''; }
       // rč, narozeni, sex
       $narozeni= $sex= '';
-      if ( $d[5] ) {
-        list($rc,$xxxx)= explode('/',$d[5]);
-        $narozeni= datum_rc(trim($d[5]));
+      $rc0= trim($d[5]);
+      if ( $rc0 ) {
+        if ( strlen($rc0)==10 )
+          $rc0= substr($rc0,0,6).'/'.substr($rc0,6,4);
+        list($rc,$xxxx)= explode('/',$rc0);
+        $narozeni= datum_rc($rc0);
+        if ( $rc[2]=='5'||$rc[2]=='6' ) $sex= 2;
+                                                        display("narozeni1=$narozeni, rc=$xxxx, sex=$sex");
       }
       elseif ( $d[6] ) {
         $narozeni= sql_date(trim($d[6]),true);
+                                                        display("narozeni2=$narozeni");
       }
       if ( !$sex ) {
         $sex= mb_substr($prijmeni,-1)=='á' ? 2 : 1;
@@ -145,27 +152,39 @@ function cr_import_dat($opt) {  trace();
       $funkce= trim($d[9]);
       if ( $funkce ) $funkce= "Personál: $funkce";
       // nalezení v OSOBA
-      $qo= "SELECT id_osoba,jmeno,prijmeni FROM osoba
+      $qo= "SELECT id_osoba,jmeno,prijmeni,rodne,telefon,email,ulice,psc,obec FROM osoba
             WHERE narozeni='$narozeni' AND jmeno='$jmeno'";
       $ro= mysql_qry($qo); if ( !$ro ) { $err= "CHYBA $jmeno $prijmeni"; goto end; }
-      $oo= mysql_fetch_object($ro);
-      if ( $oo ) {
+      if ( $ro && mysql_num_rows($ro)==1 ) {
+        $oo= mysql_fetch_object($ro);
         $o++;
         $msg.= "<br>NALEZEN: $jmeno $prijmeni jako {$oo->jmeno} {$oo->prijmeni}";
         if ( $prijmeni!=$oo->prijmeni && levenshtein($prijmeni,$oo->prijmeni)>2 )
           $msg.= " --- ROZENÁ: $prijmeni (".levenshtein($prijmeni,$oo->prijmeni).")";
         $osoba= $oo->id_osoba;
         $msg.= " -osoba=$osoba";
-        // přidání starého příjmení jako rodného
-        $qu= "UPDATE osoba SET rodne='$prijmeni' WHERE id_osoba=$osoba";
-        $ru= mysql_qry($qu);
+        $set= array();
+        // přidání případných chybějících údajů (rodné,telefon, mail, ...)
+        if ( $prijmeni!=$oo->prijmeni && !$oo->rodne ) $set[]= "rodne='$prijmeni'";
+        if ( $telefon && !$oo->telefon )        $set[]= "telefon='$telefon'";
+        if ( $email && !$oo->email )            $set[]= "email='$email'";
+        if ( $ulice && !$oo->ulice )            $set[]= "ulice='$ulice'";
+        if ( $psc && !$oo->psc )                $set[]= "psc='$psc'";
+        if ( $obec && !$oo->obec )              $set[]= "obec='$obec'";
+        // přidání informací
+                                                        debug($set,"$prijmeni $jmeno");
+        if ( count($set) ) {
+          $set= implode(",",$set);
+          $qu= "UPDATE osoba SET $set WHERE id_osoba=$osoba";
+          $ru= mysql_qry($qu);
+        }
       }
       else {
         // vložení do OSOBA, RODINA, TVORI
         $qi= "INSERT INTO osoba (jmeno,prijmeni,sex,ulice,psc,obec,stat,telefon,email,narozeni,rc_xxxx)
               VALUES ('$jmeno','$prijmeni',$sex,'$ulice','$psc','$obec','$stat','$telefon','$email',"
                     ."'$narozeni','$xxxx')";
-        $ri= mysql_qry($qi,0,'-'); if ( !$ri ) { $err= "insert OSOBA $jmeno $prijmeni"; goto end; }
+        $ri= mysql_qry($qi,0,'-'); if ( !$ri ) { $err= "insert OSOBA $jmeno $prijmeni:$qi"; goto end; }
         $i++;
         $osoba= mysql_insert_id();
         $msg.= "<br>VLOŽEN: $jmeno $prijmeni ";
@@ -181,95 +200,6 @@ function cr_import_dat($opt) {  trace();
     $msg.= "<br><br>vloženo $p pobytů";
     fclose($f);
     break;
-/*
-    $fname= "$ezer_path_root/cr/data/EXPORT-pecouni.csv";
-    $f= fopen($fname, "r");
-    if ( !$f ) { $err= "importní soubor $fname neexistuje"; goto end; }
-    // načtení kurzů
-    $kurz= kurzy($err,$msg); if ( $err ) goto end;
-    // importní soubor
-    $poradatel= "CR";
-//     $poradatel= "YS";
-    $msg.= "Import ze souboru $fname pro $poradatel";
-    $rok0= 0;
-    $line= 0;
-    $values= ''; $del= '';
-    $o= $n= 0;
-//     $min= 122;                    // ladění !!!!!!!!!! od kterého importovat
-//     $max= 999;                    // ladění !!!!!!!!!! kolik maximálně importovat
-    while (($d= fgetcsv($f, 1000, ";")) !== false) {
-      $line++;
-      if ( $line<2 ) continue; // vynechání hlaviček
-//       if ( $line<$min ) continue; // ladění !!!!!!!!!!
-      // 0        1     2     3    4   5  6        7    8   9      10      11
-      // příjmení;jméno;ulice;obec;psč;rč;narození;kurz;rok;funkce;telefon;email
-      // určení akce, je-li tohoto pořadatele
-      if ( $poradatel!=$d[7] ) continue;
-//       $n++;                     // ladění !!!!!!!!!!
-//       if ( $n>$max ) break;     // ladění !!!!!!!!!!
-      $rok= trim($d[8]);
-      if ( $rok0!=$rok ) {
-        $msg.= "<hr>rok $rok";
-        $rok0= $rok;
-        $akce= $kurz[$rok];
-        // vložení POBYT typu 99 pro pečouny
-        $qp= "INSERT INTO pobyt (id_akce,funkce) VALUES ($akce,99)";
-        $rp= @mysql_qry($qp); if ( !$rp ) { $err= "insert POBYT $rok"; goto end; }
-        $pobyt= mysql_insert_id();
-      }
-      // osobní údaje
-      $prijmeni= trim($d[0]);
-      $jmeno= trim($d[1]);
-      $ulice= trim($d[2]);
-      $obec= trim($d[3]);
-      // psč a stát
-      list($stat,$psc)= explode('-',str_replace(" ",'',$d[4]));
-      if ( !$psc ) { $psc= $stat; $stat= ''; }
-      // rč, narozeni, sex
-      $narozeni= $sex= '';
-      if ( $d[5] ) {
-        list($rc,$xxxx)= explode('/',$d[5]);
-        $narozeni= datum_rc(trim($d[5]));
-      }
-      elseif ( $d[6] ) {
-        $narozeni= sql_date(trim($d[6]),true);
-      }
-      if ( !$sex ) {
-        $sex= mb_substr($prijmeni,-1)=='á' ? 2 : 1;
-      }
-      // telefon, email
-      $telefon= str_replace(" ",'',$d[10]);
-      $email= str_replace(" ",'',$d[11]);
-      // funkce
-      $funkce= trim($d[9]);
-      if ( $funkce ) $funkce= "Personál: $funkce";
-      // hledání v OSOBA
-      $qo= "SELECT id_osoba,jmeno,prijmeni FROM osoba WHERE narozeni='$narozeni'";
-      $ro= mysql_qry($qo); if ( !$ro ) { $err= "CHYBA $jmeno $prijmeni"; goto end; }
-      $oo= mysql_fetch_object($ro);
-      if ( $oo ) {
-        $o++;
-        $osoba= $oo->id_osoba;
-        $msg.= "<br>NALEZENO: $jmeno $prijmeni jako {$oo->jmeno} {$oo->prijmeni}";
-      }
-      else {
-        // vložení do OSOBA
-        $qi= "INSERT INTO osoba (jmeno,prijmeni,sex,ulice,psc,obec,stat,telefon,email,narozeni,rc_xxxx)
-              VALUES ('$jmeno','$prijmeni',$sex,'$ulice','$psc','$obec','$stat','$telefon','$email',"
-                    ."'$narozeni','$xxxx')";
-  //                                         display($qi);
-        $ri= @mysql_qry($qi); if ( !$ri ) { $err= "insert OSOBA $prijmeni"; goto end; }
-        $n++;
-        $osoba= mysql_insert_id();
-      }
-      $qi= "INSERT INTO spolu (id_osoba,id_pobyt,poznamka) VALUES ($osoba,$pobyt,'$funkce')";
-      $ri= @mysql_qry($qi); if ( !$ri ) { $err= "insert SPOLU "; goto end; }
-      $t++;
-    }
-    $msg.= "<br><br>vloženo $n pečounů z toho $o bylo nalezeno";
-    fclose($f);
-    break;
-*/
   case 'MS-ucast': // -------------------------------------------------------------------- účastníci
     $fname= "$ezer_path_root/cr/data/EXPORT-ucastnici_1995-2012.csv";
     $f= fopen($fname, "r");
