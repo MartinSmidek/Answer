@@ -107,13 +107,13 @@ menu m {type:'left'
 #       | rodiny.b.browse_load(i.par.cnd,"",i.par.hav) ]
     }
   }
-  menu {title:'Přehledy a statistiky',type:'group',                             skill:'yae;fae;cae'
+  menu prehled {title:'Přehledy a statistiky',type:'group',                             skill:'yae;fae;cae'
     item {title:'Přehled VPS od 1990',                                          skill:'yae'
           par:°{typ:'e-v',exp:'Excel',cnd:1, hav:"_vps>0",tit:'jméno:20,obec:20',fld:'_jmeno,obec'}}
     item {title:'Přehled všech od 1990',                                        skill:'yae'
           par:°{typ:'e-v',exp:'Excel',cnd:1, hav:"1",tit:'jméno:20,obec:20',fld:'_jmeno,obec'}}
     item {title:'Struktura letních kurzů MS',   par:°{typ:'e-s',exp:'Excel'}    skill:'yae'}
-    item {title:'Akce s pečouny',               par:°{typ:'e-p',exp:'Excel'}    skill:'yae;cae;fae'}
+    item pec {title:'Akce s pečouny',           par:°{typ:'e-p',exp:'Excel'}    skill:'yae;cae;fae'}
   }
   menu {title:'Výpisy a exporty',type:'group', skill:'yae'
     item {title:'Členové YMCA Setkání'
