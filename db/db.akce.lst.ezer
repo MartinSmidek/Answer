@@ -185,25 +185,42 @@ form _akce [,,*,50] {
   select rok [4,5,52,] { format:'t'
     proc onchange() { akce_roku }
   }
+  # je voláno z kontextem správného the_source
+  proc nazev_akce(id_akce) {
+    var nazev: text
+    { and(id_akce,not(eq(id_akce,'0')));
+      { eq(the_source.get,'google');
+        nazev.set(conc(' Akce ',google.kod.get,'/',google.rok.get,' - ',google.nazev.get));
+      | eq(the_source.get,'sey');
+        nazev.set(conc(' ',conc(sey.nazev.get,', ',fdate('Y',sey.od.get))));
+      | error('X1')
+      };
+    };
+    return (nazev);
+  }
   proc volba_akce(id_akce,naz,ma_cenik) {
     the_duakce.set(id_akce); the_cenik.set(ma_cenik);
     set_cookie(conc(sys('root'),'_akce_id'),the_duakce.get);
     set_cookie(conc(sys('root'),'_akce_cenik'),the_cenik.get);
-    { and(the_duakce.get,not(eq(the_duakce.get,'0')));
-      { eq(the_source.get,'google');
-        the_title.set(conc(' Akce ',google.kod.get,'/',google.rok.get,' - ',google.nazev.get));
-      | eq(the_source.get,'sey');
-        the_rok.set(fdate('Y',sey.od.get));
-        set_cookie(conc(sys('root'),'_akce_rok'),the_rok.get);
-        the_title.set(conc('&nbsp;',conc(sey.nazev.get,', ',the_rok.get)));
-      | error('X1')
-      };
-      lst.info.fill(the_title.get);
-      set_cookie(conc(sys('root'),'_akce_title'),the_title.get);
-      [ ucast.call('init_ucast2') ];
-      [ mai.call('init_ucast') ];
-      [ pece.call('init_pece') ]
-    };
+    [ eq(the_source.get,'sey');
+      the_rok.set(fdate('Y',sey.od.get));
+      set_cookie(conc(sys('root'),'_akce_rok'),the_rok.get) ];
+    the_title.set(nazev_akce(id_akce));
+#     { and(the_duakce.get,not(eq(the_duakce.get,'0')));
+#       { eq(the_source.get,'google');
+#         the_title.set(conc(' Akce ',google.kod.get,'/',google.rok.get,' - ',google.nazev.get));
+#       | eq(the_source.get,'sey');
+#         the_rok.set(fdate('Y',sey.od.get));
+#         set_cookie(conc(sys('root'),'_akce_rok'),the_rok.get);
+#         the_title.set(conc('&nbsp;',conc(sey.nazev.get,', ',the_rok.get)));
+#       | error('X1')
+#       };
+    lst.info.fill(the_title.get);
+    set_cookie(conc(sys('root'),'_akce_title'),the_title.get);
+    [ ucast.call('init_ucast2') ];
+    [ mai.call('init_ucast') ];
+    [ pece.call('init_pece') ];
+#     };
     // vložení informací o akci do proměnné obj_akce
     obj_akce.set(object('nazev',naz));
   }
@@ -296,8 +313,11 @@ form _akce [,,*,50] {
   button [-30,3,100,] { title:'Mapa', //skill:'a|a'
     help:"mapa s bydlišti účastníků akcí"
     proc onclick() {
-      mapa.ukaz_psc;
-      mapa.modal(20,100);
+      mapa.id_akce.set(cconc(
+        eq(the_source.get,'google'),google.id_akce.get,
+        eq(the_source.get,'sey'),sey.id_akce.get,0));
+      mapa.id_akce.get;
+      mapa.modal(20,100,nazev_akce(mapa.id_akce.get))
     }
   }
   proc fill(x) {
@@ -305,14 +325,19 @@ form _akce [,,*,50] {
   }
 }
 // ------------------------------------------- mapa
-panel mapa [,,640,400] { type:'popup'
+panel mapa [,,640,400] { type:'popup', title:'mapa účastníků'
+  var id_akce: number
   proc onfirstfocus() {
     google_maps('mapa_cr',object('label',f.cr));
+    ukaz_psc;
+  }
+  proc onfocus() {
+    ukaz_psc;
   }
   proc ukaz_psc() {
     var ret: object
     google_maps('mark_new');
-    ret.set(ask('akce_mapa',the_duakce.get));
+    ret.set(ask('akce_mapa',id_akce.get));
     google_maps('mark_put',object('mark',ret.mark));
   }
   use f: form _f [0,10,,]

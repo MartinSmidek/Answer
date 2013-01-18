@@ -168,7 +168,7 @@ kEzer-ys2
 		dg\dg.css.css
 		dg.inc
 		dg.php
-	-ys
+	+ys
 		-banka
 			ys\ys.ban.ezer
 			ys\ys.ban.php
@@ -180,6 +180,7 @@ kEzer-ys2
 			ys\ys.css.php
 			ys.inc
 			ys.php
+			ys\ys.syst.dat.ezer
 			ys\ys_fce.js
 			ys\ys_fce.php
 		-ds
@@ -202,7 +203,7 @@ kEzer-ys2
 			ys\ys.syst.ezer
 			ys\ys.syst.oso.ezer
 		ys\ys.doc.ezer
-	+ds
+	-ds
 		ds\ds.css.css
 		ds\ds.dum.ezer
 		ds\ds.ezer
@@ -226,10 +227,16 @@ kEzer-ys2
 3=ezer2.2\client\ezer_fdom1.js
 4=ezer2.2\client\ezer.js
 5=ezer2.2\client\ezer_fdom2.js
-6=cr\data\EXPORT-pecouni.csv
+6=cr\cr_fce.php
+7=ys\ys_fce.php
+8=ys\data\EXPORT-pecouni-test.csv
+9=ys\data\EXPORT-pecouni.csv
+10=db\db.akce.evi.ezer
+11=ys\$.ezer
+12=ys\ys.syst.dat.ezer
 [Selected Project Files]
 Main=
-Selected=cr\data\EXPORT-pecouni.csv
+Selected=ys\ys_fce.php
 [ezer2.2\client\app.js]
 TopLine=27
 Caret=46,60
@@ -237,8 +244,8 @@ Caret=46,60
 TopLine=784
 Caret=46,804
 [ezer2.2\server\ae_slib.php]
-TopLine=1330
-Caret=42,1376
+TopLine=989
+Caret=1,997
 [ezer2.2\client\ezer_fdom1.js]
 TopLine=776
 Caret=36,810
@@ -248,6 +255,25 @@ Caret=10,7209
 [ezer2.2\client\ezer_fdom2.js]
 TopLine=788
 Caret=48,798
-[cr\data\EXPORT-pecouni.csv]
-TopLine=3
-Caret=87,3
+[cr\cr_fce.php]
+TopLine=33
+Caret=1,62
+[ys\ys_fce.php]
+TopLine=53
+Caret=52,72
+Mark1=1,198
+[ys\data\EXPORT-pecouni-test.csv]
+TopLine=1
+Caret=57,5
+[ys\data\EXPORT-pecouni.csv]
+TopLine=276
+Caret=1,310
+[db\db.akce.evi.ezer]
+TopLine=85
+Caret=59,103
+[ys\$.ezer]
+TopLine=1
+Caret=1,1
+[ys\ys.syst.dat.ezer]
+TopLine=1
+Caret=65,11
