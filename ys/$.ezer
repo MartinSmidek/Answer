@@ -14,7 +14,7 @@ menu ys { type:'main', active:* //ys.pok
 #   tabs lide {title:"Lidé", _sys:'lid', include:'onclick', skill:'yl' }
   tabs syst {title:"Systém", _sys:'sys',  include:'onclick,ezer2.syst', active:*
     panel oso {type:'right', title:'Osobní nastavení', _sys:'*', include:'onclick,ezer2.pers' }
-    panel nas {type:'right', title:'Nastavení', _sys:'nas', skill:'a'
+    panel nas {type:'right', title:'Data', _sys:'nas', skill:'a'
       menu {type:'left', active:*
         menu {title:'Opravy dat',type:'group', _sys:'*'
           item {title:'kontroly databáze'               ,par:°{opravit:0}}

@@ -7,7 +7,7 @@ menu fa { type:'main', active:* //ys.pok
 #   tabs lide {title:"Lidé", _sys:'lid', include:'onclick', skill:'a' }
   tabs syst {title:"Systém", _sys:'sys',  include:'onclick,ezer2.syst', active:*
     panel oso {type:'right', title:'Osobní nastavení', _sys:'*', include:'onclick,ezer2.pers' }
-    panel nas {type:'right', title:'Nastavení', _sys:'nas', skill:'a'
+    panel nas {type:'right', title:'Data', _sys:'nas', skill:'a'
       menu {type:'left', active:*
         menu {title:'Centrum pro rodinu ...',type:'group', _sys:'*'
           item {title:'přehled dat',                          par:°{cmd:'survey'}, skill:'m' }
@@ -40,10 +40,27 @@ menu fa { type:'main', active:* //ys.pok
 #             info.fill('',ask('akce_foxpro_data'));
 #           }}
         }
+        menu tento {title:'Záloha databáze', type:'group', skill:'m'
+          #item { title:"kontrola dnešní zálohy" ,par:°{typ:'kontrola'} }
+          #item den { title:"pravidelná záloha"  ,par:°{typ:'kaskada'} }
+          item { title:"zálohuj teď"            ,par:°{typ:'special'} }
+          item { title:"přehled záloh"          ,par:°{typ:'listing'} }
+          item { title:"obnova ze zálohy (jen local)"  ,par:°{typ:'restore'}
+            proc onclick(i) {
+              sys('ezer','options','local');
+              info.fill(conc(i.owner.title,' - ',i.title),' ');
+              [ confirm('Pokračovat?'); info.append(ask('sys_backup_make',i.par)) ]
+            | alert('obnovu ze zálohy lze provádět pouze na lokální kopii systému');
+            }
+          }
+          proc onclick(i) {
+            info.fill(conc(i.owner.title,' - ',i.title),' ');
+            [ confirm('Pokračovat?'); info.append(ask('sys_backup_make',i.par)) ]
+          }
+        }
       }
       use info: form right [12,4,,]
     }
-    panel dat {type:'right', title:"Zálohování", _sys:'*', skill:'m', include:'onclick' }
   }
   tabs doc  {title:"Nápověda", _sys:'nap',  include:'onclick,ezer2.help' }
   tabs off  {title:"Odhlásit", type:'logoff' }

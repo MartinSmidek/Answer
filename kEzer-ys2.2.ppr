@@ -11,6 +11,12 @@ FileFormat=0
 ProjectFilesOnly=0
 [Project tree]
 kEzer-ys2
+	+wiki
+		-db
+		-cr
+		+ezer
+			wiki\ezer_nastaveni.wiki
+		wiki\cr_system.wiki
 	-cr
 		cr\$.ezer
 		.htaccess
@@ -168,7 +174,7 @@ kEzer-ys2
 		dg\dg.css.css
 		dg.inc
 		dg.php
-	+ys
+	-ys
 		-banka
 			ys\ys.ban.ezer
 			ys\ys.ban.php
@@ -229,32 +235,39 @@ kEzer-ys2
 5=ezer2.2\client\ezer_fdom2.js
 6=cr\cr_fce.php
 7=ys\ys_fce.php
-8=ys\data\EXPORT-pecouni-test.csv
-9=ys\data\EXPORT-pecouni.csv
-10=db\db.akce.evi.ezer
-11=ys\$.ezer
-12=ys\ys.syst.dat.ezer
+8=db\db.akce.evi.ezer
+9=ys\$.ezer
+10=cr.inc
+11=db\db.akce.lst.ezer
+12=db\db_akce.php
+13=db\db.akce.ezer
+14=ezer2.2\server\reference.php
+15=ezer2.2\ezer2.help.ezer
+16=cr.php
+17=wiki\ezer_nastaveni.wiki
 [Selected Project Files]
 Main=
-Selected=ys\ys_fce.php
+Selected=ezer2.2\client\ezer.js
 [ezer2.2\client\app.js]
-TopLine=27
+TopLine=1
 Caret=46,60
 [ezer2.2\server\ezer2.php]
 TopLine=784
 Caret=46,804
 [ezer2.2\server\ae_slib.php]
-TopLine=989
-Caret=1,997
+TopLine=790
+Caret=1,832
 [ezer2.2\client\ezer_fdom1.js]
-TopLine=776
-Caret=36,810
+TopLine=639
+Caret=39,636
 [ezer2.2\client\ezer.js]
-TopLine=7182
-Caret=10,7209
+TopLine=1109
+Caret=1,1147
+BookMark1=22,139
+BookMark2=9,552
 [ezer2.2\client\ezer_fdom2.js]
-TopLine=788
-Caret=48,798
+TopLine=4
+Caret=80,29
 [cr\cr_fce.php]
 TopLine=33
 Caret=1,62
@@ -262,18 +275,39 @@ Caret=1,62
 TopLine=53
 Caret=52,72
 Mark1=1,198
-[ys\data\EXPORT-pecouni-test.csv]
-TopLine=1
-Caret=57,5
-[ys\data\EXPORT-pecouni.csv]
-TopLine=276
-Caret=1,310
 [db\db.akce.evi.ezer]
 TopLine=85
 Caret=59,103
 [ys\$.ezer]
 TopLine=1
 Caret=1,1
-[ys\ys.syst.dat.ezer]
+[cr.inc]
 TopLine=1
-Caret=65,11
+Caret=22,14
+[db\db.akce.lst.ezer]
+TopLine=157
+Caret=24,160
+BookMark1=19,321
+BookMark2=33,188
+[db\db_akce.php]
+TopLine=2902
+Caret=1,2933
+[db\db.akce.ezer]
+TopLine=1
+Caret=1,11
+[ezer2.2\server\reference.php]
+TopLine=991
+Caret=49,1041
+Mark1=27,199
+Mark2=15,259
+[ezer2.2\ezer2.help.ezer]
+TopLine=47
+Caret=71,70
+BookMark1=65,73
+Mark1=19,14
+[cr.php]
+TopLine=49
+Caret=3,82
+[wiki\ezer_nastaveni.wiki]
+TopLine=1
+Caret=50,18
