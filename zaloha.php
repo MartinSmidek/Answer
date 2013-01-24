@@ -2,13 +2,13 @@
 # ------------------------------------------------------------------------------------------------ #
 # Zaloha databází systému Ezer pro Ans(w)er                                                        #
 #                                                                                                  #
-#                                                   (c) 2007-2011 Martin Šmídek <martin@smidek.eu> #
+#                                                   (c) 2007-2013 Martin Šmídek <martin@smidek.eu> #
 # ------------------------------------------------------------------------------------------------ #
 
 $ezer_root= $_POST['root'];                        // jméno adresáře a hlavního objektu aplikace
 if ( !$ezer_root ) $ezer_root= $_GET['root'];
 require_once("$ezer_root.inc");
-require_once("ezer2/ezer2_fce.php");
+require_once("{$EZER->version}/ezer2_fce.php");
 
 # zaloha.php?restore=path
 #   obnoví databázi ze souboru $path_backup/subpath

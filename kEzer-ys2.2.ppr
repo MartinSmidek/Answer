@@ -17,7 +17,7 @@ kEzer-ys2
 		+ezer
 			wiki\ezer_nastaveni.wiki
 		wiki\cr_system.wiki
-	-cr
+	+cr
 		cr\$.ezer
 		.htaccess
 		cr\cr.css.php
@@ -186,7 +186,6 @@ kEzer-ys2
 			ys\ys.css.php
 			ys.inc
 			ys.php
-			ys\ys.syst.dat.ezer
 			ys\ys_fce.js
 			ys\ys_fce.php
 		-ds
@@ -204,7 +203,7 @@ kEzer-ys2
 			ys\ys.pok.den.ezer
 			ys\ys.pok.ezer
 			ys\ys.pok.nas.ezer
-		-syst
+		+syst
 			ys\ys.syst.dat.ezer
 			ys\ys.syst.ezer
 			ys\ys.syst.oso.ezer
@@ -245,9 +244,13 @@ kEzer-ys2
 15=ezer2.2\ezer2.help.ezer
 16=cr.php
 17=wiki\ezer_nastaveni.wiki
+18=cr\$.ezer
+19=ys\ys.syst.dat.ezer
+20=ys.inc
+21=fa.inc
 [Selected Project Files]
 Main=
-Selected=ezer2.2\client\ezer.js
+Selected=fa.inc
 [ezer2.2\client\app.js]
 TopLine=1
 Caret=46,60
@@ -255,10 +258,10 @@ Caret=46,60
 TopLine=784
 Caret=46,804
 [ezer2.2\server\ae_slib.php]
-TopLine=790
-Caret=1,832
+TopLine=856
+Caret=1,906
 [ezer2.2\client\ezer_fdom1.js]
-TopLine=639
+TopLine=636
 Caret=39,636
 [ezer2.2\client\ezer.js]
 TopLine=1109
@@ -280,10 +283,10 @@ TopLine=85
 Caret=59,103
 [ys\$.ezer]
 TopLine=1
-Caret=1,1
+Caret=41,32
 [cr.inc]
-TopLine=1
-Caret=22,14
+TopLine=65
+Caret=1,82
 [db\db.akce.lst.ezer]
 TopLine=157
 Caret=24,160
@@ -311,3 +314,15 @@ Caret=3,82
 [wiki\ezer_nastaveni.wiki]
 TopLine=1
 Caret=50,18
+[cr\$.ezer]
+TopLine=17
+Caret=42,50
+[ys\ys.syst.dat.ezer]
+TopLine=1
+Caret=46,21
+[ys.inc]
+TopLine=74
+Caret=1,101
+[fa.inc]
+TopLine=67
+Caret=1,81
