@@ -78,6 +78,7 @@
   );
 
   // parametrizace $EZER
+  $EZER->options->local= $ezer_local;
   $EZER->options->org=    'YMCA Familia';
   $EZER->options->web=    'www.setkani.org';
   $EZER->options->author= 'Martin';

@@ -61,13 +61,14 @@ proc onfirstfocus() {
 
 proc status(on) {
   has_skill('m');
-  on; stav.klice.display(1);
-  switch(mode.get,
-  'o',{ stav.klice.set(conc('osoby: id_osoba=',osoby.b.id_o.get,', id_rodina=',osoby.b.id_r.get)) },
-  'r',{ stav.klice.set(conc('rodiny: id_rodina=',rodiny.b.id_r.get)) },
-      { stav.klice.set('') }
-  ); echo('x')
-| stav.klice.display(0)
+  { on; stav.klice.display(1);
+    switch(mode.get,
+    'o',{ stav.klice.set(conc('osoby: id_osoba=',osoby.b.id_o.get,', id_rodina=',osoby.b.id_r.get)) },
+    'r',{ stav.klice.set(conc('rodiny: id_rodina=',rodiny.b.id_r.get)) },
+        { stav.klice.set('') }
+    ); echo('x')
+  | stav.klice.display(0)
+  }
 }
 const LETOS = "NOW()>=od.dat_od AND (NOW()<=od.dat_do OR od.dat_do='0000-00-00')"
 menu m {type:'left'
