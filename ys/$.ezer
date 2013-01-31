@@ -100,6 +100,7 @@ table _cis { key_id:'id_cis'
   text hodnota,
   text popis,
   text barva,
+  text ikona
 }
 
 table du_kurs { key_id:'id_dukurs'

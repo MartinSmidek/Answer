@@ -54,6 +54,7 @@ table _cis { key_id:'id_cis'
   text zkratka,
   number poradi,
   text barva,
+  text ikona
 }
 
 table pdenik { key_id:'id_pokl'
