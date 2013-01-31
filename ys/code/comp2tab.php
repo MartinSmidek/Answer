@@ -98,6 +98,7 @@ $names= array(
  'init_queries' => (object)array('op'=>'fm'),
  'insert' => (object)array('op'=>'fx'),
  'insert_record' => (object)array('op'=>'fx'),
+ 'is_number' => (object)array('op'=>'ff'),
  'javascript' => (object)array('op'=>'ff'),
  'join' => (object)array('op'=>'os'),
  'join_type' => (object)array('op'=>'os'),

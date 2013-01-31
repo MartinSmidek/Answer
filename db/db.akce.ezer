@@ -92,6 +92,7 @@ table _cis { key_id:'id_cis'
   text hodnota,
   text popis,
   text barva,
+  text ikona
 }
 table _user { key_id:'id_user', db:'ezer_system'
   number id_user

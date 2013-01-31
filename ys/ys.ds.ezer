@@ -96,7 +96,7 @@ group tab { /*include:'static'*/
   }
   table _cis { key_id:'id_cis'
   # ------------------------------------------------------------------------------------------------ číselníky,mapy
-    number id_cis, text druh, text data, text hodnota, text zkratka, number poradi, text barva
+    number id_cis, text druh, text data, text hodnota, text zkratka, number poradi, text barva, text ikona
   }
   map ds_stav:   table _cis {where:"druh='ds_stav'", order:'poradi', key_id:'data'}
   map ds_strava: table _cis {where:"druh='ds_strava'", order:'poradi', key_id:'data'}

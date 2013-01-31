@@ -49,7 +49,7 @@ menu m {type:'left',
     item {title:'členům skupiny'
       proc onclick (i) {
         ini(i,'et','Q','skup','akce');
-        [ echo('vy.komu_Q.key=',vy.komu_Q.key); vy.komu_Q.key | et.get.enable(0,'n') ]
+        [ vy.komu_Q.key | et.get.enable(0,'n') ]
       }
     }
     item {title:'Definice skupin (SQL)',
@@ -78,7 +78,9 @@ form _vyber {
   label [7,7,72,17] { tag:'skup', title:'výběr skupiny:' }
   select komu_Q  [82,5,289,17] { tag:'skup', type:'map', options:map_db_maily_sql.zkratka, format:'t'
     help:'komu|výběr skupiny adresátů'
-    proc onchange() { switch(karta.get,'et',{et.reload},'es',{es.reload},'sq',{sq.reload}) }
+    proc onchange() {
+      switch(karta.get,'et',{et.reload},'es',{es.reload},'sq',{sq.reload})
+    }
   }
   label popis [391,9,400,19] { format:'n', title:"
     <span class='zeleny'> posláno </span>&nbsp;&nbsp;
@@ -93,12 +95,11 @@ form _esql {
   view c: table _cis
   field id_cis { data:c.id_cis }
   field dat { data:c.data }
-  field druh { data:c.druh, value:'db_maily_sql' }
-  field zkratka  [0,40,486,]  { data:c.zkratka, value:'' }
+#   field druh { data:c.druh, value:'db_maily_sql' }
+  field zkratka  [0,40,273,]  { data:c.zkratka, value:'' }
   edit note  [0,70,750,50]    { data:c.popis }
   edit query [0,130,750,200]  { data:c.hodnota }
-#   check druh [546,40,55,]    { title:"chlapi", data:c.barva, value:'0' }
-  select druh  [498,40,100,17] { type:'map', data:c.barva, options:map_db_maily_tab.zkratka, help:'mail pro ...' }
+  select druh [281,40,100,17] { type:'map', data:c.barva, options:map_db_maily_tab.zkratka, help:'mail pro ...' }
   label anwer [0,340,750,200]
   # příkazy
   label  [400,5,205,30] { tag:'def', css:'ae_parm' }
@@ -122,6 +123,7 @@ form _esql {
     _cis.delete_record(conc("id_cis=",id_cis.get," AND druh='db_maily_sql' AND data=",vy.komu_Q.key));
     form.init; vy.komu_Q.init; vy.komu_Q.selects // obnov výběrové hodnoty
   }}
+  check [408,39,197,]    { title:"dotaz je zablokovaný", data:c.ikona, value:'0' }
   # test
   label  [620,5,131,55] { css:'ae_parm' }
   button [627,9,,] {title:'Test',  help:'Uložit změny a otestovat dotaz', proc onclick() {
@@ -149,7 +151,7 @@ form _etext  {
   proc form_init() {
     texty.browse_init; form.init; drop.set(''); form_state('n','u|z|s') }
   proc form_state(on,off) {
-    echo('form_state(',on,',',off,')');
+#     echo('form_state(',on,',',off,')');
     form.enable(1,on); form.enable(0,off); }
   proc onchanged () {
     or(uloz.enable,oprav.enable); form_state('u|z','n|s')
@@ -171,7 +173,7 @@ form _etext  {
     show stav2 { expr:'max(etm.stav)', format:'rsq' }
     show pocet [,,30,] { title:'#', data:etd.pocet, format:'rs' }
     proc onrowclick () {
-      echo(dopis_id.get,'-',id_dopis.get);
+#       echo(dopis_id.get,'-',id_dopis.get);
       dopis_id.set(id_dopis.get);
       form.load(dopis_id.get);
       { attach.get; drop.set(ask('dop_mai_refs',attach.get)) | drop.set('') };
@@ -281,7 +283,11 @@ form _etext  {
   button generovat [L+8,211,45,17] { tag:'s', title:'Vygenerovat rozesílací seznam',
     help:'připravit rozesílání', skill:'yam|yams;fam|fams;cam|cams'
     proc onclick () {
-      prazdny; et_prazdy.get;
+      var ikona: number
+      ikona.set(ask('select','ikona','_cis',conc("druh='db_maily_sql' AND data=",vy.komu_Q.key)));
+      ikona.get; alert("použití skupiny <b>",vy.komu_Q.get,"</b> je zablokováno - asi probíhá úprava dotazu",
+        ", kontaktuj administrátora aplikace ...");
+    | prazdny; et_prazdy.get;
       E_info.set(ask('dop_mai_pocet',dopis_id.get,dopis_var.get));
       confirm(E_info.get('_html'));
       E_info.get('_count'); ask('dop_mai_posli',dopis_id.get,E_info.get);
