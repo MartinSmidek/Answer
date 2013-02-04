@@ -45,6 +45,7 @@ proc akce_show(xakce,xpobyt,xnadpis,xback) {
   the_duakce.set(xakce);
   header.fill(conc('<i>',xback,': ',xnadpis,'</i>'));
   reload(xpobyt);
+  [ u.b.browse_count; page.evd.onclick ];
 }
 proc akce_back() {
   the_duakce.set(back.get('ida'));
