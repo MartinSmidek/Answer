@@ -4125,7 +4125,8 @@ function db_mail_sql_subst($qry='') {  trace();
   $parms= array (
    'letos' => array (date('Y'),'letošní rok'),
    'vloni' => array (date('Y')-1,'loňský rok'),
-   'pred5' => array (date('Y')-5,'před 5 lety')
+   'pred5' => array (date('Y')-5,'před 5 lety'),
+   'pred6' => array (date('Y')-6,'před 6 lety')
   );
   if ( $qry=='' ) {
     // help
