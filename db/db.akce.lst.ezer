@@ -313,9 +313,8 @@ form _akce [,,*,50] {
   button [-30,3,100,] { title:'Mapa', //skill:'a|a'
     help:"mapa s bydlišti účastníků akcí"
     proc onclick() {
-      mapa.id_akce.set(cconc(
-        eq(the_source.get,'google'),google.id_akce.get,
-        eq(the_source.get,'sey'),sey.id_akce.get,0));
+      [ eq(the_source.get,'google'); mapa.id_akce.set(google.id_akce.get)
+      | eq(the_source.get,'sey'); mapa.id_akce.set(sey.id_akce.get) ];
       mapa.id_akce.get;
       mapa.modal(20,100,nazev_akce(mapa.id_akce.get))
     }
