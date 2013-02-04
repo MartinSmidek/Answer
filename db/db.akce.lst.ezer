@@ -75,8 +75,8 @@ form _page [,,285,500] {
   label cor [100,0,80,20] {tag:'p', title:'<b>Úprava</b>', format:'c'
     proc onclick() { tags(this,'cor','inf|cen'); zalozka.set('cor'); show_akce(a_akce.get)
   } }
-  // jen pro YF - přidání akce
-  label new [188,0,80,20] {tag:'p', title:'<b>Nová akce</b>', format:'c', skill:'faan'
+  // jen pro YF,CR - přidání akce
+  label new [188,0,80,20] {tag:'p', title:'<b>Nová akce</b>', format:'c', skill:'faan;caan'
     proc onclick() { tags(this,'cor','inf|cen'); zalozka.set('new'); show_akce(a_akce.get)
   } }
   // je pro YS - ceník akce
@@ -158,14 +158,14 @@ form _page [,,285,500] {
     proc onchange() { echo('strava=',this.get) }
   }
   label [14,202,,] { tag:'cor', title:'účetní symbol:', skill:'faa;caa|faa;caa' }
-  field [96,202,47,] { tag:'cor', data:akce.ciselnik_akce, skill:'faa|faa' }
+  field [96,202,47,] { tag:'cor', data:akce.ciselnik_akce, skill:'faa|faa;caa|caa' }
   // Zpět a Uložit
-  label  [144,236,98,30] { tag:'cor', css:'ae_parm', style:'z-index:1', skill:'yaa+;faa+' }
-  button [150,241,,] { tag:'cor', title:'Zpět', skill:'yaa+|yaa+;faa+|faa+'
+  label  [144,236,98,30] { tag:'cor', css:'ae_parm', style:'z-index:1', skill:'yaa+;faa+;caa+' }
+  button [150,241,,] { tag:'cor', title:'Zpět', skill:'yaa+|yaa+;faa+|faa+;caa+|caa+'
     help:'Neměnit změněná data'
     proc onclick() { form.load(page.a_akce.get);
   }}
-  button [196,241,,] { tag:'cor', title:'Uložit', skill:'yaa+|yaa+;faa+|faa+'
+  button [196,241,,] { tag:'cor', title:'Uložit', skill:'yaa+|yaa+;faa+|faa+;caa+|caa+'
     help:'Uložit změněná data',
     proc onclick() {
       form.same
