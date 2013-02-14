@@ -1227,65 +1227,80 @@ function ucet_load_akce2($rok) {  #trace();
 function ucet_load_denik($rok) { #trace();
   // import účetního deníku
   global $ezer_path_docs;
+  $err= "";
+  $sloupcu= 38;
   $fname= "$ezer_path_docs/{$rok}_udenik.txt";
   $f= fopen($fname, "r");
-  if ( $f ) {
-    $html.= "importuji ze souboru $fname ... ";
-    $line= 0;
-    $values= ''; $del= '';
-    while (($data= fgetcsv($f, 1000, ";")) !== false) {
-//                                                   debug($data);
-      $line++;
-      if ( $line==1 ) continue; // vynechání hlaviček
-      $key= sprintf("%04d%05d",$rok,$line);
-      $num= count($data);
-      if ( !$num ) break;
-      $value= '';
-      $empty= true;
-      for ($clmn= 0; $clmn < $num; $clmn++) {
-        $val= $data[$clmn];
-        if ( $val && $val!='@' && $val!='0' ) $empty= false;
-        switch ($clmn) {
-        case 4: case 5:                   // datum
-          $val= substr(sql_time($val,1),0,10);
-          break;
-        case 14: case 20:                 // Kč
-          $val= substr(str_replace(",",".",$val),0,-3); break;
-        case 24:                          // dotace
-          if ( substr($val,2,7)=='Zak0000' ) {
-            $n= substr($val,-1,1);
-            $val= strtr($n,array('1'=>'MS','2'=>'DS','3'=>'DH'));
-          }
-          else if ( $val=='' ) {
-            $val= 'x';
-          }
-          break;
+  if ( !$f ) { $err= "importní soubor $fname neexistuje"; goto end; }
+  $html.= "import ze souboru $fname ... ";
+  $line= 0;
+  $values= ''; $del= '';
+  while (($data= fgetcsv($f, 1000, ";")) !== false) {
+//                                                   debug($data,$line+1);
+    $line++;
+    $num= count($data);
+    if ( $line==1 ) {
+      // kontrola hlaviček
+                                                        debug($data);
+      if ( $num!=$sloupcu ) { // problém
+        $err= "soubor $fname má $num sloupců - očekává se $sloupcu";
+        goto end_read;
+      }
+      continue; // vynechání hlaviček
+    }
+    $key= sprintf("%04d%05d",$rok,$line);
+    if ( !$num ) break;
+    $value= '';
+    $empty= true;
+    for ($clmn= 0; $clmn < $num; $clmn++) {
+      $val= $data[$clmn];
+      if ( $val && $val!='@' && $val!='0' ) $empty= false;
+      switch ($clmn) {
+      case 4: case 5:                   // datum
+        $val= substr(sql_time($val,1),0,10);
+        break;
+      case 14: case 20:                 // Kč
+        $val= strtr($val,array(","=>"."," "=>""));
+        break;
+//         $val= substr(str_replace(",",".",$val),0,-3); break;
+      case 24:                          // dotace
+        if ( substr($val,2,7)=='Zak0000' ) {
+          $n= substr($val,-1,1);
+          $val= strtr($n,array('1'=>'MS','2'=>'DS','3'=>'DH'));
         }
-        $value.= ', "'.win2utf($val,true).'"';
+        else if ( $val=='' ) {
+          $val= 'x';
+        }
+        break;
       }
-      // přidat jen neprázdné řádky
-      if ( !$empty ) {
-        $values.= "$del\n(\"$key\"$value)";
-        $del= ',';
-      }
-//       if ( $line>13 ) break;
+      $value.= ', "'.win2utf($val,true).'"';
     }
-    $html.= "ok <br>";
-    fclose($f);
-    // smazání starých
-    $qry= "DELETE FROM udenik WHERE id_udenik BETWEEN {$rok}00000 AND {$rok}99999;";
-    $res= mysql_qry($qry);
-    if ( $res ) {
-      $html.= "rok $rok smazán<br>";
-      // vložení nových
-      $qry= "INSERT INTO udenik VALUES $values;";
-      $res= mysql_qry($qry);
-      $n= mysql_affected_rows();
-      if ( $res ) $html.= "pro rok $rok vloženo $n řádků<br>";
+    // přidat jen neprázdné řádky
+    if ( !$empty ) {
+      $values.= "$del\n(\"$key\"$value)";
+      $del= ',';
     }
+//     if ( $line>20 ) break;
   }
-  else fce_error("importní soubor $fname neexistuje");
-//   $html.= nl2br("<br>qry=\n$qry<br>");
+  $html.= "ok <br>";
+end_read:
+  fclose($f);
+  if ( $err ) goto end;
+  // smazání starých
+  $qry= "DELETE FROM udenik WHERE id_udenik BETWEEN {$rok}00000 AND {$rok}99999;";
+  $res= mysql_qry($qry);
+  if ( $res ) {
+    $html.= "rok $rok smazán<br>";
+    // vložení nových
+    $qry= "INSERT INTO udenik VALUES $values;";
+    $res= @mysql_qry($qry,0,'-'); if ( !$res ) { $err= mysql_error(); goto end; }
+    $n= mysql_affected_rows();
+    if ( $res ) $html.= "pro rok $rok vloženo $n řádků<br>";
+  }
+end:
+  if ( $err ) {
+    $html.= "<br><br><div style='color:red'>IMPORT SKONČIL CHYBOU: $err</div>";
+  }
   $result= (object)array('html'=>$html);
   return $result;
 }
