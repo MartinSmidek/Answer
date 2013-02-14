@@ -18,7 +18,9 @@ panel den [,,,750] {type:'right', title:'Účetní deník',_sys:'den'
     menu m {title:'Účetní deník',type:'group',_sys:'den', active:m.a
       item {title:'Rok 2008'                   ,par:°{s:'u-show',c:'2008'}}
       item {title:'Rok 2009'                   ,par:°{s:'u-show',c:'2009'}}
-      item a {title:'Rok 2010'                 ,par:°{s:'u-show',c:'2010'}}
+      item {title:'Rok 2010'                   ,par:°{s:'u-show',c:'2010'}}
+      item {title:'Rok 2011'                   ,par:°{s:'u-show',c:'2011'}}
+      item a {title:'Rok 2012'                 ,par:°{s:'u-show',c:'2012'}}
       item {title:'Import deníku, akcí, osnovy',par:°{s:'u-load',c:''}}
     }
     menu {title:'Přehledy',type:'group',_sys:'pre'
