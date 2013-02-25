@@ -77,7 +77,7 @@ kEzer-ys2
 		sql\mysql_all.bat
 		sql\pohled_osoba.sql
 		zaloha.php
-	+ezer2.2
+	-ezer2.2
 		+libr
 			ezer2.2\$.ezer
 			ezer2.2\ezer2.help.ezer
@@ -235,11 +235,10 @@ kEzer-ys2
 6=ys\$.ezer
 7=ys\ys.eko.ezer
 8=ys\ys_ucet.php
-9=docs\2012_udenik.txt
-10=Novy1.php
+9=db\db.akce.mai.ezer
 [Selected Project Files]
 Main=
-Selected=Novy1.php
+Selected=db\db.akce.mai.ezer
 [ezer2.2\client\app.js]
 TopLine=1
 Caret=46,60
@@ -272,9 +271,6 @@ Caret=37,129
 TopLine=1240
 Caret=49,1263
 BookMark1=21,1227
-[docs\2012_udenik.txt]
-TopLine=1
-Caret=1,1
-[Novy1.php]
-TopLine=1
-Caret=29,7
+[db\db.akce.mai.ezer]
+TopLine=189
+Caret=65,197

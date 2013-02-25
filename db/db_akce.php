@@ -827,7 +827,8 @@ function akce_sestava($akce,$par,$title,$vypis,$export=false) {
      : ( $par->typ=='sd' ? akce_skup_deti($akce,$par,$title,$vypis,$export)
      : ( $par->typ=='d'  ? akce_sestava_pecouni($akce,$par,$title,$vypis,$export)
      : ( $par->typ=='fs' ? akce_fotoseznam($akce,$par,$title,$vypis,$export)
-                         : fce_error("akce_sestava: N.Y.I.") )))))))))))));
+     : ( $par->typ=='12' ? akce_jednou_dvakrat($akce,$par,$title,$vypis,$export)
+                         : fce_error("akce_sestava: N.Y.I.") ))))))))))))));
 }
 # -------------------------------------------------------------------------------------------------- akce_table
 function akce_table($tits,$flds,$clmn,$export=false) {
@@ -857,6 +858,60 @@ function akce_table($tits,$flds,$clmn,$export=false) {
     }
     $result->html= "<div class='stat'><table class='stat'><tr>$ths</tr>$tab</table>$n řádků</div>";
   }
+  return $result;
+}
+# -------------------------------------------------------------------------------------------------- akce_jednou_dvakrat
+# generování seznamu jedno- a dvou-ročáků spolu s mailem na VPS
+#   $fld = seznam položek s prefixem
+#   $cnd = podmínka
+function akce_jednou_dvakrat($akce,$par,$title,$vypis,$export=false) { trace();
+  $result= (object)array('html'=>'');
+  $vps= array();
+  $n= 0;
+  $qry=  "SELECT
+            r.nazev as nazev,
+            ( SELECT CONCAT(nazev,' ',emaily,' ',email,'/',funkce )
+              FROM rodina
+              JOIN tvori ON rodina.id_rodina=tvori.id_rodina
+              JOIN osoba ON osoba.id_osoba=tvori.id_osoba
+              JOIN spolu ON spolu.id_osoba=osoba.id_osoba
+              JOIN pobyt ON pobyt.id_pobyt=spolu.id_pobyt
+              WHERE pobyt.id_akce='$akce' AND skupina=p.skupina AND role='a'
+              ORDER BY funkce DESC LIMIT 1) as skup,
+            GROUP_CONCAT(DISTINCT IF(t.role='a',o.jmeno,'')    SEPARATOR '') as jmeno_m,
+            GROUP_CONCAT(DISTINCT IF(t.role='b',o.jmeno,'')    SEPARATOR '') as jmeno_z,
+            ( SELECT count(DISTINCT cp.id_pobyt) FROM pobyt AS cp
+              JOIN akce AS ca ON ca.id_duakce=cp.id_akce
+              JOIN spolu AS cs ON cp.id_pobyt=cs.id_pobyt
+              JOIN osoba AS co ON cs.id_osoba=co.id_osoba
+              LEFT JOIN tvori AS ct ON ct.id_osoba=co.id_osoba
+              LEFT JOIN rodina AS cr ON cr.id_rodina=ct.id_rodina
+              WHERE ca.druh=1 AND cr.id_rodina=r.id_rodina ) AS _ucasti
+          FROM pobyt AS p
+          JOIN spolu AS s USING(id_pobyt)
+          JOIN osoba AS o ON s.id_osoba=o.id_osoba
+          LEFT JOIN tvori AS t ON t.id_osoba=o.id_osoba
+          LEFT JOIN rodina AS r USING(id_rodina)
+          WHERE p.id_akce='$akce' AND p.skupina!=0
+          GROUP BY id_pobyt HAVING _ucasti IN (1,2)
+          ORDER BY nazev";
+  $res= mysql_qry($qry);
+  while ( $res && ($x= mysql_fetch_object($res)) ) {
+    $par= "{$x->_ucasti}x {$x->jmeno_m} a {$x->jmeno_z} {$x->nazev}";
+    $vps[$x->skup][]= $par;
+    $n++;
+  }
+  ksort($vps);
+                                        debug($vps,"jednou - dvakrát");
+  $html= "<h3>Pracovní seznam párů, kteří jsou na MS poprvé (1x) nebo podruhé (2x), spolu s jejich VPS</h3>";
+  foreach ($vps as $v => $ps) {
+    $html.= "<p><b>$v</b>";
+    foreach ($ps as $p) {
+      $html.= "<br>$p";
+    }
+    $html.= "</p>";
+  }
+  $result->html= $html;
   return $result;
 }
 # -------------------------------------------------------------------------------------------------- akce_fotoseznam
