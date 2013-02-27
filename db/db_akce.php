@@ -816,7 +816,7 @@ function akce_sestava($akce,$par,$title,$vypis,$export=false) {
   return $par->typ=='p'  ? akce_sestava_pary($akce,$par,$title,$vypis,$export)
      : ( $par->typ=='j'  ? akce_sestava_lidi($akce,$par,$title,$vypis,$export)
      : ( $par->typ=='vp' ? akce_vyuctov_pary($akce,$par,$title,$vypis,$export)
-     : ( $par->typ=='vs' ? akce_strava_pary($akce,$par,$title,$vypis,$export)
+     : ( $par->typ=='vs' ? akce_strava_pary($akce,$par,$title,$vypis,$export)  // bez náhradníků
      : ( $par->typ=='vj' ? akce_stravenky($akce,$par,$title,$vypis,$export)
      : ( $par->typ=='vjp'? akce_stravenky($akce,$par,$title,$vypis,$export)
      : ( $par->typ=='vn' ? akce_sestava_noci($akce,$par,$title,$vypis,$export)
@@ -1809,9 +1809,9 @@ function akce_strava_pary($akce,$par,$title,$vypis,$export=false,$id_pobyt=0) { 
     if ( $sum=='s' ) $suma[$fld]= 0;
     if ( isset($f) ) $fmts[$fld]= $f;
   }
+  // pokud není id_pobyt tak vyloučíme náhradníky
+  $cond.= $id_pobyt ? " AND id_pobyt=$id_pobyt" : " AND funkce NOT IN (9)";
   // data akce
-  if ( $id_pobyt )
-    $cond.= " AND id_pobyt=$id_pobyt";
   $qry=  "SELECT r.nazev as nazev,strava_cel,strava_pol,cstrava_cel,cstrava_pol,p.pouze,
             GROUP_CONCAT(DISTINCT IF(t.role='a',o.prijmeni,'') SEPARATOR '') as prijmeni_m,
             GROUP_CONCAT(DISTINCT IF(t.role='a',o.jmeno,'')    SEPARATOR '') as jmeno_m,
@@ -1822,7 +1822,7 @@ function akce_strava_pary($akce,$par,$title,$vypis,$export=false,$id_pobyt=0) { 
           JOIN osoba AS o ON s.id_osoba=o.id_osoba
           LEFT JOIN tvori AS t ON t.id_osoba=o.id_osoba
           LEFT JOIN rodina AS r USING(id_rodina)
-          WHERE p.id_akce='$akce' AND funkce NOT IN (9) AND $cond
+          WHERE p.id_akce='$akce' AND $cond
           GROUP BY id_pobyt
           ORDER BY $ord";
 //   $qry.=  " LIMIT 5";
