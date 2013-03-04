@@ -42,7 +42,7 @@ group pobyt {
 
   use popis: form zahlavi [0,0,,]
   use obj: form objednavka [10,30,,]
-  use fak: form fakturace [380,30,,]
+  use fak: form fakturace [400,30,,]
   // zobrazení objednávky
   proc precti  {
     popis.tit.set(conc('<h3>Objednávka číslo ',the_order.get,'</h3>')); obj.load(the_order.get);
@@ -90,7 +90,7 @@ group pobyt {
       | alert("Bohužel, toto není správný PIN")
       }
     }
-    label [380,  0,300,] { title:'<h3>Fakturační adresa objednavatele</h3>' }
+    label [400,  0,300,] { title:'<h3>Fakturační adresa objednavatele</h3>' }
   }
   // ------------------------------------------------------------------ OBJEDNÁVKA
   form objednavka /*[,,300,100]*/ { css:'ds_form'
@@ -198,12 +198,12 @@ group ucastnici {
   var to_show: number                           // 1 => zobrazovat
   var akc: form
   var per: form
-#   use per: form osoba [380,280,,]
+#   use per: form osoba [400,280,,]
 
   // zobrazení formuláře účastníků
   proc formular {
-#     to_show.get; akc.set(new_form(akce,10,280)); //per.set(new_form(osoba,380,280));
-    to_show.get; akc.set(new_form(akce,10,280)); per.set(new_form(_osoba,380,280));
+#     to_show.get; akc.set(new_form(akce,10,280)); //per.set(new_form(osoba,400,280));
+    to_show.get; akc.set(new_form(akce,10,280)); per.set(new_form(_osoba,400,280));
     new_form(zahlavi,0,240)
   }
   // zobrazí spodní formuláře
@@ -283,7 +283,7 @@ group ucastnici {
   form zahlavi [,,600,30] { css:'ds_form'
     label [ 10,0,694,] { title:'<hr>' }
     label [ 10,20,300,] { title:"<h3 style='margin:0'>Seznam účastníků pobytu</h3>"  }
-    label [380,20,300,] { title:"<h3 style='margin:0'>Údaje vybraného účastníka</h3>" }
+    label [400,20,300,] { title:"<h3 style='margin:0'>Údaje vybraného účastníka</h3>" }
 
     button [200,10,,] { title:'TEST', skill:'m|m'
       proc onclick () { ask('test_020811') }
