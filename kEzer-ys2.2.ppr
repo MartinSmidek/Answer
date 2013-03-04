@@ -47,7 +47,7 @@ kEzer-ys2
 		fa\fa_lide.php
 	-skins
 		skins\colors.php
-	-db
+	+db
 		db\$.ezer
 		db\db.akce.dup.ezer
 		db\db.akce.evi.ezer
@@ -236,9 +236,11 @@ kEzer-ys2
 7=ys\ys.eko.ezer
 8=ys\ys_ucet.php
 9=db\db.akce.mai.ezer
+10=db\db_akce.php
+11=db\db.akce.tisk.ezer
 [Selected Project Files]
 Main=
-Selected=db\db.akce.mai.ezer
+Selected=db\db_akce.php
 [ezer2.2\client\app.js]
 TopLine=1
 Caret=46,60
@@ -273,4 +275,11 @@ Caret=49,1263
 BookMark1=21,1227
 [db\db.akce.mai.ezer]
 TopLine=189
-Caret=65,197
+Caret=100,209
+[db\db_akce.php]
+TopLine=1410
+Caret=87,1429
+BookMark1=43,1825
+[db\db.akce.tisk.ezer]
+TopLine=109
+Caret=119,160
