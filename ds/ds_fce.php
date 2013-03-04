@@ -515,10 +515,12 @@ function ds_hoste($orders,$rok) {  #trace('','win1250');
 # definice Excelovského listu - zálohové faktury
 function ds_xls_zaloha($order) {  #trace('','win1250');
   global $ezer_path_serv;
+  $html= " nastala chyba";
   $name= "zal_$order";
   // vytvoøení sešitu s fakturou
   $xls= "|open  $name|";
   $x= ds_zaloha($order);
+  if ( !count((array)$x) ) goto end;
   $xls.= ds_faktura('zalohova_faktura','ZÁLOHOVÁ FAKTURA',$order,$x->polozky,$x->platce,50,
     "Tìšíme se na Váš pobyt v Domì setkání");
   $xls.= "|close|";
@@ -532,6 +534,7 @@ function ds_xls_zaloha($order) {  #trace('','win1250');
   }
   else
     $html= " <a href='docs/$name.xls' target='xls'>zálohová faktura</a>.";
+end:
   return wu($html);
 }
 # -------------------------------------------------------------------------------------------------- ds_zaloha
@@ -548,6 +551,10 @@ function ds_zaloha($order) {  #trace('','win1250');
   $qry= "SELECT * FROM tx_gnalberice_order WHERE uid=$order";
   $res= mysql_qry($qry);
   if ( $res && $o= mysql_fetch_object($res) ) {
+    foreach ((array)$o as $on) if ( strstr($on,'|')!==false ) { // test na |
+      fce_warning(wu("nepøípustný znak '|' v '$on'"));
+      goto end;
+    }
     $obdobi= date('j.n',$o->fromday).' - '.date('j.n.Y',$o->untilday);
     $dnu= ($o->untilday-$o->fromday)/(60*60*24);
 //                                                         display("pocet dnu=$dnu");
@@ -580,6 +587,7 @@ function ds_zaloha($order) {  #trace('','win1250');
     }
 //                                                                 debug($x,'zaloha',(object)array('win1250'=>1));
   }
+end:
   return $x;
 }
 # ================================================================================================== KONEÈNÁ FAKTURA
@@ -590,8 +598,10 @@ function ds_zaloha($order) {  #trace('','win1250');
 # *ubytování
 function ds_xls_faktury($order) {  trace('','win1250');
   global $ds_cena;
+  $html= " nastala chyba";
   $test= 1;
   $x= ds_faktury($order);
+  if ( !count((array)$x->rodiny) ) goto end;
   $ds_cena['zzz_zzz']= 0;    // pøidání prázdného øádku
   ksort($ds_cena);
 
@@ -811,6 +821,7 @@ __XLS;
     $html= " <a href='docs/$name.xls' target='xls'>koneèná faktura</a>.";
   // pøípadný testovací výpis
   time_mark('ds_xls_faktury end');
+end:
   return wu($html);
 }
 # -------------------------------------------------------------------------------------------------- ds_faktury
@@ -838,6 +849,10 @@ function ds_faktury($order) {  trace('','win1250');
   $qry= "SELECT * FROM setkani.tx_gnalberice_order WHERE uid=$order";
   $res= mysql_qry($qry);
   if ( $res && $o= mysql_fetch_object($res) ) {
+    foreach ((array)$o as $on) if ( strstr($on,'|')!==false ) { // test na |
+      fce_warning(wu("nepøípustný znak '|' v '$on'"));
+      goto end;
+    }
     $obdobi= date('j.n',$o->fromday).' - '.date('j.n.Y',$o->untilday);
     $skoleni= $o->skoleni;
     // údaje o plátci: $ic,$dic,$adresa
@@ -870,6 +885,10 @@ function ds_faktury($order) {  trace('','win1250');
              WHERE id_order=$order AND rodina='{$r->rodina}' ORDER BY narozeni DESC";
       $reso= mysql_qry($qry);
       while ( $reso && $h= mysql_fetch_object($reso) ) {
+        foreach ((array)$h as $on) if ( strstr($on,'|')!==false ) { // test na |
+          fce_warning(wu("nepøípustný znak '|' v '$on'"));
+          goto end;
+        }
         $hf= sql2stamp($h->fromday); $hu= sql2stamp($h->untilday);
         $od_ts= $hf ? $hf : $o->fromday;  $od= date('j.n',$od_ts);
         $do_ts= $hu ? $hu : $o->untilday; $do= date('j.n',$do_ts);
@@ -937,6 +956,7 @@ function ds_faktury($order) {  trace('','win1250');
     fce_error(wu("neúplná objednávka $order"));
 //                                                                 debug($ds_cena,'ds_cena',(object)array('win1250'=>1));
 //                                                                 debug($x,'faktura',(object)array('win1250'=>1));
+end:
   return $x;
 }
 # ================================================================================================== FAKTURA OBECNÌ
