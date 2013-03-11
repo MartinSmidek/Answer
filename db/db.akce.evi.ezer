@@ -75,6 +75,12 @@ menu m {type:'left'
   menu g {title:'Evidence jednotlivců',type:'group', skill:'yae;fae;cae'
     item i {title:'všechny kontakty'
           par:°{cnd:"1",hav:"1"} }
+    item {title:'VPS i s dětmi' skill:'yae;cae'
+          par:°{cnd:"1",hav:"FIND_IN_SET(1,_akt)"} }
+    item {title:'PPS i s dětmi' skill:'fae'
+          par:°{cnd:"1",hav:"FIND_IN_SET(1,_akt)"} }
+    item {title:'pečovatelé'
+          par:°{cnd:"1",hav:"FIND_IN_SET(99,_akt)"} }
     item {title:'letošní členové'
           par:°{cnd:LETOS,hav:"LOCATE('b',rel)>0 OR LOCATE('c',rel)>0"} }
     item {title:'letošní činní členové'
@@ -165,18 +171,28 @@ form _stav [,,380,106] {
 # -------------------------------------------------------------------------------------------------- _osoby
 form _osoby {
   view os: table osoba
-  view ot: table tvori { join_type:'LEFT', join:"ON os.id_osoba=ot.id_osoba" }
+  view ox: table spolu  { join_type:'LEFT', join:"ON ox.id_osoba=os.id_osoba" }
+  view op: table pobyt  { join_type:'LEFT', join:"ON op.id_pobyt=ox.id_pobyt" }
+  view oc: table _cis   { join_type:'LEFT', join:"ON op.funkce=oc.data AND oc.druh='ms_akce_funkce'" }
+  view ot: table tvori  { join_type:'LEFT', join:"ON os.id_osoba=ot.id_osoba" }
   view of: table rodina { join_type:'LEFT', join:"USING(id_rodina)" }
-  view od: table dar { join_type:'LEFT', join:"ON os.id_osoba=od.id_osoba AND od.deleted=''" }
+  view od: table dar    { join_type:'LEFT', join:"ON os.id_osoba=od.id_osoba AND od.deleted=''" }
   browse b [0,0,,] { rows:28, qry_rows:1, group_by:'os.id_osoba'
     show id_o { data:os.id_osoba }
+    show id_x { data:ox.id_spolu }
+    show id_p { data:op.id_pobyt }
     show id_t { data:ot.id_tvori }
     show id_r { data:of.id_rodina }
     show id_d { data:od.id_dar }
     show prijmeni [,,70,] { data:os.prijmeni, title:'příjmení', format:'q*s' }
     show jmeno [,,70,] { data:os.jmeno, title:'jméno', format:'q*s' }
     show [,,60,] { title:'obec', data:os.obec, format:'q*s' }
-    show rel [,,100,] { expr:"GROUP_CONCAT(DISTINCT od.ukon ORDER BY od.ukon SEPARATOR '')", title:'YS',
+    show _akt { expr:"GROUP_CONCAT(DISTINCT funkce)" }
+    show akt [,,100,] { title:'funkce',
+      expr:"GROUP_CONCAT(DISTINCT oc.zkratka ORDER BY funkce)",
+      help:'zkratky funkcí', format:'q%s' }
+    show rel [,,0,] { title:'příspěvky',
+      expr:"GROUP_CONCAT(DISTINCT od.ukon ORDER BY od.ukon SEPARATOR '')",
       help:'b,c=běžný či činný člen, d=dar, p=příspěvek', format:'q%s' }
     show nar [,,0,] { title:'rrmmdd', data:os.narozeni, sql_pipe:'sql_yymmdd', format:'q@s'
       help:'datum narození ve tvaru rrmmdd'}
@@ -184,9 +200,10 @@ form _osoby {
       help:'osobní i  rodinné emaily', format:'tq%s' }
     proc onrowclick() { evid.reload; dary.reload; status(1) }
     proc onclick() {
-      rel.width; rel.width(0);   nar.width(100);
+      akt.width; akt.width(0);   rel.width(100);
+    | rel.width; rel.width(0);   nar.width(100);
     | nar.width; nar.width(0);   mail.width(100);
-    |            rel.width(100); mail.width(0);
+    |            mail.width(0);  akt.width(100);
     }
     # --------------------------------------------------  KONTEXTOVÉ MENU
     menu { type:'context'

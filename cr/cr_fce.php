@@ -76,15 +76,15 @@ function cr_import_dat($opt) {  trace();
     }
     break;
   case 'MS-pec': // ------------------------------------------------------------------------ pečouni
-    $fname= "$ezer_path_root/ys/data/EXPORT-pecouni.csv";
+    $fname= "$ezer_path_root/cr/data/EXPORT-pecouni.csv";
     $f= fopen($fname, "r");
     if ( !$f ) { $err= "importní soubor $fname neexistuje"; goto end; }
     // načtení kurzů
     $kurz= kurzy($err,$msg,false,2000); if ( $err ) goto end;
     // importní soubor
     $msg.= "Import ze souboru $fname ... ";
-//     $poradatel= "CR";
-    $poradatel= "YS";
+    $poradatel= "CR";
+//     $poradatel= "YS";
     $line= 0;
     $values= ''; $del= '';
     $akce= 0;
