@@ -427,6 +427,41 @@ end:
   }
   return $msg;
 }
+# ================================================================================================== DOKUMENTY
+# ----------------------------------------------------------------------------------------- doc_menu
+# vygeneruje menu pro přehled dokumentů z tabulky DOKUMENT
+function doc_menu() {
+  $the= '';
+  $mn= (object)array('type'=>'menu.left'
+    ,'options'=>(object)array(),'part'=>(object)array());
+  $qg= "SELECT kod1,nazev FROM dokument WHERE uroven=2";
+  $rg= mysql_qry($qg);
+  while ( $rg && $g= mysql_fetch_object($rg) ) {
+    $group= $g->kod1;
+    $title= "$group) {$g->nazev}";
+    $gr= (object)array('type'=>'menu.group'
+      ,'options'=>(object)array('title'=>$title),'part'=>(object)array());
+    $ti= null;
+    $qi= "SELECT kod2,nazev FROM dokument WHERE uroven=1 AND kod1='$group'";
+    $ri= mysql_qry($qi);
+    while ( $ri && $i= mysql_fetch_object($ri) ) {
+      $item= "$group{$i->kod2}";
+      $title= "$item {$i->nazev}";
+      $par= (object)array('kody'=>$item);
+      $ti= (object)array('type'=>'item','options'=>(object)array('title'=>$title,'par'=>$par));
+      $gr->part->$item= $ti;
+      if ( !$the ) {
+        $the= "$group.$item";
+      }
+    }
+    if ( $ti ) {
+      $mn->part->$group= $gr;
+    }
+  }
+  $result= (object)array('th'=>$the,'cd'=>$mn);
+                                                        debug($result);
+  return $mn;
+}
 # ================================================================================================== SOUBORY
 # -------------------------------------------------------------------------------------------------- google_sheet
 # přečtení listu $list z tabulky $sheet uživatele $user do pole $cell

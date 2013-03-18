@@ -23,8 +23,11 @@ Ezer.fce.google_maps= function (fce,options) {
     options.mark.split(';').map(function(xy) {
       var x_y= xy.split(',');
       var ll= new google.maps.LatLng(x_y[0],x_y[1]);
-      Ezer.obj.google_maps.mark.push(
-        new google.maps.Marker({position:ll,map:Ezer.obj.google_maps.map}));
+      var map_opts= {position:ll,map:Ezer.obj.google_maps.map};
+      if ( x_y[2] ) map_opts.title= x_y[2];     // přidá label
+      Ezer.obj.google_maps.mark.push(new google.maps.Marker(map_opts));
+//       Ezer.obj.google_maps.mark.push(
+//         new google.maps.Marker({position:ll,map:Ezer.obj.google_maps.map}));
     });
     break;
   case 'poly_new':                                      // vymaže všechny polygony

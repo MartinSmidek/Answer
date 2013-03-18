@@ -246,6 +246,7 @@ table spolu { key_id:'id_spolu'
   number skupinka
   text poznamka
   number s_rodici
+  number pulstrava
 }
 
 table osoba { key_id:'id_osoba'

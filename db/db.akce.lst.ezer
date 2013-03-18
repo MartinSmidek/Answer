@@ -1,25 +1,27 @@
 # ------------------------------------------------------------------------------------------------ #
 # Karta pro výběr akce                                                                             #
 #                                                                                                  #
-# Ans(w)er/Ezer                                     (c) 2007-2011 Martin Šmídek <martin@smidek.eu> #
+# Ans(w)er/Ezer                                     (c) 2007-2013 Martin Šmídek <martin@smidek.eu> #
 # ------------------------------------------------------------------------------------------------ #
 
-var zalozka: text           // inf | new
+var zalozka: text           // inf | cor | cen
 
 use info: form _akce [12,4,,]
 use page: form _page [450,40,,]
 
-proc onstart() { echo('db.akce.lst.onstart');
+proc onfirstfocus() {
+# proc onstart() { echo('db.akce.lst.onstart');
   info.fill(the_title.get);
   info.rok.selects(javascript(conc(
     "var x='';for(i=",sum(fdate('Y'),1),";i>=1990;i--){x+=i+',';};x+='0'")));
   { the_duakce.get;
     info.rok.set(the_rok.get)
   | info.rok.set(fdate('Y')) };
-}
-proc onfirstfocus() {
+# }
+# proc onfirstfocus() {
   zalozka.set('inf');
   m.g.sey.click;
+  page.cen_copy.selects("neměnit:0");
   page.inf.onclick
 }
 
@@ -60,7 +62,7 @@ proc akce_vsechny(cond) {
   [ info.sey.browse_load(cond) ];
   set_cookie(conc(sys('root'),'_akce_rok'),the_rok.get);
 }
-# -------------------------------------------------------------------------------------------------- _page
+# -------------------------------------------------------------------------------------------- _page
 form _page [,,285,500] {
   var a_akce: number
   # --------------------------- záložky
@@ -75,20 +77,12 @@ form _page [,,285,500] {
   label cor [100,0,80,20] {tag:'p', title:'<b>Úprava</b>', format:'c'
     proc onclick() { tags(this,'cor','inf|cen'); zalozka.set('cor'); show_akce(a_akce.get)
   } }
-  // jen pro YF,CR - přidání akce
-  label new [188,0,80,20] {tag:'p', title:'<b>Nová akce</b>', format:'c', skill:'faan;caan'
-    proc onclick() { tags(this,'cor','inf|cen'); zalozka.set('new'); show_akce(a_akce.get)
-  } }
-  // je pro YS - ceník akce
-  label cen [188,0,80,20] {tag:'p', title:'<b>Ceník</b>', format:'c', skill:'yaan'
-    proc onclick() { tags(this,'cen','inf|cor'); zalozka.set('cen'); show_akce(a_akce.get)
-  } }
-  // je pro CPR - ceník akce
-  label  [280,0,30,20] {tag:'p', title:'<b>C..</b>', format:'c', skill:'caan'
+  label cen [188,0,80,20] {tag:'p', title:'<b>Ceník</b>', format:'c',
     proc onclick() { tags(this,'cen','inf|cor'); zalozka.set('cen'); show_akce(a_akce.get)
   } }
   proc show_akce(id_akce) {
     page.a_akce.set(id_akce);
+    cen_copy.enable(0); cen_copy.key(0);
     switch(zalozka.get,
     'inf',{
       note.set(ask('akce_info',id_akce));
@@ -96,16 +90,70 @@ form _page [,,285,500] {
     'cor',{
       form.load(id_akce); info.sey.browse_focus
     },
-    'new',{
-      form.init; info.sey.blur(1)
-    },
     'cen',{
       form.init; c.browse_load(conc("id_akce=",id_akce));
     },
     { stop}
   )}
+  # --------------------------- informace
+  label note [10,25,270,460] { tag:'inf', title:'', style:'color:black;font-size:12px' }
+  # --------------------------- položky akce
+  label [17,32,104,] { tag:'cor', title:'název akce *' }
+  field [17,49,218,] { tag:'cor', data:akce.nazev }
+  label [17,72,104,] { tag:'cor', title:'místo' }
+  field [17,89,218,] { tag:'cor', data:akce.misto }
+  label [18,116,65,] { tag:'cor', title:'začátek *' }
+  field [18,133,83,] { tag:'cor', type:'date', data:akce.datum_od }
+  label [118,116,64,] { tag:'cor', title:'ukončení' }
+  field [118,133,83,] { tag:'cor', type:'date', data:akce.datum_do }
+  check [205,166,83,] { tag:'cor', title:'jen seznam', data:akce.spec, format:'r' }
+  label [18,173,,]     { tag:'cor', title:'typ akce *' }
+  select [71,169,139,] { tag:'cor', type:'map', data:akce.druh, options:ms_akce_typ.zkratka }
+  radio [213,117,86,35] { tag:'cor', data:akce.strava_oddo, value:'vo'
+    case [0,2,83,] { title:'večeře-oběd', expr:'vo' }
+    case [0,17,76,] { title:'oběd-oběd', expr:'oo' }
+    proc onchange() { echo('strava=',this.get) }
+  }
+  label [18,204,,] { tag:'cor', title:'účetní symbol:', skill:'faa;caa|faa;caa' }
+  field [96,202,54,] { tag:'cor', data:akce.ciselnik_akce, skill:'faa|faa;caa|caa' }
+  // Změna ceníku
+  check [134,254,93,] { tag:'cor', title:'používat ceník', data:akce.ma_cenik,
+                        format:'', skill:'yaa|yaa;caa|caa;faa|faa' }
+  button [14,230,,] { tag:'cor', title:'Změnit ceník podle', skill:'yaa|yaa;caa|caa;faa|faa'
+    proc onclick() {
+      cen_copy.enable(1);
+      cen_copy.selects(ask('akce_select_cenik',form.key))
+  }}
+  select cen_copy [138,232,158,] {tag:'cor', format:'td', help:'vzory ceníků'
+    proc onchange() {
+      cen_copy.key;
+      confirm("opravdu zaměnit ceník za vybraný?");
+      alert(ask('akce_change_cenik',form.key,cen_copy.key))
+  }}
+  // Zpět a Uložit
+  label  [139,301,98,30] { tag:'cor', css:'ae_parm', style:'z-index:1', skill:'yaa+;faa+;caa+' }
+  button [145,306,,] { tag:'cor', title:'Zpět', skill:'yaa+|yaa+;faa+|faa+;caa+|caa+'
+    help:'Neměnit změněná data'
+    proc onclick() { form.load(page.a_akce.get);
+  }}
+  button [191,306,,] { tag:'cor', title:'Uložit', skill:'yaa+|yaa+;faa+|faa+;caa+|caa+'
+    help:'Uložit změněná data',
+    proc onclick() {
+      form.same
+    | // oprava
+      form.key; form.save; form.load; info.sey.browse_seek
+    | // přidání
+      form.insert; form.load;
+      info.sey.raise('onrowclick',info.sey.browse_seek(conc('id_duakce=',form.key)))
+  } }
+  // jen pro YF,CR - přidání akce
+  label  [10,301,84,30] { tag:'cor', css:'ae_parm', style:'z-index:1', skill:'faan;caan' }
+  button [18,306,,] {tag:'cor', title:'Nová akce', format:'c', skill:'faan|faan;caan|caan'
+    proc onclick() {
+      form.init; info.sey.blur(1)
+  } }
   # --------------------------- ceník
-  browse c [10,25,,] { tag:'cen', rows:14, qry_rows:1, css_rows:"barva,1:grey"
+  browse c [10,25,,] { tag:'cen', rows:25, qry_rows:1, css_rows:"barva,1:grey"
     show id_cenik { data:cenik.id_cenik }
     show id_akce  { data:cenik.id_akce }
     show poradi [,,25,] { title:'N', help:'pořadí ve faktuře', data:cenik.poradi, format:'ruq*s+'
@@ -137,49 +185,10 @@ form _page [,,285,500] {
       } }
     }
   }
-  # --------------------------- informace
-  label note [10,25,270,460] { tag:'inf', title:'', style:'color:black;font-size:12px' }
-  # --------------------------- položky akce
-  label [17,32,104,] { tag:'cor', title:'název akce *' }
-  field [17,49,218,] { tag:'cor', data:akce.nazev }
-  label [17,72,104,] { tag:'cor', title:'místo' }
-  field [17,89,218,] { tag:'cor', data:akce.misto }
-  label [18,116,65,] { tag:'cor', title:'začátek *' }
-  field [18,133,83,] { tag:'cor', type:'date', data:akce.datum_od }
-  label [118,116,64,] { tag:'cor', title:'ukončení' }
-  field [118,133,83,] { tag:'cor', type:'date', data:akce.datum_do }
-  check [205,166,83,] { tag:'cor', title:'jen seznam', data:akce.spec, format:'r' }
-  check [206,189,69,] { tag:'cor', title:'má ceník', data:akce.ma_cenik, format:'r', skill:'yaa|yaa;caa|caa' }
-  label [18,173,,]     { tag:'cor', title:'typ akce *' }
-  select [71,169,139,] { tag:'cor', type:'map', data:akce.druh, options:ms_akce_typ.zkratka }
-  radio [213,117,86,35] { tag:'cor', data:akce.strava_oddo, value:'vo'
-    case [0,2,83,] { title:'večeře-oběd', expr:'vo' }
-    case [0,17,76,] { title:'oběd-oběd', expr:'oo' }
-    proc onchange() { echo('strava=',this.get) }
-  }
-  label [14,202,,] { tag:'cor', title:'účetní symbol:', skill:'faa;caa|faa;caa' }
-  field [96,202,47,] { tag:'cor', data:akce.ciselnik_akce, skill:'faa|faa;caa|caa' }
-  // Zpět a Uložit
-  label  [144,236,98,30] { tag:'cor', css:'ae_parm', style:'z-index:1', skill:'yaa+;faa+;caa+' }
-  button [150,241,,] { tag:'cor', title:'Zpět', skill:'yaa+|yaa+;faa+|faa+;caa+|caa+'
-    help:'Neměnit změněná data'
-    proc onclick() { form.load(page.a_akce.get);
-  }}
-  button [196,241,,] { tag:'cor', title:'Uložit', skill:'yaa+|yaa+;faa+|faa+;caa+|caa+'
-    help:'Uložit změněná data',
-    proc onclick() {
-      form.same
-    | // oprava
-      form.key; form.save; form.load; info.sey.browse_seek
-    | // přidání
-      form.insert; form.load;
-      info.sey.raise('onrowclick',info.sey.browse_seek(conc('id_duakce=',form.key)))
-    }
-  }
   # --------------------------- pozadí stránky nakonec
   label [2,16,283,476] { title:'', css:'ae_work page' }
 }
-# -------------------------------------------------------------------------------------------------- _akce
+# -------------------------------------------------------------------------------------------- _akce
 # formulář pro výběr akce pro další práci
 form _akce [,,*,50] {
   select rok [4,5,52,] { format:'t'
@@ -344,3 +353,5 @@ panel mapa [,,640,400] { type:'popup', title:'mapa účastníků'
     label cr [0,0,640,400]
   }
 }
+
+map akce_cenik: table akce {where:"ma_cenik=1", order:'datum_od', key_id:'id_duakce'}
