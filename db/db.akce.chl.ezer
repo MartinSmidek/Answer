@@ -63,6 +63,7 @@ menu m {type:'left'
     item inic {title:'všech iniciovaných chlapů'
       proc onclick(i) {
         chs.reset('mrop'); ch.reset('mrop');
+        the_akce_nazev.set("iniciovaní chlapi");
         info.get.display(1,'ex'); info.export_type.set('mrop');  // umožníme export
         info.fill(conc(i.owner.title,' ',i.title),' ');
         ch.get.display(1); chs.get.display(1);
@@ -72,7 +73,8 @@ menu m {type:'left'
     item {title:'všech známých chlapů'
       proc onclick(i) {
         chs.reset('all'); ch.reset('all');
-        info.get.display(1,'ex'); info.export_type.set('mrop');  // umožníme export
+        the_akce_nazev.set("známí chlapi");
+        info.get.display(0,'ex');
         info.fill(conc(i.owner.title,' ',i.title),' ');
         ch.get.display(1); chs.get.display(1);
         chs.reload(0);
@@ -80,11 +82,21 @@ menu m {type:'left'
     }
   }
 }
-# -------------------------------------------------------------------------------------------------- _info
+# -------------------------------------------------------------------------------------------- _info
 # univerzální formulář pro levostranné menu
 form _info [,,*,50] { css:'ds_form'
   var export_type: text
   label head [0,0,*,50]  { title:'' }
+  button [-100,3,,] { tag:'ex', title:'Mapa', //skill:'a|a'
+    help:"mapa s bydlišti účastníků akcí"
+    proc onclick() {
+      switch(export_type.get,
+      'akce',{ mapa.id_akce.set(the_akce.get); mapa.modal(20,100,the_akce_nazev.get) },
+      'mrop',{ mapa.id_akce.set(0); mapa.modal(20,100,the_akce_nazev.get) }
+      );
+
+    }
+  }
   button [-22,3,50,] { tag:'ex', title:"Export"
     proc onclick() {
       switch(export_type.get,
@@ -101,7 +113,28 @@ form _info [,,*,50] { css:'ds_form'
   }
   proc append(x) { note.get; note.set(conc(note.get,'<br>',x)) | note.set(x) }
 }
-# -------------------------------------------------------------------------------------------------- _chlapi
+// ------------------------------------------- mapa
+panel mapa [,,640,400] { type:'popup', title:'mapa účastníků'
+  var id_akce: number
+  proc onfirstfocus() {
+    google_maps('mapa_cr',object('label',f.cr));
+    ukaz_psc;
+  }
+  proc onfocus() {
+    ukaz_psc;
+  }
+  proc ukaz_psc() {
+    var ret: object
+    google_maps('mark_new');
+    ret.set(ask('chlapi_akce_mapa',id_akce.get));
+    google_maps('mark_put',object('mark',ret.mark));
+  }
+  use f: form _f [0,10,,]
+  form _f [,,700,400] {
+    label cr [0,0,640,400]
+  }
+}
+# ------------------------------------------------------------------------------------------ _chlapi
 form _chlapi [,,*,50] {
   var mode: text        // mrop|akce|all
   // funkce
@@ -184,7 +217,7 @@ form _chlapi [,,*,50] {
     proc onchange () { all.browse_count | ch.init }
   }
 }
-# -------------------------------------------------------------------------------------------------- _chlap
+# ------------------------------------------------------------------------------------------- _chlap
 form _chlap [,,*,466] {
   var mode: text        // mrop|akce
   // funkce
@@ -388,7 +421,7 @@ panel Ctrack [,,572,564] { title:'Korekce oprav databáze', type:'popup', css:'d
     CT_fld.change
   | alert('Položka ',CT_fld_id.get,' není dostupná, vraťte prosím změnu ručně')
   }
-  # ------------------------------------------------------------------------------------------------- BACK
+  # ------------------------------------------------------------------------------------------- BACK
   # id_track,kdy,kdo,kde,klic,zmena:fld,op,val,old
   form _back [,,570,570] {
     browse list [8,8,150,100] { rows:27,

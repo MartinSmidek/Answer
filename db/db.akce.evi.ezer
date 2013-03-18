@@ -258,6 +258,7 @@ form _evid { style:'z-index:1'
     var rid: number
     eq(mode.get,'o');
     // zajisti správnou viditelnost záložek
+    fir.enable(1); akc.enable(1);
     [ osoby.b.id_r.get;
       rod.enable(1); cle.enable(1)
     | rod.enable(0); cle.enable(0);
@@ -268,11 +269,13 @@ form _evid { style:'z-index:1'
     switch(zalozka.get,
     'p_oso',{ p_oso.key(osoby.b.id_o.get); p_oso.reload },
     // rodina a tedy ani členové nemusí být definovány
-    'p_rod',{ osoby.b.id_r.get; p_rod.load(osoby.b.id_r.get) | p_rod.init},
+    'p_rod',{ osoby.b.id_r.get; p_rod.load(osoby.b.id_r.get) | p_rod.init },
     'p_cle',{ osoby.b.id_r.get; p_cle.b.browse_load(conc('ox.id_rodina=',osoby.b.id_r.get)) },
     'p_akc',{ p_akc.ucasti(osoby.b.id_o.get) },
     { stop })
   | eq(mode.get,'r');
+    // zajisti správnou viditelnost záložek
+    fir.enable(0); akc.enable(0);
     p_rod.load(rodiny.b.id_r.get)
   }
   proc page_init() {

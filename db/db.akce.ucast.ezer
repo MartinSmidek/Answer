@@ -12,7 +12,7 @@ var back: object
 proc onstart() {
   the_duakce_local.set(0);
 }
-proc onfirstfocus() { onfocus; init_forms }
+proc onfirstfocus() { init_forms; onfocus }
 proc onfocus() {
   u.legenda.display(the_cenik.get);
   [ the_duakce.get | akce_onstart ];
