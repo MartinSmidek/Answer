@@ -40,9 +40,9 @@ echo <<<__EOD
   cursor:default; background-color:#effdf1; z-index:0; /*behavior:url(ck/border-radius-ie8.htc);*/
   -moz-border-radius:5px; -webkit-border-radius:5px; -khtml-border-radius:5px; }
 .ae_butt_on:hover {
-  background:url("../../skins/ck/label_switch_on_hover.png") repeat-x scroll 0 -1px transparent !important; }
+  background:url("../../skins/ch/label_switch_on_hover.png") repeat-x scroll 0 -1px transparent !important; }
 .ae_butt_off:hover {
-  background:url("../../skins/ck/label_switch_off_hover.png") repeat-x scroll 0 -1px transparent !important; }
+  background:url("../../skins/ch/label_switch_off_hover.png") repeat-x scroll 0 -1px transparent !important; }
 /* rámečky formulářů */
 .ae_info        {
   background-color:#f5f5f5; border:1px solid #f5f5f5; z-index:-1; /*behavior:url(ck/border-radius-ie8.htc);*/
