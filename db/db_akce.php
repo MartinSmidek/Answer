@@ -43,7 +43,7 @@ function album_delete($id_rodina) { #trace();
 }
 # ---------------------------------------------------------------------------------------- album_get
 # zobrazí fotografii z alba
-function album_get($name,$w,$h) { #trace();
+function album_get($name,$w,$h,$msg="Fotografie ještě není k dispozici - lze ji sem přidat myší") {
   global $ezer_path_root;
   if ( $name ) {
     $dest= "$ezer_path_root/fotky/copy/$name";
@@ -54,14 +54,14 @@ function album_get($name,$w,$h) { #trace();
     }
     $src= "fotky/copy/$name";
     $html= "<a href='fotky/$name' target='_album'><img src='fotky/copy/$name'
-      onload='var x=arguments[0];img_filter(x.target,\"sharpen\",1,1);'/></a>";
+      width='$w' onload='var x=arguments[0];img_filter(x.target,\"sharpen\",0.7,1);'/></a>";
   //   $data= "iVBORw0"."KGgoAAAANSUhEUgAAACAAAAAFCAYAAAAkG+5xAAAABGdBTUEAANbY1E9YMgAAABl0RVh0U29mdHdhcm"
   //        . "UAQWRvYmUgSW1hZ2VSZWFkeXHJZTwAAABTSURBVHjarJJRCgAgCEM9nHfy+K+fKBKzjATBDZUxFUAuU5mhnWPT"
   //        . "SzK7YCkkQR3tsM5bImjgVwE3HIED6vFvB4w17CC4dILdD5AIwvX5OW0CDAAH+Qok/eTdBgAAAABJRU5E"."rkJggg";
   //   $html= "<img alt='Embedded Image' src='data:image/png;base64,$data' />";
   }
   else {
-    $html.= "Fotografie ještě není k dispozici - lze ji sem přidat myší";
+    $html.= $msg;
   }
   return $html;
 }

@@ -26,6 +26,7 @@ use p_akc:  form _oakce  [360,10,,]       { tag:'p_akc', format:'n'  }
 use d_cle:  form _dcleni [360,300,,]      { tag:'d_cle', format:'n' }
 use d_pri:  form _dpris  [360,300,,]      { tag:'d_pri', format:'n' }
 use d_dar:  form _ddary  [360,300,,]      { tag:'d_dar', format:'n' }
+use foto:   form _foto   [355,300,,]      { tag:'foto',  format:'n' }
 
 use info: form right [12,4,,] {             tag:'inf'
   button export [-20,4,100,16] { title:'Excel', style:'display:block;zIndex:2',
@@ -93,8 +94,8 @@ menu m {type:'left'
     item {title:'letošní dárci bez potvrzení', format:'d', skill:'yae'
           par:°{cnd:"1",hav:"LOCATE('d',rel)>0"} }
     proc onclick (i) {
-      mode.set('o');
-      panel.display(0,'inf|rodi|plat|p_.*'); panel.display(1,'evid|list|syst|p_oso'); status(0);
+      mode.set('o'); status(0);
+      panel.display(0,'inf|rodi|plat|p_.*|foto'); panel.display(1,'evid|list|syst|p_oso');
       evid.page_init; dary.page_init;
       osoby.b.browse_load(conc("os.deleted='' AND ",i.par.cnd),"",i.par.hav);
       evid.page_show; dary.page_show;
@@ -106,8 +107,8 @@ menu m {type:'left'
     item {title:'... s více maily' par:°{cnd:"TRIM(emaily) REGEXP ',[^$]|;[^$]'",hav:"1"}, skill:'yae' }
     item {title:'... s více telefony' par:°{cnd:"TRIM(telefony) REGEXP ',[^$]|;[^$]'",hav:"1"}, skill:'yae' }
     proc onclick (i) {
-      mode.set('r');
-      panel.display(0,'inf|list|plat'); panel.display(1,'rodi|syst'); status(0);
+      mode.set('r'); status(0);
+      panel.display(0,'inf|list|plat'); panel.display(1,'rodi|syst|foto');
       evid.page_init; dary.page_init;
       rodiny.b.browse_load(i.par.cnd,"",i.par.hav);
       // experimentální přepnutí podle osoby
@@ -165,11 +166,11 @@ menu m {type:'left'
     info.fill('',x.html);
   }
 }
-# -------------------------------------------------------------------------------------------------- _stav
+# -------------------------------------------------------------------------------------------- _stav
 form _stav [,,380,106] {
   label klice [0,0,380,106] { skill:'m', style:'border:1px solid #bbb;padding:3px' }
 }
-# -------------------------------------------------------------------------------------------------- _osoby
+# ------------------------------------------------------------------------------------------- _osoby
 form _osoby {
   view os: table osoba
   view ox: table spolu  { join_type:'LEFT', join:"ON ox.id_osoba=os.id_osoba" }
@@ -214,7 +215,7 @@ form _osoby {
     }
   }
 }
-# -------------------------------------------------------------------------------------------------- _rodiny
+# ------------------------------------------------------------------------------------------ _rodiny
 form _rodiny {
   view r: table rodina
   view t: table tvori { join:"USING(id_rodina)" }
@@ -222,6 +223,7 @@ form _rodiny {
   browse b [0,0,,] { rows:28, qry_rows:1, group_by:'r.id_rodina'
     show id_r { data:r.id_rodina }
     show id_t { data:t.id_tvori }
+    show fotka { data:r.fotka }
     show _nazev [,, 80,] { title:'rodina', format:'s+q*', data:r.nazev }
     show _jmena [,,160,] { title:'jméno/a', format:'tsq%',
       expr:"GROUP_CONCAT(DISTINCT o.jmeno ORDER BY t.role SEPARATOR ' ')" }
@@ -244,7 +246,7 @@ form _rodiny {
     }
   }
 }
-# -------------------------------------------------------------------------------------------------- _evid
+# -------------------------------------------------------------------------------------------- _evid
 form _evid { style:'z-index:1'
   var zalozka: text           // oso | rod | cle | fir | akc
   proc page_show() { tags(oso,'p_oso','p_rod|p_cle|p_fir|p_akc') }
@@ -279,9 +281,11 @@ form _evid { style:'z-index:1'
     fir.enable(0); akc.enable(0);
     // pokud došlo ke změně rodiny, načti všechny záložky
     [ eq(rodiny.b.id_r.get,p_rod.key)
-    | p_rod.load(rodiny.b.id_r.get);
+    | foto.fotka.set('');
+      p_rod.load(rodiny.b.id_r.get);
       p_cle.b.browse_load(conc('ox.id_rodina=',rodiny.b.id_r.get));
-      p_cle.b.raise('onrowclick');
+      p_cle.b.raise('onrowclick');                  //  1   0.8
+      foto.fotka.set(ask('album_get',rodiny.b.fotka.get,400,320,""));
     ];
   }
   proc page_init() {
@@ -489,7 +493,11 @@ form _oakce {
 form _firma {
   label [10,50,,] { title:'tady bude informace o firmě, pokud se mají dary psát na ni' }
 }
-# -------------------------------------------------------------------------------------------------- _dary
+# -------------------------------------------------------------------------------------------- _foto
+form _foto [,,380,106] {
+  label fotka [0,0,*,*]
+}
+# -------------------------------------------------------------------------------------------- _dary
 form _dary { style:'z-index:1'
   var zalozka: text           // cle | dar
   proc page_show() { tags(cle,'d_cle','d_pri|d_dar'); }
@@ -927,7 +935,7 @@ panel Ctrack [,,622,564] { title:'Korekce oprav databáze', type:'popup', css:'d
 #     CT_fld.change
 #   | alert('Položka ',CT_fld_id.get,' není dostupná, vraťte prosím změnu ručně')
 #   }
-  # ------------------------------------------------------------------------------------------------- BACK
+  # ------------------------------------------------------------------------------------------- BACK
   # id_track,kdy,kdo,kde,klic,zmena:fld,op,val,old
   form _back [,,620,570] {
     browse list [8,8,150,100] { rows:27,
