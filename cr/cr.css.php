@@ -15,7 +15,7 @@ require_once("../skins/colors.php");
 echo <<<__EOD
 /* úpravy standardu */
 .BrowseSmart td.BrowseQry input {
-  background-color:#effdf1; }
+  background-color:$b8_brow; }
 /*.SelectDrop li {
   white-space:normal !important; }*/
 .Label, .Check {

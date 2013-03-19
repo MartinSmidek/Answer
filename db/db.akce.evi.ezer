@@ -10,17 +10,17 @@ var the_title: text             // text běžného itemu menu
 var mode: text                  // r|o -- rodiny nebo osoby
 
 use osoby:  form _osoby  [10,10,,]        { tag:'list' }
-use rodiny: form _rodiny [10,10,,]        { tag:'rodi', format:'n'  }
-use evid:   form _evid   [355,10,,]       { tag:'evid' }
+use rodiny: form _rodiny [10,10,,]        { tag:'rodi', format:'n' }
+use evid:   form _evid   [355,10,,]       { tag:'evid', format:'n' }
 use dary:   form _dary   [355,300,,]      { tag:'dary', format:'n' }
 use platby: form _platby [10,550,,]       { tag:'plat', format:'n' }
 
 # záložky evidence
-use p_oso:  form _osoba  [360,10,,]       { tag:'p_oso', format:'n'  }
-use p_rod:  form _rodina [360,10,,]       { tag:'p_rod', format:'n'  }
-use p_cle:  form _rcleni [360,10,,]       { tag:'p_cle', format:'n'  }
-use p_fir:  form _firma  [360,10,,]       { tag:'p_fir', format:'n'  }
-use p_akc:  form _oakce  [360,10,,]       { tag:'p_akc', format:'n'  }
+use p_oso:  form _osoba  [360,10,,]       { tag:'p_oso', format:'n' }
+use p_rod:  form _rodina [360,10,,]       { tag:'p_rod', format:'n' }
+use p_cle:  form _rcleni [360,10,,]       { tag:'p_cle', format:'n' }
+use p_fir:  form _firma  [360,10,,]       { tag:'p_fir', format:'n' }
+use p_akc:  form _oakce  [360,10,,]       { tag:'p_akc', format:'n' }
 
 # záložky členství a darů
 use d_cle:  form _dcleni [360,300,,]      { tag:'d_cle', format:'n' }
