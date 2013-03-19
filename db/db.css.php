@@ -41,8 +41,8 @@ echo <<<__EOD
   font-size:9pt !important; padding:10px; line-height:13pt; }
 
 /* úpravy standardu */
-/*.BrowseSmart td.BrowseQry input {
-  background-color:#effdf1; }*/
+.BrowseSmart td.BrowseQry input {
+  background-color:$b8_brow; }
 .Panel {
   width:100%; }
 /*.SelectDrop li {
@@ -68,7 +68,7 @@ echo <<<__EOD
   cursor:default; background-color:$b_work; z-index:0; /*behavior:url(ck/border-radius-ie8.htc);*/
   -moz-border-radius:5px; -webkit-border-radius:5px; -khtml-border-radius:5px; }
 .ae_butt_off {
-  cursor:default; background-color:#effdf1; z-index:0; /*behavior:url(ck/border-radius-ie8.htc);*/
+  cursor:default; background-color:$b8_brow; z-index:0; /*behavior:url(ck/border-radius-ie8.htc);*/
   -moz-border-radius:5px; -webkit-border-radius:5px; -khtml-border-radius:5px; }
 .ae_butt_on:hover {
   background:url("../../skins/ck/label_switch_on_hover.png") repeat-x scroll 0 -1px transparent !important; }
