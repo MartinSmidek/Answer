@@ -10,17 +10,17 @@ var the_title: text             // text běžného itemu menu
 var mode: text                  // r|o -- rodiny nebo osoby
 
 use osoby:  form _osoby  [10,10,,]        { tag:'list' }
-use rodiny: form _rodiny [10,10,,]        { tag:'rodi' }
+use rodiny: form _rodiny [10,10,,]        { tag:'rodi', format:'n'  }
 use evid:   form _evid   [355,10,,]       { tag:'evid' }
 use dary:   form _dary   [355,300,,]      { tag:'dary', format:'n' }
 use platby: form _platby [10,550,,]       { tag:'plat', format:'n' }
 
 # záložky evidence
-use p_oso:  form _osoba  [360,10,,]       { tag:'p_oso' }
-use p_rod:  form _rodina [360,10,,]       { tag:'p_rod' }
-use p_cle:  form _rcleni [360,10,,]       { tag:'p_cle' }
-use p_fir:  form _firma  [360,10,,]       { tag:'p_fir' }
-use p_akc:  form _oakce  [360,10,,]       { tag:'p_akc' }
+use p_oso:  form _osoba  [360,10,,]       { tag:'p_oso', format:'n'  }
+use p_rod:  form _rodina [360,10,,]       { tag:'p_rod', format:'n'  }
+use p_cle:  form _rcleni [360,10,,]       { tag:'p_cle', format:'n'  }
+use p_fir:  form _firma  [360,10,,]       { tag:'p_fir', format:'n'  }
+use p_akc:  form _oakce  [360,10,,]       { tag:'p_akc', format:'n'  }
 
 # záložky členství a darů
 use d_cle:  form _dcleni [360,300,,]      { tag:'d_cle', format:'n' }
@@ -62,11 +62,12 @@ proc onfirstfocus() {
 proc status(on) {
   has_skill('m');
   { on; stav.klice.display(1);
+    stav.klice.set('');
     switch(mode.get,
-    'o',{ stav.klice.set(conc('osoby: id_osoba=',osoby.b.id_o.get,', id_rodina=',osoby.b.id_r.get)) },
-    'r',{ stav.klice.set(conc('rodiny: id_rodina=',rodiny.b.id_r.get)) },
-        { stav.klice.set('') }
-    ); echo('x')
+    'o',{ osoby.b.browse_count;
+          stav.klice.set(conc('osoby: id_osoba=',osoby.b.id_o.get,', id_rodina=',osoby.b.id_r.get))},
+    'r',{ rodiny.b.browse_count; stav.klice.set(conc('rodiny: id_rodina=',rodiny.b.id_r.get)) }
+    )
   | stav.klice.display(0)
   }
 }
@@ -93,7 +94,7 @@ menu m {type:'left'
           par:°{cnd:"1",hav:"LOCATE('d',rel)>0"} }
     proc onclick (i) {
       mode.set('o');
-      panel.display(0,'inf|rodi|plat'); panel.display(1,'evid|list|syst|p_.*'); status(0);
+      panel.display(0,'inf|rodi|plat|p_.*'); panel.display(1,'evid|list|syst|p_oso'); status(0);
       evid.page_init; dary.page_init;
       osoby.b.browse_load(conc("os.deleted='' AND ",i.par.cnd),"",i.par.hav);
       evid.page_show; dary.page_show;
@@ -114,7 +115,7 @@ menu m {type:'left'
 #       | rodiny.b.browse_load(i.par.cnd,"",i.par.hav) ]
     }
   }
-  menu prehled {title:'Přehledy a statistiky',type:'group',                             skill:'yae;fae;cae'
+  menu prehled {title:'Přehledy a statistiky',type:'group',                     skill:'yae;fae;cae'
     item {title:'Přehled VPS od 1990',                                          skill:'yae'
           par:°{typ:'e-v',exp:'Excel',cnd:1, hav:"_vps>0",tit:'jméno:20,obec:20',fld:'_jmeno,obec'}}
     item {title:'Přehled všech od 1990',                                        skill:'yae'
@@ -259,7 +260,7 @@ form _evid { style:'z-index:1'
     eq(mode.get,'o');
     // zajisti správnou viditelnost záložek
     fir.enable(1); akc.enable(1);
-    [ osoby.b.id_r.get;
+    [ osoby.b.browse_count; //osoby.b.id_r.get;
       rod.enable(1); cle.enable(1)
     | rod.enable(0); cle.enable(0);
       eq(zalozka.get,'p_rod','p_cle');
@@ -276,7 +277,12 @@ form _evid { style:'z-index:1'
   | eq(mode.get,'r');
     // zajisti správnou viditelnost záložek
     fir.enable(0); akc.enable(0);
-    p_rod.load(rodiny.b.id_r.get)
+    // pokud došlo ke změně rodiny, načti všechny záložky
+    [ eq(rodiny.b.id_r.get,p_rod.key)
+    | p_rod.load(rodiny.b.id_r.get);
+      p_cle.b.browse_load(conc('ox.id_rodina=',rodiny.b.id_r.get));
+      p_cle.b.raise('onrowclick');
+    ];
   }
   proc page_init() {
     eq(mode.get,'o'); zalozka.set('oso'); evid.display(1,'p');
@@ -300,18 +306,18 @@ form _evid { style:'z-index:1'
 # ---------------------------------------------------------------------- _osoba
 form _osoba { tag:'a'
   view o: table osoba
-  view t: table tvori { join:"ON o.id_osoba=t.id_osoba" }
-  view r: table rodina { join:"ON r.id_rodina=t.id_rodina" }
+#   view t: table tvori { join:"ON o.id_osoba=t.id_osoba" }     nepoužité
+#   view r: table rodina { join:"ON r.id_rodina=t.id_rodina" }  nepoužité
   # --------------------------------------------------  PROCEDURY
   proc reload() { o.key(form.key); o.load }
   # --------------------------------------------------  OSOBA
   const L=0; T=10
   field  { data:o.id_osoba }
-  field  { data:t.id_tvori }
-  field  { data:r.id_rodina }
+#   field  { data:t.id_tvori }
+#   field  { data:r.id_rodina }
 #   label  [L+0,T+9,367,249] { css:'ae_part' }
 #   label  [L+8,T+0,74,] { title:'osobní údaje', css:'ae_part_label' }
-  label          [L+5,T+15,89,] {title:'příjmení'}
+  label          [L+5,T+15,89,] {title:'příjmení/rodné'}
   field prijmeni [L+5,T+30,89,] {data:o.prijmeni, help:'příjmení'}
   field rodne    [L+5,T+52,89,] {data:o.rodne, help:'rodné příjmení'}
   label          [L+109,T+15,78,] {title:'jméno'}
@@ -444,11 +450,14 @@ form _rcleni {
     show [,,80,] { data:os.prijmeni, title:'příjmení', format:'q*s' }
     show [,,70,] { data:os.jmeno, title:'jméno', format:'q*s' }
     show [,,30,] { data:ot.role, title:'vztah', help:'vztah k rodině', format:'q*s' }
-    proc onrowclick() { echo('onrowclick: osoba=',id_o.get,', rodina=',id_r.get) }
-    proc onsubmit() { echo('onsubmit: osoba=',id_o.get,', rodina=',id_r.get);
-      osoby.b.raise('onrowclick',id_o.get);
-    | osoby.b.browse_seek(conc('os.id_osoba=',id_o.get));
+    proc onrowclick() {
+      eq(mode.get,'r'); p_oso.key(id_o.get); p_oso.reload
     }
+    proc onsubmit() {
+      eq(mode.get,'o');
+      { osoby.b.raise('onrowclick',id_o.get);
+      | osoby.b.browse_seek(conc('os.id_osoba=',id_o.get));
+    } }
   }
 }
 # ---------------------------------------------------------------------- _oakce
