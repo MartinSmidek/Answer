@@ -242,7 +242,7 @@ form _platba {
   label [2,27,527,495] {title:"<img src='img/ms2p.png'>" }
   proc ini() {
     // výpočet součtu cen a rozpis, došlé platby
-    [ has_skill("yaa"); dosle_platby; rozpis_ceny;
+    [ has_skill("yaa,faa"); dosle_platby; rozpis_ceny;
       celkem.set(sum(c_nocleh.get,c_strava.get,c_program.get,c_sleva.get)) ];
     // obarvení tlačítka [Str.pol]
     or(u.b.cstrava_cel.get,u.b.cstrava_pol.get); stravy.set_css('cervena','cerna');
