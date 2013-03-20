@@ -38,8 +38,9 @@ kEzer-ys2
 	-fis - θαst
 		fis\fis_pdf.php
 		fis\fis_tcpdf.php
-	-fa
+	+fa
 		fa\$.ezer
+		fa\fa.css.php
 		fa.inc
 		fa\fa.lide.ezer
 		fa.php
@@ -175,7 +176,7 @@ kEzer-ys2
 		dg\dg.css.css
 		dg.inc
 		dg.php
-	-ys
+	+ys
 		-banka
 			ys\ys.ban.ezer
 			ys\ys.ban.php
@@ -193,7 +194,7 @@ kEzer-ys2
 			ys\ys.ds.ezer
 			ys\ys.ds.kl.ezer
 			ys\ys.ds.tab.ezer
-		+eko
+		-eko
 			ys\ys.eko.ezer
 			ys\ys_ucet.php
 		-lide
@@ -239,27 +240,27 @@ kEzer-ys2
 9=db\db_akce.php
 10=db\db.akce.lst.ezer
 11=db\db.akce.evi.ezer
-12=db\$.ezer
-13=db\db.akce.ucast.ezer
-14=db\db_fce.js
-15=ch\ch.ezer
-16=ch\$.ezer
-17=db\db.akce.chl.ezer
+12=db\db.akce.ucast.ezer
+13=db\db.css.php
+14=skins\colors.php
+15=cr\cr.css.php
+16=ys\ys.css.php
+17=fa\fa.css.php
 [Selected Project Files]
 Main=
-Selected=db\db.akce.ucast.ezer
+Selected=db\db.css.php
 [ezer2.2\client\app.js]
 TopLine=430
 Caret=31,440
 BookMark1=3,462
 [ezer2.2\server\ezer2.php]
-TopLine=784
-Caret=46,804
+TopLine=1066
+Caret=66,1123
 [ezer2.2\server\ae_slib.php]
-TopLine=299
-Caret=50,320
-BookMark1=11,171
-BookMark2=1,339
+TopLine=128
+Caret=42,171
+BookMark2=1,340
+BookMark1=1,165
 [ezer2.2\client\ezer_fdom1.js]
 TopLine=1
 Caret=70,18
@@ -284,36 +285,36 @@ BookMark4=21,603
 TopLine=3
 Caret=46,21
 [db\db_akce.php]
-TopLine=3172
-Caret=8,3215
+TopLine=38
+Caret=38,66
 BookMark1=13,2988
 BookMark3=15,3656
 [db\db.akce.lst.ezer]
 TopLine=304
 Caret=1,356
 BookMark1=20,100
-Mark1=9,93
 BookMark4=24,149
+Mark1=9,93
 [db\db.akce.evi.ezer]
-TopLine=235
-Caret=1,273
-BookMark1=18,257
-[db\$.ezer]
 TopLine=1
-Caret=1,1
+Caret=27,7
+BookMark1=18,290
+BookMark3=11,226
 [db\db.akce.ucast.ezer]
-TopLine=451
-Caret=78,475
-[db\db_fce.js]
-TopLine=17
-Caret=73,45
-[ch\ch.ezer]
+TopLine=669
+Caret=55,709
+[db\db.css.php]
+TopLine=36
+Caret=96,74
+[skins\colors.php]
 TopLine=1
-Caret=64,10
-[ch\$.ezer]
+Caret=62,4
+[cr\cr.css.php]
 TopLine=1
-Caret=1,1
-[db\db.akce.chl.ezer]
-TopLine=25
-Caret=81,37
-BookMark1=17,90
+Caret=28,18
+[ys\ys.css.php]
+TopLine=1
+Caret=35,27
+[fa\fa.css.php]
+TopLine=1
+Caret=57,21
