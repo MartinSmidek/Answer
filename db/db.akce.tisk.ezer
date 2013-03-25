@@ -119,7 +119,7 @@ menu m {type:'left',
     item {title:'Narozeniny, výročí'    ,par:°{typ:'vv',cnd:'1'}}
     item {title:'Přehled o akci'        ,par:°{typ:'vi',cnd:'1'}}
     item {title:'Ekonomické ukazatele'  ,par:°{typ:'ve',cnd:'1'}}
-    item {title:'Udržet kontakt'        ,par:°{typ:'12',cnd:'1'}, skill:'y'}
+    item {title:'Udržet kontakt'        ,par:°{typ:'12',cnd:'1'}, skill:'y;f'}
   }
   menu {title:'jmenovky na akci',type:'group',_sys:'*'
     item {title:'Účastníci bez funkce'                                                                  skill:'y;f'
