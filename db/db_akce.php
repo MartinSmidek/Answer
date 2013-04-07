@@ -4497,7 +4497,7 @@ function dop_mai_omitt($id_dopis,$id_vynech) {  trace();
     foreach(explode(',',str_replace(';','',str_replace(' ','',$emaily))) as $em) {
       if ( in_array($em,$vynech) ) {
         $n++;
-        $qu= "UPDATE mail SET stav=5 WHERE id_mail={$d->id_mail} ";
+        $qu= "UPDATE mail SET stav=5,msg='viz $id_vynech' WHERE id_mail={$d->id_mail} ";
         $ru= mysql_qry($qu);
       }
     }
