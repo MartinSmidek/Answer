@@ -428,7 +428,7 @@ form _esady  {
   # ------------------- informace
   label msg [0,305,377,67]
   label info [0,373,367,90]   { style:"overflow:auto;border:1px solid grey;padding:5px" }
-  label obsah [0,473,716,246] { style:"overflow:auto;border:1px solid grey;padding:5px" }
+  label obsah [0,474,716,246] { style:"overflow:auto;border:1px solid grey;padding:5px" }
   # ------------------- seznam adres
   view etmm: table mail
   view etmo: table osoba  {join_type:'LEFT' join:'ON id_clen=etmo.id_osoba'}
