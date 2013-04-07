@@ -32,9 +32,9 @@ proc ini(i,k,uq,on,off) {
   dopis_var.set(uq); karta.set(k); dopis_id.set(0); dopis_akce.set(the_duakce.get);
   et.form_init;
   switch(k,
-  'et',{et.get.display(1); es.get.display(0); sq.get.display(0); vy.popis.display(0); et.reload},
-  'sq',{et.get.display(0); es.get.display(0); sq.get.display(1); vy.popis.display(0); sq.reload},
-  'es',{et.get.display(0); es.get.display(1); sq.get.display(0); vy.popis.display(1); es.reload},
+  'et',{et.get.display(1); es.get.display(0); sq.get.display(0); vy.get.display(0,'es'); et.reload},
+  'sq',{et.get.display(0); es.get.display(0); sq.get.display(1); vy.get.display(0,'es'); sq.reload},
+  'es',{et.get.display(0); es.get.display(1); sq.get.display(0); vy.get.display(1,'es'); es.reload},
        {et.get.display(0); es.get.display(0)});
 }
 
@@ -82,11 +82,20 @@ form _vyber {
       switch(karta.get,'et',{et.reload},'es',{es.reload},'sq',{sq.reload})
     }
   }
-  label popis [391,9,400,19] { format:'n', title:"
+  label popis [391,9,240,19] { tag:'es', format:'n', title:"
     <span class='zeleny'> posláno </span>&nbsp;&nbsp;
     <span class='cerveny'> chyba resp. neposílat </span>&nbsp;&nbsp;
     <span class='zluty'> poslat znovu </span>
    "}
+  button [644,3,,] { tag:'es', title:'neposlat', skill:'m|m',
+    help:'vynechání adresátů z mailu s daným id_dopis'
+    proc onclick () {
+      es.msg.set('čekej ...');
+      es.msg.set(ask('dop_mai_omitt',dopis_id.get,vynech_id.get));
+    }
+  }
+  field vynech_id [711,6,60,] { tag:'es', skill:'m|m', format:'t' }
+
 }
 # -------------------------------------------------------------------------------------------------- _esql
 # správa SQL dotazů
