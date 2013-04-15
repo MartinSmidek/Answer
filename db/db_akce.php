@@ -3357,8 +3357,9 @@ function akce_auto_jmena1($patt,$par) {  #trace();
   // páry
   $qry= "SELECT prijmeni, jmeno, id_osoba AS _key
          FROM osoba
-         JOIN tvori USING(id_osoba)
-         WHERE concat(trim(prijmeni),' ',jmeno) LIKE '$patt%' AND prijmeni!='' AND role!='d'
+         LEFT JOIN tvori USING(id_osoba)
+         WHERE concat(trim(prijmeni),' ',jmeno) LIKE '$patt%' AND prijmeni!=''
+           AND (ISNULL(role) OR role!='d')
          ORDER BY prijmeni,jmeno LIMIT $limit";
   $res= mysql_qry($qry);
   while ( $res && $t= mysql_fetch_object($res) ) {
