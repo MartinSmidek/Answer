@@ -315,9 +315,17 @@ form _cmd [,,200,] { css:'ds_form'
       PridaniAkce.modal(240,50)
   } }
   // PŘIDAT z pečounů
-  button pridat_1   [155,525,,] {title:'... jménem', skill:'yaap+|yaap+;faa+|faa+;caa+|caa+',
-    help:'Přidání pečouna podle jména'
+  button [155,525,,] {title:'... jménem', skill:'yaap+|yaap+;faa+|faa+;caa+|caa+',
+    help:'Přidání pečouna podle jména - výběr z EVIDENCE'
     proc onclick() {
+      PridaniJmenem3.fl.jmena.set_attrib('par.fce','akce_auto_jmena1');
+      PridaniJmenem3.modal(240,50)
+  } }
+  // PŘIDAT z evidence
+  button [228,525,,] {title:'... jménem pečouna', skill:'yaap+|yaap+;faa+|faa+;caa+|caa+',
+    help:'Přidání pečouna podle jména - výběr z pečounů'
+    proc onclick() {
+      PridaniJmenem3.fl.jmena.set_attrib('par.fce','akce_auto_jmena3');
       PridaniJmenem3.modal(240,50)
   } }
   // VYŘADIT a VYMAZAT
@@ -345,7 +353,7 @@ form _cmd [,,200,] { css:'ds_form'
   // procedury
   proc b_display(on) { up.b.display(on);  }
 }
-# ================================================================================================== Přidání jménem 3
+# ================================================================================= Přidání jménem 3
 panel PridaniJmenem3 [,,320,280] {type:'popup', title:'Přidání známých pečounů jménem'
   use fl: form _fl [12,10,,]
   proc onfocus() { fl.jmena.init; fl.vse.init; fl.L.init; fl.jmena.focus }
@@ -356,12 +364,13 @@ panel PridaniJmenem3 [,,320,280] {type:'popup', title:'Přidání známých peč
     button [0,250,50,16] { title:'přidat do pečounů akce', proc onclick() {
       each(L,pecouni_add); reload(0); panel.hide(0)
     } }
-    button [140,250,50,16] { title:'jiná jména', proc onclick() {
+    button [144,250,50,16] { title:'jiná jména', proc onclick() {
       jmena.init; vse.init; L.init } }
     button [230,250,50,16] { title:'konec', proc onclick() {
       jmena.init; vse.init; L.init; panel.hide(0) } }
     // výběr z databáze MS
-    select jmena [100,0,200,17] { type:'auto', par:°{fce:'akce_auto_jmena3',patt:'whole'}, format:'t'
+    select jmena [100,0,200,17] { type:'auto', format:'t',
+      par:°{fce:'akce_auto_jmena3',patt:'whole',cond:'funkce=99'}, // par.cond je měněno při volání
       proc onchanged() {
         rod.set(ask('akce_auto_jmena3L',this.key));
         each(rod.get,jmenovci); // nesmí volat asynchronní operace
