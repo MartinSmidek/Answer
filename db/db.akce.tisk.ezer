@@ -89,7 +89,7 @@ menu m {type:'left',
                                         ,tit:'příjmení:15,jména:20,obec:25'
                                         ,fld:'prijmeni,jmena,obec'}}
     item {title:'Děti na akci'                                                                          skill:'y;f'
-                                        ,par:°{typ:'j',exp:'Excel',cnd:"role='d'",ord:"narozeni"
+                                        ,par:°{typ:'j',exp:'Excel',cnd:"role='d' AND funkce!=99",ord:"narozeni"
                                         ,tit:'příjmení:15,jméno:12,narození:12,/rč:5,obec:25,psč:7,ulice:25'
                                         ,fld:'prijmeni,jmeno,narozeni,rc_xxxx,obec,psc,ulice'}}
     item {title:'Účastníci akce s poznámkami'
@@ -97,11 +97,11 @@ menu m {type:'left',
                                         ,tit:'příjmení:15,jména:12,obec:25,počet:5,poznámka:100'
                                         ,fld:'prijmeni,jmena,obec,_pocet,poznamka'}}
     item {title:'Děti na akci s poznámkami'                                                             skill:'y;f'
-                                        ,par:°{typ:'j',exp:'Excel',cnd:"role='d'",ord:"narozeni"
+                                        ,par:°{typ:'j',exp:'Excel',cnd:"role='d' AND funkce!=99",ord:"narozeni"
                                         ,tit:'příjmení:15,jméno:12,narození:12,/rč:5,věk:4,obec:25,psč:7,ulice:25,poznámka:100'
                                         ,fld:'prijmeni,jmeno,narozeni,rc_xxxx,_vek,obec,psc,ulice,note'}}
     item {title:'Děti na akci s poznámkami'                                                             skill:'c'
-                                        ,par:°{typ:'j',exp:'Excel',cnd:"role='d'",ord:"narozeni"
+                                        ,par:°{typ:'j',exp:'Excel',cnd:"role='d' AND funkce!=99",ord:"narozeni"
                                         ,tit:'příjmení:15,jméno:12,narození:12,věk:4,obec:25,psč:7,ulice:25,poznámka:100'
                                         ,fld:'prijmeni,jmeno,narozeni,_vek,obec,psc,ulice,note'}}
     item {title:'Účastníci, skupinky a pokoje'                                                          skill:'y;f'
