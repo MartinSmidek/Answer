@@ -3164,7 +3164,7 @@ function chlapi_delete($id_chlapi) {  #trace();
   }
   return $ans;
 }
-# ---------------------------------------------------------------------------------- akce_auto_jmena
+# ------------------------------------------------------------------------------ chlapi_akce_prehled
 # souhrn akce
 function chlapi_akce_prehled($id_akce) {  #trace();
   $html= '';
@@ -3402,6 +3402,7 @@ function akce_auto_jmena1L($id_osoba) {  #trace();
 }
 # --------------------------------------------------------------------------------- akce_auto_jmena3
 # SELECT autocomplete - výběr z pečounů
+# $par->cond může obsahovat dodatečnou podmínku např. 'funkce=99' pro zúžení na pečouny
 function akce_auto_jmena3($patt,$par) {  #trace();
   $a= array();
   $limit= 20;
@@ -3410,12 +3411,13 @@ function akce_auto_jmena3($patt,$par) {  #trace();
     $is= strpos($patt,' ');
     $patt= $is ? substr($patt,0,$is) : $patt;
   }
+  $AND= $par->cond ? "AND {$par->cond}" : '';
   // páry
   $qry= "SELECT prijmeni, jmeno, osoba.id_osoba AS _key
          FROM osoba
          JOIN spolu USING(id_osoba)
          JOIN pobyt USING(id_pobyt)
-         WHERE concat(trim(prijmeni),' ',jmeno) LIKE '$patt%' AND prijmeni!='' AND funkce=99
+         WHERE concat(trim(prijmeni),' ',jmeno) LIKE '$patt%' AND prijmeni!='' $AND
          ORDER BY prijmeni,jmeno LIMIT $limit";
   $res= mysql_qry($qry);
   while ( $res && $t= mysql_fetch_object($res) ) {
@@ -3428,7 +3430,7 @@ function akce_auto_jmena3($patt,$par) {  #trace();
     $a[0]= "... žádné příjmení nezačíná '$patt'";
   elseif ( $n==$limit )
     $a[-999999]= "... a další";
-//                                                                 debug($a,$patt);
+                                                                debug($a,$qry);
   return $a;
 }
 # --------------------------------------- akce_auto_jmena3L
