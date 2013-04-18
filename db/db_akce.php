@@ -242,7 +242,56 @@ function akce_kontrola_dat($par) { trace();
     : "<h3>Následující tabulky jsou konzistentní</h3>$html";
   return $html;
 }
-# ================================================================================================== PDF
+# ======================================================================================= CENÍK AKCE
+function akce_platby_xls($id_akce) {  trace();
+  $ret= (object)array('ok'=>0,'xhref'=>'','msg'=>'');
+  $test= 0;
+  $name= "cenik_$id_akce";
+  list($nazev,$rok)= select("nazev,YEAR(datum_do)","akce","id_duakce=$id_akce");
+  // vytvoření sešitu s ceníkem
+  $n= 1;
+  $xls= <<<__XLS
+  |open  $name|\n\n|sheet cenik|columns A=40
+    |A$n Ceník pro akci $nazev $rok::bold size=16\n
+__XLS;
+  // výpis ceníku podle typu ubytování
+  $tit= "|B* cena|C* DPH|A*:C* bcolor=ffcccccc bold\n";
+  $qa= "SELECT * FROM cenik WHERE id_akce=$id_akce ORDER BY poradi";
+  $ra= mysql_qry($qa);
+  if ( !$ra || !mysql_num_rows($ra) ) {
+    $ret->msg.= "akce {$pobyt->id_akce} nemá cenový vzorec";
+    goto end;
+  }
+  while ( $ra && ($a= mysql_fetch_object($ra)) ) {
+    $pol= $a->polozka;
+    $bc= '';
+    if ( substr($pol,0,2)=='--' ) {
+      $n+= 2;
+      $xls.= "|A$n ".substr($pol,2).str_replace('*',$n,$tit);
+    }
+    elseif ( substr($pol,0,1)=='-' ) {
+      $n+= 3;
+      $xls.= "|A$n ".substr($pol,1)."|A$n:C$n bcolor=ffaaaaff bold size=14\n";
+    }
+    else {
+      $n++;
+      $za= $a->za;
+      $cena= $a->cena;
+      $dph= $a->dph;
+      $xls.= "|A$n $pol ($za)|B$n $cena|C$n $dph\n";
+    };
+  }
+  // konec
+  $xls.= "|close|";
+  $ret->msg= Excel5($xls,!$test);
+  if ( $ret->msg ) goto end;
+  $ret->ok= 1;
+  $ret->xhref= " zde lze stáhnout <a href='docs/$name.xls' target='xls'>$name.xls</a>.";
+                                                        if ($test) display(($xls));
+end:
+                                                        debug($ret);
+  return $ret;
+}
 # -------------------------------------------------------------------------------------- akce_platby
 # nalezení platby za pobyt na akci
 function akce_platby($id_pobyt) {  trace();
@@ -297,12 +346,15 @@ function akce_pobyt_default($id_pobyt,$zapsat=0) {  trace();
 }
 # -------------------------------------------------------------------------------------- akce_vzorec
 # výpočet platby za pobyt na akci
+# od 130416 přidána položka CENIK.typ - pokud je 0 tak nemá vliv,
+#                                       pokud je nenulová pak se bere hodnota podle POBYT.ubytovani
 function akce_vzorec($id_pobyt) {  trace();
   $id_akce= 0;
   $ok= true;
   $ret= (object)array('navrh'=>'cenu nelze spočítat','eko'=>(object)array());
   // parametry pobytu
   $x= (object)array();
+  $ubytovani= 0;
   $qp= "SELECT * FROM pobyt AS p
         JOIN akce AS a ON p.id_akce=a.id_duakce WHERE id_pobyt=$id_pobyt";
   $rp= mysql_qry($qp);
@@ -312,13 +364,14 @@ function akce_vzorec($id_pobyt) {  trace();
     $x->nocoprist+= $p->pristylky * $p->pocetdnu;
     $ucastniku= $p->pouze ? 1 : 2;
     $vzorec= $p->vzorec;
+    $ubytovani= $p->ubytovani;
     $sleva= $p->sleva;
     $neprijel= $p->funkce==10;
     $datum_od= $p->datum_od;
   }
-  // podrobné parametry
+  // podrobné parametry, ubytovani ma hodnoty z číselníku ms_akce_ubytovan
   $deti= $koje= 0;
-  $qo= "SELECT o.jmeno,o.narozeni,p.funkce,t.role
+  $qo= "SELECT o.jmeno,o.narozeni,p.funkce,t.role, p.ubytovani
         FROM spolu AS s
         JOIN osoba AS o ON s.id_osoba=o.id_osoba
         JOIN pobyt AS p USING(id_pobyt)
@@ -352,6 +405,7 @@ function akce_vzorec($id_pobyt) {  trace();
     $ret->eko->slevy= $vzor->slevy;
   }
 //                                                         debug($vzor);
+  // načtení ceníku do pole $cenik s případnou specifikací podle typu ubytování
   $qa= "SELECT * FROM cenik WHERE id_akce=$id_akce ORDER BY poradi";
   $ra= mysql_qry($qa);
   $n= $ra ? mysql_num_rows($ra) : 0;
@@ -361,14 +415,34 @@ function akce_vzorec($id_pobyt) {  trace();
   }
   else {
     $cenik= array();
+    $cenik_typy= false;
+    $nazev_ceniku= '';
     while ( $ra && ($a= mysql_fetch_object($ra)) ) {
       $cc= (object)array();
-      $cc->txt= $a->polozka;
+      // diskuse pole typ - je-li nenulové, ignorují se hodnoty různé od POBYT.ubytovani
+      if ( $a->typ!=0 && $a->typ!=$ubytovani ) continue;
+      $cc->typ= $a->typ;
+      if ( $a->typ && !$cenik_typy ) {
+        // ceník má typy a tedy pobyt musí mít definované nenulové ubytování
+        if ( !$ubytovani ) {
+          $html.= "účastník nemá definován typ ubytování, ačkoliv to ceník požaduje";
+          $ok= false;
+        }
+        $cenik_typy= true;
+      }
+      $pol= $a->polozka;
+      if ( $cenik_typy && substr($pol,0,1)=='-' && substr($pol,1,1)!='-' ) {
+        // název typu ceníku
+        $nazev_ceniku= substr($pol,1);
+      }
+
+      $cc->txt= $pol;
       $cc->za= $a->za;
       $cc->c= $a->cena;
       $cc->j= $a->za ? $jidel->{$a->za} : '';
       $cenik[]= $cc;
     }
+                                                        debug($cenik,"ceník pro typ $ubytovani");
   }
   // výpočty
   if ( $ok ) {
@@ -378,7 +452,7 @@ function akce_vzorec($id_pobyt) {  trace();
     $cena= 0;
     $html.= "<table>";
     // ubytování
-    $html.= "<tr><th>ubytování</th></tr>";
+    $html.= "<tr><th>ubytování $nazev_ceniku</th></tr>";
     $ret->c_nocleh= 0;
     if ( $vzorec && $vzor->slevy->ubytovani===0 ) {
       $html.= "<tr><td>zdarma</td><td align='right'>0</td></tr>";
@@ -391,12 +465,14 @@ function akce_vzorec($id_pobyt) {  trace();
       switch ($a->za) {
         case 'Nl':
           $cc= $nl * $a->c;
+          if ( !$cc ) break;
           $cena+= $cc;
           $ret->c_nocleh+= $cc;
           $html.= "<tr><td>{$a->txt} ($nl*{$a->c})</td><td align='right'>$cc</td></tr>";
           break;
         case 'Np':
           $cc= $np * $a->c;
+          if ( !$cc ) break;
           $cena+= $cc;
           $ret->c_nocleh+= $cc;
           $html.= "<tr><td>{$a->txt} ($np*{$a->c})</td><td align='right'>$cc</td></tr>";
@@ -417,6 +493,7 @@ function akce_vzorec($id_pobyt) {  trace();
         case 'sc': case 'sp': case 'oc':
         case 'op': case 'vc': case 'vp':
           $cc= $a->j * $a->c;
+          if ( !$cc ) break;
           $cena+= $cc;
           $ret->c_strava+= $cc;
           $html.= "<tr><td>{$a->txt} ({$a->j}*{$a->c})</td><td align='right'>$cc</td></tr>";
@@ -494,6 +571,9 @@ function akce_vzorec($id_pobyt) {  trace();
     $html.= "</table>";
     $ret->navrh= $html;
     $ret->mail= "<div style='background-color:#eeeeee;margin-left:15px'>$html</div>";
+  }
+  else {
+    $ret->navrh.= ", protože $html";
   }
   return $ret;
 }

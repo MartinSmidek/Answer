@@ -117,7 +117,7 @@ proc pary_add(p,i) {  // používají panely PridaniJmenem a PridaniAkce
   [ z.get; spolu.insert_record(object('id_osoba',z.get,'id_pobyt',pk.get)) ];
   reload(pk.get);
 }
-# -------------------------------------------------------------------------------------------------- _header
+# ------------------------------------------------------------------------------------------ _header
 form _header [,,380,50] {
   proc fill(x) {
     head.set(conc("<div class='karta'>",x,"</div>"))
@@ -127,7 +127,7 @@ form _header [,,380,50] {
     proc onclick() { this.display(0); akce_back }
   }
 }
-# -------------------------------------------------------------------------------------------------- _page
+# -------------------------------------------------------------------------------------------- _page
 form _page {
   # --------------------------- záložky
   proc tags(a,on,off) {
@@ -178,7 +178,7 @@ form _page {
   }
   label [0,16,582,530] { css:'ae_work'}
 }
-# -------------------------------------------------------------------------------------------------- _album
+# ------------------------------------------------------------------------------------------- _album
 form _album {
   label drop [38,35,500,45] { format:'c' }
   label foto [38,85,500,400] { format:'c' }
@@ -209,7 +209,7 @@ form _album {
 #     [ sharp; foto.image_filter('sharpen') ]
   }
 }
-# -------------------------------------------------------------------------------------------------- _aktivity
+# ---------------------------------------------------------------------------------------- _aktivity
 form _aktivity {
 #   field id_osoba
   var ido: number
@@ -236,13 +236,13 @@ form _aktivity {
   | akc.browse_init
   }
 }
-# -------------------------------------------------------------------------------------------------- _platba
+# ------------------------------------------------------------------------------------------ _platba
 form _platba {
   var cena: object
   label [2,27,527,495] {title:"<img src='img/ms2p.png'>" }
   proc ini() {
     // výpočet součtu cen a rozpis, došlé platby
-    [ has_skill("yaa;faa"); dosle_platby; rozpis_ceny;
+    [ has_skill("yaa;faa;caa"); dosle_platby; rozpis_ceny;
       celkem.set(sum(c_nocleh.get,c_strava.get,c_program.get,c_sleva.get)) ];
     // obarvení tlačítka [Str.pol]
     or(u.b.cstrava_cel.get,u.b.cstrava_pol.get); stravy.set_css('cervena','cerna');
@@ -304,7 +304,7 @@ form _platba {
   button stravy     [89,437,37,] {title:'Str Po', style:'font-size:10px;height:19px;width:40px',
     //skill:'yaa+|yaa+;faa+|faa+',
     proc onclick() {
-      has_skill("yaa+;faa+");
+      has_skill("yaa+;faa+;caa+");
       Strava.dnu.set(u.b.dnu.get); // pokud jsou definovány výjimky z pravidelné stravy
       lt(Strava.dnu.get,15);       // 15 je maximálně možný počet řádků vyjímek ze stravy
       Strava.modal(240,50)
@@ -348,7 +348,7 @@ form _platba {
   label [129,510,,] {title:'program'}
   label [179,510,,] {title:'sleva'}
 }
-# -------------------------------------------------------------------------------------------------- _evidence
+# ---------------------------------------------------------------------------------------- _evidence
 form _evidence {
   # --------------------------- kontextové_menu
   menu { type:'context'
@@ -399,7 +399,7 @@ form _evidence {
   label [295,409,38,] {title:'budova'}
   label [375,409,38,] {title:'typ', skill:'c' }
 }
-# -------------------------------------------------------------------------------------------------- _rodina
+# ------------------------------------------------------------------------------------------ _rodina
 form _rodina {
   field nazev       [10,48,100,] {data:rodina.nazev, help:'společné příjmení', format:':F' }
   field _spolu      [159,49,23,] {format:'o', value:'?'}
@@ -416,7 +416,7 @@ form _rodina {
   label             [10,557,,] {title:'rodina - alternativní údaje', skill:'yaah'}
   chat  historie    [8,570,185,106] { divide:100, skill:'yaah' }
 }
-# -------------------------------------------------------------------------------------------------- _muz
+# --------------------------------------------------------------------------------------------- _muz
 form _muz {
   field id_spolu_m  // id_spolu nebo 0, pokud není na akci
   field jmeno_m     [225,48,83,22] {data:osoba.jmeno}
@@ -439,7 +439,7 @@ form _muz {
   label             [200,557,,] {title:'muž - alternativní údaje', skill:'yaah' }
   chat  historie_m  [198,570,185,106] { divide:100, skill:'yaah' }
 }
-# -------------------------------------------------------------------------------------------------- _zena
+# -------------------------------------------------------------------------------------------- _zena
 form _zena {
   field id_spolu_z  // id_spolu nebo 0, pokud není na akci
   field jmeno_z     [421,49,85,] {data:osoba.jmeno}
@@ -462,7 +462,7 @@ form _zena {
   label             [390,557,,] {title:'žena - alternativní údaje', skill:'yaah' }
   chat  historie_z  [389,570,185,106] { divide:100, skill:'yaah' }
 }
-# -------------------------------------------------------------------------------------------------- _pobyt
+# ------------------------------------------------------------------------------------------- _pobyt
 form _pobyt {
   field id_akce     {data:pobyt.id_akce}
   select pouze      [254,371,96,] {type:'map', data:pobyt.pouze, options:ms_akce_pouze.zkratka
@@ -504,7 +504,7 @@ form _pobyt {
     }
   }
 }
-# -------------------------------------------------------------------------------------------------- _ucast
+# ------------------------------------------------------------------------------------------- _ucast
 form _ucast [,,400,] { css:'ds_form'
   label         [4,537,,] {title:'pobyt - vývojářské údaje', skill:'m'}
   label develop [0,550,380,106] { skill:'m', style:'border:1px solid #bbb;padding:3px' }
@@ -732,7 +732,7 @@ proc neni_ulozeno() {
     warning('neuložené změny pro účastníka <b>',rod.nazev.get,'</b> použij [Zpět] nebo [Uložit]') ];
   return(ok)
 }
-# -------------------------------------------------------------------------------------------------- _cmd
+# --------------------------------------------------------------------------------------------- _cmd
 form _cmd [,,200,] { css:'ds_form'
   // Nový
   button [6,525,,] {title:'Nový', skill:'yaa+|yaa+;faa+|faa+;caa+|caa+',
@@ -856,7 +856,7 @@ form _cmd [,,200,] { css:'ds_form'
   // procedury
   proc b_display(on) { u.b.display(on); pob.d.display(on); pob.s.display(on); }
 }
-# -------------------------------------------------------------------------------------------------- _cmd_p
+# ------------------------------------------------------------------------------------------- _cmd_p
 # uložení změn v platbách
 form _cmd_p [,,200,] { css:'ds_form'
   // Zpět a Uložit
@@ -891,7 +891,7 @@ form _cmd_p [,,200,] { css:'ds_form'
     }
   }
 }
-# ================================================================================================== Dítě
+# ============================================================================================= Dítě
 panel Dite [,,360,360] {type:'popup', title:'Úprava dětí'
   use dite: form _dite [0,10,,]
   var key_dite: number
@@ -990,7 +990,7 @@ panel Dite [,,360,360] {type:'popup', title:'Úprava dětí'
     }
   }
 }
-# ================================================================================================== Přidání jménem 1
+# ================================================================================= Přidání jménem 1
 panel PridaniJmenem1 [,,320,280] {type:'popup', title:'Přidání známých dospělých jménem'
   use fl: form _fl [12,10,,]
   proc onfocus() { fl.jmena.focus }
@@ -1030,7 +1030,7 @@ panel PridaniJmenem1 [,,320,280] {type:'popup', title:'Přidání známých dosp
     }
   }
 }
-# ================================================================================================== Přidání jménem 2
+# ================================================================================= Přidání jménem 2
 panel PridaniJmenem2 [,,320,280] {type:'popup', title:'Přidání známých párů jménem'
   use fl: form _fl [12,10,,]
   form _fl [,,300,200] {
@@ -1069,7 +1069,7 @@ panel PridaniJmenem2 [,,320,280] {type:'popup', title:'Přidání známých pár
     }
   }
 }
-# ================================================================================================== Přidání akce
+# ===================================================================================== Přidání akce
 panel PridaniAkce [,,320,280] {type:'popup', title:'Přidání účastníků známých z jiných akcí'
   use fl: form _fl [12,10,,]
   form _fl [,,300,200] {
@@ -1108,7 +1108,7 @@ panel PridaniAkce [,,320,280] {type:'popup', title:'Přidání účastníků zn�
     }
   }
 }
-# ================================================================================================== Strava
+# =========================================================================================== Strava
 panel Strava [,,320,280] {type:'popup', title:'Nastavení nestandardního počtu strav'
   var dnu: number
   var arr: object
@@ -1231,7 +1231,7 @@ panel Strava [,,320,280] {type:'popup', title:'Nastavení nestandardního počtu
     }
   }
 }
-# ================================================================================================== BackTrace
+# ======================================================================================== BackTrace
 # přehled provedených změn
 panel BackTrace [,,540,250] { title:'histore oprav', type:'popup', css:'dialog'
   use back: form _back [0,16,,] { tabindex:20 },

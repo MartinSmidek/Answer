@@ -348,6 +348,7 @@ table cenik { key_id:'id_cenik'
   number poradi
   text   polozka
   text   za             // N: noc, S:snídaně, O:oběd, V:večeře, P:pobyt
+  number typ            // index typu ubytování
   number od
   number do
   number cena
