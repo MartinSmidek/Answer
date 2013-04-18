@@ -1384,9 +1384,9 @@ function akce_text_eko($akce,$par,$title,$vypis,$export=false) { trace();
 function akce_text_prehled($akce,$par,$title,$vypis,$export=false) { trace();
   $html= '';
   // data akce
-  $veky= array();
+  $veky= $kluci= $holky= array();
   // histogram věku dětí
-  $qo=  "SELECT prijmeni,jmeno,narozeni,role,a.datum_od
+  $qo=  "SELECT prijmeni,jmeno,narozeni,role,a.datum_od,o.sex
          FROM akce AS a
          JOIN pobyt AS p ON a.id_duakce=p.id_akce
          JOIN spolu AS s USING(id_pobyt)
@@ -1396,19 +1396,24 @@ function akce_text_prehled($akce,$par,$title,$vypis,$export=false) { trace();
   $ro= mysql_qry($qo);
   while ( $ro && ($o= mysql_fetch_object($ro)) ) {
     $vek= narozeni2roky_sql($o->narozeni,$o->datum_od);
+    $sex= $o->sex;
     $veky[$vek]++;
-//     $html.= " $vek";
+    if ( $sex==1 ) $kluci[$vek]++;
+    if ( $sex==2 ) $holky[$vek]++;
   }
   ksort($veky);
   // formátování výsledku
   $html.= "<h3>Počet dětí na akci podle stáří (v době začátku akce)</h3>";
   $html.= "<table class='stat'>";
-  $r1= $r2= '';
+  $r1= $r2= $r3= $r4= '';
   foreach($veky as $v=>$n) {
     $r1.= "<th align='right' width='20'>$v</th>";
     $r2.= "<td align='right'>$n</td>";
+    $r3.= "<td align='right'>{$kluci[$v]}</td>";
+    $r4.= "<td align='right'>{$holky[$v]}</td>";
   }
-  $html.= "<tr><th>věk</th>$r1</tr><tr><th>počet</th>$r2</tr></table>";
+  $html.= "<tr><th>věk</th>$r1</tr><tr><th>počet</th>$r2</tr><tr>"
+        . "<th>kluci</th>$r3</tr><tr><th>holky</th>$r4</tr></table>";
   // předání výsledku
   $result->html= $html;
   return $result;
