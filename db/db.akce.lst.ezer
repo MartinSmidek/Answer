@@ -153,24 +153,33 @@ form _page [,,285,500] {
       form.init; info.sey.blur(1)
   } }
   # --------------------------- ceník
-  browse c [10,25,,] { tag:'cen', rows:25, qry_rows:1, css_rows:"barva,1:grey"
+  browse c [10,25,,] { tag:'cen', rows:22, qry_rows:1, css_rows:"barva,1:grey"
     show id_cenik { data:cenik.id_cenik }
     show id_akce  { data:cenik.id_akce }
+    show polozka  { data:cenik.polozka }
     show poradi [,,25,] { title:'N', help:'pořadí ve faktuře', data:cenik.poradi, format:'ruq*s+'
       proc onsubmit() { this.save } }
     show barva { expr:"IF(LEFT(polozka,1)='-',1,0)" }
-    show polozka [,,125,] { title:'položka', help:'... do faktury', data:cenik.polozka, format:'uq*s'
+    show [,,155,] { title:'položka', help:'... do faktury', data:cenik.polozka, skill:'y|y;f|f',
+      format:'tuq*s'
+      proc onsubmit() { this.save } }
+    show [,,105,] { title:'položka', help:'... do faktury', data:cenik.polozka,  skill:'c|c',
+      format:'tuq*s'
       proc onsubmit() { this.save } }
     show za [,,27,] { title:'za', data:cenik.za, format:'urq=s',
       help:'noc:N, strava:(s=snídaně/o=oběd/v=večeře)(c=celá/p=poloviční), pobyt:P, slevy:S'
+      proc onsubmit() { this.save } }
+    show typ [,,50,] { title:'typ', data:cenik.typ, map_pipe:ms_akce_ubytovan.zkratka,
+      format:'urq#s',                                                                    skill:'c|c'
+      help:'typ ubutování: 1,2,3,...'
       proc onsubmit() { this.save } }
 #     show od [,,29,] { title:'od', help:'od věku - včetně', data:cenik.od, format:'urq=s'
 #       proc onsubmit() { this.save } }
 #     show do [,,29,] { title:'do', help:'do věku - nevčetně', data:cenik.do, format:'urq=s'
 #       proc onsubmit() { this.save } }
-    show cena [,,42,] { title:'cena', help:'cena v Kč', data:cenik.cena, format:'urq=s'
+    show cena [,,32,] { title:'cena', help:'cena v Kč vč. DPH', data:cenik.cena, format:'urq=s'
       proc onsubmit() { this.save } }
-    show dph [,,35,] { title:'dph', help:'DPH v Kč', data:cenik.dph, format:'urq=s'
+    show dph [,,15,] { title:'dph', help:'DPH v Kč', data:cenik.dph, format:'urq=s'
       proc onsubmit() { this.save } }
     menu { type:'context'
       item { title:'přidat nový řádek', skill:'a|a'
@@ -185,6 +194,16 @@ form _page [,,285,500] {
       } }
     }
   }
+  // export ceníku
+  label  [10,465,100,30] { tag:'cen', css:'ae_parm', style:'z-index:1' }
+  button [18,470,,] { tag:'cen', title:'Export ceníku', format:'c'
+    proc onclick() {
+      var ret: object
+      ret.set(ask('akce_platby_xls',a_akce.get));
+      ret.ok; xhref.set(ret.xhref);
+    | warning(ret.msg);
+  } }
+  label xhref [122,474,173,]
   # --------------------------- pozadí stránky nakonec
   label [2,16,283,476] { title:'', css:'ae_work page' }
 }

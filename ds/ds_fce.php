@@ -1294,7 +1294,7 @@ function ds_cenik($rok) {  #trace('','win1250');
   while ( $res2 && $c= mysql_fetch_object($res2) ) {
     $ds_cena[$c->typ]= $c;
   }
-//                                                                debug($cena,'cena',(object)array('win1250'=>1));
+                                                               debug($cena,'cena',(object)array('win1250'=>1));
 }
 # -------------------------------------------------------------------------------------------------- ds_c
 # položka faktury
