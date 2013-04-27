@@ -371,9 +371,9 @@ form _evidence {
   label [123,40,28,] {title:'spolu'}
   label [118,382,38,] {title:'funkce'}
   label [48,382,55,] {title:'č.skupinky'}
-  label [382,42,31,] {title:'křestní'}
-  label [382,63,31,] {title:'příjmení'}
-  label [385,84,31,] {title:'rodné'}
+  label [379,42,31,] {title:'křestní'}
+  label [377,63,31,] {title:'příjmení'}
+  label [378,86,31,] {title:'rodné/op'}
   label [382,112,31,] {title:'telefon'}
   label [385,137,26,] {title:'email'}
   label [383,310,48,] {title:'osobní pozn.'}
@@ -419,16 +419,17 @@ form _rodina {
 # --------------------------------------------------------------------------------------------- _muz
 form _muz {
   field id_spolu_m  // id_spolu nebo 0, pokud není na akci
-  field jmeno_m     [225,48,83,22] {data:osoba.jmeno}
+  field jmeno_m     [224,48,80,22] {data:osoba.jmeno}
   field _vek_m      [354,50,19,] {format:'o', value:'?'}
-  field prijmeni_m  [225,71,86,] {data:osoba.prijmeni}
-  field rodne_m     [225,94,86,] {data:osoba.rodne}
-  select clen_m     [318,72,57,] {type:'map', data:osoba.clen, options:ms_akce_clen.zkratka}
+  field prijmeni_m  [224,71,80,] {data:osoba.prijmeni}
+  field rodne_m     [224,94,80,] {data:osoba.rodne}
+  select clen_m     [310,72,57,] {type:'map', data:osoba.clen, options:ms_akce_clen.zkratka}
+  field obcanka_m   [310,94,64,] {data:osoba.obcanka}
   field telefon_m   [224,119,151,] {type:'list', data:osoba.telefon}
   field email_m     [224,143,151,] {type:'list', data:osoba.email}
   field narozeni_m  [224,167,93,] {type:'date', data:osoba.narozeni, sql_pipe:'sql_date1'}
   field rc_xxxx_m   [342,166,32,] {tag:'rc', data:osoba.rc_xxxx, format:'r', help:'4 cifry za lomítkem rodného čísla' }
-  select cirkev_m   [224,189,152,] {type:'map', data:osoba.cirkev, options:ms_akce_cirkev.zkratka}
+  select cirkev_m   [224,188,152,] {type:'map', data:osoba.cirkev, options:ms_akce_cirkev.zkratka}
   select vzdelani_m [224,209,152,] {type:'map', data:osoba.vzdelani, options:ms_akce_vzdelani.zkratka}
   field zamest_m    [224,230,152,] {data:osoba.zamest}
   field zajmy_m     [224,251,152,] {data:osoba.zajmy}
@@ -442,11 +443,12 @@ form _muz {
 # -------------------------------------------------------------------------------------------- _zena
 form _zena {
   field id_spolu_z  // id_spolu nebo 0, pokud není na akci
-  field jmeno_z     [421,49,85,] {data:osoba.jmeno}
+  field jmeno_z     [421,48,80,] {data:osoba.jmeno}
   field _vek_z      [549,50,20,] {format:'o', value:'?'}
-  field prijmeni_z  [420,71,86,] {data:osoba.prijmeni}
-  field rodne_z     [420,94,86,] {data:osoba.rodne}
-  select clen_z     [515,72,56,] {type:'map', data:osoba.clen, options:ms_akce_clen.zkratka}
+  field prijmeni_z  [420,71,80,] {data:osoba.prijmeni}
+  field rodne_z     [420,94,80,] {data:osoba.rodne}
+  select clen_z     [506,72,56,] {type:'map', data:osoba.clen, options:ms_akce_clen.zkratka}
+  field obcanka_z   [506,94,64,] {data:osoba.obcanka}
   field telefon_z   [420,119,151,] {type:'list', data:osoba.telefon}
   field email_z     [420,143,151,] {type:'list', data:osoba.email}
   field narozeni_z  [420,167,93,] {type:'date', data:osoba.narozeni, sql_pipe:'sql_date1'}
@@ -567,6 +569,7 @@ form _ucast [,,400,] { css:'ds_form'
     show jmeno_m    { expr:"GROUP_CONCAT(DISTINCT IF(tx.role='a',ox.jmeno,'')    SEPARATOR '')" }
     show prijmeni_m { expr:"GROUP_CONCAT(DISTINCT IF(tx.role='a',ox.prijmeni,'') SEPARATOR '')" }
     show rodne_m    { expr:"GROUP_CONCAT(DISTINCT IF(tx.role='a',ox.rodne,'')    SEPARATOR '')" }
+    show obcanka_m  { expr:"GROUP_CONCAT(DISTINCT IF(tx.role='a',ox.obcanka,'')  SEPARATOR '')" }
     show narozeni_m { expr:"GROUP_CONCAT(DISTINCT IF(tx.role='a',ox.narozeni,'') SEPARATOR '')", sql_pipe:'sql_date1' }
     show rc_xxxx_m  { expr:"GROUP_CONCAT(DISTINCT IF(tx.role='a',ox.rc_xxxx,'')  SEPARATOR '')" }
     show telefon_m  { expr:"GROUP_CONCAT(DISTINCT IF(tx.role='a',ox.telefon,'')  SEPARATOR '')" }
@@ -586,6 +589,7 @@ form _ucast [,,400,] { css:'ds_form'
     show jmeno_z    { expr:"GROUP_CONCAT(DISTINCT IF(tx.role='b',ox.jmeno,'')    SEPARATOR '')" }
     show prijmeni_z { expr:"GROUP_CONCAT(DISTINCT IF(tx.role='b',ox.prijmeni,'') SEPARATOR '')" }
     show rodne_z    { expr:"GROUP_CONCAT(DISTINCT IF(tx.role='b',ox.rodne,'')    SEPARATOR '')" }
+    show obcanka_z  { expr:"GROUP_CONCAT(DISTINCT IF(tx.role='b',ox.obcanka,'')  SEPARATOR '')" }
     show narozeni_z { expr:"GROUP_CONCAT(DISTINCT IF(tx.role='b',ox.narozeni,'') SEPARATOR '')", sql_pipe:'sql_date1' }
     show rc_xxxx_z  { expr:"GROUP_CONCAT(DISTINCT IF(tx.role='b',ox.rc_xxxx,'')  SEPARATOR '')" }
     show telefon_z  { expr:"GROUP_CONCAT(DISTINCT IF(tx.role='b',ox.telefon,'')  SEPARATOR '')" }

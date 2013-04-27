@@ -1159,7 +1159,7 @@ function akce_sestava_lidi($akce,$par,$title,$vypis,$export=false) { trace();
   // data akce
   $qry=  "SELECT
           p.pouze,p.poznamka,
-          o.prijmeni,o.jmeno,o.narozeni,o.rc_xxxx,o.note,
+          o.prijmeni,o.jmeno,o.narozeni,o.rc_xxxx,o.note,o.obcanka,
           r.ulice,r.psc,r.obec,r.telefony,r.emaily,
           ROUND(DATEDIFF(a.datum_od,o.narozeni)/365.25,1) AS _vek
           FROM pobyt AS p
