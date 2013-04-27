@@ -96,10 +96,10 @@ menu m {type:'left',
                                         ,par:°{typ:'p',exp:'Excel',cnd:"funkce!=99"
                                         ,tit:'příjmení:15,jména:12,obec:25,počet:5,poznámka:100'
                                         ,fld:'prijmeni,jmena,obec,_pocet,poznamka'}}
-    item {title:'Účastníci akce s občankou'
+    item {title:'Účastníci akce pro ubytování'
                                         ,par:°{typ:'j',exp:'Excel',cnd:"funkce!=99 AND role!='d'"
-                                        ,tit:'příjmení:15,jméno:12,OP:12,obec:25,psč:7,ulice:25'
-                                        ,fld:'prijmeni,jmeno,obcanka,obec,psc,ulice'}}
+                                        ,tit:'příjmení:15,jméno:12,OP:12,narození:12,obec:25,psč:7,ulice:25'
+                                        ,fld:'prijmeni,jmeno,obcanka,narozeni_dmy,obec,psc,ulice'}}
     item {title:'Děti na akci s poznámkami'                                                             skill:'y;f'
                                         ,par:°{typ:'j',exp:'Excel',cnd:"role='d' AND funkce!=99",ord:"narozeni"
                                         ,tit:'příjmení:15,jméno:12,narození:12,/rč:5,věk:4,obec:25,psč:7,ulice:25,poznámka:100'

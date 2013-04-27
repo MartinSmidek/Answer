@@ -1174,6 +1174,8 @@ function akce_sestava_lidi($akce,$par,$title,$vypis,$export=false) { trace();
   while ( $res && ($x= mysql_fetch_object($res)) ) {
     $n++;
     $clmn[$n]= array();
+    // doplnění počítaných položek
+    $x->narozeni_dmy= sql_date1($x->narozeni);
     foreach($flds as $f) {
       $clmn[$n][$f]= $x->$f;
     }
