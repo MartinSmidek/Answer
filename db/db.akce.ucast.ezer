@@ -12,13 +12,14 @@ var back: object
 proc onstart() {
   the_duakce_local.set(0);
 }
-proc onfirstfocus() { init_forms; onfocus }
+proc onfirstfocus() { init_forms; akce_onstart; onfocus }
 proc onfocus() {
-  u.legenda.display(the_cenik.get);
-  [ the_duakce.get | akce_onstart ];
-  eq(the_duakce_local.get,the_duakce.get)
-| init_ucast2;
-  the_duakce_local.set(the_duakce.get)
+  [ [ the_duakce.get | akce_onstart ];
+    eq(the_duakce_local.get,the_duakce.get)
+  | init_ucast2;
+    the_duakce_local.set(the_duakce.get)
+  ];
+  u.legenda(the_cenik.get,the_cena.get);
 }
 # úpravy formulářů pro y;f;c
 proc init_forms() {
@@ -511,10 +512,14 @@ form _ucast [,,400,] { css:'ds_form'
   label         [4,537,,] {title:'pobyt - vývojářské údaje', skill:'m'}
   label develop [0,550,380,106] { skill:'m', style:'border:1px solid #bbb;padding:3px' }
   // legenda
-  label legenda [114,12,150,11] { title:"
-    <span class='blue'> nestanovena cena </span>&nbsp;&nbsp;
-    <span class='yellow'> dlužník </span>
-   "}
+  const NESTANOVENA = "<span class='blue'> nestanovena cena </span>"
+  const DLUZNIK =     " <span class='yellow'> dlužník </span>"
+  proc legenda(cenik,cena) {
+    cenik; leg.set(conc("MÁ CENÍK &nbsp;&nbsp; ",DLUZNIK.get," &nbsp;&nbsp; ",NESTANOVENA.get))
+  | cena; leg.set(conc("MÁ PEVNOU CENU &nbsp;&nbsp; ",DLUZNIK.get))
+  | leg.set('')
+  }
+  label leg [10,12,250,11]
   // omezení browse
   check jen [293,7,83,15] { title:'jen účastníci', format:'t', proc onchange() { reload(0) }}
   // definice pohledů
@@ -562,7 +567,12 @@ form _ucast [,,400,] { css:'ds_form'
     show xfunkce [,,40,] { title:'fce', data:p.funkce, format:'rq#s', map_pipe:ms_akce_funkce.zkratka, help:'funkce na akci'}
     show skupina [,,30,] { title:'sk.', data:p.skupina, format:'rqs:e', help:'číslo skupinky'}
     // barvení
-    show dluh       { expr:"IF(a.ma_cenik,IF(p.platba1+p.platba2+p.platba3+p.platba4=0,2,IF(p.platba1+p.platba2+p.platba3+p.platba4>platba,1,0)),0)" }
+    show dluh       { expr:"CASE
+      WHEN a.ma_cenik THEN
+         IF(p.platba1+p.platba2+p.platba3+p.platba4=0,2,IF(p.platba1+p.platba2+p.platba3+p.platba4>platba,1,0))
+      WHEN a.ma_cenu THEN
+         IF(IF(pouze>0,1,2)*a.cena>platba,1,0)
+      ELSE 0 END" }
     // muž - načte se, i když není na akci
     show id_spolu_m { expr:"GROUP_CONCAT(DISTINCT IF(t.role='a',s.id_spolu,'')   SEPARATOR '')" }
     show id_m       { expr:"GROUP_CONCAT(DISTINCT IF(tx.role='a',ox.id_osoba,'') SEPARATOR '')" }
@@ -667,7 +677,8 @@ form _ucast [,,400,] { css:'ds_form'
     proc reload_pobyt() {
       b.browse_count;
       [ has_skill('m'); develop.set(conc(
-           'id_akce=',key_akce.get,', id_pobyt=',key_pobyt.get,', id_rodina=',key_rodina.get
+           'id_pobyt=',key_pobyt.get,', id_rodina=',key_rodina.get,
+           '... id_akce=',key_akce.get,', ceník:',the_cenik.get,', cena:',the_cena.get
           ,'<br>m: id_spolu=', id_spolu_m.get, ', id_osoba=', id_m.get
           ,'<br>z: id_spolu=', id_spolu_z.get, ', id_osoba=', id_z.get
           ,'<br>strava=', strava_oddo.get,', strava_cel=', strava_cel.get,', strava_pol=', strava_pol.get
