@@ -497,7 +497,7 @@ form _pobyt {
     show vek      [,,20,] { title:'věk', js_pipe:'roku', format:'r' }
     show narozeni
     show rc_xxxx
-    show note     [,,60,] { title:'poznámka' }
+    show note     [,,60,] { title:'poznámka', format:'t' }
     proc onsubmit() {
       neni_ulozeno // warning
     | Dite.key_dite.set(id_osoba.get); Dite.key_spolu.set(id_spolu.get);
@@ -631,9 +631,10 @@ form _ucast [,,400,] { css:'ds_form'
           (IFNULL((SELECT CONCAT(id_spolu,'|',skupinka) FROM osoba LEFT JOIN spolu USING(id_osoba)
                    WHERE id_pobyt=p.id_pobyt AND id_osoba=tvori.id_osoba
                    GROUP BY id_osoba),'0|0'))
-           ,'|',jmeno,'|',narozeni,'|',narozeni,'|',rc_xxxx,'|',note)
+           ,'|',jmeno,'|',narozeni,'|',narozeni,'|',rc_xxxx,'|'
+           ,IF(spolu.poznamka!='',CONCAT(note,'/',spolu.poznamka),note))
            ORDER BY osoba.id_osoba DESC SEPARATOR '|')
-        FROM osoba JOIN tvori USING(id_osoba)
+        FROM osoba JOIN tvori USING(id_osoba) LEFT JOIN spolu USING(id_osoba)
         WHERE id_rodina=t.id_rodina AND role='d')"}
     // pobyt
     show funkce     { data:p.funkce}
@@ -896,8 +897,8 @@ form _cmd_p [,,200,] { css:'ds_form'
   }
 }
 # ============================================================================================= Dítě
-panel Dite [,,360,360] {type:'popup', title:'Úprava dětí'
-  use dite: form _dite [0,10,,]
+panel Dite [,,360,370] {type:'popup', title:'Úprava dětí'
+  use dite: form _dite [0,4,,]
   var key_dite: number
   var key_spolu: number
   var key_pobyt: number
@@ -907,9 +908,17 @@ panel Dite [,,360,360] {type:'popup', title:'Úprava dětí'
       dite.s.set_attrib('join',conc('ON d.id_osoba=s.id_osoba AND s.id_pobyt=',key_pobyt.get));
       dite.load(key_dite.get) | dite.init(2) };
     [ has_skill('yaa+;faa+;caa+'); dite.vyradit.enable(eq(dite.ucasti.get,'')) ];
-    dite.sebou.set(cconc(key_spolu.get,1,0))
+    dite.sebou.set(cconc(key_spolu.get,1,0));
   }
-  form _dite [,,200,50] { css:'ds_form'
+  form _dite [,,370,353] { css:'ds_form'
+    # --------------------------- kontextové_menu
+    menu { type:'context'
+      item { title:'ukázat všechny změny'
+        proc onclick () { BackTrace.back_dite(key_dite.get,key_spolu.get) } }
+      item { title:'m: ECHO hodnoty klíčů', skill:'m'
+        proc onclick () { echo('KLÍČE: dítě=',key_dite.get,', pobyt=',key_pobyt.get,
+          ', spolu=',key_spolu.get ) } }
+    }
     # --------------------------------------------------  OSOBA
     const L=0
     const T=0
@@ -932,28 +941,30 @@ panel Dite [,,360,360] {type:'popup', title:'Úprava dětí'
     field the_osoba { data:d.id_osoba }
     label [0,0,,]  { title:'na akci' }
     label          [L+5,T+38,100,] {title:'ulice'}
-    field ulice    [L+5,T+53,162,] {data:d.ulice}
+    field ulice    [L+5,T+51,162,] {data:d.ulice}
     label          [L+179,T+38,39,] {title:'psč'}
-    field psc      [L+179,T+53,40,] {data:d.psc}
+    field psc      [L+179,T+51,40,] {data:d.psc}
     label          [L+230,T+38,100,] {title:'obec'}
-    field obec     [L+229,T+53,131,] {data:d.obec}
-    label          [L+5,T+78,37,] {title:'telefon'}
-    field telefon  [L+5,T+94,212,] {data:d.telefon}
-    label          [L+230,T+78,33,] {title:'narození'}
-    field narozeni [L+229,T+94,85,] {type:'date', data:d.narozeni, format:'rR:e'}
-    label          [L+324,T+78,41,] {tag:'rc', title:'nnnn rč'}
-    field rodne    [L+323,T+94,37,] {tag:'rc', data:d.rc_xxxx, format:'r:e'}
-    label          [L+5,T+122,33,] {title:'e-mail'}
-    field email    [L+5,T+138,355,] {data:d.email}
-    label          [L+5,T+163,33,] {title:'poznámka'}
-    edit  note     [L+5,T+178,355,60] {data:d.note}
-    label          [L+5,T+243,,] {title:'účast na akcích'}
-    edit  ucasti   [L+5,T+255,355,60] { expr:"
+    field obec     [L+229,T+51,131,] {data:d.obec}
+    label          [L+5,T+73,37,] {title:'telefon'}
+    field telefon  [L+5,T+85,212,] {data:d.telefon}
+    label          [L+230,T+73,33,] {title:'narození'}
+    field narozeni [L+229,T+85,85,] {type:'date', data:d.narozeni, format:'rR:e'}
+    label          [L+324,T+73,41,] {tag:'rc', title:'nnnn rč'}
+    field rodne    [L+323,T+85,37,] {tag:'rc', data:d.rc_xxxx, format:'r:e'}
+    label          [L+5,T+107,33,] {title:'e-mail'}
+    field email    [L+5,T+119,355,] {data:d.email}
+    label          [L+5,T+140,33,] {title:'poznámka k dítěti (trvalá)'}
+    edit  note     [L+5,T+151,355,60] {data:d.note, skill:'yaa|yaa+'}           // opravuje výbor
+    label          [L+5,T+217,74,48] {title:'poznámka jen k účasti na akci (pro pečouny)', format:'r'}
+    edit  poznamka [L+86,T+215,273,60] {data:s.poznamka, skill:'yaa|yaap+'}     // opravují pečouni
+    label          [L+5,T+270,,] {title:'účast na akcích'}
+    edit  ucasti   [L+5,T+282,355,60] { expr:"
                         (SELECT GROUP_CONCAT(nazev) FROM spolu JOIN pobyt USING(id_pobyt)
                         JOIN akce ON akce.id_duakce=pobyt.id_akce WHERE spolu.id_osoba=the_osoba)"
                      format:'o' }
     // ukončení
-    button vyradit [5,330,,] { title:'Vyřadit z evidence', skill:'yaa+|yaa+;faa+|faa+;caa+|caa+',
+    button vyradit [5,349,,] { title:'Vyřadit z evidence', skill:'yaa+|yaa+;faa+|faa+;caa+|caa+',
       help:'Vyřadit toto dítě z evidence - jen pokud nebylo na žádné akci',
       proc onclick() {
         confirm("Opravdu zrušit všechny informace o ",jmeno.get,"?");
@@ -964,16 +975,16 @@ panel Dite [,,360,360] {type:'popup', title:'Úprava dětí'
         reload(u.b.browse_key);
         panel.hide(1)
     } }
-    label  [260,326,98,30] { css:'ae_parm', skill:'yaa+;faa+;caa+' }
-    button [266,330,,] { title:'Zpět', skill:'yaa+|yaa+;faa+|faa+;caa+|caa+',
+    label  [260,344,98,30] { css:'ae_parm', skill:'yaa+;yaap+;faa+;caa+' }
+    button [266,349,,] { title:'Zpět', skill:'yaa+|yaa+;yaap+|yaap+;faa+|faa+;caa+|caa+',
       proc onclick() { panel.hide(0)
     }}
-    button [312,330,,] { type:'submit', title:'Uložit', skill:'yaa+|yaa+;faa+|faa+;caa+|caa+'
+    button [312,349,,] { type:'submit', title:'Uložit', skill:'yaa+|yaa+;yaap+|yaap+;faa+|faa+;caa+|caa+'
       proc onclick() {
       { key_dite.get;
         dite_spolu.set(id_spolu.get);
         // oprava
-        d.key(key_dite.get); [ d.save ];
+        d.key(key_dite.get); [ d.save ];     // oprava položek v osoba
         [ and(key_spolu.get,not(sebou.get)); // vyjmout z kurzu
           spolu.delete_record(conc('id_spolu=',key_spolu.get));
           dite_spolu.set(0)
@@ -985,7 +996,7 @@ panel Dite [,,360,360] {type:'popup', title:'Úprava dětí'
         tvori.insert_record(object('id_osoba',key_dite.get,'id_rodina',u.b.key_rodina.get,'role','d'));
         dite_na_kurs
       };
-      [ skupinka.changed; dite_spolu.get; s.key(dite_spolu.get); s.save ];
+      [ /*skupinka.changed;*/ dite_spolu.get; s.key(dite_spolu.get); s.save ];
       reload(u.b.browse_key);
       panel.hide(1)
     }}
@@ -1245,6 +1256,13 @@ panel BackTrace [,,540,250] { title:'histore oprav', type:'popup', css:'dialog'
       conc("(kde='pobyt' AND klic=",id_pobyt,
       ") OR (kde='osoba' AND klic IN(",id_muz,",",id_zen,")",
       ") OR (kde='rodina' AND klic=",id_rodina,")"),"kdy DESC");
+    back.list.raise('onrowclick')
+  }
+  proc back_dite(id_dite,id_spolu) {
+    BackTrace.popup(0,1);
+    back.list.browse_load(
+      conc("(kde='osoba' AND klic=",id_dite,
+      ") OR (kde='spolu' AND klic=",id_spolu,")"),"kdy DESC");
     back.list.raise('onrowclick')
   }
   # ------------------------------------------------------------- _back

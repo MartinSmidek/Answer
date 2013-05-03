@@ -246,9 +246,10 @@ kEzer-ys2
 15=db\db.akce.tisk.ezer
 16=doc\Skype-Putzlachers.txt
 17=cr\$.ezer
+18=ezer2.2\client\lib.js
 [Selected Project Files]
 Main=
-Selected=db\db.akce.tisk.ezer
+Selected=db\db.akce.ucast.ezer
 [ezer2.2\client\app.js]
 TopLine=430
 Caret=31,440
@@ -265,12 +266,12 @@ BookMark2=1,340
 TopLine=1
 Caret=70,18
 [ezer2.2\client\ezer.js]
-TopLine=3263
-Caret=41,3267
+TopLine=4493
+Caret=36,4507
 BookMark1=1,2556
 [ezer2.2\client\ezer_fdom2.js]
-TopLine=2739
-Caret=53,2767
+TopLine=270
+Caret=85,276
 BookMark1=13,833
 [ys\$.ezer]
 TopLine=1
@@ -299,10 +300,11 @@ Caret=20,98
 BookMark1=18,290
 BookMark3=11,226
 [db\db.akce.ucast.ezer]
-TopLine=419
-Caret=57,429
-BookMark1=31,666
-BookMark2=12,695
+TopLine=604
+Caret=86,634
+BookMark1=23,899
+BookMark2=13,500
+BookMark3=74,634
 [db\db_akce.php]
 TopLine=1134
 Caret=46,1178
@@ -314,7 +316,7 @@ TopLine=344
 Caret=123,353
 [db\db.akce.tisk.ezer]
 TopLine=66
-Caret=82,102
+Caret=107,77
 BookMark1=27,99
 [doc\Skype-Putzlachers.txt]
 TopLine=299
@@ -325,3 +327,6 @@ Mark3=48,330
 [cr\$.ezer]
 TopLine=327
 Caret=1,1
+[ezer2.2\client\lib.js]
+TopLine=213
+Caret=14,227
