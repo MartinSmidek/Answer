@@ -7,6 +7,7 @@ var the_duakce: number          // nastavená akce: id_akce (id_dukace)
 var the_rok: number             // nastavená akce: rok
 var the_title: text             // nastavená akce: název do titulků
 var the_cenik: text             // nastavená akce: má (mít) ceník
+var the_cena:  number           // nastavená akce: má pevnou cenu pro dospělého
 
 var the_source: text    // google|sey
 var dirty: number
@@ -19,6 +20,7 @@ proc akce_onstart() { dirty.get
   echo('db.akce.onstart');
   the_duakce.set(get_cookie(conc(sys('root'),'_akce_id'),0));
   the_cenik.set(get_cookie(conc(sys('root'),'_akce_cenik'),0));
+  the_cena.set(get_cookie(conc(sys('root'),'_akce_cena'),0));
   the_title.set(get_cookie(conc(sys('root'),'_akce_title'),'Vyber akci ...'));
   the_rok.set(get_cookie(conc(sys('root'),'_akce_rok'),fdate('Y')));
 }
@@ -188,6 +190,8 @@ table akce { key_id:'id_duakce'
   number id_duakce
   number typ
   number ma_cenik  // 1 znamená, že bereme v úvahu tabulku cenik
+  number ma_cenu   // 1 znamená, že bereme v úvahu položku cena (pro 1 dospělého)
+  number cena      // cena akce pro dospělého (je-li ma_cenu=1)
   number spec      // 1 znamená ne-akci, starý způsob příležitostných seznamů
   text nazev
   text misto
