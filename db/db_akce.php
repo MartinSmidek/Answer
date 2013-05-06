@@ -3316,7 +3316,7 @@ function chlapi_akce_mapa($id_akce) {  trace();
 //                                                 debug($ret,"mapa_akce");
   return $ret;
 }
-# ================================================================================================== PRIDEJ JMENEM
+# ============================================================================= PRIDEJ JMENEM CHLAPA
 # funkce pro spolupráci se select
 # -------------------------------------------------------------------------------- chlapi_auto_jmena
 # kontrola, zda chlap ještě na akci není
@@ -3366,8 +3366,12 @@ function chlapi_auto_jmenovci($id_pary) {  #trace();
 //                                                                 debug($a,$id_chlapi);
   return $a;
 }
-# ================================================================================================== PRIDEJ JMENEM
+# ==================================================================================== PRIDEJ JMENEM
 # funkce pro spolupráci se select
+# --------------------------------------------------------------------------------- akce_auto_jmena2
+# SELECT autocomplete - výběr z párů
+function akce_pridej($id_akce,$id_muz,$id_zena) {  #trace();
+}
 # --------------------------------------------------------------------------------- akce_auto_jmena2
 # SELECT autocomplete - výběr z párů
 function akce_auto_jmena2($patt) {  #trace();
@@ -3537,7 +3541,7 @@ function akce_auto_jmena3L($id_osoba) {  #trace();
 //                                                                 debug($pecouni,$id_akce);
   return $pecouni;
 }
-# ================================================================================================== PRIDEJ z AKCE
+# ==================================================================================== PRIDEJ z AKCE
 # ----------------------------------------------------------------------------------- akce_auto_akce
 # SELECT autocomplete - výběr z akcí
 function akce_auto_akce($patt) {  #trace();
@@ -3643,7 +3647,7 @@ function akce_auto_peceL($id_akce) {  #trace();
 //                                                                 debug($pecouni,$id_akce);
   return $pecouni;
 }
-# ================================================================================================== PLATBY
+# =========================================================================================== PLATBY
 # záložka Platba za akci
 # --------------------------------------------------------------------------- akce_platba_prispevek1
 # členské příspěvky - zjištění zda jsou dospělí co jsou na pobytu členy a mají-li zaplaceno
