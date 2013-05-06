@@ -105,8 +105,11 @@ proc pary_add(p,i) {  // používají panely PridaniJmenem1, PridaniJmenem2 a Pr
   var m: number
   var z: number
   var pou: number
+  var ret: object
   p.chck.get;
   pall.set(p.all.get); m.set(pall.get('muz')); z.set(pall.get('zen'));
+  // zamezení duplicit
+#   ret.set(ask('akce_pridej',the_duakce.get,get('muz'),pall.get('zen'));
   // zjištění možné hodnoty 'pouze'
   pou.set(pob.pouze.key);
   [ eq(pou,0); { m;z | warning('chybí osobní údaje jednoho z manželů'); pou.set(cconc(m,1,2))}];
@@ -637,7 +640,7 @@ form _ucast [,,400,] { css:'ds_form'
         WHERE pobyt.id_akce=@akce AND skupina=p.skupina))" }
     // všechny děti: (id_osoba, jsou na akci?id_spolu:0, jmeno, narozeni, note)
     show deti       {expr:"
-       (SELECT GROUP_CONCAT(DISTINCT CONCAT(osoba.id_osoba,'|',
+       (SELECT GROUP_CONCAT(CONCAT(osoba.id_osoba,'|',
           (IFNULL((SELECT CONCAT(id_spolu,'|',skupinka) FROM osoba LEFT JOIN spolu USING(id_osoba)
                    WHERE id_pobyt=p.id_pobyt AND id_osoba=tvori.id_osoba
                    GROUP BY id_osoba),'0|0'))
@@ -966,9 +969,9 @@ panel Dite [,,360,370] {type:'popup', title:'Úprava dětí'
     label          [L+5,T+107,33,] {title:'e-mail'}
     field email    [L+5,T+119,355,] {data:d.email}
     label          [L+5,T+140,33,] {title:'poznámka k dítěti (trvalá)'}
-    edit  note     [L+5,T+151,355,60] {data:d.note, skill:'yaa|yaa+'}           // opravuje výbor
+    edit  note     [L+5,T+151,355,60] {data:d.note, skill:'yaa|yaa+;faa|faa+;caa|caa+'}         // opravuje výbor
     label          [L+5,T+217,74,48] {title:'poznámka jen k účasti na akci (pro pečouny)', format:'r'}
-    edit  poznamka [L+86,T+215,273,60] {data:s.poznamka, skill:'yaa|yaap+'}     // opravují pečouni
+    edit  poznamka [L+86,T+215,273,60] {data:s.poznamka, skill:'yaa|yaap+;faa|faap+;caa|caap+'} // opravují pečouni
     label          [L+5,T+270,,] {title:'účast na akcích'}
     edit  ucasti   [L+5,T+282,355,60] { expr:"
                         (SELECT GROUP_CONCAT(nazev) FROM spolu JOIN pobyt USING(id_pobyt)
