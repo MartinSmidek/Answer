@@ -100,7 +100,7 @@ proc reload(id_pobyt) { echo('reload ',the_title.get);
     | u.b.raise('onrowclick') } ]
 }
 var pall: object
-proc pary_add(p,i) {  // používají panely PridaniJmenem a PridaniAkce
+proc pary_add(p,i) {  // používají panely PridaniJmenem1, PridaniJmenem2 a PridaniAkce
   var pk: number
   var m: number
   var z: number
@@ -645,7 +645,7 @@ form _ucast [,,400,] { css:'ds_form'
            ,IF(spolu.poznamka!='',CONCAT(note,'/',spolu.poznamka),note))
            ORDER BY osoba.id_osoba DESC SEPARATOR '|')
         FROM osoba JOIN tvori USING(id_osoba) LEFT JOIN spolu USING(id_osoba)
-        WHERE id_rodina=t.id_rodina AND role='d')"}
+        WHERE spolu.id_pobyt=p.id_pobyt AND id_rodina=t.id_rodina AND role='d')"}
     // pobyt
     show funkce     { data:p.funkce}
     show prednasi   { data:p.prednasi}
