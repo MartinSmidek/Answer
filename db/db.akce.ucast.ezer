@@ -637,7 +637,7 @@ form _ucast [,,400,] { css:'ds_form'
         WHERE pobyt.id_akce=@akce AND skupina=p.skupina))" }
     // všechny děti: (id_osoba, jsou na akci?id_spolu:0, jmeno, narozeni, note)
     show deti       {expr:"
-       (SELECT GROUP_CONCAT(CONCAT(osoba.id_osoba,'|',
+       (SELECT GROUP_CONCAT(DISTINCT CONCAT(osoba.id_osoba,'|',
           (IFNULL((SELECT CONCAT(id_spolu,'|',skupinka) FROM osoba LEFT JOIN spolu USING(id_osoba)
                    WHERE id_pobyt=p.id_pobyt AND id_osoba=tvori.id_osoba
                    GROUP BY id_osoba),'0|0'))
