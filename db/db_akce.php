@@ -4660,7 +4660,13 @@ function dop_mai_pocet($id_dopis,$dopis_var,$cond='',$recall=false) {  trace();
     $AND= $cond ? "AND $cond" : '';
     $AND.= $dopis_var=='U'  ? " AND p.funkce IN (0,1,2,5)" : (
            $dopis_var=='U2' ? " AND p.funkce IN (1,2,5)"   : (
-           $dopis_var=='U3' ? " AND p.funkce IN (0,1,2,5) AND p.platba1+p.platba2+p.platba3+p.platba4>platba"
+           $dopis_var=='U3' ?
+             " AND p.funkce IN (0,1,2,5) AND
+               IF(a.ma_cenu,
+                 IF(p.platba1+p.platba2+p.platba3+p.platba4>0,
+                   p.platba1+p.platba2+p.platba3+p.platba4,
+                   IF(pouze>0,1,2)*a.cena)>platba,
+                 p.platba1+p.platba2+p.platba3+p.platba4>platba)"
          : " --- chybné komu --- " ));
     // využívá se toho, že role rodičů 'a','b' jsou před dětskou 'd', takže v seznamech
     // GROUP_CONCAT jsou rodiče, byli-li na akci. Emaily se ale vezmou ode všech
