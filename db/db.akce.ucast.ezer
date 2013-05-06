@@ -971,7 +971,7 @@ panel Dite [,,360,370] {type:'popup', title:'Úprava dětí'
     label          [L+5,T+140,33,] {title:'poznámka k dítěti (trvalá)'}
     edit  note     [L+5,T+151,355,60] {data:d.note, skill:'yaa|yaa+;faa|faa+;caa|caa+'}         // opravuje výbor
     label          [L+5,T+217,74,48] {title:'poznámka jen k účasti na akci (pro pečouny)', format:'r'}
-    edit  poznamka [L+86,T+215,273,60] {data:s.poznamka, skill:'yaa|yaap+;faa|faap+;caa|caap+'} // opravují pečouni
+    edit  poznamka [L+86,T+215,273,60] {data:s.poznamka, skill:'yaa|yaap+;faa|faa+;caa|caa+'} // opravují pečouni
     label          [L+5,T+270,,] {title:'účast na akcích'}
     edit  ucasti   [L+5,T+282,355,60] { expr:"
                         (SELECT GROUP_CONCAT(nazev) FROM spolu JOIN pobyt USING(id_pobyt)
