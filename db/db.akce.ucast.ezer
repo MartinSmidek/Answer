@@ -495,13 +495,13 @@ form _pobyt {
   // děti
   browse d [10,209,,] {type:'smart', rows:4, css_rows:'id_spolu,0:nic,:nakursu'
     show id_osoba
-    show id_spolu
-    show skupinka [,,20,] { title:'skupinka', format:'r:e' }
     show jmeno    [,,70,] { title:'Děti', format:'t' }
     show vek      [,,20,] { title:'věk', js_pipe:'roku', format:'r' }
     show narozeni
     show rc_xxxx
+    show id_spolu
     show note     [,,60,] { title:'poznámka', format:'t' }
+    show skupinka [,,20,] { title:'skupinka', format:'r:e' }
     proc onsubmit() {
       neni_ulozeno // warning
     | Dite.key_dite.set(id_osoba.get); Dite.key_spolu.set(id_spolu.get);
@@ -640,15 +640,17 @@ form _ucast [,,400,] { css:'ds_form'
         WHERE pobyt.id_akce=@akce AND skupina=p.skupina))" }
     // všechny děti: (id_osoba, jsou na akci?id_spolu:0, jmeno, narozeni, note)
     show deti       {expr:"
-       (SELECT GROUP_CONCAT(CONCAT(osoba.id_osoba,'|',
-          (IFNULL((SELECT CONCAT(id_spolu,'|',skupinka) FROM osoba LEFT JOIN spolu USING(id_osoba)
+       (SELECT GROUP_CONCAT(DISTINCT CONCAT(
+          osoba.id_osoba,'|',jmeno,'|',narozeni,'|',narozeni,'|',rc_xxxx,'|',
+          (IFNULL((SELECT CONCAT(id_spolu,'|',
+                     IF(poznamka!='',CONCAT(note,'/',poznamka),note),'|',skupinka)
+                   FROM osoba LEFT JOIN spolu USING(id_osoba)
                    WHERE id_pobyt=p.id_pobyt AND id_osoba=tvori.id_osoba
-                   GROUP BY id_osoba),'0|0'))
-           ,'|',jmeno,'|',narozeni,'|',narozeni,'|',rc_xxxx,'|'
-           ,IF(spolu.poznamka!='',CONCAT(note,'/',spolu.poznamka),note))
-           ORDER BY osoba.id_osoba DESC SEPARATOR '|')
-        FROM osoba JOIN tvori USING(id_osoba) LEFT JOIN spolu USING(id_osoba)
-        WHERE spolu.id_pobyt=p.id_pobyt AND id_rodina=t.id_rodina AND role='d')"}
+                   GROUP BY id_osoba),CONCAT('0|0|',note)))
+           )
+           ORDER BY osoba.narozeni DESC SEPARATOR '|')
+        FROM osoba JOIN tvori USING(id_osoba)
+        WHERE id_rodina=t.id_rodina AND role='d')"}
     // pobyt
     show funkce     { data:p.funkce}
     show prednasi   { data:p.prednasi}
