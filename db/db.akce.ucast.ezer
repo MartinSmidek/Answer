@@ -109,17 +109,9 @@ proc pary_add(p,i) {  // používají panely PridaniJmenem1, PridaniJmenem2 a Pr
   p.chck.get;
   pall.set(p.all.get); m.set(pall.get('muz')); z.set(pall.get('zen'));
   // zamezení duplicit
-#   ret.set(ask('akce_pridej',the_duakce.get,get('muz'),pall.get('zen'));
-  // zjištění možné hodnoty 'pouze'
-  pou.set(pob.pouze.key);
-  [ eq(pou,0); { m;z | warning('chybí osobní údaje jednoho z manželů'); pou.set(cconc(m,1,2))}];
-  [ eq(pou,1); { m   | warning('chybí osobní údaje muže, na akci přidána jen žena'); pou.set(2)}];
-  [ eq(pou,2); { z   | warning('chybí osobní údaje ženy, na akci přidán jen muž'); pou.set(1)}];
-  // přidání nového pobytu
-  pk.set(pobyt.insert_record(object('id_akce',the_duakce.get,'pouze',pou)));
-  [ m.get; spolu.insert_record(object('id_osoba',m.get,'id_pobyt',pk.get)) ];
-  [ z.get; spolu.insert_record(object('id_osoba',z.get,'id_pobyt',pk.get)) ];
-  reload(pk.get);
+  ret.set(ask('akce_pridej',the_duakce.get,pall.get('muz'),pall.get('zen')));
+  { ret.ok; reload(ret.pobyt);
+  | warning(ret.msg) }
 }
 # ------------------------------------------------------------------------------------------ _header
 form _header [,,380,50] {

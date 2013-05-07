@@ -3369,8 +3369,47 @@ function chlapi_auto_jmenovci($id_pary) {  #trace();
 # ==================================================================================== PRIDEJ JMENEM
 # funkce pro spolupráci se select
 # --------------------------------------------------------------------------------- akce_auto_jmena2
-# SELECT autocomplete - výběr z párů
+# ASK přidání pobytu do akce, pokud ještě nebyly tyto osoby/osoba přidány
 function akce_pridej($id_akce,$id_muz,$id_zena) {  #trace();
+  $ret= (object)array('ok'=>0,'msg'=>'chyba při vkládání');
+  // zjištění, kdo se přihlašuje na akci
+  $pouze= $id_muz && $id_zena ? 0 : ( $id_muz ? 1 : 2 );
+  // kontrola přítomnosti
+  $qp= "SELECT id_pobyt
+        FROM pobyt AS p
+        JOIN spolu AS s USING(id_pobyt)
+        WHERE id_akce=$id_akce AND s.id_osoba IN ('$id_muz','$id_zena')";
+  $rp= mysql_qry($qp);
+  $jsou= mysql_num_rows($rp);
+  if ( $jsou==2 || $jsou==1 && $pouze==0 ) {
+    // už tam jsou oba
+    $ret->msg= "... již jsou mezi účastníky akce";
+  }
+  elseif ( $jsou==1 && $pouze>0 ) {
+    // už tam je
+    $ret->msg= "... již je mezi účastníky akce";
+  }
+  else {
+    // vložení nového pobytu
+    $qi= "INSERT pobyt (id_akce,pouze) VALUES ($id_akce,$pouze)";
+    $ri= mysql_qry($qi); if ( !$ri ) goto end;
+    $ret->pobyt= mysql_insert_id();
+    if ( $id_muz ) {
+      // vložení muže
+      $qi= "INSERT spolu (id_pobyt,id_osoba) VALUES ({$ret->pobyt},$id_muz)";
+      $ri= mysql_qry($qi); if ( !$ri ) goto end;
+    }
+    if ( $id_zena ) {
+      // vložení ženy
+      $qi= "INSERT spolu (id_pobyt,id_osoba) VALUES ({$ret->pobyt},$id_zena)";
+      $ri= mysql_qry($qi); if ( !$ri ) goto end;
+    }
+    $ret->ok= 1;
+    $ret->msg= "... vloženo";
+  }
+end:
+                                                        debug($ret,"akce_pridej");
+  return $ret;
 }
 # --------------------------------------------------------------------------------- akce_auto_jmena2
 # SELECT autocomplete - výběr z párů
