@@ -1161,6 +1161,7 @@ function akce_sestava_lidi($akce,$par,$title,$vypis,$export=false) { trace();
           p.pouze,p.poznamka,
           o.prijmeni,o.jmeno,o.narozeni,o.rc_xxxx,o.note,o.obcanka,
           r.ulice,r.psc,r.obec,r.telefony,r.emaily,
+          s.poznamka AS s_note,
           ROUND(DATEDIFF(a.datum_od,o.narozeni)/365.25,1) AS _vek
           FROM pobyt AS p
           JOIN spolu AS s USING(id_pobyt)
@@ -1177,7 +1178,7 @@ function akce_sestava_lidi($akce,$par,$title,$vypis,$export=false) { trace();
     // doplnění počítaných položek
     $x->narozeni_dmy= sql_date1($x->narozeni);
     foreach($flds as $f) {
-      $clmn[$n][$f]= $x->$f;
+      $clmn[$n][$f]= $f=='note' && $x->s_note ? $x->$f.' / '.$x->s_note : $x->$f;
     }
   }
 //                                         debug($clmn,"sestava pro $akce,$typ,$fld,$cnd");
