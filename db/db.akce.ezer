@@ -623,7 +623,7 @@ table dopis { key_id:'id_dopis'
   text add_list
 }
 
-map ms_akce_typ:      table _cis {where:"druh='ms_akce_typ'",       order:'poradi', key_id:'data'}
+map ms_akce_typ:      table _cis {where:"druh='ms_akce_typ'",       order:'poradi', key_id:'data'}  // ikona=1 pro muže, 2 pro ženy, jinak 0
 map ms_akce_clen:     table _cis {where:"druh='ms_akce_clen'",      order:'poradi', key_id:'data'}
 map ms_akce_pouze:    table _cis {where:"druh='ms_akce_pouze'",     order:'poradi', key_id:'data'}
 map ms_akce_funkce:   table _cis {where:"druh='ms_akce_funkce'",    order:'poradi', key_id:'data'}
