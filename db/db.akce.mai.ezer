@@ -88,23 +88,23 @@ form _vyber {
     <span class='zluty'> poslat znovu </span>
    "}
   # vynechání adresátů daného dopisu
-  button [644,0,,] { tag:'es', title:'neposlat', skill:'m|m',
+  button [644,0,,] { tag:'es', title:'neposlat',
     help:'vynechání adresátů z mailu s daným id_dopis'
     proc onclick () {
       es.msg.set('čekej ...');
       es.msg.set(ask('dop_mai_omitt',dopis_id.get,vynech_id.get));
     }
   }
-  field vynech_id [711,3,60,] { tag:'es', skill:'m|m', format:'t' }
+  field vynech_id [711,3,60,] { tag:'es', format:'t' }
   # vynechání adresátů daných adres
-  button [644,20,,] { tag:'es', title:'neposlat', skill:'m|m',
+  button [644,20,,] { tag:'es', title:'neposlat',
     help:'vynechání adresátů daných adres'
     proc onclick () {
       es.msg.set('čekej ...');
       es.msg.set(ask('dop_mai_omitt2',dopis_id.get,vynech_emaily.get));
     }
   }
-  field vynech_emaily [711,23,60,] { tag:'es', skill:'m|m', format:'t' }
+  field vynech_emaily [711,23,60,] { tag:'es', format:'t' }
 
 }
 # -------------------------------------------------------------------------------------------------- _esql
