@@ -12,7 +12,7 @@ var dopis_akce: number          // id_akce|0
 var karta: text                 // et|es
 
 use ii: form right [12,4,,]
-use vy: form _vyber [10,40,,]   // výběr skupiny | zobrazené akce
+use vy: form _vyber [10,30,,]   // výběr skupiny | zobrazené akce
 use et: form _etext [10,40,,]   // editace mailu
 use sq: form _esql [10,34,,]    // správa SQL
 use es: form _esady [10,74,,]   // rozesílání
@@ -71,30 +71,40 @@ menu m {type:'left',
 # -------------------------------------------------------------------------------------------------- _vyber
 form _vyber {
   # --------------------------- jméno akce
-  label txt [0,0,380,28] { tag:'akce' }
+  label txt [0,10,380,28] { tag:'akce' }
   proc fill(x) { txt.set(conc("<div class='karta'>",x,"</div>")) }
   # --------------------------- výběr skupiny (nejde-li o maily akce)
-  label  [0,0,380,28] { tag:'skup', css:'ae_parm' }
-  label [7,7,72,17] { tag:'skup', title:'výběr skupiny:' }
-  select komu_Q  [82,5,289,17] { tag:'skup', type:'map', options:map_db_maily_sql.zkratka, format:'t'
+  label  [0,10,380,28] { tag:'skup', css:'ae_parm' }
+  label [7,17,72,17] { tag:'skup', title:'výběr skupiny:' }
+  select komu_Q  [82,15,289,17] { tag:'skup', type:'map', options:map_db_maily_sql.zkratka, format:'t'
     help:'komu|výběr skupiny adresátů'
     proc onchange() {
       switch(karta.get,'et',{et.reload},'es',{es.reload},'sq',{sq.reload})
     }
   }
-  label popis [391,9,240,19] { tag:'es', format:'n', title:"
+  label popis [391,19,240,19] { tag:'es', format:'n', title:"
     <span class='zeleny'> posláno </span>&nbsp;&nbsp;
     <span class='cerveny'> chyba resp. neposílat </span>&nbsp;&nbsp;
     <span class='zluty'> poslat znovu </span>
    "}
-  button [644,3,,] { tag:'es', title:'neposlat', skill:'m|m',
+  # vynechání adresátů daného dopisu
+  button [644,0,,] { tag:'es', title:'neposlat', skill:'m|m',
     help:'vynechání adresátů z mailu s daným id_dopis'
     proc onclick () {
       es.msg.set('čekej ...');
       es.msg.set(ask('dop_mai_omitt',dopis_id.get,vynech_id.get));
     }
   }
-  field vynech_id [711,6,60,] { tag:'es', skill:'m|m', format:'t' }
+  field vynech_id [711,3,60,] { tag:'es', skill:'m|m', format:'t' }
+  # vynechání adresátů daných adres
+  button [644,20,,] { tag:'es', title:'neposlat', skill:'m|m',
+    help:'vynechání adresátů daných adres'
+    proc onclick () {
+      es.msg.set('čekej ...');
+      es.msg.set(ask('dop_mai_omitt2',dopis_id.get,vynech_emaily.get));
+    }
+  }
+  field vynech_emaily [711,23,60,] { tag:'es', skill:'m|m', format:'t' }
 
 }
 # -------------------------------------------------------------------------------------------------- _esql

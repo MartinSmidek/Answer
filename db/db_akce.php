@@ -907,8 +907,9 @@ function akce_sestava($akce,$par,$title,$vypis,$export=false) {
      : ( $par->typ=='sd' ? akce_skup_deti($akce,$par,$title,$vypis,$export)
      : ( $par->typ=='d'  ? akce_sestava_pecouni($akce,$par,$title,$vypis,$export)
      : ( $par->typ=='fs' ? akce_fotoseznam($akce,$par,$title,$vypis,$export)
+     : ( $par->typ=='fx' ? akce_sestava_spec($akce,$par,$title,$vypis,$export)
      : ( $par->typ=='12' ? akce_jednou_dvakrat($akce,$par,$title,$vypis,$export)
-                         : fce_error("akce_sestava: N.Y.I.") ))))))))))))));
+                         : fce_error("akce_sestava: N.Y.I.") )))))))))))))));
 }
 # --------------------------------------------------------------------------------------- akce_table
 function akce_table($tits,$flds,$clmn,$export=false) {
@@ -938,6 +939,45 @@ function akce_table($tits,$flds,$clmn,$export=false) {
     }
     $result->html= "<div class='stat'><table class='stat'><tr>$ths</tr>$tab</table>$n řádků</div>";
   }
+  return $result;
+}
+# -------------------------------------------------------------------------------- akce_sestava_spec
+# generování technických seznamů: emaily
+function akce_sestava_spec($akce,$par,$title,$vypis,$export=false) { trace();
+  $result= (object)array('html'=>'');
+  $ems= array();
+  switch($par->subtyp) {
+  case 'emails':
+    // získání seznamu emailů
+    $qry=  "SELECT
+              r.emaily, p.pouze,
+              GROUP_CONCAT(DISTINCT IF(t.role='a',o.email,'') SEPARATOR ',') as email_m,
+              GROUP_CONCAT(DISTINCT IF(t.role='b',o.email,'') SEPARATOR ',') as email_z
+            FROM pobyt AS p
+            JOIN spolu AS s USING(id_pobyt)
+            JOIN osoba AS o ON s.id_osoba=o.id_osoba
+            LEFT JOIN tvori AS t ON t.id_osoba=o.id_osoba
+            LEFT JOIN rodina AS r USING(id_rodina)
+            WHERE p.id_akce='$akce'
+            GROUP BY id_pobyt";
+    $res= mysql_qry($qry);
+    while ( $res && ($x= mysql_fetch_object($res)) ) {
+      // extrakce emailů
+      $a_emaily_m= preg_split("/,\s*|;\s*/",trim($x->email_m," ,;"),-1,PREG_SPLIT_NO_EMPTY);
+//                                                 debug($a_emaily_m,'m');
+      $a_emaily_z= preg_split("/,\s*|;\s*/",trim($x->email_z," ,;"),-1,PREG_SPLIT_NO_EMPTY);
+//                                                 debug($a_emaily_z,'z');
+      $a_emaily= preg_split("/,\s*|;\s*/",trim($x->emaily," ,;"),-1,PREG_SPLIT_NO_EMPTY);
+//                                                 debug($a_emaily,'r');
+      if ( count($a_emaily)) $ems= array_merge($ems,$a_emaily);
+      if ( (!$x->pouze || $x->pouze==1) && count($a_emaily_m)>0 ) $ems= array_merge($ems,$a_emaily_m);
+      if ( (!$x->pouze || $x->pouze==2) && count($a_emaily_z)>0 ) $ems= array_merge($ems,$a_emaily_z);
+    }
+    $ems= array_unique($ems);
+    $result->html= implode(', ',$ems);
+    break;
+  }
+                                                debug($ems,count($ems));
   return $result;
 }
 # ------------------------------------------------------------------------------ akce_jednou_dvakrat
@@ -4632,6 +4672,31 @@ function dop_mai_omitt($id_dopis,$id_vynech) {  trace();
       if ( in_array($em,$vynech) ) {
         $n++;
         $qu= "UPDATE mail SET stav=5,msg='viz $id_vynech' WHERE id_mail={$d->id_mail} ";
+        $ru= mysql_qry($qu);
+      }
+    }
+  }
+  $msg.= "<br>označeno bylo $n adres";
+  return $msg;
+}
+# -------------------------------------------------------------------------------------------------- dop_mai_omitt
+# v tabulce MAIL(id_dopis=$dopis) označí jako neposlatelné emaily $vynech (čárkami oddělený seznam)
+function dop_mai_omitt2($id_dopis,$lst_vynech) {  trace();
+  // seznam vynechaných adres
+  $vynech= explode(',',str_replace(' ','',$lst_vynech));
+  $msg= "Z mailů podle dopisu $id_dopis bude vynecháno ".count($vynech)." adres";
+//                                                         debug($vynech,"vynechané adresy");
+  // probírka adresátů
+  $n= 0;
+  $qd= "SELECT id_mail,email FROM mail WHERE id_dopis=$id_dopis ";
+  $rd= mysql_qry($qd);
+  while ( $rd && ($d= mysql_fetch_object($rd)) ) {
+    $emaily= $d->email;
+    foreach(explode(',',str_replace(';','',str_replace(' ','',$emaily))) as $em) {
+//                                         display("'$em'=".(in_array($em,$vynech)?1:0));
+      if ( in_array($em,$vynech) ) {
+        $n++;
+        $qu= "UPDATE mail SET stav=5,msg='viz' WHERE id_mail={$d->id_mail} ";
         $ru= mysql_qry($qu);
       }
     }

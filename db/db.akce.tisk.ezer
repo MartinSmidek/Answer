@@ -116,8 +116,6 @@ menu m {type:'left',
                                         ,par:°{typ:'p',exp:'Excel',cnd:"funkce!=99",ord:"prijmeni"
                                         ,tit:'příjmení:15,jména:20,ubytovani:10,budova:5,pokoj:5,skupinka:10'
                                         ,fld:'prijmeni,jmena,ubytovani,budova,pokoj,skupina'}}
-    item {title:'Seznam s fotkami'                                                                      skill:'m'
-                                        ,par:°{typ:'fs',cnd:"funkce!=99",ord:"prijmeni"}}
   }
   menu {title:'informace o akci',type:'group',_sys:'*'
     item {title:'Narozeniny, výročí'    ,par:°{typ:'vv',cnd:'1'}}
@@ -221,6 +219,10 @@ menu m {type:'left',
     item {title:'Skupinky - plachta'                                                                    skill:'y;f'
                                         ,par:°{typ:'sk',exp:'Excel-plachta',cnd:'1',fce:'plachta'}}
 #     item {title:'Skupinky - tisk+'      ,par:°{typ:'sk',exp:'Excel',cnd:'1',fce:'tisk',mark:'novic'}}
+  }
+  menu {title:'Technické seznamy',type:'group',_sys:'*'
+    item {title:'Seznam s fotkami'      ,par:°{typ:'fs',cnd:"funkce!=99",ord:"prijmeni"}}
+    item {title:'Seznam emailů'         ,par:°{typ:'fx',subtyp:'emails'}}
   }
   proc onclick (i) {
     var x: object
