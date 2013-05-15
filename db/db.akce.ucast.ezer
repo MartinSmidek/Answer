@@ -135,7 +135,7 @@ form _page {
     zalozka.set('evid'); tags(evd,'z','h|o|f');
     a_muz.display(0); a_zen.display(0); pla.display(0); cmdp.display(0);
   }
-  label evd [ 12,0,120,20] {tag:'p', title:'<b>Evidenční karta</b>', format:'c', css:'ae_butt_on'
+  label evd [ 12,0,120,20] {tag:'p', _sys:'*', title:'<b>Evidenční karta</b>', format:'c', css:'ae_butt_on'
     proc onclick() {
       neni_ulozeno // warning
     | tags(this,'z','h|o|f');
@@ -144,7 +144,7 @@ form _page {
       a_muz.display(0); a_zen.display(0); pla.display(0); cmdp.display(0); alb.display(0);
     }
   }
-  label plt [152,0,120,20] {tag:'p', title:'<b>Platba za akci</b>', format:'c',
+  label plt [152,0,120,20] {tag:'p', _sys:'*', title:'<b>Platba za akci</b>', format:'c',
     proc onclick() {
       neni_ulozeno // warning
     | tags(this,'h','z|o|f');
@@ -154,7 +154,7 @@ form _page {
       pla.get.display(the_cenik.get,'cenik'); // omezení výpisu pokud není definován ceník
     }
   }
-  label jin [292,0,120,20] {tag:'p', title:'<b>Přehled aktivit</b>', format:'c',
+  label jin [292,0,120,20] {tag:'p', _sys:'*', title:'<b>Přehled aktivit</b>', format:'c',
     proc onclick() {
       neni_ulozeno // warning
     | tags(this,'o','z|h|f');
@@ -163,7 +163,7 @@ form _page {
       a_muz.display(1); a_zen.display(1); pla.display(0); cmdp.display(0); alb.display(0);
     }
   }
-  label fot [432,0,120,20] {tag:'p', title:'<b>Fotky</b>', format:'c', /*skill:'a'*/
+  label fot [432,0,120,20] {tag:'p', _sys:'*', title:'<b>Fotky</b>', format:'c', /*skill:'a'*/
     proc onclick() {
       neni_ulozeno // warning
     | tags(this,'f','o|z|h');
@@ -638,7 +638,7 @@ form _ucast [,,400,] { css:'ds_form'
                      IF(poznamka!='',CONCAT(note,'/',poznamka),note),'|',skupinka)
                    FROM osoba LEFT JOIN spolu USING(id_osoba)
                    WHERE id_pobyt=p.id_pobyt AND id_osoba=tvori.id_osoba
-                   GROUP BY id_osoba),CONCAT('0|0|',note)))
+                   GROUP BY id_osoba),CONCAT('0|',note,'|')))
            )
            ORDER BY osoba.narozeni DESC SEPARATOR '|')
         FROM osoba JOIN tvori USING(id_osoba)
