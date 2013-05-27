@@ -315,17 +315,28 @@ function akce_platby($id_pobyt) {  trace();
 }
 # ------------------------------------------------------------------------------- akce_pobyt_default
 # definice položek v POBYT podle počtu a věku účastníků
+# 130522 údaje za chůvu budou připsány na rodinu chovaného dítěte
+# 130524 oživena položka SVP
 function akce_pobyt_default($id_pobyt,$zapsat=0) {  trace();
   // projítí společníků v pobytu
-  $dosp= $deti= $koje= $noci= $sleva= $fce= 0;
+  $dosp= $deti= $koje= $noci= $sleva= $fce= $svp= 0;
   $msg= '';
-  $qo= "SELECT o.jmeno,o.narozeni,a.datum_od,DATEDIFF(datum_do,datum_od) AS _noci,p.funkce
-        FROM spolu AS s
-        JOIN osoba AS o USING(id_osoba)
-        JOIN pobyt AS p USING(id_pobyt)
-        JOIN akce AS a ON p.id_akce=a.id_duakce WHERE id_pobyt=$id_pobyt";
+  $qo= "SELECT o.jmeno,o.narozeni,a.datum_od,DATEDIFF(datum_do,datum_od) AS _noci,p.funkce,
+         s.pecovane,(SELECT CONCAT(osoba.id_osoba,',',pobyt.id_pobyt)
+          FROM pobyt
+          JOIN spolu ON spolu.id_pobyt=pobyt.id_pobyt
+          JOIN osoba ON osoba.id_osoba=spolu.id_osoba
+          WHERE pobyt.id_akce=a.id_duakce AND spolu.pecovane=o.id_osoba) AS _chuva
+        FROM spolu AS s JOIN osoba AS o USING(id_osoba) JOIN pobyt AS p USING(id_pobyt)
+        JOIN akce AS a ON p.id_akce=a.id_duakce
+        WHERE id_pobyt=$id_pobyt";
   $ro= mysql_qry($qo);
   while ( $ro && ($o= mysql_fetch_object($ro)) ) {
+    if ( $o->_chuva ) {
+      $dosp++;                          // platíme za chůvu vlastního dítěte
+      $svp++;                           // ale ne za obecného pečouna
+    }
+    if ( $o->pecovane) $dosp--;         // za dítě-chůvu platí rodič pečovaného dítěte
     $noci= $o->_noci;
     $fce= $o->funkce;
     $vek= narozeni2roky(sql2stamp($o->narozeni),sql2stamp($o->datum_od));
@@ -337,11 +348,11 @@ function akce_pobyt_default($id_pobyt,$zapsat=0) {  trace();
   // zápis do pobytu
   if ( $zapsat ) {
     query("UPDATE pobyt SET luzka=".($dosp+$deti).",kocarek=$koje,strava_cel=$dosp,strava_pol=$deti,
-             pocetdnu=$noci WHERE id_pobyt=$id_pobyt");
+             pocetdnu=$noci,svp=$svp WHERE id_pobyt=$id_pobyt");
   }
-  $ret= (object)array('luzka'=>$dosp+$deti,'kocarek'=>$koje,'pocetdnu'=>$noci,
+  $ret= (object)array('luzka'=>$dosp+$deti,'kocarek'=>$koje,'pocetdnu'=>$noci,'svp'=>$svp,
                       'strava_cel'=>$dosp,'strava_pol'=>$deti,'vzorec'=>$fce);
-//                                                 debug($ret,"osob:$koje,$deti,$dosp $msg fce=$fce");
+                                                debug($ret,"osob:$koje,$deti,$dosp $msg fce=$fce");
   return $ret;
 }
 # -------------------------------------------------------------------------------------- akce_vzorec
@@ -366,12 +377,18 @@ function akce_vzorec($id_pobyt) {  trace();
     $vzorec= $p->vzorec;
     $ubytovani= $p->ubytovani;
     $sleva= $p->sleva;
+    $svp= $p->svp;
     $neprijel= $p->funkce==10;
     $datum_od= $p->datum_od;
   }
   // podrobné parametry, ubytovani ma hodnoty z číselníku ms_akce_ubytovan
   $deti= $koje= 0;
-  $qo= "SELECT o.jmeno,o.narozeni,p.funkce,t.role, p.ubytovani
+  $qo= "SELECT o.jmeno,o.narozeni,p.funkce,t.role, p.ubytovani,
+         s.pecovane,(SELECT CONCAT(osoba.id_osoba,',',pobyt.id_pobyt)
+          FROM pobyt
+          JOIN spolu ON spolu.id_pobyt=pobyt.id_pobyt
+          JOIN osoba ON osoba.id_osoba=spolu.id_osoba
+          WHERE pobyt.id_akce=p.id_akce AND spolu.pecovane=o.id_osoba) AS _chuva
         FROM spolu AS s
         JOIN osoba AS o ON s.id_osoba=o.id_osoba
         JOIN pobyt AS p USING(id_pobyt)
@@ -531,8 +548,8 @@ function akce_vzorec($id_pobyt) {  trace();
           }
           break;
         case 'Pk':
-          if ( $koje ) {
-            $cc= $a->c * $koje;
+          if ( $koje-$svp > 0 ) {
+            $cc= $a->c * ($koje-$svp);
             $cena+= $cc;
             $ret->c_program+= $cc;
             $ret->eko->vzorec->{$a->za}+= $cc;
@@ -545,7 +562,7 @@ function akce_vzorec($id_pobyt) {  trace();
     }
     // případné slevy
     $ret->c_sleva= 0;
-    if ( !$neprijel && ($sleva!=0 || isset($vzor->slevy->procenta)) ) {
+    if ( !$neprijel && ($sleva!=0 || isset($vzor->slevy->procenta) || isset($vzor->slevy->za)) ) {
       $html.= "<tr><th>slevy</th></tr>";
       if ( $sleva!=0 ) {
         $cena-= $sleva;
@@ -564,6 +581,18 @@ function akce_vzorec($id_pobyt) {  trace();
         $cena+= $cc;
         $ret->c_sleva+= $cc;
         $html.= "<tr><td>{$vzor->zkratka} {$vzor->slevy->castka},-</td><td align='right'>$cc</td></tr>";
+      }
+      if ( isset($vzor->slevy->za) ) {
+        $cc= 0;
+        foreach ($cenik as $radek) {
+          if ( $radek->za==$vzor->slevy->za ) {
+            $cc= -$radek->c;
+            break;
+          }
+        }
+        $cena+= $cc;
+        $ret->c_sleva+= $cc;
+        $html.= "<tr><td>{$vzor->zkratka} </td><td align='right'>$cc</td></tr>";
       }
       $html.= "<tr><td></td><td></td><th align='right'>{$ret->c_sleva}</th></tr>";
     }
@@ -3407,7 +3436,7 @@ function chlapi_auto_jmenovci($id_pary) {  #trace();
 //                                                                 debug($a,$id_chlapi);
   return $a;
 }
-# ==================================================================================== PRIDEJ JMENEM
+# ================================================================================================== PRIDEJ
 # funkce pro spolupráci se select
 # --------------------------------------------------------------------------------- akce_auto_jmena2
 # ASK přidání pobytu do akce, pokud ještě nebyly tyto osoby/osoba přidány
@@ -3572,6 +3601,39 @@ function akce_auto_jmena1L($id_osoba) {  #trace();
 //                                                                 debug($pary,$id_akce);
   return $pary;
 }
+# ----------------------------------------------------------------------------------- akce_auto_deti
+# SELECT autocomplete - výběr z dětí na akci=par->akce
+function akce_auto_deti($patt,$par) {  #trace();
+                                                                debug($par,$patt);
+  $a= array();
+  $limit= 20;
+  $n= 0;
+  if ( $par->patt!='whole' ) {
+    $is= strpos($patt,' ');
+    $patt= $is ? substr($patt,0,$is) : $patt;
+  }
+  // děti na akci
+  $qry= "SELECT prijmeni, jmeno, s.id_osoba AS _key
+         FROM osoba AS o
+         JOIN spolu AS s USING(id_osoba)
+         JOIN pobyt AS p USING(id_pobyt)
+         LEFT JOIN tvori AS t ON s.id_osoba=t.id_osoba
+         WHERE prijmeni LIKE '$patt%' AND role='d' AND id_akce='{$par->akce}'
+         ORDER BY prijmeni,jmeno LIMIT $limit";
+  $res= mysql_qry($qry);
+  while ( $res && $t= mysql_fetch_object($res) ) {
+    if ( ++$n==$limit ) break;
+    $key= $t->_key;
+    $a[$key]= "{$t->prijmeni} {$t->jmeno}";
+  }
+  // obecné položky
+  if ( !$n )
+    $a[0]= "... žádné příjmení nezačíná '$patt'";
+  elseif ( $n==$limit )
+    $a[-999999]= "... a další";
+//                                                                 debug($a,$patt);
+  return $a;
+}
 # --------------------------------------------------------------------------------- akce_auto_jmena3
 # SELECT autocomplete - výběr z pečounů
 # $par->cond může obsahovat dodatečnou podmínku např. 'funkce=99' pro zúžení na pečouny
@@ -3727,7 +3789,7 @@ function akce_auto_peceL($id_akce) {  #trace();
 //                                                                 debug($pecouni,$id_akce);
   return $pecouni;
 }
-# =========================================================================================== PLATBY
+# ================================================================================================== PLATBY
 # záložka Platba za akci
 # --------------------------------------------------------------------------- akce_platba_prispevek1
 # členské příspěvky - zjištění zda jsou dospělí co jsou na pobytu členy a mají-li zaplaceno
