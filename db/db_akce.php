@@ -408,12 +408,14 @@ function akce_vzorec($id_pobyt) {  trace();
         if ( $o->_chuva ) $dite_chovane++;
       }
       if ( $o->_chuva ) {
-        $chuv++;
         list($prijmeni,$jmeno,$pobyt)= explode(',',$o->_chuva);
         if ( $pobyt!=$id_pobyt ) {
           $chuvy= "$del$jmeno $prijmeni";
           $del= ' a ';
         }
+      }
+      if ( $o->pecovane ) {
+        $chuv++;
       }
     }
   }
