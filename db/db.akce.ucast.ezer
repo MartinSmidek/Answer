@@ -978,7 +978,7 @@ panel Dite [,,380,470] {type:'popup', title:'Úprava dětí (a osobních pečova
     # --------------------------------------------------  SPOLU - o účasti
     view s: table spolu { join_type:'LEFT', join:'USING(id_osoba)' }
     view x: table osoba { join_type:'LEFT', join:'ON x.id_osoba=s.pecovane' }
-    view p: table pobyt { join:'USING(id_pobyt)' }
+    view p: table pobyt { join_type:'LEFT', join:'USING(id_pobyt)' }
     const Ta=320
     field {data:o.id_osoba}
     # údaje svázané s účastí na akci
