@@ -383,8 +383,9 @@ function akce_vzorec($id_pobyt) {  trace();
   }
   // podrobné parametry, ubytovani ma hodnoty z číselníku ms_akce_ubytovan
   $deti= $koje= 0;
+  $chuvy= $del= '';
   $qo= "SELECT o.jmeno,o.narozeni,p.funkce,t.role, p.ubytovani,
-         s.pecovane,(SELECT CONCAT(osoba.id_osoba,',',pobyt.id_pobyt)
+         s.pecovane,(SELECT CONCAT(osoba.prijmeni,',',osoba.jmeno,',',pobyt.id_pobyt)
           FROM pobyt
           JOIN spolu ON spolu.id_pobyt=pobyt.id_pobyt
           JOIN osoba ON osoba.id_osoba=spolu.id_osoba
@@ -400,6 +401,13 @@ function akce_vzorec($id_pobyt) {  trace();
       $vek= narozeni2roky(sql2stamp($o->narozeni),sql2stamp($datum_od));
       if ( $vek<3 ) $koje++;
       else $deti++;
+      if ( $o->_chuva ) {
+        list($prijmeni,$jmeno,$pobyt)= explode(',',$o->_chuva);
+        if ( $pobyt!=$id_pobyt ) {
+          $chuvy= "$del$jmeno $prijmeni";
+          $del= ' a ';
+        }
+      }
     }
   }
 //                                                         debug($x,"pobyt");
@@ -597,6 +605,9 @@ function akce_vzorec($id_pobyt) {  trace();
       $html.= "<tr><td></td><td></td><th align='right'>{$ret->c_sleva}</th></tr>";
     }
     $html.= "<tr><th>celková cena</th><td></td><th align='right'>$cena</th></tr>";
+    if ( $chuvy ) {
+      $html.= "<tr><td colspan=3>(Cena obsahuje náklady na vlastního pečovatele: $chuvy)</td></tr>";
+    }
     $html.= "</table>";
     $ret->navrh= $html;
     $ret->mail= "<div style='background-color:#eeeeee;margin-left:15px'>$html</div>";
@@ -1382,7 +1393,7 @@ function akce_text_eko($akce,$par,$title,$vypis,$export=false) { trace();
   $prijmy= 0;
   $html.= "<h3>Příjmy za akci podle aktuální skladby účastníků</h3>";
   $html.= "Pozn. pro přehled se počítá také cena s uplatněnou procentní slevou (např. VPS)<br>";
-  $html.= "(příjmy pro pečovatele se počítají s plné tzn. vyšší ceny)<br><br>";
+  $html.= "(příjmy pro pečovatele se počítají z plné tzn. vyšší ceny)<br><br>";
   $html.= "<table class='stat'><td>položky</td><th>cena bez slev</th><th>cena po slevě</th></tr>";
   $qc= "SELECT GROUP_CONCAT(polozka) AS polozky, za
         FROM ezer_ys.cenik
