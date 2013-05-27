@@ -382,7 +382,7 @@ function akce_vzorec($id_pobyt) {  trace();
     $datum_od= $p->datum_od;
   }
   // podrobné parametry, ubytovani ma hodnoty z číselníku ms_akce_ubytovan
-  $deti= $koje= 0;
+  $deti= $koje= $chuv= $dite_chovane= $koje_chovany= 0;
   $chuvy= $del= '';
   $qo= "SELECT o.jmeno,o.narozeni,p.funkce,t.role, p.ubytovani,
          s.pecovane,(SELECT CONCAT(osoba.prijmeni,',',osoba.jmeno,',',pobyt.id_pobyt)
@@ -399,9 +399,16 @@ function akce_vzorec($id_pobyt) {  trace();
   while ( $ro && ($o= mysql_fetch_object($ro)) ) {
     if ( $o->role=='d' ) {
       $vek= narozeni2roky(sql2stamp($o->narozeni),sql2stamp($datum_od));
-      if ( $vek<3 ) $koje++;
-      else $deti++;
+      if ( $vek<3 ) {
+        $koje++;
+        if ( $o->_chuva ) $koje_chovany++;
+      }
+      else {
+        $deti++;
+        if ( $o->_chuva ) $dite_chovane++;
+      }
       if ( $o->_chuva ) {
+        $chuv++;
         list($prijmeni,$jmeno,$pobyt)= explode(',',$o->_chuva);
         if ( $pobyt!=$id_pobyt ) {
           $chuvy= "$del$jmeno $prijmeni";
@@ -547,8 +554,8 @@ function akce_vzorec($id_pobyt) {  trace();
           $html.= "<tr><td>{$a->txt}</td><td align='right'>$cc</td></tr>";
           break;
         case 'Pd':
-          if ( $deti ) {
-            $cc= $a->c * $deti;
+          if ( $deti - $dite_chovane - $chuv > 0 ) {
+            $cc= $a->c * ($deti-$dite_chovane-$chuv);
             $cena+= $cc;
             $ret->c_program+= $cc;
             $ret->eko->vzorec->{$a->za}+= $cc;
@@ -556,8 +563,8 @@ function akce_vzorec($id_pobyt) {  trace();
           }
           break;
         case 'Pk':
-          if ( $koje-$svp > 0 ) {
-            $cc= $a->c * ($koje-$svp);
+          if ( $koje - $koje_chovany > 0 ) {
+            $cc= $a->c * ($koje-$koje_chovany);
             $cena+= $cc;
             $ret->c_program+= $cc;
             $ret->eko->vzorec->{$a->za}+= $cc;
