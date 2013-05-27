@@ -6,6 +6,7 @@
   $app_name= 'Ans(w)er';
   $skin=     'default';
   $skin=     'ck';
+  $CKEditor= $_GET['editor'] ? $_GET['editor'] : '';
 
   // Ans(w)er rozeznává tyto doplňkové parametry v URL
   //   dbs=db_name:other_db_name,...    -- záměna MySQL tabulek za jiné (je zpracováváno ve fis.ini)
@@ -18,7 +19,7 @@
   $licensed= "$client/licensed";
   $js= array_merge(
     // ckeditor a mootools
-    array("$licensed/ckeditor/ckeditor.js","$licensed/clientcide.js"),
+    array("$licensed/ckeditor$CKEditor/ckeditor.js","$licensed/clientcide.js"),
     // pro verzi 2.1
     $EZER->version=='ezer2'
     ? array("$licensed/mootools/asset.js","$licensed/mootools/slider.js"):array(),
@@ -70,7 +71,15 @@
     'watch_key' => true,               // true = povolit přístup jen po vložení klíče
     'watch_ip' => true,                // true = povolit přístup jen ze známých IP adres
     'title_right' => $ezer_local ? "<span style='color:#ef7f13'>$app_name</span>" : $app_name,
-    'contact' => $kontakt
+    'contact' => $kontakt,
+    'CKEditor' => "{
+      version:'$CKEditor',
+      Minimal:{toolbar:[['Bold','Italic','Source']]},
+      IntranetSlim:{
+        toolbar:[['Bold','Italic','-','Link','Unlink','-','Source']],
+        removePlugins:'wsc,elementspath,scayt'
+      }
+    }"
   );
   root_php($app,$app_name,'news',$skin,$options,$js,$css,$pars);
 

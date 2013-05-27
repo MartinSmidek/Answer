@@ -229,7 +229,7 @@ table pobyt { key_id:'id_pobyt'
   text poznamka
   number pristylky
   number pocetdnu
-  number svp
+  number svp            // počet dětí s vlastním pečovatelem
   number cd
   number dorazil
   number pouze
@@ -251,6 +251,7 @@ table spolu { key_id:'id_spolu'
   text poznamka
   number s_rodici
   number pulstrava
+  number pecovane //id_osoba pečovaného dítěte
 }
 
 table osoba { key_id:'id_osoba'
