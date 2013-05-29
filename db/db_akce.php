@@ -3463,12 +3463,23 @@ function chlapi_auto_jmenovci($id_pary) {  #trace();
 function akce_pridej($id_akce,$id_muz,$id_zena) {  #trace();
   $ret= (object)array('ok'=>0,'msg'=>'chyba při vkládání');
   // zjištění, kdo se přihlašuje na akci
-  $pouze= $id_muz && $id_zena ? 0 : ( $id_muz ? 1 : 2 );
+  if ( $id_muz && $id_zena ) {
+    $pouze= 0;
+    $cond=  "s.id_osoba IN ('$id_muz','$id_zena')";
+  }
+  elseif ( $id_muz ) {
+    $pouze= 1;
+    $cond=  "s.id_osoba=$id_muz";
+  }
+  elseif ( $id_zena ) {
+    $pouze= 2;
+    $cond=  "s.id_osoba=$id_zena";
+  }
   // kontrola přítomnosti
   $qp= "SELECT id_pobyt
         FROM pobyt AS p
         JOIN spolu AS s USING(id_pobyt)
-        WHERE id_akce=$id_akce AND s.id_osoba IN ('$id_muz','$id_zena')";
+        WHERE id_akce=$id_akce AND $cond";
   $rp= mysql_qry($qp);
   $jsou= mysql_num_rows($rp);
   if ( $jsou==2 || $jsou==1 && $pouze==0 ) {

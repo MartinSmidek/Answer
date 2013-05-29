@@ -546,7 +546,10 @@ form _ucast [,,400,] { css:'ds_form'
     show dnu      {expr:"DATEDIFF(a.datum_do,a.datum_od)+1"}
     show datum_od {data:a.datum_od, sql_pipe:'' }
     // zobrazení
-    show _nazev [,,100,] { title:'rodina', format:'s+q*', expr:"IF(pouze=0,r.nazev,o.prijmeni)" }
+    show _nazev [,,100,] { title:'rodina', format:'s+q*', expr:"CASE
+      WHEN pouze=0 THEN r.nazev
+      WHEN pouze=1 THEN GROUP_CONCAT(DISTINCT IF(tx.role='a',ox.prijmeni,'') SEPARATOR '')
+      WHEN pouze=2 THEN GROUP_CONCAT(DISTINCT IF(tx.role='b',ox.prijmeni,'') SEPARATOR '') END" }
     show _jmena [,,180,] { title:'jméno/a', format:'tsq%',
       expr:"GROUP_CONCAT(DISTINCT IF(pouze=1 AND t.role='b','',IF(pouze=2 AND t.role='a','',o.jmeno)) ORDER BY t.role SEPARATOR ' ')" }
     # varianta A

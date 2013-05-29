@@ -17,7 +17,7 @@ kEzer-ys2
 		+ezer
 			wiki\ezer_nastaveni.wiki
 		wiki\cr_system.wiki
-	-cr
+	+cr
 		cr\$.ezer
 		.htaccess
 		cr\cr.css.php
@@ -78,7 +78,7 @@ kEzer-ys2
 		sql\mysql_all.bat
 		sql\pohled_osoba.sql
 		zaloha.php
-	-ezer2.2
+	+ezer2.2
 		-libr
 			ezer2.2\$.ezer
 			ezer2.2\ezer2.help.ezer
@@ -102,7 +102,7 @@ kEzer-ys2
 			ezer2.2\client\ezer_fdom1.js
 			ezer2.2\client\ezer_fdom2.js
 			ezer2.2\client\natdocs.css
-		+server
+		-server
 			ezer2.2\server\ae_slib.php
 			ezer2.2\comp.php
 			ezer2.2\server\comp2.php
@@ -120,7 +120,7 @@ kEzer-ys2
 	-comp
 		ezer2.2\comp.php
 		ezer2.2\comp.css
-	+doc
+	-doc
 		docs\2008_ciselnik_akci.txt
 		wiki\dokumentace.wiki
 		doc\poznamky.txt
@@ -244,9 +244,12 @@ kEzer-ys2
 13=db\db.akce.tisk.ezer
 14=doc\Skype-Putzlachers.txt
 15=db\db.css.php
+16=cr.php
+17=ys.php
+18=ezer2.2\client\ezer_report.js
 [Selected Project Files]
 Main=
-Selected=db\db.akce.ucast.ezer
+Selected=ezer2.2\client\ezer_report.js
 [ezer2.2\client\app.js]
 TopLine=474
 Caret=1,516
@@ -268,14 +271,14 @@ BookMark1=19,289
 TopLine=3268
 Caret=63,3298
 BookMark1=1,2569
+BookMark2=39,6703
 Mark1=20,7810
 Mark2=36,3576
-BookMark2=39,6703
 [ezer2.2\client\ezer_fdom2.js]
 TopLine=1877
 Caret=57,1897
-Mark1=27,788
 BookMark1=27,1891
+Mark1=27,788
 [db\db.akce.ezer]
 TopLine=206
 Caret=61,232
@@ -284,7 +287,7 @@ TopLine=81
 Caret=41,97
 BookMark1=16,91
 [db\db.akce.lst.ezer]
-TopLine=157
+TopLine=169
 Caret=55,240
 BookMark1=102,133
 BookMark4=24,172
@@ -297,27 +300,36 @@ BookMark3=11,226
 [db\db.akce.ucast.ezer]
 TopLine=946
 Caret=45,981
-Mark1=16,497
-Mark2=25,640
 BookMark1=57,488
 BookMark2=41,641
+Mark1=16,497
+Mark2=25,640
 [db\db_akce.php]
-TopLine=100
-Caret=84,382
+TopLine=681
+Caret=44,721
 BookMark3=34,602
-BookMark1=81,392
+BookMark1=1,719
 [db\db.akce.pece.ezer]
 TopLine=123
 Caret=22,184
 BookMark1=22,184
 BookMark2=28,59
 [db\db.akce.tisk.ezer]
-TopLine=192
-Caret=72,225
+TopLine=212
+Caret=25,254
 BookMark1=27,99
 [doc\Skype-Putzlachers.txt]
-TopLine=424
+TopLine=394
 Caret=74,394
 [db\db.css.php]
 TopLine=1
 Caret=37,29
+[cr.php]
+TopLine=1
+Caret=1,19
+[ys.php]
+TopLine=1
+Caret=1,23
+[ezer2.2\client\ezer_report.js]
+TopLine=467
+Caret=38,469
