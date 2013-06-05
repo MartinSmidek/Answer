@@ -6,7 +6,7 @@
   $app_name= 'Ans(w)er - Centrum pro rodinu';
   $skin=     'default';
   $skin=     'ck';
-  $CKEditor= $_GET['editor'] ? $_GET['editor'] : '';
+  $CKEditor= $_GET['editor'] ? $_GET['editor'] : '4';
 
   require_once("$app.inc");
   require_once("{$EZER->version}/server/ae_slib.php");
@@ -32,37 +32,11 @@
     array("db/db_fce.js","ds/fce.js")
   );
 
-
-//   $js= array(
-//     'ezer2/client/licensed/ckeditor/ckeditor.js',
-//     'ezer2/client/licensed/clientcide.js',
-//     'ezer2/client/licensed/mootools/asset.js',
-//     'ezer2/client/licensed/mootools/slider.js',
-//     'ezer2/client/licensed/glfx.js',
-//     'ezer2/client/lib.js',
-//     'ezer2/client/ezer_fdom1.js',
-//     'ezer2/client/ezer.js',
-//     'ezer2/client/ezer_report.js',
-//     'ezer2/client/ezer_fdom2.js',
-//     'ezer2/client/app.js',
-//     'db/db_fce.js',
-//     'ds/fce.js',
-//     'http://maps.googleapis.com/maps/api/js?sensor=false'
-//   );
-
-
   $css= array_merge(
     array("./$client/ezer.css.php","./cr/cr.css.php","./db/db.css.php"),
     /* pro verzi 2.2 */ $EZER->version=='ezer2.2'
     ? array("$licensed/datepicker/datepicker_vista/datepicker_vista.css"):array()
   );
-
-//   $css= array(
-//     './ezer2/client/ezer.css.php',
-// //     './ezer2/client/licensed/fancyupload.css',
-//     './fa/fa.css.php',
-//     './db/db.css.php'
-//   );
 
   $options= (object)array(
     'skill'      => "'c'",

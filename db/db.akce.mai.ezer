@@ -195,7 +195,7 @@ form _etext  {
 #       echo(dopis_id.get,'-',id_dopis.get);
       dopis_id.set(id_dopis.get);
       form.load(dopis_id.get);
-      { attach.get; drop.set(ask('dop_mai_refs',attach.get)) | drop.set('') };
+#       { attach.get; drop.set(ask('dop_mai_refs',attach.get)) | drop.set('') };
       drop_init;
       obsah.set(ask('dop_mai_text',dopis_id.get));
       adopis.set(id_dopis.get);
@@ -212,36 +212,30 @@ form _etext  {
   const L=390
   field id_davka { data:dopis.id_davka }
   label [L+0,20,365,150] { css:'ae_work' }
-  label [L+10,25,100,17] { title:'datum odeslání' }
-  field datum [L+10,40,80,17] { data:dopis.datum, help:'datum|datum emailu', skill:'yam|yams;fam|fams;cam|cams' }
-  label [L+10,65,100,17] { title:'předmět mailu' }
-  field predmet [L+10,80,340,17] { data:dopis.nazev, help:'předmět|předmět emailu', skill:'yam|yams;fam|fams;cam|cams' }
-
-  // přílohy - je třeba aby bylo provedeno
-  // při onfocus ap.: drop_init
-  // při nový záznam: drop.set('')
-  // při onrowclick:  { attach.get; drop.set(ask('dop_mai_refs',attach.get)) | drop.set('') };
-  label [L+10,100,,] {title:'přílohy'}                  // nadpis na vnějším obalem
-  label [L+10,115,340,45] {css:'drop_envelope'}         // vnější obal drop boxu
+  label [L+10,23,100,17] { title:'datum odeslání' }
+  field datum [L+10,38,80,17] { data:dopis.datum, help:'datum|datum emailu', skill:'yam|yams;fam|fams;cam|cams' }
+  label [L+10,62,100,17] { title:'předmět mailu' }
+  field predmet [L+10,77,340,17] { data:dopis.nazev, help:'předmět|předmět emailu', skill:'yam|yams;fam|fams;cam|cams' }
+  // připojení příloh - nově od 20130604
   field attach {data:dopis.prilohy}                     // datové pole se seznamem příloh
-  label drop [L+15,119,335,41] {                        // vlastní drop box se signalizací dragu
-    menu { type:'context'
-      item { title:'odstranit přílohy', proc onclick() {
-          ask('dop_mai_detach',form.key);               // odstraní všechny přílohy
-          texty.raise('onrowclick',dopis_id.get);       // obnova zabrazení bez příloh
-  } } } }
-  proc ondrop(fileinfo) {                               // obsluha dropu souboru
-    drop.set(ask('dop_mai_attach',form.key,fileinfo));  // update a sofistikované zobrazení položky
-    texty.raise('onrowclick',dopis_id.get);             // obnova zabrazení s novou přílohou
-    drop_init;                                          // reinicializace
+  label [L+10,100,,] {title:'sem lze přetáhnout přílohy'}   // nadpis na vnějším obalem
+  label drop [L+10,115,340,45] { type:'drop'
+    proc onload(f) {                                    // po dokončení přenosu
+      ask('dop_mai_attach',form.key,f);                 // přidání souboru k dávce
+    }
+    proc onmenu(op,name) {  // op=remove|remove-all
+      { eq(op,'remove');     ask('dop_mai_detach',form.key,name) // odebrání přílohy
+      | eq(op,'remove-all'); ask('dop_mai_detach_all',form.key)  // odebrání všech příloh
+      | alert('N.Y.I')
+      };
+      attach.set(ask('select','prilohy','dopis',conc("id_dopis=",form.key)));
+      drop_init
+    }
   }
   proc drop_init() {                                    // inicializace - je třeba na začátku
-    form.file_drop(drop,°{                              // vazba na drop box
-      css_hover:'drop_area_hover',                      // styl aktivace při dragu
-      css_run:'drop_area_run',                          // styl komunikace se serverem po dropu
-      transfer:'base64'});                              // binární přenos - jiné viz help
+    drop.init(conc('/',sys('root'),'/'));               // naplnit pole drag&drop a definovat dir
+    drop.set(attach.get);
   }
-
   # příkazy 1
   label  [L+0,180,200,78] { css:'ae_parm' }
   label [L+8,232,184,] { title:"přegenerováním jsou také přepočteny všechny {proměnné}" }
