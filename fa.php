@@ -55,7 +55,20 @@
     'title_right' => $ezer_local ? "<span style='color:#ef7f13'>$app_name</span>" : $app_name,
     'contact' => $kontakt,
     'CKEditor' => "{
-      version:'$CKEditor'
+      version:'$CKEditor',
+      Minimal:{toolbar:[['Bold','Italic','Source']]},
+      IntranetSlim:{
+        toolbar:[['Bold','Italic','-','Link','Unlink','-','Source']],
+        removePlugins:'wsc,elementspath,scayt'
+      },
+      'EzerMail':{toolbar:[['PasteFromWord',
+        '-','Bold','Italic','TextColor','BGColor',
+        '-','JustifyLeft','JustifyCenter','JustifyRight','JustifyBlock',
+        '-','Link','Unlink','HorizontalRule','Image','Smiley',
+        '-','NumberedList','BulletedList',
+        '-','Outdent','Indent',
+        '-','Source','ShowBlocks','RemoveFormat']]
+      }
     }"
   );
   root_php($app,$app_name,'news',$skin,$options,$js,$css,$pars);
