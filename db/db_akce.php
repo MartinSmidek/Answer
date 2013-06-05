@@ -5172,7 +5172,7 @@ function dop_mai_stav($id_mail,$stav) {  trace();
 # $test = 1 mail na tuto adresu (pokud je $kolik=0)
 # pokud je definováno $id_mail s definovaným text MAIL.body, použije se - jinak DOPIS.obsah
 function dop_mai_send($id_dopis,$kolik,$from,$fromname,$test='',$id_mail=0) { trace();
-  global $ezer_path_serv;
+  global $ezer_path_serv, $ezer_root;
   $phpmailer_path= "$ezer_path_serv/licensed/phpmailer";
   require_once("$phpmailer_path/class.phpmailer.php");
   $result= (object)array('_error'=>0);
@@ -5200,8 +5200,9 @@ function dop_mai_send($id_dopis,$kolik,$from,$fromname,$test='',$id_mail=0) { tr
   $mail->IsHTML(true);
   $mail->Mailer= "smtp";
   if ( $d->prilohy ) {
-    foreach ( explode(',',$d->prilohy) as $fname ) {
-      $fpath= "docs/".trim($fname);
+    foreach ( explode(',',$d->prilohy) as $fnamesb ) {
+      list($fname,$bytes)= explode(':',$fnamesb);
+      $fpath= "docs/$ezer_root/".trim($fname);
       $mail->AddAttachment($fpath);
     }
   }
@@ -5287,38 +5288,35 @@ function dop_mai_send($id_dopis,$kolik,$from,$fromname,$test='',$id_mail=0) { tr
 //                                                 debug($result,"dop_mai_send");
   return $result;
 }
-# -------------------------------------------------------------------------------------------------- dop_mai_attach
-# přidá přílohu k mailu jako odkaz, soubor bude v docs
-function dop_mai_attach($id_dopis,$fileinfo) { trace();
-  global $ezer_path_root;
-  $f= pathinfo($fileinfo->name);
-  $name= utf2ascii($f['filename']).'.'.utf2ascii($f['extension']);
-  $path= "$ezer_path_root/docs/$name";
-  // uložení souboru
-  $data= base64_decode($fileinfo->text);
-  $bytes= file_put_contents($path,$data);
+# ----------------------------------------------------------------------------------- dop_mai_attach
+# přidá další přílohu k mailu (soubor je v docs/$ezer_root)
+function dop_mai_attach($id_dopis,$f) { trace();
   // nalezení záznamu v tabulce a přidání názvu souboru
   $names= select('prilohy','dopis',"id_dopis=$id_dopis");
-  $names= $names ? "$names,$name" : $name;
+  $names= ($names ? "$names," : '')."{$f->name}:{$f->size}";
   query("UPDATE dopis SET prilohy='$names' WHERE id_dopis=$id_dopis");
-  $refs= dop_mai_refs($names);
-  return $refs;
+  return 1;
 }
-# -------------------------------------------------------------------------------------------------- dop_mai_detach
-# odstraní všechny odkazy na přílohy mailu
-function dop_mai_detach($id_dopis) { trace();
+# ------------------------------------------------------------------------------- dop_mai_detach_all
+# odstraní všechny přílohy mailu
+function dop_mai_detach_all($id_dopis) { trace();
   query("UPDATE dopis SET prilohy='' WHERE id_dopis=$id_dopis");
   return 1;
 }
-# -------------------------------------------------------------------------------------------------- dop_mai_refs
-# převede seznam jmen na odkazy
-function dop_mai_refs($names) {
-  $refs= array();
-  foreach(explode(',',$names) as $name) {
-    $ref= "<a href='docs/$name' title='$name' target='priloha'>$name</a>";
-    $refs[]= $ref;
+# ----------------------------------------------------------------------------------- dop_mai_detach
+# odebere soubor z příloh
+function dop_mai_detach($id_dopis,$name) { trace();
+  // nalezení záznamu v tabulce a přidání názvu souboru
+  $names= select('prilohy','dopis',"id_dopis=$id_dopis");
+  $as= explode(',',$names);
+  $as2= array();
+  foreach($as as $a) {
+    list($an,$ab)= explode(':',$a);
+    if ( $an!=$name )$as2[]= $a;
   }
-  return implode(' &nbsp; ',$refs);
+  $names2= implode(',',$as2);
+  query("UPDATE dopis SET prilohy='$names2' WHERE id_dopis=$id_dopis");
+  return 1;
 }
 
 ?>
