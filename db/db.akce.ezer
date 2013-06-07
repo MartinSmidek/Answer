@@ -241,6 +241,8 @@ table pobyt { key_id:'id_pobyt'
   number platba4
   number sleva
   number vzorec //#
+  number duvod_typ	// 0: zdůvodnění podle ceníku, 1: vlastním textem
+  text   duvod_text	// vlastní text zdůvodňující cenu
 }
 
 table spolu { key_id:'id_spolu'

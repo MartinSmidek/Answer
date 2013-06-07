@@ -244,12 +244,6 @@ form _platba {
     or(u.b.cstrava_cel.get,u.b.cstrava_pol.get); stravy.set_css('cervena','cerna');
   | stravy.set_css('cerna','cervena')
   }
-  proc rozpis_ceny() {
-    form.same;
-    cena.set(ask('akce_vzorec',the_pobyt.get));
-    navrh.set(cena.get('navrh'))
-#   | alert("před rozpisem ceny ulož změny")
-  }
   proc dosle_platby() {
     doslo.set(ask('akce_platby',the_pobyt.get));
   }
@@ -278,12 +272,26 @@ form _platba {
       cena.set(ask('akce_vzorec',the_pobyt.get)); copy_by_name(cena.get,form);
       c_nocleh.change; c_strava.change; c_program.change; c_sleva.change; ini
   } }
-  label [110,77,,] { tag:'cenik', title:"sleva:" }
-  field sleva [143,74,50,] { tag:'cenik', data:pobyt.sleva, help:"Slevy pro potřebné účastníky", format:'r' }
+  // parametry ceny
   label [93,53,,] { tag:'cenik', title:"cena pro:" }
   select vzorec [143,51,148,] { tag:'cenik', type:'map0', data:pobyt.vzorec, help:"výběr vzorce pro organizátory",
     options:ms_cena_vzorec.zkratka }
-  label navrh [10,100,280,331] { tag:'cenik', css:'karta_info' }
+  label [110,77,,] { tag:'cenik', title:"sleva:" }
+  field sleva [143,74,50,] { tag:'cenik', data:pobyt.sleva, help:"Slevy pro potřebné účastníky", format:'r' }
+  // zdůvodnění ceny podle vzorce nebo textem
+  proc rozpis_ceny() {
+    duvod_typ.get; navrh.display(0); duvod_text.display(1)
+  | navrh.display(1); duvod_text.display(0);
+    cena.set(ask('akce_vzorec',the_pobyt.get));
+    navrh.set(cena.get('navrh'))
+  }
+  radio duvod_typ [7,100,284,332] { data:pobyt.duvod_typ, value:'0', style:"border:1px solid gray"
+    case [0,2,157,] { title:'cena podle položek ceníku', expr:'0' }
+    case [158,2,122,] { title:'vlastní text s cenou', expr:'1' }
+    proc onchange () { rozpis_ceny }
+  }
+  label navrh [10,119,280,313] { tag:'cenik', css:'karta_info' }
+  edit duvod_text [10,119,280,313] { tag:'cenik', /*type:'html',*/ data:pobyt.duvod_text }
   // platby
   button [307,70,,] { title:"Aktualizace bankovních výpisů", skill:'yaa|yaa'
     proc onclick() {
@@ -678,6 +686,8 @@ form _ucast [,,400,] { css:'ds_form'
     show pouze      { data:p.pouze}
     show sleva      { data:p.sleva}
     show vzorec     { data:p.vzorec}
+    show duvod_typ  { data:p.duvod_typ}
+    show duvod_text { data:p.duvod_text}
     // změna
     proc reload_pobyt() {
       b.browse_count;
@@ -686,7 +696,8 @@ form _ucast [,,400,] { css:'ds_form'
            '... id_akce=',key_akce.get,', ceník:',the_cenik.get,', cena:',the_cena.get
           ,'<br>m: id_spolu=', id_spolu_m.get, ', id_osoba=', id_m.get
           ,'<br>z: id_spolu=', id_spolu_z.get, ', id_osoba=', id_z.get
-          ,'<br>strava=', strava_oddo.get,', strava_cel=', strava_cel.get,', strava_pol=', strava_pol.get
+          ,'<br>strava=', strava_oddo.get,', strava_cel=', strava_cel.get
+          ,', strava_pol=', strava_pol.get,'  (duvod_typ=',duvod_typ.get,')'
           ,'<br>cstrava_cel=', cstrava_cel.get
           ,'<br>cstrava_pol=', cstrava_pol.get
       ))];

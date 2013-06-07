@@ -75,7 +75,7 @@ form _vyber {
   proc fill(x) { txt.set(conc("<div class='karta'>",x,"</div>")) }
   # --------------------------- výběr skupiny (nejde-li o maily akce)
   label  [0,10,380,28] { tag:'skup', css:'ae_parm' }
-  label [7,17,72,17] { tag:'skup', title:'výběr skupiny:' }
+  label [7,17,100,17] { tag:'skup', title:'výběr skupiny:' }
   select komu_Q  [82,15,289,17] { tag:'skup', type:'map', options:map_db_maily_sql.zkratka, format:'t'
     help:'komu|výběr skupiny adresátů'
     proc onchange() {
@@ -114,11 +114,12 @@ form _esql {
   view c: table _cis
   field id_cis { data:c.id_cis }
   field dat { data:c.data }
-#   field druh { data:c.druh, value:'db_maily_sql' }
+  field druh { data:c.druh, value:'db_maily_sql' }
   field zkratka  [0,40,273,]  { data:c.zkratka, value:'' }
   edit note  [0,70,750,50]    { data:c.popis }
   edit query [0,130,750,200]  { data:c.hodnota }
-  select druh [281,40,100,17] { type:'map', data:c.barva, options:map_db_maily_tab.zkratka, help:'mail pro ...' }
+  select [281,40,100,17] { type:'map', data:c.barva, options:map_db_maily_tab.zkratka,
+    help:'mail pro ...' }
   label anwer [0,340,750,200]
   # příkazy
   label  [400,5,205,30] { tag:'def', css:'ae_parm' }
