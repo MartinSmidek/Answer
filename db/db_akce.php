@@ -1249,7 +1249,11 @@ function akce_sestava_lidi($akce,$par,$title,$vypis,$export=false) { trace();
   $qry=  "SELECT
           p.pouze,p.poznamka,
           o.prijmeni,o.jmeno,o.narozeni,o.rc_xxxx,o.note,o.obcanka,
-          r.ulice,r.psc,r.obec,r.telefony,r.emaily,
+          IF(o.telefon='',r.telefony,o.telefon) AS telefon,
+          IF(o.email='',r.emaily,o.email) AS email,
+          IF(o.ulice='',r.ulice,o.ulice) AS ulice,
+          IF(o.psc='',r.psc,o.psc) AS psc,
+          IF(o.obec='',r.obec,o.obec) AS obec,
           s.poznamka AS s_note,
           ROUND(DATEDIFF(a.datum_od,o.narozeni)/365.25,1) AS _vek
           FROM pobyt AS p
@@ -5023,12 +5027,18 @@ function dop_mai_posli($id_dopis,$info) {  trace();
 # vrátí celý text
 function dop_mail_personify($obsah,$vars,$id_pobyt) {
   $text= $obsah;
+  $p= select('*','pobyt',"id_pobyt=$id_pobyt");
   foreach($vars as $var) {
     $val= '';
     switch ($var) {
     case 'akce_cena':
-      $ret= akce_vzorec($id_pobyt);
-      $val= $ret->mail;
+      if ( $p->duvod_typ ) {
+        $val= $p->duvod_text;
+      }
+      else {
+        $ret= akce_vzorec($id_pobyt);
+        $val= $ret->mail;
+      }
       break;
     }
     $text= str_replace('{'.$var.'}',$val,$text);
