@@ -216,11 +216,14 @@ menu m {type:'left',
     item {title:'Skupinky dětí'         ,par:°{typ:'sd',exp:'Excel',cnd:'1',fce:'tisk'}}
     item {title:'Skupinky (* noví)'     ,par:°{typ:'sk',exp:'Excel',cnd:'1',fce:'tisk',mark:'novic'}}
     item {title:'Skupinky - přehled historie' ,par:°{typ:'sk',exp:'Excel',cnd:'1',fce:'prehled'}}
-    item {title:'Skupinky - plachta'                                                                    skill:'y;f'
-                                        ,par:°{typ:'sk',exp:'Excel-plachta',cnd:'1',fce:'plachta'}}
 #     item {title:'Skupinky - tisk+'      ,par:°{typ:'sk',exp:'Excel',cnd:'1',fce:'tisk',mark:'novic'}}
   }
   menu {title:'Technické seznamy',type:'group',_sys:'*'
+    item {title:'Návrh ubytování'       ,par:°{typ:'p',exp:'Excel',cnd:"funkce!=99"
+                                        ,tit:'příjmení:15,jména:12,obec:25,lůžka:5,přistýlka:5,kočárek:5,pokoj:5,poznámka:100'
+                                        ,fld:'prijmeni,jmena,obec,luzka,pristylky,kocarek,pokoj,poznamka'}}
+    item {title:'Návrh skupinek'                                                                    skill:'y;f'
+                                        ,par:°{typ:'sk',exp:'Excel-plachta',cnd:'1',fce:'plachta'}}
     item {title:'Seznam s fotkami'      ,par:°{typ:'fs',cnd:"funkce!=99",ord:"prijmeni"}}
     item {title:'Seznam emailů'         ,par:°{typ:'fx',subtyp:'emails'}}
   }
