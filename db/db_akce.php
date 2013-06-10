@@ -1,4 +1,35 @@
 <?php # (c) 2009-2010 Martin Smidek <martin@smidek.eu>
+# ================================================================================================== DUPL
+# --------------------------------------------------------------------------------------- dupl_spolu
+# zkusí vyřešit duplikáty - klíče z tabulky SPOLU
+function dupl_spolu($ids_spolu) { trace();
+  if ( substr_count($ids_spolu,',')!=1 ) { $html= "nejsou vybrány 2 osoby"; goto end; }
+  $html= dupl_osoba(select("GROUP_CONCAT(id_osoba)","spolu","id_spolu IN ($ids_spolu)"));
+end:
+  return $html;
+}
+# --------------------------------------------------------------------------------------- dupl_osoba
+# zkusí vyřešit duplikáty
+function dupl_osoba($ids_osoba) { trace();
+                                                        debug($ids_osoba,"osoby");
+  $html= '';
+  $ths.= "<th>ID:</th>";
+  $trs= "";
+  foreach (explode(',',$ids_osoba) as $id_osoba) {
+    $ths.= "<th>$id_osoba</th>";
+  }
+  foreach (array('tvori','spolu','pobyt','dar','platba') as $tab) {
+    $trs.= "<tr><th>$tab</th>";
+    foreach (explode(',',$ids_osoba) as $id_osoba) {
+      $n= select("COUNT(*)",$tab,"id_osoba=$id_osoba");
+      $trs.= "<td>$n</td>";
+    }
+    $trs.= "</tr>";
+  }
+  $table= "<table><tr>$ths</tr>$trs</table>";
+  $html= $table;
+  return $html;
+}
 # ================================================================================================== ALBUM
 # ---------------------------------------------------------------------------------------- album_set
 # přidá fotografii do alba
@@ -1326,7 +1357,12 @@ function akce_sestava_pary($akce,$par,$title,$vypis,$export=false) { trace();
             SUM(IF(t.role='d',1,0)) as _deti,
             r.ulice,r.psc,r.obec,r.telefony,r.emaily,p.poznamka,p.skupina,
             p.ubytovani,p.budova,p.pokoj,
-            p.luzka,p.kocarek,p.pristylky,p.strava_cel,p.strava_pol
+            p.luzka,p.kocarek,p.pristylky,p.strava_cel,p.strava_pol,
+            GROUP_CONCAT(IFNULL((SELECT CONCAT(osoba.jmeno,' ',osoba.prijmeni)
+            FROM pobyt
+            JOIN spolu ON spolu.id_pobyt=pobyt.id_pobyt
+            JOIN osoba ON osoba.id_osoba=spolu.id_osoba
+            WHERE pobyt.id_akce='369' AND spolu.pecovane=o.id_osoba),'') SEPARATOR ' ') AS _chuvy
           FROM pobyt AS p
           JOIN spolu AS s USING(id_pobyt)
           JOIN osoba AS o ON s.id_osoba=o.id_osoba
