@@ -5,17 +5,17 @@
 # ------------------------------------------------------------------------------------------------ #
 
 var the_duakce_local: number    // zobrazená akce - pokud se liší od the_duakce, je třeba překreslit
-var zalozka: text               // evid | plat | akce
+var zalozka: text               // evid | akce | foto
 var the_pobyt: number           // klíč společného pobytu pečounů
 var back: object
 
 use header: form _header   [  4,0,,]
-use up:     form _pece     [  6,40,,]
+use up:     form _pece     [  6,30,,]
 use page:   form _page     [400,10,,]
 use p_oso:  form _osoba    [400,10,,]       { tag:'p_oso' }
 use cmd:    form _cmd      [400, 0,,]       { tag:'p_oso' }
 use p_act:  form _aktivity [400,10,,]       { tag:'p_act' }
-use p_pla:  form _platba   [400,10,,]       { tag:'p_pla' }
+use alb:    form _album    [400,10,,]       { tag:'p_fot' }
 
 proc onfocus() {
   [ the_duakce.get | akce_onstart ];
@@ -56,7 +56,9 @@ proc reload(id_spolu) {
   the_pobyt.set(ask('select','id_pobyt','pobyt',conc("funkce=99 AND id_akce=",the_duakce.get)));
   [ the_pobyt.get
   | the_pobyt.set(pobyt.insert_record(object('id_akce',the_duakce.get,'funkce',99))) ];
-  up.b.browse_load(conc("p.funkce=99 AND p.id_akce=",the_duakce.get));
+  up.b.browse_load(cconc(up.nevlastni.get,
+    conc("(p.funkce=99 OR pecovane) AND p.id_akce=",the_duakce.get),
+    conc("(p.funkce=99) AND p.id_akce=",the_duakce.get)));
   up.b.browse_focus;
   { id_spolu; up.b.browse_seek(conc('s.id_spolu=',id_spolu)); up.b.reload_pecoun
   | up.b.raise('onrowclick') }
@@ -93,32 +95,81 @@ form _page {
     panel.display(1,on); panel.display(0,off);
   }
   proc page_init() {
-    zalozka.set('evid'); tags(evd,'p_oso','p_act|p_pla');
+    zalozka.set('evid'); tags(evd,'p_oso','p_act|p_fot');
   }
   label evd [ 12,0,120,20] {tag:'p', title:'<b>Evidenční karta</b>', format:'c', css:'ae_butt_on'
-    proc onclick() { tags(this,'p_oso','p_act|p_pla');
+    proc onclick() { tags(this,'p_oso','p_act|p_fot');
       zalozka.set('evid'); up.b.reload_pecoun;
     }
   }
-  label plt [152,0,120,20] {tag:'p', title:'<b>Platba za akci</b>', format:'c',
-    proc onclick() { tags(this,'p_pla','p_oso|p_act');
-      zalozka.set('plat'); up.b.reload_pecoun;
+  label jin [152,0,120,20] {tag:'p', title:'<b>Přehled aktivit</b>', format:'c',
+    proc onclick() { tags(this,'p_act','p_oso|p_fot');
+      zalozka.set('akce'); up.b.reload_pecoun;
     }
   }
-  label jin [292,0,120,20] {tag:'p', title:'<b>Přehled aktivit</b>', format:'c',
-    proc onclick() { tags(this,'p_act','p_oso|p_pla');
-      zalozka.set('akce'); up.b.reload_pecoun;
+  label plt [292,0,120,20] {tag:'p', title:'<b>Fotky</b>', format:'c',
+    proc onclick() { tags(this,'p_fot','p_oso|p_act');
+      zalozka.set('foto'); up.b.reload_pecoun;
     }
   }
   label [0,16,582,530] { css:'ae_work'}
 }
 # ---------------------------------------------------------------------- _aktivity
 form _aktivity {
-  label [10,50,,] { title:'tady budou další akce tohoto pečouna' }
+  var ido: number
+  field jme [10,34,200,] { format:'o' }
+  button [160,20,,] { title:'^evidence'
+#     proc onclick() { akce_evidence(ido.get) }
+  }
+  view a: table akce
+  view p: table pobyt { join:'ON a.id_duakce=p.id_akce' }
+  view s: table spolu { join:'USING(id_pobyt)' }
+  browse akc [ 0,60,,] { rows:25, qry_rows:1
+    show ida { data:a.id_duakce }
+    show idp { data:p.id_pobyt }
+    show ids { data:s.id_spolu }
+    show rok  [,, 30,] { title:'rok', expr:"YEAR(a.datum_od)", format:'q*s-' }
+    show akce [,,150,] { title:'název', data:a.nazev, format:'q*s' }
+    show fce  [,, 30,] { title:'fce', data:p.funkce, map_pipe:ms_akce_funkce.zkratka, format:'q*s' }
+    proc onsubmit() {
+      akce_show(ida.get,idp.get,conc(akce.get,' ',rok.get),'AKTIVITA') }
+  }
+  proc ucasti(id_osoba) {
+    id_osoba; ido.set(id_osoba);
+    akc.browse_load(conc('a.spec=0 AND s.id_osoba=',id_osoba),"datum_od DESC")
+  | akc.browse_init
+  }
 }
-# ---------------------------------------------------------------------- _platba
-form _platba {
-  label [10,50,,] { title:'tady bude rozpis ceny akce podle cenového vzorce akce a přehled příchozích plateb' }
+# ----------------------------------------------------------------------- _album
+form _album {
+  label drop [38,35,500,45] { format:'c' }
+  label foto [38,85,500,400] { format:'c' }
+  button smazat [250,500,,] { title:'Odstranit fotografii', format:'n'
+    proc onclick() {
+      confirm("Opravdu odstranit tuto fotografii?");
+      { ask('album_delete',up.b.key_osoba.get); up.b.fotka.let(''); foto.set('');
+      | warning("fotografii nebylo možné smazat");
+      }
+  }}
+  proc ondrop(fileinfo) {
+    var name: text
+    drop.set_css('','drop_area drop_area_hover');
+    name.set(ask('album_set',up.b.key_osoba.get,fileinfo,
+      conc(up.b.prijmeni.get,' ',up.b.jmeno.get)));
+    up.b.fotka.let(name);
+    smazat.display(1);
+    drop_set(0);
+    drop.set_css('','drop_area drop_area_hover drop_area_run');
+    drop_init;
+  }
+  proc drop_init() {
+    form.file_drop(drop,°{css_hover:'drop_area_hover',css_run:'drop_area_run',handler:'ondrop',
+      max_width:1200,max_height:960});
+  }
+  proc drop_set(sharp) {
+    foto.set(ask('album_get',up.b.fotka.get,500,400));
+#     [ sharp; foto.image_filter('sharpen') ]
+  }
 }
 # ---------------------------------------------------------------------- _osoba
 form _osoba { tag:'a',
@@ -149,9 +200,9 @@ form _osoba { tag:'a',
   field obec     [L+229,T+69,131,] {data:o.obec}
   label          [L+5,T+94,33,] {title:'telefon'}
   field telefon  [L+5,T+108,212,] {data:o.telefon}
-  label          [L+229,T+94,30,] {title:'e-mail'}
+  label          [L+229,T+94,37,] {title:'e-mail'}
   field email    [L+229,T+108,330,] {data:o.email}
-  label          [L+5,T+132,48,] {title:'poznámka'}
+  label          [L+5,T+132,148,] {title:'poznámka mimo akci'}
   edit  pozn     [L+5,T+145,216,84] {data:o.note}
   # ------------------------ akce
   view s: table spolu
@@ -181,41 +232,44 @@ form _osoba { tag:'a',
 form _pece [,,400,] { css:'ds_form'
   label         [4,516,,] {title:'pobyt - vývojářské údaje', skill:'m'}
   label develop [0,530,380,106] { skill:'m', style:'border:1px solid #bbb;padding:3px' }
+  // legenda
+  label leg [5,4,250,11] { title:"<span class='green'> Účastníci/chůva </span>"}
+  // omezení browse
+  check nevlastni [-5,0,177,15] { title:'vč.nepečounských záznamů', value:'0', format:'t', skill:'a'
+    proc onchange() { reload(0) }}
   // definice pohledů
   view s: table spolu
   view p: table pobyt  { join:'USING(id_pobyt)' }   // ON p.id_pobyt=s.id_pobyt
   view a: table akce   { join:'ON a.id_duakce=p.id_akce' }
   view o: table osoba  { join:'ON s.id_osoba=o.id_osoba' }
   view t: table tvori  { join_type:'LEFT', join:'ON t.id_osoba=o.id_osoba' }
-#   // definice pohledů
-#   view p: table pobyt
-#   view a: table akce   { join:'ON a.id_duakce=p.id_akce' }
-#   view s: table spolu  { join:'USING(id_pobyt)' }
-#   view o: table osoba  { join:'ON s.id_osoba=o.id_osoba' }
-#   view t: table tvori  { join_type:'LEFT', join:'ON t.id_osoba=o.id_osoba' }
+  view c: table osoba  { join_type:'LEFT', join:'ON c.id_osoba=s.pecovane' }
   // seznam účastníků
-  browse b [0,0,,] {type:'smart', buf_rows:120, rows:27, qry_rows:1,
-    optimize:°{qry:'noseek'}
+  browse b [0,17,,] {type:'smart', buf_rows:120, rows:27, qry_rows:1,
+    optimize:°{qry:'noseek'}, css_rows:'barva,0:nic,1:zeleny'
     // klíče
     show key_spolu  {data:s.id_spolu}
     show key_akce   {data:p.id_akce}
     show key_pobyt  {data:p.id_pobyt}
+    show pecovane   {data:s.pecovane}   // jde-li o chůvu
     show key_osoba  {data:o.id_osoba}
     show key_rodina {data:t.id_rodina}
     show role       {data:t.role}
     // data
-    show prijmeni { data:o.prijmeni }
-    show jmeno    { data:o.jmeno }
-    show sex      { data:o.sex }
-    show narozeni { data:o.narozeni }
-    show rodne    { data:o.rc_xxxx }
-    show cirkev   { data:o.cirkev }
-    show ulice    { data:o.ulice }
-    show psc      { data:o.psc }
-    show obec     { data:o.obec }
-    show telefon  { data:o.telefon }
-    show email    { data:o.email }
-    show pozn     { data:o.note }
+    show barva     { expr:"IF(pecovane,1,0)"}
+    show fotka     { data:o.fotka }
+    show prijmeni  { data:o.prijmeni }
+    show jmeno     { data:o.jmeno }
+    show sex       { data:o.sex }
+    show narozeni  { data:o.narozeni }
+    show rodne     { data:o.rc_xxxx }
+    show cirkev    { data:o.cirkev }
+    show ulice     { data:o.ulice }
+    show psc       { data:o.psc }
+    show obec      { data:o.obec }
+    show telefon   { data:o.telefon }
+    show email     { data:o.email }
+    show pozn      { data:o.note }
     show pozn_akce { data:s.poznamka }
     show s_rodici  { data:s.s_rodici }
     show pulstrava { data:s.pulstrava }
@@ -223,8 +277,10 @@ form _pece [,,400,] { css:'ds_form'
     show _nazev    [,,150,] { title:'příjmení jméno', format:'s+q*',
                               expr:"CONCAT(o.prijmeni,' ',o.jmeno)" }
     show skupinka  [,,30,]  { title:'sk.', data:s.skupinka, format:'rqs:e'}
-    show           [,,170,] { title:'poznámka / k akci', format:'qs',
-      expr:"IF(o.note='' AND s.poznamka='','',CONCAT(o.note,' / ',s.poznamka))" }
+    show           [,,170,] { title:'poznámka / k akci', format:'qs', expr:"CONCAT
+                             (IF(pecovane,CONCAT('chůva pro ',c.jmeno,' ',c.prijmeni,' / '),''),
+                              IF(o.note='' AND s.poznamka='','',CONCAT(o.note,' / ',s.poznamka)))"
+                            }
     // skupinka
     show skup     { expr:"
       IF(s.skupinka=0,'',
@@ -236,14 +292,15 @@ form _pece [,,400,] { css:'ds_form'
         JOIN spolu USING(id_osoba)
         JOIN pobyt USING(id_pobyt)
         WHERE pobyt.id_akce=p.id_akce AND skupinka=s.skupinka
-        ))" }
+      ))"
+    }
     proc onrowclick() { reload_pecoun }
     // změna
     proc reload_pecoun() {
       [ has_skill('m');
         { b.browse_count;
         develop.set(conc(
-           'id_akce=',key_akce.get,', id_pobyt=',key_pobyt.get
+           'id_akce=',key_akce.get,', id_pobyt=',key_pobyt.get,', pecovane=',pecovane.get
           ,'<br>m: id_spolu=', key_spolu.get, ', id_osoba=', key_osoba.get
           , ', id_rodina=', key_rodina.get, '/', role.get
         ))
@@ -260,14 +317,43 @@ form _pece [,,400,] { css:'ds_form'
         copy_by_name(b,p_oso.get); p_oso.o.key(key_osoba.get); p_oso.s.key(key_spolu.get);
         p_oso.d.browse_fill(skup.get);
       },
-      'plat',{
-        stop
-      },
       'akce',{
-        stop
+        p_act.ucasti(key_osoba.get)
+      },
+      'foto',{
+#         stop
+        { has_skill("yaa+;faa+;caa+");
+          { up.b.fotka.get;
+            // známe fotku
+            alb.drop.set("<br>Fotografii můžeš nahradit přetažením myší ze složky svého počítače sem");
+            alb.smazat.display(1);
+            alb.drop_set(1); alb.drop_init
+          | // není žádná fotka
+            alb.smazat.display(0);
+            alb.drop.set("<br>Sem můžeš přidat fotografii přetažením myší ze složky svého počítače");
+            alb.drop.set_css('drop_area',''); alb.foto.set(''); alb.drop_init
+          | echo('file_drop nelze zahájit')
+          }
+        | up.b.fotka.get; alb.drop_set(1)
+        }
       },
       {stop}
     )}
+    # --------------------------- kontextové_menu
+    menu { type:'context'
+      item { title:'ukázat všechny změny'
+#         proc onclick () { BackTrace.back_dite(key_dite.get,key_spolu.get) }
+      }
+      item { title:'posoudit vybrané duplikáty', skill:'m', proc onclick () {
+        echo(ask('dupl_spolu',b.selected('get'),0))
+      } }
+      item { title:'ztotožnit duplikáty, jde-li to', skill:'m', proc onclick () {
+        echo(ask('dupl_spolu',b.selected('get'),1))
+      } }
+      item { title:'zrušit označení', skill:'m', proc onclick () {
+        b.selected('clear')
+      } }
+    }
   }
 }
 # --------------------------------------------------------------------------------------------- _cmd
