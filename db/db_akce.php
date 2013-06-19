@@ -1,33 +1,81 @@
 <?php # (c) 2009-2010 Martin Smidek <martin@smidek.eu>
 # ================================================================================================== DUPL
 # --------------------------------------------------------------------------------------- dupl_spolu
-# zkusí vyřešit duplikáty - klíče z tabulky SPOLU
-function dupl_spolu($ids_spolu) { trace();
+# zkusí vyřešit duplicitu 2 osob - klíče z tabulky SPOLU
+function dupl_spolu($ids_spolu,$to_change=0) { trace();
   if ( substr_count($ids_spolu,',')!=1 ) { $html= "nejsou vybrány 2 osoby"; goto end; }
-  $html= dupl_osoba(select("GROUP_CONCAT(id_osoba)","spolu","id_spolu IN ($ids_spolu)"));
+  $html= dupl_osoba(select("GROUP_CONCAT(id_osoba)","spolu","id_spolu IN ($ids_spolu)"),$to_change);
 end:
   return $html;
 }
 # --------------------------------------------------------------------------------------- dupl_osoba
-# zkusí vyřešit duplikáty
-function dupl_osoba($ids_osoba) { trace();
+# zkusí vyřešit duplicitu 2 osob
+function dupl_osoba($ids_osoba,$to_change=0) { trace();
                                                         debug($ids_osoba,"osoby");
   $html= '';
-  $ths.= "<th>ID:</th>";
-  $trs= "";
+  // pomocné
+  $omitt= array('osoba'=>array('id_osoba','id_dupary','id_dudeti','origin'));
+  $cisla= array('osoba'=>array('vzdelani','cirkev'));
+  $ths.= "<th>ID:</th><th>$id_osoba</th>";
+  $id= $os= array();
+  $i= 0;
   foreach (explode(',',$ids_osoba) as $id_osoba) {
+    $i++; $idi= "id$i";
+    $$idi= $id_osoba;
     $ths.= "<th>$id_osoba</th>";
+    $qo= "SELECT * FROM osoba WHERE id_osoba=$id_osoba ";
+    $ro= mysql_qry($qo);
+    while ( $ro && ($o= mysql_fetch_object($ro)) ) {
+      foreach ($o as $fld=>$val) {
+        if ( !in_array($fld,$omitt['osoba']) ) {
+          $os[$id_osoba][$fld]= $val;
+        }
+      }
+    }
   }
+                                                        display("$id1,$id2");
+  // posouzení rozdílů v instancích osoby - případně nalezení hlavní identity
+  $trs= "";
+  $smery= array();
+  foreach ($os[$id1] as $fld=>$val1) {
+    $val1= trim($val1);
+    $val2= trim($os[$id2][$fld]);
+    if ( $val1!=$val2 ) {
+      $smer= $val1!='' && ($val2=='' || in_array($fld,$cisla['osoba']) && $val2=='0') ? '>' : (
+             $val2!='' && ($val1=='' || in_array($fld,$cisla['osoba']) && $val1=='0')? '<' : 'X');
+      $trs.= "<tr><th>$fld</th><th>$smer</th><td>$val1</td><td>$val2</td></tr>";
+      if ( !in_array($smer,$smery) ) $smery[]= $smer;
+    }
+  }
+  $table= "<table><tr>$ths</tr>$trs</table>";
+  $lze= "NELZE";
+  if ( count($smery)==1 && $smery[0]!='X' ) {
+    $idx= $smery[0]=='>' ? $id1 : $id2;
+    $idy= $smery[0]=='<' ? $id1 : $id2;
+    $lze= "LZE PONECHAT $idx a zrušit $idy";
+  }
+  $html.= "<h3>různé hodnoty - $lze</h3>$table";
+
+  // přehled počtu odkazů v tabulkách - případně přepnutí na hlavní identitu
+  $trs= "";
   foreach (array('tvori','spolu','pobyt','dar','platba') as $tab) {
-    $trs.= "<tr><th>$tab</th>";
+    $trs.= "<tr><th></th><th>$tab</th>";
     foreach (explode(',',$ids_osoba) as $id_osoba) {
-      $n= select("COUNT(*)",$tab,"id_osoba=$id_osoba");
-      $trs.= "<td>$n</td>";
+      list($n,$ids)= select("COUNT(*),GROUP_CONCAT(id_$tab)",$tab,"id_osoba=$id_osoba");
+      if ( $to_change && $lze ) {
+        $ok= query("UPDATE $tab SET id_osoba=$idx WHERE id_osoba=$idy");
+        $m= mysql_affected_rows();
+        $trs.= "<td>$n/$m</td>";
+      }
+      else {
+        $trs.= "<td>$n:$ids</td>";
+      }
     }
     $trs.= "</tr>";
   }
   $table= "<table><tr>$ths</tr>$trs</table>";
-  $html= $table;
+  $html.= "<h3>odkazy na výskyty</h3>$table";
+end:
   return $html;
 }
 # ================================================================================================== ALBUM
@@ -187,7 +235,8 @@ function akce_kontrola_dat($par) { trace();
   // tabulka SPOLU I
   $msg= '';
   $cond= "id_pobyt=0 OR spolu.id_osoba=0 ";
-  $qry=  "SELECT id_spolu,spolu.id_osoba,spolu.id_pobyt,a.nazev,prijmeni,jmeno
+  $qry=  "SELECT id_spolu,spolu.id_osoba,spolu.id_pobyt,
+            CONCAT(a.nazev,' ',YEAR(datum_od)) AS nazev,prijmeni,jmeno
           FROM spolu
           LEFT JOIN pobyt AS p USING(id_pobyt)
           LEFT JOIN akce  AS a ON a.id_duakce=p.id_akce
@@ -208,7 +257,8 @@ function akce_kontrola_dat($par) { trace();
       $msg.= "<dd>pobyt=0 v záznamu spolu={$x->id_spolu} osoby {$x->prijmeni} {$x->jmeno}$ok</dd>";
   }
   // tabulka SPOLU II
-  $qry=  "SELECT id_spolu,count(*) AS _pocet_,s.id_osoba,o.id_osoba,nazev,prijmeni,jmeno
+  $qry=  "SELECT id_spolu,count(*) AS _pocet_,s.id_osoba,o.id_osoba,
+            CONCAT(a.nazev,' ',YEAR(datum_od)) AS nazev,prijmeni,jmeno
           FROM spolu AS s
           LEFT JOIN pobyt AS p USING(id_pobyt)
           LEFT JOIN akce  AS a ON a.id_duakce=p.id_akce
@@ -224,6 +274,26 @@ function akce_kontrola_dat($par) { trace();
     }
     $msg.= "<dd>násobný pobyt záznamem spolu={$x->id_spolu} na akci {$x->nazev}
       osoby {$x->prijmeni} {$x->jmeno} $ok</dd>";
+  }
+  $html.= "<dt style='margin-top:5px'>tabulka <b>spolu</b>".($msg?$msg:"<dd>ok</dd>")."</dt>";
+  // tabulka SPOLU III
+  $qry=  "SELECT GROUP_CONCAT(id_pobyt) AS _p,count(DISTINCT id_pobyt) AS _pocet_,s.id_osoba,o.id_osoba,
+            CONCAT(a.nazev,' ',YEAR(datum_od)) AS nazev,prijmeni,jmeno
+          FROM spolu AS s
+          LEFT JOIN pobyt AS p USING(id_pobyt)
+          LEFT JOIN akce  AS a ON a.id_duakce=p.id_akce
+          LEFT JOIN osoba AS o ON o.id_osoba=s.id_osoba
+          GROUP BY s.id_osoba,id_akce HAVING _pocet_>1
+          ORDER BY id_akce";
+  $res= mysql_qry($qry);
+  while ( $res && ($x= mysql_fetch_object($res)) ) {
+    $n++;
+//     if ( $opravit ) {    nelze automaticky
+//       $ok= mysql_qry("DELETE FROM spolu WHERE id_spolu={$x->id_spolu}",1)
+//          ? " = SMAZÁNO" : ' !!!!!CHYBA při mazání' ;
+//     }
+    $msg.= "<dd>násobný pobyt na akci {$x->nazev} - záznamy pobyt {$x->_p} pro
+      osobu {$x->prijmeni} {$x->jmeno} $ok</dd>";
   }
   $html.= "<dt style='margin-top:5px'>tabulka <b>spolu</b>".($msg?$msg:"<dd>ok</dd>")."</dt>";
   // tabulka TVORI I

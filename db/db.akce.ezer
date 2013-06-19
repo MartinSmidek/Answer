@@ -265,6 +265,7 @@ table osoba { key_id:'id_osoba'
   text prijmeni
   text rodne
   number sex
+  text fotka
   text ulice
   text psc
   text obec

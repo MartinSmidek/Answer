@@ -3,7 +3,7 @@
 
 menu cr { type:'main', active:*
   var global: text,
-  tabs db {title:"Databáze MS", _sys:'db', include:'onclick,db.akce', active:*, skill:'ca' }
+  tabs db {title:"Databáze", _sys:'db', include:'onclick,db.akce', active:*, skill:'ca' }
   tabs doc {title:"Dokumenty", _sys:'doc', include:'onclick', active:*, skill:'m' }
 #   tabs lide {title:"Lidé", _sys:'lid', include:'onclick', skill:'a' }
   tabs syst {title:"Systém", _sys:'sys',  include:'onclick,ezer2.syst', active:*

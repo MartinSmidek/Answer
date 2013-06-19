@@ -65,19 +65,19 @@ use header:form _header  [  4,0,,]
 use u:     form _ucast   [  6,20,,]     // seznam účastníků
 use page:  form _page    [400,10,,]
 # záložka evidence
-use evid:  form _evidence[400,10,,]
-use rod:   form _rodina  [400,0,,]
-use muz:   form _muz     [400,0,,]
-use zen:   form _zena    [400,0,,]
-use pob:   form _pobyt   [400,0,,]
-use cmd:   form _cmd     [400,0,,]
-use alb:   form _album   [400,0,,]
+use evid:  form _evidence[400,10,,]  { format:'n' }
+use rod:   form _rodina  [400,0,,]   { format:'n' }
+use muz:   form _muz     [400,0,,]   { format:'n' }
+use zen:   form _zena    [400,0,,]   { format:'n' }
+use pob:   form _pobyt   [400,0,,]   { format:'n' }
+use cmd:   form _cmd     [400,0,,]   { format:'n' }
+use alb:   form _album   [400,0,,]   { format:'n' }
 # záložka plateb
-use pla:   form _platba  [400,0,,]
-use cmdp:  form _cmd_p   [400,0,,]
+use pla:   form _platba  [400,0,,]   { format:'n' }
+use cmdp:  form _cmd_p   [400,0,,]   { format:'n' }
 # záložka aktivity
-use a_muz: form _aktivity[420,10,,]
-use a_zen: form _aktivity[700,10,,]
+use a_muz: form _aktivity[420,10,,]  { format:'n' }
+use a_zen: form _aktivity[700,10,,]  { format:'n' }
 
 proc page_clear() {
   muz.init(1); zen.init(1); rod.init(1); pob.init(1); pob.s.browse_init; pob.d.browse_init;
