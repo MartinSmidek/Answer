@@ -17,7 +17,7 @@ kEzer-ys2
 		+ezer
 			wiki\ezer_nastaveni.wiki
 		wiki\cr_system.wiki
-	+cr
+	-cr
 		cr\$.ezer
 		.htaccess
 		cr\cr.css.php
@@ -49,7 +49,7 @@ kEzer-ys2
 		fa\fa_lide.php
 	-skins
 		skins\colors.php
-	-db
+	+db
 		db\$.ezer
 		db\db.akce.dup.ezer
 		db\db.akce.evi.ezer
@@ -257,9 +257,10 @@ kEzer-ys2
 24=sql\sql\indexy.sql
 25=sql\pohled_osoba.sql
 26=sql\answer_dotazy.sql
+27=db\db.akce.lst.ezer
 [Selected Project Files]
 Main=
-Selected=db\db_akce.php
+Selected=db\db.akce.lst.ezer
 [ezer2.2\client\app.js]
 TopLine=1
 Caret=17,30
@@ -293,31 +294,33 @@ Mark1=27,788
 TopLine=266
 Caret=1,269
 [db\db_akce.php]
-TopLine=3069
-Caret=72,3079
+TopLine=929
+Caret=12,960
 BookMark3=32,5322
-BookMark1=66,67
+BookMark2=14,761
+BookMark1=21,937
 [db\db.akce.pece.ezer]
-TopLine=324
-Caret=1,340
-BookMark1=9,116
-BookMark2=9,350
+TopLine=317
+Caret=9,343
+BookMark1=14,238
+BookMark2=24,59
 [db\db.akce.evi.ezer]
 TopLine=327
 Caret=1,329
 BookMark1=18,290
 BookMark3=11,226
 [db\db.akce.ucast.ezer]
-TopLine=39
-Caret=52,80
+TopLine=500
+Caret=34,530
 BookMark1=5,290
 BookMark2=58,690
 Mark1=16,505
 Mark2=25,651
 [db\db.akce.tisk.ezer]
-TopLine=192
-Caret=85,216
-BookMark1=27,99
+TopLine=159
+Caret=41,180
+BookMark2=13,250
+BookMark1=28,179
 [doc\Skype-Putzlachers.txt]
 TopLine=394
 Caret=74,394
@@ -340,7 +343,7 @@ Caret=37,725
 TopLine=25
 Caret=79,50
 [db\db.akce.dup.ezer]
-TopLine=170
+TopLine=171
 Caret=7,214
 [db\db.akce.chl.ezer]
 TopLine=260
@@ -363,3 +366,6 @@ Caret=1,1
 [sql\answer_dotazy.sql]
 TopLine=1
 Caret=1,11
+[db\db.akce.lst.ezer]
+TopLine=18
+Caret=1,48

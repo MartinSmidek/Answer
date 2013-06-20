@@ -400,7 +400,7 @@ form _evidence {
   label [10,361,149,] {title:'<b>údaje k účasti na této akci</b>'}
   label [215,437,162,] {title:'poznámka k účasti na této akci'}
   label [215,409,31,] {title:'pokoj'}
-  label [295,409,38,] {title:'budova'}
+  label [337,409,38,] {title:'budova'}
   label [375,409,38,] {title:'typ', skill:'c' }
 }
 # ------------------------------------------------------------------------------------------ _rodina
@@ -479,8 +479,8 @@ form _pobyt {
   field skupina     [7,388,35,] {data:pobyt.skupina, format:'r'}
   select funkce     [155,389,50,] {type:'map', data:pobyt.funkce, options:ms_akce_funkce.zkratka }
   select prednasi   [450,389,122,] {type:'map', data:pobyt.prednasi, options:ms_akce_prednasi.zkratka }
-  field pokoj       [244,417,39,] {data:pobyt.pokoj}
-  field budova      [335,416,32,] {data:pobyt.budova}
+  field pokoj       [244,417,82,] {data:pobyt.pokoj}
+  field budova      [377,416,32,] {data:pobyt.budova}
   select ubytovani  [395,416,60,] {type:'map', data:pobyt.ubytovani, options:ms_akce_ubytovan.zkratka, skill:'c|c'}
   check cd          [446,441,20,] {data:pobyt.cd}
   edit k_poznamka   [214,462,355,50] {data:pobyt.poznamka}
@@ -507,7 +507,7 @@ form _pobyt {
       neni_ulozeno // warning
     | Dite.key_dite.set(id_osoba.get); Dite.key_spolu.set(id_spolu.get);
       Dite.key_pobyt.set(u.b.key_pobyt.get);
-      Dite.modal(260,30)
+      Dite.modal(260,10)
     }
   }
 }
@@ -554,7 +554,7 @@ form _ucast [,,400,] { css:'ds_form'
     show dnu      {expr:"DATEDIFF(a.datum_do,a.datum_od)+1"}
     show datum_od {data:a.datum_od, sql_pipe:'' }
     // zobrazení
-    show _nazev [,,100,] { title:'rodina', format:'s+q*', expr:"CASE
+    show _nazev [,,100,] { title:'příjmení', format:'s+q*', expr:"CASE
       WHEN pouze=0 THEN r.nazev
       WHEN pouze=1 THEN GROUP_CONCAT(DISTINCT IF(tx.role='a',ox.prijmeni,'') SEPARATOR '')
       WHEN pouze=2 THEN GROUP_CONCAT(DISTINCT IF(tx.role='b',ox.prijmeni,'') SEPARATOR '') END" }
@@ -883,7 +883,7 @@ form _cmd [,,200,] { css:'ds_form'
     proc onclick() {
       neni_ulozeno // warning
     | Dite.key_dite.set(0); Dite.key_spolu.set(0); Dite.key_pobyt.set(u.b.key_pobyt.get);
-      Dite.modal(260,30)
+      Dite.modal(260,10)
   } }
   // procedury
   proc b_display(on) { u.b.display(on); pob.d.display(on); pob.s.display(on); }
@@ -924,7 +924,7 @@ form _cmd_p [,,200,] { css:'ds_form'
   }
 }
 # ============================================================================================= Dítě
-panel Dite [,,380,470] {type:'popup', title:'Úprava dětí (a osobních pečovatelů)'
+panel Dite [,,380,495] {type:'popup', title:'Úprava dětí (a osobních pečovatelů)'
   use dite: form _dite [0,0,,]
   var key_dite: number
   var key_spolu: number
@@ -938,7 +938,8 @@ panel Dite [,,380,470] {type:'popup', title:'Úprava dětí (a osobních pečova
     dite.sebou.set(cconc(key_spolu.get,1,0));
     dite.pece_sel.set_attrib('par',object('fce','akce_auto_deti','akce',the_duakce.get,
       'save','value'));
-    [ dite.pece_key.get; dite.pece_sel.set(dite.pece_val.get) | dite.pece_sel.set('') ];
+    dite.pece_sel.set(''); dite.pecoun.set(0); dite.kategorie.plain;
+    [ dite.sebou.get; dite.load_sebou ];
   }
   form _dite [,,380,353] { css:'ds_form'
     # --------------------------- kontextové_menu
@@ -977,54 +978,86 @@ panel Dite [,,380,470] {type:'popup', title:'Úprava dětí (a osobních pečova
     field obec     [L+229,T+90,131,] {data:o.obec}
     label          [L+13,T+119,33,] {title:'telefon'}
     field telefon  [L+51,T+115,212,] {type:'list', data:o.telefon}
-    label          [L+16,T+144,30,] {title:'e-mail'}
+    label          [L+14,T+144,32,] {title:'e-mail'}
     field email    [L+52,T+140,330,] {type:'list', data:o.email}
     label          [L+0,T+165,48,] {title:'poznámka'}
     edit  pozn     [L+52,T+164,329,60] {data:o.note}
 
     # --------------------------------------------------  SPOLU - jiné účasti
-    const Tj = 250
+    const Tj = 240
     label          [L+5,Tj+0,,] {title:'účast na akcích'}
     label          [L+82,Tj+7,300,]  { style:'border-top:2px solid grey' }
-    edit  ucasti   [L+5,Tj+14,376,60] { format:'o', expr:"
-                    (SELECT GROUP_CONCAT(nazev SEPARATOR ', ') FROM spolu JOIN pobyt USING(id_pobyt)
+    edit  ucasti   [L+5,Tj+14,376,56] { format:'o', expr:"
+                    (SELECT GROUP_CONCAT(CONCAT(nazev,' ',YEAR(akce.datum_od)) ORDER BY akce.datum_od
+                     DESC SEPARATOR ', ') FROM spolu JOIN pobyt USING(id_pobyt)
                      JOIN akce ON akce.id_duakce=pobyt.id_akce WHERE spolu.id_osoba=the_osoba)" }
     # --------------------------------------------------  SPOLU - o účasti
     view s: table spolu { join_type:'LEFT', join:'USING(id_osoba)' }
     view x: table osoba { join_type:'LEFT', join:'ON x.id_osoba=s.pecovane' }
     view p: table pobyt { join_type:'LEFT', join:'USING(id_pobyt)' }
-    const Ta=320
+    const Ta=310
     field {data:o.id_osoba}
     # údaje svázané s účastí na akci
     field id_spolu {data:s.id_spolu}
+    field pfunkce {data:s.pfunkce}  // hodnoty (4,5) z ms_akce_pfunkce + 0 (dite) + 95 (děda ap.)
     field our_akce {data:p.id_akce}
-    check sebou    [L+0,Ta+0,59,17]   { title:'na akci', proc onchange() {
+    check sebou    [L+0,Ta+0,89,17]   { title:'na akci jako:', proc onchange() {
       this.get
     | [ pecujici.get; alert("napřed je třeba zrušit chůvu"); this.set(1) ];
       [ pece_sel.get; alert("napřed je třeba zrušit chování"); this.set(1) ];
     }}
-    label          [L+60,Ta+13,322,]  { style:'border-top:2px solid grey' }
-    label          [L+9,Ta+25,,]     { title:'skupinka'}
-    field skupinka [L+59,Ta+21,30,]   { data:s.skupinka, help:'skupinka'}
-    field pece_key { data:s.pecovane }
-    label [L+107,Ta+25,140,17] { title:'není ve skupince, má chůvu:' }
-    field pecujici [L+246,Ta+21,134,17] { format:'d', expr:"
+    label          [L+86,Ta+9,295,]  { style:'border-top:2px solid grey' }
+    // kategorie člena rodiny - dítěte nebo pomocníka (dědečka)
+    proc load_sebou() {
+      [ # dítě s osobním pečovatelem
+        eq(pfunkce.get,92); pecujici.get; kategorie.set(pfunkce.get)
+      | # dítě ve skupince bez osobního pečovatele, pomocný pečovatel, skupina G
+        eq(pfunkce.get,0,4,8); eq(pecujici.get,0); eq(pece_val.get,''); kategorie.set(pfunkce.get)
+      | # osobní pečovatel - je na kartě Pečouni
+        eq(pfunkce.get,5); kategorie.set(5); pece_sel.set(pece_val.get); pecoun.set(1)
+      | # osobní pečovatel - není na kartě Pečouni
+        eq(pfunkce.get,95); kategorie.set(5); pece_sel.set(pece_val.get); pecoun.set(0)
+      | warning("něco je špatně: pfce=",pfunkce.get," pecujici=",pecujici.get," pečované=",pece_key.get)
+      ]
+    }
+    radio kategorie [L+13,Ta+21,369,71] { value:'99', style:"border:1px solid gray"
+      case [0,5,109,] { title:"dítě ve skupince", expr:'0' }
+      case [149,5,80,] { title:"dítě typu 'G'", expr:'8' }             // hodnota ms_akce_pfunkce
+      case [242,5,123,] { title:"pomocný pečovatel", expr:'4' }        // hodnota ms_akce_pfunkce
+      case [0,28,158,] { title:"dítě s os. pečovatelem:", expr:'92' }
+      case [0,52,178,] { title:"osobní pečovatel pro:", expr:'5' }     // hodnota ms_akce_pfunkce
+      proc onchange () {
+        and(eq(this.get,5),eq(pecoun.get,0)); pfunkce.set(95); pfunkce.change
+      | pfunkce.set(this.get); pfunkce.change
+      }
+    }
+    // dospělý osobní pečovatel - mimo Pečouny
+    check pecoun [L+291,Ta+70,82,17] { title:"je 'pečoun'", value:'0'   // 0 => osobní & 'dědeček'
+      proc onchange () {
+        and(eq(pfunkce.get,5),eq(pecoun.get,0)); pfunkce.set(95); pfunkce.change
+    }}
+    // ve skupince
+    field skupinka [L+119,Ta+24,30,]   { data:s.skupinka, help:'skupinka' }
+    // s osobním pečovatelem
+    field pecujici [L+152,Ta+47,134,17] { format:'d', expr:"
                        (SELECT GROUP_CONCAT(prijmeni,' ',jmeno)
                         FROM akce JOIN pobyt ON id_akce=akce.id_duakce
                         JOIN spolu ON spolu.id_pobyt=pobyt.id_pobyt
                         JOIN osoba ON osoba.id_osoba=spolu.id_osoba
                         WHERE spolu.pecovane=the_osoba AND id_akce=our_akce)"}
-    label [L+87,Ta+48,176,17] { title:'není ve skupince, je chůvou pro:' }
+    // je osobním pečovatelem pro
     field pece_val { expr:"CONCAT(x.prijmeni,' ',x.jmeno)" }
-    select pece_sel [L+246,Ta+45,136,17] { type:'auto', par:°{fce:'akce_auto_deti'}
+    select pece_sel [L+152,Ta+71,136,17] { type:'auto', par:°{fce:'akce_auto_deti'}
       proc onchanged() {
         pece_key.set(pece_sel.key); pece_key.change;
       }
     }
-    label          [L+0,Ta+72,53,48] {title:'poznámka k účasti na této akci', format:'r'}
-    edit  poznamka [L+58,Ta+69,323,50] {data:s.poznamka, skill:'yaa|yaap+;faa|faa+;caa|caa+'} // opravují pečouni
+    field pece_key { data:s.pecovane }
+    // poznámka k akci
+    label          [L+0,Ta+100,53,52] {title:'poznámka k účasti na této akci', format:'r'}
+    edit  poznamka [L+58,Ta+98,323,54] {data:s.poznamka, skill:'yaa|yaap+;faa|faa+;caa|caa+'}
     # --------------------------------------------------  ovládání
-    const Tc = 440
+    const Tc = 465
     proc s.onsave() { // kontrola konzistence
       [ sebou.get; skupinka.get; or(pece_sel.get,pecujici.get);
         warning("dítě ve skupince nemůže ani chovat ani být chováno"); return(0) ];

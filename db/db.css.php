@@ -25,9 +25,10 @@ echo <<<__EOD
 .nic     { }
 
 /* obecné barvy pozadí */
-.sedy           { background-color:#777777 !important; }
+.sedy           { background-color:#aaaaaa !important; }
 .zluty          { background-color:#ffff77 !important; }
 .cerveny        { background-color:#ff7777 !important; }
+.oranzovy       { background-color:#ffaa00 !important; }
 .zeleny         { background-color:#77ff77 !important; }
 .modry          { background-color:#7389ae !important; }
 

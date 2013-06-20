@@ -254,6 +254,7 @@ table spolu { key_id:'id_spolu'
   number s_rodici
   number pulstrava
   number pecovane //id_osoba pečovaného dítěte
+  number pfunkce  // #ms_akce_pfunkce -- funkce pečovatelská, jinak 0
 }
 
 table osoba { key_id:'id_osoba'
@@ -631,6 +632,7 @@ map ms_akce_typ:      table _cis {where:"druh='ms_akce_typ'",       order:'porad
 map ms_akce_clen:     table _cis {where:"druh='ms_akce_clen'",      order:'poradi', key_id:'data'}
 map ms_akce_pouze:    table _cis {where:"druh='ms_akce_pouze'",     order:'poradi', key_id:'data'}
 map ms_akce_funkce:   table _cis {where:"druh='ms_akce_funkce'",    order:'poradi', key_id:'data'}
+map ms_akce_pfunkce:  table _cis {where:"druh='ms_akce_pfunkce'",   order:'poradi', key_id:'data'}
 map ms_akce_prednasi: table _cis {where:"druh='ms_akce_prednasi'",  order:'poradi', key_id:'data'}
 map ms_akce_cirkev:   table _cis {where:"druh='ms_akce_cirkev'",    order:'poradi', key_id:'data'}
 map ms_akce_vzdelani: table _cis {where:"druh='ms_akce_vzdelani'",  order:'poradi', key_id:'data'}
