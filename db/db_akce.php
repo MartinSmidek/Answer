@@ -3721,7 +3721,8 @@ function akce_auto_jmena1($patt,$par) {  #trace();
 function akce_auto_jmena1L($id_osoba) {  #trace();
   $pary= array();
   // páry
-  $qry= "SELECT prijmeni, jmeno, id_osoba, r.obec,
+  $qry= "SELECT prijmeni, jmeno, id_osoba, o.obec, o.ulice, telefon, email,
+           r.obec AS r_obec, r.ulice AS r_ulice,
            GROUP_CONCAT(DISTINCT IF(t.role='a',o.jmeno,'')    SEPARATOR '') AS _muz,
            GROUP_CONCAT(DISTINCT IF(t.role='a',o.prijmeni,'') SEPARATOR '') AS _muzp,
            GROUP_CONCAT(DISTINCT IF(t.role='a',o.id_osoba,'') SEPARATOR '') AS _muz_id,
@@ -3736,7 +3737,10 @@ function akce_auto_jmena1L($id_osoba) {  #trace();
   $res= mysql_qry($qry);
   while ( $res && $p= mysql_fetch_object($res) ) {
     $nazev= "{$p->prijmeni} {$p->jmeno}";
-    $nazev.= ", {$p->obec}";
+    $nazev.= $p->obec ? ", {$p->obec}" : ", {$p->r_obec}";
+    $nazev.= $p->ulice ? ", {$p->ulice}" : ", {$p->r_ulice}";
+    $nazev.= $p->email ? ", {$p->email}" : '';
+    $nazev.= $p->telefon ? ", {$p->telefon}" : '';
     $pary[]= (object)array('nazev'=>$nazev,'muz'=>$p->_muz_id,'zen'=>$p->_zena_id);
   }
 //                                                                 debug($pary,$id_akce);
