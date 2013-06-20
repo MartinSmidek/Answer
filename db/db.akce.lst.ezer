@@ -6,12 +6,15 @@
 
 var zalozka: text           // inf | cor | cen
 
+var the_omezeni: text           // pro skill=c obsahuje omezující podmínku na viditelné akce
+
 use info: form _akce [12,4,,]
 use page: form _page [450,40,,]
 
 proc onfirstfocus() {
 # proc onstart() { echo('db.akce.lst.onstart');
   info.fill(the_title.get);
+  the_omezeni.set('1');
   info.rok.selects(javascript(conc(
     "var x='';for(i=",sum(fdate('Y'),1),";i>=1990;i--){x+=i+',';};x+='0'")));
   { the_duakce.get;
@@ -20,7 +23,7 @@ proc onfirstfocus() {
 # }
 # proc onfirstfocus() {
   zalozka.set('inf');
-  m.g.sey.click;
+  [ has_skill('y|f'); m.g.sey.click ];
   page.cen_copy.selects("neměnit:0");
   page.inf.onclick
 }
@@ -30,7 +33,16 @@ proc onfirstfocus() {
 #   'sey' používá pouze tabulku AKCE
 
 menu m {type:'left'
-  menu g {title:'Výběr akce zadaného roku',type:'group'
+  menu c {title:'Výběr akce',type:'group',   skill:'c'             // jen pro CR
+    item {title:'program Manželská setkání', skill:'cam', par:°{omez:'druh IN (1,2,3,4)'} }
+    item {title:'programy Rodina mimo MS',   skill:'car', par:°{omez:'druh NOT IN (1,2,3,4)'} }
+    item {title:'... bez omezení',           skill:'a',   par:°{omez:'1'} }
+      proc onclick (i) {
+        info.rok.display(1); info.sey.display(1); info.google.display(0);
+        the_omezeni.set(i.par.omez);
+        the_source.set('sey'); akce_roku
+  } }
+  menu g {title:'Výběr akce zadaného roku',type:'group', skill:'y;f'
     item {title:'podle číselníku akcí na intranetu', skill:'y'          // jen pro YS
       proc onclick (i) {
         info.rok.display(1); info.google.display(1); info.sey.display(0);
@@ -41,7 +53,7 @@ menu m {type:'left'
         info.rok.display(1); info.sey.display(1); info.google.display(0);
         the_source.set('sey'); akce_roku
   } } }
-  menu {title:'Výběr ze všech roků',type:'group'
+  menu {title:'Výběr ze všech roků',type:'group', skill:'y;f'
     item sey {title:'ze seznamu všech akcí',    par:°{cond:'1'} }
     item  {title:'... opravdové akce',          par:°{cond:'da2.spec=0'} }
     item  {title:'... jen různé seznamy',       par:°{cond:'da2.spec=1'} }
@@ -51,10 +63,11 @@ menu m {type:'left'
 } } }
 proc akce_roku() {
   the_rok.set(info.rok.get);
-  [ gt(the_rok.get,2010);                       // intranet obsahuje akce od roku 2010
+  [ gt(the_rok.get,2010);          // intranet YS obsahuje akce od roku 2010
     info.google.browse_load(conc("g_kat='a' AND g_rok=",the_rok.get))
   | info.google.browse_init];
-  [ info.sey.browse_load(conc("YEAR(da2.datum_od)='",the_rok.get,"' AND spec=0")) ];
+  [ info.sey.browse_load(conc(
+      "YEAR(da2.datum_od)='",the_rok.get,"' AND spec=0 AND ",the_omezeni.get)) ];
   set_cookie(conc(sys('root'),'_akce_rok'),the_rok.get);
 }
 proc akce_vsechny(cond) {
