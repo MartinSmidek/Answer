@@ -1570,7 +1570,7 @@ function akce_text_eko($akce,$par,$title,$vypis,$export=false) { trace();
   }
 //                                                         debug($ham);
   $html.= "<h3>Výdaje za stravu a ubytování pro $pecounu pečovatelů ($noci nocí)</h3>";
-  $html.= "V tomto počtu nejsou zahrnuti pomocní pečovatelé, jejichž náklady hradí jejich rodiče<br>";
+  $html.= "V tomto počtu nejsou zahrnuti pomocní a osobní pečovatelé, jejichž náklady hradí rodiče<br>";
   $html.= "(to je třeba v evidenční kartě pečovatele zapsat zaškrtnutím políčka pod poznámkou)<br><br>";
   $html.= "<table class='stat'><td>položky</td><th>cena</td></tr>";
   $qc= "SELECT GROUP_CONCAT(polozka) AS polozky, za, SUM(cena) AS _cena_
@@ -1602,39 +1602,60 @@ function akce_text_eko($akce,$par,$title,$vypis,$export=false) { trace();
 }
 # -------------------------------------------------------------------------------- akce_text_prehled
 function akce_text_prehled($akce,$par,$title,$vypis,$export=false) { trace();
+  function akce_text_prehled_x($akce,$cond) {
+    $html= '';
+    // data akce
+    $veky= $kluci= $holky= array();
+    $nkluci= $nholky= 0;
+    // histogram věku dětí - s vynecháním "dědečků a tet" tzn. spolu.pfunkce=95
+    $qo=  "SELECT prijmeni,jmeno,narozeni,role,a.datum_od,o.sex
+           FROM akce AS a
+           JOIN pobyt AS p ON a.id_duakce=p.id_akce
+           JOIN spolu AS s USING(id_pobyt)
+           JOIN osoba AS o ON s.id_osoba=o.id_osoba
+           LEFT JOIN tvori AS t ON t.id_osoba=o.id_osoba
+           WHERE a.id_duakce='$akce' AND t.role='d' AND $cond";
+    $ro= mysql_qry($qo);
+    while ( $ro && ($o= mysql_fetch_object($ro)) ) {
+      $vek= narozeni2roky_sql($o->narozeni,$o->datum_od);
+      $sex= $o->sex;
+      $veky[$vek]++;
+      if ( $sex==1 ) { $kluci[$vek]++; $nkluci++; }
+      if ( $sex==2 ) { $holky[$vek]++; $nholky++; }
+    }
+    ksort($veky);
+    // formátování výsledku
+    $html.= "<table class='stat'>";
+    $r1= $r2= $r3= $r4= '';
+    foreach($veky as $v=>$n) {
+      $r1.= "<th align='right' width='20'>$v</th>";
+      $r2.= "<td align='right'>$n</td>";
+      $r3.= "<td align='right'>{$kluci[$v]}</td>";
+      $r4.= "<td align='right'>{$holky[$v]}</td>";
+    }
+    $r1.= "<th align='right'>celkem</th>";
+    $r2.= "<td align='right'>".($nkluci+$nholky)."</td>";
+    $r3.= "<td align='right'>$nkluci</td>";
+    $r4.= "<td align='right'>$nholky</td>";
+    $html.= "<tr><th>věk</th>$r1</tr><tr><th>počet</th>$r2</tr><tr>"
+          . "<th>kluci</th>$r3</tr><tr><th>holky</th>$r4</tr></table>";
+    // předání výsledku
+    return $html;
+  }
   $html= '';
-  // data akce
-  $veky= $kluci= $holky= array();
-  // histogram věku dětí
-  $qo=  "SELECT prijmeni,jmeno,narozeni,role,a.datum_od,o.sex
-         FROM akce AS a
-         JOIN pobyt AS p ON a.id_duakce=p.id_akce
-         JOIN spolu AS s USING(id_pobyt)
-         JOIN osoba AS o ON s.id_osoba=o.id_osoba
-         LEFT JOIN tvori AS t ON t.id_osoba=o.id_osoba
-         WHERE a.id_duakce='$akce' AND t.role='d' ";
-  $ro= mysql_qry($qo);
-  while ( $ro && ($o= mysql_fetch_object($ro)) ) {
-    $vek= narozeni2roky_sql($o->narozeni,$o->datum_od);
-    $sex= $o->sex;
-    $veky[$vek]++;
-    if ( $sex==1 ) $kluci[$vek]++;
-    if ( $sex==2 ) $holky[$vek]++;
-  }
-  ksort($veky);
-  // formátování výsledku
-  $html.= "<h3>Počet dětí na akci podle stáří (v době začátku akce)</h3>";
-  $html.= "<table class='stat'>";
-  $r1= $r2= $r3= $r4= '';
-  foreach($veky as $v=>$n) {
-    $r1.= "<th align='right' width='20'>$v</th>";
-    $r2.= "<td align='right'>$n</td>";
-    $r3.= "<td align='right'>{$kluci[$v]}</td>";
-    $r4.= "<td align='right'>{$holky[$v]}</td>";
-  }
-  $html.= "<tr><th>věk</th>$r1</tr><tr><th>počet</th>$r2</tr><tr>"
-        . "<th>kluci</th>$r3</tr><tr><th>holky</th>$r4</tr></table>";
-  // předání výsledku
+  // pfunkce: 0 4 5 8 92 95
+  $html.= "<h3>Celkový počet dětí na akci podle stáří (v době začátku akce)</h3>";
+  $html.= akce_text_prehled_x($akce,"s.pfunkce!=95 ");
+  $html.= "<h3>Děti ve skupinkách (mimo G a osobně opečovávaných)</h3>";
+  $html.= akce_text_prehled_x($akce,"s.pfunkce IN (0)");
+  $html.= "<h3>Skupina G</h3>";
+  $html.= akce_text_prehled_x($akce,"s.pfunkce=8");
+  $html.= "<h3>Pomocní pečovatelé</h3>";
+  $html.= akce_text_prehled_x($akce,"s.pfunkce=4");
+  $html.= "<h3>Děti v péči osobního pečovatele</h3>";
+  $html.= akce_text_prehled_x($akce,"s.pfunkce=92");
+  $html.= "<h3>Osobní pečovatelé (včetně tet a dědečků)</h3>";
+  $html.= akce_text_prehled_x($akce,"s.pfunkce IN (5,95)");
   $result->html= $html;
   return $result;
 }
