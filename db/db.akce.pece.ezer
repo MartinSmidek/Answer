@@ -289,7 +289,9 @@ form _pece [,,400,] { css:'ds_form'
     show _nazev    [,,130,] { title:'příjmení jméno', format:'s+q*', css_cell:"funkce,0:nic,1:zluty"
                               expr:"CONCAT(o.prijmeni,' ',o.jmeno)" }
     show _pfunkce  [,,40,]  { title:'funkce', map_pipe:ms_akce_pfunkce.zkratka, format:'q*s',
-                               data:s.pfunkce, css_cell:'pfunkce,0:nic,1:modry,4:zluty,5:zeleny,6:cerveny,7:sedy,8:oranzovy' }
+#                                                                 ?     hlavoun  pomocny  osobni   mimořádný team   skupina G
+#                                data:s.pfunkce, css_cell:'pfunkce,0:nic,1:modry,4:zluty,5:zeleny,6:cerveny,7:sedy,8:oranzovy' }
+                               data:s.pfunkce, css_cell:'pfunkce,0:nic,1:nic,4:zluty,5:zluty,6:nic,7:nic,8:zluty' }
     show skupinka  [,,20,]  { title:'sk.', data:s.skupinka, format:'rqs:e'}
     show           [,,160,] { title:'poznámka / k akci', format:'qs', expr:"CONCAT
                              (IF(pecovane,CONCAT('chůva pro ',c.jmeno,' ',c.prijmeni,' / '),''),
