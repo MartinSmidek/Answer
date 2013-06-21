@@ -1312,7 +1312,7 @@ function ds_vek($narozeni,$fromday) {
     $vek= -1;
   else {
     $vek= $fromday-sql2stamp($narozeni);
-    $vek= round($vek/(60*60*24*365),1);
+    $vek= round($vek/(60*60*24*365.2425),1);
   }
   return $vek;
 }

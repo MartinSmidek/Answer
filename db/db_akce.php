@@ -1303,12 +1303,14 @@ function akce_sestava_pecouni($akce,$par,$title,$vypis,$export=false) { trace();
   // dekódování parametrů
   $tits= explode(',',$tit);
   $flds= explode(',',$fld);
+  // číselníky
+  $pfunkce= map_cis('ms_akce_pfunkce','zkratka');  $pfunkce[0]= '?';
   // získání dat - podle $kdo
   $clmn= array();
   $expr= array();       // pro výrazy
   // data akce
   $qry= " SELECT o.prijmeni,o.jmeno,o.narozeni,o.rc_xxxx,o.ulice,o.psc,o.obec,o.telefon,o.email,
-            s.skupinka as skupinka,
+            s.skupinka as skupinka,s.pfunkce,
             IF(o.note='' AND s.poznamka='','',CONCAT(o.note,' / ',s.poznamka)) AS _poznamky
           FROM pobyt AS p
           JOIN spolu AS s USING(id_pobyt)
@@ -1320,7 +1322,10 @@ function akce_sestava_pecouni($akce,$par,$title,$vypis,$export=false) { trace();
     $n++;
     $clmn[$n]= array();
     foreach($flds as $f) {
-      $clmn[$n][$f]= $x->$f;
+      switch ($f) {
+      case 'pfunkce':   $clmn[$n][$f]= $pfunkce[$x->$f]; break;
+      default:          $clmn[$n][$f]= $x->$f;
+      }
     }
   }
 //                                         debug($clmn,"sestava pro $akce,$typ,$fld,$cnd");
@@ -1343,6 +1348,8 @@ function akce_sestava_lidi($akce,$par,$title,$vypis,$export=false) { trace();
   // dekódování parametrů
   $tits= explode(',',$tit);
   $flds= explode(',',$fld);
+  // číselníky
+  $pfunkce= map_cis('ms_akce_pfunkce','zkratka');  $pfunkce[0]= '?';
   // získání dat - podle $kdo
   $clmn= array();
   $expr= array();       // pro výrazy
@@ -1355,8 +1362,8 @@ function akce_sestava_lidi($akce,$par,$title,$vypis,$export=false) { trace();
           IF(o.ulice='',r.ulice,o.ulice) AS ulice,
           IF(o.psc='',r.psc,o.psc) AS psc,
           IF(o.obec='',r.obec,o.obec) AS obec,
-          s.poznamka AS s_note,
-          ROUND(DATEDIFF(a.datum_od,o.narozeni)/365.25,1) AS _vek
+          s.poznamka AS s_note,s.pfunkce,
+          ROUND(DATEDIFF(a.datum_od,o.narozeni)/365.2425,1) AS _vek
           FROM pobyt AS p
           JOIN spolu AS s USING(id_pobyt)
           JOIN osoba AS o ON o.id_osoba=s.id_osoba
@@ -1372,7 +1379,18 @@ function akce_sestava_lidi($akce,$par,$title,$vypis,$export=false) { trace();
     // doplnění počítaných položek
     $x->narozeni_dmy= sql_date1($x->narozeni);
     foreach($flds as $f) {
-      $clmn[$n][$f]= $f=='note' && $x->s_note ? $x->$f.' / '.$x->s_note : $x->$f;
+      switch ($f) {
+      case 'note': $clmn[$n][$f]= $x->s_note ? $x->$f.' / '.$x->s_note : $x->$f; break;
+      case 'pfunkce':
+        $pf= $x->$f;
+        $clmn[$n][$f]= !$pf ? 'skupinka' : (
+            $pf==4 ? 'pomocný p.' : (
+            $pf==5 || $pf==95 ? 'osobní p.' : (
+            $pf==8 ? 'skupina G' : (
+            $pf==92 ? "v os.péči" : '?'))));
+        break;
+      default: $clmn[$n][$f]= $x->$f;
+      }
     }
   }
 //                                         debug($clmn,"sestava pro $akce,$typ,$fld,$cnd");
@@ -1404,7 +1422,7 @@ function akce_sestava_pary($akce,$par,$title,$vypis,$export=false) { trace();
   $expr= array();       // pro výrazy
   // data akce
   $qry=  "SELECT
-            r.nazev as nazev,p.pouze as pouze,
+            r.nazev as nazev,p.pouze as pouze,p.poznamka,
             GROUP_CONCAT(DISTINCT IF(t.role='a',o.prijmeni,'') SEPARATOR '') as prijmeni_m,
             GROUP_CONCAT(DISTINCT IF(t.role='a',o.jmeno,'')    SEPARATOR '') as jmeno_m,
             GROUP_CONCAT(DISTINCT IF(t.role='a',o.narozeni,'') SEPARATOR '') as narozeni_m,
@@ -1425,14 +1443,14 @@ function akce_sestava_pary($akce,$par,$title,$vypis,$export=false) { trace();
               LEFT JOIN rodina AS cr ON cr.id_rodina=ct.id_rodina
               WHERE ca.druh=1 AND cr.id_rodina=r.id_rodina ) AS _ucasti,
             SUM(IF(t.role='d',1,0)) as _deti,
-            r.ulice,r.psc,r.obec,r.telefony,r.emaily,p.poznamka,p.skupina,
+            r.ulice,r.psc,r.obec,r.telefony,r.emaily,r.note AS r_note,p.skupina,
             p.ubytovani,p.budova,p.pokoj,
             p.luzka,p.kocarek,p.pristylky,p.strava_cel,p.strava_pol,
             GROUP_CONCAT(IFNULL((SELECT CONCAT(osoba.jmeno,' ',osoba.prijmeni)
-            FROM pobyt
-            JOIN spolu ON spolu.id_pobyt=pobyt.id_pobyt
-            JOIN osoba ON osoba.id_osoba=spolu.id_osoba
-            WHERE pobyt.id_akce='369' AND spolu.pecovane=o.id_osoba),'') SEPARATOR ' ') AS _chuvy
+              FROM pobyt
+              JOIN spolu ON spolu.id_pobyt=pobyt.id_pobyt
+              JOIN osoba ON osoba.id_osoba=spolu.id_osoba
+              WHERE pobyt.id_akce='369' AND spolu.pecovane=o.id_osoba),'') SEPARATOR ' ') AS _chuvy
           FROM pobyt AS p
           JOIN spolu AS s USING(id_pobyt)
           JOIN osoba AS o ON s.id_osoba=o.id_osoba
@@ -1469,7 +1487,7 @@ function akce_sestava_pary($akce,$par,$title,$vypis,$export=false) { trace();
     $n++;
     $clmn[$n]= array();
     foreach($flds as $f) {
-      $clmn[$n][$f]= $x->$f;
+      $clmn[$n][$f]= $f=='poznamka' && $x->r_note ? ($x->$f.' / '.$x->r_note) : $x->$f;
     }
 //     break;
   }
@@ -2896,8 +2914,8 @@ function sql2roku($narozeni) {
     list($y,$m,$d)= explode('-',$narozeni);
     $now= time();
     $nar= mktime(0,0,0,$m,$d,$y)+1;
-//     $roku= ($now-$nar)/(60*60*24*365.24);
-    $roku= ceil(($now-$nar)/(60*60*24*365.24));
+//     $roku= ($now-$nar)/(60*60*24*365.2425);
+    $roku= ceil(($now-$nar)/(60*60*24*365.2425));
   }
   return $roku;
 };
