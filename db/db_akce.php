@@ -1355,15 +1355,22 @@ function akce_sestava_lidi($akce,$par,$title,$vypis,$export=false) { trace();
   $expr= array();       // pro výrazy
   // data akce
   $qry=  "SELECT
-          p.pouze,p.poznamka,
-          o.prijmeni,o.jmeno,o.narozeni,o.rc_xxxx,o.note,o.obcanka,
-          IF(o.telefon='',r.telefony,o.telefon) AS telefon,
-          IF(o.email='',r.emaily,o.email) AS email,
-          IF(o.ulice='',r.ulice,o.ulice) AS ulice,
-          IF(o.psc='',r.psc,o.psc) AS psc,
-          IF(o.obec='',r.obec,o.obec) AS obec,
-          s.poznamka AS s_note,s.pfunkce,
-          ROUND(DATEDIFF(a.datum_od,o.narozeni)/365.2425,1) AS _vek
+            p.pouze,p.poznamka,
+            o.prijmeni,o.jmeno,o.narozeni,o.rc_xxxx,o.note,o.obcanka,
+            IF(o.telefon='',r.telefony,o.telefon) AS telefon,
+            IF(o.email='',r.emaily,o.email) AS email,
+            IF(o.ulice='',r.ulice,o.ulice) AS ulice,
+            IF(o.psc='',r.psc,o.psc) AS psc,
+            IF(o.obec='',r.obec,o.obec) AS obec,
+            s.poznamka AS s_note,s.pfunkce,
+            ROUND(DATEDIFF(a.datum_od,o.narozeni)/365.2425,1) AS _vek,
+            (SELECT GROUP_CONCAT(prijmeni,' ',jmeno)
+              FROM akce JOIN pobyt ON id_akce=akce.id_duakce
+              JOIN spolu ON spolu.id_pobyt=pobyt.id_pobyt
+              JOIN osoba ON osoba.id_osoba=spolu.id_osoba
+              WHERE spolu.pecovane=o.id_osoba AND id_akce=$akce) AS _chuva,
+            (SELECT CONCAT(prijmeni,' ',jmeno) FROM osoba
+              WHERE s.pecovane=osoba.id_osoba) AS _chovany
           FROM pobyt AS p
           JOIN spolu AS s USING(id_pobyt)
           JOIN osoba AS o ON o.id_osoba=s.id_osoba
@@ -1380,14 +1387,16 @@ function akce_sestava_lidi($akce,$par,$title,$vypis,$export=false) { trace();
     $x->narozeni_dmy= sql_date1($x->narozeni);
     foreach($flds as $f) {
       switch ($f) {
-      case 'note': $clmn[$n][$f]= $x->s_note ? $x->$f.' / '.$x->s_note : $x->$f; break;
+      case 'note':
+        $clmn[$n][$f]= $x->s_note ? $x->$f.' / '.$x->s_note : $x->$f;
+        break;
       case 'pfunkce':
         $pf= $x->$f;
         $clmn[$n][$f]= !$pf ? 'skupinka' : (
             $pf==4 ? 'pomocný p.' : (
-            $pf==5 || $pf==95 ? 'osobní p.' : (
+            $pf==5 || $pf==95 ? "os.peč. pro: {$x->_chovany}" : (
             $pf==8 ? 'skupina G' : (
-            $pf==92 ? "v os.péči" : '?'))));
+            $pf==92 ? "os.peč. je: {$x->_chuva}" : '?'))));
         break;
       default: $clmn[$n][$f]= $x->$f;
       }
@@ -1607,7 +1616,7 @@ function akce_text_prehled($akce,$par,$title,$vypis,$export=false) { trace();
     // data akce
     $veky= $kluci= $holky= array();
     $nkluci= $nholky= 0;
-    // histogram věku dětí - s vynecháním "dědečků a tet" tzn. spolu.pfunkce=95
+    // histogram věku dětí pozor na vynechání "dědečků a tet" tzn. spolu.pfunkce=95
     $qo=  "SELECT prijmeni,jmeno,narozeni,role,a.datum_od,o.sex
            FROM akce AS a
            JOIN pobyt AS p ON a.id_duakce=p.id_akce
