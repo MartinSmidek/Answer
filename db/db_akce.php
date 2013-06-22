@@ -1507,7 +1507,15 @@ function akce_sestava_pary($akce,$par,$title,$vypis,$export=false) { trace();
 # ------------------------------------------------------------------------------------ akce_text_eko
 function akce_text_eko($akce,$par,$title,$vypis,$export=false) { trace();
   $html= '';
+  $prijmy= 0;
+  $vydaje= 0;
   $prijem= array();
+  // zjištění mimořádných pečovatelů
+  $qm="SELECT id_spolu FROM pobyt AS p  JOIN akce  AS a ON p.id_akce=a.id_duakce
+      JOIN spolu AS s USING(id_pobyt) WHERE p.id_akce='$akce' AND p.funkce=99 AND s.pfunkce=6 ";
+  $rm= mysql_qry($qm);
+  $n_mimoradni= mysql_num_rows($rm);
+//   $mimoradni= $n_mimoradni ? "platba za stravu a ubytování $n_mimoradni mimořádných pečovatelů, kterou uhradili" : '';
   // příjmy od účastníků na pečouny
   $limit= '';
 //   $limit= "AND id_pobyt IN (17957,18258,18382)";
@@ -1534,13 +1542,9 @@ function akce_text_eko($akce,$par,$title,$vypis,$export=false) { trace();
       }
     }
   }
-//                                                         debug($prijem,"EKONOMIKA AKCE celkem");
-  // formátování odpovědi dle ceníku akce
-  $prijmy= 0;
-  $html.= "<h3>Příjmy za akci podle aktuální skladby účastníků</h3>";
-  $html.= "Pozn. pro přehled se počítá také cena s uplatněnou procentní slevou (např. VPS)<br>";
-  $html.= "(příjmy pro pečovatele se počítají z plné tzn. vyšší ceny)<br><br>";
-  $html.= "<table class='stat'><td>položky</td><th>cena bez slev</th><th>cena po slevě</th></tr>";
+  // výdaje za pečouny (mimo osobních a pomocných)
+  $rows_vydaje= '';
+  $rows_prijmy= '';
   $qc= "SELECT GROUP_CONCAT(polozka) AS polozky, za
         FROM ezer_ys.cenik
         WHERE id_akce='$akce' AND za!=''
@@ -1554,11 +1558,11 @@ function akce_text_eko($akce,$par,$title,$vypis,$export=false) { trace();
       if ( $c->za != 'P' ) $prijmy+= $cena;
       $cena= number_format($cena, 0, '.', ' ');
       $platba= number_format($platba, 0, '.', ' ');
-      $html.= "<tr><th>{$c->polozky}</th><td align='right'>$cena</td><td align='right'>$platba</td></tr>";
+//       $rows_prijmy.= "<tr><th>{$c->polozky}</th><td align='right'>$cena</td><td align='right'>$platba</td></tr>";
+      $rows_prijmy.= "<tr><th>{$c->polozky}</th><td align='right'>$cena</td></tr>";
     }
   }
-  $html.= "</table>";
-  // náklad na stravu pečounů
+  // náklad na stravu pečounů - kteří mají funkci a nemají zaškrtnuto "platí rodiče"
   $par= (object)array('typ'=>'vjp');
   $ret= akce_stravenky($akce,$par,'','',true);
 //                                                         debug($ret->tab);
@@ -1577,26 +1581,42 @@ function akce_text_eko($akce,$par,$title,$vypis,$export=false) { trace();
       }
     }
   }
-//                                                         debug($ham);
-  $html.= "<h3>Výdaje za stravu a ubytování pro $pecounu pečovatelů ($noci nocí)</h3>";
-  $html.= "V tomto počtu nejsou zahrnuti pomocní a osobní pečovatelé, jejichž náklady hradí rodiče<br>";
-  $html.= "(to je třeba v evidenční kartě pečovatele zapsat zaškrtnutím políčka pod poznámkou)<br><br>";
-  $html.= "<table class='stat'><td>položky</td><th>cena</td></tr>";
   $qc= "SELECT GROUP_CONCAT(polozka) AS polozky, za, SUM(cena) AS _cena_
         FROM ezer_ys.cenik
         WHERE id_akce='$akce' AND za IN ('sc','oc','vc','Np')
         GROUP BY za ORDER BY poradi ASC";
   $rc= mysql_qry($qc);
-  $vydaje= 0;
   while ( $rc && ($c= mysql_fetch_object($rc)) ) {
     $cena= $c->za=='Np'
       ? $noci * $pecounu * $c->_cena_
       : $ham[$c->za] * $c->_cena_;
     $vydaje+= $cena;
     $cena= number_format($cena, 0, '.', ' ');
-    $html.= "<tr><th>{$c->polozky}</th><td align='right'>$cena</td></tr>";
+    $rows_vydaje.= "<tr><th>{$c->polozky}</th><td align='right'>$cena</td></tr>";
   }
-  $html.= "</table>";
+  // odhad příjmů za mimořádné pečouny - přičtení k příjmům
+  if ( $n_mimoradni ) {
+    $cena_mimoradni= $vydaje*$n_mimoradni/$pecounu;
+    $prijmy+= $cena_mimoradni;
+    $cena= number_format($cena_mimoradni, 0, '.', ' ');
+    $rows_prijmy.= "<tr><th>ubytování a strava $n_mimoradni mimoř.peč.</th>
+      <td align='right'>$cena</td></tr>";
+  }
+//                                                         debug($prijem,"EKONOMIKA AKCE celkem");
+  // formátování odpovědi dle ceníku akce
+  $html.= "<h3>Příjmy za akci podle aktuální skladby účastníků</h3>";
+//   $html.= "Pozn. pro přehled se počítá také cena s uplatněnou procentní slevou (např. VPS)<br>";
+//   $html.= "(příjmy pro pečovatele se počítají z plné tzn. vyšší ceny)<br>";
+//   $html.= "<br><table class='stat'><td>položky</td><th>cena bez slev</th><th>cena po slevě</th></tr>";
+  $html.= "<br><table class='stat'><td>položky</td><th>cena</th></tr>";
+  $html.= "$rows_prijmy</table>";
+  $html.= "<h3>Výdaje za stravu a ubytování pro $pecounu pečovatelů ($noci nocí)</h3>";
+  $html.= "V tomto počtu nejsou zahrnuti pomocní a osobní pečovatelé, jejichž náklady hradí rodiče<br>";
+  $html.= "(to je třeba v evidenční kartě pečovatele zapsat zaškrtnutím políčka pod poznámkou)<br>";
+  // stravenky nejsou vytištěny pro $note, kteří nemají jasnou funkci -- pfunkce=0
+  $html.= $ret->note ? "{$ret->note}<br>" : '';
+  $html.= "<br><table class='stat'><td>položky</td><th>cena</td></tr>";
+  $html.= "$rows_vydaje</table>";
   $html.= "<h3>Shrnutí pro pečovatele</h3>";
   $obrat= $prijmy - $vydaje;
   $prijmy= number_format($prijmy, 0, '.', ' ')."&nbsp;Kč";
@@ -1615,7 +1635,8 @@ function akce_text_prehled($akce,$par,$title,$vypis,$export=false) { trace();
     $html= '';
     // data akce
     $veky= $kluci= $holky= array();
-    $nkluci= $nholky= 0;
+    $nveky= $nkluci= $nholky= 0;
+    $bez= $del= '';
     // histogram věku dětí pozor na vynechání "dědečků a tet" tzn. spolu.pfunkce=95
     $qo=  "SELECT prijmeni,jmeno,narozeni,role,a.datum_od,o.sex
            FROM akce AS a
@@ -1623,14 +1644,16 @@ function akce_text_prehled($akce,$par,$title,$vypis,$export=false) { trace();
            JOIN spolu AS s USING(id_pobyt)
            JOIN osoba AS o ON s.id_osoba=o.id_osoba
            LEFT JOIN tvori AS t ON t.id_osoba=o.id_osoba
-           WHERE a.id_duakce='$akce' AND t.role='d' AND $cond";
+           WHERE a.id_duakce='$akce' AND $cond";
     $ro= mysql_qry($qo);
     while ( $ro && ($o= mysql_fetch_object($ro)) ) {
       $vek= narozeni2roky_sql($o->narozeni,$o->datum_od);
       $sex= $o->sex;
       $veky[$vek]++;
+      $nveky++;
       if ( $sex==1 ) { $kluci[$vek]++; $nkluci++; }
-      if ( $sex==2 ) { $holky[$vek]++; $nholky++; }
+      elseif ( $sex==2 ) { $holky[$vek]++; $nholky++; }
+      else { $bez.= "$del{$o->prijmeni} {$o->jmeno}"; $del= ", "; }
     }
     ksort($veky);
     // formátování výsledku
@@ -1638,33 +1661,43 @@ function akce_text_prehled($akce,$par,$title,$vypis,$export=false) { trace();
     $r1= $r2= $r3= $r4= '';
     foreach($veky as $v=>$n) {
       $r1.= "<th align='right' width='20'>$v</th>";
-      $r2.= "<td align='right'>$n</td>";
+      $style= $n==$kluci[$v]+$holky[$v] ? '' : " style='background-color:yellow'";
+      $r2.= "<td align='right'$style>$n</td>";
       $r3.= "<td align='right'>{$kluci[$v]}</td>";
       $r4.= "<td align='right'>{$holky[$v]}</td>";
     }
     $r1.= "<th align='right'>celkem</th>";
-    $r2.= "<td align='right'>".($nkluci+$nholky)."</td>";
+    $style= $nveky==$nkluci+$nholky ? '' : " style='background-color:yellow'";
+    $r2.= "<td align='right'$style>$nveky</td>";
     $r3.= "<td align='right'>$nkluci</td>";
     $r4.= "<td align='right'>$nholky</td>";
     $html.= "<tr><th>věk</th>$r1</tr><tr><th>počet</th>$r2</tr><tr>"
           . "<th>kluci</th>$r3</tr><tr><th>holky</th>$r4</tr></table>";
+    // upozornění
+    if ( $bez ) $html.= "(ani holka ani kluk: $bez)";
     // předání výsledku
     return $html;
   }
   $html= '';
   // pfunkce: 0 4 5 8 92 95
   $html.= "<h3>Celkový počet dětí na akci podle stáří (v době začátku akce)</h3>";
-  $html.= akce_text_prehled_x($akce,"s.pfunkce!=95 ");
+  $html.= akce_text_prehled_x($akce,"t.role='d' AND s.pfunkce!=95 ");
   $html.= "<h3>Děti ve skupinkách (mimo G a osobně opečovávaných)</h3>";
-  $html.= akce_text_prehled_x($akce,"s.pfunkce IN (0)");
-  $html.= "<h3>Skupina G</h3>";
-  $html.= akce_text_prehled_x($akce,"s.pfunkce=8");
-  $html.= "<h3>Pomocní pečovatelé</h3>";
-  $html.= akce_text_prehled_x($akce,"s.pfunkce=4");
+  $html.= akce_text_prehled_x($akce,"t.role='d' AND s.pfunkce IN (0)");
   $html.= "<h3>Děti v péči osobního pečovatele</h3>";
-  $html.= akce_text_prehled_x($akce,"s.pfunkce=92");
+  $html.= akce_text_prehled_x($akce,"t.role='d' AND s.pfunkce=92");
+  $html.= "<h3>Děti ve skupině G</h3>";
+  $html.= akce_text_prehled_x($akce,"t.role='d' AND s.pfunkce=8");
+  $html.= "<h3>Pomocní pečovatelé</h3>";
+  $html.= akce_text_prehled_x($akce,"t.role='d' AND s.pfunkce=4");
   $html.= "<h3>Osobní pečovatelé (včetně tet a dědečků)</h3>";
-  $html.= akce_text_prehled_x($akce,"s.pfunkce IN (5,95)");
+  $html.= akce_text_prehled_x($akce,"t.role='d' AND s.pfunkce IN (5,95)");
+  $html.= "<br><hr><h3>Řádní pečovatelé</h3>";
+  $html.= akce_text_prehled_x($akce,"p.funkce=99 AND s.pfunkce IN (1,2,3) ");
+  $html.= "<h3>Mimořádní pečovatelé</h3>";
+  $html.= akce_text_prehled_x($akce,"p.funkce=99 AND s.pfunkce=6 ");
+  $html.= "<h3>Team pečovatelů (vč. bez přiřazené funkce)</h3>";
+  $html.= akce_text_prehled_x($akce,"p.funkce=99 AND s.pfunkce IN (0,7) ");
   $result->html= $html;
   return $result;
 }
@@ -1887,13 +1920,15 @@ function akce_sestava_noci($akce,$par,$title,$vypis,$export=false) { trace();
 #   manzele = rodina.nazev muz, zena a děti
 # generované vzorce
 #   platit = součet předepsaných plateb
+# výstupy
+#   note = pro pečouny seznam jmen, pro které nejsou stravenky, protože nemají funkci
+#          (tzn. asi nejsou na celý pobyt)
 function akce_stravenky($akce,$par,$title,$vypis,$export=false) { trace();
 //                                                         debug($par,"akce_stravenky($akce,,$title,$vypis,$export)");
   $ord= $par->ord ? $par->ord : "IF(funkce<=2,1,funkce),IF(pouze=0,r.nazev,o.prijmeni)";
   $result= (object)array();
   $cnd= $par->cnd;
-  $html= '';
-  $href= '';
+  $note= $delnote= $html= $href= '';
   $n= 0;
   // zjištění sloupců (0=ne)
   $tit= $par->typ=='vjp' ? "Pečovatel:25" : "Manželé:25";
@@ -1952,7 +1987,7 @@ function akce_stravenky($akce,$par,$title,$vypis,$export=false) { trace();
   $akce_data= (object)array();
   $dny= array('ne','po','út','st','čt','pá','so');
   if ( $par->typ=='vjp' )
-    $qry="SELECT o.prijmeni,o.jmeno,
+    $qry="SELECT o.prijmeni,o.jmeno,s.pfunkce,YEAR(datum_od) AS _rok,
             a.nazev AS akce_nazev, YEAR(a.datum_od) AS akce_rok, a.misto AS akce_misto
           FROM pobyt AS p
           JOIN akce  AS a ON p.id_akce=a.id_duakce
@@ -1986,6 +2021,11 @@ function akce_stravenky($akce,$par,$title,$vypis,$export=false) { trace();
   $jidlo_1= $xjidlo[$oo[0]];
   $jidlo_n= $xjidlo[$oo[1]];
   while ( $res && ($x= mysql_fetch_object($res)) ) {
+    if ( $par->typ=='vjp' && $x->pfunkce==0 && $x->_rok>2012 ) {        // !!!!!!!!!!!!!! od roku 2013
+      $note.= "$delnote{$x->prijmeni} {$x->jmeno}";
+      $delnote= ", ";
+      continue;
+    }
     $n++;
     $akce_data->nazev= $x->akce_nazev;
     $akce_data->rok=   $x->akce_rok;
@@ -2078,6 +2118,7 @@ function akce_stravenky($akce,$par,$title,$vypis,$export=false) { trace();
   $result->href= $href;
   $result->tab= $str;
   $result->akce= $akce_data;
+  $result->note= $note ? "(bez $note, kteří nemají vyjasněnou funkci)" : '';
   return $result;
 }
 # --------------------------------------------------------------------------------- akce_strava_pary
@@ -2228,7 +2269,8 @@ function akce_strava_pary($akce,$par,$title,$vypis,$export=false,$id_pobyt=0) { 
       }
       $sum.= "</tr>";
     }
-    $result->html= "<div class='stat'><table class='stat'><tr>$ths</tr>$sum$tab</table></div>";
+    $result->html.= "<h3>Počty strav bez pečounů</h3>";
+    $result->html.= "<div class='stat'><table class='stat'><tr>$ths</tr>$sum$tab</table></div>";
     $result->html.= "</br>";
     $result->href= $href;
   }
