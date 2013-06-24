@@ -1645,11 +1645,12 @@ function akce_text_eko($akce,$par,$title,$vypis,$export=false) { trace();
 }
 # -------------------------------------------------------------------------------- akce_text_prehled
 function akce_text_prehled($akce,$par,$title,$vypis,$export=false) { trace();
-  function akce_text_prehled_x($akce,$cond) {
+  function akce_text_prehled_x($akce,$cond,$uvest_jmena=false) {
     $html= '';
     // data akce
     $veky= $kluci= $holky= array();
     $nveky= $nkluci= $nholky= 0;
+    $jmena= $deljmena= '';
     $bez= $del= '';
     // histogram věku dětí pozor na vynechání "dědečků a tet" tzn. spolu.pfunkce=95
     $qo=  "SELECT prijmeni,jmeno,narozeni,role,a.datum_od,o.sex
@@ -1658,7 +1659,7 @@ function akce_text_prehled($akce,$par,$title,$vypis,$export=false) { trace();
            JOIN spolu AS s USING(id_pobyt)
            JOIN osoba AS o ON s.id_osoba=o.id_osoba
            LEFT JOIN tvori AS t ON t.id_osoba=o.id_osoba
-           WHERE a.id_duakce='$akce' AND $cond";
+           WHERE a.id_duakce='$akce' AND $cond ORDER BY prijmeni ";
     $ro= mysql_qry($qo);
     while ( $ro && ($o= mysql_fetch_object($ro)) ) {
       $vek= narozeni2roky_sql($o->narozeni,$o->datum_od);
@@ -1668,6 +1669,9 @@ function akce_text_prehled($akce,$par,$title,$vypis,$export=false) { trace();
       if ( $sex==1 ) { $kluci[$vek]++; $nkluci++; }
       elseif ( $sex==2 ) { $holky[$vek]++; $nholky++; }
       else { $bez.= "$del{$o->prijmeni} {$o->jmeno}"; $del= ", "; }
+      if ( $uvest_jmena ) {
+        $jmena.= "$deljmena{$o->prijmeni} {$o->jmeno}"; $deljmena= ", ";
+      }
     }
     ksort($veky);
     // formátování výsledku
@@ -1687,8 +1691,10 @@ function akce_text_prehled($akce,$par,$title,$vypis,$export=false) { trace();
     $r4.= "<td align='right'>$nholky</td>";
     $html.= "<tr><th>věk</th>$r1</tr><tr><th>počet</th>$r2</tr><tr>"
           . "<th>kluci</th>$r3</tr><tr><th>holky</th>$r4</tr></table>";
+    // jména
+    if ( $jmena ) $html.= "<b>($jmena)</b>";
     // upozornění
-    if ( $bez ) $html.= "(ani holka ani kluk: $bez)";
+    if ( $bez ) $html.= ($jmena?"<br>":'')."<i>(ani holka ani kluk: $bez)</i>";
     // předání výsledku
     return $html;
   }
@@ -1699,20 +1705,24 @@ function akce_text_prehled($akce,$par,$title,$vypis,$export=false) { trace();
   $html.= "<h3>Děti ve skupinkách (mimo G a osobně opečovávaných)</h3>";
   $html.= akce_text_prehled_x($akce,"t.role='d' AND s.pfunkce IN (0)");
   $html.= "<h3>Děti v péči osobního pečovatele</h3>";
-  $html.= akce_text_prehled_x($akce,"t.role='d' AND s.pfunkce=92");
+  $html.= akce_text_prehled_x($akce,"t.role='d' AND s.pfunkce=92",true);
   $html.= "<h3>Děti ve skupině G</h3>";
-  $html.= akce_text_prehled_x($akce,"t.role='d' AND s.pfunkce=8");
+  $html.= akce_text_prehled_x($akce,"t.role='d' AND s.pfunkce=8",true);
   $html.= "<h3>Pomocní pečovatelé</h3>";
-  $html.= akce_text_prehled_x($akce,"t.role='d' AND s.pfunkce=4");
-  $html.= "<h3>Osobní pečovatelé (včetně tet a dědečků)</h3>";
-  $html.= akce_text_prehled_x($akce,"t.role='d' AND s.pfunkce IN (5,95)");
+  $html.= akce_text_prehled_x($akce,"t.role='d' AND s.pfunkce=4",true);
+  $html.= "<h3>Osobní pečovatelé (zařazení mezi Pečovatele)</h3>";
+  $html.= akce_text_prehled_x($akce,"t.role='d' AND s.pfunkce IN (5)",true);
+  $html.= "<h3>Osobní pečovatelé (nezařazení mezi Pečovatele)</h3>";
+  $html.= akce_text_prehled_x($akce,"t.role='d' AND s.pfunkce IN (95)",true);
   $html.= "<br><hr><h3>Řádní pečovatelé</h3>";
   $html.= akce_text_prehled_x($akce,"p.funkce=99 AND s.pfunkce IN (1,2,3) ");
   $html.= "<h3>Mimořádní pečovatelé</h3>";
-  $html.= akce_text_prehled_x($akce,"p.funkce=99 AND s.pfunkce=6 ");
-  $html.= "<h3>Team pečovatelů (vč. bez přiřazené funkce)</h3>";
-  $html.= akce_text_prehled_x($akce,"p.funkce=99 AND s.pfunkce IN (0,7) ");
-  $result->html= $html;
+  $html.= akce_text_prehled_x($akce,"p.funkce=99 AND s.pfunkce=6 ",true);
+  $html.= "<h3>Team pečovatelů (s touto funkcí)</h3>";
+  $html.= akce_text_prehled_x($akce,"p.funkce=99 AND s.pfunkce IN (7) ",true);
+  $html.= "<h3>Team pečovatelů (bez přiřazené funkce)</h3>";
+  $html.= akce_text_prehled_x($akce,"p.funkce=99 AND s.pfunkce IN (0) ",true);
+  $result->html= "$html<br><br>";
   return $result;
 }
 # --------------------------------------------------------------------------------- akce_text_vyroci
