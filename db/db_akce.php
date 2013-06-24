@@ -751,11 +751,13 @@ function akce_pdf_stravenky0($akce,$par,$report_json) {  trace();
     $parss[$n]->line1= "$den";
     $parss[$n]->line2= "<b>{$sob[$jidlo]}</b>";
     $parss[$n]->rect=  "<b>{$cp[$velikost]}</b>";
-    $parss[$n]->ram= $parss[$n]->end= '';
+    $parss[$n]->end= '';
+    $parss[$n]->ram= '';
+    $parss[$n]->ram= '<img src="db/img/stravenky-rastr-1.png" width="48" height="23" border="0" />';
     $n++;
   }
   // předání k tisku
-                                        debug($parss,"akce_pdf_stravenky");
+//                                         debug($parss,"akce_pdf_stravenky");
   $fname= 'stravenky_'.date("Ymd_Hi");
   $fpath= "$ezer_path_docs/$fname.pdf";
   dop_rep_ids($report_json,$parss,$fpath);
@@ -946,6 +948,7 @@ function dop_rep_ids($report_json,$parss,$fname) { trace();
     }
   }
   $report= $json->decode($report_json);
+//                                         debug($report,"dop_rep_ids");
   // vytvoření $texty - seznam
   $texty= array();
   for ($i=0; $i<count($parss); $i++) {
