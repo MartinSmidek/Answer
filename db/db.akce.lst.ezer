@@ -35,9 +35,9 @@ proc onfirstfocus() {
 
 menu m {type:'left'
   menu c {title:'Výběr akce',type:'group',   skill:'c'             // jen pro CR
-    item {title:'program Manželská setkání', skill:'cam', par:°{omez:'druh IN (1,2,3,4)'} }
-    item {title:'programy Rodina mimo MS',   skill:'car', par:°{omez:'druh NOT IN (1,2,3,4)'} }
-    item {title:'... bez omezení',           skill:'a',   par:°{omez:'1'} }
+    item {title:'program Manželská setkání', skill:'caam', par:°{omez:'druh IN (1,2,3,4)'} }
+    item {title:'programy Rodina mimo MS',   skill:'caar', par:°{omez:'druh NOT IN (1,2,3,4)'} }
+    item {title:'... bez omezení',           skill:'a',    par:°{omez:'1'} }
       proc onclick (i) {
         info.rok.display(1); info.sey.display(1); info.google.display(0);
         the_omezeni.set(i.par.omez);
@@ -241,7 +241,7 @@ form _akce [,,*,50] {
         nazev.set(conc(' Akce ',google.kod.get,'/',google.rok.get,' - ',google.nazev.get));
       | eq(the_source.get,'sey');
         nazev.set(conc(' ',conc(sey.nazev.get,', ',fdate('Y',sey.od.get))));
-      | error('X1')
+      | alert('V levém menu je třeba vybrat typ akcí (na které máte oprávnění)')
       };
     };
     return (nazev);
