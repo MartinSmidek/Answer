@@ -13,6 +13,7 @@ use page: form _page [450,40,,]
 
 proc onfirstfocus() {
 # proc onstart() { echo('db.akce.lst.onstart');
+  the_source.set('sey');
   info.fill(the_title.get);
   the_omezeni.set('1');
   info.rok.selects(javascript(conc(
