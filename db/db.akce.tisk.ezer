@@ -64,20 +64,24 @@ menu m {type:'left',
                                         ,fld:'prijmeni,jmena,obec,psc,ulice,telefon_m,email_m,telefon_z,email_z'}}
     item {title:'Jednotlivci bez dětí'                                                                  skill:'y;f'
                                         ,par:°{typ:'j',exp:'Excel',cnd:"funkce!=99 AND role!='d'"
-                                        ,tit:'příjmení:15,jméno:12,narození:12,/rč:5,obec:25,psč:7,ulice:25'
-                                        ,fld:'prijmeni,jmeno,narozeni,rc_xxxx,obec,psc,ulice'}}
+                                        ,tit:'příjmení:15,jméno:12,věk:5,narození:12,/rč:5,obec:25,psč:7,ulice:25'
+                                        ,fld:'prijmeni,jmeno,_vek,narozeni,rc_xxxx,obec,psc,ulice'}}
     item {title:'Jednotlivci bez dětí'                                                                  skill:'c'
                                         ,par:°{typ:'j',exp:'Excel',cnd:"funkce!=99 AND role!='d'"
-                                        ,tit:'příjmení:15,jméno:12,narození:12,obec:25,psč:7,ulice:25'
-                                        ,fld:'prijmeni,jmeno,narozeni,obec,psc,ulice'}}
+                                        ,tit:'příjmení:15,jméno:12,věk:5,narození:12,obec:25,psč:7,ulice:25'
+                                        ,fld:'prijmeni,jmeno,_vek,narozeni,obec,psc,ulice'}}
     item {title:'Jednotlivci vč. dětí'                                                                  skill:'y;f'
                                         ,par:°{typ:'j',exp:'Excel',cnd:'funkce!=99'
-                                        ,tit:'příjmení:15,jméno:12,narození:12,/rč:5,obec:25,psč:7,ulice:25'
-                                        ,fld:'prijmeni,jmeno,narozeni,rc_xxxx,obec,psc,ulice'}}
+                                        ,tit:'příjmení:15,jméno:12,věk:5,narození:12,/rč:5,obec:25,psč:7,ulice:25'
+                                        ,fld:'prijmeni,jmeno,_vek,narozeni,rc_xxxx,obec,psc,ulice'}}
+    item {title:'Jednotlivci vč. dětí a pečounů'                                                        skill:'y;f'
+                                        ,par:°{typ:'j',exp:'Excel',cnd:'1',ord:'o.prijmeni,o.jmeno'
+                                        ,tit:'příjmení:15,jméno:12,věk:5,narození:12,/rč:5,obec:25,psč:7,ulice:25'
+                                        ,fld:'prijmeni,jmeno,_vek,narozeni,rc_xxxx,obec,psc,ulice'}}
     item {title:'Jednotlivci vč. dětí'                                                                  skill:'c'
                                         ,par:°{typ:'j',exp:'Excel',cnd:'funkce!=99'
-                                        ,tit:'příjmení:15,jméno:12,narození:12,obec:25,psč:7,ulice:25'
-                                        ,fld:'prijmeni,jmeno,narozeni,obec,psc,ulice'}}
+                                        ,tit:'příjmení:15,jméno:12,věk:5,narození:12,obec:25,psč:7,ulice:25'
+                                        ,fld:'prijmeni,jmeno,_vek,narozeni,obec,psc,ulice'}}
   }
   menu {title:'seznamy',type:'group',_sys:'*'
     item {title:'VPS na akci'                                                                           skill:'y;c'
@@ -119,7 +123,7 @@ menu m {type:'left',
   }
   menu {title:'informace o akci',type:'group',_sys:'*'
     item {title:'Narozeniny, výročí'    ,par:°{typ:'vv',cnd:'1'}}
-    item {title:'Přehled o akci'        ,par:°{typ:'vi',cnd:'1'}}
+    item {title:'Přehled o akci (děti,pečouni)', par:°{typ:'vi',cnd:'1'}}
     item {title:'Ekonomické ukazatele'  ,par:°{typ:'ve',cnd:'1'}}
     item {title:'Udržet kontakt'        ,par:°{typ:'12',cnd:'1'}, skill:'y;f'}
   }

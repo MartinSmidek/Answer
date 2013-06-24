@@ -1388,10 +1388,11 @@ function akce_sestava_lidi($akce,$par,$title,$vypis,$export=false) { trace();
           FROM pobyt AS p
           JOIN spolu AS s USING(id_pobyt)
           JOIN osoba AS o ON o.id_osoba=s.id_osoba
-          JOIN tvori AS t ON t.id_osoba=o.id_osoba
-          JOIN rodina AS r USING(id_rodina)
+          LEFT JOIN tvori AS t ON t.id_osoba=o.id_osoba
+          LEFT JOIN rodina AS r USING(id_rodina)
           JOIN akce AS a ON a.id_duakce=p.id_akce
           WHERE p.id_akce='$akce' AND $cnd
+          GROUP BY o.prijmeni,o.jmeno,o.narozeni
           ORDER BY $ord";
   $res= mysql_qry($qry);
   while ( $res && ($x= mysql_fetch_object($res)) ) {
