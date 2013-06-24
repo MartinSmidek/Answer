@@ -390,7 +390,7 @@ __XLS;
   $ret->xhref= " zde lze stáhnout <a href='docs/$name.xls' target='xls'>$name.xls</a>.";
                                                         if ($test) display(($xls));
 end:
-                                                        debug($ret);
+//                                                         debug($ret);
   return $ret;
 }
 # -------------------------------------------------------------------------------------- akce_platby
@@ -453,7 +453,7 @@ function akce_pobyt_default($id_pobyt,$zapsat=0) {  trace();
   }
   $ret= (object)array('luzka'=>$dosp+$deti,'kocarek'=>$koje,'pocetdnu'=>$noci,'svp'=>$svp,
                       'strava_cel'=>$dosp,'strava_pol'=>$deti,'vzorec'=>$fce);
-                                                debug($ret,"osob:$koje,$deti,$dosp $msg fce=$fce");
+//                                                 debug($ret,"osob:$koje,$deti,$dosp $msg fce=$fce");
   return $ret;
 }
 # -------------------------------------------------------------------------------------- akce_vzorec
@@ -577,7 +577,7 @@ function akce_vzorec($id_pobyt) {  trace();
       $cc->j= $a->za ? $jidel->{$a->za} : '';
       $cenik[]= $cc;
     }
-                                                        debug($cenik,"ceník pro typ $ubytovani");
+//                                                         debug($cenik,"ceník pro typ $ubytovani");
   }
   // výpočty
   if ( $ok ) {
@@ -753,7 +753,7 @@ function akce_pdf_stravenky0($akce,$par,$report_json) {  trace();
     $parss[$n]->rect=  "<b>{$cp[$velikost]}</b>";
     $parss[$n]->end= '';
     $parss[$n]->ram= '';
-    $parss[$n]->ram= '<img src="db/img/stravenky-rastr-1.png" width="48" height="23" border="0" />';
+    $parss[$n]->ram= '<img src="db/img/stravenky-rastr-1.png" style="width:48mm;height:23mm" border="0" />';
     $n++;
   }
   // předání k tisku
@@ -790,6 +790,7 @@ function akce_pdf_stravenky($akce,$par,$report_json) {  trace();
     }
     // stravenky pro účastníka
     list($prijmeni,$jmena)= explode('|',$jmeno);
+//                                                         if ( $prijmeni!="Bučkovi" ) continue;
     $parss[$n]= (object)array();
     $parss[$n]->header= $header;
     $parss[$n]->line1= "<b>$prijmeni</b>";
@@ -819,8 +820,18 @@ function akce_pdf_stravenky($akce,$par,$report_json) {  trace();
             $parss[$n]->header= $header;
             $parss[$n]->line1= "$den";
             $parss[$n]->line2= "<b>{$sob[$jidlo]}</b>";
-            $parss[$n]->rect=  "<b>{$cp[$velikost]}</b>";
-            $parss[$n]->ram= $parss[$n]->end= '';
+            if ( $velikost=='c' ) {
+              // celá porce
+              $parss[$n]->ram= '<img src="db/img/stravenky-rastr-1.png"'
+                             . ' style="width:48mm" border="0" />';
+              $parss[$n]->rect=  " ";
+            }
+            else {
+              // poloviční porce
+              $parss[$n]->ram= '';
+              $parss[$n]->rect=  "<b>1/2</b>";
+            }
+            $parss[$n]->end= '';
             $n++;
           }
         }
@@ -1130,7 +1141,7 @@ function akce_sestava_spec($akce,$par,$title,$vypis,$export=false) { trace();
     $result->html= implode(', ',$ems);
     break;
   }
-                                                debug($ems,count($ems));
+//                                                 debug($ems,count($ems));
   return $result;
 }
 # ------------------------------------------------------------------------------ akce_jednou_dvakrat
@@ -1175,7 +1186,7 @@ function akce_jednou_dvakrat($akce,$par,$title,$vypis,$export=false) { trace();
     $n++;
   }
   ksort($vps);
-                                        debug($vps,"jednou - dvakrát");
+//                                         debug($vps,"jednou - dvakrát");
   $html= "<h3>Pracovní seznam párů, kteří jsou na MS poprvé (1x) nebo podruhé (2x), spolu s jejich $VPS</h3>";
   foreach ($vps as $v => $ps) {
     $html.= "<p><b>$v</b>";
@@ -2140,7 +2151,7 @@ function akce_strava_pary($akce,$par,$title,$vypis,$export=false,$id_pobyt=0) { 
   $href= '';
   $n= 0;
   // zjištění sloupců (0=ne)
-  $tit= "Manželé:25";
+  $tit= "Manželé a pečouni:25";  // bude opraveno podle skutečnosti před exportem
   $fld= "manzele";
   $dny= array('ne','po','út','st','čt','pá','so');
   $dny= array('n','p','ú','s','č','p','s');
@@ -2192,8 +2203,10 @@ function akce_strava_pary($akce,$par,$title,$vypis,$export=false,$id_pobyt=0) { 
   }
   // pokud není id_pobyt tak vyloučíme náhradníky
   $cond.= $id_pobyt ? " AND id_pobyt=$id_pobyt" : " AND funkce NOT IN (9)";
+  $jsou_pecouni= false;
   // data akce
-  $qry=  "SELECT r.nazev as nazev,strava_cel,strava_pol,cstrava_cel,cstrava_pol,p.pouze,
+  $qry=  "SELECT COUNT(*) AS _pocet,funkce,pfunkce,
+            r.nazev as nazev,strava_cel,strava_pol,cstrava_cel,cstrava_pol,p.pouze,
             GROUP_CONCAT(DISTINCT IF(t.role='a',o.prijmeni,'') SEPARATOR '') as prijmeni_m,
             GROUP_CONCAT(DISTINCT IF(t.role='a',o.jmeno,'')    SEPARATOR '') as jmeno_m,
             GROUP_CONCAT(DISTINCT IF(t.role='b',o.prijmeni,'') SEPARATOR '') as prijmeni_z,
@@ -2203,7 +2216,7 @@ function akce_strava_pary($akce,$par,$title,$vypis,$export=false,$id_pobyt=0) { 
           JOIN osoba AS o ON s.id_osoba=o.id_osoba
           LEFT JOIN tvori AS t ON t.id_osoba=o.id_osoba
           LEFT JOIN rodina AS r USING(id_rodina)
-          WHERE p.id_akce='$akce' AND $cond
+          WHERE p.id_akce='$akce' AND IF(funkce=99,s_rodici=0 AND pfunkce,1) AND $cond
           GROUP BY id_pobyt
           ORDER BY $ord";
 //   $qry.=  " LIMIT 5";
@@ -2212,34 +2225,60 @@ function akce_strava_pary($akce,$par,$title,$vypis,$export=false,$id_pobyt=0) { 
 //                                                         debug($x,"hodnoty");
     $n++;
     $clmn[$n]= array();
-    $clmn[$n]['manzele']=
-          $x->pouze==1 ? "{$x->prijmeni_m} {$x->jmeno_m}"
-       : ($x->pouze==2 ? "{$x->prijmeni_z} {$x->jmeno_z}"
-       : "{$x->nazev} {$x->jmeno_m} a {$x->jmeno_z}");
-    // stravy
-    $sc= $x->strava_cel;
-    $sp= $x->strava_pol;
-    $csc= $x->cstrava_cel;
-    $csp= $x->cstrava_pol;
-    $k= 0;
-    for ($i= 0; $i<=$nd; $i++) {
-      if ( $i>0 || $oo[0]=='s' ) {
-        $k++; $suma[$flds[$k]]+= $clmn[$n][$flds[$k]]= $csc ? $csc[3*$i+0] : $sc;
-        $k++; $suma[$flds[$k]]+= $clmn[$n][$flds[$k]]= $csp ? $csp[3*$i+0] : $sp;
+    if ( $x->funkce==99 && $x->pfunkce ) {
+      // stravy pro pečouny - mají jednotně celou stravu - (s_rodici=0,pfunkce!=0 viz SQL)
+      $jsou_pecouni= true;
+      $clmn[$n]['manzele']= 'PEČOUNI';
+      $sc= $x->_pocet;
+      $k= 0;
+      for ($i= 0; $i<=$nd; $i++) {
+        if ( $i>0 || $oo[0]=='s' ) {
+          $k++; $suma[$flds[$k]]+= $clmn[$n][$flds[$k]]= $sc;
+          $k++; $suma[$flds[$k]]+= $clmn[$n][$flds[$k]]= $sp;
+        }
+        if ( $i>0 && $i<$nd
+          || $i==0   && ($oo[0]=='s' || $oo[0]=='o')
+          || $i==$nd && ($oo[1]=='o' || $oo[1]=='v') ) {
+          $k++; $suma[$flds[$k]]+= $clmn[$n][$flds[$k]]= $sc;
+          $k++; $suma[$flds[$k]]+= $clmn[$n][$flds[$k]]= $sp;
+        }
+        if ( $i<$nd || $oo[1]=='v' ) {
+          $k++; $suma[$flds[$k]]+= $clmn[$n][$flds[$k]]= $sc;
+          $k++; $suma[$flds[$k]]+= $clmn[$n][$flds[$k]]= $sp;
+        }
       }
-      if ( $i>0 && $i<$nd
-        || $i==0   && ($oo[0]=='s' || $oo[0]=='o')
-        || $i==$nd && ($oo[1]=='o' || $oo[1]=='v') ) {
-        $k++; $suma[$flds[$k]]+= $clmn[$n][$flds[$k]]= $csc ? $csc[3*$i+1] : $sc;
-        $k++; $suma[$flds[$k]]+= $clmn[$n][$flds[$k]]= $csp ? $csp[3*$i+1] : $sp;
-      }
-      if ( $i<$nd || $oo[1]=='v' ) {
-        $k++; $suma[$flds[$k]]+= $clmn[$n][$flds[$k]]= $csc ? $csc[3*$i+2] : $sc;
-        $k++; $suma[$flds[$k]]+= $clmn[$n][$flds[$k]]= $csp ? $csp[3*$i+2] : $sp;
+    }
+    elseif ( $x->funkce!=99 ) {
+      // stravy pro manžele
+      $clmn[$n]['manzele']=
+            $x->pouze==1 ? "{$x->prijmeni_m} {$x->jmeno_m}"
+         : ($x->pouze==2 ? "{$x->prijmeni_z} {$x->jmeno_z}"
+         : "{$x->nazev} {$x->jmeno_m} a {$x->jmeno_z}");
+      $sc= $x->strava_cel;
+      $sp= $x->strava_pol;
+      $csc= $x->cstrava_cel;
+      $csp= $x->cstrava_pol;
+      $k= 0;
+      for ($i= 0; $i<=$nd; $i++) {
+        if ( $i>0 || $oo[0]=='s' ) {
+          $k++; $suma[$flds[$k]]+= $clmn[$n][$flds[$k]]= $csc ? $csc[3*$i+0] : $sc;
+          $k++; $suma[$flds[$k]]+= $clmn[$n][$flds[$k]]= $csp ? $csp[3*$i+0] : $sp;
+        }
+        if ( $i>0 && $i<$nd
+          || $i==0   && ($oo[0]=='s' || $oo[0]=='o')
+          || $i==$nd && ($oo[1]=='o' || $oo[1]=='v') ) {
+          $k++; $suma[$flds[$k]]+= $clmn[$n][$flds[$k]]= $csc ? $csc[3*$i+1] : $sc;
+          $k++; $suma[$flds[$k]]+= $clmn[$n][$flds[$k]]= $csp ? $csp[3*$i+1] : $sp;
+        }
+        if ( $i<$nd || $oo[1]=='v' ) {
+          $k++; $suma[$flds[$k]]+= $clmn[$n][$flds[$k]]= $csc ? $csc[3*$i+2] : $sc;
+          $k++; $suma[$flds[$k]]+= $clmn[$n][$flds[$k]]= $csp ? $csp[3*$i+2] : $sp;
+        }
       }
     }
   }
 //                                                         debug($suma,"sumy");
+  $tits[0]= $jsou_pecouni ? "Manželé a pečouni:25" : "Manželé:25";
   if ( $export ) {
     $result->tits= $tits;
     $result->flds= $flds;
@@ -2272,8 +2311,9 @@ function akce_strava_pary($akce,$par,$title,$vypis,$export=false,$id_pobyt=0) { 
       }
       $sum.= "</tr>";
     }
-    $result->html.= "<h3>Počty strav bez pečounů</h3>";
-    $result->html.= "<div class='stat'><table class='stat'><tr>$ths</tr>$sum$tab</table></div>";
+    $result->html.= "<h3>Počty strav včetně pečounů</h3>";
+    $result->html.= "nejsou započteni pečouni, kteří mají prázdný sloupec funkce (asi jsou jen dočasní)";
+    $result->html.= "<br><br><div class='stat'><table class='stat'><tr>$ths</tr>$sum$tab</table></div>";
     $result->html.= "</br>";
     $result->href= $href;
   }
@@ -3712,7 +3752,7 @@ function akce_pridej($id_akce,$id_muz,$id_zena) {  #trace();
     $ret->msg= "... vloženo";
   }
 end:
-                                                        debug($ret,"akce_pridej");
+//                                                         debug($ret,"akce_pridej");
   return $ret;
 }
 # --------------------------------------------------------------------------------- akce_auto_jmena2
@@ -3842,7 +3882,7 @@ function akce_auto_jmena1L($id_osoba) {  #trace();
 # ----------------------------------------------------------------------------------- akce_auto_deti
 # SELECT autocomplete - výběr z dětí na akci=par->akce
 function akce_auto_deti($patt,$par) {  #trace();
-                                                                debug($par,$patt);
+//                                                                 debug($par,$patt);
   $a= array();
   $limit= 20;
   $n= 0;
@@ -3902,7 +3942,7 @@ function akce_auto_jmena3($patt,$par) {  #trace();
     $a[0]= "... žádné příjmení nezačíná '$patt'";
   elseif ( $n==$limit )
     $a[-999999]= "... a další";
-                                                                debug($a,$qry);
+//                                                                 debug($a,$qry);
   return $a;
 }
 # --------------------------------------- akce_auto_jmena3L
@@ -4300,7 +4340,7 @@ function evid_table($par,$tits,$flds,$clmn,$export=false) {
     $result->html= "<div class='stat'><table class='stat'><tr>$ths</tr>$tab</table>
       $n řádků<br><br>{$par->txt}</div>";
   }
-                                                debug($result);
+//                                                 debug($result);
   return $result;
 }
 # -------------------------------------------------------------------------------------------------- evid_sestava_s
@@ -4693,7 +4733,7 @@ function db_mail_copy_ds() {  trace();
       }
       $qry= "INSERT INTO ezer_ys.ds_osoba_copy ($ids) VALUES ($vals)";
       $ok= mysql_query($qry,$ezer_db['ezer_ys'][0]);
-                                                        display("$ok:$qry");
+//                                                         display("$ok:$qry");
       if ( !$ok ) {
         $html.= "\nPROBLEM ".mysql_error();
       }
@@ -4963,7 +5003,7 @@ function dop_mai_omitt($id_dopis,$id_vynech) {  trace();
       $vynech[]= $em;
     }
   }
-                                                        debug($vynech,"vynechané adresy");
+//                                                         debug($vynech,"vynechané adresy");
   $msg.= "<br>podezřelých je ".count($vynech)." adres";
   // probírka adresátů
   $n= 0;
