@@ -1035,6 +1035,7 @@ panel Dite [,,380,495] {type:'popup', title:'Úprava dětí (a osobních pečova
     check pecoun [L+291,Ta+70,82,17] { title:"je 'pečoun'", value:'0'   // 0 => osobní & 'dědeček'
       proc onchange () {
         and(eq(pfunkce.get,5),eq(pecoun.get,0)); pfunkce.set(95); pfunkce.change
+      | and(eq(pfunkce.get,95),eq(pecoun.get,1)); pfunkce.set(5); pfunkce.change
     }}
     // ve skupince
     field skupinka [L+119,Ta+24,30,]   { data:s.skupinka, help:'skupinka' }
