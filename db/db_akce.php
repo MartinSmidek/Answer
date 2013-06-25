@@ -967,7 +967,7 @@ function akce_pdf_jmenovky($akce,$par,$report_json) {  trace();
     // definice pole substitucí
     $x= (object)$xa;
     $parss[$n]= (object)array();
-    $fsize= mb_strlen($x->jmeno)>9 ? 13 : 14;
+    $fsize= mb_strlen($x->jmeno)>8 ? 13 : 14;
     $parss[$n]->jmeno= "<span style=\"font-size:{$fsize}mm;font-weight:bold\">{$x->jmeno}</span>";
     list($prijmeni)= explode(' ',$x->prijmeni);
     $fsize= mb_strlen($prijmeni)>10 ? 10 : 12;
@@ -2454,7 +2454,7 @@ function akce_vyuctov_pary($akce,$par,$title,$vypis,$export=false) { trace();
         $preplatek= $x->platba > $predpis ? $x->platba - $predpis : '';
         $nedoplatek= $x->platba < $predpis ? $predpis - $x->platba : '';
         switch ($f) {
-        case '=pocetnoci':  $val= max(0,$x->pocetdnu-1);
+        case '=pocetnoci':  $val= max(0,$x->pocetdnu);
                             break;
         case '=platit':     $val= $predpis;
                             $exp= "=[platba1,0]+[platba2,0]+[platba3,0]+[platba4,0]"; break;
