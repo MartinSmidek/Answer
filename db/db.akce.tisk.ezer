@@ -8,6 +8,17 @@ var the_par: object
 var the_vypis: text
 
 use info: form right [12,4,,] {
+  button export2 [-80,4,100,16] { title:'PDF...', style:'display:block;zIndex:2',
+    proc onclick() {
+      var res: object
+      switch(export2.get,
+      'PDF-jmenovky',{
+        sti_V.report_init; sti_V.report_check;
+        res.set(ask('akce_pdf_jmenovky',the_duakce.get,the_par.get,sti_V.get_json));
+        form.msg.set(res.html);
+      })
+    }
+  }
   button export [-20,4,100,16] { title:'Excel', style:'display:block;zIndex:2',
     proc onclick() {
       var res: object
@@ -128,37 +139,37 @@ menu m {type:'left',
     item {title:'Udržet kontakt'        ,par:°{typ:'12',cnd:'1'}, skill:'y;f'}
   }
   menu {title:'jmenovky na akci',type:'group',_sys:'*'
-    item {title:'Účastníci bez funkce'                                                                  skill:'y;f'
-                                        ,par:°{typ:'j',exp:'Excel',cnd:"role!='d' AND funkce=0",ord:"prijmeni"
-                                        ,tit:'jméno:20, příjmení:15'
-                                        ,fld:'jmeno,prijmeni'}}
-    item {title:'Účastníci'                                                                             skill:'c'
-                                        ,par:°{typ:'j',exp:'Excel',cnd:"role!='d' AND funkce IN (0,1,2)",ord:"prijmeni"
-                                        ,tit:'jméno:20, příjmení:15'
-                                        ,fld:'jmeno,prijmeni'}}
-    item {title:'Děti'                  ,par:°{typ:'j',exp:'Excel',cnd:"role='d'",ord:"prijmeni"
-                                        ,tit:'jméno:20, příjmení:15'
-                                        ,fld:'jmeno,prijmeni'}}
-    item {title:'Pečouni' format:'d'    ,par:°{typ:'j',exp:'Excel',cnd:"AND funkce=99",ord:"prijmeni"
-                                        ,tit:'jméno:20, příjmení:15'
-                                        ,fld:'jmeno,prijmeni'}}
-    item {title:'VPS'                                                                                   skill:'y'
-                                        ,par:°{typ:'j',exp:'Excel',cnd:"role!='d' AND funkce IN (1,2)",ord:"prijmeni"
-                                        ,tit:'jméno:20, příjmení:15'
-                                        ,fld:'jmeno,prijmeni'}}
+    item {title:'Účastníci bez funkce'                                                                  skill:'f'
+                                        ,par:°{typ:'j',exp:'Excel',exp2:'PDF-jmenovky'
+                                        ,cnd:"role!='d' AND funkce=0",ord:"prijmeni"
+                                        ,tit:'jméno:20, příjmení:15',fld:'jmeno,prijmeni'}}
+    item {title:'Účastníci'                                                                             skill:'y;c'
+                                        ,par:°{typ:'j',exp:'Excel',exp2:'PDF-jmenovky'
+                                        ,cnd:"role!='d' AND funkce IN (0,1,2)",ord:"prijmeni"
+                                        ,tit:'jméno:20, příjmení:15',fld:'jmeno,prijmeni'}}
+    item {title:'Děti'                  ,par:°{typ:'j',exp:'Excel',exp2:'PDF-jmenovky'
+                                        ,cnd:"role='d'",ord:"prijmeni"
+                                        ,tit:'jméno:20, příjmení:15',fld:'jmeno,prijmeni'}}
+    item {title:'Pečouni' format:'d'    ,par:°{typ:'j',exp:'Excel',exp2:'PDF-jmenovky'
+                                        ,cnd:"AND funkce=99",ord:"prijmeni"
+                                        ,tit:'jméno:20, příjmení:15',fld:'jmeno,prijmeni'}}
+    item {title:'VPS'                                                                                   skill:'-'
+                                        ,par:°{typ:'j',exp:'Excel',exp2:'PDF-jmenovky'
+                                        ,cnd:"role!='d' AND funkce IN (1,2)",ord:"prijmeni"
+                                        ,tit:'jméno:20, příjmení:15',fld:'jmeno,prijmeni'}}
     item {title:'PPS'                                                                                   skill:'f'
-                                        ,par:°{typ:'j',exp:'Excel',cnd:"role!='d' AND funkce IN (1,2)",ord:"prijmeni"
-                                        ,tit:'jméno:20, příjmení:15'
-                                        ,fld:'jmeno,prijmeni'}}
-    item {title:'Kněží'                 ,par:°{typ:'j',exp:'Excel',cnd:"role!='d' AND funkce=3",ord:"prijmeni"
-                                        ,tit:'jméno:20, příjmení:15'
-                                        ,fld:'jmeno,prijmeni'}}
-    item {title:'Psychologové'          ,par:°{typ:'j',exp:'Excel',cnd:"role!='d' AND funkce=4",ord:"prijmeni"
-                                        ,tit:'jméno:20, příjmení:15'
-                                        ,fld:'jmeno,prijmeni'}}
-    item {title:'Hospodáři'             ,par:°{typ:'j',exp:'Excel',cnd:"role!='d' AND funkce=5",ord:"prijmeni"
-                                        ,tit:'jméno:20, příjmení:15'
-                                        ,fld:'jmeno,prijmeni'}}
+                                        ,par:°{typ:'j',exp:'Excel',exp2:'PDF-jmenovky'
+                                        ,cnd:"role!='d' AND funkce IN (1,2)",ord:"prijmeni"
+                                        ,tit:'jméno:20, příjmení:15',fld:'jmeno,prijmeni'}}
+    item {title:'Kněží'                 ,par:°{typ:'j',exp:'Excel',exp2:'PDF-jmenovky'
+                                        ,cnd:"role!='d' AND funkce=3",ord:"prijmeni"
+                                        ,tit:'jméno:20, příjmení:15',fld:'jmeno,prijmeni'}}
+    item {title:'Psychologové'          ,par:°{typ:'j',exp:'Excel',exp2:'PDF-jmenovky'
+                                        ,cnd:"role!='d' AND funkce=4",ord:"prijmeni"
+                                        ,tit:'jméno:20, příjmení:15',fld:'jmeno,prijmeni'}}
+    item {title:'Hospodáři'             ,par:°{typ:'j',exp:'Excel',exp2:'PDF-jmenovky'
+                                        ,cnd:"role!='d' AND funkce=5",ord:"prijmeni"
+                                        ,tit:'jméno:20, příjmení:15',fld:'jmeno,prijmeni'}}
   }
   menu {title:'tisky do PDF',type:'group',_sys:'*'
     item {title:'Adresní štítky rodin'  ,par:°{typ:'p',exp:'PDF-adresy',cnd:'funkce!=99'
@@ -223,7 +234,7 @@ menu m {type:'left',
 #     item {title:'Skupinky - tisk+'      ,par:°{typ:'sk',exp:'Excel',cnd:'1',fce:'tisk',mark:'novic'}}
   }
   menu {title:'Technické seznamy',type:'group',_sys:'*'
-    item {title:'Návrh ubytování'       ,par:°{typ:'p',exp:'Excel',cnd:"funkce!=99"
+    item {title:'Návrh ubytování'       ,par:°{typ:'p',exp:'Excel',exp2:'PDF',cnd:"funkce!=99"
                                         ,tit:'příjmení:15,jména:12,obec:25,lůžka:5,přistýlka:5,kočárek:5,pokoj:5,chůvy:20,poznámka:100'
                                         ,fld:'prijmeni,jmena,obec,luzka,pristylky,kocarek,pokoj,_chuvy,poznamka'}}
     item {title:'Návrh skupinek'                                                                    skill:'y;f'
@@ -235,7 +246,8 @@ menu m {type:'left',
     var x: object
     the_par.set(i.par);
     the_vypis.set(conc(i.owner.title,' - ',i.title));
-    info.export.display(1); info.export.set(i.par.exp);
+    { i.par.exp; info.export.display(1); info.export.set(i.par.exp) | info.export.display(0) };
+    { i.par.exp2; info.export2.display(1); info.export2.set(i.par.exp2) | info.export2.display(0) };
     info.fill(conc(the_title.get,' / ',the_vypis.get),' ');
     info.msg.set('');
     x.set(ask('akce_sestava',the_duakce.get,i.par,the_title.get,the_vypis.get));
@@ -257,4 +269,9 @@ report sti_C [0,0,210,297] { format:'A4:5,5,50,24',
   box header    [  2,  4, 45,  4] { style:'8,L',                title:'{header}' }
   box lines     [  2,  8, 48, 16] { style:'14,L',               title:'{line1}<br>{line2}' }
   box rect      [ 25, 10, 20, 14] { style:'20,R',               title:'{rect}' }
+}
+# -------------------------   stitek_V - vizitky
+report sti_V [0,0,210,297] { format:'A4:15,10,90,55',
+  box ram       [  0,  0, 90, 55] { style:'1,L,LTRB:0.05 dotted 250', title:' ' }
+  box jmeno     [ 10, 10, 80, 40] { style:'30,L',                     title:'{jmeno}<br>{prijmeni}' }
 }

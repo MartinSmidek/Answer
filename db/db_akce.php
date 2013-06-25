@@ -941,6 +941,46 @@ function akce_pdf_stitky($cond,$report_json) { trace();
   $result->html= " Výpis byl vygenerován ve formátu <a href='docs/$fname.pdf' target='pdf'>PDF</a>.";
   return $result;
 }
+# -------------------------------------------------------------------------------- akce_pdf_jmenovky
+# vygenerování PDF s vizitkami s rozměrem 55x90 na rozstříhání
+#   $the_json obsahuje  title:'{jmeno}<br>{prijmeni}'
+function akce_pdf_jmenovky($akce,$par,$report_json) {  trace();
+  global $json, $ezer_path_docs;
+  $result= (object)array('_error'=>0);
+  $html= '';
+  // získání dat
+  mb_internal_encoding('UTF-8');
+  $tab= akce_sestava($akce,$par,$title,$vypis,true);
+//                                         display($report_json);
+//                                         debug($tab,"akce_sestava($akce,...)"); //return;
+  $report_json= "{'format':'A4:15,10,90,55','boxes':["
+    . "{'type':'text','left':0,'top':0,'width':90,'height':55,'id':'ram','style':'1,L,LTRB:0.05 dotted 250',txt:' '},"
+    . "{'type':'text','left':10,'top':10,'width':80,'height':40,'id':'jmeno','txt':'{jmeno}<br />{prijmeni}','style':'30,L'}]}";
+  $report_json= "{'format':'A4:15,10,90,55','boxes':["
+    . "{'type':'text','left':0,'top':0,'width':90,'height':55,'id':'ram','style':'1,L,LTRB:0.05 dotted',txt:' '},"
+    . "{'type':'text','left':10,'top':10,'width':80,'height':40,'id':'jmeno','txt':'{jmeno}<br />{prijmeni}','style':'30,L'}]}";
+//                                         display($report_json);
+  // projdi vygenerované záznamy
+  $n= 0;
+  $parss= array();
+  foreach ( $tab->clmn as $xa ) {
+    // definice pole substitucí
+    $x= (object)$xa;
+    $parss[$n]= (object)array();
+    $fsize= mb_strlen($x->jmeno)>9 ? 13 : 14;
+    $parss[$n]->jmeno= "<span style=\"font-size:{$fsize}mm;font-weight:bold\">{$x->jmeno}</span>";
+    list($prijmeni)= explode(' ',$x->prijmeni);
+    $fsize= mb_strlen($prijmeni)>10 ? 10 : 12;
+    $parss[$n]->prijmeni= "<span style=\"font-size:{$fsize}mm;font-weight:bold\">{$prijmeni}</span>";
+    $n++;
+  }
+  // předání k tisku
+  $fname= 'jmenovky_'.date("Ymd_Hi");
+  $fpath= "$ezer_path_docs/$fname.pdf";
+  dop_rep_ids($report_json,$parss,$fpath);
+  $result->html= " Výpis byl vygenerován ve formátu <a href='docs/$fname.pdf' target='pdf'>PDF</a>.";
+  return $result;
+}
 # -------------------------------------------------------------------------------------- dop_rep_ids
 # LOCAL
 # vytvoření dopisů se šablonou pomocí TCPDF podle parametrů
@@ -959,7 +999,7 @@ function dop_rep_ids($report_json,$parss,$fname) { trace();
     }
   }
   $report= $json->decode($report_json);
-//                                         debug($report,"dop_rep_ids");
+//                                                         debug($report,"dop_rep_ids");
   // vytvoření $texty - seznam
   $texty= array();
   for ($i=0; $i<count($parss); $i++) {
