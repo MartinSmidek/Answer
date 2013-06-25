@@ -323,7 +323,7 @@ form _platba {
 #   field pouze                    {data:pobyt.pouze}
   field luzka       [10,456,11,] {data:pobyt.luzka}
   field pristylky   [30,456,11,] {data:pobyt.pristylky}
-  field pocetdnu    [51,456,11,] {data:pobyt.pocetdnu}
+  field pocetdnu    [51,456,11,] {data:pobyt.pocetdnu}                  // sémantika: počet nocí
   field kocarek     [71,456,11,] {data:pobyt.kocarek}
   field strava_cel  [94,456,11,] {data:pobyt.strava_cel}
   field strava_pol  [112,456,11,] {data:pobyt.strava_pol}
@@ -664,7 +664,7 @@ form _ucast [,,400,] { css:'ds_form'
     show prednasi   { data:p.prednasi}
     show luzka      { data:p.luzka}
     show pristylky  { data:p.pristylky}
-    show pocetdnu   { data:p.pocetdnu}
+    show pocetdnu   { data:p.pocetdnu}           // počet nocí
     show kocarek    { data:p.kocarek}
     show strava_oddo{ data:a.strava_oddo}
     show strava_cel { data:p.strava_cel}

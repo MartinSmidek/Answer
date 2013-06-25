@@ -150,8 +150,8 @@ menu m {type:'left',
     item {title:'Děti'                  ,par:°{typ:'j',exp:'Excel',exp2:'PDF-jmenovky'
                                         ,cnd:"role='d'",ord:"prijmeni"
                                         ,tit:'jméno:20, příjmení:15',fld:'jmeno,prijmeni'}}
-    item {title:'Pečouni' format:'d'    ,par:°{typ:'j',exp:'Excel',exp2:'PDF-jmenovky'
-                                        ,cnd:"AND funkce=99",ord:"prijmeni"
+    item {title:'Pečouni'               ,par:°{typ:'j',exp:'Excel',exp2:'PDF-jmenovky'
+                                        ,cnd:"p.funkce=99",ord:"prijmeni"
                                         ,tit:'jméno:20, příjmení:15',fld:'jmeno,prijmeni'}}
     item {title:'VPS'                                                                                   skill:'-'
                                         ,par:°{typ:'j',exp:'Excel',exp2:'PDF-jmenovky'
