@@ -234,7 +234,7 @@ form _etext  {
     }
   }
   proc drop_init() {                                    // inicializace - je třeba na začátku
-    drop.init(conc('/',sys('root'),'/'));               // naplnit pole drag&drop a definovat dir
+    drop.init(conc('/docs/',sys('root'),'/'));          // naplnit pole drag&drop a definovat dir
     drop.set(attach.get);
   }
   # příkazy 1
