@@ -148,7 +148,7 @@ menu m {type:'left',
                                         ,cnd:"role!='d' AND funkce IN (0,1,2)",ord:"prijmeni"
                                         ,tit:'jméno:20, příjmení:15',fld:'jmeno,prijmeni'}}
     item {title:'Děti'                  ,par:°{typ:'j',exp:'Excel',exp2:'PDF-jmenovky'
-                                        ,cnd:"role='d'",ord:"prijmeni"
+                                        ,cnd:"role='d' AND pfunkce NOT IN (4,5,6,8)",ord:"prijmeni"
                                         ,tit:'jméno:20, příjmení:15',fld:'jmeno,prijmeni'}}
     item {title:'Pečouni'               ,par:°{typ:'j',exp:'Excel',exp2:'PDF-jmenovky'
                                         ,cnd:"p.funkce=99",ord:"prijmeni"
@@ -230,11 +230,11 @@ menu m {type:'left',
     item {title:'Skupinky'              ,par:°{typ:'sk',exp:'Excel',cnd:'1',fce:'tisk'}}
     item {title:'Skupinky dětí'         ,par:°{typ:'sd',exp:'Excel',cnd:'1',fce:'tisk'}}
     item {title:'Skupinky (* noví)'     ,par:°{typ:'sk',exp:'Excel',cnd:'1',fce:'tisk',mark:'novic'}}
-    item {title:'Skupinky - přehled historie' ,par:°{typ:'sk',exp:'Excel',cnd:'1',fce:'prehled'}}
+    item {title:'Skupinky - přehled historie' ,par:°{typ:'sk',cnd:'1',fce:'prehled'}}
 #     item {title:'Skupinky - tisk+'      ,par:°{typ:'sk',exp:'Excel',cnd:'1',fce:'tisk',mark:'novic'}}
   }
   menu {title:'Technické seznamy',type:'group',_sys:'*'
-    item {title:'Návrh ubytování'       ,par:°{typ:'p',exp:'Excel',exp2:'PDF',cnd:"funkce!=99"
+    item {title:'Návrh ubytování'       ,par:°{typ:'p',exp:'Excel',cnd:"funkce!=99"
                                         ,tit:'příjmení:15,jména:12,obec:25,lůžka:5,přistýlka:5,kočárek:5,pokoj:5,chůvy:20,poznámka:100'
                                         ,fld:'prijmeni,jmena,obec,luzka,pristylky,kocarek,pokoj,_chuvy,poznamka'}}
     item {title:'Návrh skupinek'                                                                    skill:'y;f'
