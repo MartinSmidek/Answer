@@ -2717,7 +2717,7 @@ function akce_skup_get($akce,$kontrola,&$err,$par=null) { trace();
           LEFT JOIN rodina AS r USING(id_rodina)
           WHERE p.id_pobyt IN ({$s->_skupina})
           GROUP BY id_pobyt
-          ORDER BY funkce DESC, nazev";
+          ORDER BY IF(funkce IN (1,2),1,2), nazev";
       $resu= mysql_qry($qryu);
       while ( $resu && ($u= mysql_fetch_object($resu)) ) {
         $mark= '';
@@ -2934,7 +2934,7 @@ function akce_skup_hist($akce,$par,$title,$vypis,$export) { trace();
       }
     }
     if ( $ucasti )
-      $html.= "<dt><b>{$info->_nazev}</b> $n&times;</dt><dd>$ucasti</dd>";
+      $html.= "<dt><b>{$info->_nazev}</b> $n&times;<dd>$ucasti</dd></dt>";
     elseif ( $n )
       $html.= "<dt><b>{$info->_nazev}</b> $n&times;</dt>";
     else
@@ -2943,7 +2943,7 @@ function akce_skup_hist($akce,$par,$title,$vypis,$export) { trace();
   $html.= "</dl>";
   $note= "Abecední seznam účastníků letního kurzu roku $rok doplněný seznamem členů jeho starších
           skupinek na letních kurzech. <br>Ve skupinkách jsou uvedení jen účastníci
-          kurzu roku $rok.";
+          kurzu roku $rok. (Pro tisk je nejjednodušší označit jako blok a vložit do Wordu.)";
   $html= "<i>$note</i><br>$html";
   $result->html= $html;
   return $result;
@@ -4724,7 +4724,7 @@ __XLS;
     \n|close
 __XLS;
   // výstup
-//                                                                 display($xls);
+                                                                display($xls);
   $inf= Excel5($xls,1);
   if ( $inf ) {
     $html= " se nepodařilo vygenerovat - viz začátek chybové hlášky";
