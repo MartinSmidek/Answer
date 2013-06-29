@@ -749,11 +749,21 @@ function akce_pdf_stravenky0($akce,$par,$report_json) {  trace();
     $parss[$n]= (object)array();
     $parss[$n]->header= $header;
     $parss[$n]->line1= "$den";
-    $parss[$n]->line2= "<b>{$sob[$jidlo]}</b>";
-    $parss[$n]->rect=  "<b>{$cp[$velikost]}</b>";
+    $parss[$n]->line2= "";
+    $parss[$n]->rect=  "";
     $parss[$n]->end= '';
-    $parss[$n]->ram= '';
     $parss[$n]->ram= '<img src="db/img/stravenky-rastr-1.png" style="width:48mm;height:23mm" border="0" />';
+    $n++;
+  }
+  for ($i= 1; $i<=$pocet; $i++) {
+    // text stravenky na jedno jídlo
+    $parss[$n]= (object)array();
+    $parss[$n]->header= $header;
+    $parss[$n]->line1= "$den";
+    $parss[$n]->line2= "";
+    $parss[$n]->rect=  "<b>1/2</b>";
+    $parss[$n]->end= '';
+    $parss[$n]->ram= ' ';
     $n++;
   }
   // předání k tisku
@@ -3754,7 +3764,7 @@ function chlapi_auto_jmenovci($id_pary) {  #trace();
 # funkce pro spolupráci se select
 # --------------------------------------------------------------------------------- akce_auto_jmena2
 # ASK přidání pobytu do akce, pokud ještě nebyly tyto osoby/osoba přidány
-function akce_pridej($id_akce,$id_muz,$id_zena) {  #trace();
+function akce_pridej($id_akce,$id_muz,$id_zena,$cnd='') {  #trace();
   $ret= (object)array('ok'=>0,'msg'=>'chyba při vkládání');
   // zjištění, kdo se přihlašuje na akci
   if ( $id_muz && $id_zena ) {
@@ -3769,6 +3779,7 @@ function akce_pridej($id_akce,$id_muz,$id_zena) {  #trace();
     $pouze= 2;
     $cond=  "s.id_osoba=$id_zena";
   }
+  $cond.= $cnd ? " AND $cnd" : '';
   // kontrola přítomnosti
   $qp= "SELECT id_pobyt
         FROM pobyt AS p
