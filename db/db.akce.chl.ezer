@@ -255,15 +255,25 @@ form _chlap [,,*,466] {
       chs.reload(0);
   } }
   # --------------------------------------------------  PŘIDÁVÁNÍ Z JINÝCH ZDROJŮ pro mode='akce'
-  label  [Lu+256,Tu+125,109,51] { tag:'akce', css:'ae_parm' }
-  button [Lu+262,Tu+128,,29] { tag:'akce', title:'Přidat z akcí',
+  label  [Lu+256,Tu+125,159,51] { tag:'akce', css:'ae_parm' }
+  button [Lu+262,Tu+128,,29] { tag:'akce', title:'Přidat z akcí pro chlapy',
     help:'Nalezení účastníka podle jména a přidání na akci'
     proc onclick() {
+      PridaniJmenem.databaze('chlapi');
       PridaniJmenem.modal(240,50)
   } }
-  button [Lu+262,Tu+152,,] { tag:'akce', title:'Přidat z MS', format:'d',
-      help:'Nalezení účastníka podle jména a přidání na akci'
-  }
+  button [Lu+262,Tu+152,,] { tag:'akce', title:'Přidat z YS',
+    help:'Nalezení účastníka podle jména v YMCA Setkání a přidání na akci'
+    proc onclick() {
+      PridaniJmenem.databaze('ezer_ys');
+      PridaniJmenem.modal(240,50)
+  } }
+  button [Lu+337,Tu+152,,] { tag:'akce', title:'Přidat z YF',
+    help:'Nalezení účastníka podle jména v YMCA Familia a přidání na akci'
+    proc onclick() {
+      PridaniJmenem.databaze('ezer_fa');
+      PridaniJmenem.modal(240,50)
+  } }
   # --------------------------------------------------  OSOBA
   const L=240
   const T=10
@@ -347,17 +357,29 @@ form _chlap [,,*,466] {
 # ================================================================================================== Přidání jménem
 var pall: object
 proc ucast_add(p,i) {  // používají panely PridatJmenem a PridatAkce
-  var rec: number
+  var ret: object
+#   var rec: number
   p.chck.get;
   pall.set(p.all.get);
-  { ask('chlapi_auto_not_yet',the_akce.get,pall.get('id_chlapi'));
-    rec.set(ch_ucast.insert_record(
-      object('id_akce',the_akce.get,'id_chlapi',pall.get('id_chlapi'),'stupen',1,'cena',the_akce_cena.get)));
-    [ chs.all.browse_seek(conc('id_ucast=',rec)) ]
-  | warning(pall.get('nazev'),' už na akci je') }
+  { ret.set(ask('chlapi_pridej',the_akce.get,the_akce_cena.get,pall.get));
+    ret.ok;
+#     rec.set(ch_ucast.insert_record(
+#       object('id_akce',the_akce.get,'id_chlapi',pall.get('id_chlapi'),'stupen',1,'cena',the_akce_cena.get)));
+    [ chs.all.browse_seek(conc('id_ucast=',ret.id_ucast)) ]
+  | warning(ret.err) }
+#   { ask('chlapi_auto_not_yet',the_akce.get,pall.get('id_chlapi'));
+#     rec.set(ch_ucast.insert_record(
+#       object('id_akce',the_akce.get,'id_chlapi',pall.get('id_chlapi'),'stupen',1,'cena',the_akce_cena.get)));
+#     [ chs.all.browse_seek(conc('id_ucast=',rec)) ]
+#   | warning(pall.get('nazev'),' už na akci je') }
 }
 panel PridaniJmenem [,,320,280] {type:'popup', title:'Přidání známých osob jménem'
+  var baze: text
   use fl: form _fl [12,10,,]
+  proc databaze(vyber) {
+    baze.set(vyber);
+    fl.jmena.set_attrib('par',object('fce','chlapi_auto_jmena','db',vyber));
+  }
   form _fl [,,300,200] {
     var last: number
     var rod: object
@@ -372,13 +394,13 @@ panel PridaniJmenem [,,320,280] {type:'popup', title:'Přidání známých osob 
     // výběr z databáze chlapů
     select jmena [100,0,200,17] { type:'auto', par:°{fce:'chlapi_auto_jmena'}, format:'t'
       proc onchanged() {
-        rod.set(ask('chlapi_auto_jmenovci',this.key));
+        rod.set(ask('chlapi_auto_jmenovci',this.key,baze.get));
         each(rod.get,jmenovci); // nesmí volat asynchronní operace
       }
     }
     proc jmenovci(p,i) {
       last.set(L.add);
-      popis.set(p.nazev);
+      popis.set(p._nazev);
       L.part(last.get).part('info').set(popis.get);
       L.part(last.get).part('all').set(p);
     }

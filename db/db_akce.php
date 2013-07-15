@@ -3714,6 +3714,43 @@ function chlapi_akce_mapa($id_akce) {  trace();
 # funkce pro spolupráci se select
 # -------------------------------------------------------------------------------- chlapi_auto_jmena
 # kontrola, zda chlap ještě na akci není
+function chlapi_pridej($id_akce,$cena,$a) {
+//                                                         debug($a,"chlapi_pridej($id_akce,$cena,...");
+  $ret= (object)array('ok'=>0,'err'=>'');
+  $id_chlapi= 0;
+  $chlap= "{$a->jmeno} {$a->prijmeni}";
+  if ( $a->_db=='chlapi' ) {
+    $id_chlapi= $a->id_chlapi;
+    $qry= "SELECT id_ucast FROM ch_ucast JOIN chlapi USING(id_chlapi)
+           WHERE id_akce='$id_akce' AND id_chlapi=$id_chlapi ";
+    $res= mysql_qry($qry);
+    if ( mysql_num_rows($res) ) { $ret->err= "'$chlap' už je přihlášen"; goto end; }
+  }
+  else {
+    // zkontroluj jednoznačnost jména
+    $cond= "prijmeni='{$a->prijmeni}' AND jmeno='{$a->jmeno}' ";
+    $qry= "SELECT id_chlapi FROM chlapi
+           WHERE prijmeni='{$a->prijmeni}' AND jmeno='{$a->jmeno}' ";
+    $res= mysql_qry($qry);
+    if ( mysql_num_rows($res) ) { $ret->err= "'$chlap' už je v databázi Chlapi"; goto end; }
+    // zkopíruj údaje
+    $qc= "INSERT INTO chlapi (prijmeni,jmeno,sex,narozeni,rc_xxxx,psc,obec,ulice,email,telefon,pozn)
+          VALUE ('$a->prijmeni','$a->jmeno','$a->sex','$a->narozeni','$a->rc_xxxx','$a->psc',
+                 '$a->obec','$a->ulice','$a->email','$a->telefon','$a->pozn') ";
+    $rc= mysql_qry($qc);
+    if ( !$rc ) { $ret->err= "'$chlap' nejde zkopírovat"; goto end; }
+    $id_chlapi= mysql_insert_id();
+  }
+  // zapoj do akce
+  $qu= "INSERT INTO ch_ucast (id_akce,id_chlapi,stupen,cena) VALUE ($id_akce,$id_chlapi,1,$cena) ";
+  $ru= mysql_qry($qu);
+  $ret->id_ucast= mysql_insert_id();
+  $ret->ok= 1;
+end:
+  return $ret;
+}
+# -------------------------------------------------------------------------------- chlapi_auto_jmena
+# kontrola, zda chlap ještě na akci není
 function chlapi_auto_not_yet($id_akce,$id_chlapi) {
   $qry= "SELECT count(*) AS _pocet
          FROM ch_ucast
@@ -3724,14 +3761,24 @@ function chlapi_auto_not_yet($id_akce,$id_chlapi) {
 }
 # -------------------------------------------------------------------------------- chlapi_auto_jmena
 # SELECT autocomplete - výběr z akcí
-function chlapi_auto_jmena($patt) {  #trace();
+function chlapi_auto_jmena($patt,$par) {  #trace();
   $a= array();
   $limit= 20;
+  $db= $par->db ? $par->db : '';
   $n= 0;
-  // rodiče
-  $qry= "SELECT id_chlapi AS _key,CONCAT(prijmeni,' ',jmeno) AS _value
-         FROM chlapi
-         WHERE prijmeni LIKE '$patt%' ORDER BY prijmeni,jmeno LIMIT $limit";
+  // dotaz podle databáze
+  switch($db) {
+  case 'chlapi':
+    $qry= "SELECT id_chlapi AS _key,CONCAT(prijmeni,' ',jmeno) AS _value
+           FROM chlapi WHERE prijmeni LIKE '$patt%' ORDER BY prijmeni,jmeno LIMIT $limit";
+    break;
+  case 'ezer_ys':
+  case 'ezer_fa':
+    $qry= "SELECT id_osoba AS _key,CONCAT(prijmeni,' ',jmeno) AS _value
+           FROM $db.osoba WHERE sex=1 AND prijmeni LIKE '$patt%'
+           ORDER BY prijmeni,jmeno LIMIT $limit";
+    break;
+  }
   $res= mysql_qry($qry);
   while ( $res && $t= mysql_fetch_object($res) ) {
     if ( ++$n==$limit ) break;
@@ -3748,15 +3795,26 @@ function chlapi_auto_jmena($patt) {  #trace();
 }
 # ----------------------------------------------------------------------------- chlapi_auto_jmenovci
 # formátování autocomplete
-function chlapi_auto_jmenovci($id_pary) {  #trace();
+function chlapi_auto_jmenovci($id,$db) {  #trace();
   $a= array();
-  // páry na akci
-  $qry= "SELECT * FROM chlapi WHERE id_chlapi=$id_pary ORDER BY prijmeni";
+  // dotaz podle databáze
+  switch($db) {
+  case 'chlapi':
+    $qry= "SELECT *,id_chlapi AS _id FROM chlapi WHERE id_chlapi=$id ";
+    break;
+  case 'ezer_ys':
+  case 'ezer_fa':
+    $qry= "SELECT prijmeni,jmeno,sex,narozeni,rc_xxxx,psc,obec,ulice,email,telefon,
+             note AS pozn,id_osoba AS _id FROM $db.osoba WHERE id_osoba=$id ";
+    break;
+  }
   $res= mysql_qry($qry);
   while ( $res && $p= mysql_fetch_object($res) ) {
-    $nazev= "{$p->prijmeni} {$p->jmeno}, {$p->obec} ({$p->id_chlapi})";
-    $a[]= (object)array('id_chlapi'=>$p->id_chlapi,'nazev'=>$nazev);
+    $a[0]= (array)$p;
+    $a[0]['_nazev']= "{$p->prijmeni} {$p->jmeno}, {$p->obec}, {$p->email} ({$p->_id})";
+//     $a[]= (object)array('id_chlapi'=>$p->_id,'nazev'=>$nazev);
   }
+  $a[0]['_db']= $db;
 //                                                                 debug($a,$id_chlapi);
   return $a;
 }
