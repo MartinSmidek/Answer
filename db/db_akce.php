@@ -3734,9 +3734,11 @@ function chlapi_pridej($id_akce,$cena,$a) {
     $res= mysql_qry($qry);
     if ( mysql_num_rows($res) ) { $ret->err= "'$chlap' už je v databázi Chlapi"; goto end; }
     // zkopíruj údaje
-    $qc= "INSERT INTO chlapi (prijmeni,jmeno,sex,narozeni,rc_xxxx,psc,obec,ulice,email,telefon,pozn)
+    $origin= "{$a->_db},{$a->_id},".date("Y-m-d");
+    $qc= "INSERT INTO chlapi (prijmeni,jmeno,sex,narozeni,rc_xxxx,psc,
+                              obec,ulice,email,telefon,pozn,origin)
           VALUE ('$a->prijmeni','$a->jmeno','$a->sex','$a->narozeni','$a->rc_xxxx','$a->psc',
-                 '$a->obec','$a->ulice','$a->email','$a->telefon','$a->pozn') ";
+                 '$a->obec','$a->ulice','$a->email','$a->telefon','$a->pozn','$origin') ";
     $rc= mysql_qry($qc);
     if ( !$rc ) { $ret->err= "'$chlap' nejde zkopírovat"; goto end; }
     $id_chlapi= mysql_insert_id();

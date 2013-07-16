@@ -274,6 +274,7 @@ form _chlap [,,*,466] {
       PridaniJmenem.databaze('ezer_fa');
       PridaniJmenem.modal(240,50)
   } }
+  field origin [Lu+256,Tu+175,159,] { data:c.origin, format:'o', style:'color:#aaa' }
   # --------------------------------------------------  OSOBA
   const L=240
   const T=10
