@@ -141,6 +141,7 @@ table chlapi { key_id:'id_chlapi', db:'ezer_ys'
   text email
   number iniciace
   text pozn
+  text origin  // databáze,id,datum vkopírování
 }
 table ch_ucast { key_id:'id_ucast', db:'ezer_ys'
   number id_ucast
