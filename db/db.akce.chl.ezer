@@ -82,7 +82,7 @@ menu m {type:'left'
 form _info [,,*,50] { css:'ds_form'
   var export_type: text
   label head [0,0,*,50]  { title:'' }
-  button [-100,3,,] { tag:'ex', title:'Mapa', //skill:'a|a'
+  button [-22,3,,] { tag:'ex', title:'Mapa', //skill:'a|a'
     help:"mapa s bydlišti účastníků akcí"
     proc onclick() {
       switch(export_type.get,
@@ -92,7 +92,7 @@ form _info [,,*,50] { css:'ds_form'
 
     }
   }
-  button [-22,3,50,] { tag:'ex', title:"Export"
+  button [-100,3,50,] { tag:'ex', title:"Export"
     proc onclick() {
       switch(export_type.get,
       'akce',{ ref.set(ask('chlapi_akce_export',the_akce.get,the_akce_nazev.get))},
@@ -100,7 +100,7 @@ form _info [,,*,50] { css:'ds_form'
       )
     }
   }
-  label ref [-80,7,200,]  { tag:'ex', format:'r', css:'title_ref' }
+  label ref [-170,7,200,]  { tag:'ex', format:'r', css:'title_ref' }
   label note [0,35,,550] { title:'' }
   proc fill(x,y) {
     [ x; head.set(conc("<div class='karta'>",x,"</div>")) ];
