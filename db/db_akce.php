@@ -3581,6 +3581,10 @@ function chlapi_mrop_export() {  #trace();
 # ------------------------------------------------------------------------------- chlapi_akce_export
 # export účastníků akce do Excelu
 function chlapi_akce_export($id_akce,$nazev) {  #trace();
+  function narozeni2vs ($dat) {
+    $vs= substr($dat,2,2).substr($dat,5,2).substr($dat,8,2);
+    return $vs;
+  }
   global $ezer_path_docs;
   // zahájení exportu
   $ymd= date('Ymd');
@@ -3590,8 +3594,8 @@ function chlapi_akce_export($id_akce,$nazev) {  #trace();
   $type= 'xls';
   $par= (object)array('file'=>$file,'type'=>$type,'title'=>$t,'color'=>'aac0cae2');
   $clmns= "prijmeni:příjmení,jmeno:jméno,narozeni:narození,ulice,psc:psč,obec,email,telefon,
-           iniciace,c.pozn AS c_pozn:poznámka,u.pozn:... k akci,u.cena:cena,u.avizo:avizo,
-           u.uctem:účtem,u.pokladnou:pokladnou";
+           iniciace,c.pozn AS c_pozn:poznámka,u.pozn:... k akci,u.cena:cena,
+           narozeni AS _vs:VS,u.avizo:avizo,u.uctem:účtem,u.pokladnou:pokladnou";
   $titles= $fields= $del= '';
   foreach (explode(',',$clmns) as $clmn) {
     list($field,$title)= explode(':',trim($clmn));
@@ -3600,7 +3604,7 @@ function chlapi_akce_export($id_akce,$nazev) {  #trace();
     $fields.= "$del$field";
     $del= ',';
   }
-  $pipe= array('narozeni'=>'sql_date1');
+  $pipe= array('narozeni'=>'sql_date1','_vs'=>'narozeni2vs');
   export_head($par,$titles);
   $qry= "SELECT $fields
          FROM ezer_ys.ch_ucast AS u JOIN ezer_ys.chlapi AS c USING(id_chlapi) WHERE id_akce=$id_akce ";
@@ -3614,6 +3618,7 @@ function chlapi_akce_export($id_akce,$nazev) {  #trace();
       $values[$f]= $a;
     }
     export_row($values);
+                                                        debug($values);
   }
    export_tail();
 //                                                 display(export_tail(1));

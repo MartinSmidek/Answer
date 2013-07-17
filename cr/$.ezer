@@ -12,10 +12,10 @@ menu cr { type:'main', active:*
       menu {type:'left', active:*
         menu {title:'Centrum pro rodinu ...',type:'group', _sys:'*'
           item {title:'přehled dat',                          par:°{cmd:'survey'}, skill:'m' }
-          item {title:'import účastníků MS',                  par:°{cmd:'MS-ucast'}, skill:'m' }
-          item {title:'import skupinek MS',                   par:°{cmd:'MS-skup'}, skill:'m' }
-          item {title:'import pečovatelů MS',                 par:°{cmd:'MS-pec'}, skill:'m' }
-          item {title:'výmaz osoba,tvori,rodina,pobyt,spolu', par:°{cmd:'clear-all'}, skill:'m' }
+#           item {title:'import účastníků MS',                  par:°{cmd:'MS-ucast'}, skill:'m' }
+#           item {title:'import skupinek MS',                   par:°{cmd:'MS-skup'}, skill:'m' }
+#           item {title:'import pečovatelů MS',                 par:°{cmd:'MS-pec'}, skill:'m' }
+#           item {title:'výmaz osoba,tvori,rodina,pobyt,spolu', par:°{cmd:'clear-all'}, skill:'m' }
 #           item {title:'výmaz osoba/pečoun', par:°{cmd:'clear-pec'}, skill:'m' }
           proc onclick (i) {
             info.fill(conc(i.owner.title,' - ',i.title),' ... probíhá import dat ...');

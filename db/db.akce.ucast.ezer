@@ -440,6 +440,8 @@ form _muz {
   field jazyk_m     [224,272,152,] {data:osoba.jazyk}
   field aktivita_m  [224,293,152,] {data:osoba.aktivita}
   edit  note_m      [224,319,150,44] {data:osoba.note}
+  // nezobrazené
+  field sex         { data:osoba.sex }
   // pod čarou
   label             [200,557,,] {title:'muž - alternativní údaje', skill:'yaah' }
   chat  historie_m  [198,570,185,106] { divide:100, skill:'yaah' }
@@ -464,6 +466,8 @@ form _zena {
   field jazyk_z     [420,272,152,] {data:osoba.jazyk}
   field aktivita_z  [420,293,152,] {data:osoba.aktivita}
   edit  note_z      [420,319,149,44] {data:osoba.note}
+  // nezobrazené
+  field sex         { data:osoba.sex }
   // pod čarou
   label             [390,557,,] {title:'žena - alternativní údaje', skill:'yaah' }
   chat  historie_z  [389,570,185,106] { divide:100, skill:'yaah' }
@@ -811,8 +815,8 @@ form _cmd [,,200,] { css:'ds_form'
           spolu.delete_record(conc('id_spolu=',zen.id_spolu_z.get)) ];
         pob.save; pob.plain
       ];
-      [ muz.same | osoba_ulozit(muz,'a',rod.key) ];
-      [ zen.same | osoba_ulozit(zen,'b',rod.key) ];
+      [ muz.same | muz.sex.set(1); muz.sex.change; osoba_ulozit(muz,'a',rod.key) ];
+      [ zen.same | zen.sex.set(2); zen.sex.change; osoba_ulozit(zen,'b',rod.key) ];
       reload(the_pobyt.get);
     | // přidání - kontroly postačitelnosti údajů
       eq(pob.pouze.key,0,1); muz.same;
@@ -823,7 +827,9 @@ form _cmd [,,200,] { css:'ds_form'
       warning("nelze uložit: chybí společný název rodiny");
     | // vlastní přidání
       rod.insert; pob.insert; the_pobyt.set(pob.key);
+      muz.sex.set(1); muz.sex.change;
       osoba_ulozit(muz,'a',rod.key);
+      zen.sex.set(2); zen.sex.change;
       osoba_ulozit(zen,'b',rod.key);
       rod.plain; pob.plain;
       reload(the_pobyt.get);
