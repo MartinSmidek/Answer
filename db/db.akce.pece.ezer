@@ -200,24 +200,26 @@ form _osoba { tag:'a',
   field psc      [L+179,T+69,40,] {data:o.psc}
   label          [L+230,T+54,100,] {title:'obec'}
   field obec     [L+229,T+69,131,] {data:o.obec}
-  label          [L+396,T+54,41,] {title:'církev'}
-  select cirkev  [L+395,T+69,152,] {type:'map', data:o.cirkev, options:ms_akce_cirkev.zkratka}
+  label          [L+378,T+54,57,] {title:'církev'}
+  select cirkev  [L+377,T+69,96,] {type:'map', data:o.cirkev, options:ms_akce_cirkev.zkratka}
+  label          [L+490,T+54,62,] {title:'dieta'}
+  select dieta   [L+489,T+69,80,] {type:'map', data:o.dieta, options:ms_akce_dieta.zkratka}
   label          [L+5,T+94,33,] {title:'telefon'}
   field telefon  [L+5,T+108,212,] {data:o.telefon}
   label          [L+229,T+94,37,] {title:'e-mail'}
-  field email    [L+229,T+108,330,] {data:o.email}
+  field email    [L+229,T+108,337,] {data:o.email}
   label          [L+5,T+132,148,] {title:'poznámka mimo akci'}
   edit  pozn     [L+5,T+145,216,84] {data:o.note}
   # ------------------------ akce
   view s: table spolu
   label          [L+396,T+16,103,] {title:'typ pečovatele'}
-  select pfunkce [L+395,T+32,152,] {type:'map', data:s.pfunkce, options:ms_akce_pfunkce.zkratka
+  select pfunkce [L+395,T+32,173,] {type:'map', data:s.pfunkce, options:ms_akce_pfunkce.zkratka
     proc onchange() { eq(the_pobyt.get,up.b.key_pobyt.get)
   | this.key(up.b.pfunkce.get); this.plain;
     alert("typ pečovatele s rodiči na kurzu je třeba změnit na kartě Úcastníci na kartě dítěte")
   }}
   label           [L+220,T+132,,] {title:'/ poznámka k pobytu na této akci'}
-  edit  pozn_akce [L+229,T+145,329,84] {data:s.poznamka}
+  edit  pozn_akce [L+229,T+145,336,84] {data:s.poznamka}
   // děti
   label           [L+5,T+240,,] {title:'skupinka č.'}
   field skupinka  [L+70,T+237,30,] {data:s.skupinka, format:'r:e'}
@@ -228,7 +230,7 @@ form _osoba { tag:'a',
     show id_spolu
     show prijmeni [,,80,] { title:'příjmení' }
     show jmeno    [,,70,] { title:'jméno' }
-    show vek      [,,30,] { title:'věk', js_pipe:'roku', format:'r' }
+    show vek      [,,35,] { title:'věk', js_pipe:'roku', format:'r' }
     show narozeni
     show rc_xxxx
     show note     [,,350,] { title:'poznámka / poznámka k akci' }
@@ -276,6 +278,7 @@ form _pece [,,400,] { css:'ds_form'
     show narozeni  { data:o.narozeni }
     show rodne     { data:o.rc_xxxx }
     show cirkev    { data:o.cirkev }
+    show dieta     { data:o.dieta }
     show ulice     { data:o.ulice }
     show psc       { data:o.psc }
     show obec      { data:o.obec }

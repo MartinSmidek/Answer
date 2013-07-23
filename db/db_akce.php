@@ -1517,7 +1517,7 @@ function akce_sestava_pary($akce,$par,$title,$vypis,$export=false) { trace();
               LEFT JOIN rodina AS cr ON cr.id_rodina=ct.id_rodina
               WHERE ca.druh=1 AND cr.id_rodina=r.id_rodina ) AS _ucasti,
             SUM(IF(t.role='d',1,0)) as _deti,
-            r.ulice,r.psc,r.obec,r.telefony,r.emaily,r.note AS r_note,p.skupina,
+            r.ulice,r.psc,r.obec,r.telefony,r.emaily,r.note/* AS r_note*/,p.skupina,
             p.ubytovani,p.budova,p.pokoj,
             p.luzka,p.kocarek,p.pristylky,p.strava_cel,p.strava_pol,
             GROUP_CONCAT(IFNULL((SELECT CONCAT(osoba.jmeno,' ',osoba.prijmeni)
@@ -1561,7 +1561,8 @@ function akce_sestava_pary($akce,$par,$title,$vypis,$export=false) { trace();
     $n++;
     $clmn[$n]= array();
     foreach($flds as $f) {
-      $clmn[$n][$f]= $f=='poznamka' && $x->r_note ? ($x->$f.' / '.$x->r_note) : $x->$f;
+//       $clmn[$n][$f]= $f=='poznamka' && $x->r_note ? ($x->$f.' / '.$x->r_note) : $x->$f;
+      $clmn[$n][$f]= $x->$f;
     }
 //     break;
   }
