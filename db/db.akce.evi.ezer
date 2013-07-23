@@ -341,11 +341,13 @@ form _osoba { tag:'a'
   field psc      [L+179,T+90,40,] {data:o.psc}
   label          [L+230,T+75,100,] {title:'obec'}
   field obec     [L+229,T+90,131,] {data:o.obec}
-  label          [L+13,T+119,33,] {title:'telefon'}
+  label          [L+14,T+119,34,] {title:'telefon'}
   field telefon  [L+51,T+115,212,] {type:'list', data:o.telefon}
-  label          [L+16,T+144,30,] {title:'e-mail'}
+  label          [L+264,T+119,33,] {title:'dieta', format:'r'}
+  select dieta   [L+300,T+115,82,] {type:'map', data:o.dieta, options:ms_akce_dieta.zkratka }
+  label          [L+8,T+144,40,] {title:'e-mail', format:'r'}
   field email    [L+52,T+140,330,] {type:'list', data:o.email}
-  label          [L+0,T+165,48,] {title:'poznámka'}
+  label          [L+-3,T+165,51,] {title:'poznámka'}
   edit  pozn     [L+52,T+164,329,60] {data:o.note}
   # --------------------------------------------------  OPRAVA
   const Lt=55
@@ -365,7 +367,7 @@ form _osoba { tag:'a'
       evid.reload;
   }}
   # --------------------------------------------------  VYTVÁŘENÍ A MAZÁNÍ
-  label  [Lt+122,Tt+0,109,30] { css:'ae_parm', style:'z-index:1'  }
+  label  [Lt+122,Tt+0,116,30] { css:'ae_parm', style:'z-index:1'  }
   button [Lt+127,Tt+5,,] {title:'Nový', help:'Založení nového kontaktu na osobu', format:'d'
     proc onclick() {  } }
   button [Lt+170,Tt+5,,] {title:'Vymazat', help:'Vymazání osobních informací z evidence', format:'d'

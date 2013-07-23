@@ -109,16 +109,16 @@ menu m {type:'left',
                                         ,fld:'prijmeni,jmeno,narozeni,rc_xxxx,obec,psc,ulice'}}
     item {title:'Účastníci akce s poznámkami'
                                         ,par:°{typ:'p',exp:'Excel',cnd:"funkce!=99"
-                                        ,tit:'příjmení:15,jména:12,obec:25,počet:5,poznámka k akce / trvalá poznámka:100'
-                                        ,fld:'prijmeni,jmena,obec,_pocet,poznamka'}}
+                                        ,tit:'příjmení:15,jména:12,obec:25,počet:5,poznámka k akci:50,trvalá poznámka:50'
+                                        ,fld:'prijmeni,jmena,obec,_pocet,poznamka,note'}}
     item {title:'Účastníci akce pro ubytování'
                                         ,par:°{typ:'j',exp:'Excel',cnd:"funkce!=99 AND role!='d'"
                                         ,tit:'příjmení:15,jméno:12,OP:12,narození:12,obec:25,psč:7,ulice:25'
                                         ,fld:'prijmeni,jmeno,obcanka,narozeni_dmy,obec,psc,ulice'}}
     item {title:'Děti na akci s poznámkami'                                                             skill:'y;f'
                                         ,par:°{typ:'j',exp:'Excel',cnd:"role='d' AND funkce!=99 AND pfunkce!=95",ord:"narozeni"
-                                        ,tit:'příjmení:15,jméno:12,narození:12,/rč:5,věk:4,obec:25,psč:7,ulice:25,na kurzu jako:20,poznámka:100'
-                                        ,fld:'prijmeni,jmeno,narozeni,rc_xxxx,_vek,obec,psc,ulice,pfunkce,note'}}
+                                        ,tit:'příjmení:15,jméno:12,narození:12,/rč:5,věk:4,obec:25,psč:7,ulice:25,na kurzu jako:20,poznámka k akci:50,trvalá poznámka:50'
+                                        ,fld:'prijmeni,jmeno,narozeni,rc_xxxx,_vek,obec,psc,ulice,pfunkce,poznamka,note'}}
     item {title:'Děti na akci s poznámkami'                                                             skill:'c'
                                         ,par:°{typ:'j',exp:'Excel',cnd:"role='d' AND funkce!=99 AND pfunkce!=95",ord:"narozeni"
                                         ,tit:'příjmení:15,jméno:12,narození:12,věk:4,obec:25,psč:7,ulice:25,poznámka:100'
