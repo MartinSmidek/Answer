@@ -91,7 +91,7 @@ proc reload(id_pobyt) { echo('reload ',the_title.get);
   [ u.b.browse_load(cconc(
         u.jen.get,"funkce IN (0,1,2,5) AND ",
         1,conc("funkce!=99 AND p.id_akce=",the_duakce.get)),
-      "IF(funkce<=2,1,funkce),IF(pouze=0,r.nazev,o.prijmeni)",
+      "IF(funkce<=2,1,funkce),_nazev",
       '','','','',
       conc('SET @akce:=',the_duakce.get));
     u.b.browse_focus;
