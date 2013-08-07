@@ -1,38 +1,14 @@
-# Systém Ans(w)er
+# Systém Ans(w)er - databáze chlapi - kód x
 # (c) 2008-2010 Martin Šmídek <martin@smidek.eu>
 
 menu ys { type:'main', active:* //ys.pok
   var global: text,
-#   tabs info {title:"Archiv", _sys:'inf',  include:'onclick', active:* }
-#   tabs pok {title:"Pokladna", _sys:'*',  include:'onclick', active:*, skill:'yp' }
-#   tabs eko {title:"Ekonomika", _sys:'*',  include:'onclick', active:*, skill:'ye' }
-#   tabs ds {title:"Dům", _sys:'dum', include:'onclick', active:*, skill:'yd' }
-##  tabs chl {title:"Chlapi",  include:'onclick' }
-#   tabs akce {title:"Akce", _sys:'akce', include:'onclick', active:*, skill:'ya' }
-  tabs db {title:"Databáze", _sys:'db', include:'onclick,db.akce', active:*, skill:'ya' }
-#   tabs lide {title:"Lidé", _sys:'lid', include:'onclick', skill:'yl' }
+  tabs db {title:"Databáze", _sys:'db', include:'onclick,db.akce', active:*, skill:'xa' }
   tabs syst {title:"Systém", _sys:'sys',  include:'onclick,ezer2.syst', active:*, skill:'a'
     panel oso {type:'right', title:'Osobní nastavení', _sys:'*', include:'onclick,ezer2.pers' }
-#     panel nas {type:'right', title:'Nastavení', _sys:'nas', skill:'m'
-#       menu {type:'left', active:*
-#         menu {title:'Opravy dat',type:'group', _sys:'*'
-#           item {title:'---', proc onclick (i) {
-#             info.fill(conc(i.owner.title,' - ',i.title),' ');
-#           }}
-#           item {title:'Dokončení převodu z FoxPro', proc onclick (i) {
-#             info.fill(conc(i.owner.title,' - ',i.title),' ');
-#             confirm("Opravdu dokončit transformaci dat z FoxPro? Klíče 'id_pary' a 'id_akce' mohou být přepsány!");
-#             info.fill('',ask('akce_foxpro_data'));
-#           }}
-#         }
-#       }
-#       use info: form right [12,4,,]
-#     }
   }
   tabs doc  {title:"Nápověda", _sys:'nap',  include:'onclick,ezer2.help' }
   tabs off  {title:"Odhlásit", type:'logoff' }
-//#   tabs test {title:"Test",  where:'http://ys2.ezer/test.html' }
-//#   tabs ys1  {title:"Pokladna/1",  where:'http://ys.ezer/anser.php?modul=ys_pokladna' }
   // univerzální procedury
   proc the_formsave (f,b) {
     f.same

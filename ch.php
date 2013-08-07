@@ -5,6 +5,11 @@
   $app=      'ch';
   $app_name= 'Chlapi';
   $skin=     'ch';
+  $CKEditor= $_GET['editor'] ? $_GET['editor'] : '4';
+
+
+
+
 
   require_once("$app.inc");
   require_once("{$EZER->version}/server/ae_slib.php");
@@ -14,7 +19,7 @@
   $licensed= "$client/licensed";
   $js= array_merge(
     // ckeditor a mootools
-    array("$licensed/ckeditor/ckeditor.js","$licensed/clientcide.js"),
+    array("$licensed/ckeditor$CKEditor/ckeditor.js","$licensed/clientcide.js"),
     // pro verzi 2.1
     $EZER->version=='ezer2'
     ? array("$licensed/mootools/asset.js","$licensed/mootools/slider.js"):array(),
@@ -30,35 +35,14 @@
     array("db/db_fce.js","ds/fce.js")
   );
 
-//   $js= array(
-//     'ezer2/client/licensed/ckeditor/ckeditor.js',
-//     'ezer2/client/licensed/clientcide.js',
-//     'ezer2/client/licensed/mootools/asset.js',
-//     'ezer2/client/licensed/mootools/slider.js',
-//     'ezer2/client/lib.js',
-//     'ezer2/client/ezer_fdom1.js',
-//     'ezer2/client/ezer.js',
-//     'ezer2/client/ezer_report.js',
-//     'ezer2/client/ezer_fdom2.js',
-//     'ezer2/client/app.js',
-//     'db/db_fce.js'
-// //     'ds/fce.js'
-//   );
-
   $css= array_merge(
     array("./$client/ezer.css.php","./fa/fa.css.php","./db/db.css.php"),
     /* pro verzi 2.2 */ $EZER->version=='ezer2.2'
     ? array("$licensed/datepicker/datepicker_vista/datepicker_vista.css"):array()
   );
-
-//   $css= array(
-//     './ezer2/client/ezer.css.php',
-// //     './ezer2/client/licensed/fancyupload.css',
-//     './db/db.css.php'
-//   );
   $options= (object)array(
-    'skill'      => "'y'",
-    'autoskill'  => "'!y'",
+    'skill'      => "'x'",
+    'autoskill'  => "'!x'",
   );
   $kontakt= " V případě zjištění problému nebo <br/>potřeby konzultace mi prosím napište<br/>
         na mail&nbsp;<a href='mailto:{$EZER->options->mail}{$EZER->options->mail_subject}'>{$EZER->options->mail}</a> "
@@ -70,7 +54,23 @@
     'watch_key' => true,               // true = povolit přístup jen po vložení klíče
     'watch_ip' => true,                // true = povolit přístup jen ze známých IP adres
     'title_right' => $ezer_local ? "<span style='color:#ef7f13'>$app_name</span>" : $app_name,
-    'contact' => $kontakt
+    'contact' => $kontakt,
+    'CKEditor' => "{
+      version:'$CKEditor',
+      Minimal:{toolbar:[['Bold','Italic','Source']]},
+      IntranetSlim:{
+        toolbar:[['Bold','Italic','-','Link','Unlink','-','Source']],
+        removePlugins:'wsc,elementspath,scayt'
+      },
+      'EzerMail':{toolbar:[['PasteFromWord',
+        '-','Bold','Italic','TextColor','BGColor',
+        '-','JustifyLeft','JustifyCenter','JustifyRight','JustifyBlock',
+        '-','Link','Unlink','HorizontalRule','Image','Smiley',
+        '-','NumberedList','BulletedList',
+        '-','Outdent','Indent',
+        '-','Source','ShowBlocks','RemoveFormat']]
+      }
+    }"
   );
   root_php($app,$app_name,'news',$skin,$options,$js,$css,$pars);
 

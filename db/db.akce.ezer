@@ -25,7 +25,7 @@ proc akce_onstart() { dirty.get
   the_rok.set(get_cookie(conc(sys('root'),'_akce_rok'),fdate('Y')));
 }
 # ================================================================================================== CHLAPI
-panel chl {type:'right', _sys:'*', title:'Chlapi', include:'onclick,db.akce.chl',skill:'yac' }
+panel chl {type:'right', _sys:'*', title:'Chlapi', include:'onclick,db.akce.chl',skill:'yac;xa' }
 # ================================================================================================== AKCE
 panel lst {type:'right', _sys:'*', title:'AKCE', include:'onclick,db.akce.lst',skill:'yaa;faa;caa'
   use the_akce: form _the_akce         // zatím nezobrazená data nastavené akce s klíčem id_duakce

@@ -1,5 +1,7 @@
 <?php # (c) 2009-2010 Martin Smidek <martin@smidek.eu>
 
+  $ezer_root= 'ch';             // jméno adresáøe a hlavního objektu aplikace
+
   // nastavení verze jádra
   $EZER= (object)array();
   $EZER->version= $_GET['ezer'] ? "ezer{$_GET['ezer']}" : 'ezer2.2';
@@ -37,8 +39,7 @@
   $ezer_comp_root= "ds/fce,db/db_fce";
   // moduly v Ezerscriptu mimo složku aplikace
   $ezer_ezer= array(
-    "ds/ds.dum",
-    "ds/ds.tab"
+    "db/db.akce.chl"
   );
   // standardní moduly v PHP obsažené v $ezer_path_root/ezer2 - vynechané v dokumentaci
   $ezer_php_libr= array(
@@ -51,15 +52,11 @@
   );
   // uživatelské i knihovní moduly v PHP obsažené v $ezer_path_root
   $ezer_php= array(
-//     "ys/ys_fce.php",
-//     "ys/ys_ucet.php",
-//     "ys/ys_lide.php",
-    "db/db_akce.php",
-//     "ds/ds_fce.php"
+    "db/db_akce.php"
   );
 
   // parametrizace $EZER
-  $EZER->options->web=    'www.chlapi.cz';
+  $EZER->options->web=    'www.familia.cz';
   $EZER->options->author= 'Martin';
   $EZER->options->mail=   'martin@smidek.eu';
   $EZER->options->phone=  '603150565';
