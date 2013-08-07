@@ -6,6 +6,6 @@
 # ------------------------------------------------------------------------------------------------ #
 
 menu db { type:'main'
-  tabs akce {title:"Akce", _sys:'akce', include:'onclick', active:*, skill:'ya;fa;ca' }
+  tabs akce {title:"Akce", _sys:'akce', include:'onclick', active:*, skill:'ya;fa;ca;xa' }
 }
 
