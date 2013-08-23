@@ -5699,5 +5699,56 @@ function dop_mai_detach($id_dopis,$name) { trace();
   query("UPDATE dopis SET prilohy='$names2' WHERE id_dopis=$id_dopis");
   return 1;
 }
-
+# ================================================================================================== Generátor SQL
+# mode=1 - jen transformace dotazu
+# -------------------------------------------------------------------------------------- dop_gen_try
+function dop_gen_try($gq,$mode=0) { trace();
+  $html= $del= '';
+  switch ($mode) {
+  case 0:
+    $n= 0;
+    $gq= str_replace('&gt;','>',$gq);
+    $gq= str_replace('&lt;','<',$gq);
+    $gr= @mysql_query($gq);
+    if ( !$gr ) {
+      $html= mysql_error()."<hr>".nl2br($gq);
+      goto end;
+    }
+    else while ( $gr && ($g= mysql_fetch_object($gr)) ) {
+      $n++;
+      $name= str_replace(' ','&nbsp;',$g->_name);
+      $html.= "$del$name";
+      $del= ', ';
+    }
+    $html= "<b>Nalezeno $n adresátů:</b><br>$html";
+    break;
+  case 1:
+    $html= nl2br($gq);
+    break;
+  }
+end:
+  return $html;
+}
+# ------------------------------------------------------------------------------------- dop_gen_json
+# test json
+function dop_gen_json($js) { //trace();
+  global $json;
+//                                                         display($js);
+  $obj= $json->decode($js);
+                                                        debug($obj);
+  $obj= json_decode($js);
+                                                        debug($obj);
+  return 1;
+}
+# ------------------------------------------------------------------------------------- dop_gen_read
+# převod parm do objektu
+function dop_gen_read($parm) { trace();
+  global $json;
+                                                        display($parm);
+  $obj= $json->decode($parm);
+                                                        debug($obj);
+//   $obj= json_decode($js);
+//                                                         debug($obj);
+  return $obj;
+}
 ?>
