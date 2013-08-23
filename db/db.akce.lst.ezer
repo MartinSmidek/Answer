@@ -342,7 +342,7 @@ form _akce [,,*,50] {
 #     show kod   [,,30,] {title:'kód', data:ga2.g_kod, format:'rs+q*u', css_cell:'kod,0:yellow'
 #       proc onsubmit() { echo(ask('akce_roku_id',id_akce.get,kod.get,the_rok.get)) }
 #     }
-/**/show druh  [,,60,] {title:'druh',   data:da2.druh, map_pipe:ms_akce_typ.zkratka, format:'sq#'}
+/**/show druh  [,,60,] {title:'typ',    data:da2.druh, map_pipe:ms_akce_typ.zkratka, format:'sq#'}
     show kod   [,,30,] {title:'účet',   expr:"IF(ga2.g_kod,ga2.g_kod,da2.ciselnik_akce)", format:'rs+q*' }
     show nazev [,,120,] {title:'název', expr:"IF(da2.nazev='',ga2.g_nazev,da2.nazev)", format:'sq*'}
     show misto [,,60,] {title:'místo',  data:da2.misto, format:'sq*'}
