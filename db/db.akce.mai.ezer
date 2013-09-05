@@ -21,7 +21,6 @@ use es: form _esady [10,74,,]   // rozesílání
 proc onfocus() {
   [ the_duakce.get | akce_onstart ];
   eq(the_duakce_local.get,the_duakce.get)
-| has_skill('m'); m.gg.ii.click
 | ini(m.g.i,'et','U','akce','skup'); vy.fill(the_title.get);
   the_duakce_local.set(the_duakce.get)
 }
