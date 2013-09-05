@@ -722,7 +722,7 @@ function akce_vzorec($id_pobyt) {  trace();
       }
       $html.= "<tr><td></td><td></td><th align='right'>{$ret->c_sleva}</th></tr>";
     }
-    $html.= "<tr><th>celková cena</th><td></td><th align='right'>$cena</th></tr>";
+    $html.= "<tr><th>celkový poplatek</th><td></td><th align='right'>$cena</th></tr>";
     if ( $chuvy ) {
       $html.= "<tr><td colspan=3>(Cena obsahuje náklady na vlastního pečovatele: $chuvy)</td></tr>";
     }
