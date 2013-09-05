@@ -239,7 +239,8 @@ form _platba {
   proc ini() {
     // výpočet součtu cen a rozpis, došlé platby
     [ has_skill("yaa;faa;caa"); dosle_platby; rozpis_ceny;
-      celkem.set(sum(c_nocleh.get,c_strava.get,c_program.get,c_sleva.get)) ];
+      celkem.set(sum(c_nocleh.get,c_strava.get,c_program.get,c_sleva.get));
+      naklad.set(sum(celkem.get,minus(c_sleva.get))) ];
     // obarvení tlačítka [Str.pol]
     or(u.b.cstrava_cel.get,u.b.cstrava_pol.get); stravy.set_css('cervena','cerna');
   | stravy.set_css('cerna','cervena')
@@ -328,7 +329,8 @@ form _platba {
   field strava_cel  [94,456,11,] {data:pobyt.strava_cel}
   field strava_pol  [112,456,11,] {data:pobyt.strava_pol}
   field svp         [136,456,11,] {data:pobyt.svp, help:"počet dětí s vlastním pečovatelem"}
-  field celkem      [173,456,50,] {format:'dr'}
+  field celkem      [173,456,50,] {format:'dr', help:'částka požadovaná po účastníkovi'}
+  field naklad      [248,474,50,] {format:'dr', help:'rozpočtovaná částka na účastníka = poplatek+sleva'}
   field c_nocleh    [29,491,47,] {data:pobyt.platba1, format:'r'}
   field c_strava    [79,491,47,] {data:pobyt.platba2, format:'r'}
   field c_program   [129,491,47,] {data:pobyt.platba3, format:'r'}
@@ -343,8 +345,10 @@ form _platba {
                       style:"border-top:2px solid grey" }
   label [3,441,100,] {title:'lůž. při. nocí koč.', help:'počet lůžek, přistýlek, nocí a kočárků'}
   label [134,441,27,] {title:'SVP'}
-  label [175,441,33,] {title:'cena'}
+  label [175,441,33,] {title:'poplatek'}
+  label [250,446,52,] {title:'rozpočet organizace'}
   label [327,441,33,] {title:'platba'}
+  label [229,477,20,] {title:'=>'}
   label [384,441,71,] {title:'způsob platby'}
   label [475,441,51,] {title:'dne'}
   label [29,510,,] {title:'nocleh'}

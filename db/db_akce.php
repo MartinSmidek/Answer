@@ -1,21 +1,29 @@
 <?php # (c) 2009-2010 Martin Smidek <martin@smidek.eu>
 # ================================================================================================== DUPL
+# --------------------------------------------------------------------------------------- dupl_osoba
+# zkusí vyřešit duplicitu 2 osob - klíče z tabulky SPOLU
+function dupl_osoba($ids_osoba,$to_change=0) { trace();
+  if ( substr_count($ids_osoba,',')!=1 ) { $html= "nejsou vybrány 2 osoby"; goto end; }
+  $html= dupl_meth1($ids_osoba,$to_change);
+end:
+  return $html;
+}
 # --------------------------------------------------------------------------------------- dupl_spolu
 # zkusí vyřešit duplicitu 2 osob - klíče z tabulky SPOLU
 function dupl_spolu($ids_spolu,$to_change=0) { trace();
   if ( substr_count($ids_spolu,',')!=1 ) { $html= "nejsou vybrány 2 osoby"; goto end; }
-  $html= dupl_osoba(select("GROUP_CONCAT(id_osoba)","spolu","id_spolu IN ($ids_spolu)"),$to_change);
+  $html= dupl_meth1(select("GROUP_CONCAT(id_osoba)","spolu","id_spolu IN ($ids_spolu)"),$to_change);
 end:
   return $html;
 }
-# --------------------------------------------------------------------------------------- dupl_osoba
+# --------------------------------------------------------------------------------------- dupl_meth1
 # zkusí vyřešit duplicitu 2 osob
-function dupl_osoba($ids_osoba,$to_change=0) { trace();
+function dupl_meth1($ids_osoba,$to_change=0) { trace();
                                                         debug($ids_osoba,"osoby");
   $html= '';
   // pomocné
-  $omitt= array('osoba'=>array('id_osoba','id_dupary','id_dudeti','origin'));
-  $cisla= array('osoba'=>array('vzdelani','cirkev'));
+  $omitt= array('osoba'=>array('id_osoba','id_dupary','id_dudeti','origin','historie'));
+  $cisla= array('osoba'=>array('vzdelani','cirkev','rc_xxxx'));
   $ths.= "<th>ID:</th><th>$id_osoba</th>";
   $id= $os= array();
   $i= 0;
@@ -38,8 +46,8 @@ function dupl_osoba($ids_osoba,$to_change=0) { trace();
   $trs= "";
   $smery= array();
   foreach ($os[$id1] as $fld=>$val1) {
-    $val1= trim($val1);
-    $val2= trim($os[$id2][$fld]);
+    $val1= str_replace(' ','',$val1);
+    $val2= str_replace(' ','',$os[$id2][$fld]);
     if ( $val1!=$val2 ) {
       $smer= $val1!='' && ($val2=='' || in_array($fld,$cisla['osoba']) && $val2=='0') ? '>' : (
              $val2!='' && ($val1=='' || in_array($fld,$cisla['osoba']) && $val1=='0')? '<' : 'X');
@@ -2399,13 +2407,13 @@ function akce_vyuctov_pary($akce,$par,$title,$vypis,$export=false) { trace();
       . ",na účet:7:r:s,datum platby:10:d"
       . ",nedo platek:6:r:s,pokladna:6:r:s,přepl.:6:r:s,poznámka:50,SPZ:9,.:7"
       . ",ubyt.:8:r:s,DPH:6:r:s,strava:8:r:s,DPH:6:r:s,režie:8:r:s,zapla ceno:8:r:s"
-      . ",dota ce:6:r:s,nedo platek:6:r:s,dar:7:r:s"
+      . ",dota ce:6:r:s,nedo platek:6:r:s,dar:7:r:s,rozpočet organizace:10:r:s"
       . "";
   $fld= "manzele"
       . ",pokoj,_deti,luzka,pristylky,kocarek,=pocetnoci,strava_cel,strava_pol"
       . ",platba1,platba2,platba3,platba4,=cd,=platit,platba,datplatby"
       . ",=nedoplatek,=pokladna,=preplatek,poznamka,spz,"
-      . ",=ubyt,=ubytDPH,=strava,=stravaDPH,=rezie,=zaplaceno,=dotace,=nedopl,=dar"
+      . ",=ubyt,=ubytDPH,=strava,=stravaDPH,=rezie,=zaplaceno,=dotace,=nedopl,=dar,=naklad"
       . "";
   $cnd= 1;
   $html= '';
@@ -2464,6 +2472,7 @@ function akce_vyuctov_pary($akce,$par,$title,$vypis,$export=false) { trace();
         $predpis= $x->platba1 + $x->platba2 + $x->platba3 + $x->platba4;
         $preplatek= $x->platba > $predpis ? $x->platba - $predpis : '';
         $nedoplatek= $x->platba < $predpis ? $predpis - $x->platba : '';
+        $naklad= $predpis - $x->platba4;
         switch ($f) {
         case '=pocetnoci':  $val= max(0,$x->pocetdnu);
                             break;
@@ -2493,6 +2502,8 @@ function akce_vyuctov_pary($akce,$par,$title,$vypis,$export=false) { trace();
                             $exp= "=IF([=zaplaceno,0]<[=platit,0],[=platit,0]-[=zaplaceno,0],0)"; break;
         case '=dar':        $val= $preplatek;
                             $exp= "=IF([=zaplaceno,0]>[=platit,0],[=zaplaceno,0]-[=platit,0],0)"; break;
+        case '=naklad':     $val= $naklad;
+                            $exp= "=[=platit,0]-[platba4,0]"; break;
         default:            $val= '???'; break;
         }
         $clmn[$n][$f]= $val;

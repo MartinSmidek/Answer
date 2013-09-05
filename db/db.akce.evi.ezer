@@ -62,14 +62,15 @@ proc onfirstfocus() {
 
 proc status(on) {
   has_skill('m');
-  { on; stav.klice.display(1);
+  { on; stav.display(1);
     stav.klice.set('');
     switch(mode.get,
     'o',{ osoby.b.browse_count;
           stav.klice.set(conc('osoby: id_osoba=',osoby.b.id_o.get,', id_rodina=',osoby.b.id_r.get))},
     'r',{ rodiny.b.browse_count; stav.klice.set(conc('rodiny: id_rodina=',rodiny.b.id_r.get)) }
     )
-  | stav.klice.display(0)
+#   | stav.display(0)
+  | not(on); stav.display(1) // náhradní řešení
   }
 }
 const LETOS = "NOW()>=od.dat_od AND (NOW()<=od.dat_do OR od.dat_do='0000-00-00')"
@@ -200,17 +201,23 @@ form _osoby {
       help:'datum narození ve tvaru rrmmdd'}
     show mail [,,0,] { expr:"CONCAT(email,IF(email='','',','),emaily)", title:'emaily',
       help:'osobní i  rodinné emaily', format:'tq%s' }
+    show ids [,,0,] {expr:"CONCAT('o:',os.id_osoba,' r:',IFNULL(of.id_rodina,'-'))", title:'DB klíče',
+      help:'id_osoba id_rodina', format:'trq%s' }
     proc onrowclick() { evid.reload; dary.reload; status(1) }
     proc onclick() {
-      akt.width; akt.width(0);   rel.width(100);
-    | rel.width; rel.width(0);   nar.width(100);
-    | nar.width; nar.width(0);   mail.width(100);
-    |            mail.width(0);  akt.width(100);
+      akt.width;  akt.width(0);   rel.width(100);
+    | rel.width;  rel.width(0);   nar.width(100);
+    | nar.width;  nar.width(0);   mail.width(100);
+    | mail.width; mail.width(0);  ids.width(100);
+    | ids.width;  ids.width(0);   akt.width(100);
     }
     # --------------------------------------------------  KONTEXTOVÉ MENU
     menu { type:'context'
       item { title:'ukázat všechny změny'
         proc onclick () { Ctrack.CT_tab.set('osoba'); Ctrack.CT_load(id_o.get) }
+      }
+      item { title:'sjednotit označené záznamy'
+        proc onclick () { echo(ask('dupl_osoba',b.selected('get'))) }
       }
     }
   }
