@@ -202,7 +202,7 @@ form _page [,,285,500] {
     show dph [,,15,] { title:'dph', help:'DPH v Kč', data:cenik.dph, format:'urq=s'
       proc onsubmit() { this.save } }
     menu { type:'context'
-      item { title:'přidat nový řádek', skill:'a|a'
+      item { title:'přidat nový řádek', skill:'yaa+|yaa+;faa+|faa+;caa+|caa+'
         proc onclick() {
           c.browse_seek(conc('id_cenik=',cenik.insert_record(
             object('id_akce',a_akce.get,'polozka','?'))));
