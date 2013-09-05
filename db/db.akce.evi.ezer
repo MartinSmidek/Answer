@@ -216,7 +216,7 @@ form _osoby {
       item { title:'ukázat všechny změny'
         proc onclick () { Ctrack.CT_tab.set('osoba'); Ctrack.CT_load(id_o.get) }
       }
-      item { title:'sjednotit označené záznamy'
+      item { title:'sjednotit označené záznamy', skill:'m|m'
         proc onclick () { echo(ask('dupl_osoba',b.selected('get'))) }
       }
     }
