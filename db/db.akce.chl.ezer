@@ -101,6 +101,11 @@ form _info [,,*,50] { css:'ds_form'
     }
   }
   label ref [-170,7,200,]  { tag:'ex', format:'r', css:'title_ref' }
+  button [-200,3,50,] { title:"exBrno", skill:'m|m'
+    proc onclick() {
+      ref.set(ask('chlapi_spec_export',"psc REGEXP '^6' AND obec REGEXP 'Brno|Babice|Zastávka|Lednice' "))
+    }
+  }
   label note [0,35,,550] { title:'' }
   proc fill(x,y) {
     [ x; head.set(conc("<div class='karta'>",x,"</div>")) ];

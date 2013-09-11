@@ -36,6 +36,8 @@ proc ini(i,k,uq,on,off) {
   switch(k,
   'gq',{et.get.display(0); es.get.display(0); gq.get.display(1);
         sq.get.display(0); vy.get.display(0,'es'); gq.reload},
+#   'gs',{et.get.display(0); es.get.display(0); gq.get.display(1);
+#         sq.get.display(0); vy.get.display(1,'es'); gq.reload},
   'et',{et.get.display(1); es.get.display(0); gq.get.display(0);
         sq.get.display(0); vy.get.display(0,'es'); et.reload},
   'sq',{et.get.display(0); es.get.display(0); gq.get.display(0);
@@ -47,24 +49,24 @@ proc ini(i,k,uq,on,off) {
 
 menu m {type:'left',
   menu g {title:'Příprava mailů ', type:'group'
-    item i {title:'všem účastníkům této akce'
+    item i {title:'všem účastníkům této akce', _sys:'akc'
       proc onclick (i) { ini(i,'et','U','akce','skup|gen'); vy.fill(the_title.get); } }
     item {title:'... VPS,SVPS,hospodářům akce'
       proc onclick (i) { ini(i,'et','U2','akce','skup|gen'); vy.fill(the_title.get); } }
     item {title:'... dlužníkům akce'
       proc onclick (i) { ini(i,'et','U3','akce','skup|gen'); vy.fill(the_title.get); } }
-    item {title:'členům skupiny'
+    item {title:'členům skupiny', _sys:'sku'
       proc onclick (i) {
         ini(i,'et','Q','skup','akce|gen');
         [ vy.komu_Q.key | et.get.enable(0,'n') ]
       }
     }
-    item {title:'Definice skupin (SQL)',
+    item {title:'Definice skupin (SQL)', skill:'a|a'
       proc onclick (i) { ini(i,'sq','','skup','akce|gen'); } }
     item {title:'Kopie emailů z Domu setkání', skill:'yae'
       proc onclick (i) { alert(ask('db_mail_copy_ds')); } }
   }
-  menu {title:'Rozesílání mailů ', type:'group'
+  menu {title:'Rozesílání mailů ', type:'group', _sys:'snd'
     item {title:'všem účastníkům této akce',
       proc onclick (i) { ini(i,'es','U','akce','skup|gen'); vy.fill(the_title.get); } }
     item {title:'... VPS,SVPS,hospodářům akce'
@@ -74,10 +76,21 @@ menu m {type:'left',
     item {title:'členům skupin',
       proc onclick (i) { ini(i,'es','Q','skup','akce|gen'); } }
   }
-  menu gg  {title:'(generátor mail-listů)', type:'group', skill:'mg'
-    item ii {title:'testování'
-      proc onclick (i) { ini(i,'gq','G','gen','akce|skup'); } }
+  menu {title:'(testování mail-listů)', type:'group', skill:'mg', _sys:'lst'
+    item {title:'správa mail-listu'
+      proc onclick (i) {
+        ini(i,'gq','G','gen','akce|skup');
+        gq.get.display(1,'def'); gq.get.display(0,'send');
+    } }
+    item {title:'rozeslání podle mail-listu',
+      proc onclick (i) {
+        ini(i,'gq','G','gen','akce|skup');
+        gq.get.display(0,'def'); gq.get.display(1,'send');
+    } }
   }
+#   menu {title:'(test)', type:'group', _sys:'tst'
+#     item {title:'X' }
+#   }
 }
 # -------------------------------------------------------------------------------------------------- _vyber
 form _vyber {
@@ -128,7 +141,9 @@ form _vyber {
   }
 }
 # -------------------------------------------------------------------------------------------------- _gsql
-# generátor SQL dotazů
+# generátor SQL dotazů, tags:
+# def = správa mail-listů
+# snd = rozesílání
 form _gsql {
   view g: table mailist
   field id_mailist { data:g.id_mailist }
@@ -160,13 +175,13 @@ form _gsql {
   # ------------------------------------- výběr typů akcí
   const t_akce = 60; l_ne_akce = 380
   # ------------------------ výběr typu ano-akce
-  label [10,t_akce,300,] { title:"<h3>obeslat účastníky akcí</h3>" }
-  label [5,t_akce+10,370,435] { css:'ae_work'}
-  check ano_akce [10,t_akce+30,150,] { title:'jen některé typy akcí?', value:'0', format:'t'
+  label [10,t_akce,300,] { tag:'def', title:"<h3>obeslat účastníky akcí</h3>" }
+  label [5,t_akce+10,370,435] { tag:'def', css:'ae_work'}
+  check ano_akce [10,t_akce+30,150,] { tag:'def', title:'jen některé typy akcí?', value:'0', format:'t'
     proc onchange() {
       ano_akces.display(this.get); ano_akces.selected('clear');
   } }
-  browse ano_akces [230,t_akce+30,,] { rows:9
+  browse ano_akces [230,t_akce+30,,] { tag:'def', rows:9
     view c: table _cis
     show id_cis { data:c.id_cis }
     show druh {data:c.data}
@@ -176,12 +191,12 @@ form _gsql {
   # ------- časové ano-podmínky
   const cas_options = "neomezovat:1,plánovaná akce:2,dříve než:3,později než:4"
   var last_ano: number
-  button ano_cas [10,t_akce+60,140,] { title:'omezit termínem akce?', proc onclick() {
+  button ano_cas [10,t_akce+60,140,] { tag:'def', title:'omezit termínem akce?', proc onclick() {
     last_ano.set(L_ano.add);
     L_ano.part(last_ano.get).part('kdy').selects(cas_options.get);
     L_ano.part(last_ano.get).part('rok').init(1); L_ano.part(last_ano.get).part('kdy').key(4);
   } }
-  list L_ano [10,t_akce+90,185,120] {rows:22
+  list L_ano [10,t_akce+90,185,120] { tag:'def', rows:22
     select kdy [0,4,100,] { format:'t', proc onchange() {
       rok.display(gt(this.key,2)); rokem.display(gt(this.key,2));
     }}
@@ -189,13 +204,13 @@ form _gsql {
     label rokem [140,6,50,] { title:"rokem" }
   }
   # ------------------------ výběr typu ne-akce
-  label [l_ne_akce+10,t_akce,300,] { title:"<h3>... z toho vynechat účastníky akcí</h3>" }
-  label [l_ne_akce+5,t_akce+10,370,435] { css:'ae_work'}
-  check ne_akce [l_ne_akce+10,t_akce+30,150,] { title:'některých typů akcí?', value:'0', format:'t'
+  label [l_ne_akce+10,t_akce,300,] { tag:'def', title:"<h3>... z toho vynechat účastníky akcí</h3>" }
+  label [l_ne_akce+5,t_akce+10,370,435] { tag:'def', css:'ae_work'}
+  check ne_akce [l_ne_akce+10,t_akce+30,150,] { tag:'def', title:'některých typů akcí?', value:'0', format:'t'
     proc onchange() {
       ne_akces.display(this.get); ne_akces.selected('clear');
   } }
-  browse ne_akces [l_ne_akce+230,t_akce+30,,] { rows:9,
+  browse ne_akces [l_ne_akce+230,t_akce+30,,] { tag:'def', rows:9,
     view c: table _cis
     show id_cis { data:c.id_cis }
     show druh {data:c.data}
@@ -204,12 +219,12 @@ form _gsql {
   }
   # ------- časové ne-podmínky
   var last_ne: number
-  button ne_cas [l_ne_akce+10,t_akce+60,140,] { title:'omezit termínem akce?', proc onclick() {
+  button ne_cas [l_ne_akce+10,t_akce+60,140,] { tag:'def', title:'omezit termínem akce?', proc onclick() {
     last_ne.set(L_ne.add);
     L_ne.part(last_ne.get).part('kdy').selects(cas_options.get);
     L_ne.part(last_ne.get).part('rok').init(1); L_ne.part(last_ne.get).part('kdy').key(4);
   } }
-  list L_ne [l_ne_akce+10,t_akce+90,185,120] {rows:22
+  list L_ne [l_ne_akce+10,t_akce+90,185,120] { tag:'def', rows:22
     select kdy [0,4,100,] { format:'t', proc onchange() {
       rok.display(gt(this.key,2)); rokem.display(gt(this.key,2));
     }}
@@ -218,14 +233,14 @@ form _gsql {
   }
   # ------------------------------------- kriteria obeslaných účastníků
   const t_pro = 500
-  label [10,t_pro+10,300,] { title:"<h3>koho z účastníků obeslat?</h3>" }
-  label [5,t_pro+15,370,125] { css:'ae_work'}
-  check pro_fce [10,t_pro+40,150,] { title:'jen s vybranými funkcemi?', value:'0', format:'t'
+  label [10,t_pro+10,300,] { tag:'def', title:"<h3>koho z účastníků obeslat?</h3>" }
+  label [5,t_pro+15,370,125] { tag:'def', css:'ae_work'}
+  check pro_fce [10,t_pro+40,150,] { tag:'def', title:'jen s vybranými funkcemi?', value:'0', format:'t'
     proc onchange() {
       fces.display(this.get); fces.selected('clear');
     }
   }
-  browse fces [230,t_pro+25,,] { rows:4
+  browse fces [230,t_pro+25,,] { tag:'def', rows:4
     view c: table _cis
     show id_cis { data:c.id_cis }
     show fce {data:c.data}
@@ -249,9 +264,9 @@ form _gsql {
       return(cond);
     }
   }
-  check pro_muze  [10,t_pro+60,58,] { title:'muže', value:'1', format:'t' }
-  check pro_zeny  [65,t_pro+60,63,] { title:'ženy', value:'1', format:'t' }
-  check pro_ucast [ 10,t_pro+80,90,] { title:'podle účastí?', value:'0', format:'t'
+  check pro_muze  [10,t_pro+60,58,] { tag:'def', title:'muže', value:'1', format:'t' }
+  check pro_zeny  [65,t_pro+60,63,] { tag:'def', title:'ženy', value:'1', format:'t' }
+  check pro_ucast [ 10,t_pro+80,90,] { tag:'def', title:'podle účastí?', value:'0', format:'t'
     proc onchange() {
       form.display(this.get,'ucast'); pro_kolik.init(1); pro_jak.key(1);
     }
@@ -270,9 +285,9 @@ form _gsql {
       return(having);
     }
   }
-  field pro_kolik [100,t_pro+80,20,] { tag:'ucast', format:'ntr', value:'1' }
-  select pro_jak  [125,t_pro+80,65,] { tag:'ucast', format:'nt' }
-  check pro_mail  [ 10,t_pro+100,90,] { title:'známe email', value:'1', format:'t' }
+  field pro_kolik [100,t_pro+80,20,] { tag:'def', tag:'ucast', format:'ntr', value:'1' }
+  select pro_jak  [125,t_pro+80,65,] { tag:'def', tag:'ucast', format:'nt' }
+  check pro_mail  [ 10,t_pro+100,90,] { tag:'def', title:'známe email', value:'1', format:'t' }
   # ------------------------------------- zápis a nastavení stavu do JSON
   proc make_json() {
     var json: text
@@ -339,10 +354,10 @@ form _gsql {
   var sql: text
   var from: text
   var cond: text
-  label  [620,t_pro+85,132,55] { css:'ae_parm' }
-  button [628,t_pro+90,,] {title:'TEST',  help:'otestovat dotaz', proc onclick() { make_sql; run_sql } }
-  button [678,t_pro+90,,] {title:'(jen SQL)',  help:'otestovat dotaz', proc onclick() { make_sql } }
-  button [678,t_pro+115,,] {title:'(jen JSON)',  proc onclick() { tsql.set(make_json) } }
+  label  [620,t_pro+85,132,55] { tag:'def', css:'ae_parm' }
+  button [628,t_pro+90,,] { tag:'def', title:'TEST',  help:'otestovat dotaz', proc onclick() { make_sql; run_sql } }
+  button [678,t_pro+90,,] { tag:'def', title:'(jen SQL)',  help:'otestovat dotaz', proc onclick() { make_sql } }
+  button [678,t_pro+115,,] { tag:'def', title:'(jen JSON)',  proc onclick() { tsql.set(make_json) } }
   proc make_sql() {
     var akce_ano: text
     var akce_ne: text
@@ -380,8 +395,8 @@ form _gsql {
   }
   proc run_sql() { tsql.set(ask('dop_gen_try',sql.get)) }
   proc run_sql1() { tsql.set(conc(ask('dop_gen_try',sql.get,1),'<hr>',ask('dop_gen_try',sql.get))) }
-  label tsql [5,t_pro+150,750,*] { style:"background-color:#e6e6e6" }
-  button [742,t_pro+150,,] { title:'!' proc onclick() { make_sql; run_sql1 }}
+  label tsql [5,t_pro+150,750,*] { tag:'def', style:"background-color:#e6e6e6" }
+  button [742,t_pro+150,,] { tag:'def', title:'!' proc onclick() { make_sql; run_sql1 }}
   # ------------------------------------- procedury
   var code_cas:text
   var json_cas:text
@@ -461,14 +476,14 @@ form _gsql {
   # ------------------------------------- kontrolní zobrazení akcí
   const t_ctrl = 270
   # ------------ ano akce
-  browse ctrl_akce_ano [10,t_ctrl+20,,] { rows:10
+  browse ctrl_akce_ano [10,t_ctrl+20,,] { tag:'def', rows:10
     view a: table akce
     show [,,110,] {title:'typ akce',data:a.druh, map_pipe:ms_akce_typ.zkratka, format:'ts'}
     show [,,153,] {title:'název',   data:a.nazev, format:'ts'}
     show [,,65,]  {title:'od',      data:a.datum_od, format:'rs-'}
   }
   # ------------ ne akce
-  browse ctrl_akce_ne [l_ne_akce+10,t_ctrl+20,,] { rows:10
+  browse ctrl_akce_ne [l_ne_akce+10,t_ctrl+20,,] { tag:'def', rows:10
     view a: table akce
     show [,,110,]  {title:'typ akce',data:a.druh, map_pipe:ms_akce_typ.zkratka, format:'ts'}
     show [,,153,] {title:'název',   data:a.nazev, format:'ts'}
