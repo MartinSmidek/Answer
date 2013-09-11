@@ -63,9 +63,9 @@
         removePlugins:'wsc,elementspath,scayt'
       },
       'EzerMail':{toolbar:[['PasteFromWord',
-        '-','Bold','Italic','TextColor','BGColor',
-        '-','JustifyLeft','JustifyCenter','JustifyRight','JustifyBlock',
-        '-','Link','Unlink','HorizontalRule','Image','Smiley',
+        '-','Format','Bold','Italic','TextColor','BGColor',
+        '-','JustifyLeft','JustifyCenter','JustifyRight',
+        '-','Link','Unlink','HorizontalRule','Image',
         '-','NumberedList','BulletedList',
         '-','Outdent','Indent',
         '-','Source','ShowBlocks','RemoveFormat']]
