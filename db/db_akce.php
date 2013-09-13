@@ -5247,7 +5247,39 @@ function dop_mai_pocet($id_dopis,$dopis_var,$cond='',$recall=false) {  trace();
   $dels= $deln= $delm= '';
   $nazev= '';
   switch ($dopis_var) {
-  // obecný dotaz
+  // mail-list
+  case 'G':
+    $id= select('id_mailist','dopis',"id_dopis=$id_dopis");
+    list($qry,$ucel)= select('sexpr,ucel','mailist',"id_mailist=$id");
+    // SQL dotaz z mail-listu obsahuje _email,_nazev,_id
+    $res= mysql_qry($qry);
+    while ( $res && ($d= mysql_fetch_object($res)) ) {
+      $n++;
+      $nazev= "'$ucel'";
+      if ( $d->_email ) {
+        // přidej každý mail zvlášť do seznamu
+        foreach(preg_split('/\s*[,;]\s*/',trim($d->_email,",; \n\r"),0,PREG_SPLIT_NO_EMPTY) as $adr) {
+          // pokud tam ještě není
+          if ( $adr && !in_array($adr,$emaily) ) {
+            if ( $adr[0]=='*' ) {
+              // vyřazený mail
+              $mimo.= "$delm{$d->_name}"; $delm= ', '; $mx++;
+            }
+            else {
+              $emaily[]= $adr;
+              $ids[]= $d->_id;
+              $jmena[]= $d->_name;
+            }
+          }
+        }
+      }
+      else {
+        $nema.= "$deln{$d->_name}"; $deln= ', ';
+        $nx++;
+      }
+    }
+    break;
+  // obecný SQL dotaz - skupina
   case 'Q':
     $qryQ= "SELECT _cis.hodnota,_cis.zkratka FROM dopis
            JOIN _cis ON _cis.data=dopis.cis_skupina AND _cis.druh='db_maily_sql'
@@ -5556,6 +5588,7 @@ function dop_mai_info($id,$email,$id_dopis,$zdroj) {  trace();
   case 'U':                     // účastníci akce
   case 'U2':                    // sloužící účastníci akce
   case 'U3':                    // dlužníci
+  case 'G':                     // mail-list
     $qry= "SELECT * FROM osoba WHERE id_osoba=$id ";
     $res= mysql_qry($qry);
     if ( $res && $c= mysql_fetch_object($res) ) {
@@ -5751,8 +5784,9 @@ function dop_mai_detach($id_dopis,$name) { trace();
   return 1;
 }
 # ================================================================================================== Generátor SQL
-# mode=1 - jen transformace dotazu
 # -------------------------------------------------------------------------------------- dop_gen_try
+# mode=0 -- spustit a ukázat dotaz a také výsledek
+# mode=1 -- zobrazit argument jako html
 function dop_gen_try($gq,$mode=0) { trace();
   $html= $del= '';
   switch ($mode) {

@@ -602,6 +602,15 @@ table mail { key_id:'id_mail'
   text body
 }
 
+table mailist { key_id:'id_mailist'
+  number id_mailist
+  number blokovano
+  text   nazev
+  text   ucel
+  text   parms  // json
+  text   sexpr
+}
+
 table dopis { key_id:'id_dopis'
   number id_dopis { key:'primary' },
   number id_davka { help:'dávka|číslo rozesílání dávky dopisů' },
@@ -610,6 +619,7 @@ table dopis { key_id:'id_dopis'
   number potvrzeni { help:"potvrzení|vyžádat zaslání potvrzení o přečtení" }
   number kopie	{ help:"poslat slepou kopii 'odesílateli'" }
   number id_duakce   // pouze pro maily: id akce
+  number id_mailist  // pouze pro maily přes mail-list: id mailist
   number cis_skupina // pouze pro maily: _cis.data položky se SQL (_cis.druh='db_maily_sql')
   text druh { help:'druh|D-dopis, S-samolepka,legitimace, N-nesamostatná složka' },
   text typ { help:'typ|značka dopisu' },
@@ -640,4 +650,4 @@ map ms_akce_sex:      table _cis {where:"druh='ms_akce_sex'",       order:'porad
 map ms_akce_ucastnik: table _cis {where:"druh='ms_akce_ucastnik'",  order:'poradi', key_id:'data'}
 map ms_cena_vzorec:   table _cis {where:"druh='ms_cena_vzorec'",    order:'poradi', key_id:'data'}
 map ms_akce_ubytovan: table _cis {where:"druh='ms_akce_ubytovan'",  order:'poradi', key_id:'data'}
-map ms_akce_dieta:   table _cis {where:"druh='ms_akce_dieta'",    order:'poradi', key_id:'data'}
+map ms_akce_dieta:    table _cis {where:"druh='ms_akce_dieta'",     order:'poradi', key_id:'data'}
