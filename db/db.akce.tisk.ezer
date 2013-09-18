@@ -232,6 +232,10 @@ menu m {type:'left',
     item {title:'Skupinky (* noví)'     ,par:°{typ:'sk',exp:'Excel',cnd:'1',fce:'tisk',mark:'novic'}}
     item {title:'Skupinky - přehled historie' ,par:°{typ:'sk',cnd:'1',fce:'prehled'}}
 #     item {title:'Skupinky - tisk+'      ,par:°{typ:'sk',exp:'Excel',cnd:'1',fce:'tisk',mark:'novic'}}
+    item {title:'pro Závěrečnou zprávu'                                                                 skill:'y;f'
+                                        ,par:°{typ:'j',exp:'Excel',cnd:'1',ord:'o.prijmeni,o.jmeno'
+                                        ,tit:':5,Příjmení:15,Jméno:12,Ulice:25,Město:25,PSČ:7,Datum nar.:12,Člen YMCA:10,věk:10'
+                                        ,fld:'_1,prijmeni,jmeno,ulice,obec,psc,_narozeni6,_ymca,_vek',ord:'_zprava'}}
   }
   menu {title:'Technické seznamy',type:'group',_sys:'*'
     item {title:'Návrh ubytování'       ,par:°{typ:'p',exp:'Excel',cnd:"funkce!=99"
