@@ -308,10 +308,10 @@ BookMark2=1,1410
 BookMark4=50,1785
 BookMark1=12,5251
 [db\db.akce.mai.ezer]
-TopLine=46
-Caret=25,85
-BookMark1=38,665
-BookMark2=18,691
+TopLine=1
+Caret=14,23
+BookMark1=38,656
+BookMark2=18,682
 [db\db.akce.tisk.ezer]
 TopLine=201
 Caret=53,228

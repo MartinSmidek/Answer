@@ -1425,10 +1425,16 @@ function akce_sestava_lidi($akce,$par,$title,$vypis,$export=false) { trace();
   // získání dat - podle $kdo
   $clmn= array();
   $expr= array();       // pro výrazy
+  // případné zvláštní řazení
+  switch ($ord) {
+  case '_zprava':
+    $ord= "CASE WHEN _vek<6 THEN 1 WHEN _vek<18 THEN 2 WHEN _vek<26 THEN 3 ELSE 9 END,prijmeni";
+    break;
+  }
   // data akce
   $qry=  "SELECT
             p.pouze,p.poznamka,
-            o.prijmeni,o.jmeno,o.narozeni,o.rc_xxxx,o.note,o.obcanka,
+            o.prijmeni,o.jmeno,o.narozeni,o.rc_xxxx,o.note,o.obcanka,o.clen,
             IF(o.telefon='',r.telefony,o.telefon) AS telefon,
             IF(o.email='',r.emaily,o.email) AS email,
             IF(o.ulice='',r.ulice,o.ulice) AS ulice,
@@ -1460,8 +1466,18 @@ function akce_sestava_lidi($akce,$par,$title,$vypis,$export=false) { trace();
     $x->narozeni_dmy= sql_date1($x->narozeni);
     foreach($flds as $f) {
       switch ($f) {
+      case '_1':
+        $clmn[$n][$f]= 1;
+        break;
       case 'note':
         $clmn[$n][$f]= $x->s_note ? $x->$f.' / '.$x->s_note : $x->$f;
+        break;
+      case '_narozeni6':
+        $nar= $x->narozeni;
+        $clmn[$n][$f]= "'".substr($nar,2,2).substr($nar,5,2).substr($nar,8,2);
+        break;
+      case '_ymca':
+        $clmn[$n][$f]= $x->clen ? $x->clen : '';
         break;
       case 'pfunkce':
         $pf= $x->$f;
