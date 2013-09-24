@@ -124,6 +124,7 @@ menu m {type:'left'
           par:°{typ:'e-v',exp:'Excel',cnd:1, hav:"1",tit:'jméno:20,obec:20',fld:'_jmeno,obec'}}
     item {title:'Struktura letních kurzů MS',   par:°{typ:'e-s',exp:'Excel'}    skill:'yae'}
     item pec {title:'Akce s pečouny',           par:°{typ:'e-p',exp:'Excel'}    skill:'yae;cae;fae'}
+    item {title:'Podklady pro projekty',        par:°{typ:'e-p',exp:'Excel'}    skill:'yae;cae;fae'}
   }
   menu {title:'Výpisy a exporty',type:'group', skill:'yae'
     item {title:'Členové YMCA Setkání'

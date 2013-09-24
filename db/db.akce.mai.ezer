@@ -683,9 +683,10 @@ form _etext  {
     help:'připravit rozesílání', skill:'yam|yams;fam|fams;cam|cams'
     proc onclick () {
       var blokovano: number
-      eq(dopis_var.get,'Q');
-      # rozesílání podle SQL
-      { blokovano.set(ask('select','ikona','_cis',conc("druh='db_maily_sql' AND data=",vy.komu_Q.key)));
+      eq(dopis_var.get,'Q','U','U2','U3');
+      # rozesílání podle SQL nebo podle nastavené akce
+      { eq(dopis_var.get,'Q');
+        blokovano.set(ask('select','ikona','_cis',conc("druh='db_maily_sql' AND data=",vy.komu_Q.key)));
         blokovano.get; alert("použití skupiny <b>",vy.komu_Q.get,"</b> je zablokováno - asi probíhá úprava dotazu",
           ", kontaktuj administrátora aplikace ...");
       | prazdny; et_prazdy.get;
