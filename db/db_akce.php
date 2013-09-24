@@ -4482,7 +4482,8 @@ function evid_sestava($par,$title,$export=false) {
           FROM spolu JOIN pobyt USING (id_pobyt) JOIN akce ON id_akce=id_duakce
           WHERE funkce=99
           GROUP BY id_akce ORDER BY datum_od DESC")
-     : fce_error("evid_sestava: N.Y.I.") )));
+     : ( $par->typ=='e-x' ? evid_sestava_x($par,$title,$export)
+     : fce_error("evid_sestava: N.Y.I.") ))));
 }
 # -------------------------------------------------------------------------------------------------- evid_vyp_excel
 # generování tabulky do excelu
