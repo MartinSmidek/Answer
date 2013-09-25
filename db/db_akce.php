@@ -4772,6 +4772,7 @@ function evid_sestava_x($par,$title,$export) {
   $result= evid_sestava_Q($par,$title,$export,"
     SELECT COUNT(DISTINCT id_duakce) AS `účastí`, r.nazev AS rodina,
       (SELECT COUNT(*) FROM tvori WHERE tvori.id_rodina=r.id_rodina AND tvori.role='d') AS `dětí`,
+      (SELECT COUNT(*) FROM tvori WHERE tvori.id_rodina=r.id_rodina AND tvori.role IN ('a','b')) AS `rodičů`,
       MIN(ROUND(DATEDIFF(NOW(),o.narozeni)/365.2425,0)) AS `věk`, uk.zkratka AS kraj, uk.nuts3,
       IF(ISNULL(uk.nuts3),r.psc,'') AS `?PSČ`
     FROM pobyt AS p JOIN spolu AS s USING(id_pobyt)

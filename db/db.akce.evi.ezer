@@ -152,7 +152,7 @@ menu m {type:'left'
     }
     item {title:'zpracování plateb z RB', //skill:'m'
       proc onclick (i) {
-        panel.display(1,'plat'); panel.display(0,'syst'); status(0);
+        panel.display(1,'plat'); panel.display(0,'syst|evid|rodi|list|dary'); status(0);
         info.fill(conc(i.owner.title,' - ',i.title),' ');
         platby.b.browse_load
       }
@@ -160,7 +160,7 @@ menu m {type:'left'
   }
   proc onclick (i) {
     var x: object
-    panel.display(1,'inf'); panel.display(0,'evid|list|dary|plat|p_.*|d_.*'); status(0);
+    panel.display(1,'inf'); panel.display(0,'evid|rodi|list|dary|plat|p_.*|d_.*'); status(0);
     the_par.set(i.par); the_title.set(i.title); info.export.set(i.par.exp);
     info.fill(conc(i.owner.title,' - ',i.title),' ');
     info.msg.set('');
