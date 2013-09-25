@@ -4758,6 +4758,42 @@ function evid_sestava_Q($par,$title,$export,$qry) {
   $par->fld= $fld;
   return evid_table($par,$tits,$flds,$clmn,$export);
 }
+# -------------------------------------------------------------------------------------------------- evid_sestava_x
+# generování sestavy - podkladů k projektu
+# do HTML počet a do Excelu seznam: jména + počet dětí + kraj
+# rodin, které a) mají 3 a více dětí
+# rodin, které b) mají 1-2 děti, ale není jim ještě 40let
+function evid_sestava_x($par,$title,$export) {
+  $od= 3;
+  // počet akcí
+  list($_akci,$_od)= select("count(*),YEAR(CURDATE())","akce","YEAR(datum_od)>=YEAR(CURDATE())-$od");
+//                                                 debug($ans);
+  // jejich účastníci
+  $result= evid_sestava_Q($par,$title,$export,"
+    SELECT COUNT(DISTINCT id_duakce) AS `účastí`, r.nazev AS rodina,
+      (SELECT COUNT(*) FROM tvori WHERE tvori.id_rodina=r.id_rodina AND tvori.role='d') AS `dětí`,
+      MIN(ROUND(DATEDIFF(NOW(),o.narozeni)/365.2425,0)) AS `věk`, uk.zkratka AS kraj, uk.nuts3,
+      IF(ISNULL(uk.nuts3),r.psc,'') AS `?PSČ`
+    FROM pobyt AS p JOIN spolu AS s USING(id_pobyt)
+    JOIN osoba AS o ON s.id_osoba=o.id_osoba JOIN akce AS a ON a.id_duakce=p.id_akce
+    LEFT JOIN tvori AS t ON t.id_osoba=o.id_osoba
+    LEFT JOIN rodina AS r USING(id_rodina)
+    LEFT JOIN uir_adr.uir_psc AS up ON r.psc=up.psc
+    LEFT JOIN uir_adr.kraj AS uk USING(nuts3)
+    WHERE t.role IN ('a','b')
+      AND p.id_akce IN (SELECT id_duakce FROM akce WHERE 1 AND YEAR(datum_od)>=YEAR(CURDATE())-$od)
+    GROUP BY id_rodina /*HAVING `účastí`>30*/
+    ORDER BY nuts3,r.nazev
+  ");
+  $result->html= "Seznam účastníků $_akci akcí, které jsme uspořádali od roku $_od<br><br>"
+    ."<b>Poznámky</b>:<ul>
+      <li>věk je toho mladšího z manželů,
+      <li>pokud není určen kraj je v posledním sloupci uvedeno PSČ, ze kterého se to nedalo poznat
+      <li>do Excelu se to dostane tlačítkem [Excel] vpravo nahoře
+    </ul><br><hr>"
+    .$result->html;
+  return $result;
+}
 # ================================================================================================== VYPISY AKCE
 # obsluha různých forem výpisů karet AKCE
 # -------------------------------------------------------------------------------------------------- akce_vyp_excel
