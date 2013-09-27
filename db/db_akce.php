@@ -4766,15 +4766,18 @@ function evid_sestava_Q($par,$title,$export,$qry) {
 function evid_sestava_x($par,$title,$export) {
   $od= 3;
   // počet akcí
-  list($_akci,$_od)= select("count(*),YEAR(CURDATE())","akce","YEAR(datum_od)>=YEAR(CURDATE())-$od");
+  list($_akci,$_od)= select("count(*),YEAR(CURDATE())-$od","akce","YEAR(datum_od)>=YEAR(CURDATE())-$od");
 //                                                 debug($ans);
   // jejich účastníci
+  $notes=",(SELECT GROUP_CONCAT(IF(osoba.note,CONCAT(osoba.jmeno,':',osoba.note),''))
+    FROM tvori JOIN osoba USING(id_osoba)
+    WHERE tvori.id_rodina=r.id_rodina AND tvori.role='d') AS `poznámky k dětem`";
   $result= evid_sestava_Q($par,$title,$export,"
     SELECT COUNT(DISTINCT id_duakce) AS `účastí`, r.nazev AS rodina,
       (SELECT COUNT(*) FROM tvori WHERE tvori.id_rodina=r.id_rodina AND tvori.role='d') AS `dětí`,
       (SELECT COUNT(*) FROM tvori WHERE tvori.id_rodina=r.id_rodina AND tvori.role IN ('a','b')) AS `rodičů`,
       MIN(ROUND(DATEDIFF(NOW(),o.narozeni)/365.2425,0)) AS `věk`, uk.zkratka AS kraj, uk.nuts3,
-      IF(ISNULL(uk.nuts3),r.psc,'') AS `?PSČ`
+      IF(ISNULL(uk.nuts3),r.psc,'') AS `?PSČ`$notes
     FROM pobyt AS p JOIN spolu AS s USING(id_pobyt)
     JOIN osoba AS o ON s.id_osoba=o.id_osoba JOIN akce AS a ON a.id_duakce=p.id_akce
     LEFT JOIN tvori AS t ON t.id_osoba=o.id_osoba
@@ -4786,7 +4789,7 @@ function evid_sestava_x($par,$title,$export) {
     GROUP BY id_rodina /*HAVING `účastí`>30*/
     ORDER BY nuts3,r.nazev
   ");
-  $result->html= "Seznam účastníků $_akci akcí, které jsme uspořádali od roku $_od<br><br>"
+  $result->html= "Seznam účastníků $_akci akcí, pořádaných od roku $_od<br><br>"
     ."<b>Poznámky</b>:<ul>
       <li>věk je toho mladšího z manželů,
       <li>pokud není určen kraj je v posledním sloupci uvedeno PSČ, ze kterého se to nedalo poznat
