@@ -1441,6 +1441,7 @@ function akce_sestava_lidi($akce,$par,$title,$vypis,$export=false) { trace();
             IF(o.psc='',r.psc,o.psc) AS psc,
             IF(o.obec='',r.obec,o.obec) AS obec,
             s.poznamka AS s_note,s.pfunkce,
+            r.note AS r_note,
             ROUND(DATEDIFF(a.datum_od,o.narozeni)/365.2425,1) AS _vek,
             (SELECT GROUP_CONCAT(prijmeni,' ',jmeno)
               FROM akce JOIN pobyt ON id_akce=akce.id_duakce
@@ -1469,8 +1470,19 @@ function akce_sestava_lidi($akce,$par,$title,$vypis,$export=false) { trace();
       case '_1':
         $clmn[$n][$f]= 1;
         break;
-      case 'note':
-        $clmn[$n][$f]= $x->s_note ? $x->$f.' / '.$x->s_note : $x->$f;
+      case '_ar_note':                                                // k akci: rodina/osoba
+        $clmn[$n][$f]= "{$x->poznamka} / {$x->s_note}";
+        break;
+      case '_tr_note':                                                // trvalá: rodina/osoba
+        $clmn[$n][$f]= "{$x->r_note} / {$x->note}";
+        break;
+      case '_a_note':                                                 // k akci: osoba
+        $clmn[$n][$f]= $x->s_note;
+//         $clmn[$n][$f]= $x->s_note ? $x->$f.' / '.$x->s_note : $x->$f;
+        break;
+      case '_t_note':                                                 // trvalá: osoba
+        $clmn[$n][$f]= $x->note;
+//         $clmn[$n][$f]= $x->s_note ? $x->$f.' / '.$x->s_note : $x->$f;
         break;
       case '_narozeni6':
         $nar= $x->narozeni;
@@ -5848,7 +5860,7 @@ function dop_gen_try($gq,$mode=0) { trace();
   $html= $del= '';
   switch ($mode) {
   case 0:
-    $n= 0;
+    $n= $nw= 0;
     $gq= str_replace('&gt;','>',$gq);
     $gq= str_replace('&lt;','<',$gq);
     $gr= @mysql_query($gq);
@@ -5859,10 +5871,15 @@ function dop_gen_try($gq,$mode=0) { trace();
     else while ( $gr && ($g= mysql_fetch_object($gr)) ) {
       $n++;
       $name= str_replace(' ','&nbsp;',$g->_name);
+      if ( !$g->_email ) {
+        $nw++;
+        $name= "<span style='color:darkred'>$name</span>";
+      }
       $html.= "$del$name";
       $del= ', ';
     }
-    $html= "<b>Nalezeno $n adresátů:</b><br>$html";
+    $warn= $nw ? " ($nw nemá <span style='color:darkred'>email</span> ani rodinný)" : '';
+    $html= "<b>Nalezeno $n adresátů$warn:</b><br>$html";
     break;
   case 1:
     $html= nl2br($gq);
