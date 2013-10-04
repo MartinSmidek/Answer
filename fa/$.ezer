@@ -7,8 +7,15 @@ menu fa { type:'main', active:* //ys.pok
 #   tabs lide {title:"Lidé", _sys:'lid', include:'onclick', skill:'a' }
   tabs syst {title:"Systém", _sys:'sys',  include:'onclick,ezer2.syst', active:*
     panel oso {type:'right', title:'Osobní nastavení', _sys:'*', include:'onclick,ezer2.pers' }
-    panel nas {type:'right', title:'Nastavení', _sys:'nas', skill:'a'
+    panel nas {type:'right', title:'Data', _sys:'nas', skill:'a'
       menu {type:'left', active:*
+        menu {title:'YMCA Familia ...',type:'group', _sys:'*'
+          item {title:'přehled dat'                     ,par:°{cmd:'survey'} }
+          proc onclick (i) {
+            info.fill(conc(i.owner.title,' - ',i.title),' ... probíhá výpočet ...');
+            info.fill('',ask('akce_data_survey',i.par));
+          }
+        }
         menu {title:'Kontrola a opravy dat',type:'group', _sys:'*'
 #           item {title:'poznámky pečounům'               ,par:°{opravit:0}
 #             proc onclick (i) {
