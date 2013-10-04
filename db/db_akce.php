@@ -1517,7 +1517,13 @@ function akce_sestava_pary($akce,$par,$title,$vypis,$export=false) { trace();
   $fld= $par->fld;
   $cnd= $par->cnd ? $par->cnd : 1;
   $hav= $par->hav ? "HAVING {$par->hav}" : '';
-  $ord= $par->ord ? $par->ord : "IF(funkce<=2,1,funkce),IF(pouze=0,r.nazev,o.prijmeni)";
+  $ord= $par->ord ? $par->ord : "
+    CASE
+      WHEN pouze=0 THEN r.nazev
+      WHEN pouze=1 THEN GROUP_CONCAT(DISTINCT IF(t.role='a',o.prijmeni,'') SEPARATOR '')
+      WHEN pouze=2 THEN GROUP_CONCAT(DISTINCT IF(t.role='b',o.prijmeni,'') SEPARATOR '')
+    END";
+//   IF(funkce<=2,1,funkce),IF(pouze=0,r.nazev,o.prijmeni)";
   $html= '';
   $href= '';
   $n= 0;
@@ -2757,9 +2763,21 @@ function akce_skup_get($akce,$kontrola,&$err,$par=null) { trace();
       $skupina= array();
       $qryu= "
           SELECT p.id_pobyt,skupina,nazev,pokoj,
+            GROUP_CONCAT(DISTINCT IF(t.role IN ('a','b'),o.id_osoba,'')) as ids_osoba,
             GROUP_CONCAT(DISTINCT IF(t.role='a',o.id_osoba,'') SEPARATOR '') as id_osoba_m,
-            GROUP_CONCAT(DISTINCT IF(t.role='a',o.jmeno,'')    SEPARATOR '') as jmeno_m,
-            GROUP_CONCAT(DISTINCT IF(t.role='b',o.jmeno,'')    SEPARATOR '') as jmeno_z
+            CASE WHEN pouze=0 THEN
+              CONCAT(nazev,' ',
+                GROUP_CONCAT(DISTINCT IF(t.role='a',o.jmeno,'') SEPARATOR ''),' a ',
+                GROUP_CONCAT(DISTINCT IF(t.role='b',o.jmeno,'') SEPARATOR ''))
+            WHEN pouze=1 THEN
+              CONCAT(
+                GROUP_CONCAT(DISTINCT IF(t.role='a',o.prijmeni,'') SEPARATOR ''),' ',
+                GROUP_CONCAT(DISTINCT IF(t.role='a',o.jmeno,'') SEPARATOR ''))
+            WHEN pouze=2 THEN
+              CONCAT(
+                GROUP_CONCAT(DISTINCT IF(t.role='b',o.prijmeni,'') SEPARATOR ''),' ',
+                GROUP_CONCAT(DISTINCT IF(t.role='b',o.jmeno,'') SEPARATOR ''))
+            END AS _nazev
           FROM pobyt AS p
           JOIN spolu AS s USING(id_pobyt)
           JOIN osoba AS o ON s.id_osoba=o.id_osoba
@@ -2773,19 +2791,19 @@ function akce_skup_get($akce,$kontrola,&$err,$par=null) { trace();
         $mark= '';
         if ( $par && $par->mark=='novic' ) {
           // minulé účasti
-          $muz= $u->id_osoba_m;
+          $ids= $u->ids_osoba;
           $rqry= "SELECT count(*) as _pocet
                   FROM akce AS a
                   JOIN pobyt AS p ON a.id_duakce=p.id_akce
                   JOIN spolu AS s USING(id_pobyt)
-                  WHERE a.druh=1 AND s.id_osoba=$muz AND p.id_akce!=$akce";
+                  WHERE a.druh=1 AND s.id_osoba IN ($ids) AND p.id_akce!=$akce";
           $rres= mysql_qry($rqry);
           if ( $rres && ($r= mysql_fetch_object($rres)) ) {
             $mark= $r->_pocet;
           }
           $mark= $mark==0 ? '* ' : '';
         }
-        $u->_nazev= "$mark {$u->nazev} {$u->jmeno_m} a {$u->jmeno_z}";
+        $u->_nazev= "$mark {$u->_nazev}";
         $skupina[$u->id_pobyt]= $u;
         $n++;
       }
@@ -4420,7 +4438,7 @@ function akce_info($id_akce) {  trace();
       }
       $html= $rod>0
        ? "Akce <b>$akce</b><br>$cas1 $dne<br><br>$cas2
-         <br>$dosp dospělých a<br>$deti dětí, tvořících<br>$rod rodin"
+         <br>$dosp dospělých ($p->_muzu muži + $p->_zen žen) a<br>$deti dětí, tvořících<br>$rod rodin"
        : "Akce byla vložena do databáze<br>ale nemá zatím žádné účastníky";
   }
   else {

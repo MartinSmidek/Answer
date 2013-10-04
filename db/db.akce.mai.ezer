@@ -20,6 +20,7 @@ use es: form _esady [10,74,,]   // rozesílání
 
 proc onfirstfocus() {
   [ the_duakce.get | akce_onstart ];
+  gq.reinit;
   m.g.i.click
 #   eq(the_duakce_local.get,the_duakce.get)
 # | ini(m.g.i,'et','U','akce','gen|skup'); vy.fill(the_title.get);
@@ -108,7 +109,7 @@ form _vyber {
   # --------------------------- výběr mail-listu
   label  [0,10,380,28] { tag:'gen', css:'ae_parm', format:'n' }
   label [7,19,100,17] { tag:'gen', title:'výběr mail-listu:', format:'n' }
-  select komu_G  [82,15,289,17] { tag:'gen', type:'map0', options:map_db_mailist.ucel, format:'nt'
+  select komu_G  [82,15,289,17] { tag:'gen', type:'map', options:map_db_mailist.ucel, format:'nt'
     help:'komu|výběr mail-listu'
     proc onchange() {
       switch(karta.get,'et',{et.reload},'es',{es.reload},'sq',{sq.reload},'gq',{gq.reload})
@@ -142,12 +143,17 @@ form _vyber {
 # generátor SQL dotazů, tags:
 # def = správa mail-listů
 # snd = rozesílání
+var sql_dirty: number
 form _gsql {
   view g: table mailist
   field id_mailist { data:g.id_mailist }
   label [5,44,76,17] { title:'název:', format:'r' }
-  field ucel  [83,40,267,]  { data:g.ucel, value:'' }
-  check [508,39,197,] { title:"zablokovat dotazy", data:g.blokovano, value:'0' }
+  field ucel  [83,40,267,]  { data:g.ucel, value:'' proc onchange() {
+    eq(vy.komu_G.key,1);
+    alert("název testovacího mail-listu není dovoleno měnit");
+    this.set(vy.komu_G.get); this.plain
+  } }
+  check blokovano [508,39,197,] { title:"zablokovat dotazy", data:g.blokovano, value:'0' }
   field parms { data:g.parms }
   field gsql { data:g.sexpr }
   # ------------------- příkazy
@@ -179,6 +185,14 @@ form _gsql {
     show druh {data:c.data}
     show { data:c.poradi, format:'s+' }
     show [,,110,] { title:'typ akce', data:c.zkratka, format:'t' }
+    proc onchoice() { sql_dirty.set(1) }
+    proc onsubmit() { sql_dirty.set(1); ano_akces.selected('toggle',1); }
+    menu { type:'context'
+      item { title:'zobrazit vybrané'
+        proc onclick() { ano_akces.selected("use"); ano_akces.browse_load  } }
+      item { title:'zobrazit vše'
+        proc onclick() { ano_akces.selected("ignore"); ano_akces.browse_load } }
+    }
   }
   # ------- časové ano-podmínky
   const cas_options = "neomezovat:1,plánovaná akce:2,dříve než:3,později než:4"
@@ -208,6 +222,14 @@ form _gsql {
     show druh {data:c.data}
     show { data:c.poradi, format:'s+' }
     show [,,110,] { title:'typ akce', data:c.zkratka, format:'t' }
+    proc onchoice() { sql_dirty.set(1) }
+    proc onsubmit() { sql_dirty.set(1); ne_akces.selected('toggle',1); }
+    menu { type:'context'
+      item { title:'zobrazit vybrané'
+        proc onclick() { ne_akces.selected("use"); ne_akces.browse_load  } }
+      item { title:'zobrazit vše'
+        proc onclick() { ne_akces.selected("ignore"); ne_akces.browse_load } }
+    }
   }
   # ------- časové ne-podmínky
   var last_ne: number
@@ -238,6 +260,14 @@ form _gsql {
     show fce {data:c.data}
     show { data:c.poradi, format:'s+' }
     show [,,110,] { title:'funkce', data:c.zkratka, format:'t' }
+    proc onchoice() { sql_dirty.set(1) }
+    proc onsubmit() { sql_dirty.set(1); fces.selected('toggle',1); }
+    menu { type:'context'
+      item { title:'zobrazit vybrané'
+        proc onclick() { fces.selected("use"); fces.browse_load  } }
+      item { title:'zobrazit vše'
+        proc onclick() { fces.selected("ignore"); fces.browse_load } }
+    }
     # kód
     proc code_fce() {
       var cond: text
@@ -251,12 +281,6 @@ form _gsql {
         | keys.set(fce.get) ];
         json_akce.set(conc(json_akce.get,',"fce_keys":"',keys,'"'));
         cond.set(conc("p.funkce IN (",keys,")")) ];
-#         [ ids; keys.set(ask('select',"GROUP_CONCAT(data)",'_cis',conc("id_cis IN (",ids,")"))) ];
-#         json_akce.set(conc(json_akce.get,
-#           cconc(ids,conc(',"fce_keys":"',ids,'"'),conc(',"fce_key":',fce.get))));
-#         cond.set(cconc(ids,
-#           conc("p.funkce IN (",keys,")"),
-#           conc("p.funkce=",fce.get))) ];
       return(cond);
     }
   }
@@ -365,7 +389,7 @@ form _gsql {
   var cond: text
   label  [620,t_pro+85,132,55] { tag:'def', css:'ae_parm' }
   button [628,t_pro+90,,] { tag:'def', title:'TEST',  help:'otestovat dotaz', proc onclick() {
-    make_sql(0); save_sql(0); run_sql } }
+    /*make_sql(0);*/ save_sql(0); run_sql } }
   button [678,t_pro+90,,] { tag:'def', title:'(jen SQL)',  help:'otestovat dotaz', proc onclick() {
     make_sql(1); save_sql(0) } }
   button [678,t_pro+115,,] { tag:'def', title:'(jen JSON)',  proc onclick() {
@@ -408,14 +432,22 @@ form _gsql {
   }
   proc save_sql(to_reload) {
     ucel.get;
-    { form.same
+    { form.same; not(sql_dirty.get)
     | parms.set(make_json); parms.change; make_sql(0); gsql.change;
-      id_mailist.get; form.key(id_mailist.get); form.save;
-      [ to_reload; reload ];
-      echo("QUERY SAVED")
-    | gsql.changed; id_mailist.set(form.insert);
-      [ to_reload; reload ];
-      echo("QUERY CREATED")
+      id_mailist.get; form.key(id_mailist.get);
+      //form.save;
+      ask('query',conc("UPDATE mailist SET ",
+        "parms='",parms.get,"',",       "sexpr=",'"',gsql.get,'",',
+        "ucel='",ucel.get,"',",         "blokovano=",blokovano.get,
+        ' WHERE id_mailist=',id_mailist.get));
+      [ to_reload; reload | form.plain; sql_dirty.set(0) ];
+      warning("QUERY SAVED")
+    | not(id_mailist.get);
+      or(not(form.same),sql_dirty.get);
+      id_mailist.set(form.insert);
+      reload;
+      warning("QUERY CREATED")
+    | warning("QUERY SAVE ERROR id_mailist=",id_mailist.get,", sql_dirty=",sql_dirty.get)
     };
     vy.komu_G.selects(id_mailist.get);
   | warning('název je povinný');
@@ -444,11 +476,12 @@ form _gsql {
     # testy
     ctrl_akce_ano.browse_init; ctrl_akce_ne.browse_init;
     tsql.set('');
+    sql_dirty.set(0);
   }
   proc reload() {
     var akey:number
     reinit;
-    vy.komu_G.key;
+    [ vy.komu_G.key | vy.komu_G.key(1) ];
     akey.set(ask('select','id_mailist','mailist',conc("id_mailist=",vy.komu_G.key)));
     akey;
     form.load(akey);

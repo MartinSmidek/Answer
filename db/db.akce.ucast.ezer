@@ -836,10 +836,8 @@ form _cmd [,,200,] { css:'ds_form'
       warning("nelze uložit: chybí společný název rodiny");
     | // vlastní přidání
       rod.insert; pob.insert; the_pobyt.set(pob.key);
-      muz.sex.set(1); muz.sex.change;
-      osoba_ulozit(muz,'a',rod.key);
-      zen.sex.set(2); zen.sex.change;
-      osoba_ulozit(zen,'b',rod.key);
+      [ not(muz.same); muz.sex.set(1); muz.sex.change; osoba_ulozit(muz,'a',rod.key) ];
+      [ not(zen.same); zen.sex.set(2); zen.sex.change; osoba_ulozit(zen,'b',rod.key) ];
       rod.plain; pob.plain;
       reload(the_pobyt.get);
       b_display(1);
