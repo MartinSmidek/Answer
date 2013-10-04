@@ -96,11 +96,11 @@ menu m {type:'left',
   }
   menu {title:'seznamy',type:'group',_sys:'*'
     item {title:'VPS na akci'                                                                           skill:'y;c'
-                                        ,par:°{typ:'p',exp:'Excel',cnd:"funkce IN (1,2)",ord:"prijmeni"
+                                        ,par:°{typ:'p',exp:'Excel',cnd:"funkce IN (1,2)"
                                         ,tit:'příjmení:15,jména:20,obec:25'
                                         ,fld:'prijmeni,jmena,obec'}}
     item {title:'PPS na akci'                                                                           skill:'f'
-                                        ,par:°{typ:'p',exp:'Excel',cnd:"funkce IN (1,2)",ord:"prijmeni"
+                                        ,par:°{typ:'p',exp:'Excel',cnd:"funkce IN (1,2)"
                                         ,tit:'příjmení:15,jména:20,obec:25'
                                         ,fld:'prijmeni,jmena,obec'}}
     item {title:'Děti na akci'                                                                          skill:'y;f'
@@ -124,11 +124,11 @@ menu m {type:'left',
                                         ,tit:'příjmení:15,jméno:12,narození:12,věk:4,obec:25,psč:7,ulice:25,poznámka:100'
                                         ,fld:'prijmeni,jmeno,narozeni,_vek,obec,psc,ulice,note'}}
     item {title:'Účastníci, skupinky a pokoje'                                                          skill:'y;f'
-                                        ,par:°{typ:'p',exp:'Excel',cnd:"funkce!=99",ord:"prijmeni"
+                                        ,par:°{typ:'p',exp:'Excel',cnd:"funkce!=99"
                                         ,tit:'příjmení:15,jména:20,pokoj:10,skupinka:10'
                                         ,fld:'prijmeni,jmena,pokoj,skupina'}}
     item {title:'Účastníci, skupinky a ubytování'                                                       skill:'c'
-                                        ,par:°{typ:'p',exp:'Excel',cnd:"funkce!=99",ord:"prijmeni"
+                                        ,par:°{typ:'p',exp:'Excel',cnd:"funkce!=99"
                                         ,tit:'příjmení:15,jména:20,ubytovani:10,budova:5,pokoj:5,skupinka:10'
                                         ,fld:'prijmeni,jmena,ubytovani,budova,pokoj,skupina'}}
   }
@@ -200,12 +200,12 @@ menu m {type:'left',
   menu {title:'MS: letní kurs, obnovy',type:'group',_sys:'*'
     item {title:'noví účastníci'                                                                        skill:'y;f;c'
                                         ,par:°{typ:'p',exp:'Excel'
-                                        ,cnd:"p.funkce IN (0,1,2)",hav:"_ucasti=1",ord:"prijmeni"
+                                        ,cnd:"p.funkce IN (0,1,2)",hav:"_ucasti=1"
                                         ,tit:'příjmení:15,jména:20,obec:25'
                                         ,fld:'prijmeni,jmena,obec'}}
     item {title:'účastníci podruhé'                                                                     skill:'y;f;c'
                                         ,par:°{typ:'p',exp:'Excel'
-                                        ,cnd:"p.funkce IN (0,1,2)",hav:"_ucasti=2",ord:"prijmeni"
+                                        ,cnd:"p.funkce IN (0,1,2)",hav:"_ucasti=2"
                                         ,tit:'příjmení:15,jména:20,obec:25'
                                         ,fld:'prijmeni,jmena,obec'}}
     item {title:'Pečouni'                                                                               skill:'y;f'
