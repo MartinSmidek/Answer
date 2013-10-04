@@ -206,7 +206,7 @@ table akce { key_id:'id_duakce'
 table pobyt { key_id:'id_pobyt'
   number id_pobyt
   number id_akce
-  number id_osoba
+  # number id_osoba -- 131004 zrušeno
   number typ            // 10,11,20,21
   number skupina
   number funkce

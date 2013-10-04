@@ -1,4 +1,4 @@
-# Systém Ans(w)er
+# Systém Ans(w)er pro YMCA Setkání
 # (c) 2008-2010 Martin Šmídek <martin@smidek.eu>
 
 menu ys { type:'main', active:* //ys.pok
@@ -16,6 +16,13 @@ menu ys { type:'main', active:* //ys.pok
     panel oso {type:'right', title:'Osobní nastavení', _sys:'*', include:'onclick,ezer2.pers' }
     panel nas {type:'right', title:'Data', _sys:'nas', skill:'a'
       menu {type:'left', active:*
+        menu {title:'YMCA Setkání ...',type:'group', _sys:'*'
+          item {title:'přehled dat'                     ,par:°{cmd:'survey'} }
+          proc onclick (i) {
+            info.fill(conc(i.owner.title,' - ',i.title),' ... probíhá výpočet ...');
+            info.fill('',ask('akce_data_survey',i.par));
+          }
+        }
         menu {title:'Opravy dat',type:'group', _sys:'*'
           item {title:'kontroly databáze'               ,par:°{opravit:0}}
           item {title:'kontroly databáze s opravou'     ,par:°{opravit:1}, skill:'m'}
@@ -23,21 +30,15 @@ menu ys { type:'main', active:* //ys.pok
             info.fill(conc(i.owner.title,' - ',i.title),' ... probíhá kontrola dat ...');
             info.fill('',ask('akce_kontrola_dat',i.par));
           }
-#           item {title:'Dokončení převodu z FoxPro', proc onclick (i) {
-#             info.fill(conc(i.owner.title,' - ',i.title),' ');
-#             confirm("Opravdu dokončit transformaci dat z FoxPro? Klíče 'id_pary' a 'id_akce' mohou být přepsány!");
-#             info.fill('',ask('akce_foxpro_data'));
-#           }}
         }
-        menu {title:'Importy ...',type:'group', _sys:'*'
-          item {title:'přehled dat',                          par:°{cmd:'survey'}, skill:'m' }
-          item {title:'import pečovatelů MS',                 par:°{cmd:'MS-pec'}, skill:'m' }
-#           item {title:'výmaz osoba/pečoun', par:°{cmd:'clear-pec'}, skill:'m' }
-          proc onclick (i) {
-            info.fill(conc(i.owner.title,' - ',i.title),' ... probíhá import dat ...');
-            info.fill('',ask('ys_import_dat',i.par));
-          }
-        }
+#         menu {title:'Importy ...',type:'group', _sys:'*'
+#           item {title:'přehled dat',                          par:°{cmd:'survey'}, skill:'m' }
+#           item {title:'import pečovatelů MS',                 par:°{cmd:'MS-pec'}, skill:'m' }
+#           proc onclick (i) {
+#             info.fill(conc(i.owner.title,' - ',i.title),' ... probíhá import dat ...');
+#             info.fill('',ask('ys_import_dat',i.par));
+#           }
+#         }
       }
       use info: form right [12,4,,]
     }
