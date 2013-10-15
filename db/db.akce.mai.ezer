@@ -62,7 +62,7 @@ menu m {type:'left',
         ini(i,'et','Q','skup','gen|akce');
         [ vy.komu_Q.key | et.get.enable(0,'n') ]
     } }
-    item {title:'pro vygenerované adresy', _sys:'gen', skill:'mg'
+    item {title:'podle zvoleného mail-listu', _sys:'gen'
       proc onclick (i) {
         ini(i,'et','G','gen','skup|akce');
 #         [ vy.komu_Q.key | et.get.enable(0,'n') ]
@@ -79,10 +79,10 @@ menu m {type:'left',
       proc onclick (i) { ini(i,'es','U3','akce','gen|skup'); vy.fill(the_title.get); } }
     item {title:'členům skupin',
       proc onclick (i) { ini(i,'es','Q','skup','gen|akce'); } }
-    item {title:'pro vygenerované adresy', skill:'mg'
+    item {title:'podle zvoleného mail-listu'
       proc onclick (i) { ini(i,'es','G','gen','akce|skup'); } }
   }
-  menu {title:'Obecné rozesílací seznamy', type:'group', skill:'a', _sys:'lst'
+  menu {title:'Obecné rozesílací seznamy', type:'group', skill:'yamg;famg;camg', _sys:'lst'
     item {title:'Definování seznamů (mail-list)'
       proc onclick (i) {
         ini(i,'gq','G','gen','akce|skup');
