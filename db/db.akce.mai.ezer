@@ -419,11 +419,11 @@ form _gsql {
       "  IF(email!='',email,r.emaily) AS _email",chr(10),
       from.get,chr(10),
       "WHERE ",cond.get,
-      " AND p.id_akce IN (SELECT id_duakce FROM akce WHERE ",akce_ano,")",chr(10),
+      " AND p.id_akce IN (SELECT id_duakce FROM akce WHERE spec=0 AND ",akce_ano,")",chr(10),
       cconc(akce_ne,conc(chr(10),
         "AND o.id_osoba NOT IN (SELECT DISTINCT o.id_osoba",chr(10),
         from.get,chr(10),
-        "WHERE p.id_akce IN (SELECT id_duakce FROM akce WHERE ",akce_ne,")",chr(10),
+        "WHERE p.id_akce IN (SELECT id_duakce FROM akce WHERE spec=0 AND ",akce_ne,")",chr(10),
         ")",chr(10))),
       "GROUP BY o.id_osoba ",pro_ucast.code_ucasti,chr(10),
       "ORDER BY prijmeni",chr(10)
@@ -518,7 +518,7 @@ form _gsql {
     var keys: text
     var values: text
     gen_cas(L);
-    cond.set(conc("1",code_cas.get));
+    cond.set(conc("spec=0",code_cas.get));
     json_akce.set(conc('"typy":"',typ_akce,'"'));
     [ typ_akce;
       keys.set(akces.selected('get'));
@@ -530,7 +530,7 @@ form _gsql {
         conc("druh IN (",values,")"),
         conc("druh=",druh)))) ];
     json_akce.set(conc("{",json_akce.get,',"cas":',json_cas.get,'}'));
-    [ eq(all,0); eq(cond.get,"1"); cond.set("0") ];
+    [ eq(all,0); eq(cond.get,"spec=0"); cond.set("0") ];
     return(cond);
   }
   # ------------------------------------- kontrolní zobrazení akcí
