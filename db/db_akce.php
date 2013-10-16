@@ -6015,18 +6015,18 @@ function dop_gen_try($gq,$mode=0) { trace();
       if ( $g->_email[0]=='*' ) {
         // vyřazený mail
         $nx++;
-        $name= "<span style='background-color:orange'>$name</span>";
+        $name= "<strike><b>$name</b></strike>";
       }
       $html.= "$del$name";
       $del= ', ';
     }
     $warn= $nw+$nm+$nx ? " (" : '';
-    $warn.= $nw ? "$nw nemá <span style='color:darkred'>email</span> ani rodinný" : '';
+    $warn.= $nw ? "$nw <span style='color:darkred'>nemá email</span> ani rodinný" : '';
     $warn.= $nw && $nm ? ", " : '';
-    $warn.= $nm ? "$nm nechce <span style='background-color:yellow'>hromadné</span> informace
+    $warn.= $nm ? "$nm <span style='background-color:yellow'>nechce hromadné</span> informace
       - budou vyňati z mail-listu" : '';
     $warn.= ($nw||$nm) && $nx ? ", " : '';
-    $warn.= $nx ? "$nx má <span style='background-color:orange'>zneplatněný</span> email" : '';
+    $warn.= $nx ? "$nx má <strike>zneplatněný email</strike>" : '';
     $warn.= $nw+$nm+$nx ? ")" : '';
     $html= "<b>Nalezeno $n adresátů$warn:</b><br>$html";
     break;
