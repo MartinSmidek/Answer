@@ -202,7 +202,7 @@ form _album {
   }
   proc drop_set(sharp) {
     foto.set(ask('album_get',u.b.fotka.get,500,400));
-#     [ sharp; foto.image_filter('sharpen') ]
+    //[ sharp; foto.image_filter('sharpen') ] -- sharp se dělá z php
   }
 }
 # ---------------------------------------------------------------------------------------- _aktivity
@@ -979,6 +979,7 @@ panel Dite [,,380,495] {type:'popup', title:'Úprava dětí (a osobních pečova
       case [0,2,50,] { title:'muž', expr:'1' }
       case [0,17,50,] { title:'žena', expr:'2' }
     }
+    check uvitano  [L+251,T+50,131,] {data:o.uvitano, title:'dítě bylo přivítáno :-)'}
     label          [L+256,T+16,33,] {title:'narození'}
     field narozeni [L+255,T+32,85,] {type:'date', data:o.narozeni, format:'rR:e'}
     label          [L+346,T+16,41,] {title:'nnnn rč'}

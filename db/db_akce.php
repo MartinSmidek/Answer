@@ -142,6 +142,7 @@ function album_get($name,$w,$h,$msg="Fotografie ještě není k dispozici - lze 
     $src= "fotky/copy/$name";
     $html= "<a href='fotky/$name' target='_album'><img src='fotky/copy/$name'
       width='$w' onload='var x=arguments[0];img_filter(x.target,\"sharpen\",0.7,1);'/></a>";
+
   //   $data= "iVBORw0"."KGgoAAAANSUhEUgAAACAAAAAFCAYAAAAkG+5xAAAABGdBTUEAANbY1E9YMgAAABl0RVh0U29mdHdhcm"
   //        . "UAQWRvYmUgSW1hZ2VSZWFkeXHJZTwAAABTSURBVHjarJJRCgAgCEM9nHfy+K+fKBKzjATBDZUxFUAuU5mhnWPT"
   //        . "SzK7YCkkQR3tsM5bImjgVwE3HIED6vFvB4w17CC4dILdD5AIwvX5OW0CDAAH+Qok/eTdBgAAAABJRU5E"."rkJggg";
@@ -1931,7 +1932,30 @@ function akce_text_vyroci($akce,$par,$title,$vypis,$export=false) { trace();
   while ( $res && ($x= mysql_fetch_object($res)) ) {
     $vyroci['s'][]= "{$x->nazev} {$x->jmeno_m} a {$x->jmeno_z}|".sql_date1($x->datsvatba);
   }
+  // nepřivítané děti mladší 2 let
+  $qry=  "SELECT prijmeni,jmeno,narozeni,role,
+            ROUND(DATEDIFF(a.datum_od,o.narozeni)/365.2425,1) AS _vek
+          FROM akce AS a
+          JOIN pobyt AS p ON a.id_duakce=p.id_akce
+          JOIN spolu AS s USING(id_pobyt)
+          JOIN osoba AS o ON s.id_osoba=o.id_osoba
+          LEFT JOIN tvori AS t ON t.id_osoba=o.id_osoba
+          WHERE a.id_duakce='$akce' AND role='d' AND o.uvitano=0
+          GROUP BY o.id_osoba HAVING _vek<2";
+  $res= mysql_qry($qry);
+  while ( $res && ($x= mysql_fetch_object($res)) ) {
+    $vyroci['v'][]= "{$x->prijmeni} {$x->jmeno}|".sql_date1($x->narozeni);
+  }
   // redakce
+  if ( count($vyroci['s']) ) {
+    $html.= "<h3>Výročí svatby během akce</h3><table>";
+    foreach($vyroci['s'] as $txt) {
+      list($kdo,$kdy)= explode('|',$txt);
+      $html.= "<tr><td>$kdy</td><td>$kdo</td></tr>";
+    }
+    $html.= "</table>";
+  }
+  else $html.= "<h3>Na akci nemá žádný pár výročí svatby</h3>";
   if ( count($vyroci['a']) ) {
     $html.= "<h3>Narozeniny dopělých na akci</h3><table>";
     foreach($vyroci['a'] as $txt) {
@@ -1950,15 +1974,15 @@ function akce_text_vyroci($akce,$par,$title,$vypis,$export=false) { trace();
     $html.= "</table>";
   }
   else $html.= "<h3>Na akci nemá žádné dítě narozeniny</h3>";
-  if ( count($vyroci['s']) ) {
-    $html.= "<h3>Výročí svatby během akce</h3><table>";
-    foreach($vyroci['s'] as $txt) {
+  if ( count($vyroci['v']) ) {
+    $html.= "<h3>Nepřivítané děti mladší 2 let na akci</h3><table>";
+    foreach($vyroci['v'] as $txt) {
       list($kdo,$kdy)= explode('|',$txt);
       $html.= "<tr><td>$kdy</td><td>$kdo</td></tr>";
     }
     $html.= "</table>";
   }
-  else $html.= "<h3>Na akci nemá žádný pár výročí svatby</h3>";
+  else $html.= "<h3>Na akci nebudeme vítat žádné dítě</h3>";
   $result->html= $html;
   return $result;
 }
@@ -5402,9 +5426,9 @@ function dop_mai_pocet($id_dopis,$dopis_var,$cond='',$recall=false) {  trace();
   $result= (object)array('_error'=>0, '_count'=> 0, '_cond'=>false);
   $result->_html= 'Rozesílání mailu nemá určené adresáty, stiskni ZRUŠIT';
   $emaily= $ids= $jmena= $pobyty= array();
-  $spatne= $nema= $mimo= '';
-  $n= $ns= $nt= $nx= $mx= 0;
-  $dels= $deln= $delm= '';
+  $spatne= $nema= $mimo= $nomail= '';
+  $n= $ns= $nt= $nx= $mx= $nm= 0;
+  $dels= $deln= $delm= $delnm= '';
   $nazev= '';
   switch ($dopis_var) {
   // mail-list
@@ -5416,6 +5440,11 @@ function dop_mai_pocet($id_dopis,$dopis_var,$cond='',$recall=false) {  trace();
     while ( $res && ($d= mysql_fetch_object($res)) ) {
       $n++;
       $nazev= "'$ucel'";
+      if ( $d->nomail ) {
+        // nechce dostávat maily
+        $nomail.= "$delnm{$d->_name}"; $delnm= ', '; $nm++;
+        continue;
+      }
       if ( $d->_email ) {
         // přidej každý mail zvlášť do seznamu
         foreach(preg_split('/\s*[,;]\s*/',trim($d->_email,",; \n\r"),0,PREG_SPLIT_NO_EMPTY) as $adr) {
@@ -5452,6 +5481,11 @@ function dop_mai_pocet($id_dopis,$dopis_var,$cond='',$recall=false) {  trace();
       while ( $res && ($d= mysql_fetch_object($res)) ) {
         $n++;
         $nazev= "Členů {$q->zkratka}";
+        if ( $d->nomail ) {
+          // nechce dostávat maily
+          $nomail.= "$delnm$jm"; $delnm= ', '; $nm++;
+          continue;
+        }
         if ( $d->_email ) {
           // přidej každý mail zvlášť do seznamu
           foreach(preg_split('/\s*[,;]\s*/',trim($d->_email,",; \n\r"),0,PREG_SPLIT_NO_EMPTY) as $adr) {
@@ -5509,11 +5543,17 @@ function dop_mai_pocet($id_dopis,$dopis_var,$cond='',$recall=false) {  trace();
     while ( $res && ($d= mysql_fetch_object($res)) ) {
       $n++;
       $nazev= "Účastníků {$d->nazev}";
+      if ( $d->nomail ) {
+        // nechce dostávat maily
+        $nomail.= "$delnm$jm"; $delnm= ', '; $nm++;
+        continue;
+      }
       if ( $d->email!='' || $d->emaily!='' ) {
         $em= "{$d->email},{$d->emaily}";
         if ( strpos($em,'*')!==false ) {
           // vyřazený mail
           $mimo.= "$delm$jm"; $delm= ', '; $mx++;
+          continue;
         }
         $emaily[]= $em;
         $pobyty[]= $d->id_pobyt;
@@ -5556,7 +5596,8 @@ function dop_mai_pocet($id_dopis,$dopis_var,$cond='',$recall=false) {  trace();
   $result->_ids= $ids;
   $html.= "$nazev je $n celkem\n";
   $html.= $ns ? "$ns má chybný mail ($spatne)\n" : '';
-  $html.= $nx ? "$nx nemají mail ($nema)" : '';
+  $html.= $nx ? "$nx nemají mail ($nema)\n" : '';
+  $html.= $nm ? "$nm nechtějí hromadné informace ($nomail)\n" : '';
   $html.= $mx ? "$mx mají mail označený '*' jako nedostupný ($mimo)" : '';
   $result->_html= $nt>0
     ? "Opravdu vygenerovat seznam pro rozeslání\n'$nazev'\nna $nt adres?"
@@ -5951,7 +5992,7 @@ function dop_gen_try($gq,$mode=0) { trace();
   $html= $del= '';
   switch ($mode) {
   case 0:
-    $n= $nw= 0;
+    $n= $nw= $nm= 0;
     $gq= str_replace('&gt;','>',$gq);
     $gq= str_replace('&lt;','<',$gq);
     $gr= @mysql_query($gq);
@@ -5966,10 +6007,19 @@ function dop_gen_try($gq,$mode=0) { trace();
         $nw++;
         $name= "<span style='color:darkred'>$name</span>";
       }
+      if ( $g->nomail ) {
+        $nm++;
+        $name= "<span style='background-color:yellow'>$name</span>";
+      }
       $html.= "$del$name";
       $del= ', ';
     }
-    $warn= $nw ? " ($nw nemá <span style='color:darkred'>email</span> ani rodinný)" : '';
+    $warn= $nw+$nm ? " (" : '';
+    $warn.= $nw ? "$nw nemá <span style='color:darkred'>email</span> ani rodinný" : '';
+    $warn.= $nw && $nm ? ", " : '';
+    $warn.= $nm ? "$nm nechce <span style='background-color:yellow'>hromadné</span> informace
+      - budou vyňati z mail-listu" : '';
+    $warn.= $nw+$nm ? ")" : '';
     $html= "<b>Nalezeno $n adresátů$warn:</b><br>$html";
     break;
   case 1:

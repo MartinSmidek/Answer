@@ -354,7 +354,12 @@ form _osoba { tag:'a'
   label          [L+264,T+119,33,] {title:'dieta', format:'r'}
   select dieta   [L+300,T+115,82,] {type:'map', data:o.dieta, options:ms_akce_dieta.zkratka }
   label          [L+8,T+144,40,] {title:'e-mail', format:'r'}
-  field email    [L+52,T+140,330,] {type:'list', data:o.email}
+  field email    [L+52,T+140,212,] {type:'list', data:o.email}
+  check nomail   [L+268,T+137,121,] {title:"nechce informace", data:o.nomail,
+    help:"nepoužívat mailovou adresu pro rozesílání hromadných nabídek a informací"
+    proc onchange() {
+      alert("napiš prosím do poznámky důvod a datum odmítnutí hromadně rozesílaných informací")
+  } }
   label          [L+-3,T+165,51,] {title:'poznámka'}
   edit  pozn     [L+52,T+164,329,60] {data:o.note}
   # --------------------------------------------------  OPRAVA
@@ -465,7 +470,8 @@ form _rcleni {
     show [,,70,] { data:os.jmeno, title:'jméno', format:'q*s' }
     show [,,30,] { data:ot.role, title:'vztah', help:'vztah k rodině', format:'q*s' }
     proc onrowclick() {
-      eq(mode.get,'r'); p_oso.key(id_o.get); p_oso.reload
+      eq(mode.get,'r'); p_oso.key(id_o.get); p_oso.reload;
+      os.load(id_o.get)
     }
     proc onsubmit() {
       eq(mode.get,'o');
@@ -473,6 +479,7 @@ form _rcleni {
       | osoby.b.browse_seek(conc('os.id_osoba=',id_o.get));
     } }
   }
+  check uvitano  [250,100,200,] {data:os.uvitano, title:'dítě již bylo přivítáno :-)', format:'d'}
 }
 # ---------------------------------------------------------------------- _oakce
 form _oakce {
@@ -505,7 +512,7 @@ form _firma {
 }
 # -------------------------------------------------------------------------------------------- _foto
 form _foto [,,380,106] {
-  label fotka [0,0,*,*]
+  label fotka [0,0,*,*] { style:"z-index:5" }
 }
 # -------------------------------------------------------------------------------------------- _dary
 form _dary { style:'z-index:1'

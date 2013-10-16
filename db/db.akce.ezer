@@ -271,9 +271,11 @@ table osoba { key_id:'id_osoba'
   text obec
   text stat
   text email
+  number nomail { help:"nomail|nechce přijímat hromadně rozesílané informace" }
   text telefon
   text spz
   date narozeni { sql_pipe:'sql_date1'}
+  number uvitano { help:"uvítáno|bylo uvítáno ve společenství" }
   text rc_xxxx
   date umrti { sql_pipe:'sql_date1'}
   text poznamka
