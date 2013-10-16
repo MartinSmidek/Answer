@@ -117,14 +117,20 @@ function img_filter (image,filter) {
     Ezer.canvas= fx.canvas();         // volání fce knihovny glfx.js
   } catch(e) { Ezer.canvas= null; };
   if ( Ezer.canvas && ['gray','sepia','sharpen'].contains(filter) ) {
+    var radius, strength;
     var texture= Ezer.canvas.texture(image);
     var data= Ezer.canvas.draw(texture);
     switch (filter) {
-    case 'gray':    data.hueSaturation(-1,-1); break;
-    case 'sepia':   data.sepia(1);             break;
     case 'sharpen':
-      var radius= arguments[2]||1, strength= arguments[3]||1;
+      radius= arguments[2]||1;
+      strength= arguments[3]||1;
       data.unsharpMask(radius,strength);
+      break;
+    case 'gray':
+      data.hueSaturation(-1,-1);
+      break;
+    case 'sepia':
+      data.sepia(1);
       break;
     }
     data.update();

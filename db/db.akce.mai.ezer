@@ -416,7 +416,7 @@ form _gsql {
     # sestavení SELECT
     gsql.set(conc(
       "SELECT COUNT(*) AS _ucasti,o.id_osoba AS _id,CONCAT(prijmeni,' ',jmeno) AS _name,",chr(10),
-      "  IF(email!='',email,r.emaily) AS _email",chr(10),
+      "  IF(email!='',email,r.emaily) AS _email,nomail",chr(10),
       from.get,chr(10),
       "WHERE ",cond.get,
       " AND p.id_akce IN (SELECT id_duakce FROM akce WHERE spec=0 AND ",akce_ano,")",chr(10),
