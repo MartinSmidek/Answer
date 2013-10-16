@@ -5992,7 +5992,7 @@ function dop_gen_try($gq,$mode=0) { trace();
   $html= $del= '';
   switch ($mode) {
   case 0:
-    $n= $nw= $nm= 0;
+    $n= $nw= $nm= $nx= 0;
     $gq= str_replace('&gt;','>',$gq);
     $gq= str_replace('&lt;','<',$gq);
     $gr= @mysql_query($gq);
@@ -6011,15 +6011,22 @@ function dop_gen_try($gq,$mode=0) { trace();
         $nm++;
         $name= "<span style='background-color:yellow'>$name</span>";
       }
+      if ( $g->_email[0]=='*' ) {
+        // vyřazený mail
+        $nx++;
+        $name= "<span style='background-color:orange'>$name</span>";
+      }
       $html.= "$del$name";
       $del= ', ';
     }
-    $warn= $nw+$nm ? " (" : '';
+    $warn= $nw+$nm+$nx ? " (" : '';
     $warn.= $nw ? "$nw nemá <span style='color:darkred'>email</span> ani rodinný" : '';
     $warn.= $nw && $nm ? ", " : '';
     $warn.= $nm ? "$nm nechce <span style='background-color:yellow'>hromadné</span> informace
       - budou vyňati z mail-listu" : '';
-    $warn.= $nw+$nm ? ")" : '';
+    $warn.= ($nw||$nm) && $nx ? ", " : '';
+    $warn.= $nx ? "$nx má <span style='background-color:orange'>zneplatněný</span> email" : '';
+    $warn.= $nw+$nm+$nx ? ")" : '';
     $html= "<b>Nalezeno $n adresátů$warn:</b><br>$html";
     break;
   case 1:
