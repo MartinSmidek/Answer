@@ -5481,6 +5481,7 @@ function dop_mai_pocet($id_dopis,$dopis_var,$cond='',$recall=false) {  trace();
       while ( $res && ($d= mysql_fetch_object($res)) ) {
         $n++;
         $nazev= "Členů {$q->zkratka}";
+        $jm= "{$d->prijmeni} {$d->jmeno}";
         if ( $d->nomail ) {
           // nechce dostávat maily
           $nomail.= "$delnm$jm"; $delnm= ', '; $nm++;
@@ -5493,12 +5494,12 @@ function dop_mai_pocet($id_dopis,$dopis_var,$cond='',$recall=false) {  trace();
             if ( $adr && !in_array($adr,$emaily) ) {
               if ( $adr[0]=='*' ) {
                 // vyřazený mail
-                $mimo.= "$delm{$d->prijmeni} {$d->jmeno}"; $delm= ', '; $mx++;
+                $mimo.= "$delm$jm"; $delm= ', '; $mx++;
               }
               else {
                 $emaily[]= $adr;
                 $ids[]= $d->_id;
-                $jmena[]= "{$d->prijmeni} {$d->jmeno}";
+                $jmena[]= $jm;
               }
             }
           }
@@ -5543,6 +5544,7 @@ function dop_mai_pocet($id_dopis,$dopis_var,$cond='',$recall=false) {  trace();
     while ( $res && ($d= mysql_fetch_object($res)) ) {
       $n++;
       $nazev= "Účastníků {$d->nazev}";
+      list($jm)= explode(',',$d->_jm);
       if ( $d->nomail ) {
         // nechce dostávat maily
         $nomail.= "$delnm$jm"; $delnm= ', '; $nm++;
@@ -5561,7 +5563,6 @@ function dop_mai_pocet($id_dopis,$dopis_var,$cond='',$recall=false) {  trace();
         list($jmena[])= explode(',',$d->_jm);
       }
       else {
-        list($jm)= explode(',',$d->_jm);
         $nema.= "$deln$jm"; $deln= ', ';
         $nx++;
       }
