@@ -437,7 +437,7 @@ function kasa_export($cond,$file) {
     $format_dat= $wb->add_format();
     $format_dat->set_num_format("d.m.yyyy");
     // hlavička
-    $fields= explode(',','ident:11,číslo:6,datum:10,příjmy:10,výdaje:10,od koho/komu:30,účel:30,př.:2');
+    $fields= explode(',','ident:11,číslo:6,datum:10,příjmy:10,výdaje:10,stav:10,od koho/komu:30,účel:30,př.:2');
     $sy= 0;
     foreach ($fields as $sx => $fa) {
       list($title,$width)= explode(':',$fa);
@@ -463,14 +463,19 @@ function kasa_export($cond,$file) {
         $ws->write_number($sy,$sx++,$d->castka,$format_dec);
         $ws->write_blank($sy,$sx++);
       }
+      $s= $sy==1 ? "" : "F".($sy)."+";
+      $ws->write_formula($sy,$sx++,"={$s}D".($sy+1)."-E".($sy+1),$format_dec);
+
       $ws->write_string($sy,$sx++,utf2win_sylk($d->komu,true));
       $ws->write_string($sy,$sx++,utf2win_sylk($d->ucel,true));
       $ws->write_number($sy,$sx++,$d->priloh);
     }
     $sy++;
+    $sy2= $sy+2;
     $ws->write_string($sy+1,0,utf2win_sylk('CELKEM',true));
     $ws->write_formula($sy+1,3,"=SUM(D2:D$sy)",$format_dec);
     $ws->write_formula($sy+1,4,"=SUM(E2:E$sy)",$format_dec);
+    $ws->write_formula($sy+1,5,"=D$sy2-E$sy2",$format_dec);
   }
   $wb->close();
   $html.= "Byl vygenerován soubor pro Excel: <a href='docs/$table'>$table</a>";
