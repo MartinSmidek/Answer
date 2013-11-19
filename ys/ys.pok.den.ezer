@@ -13,7 +13,7 @@ use dc: form _d_cmd [20,500,,]
 
 proc onstart () {
   dd.seznam.browse_focus;
-  get_cookie('p_state','1,2.1.2009,1.1.2009,31.12.2009,2,Y,Y,N,1,1,1,poštovné',
+  get_cookie('p_state','1,2.1.2013,1.1.2013,31.12.2013,2,Y,Y,N,1,1,1,poštovné',
     dv,'r_dat,rd_dne,rd_od,rd_do,r_org,ro_1,ro_n,ro_pokl,r_typ,r_sta,r_goa,rf_goal');
   dv.cond
 }
