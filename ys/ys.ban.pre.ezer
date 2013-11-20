@@ -32,7 +32,7 @@ proc the_formsave (f,b) {
 
 # -------------------------------------------------------------------------------------------------- _prevody
 form _prevody [,,578,400] { tabindex:1000
-  browse prevody [0,0,300,200] {type:'smart', buf_rows:100, rows:26, qry_rows:2
+  browse prevody [0,0,300,200] { buf_rows:100, rows:26, qry_rows:2, css_rows:'barva,1:yellow,2:green'
     show ident [,,80,] { title:'ident', data:prevod.ident, format:'q*s-' },
     show splatnost [,,65,] { title:'datum', data:prevod.splatnost, format:'qs*r' },
     show typ [,,20,] { title:'typ', data:prevod.typ, format:'qs/r' },
@@ -41,7 +41,8 @@ form _prevody [,,578,400] { tabindex:1000
     show popis [,,110,] { title:'popis', data:prevod.popis, format:'q*s' },
     show poznamka [,,140,] { title:'poznamka', data:prevod.poznamka, format:'q*s' },
     show castka [,,80,] { title:'částka', data:prevod.castka, format:'q/sr' },
-    show id [,,0,] { data:prevod.id_prevod },
+    show id { data:prevod.id_prevod }
+    show barva { expr:"IF(kat='+d',1,IF(kat='+p',2,''))" }
     proc onrowclick () { }
   },
   proc dzmena () {
@@ -53,7 +54,11 @@ form _prevody [,,578,400] { tabindex:1000
 form _b_detail [,,282,197] { tabindex:2000,
   view dp: table prevod,
   view dpu: table ucet {join_type:'LEFT', join:'ON dpu.protiucet=dp.protiucet AND dpu.banka=dp.banka'},
+  // 1.
   label [0,24,337,69] { title:'', css:'ae_info' }
+  label [29,31,77,17] { title:'dárce, datum' },
+  label [36,53,72,17] { title:'VS, KS, SS' },
+  label [35,74,77,17] { title:'částka, účet' },
   field clen [111,30,120,17] { data:dp.clen, format:'ro' },
   field splatnost [234,30,94,17] { data:dp.splatnost, format:'o' },
   field vsym [111,50,78,17] { data:dp.vsym, format:'ro' },
@@ -62,22 +67,35 @@ form _b_detail [,,282,197] { tabindex:2000,
   field castka [111,70,60,17] { data:dp.castka, format:'ro' },
   field protiucet [174,70,120,17] { data:dp.protiucet, format:'ro' },
   field banka [295,70,33,17] { data:dp.banka, format:'ro' },
+  // 2.
   label [0,103,335,112] { title:'', css:'ae_info' }
-  field nazev [109,112,216,17] { data:dpu.nazev, format:'o' },
-  field popis [109,132,216,17] { data:dp.popis, format:'o'  },
-  field poznamka [109,152,216,17] { data:dp.poznamka, format:'o'  },
-  field kat [230,172,77,17] { data:dp.kat, format:'o'  },
-  field [230,192,98,17] { data:dp.typ, format:'o'  },
-#   select [230,192,98,17] { data:dp.typ, options:b_typ.hodnota, type:'map', format:'o'  },
-  label [29,31,77,17] { title:'dárce, datum' },
-  label [36,53,72,17] { title:'VS, KS, SS' },
-  label [35,74,77,17] { title:'částka, účet' },
   label [18,113,92,17] { title:'náš název účtu' },
   label [41,133,92,17] { title:'název účtu' },
   label [44,153,62,17] { title:'poznámka' },
   label [37,173,190,17] { title:'zařazení převodu podle kategorií' },
   label [2,4,222,17] { title:'<b>Detail nastaveného převodu</b>' },
   label [47,192,208,17] { title:'klasifikace převodu podle typu' },
+  field nazev [109,112,216,17] { data:dpu.nazev, format:'o' },
+  field popis [109,132,216,17] { data:dp.popis, format:'o'  },
+  field poznamka [109,152,216,17] { data:dp.poznamka, format:'o'  },
+  field kat [230,172,77,17] { data:dp.kat, format:'o'  },
+  field [230,192,98,17] { data:dp.typ, format:'o'  },
+#   select [230,192,98,17] { data:dp.typ, options:b_typ.hodnota, type:'map', format:'o'  },
+  # příkazy
+  label  [20,250,20,20] { css:"green" }
+  button [50,250,,] { title:"členský příspěvek", proc onclick() {
+    confirm("Označit převod ",castka.get," Kč z účtu ",popis.get," jako členský příspěvek?");
+    kat.set("+p"); kat.change; form.save; pr.prevody.browse_row; form.load;
+  }}
+  label  [20,280,20,20] { css:"yellow" }
+  button [50,280,,] { title:"dar k potvrzení", proc onclick() {
+    confirm("Označit převod ",castka.get," Kč z účtu ",popis.get," jako dar a zaslat potvrzení?");
+    kat.set("+d"); kat.change; form.save; pr.prevody.browse_row; form.load;
+  }}
+  button [50,310,,] { title:"zrušit zařazení", proc onclick() {
+    confirm("Zrušit označení převodu ",castka.get," Kč z účtu ",popis.get," jako ",kat.get,"?");
+    kat.set(""); kat.change; form.save; pr.prevody.browse_row; form.load;
+  }}
 }
 # -------------------------------------------------------------------------------------------------- _b_vyber
 form _b_vyber [,,600,50] { tabindex:5000,
