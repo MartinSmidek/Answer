@@ -137,6 +137,7 @@ menu m {type:'left',
     item {title:'Přehled o akci (děti,pečouni)', par:°{typ:'vi',cnd:'1'}}
     item {title:'Ekonomické ukazatele'  ,par:°{typ:'ve',cnd:'1'}}
     item {title:'Udržet kontakt'        ,par:°{typ:'12',cnd:'1'}, skill:'y;f'}
+    item {title:'Seznam čerstvých změn' ,par:°{typ:'cz',cnd:'1'}, skill:'a'}
   }
   menu {title:'jmenovky na akci',type:'group',_sys:'*'
     item {title:'Účastníci bez funkce'                                                                  skill:'f'

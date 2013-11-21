@@ -33,6 +33,7 @@ echo <<<__EOD
 .modry          { background-color:#7389ae !important; }
 
 /* specifické */
+.form_note { font-size:10px; color:$s1_brow }
 .title_ref { color:#ffffff !important; }
 .title_ref a { color:#ffffff !important; }
 .karta_info {

@@ -212,6 +212,223 @@ function album_resample($source, $dest, &$width, &$height,$copy_bigger=0,$copy_s
   }
   return $ok;
 }
+# ================================================================================================== DUPLICITY
+# ---------------------------------------------------------------------------------- akce_data_osoba
+# načte data OSOBA+TVORI včetně záznamů v _track
+function akce_data_osoba($ido,$idr) {  trace();
+  $ret= (object)array();
+  // načtení změn
+  $chng_kdy= $chng_kdo= $chng_val= array();
+  $zs= mysql_qry("
+    SELECT fld,kdo,kdy,val
+    FROM _track
+    WHERE kde='osoba' AND klic=$ido
+  ");
+  while (($z= mysql_fetch_object($zs))) {
+    $fld= $z->fld;
+    $kdy= $z->kdy;
+    $kdo= $z->kdo;
+    $val= $z->val;
+    if ( !isset($chng_kdy[$fld]) || isset($chng_kdy[$fld]) && strcmp($chng_kdy[$fld],$kdy)<0 ) {
+      $chng_kdy[$fld]= $kdy;
+      $chng_kdo[$fld]= "$kdo: ".sql_date1($kdy);
+      $chng_val[$fld]= $val;
+    }
+  }
+  $ret->chng= $chng_kdo;
+  // načtení hodnot
+  $os= mysql_qry("
+    SELECT *
+    FROM osoba AS o
+    JOIN tvori AS t USING(id_osoba)
+    WHERE id_rodina=$idr AND id_osoba=$ido
+  ");
+  $o= mysql_fetch_object($os);
+  foreach($o as $fld=>$val) {
+    if ( $chng_kdy[$fld] && $chng_val[$fld]!=$val ) {
+      $ret->diff[$fld]= $chng_val[$fld];
+      $ret->chng[$fld]= "<span style='color:red'>{$ret->chng[$fld]}: {$chng_val[$fld]}</span>";
+    }
+  }
+                                                        debug($ret,"akce_data_osoba");
+  return $ret;
+}
+# --------------------------------------------------------------------------------- akce_data_rodina
+# načte data RODINA včetně záznamů v _track
+function akce_data_rodina($idr) {  trace();
+  $ret= (object)array();
+  // načtení změn
+  $chng_kdy= $chng_kdo= $chng_val= array();
+  $zs= mysql_qry("
+    SELECT fld,kdo,kdy,val
+    FROM _track
+    WHERE kde='rodina' AND klic=$idr
+  ");
+  while (($z= mysql_fetch_object($zs))) {
+    $fld= $z->fld;
+    $kdy= $z->kdy;
+    $kdo= $z->kdo;
+    $val= $z->val;
+    if ( !isset($chng_kdy[$fld]) || isset($chng_kdy[$fld]) && strcmp($chng_kdy[$fld],$kdy)<0 ) {
+      $chng_kdy[$fld]= $kdy;
+      $chng_kdo[$fld]= "$kdo: ".sql_date1($kdy);
+      $chng_val[$fld]= $val;
+    }
+  }
+  $ret->chng= $chng_kdo;
+  // načtení hodnot
+  $os= mysql_qry("
+    SELECT *
+    FROM rodina AS o
+    WHERE id_rodina=$idr
+  ");
+  $o= mysql_fetch_object($os);
+  foreach($o as $fld=>$val) {
+    if ( $chng_kdy[$fld] && $chng_val[$fld]!=$val ) {
+      $ret->diff[$fld]= $chng_val[$fld];
+      $ret->chng[$fld].= ": {$chng_val[$fld]}";
+    }
+  }
+                                                        debug($ret,"akce_data_rodina");
+  return $ret;
+}
+# ---------------------------------------------------------------------------------- akce_data_duplo
+function akce_data_duplo($par,$ids=null) {  trace();
+  # vrácení počtu záznamů DUPLO
+  function duplo_state() {
+    return select("COUNT(*)","duplo");
+  }
+  # přidání členů rodin k rodinám specifikovaným $cond v DUPLO
+  function pridej_cleny($cond) {
+    $ds= mysql_qry("
+      SELECT id_duplo,id_1,id_2 FROM duplo WHERE tab='r' AND $cond
+    ");
+    if ( !$ds ) { $err.= mysql_error(); goto end; }
+    while (($d= mysql_fetch_object($ds))) {
+      $id_duplo= $d->id_duplo;
+      $r1= $d->id_1;
+      $r2= $d->id_2;
+      $os= mysql_qry("
+        SELECT GROUP_CONCAT(CONCAT(id_tvori,'/',t.id_rodina)) AS _ids
+        FROM osoba AS o
+        JOIN tvori AS t USING(id_osoba)
+        WHERE id_rodina IN ($r1,$r2)
+        GROUP BY role,jmeno
+      ");
+      if ( !$os ) { $err.= mysql_error(); goto end; }
+      while (($o= mysql_fetch_object($os))) {
+        list($tr1,$tr2)= explode(',',$o->_ids);
+        list($tr1t,$tr1r)= explode('/',$tr1);
+        list($tr2t,$tr2r)= explode('/',$tr2);
+        $id1= $tr1r==$r1 ? $tr1t : ( $tr2r==$r1 ? $tr2t : 0);
+        $id2= $tr2r==$r2 ? $tr2t : ( $tr1r==$r2 ? $tr1t : 0);
+        // asi ekvivalentní osoby v rodině idR
+        if ( !mysql_qry("
+          INSERT INTO duplo (faze,ids_duplo,tab,typ,ids,id_1,id_2)
+            VaLUES (0,$id_duplo,'o',1,'$id1,$id2','$id1','$id2')
+        ")) { $err.= mysql_error(); goto end; }
+      }
+    }
+  end:
+    return $err;
+  }
+  # vlastní tělo funkce
+  $ret= (object)array('ok'=>0,'msg'=>'');
+  $err= $msg= "";
+  foreach (explode(',',$par->duplo) as $do) {
+    $msg.= "#DUPLO= ".duplo_state()."<br>";
+    switch ($do) {
+    case 'truncate': # ---------------------------------- vyprázdnění DUPLO
+      $msg.= "inicializace DUPLO: ";
+      $ok= mysql_qry("TRUNCATE TABLE duplo ");
+      if ( !$ok ) { $err.= mysql_error(); goto end; }
+      $msg.= "ok";
+      break;
+    case 'dupl-rodiny': # ------------------------------ ruční přidání duplicitních výskytů rodin
+      $msg.= "přidání osob: ";
+      list($id1,$id2)= explode(',',$ids);
+      if ( !mysql_qry("
+        INSERT INTO duplo (faze,ids,tab,typ,id_1,id_2)
+          VaLUES (0,'$ids','r',1,$id1,$id2)
+      ")) { $err.= mysql_error(); goto end; }
+      $ret->id= mysql_insert_id();
+      $err= pridej_cleny("id_duplo={$ret->id}"); if ( $err ) goto end;
+      break;
+    case '+osoby': # ----------------------------------- vybrání O-kandidátů
+      $msg.= "přidání osob: ";
+      $ok= mysql_qry("
+        SELECT
+          CONCAT(prijmeni,' ',jmeno),
+          COUNT(id_osoba) AS _pocet,GROUP_CONCAT(id_osoba) AS ids_osoba,
+          GROUP_CONCAT((SELECT COUNT(id_spolu) FROM spolu WHERE id_osoba=o.id_osoba)) AS _ucasti,
+          GROUP_CONCAT(CONCAT(IFNULL(id_rodina,'-'),IFNULL(t.role,''))) AS ids_rodina,
+          COUNT(DISTINCT narozeni) AS _nar,MIN(narozeni) AS _nar_min,MAX(narozeni) AS _nar_max,
+          COUNT(DISTINCT o.obec) AS _obci,GROUP_CONCAT(DISTINCT o.obec) AS _obce
+        FROM osoba AS o
+        LEFT JOIN tvori AS t USING(id_osoba)
+        LEFT JOIN rodina AS r USING(id_rodina)
+        WHERE jmeno!='' AND prijmeni!=''
+        GROUP BY CONCAT(prijmeni,' ',jmeno) HAVING _pocet>1
+        AND (
+          ( _obci=1 AND YEAR(_nar_max)=YEAR(_nar_min) )
+          OR
+          ( _obci=2 AND YEAR(_nar_max)=YEAR(_nar_min) AND _nar_max!='0000-00-00' )
+        )
+      ");
+      if ( !$ok ) { $err.= mysql_error(); goto end; }
+      while (($o= mysql_fetch_object($ok))) {
+        list($id1,$id2)= explode(',',$o->ids_osoba);
+        $n= select("COUNT(*)","duplo","id_1 IN($id1,$id2) OR id_2 IN($id1,$id2)");
+        if ( !$n ) {
+          if ( !mysql_qry("
+            INSERT INTO duplo (faze,ids_duplo,tab,typ,id_1,id_2)
+              VaLUES (0,'$id1,$id2','o',1,$id1,$id2)
+          ")) { $err.= mysql_error(); goto end; }
+        }
+      }
+      $msg.= "ok";
+      break;
+    case '+rodiny': # ----------------------------------- doplnění eRodin
+      $msg.= "přidání rodin: ";
+      $ok= mysql_qry("
+        SELECT COUNT(id_rodina) AS _pocet,GROUP_CONCAT(id_rodina) AS ids_rodina,
+          GROUP_CONCAT(DISTINCT nazev) AS _nazev,
+          COUNT(DISTINCT obec) AS _obci,GROUP_CONCAT(DISTINCT obec) AS _obce,
+          GROUP_CONCAT(
+            (SELECT GROUP_CONCAT(CONCAT(role,jmeno) ORDER BY role)
+             FROM rodina JOIN tvori USING(id_rodina) JOIN osoba USING(id_osoba)
+             WHERE id_rodina=r.id_rodina) SEPARATOR '\n') AS _cleni
+        FROM rodina AS r
+        WHERE nazev!='' AND LEFT(nazev,1)!='-'
+        GROUP BY CONCAT(nazev,obec,ulice) HAVING _pocet BETWEEN 2 AND 5
+      ");
+      if ( !$ok ) { $err.= mysql_error(); goto end; }
+      while (($r= mysql_fetch_object($ok))) {
+        list($id1,$id2)= explode(',',$r->ids_rodina);
+        if ( !mysql_qry("
+          INSERT INTO duplo (faze,ids,tab,typ,id_1,id_2)
+            VaLUES (0,'{$r->ids_rodina}','r',1,$id1,$id2)
+        ")) { $err.= mysql_error(); goto end; }
+      }
+      $msg.= "ok";
+      break;
+    case '+eOsoby': # ----------------------------------- doplnění eOsob k eRodinám
+      $msg.= "přidání eOsob k eRodinám: ";
+      $msg.= "ok";
+      $err= pridej_cleny(1); if ( $err ) goto end;
+      break;
+    default:
+      $err.= "požadavek $od N.Y.I.";
+      break;
+    }
+    $msg.= "<br>#DUPLO= ".duplo_state()."<hr>";
+  }
+end:
+  if ( $err ) $msg= "<br><br>CHYBA: $err<hr>$msg";
+  $ret->msg= $msg;
+                                                        debug($ret,"akce_data_duplo");
+  return $ret;
+}
 # ================================================================================================== KONTROLY
 # --------------------------------------------------------------------------------- akce_data_survey
 # přehled dat
@@ -1205,7 +1422,8 @@ function akce_sestava($akce,$par,$title,$vypis,$export=false) {
      : ( $par->typ=='fs' ? akce_fotoseznam($akce,$par,$title,$vypis,$export)
      : ( $par->typ=='fx' ? akce_sestava_spec($akce,$par,$title,$vypis,$export)
      : ( $par->typ=='12' ? akce_jednou_dvakrat($akce,$par,$title,$vypis,$export)
-                         : fce_error("akce_sestava: N.Y.I.") )))))))))))))));
+     : ( $par->typ=='cz' ? akce_cerstve_zmeny($akce,$par,$title,$vypis,$export)
+                         : fce_error("akce_sestava: N.Y.I.") ))))))))))))))));
 }
 # --------------------------------------------------------------------------------------- akce_table
 function akce_table($tits,$flds,$clmn,$export=false) {
@@ -1275,6 +1493,57 @@ function akce_sestava_spec($akce,$par,$title,$vypis,$export=false) { trace();
   }
 //                                                 debug($ems,count($ems));
   return $result;
+}
+# ------------------------------------------------------------------------------ akce_jednou_dvakrat
+# generování seznamu změn v pobytech na akci od par-datetime
+function akce_cerstve_zmeny($akce,$par,$title,$vypis,$export=false) { trace();
+  $result= (object)array('html'=>'');
+  $od= $par->datetime= "2013-09-25 18:00";
+  $p_flds= "'luzka','pokoj','pristylky','pocetdnu'";
+  //
+  $tits= explode(',',"_ucastnik,kdy,fld,old,val,kdo,id_track");
+  $flds= $tits;
+  $clmn= array();
+  $n= 0;
+  $ord= "
+    CASE
+      WHEN pouze=0 THEN r.nazev
+      WHEN pouze=1 THEN GROUP_CONCAT(DISTINCT IF(t.role='a',o.prijmeni,'') SEPARATOR '')
+      WHEN pouze=2 THEN GROUP_CONCAT(DISTINCT IF(t.role='b',o.prijmeni,'') SEPARATOR '')
+    END";
+  $rz= mysql_qry("
+    SELECT id_track,kdy,kdo,klic,fld,op,old,val,
+      GROUP_CONCAT(DISTINCT IF(t.role='a',o.prijmeni,'') SEPARATOR '') as prijmeni_m,
+      GROUP_CONCAT(DISTINCT IF(t.role='a',o.jmeno,'')    SEPARATOR '') as jmeno_m,
+      GROUP_CONCAT(DISTINCT IF(t.role='b',o.prijmeni,'') SEPARATOR '') as prijmeni_z,
+      GROUP_CONCAT(DISTINCT IF(t.role='b',o.jmeno,'')    SEPARATOR '') as jmeno_z,
+      r.nazev as nazev,p.pouze as pouze
+    FROM _track
+    JOIN pobyt AS p ON p.id_pobyt=klic
+    JOIN akce AS a ON a.id_duakce=p.id_akce
+    JOIN spolu AS s USING(id_pobyt)
+    JOIN osoba AS o ON s.id_osoba=o.id_osoba
+    LEFT JOIN tvori AS t ON t.id_osoba=o.id_osoba
+    LEFT JOIN rodina AS r USING(id_rodina)
+    WHERE kde='pobyt' AND kdy>='$od' AND id_akce=$akce AND fld IN ($p_flds) AND old!=val AND old!=''
+    GROUP BY id_track,id_pobyt
+    ORDER BY $ord,kdy
+  ");
+  while ( $rz && ($z= mysql_fetch_object($rz)) ) {
+    $prijmeni= $z->pouze==1 ? $z->prijmeni_m : ($z->pouze==2 ? $z->prijmeni_z : $z->nazev);
+    $jmena=    $z->pouze==1 ? $z->jmeno_m    : ($z->pouze==2 ? $z->jmeno_z : "{$z->jmeno_m} a {$z->jmeno_z}");
+    $clmn[$n]= array();
+    foreach($flds as $f) {
+      switch ($f) {
+      case '_ucastnik': $clmn[$n][$f]= "$prijmeni $jmena"; break;
+      default:          $clmn[$n][$f]= $z->$f;
+      }
+    }
+    $n++;
+  }
+  $result->html= "od $od bylo provedeno $n změn";
+                                        debug($clmn,"sestava pro $akce,$typ,$fld,$cnd");
+  return akce_table($tits,$flds,$clmn,$export);
 }
 # ------------------------------------------------------------------------------ akce_jednou_dvakrat
 # generování seznamu jedno- a dvou-ročáků spolu s mailem na VPS

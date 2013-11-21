@@ -1076,8 +1076,8 @@ __XLS;
     |I8:M10 border=h
     |J9 $adresa  |J9:M9 merge middle wrap size=14
 
-    |C13 Penìžní ústav           |E13 Raiffeisenbank, a.s.
-    |C14 Èíslo úètu       ::bold |E14 514048044/5500 ::bold
+    |C13 Penìžní ústav           |E13 Fio banka, a.s.
+    |C14 Èíslo úètu       ::bold |E14 2000465448/2010 ::bold
     |C15 Konstantní symbol       |E15 558 ::left
     |C16 Variabilní symbol       |E16 <èíslo faktury> ::left bcolor=ffffffaa
     |C17 Specifický symbol       |E17 $akce ::left bcolor=ffffffaa
@@ -1194,8 +1194,8 @@ function ds_faktura($list,$typ,$order,$polozky,$platce,$zaloha=100,$pata='') {  
     |I8:M10 border=h
     |J9 $adresa  |J9:M9 merge middle wrap size=14
 
-    |C13 Penìžní ústav           |E13 Raiffeisenbank, a.s.
-    |C14 Èíslo úètu       ::bold |E14 514048044/5500 ::bold
+    |C13 Penìžní ústav           |E13 Fio banka, a.s.
+    |C14 Èíslo úètu       ::bold |E14 2000465448/2010 ::bold
     |C15 Konstantní symbol       |E15 558 ::left
     |C16 Variabilní symbol       |E16 <èíslo faktury> ::left bcolor=ffffffaa
     |C17 Specifický symbol       |E17 $akce ::left bcolor=ffffffaa

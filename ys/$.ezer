@@ -23,6 +23,15 @@ menu ys { type:'main', active:* //ys.pok
             info.fill('',ask('akce_data_survey',i.par));
           }
         }
+        menu {title:'Eliminace duplicit',type:'group', _sys:'*', skill:'m'
+          item {title:'vyprázdnit duplo'                ,par:°{duplo:'truncate'}}
+          item {title:'+ tipy na osoby => duplo'        ,par:°{duplo:'+osoby'}}
+          item {title:'+ tranzitivní obal rodin'        ,par:°{duplo:'+rodiny'}}
+          proc onclick (i) {
+            info.fill(conc(i.owner.title,' - ',i.title),' ... probíhá výpočet ...');
+            info.fill('',ask('akce_data_duplo',i.par));
+          }
+        }
         menu {title:'Opravy dat',type:'group', _sys:'*'
           item {title:'kontroly databáze'               ,par:°{opravit:0}}
           item {title:'kontroly databáze s opravou'     ,par:°{opravit:1}, skill:'m'}
@@ -63,7 +72,7 @@ form right [,,700,50] {
   label head [0,0,680,50]  { title:'' }
   label note [0,50,680,550] { title:'' }
   proc fill(x,y) {
-    [ x; head.set(conc("<div class='CSection CMenu'><h3 class='CTitle'>",x,"</h3></div>")) ];
+    [ x; head.set(conc("<div class='karta'>",x,"</div>")) ];
     [ y; note.set(y) ]
   }
   proc append(x) { note.get; note.set(conc(note.get,'<br>',x)) | note.set(x) }
