@@ -27,6 +27,7 @@ cr/img/cr_local.png -text
 db/$.ezer -text
 db/code/comp2tab.php -text
 db/db.akce.chl.ezer -text
+db/db.akce.eli.ezer -text
 db/db.akce.evi.ezer -text
 db/db.akce.ezer -text
 db/db.akce.lst.ezer -text
