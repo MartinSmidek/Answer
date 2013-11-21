@@ -1,4 +1,81 @@
-// uživatelské funkce aplikace YS
+// uživatelské funkce aplikace Ans(w)er
+// ================================================================================================= Ezer.Form
+// ------------------------------------------------------------------------------- on_dblclk_copy_to
+//fm: Form.on_dblclk_copy_to (goal)
+// Pro elementy při DblClk zkopíruje hodnotu do stejnojmenného elementu formuláře goal
+// (funguje pro field, edit)
+Ezer.Form.implement({
+  on_dblclk_copy_to: function(goal) {
+    $each(this.part,function(field,id) {
+      if ( (field instanceof Ezer.Field || field instanceof Ezer.Edit)
+        && field.DOM_Input ) {
+//                                                         Ezer.trace('*',id);
+        field.DOM_Input.addEvents({
+          dblclick: function(el) {
+//                                                         Ezer.trace('*','DblClick '+this.id+'='+this.value);
+            if ( field2= goal.part[this.id] ) {
+              field2.set(this.value);
+              field2.change();
+            }
+          }.bind(field)
+        });
+      }
+    },this);
+    return 1;
+  },
+// ----------------------------------------------------------------------------------------- copy_to
+//fm: Form.copy_to (goal)
+// Pro všechny elementy zkopíruje hodnotu do stejnojmenného elementu formuláře goal
+// (funguje pro field, edit)
+  copy_to: function(goal) {
+    $each(this.part,function(field,id) {
+      if ( field instanceof Ezer.Field || field instanceof Ezer.Edit ) {
+        if ( (field2= goal.part[field.id]) && field.value ) {
+          field2.set(field.value);
+          field2.change();
+        }
+      }
+    },this);
+    return 1;
+  },
+// --------------------------------------------------------------------------------------- set_notes
+//fm: Form.set_notes (pairs,css)
+// pairs :: { name:val, ...]
+// zobrazí hodnoty 'val' přes elementy dané jménem 'name', aplikuje přitom styl zadaný 'css'
+  set_notes: function(pairs,css) {
+    if ( this.notes ) {
+      this.notes.each(function(note){note.destroy()});
+      this.notes= [];
+    }
+    else {
+      this.notes= [];
+    }
+    $each(this.part,function(field,id) {
+      if ( field.data && pairs[field.data.id] ) {
+        this.notes.push(new Element('div',{'class':css,html:pairs[field.data.id],styles:{
+          position:'absolute',left:field._l,top:field._t+(field._h||16)+2
+        }}).inject(this.DOM_Block));
+      }
+    },this);
+    return 1;
+  },
+// --------------------------------------------------------------------------------------- real_json
+//fm: Form.real_json (goal)
+// oprava metody Form.json
+  real_json: function(str) {
+    var res= 0;
+    if ( str ) {
+      // setter
+      res= this.json(JSON.decode(str));
+    }
+    else {
+      // getter
+      res= JSON.encode(this.json());
+
+    }
+    return res;
+  }
+});
 // ================================================================================================= Google
 // Ezer.obj= {};        -- je definováno v ezer.js
 // ------------------------------------------------------------------------------------------------- google_maps
