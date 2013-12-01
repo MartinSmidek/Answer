@@ -3,6 +3,7 @@
 # -------------------------------------------------------------------------------------------------- rr_nastav
 # $par = {den:ode dneška,poslat: 0/1}
 function rr_nastav($den,$datum,$pocet) {  trace();
+  $ret= (object)array('msg'=>'','next'=>'');
   $nastaveno= 0;
   $dat= sql_date1($datum,1);
   $ndat0= sql2stamp($dat);
@@ -12,7 +13,9 @@ function rr_nastav($den,$datum,$pocet) {  trace();
     query("UPDATE rr SET datum='$ndatum',state='prepared' WHERE day_n=$day_n");
     $nastaveno+= mysql_affected_rows();
   }
-  return "nastaveno $nastaveno dnů od $dat po $ndatum";
+  $ret->next= date('Y-m-d',$ndat0+$pocet*60*60*24);
+  $ret->msg= "nastaveno $nastaveno dnů od $dat po $ndatum";
+  return $ret;
 }
 # -------------------------------------------------------------------------------------------------- rr_send
 # $par = {den:ode dneška,poslat: 0/1}

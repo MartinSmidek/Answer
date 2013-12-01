@@ -24,7 +24,7 @@ menu rr { type:'main', active:rr.richard
     panel plan {type:'right', title:'Opravy'
       use f: form _f [12,4,,]
       use g: form _g [12,4,,]
-      menu nastav {type:'left'
+      menu nastav {type:'left', format:'f'
         menu obdobi {title:'Opravy',type:'group'
           item od {title:'Nastavení období'
             proc onclick (i) {
@@ -44,6 +44,7 @@ menu rr { type:'main', active:rr.richard
         f.b.browse_load;
         g.b.browse_load
       }
+      # ---------------------------------------------------------------------------- opravy překladu
       form _g [,,*,100] {
         browse b [0,0,,] { rows:7, qry_rows:1, css_rows:'barva,1:yellow'
           show id_rr { data:rr.id_rr, format:'qs' }
@@ -65,23 +66,29 @@ menu rr { type:'main', active:rr.richard
         label [423,19,,] { title:'Důvod pozměnění překladu' }
         edit errata [421,39,402,131] { data:rr.errata }
       }
+      # --------------------------------------------------------------------------- nastavení období
       form _f [,,*,500] {
         browse b [0,0,,] { rows:24, qry_rows:1
           show id_rr { data:rr.id_rr, format:'qs' }
-          show [,,30,] { title:'pořadí', data:rr.day_n, format:'qs' }
+          show den [,,30,] { title:'pořadí', data:rr.day_n, format:'qs' }
           show [,,40,] { title:'den', data:rr.day, format:'qs' }
           show [,,20,] { title:'ps', data:rr.state, format:'qs' }
-          show [,,70,] { title:'datum', data:rr.datum, format:'qs' }
+          show datum [,,70,] { title:'datum', data:rr.datum, format:'qs' }
           show [,,140,] { title:'název', data:rr.subject, format:'qs' }
+          proc onsubmit() {
+            form.den.set(den.get); form.datum.set(replace(sql2date(datum.get),' ','')); }
         }
         label [340,10,,] { title:"Nastav pořadové číslo dne, počáteční datum a počet dnů" }
-        field den [340,40,30,]
-        field datum [380,40,80,] { type:'date' }
-        field pocet [470,40,40,]
+        field den [340,40,30,] { format:'t' }
+        field datum [380,40,80,] { type:'date', format:'t' }
+        field pocet [470,40,40,] { format:'t' }
         button [530,38,,] { title:'nastav'
-          proc onclick() {
-            msg.set(ask('rr_nastav',den.get,datum.get,pocet.get));
-            f.b.browse_load;
+          proc onclick() { var ret:object
+            ret.set(ask('rr_nastav',den.get,datum.get,pocet.get));
+            msg.set(ret.msg);
+            datum.set(replace(sql2date(ret.next),' ',''));
+            den.set(sum(den.get,pocet.get));
+            f.b.browse_seek(conc('day_n=',sum(den.get,pocet.get)));
           }
         }
         label msg [340,70,300,200]
