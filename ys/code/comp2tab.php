@@ -75,6 +75,7 @@ $names= array(
  'focus' => (object)array('op'=>'fm'),
  'form_set' => (object)array('op'=>'ff'),
  'format' => (object)array('op'=>'os'),
+ 'function' => (object)array('op'=>'ff'),
  'geocode' => (object)array('op'=>'fi'),
  'get' => (object)array('op'=>'fm'),
  'get_bounds' => (object)array('op'=>'fm'),

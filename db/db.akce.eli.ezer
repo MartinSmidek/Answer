@@ -1,332 +1,577 @@
 # ------------------------------------------------------------------------------------------------ #
-# Karta pro eliminaci duplicit v tabulkách OSOBA, RODINA                                           #
+# Karty pro eliminaci duplicit v tabulkách OSOBA, RODINA                                           #
 #                                                                                                  #
 # Ans(w)er/Ezer                                     (c) 2007-2013 Martin Šmídek <martin@smidek.eu> #
 # ------------------------------------------------------------------------------------------------ #
 
-use info: form right    [  12,  4,,] { tag:'inf' }
-use capt: form _caption [  12,  4,,] { tag:'eli' }
-// rodiny
-use er:   form _eRodiny [  12, 34,,] { tag:'eli' }
-use er1:  form _rodina  [ 245, 34,,] { tag:'eli' }
-use er2:  form _rodina  [ 660, 34,,] { tag:'eli' }
-use fr:   form _rodiny  [1062, 34,,] { tag:'eli' }
-use cr:   form _cmd_r   [548,304,,] { tag:'eli' }
-// tvoří, osoby
-use eo:   form _eOsoby  [  12,334,,] { tag:'eli' }
-use eo1:  form _osoba   [ 245,334,,] { tag:'eli' }
-use eo2:  form _osoba   [660,334,,] { tag:'eli' }
-use fo:   form _osoby   [1062,334,,] { tag:'eli' }
-use co:   form _cmd_o   [548,659,,] { tag:'eli' }
+const Lr= 5; Lcr= 242
+const Tr= 170; Ts= Tr+270; Tc= Ts+137
+const Wr= 400; Hr= 856
 
-var mode: number                // 1 = hledání duplicit, 2 = scelování hodnot
-var modes: object
+var mode: text
 
-proc onstart() { modes.set(°{
-  m1:°{
-    caps:°{er:'er',er1:'er1',er2:'er2',fr:'fr',
-           eo:'eo',eo1:'eo1',eo2:'eo2',fo:'fo'}
-  },
-  m2:°{
-    caps:°{er:'sjednocené rodiny',
-           er1:'sjednocené hodnoty pro rodinu',
-           er2:'variantní hodnoty pro rodinu podle seznamu duplicit',
-           fr:'seznam duplicit rodin',
-           eo:'všichni možní členové',
-           eo1:'správné hodnoty pro člena a jeho roli v rodině',
-           eo2:'variantní hodnoty pro člena podle seznamu duplicit',
-           fo:'členové v duplicitní rodině'}
-  }})
+use info: form right [6,4,,] { tag:'i'
+  # zkratky testovacích běhů
+  button [-20,4,,] { title:"TRUN", proc onclick() {
+    ti.onclick; ask("ROLLBACK_ALL");
+  }}
+  button ti [-70,4,,] { title:"INIT", proc onclick() { clear;
+    n1.init_all; s2.init_all; c2.init_all; r2.init_all; r3.init_all }}
+  button [-120,4,,] { title:"rr:babi/babí", proc onclick() {
+    clear; do.rucne.rr.click; r2.br._nazev.set_query(1,"babi"); r3.br._nazev.set_query(1,"babí"); }}
+  button [-220,4,,] { title:"cr:baj/baj", proc onclick() {
+    clear; do.rucne.cr.click; c2.bc._nazev.set_query(1,"baj"); r3.br._nazev.set_query(1,"baj"); }}
+  button [-320,4,,] { title:"sr:oh/ohř", proc onclick() {
+    clear; do.rucne.sr.click; s2.bs._nazev.set_query(1,"oh"); r3.br._nazev.set_query(1,"ohř"); }}
+  field parametr [-420,5,80,] label [-472,8,50,] { title:"par:", style:"color:white" }
+}
+# ================================================================================================ 1
+use n1:   form _navrhy  [6,38,,] { tag:'n1'     # ------------------------- návrhy
+                                                # ------------------------- rodina+rodina připravené
+  # uložení hodnot k rodině
+  button [Lcr,Tr-20,100,] { tag:'s', title:"Zapamatuj", proc onclick() {
+    form.chngs.set(form.r.real_json); form.r.plain; form.chngs.change;
+    form.d.key(form.bn.idd.get); form.d.save
+  }}
+                                                # ------------------------- chlap+rodina sjednocení
+  button [Lcr,Ts+30,,] { tag:'s,o', title:"Ztotožnit!",
+    style:"height:50px;width:70px;background-color:lightgreen"
+    proc onclick() { form.call('o_acccept') }}
+  button [Lcr+80,Ts+30,,] { tag:'s,o', title:"Rozpojit!",
+    style:"height:50px;width:70px;background-color:lightsalmon"
+    proc onclick() { form.call('o_reject') }}
+  button [Lcr,Ts+0,100,] { tag:'s,o', title:"zapamatovat změny údajů",
+    proc onclick() { form.call('o_save') }}
+                                                # ------------------------- chlap+rodina ručně
+  button novy_cr [Lcr,40,100,] {tag:'h', title:"Přidej do návrhů" }
+  button pridej_c [Lcr,Ts+30,100,] {tag:'h_cr', title:"Přidat chlapa do rodiny" }
+  button toje_c [Lcr,Ts+50,100,] {tag:'---', title:"Nastavená osoba je chlap", proc onclick() {  }}
+#   button save_c [Lcr,Tc-20,100,] {tag:'n1_cr', title:"Zapamatuj" }
+}
+# ================================================================================================ 2
+use c2:   form _chlapi  [ 416, 38,,] { tag:'c2' # -------------------------- chlapi
+  button [Lcr,Ts+0,100,] {tag:'o', title:"<< vše přenes", proc onclick() { form.copy_to(n1.get,'o'); }}
+}
+use s2:   form _singles [ 416, 38,,] { tag:'s2' # -------------------------- singles
+  button [Lcr,Tc-20,100,] {tag:'o', title:"<< vše přenes", proc onclick() { form.copy_to(n1.get,'o'); }}
+}
+use r2:   form _rodiny  [ 416, 38,,] { tag:'r2' # -------------------------- rodina
+  button [Lcr,Tr-20,100,] { title:"<< vše přenes", proc onclick() { form.copy_to(n1.get,'r'); }}
+  button [Lcr,Tc-20,100,] { title:"<< vše přenes", proc onclick() { form.copy_to(n1.get,'o'); }}
+}
+# ================================================================================================ 3
+use s3:   form _singles [ 826, 38,,] { tag:'s3' # -------------------------- singles
+  button [Lcr,Tc-20,100,] {tag:'o', title:"<< vše přenes", proc onclick() { form.copy_to(n1.get,'o'); }}
+}
+use r3:   form _rodiny  [ 826, 38,,] { tag:'r3' # -------------------------- rodina
+  button [Lcr,Tr-20,100,] { title:"<< vše", proc onclick() { form.copy_to(n1.get,'r'); }}
+  button [Lcr,Tc-20,100,] { title:"<< vše", proc onclick() { form.copy_to(n1.get,'o'); }}
+}
+# --------------------------------------------------------------------------------------------- menu
+menu do {type:'left', format:'f'
+  menu zjistene {title:'=> Sjednocení duplicit',type:'group'
+    item cr {title:'chlap a rodina',    par:°{mode:'s', forms:'i|n1|c2|r3', tags:'s|s_cr|o', call:'init_cr_s'} }
+    item cs {title:'chlap a single',    par:°{mode:'s', forms:'i|n1|c2|s3', tags:'s|s_cr|o', call:'init_cs_s'} }
+    item sr {title:'single a rodina',   par:°{mode:'s', forms:'i|n1|s2|r3', tags:'s|s_sr|o'} }
+    item rr {title:'2 rodiny',          par:°{mode:'s', forms:'i|n1|r2|r3', tags:'s|s_rr|o|r'} }
+  }
+  menu rucne {title:'<= ruční hledání duplicit',type:'group'
+    item cr {title:'chlap a rodina',    par:°{mode:'h', forms:'i|n1|c2|r3', tags:'h_cr', call:'init_cr_a'} }
+    item sr {title:'single a rodina',   par:°{mode:'h', forms:'i|n1|s2|r3', tags:'h_sr', call:'init_sr_a'} }
+    item rr {title:'2 rodiny',          par:°{mode:'h', forms:'i|n1|r2|r3', tags:'h_rr|r', call:'init_rr_a'} }
+  }
+  menu auto {title:'algoritmické nalezení duplicit',type:'group'
+    item cc {title:'chlap a chlap',     par:°{forms:'i', call:'info_auto', x:'cc', y:'.*'} }
+    item cs {title:'chlap a single',    par:°{forms:'i', call:'info_auto', x:'cs', y:'.*'} }
+    item    {title:'... [Večeř*]',      par:°{forms:'i', call:'info_auto', x:'cs', y:'Večeř'} }
+    item cr {title:'chlap a rodina',    par:°{forms:'i', call:'info_auto', x:'ct', y:'.*'} }
+    item    {title:'... VYBRANÉ TESTY', par:°{forms:'i', call:'info_auto', x:'ct', y:'Apa|^Mich|^Kan|^Bárt|^Břez|^Ern|^Večeř'} }
+    item    {title:'... par (nahoře)',  par:°{forms:'i', call:'info_auto_par', x:'ct' } }
+    item    {title:'... [A*]',          par:°{forms:'i', call:'info_auto', x:'ct', y:'A'} }
+    item    {title:'... [B*]',          par:°{forms:'i', call:'info_auto', x:'ct', y:'B'} }
+    item    {title:'... [Čer*]',        par:°{forms:'i', call:'info_auto', x:'ct', y:'Čer'} }
+    item    {title:'... [Gůr*]',        par:°{forms:'i', call:'info_auto', x:'ct', y:'Gůr'} }
+    item    {title:'... [Micha*]',      par:°{forms:'i', call:'info_auto', x:'ct', y:'Micha'} }
+    item    {title:'... [Vop*]',        par:°{forms:'i', call:'info_auto', x:'ct', y:'Vop'} }
+  }
+  menu ones {title:'jednorázové úpravy',type:'group'
+    item    {title:'akce z chlapi=>db: test',        par:°{forms:'i', call:'info_akce', x:'test'} }
+    item    {title:'akce z chlapi=>db: insert',      par:°{forms:'i', call:'info_akce', x:'insert'} }
+    item    {title:'obnova _track ze záloh: test',   par:°{forms:'i', call:'info_track', x:'test'} }
+    item    {title:'obnova _track ze záloh: insert', par:°{forms:'i', call:'info_track', x:'insert'} }
+  }
+  proc onclick (i) {
+    info.fill(conc(i.owner.title,' - ',i.title),' ');
+    panel.display(2,i.par.forms);
+    [ n1.display; n1.display(2,i.par.tags) ];
+    [ c2.display; c2.display(2,i.par.tags) ];
+    [ s2.display; s2.display(2,i.par.tags) ];
+    [ r2.display; r2.display(2,i.par.tags) ];
+    [ r3.display; r3.display(2,i.par.tags) ];
+    [ i.par.call;
+      { i.par.x; { i.par.y; panel.call(i.par.call,i.par.x,i.par.y) | panel.call(i.par.call,i.par.x) }
+      | panel.call(i.par.call)
+    }];
+    mode.set(cconc(i.par.mode,i.par.mode,''));
+  }
 }
 proc onfirstfocus() {
-  mm.mg.mi.click;
-#   fr.reload;
-#   er.reload; er.b.raise('onrowclick');
-  er2.get.on_dblclk_copy_to(er1.get);
-  eo2.get.on_dblclk_copy_to(eo1.get);
+#   function("panel","panel.DOM_Block.setStyles({overflow:'auto'})",panel);
+  javascript("this.DOM_Block.setStyles({overflow:'auto',borderLeft:'2px solid white'})");
+  r2.get.on_dblclk_copy_to(n1.get);
+  c2.get.on_dblclk_copy_to(n1.get);
+  r3.get.on_dblclk_copy_to(n1.get);
+  do.zjistene.cr.click;
 }
-
-proc caps_set(x,i) {
-  var cap: text
-  panel.part(i);
-#   panel.part(i).display(not(eq(x,'-')));
-  panel.part(i).part('cap').set(conc("<b>",x,"</b>"))
+# --------------------------------------------------------------------------------------- sjednocení
+# ----------------------------------------------------------- procedury pro chlap+rodina
+proc init_cr_s() { //clear;
+  n1.init_all; c2.init_all; r3.init_all;
+  n1.reload_all("d.idd=0 AND d.tab1='-' AND d.tab2='r'");
 }
-
-menu mm {type:'left'
-  menu mg {title:'eliminace duplicit',type:'group'
-    item mi {title:'1. hledání duplicit', par:°{mode:1} }
-    item    {title:'2. scelování hodnot', par:°{mode:2} }
-    proc onclick (i) {
-      var mode_caps: object   // nadpisy formulářů pro aktuální mode
-      capt.fill(conc(' - ',i.title));
-      panel.display(2,'eli');
-      mode.set(i.par.mode);
-      mode_caps.set(modes.get(conc('m',mode.get,'.caps')));
-      each(mode_caps,caps_set);
-      er.b.browse_init; er1.init; er2.init; fr.b.browse_init;
-      eo.b.browse_init; eo1.init; eo2.init; fo.b.browse_init;
-      // inicializace podle mode
-      [ eq(mode.get,1); er.reload; fr.reload ];
-      [ eq(mode.get,2); er.reload; fr.reload_2  ]
-    }
-  }
-  menu {title:'tipy duplicit',type:'group'
-    item {title:'vyprázdnit duplo'      ,par:°{duplo:'truncate'}}
-    item {title:'+ rodiny => duplo'     ,par:°{duplo:'+rodiny'}}
-    item {title:'+ osoby k rodinám'      ,par:°{duplo:'+eOsoby'}}
-    item {title:'+ osoby => duplo'      ,par:°{duplo:'+osoby'}}
-    proc onclick (i) {
-      var ret: object
-      panel.display(2,'inf');
-      info.fill(conc(i.owner.title,' - ',i.title),' ... probíhá výpočet ...');
-      ret.set(ask('akce_data_duplo',i.par));
-      info.fill('',ret.msg);
-    }
-  }
+# ----------------------------------------------------------- procedury pro chlap+single
+proc init_cs_s() { //clear;
+  n1.init_all; c2.init_all; s3.init_all;
+  n1.reload_all("d.idd=0 AND d.tab1='-' AND d.tab2='-'");
 }
-# ----------------------------------------------------------------------------------------- _caption
-form _caption {
-  label head [0,0,*,20]
-  proc fill(x) {
-    head.set(conc("<div class='karta'>",x,"</div>"))
-  }
+# ------------------------------------------------------------------------------------------ hledání
+# ----------------------------------------------------------- procedury pro chlap+rodina
+proc init_cr_a() {
+  c2.init; c2.load_all; r3.init; r3.load_all
 }
-# ------------------------------------------------------------------------------------------- _cmd_r
-form _cmd_r [,,200,20]  {
-  button f1 [79,0,,] { title:"< vše", proc onclick() { er2.get.copy_to(er1.get); } }
-  button f2 [0,0,,] { title:"Zapamatuj", proc onclick() {
-    er.chngs.set(er1.real_json); er1.plain; er.chngs.change;
-    er.d.key(er.b.idd.get); er.d.save
-  }}
+proc load_n_cr() {
+  n1.bn.browse_load("d.idd=0 AND d.tab1='-'")
 }
-# ------------------------------------------------------------------------------------------- _cmd_o
-form _cmd_o [,,200,20] {
-  button f1 [78,0,,] { title:"< vše", proc onclick() { eo2.get.copy_to(eo1.get); } }
-  button f2 [0,0,,] { title:"Zapamatuj", proc onclick() {
-    eo.chngs.set(eo1.real_json); eo1.plain; eo.chngs.change;
-    eo.d.key(eo.b.idd.get); eo.d.save
-  }}
-  button f3 [150,0,,] { title:"Načti", proc onclick() {
-    var ret: object
-#     eo2.t_reload(fo.b.id.get,fo.idr.get);
-    ret.set(ask('akce_data_osoba',fo.b.id.get,fo.idr.get));
-    copy_by_name(ret.frm,eo2.get);
-    eo2.set_notes(ret.chng,'form_note');
-  }}
+# vytvoření záznamu v DUPLO pro nastavenou rodinu+osobu a chlapa
+proc n1.novy_cr.onclick() { clear;
+  ask('akce_eli_navrh','ct',c2.bc.idc.get,r3.bro.idt.get)
 }
-# ----------------------------------------------------------------------------------------- _eRodiny
-form _eRodiny { // er
-  view d: table duplo
-  view r: table rodina { join:"ON FIND_IN_SET(r.id_rodina,d.ids_tab)" }
-  # --------------------------------------------------  PROCEDURY
-  proc reload() { b.browse_load("tab='r'") }
-  # --------------------------------------------------  DUPLO
+# uložení hodnot k osobě
+# proc n1.save_c.onclick() { clear;
+#   n1.chngs.set(n1.o.real_json); n1.o.plain; n1.chngs.change;
+#   n1.d.key(n1.bnn.idd.get); n1.d.save
+# }
+# ----------------------------------------------------------- procedury pro single+rodina ručně
+proc init_sr_a() { s2.init; s2.load_all; r3.init; r3.load_all }
+# ----------------------------------------------------------- procedury pro rodina+rodina ručně
+proc init_rr_a() { r2.init; r2.load_all; r3.init; r3.load_all }
+# ----------------------------------------------------------- algoritmy
+# generování návrhů na sjednocení
+proc info_auto(typ,filtr) {
+  var ret:object
+  clear; info.fill('','... probíhá výpočet duplicit');
+  ret.set(ask('data_eli_auto',typ,filtr));
+  info.fill('',ret.html);
+}
+proc info_auto_par(typ) { info_auto(typ,info.parametr.get) }
+# obnova _track ze záloh
+proc info_track(insert) { var ret:object
+  clear; info.fill('','... probíhá doplnění _track ze záloh');
+  ret.set(ask('data_eli_track',insert));
+  info.fill('',ret.html);
+}
+# převod akcí z ch_akce do akce
+proc info_akce (insert) {
+  info.fill('','... převod akcí'); info.fill('',ask('data_eli_akce',insert)) }
+# ================================================================================================== _navrhy
+form _navrhy [,,Wr,Hr] {
+  view d:  table duplo
+  view r:  table rodina { join:"ON r.id_rodina=d.id_tab1 OR r.id_rodina=d.id_tab2" }
+  view dr: table duplo  { join_type:'LEFT', join:"ON dr.id_duplo=d.idd" }
+  view t:  table tvori  //{ join_type:'LEFT', join:"ON FIND_IN_SET(t.id_tvori,d.ids_tab)" }
+  view o:  table osoba  //{ join_type:'LEFT', join:"ON o.id_osoba=t.id_osoba" }
+  const o_barvy=
+    // modrá     zelená    žlutá     modřejší  zelenější červená   ostrá_zelená
+    "3:#d2d2f2,4:#d2f2d2,2:#ffff64,5:#aaaaff,6:#aaffaa,7:#ffaaaa,9:#00ff00"
   field chngs { data:d.chngs }
-  # --------------------------------------------------  RODINA
-  label cap [10,0,300,]
-  browse b [0,14,,] { rows:12, qry_rows:1, group_by:"d.ids_tab"
-    show idd [,,40,] { title:'id_duplo', data:d.id_duplo, format:'rq=s' }
-    show ids_rodina [,,60,] { title:'duplicity', data:d.ids_tab, format:'rq=s'  }
-    show _nazev [,,100,] { title:'rodina', format:'s+q*',
-      expr:"GROUP_CONCAT(DISTINCT r.nazev SEPARATOR '/')" }
+  # --------------------------------------------------  metody
+  proc init_all() { form.init; form.set_styles(°{background:''}); bn.browse_init; bnn.browse_init; }
+
+  proc o_save() {
+    chngs.set(o.save_json(chngs.get,'9:#00ff00')); o.plain; chngs.change;
+    d.key(bnn.idd.get); d.save
+  }
+  proc o_acccept() { var ret:object
+    o_save;
+    ret.set(ask('data_eli_dupl_co',bn.idd.get,bnn.idd.get,bnn.id1.get,bnn.id2.get));
+    [ ret.err; warning(ret.err) ];
+    bn.browse_seek(conc("id_duplo=",bn.idd.get));
+  }
+
+  proc reload_all(cond) { bn.browse_load(cond) | form.init }
+  proc bn_load(idd) {
+    d.load(idd); [chngs.get; form.load_json(chngs.get,o_barvy.get,'r') | r.init]; idd1.set(idd)}
+  proc bnn_seek(idd) {
+    bnn.browse_seek("d.id_tab1!=0",conc("d.idd=",idd));
+    bnn.onrowclick }
+  proc bnn_load(idd,show_o) {
+    n1.display(show_o,'o');
+    d.load(idd);
+    form.set_styles(°{background:''},'o'); o.init;
+    # 1 - obě hodnoty jsou stejné (až na trim mezer)
+    # 2 - hodnoty se liší překlepem, použita první
+    # 3 - použita první hodnota, druhá chybí
+    # 4 - použita druhá hodnota, první chybí
+    # 5 - hodnoty jsou odlišné, asi duplicita, použita první - novější
+    # 6 - hodnoty jsou odlišné, asi duplicita, použita druhá - novější
+    # 7 - hodnoty jsou odlišné, nepoužita žádná
+    # 9 - rodina nenalezena
+    [ chngs.get; form.load_json(chngs.get,o_barvy.get,'o') ];
+    idd2.set(idd) }
+  # --------------------------------------------------  nadpis a orámování
+  label     [0,0,Wr,Hr] { style:"border:1px solid #B00;background-color:rgba(186,0,0,.1);z-index:0"}
+  label cap [0,0,Wr-4,15] { title:"<b>návrhy na sjednocení rodin a osob</b>",
+    style:"color:white;background-color:rgba(186,0,0,1);padding-left:5px" }
+  # --------------------------------------------------  [Lr,,] seznam návrhů rodin
+  browse bn [Lr+0,19,,] { rows:5, qry_rows:2,
+    css_rows:"barva,1:green,2:blue,3:yellow,4:yellow,5:orange,6:orange,7:red,8:red2,9:fialovy,10:grey"
+    show idd [,,34,] { title:'id_duplo', data:d.id_duplo, format:'rq=s' }
+    show id1 [,,34,] { title:'id1', data:d.id_tab1, format:'rq=s'  }
+    show id2 [,,34,] { title:'id2', data:d.id_tab2, format:'rq=s'  }
+    show _nazev [,,90,] { title:'rodina', data:d.znacka, format:'s+q*t' }
+    show barva [,,10,] { title:'.', data:d.rozdily, format:'sq*' }
     proc onrowclick() {
-#       eq(mode.get,1); er1.load(id1.get); er2.load(id2.get); eo.reload(idd.get)
-#       [ eq(mode.get,2); er1.load(id1.get); er2.load(id2.get); er.reload ]
-      [ eq(mode.get,2); onrowclick_2 ]
-    }
-    proc onrowclick_2() {
-      eo.reload(idd.get);
-      form.load(idd.get);
-      { chngs.get; er1.real_json(chngs.get) | er1.init };
-    }
-    menu { type:'context'
-      item { title:'to jsou různé rodiny' }
+      # ukaž data a nastav bnn
+      bn_load(idd.get); bnn_seek(idd.get);
+      # při sjednocování navíc nastav horní část aktivních r2 a r3
+      eq(mode.get,'s'); lt(barva.get,9);
+      [ r3.display;  r3.br_seek(id2.get) ];
+      [ s3.display;  s3.br_seek(id2.get) ];
     }
   }
+  # --------------------------------------------------  [Lcr,Tr,,] operace
+  # --------------------------------------------------  [Lr,Tr,,]  údaje návrhu pro rodinu
+  label          [Lr+0,Tr+9,390,254]  {tag:'r', css:'ae_part' }
+  label          [Lr+5,Tr+15,100,]    {tag:'r', title:'společné příjmení'}
+  label          [Lr+181,Tr+15,75,]   {tag:'r', title:'svatba'}
+  label          [Lr+313,Tr+15,43,]   {tag:'r', title:'SPZ'}
+  label          [Lr+5,Tr+63,100,]    {tag:'r', title:'ulice'}
+  label          [Lr+179,Tr+63,39,]   {tag:'r', title:'psč'}
+  label          [Lr+257,Tr+63,95,]   {tag:'r', title:'obec'}
+  field nazev    [Lr+4,Tr+30,100,]    {tag:'r', data:r.nazev, help:'příjmení'}
+  field _spolu   [Lr+149,Tr+32,23,]   {tag:'r', format:'o', value:'?'}
+  field svatba   [Lr+178,Tr+31,36,]   {tag:'r', data:r.svatba}
+  field ulice_r  [Lr+4,Tr+78,162,]    {tag:'r', data:r.ulice}
+  field psc_r    [Lr+179,Tr+78,39,]   {tag:'r', data:r.psc}
+  field obec_r   [Lr+255,Tr+78,124,]  {tag:'r', data:r.obec}
+  field datsvatba[Lr+236,Tr+31,63,]   {tag:'r', data:r.datsvatba}
+  field spz      [Lr+313,Tr+31,62,]   {tag:'r', data:r.spz}
+  label          [Lr+13,Tr+119,33,]   {tag:'r', title:'telefon'}
+  field telefony [Lr+51,Tr+115,212,]  {tag:'r', type:'list', data:r.telefony, par:°{delim:',|;'}}
+  label          [Lr+16,Tr+154,30,]   {tag:'r', title:'e-mail'}
+  field emaily   [Lr+52,Tr+150,330,]  {tag:'r', type:'list', data:r.emaily, par:°{delim:',|;'}}
+  label          [Lr+0,Tr+187,48,]    {tag:'r', title:'poznámka'}
+  edit  note     [Lr+52,Tr+186,329,60]{tag:'r', data:r.note}
+  label idd1     [Lr+4,Tr+246,40,]    {tag:'r', format:'r' }
+  # --------------------------------------------------  [Lr,Ts,,] návrh seznamu členů
+  browse bnn [Lr,Ts,,] { rows:6, buf_rows:10,
+    css_rows:"barva,1:green,2:blue,3:yellow,4:yellow,5:orange,6:orange,7:red,8:red2,9:fialovy,10:grey"
+    show idd [,,34,] { title:'id_duplo', data:d.id_duplo, format:'rq=s+' }
+    show barva { data:d.rozdily }
+    show id1 [,,34,] { title:'id1', data:d.id_tab1, format:'q=s' }
+    show id2 [,,34,] { title:'id2', data:d.id_tab2, format:'q=s' }
+    show _nazev [,,100,] { title:'jmeno (role)', data:d.znacka, format:'sq*t' }
+    proc onrowclick() {
+      # ukaž data
+#       form.call('bnn_load',idd.get,and(id1.get,id2.get)); // asynchronně
+      form.call('bnn_load',idd.get,id1.get); // asynchronně
+      # při sjednocování navíc nastav spodní část aktivních x2 a x3 (x=x,s,r)
+      eq(mode.get,'s');
+      [ c2.display;  c2.bc_seek(id1.get) ];
+      [ r3.display;  r3.bro_seek(bn.id2.get,id2.get) ];
+      [ s3.display;  s3.bs_seek(bn.id2.get) ];
+    }
+  }
+  # --------------------------------------------------  [Lcr,Ts,,] návrh role člena
+  label          [Lcr+0,Ts+109,153,28]  {css:'ae_part' }
+  label          [Lcr+5,Ts+117,78,]     {title:'role' }
+  field role     [Lcr+50,Ts+113,20,]    {tag:'o', help:'role v rodině', data:t.role }
+  # --------------------------------------------------  [Lcr,Ts,,] operace
+  # --------------------------------------------------  [Lr,Tc,,]  návrh údajů člena
+  label          [Lr+0,Tc+9,390,267]  {tag:'o', css:'ae_part' }
+  field ido
+  label          [Lr+5,Tc+15,89,]     {tag:'o', title:'příjmení/rodné'}
+  field prijmeni [Lr+5,Tc+30,89,]     {tag:'o', help:'příjmení', data:o.prijmeni }
+  field rodne    [Lr+5,Tc+64,89,]     {tag:'o', help:'rodné příjmení', data:o.rodne }
+  label          [Lr+109,Tc+15,78,]   {tag:'o', title:'jméno'}
+  field jmeno    [Lr+109,Tc+30,79,]   {tag:'o', data:o.jmeno }
+  radio sex [Lr+200,Tc+25,50,35]      {tag:'o', value:'1'
+    case [0,2,50,] { title:'muž', expr:'1' }
+    case [0,17,50,] { title:'žena', expr:'2' } }
+  label          [Lr+256,Tc+16,33,]   {tag:'o', title:'narození'}
+  field narozeni [Lr+255,Tc+32,85,]   {tag:'o', type:'date', data:o.narozeni, format:'rR:e' }
+  label          [Lr+346,Tc+16,41,]   {tag:'o', title:'nnnn rč'}
+  field rc_xxxx  [Lr+345,Tc+32,37,]   {tag:'o', data:o.rc_xxxx, format:'r:e'}
+  label          [Lr+142,Tc+87,25,]   {tag:'o', title:'ulice'}
+  field ulice    [Lr+5,Tc+102,162,]   {tag:'o', data:o.ulice}
+  label          [Lr+179,Tc+87,39,]   {tag:'o', title:'psč'}
+  field psc      [Lr+179,Tc+102,40,]  {tag:'o', data:o.psc}
+  label          [Lr+230,Tc+87,100,]  {tag:'o', title:'obec'}
+  field obec     [Lr+229,Tc+102,131,] {tag:'o', data:o.obec}
+  label          [Lr+14,Tc+139,34,]   {tag:'o', title:'telefon'}
+  field telefon  [Lr+51,Tc+135,212,]  {tag:'o', type:'list', data:o.telefon}
+  label          [Lr+264,Tc+139,33,]  {tag:'o', title:'dieta', format:'r'}
+  select dieta   [Lr+300,Tc+135,82,]  {tag:'o', type:'map', data:o.dieta, options:ms_akce_dieta.zkratka }
+  label          [Lr+8,Tc+172,40,]    {tag:'o', title:'e-mail', format:'r'}
+  field email    [Lr+52,Tc+168,212,]  {tag:'o', type:'list', data:o.email}
+  check nomail   [Lr+268,Tc+165,121,] {tag:'o', title:"nechce informace", data:o.nomail,
+    help:"nepoužívat mailovou adresu pro rozesílání hromadných nabídek a informací" }
+  label          [Lr+23,Tc+201,29,]   {tag:'o', title:'pozn.'}
+  edit  pozn     [Lr+52,Tc+200,329,60]{tag:'o', data:o.note}
+  label idd2     [Lr+4,Tc+260,40,]    {tag:'o', format:'r' }
 }
-# ------------------------------------------------------------------------------------------ _rodina
-form _rodina {
-  view r: table rodina
-  # --------------------------------------------------  PROCEDURY
-  proc reload() { form.load }
-  # --------------------------------------------------  RODINA
-  const Lr= 3; Tr= 5
-  label cap      [10,0,300,]
-  label          [Lr+0,Tr+9,390,254] { css:'ae_part' }
-  label          [Lr+5,Tr+15,100,] {title:'společné příjmení'}
-  label          [Lr+181,Tr+15,75,] {title:'svatba'}
-  label          [Lr+313,Tr+15,43,] {title:'SPZ'}
-  label          [Lr+5,Tr+63,100,] {title:'ulice'}
-  label          [Lr+179,Tr+63,39,] {title:'psč'}
-  label          [Lr+257,Tr+63,95,] {title:'obec'}
-  field nazev    [Lr+4,Tr+30,100,] {data:r.nazev, help:'příjmení'}
-  field _spolu   [Lr+149,Tr+32,23,] {format:'o', value:'?'}
-  field svatba   [Lr+178,Tr+31,36,] {data:r.svatba}
-  field ulice_r  [Lr+4,Tr+78,162,] {data:r.ulice}
-  field psc_r    [Lr+179,Tr+78,39,] {data:r.psc}
-  field obec_r   [Lr+255,Tr+78,124,] {data:r.obec}
-  field datsvatba[Lr+236,Tr+31,63,] {data:r.datsvatba}
-  field spz      [Lr+313,Tr+31,62,] {data:r.spz}
-  label          [Lr+13,Tr+119,33,] {title:'telefon'}
-  field telefony [Lr+51,Tr+115,212,] {type:'list', data:r.telefony, par:°{delim:',|;'} }
-  label          [Lr+16,Tr+154,30,] {title:'e-mail'}
-  field emaily   [Lr+52,Tr+150,330,] {type:'list', data:r.emaily, par:°{delim:',|;'}}
-  label          [Lr+0,Tr+187,48,] {title:'poznámka'}
-  edit  note     [Lr+52,Tr+186,329,60] {data:r.note}
+# ================================================================================================== _chlapi
+form _chlapi [,,Wr,Hr] {
+  view c: table chlapi
+  # --------------------------------------------------  nadpis a orámování
+  label     [0,0,Wr,Hr] { style:"border:1px solid navy;background-color:rgba(0,0,128,.1);z-index:0" }
+  label cap [0,0,Wr-4,15] { title:"<b>seznam chlapů</b>",
+    style:"color:white;background-color:navy;padding-left:5px" }
+  # --------------------------------------------------  metody
+  proc init_all() { form.init; bc.browse_init }
+  proc load_all() { bc.browse_load | form.init }
+  proc bc_seek(idc) {
+    c2.display(idc,'o'); idc;
+    bc.browse_seek(conc("id_chlapi=",idc)); bc_load(idc);
+  | bc.blur(1); form.init; c.set_notes }
+  proc bc_load(idc) {
+    var ret: object
+    ret.set(ask('akce_data_chlapi',idc)); c.load(idc); c.set_notes(ret.chng,'form_note');
+    iniciace.set(ret.iniciace); posledni.set(ret.posledni); origin.set(ret.origin);
+  }
+  # --------------------------------------------------  [Lr,Ts,] seznam chlapů
+  browse bc [Lr,19,,] { rows:5, qry_rows:2
+    show idc [,,40,] { title:'chlap', data:c.id_chlapi, format:'srq=' }
+    show _nazev [,, 95,] { title:'jmeno', format:'tsq*', expr:"CONCAT(c.prijmeni,' ',c.jmeno)" }
+    show [,, 65,] { title:'narození', format:'rsq*', data:c.narozeni }
+    proc onrowclick() { bc_load(idc.get) }
+  }
+  # --------------------------------------------------  [Lcr,Ts,,] informace o čerstvosti údajů
+  label          [Lcr+0,Ts+60,153,80]  {css:'ae_part' }
+  label          [Lcr+58,Ts+71,78,]    {title:'iniciace' }
+  field iniciace [Lcr+112,Ts+67,36,]   {tag:'o' }
+  label          [Lcr+58,Ts+96,78,]    {title:'posl.akce' }
+  field posledni [Lcr+112,Ts+92,36,]   {tag:'o' }
+  field origin   [Lcr+4,Ts+117,144,]   {tag:'o' }
+  # --------------------------------------------------  [Lr,Tc,,]  údaje chlapa
+  label          [Lr+0,Tc+9,390,267]  {tag:'o', css:'ae_part' }
+  field idc { data:c.id_chlapi }
+  label          [Lr+5,Tc+15,89,]     {tag:'o', title:'příjmení'}
+  field prijmeni [Lr+5,Tc+30,89,]     {tag:'o', data:c.prijmeni, help:'příjmení'}
+  label          [Lr+109,Tc+15,78,]   {tag:'o', title:'jméno'}
+  field jmeno    [Lr+109,Tc+30,79,]   {tag:'o', data:c.jmeno}
+  radio sex [Lr+200,Tc+25,50,35]      {tag:'o', data:c.sex, value:'1'
+    case [0,2,50,]  { title:'muž',  expr:'1' }
+    case [0,17,50,] { title:'žena', expr:'2' } }
+  label          [Lr+256,Tc+16,33,]   {tag:'o', title:'narození'}
+  field narozeni [Lr+255,Tc+32,85,]   {tag:'o', type:'date', data:c.narozeni, format:'rR:e'}
+  label          [Lr+346,Tc+16,41,]   {tag:'o', title:'nnnn rč'}
+  field rc_xxxx  [Lr+345,Tc+32,37,]   {tag:'o', data:c.rc_xxxx, format:'r:e'}
+  label          [Lr+142,Tc+87,25,]   {tag:'o', title:'ulice'}
+  field ulice    [Lr+5,Tc+102,162,]   {tag:'o', data:c.ulice}
+  label          [Lr+179,Tc+87,39,]   {tag:'o', title:'psč'}
+  field psc      [Lr+179,Tc+102,40,]  {tag:'o', data:c.psc}
+  label          [Lr+230,Tc+87,100,]  {tag:'o', title:'obec'}
+  field obec     [Lr+229,Tc+102,131,] {tag:'o', data:c.obec}
+  label          [Lr+14,Tc+139,34,]   {tag:'o', title:'telefon'}
+  field telefon  [Lr+51,Tc+135,212,]  {tag:'o', type:'list', data:c.telefon}
+  label          [Lr+8,Tc+172,40,]    {tag:'o', title:'e-mail', format:'r'}
+  field email    [Lr+52,Tc+168,212,]  {tag:'o', type:'list', data:c.email}
+  label          [Lr+23,Tc+201,29,]   {tag:'o', title:'pozn.'}
+  edit  pozn     [Lr+52,Tc+200,329,60]{tag:'o', data:c.pozn}
+  label idd2     [Lr+4,Tc+260,40,]    {tag:'o', format:'r' }
 }
-# ------------------------------------------------------------------------------------------ _rodiny
-form _rodiny {
+# ================================================================================================== _singles
+form _singles [,,Wr,Hr] {
+  view o: table osoba
+  view t: table tvori  { join_type:'LEFT', join:"USING(id_osoba)" }
+  # --------------------------------------------------  nadpis a orámování
+  label     [0,0,Wr,Hr] { style:"border:1px solid olive;background-color:rgba(128,128,0,.1);z-index:0" }
+  label cap [0,0,Wr-4,15] { title:"<b>seznam jednotlivců (bez rodin)</b>",
+    style:"color:white;background-color:olive;padding-left:5px" }
+  # --------------------------------------------------  metody
+  proc init_all() { form.init; bs.browse_init }
+  proc load_all() { bs.browse_load("ISNULL(t.id_tvori)") | form.init  }
+  proc bs_seek(ido) {
+    [ bs.browse_count    | load_all ];
+    [ eq(ido,bs.ids.get) | bs.browse_seek(conc("id_osoba=",ido)) ];
+  }
+  proc bs_load(ido) { var ret: object
+    ret.set(ask('akce_data_single',ido));
+    o.load(ido);
+    o.set_notes(ret.chng,'form_note');
+  }
+  # --------------------------------------------------  [Lr,Ts,] seznam singlů
+  browse bs [Lr,19,,] { rows:5, qry_rows:2
+    show ids [,,40,] { title:'single', data:o.id_osoba, format:'srq=' }
+    show { data:t.id_tvori }
+    show _nazev [,, 95,] { title:'jmeno', format:'tsq*', expr:"CONCAT(o.prijmeni,' ',o.jmeno)" }
+    show [,, 65,] { title:'narození', format:'rsq*', data:o.narozeni }
+    proc onrowclick() { bs_load(ids.get) }
+  }
+  # --------------------------------------------------  [Lr,Tc,,]  údaje singla
+  label          [Lr+0,Tc+9,390,267] { css:'ae_part' }
+  field ido { data:o.id_osoba }
+  label          [Lr+5,Tc+15,89,]   {title:'příjmení/rodné'}
+  field prijmeni [Lr+5,Tc+30,89,]   {data:o.prijmeni, help:'příjmení'}
+  field rodne    [Lr+5,Tc+64,89,]   {data:o.rodne, help:'rodné příjmení'}
+  label          [Lr+109,Tc+15,78,] {title:'jméno'}
+  field jmeno    [Lr+109,Tc+30,79,] {data:o.jmeno}
+  radio sex [Lr+200,Tc+25,50,35]    {data:o.sex, value:'1'
+    case [0,2,50,] { title:'muž', expr:'1' }
+    case [0,17,50,] { title:'žena', expr:'2' } }
+  label          [Lr+256,Tc+16,33,] {title:'narození'}
+  field narozeni [Lr+255,Tc+32,85,] {type:'date', data:o.narozeni, format:'rR:e'}
+  label          [Lr+346,Tc+16,41,] {title:'nnnn rč'}
+  field rc_xxxx  [Lr+345,Tc+32,37,] {data:o.rc_xxxx, format:'r:e'}
+  label          [Lr+142,Tc+87,25,] {title:'ulice'}
+  field ulice    [Lr+5,Tc+102,162,] {data:o.ulice}
+  label          [Lr+179,Tc+87,39,] {title:'psč'}
+  field psc      [Lr+179,Tc+102,40,] {data:o.psc}
+  label          [Lr+230,Tc+87,100,] {title:'obec'}
+  field obec     [Lr+229,Tc+102,131,] {data:o.obec}
+  label          [Lr+14,Tc+139,34,]  {title:'telefon'}
+  field telefon  [Lr+51,Tc+135,212,] {type:'list', data:o.telefon}
+  label          [Lr+264,Tc+139,33,] {title:'dieta', format:'r'}
+  select dieta   [Lr+300,Tc+135,82,] {type:'map', data:o.dieta, options:ms_akce_dieta.zkratka }
+  label          [Lr+8,Tc+172,40,] {  title:'e-mail', format:'r'}
+  field email    [Lr+52,Tc+168,212,] {type:'list', data:o.email}
+  check nomail   [Lr+268,Tc+165,121,] {title:"nechce informace", data:o.nomail,
+    help:"nepoužívat mailovou adresu pro rozesílání hromadných nabídek a informací"
+  }
+  label          [Lr+23,Tc+201,29,] {title:'pozn.'}
+  edit  pozn     [Lr+52,Tc+200,329,60] {data:o.note}
+  label idd2     [Lr+4,Tc+260,40,] { format:'r' }
+}
+# ================================================================================================== _rodiny
+form _rodiny [,,Wr,Hr] {
   view r: table rodina
-  # --------------------------------------------------  PROCEDURY
-  proc reload_2() {
-    er.b.browse_count;
-    b.browse_load(conc("id_rodina IN (",er.b.ids_rodina.get,")")); b.raise('onrowclick')
-  | er.b.browse_init; er2.init
+  view so: table osoba
+  view sto: table tvori  { join:"USING(id_osoba)" }
+  view t: table tvori
+  view o: table osoba { join:"USING(id_osoba)" }
+  # --------------------------------------------------  metody
+  proc init_all() { form.init; br.browse_init; bro.browse_init }
+  proc load_all() { br.browse_load | form.init }
+  # br
+  proc br_seek(idr) { br.browse_seek(conc("id_rodina=",idr)); /*br.onrowclick*/ }
+  proc br_load(idr) { var ret: object
+    ret.set(ask('akce_data_rodina',idr));
+    r.load(idr); idd1.set(idr);
+    r.set_notes(ret.chng,'form_note');
   }
-  proc reload() {
-    [ eq(mode.get,1); b.browse_load(1); b.raise('onrowclick') ];
-    [ eq(mode.get,2); reload_2 ]
+  # bro
+  proc bro_list(idr) { bro.browse_load(conc("id_rodina=",idr)); }
+  proc bro_seek(idr,idt) {
+    [ br.browse_count     | load_all ];
+    [ eq(idr,br.idr.get)  | br_seek(idr); bro_list(idr) ];
+    [ bro.browse_count; { eq(idt,bro.idt.get) | bro.browse_seek(conc("id_tvori=",idt)) } ];
+    /*bro.onrowclick*/
   }
-  # --------------------------------------------------  RODINA
-  label cap [10,0,300,]
-  browse b  [0,14,,] { rows:12, qry_rows:1
-    show id [,,40,] { title:'id_rodina', data:r.id_rodina, format:'srq=' }
+  proc bro_load(ido,idt,idr) { var ret: object
+    ret.set(ask('akce_data_osoba',ido,idr));
+    o.load(ido); t.load(idt); idd2.set(ido);
+    o.set_notes(ret.chng,'form_note');
+  }
+  # --------------------------------------------------  nadpis a orámování
+  label     [0,0,Wr,Hr] { style:"border:1px solid green;background-color:rgba(0,128,0,.1);z-index:0" }
+  label cap [0,0,Wr-4,15] { title:"<b>seznam rodin</b>",
+    style:"color:white;background-color:green;padding-left:5px" }
+  # --------------------------------------------------  [Lr,,] seznam rodin
+  browse br [Lr+0,19,,] { rows:6, qry_rows:1
+    show idr [,,40,] { title:'id_rodina', data:r.id_rodina, format:'srq=' }
     show _nazev [,, 80,] { title:'rodina', format:'ts+q*', data:r.nazev }
     show _obec [,, 80,] { title:'bydliště', format:'tsq*', expr:"CONCAT(r.obec,',',r.ulice)" }
     proc onrowclick() {
-      [ eq(mode.get,2); onrowclick_2 ];
-    }
-    proc onrowclick_2() {
-      var ret: object
-      ret.set(ask('akce_data_rodina',id.get));
-      er2.load(id.get); fo.reload(id.get);
-      er2.set_notes(ret.chng,'form_note');
-    }
-    menu { type:'context'
-      item { title:'to jsou stejné rodiny'
-        proc onclick() {
-          var ret: object
-          ret.set(ask('akce_data_duplo',°{duplo:'dupl-rodiny'},b.selected('get')));
-          warning(ret.msg);
-          er.b.browse_seek(conc("id_duplo=",ret.id));
-          er.b.raise('onrowclick');
-        }
-      }
+      # ukaž data a nastav bro
+      br_load(idr.get); bro_list(idr.get);
     }
   }
-}
-# ------------------------------------------------------------------------------------------ _eOsoby
-form _eOsoby {  // eo
-  view d:  table duplo
-  view dr: table duplo  { join:"ON dr.id_duplo=d.ids_duplo" }
-  view t:  table tvori  { join_type:'LEFT', join:"ON FIND_IN_SET(t.id_tvori,d.ids_tab)" }
-  view o:  table osoba  { join_type:'LEFT', join:"ON o.id_osoba=t.id_osoba" }
-  # --------------------------------------------------  PROCEDURY
-  proc reload(idd) { b.browse_load(conc("d.tab='o' AND d.ids_duplo=",idd)) }
-  # --------------------------------------------------  DUPLO
-  field chngs { data:d.chngs }
-  # --------------------------------------------------  RODINA
-  label cap [10,0,300,]
-  browse b  [0,14,,] { rows:12, qry_rows:1, group_by:"d.id_duplo"
-    show idd [,,40,] { title:'id_duplo', data:d.id_duplo, format:'rq=s+' }
-    show { data:dr.id_duplo }
-    show { data:t.id_tvori }
-    show ids_osoba [,,60,] { title:'duplicity', data:d.ids_tab, format:'q=s' }
-    show _nazev [,,100,] { title:'jmeno (role)', format:'sq*',
-      expr:"GROUP_CONCAT(CONCAT(o.jmeno,' (',t.role,')'))" }
-    proc onrowclick() { [ eq(mode.get,1); onrowclick_1 ]; [ eq(mode.get,2); onrowclick_2 ] }
-    proc onrowclick_1() {}
-    proc onrowclick_2() {
-      form.load(idd.get);
-      { chngs.get; eo1.real_json(chngs.get) | eo1.init };
-    }
+  # --------------------------------------------------  [Lcr,Tr,,] -------------  operace rodiny
+  # --------------------------------------------------  [Lr,Tr,,] údaje rodiny
+  label          [Lr+0,Tr+9,390,254] {css:'ae_part' }
+  label          [Lr+5,Tr+15,100,]   {title:'společné příjmení'}
+  label          [Lr+181,Tr+15,75,]  {title:'svatba'}
+  label          [Lr+313,Tr+15,43,]  {title:'SPZ'}
+  label          [Lr+5,Tr+63,100,]   {title:'ulice'}
+  label          [Lr+179,Tr+63,39,]  {title:'psč'}
+  label          [Lr+257,Tr+63,95,]  {title:'obec'}
+  field nazev    [Lr+4,Tr+30,100,]   {data:r.nazev, help:'příjmení'}
+  field _spolu   [Lr+149,Tr+32,23,]  {format:'o', value:'?'}
+  field svatba   [Lr+178,Tr+31,36,]  {data:r.svatba}
+  field ulice_r  [Lr+4,Tr+78,162,]   {data:r.ulice}
+  field psc_r    [Lr+179,Tr+78,39,]  {data:r.psc}
+  field obec_r   [Lr+255,Tr+78,124,] {data:r.obec}
+  field datsvatba[Lr+236,Tr+31,63,]  {data:r.datsvatba}
+  field spz      [Lr+313,Tr+31,62,]  {data:r.spz}
+  label          [Lr+13,Tr+119,33,]  {title:'telefon'}
+  field telefony [Lr+51,Tr+115,212,] {type:'list', data:r.telefony, par:°{delim:',|;'} }
+  label          [Lr+16,Tr+154,30,]  {title:'e-mail'}
+  field emaily   [Lr+52,Tr+150,330,] {type:'list', data:r.emaily, par:°{delim:',|;'}}
+  label          [Lr+0,Tr+187,48,]   {title:'poznámka'}
+  edit  note    [Lr+52,Tr+186,329,60]{data:r.note}
+  label idd1     [Lr+4,Tr+246,40,]   {format:'r' }
+  # --------------------------------------------------  [Lr,Ts,,] seznam členů
+  browse bro [Lr,Ts,,] { rows:6
+    show ido [,,40,] { title:'osoba', data:so.id_osoba, format:'rq=s+' }
+    show idt { data:sto.id_tvori }
+    show idr { data:sto.id_rodina }
+    show [,, 95,] { title:'jmeno (role)', format:'tsq*',
+      expr:"CONCAT(so.jmeno,' (',sto.role,') ',so.prijmeni)" }
+    show [,, 65,] { title:'narození', format:'rsq*', data:so.narozeni }
+    proc onrowclick() { bro_load(ido.get,idt.get,idr.get) }
   }
-}
-# ------------------------------------------------------------------------------------------- _osoba
-form [,,1283,]form _osoba { // eo1, eo2
-  view t: table tvori
-  view o: table osoba { join:"USING(id_osoba)" }
-  # --------------------------------------------------  PROCEDURY
-  proc t_reload(id_osoba,id_rodina) {
-    form.load(0,conc("id_osoba=",id_osoba," AND id_rodina=",id_rodina));
-  }
-  proc test(id) { o.load(id) }
-  proc o_reload(id) { o.load(id) }
-  # --------------------------------------------------  položky
-  const L=3; T=40
-  label cap      [10,0,300,]
-  # --------------------------------------------------  TVOŘÍ
-  label          [L+0,14,390,28] { css:'ae_part' }
-  label          [L+5,22,78,] {title:'role'}
-  field role     [L+50,18,20,] {data:t.role, help:'role v rodině'}
-  # --------------------------------------------------  OSOBA
-  label          [L+0,T+9,390,267] { css:'ae_part' }
+  # --------------------------------------------------  [Lcr,Ts,,] -------------  role člena
+  label          [Lcr+0,Ts+109,140,28] { css:'ae_part' }
+  # --------------------------------------------------  [Lcr,Ts,,] role člena
+  label          [Lcr+5,Ts+117,78,] {title:'role'}
+  field role     [Lcr+50,Ts+113,20,] {data:t.role, help:'role v rodině'}
+  # --------------------------------------------------  [Lr,Tc,,]  údaje člena
+  label          [Lr+0,Tc+9,390,267] { css:'ae_part' }
   field ido { data:o.id_osoba }
-  label          [L+5,T+15,89,] {title:'příjmení/rodné'}
-  field prijmeni [L+5,T+30,89,] {data:o.prijmeni, help:'příjmení'}
-  field rodne    [L+5,T+64,89,] {data:o.rodne, help:'rodné příjmení'}
-  label          [L+109,T+15,78,] {title:'jméno'}
-  field jmeno    [L+109,T+30,79,] {data:o.jmeno}
-  radio sex [L+200,T+25,50,35] { data:o.sex, value:'1'
+  label          [Lr+5,Tc+15,89,] {title:'příjmení/rodné'}
+  field prijmeni [Lr+5,Tc+30,89,] {data:o.prijmeni, help:'příjmení'}
+  field rodne    [Lr+5,Tc+64,89,] {data:o.rodne, help:'rodné příjmení'}
+  label          [Lr+109,Tc+15,78,] {title:'jméno'}
+  field jmeno    [Lr+109,Tc+30,79,] {data:o.jmeno}
+  radio sex [Lr+200,Tc+25,50,35] {data:o.sex, value:'1'
     case [0,2,50,] { title:'muž', expr:'1' }
     case [0,17,50,] { title:'žena', expr:'2' }
   }
-  label          [L+256,T+16,33,] {title:'narození'}
-  field narozeni [L+255,T+32,85,] {type:'date', data:o.narozeni, format:'rR:e'}
-  label          [L+346,T+16,41,] {title:'nnnn rč'}
-  field rodnexxxx[L+345,T+32,37,] {data:o.rc_xxxx, format:'r:e'}
-  label          [L+142,T+87,25,] {title:'ulice'}
-  field ulice    [L+5,T+102,162,] {data:o.ulice}
-  label          [L+179,T+87,39,] {title:'psč'}
-  field psc      [L+179,T+102,40,] {data:o.psc}
-  label          [L+230,T+87,100,] {title:'obec'}
-  field obec     [L+229,T+102,131,] {data:o.obec}
-  label          [L+14,T+139,34,] {title:'telefon'}
-  field telefon  [L+51,T+135,212,] {type:'list', data:o.telefon}
-  label          [L+264,T+139,33,] {title:'dieta', format:'r'}
-  select dieta   [L+300,T+135,82,] {type:'map', data:o.dieta, options:ms_akce_dieta.zkratka }
-  label          [L+8,T+172,40,] {title:'e-mail', format:'r'}
-  field email    [L+52,T+168,212,] {type:'list', data:o.email}
-  check nomail   [L+268,T+165,121,] {title:"nechce informace", data:o.nomail,
+  label          [Lr+256,Tc+16,33,] {title:'narození'}
+  field narozeni [Lr+255,Tc+32,85,] {type:'date', data:o.narozeni, format:'rR:e'}
+  label          [Lr+346,Tc+16,41,] {title:'nnnn rč'}
+  field rc_xxxx  [Lr+345,Tc+32,37,] {data:o.rc_xxxx, format:'r:e'}
+  label          [Lr+142,Tc+87,25,] {title:'ulice'}
+  field ulice    [Lr+5,Tc+102,162,] {data:o.ulice}
+  label          [Lr+179,Tc+87,39,] {title:'psč'}
+  field psc      [Lr+179,Tc+102,40,] {data:o.psc}
+  label          [Lr+230,Tc+87,100,] {title:'obec'}
+  field obec     [Lr+229,Tc+102,131,] {data:o.obec}
+  label          [Lr+14,Tc+139,34,] {title:'telefon'}
+  field telefon  [Lr+51,Tc+135,212,] {type:'list', data:o.telefon}
+  label          [Lr+264,Tc+139,33,] {title:'dieta', format:'r'}
+  select dieta   [Lr+300,Tc+135,82,] {type:'map', data:o.dieta, options:ms_akce_dieta.zkratka }
+  label          [Lr+8,Tc+172,40,] {title:'e-mail', format:'r'}
+  field email    [Lr+52,Tc+168,212,] {type:'list', data:o.email}
+  check nomail   [Lr+268,Tc+165,121,] {title:"nechce informace", data:o.nomail,
     help:"nepoužívat mailovou adresu pro rozesílání hromadných nabídek a informací"
-    proc onchange() {
-      alert("napiš prosím do poznámky důvod a datum odmítnutí hromadně rozesílaných informací")
-  } }
-  label          [L+23,T+201,29,] {title:'pozn.'}
-  edit  pozn     [L+52,T+200,329,60] {data:o.note}
-}
-# ------------------------------------------------------------------------------------------ _osoby
-form _osoby { // fo
-  var idr: number
-  view o: table osoba
-  view t: table tvori  { join_type:'LEFT', join:"USING(id_osoba)" }
-  # --------------------------------------------------  PROCEDURY
-  proc reload(id_rodina) { idr.set(id_rodina); b.browse_load(conc("t.id_rodina=",id_rodina)) }
-  # --------------------------------------------------  RODINA
-  label cap [10,0,300,]
-  browse b  [0,14,,] { rows:12, qry_rows:1
-    show id [,,40,] { title:'osoba', data:o.id_osoba, format:'rq=s+' }
-    show [,, 95,] { title:'jmeno (role)', format:'tsq*',
-      expr:"CONCAT(o.jmeno,' (',t.role,') ',o.prijmeni)" }
-    show [,, 65,] { title:'narození', format:'rsq*', data:o.narozeni }
-    proc onrowclick() { [ eq(mode.get,1); click_1 ]; [ eq(mode.get,2); click_2 ] }
-    proc click_1() {}
-    proc click_2() {
-      var ret: object
-      ret.set(ask('akce_data_osoba',id.get,idr.get));
-      eo2.t_reload(id.get,idr.get);
-      eo2.set_notes(ret.chng,'form_note');
-      eo.b.browse_seek(conc("FIND_IN_SET(",id.get,",d.ids_tab)"));
-    }
   }
+  label          [Lr+23,Tc+201,29,] {title:'pozn.'}
+  edit  pozn     [Lr+52,Tc+200,329,60] {data:o.note}
+  label idd2     [Lr+4,Tc+260,40,] { format:'r' }
 }
+
 # -------------------------------------------------------------------------------------- table DUPLO
 table duplo { key_id:'id_duplo'
   number id_duplo { key:'primary' },
-  text   ids_duplo
-  text   tab
-  number id_tab
-  text   ids_tab
+  text   znacka
+  number faze
+  number rozdily
+  number idd
+  text   tab1
+  number id_tab1
+  text   tab2
+  number id_tab2
   text   chngs
 }

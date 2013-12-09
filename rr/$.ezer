@@ -1,5 +1,6 @@
 menu rr { type:'main', active:rr.richard
   tabs richard {title:"Myšlenky", _sys:'*'
+    # =================================================================================== rozesílání
     panel rohr {type:'right', title:'Rozesílání'
       menu myslenka {type:'left'
         menu ukazat {title:'Zobrazení',type:'group'
@@ -21,9 +22,10 @@ menu rr { type:'main', active:rr.richard
       }
       use info: form right [12,4,,]
     }
+    # ======================================================================================= opravy
     panel plan {type:'right', title:'Opravy'
-      use f: form _f [12,4,,]
-      use g: form _g [12,4,,]
+      use f: form _f [12,4,,] { format:'n' }
+      use g: form _g [12,4,,] { format:'n' }
       menu nastav {type:'left', format:'f'
         menu obdobi {title:'Opravy',type:'group'
           item od {title:'Nastavení období'
@@ -88,7 +90,7 @@ menu rr { type:'main', active:rr.richard
             msg.set(ret.msg);
             datum.set(replace(sql2date(ret.next),' ',''));
             den.set(sum(den.get,pocet.get));
-            f.b.browse_seek(conc('day_n=',sum(den.get,pocet.get)));
+            f.b.browse_seek(conc('day_n=',sum(den.get,-1)));
           }
         }
         label msg [340,70,300,200]
