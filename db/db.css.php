@@ -31,6 +31,7 @@ echo <<<__EOD
 .oranzovy       { background-color:#ffaa00 !important; }
 .zeleny         { background-color:#77ff77 !important; }
 .modry          { background-color:#7389ae !important; }
+.fialovy        { background-color:#d27efc !important; }
 
 /* specifické */
 .form_note { font-size:10px; color:$s1_brow }

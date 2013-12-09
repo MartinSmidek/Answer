@@ -30,7 +30,10 @@
     array("$client/lib.js","$client/ezer_fdom1.js","$client/ezer.js","$client/ezer_report.js",
       "$client/ezer_fdom2.js","$client/app.js","$licensed/zeroclipboard/ZeroClipboard.js"),
     // další knihovny
-    array("$licensed/glfx.js","http://maps.googleapis.com/maps/api/js?sensor=false"),
+    array("$licensed/glfx.js"),
+    // vynechat při ladění
+    $ezer_local ? array()
+    : array("http://maps.googleapis.com/maps/api/js?sensor=false"),
     // uživatelské skripty
     array("db/db_fce.js","ds/fce.js")
   );

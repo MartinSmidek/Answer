@@ -1,10 +1,10 @@
 // uživatelské funkce aplikace Ans(w)er
 // ================================================================================================= Ezer.Form
+Ezer.Form.implement({
 // ------------------------------------------------------------------------------- on_dblclk_copy_to
 //fm: Form.on_dblclk_copy_to (goal)
 // Pro elementy při DblClk zkopíruje hodnotu do stejnojmenného elementu formuláře goal
 // (funguje pro field, edit)
-Ezer.Form.implement({
   on_dblclk_copy_to: function(goal) {
     $each(this.part,function(field,id) {
       if ( (field instanceof Ezer.Field || field instanceof Ezer.Edit)
@@ -24,13 +24,13 @@ Ezer.Form.implement({
     return 1;
   },
 // ----------------------------------------------------------------------------------------- copy_to
-//fm: Form.copy_to (goal)
-// Pro všechny elementy zkopíruje hodnotu do stejnojmenného elementu formuláře goal
+//fm: Form.copy_to (goal,tag)
+// Pro všechny elementy s atributem tag zkopíruje hodnotu do stejnojmenného elementu formuláře goal
 // (funguje pro field, edit)
-  copy_to: function(goal) {
+  copy_to: function(goal,tag) {
     $each(this.part,function(field,id) {
       if ( field instanceof Ezer.Field || field instanceof Ezer.Edit ) {
-        if ( (field2= goal.part[field.id]) && field.value ) {
+        if ( (field2= goal.part[field.id]) && field.value && field.options.tag==tag ) {
           field2.set(field.value);
           field2.change();
         }
@@ -38,10 +38,25 @@ Ezer.Form.implement({
     },this);
     return 1;
   },
+// -------------------------------------------------------------------------------------- set_styles
+//fm: Form.set_styles (styles[,tag])
+// Na všechny elementy (je-li zadán 'tag', tak s atributem tag) aplikuje styly dané objektem 'styles'
+// (funguje pro field, edit)
+  set_styles: function(styles,tag) {
+    $each(this.part,function(field,id) {
+      if ( field instanceof Ezer.Field || field instanceof Ezer.Edit ) {
+        if ( field.DOM_Input && (tag?field.options.tag==tag:true)  ) {
+          field.DOM_Input.setStyles(styles);
+        }
+      }
+    },this);
+    return 1;
+  },
 // --------------------------------------------------------------------------------------- set_notes
-//fm: Form.set_notes (pairs,css)
+//fm: Form.set_notes ([pairs,css])
 // pairs :: { name:val, ...]
 // zobrazí hodnoty 'val' přes elementy dané jménem 'name', aplikuje přitom styl zadaný 'css'
+// bezparametrická funkce pouze vymaže přidané texty
   set_notes: function(pairs,css) {
     if ( this.notes ) {
       this.notes.each(function(note){note.destroy()});
@@ -50,18 +65,64 @@ Ezer.Form.implement({
     else {
       this.notes= [];
     }
-    $each(this.part,function(field,id) {
-      if ( field.data && pairs[field.data.id] ) {
-        this.notes.push(new Element('div',{'class':css,html:pairs[field.data.id],styles:{
-          position:'absolute',left:field._l,top:field._t+(field._h||16)+2
-        }}).inject(this.DOM_Block));
-      }
-    },this);
+    if ( pairs ) {
+      $each(this.part,function(field,id) {
+        if ( field.data && pairs[field.data.id] ) {
+          this.notes.push(new Element('div',{'class':css,html:pairs[field.data.id],styles:{
+            position:'absolute',left:field._l,top:field._t+(field._h||16)+2
+          }}).inject(this.DOM_Block));
+        }
+      },this);
+    }
     return 1;
   },
+// --------------------------------------------------------------------------------------- load_json
+//fm: Form.load_json (json_str,styles,tag)
+// zobrazí v elementech form hodnoty předané v zakódovaném tvaru, který obsahuje barvu pozadí
+// - hodnota je zadána buďto přímo (s defaultním pozadím 'white') nebo jako pole [hodnota,pozadí]
+// - barvy jsou zadány stringem 'p1:c1,p2:c2,...' kde ci bude aplikováno podkud pozadí=pi
+  load_json: function(json_str,styles,tag) {
+    var obj= JSON.decode(json_str);
+    // převod styles na pole
+    if ( styles ) {
+      var as= styles.split(',');
+      styles= [];
+      as.each(function(vs){
+        var avs= vs.split(':');
+        styles[avs[0]]= avs[1];
+      })
+    }
+    var ok= 1, value, style= '';
+    for (var ie in obj) {
+      var elem= this.part[ie];
+      // definuj jen elementy tohoto view s metodou set
+      if ( !elem || !elem.set ) continue;
+      if ( elem.options && elem.options.tag && elem.options.tag==tag ) {
+        if ( typeof(obj[ie])=="string" ) {
+          value= obj[ie];
+          style= '';
+        }
+        else {
+          value= obj[ie][0];
+          style= styles ? styles[obj[ie][1]] : '';
+        }
+        if ( elem instanceof Ezer.Select )
+          elem.key(value);
+        else
+          elem.set(value);
+        // aplikace barvy
+        if ( elem.DOM_Input )
+          elem.DOM_Input.setStyle('background-color',style ? style : '#fff');
+      }
+    }
+    return ok;
+  }
+});
+// ================================================================================================= Ezer.View
+Ezer.View.implement({
 // --------------------------------------------------------------------------------------- real_json
-//fm: Form.real_json (goal)
-// oprava metody Form.json
+// oprava metody View.json
+//fm: View.real_json (str)
   real_json: function(str) {
     var res= 0;
     if ( str ) {
@@ -74,6 +135,87 @@ Ezer.Form.implement({
 
     }
     return res;
+  },
+// --------------------------------------------------------------------------------------- load_json
+//fm: View.load_json (json_str,styles)
+// zobrazí v elementech view hodnoty předané v zakódovaném tvaru, který obsahuje barvu pozadí
+// - hodnota je zadána buďto přímo (s defaultním pozadím 'white') nebo jako pole [hodnota,pozadí]
+// - barvy jsou zadány stringem 'p1:c1,p2:c2,...' kde ci bude aplikováno podkud pozadí=pi
+  load_json: function(json_str,styles) {
+    var obj= JSON.decode(json_str);
+    // převod styles na pole
+    if ( styles ) {
+      var as= styles.split(',');
+      styles= [];
+      as.each(function(vs){
+        var avs= vs.split(':');
+        styles[avs[0]]= avs[1];
+      })
+    }
+    var ok= 1, value, style= '';
+    for (var ie in obj) {
+      var elem= this.owner.part[ie];
+      // definuj jen elementy tohoto view s metodou set
+      if ( !elem || elem.view!=this || !elem.set ) continue;
+      if ( typeof(obj[ie])=="string" ) {
+        value= obj[ie];
+        style= '';
+      }
+      else {
+        value= obj[ie][0];
+        style= styles ? styles[obj[ie][1]] : '';
+      }
+      if ( elem instanceof Ezer.Select )
+        elem.key(value);
+      else
+        elem.set(value);
+      // aplikace barvy
+      if ( elem.DOM_Input )
+        elem.DOM_Input.setStyle('background-color',style ? style : '#fff');
+    }
+    return ok;
+  },
+// --------------------------------------------------------------------------------------- save_json
+//fm: View.save_json (json_str,style)
+// přebarví v elementech view pozadí změněných hodnot podle barvy dané řetězem p1:c1
+  save_json: function(json_str,style) {
+    var obj= JSON.decode(json_str);
+    // převod styles na index a barvu
+    var avs= style.split(':');
+    var icolor= avs[0], color= avs[1];
+    // projdi změněné elementy tohoto view
+    $each(this.owner.part,function(field,id) {
+      if ( field.changed && field.changed() && field.data && field._save && field.view==this ) {
+        obj[id]= [field.value,icolor];
+        field.DOM_Input.setStyle('background-color',color);
+      }
+    },this);
+    var ret= JSON.encode(obj);
+    return ret;
+  },
+// --------------------------------------------------------------------------------------- set_notes
+//fm: View.set_notes ([pairs,css])
+// pairs :: { name:val, ...]
+// zobrazí hodnoty 'val' přes elementy dané jménem 'name', aplikuje přitom styl zadaný 'css'
+// bezparametrická funkce pouze vymaže přidané texty
+  set_notes: function(pairs,css) {
+    if ( this.notes ) {
+      this.notes.each(function(note){note.destroy()});
+      this.notes= [];
+    }
+    else {
+      this.notes= [];
+    }
+    if ( pairs ) {
+      $each(this.owner.part,function(field,id) {
+        if ( field.data && pairs[field.data.id] && field.view==this ) {
+          this.notes.push(new Element('div',{'class':css,html:pairs[field.data.id],styles:{
+            position:'absolute',left:field._l,top:field._t+(field._h||16)+2
+          }}).inject(this.owner.DOM_Block));
+        }
+      },this);
+    }
+    return 1;
   }
 });
 // ================================================================================================= Google

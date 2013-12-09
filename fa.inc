@@ -38,7 +38,7 @@
   $path_url= $path_url[$ezer_local?1:0];                // prefix url
   // ostatní parametry
   $tracking= '_track';
-  $tracked= ',akce,pobyt,spolu,osoba,tvori,rodina,_user,';
+  $tracked= ',chlapi,akce,pobyt,spolu,osoba,tvori,rodina,_user,';
   root_inc($db,$dbs,$tracking,$tracked,$path_root,$path_pspad);
 
   // PARAMETRY SPECIFICKÉ PRO APLIKACI
