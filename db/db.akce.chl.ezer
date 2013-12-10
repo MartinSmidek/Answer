@@ -227,6 +227,8 @@ form _chlap [,,*,466] {
     form.display(0,'akce');
   | form.display(1,'akce');
   }
+  const Lu=240
+  const Tu=280
   # --------------------------------------------------  data
   view u: table ch_ucast
   view a: table ch_akce { join:'USING(id_akce)' }
@@ -234,10 +236,8 @@ form _chlap [,,*,466] {
   field id_ucast { data:u.id_ucast }
   field id_akce { data:a.id_akce }
   field nazev { data:a.nazev }
-  field id_chlapi { data:c.id_chlapi }
+  field id_chlapi [Lu+423,Tu+30,36,] { data:c.id_chlapi }
   # --------------------------------------------------  VZTAH k AKCI pro mode='akce'
-  const Lu=240
-  const Tu=280
   label  [Lu+2,Tu+9,454,101] { tag:'akce', css:'ae_part' }
   label  [Lu+9,Tu+0,90,] { tag:'akce', title:'údaje k této akci', css:'ae_part_label' }
   select stupen [Lu+7,Tu+17,106,] { tag:'akce', type:'map', data:u.stupen, options:akce_ucast.zkratka }
