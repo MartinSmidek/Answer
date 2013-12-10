@@ -544,7 +544,7 @@ form _ucast [,,400,] { css:'ds_form'
   view t: table tvori  { join_type:'LEFT', join:'ON t.id_osoba=o.id_osoba' }
   view r: table rodina { join_type:'LEFT', join:'USING(id_rodina)' }
   view tx:table tvori  { join_type:'LEFT', join:'USING(id_rodina)' }
-  view ox:table osoba  { join:'ON tx.id_osoba=ox.id_osoba' }
+  view ox:table osoba  { join_type:'LEFT', join:'ON tx.id_osoba=ox.id_osoba' }
   // seznam účastníků
   browse b [0,26,,] {type:'smart', buf_rows:200, rows:27, qry_rows:1, group_by:'id_pobyt',
     optimize:°{qry:'noseek'}, css_rows:"dluh,1:yellow,2:blue"
@@ -565,6 +565,7 @@ form _ucast [,,400,] { css:'ds_form'
     show datum_od {data:a.datum_od, sql_pipe:'' }
     // zobrazení
     show _nazev [,,100,] { title:'příjmení', format:'s+q*', expr:"CASE
+      WHEN tx.role IS NULL THEN CONCAT('single (',o.prijmeni,')')
       WHEN pouze=0 THEN r.nazev
       WHEN pouze=1 THEN GROUP_CONCAT(DISTINCT IF(tx.role='a',ox.prijmeni,'') SEPARATOR '')
       WHEN pouze=2 THEN GROUP_CONCAT(DISTINCT IF(tx.role='b',ox.prijmeni,'') SEPARATOR '') END" }
