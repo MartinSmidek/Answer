@@ -11,11 +11,24 @@ function ROLLBACK_ALL() { trace();
   query("DELETE FROM spolu WHERE id_spolu>$last_spolu");
   return 1;
 }
-# --------------------------------------------------------------------------------- data_eli_dupl_co
+# --------------------------------------------------------------------------------- data_eli_dupl_cr
 # osobě ztotožněné s chlapem připíše informace o chlapských akcích (? a rok iniciace ?)
 # upraví položku DUPLO.rozdily=10 (šedá) v předaném záznamu
 # pokud je to poslední duplicita v rámci rodiny tak i v nadřazeném záznamu DUPLO
-function data_eli_dupl_co($iddr,$idd,$idc,$ido) { trace();
+function data_eli_dupl_cr($iddr,$idd,$idc,$ido) { trace();
+  $ret= data_eli_dupl_cs($idd,$idc,$ido);
+  if ( !$ret->err ) {
+    $n= select("COUNT(*)","duplo","idd=$iddr AND rozdily NOT IN (0,10)");
+    if ( !$n ) {
+      query("UPDATE duplo SET rozdily=10 WHERE id_duplo=$iddr");
+    }
+  }
+  return $ret;
+}
+# --------------------------------------------------------------------------------- data_eli_dupl_cs
+# osobě ztotožněné s chlapem připíše informace o chlapských akcích (? a rok iniciace ?)
+# upraví položku DUPLO.rozdily=10 (šedá) v předaném záznamu
+function data_eli_dupl_cs($idd,$idc,$ido) { trace();
   $ret= (object)array('err'=>'');
   $ok= 0;
   # převedení informací o účasti na chlapské akci do AKCE
@@ -49,10 +62,6 @@ function data_eli_dupl_co($iddr,$idd,$idc,$ido) { trace();
   # zápis do DUPLO
   query("UPDATE duplo SET rozdily=10 WHERE id_duplo=$idd");
   $m= mysql_affected_rows();
-  $n= select("COUNT(*)","duplo","idd=$iddr AND rozdily NOT IN (0,10)");
-  if ( !$n ) {
-    query("UPDATE duplo SET rozdily=10 WHERE id_duplo=$iddr");
-  }
 end:
   return $ret;
 }
@@ -68,9 +77,9 @@ function data_eli_akce($insert='test') { trace();
     array( 5,  'Křižanov 2012',     2200,'2012-05-24','2012-05-27',"Křižanov",0),
     array( 6,  'MROP 2012',         2900,'2012-09-12','2012-09-16',"Nesměř"  ,0),
     array( 7,  'Závěr MROP 2012',    400,'2012-09-15','2012-09-16',"Nesměř"  ,0),
-//  array( 8,  'Cross 2012',        1700,'2012-09-15','2012-09-16',"-",0,0),
-    array( 9,  'MROP 2013',         1500,'2013-09-11','2013-09-15',"Nesměř",369),
-    array(10,  'Závěr MROP 2013',    400,'2013-09-14','2013-09-15',"Nesměř",370)
+    array( 8,  'Cross 2012',        1700,'2012-09-15','2012-09-16',"?"       ,0),
+    array( 9,  'MROP 2013',         1500,'2013-09-11','2013-09-15',"Nesměř"  ,369),
+    array(10,  'Závěr MROP 2013',    400,'2013-09-14','2013-09-15',"Nesměř"  ,370)
   );
   // nazev=
   foreach ($akces as $akce) {
@@ -223,10 +232,13 @@ function akce_data_single($ido) {  trace();
   $ret->chng= $chng_kdo;
   // načtení hodnot
   $os= mysql_qry("
-    SELECT *
+    SELECT MAX(datum_od) AS _last,
+      prijmeni,jmeno,sex,narozeni,rc_xxxx,psc,obec,ulice,email,telefon,o.note
     FROM osoba AS o
-    LEFT JOIN tvori AS t USING(id_osoba)
-    WHERE ISNULL(id_tvori) AND id_osoba=$ido
+    LEFT JOIN spolu AS s USING(id_osoba)
+    LEFT JOIN pobyt AS p USING(id_pobyt)
+    LEFT JOIN akce AS a ON p.id_akce=a.id_duakce
+    WHERE id_osoba=$ido GROUP BY id_osoba
   ");
   $o= mysql_fetch_object($os);
   foreach($o as $fld=>$val) {
@@ -234,6 +246,7 @@ function akce_data_single($ido) {  trace();
       $ret->diff[$fld]= $chng_val[$fld];
       $ret->chng[$fld]= "<span style='color:red'>{$ret->chng[$fld]}: {$chng_val[$fld]}</span>";
     }
+    $ret->posledni= $o->_last;
   }
                                                         debug($ret,"akce_data_single");
   return $ret;
@@ -264,10 +277,17 @@ function akce_data_osoba($ido,$idr) {  trace();
   $ret->chng= $chng_kdo;
   // načtení hodnot
   $os= mysql_qry("
-    SELECT *
+    /*SELECT *
     FROM osoba AS o
     JOIN tvori AS t USING(id_osoba)
-    WHERE id_rodina=$idr AND id_osoba=$ido
+    WHERE id_rodina=$idr AND id_osoba=$ido*/
+    SELECT MAX(datum_od) AS _last,
+      prijmeni,jmeno,sex,narozeni,rc_xxxx,psc,obec,ulice,email,telefon,o.note
+    FROM osoba AS o
+    LEFT JOIN spolu AS s USING(id_osoba)
+    LEFT JOIN pobyt AS p USING(id_pobyt)
+    LEFT JOIN akce AS a ON p.id_akce=a.id_duakce
+    WHERE id_osoba=$ido GROUP BY id_osoba
   ");
   $o= mysql_fetch_object($os);
   foreach($o as $fld=>$val) {
@@ -276,6 +296,7 @@ function akce_data_osoba($ido,$idr) {  trace();
       $ret->chng[$fld]= "<span style='color:red'>{$ret->chng[$fld]}: {$chng_val[$fld]}</span>";
     }
   }
+    $ret->posledni= $o->_last;
                                                         debug($ret,"akce_data_osoba");
   return $ret;
 }
@@ -346,7 +367,7 @@ function akce_data_chlapi($idc) {  trace();
   $ret->chng= $chng_kdo;
   // načtení hodnot
   $cs= mysql_qry("
-    SELECT id_chlapi,MAX(YEAR(datum_od)) AS _last,origin,iniciace,
+    SELECT id_chlapi,MAX(datum_od) AS _last,origin,iniciace,
       prijmeni,jmeno,sex,narozeni,rc_xxxx,psc,obec,ulice,email,telefon,c.pozn
     FROM ezer_ys.chlapi AS c
     LEFT JOIN ezer_ys.ch_ucast AS u USING(id_chlapi)
@@ -369,6 +390,19 @@ function akce_data_chlapi($idc) {  trace();
                                                         debug($ret,"akce_data_chlapi");
   return $ret;
 }
+# -------------------------------------------------------------------------------- data_eli_corr_id2
+# vymění v DUPLO id_tab2 (tab2 změnit nelze, předává se pro kontrolu),
+# kontroluje zda tab2+id_tab2 bude jednoznačné, vynuluje chngs a rozdíly
+function data_eli_corr_id2($idd,$tab2,$id2) { trace();
+  $ret= (object)array('err'=>'');
+  $xidd= select("idd","duplo","tab2='$tab2' AND id_tab2=$id2");
+  if ( $xidd ) { $ret->err= "tato osoba je již použita pro id=$xidd"; goto end; }
+  else {
+    query("UPDATE duplo SET id_tab2=$id2 WHERE id_duplo=$idd");
+  }
+end:
+  return $ret;
+}
 # ------------------------------------------------------------------------------------ data_eli_auto
 # $typ = ct
 function data_eli_auto($typ,$patt='') { trace();
@@ -381,7 +415,7 @@ function data_eli_auto($typ,$patt='') { trace();
   //   5 - hodnoty jsou odlišné, asi duplicita, použita první - novější";
   //   6 - hodnoty jsou odlišné, asi duplicita, použita druhá - novější";
   //   7 - hodnoty jsou odlišné, nepoužita žádná";
-  function find_track($tab,$id,$fld,$val) {
+  function find_track($tab,$id,$fld,$val) { // ------------------------ find_track
     $kdy= '';
     $db= $tab=='chlapi' ? 'ezer_ys.' : '';
     $val= mysql_real_escape_string($val);
@@ -392,7 +426,7 @@ function data_eli_auto($typ,$patt='') { trace();
                                 display("kde='$tab' AND fld='$fld' AND klic=$id: $kdyval");
     return $kdy;
   }
-  function make_chngs($c,&$max_kod) {
+  function make_chngs($c,&$max_kod) { // ------------------------------ make_chngs
     global $data_eli_sum;
     // definice polí osoba a kódu polí s odhady
     $flds= explode(',',"jmeno,prijmeni,sex,ulice,psc,obec,telefon,email,narozeni,rc_xxxx,note,role");
@@ -471,7 +505,7 @@ function data_eli_auto($typ,$patt='') { trace();
 //                                                          display($chngs);
     return $chngs;
   }
-  function make_query($patt,$cond) {
+  function make_query($cond) { // -------------------------------- make_query
     return "
       SELECT * FROM
       ( SELECT
@@ -517,7 +551,9 @@ function data_eli_auto($typ,$patt='') { trace();
           levenshtein(c.prijmeni,o.prijmeni)<=1 AND (c.jmeno RLIKE o.jmeno OR o.jmeno RLIKE c.jmeno)
         LEFT JOIN tvori AS t USING(id_osoba)
         LEFT JOIN rodina AS r USING(id_rodina)
-        WHERE c.prijmeni RLIKE '^$patt' AND $cond
+        WHERE c.deleted='' AND o.deleted='' AND $cond
+          AND id_chlapi NOT IN (740,749,750,751,756,758,817,779,789,790,792,797,798,799,813,825) /* neiniciovaní jen na Cross */
+          AND id_chlapi NOT IN (614,620,622,629,630,646,653,656,671,673,679,686,691,694,703,727,731,737,739,742,757,765,783,805,807,812,816,830,836,863,867,869,875,878,886,895,910,916,931,935,944,948,952,963,966,967,971) /* neiniciovaní bez akce */
                                         /*AND LEFT(c.origin,7)='ezer_ys'*/
         ORDER BY _asi DESC
       ) AS _trick
@@ -531,10 +567,29 @@ function data_eli_auto($typ,$patt='') { trace();
   // zjištění podobných chlapů a osob
   switch ($typ) {
   case 'cs':
-    $qc= mysql_qry(make_query($patt,"ISNULL(id_rodina) AND id_osoba"));
+    $qc= mysql_qry(make_query("c.prijmeni RLIKE '^$patt' AND ISNULL(id_rodina) AND id_osoba"));
+    while (($c= mysql_fetch_object($qc))) {
+      $asi= $c->_asi;
+      $x= $c->_x;
+      $idc= $c->id_chlapi;
+      $ido= $c->id_osoba;
+      $c->o_narozeni= sql_date1($c->o_narozeni);
+      $c->c_narozeni= sql_date1($c->c_narozeni);
+      // rodina nenalezena ale osoba ano => rozdíly=9 (fialovy)
+      $rozdily= 0;
+      $chngs= make_chngs($c,$rozdily);
+      $rzd= $asi<512 ? 8 : $rozdily;
+      $pj= mysql_real_escape_string("{$c->c_prijmeni} [$x] {$c->c_jmeno}");
+      query("INSERT INTO duplo (idd,znacka,rozdily,tab1,id_tab1,tab2,id_tab2,chngs)
+             VALUES (0,'$pj',$rzd,'c',$idc,'o',$ido,'$chngs')");
+      $idd= mysql_insert_id();
+      $n++;
+      $m++;
+      $data_eli_max[9]++;
+    }
     break;
   case 'ct':
-    $qc= mysql_qry(make_query($patt,"id_rodina AND id_osoba"));
+    $qc= mysql_qry(make_query("c.prijmeni RLIKE '^$patt' AND id_rodina AND id_osoba"));
     while (($c= mysql_fetch_object($qc))) {
       $c->o_narozeni= sql_date1($c->o_narozeni);
       $c->c_narozeni= sql_date1($c->c_narozeni);
@@ -546,89 +601,67 @@ function data_eli_auto($typ,$patt='') { trace();
       $idt= $c->id_tvori;
       $idr= $c->id_rodina;
       $jmr= $c->nazev;
-                                                        display("SELECT ... {$c->c_prijmeni} $jmr (rodina $idr) ");
-      if ( $idr ) {
-        // vložení nebo nalezení rodiny
-        $idd= select("id_duplo","duplo","tab1='-' AND tab2='r' AND id_tab2='$idr'");
-                                                        display("select(...$idr)=$idd");
-        if ( $idd ) {
-          // rodina již byla vložena - přidej $idt správnému členu
-          $rozdily= 0;
-          $chngs= make_chngs($c,$rozdily);
-          // rozdíl při neshodě E,T,N je nesnižitelný
-          $rzd= $asi<512 ? 8 : "IF($rozdily>rozdily,$rozdily,rozdily)";
-          if ( $asi<32 ) { // pokud se neshoduje ani ulice, necháme formulář prázdný
-            $chngs= '';
-          }
-          mysql_qry("
-            UPDATE duplo SET tab1='c',id_tab1=$idc,znacka=CONCAT('{$jmo}[$x] / ',znacka),
-              chngs='$chngs',rozdily=$rzd
-            WHERE tab1='-' AND tab2='t' AND id_tab2=$idt
-          ");
+//                                                         display("SELECT ... {$c->c_prijmeni} $jmr (rodina $idr) ");
+      // vložení nebo nalezení rodiny
+      $idd= select("id_duplo","duplo","tab1='-' AND tab2='r' AND id_tab2='$idr'");
+//                                                       display("select(...$idr)=$idd");
+      if ( $idd ) {
+        // rodina již byla vložena - přidej $idt správnému členu
+        $rozdily= 0;
+        $chngs= make_chngs($c,$rozdily);
+        // rozdíl při neshodě E,T,N je nesnižitelný
+        $rzd= $asi<512 ? 8 : "IF($rozdily>rozdily,$rozdily,rozdily)";
+        if ( $asi<32 ) { // pokud se neshoduje ani ulice, necháme formulář prázdný
+          $chngs= '';
         }
-        else {
-        // vložení rodiny $idr a jejich členů - poznač $idt a vkopíruj chngs
-          $rzd= $asi<512 ? 8 : 0;   // rozdíl při neshodě E,T,N je nesnižitelný
-          mysql_qry("
-            INSERT INTO duplo (znacka,rozdily,tab1,tab2,id_tab2)
-            VALUES (\"$jmr\",$rzd,'-','r',$idr)");
-          $idd= mysql_insert_id();
-          $n++;
-          $max_rozdily= 0;
-          $qt= mysql_qry("
-            SELECT *
-            FROM tvori AS t JOIN osoba AS o USING (id_osoba)
-            WHERE id_rodina=$idr
-          ");
-          while (($t= mysql_fetch_object($qt))) {
-            $idrt= $t->id_tvori;
-            $jmro= "{$t->jmeno}({$t->role})";
-            $chngs= "";
-            $rozdily= 0;
-            if ( $idt == $idrt ) {
-              $chngs= make_chngs($c,$rozdily);
-              $max_rozdily= max($max_rozdily,$rozdily);
-              if ( $asi<32 ) { // pokud se neshoduje ani ulice, necháme formulář prázdný
-                $chngs= '';
-              }
-              $data_eli_max[$max_rozdily]++;
-              $qi= "INSERT INTO duplo (znacka,idd,rozdily,tab1,id_tab1,tab2,id_tab2,chngs)
-                    VALUES ('{$jmo}[$x] / $jmro',$idd,$rozdily,'c',$idc,'t',$idrt,'$chngs')";
-            }
-            else {
-              // jen přenesení osoby
-              $qi= "INSERT INTO duplo (znacka,idd,rozdily,tab1,tab2,id_tab2)
-                    VaLUES ('$jmro',$idd,0,'-','t',$idrt)";
-            }
-            mysql_qry($qi);
-            $m++;
-          }
-          // úprava maximálního rozdílu v rodině
-          mysql_qry("
-            UPDATE duplo SET rozdily=IF($max_rozdily>rozdily,$max_rozdily,rozdily)
-            WHERE id_duplo=$idd
-          ");
-        }
+        mysql_qry("
+          UPDATE duplo SET tab1='c',id_tab1=$idc,znacka=CONCAT('{$jmo}[$x] / ',znacka),
+            chngs='$chngs',rozdily=$rzd
+          WHERE tab1='-' AND tab2='t' AND id_tab2=$idt
+        ");
       }
-      else { // rodina nenalezena rozdíly=9 (fialovy)
-        $pm= mysql_real_escape_string($c->c_prijmeni);
-        $jm= mysql_real_escape_string($c->c_jmeno);
-        query("INSERT INTO duplo (znacka,rozdily,tab1,tab2) VALUES ('$pm',9,'-','-')");
+      else {
+      // vložení rodiny $idr a jejich členů - poznač $idt a vkopíruj chngs
+        $rzd= $asi<512 ? 8 : 0;   // rozdíl při neshodě E,T,N je nesnižitelný
+        mysql_qry("
+          INSERT INTO duplo (znacka,rozdily,tab1,tab2,id_tab2)
+          VALUES (\"$jmr\",$rzd,'-','r',$idr)");
         $idd= mysql_insert_id();
         $n++;
-        $flds= explode(',',"jmeno,prijmeni,sex,ulice,psc,obec,telefon,email,narozeni,rc_xxxx,note,role");
-        $chngs= '{'; $del= '';
-        foreach ($flds as $f) {
-          // přímá kopie zobrazovaných údajů
-          $cf= "c_$f";
-          $chngs.= "$del\"$f\":\"{$c->$cf}\"";
-          $del= ',';
+        $max_rozdily= 0;
+        $qt= mysql_qry("
+          SELECT *
+          FROM tvori AS t JOIN osoba AS o USING (id_osoba)
+          WHERE id_rodina=$idr
+        ");
+        while (($t= mysql_fetch_object($qt))) {
+          $idrt= $t->id_tvori;
+          $jmro= "{$t->jmeno}({$t->role})";
+          $chngs= "";
+          $rozdily= 0;
+          if ( $idt == $idrt ) {
+            $chngs= make_chngs($c,$rozdily);
+            $max_rozdily= max($max_rozdily,$rozdily);
+            if ( $asi<32 ) { // pokud se neshoduje ani ulice, necháme formulář prázdný
+              $chngs= '';
+            }
+            $data_eli_max[$max_rozdily]++;
+            $qi= "INSERT INTO duplo (znacka,idd,rozdily,tab1,id_tab1,tab2,id_tab2,chngs)
+                  VALUES ('{$jmo}[$x] / $jmro',$idd,$rozdily,'c',$idc,'t',$idrt,'$chngs')";
+          }
+          else {
+            // jen přenesení osoby
+            $qi= "INSERT INTO duplo (znacka,idd,rozdily,tab1,tab2,id_tab2)
+                  VaLUES ('$jmro',$idd,0,'-','t',$idrt)";
+          }
+          mysql_qry($qi);
+          $m++;
         }
-        $chngs.= '}';
-        query("INSERT INTO duplo (znacka,idd,rozdily,tab1,id_tab1,tab2,chngs)
-               VALUES ('$jm',$idd,9,'c',$idc,'-','$chngs')");
-        $m++;
-        $data_eli_max[9]++;
+        // úprava maximálního rozdílu v rodině
+        mysql_qry("
+          UPDATE duplo SET rozdily=IF($max_rozdily>rozdily,$max_rozdily,rozdily)
+          WHERE id_duplo=$idd
+        ");
       }
 //       break;
     }
