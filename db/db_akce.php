@@ -79,17 +79,37 @@ end:
 # upraví položku DUPLO.rozdily=10 (šedá) v předaném záznamu
 # pokud je to poslední duplicita v rámci rodiny tak i v nadřazeném záznamu DUPLO
 # faze=2 pro ruční a faze=1 pro automatické ztotožnění
-function data_eli_izol_cr($iddr,$idd,$idc,$idt,$faze=2) { trace();
-//   $ido= select("id_osoba","tvori","id_tvori=$idt");
-//   $ret= data_eli_dupl_cs($idd,$idc,$ido,$faze);
-//   if ( !$ret->err ) {
-//     $n= select("COUNT(*)","duplo","idd=$iddr AND rozdily NOT IN (0,10)");
-//     if ( !$n ) {
-//       # poznač, že je sjednocena rodina
-//       query("UPDATE duplo SET rozdily=10,faze=$faze WHERE id_duplo=$iddr");
-//     }
-//   }
-//   return $ret;
+function data_eli_izol_cr($iddr,$idd,$idc,$faze=2) { trace();
+  $ret= (object)array('err'=>'');
+  $flds= explode(',',"jmeno,prijmeni,sex,ulice,psc,obec,telefon,email,narozeni,rc_xxxx,note,nomail");
+  $c= select("*","ezer_ys.chlapi","id_chlapi=$idc");
+  $zmeny= array();
+  foreach ($flds as $fld) {
+    $zmeny[]= (object)array('fld'=>$fld,'op'=>'i','val'=>$c->$fld);
+  }
+//                                                 debug($zmeny);
+  // vložení do OSOBA,TVORI,RODINA
+  $ido= ezer_qry("INSERT",'osoba',0,$zmeny);
+  if ( !$ido ) { $ret->err= "ERROR: ".mysql_error(); goto end; }
+  $zm_rodina= array(
+    (object)array('fld'=>'nazev','op'=>'i','val'=>$c->prijmeni));
+  $idr= ezer_qry("INSERT",'rodina',0,$zm_rodina);
+  if ( !$idr ) { $ret->err= "ERROR: ".mysql_error(); goto end; }
+  $zm_tvori= array(
+    (object)array('fld'=>'id_osoba', 'op'=>'i','val'=>$ido),
+    (object)array('fld'=>'id_rodina','op'=>'i','val'=>$idr),
+    (object)array('fld'=>'role',     'op'=>'i','val'=>$c->sex==1?'a':'b')
+  );
+  $idt= ezer_qry("INSERT",'tvori',0,$zm_tvori);
+  if ( !$idt ) { $ret->err= "ERROR: ".mysql_error(); goto end; }
+  // vložení akcí a poznačení v DUPLO
+  data_eli_dupl_cs($idd,$idc,$ido,$faze,true);
+  $n= select("COUNT(*)","duplo","idd=$iddr AND rozdily NOT IN (0,10)");
+  if ( !$n ) { // poznač, že je sjednocena "rodina"
+    query("UPDATE duplo SET rozdily=10,faze=$faze WHERE id_duplo=$iddr");
+  }
+end:
+  return $ret;
 }
 # --------------------------------------------------------------------------------- data_eli_dupl_cr
 # osobě ztotožněné s chlapem připíše informace o chlapských akcích (? a rok iniciace ?)
@@ -112,7 +132,7 @@ function data_eli_dupl_cr($iddr,$idd,$idc,$idt,$faze=2) { trace();
 # osobě ztotožněné s chlapem připíše informace o chlapských akcích (? a rok iniciace ?)
 # upraví položku DUPLO.rozdily=10 (šedá) v předaném záznamu
 # faze=2 pro ruční a faze=1 pro automatické ztotožnění
-function data_eli_dupl_cs($idd,$idc,$ido,$faze=2) { trace();
+function data_eli_dupl_cs($idd,$idc,$ido,$faze=2,$jen_akce=false) { trace();
   $ret= (object)array('err'=>'');
   $ok= 0;
   # převedení informací o účasti na chlapské akci do AKCE
@@ -146,24 +166,26 @@ function data_eli_dupl_cs($idd,$idc,$ido,$faze=2) { trace();
   # zápis do DUPLO
   query("UPDATE duplo SET rozdily=10,faze=$faze WHERE id_duplo=$idd");
   $m= mysql_affected_rows();
-  # zápis změněných údajů z DUPLO.chngs do osoba
-  $chngs_s= select("chngs","duplo","id_duplo=$idd");
-  $o= select("*","osoba","id_osoba=$ido");
-  $chngs= json_decode($chngs_s);
-                                                debug($chngs);
-  $zmeny= array();
-  foreach ($chngs as $fld=>$chng) {
-    $val= is_array($chng) ? $chng[0] : $chng;
-    $old= $o->$fld;
-    if ( $fld=='narozeni' ) $val= sql_date1($val,1);
-    if ( $val != $old && isset($o->$fld) ) {
-      $zmeny[]= (object)array('fld'=>$fld,'op'=>'u','val'=>$val,'old'=>$old);
+  if ( !$jen_akce ) {
+    # zápis změněných údajů z DUPLO.chngs do osoba
+    $chngs_s= select("chngs","duplo","id_duplo=$idd");
+    $o= select("*","osoba","id_osoba=$ido");
+    $chngs= json_decode($chngs_s);
+                                                  debug($chngs);
+    $zmeny= array();
+    foreach ($chngs as $fld=>$chng) {
+      $val= is_array($chng) ? $chng[0] : $chng;
+      $old= $o->$fld;
+      if ( $fld=='narozeni' ) $val= sql_date1($val,1);
+      if ( $val != $old && isset($o->$fld) ) {
+        $zmeny[]= (object)array('fld'=>$fld,'op'=>'u','val'=>$val,'old'=>$old);
+      }
     }
-  }
-                                                debug($zmeny);
-  // promítnutí změn do OSOBA
-  if ( count($zmeny) ) {
-    ezer_qry("UPDATE",'osoba',$ido,$zmeny);
+                                                  debug($zmeny);
+    // promítnutí změn do OSOBA
+    if ( count($zmeny) ) {
+      ezer_qry("UPDATE",'osoba',$ido,$zmeny);
+    }
   }
 end:
   return $ret;
