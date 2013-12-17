@@ -3,24 +3,107 @@
 # ------------------------------------------------------------------------------------- ROLLBACK_ALL
 # jen pro ladění - vrácení do původního stavu
 function ROLLBACK_ALL() { trace();
-  $last_pobyt= 12304;
+  // úplně znova
+  $last_pobyt= 12302;
   $last_spolu= 24442;
-  query("TRUNCATE TABLE duplo");
+  $last_duplo= 0;
+//   // po sjednocení cs, cr - před sr
+//   $last_pobyt= 16562;
+//   $last_spolu= 28631;
+//   $last_duplo= 1413;
+  query($last_duplo ? "DELETE FROM duplo WHERE id_duplo>$last_duplo": "TRUNCATE TABLE duplo");
   query("DELETE FROM ch_fa WHERE tab!='a'");
   query("DELETE FROM pobyt WHERE id_pobyt>$last_pobyt");
   query("DELETE FROM spolu WHERE id_spolu>$last_spolu");
   return 1;
 }
+# --------------------------------------------------------------------------------------- calc_tvori
+function calc_tvori($idt) { trace();
+  $ret= (object)array();
+  $qd= mysql_qry("
+    SELECT id_tvori,id_osoba,CONCAT(prijmeni,' ',jmeno) AS jmena,id_rodina,nazev
+    FROM tvori JOIN osoba USING(id_osoba) JOIN rodina USING(id_rodina)
+    WHERE id_tvori=$idt
+  ");
+  if ( !$qd ) { $ret->err= "ERROR: ".mysql_error(); goto end; }
+  if (($d= mysql_fetch_object($qd))) {
+    foreach ($d as $fld=>$val) {
+      $ret->$fld= $val;
+    }
+  }
+end:
+                                                                debug($ret,"calc_tvori($idt)");
+  return $ret;
+}
+# --------------------------------------------------------------------------------------- calc_spolu
+function calc_spolu($ids) { trace();
+  $ret= (object)array();
+  $qd= mysql_qry("
+    SELECT id_akce,id_pobyt,id_spolu,id_osoba,id_tvori,id_rodina,
+      akce.nazev AS a_nazev,CONCAT(prijmeni,' ',jmeno) AS jmena,rodina.nazev
+    FROM spolu JOIN pobyt USING(id_pobyt) JOIN akce ON id_duakce=id_akce
+    JOIN osoba USING(id_osoba) JOIN tvori USING(id_osoba) JOIN rodina USING(id_rodina)
+    WHERE id_spolu=$ids
+  ");
+  if ( !$qd ) { $ret->err= "ERROR: ".mysql_error(); goto end; }
+  if (($d= mysql_fetch_object($qd))) {
+    foreach ($d as $fld=>$val) {
+      $ret->$fld= $val;
+    }
+  }
+end:
+                                                                debug($ret,"calc_spolu($idt)");
+  return $ret;
+}
+# --------------------------------------------------------------------------------- data_eli_dupl_sr
+# členu rodiny ztotožněném se sinlem přepíše informace o akcích
+# upraví položku DUPLO.rozdily=10 (šedá) v předaném záznamu
+# pokud je to poslední duplicita v rámci rodiny tak i v nadřazeném záznamu DUPLO
+# faze=2 pro ruční a faze=1 pro automatické ztotožnění
+function data_eli_dupl_sr($iddr,$idd,$ids,$idt,$faze=2) { trace();
+  $ret= (object)array('err'=>'');
+  $ido= select("id_osoba","tvori","id_tvori=$idt");
+  $qc= query("UPDATE spolu SET id_osoba=$ido WHERE id_osoba=$ids");
+  if ( !$qc ) { $ret->err= "ERROR: ".mysql_error(); goto end; }
+  $qd= query("UPDATE duplo SET rozdily=10,faze=$faze WHERE id_duplo=$idd");
+  if ( !$qd ) { $ret->err= "ERROR: ".mysql_error(); goto end; }
+  $n= select("COUNT(*)","duplo","idd=$iddr AND rozdily NOT IN (0,10)");
+  if ( !$n ) {
+    query("UPDATE duplo SET rozdily=10,faze=$faze WHERE id_duplo=$iddr");
+  }
+end:
+  return $ret;
+}
+# --------------------------------------------------------------------------------- data_eli_izol_cr
+# vytvoří z chlapa osobu a připíše informace o chlapských akcích (? a rok iniciace ?)
+# upraví položku DUPLO.rozdily=10 (šedá) v předaném záznamu
+# pokud je to poslední duplicita v rámci rodiny tak i v nadřazeném záznamu DUPLO
+# faze=2 pro ruční a faze=1 pro automatické ztotožnění
+function data_eli_izol_cr($iddr,$idd,$idc,$idt,$faze=2) { trace();
+//   $ido= select("id_osoba","tvori","id_tvori=$idt");
+//   $ret= data_eli_dupl_cs($idd,$idc,$ido,$faze);
+//   if ( !$ret->err ) {
+//     $n= select("COUNT(*)","duplo","idd=$iddr AND rozdily NOT IN (0,10)");
+//     if ( !$n ) {
+//       # poznač, že je sjednocena rodina
+//       query("UPDATE duplo SET rozdily=10,faze=$faze WHERE id_duplo=$iddr");
+//     }
+//   }
+//   return $ret;
+}
 # --------------------------------------------------------------------------------- data_eli_dupl_cr
 # osobě ztotožněné s chlapem připíše informace o chlapských akcích (? a rok iniciace ?)
 # upraví položku DUPLO.rozdily=10 (šedá) v předaném záznamu
 # pokud je to poslední duplicita v rámci rodiny tak i v nadřazeném záznamu DUPLO
-function data_eli_dupl_cr($iddr,$idd,$idc,$ido) { trace();
-  $ret= data_eli_dupl_cs($idd,$idc,$ido);
+# faze=2 pro ruční a faze=1 pro automatické ztotožnění
+function data_eli_dupl_cr($iddr,$idd,$idc,$idt,$faze=2) { trace();
+  $ido= select("id_osoba","tvori","id_tvori=$idt");
+  $ret= data_eli_dupl_cs($idd,$idc,$ido,$faze);
   if ( !$ret->err ) {
     $n= select("COUNT(*)","duplo","idd=$iddr AND rozdily NOT IN (0,10)");
     if ( !$n ) {
-      query("UPDATE duplo SET rozdily=10 WHERE id_duplo=$iddr");
+      # poznač, že je sjednocena rodina
+      query("UPDATE duplo SET rozdily=10,faze=$faze WHERE id_duplo=$iddr");
     }
   }
   return $ret;
@@ -28,12 +111,13 @@ function data_eli_dupl_cr($iddr,$idd,$idc,$ido) { trace();
 # --------------------------------------------------------------------------------- data_eli_dupl_cs
 # osobě ztotožněné s chlapem připíše informace o chlapských akcích (? a rok iniciace ?)
 # upraví položku DUPLO.rozdily=10 (šedá) v předaném záznamu
-function data_eli_dupl_cs($idd,$idc,$ido) { trace();
+# faze=2 pro ruční a faze=1 pro automatické ztotožnění
+function data_eli_dupl_cs($idd,$idc,$ido,$faze=2) { trace();
   $ret= (object)array('err'=>'');
   $ok= 0;
   # převedení informací o účasti na chlapské akci do AKCE
-  # 1/13=prihl/prihl   2/0=ucast/-  3=10 nedojel/nedojel    4/5-org/hosp   5/12=lektor/lektor
-  $stupen_fce= array(1=>13,2=>0,3=>10,4=>5,5=>13);
+  # 1/0=prihl/-   2/0=ucast/-  3=10 nedojel/nedojel    4/5-org/hosp   5/12=lektor/lektor
+  $stupen_fce= array(1=>0,2=>0,3=>10,4=>5,5=>12);
   $qc= mysql_qry("
     SELECT idf,id_akce,id_ucast,stupen,u.pozn,iniciace
     FROM ezer_ys.chlapi AS c
@@ -60,8 +144,79 @@ function data_eli_dupl_cs($idd,$idc,$ido) { trace();
   # zápis vztahu id_osoba do id_chlapi
   query("INSERT INTO ch_fa (idc,idf,tab) VALUES ($idc,$ido,'o')");
   # zápis do DUPLO
-  query("UPDATE duplo SET rozdily=10 WHERE id_duplo=$idd");
+  query("UPDATE duplo SET rozdily=10,faze=$faze WHERE id_duplo=$idd");
   $m= mysql_affected_rows();
+  # zápis změněných údajů z DUPLO.chngs do osoba
+  $chngs_s= select("chngs","duplo","id_duplo=$idd");
+  $o= select("*","osoba","id_osoba=$ido");
+  $chngs= json_decode($chngs_s);
+                                                debug($chngs);
+  $zmeny= array();
+  foreach ($chngs as $fld=>$chng) {
+    $val= is_array($chng) ? $chng[0] : $chng;
+    $old= $o->$fld;
+    if ( $fld=='narozeni' ) $val= sql_date1($val,1);
+    if ( $val != $old && isset($o->$fld) ) {
+      $zmeny[]= (object)array('fld'=>$fld,'op'=>'u','val'=>$val,'old'=>$old);
+    }
+  }
+                                                debug($zmeny);
+  // promítnutí změn do OSOBA
+  if ( count($zmeny) ) {
+    ezer_qry("UPDATE",'osoba',$ido,$zmeny);
+  }
+end:
+  return $ret;
+}
+# 2. ezer_qry("UPDATE",$table,$x->key,$zmeny[,$key_id]);       -- oprava 1 záznamu
+#     zmeny= [ zmena,...]
+#     zmena= { fld:field, op:a|p|d|c, val:value, row:n }          -- pro chat
+#          | { fld:field, op:u,   val:value, old:value }          -- pro opravu
+#          | { fld:field, op:i,   val:value }                     -- pro vytvoření
+# -------------------------------------------------------------------------------- data_eli_dupl_all
+# pro mode=cs,cr ztožní osoby s chlapem a připíše informace o chlapských akcích pokud DUPLO.asi>=mez
+# pro mode=sr ztotožní singly se čůeny rodin a připíše informace o  akcích
+# upraví položky DUPLO.rozdily=10 (šedá) v záznamech
+function data_eli_dupl_all($mode) { trace();
+  $ret= (object)array('err'=>'');
+  $mez= 48; // pro aspoň ulice+psc
+  switch ($mode) {
+  case 'sr':
+    $qd= mysql_qry("
+      SELECT id_duplo,id_tab1,id_tab2,idd FROM duplo
+      WHERE faze=0 AND asi>=$mez AND tab1='s' AND id_tab1>0 AND tab2='t' AND id_tab2>0
+    ");
+    if ( !$qd ) { $ret->err= "ERROR: ".mysql_error(); goto end; }
+    while (($d= mysql_fetch_object($qd))) {
+      $ret0= data_eli_dupl_sr($d->idd,$d->id_duplo,$d->id_tab1,$d->id_tab2,1);
+      $ret->err.= $ret0->err;
+    }
+    break;
+  case 'cs':
+    $qd= mysql_qry("
+      SELECT id_duplo,id_tab1,id_tab2 FROM duplo
+      WHERE faze=0 AND asi>=$mez AND tab1='c' AND id_tab1>0 AND tab2='o' AND id_tab2>0
+    ");
+    if ( !$qd ) { $ret->err= "ERROR: ".mysql_error(); goto end; }
+    while (($d= mysql_fetch_object($qd))) {
+      $ret0= data_eli_dupl_cs($d->id_duplo,$d->id_tab1,$d->id_tab2,1);
+      $ret->err.= $ret0->err;
+    }
+    // a co se nepovedlo, vymažeme
+    query("DELETE FROM duplo WHERE faze=0 AND asi<$mez AND tab1='c' AND tab2='o'");
+    break;
+  case 'cr':
+    $qd= mysql_qry("
+      SELECT id_duplo,id_tab1,id_tab2,idd FROM duplo
+      WHERE faze=0 AND asi>=$mez AND tab1='c' AND id_tab1>0 AND tab2='t' AND id_tab2>0
+    ");
+    if ( !$qd ) { $ret->err= "ERROR: ".mysql_error(); goto end; }
+    while (($d= mysql_fetch_object($qd))) {
+      $ret0= data_eli_dupl_cr($d->idd,$d->id_duplo,$d->id_tab1,$d->id_tab2,1);
+      $ret->err.= $ret0->err;
+    }
+    break;
+  }
 end:
   return $ret;
 }
@@ -181,7 +336,7 @@ function data_eli_track($insert='test') { trace();
         if ( $id ) {
           $rt= write_track($ids,$flds,$kdy);
           $ret->html.= $rt->html;
-          $sql.= $rt->sql;
+          $sql.= "\n".$rt->sql;
         }
         $id= $c->id_chlapi;
         $ids= array($c);
@@ -190,11 +345,12 @@ function data_eli_track($insert='test') { trace();
     if ( count($ids) ) {
       $rt= write_track($ids,$flds,$kdy);
       $ret->html.= $rt->html;
-      $sql.= $rt->sql;
+      $sql.= "\n".$rt->sql;
     }
   }
   // doplnění do _track
   $sql= "INSERT INTO ezer_ys._track (kdy,kdo,kde,klic,fld,op,old,val) VALUES ".substr($sql,1).";";
+                                                        display($sql);
   if ( $insert=='insert' ) {
     $res= mysql_qry($sql);
     $n= mysql_affected_rows();
@@ -248,7 +404,7 @@ function akce_data_single($ido) {  trace();
     }
     $ret->posledni= $o->_last;
   }
-                                                        debug($ret,"akce_data_single");
+//                                                         debug($ret,"akce_data_single");
   return $ret;
 }
 # ---------------------------------------------------------------------------------- akce_data_osoba
@@ -297,7 +453,7 @@ function akce_data_osoba($ido,$idr) {  trace();
     }
   }
     $ret->posledni= $o->_last;
-                                                        debug($ret,"akce_data_osoba");
+//                                                         debug($ret,"akce_data_osoba");
   return $ret;
 }
 # --------------------------------------------------------------------------------- akce_data_rodina
@@ -338,7 +494,7 @@ function akce_data_rodina($idr) {  trace();
 //       $ret->chng[$fld].= ": {$chng_val[$fld]}";
     }
   }
-                                                        debug($ret,"akce_data_rodina");
+//                                                         debug($ret,"akce_data_rodina");
   return $ret;
 }
 # --------------------------------------------------------------------------------- akce_data_chlapi
@@ -368,7 +524,7 @@ function akce_data_chlapi($idc) {  trace();
   // načtení hodnot
   $cs= mysql_qry("
     SELECT id_chlapi,MAX(datum_od) AS _last,origin,iniciace,
-      prijmeni,jmeno,sex,narozeni,rc_xxxx,psc,obec,ulice,email,telefon,c.pozn
+      prijmeni,jmeno,sex,narozeni,rc_xxxx,psc,obec,ulice,email,telefon,note
     FROM ezer_ys.chlapi AS c
     LEFT JOIN ezer_ys.ch_ucast AS u USING(id_chlapi)
     LEFT JOIN ezer_ys.ch_akce AS a USING(id_akce)
@@ -387,7 +543,7 @@ function akce_data_chlapi($idc) {  trace();
     $ret->iniciace= $c->iniciace;
     $ret->posledni= $c->_last;
   }
-                                                        debug($ret,"akce_data_chlapi");
+//                                                         debug($ret,"akce_data_chlapi");
   return $ret;
 }
 # -------------------------------------------------------------------------------- data_eli_corr_id2
@@ -415,6 +571,39 @@ function data_eli_auto($typ,$patt='') { trace();
   //   5 - hodnoty jsou odlišné, asi duplicita, použita první - novější";
   //   6 - hodnoty jsou odlišné, asi duplicita, použita druhá - novější";
   //   7 - hodnoty jsou odlišné, nepoužita žádná";
+  function last_dates_sr($s) { // ------------------------------------- last_dates_sr
+    // single
+    $s_track= select1("MAX(LEFT(kdy,10))","_track","kde='osoba' AND klic={$s->s_id_osoba}");
+    $s_last= select1("MAX(datum_od)","osoba AS o
+      LEFT JOIN spolu AS s USING(id_osoba) LEFT JOIN pobyt AS p USING(id_pobyt)
+      LEFT JOIN akce AS a ON p.id_akce=a.id_duakce",
+      "id_osoba={$s->s_id_osoba}");
+    $s->_s_last= max($s_track,$s_last);
+    // osoba - člen rodiny
+    $o_track= select1("MAX(LEFT(kdy,10))","_track","kde='osoba' AND klic={$s->o_id_osoba}");
+    $o_last= select1("MAX(datum_od)","osoba AS o
+      LEFT JOIN spolu AS s USING(id_osoba) LEFT JOIN pobyt AS p USING(id_pobyt)
+      LEFT JOIN akce AS a ON p.id_akce=a.id_duakce",
+      "id_osoba={$s->o_id_osoba}");
+    $s->_o_last= max($o_track,$o_last);
+//                   display("$s_track $s_last {$s->_s_last} $o_track $o_last {$s->_o_last}");
+  }
+  function last_dates_co($c) { // ------------------------------------- last_dates_co
+    // chlapi
+    $c_track= select1("MAX(LEFT(kdy,10))","ezer_ys._track","kde='chlapi' AND klic={$c->id_chlapi}");
+    $c_last= select1("MAX(datum_od)","ezer_ys.chlapi AS c
+      LEFT JOIN ezer_ys.ch_ucast AS u USING(id_chlapi) LEFT JOIN ezer_ys.ch_akce AS a USING(id_akce)",
+      "id_chlapi={$c->id_chlapi}");
+    $c->_c_last= max($c_track,$c_last);
+    // osoba
+    $o_track= select1("MAX(LEFT(kdy,10))","_track","kde='osoba' AND klic={$c->id_osoba}");
+    $o_last= select1("MAX(datum_od)","osoba AS o
+      LEFT JOIN spolu AS s USING(id_osoba) LEFT JOIN pobyt AS p USING(id_pobyt)
+      LEFT JOIN akce AS a ON p.id_akce=a.id_duakce",
+      "id_osoba={$c->id_osoba}");
+    $c->_o_last= max($o_track,$o_last);
+//                   display("$c_track $c_last {$c->_c_last} $o_track $o_last {$c->_o_last}");
+  }
   function find_track($tab,$id,$fld,$val) { // ------------------------ find_track
     $kdy= '';
     $db= $tab=='chlapi' ? 'ezer_ys.' : '';
@@ -422,11 +611,91 @@ function data_eli_auto($typ,$patt='') { trace();
     $kdyval= select1("MAX(CONCAT(kdy,val))","{$db}_track",
       "kde='$tab' AND fld='$fld' AND klic=$id AND val='$val'");
     $kdy= $kdyval ? substr($kdyval,0,19) : '';
-                                if ( $id==9 || $id==1262 )
-                                display("kde='$tab' AND fld='$fld' AND klic=$id: $kdyval");
+//                                 if ( $id==9 || $id==1262 )
+//                                 display("kde='$tab' AND fld='$fld' AND klic=$id: $kdyval");
     return $kdy;
   }
-  function make_chngs($c,&$max_kod) { // ------------------------------ make_chngs
+  function make_chngs_so($c,&$max_kod) { // --------------------------- make_chngs_so
+    global $data_eli_sum;
+    // definice polí osoba a kódu polí s odhady
+    $flds= explode(',',"jmeno,prijmeni,sex,ulice,psc,obec,telefon,email,narozeni,rc_xxxx,note,role,nomail");
+    $spec= array('telefon'=>2048,'email'=>1024,'narozeni'=>128,'obec'=>64,'ulice'=>32);
+    $copy= explode(',',"role");
+    $asi= $c->_asi;
+    $chngs= '{'; $del= '';
+    foreach ($flds as $f) {
+      // přímá kopie zobrazovaných údajů
+      if ( in_array($f,$copy) ) {
+        $chngs.= "$del\"$f\":\"{$c->$f}\"";
+        $del= ',';
+      }
+      else {
+        // zkoumání rozdílů
+        $sf= "s_$f";
+        $of= "o_$f";
+        $kod= 0;
+        $telx= false;
+        if ( trim($c->$sf)==trim($c->$of)                                                          # 1  =
+          || ( $f=='telefon' && $telx=(str_replace($c->$sf,' ','')==str_replace($c->$of,' ','')) )) {
+          // stejné
+          $kod= 1;
+          if ( $telx && strpos($c->$of,' ')!==false ) {
+            // raději telefon s mezerami
+            $chngs.= "$del\"$f\":\"".trim($c->$of)."\"";
+          }
+          else {
+            $chngs.= "$del\"$f\":\"".trim($c->$sf)."\"";
+          }
+          $data_eli_sum[$kod]++;
+        }
+        elseif ( trim($c->$of)==''     && trim($c->$sf)!=''                                        # 3  c
+              || $c->$of==0            && $c->$sf!=0
+              || $c->$of=='0000-00-00' && $c->$sf!='0000-00-00' ) {
+          // jen chlapi
+          $kod= 3;
+          $chngs.= "$del\"$f\":[\"".trim($c->$sf)."\",$kod]";
+          $data_eli_sum[$kod]++;
+        }
+        elseif ( trim($c->$sf)==''     && trim($c->$of)!=''                                        # 4  o
+              || $c->$sf==0            && $c->$of!=0
+              || $c->$sf=='0000-00-00' && $c->$of!='0000-00-00' ) {
+          // jen osoba
+          $kod= 4;
+          $chngs.= "$del\"$f\":[\"".trim($c->$of)."\",$kod]";
+          $data_eli_sum[$kod]++;
+        }
+        else {
+          $strack= find_track('osoba',$c->s_id_osoba,$f,$c->$sf);
+          $otrack= find_track('osoba',$c->o_id_osoba,$f,$c->$of);
+          $val= mysql_real_escape_string(trim($c->$sf));
+          if ( $otrack && $strack ) {                                                              # 5,6  _track
+            // lze porovnat datum vložení údaje
+            $kod= strcmp($strack,$otrack)>=0 ? 5 : 6;
+            $chngs.= "$del\"$f\":[\"".($kod==7 ? "" : $val)."\",$kod]";
+            $data_eli_sum[$kod]++;
+          }
+          elseif ( isset($spec[$f]) && ($asi & $spec[$f]) ) {                                      # 2  ~
+            // jde o překlep
+            $kod= 2;
+            $chngs.= "$del\"$f\":[\"".$val."\",$kod]";
+            $data_eli_sum[$kod]++;
+          }
+          else {                                                                                   # 7  x
+            // údaje se liší
+            $kod= 7;
+            $chngs.= "$del\"$f\":[\"".$val."\",$kod]";
+            $data_eli_sum[$kod]++;
+          }
+        }
+      }
+      $del= ',';
+      $max_kod= max($max_kod,$kod);
+    }
+    $chngs.= '}';
+//                                                          display($chngs);
+    return $chngs;
+  }
+  function make_chngs_co($c,&$max_kod) { // --------------------------- make_chngs_co
     global $data_eli_sum;
     // definice polí osoba a kódu polí s odhady
     $flds= explode(',',"jmeno,prijmeni,sex,ulice,psc,obec,telefon,email,narozeni,rc_xxxx,note,role");
@@ -476,24 +745,26 @@ function data_eli_auto($typ,$patt='') { trace();
           $data_eli_sum[$kod]++;
         }
         else {
-          $ctrack= find_track('chlapi',$c->id_chlapi,$f=='note'?'pozn':$f,$c->$cf);
+//           $ctrack= find_track('chlapi',$c->id_chlapi,$f=='note'?'pozn':$f,$c->$cf);
+          $ctrack= find_track('chlapi',$c->id_chlapi,$f,$c->$cf);
           $otrack= find_track('osoba',$c->id_osoba,$f,$c->$of);
+          $val= mysql_real_escape_string(trim($c->$cf));
           if ( $otrack && $ctrack ) {                                                            # 5,6  _track
             // lze porovnat datum vložení údaje
             $kod= strcmp($ctrack,$otrack)>=0 ? 5 : 6;
-            $chngs.= "$del\"$f\":[\"".($kod==7 ? "" : trim($c->$cf))."\",$kod]";
+            $chngs.= "$del\"$f\":[\"".($kod==7 ? "" : $val)."\",$kod]";
             $data_eli_sum[$kod]++;
           }
           elseif ( isset($spec[$f]) && ($asi & $spec[$f]) ) {                                      # 2  ~
             // jde o překlep
             $kod= 2;
-            $chngs.= "$del\"$f\":[\"".trim($c->$cf)."\",$kod]";
+            $chngs.= "$del\"$f\":[\"".$val."\",$kod]";
             $data_eli_sum[$kod]++;
           }
           else {                                                                                   # 7  x
             // údaje se liší
             $kod= 7;
-            $chngs.= "$del\"$f\":[\"".trim($c->$cf)."\",$kod]";
+            $chngs.= "$del\"$f\":[\"".$val."\",$kod]";
             $data_eli_sum[$kod]++;
           }
         }
@@ -505,7 +776,68 @@ function data_eli_auto($typ,$patt='') { trace();
 //                                                          display($chngs);
     return $chngs;
   }
-  function make_query($cond) { // -------------------------------- make_query
+  function make_query_sr($cond) { // -------------------------------- make_query_sr
+    return "
+      SELECT * FROM
+      ( SELECT
+        -- technické
+        s.id_osoba AS s_id_osoba,o.id_osoba AS o_id_osoba,t.id_tvori,t.id_rodina,nazev,
+          ( IF(o.telefon!='' AND levenshtein(o.telefon,s.telefon)<=3,2048,0)
+          + IF(o.email!='' AND s.email!='' AND (
+              FIND_IN_SET(o.email,s.email) OR FIND_IN_SET(s.email,o.email) OR
+                levenshtein(s.email,o.email)<=3),1024,0)
+          + IF(o.narozeni!='0000-00-00' AND s.narozeni=o.narozeni,512,0)
+          + IF(o.narozeni!='0000-00-00' AND YEAR(s.narozeni)=YEAR(o.narozeni),128,0)
+          + IF(o.obec!='' AND s.obec!='' AND levenshtein(o.obec,s.obec)<=4,64,0)
+          + IF(o.ulice!='' AND s.ulice!='' AND levenshtein(o.ulice,s.ulice)<=6,32,0)
+          + IF(o.psc!='' AND o.psc=s.psc,16,0)
+          ) AS _asi,
+          CONCAT(
+            IF(o.telefon!='' AND levenshtein(o.telefon,s.telefon)<=3,'T',''),
+            IF(o.email!='' AND s.email!='' AND (
+              FIND_IN_SET(o.email,s.email) OR FIND_IN_SET(s.email,o.email) OR
+                levenshtein(s.email,o.email)<=3),'E',''),
+            IF(o.narozeni!='0000-00-00' AND s.narozeni=o.narozeni,'N',
+              IF(o.narozeni!='0000-00-00' AND YEAR(s.narozeni)=YEAR(o.narozeni),'Y','')),
+            IF(o.obec!='' AND s.obec!='' AND levenshtein(o.obec,s.obec)<=4,'O',''),
+            IF(o.ulice!='' AND s.ulice!='' AND levenshtein(o.ulice,s.ulice)<=6,'U',''),
+            IF(o.psc!='' AND o.psc=s.psc,'P','')
+          ) AS _x,
+        -- OSOBA jako člen rodiny
+        o.jmeno AS o_jmeno,o.prijmeni AS o_prijmeni,o.sex AS o_sex,o.ulice AS o_ulice,
+        o.psc AS o_psc,o.obec AS o_obec,o.telefon AS o_telefon,o.email AS o_email,
+        o.narozeni AS o_narozeni,o.rc_xxxx AS o_rc_xxxx,o.note AS o_note,o.origin AS o_origin,
+        o.rodne AS o_rodne,o.fotka AS o_fotka,o.dieta AS o_dieta,o.stat AS o_stat,
+        o.nomail AS o_nomail,o.uvitano AS o_uvitano,o.historie AS o_historie,o.umrti AS o_umrti,
+        o.obcanka AS o_obcanka,o.vzdelani AS o_vzdelani,o.zamest AS o_zamest,
+        o.zajmy AS o_zajmy,o.jazyk AS o_jazyk,o.cirkev AS o_cirkev,o.aktivita AS o_aktivita,
+        o.clen AS o_clen,
+        -- OSOBA jako single
+        s.jmeno AS s_jmeno,s.prijmeni AS s_prijmeni,s.sex AS s_sex,s.ulice AS s_ulice,
+        s.psc AS s_psc,s.obec AS s_obec,s.telefon AS s_telefon,s.email AS s_email,
+        s.narozeni AS s_narozeni,s.rc_xxxx AS s_rc_xxxx,s.note AS s_note,s.origin AS s_origin,
+        s.rodne AS s_rodne,s.fotka AS s_fotka,s.dieta AS s_dieta,s.stat AS s_stat,
+        s.nomail AS s_nomail,s.uvitano AS s_uvitano,s.historie AS s_historie,s.umrti AS s_umrti,
+        s.obcanka AS s_obcanka,s.vzdelani AS s_vzdelani,s.zamest AS s_zamest,
+        s.zajmy AS s_zajmy,s.jazyk AS s_jazyk,s.cirkev AS s_cirkev,s.aktivita AS s_aktivita,
+        s.clen AS s_clen,
+        -- jen kopírované
+        t.role
+        FROM osoba AS s
+        LEFT JOIN tvori AS st ON st.id_osoba=s.id_osoba
+        LEFT JOIN osoba AS o ON LEFT(s.prijmeni,4)=LEFT(o.prijmeni,4) AND
+          levenshtein(s.prijmeni,o.prijmeni)<=1 AND (s.jmeno RLIKE o.jmeno OR o.jmeno RLIKE s.jmeno)
+        LEFT JOIN tvori AS t ON t.id_osoba=o.id_osoba
+        LEFT JOIN rodina AS r ON r.id_rodina=t.id_rodina
+        LEFT JOIN duplo AS d ON tab1='s' AND id_tab1=s.id_osoba
+        WHERE ISNULL(st.id_tvori) AND t.id_tvori AND
+          ISNULL(id_duplo) AND s.deleted='' AND o.deleted='' AND $cond
+        ORDER BY _asi DESC
+      ) AS _trick
+      GROUP BY s_id_osoba;
+    ";
+  }
+  function make_query_ct($cond) { // -------------------------------- make_query_ct
     return "
       SELECT * FROM
       ( SELECT
@@ -515,7 +847,7 @@ function data_eli_auto($typ,$patt='') { trace();
         o.narozeni AS o_narozeni,o.rc_xxxx AS o_rc_xxxx,o.note AS o_note,o.origin AS o_origin,
         c.jmeno AS c_jmeno,c.prijmeni AS c_prijmeni,c.sex AS c_sex,c.ulice AS c_ulice,
         c.psc AS c_psc,c.obec AS c_obec,c.telefon AS c_telefon,c.email AS c_email,
-        c.narozeni AS c_narozeni,c.rc_xxxx AS c_rc_xxxx,c.pozn AS c_note,c.origin AS c_origin,
+        c.narozeni AS c_narozeni,c.rc_xxxx AS c_rc_xxxx,c.note AS c_note,c.origin AS c_origin,
         -- jen v OSOBA
         o.rodne AS o_rodne,o.fotka AS o_fotka,o.dieta AS o_dieta,o.stat AS o_stat,
         o.nomail AS o_nomail,o.uvitano AS o_uvitano,o.historie AS o_historie,o.umrti AS o_umrti,
@@ -551,9 +883,10 @@ function data_eli_auto($typ,$patt='') { trace();
           levenshtein(c.prijmeni,o.prijmeni)<=1 AND (c.jmeno RLIKE o.jmeno OR o.jmeno RLIKE c.jmeno)
         LEFT JOIN tvori AS t USING(id_osoba)
         LEFT JOIN rodina AS r USING(id_rodina)
-        WHERE c.deleted='' AND o.deleted='' AND $cond
-          AND id_chlapi NOT IN (740,749,750,751,756,758,817,779,789,790,792,797,798,799,813,825) /* neiniciovaní jen na Cross */
-          AND id_chlapi NOT IN (614,620,622,629,630,646,653,656,671,673,679,686,691,694,703,727,731,737,739,742,757,765,783,805,807,812,816,830,836,863,867,869,875,878,886,895,910,916,931,935,944,948,952,963,966,967,971) /* neiniciovaní bez akce */
+        LEFT JOIN duplo AS d ON tab1='c' AND id_tab1=c.id_chlapi
+        WHERE ISNULL(id_duplo) AND c.deleted='' AND o.deleted='' AND $cond
+          /*AND id_chlapi NOT IN (740,749,750,751,756,758,817,779,789,790,792,797,798,799,813,825) neiniciovaní jen na Cross */
+          /*AND id_chlapi NOT IN (614,620,622,629,630,646,653,656,671,673,679,686,691,694,703,727,731,737,739,742,757,765,783,805,807,812,816,830,836,863,867,869,875,878,886,895,910,916,931,935,944,948,952,963,966,967,971) -- neiniciovaní bez akce */
                                         /*AND LEFT(c.origin,7)='ezer_ys'*/
         ORDER BY _asi DESC
       ) AS _trick
@@ -566,9 +899,46 @@ function data_eli_auto($typ,$patt='') { trace();
   $m= $n= 0;
   // zjištění podobných chlapů a osob
   switch ($typ) {
+  case 'sr':
+    $qs= mysql_qry(make_query_sr("s.prijmeni RLIKE '^$patt'"));
+    if ( !$qs ) { $ret->html= "ERROR: ".mysql_error(); goto end; }
+    while (($s= mysql_fetch_object($qs))) {
+      $asi= $s->_asi;
+      $x= $s->_x;
+      $ids= $s->s_id_osoba;
+      $pjs= mysql_real_escape_string("{$s->s_prijmeni} [$x] {$s->s_jmeno}");
+      $idt= $s->id_tvori;
+      $idr= $s->id_rodina;
+      $jmr= $s->nazev;
+      $s->s_narozeni= sql_date1($s->s_narozeni);
+      $s->o_narozeni= sql_date1($s->o_narozeni);
+      last_dates_sr($s);        // přepočítej data poslední práce se záznamem
+                                                                debug($s,"$typ");
+      $rozdily= 0;
+      $chngs= make_chngs_so($s,$rozdily);
+      $rzd= $asi<512 ? 8 : $rozdily;
+      // vložení nebo nalezení rodiny
+      $idd= select("id_duplo","duplo","tab1='s' AND tab2='r' AND id_tab2='$idr'");
+      if ( !$idd ) {
+        // vložení nalezené rodiny $idr
+        $rr= query("INSERT INTO duplo (znacka,rozdily,asi,tab1,tab2,id_tab2)
+                    VALUES (\"$jmr\",$rzd,-1,'s','r',$idr)");
+        if ( !$rr ) { $ret->html= "ERROR: ".mysql_error(); goto end; }
+        $idd= mysql_insert_id();
+      }
+      // vložení singla
+      $ri= query("INSERT INTO duplo (idd,znacka,rozdily,asi,faze,tab1,id_tab1,last1,tab2,id_tab2,last2,chngs)
+             VALUES ($idd,'$pjs',$rzd,$asi,1,'s',$ids,'{$s->_s_last}','t',$idt,'{$s->_o_last}','$chngs')");
+      if ( !$ri ) { $ret->html= "ERROR: ".mysql_error(); goto end; }
+      $n++;
+      $m++;
+      $data_eli_max[9]++;
+    }
+    break;
   case 'cs':
-    $qc= mysql_qry(make_query("c.prijmeni RLIKE '^$patt' AND ISNULL(id_rodina) AND id_osoba"));
+    $qc= mysql_qry(make_query_ct("c.prijmeni RLIKE '^$patt' AND ISNULL(id_rodina) AND id_osoba"));
     while (($c= mysql_fetch_object($qc))) {
+//                                                                 debug($c,"$typ");
       $asi= $c->_asi;
       $x= $c->_x;
       $idc= $c->id_chlapi;
@@ -576,24 +946,25 @@ function data_eli_auto($typ,$patt='') { trace();
       $c->o_narozeni= sql_date1($c->o_narozeni);
       $c->c_narozeni= sql_date1($c->c_narozeni);
       // rodina nenalezena ale osoba ano => rozdíly=9 (fialovy)
+      last_dates_co($c);        // přepočítej data poslední práce se záznamem
       $rozdily= 0;
-      $chngs= make_chngs($c,$rozdily);
+      $chngs= make_chngs_co($c,$rozdily);
       $rzd= $asi<512 ? 8 : $rozdily;
       $pj= mysql_real_escape_string("{$c->c_prijmeni} [$x] {$c->c_jmeno}");
-      query("INSERT INTO duplo (idd,znacka,rozdily,tab1,id_tab1,tab2,id_tab2,chngs)
-             VALUES (0,'$pj',$rzd,'c',$idc,'o',$ido,'$chngs')");
-      $idd= mysql_insert_id();
+      query("INSERT INTO duplo (idd,znacka,rozdily,asi,faze,tab1,id_tab1,last1,tab2,id_tab2,last2,chngs)
+             VALUES (0,'$pj',$rzd,$asi,1,'c',$idc,'{$c->_c_last}','o',$ido,'{$c->_o_last}','$chngs')");
       $n++;
       $m++;
       $data_eli_max[9]++;
     }
     break;
   case 'ct':
-    $qc= mysql_qry(make_query("c.prijmeni RLIKE '^$patt' AND id_rodina AND id_osoba"));
+    $qc= mysql_qry(make_query_ct("c.prijmeni RLIKE '^$patt' AND id_rodina AND id_osoba"));
     while (($c= mysql_fetch_object($qc))) {
       $c->o_narozeni= sql_date1($c->o_narozeni);
       $c->c_narozeni= sql_date1($c->c_narozeni);
       # r,s - rodina nebo single
+      last_dates_co($c);        // přepočítej data poslední práce se záznamem
       $asi= $c->_asi;
       $x= $c->_x;
       $idc= $c->id_chlapi;
@@ -608,7 +979,7 @@ function data_eli_auto($typ,$patt='') { trace();
       if ( $idd ) {
         // rodina již byla vložena - přidej $idt správnému členu
         $rozdily= 0;
-        $chngs= make_chngs($c,$rozdily);
+        $chngs= make_chngs_co($c,$rozdily);
         // rozdíl při neshodě E,T,N je nesnižitelný
         $rzd= $asi<512 ? 8 : "IF($rozdily>rozdily,$rozdily,rozdily)";
         if ( $asi<32 ) { // pokud se neshoduje ani ulice, necháme formulář prázdný
@@ -616,16 +987,16 @@ function data_eli_auto($typ,$patt='') { trace();
         }
         mysql_qry("
           UPDATE duplo SET tab1='c',id_tab1=$idc,znacka=CONCAT('{$jmo}[$x] / ',znacka),
-            chngs='$chngs',rozdily=$rzd
-          WHERE tab1='-' AND tab2='t' AND id_tab2=$idt
+            chngs='$chngs',rozdily=$rzd,faze=1
+          WHERE tab1='-' AND tab2='r' AND id_tab2=$idt
         ");
       }
       else {
       // vložení rodiny $idr a jejich členů - poznač $idt a vkopíruj chngs
         $rzd= $asi<512 ? 8 : 0;   // rozdíl při neshodě E,T,N je nesnižitelný
         mysql_qry("
-          INSERT INTO duplo (znacka,rozdily,tab1,tab2,id_tab2)
-          VALUES (\"$jmr\",$rzd,'-','r',$idr)");
+          INSERT INTO duplo (znacka,rozdily,asi,tab1,tab2,id_tab2)
+          VALUES (\"$jmr\",$rzd,-1,'-','r',$idr)");
         $idd= mysql_insert_id();
         $n++;
         $max_rozdily= 0;
@@ -640,19 +1011,20 @@ function data_eli_auto($typ,$patt='') { trace();
           $chngs= "";
           $rozdily= 0;
           if ( $idt == $idrt ) {
-            $chngs= make_chngs($c,$rozdily);
+            $chngs= make_chngs_co($c,$rozdily);
             $max_rozdily= max($max_rozdily,$rozdily);
             if ( $asi<32 ) { // pokud se neshoduje ani ulice, necháme formulář prázdný
               $chngs= '';
             }
             $data_eli_max[$max_rozdily]++;
-            $qi= "INSERT INTO duplo (znacka,idd,rozdily,tab1,id_tab1,tab2,id_tab2,chngs)
-                  VALUES ('{$jmo}[$x] / $jmro',$idd,$rozdily,'c',$idc,'t',$idrt,'$chngs')";
+            $qi= "INSERT INTO duplo (znacka,idd,rozdily,asi,faze,tab1,id_tab1,last1,tab2,id_tab2,last2,chngs)
+                  VALUES ('{$jmo}[$x] / $jmro',$idd,$rozdily,$asi,1,'c',$idc,'{$c->_c_last}',
+                                                                  't',$idrt,'{$c->_o_last}','$chngs')";
           }
           else {
             // jen přenesení osoby
-            $qi= "INSERT INTO duplo (znacka,idd,rozdily,tab1,tab2,id_tab2)
-                  VaLUES ('$jmro',$idd,0,'-','t',$idrt)";
+            $qi= "INSERT INTO duplo (znacka,idd,rozdily,asi,tab1,tab2,id_tab2)
+                  VaLUES ('$jmro',$idd,0,-2,'-','r',$idrt)";
           }
           mysql_qry($qi);
           $m++;
@@ -734,6 +1106,215 @@ function akce_eli_navrh($typ,$id1,$id2) { trace();
 end:
   return 1;
 }
+# ================================================================================================== PF
+# ------------------------------------------------------------------------------------------- adresy
+# generování adres pro PF2013
+function adresy($roku,$patt='') { trace();
+  global $adresy_n, $adresy_limit, $adresy_err;
+  function out(&$html,&$xls,$prijmeni,$jmeno,$jmena,$obec,$psc,$ulice,$stat,$info,$posledni,$zdroj) { // --- out
+    $html.= "<tr><td>$prijmeni</td><td>$jmeno</td><td>$jmena</td>"
+           ."<td>$obec</td><td>$psc</td><td>$ulice</td><td>$stat</td>"
+           ."<td>$info</td><td>$posledni</td><td>$zdroj</td></tr>";
+  }
+  function out_sql(&$tab,&$xls,$sql) { // ------------------------------------------------- out_sql
+    global $adresy_n, $adresy_limit, $adresy_err;
+    $qo= mysql_qry($sql);
+    if ( !$qo ) { $adresy_err.= "ERROR: ".mysql_error(); goto end; }
+    while (($o= mysql_fetch_object($qo))) {
+      if ( !$adresy_limit || $n<$adresy_limit) {
+        list($a,$b)= explode(" a ",$o->jmeno);
+        $jmena= $b ? "$a a $b" : $a;
+        if ( $o->_adr ) {
+          list($ulice,$psc,$obec,$stat)= explode('|',$o->_adr);
+          if ( $ulice || $obec ) {
+            out($tab,$xls,$o->prijmeni,$o->jmeno,$jmena,$obec,$psc,$ulice,$stat,
+                          $o->info,$o->_posledni,$o->zdroj);
+          }
+        }
+        elseif ( $o->ulice || $o->obec ) {
+          out($tab,$xls,$o->prijmeni,$o->jmeno,$jmena,$o->obec,$o->psc,$o->ulice,$o->stat,
+                        $o->info,$o->_posledni,$o->zdroj);
+        }
+      }
+      $adresy_n++;
+    }
+  end:
+  }
+  function sql_roles($cond,$hranice) {
+    // rodina včetně svých dětí coby pečounů bez různosti adres svých členů
+    return "
+      SELECT * FROM
+        (SELECT
+          id_rodina, nazev, GROUP_CONCAT(id_osoba ORDER BY role) AS ids_osoba,
+          IF(o.ulice AND o.ulice!=r.ulice OR o.psc AND o.psc!=r.psc OR o.obec AND o.obec!=r.obec,id_rodina,0) AS _jinde,
+          GROUP_CONCAT(role ORDER BY role) AS _roles,
+          CONCAT(r.ulice,'|',r.psc,'|',r.obec,'|',
+            IF(r.stat,r.stat,IF(LEFT(r.psc,1) IN ('0',9,8),'SK',
+              IF(LEFT(r.psc,1) IN (1,2,3,4,5,6,7),'CZ','?')))) AS _radr,
+          ( SELECT CONCAT(MAX(YEAR(datum_od)),GROUP_CONCAT(IF(id_akce=369,IF(funkce IN (5,12),'team 2013','mrop 2013'),'') SEPARATOR ''))
+            FROM osoba JOIN spolu USING(id_osoba)
+            JOIN pobyt USING(id_pobyt) JOIN akce ON pobyt.id_akce=akce.id_duakce
+            WHERE id_osoba=o.id_osoba AND akce.spec=0) AS _akce
+        FROM osoba AS o LEFT JOIN tvori AS t USING(id_osoba) LEFT JOIN rodina AS r USING(id_rodina)
+        WHERE (LOWER(nazev) NOT RLIKE 'zemřel|vdov' AND LOWER(o.note) NOT RLIKE 'zemřel|vdov' AND LOWER(o.jmeno) NOT RLIKE 'zemřel|vdov')
+        AND ( role IN ('a','b') OR ( SELECT MAX(funkce) FROM osoba JOIN spolu USING(id_osoba)
+            LEFT JOIN pobyt USING(id_pobyt) LEFT JOIN akce ON pobyt.id_akce=akce.id_duakce
+            WHERE id_osoba=o.id_osoba AND akce.spec=0)=99 )
+        AND id_rodina
+        GROUP BY id_rodina HAVING LEFT(_akce,4)>$hranice
+        ORDER BY _jinde DESC,_roles DESC) AS _rs
+      WHERE $cond
+    ";
+  }
+  function sql_roles_non_spec($cond,$hranice) {
+    // rodina včetně svých dětí coby pečounů bez různosti adres svých členů
+    return "
+      SELECT * FROM
+        (SELECT
+          id_rodina, nazev, GROUP_CONCAT(id_osoba ORDER BY role) AS ids_osoba,
+          IF(o.ulice AND o.ulice!=r.ulice OR o.psc AND o.psc!=r.psc OR o.obec AND o.obec!=r.obec,id_rodina,0) AS _jinde,
+          GROUP_CONCAT(role ORDER BY role) AS _roles,
+          CONCAT(r.ulice,'|',r.psc,'|',r.obec,'|',
+            IF(r.stat,r.stat,IF(LEFT(r.psc,1) IN ('0',9,8),'SK',
+              IF(LEFT(r.psc,1) IN (1,2,3,4,5,6,7),'CZ','?')))) AS _radr,
+          ( SELECT CONCAT(MAX(YEAR(datum_od)),GROUP_CONCAT(IF(id_akce=369,IF(funkce IN (5,12),'team 2013','mrop 2013'),'') SEPARATOR ''))
+            FROM osoba JOIN spolu USING(id_osoba)
+            JOIN pobyt USING(id_pobyt) JOIN akce ON pobyt.id_akce=akce.id_duakce
+            WHERE id_osoba=o.id_osoba AND akce.spec=0) AS _akce,
+          ( SELECT MIN(spec)
+            FROM osoba JOIN spolu USING(id_osoba)
+            JOIN pobyt USING(id_pobyt) JOIN akce ON pobyt.id_akce=akce.id_duakce
+            WHERE id_osoba=o.id_osoba AND YEAR(datum_od)<=$hranice) AS _spec
+        FROM osoba AS o LEFT JOIN tvori AS t USING(id_osoba) LEFT JOIN rodina AS r USING(id_rodina)
+        WHERE (LOWER(nazev) NOT RLIKE 'zemřel|vdov' AND LOWER(o.note) NOT RLIKE 'zemřel|vdov' AND LOWER(o.jmeno) NOT RLIKE 'zemřel|vdov')
+        AND ( role IN ('a','b') OR ( SELECT MAX(funkce) FROM osoba JOIN spolu USING(id_osoba)
+            LEFT JOIN pobyt USING(id_pobyt) LEFT JOIN akce ON pobyt.id_akce=akce.id_duakce
+            WHERE id_osoba=o.id_osoba AND akce.spec=0)=99 )
+        AND id_rodina
+        GROUP BY id_rodina HAVING LEFT(_akce,4)>$hranice AND _spec=0
+        ORDER BY _jinde DESC,_roles DESC) AS _rs
+      WHERE $cond
+    ";
+  }
+  function sql_stat($x) {
+    return "
+        IF({$x}obec RLIKE 'Polska','P',
+          IF({$x}obec RLIKE '^A-','A',
+            IF(LEFT({$x}psc,1) IN ('0','9','8'),'SK',
+              IF(LEFT({$x}psc,1) IN (1,2,3,4,5,6,7),'CZ','?'))))
+    ";
+  }
+  // --------------------------------------------------------------------------------------- .main.
+  $html= '';
+  $xls= "";
+  $adresy_n= 0;
+  $hranice= 2013-$roku;
+  $cond= $patt ? "prijmeni RLIKE '^$patt'" : "1";
+  $tab= "<table class='stat'><tr><th>prijmeni</th><th>jmena</th><th>jmena2</th>
+         <th>obec</th><th>psc</th><th>ulice</th><th>stat</th><th>info</th><th>naposled</th><th>zdroj</th></tr>";
+
+  // info: team 2013, mrop 2013
+  // nesjednocení chlapi s účastí na chlapské akci
+  $stat= sql_stat("");
+  out_sql($tab,$xls,"
+    SELECT prijmeni,jmeno,ulice,psc,obec,MAX(YEAR(datum_od)) AS _posledni,
+      $stat AS stat,
+      GROUP_CONCAT(IF(id_akce=9,IF(stupen IN (4,5),'team 2013','mrop 2013'),'') SEPARATOR '') AS info,
+      CONCAT('chlapi mimo rodinu - ',id_chlapi) AS zdroj
+      -- 'chlapi mimo db' AS zdroj
+    FROM ezer_ys.chlapi AS c
+    JOIN ezer_ys.ch_ucast USING(id_chlapi)
+    JOIN ezer_ys.ch_akce USING(id_akce)
+    LEFT JOIN duplo AS d ON tab1='c' AND id_tab1=id_chlapi AND rozdily=10
+    WHERE id_akce!=8 /*Cross*/ AND ISNULL(id_duplo) AND $cond
+    GROUP BY id_chlapi HAVING _posledni>$hranice
+    ORDER BY ulice,obec
+  ");
+  // nesjednocení singles s účastí na akci
+  $stat= sql_stat("");
+  out_sql($tab,$xls,"
+    SELECT prijmeni,jmeno,ulice,psc,obec,MAX(YEAR(datum_od)) AS _posledni,
+      $stat AS stat,
+      GROUP_CONCAT(IF(id_akce=369,IF(funkce IN (5,12),'team 2013','mrop 2013'),'') SEPARATOR '') AS info,
+      CONCAT('pečouni mimo rodinu - ',id_osoba) AS zdroj
+    FROM osoba AS o
+    JOIN spolu AS s USING(id_osoba)
+    LEFT JOIN pobyt AS p USING(id_pobyt)
+    LEFT JOIN akce AS a ON p.id_akce=a.id_duakce
+    LEFT JOIN tvori AS t USING(id_osoba)
+    LEFT JOIN duplo AS d ON tab1='s' AND id_tab1=id_osoba AND rozdily=10
+    WHERE ISNULL(id_tvori) AND ISNULL(id_duplo) AND a.spec=0 AND $cond
+    GROUP BY id_osoba HAVING _posledni>$hranice
+    ORDER BY ulice,obec
+  ");
+  // účastnil se pouze jeden člen rodiny
+  $qr= mysql_qry(sql_roles("_roles IN ('a','b','d')",$hranice));
+  if ( !$qr ) { $adresy_err.= "ERROR: ".mysql_error(); goto end; }
+  while (($r= mysql_fetch_object($qr))) {
+    $posledni= substr($r->_akce,0,4);
+    $info= substr($r->_akce,4);
+    $stat= sql_stat("o.");
+    out_sql($tab,$xls,"
+      SELECT prijmeni,jmeno,
+        IF(o.ulice='' AND o.psc='' AND o.obec='' AND o.stat='','{$r->_radr}',
+          CONCAT(o.ulice,'|',o.psc,'|',o.obec,'|',$stat)
+          ) AS _adr,
+        $posledni AS _posledni, '$info' AS info,
+        CONCAT('db single - ',id_osoba) AS zdroj
+      FROM osoba AS o JOIN tvori AS t USING(id_osoba) JOIN rodina AS r USING(id_rodina)
+      WHERE id_osoba={$r->ids_osoba}
+    ");
+  }
+  // účastnilo se více členů z rodiny - bereme rodinnou adresu
+  $qr= mysql_qry(sql_roles("_jinde=0 AND _roles RLIKE ','",$hranice));
+  if ( !$qr ) { $adresy_err.= "ERROR: ".mysql_error(); goto end; }
+  while (($r= mysql_fetch_object($qr))) {
+    $posledni= substr($r->_akce,0,4);
+    $info= substr($r->_akce,4);
+    out_sql($tab,$xls,"
+      SELECT \"{$r->nazev}\" AS prijmeni,'{$r->_radr}' AS _adr,
+        GROUP_CONCAT(jmeno SEPARATOR ' a ') AS jmeno,
+        $posledni AS _posledni, '$info' AS info,
+        CONCAT('db rodina - ',{$r->id_rodina}) AS zdroj
+      FROM osoba
+      WHERE id_osoba IN ({$r->ids_osoba})
+    ");
+  }
+  // účastnilo se více členů z rodiny - bereme rodinnou adresu
+  $qr= mysql_qry(sql_roles("_jinde!=0 AND _roles RLIKE ','",$hranice));
+  if ( !$qr ) { $adresy_err.= "ERROR: ".mysql_error(); goto end; }
+  while (($r= mysql_fetch_object($qr))) {
+    $posledni= substr($r->_akce,0,4);
+    $info= substr($r->_akce,4);
+    out_sql($tab,$xls,"
+      SELECT \"{$r->nazev}\" AS prijmeni,'{$r->_radr}' AS _adr,
+        GROUP_CONCAT(jmeno SEPARATOR ' a ') AS jmeno,
+        $posledni AS _posledni, '$info' AS info,
+        CONCAT('db xrodina - ',{$r->id_rodina}) AS zdroj
+      FROM osoba
+      WHERE id_osoba IN ({$r->ids_osoba})
+    ");
+  }
+//   // účastnilo se více členů z rodiny - bereme rodinnou adresu ... BEZ SPEC
+//   $qr= mysql_qry(sql_roles_non_spec("_jinde!=0 AND _roles RLIKE ','",$hranice));
+//   if ( !$qr ) { $adresy_err.= "ERROR: ".mysql_error(); goto end; }
+//   while (($r= mysql_fetch_object($qr))) {
+//     $posledni= substr($r->_akce,0,4);
+//     $info= substr($r->_akce,4);
+//     out_sql($tab,$xls,"
+//       SELECT \"{$r->nazev}\" AS prijmeni,'{$r->_radr}' AS _adr,
+//         GROUP_CONCAT(jmeno SEPARATOR ' a ') AS jmeno,
+//         $posledni AS _posledni, '$info' AS info,
+//         CONCAT('db xrodina - ',{$r->id_rodina}) AS zdroj
+//       FROM osoba
+//       WHERE id_osoba IN ({$r->ids_osoba})
+//     ");
+//   }
+  $tab.= "</table>";
+  $html.= "Našlo se $adresy_n adres<br>$tab";
+end:
+  return $html;
+}
 # ================================================================================================== DUPLICITY - OLDIES
 # ---------------------------------------------------------------------------------- akce_data_duplo
 function akce_data_duplo($par,$ids=null) {  trace();
@@ -777,7 +1358,7 @@ function akce_data_duplo($par,$ids=null) {  trace();
     return $err;
   }
   # vlastní tělo funkce
-                                                        debug($par,"akce_data_duplo(...,$ids)");
+//                                                         debug($par,"akce_data_duplo(...,$ids)");
   $ret= (object)array('ok'=>0,'msg'=>'');
   $err= $msg= "";
   foreach (explode(',',$par->duplo) as $do) {
@@ -874,7 +1455,7 @@ function akce_data_duplo($par,$ids=null) {  trace();
 end:
   if ( $err ) $msg= "<br><br>CHYBA: $err<hr>$msg";
   $ret->msg= $msg;
-                                                        debug($ret,"akce_data_duplo");
+//                                                         debug($ret,"akce_data_duplo");
   return $ret;
 }
 # --------------------------------------------------------------------------------------- dupl_osoba
@@ -896,7 +1477,7 @@ end:
 # --------------------------------------------------------------------------------------- dupl_meth1
 # zkusí vyřešit duplicitu 2 osob
 function dupl_meth1($ids_osoba,$to_change=0) { trace();
-                                                        debug($ids_osoba,"osoby");
+//                                                         debug($ids_osoba,"osoby");
   $html= '';
   // pomocné
   $omitt= array('osoba'=>array('id_osoba','id_dupary','id_dudeti','origin','historie'));

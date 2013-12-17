@@ -311,7 +311,7 @@ form _chlap [,,*,466] {
   label          [L+5,T+138,33,] {title:'e-mail'}
   field email    [L+5,T+154,355,] {data:c.email}
   label          [L+5,T+179,33,] {title:'poznámka'}
-  edit  pozn     [L+5,T+194,355,60] {data:c.pozn}
+  edit  pozn     [L+5,T+194,355,60] {data:c.note}
   # --------------------------------------------------  TLAČÍTKA
   const Lt=240
   const Tt=340
