@@ -253,7 +253,7 @@ form _navrhy [,,Wr,Hr] {
   field faze  { data:d.faze }   // 2 = sjednoceno
   # --------------------------------------------------  metody rozpojení
   proc cr_reject() { var ret:object
-    ret.set(ask('data_eli_izol_cr',bn.idd.get,bnn.idd.get,bnn.id1.get,bnn.id2.get));
+    ret.set(ask('data_eli_izol_cr',bn.idd.get,bnn.idd.get,bnn.id1.get));
     [ ret.err; warning(ret.err) ];
     bn.browse_seek(conc("id_duplo=",bn.idd.get));
     bnn.browse_seek;
