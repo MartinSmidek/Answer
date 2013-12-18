@@ -21,9 +21,13 @@ function ROLLBACK_ALL() { trace();
 function calc_tvori($idt) { trace();
   $ret= (object)array();
   $qd= mysql_qry("
-    SELECT id_tvori,id_osoba,CONCAT(prijmeni,' ',jmeno) AS jmena,id_rodina,nazev
+    SELECT id_tvori,id_osoba,CONCAT(prijmeni,' ',jmeno) AS jmena,id_rodina,rodina.nazev,
+      id_spolu,id_pobyt,id_akce,akce.nazev AS a_nazev
     FROM tvori JOIN osoba USING(id_osoba) JOIN rodina USING(id_rodina)
-    WHERE id_tvori=$idt
+    LEFT JOIN spolu USING(id_osoba) LEFT JOIN pobyt USING(id_pobyt)
+    LEFT JOIN akce ON id_duakce=id_akce
+    WHERE id_tvori=$idt AND akce.spec=0
+    ORDER BY akce.datum_od DESC,id_akce DESC LIMIT 1
   ");
   if ( !$qd ) { $ret->err= "ERROR: ".mysql_error(); goto end; }
   if (($d= mysql_fetch_object($qd))) {
@@ -85,7 +89,9 @@ function data_eli_izol_cr($iddr,$idd,$idc,$faze=2) { trace();
   $c= select("*","ezer_ys.chlapi","id_chlapi=$idc");
   $zmeny= array();
   foreach ($flds as $fld) {
-    $zmeny[]= (object)array('fld'=>$fld,'op'=>'i','val'=>$c->$fld);
+    if ( $c->$fld ) {
+      $zmeny[]= (object)array('fld'=>$fld,'op'=>'i','val'=>$c->$fld);
+    }
   }
 //                                                 debug($zmeny);
   // vložení do OSOBA,TVORI,RODINA
@@ -104,9 +110,11 @@ function data_eli_izol_cr($iddr,$idd,$idc,$faze=2) { trace();
   if ( !$idt ) { $ret->err= "ERROR: ".mysql_error(); goto end; }
   // vložení akcí a poznačení v DUPLO
   data_eli_dupl_cs($idd,$idc,$ido,$faze,true);
-  $n= select("COUNT(*)","duplo","idd=$iddr AND rozdily NOT IN (0,10)");
-  if ( !$n ) { // poznač, že je sjednocena "rodina"
-    query("UPDATE duplo SET rozdily=10,faze=$faze WHERE id_duplo=$iddr");
+  if ( $iddr ) {
+    $n= select("COUNT(*)","duplo","idd=$iddr AND rozdily NOT IN (0,10)");
+    if ( !$n ) { // poznač, že je sjednocena "rodina"
+      query("UPDATE duplo SET rozdily=10,faze=$faze WHERE id_duplo=$iddr");
+    }
   }
 end:
   return $ret;
@@ -167,24 +175,26 @@ function data_eli_dupl_cs($idd,$idc,$ido,$faze=2,$jen_akce=false) { trace();
   query("UPDATE duplo SET rozdily=10,faze=$faze WHERE id_duplo=$idd");
   $m= mysql_affected_rows();
   if ( !$jen_akce ) {
-    # zápis změněných údajů z DUPLO.chngs do osoba
+    # zápis změněných údajů z DUPLO.chngs do osoba, jsou-li
     $chngs_s= select("chngs","duplo","id_duplo=$idd");
     $o= select("*","osoba","id_osoba=$ido");
-    $chngs= json_decode($chngs_s);
-                                                  debug($chngs);
-    $zmeny= array();
-    foreach ($chngs as $fld=>$chng) {
-      $val= is_array($chng) ? $chng[0] : $chng;
-      $old= $o->$fld;
-      if ( $fld=='narozeni' ) $val= sql_date1($val,1);
-      if ( $val != $old && isset($o->$fld) ) {
-        $zmeny[]= (object)array('fld'=>$fld,'op'=>'u','val'=>$val,'old'=>$old);
+    if ( $chngs_s ) {
+      $chngs= json_decode($chngs_s);
+                                                    debug($chngs);
+      $zmeny= array();
+      foreach ($chngs as $fld=>$chng) {
+        $val= is_array($chng) ? $chng[0] : $chng;
+        $old= $o->$fld;
+        if ( $fld=='narozeni' ) $val= sql_date1($val,1);
+        if ( $val != $old && isset($o->$fld) ) {
+          $zmeny[]= (object)array('fld'=>$fld,'op'=>'u','val'=>$val,'old'=>$old);
+        }
       }
-    }
-                                                  debug($zmeny);
-    // promítnutí změn do OSOBA
-    if ( count($zmeny) ) {
-      ezer_qry("UPDATE",'osoba',$ido,$zmeny);
+                                                    debug($zmeny);
+      // promítnutí změn do OSOBA
+      if ( count($zmeny) ) {
+        ezer_qry("UPDATE",'osoba',$ido,$zmeny);
+      }
     }
   }
 end:
@@ -915,13 +925,26 @@ function data_eli_auto($typ,$patt='') { trace();
       GROUP BY id_chlapi;
     ";
   }
+  function make_query_c($cond) { // -------------------------------- make_query_c
+    return "
+      SELECT
+        id_chlapi,c.jmeno,c.prijmeni
+        FROM ezer_ys.chlapi AS c
+        LEFT JOIN osoba AS o ON LEFT(c.prijmeni,4)=LEFT(o.prijmeni,4) AND
+          levenshtein(c.prijmeni,o.prijmeni)<=1 AND (c.jmeno RLIKE o.jmeno OR o.jmeno RLIKE c.jmeno)
+        LEFT JOIN duplo AS d ON tab1='c' AND id_tab1=c.id_chlapi
+        WHERE ISNULL(id_duplo) AND c.deleted='' AND (ISNULL(id_osoba) OR o.deleted!='')
+          AND $cond
+        ORDER BY c.prijmeni
+    ";
+  }
   $ret= (object)array('html'=>'hotovo');
   $data_eli_sum= array(0,0,0,0,0,0,0,0,0,0,0);
   $data_eli_max= array(0,0,0,0,0,0,0,0,0,0,0);
   $m= $n= 0;
   // zjištění podobných chlapů a osob
   switch ($typ) {
-  case 'sr':
+  case 'sr': // -------------------------------------------------------- single - rodina
     $qs= mysql_qry(make_query_sr("s.prijmeni RLIKE '^$patt'"));
     if ( !$qs ) { $ret->html= "ERROR: ".mysql_error(); goto end; }
     while (($s= mysql_fetch_object($qs))) {
@@ -957,7 +980,7 @@ function data_eli_auto($typ,$patt='') { trace();
       $data_eli_max[9]++;
     }
     break;
-  case 'cs':
+  case 'cs': // -------------------------------------------------------- chlap - single
     $qc= mysql_qry(make_query_ct("c.prijmeni RLIKE '^$patt' AND ISNULL(id_rodina) AND id_osoba"));
     while (($c= mysql_fetch_object($qc))) {
 //                                                                 debug($c,"$typ");
@@ -980,7 +1003,22 @@ function data_eli_auto($typ,$patt='') { trace();
       $data_eli_max[9]++;
     }
     break;
-  case 'ct':
+  case 'c-': // -------------------------------------------------------- chlap - neznámý
+    $qc= mysql_qry(make_query_c("c.prijmeni RLIKE '^$patt'"));
+    if ( !$qc ) { $ret->html= "ERROR: ".mysql_error(); goto end; }
+    while (($c= mysql_fetch_object($qc))) {
+      $idc= $c->id_chlapi;
+      $jmr= mysql_real_escape_string("{$c->prijmeni} {$c->jmeno}");
+      mysql_qry("
+        INSERT INTO duplo (znacka,rozdily,asi,tab1,id_tab1,tab2)
+        VALUES ('$jmr','*',9999,'c',$idc,'-')");
+      $idd= mysql_insert_id();
+      $n++;
+      // vytvoření osoby z izolovaného chlapa, včetně zápisu do CH_FA
+      data_eli_izol_cr(0,$idd,$idc);
+    }
+    break;
+  case 'ct': // -------------------------------------------------------- chlap - rodina
     $qc= mysql_qry(make_query_ct("c.prijmeni RLIKE '^$patt' AND id_rodina AND id_osoba"));
     while (($c= mysql_fetch_object($qc))) {
       $c->o_narozeni= sql_date1($c->o_narozeni);

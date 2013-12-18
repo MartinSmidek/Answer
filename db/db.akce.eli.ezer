@@ -25,19 +25,27 @@ use info: form right [6,4,,] { tag:'i'
     clear; do.rucne.sr.click; s2.bs._nazev.set_query(1,"oh"); r3.br._nazev.set_query(1,"ohř"); }}
   field parametr [-420,5,80,] label [-472,8,50,] { title:"par:", style:"color:white" }
                                                 # ------------------------- kalkulačka
-  field id_akce   [ 50,150, 80,] { tag:'c', format:'nr' }
-  field a_nazev   [ 50,180,150,] { tag:'c', format:'n' }
-  field id_pobyt  [150,150, 80,] { tag:'c', format:'nr' }
-  field id_spolu  [250,150, 80,] { tag:'c', format:'nr', proc onchanged() { var ret:object
-    form.init; ret.set(ask('calc_spolu',id_spolu.get)); copy_by_name(ret,form);
+  label          [ 50,130, 80,] { tag:'c', title:'akce'}
+  field id_akce  [ 50,150, 40,] { tag:'c', format:'dnr' }
+  field a_nazev  [ 50,180,150,] { tag:'c', format:'on' }
+  label          [150,130, 80,] { tag:'c', title:'pobyt'}
+  field id_pobyt [150,150, 40,] { tag:'c', format:'dnr' }
+  label          [250,130, 80,] { tag:'c', title:'&lt;= spolu =&gt;'}
+  field id_spolu [250,150, 40,] { tag:'c', format:'nr',
+    proc onchanged() { var ret:object
+      form.init; ret.set(ask('calc_spolu',id_spolu.get)); copy_by_name(ret,form);
   }}
-  field id_osoba  [350,150, 80,] { tag:'c', format:'nr' }
-  field jmena     [350,180,150,] { tag:'c', format:'n' }
-  field id_tvori  [450,150, 80,] { tag:'c', format:'nr',proc onchanged() { var ret:object
-    form.init; ret.set(ask('calc_tvori',id_tvori.get)); copy_by_name(ret,form);
+  label          [350,130, 80,] { tag:'c', title:'osoba'}
+  field id_osoba [350,150, 40,] { tag:'c', format:'dnr' }
+  field jmena    [350,180,150,] { tag:'c', format:'on' }
+  label          [450,130, 80,] { tag:'c', title:'&lt;&lt;= tvoří =&gt;'}
+  field id_tvori [450,150, 40,] { tag:'c', format:'nr',
+    proc onchanged() { var ret:object
+      form.init; ret.set(ask('calc_tvori',id_tvori.get)); copy_by_name(ret,form);
   }}
-  field id_rodina [550,150, 80,] { tag:'c', format:'nr' }
-  field nazev     [550,180, 80,] { tag:'c', format:'n' }
+  label           [550,130, 80,] { tag:'c', title:'rodina'}
+  field id_rodina [550,150, 40,] { tag:'c', format:'dnr' }
+  field nazev     [550,180, 40,] { tag:'c', format:'on' }
 }
 # ================================================================================================ 1
 use n1:   form _navrhy  [6,38,,] { tag:'n1'     # ------------------------- návrhy
@@ -45,7 +53,7 @@ use n1:   form _navrhy  [6,38,,] { tag:'n1'     # ------------------------- náv
   # uložení hodnot k rodině
   button [Lcr,Tr-20,100,] { tag:'jrr', title:"zapamatovat změny údajů", proc onclick() {
     form.chngs.set(form.r.real_json); form.r.plain; form.chngs.change;
-    form.d.key(form.bn.idd.get); form.d.save
+    form.d.key(form.bn.idd.get); form.d.save; form.d.load
   }}
                                                 # ------------------------- chlap+rodina  sjednocení
                                                 # ------------------------- chlap+single  sjednocení
@@ -102,6 +110,7 @@ menu do {type:'left', format:'f'
   menu zjistene {title:'=> Sjednocení duplicit',type:'group'
     item cs {title:'chlap a single',    par:°{mode:'jcs', forms:'i|n1|c2|s3', tags:'jcs|o', call:'init_cs_s'} }
     item cr {title:'chlap a rodina',    par:°{mode:'jcr', forms:'i|n1|c2|r3', tags:'jcr|o', call:'init_cr_s'} }
+    item c  {title:'chlap izolovaný',   par:°{mode:'jc',  forms:'i|n1|c2',    tags:'jc|o',  call:'init_c_s'} }
     item sr {title:'single a rodina',   par:°{mode:'jsr', forms:'i|n1|s2|r3', tags:'jsr|o', call:'init_sr_s'} }
     item rr {title:'2 rodiny',          par:°{mode:'jrr', forms:'i|n1|r2|r3', tags:'jrr|o|r'} }
   }
@@ -111,31 +120,25 @@ menu do {type:'left', format:'f'
     item rr {title:'2 rodiny',          par:°{mode:'h', forms:'i|n1|r2|r3', tags:'h_rr|r', call:'init_rr_a'} }
   }
   menu auto {title:'algoritmické nalezení duplicit',type:'group'
-    item cs {title:'chlap a single',    par:°{forms:'i', call:'info_auto', x:'cs', y:'.*'} }
+    item cs {title:'chlap a single',    par:°{forms:'i', call:'info_auto',     x:'cs', y:'.*'} }
     item    {title:'... ... parametr',  par:°{forms:'i', call:'info_auto_par', x:'cs' } }
-    item    {title:'... [Večeř*]',      par:°{forms:'i', call:'info_auto', x:'cs', y:'Večeř'} }
-    item cr {title:'chlap a rodina',    par:°{forms:'i', call:'info_auto', x:'ct', y:'.*'} }
-    item    {title:'... VYBRANÉ TESTY', par:°{forms:'i', call:'info_auto', x:'ct', y:'Apa|^Mich|^Kan|^Bárt|^Břez|^Ern|^Večeř'} }
+    item cr {title:'chlap a rodina',    par:°{forms:'i', call:'info_auto',     x:'ct', y:'.*'} }
+    item    {title:'... VYBRANÉ TESTY', par:°{forms:'i', call:'info_auto',     x:'ct', y:'Apa|^Mich|^Kan|^Bárt|^Břez|^Ern|^Večeř'} }
     item    {title:'... ... parametr',  par:°{forms:'i', call:'info_auto_par', x:'ct' } }
-    item    {title:'... [A*]',          par:°{forms:'i', call:'info_auto', x:'ct', y:'A'} }
-    item    {title:'... [B*]',          par:°{forms:'i', call:'info_auto', x:'ct', y:'B'} }
-    item    {title:'... [Čer*]',        par:°{forms:'i', call:'info_auto', x:'ct', y:'Čer'} }
-    item    {title:'... [Gůr*]',        par:°{forms:'i', call:'info_auto', x:'ct', y:'Gůr'} }
-    item    {title:'... [Micha*]',      par:°{forms:'i', call:'info_auto', x:'ct', y:'Micha'} }
-    item    {title:'... [Vop*]',        par:°{forms:'i', call:'info_auto', x:'ct', y:'Vop'} }
-    item sr {title:'single a rodina',   par:°{forms:'i', call:'info_auto', x:'sr', y:'.*'} }
-    item    {title:'... [Večeř*]',      par:°{forms:'i', call:'info_auto', x:'sr', y:'Večeř'} }
+    item c  {title:'chlap mimo DUPLO',  par:°{forms:'i', call:'info_auto',     x:'c-', y:'.*'} }
+    item    {title:'... ... parametr',  par:°{forms:'i', call:'info_auto_par', x:'c-' } }
+    item sr {title:'single a rodina',   par:°{forms:'i', call:'info_auto',     x:'sr', y:'.*'} }
+    item    {title:'... ... parametr',  par:°{forms:'i', call:'info_auto_par', x:'sr' } }
   }
   menu ones {title:'jednorázové úpravy',type:'group'
     item    {title:'doplnění po importu ys_ezer',    par:°{forms:'i', call:'info_start'} }
-    item    {title:'akce z chlapi=>db: test',        par:°{forms:'i', call:'info_akce', x:'test'} }
-    item    {title:'akce z chlapi=>db: insert',      par:°{forms:'i', call:'info_akce', x:'insert'} }
+    item    {title:'akce z chlapi=>db: test',        par:°{forms:'i', call:'info_akce',  x:'test'} }
+#     item    {title:'akce z chlapi=>db: insert',      par:°{forms:'i', call:'info_akce',  x:'insert'} }
     item    {title:'obnova _track ze záloh: test',   par:°{forms:'i', call:'info_track', x:'test'} }
-    item    {title:'obnova _track ze záloh: insert', par:°{forms:'i', call:'info_track', x:'insert'} }
+#     item    {title:'obnova _track ze záloh: insert', par:°{forms:'i', call:'info_track', x:'insert'} }
   }
   menu calc {title:'kalkulačka',type:'group'
-    item    {title:'osoba < tvori > rodina',         par:°{forms:'i', tags:'c', call:'calc_tvori'} }
-    item    {title:'akce < pobyt < spolu > osoba',   par:°{forms:'i', tags:'c', call:'calc_spolu'} }
+    item    {title:'akce ... osoba ... rodina',   par:°{forms:'i', tags:'c', call:'calc_spolu'} }
   }
   menu tisky {title:'Tisk seznamu (filtrováno par)',type:'group'
     item {title:'... poslední výsledek'
@@ -193,6 +196,11 @@ proc init_cs_s() { //clear;
 proc init_sr_s() { //clear;
   n1.init_all; s2.init_all; r3.init_all;
   n1.reload_bn("d.idd=0 AND d.tab1='s' AND d.tab2='r'");
+}
+# ----------------------------------------------------------- procedury pro chlap+izolovaný
+proc init_c_s() { //clear;
+  c2.init_all;
+  n1.reload_bnn("d.idd=0 AND d.tab1='c' AND d.tab2='-'");
 }
 # ------------------------------------------------------------------------------------------ hledání
 # ----------------------------------------------------------- procedury pro chlap+rodina
