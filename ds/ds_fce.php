@@ -385,21 +385,24 @@ function ds_ceny_uprava($par) { trace('','win1250');
   $html= "";
   if ( $par->op=='kopie' ) {
     ezer_connect('setkani');
+    // urèení rokù
+    $z= date('Y')+$par->z;
+    $na= date('Y')+$par->na;
     // kontrola prázdnosti nového ceníku
-    $qry= "SELECT count(*) as pocet FROM setkani.ds_cena  WHERE rok={$par->na} ";
+    $qry= "SELECT count(*) as pocet FROM setkani.ds_cena  WHERE rok=$na ";
     $res= mysql_qry($qry);
     if ( $res && $c= mysql_fetch_object($res) ) {
       if ( $c->pocet>0 )
-        $html= "Cenik pro rok {$par->na} byl jiz zrejme vygenerovan. Operace prerusena.";
+        $html= "Cenik pro rok $na byl jiz zrejme vygenerovan. Operace prerusena.";
     }
     if ( !$html ) {
       // kopie ceníku
-      $qry= "SELECT * FROM ds_cena WHERE rok={$par->z} ORDER BY typ";
+      $qry= "SELECT * FROM ds_cena WHERE rok=$z ORDER BY typ";
       $res= mysql_qry($qry);
       $ok= 1; $n= 0;
       while ( $res && $c= mysql_fetch_object($res) ) {
         $ins= "INSERT INTO ds_cena (rok,polozka,druh,typ,od,do,cena,dph)
-               VALUES ({$par->na},'{$c->polozka}','{$c->druh}','{$c->typ}',{$c->od},{$c->do},{$c->cena},{$c->dph})";
+               VALUES ($na,'{$c->polozka}','{$c->druh}','{$c->typ}',{$c->od},{$c->do},{$c->cena},{$c->dph})";
         display(wu($ins));
         $n++;
         $ires= mysql_qry($ins);
