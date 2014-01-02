@@ -109,6 +109,8 @@ var rok: number
 panel cen [,,,543] {type:'right', title:'Ceny'
   menu {type:'left', active:*
     menu m {title:'Ceny roku ',type:'group'
+      item {title:'2015',par:°{rok:'2015'} }
+      item {title:'2014',par:°{rok:'2014'} }
       item {title:'2013',par:°{rok:'2013'} }
       item {title:'2012',par:°{rok:'2012'} }
       item {title:'2011',par:°{rok:'2011'} }
@@ -123,11 +125,14 @@ panel cen [,,,543] {type:'right', title:'Ceny'
       }
     }
     menu {title:'Ceník dalšího roku ',type:'group'
-      item {title:'kopie 2012 => 2013',par:°{op:'kopie',z:'2012',na:'2013'} }
-      proc onclick (i) {
-        confirm("Ceník roku ",i.par.na," bude nahrazen kopií ceníku roku ",i.par.z,". Pokračovat?");
+      item {title:'kopie letos => příští rok',  par:°{op:'kopie',z:'0',na:'1'} }
+      item {title:'kopie loni => letos',        par:°{op:'kopie',z:'-1',na:'0'} }
+      proc onclick (i) { var na:text var z:text
+        na.set(sum(fdate('Y'),i.par.na));
+        z.set(sum(fdate('Y'),i.par.z));
+        confirm("Ceník roku ",na," bude nahrazen kopií ceníku roku ",z,". Pokračovat?");
         info.fill(conc(i.owner.title,i.title),ask('ds_ceny_uprava',i.par));
-        info.ceny.browse_load(conc("rok=",i.par.na));
+        info.ceny.browse_load(conc("rok=",na));
       }
     }
   }
