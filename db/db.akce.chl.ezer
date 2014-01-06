@@ -251,7 +251,7 @@ form _chlap [,,*,466] {
   label  [Lu+285,Tu+88,26,]   { tag:'akce', title:'pokl.' }
   field  [Lu+315,Tu+85,44,]   { tag:'akce', format:'r', data:u.pokladnou }
   label  [Lu+7,Tu+42,98,16]   { tag:'akce', title:'poznámka k akci'}
-  edit   [Lu+7,Tu+58,258,48]  { tag:'akce', data:u.pozn }
+  edit   [Lu+7,Tu+58,258,48]  { tag:'akce', data:u.note }
   button [Lu+118,Tu+15,,] { tag:'akce', title:'Vyřadit z této akce',
       help:'Vyřazení účastníka z účasti na této akci'
     proc onclick() {
