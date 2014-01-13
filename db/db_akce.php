@@ -255,142 +255,142 @@ end:
 # ------------------------------------------------------------------------------------ data_eli_akce
 # vytvoření akcí z CH_AKCE v AKCE  - $insert='insert' způsobí zápis
 function data_eli_akce($insert='test') { trace();
-  $html= '';
-  $akces= array( // 1                 2      3             4          5          6
-    array( 1,  'GloTraCh 2011',     2200,'2011-05-19','2011-05-22',"Nesměř"  ,0),
-    array( 2,  'MROP 2011',         2900,'2011-09-10','2011-09-14',"Nesměř"  ,0),
-    array( 3,  'Sestup do Jordánu', 1500,'2011-09-15','2011-09-18',"Nesměř"  ,0),
-    array( 4,  'Závěr MROP 2011',   1000,'2011-09-13','2011-09-14',"Nesměř"  ,0),
-    array( 5,  'Křižanov 2012',     2200,'2012-05-24','2012-05-27',"Křižanov",0),
-    array( 6,  'MROP 2012',         2900,'2012-09-12','2012-09-16',"Nesměř"  ,0),
-    array( 7,  'Závěr MROP 2012',    400,'2012-09-15','2012-09-16',"Nesměř"  ,0),
-    array( 8,  'Cross 2012',        1700,'2012-09-15','2012-09-16',"?"       ,0),
-    array( 9,  'MROP 2013',         1500,'2013-09-11','2013-09-15',"Nesměř"  ,369),
-    array(10,  'Závěr MROP 2013',    400,'2013-09-14','2013-09-15',"Nesměř"  ,370)
-  );
-  // nazev=
-  foreach ($akces as $akce) {
-    $idch=  $akce[0];
-    $nazev= $akce[1];
-    $cena=  $akce[2];
-    $od=    $akce[3];
-    $do=    $akce[4];
-    $misto= $akce[5];
-    $idfa=  $akce[6];
-    $sql= "INSERT INTO akce (ma_cenu,cena,nazev,misto,datum_od,datum_do)
-                     VALUES (1,$cena,'$nazev','$misto','$od','$do')";
-    $html.= "<br>$sql";
-    if ( $insert=='insert' ) {
-      if ( !$idfa ) {
-        $res= mysql_qry($sql);
-        $idfa= mysql_insert_id();
-      }
-      $sql= "INSERT INTO ch_fa (idc,idf,tab) VALUES ($idch,$idfa,'a')";
-      $html.= "<br> - $sql";
-      $res= mysql_qry($sql);
-    }
-  }
+  $html= 'již bylo provedeno';
+//   $akces= array( // 1                 2      3             4          5          6
+//     array( 1,  'GloTraCh 2011',     2200,'2011-05-19','2011-05-22',"Nesměř"  ,0),
+//     array( 2,  'MROP 2011',         2900,'2011-09-10','2011-09-14',"Nesměř"  ,0),
+//     array( 3,  'Sestup do Jordánu', 1500,'2011-09-15','2011-09-18',"Nesměř"  ,0),
+//     array( 4,  'Závěr MROP 2011',   1000,'2011-09-13','2011-09-14',"Nesměř"  ,0),
+//     array( 5,  'Křižanov 2012',     2200,'2012-05-24','2012-05-27',"Křižanov",0),
+//     array( 6,  'MROP 2012',         2900,'2012-09-12','2012-09-16',"Nesměř"  ,0),
+//     array( 7,  'Závěr MROP 2012',    400,'2012-09-15','2012-09-16',"Nesměř"  ,0),
+//     array( 8,  'Cross 2012',        1700,'2012-09-15','2012-09-16',"?"       ,0),
+//     array( 9,  'MROP 2013',         1500,'2013-09-11','2013-09-15',"Nesměř"  ,369),
+//     array(10,  'Závěr MROP 2013',    400,'2013-09-14','2013-09-15',"Nesměř"  ,370)
+//   );
+//   // nazev=
+//   foreach ($akces as $akce) {
+//     $idch=  $akce[0];
+//     $nazev= $akce[1];
+//     $cena=  $akce[2];
+//     $od=    $akce[3];
+//     $do=    $akce[4];
+//     $misto= $akce[5];
+//     $idfa=  $akce[6];
+//     $sql= "INSERT INTO akce (ma_cenu,cena,nazev,misto,datum_od,datum_do)
+//                      VALUES (1,$cena,'$nazev','$misto','$od','$do')";
+//     $html.= "<br>$sql";
+//     if ( $insert=='insert' ) {
+//       if ( !$idfa ) {
+//         $res= mysql_qry($sql);
+//         $idfa= mysql_insert_id();
+//       }
+//       $sql= "INSERT INTO ch_fa (idc,idf,tab) VALUES ($idch,$idfa,'a')";
+//       $html.= "<br> - $sql";
+//       $res= mysql_qry($sql);
+//     }
+//   }
   return $html;
 }
 # ----------------------------------------------------------------------------------- data_eli_track
 # obnova _track ze zálohy - $insert='insert' způsobí zápis do _track
 function data_eli_track($insert='test') { trace();
   $ret= (object)array('html'=>'hotovo');
-  function write_track($ids,$flds,$kdy) {
-//                                                         display("{$ids[0]->id_chlapi} / ".count($ids));
-//                                                         debug($ids,"write_track");
-    $ret= (object)array('html'=>'','sql'=>'');
-    $id_chlapi= $ids[0]->id_chlapi;
-    if ( count($ids)==1 ) {
-      // insert
-      $i= "";
-      foreach($flds as $fld) {
-        $val= mysql_real_escape_string($ids[0]->$fld);
-        if ( $val ) {
-          $i.= " $fld";
-          $ret->sql.= ", ('$kdy','ZMI','chlapi',$id_chlapi,'$fld','i','','$val')";
-        }
-      }
-      $ret->html.= "$id_chlapi - {$ids[0]->prijmeni} insert $i<br>";
-    }
-    else {
-      // update
-      $u= "";
-      foreach($flds as $fld) {
-        $old= mysql_real_escape_string($ids[1]->$fld);
-        $val= mysql_real_escape_string($ids[0]->$fld);
-        if ( $old!=$val ) {
-          $u.= " $fld";
-          $ret->sql.= ", ('$kdy','ZMI','chlapi',$id_chlapi,'$fld','u','$old','$val')";
-        }
-      }
-      $ret->html.= "$id_chlapi - {$ids[0]->prijmeni} update $u<br>";
-    }
-    return $ret;
-  }
-  $tabs= array(
-    "chlapi_130117","chlapi_130304","chlapi_130311","chlapi_130407","chlapi_130416","chlapi_130522",
-    "chlapi_130608","chlapi_130620","chlapi_130624","chlapi_130701","chlapi_130702",
-    "chlapi_130723",
-    "chlapi_130801",
-    "chlapi_130812","chlapi_130901","chlapi_130909",
-    "chlapi_130924","chlapi_131003",
-    "chlapi_131018","chlapi_131127"
-  );
-  // projití seznamu
-  for ($i= 0; $i<=count($tabs)-2; $i++) {
-    $a= $tabs[$i];
-    $b= $tabs[$i+1];
-    $kdy= "20".substr($b,7,2)."-".substr($b,9,2)."-".substr($b,11,2);
-    $ret->html.= "<hr>změny mezi $a a $b ($kdy)<hr>";
-    $fldss= "jmeno,prijmeni,sex,ulice,psc,obec,telefon,email,narozeni,rc_xxxx,pozn";
-    if ( $a>="chlapi_130723" && $b>="chlapi_130723" )
-      $fldss.= ",origin";
-    $flds= explode(',',$fldss);
-    $id= 0;
-    $ids= array();
-    $qc= mysql_qry("
-      SELECT MIN(tableName) as tableName,id_chlapi, $fldss FROM (
-        SELECT 'old' as tableName,id_chlapi, $fldss FROM obnova.$a AS a
-        UNION ALL
-        SELECT 'new' as tableName,id_chlapi, $fldss FROM obnova.$b as b
-      ) AS tmp
-      GROUP BY id_chlapi,$fldss
-      HAVING COUNT(*) = 1
-      ORDER BY id_chlapi,tableName
-    ");
-    if ( !$qc ) { $ret->html= "ERROR: ".mysql_error(); goto end; }
-    while (($c= mysql_fetch_object($qc))) {
-      if ( $c->id_chlapi==$id ) {
-        $ids[]= $c;
-      }
-      else {
-        if ( $id ) {
-          $rt= write_track($ids,$flds,$kdy);
-          $ret->html.= $rt->html;
-          $sql.= "\n".$rt->sql;
-        }
-        $id= $c->id_chlapi;
-        $ids= array($c);
-      }
-    }
-    if ( count($ids) ) {
-      $rt= write_track($ids,$flds,$kdy);
-      $ret->html.= $rt->html;
-      $sql.= "\n".$rt->sql;
-    }
-  }
-  // doplnění do _track
-  $sql= "INSERT INTO ezer_ys._track (kdy,kdo,kde,klic,fld,op,old,val) VALUES ".substr($sql,1).";";
-                                                        display($sql);
-  if ( $insert=='insert' ) {
-    $res= mysql_qry($sql);
-    $n= mysql_affected_rows();
-    $ret->html.= $res ? "<hr>do tabulky _track bylo přidáno $n záznamů"
-      : "<hr>zápis do tabulky _track selhal" ;
-  }
-  $ret->html.= "<hr>$sql";
-end:
+//   function write_track($ids,$flds,$kdy) {
+// //                                                         display("{$ids[0]->id_chlapi} / ".count($ids));
+// //                                                         debug($ids,"write_track");
+//     $ret= (object)array('html'=>'','sql'=>'');
+//     $id_chlapi= $ids[0]->id_chlapi;
+//     if ( count($ids)==1 ) {
+//       // insert
+//       $i= "";
+//       foreach($flds as $fld) {
+//         $val= mysql_real_escape_string($ids[0]->$fld);
+//         if ( $val ) {
+//           $i.= " $fld";
+//           $ret->sql.= ", ('$kdy','ZMI','chlapi',$id_chlapi,'$fld','i','','$val')";
+//         }
+//       }
+//       $ret->html.= "$id_chlapi - {$ids[0]->prijmeni} insert $i<br>";
+//     }
+//     else {
+//       // update
+//       $u= "";
+//       foreach($flds as $fld) {
+//         $old= mysql_real_escape_string($ids[1]->$fld);
+//         $val= mysql_real_escape_string($ids[0]->$fld);
+//         if ( $old!=$val ) {
+//           $u.= " $fld";
+//           $ret->sql.= ", ('$kdy','ZMI','chlapi',$id_chlapi,'$fld','u','$old','$val')";
+//         }
+//       }
+//       $ret->html.= "$id_chlapi - {$ids[0]->prijmeni} update $u<br>";
+//     }
+//     return $ret;
+//   }
+//   $tabs= array(
+//     "chlapi_130117","chlapi_130304","chlapi_130311","chlapi_130407","chlapi_130416","chlapi_130522",
+//     "chlapi_130608","chlapi_130620","chlapi_130624","chlapi_130701","chlapi_130702",
+//     "chlapi_130723",
+//     "chlapi_130801",
+//     "chlapi_130812","chlapi_130901","chlapi_130909",
+//     "chlapi_130924","chlapi_131003",
+//     "chlapi_131018","chlapi_131127"
+//   );
+//   // projití seznamu
+//   for ($i= 0; $i<=count($tabs)-2; $i++) {
+//     $a= $tabs[$i];
+//     $b= $tabs[$i+1];
+//     $kdy= "20".substr($b,7,2)."-".substr($b,9,2)."-".substr($b,11,2);
+//     $ret->html.= "<hr>změny mezi $a a $b ($kdy)<hr>";
+//     $fldss= "jmeno,prijmeni,sex,ulice,psc,obec,telefon,email,narozeni,rc_xxxx,pozn";
+//     if ( $a>="chlapi_130723" && $b>="chlapi_130723" )
+//       $fldss.= ",origin";
+//     $flds= explode(',',$fldss);
+//     $id= 0;
+//     $ids= array();
+//     $qc= mysql_qry("
+//       SELECT MIN(tableName) as tableName,id_chlapi, $fldss FROM (
+//         SELECT 'old' as tableName,id_chlapi, $fldss FROM obnova.$a AS a
+//         UNION ALL
+//         SELECT 'new' as tableName,id_chlapi, $fldss FROM obnova.$b as b
+//       ) AS tmp
+//       GROUP BY id_chlapi,$fldss
+//       HAVING COUNT(*) = 1
+//       ORDER BY id_chlapi,tableName
+//     ");
+//     if ( !$qc ) { $ret->html= "ERROR: ".mysql_error(); goto end; }
+//     while (($c= mysql_fetch_object($qc))) {
+//       if ( $c->id_chlapi==$id ) {
+//         $ids[]= $c;
+//       }
+//       else {
+//         if ( $id ) {
+//           $rt= write_track($ids,$flds,$kdy);
+//           $ret->html.= $rt->html;
+//           $sql.= "\n".$rt->sql;
+//         }
+//         $id= $c->id_chlapi;
+//         $ids= array($c);
+//       }
+//     }
+//     if ( count($ids) ) {
+//       $rt= write_track($ids,$flds,$kdy);
+//       $ret->html.= $rt->html;
+//       $sql.= "\n".$rt->sql;
+//     }
+//   }
+//   // doplnění do _track
+//   $sql= "INSERT INTO ezer_ys._track (kdy,kdo,kde,klic,fld,op,old,val) VALUES ".substr($sql,1).";";
+//                                                         display($sql);
+//   if ( $insert=='insert' ) {
+//     $res= mysql_qry($sql);
+//     $n= mysql_affected_rows();
+//     $ret->html.= $res ? "<hr>do tabulky _track bylo přidáno $n záznamů"
+//       : "<hr>zápis do tabulky _track selhal" ;
+//   }
+//   $ret->html.= "<hr>$sql";
+// end:
   return $ret;
 }
 # ================================================================================================== DUPLICITY
@@ -5359,7 +5359,7 @@ function chlapi_akce_export($id_akce,$nazev) {  #trace();
   $type= 'xls';
   $par= (object)array('file'=>$file,'type'=>$type,'title'=>$t,'color'=>'aac0cae2');
   $clmns= "prijmeni:příjmení,jmeno:jméno,narozeni:narození,ulice,psc:psč,obec,email,telefon,
-           iniciace,c.pozn AS c_pozn:poznámka,u.pozn:... k akci,u.cena:cena,
+           iniciace,c.note AS c_pozn:poznámka,u.pozn:... k akci,u.cena:cena,
            narozeni AS _vs:VS,u.avizo:avizo,u.uctem:účtem,u.pokladnou:pokladnou";
   $titles= $fields= $del= '';
   foreach (explode(',',$clmns) as $clmn) {
