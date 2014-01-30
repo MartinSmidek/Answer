@@ -208,7 +208,8 @@ end:
 # -------------------------------------------------------------------------------------------------- google_sheet
 # přečtení listu $list z tabulky $sheet uživatele $user do pole $cell
 # $cells['dim']= array($max_A,$max_n)
-function google_sheet($list,$sheet,$user='answer@smidek.eu') {  trace();
+function google_sheet($list,$sheet,$user='answer@smidek.eu',&$keys) {  trace();
+  $keys= (object)array();
   $n= 0;
   $cells= null;
   require_once 'Zend/Loader.php';
@@ -223,12 +224,14 @@ function google_sheet($list,$sheet,$user='answer@smidek.eu') {  trace();
     $httpClient= Zend_Gdata_ClientLogin::getHttpClient($user,$pass[$user], $authService);
     // nalezení tabulky
     $gdClient= new Zend_Gdata_Spreadsheets($httpClient);
+    $keys->service= $gdClient;
     $feed= $gdClient->getSpreadsheetFeed();
     $table= getFirstFeed($feed,$sheet);
     if ( $table ) {
       // pokud tabulka existuje
       $table_id= explode('/', $table->id->text);
       $table_key= $table_id[5];
+      $keys->sskey= $table_key;
       // najdi list
       $query= new Zend_Gdata_Spreadsheets_DocumentQuery();
       $query->setSpreadsheetKey($table_key);
@@ -240,6 +243,7 @@ function google_sheet($list,$sheet,$user='answer@smidek.eu') {  trace();
       // pokud list tabulky existuje
       $ws_id= explode('/', $ws->id->text);
       $ws_key= $ws_id[8];
+      $keys->wskey= $ws_key;
       // načti buňky
       $query= new Zend_Gdata_Spreadsheets_CellQuery();
       $query->setSpreadsheetKey($table_key);
@@ -405,6 +409,12 @@ function kasa_menu_show($k1,$k2,$k3,$cond=1,$day='') {
     break;
   case 'export letos':
     $rok= date('Y');
+    $html.= "<h3 class='CTitle'>Export pokladních deníků roku $rok</h3>";
+    $cond= " datum BETWEEN '$rok-01-01' AND '$rok-12-31'";
+    $html.= kasa_export($cond,"pokladna_{$rok}");
+    break;
+  case 'export vloni':
+    $rok= date('Y')-1;
     $html.= "<h3 class='CTitle'>Export pokladních deníků roku $rok</h3>";
     $cond= " datum BETWEEN '$rok-01-01' AND '$rok-12-31'";
     $html.= kasa_export($cond,"pokladna_{$rok}");

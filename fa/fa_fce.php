@@ -237,6 +237,12 @@ function kasa_menu_show($k1,$k2,$k3,$cond=1,$day='') {
     $cond= " datum BETWEEN '$rok-01-01' AND '$rok-12-31'";
     $html.= kasa_export($cond,"pokladna_{$rok}");
     break;
+  case 'export vloni':
+    $rok= date('Y')-1;
+    $html.= "<h3 class='CTitle'>Export pokladních deníků roku $rok</h3>";
+    $cond= " datum BETWEEN '$rok-01-01' AND '$rok-12-31'";
+    $html.= kasa_export($cond,"pokladna_{$rok}");
+    break;
   }
   $html.= "</div>";
   return $html;

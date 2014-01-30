@@ -612,6 +612,7 @@ table mail { key_id:'id_mail'
 
 table mailist { key_id:'id_mailist'
   number id_mailist
+  number specialni   // 1 znamená speciální mail-list, definovaný obsahem parms
   number blokovano
   text   nazev
   text   ucel

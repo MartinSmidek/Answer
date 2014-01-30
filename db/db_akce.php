@@ -1943,6 +1943,48 @@ function akce_kontrola_dat($par) { trace();
     : "<h3>Následující tabulky jsou konzistentní</h3>$html";
   return $html;
 }
+# ================================================================================================== AKCE
+# ------------------------------------------------------------------------------ akce_delete_confirm
+# dotazy před zrušením akce
+function akce_delete_confirm($id_akce) {  trace();
+  $ret= (object)array('zrusit'=>0,'ucastnici'=>'','platby'=>'');
+  // fakt zrušit?
+  list($nazev,$misto,$datum)=
+    select("nazev,misto,DATE_FORMAT(datum_od,'%e.%m.%Y')",'akce',"id_duakce=$id_akce");
+  $ret->zrusit= "Opravdu smazat akci '$nazev, $misto' začínající $datum?";
+  if ( !$nazev ) goto end;
+  // má účastníky
+  $ucastnici= select('COUNT(*)','pobyt',"id_akce=$id_akce");
+  $ret->ucastnici= $ucastnici
+    ? "Tato akce má již zapsáno $ucastnici účastníků. Má se jejich účast zrušit a potom smazat akci?"
+    : '';
+  // jsou evidovány platby
+  $platby= select('COUNT(*)','platba',"id_duakce=$id_akce");
+  $ret->platby= $platby
+    ? "S touto akcí jsou již svázány $platby platby. Akci nelze smazat."
+    : '';
+end:
+  return $ret;
+}
+# -------------------------------------------------------------------------------------- akce_delete
+# zrušení akce
+function akce_delete($id_akce,$ret) {  trace();
+  list($nazev)= select("nazev",'akce',"id_duakce=$id_akce");
+  if ( $ret->ucastnici ) {
+    // napřed zrušit účasti na akci
+    query("DELETE FROM spolu USING spolu JOIN pobyt USING(id_pobyt) WHERE id_akce=$id_akce");
+    $s= mysql_affected_rows();
+    query("DELETE FROM pobyt WHERE id_akce=$id_akce");
+    $p= mysql_affected_rows();
+  }
+  query("DELETE FROM akce WHERE id_duakce=$id_akce");
+  $a= mysql_affected_rows();
+  $msg= $a
+    ? "Akce '$nazev' byla smazána" . ( $p+$s ? ", včetně $p účastí $s účastníků" : '.')
+    : "CHYBA: akce '$nazev' nebyla smazána";
+end:
+  return $msg;
+}
 # ======================================================================================= CENÍK AKCE
 function akce_platby_xls($id_akce) {  trace();
   $ret= (object)array('ok'=>0,'xhref'=>'','msg'=>'');
@@ -6862,6 +6904,134 @@ function db_mail_send($from,$to,$subj,$text) { trace();
 #   MAIL(id_mail=key,id_davka=1,id_dopis=DOPIS.id_dopis,znacka='@',id_clen=clen,email=adresa,
 #         stav={0:nový,3:rozesílaný,4:ok,5:chyba})
 # formát zápisu dotazu v číselníku viz fce dop_mai_qry
+# -------------------------------------------------------------------------------------------------- dop_mai_pocet_spec
+# spočítá maily podle daného maillistu
+function dop_mai_confirm_spec($id_mailist,$id_dopis) {  trace();
+  $ret= (object)array('specialni'=>0, 'prepsat'=>'', 'pocet'=>'');
+  // speciální?
+  list($ret->specialni,$qry)= select('specialni,sexpr','mailist',"id_mailist=$id_mailist");
+  if ( !$ret->specialni ) goto end;
+  // jsou už vygenerované maily
+  $ret->prepsat= select('COUNT(*)','mail',"id_dopis=$id_dopis")
+    ? "Opravdu přepsat předchozí maily?" : '';
+  // počet nově vygenerovaných
+  $res= mysql_qry($qry);
+  $ret->pocet= "Opravdu vygenerovat maily na ".mysql_num_rows($res)." adres?";
+end:
+  return $ret;
+}
+# -------------------------------------------------------------------------------------------------- dop_mai_posli_spec
+# vygeneruje sadu mailů podle daného maillistu s nastaveným specialni a parms
+function dop_mai_posli_spec($id_dopis) {  trace();
+  $ret= (object)array('msg'=>'');
+  $id_mailist= select('id_mailist','dopis',"id_dopis=$id_dopis");
+  list($spec,$sparms,$qry,$ucel)= select('specialni,parms,sexpr,ucel','mailist',"id_mailist=$id_mailist");
+//                                                         debug($parms,$ucel);
+  $parms= json_decode($sparms);
+  switch ($parms->specialni) {
+  case 'potvrzeni':
+    // smaž starý seznam
+    mysql_qry("DELETE FROM mail WHERE id_dopis=$id_dopis");
+    $num= 0;
+    $nomail= array();
+    $rok= date('Y')+$parms->rok;
+    // projdi všechny relevantní dárce podle dotazu z maillistu
+    $os= mysql_qry($qry);
+    while ($os && ($o= mysql_fetch_object($os))) {
+      $email= $o->email;
+      if ( $email ) {
+        // vygeneruj PDF s potvrzením do $x->path
+        $x= dop_mai_potvr("Pf",$o,$rok);
+        // vlož mail
+        mysql_qry(
+          "INSERT mail (id_davka,znacka,stav,id_dopis,id_clen,email,priloha)
+             VALUE (1,'@',0,$id_dopis,$o->id_osoba,'$email','{$x->fname}')");
+        $num+= mysql_affected_rows();
+      }
+      else {
+        $nomail[]= "{$o->jmeno} {$o->prijmeni}";
+      }
+    }
+    // oprav počet v DOPIS
+    mysql_qry("UPDATE dopis SET pocet=$num WHERE id_dopis=$id_dopis");
+    // informační zpráva
+    $ret->msg= "Bylo vygenerováno $num mailů";
+    if ( count($nomail) ) $ret->msg.= ", emailovou adresu nemají:<hr>".implode(', ',$nomail);
+    break;
+  default:
+    fce_error("není implemntováno");
+  }
+                                                        debug($ret,"dop_mai_posli_spec end");
+  return $ret;
+}
+# -------------------------------------------------------------------------------------------------- dop_mai_potvr
+# vygeneruje PDF s daňovým potvrzením s výsledkem
+# ret->fname - jméno vygenerovaného PDF souboru
+# ret->href  - odkaz na soubor
+# ret->fpath - úplná lokální cesta k souboru
+# ret->log   - log
+function dop_mai_potvr($druh,$o,$rok) {  trace();
+  $ret= (object)array('msg'=>'');
+  // report
+  $d= select("*","dopis","typ='$druh'");
+  $vzor= $d->obsah;
+  $sablona= $d->sablona;
+  $texty= array();
+  $parss= array();
+  // výpočet proměnných použitých v dopisu
+  $is_vars= preg_match_all("/[\{]([^}]+)[}]/",$vzor,$list);
+  $vars= array_merge($list[1],array('vyrizeno'));
+//                                                         debug($vars,"vars");
+  $dary= json_decode($o->pars);
+  $data= $dary->data;
+  $castka= number_format($o->castka, 0, '.', ' ');
+  $id_osoba= $o->id_osoba;
+  $prijmeni= $o->prijmeni;
+  $jmeno= $o->jmeno;
+  $sex= $o->sex;
+  $ulice= $o->ulice;
+  $psc= $o->psc;
+  $obec= $o->obec;
+  $osloveni= $sex==1 ? "pan" : ($sex==2 ? "paní" : "");
+  $Osloveni= $sex==1 ? "Pan" : ($sex==2 ? "Paní" : "");
+  $adr= "$osloveni,$prijmeni,$jmeno,$sex,$ulice,$psc,$obec";
+  $html= "<table>";
+  $html.= "<tr><td>$id</td><td>$castka</td><td>$adr</td><td>$data</td></tr>";
+  // definice parametrů pro potvrzující dopis
+  $parss[$n]= (object)array();
+  $parss[$n]->dar_datum= $data;
+  $parss[$n]->dar_castka= $castka;
+  $parss[$n]->darce= "$osloveni <b>$jmeno $prijmeni</b>";
+  $parss[$n]->darce_a= $sex==2 ? "a" : "";
+  $parss[$n]->vyrizeno= date('j. n. Y');
+  // substituce v 'text' a 'odeslano'
+  $text= $vzor;
+  $odeslano= select('obsah','dopis_cast',"name='odeslano'");
+  if ( $is_vars ) foreach ($vars as $var ) {
+    $text= str_replace('{'.$var.'}',$parss[$n]->$var,$text);
+    $odeslano= str_replace('{'.$var.'}',$parss[$n]->$var,$odeslano);
+  }
+  // úprava lámání textu kolem jednopísmenných předložek a přilepení Kč k částce
+  $text= preg_replace(array('/ ([v|k|z|s|a|o|u|i]) /u','/ Kč/u'),array(' \1&nbsp;','&nbsp;Kč'),$text);
+  $texty[$n]->adresa= "<b>$Osloveni<br>$jmeno $prijmeni<br>$ulice<br>$psc $obec</b>";
+  $texty[$n]->odeslano= $odeslano;
+  $texty[$n]->text= $text;
+  $n++;
+  $html.= "<hr>$text";
+  $html.= "</table>";
+  // předání k tisku
+                                                debug($parss);
+                                                display($html);
+  global $ezer_path_docs, $ezer_root;
+  $ret->fname= "potvrzeni_{$rok}_$id_osoba.pdf";
+  $ret->fpath= "$ezer_path_docs/$ezer_root/{$ret->fname}";
+  $dlouhe= tc_dopisy($texty,$ret->fpath,'','_user',$listu);
+  $ret->href= "<a href='docs/$ezer_root/{$ret->fname}' target='pdf'>{$ret->fname}</a>";
+//   $html.= " Bylo vygenerováno $listu potvrzení do $href.";
+  // konec
+  $ret->log= $html;
+  return $ret;
+}
 # -------------------------------------------------------------------------------------------------- dop_mai_text
 # přečtení mailu
 function dop_mai_text($id_dopis) {  trace();
@@ -7279,7 +7449,8 @@ function dop_mail_personify($obsah,$vars,$id_pobyt) {
 #   'U','U2','U3' - rozeslat účastníkům akce dopis.id_duakce ukazující do akce
 #   'C' - rozeslat účastníkům akce dopis.id_duakce ukazující do ch_ucast
 #   'Q' - rozeslat na adresy vygenerované dopis.cis_skupina => hodnota
-function dop_mai_info($id,$email,$id_dopis,$zdroj) {  trace();
+#   'G' - maillist
+function dop_mai_info($id,$email,$id_dopis,$zdroj,$id_mail) {  trace();
   $html= '';
   switch ($zdroj) {
   case 'C':                     // chlapi
@@ -7360,7 +7531,6 @@ function dop_mai_info($id,$email,$id_dopis,$zdroj) {  trace();
   case 'U':                     // účastníci akce
   case 'U2':                    // sloužící účastníci akce
   case 'U3':                    // dlužníci
-  case 'G':                     // mail-list
     $qry= "SELECT * FROM osoba WHERE id_osoba=$id ";
     $res= mysql_qry($qry);
     if ( $res && $c= mysql_fetch_object($res) ) {
@@ -7369,6 +7539,29 @@ function dop_mai_info($id,$email,$id_dopis,$zdroj) {  trace();
       if ( $c->telefony )
         $html.= "Telefon: {$c->telefony}<br>";
     }
+    break;
+  case 'G':                     // mail-list
+    function href($fnames) {
+      global $ezer_root;
+      $href= array();
+      foreach(explode(',',$fnames) as $fnamesize) {
+        list($fname)= explode(':',$fnamesize);
+        $href[]= "<a href='docs/$ezer_root/$fname' target='pdf'>$fname</a>";
+      }
+      return implode(', ',$href);
+    }
+    list($obsah,$prilohy)= select('obsah,prilohy','dopis',"id_dopis=$id_dopis");
+    $priloha= select('priloha','mail',"id_mail=$id_mail");
+    $c= select("*",'osoba',"id_osoba=$id");
+    $html.= "{$c->id_osoba}: {$c->jmeno} {$c->prijmeni}<br>";
+    $html.= "{$c->ulice}, {$c->psc} {$c->obec}<br><br>";
+    if ( $c->telefony )
+      $html.= "Telefon: {$c->telefony}<br>";
+    // přílohy ke kontrole
+    if ( $prilohy )
+      $html.= "<br>Společné přílohy: ".href($prilohy);
+    if ( $priloha )
+      $html.= "<br>Vlastní přílohy: ".href($priloha);
     break;
   }
   return $html;
@@ -7409,6 +7602,16 @@ function dop_mai_stav($id_mail,$stav) {  trace();
 # $test = 1 mail na tuto adresu (pokud je $kolik=0)
 # pokud je definováno $id_mail s definovaným text MAIL.body, použije se - jinak DOPIS.obsah
 function dop_mai_send($id_dopis,$kolik,$from,$fromname,$test='',$id_mail=0) { trace();
+  // připojení případné přílohy
+  function attach($mail,$fname) {
+    global $ezer_root;
+    if ( $fname ) {
+      foreach ( explode(',',$fname) as $fnamesb ) {
+        list($fname,$bytes)= explode(':',$fnamesb);
+        $fpath= "docs/$ezer_root/".trim($fname);
+        $mail->AddAttachment($fpath);
+  } } }
+  //
   global $ezer_path_serv, $ezer_root;
   $phpmailer_path= "$ezer_path_serv/licensed/phpmailer";
   require_once("$phpmailer_path/class.phpmailer.php");
@@ -7436,13 +7639,14 @@ function dop_mai_send($id_dopis,$kolik,$from,$fromname,$test='',$id_mail=0) { tr
   $mail->Subject= $d->nazev;
   $mail->IsHTML(true);
   $mail->Mailer= "smtp";
-  if ( $d->prilohy ) {
-    foreach ( explode(',',$d->prilohy) as $fnamesb ) {
-      list($fname,$bytes)= explode(':',$fnamesb);
-      $fpath= "docs/$ezer_root/".trim($fname);
-      $mail->AddAttachment($fpath);
-    }
-  }
+  attach($mail,$d->prilohy);
+//   if ( $d->prilohy ) {
+//     foreach ( explode(',',$d->prilohy) as $fnamesb ) {
+//       list($fname,$bytes)= explode(':',$fnamesb);
+//       $fpath= "docs/$ezer_root/".trim($fname);
+//       $mail->AddAttachment($fpath);
+//     }
+//   }
   if ( $kolik==0 ) {
     // testovací poslání sobě
     if ( $id_mail ) {
@@ -7459,6 +7663,7 @@ function dop_mai_send($id_dopis,$kolik,$from,$fromname,$test='',$id_mail=0) { tr
         $obsah= $d->obsah;
         $pro= '';
       }
+      attach($mail,$m->priloha);
     }
     $mail->Body= $obsah;
     $mail->AddAddress($test);   // pošli sám sobě
@@ -7492,6 +7697,12 @@ function dop_mai_send($id_dopis,$kolik,$from,$fromname,$test='',$id_mail=0) { tr
       else {
         // jinak obecný z DOPIS
         $obsah= $d->obsah;
+      }
+      // přílohy - pokud jsou vlastní, pak je třeba staré vymazat a vše vložit
+      if ( $z->priloha ) {
+        $mail->ClearAttachments();
+        attach($mail,$d->prilohy);
+        attach($mail,$m->priloha);
       }
       $mail->Body= $obsah;
       foreach(explode(',',$z->email) as $adresa) {

@@ -328,13 +328,14 @@ table mail { key_id:'id_mail'
   number stav
   text msg
   text body
+  text priloha          // seznam souborů ze složky ./docs
 }
 
 table dopis { key_id:'id_dopis'
   number id_dopis { key:'primary' },
   number id_davka { help:'dávka|číslo rozesílání dávky dopisů' },
   text nazev
-  text prilohy
+  text prilohy          // seznam souborů ze složky ./docs
   number potvrzeni { help:"potvrzení|vyžádat zaslání potvrzení o přečtení" }
   number kopie	{ help:"poslat slepou kopii 'odesílateli'" }
   text druh { help:'druh|D-dopis, S-samolepka,legitimace, N-nesamostatná složka' },
