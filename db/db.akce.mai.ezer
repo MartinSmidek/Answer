@@ -18,6 +18,9 @@ use gq: form _gsql [10,34,,]    // generování SQL
 use sq: form _esql [10,34,,]    // správa SQL
 use es: form _esady [10,74,,]   // rozesílání
 
+proc test_dbg() {
+  echo(dopis_id.get)
+}
 proc onfirstfocus() {
   [ the_duakce.get | akce_onstart ];
   gq.reinit;
@@ -153,6 +156,7 @@ form _gsql {
     alert("název testovacího mail-listu není dovoleno měnit");
     this.set(vy.komu_G.get); this.plain
   } }
+  check spec [408,39,197,] { title:"speciální mail-list", data:g.specialni, value:'0', format:'d' }
   check blokovano [508,39,197,] { title:"zablokovat dotazy", data:g.blokovano, value:'0' }
   field parms { data:g.parms }
   field gsql { data:g.sexpr }
@@ -160,14 +164,15 @@ form _gsql {
   const t_butt = 5; l_butt = 640
   label  [l_butt,t_butt,115,55] { tag:'def', css:'ae_parm' }
   button qry_save [l_butt+9,t_butt+5,,] { tag:'def',title:'Uložit',  help:'Uložit mail-list',
-    proc onclick() { save_sql(1) } }
+    proc onclick() { spec.get; warning("speciální mail-list nelze měnit") | save_sql(1) } }
   button [l_butt+57,t_butt+5,,] { tag:'def', title:'Zpět',  help:'Neuložit změny',
     proc onclick() { reload } }
   button [l_butt+9,t_butt+30,,] { tag:'def', title:'Nový',  help:'Nový mail-list', proc onclick() {
     reinit; vy.komu_G.key(0);
   } }
   button [l_butt+57,t_butt+30,,] { tag:'def', title:'Smazat', help:'smazat SQL mail-list', proc onclick() {
-    confirm('opravdu smazat mail-list ',ucel.get,'?');
+    spec.get; warning("speciální mail-list nelze smazat")
+  | confirm('opravdu smazat mail-list ',ucel.get,'?');
     warning('N.Y.I.')
   }}
   # ------------------------------------- výběr typů akcí
@@ -485,7 +490,8 @@ form _gsql {
     akey.set(ask('select','id_mailist','mailist',conc("id_mailist=",vy.komu_G.key)));
     akey;
     form.load(akey);
-    [ read_json(parms.get) ]
+    [ spec.get; warning("speciální předdefinovaný mail-list nelze měnit")
+    | read_json(parms.get) ]
   | form.init(1)
   }
   var gen_cas_del:text
@@ -743,7 +749,9 @@ form _etext  {
   button generovat [L+8,211,45,17] { tag:'s', title:'Vygenerovat rozesílací seznam',
     help:'připravit rozesílání', skill:'yam|yams;fam|fams;cam|cams'
     proc onclick () {
+      var conf: object
       var blokovano: number
+      var pocet: number
       eq(dopis_var.get,'Q','U','U2','U3');
       # rozesílání podle SQL nebo podle nastavené akce
       { eq(dopis_var.get,'Q');
@@ -760,6 +768,14 @@ form _etext  {
       # rozesílání podle mail-listu
       { blokovano.set(ask('select','blokovano','mailist',conc("id_mailist=",vy.komu_G.key)));
         blokovano.get; alert("použití tohoto mail-listu je zablokováno - asi probíhá úprava dotazu");
+      | conf.set(ask('dop_mai_confirm_spec',vy.komu_G.key,dopis_id.get));
+        conf.specialni;
+        [ { not(conf.prepsat) | confirm(conf.prepsat) };
+          confirm(conf.pocet);
+          E_info.set(ask('dop_mai_posli_spec',dopis_id.get));
+          texty.browse_seek; texty.browse_focus;
+          alert(E_info.get('msg'))
+        ]
       | prazdny; et_prazdy.get;
         E_info.set(ask('dop_mai_pocet',dopis_id.get,dopis_var.get));
         confirm(E_info.get('_html'));
@@ -918,7 +934,7 @@ form _esady  {
     show                  { data:etmr.id_rodina }
     show                  { data:etmx.id_chlapi }
     show                  { data:etms.id_osoba }
-    show                  { data:etmd.id_dopis }
+    show id_dopis         { data:etmd.id_dopis }
     show                  { data:etmc.id_cis }
     show stav    [,,20,]  { title:'s.', data:etmm.stav, format:'rsq' },
     show id_clen [,,50,]  { title:'člen', data:etmm.id_clen, format:'rsq' },
@@ -931,8 +947,9 @@ form _esady  {
       this.browse_row;
     }
     proc onrowclick () {
-      info.set(ask('dop_mai_info',id_clen.get,email.get,dopis_id.get,dopis_var.get));
-      [ body.get; obsah.set(body.get) | obsah.set('nepersonifikovaný mail') ]
+      info.set(ask('dop_mai_info',id_clen.get,email.get,dopis_id.get,dopis_var.get,id_mail.get));
+      [ body.get; obsah.set(body.get)
+      | obsah.set(ask('select','obsah','dopis',conc('id_dopis=',id_dopis.get))) ]
     }
   }
   # --------------------- načtení celé karty
@@ -979,7 +996,7 @@ form _esady  {
   }
 }
 
-map map_dm_komu:      table _cis {where:"druh='am_komu'",      order:'poradi',  key_id:'data'}
-map map_db_maily_sql: table _cis {where:"druh='db_maily_sql'", order:'zkratka', key_id:'data'}
-map map_db_maily_tab: table _cis {where:"druh='db_maily_tab'", order:'zkratka', key_id:'data'}
+map map_dm_komu:      table _cis  {where:"druh='am_komu'",      order:'poradi',  key_id:'data'}
+map map_db_maily_sql: table _cis  {where:"druh='db_maily_sql'", order:'zkratka', key_id:'data'}
+map map_db_maily_tab: table _cis  {where:"druh='db_maily_tab'", order:'zkratka', key_id:'data'}
 map map_db_mailist: table mailist {key_id:'id_mailist'}

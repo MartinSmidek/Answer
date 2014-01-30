@@ -7,6 +7,7 @@
   $skin=     'default';
   $skin=     'ck';
   $CKEditor= $_GET['editor'] ? $_GET['editor'] : '4';
+  $dbg=      $_GET['dbg'];
 
   // Ans(w)er rozeznává tyto doplňkové parametry v URL
   //   dbs=db_name:other_db_name,...    -- záměna MySQL tabulek za jiné (je zpracováváno ve fis.ini)
@@ -29,6 +30,8 @@
     // jádro Ezer
     array("$client/lib.js","$client/ezer_fdom1.js","$client/ezer.js","$client/ezer_report.js",
       "$client/ezer_fdom2.js","$client/app.js","$licensed/zeroclipboard/ZeroClipboard.js"),
+    // debugger
+    $dbg ? array("$licensed/jush/mini_jush.js"):array(),
     // další knihovny
     array("$licensed/glfx.js"),
     // vynechat při ladění
@@ -39,6 +42,7 @@
   );
 
   $css= array_merge(
+    $dbg ? array("./$licensed/jush/mini_jush.css") : array(),
     array("./$client/ezer.css.php","./ys/ys.css.php","./db/db.css.php"),
     /* pro verzi 2.2 */ $EZER->version=='ezer2.2'
     ? array("$licensed/datepicker/datepicker_vista/datepicker_vista.css"):array()
@@ -54,6 +58,7 @@
       . "<br/><br/>Za spolupráci děkuje <br/>{$EZER->options->author}";
   $pars= (object)array(
 //     'no_local' => true,                // true = nezohledňovat lokální přístup pro watch_key,watch_ip
+    'dbg' => $dbg,                     // true = povolit podokno debuggeru v trasování
     'watch_key' => true,               // true = povolit přístup jen po vložení klíče
     'watch_ip' => true,                // true = povolit přístup jen ze známých IP adres
     'title_right' => $ezer_local ? "<span style='color:#ef7f13'>$app_name</span>" : $app_name,

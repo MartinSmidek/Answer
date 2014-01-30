@@ -131,10 +131,10 @@ menu do {type:'left', format:'f'
     item    {title:'... ... parametr',  par:°{forms:'i', call:'info_auto_par', x:'sr' } }
   }
   menu ones {title:'jednorázové úpravy',type:'group'
-    item    {title:'doplnění po importu ys_ezer',    par:°{forms:'i', call:'info_start'} }
-    item    {title:'akce z chlapi=>db: test',        par:°{forms:'i', call:'info_akce',  x:'test'} }
+#     item    {title:'doplnění po importu ys_ezer',    par:°{forms:'i', call:'info_start'} }
+#     item    {title:'akce z chlapi=>db: test',        par:°{forms:'i', call:'info_akce',  x:'test'} }
 #     item    {title:'akce z chlapi=>db: insert',      par:°{forms:'i', call:'info_akce',  x:'insert'} }
-    item    {title:'obnova _track ze záloh: test',   par:°{forms:'i', call:'info_track', x:'test'} }
+#     item    {title:'obnova _track ze záloh: test',   par:°{forms:'i', call:'info_track', x:'test'} }
 #     item    {title:'obnova _track ze záloh: insert', par:°{forms:'i', call:'info_track', x:'insert'} }
   }
   menu calc {title:'kalkulačka',type:'group'
@@ -233,20 +233,20 @@ proc info_auto(typ,filtr) {
 }
 proc info_auto_par(typ) { info_auto(typ,info.parametr.get) }
 # obnova _track ze záloh
-proc info_track(insert) { var ret:object
-  clear; info.fill('','... probíhá doplnění _track ze záloh');
-  ret.set(ask('data_eli_track',insert));
-  info.fill('',ret.html);
-}
+# proc info_track(insert) { var ret:object
+#   clear; info.fill('','... probíhá doplnění _track ze záloh');
+#   ret.set(ask('data_eli_track',insert));
+#   info.fill('',ret.html);
+# }
 # převod akcí z ch_akce do akce
-proc info_akce (insert) {
-  info.fill('','... převod akcí'); info.fill('',ask('data_eli_akce',insert)) }
+# proc info_akce (insert) {
+#   info.fill('','... převod akcí'); info.fill('',ask('data_eli_akce',insert)) }
 # po importu db
-proc info_start() {
-  echo(ask('query',"ALTER TABLE ezer_ys.chlapi CHANGE pozn note tinytext COLLATE 'utf8_czech_ci' NOT NULL AFTER iniciace"));
-  echo(ask('query',"ALTER TABLE duplo ADD asi smallint NOT NULL AFTER rozdily, ADD last1 date NOT NULL AFTER id_tab1, ADD last2 date NOT NULL AFTER id_tab2"));
-  info_akce('insert');
-}
+# proc info_start() {
+#   echo(ask('query',"ALTER TABLE ezer_ys.chlapi CHANGE pozn note tinytext COLLATE 'utf8_czech_ci' NOT NULL AFTER iniciace"));
+#   echo(ask('query',"ALTER TABLE duplo ADD asi smallint NOT NULL AFTER rozdily, ADD last1 date NOT NULL AFTER id_tab1, ADD last2 date NOT NULL AFTER id_tab2"));
+#   info_akce('insert');
+# }
 # ================================================================================================== _navrhy
 form _navrhy [,,Wr,Hr] {
   view d:  table duplo

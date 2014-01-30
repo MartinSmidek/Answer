@@ -17,6 +17,7 @@ panel inf {type:'right', title:"Informace", _sys:'inf'
     }
     menu {title:'Exporty',type:'group', _sys:'exp'
       item {title:'Letošní pokladní deník',                     par:°{s:'export',c:'letos'} }
+      item {title:'Loňský pokladní deník',                      par:°{s:'export',c:'vloni'} }
     }
     proc onstart () {
       d_cond.set(''); d_day.set(now);

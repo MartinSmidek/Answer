@@ -12,7 +12,6 @@ use info: form _akce [12,4,,]
 use page: form _page [450,40,,]
 
 proc onfirstfocus() {
-# proc onstart() { echo('db.akce.lst.onstart');
   the_source.set('sey');
   info.fill(the_title.get);
   the_omezeni.set('1');
@@ -21,8 +20,6 @@ proc onfirstfocus() {
   { the_duakce.get;
     info.rok.set(the_rok.get)
   | info.rok.set(fdate('Y')) };
-# }
-# proc onfirstfocus() {
   zalozka.set('inf');
   [ has_skill('y|f'); m.g.sey.click ];
   page.cen_copy.selects("neměnit:0");
@@ -98,15 +95,9 @@ form _page [,,285,500] {
     page.a_akce.set(id_akce);
     cen_copy.enable(0); cen_copy.key(0);
     switch(zalozka.get,
-    'inf',{
-      note.set(ask('akce_info',id_akce));
-    },
-    'cor',{
-      form.load(id_akce); info.sey.browse_focus
-    },
-    'cen',{
-      form.init; c.browse_load(conc("id_akce=",id_akce));
-    },
+    'inf',{ note.set(ask('akce_info',id_akce)) },
+    'cor',{ form.load(id_akce); info.sey.browse_focus },
+    'cen',{ form.init; c.browse_load(conc("id_akce=",id_akce)) },
     { stop}
   )}
   # --------------------------- informace
@@ -151,12 +142,12 @@ form _page [,,285,500] {
                         help:'pro 1 dospělého' }
   label [279,289,20,] { tag:'cor', title:'Kč' }
   // Zpět a Uložit
-  label  [139,351,98,30] { tag:'cor', css:'ae_parm', style:'z-index:1', skill:'yaa+;faa+;caa+' }
-  button [145,356,,] { tag:'cor', title:'Zpět', skill:'yaa+|yaa+;faa+|faa+;caa+|caa+'
+  label  [193,351,98,30] { tag:'cor', css:'ae_parm', style:'z-index:1', skill:'yaa+;faa+;caa+' }
+  button [199,356,,] { tag:'cor', title:'Zpět', skill:'yaa+|yaa+;faa+|faa+;caa+|caa+'
     help:'Neměnit změněná data'
     proc onclick() { form.load(page.a_akce.get);
   }}
-  button [191,356,,] { tag:'cor', title:'Uložit', skill:'yaa+|yaa+;faa+|faa+;caa+|caa+'
+  button [245,356,,] { tag:'cor', title:'Uložit', skill:'yaa+|yaa+;faa+|faa+;caa+|caa+'
     help:'Uložit změněná data',
     proc onclick() {
       form.same
@@ -166,12 +157,23 @@ form _page [,,285,500] {
       form.insert; form.load;
       info.sey.raise('onrowclick',info.sey.browse_seek(conc('id_duakce=',form.key)))
   } }
-  // jen pro YF,CR - přidání akce
-  label  [10,351,84,30] { tag:'cor', css:'ae_parm', style:'z-index:1', skill:'faan;caan' }
-  button [18,356,,] {tag:'cor', title:'Nová akce', format:'c', skill:'faan|faan;caan|caan'
+  // jen pro YF,CR - přidání a zrušení akce
+  label  [10,351,164,30] { tag:'cor', css:'ae_parm', style:'z-index:1', skill:'faan;caan' }
+  button [16,356,,] {tag:'cor', title:'Nová akce', format:'c', skill:'faan|faan;caan|caan'
     proc onclick() {
       form.init; info.sey.blur(1)
   } }
+  button [91,356,,] {tag:'cor', title:'Smazat akci', format:'c', skill:'faan|faan;caan|caan'
+    proc onclick() {
+      var ret:object
+      var msg:text
+      ret.set(ask('akce_delete_confirm',form.key));
+      ret.zrusit; confirm(ret.zrusit);                  // fakt zrušit + název
+      { not(ret.ucastnici) | confirm(ret.ucastnici) };  // ale akce má účastníky
+      { ret.platby; alert(ret.platby)                   // nelze smazat, jsou-li platby
+      | msg.set(ask('akce_delete',form.key,ret));
+        akce_roku; alert(msg.get);
+  } } }
   # --------------------------- ceník
   browse c [10,25,,] { tag:'cen', rows:22, qry_rows:1, css_rows:"barva,1:grey"
     show id_cenik { data:cenik.id_cenik }
@@ -193,10 +195,6 @@ form _page [,,285,500] {
       format:'urq#s',                                                                    skill:'c|c'
       help:'typ ubutování: 1,2,3,...'
       proc onsubmit() { this.save } }
-#     show od [,,29,] { title:'od', help:'od věku - včetně', data:cenik.od, format:'urq=s'
-#       proc onsubmit() { this.save } }
-#     show do [,,29,] { title:'do', help:'do věku - nevčetně', data:cenik.do, format:'urq=s'
-#       proc onsubmit() { this.save } }
     show cena [,,32,] { title:'cena', help:'cena v Kč vč. DPH', data:cenik.cena, format:'urq=s'
       proc onsubmit() { this.save } }
     show dph [,,15,] { title:'dph', help:'DPH v Kč', data:cenik.dph, format:'urq=s'
@@ -256,45 +254,14 @@ form _akce [,,*,50] {
       the_rok.set(fdate('Y',sey.od.get));
       set_cookie(conc(sys('root'),'_akce_rok'),the_rok.get) ];
     the_title.set(nazev_akce(id_akce));
-#     { and(the_duakce.get,not(eq(the_duakce.get,'0')));
-#       { eq(the_source.get,'google');
-#         the_title.set(conc(' Akce ',google.kod.get,'/',google.rok.get,' - ',google.nazev.get));
-#       | eq(the_source.get,'sey');
-#         the_rok.set(fdate('Y',sey.od.get));
-#         set_cookie(conc(sys('root'),'_akce_rok'),the_rok.get);
-#         the_title.set(conc('&nbsp;',conc(sey.nazev.get,', ',the_rok.get)));
-#       | error('X1')
-#       };
     lst.info.fill(the_title.get);
     set_cookie(conc(sys('root'),'_akce_title'),the_title.get);
     [ ucast.call('init_ucast2') ];
     [ has_skill('yam;fam;cam'); mai.call('init_ucast') ];
     [ pece.call('init_pece') ];
-#     };
     // vložení informací o akci do proměnné obj_akce
     obj_akce.set(object('nazev',naz));
   }
-
-#       [ the_title.set(if(eq(the_source.get,'google'),
-#           conc(' Akce ',google.kod.get,'/',google.rok.get,' - ',google.nazev.get),
-#           conc('&nbsp;',conc(sey.nazev.get,', ',the_rok.get))
-#         ));
-#       [ the_title.set(if(eq(the_source.get,'google'),
-#           conc(' Akce ',google.kod.get,'/',google.rok.get,' - ',google.nazev.get),
-#           conc('&nbsp;',conc(sey.nazev.get,', ',the_rok.get))
-#         ));
-#         lst.info.fill(the_title.get);
-#         set_cookie(conc(sys('root'),'_akce_title'),the_title.get);
-#         [ ucast.call('init_ucast2') ];
-#         [ mai.call('init_ucast') ];
-#         [ pece.call('init_pece') ]
-#       ]
-#
-#
-#     };
-#     // vložení informací o akci do proměnné obj_akce
-#     obj_akce.set(object('nazev',naz));
-#   }
   // -------------------------------------------  g_akce (kopie číselníku z intranetu) pro YS
   view ga: table g_akce
   view ja: table join_akce {join_type:'LEFT',join:'USING(g_rok,g_kod)'}
@@ -311,9 +278,6 @@ form _akce [,,*,50] {
     show nazev [,,210,] {title:'název', data:ga.g_nazev, format:'sq*'}
     show od    [,,65,] {title:'od',     data:ga.g_od, format:'rsq*'}
     show do    [,,65,] {title:'do',     data:ga.g_do, format:'rsq*'}
-#     show strava[,,20,] {title:'str',    data:da.strava_oddo, format:'rsq*'}
-#     show typ   [,,30,] {title:'typ',    data:ga.g_typ, format:'sq*'}
-#     show kap   [,,30,] {title:'kap',    data:ga.g_kap, format:'sq*'}
     proc onsubmit() {
       id_akce.get; volba_akce(id_akce.get,naz_akce.get,ma_cenik.get,ma_cenu.get,cena.get)
     | not(eq(fdate('Y',od.get),rok.get));
@@ -328,30 +292,21 @@ form _akce [,,*,50] {
   }
   // ------------------------------------------- akce (všechny akce) pro YS, FA, CR
   view da2: table akce
-#   view ma2: table ms_akce   {join_type:'LEFT',join:'USING(id_duakce)'}
   view ja2: table join_akce {join_type:'LEFT',join:'ON ja2.id_akce=da2.id_duakce'}
   view ga2: table g_akce    {join_type:'LEFT',join:'USING(g_rok,g_kod)'}
   browse sey [0,36,200,500] { type:'smart', rows:27, qry_rows:1, buf_rows:120,
     show id_akce  {data:da2.id_duakce}
     show          {data:ja2.id_akce}
     show ma_cenik {data:da2.ma_cenik}
-#     show          {data:ma2.id_akce}
     show ma_cenu {data:da2.ma_cenu}
     show cena {data:da2.cena}
     show id_gakce {data:ga2.id_gakce}
-#     show kod   [,,30,] {title:'kód', data:ga2.g_kod, format:'rs+q*u', css_cell:'kod,0:yellow'
-#       proc onsubmit() { echo(ask('akce_roku_id',id_akce.get,kod.get,the_rok.get)) }
-#     }
 /**/show druh  [,,60,] {title:'typ',    data:da2.druh, map_pipe:ms_akce_typ.zkratka, format:'sq#'}
     show kod   [,,30,] {title:'účet',   expr:"IF(ga2.g_kod,ga2.g_kod,da2.ciselnik_akce)", format:'rs+q*' }
     show nazev [,,120,] {title:'název', expr:"IF(da2.nazev='',ga2.g_nazev,da2.nazev)", format:'sq*'}
     show misto [,,60,] {title:'místo',  data:da2.misto, format:'sq*'}
     show od    [,,65,] {title:'od',     data:da2.datum_od, format:'rsq*'}
     show do    [,,65,] {title:'do',     data:da2.datum_do, format:'rsq*'}
-#     show strava[,,20,] {title:'str',    data:da2.strava_oddo, format:'rsq*'}
-#     show       [,,30,] {title:'klíč',   data:da2.id_duakce, format:'rsq'}
-#     show typ   [,,30,] {title:'typ',    data:ga2.g_typ, format:'sq*'}
-#     show kap   [,,30,] {title:'kap',    data:ga2.g_kap, format:'sq*'}
     proc onsubmit() { volba_akce(id_akce.get,nazev.get,ma_cenik.get,ma_cenu.get,cena.get) }
     proc onrowclick() { page.show_akce(id_akce.get); }
   }

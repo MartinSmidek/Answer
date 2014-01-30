@@ -444,6 +444,150 @@ panel akc [,,,750] {type:'right', title:'Akce',_sys:'*'
     }
   }
 }
+# ================================================================================================== Potvrzení
+panel pot [,,,750] {type:'right', title:'Potvrzení',_sys:'*'
+  use ii: form right [12,4,,]
+  var dopis_id: text
+  var cast_sablony: text
+  var cast_dopis: text
+  proc test_dbg() {
+    echo(dopis_id.get)
+  }
+  menu {type:'left', active:*
+    menu {title:'Daňová potvrzení',type:'group',_sys:'*'
+      item {title:'Loňské dary'                 ,par:°{rok:'-1'}}
+      item {title:'Předloňské dary'             ,par:°{rok:'-2'}}
+      item {title:'Předloňské dary - uložení'   ,par:°{rok:'-2',save:1}}
+      proc onclick (i) {
+        var ret:object
+        S_sablona.hide;
+        ii.nadpis(i.title,"... probíhá výpočet");
+        ret.set(ask('ucet_potv',i.par));
+        ii.nadpis('',ret.html);
+      }
+    }
+    menu {title:'Vzory dopisů', type:'group'
+      item {title:'Potvrzení ročních darů'   ,par:°{s:'texty',c:'Pf'} }
+      proc onclick (i) {
+        ii.opravit.display(1); S_sablona.hide;
+        cast_dopis.set(ask('dop_sab_text',i.par.c));
+        dopis_id.set(cast_dopis.get('id_dopis'));
+        ii.nadpis(i.title,cast_dopis.get('obsah'))
+      }
+    }
+    menu {title:'Části šablony dopisů', type:'group', _sys:'sab'
+      item {title:'hlavička'    ,par:°{s:'D',c:'hlavicka'} }
+      item {title:'adresát'     ,par:°{s:'D',c:'adresa'} }
+      item {title:'vyřizuje'    ,par:°{s:'D',c:'vyrizuje'} }
+      item {title:'datum'       ,par:°{s:'D',c:'odeslano'} }
+      item {title:'text'        ,par:°{s:'D',c:'text'} }
+      item {title:'patička'     ,par:°{s:'D',c:'paticka'} }
+      proc onclick (i) {
+        ii.opravit.display(0);
+        cast_sablony.set(ask('dop_sab_cast',i.par.s,i.par.c));
+        ii.nadpis(i.title,' ');
+        S_sablona.popup(0,90);
+      }
+    }
+    menu {title:'Ukázkové tisky šablon', type:'group', _sys:'sab'
+      item {title:'šablona YMCA Setkání'        ,par:°{s:'nahled',c:'nahled_j'} }
+      proc onclick (i) {
+        ii.opravit.display(0); S_sablona.hide;
+        ii.nadpis(i.title,ask('dop_sab_nahled',i.par.c))
+      }
+    }
+  }
+  # ------------------------------------------------------------------------------------------------ right
+  # formulář pro levostranné menu s tlačítkem OPRAVIT
+  form right [,,*,600] {
+    button opravit [-24,4,100,16] { title:'Upravit', style:'display:none;zIndex:2'
+      proc onclick() { D_dopis.modal(50,50) }
+    }
+    label head [0,0,*,50] { title:'' }
+    label note [0,50,*,500] { title:'' }
+    proc nadpis(h,n) {
+      [ h; head.set(conc("<div class='karta'>",h,"</div>")) ];
+      [ n; note.set(n) ]
+    }
+    proc append(n) {
+      note.set(conc(note.get,n))
+    }
+  }
+  # ================================================================================================ D_dopis
+  # oprava textu, stavu v popup menu
+  panel D_dopis [0,0,645,520] { title:' Úprava textu dopisu', type:'popup', css:'dialog'
+    use d: form _dopis [0,0,,],
+    proc onfocus () {
+      dopis_id.get; d.load(dopis_id.get);
+    | warning('nedefinovaný dopis')
+    }
+    # ------------------------------------------------------------------------------ _dopis
+    form _dopis [10,10,600,460] {
+      label [0,12,60,20] { title:'Aktuální:' }
+      check nazev [50,10,50,20] { data:dopis.aktualni },
+      button  [540,9,45,20] { title:'Uložit', help:'ukončit editor a uložit změny'
+        proc onclick() { form.save; panel.hide(1); ii.nadpis('',html.get) } }
+      button  [600,9,45,20] { title:'Zpět', help:'ukončit editor bez uložení změn'
+        proc onclick() { panel.hide(0); }
+      }
+      edit html [0,40,655,480] {type:'html', data:dopis.obsah, par:°{toolbar:'EzerLetter'} },
+    }
+  }
+  # ------------------------------------------------------------------------------------------------ S_sablona
+  # popup
+  panel S_sablona [0,0,645,520] { title:' Úprava šablony dopisu',
+    use cast: form _cast [0,0,,],
+    proc onfocus () {
+      cast.load(cast_sablony.get('id_dopis_cast'));
+      cast.ukazka.set(cast_sablony.get('obsah'))
+    }
+    form _cast [,,700,447] {
+      label [55,4,100,17] { title:'zleva:' },
+      field l [94,1,33,17] { data:dopis_cast.l, format:'r' },
+      label [144,5,50,17] { title:'zhora:' },
+      field t [183,1,35,17] { data:dopis_cast.t, format:'r' },
+      label [55,29,100,17] { title:'šířka:' },
+      field w [96,28,33,17] { data:dopis_cast.w, format:'r' },
+      label [142,30,50,17] { title:'výška:' },
+      field h [183,28,35,17] { data:dopis_cast.h, format:'r' },
+      label [267,32,50,17] { title:'zarovnání:' },
+      field align [332,31,30,17] { data:dopis_cast.fattr },
+      label [239,4,100,17] { title:'velikost písma:' },
+      field fsize [332,3,31,17] { data:dopis_cast.fsize, format:'r' },
+      label [381,6,50,17] { title:'řádkování:' },
+      field ln [444,3,32,17] { data:dopis_cast.ln },
+      label [376,31,100,17] { title:'ohraničení:' },
+      field bord [444,29,33,17] { data:dopis_cast.bord, format:'' },
+      label [490,6,100,17] { title:'umístění:' },
+      field umisteni [550,2,16,17] { data:dopis_cast.umisteni, format:'' },
+      label [518,28,100,17] { title:'typ:' },
+      field typ [550,29,17,17] { data:dopis_cast.typ, format:'' },
+      label [23,59,100,17] { title:'text (html):' },
+      edit obsah [95,63,547,200] { data:dopis_cast.obsah },
+      label [23,275,640,17] { title:"<u>orientační</u> ukázka (přesná viz menu 'Ukázkové tisky šablon'):" },
+      label ukazka [23,295,640,500]
+      button uloz [590,0,100,17] { title:'Uložit'
+        proc onclick () { form.save; form.load; ukazka.set(obsah.get) }
+      }
+    }
+  }
+}
+table dopis_cast { key_id:'id_dopis_cast'
+  number id_dopis_cast { key:'primary' },
+  text name
+  text umisteni
+  text typ
+  number l
+  number t
+  number w
+  number h
+  number ln
+  text align
+  number fsize
+  text fattr
+  text bord
+  text obsah
+}
 # ================================================================================================== tabulky
 table udenik { key_id:'id_udenik'
   number id_udenik { key:'primary' }
