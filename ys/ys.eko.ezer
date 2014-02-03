@@ -456,6 +456,7 @@ panel pot [,,,750] {type:'right', title:'Potvrzení',_sys:'*'
   menu {type:'left', active:*
     menu {title:'Daňová potvrzení',type:'group',_sys:'*'
       item {title:'Loňské dary'                 ,par:°{rok:'-1'}}
+      item {title:'Loňské dary - uložení'       ,par:°{rok:'-1',save:1}}
       item {title:'Předloňské dary'             ,par:°{rok:'-2'}}
       item {title:'Předloňské dary - uložení'   ,par:°{rok:'-2',save:1}}
       proc onclick (i) {
