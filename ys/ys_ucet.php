@@ -117,7 +117,8 @@ function ucet_potv($par) { trace();
     $id= $jmeno_id["$prijmeni$jmeno"];
     if ( $id ) {
       if ( !isset($darce[$id]) ) $darce[$id]= (object)array('data'=>array(),'castka'=>0);
-      list($m,$d,$y)= explode('/',$datum);
+      list($d,$m,$y)= preg_split("/[\/\.]/",$datum);
+      $m= 0+$m; $d= 0+$d;
       $darce[$id]->data[]= "$d. $m.";
       $darce[$id]->castka+= $castka;
     }
