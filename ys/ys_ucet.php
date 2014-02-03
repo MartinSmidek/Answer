@@ -106,7 +106,7 @@ function ucet_potv($par) { trace();
     }
     elseif ( $manual ) {
       if ( $manual=='x' )
-        $prblm3.=  ($prblm3?"<br>":'')."x $datum $jmeno $prijmeni $castka";
+        $prblm3.=  ($prblm3?"<br>":'')."x $dar_jmeno $castka";
       else
         $jmeno_id["$prijmeni$jmeno"]= $manual;
     }
