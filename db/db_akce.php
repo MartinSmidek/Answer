@@ -7000,7 +7000,7 @@ function dop_mai_potvr($druh,$o,$rok) {  trace();
   // definice parametrů pro potvrzující dopis
   $parss[$n]= (object)array();
   $parss[$n]->dar_datum= $data;
-  $parss[$n]->dar_castka= $castka;
+  $parss[$n]->dar_castka= str_replace(' ','&nbsp;',$castka);
   $parss[$n]->darce= "$osloveni <b>$jmeno $prijmeni</b>";
   $parss[$n]->darce_a= $sex==2 ? "a" : "";
   $parss[$n]->vyrizeno= date('j. n. Y');
@@ -7702,10 +7702,10 @@ function dop_mai_send($id_dopis,$kolik,$from,$fromname,$test='',$id_mail=0) { tr
       if ( $z->priloha ) {
         $mail->ClearAttachments();
         attach($mail,$d->prilohy);
-        attach($mail,$m->priloha);
+        attach($mail,$z->priloha);
       }
       $mail->Body= $obsah;
-      foreach(explode(',',$z->email) as $adresa) {
+      foreach(preg_split("/,\s*|;\s*/",trim($z->email," ,;")) as $adresa) {
         if ( !$i++ )
           $mail->AddAddress($adresa);   // pošli na 1. adresu
         else                            // na další jako kopie
