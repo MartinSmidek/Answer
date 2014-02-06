@@ -116,7 +116,9 @@ function ucet_potv($par) { trace();
     // střádání darů od jednoznačně určeného dárce
     $id= $jmeno_id["$prijmeni$jmeno"];
     if ( $id ) {
-      if ( !isset($darce[$id]) ) $darce[$id]= (object)array('data'=>array(),'castka'=>0);
+      if ( !isset($darce[$id]) ) {
+        $darce[$id]= (object)array('data'=>array(),'castka'=>0,'jmeno'=>"$prijmeni $jmeno");
+      }
       list($d,$m,$y)= preg_split("/[\/\.]/",$datum);
       $m= 0+$m; $d= 0+$d;
       $darce[$id]->data[]= "$d. $m.";
@@ -144,6 +146,33 @@ function ucet_potv($par) { trace();
       $n+= $oki ? mysql_affected_rows () : 0;
     }
     $html.= "<br><br>vloženo $n dárců k potvrzování za rok $rok";
+  }
+  elseif ( $druh= $par->corr ) {
+    // oprava záznamů o účetních darech
+    $n1= $n2= $n3= 0;
+    foreach ($darce as $id=>$dary) {
+      $data= implode(', ',$dary->data)." $rok";
+      $pars= ezer_json_encode((object)array('data'=>$data));
+      // zjištění výše zaznamenaného daru
+      $castka2= $dary->castka;
+      list($id_dar,$castka1)= select("id_dar,castka","dar","id_osoba=$id AND ukon='d' AND zpusob='u'
+        AND dat_od='$rok-12-31' AND note='daňové potvrzení'");
+      if ( $castka2==$castka1 ) {
+        $n1++;
+      }
+      elseif ( $castka2 >= 400 ) {
+        $pars= ezer_json_encode((object)array('data'=>$data,'bylo'=>$castka1));
+                                        display("{$dary->jmeno} $castka1 - $castka2");
+        $oku= query("UPDATE dar
+          SET castka=$castka2, note='2.daňové potvrzení', pars='$pars'
+          WHERE id_dar=$id_dar");
+        $n2+= $oku ? mysql_affected_rows () : 0;
+      }
+      else {
+        $n3++;
+      }
+    }
+    $html.= "<br><br>opraveno $n2 dárců za rok $rok, bez opravy jich je $n1, $n3 pod 400 Kč";
   }
 end:
   return (object)array('html'=>$html,'href'=>$href);
