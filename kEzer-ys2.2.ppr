@@ -38,12 +38,13 @@ kEzer-ys2
 	-fis - θαst
 		fis\fis_pdf.php
 		fis\fis_tcpdf.php
-	-fa
+	+fa
 		fa\$.ezer
 		fa\fa.css.php
 		fa.inc
 		fa\fa.lide.ezer
 		fa.php
+		fa\fa.syst.dat.ezer
 		fa\fa_fce.js
 		fa\fa_fce.php
 		fa\fa_lide.php
@@ -184,7 +185,7 @@ kEzer-ys2
 			ys\ys.ban.php
 			ys\ys.ban.pre.ezer
 			ys\ys.ban.vyp.ezer
-		-$
+		+$
 			ys\$.ezer
 			skins\colors.php
 			ys\ys.css.php
@@ -203,7 +204,7 @@ kEzer-ys2
 			ys\ys.info.ezer
 			ys\ys.lide.ezer
 			ys\ys_lide.php
-		+pokladna
+		-pokladna
 			ys\ys.pok.den.ezer
 			ys\ys.pok.ezer
 			ys\ys.pok.nas.ezer
@@ -235,65 +236,58 @@ kEzer-ys2
 2=ezer2.2\client\ezer.js
 3=ezer2.2\client\ezer_fdom1.js
 4=ezer2.2\client\ezer_fdom2.js
-5=db\db.akce.mai.ezer
-6=db\db_akce.php
-7=db\db.akce.lst.ezer
-8=db\db.akce.ezer
-9=ys\ys_fce.php
-10=ys\ys.eko.ezer
-11=ys\ys_ucet.php
-12=db\db.akce.evi.ezer
+5=db\db_akce.php
+6=db\db.akce.ezer
+7=ys\ys_fce.php
+8=ys\ys_ucet.php
+9=db\db.akce.evi.ezer
+10=db\db.akce.eli.ezer
+11=ys\ys.eko.ezer
 [Selected Project Files]
 Main=
-Selected=db\db_akce.php
+Selected=ezer2.2\client\ezer.js
 [ezer2.2\server\ezer2.php]
 TopLine=1518
 Caret=72,1520
 BookMark1=52,1531
 [ezer2.2\server\ae_slib.php]
-TopLine=338
-Caret=83,341
+TopLine=2175
+Caret=3,2200
 [ezer2.2\client\ezer.js]
 TopLine=765
-Caret=1,815
+Caret=59,793
 [ezer2.2\client\ezer_fdom1.js]
 TopLine=276
 Caret=40,302
 [ezer2.2\client\ezer_fdom2.js]
 TopLine=1
 Caret=1,1
-[db\db.akce.mai.ezer]
-TopLine=880
-Caret=35,914
-BookMark1=1,771
-BookMark2=5,493
-Mark1=1,951
 [db\db_akce.php]
-TopLine=7675
-Caret=88,7684
-BookMark2=1,6925
-BookMark3=5,6973
-BookMark7=9,7543
-Mark1=29,7716
-Mark2=17,7671
-BookMark1=47,7708
-[db\db.akce.lst.ezer]
-TopLine=114
-Caret=33,175
-BookMark1=20,167
+TopLine=598
+Caret=97,618
+BookMark1=47,7714
+BookMark2=1,6931
+BookMark3=5,6979
+BookMark7=9,7549
+Mark1=29,7722
+Mark2=17,7677
 [db\db.akce.ezer]
-TopLine=1
-Caret=16,1
+TopLine=31
+Caret=45,61
 [ys\ys_fce.php]
 TopLine=207
-Caret=92,231
-[ys\ys.eko.ezer]
-TopLine=438
-Caret=89,449
+Caret=75,222
 [ys\ys_ucet.php]
-TopLine=61
-Caret=45,88
-BookMark1=21,120
+TopLine=88
+Caret=91,102
+BookMark1=21,122
 [db\db.akce.evi.ezer]
-TopLine=316
-Caret=66,346
+TopLine=382
+Caret=75,401
+[db\db.akce.eli.ezer]
+TopLine=258
+Caret=34,286
+BookMark1=49,64
+[ys\ys.eko.ezer]
+TopLine=427
+Caret=41,453
