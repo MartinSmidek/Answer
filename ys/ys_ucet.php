@@ -115,7 +115,7 @@ function ucet_potv($par) { trace();
     }
     // střádání darů od jednoznačně určeného dárce
     $id= $jmeno_id["$prijmeni$jmeno"];
-    if ( $id ) {
+    if ( $id && $castka ) {
       if ( !isset($darce[$id]) ) {
         $darce[$id]= (object)array('data'=>array(),'castka'=>0,'jmeno'=>"$prijmeni $jmeno");
       }
