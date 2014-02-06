@@ -149,7 +149,7 @@ function ucet_potv($par) { trace();
   }
   elseif ( $druh= $par->corr ) {
     // oprava záznamů o účetních darech
-    $n1= $n2= $n3= 0;
+    $n1= $n2= $n3= $n4= 0;
     foreach ($darce as $id=>$dary) {
       $data= implode(', ',$dary->data)." $rok";
       $pars= ezer_json_encode((object)array('data'=>$data));
@@ -160,7 +160,7 @@ function ucet_potv($par) { trace();
       if ( $castka2==$castka1 ) {
         $n1++;
       }
-      elseif ( $castka2 >= 400 ) {
+      elseif ( $id_dar && $castka2 >= 400 ) {
         $pars= ezer_json_encode((object)array('data'=>$data,'bylo'=>$castka1));
                                         display("{$dary->jmeno} $castka1 - $castka2");
         $oku= query("UPDATE dar
@@ -168,11 +168,16 @@ function ucet_potv($par) { trace();
           WHERE id_dar=$id_dar");
         $n2+= $oku ? mysql_affected_rows () : 0;
       }
+      elseif ( !$id_dar && $castka2 >= 400 ) {
+        $oki= query("INSERT INTO dar (id_osoba,ukon,zpusob,castka,dat_od,note,pars)
+          VALUES ($id,'d','u',$castka2,'$rok-12-31','2.daňové potvrzení','$pars')");
+        $n4+= $oki ? mysql_affected_rows () : 0;
+      }
       else {
         $n3++;
       }
     }
-    $html.= "<br><br>opraveno $n2 dárců za rok $rok, bez opravy jich je $n1, $n3 pod 400 Kč";
+    $html.= "<br><br>dárců za rok $rok: přidáno $n4, opraveno $n2, bez opravy $n1, $n3 pod 400 Kč";
   }
 end:
   return (object)array('html'=>$html,'href'=>$href);
