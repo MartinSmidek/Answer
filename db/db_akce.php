@@ -141,6 +141,7 @@ function data_eli_dupl_cr($iddr,$idd,$idc,$idt,$faze=2) { trace();
 # upraví položku DUPLO.rozdily=10 (šedá) v předaném záznamu
 # faze=2 pro ruční a faze=1 pro automatické ztotožnění
 function data_eli_dupl_cs($idd,$idc,$ido,$faze=2,$jen_akce=false) { trace();
+  global $USER;
   $ret= (object)array('err'=>'');
   $ok= 0;
   # převedení informací o účasti na chlapské akci do AKCE
@@ -195,6 +196,11 @@ function data_eli_dupl_cs($idd,$idc,$ido,$faze=2,$jen_akce=false) { trace();
       if ( count($zmeny) ) {
         ezer_qry("UPDATE",'osoba',$ido,$zmeny);
       }
+      // zápis o importu z chlapi do _track
+//       $now= date("Y-m-d H:i:s");
+//       $user= $USER->abbr;
+//       $qt= "INSERT INTO _track (kdy,kdo,kde,klic,fld,op,old,val)
+//             VALUES ('$now','$user','osoba',$ido,)"
     }
   }
 end:

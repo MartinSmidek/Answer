@@ -58,7 +58,7 @@ panel mai {type:'right', title:'MAILY', _sys:'*', include:'onclick,db.akce.mai',
 #   include:'onclick,db.akce.eli0', skill:'m' }
 panel eli {type:'right', _sys:'*'
   title:'&nbsp;.&nbsp;&nbsp;.&nbsp;&nbsp;.&nbsp;&nbsp;.&nbsp;&nbsp;.&nbsp;&nbsp;.&nbsp;&nbsp;.&nbsp;&nbsp;.&nbsp;&nbsp;.&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(duplicity)',
-  include:'onclick,db.akce.eli', skill:'m' }
+  include:'onclick,db.akce.eli', skill:'m;ah' }
 
 # ================================================================================================== COMMON
 # ------------------------------------------------------------------ _the_akce
