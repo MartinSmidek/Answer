@@ -192,15 +192,15 @@ function data_eli_dupl_cs($idd,$idc,$ido,$faze=2,$jen_akce=false) { trace();
         }
       }
                                                     debug($zmeny);
+      // zápis o importu z chlapi do _track jako op=d (duplicita)
+      $now= date("Y-m-d H:i:s");
+      $user= $USER->abbr;
+      query("INSERT INTO _track (kdy,kdo,kde,klic,fld,op,old,val)
+            VALUES ('$now','$user','osoba',$ido,'','d','chlapi',$idc)");
       // promítnutí změn do OSOBA
       if ( count($zmeny) ) {
         ezer_qry("UPDATE",'osoba',$ido,$zmeny);
       }
-      // zápis o importu z chlapi do _track
-//       $now= date("Y-m-d H:i:s");
-//       $user= $USER->abbr;
-//       $qt= "INSERT INTO _track (kdy,kdo,kde,klic,fld,op,old,val)
-//             VALUES ('$now','$user','osoba',$ido,)"
     }
   }
 end:
@@ -7711,7 +7711,7 @@ function dop_mai_send($id_dopis,$kolik,$from,$fromname,$test='',$id_mail=0) { tr
         attach($mail,$z->priloha);
       }
       $mail->Body= $obsah;
-      foreach(preg_split("/,\s*|;\s*/",trim($z->email," ,;")) as $adresa) {
+      foreach(preg_split("/,\s*|;\s*|\s+/",trim($z->email," ,;"),-1,PREG_SPLIT_NO_EMPTY) as $adresa) {
         if ( !$i++ )
           $mail->AddAddress($adresa);   // pošli na 1. adresu
         else                            // na další jako kopie
