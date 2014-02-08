@@ -12,18 +12,19 @@ var mode: text   // j=join, h=hand, i=info
 
 use info: form right [6,4,,] { tag:'i'
   # zkratky testovacích běhů
-  button [-20,4,,] { title:"TRUN", proc onclick() {
+  button [-20,4,,] { title:"TRUN", skill:'m|m', proc onclick() {
     ti.onclick; ask("ROLLBACK_ALL");
   }}
-  button ti [-70,4,,] { title:"INIT", proc onclick() { clear;
+  button ti [-70,4,,] { title:"INIT", skill:'m|m', proc onclick() { clear;
     n1.init_all; s2.init_all; c2.init_all; r2.init_all; r3.init_all; s3.init_all; }}
-  button [-120,4,,] { title:"rr:babi/babí", proc onclick() {
+  button [-120,4,,] { title:"rr:babi/babí", skill:'m|m', proc onclick() {
     clear; do.rucne.rr.click; r2.br._nazev.set_query(1,"babi"); r3.br._nazev.set_query(1,"babí"); }}
-  button [-220,4,,] { title:"cr:baj/baj", proc onclick() {
+  button [-220,4,,] { title:"cr:baj/baj", skill:'m|m', proc onclick() {
     clear; do.rucne.cr.click; c2.bc._nazev.set_query(1,"baj"); r3.br._nazev.set_query(1,"baj"); }}
-  button [-320,4,,] { title:"sr:oh/ohř", proc onclick() {
+  button [-320,4,,] { title:"sr:oh/ohř", skill:'m|m', proc onclick() {
     clear; do.rucne.sr.click; s2.bs._nazev.set_query(1,"oh"); r3.br._nazev.set_query(1,"ohř"); }}
-  field parametr [-420,5,80,] label [-472,8,50,] { title:"par:", style:"color:white" }
+  field parametr [-420,5,80,] {skill:'m|m'}
+  label [-472,8,50,] { title:"par:", style:"color:white", skill:'m' }
                                                 # ------------------------- kalkulačka
   label          [ 50,130, 80,] { tag:'c', title:'akce'}
   field id_akce  [ 50,150, 40,] { tag:'c', format:'dnr' }
