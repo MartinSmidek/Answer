@@ -3,6 +3,9 @@
 # ------------------------------------------------------------------------------------- ROLLBACK_ALL
 # jen pro ladění - vrácení do původního stavu
 function ROLLBACK_ALL() { trace();
+  // částečně znova
+  query("TRUNCATE TABLE duplo");
+  return 1;
   // úplně znova
   $last_pobyt= 12302;
   $last_spolu= 24442;
@@ -741,6 +744,12 @@ function data_eli_auto($typ,$patt='') { trace();
     $copy= explode(',',"role,nomail");
     $asi= $c->_asi;
     $chngs= '{'; $del= '';
+    // odstranění variabilního symbolu z chlapi.note
+//                                                         display("-- {$c->c_prijmeni}:{$c->c_note}");
+    if ( preg_match("/^VS:\s\d{6}\s*(.*)$/m",$c->c_note,$m) ) {
+//                                                         debug($m,$c->c_note);
+      $c->c_note= $m[1];
+    }
     foreach ($flds as $f) {
       // přímá kopie zobrazovaných údajů
       if ( in_array($f,$copy) ) {

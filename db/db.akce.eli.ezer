@@ -110,7 +110,7 @@ var tisk2:text
 menu do {type:'left', format:'f'
   menu zjistene {title:'=> Sjednocení duplicit',type:'group'
     item cs {title:'chlap a single',    par:°{mode:'jcs', forms:'i|n1|c2|s3', tags:'jcs|o', call:'init_cs_s'} }
-    item cr {title:'chlap a rodina',    par:°{mode:'jcr', forms:'i|n1|c2|r3', tags:'jcr|o', call:'init_cr_s'}, skill:'m' }
+    item cr {title:'chlap a rodina',    par:°{mode:'jcr', forms:'i|n1|c2|r3', tags:'jcr|o|t',call:'init_cr_s'}, skill:'m' }
     item c  {title:'chlap izolovaný',   par:°{mode:'jc',  forms:'i|n1|c2',    tags:'jc|o',  call:'init_c_s'} , skill:'m' }
     item sr {title:'single a rodina',   par:°{mode:'jsr', forms:'i|n1|s2|r3', tags:'jsr|o', call:'init_sr_s'}, skill:'m' }
     item rr {title:'2 rodiny',          par:°{mode:'jrr', forms:'i|n1|r2|r3', tags:'jrr|o|r'}                , skill:'m' }
@@ -324,7 +324,8 @@ form _navrhy [,,Wr,Hr] {
   proc o_save() {
     chngs.set(o.save_json(chngs.get,'9:#00ff00')); o.plain; chngs.change;
     d.key(bnn.idd.get); d.save; bnn.onrowclick }
-  proc reload_bn(cond) { bn.display(1); bn.browse_load(cond) | form.init }
+  proc reload_bn(cond) { bn.display(1); bn.browse_load(cond); //bnn_load(bn.idd.get,1)
+  | form.init }
   const bn_order= "d.asi DESC,d.id_duplo"
   proc reload_bnn(cond) { bn.display(0);
     bnn.browse_load(cond,bn_order.get,0,0,0,1); [ bnn.browse_seek("d.rozdily!=10") ];
@@ -370,8 +371,10 @@ form _navrhy [,,Wr,Hr] {
     | # varianta se zobrazenou rodinou
       r3.display;
       bn_load(idd.get); bnn_seek(idd.get); // ukaž data a nastav bnn
+      bnn_load(bnn.idd.get,1);
       # při sjednocování navíc nastav horní část aktivních r2 a r3
       eq(substr(mode.get,0,1),'j'); //--lt(barva.get,9);
+      [ c2.display;  c2.bc_seek(bnn.id1.get) ];
       [ r3.display;  r3.br_seek(id2.get) ];
     }
   }
