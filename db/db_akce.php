@@ -4,11 +4,11 @@
 function test1() {
   $x= (object)array('a'=>'ěščřžýáíé',"b=>"=>array("\"ěščřžýáíé\"
 'radek2'"));
-                                                debug($x);
+//                                                 debug($x);
   $x= json_encode($x);
-                                                display($x);
+//                                                 display($x);
   $x= json_decode($x);
-                                                debug($x);
+//                                                 debug($x);
   return $x;
 }
 # ================================================================================================== DUPL
@@ -51,7 +51,7 @@ function calc_tvori($idt) { trace();
     }
   }
 end:
-                                                                debug($ret,"calc_tvori($idt)");
+//                                                                 debug($ret,"calc_tvori($idt)");
   return $ret;
 }
 # --------------------------------------------------------------------------------------- calc_spolu
@@ -71,7 +71,7 @@ function calc_spolu($ids) { trace();
     }
   }
 end:
-                                                                debug($ret,"calc_spolu($idt)");
+//                                                                 debug($ret,"calc_spolu($idt)");
   return $ret;
 }
 # --------------------------------------------------------------------------------- data_eli_dupl_sr
@@ -99,7 +99,7 @@ function data_eli_dupl_sr($iddr,$idd,$ids,$idt,$faze=2) { trace();
   $o= select("*","osoba","id_osoba=$ido");
   if ( $chngs_s ) {
     $chngs= json_decode($chngs_s);
-                                                  debug($chngs);
+//                                                   debug($chngs);
     $zmeny= array();
     foreach ($chngs as $fld=>$chng) {
       $val= is_array($chng) ? $chng[0] : $chng;
@@ -109,7 +109,7 @@ function data_eli_dupl_sr($iddr,$idd,$ids,$idt,$faze=2) { trace();
         $zmeny[]= (object)array('fld'=>$fld,'op'=>'u','val'=>$val,'old'=>$old);
       }
     }
-                                                  debug($zmeny);
+//                                                   debug($zmeny);
     // zápis o ztotožnšní se single do _track jako op=d (duplicita)
     $now= date("Y-m-d H:i:s");
     $user= $USER->abbr;
@@ -184,7 +184,7 @@ function data_eli_dupl_cr($iddr,$idd,$idc,$idt,$faze=2) { trace();
   return $ret;
 }
 # --------------------------------------------------------------------------------- data_eli_dupl_cs
-# osobě ztotožněné s chlapem připíše informace o chlapských akcích (? a rok iniciace ?)
+# osobě ztotožněné s chlapem připíše informace o chlapských akcích //a rok iniciace
 # upraví položku DUPLO.rozdily=10 (šedá) v předaném záznamu
 # faze=2 pro ruční a faze=1 pro automatické ztotožnění
 function data_eli_dupl_cs($idd,$idc,$ido,$faze=2,$jen_akce=false) { trace();
@@ -214,8 +214,8 @@ function data_eli_dupl_cs($idd,$idc,$ido,$faze=2,$jen_akce=false) { trace();
     $ids= mysql_insert_id();
     # zápis vztahu id_ucast a id_pobyt
     query("INSERT INTO ch_fa (idc,idf,tab) VALUES ({$c->id_ucast},$idp,'p')");
-    # přenos informace o roku iniciace do OSOBA
-    //query("UPDATE osoba SET iniciace={$c->iniciace} WHERE id_osoba=$ido");
+//     # přenos informace o roku iniciace do OSOBA
+//     query("UPDATE osoba SET iniciace={$c->iniciace} WHERE id_osoba=$ido");
   }
   # zápis vztahu id_osoba do id_chlapi
   query("INSERT INTO ch_fa (idc,idf,tab) VALUES ($idc,$ido,'o')");
@@ -229,7 +229,7 @@ function data_eli_dupl_cs($idd,$idc,$ido,$faze=2,$jen_akce=false) { trace();
     $o= select("*","osoba","id_osoba=$ido");
     if ( $chngs_s ) {
       $chngs= json_decode($chngs_s);
-                                                    debug($chngs);
+//                                                     debug($chngs);
       $zmeny= array();
       foreach ($chngs as $fld=>$chng) {
         $val= is_array($chng) ? $chng[0] : $chng;
@@ -239,7 +239,7 @@ function data_eli_dupl_cs($idd,$idc,$ido,$faze=2,$jen_akce=false) { trace();
           $zmeny[]= (object)array('fld'=>$fld,'op'=>'u','val'=>$val,'old'=>$old);
         }
       }
-                                                    debug($zmeny);
+//                                                     debug($zmeny);
       // zápis o importu z chlapi do _track jako op=d (duplicita)
       $now= date("Y-m-d H:i:s");
       $user= $USER->abbr;
@@ -704,7 +704,7 @@ function data_eli_auto($typ,$patt='') { trace();
   function make_chngs_so($c,&$max_kod) { // --------------------------- make_chngs_so
     global $data_eli_sum;
     // definice polí osoba a kódu polí s odhady
-    $flds= explode(',',"jmeno,prijmeni,sex,ulice,psc,obec,telefon,email,narozeni,rc_xxxx,note,role,nomail");
+    $flds= explode(',',"jmeno,prijmeni,sex,ulice,psc,obec,telefon,email,narozeni,rc_xxxx,note,role,nomail,iniciace");
     $spec= array('telefon'=>2048,'email'=>1024,'narozeni'=>128,'obec'=>64,'ulice'=>32);
     $copy= explode(',',"role");
     $asi= $c->_asi;
@@ -797,10 +797,11 @@ function data_eli_auto($typ,$patt='') { trace();
   function make_chngs_co($c,&$max_kod) { // --------------------------- make_chngs_co
     global $data_eli_sum;
     // definice polí osoba a kódu polí s odhady
-    $flds= explode(',',"jmeno,prijmeni,sex,ulice,psc,obec,telefon,email,narozeni,rc_xxxx,note,role");
+    $flds= explode(',',"jmeno,prijmeni,sex,ulice,psc,obec,telefon,email,narozeni,rc_xxxx,note,iniciace");
     $spec= array('telefon'=>2048,'email'=>1024,'narozeni'=>128,'obec'=>64,'ulice'=>32);
     $copy= explode(',',"role,nomail");
     $asi= $c->_asi;
+//                                                         debug($c);
     $xchngs= (object)array();
     $chngs= '{'; $del= '';
     // odstranění variabilního symbolu z chlapi.note
@@ -928,7 +929,7 @@ function data_eli_auto($typ,$patt='') { trace();
         o.nomail AS o_nomail,o.uvitano AS o_uvitano,o.historie AS o_historie,o.umrti AS o_umrti,
         o.obcanka AS o_obcanka,o.vzdelani AS o_vzdelani,o.zamest AS o_zamest,
         o.zajmy AS o_zajmy,o.jazyk AS o_jazyk,o.cirkev AS o_cirkev,o.aktivita AS o_aktivita,
-        o.clen AS o_clen,
+        o.clen AS o_clen,o.iniciace AS o_iniciace,
         -- OSOBA jako single
         s.jmeno AS s_jmeno,s.prijmeni AS s_prijmeni,s.sex AS s_sex,s.ulice AS s_ulice,
         s.psc AS s_psc,s.obec AS s_obec,s.telefon AS s_telefon,s.email AS s_email,
@@ -937,7 +938,7 @@ function data_eli_auto($typ,$patt='') { trace();
         s.nomail AS s_nomail,s.uvitano AS s_uvitano,s.historie AS s_historie,s.umrti AS s_umrti,
         s.obcanka AS s_obcanka,s.vzdelani AS s_vzdelani,s.zamest AS s_zamest,
         s.zajmy AS s_zajmy,s.jazyk AS s_jazyk,s.cirkev AS s_cirkev,s.aktivita AS s_aktivita,
-        s.clen AS s_clen,
+        s.clen AS s_clen,s.iniciace AS s_iniciace,
         -- jen kopírované
         t.role
         FROM osoba AS s
@@ -965,11 +966,13 @@ function data_eli_auto($typ,$patt='') { trace();
         c.jmeno AS c_jmeno,c.prijmeni AS c_prijmeni,c.sex AS c_sex,c.ulice AS c_ulice,
         c.psc AS c_psc,c.obec AS c_obec,c.telefon AS c_telefon,c.email AS c_email,
         c.narozeni AS c_narozeni,c.rc_xxxx AS c_rc_xxxx,c.note AS c_note,c.origin AS c_origin,
+        c.iniciace AS c_iniciace,
         -- jen v OSOBA
         o.rodne AS o_rodne,o.fotka AS o_fotka,o.dieta AS o_dieta,o.stat AS o_stat,
         o.nomail AS o_nomail,o.uvitano AS o_uvitano,o.historie AS o_historie,o.umrti AS o_umrti,
         o.obcanka AS o_obcanka,o.vzdelani AS o_vzdelani,o.zamest AS o_zamest,
         o.zajmy AS o_zajmy,o.jazyk AS o_jazyk,o.cirkev AS o_cirkev,o.aktivita AS o_aktivita,o.clen AS o_clen,
+        o.iniciace AS o_iniciace,
         -- jen kopírované
         role,nomail,
         -- technické
@@ -1013,7 +1016,7 @@ function data_eli_auto($typ,$patt='') { trace();
   function make_query_c($cond) { // -------------------------------- make_query_c
     return "
       SELECT
-        id_chlapi,c.jmeno,c.prijmeni
+        id_chlapi,c.jmeno,c.prijmeni,c.iniciace
         FROM ezer_ys.chlapi AS c
         LEFT JOIN osoba AS o ON LEFT(c.prijmeni,4)=LEFT(o.prijmeni,4) AND
           levenshtein(c.prijmeni,o.prijmeni)<=1 AND (c.jmeno RLIKE o.jmeno OR o.jmeno RLIKE c.jmeno)
@@ -1043,7 +1046,7 @@ function data_eli_auto($typ,$patt='') { trace();
       $s->s_narozeni= sql_date1($s->s_narozeni);
       $s->o_narozeni= sql_date1($s->o_narozeni);
       last_dates_sr($s);        // přepočítej data poslední práce se záznamem
-                                                                debug($s,"$typ");
+//                                                                 debug($s,"$typ");
       $rozdily= 0;
       $chngs= make_chngs_so($s,$rozdily);
       $rzd= $asi<512 ? 8 : $rozdily;
@@ -1644,7 +1647,7 @@ function dupl_meth1($ids_osoba,$to_change=0) { trace();
       }
     }
   }
-                                                        display("$id1,$id2");
+//                                                         display("$id1,$id2");
   // posouzení rozdílů v instancích osoby - případně nalezení hlavní identity
   $trs= "";
   $smery= array();
@@ -2115,7 +2118,7 @@ __XLS;
   if ( $ret->msg ) goto end;
   $ret->ok= 1;
   $ret->xhref= " zde lze stáhnout <a href='docs/$name.xls' target='xls'>$name.xls</a>.";
-                                                        if ($test) display(($xls));
+//                                                         if ($test) display(($xls));
 end:
 //                                                         debug($ret);
   return $ret;
@@ -2970,7 +2973,7 @@ function akce_cerstve_zmeny($akce,$par,$title,$vypis,$export=false) { trace();
     $n++;
   }
   $result->html= "od $od bylo provedeno $n změn";
-                                        debug($clmn,"sestava pro $akce,$typ,$fld,$cnd");
+//                                         debug($clmn,"sestava pro $akce,$typ,$fld,$cnd");
   return akce_table($tits,$flds,$clmn,$export);
 }
 # ------------------------------------------------------------------------------ akce_jednou_dvakrat
@@ -5510,7 +5513,7 @@ function chlapi_akce_export($id_akce,$nazev) {  #trace();
       $values[$f]= $a;
     }
     export_row($values);
-                                                        debug($values);
+//                                                         debug($values);
   }
    export_tail();
 //                                                 display(export_tail(1));
@@ -6733,7 +6736,7 @@ __XLS;
     \n|close
 __XLS;
   // výstup
-                                                                display($xls);
+//                                                                 display($xls);
   $inf= Excel5($xls,1);
   if ( $inf ) {
     $html= " se nepodařilo vygenerovat - viz začátek chybové hlášky";
@@ -7046,7 +7049,7 @@ function dop_mai_posli_spec($id_dopis) {  trace();
   default:
     fce_error("není implemntováno");
   }
-                                                        debug($ret,"dop_mai_posli_spec end");
+//                                                         debug($ret,"dop_mai_posli_spec end");
   return $ret;
 }
 # -------------------------------------------------------------------------------------------------- dop_mai_potvr
@@ -7105,8 +7108,8 @@ function dop_mai_potvr($druh,$o,$rok) {  trace();
   $html.= "<hr>$text";
   $html.= "</table>";
   // předání k tisku
-                                                debug($parss);
-                                                display($html);
+//                                                 debug($parss);
+//                                                 display($html);
   global $ezer_path_docs, $ezer_root;
   $ret->fname= "potvrzeni_{$rok}_$id_osoba.pdf";
   $ret->fpath= "$ezer_path_docs/$ezer_root/{$ret->fname}";
@@ -7909,18 +7912,18 @@ function dop_gen_json($js) { //trace();
   global $json;
 //                                                         display($js);
   $obj= $json->decode($js);
-                                                        debug($obj);
+//                                                         debug($obj);
   $obj= json_decode($js);
-                                                        debug($obj);
+//                                                         debug($obj);
   return 1;
 }
 # ------------------------------------------------------------------------------------- dop_gen_read
 # převod parm do objektu
 function dop_gen_read($parm) { trace();
   global $json;
-                                                        display($parm);
+//                                                         display($parm);
   $obj= $json->decode($parm);
-                                                        debug($obj);
+//                                                         debug($obj);
 //   $obj= json_decode($js);
 //                                                         debug($obj);
   return $obj;
