@@ -82,6 +82,7 @@ Ezer.Form.implement({
 // - hodnota je zadána buďto přímo (s defaultním pozadím 'white') nebo jako pole [hodnota,pozadí]
 // - barvy jsou zadány stringem 'p1:c1,p2:c2,...' kde ci bude aplikováno podkud pozadí=pi
   load_json: function(json_str,styles,tag) {
+    json_str= json_str.replace(/\n/,"\\n").replace(/\r/,"\\r");
     var obj= JSON.decode(json_str);
     // převod styles na pole
     if ( styles ) {
@@ -127,6 +128,7 @@ Ezer.View.implement({
     var res= 0;
     if ( str ) {
       // setter
+      str= str.replace(/\n/,"\\n").replace(/\r/,"\\r");
       res= this.json(JSON.decode(str));
     }
     else {
@@ -142,6 +144,7 @@ Ezer.View.implement({
 // - hodnota je zadána buďto přímo (s defaultním pozadím 'white') nebo jako pole [hodnota,pozadí]
 // - barvy jsou zadány stringem 'p1:c1,p2:c2,...' kde ci bude aplikováno podkud pozadí=pi
   load_json: function(json_str,styles) {
+    json_str= json_str.replace(/\n/,"\\n").replace(/\r/,"\\r");
     var obj= JSON.decode(json_str);
     // převod styles na pole
     if ( styles ) {
@@ -179,6 +182,7 @@ Ezer.View.implement({
 //fm: View.save_json (json_str,style)
 // přebarví v elementech view pozadí změněných hodnot podle barvy dané řetězem p1:c1
   save_json: function(json_str,style) {
+    json_str= json_str.replace(/\n/,"\\n").replace(/\r/,"\\r");
     var obj= JSON.decode(json_str);
     // převod styles na index a barvu
     var avs= style.split(':');

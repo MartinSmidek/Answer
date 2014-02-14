@@ -101,7 +101,16 @@ form _page [,,285,500] {
     { stop}
   )}
   # --------------------------- informace
-  label note [10,25,270,460] { tag:'inf', title:'', style:'color:black;font-size:12px' }
+  label note [10,25,270,200] { tag:'inf', title:'', style:'color:black;font-size:12px' }
+  label web_href [30,265,260,50] { tag:'inf,web' }
+  check web [10,240,114,] { tag:'inf,web', title:'svázat s webem', skill:'m|m',
+    proc onchange() {
+      web_href.set(ask('web_akce',a_akce.get,this.get));
+  }}
+  check cal [10,310,114,] { tag:'inf,web', title:'do kalendáře', skill:'m|m',
+    proc onchange() {
+      web_href.set(ask('cal_akce',a_akce.get,this.get));
+  }}
   # --------------------------- položky akce
   label [17,32,104,] { tag:'cor', title:'název akce *' }
   field [17,49,218,] { tag:'cor', data:akce.nazev }

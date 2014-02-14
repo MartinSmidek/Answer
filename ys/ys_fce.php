@@ -1,36 +1,71 @@
 <?php # (c) 2007-2008 Martin Smidek <martin@smidek.eu>
-# -------------------------------------------------------------------------------------------------- pipe_pdenik_typ
-// 0=V 1=P
-function pipe_pdenik_typ ($x,$save=0) {
-  if ( $save ) {     // převeď zobrazení na uložení
-    $z= $x=='V' ? 1 : 2;
-  }
-  else {             // převeď uložení na zobrazení
-    $z= $x==1 ? 'V' : 'P';
-  }
-  return $z;
+# ================================================================================================== WEB
+# ----------------------------------------------------------------------------------------- cal_akce
+function cal_akce($id_akce,$on) {
+  list($nazev,$misto,$datum_od,$datum_do,$druh)=
+    select("nazev,misto,datum_od,datum_do,druh",'akce',"id_duakce=$id_akce");
 }
-# -------------------------------------------------------------------------------------------------- pipe_pdenik_org
-// 1=N 2=R 3=P 4=G
-function pipe_pdenik_org ($x,$save=0) {
-  if ( $save ) {     // převeď zobrazení na uložení
-    $z= $x=='N' ? 1 : ($x=='R' ? 2 : ($x=='P' ? 3 : ($x=='G' ? 4 : 0)));
+# ----------------------------------------------------------------------------------------- web_akce
+function web_akce($id_akce,$on) {
+  $druh_prog= array(
+    1=>array(21),                               // rodiny
+    2=>array(1,2,3,4,8,9,17,18,20,22),          // manželé
+    3=>array(5,11),                             // chlapi
+    4=>array(6,19),                             // ženy
+    5=>array(7)                                 // mládež
+  );
+  $prog_menu= array('home','rodiny','manzele','chlapi','zeny','mladez','alberice','sdruzeni','web');
+  $prog_pozv= array(   102,      99,      102,      55,    98,     197,       280,         0,   0 );
+  $prog_repo= array(     0,      89,       61,      46,    40,     196,       247,         0,   0 );
+  $a= " - není na webu";
+  list($nazev,$misto,$datum_od,$datum_do,$druh)=
+    select("nazev,misto,datum_od,datum_do,druh",'akce',"id_duakce=$id_akce");
+  ezer_connect('setkani');
+  $je= select("count(*)","setkani.tx_gncase","humor='$id_akce'");
+  if ( $je ) {
+    $a= " - je na webu";
   }
-  else {             // převeď uložení na zobrazení
-    $z= $x==1 ? 'N' : ($x==2 ? 'R' : ($x==3 ? 'P' : ($x==4 ? 'G' : '?')));
+  else {
+    $akce= "$nazev";
+    $title= "$nazev";
+    $text= "Před konáním akce se zde dozvíte podrobnosti";
+    // podle typu akce = menu1
+    $prog= 0;
+    foreach($druh_prog as $prog=>$druhy) { if ( in_array($druh,$druhy) ) break; }
+    $menu1= $prog_menu[$prog];
+    // termín akce = menu2
+    $now= date('Y-m-d');
+    if ( strcmp($datum_od,$now)>0 ) {
+      $menu2= 'pozvanky';
+      $pid= $prog_pozv[$prog];
+    }
+    else {
+      $menu2= 'reportaze';
+      $pid= $prog_repo[$prog];
+    }
+    // pokud se koná v Albeřicích, doplň program
+    if ( $misto=='Albeřice' ) {
+      $prog.= ",6";
+    }
+    // vložení akce => id_case = menu3
+    if ( !$pid ) { $a= "nelze určit pid ($menu1/$menu2)"; goto end; }
+    $tstamp= mktime();
+    query("INSERT INTO setkani.tx_gncase (pid,tstamp,crdate,cruser_id,type,fromday,untilday,
+             akce,program)
+           VALUES ($pid,$tstamp,$tstamp,1,2,UNIX_TIMESTAMP('$datum_od'),UNIX_TIMESTAMP('$datum_do'),
+             '$menu1','$prog')");
+    $cid= mysql_insert_id();
+    query("INSERT INTO setkani.tx_gncase_part (pid,cid,tstamp,crdate,cruser_id,tags,author,date,
+             title,text)
+           VALUES ($pid,$cid,$tstamp,$tstamp,1,'A','YMCA Setkání',$tstamp,'$title',
+             '$text')");
+    // zobrazení odkazu
+    $a= "old: <a href='http://web.ezer/index.php?id=$pid&case=$cid' target='web'>$akce</a><br>";
+    $a.= "new: <a href='http://web.ezer/test.php?site=1&page=$menu1/$menu2/$cid' target='web'>$akce</a><br>";
+    $a.= "cms: <a href='http://cms.ezer/cms.php?page=$menu1/$menu2/$cid' target='web'>$akce</a>";
   }
-  return $z;
-}
-# -------------------------------------------------------------------------------------------------- psc
-// doplnění mezery do PSČ
-function psc ($psc,$user2sql=0) {
-  if ( $user2sql )                            // převeď uživatelskou podobu na sql tvar
-    $text= str_replace(' ','',$psc);
-  else {                                      // převeď sql tvar na uživatelskou podobu (default)
-    $psc= str_replace(' ','',$psc);
-    $text= substr($psc,0,3).' '.substr($psc,3);
-  }
-  return $text;
+end:
+  return $a;
 }
 # ================================================================================================== SYSTEM
 # -------------------------------------------------------------------------------------------------- ys_import_dat
@@ -323,7 +358,40 @@ function sou_kal($k1,$k2,$k3) {
   $result= (object)array('html'=>$html,'path'=>$path);
   return $result;
 }
-# ================================================================================================== KASA
+# ================================================================================================== POKLADNA
+# -------------------------------------------------------------------------------------------------- pipe_pdenik_typ
+// 0=V 1=P
+function pipe_pdenik_typ ($x,$save=0) {
+  if ( $save ) {     // převeď zobrazení na uložení
+    $z= $x=='V' ? 1 : 2;
+  }
+  else {             // převeď uložení na zobrazení
+    $z= $x==1 ? 'V' : 'P';
+  }
+  return $z;
+}
+# -------------------------------------------------------------------------------------------------- pipe_pdenik_org
+// 1=N 2=R 3=P 4=G
+function pipe_pdenik_org ($x,$save=0) {
+  if ( $save ) {     // převeď zobrazení na uložení
+    $z= $x=='N' ? 1 : ($x=='R' ? 2 : ($x=='P' ? 3 : ($x=='G' ? 4 : 0)));
+  }
+  else {             // převeď uložení na zobrazení
+    $z= $x==1 ? 'N' : ($x==2 ? 'R' : ($x==3 ? 'P' : ($x==4 ? 'G' : '?')));
+  }
+  return $z;
+}
+# -------------------------------------------------------------------------------------------------- psc
+// doplnění mezery do PSČ
+function psc ($psc,$user2sql=0) {
+  if ( $user2sql )                            // převeď uživatelskou podobu na sql tvar
+    $text= str_replace(' ','',$psc);
+  else {                                      // převeď sql tvar na uživatelskou podobu (default)
+    $psc= str_replace(' ','',$psc);
+    $text= substr($psc,0,3).' '.substr($psc,3);
+  }
+  return $text;
+}
 # -------------------------------------------------------------------------------------------------- p_pdenik_vytisten
 # ask
 # doklad je označen jako vytištěný
