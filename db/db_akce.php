@@ -1,4 +1,16 @@
 <?php # (c) 2009-2010 Martin Smidek <martin@smidek.eu>
+# ================================================================================================== TEST
+# ------------------------------------------------------------------------------------- test1
+function test1() {
+  $x= (object)array('a'=>'ěščřžýáíé',"b=>"=>array("\"ěščřžýáíé\"
+'radek2'"));
+                                                debug($x);
+  $x= json_encode($x);
+                                                display($x);
+  $x= json_decode($x);
+                                                debug($x);
+  return $x;
+}
 # ================================================================================================== DUPL
 # ------------------------------------------------------------------------------------- ROLLBACK_ALL
 # jen pro ladění - vrácení do původního stavu
@@ -63,20 +75,52 @@ end:
   return $ret;
 }
 # --------------------------------------------------------------------------------- data_eli_dupl_sr
-# členu rodiny ztotožněném se sinlem přepíše informace o akcích
+# členu rodiny ztotožněném se singlem přepíše informace o akcích a singla zrušíme
 # upraví položku DUPLO.rozdily=10 (šedá) v předaném záznamu
 # pokud je to poslední duplicita v rámci rodiny tak i v nadřazeném záznamu DUPLO
 # faze=2 pro ruční a faze=1 pro automatické ztotožnění
 function data_eli_dupl_sr($iddr,$idd,$ids,$idt,$faze=2) { trace();
   $ret= (object)array('err'=>'');
   $ido= select("id_osoba","tvori","id_tvori=$idt");
-  $qc= query("UPDATE spolu SET id_osoba=$ido WHERE id_osoba=$ids");
-  if ( !$qc ) { $ret->err= "ERROR: ".mysql_error(); goto end; }
+  # převedení informací o účasti akcích z $ids na $ido
+  $qs= mysql_qry("SELECT id_spolu FROM spolu WHERE id_osoba=$ids");
+  while (($s= mysql_fetch_object($qs))) {
+    query("UPDATE spolu SET id_osoba=$ido WHERE id_spolu={$s->id_spolu}");
+  }
+  # zápis změn do DUPLO
   $qd= query("UPDATE duplo SET rozdily=10,faze=$faze WHERE id_duplo=$idd");
   if ( !$qd ) { $ret->err= "ERROR: ".mysql_error(); goto end; }
   $n= select("COUNT(*)","duplo","idd=$iddr AND rozdily NOT IN (0,10)");
   if ( !$n ) {
     query("UPDATE duplo SET rozdily=10,faze=$faze WHERE id_duplo=$iddr");
+  }
+  # zápis změněných údajů z DUPLO.chngs do osoba, jsou-li
+  $chngs_s= select("chngs","duplo","id_duplo=$idd");
+  $o= select("*","osoba","id_osoba=$ido");
+  if ( $chngs_s ) {
+    $chngs= json_decode($chngs_s);
+                                                  debug($chngs);
+    $zmeny= array();
+    foreach ($chngs as $fld=>$chng) {
+      $val= is_array($chng) ? $chng[0] : $chng;
+      $old= $o->$fld;
+      if ( $fld=='narozeni' ) $val= sql_date1($val,1);
+      if ( $val != $old && isset($o->$fld) ) {
+        $zmeny[]= (object)array('fld'=>$fld,'op'=>'u','val'=>$val,'old'=>$old);
+      }
+    }
+                                                  debug($zmeny);
+    // zápis o ztotožnšní se single do _track jako op=d (duplicita)
+    $now= date("Y-m-d H:i:s");
+    $user= $USER->abbr;
+    query("INSERT INTO _track (kdy,kdo,kde,klic,fld,op,old,val)
+          VALUES ('$now','$user','osoba',$ido,'','d','osoba',$ids)");
+    // promítnutí změn do OSOBA
+    if ( count($zmeny) ) {
+      ezer_qry("UPDATE",'osoba',$ido,$zmeny);
+    }
+    // zneplatnění single
+    query("UPDATE osoba SET deleted='D osoba=$ido' WHERE id_osoba=$ids");
   }
 end:
   return $ret;
@@ -179,6 +223,7 @@ function data_eli_dupl_cs($idd,$idc,$ido,$faze=2,$jen_akce=false) { trace();
   query("UPDATE duplo SET rozdily=10,faze=$faze WHERE id_duplo=$idd");
   $m= mysql_affected_rows();
   if ( !$jen_akce ) {
+
     # zápis změněných údajů z DUPLO.chngs do osoba, jsou-li
     $chngs_s= select("chngs","duplo","id_duplo=$idd");
     $o= select("*","osoba","id_osoba=$ido");
@@ -663,11 +708,13 @@ function data_eli_auto($typ,$patt='') { trace();
     $spec= array('telefon'=>2048,'email'=>1024,'narozeni'=>128,'obec'=>64,'ulice'=>32);
     $copy= explode(',',"role");
     $asi= $c->_asi;
+    $xchngs= (object)array();
     $chngs= '{'; $del= '';
     foreach ($flds as $f) {
       // přímá kopie zobrazovaných údajů
       if ( in_array($f,$copy) ) {
         $chngs.= "$del\"$f\":\"{$c->$f}\"";
+        $xchngs->$f= $c->$f;
         $del= ',';
       }
       else {
@@ -683,9 +730,11 @@ function data_eli_auto($typ,$patt='') { trace();
           if ( $telx && strpos($c->$of,' ')!==false ) {
             // raději telefon s mezerami
             $chngs.= "$del\"$f\":\"".trim($c->$of)."\"";
+            $xchngs->$f= trim($c->$of);
           }
           else {
             $chngs.= "$del\"$f\":\"".trim($c->$sf)."\"";
+            $xchngs->$f= trim($c->$sf);
           }
           $data_eli_sum[$kod]++;
         }
@@ -694,7 +743,9 @@ function data_eli_auto($typ,$patt='') { trace();
               || $c->$of=='0000-00-00' && $c->$sf!='0000-00-00' ) {
           // jen chlapi
           $kod= 3;
-          $chngs.= "$del\"$f\":[\"".trim($c->$sf)."\",$kod]";
+          $val= trim($c->$sf);
+          $chngs.= "$del\"$f\":[\"$val\",$kod]";
+          $xchngs->$f= array($val,$kod);
           $data_eli_sum[$kod]++;
         }
         elseif ( trim($c->$sf)==''     && trim($c->$of)!=''                                        # 4  o
@@ -702,29 +753,34 @@ function data_eli_auto($typ,$patt='') { trace();
               || $c->$sf=='0000-00-00' && $c->$of!='0000-00-00' ) {
           // jen osoba
           $kod= 4;
-          $chngs.= "$del\"$f\":[\"".trim($c->$of)."\",$kod]";
+          $val= trim($c->$of);
+          $chngs.= "$del\"$f\":[\"$val\",$kod]";
+          $xchngs->$f= array($val,$kod);
           $data_eli_sum[$kod]++;
         }
         else {
           $strack= find_track('osoba',$c->s_id_osoba,$f,$c->$sf);
           $otrack= find_track('osoba',$c->o_id_osoba,$f,$c->$of);
-          $val= mysql_real_escape_string(trim($c->$sf));
+          $val= trim($c->$sf);
           if ( $otrack && $strack ) {                                                              # 5,6  _track
             // lze porovnat datum vložení údaje
             $kod= strcmp($strack,$otrack)>=0 ? 5 : 6;
             $chngs.= "$del\"$f\":[\"".($kod==7 ? "" : $val)."\",$kod]";
+            $xchngs->$f= array(($kod==7 ? "" : $val),$kod);
             $data_eli_sum[$kod]++;
           }
           elseif ( isset($spec[$f]) && ($asi & $spec[$f]) ) {                                      # 2  ~
             // jde o překlep
             $kod= 2;
-            $chngs.= "$del\"$f\":[\"".$val."\",$kod]";
+            $chngs.= "$del\"$f\":[\"$val\",$kod]";
+            $xchngs->$f= array($val,$kod);
             $data_eli_sum[$kod]++;
           }
           else {                                                                                   # 7  x
             // údaje se liší
             $kod= 7;
-            $chngs.= "$del\"$f\":[\"".$val."\",$kod]";
+            $chngs.= "$del\"$f\":[\"$val\",$kod]";
+            $xchngs->$f= array($val,$kod);
             $data_eli_sum[$kod]++;
           }
         }
@@ -733,6 +789,8 @@ function data_eli_auto($typ,$patt='') { trace();
       $max_kod= max($max_kod,$kod);
     }
     $chngs.= '}';
+    $chngs= mysql_real_escape_string($chngs);
+//     $chngs= json_encode($xchngs);
 //                                                          display($chngs);
     return $chngs;
   }
@@ -743,6 +801,7 @@ function data_eli_auto($typ,$patt='') { trace();
     $spec= array('telefon'=>2048,'email'=>1024,'narozeni'=>128,'obec'=>64,'ulice'=>32);
     $copy= explode(',',"role,nomail");
     $asi= $c->_asi;
+    $xchngs= (object)array();
     $chngs= '{'; $del= '';
     // odstranění variabilního symbolu z chlapi.note
 //                                                         display("-- {$c->c_prijmeni}:{$c->c_note}");
@@ -754,6 +813,7 @@ function data_eli_auto($typ,$patt='') { trace();
       // přímá kopie zobrazovaných údajů
       if ( in_array($f,$copy) ) {
         $chngs.= "$del\"$f\":\"{$c->$f}\"";
+        $xchngs->$f= $c->$f;
         $del= ',';
       }
       else {
@@ -769,9 +829,11 @@ function data_eli_auto($typ,$patt='') { trace();
           if ( $telx && strpos($c->$of,' ')!==false ) {
             // raději telefon s mezerami
             $chngs.= "$del\"$f\":\"".trim($c->$of)."\"";
+            $xchngs->$f= trim($c->$of);
           }
           else {
             $chngs.= "$del\"$f\":\"".trim($c->$cf)."\"";
+            $xchngs->$f= trim($c->$cf);
           }
           $data_eli_sum[$kod]++;
         }
@@ -781,6 +843,7 @@ function data_eli_auto($typ,$patt='') { trace();
           // jen chlapi
           $kod= 3;
           $chngs.= "$del\"$f\":[\"".trim($c->$cf)."\",$kod]";
+          $xchngs->$f= trim($c->$cf);
           $data_eli_sum[$kod]++;
         }
         elseif ( trim($c->$cf)==''     && trim($c->$of)!=''                                        # 4  o
@@ -789,29 +852,33 @@ function data_eli_auto($typ,$patt='') { trace();
           // jen osoba
           $kod= 4;
           $chngs.= "$del\"$f\":[\"".trim($c->$of)."\",$kod]";
+          $xchngs->$f= trim($c->$of);
           $data_eli_sum[$kod]++;
         }
         else {
 //           $ctrack= find_track('chlapi',$c->id_chlapi,$f=='note'?'pozn':$f,$c->$cf);
           $ctrack= find_track('chlapi',$c->id_chlapi,$f,$c->$cf);
           $otrack= find_track('osoba',$c->id_osoba,$f,$c->$of);
-          $val= mysql_real_escape_string(trim($c->$cf));
+          $val= trim($c->$cf);
           if ( $otrack && $ctrack ) {                                                            # 5,6  _track
             // lze porovnat datum vložení údaje
             $kod= strcmp($ctrack,$otrack)>=0 ? 5 : 6;
             $chngs.= "$del\"$f\":[\"".($kod==7 ? "" : $val)."\",$kod]";
+            $xchngs->$f= array(($kod==7 ? "" : $val),$kod);
             $data_eli_sum[$kod]++;
           }
           elseif ( isset($spec[$f]) && ($asi & $spec[$f]) ) {                                      # 2  ~
             // jde o překlep
             $kod= 2;
             $chngs.= "$del\"$f\":[\"".$val."\",$kod]";
+            $xchngs->$f= array($val,$kod);
             $data_eli_sum[$kod]++;
           }
           else {                                                                                   # 7  x
             // údaje se liší
             $kod= 7;
             $chngs.= "$del\"$f\":[\"".$val."\",$kod]";
+            $xchngs->$f= array($val,$kod);
             $data_eli_sum[$kod]++;
           }
         }
@@ -820,6 +887,9 @@ function data_eli_auto($typ,$patt='') { trace();
       $max_kod= max($max_kod,$kod);
     }
     $chngs.= '}';
+    $chngs= mysql_real_escape_string($chngs);
+//                                                         debug($xchngs);
+//     $chngs= json_encode($xchngs);
 //                                                          display($chngs);
     return $chngs;
   }

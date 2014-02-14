@@ -374,6 +374,7 @@ form _navrhy [,,Wr,Hr] {
       bnn_load(bnn.idd.get,1);
       # při sjednocování navíc nastav horní část aktivních r2 a r3
       eq(substr(mode.get,0,1),'j'); //--lt(barva.get,9);
+      [ s2.display;  s2.bs_seek(bnn.id1.get) ];
       [ c2.display;  c2.bc_seek(bnn.id1.get) ];
       [ r3.display;  r3.br_seek(id2.get) ];
     }
