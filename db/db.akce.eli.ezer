@@ -444,6 +444,8 @@ form _navrhy [,,Wr,Hr] {
   field narozeni [Lr+255,Tc+32,85,]   {tag:'o', type:'date', data:o.narozeni, format:'rR:e' }
   label          [Lr+346,Tc+16,41,]   {tag:'o', title:'nnnn rč'}
   field rc_xxxx  [Lr+345,Tc+32,37,]   {tag:'o', data:o.rc_xxxx, format:'r:e'}
+  label          [Lr+317,Tc+67,27,]   {tag:'o', title:'mrop'}
+  field iniciace [Lr+345,Tc+64,37,]   {tag:'o', data:o.iniciace, format:'r:e'}
   label          [Lr+142,Tc+87,25,]   {tag:'o', title:'ulice'}
   field ulice    [Lr+5,Tc+102,162,]   {tag:'o', data:o.ulice}
   label          [Lr+179,Tc+87,39,]   {tag:'o', title:'psč'}
@@ -479,7 +481,7 @@ form _chlapi [,,Wr,Hr] {
   proc bc_load(idc) {
     var ret: object
     ret.set(ask('akce_data_chlapi',idc)); c.load(idc); c.set_notes(ret.chng,'form_note');
-    iniciace.set(ret.iniciace); posledni.set(sql2date(ret.posledni)); origin.set(ret.origin);
+    mrop.set(ret.iniciace); posledni.set(sql2date(ret.posledni)); origin.set(ret.origin);
   }
   # --------------------------------------------------  [Lr,Ts,] seznam chlapů
   browse bc [Lr,Ts,,] { rows:5, qry_rows:1
@@ -491,7 +493,7 @@ form _chlapi [,,Wr,Hr] {
   # --------------------------------------------------  [Lcr,Ts,,] informace o čerstvosti údajů
   label          [Lcr+0,Ts+33,153,80] {css:'ae_part' }
   label          [Lcr+58,Ts+44,78,]   {title:'iniciace' }
-  field iniciace [Lcr+112,Ts+40,36,]  {tag:'o' }
+  field mrop     [Lcr+112,Ts+40,36,]  {tag:'o' }
   label          [Lcr+23,Ts+69,78,]   {title:'posl.akce' }
   field posledni [Lcr+77,Ts+65,70,]   {tag:'o', format:'r' }
   field origin   [Lcr+4,Ts+90,144,]   {tag:'o' }
@@ -509,6 +511,8 @@ form _chlapi [,,Wr,Hr] {
   field narozeni [Lr+255,Tc+32,85,]   {tag:'o', type:'date', data:c.narozeni, format:'rR:e'}
   label          [Lr+346,Tc+16,41,]   {tag:'o', title:'nnnn rč'}
   field rc_xxxx  [Lr+345,Tc+32,37,]   {tag:'o', data:c.rc_xxxx, format:'r:e'}
+  label          [Lr+317,Tc+67,27,]   {tag:'o', title:'mrop'}
+  field iniciace [Lr+345,Tc+64,37,]   {tag:'o', data:c.iniciace, format:'r:e'}
   label          [Lr+142,Tc+87,25,]   {tag:'o', title:'ulice'}
   field ulice    [Lr+5,Tc+102,162,]   {tag:'o', data:c.ulice}
   label          [Lr+179,Tc+87,39,]   {tag:'o', title:'psč'}
@@ -572,6 +576,8 @@ form _singles [,,Wr,Hr] {
   field narozeni [Lr+255,Tc+32,85,]   {tag:'o', type:'date', data:o.narozeni, format:'rR:e'}
   label          [Lr+346,Tc+16,41,]   {tag:'o', title:'nnnn rč'}
   field rc_xxxx  [Lr+345,Tc+32,37,]   {tag:'o', data:o.rc_xxxx, format:'r:e'}
+  label          [Lr+317,Tc+67,27,]   {tag:'o', title:'mrop'}
+  field iniciace [Lr+345,Tc+64,37,]   {tag:'o', data:o.iniciace, format:'r:e'}
   label          [Lr+142,Tc+87,25,]   {tag:'o', title:'ulice'}
   field ulice    [Lr+5,Tc+102,162,]   {tag:'o', data:o.ulice}
   label          [Lr+179,Tc+87,39,]   {tag:'o', title:'psč'}
@@ -707,6 +713,8 @@ form _rodiny [,,Wr,Hr] {
   field narozeni [Lr+255,Tc+32,85,] {type:'date', data:o.narozeni, format:'rR:e'}
   label          [Lr+346,Tc+16,41,] {title:'nnnn rč'}
   field rc_xxxx  [Lr+345,Tc+32,37,] {data:o.rc_xxxx, format:'r:e'}
+  label          [Lr+317,Tc+67,27,]   {tag:'o', title:'mrop'}
+  field iniciace [Lr+345,Tc+64,37,]   {tag:'o', data:o.iniciace, format:'r:e'}
   label          [Lr+142,Tc+87,25,] {title:'ulice'}
   field ulice    [Lr+5,Tc+102,162,] {data:o.ulice}
   label          [Lr+179,Tc+87,39,] {title:'psč'}

@@ -282,6 +282,7 @@ table osoba { key_id:'id_osoba'
   text spz
   date narozeni { sql_pipe:'sql_date1'}
   number uvitano { help:"uvítáno|bylo uvítáno ve společenství" }
+  number iniciace { help:"mrop|rok iniciace nebo 0" }
   text rc_xxxx
   date umrti { sql_pipe:'sql_date1'}
   text poznamka

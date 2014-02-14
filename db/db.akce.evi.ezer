@@ -344,6 +344,8 @@ form _osoba { tag:'a'
   field narozeni [L+255,T+32,85,] {type:'date', data:o.narozeni, format:'rR:e'}
   label          [L+346,T+16,41,] {title:'nnnn rč'}
   field rodnexxxx[L+345,T+32,37,] {data:o.rc_xxxx, format:'r:e'}
+  label          [L+317,T+67,27,] {title:'mrop'}
+  field iniciace [L+345,T+64,37,] {data:o.iniciace, format:'r:e'}
   label          [L+5,T+75,100,] {title:'ulice'}
   field ulice    [L+5,T+90,162,] {data:o.ulice}
   label          [L+179,T+75,39,] {title:'psč'}
