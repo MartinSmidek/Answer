@@ -2410,6 +2410,21 @@ function akce_vzorec($id_pobyt) {  trace();
     }
     // případné slevy
     $ret->c_sleva= 0;
+    $sleva_cenik= 0;
+    $sleva_cenik_html= '';
+    foreach ($cenik as $a) {
+      switch ($a->za) {
+      case 'Su':        // sleva na dospělého účastníka
+        $sleva_cenik+= $u * $a->c;
+        $sleva_cenik_html.= '';
+        break;
+      case 'Sk':        // sleva na kojence
+        $sleva_cenik+= $koje * $a->c;
+        $sleva_cenik_html.= '';
+        break;
+      }
+    }
+    $sleva+= $sleva_cenik;
     if ( !$neprijel && ($sleva!=0 || isset($vzor->slevy->procenta) || isset($vzor->slevy->za)) ) {
       $html.= "<tr><th>slevy</th></tr>";
       if ( $sleva!=0 ) {
