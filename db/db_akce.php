@@ -2186,6 +2186,54 @@ function akce_pobyt_default($id_pobyt,$zapsat=0) {  trace();
 //                                                 debug($ret,"osob:$koje,$deti,$dosp $msg fce=$fce");
   return $ret;
 }
+# --------------------------------------------------------------------------------- akce_vzorec_test
+# test výpočtu platby za pobyt na akci
+function akce_vzorec_test($id_akce,$nu=2,$nd=0,$nk=0) {  trace();
+  $html= "";
+  // obecné info o akci
+  list($ma_cenik,$noci,$strava_oddo)=
+    select("ma_cenik,DATEDIFF(datum_do,datum_od),strava_oddo","akce","id_duakce=$id_akce");
+                                                display("$ma_cenik,$noci,$strava_oddo");
+  if ( !$ma_cenik ) { $html= "akce nemá ceník"; goto end; }
+  // definované položky
+  $o= $strava_oddo=='oo' ? 1 : 0;       // oběd navíc
+  $cenik= array(
+    //            u d k noci oo plus
+    'Nl' => array(1,1,0,   1, 0,  1),
+    'P'  => array(1,0,0,   0, 0,  1),
+    'Pd' => array(0,1,0,   0, 0,  1),
+    'Pk' => array(0,0,1,   0, 0,  1),
+    'Su' => array(1,0,0,   0, 0, -1),
+    'Sk' => array(0,0,1,   0, 0, -1),
+    'sc' => array(1,0,0,   1, 0,  1),
+    'oc' => array(1,0,0,   1,$o,  1),
+    'vc' => array(1,0,0,   1, 0,  1),
+    'sp' => array(0,1,0,   1, 0,  1),
+    'op' => array(0,1,0,   1,$o,  1),
+    'vp' => array(0,1,0,   1, 0,  1),
+  );
+  // výpočet ceny podle parametrů
+  $cena= 0;
+  $html= "<table>";
+  $ra= mysql_qry("SELECT * FROM cenik WHERE id_akce=$id_akce AND za!='' ORDER BY poradi");
+  while ( $ra && ($a= mysql_fetch_object($ra)) ) {
+    $acena= $a->cena;
+    list($za_u,$za_d,$za_k,$za_noc,$oo,$plus)= $cenik[$a->za];
+    $nx= $nu*$za_u + $nd*$za_d + $nk*$za_k;
+    $cena+= $cc= $nx * ($za_noc?$noci:1) * $acena * $plus;
+    if ( $cc ) {
+      $pocet= $za_noc?" * ".($noci+$oo):'';
+      $html.= "<tr>
+        <td>{$a->polozka} ($nx$pocet * $acena)</td>
+        <td align='right'>$cc</td></tr>";
+    }
+  }
+  $html.= "<tr><td><b>Celkem</b></td><td align='right'><b>$cena</b></td></tr>";
+  $html.= "</table>";
+  // návrat
+end:
+  return $html;
+}
 # -------------------------------------------------------------------------------------- akce_vzorec
 # výpočet platby za pobyt na akci
 # od 130416 přidána položka CENIK.typ - pokud je 0 tak nemá vliv,
