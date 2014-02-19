@@ -341,6 +341,10 @@ form _akce [,,*,50] {
       google.browse_seek;
     }
   }
+  button [-88,3,100,] { title:'Export', proc onclick() {
+    sey.browse_count; sey.browse_export(°{file:'akce',type:'xls'});
+    alert("vygenerovaný sešit lze stáhnout <a href='docs/akce.xls' target='xls'>zde</a>");
+  }}
   button [-30,3,100,] { title:'Mapa', //skill:'a|a'
     help:"mapa s bydlišti účastníků akcí"
     proc onclick() {

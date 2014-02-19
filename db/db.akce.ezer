@@ -74,7 +74,7 @@ form _the_akce {
 form right [,,*,50] {
   label head [0,0,*,50]  { title:'' }
   label msg  [0,35,*,20] { title:'' }
-  label note [57,46,,550] { title:'' }
+  label note [50,57,,550] { title:'' }
   proc fill(x,y) {
     [ x; head.set(conc("<div class='karta'>",x,"</div>")) ];
     [ y; note.set(y) ]
