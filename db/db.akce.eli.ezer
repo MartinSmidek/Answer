@@ -121,11 +121,11 @@ menu do {type:'left', format:'f'
     item rr {title:'2 rodiny',          par:°{mode:'h', forms:'i|n1|r2|r3', tags:'h_rr|r', call:'init_rr_a'} }
   }
   menu auto {title:'algoritmické nalezení duplicit',type:'group', skill:'m'
-    item cs {title:'1. chlap a single',   par:°{forms:'i', call:'info_auto',     x:'cs', y:'.*'} }
-    item    {title:'... ... parametr',    par:°{forms:'i', call:'info_auto_par', x:'cs' } }
-    item cr {title:'2. chlap a rodina',   par:°{forms:'i', call:'info_auto',     x:'ct', y:'.*'} }
-    item    {title:'... VYBRANÉ TESTY',   par:°{forms:'i', call:'info_auto',     x:'ct', y:'Apa|^Mich|^Kan|^Bárt|^Břez|^Ern|^Večeř'} }
-    item    {title:'... ... parametr',    par:°{forms:'i', call:'info_auto_par', x:'ct' } }
+#     item cs {title:'1. chlap a single',   par:°{forms:'i', call:'info_auto',     x:'cs', y:'.*'} }
+#     item    {title:'... ... parametr',    par:°{forms:'i', call:'info_auto_par', x:'cs' } }
+#     item cr {title:'2. chlap a rodina',   par:°{forms:'i', call:'info_auto',     x:'ct', y:'.*'} }
+#     item    {title:'... VYBRANÉ TESTY',   par:°{forms:'i', call:'info_auto',     x:'ct', y:'Apa|^Mich|^Kan|^Bárt|^Břez|^Ern|^Večeř'} }
+#     item    {title:'... ... parametr',    par:°{forms:'i', call:'info_auto_par', x:'ct' } }
     item c  {title:'3. chlap mimo DUPLO', par:°{forms:'i', call:'info_auto',     x:'c-', y:'.*'} }
     item    {title:'... ... parametr',    par:°{forms:'i', call:'info_auto_par', x:'c-' } }
     item sr {title:'4. single a rodina',  par:°{forms:'i', call:'info_auto',     x:'sr', y:'.*'} }

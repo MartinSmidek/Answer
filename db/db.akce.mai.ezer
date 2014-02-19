@@ -652,7 +652,7 @@ form _etext  {
   view etc: table _cis {join_type:'LEFT' join:"ON etd.cis_skupina=etc.data AND etc.druh='db_maily_sql'"}
   view etl: table mailist {join_type:'LEFT' join:"ON etl.id_mailist=etd.id_mailist"}
   browse texty [0,34,150,200] { rows:10, qry_rows:1, group_by:'id_dopis', css_rows:'stav1,3:zluty,4:zeleny,5:cerveny'
-    show id_dopis { data:etd.id_dopis },
+    show id_dopis { data:etd.id_dopis }
     show x { data:etm.id_davka },
     show datum [,,60,] { title:'datum', data:etd.datum, format:'rs-' }
 #     show vyber{ data:etd.vyber }
@@ -687,6 +687,8 @@ form _etext  {
   label [L+0,20,365,150] { css:'ae_work' }
   label [L+10,23,100,17] { title:'datum odeslání' }
   field datum [L+10,38,80,17] { data:dopis.datum, help:'datum|datum emailu', skill:'yam|yams;fam|fams;cam|cams' }
+  label [L+307,23,45,17] { title:'ID dopisu' }
+  field id_dopis [L+307,38,43,17] { data:dopis.id_dopis, format:'rd' }
   label [L+10,62,100,17] { title:'předmět mailu' }
   field predmet [L+10,77,340,17] { data:dopis.nazev, help:'předmět|předmět emailu', skill:'yam|yams;fam|fams;cam|cams' }
   // připojení příloh - nově od 20130604

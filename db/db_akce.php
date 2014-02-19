@@ -7250,11 +7250,11 @@ function dop_mai_qry($komu) {  trace();
 # -------------------------------------------------------------------------------------------------- dop_mai_omitt
 # v tabulce MAIL(id_dopis=$dopis) označí jako neposlatelné emailu z MAIL($id_dopis=$vynech)
 # to je funkce určená k zamezení duplicit
-function dop_mai_omitt($id_dopis,$id_vynech) {  trace();
-  $msg= "Z mailů podle dopisu $id_dopis budou vynechány adresy z mailů podle dopisu $id_vynech";
+function dop_mai_omitt($id_dopis,$ids_vynech) {  trace();
+  $msg= "Z mailů podle dopisu $id_dopis budou vynechány adresy z mailů podle dopisu $ids_vynech";
   // seznam vynechaných adres
   $vynech= array();
-  $qv= "SELECT email FROM mail WHERE id_dopis=$id_vynech ";
+  $qv= "SELECT email FROM mail WHERE id_dopis IN ($ids_vynech) ";
   $rv= mysql_qry($qv);
   while ( $rv && ($v= mysql_fetch_object($rv)) ) {
     foreach(explode(',',str_replace(';','',str_replace(' ','',$v->email))) as $em) {
@@ -7272,7 +7272,7 @@ function dop_mai_omitt($id_dopis,$id_vynech) {  trace();
     foreach(explode(',',str_replace(';','',str_replace(' ','',$emaily))) as $em) {
       if ( in_array($em,$vynech) ) {
         $n++;
-        $qu= "UPDATE mail SET stav=5,msg='viz $id_vynech' WHERE id_mail={$d->id_mail} ";
+        $qu= "UPDATE mail SET stav=5,msg='- $ids_vynech' WHERE id_mail={$d->id_mail} ";
         $ru= mysql_qry($qu);
       }
     }
