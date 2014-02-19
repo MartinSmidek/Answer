@@ -92,6 +92,7 @@ form _page [,,285,500] {
     proc onclick() { tags(this,'cen','inf|cor'); zalozka.set('cen'); show_akce(a_akce.get)
   } }
   proc show_akce(id_akce) {
+    info.sey.browse_count;
     page.a_akce.set(id_akce);
     cen_copy.enable(0); cen_copy.key(0);
     switch(zalozka.get,
@@ -101,16 +102,22 @@ form _page [,,285,500] {
     { stop}
   )}
   # --------------------------- informace
-  label note [10,25,270,200] { tag:'inf', title:'', style:'color:black;font-size:12px' }
-  label web_href [30,265,260,50] { tag:'inf,web' }
-  check web [10,240,114,] { tag:'inf,web', title:'svázat s webem', skill:'m|m',
+  label note [10,25,283,193] { tag:'inf', title:'', style:'color:black;font-size:12px' }
+  label web_href [30,265,264,50] { tag:'inf,web' }
+  label [31,210,315,] {tag:'inf,web', title:'<h3>Propagace a dokumentace akce</h3>', skill:'demo|demo'}
+  check web [10,240,114,] { tag:'inf,web', title:'svázat s webem', format:'t', skill:'demo|demo',
     proc onchange() {
       web_href.set(ask('web_akce',a_akce.get,this.get));
   }}
-  check cal [10,310,114,] { tag:'inf,web', title:'do kalendáře', skill:'m|m',
+  check cal [10,310,114,] { tag:'inf,web', title:'vložit do kalendáře', format:'t', skill:'demo|demo',
     proc onchange() {
       web_href.set(ask('cal_akce',a_akce.get,this.get));
   }}
+  check [10,337,21,] { tag:'inf,web', format:'t', skill:'demo|demo' }
+  label [30,342,246,] { tag:'inf,web', skill:'demo|demo',
+    title:"vložit na <a href='www.kalendar-nasich-akci.cz' target='web'>www.kalendar-nasich-akci.cz</a>"}
+  label [10,364,,] {title:'dokumentace k akci', skill:'demo|demo'} // nadpis na vnějším obalem
+  label drop [10,384,283,113] { tag:'inf,web', type:'drop', skill:'demo|demo'  }
   # --------------------------- položky akce
   label [17,32,104,] { tag:'cor', title:'název akce *' }
   field [17,49,218,] { tag:'cor', data:akce.nazev }
@@ -230,7 +237,7 @@ form _page [,,285,500] {
       ret.ok; xhref.set(ret.xhref);
     | warning(ret.msg);
   } }
-  label  [129,476,,] { title:"test ceny:" }
+  label  [129,476,,] { tag:'cen', title:"test ceny:" }
   button [182,470,,] { tag:'cen', title:'pár'
     proc onclick() { alert(ask('akce_vzorec_test',the_duakce.get,2,0,0)) }}
   button [217,470,,] { tag:'cen', title:'pár+kojenec'
@@ -289,7 +296,7 @@ form _akce [,,*,50] {
     show cena {data:da.cena}
     show rok {data:ga.g_rok}
     show kod   [,,30,] {title:'kód',    data:ga.g_kod, format:'rs+q*'}
-    show nazev [,,210,] {title:'název', data:ga.g_nazev, format:'sq*'}
+    show nazev [,,210,] {title:'název', data:ga.g_nazev, format:'tsq*'}
     show od    [,,65,] {title:'od',     data:ga.g_od, format:'rsq*'}
     show do    [,,65,] {title:'do',     data:ga.g_do, format:'rsq*'}
     proc onsubmit() {
@@ -317,8 +324,8 @@ form _akce [,,*,50] {
     show id_gakce {data:ga2.id_gakce}
 /**/show druh  [,,60,] {title:'typ',    data:da2.druh, map_pipe:ms_akce_typ.zkratka, format:'sq#'}
     show kod   [,,30,] {title:'účet',   expr:"IF(ga2.g_kod,ga2.g_kod,da2.ciselnik_akce)", format:'rs+q*' }
-    show nazev [,,120,] {title:'název', expr:"IF(da2.nazev='',ga2.g_nazev,da2.nazev)", format:'sq*'}
-    show misto [,,60,] {title:'místo',  data:da2.misto, format:'sq*'}
+    show nazev [,,120,] {title:'název', expr:"IF(da2.nazev='',ga2.g_nazev,da2.nazev)", format:'tsq*'}
+    show misto [,,60,] {title:'místo',  data:da2.misto, format:'tsq*'}
     show od    [,,65,] {title:'od',     data:da2.datum_od, format:'rsq*'}
     show do    [,,65,] {title:'do',     data:da2.datum_do, format:'rsq*'}
     proc onsubmit() { volba_akce(id_akce.get,nazev.get,ma_cenik.get,ma_cenu.get,cena.get) }

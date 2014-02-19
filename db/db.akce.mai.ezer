@@ -10,6 +10,7 @@ var dopis_id: text
 var dopis_var: text             // typ rozesílání: U/U2 - účastníci akce, Q - query
 var dopis_akce: number          // id_akce|0
 var karta: text                 // et|es
+var sql_export:text
 
 use ii: form right [12,4,,]
 use vy: form _vyber [10,30,,]   // výběr skupiny | zobrazené akce
@@ -156,25 +157,34 @@ form _gsql {
     alert("název testovacího mail-listu není dovoleno měnit");
     this.set(vy.komu_G.get); this.plain
   } }
-  check spec [408,39,197,] { title:"speciální mail-list", data:g.specialni, value:'0', format:'d' }
-  check blokovano [508,39,197,] { title:"zablokovat dotazy", data:g.blokovano, value:'0' }
+  check spec [408,10,137,] { title:"speciální mail-list", data:g.specialni, value:'0', format:'d' }
+  check blokovano [408,39,138,] { title:"zablokovat dotazy", data:g.blokovano, value:'0' }
   field parms { data:g.parms }
   field gsql { data:g.sexpr }
   # ------------------- příkazy
-  const t_butt = 5; l_butt = 640
-  label  [l_butt,t_butt,115,55] { tag:'def', css:'ae_parm' }
-  button qry_save [l_butt+9,t_butt+5,,] { tag:'def',title:'Uložit',  help:'Uložit mail-list',
+  const t_butt = 5; l_butt = 530
+  label  [l_butt,t_butt,222,55] { tag:'def', css:'ae_parm' }
+  button qry_save [l_butt+7,t_butt+5,,] { tag:'def',title:'Uložit',  help:'Uložit mail-list',
     proc onclick() { spec.get; warning("speciální mail-list nelze měnit") | save_sql(1) } }
-  button [l_butt+57,t_butt+5,,] { tag:'def', title:'Zpět',  help:'Neuložit změny',
+  button [l_butt+55,t_butt+5,,] { tag:'def', title:'Zpět',  help:'Neuložit změny',
     proc onclick() { reload } }
-  button [l_butt+9,t_butt+30,,] { tag:'def', title:'Nový',  help:'Nový mail-list', proc onclick() {
+  button [l_butt+7,t_butt+30,,] { tag:'def', title:'Nový',  help:'Nový mail-list', proc onclick() {
     reinit; vy.komu_G.key(0);
   } }
-  button [l_butt+57,t_butt+30,,] { tag:'def', title:'Smazat', help:'smazat SQL mail-list', proc onclick() {
+  button [l_butt+55,t_butt+30,,] { tag:'def', title:'Smazat', help:'smazat SQL mail-list', proc onclick() {
     spec.get; warning("speciální mail-list nelze smazat")
   | confirm('opravdu smazat mail-list ',ucel.get,'?');
     warning('N.Y.I.')
   }}
+  button [l_butt+130,t_butt+5,,] {tag:'def', title:'Excel', help:'Export emaily a adres do Excelu',
+    proc onclick(){
+      save_sql(0); sql_export.set(gsql.get); xls.set(ask('dop_gen_excel',sql_export.get,ucel.get))
+  } }
+  button [l_butt+175,t_butt+5,,] {tag:'def', title:'PDF', help:'Export adres do PDF', format:'d'
+    proc onclick(){
+      save_sql(0); sql_export.set(gsql.get); xls.set(ask('dop_gen_excel',sql_export.get,ucel.get))
+  } }
+  label xls [l_butt+130,t_butt+30,100,] { tag:'def' }
   # ------------------------------------- výběr typů akcí
   const t_akce = 60; l_ne_akce = 380
   # ------------------------ výběr typu ano-akce
@@ -289,9 +299,10 @@ form _gsql {
       return(cond);
     }
   }
-  check pro_muze  [10,t_pro+60,58,] { tag:'def', title:'muže', value:'1', format:'t' }
-  check pro_zeny  [65,t_pro+60,63,] { tag:'def', title:'ženy', value:'1', format:'t' }
-  check pro_ucast [ 10,t_pro+80,90,] { tag:'def', title:'podle účastí?', value:'0', format:'t'
+  check pro_muze   [10,t_pro+60,58,] { tag:'def', title:'muže', value:'1', format:'t' }
+  check pro_zeny   [65,t_pro+60,63,] { tag:'def', title:'ženy', value:'1', format:'t' }
+  check pro_rodiny [120,t_pro+60,63,] { tag:'def', title:'rodiny', value:'0', format:'td' }
+  check pro_ucast  [ 10,t_pro+80,90,] { tag:'def', title:'podle účastí?', value:'0', format:'t'
     proc onchange() {
       form.display(this.get,'ucast'); pro_kolik.init(1); pro_jak.key(1);
     }
@@ -415,12 +426,15 @@ form _gsql {
     | pro_muze.get; cond.set("t.role='a'")
     | pro_zeny.get; cond.set("t.role='b'")
     | warning("chybí výběr muži/ženy") };
-    [ pro_mail.get; cond.set(conc(cond.get,' AND (o.email!="" OR r.emaily!="") ')) ];
+    [ pro_mail.get; cond.set(conc(cond.get," AND (o.email!='' OR r.emaily!='') ")) ];
     # ... - funkce
     cond.set(conc(cond.get,' AND ',fces.code_fce));
-    # sestavení SELECT
+    # sestavení SELECT pro osobu
     gsql.set(conc(
       "SELECT COUNT(*) AS _ucasti,o.id_osoba AS _id,CONCAT(prijmeni,' ',jmeno) AS _name,",chr(10),
+      "  IF(o.psc!='',o.psc,r.psc) AS _psc,",chr(10),
+      "  IF(o.psc!='' OR r.psc!='',o.ulice,r.ulice) AS _ulice,",chr(10),
+      "  IF(o.psc!='' OR r.psc!='',o.obec,r.obec) AS _obec,",chr(10),
       "  IF(email!='',email,r.emaily) AS _email,nomail",chr(10),
       from.get,chr(10),
       "WHERE ",cond.get,
@@ -465,7 +479,7 @@ form _gsql {
   var code_cas:text
   var json_cas:text
   proc reinit() {
-    form.init(1);
+    form.init(1); xls.set('');
     # výběr ano-akcí
     L_ano.init;
     ano_akce.init; ano_akce.change;
