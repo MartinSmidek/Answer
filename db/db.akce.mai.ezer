@@ -421,10 +421,16 @@ form _gsql {
     from.set(conc("FROM pobyt AS p JOIN spolu AS s USING(id_pobyt) ",
       chr(10),"JOIN osoba AS o ON s.id_osoba=o.id_osoba JOIN akce AS a ON a.id_duakce=p.id_akce ",
       chr(10),"LEFT JOIN tvori AS t ON t.id_osoba=o.id_osoba LEFT JOIN rodina AS r USING(id_rodina)"));
+#     # výběry lidí - pohlaví podle role
+#     { and(pro_muze.get,pro_zeny.get); cond.set("t.role IN ('a','b')")
+#     | pro_muze.get; cond.set("t.role='a'")
+#     | pro_zeny.get; cond.set("t.role='b'")
+#     | warning("chybí výběr muži/ženy") };
+#     [ pro_mail.get; cond.set(conc("IFNULL(",cond.get,",TRUE) AND (o.email!='' OR r.emaily!='') ")) ];
     # výběry lidí - pohlaví
-    { and(pro_muze.get,pro_zeny.get); cond.set("t.role IN ('a','b')")
-    | pro_muze.get; cond.set("t.role='a'")
-    | pro_zeny.get; cond.set("t.role='b'")
+    { and(pro_muze.get,pro_zeny.get); cond.set("TRUE")
+    | pro_muze.get; cond.set("o.sex='1'")
+    | pro_zeny.get; cond.set("o.sex='2'")
     | warning("chybí výběr muži/ženy") };
     [ pro_mail.get; cond.set(conc(cond.get," AND (o.email!='' OR r.emaily!='') ")) ];
     # ... - funkce

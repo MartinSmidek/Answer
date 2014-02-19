@@ -115,7 +115,8 @@ form _page [,,285,500] {
   }}
   check [10,337,21,] { tag:'inf,web', format:'t', skill:'demo|demo' }
   label [30,342,246,] { tag:'inf,web', skill:'demo|demo',
-    title:"vložit na <a href='www.kalendar-nasich-akci.cz' target='web'>www.kalendar-nasich-akci.cz</a>"}
+    title:"vložit na <a href='www.kalendar-nasich-akci.cz' target='web'>kalendar-nasich-akci.cz</a>"}
+  check [196,337,100,] { tag:'inf,web', title:'s přihláškou', format:'t', skill:'demo|demo' }
   label [10,364,,] {title:'dokumentace k akci', skill:'demo|demo'} // nadpis na vnějším obalem
   label drop [10,384,283,113] { tag:'inf,web', type:'drop', skill:'demo|demo'  }
   # --------------------------- položky akce

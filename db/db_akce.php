@@ -5802,6 +5802,10 @@ function akce_pridej($id_akce,$id_muz,$id_zena,$cnd='') {  #trace();
     $pouze= 2;
     $cond=  "s.id_osoba=$id_zena";
   }
+  else {
+    $ret->msg= "dítě zatím nemůže jet bez rodiče";
+    goto end;
+  }
   $cond.= $cnd ? " AND $cnd" : '';
   // kontrola přítomnosti
   $qp= "SELECT id_pobyt
