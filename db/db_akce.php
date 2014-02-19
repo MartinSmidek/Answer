@@ -7918,6 +7918,106 @@ function dop_mai_detach($id_dopis,$name) { trace();
   return 1;
 }
 # ================================================================================================== Generátor SQL
+# -------------------------------------------------------------------------------------- dop_gen_pdf
+# vygenerování PDF se samolepkami - adresními štítky
+#   $the_json obsahuje  title:'{jmeno_postovni}<br>{adresa_postovni}'
+function dop_gen_pdf($gq,$report_json) { trace();
+  global $ezer_root, $json, $ezer_path_docs;
+  $href= "CHYBA!";
+  // projdi požadované adresy rodin
+  $n= 0;
+  $parss= array();
+  $qry=  "SELECT
+          r.nazev as nazev,p.pouze as pouze,
+          GROUP_CONCAT(DISTINCT IF(t.role='a',o.prijmeni,'') SEPARATOR '') as prijmeni_m,
+          GROUP_CONCAT(DISTINCT IF(t.role='a',o.jmeno,'')    SEPARATOR '') as jmeno_m,
+          GROUP_CONCAT(DISTINCT IF(t.role='a',o.narozeni,'') SEPARATOR '') as narozeni_m,
+          GROUP_CONCAT(DISTINCT IF(t.role='a',o.rc_xxxx,'')  SEPARATOR '') as rc_xxxx_m,
+          GROUP_CONCAT(DISTINCT IF(t.role='b',o.prijmeni,'') SEPARATOR '') as prijmeni_z,
+          GROUP_CONCAT(DISTINCT IF(t.role='b',o.jmeno,'')    SEPARATOR '') as jmeno_z,
+          GROUP_CONCAT(DISTINCT IF(t.role='b',o.narozeni,'') SEPARATOR '') as narozeni_z,
+          GROUP_CONCAT(DISTINCT IF(t.role='b',o.rc_xxxx,'')  SEPARATOR '') as rc_xxxx_z,
+          r.ulice,r.psc,r.obec,r.stat,r.telefony,r.emaily,p.poznamka
+          FROM pobyt AS p
+          JOIN spolu AS s USING(id_pobyt)
+          JOIN osoba AS o ON s.id_osoba=o.id_osoba
+          LEFT JOIN tvori AS t ON t.id_osoba=o.id_osoba
+          LEFT JOIN rodina AS r USING(id_rodina)
+          WHERE $cond
+          GROUP BY id_pobyt
+          ORDER BY IF(funkce<=2,1,funkce),IF(pouze=0,r.nazev,o.prijmeni)";
+  $res= mysql_qry($qry);
+  while ( $res && ($x= mysql_fetch_object($res)) ) {
+    $x->prijmeni= $x->pouze==1 ? $x->prijmeni_m : ($x->pouze==2 ? $x->prijmeni_z : $x->nazev);
+    $x->jmena=    $x->pouze==1 ? $x->jmeno_m    : ($x->pouze==2 ? $x->jmeno_z : "{$x->jmeno_m} a {$x->jmeno_z}");
+    // formátované PSČ (tuzemské a slovenské)
+    $psc= (!$x->stat||$x->stat=='CZ'||$x->stat=='SK')
+      ? substr($x->psc,0,3).' '.substr($x->psc,3,2)
+      : $x->psc;
+    $stat= $x->stat=='CZ' ? '' : $x->stat;
+    // definice pole substitucí
+    $parss[$n]= (object)array();
+    $parss[$n]->jmeno_postovni= "{$x->jmena} {$x->prijmeni}";
+    $parss[$n]->adresa_postovni= "{$x->ulice}<br/>$psc  {$x->obec}".( $stat ? "<br/>        $stat" : "");
+    $n++;
+  }
+  // předání k tisku
+  $fname= 'stitky_'.date("Ymd_Hi");
+  $fpath= "$ezer_path_docs/$ezer_root/$fname.pdf";
+  dop_rep_ids($report_json,$parss,$fpath);
+  $href= "soubor v <a href='docs/$ezer_root/$fname.pdf' target='pdf'>PDF</a>.";
+  return $result;
+}
+# ------------------------------------------------------------------------------------ dop_gen_excel
+# vygeneruje do Excelu seznam adresátů
+function dop_gen_excel($gq,$nazev) { trace();
+  global $ezer_root;
+  $href= "CHYBA!";
+  // úprava dotazu
+  $gq= str_replace('&gt;','>',$gq);
+  $gq= str_replace('&lt;','<',$gq);
+                                                        display($gq);
+  // export do Excelu
+  // zahájení exportu
+  $ymd_hi= date('Ymd_Hi');
+  $dnes= date('j. n. Y');
+  $t= "$nazev, stav ke dni $dnes";
+  $file= "maillist_$ymd_hi";
+  $type= 'xls';
+  $par= (object)array('dir'=>$ezer_root,'file'=>$file,'type'=>$type,'title'=>$t,'color'=>'aac0cae2');
+  $clmns= "_name:příjmení jméno,_email:email,_ulice:ulice,_psc:PSČ,_obec:obec,_ucasti:účastí";
+  $titles= $del= '';
+  $fields= $values= array();
+  foreach (explode(',',$clmns) as $clmn) {
+    list($field,$title)= explode(':',trim($clmn));
+    $title= $title ? $title : $field;
+    $titles.= "$del$title";
+    $fields[]= $field;
+    $values[$field]= "";
+    $del= ',';
+  }
+  $pipe= array('narozeni'=>'sql_date1');
+  export_head($par,$titles,":: bcolor=ffc0e2c2 wrap border=+h");
+  // dotaz
+  $gr= @mysql_query($gq);
+  if ( !$gr ) { fce_warning(mysql_error()); goto end; }
+  while ( $gr && ($g= mysql_fetch_object($gr)) ) {
+    foreach ($g as $f => $val) {
+      if ( in_array($f,$fields) ) {
+        $a= $val;
+        if ( isset($pipe[$f]) ) $a= $pipe[$f]($a);
+        $values[$f]= $a;
+      }
+    }
+    export_row($values,":: border=+h");
+  }
+  export_tail();
+//                                                 display(export_tail(1));
+  // odkaz pro stáhnutí
+  $href= "soubor pro <a href='docs/$ezer_root/$file.$type' target='xls'>Excel</a>";
+end:
+  return $href;
+}
 # -------------------------------------------------------------------------------------- dop_gen_try
 # mode=0 -- spustit a ukázat dotaz a také výsledek
 # mode=1 -- zobrazit argument jako html
