@@ -110,7 +110,7 @@ var tisk2:text
 menu do {type:'left', format:'f'
   menu zjistene {title:'=> Sjednocení duplicit',type:'group'
     item cs {title:'chlap a single',    par:°{mode:'jcs', forms:'i|n1|c2|s3', tags:'jcs|o', call:'init_cs_s'} }
-    item cr {title:'chlap a rodina',    par:°{mode:'jcr', forms:'i|n1|c2|r3', tags:'jcr|o|t',call:'init_cr_s'}, skill:'m' }
+    item cr {title:'chlap a rodina',    par:°{mode:'jcr', forms:'i|n1|c2|r3', tags:'jcr|o|t',call:'init_cr_s'} }
     item c  {title:'chlap izolovaný',   par:°{mode:'jc',  forms:'i|n1|c2',    tags:'jc|o',  call:'init_c_s'} , skill:'m' }
     item sr {title:'single a rodina',   par:°{mode:'jsr', forms:'i|n1|s2|r3', tags:'jsr|o', call:'init_sr_s'}, skill:'m' }
     item rr {title:'2 rodiny',          par:°{mode:'jrr', forms:'i|n1|r2|r3', tags:'jrr|o|r'}                , skill:'m' }
