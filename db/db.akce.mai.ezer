@@ -433,6 +433,8 @@ form _gsql {
     | pro_zeny.get; cond.set("o.sex='2'")
     | warning("chybí výběr muži/ženy") };
     [ pro_mail.get; cond.set(conc(cond.get," AND (o.email!='' OR r.emaily!='') ")) ];
+    # vynechání dětí                                                                POZOR PŘEDĚLAT !
+    cond.set(conc(cond.get," AND t.role!='d'"));
     # ... - funkce
     cond.set(conc(cond.get,' AND ',fces.code_fce));
     # sestavení SELECT pro osobu
