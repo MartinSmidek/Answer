@@ -976,8 +976,8 @@ function ds_rozpis_faktura($listr,$listf,$typ,$order,$x,$polozky,$platce,$zaloha
 //                                                                 debug($platce,'platce',(object)array('win1250'=>1));
   $vystaveno= Excel5_date(mktime());
   //list($obdobi)= $x->objednavka;
-  $ymca_setkani= "YMCA Setkání, obèanské sdružení{}Talichova 53, 62300 Brno{}".
-                 "Zaregistrované MV ÈR 25.4.2001{}pod è.j. VS/1-1/46 887/01-R{}".
+  $ymca_setkani= "YMCA Setkání, spolek{}Talichova 53, 62300 Brno{}".
+                 "zaregistrovaný Krajským soudem v Brnì{}spisová znaèka: L 8556{}".
                  "IÈ: 26531135  DIÈ: CZ26531135";
   $dum_setkani=  "Dolní Albeøice 1, 542 26 Horní Maršov{}".
                  "telefon: 499 874 152, 736 537 122{}dum@setkani.org{}www.alberice.setkani.org";
@@ -1160,8 +1160,8 @@ __XLS;
 function ds_faktura($list,$typ,$order,$polozky,$platce,$zaloha=100,$pata='') {  #trace('','win1250');
   list($ic,$dic,$adresa,$akce,$obdobi)= $platce;
   $vystaveno= Excel5_date(mktime());
-  $ymca_setkani= "YMCA Setkání, obèanské sdružení{}Talichova 53, 62300 Brno{}".
-                 "Zaregistrované MV ÈR 25.4.2001{}pod è.j. VS/1-1/46 887/01-R{}".
+  $ymca_setkani= "YMCA Setkání, spolek{}Talichova 53, 62300 Brno{}".
+                 "zaregistrovaný Krajským soudem v Brnì{}spisová znaèka: L 8556{}".
                  "IÈ: 26531135  DIÈ: CZ26531135";
   $dum_setkani=  "Dolní Albeøice 1, 542 26 Horní Maršov{}".
                  "telefon: 499 874 152, 736 537 122{}dum@setkani.org{}www.alberice.setkani.org";
