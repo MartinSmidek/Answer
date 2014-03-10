@@ -254,7 +254,7 @@ kEzer-ys2
 20=db\db.akce.ucast.ezer
 [Selected Project Files]
 Main=
-Selected=db\db.akce.ucast.ezer
+Selected=db\db_akce.php
 [ezer2.2\server\ezer2.php]
 TopLine=1518
 Caret=72,1520
@@ -299,8 +299,8 @@ BookMark1=42,110
 TopLine=127
 Caret=99,159
 [db\db_akce.php]
-TopLine=5938
-Caret=35,5940
+TopLine=5943
+Caret=43,5958
 Mark1=37,746
 BookMark2=18,6007
 Mark2=15,5943
@@ -324,13 +324,13 @@ Caret=1,1
 TopLine=1
 Caret=43,16
 [db\db.akce.pece.ezer]
-TopLine=504
+TopLine=516
 Caret=71,539
 BookMark2=21,432
 BookMark1=21,425
 BookMark3=21,479
 [db\db.akce.ucast.ezer]
 TopLine=1310
-Caret=63,1328
+Caret=38,1325
 BookMark1=24,863
 BookMark2=21,1144
