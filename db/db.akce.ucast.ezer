@@ -1141,7 +1141,8 @@ panel PridaniJmenem1 [,,320,280] {type:'popup', title:'Přidání známých dosp
     button [220,250,50,16] { title:'konec', proc onclick() {
       jmena.init; vse.init; L.init; panel.hide(0) } }
     // výběr z databáze MS
-    select jmena [100,0,200,17] { type:'auto', par:°{fce:'akce_auto_jmena1',patt:'whole'}, format:'t'
+    select jmena [100,0,200,17] { type:'auto', format:'t'
+      par:°{fce:'akce_auto_jmena1',patt:'whole',save:'key_only'}
       proc onchanged() {
         rod.set(ask('akce_auto_jmena1L',this.key));
         each(rod.get,jmenovci); // nesmí volat asynchronní operace
@@ -1180,7 +1181,8 @@ panel PridaniJmenem2 [,,320,280] {type:'popup', title:'Přidání známých pár
     button [220,250,50,16] { title:'konec', proc onclick() {
       jmena.init; vse.init; L.init; panel.hide(0) } }
     // výběr z databáze MS
-    select jmena [100,0,200,17] { type:'auto', par:°{fce:'akce_auto_jmena2'}, format:'t'
+    select jmena [100,0,200,17] { type:'auto',
+      par:°{fce:'akce_auto_jmena2',save:'key_only'}, format:'t'
       proc onchanged() {
         rod.set(ask('akce_auto_jmena2L',this.key));
         each(rod.get,jmenovci); // nesmí volat asynchronní operace

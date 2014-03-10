@@ -194,7 +194,7 @@ form _gsql {
     proc onchange() {
       ano_akces.display(this.get); ano_akces.selected('clear');
   } }
-  browse ano_akces [230,t_akce+30,,] { tag:'def', rows:9
+  browse ano_akces [230,t_akce+30,,] { tag:'def', rows:9,
     view c: table _cis
     show id_cis { data:c.id_cis }
     show druh {data:c.data}
@@ -210,19 +210,23 @@ form _gsql {
     }
   }
   # ------- časové ano-podmínky
-  const cas_options = "neomezovat:1,plánovaná akce:2,dříve než:3,později než:4"
+  const cas_options = "neomezovat:1,plánovaná akce:2,dříve než:3,později než:4,místo:11,název:12"
   var last_ano: number
   button ano_cas [10,t_akce+60,140,] { tag:'def', title:'omezit termínem akce?', proc onclick() {
     last_ano.set(L_ano.add);
     L_ano.part(last_ano.get).part('kdy').selects(cas_options.get);
     L_ano.part(last_ano.get).part('rok').init(1); L_ano.part(last_ano.get).part('kdy').key(4);
+    L_ano.part(last_ano.get).part('vzor').init(1);
   } }
-  list L_ano [10,t_akce+90,185,120] { tag:'def', rows:22
+  list L_ano [10,t_akce+90,215,500] { tag:'def', rows:22
     select kdy [0,4,100,] { format:'t', proc onchange() {
-      rok.display(gt(this.key,2)); rokem.display(gt(this.key,2));
+      rok.display(0); rokem.display(0); vzor.display(0);
+      gt(this.key,10); vzor.display(1)
+    | gt(this.key,2); rok.display(1); rokem.display(1)
     }}
-    field rok [110,4,25,] { format:'t', value:'0' }
-    label rokem [140,6,50,] { title:"rokem" }
+    field rok [110,4,25,] { format:'nt', value:'0' }
+    label rokem [140,6,50,] { format:'n', title:"rokem" }
+    field vzor [110,4,85,] { format:'nt', value:'', help:'začátek názvu' }
   }
   # ------------------------ výběr typu ne-akce
   label [l_ne_akce+10,t_akce,300,] { tag:'def', title:"<h3>... z toho vynechat účastníky akcí</h3>" }
@@ -231,7 +235,7 @@ form _gsql {
     proc onchange() {
       ne_akces.display(this.get); ne_akces.selected('clear');
   } }
-  browse ne_akces [l_ne_akce+230,t_akce+30,,] { tag:'def', rows:9,
+  browse ne_akces [l_ne_akce+230,t_akce+30,,] { tag:'def', rows:9
     view c: table _cis
     show id_cis { data:c.id_cis }
     show druh {data:c.data}
@@ -252,13 +256,17 @@ form _gsql {
     last_ne.set(L_ne.add);
     L_ne.part(last_ne.get).part('kdy').selects(cas_options.get);
     L_ne.part(last_ne.get).part('rok').init(1); L_ne.part(last_ne.get).part('kdy').key(4);
+    L_ne.part(last_ne.get).part('vzor').init(1);
   } }
-  list L_ne [l_ne_akce+10,t_akce+90,185,120] { tag:'def', rows:22
+  list L_ne [l_ne_akce+10,t_akce+90,215,500] { tag:'def', rows:22
     select kdy [0,4,100,] { format:'t', proc onchange() {
-      rok.display(gt(this.key,2)); rokem.display(gt(this.key,2));
+      rok.display(0); rokem.display(0); vzor.display(0);
+      gt(this.key,10); vzor.display(1)
+    | gt(this.key,2); rok.display(1); rokem.display(1)
     }}
     field rok [110,4,25,] { format:'t', value:'0' }
     label rokem [140,6,50,] { title:"rokem" }
+    field vzor [110,4,85,] { format:'nt', value:'', help:'začátek názvu' }
   }
   # ------------------------------------- kriteria obeslaných účastníků
   const t_pro = 500
@@ -389,16 +397,20 @@ form _gsql {
   proc read_cas_ano(xi) {
     gt(xi.akey,1); // vynecháme "neomezovat"
     ano_cas.onclick;
-    L_ano.part(last_ano.get).part('rok').set(xi.val);
     L_ano.part(last_ano.get).part('kdy').key(xi.akey);
     L_ano.part(last_ano.get).part('kdy').call('onchange');
+    gt(xi.akey,10);
+    L_ano.part(last_ano.get).part('vzor').set(xi.val);
+  | L_ano.part(last_ano.get).part('rok').set(xi.val);
   }
   proc read_cas_ne(xi) {
     gt(xi.akey,1); // vynecháme "neomezovat"
     ne_cas.onclick;
-    L_ne.part(last_ne.get).part('rok').set(xi.val);
     L_ne.part(last_ne.get).part('kdy').key(xi.akey);
     L_ne.part(last_ne.get).part('kdy').call('onchange');
+    gt(xi.akey,10);
+    L_ne.part(last_ne.get).part('vzor').set(xi.val);
+  | L_ne.part(last_ne.get).part('rok').set(xi.val);
   }
   # ------------------------------------- tvorba a úschova SQL dotazu a testy
   var from: text
@@ -530,12 +542,22 @@ form _gsql {
     json_cas.set(conc(json_cas.get,gen_cas_del.get,'{"akey":',x.part('kdy').key,','));
     gen_cas_del.set(',');
     switch(x.part('kdy').key,
+    // neomezovat
     1, { stop },
+    // plánovaná akce
     2, { code_cas.set(conc(code_cas.get," AND datum_od>CURDATE()")) },
+    // dříve než
     3, { val.set(x.part('rok').get);
          code_cas.set(conc(code_cas.get," AND YEAR(datum_od)<=YEAR(CURDATE())-",val.get)) },
+    // později než
     4, { val.set(x.part('rok').get);
-         code_cas.set(conc(code_cas.get," AND YEAR(datum_od)>=YEAR(CURDATE())-",val.get)) }
+         code_cas.set(conc(code_cas.get," AND YEAR(datum_od)>=YEAR(CURDATE())-",val.get)) },
+    // místo
+    11, { val.set(x.part('vzor').get);
+         code_cas.set(conc(code_cas.get," AND misto LIKE '",val.get,"%'")) },
+    // název
+    12, { val.set(x.part('vzor').get);
+         code_cas.set(conc(code_cas.get," AND nazev LIKE '",val.get,"%'")) }
     );
     json_cas.set(conc(json_cas.get,'"val":"',val.get,'"}'));
   }
@@ -566,16 +588,20 @@ form _gsql {
   # ------------ ano akce
   browse ctrl_akce_ano [10,t_ctrl+20,,] { tag:'def', rows:10
     view a: table akce
-    show [,,110,] {title:'typ akce',data:a.druh, map_pipe:ms_akce_typ.zkratka, format:'ts'}
-    show [,,153,] {title:'název',   data:a.nazev, format:'ts'}
-    show [,,65,]  {title:'od',      data:a.datum_od, format:'rs-'}
+    show [,,80,] {title:'typ akce',data:a.druh, map_pipe:ms_akce_typ.zkratka, format:'ts'}
+    show [,,123,] {title:'název',  data:a.nazev, format:'ts'}
+    show [,,60,] {title:'místo',   data:a.misto, format:'ts'}
+    show [,,65,]  {title:'od',     data:a.datum_od, format:'rs-'}
+    proc onstart () { javascript("this.DOM_Block.setStyles({zIndex:0})") }
   }
   # ------------ ne akce
   browse ctrl_akce_ne [l_ne_akce+10,t_ctrl+20,,] { tag:'def', rows:10
     view a: table akce
-    show [,,110,]  {title:'typ akce',data:a.druh, map_pipe:ms_akce_typ.zkratka, format:'ts'}
-    show [,,153,] {title:'název',   data:a.nazev, format:'ts'}
-    show [,,65,]  {title:'od',      data:a.datum_od, format:'rs-'}
+    show [,,80,] {title:'typ akce',data:a.druh, map_pipe:ms_akce_typ.zkratka, format:'ts'}
+    show [,,123,] {title:'název',  data:a.nazev, format:'ts'}
+    show [,,60,] {title:'místo',   data:a.misto, format:'ts'}
+    show [,,65,]  {title:'od',     data:a.datum_od, format:'rs-'}
+    proc onstart () { javascript("this.DOM_Block.setStyles({zIndex:0})") }
   }
 }
 # -------------------------------------------------------------------------------------------------- _esql

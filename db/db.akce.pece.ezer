@@ -477,7 +477,8 @@ panel PridaniJmenem3 [,,320,280] {type:'popup', title:'Přidání známých peč
       jmena.init; vse.init; L.init; panel.hide(0) } }
     // výběr z databáze MS
     select jmena [100,0,200,17] { type:'auto', format:'t',
-      par:°{fce:'akce_auto_jmena3',patt:'whole',cond:'funkce=99'}, // par.cond je měněno při volání
+      par:°{fce:'akce_auto_jmena3',patt:'whole',cond:'funkce=99',save:'key_only'},
+      // par.cond je měněno při volání
       proc onchanged() {
         rod.set(ask('akce_auto_jmena3L',this.key));
         each(rod.get,jmenovci); // nesmí volat asynchronní operace
