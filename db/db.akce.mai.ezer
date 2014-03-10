@@ -212,7 +212,7 @@ form _gsql {
   # ------- časové ano-podmínky
   const cas_options = "neomezovat:1,plánovaná akce:2,dříve než:3,později než:4,místo:11,název:12"
   var last_ano: number
-  button ano_cas [10,t_akce+60,140,] { tag:'def', title:'omezit termínem akce?', proc onclick() {
+  button ano_cas [10,t_akce+60,140,] { tag:'def', title:'omezení akcí časem, místem,...', proc onclick() {
     last_ano.set(L_ano.add);
     L_ano.part(last_ano.get).part('kdy').selects(cas_options.get);
     L_ano.part(last_ano.get).part('rok').init(1); L_ano.part(last_ano.get).part('kdy').key(4);
@@ -252,7 +252,7 @@ form _gsql {
   }
   # ------- časové ne-podmínky
   var last_ne: number
-  button ne_cas [l_ne_akce+10,t_akce+60,140,] { tag:'def', title:'omezit termínem akce?', proc onclick() {
+  button ne_cas [l_ne_akce+10,t_akce+60,140,] { tag:'def', title:'omezení akcí časem, místem,...', proc onclick() {
     last_ne.set(L_ne.add);
     L_ne.part(last_ne.get).part('kdy').selects(cas_options.get);
     L_ne.part(last_ne.get).part('rok').init(1); L_ne.part(last_ne.get).part('kdy').key(4);
