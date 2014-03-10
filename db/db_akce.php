@@ -5943,7 +5943,7 @@ function akce_auto_jmena1($patt,$par) {  #trace();
 function akce_auto_jmena1L($id_osoba) {  #trace();
   $pary= array();
   // páry
-  $qry= "SELECT prijmeni, jmeno, id_osoba, o.obec, o.ulice, telefon, email,
+  $qry= "SELECT prijmeni, jmeno, id_osoba, o.obec, o.ulice, telefon, email, YEAR(narozeni) AS rok,
            r.obec AS r_obec, r.ulice AS r_ulice,
            GROUP_CONCAT(DISTINCT IF(t.role='a',o.jmeno,'')    SEPARATOR '') AS _muz,
            GROUP_CONCAT(DISTINCT IF(t.role='a',o.prijmeni,'') SEPARATOR '') AS _muzp,
@@ -5958,7 +5958,7 @@ function akce_auto_jmena1L($id_osoba) {  #trace();
          GROUP BY id_rodina";
   $res= mysql_qry($qry);
   while ( $res && $p= mysql_fetch_object($res) ) {
-    $nazev= "{$p->prijmeni} {$p->jmeno}";
+    $nazev= "{$p->prijmeni} {$p->jmeno} / {$p->rok}";
     $nazev.= $p->obec ? ", {$p->obec}" : ", {$p->r_obec}";
     $nazev.= $p->ulice ? ", {$p->ulice}" : ", {$p->r_ulice}";
     $nazev.= $p->email ? ", {$p->email}" : '';
@@ -6019,6 +6019,7 @@ function akce_auto_jmena3($patt,$par) {  #trace();
          JOIN spolu USING(id_osoba)
          JOIN pobyt USING(id_pobyt)
          WHERE concat(trim(prijmeni),' ',jmeno) LIKE '$patt%' AND prijmeni!='' $AND
+         GROUP BY id_osoba
          ORDER BY prijmeni,jmeno LIMIT $limit";
   $res= mysql_qry($qry);
   while ( $res && $t= mysql_fetch_object($res) ) {
@@ -6039,12 +6040,12 @@ function akce_auto_jmena3($patt,$par) {  #trace();
 function akce_auto_jmena3L($id_osoba) {  #trace();
   $pecouni= array();
   // páry
-  $qry= "SELECT id_osoba, prijmeni, jmeno, obec
+  $qry= "SELECT id_osoba, prijmeni, jmeno, obec, email, telefon, YEAR(narozeni) AS rok
          FROM osoba AS o
          WHERE id_osoba='$id_osoba' ";
   $res= mysql_qry($qry);
   while ( $res && $p= mysql_fetch_object($res) ) {
-    $nazev= "{$p->prijmeni} {$p->jmeno}, {$p->obec}";
+    $nazev= "{$p->prijmeni} {$p->jmeno} / {$p->rok}, {$p->obec}, {$p->email}, {$p->telefon}";
     $pecouni[]= (object)array('nazev'=>$nazev,'id'=>$p->id_osoba);
   }
 //                                                                 debug($pecouni,$id_akce);
@@ -6142,7 +6143,7 @@ function akce_auto_pece($patt) {  #trace();
 function akce_auto_peceL($id_akce) {  #trace();
   $pecouni= array();
   // páry na akci
-  $qry= "SELECT o.id_osoba,jmeno,prijmeni,obec
+  $qry= "SELECT o.id_osoba,jmeno,prijmeni,obec, YEAR(narozeni) AS rok, email, telefon
          FROM pobyt AS p
          JOIN spolu AS s ON p.id_pobyt=s.id_pobyt
          JOIN osoba AS o ON s.id_osoba=o.id_osoba
@@ -6150,7 +6151,7 @@ function akce_auto_peceL($id_akce) {  #trace();
 	 ORDER BY prijmeni,jmeno";
   $res= mysql_qry($qry);
   while ( $res && $p= mysql_fetch_object($res) ) {
-    $nazev= "{$p->prijmeni} {$p->jmeno}, {$p->obec}";
+    $nazev= "{$p->prijmeni} {$p->jmeno} / {$p->rok}, {$p->obec}, {$p->email}, {$p->telefon}";
     $pecouni[]= (object)array('nazev'=>$nazev,'id'=>$p->id_osoba);
   }
 //                                                                 debug($pecouni,$id_akce);

@@ -496,7 +496,7 @@ panel PridaniJmenem3 [,,320,280] {type:'popup', title:'Přidání známých peč
     }
     list L [0,23,300,200] {rows:22      // anonymní group
       check chck [4,0,50,16] { title:' ', format:'t', value:'1' }
-      label info [23,4,300,16] {style:'white-space:nowrap'}
+      label info [23,4,300,16] {style:'white-space:nowrap', format:'t'}
       var all: object
     }
   }
@@ -536,7 +536,7 @@ panel PridaniAkce [,,320,280] {type:'popup', title:'Přidání pečounů známý
     }
     list L [0,23,300,200] {rows:22      // anonymní group
       check chck [4,0,50,16] { title:' ', format:'t'  /*, proc onchange() { echo('jo/ne') }*/ }
-      label info [23,4,300,16] {style:'white-space:nowrap'}
+      label info [23,4,300,16] {style:'white-space:nowrap', format:'t'}
       var all: object
     }
   }

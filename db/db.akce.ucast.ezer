@@ -1160,7 +1160,7 @@ panel PridaniJmenem1 [,,320,280] {type:'popup', title:'Přidání známých dosp
     }
     list L [0,23,300,200] {rows:22      // anonymní group
       check chck [4,0,50,16] { title:' ', format:'t', value:'1' /*, proc onchange() { echo('jo/ne') }*/ }
-      label info [23,4,300,16] {style:'white-space:nowrap'}
+      label info [23,4,300,16] {style:'white-space:nowrap', format:'t'}
       var all: object
     }
   }
@@ -1199,7 +1199,7 @@ panel PridaniJmenem2 [,,320,280] {type:'popup', title:'Přidání známých pár
     }
     list L [0,23,300,200] {rows:22      // anonymní group
       check chck [4,0,50,16] { title:' ', format:'t', value:'1' /*, proc onchange() { echo('jo/ne') }*/ }
-      label info [23,4,300,16] {style:'white-space:nowrap'}
+      label info [23,4,300,16] {style:'white-space:nowrap', format:'t'}
       var all: object
     }
   }
@@ -1238,7 +1238,7 @@ panel PridaniAkce [,,320,280] {type:'popup', title:'Přidání účastníků zn�
     }
     list L [0,23,300,200] {rows:22      // anonymní group
       check chck [4,0,50,16] { title:' ', format:'t'  /*, proc onchange() { echo('jo/ne') }*/ }
-      label info [23,4,300,16] {style:'white-space:nowrap'}
+      label info [23,4,300,16] {style:'white-space:nowrap', format:'t'}
       var all: object
     }
   }
