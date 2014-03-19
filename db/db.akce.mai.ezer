@@ -537,7 +537,7 @@ form _gsql {
     json_cas.set(conc(json_cas.get,']'));
   }
   var val:text
-  proc gen_cas_fce(x,i) {
+  proc gen_cas_fce(x,i) { var sval:text
     val.set("''");
     json_cas.set(conc(json_cas.get,gen_cas_del.get,'{"akey":',x.part('kdy').key,','));
     gen_cas_del.set(',');
@@ -553,11 +553,13 @@ form _gsql {
     4, { val.set(x.part('rok').get);
          code_cas.set(conc(code_cas.get," AND YEAR(datum_od)>=YEAR(CURDATE())-",val.get)) },
     // místo
-    11, { val.set(x.part('vzor').get);
-         code_cas.set(conc(code_cas.get," AND misto LIKE '",val.get,"%'")) },
+    11,{ val.set(x.part('vzor').get);
+         sval.set(replace(val.get,'\*','%','\?','_'));
+         code_cas.set(conc(code_cas.get," AND misto LIKE '",sval.get,"%'")) },
     // název
-    12, { val.set(x.part('vzor').get);
-         code_cas.set(conc(code_cas.get," AND nazev LIKE '",val.get,"%'")) }
+    12,{ val.set(x.part('vzor').get);
+         sval.set(replace(val.get,'\*','%','\?','_'));
+         code_cas.set(conc(code_cas.get," AND nazev LIKE '",sval.get,"%'")) }
     );
     json_cas.set(conc(json_cas.get,'"val":"',val.get,'"}'));
   }
