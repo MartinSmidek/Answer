@@ -171,8 +171,8 @@ menu m {type:'left',
     item {title:'Hospodáři'             ,par:°{typ:'j',exp:'Excel',exp2:'PDF-jmenovky'
                                         ,cnd:"role!='d' AND funkce=5",ord:"prijmeni"
                                         ,tit:'jméno:20, příjmení:15',fld:'jmeno,prijmeni'}}
-    item {title:'Hudba,zvuk,host,...'   ,par:°{typ:'j',exp:'Excel',exp2:'PDF-jmenovky'
-                                        ,cnd:"role!='d' AND funkce IN (6,7)",ord:"prijmeni"
+    item {title:'... ostatní'           ,par:°{typ:'j',exp:'Excel',exp2:'PDF-jmenovky'
+                                        ,cnd:"role!='d' AND funkce NOT IN (0,1,2,3,4,5)",ord:"prijmeni"
                                         ,tit:'jméno:20, příjmení:15',fld:'jmeno,prijmeni'}}
   }
   menu {title:'tisky do PDF',type:'group',_sys:'*'
