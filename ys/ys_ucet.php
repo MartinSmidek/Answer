@@ -1362,7 +1362,7 @@ function ucet_load_akce($rok) {  #trace();
 # import číselníku akcí z intranetu (od roku 2010)
 function ucet_load_akce2($rok) {  #trace();
   $n= 0;
-  $cells= google_sheet($rok,"ciselnik_akci",'answer@smidek.eu');
+  $cells= google_sheet($rok,"ciselnik_akci",'answer@smidek.eu',$google);
   if ( $cells ) {
     list($max_A,$max_n)= $cells['dim'];
 //                                                 debug($cells,"akce $rok");

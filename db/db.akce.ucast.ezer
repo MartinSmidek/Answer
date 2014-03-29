@@ -14,12 +14,17 @@ proc onstart() {
 }
 proc onfirstfocus() { init_forms; akce_onstart; onfocus }
 proc onfocus() {
-  [ [ the_duakce.get | akce_onstart ];
+  [ [ dirty.get | akce_onstart ];
     eq(the_duakce_local.get,the_duakce.get)
   | init_ucast2;
     the_duakce_local.set(the_duakce.get)
   ];
   u.legenda(the_cenik.get,the_cena.get);
+  switch(the_soubeh.get,
+  0,{ header.soubeh.display(0) },
+  1,{ header.soubeh.display(1); header.soubeh.set('^Děti') },
+  2,{ header.soubeh.display(1); header.soubeh.set('^Kurs') }
+  )
 }
 # úpravy formulářů pro y;f;c
 proc init_forms() {
@@ -29,13 +34,16 @@ proc init_forms() {
     zen.get.display(0,'rc');
     Dite.dite.get.display(0,'rc');
 ]}
-proc init_ucast2() { echo('init_ucast2 ',the_title.get);
-  akce_onstart();
+proc init_ucast2() {
   page.page_init;
   header.fill(the_title.get);
   [ reload(0) ];
   [ u.b.browse_count; page.evd.onclick ];
 }
+
+proc akce_load(id_akce) { lst.akce_work(id_akce); onfocus(); }
+
+# zobrazí dočasně jinou akci s tlačítkem ZPĚT  (jen z podzáložky Aktivita)
 proc akce_show(xakce,xpobyt,xnadpis,xback) {
   page.page_init;
   back.set(object('ida',the_duakce.get,
@@ -93,7 +101,7 @@ proc reload(id_pobyt) { echo('reload ',the_title.get);
         1,conc("funkce!=99 AND p.id_akce=",the_duakce.get)),
       "IF(funkce<=2,1,funkce),_nazev",
       '','','','',
-      conc('SET @akce:=',the_duakce.get));
+      conc('SET @akce:=',the_duakce.get,",@app:='",sys('ezer','options','app'),"'"));
     u.b.browse_focus;
     { id_pobyt; { u.b.raise('onrowclick',id_pobyt)
                 | u.b.browse_seek(conc('p.id_pobyt=',id_pobyt)) }
@@ -119,9 +127,20 @@ form _header [,,380,50] {
     head.set(conc("<div class='karta'>",x,"</div>"))
   }
   label head [0,2,*,50]  { title:'' }
-  button zpet [-2,6,,] { title:'Zpět', help:'Navrátí zobrazení účastníků původní akce', format:'n'
+  button zpet [-2,6,,] { title:'Zpět', help:'Navrátí zobrazení účastníků původní akce', format:'n',
+    style:"z-index:5"
     proc onclick() { this.display(0); akce_back }
   }
+  var soubeh_id:number
+  button soubeh [-2,6,,] { title:'H/S', help:'Přepínač hlavní/souběžná akce', format:'n'
+    proc onclick() {
+      switch(the_soubeh.get,
+      2,{ soubeh_id.set(ask('select1','id_hlavni','akce',conc('id_duakce=',the_duakce.get)));
+          akce_load(soubeh_id.get)},
+      1,{ soubeh_id.set(ask('select1','id_duakce','akce',conc('id_hlavni=',the_duakce.get)));
+          akce_load(soubeh_id.get)}
+      )
+  }}
 }
 # -------------------------------------------------------------------------------------------- _page
 form _page {
@@ -507,6 +526,7 @@ form _pobyt {
     show id_osoba
     show jmeno    [,,70,] { title:'Děti', format:'t' }
     show vek      [,,20,] { title:'věk', js_pipe:'roku', format:'r' }
+#     show kat      [,,20,] { title:'kat' }                                                         // fa
     show narozeni
     show rc_xxxx
     show id_spolu
@@ -570,7 +590,11 @@ form _ucast [,,400,] { css:'ds_form'
       WHEN pouze=1 THEN GROUP_CONCAT(DISTINCT IF(tx.role='a',ox.prijmeni,'') SEPARATOR '')
       WHEN pouze=2 THEN GROUP_CONCAT(DISTINCT IF(tx.role='b',ox.prijmeni,'') SEPARATOR '') END" }
     show _jmena [,,180,] { title:'jméno/a', format:'tsq%',
-      expr:"GROUP_CONCAT(DISTINCT IF(pouze=1 AND t.role='b','',IF(pouze=2 AND t.role='a','',o.jmeno)) ORDER BY t.role SEPARATOR ' ')" }
+      expr:"
+      CONCAT(GROUP_CONCAT(
+        DISTINCT IF(t.role='d','',IF(pouze=1 AND t.role='b','',IF(pouze=2 AND t.role='a','',o.jmeno)))
+        ORDER BY t.role SEPARATOR ' '),
+      GROUP_CONCAT(DISTINCT IF(t.role='d',o.jmeno,'') ORDER BY t.role SEPARATOR ' '))" }
     # varianta A
     # varianta B na úkor _jmena
     show c_suma  [,,0,] { title:'cena', expr:"p.platba1+p.platba2+p.platba3+p.platba4", format:"rsq" }
@@ -660,12 +684,14 @@ form _ucast [,,400,] { css:'ds_form'
        (SELECT GROUP_CONCAT(DISTINCT CONCAT(
           osoba.id_osoba,'|',jmeno,'|',narozeni,'|',narozeni,'|',rc_xxxx,'|',
           (IFNULL((SELECT CONCAT(id_spolu,'|',
+                     IF(@app='fa',CONCAT(IFNULL(_cis.zkratka,'?'),' '),''),
                      IF(poznamka!='',CONCAT(note,'/',poznamka),note),'|',skupinka,'|',
                      IF(pecovane!=0,1,
                        (IFNULL((SELECT 2 FROM pobyt JOIN spolu USING(id_pobyt)
                                 WHERE spolu.pecovane=osoba.id_osoba AND id_akce=p.id_akce),'3'))
                      ))
                    FROM osoba LEFT JOIN spolu USING(id_osoba)
+                   LEFT JOIN _cis ON _cis.druh='ms_akce_dite_kat' AND _cis.data=dite_kat
                    WHERE id_pobyt=p.id_pobyt AND id_osoba=tvori.id_osoba
                    GROUP BY id_osoba),CONCAT('0|',note,'||0')))
            )
@@ -1069,6 +1095,16 @@ panel Dite [,,380,495] {type:'popup', title:'Úprava dětí (a osobních pečova
       }
     }
     field pece_key { data:s.pecovane }
+    // cenová kategorie pro FA                                                                      // fa
+    field kat_orig { data:s.dite_kat}                                                               // fa
+    label  [L+295,Ta+51,,] { title:'kategorie', skill:'f' }                                         // fa
+    select  [L+343,Ta+47,35,] { type:'map', data:s.dite_kat, skill:'faa|faa+',                      // fa
+      options:ms_akce_dite_kat.hodnota, format:'w'                                                  // fa
+      proc onchanged() { var a:object                                                               // fa
+        a.set(ask('akce_test_dite_kat',this.key,narozeni.get,the_duakce.get)); a.ok                 // fa
+      | alert("POZOR: kategorie '",this.get,"' neodpovídá věku dítěte ",a.vek," let (k začátku akce)");
+        this.key(kat_orig.get); this.plain;                                                         // fa
+    }}                                                                                              // fa
     // poznámka k akci
     label          [L+0,Ta+100,53,52] {title:'poznámka k účasti na této akci', format:'r'}
     edit  poznamka [L+58,Ta+98,323,54] {data:s.poznamka, skill:'yaa|yaap+;faa|faa+;caa|caa+'}

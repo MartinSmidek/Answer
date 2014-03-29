@@ -2,12 +2,11 @@
 # ================================================================================================== TEST
 # ------------------------------------------------------------------------------------- test1
 function test1() {
-  $x= (object)array('a'=>'ěščřžýáíé',"b=>"=>array("\"ěščřžýáíé\"
-'radek2'"));
-//                                                 debug($x);
-  $x= json_encode($x);
+//   $x= (object)array('a'=>'ěščřžýáíé',"b=>"=>array("\"ěščřžýáíé\"'radek2'"));
+                                                debug($_SESSION);
+//   $x= json_encode($x);
 //                                                 display($x);
-  $x= json_decode($x);
+//   $x= json_decode($x);
 //                                                 debug($x);
   return $x;
 }
@@ -157,6 +156,11 @@ function data_eli_izol_cr($iddr,$idd,$idc,$faze=2) { trace();
   if ( !$idt ) { $ret->err= "ERROR: ".mysql_error(); goto end; }
   // vložení akcí a poznačení v DUPLO
   data_eli_dupl_cs($idd,$idc,$ido,$faze,true);
+  // zápis o importu z chlapi do _track jako op=d (duplicita)
+  $now= date("Y-m-d H:i:s");
+  $user= $USER->abbr;
+  query("INSERT INTO _track (kdy,kdo,kde,klic,fld,op,old,val)
+        VALUES ('$now','$user','osoba',$ido,'','d','chlapi',$idc)");
   if ( $iddr ) {
     $n= select("COUNT(*)","duplo","idd=$iddr AND rozdily NOT IN (0,10)");
     if ( !$n ) { // poznač, že je sjednocena "rodina"
@@ -219,35 +223,37 @@ function data_eli_dupl_cs($idd,$idc,$ido,$faze=2,$jen_akce=false) { trace();
   }
   # zápis vztahu id_osoba do id_chlapi
   query("INSERT INTO ch_fa (idc,idf,tab) VALUES ($idc,$ido,'o')");
-  # zápis do DUPLO
-  query("UPDATE duplo SET rozdily=10,faze=$faze WHERE id_duplo=$idd");
-  $m= mysql_affected_rows();
-  if ( !$jen_akce ) {
+  if ( $idd ) {
+    # zápis do DUPLO
+    query("UPDATE duplo SET rozdily=10,faze=$faze WHERE id_duplo=$idd");
+    $m= mysql_affected_rows();
+    if ( !$jen_akce ) {
 
-    # zápis změněných údajů z DUPLO.chngs do osoba, jsou-li
-    $chngs_s= select("chngs","duplo","id_duplo=$idd");
-    $o= select("*","osoba","id_osoba=$ido");
-    if ( $chngs_s ) {
-      $chngs= json_decode($chngs_s);
-//                                                     debug($chngs);
-      $zmeny= array();
-      foreach ($chngs as $fld=>$chng) {
-        $val= is_array($chng) ? $chng[0] : $chng;
-        $old= $o->$fld;
-        if ( $fld=='narozeni' ) $val= sql_date1($val,1);
-        if ( $val != $old && isset($o->$fld) ) {
-          $zmeny[]= (object)array('fld'=>$fld,'op'=>'u','val'=>$val,'old'=>$old);
+      # zápis změněných údajů z DUPLO.chngs do osoba, jsou-li
+      $chngs_s= select("chngs","duplo","id_duplo=$idd");
+      $o= select("*","osoba","id_osoba=$ido");
+      if ( $chngs_s ) {
+        $chngs= json_decode($chngs_s);
+  //                                                     debug($chngs);
+        $zmeny= array();
+        foreach ($chngs as $fld=>$chng) {
+          $val= is_array($chng) ? $chng[0] : $chng;
+          $old= $o->$fld;
+          if ( $fld=='narozeni' ) $val= sql_date1($val,1);
+          if ( $val != $old && isset($o->$fld) ) {
+            $zmeny[]= (object)array('fld'=>$fld,'op'=>'u','val'=>$val,'old'=>$old);
+          }
         }
-      }
-//                                                     debug($zmeny);
-      // zápis o importu z chlapi do _track jako op=d (duplicita)
-      $now= date("Y-m-d H:i:s");
-      $user= $USER->abbr;
-      query("INSERT INTO _track (kdy,kdo,kde,klic,fld,op,old,val)
-            VALUES ('$now','$user','osoba',$ido,'','d','chlapi',$idc)");
-      // promítnutí změn do OSOBA
-      if ( count($zmeny) ) {
-        ezer_qry("UPDATE",'osoba',$ido,$zmeny);
+  //                                                     debug($zmeny);
+        // zápis o importu z chlapi do _track jako op=d (duplicita)
+        $now= date("Y-m-d H:i:s");
+        $user= $USER->abbr;
+        query("INSERT INTO _track (kdy,kdo,kde,klic,fld,op,old,val)
+              VALUES ('$now','$user','osoba',$ido,'','d','chlapi',$idc)");
+        // promítnutí změn do OSOBA
+        if ( count($zmeny) ) {
+          ezer_qry("UPDATE",'osoba',$ido,$zmeny);
+        }
       }
     }
   }
@@ -643,6 +649,27 @@ function data_eli_corr_id2($idd,$tab2,$id2) { trace();
     query("UPDATE duplo SET id_tab2=$id2 WHERE id_duplo=$idd");
   }
 end:
+  return $ret;
+}
+# ------------------------------------------------------------------------------------ data_eli_tack
+# přidá do OSOBA,TVORI,RODINA jednočlenné "rodiny" z neduplicitních chlapů
+function data_eli_tack() { trace();
+  $ret= (object)array('html'=>'');
+  $n= 0;
+  $cs= mysql_qry("
+    SELECT id_chlapi,prijmeni,jmeno
+    FROM ezer_ys.chlapi
+    LEFT JOIN duplo ON tab1='c' AND id_tab1=id_chlapi
+    LEFT JOIN ch_fa ON idc=id_chlapi
+    WHERE ISNULL(tab1) AND deleted='' AND ISNULL(idc) ORDER BY prijmeni
+  ");
+  while (($c= mysql_fetch_object($cs))) {
+    data_eli_izol_cr(null,null,$c->id_chlapi,1);
+    $ret->html.= "<b>{$c->prijmeni}</b> {$c->jmeno}, ";
+    $n++;
+//     $ret->html.= " -- STOP"; break;
+  }
+  $ret->html= "Přidáno $n chlapů jako triviální rodina<br><br>{$ret->html}";
   return $ret;
 }
 # ------------------------------------------------------------------------------------ data_eli_auto
@@ -2032,6 +2059,53 @@ function akce_kontrola_dat($par) { trace();
   return $html;
 }
 # ================================================================================================== AKCE
+# ---------------------------------------------------------------------------------------- akce_id2a
+# vrácení hodnot akce
+function akce_id2a($id_akce) {  trace();
+  $a= (object)array('title'=>'?','cenik'=>0,'cena'=>0,'soubeh'=>0,'hlavni'=>0,'soubezna'=>0);
+  list($a->title,$a->rok,$a->cenik,$a->cena,$a->hlavni,$a->soubezna)=
+    select("a.nazev,YEAR(a.datum_od),a.ma_cenik,a.cena,a.id_hlavni,IFNULL(s.id_duakce,0)",
+      "akce AS a
+       LEFT JOIN akce AS s ON s.id_hlavni=a.id_duakce",
+      "a.id_duakce=$id_akce");
+  # diskuse souběhu: 0=normální akce, 1=hlavní akce, 2=souběžná akce
+  $a->soubeh= $a->soubezna ? 1 : ( $a->hlavni ? 2 : 0);
+  $a->rok= $a->rok ?: date('Y');
+                                                                debug($a,$id_akce);
+  return $a;
+}
+# ------------------------------------------------------------------------------- akce_soubeh_nastav
+# nastavení akce jako souběžné s jinou (která musí mít stejné datumy a místo konání)
+function akce_soubeh_nastav($id_akce,$nastavit=1) {  trace();
+  $msg= "";
+  if ( $nastavit ) {
+    list($hlavni,$nazev,$nic,$pocet)=
+      select("h.id_duakce,h.nazev,s.id_hlavni,COUNT(*)","akce AS h JOIN akce AS s ON s.misto=h.misto",
+        "s.id_duakce=$id_akce AND s.id_duakce!=h.id_duakce AND s.datum_od=h.datum_od");
+    if ( !$pocet ) {
+      $msg= "k souběžné akci musí napřed existovat hlavní akce se stejným začátkem a místem konání";
+      goto end;
+    }
+    elseif ( $pocet>1 ) {
+      $msg= "Souběžná akce již existuje (tzn. již jsou $počet akce se stejným začátkem a místem konání)";
+      goto end;
+    }
+    elseif ( $nic ) {
+      $msg= "Tato akce již je souběžná k hlavní akci (se stejným začátkem a místem konání)";
+      goto end;
+    }
+    // vše je v pořádku $hlavni může být hlavní akcí k $id_akce
+    $ok= query("UPDATE akce SET id_hlavni=$hlavni WHERE id_duakce=$id_akce");
+    $msg.= $ok ? "akce byla přiřazena k hlavní akci '$nazev'" : "CHYBA!";
+  }
+  else {
+    // zrušit nastavení
+    $ok= query("UPDATE akce SET id_hlavni=0 WHERE id_duakce=$id_akce");
+    $msg.= $ok ? "akce je nadále vedena jako samostatná" : "CHYBA!";
+  }
+end:
+  return $msg;
+}
 # ------------------------------------------------------------------------------ akce_delete_confirm
 # dotazy před zrušením akce
 function akce_delete_confirm($id_akce) {  trace();
@@ -2817,83 +2891,6 @@ function dop_rep_ids($report_json,$parss,$fname) { trace();
   tc_report($report,$texty,$fname);
 }
 # ================================================================================================== SYSTEM-DATA
-# --------------------------------------------------------------------------------- akce_foxpro_data
-# dokončení transformace z my_mysql.prg naplněním id_pary
-function akce_foxpro_data() {  #trace('');
-/*
-  $n= 0;
-  // přidání id_pary
-  $qry= "SELECT id_pary,cislo FROM ms_pary ";
-  $res= mysql_qry($qry);
-  while ( $res && ($x= mysql_fetch_object($res)) ) {
-    $n++;
-    // doplň id_pary do ms_kurs a ms_deti
-    mysql_qry("UPDATE ms_kurs SET id_pary={$x->id_pary} WHERE cislo={$x->cislo} ");
-    mysql_qry("UPDATE ms_deti SET id_pary={$x->id_pary} WHERE cislo={$x->cislo} ");
-    mysql_qry("UPDATE ms_kursdeti SET id_pary={$x->id_pary} WHERE cislo={$x->cislo} ");
-  }
-  $html= "Do tabulek ms_kurs, ms_deti, ms_kursdeti byly {$n}x přidány hodnoty klíče id_pary";
-  // přidání id_akce
-  $n= 0;
-  $qry= "SELECT id_akce,source,akce FROM ms_akce ";
-  $res= mysql_qry($qry);
-  while ( $res && ($x= mysql_fetch_object($res)) ) {
-    $n++;
-    // doplň id_pary do ms_kurs a ms_deti
-    mysql_qry("UPDATE ms_kurs SET id_akce={$x->id_akce} WHERE akce={$x->akce} AND source='{$x->source}'");
-    mysql_qry("UPDATE ms_kursdeti SET id_akce={$x->id_akce} WHERE akce={$x->akce} AND source='{$x->source}'");
-    mysql_qry("UPDATE uakce SET id_akce={$x->id_akce} WHERE ms_akce={$x->akce} AND ms_source='{$x->source}'");
-  }
-  $html.= "<br>Do tabulek ms_kurs, ms_kursdeti, uakce byly {$n}x přidány hodnoty klíče id_akce";
-  // oprava dětí
-  $n= 0;
-  $qry= "SELECT id_deti,id_pary,jmeno FROM ms_deti ";
-  $res= mysql_qry($qry);
-  while ( $res && ($x= mysql_fetch_object($res)) ) {
-    $n++;
-    // doplň id_deti do ms_kursdeti
-    mysql_qry("UPDATE ms_kursdeti SET id_deti={$x->id_deti} WHERE id_pary={$x->id_pary} AND jmeno='{$x->jmeno}'");
-  }
-  $html.= "<br>Do tabulky ms_kursdeti byly {$n}x přidány hodnoty klíče id_deti";
-  return $html;
-*/
-  // verze pro YMCA Familia
-  $n= 0;
-  // přidání id_pary
-  $qry= "SELECT id_pary,cislo FROM ms_pary ";
-  $res= mysql_qry($qry);
-  while ( $res && ($x= mysql_fetch_object($res)) ) {
-    $n++;
-    // doplň id_pary do ms_kurs a ms_deti
-    mysql_qry("UPDATE ms_kurs SET id_pary={$x->id_pary} WHERE cislo={$x->cislo} ");
-    mysql_qry("UPDATE ms_deti SET id_pary={$x->id_pary} WHERE cislo={$x->cislo} ");
-    mysql_qry("UPDATE ms_kursdeti SET id_pary={$x->id_pary} WHERE cislo={$x->cislo} ");
-  }
-  $html= "Do tabulek ms_kurs, ms_deti, ms_kursdeti byly {$n}x přidány hodnoty klíče id_pary";
-  // přidání id_akce
-  $n= 0;
-  $qry= "SELECT id_akce,source,akce FROM ms_akce ";
-  $res= mysql_qry($qry);
-  while ( $res && ($x= mysql_fetch_object($res)) ) {
-    $n++;
-    // doplň id_pary do ms_kurs a ms_deti
-    mysql_qry("UPDATE ms_kurs SET id_akce={$x->id_akce} WHERE akce={$x->akce} AND source='{$x->source}'");
-    mysql_qry("UPDATE ms_kursdeti SET id_akce={$x->id_akce} WHERE akce={$x->akce} AND source='{$x->source}'");
-//     mysql_qry("UPDATE uakce SET id_akce={$x->id_akce} WHERE ms_akce={$x->akce} AND ms_source='{$x->source}'");
-  }
-  $html.= "<br>Do tabulek ms_kurs, ms_kursdeti, uakce byly {$n}x přidány hodnoty klíče id_akce";
-  // oprava dětí
-  $n= 0;
-  $qry= "SELECT id_deti,id_pary,jmeno FROM ms_deti ";
-  $res= mysql_qry($qry);
-  while ( $res && ($x= mysql_fetch_object($res)) ) {
-    $n++;
-    // doplň id_deti do ms_kursdeti
-    mysql_qry("UPDATE ms_kursdeti SET id_deti={$x->id_deti} WHERE id_pary={$x->id_pary} AND jmeno='{$x->jmeno}'");
-  }
-  $html.= "<br>Do tabulky ms_kursdeti byly {$n}x přidány hodnoty klíče id_deti";
-  return $html;
-}
 # ================================================================================================== VÝPISY
 # výběr generátoru sestavy
 # ------------------------------------------------------------------------------------ akce_sestava2
@@ -5249,7 +5246,7 @@ function dom_hasChild($p) {
 function akce_google_cleni() {  trace();
   $n= 0;
   $html= '';
-  $cells= google_sheet($ws="Kroměříž 10",$wt="ČlenovéYS_2010-2011",'answer@smidek.eu');
+  $cells= google_sheet($ws="Kroměříž 10",$wt="ČlenovéYS_2010-2011",'answer@smidek.eu',$google);
   if ( $cells ) {
     list($max_A,$max_n)= $cells['dim'];
 //                                                 debug($cells,"přehled členů");
@@ -5345,7 +5342,7 @@ function akce_roku_id($id_akce,$kod,$rok) {
 # načítají se jen řádky ve kterých typ='a'
 function akce_roku_update($rok) {  trace();
   $n= 0;
-  $cells= google_sheet($rok,"ciselnik_akci",'answer@smidek.eu');
+  $cells= google_sheet($rok,"ciselnik_akci",'answer@smidek.eu',$google);
 //                                                 debug($cells,"akce $rok");
   if ( $cells ) {
     list($max_A,$max_n)= $cells['dim'];
@@ -5408,6 +5405,26 @@ function akce_mapa($akce) {  trace();
   return $ret;
 }
 # ================================================================================================== ÚČASTNÍCI
+# ------------------------------------------------------------------------------- akce_test_dite_kat
+# testuje, zda je kategorie dítěte v souladu s rozmezím věku v číselníku
+# narozeni=d.m.Y
+function akce_test_dite_kat($kat,$narozeni,$id_akce) {  trace();
+  $ret= (object)array('ok'=>0,'vek'=>0.0);
+  $od_do= select1("ikona","_cis","druh='ms_akce_dite_kat' AND data=$kat");
+  list($od,$do)= explode('-',$od_do);
+  $akce_od= select1("datum_od","akce","id_duakce=$id_akce");
+  $narozeni= sql_date1($narozeni,1);
+  $date1 = new DateTime($narozeni);
+  $date2 = new DateTime($akce_od);
+  $diff= $date2->diff($date1,1);
+  $x= $diff->y . " years, " . $diff->m." months, ".$diff->d." days ";
+  $vek= $diff->y+($diff->m+$diff->d/30)/12;
+//   $d= array($diff->y,$diff->m,$diff->d,$diff->days);
+//                                               debug($d,"$vek: $x, narozen:$narozeni, akce:$akce_od");
+  $ret->vek= round($vek,1);
+  $ret->ok= $vek>=$od && $vek<$do ? 1 : 0;
+  return $ret;
+}
 # -------------------------------------------------------------------------------- akce_strava_denne
 # vrácení výjimek z providelné stravy jako pole
 function akce_strava_denne($od,$dnu,$cela,$polo) {  #trace('');

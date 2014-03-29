@@ -93,6 +93,7 @@ table _file_ {
   text finfo
 }
 
+# kopie číselníků akcí z intranetu YS
 table uakce { key_id:'id_uakce'
   number id_uakce
   number id_akce
@@ -108,6 +109,7 @@ table uakce { key_id:'id_uakce'
   text kapitola
 }
 
+# číselník
 table _cis { key_id:'id_cis'
   number id_cis
   text druh,
@@ -261,17 +263,17 @@ table akce { key_id:'id_duakce'
   number typ
 }
 
-table ms_akce { key_id:'id_akce'  // Sey
-  number id_akce
-  text source
-  text nazev
-  number akce
-  number druh
-  number poradatel
-  date datum_od        // SQL tvar se používá v ys.akce
-  date datum_do
-  text misto
-}
+# table ms_akce { key_id:'id_akce'  // Sey
+#   number id_akce
+#   text source
+#   text nazev
+#   number akce
+#   number druh
+#   number poradatel
+#   date datum_od        // SQL tvar se používá v ys.akce
+#   date datum_do
+#   text misto
+# }
 
 table g_akce { key_id:'id_gakce' // kopie číselníku akcí z intranetu
   number id_gakce

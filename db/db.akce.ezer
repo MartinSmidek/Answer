@@ -3,32 +3,50 @@
 # Systém Ans(w)er - modul Akce
 # (c) 2008-2010 Martin Šmídek <martin@smidek.eu>
 
-var the_duakce: number          // nastavená akce: id_akce (id_dukace)
-var the_rok: number             // nastavená akce: rok
-var the_title: text             // nastavená akce: název do titulků
-var the_cenik: text             // nastavená akce: má (mít) ceník
-var the_cena:  number           // nastavená akce: má pevnou cenu pro dospělého
+# globální proměnné pro modul Databáze - týkají se vlastností nastavené akce
 
-var the_source: text    // google|sey
-var dirty: number
+# hodnoty pamatované v cookies
+var the_source: text            // forma seznamu akcí google|sey                           -- cookie
+var the_omezeni: text           // pro skill=c obsahuje podmínku přístupných akcí          -- cookie
+var the_duakce: number          // pracovní akce: id_akce (id_dukace)                      -- cookie
 
-var obj_akce: object    // všechny informace o nastavené akci
+# hodnoty udržované funkcí akce_change
+var the_title: text             // pracovní akce: název do titulků
+var the_rok: number             // pracovní akce: rok konání
+var the_soubeh: number          // 0=normální akce, 1=hlavní akce, 2=souběžná akce
+var the_hlavni: number          // 0=normální akce, id=akce k the_duakce hlavní
+var the_soubezna: number        // 0=normální akce, id=akce s the_duakce souběžná
+var the_cenik: text             // pracovní akce: má ceník
+var the_cena:  number           // pracovní akce: má pevnou cenu pro dospělého
 
-proc onstart() { akce_onstart }
-proc akce_onstart() { dirty.get
+# inicializace modulu Databáze - nastavení globálních proměnných the_* tohoto modulu
+var dirty: number       // 1 => byla začata inicializace modulu
+proc onstart() { dirty.get; akce_onstart }
+proc akce_onstart() {
+  dirty.get
 | dirty.set(1);
   echo('db.akce.onstart');
-  the_duakce.set(get_cookie(conc(sys('root'),'_akce_id'),0));
-  the_cenik.set(get_cookie(conc(sys('root'),'_akce_cenik'),0));
-  the_cena.set(get_cookie(conc(sys('root'),'_akce_cena'),0));
-  the_title.set(get_cookie(conc(sys('root'),'_akce_title'),'Vyber akci ...'));
-  the_rok.set(get_cookie(conc(sys('root'),'_akce_rok'),fdate('Y')));
+  # hodnoty zapamatované pro navázání na předchozí session
+  the_source.set(get_cookie(conc(sys('root'),'_akce_source'),'sey'));
+  the_omezeni.set(get_cookie(conc(sys('root'),'_akce_omezeni'),1));
+  # příprava zobrazení v AKCE - volá akce_choose
+  lst.akce_work(get_cookie(conc(sys('root'),'_akce_id'),0));
+  echo('db.akce.onstart end');
+}
+# nastavení akce jako the_duakce, dopočítání stavových hodnot
+proc akce_choose(id_akce) { var a:object
+  the_duakce.set(id_akce);
+  a.set(ask('akce_id2a',id_akce)); // nastaví i nulové hodnoty pro id_akce=0
+  the_rok.set(a.rok);       the_title.set(a.title);       the_soubeh.set(a.soubeh);
+  the_hlavni.set(a.hlavni); the_soubezna.set(a.soubezna); the_cenik.set(a.cenik);
+  the_cena.set(a.cena);
 }
 # ================================================================================================== CHLAPI
 panel chl {type:'right', _sys:'*', title:'Chlapi', include:'onclick,db.akce.chl',skill:'yac;xa' }
 # ================================================================================================== AKCE
-panel lst {type:'right', _sys:'*', title:'AKCE', include:'onclick,db.akce.lst',skill:'yaa;faa;caa'
+panel lst {type:'right', _sys:'*', title:'AKCE', include:'onload,db.akce.lst',skill:'yaa;faa;caa'
   use the_akce: form _the_akce         // zatím nezobrazená data nastavené akce s klíčem id_duakce
+  proc akce_work(id) {}                // nastaví akci jako vybranou
 }
 panel ucast {type:'plain', _sys:'*',
   /*title:"<img src='img/icon_new.gif' style='float:left;margin-top:-5px;padding-right:5px;'>Účastníci",*/
@@ -41,21 +59,13 @@ panel pece {type:'plain', _sys:'*', title:'Pečouni', include:'onload,db.akce.pe
   proc init_pece() { alert('napřed klikni na Databáze|Pečouni') }
   proc akce_show() { alert('napřed klikni na Databáze|Pečouni') }
 }
-# panel ducast2 {type:'plain', _sys:'*', title:'Účastníci2', include:'onclick,db.akce.ducast2',skill:'md' //martin doma
-#   proc init_ucast() { }
-# }
 panel tisk [,,,] {type:'right', _sys:'*', title:'Výpisy akce', include:'onclick,db.akce.tisk',skill:'yaa;faa;caa'  }
 # ================================================================================================== EVIDENCE
 panel evi {type:'right', _sys:'*', title:'EVIDENCE', include:'onclick,db.akce.evi', skill:'yae;fae;caa'
   proc evid_show() { alert('napřed klikni na Databáze|EVIDENCE') }
 }
 panel dup {type:'right', _sys:'*', title:'(duplicity)', include:'onclick,db.akce.dup', skill:'m+' }
-# panel rod {type:'plain', title:'Rodiny', include:'onclick,db.akce.rod', skill:'yae;fae'  }
-# panel jed {type:'plain', title:'Jednotlivci', skill:'yae;fae'  }
 panel mai {type:'right', title:'MAILY', _sys:'*', include:'onclick,db.akce.mai', skill:'yam;fam;cam'  }
-# panel eli0 {type:'right', _sys:'*'
-#   title:'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(1.pokus)',
-#   include:'onclick,db.akce.eli0', skill:'m' }
 panel eli {type:'right', _sys:'*'
   title:'&nbsp;.&nbsp;&nbsp;.&nbsp;&nbsp;.&nbsp;&nbsp;.&nbsp;&nbsp;.&nbsp;&nbsp;.&nbsp;&nbsp;.&nbsp;&nbsp;.&nbsp;&nbsp;.&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(duplicity)',
   include:'onclick,db.akce.eli', skill:'m;fad' }
@@ -192,6 +202,7 @@ table ds_osoba_copy { key_id:'id_osoba'
 # ================================================================================================== AKCE
 table akce { key_id:'id_duakce'
   number id_duakce
+  number id_hlavni // 0 nebo id_duakce hlavní akce souběžné akce
   number typ
   number ma_cenik  // 1 znamená, že bereme v úvahu tabulku cenik
   number ma_cenu   // 1 znamená, že bereme v úvahu položku cena (pro 1 dospělého)
@@ -257,8 +268,9 @@ table spolu { key_id:'id_spolu'
   text poznamka
   number s_rodici
   number pulstrava
-  number pecovane //id_osoba pečovaného dítěte
+  number pecovane // id_osoba pečovaného dítěte
   number pfunkce  // #ms_akce_pfunkce -- funkce pečovatelská, jinak 0
+  number dite_kat // #ms_akce_dite_kat -- cenová kategorie
 }
 
 table osoba { key_id:'id_osoba'
@@ -398,141 +410,6 @@ table webform { key_id:'id_webform'
   text historie
 }
 map db_dary_frek:  table _cis {where:"druh='db_dary_frek'",  order:'poradi', key_id:'data'}
-# ================================================================================================== Sey
-# table uakce { key_id:'id_uakce'
-#   number id_uakce
-#   number id_akce
-#   text ms_source
-#   number ms_akce
-#   number rok
-#   text akce
-#   text nazev_akce
-#   date datum { sql_pipe:'sql_date1' }
-#   number dnu
-#   number osob
-#   number typ
-#   text kapitola
-# }
-#
-# table du_kurs { key_id:'id_dukurs'
-#   number id_dukurs
-#   number typ
-# }
-
-# table ms_kurs { key_id:'id_kurs'
-#   number id_kurs
-#   text source
-#   number id_pary
-#   number id_akce
-#   number id_dupary
-#   number cislo
-#   number skupina
-#   number funkce
-#   text aktivita
-#   date datplatby        { sql_pipe:'sql_date1'}
-#   number zpusobplat
-#   text budova
-#   text pokoj
-#   number luzka
-#   number strava_cel
-#   number strava_pol
-#   number kocarek
-#   text pecovatel
-#   text poznamka
-#   number pristylky
-#   number pocetdnu
-#   number svp
-#   number dorazil
-#   number pouze
-#   number akce
-#   number platba
-#   text cstrava_cel      // číslice jsou seřazeny jako počty snídaní,obědů,večeří po dnech
-#   text cstrava_pol
-#   number platba1
-#   number platba2
-#   number platba3
-#   number platba4
-# }
-
-# table du_kursdeti { key_id:'id_dukursdeti'
-#   number id_dukursdeti
-#   number typ
-# }
-
-# table ms_kursdeti { key_id:'id_kursdeti'
-#   number id_kursdeti
-#   number id_pary        //-
-#   number id_akce
-#   number id_deti
-#   number cislo          //-
-#   text jmeno            //-
-#   number skupina
-#   number akce           //-
-# }
-#
-# table du_pary { key_id:'id_dupary'
-#   number id_dupary
-#   number typ
-# }
-
-# table ms_pary { key_id:'id_pary'
-#   number id_pary
-#   number cislo
-#   number cislo_z
-#   text source
-#   text jmeno
-#   text adresa
-#   text psc
-#   text mesto
-#   text telefon
-#   text spz
-#   date datsvatba { sql_pipe:'sql_date1'}
-#   number svatba
-#   text poznamka
-#   text jmeno_m
-#   text jmeno_z
-#   text prijmeni_m
-#   text prijmeni_z
-#   number rodcislo_m
-#   number rodcislo_z
-#   text obcanka_m
-#   text obcanka_z
-#   number vzdelani_m
-#   number vzdelani_z
-#   text zamest_m
-#   text zamest_z
-#   text zajmy_m
-#   text zajmy_z
-#   text jazyk_m
-#   text jazyk_z
-#   number cirkev_m
-#   number cirkev_z
-#   text ccirkev_m
-#   text ccirkev_z
-#   text aktivita_m
-#   text aktivita_z
-#   number cislo_m
-#   number clen_m
-#   number clen_z
-#   text vyloucen
-#   text email
-#   number nfoto
-#   number lxx1
-# }
-
-# table ms_deti { key_id:'id_deti'
-#   number id_deti
-#   number id_pary
-#   number cislo
-#   text jmeno
-#   number rodcislo
-#   text poznamka
-# }
-#
-# table ms_poraakce {
-#   number poradatel
-#   text jmeno
-# }
 
 table join_akce { // spojení číselníku akcí s MS
   number id_akce   { help:"klíč akce v tabulce akce" }
@@ -540,18 +417,6 @@ table join_akce { // spojení číselníku akcí s MS
   number g_kod     { help:"kód akce podle číselníku akcí" }
   text   source    { help:"L:Lídino M:Milošovo MS.EXE" }
   number akce      { help:"staré číslo akce podle MS.EXE" }
-}
-
-table ms_akce { key_id:'id_akce'  // Sey
-  number id_akce
-  text source
-  text nazev
-  number akce
-  number druh
-  number poradatel
-  date datum_od    { sql_pipe:'sql_date1'}    // SQL tvar se používá v ys.akce
-  date datum_do    { sql_pipe:'sql_date1'}
-  text misto
 }
 
 table g_akce { key_id:'id_gakce' // kopie číselníku akcí z intranetu
@@ -565,37 +430,6 @@ table g_akce { key_id:'id_gakce' // kopie číselníku akcí z intranetu
   text   g_typ     { help:"typ akce z číselníku akcí" }
   text   g_kap     { help:"účetní kapitola akce z číselníku akcí" }
 }
-
-# table ms_pece {
-#   number cislo
-#   text jmeno
-#   text krestni
-#   text adresa
-#   text psc
-#   text mesto
-#   text telefon
-#   text poznamka
-#   number rodcislo
-#   text obcanka
-#   number zamestnani
-#   number kategorie
-#   number cirkev
-#   text ccirkev
-#   number cislo_y
-#   number kod
-#   number clen
-#   text email
-# }
-#
-# table ms_kurspece {
-#   number cislo
-#   number skupina
-#   text budova
-#   text pokoj
-#   number dorazil
-#   number akce
-#   text poznamka
-# }
 
 table mail { key_id:'id_mail'
   number id_mail { key:'primary' },
@@ -661,3 +495,4 @@ map ms_akce_ucastnik: table _cis {where:"druh='ms_akce_ucastnik'",  order:'porad
 map ms_cena_vzorec:   table _cis {where:"druh='ms_cena_vzorec'",    order:'poradi', key_id:'data'}
 map ms_akce_ubytovan: table _cis {where:"druh='ms_akce_ubytovan'",  order:'poradi', key_id:'data'}
 map ms_akce_dieta:    table _cis {where:"druh='ms_akce_dieta'",     order:'poradi', key_id:'data'}
+map ms_akce_dite_kat: table _cis {where:"druh='ms_akce_dite_kat'",  order:'poradi', key_id:'data'}

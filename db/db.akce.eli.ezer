@@ -137,6 +137,7 @@ menu do {type:'left', format:'f'
 #     item    {title:'akce z chlapi=>db: insert',      par:°{forms:'i', call:'info_akce',  x:'insert'} }
 #     item    {title:'obnova _track ze záloh: test',   par:°{forms:'i', call:'info_track', x:'test'} }
 #     item    {title:'obnova _track ze záloh: insert', par:°{forms:'i', call:'info_track', x:'insert'} }
+    item    {title:'doplnění neduplicitních chlapů', par:°{forms:'i', call:'info_tack'} }
   }
   menu calc {title:'kalkulačka',type:'group'
     item    {title:'akce ... osoba ... rodina',   par:°{forms:'i', tags:'c', call:'calc_spolu'} }
@@ -225,6 +226,13 @@ proc init_sr_a() { s2.init; s2.load_all; r3.init; r3.load_all }
 # ----------------------------------------------------------- procedury pro rodina+rodina ručně
 proc init_rr_a() { r2.init; r2.load_all; r3.init; r3.load_all }
 # ----------------------------------------------------------- algoritmy
+# doplnění chlapů, kteří nejsou v duplo
+proc info_tack() {
+  var ret:object
+  clear; info.fill('','... probíhá doplnění neduplicitních chlapů');
+  ret.set(ask('data_eli_tack'));
+  info.fill('',ret.html);
+}
 # generování návrhů na sjednocení
 proc info_auto(typ,filtr) {
   var ret:object
@@ -261,12 +269,14 @@ form _navrhy [,,Wr,Hr] {
   field chngs { data:d.chngs }
   field faze  { data:d.faze }   // 2 = sjednoceno
   # --------------------------------------------------  metody rozpojení
+  # vytvoř novou instanci osoby a rodiny
   proc cr_reject() { var ret:object
     ret.set(ask('data_eli_izol_cr',bn.idd.get,bnn.idd.get,bnn.id1.get));
     [ ret.err; warning(ret.err) ];
     bn.browse_seek(conc("id_duplo=",bn.idd.get));
     bnn.browse_seek;
   }
+  # vyřaď z duplo
   proc cs_reject() { var ret:object
     var idd:number
     var nxt:number
