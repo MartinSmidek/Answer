@@ -23,7 +23,7 @@ proc test_dbg() {
   echo(dopis_id.get)
 }
 proc onfirstfocus() {
-  [ the_duakce.get | akce_onstart ];
+  [ dirty.get | akce_onstart ];
   gq.reinit;
   m.g.i.click
 #   eq(the_duakce_local.get,the_duakce.get)

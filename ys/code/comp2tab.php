@@ -163,6 +163,7 @@ $names= array(
  'roku' => (object)array('op'=>'ff'),
  'rooms_check' => (object)array('op'=>'ff'),
  'rows' => (object)array('op'=>'on'),
+ 'runScript' => (object)array('op'=>'fm'),
  'same' => (object)array('op'=>'fm'),
  'save' => (object)array('op'=>'fx'),
  'save_json' => (object)array('op'=>'fm'),

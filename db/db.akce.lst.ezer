@@ -6,24 +6,35 @@
 
 var zalozka: text           // inf | cor | cen
 
-var the_omezeni: text           // pro skill=c obsahuje omezující podmínku na viditelné akce
-
 use info: form _akce [12,4,,]
 use page: form _page [450,40,,]
 
+# ------------------------------------------------------------------------------- globální procedury
+# nastaví akci jako pracovní
+proc akce_work(id_akce) {
+  info.volba_akce(id_akce)
+}
+# ------------------------------------------------------------------------------- inicializace
+# inicializace panelu proběhne po akce.onstart, zobrazí seznam akcí daného roku podle the_source
 proc onfirstfocus() {
-  the_source.set('sey');
+  [ dirty.get | akce_onstart ]; // zavolá akce_work
+  echo('db.akce.lst.onfirstfocus');
+  // zobrazení akce
   info.fill(the_title.get);
-  the_omezeni.set('1');
+  // inicializace zobrazení
   info.rok.selects(javascript(conc(
     "var x='';for(i=",sum(fdate('Y'),1),";i>=1990;i--){x+=i+',';};x+='0'")));
-  { the_duakce.get;
-    info.rok.set(the_rok.get)
-  | info.rok.set(fdate('Y')) };
-  zalozka.set('inf');
-  [ has_skill('y|f'); m.g.sey.click ];
+  info.rok.set(the_rok.get);
   page.cen_copy.selects("neměnit:0");
-  page.inf.onclick
+  zalozka.set('inf');
+  // zobrazení seznamu akcí
+  akce_roku(the_rok.get);
+  [ has_skill('y;f');  m.g.sey.click
+  | has_skill('caam'); m.c.m.click
+  | has_skill('caar'); m.c.r.click
+  | has_skill('a');    m.c.a.click ];
+  page.inf.onclick;
+  echo('db.akce.lst.onfirstfocus end');
 }
 
 # Výběr akce má dvě možnosti, uchované v proměnné the_source:
@@ -32,24 +43,25 @@ proc onfirstfocus() {
 
 menu m {type:'left'
   menu c {title:'Výběr akce',type:'group',   skill:'c'             // jen pro CR
-    item {title:'program Manželská setkání', skill:'caam', par:°{omez:'druh IN (1,2,3,4)'} }
-    item {title:'programy Rodina mimo MS',   skill:'caar', par:°{omez:'druh NOT IN (1,2,3,4)'} }
-    item {title:'... bez omezení',           skill:'a',    par:°{omez:'1'} }
+    item m {title:'program Manželská setkání', skill:'caam', par:°{omez:'da2.druh IN (1,2,3,4)'} }
+    item r {title:'programy Rodina mimo MS',   skill:'caar', par:°{omez:'da2.druh NOT IN (1,2,3,4)'} }
+    item a {title:'... bez omezení',           skill:'a',    par:°{omez:'1'} }
       proc onclick (i) {
         info.rok.display(1); info.sey.display(1); info.google.display(0);
         the_omezeni.set(i.par.omez);
-        the_source.set('sey'); akce_roku
+        the_source.set('sey'); akce_roku(info.rok.get);
   } }
   menu g {title:'Výběr akce zadaného roku',type:'group', skill:'y;f'
-    item {title:'podle číselníku akcí na intranetu', skill:'y'          // jen pro YS
+    item {title:'podle číselníku akcí z intranetu', skill:'y'          // jen pro YS
       proc onclick (i) {
         info.rok.display(1); info.google.display(1); info.sey.display(0);
-        the_source.set('google'); akce_roku
+        the_source.set('google'); akce_roku(info.rok.get);
     } }
     item sey {title:'ze seznamu všech akcí'
       proc onclick (i) {
+        // skryjeme rok - po výběru zase zobrazíme - tento režim je lokální pro AKCE
         info.rok.display(1); info.sey.display(1); info.google.display(0);
-        the_source.set('sey'); akce_roku
+        the_source.set('sey'); akce_roku(info.rok.get);
   } } }
   menu {title:'Výběr ze všech roků',type:'group', skill:'y;f'
     item sey {title:'ze seznamu všech akcí',    par:°{cond:'1'} }
@@ -59,19 +71,18 @@ menu m {type:'left'
       info.rok.display(0); info.sey.display(1); info.google.display(0);
       the_source.set('sey'); akce_vsechny(i.par.cond)
 } } }
-proc akce_roku() {
-  the_rok.set(info.rok.get);
-  [ gt(the_rok.get,2010);          // intranet YS obsahuje akce od roku 2010
-    info.google.browse_load(conc("g_kat='a' AND g_rok=",the_rok.get))
+# zobrazení akcí definovaného roku
+proc akce_roku(rok) {
+  page.init_page;
+  [ eq(the_source.get,'google'); gt(rok,2010);  // intranet YS obsahuje akce od roku 2010
+    info.google.browse_load(conc("g_kat='a' AND g_rok=",rok));
   | info.google.browse_init];
-  [ info.sey.browse_load(conc(
-      "YEAR(da2.datum_od)='",the_rok.get,"' AND spec=0 AND ",the_omezeni.get)) ];
-  set_cookie(conc(sys('root'),'_akce_rok'),the_rok.get);
+  [ eq(the_source.get,'sey');
+    info.sey.browse_load(conc(
+      "YEAR(da2.datum_od)='",rok,"' AND da2.spec=0 AND ",the_omezeni.get))];
 }
 proc akce_vsechny(cond) {
-  the_rok.set(0);
   [ info.sey.browse_load(cond) ];
-  set_cookie(conc(sys('root'),'_akce_rok'),the_rok.get);
 }
 # -------------------------------------------------------------------------------------------- _page
 form _page [,,285,500] {
@@ -92,15 +103,25 @@ form _page [,,285,500] {
     proc onclick() { tags(this,'cen','inf|cor'); zalozka.set('cen'); show_akce(a_akce.get)
   } }
   proc show_akce(id_akce) {
-    info.sey.browse_count;
     page.a_akce.set(id_akce);
+    eq(the_source.get,'sey');    [ info.sey.browse_count; show_page(id_akce) | init_page ]
+  | eq(the_source.get,'google'); [ info.google.browse_count; show_page(id_akce) | init_page ]
+  }
+  proc show_page(id_akce) {
     cen_copy.enable(0); cen_copy.key(0);
     switch(zalozka.get,
     'inf',{ note.set(ask('akce_info',id_akce)) },
-    'cor',{ form.load(id_akce); info.sey.browse_focus },
-    'cen',{ form.init; c.browse_load(conc("id_akce=",id_akce)) },
-    { stop}
-  )}
+    'cor',{ form.load(id_akce);
+            [ has_skill('f'); soubezna.set(cconc(id_hlavni.get,1,0)) ];
+            info.sey.browse_focus },
+    'cen',{ form.init; c.browse_load(conc("id_akce=",id_akce)) });
+  }
+  proc init_page() {
+    page.a_akce.set(0);
+    cen_copy.enable(0); cen_copy.key(0);
+    form.init;
+    note.set('');
+  }
   # --------------------------- informace
   label note [10,25,283,193] { tag:'inf', title:'', style:'color:black;font-size:12px' }
   label web_href [30,265,264,50] { tag:'inf,web' }
@@ -120,6 +141,7 @@ form _page [,,285,500] {
   label [10,364,,] {title:'dokumentace k akci', skill:'demo|demo'} // nadpis na vnějším obalem
   label drop [10,384,283,113] { tag:'inf,web', type:'drop', skill:'demo|demo'  }
   # --------------------------- položky akce
+  field id_hlavni { data:akce.id_hlavni }
   label [17,32,104,] { tag:'cor', title:'název akce *' }
   field [17,49,218,] { tag:'cor', data:akce.nazev }
   label [17,72,104,] { tag:'cor', title:'místo' }
@@ -138,6 +160,14 @@ form _page [,,285,500] {
   }
   label [18,204,,] { tag:'cor', title:'účetní symbol:', skill:'faa;caa|faa;caa' }
   field [96,202,54,] { tag:'cor', data:akce.ciselnik_akce, skill:'faa|faa;caa|caa' }
+  // zobrazení a nastavení akce jako souběžné (stejné datum a místo)
+  check soubezna [157,200,120,] { tag:'cor', title:'akce je souběžná', skill:'faa|faa',
+    proc onchange() {
+      { info.sey.id_hlavni.get;
+        [ confirm("opravdu zrušit souběh této akce?"); ask('akce_soubeh_nastav',form.key,0) ]
+      | alert(ask('akce_soubeh_nastav',form.key)) };
+      info.sey.browse_seek; show_akce(form.key);
+  }}
   // Změna ceníku
   check [134,254,93,] { tag:'cor', title:'používat ceník', data:akce.ma_cenik,
                         format:'', skill:'yaa|yaa;caa|caa;faa|faa' }
@@ -189,7 +219,7 @@ form _page [,,285,500] {
       { not(ret.ucastnici) | confirm(ret.ucastnici) };  // ale akce má účastníky
       { ret.platby; alert(ret.platby)                   // nelze smazat, jsou-li platby
       | msg.set(ask('akce_delete',form.key,ret));
-        akce_roku; alert(msg.get);
+        akce_roku(info.rok.get); alert(msg.get);
   } } }
   # --------------------------- ceník
   browse c [10,25,,] { tag:'cen', rows:22, qry_rows:1, css_rows:"barva,1:grey"
@@ -240,9 +270,9 @@ form _page [,,285,500] {
   } }
   label  [129,476,,] { tag:'cen', title:"test ceny:" }
   button [182,470,,] { tag:'cen', title:'pár'
-    proc onclick() { alert(ask('akce_vzorec_test',the_duakce.get,2,0,0)) }}
+    proc onclick() { alert(ask('akce_vzorec_test',a_akce.get,2,0,0)) }}
   button [217,470,,] { tag:'cen', title:'pár+kojenec'
-    proc onclick() { alert(ask('akce_vzorec_test',the_duakce.get,2,0,1)) }}
+    proc onclick() { alert(ask('akce_vzorec_test',a_akce.get,2,0,1)) }}
   label xhref [122,474,173,]
   # --------------------------- pozadí stránky nakonec
   label [2,16,283,476] { title:'', css:'ae_work page' }
@@ -250,10 +280,8 @@ form _page [,,285,500] {
 # -------------------------------------------------------------------------------------------- _akce
 # formulář pro výběr akce pro další práci
 form _akce [,,*,50] {
-  select rok [4,5,52,] { format:'t'
-    proc onchange() { akce_roku }
-  }
-  # je voláno z kontextem správného the_source
+  select rok [4,5,52,] { format:'t', proc onchange() { akce_roku(this.get) }}
+  # je voláno s kontextem správného the_source
   proc nazev_akce(id_akce) {
     var nazev: text
     { and(id_akce,not(eq(id_akce,'0')));
@@ -266,23 +294,17 @@ form _akce [,,*,50] {
     };
     return (nazev);
   }
-  proc volba_akce(id_akce,naz,ma_cenik,ma_cenu,cena) {
-    the_duakce.set(id_akce); the_cenik.set(ma_cenik);
-    [ ma_cenu; the_cena.set(cena) | the_cena.set(0) ];
-    set_cookie(conc(sys('root'),'_akce_id'),the_duakce.get);
-    set_cookie(conc(sys('root'),'_akce_cenik'),the_cenik.get);
-    set_cookie(conc(sys('root'),'_akce_cena'),the_cena.get);
-    [ eq(the_source.get,'sey');
-      the_rok.set(fdate('Y',sey.od.get));
-      set_cookie(conc(sys('root'),'_akce_rok'),the_rok.get) ];
-    the_title.set(nazev_akce(id_akce));
-    lst.info.fill(the_title.get);
-    set_cookie(conc(sys('root'),'_akce_title'),the_title.get);
+  proc volba_akce(id_akce) {
+    akce_choose(id_akce);
+    lst.info.fill(conc(the_title.get,' '));
     [ ucast.call('init_ucast2') ];
     [ has_skill('yam;fam;cam'); mai.call('init_ucast') ];
     [ pece.call('init_pece') ];
-    // vložení informací o akci do proměnné obj_akce
-    obj_akce.set(object('nazev',naz));
+    // ošetření souběžných akcí - 0=normální akce, 1=hlavní akce, 2=souběžná akce
+    [ has_skill('f'); page.soubezna.set(eq(the_soubeh.get,2));
+    ];
+    // nastavení cookies
+    set_cookie(conc(sys('root'),'_akce_id'),the_duakce.get);
   }
   // -------------------------------------------  g_akce (kopie číselníku z intranetu) pro YS
   view ga: table g_akce
@@ -301,14 +323,14 @@ form _akce [,,*,50] {
     show od    [,,65,] {title:'od',     data:ga.g_od, format:'rsq*'}
     show do    [,,65,] {title:'do',     data:ga.g_do, format:'rsq*'}
     proc onsubmit() {
-      id_akce.get; volba_akce(id_akce.get,naz_akce.get,ma_cenik.get,ma_cenu.get,cena.get)
+      id_akce.get; volba_akce(id_akce.get)
     | not(eq(fdate('Y',od.get),rok.get));
       alert('Akce má na intranetu uvedeno chybné datum zahájení (např. chybějící nebo z jiného roku)');
     | confirm('akce ',nazev.get,' zatím není v databázi, mám ji založit?');
       the_duakce.set(akce.insert_record(
         object('nazev',nazev.get,'datum_od',date2sql(od.get),'datum_do',date2sql(do.get))));
       join_akce.insert_record(object('id_akce',the_duakce.get,'g_rok',rok.get,'g_kod',kod.get));
-      google.browse_row; volba_akce(id_akce.get,nazev.get,ma_cenik.get,ma_cenu.get,cena.get)
+      google.browse_row; volba_akce(id_akce.get) //,nazev.get,ma_cenik.get,ma_cenu.get,cena.get)
     }
     proc onrowclick() { page.show_akce(id_akce.get); }
   }
@@ -316,35 +338,45 @@ form _akce [,,*,50] {
   view da2: table akce
   view ja2: table join_akce {join_type:'LEFT',join:'ON ja2.id_akce=da2.id_duakce'}
   view ga2: table g_akce    {join_type:'LEFT',join:'USING(g_rok,g_kod)'}
+  view sa2: table akce      {join_type:'LEFT',join:'ON sa2.id_hlavni=da2.id_duakce'}
   browse sey [0,36,200,500] { type:'smart', rows:27, qry_rows:1, buf_rows:120,
+      css_rows:"barva,1:cerveny,2:zluty" // 1=hlavní akce, 2=souběžná akce
     show id_akce  {data:da2.id_duakce}
     show          {data:ja2.id_akce}
     show ma_cenik {data:da2.ma_cenik}
     show ma_cenu {data:da2.ma_cenu}
     show cena {data:da2.cena}
     show id_gakce {data:ga2.id_gakce}
+    show id_hlavni {data:da2.id_hlavni}
+    show id_soubeh {data:sa2.id_duakce}
+    show barva { expr:"CASE WHEN da2.id_hlavni THEN 2 WHEN sa2.id_duakce THEN 1 ELSE 0 END" }
 /**/show druh  [,,60,] {title:'typ',    data:da2.druh, map_pipe:ms_akce_typ.zkratka, format:'sq#'}
-    show kod   [,,30,] {title:'účet',   expr:"IF(ga2.g_kod,ga2.g_kod,da2.ciselnik_akce)", format:'rs+q*' }
+    show kod   [,,30,] {title:'účet',   expr:"IF(ga2.g_kod,ga2.g_kod,da2.ciselnik_akce)", format:'rsq*' }
     show nazev [,,120,] {title:'název', expr:"IF(da2.nazev='',ga2.g_nazev,da2.nazev)", format:'tsq*'}
     show misto [,,60,] {title:'místo',  data:da2.misto, format:'tsq*'}
-    show od    [,,65,] {title:'od',     data:da2.datum_od, format:'rsq*'}
+    show od    [,,65,] {title:'od',     data:da2.datum_od, format:'rs+q*'}
     show do    [,,65,] {title:'do',     data:da2.datum_do, format:'rsq*'}
-    proc onsubmit() { volba_akce(id_akce.get,nazev.get,ma_cenik.get,ma_cenu.get,cena.get) }
+    proc onsubmit() { volba_akce(id_akce.get) }
     proc onrowclick() { page.show_akce(id_akce.get); }
   }
   label head [0,0,*,30] { title:'' }
+  # volba pracovní akce
+  button [376,3,100,] { title:'Pracovní', proc onclick() { volba_akce(sey.id_akce.get)  }}
+  # načtení akcí a intranetu
   button [-160,3,100,] { title:'Obnovit rok z intranetu', skill:'y|yaa+'
     help:"obnoví akce roku z http://intranet.setkani.org"
     # získání seznamu akcí z docs.google.com pomocí API spredsheet
     proc onclick() {
-      alert('bylo obnoveno ',ask('akce_roku_update',the_rok.get),' záznamů o akcích');
+      alert('bylo obnoveno ',ask('akce_roku_update',rok.get),' záznamů o akcích');
       google.browse_seek;
     }
   }
+  # export vlastností akcí nastaveného roku
   button [-88,3,100,] { title:'Export', proc onclick() {
     sey.browse_count; sey.browse_export(°{file:'akce',type:'xls'});
     alert("vygenerovaný sešit lze stáhnout <a href='docs/akce.xls' target='xls'>zde</a>");
   }}
+  # zobrazení mapy s pozicí míst účastníků dané akce
   button [-30,3,100,] { title:'Mapa', //skill:'a|a'
     help:"mapa s bydlišti účastníků akcí"
     proc onclick() {

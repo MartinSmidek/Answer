@@ -252,33 +252,33 @@ form _chlap [,,*,466] {
   field  [Lu+315,Tu+85,44,]   { tag:'akce', format:'r', data:u.pokladnou }
   label  [Lu+7,Tu+42,98,16]   { tag:'akce', title:'poznámka k akci'}
   edit   [Lu+7,Tu+58,258,48]  { tag:'akce', data:u.pozn }
-  button [Lu+118,Tu+15,,] { tag:'akce', title:'Vyřadit z této akce',
-      help:'Vyřazení účastníka z účasti na této akci'
-    proc onclick() {
-      confirm('Opravdu vyřadit ',prijmeni.get,' ',jmeno.get,' z akce ',nazev.get,'?');
-      ch_ucast.delete_record(conc('id_ucast=',id_ucast.get));
-      chs.reload(0);
-  } }
+#   button [Lu+118,Tu+15,,] { tag:'akce', title:'Vyřadit z této akce',
+#       help:'Vyřazení účastníka z účasti na této akci'
+#     proc onclick() {
+#       confirm('Opravdu vyřadit ',prijmeni.get,' ',jmeno.get,' z akce ',nazev.get,'?');
+#       ch_ucast.delete_record(conc('id_ucast=',id_ucast.get));
+#       chs.reload(0);
+#   } }
   # --------------------------------------------------  PŘIDÁVÁNÍ Z JINÝCH ZDROJŮ pro mode='akce'
-  label  [Lu+256,Tu+125,159,51] { tag:'akce', css:'ae_parm' }
-  button [Lu+262,Tu+128,,29] { tag:'akce', title:'Přidat z akcí pro chlapy',
-    help:'Nalezení účastníka podle jména a přidání na akci'
-    proc onclick() {
-      PridaniJmenem.databaze('chlapi');
-      PridaniJmenem.modal(240,50)
-  } }
-  button [Lu+262,Tu+152,,] { tag:'akce', title:'Přidat z YS',
-    help:'Nalezení účastníka podle jména v YMCA Setkání a přidání na akci'
-    proc onclick() {
-      PridaniJmenem.databaze('ezer_ys');
-      PridaniJmenem.modal(240,50)
-  } }
-  button [Lu+337,Tu+152,,] { tag:'akce', title:'Přidat z YF',
-    help:'Nalezení účastníka podle jména v YMCA Familia a přidání na akci'
-    proc onclick() {
-      PridaniJmenem.databaze('ezer_fa');
-      PridaniJmenem.modal(240,50)
-  } }
+#   label  [Lu+256,Tu+125,159,51] { tag:'akce', css:'ae_parm' }
+#   button [Lu+262,Tu+128,,29] { tag:'akce', title:'Přidat z akcí pro chlapy',
+#     help:'Nalezení účastníka podle jména a přidání na akci'
+#     proc onclick() {
+#       PridaniJmenem.databaze('chlapi');
+#       PridaniJmenem.modal(240,50)
+#   } }
+#   button [Lu+262,Tu+152,,] { tag:'akce', title:'Přidat z YS',
+#     help:'Nalezení účastníka podle jména v YMCA Setkání a přidání na akci'
+#     proc onclick() {
+#       PridaniJmenem.databaze('ezer_ys');
+#       PridaniJmenem.modal(240,50)
+#   } }
+#   button [Lu+337,Tu+152,,] { tag:'akce', title:'Přidat z YF',
+#     help:'Nalezení účastníka podle jména v YMCA Familia a přidání na akci'
+#     proc onclick() {
+#       PridaniJmenem.databaze('ezer_fa');
+#       PridaniJmenem.modal(240,50)
+#   } }
   field origin [Lu+256,Tu+175,159,] { data:c.origin, format:'o', style:'color:#aaa' }
   # --------------------------------------------------  OSOBA
   const L=240
@@ -316,43 +316,43 @@ form _chlap [,,*,466] {
   const Lt=240
   const Tt=340
   // - opravy
-  label  [Lt+0,Tt+86,98,30] { css:'ae_parm' }
-  button [Lt+6,Tt+91,,] {title:'Uložit', help:'Uložení změněných osobních údajů'
-    proc onclick() {
-      var zmena_browse: number
-      c.key;
-      // oprava
-      [ c.save; c.load ];
-      [ eq(mode.get,'akce'); u.save; u.load ];
-      chs.reload_row()
-    | // přidání
-      c.insert;
-      [ eq(mode.get,'akce'); ch_ucast.insert_record(
-        object('id_akce',the_akce.get,'id_chlapi',c.key,'stupen',stupen.key,'cena',cena.get)) ];
-      chs.reload(c.key);
-  }}
-  button [Lt+55,Tt+91,,] {title:'Zpět', help:'Změny nebudou uloženy'
-    proc onclick() {
-      chs.reload(0);
-  }}
-  # --------------------------------------------------  VYTVÁŘENÍ A MAZÁNÍ
-  label  [Lt+122,Tt+86,109,30] { css:'ae_parm' }
-  button [Lt+127,Tt+91,,] {title:'Nový', help:'Založení nového účastníka'
-    proc onclick() {
-      form.init(1); chs.all.blur(1);
-      prijmeni.change; jmeno.change; ulice.change; psc.change; obec.change; sex.change;
-      stupen.key(1); stupen.change; id_akce.set(the_akce.get); id_akce.change;
-      cena.set(the_akce_cena.get); cena.change;
-      c.key(0); u.key(0);
-  } }
-  button [Lt+170,Tt+91,,] {title:'Vymazat', help:'Vymazání osobních informací z evidence'
-    proc onclick() {
-      var ans: text
-      confirm('Opravdu vymazat všechny údaje o ',prijmeni.get,' ',jmeno.get,' z databáze?');
-      ans.set(ask('chlapi_delete',c.key));
-      ans.get; alert(ans.get)
-    | chs.reload(0)
-  } }
+#   label  [Lt+0,Tt+86,98,30] { css:'ae_parm' }
+#   button [Lt+6,Tt+91,,] {title:'Uložit', help:'Uložení změněných osobních údajů'
+#     proc onclick() {
+#       var zmena_browse: number
+#       c.key;
+#       // oprava
+#       [ c.save; c.load ];
+#       [ eq(mode.get,'akce'); u.save; u.load ];
+#       chs.reload_row()
+#     | // přidání
+#       c.insert;
+#       [ eq(mode.get,'akce'); ch_ucast.insert_record(
+#         object('id_akce',the_akce.get,'id_chlapi',c.key,'stupen',stupen.key,'cena',cena.get)) ];
+#       chs.reload(c.key);
+#   }}
+#   button [Lt+55,Tt+91,,] {title:'Zpět', help:'Změny nebudou uloženy'
+#     proc onclick() {
+#       chs.reload(0);
+#   }}
+#   # --------------------------------------------------  VYTVÁŘENÍ A MAZÁNÍ
+#   label  [Lt+122,Tt+86,109,30] { css:'ae_parm' }
+#   button [Lt+127,Tt+91,,] {title:'Nový', help:'Založení nového účastníka'
+#     proc onclick() {
+#       form.init(1); chs.all.blur(1);
+#       prijmeni.change; jmeno.change; ulice.change; psc.change; obec.change; sex.change;
+#       stupen.key(1); stupen.change; id_akce.set(the_akce.get); id_akce.change;
+#       cena.set(the_akce_cena.get); cena.change;
+#       c.key(0); u.key(0);
+#   } }
+#   button [Lt+170,Tt+91,,] {title:'Vymazat', help:'Vymazání osobních informací z evidence'
+#     proc onclick() {
+#       var ans: text
+#       confirm('Opravdu vymazat všechny údaje o ',prijmeni.get,' ',jmeno.get,' z databáze?');
+#       ans.set(ask('chlapi_delete',c.key));
+#       ans.get; alert(ans.get)
+#     | chs.reload(0)
+#   } }
   # --------------------------------------------------  KONTEXTOVÉ MENU
   menu { type:'context'
     item back { title:'ukázat všechny změny'
@@ -379,49 +379,49 @@ proc ucast_add(p,i) {  // používají panely PridatJmenem a PridatAkce
 #     [ chs.all.browse_seek(conc('id_ucast=',rec)) ]
 #   | warning(pall.get('nazev'),' už na akci je') }
 }
-panel PridaniJmenem [,,320,280] {type:'popup', title:'Přidání známých osob jménem'
-  var baze: text
-  use fl: form _fl [12,10,,]
-  proc databaze(vyber) {
-    baze.set(vyber);
-    fl.jmena.set_attrib('par',object('fce','chlapi_auto_jmena','db',vyber));
-  }
-  form _fl [,,300,200] {
-    var last: number
-    var rod: object
-    var popis: text
-    button [0,250,50,16] { title:'přidat do účastníků', proc onclick() {
-      each(L,ucast_add); chs.reload(0);
-    } }
-    button [130,250,50,16] { title:'jiná jména', proc onclick() {
-      jmena.init; vse.init; L.init } }
-    button [220,250,50,16] { title:'konec', proc onclick() {
-      jmena.init; vse.init; L.init; panel.hide(0) } }
-    // výběr z databáze chlapů
-    select jmena [100,0,200,17] { type:'auto', par:°{fce:'chlapi_auto_jmena'}, format:'t'
-      proc onchanged() {
-        rod.set(ask('chlapi_auto_jmenovci',this.key,baze.get));
-        each(rod.get,jmenovci); // nesmí volat asynchronní operace
-      }
-    }
-    proc jmenovci(p,i) {
-      last.set(L.add);
-      popis.set(p._nazev);
-      L.part(last.get).part('info').set(popis.get);
-      L.part(last.get).part('all').set(p);
-    }
-    // nastavení výběru
-    check vse [4,0,80,16] { title:'všichni', format:'t'
-      proc onchange() { each(L,nastav) }
-      proc nastav (x,i) { x.chck.set(form.vse.get) }
-    }
-    list L [0,23,300,200] {rows:22
-      check chck [4,0,50,16] { title:' ', format:'t' }
-      label info [23,4,300,16] {style:'white-space:nowrap'}
-      var all: object
-    }
-  }
-}
+# panel PridaniJmenem [,,320,280] {type:'popup', title:'Přidání známých osob jménem'
+#   var baze: text
+#   use fl: form _fl [12,10,,]
+#   proc databaze(vyber) {
+#     baze.set(vyber);
+#     fl.jmena.set_attrib('par',object('fce','chlapi_auto_jmena','db',vyber));
+#   }
+#   form _fl [,,300,200] {
+#     var last: number
+#     var rod: object
+#     var popis: text
+#     button [0,250,50,16] { title:'přidat do účastníků', proc onclick() {
+#       each(L,ucast_add); chs.reload(0);
+#     } }
+#     button [130,250,50,16] { title:'jiná jména', proc onclick() {
+#       jmena.init; vse.init; L.init } }
+#     button [220,250,50,16] { title:'konec', proc onclick() {
+#       jmena.init; vse.init; L.init; panel.hide(0) } }
+#     // výběr z databáze chlapů
+#     select jmena [100,0,200,17] { type:'auto', par:°{fce:'chlapi_auto_jmena'}, format:'t'
+#       proc onchanged() {
+#         rod.set(ask('chlapi_auto_jmenovci',this.key,baze.get));
+#         each(rod.get,jmenovci); // nesmí volat asynchronní operace
+#       }
+#     }
+#     proc jmenovci(p,i) {
+#       last.set(L.add);
+#       popis.set(p._nazev);
+#       L.part(last.get).part('info').set(popis.get);
+#       L.part(last.get).part('all').set(p);
+#     }
+#     // nastavení výběru
+#     check vse [4,0,80,16] { title:'všichni', format:'t'
+#       proc onchange() { each(L,nastav) }
+#       proc nastav (x,i) { x.chck.set(form.vse.get) }
+#     }
+#     list L [0,23,300,200] {rows:22
+#       check chck [4,0,50,16] { title:' ', format:'t' }
+#       label info [23,4,300,16] {style:'white-space:nowrap'}
+#       var all: object
+#     }
+#   }
+# }
 # ================================================================================================== BackTrace
 # --- back_track
 panel Ctrack [,,572,564] { title:'Korekce oprav databáze', type:'popup', css:'dialog'

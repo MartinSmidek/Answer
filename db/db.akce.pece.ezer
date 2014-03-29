@@ -22,7 +22,7 @@ proc onstart() {
 }
 
 proc onfocus() {
-  [ the_duakce.get | akce_onstart ];
+  [ dirty.get | akce_onstart ];
   eq(the_duakce_local.get,the_duakce.get)
 | init_pece;
   the_duakce_local.set(the_duakce.get)

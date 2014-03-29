@@ -63,14 +63,19 @@ form right [,,700,50] {
   proc append(x) { note.get; note.set(conc(note.get,'<br>',x)) | note.set(x) }
 }
 
-table _file_ {
-  text fid
-  date fdate
-  text fname
-  text ftype
-  text finfo
+table akce { key_id:'id_duakce'
+  number id_duakce
+  number typ
 }
 
+table join_akce { // spojení číselníku akcí s MS
+  number g_rok     { help:"rok akce podle číselníku akcí" }
+  number g_kod     { help:"kód akce podle číselníku akcí" }
+  text   source    { help:"L:Lídino M:Milošovo MS.EXE" }
+  number akce      { help:"staré číslo akce podle MS.EXE" }
+}
+
+# kopie číselníků akcí z intranetu YS
 table uakce { key_id:'id_uakce'
   number id_uakce
   number id_akce
@@ -84,159 +89,6 @@ table uakce { key_id:'id_uakce'
   number osob
   number typ
   text kapitola
-}
-
-table _cis { key_id:'id_cis'
-  number id_cis
-  text druh,
-  text data,
-  text zkratka,
-  number poradi,
-  text hodnota,
-  text popis,
-  text barva,
-  text ikona
-}
-
-table du_kurs { key_id:'id_dukurs'
-  number id_dukurs
-  number typ
-}
-
-table ms_kurs { key_id:'id_kurs'
-  number id_kurs
-  text source
-  number id_pary
-  number id_akce
-  number id_dupary
-  number cislo
-  number skupina
-  number funkce
-  text aktivita
-  date datplatby        { sql_pipe:'sql_date1'}
-  number zpusobplat
-  text budova
-  text pokoj
-  number luzka
-  number strava_cel
-  number strava_pol
-  number kocarek
-  text pecovatel
-  text poznamka
-  number pristylky
-  number pocetdnu
-  number svp
-  number dorazil
-  number pouze
-  number akce
-  number platba
-  text cstrava_cel      // číslice jsou seřazeny jako počty snídaní,obědů,večeří po dnech
-  text cstrava_pol
-  number platba1
-  number platba2
-  number platba3
-  number platba4
-}
-
-table du_kursdeti { key_id:'id_dukursdeti'
-  number id_dukursdeti
-  number typ
-}
-
-table ms_kursdeti { key_id:'id_kursdeti'
-  number id_kursdeti
-  number id_pary        //-
-  number id_akce
-  number id_deti
-  number cislo          //-
-  text jmeno            //-
-  number skupina
-  number akce           //-
-}
-
-table du_pary { key_id:'id_dupary'
-  number id_dupary
-  number typ
-}
-
-table ms_pary { key_id:'id_pary'
-  number id_pary
-  number cislo
-  number cislo_z
-  text source
-  text jmeno
-  text adresa
-  text psc
-  text mesto
-  text telefon
-  text spz
-  date datsvatba { sql_pipe:'sql_date1'}
-  number svatba
-  text poznamka
-  text jmeno_m
-  text jmeno_z
-  text prijmeni_m
-  text prijmeni_z
-  number rodcislo_m
-  number rodcislo_z
-  text obcanka_m
-  text obcanka_z
-  number vzdelani_m
-  number vzdelani_z
-  text zamest_m
-  text zamest_z
-  text zajmy_m
-  text zajmy_z
-  text jazyk_m
-  text jazyk_z
-  number cirkev_m
-  number cirkev_z
-  text ccirkev_m
-  text ccirkev_z
-  text aktivita_m
-  text aktivita_z
-  number cislo_m
-  number clen_m
-  number clen_z
-  text vyloucen
-  text email
-  number nfoto
-  number lxx1
-}
-
-table du_deti { key_id:'id_dudeti'
-  number id_dudeti
-  number id_dupary
-  number id_deti
-  number typ
-  number pocet
-}
-
-table ms_deti { key_id:'id_deti'
-  number id_deti
-  number id_pary
-  text source
-  number cislo
-  text jmeno
-  number rodcislo
-  text poznamka
-}
-
-table ms_poraakce {
-  number poradatel
-  text jmeno
-}
-
-table join_akce { // spojení číselníku akcí s MS
-  number g_rok     { help:"rok akce podle číselníku akcí" }
-  number g_kod     { help:"kód akce podle číselníku akcí" }
-  text   source    { help:"L:Lídino M:Milošovo MS.EXE" }
-  number akce      { help:"staré číslo akce podle MS.EXE" }
-}
-
-table akce { key_id:'id_duakce'
-  number id_duakce
-  number typ
 }
 
 table ms_akce { key_id:'id_akce'  // Sey
@@ -262,37 +114,6 @@ table g_akce { key_id:'id_gakce' // kopie číselníku akcí z intranetu
   text   g_typ     { help:"typ akce z číselníku akcí" }
   text   g_kap     { help:"účetní kapitola akce z číselníku akcí" }
 }
-
-# table ms_pece {
-#   number cislo
-#   text jmeno
-#   text krestni
-#   text adresa
-#   text psc
-#   text mesto
-#   text telefon
-#   text poznamka
-#   number rodcislo
-#   text obcanka
-#   number zamestnani
-#   number kategorie
-#   number cirkev
-#   text ccirkev
-#   number cislo_y
-#   number kod
-#   number clen
-#   text email
-# }
-#
-# table ms_kurspece {
-#   number cislo
-#   number skupina
-#   text budova
-#   text pokoj
-#   number dorazil
-#   number akce
-#   text poznamka
-# }
 
 table mail { key_id:'id_mail'
   number id_mail { key:'primary' },
@@ -348,6 +169,26 @@ table _user { key_id:'id_user', db:'ezer_system'
   text sess_data,
   number zmena_kdo,
   date zmena_kdy {  },
+}
+
+table _file_ {
+  text fid
+  date fdate
+  text fname
+  text ftype
+  text finfo
+}
+
+table _cis { key_id:'id_cis'
+  number id_cis
+  text druh,
+  text data,
+  text zkratka,
+  number poradi,
+  text hodnota,
+  text popis,
+  text barva,
+  text ikona
 }
 
 map ms_akce_clen:     table _cis {where:"druh='ms_akce_clen'",     order:'poradi', key_id:'data'}

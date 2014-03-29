@@ -52,7 +52,7 @@ use info: form right [12,4,,] {
 }
 
 proc onfocus() {
-  [ the_duakce.get | akce_onstart ];
+  [ dirty.get | akce_onstart ];
   eq(the_duakce_local.get,the_duakce.get)
 | the_duakce_local.set(the_duakce.get);
   info.msg.set('');
