@@ -138,6 +138,7 @@ menu do {type:'left', format:'f'
 #     item    {title:'obnova _track ze záloh: test',   par:°{forms:'i', call:'info_track', x:'test'} }
 #     item    {title:'obnova _track ze záloh: insert', par:°{forms:'i', call:'info_track', x:'insert'} }
     item    {title:'doplnění neduplicitních chlapů', par:°{forms:'i', call:'info_tack'} }
+    item    {title:'doplnění rodin dospělých singles', par:°{forms:'i', call:'info_singles'} }
   }
   menu calc {title:'kalkulačka',type:'group'
     item    {title:'akce ... osoba ... rodina',   par:°{forms:'i', tags:'c', call:'calc_spolu'} }
@@ -231,6 +232,13 @@ proc info_tack() {
   var ret:object
   clear; info.fill('','... probíhá doplnění neduplicitních chlapů');
   ret.set(ask('data_eli_tack'));
+  info.fill('',ret.html);
+}
+# doplnění některých singles
+proc info_singles() {
+  var ret:object
+  clear; info.fill('','... probíhá doplnění "rodin" pro dospělé singles');
+  ret.set(ask('data_eli_singles'));
   info.fill('',ret.html);
 }
 # generování návrhů na sjednocení

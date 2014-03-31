@@ -672,6 +672,31 @@ function data_eli_tack() { trace();
   $ret->html= "Přidáno $n chlapů jako triviální rodina<br><br>{$ret->html}";
   return $ret;
 }
+# --------------------------------------------------------------------------------- data_eli_singles
+# přidá do TVORI,RODINA jednočlenné "rodiny" z některých dospělých singles
+function data_eli_singles() { trace();
+  $ret= (object)array('html'=>'');
+  $n= 0;
+  $ss= mysql_qry("
+    SELECT id_osoba,prijmeni,jmeno,sex,YEAR(narozeni)
+    FROM osoba
+    LEFT JOIN tvori USING(id_osoba)
+    WHERE ISNULL(id_tvori) AND deleted='' AND sex AND YEAR(narozeni)<=1995
+    ORDER BY prijmeni
+  ");
+  while (($s= mysql_fetch_object($ss))) {
+    $ido= $s->id_osoba;
+    $role= $s->sex==1 ? 'a' : 'b';
+    query("INSERT INTO rodina (origin) VALUES ('x') ");
+    $idr= mysql_insert_id();
+    query("INSERT INTO tvori (id_osoba,id_rodina,role) VALUES ($ido,$idr,'$role') ");
+    $ret->html.= "<b>{$s->prijmeni}</b> {$s->jmeno}, ";
+    $n++;
+//     $ret->html.= " -- STOP"; break;
+  }
+  $ret->html= "Přidáno $n dosplěých singles jako triviální rodina (origin='x')<br><br>{$ret->html}";
+  return $ret;
+}
 # ------------------------------------------------------------------------------------ data_eli_auto
 # $typ = ct
 function data_eli_auto($typ,$patt='') { trace();
@@ -5804,7 +5829,7 @@ function chlapi_auto_jmenovci($id,$db) {  #trace();
 # funkce pro spolupráci se select
 # --------------------------------------------------------------------------------- akce_auto_jmena2
 # ASK přidání pobytu do akce, pokud ještě nebyly tyto osoby/osoba přidány
-function akce_pridej($id_akce,$id_muz,$id_zena,$cnd='') {  #trace();
+function akce_pridej($id_akce,$id_muz,$id_zena,$cnd='',$note='') { trace();
   $ret= (object)array('ok'=>0,'msg'=>'chyba při vkládání');
   // zjištění, kdo se přihlašuje na akci
   if ( $id_muz && $id_zena ) {
@@ -5820,7 +5845,7 @@ function akce_pridej($id_akce,$id_muz,$id_zena,$cnd='') {  #trace();
     $cond=  "s.id_osoba=$id_zena";
   }
   else {
-    $ret->msg= "dítě zatím nemůže jet bez rodiče";
+    $ret->msg= "dítě zatím nemůže jet bez rodiče: $note";
     goto end;
   }
   $cond.= $cnd ? " AND $cnd" : '';
@@ -5980,9 +6005,9 @@ function akce_auto_jmena1L($id_osoba) {  #trace();
     $nazev.= $p->ulice ? ", {$p->ulice}" : ", {$p->r_ulice}";
     $nazev.= $p->email ? ", {$p->email}" : '';
     $nazev.= $p->telefon ? ", {$p->telefon}" : '';
-    $pary[]= (object)array('nazev'=>$nazev,'muz'=>$p->_muz_id,'zen'=>$p->_zena_id);
+    $pary[]= (object)array('nazev'=>$nazev,'muz'=>$p->_muz_id,'zen'=>$p->_zena_id,'id'=>$id_osoba);
   }
-//                                                                 debug($pary,$id_akce);
+                                                                debug($pary,$id_akce);
   return $pary;
 }
 # ----------------------------------------------------------------------------------- akce_auto_deti
