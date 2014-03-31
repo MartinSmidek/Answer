@@ -38,7 +38,12 @@ proc init_ucast2() {
   page.page_init;
   header.fill(the_title.get);
   [ reload(0) ];
+  eq(the_soubeh.get,0,1);
+  # normální zobrazení
   [ u.b.browse_count; page.evd.onclick ];
+| eq(the_soubeh.get,2);
+  # souběžná akce - jen děti
+  u2.reload
 }
 
 proc akce_load(id_akce) { lst.akce_work(id_akce); onfocus(); }
@@ -70,28 +75,34 @@ proc akce_evidence(id_osoba) {
   evi.focus(1);
 }
 use header:form _header  [  4,0,,]
-use u:     form _ucast   [  6,20,,]     // seznam účastníků
-use page:  form _page    [400,10,,]
+use u:     form _ucast   [  6,20,,]  { tag:'akce1' }               // seznam účastníků
+use u2:    form _ucast2  [  6,20,,]  { tag:'akce2', format:'n' }   // seznam dětí
+use page:  form _page    [400,10,,]  { tag:'akce1' }
 # záložka evidence
-use evid:  form _evidence[400,10,,]  { format:'n' }
-use rod:   form _rodina  [400,0,,]   { format:'n' }
-use muz:   form _muz     [400,0,,]   { format:'n' }
-use zen:   form _zena    [400,0,,]   { format:'n' }
-use pob:   form _pobyt   [400,0,,]   { format:'n' }
-use cmd:   form _cmd     [400,0,,]   { format:'n' }
-use alb:   form _album   [400,0,,]   { format:'n' }
+use evid:  form _evidence[400,10,,]  { tag:'akce1', format:'n' }
+use rod:   form _rodina  [400,0,,]   { tag:'akce1', format:'n' }
+use muz:   form _muz     [400,0,,]   { tag:'akce1', format:'n' }
+use zen:   form _zena    [400,0,,]   { tag:'akce1', format:'n' }
+use pob:   form _pobyt   [400,0,,]   { tag:'akce1', format:'n' }
+use cmd:   form _cmd     [400,0,,]   { tag:'akce1', format:'n' }
+use alb:   form _album   [400,0,,]   { tag:'akce0', format:'n' }
 # záložka plateb
-use pla:   form _platba  [400,0,,]   { format:'n' }
-use cmdp:  form _cmd_p   [400,0,,]   { format:'n' }
+use pla:   form _platba  [400,0,,]   { tag:'akce0', format:'n' }
+use cmdp:  form _cmd_p   [400,0,,]   { tag:'akce0', format:'n' }
 # záložka aktivity
-use a_muz: form _aktivity[420,10,,]  { format:'n' }
-use a_zen: form _aktivity[700,10,,]  { format:'n' }
+use a_muz: form _aktivity[420,10,,]  { tag:'akce0', format:'n' }
+use a_zen: form _aktivity[700,10,,]  { tag:'akce0', format:'n' }
 
 proc page_clear() {
   muz.init(1); zen.init(1); rod.init(1); pob.init(1); pob.s.browse_init; pob.d.browse_init;
   [ has_skill('m'); u.develop.set('') ];
 }
-proc reload(id_pobyt) { echo('reload ',the_title.get);
+proc reload(id_pobyt) {
+  eq(the_soubeh.get,2);
+  # zobrazení jen dětí
+  panel.display(0,'akce1|akce0'); panel.display(1,'akce2');
+| # normální zobrazení
+  panel.display(0,'akce2'); panel.display(1,'akce1');
   cmd.b_display(1);
   the_duakce.get;
   lst.the_akce.load(the_duakce.get);
@@ -135,9 +146,9 @@ form _header [,,380,50] {
   button soubeh [-2,6,,] { title:'H/S', help:'Přepínač hlavní/souběžná akce', format:'n'
     proc onclick() {
       switch(the_soubeh.get,
-      2,{ soubeh_id.set(ask('select1','id_hlavni','akce',conc('id_duakce=',the_duakce.get)));
-          akce_load(soubeh_id.get)},
       1,{ soubeh_id.set(ask('select1','id_duakce','akce',conc('id_hlavni=',the_duakce.get)));
+          akce_load(soubeh_id.get)},
+      2,{ soubeh_id.set(ask('select1','id_hlavni','akce',conc('id_duakce=',the_duakce.get)));
           akce_load(soubeh_id.get)}
       )
   }}
@@ -539,6 +550,28 @@ form _pobyt {
       Dite.key_pobyt.set(u.b.key_pobyt.get);
       Dite.modal(260,10)
     }
+  }
+}
+# ------------------------------------------------------------------------------------------ _ucast2 - účast dětí
+form _ucast2 [,,400,] { css:'ds_form'
+  view p: table pobyt
+  view a: table akce   { join:'ON a.id_duakce=p.id_akce' }
+  view s: table spolu  { join:'USING(id_pobyt)' }
+  view o: table osoba  { join:'ON s.id_osoba=o.id_osoba' }
+  view t: table tvori  { join_type:'LEFT', join:'ON t.id_osoba=o.id_osoba' }
+  // seznam dětí účastníků hlavní akce
+  browse b [0,26,,] {buf_rows:200, rows:27, qry_rows:1
+    show key_akce  {data:p.id_akce}
+    show key_pobyt {data:p.id_pobyt}
+    show key_spolu {data:s.id_spolu}
+    show key_osoba {data:o.id_osoba}
+    show key_tvori {data:t.id_tvori}
+    show prijmeni [,,100,] { title:'příjmení', format:'s+q*', data:o.prijmeni }
+    show jmeno    [,,180,] { title:'jméno', format:'tsq%', data:o.jmeno }
+    show kat      [,,50,]  { title:'kat', format:'tsq%', data:s.dite_kat, map_pipe:ms_akce_dite_kat.zkratka }
+  }
+  proc reload() {
+    b.browse_load(conc("p.id_akce=",the_hlavni.get," AND t.role='d'"))
   }
 }
 # ------------------------------------------------------------------------------------------- _ucast
