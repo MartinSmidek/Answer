@@ -22,8 +22,8 @@ proc onfocus() {
   u.legenda(the_cenik.get,the_cena.get);
   switch(the_soubeh.get,
   0,{ header.soubeh.display(0) },
-  1,{ header.soubeh.display(1); header.soubeh.set('^Děti') },
-  2,{ header.soubeh.display(1); header.soubeh.set('^Kurs') }
+  1,{ header.soubeh.display(1); panel.display(2,'akce1'); header.soubeh.set('^Děti') },
+  2,{ header.soubeh.display(1); panel.display(2,'akce2');  header.soubeh.set('^Kurs') }
   )
 }
 # úpravy formulářů pro y;f;c
@@ -74,9 +74,9 @@ proc akce_evidence(id_osoba) {
   evi.evid_show(id_osoba);
   evi.focus(1);
 }
+# 1. zobrazení normální nebo hlavní akce
 use header:form _header  [  4,0,,]
 use u:     form _ucast   [  6,20,,]  { tag:'akce1' }               // seznam účastníků
-use u2:    form _ucast2  [  6,20,,]  { tag:'akce2', format:'n' }   // seznam dětí
 use page:  form _page    [400,10,,]  { tag:'akce1' }
 # záložka evidence
 use evid:  form _evidence[400,10,,]  { tag:'akce1', format:'n' }
@@ -92,17 +92,14 @@ use cmdp:  form _cmd_p   [400,0,,]   { tag:'akce0', format:'n' }
 # záložka aktivity
 use a_muz: form _aktivity[420,10,,]  { tag:'akce0', format:'n' }
 use a_zen: form _aktivity[700,10,,]  { tag:'akce0', format:'n' }
+# 2. zobrazení dětí
+use u2:    form _ucast2  [  6,20,,]  { tag:'akce2', format:'n' }   // seznam dětí
 
 proc page_clear() {
   muz.init(1); zen.init(1); rod.init(1); pob.init(1); pob.s.browse_init; pob.d.browse_init;
   [ has_skill('m'); u.develop.set('') ];
 }
 proc reload(id_pobyt) {
-  eq(the_soubeh.get,2);
-  # zobrazení jen dětí
-  panel.display(0,'akce1|akce0'); panel.display(1,'akce2');
-| # normální zobrazení
-  panel.display(0,'akce2'); panel.display(1,'akce1');
   cmd.b_display(1);
   the_duakce.get;
   lst.the_akce.load(the_duakce.get);
@@ -142,9 +139,11 @@ form _header [,,380,50] {
   button soubeh [-2,6,,] { title:'H/S', help:'Přepínač hlavní/souběžná akce', format:'n'
     proc onclick() {
       switch(the_soubeh.get,
-      1,{ soubeh_id.set(ask('select1','id_duakce','akce',conc('id_hlavni=',the_duakce.get)));
+      1,{ panel.display(2,'akce2');
+          soubeh_id.set(ask('select1','id_duakce','akce',conc('id_hlavni=',the_duakce.get)));
           akce_load(soubeh_id.get)},
-      2,{ soubeh_id.set(ask('select1','id_hlavni','akce',conc('id_duakce=',the_duakce.get)));
+      2,{ panel.display(2,'akce1');
+          soubeh_id.set(ask('select1','id_hlavni','akce',conc('id_duakce=',the_duakce.get)));
           akce_load(soubeh_id.get)}
       )
   }}
