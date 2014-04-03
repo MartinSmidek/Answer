@@ -152,7 +152,7 @@ form _page [,,285,500] {
   field [118,133,83,] { tag:'cor', type:'date', data:akce.datum_do }
   check [205,166,83,] { tag:'cor', title:'jen seznam', data:akce.spec, format:'r' }
   label [18,173,,]     { tag:'cor', title:'typ akce *' }
-  select [71,169,139,] { tag:'cor', type:'map', data:akce.druh, options:ms_akce_typ.zkratka }
+  select [71,169,139,] { tag:'cor', type:'map', data:akce.druh, options:ms_akce_typ.zkratka, format:'n' }
   radio [213,117,86,35] { tag:'cor', data:akce.strava_oddo, value:'vo'
     case [0,2,83,] { title:'večeře-oběd', expr:'vo' }
     case [0,17,76,] { title:'oběd-oběd', expr:'oo' }
@@ -176,7 +176,7 @@ form _page [,,285,500] {
       cen_copy.enable(1);
       cen_copy.selects(ask('akce_select_cenik',form.key))
   }}
-  select cen_copy [138,232,158,] {tag:'cor', format:'td', help:'vzory ceníků'
+  select cen_copy [138,232,158,] {tag:'cor', format:'ntd', help:'vzory ceníků'
     proc onchange() {
       cen_copy.key;
       confirm("opravdu zaměnit ceník za vybraný?");

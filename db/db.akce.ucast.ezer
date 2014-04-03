@@ -424,13 +424,13 @@ form _evidence {
   label [384,245,29,] {title:'zájmy'}
   label [379,265,37,] {title:'jaz.,diet.'}
   label [383,287,32,] {title:'aktivita'}
-  label [400,381,,] {title:'přednáší:'}
+  label [395,381,,] {title:'přednáší:'}
   label [470,435,99,] {title:'objednal CD z akce'}
   label [10,361,149,] {title:'<b>údaje k účasti na této akci</b>'}
   label [215,437,162,] {title:'poznámka k účasti na této akci'}
   label [215,409,31,] {title:'pokoj'}
   label [337,409,38,] {title:'budova'}
-  label [375,409,38,] {title:'typ', skill:'c' }
+  label [421,409,19,] {title:'typ', skill:'c' }
 }
 # ------------------------------------------------------------------------------------------ _rodina
 form _rodina {
@@ -463,7 +463,8 @@ form _muz {
   field narozeni_m  [224,167,93,] {type:'date', data:osoba.narozeni, sql_pipe:'sql_date1'}
   field rc_xxxx_m   [342,166,32,] {tag:'rc', data:osoba.rc_xxxx, format:'r', help:'4 cifry za lomítkem rodného čísla' }
   select cirkev_m   [224,188,152,] {type:'map', data:osoba.cirkev, options:ms_akce_cirkev.zkratka}
-  select vzdelani_m [224,209,152,] {type:'map', data:osoba.vzdelani, options:ms_akce_vzdelani.zkratka}
+  select vzdelani_m [224,209,97,] {type:'map', data:osoba.vzdelani, options:ms_akce_vzdelani.zkratka}
+  select titul_m    [324,209,52,] {type:'map', data:osoba.titul, options:ms_akce_titul.zkratka}
   field zamest_m    [224,230,152,] {data:osoba.zamest}
   field zajmy_m     [224,251,152,] {data:osoba.zajmy}
   field jazyk_m     [224,272,77,] {data:osoba.jazyk}
@@ -490,7 +491,8 @@ form _zena {
   field narozeni_z  [420,167,93,] {type:'date', data:osoba.narozeni, sql_pipe:'sql_date1'}
   field rc_xxxx_z   [539,166,32,] {tag:'rc', data:osoba.rc_xxxx, format:'r', help:'4 cifry za lomítkem rodného čísla'}
   select cirkev_z   [420,188,152,] {type:'map', data:osoba.cirkev, options:ms_akce_cirkev.zkratka}
-  select vzdelani_z [420,209,152,] {type:'map', data:osoba.vzdelani, options:ms_akce_vzdelani.zkratka}
+  select vzdelani_z [420,209,97,] {type:'map', data:osoba.vzdelani, options:ms_akce_vzdelani.zkratka}
+  select titul_z    [520,209,52,] {type:'map', data:osoba.titul, options:ms_akce_titul.zkratka}
   field zamest_z    [420,230,152,] {data:osoba.zamest}
   field zajmy_z     [420,251,152,] {data:osoba.zajmy}
   field jazyk_z     [420,272,77,] {data:osoba.jazyk}
@@ -513,10 +515,10 @@ form _pobyt {
   }}
   field skupina     [7,388,35,] {data:pobyt.skupina, format:'r'}
   select funkce     [155,389,50,] {type:'map', data:pobyt.funkce, options:ms_akce_funkce.zkratka }
-  select prednasi   [450,389,122,] {type:'map', data:pobyt.prednasi, options:ms_akce_prednasi.zkratka }
+  select prednasi   [445,389,127,] {type:'map', data:pobyt.prednasi, options:ms_akce_prednasi.zkratka }
   field pokoj       [244,417,82,] {data:pobyt.pokoj}
-  field budova      [377,416,32,] {data:pobyt.budova}
-  select ubytovani  [395,416,60,] {type:'map', data:pobyt.ubytovani, options:ms_akce_ubytovan.zkratka, skill:'c|c'}
+  field budova      [380,416,32,] {data:pobyt.budova}
+  select ubytovani  [445,416,60,] {type:'map', data:pobyt.ubytovani, options:ms_akce_ubytovan.zkratka, skill:'c|c'}
   check cd          [446,441,20,] {data:pobyt.cd}
   edit k_poznamka   [214,462,355,50] {data:pobyt.poznamka}
   // skupinka
@@ -656,6 +658,7 @@ form _ucast [,,400,] { css:'ds_form'
     show email_m    { expr:"GROUP_CONCAT(DISTINCT IF(tx.role='a',ox.email,'')    SEPARATOR '')" }
     show note_m     { expr:"GROUP_CONCAT(DISTINCT IF(tx.role='a',ox.note,'')     SEPARATOR '')" }
     show vzdelani_m { expr:"GROUP_CONCAT(DISTINCT IF(tx.role='a',ox.vzdelani,'') SEPARATOR '')" }
+    show titul_m    { expr:"GROUP_CONCAT(DISTINCT IF(tx.role='a',ox.titul,'')    SEPARATOR '')" }
     show zamest_m   { expr:"GROUP_CONCAT(DISTINCT IF(tx.role='a',ox.zamest,'')   SEPARATOR '')" }
     show zajmy_m    { expr:"GROUP_CONCAT(DISTINCT IF(tx.role='a',ox.zajmy,'')    SEPARATOR '')" }
     show jazyk_m    { expr:"GROUP_CONCAT(DISTINCT IF(tx.role='a',ox.jazyk,'')    SEPARATOR '')" }
@@ -677,6 +680,7 @@ form _ucast [,,400,] { css:'ds_form'
     show email_z    { expr:"GROUP_CONCAT(DISTINCT IF(tx.role='b',ox.email,'')    SEPARATOR '')" }
     show note_z     { expr:"GROUP_CONCAT(DISTINCT IF(tx.role='b',ox.note,'')     SEPARATOR '')" }
     show vzdelani_z { expr:"GROUP_CONCAT(DISTINCT IF(tx.role='b',ox.vzdelani,'') SEPARATOR '')" }
+    show titul_z    { expr:"GROUP_CONCAT(DISTINCT IF(tx.role='b',ox.titul,'')    SEPARATOR '')" }
     show zamest_z   { expr:"GROUP_CONCAT(DISTINCT IF(tx.role='b',ox.zamest,'')   SEPARATOR '')" }
     show zajmy_z    { expr:"GROUP_CONCAT(DISTINCT IF(tx.role='b',ox.zajmy,'')    SEPARATOR '')" }
     show jazyk_z    { expr:"GROUP_CONCAT(DISTINCT IF(tx.role='b',ox.jazyk,'')    SEPARATOR '')" }
