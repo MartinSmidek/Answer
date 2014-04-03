@@ -300,6 +300,7 @@ table osoba { key_id:'id_osoba'
   text poznamka
   text obcanka
   number vzdelani
+  text titul
   text zamest
   text zajmy
   text jazyk
@@ -489,6 +490,7 @@ map ms_akce_pfunkce:  table _cis {where:"druh='ms_akce_pfunkce'",   order:'porad
 map ms_akce_prednasi: table _cis {where:"druh='ms_akce_prednasi'",  order:'poradi', key_id:'data'}
 map ms_akce_cirkev:   table _cis {where:"druh='ms_akce_cirkev'",    order:'poradi', key_id:'data'}
 map ms_akce_vzdelani: table _cis {where:"druh='ms_akce_vzdelani'",  order:'poradi', key_id:'data'}
+map ms_akce_titul:    table _cis {where:"druh='ms_akce_titul'",     order:'poradi', key_id:'data'}
 map ms_akce_platba:   table _cis {where:"druh='ms_akce_platba'",    order:'poradi', key_id:'data'}
 map ms_akce_sex:      table _cis {where:"druh='ms_akce_sex'",       order:'poradi', key_id:'data'}
 map ms_akce_ucastnik: table _cis {where:"druh='ms_akce_ucastnik'",  order:'poradi', key_id:'data'}
