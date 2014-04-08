@@ -2288,7 +2288,7 @@ function akce_pobyt_default($id_pobyt,$zapsat=0) {  trace();
 # --------------------------------------------------------------------------------- akce_vzorec_test
 # test výpočtu platby za pobyt na akci
 function akce_vzorec_test($id_akce,$nu=2,$nd=0,$nk=0) {  trace();
-  $html= "";
+  $ret= (object)array('navrh'=>'','err'=>'');
   // obecné info o akci
   list($ma_cenik,$noci,$strava_oddo)=
     select("ma_cenik,DATEDIFF(datum_do,datum_od),strava_oddo","akce","id_duakce=$id_akce");
@@ -2331,7 +2331,164 @@ function akce_vzorec_test($id_akce,$nu=2,$nd=0,$nk=0) {  trace();
   $html.= "</table>";
   // návrat
 end:
-  return $html;
+  $ret->navrh.= $html;
+  return $ret;
+}
+# ------------------------------------------------------------------------------- akce_vzorec_soubeh
+# výpočet platby za pobyt na hlavní akci, včetně platby za souběžnou akci (děti)
+# pokud je $id_pobyt=0 provede se výpočet podle dodaných hodnot (dosp+koje)
+function akce_vzorec_soubeh($id_pobyt,$id_hlavni,$id_soubezna,$dosp=0,$deti=0,$koje=0) { trace();
+  $sleva= 0;
+  // načtení ceníků
+  function nacti_cenik($id_akce,&$cenik,&$html) {
+    $qa= "SELECT * FROM cenik WHERE id_akce=$id_akce ORDER BY poradi";
+    $ra= mysql_qry($qa);
+    if ( !mysql_num_rows($ra) ) {
+      $html.= "akce $id_akce nemá ceník";
+    }
+    else {
+      $cenik= array();
+      while ( $ra && ($a= mysql_fetch_object($ra)) ) {
+        $za= $a->za;
+        if ( !$za ) continue;
+        $cc= (object)array();
+        if ( isset($cenik[$za]) ) $html.= "v ceníku se opakují kódy za=$za";
+        $cenik[$za]= (object)array('c'=>$a->cena,'txt'=>$a->polozka);
+      }
+//                                                         debug($cenik,"ceník pro $id_akce");
+    }
+  }
+  $ret= (object)array('navrh'=>'','err'=>'');
+  nacti_cenik($id_hlavni,$cenik_dosp,$ret->navrh);   if ( $html ) goto end;
+  nacti_cenik($id_soubezna,$cenik_deti,$ret->navrh); if ( $html ) goto end;
+  $map_kat= map_cis('ms_akce_dite_kat','zkratka');
+  if ( $id_pobyt ) {
+    // zjištění parametrů pobytu podle hlavní akce
+    $qp= "SELECT * FROM pobyt AS p JOIN akce AS a ON p.id_akce=a.id_duakce WHERE id_pobyt=$id_pobyt";
+    $rp= mysql_qry($qp);
+    if ( $rp && ($p= mysql_fetch_object($rp)) ) {
+      $pocetdnu= $p->pocetdnu;
+      $strava_oddo= $p->strava_oddo;
+      $dosp= $p->pouze ? 1 : 2;
+      $sleva= $p->sleva;
+  //     $svp= $p->svp;
+  //     $neprijel= $p->funkce==10;
+      $datum_od= $p->datum_od;
+    }
+    // pokud mají děti označenou kategorii X, určuje se cena podle pX ceníku souběžné akce
+    // cena pro dospělé se určí podle ceníku hlavní akce - děti bez kategorie se nesmí
+    $deti_kat= array();
+    $n= $ndeti= 0;
+    $chuvy= $del= '';
+    $qo= "SELECT o.jmeno,s.dite_kat,p.funkce, t.role, p.ubytovani, narozeni,
+           s.pecovane,(SELECT CONCAT(osoba.prijmeni,',',osoba.jmeno,',',pobyt.id_pobyt)
+            FROM pobyt
+            JOIN spolu ON spolu.id_pobyt=pobyt.id_pobyt
+            JOIN osoba ON osoba.id_osoba=spolu.id_osoba
+            WHERE pobyt.id_akce=p.id_akce AND spolu.pecovane=o.id_osoba) AS _chuva
+          FROM spolu AS s
+          JOIN osoba AS o ON s.id_osoba=o.id_osoba
+          JOIN pobyt AS p USING(id_pobyt)
+          LEFT JOIN tvori AS t ON t.id_osoba=o.id_osoba
+          WHERE id_pobyt=$id_pobyt";
+    $ro= mysql_qry($qo);
+    while ( $ro && ($o= mysql_fetch_object($ro)) ) {
+      $vek= narozeni2roky(sql2stamp($o->narozeni),sql2stamp($datum_od));
+      $kat= $o->dite_kat;
+      if ( $kat ) {
+        // dítě - speciální cena
+        $deti_kat[$map_kat[$kat]]++;
+        $ndeti++;
+      }
+      elseif ( $vek<18 ) {
+        // dítě bez kategorie
+        $ret->err.= "<br>Chybí kategorie u dítěte: {$o->jmeno}";
+        $ndeti++;
+      }
+      $n++;
+    }
+    // kontrola počtu
+    if ( $dosp + $ndeti != $n ) {
+      $ret->err.= "<br>chyba v počtech: dospělí=$dosp, $deti=$ndeti ale celkem $n";
+    }
+  }
+  elseif ( $id_hlavni ) {
+    // zjištění parametrů testovacího "pobytu" podle ceníku dané akce
+    list($pocetdnu,$strava_oddo)=
+      select("DATEDIFF(datum_do,datum_od),strava_oddo","akce","id_duakce=$id_hlavni");
+    // doplnění dětí do tabulky jako kojenců
+    if ( $koje ) $deti_kat['F']= $koje;
+    if ( $deti ) $deti_kat['B']= $deti;
+  }
+//                                         debug($deti_kat,"dětí");
+  $Kc= "&nbsp;Kč";
+  // redakce textu k ceně dospělých
+  $html.= "<b>Rozpis platby za účast dospělých na jejich akci</b><table>";
+  $cena= 0;
+  $ubytovani= $strava= $program= $slevy= '';
+  foreach($cenik_dosp as $za=>$a) {
+    $c= $a->c; $txt= $a->txt;
+    switch ($za) {
+    case 'Nl':
+      $cena+= $cc= $dosp * $pocetdnu * $c;
+      if ( !$cc ) break;
+      $ret->c_nocleh+= $cc;
+      $ubytovani.= "<tr><td>".($dosp*$pocetdnu)." x $txt ($c$Kc)</td><td align='right'>$cc$Kc</td></tr>";
+      break;
+    case 'P':
+      $cena+= $cc= $c * $dosp;
+      if ( !$cc ) break;
+      $ret->c_program+= $cc;
+      $program.= "<tr><td>$dosp x $txt ($c$Kc)</td><td align='right'>$cc$Kc</td></tr>";
+      break;
+    case 'Su':
+      $cena-= $cc= $c * $dosp;
+      if ( !$cc ) break;
+      $ret->c_sleva+= $cc;
+      $slevy.= "<tr><td>$dosp x $txt ($c$Kc)</td><td align='right'>$cc$Kc</td></tr>";
+      break;
+    case 'sc': case 'oc': case 'vc':
+      $strav= $dosp * ($pocetdnu + ($za=='oc' && $strava_oddo=='oo' ? 1 : 0)); // případně oběd navíc
+      $cena+= $cc= $strav * $c;
+      if ( !$cc ) break;
+      $ret->c_strava+= $cc;
+      $html.= "<tr><td>$strav x $txt ($c$Kc)</td><td align='right'>$cc$Kc</td></tr>";
+      break;
+    default:
+      $ret->err.= "<br>cenu za $za nelze vypočítat";
+    }
+  }
+  // doplnění slev
+  if ( $sleva ) {
+    $cena-= $sleva;
+    $ret->c_sleva-= $sleva;
+    $slevy.= "<tr><td>zvláštní sleva</td><td align='right'>$sleva$Kc</td></tr>";
+  }
+  // konečná redakce textu k ceně dospělých
+  if ( $ubytovani ) $html.= "<tr><th>ubytování</th></tr>$ubytovani";
+  if ( $strava )    $html.= "<tr><th>strava</th></tr>$strava";
+  if ( $program )   $html.= "<tr><th>program</th></tr>$program";
+  if ( $slevy )     $html.= "<tr><th>sleva</th></tr>$slevy";
+  $html.= "<tr><th>Celkem za dospělé</th><th align='right'>$cena$Kc</th></tr>";
+  $html.= "</table>";
+  // redakce textu k ceně dětí
+  if ( count($deti_kat) ) {
+    $html.= "<br><b>Rozpis platby za účast dětí na jejich akci</b><table>";
+    $cena= 0;
+    ksort($deti_kat);
+    foreach($deti_kat as $kat=>$n) {
+      $a= $cenik_deti["p$kat"]; $c= $a->c; $txt= $a->txt;
+      $cena+= $cc= $c * $n;
+      $html.= "<tr><td>$n x $txt </td><td align='right'>$cc$Kc</td></tr>";
+    }
+    $html.= "<tr><th>Celkem za děti</th><th align='right'>$cena$Kc</th></tr>";
+    $html.= "</table>";
+  }
+end:
+  if ( $ret->err ) $ret->navrh.= "<b style='color:red'>POZOR! neúplná platba:</b>{$ret->err}<hr>";
+  $ret->navrh.= $html;
+                                                        debug($ret,"akce_vzorec_soubeh");
+  return $ret;
 }
 # -------------------------------------------------------------------------------------- akce_vzorec
 # výpočet platby za pobyt na akci

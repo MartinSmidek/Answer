@@ -231,6 +231,10 @@ table pobyt { key_id:'id_pobyt'
   text aktivita
   date datplatby        { sql_pipe:'sql_date1'}
   number zpusobplat
+  number platba
+  date datplatby_d      { sql_pipe:'sql_date1'} // platba za děti v souběžné akci
+  number zpusobplat_d
+  number platba_d
   text budova
   text pokoj
   number ubytovani      // číselník ms_akce_ubytovan
@@ -249,7 +253,6 @@ table pobyt { key_id:'id_pobyt'
   number dorazil
   number pouze
   number akce
-  number platba
   number platba1
   number platba2
   number platba3
