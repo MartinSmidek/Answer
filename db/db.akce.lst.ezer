@@ -285,8 +285,10 @@ form _page [,,285,500] {
   button [217,470,,] { tag:'cen', title:'pár+kojenec', proc onclick() { test_ceniku(2,0,1) }}
   proc test_ceniku(dosp,deti,koje) { var cena:object
     eq(the_duakce.get,a_akce.get);
-    { the_soubeh.get;
+    { eq(the_soubeh.get,1);
       cena.set(ask('akce_vzorec_soubeh',0,the_duakce.get,the_soubezna.get,dosp,deti,koje))
+    | eq(the_soubeh.get,2);
+      cena.set(ask('akce_vzorec_soubeh',0,the_hlavni.get,the_duakce.get,dosp,deti,koje))
     | cena.set(ask('akce_vzorec_test',a_akce.get,dosp,deti,koje)) };
     alert(cena.navrh)
   | alert("pro testování ceníku musí být akce nastavena jako pracovní")
