@@ -281,10 +281,16 @@ form _page [,,285,500] {
     | warning(ret.msg);
   } }
   label  [129,476,,] { tag:'cen', title:"test ceny:" }
-  button [182,470,,] { tag:'cen', title:'pár'
-    proc onclick() { alert(ask('akce_vzorec_test',a_akce.get,2,0,0)) }}
-  button [217,470,,] { tag:'cen', title:'pár+kojenec'
-    proc onclick() { alert(ask('akce_vzorec_test',a_akce.get,2,0,1)) }}
+  button [182,470,,] { tag:'cen', title:'pár', proc onclick() { test_ceniku(2,0,0) }}
+  button [217,470,,] { tag:'cen', title:'pár+kojenec', proc onclick() { test_ceniku(2,0,1) }}
+  proc test_ceniku(dosp,deti,koje) { var cena:object
+    eq(the_duakce.get,a_akce.get);
+    { the_soubeh.get;
+      cena.set(ask('akce_vzorec_soubeh',0,the_duakce.get,the_soubezna.get,dosp,deti,koje))
+    | cena.set(ask('akce_vzorec_test',a_akce.get,dosp,deti,koje)) };
+    alert(cena.navrh)
+  | alert("pro testování ceníku musí být akce nastavena jako pracovní")
+  }
   label xhref [122,474,173,]
   # --------------------------- pozadí stránky nakonec
   label [2,16,283,476] { title:'', css:'ae_work page' }
@@ -377,7 +383,7 @@ form _akce [,,*,50] {
   label head [0,0,*,30] { title:'' }
   # volba pracovní akce
   button [376,3,100,] { title:'Pracovní', proc onclick() {
-    volba_akce(cconc(eq(the_source.get,'sey'),sey.id_akce.get,google.id_akce.get))
+    volba_akce(if(eq(the_source.get,'sey'),sey.id_akce.get,google.id_akce.get))
   }}
   # načtení akcí a intranetu
   button [-160,3,100,] { title:'Obnovit rok z intranetu', skill:'y|yaa+'

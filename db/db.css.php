@@ -34,7 +34,7 @@ echo <<<__EOD
 .fialovy        { background-color:#d27efc !important; }
 
 /* specifické */
-.curr_akce { background-color:$nazelenala !important; color:$bila; }
+.curr_akce { background-color:$nazelenala !important; color:$bila; font-weight:bold; }
 .form_note { font-size:10px; color:$s1_brow }
 .title_ref { color:#ffffff !important; }
 .title_ref a { color:#ffffff !important; }

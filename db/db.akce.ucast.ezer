@@ -24,7 +24,8 @@ proc onfocus() {
   0,{ header.soubeh.display(0) },
   1,{ header.soubeh.display(1); panel.display(2,'akce1'); header.soubeh.set('^Děti') },
   2,{ header.soubeh.display(1); panel.display(2,'akce2');  header.soubeh.set('^Kurs') }
-  )
+  );
+  page.page_init
 }
 # úpravy formulářů pro y;f;c
 proc init_forms() {
@@ -177,6 +178,7 @@ form _page {
       evid.display(0); cmd.display(0); rod.display(0); muz.display(0); zen.display(0); pob.display(0);
       a_muz.display(0); a_zen.display(0); pla.display(1); cmdp.display(1); alb.display(0);
       pla.get.display(the_cenik.get,'cenik'); // omezení výpisu pokud není definován ceník
+      pla.display(eq(the_soubeh.get,1),'deti'); // platby za děti
     }
   }
   label jin [292,0,120,20] {tag:'p', _sys:'*', title:'<b>Přehled aktivit</b>', format:'c',
@@ -295,7 +297,9 @@ form _platba {
       | or(u.b.cstrava_cel.get,u.b.cstrava_pol.get);
         confirm("Pozor - jsou vyplněny speciální stravy. Pokračovat?")
       };
-      cena.set(ask('akce_vzorec',the_pobyt.get)); copy_by_name(cena.get,form);
+      { the_soubeh.get; cena.set(ask('akce_vzorec_soubeh',the_pobyt.get,the_duakce.get,the_soubezna.get))
+      | cena.set(ask('akce_vzorec',the_pobyt.get)) };
+      copy_by_name(cena.get,form);
       c_nocleh.change; c_strava.change; c_program.change; c_sleva.change; ini
   } }
   // parametry ceny
@@ -308,7 +312,8 @@ form _platba {
   proc rozpis_ceny() {
     duvod_typ.get; navrh.display(0); duvod_text.display(1)
   | navrh.display(1); duvod_text.display(0);
-    cena.set(ask('akce_vzorec',the_pobyt.get));
+    { the_soubeh.get; cena.set(ask('akce_vzorec_soubeh',the_pobyt.get,the_duakce.get,the_soubezna.get))
+    | cena.set(ask('akce_vzorec',the_pobyt.get)) };
     navrh.set(cena.get('navrh'))
   }
   radio duvod_typ [7,100,284,332] { data:pobyt.duvod_typ, value:'0', style:"border:1px solid gray"
@@ -364,6 +369,11 @@ form _platba {
   select zpusobplat [383,456,86,] {type:'map', data:pobyt.zpusobplat,
                                    options:ms_akce_platba.zkratka, format:'u'}
   field datplatby   [474,456,84,] {type:'date', data:pobyt.datplatby}
+  // pouze u hlavní akce - platba za souběžnou
+  field platba_d      [327,480,50,] {tag:'deti', data:pobyt.platba_d, format:'nr'}
+  select zpusobplat_d [383,480,86,] {tag:'deti', type:'map', data:pobyt.zpusobplat_d,
+                                     options:ms_akce_platba.zkratka, format:'nu'}
+  field datplatby_d   [474,480,84,] {tag:'deti', type:'date', data:pobyt.datplatby_d, format:'n'}
   // pevné texty
   label [13,32,,]   { tag:'cenik', title:'Rozpis ceny akce podle cenového vzorce akce a přehled příchozích plateb' }
   label [5,528,,]  { title:'Cena zapsaná v evidenční kartě (použitá pro export do Excelu)',
@@ -749,6 +759,9 @@ form _ucast [,,400,] { css:'ds_form'
     show c_sleva    { data:p.platba4}
     show zpusobplat { data:p.zpusobplat}
     show datplatby  { data:p.datplatby}
+    show platba_d     { data:p.platba_d}
+    show zpusobplat_d { data:p.zpusobplat_d}
+    show datplatby_d  { data:p.datplatby_d}
     show budova     { data:p.budova}
     show pokoj      { data:p.pokoj}
     show ubytovani  { data:p.ubytovani}
