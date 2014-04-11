@@ -2,12 +2,35 @@
 # ================================================================================================== TEST
 # ------------------------------------------------------------------------------------- test1
 function test1() {
-//   $x= (object)array('a'=>'ěščřžýáíé',"b=>"=>array("\"ěščřžýáíé\"'radek2'"));
-                                                debug($_SESSION);
-//   $x= json_encode($x);
-//                                                 display($x);
-//   $x= json_decode($x);
-//                                                 debug($x);
+  $screen= array();
+  $qd= mysql_qry("
+    SELECT id_touch, msg, day, time, user, menu
+    FROM _touch
+    WHERE YEAR(day)=2013 AND msg!='' AND menu IN ('login')
+    ORDER BY day DESC,time DESC");
+  while ($qd && ($d= mysql_fetch_object($qd))) {
+    $user= $d->user;
+    list($filler,$ip,$wport,$wscreen)= explode('|',$d->msg);
+    list($w,$h)= explode('/',$wscreen);
+
+    if ( !is_numeric($w) ) {
+                                                        debug($d);
+      goto end;
+    }
+    if ( $user=="GAN" ) continue;
+    if ( isset($screen[$wscreen]) ) {
+      $screen[$wscreen][0]++;
+      if ( strpos($screen[$wscreen][1]," $user ")===false )
+        $screen[$wscreen][1].= " $user ";
+    }
+    else {
+      $screen[$wscreen][0]= 1;
+      $screen[$wscreen][1]= " $user ";
+    }
+  }
+  ksort($screen);
+                                                        debug($screen);
+end:
   return $x;
 }
 # ================================================================================================== DUPL
@@ -2358,7 +2381,7 @@ function akce_vzorec_soubeh($id_pobyt,$id_hlavni,$id_soubezna,$dosp=0,$deti=0,$k
 //                                                         debug($cenik,"ceník pro $id_akce");
     }
   }
-  $ret= (object)array('navrh'=>'','err'=>'');
+  $ret= (object)array('navrh'=>'','err'=>'','naklad_d'=>0,'poplatek_d'=>0);
   nacti_cenik($id_hlavni,$cenik_dosp,$ret->navrh);   if ( $html ) goto end;
   nacti_cenik($id_soubezna,$cenik_deti,$ret->navrh); if ( $html ) goto end;
   $map_kat= map_cis('ms_akce_dite_kat','zkratka');
@@ -2442,7 +2465,7 @@ function akce_vzorec_soubeh($id_pobyt,$id_hlavni,$id_soubezna,$dosp=0,$deti=0,$k
       $program.= "<tr><td>$dosp x $txt ($c$Kc)</td><td align='right'>$cc$Kc</td></tr>";
       break;
     case 'Su':
-      $cena-= $cc= $c * $dosp;
+      $cena+= $cc= - $c * $dosp;
       if ( !$cc ) break;
       $ret->c_sleva+= $cc;
       $slevy.= "<tr><td>$dosp x $txt ($c$Kc)</td><td align='right'>$cc$Kc</td></tr>";
@@ -2472,6 +2495,7 @@ function akce_vzorec_soubeh($id_pobyt,$id_hlavni,$id_soubezna,$dosp=0,$deti=0,$k
   $html.= "<tr><th>Celkem za dospělé</th><th align='right'>$cena$Kc</th></tr>";
   $html.= "</table>";
   // redakce textu k ceně dětí
+  $sleva= "";
   if ( count($deti_kat) ) {
     $html.= "<br><b>Rozpis platby za účast dětí na jejich akci</b><table>";
     $cena= 0;
@@ -2479,8 +2503,15 @@ function akce_vzorec_soubeh($id_pobyt,$id_hlavni,$id_soubezna,$dosp=0,$deti=0,$k
     foreach($deti_kat as $kat=>$n) {
       $a= $cenik_deti["p$kat"]; $c= $a->c; $txt= $a->txt;
       $cena+= $cc= $c * $n;
+      $ret->naklad_d+= $cc;
       $html.= "<tr><td>$n x $txt </td><td align='right'>$cc$Kc</td></tr>";
+      $a= $cenik_deti["d$kat"]; $c= $a->c; $txt= $a->txt;
+      $cena+= $cc= - $c * $n;
+      $ret->poplatek_d+= $cc;
+      $sleva.= "<tr><td>$n x $txt </td><td align='right'>$cc$Kc</td></tr>";
     }
+    $ret->poplatek_d+= $ret->naklad_d;
+    $html.= "<tr><th>sleva</th></tr>$sleva";
     $html.= "<tr><th>Celkem za děti</th><th align='right'>$cena$Kc</th></tr>";
     $html.= "</table>";
   }
