@@ -2119,7 +2119,7 @@ function akce_id2a($id_akce) {  trace();
   # diskuse souběhu: 0=normální akce, 1=hlavní akce, 2=souběžná akce
   $a->soubeh= $a->soubezna ? 1 : ( $a->hlavni ? 2 : 0);
   $a->rok= $a->rok ?: date('Y');
-                                                                debug($a,$id_akce);
+//                                                                 debug($a,$id_akce);
   return $a;
 }
 # ------------------------------------------------------------------------------- akce_soubeh_nastav
@@ -2357,33 +2357,35 @@ end:
   $ret->navrh.= $html;
   return $ret;
 }
+# --------------------------------------------------------------------------------- akce_nacti_cenik
+# lokální pro akce_vzorec_soubeh
+function akce_nacti_cenik($id_akce,&$cenik,&$html) {
+  $qa= "SELECT * FROM cenik WHERE id_akce=$id_akce ORDER BY poradi";
+  $ra= mysql_qry($qa);
+  if ( !mysql_num_rows($ra) ) {
+    $html.= "akce $id_akce nemá ceník";
+  }
+  else {
+    $cenik= array();
+    while ( $ra && ($a= mysql_fetch_object($ra)) ) {
+      $za= $a->za;
+      if ( !$za ) continue;
+      $cc= (object)array();
+      if ( isset($cenik[$za]) ) $html.= "v ceníku se opakují kódy za=$za";
+      $cenik[$za]= (object)array('c'=>$a->cena,'txt'=>$a->polozka);
+    }
+//                                                         debug($cenik,"ceník pro $id_akce");
+  }
+}
 # ------------------------------------------------------------------------------- akce_vzorec_soubeh
 # výpočet platby za pobyt na hlavní akci, včetně platby za souběžnou akci (děti)
 # pokud je $id_pobyt=0 provede se výpočet podle dodaných hodnot (dosp+koje)
 function akce_vzorec_soubeh($id_pobyt,$id_hlavni,$id_soubezna,$dosp=0,$deti=0,$koje=0) { trace();
-  $sleva= 0;
   // načtení ceníků
-  function nacti_cenik($id_akce,&$cenik,&$html) {
-    $qa= "SELECT * FROM cenik WHERE id_akce=$id_akce ORDER BY poradi";
-    $ra= mysql_qry($qa);
-    if ( !mysql_num_rows($ra) ) {
-      $html.= "akce $id_akce nemá ceník";
-    }
-    else {
-      $cenik= array();
-      while ( $ra && ($a= mysql_fetch_object($ra)) ) {
-        $za= $a->za;
-        if ( !$za ) continue;
-        $cc= (object)array();
-        if ( isset($cenik[$za]) ) $html.= "v ceníku se opakují kódy za=$za";
-        $cenik[$za]= (object)array('c'=>$a->cena,'txt'=>$a->polozka);
-      }
-//                                                         debug($cenik,"ceník pro $id_akce");
-    }
-  }
+  $sleva= 0;
   $ret= (object)array('navrh'=>'','err'=>'','naklad_d'=>0,'poplatek_d'=>0);
-  nacti_cenik($id_hlavni,$cenik_dosp,$ret->navrh);   if ( $html ) goto end;
-  nacti_cenik($id_soubezna,$cenik_deti,$ret->navrh); if ( $html ) goto end;
+  akce_nacti_cenik($id_hlavni,$cenik_dosp,$ret->navrh);   if ( $html ) goto end;
+  akce_nacti_cenik($id_soubezna,$cenik_deti,$ret->navrh); if ( $html ) goto end;
   $map_kat= map_cis('ms_akce_dite_kat','zkratka');
   if ( $id_pobyt ) {
     // zjištění parametrů pobytu podle hlavní akce
@@ -2403,7 +2405,7 @@ function akce_vzorec_soubeh($id_pobyt,$id_hlavni,$id_soubezna,$dosp=0,$deti=0,$k
     $deti_kat= array();
     $n= $ndeti= 0;
     $chuvy= $del= '';
-    $qo= "SELECT o.jmeno,s.dite_kat,p.funkce, t.role, p.ubytovani, narozeni,
+    $qo= "SELECT o.jmeno,s.dite_kat,p.funkce, t.role, p.ubytovani, narozeni, p.funkce,
            s.pecovane,(SELECT CONCAT(osoba.prijmeni,',',osoba.jmeno,',',pobyt.id_pobyt)
             FROM pobyt
             JOIN spolu ON spolu.id_pobyt=pobyt.id_pobyt
@@ -2418,6 +2420,7 @@ function akce_vzorec_soubeh($id_pobyt,$id_hlavni,$id_soubezna,$dosp=0,$deti=0,$k
     while ( $ro && ($o= mysql_fetch_object($ro)) ) {
       $vek= narozeni2roky(sql2stamp($o->narozeni),sql2stamp($datum_od));
       $kat= $o->dite_kat;
+      $pps= $o->funkce==1;
       if ( $kat ) {
         // dítě - speciální cena
         $deti_kat[$map_kat[$kat]]++;
@@ -2465,6 +2468,14 @@ function akce_vzorec_soubeh($id_pobyt,$id_hlavni,$id_soubezna,$dosp=0,$deti=0,$k
       $program.= "<tr><td>$dosp x $txt ($c$Kc)</td><td align='right'>$cc$Kc</td></tr>";
       break;
     case 'Su':
+      if ( $pps ) continue;
+      $cena+= $cc= - $c * $dosp;
+      if ( !$cc ) break;
+      $ret->c_sleva+= $cc;
+      $slevy.= "<tr><td>$dosp x $txt ($c$Kc)</td><td align='right'>$cc$Kc</td></tr>";
+      break;
+    case 'Sp':
+      if ( !$pps ) continue;
       $cena+= $cc= - $c * $dosp;
       if ( !$cc ) break;
       $ret->c_sleva+= $cc;
@@ -2518,7 +2529,8 @@ function akce_vzorec_soubeh($id_pobyt,$id_hlavni,$id_soubezna,$dosp=0,$deti=0,$k
 end:
   if ( $ret->err ) $ret->navrh.= "<b style='color:red'>POZOR! neúplná platba:</b>{$ret->err}<hr>";
   $ret->navrh.= $html;
-                                                        debug($ret,"akce_vzorec_soubeh");
+  $ret->mail= "<div style='background-color:#eeeeee;margin-left:15px'>$html</div>";
+//                                                         debug($ret,"akce_vzorec_soubeh");
   return $ret;
 }
 # -------------------------------------------------------------------------------------- akce_vzorec
@@ -7809,13 +7821,20 @@ function dop_mai_posli($id_dopis,$info) {  trace();
 # vrátí celý text
 function dop_mail_personify($obsah,$vars,$id_pobyt) {
   $text= $obsah;
-  $p= select('*','pobyt',"id_pobyt=$id_pobyt");
+  list($duvod_typ,$duvod_text,$id_hlavni,$id_soubezna)=
+    select('duvod_typ,duvod_text,IFNULL(id_hlavni,0),id_duakce',
+    "pobyt LEFT JOIN akce ON id_hlavni=pobyt.id_akce",
+    "id_pobyt=$id_pobyt");
   foreach($vars as $var) {
     $val= '';
     switch ($var) {
     case 'akce_cena':
-      if ( $p->duvod_typ ) {
-        $val= $p->duvod_text;
+      if ( $duvod_typ ) {
+        $val= $duvod_text;
+      }
+      elseif ( $id_hlavni ) {
+        $ret= akce_vzorec_soubeh($id_pobyt,$id_hlavni,$id_soubezna);
+        $val= $ret->mail;
       }
       else {
         $ret= akce_vzorec($id_pobyt);
