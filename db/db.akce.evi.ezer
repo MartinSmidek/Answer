@@ -70,7 +70,7 @@ proc status(on) {
     'r',{ rodiny.b.browse_count; stav.klice.set(conc('rodiny: id_rodina=',rodiny.b.id_r.get)) }
     )
 #   | stav.display(0)
-  | not(on); stav.display(1) // náhradní řešení
+  | not(on); stav.display(0) // náhradní řešení
   }
 }
 const LETOS = "NOW()>=od.dat_od AND (NOW()<=od.dat_do OR od.dat_do='0000-00-00')"
@@ -122,7 +122,7 @@ menu m {type:'left'
           par:°{typ:'e-v',exp:'Excel',cnd:1, hav:"_vps>0",tit:'jméno:20,obec:20',fld:'_jmeno,obec'}}
     item {title:'Přehled všech od 1990',                                        skill:'yae'
           par:°{typ:'e-v',exp:'Excel',cnd:1, hav:"1",tit:'jméno:20,obec:20',fld:'_jmeno,obec'}}
-    item {title:'Struktura letních kurzů MS',   par:°{typ:'e-s',exp:'Excel'}    skill:'yae'}
+    item {title:'Struktura letních kurzů MS',   par:°{typ:'e-s',exp:'Excel'}    skill:'yae;m'}
     item pec {title:'Akce s pečouny',           par:°{typ:'e-p',exp:'Excel'}    skill:'yae;cae;fae'}
     item {title:'Podklady pro projekty',        par:°{typ:'e-x',exp:'Excel'}    skill:'yae;cae;fae'}
   }
@@ -160,7 +160,7 @@ menu m {type:'left'
   }
   proc onclick (i) {
     var x: object
-    panel.display(1,'inf'); panel.display(0,'evid|rodi|list|dary|plat|p_.*|d_.*'); status(0);
+    panel.display(1,'inf'); panel.display(0,'evid|rodi|list|dary|plat|p_.*|d_.*|syst'); status(0);
     the_par.set(i.par); the_title.set(i.title); info.export.set(i.par.exp);
     info.fill(conc(i.owner.title,' - ',i.title),' ');
     info.msg.set('');
@@ -316,7 +316,7 @@ form _evid { style:'z-index:1'
   label [0,16,400,260] { css:'ae_work'}
 }
 # ---------------------------------------------------------------------- _osoba
-form _osoba { tag:'a'
+form _osoba { //tag:'a'
   view o: table osoba
 #   view t: table tvori { join:"ON o.id_osoba=t.id_osoba" }     nepoužité
 #   view r: table rodina { join:"ON r.id_rodina=t.id_rodina" }  nepoužité

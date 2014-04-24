@@ -1,0 +1,551 @@
+#pragma library
+
+# Systém Ans(w)er - modul Akce
+# (c) 2008-2010 Martin Šmídek <martin@smidek.eu>
+
+# globální proměnné pro modul Databáze - týkají se vlastností nastavené akce
+
+# hodnoty pamatované v cookies
+var the_source: text            // forma seznamu akcí google|sey                           -- cookie
+var the_omezeni: text           // pro skill=c obsahuje podmínku přístupných akcí          -- cookie
+var the_duakce: number          // pracovní akce: id_akce (id_dukace)                      -- cookie
+
+# hodnoty udržované funkcí akce_change
+var the_title: text             // pracovní akce: název do titulků
+var the_rok: number             // pracovní akce: rok konání
+var the_soubeh: number          // 0=normální akce, 1=hlavní akce, 2=souběžná akce
+var the_hlavni: number          // 0=normální akce, id=akce k the_duakce hlavní
+var the_soubezna: number        // 0=normální akce, id=akce s the_duakce souběžná
+var the_cenik: text             // pracovní akce: má ceník
+var the_cena:  number           // pracovní akce: má pevnou cenu pro dospělého
+
+# inicializace modulu Databáze - nastavení globálních proměnných the_* tohoto modulu
+var dirty: number       // 1 => byla začata inicializace modulu
+proc onstart() { dirty.get; akce_onstart }
+proc akce_onstart() {
+  dirty.get
+| dirty.set(1);
+  echo('db.akce.onstart');
+  # hodnoty zapamatované pro navázání na předchozí session
+  the_source.set(get_cookie(conc(sys('root'),'_akce_source'),'sey'));
+  the_omezeni.set(get_cookie(conc(sys('root'),'_akce_omezeni'),1));
+  # příprava zobrazení v AKCE - volá akce_choose
+  lst.akce_work(get_cookie(conc(sys('root'),'_akce_id'),0));
+  echo('db.akce.onstart end');
+}
+# nastavení akce jako the_duakce, dopočítání stavových hodnot
+proc akce_choose(id_akce) { var a:object
+  the_duakce.set(id_akce);
+  a.set(ask('akce_id2a',id_akce)); // nastaví i nulové hodnoty pro id_akce=0
+  the_rok.set(a.rok);       the_title.set(a.title);       the_soubeh.set(a.soubeh);
+  the_hlavni.set(a.hlavni); the_soubezna.set(a.soubezna); the_cenik.set(a.cenik);
+  the_cena.set(a.cena);
+}
+# ================================================================================================== CHLAPI
+# panel chl {type:'right', _sys:'*', title:'Chlapi', include:'onclick,db.akce.chl',skill:'yac;xa' }
+# ================================================================================================== AKCE
+panel lst {type:'right', _sys:'*', title:'AKCE', include:'onload,db.akce.lst',skill:'yaa;faa;caa'
+  use the_akce: form _the_akce         // zatím nezobrazená data nastavené akce s klíčem id_duakce
+  proc akce_work(id) {}                // nastaví akci jako vybranou
+}
+panel ucast {type:'plain', _sys:'*',
+  /*title:"<img src='img/icon_new.gif' style='float:left;margin-top:-5px;padding-right:5px;'>Účastníci",*/
+    title:"Účastníci2",
+    include:'onload,db.akce2.ucast',skill:'yaa;faa;caa'
+  proc init_ucast2() { alert('napřed klikni na Databáze|Účastníci') }
+  proc akce_show() { alert('napřed klikni na Databáze|Účastníci') }
+}
+panel pece {type:'plain', _sys:'*', title:'Pečouni', include:'onload,db.akce.pece',skill:'yaa;faa;caa'
+  proc init_pece() { alert('napřed klikni na Databáze|Pečouni') }
+  proc akce_show() { alert('napřed klikni na Databáze|Pečouni') }
+}
+panel tisk [,,,] {type:'right', _sys:'*', title:'Výpisy akce', include:'onclick,db.akce.tisk',skill:'yaa;faa;caa'  }
+# ================================================================================================== EVIDENCE
+panel evi {type:'right', _sys:'*', title:'EVIDENCE', include:'onclick,db.akce.evi', skill:'yae;fae;caa'
+  proc evid_show() { alert('napřed klikni na Databáze|EVIDENCE') }
+}
+# panel dup {type:'right', _sys:'*', title:'(duplicity)', include:'onclick,db.akce.dup', skill:'m+' }
+panel mai {type:'right', title:'MAILY', _sys:'*', include:'onclick,db.akce.mai', skill:'yam;fam;cam'  }
+# panel eli {type:'right', _sys:'*'
+#   title:'&nbsp;.&nbsp;&nbsp;.&nbsp;&nbsp;.&nbsp;&nbsp;.&nbsp;&nbsp;.&nbsp;&nbsp;.&nbsp;&nbsp;.&nbsp;&nbsp;.&nbsp;&nbsp;.&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(duplicity)',
+#   include:'onclick,db.akce.eli', skill:'m;fad' }
+
+# ================================================================================================== COMMON
+# ------------------------------------------------------------------ _the_akce
+# zatím nezobrazená data nastavené akce s klíčem id_duakce
+form _the_akce {
+  field id_duakce   { data:akce.id_duakce }
+  field nazev       { data:akce.nazev }
+  field datum_od    { data:akce.datum_od }
+  field datum_do    { data:akce.datum_do }
+  field strava_oddo { data:akce.strava_oddo }
+}
+# ------------------------------------------------------------------ right
+form right [,,*,50] {
+  label head [0,0,*,50]  { title:'' }
+  label msg  [0,35,*,20] { title:'' }
+  label note [50,57,,550] { title:'' }
+  proc fill(x,y) {
+    [ x; head.set(conc("<div class='karta'>",x,"</div>")) ];
+    [ y; note.set(y) ]
+  }
+}
+# ------------------------------------------------------------------ obecné tabulky
+table _file_ {
+  text fid
+  date fdate
+  text fname
+  text ftype
+  text finfo
+}
+table _cis { key_id:'id_cis'
+  number id_cis
+  text druh,
+  text data,
+  text zkratka,
+  number poradi,
+  text hodnota,
+  text popis,
+  text barva,
+  text ikona
+}
+table _user { key_id:'id_user', db:'ezer_system'
+  number id_user
+  text deleted,
+  text abbr,
+  text skills,
+  text options { help:'privátní nastavení|ve formátu JSON' }
+  text username,
+  text password,
+  number state,
+  text forename,
+  text surname,
+  text login,
+  text history,
+  text sess_id,
+  text sess_time,
+  text sess_data,
+  number zmena_kdo,
+  date zmena_kdy {  },
+}
+table _track { key_id:'id_track'
+  number id_track { key:'primary' },
+  date kdy { help:'datum změny' },
+  text kdo { help:'pachatel' },
+  text kde { help:'tabulka' },
+  number klic { help:'klíč' },
+  text fld { help:'položka' },
+  text op { help:'operace' },
+  text old { help:'původní hodnota' },
+  text val { help:'nová hodnota' },
+}
+# ================================================================================================== CHLAPI
+table chlapi { key_id:'id_chlapi', db:'ezer_ys'
+  number id_chlapi
+  text prijmeni
+  text jmeno
+  number sex
+  date narozeni  { sql_pipe:'sql_date1' }
+  text rc_xxxx {help:'3-4 rozlišovací číslice rodného čísla'}
+  text ulice
+  text psc
+  text obec
+  text telefon
+  text email
+  number iniciace
+  text note /*pozn*/
+  text origin  // databáze,id,datum vkopírování
+}
+table ch_ucast { key_id:'id_ucast', db:'ezer_ys'
+  number id_ucast
+  number id_chlapi
+  number id_akce
+  number stupen    { help:"vztah k akci" }
+  number cena      { help:"cena akce pro účastníka" }
+  number avizo     { help:"přišlo potvrzení o platbě" }
+  number uctem     { help:"zaplaceno převodem" }
+  date uctem_dne   { help:"datum převodu", sql_pipe:'sql_date1' }
+  number pokladnou { help:"zaplaceno v hotovosti" }
+  text pozn
+}
+table ch_akce { key_id:'id_akce', db:'ezer_ys'
+  number id_akce
+  text nazev
+  number cena      { help:"cena akce" }
+  date datum_od    { sql_pipe:'sql_date1' }
+  date datum_do    { sql_pipe:'sql_date1' }
+}
+map akce_ucast: table _cis {where:"druh='akce_ucast'", order:'poradi', key_id:'data'}
+
+# ------------------------------------------------------------------ pohledy
+table $osoba { key_id:'id_osoba'
+  number id_osoba
+  text tab
+  number id
+  text prijmeni
+  text jmeno
+  text rodcis
+  date narozeni
+  text ulice
+  text psc
+  text obec
+  text telefon
+  text email
+  text info
+}
+
+table ds_osoba_copy { key_id:'id_osoba'
+  number id_osoba
+  text prijmeni
+}
+
+# ================================================================================================== AKCE
+table akce { key_id:'id_duakce'
+  number id_duakce
+  number id_hlavni // 0 nebo id_duakce hlavní akce souběžné akce
+  number typ
+  number ma_cenik  // 1 znamená, že bereme v úvahu tabulku cenik
+  number ma_cenu   // 1 znamená, že bereme v úvahu položku cena (pro 1 dospělého)
+  number cena      // cena akce pro dospělého (je-li ma_cenu=1)
+  number spec      // 1 znamená ne-akci, starý způsob příležitostných seznamů
+  text nazev
+  text misto
+  number druh
+  number poradatel
+  date datum_od    { sql_pipe:'sql_date1'}    // SQL tvar se používá v ys.akce
+  date datum_do    { sql_pipe:'sql_date1'}
+  text strava_oddo { help:'2 písmena označující první a poslední stravu (sov)' }
+  number ciselnik_akce
+  number ciselnik_rok
+  text note
+}
+
+table pobyt { key_id:'id_pobyt'
+  number id_pobyt
+  number id_akce
+  # number id_osoba -- 131004 zrušeno
+  number typ            // 10,11,20,21
+  number skupina
+  number funkce
+  number prednasi      // číselník ms_akce_prednasi
+  text aktivita
+  date datplatby        { sql_pipe:'sql_date1'}
+  number zpusobplat
+  number platba
+  number naklad_d
+  number poplatek_d
+  date datplatby_d      { sql_pipe:'sql_date1'} // platba za děti v souběžné akci
+  number zpusobplat_d
+  number platba_d
+  text budova
+  text pokoj
+  number ubytovani      // číselník ms_akce_ubytovan
+  number luzka
+  number strava_cel
+  number strava_pol
+  text cstrava_cel      // číslice jsou seřazeny jako počty snídaní,obědů,večeří po dnech
+  text cstrava_pol
+  number kocarek
+  text pecovatel
+  text poznamka
+  number pristylky
+  number pocetdnu       // počet nocí!
+  number svp            // počet dětí s vlastním pečovatelem
+  number cd
+  number dorazil
+  number pouze
+  number akce
+  number platba1
+  number platba2
+  number platba3
+  number platba4
+  number sleva
+  number vzorec //#
+  number duvod_typ	// 0: zdůvodnění podle ceníku, 1: vlastním textem
+  text   duvod_text	// vlastní text zdůvodňující cenu
+}
+
+table spolu { key_id:'id_spolu'
+  number id_spolu
+  number id_pobyt
+  number id_osoba
+  number skupinka
+  text poznamka
+  number s_rodici
+  number pulstrava
+  number pecovane // id_osoba pečovaného dítěte
+  number pfunkce  // #ms_akce_pfunkce -- funkce pečovatelská, jinak 0
+  number dite_kat // #ms_akce_dite_kat -- cenová kategorie
+}
+
+table osoba { key_id:'id_osoba'
+  number id_osoba
+  number id_dupary
+  number id_dudeti
+  text   deleted     { help:'ok|prázdné nebo D=značka smazání osoby' },
+  text jmeno
+  text prijmeni
+  text rodne
+  number sex
+  number dieta  // #ms_akce_dieta
+  text fotka
+  text ulice
+  text psc
+  text obec
+  text stat
+  text email
+  number nomail { help:"nomail|nechce přijímat hromadně rozesílané informace" }
+  text telefon
+  text spz
+  date narozeni { sql_pipe:'sql_date1'}
+  number uvitano { help:"uvítáno|bylo uvítáno ve společenství" }
+  number iniciace { help:"mrop|rok iniciace nebo 0" }
+  text rc_xxxx
+  date umrti { sql_pipe:'sql_date1'}
+  text poznamka
+  text obcanka
+  number vzdelani
+  text titul
+  text zamest
+  text zajmy
+  text jazyk
+  number cirkev
+  text aktivita
+  number clen
+  text note
+  text origin
+  text historie
+}
+
+table tvori { key_id:'id_tvori'
+  number id_tvori
+  number id_osoba
+  number id_rodina
+  number role
+}
+
+table dar { key_id:'id_dar'
+  number id_dar
+  number id_osoba
+  number id_rodina
+  text   deleted{ help:'ok|prázdné nebo D=značka smazání daru' },
+  text   ukon   { help:'b-člen běžný,c-člen činný,d-dar,p-členský příspěvek' }
+  text   zpusob { help:'b-banka,s-složenka,p-pokladna' }
+  number castka
+  date   dat_od { sql_pipe:'sql_date1', help:'datum darování nebo vzniku členství' }
+  date   dat_do { sql_pipe:'sql_date1', help:'datum zaslání potvrzení nebo datum pokrytí členství příspěvkem nebo datum zániku členství' }
+  text   note
+}
+
+table rodina { key_id:'id_rodina'
+  number id_rodina
+  number id_dupary
+  number typ            // 10,11,20,21
+  text nazev
+  text fotka
+  text ulice
+  text psc
+  text obec
+  text stat
+  text telefony
+  text emaily
+  text spz
+  number svatba
+  date datsvatba { sql_pipe:'sql_date1'}
+  text note
+  text origin
+  text historie
+}
+
+table platba { key_id:'id_platba'
+  number id_platba
+  text   ucet           // M=514048001, D=514048044
+  number id_osoba
+  number id_rodina
+  number id_duakce
+  number id_pokl
+  number ucel
+  number castka
+  date   datum          { sql_pipe:'sql_date1'}
+  text   poznamka
+  number zpusob
+  text   ucet_nazev
+  text   vs
+  text   ks
+  text   ss
+  text   ss2            // ručně opravený SS
+  text   tipy           // vytipované možnosti plátce
+}
+
+table cenik { key_id:'id_cenik'
+  number id_cenik
+  number id_akce
+  number poradi
+  text   polozka
+  text   za             // N: noc, S:snídaně, O:oběd, V:večeře, P:pobyt
+  number typ            // index typu ubytování
+  number od
+  number do
+  number cena
+  number dph
+}
+
+# -------------------------------------------------------------------------- webform
+table webform { key_id:'id_webform'
+  number id_webform
+  number id_osoba       { help:"int(11)	přiřazená osoba (u firmy kontaktní)" }
+  number typ_osoby      { help:"1:jednotlivec, 2:rodina, 3:firma" }
+  number id_rodina      { help:"přiřazená rodina, pokud typ=2" }
+  text firma_nazev      { help:"jméno firmy pokud typ_osoby=3" }
+  number firma_ic       { help:"" }
+  text jmeno
+  text prijmeni
+  number sex
+  text ulice
+  text psc
+  text obec
+  text stat
+  text email
+  text telefon
+  date narozeni         { sql_pipe:'sql_date1'}
+  text rc_xxxx
+  text zamest
+  number dary_frekvence { help:"předpokládaná frekvence darů" } // db_dary_frek
+  number dary_potvrzeni { help:"potřebuje potvrzení pro daňový odečet" }
+  number potvrzeno      { help:"bylo kliknuto na URL zaslané mailem" }
+  text historie
+}
+map db_dary_frek:  table _cis {where:"druh='db_dary_frek'",  order:'poradi', key_id:'data'}
+
+table join_akce { // spojení číselníku akcí s MS
+  number id_akce   { help:"klíč akce v tabulce akce" }
+  number g_rok     { help:"rok akce podle číselníku akcí" }
+  number g_kod     { help:"kód akce podle číselníku akcí" }
+  text   source    { help:"L:Lídino M:Milošovo MS.EXE" }
+  number akce      { help:"staré číslo akce podle MS.EXE" }
+}
+
+table g_akce { key_id:'id_gakce' // kopie číselníku akcí z intranetu
+  number id_gakce
+  number g_rok     { help:"rok akce podle číselníku akcí" }
+  number g_kod     { help:"kód akce podle číselníku akcí" }
+  text   g_nazev   { help:"název akce z číselníku akcí" }
+  date   g_od      { help:"začátek akce z číselníku akcí", sql_pipe:'sql_date1' }
+  date   g_do      { help:"ukončení akce z číselníku akcí", sql_pipe:'sql_date1' }
+  number g_ucast   { help:"počet účastníků akce z číselníku akcí" }
+  text   g_typ     { help:"typ akce z číselníku akcí" }
+  text   g_kap     { help:"účetní kapitola akce z číselníku akcí" }
+}
+
+table mail { key_id:'id_mail'
+  number id_mail { key:'primary' },
+  number id_dopis { help:'mail|index mailu' }, // nepoužívá se pro dopisy s druh!='@'
+  number id_pobyt { help:'pobyt|ID pobytu na akci' } // jen pro maily 'U' = účastníkům akce
+  number id_davka
+  number id_znacka                             // nepoužívá se pro dopisy s druh=='@'
+  number id_clen
+  text znacka
+  text email
+  number stav
+  text msg
+  text body
+}
+
+table mailist { key_id:'id_mailist'
+  number id_mailist
+  number specialni   // 1 znamená speciální mail-list, definovaný obsahem parms
+  number blokovano
+  text   nazev
+  text   ucel
+  text   parms  // json
+  text   sexpr
+}
+
+table dopis { key_id:'id_dopis'
+  number id_dopis { key:'primary' },
+  number id_davka { help:'dávka|číslo rozesílání dávky dopisů' },
+  text nazev
+  text prilohy
+  number potvrzeni { help:"potvrzení|vyžádat zaslání potvrzení o přečtení" }
+  number kopie	{ help:"poslat slepou kopii 'odesílateli'" }
+  number id_duakce   // pouze pro maily: id akce
+  number id_mailist  // pouze pro maily přes mail-list: id mailist
+  number cis_skupina // pouze pro maily: _cis.data položky se SQL (_cis.druh='db_maily_sql')
+  text druh { help:'druh|D-dopis, S-samolepka,legitimace, N-nesamostatná složka' },
+  text typ { help:'typ|značka dopisu' },
+  number nw
+  number nh
+  number komu     // pouze pro maily
+  number pocet    // pouze pro maily
+  text report { help:'vzor|identifikátor reportu' },
+  number aktualni { help:'aktualni|text dopisu je připraven k tisku' },
+  date datum { help:'datum|vročení dopisu', sql_pipe:'sql_date1' },
+  text obsah { help:'obsah|text dopisu' },
+  text var_list { help:'seznam proměnných'}
+  text post_vars { help:'seznam proměnných počítaných po generování'}
+  text nest_list { help:'seznam složek (druh=N)'}
+  text add_list
+}
+
+map ms_akce_typ:      table _cis {where:"druh='ms_akce_typ'",       order:'poradi', key_id:'data'}  // ikona=1 pro muže, 2 pro ženy, jinak 0
+map ms_akce_clen:     table _cis {where:"druh='ms_akce_clen'",      order:'poradi', key_id:'data'}
+map ms_akce_pouze:    table _cis {where:"druh='ms_akce_pouze'",     order:'poradi', key_id:'data'}
+map ms_akce_funkce:   table _cis {where:"druh='ms_akce_funkce'",    order:'poradi', key_id:'data'}
+map ms_akce_pfunkce:  table _cis {where:"druh='ms_akce_pfunkce'",   order:'poradi', key_id:'data'}
+map ms_akce_prednasi: table _cis {where:"druh='ms_akce_prednasi'",  order:'poradi', key_id:'data'}
+map ms_akce_cirkev:   table _cis {where:"druh='ms_akce_cirkev'",    order:'poradi', key_id:'data'}
+map ms_akce_vzdelani: table _cis {where:"druh='ms_akce_vzdelani'",  order:'poradi', key_id:'data'}
+map ms_akce_titul:    table _cis {where:"druh='ms_akce_titul'",     order:'poradi', key_id:'data'}
+map ms_akce_platba:   table _cis {where:"druh='ms_akce_platba'",    order:'poradi', key_id:'data'}
+map ms_akce_sex:      table _cis {where:"druh='ms_akce_sex'",       order:'poradi', key_id:'data'}
+map ms_akce_ucastnik: table _cis {where:"druh='ms_akce_ucastnik'",  order:'poradi', key_id:'data'}
+map ms_cena_vzorec:   table _cis {where:"druh='ms_cena_vzorec'",    order:'poradi', key_id:'data'}
+map ms_akce_ubytovan: table _cis {where:"druh='ms_akce_ubytovan'",  order:'poradi', key_id:'data'}
+map ms_akce_dieta:    table _cis {where:"druh='ms_akce_dieta'",     order:'poradi', key_id:'data'}
+map ms_akce_dite_kat: table _cis {where:"druh='ms_akce_dite_kat'",  order:'poradi', key_id:'data'}
+# ================================================================================================== TEST
+panel test {type:'plain', _sys:'*', title:"TEST", include:'onload,db.akce2.test',skill:'m'}
+# ================================================================================================== formuláře
+form _osoba2 {
+  view o: table osoba  // 679=já, 680=Marie
+  proc load_osoba(id) { form.key(id); form.load }
+  const L=0; T=10
+  label [L+0,T+0,300,500] { css:'ae_work'}
+  // identifikace
+  label          [L+5,T+2,89,] {title:'příjmení/rodné'}
+  field prijmeni [L+5,T+17,89,] {data:o.prijmeni, help:'příjmení'}
+  field rodne    [L+5,T+52,89,] {data:o.rodne, help:'rodné příjmení'}
+  label          [L+109,T+2,78,] {title:'jméno'}
+  field jmeno    [L+109,T+17,79,] {data:o.jmeno}
+  radio sex [L+194,T+-1,50,35] { data:o.sex, value:'1'
+    case [0,2,50,] { title:'muž', expr:'1' }
+    case [0,17,50,] { title:'žena', expr:'2' }
+    proc onchange() { echo('sex=',this.get) }
+  }
+  label          [L+108,T+37,33,] {title:'narození'}
+  field narozeni [L+107,T+53,85,] {type:'date', data:o.narozeni, format:'rR:e'}
+  label          [L+198,T+37,41,] {title:'nnnn rč'}
+  field rodnexxxx[L+197,T+53,37,] {data:o.rc_xxxx, format:'r:e'}
+  label          [L+248,T+37,27,] {title:'mrop'}
+  field iniciace [L+245,T+53,37,] {data:o.iniciace, format:'r:e'}
+  // kontakt
+  label          [L+5,T+75,100,] {title:'ulice'}
+  field ulice    [L+5,T+90,162,] {data:o.ulice}
+  label          [L+179,T+75,39,] {title:'psč'}
+  field psc      [L+179,T+90,40,] {data:o.psc}
+  label          [L+230,T+75,100,] {title:'obec'}
+  field obec     [L+229,T+90,131,] {data:o.obec}
+  label          [L+14,T+142,34,] {title:'telefon'}
+  field telefon  [L+51,T+138,212,] {type:'list', data:o.telefon}
+  label          [L+16,T+195,33,] {title:'dieta', format:'r'}
+  select dieta   [L+52,T+191,82,] {type:'map', data:o.dieta, options:ms_akce_dieta.zkratka }
+  label          [L+8,T+167,40,] {title:'e-mail', format:'r'}
+  field email    [L+52,T+163,212,] {type:'list', data:o.email}
+  check nomail   [L+268,T+137,121,] {title:"nechce informace", data:o.nomail,
+    help:"nepoužívat mailovou adresu pro rozesílání hromadných nabídek a informací"
+    proc onchange() {
+      alert("napiš prosím do poznámky důvod a datum odmítnutí hromadně rozesílaných informací")
+  } }
+  label          [L+-3,T+165,51,] {title:'poznámka'}
+  edit  pozn     [L+5,T+217,286,60] {data:o.note}
+}
