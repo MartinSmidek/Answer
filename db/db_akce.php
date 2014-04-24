@@ -6,17 +6,17 @@ function test1() {
   $qd= mysql_qry("
     SELECT id_touch, msg, day, time, user, menu
     FROM _touch
-    WHERE YEAR(day)=2013 AND msg!='' AND menu IN ('login')
+    WHERE YEAR(day)=2014 AND msg!='' AND menu IN ('login')
     ORDER BY day DESC,time DESC");
   while ($qd && ($d= mysql_fetch_object($qd))) {
     $user= $d->user;
     list($filler,$ip,$wport,$wscreen)= explode('|',$d->msg);
     list($w,$h)= explode('/',$wscreen);
 
-    if ( !is_numeric($w) ) {
-                                                        debug($d);
-      goto end;
-    }
+//     if ( !is_numeric($w) ) {
+//                                                         debug($d);
+//       goto end;
+//     }
     if ( $user=="GAN" ) continue;
     if ( isset($screen[$wscreen]) ) {
       $screen[$wscreen][0]++;
@@ -2119,6 +2119,7 @@ function akce_id2a($id_akce) {  trace();
   # diskuse souběhu: 0=normální akce, 1=hlavní akce, 2=souběžná akce
   $a->soubeh= $a->soubezna ? 1 : ( $a->hlavni ? 2 : 0);
   $a->rok= $a->rok ?: date('Y');
+  $a->title.= ", {$a->rok}";
 //                                                                 debug($a,$id_akce);
   return $a;
 }
@@ -6154,6 +6155,7 @@ function akce_auto_jmena2L($id_rodina) {  #trace();
 function akce_auto_jmena1($patt,$par) {  #trace();
   $a= array();
   $limit= 20;
+  $dnes= date("Y-m-d");
   $n= 0;
   if ( $par->patt!='whole' ) {
     $is= strpos($patt,' ');
@@ -6164,7 +6166,8 @@ function akce_auto_jmena1($patt,$par) {  #trace();
          FROM osoba
          LEFT JOIN tvori USING(id_osoba)
          WHERE concat(trim(prijmeni),' ',jmeno) LIKE '$patt%' AND prijmeni!=''
-           AND (ISNULL(role) OR role!='d')
+           AND DATEDIFF('$dnes',narozeni)/365.2425>18
+           /*AND (ISNULL(role) OR role!='d')*/
          ORDER BY prijmeni,jmeno LIMIT $limit";
   $res= mysql_qry($qry);
   while ( $res && $t= mysql_fetch_object($res) ) {
