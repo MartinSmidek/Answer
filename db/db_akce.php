@@ -6030,8 +6030,14 @@ function chlapi_auto_jmenovci($id,$db) {  #trace();
 # funkce pro spolupráci se select
 # --------------------------------------------------------------------------------- akce_auto_jmena2
 # ASK přidání pobytu do akce, pokud ještě nebyly tyto osoby/osoba přidány
-function akce_pridej($id_akce,$id_muz,$id_zena,$cnd='',$note='') { trace();
+// function akce_pridej($id_akce,$id_muz,$id_zena,$cnd='',$note='') { trace();
+function akce_pridej($id_akce,$info,$cnd='') { trace();
   $ret= (object)array('ok'=>0,'msg'=>'chyba při vkládání');
+//                                                         debug($info);
+  $id_muz= $info->mz;
+  $id_zena= $info->zen;
+  $id= $info->id;
+  $note= $info->nazev;
   // zjištění, kdo se přihlašuje na akci
   if ( $id_muz && $id_zena ) {
     $pouze= 0;
@@ -6046,8 +6052,10 @@ function akce_pridej($id_akce,$id_muz,$id_zena,$cnd='',$note='') { trace();
     $cond=  "s.id_osoba=$id_zena";
   }
   else {
-    $ret->msg= "dítě zatím nemůže jet bez rodiče: $note";
-    goto end;
+    $ret->msg= "POZOR: dítě bez rodiče je zatím (!) zobrazeno jako dítě svého otce: $note";
+    $pouze= 1;
+    $cond=  "s.id_osoba=$id";
+//     goto end;
   }
   $cond.= $cnd ? " AND $cnd" : '';
   // kontrola přítomnosti
@@ -6078,6 +6086,11 @@ function akce_pridej($id_akce,$id_muz,$id_zena,$cnd='',$note='') { trace();
     if ( $id_zena ) {
       // vložení ženy
       $qi= "INSERT spolu (id_pobyt,id_osoba) VALUES ({$ret->pobyt},$id_zena)";
+      $ri= mysql_qry($qi); if ( !$ri ) goto end;
+    }
+    if ( !$id_zena && !$id_muz ) {
+      // vložení jiné osoby (samostatného dítěte)
+      $qi= "INSERT spolu (id_pobyt,id_osoba) VALUES ({$ret->pobyt},$id)";
       $ri= mysql_qry($qi); if ( !$ri ) goto end;
     }
     $ret->ok= 1;

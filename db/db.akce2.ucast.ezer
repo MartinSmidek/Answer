@@ -1,7 +1,7 @@
 # ------------------------------------------------------------------------------------------------ #
-# Karta pro správu účastníků vybrané akce                                                          #
+# Karta pro správu účastníků vybrané akce II.                                                      #
 #                                                                                                  #
-# Ans(w)er/Ezer                                     (c) 2007-2012 Martin Šmídek <martin@smidek.eu> #
+# Ans(w)er/Ezer                                     (c) 2007-2014 Martin Šmídek <martin@smidek.eu> #
 # ------------------------------------------------------------------------------------------------ #
 
 var the_duakce_local: number    // zobrazená akce - pokud se liší od the_duakce, je třeba překreslit
@@ -31,8 +31,8 @@ proc onfocus() {
 proc init_forms() {
   [ has_skill('c');
     evid.get.display(0,'rc');
-    muz.get.display(0,'rc');
-    zen.get.display(0,'rc');
+#     muz.get.display(0,'rc');
+#     zen.get.display(0,'rc');
     Dite.dite.get.display(0,'rc');
 ]}
 proc init_ucast2() {
@@ -81,23 +81,23 @@ use u:     form _ucast   [  6,20,,]  { tag:'akce1' }               // seznam ú�
 use page:  form _page    [400,10,,]  { tag:'akce1' }
 # záložka evidence
 use evid:  form _evidence[400,10,,]  { tag:'akce1', format:'n' }
-use rod:   form _rodina  [400,0,,]   { tag:'akce1', format:'n' }
-use muz:   form _muz     [400,0,,]   { tag:'akce1', format:'n' }
-use zen:   form _zena    [400,0,,]   { tag:'akce1', format:'n' }
-use pob:   form _pobyt   [400,0,,]   { tag:'akce1', format:'n' }
+# use rod:   form _rodina  [400,0,,]   { tag:'akce1', format:'n' }
+# use muz:   form _muz     [400,0,,]   { tag:'akce1', format:'n' }
+# use zen:   form _zena    [400,0,,]   { tag:'akce1', format:'n' }
+# use pob:   form _pobyt   [400,0,,]   { tag:'akce1', format:'n' }
 use cmd:   form _cmd     [400,0,,]   { tag:'akce1', format:'n' }
 use alb:   form _album   [400,0,,]   { tag:'akce0', format:'n' }
 # záložka plateb
 use pla:   form _platba  [400,0,,]   { tag:'akce0', format:'n' }
 use cmdp:  form _cmd_p   [400,0,,]   { tag:'akce0', format:'n' }
 # záložka aktivity
-use a_muz: form _aktivity[420,10,,]  { tag:'akce0', format:'n' }
-use a_zen: form _aktivity[700,10,,]  { tag:'akce0', format:'n' }
+# use a_muz: form _aktivity[420,10,,]  { tag:'akce0', format:'n' }
+# use a_zen: form _aktivity[700,10,,]  { tag:'akce0', format:'n' }
 # 2. zobrazení dětí
 use u2:    form _ucast2  [  6,20,,]  { tag:'akce2', format:'n' }   // seznam dětí
 
 proc page_clear() {
-  muz.init(1); zen.init(1); rod.init(1); pob.init(1); pob.s.browse_init; pob.d.browse_init;
+#   muz.init(1); zen.init(1); rod.init(1); pob.init(1); pob.s.browse_init; pob.d.browse_init;
   [ has_skill('m'); u.develop.set('') ];
 }
 proc reload(id_pobyt) {
@@ -159,15 +159,18 @@ form _page {
   }
   proc page_init() {
     zalozka.set('evid'); tags(evd,'z','h|o|f');
-    a_muz.display(0); a_zen.display(0); pla.display(0); cmdp.display(0);
+#     a_muz.display(0); a_zen.display(0); pla.display(0);
+    cmdp.display(0);
   }
   label evd [ 12,0,120,20] {tag:'p', _sys:'*', title:'<b>Evidenční karta</b>', format:'c', css:'ae_butt_on'
     proc onclick() {
       neni_ulozeno // warning
     | tags(this,'z','h|o|f');
       zalozka.set('evid'); u.b.reload_pobyt;
-      evid.display(1); cmd.display(1); rod.display(1); muz.display(1); zen.display(1); pob.display(1);
-      a_muz.display(0); a_zen.display(0); pla.display(0); cmdp.display(0); alb.display(0);
+      evid.display(1); cmd.display(1);
+#       rod.display(1); muz.display(1); zen.display(1); pob.display(1);
+#       a_muz.display(0); a_zen.display(0);
+      pla.display(0); cmdp.display(0); alb.display(0);
     }
   }
   label plt [152,0,120,20] {tag:'p', _sys:'*', title:'<b>Platba za akci</b>', format:'c',
@@ -175,8 +178,10 @@ form _page {
       neni_ulozeno // warning
     | tags(this,'h','z|o|f');
       zalozka.set('plat'); u.b.reload_pobyt;
-      evid.display(0); cmd.display(0); rod.display(0); muz.display(0); zen.display(0); pob.display(0);
-      a_muz.display(0); a_zen.display(0); pla.display(1); cmdp.display(1); alb.display(0);
+      evid.display(0); cmd.display(0);
+#       rod.display(0); muz.display(0); zen.display(0); pob.display(0);
+#       a_muz.display(0); a_zen.display(0);
+      pla.display(1); cmdp.display(1); alb.display(0);
       pla.get.display(the_cenik.get,'cenik'); // omezení výpisu pokud není definován ceník
       pla.display(eq(the_soubeh.get,1),'deti'); // platby za děti
     }
@@ -186,8 +191,10 @@ form _page {
       neni_ulozeno // warning
     | tags(this,'o','z|h|f');
       zalozka.set('akce'); u.b.reload_pobyt;
-      evid.display(0); cmd.display(0); rod.display(0); muz.display(0); zen.display(0); pob.display(0);
-      a_muz.display(1); a_zen.display(1); pla.display(0); cmdp.display(0); alb.display(0);
+      evid.display(0); cmd.display(0);
+#       rod.display(0); muz.display(0); zen.display(0); pob.display(0);
+#       a_muz.display(1); a_zen.display(1);
+      pla.display(0); cmdp.display(0); alb.display(0);
     }
   }
   label fot [432,0,120,20] {tag:'p', _sys:'*', title:'<b>Fotky</b>', format:'c', /*skill:'a'*/
@@ -195,8 +202,10 @@ form _page {
       neni_ulozeno // warning
     | tags(this,'f','o|z|h');
       zalozka.set('foto'); u.b.reload_pobyt;
-      evid.display(0); cmd.display(0); rod.display(0); muz.display(0); zen.display(0); pob.display(0);
-      a_muz.display(0); a_zen.display(0); pla.display(0); cmdp.display(0); alb.display(1);
+      evid.display(0); cmd.display(0);
+#       rod.display(0); muz.display(0); zen.display(0); pob.display(0);
+#       a_muz.display(0); a_zen.display(0);
+      pla.display(0); cmdp.display(0); alb.display(1);
     }
   }
   label [0,16,582,530] { css:'ae_work'}
@@ -411,163 +420,164 @@ form _evidence {
     item { title:'přečíslovat skupinky podle PPS', skill:'faa+',
       proc onclick () { alert(ask('akce_skup_renum',the_duakce.get)) } }
     item { title:'ukázat všechny změny'
-      proc onclick () { BackTrace.back_load(pob.key,muz.key,zen.key,rod.key) } }
+#       proc onclick () { BackTrace.back_load(pob.key,muz.key,zen.key,rod.key) }
+    }
     item { title:'m: ECHO hodnoty klíčů', skill:'m'
       proc onclick () { echo('KLÍČE: akce=',the_duakce.get,', pobyt=',u.b.key_pobyt.get,
         ', strava=',lst.the_akce.strava_oddo.get ) } }
   }
-  label [2,17,723,495] {title:"<img src='img/ms3.png'>" }
-  label [10,21,100,] {title:'<b>společné údaje</b>'}
-  label [321,42,28,] {title:'věk'}
-  label [518,42,29,] {title:'věk'}
-  label [123,40,28,] {title:'spolu'}
-  label [118,382,38,] {title:'funkce'}
-  label [48,382,55,] {title:'č.skupinky'}
-  label [379,42,31,] {title:'křestní'}
-  label [377,63,31,] {title:'příjmení'}
-  label [378,86,31,] {title:'rodné/op'}
-  label [382,112,31,] {title:'telefon'}
-  label [385,137,26,] {title:'email'}
-  label [383,310,48,] {title:'osobní pozn.'}
-  label [14,159,68,] {title:'svatba'}
-  label [21,180,55,] {title:'(aspoň rok'}
-  label [121,180,28,] {title:') SPZ'}
-  label [225,21,127,] {title:'<b>osobní údaje muže</b>'}
-  label [422,22,119,] {title:'<b>osobní údaje ženy</b>'}
-  label [379,160,37,] {title:'narození'}
-  label [324,160,17,] {tag:'rc', title:'/rč:'}
-  label [521,159,17,] {tag:'rc', title:'/rč:'}
-  label [382,181,31,] {title:'církev'}
-  label [378,202,41,] {title:'vzdělání'}
-  label [380,223,37,] {title:'zaměst.'}
-  label [384,245,29,] {title:'zájmy'}
-  label [379,265,37,] {title:'jaz.,diet.'}
-  label [383,287,32,] {title:'aktivita'}
-  label [395,381,,] {title:'přednáší:'}
-  label [470,435,99,] {title:'objednal CD z akce'}
-  label [10,361,149,] {title:'<b>údaje k účasti na této akci</b>'}
-  label [215,437,162,] {title:'poznámka k účasti na této akci'}
-  label [215,409,31,] {title:'pokoj'}
-  label [337,409,38,] {title:'budova'}
-  label [421,409,19,] {title:'typ', skill:'c' }
+#   label [2,17,723,495] {title:"<img src='img/ms3.png'>" }
+#   label [10,21,100,] {title:'<b>společné údaje</b>'}
+#   label [321,42,28,] {title:'věk'}
+#   label [518,42,29,] {title:'věk'}
+#   label [123,40,28,] {title:'spolu'}
+#   label [118,382,38,] {title:'funkce'}
+#   label [48,382,55,] {title:'č.skupinky'}
+#   label [379,42,31,] {title:'křestní'}
+#   label [377,63,31,] {title:'příjmení'}
+#   label [378,86,31,] {title:'rodné/op'}
+#   label [382,112,31,] {title:'telefon'}
+#   label [385,137,26,] {title:'email'}
+#   label [383,310,48,] {title:'osobní pozn.'}
+#   label [14,159,68,] {title:'svatba'}
+#   label [21,180,55,] {title:'(aspoň rok'}
+#   label [121,180,28,] {title:') SPZ'}
+#   label [225,21,127,] {title:'<b>osobní údaje muže</b>'}
+#   label [422,22,119,] {title:'<b>osobní údaje ženy</b>'}
+#   label [379,160,37,] {title:'narození'}
+#   label [324,160,17,] {tag:'rc', title:'/rč:'}
+#   label [521,159,17,] {tag:'rc', title:'/rč:'}
+#   label [382,181,31,] {title:'církev'}
+#   label [378,202,41,] {title:'vzdělání'}
+#   label [380,223,37,] {title:'zaměst.'}
+#   label [384,245,29,] {title:'zájmy'}
+#   label [379,265,37,] {title:'jaz.,diet.'}
+#   label [383,287,32,] {title:'aktivita'}
+#   label [395,381,,] {title:'přednáší:'}
+#   label [470,435,99,] {title:'objednal CD z akce'}
+#   label [10,361,149,] {title:'<b>údaje k účasti na této akci</b>'}
+#   label [215,437,162,] {title:'poznámka k účasti na této akci'}
+#   label [215,409,31,] {title:'pokoj'}
+#   label [337,409,38,] {title:'budova'}
+#   label [421,409,19,] {title:'typ', skill:'c' }
 }
 # ------------------------------------------------------------------------------------------ _rodina
-form _rodina {
-  field nazev       [10,48,100,] {data:rodina.nazev, help:'společné příjmení', format:':F' }
-  field _spolu      [159,49,23,] {format:'o', value:'?'}
-  field ulice       [11,72,191,] {data:rodina.ulice}
-  field psc         [11,96,39,] {data:rodina.psc}
-  field obec        [59,96,142,] {data:rodina.obec}
-  field telefony    [11,120,161,] {type:'list', data:rodina.telefony}
-  field emaily      [11,144,161,] {type:'list', data:rodina.emaily}
-  field datsvatba   [55,166,63,] {data:rodina.datsvatba}
-  field svatba      [81,187,36,] {data:rodina.svatba}
-  field spz         [152,187,55,] {data:rodina.spz}
-  edit  note        [10,319,196,44] {data:rodina.note}
-  // pod čarou
-  label             [10,557,,] {title:'rodina - alternativní údaje', skill:'yaah'}
-  chat  historie    [8,570,185,106] { divide:100, skill:'yaah' }
-}
+# form _rodina {
+#   field nazev       [10,48,100,] {data:rodina.nazev, help:'společné příjmení', format:':F' }
+#   field _spolu      [159,49,23,] {format:'o', value:'?'}
+#   field ulice       [11,72,191,] {data:rodina.ulice}
+#   field psc         [11,96,39,] {data:rodina.psc}
+#   field obec        [59,96,142,] {data:rodina.obec}
+#   field telefony    [11,120,161,] {type:'list', data:rodina.telefony}
+#   field emaily      [11,144,161,] {type:'list', data:rodina.emaily}
+#   field datsvatba   [55,166,63,] {data:rodina.datsvatba}
+#   field svatba      [81,187,36,] {data:rodina.svatba}
+#   field spz         [152,187,55,] {data:rodina.spz}
+#   edit  note        [10,319,196,44] {data:rodina.note}
+#   // pod čarou
+#   label             [10,557,,] {title:'rodina - alternativní údaje', skill:'yaah'}
+#   chat  historie    [8,570,185,106] { divide:100, skill:'yaah' }
+# }
 # --------------------------------------------------------------------------------------------- _muz
-form _muz {
-  field id_spolu_m  // id_spolu nebo 0, pokud není na akci
-  field jmeno_m     [224,48,80,22] {data:osoba.jmeno}
-  field _vek_m      [354,50,19,] {format:'o', value:'?'}
-  field prijmeni_m  [224,71,80,] {data:osoba.prijmeni}
-  field rodne_m     [224,94,80,] {data:osoba.rodne}
-  select clen_m     [310,72,57,] {type:'map', data:osoba.clen, options:ms_akce_clen.zkratka}
-  field obcanka_m   [310,94,64,] {data:osoba.obcanka}
-  field telefon_m   [224,119,151,] {type:'list', data:osoba.telefon}
-  field email_m     [224,143,151,] {type:'list', data:osoba.email}
-  field narozeni_m  [224,167,93,] {type:'date', data:osoba.narozeni, sql_pipe:'sql_date1'}
-  field rc_xxxx_m   [342,166,32,] {tag:'rc', data:osoba.rc_xxxx, format:'r', help:'4 cifry za lomítkem rodného čísla' }
-  select cirkev_m   [224,188,152,] {type:'map', data:osoba.cirkev, options:ms_akce_cirkev.zkratka}
-  select vzdelani_m [224,209,97,] {type:'map', data:osoba.vzdelani, options:ms_akce_vzdelani.zkratka}
-  select titul_m    [324,209,52,] {type:'map', data:osoba.titul, options:ms_akce_titul.zkratka}
-  field zamest_m    [224,230,152,] {data:osoba.zamest}
-  field zajmy_m     [224,251,152,] {data:osoba.zajmy}
-  field jazyk_m     [224,272,77,] {data:osoba.jazyk}
-  select dieta_m    [307,272,70,] {type:'map', data:osoba.dieta, options:ms_akce_dieta.zkratka}
-  field aktivita_m  [224,293,152,] {data:osoba.aktivita}
-  edit  note_m      [224,319,150,44] {data:osoba.note}
-  // nezobrazené
-  field sex         { data:osoba.sex }
-  // pod čarou
-  label             [200,557,,] {title:'muž - alternativní údaje', skill:'yaah' }
-  chat  historie_m  [198,570,185,106] { divide:100, skill:'yaah' }
-}
+# form _muz {
+#   field id_spolu_m  // id_spolu nebo 0, pokud není na akci
+#   field jmeno_m     [224,48,80,22] {data:osoba.jmeno}
+#   field _vek_m      [354,50,19,] {format:'o', value:'?'}
+#   field prijmeni_m  [224,71,80,] {data:osoba.prijmeni}
+#   field rodne_m     [224,94,80,] {data:osoba.rodne}
+#   select clen_m     [310,72,57,] {type:'map', data:osoba.clen, options:ms_akce_clen.zkratka}
+#   field obcanka_m   [310,94,64,] {data:osoba.obcanka}
+#   field telefon_m   [224,119,151,] {type:'list', data:osoba.telefon}
+#   field email_m     [224,143,151,] {type:'list', data:osoba.email}
+#   field narozeni_m  [224,167,93,] {type:'date', data:osoba.narozeni, sql_pipe:'sql_date1'}
+#   field rc_xxxx_m   [342,166,32,] {tag:'rc', data:osoba.rc_xxxx, format:'r', help:'4 cifry za lomítkem rodného čísla' }
+#   select cirkev_m   [224,188,152,] {type:'map', data:osoba.cirkev, options:ms_akce_cirkev.zkratka}
+#   select vzdelani_m [224,209,97,] {type:'map', data:osoba.vzdelani, options:ms_akce_vzdelani.zkratka}
+#   select titul_m    [324,209,52,] {type:'map', data:osoba.titul, options:ms_akce_titul.zkratka}
+#   field zamest_m    [224,230,152,] {data:osoba.zamest}
+#   field zajmy_m     [224,251,152,] {data:osoba.zajmy}
+#   field jazyk_m     [224,272,77,] {data:osoba.jazyk}
+#   select dieta_m    [307,272,70,] {type:'map', data:osoba.dieta, options:ms_akce_dieta.zkratka}
+#   field aktivita_m  [224,293,152,] {data:osoba.aktivita}
+#   edit  note_m      [224,319,150,44] {data:osoba.note}
+#   // nezobrazené
+#   field sex         { data:osoba.sex }
+#   // pod čarou
+#   label             [200,557,,] {title:'muž - alternativní údaje', skill:'yaah' }
+#   chat  historie_m  [198,570,185,106] { divide:100, skill:'yaah' }
+# }
 # -------------------------------------------------------------------------------------------- _zena
-form _zena {
-  field id_spolu_z  // id_spolu nebo 0, pokud není na akci
-  field jmeno_z     [421,48,80,] {data:osoba.jmeno}
-  field _vek_z      [549,50,20,] {format:'o', value:'?'}
-  field prijmeni_z  [420,71,80,] {data:osoba.prijmeni}
-  field rodne_z     [420,94,80,] {data:osoba.rodne}
-  select clen_z     [506,72,56,] {type:'map', data:osoba.clen, options:ms_akce_clen.zkratka}
-  field obcanka_z   [506,94,64,] {data:osoba.obcanka}
-  field telefon_z   [420,119,151,] {type:'list', data:osoba.telefon}
-  field email_z     [420,143,151,] {type:'list', data:osoba.email}
-  field narozeni_z  [420,167,93,] {type:'date', data:osoba.narozeni, sql_pipe:'sql_date1'}
-  field rc_xxxx_z   [539,166,32,] {tag:'rc', data:osoba.rc_xxxx, format:'r', help:'4 cifry za lomítkem rodného čísla'}
-  select cirkev_z   [420,188,152,] {type:'map', data:osoba.cirkev, options:ms_akce_cirkev.zkratka}
-  select vzdelani_z [420,209,97,] {type:'map', data:osoba.vzdelani, options:ms_akce_vzdelani.zkratka}
-  select titul_z    [520,209,52,] {type:'map', data:osoba.titul, options:ms_akce_titul.zkratka}
-  field zamest_z    [420,230,152,] {data:osoba.zamest}
-  field zajmy_z     [420,251,152,] {data:osoba.zajmy}
-  field jazyk_z     [420,272,77,] {data:osoba.jazyk}
-  select dieta_z    [504,272,70,] {type:'map', data:osoba.dieta, options:ms_akce_dieta.zkratka}
-  field aktivita_z  [420,293,152,] {data:osoba.aktivita}
-  edit  note_z      [420,319,149,44] {data:osoba.note}
-  // nezobrazené
-  field sex         { data:osoba.sex }
-  // pod čarou
-  label             [390,557,,] {title:'žena - alternativní údaje', skill:'yaah' }
-  chat  historie_z  [389,570,185,106] { divide:100, skill:'yaah' }
-}
+# form _zena {
+#   field id_spolu_z  // id_spolu nebo 0, pokud není na akci
+#   field jmeno_z     [421,48,80,] {data:osoba.jmeno}
+#   field _vek_z      [549,50,20,] {format:'o', value:'?'}
+#   field prijmeni_z  [420,71,80,] {data:osoba.prijmeni}
+#   field rodne_z     [420,94,80,] {data:osoba.rodne}
+#   select clen_z     [506,72,56,] {type:'map', data:osoba.clen, options:ms_akce_clen.zkratka}
+#   field obcanka_z   [506,94,64,] {data:osoba.obcanka}
+#   field telefon_z   [420,119,151,] {type:'list', data:osoba.telefon}
+#   field email_z     [420,143,151,] {type:'list', data:osoba.email}
+#   field narozeni_z  [420,167,93,] {type:'date', data:osoba.narozeni, sql_pipe:'sql_date1'}
+#   field rc_xxxx_z   [539,166,32,] {tag:'rc', data:osoba.rc_xxxx, format:'r', help:'4 cifry za lomítkem rodného čísla'}
+#   select cirkev_z   [420,188,152,] {type:'map', data:osoba.cirkev, options:ms_akce_cirkev.zkratka}
+#   select vzdelani_z [420,209,97,] {type:'map', data:osoba.vzdelani, options:ms_akce_vzdelani.zkratka}
+#   select titul_z    [520,209,52,] {type:'map', data:osoba.titul, options:ms_akce_titul.zkratka}
+#   field zamest_z    [420,230,152,] {data:osoba.zamest}
+#   field zajmy_z     [420,251,152,] {data:osoba.zajmy}
+#   field jazyk_z     [420,272,77,] {data:osoba.jazyk}
+#   select dieta_z    [504,272,70,] {type:'map', data:osoba.dieta, options:ms_akce_dieta.zkratka}
+#   field aktivita_z  [420,293,152,] {data:osoba.aktivita}
+#   edit  note_z      [420,319,149,44] {data:osoba.note}
+#   // nezobrazené
+#   field sex         { data:osoba.sex }
+#   // pod čarou
+#   label             [390,557,,] {title:'žena - alternativní údaje', skill:'yaah' }
+#   chat  historie_z  [389,570,185,106] { divide:100, skill:'yaah' }
+# }
 # ------------------------------------------------------------------------------------------- _pobyt
-form _pobyt {
-  field id_akce     {data:pobyt.id_akce}
-  select pouze      [254,371,96,] {type:'map', data:pobyt.pouze, options:ms_akce_pouze.zkratka
-    proc onchange() {
-      { eq(pouze.key,0,1); muz.get.display(1) | muz.get.display(0) };
-      { eq(pouze.key,0,2); zen.get.display(1) | zen.get.display(0) };
-  }}
-  field skupina     [7,388,35,] {data:pobyt.skupina, format:'r'}
-  select funkce     [155,389,50,] {type:'map', data:pobyt.funkce, options:ms_akce_funkce.zkratka }
-  select prednasi   [445,389,127,] {type:'map', data:pobyt.prednasi, options:ms_akce_prednasi.zkratka }
-  field pokoj       [244,417,82,] {data:pobyt.pokoj}
-  field budova      [380,416,32,] {data:pobyt.budova}
-  select ubytovani  [445,416,60,] {type:'map', data:pobyt.ubytovani, options:ms_akce_ubytovan.zkratka, skill:'c|c'}
-  check cd          [446,441,20,] {data:pobyt.cd}
-  edit k_poznamka   [214,462,355,50] {data:pobyt.poznamka}
-  // skupinka
-  browse s [7,409,,] {type:'smart', rows:4
-    show id_pobyt
-    show jmeno [,,170,] {title:'Skupinka'}
-    proc onsubmit () {
-      u.b.raise('onrowclick',id_pobyt.get);
-    }
-  }
-  // děti                                                            chůva    s chůvou  standard
-  browse d [10,209,,] {type:'smart', rows:4, css_rows:'barva,0:nic,1:zeleny,2:cerveny,3:nakursu'
-    show id_osoba
-    show jmeno    [,,70,] { title:'Děti', format:'t' }
-    show vek      [,,20,] { title:'věk', js_pipe:'roku', format:'r' }
-#     show kat      [,,20,] { title:'kat' }                                                         // fa
-    show narozeni
-    show rc_xxxx
-    show id_spolu
-    show note     [,,60,] { title:'poznámka', format:'t' }
-    show skupinka [,,20,] { title:'skupinka', format:'r:e' }
-    show barva
-    proc onsubmit() {
-      neni_ulozeno // warning
-    | Dite.key_dite.set(id_osoba.get); Dite.key_spolu.set(id_spolu.get);
-      Dite.key_pobyt.set(u.b.key_pobyt.get);
-      Dite.modal(260,10)
-    }
-  }
-}
+# form _pobyt {
+#   field id_akce     {data:pobyt.id_akce}
+#   select pouze      [254,371,96,] {type:'map', data:pobyt.pouze, options:ms_akce_pouze.zkratka
+#     proc onchange() {
+#       { eq(pouze.key,0,1); muz.get.display(1) | muz.get.display(0) };
+#       { eq(pouze.key,0,2); zen.get.display(1) | zen.get.display(0) };
+#   }}
+#   field skupina     [7,388,35,] {data:pobyt.skupina, format:'r'}
+#   select funkce     [155,389,50,] {type:'map', data:pobyt.funkce, options:ms_akce_funkce.zkratka }
+#   select prednasi   [445,389,127,] {type:'map', data:pobyt.prednasi, options:ms_akce_prednasi.zkratka }
+#   field pokoj       [244,417,82,] {data:pobyt.pokoj}
+#   field budova      [380,416,32,] {data:pobyt.budova}
+#   select ubytovani  [445,416,60,] {type:'map', data:pobyt.ubytovani, options:ms_akce_ubytovan.zkratka, skill:'c|c'}
+#   check cd          [446,441,20,] {data:pobyt.cd}
+#   edit k_poznamka   [214,462,355,50] {data:pobyt.poznamka}
+#   // skupinka
+#   browse s [7,409,,] {type:'smart', rows:4
+#     show id_pobyt
+#     show jmeno [,,170,] {title:'Skupinka'}
+#     proc onsubmit () {
+#       u.b.raise('onrowclick',id_pobyt.get);
+#     }
+#   }
+#   // děti                                                            chůva    s chůvou  standard
+#   browse d [10,209,,] {type:'smart', rows:4, css_rows:'barva,0:nic,1:zeleny,2:cerveny,3:nakursu'
+#     show id_osoba
+#     show jmeno    [,,70,] { title:'Děti', format:'t' }
+#     show vek      [,,20,] { title:'věk', js_pipe:'roku', format:'r' }
+# #     show kat      [,,20,] { title:'kat' }                                                         // fa
+#     show narozeni
+#     show rc_xxxx
+#     show id_spolu
+#     show note     [,,60,] { title:'poznámka', format:'t' }
+#     show skupinka [,,20,] { title:'skupinka', format:'r:e' }
+#     show barva
+#     proc onsubmit() {
+#       neni_ulozeno // warning
+#     | Dite.key_dite.set(id_osoba.get); Dite.key_spolu.set(id_spolu.get);
+#       Dite.key_pobyt.set(u.b.key_pobyt.get);
+#       Dite.modal(260,10)
+#     }
+#   }
+# }
 # ------------------------------------------------------------------------------------------ _ucast2 - účast dětí
 form _ucast2 [,,400,] { css:'ds_form'
   view p: table pobyt
@@ -668,50 +678,6 @@ form _ucast [,,400,] { css:'ds_form'
       WHEN a.ma_cenu THEN
          IF(IF(pouze>0,1,2)*a.cena>platba,1,0)
       ELSE 0 END" }
-    // muž - načte se, i když není na akci
-    show id_spolu_m { expr:"GROUP_CONCAT(DISTINCT IF(t.role='a',s.id_spolu,'')   SEPARATOR '')" }
-    show id_m       { expr:"GROUP_CONCAT(DISTINCT IF(tx.role='a',ox.id_osoba,'') SEPARATOR '')" }
-    show jmeno_m    { expr:"GROUP_CONCAT(DISTINCT IF(tx.role='a',ox.jmeno,'')    SEPARATOR '')" }
-    show prijmeni_m { expr:"GROUP_CONCAT(DISTINCT IF(tx.role='a',ox.prijmeni,'') SEPARATOR '')" }
-    show rodne_m    { expr:"GROUP_CONCAT(DISTINCT IF(tx.role='a',ox.rodne,'')    SEPARATOR '')" }
-    show obcanka_m  { expr:"GROUP_CONCAT(DISTINCT IF(tx.role='a',ox.obcanka,'')  SEPARATOR '')" }
-    show narozeni_m { expr:"GROUP_CONCAT(DISTINCT IF(tx.role='a',ox.narozeni,'') SEPARATOR '')", sql_pipe:'sql_date1' }
-    show rc_xxxx_m  { expr:"GROUP_CONCAT(DISTINCT IF(tx.role='a',ox.rc_xxxx,'')  SEPARATOR '')" }
-    show telefon_m  { expr:"GROUP_CONCAT(DISTINCT IF(tx.role='a',ox.telefon,'')  SEPARATOR '')" }
-    show email_m    { expr:"GROUP_CONCAT(DISTINCT IF(tx.role='a',ox.email,'')    SEPARATOR '')" }
-    show note_m     { expr:"GROUP_CONCAT(DISTINCT IF(tx.role='a',ox.note,'')     SEPARATOR '')" }
-    show vzdelani_m { expr:"GROUP_CONCAT(DISTINCT IF(tx.role='a',ox.vzdelani,'') SEPARATOR '')" }
-    show titul_m    { expr:"GROUP_CONCAT(DISTINCT IF(tx.role='a',ox.titul,'')    SEPARATOR '')" }
-    show zamest_m   { expr:"GROUP_CONCAT(DISTINCT IF(tx.role='a',ox.zamest,'')   SEPARATOR '')" }
-    show zajmy_m    { expr:"GROUP_CONCAT(DISTINCT IF(tx.role='a',ox.zajmy,'')    SEPARATOR '')" }
-    show jazyk_m    { expr:"GROUP_CONCAT(DISTINCT IF(tx.role='a',ox.jazyk,'')    SEPARATOR '')" }
-    show dieta_m    { expr:"GROUP_CONCAT(DISTINCT IF(tx.role='a',ox.dieta,'')    SEPARATOR '')" }
-    show aktivita_m { expr:"GROUP_CONCAT(DISTINCT IF(tx.role='a',ox.aktivita,'') SEPARATOR '')" }
-    show cirkev_m   { expr:"GROUP_CONCAT(DISTINCT IF(tx.role='a',ox.cirkev,'')   SEPARATOR '')" }
-    show clen_m     { expr:"GROUP_CONCAT(DISTINCT IF(tx.role='a',ox.clen,'')     SEPARATOR '')" }
-    show historie_m { expr:"GROUP_CONCAT(DISTINCT IF(tx.role='a',ox.historie,'') SEPARATOR '')", skill:'yaah' }
-    // žena - načte se, i když není na akci
-    show id_spolu_z { expr:"GROUP_CONCAT(DISTINCT IF(t.role='b',s.id_spolu,'')   SEPARATOR '')" }
-    show id_z       { expr:"GROUP_CONCAT(DISTINCT IF(tx.role='b',ox.id_osoba,'') SEPARATOR '')" }
-    show jmeno_z    { expr:"GROUP_CONCAT(DISTINCT IF(tx.role='b',ox.jmeno,'')    SEPARATOR '')" }
-    show prijmeni_z { expr:"GROUP_CONCAT(DISTINCT IF(tx.role='b',ox.prijmeni,'') SEPARATOR '')" }
-    show rodne_z    { expr:"GROUP_CONCAT(DISTINCT IF(tx.role='b',ox.rodne,'')    SEPARATOR '')" }
-    show obcanka_z  { expr:"GROUP_CONCAT(DISTINCT IF(tx.role='b',ox.obcanka,'')  SEPARATOR '')" }
-    show narozeni_z { expr:"GROUP_CONCAT(DISTINCT IF(tx.role='b',ox.narozeni,'') SEPARATOR '')", sql_pipe:'sql_date1' }
-    show rc_xxxx_z  { expr:"GROUP_CONCAT(DISTINCT IF(tx.role='b',ox.rc_xxxx,'')  SEPARATOR '')" }
-    show telefon_z  { expr:"GROUP_CONCAT(DISTINCT IF(tx.role='b',ox.telefon,'')  SEPARATOR '')" }
-    show email_z    { expr:"GROUP_CONCAT(DISTINCT IF(tx.role='b',ox.email,'')    SEPARATOR '')" }
-    show note_z     { expr:"GROUP_CONCAT(DISTINCT IF(tx.role='b',ox.note,'')     SEPARATOR '')" }
-    show vzdelani_z { expr:"GROUP_CONCAT(DISTINCT IF(tx.role='b',ox.vzdelani,'') SEPARATOR '')" }
-    show titul_z    { expr:"GROUP_CONCAT(DISTINCT IF(tx.role='b',ox.titul,'')    SEPARATOR '')" }
-    show zamest_z   { expr:"GROUP_CONCAT(DISTINCT IF(tx.role='b',ox.zamest,'')   SEPARATOR '')" }
-    show zajmy_z    { expr:"GROUP_CONCAT(DISTINCT IF(tx.role='b',ox.zajmy,'')    SEPARATOR '')" }
-    show jazyk_z    { expr:"GROUP_CONCAT(DISTINCT IF(tx.role='b',ox.jazyk,'')    SEPARATOR '')" }
-    show dieta_z    { expr:"GROUP_CONCAT(DISTINCT IF(tx.role='b',ox.dieta,'')    SEPARATOR '')" }
-    show aktivita_z { expr:"GROUP_CONCAT(DISTINCT IF(tx.role='b',ox.aktivita,'') SEPARATOR '')" }
-    show cirkev_z   { expr:"GROUP_CONCAT(DISTINCT IF(tx.role='b',ox.cirkev,'')   SEPARATOR '')" }
-    show clen_z     { expr:"GROUP_CONCAT(DISTINCT IF(tx.role='b',ox.clen,'')     SEPARATOR '')" }
-    show historie_z { expr:"GROUP_CONCAT(DISTINCT IF(tx.role='b',ox.historie,'') SEPARATOR '')", skill:'yaah' }
     // rodina
     show nazev      { data:r.nazev }
     show svatba     { data:r.svatba}
@@ -789,62 +755,62 @@ form _ucast [,,400,] { css:'ds_form'
     show duvod_text { data:p.duvod_text}
     // změna
     proc reload_pobyt() {
-      b.browse_count;
-      [ has_skill('m'); develop.set(conc(
-           'id_pobyt=',key_pobyt.get,', id_rodina=',key_rodina.get,
-           '... id_akce=',key_akce.get,', ceník:',the_cenik.get,', cena:',the_cena.get
-          ,'<br>m: id_spolu=', id_spolu_m.get, ', id_osoba=', id_m.get
-          ,'<br>z: id_spolu=', id_spolu_z.get, ', id_osoba=', id_z.get
-          ,'<br>strava=', strava_oddo.get,', strava_cel=', strava_cel.get
-          ,', strava_pol=', strava_pol.get,'  (duvod_typ=',duvod_typ.get,')'
-          ,'<br>cstrava_cel=', cstrava_cel.get
-          ,'<br>cstrava_pol=', cstrava_pol.get
-      ))];
-      neni_ulozeno // warning
-    | b.browse_count;
-      // přechod na jiný pobyt
-      the_pobyt.set(key_pobyt.get);
-      switch(zalozka.get,
-      'evid', {
-        // načtou se všichni, ale ukážou se jen účastníci akce (pouze: 0=oba, 1=muž, 2=žena)
-        copy_by_name(b,muz.get); muz.key(id_m.get); muz.get.display(eq(pouze.get,0,1));
-        copy_by_name(b,zen.get); zen.key(id_z.get); zen.get.display(eq(pouze.get,0,2));
-        copy_by_name(b,rod.get); rod.key(key_rodina.get);
-        copy_by_name(b,pob.get); pob.key(key_pobyt.get);
-        // počítané položky
-        muz._vek_m.set(roku(narozeni_m.get));
-        zen._vek_z.set(roku(narozeni_z.get));
-        rod._spolu.set(cconc(or(svatba.get,datsvatba.get),roku(datsvatba.get,svatba.get),' '));
-        pob.d.browse_fill(deti.get);
-        pob.s.browse_fill(skup.get);
-      },
-      'plat',{
-        pla.nove; copy_by_name(b,pla.get); pla.key(key_pobyt.get); pla.ini
-      },
-      'akce',{
-        [ id_m.get; a_muz.jme.set(conc(prijmeni_m.get,' ',jmeno_m.get)) | a_muz.jme.init ];
-        a_muz.ucasti(id_m.get);
-        [ id_z.get; a_zen.jme.set(conc(prijmeni_z.get,' ',jmeno_z.get)) | a_zen.jme.init ];
-        a_zen.ucasti(id_z.get);
-      },
-      'foto',{
-        { has_skill("yaa+;faa+;caa+");
-          { u.b.fotka.get; //echo("u.b.fotka='",u.b.fotka.get,"'");
-            // známe fotku
-            alb.drop.set("<br>Fotografii můžeš nahradit přetažením myší ze složky svého počítače sem");
-            alb.smazat.display(1);
-            alb.drop_set(1); alb.drop_init
-          | // není žádná fotka
-            alb.smazat.display(0);
-            alb.drop.set("<br>Sem můžeš přidat fotografii přetažením myší ze složky svého počítače");
-            alb.drop.set_css('drop_area',''); alb.foto.set(''); alb.drop_init
-          | echo('file_drop nelze zahájit')
-          }
-        | u.b.fotka.get; alb.drop_set(1)
-        }
-      },
-      {stop}
-    )}
+#       b.browse_count;
+#       [ has_skill('m'); develop.set(conc(
+#            'id_pobyt=',key_pobyt.get,', id_rodina=',key_rodina.get,
+#            '... id_akce=',key_akce.get,', ceník:',the_cenik.get,', cena:',the_cena.get
+# #           ,'<br>m: id_spolu=', id_spolu_m.get, ', id_osoba=', id_m.get
+# #           ,'<br>z: id_spolu=', id_spolu_z.get, ', id_osoba=', id_z.get
+#           ,'<br>strava=', strava_oddo.get,', strava_cel=', strava_cel.get
+#           ,', strava_pol=', strava_pol.get,'  (duvod_typ=',duvod_typ.get,')'
+#           ,'<br>cstrava_cel=', cstrava_cel.get
+#           ,'<br>cstrava_pol=', cstrava_pol.get
+#       ))];
+#       neni_ulozeno // warning
+#     | b.browse_count;
+#       // přechod na jiný pobyt
+#       the_pobyt.set(key_pobyt.get);
+#       switch(zalozka.get,
+#       'evid', {
+#         // načtou se všichni, ale ukážou se jen účastníci akce (pouze: 0=oba, 1=muž, 2=žena)
+#         copy_by_name(b,muz.get); muz.key(id_m.get); muz.get.display(eq(pouze.get,0,1));
+#         copy_by_name(b,zen.get); zen.key(id_z.get); zen.get.display(eq(pouze.get,0,2));
+#         copy_by_name(b,rod.get); rod.key(key_rodina.get);
+#         copy_by_name(b,pob.get); pob.key(key_pobyt.get);
+#         // počítané položky
+#         muz._vek_m.set(roku(narozeni_m.get));
+#         zen._vek_z.set(roku(narozeni_z.get));
+#         rod._spolu.set(cconc(or(svatba.get,datsvatba.get),roku(datsvatba.get,svatba.get),' '));
+#         pob.d.browse_fill(deti.get);
+#         pob.s.browse_fill(skup.get);
+#       },
+#       'plat',{
+#         pla.nove; copy_by_name(b,pla.get); pla.key(key_pobyt.get); pla.ini
+#       },
+#       'akce',{
+#         [ id_m.get; a_muz.jme.set(conc(prijmeni_m.get,' ',jmeno_m.get)) | a_muz.jme.init ];
+#         a_muz.ucasti(id_m.get);
+#         [ id_z.get; a_zen.jme.set(conc(prijmeni_z.get,' ',jmeno_z.get)) | a_zen.jme.init ];
+#         a_zen.ucasti(id_z.get);
+#       },
+#       'foto',{
+#         { has_skill("yaa+;faa+;caa+");
+#           { u.b.fotka.get; //echo("u.b.fotka='",u.b.fotka.get,"'");
+#             // známe fotku
+#             alb.drop.set("<br>Fotografii můžeš nahradit přetažením myší ze složky svého počítače sem");
+#             alb.smazat.display(1);
+#             alb.drop_set(1); alb.drop_init
+#           | // není žádná fotka
+#             alb.smazat.display(0);
+#             alb.drop.set("<br>Sem můžeš přidat fotografii přetažením myší ze složky svého počítače");
+#             alb.drop.set_css('drop_area',''); alb.foto.set(''); alb.drop_init
+#           | echo('file_drop nelze zahájit')
+#           }
+#         | u.b.fotka.get; alb.drop_set(1)
+#         }
+#       },
+#       {stop})
+    }
     proc onrowclick() { reload_pobyt }
     proc onclick() {
       _vek.width;   _vek.width(0); _vzd.width(0); fotka.width(0);
@@ -857,11 +823,11 @@ form _ucast [,,400,] { css:'ds_form'
 # ----------------------------------------------------- neni_ulozeno
 # ochrana proti neuložené změně, (selže, pokud jsou uloženy)
 proc neni_ulozeno() {
-  var ok: number
-  ok.set(not(and(rod.same,pob.same,muz.same,zen.same,pla.same)));
-  [ ok;
-    warning('neuložené změny pro účastníka <b>',rod.nazev.get,'</b> použij [Zpět] nebo [Uložit]') ];
-  return(ok)
+#   var ok: number
+#   ok.set(not(and(rod.same,pob.same,muz.same,zen.same,pla.same)));
+#   [ ok;
+#     warning('neuložené změny pro účastníka <b>',rod.nazev.get,'</b> použij [Zpět] nebo [Uložit]') ];
+#   return(ok)
 }
 # --------------------------------------------------------------------------------------------- _cmd
 form _cmd [,,200,] { css:'ds_form'
@@ -869,74 +835,74 @@ form _cmd [,,200,] { css:'ds_form'
   button [6,525,,] {title:'Nový', skill:'yaa+|yaa+;faa+|faa+;caa+|caa+',
     help:'Vytvoření nového jednotlivce (na akce muž) nebo páru (na akci oba) a vložení jako účastníka'
     proc onclick() {   // založení páru a jeho zařazení na akci
-      var a_pouze: number
-      neni_ulozeno // warning
-    | { u.b.browse_count; a_pouze.set(u.b.pouze.get) | a_pouze.set(0) };
-      the_pobyt.set(0);
-      page_clear;
-      b_display(0);
-      // naplnění základních (strukturotvorných) položek pro pár nebo jednotlivce podle předchozího
-      pob.id_akce.set(the_duakce.get); pob.id_akce.change;
-      rod.nazev.set(''); rod.nazev.change;
-      pob.pouze.key(a_pouze.get); pob.pouze.change;
-      rod.nazev.focus
+#       var a_pouze: number
+#       neni_ulozeno // warning
+#     | { u.b.browse_count; a_pouze.set(u.b.pouze.get) | a_pouze.set(0) };
+#       the_pobyt.set(0);
+#       page_clear;
+#       b_display(0);
+#       // naplnění základních (strukturotvorných) položek pro pár nebo jednotlivce podle předchozího
+#       pob.id_akce.set(the_duakce.get); pob.id_akce.change;
+#       rod.nazev.set(''); rod.nazev.change;
+#       pob.pouze.key(a_pouze.get); pob.pouze.change;
+#       rod.nazev.focus
   } }
   // Zpět a Uložit
   label  [473,520,102,30] { css:'ae_parm', skill:'yaa+;faa+;caa+' }
   button [479,525,,] {title:'Zpět',  help:'Neměnit změněná data', skill:'yaa+|yaa+;faa+|faa+;caa+|caa+'
     proc onclick() {
-      #echo('ZPĚT: tab_act=',u.b.browse_active,', key=',u.b.browse_key,', nazev=',u.b.nazev.get);
-      // potlačení ochrany proti neuložené změně
-      rod.plain; pob.plain; muz.plain; zen.plain;
-      b_display(1);
-      reload(u.b.browse_key);
+#       #echo('ZPĚT: tab_act=',u.b.browse_active,', key=',u.b.browse_key,', nazev=',u.b.nazev.get);
+#       // potlačení ochrany proti neuložené změně
+#       rod.plain; pob.plain; muz.plain; zen.plain;
+#       b_display(1);
+#       reload(u.b.browse_key);
   } }
   button [525,525,,] {title:'Uložit',  help:'Uložit změněná data', skill:'yaa+|yaa+;faa+|faa+;caa+|caa+'
     proc onclick() {
-      var ok: number
-      the_pobyt.get;
-      // oprava
-      [ rod.same | rod.save; rod.plain ];
-      [ pob.same
-      | eq(u.b.pouze.get,pob.pouze.key);
-        pob.save; pob.plain
-      | // došlo ke změně počtu dospělých účastníků - nutno opravit spojku 'spolu'
-        [ eq(u.b.pouze.get,2); eq(pob.pouze.key,1,0);   // +m
-          spolu.insert_record(object('id_osoba',muz.key,'id_pobyt',the_pobyt.get)) ];
-        [ eq(u.b.pouze.get,1); eq(pob.pouze.key,2,0);   // +z
-          spolu.insert_record(object('id_osoba',zen.key,'id_pobyt',the_pobyt.get)) ];
-        [ eq(u.b.pouze.get,0,1); eq(pob.pouze.key,2);   // -m
-          spolu.delete_record(conc('id_spolu=',muz.id_spolu_m.get)) ];
-        [ eq(u.b.pouze.get,0,2); eq(pob.pouze.key,1);   // -z
-          spolu.delete_record(conc('id_spolu=',zen.id_spolu_z.get)) ];
-        pob.save; pob.plain
-      ];
-      [ muz.same | muz.sex.set(1); muz.sex.change; osoba_ulozit(muz,'a',rod.key) ];
-      [ zen.same | zen.sex.set(2); zen.sex.change; osoba_ulozit(zen,'b',rod.key) ];
-      reload(the_pobyt.get);
-    | // přidání - kontroly postačitelnosti údajů
-      eq(pob.pouze.key,0,1); muz.same;
-      warning("nelze uložit: chybí jakýkoliv údaj o muži - účastníkovi akce");
-    | eq(pob.pouze.key,0,2); zen.same;
-      warning("nelze uložit: chybí jakýkoliv údaj o ženě - účastnici akce");
-    | eq(pob.pouze.key,0); eq(rod.nazev.get,'');
-      warning("nelze uložit: chybí společný název rodiny");
-    | // vlastní přidání
-      rod.insert; pob.insert; the_pobyt.set(pob.key);
-      [ not(muz.same); muz.sex.set(1); muz.sex.change; osoba_ulozit(muz,'a',rod.key) ];
-      [ not(zen.same); zen.sex.set(2); zen.sex.change; osoba_ulozit(zen,'b',rod.key) ];
-      rod.plain; pob.plain;
-      reload(the_pobyt.get);
-      b_display(1);
+#       var ok: number
+#       the_pobyt.get;
+#       // oprava
+#       [ rod.same | rod.save; rod.plain ];
+#       [ pob.same
+#       | eq(u.b.pouze.get,pob.pouze.key);
+#         pob.save; pob.plain
+#       | // došlo ke změně počtu dospělých účastníků - nutno opravit spojku 'spolu'
+#         [ eq(u.b.pouze.get,2); eq(pob.pouze.key,1,0);   // +m
+#           spolu.insert_record(object('id_osoba',muz.key,'id_pobyt',the_pobyt.get)) ];
+#         [ eq(u.b.pouze.get,1); eq(pob.pouze.key,2,0);   // +z
+#           spolu.insert_record(object('id_osoba',zen.key,'id_pobyt',the_pobyt.get)) ];
+#         [ eq(u.b.pouze.get,0,1); eq(pob.pouze.key,2);   // -m
+#           spolu.delete_record(conc('id_spolu=',muz.id_spolu_m.get)) ];
+#         [ eq(u.b.pouze.get,0,2); eq(pob.pouze.key,1);   // -z
+#           spolu.delete_record(conc('id_spolu=',zen.id_spolu_z.get)) ];
+#         pob.save; pob.plain
+#       ];
+#       [ muz.same | muz.sex.set(1); muz.sex.change; osoba_ulozit(muz,'a',rod.key) ];
+#       [ zen.same | zen.sex.set(2); zen.sex.change; osoba_ulozit(zen,'b',rod.key) ];
+#       reload(the_pobyt.get);
+#     | // přidání - kontroly postačitelnosti údajů
+#       eq(pob.pouze.key,0,1); muz.same;
+#       warning("nelze uložit: chybí jakýkoliv údaj o muži - účastníkovi akce");
+#     | eq(pob.pouze.key,0,2); zen.same;
+#       warning("nelze uložit: chybí jakýkoliv údaj o ženě - účastnici akce");
+#     | eq(pob.pouze.key,0); eq(rod.nazev.get,'');
+#       warning("nelze uložit: chybí společný název rodiny");
+#     | // vlastní přidání
+#       rod.insert; pob.insert; the_pobyt.set(pob.key);
+#       [ not(muz.same); muz.sex.set(1); muz.sex.change; osoba_ulozit(muz,'a',rod.key) ];
+#       [ not(zen.same); zen.sex.set(2); zen.sex.change; osoba_ulozit(zen,'b',rod.key) ];
+#       rod.plain; pob.plain;
+#       reload(the_pobyt.get);
+#       b_display(1);
     }
-    proc osoba_ulozit(frm,role,rod_key) {
-      frm.get.same
-    | frm.get.key; frm.get.save; frm.get.plain
-    | frm.get.insert;
-      tvori.insert_record(object('id_osoba',frm.get.key,'id_rodina',rod_key,'role',role));
-      spolu.insert_record(object('id_osoba',frm.get.key,'id_pobyt',the_pobyt.get));
-      frm.get.plain
-    }
+#     proc osoba_ulozit(frm,role,rod_key) {
+#       frm.get.same
+#     | frm.get.key; frm.get.save; frm.get.plain
+#     | frm.get.insert;
+#       tvori.insert_record(object('id_osoba',frm.get.key,'id_rodina',rod_key,'role',role));
+#       spolu.insert_record(object('id_osoba',frm.get.key,'id_pobyt',the_pobyt.get));
+#       frm.get.plain
+#     }
   }
   // PŘIDAT z AKCE
   button pridat_a   [69,525,,] {title:'Přidat: z akce', skill:'yaa+|yaa+;faa+|faa+;caa+|caa+',
@@ -986,7 +952,10 @@ form _cmd [,,200,] { css:'ds_form'
       Dite.modal(260,10)
   } }
   // procedury
-  proc b_display(on) { u.b.display(on); pob.d.display(on); pob.s.display(on); }
+  proc b_display(on) {
+    u.b.display(on);
+#     pob.d.display(on); pob.s.display(on);
+  }
 }
 # ------------------------------------------------------------------------------------------- _cmd_p
 # uložení změn v platbách
