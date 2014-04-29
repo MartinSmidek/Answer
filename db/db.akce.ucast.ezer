@@ -122,7 +122,8 @@ proc pary_add(p,i) {  // používají panely PridaniJmenem1, PridaniJmenem2 a Pr
   p.chck.get;
   pall.set(p.all.get);
   // zamezení duplicit - pečounů si teď nevšímáme
-  ret.set(ask('akce_pridej',the_duakce.get,pall.get('muz'),pall.get('zen'),"funkce!=99",pall.get('nazev')));
+#   ret.set(ask('akce_pridej',the_duakce.get,pall.get('muz'),pall.get('zen'),"funkce!=99",pall.get('nazev')));
+  ret.set(ask('akce_pridej',the_duakce.get,pall.get,"funkce!=99"));
   { ret.ok; reload(ret.pobyt);
   | warning(ret.msg) }
 }

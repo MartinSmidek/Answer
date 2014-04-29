@@ -512,40 +512,29 @@ form _osoba2 {
   const L=0; T=10
   label [L+0,T+0,300,500] { css:'ae_work'}
   // identifikace
-  label          [L+5,T+2,89,] {title:'příjmení/rodné'}
-  field prijmeni [L+5,T+17,89,] {data:o.prijmeni, help:'příjmení'}
+  field prijmeni [L+5,T+17,89,] {data:o.prijmeni, help:'příjmení', title:'^příjmení/rodné'}
   field rodne    [L+5,T+52,89,] {data:o.rodne, help:'rodné příjmení'}
-  label          [L+109,T+2,78,] {title:'jméno'}
-  field jmeno    [L+109,T+17,79,] {data:o.jmeno}
+  field jmeno    [L+109,T+17,79,] {data:o.jmeno, title:'^jméno'}
   radio sex [L+194,T+-1,50,35] { data:o.sex, value:'1'
     case [0,2,50,] { title:'muž', expr:'1' }
     case [0,17,50,] { title:'žena', expr:'2' }
     proc onchange() { echo('sex=',this.get) }
   }
-  label          [L+108,T+37,33,] {title:'narození'}
-  field narozeni [L+107,T+53,85,] {type:'date', data:o.narozeni, format:'rR:e'}
-  label          [L+198,T+37,41,] {title:'nnnn rč'}
-  field rodnexxxx[L+197,T+53,37,] {data:o.rc_xxxx, format:'r:e'}
-  label          [L+248,T+37,27,] {title:'mrop'}
-  field iniciace [L+245,T+53,37,] {data:o.iniciace, format:'r:e'}
+  field narozeni [L+107,T+53,85,] {type:'date', data:o.narozeni, format:'rR:e',title:'^narození'}
+  field rodnexxxx[L+197,T+53,37,] {data:o.rc_xxxx, format:'r:e', title:'^nnnn rč'}
+  field iniciace [L+245,T+53,37,] {data:o.iniciace, format:'r:e', title:'^mrop'}
   // kontakt
-  label          [L+5,T+75,100,] {title:'ulice'}
-  field ulice    [L+5,T+90,162,] {data:o.ulice}
-  label          [L+179,T+75,39,] {title:'psč'}
-  field psc      [L+179,T+90,40,] {data:o.psc}
-  label          [L+230,T+75,100,] {title:'obec'}
-  field obec     [L+229,T+90,131,] {data:o.obec}
-  label          [L+14,T+142,34,] {title:'telefon'}
-  field telefon  [L+51,T+138,212,] {type:'list', data:o.telefon}
-  label          [L+16,T+195,33,] {title:'dieta', format:'r'}
-  select dieta   [L+52,T+191,82,] {type:'map', data:o.dieta, options:ms_akce_dieta.zkratka }
-  label          [L+8,T+167,40,] {title:'e-mail', format:'r'}
-  field email    [L+52,T+163,212,] {type:'list', data:o.email}
+  field ulice    [L+5,T+90,162,] {data:o.ulice,title:'^ulice'}
+  field psc      [L+179,T+90,40,] {data:o.psc,title:'^psč'}
+  field obec     [L+229,T+90,131,] {data:o.obec,title:'^obec'}
+  field telefon  [L+51,T+138,212,] {type:'list', data:o.telefon,title:'telefon'}
+  select dieta   [L+52,T+191,82,] {type:'map', data:o.dieta, options:ms_akce_dieta.zkratka,title:'dieta' }
+  field email    [L+52,T+163,212,] {type:'list', data:o.email, title:'e-mail'}
   check nomail   [L+268,T+137,121,] {title:"nechce informace", data:o.nomail,
     help:"nepoužívat mailovou adresu pro rozesílání hromadných nabídek a informací"
     proc onchange() {
       alert("napiš prosím do poznámky důvod a datum odmítnutí hromadně rozesílaných informací")
   } }
-  label          [L+-3,T+165,51,] {title:'poznámka'}
-  edit  pozn     [L+5,T+217,286,60] {data:o.note}
+  edit  pozn     [L+5,T+217,286,60] {data:o.note, title:'^poznámka'}
+  chat  pozn2    [L+5,T+300,286,60] {data:o.note, divide:50, title:'^chat'}
 }
