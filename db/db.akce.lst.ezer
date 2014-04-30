@@ -206,7 +206,7 @@ form _page [,,285,500] {
     | // oprava
       form.key; form.save; form.load; info.sey.browse_seek
     | // přidání
-      or(has_skill("faa+ caa+"),lt(fdate("Y",datum_od.get),2011));
+      or(has_skill("faa+;caa+"),lt(fdate("Y",datum_od.get),2011));
       form.insert; form.load;
       info.sey.raise('onrowclick',info.sey.browse_seek(conc('da2.id_duakce=',form.key)))
     | alert("Vkládat lze jen 'historické akce', po roce 2010 jen přes intranet")                    //ys
