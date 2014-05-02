@@ -6179,7 +6179,7 @@ function akce_auto_jmena1($patt,$par) {  #trace();
          FROM osoba
          LEFT JOIN tvori USING(id_osoba)
          WHERE concat(trim(prijmeni),' ',jmeno) LIKE '$patt%' AND prijmeni!=''
-           AND DATEDIFF('$dnes',narozeni)/365.2425>18
+           AND (narozeni='0000-00-00' OR DATEDIFF('$dnes',narozeni)/365.2425>18)
            /*AND (ISNULL(role) OR role!='d')*/
          ORDER BY prijmeni,jmeno LIMIT $limit";
   $res= mysql_qry($qry);
