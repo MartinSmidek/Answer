@@ -7775,6 +7775,7 @@ function dop_mai_pocet($id_dopis,$dopis_var,$cond='',$recall=false) {  trace();
 # $info = {_adresy,_ids[,_cond]}   _cond
 function dop_mai_posli($id_dopis,$info) {  trace();
   $num= 0;
+  $err= '';
 //                                                         debug($info);
   // smaž starý seznam
   $qry= "DELETE FROM mail WHERE id_dopis=$id_dopis ";
@@ -7803,7 +7804,7 @@ function dop_mai_posli($id_dopis,$info) {  trace();
       if ( $email[0]!='*' ) {
         $id_pobyt= isset($pobyty[$i]) ? $pobyty[$i] : 0;
         // pokud dopis obsahuje proměnné, personifikuj obsah
-        $body= $is_vars ? dop_mail_personify($obsah,$vars,$id_pobyt) : '';
+        $body= $is_vars ? dop_mail_personify($obsah,$vars,$id_pobyt,$err) : '';
         $qr= "INSERT mail (id_davka,znacka,stav,id_dopis,id_clen,id_pobyt,email,body)
               VALUE (1,'@',0,$id_dopis,$id,$id_pobyt,'$email','$body')";
 //                                         display("$i:$qr");
@@ -7830,21 +7831,29 @@ function dop_mai_posli($id_dopis,$info) {  trace();
   $qr= "UPDATE dopis SET pocet=$num WHERE id_dopis=$id_dopis";
 //                                                         fce_log("dop_mai_posli: UPDATE");
   $rs= mysql_qry($qr);
-  return true;
+  return $err;
 }
 # -------------------------------------------------------------------------------------------------- dop_mail_personify
 # spočítá proměnné podle id_pobyt a dosadí do textu dopisu
 # vrátí celý text
-function dop_mail_personify($obsah,$vars,$id_pobyt) {
+function dop_mail_personify($obsah,$vars,$id_pobyt,&$err) {
   $text= $obsah;
-  list($duvod_typ,$duvod_text,$id_hlavni,$id_soubezna)=
-    select('duvod_typ,duvod_text,IFNULL(id_hlavni,0),id_duakce',
+  list($duvod_typ,$duvod_text,$id_hlavni,$id_soubezna,
+       $platba1,$platba2,$platba3,$platba4,$poplatek_d)=
+    select('duvod_typ,duvod_text,IFNULL(id_hlavni,0),id_duakce,
+      platba1,platba2,platba3,platba4,poplatek_d',
     "pobyt LEFT JOIN akce ON id_hlavni=pobyt.id_akce",
     "id_pobyt=$id_pobyt");
   foreach($vars as $var) {
     $val= '';
     switch ($var) {
     case 'akce_cena':
+      // zjisti, zda je cena stanovena
+      if ($platba1+$platba2+$platba3+$platba4+$poplatek_d==0) {
+        // není :-(
+        $err.= "<br>POZOR: všichni účastníci nemají stanovenu cenu (pobyt=$id_pobyt)";
+        break;
+      }
       if ( $duvod_typ ) {
         $val= $duvod_text;
       }
