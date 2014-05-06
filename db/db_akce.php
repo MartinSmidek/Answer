@@ -33,6 +33,45 @@ function test1() {
 end:
   return $x;
 }
+# ================================================================================================== ÚČASTNÍCI 2
+# -------------------------------------------------------------------------------- akce_osoba_rodiny
+# vrátí rodiny dané osoby ve formátu pro select (název:id_rodina;...)
+function akce_osoba_rodiny($id_osoba) {
+  $rodiny= select1("GROUP_CONCAT(CONCAT(nazev,':',id_rodina) SEPARATOR ',')",
+    "rodina JOIN tvori USING(id_rodina)","id_osoba=$id_osoba");
+  $rodiny= "-:0".($rodiny ? ',' : '').$rodiny;
+                                                display("akce_osoba_rodiny($id_osoba)=$rodiny");
+  return $rodiny;
+}
+# ------------------------------------------------------------------------------- akce_pobyt_rodinny
+# definuje pobyt jako rodinný
+function akce_pobyt_rodinny($id_pobyt,$id_rodina) { trace();
+  query("UPDATE pobyt SET i0_rodina=$id_rodina WHERE id_pobyt=$id_pobyt");
+  return 1;
+}
+# ------------------------------------------------------------------------------ akce_pobyt_skupinka
+# vrátí členy skupinky ve formátu browse_fill
+function akce_pobyt_skupinka($id_akce,$skup) { trace();
+  $data= array();
+  $qs= mysql_qry("
+    SELECT p.id_pobyt,IF(p.i0_rodina
+      ,CONCAT(pr.nazev,' ',GROUP_CONCAT( CONCAT(LEFT(po.jmeno,1),'.') ORDER BY role SEPARATOR ' a '))
+      ,GROUP_CONCAT(DISTINCT
+        CONCAT(pso.prijmeni,' ',LEFT(pso.jmeno,1),'.') ORDER BY role SEPARATOR ' a ')) as _jm
+    FROM pobyt AS p
+    LEFT JOIN rodina AS pr ON pr.id_rodina=p.i0_rodina
+    JOIN spolu AS ps ON ps.id_pobyt=p.id_pobyt
+    LEFT JOIN tvori AS pt ON pt.id_rodina=p.i0_rodina AND role IN ('a','b') AND ps.id_osoba=pt.id_osoba
+    LEFT JOIN osoba AS po ON po.id_osoba=pt.id_osoba
+    JOIN osoba AS pso ON pso.id_osoba=ps.id_osoba
+    WHERE id_akce=$id_akce AND skupina=$skup
+    GROUP BY p.id_pobyt
+    ORDER BY p.id_pobyt");
+  while (($s= mysql_fetch_object($qs))) {
+    $data[]= "{$s->id_pobyt}|{$s->_jm}";
+  }
+  return implode('|',$data);
+}
 # ================================================================================================== DUPL
 # ------------------------------------------------------------------------------------- ROLLBACK_ALL
 # jen pro ladění - vrácení do původního stavu

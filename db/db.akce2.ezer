@@ -223,6 +223,7 @@ table akce { key_id:'id_duakce'
 table pobyt { key_id:'id_pobyt'
   number id_pobyt
   number id_akce
+  number i0_rodina // jen pro rodinný pobyt
   # number id_osoba -- 131004 zrušeno
   number typ            // 10,11,20,21
   number skupina
@@ -506,35 +507,133 @@ map ms_akce_dite_kat: table _cis {where:"druh='ms_akce_dite_kat'",  order:'porad
 # ================================================================================================== TEST
 panel test {type:'plain', _sys:'*', title:"TEST", include:'onload,db.akce2.test',skill:'m'}
 # ================================================================================================== formuláře
-form _osoba2 {
-  view o: table osoba  // 679=já, 680=Marie
-  proc load_osoba(id) { form.key(id); form.load }
-  const L=0; T=10
-  label [L+0,T+0,300,500] { css:'ae_work'}
+# ----------------------------------------------------------------------------------------- _rodina2
+form _rodina2 {
+  var key_rodina: number
+  var key_pobyt: number
+  // globální procedury
+  proc load_rodina(id_pobyt,id_rodina) {
+    key_rodina.set(id_rodina);
+    key_pobyt.set(id_pobyt);
+    form.display(2,'rod');
+    { id_rodina;
+      form.load(id_rodina)
+    | form.init
+    };
+    id.set(form.key);
+    cleni.browse_load("id_rodina=@rodina OR id_pobyt=@pobyt",'','','','','',
+      conc("SET @rodina:=",id_rodina,",@pobyt:=",id_pobyt));
+    spolu.set(cconc(datsvatba.get,conc(roku(datsvatba.get,svatba.get),' let'),' '));
+#     spolu.set(cconc(or(svatba.get,datsvatba.get),roku(datsvatba.get,svatba.get),' '));
+  }
+  proc get_osobu2() { return(
+    object('ido',cleni.key_osoba.get(2),'ids',cleni.key_spolu.get(2),'idt',cleni.key_tvori.get(2))
+  )}
+  proc zmena_rodiny() { echo("nic") }
+  // alternující procedury
+  proc show_osoba(ido,ids,idt) { echo(ido)  }
+  # údaje o rodině
+  const Lr=143; Tr=10
+  view r: table rodina
+  label [0,Tr+0,316,322] {css:'ae_form', title:'rodinné údaje'}
+  label id [260,16,50,] { format:'r' }
   // identifikace
-  field prijmeni [L+5,T+17,89,] {data:o.prijmeni, help:'příjmení', title:'^příjmení/rodné'}
-  field rodne    [L+5,T+52,89,] {data:o.rodne, help:'rodné příjmení'}
-  field jmeno    [L+109,T+17,79,] {data:o.jmeno, title:'^jméno'}
-  radio sex [L+194,T+-1,50,35] { data:o.sex, value:'1'
+  field nazev    [Lr+5,Tr+32,104,] {tag:'rod', data:r.nazev, help:'název rodiny', title:'^název rodiny'}
+  field spz      [Lr+5,Tr+66,58,]  {tag:'rod', data:r.spz, format:'r:e',title:'^SPZ auta'}
+  label spolu    [Lr+135,Tr+52,26,] {tag:'rod' }
+  field svatba   {data:rodina.svatba}
+  field datsvatba[Lr+82,Tr+66,85,] {tag:'rod', type:'date', data:r.datsvatba, format:'rR:e',title:'^od svatby'}
+  // kontakt
+  field ulice    [Lr+5,Tr+101,161,] {tag:'rod', data:r.ulice,title:'^ulice'}
+  field psc      [Lr+5,Tr+136,40,] {tag:'rod', data:r.psc,title:'^psč'}
+  field obec     [Lr+52,Tr+136,61,] {tag:'rod', data:r.obec,title:'^obec'}
+  select stat    [Lr+121,Tr+136,45,] {tag:'rod', format:'r:e', title:'^stát'}
+  field telefon  [Lr+5,Tr+171,160,] {tag:'rod', type:'list', data:r.telefony,title:'^telefony'}
+  field email    [Lr+5,Tr+206,160,] {tag:'rod', type:'list', data:r.emaily, title:'^e-maily'}
+  // rodinná poznámka
+  edit  pozn     [5,Tr+242,302,74] {tag:'rod', data:r.note, title:'^poznámka'}
+  // členové rodiny
+  view o: table osoba
+  view tr: table tvori {join_type:"LEFT", join:"ON tr.id_osoba=o.id_osoba AND tr.id_rodina=@rodina"}
+  view so: table spolu {join_type:"LEFT", join:"ON so.id_osoba=o.id_osoba AND so.id_pobyt=@pobyt"}
+  label [7,Tr+19,132,] { title:'členi rodiny (žlutě nečleni)' }
+  browse cleni [5,Tr+35,107,] { rows:9, css_rows:'barva,0:neucast,2:blue'
+    show key_osoba {data:o.id_osoba}
+    show key_tvori {data:tr.id_tvori}
+    show key_spolu {data:so.id_spolu}
+    show barva {expr:"IF(ISNULL(id_spolu),0,IF(ISNULL(id_rodina),2,1))"}
+    show jmeno [,,80,] {title:'jméno',
+      expr:"IF(ISNULL(tr.id_tvori),CONCAT(o.prijmeni,' ',o.jmeno),REPLACE(o.jmeno,' ','-'))"}
+    show vek   [,,20,] {title:'věk', data:o.narozeni, js_pipe:'roku', format:'r' }
+    show role  [,,10,] {title:'role', expr:"IFNULL(tr.role,'-')" }
+    proc onrowclick() {
+      form.display(key_tvori.get,'rod');
+      show_osoba(key_osoba.get,key_spolu.get,key_tvori.get)
+    }
+  }
+  // nastavení účasti jako rodinné
+  select rodiny [Lr+5,Tr+32,104,] {tag:'add', format:'t', title:'^název rodiny',
+    help:'výběr rodiny podle nastaveného účastníka a její přiřazení k pobytu'
+    proc onchanged() { ask('akce_pobyt_rodinny',key_pobyt.get,this.key); zmena_rodiny
+  }}
+  button zmen_rodinu [Lr+120,Tr+30,50,] {title:'změna', help:'změna rodiny pobytu'
+    proc onclick() { rodiny.display(1);
+      rodiny.selects(ask('akce_osoba_rodiny',cleni.key_osoba.get));
+      rodiny.key(key_rodina.get);
+  }}
+}
+# ------------------------------------------------------------------------------------------ _osoba2
+form _osoba2 { style:'z-index:5'
+  // globální procedury
+  proc load_osoba(ido) { form.key(ido); form.load; id.set(form.key) }
+
+  const L=0; T=10
+  label [L+0,T+0,222,322] { tag:'z', css:'ae_form', title:'kontaktní údaje'}
+  label [L+0,T+0,222,526] { tag:'r', css:'ae_form', format:'n', title:'kontaktní a osobní údaje'}
+  label id [166,16,50,] { format:'r' }
+
+  // společné
+  view o: table osoba
+
+  // základní údaje - jsou vždy vidět
+  field prijmeni [L+5,T+32,112,] {data:o.prijmeni, help:'příjmení', title:'^příjmení'}
+  field rodne    [L+5,T+66,72,] {data:o.rodne, help:'rodné příjmení', title:'^rodné příjmení'}
+  field jmeno    [L+130,T+32,79,] {data:o.jmeno, title:'^jméno'}
+  radio sex [L+81,T+48,50,35] { data:o.sex, value:'1'
     case [0,2,50,] { title:'muž', expr:'1' }
     case [0,17,50,] { title:'žena', expr:'2' }
     proc onchange() { echo('sex=',this.get) }
   }
-  field narozeni [L+107,T+53,85,] {type:'date', data:o.narozeni, format:'rR:e',title:'^narození'}
-  field rodnexxxx[L+197,T+53,37,] {data:o.rc_xxxx, format:'r:e', title:'^nnnn rč'}
-  field iniciace [L+245,T+53,37,] {data:o.iniciace, format:'r:e', title:'^mrop'}
+  field narozeni [L+130,T+66,85,] {type:'date', data:o.narozeni, format:'rR:e',title:'^narození'}
+  field umrti    [L+172,T+101,43,] {data:o.umrti, format:'r:e',title:'^rok úmrtí'}
   // kontakt
-  field ulice    [L+5,T+90,162,] {data:o.ulice,title:'^ulice'}
-  field psc      [L+179,T+90,40,] {data:o.psc,title:'^psč'}
-  field obec     [L+229,T+90,131,] {data:o.obec,title:'^obec'}
-  field telefon  [L+51,T+138,212,] {type:'list', data:o.telefon,title:'telefon'}
-  select dieta   [L+52,T+191,82,] {type:'map', data:o.dieta, options:ms_akce_dieta.zkratka,title:'dieta' }
-  field email    [L+52,T+163,212,] {type:'list', data:o.email, title:'e-mail'}
-  check nomail   [L+268,T+137,121,] {title:"nechce informace", data:o.nomail,
+  field ulice    [L+5,T+101,161,] {data:o.ulice,title:'^ulice'}
+  field psc      [L+5,T+136,40,] {data:o.psc,title:'^psč'}
+  field obec     [L+52,T+136,114,] {data:o.obec,title:'^obec'}
+  select stat    [L+172,T+136,45,] {format:'r:e', title:'^stát'}
+  field telefon  [L+5,T+171,212,] {type:'list', data:o.telefon,title:'^telefon'}
+  check nomail   [L+48,T+189,169,] {title:"neposílat hromadné informace", data:o.nomail,
     help:"nepoužívat mailovou adresu pro rozesílání hromadných nabídek a informací"
     proc onchange() {
       alert("napiš prosím do poznámky důvod a datum odmítnutí hromadně rozesílaných informací")
   } }
-  edit  pozn     [L+5,T+217,286,60] {data:o.note, title:'^poznámka'}
-  chat  pozn2    [L+5,T+300,286,60] {data:o.note, divide:50, title:'^chat'}
+  field email    [L+5,T+207,212,] {type:'list', data:o.email, title:'^e-mail'}
+  // osobní poznámka
+  edit  pozn     [L+5,T+242,212,74] {data:o.note, title:'^poznámka'}
+
+  // zvláštní údaje - budou vidět jen pro oprávněné
+  const Lz=0; Tz=300
+  field iniciace [Lz+173,Tz+81,40,] {tag:'r', data:o.iniciace, format:'nr:e', title:'^mrop'}
+  field uvitano  [Lz+123,Tz+81,40,] {tag:'r', data:o.uvitano, format:'nr:e', title:'^vítej'}
+  select clen       [Lz+6,Tz+81,70,] {tag:'r', type:'map', format:'n', data:o.clen, options:ms_akce_clen.zkratka, title:'^vztah k nám'}
+  field obcanka     [Lz+6,Tz+44,70,] {tag:'r', data:o.obcanka, format:'n', title:'^občanka'}
+  field rc          [Lz+99,Tz+44,70,] {tag:'r', format:'nd', title:'^rodné číslo'}
+  field rcxxxx      [Lz+175,Tz+44,37,] {tag:'r', data:o.rc_xxxx, format:'n:e', title:'^/nnnn'}
+  select cirkev     [Lz+48,Tz+110,167,] {tag:'r', type:'map', data:o.cirkev, format:'n', options:ms_akce_cirkev.zkratka, title:'církev'}
+  select vzdelani   [Lz+48,Tz+152,114,] {tag:'r', type:'map', data:o.vzdelani, format:'n', options:ms_akce_vzdelani.zkratka, title:'vzdělání'}
+  select titul      [Lz+162,Tz+151,54,] {tag:'r', type:'map', data:o.titul, format:'n', options:ms_akce_titul.zkratka, title:'^titul'}
+  field zamest      [Lz+48,Tz+173,167,] {tag:'r', data:o.zamest, format:'n', title:'zaměst.'}
+  field zajmy       [Lz+48,Tz+194,167,] {tag:'r', data:o.zajmy, format:'n', title:'zájmy'}
+  field jazyk       [Lz+48,Tz+131,94,] {tag:'r', data:o.jazyk, format:'n', title:'jazyky'}
+  field aktivita    [Lz+48,Tz+215,167,] {tag:'r', data:o.aktivita, format:'n', title:'aktivita'}
 }

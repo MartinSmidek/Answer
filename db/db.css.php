@@ -40,6 +40,7 @@ echo <<<__EOD
 .title_ref a { color:#ffffff !important; }
 .karta_info {
   background-color:$b8_brow; overflow: auto; }
+.neucast  { text-decoration:line-through; color:#aaaaaa; }
 
 .page {
   font-size:9pt !important; padding:10px; line-height:13pt; }
@@ -85,6 +86,11 @@ echo <<<__EOD
 .ae_work        {
   background-color:$b_work; z-index:0; /*behavior:url(ck/border-radius-ie8.htc);*/
   -moz-border-radius:5px; -webkit-border-radius:5px; -khtml-border-radius:5px; }
+.ae_form        {
+  background-color:$b_work; z-index:0; border:1px solid $s1_brow; color:$s1_brow;
+  border-radius:3px; text-indent:7px; font-weight:bold; }
+.form_switch    {
+  background-color:$b_work; cursor:default; font-weight:bold; }
 .ae_part        {
   background-color:$b_part; border:1px solid $s1_brow; z-index:0;  /*behavior:url(ck/border-radius-ie8.htc);*/
   /*-moz-border-radius:5px; -webkit-border-radius:5px; -khtml-border-radius:5px;*/  }
