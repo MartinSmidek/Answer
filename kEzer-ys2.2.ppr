@@ -11,12 +11,6 @@ FileFormat=0
 ProjectFilesOnly=0
 [Project tree]
 kEzer-ys2
-	-wiki
-		-db
-		-cr
-		+ezer
-			wiki\ezer_nastaveni.wiki
-		wiki\cr_system.wiki
 	-cr
 		cr\$.ezer
 		.htaccess
@@ -28,28 +22,6 @@ kEzer-ys2
 		cr\cr_fce.js
 		cr\cr_fce.php
 		cr\cr_lide.php
-	-rr
-		rr\$.ezer
-		myslenky.php
-		robots.txt
-		rr.inc
-		rr.php
-		rr\rr_fce.php
-	-fis - θαst
-		fis\fis_pdf.php
-		fis\fis_tcpdf.php
-	+fa
-		fa\$.ezer
-		fa\fa.css.php
-		fa.inc
-		fa\fa.lide.ezer
-		fa.php
-		fa\fa.syst.dat.ezer
-		fa\fa_fce.js
-		fa\fa_fce.php
-		fa\fa_lide.php
-	-skins
-		skins\colors.php
 	+db
 		db\$.ezer
 		db\db.akce.dup.ezer
@@ -64,33 +36,37 @@ kEzer-ys2
 		db\db.akce.tisk.ezer
 		db\db.akce.ucast.ezer
 		db\db.akce.vse.ezer
-		db\db.akce2.ezer
 		db\db.css.php
 		db.inc
 		db\db_akce.php
 		db\db_fce.js
-	-GData
-		_\ZendGdata-1.10.4\demos\Zend\Gdata\Docs.php
-	-sql,konverze
-		sql\answer_dotazy.sql
-		sql\backup_ys_setkani.bat
-		sql\fa_mysql.bat
-		sql\fa_mysql.PRG
-		sql\fa_mysql_all.bat
-		sql\sql\indexy.sql
-		sql\maily_vybery.sql
-		sql\ms_mysql.PRG
-		sql\mysql_all.bat
-		sql\pohled_osoba.sql
-		zaloha.php
+	+db2
+		db\db.akce2.ezer
+		db\db.akce2.test.ezer
+		db\db.akce2.ucast.ezer
+	-dg
+		dg\$.ezer
+		dg\dg.css.css
+		dg.inc
+		dg.php
+	-doc
+		docs\2008_ciselnik_akci.txt
+		wiki\dokumentace.wiki
+		doc\poznamky.txt
+		doc\Skype-Putzlachers.txt
+		wiki\todo.wiki
+	-ds
+		ds\$.ezer
+		ds\ds.css.css
+		ds\ds.dum.ezer
+		ds\ds.ezer
+		ds.inc
+		ds.php
+		ds\ds.tab.ezer
+		ds\ds_fce.php
+		ds\fce.js
 	-ezer2.2
-		-libr
-			ezer2.2\$.ezer
-			ezer2.2\ezer2.help.ezer
-			ezer2.2\ezer2.pers.ezer
-			ezer2.2\ezer2.syst.ezer
-			ezer2.2\ezer2_fce.php
-		-client
+		+client
 			ezer2.2\client\app.js
 			ezer2.2\client\dbg.css
 			ezer2.2\client\dbg.js
@@ -100,14 +76,20 @@ kEzer-ys2
 			ezer2.2\client\licensed\fancyupload.css
 			ezer2.2\client\licensed\fancyupload.js
 			ezer2.2\client\lib.js
-		-client f
+		+client f
 			ezer2.2\client\appf.css
 			dbg.html
 			ezer2.2\client\dbgf.html
 			ezer2.2\client\ezer_fdom1.js
 			ezer2.2\client\ezer_fdom2.js
 			ezer2.2\client\natdocs.css
-		-server
+		-libr
+			ezer2.2\$.ezer
+			ezer2.2\ezer2.help.ezer
+			ezer2.2\ezer2.pers.ezer
+			ezer2.2\ezer2.syst.ezer
+			ezer2.2\ezer2_fce.php
+		+server
 			ezer2.2\server\ae_slib.php
 			ezer2.2\comp.css
 			ezer2.2\comp.php
@@ -120,8 +102,55 @@ kEzer-ys2
 			ezer2.2\server\reference.php
 			ezer2.2\server\session.php
 			ezer2.2\server\sys_doc.php
-		+wiki
+		-wiki
 			ezer2.2\wiki\guide.wiki
+	-fa
+		fa\$.ezer
+		fa\fa.css.php
+		fa.inc
+		fa\fa.lide.ezer
+		fa.php
+		fa\fa.syst.dat.ezer
+		fa\fa_fce.js
+		fa\fa_fce.php
+		fa\fa_lide.php
+	-fis - θαst
+		fis\fis_pdf.php
+		fis\fis_tcpdf.php
+	-GData
+		_\ZendGdata-1.10.4\demos\Zend\Gdata\Docs.php
+	-ch
+		ch\$.ezer
+		ch\ch.css.css
+		ch\ch.ezer
+		ch.inc
+		ch.php
+		ch\ch_fce.php
+	-rr
+		rr\$.ezer
+		myslenky.php
+		robots.txt
+		rr.inc
+		rr.php
+		rr\rr_fce.php
+	-skins
+		skins\colors.php
+	-sql,konverze
+		sql\answer_dotazy.sql
+		sql\backup_ys_setkani.bat
+		sql\fa_mysql.bat
+		sql\fa_mysql.PRG
+		sql\fa_mysql_all.bat
+		sql\sql\indexy.sql
+		sql\maily_vybery.sql
+		sql\ms_mysql.PRG
+		sql\mysql_all.bat
+		sql\pohled_osoba.sql
+		zaloha.php
+	-system
+		..\..\..\..\WINDOWS\system32\drivers\etc\hosts
+		..\..\..\Apache\conf\extra\httpd-vhosts-ezer.conf
+		..\..\..\Apache\logs\ys2-error.log
 	-test
 		test\$.ezer
 		test\fce.js
@@ -163,27 +192,13 @@ kEzer-ys2
 		test\test.ys_ucetnictvi.ezer
 		test\test.ysp.ezer
 		test\test_fce.php
-	-doc
-		docs\2008_ciselnik_akci.txt
-		wiki\dokumentace.wiki
-		doc\poznamky.txt
-		doc\Skype-Putzlachers.txt
-		wiki\todo.wiki
-	-system
-		..\..\..\..\WINDOWS\system32\drivers\etc\hosts
-		..\..\..\Apache\conf\extra\httpd-vhosts-ezer.conf
-		..\..\..\Apache\logs\ys2-error.log
-	-dg
-		dg\$.ezer
-		dg\dg.css.css
-		dg.inc
-		dg.php
+	-wiki
+		-cr
+		-db
+		+ezer
+			wiki\ezer_nastaveni.wiki
+		wiki\cr_system.wiki
 	-ys
-		-banka
-			ys\ys.ban.ezer
-			ys\ys.ban.php
-			ys\ys.ban.pre.ezer
-			ys\ys.ban.vyp.ezer
 		+$
 			ys\$.ezer
 			skins\colors.php
@@ -192,7 +207,12 @@ kEzer-ys2
 			ys.php
 			ys\ys_fce.js
 			ys\ys_fce.php
-		-ds
+		-banka
+			ys\ys.ban.ezer
+			ys\ys.ban.php
+			ys\ys.ban.pre.ezer
+			ys\ys.ban.vyp.ezer
+		+ds
 			ys\ys.ds.ezer
 			ys\ys.ds.kl.ezer
 			ys\ys.ds.tab.ezer
@@ -212,96 +232,74 @@ kEzer-ys2
 			ys\ys.syst.ezer
 			ys\ys.syst.oso.ezer
 		ys\ys.doc.ezer
-	-ds
-		ds\ds.css.css
-		ds\ds.dum.ezer
-		ds\ds.ezer
-		ds.php
-		ds\ds.tab.ezer
-		ds\ds_fce.php
-		ds\fce.js
-		ds\$.ezer
-		ds.inc
-	-ch
-		ch\$.ezer
-		ch\ch.css.css
-		ch\ch.ezer
-		ch.inc
-		ch.php
-		ch\ch_fce.php
 [Open project files]
 0=ezer2.2\server\ezer2.php
 1=ezer2.2\server\ae_slib.php
 2=ezer2.2\client\ezer.js
 3=ezer2.2\client\ezer_fdom1.js
 4=ezer2.2\client\ezer_fdom2.js
-5=ezer2.2\client\licensed\clientcide.js
-6=db\db.akce.ezer
-7=db\db_akce.php
-8=db\db.akce.lst.ezer
-9=db\db.akce.ucast.ezer
-10=db\db.akce.mai.ezer
-11=db\db.akce.tisk.ezer
-12=db\db_fce.js
-13=cr\cr_fce.php
-14=ezer2.2\ezer2_fce.php
-15=fa\$.ezer
-16=db\db.akce2.ezer
+5=db\db.akce.ezer
+6=db\db_akce.php
+7=db\db_fce.js
+8=db\db.akce2.ezer
+9=db\db.akce2.test.ezer
+10=db\db.akce2.ucast.ezer
+11=db\db.akce.ucast.ezer
+12=db\db.akce.lst.ezer
+13=db\db.css.php
 [Selected Project Files]
+Main=
+Selected=db\db.akce2.ezer
 [ezer2.2\server\ezer2.php]
 TopLine=63
 Caret=37,75
 BookMark1=52,1531
 [ezer2.2\server\ae_slib.php]
-TopLine=1161
+TopLine=1165
 Caret=36,1184
 BookMark2=14,1920
 [ezer2.2\client\ezer.js]
-TopLine=4475
-Caret=31,4502
-BookMark1=17,3124
-BookMark2=10,3221
+TopLine=6012
+Caret=60,6033
+BookMark1=41,5237
+BookMark2=41,4087
 [ezer2.2\client\ezer_fdom1.js]
-TopLine=276
+TopLine=283
 Caret=40,302
 [ezer2.2\client\ezer_fdom2.js]
-TopLine=3023
-Caret=61,3026
-BookMark2=25,2132
-[ezer2.2\client\licensed\clientcide.js]
-TopLine=8169
-Caret=9,8197
+TopLine=2592
+Caret=1,2615
+BookMark1=3,53
+BookMark2=10,1287
+BookMark3=1,1505
 [db\db.akce.ezer]
-TopLine=206
-[db\db.akce.lst.ezer]
-TopLine=261
-Caret=69,278
-BookMark1=11,387
-BookMark2=48,317
-Mark1=18,84
-[db\db.akce.ucast.ezer]
-TopLine=244
-Caret=23,254
-BookMark1=13,306
-BookMark3=65,271
-[db\db.akce.mai.ezer]
-TopLine=18
-Caret=14,26
-[db\db.akce.tisk.ezer]
-TopLine=43
-Caret=14,55
+TopLine=24
+Caret=69,24
+[db\db_akce.php]
+TopLine=6128
+Caret=18,6141
+BookMark1=24,6183
+BookMark2=17,3505
 [db\db_fce.js]
 TopLine=357
 Caret=43,386
-[cr\cr_fce.php]
-TopLine=78
-Caret=26,83
-[ezer2.2\ezer2_fce.php]
-TopLine=795
-Caret=1,811
-[fa\$.ezer]
-TopLine=4
-Caret=54,11
 [db\db.akce2.ezer]
-TopLine=22
-Caret=43,43
+TopLine=518
+Caret=51,557
+[db\db.akce2.test.ezer]
+TopLine=1
+Caret=33,8
+[db\db.akce2.ucast.ezer]
+TopLine=407
+Caret=29,428
+BookMark1=42,417
+BookMark2=7,793
+[db\db.akce.ucast.ezer]
+TopLine=719
+Caret=1,742
+[db\db.akce.lst.ezer]
+TopLine=138
+Caret=30,203
+[db\db.css.php]
+TopLine=11
+Caret=56,43
