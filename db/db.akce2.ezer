@@ -508,7 +508,7 @@ map ms_akce_dite_kat: table _cis {where:"druh='ms_akce_dite_kat'",  order:'porad
 panel test {type:'plain', _sys:'*', title:"TEST", include:'onload,db.akce2.test',skill:'m'}
 # ================================================================================================== formuláře
 # ----------------------------------------------------------------------------------------- _rodina2
-form _rodina2 {
+form _rodina2 { style:'z-index:5'
   var key_rodina: number
   var key_pobyt: number
   // globální procedury
@@ -535,7 +535,7 @@ form _rodina2 {
   # údaje o rodině
   const Lr=143; Tr=10
   view r: table rodina
-  label [0,Tr+0,316,322] {css:'ae_form', title:'rodinné údaje'}
+  label [0,Tr+0,360,322] {css:'ae_form', title:'rodinné údaje'}
   label id [260,16,50,] { format:'r' }
   // identifikace
   field nazev    [Lr+5,Tr+32,104,] {tag:'rod', data:r.nazev, help:'název rodiny', title:'^název rodiny'}
@@ -556,7 +556,7 @@ form _rodina2 {
   view o: table osoba
   view tr: table tvori {join_type:"LEFT", join:"ON tr.id_osoba=o.id_osoba AND tr.id_rodina=@rodina"}
   view so: table spolu {join_type:"LEFT", join:"ON so.id_osoba=o.id_osoba AND so.id_pobyt=@pobyt"}
-  label [7,Tr+19,132,] { title:'členi rodiny (žlutě nečleni)' }
+  label [7,Tr+19,132,] { title:"členi resp. <span class='blue'>nečleni</span> rodiny" }
   browse cleni [5,Tr+35,107,] { rows:9, css_rows:'barva,0:neucast,2:blue'
     show key_osoba {data:o.id_osoba}
     show key_tvori {data:tr.id_tvori}
@@ -588,8 +588,8 @@ form _osoba2 { style:'z-index:5'
   proc load_osoba(ido) { form.key(ido); form.load; id.set(form.key) }
 
   const L=0; T=10
-  label [L+0,T+0,222,322] { tag:'z', css:'ae_form', title:'kontaktní údaje'}
-  label [L+0,T+0,222,526] { tag:'r', css:'ae_form', format:'n', title:'kontaktní a osobní údaje'}
+  label [L+0,T+0,242,322] { tag:'z', css:'ae_form', title:'kontaktní údaje'}
+  label [L+0,T+0,242,526] { tag:'r', css:'ae_form', format:'n', title:'kontaktní a osobní údaje'}
   label id [166,16,50,] { format:'r' }
 
   // společné
@@ -597,27 +597,27 @@ form _osoba2 { style:'z-index:5'
 
   // základní údaje - jsou vždy vidět
   field prijmeni [L+5,T+32,112,] {data:o.prijmeni, help:'příjmení', title:'^příjmení'}
-  field rodne    [L+5,T+66,72,] {data:o.rodne, help:'rodné příjmení', title:'^rodné příjmení'}
+  field rodne    [L+5,T+66,93,] {data:o.rodne, help:'rodné příjmení', title:'^rodné příjmení'}
   field jmeno    [L+130,T+32,79,] {data:o.jmeno, title:'^jméno'}
-  radio sex [L+81,T+48,50,35] { data:o.sex, value:'1'
+  radio sex [L+102,T+50,50,35] { data:o.sex, value:'1'
     case [0,2,50,] { title:'muž', expr:'1' }
     case [0,17,50,] { title:'žena', expr:'2' }
     proc onchange() { echo('sex=',this.get) }
   }
-  field narozeni [L+130,T+66,85,] {type:'date', data:o.narozeni, format:'rR:e',title:'^narození'}
-  field umrti    [L+172,T+101,43,] {data:o.umrti, format:'r:e',title:'^rok úmrtí'}
+  field narozeni [L+151,T+66,85,] {type:'date', data:o.narozeni, format:'rR:e',title:'^narození'}
+  field umrti    [L+193,T+101,43,] {data:o.umrti, format:'r:e',title:'^rok úmrtí'}
   // kontakt
-  field ulice    [L+5,T+101,161,] {data:o.ulice,title:'^ulice'}
+  field ulice    [L+5,T+101,182,] {data:o.ulice,title:'^ulice'}
   field psc      [L+5,T+136,40,] {data:o.psc,title:'^psč'}
-  field obec     [L+52,T+136,114,] {data:o.obec,title:'^obec'}
-  select stat    [L+172,T+136,45,] {format:'r:e', title:'^stát'}
-  field telefon  [L+5,T+171,212,] {type:'list', data:o.telefon,title:'^telefon'}
+  field obec     [L+52,T+136,135,] {data:o.obec,title:'^obec'}
+  select stat    [L+193,T+136,45,] {format:'r:e', title:'^stát'}
+  field telefon  [L+5,T+171,233,] {type:'list', data:o.telefon,title:'^telefon'}
   check nomail   [L+48,T+189,169,] {title:"neposílat hromadné informace", data:o.nomail,
     help:"nepoužívat mailovou adresu pro rozesílání hromadných nabídek a informací"
     proc onchange() {
       alert("napiš prosím do poznámky důvod a datum odmítnutí hromadně rozesílaných informací")
   } }
-  field email    [L+5,T+207,212,] {type:'list', data:o.email, title:'^e-mail'}
+  field email    [L+5,T+207,233,] {type:'list', data:o.email, title:'^e-mail'}
   // osobní poznámka
   edit  pozn     [L+5,T+242,212,74] {data:o.note, title:'^poznámka'}
 
