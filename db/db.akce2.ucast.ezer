@@ -80,7 +80,7 @@ use header:form _header  [  4,0,,]
 use u:     form _ucast   [  6,20,,]  { tag:'akce1' }               // seznam účastníků
 use page:  form _page    [400,10,,]  { tag:'akce1' }
 # záložka evidence
-use evid:  form _evidence[400,10,,]  { tag:'akce1', format:'n' }
+use evid:  form _evidence [400,10,,]  { tag:'akce1', format:'n' }
 # use pob:   form _pobyt   [400,0,,]   { tag:'akce1', format:'n' }
 use cmd:   form _cmd_e   [400,613,,]   { tag:'akce1', format:'n' }
 use cmd2:  form _cmd2    [400,650,,]   { tag:'akce1', format:'' }
@@ -206,7 +206,7 @@ form _page {
       pla.display(0); cmdp.display(0); alb.display(1);
     }
   }
-  label [0,16,793,585] { css:'ae_work'}
+  label [0,16,873,585] { css:'ae_work'}
 }
 # ------------------------------------------------------------------------------------------- _album
 form _album {
@@ -409,6 +409,8 @@ form _platba {
 }
 # ---------------------------------------------------------------------------------------- _evidence
 form _evidence {
+  proc onstart() { mode.set(2) }
+  var mode: number    // 1=jeden sloupec osob, 2=dva
   proc pobyt_onrowclick(i0_rodina) { var idost: object
     os1.init; os2.init;
     // volá show_osoby a při rowclick show_osoba
@@ -419,12 +421,13 @@ form _evidence {
     pob.load_pobyt(the_pobyt.get);
   }
   # osoba 1 a 2
-  use os1: form _osoba2 [10,10,,]
-  use os2: form _osoba2 [240,10,,]
+  use os1: form _osoba2 [5,10,,]
+  use os2: form _osoba2 [255,10,,] {tag:'2,r,z'}
   # rodina
-  use rod: form _rodina2 [470,10,,] {
+  use rod: form _rodina2 [505,10,,] {
     // pozor - proměnné jsou vzhledem k db.akce2._rodina2
     proc show_osoba(ido,ids,idt) {
+      eq(ucast.evid.mode.get,2);
       ucast.evid.os1.key;
       [ eq(ido,ucast.evid.os1.key)
       | ucast.evid.os2.load_osoba(ido);
@@ -435,20 +438,31 @@ form _evidence {
     proc zmena_rodiny() { reload(ucast.the_pobyt.get) }
   }
   # pobyt
-  use pob1: form _pobyt_osoba  [ 10,350,,]
-  use pob2: form _pobyt_osoba  [240,350,,]
-  use pob:  form _pobyt_rodina [470,350,,]
+  use pob1: form _pobyt_osoba  [  5,350,,]
+  use pob2: form _pobyt_osoba  [255,350,,] {tag:'2,r,z'}
+  use pob:  form _pobyt_rodina [505,350,,] {
+    button [350,0,,] {title:'<', style:'z-index:5;margin-top:-16px'
+      proc onclick() {
+        eq(this.get,'<'); this.set('>'); ucast.evid.mode.set(1);
+        ucast.evid.rod.get.property(°{left:255},1);
+        ucast.evid.pob.get.property(°{left:255},this);
+      | eq(this.get,'>'); this.set('<'); ucast.evid.mode.set(2);
+        ucast.evid.display(1,'2');
+        ucast.evid.rod.get.property(°{left:505},1);
+        ucast.evid.pob.get.property(°{left:505},1);
+      }
+      proc onproperty() { ucast.evid.display(0,'2') }
+    }
+  }
   # --------------------------- rozšíření pohledů o-osoba / p-pobyt (z=základní, r=rozšířené)
-  button [229,333,,] { tag:'p', title:'v', style:'z-index:5'
+  button [229+16,333,,] { tag:'p', title:'v', style:'z-index:5'
     proc onclick() { form.display(2,'o');
     os1.display(2,'r'); os2.display(2,'r');
-    pob1.show_spolu('z'); pob2.show_spolu('z');
-    }}
-  button [228,540,,] { tag:'o', title:'^', format:'n', style:'z-index:5'
+    pob1.show_spolu('z'); pob2.show_spolu('z') }}
+  button [228+16,540,,] { tag:'o', title:'^', format:'n', style:'z-index:5'
     proc onclick() { form.display(2,'p');
     os1.display(2,'z'); os2.display(2,'z');
-    pob1.show_spolu('r'); pob2.show_spolu('r');
-    }}
+    pob1.show_spolu('r'); pob2.show_spolu('r') }}
   # --------------------------- kontextové_menu
   menu { type:'context'
     item { title:'zkontrolovat skupinky', skill:'yaa+;faa+;caa+',
@@ -479,8 +493,8 @@ form _pobyt_osoba {
 
   // přepínání pohledů z=základní, r=rozšířené
   const Lo=0; Hz=200; Hr=41
-  label [0,Hz+3,222,Hr] {tag:'z', css:'ae_form', title:'základní údaje o pobytu', format:'n'}
-  label [0,0,222,Hz+Hr+3] {tag:'r', css:'ae_form', title:'údaje o pobytu'}
+  label [0,Hz+3,242,Hr] {tag:'z', css:'ae_form', title:'základní údaje o pobytu', format:'n'}
+  label [0,0,242,Hz+Hr+3] {tag:'r', css:'ae_form', title:'údaje o pobytu'}
 
   view s: table spolu
   // základní údaje - vždy viditelné
@@ -504,7 +518,7 @@ form _pobyt_osoba {
   }}
 }
 # ------------------------------------------------------------------------------------ _pobyt_rodina
-form _pobyt_rodina {
+form _pobyt_rodina { style:'z-index:5'
   proc load_pobyt(idp) {
     form.load(idp); id.set(idp);
     skupina.get;
@@ -514,7 +528,7 @@ form _pobyt_rodina {
   }
   view p: table pobyt
   const Lr=0; Tr=0
-  label [0,0,316,244] {css:'ae_form', title:'společné údaje o pobytu'}
+  label [0,0,360,244] {css:'ae_form', title:'společné údaje o pobytu'}
   label id [260,6,50,] { format:'r' }
   edit  pozn      [5,Tr+32,302,74] {data:p.poznamka, title:'^poznámka k pobytu'}
   // ubytování

@@ -3521,6 +3521,7 @@ function akce_sestava_lidi($akce,$par,$title,$vypis,$export=false) { trace();
   $flds= explode(',',$fld);
   // číselníky
   $pfunkce= map_cis('ms_akce_pfunkce','zkratka');  $pfunkce[0]= '?';
+  $dieta= map_cis('ms_akce_dieta','zkratka');  $dieta[0]= '';
   // získání dat - podle $kdo
   $clmn= array();
   $expr= array();       // pro výrazy
@@ -3533,7 +3534,7 @@ function akce_sestava_lidi($akce,$par,$title,$vypis,$export=false) { trace();
   // data akce
   $qry=  "SELECT
             p.pouze,p.poznamka,
-            o.prijmeni,o.jmeno,o.narozeni,o.rc_xxxx,o.note,o.obcanka,o.clen,
+            o.prijmeni,o.jmeno,o.narozeni,o.rc_xxxx,o.note,o.obcanka,o.clen,o.dieta,
             IF(o.telefon='',r.telefony,o.telefon) AS telefon,
             IF(o.email='',r.emaily,o.email) AS email,
             IF(o.ulice='',r.ulice,o.ulice) AS ulice,
@@ -3566,6 +3567,9 @@ function akce_sestava_lidi($akce,$par,$title,$vypis,$export=false) { trace();
     $x->narozeni_dmy= sql_date1($x->narozeni);
     foreach($flds as $f) {
       switch ($f) {
+      case 'dieta':                                                   // osoba: dieta
+        $clmn[$n][$f]= $dieta[$x->$f];
+        break;
       case '_1':
         $clmn[$n][$f]= 1;
         break;

@@ -93,6 +93,10 @@ menu m {type:'left',
                                         ,par:°{typ:'j',exp:'Excel',cnd:'funkce!=99'
                                         ,tit:'příjmení:15,jméno:12,věk:5,narození:12,obec:25,psč:7,ulice:25'
                                         ,fld:'prijmeni,jmeno,_vek,narozeni,obec,psc,ulice'}}
+    item {title:'Jednotlivci všichni podrobně'                                                          skill:'y;f'
+                                        ,par:°{typ:'j',exp:'Excel',cnd:'1',ord:'o.prijmeni,o.jmeno'
+                                        ,tit:'příjmení:15,jméno:12,věk:5,narození:12,/rč:5,obec:25,psč:7,ulice:25,dieta:12'
+                                        ,fld:'prijmeni,jmeno,_vek,narozeni,rc_xxxx,obec,psc,ulice,dieta'}}
   }
   menu {title:'seznamy',type:'group',_sys:'*'
     item {title:'VPS na akci'                                                                           skill:'y;c'
