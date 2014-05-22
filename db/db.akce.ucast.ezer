@@ -117,7 +117,7 @@ proc reload(id_pobyt) {
     | u.b.raise('onrowclick') } ]
 }
 var pall: object
-proc pary_add(p,i) {  // používají panely PridaniJmenem1, PridaniJmenem2 a PridaniAkce
+proc pobyt_add(p,i) {  // používají panely PridaniJmenem1, PridaniJmenem2 a PridaniAkce
   var ret: object
   p.chck.get;
   pall.set(p.all.get);
@@ -1231,7 +1231,7 @@ panel PridaniJmenem1 [,,320,280] {type:'popup', title:'Přidání známých dosp
     var rod: object
     var popis: text
     button [0,250,50,16] { title:'přidat do účastníků', proc onclick() {
-      each(L,pary_add); reload(0); panel.hide(0)
+      each(L,pobyt_add); reload(0); panel.hide(0)
     } }
     button [130,250,50,16] { title:'jiná jména', proc onclick() {
       jmena.init; vse.init; L.init } }
@@ -1271,7 +1271,7 @@ panel PridaniJmenem2 [,,320,280] {type:'popup', title:'Přidání známých pár
     var rod: object
     var popis: text
     button [0,250,50,16] { title:'přidat do účastníků', proc onclick() {
-      each(L,pary_add); reload(0);
+      each(L,pobyt_add); reload(0);
     } }
     button [130,250,50,16] { title:'jiná jména', proc onclick() {
       jmena.init; vse.init; L.init } }
@@ -1311,7 +1311,7 @@ panel PridaniAkce [,,320,280] {type:'popup', title:'Přidání účastníků zn�
     var pary: object
     var popis: text
     button [0,250,50,16] { title:'přidat do účastníků', proc onclick() {
-      each(L,pary_add); reload(0);
+      each(L,pobyt_add); reload(0);
     } }
     button [130,250,50,16] { title:'jiná akce', proc onclick() {
       akce.init; vse.init; L.init } }

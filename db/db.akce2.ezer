@@ -521,7 +521,7 @@ form _rodina2 {
     tit.set(split(mode.get(imode.get),':',0));
     tags.set(split(mode.get(imode.get),':',1));
     form.display(0,mode.get(0));
-    height.set(sum(stack_forms(form,tags,0),25));
+    height.set(sum(stack_forms(form,tags,0),28));
     frame.property(object('height',height.get));
     frame.set(tit);
   }
@@ -538,22 +538,30 @@ form _rodina2 {
     | form.init
     };
     id.set(form.key);
-#     cleni.browse_load("id_rodina=@rodina OR id_pobyt=@pobyt",'','','','','norowclick',
-#       conc("SET @rodina:=",id_rodina,",@pobyt:=",id_pobyt));
-    cleni.browse_seek("NOT(ISNULL(id_spolu))","id_rodina=@rodina OR id_pobyt=@pobyt",'',
+    cleni.browse_load("id_rodina=@rodina OR id_pobyt=@pobyt",'','','','','norowclick',
       conc("SET @rodina:=",id_rodina,",@pobyt:=",id_pobyt));
+#     cleni.browse_seek("NOT(ISNULL(id_spolu))","id_rodina=@rodina OR id_pobyt=@pobyt",'',
+#       conc("SET @rodina:=",id_rodina,",@pobyt:=",id_pobyt));
     spolu.set(cconc(datsvatba.get,conc(roku(datsvatba.get,svatba.get),' let'),' '));
-    [ cleni.browse_active; cleni.onrowclick ]
+    focus_osobu1; cleni.onrowclick
   }
   # dá další osobu (po nastavené) z pobytu nebo 0
+  proc focus_osobu1() { var i:number var c:number var found:number
+    i.set(1); c.set(cleni.browse_count);
+    while(and(not(found),not(gt(i,c))),{
+      cleni.browse_next(i);
+      found.set(cleni.barva.get); i.set(cconc(found,i,sum(i,1)));
+#       echo(i,":",cleni.jmeno.get,':',cleni.barva.get,'=',found.get);
+    });
+  }
   proc get_osobu2() { var i1:number var i2:number var c:number var ret:object
     ret.set(0);
     i1.set(cleni.browse_active); c.set(cleni.browse_count);
     while(and(not(i2),not(gt(i1,c))),{ i1.set(sum(i1,1));
-      i2.set(cconc(cleni.key_spolu.get(i1),i1,0));
+      cleni.key_spolu.get(i1); i2.set(i1)
     });
     [ i2; ret.set(object(
-      'ido',cleni.key_osoba.get(2),'ids',cleni.key_spolu.get(2),'idt',cleni.key_tvori.get(2))) ];
+      'ido',cleni.key_osoba.get(i2),'ids',cleni.key_spolu.get(i2),'idt',cleni.key_tvori.get(i2))) ];
     return(ret)
   }
   proc zmena_rodiny() { echo("nic") }
@@ -563,30 +571,30 @@ form _rodina2 {
   # údaje o rodině
   const Lr=143+44; Tr=10
   view r: table rodina
-  label frame [0,Tr+0,360,322] {tag:'f', css:'ae_form', title:'rodinné údaje', proc onclick() { on_click }}
+  label frame [0,10,360,322] {tag:'f', css:'ae_form', title:'rodinné údaje', proc onclick() { on_click }}
   label id [304,16,50,] {tag:'f', format:'r' }
 
   // identifikace
-  field nazev    [Lr+5,Tr+32,104,] {tag:'rod', data:r.nazev, help:'název rodiny', title:'^název rodiny'}
-  field spz      [Lr+5,Tr+66,58,]  {tag:'rod', data:r.spz, format:'r:e',title:'^SPZ auta'}
-  label spolu    [Lr+135,Tr+52,26,] {tag:'rod' }
+#   field nazev    [Lr+5,Tr+32,104,] {tag:'rod', data:r.nazev, help:'název rodiny', title:'^název rodiny'}
+  field spz      [Lr+5,Tr+36,58,]  {tag:'rod', data:r.spz, format:'r:e',title:'^SPZ auta'}
+  label spolu    [Lr+135,Tr+22,26,] {tag:'rod' }
   field svatba   {data:rodina.svatba}
-  field datsvatba[Lr+82,Tr+66,85,] {tag:'rod', type:'date', data:r.datsvatba, format:'rR:e',title:'^od svatby'}
+  field datsvatba[Lr+82,Tr+36,85,] {tag:'rod', type:'date', data:r.datsvatba, format:'rR:e',title:'^od svatby'}
 
   // kontakt
-  field ulice    [Lr+5,Tr+101,161,] {tag:'rod', data:r.ulice,title:'^ulice'}
-  field psc      [Lr+5,Tr+136,40,] {tag:'rod', data:r.psc,title:'^psč'}
-  field obec     [Lr+52,Tr+136,61,] {tag:'rod', data:r.obec,title:'^obec'}
-  select stat    [Lr+121,Tr+136,45,] {tag:'rod', format:'r:e', title:'^stát'}
-  field telefon  [Lr+5,Tr+171,160,] {tag:'rod', type:'list', data:r.telefony,title:'^telefony'}
-  field email    [Lr+5,Tr+206,160,] {tag:'rod', type:'list', data:r.emaily, title:'^e-maily'}
+  field ulice    [Lr+5,Tr+71,161,] {tag:'rod', data:r.ulice,title:'^ulice'}
+  field psc      [Lr+5,Tr+106,40,] {tag:'rod', data:r.psc,title:'^psč'}
+  field obec     [Lr+52,Tr+106,61,] {tag:'rod', data:r.obec,title:'^obec'}
+  select stat    [Lr+121,Tr+106,45,] {tag:'rod', format:'r:e', title:'^stát'}
+  field telefon  [Lr+5,Tr+141,160,] {tag:'rod', type:'list', data:r.telefony,title:'^telefony'}
+  field email    [Lr+5,Tr+176,160,] {tag:'rod', type:'list', data:r.emaily, title:'^e-maily'}
 
   // členové rodiny
   view o: table osoba
   view tr: table tvori {join_type:"LEFT", join:"ON tr.id_osoba=o.id_osoba AND tr.id_rodina=@rodina"}
   view so: table spolu {join_type:"LEFT", join:"ON so.id_osoba=o.id_osoba AND so.id_pobyt=@pobyt"}
   label [7,Tr+19,132,] {tag:'sku', title:"členi resp. <span class='blue'>nečleni</span> rodiny" }
-  browse cleni [5,Tr+35,107,] {tag:'sku', rows:9, css_rows:'barva,0:neucast,2:blue'
+  browse cleni [5,Tr+35,107,] {tag:'sku', rows:9, buf_rows:100, css_rows:'barva,0:neucast,2:blue'
     show key_osoba {data:o.id_osoba}
     show key_tvori {data:tr.id_tvori}
     show key_spolu {data:so.id_spolu}
@@ -597,7 +605,8 @@ form _rodina2 {
     show role  [,,10,] {title:'role', expr:"IFNULL(tr.role,'-')" }
     proc onrowclick() {
       form.display(key_tvori.get,'rod');
-      show_osoba(key_osoba.get,key_spolu.get,key_tvori.get)
+      show_osoba(key_osoba.get,key_spolu.get,key_tvori.get);
+      show_rodiny
     }
   }
 
@@ -605,15 +614,17 @@ form _rodina2 {
   edit  pozn     [5,46,302+44,74] {tag:'p', data:r.note, title:'^poznámka'}
 
   // nastavení účasti jako rodinné
+  proc show_rodiny() {
+    rodiny.selects(ask('akce_osoba_rodiny',cleni.key_osoba.get));
+    rodiny.key(key_rodina.get);
+  }
   select rodiny [Lr+5,Tr+32,104,] {tag:'add', format:'t', title:'^název rodiny',
     help:'výběr rodiny podle nastaveného účastníka a její přiřazení k pobytu'
     proc onchanged() { ask('akce_pobyt_rodinny',key_pobyt.get,this.key); zmena_rodiny
   }}
-  button zmen_rodinu [Lr+120,Tr+30,50,] {title:'změna', help:'změna rodiny pobytu'
-    proc onclick() { rodiny.display(1);
-      rodiny.selects(ask('akce_osoba_rodiny',cleni.key_osoba.get));
-      rodiny.key(key_rodina.get);
-  }}
+#   button zmen_rodinu [Lr+120,Tr+30,50,] {title:'změna', help:'změna rodiny pobytu'
+#     proc onclick() { rodiny.display(1); show_rodiny
+#   }}
 }
 # ------------------------------------------------------------------------------------------ _osoba2x
 form _osoba2x [,,244,322] {
@@ -635,7 +646,7 @@ form _osoba2x [,,244,322] {
     frame.set(tit);
   }
   // globální procedury
-  proc load_osoba(ido) { form.key(ido); form.load; id.set(form.key) }
+  proc load_osoba(ido) { form.key(ido); form.load; id.set(form.key); form.display(1); }
   proc on_click() {}
 
   label frame [0,10,242,0] {tag:'f', css:'ae_form', title:'kontaktní údaje', proc onclick() { on_click }}

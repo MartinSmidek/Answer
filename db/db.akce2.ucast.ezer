@@ -18,7 +18,9 @@ proc onstart() {
 #   TEST.set(1);
 }
 proc onfirstfocus() {
-  the_duakce_local.set(0); curr_h.set(0); curr_w.set(1024);
+  the_duakce_local.set(0);
+  curr_h.set(0);
+  curr_w.set(cconc(lt(sys('screen','width'),1280),1024,1280));
   TEST.set(0);
   init_forms; akce_onstart; onfocus
 }
@@ -68,12 +70,11 @@ var loaded: number      // 1 znamená, že bylo provedeno základní načtení a
 
 proc onfirstloaded() {  // zavolá se po prvním dokončení u.b.browse_load
   echo('onfirstloaded ',curr_w.get,' ',curr_h.get);
-#   onresize(sys('screen','width'),sys('screen','height'));
   w_change_all
 }
 proc onresize(w,h) {
+#   echo("resize(",w,",",h,") ... w=",sys('screen','width')," loaded=",loaded.get);
   loaded.get;
-#   echo("resize(",w,",",h,") ... w=",sys('screen','width'));
   [ and(lt(h,650),not(eq(curr_h.get,650))); curr_h.set(0); h_change_all()
   | and(gt(h,650),not(eq(h,sum(curr_h.get,650)))); curr_h.set(minus(h,650)); h_change_all() ];
   [ and(lt(w,1280),eq(curr_w.get,1280)); narrow
@@ -178,12 +179,14 @@ proc reload(id_pobyt) {
   [ loaded.get | loaded.set(1); onfirstloaded ]
 }
 var pall: object
-proc pary_add(p,i) {  // používají panely PridaniJmenem1, PridaniJmenem2 a PridaniAkce
+var pall: object
+proc pobyt_add(p,i) {  // používají panely PridaniJmenem1, PridaniJmenem2 a PridaniAkce
   var ret: object
   p.chck.get;
   pall.set(p.all.get);
   // zamezení duplicit - pečounů si teď nevšímáme
-  ret.set(ask('akce_pridej',the_duakce.get,pall.get('muz'),pall.get('zen'),"funkce!=99",pall.get('nazev')));
+#   ret.set(ask('akce_pridej',the_duakce.get,pall.get('muz'),pall.get('zen'),"funkce!=99",pall.get('nazev')));
+  ret.set(ask('akce_pridej',the_duakce.get,pall.get,"funkce!=99"));
   { ret.ok; reload(ret.pobyt);
   | warning(ret.msg) }
 }
@@ -475,6 +478,7 @@ form _platba {
 form _evidence {
   var cmode: number    // sloupce osob: 1=jeden, 2=dva
   var rmode: number    // bloky osob: iae-iep-
+  var zmode: text      // o | p
   proc evid_init() {
     cmode.set(2); rmode.set(1);
     [ lt(sys('screen','width'),1280); c_change(1) ];
@@ -486,8 +490,8 @@ form _evidence {
     rod.load_rodina(the_pobyt.get,i0_rodina);
     [ eq(cmode.get,2); idost.set(rod.get_osobu2); idost;
       idost.ido; os2.load_osoba(idost.ido); pob2.load_spolu(idost.ids)
-    | os2.init; pob2.init ];
-    z_change('o');
+    | os2.display(0); pob2.display(0); ];
+    [ not(zmode.get); z_change('o') ];
     pob.load_pobyt(the_pobyt.get);
   }
   # změny sloupců
@@ -510,8 +514,10 @@ form _evidence {
     pob1.next_mode; pob2.next_mode; pob.next_mode;
   }
   proc z_change(x) {
-    eq(x,'o'); foreach(array(os1,os2,rod),z_up); foreach(array(pob1,pob2,pob),z_down);
-  | eq(x,'p'); foreach(array(os1,os2,rod),z_down); foreach(array(pob1,pob2,pob),z_up);
+    and(eq(x,'o'),not(eq(zmode.get,x))); zmode.set('o');
+    foreach(array(os1,os2,rod),z_up); foreach(array(pob1,pob2,pob),z_down);
+  | and(eq(x,'p'),not(eq(zmode.get,x))); zmode.set('p');
+    foreach(array(os1,os2,rod),z_down); foreach(array(pob1,pob2,pob),z_up);
   }
   proc z_up(x)   { x.set_css('shift_up','shift_down','.*') }
   proc z_down(x) { x.set_css('shift_down','shift_up','.*') }
@@ -531,7 +537,10 @@ form _evidence {
     | ucast.evid.os1.load_osoba(ido);
       ucast.evid.pob1.load_spolu(ids)
     }
-    proc zmena_rodiny() { reload(ucast.the_pobyt.get) }
+    proc zmena_rodiny() {
+      reload(ucast.the_pobyt.get);
+      [ u.b.browse_count; page.evd.onclick ];
+    }
     button wider [350,0,,] {title:'<', style:'z-index:5;margin-top:-16px'
       proc onclick() {
         eq(this.get,'<'); ucast.narrow  // ucast.evid.c_change(1)
@@ -566,8 +575,8 @@ form _evidence {
 form _pobyt_osoba [,,242,270] {
   proc on_click() {}
   const mode = °[ "S|p|r"
-    ,"id + poznámka + role:S,p,r"
-    ,"id role:S,r"
+    ,"poznámka + role:S,p,r"
+    ,"role:S,r"
     ,"id:S"
   ]
   var imode: number
@@ -588,8 +597,10 @@ form _pobyt_osoba [,,242,270] {
   // globální procedury
 #   proc show_spolu(f) { filtr.set(f); load_spolu(form.key) }
   proc load_spolu(ids) {
-    ids; form.display(1,filtr.get); form.load(ids); id.set(form.key)
-  | form.init; form.display(2,'f|add');
+    form.display(1);
+    ids; pridat.display(0); form.display(1,replace(filtr.get,',','|'));
+    form.load(ids); id.set(form.key)
+  | form.init; id.set('-'); form.display(2,'S|f|add');
   }
 
   label frame [0,0,242,0] {tag:'f', css:'ae_form2', title:'základní údaje o pobytu', proc onclick() { on_click }}
@@ -609,15 +620,17 @@ form _pobyt_osoba [,,242,270] {
   // p = poznámka
   edit  pozn     [5,16,231,74] {tag:'p', data:s.poznamka, title:'^poznámka k pobytu'}
 
-#   # --------------------------- přidat na akci
-#   button [171,Hz+18,,] { tag:'z', title:"Vyřadit", proc onclick() {
-#     spolu.delete_record(conc('id_spolu=',form.key));
-#   }}
-  button [150,-2,,] { tag:'add', title:"Přidat na akci", format:'n', proc onclick() {
-#     load_spolu(spolu.insert_record(
-#       object('id_pobyt',the_pobyt.get,'id_osoba',ucast.evid.rod.cleni.key_osoba.get)));
-#     u.b.browse_row;
-#     ucast.evid.rod.cleni.browse_row;
+  # --------------------------- přidat/vyřadit
+  button [150,0,,] { tag:'r', title:"Vyřadit z akce", format:'n', proc onclick() {
+    spolu.delete_record(conc('id_spolu=',form.key));
+    u.b.browse_row;
+    ucast.evid.rod.cleni.browse_row;
+  }}
+  button pridat [150,-10,,] { tag:'add', title:"Přidat na akci", format:'n', proc onclick() {
+    load_spolu(spolu.insert_record(
+      object('id_pobyt',the_pobyt.get,'id_osoba',ucast.evid.rod.cleni.key_osoba.get)));
+    u.b.browse_row;
+    ucast.evid.rod.cleni.browse_row;
   }}
 }
 # ------------------------------------------------------------------------------------------- _empty
@@ -1345,7 +1358,7 @@ panel PridaniJmenem1 [,,320,280] {type:'popup', title:'Přidání známých dosp
     var rod: object
     var popis: text
     button [0,250,50,16] { title:'přidat do účastníků', proc onclick() {
-      each(L,pary_add); reload(0); panel.hide(0)
+      each(L,pobyt_add); reload(0); panel.hide(0)
     } }
     button [130,250,50,16] { title:'jiná jména', proc onclick() {
       jmena.init; vse.init; L.init } }
@@ -1385,7 +1398,7 @@ panel PridaniJmenem2 [,,320,280] {type:'popup', title:'Přidání známých pár
     var rod: object
     var popis: text
     button [0,250,50,16] { title:'přidat do účastníků', proc onclick() {
-      each(L,pary_add); reload(0);
+      each(L,pobyt_add); reload(0);
     } }
     button [130,250,50,16] { title:'jiná jména', proc onclick() {
       jmena.init; vse.init; L.init } }
@@ -1425,7 +1438,7 @@ panel PridaniAkce [,,320,280] {type:'popup', title:'Přidání účastníků zn�
     var pary: object
     var popis: text
     button [0,250,50,16] { title:'přidat do účastníků', proc onclick() {
-      each(L,pary_add); reload(0);
+      each(L,pobyt_add); reload(0);
     } }
     button [130,250,50,16] { title:'jiná akce', proc onclick() {
       akce.init; vse.init; L.init } }
