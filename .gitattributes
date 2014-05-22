@@ -112,6 +112,7 @@ skins/ch/browse_pgdn_act.png -text
 skins/ch/browse_pgup.png -text
 skins/ch/browse_pgup0.png -text
 skins/ch/browse_pgup_act.png -text
+skins/ch/browse_reload.png -text
 skins/ch/browse_resize.png -text
 skins/ch/browse_set.png -text
 skins/ch/browse_sort_hover.png -text
@@ -181,6 +182,7 @@ skins/ck/browse_pgdn_act.png -text
 skins/ck/browse_pgup.png -text
 skins/ck/browse_pgup0.png -text
 skins/ck/browse_pgup_act.png -text
+skins/ck/browse_reload.png -text
 skins/ck/browse_resize.png -text
 skins/ck/browse_row2.gif -text
 skins/ck/browse_set.png -text
