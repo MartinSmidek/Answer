@@ -6077,7 +6077,7 @@ function chlapi_auto_jmenovci($id,$db) {  #trace();
 function akce_pridej($id_akce,$info,$cnd='') { trace();
   $ret= (object)array('ok'=>0,'msg'=>'chyba při vkládání');
 //                                                         debug($info);
-  $id_muz= $info->mz;
+  $id_muz= $info->muz;
   $id_zena= $info->zen;
   $id= $info->id;
   $note= $info->nazev;
@@ -6118,7 +6118,8 @@ function akce_pridej($id_akce,$info,$cnd='') { trace();
   }
   else {
     // vložení nového pobytu
-    $qi= "INSERT pobyt (id_akce,pouze) VALUES ($id_akce,$pouze)";
+    $rod= $pouze==0 && $info->rod ? $info->rod : 0;
+    $qi= "INSERT pobyt (id_akce,i0_rodina,pouze) VALUES ($id_akce,$rod,$pouze)";
     $ri= mysql_qry($qi); if ( !$ri ) goto end;
     $ret->pobyt= mysql_insert_id();
     if ( $id_muz ) {
@@ -6181,7 +6182,7 @@ function akce_auto_jmena2($patt) {  #trace();
 function akce_auto_jmena2L($id_rodina) {  #trace();
   $pary= array();
   // páry
-  $qry= "SELECT nazev,
+  $qry= "SELECT nazev,id_rodina,
            IFNULL(r.nazev,o.prijmeni) as _nazev,
            GROUP_CONCAT(DISTINCT IF(t.role='a',o.jmeno,'')    SEPARATOR '') AS _muz,
            GROUP_CONCAT(DISTINCT IF(t.role='a',o.prijmeni,'') SEPARATOR '') AS _muzp,
@@ -6201,7 +6202,8 @@ function akce_auto_jmena2L($id_rodina) {  #trace();
       ? "{$p->_nazev} {$p->_muz} a {$p->_zena}"
       : ( $p->_muz ? "{$p->_muzp} {$p->_muz}" : "{$p->_zenap} {$p->_zena}" );
     $nazev.= ", {$p->obec}";
-    $pary[]= (object)array('nazev'=>$nazev,'muz'=>$p->_muz_id,'zen'=>$p->_zena_id);
+    $pary[]= (object)array(
+      'nazev'=>$nazev,'muz'=>$p->_muz_id,'zen'=>$p->_zena_id,'rod'=>$p->id_rodina);
   }
 //                                                                 debug($pary,$id_akce);
   return $pary;
@@ -6266,7 +6268,7 @@ function akce_auto_jmena1L($id_osoba) {  #trace();
     $nazev.= $p->telefon ? ", {$p->telefon}" : '';
     $pary[]= (object)array('nazev'=>$nazev,'muz'=>$p->_muz_id,'zen'=>$p->_zena_id,'id'=>$id_osoba);
   }
-                                                                debug($pary,$id_akce);
+//                                                                 debug($pary,$id_akce);
   return $pary;
 }
 # ----------------------------------------------------------------------------------- akce_auto_deti
@@ -6385,7 +6387,7 @@ function akce_auto_akceL($id_akce) {  #trace();
   $pary= array();
   // páry na akci
   $qry= "SELECT
-           IFNULL(r.nazev,o.prijmeni) as _nazev,
+           IFNULL(r.nazev,o.prijmeni) as _nazev,r.id_rodina,
            GROUP_CONCAT(DISTINCT IF(tx.role='a',ox.jmeno,'')    SEPARATOR '') AS _muz,
            GROUP_CONCAT(DISTINCT IF(tx.role='a',ox.prijmeni,'') SEPARATOR '') AS _muzp,
            GROUP_CONCAT(DISTINCT IF(tx.role='a',ox.id_osoba,'') SEPARATOR '') AS _muz_id,
@@ -6407,7 +6409,8 @@ function akce_auto_akceL($id_akce) {  #trace();
     $nazev= $p->_muz && $p->_zena
       ? "{$p->_nazev} {$p->_muz} a {$p->_zena}"
       : ( $p->_muz ? "{$p->_muzp} {$p->_muz}" : "{$p->_zenap} {$p->_zena}" );
-    $pary[]= (object)array('nazev'=>$nazev,'muz'=>$p->_muz_id,'zen'=>$p->_zena_id);
+    $pary[]= (object)array(
+      'nazev'=>$nazev,'muz'=>$p->_muz_id,'zen'=>$p->_zena_id,'rod'=>$p->id_rodina);
   }
 //                                                                 debug($pary,$id_akce);
   return $pary;
