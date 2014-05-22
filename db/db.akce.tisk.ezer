@@ -4,6 +4,7 @@
 # ================================================================================================== Tisk
 
 var the_duakce_local: number    // zobrazená akce - pokud se liší od the_duakce, je třeba překreslit
+var the_akce: number            // hlavní nebo souběžná akce podle the_soubeh
 var the_par: object
 var the_vypis: text
 
@@ -14,7 +15,7 @@ use info: form right [12,4,,] {
       switch(export2.get,
       'PDF-jmenovky',{
         sti_V.report_init; sti_V.report_check;
-        res.set(ask('akce_pdf_jmenovky',the_duakce.get,the_par.get,sti_V.get_json));
+        res.set(ask('akce_pdf_jmenovky',the_akce.get,the_par.get,sti_V.get_json));
         form.msg.set(res.html);
       })
     }
@@ -24,27 +25,27 @@ use info: form right [12,4,,] {
       var res: object
       switch(export.get,
       'Excel',{
-        res.set(ask('akce_vyp_excel',the_duakce.get,the_par.get,the_title.get,the_vypis.get));
+        res.set(ask('akce_vyp_excel',the_akce.get,the_par.get,the_title.get,the_vypis.get));
         form.msg.set(res.html);
       },
       'Excel-plachta',{
-        res.set(ask('akce_plachta',the_duakce.get,the_par.get,the_title.get,the_vypis.get,1));
+        res.set(ask('akce_plachta',the_akce.get,the_par.get,the_title.get,the_vypis.get,1));
         form.note.set('');
         form.msg.set(res.xhref);
       },
       'PDF-adresy',{
         sti_A.report_init; sti_A.report_check;
-        res.set(ask('akce_pdf_stitky',conc("p.id_akce=",the_duakce.get," AND ",the_par.get('cnd')),sti_A.get_json));
+        res.set(ask('akce_pdf_stitky',conc("p.id_akce=",the_akce.get," AND ",the_par.get('cnd')),sti_A.get_json));
         form.msg.set(res.html);
       },
       'PDF-prijem',{
         sti_B.report_init; sti_B.report_check;
-        res.set(ask('akce_pdf_prijem',the_duakce.get,the_par.get,sti_B.get_json));
+        res.set(ask('akce_pdf_prijem',the_akce.get,the_par.get,sti_B.get_json));
         form.msg.set(res.html);
       },
       'PDF-stravenky',{
         sti_C.report_init; sti_C.report_check;
-        res.set(ask('akce_pdf_stravenky',the_duakce.get,the_par.get,sti_C.get_json));
+        res.set(ask('akce_pdf_stravenky',the_akce.get,the_par.get,sti_C.get_json));
         form.msg.set(res.html);
       })
     }
@@ -52,16 +53,32 @@ use info: form right [12,4,,] {
 }
 
 proc onfocus() {
-  [ dirty.get | akce_onstart ];
-  eq(the_duakce_local.get,the_duakce.get)
-| the_duakce_local.set(the_duakce.get);
-  info.msg.set('');
-  info.fill(conc(the_title.get,' / ',the_vypis.get),' ');
-  m.n.i.click
+  [ [ dirty.get | akce_onstart ];
+    eq(the_duakce_local.get,the_duakce.get)
+  | the_duakce_local.set(the_duakce.get);
+    info.msg.set('');
+    info.fill(conc(the_title.get,' / ',the_vypis.get),' ');
+  ];
+  // volba správné akce a příslušného menu
+  eq(the_soubeh.get,2);
+  the_akce.set(the_hlavni.get); m.display(2,'d'); m.d.i.click
+| the_akce.set(the_duakce.get); m.display(2,'a'); m.n.i.click
 }
 
 menu m {type:'left',
-  menu n {title:'adresář',type:'group',_sys:'*'
+  menu d {tag:'d', title:'výpisy souběžné akce',type:'group',_sys:'*'
+    item i {title:'Seznam dětí'                                                                         skill:'f'
+                                        ,par:°{typ:'j',exp:'Excel',ord:"prijmeni,jmeno"
+                                        ,cnd:"role='d' AND funkce!=99 AND pfunkce!=95",hav:"_vek<18"
+                                        ,tit:'příjmení:15,jméno:12,ktg:5,věk:5,narození:12,obec:25,psč:7,ulice:25'
+                                        ,fld:'prijmeni,jmeno,dite_kat,_vek,narozeni,obec,psc,ulice'}}
+    item  {title:'Platby za děti'                                                                       skill:'f'
+                                        ,par:°{typ:'j',exp:'Excel',ord:"prijmeni,jmeno"
+                                        ,cnd:"role='d' AND funkce!=99 AND pfunkce!=95",hav:"_vek<18"
+                                        ,tit:'příjmení:15,jméno:12,ktg:5,věk:5,poplatek:10'
+                                        ,fld:'prijmeni,jmeno,dite_kat,_vek,_poplatek'}}
+  }
+  menu n {tag:'a', title:'adresář',type:'group',_sys:'*'
     item i {title:'Základní pro páry'   ,par:°{typ:'p',exp:'Excel',cnd:'funkce!=99'
                                         ,tit:'příjmení:15,jména:20,obec:25,psč:7,ulice:25'
                                         ,fld:'prijmeni,jmena,obec,psc,ulice'}}
@@ -98,7 +115,7 @@ menu m {type:'left',
                                         ,tit:'příjmení:15,jméno:12,věk:5,narození:12,/rč:5,obec:25,psč:7,ulice:25,dieta:12'
                                         ,fld:'prijmeni,jmeno,_vek,narozeni,rc_xxxx,obec,psc,ulice,dieta'}}
   }
-  menu {title:'seznamy',type:'group',_sys:'*'
+  menu {tag:'a', title:'seznamy',type:'group',_sys:'*'
     item {title:'VPS na akci'                                                                           skill:'y;c'
                                         ,par:°{typ:'p',exp:'Excel',cnd:"funkce IN (1,2)"
                                         ,tit:'příjmení:15,jména:20,obec:25'
@@ -136,14 +153,14 @@ menu m {type:'left',
                                         ,tit:'příjmení:15,jména:20,ubytovani:10,budova:5,pokoj:5,skupinka:10'
                                         ,fld:'prijmeni,jmena,ubytovani,budova,pokoj,skupina'}}
   }
-  menu {title:'informace o akci',type:'group',_sys:'*'
+  menu {tag:'a', title:'informace o akci',type:'group',_sys:'*'
     item {title:'Narozeniny, výročí'    ,par:°{typ:'vv',cnd:'1'}}
     item {title:'Přehled o akci (děti,pečouni)', par:°{typ:'vi',cnd:'1'}}
     item {title:'Ekonomické ukazatele'  ,par:°{typ:'ve',cnd:'1'}}
     item {title:'Udržet kontakt'        ,par:°{typ:'12',cnd:'1'}, skill:'y;f'}
     item {title:'Seznam čerstvých změn' ,par:°{typ:'cz',cnd:'1'}, skill:'a'}
   }
-  menu {title:'jmenovky na akci',type:'group',_sys:'*'
+  menu {tag:'a', title:'jmenovky na akci',type:'group',_sys:'*'
     item {title:'Účastníci bez funkce'                                                                  skill:'f'
                                         ,par:°{typ:'j',exp:'Excel',exp2:'PDF-jmenovky'
                                         ,cnd:"role!='d' AND funkce=0",ord:"prijmeni"
@@ -179,7 +196,7 @@ menu m {type:'left',
                                         ,cnd:"role!='d' AND funkce NOT IN (0,1,2,3,4,5)",ord:"prijmeni"
                                         ,tit:'jméno:20, příjmení:15',fld:'jmeno,prijmeni'}}
   }
-  menu {title:'tisky do PDF',type:'group',_sys:'*'
+  menu {tag:'a', title:'tisky do PDF',type:'group',_sys:'*'
     item {title:'Adresní štítky rodin'  ,par:°{typ:'p',exp:'PDF-adresy',cnd:'funkce!=99'
                                         ,tit:'příjmení:15,jména:20,obec:25,psč:7,ulice:25,stát:10'
                                         ,fld:'prijmeni,jmena,obec,psc,ulice,stat'}}
@@ -200,12 +217,12 @@ menu m {type:'left',
         info.export.display(0);
         info.fill(conc(i.owner.title,' - ',i.title),' ');
         sti_C.report_init; sti_C.report_check;
-        res.set(ask('akce_pdf_stravenky0',the_duakce.get,the_par.get,sti_C.get_json));
+        res.set(ask('akce_pdf_stravenky0',the_akce.get,the_par.get,sti_C.get_json));
         info.fill('',res.html);
       }
     }
   }
-  menu {title:'MS: letní kurs, obnovy',type:'group',_sys:'*'
+  menu {tag:'a', title:'MS: letní kurs, obnovy',type:'group',_sys:'*'
     item {title:'noví účastníci'                                                                        skill:'y;f;c'
                                         ,par:°{typ:'p',exp:'Excel'
                                         ,cnd:"p.funkce IN (0,1,2)",hav:"_ucasti=1"
@@ -245,7 +262,7 @@ menu m {type:'left',
                                         ,tit:':5,Příjmení:15,Jméno:12,Ulice:25,Město:25,PSČ:7,Datum nar.:12,Člen YMCA:10,věk:10'
                                         ,fld:'_1,prijmeni,jmeno,ulice,obec,psc,_narozeni6,_ymca,_vek',ord:'_zprava'}}
   }
-  menu {title:'Technické seznamy',type:'group',_sys:'*'
+  menu {tag:'a', title:'Technické seznamy',type:'group',_sys:'*'
     item {title:'Návrh ubytování'       ,par:°{typ:'p',exp:'Excel',cnd:"funkce!=99"
                                         ,tit:'příjmení:15,jména:12,obec:25,lůžka:5,přistýlka:5,kočárek:5,pokoj:5,chůvy:20,poznámka:100'
                                         ,fld:'prijmeni,jmena,obec,luzka,pristylky,kocarek,pokoj,_chuvy,poznamka'}}
@@ -262,7 +279,7 @@ menu m {type:'left',
     { i.par.exp2; info.export2.display(1); info.export2.set(i.par.exp2) | info.export2.display(0) };
     info.fill(conc(the_title.get,' / ',the_vypis.get),' ');
     info.msg.set('');
-    x.set(ask('akce_sestava',the_duakce.get,i.par,the_title.get,the_vypis.get));
+    x.set(ask('akce_sestava',the_akce.get,i.par,the_title.get,the_vypis.get));
     info.fill('',x.html);
   }
 }

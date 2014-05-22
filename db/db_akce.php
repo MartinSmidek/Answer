@@ -2398,7 +2398,7 @@ end:
   return $ret;
 }
 # --------------------------------------------------------------------------------- akce_nacti_cenik
-# lokální pro akce_vzorec_soubeh
+# lokální pro akce_vzorec_soubeh a akce_sestava_lidi
 function akce_nacti_cenik($id_akce,&$cenik,&$html) {
   $qa= "SELECT * FROM cenik WHERE id_akce=$id_akce ORDER BY poradi";
   $ra= mysql_qry($qa);
@@ -2414,7 +2414,7 @@ function akce_nacti_cenik($id_akce,&$cenik,&$html) {
       if ( isset($cenik[$za]) ) $html.= "v ceníku se opakují kódy za=$za";
       $cenik[$za]= (object)array('c'=>$a->cena,'txt'=>$a->polozka);
     }
-//                                                         debug($cenik,"ceník pro $id_akce");
+                                                        debug($cenik,"ceník pro $id_akce");
   }
 }
 # ------------------------------------------------------------------------------- akce_vzorec_soubeh
@@ -3512,6 +3512,7 @@ function akce_sestava_lidi($akce,$par,$title,$vypis,$export=false) { trace();
   $tit= $par->tit;
   $fld= $par->fld;
   $cnd= $par->cnd;
+  $hav= $par->hav ? "HAVING {$par->hav}" : '';
   $ord= $par->ord ? $par->ord : "IF(funkce<=2,1,funkce),IF(pouze=0,r.nazev,o.prijmeni)";
   $html= '';
   $href= '';
@@ -3522,6 +3523,12 @@ function akce_sestava_lidi($akce,$par,$title,$vypis,$export=false) { trace();
   // číselníky
   $pfunkce= map_cis('ms_akce_pfunkce','zkratka');  $pfunkce[0]= '?';
   $dieta= map_cis('ms_akce_dieta','zkratka');  $dieta[0]= '';
+  $dite_kat= map_cis('ms_akce_dite_kat','zkratka');  $dite_kat[0]= '?';
+  // načtení ceníku pro dite_kat, pokud se chce _poplatek
+  if ( strpos($fld,"_poplatek") ) {
+    $soubezna= select("id_duakce","akce","id_hlavni=$akce");
+    akce_nacti_cenik($soubezna,$cenik,$html);
+  }
   // získání dat - podle $kdo
   $clmn= array();
   $expr= array();       // pro výrazy
@@ -3540,7 +3547,7 @@ function akce_sestava_lidi($akce,$par,$title,$vypis,$export=false) { trace();
             IF(o.ulice='',r.ulice,o.ulice) AS ulice,
             IF(o.psc='',r.psc,o.psc) AS psc,
             IF(o.obec='',r.obec,o.obec) AS obec,
-            s.poznamka AS s_note,s.pfunkce,
+            s.poznamka AS s_note,s.pfunkce,s.dite_kat,
             r.note AS r_note,
             ROUND(DATEDIFF(a.datum_od,o.narozeni)/365.2425,1) AS _vek,
             (SELECT GROUP_CONCAT(prijmeni,' ',jmeno)
@@ -3557,7 +3564,7 @@ function akce_sestava_lidi($akce,$par,$title,$vypis,$export=false) { trace();
           LEFT JOIN rodina AS r USING(id_rodina)
           JOIN akce AS a ON a.id_duakce=p.id_akce
           WHERE p.id_akce='$akce' AND $cnd
-          GROUP BY o.prijmeni,o.jmeno,o.narozeni
+          GROUP BY o.prijmeni,o.jmeno,o.narozeni $hav
           ORDER BY $ord";
   $res= mysql_qry($qry);
   while ( $res && ($x= mysql_fetch_object($res)) ) {
@@ -3569,6 +3576,9 @@ function akce_sestava_lidi($akce,$par,$title,$vypis,$export=false) { trace();
       switch ($f) {
       case 'dieta':                                                   // osoba: dieta
         $clmn[$n][$f]= $dieta[$x->$f];
+        break;
+      case 'dite_kat':                                                // osoba: kategorie dítěte
+        $clmn[$n][$f]= $dite_kat[$x->$f];
         break;
       case '_1':
         $clmn[$n][$f]= 1;
@@ -3601,6 +3611,10 @@ function akce_sestava_lidi($akce,$par,$title,$vypis,$export=false) { trace();
             $pf==5 || $pf==95 ? "os.peč. pro: {$x->_chovany}" : (
             $pf==8 ? 'skupina G' : (
             $pf==92 ? "os.peč. je: {$x->_chuva}" : '?'))));
+        break;
+      case '_poplatek':                                               // poplatek/dítě dle číselníku
+        $kat= $dite_kat[$x->dite_kat];             // $cenik[p$kat|d$kat]= {c:cena,txt:popis}
+        $clmn[$n][$f]= $kat=="?" ? "?" : $cenik["p$kat"]->c - $cenik["d$kat"]->c;
         break;
       default: $clmn[$n][$f]= $x->$f;
       }
