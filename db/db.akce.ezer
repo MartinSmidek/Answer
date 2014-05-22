@@ -8,7 +8,7 @@
 # hodnoty pamatované v cookies
 var the_source: text            // forma seznamu akcí google|sey                           -- cookie
 var the_omezeni: text           // pro skill=c obsahuje podmínku přístupných akcí          -- cookie
-var the_duakce: number          // pracovní akce: id_akce (id_dukace)                      -- cookie
+var the_duakce: number          // pracovní akce: id_akce (id_duakce)                      -- cookie
 
 # hodnoty udržované funkcí akce_change
 var the_title: text             // pracovní akce: název do titulků
