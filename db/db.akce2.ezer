@@ -529,7 +529,7 @@ form _rodina2 {
   var key_pobyt: number
   // globální procedury
   proc on_click() {}
-  proc load_rodina(id_pobyt,id_rodina) {
+  proc load_rodina(id_pobyt,id_rodina,akce_od) {
     key_rodina.set(id_rodina);
     key_pobyt.set(id_pobyt);
     form.display(1,'rod');
@@ -539,9 +539,7 @@ form _rodina2 {
     };
     id.set(form.key);
     cleni.browse_load("id_rodina=@rodina OR id_pobyt=@pobyt",'','','','','norowclick',
-      conc("SET @rodina:=",id_rodina,",@pobyt:=",id_pobyt));
-#     cleni.browse_seek("NOT(ISNULL(id_spolu))","id_rodina=@rodina OR id_pobyt=@pobyt",'',
-#       conc("SET @rodina:=",id_rodina,",@pobyt:=",id_pobyt));
+      conc("SET @rodina:=",id_rodina,",@pobyt:=",id_pobyt,",@akce_od:='",akce_od,"'"));
     spolu.set(cconc(datsvatba.get,conc(roku(datsvatba.get,svatba.get),' let'),' '));
     focus_osobu1; cleni.onrowclick
   }
@@ -599,9 +597,10 @@ form _rodina2 {
     show key_tvori {data:tr.id_tvori}
     show key_spolu {data:so.id_spolu}
     show barva {expr:"IF(ISNULL(id_spolu),0,IF(ISNULL(id_rodina),2,1))"}
-    show jmeno [,,120,] {title:'jméno',
+    show jmeno [,,110,] {title:'jméno',
       expr:"IF(ISNULL(tr.id_tvori),CONCAT(o.prijmeni,' ',o.jmeno),REPLACE(o.jmeno,' ','-'))"}
-    show vek   [,,20,] {title:'věk', data:o.narozeni, js_pipe:'roku', format:'r' }
+#     show vek   [,,20,] {title:'věk', data:o.narozeni, js_pipe:'roku', format:'r' }
+    show vek   [,,30,] {title:'věk', expr:"ROUND(DATEDIFF(@akce_od,o.narozeni)/365.2425,1)" format:'r' }
     show role  [,,10,] {title:'role', expr:"IFNULL(tr.role,'-')" }
     proc onrowclick() {
       form.display(key_tvori.get,'rod');
@@ -646,7 +645,10 @@ form _osoba2x [,,244,322] {
     frame.set(tit);
   }
   // globální procedury
-  proc load_osoba(ido) { form.key(ido); form.load; id.set(form.key); form.display(1); }
+  proc load_osoba(ido) {
+    form.key(ido); form.load; id.set(form.key);
+    vek.set(roku_k(narozeni.get,lst.the_akce.datum_od.get));
+    form.display(1); }
   proc on_click() {}
 
   label frame [0,10,242,0] {tag:'f', css:'ae_form', title:'kontaktní údaje', proc onclick() { on_click }}
@@ -665,6 +667,7 @@ form _osoba2x [,,244,322] {
     case [0,17,50,] { title:'žena', expr:'2' }
     proc onchange() { echo('sex=',this.get) }
   }
+  label vek      [210,To+52,24,] {tag:'i', format:'nr'}
   field narozeni [151,To+66,85,] {tag:'i', type:'date', data:o.narozeni, format:'nrR:e',title:'^narození'}
 
   // k = kontakt

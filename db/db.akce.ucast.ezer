@@ -552,13 +552,14 @@ form _pobyt {
   // děti                                                            chůva    s chůvou  standard
   browse d [10,209,,] {type:'smart', rows:4, css_rows:'barva,0:nic,1:zeleny,2:cerveny,3:nakursu'
     show id_osoba
-    show jmeno    [,,70,] { title:'Děti', format:'t' }
-    show vek      [,,20,] { title:'věk', js_pipe:'roku', format:'r' }
+    show jmeno    [,,67,] { title:'Děti', format:'t' }
+#     show vek      [,,20,] { title:'věk', js_pipe:'roku', format:'r' }
+    show vek      [,,26,] { title:'věk', format:'r' }
 #     show kat      [,,20,] { title:'kat' }                                                         // fa
     show narozeni
     show rc_xxxx
     show id_spolu
-    show note     [,,60,] { title:'poznámka', format:'t' }
+    show note     [,,57,] { title:'poznámka', format:'t' }
     show skupinka [,,20,] { title:'skupinka', format:'r:e' }
     show barva
     proc onsubmit() {
@@ -738,7 +739,8 @@ form _ucast [,,400,] { css:'ds_form'
     // všechny děti: (id_osoba, jsou na akci?id_spolu:0, jmeno, narozeni, note)
     show deti       {expr:"
        (SELECT GROUP_CONCAT(DISTINCT CONCAT(
-          osoba.id_osoba,'|',jmeno,'|',narozeni,'|',narozeni,'|',rc_xxxx,'|',
+#           osoba.id_osoba,'|',jmeno,'|',narozeni,'|',narozeni,'|',rc_xxxx,'|',
+          osoba.id_osoba,'|',jmeno,'|',ROUND(DATEDIFF(datum_od,narozeni)/365.2425,1),'|',narozeni,'|',rc_xxxx,'|',
           (IFNULL((SELECT CONCAT(id_spolu,'|',
                      IF(@app='fa',CONCAT(IFNULL(_cis.zkratka,'?'),' '),''),
                      IF(poznamka!='',CONCAT(note,'/',poznamka),note),'|',skupinka,'|',
@@ -813,8 +815,8 @@ form _ucast [,,400,] { css:'ds_form'
         copy_by_name(b,rod.get); rod.key(key_rodina.get);
         copy_by_name(b,pob.get); pob.key(key_pobyt.get);
         // počítané položky
-        muz._vek_m.set(roku(narozeni_m.get));
-        zen._vek_z.set(roku(narozeni_z.get));
+        muz._vek_m.set(roku_k(narozeni_m.get,datum_od.get));
+        zen._vek_z.set(roku_k(narozeni_z.get,datum_od.get));
         rod._spolu.set(cconc(or(svatba.get,datsvatba.get),roku(datsvatba.get,svatba.get),' '));
         pob.d.browse_fill(deti.get);
         pob.s.browse_fill(skup.get);

@@ -428,6 +428,7 @@ Ezer.fce.rc2roky= function (rc) {
 // ------------------------------------------------------------------------------------------------- roku
 //ff: ys.roku (dat)
 //      vrací zaokrouhlený počet roku uplynulých od daného data, první rok počítá i načatý
+//      uvedený na 1 desetinné místo pro věk>20
 //s: ys
 Ezer.fce.roku= function (dat,rok) {
   var roku= '', now= new Date();
@@ -447,14 +448,44 @@ Ezer.fce.roku= function (dat,rok) {
       if ( m.length==3 ) {
         var nar= new Date(m[0],m[1]-1,m[2]);
         roku= (now-nar)/(1000*60*60*24*365.2425);
-        roku= roku<10 ? Math.round(10*roku)/10 : Math.round(roku);
-        if ( !roku ) roku= 1;       // první rok počítej i načatý
+        // do 20 let desetiny
+        roku= roku<20 ? roku.toFixed(1) : roku.toInt();
+        if ( !roku ) roku= 0.1;       // první rok počítej i načatý
       }
     }
   }
   else if ( rok ) {
     roku= now.getFullYear() - rok;
     if ( !roku ) roku= 1;       // první rok počítej i načatý
+  }
+  return roku;
+};
+// ------------------------------------------------------------------------------------------------- roku
+//ff: ys.roku_k (dat[,kdatu=now])
+//      vrací počet roku uplynulých od daného data do daného data (neni-li uvedeno tak od běžného)
+//s: ys
+Ezer.fce.roku_k= function (dat,kdatu) {
+  var str2date= function(s) {
+    var m= s.split('.');      // formát d.m.Y
+    if ( m.length==3 )
+      d= new Date(m[2],m[1]-1,m[0]);
+    else {
+      m= s.split('-');        // sql-formát
+      d= m.length==3 ? new Date(m[0],m[1]-1,m[2]) : 0;
+    }
+    return d;
+  }
+  if ( kdatu==undefined ) kdatu= new Date();
+  var roku= '';
+  var k= str2date(kdatu), d= str2date(dat);
+  if ( d && k ) {
+    // přibližně
+    roku= (k-d)/(1000*60*60*24*365.2425);
+    // přesně
+    var kd= k.getDate(),  dd= d.getDate(),
+        km= k.getMonth(), dm= d.getMonth(),
+        ky= k.getYear(),  dy= d.getYear();
+    roku= (km<dm || (km==dm && kd<dd)) ? ky-dy-1 : ky-dy;
   }
   return roku;
 };
