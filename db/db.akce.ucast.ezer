@@ -14,6 +14,7 @@ proc onstart() {
 }
 proc onfirstfocus() { init_forms; akce_onstart; onfocus }
 proc onfocus() {
+    echo(the_soubeh.get," local:",the_duakce_local.get,",",the_duakce.get);
   [ [ dirty.get | akce_onstart ];
     eq(the_duakce_local.get,the_duakce.get)
   | init_ucast2;
@@ -21,7 +22,7 @@ proc onfocus() {
   ];
   u.legenda(the_cenik.get,the_cena.get);
   switch(the_soubeh.get,
-  0,{ header.soubeh.display(0) },
+  0,{ header.soubeh.display(0); panel.display(2,'akce1'); },
   1,{ header.soubeh.display(1); panel.display(2,'akce1'); header.soubeh.set('^Děti') },
   2,{ header.soubeh.display(1); panel.display(2,'akce2');  header.soubeh.set('^Kurs') }
   );
@@ -38,9 +39,9 @@ proc init_forms() {
 proc init_ucast2() {
   page.page_init;
   header.fill(the_title.get);
-  [ reload(0) ];
   eq(the_soubeh.get,0,1);
   # normální zobrazení
+  [ reload(0) ];
   [ u.b.browse_count; page.evd.onclick ];
 | eq(the_soubeh.get,2);
   # souběžná akce - jen děti
@@ -426,7 +427,7 @@ form _evidence {
   label [48,382,55,] {title:'č.skupinky'}
   label [379,42,31,] {title:'křestní'}
   label [377,63,31,] {title:'příjmení'}
-  label [378,86,31,] {title:'rodné/op'}
+  label [378,86,31,] {title:'rod.př/op'}
   label [382,112,31,] {title:'telefon'}
   label [385,137,26,] {title:'email'}
   label [383,310,48,] {title:'osobní pozn.'}

@@ -285,7 +285,7 @@ table osoba { key_id:'id_osoba'
   text   deleted     { help:'ok|prázdné nebo D=značka smazání osoby' },
   text jmeno
   text prijmeni
-  text rodne
+  text rodne         { help:"rodné příjmení"}
   number sex
   number dieta  // #ms_akce_dieta
   text fotka
