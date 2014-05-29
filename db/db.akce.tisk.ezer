@@ -77,6 +77,14 @@ menu m {type:'left',
                                         ,cnd:"role='d' AND funkce!=99 AND pfunkce!=95",hav:"_vek<18"
                                         ,tit:'příjmení:15,jméno:12,ktg:5,věk:5,poplatek:10'
                                         ,fld:'prijmeni,jmeno,dite_kat,_vek,_poplatek'}}
+    item {title:'Pečouni'                                                                               skill:'f'
+                                        ,par:°{typ:'d',exp:'Excel',cnd:'1'
+                                        ,tit:'příjmení:15,jméno:15,narození:12,/rč:5,obec:25,psč:7,ulice:25,telefon:20,e-mail:30'
+                                        ,fld:'prijmeni,jmeno,narozeni,rc_xxxx,obec,psc,ulice,telefon,email'}}
+    item {title:'Pečouni s poznámkami'                                                                  skill:'f'
+                                        ,par:°{typ:'d',exp:'Excel',cnd:'1'
+                                        ,tit:'příjmení:15,jméno:15,narození:12,/rč:5,obec:25,psč:7,ulice:25,telefon:20,e-mail:30,funkce:10,poznámky:30'
+                                        ,fld:'prijmeni,jmeno,narozeni,rc_xxxx,obec,psc,ulice,telefon,email,pfunkce,_poznamky'}}
   }
   menu n {tag:'a', title:'adresář',type:'group',_sys:'*'
     item i {title:'Základní pro páry'   ,par:°{typ:'p',exp:'Excel',cnd:'funkce!=99'
