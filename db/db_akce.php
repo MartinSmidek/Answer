@@ -7742,7 +7742,7 @@ function dop_mai_pocet($id_dopis,$dopis_var,$cond='',$recall=false) {  trace();
          : " --- chybné komu --- " ));
     // využívá se toho, že role rodičů 'a','b' jsou před dětskou 'd', takže v seznamech
     // GROUP_CONCAT jsou rodiče, byli-li na akci. Emaily se ale vezmou ode všech
-    $qry= "SELECT a.nazev,id_pobyt,
+    $qry= "SELECT a.nazev,id_pobyt,pouze,
            GROUP_CONCAT(DISTINCT o.id_osoba ORDER BY t.role) AS _id,
            GROUP_CONCAT(DISTINCT CONCAT(prijmeni,' ',jmeno) ORDER BY t.role) AS _jm,
            GROUP_CONCAT(DISTINCT o.email) AS email, GROUP_CONCAT(DISTINCT r.emaily) AS emaily
@@ -7759,18 +7759,16 @@ function dop_mai_pocet($id_dopis,$dopis_var,$cond='',$recall=false) {  trace();
       $n++;
       $nazev= "Účastníků {$d->nazev}";
       list($jm)= explode(',',$d->_jm);
-      if ( $d->nomail ) {
-        // nechce dostávat maily
-        $nomail.= "$delnm$jm"; $delnm= ', '; $nm++;
-        continue;
-      }
-      if ( $d->email!='' || $d->emaily!='' ) {
-        $em= "{$d->email},{$d->emaily}";
-        if ( strpos($em,'*')!==false ) {
-          // vyřazený mail
-          $mimo.= "$delm$jm"; $delm= ', '; $mx++;
-          continue;
-        }
+      // kontrola vyřazených mailů
+      $eo= $d->email;
+      if ( strpos($eo,'*')!==false ) { $mimo.= "$delm$jm"; $delm= ', '; $mx++; $eo= ''; }
+      $er= $d->emaily;
+      if ( strpos($er,'*')!==false ) { $mimo.= "$delm$jm"; $delm= ', '; $mx++; $er= ''; }
+      // pokud je na akci pouze jeden, pošli jen na jeho mail - pokud oba, pošli na všechny maily
+      if ( $eo!='' || $er!='' ) {
+        $em= $d->pouze && $eo!='' ? $eo : (             // na akci pouze jeden => osobní mail
+          $eo!='' && $er!='' ? "$eo,$er" : $eo.$er      // jinak cokoliv půjde
+        );
         $emaily[]= $em;
         $pobyty[]= $d->id_pobyt;
         list($ids[])= explode(',',$d->_id);
