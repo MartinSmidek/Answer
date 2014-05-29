@@ -24,6 +24,8 @@ proc onstart() {
 proc onfocus() {
   [ dirty.get | akce_onstart ];
   eq(the_duakce_local.get,the_duakce.get)
+| eq(the_soubeh.get,2); alert("pro evidenci pečounů použijte prosím kartu z kurzu")
+
 | init_pece;
   the_duakce_local.set(the_duakce.get)
 }
