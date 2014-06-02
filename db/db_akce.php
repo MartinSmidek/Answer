@@ -2352,10 +2352,12 @@ function akce_pobyt_default($id_pobyt,$zapsat=0) {  trace();
 # test výpočtu platby za pobyt na akci
 function akce_vzorec_test($id_akce,$nu=2,$nd=0,$nk=0) {  trace();
   $ret= (object)array('navrh'=>'','err'=>'');
+  $map_typ= map_cis('ms_akce_ubytovan','zkratka');
+  $types= select("GROUP_CONCAT(DISTINCT typ ORDER BY typ)","cenik","id_akce=$id_akce GROUP BY id_akce");
   // obecné info o akci
   list($ma_cenik,$noci,$strava_oddo)=
     select("ma_cenik,DATEDIFF(datum_do,datum_od),strava_oddo","akce","id_duakce=$id_akce");
-                                                display("$ma_cenik,$noci,$strava_oddo");
+                                                display("$ma_cenik,$noci,$strava_oddo - typy:$types ");
   if ( !$ma_cenik ) { $html= "akce nemá ceník"; goto end; }
   // definované položky
   $o= $strava_oddo=='oo' ? 1 : 0;       // oběd navíc
@@ -2374,24 +2376,27 @@ function akce_vzorec_test($id_akce,$nu=2,$nd=0,$nk=0) {  trace();
     'op' => array(0,1,0,   1,$o,  1),
     'vp' => array(0,1,0,   1, 0,  1),
   );
-  // výpočet ceny podle parametrů
-  $cena= 0;
-  $html= "<table>";
-  $ra= mysql_qry("SELECT * FROM cenik WHERE id_akce=$id_akce AND za!='' ORDER BY poradi");
-  while ( $ra && ($a= mysql_fetch_object($ra)) ) {
-    $acena= $a->cena;
-    list($za_u,$za_d,$za_k,$za_noc,$oo,$plus)= $cenik[$a->za];
-    $nx= $nu*$za_u + $nd*$za_d + $nk*$za_k;
-    $cena+= $cc= $nx * ($za_noc?$noci:1) * $acena * $plus;
-    if ( $cc ) {
-      $pocet= $za_noc?" * ".($noci+$oo):'';
-      $html.= "<tr>
-        <td>{$a->polozka} ($nx$pocet * $acena)</td>
-        <td align='right'>$cc</td></tr>";
+  // výpočet ceny podle parametrů jednotlivých typů (jsou-li)
+  foreach(explode(',',$types) as $typ) {
+    $title= $typ ? "<h3>ceny pro ".$map_typ[$typ]."</h3>" : '';
+    $cena= 0;
+    $html.= "$title<table>";
+    $ra= mysql_qry("SELECT * FROM cenik WHERE id_akce=$id_akce AND za!='' AND typ=$typ ORDER BY poradi");
+    while ( $ra && ($a= mysql_fetch_object($ra)) ) {
+      $acena= $a->cena;
+      list($za_u,$za_d,$za_k,$za_noc,$oo,$plus)= $cenik[$a->za];
+      $nx= $nu*$za_u + $nd*$za_d + $nk*$za_k;
+      $cena+= $cc= $nx * ($za_noc?$noci+$oo:1) * $acena * $plus;
+      if ( $cc ) {
+        $pocet= $za_noc?" * ".($noci+$oo):'';
+        $html.= "<tr>
+          <td>{$a->polozka} ($nx$pocet * $acena)</td>
+          <td align='right'>$cc</td></tr>";
+      }
     }
+    $html.= "<tr><td><b>Celkem</b></td><td align='right'><b>$cena</b></td></tr>";
+    $html.= "</table>";
   }
-  $html.= "<tr><td><b>Celkem</b></td><td align='right'><b>$cena</b></td></tr>";
-  $html.= "</table>";
   // návrat
 end:
   $ret->navrh.= $html;
@@ -6581,8 +6586,8 @@ function akce_change_cenik($id_akce,$id_akce_vzor) {  trace();
   $ra= mysql_qry($qa);
   if ( !$ra ) { $err= "chyba MySQL"; goto end; }
   // kopie ze vzoru
-  $qa= "INSERT INTO cenik (id_akce,poradi,polozka,za,od,do,cena,dph)
-          SELECT $id_akce,poradi,polozka,za,od,do,cena,dph
+  $qa= "INSERT INTO cenik (id_akce,poradi,polozka,za,typ,od,do,cena,dph)
+          SELECT $id_akce,poradi,polozka,za,typ,od,do,cena,dph
           FROM cenik WHERE id_akce=$id_akce_vzor";
   $ra= mysql_qry($qa);
   if ( !$ra ) { $err= "chyba MySQL"; goto end; }
