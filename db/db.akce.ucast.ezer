@@ -376,6 +376,7 @@ form _platba {
   field c_program   [110,491,47,] {data:pobyt.platba3, format:'r'}
   field c_sleva     [160,491,47,] {data:pobyt.platba4, format:'r'}
   field platba      [283,491,50,] {data:pobyt.platba, format:'r'}
+  check avizo       [275,507,50,] {title:"avízo", data:pobyt.avizo, format:'r'}
   select zpusobplat [339,491,86,] {type:'map', data:pobyt.zpusobplat,
                                    options:ms_akce_platba.zkratka, format:'u'}
   field datplatby   [430,491,84,] {type:'date', data:pobyt.datplatby}
