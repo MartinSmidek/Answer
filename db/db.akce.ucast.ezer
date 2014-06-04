@@ -601,9 +601,10 @@ form _ucast [,,400,] { css:'ds_form'
   // legenda
   const NESTANOVENA = "<span class='blue'> nestanovena cena </span>"
   const DLUZNIK =     " <span class='yellow'> dlužník </span>"
+  const AVIZO =       " <span class='green'> avízo </span>"
   proc legenda(cenik,cena) {
     cenik; leg.set(conc("MÁ CENÍK &nbsp;&nbsp; ",DLUZNIK.get," &nbsp;&nbsp; ",NESTANOVENA.get))
-  | cena; leg.set(conc("MÁ PEVNOU CENU &nbsp;&nbsp; ",DLUZNIK.get))
+  | cena; leg.set(conc("MÁ PEVNOU CENU &nbsp;&nbsp; ",DLUZNIK.get,"&nbsp;&nbsp;",AVIZO.get))
   | leg.set('')
   }
   label leg [10,12,250,11]
@@ -620,7 +621,7 @@ form _ucast [,,400,] { css:'ds_form'
   view ox:table osoba  { join_type:'LEFT', join:'ON tx.id_osoba=ox.id_osoba' }
   // seznam účastníků
   browse b [0,26,,] {type:'smart', buf_rows:200, rows:27, qry_rows:1, group_by:'id_pobyt',
-    optimize:°{qry:'noseek'}, css_rows:"dluh,1:yellow,2:blue"
+    optimize:°{qry:'noseek'}, css_rows:"dluh,1:yellow,2:blue,3:green"
 #     proc onclick() {
 #       xfunkce.width; xfunkce.width(0);  skupina.width(33); _jmena.width(89);
 #     | skupina.width; xfunkce.width(0);  skupina.width(0);  _jmena.width(123);
@@ -670,7 +671,7 @@ form _ucast [,,400,] { css:'ds_form'
          IF(p.platba1+p.platba2+p.platba3+p.platba4=0,2,
            IF(p.platba1+p.platba2+p.platba3+p.platba4>platba,1,0))
       WHEN a.ma_cenu THEN
-         IF(IF(pouze>0,1,2)*a.cena>platba,1,0)
+         IF(p.avizo,3,IF(IF(pouze>0,1,2)*a.cena>platba,1,0))
       ELSE 0 END" }
     // muž - načte se, i když není na akci
     show id_spolu_m { expr:"GROUP_CONCAT(DISTINCT IF(t.role='a',s.id_spolu,'')   SEPARATOR '')" }
@@ -788,6 +789,7 @@ form _ucast [,,400,] { css:'ds_form'
     show k_poznamka { data:p.poznamka}
     show cd         { data:p.cd}
     show pouze      { data:p.pouze}
+    show avizo      { data:p.avizo }
     show sleva      { data:p.sleva}
     show vzorec     { data:p.vzorec}
     show duvod_typ  { data:p.duvod_typ}

@@ -7637,7 +7637,7 @@ function dop_mai_omitt2($id_dopis,$lst_vynech) {  trace();
 #   'U2'- rozeslat účastníkům akce dopis.id_duakce ukazující do akce
 #         do seznamu se dostanou pouze organizující účastnící s funkcí:1,2,6 (VPS,SVPS,hospodář)
 #   'U3'- rozeslat účastníkům akce dopis.id_duakce ukazující do akce
-#         do seznamu se dostanou pouze dlužníci
+#         do seznamu se dostanou pouze dlužníci (bez avíza)
 #   'Q' - rozeslat na adresy vygenerované dopis.cis_skupina => hodnota
 # pokud _cis.data=9999 jde o speciální seznam definovaný funkcí dop_mai_skupina - ZRUŠENO
 # $cond = dodatečná podmínka POUZE pro volání z dop_mai_stav
@@ -7739,7 +7739,7 @@ function dop_mai_pocet($id_dopis,$dopis_var,$cond='',$recall=false) {  trace();
            $dopis_var=='U2' ? " AND p.funkce IN (1,2,5)"   : (
            $dopis_var=='U3' ?
              " AND p.funkce IN (0,1,2,5) AND
-               IF(a.ma_cenu,
+               IF(a.ma_cenu AND p.avizo=0,
                  IF(p.platba1+p.platba2+p.platba3+p.platba4>0,
                    p.platba1+p.platba2+p.platba3+p.platba4,
                    IF(pouze>0,1,2)*a.cena)>platba,
@@ -7747,7 +7747,7 @@ function dop_mai_pocet($id_dopis,$dopis_var,$cond='',$recall=false) {  trace();
          : " --- chybné komu --- " ));
     // využívá se toho, že role rodičů 'a','b' jsou před dětskou 'd', takže v seznamech
     // GROUP_CONCAT jsou rodiče, byli-li na akci. Emaily se ale vezmou ode všech
-    $qry= "SELECT a.nazev,id_pobyt,pouze,
+    $qry= "SELECT a.nazev,id_pobyt,pouze,avizo,
            GROUP_CONCAT(DISTINCT o.id_osoba ORDER BY t.role) AS _id,
            GROUP_CONCAT(DISTINCT CONCAT(prijmeni,' ',jmeno) ORDER BY t.role) AS _jm,
            GROUP_CONCAT(DISTINCT o.email) AS email, GROUP_CONCAT(DISTINCT r.emaily) AS emaily
