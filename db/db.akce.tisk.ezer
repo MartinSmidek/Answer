@@ -140,6 +140,10 @@ menu m {type:'left',
                                         ,par:°{typ:'p',exp:'Excel',cnd:"funkce!=99"
                                         ,tit:'příjmení:15,jména:12,obec:25,počet:5,poznámka k akci:50,trvalá poznámka:50'
                                         ,fld:'prijmeni,jmena,obec,_pocet,poznamka,note'}}
+    item {title:'Účastníci, poznámka, platba'
+                                        ,par:°{typ:'j',exp:'Excel',cnd:"funkce!=99"
+                                        ,tit:'příjmení:15,jména:12,poznámka k akci:50,platba:12'
+                                        ,fld:'prijmeni,jmeno,poznamka,platba'}}
     item {title:'Účastníci akce pro ubytování'
                                         ,par:°{typ:'j',exp:'Excel',cnd:"funkce!=99 AND role!='d'"
                                         ,tit:'příjmení:15,jméno:12,OP:12,narození:12,obec:25,psč:7,ulice:25'
