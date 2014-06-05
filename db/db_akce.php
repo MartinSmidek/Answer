@@ -3545,7 +3545,7 @@ function akce_sestava_lidi($akce,$par,$title,$vypis,$export=false) { trace();
   }
   // data akce
   $qry=  "SELECT
-            p.pouze,p.poznamka,
+            p.pouze,p.poznamka,p.platba,
             o.prijmeni,o.jmeno,o.narozeni,o.rc_xxxx,o.note,o.obcanka,o.clen,o.dieta,
             IF(o.telefon='',r.telefony,o.telefon) AS telefon,
             IF(o.email='',r.emaily,o.email) AS email,
@@ -3660,7 +3660,7 @@ function akce_sestava_pary($akce,$par,$title,$vypis,$export=false) { trace();
   $expr= array();       // pro výrazy
   // data akce
   $qry=  "SELECT
-            r.nazev as nazev,p.pouze as pouze,p.poznamka,
+            r.nazev as nazev,p.pouze as pouze,p.poznamka,p.platba,
             GROUP_CONCAT(DISTINCT IF(t.role='a',o.prijmeni,'') SEPARATOR '') as prijmeni_m,
             GROUP_CONCAT(DISTINCT IF(t.role='a',o.jmeno,'')    SEPARATOR '') as jmeno_m,
             GROUP_CONCAT(DISTINCT IF(t.role='a',o.narozeni,'') SEPARATOR '') as narozeni_m,

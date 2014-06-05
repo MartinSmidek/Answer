@@ -603,8 +603,10 @@ form _ucast [,,400,] { css:'ds_form'
   const DLUZNIK =     " <span class='yellow'> dlužník </span>"
   const AVIZO =       " <span class='green'> avízo </span>"
   proc legenda(cenik,cena) {
+    pla.avizo.display(0);
     cenik; leg.set(conc("MÁ CENÍK &nbsp;&nbsp; ",DLUZNIK.get," &nbsp;&nbsp; ",NESTANOVENA.get))
-  | cena; leg.set(conc("MÁ PEVNOU CENU &nbsp;&nbsp; ",DLUZNIK.get,"&nbsp;&nbsp;",AVIZO.get))
+  | cena; leg.set(conc("MÁ PEVNOU CENU &nbsp;&nbsp; ",DLUZNIK.get,"&nbsp;&nbsp;",AVIZO.get));
+    pla.avizo.display(1)
   | leg.set('')
   }
   label leg [10,12,250,11]
