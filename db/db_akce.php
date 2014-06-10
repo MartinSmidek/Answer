@@ -3165,11 +3165,12 @@ function dop_rep_ids($report_json,$parss,$fname) { trace();
 # výběr generátoru sestavy
 # ------------------------------------------------------------------------------------ akce_sestava2
 # generování sestav
-#   $typ = j | p | vp | vs | vn | vv | vj | sk | sd | d | fs | ...
+#   $typ = j | p | vp | vp2 | vs | vn | vv | vj | sk | sd | d | fs | ...
 function akce_sestava($akce,$par,$title,$vypis,$export=false) {
   return $par->typ=='p'  ? akce_sestava_pary($akce,$par,$title,$vypis,$export)
      : ( $par->typ=='j'  ? akce_sestava_lidi($akce,$par,$title,$vypis,$export)
      : ( $par->typ=='vp' ? akce_vyuctov_pary($akce,$par,$title,$vypis,$export)
+     : ( $par->typ=='vp2'? akce_vyuctov_pary2($akce,$par,$title,$vypis,$export)
      : ( $par->typ=='vs' ? akce_strava_pary($akce,$par,$title,$vypis,$export)  // bez náhradníků
      : ( $par->typ=='vj' ? akce_stravenky($akce,$par,$title,$vypis,$export)
      : ( $par->typ=='vjp'? akce_stravenky($akce,$par,$title,$vypis,$export)
@@ -3184,7 +3185,7 @@ function akce_sestava($akce,$par,$title,$vypis,$export=false) {
      : ( $par->typ=='fx' ? akce_sestava_spec($akce,$par,$title,$vypis,$export)
      : ( $par->typ=='12' ? akce_jednou_dvakrat($akce,$par,$title,$vypis,$export)
      : ( $par->typ=='cz' ? akce_cerstve_zmeny($akce,$par,$title,$vypis,$export)
-                         : fce_error("akce_sestava: N.Y.I.") ))))))))))))))));
+                         : fce_error("akce_sestava: N.Y.I.") )))))))))))))))));
 }
 # --------------------------------------------------------------------------------------- akce_table
 function akce_table($tits,$flds,$clmn,$export=false) {
@@ -4563,6 +4564,218 @@ function akce_strava_pary($akce,$par,$title,$vypis,$export=false,$id_pobyt=0) { 
     $result->html.= "<h3>Počty strav včetně pečounů</h3>";
     $result->html.= "nejsou započteni pečouni, kteří mají prázdný sloupec funkce (asi jsou jen dočasní)";
     $result->html.= "<br><br><div class='stat'><table class='stat'><tr>$ths</tr>$sum$tab</table></div>";
+    $result->html.= "</br>";
+    $result->href= $href;
+  }
+  return $result;
+}
+# ------------------------------------------------------------------------------- akce_vyuctov_pary2
+# generování sestavy vyúčtování pro účastníky $akce - bez DPH
+#   $fld = seznam položek s prefixem
+#   $cnd = podmínka
+# počítané položky
+#   manzele = rodina.nazev muz a zena
+# generované vzorce
+#   platit = součet předepsaných plateb
+function akce_vyuctov_pary2($akce,$par,$title,$vypis,$export=false) { trace();
+  $ord= $par->ord ? $par->ord : "IF(funkce<=2,1,funkce),IF(pouze=0,r.nazev,o.prijmeni)";
+  $result= (object)array();
+  $tit= "Manželé:25"
+      . ",pokoj:7,dětí:5:r,lůžka:5:r:s,přis týlky:5:r:s,kočá rek:5:r:s,nocí:5:r:s"
+      . ",str. celá:5:r:S,str. pol.:5:r:s"
+//       . ",platba ubyt.:7:r:s,platba strava:7:r:s,platba režie:7:r:s,sleva:7:r:s"
+//       . ",CD:6:r:s"
+      . ",poplatek dospělí:8:r:s"
+      . ",na účet:7:r:s,datum platby:10:d"
+      . ",poplatek děti:8:r:s,na účet děti:7:r:s,datum platby děti:10:d"
+      . ",nedo platek:7:r:s,pokladna:6:r:s,přepl.:6:r:s,poznámka:50,SPZ:9"
+//       . ",.:7,ubyt.:8:r:s,strava:8:r:s,režie:8:r:s,zapla ceno:8:r:s"
+//       . ",dota ce:6:r:s,nedo platek:6:r:s,dar:7:r:s"
+      . ",rozpočet dospělí:10:r:s,rozpočet děti:10:r:s"
+      . "";
+  $fld= "manzele"
+      . ",pokoj,_deti,luzka,pristylky,kocarek,=pocetnoci,strava_cel,strava_pol"
+//       . ",platba1,platba2,platba3,platba4"
+//       . ",=cd"
+      . ",=platit,platba,datplatby"
+      . ",poplatek_d,platba_d,datplatby_d"
+      . ",=nedoplatek,=pokladna,=preplatek,poznamka,spz"
+//       . ",,=ubyt,=strava,=rezie,=zaplaceno,=dotace,=nedopl,=dar"
+      . ",=naklad,naklad_d"
+      . "";
+  $cnd= 1;
+  $html= '';
+  $href= '';
+  $n= 0;
+  // dekódování parametrů
+  $tits= explode(',',$tit);
+  $flds= explode(',',$fld);
+  $cond= 1;
+  // získání dat - podle $kdo
+  $clmn= array();       // pro hodnoty
+  $expr= array();       // pro výrazy
+  $suma= array();       // pro sumy sloupců id:::s
+  $fmts= array();       // pro formáty sloupců id::f:
+  for ($i= 0; $i<count($tits); $i++) {
+    $idw= $tits[$i];
+    $fld= $flds[$i];
+    list($id,$w,$f,$sum)= explode(':',$idw);
+    if ( $sum=='s' ) $suma[$fld]= 0;
+    if ( isset($f) ) $fmts[$fld]= $f;
+  }
+  // data akce
+  $qry=  "SELECT id_pobyt,platba_d,datplatby_d,poplatek_d,naklad_d,
+          p.pouze,pokoj,luzka,pristylky,kocarek,pocetdnu,strava_cel,strava_pol,
+            platba1,platba2,platba3,platba4,platba,datplatby,cd,p.poznamka,
+          r.nazev as nazev,r.ulice,r.psc,r.obec,r.telefony,r.emaily,r.spz,
+          SUM(IF(t.role='d',1,0)) as _deti,
+          GROUP_CONCAT(DISTINCT IF(t.role='a',o.prijmeni,'') SEPARATOR '') as prijmeni_m,
+          GROUP_CONCAT(DISTINCT IF(t.role='a',o.jmeno,'')    SEPARATOR '') as jmeno_m,
+          GROUP_CONCAT(DISTINCT IF(t.role='a',o.narozeni,'') SEPARATOR '') as narozeni_m,
+          GROUP_CONCAT(DISTINCT IF(t.role='a',o.rc_xxxx,'')  SEPARATOR '') as rc_xxxx_m,
+          GROUP_CONCAT(DISTINCT IF(t.role='b',o.prijmeni,'') SEPARATOR '') as prijmeni_z,
+          GROUP_CONCAT(DISTINCT IF(t.role='b',o.jmeno,'')    SEPARATOR '') as jmeno_z,
+          GROUP_CONCAT(DISTINCT IF(t.role='b',o.narozeni,'') SEPARATOR '') as narozeni_z,
+          GROUP_CONCAT(DISTINCT IF(t.role='b',o.rc_xxxx,'')  SEPARATOR '') as rc_xxxx_z
+          FROM pobyt AS p
+          JOIN spolu AS s USING(id_pobyt)
+          JOIN osoba AS o ON s.id_osoba=o.id_osoba
+          LEFT JOIN tvori AS t ON t.id_osoba=o.id_osoba
+          LEFT JOIN rodina AS r USING(id_rodina)
+          WHERE p.id_akce='$akce' AND funkce!=99 AND $cond
+          GROUP BY id_pobyt
+          ORDER BY $ord";
+//   $qry.=  " LIMIT 10";
+  $res= mysql_qry($qry);
+  while ( $res && ($x= mysql_fetch_object($res)) ) {
+//                                         debug($x,"hodnoty");
+    $n++;
+    $clmn[$n]= array();
+    $DPH1= 0.1;
+    $DPH2= 0.2;
+    foreach($flds as $f) {
+      $exp= ''; $val= 0;
+      if ( substr($f,0,1)=='=' ) {
+        //            ubyt.         strava        režie         sleva
+        $predpis= $x->platba1 + $x->platba2 + $x->platba3 + $x->platba4;
+        $predpis_d= $predpis + $x->poplatek_d;
+        $platba= $x->platba + $x->platba_d;
+        $preplatek= $platba > $predpis_d ? $platba - $predpis_d : '';
+        $nedoplatek= $platba < $predpis_d ? $predpis_d - $platba : '';
+        $naklad= $predpis - $x->platba4;
+        switch ($f) {
+        case '=pocetnoci':  $val= max(0,$x->pocetdnu);
+                            break;
+        case '=platit':     $val= $predpis;
+//                             $exp= "=[platba1,0]+[platba2,0]+[platba3,0]+[platba4,0]";
+                            break;
+        case '=preplatek':  $val= $preplatek;
+                            $exp= "=IF([platba,0]+[platba_d,0]>[=platit,0]+[poplatek_d,0]"
+                                . ",[platba,0]+[platba_d,0]-[=platit,0]-[poplatek_d,0],0)"; break;
+        case '=nedoplatek': $val= $nedoplatek;
+                            $exp= "=IF([platba,0]+[platba_d,0]<[=platit,0]+[poplatek_d,0]"
+                                . ",[=platit,0]+[poplatek_d,0]-[platba,0]-[platba_d,0],0)"; break;
+        case '=pokladna':   $val= ''; break;
+        case '=cd':         $val= 100.00*$x->cd; break;
+        case '=ubyt':       $val= round($x->platba1/(1+$DPH1));
+                            $exp= "=ROUND([platba1,0]/(1+$DPH1),0)"; break;
+//         case '=ubytDPH':    $val= round($x->platba1*$DPH1/(1+$DPH1));
+//                             $exp= "=[platba1,0]-[=ubyt,0]"; break;
+        case '=strava':     $val= round($x->platba2/(1+$DPH2));
+                            $exp= "=ROUND([platba2,0]/(1+$DPH2),0)"; break;
+//         case '=stravaDPH':  $val= round($x->platba2*$DPH2/(1+$DPH2));
+//                             $exp= "=[platba2,0]-[=strava,0]"; break;
+        case '=rezie':      $val= 0+$x->platba3;
+                            $exp= "=[platba3,0]"; break;
+        case '=zaplaceno':  $val= 0+$x->platba;
+                            $exp= "=[platba,0]+[=pokladna,0]"; break;
+        case '=dotace':     $val= -$x->platba4;
+                            $exp= "=-[platba4,0]"; break;
+//         case '=nedopl':     $val= $nedoplatek;
+//                             $exp= "=IF([platba,0]<[=platit,0],[=platit,0]-[=zaplaceno,0],0)"; break;
+        case '=dar':        $val= $preplatek;
+                            $exp= "=IF([=zaplaceno,0]>[=platit,0],[=zaplaceno,0]-[=platit,0],0)"; break;
+        case '=naklad':     $val= $naklad; break;
+        default:            $val= '???'; break;
+        }
+        $clmn[$n][$f]= $val;
+        if ( $exp ) $expr[$n][$f]= $exp;
+      }
+      else {
+        switch ($f) {
+        case 'manzele':
+          $val= $x->pouze==1 ? "{$x->prijmeni_m} {$x->jmeno_m}"
+             : ($x->pouze==2 ? "{$x->prijmeni_z} {$x->jmeno_z}"
+             : "{$x->nazev} {$x->jmeno_m} a {$x->jmeno_z}");
+          break;
+        case 'jmena':
+          $val= $x->pouze==1
+              ? $x->jmeno_m : ($x->pouze==2 ? $x->jmeno_z : "{$x->jmeno_m} a {$x->jmeno_z}");
+          break;
+        case 'prijmeni':
+          $val= $x->pouze==1 ? $x->prijmeni_m : ($x->pouze==2 ? $x->prijmeni_z : $x->nazev);
+          break;
+        default:
+          $val= $f ? $x->$f : '';
+          break;
+        }
+        if ( $f ) $clmn[$n][$f]= $val; else $clmn[$n][]= $val;
+      }
+      // případný výpočet sumy
+      if ( isset($suma[$f]) ) {
+         $suma[$f]+= $val;
+      }
+    }
+  }
+//                                         debug($clmn,"sestava pro $akce,$typ,$fld,$cnd");
+//                                         debug($expr,"vzorce pro $akce,$typ,$fld,$cnd");
+//                                         debug($suma,"sumy pro $akce B");
+  // zobrazení tabulkou
+  $tab= '';
+  $thd= '';
+  if ( $export ) {
+    $result->tits= $tits;
+    $result->flds= $flds;
+    $result->clmn= $clmn;
+    $result->expr= $expr;
+    $result->X= array(
+      "Přehled dotace"
+      ,"dotace dospělí","=[=naklad,s]-[=platit,s]"
+      ,"dotace děti","=[naklad_d,s]-[poplatek_d,s]"
+   );
+//     $result->DPH= array(
+//       "základ","=[=ubyt,s]+[=strava,s]+[=rezie,s]"
+//      ,"DPH ".($DPH2*100)."%","=[=stravaDPH,s]"
+//      ,"DPH ".($DPH1*100)."%","=[=ubytDPH,s]"
+//      ,"předpis celkem","=[=ubyt,s]+[=strava,s]+[=rezie,s]+[=stravaDPH,s]+[=ubytDPH,s]"
+//    );
+  }
+  else {
+    // titulky
+    foreach ($tits as $idw) {
+      list($id)= explode(':',$idw);
+      $ths.= "<th>$id</th>";
+    }
+    // data
+    foreach ($clmn as $i=>$c) {
+      $tab.= "<tr>";
+      foreach ($c as $id=>$val) {
+        $style= akce_sestava_td_style($fmts[$id]);
+        $tab.= "<td$style>$val</td>";
+      }
+      $tab.= "</tr>";
+    }
+    // sumy
+    $sum= '';
+    if ( count($suma)>0 ) {
+      $sum.= "<tr>";
+      foreach ($flds as $f) {
+        $val= isset($suma[$f]) ? $suma[$f] : '';
+        $sum.= "<th style='text-align:right'>$val</th>";
+      }
+      $sum.= "</tr>";
+    }
+    $result->html= "<div class='stat'><table class='stat'><tr>$ths</tr>$sum$tab</table></div>";
     $result->html.= "</br>";
     $result->href= $href;
   }
@@ -7122,6 +7335,24 @@ __XLS;
     $n--;
     $xls.= "\n|A$nd:B$n border=+h|A$nd1:B$n border=t";
   }
+  // tabulka X, pokud je
+  if ( $tab->X ) {
+    $n+= 3;
+    $nd1= $n;
+    $xls.= "\n|A$n {$tab->X[0]} :: bcolor=ffc0e2c2 |A$n:B$n merge center\n";
+    $n++;
+    $nd= $n;
+    for($i= 1; $i<count($tab->X); $i+= 2) {
+      $lab= $tab->X[$i];
+      $exp= $tab->X[$i+1];
+      $xn= $ns;
+      $exp= preg_replace_callback("/\[([^,]*),([^\]]*)\]/","akce_vyp_subst",$exp);
+      $xls.= "|A$n $lab ::right|B$n $exp :: bcolor=ffdddddd";
+      $n++;
+    }
+    $n--;
+    $xls.= "\n|A$nd:B$n border=+h|A$nd1:B$n border=t";
+  }
   // konec
   $xls.= <<<__XLS
     \n|close
@@ -7743,7 +7974,7 @@ function dop_mai_pocet($id_dopis,$dopis_var,$cond='',$recall=false) {  trace();
                  IF(p.platba1+p.platba2+p.platba3+p.platba4>0,
                    p.platba1+p.platba2+p.platba3+p.platba4,
                    IF(pouze>0,1,2)*a.cena)>platba,
-                 p.platba1+p.platba2+p.platba3+p.platba4>platba)"
+                 p.platba1+p.platba2+p.platba3+p.platba4+p.poplatek_d>platba+platba_d)"
          : " --- chybné komu --- " ));
     // využívá se toho, že role rodičů 'a','b' jsou před dětskou 'd', takže v seznamech
     // GROUP_CONCAT jsou rodiče, byli-li na akci. Emaily se ale vezmou ode všech
