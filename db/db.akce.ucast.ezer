@@ -654,7 +654,7 @@ form _ucast [,,400,] { css:'ds_form'
     # varianta A
     # varianta B na úkor _jmena
     show c_suma  [,,0,] { title:'cena', expr:"p.platba1+p.platba2+p.platba3+p.platba4+p.poplatek_d", format:"rsq" }
-    show platba  [,,0,] { title:'platba', data:p.platba, format:"rsq" }
+    show platba  [,,0,] { title:'platba', expr:"p.platba+platba_d", format:"rsq" }
     # varianta C na úkor _jmena
     show fotka   [,,0,] { data:r.fotka, format:'rsq*', help:'soubor s fotografií' }
     show _vek    [,,0,] { expr:"GROUP_CONCAT(DISTINCT IF(tx.role='a',ox.narozeni,'') SEPARATOR '')",
