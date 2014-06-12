@@ -95,6 +95,30 @@ menu m {type:'left',
     item {title:'Definice skupin (SQL)'
       proc onclick (i) { ini(i,'sq','','skup','gen|akce'); } }
   }
+  menu  {title:'Struktura dat (výběr)', type:'group', skill:'yamg;famg;camg'
+    item {title:'Přehled struktury dat'
+      proc onclick (i) {
+        et.get.display(0); es.get.display(0); gq.get.display(0);
+        sq.get.display(0); vy.get.display(0,'.*');
+        ii.fill(conc(i.owner.title,' - ',i.title),"<br>
+          Zjednodušené schema databáze pro <b>Answer</b>
+          s uvedením podmínek pro spojení pomocí JOIN<br><br>
+          <img src='db/img/schema_db_2014.png' />
+        ");
+      }
+    }
+    item {title:'Struktura tabulky AKCE',       par:°{tab:'akce'} }
+    item {title:'Struktura tabulky POBYT',      par:°{tab:'pobyt'} }
+    item {title:'Struktura tabulky SPOLU',      par:°{tab:'spolu'} }
+    item {title:'Struktura tabulky OSOBA',      par:°{tab:'osoba'} }
+    item {title:'Struktura tabulky TVORI',      par:°{tab:'tvori'} }
+    item {title:'Struktura tabulky RODINA',     par:°{tab:'rodina'} }
+    proc onclick (i) {
+      et.get.display(0); es.get.display(0); gq.get.display(0);
+      sq.get.display(0); vy.get.display(0,'.*');
+      ii.fill(conc(i.owner.title,' - ',i.title),ask('i_doc_table_struct',i.par.tab,0));
+    }
+  }
 }
 # -------------------------------------------------------------------------------------------------- _vyber
 form _vyber {

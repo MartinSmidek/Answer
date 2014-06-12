@@ -7,6 +7,8 @@
   $skin=     'default';
   $skin=     'ck';
   $CKEditor= $_GET['editor'] ? $_GET['editor'] : '4';
+  $dbg=      $_GET['dbg'];
+  $gmap=     $_GET['gmap'] ? true : !($ezer_local || $ezer_ksweb);
 
   require_once("$app.inc");
   require_once("{$EZER->version}/server/ae_slib.php");
@@ -27,7 +29,9 @@
     array("$client/lib.js","$client/ezer_fdom1.js","$client/ezer.js","$client/ezer_report.js",
       "$client/ezer_fdom2.js","$client/app.js","$licensed/zeroclipboard/ZeroClipboard.js"),
     // další knihovny
-    array("$licensed/glfx.js","http://maps.googleapis.com/maps/api/js?sensor=false"),
+    array("$licensed/glfx.js"),
+    // rozhodnout zda používat online mapy
+    $gmap ? array("http://maps.googleapis.com/maps/api/js?sensor=false") : array(),
     // uživatelské skripty
     array("db/db_fce.js","ds/fce.js")
   );
