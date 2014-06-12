@@ -41,6 +41,7 @@ db/db.akce2.ucast.ezer -text
 db/db.css.php -text
 db/db_akce.php -text
 db/db_fce.js -text
+db/img/schema_db_2014.png -text
 db/img/stravenky-rastr-1.png -text
 /dbg.html -text
 /dg.inc -text

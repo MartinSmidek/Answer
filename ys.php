@@ -8,6 +8,7 @@
   $skin=     'ck';
   $CKEditor= $_GET['editor'] ? $_GET['editor'] : '4';
   $dbg=      $_GET['dbg'];
+  $gmap=     $_GET['gmap'] ? true : !($ezer_local || $ezer_ksweb);
 
   // Ans(w)er rozeznává tyto doplňkové parametry v URL
   //   dbs=db_name:other_db_name,...    -- záměna MySQL tabulek za jiné (je zpracováváno ve fis.ini)
@@ -34,9 +35,8 @@
     $dbg ? array("$licensed/jush/mini_jush.js"):array(),
     // další knihovny
     array("$licensed/glfx.js"),
-    // vynechat při ladění
-    $ezer_local ? array()
-    : array("http://maps.googleapis.com/maps/api/js?sensor=false"),
+    // rozhodnout zda používat online mapy
+    $gmap ? array("http://maps.googleapis.com/maps/api/js?sensor=false") : array(),
     // uživatelské skripty
     array("db/db_fce.js","ds/fce.js")
   );

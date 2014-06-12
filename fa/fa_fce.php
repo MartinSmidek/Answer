@@ -165,7 +165,7 @@ function p_pdenik_insert($typ,$org,$org_abbr,$datum) {
                                                           debug(Array($typ,$org,$cislo,$datum),'p_denik_insert');
   $db= $x->db;
   $select= array();
-  make_get(&$set,&$select,&$fields);
+  make_get($set,$select,$fields);
   // nalezení nového čísla dokladu (v každé pokladně se zvlášť číslují příjmy a výdaje)
   $year= substr(trim($datum),-4);
   $qry= "SELECT max(cislo) as c FROM $db.pdenik WHERE org=$org AND typ=$typ AND year(datum)=$year";
