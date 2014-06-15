@@ -745,7 +745,9 @@ form _ucast [,,400,] { css:'ds_form'
     show deti       {expr:"
        (SELECT GROUP_CONCAT(DISTINCT CONCAT(
 #           osoba.id_osoba,'|',jmeno,'|',narozeni,'|',narozeni,'|',rc_xxxx,'|',
-          osoba.id_osoba,'|',jmeno,'|',ROUND(DATEDIFF(datum_od,narozeni)/365.2425,1),'|',narozeni,'|',rc_xxxx,'|',
+          osoba.id_osoba,'|',jmeno,'|',
+          IF(narozeni='0000-00-00','???',ROUND(DATEDIFF(datum_od,narozeni)/365.2425,1)),
+          '|',narozeni,'|',rc_xxxx,'|',
           (IFNULL((SELECT CONCAT(id_spolu,'|',
                      IF(@app='fa',CONCAT(IFNULL(_cis.zkratka,'?'),' '),''),
                      IF(poznamka!='',CONCAT(note,'/',poznamka),note),'|',skupinka,'|',
