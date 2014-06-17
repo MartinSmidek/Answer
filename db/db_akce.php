@@ -2448,8 +2448,7 @@ function akce_vzorec_soubeh($id_pobyt,$id_hlavni,$id_soubezna,$dosp=0,$deti=0,$k
     // pokud mají děti označenou kategorii X, určuje se cena podle pX ceníku souběžné akce
     // cena pro dospělé se určí podle ceníku hlavní akce - děti bez kategorie se nesmí
     $deti_kat= array();
-    $n= $ndeti= 0;
-    $chuvy= $del= '';
+    $n= $ndeti= $chuv= 0;
     $qo= "SELECT o.jmeno,s.dite_kat,p.funkce, t.role, p.ubytovani, narozeni, p.funkce,
            s.pecovane,(SELECT CONCAT(osoba.prijmeni,',',osoba.jmeno,',',pobyt.id_pobyt)
             FROM pobyt
@@ -2466,21 +2465,34 @@ function akce_vzorec_soubeh($id_pobyt,$id_hlavni,$id_soubezna,$dosp=0,$deti=0,$k
       $vek= narozeni2roky(sql2stamp($o->narozeni),sql2stamp($datum_od));
       $kat= $o->dite_kat;
       $pps= $o->funkce==1;
-      if ( $kat ) {
-        // dítě - speciální cena
-        $deti_kat[$map_kat[$kat]]++;
-        $ndeti++;
-      }
-      elseif ( $vek<18 ) {
-        // dítě bez kategorie
-        $ret->err.= "<br>Chybí kategorie u dítěte: {$o->jmeno}";
-        $ndeti++;
+      if ( $o->role=='d' ) {
+        if ( $kat ) {
+          // dítě - speciální cena
+          $deti_kat[$map_kat[$kat]]++;
+          $ndeti++;
+        }
+        elseif ( $vek<18 ) {
+          // dítě bez kategorie
+          $ret->err.= "<br>Chybí kategorie u dítěte: {$o->jmeno}";
+          $ndeti++;
+        }
+        if ( $o->_chuva ) {
+          list($prijmeni,$jmeno,$pobyt)= explode(',',$o->_chuva);
+          if ( $pobyt!=$id_pobyt ) {
+            // chůva nebydlí s námi ale platíme ji
+            $chuv++;
+          }
+          else {
+            // chůva bydlí s námi a platíme ji
+            $chuv++;
+          }
+        }
       }
       $n++;
     }
     // kontrola počtu
-    if ( $dosp + $ndeti != $n ) {
-      $ret->err.= "<br>chyba v počtech: dospělí=$dosp, $deti=$ndeti ale celkem $n";
+    if ( $dosp + $chuv + $ndeti != $n ) {
+      $ret->err.= "<br>chyba v počtech: dospělí $dosp + chůvy $chuv + děti $ndeti není celkem $n";
     }
   }
   elseif ( $id_hlavni ) {
@@ -2491,6 +2503,7 @@ function akce_vzorec_soubeh($id_pobyt,$id_hlavni,$id_soubezna,$dosp=0,$deti=0,$k
     if ( $koje ) $deti_kat['F']= $koje;
     if ( $deti ) $deti_kat['B']= $deti;
   }
+  $dosp_chuv= $dosp+$chuv;
 //                                         debug($deti_kat,"dětí");
   $Kc= "&nbsp;Kč";
   // redakce textu k ceně dospělých
@@ -2501,10 +2514,10 @@ function akce_vzorec_soubeh($id_pobyt,$id_hlavni,$id_soubezna,$dosp=0,$deti=0,$k
     $c= $a->c; $txt= $a->txt;
     switch ($za) {
     case 'Nl':
-      $cena+= $cc= $dosp * $pocetdnu * $c;
+      $cena+= $cc= $dosp_chuv * $pocetdnu * $c;
       if ( !$cc ) break;
       $ret->c_nocleh+= $cc;
-      $ubytovani.= "<tr><td>".($dosp*$pocetdnu)." x $txt ($c$Kc)</td><td align='right'>$cc$Kc</td></tr>";
+      $ubytovani.= "<tr><td>".($dosp_chuv*$pocetdnu)." x $txt ($c$Kc)</td><td align='right'>$cc$Kc</td></tr>";
       break;
     case 'P':
       $cena+= $cc= $c * $dosp;
@@ -2527,7 +2540,7 @@ function akce_vzorec_soubeh($id_pobyt,$id_hlavni,$id_soubezna,$dosp=0,$deti=0,$k
       $slevy.= "<tr><td>$dosp x $txt ($c$Kc)</td><td align='right'>$cc$Kc</td></tr>";
       break;
     case 'sc': case 'oc': case 'vc':
-      $strav= $dosp * ($pocetdnu + ($za=='oc' && $strava_oddo=='oo' ? 1 : 0)); // případně oběd navíc
+      $strav= $dosp_chuv * ($pocetdnu + ($za=='oc' && $strava_oddo=='oo' ? 1 : 0)); // případně oběd navíc
       $cena+= $cc= $strav * $c;
       if ( !$cc ) break;
       $ret->c_strava+= $cc;
@@ -2633,8 +2646,12 @@ function akce_vzorec($id_pobyt) {  trace();
       if ( $o->_chuva ) {
         list($prijmeni,$jmeno,$pobyt)= explode(',',$o->_chuva);
         if ( $pobyt!=$id_pobyt ) {
+          // chůva nebydlí s námi ale platíme ji
           $chuvy= "$del$jmeno $prijmeni";
           $del= ' a ';
+        }
+        else {
+          // chůva bydlí s námi a platíme ji
         }
       }
       if ( $o->pecovane ) {
@@ -3689,7 +3706,7 @@ function akce_sestava_pary($akce,$par,$title,$vypis,$export=false) { trace();
               FROM pobyt
               JOIN spolu ON spolu.id_pobyt=pobyt.id_pobyt
               JOIN osoba ON osoba.id_osoba=spolu.id_osoba
-              WHERE pobyt.id_akce='369' AND spolu.pecovane=o.id_osoba),'') SEPARATOR ' ') AS _chuvy
+              WHERE pobyt.id_akce='$akce' AND spolu.pecovane=o.id_osoba),'') SEPARATOR ' ') AS _chuvy
           FROM pobyt AS p
           JOIN spolu AS s USING(id_pobyt)
           JOIN osoba AS o ON s.id_osoba=o.id_osoba
