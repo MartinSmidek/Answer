@@ -2149,12 +2149,12 @@ function akce_kontrola_dat($par) { trace();
 # ---------------------------------------------------------------------------------------- akce_id2a
 # vrácení klíčů pobyt u kterých došlo ke změně po daném datu a čase
 function akce_zmeny($id_akce,$h) {  trace();
-  $ret= (object)array('errs'=>'','pobyt'=>'','chngs'=>array());
+  $ret= (object)array('errs'=>'','pobyt'=>'','chngs'=>array(),'osoby'=>array());
   // přebrání parametrů
   $time= date_sub(date_create(), date_interval_create_from_date_string("$h hours"));
   $ret->kdy= date_format($time, 'Y-m-d H:i');
   // získání sledovaných klíčů tabulek spolu, osoba, tvori, rodina
-  $pobyt= $osoba= $rodina= $spolu= $tvori= array();
+  $pobyt= $osoba= $osoby= $rodina= $spolu= $spolu_osoba= $tvori= array();
   $rp= mysql_qry("
     SELECT id_pobyt,id_spolu,o.id_osoba,id_tvori,id_rodina
     FROM pobyt AS p
@@ -2167,6 +2167,7 @@ function akce_zmeny($id_akce,$h) {  trace();
   while ( $rp && ($p= mysql_fetch_object($rp)) ) {
     $pid= $p->id_pobyt;
     $spolu[$p->id_spolu]= $pid;
+    $spolu_osoba[$p->id_spolu]= $p->id_osoba;
     $osoba[$p->id_osoba]= $pid;
     if ( $p->id_tvori ) $tvori[$p->id_tvori]= $pid;
     if ( $p->id_rodina ) $rodina[$p->id_rodina]= $pid;
@@ -2180,8 +2181,8 @@ function akce_zmeny($id_akce,$h) {  trace();
     $pid= 0;
     switch ( $t->kde ) {
     case 'pobyt':  $pid= $k; break;
-    case 'spolu':  $pid= $spolu[$k]; break;
-    case 'osoba':  $pid= $osoba[$k]; break;
+    case 'spolu':  if ( $pid= $spolu[$k] ) $osoby[$spolu_osoba[$k]]= 1; break;
+    case 'osoba':  if ( $pid= $osoba[$k] ) $osoby[$k]= 1; break;
     case 'tvori':  $pid= $tvori[$k]; break;
     case 'rodina': $pid= $rodina[$k]; break;
     }
@@ -2194,6 +2195,7 @@ function akce_zmeny($id_akce,$h) {  trace();
     }
   }
   // shrnutí změn
+  $ret->osoby= implode(',',array_keys($osoby));
   $ret->pobyt= implode(',',$pobyt);
 //                                         debug($ret,"$n změn po ... sql_time={$ret->kdy}");
   return $ret;

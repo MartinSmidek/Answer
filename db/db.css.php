@@ -53,7 +53,7 @@ echo <<<__EOD
 .zmeneny, .zmeneny input {
   background-color:#ffaa00 !important; }
 div.zmeneny {
-  background-color:#ffaa00; color:black; z-index:5; font-size:8px; }
+  position:absolute; color:black; z-index:2; font-size:8px; }
 
 /* úpravy standardu */
 .BrowseSmart td.BrowseQry input {
