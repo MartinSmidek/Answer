@@ -237,6 +237,8 @@ sql/unifikace_2011.sql -text
 /test.php -text
 wiki/databaze.wiki -text
 wiki/dokumentace.wiki -text
+wiki/img/db_zmeny_data.png -text
+wiki/img/db_zmeny_menu.png -text
 wiki/img/ezer.help.png -text
 wiki/img/ezer.help2.png -text
 wiki/img/ys_browse.png -text
