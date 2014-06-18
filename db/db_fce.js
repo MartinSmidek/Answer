@@ -553,9 +553,7 @@ Ezer.fce.set_css_changed= function (cases,css,chngs) {
                 // přidáme css
                 p.DOM_Block.addClass(css);
                 Ezer.obj.set_css_changed.push(
-                  new Element('div',{'class':css,html:w,styles:{
-                    borderLeft:'1px solid #aaa',borderRight:'1px solid #aaa',
-                    borderBottom:'1px solid #aaa',padding:'0 2px',
+                  new Element('span',{'class':css,html:w,styles:{
                     left:p._l,top:p._t+(p._h||16)-1
                 }}).inject(p.owner.DOM_Block));
               }

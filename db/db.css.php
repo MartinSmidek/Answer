@@ -52,9 +52,9 @@ echo <<<__EOD
 /* barvení časových změn ve formulářích */
 .zmeneny, .zmeneny input {
   background-color:#ffaa00 !important; }
-div.zmeneny {
-  position:absolute; color:black; z-index:2; font-size:8px; }
-
+span.zmeneny {
+  position:absolute; color:black; z-index:2; font-size:8px; height:11px; padding:0 1px;
+  border-left:1px solid #aaa; border-right:1px solid #aaa; border-bottom:1px solid #aaa; }
 /* úpravy standardu */
 .BrowseSmart td.BrowseQry input {
   background-color:$b8_brow; }
