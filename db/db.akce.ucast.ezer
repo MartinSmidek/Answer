@@ -425,7 +425,7 @@ form _evidence {
       proc onclick () { var ret:object
         u.b.selected('clear');
         ret.set(ask('akce_zmeny',the_duakce.get,
-          prompt("zadej stáří změn v hodinách",24)));
+          prompt("zadej stáří změn v hodinách",72)));
         not(ret.errs);
         u.b.selected('set',ret.pobyt);
         zmeny.set(ret);
