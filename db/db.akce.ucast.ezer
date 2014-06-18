@@ -421,19 +421,19 @@ form _evidence {
       proc onclick () { alert(ask('akce_skup_renum',the_duakce.get)) } }
     item { title:'ukázat všechny změny'
       proc onclick () { BackTrace.back_load(pob.key,muz.key,zen.key,rod.key) } }
-    item { title:'-označit změněné údaje'
+    item { title:'-obarvit změněné údaje'
       proc onclick () { var ret:object
         u.b.selected('clear');
         pob.d.selected('clear');
         ret.set(ask('akce_zmeny',the_duakce.get,
-          prompt("zadej stáří změn v hodinách",72)));
+          prompt("zadej stáří obarvených změn v hodinách",72)));
         not(ret.errs);
         u.b.selected('set',ret.pobyt);
         zmeny.set(ret);
         u.b.reload_pobyt
       | warning(ret.errs)
     } }
-    item { title:'... zrušit označení změn'
+    item { title:'... zrušit obarvení změn'
       proc onclick () { clear_zmeny(array(rod,muz,zen,pob,pla,Dite.dite)) } }
   }
   label [2,17,723,495] {title:"<img src='img/ms3.png'>" }
