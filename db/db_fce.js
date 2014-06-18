@@ -554,7 +554,9 @@ Ezer.fce.set_css_changed= function (cases,css,chngs) {
                 p.DOM_Block.addClass(css);
                 Ezer.obj.set_css_changed.push(
                   new Element('div',{'class':css,html:w,styles:{
-                    position:'absolute',left:p._l,top:p._t+(p._h||16)-1
+                    borderLeft:'1px solid #aaa',borderRight:'1px solid #aaa',
+                    borderBottom:'1px solid #aaa',padding:'0 2px',
+                    left:p._l,top:p._t+(p._h||16)-1
                 }}).inject(p.owner.DOM_Block));
               }
             }
@@ -563,4 +565,5 @@ Ezer.fce.set_css_changed= function (cases,css,chngs) {
       }
     }
   }
+  return 1;
 };
