@@ -49,6 +49,12 @@ echo <<<__EOD
 .page {
   font-size:9pt !important; padding:10px; line-height:13pt; }
 
+/* barvení časových změn ve formulářích */
+.zmeneny, .zmeneny input {
+  background-color:#ffaa00 !important; }
+div.zmeneny {
+  background-color:#ffaa00; color:black; z-index:5; font-size:8px; }
+
 /* úpravy standardu */
 .BrowseSmart td.BrowseQry input {
   background-color:$b8_brow; }

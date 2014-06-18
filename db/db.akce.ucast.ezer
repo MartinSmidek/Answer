@@ -6,8 +6,9 @@
 
 var the_duakce_local: number    // zobrazená akce - pokud se liší od the_duakce, je třeba překreslit
 var the_pobyt: number
-var zalozka: text           // evid | plat | akce
+var zalozka: text               // evid | plat | akce
 var back: object
+var zmeny: object               // objekt naplněný požadavkem zobrazení nedávných změn
 
 proc onstart() {
   the_duakce_local.set(0);
@@ -47,7 +48,11 @@ proc init_ucast2() {
   # souběžná akce - jen děti
   u2.reload
 }
-
+# obsluha označení změněných polí
+proc clear_zmeny(tables) {
+  zmeny.set(0); u.b.selected('clear');
+  set_css_changed(tables,'zmeneny');
+}
 proc akce_load(id_akce) { lst.akce_work(id_akce); onfocus(); }
 
 # zobrazí dočasně jinou akci s tlačítkem ZPĚT  (jen z podzáložky Aktivita)
@@ -103,6 +108,7 @@ proc page_clear() {
 }
 proc reload(id_pobyt) {
   cmd.b_display(1);
+  clear_zmeny(array(rod,muz,zen,pob,pla));
   the_duakce.get;
   lst.the_akce.load(the_duakce.get);
   page_clear;
@@ -262,7 +268,7 @@ form _aktivity {
   }
 }
 # ------------------------------------------------------------------------------------------ _platba
-form _platba {
+form _platba { key_id:'id_pobyt'
   var cena: object
   label [2,27,527,495] //{title:"<img src='img/ms2p.png'>" }
   proc ini() {
@@ -415,9 +421,19 @@ form _evidence {
       proc onclick () { alert(ask('akce_skup_renum',the_duakce.get)) } }
     item { title:'ukázat všechny změny'
       proc onclick () { BackTrace.back_load(pob.key,muz.key,zen.key,rod.key) } }
-    item { title:'m: ECHO hodnoty klíčů', skill:'m'
-      proc onclick () { echo('KLÍČE: akce=',the_duakce.get,', pobyt=',u.b.key_pobyt.get,
-        ', strava=',lst.the_akce.strava_oddo.get ) } }
+    item { title:'-označit změněné údaje'
+      proc onclick () { var ret:object
+        u.b.selected('clear');
+        ret.set(ask('akce_zmeny',the_duakce.get,
+          prompt("zadej stáří změn v hodinách",24)));
+        not(ret.errs);
+        u.b.selected('set',ret.pobyt);
+        zmeny.set(ret);
+        u.b.reload_pobyt
+      | warning(ret.errs)
+    } }
+    item { title:'... zrušit označení změn'
+      proc onclick () { clear_zmeny(array(rod,muz,zen,pob,pla,Dite.dite)) } }
   }
   label [2,17,723,495] {title:"<img src='img/ms3.png'>" }
   label [10,21,100,] {title:'<b>společné údaje</b>'}
@@ -455,7 +471,7 @@ form _evidence {
   label [421,409,19,] {title:'typ', skill:'c' }
 }
 # ------------------------------------------------------------------------------------------ _rodina
-form _rodina {
+form _rodina { key_id:'id_rodina'
   field nazev       [10,48,100,] {data:rodina.nazev, help:'společné příjmení', format:':F' }
   field _spolu      [159,49,23,] {format:'o', value:'?'}
   field ulice       [11,72,191,] {data:rodina.ulice}
@@ -472,7 +488,7 @@ form _rodina {
   chat  historie    [8,570,185,106] { divide:100, skill:'yaah' }
 }
 # --------------------------------------------------------------------------------------------- _muz
-form _muz {
+form _muz { key_id:'id_osoba'
   field id_spolu_m  // id_spolu nebo 0, pokud není na akci
   field jmeno_m     [224,48,80,22] {data:osoba.jmeno}
   field _vek_m      [354,50,19,] {format:'o', value:'?'}
@@ -500,7 +516,7 @@ form _muz {
   chat  historie_m  [198,570,185,106] { divide:100, skill:'yaah' }
 }
 # -------------------------------------------------------------------------------------------- _zena
-form _zena {
+form _zena { key_id:'id_osoba'
   field id_spolu_z  // id_spolu nebo 0, pokud není na akci
   field jmeno_z     [421,48,80,] {data:osoba.jmeno}
   field _vek_z      [549,50,20,] {format:'o', value:'?'}
@@ -528,7 +544,7 @@ form _zena {
   chat  historie_z  [389,570,185,106] { divide:100, skill:'yaah' }
 }
 # ------------------------------------------------------------------------------------------- _pobyt
-form _pobyt {
+form _pobyt { key_id:'id_pobyt'
   field id_akce     {data:pobyt.id_akce}
   select pouze      [254,371,96,] {type:'map', data:pobyt.pouze, options:ms_akce_pouze.zkratka
     proc onchange() {
@@ -566,7 +582,8 @@ form _pobyt {
     show barva
     proc onsubmit() {
       neni_ulozeno // warning
-    | Dite.key_dite.set(id_osoba.get); Dite.key_spolu.set(id_spolu.get);
+    | Dite.key_dite.set(id_osoba.get);
+      Dite.key_spolu.set(id_spolu.get);
       Dite.key_pobyt.set(u.b.key_pobyt.get);
       Dite.modal(260,10)
     }
@@ -654,7 +671,7 @@ form _ucast [,,400,] { css:'ds_form'
     # varianta A
     # varianta B na úkor _jmena
     show c_suma  [,,0,] { title:'cena', expr:"p.platba1+p.platba2+p.platba3+p.platba4+p.poplatek_d", format:"rsq" }
-    show platba  [,,0,] { title:'platba', expr:"p.platba+platba_d", format:"rsq" }
+    show platba  [,,0,] { title:'platba', data:p.platba, format:"rsq" }
     # varianta C na úkor _jmena
     show fotka   [,,0,] { data:r.fotka, format:'rsq*', help:'soubor s fotografií' }
     show _vek    [,,0,] { expr:"GROUP_CONCAT(DISTINCT IF(tx.role='a',ox.narozeni,'') SEPARATOR '')",
@@ -818,10 +835,10 @@ form _ucast [,,400,] { css:'ds_form'
       switch(zalozka.get,
       'evid', {
         // načtou se všichni, ale ukážou se jen účastníci akce (pouze: 0=oba, 1=muž, 2=žena)
-        copy_by_name(b,muz.get); muz.key(id_m.get); muz.get.display(eq(pouze.get,0,1));
-        copy_by_name(b,zen.get); zen.key(id_z.get); zen.get.display(eq(pouze.get,0,2));
-        copy_by_name(b,rod.get); rod.key(key_rodina.get);
-        copy_by_name(b,pob.get); pob.key(key_pobyt.get);
+        muz.key(id_m.get); copy_by_name(b,muz.get); muz.get.display(eq(pouze.get,0,1));
+        zen.key(id_z.get); copy_by_name(b,zen.get); zen.get.display(eq(pouze.get,0,2));
+        rod.key(key_rodina.get); copy_by_name(b,rod.get);
+        pob.key(key_pobyt.get);  copy_by_name(b,pob.get);
         // počítané položky
         muz._vek_m.set(roku_k(narozeni_m.get,datum_od.get));
         zen._vek_z.set(roku_k(narozeni_z.get,datum_od.get));
@@ -830,7 +847,7 @@ form _ucast [,,400,] { css:'ds_form'
         pob.s.browse_fill(skup.get);
       },
       'plat',{
-        pla.nove; copy_by_name(b,pla.get); pla.key(key_pobyt.get); pla.ini
+        pla.key(key_pobyt.get); pla.nove; copy_by_name(b,pla.get); pla.ini
       },
       'akce',{
         [ id_m.get; a_muz.jme.set(conc(prijmeni_m.get,' ',jmeno_m.get)) | a_muz.jme.init ];
@@ -855,7 +872,20 @@ form _ucast [,,400,] { css:'ds_form'
         }
       },
       {stop}
-    )}
+      );
+      // označ nedávno změněné hodnoty, chce-li se to
+      [ zmeny.get;
+        set_css_changed(array(
+            array(rod,'rodina',key_rodina.get),
+            array(muz,'osoba',id_m.get),
+            array(zen,'osoba',id_z.get),
+            array(pob,'pobyt',key_pobyt.get),
+            array(pla,'pobyt',key_pobyt.get)
+          ),
+          'zmeneny',
+          zmeny.get('chngs'))
+      ];
+    }
     proc onrowclick() { reload_pobyt }
     proc onclick() {
       _vek.width;   _vek.width(0); _vzd.width(0); fotka.width(0);
@@ -1051,6 +1081,16 @@ panel Dite [,,380,495] {type:'popup', title:'Úprava dětí (a osobních pečova
       'save','value'));
     dite.pece_sel.set(''); dite.pecoun.set(0); dite.kategorie.plain;
     [ dite.sebou.get; dite.load_sebou ];
+    // pokud se zobrazují časové změny
+    [ zmeny.get;
+      set_css_changed(array(
+          array(dite,'osoba',key_dite.get),
+          array(dite,'spolu',key_spolu.get),
+          array(dite,'pobyt',key_pobyt.get)
+        ),
+        'zmeneny',
+        zmeny.get('chngs'))
+    ];
   }
   form _dite [,,380,353] { css:'ds_form'
     # --------------------------- kontextové_menu

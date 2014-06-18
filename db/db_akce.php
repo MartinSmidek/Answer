@@ -2147,6 +2147,58 @@ function akce_kontrola_dat($par) { trace();
 }
 # ================================================================================================== AKCE
 # ---------------------------------------------------------------------------------------- akce_id2a
+# vrácení klíčů pobyt u kterých došlo ke změně po daném datu a čase
+function akce_zmeny($id_akce,$h) {  trace();
+  $ret= (object)array('errs'=>'','pobyt'=>'','chngs'=>array());
+  // přebrání parametrů
+  $time= date_sub(date_create(), date_interval_create_from_date_string("$h hours"));
+  $ret->kdy= date_format($time, 'Y-m-d H:i');
+  // získání sledovaných klíčů tabulek spolu, osoba, tvori, rodina
+  $pobyt= $osoba= $rodina= $spolu= $tvori= array();
+  $rp= mysql_qry("
+    SELECT id_pobyt,id_spolu,o.id_osoba,id_tvori,id_rodina
+    FROM pobyt AS p
+    JOIN spolu AS s USING(id_pobyt)
+    JOIN osoba AS o ON s.id_osoba=o.id_osoba
+    LEFT JOIN tvori AS t ON t.id_osoba=o.id_osoba
+    LEFT JOIN rodina AS r USING(id_rodina)
+    WHERE id_akce=$id_akce
+  ");
+  while ( $rp && ($p= mysql_fetch_object($rp)) ) {
+    $pid= $p->id_pobyt;
+    $spolu[$p->id_spolu]= $pid;
+    $osoba[$p->id_osoba]= $pid;
+    if ( $p->id_tvori ) $tvori[$p->id_tvori]= $pid;
+    if ( $p->id_rodina ) $rodina[$p->id_rodina]= $pid;
+  }
+//                                                         debug($rodina);
+  // projití _track
+  $n= 0;
+  $rt= mysql_qry("SELECT kde,klic,fld,kdo FROM _track WHERE kdy>'{$ret->kdy}'");
+  while ( $rt && ($t= mysql_fetch_object($rt)) ) {
+    $k= $t->klic;
+    $pid= 0;
+    switch ( $t->kde ) {
+    case 'pobyt':  $pid= $k; break;
+    case 'spolu':  $pid= $spolu[$k]; break;
+    case 'osoba':  $pid= $osoba[$k]; break;
+    case 'tvori':  $pid= $tvori[$k]; break;
+    case 'rodina': $pid= $rodina[$k]; break;
+    }
+    if ( $pid ) {
+      if ( !in_array($pid,$pobyt) )
+        $pobyt[]= $pid;
+      // vygenerování změnového objektu pro obarvení změn [[table,key,field],...]
+      $ret->chngs[]= array($t->kde,$k,$t->fld,$t->kdo);
+      $n++;
+    }
+  }
+  // shrnutí změn
+  $ret->pobyt= implode(',',$pobyt);
+//                                         debug($ret,"$n změn po ... sql_time={$ret->kdy}");
+  return $ret;
+}
+# ---------------------------------------------------------------------------------------- akce_id2a
 # vrácení hodnot akce
 function akce_id2a($id_akce) {  trace();
   $a= (object)array('title'=>'?','cenik'=>0,'cena'=>0,'soubeh'=>0,'hlavni'=>0,'soubezna'=>0);
@@ -7370,6 +7422,10 @@ __XLS;
     $n--;
     $xls.= "\n|A$nd:B$n border=+h|A$nd1:B$n border=t";
   }
+  // časová značka
+  $kdy= date("j. n. Y v H:i");
+  $n+= 2;
+  $xls.= "|A$n Výpis byl vygenerován $kdy :: italic";
   // konec
   $xls.= <<<__XLS
     \n|close

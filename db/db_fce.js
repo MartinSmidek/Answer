@@ -489,3 +489,78 @@ Ezer.fce.roku_k= function (dat,kdatu) {
   }
   return roku;
 };
+// ------------------------------------------------------------------------------------------------- set_css_changed
+//ff: ys.set_css_changed (cases,css[,chngs])
+// pokud je definováno chngs
+//   odstraní css v daných formulářích a poté je obnoví u změněných dat podle pole
+//   cases= [[form,table_id,key],...]    form se může opakovat pro různé table_id+key
+//   chngs= [[table_id,key,field],...]
+// pokud není definováno chngs
+//   cases= [form,...]  seznam formulářů, ve kterých má být odstraněné css
+//s: ys
+Ezer.obj.set_css_changed= null;
+Ezer.fce.set_css_changed= function (cases,css,chngs) {
+  // vymazání starých poznámek
+  if ( Ezer.obj.set_css_changed ) {
+    Ezer.obj.set_css_changed.each(function(note){note.destroy()});
+    Ezer.obj.set_css_changed= null;
+  }
+  Ezer.obj.set_css_changed= [];
+  // vymazání css z pole formulářů
+  var forms;
+  if ( chngs ) {
+    forms= [];
+    for (ci= 0; ci<cases.length; ci++) {
+        forms.push(cases[ci][0]);
+    }
+  }
+  else {
+    forms= cases;
+  }
+  // zrušení css ve formuláři
+  for (fi= 0; fi<forms.length; fi++) {
+    form= forms[fi].type=='var' ? forms[fi].value : forms[0];
+    for (var pi in form.part) {
+      var p= form.part[pi];
+      if ( p.data ) {
+        if ( p instanceof Ezer.Elem && p.DOM_Block ) {
+          p.DOM_Block.removeClass(css);
+        }
+      }
+    }
+  }
+  // pokud byla změna, označ ji
+  if ( chngs ) {
+    for (ci= 0; ci<cases.length; ci++) {
+      var form= cases[ci][0].type=='var' ? cases[ci][0].value : cases[ci][0],
+          table= cases[ci][1],
+          key= cases[ci][2];
+      // aplikace css podle změn
+      for (di= 0; di<chngs.length; di++) {
+        var t= chngs[di][0],    // tabulka změněné vět
+            k= chngs[di][1];    // s klíčem
+        // pokud je klíč shodný s aktivním
+        if ( key==k ) {
+          var f= chngs[di][2],  // změněné table.field
+              w= chngs[di][3];  // pachatel
+          // projdeme elementy formuláře
+          for (var pi in form.part) {
+            var p= form.part[pi];
+            // a pro elementy
+            if ( p instanceof Ezer.Elem && p.DOM_Block && p.data ) {
+              // pokud data=table.field a klíč
+              if ( p.data.id==f && p.table && p.table.id==table ) {
+                // přidáme css
+                p.DOM_Block.addClass(css);
+                Ezer.obj.set_css_changed.push(
+                  new Element('div',{'class':css,html:w,styles:{
+                    position:'absolute',left:p._l,top:p._t+(p._h||16)-1
+                }}).inject(p.owner.DOM_Block));
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+};
