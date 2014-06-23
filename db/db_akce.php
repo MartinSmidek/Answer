@@ -3453,7 +3453,7 @@ function akce_fotoseznam($akce,$par,$title,$vypis,$export=false) { trace();
           JOIN osoba AS o ON s.id_osoba=o.id_osoba
           LEFT JOIN tvori AS t ON t.id_osoba=o.id_osoba
           LEFT JOIN rodina AS r USING(id_rodina)
-          WHERE p.id_akce='$akce' AND $cnd AND fotka!=''
+          WHERE p.id_akce='$akce' AND $cnd AND r.fotka!=''
           GROUP BY id_pobyt
           ORDER BY $ord";
   $res= mysql_qry($qry);
@@ -5630,7 +5630,7 @@ function akce_plachta_export($line,$file) { trace();
     $wb->close();
     $html= " Výpis byl vygenerován ve formátu <a href='docs/$name.xls' target='xls'>Excel</a>.";
     $html.= " <br>Vygenerovaným listem <b>Hodnoty</b> je třeba nahradit stejnojmenný list v sešitu";
-    $html.= " <b>doc/plachta11.xls</b> a dále postupovat podle návodu v listu <b>Návod</b>.";
+    $html.= " <b>doc/plachta14.xls</b> a dále postupovat podle návodu v listu <b>Návod</b>.";
   }
   catch (Exception $e) {
     $html.= nl2br("Chyba: ".$e->getMessage()." na ř.".$e->getLine());
