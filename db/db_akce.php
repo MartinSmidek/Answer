@@ -4868,14 +4868,14 @@ function akce_vyuctov_pary($akce,$par,$title,$vypis,$export=false) { trace();
       . ",str. celá:5:r:S,str. pol.:5:r:s"
       . ",platba ubyt.:7:r:s,platba strava:7:r:s,platba režie:7:r:s,sleva:7:r:s,CD:6:r:s,celkem:7:r:s"
       . ",na účet:7:r:s,datum platby:10:d"
-      . ",nedo platek:6:r:s,pokladna:6:r:s,přepl.:6:r:s,poznámka:50,SPZ:9,.:7"
+      . ",nedo platek:6:r:s,č.příspěvky:6,pokladna:6:r:s,přepl.:6:r:s,poznámka:50,SPZ:9,.:7"
       . ",ubyt.:8:r:s,DPH:6:r:s,strava:8:r:s,DPH:6:r:s,režie:8:r:s,zapla ceno:8:r:s"
       . ",dota ce:6:r:s,nedo platek:6:r:s,dar:7:r:s,rozpočet organizace:10:r:s"
       . "";
   $fld= "manzele"
       . ",pokoj,_deti,luzka,pristylky,kocarek,=pocetnoci,strava_cel,strava_pol"
       . ",platba1,platba2,platba3,platba4,=cd,=platit,platba,datplatby"
-      . ",=nedoplatek,=pokladna,=preplatek,poznamka,spz,"
+      . ",=nedoplatek,prispevky,=pokladna,=preplatek,poznamka,spz,"
       . ",=ubyt,=ubytDPH,=strava,=stravaDPH,=rezie,=zaplaceno,=dotace,=nedopl,=dar,=naklad"
       . "";
   $cnd= 1;
@@ -4904,6 +4904,7 @@ function akce_vyuctov_pary($akce,$par,$title,$vypis,$export=false) { trace();
             platba1,platba2,platba3,platba4,platba,datplatby,cd,p.poznamka,
           r.nazev as nazev,r.ulice,r.psc,r.obec,r.telefony,r.emaily,r.spz,
           SUM(IF(t.role='d',1,0)) as _deti,
+          GROUP_CONCAT(DISTINCT IF(t.role='a',o.clen,'')     SEPARATOR '') as clen_m,
           GROUP_CONCAT(DISTINCT IF(t.role='a',o.prijmeni,'') SEPARATOR '') as prijmeni_m,
           GROUP_CONCAT(DISTINCT IF(t.role='a',o.jmeno,'')    SEPARATOR '') as jmeno_m,
           GROUP_CONCAT(DISTINCT IF(t.role='a',o.narozeni,'') SEPARATOR '') as narozeni_m,
@@ -4911,12 +4912,16 @@ function akce_vyuctov_pary($akce,$par,$title,$vypis,$export=false) { trace();
           GROUP_CONCAT(DISTINCT IF(t.role='b',o.prijmeni,'') SEPARATOR '') as prijmeni_z,
           GROUP_CONCAT(DISTINCT IF(t.role='b',o.jmeno,'')    SEPARATOR '') as jmeno_z,
           GROUP_CONCAT(DISTINCT IF(t.role='b',o.narozeni,'') SEPARATOR '') as narozeni_z,
-          GROUP_CONCAT(DISTINCT IF(t.role='b',o.rc_xxxx,'')  SEPARATOR '') as rc_xxxx_z
+          GROUP_CONCAT(DISTINCT IF(t.role='b',o.rc_xxxx,'')  SEPARATOR '') as rc_xxxx_z,
+          IF(MAX(clen)>0,SUM(d.castka),'-') AS prispevky
           FROM pobyt AS p
           JOIN spolu AS s USING(id_pobyt)
           JOIN osoba AS o ON s.id_osoba=o.id_osoba
           LEFT JOIN tvori AS t ON t.id_osoba=o.id_osoba
           LEFT JOIN rodina AS r USING(id_rodina)
+          JOIN akce AS a ON a.id_duakce=p.id_akce
+          LEFT JOIN dar AS d ON d.id_osoba=s.id_osoba AND d.ukon='p'
+            AND YEAR(a.datum_do) BETWEEN YEAR(d.dat_od) AND YEAR(d.dat_do)
           WHERE p.id_akce='$akce' AND $cond
           GROUP BY id_pobyt
           ORDER BY $ord";
