@@ -283,7 +283,7 @@ menu m {type:'left',
                                         ,fld:'prijmeni,jmena,obec,luzka,pristylky,kocarek,pokoj,_chuvy,poznamka'}}
     item {title:'Návrh skupinek'                                                                    skill:'y;f'
                                         ,par:°{typ:'sk',exp:'Excel-plachta',cnd:'1',fce:'plachta'}}
-    item {title:'Seznam s fotkami'      ,par:°{typ:'fs',cnd:"funkce!=99",ord:"prijmeni"}}
+#     item {title:'Seznam s fotkami'      ,par:°{typ:'fs',cnd:"funkce!=99",ord:"prijmeni"}}
     item {title:'Seznam emailů'         ,par:°{typ:'fx',subtyp:'emails'}}
   }
   proc onclick (i) {
