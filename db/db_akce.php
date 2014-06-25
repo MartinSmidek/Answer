@@ -3254,9 +3254,10 @@ function akce_sestava($akce,$par,$title,$vypis,$export=false) {
      : ( $par->typ=='d'  ? akce_sestava_pecouni($akce,$par,$title,$vypis,$export)
      : ( $par->typ=='fs' ? akce_fotoseznam($akce,$par,$title,$vypis,$export)
      : ( $par->typ=='fx' ? akce_sestava_spec($akce,$par,$title,$vypis,$export)
+     : ( $par->typ=='fp' ? akce_sestava_pred($akce,$par,$title,$vypis,$export)
      : ( $par->typ=='12' ? akce_jednou_dvakrat($akce,$par,$title,$vypis,$export)
      : ( $par->typ=='cz' ? akce_cerstve_zmeny($akce,$par,$title,$vypis,$export)
-                         : fce_error("akce_sestava: N.Y.I.") )))))))))))))))));
+                         : fce_error("akce_sestava: N.Y.I.") ))))))))))))))))));
 }
 # --------------------------------------------------------------------------------------- akce_table
 function akce_table($tits,$flds,$clmn,$export=false) {
@@ -3705,6 +3706,17 @@ function akce_sestava_lidi($akce,$par,$title,$vypis,$export=false) { trace();
 #   $fld = seznam položek s prefixem
 #   $cnd = podmínka
 function akce_sestava_pary($akce,$par,$title,$vypis,$export=false) { trace();
+  function otoc($s) {
+    mb_internal_encoding("UTF-8");
+    $s= mb_strtolower($s);
+    $x= '';
+    for ($i= mb_strlen($s); $i>=0; $i--) {
+      $xi= mb_substr($s,$i,1);
+      $xi= mb_strtoupper($xi);
+      $x.= $xi;
+    }
+    return $x;
+  }
   $result= (object)array();
   $typ= $par->typ;
   $tit= $par->tit;
@@ -3723,6 +3735,7 @@ function akce_sestava_pary($akce,$par,$title,$vypis,$export=false) { trace();
   $n= 0;
   // číselníky
   $c_ubytovani= map_cis('ms_akce_ubytovan','zkratka');  $c_ubytovani[0]= '?';
+  $c_prednasi= map_cis('ms_akce_prednasi','hodnota');  $c_ubytovani[0]= '?';
   // dekódování parametrů
   $tits= explode(',',$tit);
   $flds= explode(',',$fld);
@@ -3760,7 +3773,8 @@ function akce_sestava_pary($akce,$par,$title,$vypis,$export=false) { trace();
               FROM pobyt
               JOIN spolu ON spolu.id_pobyt=pobyt.id_pobyt
               JOIN osoba ON osoba.id_osoba=spolu.id_osoba
-              WHERE pobyt.id_akce='$akce' AND spolu.pecovane=o.id_osoba),'') SEPARATOR ' ') AS _chuvy
+              WHERE pobyt.id_akce='$akce' AND spolu.pecovane=o.id_osoba),'') SEPARATOR ' ') AS _chuvy,
+            prednasi
           FROM pobyt AS p
           JOIN spolu AS s USING(id_pobyt)
           JOIN osoba AS o ON s.id_osoba=o.id_osoba
@@ -3793,12 +3807,18 @@ function akce_sestava_pary($akce,$par,$title,$vypis,$export=false) { trace();
     $x->telefony= $x->pouze==1 ? $telefony_m  : ($x->pouze==2 ? $telefony_z : $telefony);
     // podle číselníku
     $x->ubytovani= $c_ubytovani[$x->ubytovani];
+    $x->prednasi= $c_prednasi[$x->prednasi];
     // další
     $n++;
     $clmn[$n]= array();
     foreach($flds as $f) {
 //       $clmn[$n][$f]= $f=='poznamka' && $x->r_note ? ($x->$f.' / '.$x->r_note) : $x->$f;
-      $clmn[$n][$f]= $x->$f;
+      switch ($f) {
+      case '=par':      $clmn[$n][$f]= "{$x->prijmeni} {$x->jmena}"; break;
+      // fonty: ISOCTEUR, Tekton Pro
+      case '=pozpatku': $clmn[$n][$f]= otoc("{$x->prijmeni} {$x->jmena}"); break;
+      default:          $clmn[$n][$f]= $x->$f; break;
+      }
     }
 //     break;
   }
@@ -4864,6 +4884,7 @@ function akce_vyuctov_pary($akce,$par,$title,$vypis,$export=false) { trace();
   $ord= $par->ord ? $par->ord : "IF(funkce<=2,1,funkce),IF(pouze=0,r.nazev,o.prijmeni)";
   $result= (object)array();
   $tit= "Manželé:25"
+//       . ",id_pobyt"
       . ",pokoj:7,dětí:5:r,lůžka:5:r:s,přis týlky:5:r:s,kočá rek:5:r:s,nocí:5:r:s"
       . ",str. celá:5:r:S,str. pol.:5:r:s"
       . ",platba ubyt.:7:r:s,platba strava:7:r:s,platba režie:7:r:s,sleva:7:r:s,CD:6:r:s,celkem:7:r:s"
@@ -4873,6 +4894,7 @@ function akce_vyuctov_pary($akce,$par,$title,$vypis,$export=false) { trace();
       . ",dota ce:6:r:s,nedo platek:6:r:s,dar:7:r:s,rozpočet organizace:10:r:s"
       . "";
   $fld= "manzele"
+//       . ",id_pobyt"
       . ",pokoj,_deti,luzka,pristylky,kocarek,=pocetnoci,strava_cel,strava_pol"
       . ",platba1,platba2,platba3,platba4,=cd,=platit,platba,datplatby"
       . ",=nedoplatek,prispevky,=pokladna,=preplatek,poznamka,spz,"
@@ -4899,7 +4921,7 @@ function akce_vyuctov_pary($akce,$par,$title,$vypis,$export=false) { trace();
     if ( isset($f) ) $fmts[$fld]= $f;
   }
   // data akce
-  $qry=  "SELECT
+  $qry=  "SELECT id_pobyt,
           p.pouze,pokoj,luzka,pristylky,kocarek,pocetdnu,strava_cel,strava_pol,
             platba1,platba2,platba3,platba4,platba,datplatby,cd,p.poznamka,
           r.nazev as nazev,r.ulice,r.psc,r.obec,r.telefony,r.emaily,r.spz,
@@ -4922,7 +4944,7 @@ function akce_vyuctov_pary($akce,$par,$title,$vypis,$export=false) { trace();
           JOIN akce AS a ON a.id_duakce=p.id_akce
           LEFT JOIN dar AS d ON d.id_osoba=s.id_osoba AND d.ukon='p'
             AND YEAR(a.datum_do) BETWEEN YEAR(d.dat_od) AND YEAR(d.dat_do)
-          WHERE p.id_akce='$akce' AND $cond
+          WHERE p.id_akce='$akce' AND funkce!=99 AND $cond
           GROUP BY id_pobyt
           ORDER BY $ord";
 //   $qry.=  " LIMIT 10";
@@ -5168,7 +5190,8 @@ function akce_skupinky($akce,$par,$title,$vypis,$export=false) {
 # ---------------------------------------------------------------------------------- akce_skup_check
 # zjištění konzistence skupinek podle příjmení VPS/PPS
 function akce_skup_check($akce) {
-  return akce_skup_get($akce,1,$err);
+  return svn_client_version();
+//   return akce_skup_get($akce,1,$err);
 }
 # ------------------------------------------------------------------------------------ akce_skup_get
 # zjištění skupinek podle příjmení VPS/PPS
@@ -5176,7 +5199,7 @@ function akce_skup_get($akce,$kontrola,&$err,$par=null) { trace();
   global $VPS;
   $msg= array();
   $skupiny= array();
-  $celkem= select('count(*)','pobyt',"id_akce=$akce AND funkce IN (0,1,2)");
+  $celkem= select('count(*)','pobyt',"id_akce=$akce AND funkce IN (0,1,2) AND skupina!=-1");
   $n= 0;
   $err= 0;
   $order= $all= array();
@@ -5189,7 +5212,7 @@ function akce_skup_get($akce,$kontrola,&$err,$par=null) { trace();
         GROUP_CONCAT(DISTINCT id_pobyt) as _skupina
       FROM akce AS a
       JOIN pobyt AS p ON a.id_duakce=p.id_akce
-      WHERE p.id_akce=$akce AND skupina!=0
+      WHERE p.id_akce=$akce AND skupina>0
       GROUP BY skupina ";
   $res= mysql_qry($qry);
   while ( $res && ($s= mysql_fetch_object($res)) ) {
@@ -5462,6 +5485,7 @@ function akce_plachta($akce,$par,$title,$vypis,$export=0) { trace();
 //   $html.= "<table class='vypis'>";
   // letošní účastníci
   $qry=  "SELECT
+          datum_od,
           r.nazev as jmeno,p.pouze as pouze,r.obec as mesto,svatba,datsvatba,p.funkce as funkce,
           GROUP_CONCAT(DISTINCT IF(t.role='a',o.id_osoba,'') SEPARATOR '') as id_osoba_m,
           GROUP_CONCAT(DISTINCT IF(t.role='a',o.prijmeni,'') SEPARATOR '') as prijmeni_m,
@@ -5495,6 +5519,7 @@ function akce_plachta($akce,$par,$title,$vypis,$export=0) { trace();
           JOIN osoba AS o ON s.id_osoba=o.id_osoba
           LEFT JOIN tvori AS t ON t.id_osoba=o.id_osoba
           LEFT JOIN rodina AS r USING(id_rodina)
+          JOIN akce AS a ON a.id_duakce=p.id_akce
           WHERE id_akce=$akce AND p.funkce IN (0,1,2,5)
           GROUP BY id_pobyt
           ORDER BY IF(pouze=0,r.nazev,o.prijmeni) ";
@@ -5513,8 +5538,8 @@ function akce_plachta($akce,$par,$title,$vypis,$export=0) { trace();
       $u->ucasti= $r->_pocet ? "  {$r->_pocet}x" : '';
     }
     // věk
-    $vek_m= sql2roku($u->narozeni_m);
-    $vek_z= sql2roku($u->narozeni_z);
+    $vek_m= sql2stari($u->narozeni_m,$u->datum_od);
+    $vek_z= sql2stari($u->narozeni_z,$u->datum_od);
     $vek= abs($vek_m-$vek_z)<5 ? $vek_m : "$vek_m/$vek_z";
     // spolu
     $spolu= '?';
@@ -5584,6 +5609,18 @@ function sql2roku($narozeni) {
     $nar= mktime(0,0,0,$m,$d,$y)+1;
 //     $roku= ($now-$nar)/(60*60*24*365.2425);
     $roku= ceil(($now-$nar)/(60*60*24*365.2425));
+  }
+  return $roku;
+};
+// ---------------------------------------------- stari
+// vrací stáří v letech k danému datu (vše ve formátu sql
+function sql2stari($narozeni,$datum) {
+  $datum= $datum ?: date('Y-m-d');
+  $roku= '';
+  if ( $narozeni && $narozeni!='0000-00-00' ) {
+    list($dy,$dm,$dd)= explode('-',$narozeni);
+    list($ky,$km,$kd)= explode('-',$datum);
+    $roku= ($km<$dm || ($km==$dm && $kd<$dd)) ? $ky-$dy-1 : $ky-$dy;
   }
   return $roku;
 };

@@ -170,6 +170,10 @@ menu m {type:'left',
     item {title:'Přehled o akci (děti,pečouni)', par:°{typ:'vi',cnd:'1'}}
     item {title:'Ekonomické ukazatele'  ,par:°{typ:'ve',cnd:'1'}}
     item {title:'Udržet kontakt'        ,par:°{typ:'12',cnd:'1'}, skill:'y;f'}
+    item {title:'Přednášející'                                                                          skill:'y;f;c'
+                                        ,par:°{typ:'p',exp:'Excel',cnd:"prednasi"
+                                        ,tit:'příjmení:15,jména:20,přednáška'
+                                        ,fld:'prijmeni,jmena,prednasi',ord:'prednasi'}}
     item {title:'Seznam čerstvých změn' ,par:°{typ:'cz',cnd:'1'}, skill:'a'}
   }
   menu {tag:'a', title:'jmenovky na akci',type:'group',_sys:'*'
@@ -281,10 +285,14 @@ menu m {type:'left',
     item {title:'Návrh ubytování'       ,par:°{typ:'p',exp:'Excel',cnd:"funkce!=99"
                                         ,tit:'příjmení:15,jména:12,obec:25,lůžka:5,přistýlka:5,kočárek:5,pokoj:5,chůvy:20,poznámka:100'
                                         ,fld:'prijmeni,jmena,obec,luzka,pristylky,kocarek,pokoj,_chuvy,poznamka'}}
-    item {title:'Návrh skupinek'                                                                    skill:'y;f'
+    item {title:'Návrh skupinek'                                                                        skill:'y;f'
                                         ,par:°{typ:'sk',exp:'Excel-plachta',cnd:'1',fce:'plachta'}}
 #     item {title:'Seznam s fotkami'      ,par:°{typ:'fs',cnd:"funkce!=99",ord:"prijmeni"}}
     item {title:'Seznam emailů'         ,par:°{typ:'fx',subtyp:'emails'}}
+    item {title:'Seznam - manzeS'                                                                       skill:'y'
+                                        ,par:°{typ:'p',exp:'Excel',cnd:"funkce!=99"
+                                        ,tit:'Hebrejsky:40,Česky:30'
+                                        ,fld:'=pozpatku,=par',ord:'prijmeni'}}
   }
   proc onclick (i) {
     var x: object
