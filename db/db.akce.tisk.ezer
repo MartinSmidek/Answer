@@ -186,7 +186,8 @@ menu m {type:'left',
                                         ,cnd:"role!='d' AND funkce IN (0,1,2)",ord:"prijmeni"
                                         ,tit:'jméno:20, příjmení:15',fld:'jmeno,prijmeni'}}
     item {title:'Děti'                  ,par:°{typ:'j',exp:'Excel',exp2:'PDF-jmenovky'
-                                        ,cnd:"role='d' AND pfunkce NOT IN (4,5,6,8)",ord:"prijmeni"
+                                        ,cnd:"role='d' AND pfunkce NOT IN (4,5,6,8) AND funkce!=99"
+                                        ,ord:"IF(_vek>18,'AAA',prijmeni)"
                                         ,tit:'jméno:20, příjmení:15',fld:'jmeno,prijmeni'}}
     item {title:'Pečouni'               ,par:°{typ:'j',exp:'Excel',exp2:'PDF-jmenovky'
                                         ,cnd:"p.funkce=99",ord:"prijmeni"
