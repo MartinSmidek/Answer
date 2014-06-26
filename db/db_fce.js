@@ -542,7 +542,8 @@ Ezer.fce.set_css_changed= function (cases,css,chngs) {
         // pokud je klíč shodný s aktivním
         if ( key==k ) {
           var f= chngs[di][2],  // změněné table.field
-              w= chngs[di][3];  // pachatel
+              w= chngs[di][3],  // pachatel
+              d= chngs[di][4];  // čas změny
           // projdeme elementy formuláře
           for (var pi in form.part) {
             var p= form.part[pi];
@@ -553,7 +554,7 @@ Ezer.fce.set_css_changed= function (cases,css,chngs) {
                 // přidáme css
                 p.DOM_Block.addClass(css);
                 Ezer.obj.set_css_changed.push(
-                  new Element('span',{'class':css,html:w,styles:{
+                  new Element('span',{'class':css,html:w,title:d,styles:{
                     left:p._l,top:p._t+(p._h||16)-1
                 }}).inject(p.owner.DOM_Block));
               }

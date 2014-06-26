@@ -2175,7 +2175,7 @@ function akce_zmeny($id_akce,$h) {  trace();
 //                                                         debug($rodina);
   // projití _track
   $n= 0;
-  $rt= mysql_qry("SELECT kde,klic,fld,kdo FROM _track WHERE kdy>'{$ret->kdy}'");
+  $rt= mysql_qry("SELECT kde,klic,fld,kdo,kdy FROM _track WHERE kdy>'{$ret->kdy}'");
   while ( $rt && ($t= mysql_fetch_object($rt)) ) {
     $k= $t->klic;
     $pid= 0;
@@ -2190,14 +2190,15 @@ function akce_zmeny($id_akce,$h) {  trace();
       if ( !in_array($pid,$pobyt) )
         $pobyt[]= $pid;
       // vygenerování změnového objektu pro obarvení změn [[table,key,field],...]
-      $ret->chngs[]= array($t->kde,$k,$t->fld,$t->kdo);
+      $kdy= sql_time1($t->kdy);
+      $ret->chngs[]= array($t->kde,$k,$t->fld,$t->kdo,$kdy);
       $n++;
     }
   }
   // shrnutí změn
   $ret->osoby= implode(',',array_keys($osoby));
   $ret->pobyt= implode(',',$pobyt);
-//                                         debug($ret,"$n změn po ... sql_time={$ret->kdy}");
+                                        debug($ret,"$n změn po ... sql_time={$ret->kdy}");
   return $ret;
 }
 # ---------------------------------------------------------------------------------------- akce_id2a
@@ -5190,8 +5191,7 @@ function akce_skupinky($akce,$par,$title,$vypis,$export=false) {
 # ---------------------------------------------------------------------------------- akce_skup_check
 # zjištění konzistence skupinek podle příjmení VPS/PPS
 function akce_skup_check($akce) {
-  return svn_client_version();
-//   return akce_skup_get($akce,1,$err);
+  return akce_skup_get($akce,1,$err);
 }
 # ------------------------------------------------------------------------------------ akce_skup_get
 # zjištění skupinek podle příjmení VPS/PPS
