@@ -372,7 +372,7 @@ form _navrhy [,,Wr,Hr] {
   label cap [0,0,Wr-4,15] { title:"<b>návrhy na sjednocení rodin a osob</b>",
     style:"color:white;background-color:rgba(186,0,0,1);padding-left:5px" }
   # --------------------------------------------------  [Lr,,] seznam návrhů rodin
-  browse bn [Lr+0,19,,] { rows:5, qry_rows:2,
+  browse bn [Lr+0,19,,] { rows:20, qry_rows:2,
     css_rows:"barva,1:green,2:blue,3:yellow,4:yellow,5:orange,6:orange,7:red,8:red2,9:fialovy,10:grey"
     show idd [,,34,] { title:'id_duplo', data:d.id_duplo, format:'rq=s' }
     show id1 [,,34,] { title:'id1', data:d.id_tab1, format:'rq=s'  }
