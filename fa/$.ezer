@@ -51,7 +51,6 @@ menu fa { type:'main', active:* //ys.pok
     b.raise('onrowclick',b.browse_seek(conc(f.key_id,'=',f.key)))
   }
 }
-
 // univerzální formulář pro levostranné menu
 form right [,,700,50] {
   label info [0,0,680,600] { title:'' }

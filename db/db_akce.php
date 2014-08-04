@@ -72,6 +72,93 @@ function akce_pobyt_skupinka($id_akce,$skup) { trace();
   }
   return implode('|',$data);
 }
+# ================================================================================================== ELIM
+# --------------------------------------------------------------------------------------- elim_osoba
+# zamění všechny výskyty kopie za originál v TVORI, SPOLU, DAR, PLATBA, MAIL a kopii smaže
+function elim_osoba($id_orig,$id_copy) { trace();
+  global $USER;
+  $ret= (object)array('err'=>'');
+  $now= date("Y-m-d H:i:s");
+  query("UPDATE tvori  SET id_osoba=$id_orig WHERE id_osoba=$id_copy");
+  query("UPDATE spolu  SET id_osoba=$id_orig WHERE id_osoba=$id_copy");
+  query("UPDATE dar    SET id_osoba=$id_orig WHERE id_osoba=$id_copy");
+  query("UPDATE platba SET id_osoba=$id_orig WHERE id_osoba=$id_copy");
+  //query("UPDATE mail  SET id_osoba=$id_orig WHERE id_osoba=$id_copy"); -- po úpravě
+  query("UPDATE osoba SET deleted='D osoba=$id_orig' WHERE id_osoba=$id_copy");
+  // zápis o ztotožnění osob do _track jako op=d (duplicita)
+  $user= $USER->abbr;
+  query("INSERT INTO _track (kdy,kdo,kde,klic,fld,op,old,val)
+         VALUES ('$now','$user','osoba',$id_orig,'','d','osoba',$id_copy)");
+  // zápis o smazání kopie do _track jako op=x (eXtract)
+  query("INSERT INTO _track (kdy,kdo,kde,klic,fld,op,old,val)
+         VALUES ('$now','$user','osoba',$id_copy,'','x','kopie',$id_orig)");
+end:
+  return $ret;
+}
+# -------------------------------------------------------------------------------------- elim_rodina
+# zamění všechny výskyty kopie za originál v POBYT, TVORI, DAR, PLATBA, MAIL a kopii smaže
+function elim_rodina($id_orig,$id_copy) { trace();
+  global $USER;
+  $ret= (object)array('err'=>'');
+  if ( $id_orig!=$id_copy ) {
+    $now= date("Y-m-d H:i:s");
+    query("UPDATE pobyt  SET i0_rodina=$id_orig WHERE i0_rodina=$id_copy");
+    query("UPDATE tvori  SET id_rodina=$id_orig WHERE id_rodina=$id_copy");
+    query("UPDATE dar    SET id_rodina=$id_orig WHERE id_rodina=$id_copy");
+    query("UPDATE platba SET id_rodina=$id_orig WHERE id_rodina=$id_copy");
+    //query("UPDATE mail  SET id_rodina=$id_orig WHERE id_rodina=$id_copy"); -- po úpravě
+    query("UPDATE rodina SET deleted='D rodina=$id_orig' WHERE id_rodina=$id_copy");
+    // zápis o ztotožnění rodin do _track jako op=d (duplicita)
+    $user= $USER->abbr;
+    query("INSERT INTO _track (kdy,kdo,kde,klic,fld,op,old,val)
+           VALUES ('$now','$user','rodina',$id_orig,'','d','orig',$id_copy)");
+    // zápis o smazání kopie do _track jako op=x (eXtract)
+    query("INSERT INTO _track (kdy,kdo,kde,klic,fld,op,old,val)
+           VALUES ('$now','$user','rodina',$id_copy,'','x','kopie',$id_orig)");
+  }
+  // odstranění duplicit v tabulce TVORI
+  $qt= mysql_qry("
+    SELECT COUNT(*) AS _n,GROUP_CONCAT(id_tvori ORDER BY id_tvori) AS _ids FROM tvori
+    WHERE id_rodina=$id_orig GROUP BY id_osoba,role HAVING _n>1");
+  while (($t= mysql_fetch_object($qt))) {
+    $idts= explode(',',$t->_ids);
+    for ($i= 1; $i<count($idts); $i++) {
+      query("DELETE FROM tvori WHERE id_tvori={$idts[$i]}");
+    }
+  }
+end:
+  return $ret;
+}
+# ------------------------------------------------------------------------------ elim_recovery_osoba
+# obnoví smazanou osobu se záznamem v _track
+function elim_recovery_osoba($ido) { trace();
+  global $USER;
+  $deleted= select('deleted','osoba',"id_osoba=$ido");
+  if ( $deleted ) {
+    // obnovení
+    query("UPDATE osoba SET deleted='' WHERE id_osoba=$ido");
+    // zápis o obnovení smazaného záznamu op='r' (recovery)
+    $now= date("Y-m-d H:i:s");
+    query("INSERT INTO _track (kdy,kdo,kde,klic,fld,op,old,val)
+           VALUES ('$now','{$USER->abbr}','osoba',$ido,'','r','','$deleted')");
+  }
+  return $deleted;
+}
+# ----------------------------------------------------------------------------- elim_recovery_rodina
+# obnoví smazanou rodinu se záznamem v _track
+function elim_recovery_rodina($idr) { trace();
+  global $USER;
+  $deleted= select('deleted','rodina',"id_rodina=$idr");
+  if ( $deleted ) {
+    // obnovení
+    query("UPDATE rodina SET deleted='' WHERE id_rodina=$idr");
+    // zápis o obnovení smazaného záznamu op='r' (recovery)
+    $now= date("Y-m-d H:i:s");
+    query("INSERT INTO _track (kdy,kdo,kde,klic,fld,op,old,val)
+           VALUES ('$now','{$USER->abbr}','rodina',$idr,'','r','','$deleted')");
+  }
+  return $deleted;
+}
 # ================================================================================================== DUPL
 # ------------------------------------------------------------------------------------- ROLLBACK_ALL
 # jen pro ladění - vrácení do původního stavu
@@ -645,7 +732,6 @@ function akce_data_rodina($idr) {  trace();
     if ( $chng_kdy[$fld] && $chng_val[$fld]!=$val ) {
       $ret->diff[$fld]= $chng_val[$fld];
       $ret->chng[$fld]= "<span style='color:red'>{$ret->chng[$fld]}: {$chng_val[$fld]}</span>";
-//       $ret->chng[$fld].= ": {$chng_val[$fld]}";
     }
   }
 //                                                         debug($ret,"akce_data_rodina");
@@ -1140,6 +1226,21 @@ function data_eli_auto($typ,$patt='') { trace();
         ORDER BY c.prijmeni
     ";
   }
+  function make_query_cx($cond) { // -------------------------------- make_query_cx
+    return "
+        SELECT
+          id_chlapi,c.jmeno,c.prijmeni,c.iniciace
+        FROM ezer_ys.chlapi AS c
+        LEFT JOIN osoba AS o ON LEFT(c.prijmeni,4)=LEFT(o.prijmeni,4) AND
+          levenshtein(c.prijmeni,o.prijmeni)<=1 AND (c.jmeno RLIKE o.jmeno OR o.jmeno RLIKE c.jmeno)
+        LEFT JOIN (SELECT val FROM _track WHERE op='d' AND old='chlapi') AS t ON val=id_chlapi
+        LEFT JOIN duplo AS d ON tab1='c' AND id_tab1=id_chlapi
+        LEFT JOIN ch_fa AS x ON tab='o' AND idc=id_chlapi
+        WHERE ISNULL(val) AND ISNULL(id_duplo)  AND c.deleted=''
+          AND ISNULL(id_duplo) AND (ISNULL(id_osoba) OR o.deleted!='')
+        ORDER BY prijmeni
+    ";
+  }
   $ret= (object)array('html'=>'hotovo');
   $data_eli_sum= array(0,0,0,0,0,0,0,0,0,0,0);
   $data_eli_max= array(0,0,0,0,0,0,0,0,0,0,0);
@@ -1207,6 +1308,21 @@ function data_eli_auto($typ,$patt='') { trace();
     break;
   case 'c-': // -------------------------------------------------------- chlap - neznámý
     $qc= mysql_qry(make_query_c("c.prijmeni RLIKE '^$patt'"));
+    if ( !$qc ) { $ret->html= "ERROR: ".mysql_error(); goto end; }
+    while (($c= mysql_fetch_object($qc))) {
+      $idc= $c->id_chlapi;
+      $jmr= mysql_real_escape_string("{$c->prijmeni} {$c->jmeno}");
+      mysql_qry("
+        INSERT INTO duplo (znacka,rozdily,asi,tab1,id_tab1,tab2)
+        VALUES ('$jmr','*',9999,'c',$idc,'-')");
+      $idd= mysql_insert_id();
+      $n++;
+      // vytvoření osoby z izolovaného chlapa, včetně zápisu do CH_FA
+      data_eli_izol_cr(0,$idd,$idc);
+    }
+    break;
+  case 'cx': // -------------------------------------------------------- chlap - zbytek
+    $qc= mysql_qry(make_query_cx("c.prijmeni RLIKE '^$patt'"));
     if ( !$qc ) { $ret->html= "ERROR: ".mysql_error(); goto end; }
     while (($c= mysql_fetch_object($qc))) {
       $idc= $c->id_chlapi;
@@ -1722,90 +1838,90 @@ end:
 }
 # --------------------------------------------------------------------------------------- dupl_osoba
 # zkusí vyřešit duplicitu 2 osob - klíče z tabulky SPOLU
-function dupl_osoba($ids_osoba,$to_change=0) { trace();
-  if ( substr_count($ids_osoba,',')!=1 ) { $html= "nejsou vybrány 2 osoby"; goto end; }
-  $html= dupl_meth1($ids_osoba,$to_change);
-end:
-  return $html;
-}
+// function dupl_osoba($ids_osoba,$to_change=0) { trace();
+//   if ( substr_count($ids_osoba,',')!=1 ) { $html= "nejsou vybrány 2 osoby"; goto end; }
+//   $html= dupl_meth1($ids_osoba,$to_change);
+// end:
+//   return $html;
+// }
 # --------------------------------------------------------------------------------------- dupl_spolu
 # zkusí vyřešit duplicitu 2 osob - klíče z tabulky SPOLU
-function dupl_spolu($ids_spolu,$to_change=0) { trace();
-  if ( substr_count($ids_spolu,',')!=1 ) { $html= "nejsou vybrány 2 osoby"; goto end; }
-  $html= dupl_meth1(select("GROUP_CONCAT(id_osoba)","spolu","id_spolu IN ($ids_spolu)"),$to_change);
-end:
-  return $html;
-}
+// function dupl_spolu($ids_spolu,$to_change=0) { trace();
+//   if ( substr_count($ids_spolu,',')!=1 ) { $html= "nejsou vybrány 2 osoby"; goto end; }
+//   $html= dupl_meth1(select("GROUP_CONCAT(id_osoba)","spolu","id_spolu IN ($ids_spolu)"),$to_change);
+// end:
+//   return $html;
+// }
 # --------------------------------------------------------------------------------------- dupl_meth1
 # zkusí vyřešit duplicitu 2 osob
-function dupl_meth1($ids_osoba,$to_change=0) { trace();
-//                                                         debug($ids_osoba,"osoby");
-  $html= '';
-  // pomocné
-  $omitt= array('osoba'=>array('id_osoba','id_dupary','id_dudeti','origin','historie'));
-  $cisla= array('osoba'=>array('vzdelani','cirkev','rc_xxxx'));
-  $ths.= "<th>ID:</th><th>$id_osoba</th>";
-  $id= $os= array();
-  $i= 0;
-  foreach (explode(',',$ids_osoba) as $id_osoba) {
-    $i++; $idi= "id$i";
-    $$idi= $id_osoba;
-    $ths.= "<th>$id_osoba</th>";
-    $qo= "SELECT * FROM osoba WHERE id_osoba=$id_osoba ";
-    $ro= mysql_qry($qo);
-    while ( $ro && ($o= mysql_fetch_object($ro)) ) {
-      foreach ($o as $fld=>$val) {
-        if ( !in_array($fld,$omitt['osoba']) ) {
-          $os[$id_osoba][$fld]= $val;
-        }
-      }
-    }
-  }
-//                                                         display("$id1,$id2");
-  // posouzení rozdílů v instancích osoby - případně nalezení hlavní identity
-  $trs= "";
-  $smery= array();
-  foreach ($os[$id1] as $fld=>$val1) {
-    $val1= str_replace(' ','',$val1);
-    $val2= str_replace(' ','',$os[$id2][$fld]);
-    if ( $val1!=$val2 ) {
-      $smer= $val1!='' && ($val2=='' || in_array($fld,$cisla['osoba']) && $val2=='0') ? '>' : (
-             $val2!='' && ($val1=='' || in_array($fld,$cisla['osoba']) && $val1=='0')? '<' : 'X');
-      $trs.= "<tr><th>$fld</th><th>$smer</th><td>$val1</td><td>$val2</td></tr>";
-      if ( !in_array($smer,$smery) ) $smery[]= $smer;
-    }
-  }
-  $table= "<table><tr>$ths</tr>$trs</table>";
-  $lze= "NELZE";
-  if ( count($smery)==1 && $smery[0]!='X' ) {
-    $idx= $smery[0]=='>' ? $id1 : $id2;
-    $idy= $smery[0]=='<' ? $id1 : $id2;
-    $lze= "LZE PONECHAT $idx a zrušit $idy";
-  }
-  $html.= "<h3>různé hodnoty - $lze</h3>$table";
-
-  // přehled počtu odkazů v tabulkách - případně přepnutí na hlavní identitu
-  $trs= "";
-  foreach (array('tvori','spolu','pobyt','dar','platba') as $tab) {
-    $trs.= "<tr><th></th><th>$tab</th>";
-    foreach (explode(',',$ids_osoba) as $id_osoba) {
-      list($n,$ids)= select("COUNT(*),GROUP_CONCAT(id_$tab)",$tab,"id_osoba=$id_osoba");
-      if ( $to_change && $lze ) {
-        $ok= query("UPDATE $tab SET id_osoba=$idx WHERE id_osoba=$idy");
-        $m= mysql_affected_rows();
-        $trs.= "<td>$n/$m</td>";
-      }
-      else {
-        $trs.= "<td>$n:$ids</td>";
-      }
-    }
-    $trs.= "</tr>";
-  }
-  $table= "<table><tr>$ths</tr>$trs</table>";
-  $html.= "<h3>odkazy na výskyty</h3>$table";
-end:
-  return $html;
-}
+// function dupl_meth1($ids_osoba,$to_change=0) { trace();
+// //                                                         debug($ids_osoba,"osoby");
+//   $html= '';
+//   // pomocné
+//   $omitt= array('osoba'=>array('id_osoba','id_dupary','id_dudeti','origin','historie'));
+//   $cisla= array('osoba'=>array('vzdelani','cirkev','rc_xxxx'));
+//   $ths.= "<th>ID:</th><th>$id_osoba</th>";
+//   $id= $os= array();
+//   $i= 0;
+//   foreach (explode(',',$ids_osoba) as $id_osoba) {
+//     $i++; $idi= "id$i";
+//     $$idi= $id_osoba;
+//     $ths.= "<th>$id_osoba</th>";
+//     $qo= "SELECT * FROM osoba WHERE id_osoba=$id_osoba ";
+//     $ro= mysql_qry($qo);
+//     while ( $ro && ($o= mysql_fetch_object($ro)) ) {
+//       foreach ($o as $fld=>$val) {
+//         if ( !in_array($fld,$omitt['osoba']) ) {
+//           $os[$id_osoba][$fld]= $val;
+//         }
+//       }
+//     }
+//   }
+// //                                                         display("$id1,$id2");
+//   // posouzení rozdílů v instancích osoby - případně nalezení hlavní identity
+//   $trs= "";
+//   $smery= array();
+//   foreach ($os[$id1] as $fld=>$val1) {
+//     $val1= str_replace(' ','',$val1);
+//     $val2= str_replace(' ','',$os[$id2][$fld]);
+//     if ( $val1!=$val2 ) {
+//       $smer= $val1!='' && ($val2=='' || in_array($fld,$cisla['osoba']) && $val2=='0') ? '>' : (
+//              $val2!='' && ($val1=='' || in_array($fld,$cisla['osoba']) && $val1=='0')? '<' : 'X');
+//       $trs.= "<tr><th>$fld</th><th>$smer</th><td>$val1</td><td>$val2</td></tr>";
+//       if ( !in_array($smer,$smery) ) $smery[]= $smer;
+//     }
+//   }
+//   $table= "<table><tr>$ths</tr>$trs</table>";
+//   $lze= "NELZE";
+//   if ( count($smery)==1 && $smery[0]!='X' ) {
+//     $idx= $smery[0]=='>' ? $id1 : $id2;
+//     $idy= $smery[0]=='<' ? $id1 : $id2;
+//     $lze= "LZE PONECHAT $idx a zrušit $idy";
+//   }
+//   $html.= "<h3>různé hodnoty - $lze</h3>$table";
+//
+//   // přehled počtu odkazů v tabulkách - případně přepnutí na hlavní identitu
+//   $trs= "";
+//   foreach (array('tvori','spolu','pobyt','dar','platba') as $tab) {
+//     $trs.= "<tr><th></th><th>$tab</th>";
+//     foreach (explode(',',$ids_osoba) as $id_osoba) {
+//       list($n,$ids)= select("COUNT(*),GROUP_CONCAT(id_$tab)",$tab,"id_osoba=$id_osoba");
+//       if ( $to_change && $lze ) {
+//         $ok= query("UPDATE $tab SET id_osoba=$idx WHERE id_osoba=$idy");
+//         $m= mysql_affected_rows();
+//         $trs.= "<td>$n/$m</td>";
+//       }
+//       else {
+//         $trs.= "<td>$n:$ids</td>";
+//       }
+//     }
+//     $trs.= "</tr>";
+//   }
+//   $table= "<table><tr>$ths</tr>$trs</table>";
+//   $html.= "<h3>odkazy na výskyty</h3>$table";
+// end:
+//   return $html;
+// }
 # ================================================================================================== ALBUM
 # ---------------------------------------------------------------------------------------- album_set
 # přidá fotografii do alba
@@ -3114,6 +3230,56 @@ function akce_pdf_prijem($akce,$par,$report_json) {  trace();
 # vygenerování PDF se samolepkami - adresními štítky
 #   $the_json obsahuje  title:'{jmeno_postovni}<br>{adresa_postovni}'
 function akce_pdf_stitky($cond,$report_json) { trace();
+  global $json, $ezer_path_docs;
+  $result= (object)array('_error'=>0);
+  // projdi požadované adresy rodin
+  $n= 0;
+  $parss= array();
+  $qry=  "SELECT
+          r.nazev as nazev,p.pouze as pouze,
+          GROUP_CONCAT(DISTINCT IF(t.role='a',o.prijmeni,'') SEPARATOR '') as prijmeni_m,
+          GROUP_CONCAT(DISTINCT IF(t.role='a',o.jmeno,'')    SEPARATOR '') as jmeno_m,
+          GROUP_CONCAT(DISTINCT IF(t.role='a',o.narozeni,'') SEPARATOR '') as narozeni_m,
+          GROUP_CONCAT(DISTINCT IF(t.role='a',o.rc_xxxx,'')  SEPARATOR '') as rc_xxxx_m,
+          GROUP_CONCAT(DISTINCT IF(t.role='b',o.prijmeni,'') SEPARATOR '') as prijmeni_z,
+          GROUP_CONCAT(DISTINCT IF(t.role='b',o.jmeno,'')    SEPARATOR '') as jmeno_z,
+          GROUP_CONCAT(DISTINCT IF(t.role='b',o.narozeni,'') SEPARATOR '') as narozeni_z,
+          GROUP_CONCAT(DISTINCT IF(t.role='b',o.rc_xxxx,'')  SEPARATOR '') as rc_xxxx_z,
+          r.ulice,r.psc,r.obec,r.stat,r.telefony,r.emaily,p.poznamka
+          FROM pobyt AS p
+          JOIN spolu AS s USING(id_pobyt)
+          JOIN osoba AS o ON s.id_osoba=o.id_osoba
+          LEFT JOIN tvori AS t ON t.id_osoba=o.id_osoba
+          LEFT JOIN rodina AS r USING(id_rodina)
+          WHERE $cond
+          GROUP BY id_pobyt
+          ORDER BY IF(funkce<=2,1,funkce),IF(pouze=0,r.nazev,o.prijmeni)";
+  $res= mysql_qry($qry);
+  while ( $res && ($x= mysql_fetch_object($res)) ) {
+    $x->prijmeni= $x->pouze==1 ? $x->prijmeni_m : ($x->pouze==2 ? $x->prijmeni_z : $x->nazev);
+    $x->jmena=    $x->pouze==1 ? $x->jmeno_m    : ($x->pouze==2 ? $x->jmeno_z : "{$x->jmeno_m} a {$x->jmeno_z}");
+    // formátované PSČ (tuzemské a slovenské)
+    $psc= (!$x->stat||$x->stat=='CZ'||$x->stat=='SK')
+      ? substr($x->psc,0,3).' '.substr($x->psc,3,2)
+      : $x->psc;
+    $stat= $x->stat=='CZ' ? '' : $x->stat;
+    // definice pole substitucí
+    $parss[$n]= (object)array();
+    $parss[$n]->jmeno_postovni= "{$x->jmena} {$x->prijmeni}";
+    $parss[$n]->adresa_postovni= "{$x->ulice}<br/>$psc  {$x->obec}".( $stat ? "<br/>        $stat" : "");
+    $n++;
+  }
+  // předání k tisku
+  $fname= 'stitky_'.date("Ymd_Hi");
+  $fpath= "$ezer_path_docs/$fname.pdf";
+  dop_rep_ids($report_json,$parss,$fpath);
+  $result->html= " Výpis byl vygenerován ve formátu <a href='docs/$fname.pdf' target='pdf'>PDF</a>.";
+  return $result;
+}
+# ---------------------------------------------------------------------------------- akce_pdf_stitky_tmp !!!!!
+# vygenerování PDF se samolepkami - adresními štítky
+#   $the_json obsahuje  title:'{jmeno_postovni}<br>{adresa_postovni}'
+function akce_pdf_stitky_tmp($cond,$report_json) { trace();
   global $json, $ezer_path_docs;
   $result= (object)array('_error'=>0);
   // projdi požadované adresy rodin
@@ -5312,6 +5478,80 @@ function akce_skup_get($akce,$kontrola,&$err,$par=null) { trace();
   // konec
   return $kontrola ? implode(",<br>",$msg) : $skup;
 }
+
+# ----------------------------------------------------------------------------------- akce_i0_rodina
+//     // kategorie člena rodiny - dítěte nebo pomocníka (dědečka)
+//     proc load_sebou() {
+//       [ # dítě s osobním pečovatelem
+//         eq(pfunkce.get,92); pecujici.get; kategorie.set(pfunkce.get)
+//       | # dítě ve skupince bez osobního pečovatele, pomocný pečovatel, skupina G
+//         eq(pfunkce.get,0,4,8); eq(pecujici.get,0); eq(pece_val.get,''); kategorie.set(pfunkce.get)
+//       | # osobní pečovatel - je na kartě Pečouni
+//         eq(pfunkce.get,5); kategorie.set(5); pece_sel.set(pece_val.get); pecoun.set(1)
+//       | # osobní pečovatel - není na kartě Pečouni
+//         eq(pfunkce.get,95); kategorie.set(5); pece_sel.set(pece_val.get); pecoun.set(0)
+//       | warning("něco je špatně: pfce=",pfunkce.get," pecujici=",pecujici.get," pečované=",pece_key.get)
+//       ]
+//     }
+//     field pecujici [L+152,Ta+47,134,17] { format:'d', style:'z-index:3', expr:"
+//                        (SELECT GROUP_CONCAT(prijmeni,' ',jmeno)
+//                         FROM akce JOIN pobyt ON id_akce=akce.id_duakce
+//                         JOIN spolu ON spolu.id_pobyt=pobyt.id_pobyt
+//                         JOIN osoba ON osoba.id_osoba=spolu.id_osoba
+//                         WHERE spolu.pecovane=the_osoba AND id_akce=our_akce)"}
+//     // je osobním pečovatelem pro
+//     field pece_val { expr:"CONCAT(x.prijmeni,' ',x.jmeno)", style:'z-index:3' }
+//     select pece_sel [L+152,Ta+71,136,17] { type:'auto', par:°{fce:'akce_auto_deti'}
+//       proc onchanged() {
+//         pece_key.set(pece_sel.key); pece_key.change;
+//       }
+//     }
+# definice položek POBYT.i0_rodina, SPOLU.s_role
+function akce_i0_rodina($akce) {
+  // doplnění i0_rodina
+  $n= 0;
+  $qp= mysql_qry("
+    SELECT
+      COUNT(DISTINCT id_rodina) AS _pocet,id_pobyt,id_rodina,pfunkce
+    FROM pobyt
+    JOIN spolu USING (id_pobyt)
+    JOIN tvori USING(id_osoba)
+    JOIN rodina USING(id_rodina)
+    WHERE id_akce=$akce AND i0_rodina=0
+    GROUP BY id_pobyt HAVING _pocet=1 ");
+  while ( $qp && ($p= mysql_fetch_object($qp)) ) {
+    $n++;
+    mysql_qry("UPDATE pobyt SET i0_rodina={$p->id_rodina} WHERE id_pobyt={$p->id_pobyt}");
+  }
+  // doplnění s_role
+  $r= 0;
+  $qp= mysql_qry("
+    SELECT id_osoba,nazev, role, id_spolu, s_role, pfunkce, pecovane, dite_kat,
+      IFNULL((SELECT id_osoba FROM spolu AS s
+          WHERE s.id_pobyt=pobyt.id_pobyt AND spolu.id_osoba=s.pecovane),0) AS pecujici
+    FROM pobyt
+    JOIN spolu USING (id_pobyt)
+    JOIN tvori USING(id_osoba)
+    JOIN rodina USING(id_rodina)
+    WHERE id_akce=$akce AND s_role=0 AND id_rodina=i0_rodina
+    GROUP BY id_spolu");
+  while ( $qp && ($p= mysql_fetch_object($qp)) ) {
+    $r++;
+    $s_role= 0;
+    if ( $p->role=='a' || $p->role=='b' )
+      $s_role= 1;
+    elseif ( $p->pfunkce==4 )
+      $s_role= 4;
+    elseif ( $p->pecovane )
+      $s_role= 5;
+    elseif ( $p->pecujici )
+      $s_role= 3;
+    elseif ( $p->role=='d' )
+      $s_role= 2;
+    if ( $s_role ) mysql_qry("UPDATE spolu SET s_role=$s_role WHERE id_spolu={$p->id_spolu}");
+  }
+  return "doplněno $n x i0_rodina, $r x s_role";
+}
 # ---------------------------------------------------------------------------------- akce_skup_renum
 # přečíslování skupinek podle příjmení VPS/PPS
 function akce_skup_renum($akce) {
@@ -6019,6 +6259,382 @@ function akce_mapa($akce) {  trace();
   return $ret;
 }
 # ================================================================================================== ÚČASTNÍCI
+# ---------------------------------------------------------------------------------- akce_browse_ask
+# obsluha browse s optimize:ask
+function akce_browse_ask($x) { trace($x->cmd);
+  global $test_clmn,$test_asc;
+  $y= (object)array();
+  foreach(explode(',','cmd,rows,quiet,key_id,oldkey') as $i) $y->$i= $x->$i;
+  $flds1= "ido,idt,idr,ids,barva,jmeno,vek,role,rodiny";
+  $flds2= "prijmeni,rodne,sex,umrti,ulice,psc,obec,stat,telefon,nomail,email"
+       . ",iniciace,uvitano,clen,obcanka,rc_xxxx,cirkev,vzdelani,titul,zamest,zajmy,jazyk"
+       . ",aktivita,note";
+  $flds3= "s_role,dite_kat,poznamka";
+  $fosoba= explode(',',"$flds1,narozeni,$flds2,$flds3");
+  $foo= str_replace(',',',oo.',$flds2);
+  $fos= str_replace(',',',os.',$flds3);
+  $faa= "'~',_a.".str_replace(',',",'~',_a.","$flds2,$flds3");
+  $fbb= "'~',_b.".str_replace(',',",'~',_b.",$flds2);
+  switch($x->cmd) {
+  case 'browse_load':  # ------------------------------------- browse_load
+    // zvětšení prostoru pro GROUP_CONCAT
+    mysql_qry("SET group_concat_max_len = 65000;");
+    // SQL definující @akce, @soubeh, @app
+    if ( $x->sql ) mysql_qry($x->sql);
+    // SQL
+    $ucast= $skup= array();
+    $qry= "
+      SELECT p.id_pobyt AS key_pobyt,p.id_akce as key_akce,
+        p.i0_rodina AS key_rodina,DATEDIFF(a.datum_do,a.datum_od)+1 AS dnu,
+        a.datum_od AS datum_od,
+        IF(p.i0_rodina,r.nazev,_a.prijmeni) as _nazev,
+        GROUP_CONCAT(DISTINCT REPLACE(_a.jmeno,' ','-') ORDER BY _a.narozeni SEPARATOR ' ') as _jmena,
+        p.platba1+p.platba2+p.platba3+p.platba4+p.poplatek_d as c_suma,p.platba as platba,
+        r.fotka as fotka,p.funkce as xfunkce,p.skupina as skupina,
+        CASE
+          WHEN @soubeh=1 AND a.ma_cenik THEN
+             IF(p.platba1+p.platba2+p.platba3+p.platba4+p.poplatek_d=0,2,
+               IF(p.platba1+p.platba2+p.platba3+p.platba4+p.poplatek_d>platba+platba_d,1,0))
+          WHEN a.ma_cenik THEN
+             IF(p.platba1+p.platba2+p.platba3+p.platba4=0,2,
+               IF(p.platba1+p.platba2+p.platba3+p.platba4>platba,1,0))
+          WHEN a.ma_cenu THEN
+             IF(IF(pouze>0,1,2)*a.cena>platba,1,0)
+          ELSE 0 END as dluh,
+        r.spz AS r_spz,r.svatba AS r_svatba,
+        IF(r.datsvatba,DATE_FORMAT(r.datsvatba,'%e.%c.%Y'),'') AS r_datsvatba,
+        r.ulice AS r_ulice,r.psc AS r_psc,r.obec AS r_obec,r.stat AS r_stat,
+        r.telefony AS r_telefony,r.emaily AS r_emaily,r.note AS r_note,
+        p.poznamka AS p_poznamka,pokoj,budova,funkce,prednasi,
+
+        GROUP_CONCAT(DISTINCT _b.id_osoba,'~',_b.id_tvori,'~',_b.jmeno,
+          '~',DATE_FORMAT(_b.narozeni,'%e.%c.%Y'),
+          '~',_b.id_rodina,'~',_b.role,'~',_b.rodne,'~',_b.sex
+          ORDER BY role SEPARATOR '|') AS _rod,
+        GROUP_CONCAT(DISTINCT _a._rody,'~',_a.id_osoba,'~',_a.id_spolu,'~',_a.jmeno,'~',_a.prijmeni,
+          '~',DATE_FORMAT(_a.narozeni,'%e.%c.%Y'),$faa SEPARATOR '|') AS _akce
+
+        FROM ezer_fa.pobyt AS p
+        JOIN akce AS a ON a.id_duakce=p.id_akce
+        LEFT JOIN rodina AS r ON id_rodina=i0_rodina
+
+        LEFT JOIN (SELECT id_osoba,jmeno,prijmeni,id_tvori,id_rodina,role,rodne,sex,narozeni
+          FROM osoba AS oo
+          LEFT JOIN tvori AS ot USING(id_osoba)
+        ) AS _b ON _b.id_rodina=r.id_rodina
+
+        JOIN (SELECT oo.id_osoba,jmeno,id_spolu,id_pobyt,narozeni,$foo,$fos,
+            GROUP_CONCAT(CONCAT(nazev,':',id_rodina) SEPARATOR ',') AS _rody
+          FROM osoba AS oo
+          JOIN spolu AS os USING(id_osoba)
+          LEFT JOIN tvori AS ot USING(id_osoba)
+          LEFT JOIN rodina AS otr USING(id_rodina)
+          GROUP BY id_spolu
+        ) AS _a ON _a.id_pobyt=p.id_pobyt
+
+        WHERE funkce!=99 AND p.id_akce=@akce
+        GROUP BY p.id_pobyt
+        ORDER BY IF(funkce<=2,1,funkce),_nazev
+        LIMIT 300
+        ";
+/*
+        LIMIT 1";
+        LIMIT 3";
+        LIMIT 80,1"; // Glogar
+*/
+    $qp= mysql_qry($qry);
+//                                                 display("$qry / $qp");
+    if ( !$qp ) fce_warning(mysql_error());
+    while ( $qp && ($p= mysql_fetch_object($qp)) ) {
+      $idp= $p->key_pobyt;
+      // vytvoření seznamu členů
+      $clen= $nazev= array();
+//                                                 debug($clen,0);
+//                                                 debug(explode('|',$p->_rod),"rod");
+//                                                 display("{$p->_rod} rod");
+      // členové nastavené rodiny
+      $rodiny= '';
+      if ( $p->_rod ) {
+        foreach (explode('|',$p->_rod) as $info) {
+          $c= (object)array();
+          list($c->ido,$c->idt,$c->jmeno,$c->narozeni,$c->idr,$c->role,$c->rodne,$c->sex)= explode('~',$info);
+          $c->vek= roku_k($c->narozeni,$p->datum_od);
+          $rodiny= $c->rodiny= "{$p->_nazev}:$idr";
+          $clen[$c->ido]= $c;
+        }
+      }
+                                                debug($clen,1);
+//                                                 debug(explode('|',$p->_akce),"rod");
+//                                                 display("{$p->_akce}  akce");
+      // osoby na akci v rámci jednoho pobytu
+      $idos= array();
+      foreach (explode('|',$p->_akce) as $info) {
+        $a= explode('~',$info);
+                                                debug($a,$info);
+        $ido= $a[1];
+        if ( isset($clen[$ido]) ) {
+          $c= $clen[$ido];
+          $c->barva= 1;
+        }
+        else
+          $c= (object)array('barva'=>2);
+        $i= 0;
+        foreach(explode(',',"rodiny,ido,ids,jmeno,prijmeni,narozeni,$flds2,$flds3") as $f) {
+          $c->$f= $a[$i]; $i++;
+        }
+        // oprava barvy pro osobní pečovatele a jejich děti
+        if ( $c->s_role==3 || $c->s_role==5 )
+          $c->barva= $c->s_role;
+//                                                 debug($c);
+        $idos[]= $c->ido;
+        if ( !in_array(trim($c->prijmeni),$nazev) ) $nazev[]= trim($c->prijmeni);
+        $c->vek= roku_k($c->narozeni,$p->datum_od);
+                                                display("roku_k({$c->narozeni},{$p->datum_od}");
+        $c->rodiny= "-:0".($c->rodiny ? ",{$c->rodiny}" : '');
+        $clen[$ido]= $c;
+      }
+                                                debug($clen,2);
+      // transformace pro browse_fill
+      $cleni= $del= '';
+      foreach($clen as $c) {
+        foreach($fosoba as $f) {
+          $cleni.= "$del{$c->$f}"; $del= '~';
+        }
+      }
+      // skupinka?
+      if ( $p->skupina ) $skup[$p->skupina][]= $idp;
+      // zápis
+      $idr= $p->key_rodina;
+      $nazev= $idr ? $p->_nazev : implode(' ',$nazev);
+
+//     show key_pobyt, show key_akce, show key_spolu, show key_osoba, show key_rodina
+//     show dnu, show datum_od
+//     show _nazev
+//     show _jmena
+//     show c_suma
+//     show platba
+//     show fotka
+//     show xfunkce
+//     show skupina
+//     show dluh
+//     show r_spz, show r_svatba, show r_datsvatba,
+//     show r_ulice, show r_psc, show r_obec, show r_stat,
+//     show r_telefony, show r_emaily, show r_note
+//     show r_cleni
+//     show p_poznamka, show pokoj, show budova, show funkce, show prednasi, show skup
+
+      $ucast[$idp]= (object)array(
+        'key_pobyt'=>$idp,'key_akce'=>$p->key_akce,'key_spolu'=>0,'key_osoba'=>0,'key_rodina'=>$idr,
+        'dnu'=>$p->dnu,'datum_od'=>$p->datum_od,
+        '_nazev'=>$nazev, '_jmena'=>$p->_jmena,
+        'c_suma'=>$p->c_suma,'platba'=>$p->platba,'fotka'=>$p->fotka,
+        'xfunkce'=>$p->xfunkce,'skupina'=>$p->skupina,'dluh'=>$p->dluh,
+        // rodina
+        'r_spz'=>$p->r_spz,'r_svatba'=>$p->r_svatba,'r_datsvatba'=>$p->r_datsvatba,
+        'r_ulice'=>$p->r_ulice,'r_psc'=>$p->r_psc,'r_obec'=>$p->r_obec,'r_stat'=>$p->r_stat,
+        'r_telefony'=>$p->r_telefony,'r_emaily'=>$p->r_emaily,'r_note'=>$p->r_note,
+        // r_cleni (ido,idt,idr,ids,barva,jmeno,vek,role,rodiny),
+        'r_cleni'=>$cleni,
+        // rodina pobyt
+        'p_poznamka'=>$p->p_poznamka,'pokoj'=>$p->pokoj,'budova'=>$p->budova,'funkce'=>$p->funkce,
+        'prednasi'=>$p->prednasi,
+        // vypočítané údaje
+        'skup'=>0,
+        'ido1'=>isset($idos[0])?$idos[0]:0,
+        'ido2'=>isset($idos[1])?$idos[1]:0
+      );
+    }
+//                                                   debug($ucast,"SQL");
+//                                                   debug($skup,"skupinky");
+    foreach($ucast as $i=>$u) {
+      // doplnění skupinek
+      $s= $del= '';
+      if ( ($sk= $u->skupina) && $skup[$sk]) {
+        foreach($skup[$sk] as $ip) {
+          $s.= "$del$ip~{$ucast[$ip]->_nazev}";
+          $del= '~';
+        }
+      }
+      $ucast[$i]->skup= $s;
+    }
+    // předání ve formátu browse
+    $y->values= $ucast;
+    $y->from= 0;
+    $y->cursor= 0;
+    $y->rows= count($ucast);
+    $y->count= count($ucast);
+    $y->ok= 1;
+    // případné řazení
+    if ( $x->order ) {
+      $test_clmn= substr($x->order,2);
+      $test_asc= substr($x->order,0,1)=='a' ? 1 : -1;
+      usort($y->values,function($a,$b) {
+        global $test_clmn,$test_asc;
+        $c= $test_asc*($a->$test_clmn>$b->$test_clmn ? 1 : ($a->$test_clmn<$b->$test_clmn ? -1 : 0));
+//                                   display("{$a->$test_clmn} $c {$b->$test_clmn}");
+        return $c;
+      });
+    }
+    array_unshift($y->values,null);
+    break;
+  default:
+    fce_warning("N.Y.I. test_browse_ask/{$x->cmd}");
+    $y->ok= 0;
+    break;
+  }
+  return $y;
+}
+# ---------------------------------------------------------------------------------- akce_ucast_load
+# načte informace o účastnících pro browse
+// function akce_ucast_load($id_akce,$soubeh,$app) {  trace();
+//   $x= '';
+//   $ucast= $skup= array();
+// //     // klíče
+// //     show key_pobyt show key_akce show key_spolu show key_osoba show key_rodina
+// //     // akce
+// //     show dnu show datum_od
+// //     // zobrazení
+// //     show _nazev [,,100,] { title:'příjmení', format:'s+q*'}
+// //     show _jmena [,,180,] { title:'jméno/a', format:'tsq%' }
+// //     show c_suma  [,,0,] { title:'cena' }
+// //     show platba  [,,0,] { title:'platba', format:"rsq" }
+// //     show fotka   [,,0,] { title:'fotka', format:'rsq*', help:'soubor s fotografií' }
+// //     show xfunkce [,,40,] { title:'fce', format:'rq#s', map_pipe:ms_akce_funkce.zkratka, help:'funkce na akci'}
+// //     show skupina [,,30,] { title:'sk.', format:'rqs:e', help:'číslo skupinky'}
+// //     // barvení
+// //     show dluh
+// //     show r_spz, show r_svatba, show r_datsvatba,
+// //     show r_ulice, show r_psc, show r_obec, show r_stat,
+// //     show r_telefony, show r_emaily, show r_note
+// //     // údaje ucast.evid.rod.cleni
+// //     show r_cleni //(key_osoba,key_tvori,key_spolu,barva,jmeno,vek,role)
+// //     // údaje ucast.evid.pob
+// //     show p_poznamka, show pokoj, show budova, show funkce, show prednasi, show skup
+//   $qp= mysql_qry("
+//     SELECT p.id_pobyt AS key_pobyt,p.id_akce as key_akce,
+//       p.i0_rodina as key_rodina,DATEDIFF(a.datum_do,a.datum_od)+1 as dnu,
+//       a.datum_od as datum_od,
+//       IF(p.i0_rodina,r.nazev,_a.prijmeni) as _nazev,
+//       GROUP_CONCAT(DISTINCT REPLACE(_a.jmeno,' ','-') ORDER BY _a.narozeni SEPARATOR ' ') as _jmena,
+//       p.platba1+p.platba2+p.platba3+p.platba4+p.poplatek_d as c_suma,p.platba as platba,
+//       r.fotka as fotka,p.funkce as xfunkce,p.skupina as skupina,
+//       CASE
+//         WHEN $soubeh=1 AND a.ma_cenik THEN
+//            IF(p.platba1+p.platba2+p.platba3+p.platba4+p.poplatek_d=0,2,
+//              IF(p.platba1+p.platba2+p.platba3+p.platba4+p.poplatek_d>platba+platba_d,1,0))
+//         WHEN a.ma_cenik THEN
+//            IF(p.platba1+p.platba2+p.platba3+p.platba4=0,2,
+//              IF(p.platba1+p.platba2+p.platba3+p.platba4>platba,1,0))
+//         WHEN a.ma_cenu THEN
+//            IF(IF(pouze>0,1,2)*a.cena>platba,1,0)
+//         ELSE 0 END as dluh,
+//       r.spz AS r_spz,r.svatba AS r_svatba,r.datsvatba AS r_datsvatba,
+//       r.ulice AS r_ulice,r.psc AS r_psc,r.obec AS r_obec,r.stat AS r_stat,
+//       r.telefony AS r_telefony,r.emaily AS r_emaily,r.note AS r_note,
+//       p.poznamka AS p_poznamka,pokoj,budova,funkce,prednasi,
+//
+//       GROUP_CONCAT(DISTINCT _a._rody,'~',_a.id_osoba,'~',_a.id_spolu,'~',_a.jmeno,'~',_a.prijmeni,
+//         '~',_a.narozeni SEPARATOR '|') AS _akce,
+//       GROUP_CONCAT(DISTINCT _b.id_osoba,'~',_b.id_tvori,'~',_b.jmeno,'~',_b.narozeni,'~',_b.id_rodina,
+//         '~',_b.role
+//         ORDER BY role SEPARATOR '|') AS _rod
+//
+//       FROM ezer_fa.pobyt AS p
+//       JOIN akce AS a ON a.id_duakce=p.id_akce
+//       LEFT JOIN rodina AS r ON id_rodina=i0_rodina
+//
+//       JOIN (SELECT oo.id_osoba,jmeno,prijmeni,id_spolu,id_pobyt,narozeni,
+//           GROUP_CONCAT(CONCAT(nazev,':',id_rodina) SEPARATOR ',') AS _rody
+//         FROM osoba AS oo
+//         JOIN spolu AS os USING(id_osoba)
+//         LEFT JOIN tvori AS ot USING(id_osoba)
+//         LEFT JOIN rodina AS otr USING(id_rodina)
+//         GROUP BY id_spolu
+//       ) AS _a ON _a.id_pobyt=p.id_pobyt
+//
+//       LEFT JOIN (SELECT id_osoba,jmeno,id_tvori,id_rodina,narozeni,role
+//         FROM osoba AS oo
+//         LEFT JOIN tvori AS ot USING(id_osoba)
+//       ) AS _b ON _b.id_rodina=r.id_rodina
+//
+//       WHERE funkce!=99 AND p.id_akce=$id_akce
+//       GROUP BY p.id_pobyt
+//       ORDER BY IF(funkce<=2,1,funkce),_nazev
+//       LIMIT 1");
+//   while ( $qp && ($p= mysql_fetch_object($qp)) ) {
+//     $idp= $p->key_pobyt;
+//     // vytvoření seznamu členů
+//     $clen= $nazev= array();
+//     $cleni= $del= '';
+//                                                 display("{$p->_rod} rod");
+//     if ( $p->_rod ) {
+//       foreach (explode('|',$p->_rod) as $info) {
+//         list($ido,$idt,$jmeno,$narozeni,$idr,$role)= explode('~',$info);
+//         $vek= roku_k($narozeni,$p->datum_od);
+//         $rodiny= "{$p->_nazev}:$idr";
+//         $clen[$ido]= array($ido,$idt,$idr,0,0,$jmeno,$vek,$role,$rodiny);
+//       }
+//     }
+// //                                                 display("{$p->_akce}  akce");
+//     foreach (explode('|',$p->_akce) as $info) {
+//       list($rodiny,$ido,$ids,$jmeno,$prijmeni,$narozeni)= explode('~',$info);
+//       if ( !in_array($prijmeni,$nazev) ) $nazev[]= $prijmeni;
+//       $vek= roku_k($narozeni,$p->datum_od);
+//       $rodiny= "-:0".($rodiny ? ',' : '').$rodiny;
+//       if ( isset($clen[$ido]) ) {
+//         $clen[$ido][1]= $idt;
+//         $clen[$ido][4]= 1;
+//         $clen[$ido][8]= $rodiny;
+//       }
+//       else {
+//         $clen[$ido]= array($ido,0,0,$ids,2,$jmeno,$vek,'',$rodiny);
+//       }
+//     }
+//     foreach($clen as $c) {
+//       list($ido,$idt,$idr,$ids,$barva,$jmeno,$vek,$role,$rodiny)= $c;
+// //                                         display("$jmeno ... $rodiny");
+//       $cleni.= "$del$ido~$idt~$idr~$ids~$barva~$jmeno~$vek~$role~$rodiny";
+//       $del= '~';
+//     }
+//     // skupinka?
+//     if ( $p->skupina ) $skup[$p->skupina][]= $idp;
+//     // zápis
+//     $idr= $p->key_rodina;
+//     $nazev= $idr ? $p->_nazev : implode(' ',$nazev);
+//     $ucast[$idp]= array(
+//       $idp,$p->key_akce,0,0,$idr,
+//       $p->dnu,$p->datum_od,$nazev,$p->_jmena,$p->c_suma,$p->platba,$p->fotka,
+//       $p->xfunkce,$p->skupina,$p->dluh,
+//       // rodina
+//       $p->r_spz,$p->r_svatba,$p->r_datsvatby,
+//       $p->r_ulice,$p->r_psc,$p->r_obec,$p->r_stat,
+//       $p->r_telefony,$p->r_emaily,$p->r_note,
+//       // r_cleni (ido,idt,idr,ids,barva,jmeno,vek,role,rodiny),
+//       $cleni,
+//       // rodina pobyt
+//       $p->p_poznamka,$p->pokoj,$p->budova,$p->funkce,$p->prednasi
+//     );
+//   }
+// //                                                 debug($skup,"skupinky");
+//   foreach($ucast as $i=>$u) {
+//     // doplnění skupinek
+//     $s= $del= '';
+//     if ( ($sk= $u[13]) && $skup[$sk]) {
+//       foreach($skup[$sk] as $ip) {
+//         $s.= "$del$ip~{$ucast[$ip][7]}";
+//         $del= '~';
+//       }
+//     }
+//     $ucast[$i][31]= $s;
+//   }
+//   $del= '';
+//   foreach($ucast as $i=>$u) {
+//     // předání ve formátu pro browse_fill (7:_nazev,13:skupina)
+//     $x.= $del.implode('|',$u); $del= '|';
+//   }
+//                                                 debug($ucast);
+//   return $x;
+// }
 # ------------------------------------------------------------------------------- akce_test_dite_kat
 # testuje, zda je kategorie dítěte v souladu s rozmezím věku v číselníku
 # narozeni=d.m.Y
