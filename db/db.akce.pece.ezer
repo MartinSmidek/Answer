@@ -364,12 +364,12 @@ form _pece [,,400,] { css:'ds_form'
       item { title:'ukázat všechny změny'
 #         proc onclick () { BackTrace.back_dite(key_dite.get,key_spolu.get) }
       }
-      item { title:'posoudit vybrané duplikáty', skill:'m', proc onclick () {
-        echo(ask('dupl_spolu',b.selected('get'),0))
-      } }
-      item { title:'ztotožnit duplikáty, jde-li to', skill:'m', proc onclick () {
-        echo(ask('dupl_spolu',b.selected('get'),1))
-      } }
+#       item { title:'posoudit vybrané duplikáty', skill:'m', proc onclick () {
+#         echo(ask('dupl_spolu',b.selected('get'),0))
+#       } }
+#       item { title:'ztotožnit duplikáty, jde-li to', skill:'m', proc onclick () {
+#         echo(ask('dupl_spolu',b.selected('get'),1))
+#       } }
       item { title:'zrušit označení', skill:'m', proc onclick () {
         b.selected('clear')
       } }

@@ -192,6 +192,10 @@ menu m {type:'left',
     item {title:'Pečouni'               ,par:°{typ:'j',exp:'Excel',exp2:'PDF-jmenovky'
                                         ,cnd:"p.funkce=99",ord:"prijmeni"
                                         ,tit:'jméno:20, příjmení:15',fld:'jmeno,prijmeni'}}
+    item {title:'Pečouni - dotisk'      ,par:°{typ:'j',exp:'Excel',exp2:'PDF-jmenovky'
+                                        ,cnd:"CONCAT(jmeno,' ',prijmeni) IN ('Adriana Vystrčilová','Jana Buchtová','Jiří Horák','Markéta Švíková','Anna Lakosilová','Markéta Plačková','Klára Imramovská','Marek Loučka')"
+                                        ,ord:"prijmeni"
+                                        ,tit:'jméno:20, příjmení:15',fld:'jmeno,prijmeni'}}
     item {title:'VPS'                                                                                   skill:'-'
                                         ,par:°{typ:'j',exp:'Excel',exp2:'PDF-jmenovky'
                                         ,cnd:"role!='d' AND funkce IN (1,2)",ord:"prijmeni"
@@ -315,8 +319,8 @@ report sti_A [0,0,200,287] { format:'A4:5,6,70,41',
 report sti_B [0,0,200,287] { format:'A4:5,6,70,41',
   box lines     [  2.6, 11.0, 60.0, 27.3] { style:'12,L',      title:'{line1}<br>{line2}<br>{line3}<br>{line4}' }
 }
-# -------------------------   stitek_C - stravenky
-report sti_C [0,0,210,297] { format:'A4:5,5,50,24',
+# -------------------------   stitek_C - stravenky     pro LJ DN2200 je format:'A4:5,5,50,24',
+report sti_C [0,0,210,297] { format:'A4:5,3,50,24',
   box ram       [  1,  1, 48, 22] { style:'8,L,LT',             title:'{ram}' }
   box end       [  1,  1, 48, 22] { style:'8,L,RB',             title:'{end}' }
   box header    [  2,  4, 45,  4] { style:'8,L',                title:'{header}' }
