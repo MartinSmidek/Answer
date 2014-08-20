@@ -249,7 +249,7 @@ form _gsql {
     | gt(this.key,2); rok.display(1); rokem.display(1)
     }}
     field rok [110,4,25,] { format:'nt', value:'0' }
-    label rokem [140,6,50,] { format:'n', title:"rokem" }
+    label rokem [140,6,50,] { format:'n', title:". rokem" }
     field vzor [110,4,85,] { format:'nt', value:'', help:'začátek názvu' }
   }
   # ------------------------ výběr typu ne-akce
@@ -295,13 +295,14 @@ form _gsql {
   # ------------------------------------- kriteria obeslaných účastníků
   const t_pro = 500
   label [10,t_pro+10,300,] { tag:'def', title:"<h3>koho z účastníků obeslat?</h3>" }
-  label [5,t_pro+15,370,125] { tag:'def', css:'ae_work'}
+  label [5,t_pro+15,370,133] { tag:'def', css:'ae_work'}
+  // funkce
   check pro_fce [10,t_pro+40,150,] { tag:'def', title:'jen s vybranými funkcemi?', value:'0', format:'t'
     proc onchange() {
       fces.display(this.get); fces.selected('clear');
     }
   }
-  browse fces [230,t_pro+25,,] { tag:'def', rows:4
+  browse fces [230,t_pro+25,,] { tag:'def', rows:5
     view c: table _cis
     show id_cis { data:c.id_cis }
     show fce {data:c.data}
@@ -316,10 +317,7 @@ form _gsql {
         proc onclick() { fces.selected("ignore"); fces.browse_load } }
     }
     # kód
-    proc code_fce() {
-      var cond: text
-      var ids: text
-      var keys: text
+    proc code_fce() { var cond: text, ids: text, keys: text
       cond.set(1);
       json_akce.set(conc('"funkce":',pro_fce.get));
       [ pro_fce.get;
@@ -331,15 +329,31 @@ form _gsql {
       return(cond);
     }
   }
+  // sex
   check pro_muze   [10,t_pro+60,58,] { tag:'def', title:'muže', value:'1', format:'t' }
   check pro_zeny   [65,t_pro+60,63,] { tag:'def', title:'ženy', value:'1', format:'t' }
   check pro_rodiny [120,t_pro+60,63,] { tag:'def', title:'rodiny', value:'0', format:'td' }
-  check pro_ucast  [ 10,t_pro+80,90,] { tag:'def', title:'podle účastí?', value:'0', format:'t'
-    proc onchange() {
-      form.display(this.get,'ucast'); pro_kolik.init(1); pro_jak.key(1);
+  // mrop
+  check pro_mrop   [26,t_pro+82,50,] { tag:'def', title:'mrop', value:'0', format:'t'
+    proc onchange() { form.display(this.get,'mrop'); pro_mrop_f.init(1); pro_mrop_s.key(1); }
+    proc code_mrop() { var cond: text
+      cond.set(1);
+      json_akce.set(conc(',"mrop":{"ucast":',this.get));
+      [ this.get;
+        json_akce.set(conc(json_akce.get,',"kolik":',pro_mrop_f.get,',"jak":',pro_mrop_s.key));
+        cond.set(conc('iniciace',switch(pro_mrop_s.key,1,{'>='},2,{'>0 AND iniciace<='},3,{'='}),
+          pro_mrop_f.get));
+      ];
+      json_akce.set(conc(json_akce.get,'}'));
+      return(cond);
     }
-    proc code_ucasti() {
-      var having: text
+  }
+  field pro_mrop_f [90,t_pro+82,30,] { tag:'def', tag:'mrop', format:'ntr', value:'2001' }
+  select pro_mrop_s [126,t_pro+82,74,] { tag:'def', tag:'mrop', format:'nt' }
+  // účasti
+  check pro_ucast  [10,t_pro+104,90,] { tag:'def', title:'podle účastí?', value:'0', format:'t'
+    proc onchange() { form.display(this.get,'ucast'); pro_kolik.init(1); pro_jak.key(1); }
+    proc code_ucasti() { var having: text
       having.set('');
       json_akce.set(conc(',"ucasti":{"ucast":',this.get));
       [ this.get;
@@ -353,9 +367,9 @@ form _gsql {
       return(having);
     }
   }
-  field pro_kolik [100,t_pro+80,20,] { tag:'def', tag:'ucast', format:'ntr', value:'1' }
-  select pro_jak  [125,t_pro+80,65,] { tag:'def', tag:'ucast', format:'nt' }
-  check pro_mail  [ 10,t_pro+100,90,] { tag:'def', title:'známe email', value:'1', format:'t' }
+  field pro_kolik [100,t_pro+104,20,] { tag:'def', tag:'ucast', format:'ntr', value:'1' }
+  select pro_jak  [125,t_pro+104,74,] { tag:'def', tag:'ucast', format:'nt' }
+  check pro_mail  [10,t_pro+124,90,] { tag:'def', title:'známe email', value:'1', format:'t' }
   # ------------------------------------- zápis a nastavení stavu do JSON
   proc make_json() {
     var json: text
@@ -374,6 +388,7 @@ form _gsql {
     [ fces.code_fce ]; json.set(conc(json,json_akce.get));
     json.set(conc(json,',"muzi":',pro_muze.get,',"zeny":',pro_zeny.get));
     [ pro_ucast.code_ucasti ]; json.set(conc(json,json_akce.get));
+    [ pro_mrop.code_mrop ]; json.set(conc(json,json_akce.get));
     json.set(conc(json,',"email":',pro_mail.get));
     json.set(conc(json,'}'));
     # kompletace
@@ -402,16 +417,18 @@ form _gsql {
     foreach(p.ne_akce.cas,read_cas_ne);
     # funkce
     pro_fce.set(p.ucasti.funkce); pro_fce.onchange;
-
     [ p.ucasti.fce_keys;
       ids.set(ask('select',"GROUP_CONCAT(id_cis)",'_cis',
         conc("druh='ms_akce_funkce' AND data IN (",p.ucasti.fce_keys,")")));
       fces.selected('set',ids) ];
-
-#     [ p.ucasti.fce_key; fces.browse_seek(conc("data=",p.ucasti.fce_key))
-#     | p.ucasti.fce_keys; fces.selected('set',p.ucasti.fce_keys) ];
     # muži/ženy
     pro_muze.set(p.ucasti.muzi); pro_zeny.set(p.ucasti.zeny);
+    # mrop
+    { p.ucasti.mrop;
+      pro_mrop.set(p.ucasti.mrop.ucast); pro_mrop.onchange;
+      [ pro_mrop.get; pro_mrop_f.set(p.ucasti.mrop.kolik); pro_jak.key(p.ucasti.mrop.jak) ]
+    | pro_mrop.set(0); pro_mrop.onchange;
+    };
     # účasti
     pro_ucast.set(p.ucasti.ucasti.ucast); pro_ucast.onchange;
     [ pro_ucast.get; pro_kolik.set(p.ucasti.ucasti.kolik); pro_jak.key(p.ucasti.ucasti.jak) ];
@@ -439,12 +456,12 @@ form _gsql {
   # ------------------------------------- tvorba a úschova SQL dotazu a testy
   var from: text
   var cond: text
-  label  [620,t_pro+85,132,55] { tag:'def', css:'ae_parm' }
-  button [628,t_pro+90,,] { tag:'def', title:'TEST',  help:'otestovat dotaz', proc onclick() {
+  label  [620,t_pro+12,132,55] { tag:'def', css:'ae_parm' }
+  button [628,t_pro+17,,] { tag:'def', title:'TEST',  help:'otestovat dotaz', proc onclick() {
     /*make_sql(0);*/ save_sql(0); run_sql } }
-  button [678,t_pro+90,,] { tag:'def', title:'(jen SQL)',  help:'otestovat dotaz', proc onclick() {
+  button [678,t_pro+17,,] { tag:'def', title:'(jen SQL)',  help:'otestovat dotaz', proc onclick() {
     make_sql(1); save_sql(0) } }
-  button [678,t_pro+115,,] { tag:'def', title:'(jen JSON)',  proc onclick() {
+  button [678,t_pro+42,,] { tag:'def', title:'(jen JSON)',  proc onclick() {
     tsql.set(make_json) } }
   proc make_sql(to_show) {
     var akce_ano: text
@@ -457,12 +474,6 @@ form _gsql {
     from.set(conc("FROM pobyt AS p JOIN spolu AS s USING(id_pobyt) ",
       chr(10),"JOIN osoba AS o ON s.id_osoba=o.id_osoba JOIN akce AS a ON a.id_duakce=p.id_akce ",
       chr(10),"LEFT JOIN tvori AS t ON t.id_osoba=o.id_osoba LEFT JOIN rodina AS r USING(id_rodina)"));
-#     # výběry lidí - pohlaví podle role
-#     { and(pro_muze.get,pro_zeny.get); cond.set("t.role IN ('a','b')")
-#     | pro_muze.get; cond.set("t.role='a'")
-#     | pro_zeny.get; cond.set("t.role='b'")
-#     | warning("chybí výběr muži/ženy") };
-#     [ pro_mail.get; cond.set(conc("IFNULL(",cond.get,",TRUE) AND (o.email!='' OR r.emaily!='') ")) ];
     # výběry lidí - pohlaví
     { and(pro_muze.get,pro_zeny.get); cond.set("TRUE")
     | pro_muze.get; cond.set("o.sex='1'")
@@ -473,6 +484,8 @@ form _gsql {
     cond.set(conc(cond.get," AND t.role!='d'"));
     # ... - funkce
     cond.set(conc(cond.get,' AND ',fces.code_fce));
+    # ... - mrop
+    cond.set(conc(cond.get,' AND ',pro_mrop.code_mrop));
     # sestavení SELECT pro osobu
     gsql.set(conc(
       "SELECT COUNT(*) AS _ucasti,o.id_osoba AS _id,CONCAT(prijmeni,' ',jmeno) AS _name,",chr(10),
@@ -517,8 +530,8 @@ form _gsql {
   }
   proc run_sql() { tsql.set(ask('dop_gen_try',gsql.get)) }
   proc run_sql1() { tsql.set(conc(ask('dop_gen_try',gsql.get,1),'<hr>',ask('dop_gen_try',gsql.get))) }
-  label tsql [5,t_pro+150,750,*] { tag:'def', style:"background-color:#e6e6e6" }
-  button [742,t_pro+150,,] { tag:'def', title:'!' proc onclick() { make_sql(0); run_sql1 }}
+  label tsql [5,t_pro+154,750,] { tag:'def', style:"background-color:#e6e6e6" }
+  button [742,t_pro+153,,] { tag:'def', title:'!' proc onclick() { make_sql(0); run_sql1 }}
   # ------------------------------------- procedury
   var code_cas:text
   var json_cas:text
@@ -536,6 +549,7 @@ form _gsql {
     pro_fce.init; pro_fce.change;
     fces.browse_load("druh='ms_akce_funkce' ");
     pro_jak.selects("právě:1,aspoň:2,nejvýše:3");
+    pro_mrop_s.selects("a později:1,a dříve:2,právě:3");
     # testy
     ctrl_akce_ano.browse_init; ctrl_akce_ne.browse_init;
     tsql.set('');
