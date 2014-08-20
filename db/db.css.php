@@ -42,9 +42,10 @@ echo <<<__EOD
   background-color:$b8_brow; overflow: auto; }
 .neucast  { text-decoration:line-through; color:#aaaaaa; }
 
-.shift_up   { z-index:10 !important; }
-.shift_up[class*=ae_form]  { z-index:10 !important; box-shadow:2px 2px 10px #333; }
-.shift_down { z-index:1 !important; }
+.shift_up   { z-index:2; }
+.shift_up[class*=ae_form]  { z-index:2; box-shadow:2px 2px 10px #333; }
+.shift_down { z-index:1; }
+.datepicker_vista { z-index:3 !important; }
 
 .page {
   font-size:9pt !important; padding:10px; line-height:13pt; }
