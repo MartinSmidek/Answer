@@ -341,15 +341,20 @@ form _gsql {
       json_akce.set(conc(',"mrop":{"ucast":',this.get));
       [ this.get;
         json_akce.set(conc(json_akce.get,',"kolik":',pro_mrop_f.get,',"jak":',pro_mrop_s.key));
-        cond.set(conc('iniciace',switch(pro_mrop_s.key,1,{'>='},2,{'>0 AND iniciace<='},3,{'='}),
-          pro_mrop_f.get));
+        cond.set(switchx(pro_mrop_s.key,
+          1,{conc('iniciace>=',pro_mrop_f.get)},
+          2,{conc('iniciace>0 AND iniciace<=',pro_mrop_f.get)},
+          3,{conc('iniciace=',pro_mrop_f.get)},
+          4,{'iniciace=0'}));
       ];
       json_akce.set(conc(json_akce.get,'}'));
       return(cond);
     }
   }
   field pro_mrop_f [90,t_pro+82,30,] { tag:'def', tag:'mrop', format:'ntr', value:'2001' }
-  select pro_mrop_s [126,t_pro+82,74,] { tag:'def', tag:'mrop', format:'nt' }
+  select pro_mrop_s [126,t_pro+82,74,] { tag:'def', tag:'mrop', format:'nt'
+    proc onchange() { pro_mrop_f.display(not(eq(this.key,4))) }
+  }
   // účasti
   check pro_ucast  [10,t_pro+104,90,] { tag:'def', title:'podle účastí?', value:'0', format:'t'
     proc onchange() { form.display(this.get,'ucast'); pro_kolik.init(1); pro_jak.key(1); }
@@ -426,7 +431,8 @@ form _gsql {
     # mrop
     { p.ucasti.mrop;
       pro_mrop.set(p.ucasti.mrop.ucast); pro_mrop.onchange;
-      [ pro_mrop.get; pro_mrop_f.set(p.ucasti.mrop.kolik); pro_jak.key(p.ucasti.mrop.jak) ]
+      [ pro_mrop.get; pro_mrop_f.set(p.ucasti.mrop.kolik); pro_mrop_s.key(p.ucasti.mrop.jak);
+        pro_mrop_f.display(not(eq(p.ucasti.mrop.jak,4))) ]
     | pro_mrop.set(0); pro_mrop.onchange;
     };
     # účasti
@@ -549,7 +555,7 @@ form _gsql {
     pro_fce.init; pro_fce.change;
     fces.browse_load("druh='ms_akce_funkce' ");
     pro_jak.selects("právě:1,aspoň:2,nejvýše:3");
-    pro_mrop_s.selects("a později:1,a dříve:2,právě:3");
+    pro_mrop_s.selects("a později:1,a dříve:2,právě:3,ještě ne:4");
     # testy
     ctrl_akce_ano.browse_init; ctrl_akce_ne.browse_init;
     tsql.set('');
@@ -913,7 +919,7 @@ form _etext  {
     'G',{ texty.komu_U.width(0); texty.komu_Q.width(0); texty.komu_G.width(100);
           vy.komu_G.key;
           form_state('n','s|u|z');
-          [ texty.browse_load(conc("etd.id_mailist=",vy.komu_G.key)) ]
+          [ vy.komu_G.key; texty.browse_load(conc("etd.id_mailist=",vy.komu_G.key)) ]
         | texty.browse_init;
           form_state('','n|s|u|z');
     });
