@@ -34,17 +34,19 @@ echo <<<__EOD
 .fialovy        { background-color:#d27efc !important; }
 
 /* specifické */
+.db_sep { margin-top:3px; width:100%; }
+.db_hr  { border-top:1px solid $s1_brow; }
+.db_evidence { font-size:9px; background-color:$b_work; height:17px; color:$s1_brow; font-weight:bold; }
 .curr_akce { background-color:$nazelenala !important; color:$bila; font-weight:bold; }
 .form_note { font-size:10px; color:$s1_brow }
 .title_ref { color:#ffffff !important; }
 .title_ref a { color:#ffffff !important; }
-.karta_info {
-  background-color:$b8_brow; overflow: auto; }
+.karta_info { background-color:$b8_brow; overflow: auto; }
 .neucast  { text-decoration:line-through; color:#aaaaaa; }
 
-.shift_up   { z-index:2; }
-.shift_up[class*=ae_form]  { z-index:2; box-shadow:2px 2px 10px #333; }
-.shift_down { z-index:1; }
+.shift_up   { z-index:1; }
+.shift_up[class*=ae_form]  { z-index:1; box-shadow:2px 2px 10px #333; }
+.shift_down { z-index:0; }
 .datepicker_vista { z-index:3 !important; }
 
 .page {
@@ -57,6 +59,7 @@ span.zmeneny {
   position:absolute; color:black; z-index:2; font-size:8px; height:11px; padding:0 1px;
   border-left:1px solid #aaa; border-right:1px solid #aaa; border-bottom:1px solid #aaa; }
 /* úpravy standardu */
+div.Element .Label, div.Select .Label, div.FieldDate .Label { margin-top:1px }
 .BrowseSmart td.BrowseQry input {
   background-color:$b8_brow; }
 .Panel {
@@ -66,7 +69,7 @@ span.zmeneny {
 .Label, .Check, .Case {
   color:#456; font-size:11px; }
 .Case input {
-  vertical-align:bottom; }
+  vertical-align:sub; }
 .Label h1 {
   font-size:12pt; margin:0; padding:0 }
 #Content, #Index {

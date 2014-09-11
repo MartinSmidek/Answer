@@ -341,7 +341,7 @@ form _gsql {
       json_akce.set(conc(',"mrop":{"ucast":',this.get));
       [ this.get;
         json_akce.set(conc(json_akce.get,',"kolik":',pro_mrop_f.get,',"jak":',pro_mrop_s.key));
-        cond.set(switchx(pro_mrop_s.key,
+        cond.set(switch(pro_mrop_s.key,
           1,{conc('iniciace>=',pro_mrop_f.get)},
           2,{conc('iniciace>0 AND iniciace<=',pro_mrop_f.get)},
           3,{conc('iniciace=',pro_mrop_f.get)},

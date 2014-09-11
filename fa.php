@@ -41,7 +41,6 @@
     array("db/db_fce.js","ds/fce.js")
   );
 
-
   $css= array_merge(
     $dbg ? array("./$licensed/jush/mini_jush.css") : array(),
     array("./$client/ezer.css.php","./fa/fa.css.php","./db/db.css.php"),
