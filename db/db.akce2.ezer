@@ -786,7 +786,7 @@ form _osoba2x [,,244,322] {
   field email    [5,38,233,] {tag:'k', type:'list', data:o.email, format:'n', title:'^e-mail'}
   label [0,58,,5] {tag:'k,S', format:'n', css:'db_sep' } // zarovnání
 
-  // a,b = adresa - rodinná=0, osobní=1
+  // a,b = adresa - rodinná=0, osobní=1.
   label [5,3,50,12] {tag:'a', title:'adresa je' }
   radio adresa [50,0,100,18] {tag:'a', format:'n', value:'0', data:o.adresa
     case [0,0,70,] { title:'osobní', expr:'1' }
