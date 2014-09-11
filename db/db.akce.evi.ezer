@@ -45,6 +45,12 @@ proc evid_show(id_osoba) {
   osoby.b.browse_seek(conc('os.id_osoba=',id_osoba));
   evid.reload; dary.reload;
 }
+proc evid_rodina_show(id_rodina) {
+      mode.set('r'); status(0);
+      panel.display(0,'inf|list|plat'); panel.display(1,'rodi|syst|foto');
+      evid.page_init; dary.page_init;
+  rodiny.b.browse_seek(conc('id_rodina=',id_rodina));
+}
 
 # systémové informace
 use stav: form _stav [0,550,,] { tag:'syst', skill:'m' }
@@ -217,8 +223,14 @@ form _osoby {
       item { title:'ukázat všechny změny'
         proc onclick () { Ctrack.CT_tab.set('osoba'); Ctrack.CT_load(id_o.get) }
       }
-      item { title:'sjednotit označené záznamy', skill:'m|m'
-        proc onclick () { echo(ask('dupl_osoba',b.selected('get'))) }
+      item { title:'sjednotit kopie osob', skill:'a|a'
+        proc onclick () { elim.call('osoby',id_o.get,jmeno.get,prijmeni.get) }
+      }
+      item { title:'sjednotit kopie rodin', skill:'a|a'
+        proc onclick () { elim.call('rodiny',id_r.get,prijmeni.get) }
+      }
+      item { title:'sjednotit kopie rodin (0)', skill:'a|a'
+        proc onclick () { elim.call('rodiny',0,'') }
       }
     }
   }

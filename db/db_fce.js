@@ -368,8 +368,9 @@ function img_filter (image,filter) {
 // ================================================================================================= Ezer.fce
 // ------------------------------------------------------------------------------------------------- stack_forms
 //ff: db.stack_forms (form,tag_list[,space=0[,smer='down']])
-//      přeskládá formulář podle seznamu tagů, navrátí výslednou výšku, prokládá danou mezerou
-//      rovná podle smer - down:shora dolů | up:zdola nahoru
+//      přeskládá formulář podle seznamu tagů, navrátí výslednou výšku, prokládá danou mezerou;
+//      rovná podle smer - down:shora dolů | up:zdola nahoru;
+//      prízdné tagy ignoruje
 //s: ys
 Ezer.fce.stack_forms= function (form,tag_list,space,smer) {
   space= space || 0;
@@ -377,22 +378,23 @@ Ezer.fce.stack_forms= function (form,tag_list,space,smer) {
   var sum_h= 0;
   var tags= tag_list.split(',');
   if ( smer=='down' ) {
-    for(var i= 0; i<tags.length; i++) {
+    for(var i= 0; i<tags.length; i++) if ( tags[i] ) {
       var tag= tags[i];
       form.display(1,tag);
       var bounds= form.property({down:sum_h,return:'bounds'},tag);
-      sum_h+= bounds._h ? bounds._h + space : 0;
+      sum_h+= bounds._t==undefined ? 0
+        : ((!i ? bounds._t : 0) + (bounds._h ? bounds._h + space : 0));
     }
   }
   else if ( smer=='up' ) {
     var h, top= [];
     top[0]= form.options._h;
-    for(var i= 0; i<tags.length; i++) {
+    for(var i= 0; i<tags.length; i++) if ( tags[i] ) {
       var bounds= form.property({return:'bounds'},tags[i]);
       sum_h+= h= bounds._h ? bounds._h + space : 0;
       top[i+1]= top[i]+h;
     }
-    for(var i= 0; i<tags.length; i++) {
+    for(var i= 0; i<tags.length; i++) if ( tags[i] ) {
       var tag= tags[i];
       form.display(1,tag);
       form.property({down:top[i]-sum_h},tag);

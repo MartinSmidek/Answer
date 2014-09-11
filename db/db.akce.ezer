@@ -41,6 +41,9 @@ proc akce_choose(id_akce) { var a:object
   the_hlavni.set(a.hlavni); the_soubezna.set(a.soubezna); the_cenik.set(a.cenik);
   the_cena.set(a.cena);
 }
+
+# ================================================================================================== ELIM
+panel elim [0,0,807,480] { type:'popup', title:'eliminace duplicit', include:'onload,db.akce.elim' }
 # ================================================================================================== CHLAPI
 panel chl {type:'right', _sys:'*', title:'Chlapi', include:'onclick,db.akce.chl',skill:'yac;xa' }
 # ================================================================================================== AKCE
@@ -302,7 +305,7 @@ table osoba { key_id:'id_osoba'
   number uvitano { help:"uvítáno|bylo uvítáno ve společenství" }
   number iniciace { help:"mrop|rok iniciace nebo 0" }
   text rc_xxxx
-  date umrti { sql_pipe:'sql_date1'}
+  number umrti // rok úmrtí
   text poznamka
   text obcanka
   number vzdelani
