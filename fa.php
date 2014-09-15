@@ -7,13 +7,13 @@
   $app_name= 'Ans(w)er - Familia'.($ezer_ksweb?" / test Android":"");
   $skin=     'default';
   $skin=     'ch';
-  $CKEditor= $_GET['editor'] ? $_GET['editor'] : '4';
+  $CKEditor= isset($_GET['editor']) ? $_GET['editor'] : '4';
   $dbg=      $_GET['dbg'];
-  $gmap=     $_GET['gmap'] ? true : !($ezer_local || $ezer_ksweb);
+  $gmap=     isset($_GET['gmap']) ? true : !($ezer_local || $ezer_ksweb);
 
   require_once("$app.inc");
   require_once("{$EZER->version}/server/ae_slib.php");
-  $app_name.= $EZER->options->mysql ? " - {$EZER->options->mysql}" : '';
+  $app_name.= isset($EZER->options->mysql) ? " - {$EZER->options->mysql}" : '';
 
   $client= "{$EZER->version}/client";
   $licensed= "$client/licensed";

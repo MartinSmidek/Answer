@@ -4,7 +4,7 @@
 
   // nastavení verze jádra
   $EZER= (object)array();
-  $EZER->version= $_GET['ezer'] ? "ezer{$_GET['ezer']}" : 'ezer2.2';
+  $EZER->version= isset($_GET['ezer']) ? "ezer{$_GET['ezer']}" : 'ezer2.2';
 
   $ezer_local= preg_match('/^\w+\.ezer/',$_SERVER["SERVER_NAME"]); // identifikace ladícího serveru
   $ezer_ksweb= $_SERVER["SERVER_NAME"]=="localhost"; // identifikace ladícího serveru KSWEB/Android
@@ -87,6 +87,7 @@
   $EZER->options->web=    'www.setkani.org';
   $EZER->options->author= 'Martin';
   $EZER->options->mail=   'martin@smidek.eu';
+  $EZER->options->mail_subject='';
   $EZER->options->phone=  '603150565';
   $EZER->options->skype=  'martin_smidek';
   $EZER->activity->skip=  'GAN';      // viz system.php::sys_table

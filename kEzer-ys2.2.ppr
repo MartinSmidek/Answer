@@ -262,10 +262,9 @@ kEzer-ys2
 11=ezer2.2\client\ezer.css.php
 12=db\db.css.php
 13=db\db.akce.ucast.ezer
-14=try.html
 [Selected Project Files]
 Main=
-Selected=try.html
+Selected=db\db.akce.ucast.ezer
 [ezer2.2\client\app.js]
 TopLine=1
 Caret=1,1
@@ -318,7 +317,7 @@ Caret=17,834
 BookMark2=8,56
 Mark1=26,778
 [db\db.akce2.ucast.ezer]
-TopLine=733
+TopLine=729
 Caret=70,729
 BookMark1=56,813
 BookMark2=27,364
@@ -331,6 +330,3 @@ Caret=75,62
 [db\db.akce.ucast.ezer]
 TopLine=1174
 Caret=64,1203
-[try.html]
-TopLine=1
-Caret=85,17
