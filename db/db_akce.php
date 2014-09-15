@@ -6417,6 +6417,7 @@ function akce_browse_ask($x) { trace($x->cmd);
         $ids= $a[2];
         $prijmeni= $a[4];
         $s= (object)array('ids'=>$ids,'pece_jm'=>'','s_role'=>0);
+        if ( !isset($tvori[$idp][$ido]) ) $tvori[$idp][$ido]= (object)array();
         if ( !in_array($ido,$cleni) ) {
           $cleni[]= $ido;
         }
@@ -6454,7 +6455,6 @@ function akce_browse_ask($x) { trace($x->cmd);
         $osoba[$ido]= $c;
         $spolu[$idp][$ido]= $s;
         // oprava rodin
-        if ( !isset($tvori[$idp][$ido]) ) $tvori[$idp][$ido]= (object)array();
         $tvori[$idp][$ido]->rodiny= "-:0".(isset($tvori[$idp][$ido]->rodiny) ?
           ",{$tvori[$idp][$ido]->rodiny}" : '');
       }

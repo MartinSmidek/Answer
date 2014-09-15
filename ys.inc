@@ -4,7 +4,7 @@
 
   // nastavení verze jádra
   $EZER= (object)array();
-  $EZER->version= $_GET['ezer'] ? "ezer{$_GET['ezer']}" : 'ezer2.2';
+  $EZER->version= isset($_GET['ezer']) ? "ezer{$_GET['ezer']}" : 'ezer2.2';
 
   $ezer_local= preg_match('/^\w+\.ezer/',$_SERVER["SERVER_NAME"]); // identifikace ladícího serveru
 
@@ -29,18 +29,18 @@
   // modifikace tabulky případným nastavením $_GET[dbs] přeneseným do $_SESSION[$ezer_root][dbs]
   // dbs=db_name:other_db_name,...
   $subst= '';
-  if ( ($subst= $_GET['dbs']) || ($subst= $_SESSION['ys']['GET']['dbs']) ) {
-    foreach(explode(',',$subst) as $pair) {
-      list($old,$new)= explode(':',$pair);
-      if ( isset($dbs[0][$old]) && $dbs[1][$old] ) {
-        $dbs[0][$old][5]= $new;
-        $dbs[1][$old][5]= $new;
-      }
-      else {
-        $subst= "substituci $subst nelze provést";
-      }
-    }
-  }
+//   if ( ($subst= $_GET['dbs']) || ($subst= $_SESSION['ys']['GET']['dbs']) ) {
+//     foreach(explode(',',$subst) as $pair) {
+//       list($old,$new)= explode(':',$pair);
+//       if ( isset($dbs[0][$old]) && $dbs[1][$old] ) {
+//         $dbs[0][$old][5]= $new;
+//         $dbs[1][$old][5]= $new;
+//       }
+//       else {
+//         $subst= "substituci $subst nelze provést";
+//       }
+//     }
+//   }
   // kořeny cest
   $path_root=  array("/home/www/ezer/www-ys/2","C:/Apache/htdocs/ezer/www-ys2");
   $path_pspad= array(null,"C:/Program Files (x86)/PSPad editor/Syntax");
@@ -104,9 +104,11 @@
   $EZER->options->web=    'www.setkani.org';
   $EZER->options->author= 'Martin';
   $EZER->options->mail=   'martin@smidek.eu';
+  $EZER->options->mail_subject='';
   $EZER->options->phone=  '603150565';
   $EZER->options->skype=  'martin_smidek';
   $EZER->activity->skip=  'GAN';      // viz system.php::sys_table
+  $EZER->todo= (object)array();
   $EZER->todo->notify=     "new";                // poslat mail o novém požadavku
   $EZER->todo->cond_browse= "m:1;sp:cast>1";     // viz ezer2.syst.ezer panel needs
   $EZER->todo->cond_select= "m:1;sp:data>1";     // vybere se 1. vhodné
