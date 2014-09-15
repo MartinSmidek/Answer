@@ -6454,6 +6454,7 @@ function akce_browse_ask($x) { trace($x->cmd);
         $osoba[$ido]= $c;
         $spolu[$idp][$ido]= $s;
         // oprava rodin
+        if ( !isset($tvori[$idp][$ido]) ) $tvori[$idp][$ido]= (object)array();
         $tvori[$idp][$ido]->rodiny= "-:0".(isset($tvori[$idp][$ido]->rodiny) ?
           ",{$tvori[$idp][$ido]->rodiny}" : '');
 
@@ -6523,7 +6524,7 @@ function akce_browse_ask($x) { trace($x->cmd);
     foreach($pobyt as $idp=>$u) {
       foreach($pobyt[$idp]->r_cleni as $ido) {
         $o= $osoba[$ido];
-        $s= $spolu[$o->idp][$ido];
+        $s= $spolu[$o->idp][$ido]= (object)array();
         if ( !$s->s_role ) {
           // stanovení zbylých s_role a kontrola proti spolu.pfunkce
           $o_jmeno= $o->prijmeni.' '.$o->jmeno;
