@@ -1,4 +1,5 @@
 #pragma library
+#pragma test
 
 # Systém Ans(w)er - modul Akce
 # (c) 2008-2010 Martin Šmídek <martin@smidek.eu>
@@ -574,6 +575,9 @@ form _rodina2 {
   proc on_click() {}
   proc new_rodina() { form.init; form.display(1,'r|n'); form.display(0,'a|s');
     cleni.browse_init; cleni.enable(0) }
+  proc init_rodina() {
+    form.display(0,'[^f]'); cleni.display(1);
+  }
   # show_rodina - zobrazuje formulář podle: key_rodina
   proc show_rodina() { var height:number, tags:text
     form.display(0,'[^f]'); cleni.display(1);
@@ -596,7 +600,7 @@ form _rodina2 {
   # údaje o rodině
   const Lr=187; Tr=10
   view r: table rodina
-  label frame [0,10,360,322] {tag:'f', css:'ae_form', proc onclick() { on_click } }
+  label frame [0,10,360,229] {tag:'f', title:'rodinné údaje', css:'ae_form', proc onclick() { on_click } }
   button [193,11,,] {tag:'f', title:'^evidence', css:'db_evidence'
     proc onclick() { ucast.akce_evidence_rod(key_rodina.get) } }
   field key_rodina [304,10,50,] {tag:'f', format:'or', css:'Label', help:' '  }
@@ -715,6 +719,9 @@ form _osoba2x [,,244,322] {
   proc onchanged() { }
   proc new_osoba() { form.init; role.display(1); }
   proc on_click() {}
+  proc init_osoba() {
+    form.display(0,'[^f]');
+  }
   proc show_osoba() { var height:number, tags:text
     form.display(0,'[^f]');
     frame.set(osoba_config.tit.get);
@@ -737,7 +744,7 @@ form _osoba2x [,,244,322] {
     form.property(object('height',height.get));
   }
 
-  label frame [0,10,242,0] {tag:'f', css:'ae_form', proc onclick() { on_click }}
+  label frame [0,10,242,50] {tag:'f', css:'ae_form', title:'osobní údaje', proc onclick() { on_click }}
   button [121,11,,] {tag:'f', title:'^evidence', css:'db_evidence'
     proc onclick() { ucast.akce_evidence_os(key_osoba.get) } }
   field key_osoba [186,10,50,] {tag:'f', format:'or', css:'Label', help:' ' }

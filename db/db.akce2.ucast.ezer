@@ -1,3 +1,4 @@
+#pragma test
 # ------------------------------------------------------------------------------------------------ #
 # Karta pro správu účastníků vybrané akce II.                                                      #
 #                                                                                                  #
@@ -14,11 +15,14 @@ var back: object
 # události panelu
 proc onstart() {
 }
-proc onfirstfocus() {
+proc onfirstfocus() {         //set_trace('E',1,'show_pobyt,show_spolu');
   the_duakce_local.set(0);
   curr_h.set(0);
   curr_w.set(cconc(lt(sys('screen','width'),1280),1024,1280));
-  init_forms; akce_onstart; onfocus
+  init_forms;
+  page.evd.onclick;
+  akce_onstart;
+  onfocus
 }
 proc onfocus() {
   [ [ dirty.get | akce_onstart ];
@@ -33,13 +37,17 @@ proc onfocus() {
   2,{ header.soubeh.display(1); panel.display(2,'akce2');  header.soubeh.set('^Kurs') }
   );
   page.page_start;
-  h_change_b    // vypnuto kvůli ladění
+  h_change_all;
+#   h_change_b    // vypnuto kvůli ladění
 }
 
 # ------------------------------------------------------------------------------- globální procedury
 # zobrazení osob - nastavených účastníků
-proc osoby_show() { evid.os1.key; evid.os1.show_osoba; evid.os2.key; evid.os2.show_osoba }
-proc rodina_show() { evid.rod.show_rodina }
+proc osoby_show() {
+  [ evid.os1.key; evid.os1.show_osoba | evid.os1.init_osoba ];
+  [ evid.os2.key; evid.os2.show_osoba | evid.os2.init_osoba ];
+}
+proc rodina_show() { evid.rod.key_rodina.get; evid.rod.show_rodina | evid.rod.init_rodina }
 proc spolu_show() { evid.pob1.key; evid.pob1.show_spolu; evid.pob2.key; evid.pob2.show_spolu }
 # úpravy formulářů pro y;f;c
 proc init_forms() {
@@ -60,6 +68,8 @@ proc init_ucast2() {
 }
 # ---------------------------------------------------------- reakce na změny rozměrů okna prohlížeče
 
+const min_h=550         // minimální výška (jsou k ní vztaženy souřadnice v use)
+var   min_r: number     // minimální počet řádků seznamu (min_h-190)/17
 var curr_h: number      // výška nad základní výšku
 var curr_w: number      // 1024 nebo 1280
 var resized: number     // 1 znamená, že úprava browse nebyla dokončena - další požadavek se ignoruje
@@ -71,8 +81,10 @@ proc onfirstloaded() {  // zavolá se po prvním dokončení u.b.browse_load
 proc onresize(w,h) {
 #   echo("resize(",w,",",h,") ... w=",sys('screen','width')," loaded=",loaded.get);
   loaded.get;
-  [ and(lt(h,650),not(eq(curr_h.get,650))); curr_h.set(0); h_change_all()
-  | and(gt(h,650),not(eq(h,sum(curr_h.get,650)))); curr_h.set(minus(h,650)); h_change_all() ];
+  [ and(lt(h,min_h.get),not(eq(curr_h.get,min_h.get)));
+    curr_h.set(0); h_change_all()
+  | and(gt(h,min_h.get),not(eq(h,sum(curr_h.get,min_h.get))));
+    curr_h.set(minus(h,min_h.get)); h_change_all() ];
   [ and(lt(w,1280),eq(curr_w.get,1280)); narrow
   | and(gt(w,1279),eq(curr_w.get,1024)); wide ];
 }
@@ -85,18 +97,21 @@ proc w_change_all() {
   page.frame.property(object('widen',cconc(eq(curr_w.get,1024),-250,0)))//,'smooth',1));
 }
 
-# změna výšky oproti základní 650
+# změna výšky oproti základní min_h
 proc h_change_all() {
-  foreach(array(cmd,cmd2,cmdp,evid.pob1,evid.pob2,evid.pob),change_top);
+  foreach(array(cmd,cmd2,cmdp),change_top1);
+  foreach(array(evid.pob1,evid.pob2,evid.pob),change_top2);
   foreach(array(page.frame),change_height);
   h_change_b;
 }
 
 # změna počtu řádků browse u.b oproti aktuálním řádkům
-proc h_change_b() { var rows:number
+proc h_change_b() { var rows:number, h:number
   loaded.get; // změna výšky browse až po prvním načtení
-  { rows.set(sum(27,divide(minus(sys('screen','height'),650),17)));
-    [ lt(rows,27); rows.set(27) ];
+  h.set(sys('screen','height'));
+  min_r.set(divide(sum(min_h.get,-190),17));
+  { rows.set(sum(min_r.get,divide(minus(h,min_h.get),17)));
+    [ lt(rows,min_r.get); rows.set(min_r.get) ];
     not(eq(rows,u.b.rows));
     not(resized.get); resized.set(1);  // probíhá změna výšky browse
     u.b.set_attrib('rows',rows);
@@ -104,7 +119,8 @@ proc h_change_b() { var rows:number
     resized.set(0);
   }
 }
-proc change_top(x) { x.property(object('down',curr_h.get))}//,'smooth',1)) }
+proc change_top1(x) { x.property(object('down',curr_h.get))}
+proc change_top2(x) { x.property(object('down',minus(curr_h.get,223)))}
 proc change_height(x) { x.property(object('stretch',curr_h.get))}//,'smooth',1)) }
 
 proc akce_load(id_akce) { lst.akce_work(id_akce); onfocus(); }
@@ -140,12 +156,12 @@ use u:     form _ucast    [  6, 20,,]  { tag:'akce1' }               // seznam �
 use page:  form _page     [400, 10,,]  { tag:'akce1' }
 # záložka evidence
 use evid:  form _evidence [400, 10,,]  { tag:'akce1', format:'n' }
-use cmd:   form _cmd      [400,490,,]  { tag:'akce1', format:'n' }
-use cmd2:  form _cmd2     [400,525,,]  { tag:'akce1', format:'' }
+use cmd:   form _cmd      [400,min_h-160,,]  { tag:'akce1', format:'n' }   // 490
+use cmd2:  form _cmd2     [400,min_h-125,,]  { tag:'akce1', format:'' }
 use alb:   form _album    [400,  0,,]  { tag:'akce0', format:'n' }
 # záložka plateb
 use pla:   form _platba   [400, 10,,]  { tag:'akce0', format:'n' }
-use cmdp:  form _cmd_p    [400,490,,]  { tag:'akce0', format:'n' }
+use cmdp:  form _cmd_p    [400,min_h-160,,]  { tag:'akce0', format:'n' }
 # záložka aktivity
 use act1:  form _aktivity [420, 10,,]  { tag:'akce0', format:'n' }
 use act2:  form _aktivity [700, 10,,]  { tag:'akce0', format:'n' }
@@ -435,7 +451,7 @@ form _ucast [,,400,] { css:'ds_form'
   // omezení browse
   check jen [293,7,83,15] { title:'jen účastníci', format:'t', proc onchange() { reload(0) }}
   // seznam účastníků
-  browse b [0,26,,] {buf_rows:200, rows:27, qry_rows:1, key_id:'key_pobyt',
+  browse b [0,26,,] {buf_rows:200, rows:21, qry_rows:1, key_id:'key_pobyt',
     optimize:°{ask:'akce_browse_ask'}, css_rows:"dluh,1:yellow,2:blue"
     // klíče
     show key_pobyt
@@ -635,7 +651,7 @@ form _page {
       [ eq(last.get,the_pobyt.get) | u.b.load_zalozka; last.set(the_pobyt.get) ];
     }
   }
-  label frame [0,16,873,459] { css:'ae_work'}
+  label frame [0,16,873,min_h-191] { css:'ae_work'} //459
 }
 # ---------------------------------------------------------------------------------------- _evidence
 form _evidence {
@@ -723,17 +739,16 @@ form _evidence {
     }
   }
   # pobyt
-  use pob1: form _spolu  [  5,190,,] {
+  use pob1: form _spolu  [  5,min_h-235,,] {
     proc on_click() { evid.z_change('p') }
     proc onchanged() { evid.d_change('p1') }
   }
-  use pob2: form _spolu  [255,190,,] {tag:'2',
+  use pob2: form _spolu  [255,min_h-235,,] {tag:'2',
     proc on_click() { evid.z_change('p') }
     proc onchanged() { evid.d_change('p2') }
   }
-  use pob:  form _pobyt [505,207,,]
-  # --------------------------- LADĚNÍ
-  button [0,0,,] { title:'?', style:'z-index:5', proc onclick() { clear; onfirstfocus }}
+#   use pob:  form _pobyt [505,min_h-218,,]      // 650 => 207
+  use pob:  form _pobyt [505,min_h-10,,]      // 650 => 207
 #   # --------------------------- kontextové_menu
 #   menu { type:'context'
 #     item { title:'zkontrolovat skupinky', skill:'yaa+;faa+;caa+',
@@ -753,7 +768,7 @@ form _evidence {
 # ------------------------------------------------------------------------------------------- _pobyt
 panel pobyt_config [,,200,120] {type:'popup', title:"Podrobnosti údajů"
   var tit='společné údaje o pobytu', grp='Z'
-  proc start() { cnfg._back; evid.pob.show_pobyt }
+  proc start() { cnfg._back;  evid.pob.id.get; evid.pob.show_pobyt | evid.pob.init_pobyt }
   proc tune() { _old.set(grp.get); evid.z_change('p'); panel.modal }
   use cnfg: form _cnfg
   form _cnfg {
@@ -772,8 +787,9 @@ panel pobyt_config [,,200,120] {type:'popup', title:"Podrobnosti údajů"
   }
   var _old= 'Z'
 }
-form _pobyt [,,0,270] {
+form _pobyt [,,0,62] {
   proc onchanged() { evid.d_change('p') }
+  proc init_pobyt() { evid.pob.display(0,'[^f]'); }
   proc show_pobyt() { var height:number, tags:text, tit:text
     form.display(0,'[^f]');
     tags.set('F');
@@ -783,7 +799,7 @@ form _pobyt [,,0,270] {
     tags.set(conc(tags,',a'));
     [ contains('S',pobyt_config.grp.get); tags.set(conc(tags,',s')) ];
     height.set(sum(stack_forms(form,tags,0,'up'),10));
-    frame.property(object('top',minus(265,height),'height',sum(height,-7)));
+    frame.property(object('top',minus(60,height),'height',sum(height,-10)));   //-7
     [ contains('S',pobyt_config.grp.get); skupina.display(1);
       skupina.get; skup.display(1) ];
     // počítané údaje
@@ -797,7 +813,7 @@ form _pobyt [,,0,270] {
   proc on_click() { evid.z_change('p') }
   view p: table pobyt
   const Lr=0
-  label frame [0,0,360,244] {tag:'f', css:'ae_form2', title:'společné údaje o pobytu',
+  label frame [0,0,360,50] {tag:'f', css:'ae_form2', title:'společné údaje o pobytu',
     proc onclick() { on_click }
   }
   field id [304,-12,50,] {tag:'F', data:p.id_pobyt, format:'ro', style:'color:white', css:'Label', help:' ' }
@@ -827,12 +843,12 @@ form _pobyt [,,0,270] {
   field datplatby_d [216,0,84,] {tag:'d', type:'date', data:p.datplatby_d, title:'^kdy'}
 
   // ubytování
-  field pokoj     [7,0,82,] {tag:'a', data:p.pokoj, title:'^pokoj(e)'}
-  field budova    [95,0,56,] {tag:'a', data:p.budova, title:'^budova'}
+  field pokoj     [7,0,82,] {tag:'a', data:p.pokoj, title:'^pokoj(e)', format:'n'}
+  field budova    [95,0,56,] {tag:'a', data:p.budova, title:'^budova', format:'n'}
   // funkce
-  select funkce   [7,35,82,] {tag:'a', type:'map', data:p.funkce, format:'u',
+  select funkce   [7,35,82,] {tag:'a', type:'map', data:p.funkce, format:'un',
     options:ms_akce_funkce.zkratka, title:'^společná funkce' }
-  select prednasi [96,35,101,] {tag:'a', type:'map', data:p.prednasi, format:'u',
+  select prednasi [96,35,101,] {tag:'a', type:'map', data:p.prednasi, format:'un',
     options:ms_akce_prednasi.zkratka, title:'^přednáš(ej)í' }
   label [5,65,1,1] { tag:'a' } // oprava
 
@@ -902,7 +918,7 @@ form _spolu [,,0,270] {
 
   view s: table spolu
 
-  label frame [0,0,242,0] {tag:'f', css:'ae_form2', title:'základní údaje o pobytu',
+  label frame [0,0,242,50] {tag:'f', css:'ae_form2', title:'osobní údaje o pobytu',
     proc onclick() { on_click }
   }
   field key_spolu [186,0,50,] {tag:'S', data:s.id_pobyt, format:'ro', style:'color:white', css:'Label', help:' ' }
