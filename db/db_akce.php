@@ -5529,13 +5529,7 @@ function akce_skup_get($akce,$kontrola,&$err,$par=null) { trace();
 }
 
 # ----------------------------------------------------------------------------------- akce_i0_rodina
-//     0, { pobyt_show('-','je na akci'); s_role.display(0) },     // pokud není definováno s_role
-//     1, { pobyt_show('-','účastník akce') },
-//     2, { pobyt_show('d','dítě na akci') },
-//     3, { pobyt_show('d','dítě s osobním pečovatelem') },
-//     4, { pobyt_show('d','dítě jako pomocný pečovatel') },
-//     5, { pobyt_show('d','osobní pečovatel') },
-# definice položek POBYT.i0_rodina, SPOLU.s_role
+# definice položek POBYT.i0_rodina
 function akce_i0_rodina($akce) {
   // doplnění i0_rodina, má-li definovaný název
   $n= 0;
@@ -5552,34 +5546,34 @@ function akce_i0_rodina($akce) {
     $n++;
     mysql_qry("UPDATE pobyt SET i0_rodina={$p->id_rodina} WHERE id_pobyt={$p->id_pobyt}");
   }
-  // doplnění s_role
-  $r= 0;
-  $qp= mysql_qry("
-    SELECT id_osoba,nazev, role, id_spolu, s_role, pfunkce, pecovane, dite_kat,
-      IFNULL((SELECT id_osoba FROM spolu AS s
-          WHERE s.id_pobyt=pobyt.id_pobyt AND spolu.id_osoba=s.pecovane),0) AS pecujici
-    FROM pobyt
-    JOIN spolu USING (id_pobyt)
-    JOIN tvori USING(id_osoba)
-    JOIN rodina USING(id_rodina)
-    WHERE id_akce=$akce AND s_role=0 AND id_rodina=i0_rodina
-    GROUP BY id_spolu");
-  while ( $qp && ($p= mysql_fetch_object($qp)) ) {
-    $r++;
-    $s_role= 0;
-    if ( $p->role=='a' || $p->role=='b' )
-      $s_role= 1;
-    elseif ( $p->pfunkce==4 )
-      $s_role= 4;
-    elseif ( $p->pecovane )
-      $s_role= 5;
-    elseif ( $p->pecujici )
-      $s_role= 3;
-    elseif ( $p->role=='d' )
-      $s_role= 2;
-    if ( $s_role ) mysql_qry("UPDATE spolu SET s_role=$s_role WHERE id_spolu={$p->id_spolu}");
-  }
-  return "doplněno $n x i0_rodina, $r x s_role";
+//   // doplnění s_role
+//   $r= 0;
+//   $qp= mysql_qry("
+//     SELECT id_osoba,nazev, role, id_spolu, s_role, pfunkce, pecovane, dite_kat,
+//       IFNULL((SELECT id_osoba FROM spolu AS s
+//           WHERE s.id_pobyt=pobyt.id_pobyt AND spolu.id_osoba=s.pecovane),0) AS pecujici
+//     FROM pobyt
+//     JOIN spolu USING (id_pobyt)
+//     JOIN tvori USING(id_osoba)
+//     JOIN rodina USING(id_rodina)
+//     WHERE id_akce=$akce AND s_role=0 AND id_rodina=i0_rodina
+//     GROUP BY id_spolu");
+//   while ( $qp && ($p= mysql_fetch_object($qp)) ) {
+//     $r++;
+//     $s_role= 0;
+//     if ( $p->role=='a' || $p->role=='b' )
+//       $s_role= 1;
+//     elseif ( $p->pfunkce==4 )
+//       $s_role= 4;
+//     elseif ( $p->pecovane )
+//       $s_role= 5;
+//     elseif ( $p->pecujici )
+//       $s_role= 3;
+//     elseif ( $p->role=='d' )
+//       $s_role= 2;
+//     if ( $s_role ) mysql_qry("UPDATE spolu SET s_role=$s_role WHERE id_spolu={$p->id_spolu}");
+//   }
+  return "doplněno $n x i0_rodina";//, $r x s_role";
 }
 # ---------------------------------------------------------------------------------- akce_skup_renum
 # přečíslování skupinek podle příjmení VPS/PPS
@@ -6292,6 +6286,7 @@ function akce_mapa($akce) {  trace();
 # obsluha browse s optimize:ask
 function akce_browse_ask($x) { trace($x->cmd);
   global $test_clmn,$test_asc;
+  global $y;
   $y= (object)array();
   foreach(explode(',','cmd,rows,quiet,key_id,oldkey') as $i) $y->$i= $x->$i;
   $flds0= "ido,jmeno,vek";
@@ -6377,7 +6372,7 @@ function akce_browse_ask($x) { trace($x->cmd);
           GROUP BY id_spolu
         ) AS _a ON _a.id_pobyt=p.id_pobyt
 
-        WHERE funkce!=99 AND p.id_akce=@akce -- /*AND _b.id_osoba= 2015 --*/ AND p.id_pobyt IN (20568,20793)
+        WHERE funkce!=99 AND p.id_akce=@akce -- AND _b.id_rodina=7 -- AND p.id_pobyt IN (20793,20568) -- AND _a.id_osoba=369 -- /*AND _b.id_osoba= 2015 --*/ AND p.id_pobyt IN (20568,20793)
         GROUP BY p.id_pobyt
         /*ORDER BY IF(funkce<=2,1,funkce),_nazev*/
         ORDER BY p.id_pobyt DESC
@@ -6388,7 +6383,6 @@ function akce_browse_ask($x) { trace($x->cmd);
         LIMIT 80,1"; // Glogar
 */
     $qp= mysql_qry($qry);
-//                                                 display("$qry = $qp");
     if ( !$qp ) fce_warning(mysql_error());
     $osoba= array();                            // atributy osob na akci
     $spolu= array();                            // $spolu[id_pobyt,id_osoba]= id_spolu,$flds3
@@ -6400,10 +6394,13 @@ function akce_browse_ask($x) { trace($x->cmd);
       $cleni= $nazev= array();
       // členové nastavené rodiny
       if ( $p->_rod ) {
-        foreach (explode('|',$p->_rod) as $info) {
-          $c= (object)array('kmen'=>'','idp'=>$idp); // kmenová rodina tzn. kde je 'a' nebo 'b'
+        foreach (explode('|',$p->_rod) as $rod) {
+          $r= explode('~',$rod);
+          $ido= $r[0];
+          // kmenová rodina tzn. kde je 'a' nebo 'b'
+          $c= isset($osoba[$ido]) ? $osoba[$ido] : (object)array('kmen'=>'','idp'=>$idp);
           list($ido,$c->idt,$c->jmeno,$c->prijmeni,$c->narozeni,$c->umrti,
-            $c->idr,$c->role,$c->rodne,$c->sex)= explode('~',$info);
+            $c->idr,$c->role,$c->rodne,$c->sex)= $r;
           $c->ido= $ido;
           $c->vek= roku_k($c->narozeni,$p->datum_od);
           $rodiny= "{$p->_nazev}:{$c->idr}";
@@ -6414,10 +6411,11 @@ function akce_browse_ask($x) { trace($x->cmd);
         }
       }
       // osoby na akci v rámci jednoho pobytu
-      foreach (explode('|',$p->_akce) as $info) {
-        $a= explode('~',$info);
+      foreach (explode('|',$p->_akce) as $akce) {
+        $a= explode('~',$akce);
         $ido= $a[1];
         $ids= $a[2];
+        $prijmeni= $a[4];
         $s= (object)array('ids'=>$ids,'pece_jm'=>'','s_role'=>0);
         if ( !in_array($ido,$cleni) ) {
           $cleni[]= $ido;
@@ -6430,17 +6428,17 @@ function akce_browse_ask($x) { trace($x->cmd);
           $c= (object)array();
           $s->barva= 2;
         }
-        if ( isset($tvori[$idp][$ido]) ) {
-          $rody= explode(',',$a[0]);
-          $r= "-:0"; $kmen= '';
-          foreach($rody as $rod) {
-            list($role,$naz,$idr)= explode(':',$rod);
-            $kmen= $kmen ? ($role=='a' || $role=='b' ? $naz : $kmen) : $naz;
-            $r.= ",$naz:$idr";
-          }
-          $tvori[$idp][$ido]->rodiny= $r;
-          $c->kmen= $kmen;
+        // kmenová rodina
+        $rody= explode(',',$a[0]);
+        $r= "-:0"; $kmen= '';
+        foreach($rody as $rod) {
+          list($role,$naz,$idr)= explode(':',$rod);
+          $kmen= $kmen ? ($role=='a' || $role=='b' ? $naz : $kmen) : $naz;
+          $r.= ",$naz:$idr";
         }
+        $c->kmen= $kmen;
+        $tvori[$idp][$ido]->rodiny= $r;
+        // přepsání
         $i= 1;
         foreach(explode(',',"ido,ids,jmeno,prijmeni,narozeni,umrti,$flds2") as $f) {
           $c->$f= $a[$i]; $i++;
@@ -6448,7 +6446,9 @@ function akce_browse_ask($x) { trace($x->cmd);
         foreach(explode(',',"$flds3") as $f) {
           $s->$f= $a[$i]; $i++;
         }
-        if ( !in_array(trim($c->prijmeni),$nazev) ) $nazev[]= trim($c->prijmeni);
+        if ( $ids && !in_array(trim($prijmeni),$nazev) ) {
+          $nazev[]= trim($prijmeni);
+        }
         // výpočet věku
         $c->vek= roku_k($c->narozeni,$p->datum_od);
         $osoba[$ido]= $c;
@@ -6457,7 +6457,6 @@ function akce_browse_ask($x) { trace($x->cmd);
         if ( !isset($tvori[$idp][$ido]) ) $tvori[$idp][$ido]= (object)array();
         $tvori[$idp][$ido]->rodiny= "-:0".(isset($tvori[$idp][$ido]->rodiny) ?
           ",{$tvori[$idp][$ido]->rodiny}" : '');
-
       }
       // skupinka?
       if ( $p->skupina ) $skup[$p->skupina][]= $idp;
@@ -6568,11 +6567,6 @@ function akce_browse_ask($x) { trace($x->cmd);
           foreach($fspolu as $f) {
             $cleni.= "$del{$s->$f}"; $del= '~';
           }
-        }
-        else {
-          $cleni.= "$del$nespolu";
-        }
-        if ( $osoba[$ido]->ids ) {
           // seznam jmen
           $u->_jmena.= "{$osoba[$ido]->jmeno} ";
           // první 2 členi na pobytu
@@ -6580,6 +6574,9 @@ function akce_browse_ask($x) { trace($x->cmd);
             $u->ido1= $ido;
           elseif ( !$u->ido2 )
             $u->ido2= $ido;
+        }
+        else {
+          $cleni.= "$del$nespolu";
         }
       }
       $pobyt[$idp]->r_cleni= $cleni;
