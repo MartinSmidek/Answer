@@ -277,16 +277,16 @@ function rodina($xcislo) {  #trace('','win1250');
   $qry= "SELECT * FROM ms_pary WHERE source='$source' AND cislo=$cislo";
   $res= mysql_qry($qry);
   if ( $res && $p= mysql_fetch_object($res) ) {
-    rodina_add(&$rod,$p->prijmeni_m,$p->jmeno_m,$p->rodcislo_m,$p->telefon,$p->email,$p);
+    rodina_add($rod,$p->prijmeni_m,$p->jmeno_m,$p->rodcislo_m,$p->telefon,$p->email,$p);
 //                                                         display("{$p->prijmeni_m}:{$p->rodcislo_m}:$narozeni");
-    rodina_add(&$rod,$p->prijmeni_z,$p->jmeno_z,$p->rodcislo_z,$p->telefon,$p->email,$p);
+    rodina_add($rod,$p->prijmeni_z,$p->jmeno_z,$p->rodcislo_z,$p->telefon,$p->email,$p);
   }
   // dìti
   $qry= "SELECT * FROM ms_deti WHERE source='$source' AND cislo=$cislo";
   $res= mysql_qry($qry);
   while ( $res && $d= mysql_fetch_object($res) ) {
     $prijmeni= rc2man($d->rodcislo) ? $p->prijmeni_m : $p->prijmeni_z;
-    rodina_add(&$rod,$prijmeni,$d->jmeno,$d->rodcislo,' ',' ',$p);
+    rodina_add($rod,$prijmeni,$d->jmeno,$d->rodcislo,' ',' ',$p);
   }
 //                                                                 debug($rod,$cislo,(object)array('win1250'=>1));
   return $rod;
@@ -762,7 +762,7 @@ __XLS;
     }
     // vytvoøení listu
     $xls.= ds_rozpis_faktura($sheet_rozpis,$sheet_faktura,'FAKTURA',$order,$x,$polozky,$platce,100,
-      "Tìšíme se na Váš další pobyt v Domì setkání",$zaloha,&$suma);
+      "Tìšíme se na Váš další pobyt v Domì setkání",$zaloha,$suma);
     $faktury.= "";
   }
   // ------------------------------------------------------------------ ceník

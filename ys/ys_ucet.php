@@ -480,7 +480,7 @@ function rok_naklad($par) { #trace();
 //   $html.= "Prázdná tabulka:";;
 //   $html.= "<div id='proj'>".debugx($proj_tab)."</div>";
   // vyplnění tabulky
-  $sum= proj_make_x($rok,&$proj_tab,$clmn_tab);
+  $sum= proj_make_x($rok,$proj_tab,$clmn_tab);
 //                                         $html.= "<div id='proj'>".debugx($proj_tab)."</div>";
   // celkový objem
   $v= 0;
@@ -527,7 +527,7 @@ function proj_make_x($rok,&$tab,$clmn_tab) { trace();
     $n= 0; $m= 0;
     $xu= array();
     foreach($tab as $name=>$line) {
-      $line_out= proj_make_x($rok,&$tab[$name],$clmn_tab);
+      $line_out= proj_make_x($rok,$tab[$name],$clmn_tab);
       $n++;
       $m= max($m,count($line_out->xu));
       foreach ($clmn_tab as $i=>$ii) {
@@ -734,7 +734,7 @@ function proj_export($rok,$co) { #trace();
 //   $html.= "Prázdná tabulka:";;
 //   $html.= "<div id='proj'>".debugx($proj_tab)."</div>";
   // vyplnění tabulky
-  $sum= proj_make($rok,&$proj_tab,$clmn_tab);
+  $sum= proj_make($rok,$proj_tab,$clmn_tab);
 //                                         $html.= "<div id='proj'>".debugx($proj_tab)."</div>";
   // celkový objem
   $v= 0;
@@ -778,7 +778,7 @@ function proj_make($rok,&$tab,$clmn_tab) { trace();
     $n= 0; $m= 0;
     $xu= array();
     foreach($tab as $name=>$line) {
-      $line_out= proj_make($rok,&$tab[$name],$clmn_tab);
+      $line_out= proj_make($rok,$tab[$name],$clmn_tab);
       $n++;
       $m= max($m,count($line_out->xu));
       foreach ($clmn_tab as $i=>$ii) {

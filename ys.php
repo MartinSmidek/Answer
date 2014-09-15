@@ -7,9 +7,9 @@
   $app_name= 'Ans(w)er'.($ezer_ksweb?" / test Android":"");;
   $skin=     'default';
   $skin=     'ck';
-  $CKEditor= $_GET['editor'] ? $_GET['editor'] : '4';
+  $CKEditor= isset($_GET['editor']) ? $_GET['editor'] : '4';
   $dbg=      $_GET['dbg'];
-  $gmap=     $_GET['gmap'] ? true : !($ezer_local || $ezer_ksweb);
+  $gmap=     isset($_GET['gmap']) ? true : !($ezer_local || $ezer_ksweb);
 
   require_once("$app.inc");
   require_once("{$EZER->version}/server/ae_slib.php");

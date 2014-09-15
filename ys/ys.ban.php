@@ -20,7 +20,7 @@ function bank_menu_show($k2,$k3) {
   case 'stav': switch ( $k3 ) {
     case 'aktualne':
       $dnes= date('j. n. Y');
-      $tab= bank_stavy(&$datum);
+      $tab= bank_stavy($datum);
       $datum= sql_date($datum);
       $html.= "<h3 class='CTitle'>Aktuální stav bankovních účtů ke dni $datum</h3>";
       $html.= $tab;
@@ -464,10 +464,10 @@ function bank_import($patt='*',$reimport=0,$to_move=0,$change='vypisy') {
 //             break;
 //           case 'GEM':                                   // 6800
             $buf= file_get_contents($path.$file);
-            bank_gem_ext($path.$file,$soubor,&$yyyy);
+            bank_gem_ext($path.$file,$soubor,$yyyy);
             break;
           case 'GPC':                                   // 0100
-            bank_gpc($path.$file,$soubor,&$yyyy);
+            bank_gpc($path.$file,$soubor,$yyyy);
             break;
           }
                                         debug($vypisy,'$vypisy',(object)array('win1250'=>1));
