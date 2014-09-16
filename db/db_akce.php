@@ -6372,7 +6372,7 @@ function akce_browse_ask($x) { trace($x->cmd);
           GROUP BY id_spolu
         ) AS _a ON _a.id_pobyt=p.id_pobyt
 
-        WHERE funkce!=99 AND p.id_akce=@akce -- AND _b.id_rodina=7 -- AND p.id_pobyt IN (20793,20568) -- AND _a.id_osoba=369 -- /*AND _b.id_osoba= 2015 --*/ AND p.id_pobyt IN (20568,20793)
+        WHERE funkce!=99 AND p.id_akce=@akce -- AND p.id_pobyt IN (13229) -- AND _b.id_rodina=7 -- AND p.id_pobyt IN (20793,20568) -- AND _a.id_osoba=369 -- /*AND _b.id_osoba= 2015 --*/ AND p.id_pobyt IN (20568,20793)
         GROUP BY p.id_pobyt
         /*ORDER BY IF(funkce<=2,1,funkce),_nazev*/
         ORDER BY p.id_pobyt DESC
@@ -6523,7 +6523,8 @@ function akce_browse_ask($x) { trace($x->cmd);
     foreach($pobyt as $idp=>$u) {
       foreach($pobyt[$idp]->r_cleni as $ido) {
         $o= $osoba[$ido];
-        $s= $spolu[$o->idp][$ido]= (object)array();
+        if ( isset($spolu[$o->idp][$ido]) ) {
+        $s= $spolu[$o->idp][$ido]; //= (object)array();
         if ( !$s->s_role ) {
           // stanovení zbylých s_role a kontrola proti spolu.pfunkce
           $o_jmeno= $o->prijmeni.' '.$o->jmeno;
@@ -6540,6 +6541,7 @@ function akce_browse_ask($x) { trace($x->cmd);
           else {                        // zbytek
             $s->s_role= 1;
             if ( $s->pfunkce!=0 ) fce_warning("$o_jmeno: konflikt funkcí {$s->s_role}/$s->pfunkce");
+          }
           }
         }
       }
@@ -6591,7 +6593,7 @@ function akce_browse_ask($x) { trace($x->cmd);
       $pobyt[$idp]->skup= $s;
     }
 //                                                   debug($tvori,"tvori");
-//                                                   debug($spolu,"spolu");
+                                                  debug($spolu,"spolu");
 //                                                   debug($osoba,"osoby");
 //                                                   debug($pobyt,"pobyty");
     // předání ve formátu browse
