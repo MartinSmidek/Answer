@@ -164,6 +164,10 @@ menu m {type:'left',
                                         ,par:°{typ:'p',exp:'Excel',cnd:"funkce!=99"
                                         ,tit:'příjmení:15,jména:20,ubytovani:10,budova:5,pokoj:5,skupinka:10'
                                         ,fld:'prijmeni,jmena,ubytovani,budova,pokoj,skupina'}}
+    item {title:'Účastníci, platby'                                                                     skill:'y;f'
+                                        ,par:°{typ:'p',exp:'Excel',cnd:""
+                                        ,tit:'příjmení:15,jména:20,platba:8,datum:12,způsob:10'
+                                        ,fld:'prijmeni,jmena,platba,datplatby,zpusobplat'}}
   }
   menu {tag:'a', title:'informace o akci',type:'group',_sys:'*'
     item {title:'Narozeniny, výročí'    ,par:°{typ:'vv',cnd:'1'}}
