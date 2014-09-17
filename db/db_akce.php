@@ -3952,6 +3952,7 @@ function akce_sestava_pary($akce,$par,$title,$vypis,$export=false) { trace();
   // číselníky
   $c_ubytovani= map_cis('ms_akce_ubytovan','zkratka');  $c_ubytovani[0]= '?';
   $c_prednasi= map_cis('ms_akce_prednasi','hodnota');  $c_ubytovani[0]= '?';
+  $c_platba= map_cis('ms_akce_platba','zkratka');  $c_ubytovani[0]= '?';
   // dekódování parametrů
   $tits= explode(',',$tit);
   $flds= explode(',',$fld);
@@ -3961,7 +3962,7 @@ function akce_sestava_pary($akce,$par,$title,$vypis,$export=false) { trace();
   $expr= array();       // pro výrazy
   // data akce
   $qry=  "SELECT
-            r.nazev as nazev,p.pouze as pouze,p.poznamka,p.platba,
+            r.nazev as nazev,p.pouze as pouze,p.poznamka,p.platba,p.datplatby,p.zpusobplat,
             GROUP_CONCAT(DISTINCT IF(t.role='a',o.prijmeni,'') SEPARATOR '') as prijmeni_m,
             GROUP_CONCAT(DISTINCT IF(t.role='a',o.jmeno,'')    SEPARATOR '') as jmeno_m,
             GROUP_CONCAT(DISTINCT IF(t.role='a',o.narozeni,'') SEPARATOR '') as narozeni_m,
@@ -4024,6 +4025,7 @@ function akce_sestava_pary($akce,$par,$title,$vypis,$export=false) { trace();
     // podle číselníku
     $x->ubytovani= $c_ubytovani[$x->ubytovani];
     $x->prednasi= $c_prednasi[$x->prednasi];
+    $x->zpusobplat= $c_platba[$x->zpusobplat];
     // další
     $n++;
     $clmn[$n]= array();
