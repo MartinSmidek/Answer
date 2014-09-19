@@ -76,6 +76,7 @@
     "fa/fa_fce.php",
 //     "ys/ys_ucet.php",
     "db/db_akce.php",
+    "db/db_akce2.php",
     "fis/fis_tcpdf.php",
 //     "ds/ds_fce.php",
     "fa/fa_lide.php"

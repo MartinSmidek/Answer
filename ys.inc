@@ -93,6 +93,7 @@
     "ys/ys_lide.php",
     "ys/ys.ban.php",
     "db/db_akce.php",
+    "db/db_akce2.php",
     "fis/fis_tcpdf.php",
     "ds/ds_fce.php"
   );

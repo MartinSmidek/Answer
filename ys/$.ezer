@@ -56,11 +56,11 @@ menu ys { type:'main', active:* //ys.pok
   }
   tabs doc  {title:"Nápověda", _sys:'nap',  include:'onclick,ezer2.help' }
   tabs tst {title:"Testy",skill:'m'
-    panel one {type:'plain', title:'One'
-      const c=1
-      var v: text
-      proc p() { v.set(c.get) }
+    panel one {type:'plain', title:'One',
+      use u: form right
+      proc onfocus() { clear; speed('clear'); u.info.set(debug(ask('test_one'))) }
     }
+    panel two {type:'plain', title:'Two', proc onfocus() { echo(debug(ask('test_two'))) }}
   }
   tabs off  {title:"Odhlásit", type:'logoff' }
 //#   tabs test {title:"Test",  where:'http://ys2.ezer/test.html' }
