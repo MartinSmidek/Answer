@@ -28,7 +28,8 @@ function test_one($x=null) { trace();
   default:
     # české řazení
 //     setlocale(LC_ALL, "cs_CZ.UTF-8");
-    setlocale(LC_ALL, "cs_CZ.UTF-8", "Czech");
+//     setlocale(LC_ALL, "cs_CZ.UTF-8", "Czech");
+    setlocale(LC_ALL, "cs_CZ");
     # vnořené SQL definující @akce, @soubeh, @app
     if ( $x->sql ) mysql_qry($x->sql);
     $pobyt= array();              // $pobyt[id_pobyt]             vše
@@ -280,14 +281,18 @@ function test_one($x=null) { trace();
     $y->count= count($zz);
     $y->ok= 1;
     # případné řazení
+    #    funkční řešení pro Windows
+    #         setlocale(LC_ALL, "cs_CZ", "Czech");
+    #         $ax= utf2win($a->$test_clmn,1); $bx= utf2win($b->$test_clmn,1);
+    #         $c= $test_asc * strcoll($ax,$bx);
     if ( $x->order ) {
       $test_clmn= substr($x->order,2);
       $test_asc= substr($x->order,0,1)=='a' ? 1 : -1;
+      setlocale(LC_ALL, "cs_CZ", "Czech");
       usort($y->values,function($a,$b) {
         global $test_clmn,$test_asc;
-//         $c= $test_asc*($a->$test_clmn>$b->$test_clmn ? 1 : ($a->$test_clmn<$b->$test_clmn ? -1 : 0));
-//         $c= $test_asc*($a->$test_clmn==$b->$test_clmn ? 0 : ($a->$test_clmn > $b->$test_clmn ? 1 : -1));
-        $c= $test_asc * strcoll($a->$test_clmn,$b->$test_clmn);
+        $ax= utf2win($a->$test_clmn,1); $bx= utf2win($b->$test_clmn,1);
+        $c= $test_asc * strcoll($ax,$bx);
         return $c;
       });
     }
