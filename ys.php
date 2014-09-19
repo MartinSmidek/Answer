@@ -43,7 +43,11 @@
 
   $css= array_merge(
     $dbg ? array("./$licensed/jush/mini_jush.css") : array(),
-    array("./$client/ezer.css.php","./ys/ys.css.php","./db/db.css.php"),
+    array(
+      "./$client/ezer.css.php",
+      "./$client/licensed/font-awesome/css/font-awesome.min.css",
+      "./ys/ys.css.php",
+      "./db/db.css.php"),
     /* pro verzi 2.2 */ $EZER->version=='ezer2.2'
     ? array("$licensed/datepicker/datepicker_vista/datepicker_vista.css"):array()
   );

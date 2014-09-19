@@ -68,28 +68,16 @@ proc init_ucast2() {
 }
 # ---------------------------------------------------------- reakce na změny rozměrů okna prohlížeče
 
-const min_h=550         // minimální výška (jsou k ní vztaženy souřadnice v use)
-var   min_r: number     // minimální počet řádků seznamu (min_h-190)/17
-var curr_h: number      // výška nad základní výšku
-var curr_w: number      // 1024 nebo 1280
-var resized: number     // 1 znamená, že úprava browse nebyla dokončena - další požadavek se ignoruje
-var loaded: number      // 1 znamená, že bylo provedeno základní načtení a je povoleno resize
-var to_resize= 1        // požadavek na resi
+const min_h=550           // minimální výška (nelze jednoduše měnit - jsou k ní vztaženy souřadnice v use)
+var   min_r: number       // minimální počet řádků seznamu (min_h-190)/17
+var   curr_h: number      // výška nad základní výšku
+var   curr_w: number      // 1024 nebo 1280
 
 proc onfirstloaded() {  // zavolá se po prvním dokončení u.b.browse_load
   w_change_all
 }
 proc onresize(w,h) {
-#   echo("resize(",w,",",h,") ... w=",sys('screen','width')," loaded=",loaded.get);
-  to_resize.set(1);
-  loaded.get;
-  resize;
-  to_resize.set(0);
-}
-proc resize() { var h:number, w:number
-  to_resize.get;
-  h.set(sys('screen','height'));
-  w.set(sys('screen','width'));
+#   echo("resize(",w,",",h,") ... w=",sys('screen','width'));
   [ and(lt(h,min_h.get),not(eq(curr_h.get,min_h.get)));
     curr_h.set(0); h_change_all()
   | and(gt(h,min_h.get),not(eq(h,sum(curr_h.get,min_h.get))));
@@ -113,19 +101,22 @@ proc h_change_all() {
   foreach(array(page.frame),change_height);
   h_change_b;
 }
+# změna počtu řádků browse u.b oproti aktuálním řádkům
+proc h_change_b() { var r:number, h:number
+  h.set(sys('screen','height'));
+  r.set(divide(sum(h.get,-190),17));
+  not(eq(r,u.b.rows));
+  u.b.set_attrib('rows',r);
+}
 
 # změna počtu řádků browse u.b oproti aktuálním řádkům
-proc h_change_b() { var rows:number, h:number
-  loaded.get; // změna výšky browse až po prvním načtení
+proc xxh_change_b() { var rows:number, h:number
   h.set(sys('screen','height'));
   min_r.set(divide(sum(min_h.get,-190),17));
   { rows.set(sum(min_r.get,divide(minus(h,min_h.get),17)));
-    [ lt(rows,min_r.get); rows.set(min_r.get) ];
+#     [ lt(rows,min_r.get); rows.set(min_r.get) ];
     not(eq(rows,u.b.rows));
-    not(resized.get); resized.set(1);  // probíhá změna výšky browse
     u.b.set_attrib('rows',rows);
-    u.b.browse_refresh(the_pobyt.get);
-    resized.set(0);
   }
 }
 proc change_top1(x) { x.property(object('down',curr_h.get))}
@@ -193,14 +184,13 @@ proc reload(id_pobyt) {
         1,conc("funkce!=99 AND p.id_akce=",the_duakce.get)),
       "IF(funkce<=2,1,funkce),_nazev",
       '','','','norowclick',
-      conc('SET @akce:=',the_duakce.get,",@soubeh=",the_soubeh.get,",@app:='",sys('ezer','options','app'),"'"));
+      conc('SET @akce:=',the_duakce.get,",@soubeh:=",the_soubeh.get,
+              ",@app:='",sys('ezer','options','app'),"'"));
     u.b.browse_focus;
     { id_pobyt; { u.b.raise('onrowclick',id_pobyt)
                 | u.b.browse_seek(conc('p.id_pobyt=',id_pobyt)) }
     | u.b.raise('onrowclick') }
   ];
-  [ loaded.get | loaded.set(1); onfirstloaded ];
-  resize;
 }
 # ----------------------------------------------------- neni_ulozeno
 # ochrana proti neuložení změny
@@ -230,6 +220,10 @@ form _cmd2 [,,623,30] { css:'ae_work'
     'show', {form.enable(1,'s|x')},
     'hide',{form.enable(0,'s|x')}
   )}
+  // TEST
+  button [146,4,,] {type:'html', title:"<i class='fa fa-beer'></i>", skill:'a|a'
+    proc onclick() { clear; reload(0)
+  }}
   // NOVÝ POBYT
   button [6,4,,] {tag:'s', title:'Nový pobyt nových lidí', skill:'yaa+|yaa+;faa+|faa+;caa+|caa+',
     help:'Vytvoření nového pobytu s novými osobami a jejich vložení jako účastníků akce'
@@ -493,7 +487,7 @@ form _ucast [,,400,] { css:'ds_form'
     // údaje ucast.evid.rod.cleni
     show r_cleni // naplní browse pro rodinu daty jejích členů
     // údaje ucast.evid.pob
-    show p_poznamka, show pokoj, show budova, show funkce, show prednasi, show skup
+    show p_poznamka, show pokoj, show budova, show funkce, show prednasi, show skup,
     // platby
     show luzka, show pristylky, show kocarek, show pocetdnu, show strava_cel, show strava_pol,
     show c_nocleh, show c_strava, show c_program, show c_sleva, show platba, show datplatby,
@@ -511,6 +505,8 @@ form _ucast [,,400,] { css:'ds_form'
         ucast.evid.pob.key(the_pobyt.get);
         ucast.evid.rod.cleni.browse_fill(r_cleni.get,'~');
         ucast.evid.pob.skup.browse_fill(skup.get,'~');
+        [ ucast.evid.pob.skup.browse_count;
+          ucast.evid.pob.skup.raise('onrowclick',key_pobyt.get,0,0,1) ];
         ucast.evid.os1.key_osoba.set(ido1.get);
         ucast.evid.os2.key_osoba.set(ido2.get);
         reload_evid
@@ -575,7 +571,7 @@ form _ucast [,,400,] { css:'ds_form'
       platba.width; platba.width(0); c_suma.width(0); _jmena.width(180)
     | platba.width(0); platba.width(50); c_suma.width(50); _jmena.width(78)
     }
-    proc onrefreshed() { resized.set(0); h_change_b }
+    proc onrefreshed() { h_change_b }
   }
 }
 # ------------------------------------------------------------------------------------------ _ucast2 - účast dětí
@@ -904,6 +900,7 @@ form _spolu [,,0,270] {
       [ s_role.key; contains('P',spolu_config.grp.get); tags.set(conc(tags,',p')) ];
       switch(s_role.key,
       0, { tit.set('účastník akce') },
+      1, { tit.set('?') },
       2, { tags.set(conc(tags,',d'));   tit.set('dítě na akci') },
       3, { tags.set(conc(tags,',o,d')); tit.set('dítě s osobním pečovatelem') },
       4, { tags.set(conc(tags,',d'));   tit.set('dítě jako pomocný pečovatel') },
