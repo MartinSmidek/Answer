@@ -36,7 +36,43 @@ proc onfirstfocus() {
   page.inf.onclick;
   echo('db.akce.lst.onfirstfocus end');
 }
+# ---------------------------------------------------------- reakce na změny rozměrů okna prohlížeče
+const min_h=550           // minimální výška (nelze jednoduše měnit - jsou k ní vztaženy souřadnice)
+var   curr_h: number      // výška nad základní výšku
+var   curr_w: number      // 1024 nebo 1280
 
+proc onresize(w,h) {
+#   echo("resize(",w,",",h,") ... w=",sys('screen','width'));
+  [ and(lt(h,min_h.get),not(eq(curr_h.get,min_h.get)));
+    curr_h.set(0); h_change_all()
+  | and(gt(h,min_h.get),not(eq(h,sum(curr_h.get,min_h.get))));
+    curr_h.set(minus(h,min_h.get)); h_change_all() ];
+  [ and(lt(w,1280),eq(curr_w.get,1280)); narrow
+  | and(gt(w,1279),eq(curr_w.get,1024)); wide ];
+}
+
+# změna šířky 1024/1280
+proc narrow() { curr_w.set(1024); w_change_all }
+proc wide() { curr_w.set(1280); w_change_all }
+proc w_change_all() {}
+
+# změna výšky oproti základní min_h
+proc h_change_all() {
+  page.property(object('down',curr_h.get),'b');      // posunutí proti původnímu - omezeno na min_h
+  page.frame.property(object('stretch',curr_h.get)); // protažení proti původnímu
+  h_change_b;
+}
+# změna počtu řádků browse oproti aktuálním řádkům
+proc h_change_b() { var r:number, h:number
+  h.set(sys('screen','height'));
+  r.set(divide(sum(h.get,-173),17));
+  not(eq(r,info.sey.rows));
+  info.google.set_attrib('rows',r);
+  info.sey.set_attrib('rows',r);
+  page.c.set_attrib('rows',sum(r,-5));
+}
+
+# --------------------------------------------------------------------------------------------- menu
 # Výběr akce má dvě možnosti, uchované v proměnné the_source:
 #   'google' používá jako primárná data spreadsheet v intranetu YS a z něj upravuje tabulku AKCE
 #   'sey' používá pouze tabulku AKCE
@@ -272,17 +308,18 @@ form _page [,,285,500] {
     }
   }
   // export ceníku
-  label  [10,465,100,30] { tag:'cen', css:'ae_parm', style:'z-index:1' }
-  button [18,470,,] { tag:'cen', title:'Export ceníku', format:'c'
+  const bc=370
+  label  [10,bc,100,30] { tag:'b,cen', css:'ae_parm', style:'z-index:1' }
+  button [18,bc+5,,] { tag:'b,cen', title:'Export ceníku', format:'c'
     proc onclick() {
       var ret: object
       ret.set(ask('akce_platby_xls',a_akce.get));
       ret.ok; xhref.set(ret.xhref);
     | warning(ret.msg);
   } }
-  label  [129,476,,] { tag:'cen', title:"test ceny:" }
-  button [182,470,,] { tag:'cen', title:'pár', proc onclick() { test_ceniku(2,0,0) }}
-  button [217,470,,] { tag:'cen', title:'pár+kojenec', proc onclick() { test_ceniku(2,0,1) }}
+  label  [129,bc+11,,] { tag:'b,cen', title:"test ceny:" }
+  button [182,bc+5,,] { tag:'b,cen', title:'pár', proc onclick() { test_ceniku(2,0,0) }}
+  button [217,bc+5,,] { tag:'b,cen', title:'pár+kojenec', proc onclick() { test_ceniku(2,0,1) }}
   proc test_ceniku(dosp,deti,koje) { var cena:object
     eq(the_duakce.get,a_akce.get);
     { eq(the_soubeh.get,1);
@@ -293,9 +330,9 @@ form _page [,,285,500] {
     alert(cena.navrh)
   | alert("pro testování ceníku musí být akce nastavena jako pracovní")
   }
-  label xhref [122,474,173,]
+  label xhref [122,bc+9,173,]
   # --------------------------- pozadí stránky nakonec
-  label [2,16,283,476] { title:'', css:'ae_work page' }
+  label frame [2,16,283,375] { title:'', css:'ae_work page' }
 }
 # -------------------------------------------------------------------------------------------- _akce
 # formulář pro výběr akce pro další práci
