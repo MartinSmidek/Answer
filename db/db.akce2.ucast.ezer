@@ -69,7 +69,6 @@ proc init_ucast2() {
 # ---------------------------------------------------------- reakce na změny rozměrů okna prohlížeče
 
 const min_h=550           // minimální výška (nelze jednoduše měnit - jsou k ní vztaženy souřadnice v use)
-var   min_r: number       // minimální počet řádků seznamu (min_h-190)/17
 var   curr_h: number      // výška nad základní výšku
 var   curr_w: number      // 1024 nebo 1280
 
@@ -98,7 +97,8 @@ proc w_change_all() {
 proc h_change_all() {
   foreach(array(cmd,cmd2,cmdp),change_top1);
   foreach(array(evid.pob1,evid.pob2,evid.pob),change_top2);
-  foreach(array(page.frame),change_height);
+  foreach(array(page.frame,pla.duvod_text,pla.navrh,pla.duvod_typ,pla.doslo),change_height);
+  change_top3;
   h_change_b;
 }
 # změna počtu řádků browse u.b oproti aktuálním řádkům
@@ -107,20 +107,15 @@ proc h_change_b() { var r:number, h:number
   r.set(divide(sum(h.get,-190),17));
   not(eq(r,u.b.rows));
   u.b.set_attrib('rows',r);
+  act1.akc.set_attrib('rows',sum(r,-6));
+  act2.akc.set_attrib('rows',sum(r,-6));
 }
 
-# změna počtu řádků browse u.b oproti aktuálním řádkům
-proc xxh_change_b() { var rows:number, h:number
-  h.set(sys('screen','height'));
-  min_r.set(divide(sum(min_h.get,-190),17));
-  { rows.set(sum(min_r.get,divide(minus(h,min_h.get),17)));
-#     [ lt(rows,min_r.get); rows.set(min_r.get) ];
-    not(eq(rows,u.b.rows));
-    u.b.set_attrib('rows',rows);
-  }
-}
 proc change_top1(x) { x.property(object('down',curr_h.get))}
 proc change_top2(x) { x.property(object('down',minus(curr_h.get,223)))}
+proc change_top3() {
+  pla.property(object('down',curr_h.get),'b');
+  alb.property(object('down',curr_h.get),'b')}
 proc change_height(x) { x.property(object('stretch',curr_h.get))}//,'smooth',1)) }
 
 proc akce_load(id_akce) { lst.akce_work(id_akce); onfocus(); }
@@ -997,66 +992,9 @@ form _spolu [,,0,270] {
     _reload_spolu
   }}
 }
-# ------------------------------------------------------------------------------------------- _album
-form _album {
-  label drop [38,35,500,45] { format:'c' }
-  label foto [38,85,500,400] { format:'c' }
-  button smazat [250,500,,] { title:'Odstranit fotografii', format:'n'
-    proc onclick() {
-#       confirm("Opravdu odstranit tuto fotografii?");
-#       { ask('album_delete',u.b.key_rodina.get); u.b.fotka.let(''); foto.set('');
-#       | warning("fotografii nebylo možné smazat");
-#       }
-  }}
-  proc ondrop(fileinfo) {
-    var name: text
-    drop.set_css('','drop_area drop_area_hover');
-    name.set(ask('album_set',u.b.key_rodina.get,fileinfo,
-      conc(u.b._nazev.get,' ',u.b.jmeno_m.get,' ',u.b.jmeno_z.get)));
-    u.b.fotka.let(name);
-    smazat.display(1);
-    drop_set(0);
-    drop.set_css('','drop_area drop_area_hover drop_area_run');
-    drop_init;
-  }
-  proc drop_init() {
-    form.file_drop(drop,°{css_hover:'drop_area_hover',css_run:'drop_area_run',handler:'ondrop',
-      max_width:1200,max_height:960});
-  }
-  proc drop_set(sharp) {
-    foto.set(ask('album_get',u.b.fotka.get,500,400));
-    //[ sharp; foto.image_filter('sharpen') ] -- sharp se dělá z php
-  }
-}
-# ---------------------------------------------------------------------------------------- _aktivity
-form _aktivity {
-  var ido: number
-  field jme [10,34,200,] { format:'o' }
-  button [160,20,,] { title:'^evidence', css:'db_evidence',
-    proc onclick() { akce_evidence_os(ido.get) } }
-  view a: table akce
-  view p: table pobyt { join:'ON a.id_duakce=p.id_akce' }
-  view s: table spolu { join:'USING(id_pobyt)' }
-  browse akc [ 0,60,,] { rows:20, qry_rows:1
-    show ida { data:a.id_duakce }
-    show idp { data:p.id_pobyt }
-    show ids { data:s.id_spolu }
-    show rok  [,, 30,] { title:'rok', expr:"YEAR(a.datum_od)", format:'q*s-' }
-    show akce [,,150,] { title:'název', data:a.nazev, format:'q*s' }
-    show fce  [,, 30,] { title:'fce', data:p.funkce, map_pipe:ms_akce_funkce.zkratka, format:'q*s' }
-    proc onsubmit() {
-      akce_show(ida.get,idp.get,conc(akce.get,' ',rok.get),'AKTIVITA') }
-  }
-  proc ucasti(id_osoba) {
-    form.display(id_osoba);
-    id_osoba; ido.set(id_osoba);
-    jme.set(ask('select',"CONCAT(prijmeni,' ',jmeno)",'osoba',conc('id_osoba=',id_osoba)));
-    akc.browse_load(conc('a.spec=0 AND s.id_osoba=',id_osoba),"datum_od DESC")
-  }
-}
 # ------------------------------------------------------------------------------------------ _platba
 form _platba { key_id:'id_pobyt'
-  const Td= 400-75
+  const Td= 230
   var cena: object
   label [2,27,527,Td+95] //{title:"<img src='img/ms2p.png'>" }
   proc ini() {
@@ -1130,9 +1068,9 @@ form _platba { key_id:'id_pobyt'
   button [491,70,,] { title:"Došlé platby", skill:'yaa|yaa'
     proc onclick() { dosle_platby }
   }
-  label doslo [300,99,281,250] { style:"border-left:2px solid grey" }
+  label doslo [300,99,281,170] { style:"border-left:2px solid grey" }
   // nestandardní strava
-  button stravy     [89,Td+37,37,] {title:'Str Po', style:'font-size:10px;height:19px;width:40px',
+  button stravy     [89,Td+37,37,] {tag:'b', title:'Str Po', style:'font-size:10px;height:19px;width:40px',
     //skill:'yaa+|yaa+;faa+|faa+',
     proc onclick() {
       has_skill("yaa+;faa+;caa+");
@@ -1145,51 +1083,108 @@ form _platba { key_id:'id_pobyt'
     navrh.set(''); doslo.set('');
   }
   // data
-  field luzka       [10,Td+56,11,] {data:pobyt.luzka}
-  field pristylky   [30,Td+56,11,] {data:pobyt.pristylky}
-  field pocetdnu    [51,Td+56,11,] {data:pobyt.pocetdnu}                  // sémantika: počet nocí
-  field kocarek     [71,Td+56,11,] {data:pobyt.kocarek}
-  field strava_cel  [94,Td+56,11,] {data:pobyt.strava_cel}
-  field strava_pol  [112,Td+56,11,] {data:pobyt.strava_pol}
-  field svp         [136,Td+56,11,] {data:pobyt.svp, help:"počet dětí s vlastním pečovatelem"}
-  field celkem      [225,Td+91,50,] {format:'dr', help:'částka požadovaná po účastníkovi'}
-  field poplatek_d  [225,Td+48,50,] {tag:'deti', format:'dr', data:pobyt.poplatek_d,
+  field luzka       [10,Td+56,11,] {tag:'b', data:pobyt.luzka}
+  field pristylky   [30,Td+56,11,] {tag:'b', data:pobyt.pristylky}
+  field pocetdnu    [51,Td+56,11,] {tag:'b', data:pobyt.pocetdnu}                  // sémantika: počet nocí
+  field kocarek     [71,Td+56,11,] {tag:'b', data:pobyt.kocarek}
+  field strava_cel  [94,Td+56,11,] {tag:'b', data:pobyt.strava_cel}
+  field strava_pol  [112,Td+56,11,] {tag:'b', data:pobyt.strava_pol}
+  field svp         [136,Td+56,11,] {tag:'b', data:pobyt.svp, help:"počet dětí s vlastním pečovatelem"}
+  field celkem      [225,Td+91,50,] {tag:'b', format:'dr', help:'částka požadovaná po účastníkovi'}
+  field poplatek_d  [225,Td+48,50,] {tag:'b,deti', format:'dr', data:pobyt.poplatek_d,
                                    help:'částka požadovaná po účastníkovi za děti'}
-  field naklad      [523,Td+91,50,] {format:'dr',
+  field naklad      [523,Td+91,50,] {tag:'b', format:'dr',
                                    help:'rozpočtovaná částka na účastníka = poplatek+sleva'}
-  field naklad_d    [523,Td+48,50,] {tag:'deti', format:'dr', data:pobyt.naklad_d,
+  field naklad_d    [523,Td+48,50,] {tag:'b,deti', format:'dr', data:pobyt.naklad_d,
                                    help:'rozpočtovaná částka na děti = poplatek+sleva'}
-  field c_nocleh    [10,Td+91,47,] {data:pobyt.platba1, format:'r'}
-  field c_strava    [60,Td+91,47,] {data:pobyt.platba2, format:'r'}
-  field c_program   [110,Td+91,47,] {data:pobyt.platba3, format:'r'}
-  field c_sleva     [160,Td+91,47,] {data:pobyt.platba4, format:'r'}
-  field platba      [283,Td+91,50,] {data:pobyt.platba, format:'r'}
-  check avizo       [275,Td+107,50,] {title:"avízo", data:pobyt.avizo, format:'r'}
-  select zpusobplat [339,Td+91,86,] {type:'map', data:pobyt.zpusobplat,
+  field c_nocleh    [10,Td+91,47,] {tag:'b', data:pobyt.platba1, format:'r'}
+  field c_strava    [60,Td+91,47,] {tag:'b', data:pobyt.platba2, format:'r'}
+  field c_program   [110,Td+91,47,] {tag:'b', data:pobyt.platba3, format:'r'}
+  field c_sleva     [160,Td+91,47,] {tag:'b', data:pobyt.platba4, format:'r'}
+  field platba      [283,Td+91,50,] {tag:'b', data:pobyt.platba, format:'r'}
+  check avizo       [275,Td+107,50,] {tag:'b', title:"avízo", data:pobyt.avizo, format:'r'}
+  select zpusobplat [339,Td+91,86,] {tag:'b', type:'map', data:pobyt.zpusobplat,
                                    options:ms_akce_platba.zkratka, format:'u'}
-  field datplatby   [430,Td+91,84,] {type:'date', data:pobyt.datplatby}
+  field datplatby   [430,Td+91,84,] {tag:'b', type:'date', data:pobyt.datplatby}
   // pouze u hlavní akce - platba za souběžnou
-  field platba_d      [283,Td+48,50,] {tag:'deti', data:pobyt.platba_d, format:'nr'}
-  select zpusobplat_d [339,Td+48,86,] {tag:'deti', type:'map', data:pobyt.zpusobplat_d,
+  field platba_d      [283,Td+48,50,] {tag:'b,deti', data:pobyt.platba_d, format:'nr'}
+  select zpusobplat_d [339,Td+48,86,] {tag:'b,deti', type:'map', data:pobyt.zpusobplat_d,
                                      options:ms_akce_platba.zkratka, format:'nu'}
-  field datplatby_d   [430,Td+48,84,] {tag:'deti', type:'date', data:pobyt.datplatby_d, format:'n'}
+  field datplatby_d   [430,Td+48,84,] {tag:'b,deti', type:'date', data:pobyt.datplatby_d, format:'n'}
   // pevné texty
   label [13,32,,]   { tag:'cenik', title:'Rozpis ceny akce podle cenového vzorce akce a přehled příchozích plateb' }
-  label [5,Td+128,,]  { title:'Cena zapsaná v evidenční kartě (použitá pro export do Excelu)',
+  label [5,Td+128,,]  {tag:'b', title:'Cena zapsaná v evidenční kartě (použitá pro export do Excelu)',
                       style:"border-top:2px solid grey" }
-  label [3,Td+41,100,] {title:'lůž. při. nocí koč.', help:'počet lůžek, přistýlek, nocí a kočárků'}
-  label [134,Td+41,27,] {title:'SVP'}
-  label [530,Td+76,52,] {title:'rozpočet'}
-  label [283,Td+76,33,] {title:'zaplaceno'}
-  label [180,Td+40,302,21] {tag:'deti', css:'karta', style:"z-index:0"}
-  label [190,Td+59,20,] {tag:'deti', title:'^Děti', style:"color:white"}
-  label [340,Td+76,71,] {title:'způsob platby'}
-  label [431,Td+76,51,] {title:'dne'}
-  label [16,Td+110,,] {title:'nocleh'}
-  label [56,Td+110,,] {title:'+ strava'}
-  label [107,Td+110,,] {title:'+ program'}
-  label [163,Td+110,,] {title:'- sleva'}
-  label [217,Td+110,56,] {title:'= poplatek'}
+  label [3,Td+41,100,] {tag:'b', title:'lůž. při. nocí koč.', help:'počet lůžek, přistýlek, nocí a kočárků'}
+  label [134,Td+41,27,] {tag:'b', title:'SVP'}
+  label [530,Td+76,52,] {tag:'b', title:'rozpočet'}
+  label [283,Td+76,33,] {tag:'b', title:'zaplaceno'}
+  label [180,Td+40,302,21] {tag:'b,deti', css:'karta', style:"z-index:0"}
+  label [190,Td+59,20,] {tag:'b,deti', title:'^Děti', style:"color:white"}
+  label [340,Td+76,71,] {tag:'b', title:'způsob platby'}
+  label [431,Td+76,51,] {tag:'b', title:'dne'}
+  label [16,Td+110,,] {tag:'b', title:'nocleh'}
+  label [56,Td+110,,] {tag:'b', title:'+ strava'}
+  label [107,Td+110,,] {tag:'b', title:'+ program'}
+  label [163,Td+110,,] {tag:'b', title:'- sleva'}
+  label [217,Td+110,56,] {tag:'b', title:'= poplatek'}
+}
+# ---------------------------------------------------------------------------------------- _aktivity
+form _aktivity {
+  var ido: number
+  field jme [10,34,200,] { format:'o' }
+  button [160,20,,] { title:'^evidence', css:'db_evidence',
+    proc onclick() { akce_evidence_os(ido.get) } }
+  view a: table akce
+  view p: table pobyt { join:'ON a.id_duakce=p.id_akce' }
+  view s: table spolu { join:'USING(id_pobyt)' }
+  browse akc [ 0,60,,] { rows:15, qry_rows:1
+    show ida { data:a.id_duakce }
+    show idp { data:p.id_pobyt }
+    show ids { data:s.id_spolu }
+    show rok  [,, 30,] { title:'rok', expr:"YEAR(a.datum_od)", format:'q*s-' }
+    show akce [,,150,] { title:'název', data:a.nazev, format:'q*s' }
+    show fce  [,, 30,] { title:'fce', data:p.funkce, map_pipe:ms_akce_funkce.zkratka, format:'q*s' }
+    proc onsubmit() {
+      akce_show(ida.get,idp.get,conc(akce.get,' ',rok.get),'AKTIVITA') }
+  }
+  proc ucasti(id_osoba) {
+    form.display(id_osoba);
+    id_osoba; ido.set(id_osoba);
+    jme.set(ask('select',"CONCAT(prijmeni,' ',jmeno)",'osoba',conc('id_osoba=',id_osoba)));
+    akc.browse_load(conc('a.spec=0 AND s.id_osoba=',id_osoba),"datum_od DESC")
+  }
+}
+# ------------------------------------------------------------------------------------------- _album
+form _album {
+  label drop [38,35,500,35] { format:'c' }
+  label foto [38,75,500,400] { format:'c' }
+  button smazat [250,395,,] {tag:'b', title:'Odstranit fotografii', format:'n', style:'z-index:5'
+    proc onclick() {
+#       confirm("Opravdu odstranit tuto fotografii?");
+#       { ask('album_delete',u.b.key_rodina.get); u.b.fotka.let(''); foto.set('');
+#       | warning("fotografii nebylo možné smazat");
+#       }
+  }}
+  proc ondrop(fileinfo) {
+    var name: text
+    drop.set_css('','drop_area drop_area_hover');
+    name.set(ask('album_set',u.b.key_rodina.get,fileinfo,
+      conc(u.b._nazev.get,'_',u.b._jmena.get)));
+    u.b.fotka.let(name);
+    smazat.display(1);
+    drop_set(0);
+    drop.set_css('','drop_area drop_area_hover drop_area_run');
+    drop_init;
+  }
+  proc drop_init() {
+    form.file_drop(drop,°{css_hover:'drop_area_hover',css_run:'drop_area_run',handler:'ondrop',
+      max_width:1200,max_height:960});
+  }
+  proc drop_set(sharp) {
+    foto.set(ask('album_get',u.b.fotka.get,500,400));
+    //[ sharp; foto.image_filter('sharpen') ] -- sharp se dělá z php
+  }
 }
 # ================================================================================= Přidání jménem 1
 panel PridaniJmenem1 [,,320,280] {type:'popup', title:'Přidání známých dospělých jménem'
