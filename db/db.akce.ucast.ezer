@@ -798,7 +798,7 @@ form _ucast [,,400,] { css:'ds_form'
                      IF(@app='fa',CONCAT(IFNULL(_cis.zkratka,'?'),' '),''),
                      IF(poznamka!='',CONCAT(note,'/',poznamka),note),'|',skupinka,'|',
                      IF(pecovane!=0,1,
-                       (IFNULL((SELECT 2 FROM pobyt JOIN spolu USING(id_pobyt)
+                       (IFNULL((SELECT MAX(2) FROM pobyt JOIN spolu USING(id_pobyt)
                                 WHERE spolu.pecovane=osoba.id_osoba AND id_akce=p.id_akce),'3'))
                      ))
                    FROM osoba LEFT JOIN spolu USING(id_osoba)
