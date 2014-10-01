@@ -2310,6 +2310,124 @@ function akce_kontrola_dat($par) { trace();
     : "<h3>Následující tabulky jsou konzistentní</h3>$html";
   return $html;
 }
+# ================================================================================================== TRANSFORMACE
+# ----------------------------------------------------------------------------------- data_transform
+# transformace na schema 2014
+# par.cmd = seznam transformací
+# par.akce = id_akce | 0
+function data_transform($par) { trace();
+  $html= '';
+  foreach (explode(',',$par->cmd) as $cmd )
+  switch ($cmd ) {
+  // ---------------------------------------------- pobyt: pouze
+  // doplní pouze=1|2 v akcích s nastaveným i0_rodina podle role=a|b
+  // podle spolu --> osoba.role
+  case 'pouze':
+    $n= 0;
+    $AND= $par->akce ? " AND id_akce={$par->akce}" : "";
+    $qp= mysql_qry("
+      SELECT GROUP_CONCAT(role ORDER BY role SEPARATOR '') AS _roles,id_pobyt
+      FROM akce AS a
+      JOIN pobyt AS p ON a.id_duakce=p.id_akce
+      JOIN spolu AS s USING (id_pobyt)
+      JOIN rodina AS r ON r.id_rodina=i0_rodina
+      JOIN tvori AS t ON t.id_osoba=s.id_osoba AND t.id_rodina=i0_rodina
+      WHERE i0_rodina!=0 AND pouze=0 $AND
+      GROUP BY id_pobyt ");
+    while ( $qp && ($p= mysql_fetch_object($qp)) ) {
+      $roles= $p->_roles;
+      $pouze= $roles[0]=='b' ? 2 : (
+              $roles[0]=='a' && $roles[1]!='b'? 1 : 0);
+      if ( $pouze ) {
+        $n++;
+        display("$roles:mysql_qry(\"UPDATE pobyt SET pouze=$pouze WHERE id_pobyt={$p->id_pobyt}\")");
+      }
+    }
+    $html.= "<br>doplněno $n x pobyt.pouze";
+    break;
+  // ---------------------------------------------- pobyt: i0_rodina ... do starých
+  // doplní i0_rodina pokud rodina má jméno a je jednoznačná pro všechny osoby pobytu
+  // podle spolu --> osoba --> tvori --> rodina.nazev,id_rodina
+  case 'i0_rodina':
+    $n= 0;
+    $AND= $par->akce ? " AND id_akce={$par->akce}" : "";
+    $qp= mysql_qry("
+      SELECT COUNT(DISTINCT id_rodina) AS _pocet,id_pobyt,id_rodina
+      FROM akce AS a
+      JOIN pobyt AS p ON a.id_duakce=p.id_akce
+      JOIN spolu AS s USING (id_pobyt)
+      JOIN tvori AS t USING(id_osoba)
+      JOIN rodina AS r USING(id_rodina)
+      WHERE i0_rodina=0 AND r.nazev!='' $AND
+      GROUP BY id_pobyt HAVING _pocet=1 ");
+    while ( $qp && ($p= mysql_fetch_object($qp)) ) {
+      $n++;
+      mysql_qry("UPDATE pobyt SET i0_rodina={$p->id_rodina} WHERE id_pobyt={$p->id_pobyt}");
+    }
+    $html.= "<br>doplněno $n x pobyt.i0_rodina";
+    break;
+  // ---------------------------------------------- osobni_pece
+  case 'osobni_pece':
+    $html.= "<h3>kopie spolu.pecovane na spolu.pecujici</h3>Zatím ne ...";
+//       SELECT s1.id_spolu,s2.id_spolu
+//       FROM spolu AS s1
+//       JOIN pobyt AS p1 ON p1.id_pobyt=s1.id_pobyt AND p1.id_akce=
+//       JOIN spolu AS s2 ON s2.id_osoba=s1.pecovane
+//       JOIN pobyt AS p2 ON p2.id_pobyt=s2.id_pobyt AND p2.id_akce=
+//       WHERE
+//        id_akce=394 AND s1.pecovane!=0
+    break;
+  }
+  return $html;
+}
+# ----------------------------------------------------------------------------------- akce_i0_rodina
+# definice položek POBYT.i0_rodina
+function akce_i0_rodina($akce) {
+  return transformace_2014((object)array('cmd'=>'i0_rodina','akce'=> $akce));
+  // doplnění i0_rodina, má-li definovaný název
+  $n= 0;
+  $qp= mysql_qry("
+    SELECT
+      COUNT(DISTINCT id_rodina) AS _pocet,id_pobyt,id_rodina,nazev,pfunkce
+    FROM pobyt
+    JOIN spolu USING (id_pobyt)
+    JOIN tvori USING(id_osoba)
+    JOIN rodina USING(id_rodina)
+    WHERE id_akce=$akce AND i0_rodina=0 AND nazev!=''
+    GROUP BY id_pobyt HAVING _pocet=1 ");
+  while ( $qp && ($p= mysql_fetch_object($qp)) ) {
+    $n++;
+    mysql_qry("UPDATE pobyt SET i0_rodina={$p->id_rodina} WHERE id_pobyt={$p->id_pobyt}");
+  }
+//   // doplnění s_role
+//   $r= 0;
+//   $qp= mysql_qry("
+//     SELECT id_osoba,nazev, role, id_spolu, s_role, pfunkce, pecovane, dite_kat,
+//       IFNULL((SELECT id_osoba FROM spolu AS s
+//           WHERE s.id_pobyt=pobyt.id_pobyt AND spolu.id_osoba=s.pecovane),0) AS pecujici
+//     FROM pobyt
+//     JOIN spolu USING (id_pobyt)
+//     JOIN tvori USING(id_osoba)
+//     JOIN rodina USING(id_rodina)
+//     WHERE id_akce=$akce AND s_role=0 AND id_rodina=i0_rodina
+//     GROUP BY id_spolu");
+//   while ( $qp && ($p= mysql_fetch_object($qp)) ) {
+//     $r++;
+//     $s_role= 0;
+//     if ( $p->role=='a' || $p->role=='b' )
+//       $s_role= 1;
+//     elseif ( $p->pfunkce==4 )
+//       $s_role= 4;
+//     elseif ( $p->pecovane )
+//       $s_role= 5;
+//     elseif ( $p->pecujici )
+//       $s_role= 3;
+//     elseif ( $p->role=='d' )
+//       $s_role= 2;
+//     if ( $s_role ) mysql_qry("UPDATE spolu SET s_role=$s_role WHERE id_spolu={$p->id_spolu}");
+//   }
+  return "doplněno $n x i0_rodina";//, $r x s_role";
+}
 # ================================================================================================== AKCE
 # ---------------------------------------------------------------------------------------- akce_id2a
 # vrácení klíčů pobyt u kterých došlo ke změně po daném datu a čase
@@ -5530,53 +5648,6 @@ function akce_skup_get($akce,$kontrola,&$err,$par=null) { trace();
   return $kontrola ? implode(",<br>",$msg) : $skup;
 }
 
-# ----------------------------------------------------------------------------------- akce_i0_rodina
-# definice položek POBYT.i0_rodina
-function akce_i0_rodina($akce) {
-  // doplnění i0_rodina, má-li definovaný název
-  $n= 0;
-  $qp= mysql_qry("
-    SELECT
-      COUNT(DISTINCT id_rodina) AS _pocet,id_pobyt,id_rodina,nazev,pfunkce
-    FROM pobyt
-    JOIN spolu USING (id_pobyt)
-    JOIN tvori USING(id_osoba)
-    JOIN rodina USING(id_rodina)
-    WHERE id_akce=$akce AND i0_rodina=0 AND nazev!=''
-    GROUP BY id_pobyt HAVING _pocet=1 ");
-  while ( $qp && ($p= mysql_fetch_object($qp)) ) {
-    $n++;
-    mysql_qry("UPDATE pobyt SET i0_rodina={$p->id_rodina} WHERE id_pobyt={$p->id_pobyt}");
-  }
-//   // doplnění s_role
-//   $r= 0;
-//   $qp= mysql_qry("
-//     SELECT id_osoba,nazev, role, id_spolu, s_role, pfunkce, pecovane, dite_kat,
-//       IFNULL((SELECT id_osoba FROM spolu AS s
-//           WHERE s.id_pobyt=pobyt.id_pobyt AND spolu.id_osoba=s.pecovane),0) AS pecujici
-//     FROM pobyt
-//     JOIN spolu USING (id_pobyt)
-//     JOIN tvori USING(id_osoba)
-//     JOIN rodina USING(id_rodina)
-//     WHERE id_akce=$akce AND s_role=0 AND id_rodina=i0_rodina
-//     GROUP BY id_spolu");
-//   while ( $qp && ($p= mysql_fetch_object($qp)) ) {
-//     $r++;
-//     $s_role= 0;
-//     if ( $p->role=='a' || $p->role=='b' )
-//       $s_role= 1;
-//     elseif ( $p->pfunkce==4 )
-//       $s_role= 4;
-//     elseif ( $p->pecovane )
-//       $s_role= 5;
-//     elseif ( $p->pecujici )
-//       $s_role= 3;
-//     elseif ( $p->role=='d' )
-//       $s_role= 2;
-//     if ( $s_role ) mysql_qry("UPDATE spolu SET s_role=$s_role WHERE id_spolu={$p->id_spolu}");
-//   }
-  return "doplněno $n x i0_rodina";//, $r x s_role";
-}
 # ---------------------------------------------------------------------------------- akce_skup_renum
 # přečíslování skupinek podle příjmení VPS/PPS
 function akce_skup_renum($akce) {
