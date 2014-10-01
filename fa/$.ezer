@@ -36,6 +36,16 @@ menu fa { type:'main', active:* //ys.pok
 #             info.fill('',ask('akce_foxpro_data'));
 #           }}
         }
+        menu {title:'Transformace 2014',type:'group', _sys:'*'
+          item {title:'pobyt: i0_rodina,pouze'          ,par:°{cmd:'i0_rodina,spolu'} }
+          item {title:'spolu: pečované,pečující'        ,par:°{cmd:'osobni_pece'}, format:'d' }
+          proc onclick (i) {
+            info.fill(conc(i.owner.title,' - ',i.title),' ');
+            confirm("spustit transformaci databáze?");
+            info.fill('',' ... probíhá transformace dat ...');
+            info.fill('',ask('data_transform',i.par));
+          }
+        }
       }
       use info: form right [12,4,,]
     }

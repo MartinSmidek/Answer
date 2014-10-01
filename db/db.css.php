@@ -13,6 +13,10 @@ global $skin, $path, $c, $b, $ab, $c_appl,
 require_once("../skins/colors.php");
 
 echo <<<__EOD
+/* Android */
+body { position:absolute; width:100%; height:100%; }
+#paticka { bottom:0; }
+
 /* ladění */
 .nogrid {
   background:$b /*url($path/ezer_layout.png)*/ !important; }
@@ -49,8 +53,15 @@ echo <<<__EOD
 .shift_down { z-index:0; }
 .datepicker_vista { z-index:3 !important; }
 
-.page {
-  font-size:9pt !important; padding:10px; line-height:13pt; }
+.page { font-size:9pt !important; padding:10px; line-height:13pt; }
+.page_2clmn { background-image:url(img/page_vr.png);
+              background-position:251px 0;
+              background-repeat:repeat-y;}
+.page_3clmn { background-image:url(img/page_vr.png),url(img/page_vr.png);
+              background-position:251px 0,501px 0;
+              background-repeat:repeat-y,repeat-y;}
+
+#android_menu { position:fixed; z-index:999; top:0; right:0; font-size:20px; }
 
 /* barvení časových změn ve formulářích */
 .zmeneny, .zmeneny input {

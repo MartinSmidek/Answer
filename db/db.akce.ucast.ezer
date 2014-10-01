@@ -770,7 +770,7 @@ form _ucast [,,400,] { css:'ds_form'
     show telefony   { data:rr.telefony}
     show emaily     { data:rr.emaily}
     show note       { data:rr.note}
-    show datsvatba  { data:rr.datsvatba}
+    show datsvatba  { data:rr.datsvatba, sql_pipe:'sql_date1'}
     show spz        { data:rr.spz}
     show historie   { data:rr.historie, skill:'yaah' }
     // skupinka

@@ -4,7 +4,7 @@
 
   $app=      'test';
   $app_name= 'Test/Answer';
-  $skin=     'default';
+  $skin=     'ck';
   $CKEditor= $_GET['editor'] ? $_GET['editor'] : '';
   $dbg=      $_GET['dbg'] ? 1 : 0;                                                    /* debugger */
 

@@ -1,13 +1,14 @@
 <?php # (c) 2009-2011 Martin Smidek <martin@smidek.eu>
 
   $ezer_root= 'fa';             // jméno adresáře a hlavního objektu aplikace
-
+//                                 echo($_SERVER['HTTP_USER_AGENT']);
   // nastavení verze jádra
   $EZER= (object)array();
   $EZER->version= isset($_GET['ezer']) ? "ezer{$_GET['ezer']}" : 'ezer2.2';
 
-  $ezer_local= preg_match('/^\w+\.ezer/',$_SERVER["SERVER_NAME"]); // identifikace ladícího serveru
-  $ezer_ksweb= $_SERVER["SERVER_NAME"]=="localhost"; // identifikace ladícího serveru KSWEB/Android
+  $ezer_local= preg_match('/^\w+\.ezer|192.168/',$_SERVER["SERVER_NAME"]); // identifikace ladícího serveru
+  $android=    preg_match('/android|x11/i',$_SERVER['HTTP_USER_AGENT']);
+  $ezer_ksweb= $android && $_SERVER["SERVER_NAME"]=="localhost"; // identifikace ladícího serveru KSWEB/Android
 
   require_once("{$EZER->version}/server/ae_slib.php");
 
