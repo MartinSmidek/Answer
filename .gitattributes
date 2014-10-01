@@ -43,6 +43,7 @@ db/db.css.php -text
 db/db_akce.php -text
 db/db_akce2.php -text
 db/db_fce.js -text
+db/img/page_vr.png -text
 db/img/schema_db_2014.png -text
 db/img/select_edit.gif -text
 db/img/stravenky-rastr-1.png -text
