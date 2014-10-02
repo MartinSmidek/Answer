@@ -5,8 +5,8 @@
   $app=      'test';
   $app_name= 'Test/Answer';
   $skin=     'ck';
-  $CKEditor= $_GET['editor'] ? $_GET['editor'] : '';
-  $dbg=      $_GET['dbg'] ? 1 : 0;                                                    /* debugger */
+  $CKEditor= isset($_GET['editor']) ? $_GET['editor'] : '';
+  $dbg=      isset($_GET['dbg']) ? 1 : 0;                                                    /* debugger */
 
   require_once("$app.inc");
   require_once("{$EZER->version}/server/ae_slib.php");

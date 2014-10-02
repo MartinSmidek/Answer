@@ -45,6 +45,7 @@ kEzer-ys2
 		db\db.akce2.ezer
 		db\db.akce2.test.ezer
 		db\db.akce2.ucast.ezer
+		db\db_akce2.php
 	-dg
 		dg\$.ezer
 		dg\dg.css.css
@@ -213,7 +214,8 @@ kEzer-ys2
 		+ezer
 			wiki\ezer_nastaveni.wiki
 		wiki\cr_system.wiki
-	+ys
+		..\..\..\..\Dropbox\PersonalWiki\denik.wiki
+	-ys
 		+$
 			ys\$.ezer
 			skins\colors.php
@@ -262,9 +264,14 @@ kEzer-ys2
 11=ezer2.2\client\ezer.css.php
 12=db\db.css.php
 13=db\db.akce.ucast.ezer
+14=..\..\..\..\Dropbox\PersonalWiki\denik.wiki
+15=db\db_akce2.php
+16=db\db.akce.pece.ezer
+17=db\db.akce.lst.ezer
+18=db\db.akce.tisk.ezer
 [Selected Project Files]
 Main=
-Selected=db\db.akce.ucast.ezer
+Selected=db\db.akce.tisk.ezer
 [ezer2.2\client\app.js]
 TopLine=1
 Caret=1,1
@@ -299,18 +306,18 @@ BookMark1=56,1964
 BookMark2=10,1332
 BookMark3=1,1550
 [db\db_akce.php]
-TopLine=6557
-Caret=68,6585
-BookMark1=23,6382
-BookMark2=22,6296
-Mark1=28,6350
-Mark2=47,6538
+TopLine=3602
+Caret=80,3622
+BookMark1=23,6410
+BookMark2=22,6324
+Mark1=28,6378
+Mark2=47,6566
 [db\db_fce.js]
 TopLine=361
 Caret=25,393
 [fa\$.ezer]
 TopLine=1
-Caret=55,4
+Caret=65,6
 [db\db.akce2.ezer]
 TopLine=823
 Caret=17,834
@@ -330,3 +337,18 @@ Caret=75,62
 [db\db.akce.ucast.ezer]
 TopLine=1174
 Caret=64,1203
+[..\..\..\..\Dropbox\PersonalWiki\denik.wiki]
+TopLine=1
+Caret=71,13
+[db\db_akce2.php]
+TopLine=34
+Caret=31,88
+[db\db.akce.pece.ezer]
+TopLine=1
+Caret=14,34
+[db\db.akce.lst.ezer]
+TopLine=16
+Caret=16,40
+[db\db.akce.tisk.ezer]
+TopLine=127
+Caret=54,156
