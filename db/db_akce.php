@@ -5701,7 +5701,7 @@ function akce_skup_get($akce,$kontrola,&$err,$par=null) { trace();
   while ( $res && ($s= mysql_fetch_object($res)) ) {
     if ( $s->_n_svps==1 || $s->_n_vps==1 ) {
       $skupina= array();
-      if ( 1 ) { //$par && $par->verze=='2' ) {
+      if ( $par && $par->verze=='2' ) {
         $qryu= "
           SELECT p.id_pobyt,skupina,nazev,pokoj,
             GROUP_CONCAT(o.id_osoba) as ids_osoba,
