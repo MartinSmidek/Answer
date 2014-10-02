@@ -172,14 +172,18 @@ menu m {type:'left',
                                         ,par:°{typ:'p',exp:'Excel',cnd:""
                                         ,tit:'příjmení:15,jména:20,platba:8,datum:12,způsob:10'
                                         ,fld:'prijmeni,jmena,platba,datplatby,zpusobplat'}}
-    item {title:'Všichni, s poznámkami'                                                                 skill:'y'
+  }
+  menu {tag:'a', title:'seznamy DS',type:'group',_sys:'*'                                               skill:'y'
+    item {title:'Všichni, s poznámkami'
                                         ,par:°{typ:'P',exp:'Excel',cnd:"funkce!=99"
                                         ,tit:'příjmení:15,jména:12,obec:25,počet:5,poznámka k akci:50,trvalá poznámka:50'
                                         ,fld:'prijmeni,jmena,obec,_pocet,poznamka,note'}}
-    item {title:'Všichni, skupinky a pokoje'                                                            skill:'y'
+    item {title:'Všichni, skupinky a pokoje'
                                         ,par:°{typ:'P',exp:'Excel',cnd:"funkce!=99"
                                         ,tit:'příjmení:15,jména:20,pokoj:10,skupinka:10'
                                         ,fld:'prijmeni,jmena,pokoj,skupina'}}
+    item {title:'Všichni, skupinky tisk'
+                                        ,par:°{typ:'sk',exp:'Excel',cnd:'1',fce:'tisk',verze:'2'}}
   }
   menu {tag:'a', title:'informace o akci',type:'group',_sys:'*'
     item {title:'Narozeniny, výročí'    ,par:°{typ:'vv',cnd:'1'}}

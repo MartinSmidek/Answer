@@ -5701,7 +5701,23 @@ function akce_skup_get($akce,$kontrola,&$err,$par=null) { trace();
   while ( $res && ($s= mysql_fetch_object($res)) ) {
     if ( $s->_n_svps==1 || $s->_n_vps==1 ) {
       $skupina= array();
-      $qryu= "
+      if ( 1 ) { //$par && $par->verze=='2' ) {
+        $qryu= "
+          SELECT p.id_pobyt,skupina,nazev,pokoj,
+            GROUP_CONCAT(o.id_osoba) as ids_osoba,
+            GROUP_CONCAT(o.id_osoba) as id_osoba_m,
+            GROUP_CONCAT(CONCAT(o.prijmeni,' ',o.jmeno,'')) AS _nazev
+          FROM pobyt AS p
+          JOIN spolu AS s USING(id_pobyt)
+          JOIN osoba AS o ON s.id_osoba=o.id_osoba
+          LEFT JOIN tvori AS t ON t.id_osoba=o.id_osoba
+          LEFT JOIN rodina AS r USING(id_rodina)
+          WHERE p.id_pobyt IN ({$s->_skupina})
+          GROUP BY id_pobyt
+          ORDER BY IF(funkce IN (1,2),1,2), nazev";
+      }
+      else {
+        $qryu= "
           SELECT p.id_pobyt,skupina,nazev,pokoj,
             GROUP_CONCAT(DISTINCT IF(t.role IN ('a','b'),o.id_osoba,'')) as ids_osoba,
             GROUP_CONCAT(DISTINCT IF(t.role='a',o.id_osoba,'') SEPARATOR '') as id_osoba_m,
@@ -5726,6 +5742,7 @@ function akce_skup_get($akce,$kontrola,&$err,$par=null) { trace();
           WHERE p.id_pobyt IN ({$s->_skupina})
           GROUP BY id_pobyt
           ORDER BY IF(funkce IN (1,2),1,2), nazev";
+      }
       $resu= mysql_qry($qryu);
       while ( $resu && ($u= mysql_fetch_object($resu)) ) {
         $mark= '';
