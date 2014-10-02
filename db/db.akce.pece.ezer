@@ -9,14 +9,15 @@ var zalozka: text               // evid | akce | foto
 var the_pobyt: number           // klíč společného pobytu pečounů
 var back: object
 
-use header: form _header   [  4,0,,]
-use up:     form _pece     [  6,30,,]
-use page:   form _page     [400,10,,]
-use p_oso:  form _osoba    [400,10,,]       { tag:'p_oso' }
-use cmd:    form _cmd      [400, 0,,]       { tag:'p_oso' }
-use p_act:  form _aktivity [400,10,,]       { tag:'p_act' }
-use alb:    form _album    [400,10,,]       { tag:'p_fot' }
+use header: form _header   [  4,  0,,]
+use up:     form _pece     [  6, 30,,]
+use page:   form _page     [400, 10,,]
+use p_oso:  form _osoba    [400, 10,,]       { tag:'p_oso' }
+use cmd:    form _cmd      [400,420,,]       { tag:'p_oso' }
+use p_act:  form _aktivity [400, 10,,]       { tag:'p_act' }
+use alb:    form _album    [400, 10,,]       { tag:'p_fot' }
 
+# ------------------------------------------------------------------------------- inicializace
 proc onstart() {
   has_skill('a'); up.nevlastni.display(1);
 }
@@ -29,6 +30,35 @@ proc onfocus() {
 | init_pece;
   the_duakce_local.set(the_duakce.get)
 }
+# ---------------------------------------------------------- reakce na změny rozměrů okna prohlížeče
+const min_h=540           // minimální výška (nelze jednoduše měnit - jsou k ní vztaženy souřadnice)
+var   curr_h: number      // výška nad základní výšku
+
+proc onresize(w,h) {
+#   echo("resize(",w,",",h,") ... w=",sys('screen','width'));
+  [ and(lt(h,min_h.get),not(eq(curr_h.get,min_h.get)));
+    curr_h.set(0); h_change_all()
+  | and(gt(h,min_h.get),not(eq(h,sum(curr_h.get,min_h.get))));
+    curr_h.set(minus(h,min_h.get)); h_change_all() ];
+  echo("resize(",w,",",h,") ... curr_h=",curr_h.get);
+}
+
+# změna výšky oproti základní min_h
+proc h_change_all() {
+  cmd.property(object('down',curr_h.get));      // posunutí proti původnímu - omezeno na min_h
+  page.frame.property(object('stretch',curr_h.get)); // protažení proti původnímu
+  h_change_b;
+}
+# změna počtu řádků browse oproti aktuálním řádkům
+proc h_change_b() { var r:number, h:number
+  h.set(sys('screen','height'));
+  r.set(divide(sum(h.get,-175),17));
+  not(eq(r,up.b.rows));
+  up.b.set_attrib('rows',max(5,r));
+  p_oso.d.set_attrib('rows',max(6,sum(r,-15)));
+  p_act.akc.set_attrib('rows',max(5,sum(r,-2)));
+}
+# --------------------------------------------------------------------------------------------------
 proc init_pece() { echo('init_pece ',the_title.get);
   page.page_init;
   header.fill(the_title.get);
@@ -118,7 +148,7 @@ form _page {
       zalozka.set('foto'); up.b.reload_pecoun;
     }
   }
-  label [0,16,582,530] { css:'ae_work'}
+  label frame [0,16,582,430] { css:'ae_work'}
 }
 # ---------------------------------------------------------------------- _aktivity
 form _aktivity {
@@ -130,13 +160,13 @@ form _aktivity {
   view a: table akce
   view p: table pobyt { join:'ON a.id_duakce=p.id_akce' }
   view s: table spolu { join:'USING(id_pobyt)' }
-  browse akc [ 0,60,,] { rows:25, qry_rows:1
+  browse akc [ 10,60,,] { rows:25, qry_rows:1
     show ida { data:a.id_duakce }
     show idp { data:p.id_pobyt }
     show ids { data:s.id_spolu }
     show rok  [,, 30,] { title:'rok', expr:"YEAR(a.datum_od)", format:'q*s-' }
-    show akce [,,150,] { title:'název', data:a.nazev, format:'q*s' }
-    show fce  [,, 30,] { title:'fce', data:p.funkce, map_pipe:ms_akce_funkce.zkratka, format:'q*s' }
+    show akce [,,250,] { title:'název', data:a.nazev, format:'q*s' }
+    show fce  [,, 60,] { title:'fce', data:p.funkce, map_pipe:ms_akce_funkce.zkratka, format:'q*s' }
     proc onsubmit() {
       akce_show(ida.get,idp.get,conc(akce.get,' ',rok.get),'AKTIVITA') }
   }
@@ -378,23 +408,24 @@ form _pece [,,400,] { css:'ds_form'
 }
 # --------------------------------------------------------------------------------------------- _cmd
 form _cmd [,,200,] { css:'ds_form'
+  const Tc=0
   // Nový
-  button [6,525,,] {title:'Nový', skill:'yaap+|yaap+;faa+|faa+;caa+|caa+',
+  button [6,Tc+5,,] {title:'Nový', skill:'yaap+|yaap+;faa+|faa+;caa+|caa+',
     help:'Vytvoření nového pečouna a vložení jako účastníka'
     proc onclick() {   // založení
       p_oso.init(1); p_oso.d.browse_init; p_oso.o.key(0); p_oso.s.key(0);
       b_display(0);
   } }
   // Zpět a Uložit
-  label  [478,520,98,30] { css:'ae_parm', skill:'yaap+;faa+;caa+' }
-  button [484,525,,] {title:'Zpět',  help:'Neukládat změněná data',
+  label  [478,Tc+0,98,30] { css:'ae_parm', skill:'yaap+;faa+;caa+' }
+  button [484,Tc+5,,] {title:'Zpět',  help:'Neukládat změněná data',
     skill:'yaap+|yaap+;faa+|faa+;caa+|caa+'
     proc onclick() {
       p_oso.plain;
       b_display(1);
       reload(0) //(up.b.browse_key);
   } }
-  button [530,525,,] {title:'Uložit',  help:'Uložit změněná data',
+  button [530,Tc+5,,] {title:'Uložit',  help:'Uložit změněná data',
     skill:'yaap+|yaap+;faa+|faa+;caa+|caa+'
     proc onclick() {
       var ok: number
@@ -418,34 +449,34 @@ form _cmd [,,200,] { css:'ds_form'
     return(the_pobyt.get);
   }
   // PŘIDAT z AKCE
-  button pridat_a   [69,525,,] {title:'Přidat: z akce', skill:'yaap+|yaap+;faa+|faa+;caa+|caa+',
+  button pridat_a   [69,Tc+5,,] {title:'Přidat: z akce', skill:'yaap+|yaap+;faa+|faa+;caa+|caa+',
     help:'Přidání účastníky jiných akcí'
     proc onclick() {
       PridaniAkce.modal(240,50)
   } }
   // PŘIDAT z pečounů
-  button [155,525,,] {title:'... jménem', skill:'yaap+|yaap+;faa+|faa+;caa+|caa+',
+  button [155,Tc+5,,] {title:'... jménem', skill:'yaap+|yaap+;faa+|faa+;caa+|caa+',
     help:'Přidání pečouna podle jména - výběr z EVIDENCE'
     proc onclick() {
       PridaniJmenem3.fl.jmena.set_attrib('par.fce','akce_auto_jmena1');
       PridaniJmenem3.modal(240,50)
   } }
   // PŘIDAT z evidence
-  button [228,525,,] {title:'... jménem pečouna', skill:'yaap+|yaap+;faa+|faa+;caa+|caa+',
+  button [228,Tc+5,,] {title:'... jménem pečouna', skill:'yaap+|yaap+;faa+|faa+;caa+|caa+',
     help:'Přidání pečouna podle jména - výběr z pečounů'
     proc onclick() {
       PridaniJmenem3.fl.jmena.set_attrib('par.fce','akce_auto_jmena3');
       PridaniJmenem3.modal(240,50)
   } }
   // VYŘADIT a VYMAZAT
-  button [357,525,,] {title:'Vyřadit', skill:'yaap+|yaap+;faa+|faa+;caa|caa+',
+  button [357,Tc+5,,] {title:'Vyřadit', skill:'yaap+|yaap+;faa+|faa+;caa|caa+',
     help:'Vyřazení pečouna z účasti na akci'
     proc onclick() {
       confirm("Opravdu vyřadit ",up.b.prijmeni.get,' (',up.b.jmeno.get,") z této akce?");
       spolu.delete_record(conc('id_spolu=',up.b.key_spolu.get),1);
       reload(0);
   } }
-  button [409,525,,] {title:'Vymazat', skill:'yaap+|yaap+;faa+|faa+;caa+|caa+',
+  button [409,Tc+5,,] {title:'Vymazat', skill:'yaap+|yaap+;faa+|faa+;caa+|caa+',
     help:'Vymazání informací o pečounovi z evidence'
     proc onclick() {
       confirm("Opravdu vymazat z evidence ",up.b.prijmeni.get,' ',up.b.jmeno.get,"z evidence?");

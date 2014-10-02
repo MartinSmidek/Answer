@@ -2319,6 +2319,33 @@ function data_transform($par) { trace();
   $html= '';
   foreach (explode(',',$par->cmd) as $cmd )
   switch ($cmd ) {
+  // ---------------------------------------------- osoba: adresa
+  // nastaví osoba.adresa=1 pokud je adresa osobní tj. různá od rodinné
+  // (pokud je rodina nejednoznačná, zatím nic pak bere se ta s rolí a|b)
+  // podle osoba --> tvori.role --> rodina
+//   case 'adresa':
+//     $n= 0;
+//     $AND= $par->akce ? " AND id_akce={$par->akce}" : "";
+//     // 1) osobní a rodinná jsou totožné => adresa=rodinná
+//     $qo= mysql_qry("
+//       SELECT id_osoba,adresa,COUNT(id_rodina) AS _rodin,
+//         CONCAT(o.ulice,o.psc,o.obec,o.stat) AS _adresa_o,
+//         CONCAT(r.ulice,r.psc,r.obec,r.stat) AS _adresa_r
+//       FROM osoba AS o
+//       JOIN tvori AS t USING(id_osoba)
+//       JOIN rodina AS r USING(id_rodina)
+//       GROUP BY id_rodina
+//       HAVING _rodin=1 AND _adresa_o!='' AND _adresa_o!='CZ' AND _adresa_o=_adresa_r
+//     ");
+//     while ( $qo && ($o= mysql_fetch_object($qo)) ) {
+//       $r_adresa= $o->ulice,$o->psc,$o->obec,$o->stat
+//       if ( $pouze ) {
+//         $n++;
+//         display("$roles:mysql_qry(\"UPDATE pobyt SET pouze=$pouze WHERE id_pobyt={$p->id_pobyt}\")");
+//       }
+//     }
+//     $html.= "<br>doplněno $n x pobyt.pouze";
+//     break;
   // ---------------------------------------------- pobyt: pouze
   // doplní pouze=1|2 v akcích s nastaveným i0_rodina podle role=a|b
   // podle spolu --> osoba.role
@@ -3573,6 +3600,7 @@ function dop_rep_ids($report_json,$parss,$fname) { trace();
 #   $typ = j | p | vp | vp2 | vs | vn | vv | vj | sk | sd | d | fs | ...
 function akce_sestava($akce,$par,$title,$vypis,$export=false) {
   return $par->typ=='p'  ? akce_sestava_pary($akce,$par,$title,$vypis,$export)
+     : ( $par->typ=='P'  ? akce_sestava_pobyt($akce,$par,$title,$vypis,$export)
      : ( $par->typ=='j'  ? akce_sestava_lidi($akce,$par,$title,$vypis,$export)
      : ( $par->typ=='vp' ? akce_vyuctov_pary($akce,$par,$title,$vypis,$export)
      : ( $par->typ=='vp2'? akce_vyuctov_pary2($akce,$par,$title,$vypis,$export)
@@ -3591,7 +3619,7 @@ function akce_sestava($akce,$par,$title,$vypis,$export=false) {
      : ( $par->typ=='fp' ? akce_sestava_pred($akce,$par,$title,$vypis,$export)
      : ( $par->typ=='12' ? akce_jednou_dvakrat($akce,$par,$title,$vypis,$export)
      : ( $par->typ=='cz' ? akce_cerstve_zmeny($akce,$par,$title,$vypis,$export)
-                         : fce_error("akce_sestava: N.Y.I.") ))))))))))))))))));
+                         : fce_error("akce_sestava: N.Y.I.") )))))))))))))))))));
 }
 # --------------------------------------------------------------------------------------- akce_table
 function akce_table($tits,$flds,$clmn,$export=false) {
@@ -4140,6 +4168,126 @@ function akce_sestava_pary($akce,$par,$title,$vypis,$export=false) { trace();
     $telefony_m= implode(';',$a_telefony_m);
     $telefony_z= implode(';',$a_telefony_z);
     $x->telefony= $x->pouze==1 ? $telefony_m  : ($x->pouze==2 ? $telefony_z : $telefony);
+    // podle číselníku
+    $x->ubytovani= $c_ubytovani[$x->ubytovani];
+    $x->prednasi= $c_prednasi[$x->prednasi];
+    $x->zpusobplat= $c_platba[$x->zpusobplat];
+    // další
+    $n++;
+    $clmn[$n]= array();
+    foreach($flds as $f) {
+//       $clmn[$n][$f]= $f=='poznamka' && $x->r_note ? ($x->$f.' / '.$x->r_note) : $x->$f;
+      switch ($f) {
+      case '=par':      $clmn[$n][$f]= "{$x->prijmeni} {$x->jmena}"; break;
+      // fonty: ISOCTEUR, Tekton Pro
+      case '=pozpatku': $clmn[$n][$f]= otoc("{$x->prijmeni} {$x->jmena}"); break;
+      default:          $clmn[$n][$f]= $x->$f; break;
+      }
+    }
+//     break;
+  }
+//                                         debug($clmn,"sestava pro $akce,$typ,$fld,$cnd");
+  return akce_table($tits,$flds,$clmn,$export);
+}
+# ------------------------------------------------------------------------------- akce_sestava_pobyt
+# generování sestavy pro účastníky $akce se stejným pobytem
+#   $fld = seznam položek s prefixem
+#   $cnd = podmínka
+function akce_sestava_pobyt($akce,$par,$title,$vypis,$export=false) { trace();
+  function otoc($s) {
+    mb_internal_encoding("UTF-8");
+    $s= mb_strtolower($s);
+    $x= '';
+    for ($i= mb_strlen($s); $i>=0; $i--) {
+      $xi= mb_substr($s,$i,1);
+      $xi= mb_strtoupper($xi);
+      $x.= $xi;
+    }
+    return $x;
+  }
+  $result= (object)array();
+  $typ= $par->typ;
+  $tit= $par->tit;
+  $fld= $par->fld;
+  $cnd= $par->cnd ? $par->cnd : 1;
+  $hav= $par->hav ? "HAVING {$par->hav}" : '';
+  $ord= $par->ord ? $par->ord : "nazev";
+//   "
+//     CASE
+//       WHEN pouze=0 THEN r.nazev
+//       WHEN pouze=1 THEN GROUP_CONCAT(DISTINCT IF(t.role='a',o.prijmeni,'') SEPARATOR '')
+//       WHEN pouze=2 THEN GROUP_CONCAT(DISTINCT IF(t.role='b',o.prijmeni,'') SEPARATOR '')
+//     END";
+//   IF(funkce<=2,1,funkce),IF(pouze=0,r.nazev,o.prijmeni)";
+  $html= '';
+  $href= '';
+  $n= 0;
+  // číselníky
+  $c_ubytovani= map_cis('ms_akce_ubytovan','zkratka');  $c_ubytovani[0]= '?';
+  $c_prednasi= map_cis('ms_akce_prednasi','hodnota');  $c_ubytovani[0]= '?';
+  $c_platba= map_cis('ms_akce_platba','zkratka');  $c_ubytovani[0]= '?';
+  // dekódování parametrů
+  $tits= explode(',',$tit);
+  $flds= explode(',',$fld);
+  $cond= $cnd;
+  // získání dat - podle $kdo
+  $clmn= array();
+  $expr= array();       // pro výrazy
+  // data akce
+  $qry=  "SELECT
+            r.nazev as nazev,p.pouze as pouze,p.poznamka,p.platba,p.datplatby,p.zpusobplat,
+            COUNT(o.id_osoba) AS _pocet,
+            GROUP_CONCAT(o.prijmeni ORDER BY t.role DESC) as _prijmeni,
+            GROUP_CONCAT(o.jmeno    ORDER BY t.role DESC) as _jmena,
+            GROUP_CONCAT(o.email    ORDER BY t.role DESC SEPARATOR ';') as _emaily,
+            GROUP_CONCAT(o.telefon  ORDER BY t.role DESC SEPARATOR ';') as _telefony,
+            ( SELECT count(DISTINCT cp.id_pobyt) FROM pobyt AS cp
+              JOIN akce AS ca ON ca.id_duakce=cp.id_akce
+              JOIN spolu AS cs ON cp.id_pobyt=cs.id_pobyt
+              JOIN osoba AS co ON cs.id_osoba=co.id_osoba
+              LEFT JOIN tvori AS ct ON ct.id_osoba=co.id_osoba
+              LEFT JOIN rodina AS cr ON cr.id_rodina=ct.id_rodina
+              WHERE ca.druh=1 AND cr.id_rodina=r.id_rodina ) AS _ucasti,
+            SUM(IF(t.role='d',1,0)) as _deti,
+            r.ulice,r.psc,r.obec,r.telefony,r.emaily,r.note/* AS r_note*/,p.skupina,
+            p.ubytovani,p.budova,p.pokoj,
+            p.luzka,p.kocarek,p.pristylky,p.strava_cel,p.strava_pol,
+            GROUP_CONCAT(IFNULL((SELECT CONCAT(osoba.jmeno,' ',osoba.prijmeni)
+              FROM pobyt
+              JOIN spolu ON spolu.id_pobyt=pobyt.id_pobyt
+              JOIN osoba ON osoba.id_osoba=spolu.id_osoba
+              WHERE pobyt.id_akce='$akce' AND spolu.pecovane=o.id_osoba),'') SEPARATOR ' ') AS _chuvy,
+            prednasi
+          FROM pobyt AS p
+          JOIN spolu AS s USING(id_pobyt)
+          JOIN osoba AS o ON s.id_osoba=o.id_osoba
+          LEFT JOIN tvori AS t ON t.id_osoba=o.id_osoba
+          LEFT JOIN rodina AS r USING(id_rodina)
+          WHERE p.id_akce='$akce' AND $cnd
+          GROUP BY id_pobyt $hav
+          ORDER BY $ord";
+  $res= mysql_qry($qry);
+  while ( $res && ($x= mysql_fetch_object($res)) ) {
+    $x->prijmeni= $x->pouze==0 ? $x->nazev : $x->_prijmeni;
+    $x->jmena=    $x->_jmena;
+    $x->_pocet=   $x->_pocet;
+//     // emaily
+//     $a_emaily_m= preg_split("/,\s*|;\s*/",trim($x->email_m ? $x->email_m : $x->emaily," ,;"));
+//     $a_emaily_z= preg_split("/,\s*|;\s*/",trim($x->email_z ? $x->email_z : $x->emaily," ,;"));
+//     $a_emaily= preg_split("/,\s*|;\s*/",trim($x->emaily," ,;"));
+//     $emaily= implode(';',array_diff(array_unique(array_merge($a_emaily,$a_emaily_m,$a_emaily_z)),array('')));
+//     $emaily_m= implode(';',$a_emaily_m);
+//     $emaily_z= implode(';',$a_emaily_z);
+//     $x->emaily= $x->pouze==1 ? $emaily_m  : ($x->pouze==2 ? $emaily_z : $emaily);
+//     $x->emaily.= $x->emaily ? ';' : '';
+//     // telefony
+//     $a_telefony_m= preg_split("/,\s*|;\s*/",trim($x->telefon_m ? $x->telefon_m : $x->telefony," ,;"));
+//     $a_telefony_z= preg_split("/,\s*|;\s*/",trim($x->telefon_z ? $x->telefon_z : $x->telefony," ,;"));
+//     $a_telefony= preg_split("/,\s*|;\s*/",trim($x->telefony," ,;"));
+//     $telefony= implode(';',array_diff(array_unique(array_merge($a_telefony,$a_telefony_m,$a_telefony_z)),array('')));
+//     $telefony_m= implode(';',$a_telefony_m);
+//     $telefony_z= implode(';',$a_telefony_z);
+//     $x->telefony= $x->pouze==1 ? $telefony_m  : ($x->pouze==2 ? $telefony_z : $telefony);
     // podle číselníku
     $x->ubytovani= $c_ubytovani[$x->ubytovani];
     $x->prednasi= $c_prednasi[$x->prednasi];

@@ -156,6 +156,10 @@ menu m {type:'left',
                                         ,par:°{typ:'j',exp:'Excel',cnd:"role='d' AND funkce!=99 AND pfunkce!=95",ord:"narozeni"
                                         ,tit:'příjmení:15,jméno:12,narození:12,věk:4,obec:25,psč:7,ulice:25,poznámka:100'
                                         ,fld:'prijmeni,jmeno,narozeni,_vek,obec,psc,ulice,note'}}
+    item {title:' na akci s poznámkami'                                                             skill:'c'
+                                        ,par:°{typ:'j',exp:'Excel',cnd:"role='d' AND funkce!=99 AND pfunkce!=95",ord:"narozeni"
+                                        ,tit:'příjmení:15,jméno:12,narození:12,věk:4,obec:25,psč:7,ulice:25,poznámka:100'
+                                        ,fld:'prijmeni,jmeno,narozeni,_vek,obec,psc,ulice,note'}}
     item {title:'Účastníci, skupinky a pokoje'                                                          skill:'y;f'
                                         ,par:°{typ:'p',exp:'Excel',cnd:"funkce!=99"
                                         ,tit:'příjmení:15,jména:20,pokoj:10,skupinka:10'
@@ -168,6 +172,14 @@ menu m {type:'left',
                                         ,par:°{typ:'p',exp:'Excel',cnd:""
                                         ,tit:'příjmení:15,jména:20,platba:8,datum:12,způsob:10'
                                         ,fld:'prijmeni,jmena,platba,datplatby,zpusobplat'}}
+    item {title:'Všichni, s poznámkami'                                                                 skill:'y'
+                                        ,par:°{typ:'P',exp:'Excel',cnd:"funkce!=99"
+                                        ,tit:'příjmení:15,jména:12,obec:25,počet:5,poznámka k akci:50,trvalá poznámka:50'
+                                        ,fld:'prijmeni,jmena,obec,_pocet,poznamka,note'}}
+    item {title:'Všichni, skupinky a pokoje'                                                            skill:'y'
+                                        ,par:°{typ:'P',exp:'Excel',cnd:"funkce!=99"
+                                        ,tit:'příjmení:15,jména:20,pokoj:10,skupinka:10'
+                                        ,fld:'prijmeni,jmena,pokoj,skupina'}}
   }
   menu {tag:'a', title:'informace o akci',type:'group',_sys:'*'
     item {title:'Narozeniny, výročí'    ,par:°{typ:'vv',cnd:'1'}}

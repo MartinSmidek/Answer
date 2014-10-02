@@ -56,7 +56,7 @@
   // uživatelské i knihovní moduly v PHP obsažené v $ezer_path_root
   $ezer_php= array(
     "{$EZER->version}/ezer2_fce.php",
-    'test/test_fce_fis.php',      /* různé API od Google */
+//     'test/test_fce_fis.php',      /* různé API od Google */
     'test/test_fis_google.php',
     'test/test.cg.php',
     'test/cg.php'

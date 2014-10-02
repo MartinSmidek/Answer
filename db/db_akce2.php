@@ -87,6 +87,8 @@ function akce_browse_ask($x) {
     while ( $qp && ($p= mysql_fetch_object($qp)) ) {
       $osoby.= ",{$p->id_osoba}";
       $rodiny.= ",{$p->id_rodina}";
+      if ( !isset($pobyt[$p->id_pobyt]->cleni[$p->id_osoba]) )
+        $pobyt[$p->id_pobyt]->cleni[$p->id_osoba]= (object)array();
       $pobyt[$p->id_pobyt]->cleni[$p->id_osoba]->id_tvori= $p->id_tvori;
       $pobyt[$p->id_pobyt]->cleni[$p->id_osoba]->id_rodina= $p->id_rodina;
       $pobyt[$p->id_pobyt]->cleni[$p->id_osoba]->role= $p->role;
@@ -113,6 +115,7 @@ function akce_browse_ask($x) {
       GROUP BY id_osoba
     ");
     while ( $qor && ($or= mysql_fetch_object($qor)) ) {
+      if ( !isset($osoba[$or->id_osoba]) ) $osoba[$or->id_osoba]= (object)array();
       $osoba[$or->id_osoba]->_rody= $or->_rody;
     }
     # seznamy položek
