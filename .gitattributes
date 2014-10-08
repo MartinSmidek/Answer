@@ -36,6 +36,7 @@ db/db.akce.mai.ezer -text
 db/db.akce.pece.ezer -text
 db/db.akce.tisk.ezer -text
 db/db.akce.ucast.ezer -text
+db/db.akce2.evi.ezer -text
 db/db.akce2.ezer -text
 db/db.akce2.test.ezer -text
 db/db.akce2.ucast.ezer -text
