@@ -5,7 +5,7 @@
   $app=      'test';
   $app_name= 'Test/Answer';
   $skin=     'ck';
-  $CKEditor= isset($_GET['editor']) ? $_GET['editor'] : '';
+  $CKEditor= isset($_GET['editor']) ? $_GET['editor'] : '4';
   $dbg=      isset($_GET['dbg']) ? 1 : 0;                                                    /* debugger */
 
   require_once("$app.inc");
@@ -42,6 +42,7 @@
     "./$client/ezer.css.php",
     "./$client/licensed/datepicker/datepicker_vista/datepicker_vista.css",
     "./$client/licensed/font-awesome/css/font-awesome.min.css",
+    "./test/tut.css.php",
     "./test/test.css"
   );
   $options= (object)array(
