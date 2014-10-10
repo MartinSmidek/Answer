@@ -40,7 +40,12 @@ proc akce_choose(id_akce) { var a:object
   the_hlavni.set(a.hlavni); the_soubezna.set(a.soubezna); the_cenik.set(a.cenik);
   the_cena.set(a.cena);
 }
-# ================================================================================================== ELIM
+# ================================================================================================== MODULY
+group foto { include:'onload,db.akce2.foto'
+  form _alb {
+    proc galery(fotka) {}
+  }
+}
 panel elim [0,0,807,480] { type:'popup', title:'eliminace duplicit', include:'onload,db.akce.elim' }
 # ================================================================================================== CHLAPI
 # panel chl {type:'right', _sys:'*', title:'Chlapi', include:'onclick,db.akce.chl',skill:'yac;xa' }
@@ -67,7 +72,7 @@ panel pece {type:'plain', _sys:'*', title:'Pečouni', include:'onload,db.akce.pe
 }
 panel tisk [,,,] {type:'right', _sys:'*', title:'Výpisy akce', include:'onclick,db.akce.tisk',skill:'yaa;faa;caa'  }
 # ================================================================================================== EVIDENCE
-panel evi {type:'right', _sys:'*', title:'EVIDENCE', include:'onclick,db.akce.evi', skill:'yae;fae;caa'
+panel evi {type:'right', _sys:'*', title:'EVIDENCE2', include:'onclick,db.akce2.evi', skill:'yae;fae;caa'
   proc evid_show() { alert('funguje až při druhém použití') }
   proc evid_show_rodina() { alert('funguje až při druhém použití') }
 }
@@ -722,8 +727,8 @@ form _osoba2x [,,244,322] {
   proc init_osoba() {
     form.display(0,'[^f]');
   }
-  proc show_osoba() { var height:number, tags:text
-    form.display(0,'[^f]');
+  proc show_osoba(even) { var height:number, tags:text
+    form.display(0,'[^f]'); go_evi.display(not(even));
     frame.set(osoba_config.tit.get);
     tags.set('i,I');
     [ contains('K',osoba_config.grp.get); { kontakt.get;
@@ -732,20 +737,20 @@ form _osoba2x [,,244,322] {
     [ contains('A',osoba_config.grp.get); { adresa.get;
       tags.set(conc(tags,',a,b')); adresa_r.set('')
     | tags.set(conc(tags,',a,A')); adresa_r.set(kmen.get) }];
-    [ key_spolu.get;
+    [ or(even,key_spolu.get);
       [ contains('O',osoba_config.grp.get); tags.set(conc(tags,',o')) ];
       [ contains('C',osoba_config.grp.get); tags.set(conc(tags,',c')) ];
       [ contains('P',osoba_config.grp.get); tags.set(conc(tags,',p')) ];
     ];
     [ contains('S',osoba_config.grp.get); form.set_css('db_hr','','S') | form.set_css('','db_hr','S') ];
-    [ key_spolu.get | tags.set(conc(tags,',x')) ];
+    [ or(even,key_spolu.get) | tags.set(conc(tags,',x')) ];
     height.set(sum(stack_forms(form,tags,0),0));
     frame.property(object('height',height.get));
     form.property(object('height',height.get));
   }
 
   label frame [0,10,242,50] {tag:'f', css:'ae_form', title:'osobní údaje', proc onclick() { on_click }}
-  button [121,11,,] {tag:'f', title:'^evidence', css:'db_evidence'
+  button go_evi [121,11,,] {tag:'f', title:'^evidence', css:'db_evidence'
     proc onclick() { ucast.akce_evidence_os(key_osoba.get) } }
   field key_osoba [186,10,50,] {tag:'f', format:'or', css:'Label', help:' ' }
   field key_tvori [186,20,50,] {tag:'f', format:'or', css:'Label', help:' ' }
@@ -780,7 +785,7 @@ form _osoba2x [,,244,322] {
   radio kontakt [50,0,100,18] {tag:'j', format:'n', value:'0', data:o.kontakt
     case [0,0,70,] { title:'osobní', expr:'1' }
     case [56,0,70,] { title:'rodinný:', expr:'0' }
-    proc onchange() { show_osoba }
+    proc onchange() { show_osoba(0) }
   }
   label kontakt_r [169,3,75,] {tag:'j', format:'n'}
   label [0,0,,3] {tag:'J,S', format:'n', css:'db_sep' } // zarovnání
@@ -798,7 +803,7 @@ form _osoba2x [,,244,322] {
   radio adresa [50,0,100,18] {tag:'a', format:'n', value:'0', data:o.adresa
     case [0,0,70,] { title:'osobní', expr:'1' }
     case [56,0,70,] { title:'rodinná:', expr:'0' }
-    proc onchange() { show_osoba }
+    proc onchange() { show_osoba(0) }
   }
   label adresa_r [169,3,75,12] {tag:'a', format:'n'}
   label [0,0,,3] {tag:'A,S', format:'n', css:'db_sep' } // zarovnání

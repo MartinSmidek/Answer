@@ -1923,6 +1923,85 @@ end:
 //   return $html;
 // }
 # ================================================================================================== ALBUM
+# funkce s dvojkou zacházejí se seznamem fotek:
+#   set=přidání na konec, get=vrácení n-té, del=smazání n-té a vrácení n-1 nebo n+1
+# --------------------------------------------------------------------------------------- album_get2
+# vrátí n-tou fotografii ze seznamu (-1 znamená poslední) spolu s informacemi:
+# ret =>
+#   html  = kód pro zobrazení miniatury (s href na původní velikost) nebo chybové hlášení
+#   left  = pořadí předchozí fotky nebo 0
+#   right = pořadí následující fotky nebo 0
+# ? out   = seznam s vynecháním
+function album_get2($table,$id,$n,$w,$h) {  trace();
+  global $ezer_path_root;
+  $ret= (object)array('img'=>'','left'=>0,'right'=>0,'msg'=>'');
+  // název n-té fotky
+  $nazvy= explode(',',select('fotka',$table,"id_$table=$id"));
+  $n= $n==-1 ? count($nazvy) : $n;
+  if ( !(1<=$n && $n<=count($nazvy)) ) { $ret->html= "$n je chybné pořadí fotky"; goto end; }
+  // zpracování
+  $nazev= $nazvy[$n-1];
+  $orig= "$ezer_path_root/fotky/$nazev";
+                                        display("file_exists($orig)=".file_exists($orig));
+  if ( !file_exists($orig) ) { $ret->html= "fotka <b>$nazev</b> není dostupná"; goto end; }
+  // výpočet left, right, out
+  $ret->left= $n-1;
+  $ret->right= $n >= count($nazvy) ? 0 : $n+1;
+  // zmenšení na požadovanou velikost, pokud již není
+  $dest= "$ezer_path_root/fotky/copy/$nazev";
+  if ( !file_exists($dest) ) {
+    $ok= album_resample($orig,$dest,$w,$h,0,1);
+    if ( !$ok ) { $ret->html= "fotka </b>$nazev</b> nešla zmenšit ($ok)"; goto end; }
+  }
+  // html-kód s žádostí o zaostření na straně klienta
+  $ret->html= "<a href='fotky/$nazev' target='_album' title='$nazev'><img src='fotky/copy/$nazev'
+    width='$w' onload='var x=arguments[0];img_filter(x.target,\"sharpen\",0.7,1);'/></a>";
+end:
+  return $ret;
+}
+# --------------------------------------------------------------------------------------- album_add2
+# přidá fotografii do seznamu (rodina|osoba) podle ID na konec a vrátí nové názvy
+function album_add2($table,$id,$fileinfo) { trace();
+  global $ezer_path_root, $ezer_root;
+  $name= "{$ezer_root}_{$table}_{$id}.".utf2ascii($fileinfo->name);
+  $path= "$ezer_path_root/fotky/$name";
+  $data= $fileinfo->text;
+  // test korektnosti fotky
+  if ( substr($data,0,23)=="data:image/jpeg;base64," ) {
+    // uložení fotky na disk
+    $data= base64_decode(substr("$data==",23));
+    $bytes= file_put_contents($path,$data);
+    // přidání názvu fotky do záznamu v tabulce
+    $fotky= select('fotka',$table,"id_$table=$id");
+    $fotky.= $fotky ? ",$name" : $name;
+    query("UPDATE $table SET fotka='$fotky' WHERE id_$table=$id");
+  }
+  else {
+    $name= '';          // tiché oznámení chyby
+  }
+  return $name;
+}
+# ------------------------------------------------------------------------------------ album_delete2
+# zruší n-tou fotografii ze seznamu v albu a vrátí tu nyní n-tou nebo předchozí
+function album_delete2($table,$id,$n) { trace();
+  global $ezer_path_root;
+  $ok= 0;
+  // nalezení seznamu názvů fotek
+  $fotky= explode(',',select('fotka',$table,"id_$table=$id"));
+  if ( 1<=$n && $n<=count($fotky) ) {
+    $nazev= $fotky[$n-1];
+    unset($fotky[$n-1]);
+    $nazvy= implode(',',$fotky);
+    query("UPDATE $table SET fotka='$nazvy' WHERE id_$table=$id");
+    // smazání fotky a miniatury
+    $ok= unlink("$ezer_path_root/fotky/$nazev");
+//                                         display("unlink('$ezer_path_root/fotky/$name')=$ok");
+    $ok&= unlink("$ezer_path_root/fotky/copy/$nazev");
+//                                         display("unlink('$ezer_path_root/fotky/copy/$name')=$ok");
+  }
+  return $ok;
+}
+                                                                                            // verze 1
 # ---------------------------------------------------------------------------------------- album_set
 # přidá fotografii do alba
 function album_set($id_rodina,$fileinfo,$nazev) {
@@ -1978,11 +2057,6 @@ function album_get($name,$w,$h,$msg="Fotografie ještě není k dispozici - lze 
     $src= "fotky/copy/$name";
     $html= "<a href='fotky/$name' target='_album'><img src='fotky/copy/$name'
       width='$w' onload='var x=arguments[0];img_filter(x.target,\"sharpen\",0.7,1);'/></a>";
-
-  //   $data= "iVBORw0"."KGgoAAAANSUhEUgAAACAAAAAFCAYAAAAkG+5xAAAABGdBTUEAANbY1E9YMgAAABl0RVh0U29mdHdhcm"
-  //        . "UAQWRvYmUgSW1hZ2VSZWFkeXHJZTwAAABTSURBVHjarJJRCgAgCEM9nHfy+K+fKBKzjATBDZUxFUAuU5mhnWPT"
-  //        . "SzK7YCkkQR3tsM5bImjgVwE3HIED6vFvB4w17CC4dILdD5AIwvX5OW0CDAAH+Qok/eTdBgAAAABJRU5E"."rkJggg";
-  //   $html= "<img alt='Embedded Image' src='data:image/png;base64,$data' />";
   }
   else {
     $html.= $msg;
@@ -2315,17 +2389,137 @@ function akce_kontrola_dat($par) { trace();
 # transformace na schema 2014
 # par.cmd = seznam transformací
 # par.akce = id_akce | 0
+# par.pobyt = id_pobyt | 0
 function data_transform($par) { trace();
+  global $ezer_root;
   $html= '';
   foreach (explode(',',$par->cmd) as $cmd )
   switch ($cmd ) {
+  // ---------------------------------------------- osoba: kontakty
+  // zobrazí přehled kontaktů
+  case 'kontakty':
+    //  0   1   2   3   4
+    // -.- x.- -.x x.x x.y    osobní.rodinná; single=0,clen=1
+    $tab= array(array(0,0,0,0,0),array(0,0,0,0,0));
+    $n= $k= 0;
+    $AND= $par->akce ? " AND id_akce={$par->akce}" : "";
+    $qo= mysql_qry("
+      SELECT -- o.id_osoba,t.role,adresa,o.prijmeni,r.nazev,
+        COUNT(DISTINCT r.id_rodina) AS _rodin, COUNT(rt.id_tvori) AS _clenu,
+        REPLACE(REPLACE(CONCAT(o.telefon,o.email),' ',''),';',',') AS _kontakt_o,
+        REPLACE(REPLACE(CONCAT(r.telefony,r.emaily),' ',''),';',',') AS _kontakt_r
+        -- REPLACE(REPLACE(CONCAT(o.email),' ',''),';',',') AS _kontakt_o,
+        -- REPLACE(REPLACE(CONCAT(r.emaily),' ',''),';',',') AS _kontakt_r
+      FROM osoba AS o
+      JOIN tvori AS t USING(id_osoba)
+      JOIN rodina AS r ON r.id_rodina=t.id_rodina
+      JOIN tvori AS rt ON rt.id_rodina=r.id_rodina
+      WHERE 1 $AND
+      GROUP BY o.id_osoba
+    ");
+    while ( $qo && ($o= mysql_fetch_object($qo)) ) {
+      $n++;
+      if ( $o->_rodin>1 ) {
+        $k++; continue;
+      }
+      $stav= $o->_clenu==1 ? 0 : 1;
+      $r_kontakt= $o->_kontakt_r=="CZ" ? "" : $o->_kontakt_r;
+      $o_kontakt= $o->_kontakt_o=="CZ" ? "" : $o->_kontakt_o;
+      if ( $o_kontakt=='' && $r_kontakt=='' )     $tab[$stav][0]++;
+      elseif ( $o_kontakt!='' && $r_kontakt=='' ) $tab[$stav][1]++;
+      elseif ( $o_kontakt=='' && $r_kontakt!='' ) $tab[$stav][2]++;
+      elseif ( $o_kontakt==$r_kontakt )           $tab[$stav][3]++;
+      elseif ( $o_kontakt!=$r_kontakt )           $tab[$stav][4]++;
+      else fce_warning("?");
+    }
+                                                        debug($tab);
+    // formátování
+    $hr= array('single','člen');
+    $hd= array('-.-','x.-','-.x','x.x','x.y');
+    $hdr= "kontakty $ezer_root";
+    $t= "<table class='stat'><tr><th>$hdr</th><th colspan=6>osoba.rodina</th></tr><tr><th></th>";
+    foreach($hd as $i=>$clmn) {
+      $t.= "<th>$clmn</th>";
+    }
+    $t.= "<th>&Sigma;</th></tr>";
+    foreach($tab as $s=>$row) {
+      $t.= "<tr><th>{$hr[$s]}</th>";
+      $sum= 0;
+      foreach($row as $i=>$clmn) {
+        $sum+= $clmn;
+        $t.= "<td>$clmn</td>";
+      }
+      $t.= "<th>$sum</th></tr>";
+    }
+    $t.= "</table>";
+    $html.= "<br>probráno $n osob, z toho $k je ve více rodinách $t";
+    break;
+  // ---------------------------------------------- osoba: adresy
+  // zobrazí přehled adres
+  case 'adresy':
+    //  0   1   2   3   4
+    // -.- x.- -.x x.x x.y    osobní.rodinná; single=0,clen=1
+    $tab= array(array(0,0,0,0,0),array(0,0,0,0,0));
+    $n= $k= 0;
+    $AND= $par->akce ? " AND id_akce={$par->akce}" : "";
+    $qo= mysql_qry("
+      SELECT -- o.id_osoba,t.role,adresa,o.prijmeni,r.nazev,
+        COUNT(DISTINCT r.id_rodina) AS _rodin, COUNT(rt.id_tvori) AS _clenu,
+        TRIM(CONCAT(o.ulice,o.psc,o.obec,o.stat)) AS _adresa_o,
+        TRIM(CONCAT(r.ulice,r.psc,r.obec,r.stat)) AS _adresa_r
+      FROM osoba AS o
+      JOIN tvori AS t USING(id_osoba)
+      JOIN rodina AS r ON r.id_rodina=t.id_rodina
+      JOIN tvori AS rt ON rt.id_rodina=r.id_rodina
+      WHERE 1 $AND
+      GROUP BY o.id_osoba -- HAVING _rodin=1 -- AND _clenu>1
+        -- AND NOT (_adresa_r='' OR _adresa_r='CZ') AND NOT (_adresa_o='' OR _adresa_o='CZ') AND _adresa_o!=_adresa_r
+    ");
+    while ( $qo && ($o= mysql_fetch_object($qo)) ) {
+      $n++;
+      if ( $o->_rodin>1 ) {
+        $k++; continue;
+      }
+      $stav= $o->_clenu==1 ? 0 : 1;
+      $r_adresa= $o->_adresa_r=="CZ" ? "" : $o->_adresa_r;
+      $o_adresa= $o->_adresa_o=="CZ" ? "" : $o->_adresa_o;
+      if ( $o_adresa=='' && $r_adresa=='' )     $tab[$stav][0]++;
+      elseif ( $o_adresa!='' && $r_adresa=='' ) $tab[$stav][1]++;
+      elseif ( $o_adresa=='' && $r_adresa!='' ) $tab[$stav][2]++;
+      elseif ( $o_adresa==$r_adresa )           $tab[$stav][3]++;
+      elseif ( $o_adresa!=$r_adresa )           $tab[$stav][4]++;
+      else fce_warning("?");
+    }
+                                                        debug($tab);
+    // formátování
+    $hr= array('single','člen');
+    $hd= array('-.-','x.-','-.x','x.x','x.y');
+    $hdr= "adresy $ezer_root";
+    $t= "<table class='stat'><tr><th>$hdr</th><th colspan=6>osoba.rodina</th></tr><tr><th></th>";
+    foreach($hd as $i=>$clmn) {
+      $t.= "<th>$clmn</th>";
+    }
+    $t.= "<th>&Sigma;</th></tr>";
+    foreach($tab as $s=>$row) {
+      $t.= "<tr><th>{$hr[$s]}</th>";
+      $sum= 0;
+      foreach($row as $i=>$clmn) {
+        $sum+= $clmn;
+        $t.= "<td>$clmn</td>";
+      }
+      $t.= "<th>$sum</th></tr>";
+    }
+    $t.= "</table>";
+    $html.= "<br>probráno $n osob, z toho $k je ve více rodinách $t";
+    break;
   // ---------------------------------------------- osoba: adresa
   // nastaví osoba.adresa=1 pokud je adresa osobní tj. různá od rodinné
   // (pokud je rodina nejednoznačná, zatím nic pak bere se ta s rolí a|b)
   // podle osoba --> tvori.role --> rodina
-//   case 'adresa':
-//     $n= 0;
-//     $AND= $par->akce ? " AND id_akce={$par->akce}" : "";
+  case 'adresa':
+    $n= 0;
+    $AND= $par->akce ? " AND id_akce={$par->akce}" : "";
+    $AND.= $par->pobyt ? " AND id_pobyt={$par->pobyt}" : "";
 //     // 1) osobní a rodinná jsou totožné => adresa=rodinná
 //     $qo= mysql_qry("
 //       SELECT id_osoba,adresa,COUNT(id_rodina) AS _rodin,
@@ -2344,14 +2538,15 @@ function data_transform($par) { trace();
 //         display("$roles:mysql_qry(\"UPDATE pobyt SET pouze=$pouze WHERE id_pobyt={$p->id_pobyt}\")");
 //       }
 //     }
-//     $html.= "<br>doplněno $n x pobyt.pouze";
-//     break;
+    $html.= "<br>doplněno $n x osoba.adresa=1";
+    break;
   // ---------------------------------------------- pobyt: pouze
   // doplní pouze=1|2 v akcích s nastaveným i0_rodina podle role=a|b
   // podle spolu --> osoba.role
   case 'pouze':
     $n= 0;
     $AND= $par->akce ? " AND id_akce={$par->akce}" : "";
+    $AND.= $par->pobyt ? " AND id_pobyt={$par->pobyt}" : "";
     $qp= mysql_qry("
       SELECT GROUP_CONCAT(role ORDER BY role SEPARATOR '') AS _roles,id_pobyt
       FROM akce AS a

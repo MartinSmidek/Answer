@@ -34,11 +34,9 @@ echo <<<__EOD
 .info-stat      { width:624px; height:100%; z-index:0; background-color:#dce7f4; padding:5px; }
 /* Label jako přepínací tlačítko */
 .ae_butt_on {
-  cursor:default; background-color:$b_work; z-index:0; /*behavior:url(ck/border-radius-ie8.htc);*/
-  -moz-border-radius:5px; -webkit-border-radius:5px; -khtml-border-radius:5px; }
+  cursor:default; background-color:$b_work; z-index:0; border-radius:5px; text-align:center;  }
 .ae_butt_off {
-  cursor:default; background-color:#effdf1; z-index:0; /*behavior:url(ck/border-radius-ie8.htc);*/
-  -moz-border-radius:5px; -webkit-border-radius:5px; -khtml-border-radius:5px; }
+  cursor:default; background-color:#effdf1; z-index:0; border-radius:5px; text-align:center;  }
 .ae_butt_on:hover {
   background:url("../../skins/ch/label_switch_on_hover.png") repeat-x scroll 0 -1px transparent !important; }
 .ae_butt_off:hover {
