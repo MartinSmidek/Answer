@@ -40,7 +40,7 @@ proc onresize(w,h) {
     curr_h.set(0); h_change_all()
   | and(gt(h,min_h.get),not(eq(h,sum(curr_h.get,min_h.get))));
     curr_h.set(minus(h,min_h.get)); h_change_all() ];
-  echo("resize(",w,",",h,") ... curr_h=",curr_h.get);
+#   echo("resize(",w,",",h,") ... curr_h=",curr_h.get);
 }
 
 # změna výšky oproti základní min_h

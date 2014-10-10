@@ -92,7 +92,7 @@ use muz:   form _muz     [400,0,,]   { tag:'akce1', format:'n' }
 use zen:   form _zena    [400,0,,]   { tag:'akce1', format:'n' }
 use pob:   form _pobyt   [400,0,,]   { tag:'akce1', format:'n' }
 use cmd:   form _cmd     [400,0,,]   { tag:'akce1', format:'n' }
-use alb:   form _album   [400,0,,]   { tag:'akce0', format:'n' }
+use alb:   form foto._alb [400,26,,] { tag:'akce0', format:'n' }
 # záložka plateb
 use pla:   form _platba  [400,0,,]   { tag:'akce0', format:'n' }
 use cmdp:  form _cmd_p   [400,0,,]   { tag:'akce0', format:'n' }
@@ -209,37 +209,53 @@ form _page {
   }
   label [0,16,582,530] { css:'ae_work'}
 }
+
 # ------------------------------------------------------------------------------------------- _album
-form _album {
-  label drop [38,35,500,45] { format:'c' }
-  label foto [38,85,500,400] { format:'c' }
-  button smazat [250,500,,] { title:'Odstranit fotografii', format:'n'
-    proc onclick() {
-      confirm("Opravdu odstranit tuto fotografii?");
-      { ask('album_delete',u.b.key_rodina.get); u.b.fotka.let(''); foto.set('');
-      | warning("fotografii nebylo možné smazat");
-      }
-  }}
-  proc ondrop(fileinfo) {
-    var name: text
-    drop.set_css('','drop_area drop_area_hover');
-    name.set(ask('album_set',u.b.key_rodina.get,fileinfo,
-      conc(u.b._nazev.get,' ',u.b.jmeno_m.get,' ',u.b.jmeno_z.get)));
-    u.b.fotka.let(name);
-    smazat.display(1);
-    drop_set(0);
-    drop.set_css('','drop_area drop_area_hover drop_area_run');
-    drop_init;
-  }
-  proc drop_init() {
-    form.file_drop(drop,°{css_hover:'drop_area_hover',css_run:'drop_area_run',handler:'ondrop',
-      max_width:1200,max_height:960});
-  }
-  proc drop_set(sharp) {
-    foto.set(ask('album_get',u.b.fotka.get,500,400));
-    //[ sharp; foto.image_filter('sharpen') ] -- sharp se dělá z php
-  }
-}
+#         { has_skill("yaa+;faa+;caa+");
+#           { u.b.fotka.get; //echo("u.b.fotka='",u.b.fotka.get,"'");
+#             // známe fotku
+#             alb.drop.set("<br>Fotografii můžeš nahradit přetažením myší ze složky svého počítače sem");
+#             alb.smazat.display(1);
+#             alb.drop_set(1); alb.drop_init
+#           | // není žádná fotka
+#             alb.smazat.display(0);
+#             alb.drop.set("<br>Sem můžeš přidat fotografii přetažením myší ze složky svého počítače");
+#             alb.drop.set_css('drop_area',''); alb.foto.set(''); alb.drop_init
+#           | echo('file_drop nelze zahájit')
+#           }
+#         | u.b.fotka.get; alb.drop_set(1)
+#         }
+# form _album {
+#   label drop [38,35,500,45] { format:'c' }
+#   label foto [38,85,500,400] { format:'c' }
+#   button smazat [250,500,,] { title:'Odstranit fotografii', format:'n'
+#     proc onclick() {
+#       confirm("Opravdu odstranit tuto fotografii?");
+#       { ask('album_delete',u.b.key_rodina.get); u.b.fotka.let(''); foto.set('');
+#       | warning("fotografii nebylo možné smazat");
+#       }
+#   }}
+#   proc ondrop(fileinfo) {
+#     var name: text
+#     drop.set_css('','drop_area drop_area_hover');
+#     name.set(ask('album_set',u.b.key_rodina.get,fileinfo,
+#       conc(u.b._nazev.get,' ',u.b.jmeno_m.get,' ',u.b.jmeno_z.get)));
+#     u.b.fotka.let(name);
+#     smazat.display(1);
+#     drop_set(0);
+#     drop.set_css('','drop_area drop_area_hover drop_area_run');
+#     drop_init;
+#   }
+#   proc drop_init() {
+#     form.file_drop(drop,°{css_hover:'drop_area_hover',css_run:'drop_area_run',handler:'ondrop',
+#       max_width:1200,max_height:960});
+#   }
+#   proc drop_set(sharp) {
+#     foto.set(ask('album_get',u.b.fotka.get,500,400));
+#     //[ sharp; foto.image_filter('sharpen') ] -- sharp se dělá z php
+#   }
+# }
+
 # ---------------------------------------------------------------------------------------- _aktivity
 form _aktivity {
 #   field id_osoba
@@ -886,20 +902,7 @@ form _ucast [,,400,] { css:'ds_form'
         a_zen.ucasti(id_z.get);
       },
       'foto',{
-        { has_skill("yaa+;faa+;caa+");
-          { u.b.fotka.get; //echo("u.b.fotka='",u.b.fotka.get,"'");
-            // známe fotku
-            alb.drop.set("<br>Fotografii můžeš nahradit přetažením myší ze složky svého počítače sem");
-            alb.smazat.display(1);
-            alb.drop_set(1); alb.drop_init
-          | // není žádná fotka
-            alb.smazat.display(0);
-            alb.drop.set("<br>Sem můžeš přidat fotografii přetažením myší ze složky svého počítače");
-            alb.drop.set_css('drop_area',''); alb.foto.set(''); alb.drop_init
-          | echo('file_drop nelze zahájit')
-          }
-        | u.b.fotka.get; alb.drop_set(1)
-        }
+        alb.galery('rodina',key_rodina.get);
       },
       {stop}
       );

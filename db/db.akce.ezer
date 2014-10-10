@@ -42,6 +42,12 @@ proc akce_choose(id_akce) { var a:object
   the_cena.set(a.cena);
 }
 
+# ================================================================================================== MODULY
+group foto { include:'onload,db.akce2.foto'
+  form _alb {
+    proc galery(fotka) {}
+  }
+}
 # ================================================================================================== ELIM
 panel elim [0,0,807,480] { type:'popup', title:'eliminace duplicit', include:'onload,db.akce.elim' }
 # ================================================================================================== CHLAPI
