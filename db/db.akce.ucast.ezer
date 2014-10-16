@@ -4,6 +4,8 @@
 # Ans(w)er/Ezer                                     (c) 2007-2012 Martin Šmídek <martin@smidek.eu> #
 # ------------------------------------------------------------------------------------------------ #
 
+proc ucast_selected() { return(u.b.selected('get')) }
+
 var the_duakce_local: number    // zobrazená akce - pokud se liší od the_duakce, je třeba překreslit
 var the_pobyt: number
 var zalozka: text               // evid | plat | akce
@@ -25,7 +27,7 @@ proc onfocus() {
   switch(the_soubeh.get,
   0,{ header.soubeh.display(0); panel.display(2,'akce1'); },
   1,{ header.soubeh.display(1); panel.display(2,'akce1'); header.soubeh.set('^Děti') },
-  2,{ header.soubeh.display(1); panel.display(2,'akce2');  header.soubeh.set('^Kurs') }
+  2,{ header.soubeh.display(1); panel.display(2,'akce2'); header.soubeh.set('^Kurs') }
   );
   page.page_init
 }

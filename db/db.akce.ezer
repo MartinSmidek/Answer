@@ -63,6 +63,7 @@ panel ucast {type:'plain', _sys:'*',
     include:'onload,db.akce.ucast',skill:'yaa;faa;caa'
   proc init_ucast2() { alert('napřed klikni na Databáze|Účastníci') }
   proc akce_show() { alert('napřed klikni na Databáze|Účastníci') }
+  proc ucast_selected() {}
 }
 panel pece {type:'plain', _sys:'*', title:'Pečouni', include:'onload,db.akce.pece',skill:'yaa;faa;caa'
   proc init_pece() { alert('napřed klikni na Databáze|Pečouni') }

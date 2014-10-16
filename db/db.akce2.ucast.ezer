@@ -49,6 +49,7 @@ proc osoby_show() {
   [ evid.os1.key; evid.os1.show_osoba(0) | evid.os1.init_osoba ];
   [ evid.os2.key; evid.os2.show_osoba(0) | evid.os2.init_osoba ];
 }
+proc ucast_selected() { return(u.b.selected('get')) }
 proc rodina_show() { evid.rod.key_rodina.get; evid.rod.show_rodina | evid.rod.init_rodina }
 proc spolu_show() { evid.pob1.key; evid.pob1.show_spolu; evid.pob2.key; evid.pob2.show_spolu }
 # úpravy formulářů pro y;f;c
@@ -734,19 +735,19 @@ form _evidence {
   | and(eq(x,'p'),not(eq(zmode.get,x))); zmode.set('p');
     foreach(array(os1,os2,rod),z_down); foreach(array(pob1,pob2,pob),z_up);
   }
-  proc z_up(x)   { x.set_css('shift_up','shift_down','.*') }
-  proc z_down(x) { x.set_css('shift_down','shift_up','.*') }
+  proc z_up(x)   { x.get.set_css('shift_up','shift_down'); x.set_css('shift_up','shift_down','.*') }
+  proc z_down(x) { x.get.set_css('shift_down','shift_up'); x.set_css('shift_down','shift_up','.*') }
   # osoba 1 a 2
-  use os1: form _osoba2x [5,10,,] {
+  use os1: form _osoba2x [5,20,,] {
     proc on_click() { evid.z_change('o') }
     proc onchanged() { evid.d_change('o1') }
   }
-  use os2: form _osoba2x [255,10,,] {tag:'2',
+  use os2: form _osoba2x [255,20,,] {tag:'2',
     proc on_click() { evid.z_change('o') }
     proc onchanged() { evid.d_change('o2') }
   }
   # rodina
-  use rod: form _rodina2 [505,10,,] {
+  use rod: form _rodina2 [505,20,,] {
     // pozor - proměnné jsou vzhledem k db.akce2._rodina2
     proc onchanged() { evid.d_change('r') }
     proc on_click() { evid.z_change('o') }

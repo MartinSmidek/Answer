@@ -2651,7 +2651,7 @@ function akce_i0_rodina($akce) {
   return "doplněno $n x i0_rodina";//, $r x s_role";
 }
 # ================================================================================================== AKCE
-# ---------------------------------------------------------------------------------------- akce_id2a
+# --------------------------------------------------------------------------------------- akce_zmeny
 # vrácení klíčů pobyt u kterých došlo ke změně po daném datu a čase
 function akce_zmeny($id_akce,$h) {  trace();
   $ret= (object)array('errs'=>'','pobyt'=>'','chngs'=>array(),'osoby'=>array());
@@ -4141,6 +4141,7 @@ function akce_sestava_pecouni($akce,$par,$title,$vypis,$export=false) { trace();
 # generování sestavy pro účastníky $akce - jednotlivce
 #   $fld = seznam položek s prefixem
 #   $cnd = podmínka
+#   $par->sel = seznam id_pobyt
 function akce_sestava_lidi($akce,$par,$title,$vypis,$export=false) { trace();
   $result= (object)array();
   $typ= $par->typ;
@@ -4172,6 +4173,11 @@ function akce_sestava_lidi($akce,$par,$title,$vypis,$export=false) { trace();
   case '_zprava':
     $ord= "CASE WHEN _vek<6 THEN 1 WHEN _vek<18 THEN 2 WHEN _vek<26 THEN 3 ELSE 9 END,prijmeni";
     break;
+  }
+  // případné omezení podle selected na seznam pobytů
+  if ( $par->sel && $par->selected ) {
+                                                display("i.par.sel=$par->sel");
+    $cnd.= " AND p.id_pobyt IN ($par->selected)";
   }
   // data akce
   $qry=  "SELECT
