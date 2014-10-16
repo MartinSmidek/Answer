@@ -133,7 +133,7 @@ form _page {
 #     proc on_click() { z_change('r') }
 #     proc onchanged() { page.d_change('r') }
 #     select rodiny [192,32,104,] {tag:'a', format:'t', title:"^zobrazená rodina", help:'výběr jiné rodiny',
-      proc rodiny.onchanged() { var x:object
+      proc rodina_changed() { var x:object
         x.set(ask('akce_evid',page.clen.get,this.key));
         page.cleni.browse_fill(x.cleni); page.cleni.raise('onrowclick',page.clen.get);
         page.rod.r.load(this.key); page.rod.call('od_svatby')

@@ -222,6 +222,14 @@ menu m {type:'left', active:*
                                         ,cnd:"role='d' AND pfunkce NOT IN (4,5,6,8) AND funkce!=99"
                                         ,ord:"IF(_vek>18,'AAA',prijmeni)"
                                         ,tit:'jméno:20, příjmení:15',fld:'jmeno,prijmeni'}}
+    item {title:'Chůvy'                 ,par:°{typ:'j',exp:'Excel',exp2:'PDF-jmenovky'
+                                        ,cnd:"role='d' AND pfunkce IN (5) AND funkce!=99"
+                                        ,ord:"IF(_vek>18,'AAA',prijmeni)"
+                                        ,tit:'jméno:20, příjmení:15',fld:'jmeno,prijmeni'}}
+    item {title:'Chůvy (výběr)'         ,par:°{typ:'j',exp:'Excel',exp2:'PDF-jmenovky',sel:'yes'
+                                        ,cnd:"role='d' AND pfunkce IN (5) AND funkce!=99"
+                                        ,ord:"IF(_vek>18,'AAA',prijmeni)"
+                                        ,tit:'jméno:20, příjmení:15',fld:'jmeno,prijmeni'}}
     item {title:'Pečouni'               ,par:°{typ:'j',exp:'Excel',exp2:'PDF-jmenovky'
                                         ,cnd:"p.funkce=99",ord:"prijmeni"
                                         ,tit:'jméno:20, příjmení:15',fld:'jmeno,prijmeni'}}
