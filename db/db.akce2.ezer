@@ -717,9 +717,12 @@ form _rodina2p [,,360,229] { css:'ae_frame'
     title:'^role'}
 
   // výběr rodiny
+  proc rodina_changed() {}
   field  rodiny0 [Lr+5,32,104,] {tag:'n', title:"^název nové rodiny", data:r.nazev, format:'n' }
   field  rodiny1 [Lr+5,32,104,] {tag:'m', title:"^oprava názvu rodiny", data:r.nazev, format:'n' }
-  select rodiny  [Lr+5,32,104,] {tag:'a', format:'t', title:"^zobrazená rodina", help:'výběr jiné rodiny'}
+  select rodiny  [Lr+5,32,104,] {tag:'a', format:'t', title:"^zobrazená rodina", help:'výběr jiné rodiny'
+    proc onchanged() {}
+  }
   button [Lr+109,33,16,16] {tag:'a,o', type:'html', title:"[fa-circle-o]",
     style:"font-size:9px;font-weight:bold;padding-left:2px"
     proc onclick() { form.display(0,'a'); form.display(1,'m'); rodiny1.set(rodiny.get); rodiny1.change;
