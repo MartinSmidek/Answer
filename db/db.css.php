@@ -49,7 +49,7 @@ body { position:absolute; width:100%; height:100%; }
 .neucast  { text-decoration:line-through; color:#aaaaaa; }
 
 .shift_up   { z-index:1; }
-.shift_up[class*=ae_form]  { z-index:1; box-shadow:2px 2px 10px #333; }
+.shift_up[class*=ae_frame]  { z-index:1; box-shadow:2px 2px 10px #333; }
 .shift_down { z-index:0; }
 .datepicker_vista { z-index:3 !important; }
 
@@ -102,13 +102,16 @@ div.Element .Label, div.Select .Label, div.FieldDate .Label { margin-top:1px }
   background:url("../../skins/ck/label_switch_on_hover.png") repeat-x scroll 0 -1px transparent; }
 .ae_butt_off:hover {
   background:url("../../skins/ck/label_switch_off_hover.png") repeat-x scroll 0 -1px transparent; }
+/* přenesení barev */
+.frame_label_up { color:$s1_brow; font-weight:bold; padding-left:5px; }
+.frame_label_dn { color:white;    font-weight:bold; padding-left:5px; }
 /* rámečky formulářů */
 .ae_info        {
-  background-color:#f5f5f5; border:1px solid #f5f5f5; z-index:-1; /*behavior:url(ck/border-radius-ie8.htc);*/
-  -moz-border-radius:5px; -webkit-border-radius:5px; -khtml-border-radius:5px; }
+  background-color:#f5f5f5; border:1px solid #f5f5f5; z-index:-1;
+  border-radius:5px; }
 .ae_work        {
-  background-color:$b_work; z-index:0; /*behavior:url(ck/border-radius-ie8.htc);*/
-  -moz-border-radius:5px; -webkit-border-radius:5px; -khtml-border-radius:5px; }
+  background-color:$b_work; z-index:0;
+  border-radius:5px; }
 .ae_form        {
   background-color:$b_work; z-index:0; border:1px solid $s1_brow; color:$s1_brow;
   border-radius:3px; text-indent:7px; font-weight:bold; }
@@ -118,13 +121,15 @@ div.Element .Label, div.Select .Label, div.FieldDate .Label { margin-top:1px }
 .form_switch    {
   background-color:$b_work; cursor:default; font-weight:bold; }
 .ae_part        {
-  background-color:$b_part; border:1px solid $s1_brow; z-index:0;  /*behavior:url(ck/border-radius-ie8.htc);*/
-  /*-moz-border-radius:5px; -webkit-border-radius:5px; -khtml-border-radius:5px;*/  }
+  background-color:$b_part; border:1px solid $s1_brow; z-index:0;
+  border-radius:5px;  }
 .ae_part_label {
   background-color:$b_part; color:$s1_brow; padding:0 5px; z-index:0; }
 .ae_parm        {
-  background-color:$b_parm; border:1px solid #f5f5f5; z-index:0;  /*behavior:url(ck/border-radius-ie8.htc);*/
-  -moz-border-radius:5px; -webkit-border-radius:5px; -khtml-border-radius:5px;  }
+  background-color:$b_parm; border:1px solid #f5f5f5; z-index:0;
+  border-radius:5px; }
+.ae_frame       {
+  background-color:$b_work; z-index:0; border:1px solid $s1_brow; border-radius:3px;  }
 /* barvení řádků browse */
 .nakursu        { background-color:#dfa66f !important; }
 .fis_red        { background-color:#933; }

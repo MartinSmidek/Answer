@@ -1,5 +1,33 @@
 <?php # (c) 2009-2010 Martin Smidek <martin@smidek.eu>
 # ================================================================================================== ÚČASTNÍCI
+# ---------------------------------------------------------------------------------- akce_evid
+function akce_evid($id_osoba,$id_rodina=0) {
+  $cleni= "";
+  $rodiny= array();
+  $rodina= 0;
+  $AND= $id_rodina ? "AND r.id_rodina=$id_rodina" : '';
+  $qc= mysql_qry("
+    SELECT rto.id_osoba,rto.jmeno,rto.prijmeni,rto.narozeni,rt.role,r.id_rodina,nazev
+    FROM osoba AS o
+    JOIN tvori AS ot ON ot.id_osoba=o.id_osoba
+    JOIN rodina AS r ON r.id_rodina=ot.id_rodina
+    JOIN tvori AS rt ON rt.id_rodina=r.id_rodina
+    JOIN osoba AS rto ON rto.id_osoba=rt.id_osoba
+    WHERE o.id_osoba=$id_osoba $AND
+    ORDER BY r.id_rodina,rt.role,rto.narozeni
+  ");
+  while ( $qc && ($c= mysql_fetch_object($qc)) ) {
+    if ( !isset($rodiny[$c->id_rodina]) ) {
+      $rodiny[$c->id_rodina]= "{$c->nazev}:{$c->id_rodina}";
+      if ( !$rodina ) $rodina= $c->id_rodina;
+    }
+    if ( $c->id_rodina!=$rodina ) continue;
+    $vek= roku_k($c->narozeni);
+    $cleni.= "|{$c->id_osoba}|{$c->prijmeni} {$c->jmeno}|$vek|{$c->role}";
+//                                                         display("{$c->jmeno} {$c->narozeni} $vek");
+  }
+  return (object)array('cleni'=>substr($cleni,1),'rodiny'=>implode(',',$rodiny),'rodina'=>$rodina);
+}
 # ---------------------------------------------------------------------------------- akce_browse_ask
 # obsluha browse s optimize:ask
 # x->order= {a|d} polozka
