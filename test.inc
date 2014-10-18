@@ -27,7 +27,7 @@
       'ezer_system'   => array(0,'localhost','gandi','','utf8','ezer_test'))
   );
   // kořeny cest
-  $path_root=  array("/home/www/ezer/www-ys2","C:/Apache/htdocs/ezer/www-ys2");
+  $path_root=  array("/home/www/ezer/www-ys/2","C:/Apache/htdocs/ezer/www-ys2");
   $path_pspad= array(null,"C:/Program Files (x86)/PSPad editor/Syntax");
   // ostatní parametry
   $tracking= '_track';

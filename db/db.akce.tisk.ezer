@@ -344,7 +344,6 @@ menu m {type:'left', active:*
   proc onclick (i) { var x: object
     the_par.set(i.par);
     [ the_par.get('sel'); the_par.set(ucast.call('ucast_selected'),'selected') ]; // doplnění výběru id_pobyt
-                                        echo(debug(the_par.get));
     the_vypis.set(conc(i.owner.title,' - ',i.title));
     { i.par.exp; info.export.display(1); info.export.set(i.par.exp) | info.export.display(0) };
     { i.par.exp2; info.export2.display(1); info.export2.set(i.par.exp2) | info.export2.display(0) };
