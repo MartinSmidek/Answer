@@ -207,6 +207,7 @@ $names= array(
  'sys' => (object)array('op'=>'ff'),
  'tabindex' => (object)array('op'=>'on'),
  'tag' => (object)array('op'=>'os'),
+ 'tagged' => (object)array('op'=>'fm'),
  'title' => (object)array('op'=>'os'),
  'to_trace' => (object)array('op'=>'on'),
  'touch' => (object)array('op'=>'ff'),

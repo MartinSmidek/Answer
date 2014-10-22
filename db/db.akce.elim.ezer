@@ -166,6 +166,8 @@ form _osoby [,,Wr,Hr] {
   field ido { data:o.id_osoba }
   field prijmeni [Lr+5,To+30,89,]    {tag:'o', data:o.prijmeni, title:'^příjmení', help:'příjmení'}
   field rodne    [Lr+5,To+64,89,]    {tag:'o', data:o.rodne, help:'rodné příjmení', title:'^rodné příjmení'}
+  button         [Lr+97,To+64,,]     {tag:'o', type:'html', title:'[fa-angle-double-up]', proc onclick() {
+    bs._nazev.set_query(1,conc(rodne.get,' ',jmeno.get),1); }}
   field jmeno    [Lr+109,To+30,79,]  {tag:'o', data:o.jmeno, title:'^jméno'}
   radio sex [Lr+200,To+25,50,35]     {tag:'o', data:o.sex, value:'1'
     case [0,2,50,]  { title:'muž',  expr:'1' }

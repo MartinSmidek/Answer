@@ -1,32 +1,76 @@
 <?php # (c) 2009-2010 Martin Smidek <martin@smidek.eu>
 # ================================================================================================== ÚČASTNÍCI
-# ---------------------------------------------------------------------------------- akce_evid
-function akce_evid($id_osoba,$id_rodina=0) {
+# ----------------------------------------------------------------------------------- akce_save_role
+# zapíše roli - je to netypická číselníková položka definovaná jako VARCHAR(1)
+function akce_save_role($id_tvori,$role) { //trace();
+  return mysql_qry("UPDATE tvori SET role='$role' WHERE id_tvori=$id_tvori");
+}
+# ---------------------------------------------------------------------------------------- akce_evid
+# hledání a) osoby a jejích rodin b) rodiny (pokud je id_osoba=0)
+function akce_evid($id_osoba,$id_rodina) { //trace();
   $cleni= "";
   $rodiny= array();
-  $rodina= 0;
-  $AND= $id_rodina ? "AND r.id_rodina=$id_rodina" : '';
-  $qc= mysql_qry("
-    SELECT rto.id_osoba,rto.jmeno,rto.prijmeni,rto.narozeni,rt.role,r.id_rodina,nazev
-    FROM osoba AS o
-    JOIN tvori AS ot ON ot.id_osoba=o.id_osoba
-    JOIN rodina AS r ON r.id_rodina=ot.id_rodina
-    JOIN tvori AS rt ON rt.id_rodina=r.id_rodina
-    JOIN osoba AS rto ON rto.id_osoba=rt.id_osoba
-    WHERE o.id_osoba=$id_osoba $AND
-    ORDER BY r.id_rodina,rt.role,rto.narozeni
-  ");
-  while ( $qc && ($c= mysql_fetch_object($qc)) ) {
-    if ( !isset($rodiny[$c->id_rodina]) ) {
-      $rodiny[$c->id_rodina]= "{$c->nazev}:{$c->id_rodina}";
-      if ( !$rodina ) $rodina= $c->id_rodina;
+  $rodina= $rodina1= $id_rodina;
+  $id_osoba ? "o.id_osoba=$id_osoba" : "r.id_rodina=$id_rodina";
+  if ( $id_osoba ) {
+    $clen= array();
+    $qc= mysql_qry("
+      SELECT rto.id_osoba,rto.jmeno,rto.prijmeni,rto.narozeni,rt.id_tvori,rt.role,r.id_rodina,nazev
+      FROM osoba AS o
+      JOIN tvori AS ot ON ot.id_osoba=o.id_osoba
+      JOIN rodina AS r ON r.id_rodina=ot.id_rodina
+      JOIN tvori AS rt ON rt.id_rodina=r.id_rodina
+      JOIN osoba AS rto ON rto.id_osoba=rt.id_osoba
+      WHERE o.id_osoba=$id_osoba
+      ORDER BY rt.role,rto.narozeni
+    ");
+    while ( $qc && ($c= mysql_fetch_object($qc)) ) {
+      $ido= $c->id_osoba;
+      $idr= $c->id_rodina;
+      $clen[$idr][$ido]= $c;
+      $clen[0][$ido].= ",{$c->nazev}:$idr";
+      $clen[$idr][$ido]->_vek= $c->narozeni=='0000-00-00' ? '?' : roku_k($c->narozeni);
+      // určení zobrazené rodiny
+      if ( !$rodina ) $rodina1=  $c->id_rodina;
+      if ( !$rodina && $ido==$id_osoba && ($c->role=='a' || $c->role=='b'))  $rodina= $c->id_rodina;
     }
-    if ( $c->id_rodina!=$rodina ) continue;
-    $vek= roku_k($c->narozeni);
-    $cleni.= "|{$c->id_osoba}|{$c->prijmeni} {$c->jmeno}|$vek|{$c->role}";
-//                                                         display("{$c->jmeno} {$c->narozeni} $vek");
+    if ( !$rodina ) $rodina= $rodina1;
+//                                                 debug($clen,"rodina=$rodina");
+    foreach($clen[$rodina] as $ido=>$c) {
+      if ( $rodina && ($c->id_rodina==$rodina ||$c->id_osoba==$id_osoba)) {
+        $rodiny= substr($clen[0][$ido],1);
+        $role= $c->role;
+        $cleni.= "|$ido|{$c->id_tvori}|$rodiny|{$c->prijmeni} {$c->jmeno}|{$c->_vek}|$role";
+      }
+    }
   }
-  return (object)array('cleni'=>substr($cleni,1),'rodiny'=>implode(',',$rodiny),'rodina'=>$rodina);
+  else {
+    $qc= mysql_qry("
+      SELECT rto.id_osoba,rto.jmeno,rto.prijmeni,rto.narozeni,rt.role,r.id_rodina,r.nazev,
+        GROUP_CONCAT(CONCAT(otr.nazev,':',otr.id_rodina)) AS _rodiny
+      FROM rodina AS r
+      JOIN tvori AS rt ON rt.id_rodina=r.id_rodina
+      JOIN osoba AS rto ON rto.id_osoba=rt.id_osoba
+      JOIN tvori AS ot ON ot.id_osoba=rto.id_osoba
+      JOIN rodina AS otr ON otr.id_rodina=ot.id_rodina
+      WHERE r.id_rodina=$id_rodina
+      GROUP BY id_osoba
+      ORDER BY rt.role,rto.narozeni
+    ");
+    while ( $qc && ($c= mysql_fetch_object($qc)) ) {
+      if ( !isset($rodiny[$c->id_rodina]) ) {
+        $rodiny[$c->id_rodina]= "{$c->nazev}:{$c->id_rodina}";
+        if ( !$rodina ) $rodina= $c->id_rodina;
+      }
+      if ( $c->id_rodina!=$rodina ) continue;
+      $vek= roku_k($c->narozeni);
+      $cleni.= "|{$c->id_osoba}|{$c->_rodiny}|{$c->prijmeni} {$c->jmeno}|$vek|{$c->role}";
+//                                                         display("{$c->jmeno} {$c->narozeni} $vek");
+    }
+  }
+  $ret= (object)array('cleni'=>substr($cleni,1),'rodina'=>$rodina);
+//                                                         debug($ret);
+  return $ret;
 }
 # ---------------------------------------------------------------------------------- akce_browse_ask
 # obsluha browse s optimize:ask

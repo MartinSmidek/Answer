@@ -11,6 +11,7 @@
   $CKEditor= isset($_GET['editor']) ? $_GET['editor'] : '4';
   $dbg=      $_GET['dbg'];
   $gmap=     isset($_GET['gmap']) ? true : !($ezer_local || $android);
+  $awesome=  isset($_GET['awesome']) ? $_GET['awesome'] : 0;
 
   require_once("$app.inc");
   require_once("{$EZER->version}/server/ae_slib.php");
@@ -55,6 +56,7 @@
   );
 
   $options= (object)array(
+    'awesome'    => $awesome,           // zda použít v elementech ikony awesome fontu
     'skill'      => "'f'",
     'autoskill'  => "'!f'",
   );
