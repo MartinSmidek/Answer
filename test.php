@@ -7,6 +7,7 @@
   $skin=     'ck';
   $CKEditor= isset($_GET['editor']) ? $_GET['editor'] : '4';
   $dbg=      isset($_GET['dbg']) ? 1 : 0;                                                    /* debugger */
+  $awesome=  isset($_GET['awesome']) ? $_GET['awesome'] : 1;
 
   require_once("$app.inc");
   require_once("{$EZER->version}/server/ae_slib.php");
@@ -46,6 +47,7 @@
     "./test/test.css"
   );
   $options= (object)array(
+    'awesome' => $awesome,                    // použít v elementech ikony awesome fontu
 //     'path_docs'      => "'$ezer_path_docs'",  // defaultní hodnota, kterou není nutné uvádět
     'group_login'    => "'test,fis,klub'",
     'login_interval' => 21*60                 // povolená nečinnost v minutách - 21 hodiny

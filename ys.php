@@ -8,8 +8,9 @@
   $skin=     'default';
   $skin=     'ck';
   $CKEditor= isset($_GET['editor']) ? $_GET['editor'] : '4';
-  $dbg=      $_GET['dbg'];
+  $dbg=      isset($_GET['dbg']) ? $_GET['dbg'] : 0;
   $gmap=     isset($_GET['gmap']) ? true : !($ezer_local || $ezer_ksweb);
+  $awesome=  isset($_GET['awesome']) ? $_GET['awesome'] : 0;
 
   require_once("$app.inc");
   require_once("{$EZER->version}/server/ae_slib.php");
@@ -53,6 +54,7 @@
   );
 
   $options= (object)array(
+    'awesome'    => $awesome,           // zda použít v elementech ikony awesome fontu
     'skill'      => "'y'",
     'autoskill'  => "'!y'",
   );

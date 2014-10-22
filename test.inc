@@ -66,7 +66,7 @@
   $EZER->options->web=    'www.setkani.org';
   $EZER->options->author= 'Gándí';
   $EZER->options->mail=   'martin@smidek.eu'; //'smidek@proglas.cz';
-  $EZER->options->phone=  'kl.503';
+  $EZER->options->phone=  'kl.523';
   $EZER->options->skype=  'martin_smidek';
   $EZER->activity->skip=  'GAN';      // viz system.php::sys_table
   // PDF knihovny
