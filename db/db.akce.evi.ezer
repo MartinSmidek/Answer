@@ -544,7 +544,7 @@ form _dary { style:'z-index:1'
     switch(zalozka.get,
     'd_cle',{
       d_cle.form_init;
-      d_cle.b.browse_load(conc("da.deleted='' AND ukon IN ('b','c') AND id_osoba=",osoby.b.id_o.get)) },
+      d_cle.b.browse_load(conc("da.deleted='' AND ukon IN ('b','c','k') AND id_osoba=",osoby.b.id_o.get)) },
     'd_pri',{
       d_pri.form_init;
       d_pri.b.browse_load(conc("da.deleted='' AND ukon='p' AND id_osoba=",osoby.b.id_o.get)) },
@@ -588,7 +588,7 @@ form _dcleni [,,400,245] {
   # viditelné položky
   const Lc=200
   select typ   [Lc,40,65,] {type:'map', help:'typ členství', options:ms_akce_clen.zkratka
-    proc onchange() { ukon.set(cconc(typ.key,'c','b')); ukon.change(1) }
+    proc onchange() { ukon.set(cconc(eq(typ.key,0),'b',eq(typ.key,1),'c','k')); ukon.change(1) }
   }
   label        [Lc,typ.t+-14,,] {title:'typ členství'}
   field datum  [Lc,75,85,] {type:'date', data:da.dat_od, help:'datum přijetí', format:'RUr'}
