@@ -47,6 +47,7 @@ body { position:absolute; width:100%; height:100%; }
 .title_ref a { color:#ffffff !important; }
 .karta_info { background-color:$b8_brow; overflow: auto; }
 .neucast  { text-decoration:line-through; color:#aaaaaa; }
+.elim_goal { outline:3px solid $s1_brow; z-index:1 !important; }
 
 .shift_up   { z-index:1; }
 .shift_up[class*=ae_frame]  { z-index:1; box-shadow:2px 2px 10px #333; }
