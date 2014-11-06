@@ -18,12 +18,12 @@
   $db= array('ezer_cr','ezer_cr');
   $dbs= array(
     array( /* ostré */
-      'ezer_cr' =>      array(0,'localhost','gandi','r8d0st','utf8',''),
+      'ezer_cr' =>      array(0,'localhost','gandi','r8d0st','utf8'),
       'ezer_system' =>  array(0,'localhost','gandi','r8d0st','utf8','ezer_cr')),
 //       'ezercpr' =>       array(0,'localhost','gandi','radost','utf8'),                           = endora
 //       'ezer_system' =>   array(0,'localhost','gandi','radost','utf8','ezercpr')),                = endora
     array( /* lokální */
-      'ezer_cr' =>      array(0,'localhost','gandi','','utf8',''),
+      'ezer_cr' =>      array(0,'localhost','gandi','','utf8'),
       'ezer_system' =>  array(0,'localhost','gandi','','utf8','ezer_cr'))
   );
   // kořeny cest
