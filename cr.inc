@@ -4,7 +4,7 @@
 
   // nastavení verze jádra
   $EZER= (object)array();
-  $EZER->version= $_GET['ezer'] ? "ezer{$_GET['ezer']}" : 'ezer2.2';
+  $EZER->version= 'ezer2.2';
 
   $ezer_local= preg_match('/^\w+\.ezer/',$_SERVER["SERVER_NAME"]); // identifikace ladícího serveru
 
@@ -18,12 +18,12 @@
   $db= array('ezer_cr','ezer_cr');
   $dbs= array(
     array( /* ostré */
-      'ezer_cr' =>      array(0,'localhost','gandi','r8d0st','utf8'),
+      'ezer_cr' =>      array(0,'localhost','gandi','r8d0st','utf8',''),
       'ezer_system' =>  array(0,'localhost','gandi','r8d0st','utf8','ezer_cr')),
 //       'ezercpr' =>       array(0,'localhost','gandi','radost','utf8'),                           = endora
 //       'ezer_system' =>   array(0,'localhost','gandi','radost','utf8','ezercpr')),                = endora
     array( /* lokální */
-      'ezer_cr' =>      array(0,'localhost','gandi','','utf8'),
+      'ezer_cr' =>      array(0,'localhost','gandi','','utf8',''),
       'ezer_system' =>  array(0,'localhost','gandi','','utf8','ezer_cr'))
   );
   // kořeny cest
@@ -44,7 +44,7 @@
   root_inc($db,$dbs,$tracking,$tracked,$path_root,$path_pspad);
 
   // PARAMETRY SPECIFICKÉ PRO APLIKACI
-  putenv("TMPDIR=$path_root/tmpdir");
+//   putenv("TMPDIR=$path_root/tmpdir");
 
   // moduly interpreta zahrnuté do aplikace - budou zpracovány i reference.i_doc pro tabulky kompilátoru
   $ezer_comp_ezer= "app,ezer,ezer_report,ezer_fdom1,ezer_fdom2";
@@ -86,6 +86,7 @@
   $EZER->options->phone=  '603150565';
   $EZER->options->skype=  'martin_smidek';
   $EZER->activity->skip=  'GAN';      // viz system.php::sys_table
+  $EZER->todo= (object)array();
   $EZER->todo->notify=     "new";                // poslat mail o novém požadavku
   $EZER->todo->cond_browse= "m:1;sp:cast>1";     // viz ezer2.syst.ezer panel needs
   $EZER->todo->cond_select= "m:1;sp:data>1";     // vybere se 1. vhodné
