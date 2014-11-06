@@ -46,7 +46,11 @@ group foto { include:'onload,db.akce2.foto'
     proc galery(fotka) {}
   }
 }
-panel elim [0,0,807,480] { type:'popup', title:'eliminace duplicit', include:'onload,db.akce.elim' }
+panel elim [0,0,965,582] { type:'popup', title:'Duplicity', format:'c', include:'onload,db.akce2.elim'
+  proc osoby  (ido,jmeno,prijmeni) {}           // sjednocení dvou osob
+  proc rodiny (idr,nazev) {}                    // sjednocení dvou rodin
+  proc cleni  (idr) {}                          // sjednocení členů dané rodiny
+}
 # ================================================================================================== CHLAPI
 # panel chl {type:'right', _sys:'*', title:'Chlapi', include:'onclick,db.akce.chl',skill:'yac;xa' }
 # ================================================================================================== AKCE
@@ -610,9 +614,6 @@ form _osoba2x [,,244,322] {css:'ae_frame', proc onclick() { on_click }
     [ contains('S',osoba_config.grp.get); form.set_css('db_hr','','S') | form.set_css('','db_hr','S') ];
     [ or(even,key_spolu.get) | tags.set(conc(tags,',x')) ];
     form.stacks(tags,'down',0,0,10);
-#     height.set(sum(stack_forms(form,tags,0),0));
-#     frame.property(object('height',height.get));
-#     form.property(object('height',height.get));
   }
 
   // společné
@@ -648,7 +649,7 @@ form _osoba2x [,,244,322] {css:'ae_frame', proc onclick() { on_click }
 
   // j,k = kontakt - rodinný=0, osobní=1
   label [5,3,50,] {tag:'j', title:'kontakt je' }
-  radio kontakt [50,0,100,18] {tag:'j', format:'n', value:'0', data:o.kontakt
+  radio kontakt [50,0,120,18] {tag:'j', format:'n', value:'0', data:o.kontakt
     case [0,0,70,] { title:'osobní', expr:'1' }
     case [56,0,70,] { title:'rodinný:', expr:'0' }
     proc onchange() { show_osoba(0) }
@@ -666,7 +667,7 @@ form _osoba2x [,,244,322] {css:'ae_frame', proc onclick() { on_click }
 
   // a,b = adresa - rodinná=0, osobní=1.
   label [5,3,50,12] {tag:'a', title:'adresa je' }
-  radio adresa [50,0,100,18] {tag:'a', format:'n', value:'0', data:o.adresa
+  radio adresa [50,0,120,18] {tag:'a', format:'n', value:'0', data:o.adresa
     case [0,0,70,] { title:'osobní', expr:'1' }
     case [56,0,70,] { title:'rodinná:', expr:'0' }
     proc onchange() { show_osoba(0) }
@@ -783,7 +784,7 @@ form _rodina2 [,,360,229]  { css:'ae_frame', proc onclick() { on_click }
     help:'výběr rodiny podle nastaveného účastníka a její přiřazení k pobytu', proc onchanged() {
       ask('akce_pobyt_rodinny',key_pobyt.get,this.key); zmena_rodiny;
   }}
-  button [Lr+108,34,15,16] {tag:'a,o', title:"[fa-chevron-left]", style:"padding-left:0px"
+  button [Lr+108,34,15,16] {tag:'a,o', type:'html', title:"[fa-chevron-left]", style:"padding-left:0px"
     proc onclick() {
       form.display(0,'a'); form.display(1,'m'); rodiny1.set(rodiny.get); rodiny1.change;
   }}
@@ -878,7 +879,7 @@ form _rodina2p [,,360,229] { css:'ae_frame'
   select rodiny  [Lr+5,32,104,] {tag:'a,R', format:'tT', title:"^zobrazená rodina", help:'výběr jiné rodiny'
     proc onchanged() { rodina_changed}
   }
-  button [Lr+108,32,,] {tag:'a,o,R', title:"[fa-chevron-left]", css:'button' //style:"padding-left:0px"
+  button [Lr+108,32,,] {tag:'a,o,R', type:'html', title:"[fa-chevron-left]", css:'button' //style:"padding-left:0px"
     proc onclick() { form.display(0,'a'); form.display(1,'m'); rodiny1.set(rodiny.get);
       rodiny1.change; rodina_edit
   }}

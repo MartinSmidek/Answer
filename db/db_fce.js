@@ -6,7 +6,9 @@ Ezer.Form.implement({
 // Pro elementy při DblClk zkopíruje hodnotu do stejnojmenného elementu formuláře goal
 // (funguje pro field, edit)
   on_dblclk_copy_to: function(goal) {
-    $each(this.part,function(field,id) {
+    var form= this instanceof Ezer.Var ? this.value : this;
+    goal= goal instanceof Ezer.Var ? goal.value : goal;
+    $each(form.part,function(field,id) {
       if ( (field instanceof Ezer.Field || field instanceof Ezer.Edit)
         && field.DOM_Input ) {
 //                                                         Ezer.trace('*',id);
@@ -20,7 +22,7 @@ Ezer.Form.implement({
           }.bind(field)
         });
       }
-    },this);
+    });
     return 1;
   },
 // ----------------------------------------------------------------------------------------- copy_to
@@ -71,6 +73,43 @@ Ezer.Form.implement({
           this.notes.push(new Element('div',{'class':css,html:pairs[field.data.id],styles:{
             position:'absolute',left:field._l,top:field._t+(field._h||16)+2
           }}).inject(this.DOM_Block));
+        }
+      },this);
+    }
+    return 1;
+  },
+// --------------------------------------------------------------------------------------- set_notes
+//fm: Form.set_helps (pairs,css1,css2)
+// pairs :: { name:val, ...]
+// zobrazí hodnoty 'val' jako title pro elementy s data.id=name a přidá css resp. css2
+// (css2, pokud val začíná vykřičníkem)
+// bezparametrická funkce vymaže všechny definované title a přidaná css
+  set_helps: function(pairs,css1,css2) {
+    if ( pairs ) {
+      $each(this.part,function(field,id) {
+        if ( field.data && pairs[field.data.id] ) {
+          var title= pairs[field.data.id];
+          var css= title[0]=='!' ? css2 : css1;
+          if ( field instanceof Ezer.Elem && field.DOM_Input ) {
+            field.DOM_Input.set('title',title||'?');
+            field.DOM_Input.addClass(css);
+          }
+          else if ( field instanceof Ezer.Radio ) {
+            field.DOM_Block.set('title',title||'?');
+            field.DOM_Block.addClass(css);
+          }
+        }
+      },this);
+    }
+    else {
+      $each(this.part,function(field,id) {
+        if ( field instanceof Ezer.Elem && field.DOM_Input ) {
+          field.DOM_Input.set('title','');
+          field.DOM_Input.removeClass(css1).removeClass(css2);
+        }
+        else if ( field instanceof Ezer.Radio ) {
+          field.DOM_Block.set('title','');
+          field.DOM_Block.removeClass(css1).removeClass(css2);
         }
       },this);
     }

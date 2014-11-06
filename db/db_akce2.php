@@ -1,5 +1,186 @@
 <?php # (c) 2009-2010 Martin Smidek <martin@smidek.eu>
-# ================================================================================================== ÚČASTNÍCI
+# ================================================================================================== EVIDENCE
+# ---------------------------------------------------------------------------------- elim_data_osoba
+# načte data OSOBA+TVORI včetně záznamů v _track
+function elim_data_osoba($ido) {  trace();
+  $ret= (object)array();
+  // načtení změn
+  $chng_kdy= $chng_kdo= $chng_val= array();
+  $max_kdy= '';
+  $zs= mysql_qry("
+    SELECT fld,kdo,kdy,val,op
+    FROM _track
+    WHERE kde='osoba' AND klic=$ido
+  ");
+  while (($z= mysql_fetch_object($zs))) {
+    $fld= $z->fld;
+    $kdy= $z->kdy;
+    $kdo= $z->kdo;
+    $op=  $z->op;
+    $val= $z->val;
+    $max_kdy= max($max_kdy,substr($kdy,0,10));
+    if ( !isset($chng_kdy[$fld]) || isset($chng_kdy[$fld]) && strcmp($chng_kdy[$fld],$kdy)<0 ) {
+      $chng_kdy[$fld]= $kdy;
+      $chng_kdo[$fld]= "$kdo/$op: ".sql_date1($kdy);
+      $chng_val[$fld]= $val;
+    }
+  }
+  $ret->last_chng= $max_kdy;
+  $ret->chng= $chng_kdo;
+  // načtení hodnot
+  $os= mysql_qry("
+    SELECT MAX(CONCAT(datum_od,':',a.nazev)) AS _last,
+      prijmeni,jmeno,sex,narozeni,rc_xxxx,psc,obec,ulice,email,telefon,o.note
+    FROM osoba AS o
+    LEFT JOIN spolu AS s USING(id_osoba)
+    LEFT JOIN pobyt AS p USING(id_pobyt)
+    LEFT JOIN akce AS a ON p.id_akce=a.id_duakce
+    WHERE id_osoba=$ido GROUP BY id_osoba
+  ");
+  $o= mysql_fetch_object($os);
+  foreach($o as $fld=>$val) {
+    if ( $chng_kdy[$fld] && $chng_val[$fld]!=$val ) {
+      $ret->diff[$fld]= $chng_val[$fld];
+      $ret->chng[$fld]= "!{$ret->chng[$fld]}: {$chng_val[$fld]}";
+    }
+  }
+  $ret->last_akce= $o->_last;
+  // zjištění kmenové rodiny
+  $kmen= ''; $idk= 0;
+  $rs= mysql_qry("
+    SELECT id_rodina,role,nazev
+    FROM osoba AS o
+    LEFT JOIN tvori AS t USING(id_osoba)
+    LEFT JOIN rodina AS r USING(id_rodina)
+    WHERE id_osoba=$ido
+  ");
+  while (($r= mysql_fetch_object($rs))) {
+    if ( !$kmen || $r->role=='a' || $r->role=='b' ) {
+      $kmen= $r->nazev;
+      $idk= $r->id_rodina;
+    }
+  }
+  $ret->kmen= $kmen;
+  $ret->id_kmen= $idk;
+                                                        debug($ret,"elim_data_osoba");
+  return $ret;
+}
+# --------------------------------------------------------------------------------- elim_data_rodina
+# načte data RODINA včetně záznamů v _track
+function elim_data_rodina($idr) {  trace();
+  $ret= (object)array();
+  // načtení změn
+  $chng_kdy= $chng_kdo= $chng_val= array();
+  $max_kdy= '';
+  $zs= mysql_qry("
+    SELECT fld,kdo,kdy,val,op
+    FROM _track
+    WHERE kde='rodina' AND klic=$idr
+  ");
+  while (($z= mysql_fetch_object($zs))) {
+    $fld= $z->fld;
+    $kdy= $z->kdy;
+    $kdo= $z->kdo;
+    $op=  $z->op;
+    $val= $z->val;
+    $max_kdy= max($max_kdy,substr($kdy,0,10));
+    if ( !isset($chng_kdy[$fld]) || isset($chng_kdy[$fld]) && strcmp($chng_kdy[$fld],$kdy)<0 ) {
+      $chng_kdy[$fld]= $kdy;
+      $chng_kdo[$fld]= "$kdo/$op: ".sql_date1($kdy);
+      $chng_val[$fld]= $val;
+    }
+  }
+  $ret->last_chng= sql_date1($max_kdy);
+  $ret->chng= $chng_kdo;
+  // načtení hodnot
+  $os= mysql_qry("
+    SELECT r.*, MAX(CONCAT(datum_od,': ',a.nazev)) AS _last
+    FROM rodina AS r
+    LEFT JOIN tvori AS t USING (id_rodina)
+    LEFT JOIN spolu AS s USING (id_osoba)
+    LEFT JOIN pobyt AS p USING (id_pobyt)
+    LEFT JOIN akce AS a ON id_akce=id_duakce
+    WHERE id_rodina=$idr
+    GROUP BY id_rodina
+  ");
+  $o= mysql_fetch_object($os);
+  foreach($o as $fld=>$val) {
+    $ret->$fld= $val;
+    if ( $chng_kdy[$fld] && $chng_val[$fld]!=$val ) {
+      $ret->diff[$fld]= $chng_val[$fld];
+      $ret->chng[$fld]= "!{$ret->chng[$fld]}: {$chng_val[$fld]}";
+    }
+  }
+  $ret->datsvatba= sql_date1($ret->datsvatba);                  // svatba d.m.r
+  $ret->last_akce= sql_date1(substr($o->_last,0,10)).substr($o->_last,10);
+//                                                         debug($ret,"elim_data_rodina");
+  return $ret;
+}
+# -------------------------------------------------------------------------------------- evid_delete
+# zjistí, zda lze osobu smazat: dar, platba, spolu, tvori
+# cmd= conf_oso|conf_rod|del_oso|del_rod
+function evid_delete($id_osoba,$id_rodina,$cmd='confirm') { trace();
+  $ret= (object)array('html'=>'','ok'=>1);
+  $duvod= array();
+  list($name,$sex)= select("CONCAT(prijmeni,' ',jmeno),sex",'osoba',"id_osoba=$id_osoba");
+  $a= $sex==2 ? 'a' : '';
+  $nazev= select("nazev",'rodina',"id_rodina=$id_rodina");
+  switch ($cmd) {
+  case 'conf_oso':
+    $x= select1('SUM(castka)','dar',"id_osoba=$id_osoba");
+    if ( $x) $duvod[]= "je dárcem $x Kč";
+    $x= select1('SUM(castka)','platba',"id_osoba=$id_osoba");
+    if ( $x) $duvod[]= "zaplatil$a $x Kč";
+    $x= select1('COUNT(*)','spolu',"id_osoba=$id_osoba");
+    if ( $x) $duvod[]= "se zúčastnil$a $x akcí";
+    $x= select1('COUNT(*)','tvori',"id_osoba=$id_osoba AND id_rodina!=$id_rodina");
+    if ( $x) $duvod[]= "je členem dalších $x rodin";
+    $ret->ok= count($duvod) ? 0 : 1;
+    if ( $ret->ok ) {                   // lze smazat, nezůstane ale rodina prázdná?
+      $x= select1('COUNT(*)','tvori',"id_rodina=$id_rodina");
+      $ret->html= $x==1 ? "$name je jediným členem své rodiny, smazat i tu?" : "Opravdu smazat $name ?";
+      $ret->ok= $x==1 ? 2 : 1;
+    }
+    else {                              // nelze smazat - existují odkazy
+      $ret->html= "$name nejde smazat, protože ".implode(',',$duvod);
+    }
+    break;
+  case 'conf_mem':
+    $x= select1('COUNT(*)','tvori',"id_osoba=$id_osoba AND id_rodina!=$id_rodina");
+    if ( !$x ) $duvod[]= "není členem žádné další rodiny";
+    $ret->ok= count($duvod) ? 0 : 1;
+    if ( $ret->ok ) {                   // lze vyjmout, nezůstane ale rodina prázdná?
+      $x= select1('COUNT(*)','tvori',"id_rodina=$id_rodina");
+      $ret->html= $x==1 ? "$name je jediným členem rodiny $nazev, smazat ji?"
+        : "Opravdu vyjmout $name z $nazev?";
+      $ret->ok= $x==1 ? 2 : 1;
+    }
+    else {                              // nelze smazat - existují odkazy
+      $ret->html= "$name nejde vyjmout z $nazev, protože ".implode(',',$duvod);
+    }
+    break;
+  case 'del_mem':
+    $ret->ok= query("DELETE FROM tvori WHERE id_osoba=$id_osoba AND id_rodina=$id_rodina") ? 1 : 0;
+    $ret->html= "$name byl$a vyjmut$a z $nazev";
+    break;
+  case 'del_oso':
+    $ret->ok= query("UPDATE osoba SET deleted='D' WHERE id_osoba=$id_osoba") ? 1 : 0;
+    query("DELETE FROM tvori WHERE id_osoba=$id_osoba AND id_rodina=$id_rodina");
+    $ret->html= "$name byl$a smazán$a";
+    break;
+  case 'del_rod':
+    query("UPDATE osoba JOIN tvori USING (id_osoba) SET deleted='D' WHERE id_rodina=$id_rodina");
+    $no= mysql_affected_rows();
+    query("UPDATE rodina SET deleted='D' WHERE id_rodina=$id_rodina");
+    $nr= mysql_affected_rows();
+    query("DELETE FROM tvori WHERE id_rodina=$id_rodina");
+    $ret->ok= $no && $nr ? 1 : 0;
+    $ami= $no==1 ? "ou" : "ami";
+    $ret->html= "Byla smazána rodina s $no osob$ami";
+    break;
+  }
+  return $ret;
+}
 # ----------------------------------------------------------------------------------- akce_save_role
 # zapíše roli - je to netypická číselníková položka definovaná jako VARCHAR(1)
 function akce_save_role($id_tvori,$role) { //trace();
@@ -7,12 +188,12 @@ function akce_save_role($id_tvori,$role) { //trace();
 }
 # ---------------------------------------------------------------------------------------- akce_evid
 # hledání a) osoby a jejích rodin b) rodiny (pokud je id_osoba=0)
-function akce_evid($id_osoba,$id_rodina) { //trace();
+function akce_evid($id_osoba,$id_rodina) { trace();
   $cleni= "";
   $rodiny= array();
   $rodina= $rodina1= $id_rodina;
   $id_osoba ? "o.id_osoba=$id_osoba" : "r.id_rodina=$id_rodina";
-  if ( $id_osoba ) {
+  if ( $id_osoba ) { // ------------------------ osoby
     $clen= array();
     $qc= mysql_qry("
       SELECT rto.id_osoba,rto.jmeno,rto.prijmeni,rto.narozeni,rt.id_tvori,rt.role,r.id_rodina,nazev
@@ -20,8 +201,8 @@ function akce_evid($id_osoba,$id_rodina) { //trace();
       JOIN tvori AS ot ON ot.id_osoba=o.id_osoba
       JOIN rodina AS r ON r.id_rodina=ot.id_rodina
       JOIN tvori AS rt ON rt.id_rodina=r.id_rodina
-      JOIN osoba AS rto ON rto.id_osoba=rt.id_osoba
-      WHERE o.id_osoba=$id_osoba
+      JOIN osoba AS rto ON rto.id_osoba=rt.id_osoba AND rto.deleted=''
+      WHERE o.id_osoba=$id_osoba AND o.deleted=''
       ORDER BY rt.role,rto.narozeni
     ");
     while ( $qc && ($c= mysql_fetch_object($qc)) ) {
@@ -36,35 +217,35 @@ function akce_evid($id_osoba,$id_rodina) { //trace();
     }
     if ( !$rodina ) $rodina= $rodina1;
 //                                                 debug($clen,"rodina=$rodina");
-    foreach($clen[$rodina] as $ido=>$c) {
+    if ($clen[$rodina]) foreach($clen[$rodina] as $ido=>$c) {
       if ( $rodina && ($c->id_rodina==$rodina ||$c->id_osoba==$id_osoba)) {
         $rodiny= substr($clen[0][$ido],1);
         $role= $c->role;
-        $cleni.= "|$ido|{$c->id_tvori}|$rodiny|{$c->prijmeni} {$c->jmeno}|{$c->_vek}|$role";
+        $cleni.= "|$ido|$c->id_tvori|$rodiny|$c->prijmeni $c->jmeno|$c->_vek|$role";
       }
     }
   }
-  else {
+  else { // ------------------------------------ rodiny
     $qc= mysql_qry("
-      SELECT rto.id_osoba,rto.jmeno,rto.prijmeni,rto.narozeni,rt.role,r.id_rodina,r.nazev,
+      SELECT rto.id_osoba,rto.jmeno,rto.prijmeni,rto.narozeni,rt.id_tvori,rt.role,r.id_rodina,r.nazev,
         GROUP_CONCAT(CONCAT(otr.nazev,':',otr.id_rodina)) AS _rodiny
       FROM rodina AS r
       JOIN tvori AS rt ON rt.id_rodina=r.id_rodina
-      JOIN osoba AS rto ON rto.id_osoba=rt.id_osoba
+      JOIN osoba AS rto ON rto.id_osoba=rt.id_osoba AND rto.deleted=''
       JOIN tvori AS ot ON ot.id_osoba=rto.id_osoba
       JOIN rodina AS otr ON otr.id_rodina=ot.id_rodina
-      WHERE r.id_rodina=$id_rodina
+      WHERE r.id_rodina=$id_rodina AND r.deleted=''
       GROUP BY id_osoba
       ORDER BY rt.role,rto.narozeni
     ");
     while ( $qc && ($c= mysql_fetch_object($qc)) ) {
       if ( !isset($rodiny[$c->id_rodina]) ) {
-        $rodiny[$c->id_rodina]= "{$c->nazev}:{$c->id_rodina}";
+        $rodiny[$c->id_rodina]= "$c->nazev:$c->id_rodina";
         if ( !$rodina ) $rodina= $c->id_rodina;
       }
       if ( $c->id_rodina!=$rodina ) continue;
-      $vek= roku_k($c->narozeni);
-      $cleni.= "|{$c->id_osoba}|{$c->_rodiny}|{$c->prijmeni} {$c->jmeno}|$vek|{$c->role}";
+      $vek= $c->narozeni=='0000-00-00' ? '?' : roku_k($c->narozeni);
+      $cleni.= "|$c->id_osoba|$c->id_tvori|$c->_rodiny|$c->prijmeni $c->jmeno|$vek|$c->role";
 //                                                         display("{$c->jmeno} {$c->narozeni} $vek");
     }
   }
@@ -72,6 +253,7 @@ function akce_evid($id_osoba,$id_rodina) { //trace();
 //                                                         debug($ret);
   return $ret;
 }
+# ================================================================================================== ÚČASTNÍCI
 # ---------------------------------------------------------------------------------- akce_browse_ask
 # obsluha browse s optimize:ask
 # x->order= {a|d} polozka
@@ -140,7 +322,7 @@ function akce_browse_ask($x) {
       FROM osoba AS o
       JOIN spolu AS s USING (id_osoba)
       JOIN pobyt AS p USING (id_pobyt)
-      WHERE $cond $AND
+      WHERE o.deleted='' AND $cond $AND
     ");
     while ( $qu && ($u= mysql_fetch_object($qu)) ) {
       $cleni.= ",{$u->id_osoba}";
@@ -167,23 +349,24 @@ function akce_browse_ask($x) {
       $pobyt[$p->id_pobyt]->cleni[$p->id_osoba]->narozeni= $p->narozeni;
     }
     # atributy osob
-    $qo= mysql_qry("SELECT * FROM osoba AS o WHERE id_osoba IN (0$osoby)");
+    $qo= mysql_qry("SELECT * FROM osoba AS o WHERE deleted='' AND id_osoba IN (0$osoby)");
     while ( $qo && ($o= mysql_fetch_object($qo)) ) {
       $osoba[$o->id_osoba]= $o;
     }
     # atributy rodin
-    $qr= mysql_qry("SELECT * FROM rodina AS r WHERE id_rodina IN (0$rodiny)");
+    $qr= mysql_qry("SELECT * FROM rodina AS r WHERE deleted='' AND id_rodina IN (0$rodiny)");
     while ( $qr && ($r= mysql_fetch_object($qr)) ) {
       $r->datsvatba= sql_date1($r->datsvatba);                  // svatba d.m.r
       $rodina[$r->id_rodina]= $r;
     }
+                                                        debug($rodina,$rodiny);
     # seznam rodin osob
     $qor= mysql_qry("
       SELECT id_osoba,
         IFNULL(GROUP_CONCAT(CONCAT(role,':',id_rodina) SEPARATOR ','),'') AS _rody
       FROM osoba
       JOIN tvori USING(id_osoba)
-      WHERE id_osoba IN (0$osoby)
+      WHERE deleted='' AND id_osoba IN (0$osoby)
       GROUP BY id_osoba
     ");
     while ( $qor && ($or= mysql_fetch_object($qor)) ) {
@@ -261,7 +444,7 @@ function akce_browse_ask($x) {
           elseif ( !$_ido2 )
             $_ido2= $ido;
           # výpočet jmen pobytu
-          $_jmena.= "{$o->jmeno} ";
+          $_jmena.= "$o->jmeno ";
           if ( !$idr ) {
             # výpočet názvu pobyt
             $prijmeni= $o->prijmeni;
@@ -282,6 +465,7 @@ function akce_browse_ask($x) {
           list($role,$ir)= explode(':',$rod);
           $naz= $rodina[$ir]->nazev;
           $kmen= $kmen ? ($role=='a' || $role=='b' ? $naz : $kmen) : $naz;
+                                                display("$o->jmeno/$role: $kmen ($naz,$ir)");
           $r.= ",$naz:$ir";
         }
         $cleni.= "~$r";                                           // rody

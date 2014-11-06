@@ -36,6 +36,7 @@ db/db.akce.mai.ezer -text
 db/db.akce.pece.ezer -text
 db/db.akce.tisk.ezer -text
 db/db.akce.ucast.ezer -text
+db/db.akce2.elim.ezer -text
 db/db.akce2.evi.ezer -text
 db/db.akce2.ezer -text
 db/db.akce2.foto.ezer -text
@@ -134,12 +135,10 @@ skins/ch/clientcide/full.png -text
 skins/ch/clientcide/icon_problems_sm.gif -text
 skins/ch/clientcide/left_fold.png -text
 skins/ch/clientcide/left_unfold.png -text
-skins/ch/clientcide/stickyWinHTML/body.gif -text
 skins/ch/clientcide/stickyWinHTML/body.png -text
 skins/ch/clientcide/stickyWinHTML/calendar.gif -text
 skins/ch/clientcide/stickyWinHTML/closebtn.gif -text
 skins/ch/clientcide/stickyWinHTML/drag_corner.gif -text
-skins/ch/clientcide/stickyWinHTML/full.gif -text
 skins/ch/clientcide/stickyWinHTML/full.png -text
 skins/ch/clientcide/stickyWinHTML/icon_problems_sm.gif -text
 skins/ch/dbg.ico -text
@@ -198,11 +197,9 @@ skins/ck/class.png -text
 skins/ck/clientcide/calendar.gif -text
 skins/ck/clientcide/left_fold.png -text
 skins/ck/clientcide/left_unfold.png -text
-skins/ck/clientcide/stickyWinHTML/body.gif -text
 skins/ck/clientcide/stickyWinHTML/body.png -text
 skins/ck/clientcide/stickyWinHTML/closebtn.gif -text
 skins/ck/clientcide/stickyWinHTML/drag_corner.gif -text
-skins/ck/clientcide/stickyWinHTML/full.gif -text
 skins/ck/clientcide/stickyWinHTML/full.png -text
 skins/ck/clientcide/stickyWinHTML/icon_problems_sm.gif -text
 skins/ck/dbg.ico -text

@@ -95,6 +95,28 @@ function elim_osoba($id_orig,$id_copy) { trace();
 end:
   return $ret;
 }
+# ---------------------------------------------------------------------------------------- elim_clen
+# zamění všechny výskyty kopie za originál v TVORI, SPOLU, DAR, PLATBA, MAIL a kopii smaže
+function elim_clen($id_rodina,$id_orig,$id_copy) { trace();
+  global $USER;
+  $ret= (object)array('err'=>'');
+  $now= date("Y-m-d H:i:s");
+  query("DELETE FROM tvori WHERE id_rodina=$id_rodina AND id_osoba=$id_copy");
+  query("UPDATE spolu  SET id_osoba=$id_orig WHERE id_osoba=$id_copy");
+  query("UPDATE dar    SET id_osoba=$id_orig WHERE id_osoba=$id_copy");
+  query("UPDATE platba SET id_osoba=$id_orig WHERE id_osoba=$id_copy");
+  //query("UPDATE mail  SET id_osoba=$id_orig WHERE id_osoba=$id_copy"); -- po úpravě
+  query("UPDATE osoba SET deleted='D osoba=$id_orig' WHERE id_osoba=$id_copy");
+  // zápis o ztotožnění osob do _track jako op=d (duplicita)
+  $user= $USER->abbr;
+  query("INSERT INTO _track (kdy,kdo,kde,klic,fld,op,old,val)
+         VALUES ('$now','$user','osoba',$id_orig,'','d','osoba',$id_copy)");
+  // zápis o smazání kopie do _track jako op=x (eXtract)
+  query("INSERT INTO _track (kdy,kdo,kde,klic,fld,op,old,val)
+         VALUES ('$now','$user','osoba',$id_copy,'','x','kopie',$id_orig)");
+end:
+  return $ret;
+}
 # -------------------------------------------------------------------------------------- elim_rodina
 # zamění všechny výskyty kopie za originál v POBYT, TVORI, DAR, PLATBA, MAIL a kopii smaže
 function elim_rodina($id_orig,$id_copy) { trace();
@@ -638,7 +660,7 @@ function akce_data_single($ido) {  trace();
     WHERE id_osoba=$ido GROUP BY id_osoba
   ");
   $o= mysql_fetch_object($os);
-  foreach($o as $fld=>$val) {
+  if ( count($o) ) foreach($o as $fld=>$val) {
     if ( $chng_kdy[$fld] && $chng_val[$fld]!=$val ) {
       $ret->diff[$fld]= $chng_val[$fld];
       $ret->chng[$fld]= "<span style='color:red'>{$ret->chng[$fld]}: {$chng_val[$fld]}</span>";
@@ -7880,7 +7902,8 @@ function evid_sestava($par,$title,$export=false) {
           WHERE funkce=99
           GROUP BY id_akce ORDER BY datum_od DESC")
      : ( $par->typ=='e-x' ? evid_sestava_x($par,$title,$export)
-     : fce_error("evid_sestava: N.Y.I.") ))));
+     : ( $par->typ=='e-cleni' ? evid_sestava_cleni($par,$title,$export)
+     : fce_error("evid_sestava: N.Y.I.") )))));
 }
 # -------------------------------------------------------------------------------------------------- evid_vyp_excel
 # generování tabulky do excelu
@@ -8127,6 +8150,73 @@ function evid_sestava_j($par,$title,$export=false) {
       }
     }
   }
+  return evid_table($par,$tits,$flds,$clmn,$export);
+}
+# -------------------------------------------------------------------------------------------------- evid_sestava_j
+# generování přehledu členstva
+#   $fld = seznam položek s prefixem
+#   $cnd = podmínka
+# _clen_od,_cinny_od,_prisp,_dary
+function evid_sestava_cleni($par,$title,$export=false) {
+  $rok= date('Y') - $par->rok;
+  // dekódování parametrů
+  $tits= explode(',',$par->tit);
+  $flds= explode(',',$par->fld);
+  // získání dat
+  $n= 0;
+  $clmn= array();
+  $expr= array();       // pro výrazy
+  $clenu= $cinnych= $prispevku= $daru= 0;
+  $qry= "SELECT
+           os.prijmeni,os.jmeno,os.narozeni,os.sex,
+           os.obec,os.ulice,os.psc,os.email,r.emaily,
+           GROUP_CONCAT(DISTINCT od.ukon ORDER BY od.ukon SEPARATOR '') as rel,
+           GROUP_CONCAT(CONCAT(ukon,':',YEAR(dat_od),':',YEAR(dat_do),':',castka) ORDER BY dat_od DESC SEPARATOR '|') AS _ukony
+         FROM osoba AS os
+         JOIN tvori AS ot ON os.id_osoba=ot.id_osoba
+         JOIN rodina AS r USING(id_rodina)
+         LEFT JOIN dar AS od ON os.id_osoba=od.id_osoba AND od.deleted=''
+         WHERE os.deleted='' AND {$par->cnd}
+         GROUP BY os.id_osoba HAVING {$par->hav}
+         ORDER BY os.prijmeni";
+  $res= mysql_qry($qry);
+  while ( $res && ($x= mysql_fetch_object($res)) ) {
+    // rozbor úkonů
+    $_clen_od= $_cinny_od= $_prisp= $_dary= 0;
+    foreach(explode('|',$x->_ukony) as $uddc) {
+      list($u,$d1,$d2,$c)= explode(':',$uddc);
+      switch ($u) {
+      case 'p': if ( $d1==$rok ) $_prisp+= $c; break;
+      case 'd': if ( $d1==$rok ) $_dary+= $c; break;
+      case 'b': if ( $d2<=$rok && (!$_clen_od && $d1<=$rok || $d1<$_clen_od) ) $_clen_od= $d1; break;
+      case 'c': if ( $d2<=$rok && (!$_cinny_od && $d1<=$rok || $d1<$_cinny_od) ) $_cinny_od= $d1; break;
+      }
+    }
+    $prispevku+= $_prisp;
+    $daru+= $_dary;
+    if ( !$_clen_od && !$_cinny_od ) continue;
+    $clenu+= $_clen_od ? 1 : 0;
+    $cinnych+= $_cinny_od ? 1 : 0;
+    // pokračujeme jen s členy
+    $n++;
+    $clmn[$n]= array();
+    foreach($flds as $f) {
+      switch ( $f ) {
+      case '_clen_od':  $clmn[$n][$f]= $_clen_od; break;
+      case '_cinny_od': $clmn[$n][$f]= $_cinny_od; break;
+      case '_prisp':    $clmn[$n][$f]= $_prisp; break;
+      case '_dary':     $clmn[$n][$f]= $_dary; break;
+      default:
+        $clmn[$n][$f]= $x->$f;
+      }
+    }
+  }
+  // přidání sumarizace
+  $n++;
+  $clmn[$n]['_clen_od']= $clenu;
+  $clmn[$n]['_cinny_od']= $cinnych;
+  $clmn[$n]['_prisp']= $prispevku;
+  $clmn[$n]['_dary']= $daru;
   return evid_table($par,$tits,$flds,$clmn,$export);
 }
 # -------------------------------------------------------------------------------------------------- evid_sestava_Q
