@@ -29,7 +29,7 @@ use d_dar:  form _ddary  [360,300,,]      { tag:'d_dar', format:'n' }
 use foto:   form _foto   [355,300,,]      { tag:'foto',  format:'n' }
 
 use info: form right [12,4,,] {             tag:'inf'
-  button export [-20,4,100,16] { title:'Excel', style:'display:block;zIndex:2',
+  button export [-20,4,,] { title:'Excel', style:'display:block;zIndex:2',
     proc onclick() {
       var res: object
       switch(export.get,
@@ -161,12 +161,12 @@ menu m {type:'left'
 #                 fld:'prijmeni,jmeno,ulice,obec,psc,_naroz,_clen,_prisp,_rok,_kc,_email'}}
     item {title:'Členové YS - stav letos',
           par:°{typ:'e-cleni',exp:'Excel',cnd:1,hav:1,rok:0,
-                tit:'příjmení:15,jméno:10,obec:20,člen od:5,činný od:5,letos přísp.:6,letos dary:6',
-                fld:'prijmeni,jmeno,obec,_clen_od,_cinny_od,_prisp,_dary'}}
+                tit:'příjmení:15,jméno:10,datum nar.:10,obec:20,člen od:5,činný od:5,letos přísp.:6,letos dary:6',
+                fld:'prijmeni,jmeno,_naroz,obec,_clen_od,_cinny_od,_prisp,_dary'}}
     item {title:'Členové YS - stav (jak byl) vloni',
           par:°{typ:'e-cleni',exp:'Excel',cnd:1,hav:1,rok:1,
-                tit:'příjmení:15,jméno:10,obec:20,člen od:5,činný od:5,letos přísp.:6,letos dary:6',
-                fld:'prijmeni,jmeno,obec,_clen_od,_cinny_od,_prisp,_dary'}}
+                tit:'příjmení:15,jméno:10,datum nar.:10,obec:20,člen od:5,činný od:5,letos přísp.:6,letos dary:6',
+                fld:'prijmeni,jmeno,_naroz,obec,_clen_od,_cinny_od,_prisp,_dary'}}
   }
   menu {title:'Zpracování bankovních výpisů',type:'group', skill:'yae'
     item {title:'import plateb z RB', //skill:'m'

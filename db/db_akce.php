@@ -7947,7 +7947,7 @@ function evid_table($par,$tits,$flds,$clmn,$export=false) {
           $g= "<img src='skins/$skin/pixel.png'
             style='height:4px;width:{$g}px;float:left;margin-top:5px'>";
         }
-        $align= is_numeric($c[$f]) ? "right" : "left";
+        $align= is_numeric($c[$f]) || substr_count($c[$f],'.')==2 ? "right" : "left";
         $tab.= "<td style='text-align:$align'>{$c[$f]}$g</td>";
       }
       $tab.= "</tr>";
@@ -8206,6 +8206,7 @@ function evid_sestava_cleni($par,$title,$export=false) {
       case '_cinny_od': $clmn[$n][$f]= $_cinny_od; break;
       case '_prisp':    $clmn[$n][$f]= $_prisp; break;
       case '_dary':     $clmn[$n][$f]= $_dary; break;
+      case '_naroz':    $clmn[$n][$f]= sql_date1($x->narozeni); break;
       default:
         $clmn[$n][$f]= $x->$f;
       }
@@ -8213,6 +8214,7 @@ function evid_sestava_cleni($par,$title,$export=false) {
   }
   // přidání sumarizace
   $n++;
+  $clmn[$n]['obec']= '.SUMA:.';
   $clmn[$n]['_clen_od']= $clenu;
   $clmn[$n]['_cinny_od']= $cinnych;
   $clmn[$n]['_prisp']= $prispevku;
