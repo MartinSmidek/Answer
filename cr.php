@@ -6,13 +6,13 @@
   $app_name= 'Ans(w)er - Centrum pro rodinu';
   $skin=     'default';
   $skin=     'ck';
-  $CKEditor= $_GET['editor'] ? $_GET['editor'] : '4';
-  $dbg=      $_GET['dbg'];
-  $gmap=     $_GET['gmap'] ? true : !($ezer_local || $ezer_ksweb);
+  $CKEditor= isset($_GET['editor']) ? $_GET['editor'] : '4';
+  $dbg=      isset($_GET['dbg']) ? 1 : 0;
+  $gmap=     isset($_GET['gmap']) ? true : !($ezer_local || $ezer_ksweb);
 
   require_once("$app.inc");
   require_once("{$EZER->version}/server/ae_slib.php");
-  $app_name.= $EZER->options->mysql ? " - {$EZER->options->mysql}" : '';
+//   $app_name.= $EZER->options->mysql ? " - {$EZER->options->mysql}" : '';
 
   $client= "{$EZER->version}/client";
   $licensed= "$client/licensed";
@@ -47,7 +47,7 @@
     'autoskill'  => "'!c'",
   );
   $kontakt= " V případě zjištění problému nebo <br/>potřeby konzultace mi prosím napište<br/>
-        na mail&nbsp;<a href='mailto:{$EZER->options->mail}{$EZER->options->mail_subject}'>{$EZER->options->mail}</a> "
+        na mail&nbsp;<a href='mailto:{$EZER->options->mail}'>{$EZER->options->mail}</a> "
       . ($EZER->options->phone ? "případně zavolejte&nbsp;{$EZER->options->phone} " : '')
       . ($EZER->options->skype ? "nebo použijte Skype&nbsp;<a href='skype:{$EZER->options->skype}?chat'>{$EZER->options->skype}</a>" : '')
       . "<br/><br/>Za spolupráci děkuje <br/>{$EZER->options->author}";
