@@ -8207,6 +8207,8 @@ function evid_sestava_cleni($par,$title,$export=false) {
       case '_prisp':    $clmn[$n][$f]= $_prisp; break;
       case '_dary':     $clmn[$n][$f]= $_dary; break;
       case '_naroz':    $clmn[$n][$f]= sql_date1($x->narozeni); break;
+      case '_zrus':     $clmn[$n][$f]= $_clen_od<2014 && !$_cinny_od && !$_prisp ? 'x' : '';
+        break;
       default:
         $clmn[$n][$f]= $x->$f;
       }

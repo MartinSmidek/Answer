@@ -161,12 +161,12 @@ menu m {type:'left'
 #                 fld:'prijmeni,jmeno,ulice,obec,psc,_naroz,_clen,_prisp,_rok,_kc,_email'}}
     item {title:'Členové YS - stav letos',
           par:°{typ:'e-cleni',exp:'Excel',cnd:1,hav:1,rok:0,
-                tit:'příjmení:15,jméno:10,datum nar.:10,obec:20,člen od:5,činný od:5,letos přísp.:6,letos dary:6',
-                fld:'prijmeni,jmeno,_naroz,obec,_clen_od,_cinny_od,_prisp,_dary'}}
+                tit:'zrušit?:3,příjmení:15,jméno:10,datum nar.:10,obec:20,člen od:5,činný od:5,letos přísp.:6,letos dary:6',
+                fld:'_zrus,prijmeni,jmeno,_naroz,obec,_clen_od,_cinny_od,_prisp,_dary'}}
     item {title:'Členové YS - stav (jak byl) vloni',
           par:°{typ:'e-cleni',exp:'Excel',cnd:1,hav:1,rok:1,
-                tit:'příjmení:15,jméno:10,datum nar.:10,obec:20,člen od:5,činný od:5,letos přísp.:6,letos dary:6',
-                fld:'prijmeni,jmeno,_naroz,obec,_clen_od,_cinny_od,_prisp,_dary'}}
+                tit:'zrušit?:3,příjmení:15,jméno:10,datum nar.:10,obec:20,člen od:5,činný od:5,letos přísp.:6,letos dary:6',
+                fld:'_zrus,prijmeni,jmeno,_naroz,obec,_clen_od,_cinny_od,_prisp,_dary'}}
   }
   menu {title:'Zpracování bankovních výpisů',type:'group', skill:'yae'
     item {title:'import plateb z RB', //skill:'m'
