@@ -1,0 +1,394 @@
+# Systém Ans(w)er pro YMCA Setkání
+# (c) 2008-2010 Martin Šmídek <martin@smidek.eu>
+
+menu ys { type:'main', active:* //ys.pok
+  var global: text,
+#   tabs info {title:"Archiv", _sys:'inf',  include:'onclick', active:*, skill:'yc' }
+#   tabs pok {title:"Pokladna", _sys:'*',  include:'onclick', active:*, skill:'yp' }
+#   tabs ban {title:"Banka", _sys:'*',  include:'onclick', active:*, skill:'yb' }
+#   tabs eko {title:"Ekonomika", _sys:'*',  include:'onclick', active:*, skill:'ye' }
+#   tabs ds {title:"Dům", _sys:'dum', include:'onclick', active:*, skill:'yd' }
+##  tabs chl {title:"Chlapi",  include:'onclick' }
+#   tabs akce {title:"Akce", _sys:'akce', include:'onclick', active:*, skill:'ya' }
+#   tabs db {title:"Databáze", _sys:'db', include:'onclick,db.akce', active:*, skill:'ya' }
+  tabs db2 {title:"Databáze2", _sys:'db', include:'onclick,db.akce2', active:*, skill:'test' }
+#   tabs lide {title:"Lidé", _sys:'lid', include:'onclick', skill:'yl' }
+  tabs syst {title:"Systém", _sys:'sys',  include:'onclick,ezer2.syst', active:*
+    panel oso {type:'right', title:'Osobní nastavení', _sys:'*', include:'onclick,ezer2.pers' }
+    panel nas {type:'right', title:'Data', _sys:'nas', skill:'a'
+      menu {type:'left', active:*
+        menu {title:'Testovací databáze',type:'group', _sys:'*'
+          item {title:'stav ...', par:°{db:'ys'}
+            proc onclick (i) { info.fill(conc(i.owner.title,' - ',i.title),ask('elim_stav',i.par.db)) }}
+          item {title:'kopírovat ostrou db do testovací', par:°{db:'ys'} }
+          proc onclick (i) {
+            confirm2("vytvořit znovu kopii ostré databáze?");
+            info.fill(conc(i.owner.title,' - ',i.title),' ... probíhá update ...');
+            info.fill('',ask('elim_copy_test_db',i.par.db));
+          }
+        }
+        menu {title:'YMCA Setkání ...',type:'group', _sys:'*'
+          item {title:'přehled dat'                     ,par:°{cmd:'survey'} }
+          proc onclick (i) {
+            info.fill(conc(i.owner.title,' - ',i.title),' ... probíhá výpočet ...');
+            info.fill('',ask('akce_data_survey',i.par));
+          }
+        }
+        menu {title:'Eliminace duplicit',type:'group', _sys:'*', skill:'m'
+          item {title:'vyprázdnit duplo'                ,par:°{duplo:'truncate'}}
+          item {title:'+ tipy na osoby => duplo'        ,par:°{duplo:'+osoby'}}
+          item {title:'+ tranzitivní obal rodin'        ,par:°{duplo:'+rodiny'}}
+          proc onclick (i) {
+            info.fill(conc(i.owner.title,' - ',i.title),' ... probíhá výpočet ...');
+            info.fill('',ask('akce_data_duplo',i.par));
+          }
+        }
+        menu {title:'Opravy dat',type:'group', _sys:'*'
+          item {title:'kontroly databáze'               ,par:°{opravit:0}}
+          item {title:'kontroly databáze s opravou'     ,par:°{opravit:1}, skill:'m'}
+          proc onclick (i) {
+            info.fill(conc(i.owner.title,' - ',i.title),' ... probíhá kontrola dat ...');
+            info.fill('',ask('akce_kontrola_dat',i.par));
+          }
+        }
+#         menu {title:'Importy ...',type:'group', _sys:'*'
+#           item {title:'přehled dat',                          par:°{cmd:'survey'}, skill:'m' }
+#           item {title:'import pečovatelů MS',                 par:°{cmd:'MS-pec'}, skill:'m' }
+#           proc onclick (i) {
+#             info.fill(conc(i.owner.title,' - ',i.title),' ... probíhá import dat ...');
+#             info.fill('',ask('ys_import_dat',i.par));
+#           }
+#         }
+      }
+      use info: form right [12,4,,]
+    }
+    panel dat {type:'right', title:"Zálohování", _sys:'*', skill:'m', include:'onclick' }
+  }
+  tabs doc  {title:"Nápověda", _sys:'nap',  include:'onclick,ezer2.help' }
+  tabs tst {title:"Testy",skill:'m'
+    panel one {type:'plain', title:'One',
+      use u: form right
+      proc onfocus() { clear; speed('clear'); u.info.set(debug(ask('test_one'))) }
+    }
+    panel two {type:'plain', title:'Two', proc onfocus() { echo(debug(ask('test_two'))) }}
+  }
+  tabs off  {title:"Odhlásit", type:'logoff' }
+//#   tabs test {title:"Test",  where:'http://ys2.ezer/test.html' }
+//#   tabs ys1  {title:"Pokladna/1",  where:'http://ys.ezer/anser.php?modul=ys_pokladna' }
+  // univerzální procedury
+  proc the_formsave (f,b) {
+    f.same
+  | f.key; f.save; f.load; b.browse_seek
+  | f.insert; f.load;
+    b.raise('onrowclick',b.browse_seek(conc(f.key_id,'=',f.key)))
+  }
+}
+
+// univerzální formulář pro levostranné menu
+form right [,,700,50] {
+  label info [0,0,680,600] { title:'' }
+  label head [0,0,680,50]  { title:'' }
+  label note [0,50,680,550] { title:'' }
+  proc fill(x,y) {
+    [ x; head.set(conc("<div class='karta'>",x,"</div>")) ];
+    [ y; note.set(y) ]
+  }
+  proc append(x) { note.get; note.set(conc(note.get,'<br>',x)) | note.set(x) }
+}
+
+table _file_ {
+  text fid
+  date fdate
+  text fname
+  text ftype
+  text finfo
+}
+
+# kopie číselníků akcí z intranetu YS
+table uakce { key_id:'id_uakce'
+  number id_uakce
+  number id_akce
+  text ms_source
+  number ms_akce
+  number rok
+  text akce
+  text nazev_akce
+  date datum { sql_pipe:'sql_date1' }
+  number dnu
+  number osob
+  number typ
+  text kapitola
+}
+
+# číselník
+table _cis { key_id:'id_cis'
+  number id_cis
+  text druh,
+  text data,
+  text zkratka,
+  number poradi,
+  text hodnota,
+  text popis,
+  text barva,
+  text ikona
+}
+
+table du_kurs { key_id:'id_dukurs'
+  number id_dukurs
+  number typ
+}
+
+# table ms_kurs { key_id:'id_kurs'
+#   number id_kurs
+#   text source
+#   number id_pary
+#   number id_akce
+#   number id_dupary
+#   number cislo
+#   number skupina
+#   number funkce
+#   text aktivita
+#   date datplatby        { sql_pipe:'sql_date1'}
+#   number zpusobplat
+#   text budova
+#   text pokoj
+#   number luzka
+#   number strava_cel
+#   number strava_pol
+#   number kocarek
+#   text pecovatel
+#   text poznamka
+#   number pristylky
+#   number pocetdnu
+#   number svp
+#   number dorazil
+#   number pouze
+#   number akce
+#   number platba
+#   text cstrava_cel      // číslice jsou seřazeny jako počty snídaní,obědů,večeří po dnech
+#   text cstrava_pol
+#   number platba1
+#   number platba2
+#   number platba3
+#   number platba4
+# }
+#
+# table du_kursdeti { key_id:'id_dukursdeti'
+#   number id_dukursdeti
+#   number typ
+# }
+#
+# table ms_kursdeti { key_id:'id_kursdeti'
+#   number id_kursdeti
+#   number id_pary        //-
+#   number id_akce
+#   number id_deti
+#   number cislo          //-
+#   text jmeno            //-
+#   number skupina
+#   number akce           //-
+# }
+#
+# table du_pary { key_id:'id_dupary'
+#   number id_dupary
+#   number typ
+# }
+#
+# table ms_pary { key_id:'id_pary'
+#   number id_pary
+#   number cislo
+#   number cislo_z
+#   text source
+#   text jmeno
+#   text adresa
+#   text psc
+#   text mesto
+#   text telefon
+#   text spz
+#   date datsvatba { sql_pipe:'sql_date1'}
+#   number svatba
+#   text poznamka
+#   text jmeno_m
+#   text jmeno_z
+#   text prijmeni_m
+#   text prijmeni_z
+#   number rodcislo_m
+#   number rodcislo_z
+#   text obcanka_m
+#   text obcanka_z
+#   number vzdelani_m
+#   number vzdelani_z
+#   text zamest_m
+#   text zamest_z
+#   text zajmy_m
+#   text zajmy_z
+#   text jazyk_m
+#   text jazyk_z
+#   number cirkev_m
+#   number cirkev_z
+#   text ccirkev_m
+#   text ccirkev_z
+#   text aktivita_m
+#   text aktivita_z
+#   number cislo_m
+#   number clen_m
+#   number clen_z
+#   text vyloucen
+#   text email
+#   number nfoto
+#   number lxx1
+# }
+#
+# table du_deti { key_id:'id_dudeti'
+#   number id_dudeti
+#   number id_dupary
+#   number id_deti
+#   number typ
+#   number pocet
+# }
+#
+# table ms_deti { key_id:'id_deti'
+#   number id_deti
+#   number id_pary
+#   text source
+#   number cislo
+#   text jmeno
+#   number rodcislo
+#   text poznamka
+# }
+#
+# table ms_poraakce {
+#   number poradatel
+#   text jmeno
+# }
+
+table join_akce { // spojení číselníku akcí s MS
+  number g_rok     { help:"rok akce podle číselníku akcí" }
+  number g_kod     { help:"kód akce podle číselníku akcí" }
+  text   source    { help:"L:Lídino M:Milošovo MS.EXE" }
+  number akce      { help:"staré číslo akce podle MS.EXE" }
+}
+
+table akce { key_id:'id_duakce'
+  number id_duakce
+  number typ
+}
+
+# table ms_akce { key_id:'id_akce'  // Sey
+#   number id_akce
+#   text source
+#   text nazev
+#   number akce
+#   number druh
+#   number poradatel
+#   date datum_od        // SQL tvar se používá v ys.akce
+#   date datum_do
+#   text misto
+# }
+
+table g_akce { key_id:'id_gakce' // kopie číselníku akcí z intranetu
+  number id_gakce
+  number g_rok     { help:"rok akce podle číselníku akcí" }
+  number g_kod     { help:"kód akce podle číselníku akcí" }
+  text   g_nazev   { help:"název akce z číselníku akcí" }
+  date   g_od      { help:"začátek akce z číselníku akcí", sql_pipe:'sql_date1' }
+  date   g_do      { help:"ukončení akce z číselníku akcí", sql_pipe:'sql_date1' }
+  number g_ucast   { help:"počet účastníků akce z číselníku akcí" }
+  text   g_typ     { help:"typ akce z číselníku akcí" }
+  text   g_kap     { help:"účetní kapitola akce z číselníku akcí" }
+}
+
+# table ms_pece {
+#   number cislo
+#   text jmeno
+#   text krestni
+#   text adresa
+#   text psc
+#   text mesto
+#   text telefon
+#   text poznamka
+#   number rodcislo
+#   text obcanka
+#   number zamestnani
+#   number kategorie
+#   number cirkev
+#   text ccirkev
+#   number cislo_y
+#   number kod
+#   number clen
+#   text email
+# }
+#
+# table ms_kurspece {
+#   number cislo
+#   number skupina
+#   text budova
+#   text pokoj
+#   number dorazil
+#   number akce
+#   text poznamka
+# }
+
+table mail { key_id:'id_mail'
+  number id_mail { key:'primary' },
+  number id_dopis { help:'mail|index mailu' }, // nepoužívá se pro dopisy s druh!='@'
+  number id_davka
+  number id_znacka                             // nepoužívá se pro dopisy s druh=='@'
+  number id_clen
+  text znacka
+  text email
+  number stav
+  text msg
+  text body
+}
+
+table dopis { key_id:'id_dopis'
+  number id_dopis { key:'primary' },
+  number id_davka { help:'dávka|číslo rozesílání dávky dopisů' },
+  text nazev
+  text prilohy
+  number potvrzeni { help:"potvrzení|vyžádat zaslání potvrzení o přečtení" }
+  number kopie	{ help:"poslat slepou kopii 'odesílateli'" }
+  text druh { help:'druh|D-dopis, S-samolepka,legitimace, N-nesamostatná složka' },
+  text typ { help:'typ|značka dopisu' },
+  number nw
+  number nh
+  number komu     // pouze pro maily
+  number pocet    // pouze pro maily
+  text report { help:'vzor|identifikátor reportu' },
+  number aktualni { help:'aktualni|text dopisu je připraven k tisku' },
+  date datum { help:'datum|vročení dopisu', sql_pipe:'sql_date1' },
+  text obsah { help:'obsah|text dopisu' },
+  text var_list { help:'seznam proměnných'}
+  text post_vars { help:'seznam proměnných počítaných po generování'}
+  text nest_list { help:'seznam složek (druh=N)'}
+  text add_list
+}
+
+table _user { key_id:'id_user', db:'ezer_system'
+  number id_user
+  text deleted,
+  text abbr,
+  text skills,
+  text options { help:'privátní nastavení|ve formátu JSON' }
+  text username,
+  text password,
+  number state,
+  text forename,
+  text surname,
+  text login,
+  text history,
+  text sess_id,
+  text sess_time,
+  text sess_data,
+  number zmena_kdo,
+  date zmena_kdy {  },
+}
+
+map ms_akce_clen:     table _cis {where:"druh='ms_akce_clen'",     order:'poradi', key_id:'data'}
+map ms_akce_pouze:    table _cis {where:"druh='ms_akce_pouze'",    order:'poradi', key_id:'data'}
+map ms_akce_funkce:   table _cis {where:"druh='ms_akce_funkce'",   order:'poradi', key_id:'data'}
+map ms_akce_prednasi: table _cis {where:"druh='ms_akce_prednasi'", order:'poradi', key_id:'data'}
+map ms_akce_cirkev:   table _cis {where:"druh='ms_akce_cirkev'",   order:'poradi', key_id:'data'}
+map ms_akce_vzdelani: table _cis {where:"druh='ms_akce_vzdelani'", order:'poradi', key_id:'data'}
+map ms_akce_platba:   table _cis {where:"druh='ms_akce_platba'",   order:'poradi', key_id:'data'}

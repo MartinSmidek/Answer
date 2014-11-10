@@ -1,5 +1,38 @@
 <?php # (c) 2009-2010 Martin Smidek <martin@smidek.eu>
 # ================================================================================================== EVIDENCE
+# ---------------------------------------------------------------------------------------- elim_stav
+function elim_stav() {
+  global $ezer_root,$dbs;
+  $stav= array(
+    "ezer_root"=>$ezer_root,
+    "dbs"=>$dbs
+  );
+                                        debug($stav);
+//                                         debug($_SESSION);
+  return 1;
+}
+# -------------------------------------------------------------------------------- elim_copy_test_db
+# zkopíruje důležité tabulky z ezer_$db do ezer_$db_test
+function elim_copy_test_db($db) {  trace();
+  $ok= mysql_qry("SET sql_mode = 'NO_AUTO_VALUE_ON_ZERO'");
+  // tabulka¨, která se má jen vytvořit, má před jménem hvězdičku
+  $tabs= explode(',',
+    "_user,_skill,_help,_cis,"
+  . "*_touch,*_track,*_todo,"
+  . "akce,cenik,pobyt,spolu,osoba,tvori,rodina,"
+  . "dar,"
+  . "dopis,mail"
+  );
+  foreach ($tabs as $xtab ) {
+    $tab= $xtab;
+    if ( $tab[0]=='*' ) $tab= substr($tab,1);
+    if ( $ok ) $ok= mysql_qry("DROP TABLE IF EXISTS ezer_{$db}_test.$tab");
+    if ( $ok ) $ok= mysql_qry("CREATE TABLE ezer_{$db}_test.$tab LIKE $tab");
+    if ( $xtab[0]!='*' )
+      if ( $ok ) $ok= mysql_qry("INSERT INTO ezer_{$db}_test.$tab SELECT * FROM $tab");
+  }
+  return $ok ? 'ok' : 'ko';
+}
 # ---------------------------------------------------------------------------------- elim_data_osoba
 # načte data OSOBA+TVORI včetně záznamů v _track
 function elim_data_osoba($ido) {  trace();
@@ -188,21 +221,24 @@ function akce_save_role($id_tvori,$role) { //trace();
 }
 # ---------------------------------------------------------------------------------------- akce_evid
 # hledání a) osoby a jejích rodin b) rodiny (pokud je id_osoba=0)
-function akce_evid($id_osoba,$id_rodina) { trace();
+# $show_deleted==1 vrátí i smazané
+function akce_evid($id_osoba,$id_rodina,$show_deleted=0) { trace();
   $cleni= "";
   $rodiny= array();
   $rodina= $rodina1= $id_rodina;
   $id_osoba ? "o.id_osoba=$id_osoba" : "r.id_rodina=$id_rodina";
   if ( $id_osoba ) { // ------------------------ osoby
     $clen= array();
+    $deleted_o= $show_deleted ? '' : "AND o.deleted=''";
+    $deleted_rto= $show_deleted ? '' : "AND rto.deleted=''";
     $qc= mysql_qry("
       SELECT rto.id_osoba,rto.jmeno,rto.prijmeni,rto.narozeni,rt.id_tvori,rt.role,r.id_rodina,nazev
       FROM osoba AS o
       JOIN tvori AS ot ON ot.id_osoba=o.id_osoba
       JOIN rodina AS r ON r.id_rodina=ot.id_rodina
       JOIN tvori AS rt ON rt.id_rodina=r.id_rodina
-      JOIN osoba AS rto ON rto.id_osoba=rt.id_osoba AND rto.deleted=''
-      WHERE o.id_osoba=$id_osoba AND o.deleted=''
+      JOIN osoba AS rto ON rto.id_osoba=rt.id_osoba $deleted_rto
+      WHERE o.id_osoba=$id_osoba $deleted_o
       ORDER BY rt.role,rto.narozeni
     ");
     while ( $qc && ($c= mysql_fetch_object($qc)) ) {
@@ -226,15 +262,17 @@ function akce_evid($id_osoba,$id_rodina) { trace();
     }
   }
   else { // ------------------------------------ rodiny
+    $deleted_r= $show_deleted ? '' : "AND r.deleted=''";
+    $deleted_rto= $show_deleted ? '' : "AND rto.deleted=''";
     $qc= mysql_qry("
       SELECT rto.id_osoba,rto.jmeno,rto.prijmeni,rto.narozeni,rt.id_tvori,rt.role,r.id_rodina,r.nazev,
         GROUP_CONCAT(CONCAT(otr.nazev,':',otr.id_rodina)) AS _rodiny
       FROM rodina AS r
       JOIN tvori AS rt ON rt.id_rodina=r.id_rodina
-      JOIN osoba AS rto ON rto.id_osoba=rt.id_osoba AND rto.deleted=''
+      JOIN osoba AS rto ON rto.id_osoba=rt.id_osoba $deleted_rto
       JOIN tvori AS ot ON ot.id_osoba=rto.id_osoba
       JOIN rodina AS otr ON otr.id_rodina=ot.id_rodina
-      WHERE r.id_rodina=$id_rodina AND r.deleted=''
+      WHERE r.id_rodina=$id_rodina $deleted_r
       GROUP BY id_osoba
       ORDER BY rt.role,rto.narozeni
     ");
