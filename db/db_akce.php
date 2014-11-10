@@ -4575,7 +4575,7 @@ function akce_text_eko($akce,$par,$title,$vypis,$export=false) { trace();
   $rows_vydaje= '';
   $rows_prijmy= '';
   $qc= "SELECT GROUP_CONCAT(polozka) AS polozky, za
-        FROM ezer_ys.cenik
+        FROM /*ezer_ys.*/cenik
         WHERE id_akce='$akce' AND za!=''
         GROUP BY za ORDER BY poradi ASC";
   $rc= mysql_qry($qc);
@@ -4611,7 +4611,7 @@ function akce_text_eko($akce,$par,$title,$vypis,$export=false) { trace();
     }
   }
   $qc= "SELECT GROUP_CONCAT(polozka) AS polozky, za, SUM(cena) AS _cena_
-        FROM ezer_ys.cenik
+        FROM /*ezer_ys.*/cenik
         WHERE id_akce='$akce' AND za IN ('sc','oc','vc','Np')
         GROUP BY za ORDER BY poradi ASC";
   $rc= mysql_qry($qc);
@@ -6443,7 +6443,7 @@ function akce_rb_urci($vs,$ss,$datum) {  trace();
   // určení akce podle SS a roku (zjednodušení)
   $rok= substr($datum,0,4);
   $qa= "SELECT id_duakce,g_kod,g_rok
-        FROM ezer_ys.akce AS da2
+        FROM /*ezer_ys.*/akce AS da2
         LEFT JOIN join_akce AS ja2 ON ja2.id_akce=da2.id_duakce
         LEFT JOIN g_akce AS ga2 USING(g_rok,g_kod)
         WHERE g_rok=$rok AND g_kod='$ss' ";
@@ -8465,7 +8465,7 @@ function db_mail_copy_ds() {  trace();
   global $ezer_db;
   $html= 'kopie se nepovedla';
   // smazání staré kopie
-  $qry= "TRUNCATE TABLE ezer_ys.ds_osoba_copy ";
+  $qry= "TRUNCATE TABLE /*ezer_ys.*/ds_osoba_copy ";
   $ok= mysql_qry($qry);
   if ( $ok ) {
     $html= "inicializace ds_osoba_copy ok";
@@ -8480,7 +8480,7 @@ function db_mail_copy_ds() {  trace();
         $vals.= "$del'".mysql_real_escape_string(wu($val))."'";
         $del= ',';
       }
-      $qry= "INSERT INTO ezer_ys.ds_osoba_copy ($ids) VALUES ($vals)";
+      $qry= "INSERT INTO /*ezer_ys.*/ds_osoba_copy ($ids) VALUES ($vals)";
       $ok= mysql_query($qry,$ezer_db['ezer_ys'][0]);
 //                                                         display("$ok:$qry");
       if ( !$ok ) {

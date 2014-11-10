@@ -535,7 +535,7 @@ map ms_akce_t_role:   table _cis {where:"druh='ms_akce_t_role'",    order:'porad
 # panel test {type:'plain', _sys:'*', title:"TEST", include:'onload,db.akce2.test',skill:'m'}
 # ================================================================================================== TRACK
 # přehled provedených změn
-panel track [,,540,250] { title:'histore oprav', type:'popup', css:'dialog'
+panel track [,,540,250] { title:'Historie oprav', type:'popup', css:'dialog'
   use back: form _back [0,16,,] { tabindex:20 },
   proc back_show(kde,klic) {
     panel.popup(0,1);
@@ -555,9 +555,9 @@ panel track [,,540,250] { title:'histore oprav', type:'popup', css:'dialog'
       show val [,,120,] { title:'změněná hodnota', data:_track.val, format:'t' },
       show id_track [,,0,] { data:_track.id_track },
     },
-    button zpet [500,515,80,20] { title:'Zpět'
-      proc onclick() { panel.close(0) }
-    }
+#     button zpet [484,230,,] { title:'Zpět'
+#       proc onclick() { panel.close(0) }
+#     }
   }
 }
 # ================================================================================================== formuláře
