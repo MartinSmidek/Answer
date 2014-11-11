@@ -40,7 +40,7 @@ proc akce_choose(id_akce) { var a:object
   the_hlavni.set(a.hlavni); the_soubezna.set(a.soubezna); the_cenik.set(a.cenik);
   the_cena.set(a.cena);
 }
-# ================================================================================================== MODULY
+# =========================================================================================== MODULY
 group foto { include:'onload,db.akce2.foto'
   form _alb {
     proc galery(fotka) {}
@@ -51,9 +51,9 @@ panel elim [0,0,965,582] { type:'popup', title:'Duplicity', format:'c', include:
   proc rodiny (idr,nazev) {}                    // sjednocení dvou rodin
   proc cleni  (idr) {}                          // sjednocení členů dané rodiny
 }
-# ================================================================================================== CHLAPI
+# =========================================================================================== CHLAPI
 # panel chl {type:'right', _sys:'*', title:'Chlapi', include:'onclick,db.akce.chl',skill:'yac;xa' }
-# ================================================================================================== AKCE
+# ============================================================================================= AKCE
 panel lst {type:'right', _sys:'*', title:'AKCE', include:'onload,db.akce.lst',skill:'yaa;faa;caa'
   use the_akce: form _the_akce         // zatím nezobrazená data nastavené akce s klíčem id_duakce
   proc akce_work(id) {}                // nastaví akci jako vybranou
@@ -75,7 +75,7 @@ panel pece {type:'plain', _sys:'*', title:'Pečouni', include:'onload,db.akce.pe
   proc akce_show() { alert('napřed klikni na Databáze|Pečouni') }
 }
 panel tisk [,,,] {type:'right', _sys:'*', title:'Výpisy akce', include:'onclick,db.akce.tisk',skill:'yaa;faa;caa'  }
-# ================================================================================================== EVIDENCE
+# ========================================================================================= EVIDENCE
 panel evi {type:'right', _sys:'*', title:'EVIDENCE2', include:'onload,db.akce2.evi', skill:'yae;fae;caa',
     style:"overflow-y:hidden"
 #   proc evid_show() { alert('funguje až při druhém použití') }
@@ -85,12 +85,12 @@ panel evi {type:'right', _sys:'*', title:'EVIDENCE2', include:'onload,db.akce2.e
   proc osoby_show() {}
 }
 # panel dup {type:'right', _sys:'*', title:'(duplicity)', include:'onclick,db.akce.dup', skill:'m+' }
-panel mai {type:'right', title:'MAILY', _sys:'*', include:'onclick,db.akce.mai', skill:'yam;fam;cam'  }
+panel mai {type:'right', title:'MAILY', _sys:'*', include:'onclick,db.akce2.mai', skill:'yam;fam;cam'  }
 # panel eli {type:'right', _sys:'*'
 #   title:'&nbsp;.&nbsp;&nbsp;.&nbsp;&nbsp;.&nbsp;&nbsp;.&nbsp;&nbsp;.&nbsp;&nbsp;.&nbsp;&nbsp;.&nbsp;&nbsp;.&nbsp;&nbsp;.&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(duplicity)',
 #   include:'onclick,db.akce.eli', skill:'m;fad' }
 
-# ================================================================================================== COMMON
+# =========================================================================================== COMMON
 # ------------------------------------------------------------------ _the_akce
 # zatím nezobrazená data nastavené akce s klíčem id_duakce
 form _the_akce {
@@ -159,7 +159,7 @@ table _track { key_id:'id_track'
   text old { help:'původní hodnota' },
   text val { help:'nová hodnota' },
 }
-# ================================================================================================== CHLAPI
+# =========================================================================================== CHLAPI
 table chlapi { key_id:'id_chlapi', db:'ezer_ys'
   number id_chlapi
   text prijmeni
@@ -219,7 +219,7 @@ table ds_osoba_copy { key_id:'id_osoba'
   text prijmeni
 }
 
-# ================================================================================================== AKCE
+# ============================================================================================= AKCE
 table akce { key_id:'id_duakce'
   number id_duakce
   number id_hlavni // 0 nebo id_duakce hlavní akce souběžné akce
@@ -531,9 +531,9 @@ map ms_akce_dite_kat: table _cis {where:"druh='ms_akce_dite_kat'",  order:'porad
 map ms_akce_s_role:   table _cis {where:"druh='ms_akce_s_role'",    order:'poradi', key_id:'data'}
 map ms_akce_t_role:   table _cis {where:"druh='ms_akce_t_role'",    order:'poradi', key_id:'data'}
 
-# ================================================================================================== TEST
+# ============================================================================================= TEST
 # panel test {type:'plain', _sys:'*', title:"TEST", include:'onload,db.akce2.test',skill:'m'}
-# ================================================================================================== TRACK
+# ============================================================================================ TRACK
 # přehled provedených změn
 panel track [,,540,250] { title:'Historie oprav', type:'popup', css:'dialog'
   use back: form _back [0,16,,] { tabindex:20 },
@@ -853,7 +853,7 @@ form _rodina2 [,,360,229]  { css:'ae_frame', proc onclick() { on_click }
     rodiny.key(key_rodina.get);
   }
 }
-# ----------------------------------------------------------------------------------------- _rodina2p
+# ---------------------------------------------------------------------------------------- _rodina2p
 form _rodina2p [,,360,229] { css:'ae_frame'
   const Lr=187
   view r: table rodina

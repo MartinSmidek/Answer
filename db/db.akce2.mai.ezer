@@ -398,7 +398,8 @@ form _gsql {
     json.set(conc(json,'}'));
     # kompletace
     json.set(conc("{",json,'}'));
-    ask('dop_gen_json',json);
+#     ask('dop_gen_json',json);
+                                                echo("json=",json);
     return(json);
   }
   proc read_json(parm) {
@@ -406,6 +407,7 @@ form _gsql {
     var ids: text
     parm;
     p.set(ask('dop_gen_read',parm));
+    not(eq(p,0));
     # ano-akce
     ano_akce.set(p.ano_akce.typy); ano_akce.onchange;
     [ p.ano_akce.keys;
