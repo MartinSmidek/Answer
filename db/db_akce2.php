@@ -18,18 +18,18 @@ function elim_copy_test_db($db) {  trace();
   // tabulka¨, která se má jen vytvořit, má před jménem hvězdičku
   $tabs= explode(',',
     "_user,_skill,_help,_cis,"
-  . "*_touch,*_track,*_todo,"
-  . "akce,cenik,pobyt,spolu,osoba,tvori,rodina,"
-  . "dar,"
-  . "dopis,mail"
+  . "*_touch,_track,*_todo,"
+  . "akce,cenik,pobyt,spolu,osoba,tvori,rodina,g_akce,join_akce,"
+  . "dar,platba,"
+  . "dopis,mail,mailist"
   );
   foreach ($tabs as $xtab ) {
     $tab= $xtab;
     if ( $tab[0]=='*' ) $tab= substr($tab,1);
     if ( $ok ) $ok= mysql_qry("DROP TABLE IF EXISTS ezer_{$db}_test.$tab");
-    if ( $ok ) $ok= mysql_qry("CREATE TABLE ezer_{$db}_test.$tab LIKE $tab");
+    if ( $ok ) $ok= mysql_qry("CREATE TABLE ezer_{$db}_test.$tab LIKE ezer_{$db}.$tab");
     if ( $xtab[0]!='*' )
-      if ( $ok ) $ok= mysql_qry("INSERT INTO ezer_{$db}_test.$tab SELECT * FROM $tab");
+      if ( $ok ) $ok= mysql_qry("INSERT INTO ezer_{$db}_test.$tab SELECT * FROM ezer_{$db}.$tab");
   }
   return $ok ? 'ok' : 'ko';
 }

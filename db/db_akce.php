@@ -8168,7 +8168,7 @@ function evid_sestava_cleni($par,$title,$export=false) {
   $expr= array();       // pro výrazy
   $clenu= $cinnych= $prispevku= $daru= 0;
   $qry= "SELECT
-           os.prijmeni,os.jmeno,os.narozeni,os.sex,
+           os.id_osoba,os.prijmeni,os.jmeno,os.narozeni,os.sex,
            os.obec,os.ulice,os.psc,os.email,r.emaily,
            GROUP_CONCAT(DISTINCT od.ukon ORDER BY od.ukon SEPARATOR '') as rel,
            GROUP_CONCAT(CONCAT(ukon,':',YEAR(dat_od),':',YEAR(dat_do),':',castka) ORDER BY dat_od DESC SEPARATOR '|') AS _ukony
@@ -8176,11 +8176,13 @@ function evid_sestava_cleni($par,$title,$export=false) {
          JOIN tvori AS ot ON os.id_osoba=ot.id_osoba
          JOIN rodina AS r USING(id_rodina)
          LEFT JOIN dar AS od ON os.id_osoba=od.id_osoba AND od.deleted=''
-         WHERE os.deleted='' AND {$par->cnd}
+         WHERE os.deleted='' AND {$par->cnd} AND (dat_do='0000-00-00' OR YEAR(dat_do)>=$rok)
+AND LEFT(os.prijmeni,2)='Ln'
          GROUP BY os.id_osoba HAVING {$par->hav}
          ORDER BY os.prijmeni";
   $res= mysql_qry($qry);
   while ( $res && ($x= mysql_fetch_object($res)) ) {
+    $id_osoba= $x->id_osoba;
     // rozbor úkonů
     $_clen_od= $_cinny_od= $_prisp= $_dary= 0;
     foreach(explode('|',$x->_ukony) as $uddc) {
@@ -8192,6 +8194,7 @@ function evid_sestava_cleni($par,$title,$export=false) {
       case 'c': if ( $d2<=$rok && (!$_cinny_od && $d1<=$rok || $d1<$_cinny_od) ) $_cinny_od= $d1; break;
       }
     }
+                                display("$x->jmeno $_clen_od= $_cinny_od= $_prisp= $_dary");
     $prispevku+= $_prisp;
     $daru+= $_dary;
     if ( !$_clen_od && !$_cinny_od ) continue;
@@ -8207,7 +8210,21 @@ function evid_sestava_cleni($par,$title,$export=false) {
       case '_prisp':    $clmn[$n][$f]= $_prisp; break;
       case '_dary':     $clmn[$n][$f]= $_dary; break;
       case '_naroz':    $clmn[$n][$f]= sql_date1($x->narozeni); break;
-      case '_zrus':     $clmn[$n][$f]= $_clen_od<2014 && !$_cinny_od && !$_prisp ? 'x' : '';
+      case '_zrus':     $del= $_clen_od<2014 && !$_cinny_od && !$_prisp ? 'x' : '';
+        if ( $par->del && $del=='x' ) {
+          // výjimky
+          if ( in_array(substr($x->prijmeni,0,4),array("Fisc","Gada","Hora","Horo","Jaku","Ulri")) )
+            $del= '';
+          // SMAZAT!
+          if ( $del=='x' ) {
+            $qd= "UPDATE dar SET dat_do='2013-12-30',note=CONCAT(note,' inventura 2014' /* $x->prijmeni */
+                  WHERE id_osoba=$id_osoba AND ukon IN ('c','b') AND dat_do='0000-00-00'";
+                                                display($qd);
+//             $ok= query($qd);
+//             if ( !$ok ) $del= "X?";
+          }
+        }
+        $clmn[$n][$f]= $del;
         break;
       default:
         $clmn[$n][$f]= $x->$f;
@@ -9713,7 +9730,7 @@ function dop_gen_json($js) { //trace();
 //                                                         display($js);
   $obj= $json->decode($js);
 //                                                         debug($obj);
-  $obj= json_decode($js);
+//   $obj= json_decode($js);
 //                                                         debug($obj);
   return 1;
 }
@@ -9721,11 +9738,14 @@ function dop_gen_json($js) { //trace();
 # převod parm do objektu
 function dop_gen_read($parm) { trace();
   global $json;
-//                                                         display($parm);
+                                                        display($parm);
   $obj= $json->decode($parm);
 //                                                         debug($obj);
 //   $obj= json_decode($js);
-//                                                         debug($obj);
+                                                        display("isset=".isset($obj->ano_akce));
+  $obj= isset($obj->ano_akce) ? $obj : 0;
+                                                        debug($obj);
+//                                                         display("obj=".$obj);
   return $obj;
 }
 ?>
