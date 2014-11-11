@@ -1,3 +1,5 @@
+#pragma test
+
 # Systém Ans(w)er - modul Akce.Maily
 # (c) 2008-2010 Martin Šmídek <martin@smidek.eu>
 
@@ -236,7 +238,7 @@ form _gsql {
   # ------- časové ano-podmínky
   const cas_options = "neomezovat:1,plánovaná akce:2,dříve než:3,později než:4,místo:11,název:12"
   var last_ano: number
-  button ano_cas [10,t_akce+60,140,] { tag:'def', title:'omezení akcí časem, místem,...', proc onclick() {
+  button ano_cas [10,t_akce+60,,] { tag:'def', title:'omezení akcí časem, místem,...', proc onclick() {
     last_ano.set(L_ano.add);
     L_ano.part(last_ano.get).part('kdy').selects(cas_options.get);
     L_ano.part(last_ano.get).part('rok').init(1); L_ano.part(last_ano.get).part('kdy').key(4);
@@ -276,7 +278,7 @@ form _gsql {
   }
   # ------- časové ne-podmínky
   var last_ne: number
-  button ne_cas [l_ne_akce+10,t_akce+60,140,] { tag:'def', title:'omezení akcí časem, místem,...', proc onclick() {
+  button ne_cas [l_ne_akce+10,t_akce+60,,] { tag:'def', title:'omezení akcí časem, místem,...', proc onclick() {
     last_ne.set(L_ne.add);
     L_ne.part(last_ne.get).part('kdy').selects(cas_options.get);
     L_ne.part(last_ne.get).part('rok').init(1); L_ne.part(last_ne.get).part('kdy').key(4);
@@ -497,10 +499,11 @@ form _gsql {
     cond.set(conc(cond.get,' AND ',pro_mrop.code_mrop));
     # sestavení SELECT pro osobu
     gsql.set(conc(
-      "SELECT COUNT(*) AS _ucasti,o.id_osoba AS _id,CONCAT(prijmeni,' ',jmeno) AS _name,",chr(10),
+      "SELECT COUNT(*) AS _ucasti,iniciace,o.id_osoba AS _id,CONCAT(prijmeni,' ',jmeno) AS _name,",chr(10),
       "  IF(o.psc!='',o.psc,r.psc) AS _psc,",chr(10),
       "  IF(o.psc!='' OR r.psc!='',o.ulice,r.ulice) AS _ulice,",chr(10),
       "  IF(o.psc!='' OR r.psc!='',o.obec,r.obec) AS _obec,",chr(10),
+      "  IF(o.psc!='' OR r.psc!='',o.stat,r.stat) AS _stat,",chr(10),
       "  IF(email!='',email,r.emaily) AS _email,nomail",chr(10),
       from.get,chr(10),
       "WHERE ",cond.get,
@@ -791,7 +794,7 @@ form _etext  {
   # příkazy 1
   label  [L+0,180,200,78] { css:'ae_parm' }
   label [L+8,232,184,] { title:"přegenerováním jsou také přepočteny všechny {proměnné}" }
-  button uloz [L+8,186,45,17] { tag:'u', type:'submit', title:'Uložit',
+  button uloz [L+8,186,,] { tag:'u', type:'submit', title:'Uložit',
     help:'uložit opravené hodnoty', skill:'yam|yams;fam|fams;cam|cams'
     proc onclick () {
       form.same
@@ -804,13 +807,13 @@ form _etext  {
       form_state('n|s','u|z');
     }
   }
-  button [L+64,186,45,17] { tag:'z', title:'Zpět', help:'neukládat hodnoty', skill:'yam|yams;fam|fams;cam|cams'
+  button [L+64,186,,] { tag:'z', title:'Zpět', help:'neukládat hodnoty', skill:'yam|yams;fam|fams;cam|cams'
     proc onclick () {
       adopis.get; form.load(adopis.get); form_state('n|s','u|z'); texty.browse_focus
     | form.init; drop.set(''); form_state('n','u|z|s')
     }
   }
-  button oprav [L+113,186,45,17] { tag:'s', title:'Opravit text', help:'opravit text mailu',
+  button oprav [L+113,186,,] { tag:'s', title:'Opravit text', help:'opravit text mailu',
     skill:'yam|yams;fam|fams;cam|cams'
     proc onclick () {
       gt(texty.stav2.get,2); not(confirm("Tento dopis již byl rozesílán, opravdu chceš opravit jeho text?"))
@@ -819,7 +822,7 @@ form _etext  {
   }
   # příkazy 2
   label  [L+246,178,120,32] { css:'ae_parm' }
-  button novy [L+254,184,45,17] { tag:'n', title:'Nový', help:'vytvořit nový e-mail',
+  button novy [L+254,184,,] { tag:'n', title:'Nový', help:'vytvořit nový e-mail',
     skill:'yam|yams;fam|fams;cam|cams'
     proc onclick () {
       form.init; drop.set(''); form_state('u|z','n|s'); drop_init;
@@ -836,7 +839,7 @@ form _etext  {
       id_duakce.change; komu.change; cis_skupina.change; id_mailist.change;
     }
   }
-  button smaz [L+303,184,45,17] { tag:'s', title:'Smazat', help:'smazat mail a jeho rozesílání',
+  button smaz [L+303,184,,] { tag:'s', title:'Smazat', help:'smazat mail a jeho rozesílání',
     skill:'yam|yams;fam|fams;cam|cams'
     proc onclick () {
       confirm(conc("Opravdu smazat mail '",texty.predmet.get,"' a jeho rozesílací seznam?"));
@@ -845,7 +848,7 @@ form _etext  {
     }
   }
   var et_prazdy: number
-  button generovat [L+8,211,45,17] { tag:'s', title:'Vygenerovat rozesílací seznam',
+  button generovat [L+8,211,,] { tag:'s', title:'Vygenerovat rozesílací seznam',
     help:'připravit rozesílání', skill:'yam|yams;fam|fams;cam|cams'
     proc onclick () {
       var conf: object
@@ -947,10 +950,10 @@ panel E_dopis [0,0,645,520] { title:' Úprava textu mailu', type:'popup', css:'d
   form _edopis {
     label [0,12,60,20] { title:'Předmět:' }
     field nazev [50,10,480,20] { data:dopis.nazev },
-    button  [540,9,45,20] { title:'Uložit', help:'ukončit editor a uložit změny'
+    button  [540,9,,] { title:'Uložit', help:'ukončit editor a uložit změny'
       proc onclick() { form.save; panel.hide(1); }
     }
-    button  [600,9,45,20] { title:'Zpět', help:'ukončit editor bez uložení změn'
+    button  [600,9,,] { title:'Zpět', help:'ukončit editor bez uložení změn'
       proc onclick() { panel.hide(0); }
     }
     edit [0,40,645,480] {type:'html', data:dopis.obsah, par:°{toolbar:'EzerMail'} },
@@ -996,7 +999,7 @@ form _esady  {
   field zkus [105,210,200,17] { skill:'yam|yams;fam|fams;cam|cams', help:'email z osobního nastavení', format:'t' }
   field from [105,236,200,17] { skill:'yam|yams;fam|fams;cam|cams', help:'email z osobního nastavení', format:'t'  }
   field name [105,255,200,17] { skill:'yam|yams;fam|fams;cam|cams', help:"'vyřizuje' z osobního nastavení", format:'t'  }
-  button test [0,280,100,17] { title:'1 mail testovací', skill:'yam|yams;fam|fams;cam|cams',
+  button test [0,280,,] { title:'1 mail testovací', skill:'yam|yams;fam|fams;cam|cams',
     help:'pro kontrolu - posílá se na testovací adresu'
     proc onclick () {
       msg.set('');
@@ -1010,7 +1013,7 @@ form _esady  {
       send.set(conc('až ',davka.get,'  ještě neposlaných'));
     }
   }
-  button send [150,280,100,17] { title:'xx ještě neposlaných', skill:'yam|yams;fam|fams;cam|cams',
+  button send [150,280,,] { title:'xx ještě neposlaných', skill:'yam|yams;fam|fams;cam|cams',
     help:'pošle další dávku - počet lze měnit políčkem vlevo'
     proc onclick () {
       msg.set('');

@@ -1,5 +1,28 @@
 <?php # (c) 2009-2010 Martin Smidek <martin@smidek.eu>
-# ================================================================================================== EVIDENCE
+# =========================================================================================== SYSTÉM
+# ----------------------------------------------------------------------------------- data_mrop_save
+function data_mrop_save($par,$save=0) {
+  switch ($save) {
+  case 0:               // confirm
+    list($pocet,$problem,$nazev)= select("COUNT(*),SUM(IF(iniciace=0,0,1)),nazev",
+      "pobyt JOIN akce ON id_akce=id_duakce JOIN spolu USING (id_pobyt) JOIN osoba USING (id_osoba)",
+      "id_akce=$par->akce AND YEAR(datum_od)=$par->rok AND funkce=0 AND sex=1");
+    $txt= $problem
+      ? "POZOR! akce $nazev/$par->rok se zúčastnilo $problem již jednou iniciovaných!"
+      : "zapsat $par->rok jako rok iniciace pro $pocet účastníků akce $nazev/$par->rok?";
+    break;
+  case 1:               // zápis
+    query("UPDATE osoba
+             JOIN spolu USING (id_osoba) JOIN pobyt USING (id_pobyt) JOIN akce ON id_akce=id_duakce
+           SET iniciace=$par->rok
+             WHERE id_akce=$par->akce AND funkce=0 AND iniciace=0 AND sex=1");
+    $n= mysql_affected_rows();
+    $txt= "Rok $par->rok byl zapsán jako rok iniciace $n mužům";
+    break;
+  }
+  return $txt;
+}
+# ========================================================================================= EVIDENCE
 # ---------------------------------------------------------------------------------------- elim_stav
 function elim_stav() {
   global $ezer_root,$dbs;
@@ -291,7 +314,7 @@ function akce_evid($id_osoba,$id_rodina,$show_deleted=0) { trace();
 //                                                         debug($ret);
   return $ret;
 }
-# ================================================================================================== ÚČASTNÍCI
+# ======================================================================================== ÚČASTNÍCI
 # ---------------------------------------------------------------------------------- akce_browse_ask
 # obsluha browse s optimize:ask
 # x->order= {a|d} polozka

@@ -8177,7 +8177,7 @@ function evid_sestava_cleni($par,$title,$export=false) {
          JOIN rodina AS r USING(id_rodina)
          LEFT JOIN dar AS od ON os.id_osoba=od.id_osoba AND od.deleted=''
          WHERE os.deleted='' AND {$par->cnd} AND (dat_do='0000-00-00' OR YEAR(dat_do)>=$rok)
-AND LEFT(os.prijmeni,2)='Ln'
+           -- AND LEFT(os.prijmeni,2)='Ln'
          GROUP BY os.id_osoba HAVING {$par->hav}
          ORDER BY os.prijmeni";
   $res= mysql_qry($qry);
@@ -8194,7 +8194,7 @@ AND LEFT(os.prijmeni,2)='Ln'
       case 'c': if ( $d2<=$rok && (!$_cinny_od && $d1<=$rok || $d1<$_cinny_od) ) $_cinny_od= $d1; break;
       }
     }
-                                display("$x->jmeno $_clen_od= $_cinny_od= $_prisp= $_dary");
+//                                 display("$x->jmeno $_clen_od= $_cinny_od= $_prisp= $_dary");
     $prispevku+= $_prisp;
     $daru+= $_dary;
     if ( !$_clen_od && !$_cinny_od ) continue;
@@ -8217,11 +8217,10 @@ AND LEFT(os.prijmeni,2)='Ln'
             $del= '';
           // SMAZAT!
           if ( $del=='x' ) {
-            $qd= "UPDATE dar SET dat_do='2013-12-30',note=CONCAT(note,' inventura 2014' /* $x->prijmeni */
-                  WHERE id_osoba=$id_osoba AND ukon IN ('c','b') AND dat_do='0000-00-00'";
+            $qd= "UPDATE dar SET dat_do='2013-12-30',note=CONCAT(note,' inventura 2014') /* $x->prijmeni */ WHERE id_osoba=$id_osoba AND ukon IN ('c','b') AND dat_do='0000-00-00'";
                                                 display($qd);
-//             $ok= query($qd);
-//             if ( !$ok ) $del= "X?";
+            $ok= query($qd);
+            if ( !$ok ) $del= "X?";
           }
         }
         $clmn[$n][$f]= $del;
@@ -9639,7 +9638,11 @@ function dop_gen_excel($gq,$nazev) { trace();
   $file= "maillist_$ymd_hi";
   $type= 'xls';
   $par= (object)array('dir'=>$ezer_root,'file'=>$file,'type'=>$type,'title'=>$t,'color'=>'aac0cae2');
-  $clmns= "_name:příjmení jméno,_email:email,_ulice:ulice,_psc:PSČ,_obec:obec,_ucasti:účastí";
+  $clmns= "_name:příjmení jméno,_email:email,_ulice:ulice,_psc:PSČ,_obec:obec,_stat:stát,_ucasti:účastí";
+  if ( preg_match("/iniciace/i",$gq) ) {
+    // přidání sloupce iniciace, pokud se vyskytuje v dotazu
+    $clmns.= ",iniciace:iniciace";
+  }
   $titles= $del= '';
   $fields= $values= array();
   foreach (explode(',',$clmns) as $clmn) {

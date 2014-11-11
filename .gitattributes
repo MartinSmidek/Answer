@@ -282,6 +282,7 @@ ys/ys_ucet.php -text
 /ys2.inc -text
 /ys2.php -text
 ys2/$.ezer -text
+ys2/code/comp2tab.php -text
 ys2/img/+logo.gif -text
 ys2/img/-logo.gif -text
 ys2/img/ys-logo.gif -text
