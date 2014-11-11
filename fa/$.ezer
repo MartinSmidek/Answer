@@ -10,12 +10,28 @@ menu fa { type:'main', active:* //ys.pok
     panel oso {type:'right', title:'Osobní nastavení', _sys:'*', include:'onclick,ezer2.pers' }
     panel nas {type:'right', title:'Data', _sys:'nas', skill:'a'
       menu {type:'left', active:*
+        menu {title:'Testovací databáze',type:'group', _sys:'*'
+          item {title:'stav ...', par:°{db:'ys'}
+            proc onclick (i) { info.fill(conc(i.owner.title,' - ',i.title),ask('elim_stav',i.par.db)) }}
+          item {title:'kopírovat ostrou db do testovací', par:°{db:'fa'} }
+          proc onclick (i) {
+            confirm2("vytvořit znovu kopii ostré databáze?");
+            info.fill(conc(i.owner.title,' - ',i.title),' ... probíhá update ...');
+            info.fill('',ask('elim_copy_test_db',i.par.db));
+          }
+        }
         menu {title:'YMCA Familia ...',type:'group', _sys:'*'
           item {title:'přehled dat'                     ,par:°{cmd:'survey'} }
           proc onclick (i) {
             info.fill(conc(i.owner.title,' - ',i.title),' ... probíhá výpočet ...');
             info.fill('',ask('akce_data_survey',i.par));
           }
+          item {title:'zápis iniciovaných'              ,par:°{akce:403,rok:2014}
+            proc onclick (i) {
+              info.fill(conc(i.owner.title,' - ',i.title),' ');
+              confirm2(ask('data_mrop_save',i.par,0));
+              info.fill('',ask('data_mrop_save',i.par,1));
+          }}
         }
         menu {title:'Kontrola a opravy dat',type:'group', _sys:'*'
 #           item {title:'poznámky pečounům'               ,par:°{opravit:0}

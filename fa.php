@@ -9,9 +9,10 @@
   $skin=     'default';
   $skin=     'ch';
   $CKEditor= isset($_GET['editor']) ? $_GET['editor'] : '4';
-  $dbg=      $_GET['dbg'];
+  $dbg=      isset($_GET['dbg']) ? $_GET['dbg'] : 0;
   $gmap=     isset($_GET['gmap']) ? true : !($ezer_local || $android);
   $awesome=  isset($_GET['awesome']) ? $_GET['awesome'] : 0;
+  if ( isset($_GET['database']) ) $app_name.= " - {$_GET['database']}";
 
   require_once("$app.inc");
   require_once("{$EZER->version}/server/ae_slib.php");

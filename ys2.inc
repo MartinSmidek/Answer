@@ -13,6 +13,10 @@
   $ezer_ys= isset($_SESSION['ys2']['GET']['database'])
                 ? $_SESSION['ys2']['GET']['database'] : 'ezer_ys';
 
+  // android
+  $android=    preg_match('/android|x11/i',$_SERVER['HTTP_USER_AGENT']);
+  $ezer_ksweb= $android && $_SERVER["SERVER_NAME"]=="localhost"; // identifikace ladícího serveru KSWEB/Android
+
   require_once("{$EZER->version}/server/ae_slib.php");
 
   // OBECNÉ PARAMETRY
@@ -31,21 +35,6 @@
 //       'setkani' =>      array(0,'localhost','gandi','','cp1250'))
       'setkani' =>      array(0,'localhost','gandi','','utf8'))
   );
-  // modifikace tabulky případným nastavením $_GET[dbs] přeneseným do $_SESSION[$ezer_root][dbs]
-  // dbs=db_name:other_db_name,...
-  $subst= '';
-//   if ( ($subst= $_GET['dbs']) || ($subst= $_SESSION['ys']['GET']['dbs']) ) {
-//     foreach(explode(',',$subst) as $pair) {
-//       list($old,$new)= explode(':',$pair);
-//       if ( isset($dbs[0][$old]) && $dbs[1][$old] ) {
-//         $dbs[0][$old][5]= $new;
-//         $dbs[1][$old][5]= $new;
-//       }
-//       else {
-//         $subst= "substituci $subst nelze provést";
-//       }
-//     }
-//   }
   // kořeny cest
   $path_root=  array("/home/www/ezer/www-ys/2","C:/Apache/htdocs/ezer/www-ys2");
   $path_pspad= array(null,"C:/Program Files (x86)/PSPad editor/Syntax");
@@ -55,7 +44,7 @@
   $ezer_mysql_path= array("/usr/bin/","c:/apache/mysql/bin/");
   $ezer_mysql_path= $ezer_mysql_path[$ezer_local?1:0];  // cesta k utilitě mysql (i s lomítkem)
   // cesty pro zadávání url
-  $path_url= array("http://answer.setkani.org/ys.php","http://ys2.ezer/ys.php");
+  $path_url= array("http://answer.setkani.org/ys2.php","http://ys2.ezer/ys2.php");
   $path_url= $path_url[$ezer_local?1:0];                // prefix url
   // ostatní parametry
   $tracking= '_track';
@@ -105,7 +94,6 @@
 
   // parametrizace $EZER
   $EZER->options->local= $ezer_local;
-  $EZER->options->mysql= $subst;            // dbs=db_name:other_db_name,... NEBO nic NEBO chyba
   $EZER->options->org=    'YMCA Setkání';
   $EZER->options->web=    'www.setkani.org';
   $EZER->options->author= 'Martin';

@@ -7,6 +7,13 @@
   $EZER->version= isset($_GET['ezer']) ? "ezer{$_GET['ezer']}" : 'ezer2.2';
 
   $ezer_local= preg_match('/^\w+\.ezer|192.168/',$_SERVER["SERVER_NAME"]); // identifikace ladícího serveru
+
+  // případné nahrazení ostré databáze jinou
+  if ( isset($_GET['database']) ) $_SESSION['fa']['GET']['database']= $_GET['database'];
+  $ezer_fa= isset($_SESSION['fa']['GET']['database'])
+                ? $_SESSION['fa']['GET']['database'] : 'ezer_fa';
+
+  // android
   $android=    preg_match('/android|x11/i',$_SERVER['HTTP_USER_AGENT']);
   $ezer_ksweb= $android && $_SERVER["SERVER_NAME"]=="localhost"; // identifikace ladícího serveru KSWEB/Android
 
@@ -19,16 +26,16 @@
   $db= array('ezer_fa','ezer_fa');
   $dbs= array( $ezer_ksweb
   ? array( /* lokální android */
-      'ezer_fa' =>      array(0,'localhost','root','','utf8'),
-      'ezer_system' =>  array(0,'localhost','root','','utf8','ezer_fa'))
+      'ezer_fa' =>      array(0,'localhost','root','','utf8',$ezer_fa),
+      'ezer_system' =>  array(0,'localhost','root','','utf8',$ezer_fa))
   : array( /* ostré */
-      'ezer_fa' =>      array(0,'localhost','gandi','r8d0st','utf8'),
+      'ezer_fa' =>      array(0,'localhost','gandi','r8d0st','utf8',$ezer_fa),
       'ezer_ys' =>      array(0,'localhost','gandi','r8d0st','utf8'),
-      'ezer_system' =>  array(0,'localhost','gandi','r8d0st','utf8','ezer_fa')),
+      'ezer_system' =>  array(0,'localhost','gandi','r8d0st','utf8',$ezer_fa)),
     array( /* lokální */
-      'ezer_fa' =>      array(0,'localhost','gandi','','utf8'),
+      'ezer_fa' =>      array(0,'localhost','gandi','','utf8',$ezer_fa),
       'ezer_ys' =>      array(0,'localhost','gandi','','utf8'),
-      'ezer_system' =>  array(0,'localhost','gandi','','utf8','ezer_fa'))
+      'ezer_system' =>  array(0,'localhost','gandi','','utf8',$ezer_fa))
   );
   // kořeny cest
   $path_root=  array($ezer_ksweb?"/storage/sdcard0/htdocs/www-ys2":
