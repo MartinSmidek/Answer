@@ -554,6 +554,7 @@ function ds_zaloha($order) {  #trace('','win1250');
   $qry= "SELECT * FROM tx_gnalberice_order WHERE uid=$order";
   $res= mysql_qry($qry);
   if ( $res && $o= mysql_fetch_object($res) ) {
+    $o->rooms= $o->rooms1;
     foreach ((array)$o as $on) if ( strstr($on,'|')!==false ) { // test na |
       fce_warning(wu("nepøípustný znak '|' v '$on'"));
       goto end;
@@ -852,6 +853,7 @@ function ds_faktury($order) {  trace('','win1250');
   $qry= "SELECT * FROM setkani.tx_gnalberice_order WHERE uid=$order";
   $res= mysql_qry($qry);
   if ( $res && $o= mysql_fetch_object($res) ) {
+    $o->rooms= $o->rooms1;
     foreach ((array)$o as $on) if ( strstr($on,'|')!==false ) { // test na |
       fce_warning(wu("nepøípustný znak '|' v '$on'"));
       goto end;
@@ -1159,7 +1161,7 @@ __XLS;
 # }
 function ds_faktura($list,$typ,$order,$polozky,$platce,$zaloha=100,$pata='') {  #trace('','win1250');
   list($ic,$dic,$adresa,$akce,$obdobi)= $platce;
-  $vystaveno= Excel5_date(mktime());
+  $vystaveno= Excel5_date(time());
   $ymca_setkani= "YMCA Setkání, spolek{}Talichova 53, 62300 Brno{}".
                  "zaregistrovaný Krajským soudem v Brnì{}spisová znaèka: L 8556{}".
                  "IÈ: 26531135  DIÈ: CZ26531135";

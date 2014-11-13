@@ -40,8 +40,9 @@ function elim_copy_test_db($db) {  trace();
   $ok= mysql_qry("SET sql_mode = 'NO_AUTO_VALUE_ON_ZERO'");
   // tabulka¨, která se má jen vytvořit, má před jménem hvězdičku
   $tabs= explode(',',
-    "_user,_skill,_help,_cis,"
-  . "*_touch,_track,*_todo,"
+//     "_user,_skill,"
+    "_help,_cis,"
+  . "*_touch,_track,*_todo,ezer_doc2,"
   . "akce,cenik,pobyt,spolu,osoba,tvori,rodina,g_akce,join_akce,"
   . "dar,platba,"
   . "dopis,mail,mailist"

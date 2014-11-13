@@ -1,7 +1,8 @@
 <?php # Systém An(w)er/Ezer2, (c) 2008-2010 Martin Šmídek <martin@smidek.eu>
 
   $ezer_local= preg_match('/^\w+\.ezer/',$_SERVER["SERVER_NAME"]); // identifikace ladícího serveru
-  $ezer_ksweb= $_SERVER["SERVER_NAME"]=="localhost"; // identifikace ladícího serveru KSWEB/Android
+  $android=    preg_match('/android|x11/i',$_SERVER['HTTP_USER_AGENT']);
+  $ezer_ksweb= $android && $_SERVER["SERVER_NAME"]=="localhost"; // identifikace ladícího serveru KSWEB/Android
 
   $app=      'ys2';
   $app_name= 'Ans(w)er'.($ezer_ksweb?" / test Android":"");;
