@@ -151,7 +151,7 @@ group pobyt {
 
     label       [344,101,5,] { title:'?' }
     field noroom [PL+324,PT+9,17,] { format:'or:e', help:'?|počet neubytovaných podle seznamu' }
-    field rooms0  { data:tab.tx_gnalberice_order.rooms0 }
+    field rooms0  { data:tab.tx_gnalberice_order.rooms }
     field rooms1 { data:tab.tx_gnalberice_order.rooms1 }
 
     label       [0,FT+0,50,] { title:'dospělí' }

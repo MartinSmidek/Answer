@@ -57,7 +57,7 @@ table tx_gnalberice_order { db:'setkani', key_id:'uid'
   number state
   number akce         { help:"akce|číslo akce z číselníku akcí" }
   text   note         { sql_pipe:'wu' }
-  text   rooms0       { sql_pipe:'wu' }
+  text   rooms        { sql_pipe:'wu' }
   text   rooms1       { sql_pipe:'wu' }
   number adults       { help:'?|počet dospělých podle objednávky' }
   number kids_10_15   { help:'?|počet dětí ve věku 10-15 let podle objednávky' }
