@@ -26,7 +26,7 @@ panel p [,,200,70] { type:'popup', title:'Dialog'
   form f [,,200,70] {
     label [0,10,200,40] { title:"Napište prosím PIN, který Vám byl pro tuto akci zaslaný správcem Domu setkání při potvrzení objednávky:" }
     field pin [0,55,50,] { value:'6' }
-    button [100,55,80,17] { title:'Pokračovat',
+    button [100,55,,] { title:'Pokračovat',
       proc onclick() { panel.hide(ask('pin_test',the_order.get,pin.get)) }
     }
   }
@@ -38,6 +38,7 @@ proc cely { ds_web.get; javascript("window.resizeTo(720,680);",1); pobyt.popis.u
 
 // ================================================================================================= pobyt
 // ukáže a obslouží horní polovinu formuláře
+const PQ=50             // posun pro nové pokoje
 group pobyt {
 
   use popis: form zahlavi [0,0,,]
@@ -46,7 +47,7 @@ group pobyt {
   // zobrazení objednávky
   proc precti  {
     popis.tit.set(conc('<h3>Objednávka číslo ',the_order.get,'</h3>')); obj.load(the_order.get);
-    fak.load(the_order.get); fak.faktura.display(0); ucastnici.cti(obj.rooms.get)
+    fak.load(the_order.get); fak.faktura.display(0); ucastnici.cti(obj.rooms1.get)
   }
   proc obj.save_pobyt.onclick() {
     obj.save; order_load(the_order.get)
@@ -74,17 +75,17 @@ group pobyt {
   }
   proc ukaz_spodek {
     ucastnici.to_show.get
-  | ucastnici.to_show.set(1); ucastnici.formular; ucastnici.cti(obj.rooms.get)
+  | ucastnici.to_show.set(1); ucastnici.formular; ucastnici.cti(obj.rooms1.get)
   }
   // ------------------------------------------------------------------ záhlaví
   form zahlavi [,,600,30] { css:'ds_form'
     label tit [ 10,  0,300,] { title:'<h3>Objednávka pobytu</h3>' }
-    button pin [180,2,50,18] { title:'pin',  skill:'yd|yd', help:'zobrazí PIN umožňující objednateli zapsat a opravovat účastníky',
+    button pin [180,2,,] { title:'pin',  skill:'yd|yd', help:'zobrazí PIN umožňující objednateli zapsat a opravovat účastníky',
       proc onclick() {
         alert(ask('pin_make',the_order.get))
       }
     }
-    button ukaz [245,2,50,18] { title:'zobraz účastníky', help:'umožní zapsat a opravit seznam účastníků'
+    button ukaz [245,2,,] { title:'zobraz účastníky', help:'umožní zapsat a opravit seznam účastníků'
       proc onclick() {
         autorizace; authorized.get; cely; ukaz_spodek
       | alert("Bohužel, toto není správný PIN")
@@ -94,7 +95,7 @@ group pobyt {
   }
   // ------------------------------------------------------------------ OBJEDNÁVKA
   form objednavka /*[,,300,100]*/ { css:'ds_form'
-    const PL=0; PT=92,
+    const PL=0; PT=92; QT=PT+PQ-4; FT=120+PQ
     label       [  0,  0,100,] { title:'stav objednávky' }
     select      [  0, 15,120,] { type:'map', data:tab.tx_gnalberice_order.state, options:tab.ds_stav.hodnota }
     label       [130,  0,100,] { title:'akce' }
@@ -105,11 +106,12 @@ group pobyt {
     field       [  0, 55, 85,] { type:'date', data:tab.tx_gnalberice_order.fromday }
     label       [ 90, 40, 70,] { title:'odjezd' }
     field       [ 90, 55, 85,] { type:'date', data:tab.tx_gnalberice_order.untilday }
-    label       [  0, 78,150,] { title:'seznam pokojů:' }
     check skoleni [218,72,65,9] { title:'školení', data:tab.tx_gnalberice_order.skoleni, value:'0', help:"účastníci školení neplatí rekreační poplatek" }
-    label       [291,75,30,] { title:'sleva' }
-    field sleva [321,75,20,] { data:tab.tx_gnalberice_order.sleva, format:'r' }
+    label       [291,77,30,] { title:'sleva' }
+    field sleva [321,77,20,] { data:tab.tx_gnalberice_order.sleva, format:'r' }
     label       [344,77,5,] { title:'%' }
+    // staré pokoje
+    label       [  0,PT-14,150,] { title:'staré pokoje:' }
     check   p1  [PL+  0, PT,14,] { title:'1',  format:'c', css:'CheckT', help:"1 - 2 lůžka jednoduchá (V podkrovní pokojíček se střešním oknem)" }
     check   p2  [PL+ 20, PT,14,] { title:'2',  format:'c', css:'CheckT', help:"2 - 2 lůžka jako patrová postel (V pokojíček vedle sprchy, má svoje umyvadlo)" }
     check   p3  [PL+ 40, PT,14,] { title:'3',  format:'c', css:'CheckT', help:"3 - 2 lůžka jednoduchá (JZ pokojíček v rohu)" }
@@ -126,36 +128,59 @@ group pobyt {
     check   p14 [PL+260, PT,14,] { title:'14', format:'c', css:'CheckT', help:"14 - komfortní pokoj se sprchou a WC, 2 samostatné postele" }
     check   p15 [PL+280, PT,14,] { title:'15', format:'c', css:'CheckT', help:"15 - apartmán; 2 místnosti a sociálka bezbariérová: 2 lůžka jednoduchá" }
     check   p16 [PL+300, PT,14,] { title:'16', format:'c', css:'CheckT', help:"16 - apartmán; 2 místnosti a sociálka bezbariérová: 1 lůžko jednoduché a 2 lůžka jako patrová postel" }
+    // nové pokoje
+    label       [0,QT+-14,356,42] { title:'nové pokoje:', css:'jemna' }
+    check   q1  [PL+  0, QT,14,] { title:'1',  format:'c', css:'CheckT', help:"1 - 2 lůžka jednoduchá (V podkrovní pokojíček se střešním oknem)" }
+    check   q2  [PL+ 20, QT,14,] { title:'2',  format:'c', css:'CheckT', help:"2 - 2 lůžka jako patrová postel (V pokojíček vedle sprchy, má svoje umyvadlo)" }
+    check   q11 [PL+ 40, QT,14,] { title:'11', format:'c', css:'CheckT', help:"11 - 2 lůžka jednoduchá (JZ pokojíček v rohu)" }
+    check   q12 [PL+ 60, QT,14,] { title:'12', format:'c', css:'CheckT', help:"12 - 2 lůžka jednoduchá a 2 lůžka jako patrová postel (Z pokoj se dvěma okny)" }
+    check   q13 [PL+ 80, QT,14,] { title:'13', format:'c', css:'CheckT', help:"13 - 1 lůžko jednoduché a 2 lůžka jako patrová postel (Z pokoj s jedním oknem)" }
+    check   q14 [PL+100, QT,14,] { title:'14', format:'c', css:'CheckT', help:"14 - 2 lůžka jednoduchá a 4 lůžka jako patrová postel (S pokoj velký)" }
+    check   q15 [PL+120, QT,14,] { title:'15', format:'c', css:'CheckT', help:"15 - palanda a lůžko, nový pokoj vedle koupelny" }
+    check   q16 [PL+140, QT,14,] { title:'16', format:'c', css:'CheckT', help:"16 - komfortní pokoj se sprchou a WC, dvoulůžko" }
+    check   q17 [PL+160, QT,14,] { title:'17', format:'c', css:'CheckT', help:"17 - komfortní pokoj se sprchou a WC, dvoulůžko" }
+    check   q21 [PL+180, QT,14,] { title:'21', format:'c', css:'CheckT', help:"21 - 2 postele jednoduché (Z pokoj mezi kaplí a sprchami)" }
+    check   q22 [PL+200, QT,14,] { title:'22', format:'c', css:'CheckT', help:"22 - 2 jednoduché postele a 2 patrové postele a 1 rozkládací gauč (S pokoj velký)" }
+    check   q23 [PL+220, QT,14,] { title:'23', format:'c', css:'CheckT', help:"23 - 4 lůžka jednoduchá (SZ pokoj s vlastním umyvadlem a el.průtokovým ohřívačem)" }
+    check   q24 [PL+240, QT,14,] { title:'24', format:'c', css:'CheckT', help:"24 - komfortní pokoj se sprchou a WC, 2 samostatné postele" }
+    check   q25 [PL+260, QT,14,] { title:'25', format:'c', css:'CheckT', help:"25 - komfortní pokoj se sprchou a WC, 2 samostatné postele" }
+    check   q26 [PL+280, QT,14,] { title:'26', format:'c', css:'CheckT', help:"26 - apartmán; 2 místnosti a sociálka bezbariérová: 2 lůžka jednoduchá" }
+    check   q27 [PL+300, QT,14,] { title:'27', format:'c', css:'CheckT', help:"27 - apartmán; 2 místnosti a sociálka bezbariérová: 1 lůžko jednoduché a 2 lůžka jako patrová postel" }
+    check   q28 [PL+320, QT,14,] { title:'28', format:'c', css:'CheckT', help:"28 - apartmán; 2 místnosti a sociálka bezbariérová: 1 lůžko jednoduché a 2 lůžka jako patrová postel" }
+    check   q29 [PL+340, QT,14,] { title:'29', format:'c', css:'CheckT', help:"29 - apartmán; 2 místnosti a sociálka bezbariérová: 1 lůžko jednoduché a 2 lůžka jako patrová postel" }
+
     label       [344,101,5,] { title:'?' }
     field noroom [PL+324,PT+9,17,] { format:'or:e', help:'?|počet neubytovaných podle seznamu' }
-    field rooms { data:tab.tx_gnalberice_order.rooms }
-    label       [0,120,50,] { title:'dospělí' }
-    field       [0,135,17,] { data:tab.tx_gnalberice_order.adults, format:'r:e' }
-    field adults [24,136,17,] { format:'or:e', help:'?|počet dospělých podle seznamu' }
-    label       [50,120,55,] { title:'děti 10-15' }
-    field       [54,135,17,] { data:tab.tx_gnalberice_order.kids_10_15, format:'r:e' }
-    field kids_10_15 [78,136,17,] { format:'or:e', help:'?|počet dětí podle seznamu' }
-    label       [110,120,45,] { title:'děti 3-9' }
-    field       [111,135,17,] { data:tab.tx_gnalberice_order.kids_3_9, format:'r:e' }
-    field kids_3_9 [135,136,17,] { format:'or:e', help:'?|počet dětí ve věku 3-9 let podle seznamu' }
-    label       [165,120,50,] { title:'děti do 3' }
-    field       [165,135,17,] { data:tab.tx_gnalberice_order.kids_3, format:'r:e' }
-    field kids_3 [190,136,17,] { format:'or:e', help:'?|počet dětí do 3 let podle seznamu'  }
-    label       [220,120,17,] { title:'??' }
-    field nevek [220,135,17,] { format:'or:e', help:'?|počet osob v seznamu bez udaného věku' }
-    label       [252,120,100,] { title:'typ stravy' }
-    select      [250,135,100,] { type:'map', data:tab.tx_gnalberice_order.board, options:tab.ds_strava.hodnota }
+    field rooms0  { data:tab.tx_gnalberice_order.rooms0 }
+    field rooms1 { data:tab.tx_gnalberice_order.rooms1 }
+
+    label       [0,FT+0,50,] { title:'dospělí' }
+    field       [0,FT+15,17,] { data:tab.tx_gnalberice_order.adults, format:'r:e'}
+    field adults [24,FT+16,17,] { format:'or:e', help:'?|počet dospělých podle seznamu' }
+    label       [50,FT+0,55,] { title:'děti 10-15' }
+    field       [54,FT+15,17,] { data:tab.tx_gnalberice_order.kids_10_15, format:'r:e' }
+    field kids_10_15 [78,FT+16,17,] { format:'or:e', help:'?|počet dětí podle seznamu' }
+    label       [110,FT+0,45,] { title:'děti 3-9' }
+    field       [111,FT+15,17,] { data:tab.tx_gnalberice_order.kids_3_9, format:'r:e' }
+    field kids_3_9 [135,FT+16,17,] { format:'or:e', help:'?|počet dětí ve věku 3-9 let podle seznamu' }
+    label       [165,FT+0,50,] { title:'děti do 3' }
+    field       [165,FT+15,17,] { data:tab.tx_gnalberice_order.kids_3, format:'r:e' }
+    field kids_3 [190,FT+16,17,] { format:'or:e', help:'?|počet dětí do 3 let podle seznamu'  }
+    label       [220,FT+0,17,] { title:'??' }
+    field nevek [220,FT+15,17,] { format:'or:e', help:'?|počet osob v seznamu bez udaného věku' }
+    label       [252,FT+0,100,] { title:'typ stravy' }
+    select      [250,FT+15,100,] { type:'map', data:tab.tx_gnalberice_order.board, options:tab.ds_strava.hodnota }
     //button      [250,160,100,18] { title:'lze fakturovat?'
     //  proc onclick() { compare } }
-    button save_pobyt [249,191,100,18] { title:'zapsat změny', type:'submit' }
-    label info  [1,159,238,53] { title:'' }
-    label       [239,154,128,] { title:'program: dospělý / dítě' }
-    field prog_cely [251,169,30,] { data:tab.tx_gnalberice_order.prog_cely, format:'r', help:'cena programu na akci pro dospělého' }
-    label       [290,170,5,] { title:'/' }
-    field prog_dite [302,169,30,] { data:tab.tx_gnalberice_order.prog_polo, format:'r', help:'cena programu na akci pro dítě' }
-    label       [338,169,5,] { title:'Kč' }
-    proc onload () { rooms_check(rooms,form,'p') }
-    proc onsave () { check_rooms(rooms,form,'p') }
+    button save_pobyt [249,FT+71,,] { title:'zapsat změny', type:'submit' }
+    label info  [1,FT+39,238,53] { title:'' }
+    label       [239,FT+36,128,] { title:'program: dospělý / dítě' }
+    field prog_cely [251,FT+49,30,] { data:tab.tx_gnalberice_order.prog_cely, format:'r', help:'cena programu na akci pro dospělého' }
+    label       [290,FT+50,5,] { title:'/' }
+    field prog_dite [302,FT+49,30,] { data:tab.tx_gnalberice_order.prog_polo, format:'r', help:'cena programu na akci pro dítě' }
+    label       [338,FT+49,5,] { title:'Kč' }
+    proc onload () { rooms_check(rooms0,form,'p'); rooms_check(rooms1,form,'q') }
+    proc onsave () { check_rooms(rooms0,form,'p'); check_rooms(rooms1,form,'q') }
   }
   // ------------------------------------------------------------------ FAKTURACE
   form fakturace /*[,,300,100]*/ { css:'ds_form'
@@ -180,11 +205,17 @@ group pobyt {
     label       [ 60,160, 70,] { title:'obec' }
     field       [ 60,175,150,] { data:tab.tx_gnalberice_order.city}
     label faktura [223,117,120,] { title:'...' }
-    button      [220,132,100,18] { title:'vystavit zálohu'
-      proc onclick() { make_zaloha } }
-    button      [220,159,100,18] { title:'vystavit faktury'
-      proc onclick() { make_faktury } }
-    button      [220,185,100,18] { title:'zapsat změny'
+    button      [220,132,,] { title:'vystavit zálohu'
+      proc onclick() {
+        alert("dočasně nejdou vystavovat faktury, pracuji na tom, Martin");
+#         make_zaloha
+    } }
+    button      [220,159,,] { title:'vystavit faktury'
+      proc onclick() {
+        alert("dočasně nejdou vystavovat faktury, pracuji na tom, Martin");
+#         make_faktury
+    } }
+    button      [220,185,,] { title:'zapsat změny'
       proc onclick() { objednavatel_save } }
   }
 }
@@ -192,7 +223,6 @@ group pobyt {
 // ================================================================================================= účastníci
 // ukáže a obslouží spodní polovinu formuláře tj. zobrazení účastníků akce
 // vnější proměnná the_order obsahuje číslo objednávky
-
 group ucastnici {
 
   var to_show: number                           // 1 => zobrazovat
@@ -202,9 +232,8 @@ group ucastnici {
 
   // zobrazení formuláře účastníků
   proc formular {
-#     to_show.get; akc.set(new_form(akce,10,280)); //per.set(new_form(osoba,400,280));
-    to_show.get; akc.set(new_form(akce,10,280)); per.set(new_form(_osoba,400,280));
-    new_form(zahlavi,0,240)
+    to_show.get; akc.set(new_form(akce,10,330)); per.set(new_form(_osoba,400,330));
+    new_form(zahlavi,0,290)
   }
   // zobrazí spodní formuláře
   proc cti (pokoje) {
@@ -220,7 +249,7 @@ group ucastnici {
   // zobrazení účastníka
   proc osoba_load (id_osoba) {
     per.load(id_osoba);
-    per.spokoj.selects(conc('0,',sort(pobyt.obj.rooms.get,',','n')));
+    per.spokoj.selects(conc('0,',sort(pobyt.obj.rooms1.get,',','n')));
   }
   // vložení nové rodiny
   var znacka_rodiny: text
@@ -292,21 +321,21 @@ group ucastnici {
   // ------------------------------------------------------------------ AKCE
   form akce /*[,,300,100]*/ { css:'ds_form'
     var novi: object
-    button [  0,0,50,18] { title:'+ rodina', help:'výběr rodiny z databází MS'
+    button [  0,0,,] { title:'+ rodina', help:'výběr rodiny z databází MS'
       proc onclick () {
         Rodina.fl.rodiny.display(1); Rodina.fl.klienti.display(0);
         novi.set(Rodina.modal(550,250)); echo(novi.get);
     } }
-    button [ 72,0,50,18] { title:'+ hosté', help:'výběr hostů z objednávek DS'
+    button [ 72,0,,] { title:'+ hosté', help:'výběr hostů z objednávek DS'
       proc onclick () {
         Rodina.fl.rodiny.display(0); Rodina.fl.klienti.display(1);
         novi.set(Rodina.modal(550,250)); echo(novi.get);
     } }
-    button [138,0,50,18] { title:'+ 1 účastník', help:'přidání zcela nového hosta'
+    button [138,0,,] { title:'+ 1 účastník', help:'přidání zcela nového hosta'
       proc onclick () { osoba_new} }
-    button [230,0,50,18] { title:'+ dítě', help:'přidání hosta se stejným příjmením a bydlištěm'
+    button [230,0,,] { title:'+ dítě', help:'přidání hosta se stejným příjmením a bydlištěm'
       proc onclick () { osoba_new_child} }
-    button [287,0,50,18] { title:'- účastník', help:'odebrání hosta označeného oranžovou šipkou'
+    button [287,0,,] { title:'- účastník', help:'odebrání hosta označeného oranžovou šipkou'
       proc onclick () { osoba_del(seznam.id_osoba.get)} }
 #     view ys: table osoba { join_type:'LEFT', join:'ON ys_osoba=ys.id_osoba' }
     browse seznam [0,30,,] { type:'smart', rows:14, //css_rows:'ys_osoba,0:nic,:zelenkavy'
@@ -353,12 +382,12 @@ group ucastnici {
         var popis: text
         field znacka [0,225,50,16]
         label [55,225,300,16] {title:'značka rodiny na fakturách (bude bez diakritiky)'}
-        button [0,250,50,16] { title:'přidat do účastníků', proc onclick() {
+        button [0,250,,] { title:'přidat do účastníků', proc onclick() {
           znacka_rodiny.set(ask('cz2ascii',znacka.get));
           rodina_add(L) } }
-        button [130,250,50,16] { title:'jiná rodina', proc onclick() {
+        button [130,250,,] { title:'jiná rodina', proc onclick() {
           rodiny.init; klienti.init; vse.init; znacka.init; L.init } }
-        button [220,250,50,16] { title:'konec', proc onclick() {
+        button [220,250,,] { title:'konec', proc onclick() {
           rodiny.init; klienti.init; vse.init; znacka.init; L.init; panel.hide(0) } }
         // výběr z databáze MS
         select rodiny [100,0,200,17] { type:'auto', par:°{fce:'lide_ms'}, format:'t'
@@ -429,7 +458,7 @@ group ucastnici {
     check postylka [220,180,150,] { title:'postýlka', css:'CheckT', data:tab.ds_osoba.postylka }
     label       [  0,215, 70,] { title:'poznámka' }
     field       [  0,230,210,] { data:tab.ds_osoba.pozn }
-    button      [220,229,100,18] { title:'zapsat změny',
+    button      [220,229,,] { title:'zapsat změny',
       proc onclick() { osoba_save } }
     // specifické údaje
     label       [0,255,330,] { title:'--- <i>údaje o pobytu (pokud se liší od údajů v objednávce)</i> ---' }

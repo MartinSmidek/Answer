@@ -36,6 +36,7 @@ body { position:absolute; width:100%; height:100%; }
 .zeleny         { background-color:#77ff77 !important; }
 .modry          { background-color:#7389ae !important; }
 .fialovy        { background-color:#d27efc !important; }
+.jemna          { background-color:$b_item; }
 
 /* specifické */
 .db_sep { margin-top:3px; width:100%; }

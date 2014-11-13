@@ -9,9 +9,9 @@
   $ezer_local= preg_match('/^\w+\.ezer/',$_SERVER["SERVER_NAME"]); // identifikace ladícího serveru
 
   // případné nahrazení ostré databáze jinou
-  if ( isset($_GET['database']) ) $_SESSION['ys2']['GET']['database']= $_GET['database'];
-  $ezer_ys= isset($_SESSION['ys2']['GET']['database'])
-                ? $_SESSION['ys2']['GET']['database'] : 'ezer_ys';
+  if ( isset($_GET['database']) ) $_SESSION[$ezer_root]['GET']['database']= $_GET['database'];
+  $ezer_ys= isset($_SESSION[$ezer_root]['GET']['database'])
+                ? $_SESSION[$ezer_root]['GET']['database'] : 'ezer_ys';
 
   // android
   $android=    preg_match('/android|x11/i',$_SERVER['HTTP_USER_AGENT']);
@@ -36,7 +36,8 @@
       'setkani' =>      array(0,'localhost','gandi','','utf8'))
   );
   // kořeny cest
-  $path_root=  array("/home/www/ezer/www-ys/2","C:/Apache/htdocs/ezer/www-ys2");
+  $path_root=  array($ezer_ksweb?"/storage/sdcard0/htdocs/www-ys2":
+    "/home/www/ezer/www-ys/2","C:/Apache/htdocs/ezer/www-ys2");
   $path_pspad= array(null,"C:/Program Files (x86)/PSPad editor/Syntax");
   // cesty pro zálohy
   $path_backup= array("{$path_root[0]}/zalohy","C:/Apache/htdocs/ezer/www-ys2/zalohy");
@@ -44,7 +45,7 @@
   $ezer_mysql_path= array("/usr/bin/","c:/apache/mysql/bin/");
   $ezer_mysql_path= $ezer_mysql_path[$ezer_local?1:0];  // cesta k utilitě mysql (i s lomítkem)
   // cesty pro zadávání url
-  $path_url= array("http://answer.setkani.org/ys2.php","http://ys2.ezer/ys2.php");
+  $path_url= array("http://answer.setkani.org/{$ezer_root}.php","http://ys2.ezer/{$ezer_root}.php");
   $path_url= $path_url[$ezer_local?1:0];                // prefix url
   // ostatní parametry
   $tracking= '_track';
