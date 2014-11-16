@@ -16,7 +16,7 @@
 
   require_once("$app.inc");
   require_once("{$EZER->version}/server/ae_slib.php");
-  $app_name.= $EZER->options->mysql ? " - {$EZER->options->mysql}" : '';
+//   $app_name.= isset($EZER->options->mysql) ? " - {$EZER->options->mysql}" : '';
 
   $client= "{$EZER->version}/client";
   $licensed= "$client/licensed";

@@ -11,7 +11,7 @@
   // případné nahrazení ostré databáze jinou
   if ( isset($_GET['database']) ) $_SESSION[$ezer_root]['GET']['database']= $_GET['database'];
   $ezer_ys= isset($_SESSION[$ezer_root]['GET']['database'])
-                ? $_SESSION[$ezer_root]['GET']['database'] : 'ezer_ys';
+                ? $_SESSION[$ezer_root]['GET']['database'] : 'ezer_ys_test';
 
   // android
   $android=    preg_match('/android|x11/i',$_SERVER['HTTP_USER_AGENT']);

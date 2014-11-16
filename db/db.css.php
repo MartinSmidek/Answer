@@ -41,7 +41,8 @@ body { position:absolute; width:100%; height:100%; }
 /* specifické */
 .db_sep { margin-top:3px; width:100%; }
 .db_hr  { border-top:1px solid $s1_brow; }
-.db_evidence { font-size:9px; background-color:$b_work; height:17px; color:$s1_brow; font-weight:bold; }
+.db_evidence {  font-size:9px; background-color:$b_work; height:15px;
+                color:$s1_brow; font-weight:bold; padding:0 2px; }
 .curr_akce { background-color:$nazelenala !important; color:$bila; font-weight:bold; }
 .form_note { font-size:10px; color:$s1_brow }
 .title_ref { color:#ffffff !important; }
@@ -51,7 +52,8 @@ body { position:absolute; width:100%; height:100%; }
 .elim_goal { outline:3px solid $s1_brow; z-index:1 !important; }
 
 .shift_up   { z-index:1; }
-.shift_up[class*=ae_frame]  { z-index:1; box-shadow:2px 2px 10px #333; }
+.shift_up[class*=ae_frame],.shift_up[class*=ae_form2]  {
+              z-index:1; box-shadow:2px 2px 10px #333; }
 .shift_down { z-index:0; }
 .datepicker_vista { z-index:3 !important; }
 
@@ -105,6 +107,7 @@ div.Element .Label, div.Select .Label, div.FieldDate .Label { margin-top:1px }
 .ae_butt_off:hover {
   background:url("../../skins/ck/label_switch_off_hover.png") repeat-x scroll 0 -1px transparent; }
 /* přenesení barev */
+.frame_label_big { color:$s1_brow; font-weight:bold; padding-left:5px; font-size:13px; }
 .frame_label_up { color:$s1_brow; font-weight:bold; padding-left:5px; }
 .frame_label_dn { color:white;    font-weight:bold; padding-left:5px; }
 /* rámečky formulářů */
