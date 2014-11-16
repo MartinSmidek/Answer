@@ -64,11 +64,12 @@ panel ucast {type:'plain', _sys:'*',
     include:'onload,db.akce2.ucast',skill:'yaa;faa;caa'
   proc init_ucast2() {}
   proc akce_show() {}
-  proc osoby_show() {}
-  proc rodina_show() {}
+  proc osoby_show() {}                          // obnova údajů o osobě (osobách)
+  proc rodina_show() {}                         // obnova údajů o rodině
+  proc ucast_selected() {}                      // seznam vybraných účastníků
   proc z_change() {}
-  proc akce_evidence_os() {}
-  proc akce_evidence_rod() {}
+#   proc akce_evidence_os() {}
+#   proc akce_evidence_rod() {}
 }
 panel pece {type:'plain', _sys:'*', title:'Pečouni', include:'onload,db.akce.pece',skill:'yaa;faa;caa'
   proc init_pece() { alert('napřed klikni na Databáze|Pečouni') }
@@ -78,11 +79,10 @@ panel tisk [,,,] {type:'right', _sys:'*', title:'Výpisy akce', include:'onclick
 # ========================================================================================= EVIDENCE
 panel evi {type:'right', _sys:'*', title:'EVIDENCE2', include:'onload,db.akce2.evi', skill:'yae;fae;caa',
     style:"overflow-y:hidden"
-#   proc evid_show() { alert('funguje až při druhém použití') }
-#   proc evid_show_rodina() { alert('funguje až při druhém použití') }
-  proc evid_load(ido,idr) {}
   proc rodina_show() {}
   proc osoby_show() {}
+  proc evid_osoba(_ido) { }
+  proc evid_rodina(_idr) { }
 }
 # panel dup {type:'right', _sys:'*', title:'(duplicity)', include:'onclick,db.akce.dup', skill:'m+' }
 panel mai {type:'right', title:'MAILY', _sys:'*', include:'onclick,db.akce2.mai', skill:'yam;fam;cam'  }
@@ -530,6 +530,8 @@ map ms_akce_dieta:    table _cis {where:"druh='ms_akce_dieta'",     order:'porad
 map ms_akce_dite_kat: table _cis {where:"druh='ms_akce_dite_kat'",  order:'poradi', key_id:'data'}
 map ms_akce_s_role:   table _cis {where:"druh='ms_akce_s_role'",    order:'poradi', key_id:'data'}
 map ms_akce_t_role:   table _cis {where:"druh='ms_akce_t_role'",    order:'poradi', key_id:'data'}
+map map_evi_vyber_o:  table _cis {where:"druh='evi_vyber_o'",       order:'poradi', key_id:'data'}
+map map_evi_vyber_r:  table _cis {where:"druh='evi_vyber_r'",       order:'poradi', key_id:'data'}
 
 # ============================================================================================= TEST
 # panel test {type:'plain', _sys:'*', title:"TEST", include:'onload,db.akce2.test',skill:'m'}
@@ -621,7 +623,7 @@ form _osoba2x [,,244,322] {css:'ae_frame', proc onclick() { on_click }
 
   label frame [0,0,242,50] {tag:'f', css:'frame_label_up', title:'osobní údaje'}
   button go_evi [121,1,,] {tag:'f', title:'^evidence', css:'db_evidence'
-    proc onclick() { ucast.akce_evidence_os(key_osoba.get) } }
+    proc onclick() { evi.evid_osoba(key_osoba.get) } }
   field key_osoba [186,0,50,] {tag:'f', format:'or', css:'Label', help:' ', data:o.id_osoba }
   field key_tvori [186,10,50,] {tag:'f', format:'or', css:'Label', help:' ' }
   field key_spolu
@@ -768,7 +770,7 @@ form _rodina2 [,,360,229]  { css:'ae_frame', proc onclick() { on_click }
   view r: table rodina
   label frame [0,0,360,20] {tag:'f', title:'rodinné údaje', css:'frame_label_up' }
   button [193,0,,] {tag:'f', title:'^evidence', css:'db_evidence'
-    proc onclick() { ucast.akce_evidence_rod(key_rodina.get) } }
+    proc onclick() { evi.evid_rodina(key_rodina.get) } }
   field key_rodina [304,0,50,] {tag:'f', format:'or', css:'Label', help:' '  }
 
   menu detail { type:'context'
@@ -828,7 +830,7 @@ form _rodina2 [,,360,229]  { css:'ae_frame', proc onclick() { on_click }
     // údaje k akci
     show key_spolu, show barva, show s_role,
     show s_dite_kat, show s_poznamka, show pecovane, show pfunkce,
-    show pece_val /* jméno pečovaného nebo chůvy */
+    show pece_val show pece_ido /* jméno a id pečovaného nebo chůvy */
     // metody
     proc onrowclick() {
       neni_ulozen
@@ -897,7 +899,7 @@ form _rodina2p [,,360,229] { css:'ae_frame'
   field r_telefony [Lr+5,125,160,] {tag:'r', type:'list', data:r.telefony,title:'^telefony'}
   field r_emaily   [Lr+5,160,160,] {tag:'r', type:'list', data:r.emaily, title:'^e-maily'}
   // rodinná poznámka
-  edit  r_note     [5,22,302+44,74] {tag:'p', data:r.note, title:'^poznámka k rodině'}
+  edit  r_note     [5,22,302+44,74] {tag:'p', data:r.note, title:'^poznámka k rodině', format:'n'}
   // menu
   menu detail { type:'context'
     item { title:'konfigurace formuláře', proc onclick () { rodina_config.tune(evi) } }

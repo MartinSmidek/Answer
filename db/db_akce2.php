@@ -246,23 +246,21 @@ function akce_save_role($id_tvori,$role) { //trace();
 # ---------------------------------------------------------------------------------------- akce_evid
 # hledání a) osoby a jejích rodin b) rodiny (pokud je id_osoba=0)
 # $show_deleted==1 vrátí i smazané
-function akce_evid($id_osoba,$id_rodina,$show_deleted=0) { trace();
+function akce_evid($id_osoba,$id_rodina,$filtr) { trace();
   $cleni= "";
   $rodiny= array();
   $rodina= $rodina1= $id_rodina;
   $id_osoba ? "o.id_osoba=$id_osoba" : "r.id_rodina=$id_rodina";
   if ( $id_osoba ) { // ------------------------ osoby
     $clen= array();
-    $deleted_o= $show_deleted ? '' : "AND o.deleted=''";
-    $deleted_rto= $show_deleted ? '' : "AND rto.deleted=''";
     $qc= mysql_qry("
       SELECT rto.id_osoba,rto.jmeno,rto.prijmeni,rto.narozeni,rt.id_tvori,rt.role,r.id_rodina,nazev
       FROM osoba AS o
       JOIN tvori AS ot ON ot.id_osoba=o.id_osoba
       JOIN rodina AS r ON r.id_rodina=ot.id_rodina
       JOIN tvori AS rt ON rt.id_rodina=r.id_rodina
-      JOIN osoba AS rto ON rto.id_osoba=rt.id_osoba $deleted_rto
-      WHERE o.id_osoba=$id_osoba $deleted_o
+      JOIN osoba AS rto ON rto.id_osoba=rt.id_osoba
+      WHERE o.id_osoba=$id_osoba AND $filtr
       ORDER BY rt.role,rto.narozeni
     ");
     while ( $qc && ($c= mysql_fetch_object($qc)) ) {
@@ -286,17 +284,15 @@ function akce_evid($id_osoba,$id_rodina,$show_deleted=0) { trace();
     }
   }
   else { // ------------------------------------ rodiny
-    $deleted_r= $show_deleted ? '' : "AND r.deleted=''";
-    $deleted_rto= $show_deleted ? '' : "AND rto.deleted=''";
     $qc= mysql_qry("
       SELECT rto.id_osoba,rto.jmeno,rto.prijmeni,rto.narozeni,rt.id_tvori,rt.role,r.id_rodina,r.nazev,
         GROUP_CONCAT(CONCAT(otr.nazev,':',otr.id_rodina)) AS _rodiny
       FROM rodina AS r
       JOIN tvori AS rt ON rt.id_rodina=r.id_rodina
-      JOIN osoba AS rto ON rto.id_osoba=rt.id_osoba $deleted_rto
+      JOIN osoba AS rto ON rto.id_osoba=rt.id_osoba
       JOIN tvori AS ot ON ot.id_osoba=rto.id_osoba
       JOIN rodina AS otr ON otr.id_rodina=ot.id_rodina
-      WHERE r.id_rodina=$id_rodina $deleted_r
+      WHERE r.id_rodina=$id_rodina AND $filtr
       GROUP BY id_osoba
       ORDER BY rt.role,rto.narozeni
     ");
@@ -316,6 +312,102 @@ function akce_evid($id_osoba,$id_rodina,$show_deleted=0) { trace();
   return $ret;
 }
 # ======================================================================================== ÚČASTNÍCI
+# ---------------------------------------------------------------------------- akce2_pridej_k_pobytu
+# ASK získání pobytu účastníka na akci
+function akce2_ido2idp($id_osoba,$id_akce) { trace();
+  $idp= select("id_pobyt","spolu JOIN pobyt USING (id_pobyt)",
+    "spolu.id_osoba=$id_osoba AND id_akce=$id_akce");
+  return $idp;
+}
+# ---------------------------------------------------------------------------- akce2_pridej_k_pobytu
+# ASK přidání do daného pobytu akce, pokud ještě osoba na akci není
+# spolupracuje s: akce2_auto_jmena1,akce2_auto_jmena1L a číselníky: ms_akce_s_role,ms_akce_dite_kat
+# info = {id,nazev,role}
+function akce2_pridej_k_pobytu($id_akce,$id_pobyt,$info,$cnd='') { trace();
+  $ret= (object)array('spolu'=>0,'msg'=>'');
+  $ido= $info->id;
+  $je= select("COUNT(*)","pobyt JOIN spolu USING(id_pobyt)","id_akce=$id_akce AND id_osoba=$ido");
+  if ( $je ) {
+    $ret->msg= "$info->nazev už je na této akci";
+  }
+  else {
+    // zjištění stáří
+    $datum_od= select("datum_od","akce","id_duakce=$id_akce");
+    $narozeni= select("narozeni","osoba","id_osoba=$ido");
+    $vek= roku_k($narozeni,$datum_od);
+    $role= $info->role;
+    $kat= $srole= 0;                                            // host
+    // odhad typu účasti podle stáří a role
+    if ( $role=='a' || $info->role=='b' )        $srole= 1;     // účastník
+    elseif ( $role=='p' || $vek>=18 )            $srole= 5;     // osob.peč.
+    elseif ( $role=='d' && $vek>=17 )            $srole= 6;     // dítě - G
+    elseif ( $role=='d' && $vek>=13 ) { $kat= 1; $srole= 2; }   // dítě - A
+    elseif ( $role=='d' && $vek>=3 )  { $kat= 3; $srole= 2; }   // dítě - C
+    elseif ( $role=='d' && $vek>=2 )  { $kat= 5; $srole= 2; }   // dítě - E
+    elseif ( $role=='d' && $vek>0 )   { $kat= 6; $srole= 2; }   // dítě - F
+    if ( query("INSERT INTO spolu (id_pobyt,id_osoba,s_role,dite_kat)
+         VALUE ($id_pobyt,$ido,$srole,$kat)") ) {
+      $ret->spolu= mysql_insert_id();
+    }
+    else  $ret->msg= 'chyba při vkládání';
+  }
+                                                debug($ret,"$vek $kat $srole");
+  return $ret;
+}
+# -------------------------------------------------------------------------------- akce2_auto_jmena1
+# SELECT autocomplete - výběr z dospělých osob, pokud je par.deti=1 i z deti
+function akce2_auto_jmena1($patt,$par) {  #trace();
+  $a= array();
+  $limit= 20;
+  $dnes= date("Y-m-d");
+  $n= 0;
+  if ( $par->patt!='whole' ) {
+    $is= strpos($patt,' ');
+    $patt= $is ? substr($patt,0,$is) : $patt;
+  }
+  // osoby
+  $AND= $par->deti ? '' : "AND (narozeni='0000-00-00' OR DATEDIFF('$dnes',narozeni)/365.2425>18)";
+  $qry= "SELECT prijmeni, jmeno, id_osoba AS _key
+         FROM osoba
+         LEFT JOIN tvori USING(id_osoba)
+         WHERE concat(trim(prijmeni),' ',jmeno) LIKE '$patt%' AND prijmeni!='' $AND
+         ORDER BY prijmeni,jmeno LIMIT $limit";
+  $res= mysql_qry($qry);
+  while ( $res && $t= mysql_fetch_object($res) ) {
+    if ( ++$n==$limit ) break;
+    $key= $t->_key;
+    $a[$key]= "{$t->prijmeni} {$t->jmeno}";
+  }
+  // obecné položky
+  if ( !$n )
+    $a[0]= "... žádné příjmení nezačíná '$patt'";
+  elseif ( $n==$limit )
+    $a[-999999]= "... a další";
+//                                                                 debug($a,$patt);
+  return $a;
+}
+# ------------------------------------------------------------------------------- akce2_auto_jmena1L
+# formátování autocomplete
+function akce2_auto_jmena1L($id_osoba) {  #trace();
+  $osoba= array();
+  $qry= "SELECT prijmeni, jmeno, id_osoba, YEAR(narozeni) AS rok, role,
+           IF(adresa,o.ulice,r.ulice) AS ulice,
+           IF(adresa,o.psc,r.psc) AS psc, IF(adresa,o.obec,r.obec) AS obec,
+           IF(kontakt,o.telefon,r.telefony) AS telefon, IF(kontakt,o.email,r.emaily) AS email
+         FROM osoba AS o
+         LEFT JOIN tvori AS t USING(id_osoba)
+         LEFT JOIN rodina AS r USING(id_rodina)
+         WHERE id_osoba='$id_osoba'
+         ORDER BY role";                                // preference 'a' či 'b'
+  $res= mysql_qry($qry);
+  if ( $res && $p= mysql_fetch_object($res) ) {
+    $nazev= "$p->prijmeni $p->jmeno / $p->rok, $p->obec, $p->ulice, $p->email, $p->telefon";
+    $osoba[]= (object)array('nazev'=>$nazev,'id'=>$id_osoba,'role'=>$p->role);
+  }
+//                                                                 debug($osoba,$id_akce);
+  return $osoba;
+}
+# =============================================================================== ÚČASTNÍCI - BROWSE
 # ---------------------------------------------------------------------------------- akce_browse_ask
 # obsluha browse s optimize:ask
 # x->order= {a|d} polozka
@@ -380,14 +472,17 @@ function akce_browse_ask($x) {
     }
     # seznam účastníků akce - podle podmínky
     $qu= mysql_qry("
-      SELECT s.*,o.narozeni
+      SELECT s.*,o.narozeni,MIN(CONCAT(role,id_rodina)) AS _role
       FROM osoba AS o
       JOIN spolu AS s USING (id_osoba)
       JOIN pobyt AS p USING (id_pobyt)
+      LEFT JOIN tvori AS t USING (id_osoba)
       WHERE o.deleted='' AND $cond $AND
+      GROUP BY id_osoba
     ");
     while ( $qu && ($u= mysql_fetch_object($qu)) ) {
       $cleni.= ",{$u->id_osoba}";
+      $rodiny.= ",".substr($u->_role,1);
       $pobyt[$u->id_pobyt]->cleni[$u->id_osoba]= $u;
       $spolu[$u->id_osoba]= $u->id_pobyt;
     }
@@ -421,7 +516,8 @@ function akce_browse_ask($x) {
       $r->datsvatba= sql_date1($r->datsvatba);                  // svatba d.m.r
       $rodina[$r->id_rodina]= $r;
     }
-                                                        debug($rodina,$rodiny);
+//                                                         display("rodiny:$rodiny");
+//                                                         debug($rodina,$rodiny);
     # seznam rodin osob
     $qor= mysql_qry("
       SELECT id_osoba,
@@ -449,7 +545,7 @@ function akce_browse_ask($x) {
     $fos=   flds("umrti,prijmeni,rodne,sex,adresa,ulice,psc,obec,stat,kontakt,telefon,nomail,email"
           . ",iniciace,uvitano,clen,obcanka,rc_xxxx,cirkev,vzdelani,titul,zamest,zajmy,jazyk"
           . ",aktivita,note,_kmen");
-    $fspo=  flds("id_spolu,_barva,s_role,dite_kat,poznamka,pecovane,pfunkce,pece_jm");
+    $fspo=  flds("id_spolu,_barva,s_role,dite_kat,poznamka,pecovane,pfunkce,pece_jm,pece_id");
 
     # 1. průchod - kompletace údajů mezi pobyty
     $skup= array();
@@ -471,15 +567,19 @@ function akce_browse_ask($x) {
         if ( $s->id_spolu && ($idop= $s->pecovane) ) {
           # pecujici
           $o2= $osoba[$idop];
-          $s->pece_jm= $o2->prijmeni.' '.$o2->jmeno;
+          $s->pece_id= $o2->id_osoba;
+          $s->pece_jm= $o2 ? $o2->prijmeni.' '.$o2->jmeno : '???';
           $s->s_role= 5;
           $s->_barva= 5;                        // barva: 5=osobně pečující, pfunkce=95
           # pečované
           $o1= $osoba[$ido];
           $s2= $pobyt[$spolu[$idop]]->cleni[$idop];
-          $s2->pece_jm= $o1->prijmeni.' '.$o1->jmeno;
-          $s2->s_role= 3;
-          $s2->_barva= 3;                       // barva: 3=osobně pečované, pfunkce=92
+          if ( $s2 ) {
+            $s2->pece_id= $o1->id_osoba;
+            $s2->pece_jm= $o1 ? $o1->prijmeni.' '.$o1->jmeno : '???';
+            $s2->s_role= 3;
+            $s2->_barva= 3;                       // barva: 3=osobně pečované, pfunkce=92
+          }
         }
       }
     }
@@ -527,7 +627,7 @@ function akce_browse_ask($x) {
           list($role,$ir)= explode(':',$rod);
           $naz= $rodina[$ir]->nazev;
           $kmen= $kmen ? ($role=='a' || $role=='b' ? $naz : $kmen) : $naz;
-                                                display("$o->jmeno/$role: $kmen ($naz,$ir)");
+//                                                 display("$o->jmeno/$role: $kmen ($naz,$ir)");
           $r.= ",$naz:$ir";
         }
         $cleni.= "~$r";                                           // rody

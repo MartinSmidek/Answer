@@ -7293,7 +7293,6 @@ function chlapi_auto_jmenovci($id,$db) {  #trace();
 # funkce pro spolupráci se select
 # --------------------------------------------------------------------------------- akce_auto_jmena2
 # ASK přidání pobytu do akce, pokud ještě nebyly tyto osoby/osoba přidány
-// function akce_pridej($id_akce,$id_muz,$id_zena,$cnd='',$note='') { trace();
 function akce_pridej($id_akce,$info,$cnd='') { trace();
   $ret= (object)array('ok'=>0,'msg'=>'chyba při vkládání');
                                                         debug($info);
@@ -7429,7 +7428,7 @@ function akce_auto_jmena2L($id_rodina) {  #trace();
   return $pary;
 }
 # --------------------------------------------------------------------------------- akce_auto_jmena1
-# SELECT autocomplete - výběr z dospělých jednotlivců
+# SELECT autocomplete - výběr z dospělých jednotlivců, pokud je par.deti=1 i z deti
 function akce_auto_jmena1($patt,$par) {  #trace();
   $a= array();
   $limit= 20;
@@ -7439,13 +7438,12 @@ function akce_auto_jmena1($patt,$par) {  #trace();
     $is= strpos($patt,' ');
     $patt= $is ? substr($patt,0,$is) : $patt;
   }
-  // páry
+  // osoby
+  $AND= $par->deti ? '' : "AND (narozeni='0000-00-00' OR DATEDIFF('$dnes',narozeni)/365.2425>18)";
   $qry= "SELECT prijmeni, jmeno, id_osoba AS _key
          FROM osoba
          LEFT JOIN tvori USING(id_osoba)
-         WHERE concat(trim(prijmeni),' ',jmeno) LIKE '$patt%' AND prijmeni!=''
-           AND (narozeni='0000-00-00' OR DATEDIFF('$dnes',narozeni)/365.2425>18)
-           /*AND (ISNULL(role) OR role!='d')*/
+         WHERE concat(trim(prijmeni),' ',jmeno) LIKE '$patt%' AND prijmeni!='' $AND
          ORDER BY prijmeni,jmeno LIMIT $limit";
   $res= mysql_qry($qry);
   while ( $res && $t= mysql_fetch_object($res) ) {

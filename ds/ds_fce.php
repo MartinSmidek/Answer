@@ -160,6 +160,21 @@ function ds_kli_menu() {
   return $result;
 }
 # ================================================================================================== OBJEDNÁVKY
+# -------------------------------------------------------------------------------------------------- ds_rooms_help
+# vrátí popis pokojù
+function ds_rooms_help($version=1) {
+  $hlp= array();
+  ezer_connect('setkani');
+  $qry= "SELECT number,note
+         FROM tx_gnalberice_room
+         WHERE  NOT deleted AND NOT hidden AND version=1";
+  $res= mysql_qry($qry);
+  while ( $res && $o= mysql_fetch_object($res) ) {
+    $hlp[]= (object)array('fld'=>"q$o->number",'hlp'=>wu($o->note));
+  }
+//                                                         debug($hlp);
+  return $hlp;
+}
 # -------------------------------------------------------------------------------------------------- ds_obj_menu
 # vygeneruje menu pro loòský, letošní a pøíští rok ve tvaru objektu pro ezer2 pro zobrazení objednávek
 # urèující je datum zahájení pobytu v objednávce
@@ -976,7 +991,7 @@ end:
 function ds_rozpis_faktura($listr,$listf,$typ,$order,$x,$polozky,$platce,$zaloha=100,$pata,$zaloha,&$suma) {  trace('','win1250');
   list($ic,$dic,$adresa,$akce,$obdobi)= $platce;
 //                                                                 debug($platce,'platce',(object)array('win1250'=>1));
-  $vystaveno= Excel5_date(mktime());
+  $vystaveno= Excel5_date(time());
   //list($obdobi)= $x->objednavka;
   $ymca_setkani= "YMCA Setkání, spolek{}Talichova 53, 62300 Brno{}".
                  "zaregistrovaný Krajským soudem v Brnì{}spisová znaèka: L 8556{}".

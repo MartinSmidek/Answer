@@ -49,7 +49,7 @@ function web_akce($id_akce,$on) {
     }
     // vložení akce => id_case = menu3
     if ( !$pid ) { $a= "nelze určit pid ($menu1/$menu2)"; goto end; }
-    $tstamp= mktime();
+    $tstamp= time();
     query("INSERT INTO setkani.tx_gncase (pid,tstamp,crdate,cruser_id,type,fromday,untilday,
              akce,program)
            VALUES ($pid,$tstamp,$tstamp,1,2,UNIX_TIMESTAMP('$datum_od'),UNIX_TIMESTAMP('$datum_do'),
