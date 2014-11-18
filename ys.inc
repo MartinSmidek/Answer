@@ -8,6 +8,11 @@
 
   $ezer_local= preg_match('/^\w+\.ezer/',$_SERVER["SERVER_NAME"]); // identifikace ladícího serveru
 
+  // případné nahrazení ostré databáze jinou
+  if ( isset($_GET['database']) ) $_SESSION[$ezer_root]['GET']['database']= $_GET['database'];
+  $ezer_ys= isset($_SESSION[$ezer_root]['GET']['database'])
+                ? $_SESSION[$ezer_root]['GET']['database'] : 'ezer_ys_test';
+
   require_once("{$EZER->version}/server/ae_slib.php");
 
   // OBECNÉ PARAMETRY
@@ -17,30 +22,15 @@
   $db= array('ezer_ys','ezer_ys');
   $dbs= array(
     array( /* ostré */
-      'ezer_ys' =>      array(0,'localhost','gandi','r8d0st','utf8'),
-      'ezer_system' =>  array(0,'localhost','gandi','r8d0st','utf8','ezer_ys'),
+      'ezer_ys' =>      array(0,'localhost','gandi','r8d0st','utf8',$ezer_ys),
+      'ezer_system' =>  array(0,'localhost','gandi','r8d0st','utf8',$ezer_ys),
       'setkani' =>      array(0,'192.168.1.146','gandi','','cp1250')),
     array( /* lokální */
-      'ezer_ys' =>      array(0,'localhost','gandi','','utf8'),
-      'ezer_system' =>  array(0,'localhost','gandi','','utf8','ezer_ys'),
+      'ezer_ys' =>      array(0,'localhost','gandi','','utf8',$ezer_ys),
+      'ezer_system' =>  array(0,'localhost','gandi','','utf8',$ezer_ys),
 //       'setkani' =>      array(0,'localhost','gandi','','cp1250'))
       'setkani' =>      array(0,'localhost','gandi','','utf8'))
   );
-  // modifikace tabulky případným nastavením $_GET[dbs] přeneseným do $_SESSION[$ezer_root][dbs]
-  // dbs=db_name:other_db_name,...
-  $subst= '';
-//   if ( ($subst= $_GET['dbs']) || ($subst= $_SESSION['ys']['GET']['dbs']) ) {
-//     foreach(explode(',',$subst) as $pair) {
-//       list($old,$new)= explode(':',$pair);
-//       if ( isset($dbs[0][$old]) && $dbs[1][$old] ) {
-//         $dbs[0][$old][5]= $new;
-//         $dbs[1][$old][5]= $new;
-//       }
-//       else {
-//         $subst= "substituci $subst nelze provést";
-//       }
-//     }
-//   }
   // kořeny cest
   $path_root=  array("/home/www/ezer/www-ys/2","C:/Apache/htdocs/ezer/www-ys2");
   $path_pspad= array(null,"C:/Program Files (x86)/PSPad editor/Syntax");
@@ -100,7 +90,6 @@
 
   // parametrizace $EZER
   $EZER->options->local= $ezer_local;
-  $EZER->options->mysql= $subst;            // dbs=db_name:other_db_name,... NEBO nic NEBO chyba
   $EZER->options->org=    'YMCA Setkání';
   $EZER->options->web=    'www.setkani.org';
   $EZER->options->author= 'Martin';

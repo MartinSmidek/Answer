@@ -2406,7 +2406,7 @@ function akce_kontrola_dat($par) { trace();
     : "<h3>Následující tabulky jsou konzistentní</h3>$html";
   return $html;
 }
-# ================================================================================================== TRANSFORMACE
+# ===================================================================================== TRANSFORMACE
 # ----------------------------------------------------------------------------------- data_transform
 # transformace na schema 2014
 # par.cmd = seznam transformací
@@ -2415,212 +2415,310 @@ function akce_kontrola_dat($par) { trace();
 function data_transform($par) { trace();
   global $ezer_root;
   $html= '';
-  foreach (explode(',',$par->cmd) as $cmd )
-  switch ($cmd ) {
-  // ---------------------------------------------- osoba: kontakty
-  // zobrazí přehled kontaktů
-  case 'kontakty':
-    //  0   1   2   3   4
-    // -.- x.- -.x x.x x.y    osobní.rodinná; single=0,clen=1
-    $tab= array(array(0,0,0,0,0),array(0,0,0,0,0));
-    $n= $k= 0;
-    $AND= $par->akce ? " AND id_akce={$par->akce}" : "";
-    $qo= mysql_qry("
-      SELECT -- o.id_osoba,t.role,adresa,o.prijmeni,r.nazev,
-        COUNT(DISTINCT r.id_rodina) AS _rodin, COUNT(rt.id_tvori) AS _clenu,
-        REPLACE(REPLACE(CONCAT(o.telefon,o.email),' ',''),';',',') AS _kontakt_o,
-        REPLACE(REPLACE(CONCAT(r.telefony,r.emaily),' ',''),';',',') AS _kontakt_r
-        -- REPLACE(REPLACE(CONCAT(o.email),' ',''),';',',') AS _kontakt_o,
-        -- REPLACE(REPLACE(CONCAT(r.emaily),' ',''),';',',') AS _kontakt_r
-      FROM osoba AS o
-      JOIN tvori AS t USING(id_osoba)
-      JOIN rodina AS r ON r.id_rodina=t.id_rodina
-      JOIN tvori AS rt ON rt.id_rodina=r.id_rodina
-      WHERE 1 $AND
-      GROUP BY o.id_osoba
-    ");
-    while ( $qo && ($o= mysql_fetch_object($qo)) ) {
-      $n++;
-      if ( $o->_rodin>1 ) {
-        $k++; continue;
-      }
-      $stav= $o->_clenu==1 ? 0 : 1;
-      $r_kontakt= $o->_kontakt_r=="CZ" ? "" : $o->_kontakt_r;
-      $o_kontakt= $o->_kontakt_o=="CZ" ? "" : $o->_kontakt_o;
-      if ( $o_kontakt=='' && $r_kontakt=='' )     $tab[$stav][0]++;
-      elseif ( $o_kontakt!='' && $r_kontakt=='' ) $tab[$stav][1]++;
-      elseif ( $o_kontakt=='' && $r_kontakt!='' ) $tab[$stav][2]++;
-      elseif ( $o_kontakt==$r_kontakt )           $tab[$stav][3]++;
-      elseif ( $o_kontakt!=$r_kontakt )           $tab[$stav][4]++;
-      else fce_warning("?");
-    }
-                                                        debug($tab);
-    // formátování
-    $hr= array('single','člen');
-    $hd= array('-.-','x.-','-.x','x.x','x.y');
-    $hdr= "kontakty $ezer_root";
-    $t= "<table class='stat'><tr><th>$hdr</th><th colspan=6>osoba.rodina</th></tr><tr><th></th>";
-    foreach($hd as $i=>$clmn) {
-      $t.= "<th>$clmn</th>";
-    }
-    $t.= "<th>&Sigma;</th></tr>";
-    foreach($tab as $s=>$row) {
-      $t.= "<tr><th>{$hr[$s]}</th>";
-      $sum= 0;
-      foreach($row as $i=>$clmn) {
-        $sum+= $clmn;
-        $t.= "<td>$clmn</td>";
-      }
-      $t.= "<th>$sum</th></tr>";
-    }
-    $t.= "</table>";
-    $html.= "<br>probráno $n osob, z toho $k je ve více rodinách $t";
-    break;
-  // ---------------------------------------------- osoba: adresy
-  // zobrazí přehled adres
-  case 'adresy':
-    //  0   1   2   3   4
-    // -.- x.- -.x x.x x.y    osobní.rodinná; single=0,clen=1
-    $tab= array(array(0,0,0,0,0),array(0,0,0,0,0));
-    $n= $k= 0;
-    $AND= $par->akce ? " AND id_akce={$par->akce}" : "";
-    $qo= mysql_qry("
-      SELECT -- o.id_osoba,t.role,adresa,o.prijmeni,r.nazev,
-        COUNT(DISTINCT r.id_rodina) AS _rodin, COUNT(rt.id_tvori) AS _clenu,
-        TRIM(CONCAT(o.ulice,o.psc,o.obec,o.stat)) AS _adresa_o,
-        TRIM(CONCAT(r.ulice,r.psc,r.obec,r.stat)) AS _adresa_r
-      FROM osoba AS o
-      JOIN tvori AS t USING(id_osoba)
-      JOIN rodina AS r ON r.id_rodina=t.id_rodina
-      JOIN tvori AS rt ON rt.id_rodina=r.id_rodina
-      WHERE 1 $AND
-      GROUP BY o.id_osoba -- HAVING _rodin=1 -- AND _clenu>1
-        -- AND NOT (_adresa_r='' OR _adresa_r='CZ') AND NOT (_adresa_o='' OR _adresa_o='CZ') AND _adresa_o!=_adresa_r
-    ");
-    while ( $qo && ($o= mysql_fetch_object($qo)) ) {
-      $n++;
-      if ( $o->_rodin>1 ) {
-        $k++; continue;
-      }
-      $stav= $o->_clenu==1 ? 0 : 1;
-      $r_adresa= $o->_adresa_r=="CZ" ? "" : $o->_adresa_r;
-      $o_adresa= $o->_adresa_o=="CZ" ? "" : $o->_adresa_o;
-      if ( $o_adresa=='' && $r_adresa=='' )     $tab[$stav][0]++;
-      elseif ( $o_adresa!='' && $r_adresa=='' ) $tab[$stav][1]++;
-      elseif ( $o_adresa=='' && $r_adresa!='' ) $tab[$stav][2]++;
-      elseif ( $o_adresa==$r_adresa )           $tab[$stav][3]++;
-      elseif ( $o_adresa!=$r_adresa )           $tab[$stav][4]++;
-      else fce_warning("?");
-    }
-                                                        debug($tab);
-    // formátování
-    $hr= array('single','člen');
-    $hd= array('-.-','x.-','-.x','x.x','x.y');
-    $hdr= "adresy $ezer_root";
-    $t= "<table class='stat'><tr><th>$hdr</th><th colspan=6>osoba.rodina</th></tr><tr><th></th>";
-    foreach($hd as $i=>$clmn) {
-      $t.= "<th>$clmn</th>";
-    }
-    $t.= "<th>&Sigma;</th></tr>";
-    foreach($tab as $s=>$row) {
-      $t.= "<tr><th>{$hr[$s]}</th>";
-      $sum= 0;
-      foreach($row as $i=>$clmn) {
-        $sum+= $clmn;
-        $t.= "<td>$clmn</td>";
-      }
-      $t.= "<th>$sum</th></tr>";
-    }
-    $t.= "</table>";
-    $html.= "<br>probráno $n osob, z toho $k je ve více rodinách $t";
-    break;
-  // ---------------------------------------------- osoba: adresa
-  // nastaví osoba.adresa=1 pokud je adresa osobní tj. různá od rodinné
-  // (pokud je rodina nejednoznačná, zatím nic pak bere se ta s rolí a|b)
-  // podle osoba --> tvori.role --> rodina
-  case 'adresa':
-    $n= 0;
-    $AND= $par->akce ? " AND id_akce={$par->akce}" : "";
-    $AND.= $par->pobyt ? " AND id_pobyt={$par->pobyt}" : "";
-//     // 1) osobní a rodinná jsou totožné => adresa=rodinná
-//     $qo= mysql_qry("
-//       SELECT id_osoba,adresa,COUNT(id_rodina) AS _rodin,
-//         CONCAT(o.ulice,o.psc,o.obec,o.stat) AS _adresa_o,
-//         CONCAT(r.ulice,r.psc,r.obec,r.stat) AS _adresa_r
-//       FROM osoba AS o
-//       JOIN tvori AS t USING(id_osoba)
-//       JOIN rodina AS r USING(id_rodina)
-//       GROUP BY id_rodina
-//       HAVING _rodin=1 AND _adresa_o!='' AND _adresa_o!='CZ' AND _adresa_o=_adresa_r
-//     ");
-//     while ( $qo && ($o= mysql_fetch_object($qo)) ) {
-//       $r_adresa= $o->ulice,$o->psc,$o->obec,$o->stat
-//       if ( $pouze ) {
-//         $n++;
-//         display("$roles:mysql_qry(\"UPDATE pobyt SET pouze=$pouze WHERE id_pobyt={$p->id_pobyt}\")");
-//       }
-//     }
-    $html.= "<br>doplněno $n x osoba.adresa=1";
-    break;
-  // ---------------------------------------------- pobyt: pouze
-  // doplní pouze=1|2 v akcích s nastaveným i0_rodina podle role=a|b
-  // podle spolu --> osoba.role
-  case 'pouze':
-    $n= 0;
-    $AND= $par->akce ? " AND id_akce={$par->akce}" : "";
-    $AND.= $par->pobyt ? " AND id_pobyt={$par->pobyt}" : "";
-    $qp= mysql_qry("
-      SELECT GROUP_CONCAT(role ORDER BY role SEPARATOR '') AS _roles,id_pobyt
-      FROM akce AS a
-      JOIN pobyt AS p ON a.id_duakce=p.id_akce
-      JOIN spolu AS s USING (id_pobyt)
-      JOIN rodina AS r ON r.id_rodina=i0_rodina
-      JOIN tvori AS t ON t.id_osoba=s.id_osoba AND t.id_rodina=i0_rodina
-      WHERE i0_rodina!=0 AND pouze=0 $AND
-      GROUP BY id_pobyt ");
-    while ( $qp && ($p= mysql_fetch_object($qp)) ) {
-      $roles= $p->_roles;
-      $pouze= $roles[0]=='b' ? 2 : (
-              $roles[0]=='a' && $roles[1]!='b'? 1 : 0);
-      if ( $pouze ) {
+  $updated= 0;
+  foreach (explode(',',$par->cmd) as $cmd ) {
+    $update= false;
+    switch ($cmd ) {
+    // ---------------------------------------------- osoba: kontakty
+    // opraví pole osoba.kontakt
+    case 'kontakty+':
+      $update= true;
+    // zobrazí přehled kontaktů
+    case 'kontakty':
+      //  0   1   2   3   4
+      // -.- x.- -.x x.x x.y    osobní.rodinná; single=0,clen=1
+      $tab= array(array(0,0,0,0,0),array(0,0,0,0,0));
+      $tos= array(array(0,0,0,0,0),array(0,0,0,0,0));           // počet osobních
+      $n= $k= 0;
+      $AND= $par->akce ? " AND id_akce={$par->akce}" : "";
+      $qo= mysql_qry("
+        SELECT o.id_osoba,t.role,o.kontakt,
+          COUNT(DISTINCT r.id_rodina) AS _rodin, COUNT(rt.id_tvori) AS _clenu,
+          REPLACE(REPLACE(CONCAT(o.telefon,o.email),' ',''),';',',') AS _kontakt_o,
+          IFNULL(MIN(CONCAT(t.role,REPLACE(REPLACE(CONCAT(r.telefony,r.emaily),' ',''),';',','))),'')
+            AS _kontakt_r
+        FROM osoba AS o
+        LEFT JOIN tvori AS t USING(id_osoba)
+        LEFT JOIN rodina AS r ON r.id_rodina=t.id_rodina
+        LEFT JOIN tvori AS rt ON rt.id_rodina=r.id_rodina
+        WHERE o.deleted='' AND r.deleted='' $AND
+        GROUP BY o.id_osoba
+      ");
+      while ( $qo && ($o= mysql_fetch_object($qo)) ) {
         $n++;
-        display("$roles:mysql_qry(\"UPDATE pobyt SET pouze=$pouze WHERE id_pobyt={$p->id_pobyt}\")");
+        if ( $o->_rodin>1 ) {
+          $k++;                                 //continue; ??????????????
+        }
+        $stav= $o->_clenu==1 ? 0 : 1;
+        $id_osoba= $o->id_osoba;
+        $kontakt= $o->kontakt;
+        $r_kontakt= substr($o->_kontakt_r,1);
+        $o_kontakt= $o->_kontakt_o;
+        if ( $o_kontakt=='' && $r_kontakt=='' ) {               // -.-
+          $tab[$stav][0]++;
+          $tos[$stav][0]+= $kontakt;
+          if ( $update && $kontakt ) {
+            $ok= query("UPDATE osoba SET kontakt=0 WHERE id_osoba=$id_osoba");
+            $updated+= $ok ? 1 : 0;
+          }
+        }
+        elseif ( $o_kontakt!='' && $r_kontakt=='' ) {           // x.-
+          $tab[$stav][1]++;
+          $tos[$stav][1]+= $kontakt;
+          if ( $update && !$kontakt ) {
+            $ok= query("UPDATE osoba SET kontakt=1 WHERE id_osoba=$id_osoba");
+            $updated+= $ok ? 1 : 0;
+          }
+        }
+        elseif ( $o_kontakt=='' && $r_kontakt!='' ) {           // -.x
+          $tab[$stav][2]++;
+          $tos[$stav][2]+= $kontakt;
+          if ( $update && $kontakt ) {
+            $ok= query("UPDATE osoba SET kontakt=0 WHERE id_osoba=$id_osoba");
+            $updated+= $ok ? 1 : 0;
+          }
+        }
+        elseif ( $o_kontakt==$r_kontakt ) {                     // x.x
+          $tab[$stav][3]++;
+          $tos[$stav][3]+= $kontakt;
+          if ( $update && $kontakt ) {
+            $ok= query("UPDATE osoba SET kontakt=0 WHERE id_osoba=$id_osoba");
+            $updated+= $ok ? 1 : 0;
+          }
+        }
+        elseif ( $o_kontakt!=$r_kontakt ) {                     // x.y
+          $tab[$stav][4]++;
+          $tos[$stav][4]+= $kontakt;
+          if ( $update && !$kontakt ) {
+            $ok= query("UPDATE osoba SET kontakt=1 WHERE id_osoba=$id_osoba");
+            $updated+= $ok ? 1 : 0;
+          }
+        }
+        else fce_warning("?");
       }
+                                                          debug($tos);
+      // formátování
+      $hr= array('single','člen rodiny');
+      $hd= array('-.-','x.-','-.x','x.x','x.y');
+      $hdr= "kontakty $ezer_root";
+      $t= "<table class='stat'><tr><th>$hdr</th><th colspan=6>osoba.rodina</th></tr><tr><th></th>";
+      foreach($hd as $i=>$clmn) {
+        $t.= "<th>$clmn</th>";
+      }
+      $t.= "<th>&Sigma;</th></tr>";
+      foreach($tab as $s=>$row) {
+        $t.= "<tr><th>{$hr[$s]}</th>";
+        $sum= 0;
+        foreach($row as $i=>$clmn) {
+          $sum+= $clmn;
+          $t.= "<td align='right'>$clmn</td>";
+        }
+        $t.= "<th align='right'>$sum</th></tr>";
+        $row= $tos[$s];
+        $t.= "<tr><th>... osobní</th>";
+        $sum= 0;
+        foreach($row as $i=>$clmn) {
+          $sum+= $clmn;
+          $t.= "<td align='right'>$clmn</td>";
+        }
+        $t.= "<th align='right'>$sum</th></tr>";
+      }
+      $t.= "</table>";
+      $html.= "<br>probráno $n osob, z toho $k je ve více rodinách $t";
+      $html.= $update ? ($updated ? "<br> opraveno $updated údajů<br>" : "<br>beze změn<br>") : '';
+      break;
+    // ---------------------------------------------- osoba: adresy
+    // opraví pole osoba.adresa
+    case 'adresy+':
+      $update= true;
+    // zobrazí přehled adres
+    case 'adresy':
+      //  0   1   2   3   4
+      // -.- x.- -.x x.x x.y    osobní.rodinná; single=0,clen=1
+      $tab= array(array(0,0,0,0,0),array(0,0,0,0,0));
+      $n= $k= 0;
+      $tos= array(array(0,0,0,0,0),array(0,0,0,0,0));           // počet osobních
+      $AND= $par->akce ? " AND id_akce={$par->akce}" : "";
+      $qo= mysql_qry("
+        SELECT o.id_osoba,o.adresa,
+          COUNT(DISTINCT r.id_rodina) AS _rodin, COUNT(rt.id_tvori) AS _clenu,
+          TRIM(CONCAT(o.ulice,o.psc,o.obec,o.stat)) AS _adresa_o,
+          IFNULL(MIN(CONCAT(t.role,TRIM(CONCAT(r.ulice,r.psc,r.obec,r.stat)))),'') AS _adresa_r
+        FROM osoba AS o
+        LEFT JOIN tvori AS t USING(id_osoba)
+        LEFT JOIN rodina AS r ON r.id_rodina=t.id_rodina
+        LEFT JOIN tvori AS rt ON rt.id_rodina=r.id_rodina
+        WHERE o.deleted='' AND r.deleted='' $AND
+        GROUP BY o.id_osoba
+      ");
+      while ( $qo && ($o= mysql_fetch_object($qo)) ) {
+        $n++;
+        if ( $o->_rodin>1 ) {
+          $k++;                                 //continue; ????????????????
+        }
+        $stav= $o->_clenu==1 ? 0 : 1;
+        $id_osoba= $o->id_osoba;
+        $adresa= $o->adresa;
+        $r_adresa= substr($o->_adresa_r,1);
+        $r_adresa= $r_adresa=="CZ" ? "" : $r_adresa;
+        $o_adresa= $o->_adresa_o=="CZ" ? "" : $o->_adresa_o;
+        if ( $o_adresa=='' && $r_adresa=='' ) {                 // -.-
+          $tab[$stav][0]++;
+          $tos[$stav][0]+= $adresa;
+          if ( $update && $adresa ) {
+            $ok= query("UPDATE osoba SET adresa=0 WHERE id_osoba=$id_osoba");
+            $updated+= $ok ? 1 : 0;
+          }
+        }
+        elseif ( $o_adresa!='' && $r_adresa=='' ) {             // x.-
+          $tab[$stav][1]++;
+          $tos[$stav][1]+= $adresa;
+          if ( $update && !$adresa ) {
+            $ok= query("UPDATE osoba SET adresa=1 WHERE id_osoba=$id_osoba");
+            $updated+= $ok ? 1 : 0;
+          }
+        }
+        elseif ( $o_adresa=='' && $r_adresa!='' ) {             // -.x
+          $tab[$stav][2]++;
+          $tos[$stav][2]+= $adresa;
+          if ( $update && $adresa ) {
+            $ok= query("UPDATE osoba SET adresa=0 WHERE id_osoba=$id_osoba");
+            $updated+= $ok ? 1 : 0;
+          }
+        }
+        elseif ( $o_adresa==$r_adresa ) {                       // x.x
+          $tab[$stav][3]++;
+          $tos[$stav][3]+= $adresa;
+          if ( $update ) {
+            $ok= query("UPDATE osoba SET adresa=0,ulice='',psc='',obec='',stat='' WHERE id_osoba=$id_osoba");
+            $updated+= $ok ? 1 : 0;
+          }
+        }
+        elseif ( $o_adresa!=$r_adresa ) {                       // x.y
+          $tab[$stav][4]++;
+          $tos[$stav][4]+= $adresa;
+        }
+        else fce_warning("?");
+      }
+//                                                           debug($tab);
+      // formátování
+      $hr= array('single','člen rodiny');
+      $hd= array('-.-','x.-','-.x','x.x','x.y');
+      $hdr= "adresy $ezer_root";
+      $t= "<table class='stat'><tr><th>$hdr</th><th colspan=6>osoba.rodina</th></tr><tr><th></th>";
+      foreach($hd as $i=>$clmn) {
+        $t.= "<th>$clmn</th>";
+      }
+      $t.= "<th>&Sigma;</th></tr>";
+      foreach($tab as $s=>$row) {
+        $t.= "<tr><th>{$hr[$s]}</th>";
+        $sum= 0;
+        foreach($row as $i=>$clmn) {
+          $sum+= $clmn;
+          $t.= "<td align='right'>$clmn</td>";
+        }
+        $t.= "<th align='right'>$sum</th></tr>";
+        $row= $tos[$s];
+        $t.= "<tr><th>... osobní</th>";
+        $sum= 0;
+        foreach($row as $i=>$clmn) {
+          $sum+= $clmn;
+          $t.= "<td align='right'>$clmn</td>";
+        }
+        $t.= "<th align='right'>$sum</th></tr>";
+      }
+      $t.= "</table>";
+      $html.= "<br>probráno $n osob, z toho $k je ve více rodinách $t";
+      $html.= $update ? ($updated ? "<br> opraveno $updated údajů<br>" : "<br>beze změn<br>") : '';
+      break;
+    // ---------------------------------------------- osoba: adresa
+    // nastaví osoba.adresa=1 pokud je adresa osobní tj. různá od rodinné
+    // (pokud je rodina nejednoznačná, zatím nic pak bere se ta s rolí a|b)
+    // podle osoba --> tvori.role --> rodina
+    case 'adresa':
+      $n= 0;
+      $AND= $par->akce ? " AND id_akce={$par->akce}" : "";
+      $AND.= $par->pobyt ? " AND id_pobyt={$par->pobyt}" : "";
+  //     // 1) osobní a rodinná jsou totožné => adresa=rodinná
+  //     $qo= mysql_qry("
+  //       SELECT id_osoba,adresa,COUNT(id_rodina) AS _rodin,
+  //         CONCAT(o.ulice,o.psc,o.obec,o.stat) AS _adresa_o,
+  //         CONCAT(r.ulice,r.psc,r.obec,r.stat) AS _adresa_r
+  //       FROM osoba AS o
+  //       JOIN tvori AS t USING(id_osoba)
+  //       JOIN rodina AS r USING(id_rodina)
+  //       GROUP BY id_rodina
+  //       HAVING _rodin=1 AND _adresa_o!='' AND _adresa_o!='CZ' AND _adresa_o=_adresa_r
+  //     ");
+  //     while ( $qo && ($o= mysql_fetch_object($qo)) ) {
+  //       $r_adresa= $o->ulice,$o->psc,$o->obec,$o->stat
+  //       if ( $pouze ) {
+  //         $n++;
+  //         display("$roles:mysql_qry(\"UPDATE pobyt SET pouze=$pouze WHERE id_pobyt={$p->id_pobyt}\")");
+  //       }
+  //     }
+      $html.= "<br>doplněno $n x osoba.adresa=1";
+      break;
+    // ---------------------------------------------- pobyt: pouze
+    // doplní pouze=1|2 v akcích s nastaveným i0_rodina podle role=a|b
+    // podle spolu --> osoba.role
+    case 'pouze':
+      $n= 0;
+      $AND= $par->akce ? " AND id_akce={$par->akce}" : "";
+      $AND.= $par->pobyt ? " AND id_pobyt={$par->pobyt}" : "";
+      $qp= mysql_qry("
+        SELECT GROUP_CONCAT(role ORDER BY role SEPARATOR '') AS _roles,id_pobyt
+        FROM akce AS a
+        JOIN pobyt AS p ON a.id_duakce=p.id_akce
+        JOIN spolu AS s USING (id_pobyt)
+        JOIN rodina AS r ON r.id_rodina=i0_rodina
+        JOIN tvori AS t ON t.id_osoba=s.id_osoba AND t.id_rodina=i0_rodina
+        WHERE i0_rodina!=0 AND pouze=0 $AND
+        GROUP BY id_pobyt ");
+      while ( $qp && ($p= mysql_fetch_object($qp)) ) {
+        $roles= $p->_roles;
+        $pouze= $roles[0]=='b' ? 2 : (
+                $roles[0]=='a' && $roles[1]!='b'? 1 : 0);
+        if ( $pouze ) {
+          $n++;
+          display("$roles:mysql_qry(\"UPDATE pobyt SET pouze=$pouze WHERE id_pobyt={$p->id_pobyt}\")");
+        }
+      }
+      $html.= "<br>doplněno $n x pobyt.pouze";
+      break;
+    // ---------------------------------------------- pobyt: i0_rodina ... do starých
+    // doplní i0_rodina pokud rodina má jméno a je jednoznačná pro všechny osoby pobytu
+    // podle spolu --> osoba --> tvori --> rodina.nazev,id_rodina
+    case 'i0_rodina':
+      $n= 0;
+      $AND= $par->akce ? " AND id_akce={$par->akce}" : "";
+      $qp= mysql_qry("
+        SELECT COUNT(DISTINCT id_rodina) AS _pocet,id_pobyt,id_rodina
+        FROM akce AS a
+        JOIN pobyt AS p ON a.id_duakce=p.id_akce
+        JOIN spolu AS s USING (id_pobyt)
+        JOIN tvori AS t USING(id_osoba)
+        JOIN rodina AS r USING(id_rodina)
+        WHERE i0_rodina=0 AND r.nazev!='' $AND
+        GROUP BY id_pobyt HAVING _pocet=1 ");
+      while ( $qp && ($p= mysql_fetch_object($qp)) ) {
+        $n++;
+        mysql_qry("UPDATE pobyt SET i0_rodina={$p->id_rodina} WHERE id_pobyt={$p->id_pobyt}");
+      }
+      $html.= "<br>doplněno $n x pobyt.i0_rodina";
+      break;
+    // ---------------------------------------------- osobni_pece
+    case 'osobni_pece':
+      $html.= "<h3>kopie spolu.pecovane na spolu.pecujici</h3>Zatím ne ...";
+  //       SELECT s1.id_spolu,s2.id_spolu
+  //       FROM spolu AS s1
+  //       JOIN pobyt AS p1 ON p1.id_pobyt=s1.id_pobyt AND p1.id_akce=
+  //       JOIN spolu AS s2 ON s2.id_osoba=s1.pecovane
+  //       JOIN pobyt AS p2 ON p2.id_pobyt=s2.id_pobyt AND p2.id_akce=
+  //       WHERE
+  //        id_akce=394 AND s1.pecovane!=0
+      break;
     }
-    $html.= "<br>doplněno $n x pobyt.pouze";
-    break;
-  // ---------------------------------------------- pobyt: i0_rodina ... do starých
-  // doplní i0_rodina pokud rodina má jméno a je jednoznačná pro všechny osoby pobytu
-  // podle spolu --> osoba --> tvori --> rodina.nazev,id_rodina
-  case 'i0_rodina':
-    $n= 0;
-    $AND= $par->akce ? " AND id_akce={$par->akce}" : "";
-    $qp= mysql_qry("
-      SELECT COUNT(DISTINCT id_rodina) AS _pocet,id_pobyt,id_rodina
-      FROM akce AS a
-      JOIN pobyt AS p ON a.id_duakce=p.id_akce
-      JOIN spolu AS s USING (id_pobyt)
-      JOIN tvori AS t USING(id_osoba)
-      JOIN rodina AS r USING(id_rodina)
-      WHERE i0_rodina=0 AND r.nazev!='' $AND
-      GROUP BY id_pobyt HAVING _pocet=1 ");
-    while ( $qp && ($p= mysql_fetch_object($qp)) ) {
-      $n++;
-      mysql_qry("UPDATE pobyt SET i0_rodina={$p->id_rodina} WHERE id_pobyt={$p->id_pobyt}");
-    }
-    $html.= "<br>doplněno $n x pobyt.i0_rodina";
-    break;
-  // ---------------------------------------------- osobni_pece
-  case 'osobni_pece':
-    $html.= "<h3>kopie spolu.pecovane na spolu.pecujici</h3>Zatím ne ...";
-//       SELECT s1.id_spolu,s2.id_spolu
-//       FROM spolu AS s1
-//       JOIN pobyt AS p1 ON p1.id_pobyt=s1.id_pobyt AND p1.id_akce=
-//       JOIN spolu AS s2 ON s2.id_osoba=s1.pecovane
-//       JOIN pobyt AS p2 ON p2.id_pobyt=s2.id_pobyt AND p2.id_akce=
-//       WHERE
-//        id_akce=394 AND s1.pecovane!=0
-    break;
   }
   return $html;
 }
@@ -7945,7 +8043,7 @@ function evid_table($par,$tits,$flds,$clmn,$export=false) {
           $g= "<img src='skins/$skin/pixel.png'
             style='height:4px;width:{$g}px;float:left;margin-top:5px'>";
         }
-        $align= is_numeric($c[$f]) || substr_count($c[$f],'.')==2 ? "right" : "left";
+        $align= is_numeric($c[$f]) || preg_match("/\d+\.\d+\.\d+/",$c[$f]) ? "right" : "left";
         $tab.= "<td style='text-align:$align'>{$c[$f]}$g</td>";
       }
       $tab.= "</tr>";
@@ -8164,25 +8262,32 @@ function evid_sestava_cleni($par,$title,$export=false) {
   $n= 0;
   $clmn= array();
   $expr= array();       // pro výrazy
-  $clenu= $cinnych= $prispevku= $daru= 0;
+  $clenu= $cinnych= $prispevku= $daru= $dobrovolniku= $novych= 0;
   $qry= "SELECT
+           MAX(IF(YEAR(datum_od)=$rok AND p.funkce=1,1,0)) AS _vps,
            os.id_osoba,os.prijmeni,os.jmeno,os.narozeni,os.sex,
-           os.obec,os.ulice,os.psc,os.email,r.emaily,
+           IF(os.obec='',r.obec,os.obec) AS obec,
+           IF(os.ulice='',r.ulice,os.ulice) AS ulice,
+           IF(os.psc='',r.psc,os.psc) AS psc,
+           IF(os.email='',r.emaily,os.email) AS email,
            GROUP_CONCAT(DISTINCT od.ukon ORDER BY od.ukon SEPARATOR '') as rel,
-           GROUP_CONCAT(CONCAT(ukon,':',YEAR(dat_od),':',YEAR(dat_do),':',castka) ORDER BY dat_od DESC SEPARATOR '|') AS _ukony
+           GROUP_CONCAT(DISTINCT CONCAT(ukon,':',YEAR(dat_od),':',YEAR(dat_do),':',castka) ORDER BY dat_od DESC SEPARATOR '|') AS _ukony
          FROM osoba AS os
          JOIN tvori AS ot ON os.id_osoba=ot.id_osoba
          JOIN rodina AS r USING(id_rodina)
          LEFT JOIN dar AS od ON os.id_osoba=od.id_osoba AND od.deleted=''
+         LEFT JOIN spolu AS s ON s.id_osoba=os.id_osoba
+         LEFT JOIN pobyt AS p USING (id_pobyt)
+         LEFT JOIN akce AS a ON a.id_duakce=p.id_akce
          WHERE os.deleted='' AND {$par->cnd} AND (dat_do='0000-00-00' OR YEAR(dat_do)>=$rok)
-           -- AND LEFT(os.prijmeni,2)='Ln'
+           -- AND LEFT(os.prijmeni,1)='Š'
          GROUP BY os.id_osoba HAVING {$par->hav}
          ORDER BY os.prijmeni";
   $res= mysql_qry($qry);
   while ( $res && ($x= mysql_fetch_object($res)) ) {
     $id_osoba= $x->id_osoba;
     // rozbor úkonů
-    $_clen_od= $_cinny_od= $_prisp= $_dary= 0;
+    $_clen_od= $_cinny_od= $_prisp= $prisp_letos= $_dary= 0;
     foreach(explode('|',$x->_ukony) as $uddc) {
       list($u,$d1,$d2,$c)= explode(':',$uddc);
       switch ($u) {
@@ -8198,11 +8303,22 @@ function evid_sestava_cleni($par,$title,$export=false) {
     if ( !$_clen_od && !$_cinny_od ) continue;
     $clenu+= $_clen_od ? 1 : 0;
     $cinnych+= $_cinny_od ? 1 : 0;
+    $dobrovolniku+= $x->_vps && $_cinny_od>0 ? 1 : 0;
+    $novych+= $_cinny_od==2014 ? 1 : 0;
     // pokračujeme jen s členy
     $n++;
     $clmn[$n]= array();
     foreach($flds as $f) {
+//  '1,prijmeni,jmeno,ulice,obec,psc,_naroz,_b_c,_prisp,_YS,_email,_cinny_letos,_dobro'}}
       switch ( $f ) {
+      // export
+      case '1':         $clmn[$n][$f]= 1; break;
+      case '_naroz_ymd':$clmn[$n][$f]= substr($x->narozeni,2,2).substr($x->narozeni,5,2).substr($x->narozeni,8,2); break;
+      case '_b_c':      $clmn[$n][$f]= $_cinny_od>0 ? 'č' : 'b'; break;
+      case '_YS':       $clmn[$n][$f]= 'YMCA Setkání'; break;
+      case '_cinny_letos':$clmn[$n][$f]= $_cinny_od==2014 ? 1 : ''; break;
+      case '_dobro':    $clmn[$n][$f]= $x->_vps && $_cinny_od>0 ? 1 : ''; break;
+      // přehled
       case '_clen_od':  $clmn[$n][$f]= $_clen_od; break;
       case '_cinny_od': $clmn[$n][$f]= $_cinny_od; break;
       case '_prisp':    $clmn[$n][$f]= $_prisp; break;
@@ -8235,6 +8351,8 @@ function evid_sestava_cleni($par,$title,$export=false) {
   $clmn[$n]['_cinny_od']= $cinnych;
   $clmn[$n]['_prisp']= $prispevku;
   $clmn[$n]['_dary']= $daru;
+  $clmn[$n]['_dobro']= $dobrovolniku;
+  $clmn[$n]['_cinny_letos']= $novych;
   return evid_table($par,$tits,$flds,$clmn,$export);
 }
 # -------------------------------------------------------------------------------------------------- evid_sestava_Q

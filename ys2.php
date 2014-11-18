@@ -65,12 +65,16 @@
       . ($EZER->options->phone ? "případně zavolejte&nbsp;{$EZER->options->phone} " : '')
       . ($EZER->options->skype ? "nebo použijte Skype&nbsp;<a href='skype:{$EZER->options->skype}?chat'>{$EZER->options->skype}</a>" : '')
       . "<br/><br/>Za spolupráci děkuje <br/>{$EZER->options->author}";
+  $title_style= ($ezer_local || isset($_GET['database']))
+                ? " style='" . ($ezer_local ? 'color:#ef7f13;' : '')
+                . (isset($_GET['database']) ? 'background-color:#ffffaa' : '') . "'" : '';
   $pars= (object)array(
 //     'no_local' => true,                // true = nezohledňovat lokální přístup pro watch_key,watch_ip
     'dbg' => $dbg,                     // true = povolit podokno debuggeru v trasování
     'watch_key' => !$ezer_ksweb,       // true = povolit přístup jen po vložení klíče
     'watch_ip' => !$ezer_ksweb,        // true = povolit přístup jen ze známých IP adres
-    'title_right' => $ezer_local ? "<span style='color:#ef7f13'>$app_name</span>" : $app_name,
+    'title_right' => "<span$title_style>$app_name</span>"
+                     . ($android ? "<button id='android_menu'><i class='fa fa-bars'></i></button>" : ""),
     'contact' => $kontakt,
     'CKEditor' => "{
       version:'$CKEditor',

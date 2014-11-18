@@ -591,7 +591,9 @@ panel osoba_config [,,200,150] {type:'popup', title:"Podrobnosti údajů"
   var _old= 'Z'
 }
 form _osoba2x [,,244,322] {css:'ae_frame', proc onclick() { on_click }
+  var mode=0            // jak zobrazit osobní kontakt a adresu je-li rodinná: 0=hide | 1=disable
   // globální procedury
+  proc set_mode(_mode) { mode.set(_mode); form.enable(1,'a|b|j|k') }
   proc onchanged() { }
   proc new_osoba() { form.init; role.display(1); }
   proc on_click() {}
@@ -602,11 +604,13 @@ form _osoba2x [,,244,322] {css:'ae_frame', proc onclick() { on_click }
     form.display(0,'[^f]'); go_evi.display(not(even));
     frame.set(osoba_config.tit.get);
     tags.set('i,ii');
-    [ contains('K',osoba_config.grp.get); { kontakt.get;
-      tags.set(conc(tags,',j,k')); kontakt_r.set('')
+    [ contains('K',osoba_config.grp.get); { or(mode.get,kontakt.get);
+      tags.set(conc(tags,',j,k')); kontakt_r.set('');
+      [ mode.get; form.enable(kontakt.get,'j|k') ]
     | tags.set(conc(tags,',j,J')); kontakt_r.set(kmen.get) }];
-    [ contains('A',osoba_config.grp.get); { adresa.get;
-      tags.set(conc(tags,',a,b')); adresa_r.set('')
+    [ contains('A',osoba_config.grp.get); { or(mode.get,adresa.get);
+      tags.set(conc(tags,',a,b')); adresa_r.set('');
+      [ mode.get; form.enable(adresa.get,'a|b') ]
     | tags.set(conc(tags,',a,A')); adresa_r.set(kmen.get) }];
     [ or(even,key_spolu.get);
       [ contains('O',osoba_config.grp.get); tags.set(conc(tags,',o')) ];
