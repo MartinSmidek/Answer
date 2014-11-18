@@ -132,7 +132,7 @@ menu m {type:'left'
     item pec {title:'Akce s pečouny',           par:°{typ:'e-p',exp:'Excel'}    skill:'yae;cae;fae'}
     item {title:'Podklady pro projekty',        par:°{typ:'e-x',exp:'Excel'}    skill:'yae;cae;fae'}
   }
-  menu {title:'Výpisy a exporty',type:'group', skill:'yae'
+#   menu {title:'Výpisy a exporty',type:'group', skill:'yae'
 #     item {title:'Členové YMCA Setkání'
 #           par:°{typ:'e-j',exp:'Excel',cnd:1, hav:"rel RLIKE 'b|c'",
 #                 tit:'příjmení:15,jméno:10,ulice:20,obec:20,psč:7,datum nar.:10,čl.:3,přísp.:6,KČ:13,e-mail:30',
@@ -159,7 +159,12 @@ menu m {type:'left'
 #                 hav:"rel RLIKE 'c'",
 #                 tit:'příjmení:15,jméno:10,ulice:20,obec:20,psč:7,datum nar.:10,čl.:3,přísp.:6,rok:6,KČ:13,e-mail:30',
 #                 fld:'prijmeni,jmeno,ulice,obec,psc,_naroz,_clen,_prisp,_rok,_kc,_email'}}
-    item {title:'Členové YS - stav letos',
+  menu {title:'Členové YMCA Setkání',type:'group', skill:'yae'
+    item {title:'Členové YS - export YMCA v ČR',
+          par:°{typ:'e-cleni',exp:'Excel',cnd:1,hav:1,rok:0,del:0,
+                tit:'?:2,příjmení:15,jméno:10,ulice:20,město:20,PSČ:7,datum nar.:10,členství:5,čl. přísp.:6,KČ:12,e-mail:40,činný od letos:6,dobrovolník:6',
+                fld:'1,prijmeni,jmeno,ulice,obec,psc,_naroz_ymd,_b_c,_prisp,_YS,email,_cinny_letos,_dobro'}}
+    item {title:'Členové YS - přehled letošní',
           par:°{typ:'e-cleni',exp:'Excel',cnd:1,hav:1,rok:0,del:0,
                 tit:'příjmení:15,jméno:10,datum nar.:10,obec:20,člen od:5,činný od:5,letos přísp.:6,letos dary:6',
                 fld:'prijmeni,jmeno,_naroz,obec,_clen_od,_cinny_od,_prisp,_dary'}}
@@ -167,7 +172,7 @@ menu m {type:'left'
 #           par:°{typ:'e-cleni',exp:'Excel',cnd:1,hav:1,rok:0,del:1,
 #                 tit:'zrušit?:3,příjmení:15,jméno:10,datum nar.:10,obec:20,člen od:5,činný od:5,letos přísp.:6,letos dary:6',
 #                 fld:'_zrus,prijmeni,jmeno,_naroz,obec,_clen_od,_cinny_od,_prisp,_dary'}}
-    item {title:'Členové YS - stav (jak byl) vloni',
+    item {title:'Členové YS - přehled loňsk.stavu',
           par:°{typ:'e-cleni',exp:'Excel',cnd:1,hav:1,rok:1,
                 tit:'příjmení:15,jméno:10,datum nar.:10,obec:20,člen od:5,činný od:5,letos přísp.:6,letos dary:6',
                 fld:'prijmeni,jmeno,_naroz,obec,_clen_od,_cinny_od,_prisp,_dary'}}

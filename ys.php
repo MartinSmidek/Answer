@@ -1,7 +1,8 @@
 <?php # Systém An(w)er/Ezer2, (c) 2008-2010 Martin Šmídek <martin@smidek.eu>
 
   $ezer_local= preg_match('/^\w+\.ezer/',$_SERVER["SERVER_NAME"]); // identifikace ladícího serveru
-  $ezer_ksweb= $_SERVER["SERVER_NAME"]=="localhost"; // identifikace ladícího serveru KSWEB/Android
+  $android=    preg_match('/android|x11/i',$_SERVER['HTTP_USER_AGENT']);
+  $ezer_ksweb= $android && $_SERVER["SERVER_NAME"]=="localhost"; // identifikace ladícího serveru KSWEB/Android
 
   $app=      'ys';
   $app_name= 'Ans(w)er'.($ezer_ksweb?" / test Android":"");;
@@ -11,10 +12,10 @@
   $dbg=      isset($_GET['dbg']) ? $_GET['dbg'] : 0;
   $gmap=     isset($_GET['gmap']) ? true : !($ezer_local || $ezer_ksweb);
   $awesome=  isset($_GET['awesome']) ? $_GET['awesome'] : 0;
+  if ( isset($_GET['database']) ) $app_name.= " - {$_GET['database']}";
 
   require_once("$app.inc");
   require_once("{$EZER->version}/server/ae_slib.php");
-  $app_name.= $EZER->options->mysql ? " - {$EZER->options->mysql}" : '';
 
   $client= "{$EZER->version}/client";
   $licensed= "$client/licensed";
@@ -68,7 +69,9 @@
     'dbg' => $dbg,                     // true = povolit podokno debuggeru v trasování
     'watch_key' => !$ezer_ksweb,       // true = povolit přístup jen po vložení klíče
     'watch_ip' => !$ezer_ksweb,        // true = povolit přístup jen ze známých IP adres
-    'title_right' => $ezer_local ? "<span style='color:#ef7f13'>$app_name</span>" : $app_name,
+    'title_right' => ($ezer_local || isset($_GET['database'])
+                     ? "<span style='color:#ef7f13'>$app_name</span>" : $app_name)
+                     . ($android ? "<button id='android_menu'><i class='fa fa-bars'></i></button>" : ""),
     'contact' => $kontakt,
     'CKEditor' => "{
       version:'$CKEditor',

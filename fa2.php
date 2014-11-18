@@ -71,8 +71,9 @@
     'dbg' => $dbg,                     // true = povolit podokno debuggeru v trasování
     'watch_key' => true,               // true = povolit přístup jen po vložení klíče
     'watch_ip' => true,                // true = povolit přístup jen ze známých IP adres
-    'title_right' => ($ezer_local ? "<span style='color:#ef7f13'>$app_name</span>" : $app_name)
-               . ($android ? "<button id='android_menu'><i class='fa fa-bars'></i></button>" : ""),
+    'title_right' => ($ezer_local || isset($_GET['database'])
+                     ? "<span style='color:#ef7f13'>$app_name</span>" : $app_name)
+                     . ($android ? "<button id='android_menu'><i class='fa fa-bars'></i></button>" : ""),
     'contact' => $kontakt,
     'CKEditor' => "{
       version:'$CKEditor',
