@@ -9,9 +9,10 @@
   $ezer_local= preg_match('/^\w+\.ezer|192.168/',$_SERVER["SERVER_NAME"]); // identifikace ladícího serveru
 
   // případné nahrazení ostré databáze jinou
-  if ( isset($_GET['database']) ) $_SESSION['fa']['GET']['database']= $_GET['database'];
-  $ezer_fa= isset($_SESSION['fa']['GET']['database'])
-                ? $_SESSION['fa']['GET']['database'] : 'ezer_fa';
+//   if ( isset($_GET['database']) ) $_SESSION['fa']['GET']['database']= $_GET['database'];
+//   $ezer_fa= isset($_SESSION['fa']['GET']['database'])
+//                 ? $_SESSION['fa']['GET']['database'] : 'ezer_fa';
+  $ezer_fa= isset($_GET['database']) ? $_GET['database'] : 'ezer_fa';
 
   // android
   $android=    preg_match('/android|x11/i',$_SERVER['HTTP_USER_AGENT']);

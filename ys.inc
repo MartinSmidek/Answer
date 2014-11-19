@@ -9,9 +9,10 @@
   $ezer_local= preg_match('/^\w+\.ezer/',$_SERVER["SERVER_NAME"]); // identifikace ladícího serveru
 
   // případné nahrazení ostré databáze jinou
-  if ( isset($_GET['database']) ) $_SESSION[$ezer_root]['GET']['database']= $_GET['database'];
-  $ezer_ys= isset($_SESSION[$ezer_root]['GET']['database'])
-                ? $_SESSION[$ezer_root]['GET']['database'] : 'ezer_ys_test';
+  // if ( isset($_GET['database']) ) $_SESSION[$ezer_root]['GET']['database']= $_GET['database'];
+  //   $ezer_ys= isset($_SESSION[$ezer_root]['GET']['database'])
+  //                 ? $_SESSION[$ezer_root]['GET']['database'] : 'ezer_ys_test';
+  $ezer_ys= isset($_GET['database']) ? $_GET['database'] : 'ezer_ys';
 
   require_once("{$EZER->version}/server/ae_slib.php");
 
