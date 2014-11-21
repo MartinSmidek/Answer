@@ -69,6 +69,7 @@ ds/ds.tab.ezer -text
 ds/ds_fce.php -text
 ds/fce.js -text
 ds/img/ds.png -text
+/ezer2.2.inc -text
 /ezer2.inc -text
 /fa.inc -text
 /fa.php -text
@@ -295,6 +296,6 @@ ys2/code/comp2tab.php -text
 ys2/img/+logo.gif -text
 ys2/img/-logo.gif -text
 ys2/img/ys-logo.gif -text
-ys2/img/ys.png -text
+ys2/img/ys2.png -text
 ys2/img/ys_local.png -text
 /zaloha.php -text

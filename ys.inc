@@ -1,6 +1,7 @@
 <?php # (c) 2009-2011 Martin Smidek <martin@smidek.eu>
 
   $ezer_root= 'ys';             // jméno adresáře a hlavního objektu aplikace
+  $ezer_db= 'ezer_ys';          // jméno hlavní databáze
 
   // nastavení verze jádra
   $EZER= (object)array();
@@ -8,11 +9,11 @@
 
   $ezer_local= preg_match('/^\w+\.ezer/',$_SERVER["SERVER_NAME"]); // identifikace ladícího serveru
 
-  // případné nahrazení ostré databáze jinou
-  // if ( isset($_GET['database']) ) $_SESSION[$ezer_root]['GET']['database']= $_GET['database'];
-  //   $ezer_ys= isset($_SESSION[$ezer_root]['GET']['database'])
-  //                 ? $_SESSION[$ezer_root]['GET']['database'] : 'ezer_ys_test';
-  $ezer_ys= isset($_GET['database']) ? $_GET['database'] : 'ezer_ys';
+  // případné nahrazení ostré databáze testovací
+  if ( isset($_GET['database']) && $_GET['database']=='test' )
+    $_SESSION[$ezer_root]['database']= "{$ezer_db}_test";
+  if ( isset($_SESSION[$ezer_root]['database']) )
+    $ezer_db= $_SESSION[$ezer_root]['database'];
 
   require_once("{$EZER->version}/server/ae_slib.php");
 
@@ -23,12 +24,12 @@
   $db= array('ezer_ys','ezer_ys');
   $dbs= array(
     array( /* ostré */
-      'ezer_ys' =>      array(0,'localhost','gandi','r8d0st','utf8',$ezer_ys),
-      'ezer_system' =>  array(0,'localhost','gandi','r8d0st','utf8',$ezer_ys),
+      'ezer_ys' =>      array(0,'localhost','gandi','r8d0st','utf8',$ezer_db),
+      'ezer_system' =>  array(0,'localhost','gandi','r8d0st','utf8',$ezer_db),
       'setkani' =>      array(0,'192.168.1.146','gandi','','cp1250')),
     array( /* lokální */
-      'ezer_ys' =>      array(0,'localhost','gandi','','utf8',$ezer_ys),
-      'ezer_system' =>  array(0,'localhost','gandi','','utf8',$ezer_ys),
+      'ezer_ys' =>      array(0,'localhost','gandi','','utf8',$ezer_db),
+      'ezer_system' =>  array(0,'localhost','gandi','','utf8',$ezer_db),
 //       'setkani' =>      array(0,'localhost','gandi','','cp1250'))
       'setkani' =>      array(0,'localhost','gandi','','utf8'))
   );

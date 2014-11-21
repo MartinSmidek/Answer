@@ -1,7 +1,7 @@
 # Systém Ans(w)er pro YMCA Setkání
 # (c) 2008-2010 Martin Šmídek <martin@smidek.eu>
 
-menu ys { type:'main', active:* //ys.pok
+menu ys2 { type:'main', active:* //ys.pok
   var global: text,
 #   tabs info {title:"Archiv", _sys:'inf',  include:'onclick', active:*, skill:'yc' }
 #   tabs pok {title:"Pokladna", _sys:'*',  include:'onclick', active:*, skill:'yp' }
@@ -13,6 +13,7 @@ menu ys { type:'main', active:* //ys.pok
 #   tabs db {title:"Databáze", _sys:'db', include:'onclick,db.akce', active:*, skill:'ya' }
   tabs db2 {title:"Databáze2", _sys:'db', include:'onload,db.akce2', active:*, skill:'test' }
 #   tabs lide {title:"Lidé", _sys:'lid', include:'onclick', skill:'yl' }
+
   tabs syst {title:"Systém", _sys:'sys',  include:'onclick,ezer2.syst', active:*
     panel oso {type:'right', title:'Osobní nastavení', _sys:'*', include:'onclick,ezer2.pers' }
     panel nas {type:'right', title:'Data', _sys:'nas', skill:'a'
@@ -64,7 +65,7 @@ menu ys { type:'main', active:* //ys.pok
     }
     panel dat {type:'right', title:"Zálohování", _sys:'*', skill:'m', include:'onclick' }
   }
-  tabs doc  {title:"Nápověda", _sys:'nap',  include:'onclick,ezer2.help' }
+  tabs doc  {title:"Nápověda", _sys:'nap',  include:'onload,ezer2.help' }
   tabs tst {title:"Testy",skill:'m'
     panel one {type:'plain', title:'One',
       use u: form right
@@ -73,6 +74,7 @@ menu ys { type:'main', active:* //ys.pok
     panel two {type:'plain', title:'Two', proc onfocus() { echo(debug(ask('test_two'))) }}
   }
   tabs off  {title:"Odhlásit", type:'logoff' }
+
 //#   tabs test {title:"Test",  where:'http://ys2.ezer/test.html' }
 //#   tabs ys1  {title:"Pokladna/1",  where:'http://ys.ezer/anser.php?modul=ys_pokladna' }
   // univerzální procedury

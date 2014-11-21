@@ -1,6 +1,7 @@
 <?php # (c) 2009-2011 Martin Smidek <martin@smidek.eu>
 
-  $ezer_root= 'fa2';             // jméno adresáře a hlavního objektu aplikace
+  $ezer_root= 'fa2';                                             // adresář a hlavní objekt aplikace
+  $answer_db= $_SESSION[$ezer_root]['GET']['test'] ? 'ezer_fa_test' : 'ezer_fa'; // hlavní databáze
 
   // nastavení verze jádra
   $EZER= (object)array();
@@ -8,11 +9,6 @@
 
   $ezer_local= preg_match('/^\w+\.ezer|192.168/',$_SERVER["SERVER_NAME"]); // identifikace ladícího serveru
 
-  // případné nahrazení ostré databáze jinou
-//   if ( isset($_GET['database']) ) $_SESSION[$ezer_root]['GET']['database']= $_GET['database'];
-//   $ezer_fa= isset($_SESSION[$ezer_root]['GET']['database'])
-//                 ? $_SESSION[$ezer_root]['GET']['database'] : 'ezer_fa_test';
-  $ezer_fa= isset($_GET['database']) ? $_GET['database'] : 'ezer_fa_test';
 
   // android
   $android=    preg_match('/android|x11/i',$_SERVER['HTTP_USER_AGENT']);
@@ -27,16 +23,16 @@
   $db= array('ezer_fa','ezer_fa');
   $dbs= array( $ezer_ksweb
   ? array( /* lokální android */
-      'ezer_fa' =>      array(0,'localhost','root','','utf8',$ezer_fa),
-      'ezer_system' =>  array(0,'localhost','root','','utf8',$ezer_fa))
+      'ezer_fa' =>      array(0,'localhost','root','','utf8',$answer_db),
+      'ezer_system' =>  array(0,'localhost','root','','utf8',$answer_db))
   : array( /* ostré */
-      'ezer_fa' =>      array(0,'localhost','gandi','r8d0st','utf8',$ezer_fa),
+      'ezer_fa' =>      array(0,'localhost','gandi','r8d0st','utf8',$answer_db),
       'ezer_ys' =>      array(0,'localhost','gandi','r8d0st','utf8'),
-      'ezer_system' =>  array(0,'localhost','gandi','r8d0st','utf8',$ezer_fa)),
+      'ezer_system' =>  array(0,'localhost','gandi','r8d0st','utf8',$answer_db)),
     array( /* lokální */
-      'ezer_fa' =>      array(0,'localhost','gandi','','utf8',$ezer_fa),
+      'ezer_fa' =>      array(0,'localhost','gandi','','utf8',$answer_db),
       'ezer_ys' =>      array(0,'localhost','gandi','','utf8'),
-      'ezer_system' =>  array(0,'localhost','gandi','','utf8',$ezer_fa))
+      'ezer_system' =>  array(0,'localhost','gandi','','utf8',$answer_db))
   );
   // kořeny cest
   $path_root=  array($ezer_ksweb?"/storage/sdcard0/htdocs/www-ys2":

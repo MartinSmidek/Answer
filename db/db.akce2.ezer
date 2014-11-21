@@ -59,7 +59,6 @@ panel lst {type:'right', _sys:'*', title:'AKCE', include:'onload,db.akce.lst',sk
   proc akce_work(id) {}                // nastaví akci jako vybranou
 }
 panel ucast {type:'plain', _sys:'*',
-  /*title:"<img src='img/icon_new.gif' style='float:left;margin-top:-5px;padding-right:5px;'>Účastníci",*/
     title:"Účastníci2",
     include:'onload,db.akce2.ucast',skill:'yaa;faa;caa'
   proc init_ucast2() {}
@@ -173,7 +172,7 @@ table chlapi { key_id:'id_chlapi', db:'ezer_ys'
   text telefon
   text email
   number iniciace
-  text note /*pozn*/
+  text note // pozn
   text origin  // databáze,id,datum vkopírování
 }
 table ch_ucast { key_id:'id_ucast', db:'ezer_ys'
@@ -834,7 +833,7 @@ form _rodina2 [,,360,229]  { css:'ae_frame', proc onclick() { on_click }
     // údaje k akci
     show key_spolu, show barva, show s_role,
     show s_dite_kat, show s_poznamka, show pecovane, show pfunkce,
-    show pece_val show pece_ido /* jméno a id pečovaného nebo chůvy */
+    show pece_val show pece_ido // jméno a id pečovaného nebo chůvy
     // metody
     proc onrowclick() {
       neni_ulozen
@@ -860,8 +859,9 @@ form _rodina2 [,,360,229]  { css:'ae_frame', proc onclick() { on_click }
   }
 }
 # ---------------------------------------------------------------------------------------- _rodina2p
-form _rodina2p [,,360,229] { css:'ae_frame'
-  const Lr=187
+form _rodina2p [,,188,229] { css:'ae_frame'
+  const Lp=5 // 187
+  const Ts=190; Tp=0 // 0
   view r: table rodina
   view t: table tvori
   proc onchanged() { }
@@ -872,38 +872,38 @@ form _rodina2p [,,360,229] { css:'ae_frame'
   }
   proc od_svatby() {
     spolu.set(cconc(r_datsvatba.get,conc(roku(r_datsvatba.get,r_svatba.get),' let'),'?')) }
-  label frame      [0,0,360,20]   {tag:'f', title:'rodinné údaje', css:'frame_label_up' }
-  field key_rodina [304,0,50,] {tag:'f', format:'or', css:'Label', data:r.id_rodina  }
-  select t_role    [Lr+131,32,35,] {tag:'a,N', type:'map', data:t.role
+  label frame      [0,0,360,20]   {tag:'f', title:'společné rodinné údaje', css:'frame_label_up' }
+  field key_rodina [130,0,50,] {tag:'f', format:'or', css:'Label', data:r.id_rodina  }
+  select t_role    [Lp+141,Ts+32,35,] {tag:'a,N', type:'map', data:t.role
     options:ms_akce_t_role.hodnota, format:'wn', title:'^role'}
 
   // výběr rodiny
   proc rodina_changed() {}
   proc rodina_edit() {}
-  field  rodiny0 [Lr+5,32,104,] {tag:'n,N', title:"^název nové rodiny", data:r.nazev, format:'n' }
-  field  rodiny1 [Lr+5,32,104,] {tag:'m', title:"^oprava názvu rodiny", data:r.nazev, format:'n' }
-  select rodiny  [Lr+5,32,104,] {tag:'a,R', format:'tT', title:"^zobrazená rodina", help:'výběr jiné rodiny'
+  field  rodiny0 [Lp+0,Ts+32,104,] {tag:'n,N', title:"^název nové rodiny", data:r.nazev, format:'n' }
+  field  rodiny1 [Lp+0,Ts+32,104,] {tag:'m', title:"^oprava názvu rodiny", data:r.nazev, format:'n' }
+  select rodiny  [Lp+0,Ts+32,110,] {tag:'a,R', format:'tT', title:"^zobrazená rodina", help:'výběr jiné rodiny'
     proc onchanged() { rodina_changed}
   }
-  button [Lr+108,32,,] {tag:'a,o,R', type:'html', title:"[fa-chevron-left]", css:'button' //style:"padding-left:0px"
+  button [Lp+115,Ts+32,,] {tag:'a,o,R', type:'html', title:"[fa-chevron-left]", css:'button' //style:"padding-left:0px"
     proc onclick() { form.display(0,'a'); form.display(1,'m'); rodiny1.set(rodiny.get);
       rodiny1.change; rodina_edit
   }}
 
   // rodinné údaje
-  field r_spz      [Lr+5,20,58,]  {tag:'r', data:r.spz, title:'^SPZ auta'}
-  label spolu      [Lr+134,7,37,] {tag:'r' }
+  field r_spz      [Lp+ 0,Tp+20,58,]  {tag:'r', data:r.spz, title:'^SPZ auta'}
+  label spolu      [Lp+143,Tp+7,37,] {tag:'r' }
   field r_svatba   {data:rodina.svatba}
-  field r_datsvatba[Lr+82,20,85,] {tag:'r', type:'date', data:r.datsvatba, format:'rR:e',title:'^od svatby'}
+  field r_datsvatba[Lp+90,Tp+20,85,] {tag:'r', type:'date', data:r.datsvatba, format:'rR:e',title:'^od svatby'}
   // kontakt
-  field r_ulice    [Lr+ 5,55,161,] {tag:'r,N', data:r.ulice, title:'^ulice'}
-  field r_psc      [Lr+ 5,90, 40,] {tag:'r,N', data:r.psc, title:'^psč'}
-  field r_obec     [Lr+52,90, 61,] {tag:'r,N', data:r.obec, title:'^obec'}
-  select r_stat    [Lr+121,90,45,] {tag:'r', format:'r:e', title:'^stát'}
-  field r_telefony [Lr+5,125,160,] {tag:'r', type:'list', data:r.telefony,title:'^telefony'}
-  field r_emaily   [Lr+5,160,160,] {tag:'r', type:'list', data:r.emaily, title:'^e-maily'}
+  field r_ulice    [Lp+0,Tp+55,176,] {tag:'r,N', data:r.ulice, title:'^ulice'}
+  field r_psc      [Lp+ 0,Tp+90, 40,] {tag:'r,N', data:r.psc, title:'^psč'}
+  field r_obec     [Lp+47,Tp+90,78,] {tag:'r,N', data:r.obec, title:'^obec'}
+  select r_stat    [Lp+132,Tp+90,45,] {tag:'r', format:'r:e', title:'^stát'}
+  field r_telefony [Lp+0,Tp+125,176,] {tag:'r', type:'list', data:r.telefony,title:'^telefony'}
+  field r_emaily   [Lp+0,Tp+160,176,] {tag:'r', type:'list', data:r.emaily, title:'^e-maily'}
   // rodinná poznámka
-  edit  r_note     [5,22,302+44,74] {tag:'p', data:r.note, title:'^poznámka k rodině', format:'n'}
+  edit  r_note     [Lp+ 0,22,175,74] {tag:'p', data:r.note, title:'^poznámka k rodině', format:'n'}
   // menu
   menu detail { type:'context'
     item { title:'konfigurace formuláře', proc onclick () { rodina_config.tune(evi) } }

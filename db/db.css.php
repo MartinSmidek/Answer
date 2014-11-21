@@ -59,10 +59,10 @@ body { position:absolute; width:100%; height:100%; }
 
 .page { font-size:9pt !important; padding:10px; line-height:13pt; }
 .page_2clmn { background-image:url(img/page_vr.png);
-              background-position:251px 0;
+              background-position:368px 0;
               background-repeat:repeat-y;}
 .page_3clmn { background-image:url(img/page_vr.png),url(img/page_vr.png);
-              background-position:251px 0,501px 0;
+              background-position:368px 0,619px 0;
               background-repeat:repeat-y,repeat-y;}
 
 #android_menu { position:fixed; z-index:999; top:0; right:0; font-size:20px; }
