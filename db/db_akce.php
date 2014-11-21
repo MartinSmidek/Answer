@@ -1,6 +1,18 @@
 <?php # (c) 2009-2010 Martin Smidek <martin@smidek.eu>
 # ================================================================================================== TEST
 # ------------------------------------------------------------------------------------- test1
+function fiserka() {
+  $n= 0;
+  $xs= explode(',',"13,418,1426,379,5342,354,430,1640,1124,1272,210,650,33,263,39,111,447,602,2057,45,4981,449,1326,848,422,371,2040,3747,1643,962");
+  foreach ($xs as $x) {
+    query("INSERT INTO pobyt (id_akce) VALUE (405)");
+    $p= mysql_insert_id();
+    query("INSERT INTO spolu (id_osoba,id_pobyt) VALUE ($x,$p)");
+    $n++;
+  }
+  return "vytvořeno $n";
+}
+# ------------------------------------------------------------------------------------- test1
 function test1() {
   $screen= array();
   $qd= mysql_qry("
@@ -1961,14 +1973,14 @@ function album_get2($table,$id,$n,$w,$h) {  trace();
   $nazvy= explode(',',select('fotka',$table,"id_$table=$id"));
   $n= $n==-1 ? count($nazvy) : $n;
   if ( !(1<=$n && $n<=count($nazvy)) ) { $ret->html= "$n je chybné pořadí fotky"; goto end; }
+  // výpočet left, right, out
+  $ret->left= $n-1;
+  $ret->right= $n >= count($nazvy) ? 0 : $n+1;
   // zpracování
   $nazev= $nazvy[$n-1];
   $orig= "$ezer_path_root/fotky/$nazev";
                                         display("file_exists($orig)=".file_exists($orig));
   if ( !file_exists($orig) ) { $ret->html= "fotka <b>$nazev</b> není dostupná"; goto end; }
-  // výpočet left, right, out
-  $ret->left= $n-1;
-  $ret->right= $n >= count($nazvy) ? 0 : $n+1;
   // zmenšení na požadovanou velikost, pokud již není
   $dest= "$ezer_path_root/fotky/copy/$nazev";
   if ( !file_exists($dest) ) {

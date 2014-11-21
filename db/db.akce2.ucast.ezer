@@ -161,7 +161,7 @@ use page:  form _page     [400, 10,,]  { tag:'akce1' }
 use evid:  form _evidence [400, 10,,]  { tag:'akce1', format:'n' }
 use cmd:   form _cmd      [400,min_h-160,,]  { tag:'akce1', format:'n' }   // 490
 use cmd2:  form _cmd2     [400,min_h-125,,]  { tag:'akce1', format:'' }
-use alb:   form foto._alb [400, 26,,]  { tag:'akce0', format:'n' }
+use alb:   form foto._alb [410, 32,,]  { tag:'akce0', format:'n' }
 # záložka plateb
 use pla:   form _platba   [400, 10,,]  { tag:'akce0', format:'n' }
 use cmdp:  form _cmd_p    [400,min_h-160,,]  { tag:'akce0', format:'n' }
@@ -356,7 +356,7 @@ form _cmd [,,623,30] { css:'ae_work'
     }
   }
   // VYŘADIT
-  button [238,5,,] {tag:'x', title:'[fa-plug fa-rotate-180 cervena] Vyřadit z akce', skill:'yaa+|yaa+;faa+|faa+;caa+|caa+',
+  button [238,5,,] {tag:'x', title:'[fa-plug fa-rotate-180 fa-red] Vyřadit z akce', skill:'yaa+|yaa+;faa+|faa+;caa+|caa+',
     help:'Vyřazení účastníka nebo páru z účasti na akci'
     proc onclick() {
       neni_ulozeno // warning
@@ -366,7 +366,7 @@ form _cmd [,,623,30] { css:'ae_work'
       reload(0);
   } }
   // VYMAZAT
-  button [351,5,,] {tag:'y', title:'[fa-times cervena] Vymazat z evidence', skill:'yaa+|yaa+;faa+|faa+;caa+|caa+',
+  button [351,5,,] {tag:'y', title:'[fa-times fa-red] Vymazat z evidence', skill:'yaa+|yaa+;faa+|faa+;caa+|caa+',
     help:'Vymazání informací o páru z evidence', format:'d'
     proc onclick() {
       neni_ulozeno // warning
@@ -617,7 +617,7 @@ form _page {
   proc page_start() {
     zalozka.set('evid'); evd.onclick; tags(evd,'z','h|o|f'); cmdp.display(0); page_init }
   proc page_init() {
-    evd.last.set(0); plt.last.set(0); jin.last.set(0); fot.last.set(0);   }
+    evd.last.set(0); plt.last.set(0); jin.last.set(0); fot.last.set(0); evid.z_change('o') }
   label evd [ 12,0,120,20] {tag:'p', _sys:'*', title:'<b>Evidenční karta</b>', format:'c', css:'ae_butt_on'
     var last=0
     proc onclick() {
@@ -680,9 +680,9 @@ form _page {
       onfirstfocus;
 #       clear; echo(ask('data_transform',object('cmd','adresy,kontakty','run',1)));
   }}
-  button [529,9,,] {type:'html', title:"[fa-cogs]", style:'z-index:5;margin-top:-16px', skill:'m|m'
+  button [529,9,,] {type:'html', title:"fiš", style:'z-index:5;margin-top:-16px', skill:'m|m'
     proc onclick() {
-      clear; echo(ask('data_transform',object('cmd','adresy,kontakty')));
+      alert(ask('fiserka'));
   }}
   button [560,9,,] {type:'html', title:"[fa-beer]", style:'z-index:5;margin-top:-16px', skill:'m|m'
     proc onclick() {
@@ -736,14 +736,14 @@ form _evidence {
     // 1 sloupec
     eq(n,1); eq(cmode.get,2); cmode.set(1); page.wider.set('[fa-toggle-right]');
     os2.display(0); pob2.display(0);
-    rod.property(°{left:255});//,smooth:1});
-    pob.property(object('left',255));//,'smooth',object('onproperty',this)));
+#     rod.property(°{left:255});//,smooth:1});
+#     pob.property(object('left',255));//,'smooth',object('onproperty',this)));
     frame.set_css('page_2clmn','page_3clmn')
   | // 2 sloupce
     eq(n,2); eq(cmode.get,1); cmode.set(2); page.wider.set('[fa-toggle-left]');
     os2.display(1); pob2.display(1);
-    rod.property(°{left:505});//,smooth:1});
-    pob.property(°{left:505});//,smooth:1});
+#     rod.property(°{left:505});//,smooth:1});
+#     pob.property(°{left:505});//,smooth:1});
     frame.set_css('page_3clmn','page_2clmn');
   }
   proc onproperty() { form.display(0,'2') }
@@ -761,16 +761,16 @@ form _evidence {
   proc z_up(x)   { x.get.set_css('shift_up','shift_down'); x.set_css('shift_up','shift_down','.*') }
   proc z_down(x) { x.get.set_css('shift_down','shift_up'); x.set_css('shift_down','shift_up','.*') }
   # osoba 1 a 2
-  use os1: form _osoba2x [5,20,,] { //format:'n'
+  use os1: form _osoba2x [372,20,,] { //format:'n' left=5
     proc on_click() { evid.z_change('o') }
     proc onchanged() { evid.d_change('o1') }
   }
-  use os2: form _osoba2x [255,20,,] {tag:'2', //format:'n'
+  use os2: form _osoba2x [623,20,,] {tag:'2', //format:'n' left=255
     proc on_click() { evid.z_change('o') }
     proc onchanged() { evid.d_change('o2') }
   }
   # rodina
-  use rod: form _rodina2 [505,20,,] { //format:'n'
+  use rod: form _rodina2 [4,20,,] { //format:'n' left=505
     // pozor - proměnné jsou vzhledem k db.akce2._rodina2
     proc onchanged() { evid.d_change('r') }
     proc on_click() { evid.z_change('o') }
@@ -797,16 +797,15 @@ form _evidence {
     }
   }
   # pobyt
-  use pob1: form _spolu  [  5,min_h-235,,] { //format:'n'
+  use pob1: form _spolu  [372,min_h-235,,] { //format:'n'
     proc on_click() { evid.z_change('p') }
     proc onchanged() { evid.d_change('p1') }
   }
-  use pob2: form _spolu  [255,min_h-235,,] {tag:'2', //format:'n'
+  use pob2: form _spolu  [623,min_h-235,,] {tag:'2', //format:'n'
     proc on_click() { evid.z_change('p') }
     proc onchanged() { evid.d_change('p2') }
   }
-#   use pob:  form _pobyt [505,min_h-218,,]      // 650 => 207
-  use pob:  form _pobyt [505,min_h-10,,] //{ format:'n' }     // 650 => 207
+  use pob:  form _pobyt [4,min_h-10,,] //{ format:'n' }     // 650 => 207
 }
 # ------------------------------------------------------------------------------------------- _pobyt
 panel pobyt_config [,,200,120] {type:'popup', title:"Podrobnosti údajů"

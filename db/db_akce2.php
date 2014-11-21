@@ -23,6 +23,29 @@ function data_mrop_save($par,$save=0) {
   return $txt;
 }
 # ========================================================================================= EVIDENCE
+# --------------------------------------------------------------------------------------- elim_rodne
+function elim_rodne() {
+  $html= "Tipy na shodu žen podle jejich rodného jména:";
+  $tip= array();
+  $zs= mysql_qry("
+        SELECT id_osoba,prijmeni,rodne,jmeno,narozeni,psc,obec,
+          (SELECT COUNT(*) AS _n FROM osoba AS oo WHERE oo.deleted='' AND o.rodne LIKE oo.prijmeni
+            AND oo.jmeno=o.jmeno AND YEAR(oo.narozeni)=YEAR(o.narozeni)) AS x
+        FROM osoba AS o
+        WHERE deleted='' AND rodne!=''
+        GROUP BY id_osoba HAVING x>0
+        ORDER BY prijmeni");
+  while (($z= mysql_fetch_object($zs))) {
+    $tip[]= "$z->prijmeni $z->jmeno rozená $z->rodne";
+  }
+  if ( count($tip) ) {
+    $html.= "<br>".implode("<br>",$tip);
+  }
+  else {
+    $html.= "<br>... nic jsem nenalezl";
+  }
+  return $html;
+}
 # ---------------------------------------------------------------------------------------- elim_stav
 function elim_stav() {
   global $ezer_root,$dbs;
@@ -30,7 +53,7 @@ function elim_stav() {
     "ezer_root"=>$ezer_root,
     "dbs"=>$dbs
   );
-                                        debug($stav);
+//                                         debug($stav);
 //                                         debug($_SESSION);
   return 1;
 }

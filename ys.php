@@ -12,8 +12,9 @@
   $dbg=      isset($_GET['dbg']) ? $_GET['dbg'] : 0;
   $gmap=     isset($_GET['gmap']) ? true : !($ezer_local || $ezer_ksweb);
   $awesome=  isset($_GET['awesome']) ? $_GET['awesome'] : 0;
-  if ( isset($_GET['database']) ) $app_name.= " - {$_GET['database']}";
-
+  if ( isset($_GET['test']) ) {
+    $app_name.= " ! TEST";
+  }
   require_once("$app.inc");
   require_once("{$EZER->version}/server/ae_slib.php");
 
@@ -31,8 +32,9 @@
     $EZER->version=='ezer2.2'
     ? array("$licensed/datepicker.js"):array(),
     // jádro Ezer
-    array("$client/lib.js","$client/ezer_fdom1.js","$client/ezer.js","$client/ezer_report.js",
-      "$client/ezer_fdom2.js","$client/app.js","$licensed/zeroclipboard/ZeroClipboard.js"),
+    array("$client/lib.js","$client/ezer_fdom1.js","$client/ezer.js","$client/area.js",
+      "$client/ezer_report.js","$client/ezer_fdom2.js","$client/app.js",
+      "$licensed/zeroclipboard/ZeroClipboard.js","$licensed/mootree.js"),
     // debugger
     $dbg ? array("$licensed/jush/mini_jush.js"):array(),
     // další knihovny
@@ -69,7 +71,7 @@
     'dbg' => $dbg,                     // true = povolit podokno debuggeru v trasování
     'watch_key' => !$ezer_ksweb,       // true = povolit přístup jen po vložení klíče
     'watch_ip' => !$ezer_ksweb,        // true = povolit přístup jen ze známých IP adres
-    'title_right' => ($ezer_local || isset($_GET['database'])
+    'title_right' => ($ezer_local || isset($_GET['test'])
                      ? "<span style='color:#ef7f13'>$app_name</span>" : $app_name)
                      . ($android ? "<button id='android_menu'><i class='fa fa-bars'></i></button>" : ""),
     'contact' => $kontakt,

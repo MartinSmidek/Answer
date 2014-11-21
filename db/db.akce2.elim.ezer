@@ -104,7 +104,7 @@ form _cmd [,,288,30] { css:'ae_parm'
   button [63,5,,] { type:'html', title:"[fa-save] [fa-link] Ulož změny a proveď sjednocení",
     proc onclick() {
       eq(mode.get,'osoba');
-      { [ o1.same | o1.save; o1.load ];
+      { [ o1.oso.same | o1.oso.save; o1.oso.load ];
         eq(o1.bs.ido.get,o2.bs.ido.get);
         alert("vlevo i vpravo je stejná osoba!");
       | confirm2("opravdu zrušit <b>",o2.bs._nazev.get,"</b> (",o2.bs.ido.get,
@@ -114,7 +114,7 @@ form _cmd [,,288,30] { css:'ae_parm'
         o2.bs.browse_row; o2.bs_load(o2.bs.browse_key);
       }
     | eq(mode.get,'cleni');
-      { [ c1.same | c1.save; c1.load ];
+      { [ c1.oso.same | c1.oso.save; c1.oso.load ];
         eq(c1.bs.ido.get,c2.bs.ido.get);
         alert("vlevo i vpravo je stejná osoba!");
       | confirm2("opravdu zrušit <b>",c2.bs._nazev.get,"</b> (",c2.bs.ido.get,
@@ -154,7 +154,7 @@ form _cmd [,,288,30] { css:'ae_parm'
   | eq(mode.get,'osoba');  elim_cleni(o1.rs.idr.get)
   }}
   button [870,4,,] { type:'html', title:"osoby [fa-exchange] rodiny", proc onclick() {
-    eq(mode.get,'rodina'); elim_osoby(0,'') | elim_rodiny(0,'');
+    eq(mode.get,'rodina'); elim_osoby(r1.bro.ido.get,r2.bro.nazev.get) | elim_rodiny(0,'');
   }}
 }
 # =========================================================================================== _osoby

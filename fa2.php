@@ -4,19 +4,27 @@
   $android=    preg_match('/android|x11/i',$_SERVER['HTTP_USER_AGENT']);
   $ezer_ksweb= $android && $_SERVER["SERVER_NAME"]=="localhost"; // identifikace ladícího serveru KSWEB/Android
 
-  $app=      'fa2';
-  $app_name= 'Ans(w)er - Familia';
+  $app=      'fa2';             // jméno adresáře a hlavního objektu aplikace == $ezer_root!
+  $app_name= 'Ans(w)er - Familia'.($ezer_ksweb?" / test Android":"");;
   $skin=     'default';
   $skin=     'ch';
+  $title_style= $ezer_local ? 'color:#ef7f13;' : '';
   $CKEditor= isset($_GET['editor']) ? $_GET['editor'] : '4';
   $dbg=      isset($_GET['dbg']) ? $_GET['dbg'] : 0;
-  $gmap=     isset($_GET['gmap']) ? true : !($ezer_local || $android);
-  $awesome=  isset($_GET['awesome']) ? $_GET['awesome'] : 0;
-  if ( isset($_GET['database']) ) $app_name.= " - {$_GET['database']}";
+ $gmap=     isset($_GET['gmap']) ? true : !($ezer_local || $ezer_ksweb);
+  $awesome=  isset($_GET['awesome']) ? $_GET['awesome'] : 3;
+
+  // ošetření běhu s testovací databází
+  $_SESSION[$app]['GET']['test']= 0;
+  if ( isset($_GET['test']) && $_GET['test'] ) {
+    $title_style.= 'background-color:#ffffaa';
+    $app_name.= " ! TEST";
+    $_SESSION[$app]['GET']['test']= 1;
+  }
+  $title_style= $title_style ? " style='$title_style'" : '';
 
   require_once("$app.inc");
   require_once("{$EZER->version}/server/ae_slib.php");
-//   $app_name.= isset($EZER->options->mysql) ? " - {$EZER->options->mysql}" : '';
 
   $client= "{$EZER->version}/client";
   $licensed= "$client/licensed";
@@ -33,8 +41,9 @@
     $EZER->version=='ezer2.2'
     ? array("$licensed/datepicker.js"):array(),
     // jádro Ezer
-    array("$client/lib.js","$client/ezer_fdom1.js","$client/ezer.js","$client/ezer_report.js",
-      "$client/ezer_fdom2.js","$client/app.js","$licensed/zeroclipboard/ZeroClipboard.js"),
+    array("$client/lib.js","$client/ezer_fdom1.js","$client/ezer.js","$client/area.js",
+      "$client/ezer_report.js","$client/ezer_fdom2.js","$client/app.js",
+      "$licensed/zeroclipboard/ZeroClipboard.js","$licensed/mootree.js"),
     // debugger
     $dbg ? array("$licensed/jush/mini_jush.js"):array(),
     // další knihovny
@@ -56,10 +65,12 @@
     ? array("$licensed/datepicker/datepicker_vista/datepicker_vista.css"):array()
   );
 
+  global $answer_db;
   $options= (object)array(
     'awesome'    => $awesome,           // zda použít v elementech ikony awesome fontu
     'skill'      => "'f'",
     'autoskill'  => "'!f'",
+    'answer_db'  => "'$answer_db'"
   );
   $kontakt= " V případě zjištění problému nebo <br/>potřeby konzultace mi prosím napište<br/>
         na mail&nbsp;<a href='mailto:{$EZER->options->mail}{$EZER->options->mail_subject}'>{$EZER->options->mail}</a> "
@@ -69,10 +80,9 @@
   $pars= (object)array(
 //     'no_local' => true,                // true = nezohledňovat lokální přístup pro watch_key,watch_ip
     'dbg' => $dbg,                     // true = povolit podokno debuggeru v trasování
-    'watch_key' => true,               // true = povolit přístup jen po vložení klíče
-    'watch_ip' => true,                // true = povolit přístup jen ze známých IP adres
-    'title_right' => ($ezer_local || isset($_GET['database'])
-                     ? "<span style='color:#ef7f13'>$app_name</span>" : $app_name)
+    'watch_key' => !$ezer_ksweb,       // true = povolit přístup jen po vložení klíče
+    'watch_ip' => !$ezer_ksweb,        // true = povolit přístup jen ze známých IP adres
+    'title_right' => "<span$title_style>$app_name</span>"
                      . ($android ? "<button id='android_menu'><i class='fa fa-bars'></i></button>" : ""),
     'contact' => $kontakt,
     'CKEditor' => "{
