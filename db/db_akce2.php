@@ -200,7 +200,10 @@ function elim_data_rodina($idr) {  trace();
 # zjistí, zda lze osobu smazat: dar, platba, spolu, tvori
 # cmd= conf_oso|conf_rod|del_oso|del_rod
 function evid_delete($id_osoba,$id_rodina,$cmd='confirm') { trace();
+  global $USER;
   $ret= (object)array('html'=>'','ok'=>1);
+  $user= $USER->abbr;
+  $now= date("Y-m-d H:i:s");
   $duvod= array();
   list($name,$sex)= select("CONCAT(prijmeni,' ',jmeno),sex",'osoba',"id_osoba=$id_osoba");
   $a= $sex==2 ? 'a' : '';
@@ -245,14 +248,24 @@ function evid_delete($id_osoba,$id_rodina,$cmd='confirm') { trace();
     break;
   case 'del_oso':
     $ret->ok= query("UPDATE osoba SET deleted='D' WHERE id_osoba=$id_osoba") ? 1 : 0;
+    query("INSERT INTO _track (kdy,kdo,kde,klic,fld,op,old,val)
+           VALUES ('$now','$user','osoba',$id_osoba,'','x','','')");
     query("DELETE FROM tvori WHERE id_osoba=$id_osoba AND id_rodina=$id_rodina");
     $ret->html= "$name byl$a smazán$a";
+    break;
+  case 'undel_oso':
+    $ret->ok= query("UPDATE osoba SET deleted='' WHERE id_osoba=$id_osoba") ? 1 : 0;
+    query("INSERT INTO _track (kdy,kdo,kde,klic,fld,op,old,val)
+           VALUES ('$now','$user','osoba',$id_osoba,'','o','','')");    // o=obnova
+    $ret->html= "$name byl$a obnoven$a";
     break;
   case 'del_rod':
     query("UPDATE osoba JOIN tvori USING (id_osoba) SET deleted='D' WHERE id_rodina=$id_rodina");
     $no= mysql_affected_rows();
     query("UPDATE rodina SET deleted='D' WHERE id_rodina=$id_rodina");
     $nr= mysql_affected_rows();
+    query("INSERT INTO _track (kdy,kdo,kde,klic,fld,op,old,val)
+           VALUES ('$now','$user','rodina',$id_rodina,'','x','','')");
     query("DELETE FROM tvori WHERE id_rodina=$id_rodina");
     $ret->ok= $no && $nr ? 1 : 0;
     $ami= $no==1 ? "ou" : "ami";
@@ -268,7 +281,6 @@ function akce_save_role($id_tvori,$role) { //trace();
 }
 # ---------------------------------------------------------------------------------------- akce_evid
 # hledání a) osoby a jejích rodin b) rodiny (pokud je id_osoba=0)
-# $show_deleted==1 vrátí i smazané
 function akce_evid($id_osoba,$id_rodina,$filtr) { trace();
   $cleni= "";
   $rodiny= array();

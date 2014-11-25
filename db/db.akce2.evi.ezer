@@ -35,10 +35,10 @@ menu m {type:'left', active:*, format:'f-'
     item t {title:'[fa-wrench](test)'           par:°{lst:'o',tit:'testovací osoby, co ',
                                                 cnd:"o.id_osoba IN (2015,4504,2938)"},skill:'m'}
   }
-  menu s {title:'hromadné úpravy evidence',type:'group', skill:'yae;fae;cae'
+  menu s {title:'hromadné úpravy evidence',type:'group', skill:'yad;fad'
     item   {title:'[fa-phone]OSOBY: kontakt osobní/rodinný'     par:°{lst:'x',mod:'k',tit:'opravy kontaktů',cnd:"1"},skill:'m'}
     item   {title:'[fa-envelope-o]OSOBY: adresa osobní/rodinná' par:°{lst:'x',mod:'a',tit:'opravy adres',cnd:"1"},skill:'m'}
-    item   {title:'[fa-wrench fa-red]OPRAVIT osoba.kontakt,adresa' ,skill:'m'
+    item   {title:'[fa-wrench fa-red]OPRAVIT osoba.kontakt,adresa' ,skill:'yad;fad'
       proc onclick() {
         confirm2(ask('data_transform',object('cmd','kontakty,adresy')),"<br>provést transformaci dat?");
         alert(ask('data_transform',object('cmd','kontakty+,adresy+')))
@@ -75,7 +75,6 @@ form _lst [,,370,*] {
   proc reload(_mode,_cnd,_tit) {                // zobrazí rodiny či osoby podle daných podmínek
     tit.set(_tit); _reload(_mode,_cnd,0,0) }
   proc _reload(_mode,_cnd,_ido,_idr) {          // zobrazí rodinu či osobu podle daných podmínek
-#     [ virgin.get; start ];
     mode.set(_mode); cnd.set(_cnd);             // - zapamatuje podmínky pro refresh
     form.display(2,_mode);
     eq(_mode,'x'); idx.set(_ido); [_ido; bx.init_queries ]; [ bx_reload(_cnd) ]
@@ -93,9 +92,7 @@ form _lst [,,370,*] {
   var idx= 0                                    // naposledy vybraná osoba pro opravy kontaktu
   var idz= 0                                    // naposledy vybraná osoba pro tip na eliminaci
   var idy= 0                                    // naposledy vybraná rodina pro tip na eliminaci
-#   var virgin= 1
   proc start() { [                              // při startu vynecháme prázdná příjmení
-#     virgin.get; virgin.set(0);
     o_vyber.key(1); bo_filtr.set(o_vyber.get);
     r_vyber.key(1); br_filtr.set(r_vyber.get);
     [ by.nazev.set_query(1,"B",0) ];            // ... kvůli pomalosti dotazu
@@ -107,6 +104,12 @@ form _lst [,,370,*] {
   label [10,2,347,25] { css:'ae_work' }
   label tit [16,8,137,14] { format:'r', css:'frame_label_big' }
 #   menu ctx { type:'context'
+#     item { title:'sjednotit kopie osob', skill:'fad|fad'
+#       proc onclick () { elim.osoby(ido.get,page.oso.jmeno.get,page.oso.prijmeni.get); refresh } }
+#     item { title:'sjednotit kopie rodin', skill:'fad|fad'
+#       proc onclick () { elim.rodiny(idr.get,page.rod.rodiny.get); refresh } }
+#     item { title:'sjednotit kopie členů rodiny', skill:'fad|fad'
+#       proc onclick () { idr.get; elim.cleni(idr.get); refresh } }
 #   }
   # ============================================== X - ÚPRAVY OSOB
   var bx_cnd=1, bx_filtr= 1, bx_mode= 'k'
@@ -148,12 +151,14 @@ form _lst [,,370,*] {
   var bz_cnd=1
   proc bz_reload(cnd) {
     bz_cnd.set(cnd);
-    bz.browse_load(cnd,'',"_pocet>1")
+    bz.browse_load(conc(cnd,' AND ISNULL(klic)'),'',"_pocet>1")
   }
   view z: table osoba
+  view zt: table _track { join_type:"LEFT", join:"ON klic=z.id_osoba AND op='r' AND kde='osoba'" }
   browse bz [10,30,,] {tag:'z', group_by:'z.id_osoba'
       rows:27, buf_rows:60, qry_rows:1, css_rows:'barva,0:neucast'
     show id_o { data:z.id_osoba }
+    show id_tr { data:zt.id_track }
     show barva { expr:"z.deleted=''" }
     show _pocet { title:'#',expr:"
       (SELECT COUNT(*) AS _n FROM osoba AS o
@@ -171,12 +176,14 @@ form _lst [,,370,*] {
   var by_cnd=1
   proc by_reload(cnd) {
     by_cnd.set(cnd);
-    by.browse_load(cnd,'',"_pocet>1")
+    by.browse_load(conc(cnd,' AND ISNULL(klic)'),'',"_pocet>1")
   }
   view y: table rodina
+  view yt: table _track { join_type:"LEFT", join:"ON klic=y.id_rodina AND op='r' AND kde='rodina'" }
   browse by [10,30,,] {tag:'y', group_by:'y.id_rodina'
       rows:27, buf_rows:60, qry_rows:1, css_rows:'barva,0:neucast'
     show id_r { data:y.id_rodina }
+    show id_tr { data:yt.id_track }
     show barva { expr:"y.deleted=''" }
     show _pocet [,,20,] { title:'#', expr:"
       (SELECT COUNT(*) FROM rodina AS r WHERE r.deleted='' AND r.nazev=y.nazev AND r.psc=y.psc)" }
@@ -193,6 +200,7 @@ form _lst [,,370,*] {
     bo_cnd.set(cnd);
     ido.get; bo.browse_seek(conc("id_osoba=",ido.get)); bo.onrowclick;
   | bo.browse_load(conc(cnd," AND ",bo_filtr.get))
+  | page.page_init
   }
   select o_vyber [163,5,189,] {tag:'o', type:'map'
     map_pipe:map_evi_vyber_o.hodnota, options:map_evi_vyber_o.zkratka, format:'t'
@@ -200,9 +208,11 @@ form _lst [,,370,*] {
     proc onchange() { bo_filtr.set(this.get); ido.set(0); bo_reload(bo_cnd.get) }
   }
   view o: table osoba
+  view ot: table tvori  { join_type:"LEFT", join:"USING(id_osoba)" }
   browse bo [10,30,,] {tag:'o', group_by:'o.id_osoba'
       rows:27, buf_rows:60, qry_rows:1, css_rows:'barva,0:neucast'
     show id_o { data:o.id_osoba }
+    show id_r { data:ot.id_rodina }
     show barva { expr:"o.deleted=''" }
     show prijmeni [,,70,] { data:o.prijmeni, title:'příjmení', format:'q*s+' }
     show jmeno [,,70,] { data:o.jmeno, title:'jméno', format:'q*s' }
@@ -262,10 +272,15 @@ form _page {
   # ---------------------------------------------- pomocné procedury
   # načtení osoby a jeho rodin
   proc page_load() { var x:object
+    page_init;
     x.set(ask('akce_evid',ido.get,idr.get,cconc(ido.get,lst.bo_filtr.get,lst.br_filtr.get)));
-    idr.set(x.rodina); cleni.browse_fill(x.cleni); cleni.raise('onrowclick',ido.get);
+    idr.set(x.rodina); x.rodina; rod.enable(1,'.*');
+    cleni.browse_fill(x.cleni); cleni.raise('onrowclick',ido.get);
     rod.r.load(x.rodina); rod.call('od_svatby');
+  | rod.enable(0,'.*'); osoba_load
   }
+  # vyčištění stránky
+  proc page_init() { oso.init; rod.init; cleni.browse_init; act.akc.browse_init; }
   # změna v některém z formulářů
   proc d_change(x) { cmd.is_chng }
   # žádná změna
@@ -275,10 +290,13 @@ form _page {
   # načíst aktivní osobu do aktivní záložky
   proc osoba_load() {
     switch(curr.get,
-    'evid',{oso.load(ido.get); oso.show_osoba(1)},
-    'akce',{oso.load(ido.get); oso.show_osoba(1); act.ucasti(ido.get,cleni.jmeno.get)},
-    'albu',{alb.galery('rodina',idr.get)}
-    )}
+    'evid',{ oso.load(ido.get); oso.show_osoba(1)},
+    'akce',{ oso.load(ido.get); oso.show_osoba(1);
+             act.ucasti(ido.get,conc(oso.prijmeni.get,' ',oso.jmeno.get)) },
+    'albu',{ alb.galery('rodina',idr.get)}
+    );
+    cmd.o_smaz.display(not(page.oso.deleted.get)); cmd.o_obnov.display(page.oso.deleted.get);
+  }
   # ---------------------------------------------- záložky
   var curr:object                               // aktuální záložka
   proc cvak(i) {
@@ -334,15 +352,12 @@ form _page {
   use alb: form foto._alb [200, 20,,]  { tag:'F', format:'n' }
   # ============================================== KONTEXTOVÉ MENU
   menu ctx { type:'context', join:frame
-#     item { title:'ukázat všechny změny'
-#       proc onclick () { Ctrack.CT_tab.set('osoba'); Ctrack.CT_load(id_o.get) }
-#     }
-    item { title:'sjednotit kopie osob', skill:'a|a'
-      proc onclick () { elim.call('osoby',ido.get,oso.jmeno.get,oso.prijmeni.get) } }
-    item { title:'sjednotit kopie rodin', skill:'a|a'
-      proc onclick () { elim.call('rodiny',idr.get,rod.rodiny.get) } }
-    item { title:'sjednotit kopie členů rodiny', skill:'a|a'
-      proc onclick () { elim.cleni(idr.get) } }
+    item { title:'sjednotit kopie osob', skill:'fad|fad'
+      proc onclick () { elim.osoby(ido.get,oso.jmeno.get,oso.prijmeni.get); lst.refresh } }
+    item { title:'sjednotit kopie rodin', skill:'fad|fad'
+      proc onclick () { elim.rodiny(idr.get,rod.rodiny.get); lst.refresh } }
+    item { title:'sjednotit kopie členů rodiny', skill:'fad|fad'
+      proc onclick () { idr.get; elim.cleni(idr.get); lst.refresh } }
   }
   # ------------------------- TEST
 #   button [385,9,,] {type:'html', title:"ff", style:'z-index:5;margin-top:-16px', skill:'m|m'
@@ -403,7 +418,9 @@ form _cmd [,,706,30] { css:'ae_work'
              page.rod.display(0,'R'); page.rod.display(1,'r|n'); },
     'edit',{ m.enable(0); form.enable(1,'s'); form.enable(0,'x'); lst.bo.enable(0); lst.br.enable(0);
              page.cleni.enable(0); page.rod.rodiny.enable(0); },
-    'show',{ m.enable(1); form.enable(0,'s'); form.enable(1,'x'); lst.bo.enable(1); lst.br.enable(1);
+    'show',{ m.enable(1); form.enable(0,'s'); form.enable(1,'x');
+#              o_smaz.display(not(page.oso.deleted.get)); o_obnov.display(page.oso.deleted.get);
+             lst.bo.enable(1); lst.br.enable(1);
              page.display(1,'C'); page.cleni.enable(1); page.rod.enable(1,'r|R'); }
     );
   }
@@ -411,16 +428,16 @@ form _cmd [,,706,30] { css:'ae_work'
     set_state('show'); page.page_plain; warning;
     page.rod.display(1,'a'); page.rod.display(0,'m|n');
     switch(depth,
-    'curr',{ page.cleni.onrowclick; page.rod.r.load(page.idr.get) },
+    'curr',{ [ page.cleni.raise('onrowclick'); page.rod.r.load(page.idr.get) ] },
     'page',{ page.refresh },
     'lst', { lst.refresh });
   }
   // ZPĚT
-  label  [568,0,136,30] { css:'ae_parm', skill:'yaa+;faa+;caa+' }
-  button [576,6,,] {tag:'s', type:'html', title:'[fa-undo] Zpět',  help:'Neměnit změněná data', skill:'yaa+|yaa+;faa+|faa+;caa+|caa+'
+  label  [0,0,136,30] { css:'ae_parm', skill:'yaa+;faa+;caa+' }
+  button [7,6,,] {tag:'s', type:'html', title:'[fa-undo] Zpět',  help:'Neměnit změněná data', skill:'yaa+|yaa+;faa+|faa+;caa+|caa+'
     proc onclick() { reload('curr') } }
   // ULOŽIT ZMĚNY
-  button [633,6,66,] {tag:'s', type:'html', title:'[fa-save] Uložit',  help:'Uložit změněná data', skill:'yaa+|yaa+;faa+|faa+;caa+|caa+'
+  button [64,6,66,] {tag:'s', type:'html', title:'[fa-save] Uložit',  help:'Uložit změněná data', skill:'yaa+|yaa+;faa+|faa+;caa+|caa+'
     proc onclick() { var ok:number, idr:number, ido:number, depth:text
       # ------------------------ vytvoření nového člena rodiny: osoba+tvori
       eq(mode.get,'newo');
@@ -448,7 +465,7 @@ form _cmd [,,706,30] { css:'ae_work'
     }
   }
   // NOVÁ RODINA a ČLEN
-  button [6,6,,] {tag:'x', type:'html', title:'[fa-heart] Nová rodina',
+  button [158,6,,] {tag:'x', type:'html', title:'[fa-heart] Nová rodina',
     skill:'yaa+|yaa+;faa+|faa+;caa+|caa+', help:'Vytvoření nové rodiny s prvním členem'
     proc onclick() {
       set_state('newr');
@@ -457,7 +474,7 @@ form _cmd [,,706,30] { css:'ae_work'
   }}
   // NOVÝ ČLEN rodiny
   proc change_x(elem) { elem.change(1) }
-  button novy_clen [106,6,,] {tag:'x', type:'html', title:'[fa-heart-o] Nový člen',
+  button novy_clen [258,6,,] {tag:'x', type:'html', title:'[fa-heart-o] Nový člen',
     skill:'yaa+|yaa+;faa+|faa+;caa+|caa+', help:'Vytvoření nové osoby a její zapojení do rodiny'
     proc onclick() { var _sex:number, _prijmeni:text
       _sex.set(page.oso.sex.get); _prijmeni.set(page.oso.prijmeni.get);
@@ -467,11 +484,11 @@ form _cmd [,,706,30] { css:'ae_work'
       foreach(page.oso.tagged('I'),change_x); page.rod.t_role.change(1);
   } }
   // PŘIDAT DO RODINY
-  button [222,6,,] {tag:'x', title:'[fa-plug] Přidat', skill:'yaa+|yaa+;faa+|faa+;caa+|caa+',
+  button [360,6,,] {tag:'x', title:'[fa-plug] Přidat', skill:'yaa+|yaa+;faa+|faa+;caa+|caa+',
     help:'Výběr osoby z evidovaných a jeho připojení k rodině', format:'d'
   }
   // VYJMOUT Z RODINY
-  button [288,6,,] {tag:'x', title:'[fa-plug fa-rotate-180 fa-red] Vyjmout',
+  button [426,6,,] {tag:'x', title:'[fa-plug fa-rotate-180 fa-red] Vyjmout',
     skill:'yaa+|yaa+;faa+|faa+;caa+|caa+', help:'Vyjmutí osoby z rodiny', format:'d'
     proc onclick() { var ret:object
       ret.set(ask('evid_delete',page.ido.get,page.idr.get,'conf_mem'));
@@ -490,8 +507,8 @@ form _cmd [,,706,30] { css:'ae_work'
           lst.ido.set(0); lst.idr.set(0); reload('lst') ]
       | alert(ret.html) }                       // nastal problém
   } }
-  // VYMAZAT ČLENA
-  button [389,6,,] {tag:'x', title:'[fa-times fa-red] Vymazat', skill:'yaa+|yaa+;faa+|faa+;caa+|caa+',
+  // VYMAZAT OSOBU
+  button o_smaz [519,6,,] {tag:'x', title:'[fa-times fa-red] Vymazat', skill:'yaa+|yaa+;faa+|faa+;caa+|caa+',
     help:'Vymazání informací o osobě nebo jednočlenné rodině z evidence', format:'d'
     proc onclick() { var ret:object
       ret.set(ask('evid_delete',page.ido.get,page.idr.get,'conf_oso'));
@@ -509,6 +526,13 @@ form _cmd [,,706,30] { css:'ae_work'
           lst.ido.set(0); lst.idr.set(0); reload('lst') ]
       | alert(ret.html) }                       // nastal problém
   } }
+  // OBNOVIT OSOBU
+  button o_obnov [519,6,,] {tag:'x', title:'[fa-plus fa-red] Obnovit', skill:'yaa+|yaa+;faa+|faa+;caa+|caa+',
+    help:'Obnovení informací o smazané osobě', format:'n'
+    proc onclick() { var ret:object
+      ret.set(ask('evid_delete',page.ido.get,page.idr.get,'undel_oso'));
+      warning(ret.html); reload('lst')
+  }}
 }
 
 # ---------------------------------------------------------- reakce na změny rozměrů okna prohlížeče

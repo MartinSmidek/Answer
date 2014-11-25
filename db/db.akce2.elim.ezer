@@ -93,15 +93,17 @@ proc elim_refresh() { var os1:number, os2:number
     });
 }
 # ============================================================================================= _cmd
-form _cmd [,,288,30] { css:'ae_parm'
-  check smazane [545,2,150,] { title:"zobrazovat i smazané", value:'1', format:'t', proc onchange() {
+form _cmd [,,425,30] { css:'ae_parm'
+  check smazane [576,3,133,] { title:"zobrazovat i smazané", value:'1', format:'t', proc onchange() {
     smazane_o.set(cconc(this.get,1,"o.deleted=''"));
     smazane_r.set(cconc(this.get,1,"r.deleted=''"));
     elim_refresh;
   }}
+  // ZPĚT
   button [5,5,,] { type:'html', title:'[fa-undo] Zpět',  help:'Neměnit změněná data',
-    proc onclick() { panel.close }}
-  button [63,5,,] { type:'html', title:"[fa-save] [fa-link] Ulož změny a proveď sjednocení",
+    proc onclick() { panel.close(1) }}
+  // LINK
+  button [61,5,,] { type:'html', title:"[fa-save] [fa-link] Ulož změny a proveď sjednocení",
     proc onclick() {
       eq(mode.get,'osoba');
       { [ o1.oso.same | o1.oso.save; o1.oso.load ];
@@ -134,7 +136,28 @@ form _cmd [,,288,30] { css:'ae_parm'
         r2.br.browse_row; r2.br_load(r2.br.browse_key);
       }
   }}
-  button [429,4,,] { type:'html', title:"originál [fa-exchange] kopie", proc onclick() {
+  // UNLINK
+  button [286,5,,] { type:'html', title:"[fa-save] [fa-unlink] Nejde o duplicitu! "
+    proc onclick() {
+      eq(mode.get,'osoba');
+      { [ o1.oso.same | o1.oso.save; o1.oso.load ];
+        eq(o1.bs.ido.get,o2.bs.ido.get);
+        alert("vlevo i vpravo je stejná osoba!");
+      | confirm2("opravdu jsou <b>",o2.bs._nazev.get,"</b> (",o2.bs.ido.get,
+          ") a <b>",o1.bs._nazev.get,"</b> (",o1.bs.ido.get,") různé osoby?");
+        ask('elim_differ',o1.bs.ido.get,o2.bs.ido.get,'osoba');
+      }
+    | eq(mode.get,'rodina');
+      { [ r1.same | r1.save; r1.load ];
+        eq(r1.br.idr.get,r2.br.idr.get);
+        alert("vlevo i vpravo je stejná rodina!");
+      | confirm2("opravdu jsou <b>",r2.br._nazev.get,"</b> (",r2.br.idr.get,
+          ") a <b>",r1.br._nazev.get,"</b> (",r1.br.idr.get,") různé rodiny?");
+        ask('elim_differ',r1.br.idr.get,r2.br.idr.get,'rodina');
+      }
+    | eq(mode.get,'cleni'); warning("toto tlačítko má smysl jen pro osoby nebo rodiny")
+  }}
+  button [452,4,,] { type:'html', title:"originál [fa-exchange] kopie", proc onclick() {
     var qry:text, x1:number, x2:number, x:object
       eq(mode.get,'osoba');
       x.set(o1.get); o1.set(o2.get); o2.set(x);
@@ -149,7 +172,7 @@ form _cmd [,,288,30] { css:'ae_parm'
       r1.init_all("ORIGINÁL",0); r1.property(°{left:0});
       r2.init_all("KOPIE",1);    r2.property(°{left:490});
   }}
-  button [700,4,,] { type:'html', title:"rodina|osoba [fa-long-arrow-right] cleni", proc onclick() {
+  button [726,4,,] { type:'html', title:"rodina|osoba [fa-long-arrow-right] cleni", proc onclick() {
     eq(mode.get,'rodina'); elim_cleni(r1.br.idr.get)
   | eq(mode.get,'osoba');  elim_cleni(o1.rs.idr.get)
   }}
