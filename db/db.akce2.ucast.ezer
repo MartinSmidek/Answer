@@ -241,8 +241,31 @@ form _cmd2 [,,623,30] { css:'ae_work'
     'show', {form.enable(1,'s|x')},
     'hide',{form.enable(0,'s|x')}
   )}
+  label [63,9,43,] { title:"<b>Přidat na akci:</b>" }
+  // PŘIDAT RODINU
+  button pridat_2   [147,5,,] {tag:'x', title:'[fa-plug] ... rodinu',
+    skill:'yaa+|yaa+;faa+|faa+;caa+|caa+', help:'Přidání manželského páru a dětí podle jména'
+    proc onclick() {
+      neni_ulozeno // warning
+    | PridaniJmenem2.modal(240,50)
+  } }
+  // PŘIDAT OSOBU
+  button pridat_1   [229,5,,] {tag:'x', title:'[fa-plug] ... osobu',
+    skill:'yaa+|yaa+;faa+|faa+;caa+|caa+',
+    help:'Přidání účastníka podle jména - samostatně nebo přidat k jiným'
+    proc onclick() {
+      neni_ulozeno // warning
+    | PridaniJmenem1.modal(240,50)
+  } }
+  // PŘIDAT z AKCE
+  button pridat_a   [310,5,,] {tag:'x', title:'[fa-plug] ... účastníky jiné akce',
+    skill:'yaa+|yaa+;faa+|faa+;caa+|caa+', help:'Hromadné přidání účastníků z jiné akce'
+    proc onclick() {
+      neni_ulozeno // warning
+    | PridaniAkce.modal(240,50)
+  } }
   // NOVÝ POBYT
-  button [6,5,,] {tag:'s', title:'[fa-heart] Nový pobyt nových lidí', skill:'yaa+|yaa+;faa+|faa+;caa+|caa+',
+  button [459,5,,] {tag:'s', title:'[fa-heart] .. neevidovanou rodinu', skill:'yaa+|yaa+;faa+|faa+;caa+|caa+',
     help:'Vytvoření nového pobytu s novými osobami a jejich vložení jako účastníků akce'
     proc onclick() {
       cmd.mode.set('novy_pobyt'); // příznak pro "nový"
@@ -256,28 +279,6 @@ form _cmd2 [,,623,30] { css:'ae_work'
       // uprav viditelnost tlačítek
       set_state2('hide'); cmd.set_state('new');
   } }
-  // PŘIDAT z AKCE
-  button pridat_a   [450,5,,] {tag:'x', title:'[fa-plug] Přidat účastníky jiné akce',
-    skill:'yaa+|yaa+;faa+|faa+;caa+|caa+', help:'Hromadné přidání účastníků z jiné akce'
-    proc onclick() {
-      neni_ulozeno // warning
-    | PridaniAkce.modal(240,50)
-  } }
-  // PŘIDAT z JEDNOTLIVCU
-  button pridat_1   [345,5,,] {tag:'x', title:'[fa-plug] Přidat osobu',
-    skill:'yaa+|yaa+;faa+|faa+;caa+|caa+',
-    help:'Přidání účastníka podle jména - samostatně nebo přidat k jiným'
-    proc onclick() {
-      neni_ulozeno // warning
-    | PridaniJmenem1.modal(240,50)
-  } }
-  // PŘIDAT z PARU
-  button pridat_2   [238,5,,] {tag:'x', title:'[fa-plug] Přidat rodinu',
-    skill:'yaa+|yaa+;faa+|faa+;caa+|caa+', help:'Přidání manželského páru a dětí podle jména'
-    proc onclick() {
-      neni_ulozeno // warning
-    | PridaniJmenem2.modal(240,50)
-  } }
 }
 # --------------------------------------------------------------------------------------------- _cmd
 # změny v evidenci konkrétního pobytu a jeho účastníků
@@ -290,7 +291,7 @@ form _cmd [,,623,30] { css:'ae_work'
     'show',{form.enable(0,'s'); form.enable(1,'x')}
   )}
   // ZPĚT
-  label  [519,0,102,30] { css:'ae_parm', skill:'yaa+;faa+;caa+' }
+  label  [1,0,119,30] { css:'ae_parm', skill:'yaa+;faa+;caa+' }
   proc _reload(renew,ido) { // renew=0 vrácení původních dat a zhasnutí warningu, jinak znovunačtení
     set_state('show'); cmd2.set_state2('show');
     evid.evid_plain;
@@ -303,10 +304,10 @@ form _cmd [,,623,30] { css:'ae_work'
     ucast.evid.rod.cleni.raise('onrowclick',ido);
     mode.set('');
   }
-  button [525,6,,] { tag:'s', title:'[fa-undo] Zpět',  help:'Neměnit změněná data', skill:'yaa+|yaa+;faa+|faa+;caa+|caa+'
+  button [7,6,,] { tag:'s', title:'[fa-undo] Zpět',  help:'Neměnit změněná data', skill:'yaa+|yaa+;faa+|faa+;caa+|caa+'
     proc onclick() { _reload(0,ucast.evid.rod.cleni.key_osoba.get) } }
   // ULOŽIT
-  button [571,6,,] { tag:'s', title:'[fa-save] Uložit',  help:'Uložit změněná data', skill:'yaa+|yaa+;faa+|faa+;caa+|caa+'
+  button [60,6,,] { tag:'s', title:'[fa-save] Uložit',  help:'Uložit změněná data', skill:'yaa+|yaa+;faa+|faa+;caa+|caa+'
     proc onclick() { var ok:number, idr:number, ido:number
       eq(mode.get,'novy_clen');
       # ------------------------ vytvoření nového člena rodiny: osoba+tvori
@@ -356,7 +357,7 @@ form _cmd [,,623,30] { css:'ae_work'
     }
   }
   // VYŘADIT
-  button [238,5,,] {tag:'x', title:'[fa-plug fa-rotate-180 fa-red] Vyřadit z akce', skill:'yaa+|yaa+;faa+|faa+;caa+|caa+',
+  button [175,5,,] {tag:'x', title:'[fa-plug fa-rotate-180 fa-red] Zrušit celý pobyt', skill:'yaa+|yaa+;faa+|faa+;caa+|caa+',
     help:'Vyřazení účastníka nebo páru z účasti na akci'
     proc onclick() {
       neni_ulozeno // warning
@@ -366,7 +367,7 @@ form _cmd [,,623,30] { css:'ae_work'
       reload(0);
   } }
   // VYMAZAT
-  button [351,5,,] {tag:'y', title:'[fa-times fa-red] Vymazat z evidence', skill:'yaa+|yaa+;faa+|faa+;caa+|caa+',
+  button [481,5,,] {tag:'y', title:'[fa-times fa-red] Vymazat z evidence', skill:'yaa+|yaa+;faa+|faa+;caa+|caa+',
     help:'Vymazání informací o páru z evidence', format:'d'
     proc onclick() {
       neni_ulozeno // warning
@@ -375,7 +376,7 @@ form _cmd [,,623,30] { css:'ae_work'
       reload(0);
   } }
   // PŘIDAT člena rodiny
-  button novy_clen [6,5,,] {tag:'x', title:'[fa-heart-o] Nový člen rodiny', skill:'yaa+|yaa+;faa+|faa+;caa+|caa+',
+  button novy_clen [344,5,,] {tag:'x', title:'[fa-heart-o] Nový člen rodiny', skill:'yaa+|yaa+;faa+|faa+;caa+|caa+',
     help:'Přidání nového člana rodiny'
     proc onclick() { var _sex:number, _prijmeni:text
       neni_ulozeno // warning
