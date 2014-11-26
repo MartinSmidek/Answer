@@ -848,18 +848,23 @@ end:
 # {platce:[ic,dic,adresa,akce],faktury:[[rodina,poèet,sleva]...],rodiny:[<host>...],<ceník>,<chyby>}
 #    <host> :: {host:[jmeno,prijmeni,adresa1,adresa2,narozeni,vek,telefon,email,od,do,<ubyt>],
 #               cena:{<ubyt>,<strava>,<spec>,<popl>}
-#    <ubyt> :: noci:n,pokoj:1..16,pokoj_typ:P|S|B,luzko_typ:L|P|B
+#    <ubyt> :: noci:n,pokoj:1..29,pokoj_typ:P|S|B,luzko_typ:L|P|B
 #  <strava> :: CC:n,CP:n,PC:n,PP:n
 #    <spec> :: postylka:n,zvire_noci:n
 #    <popl> :: popl:CS|P
 #   <ceník> :: cenik:... viz global $ds_cena
 #   <chyby> :: chyby:[[text,...]...]
+#    pokoje :: A:1-2, S:14-17, L:11-13+21-29
 #
 function ds_faktury($order) {  trace('','win1250');
   global $ds_cena;
   $x= (object)array('faktury'=>array(),'rodiny'=>array());
-  // èíselníky                    1   2   3   4   5   6   7   8   9   10  11  12  13  14  15  16
-  $luzko_pokoje= array(0=>'?',1=>'L','L','L','L','L','L','L','S','S','L','L','L','S','S','A','A');
+//// èíselníky                    1   2   3   4   5   6   7   8   9   10  11  12  13  14  15  16
+//$luzko_pokoje= array(0=>'?',1=>'L','L','L','L','L','L','L','S','S','L','L','L','S','S','A','A');
+  $luzko_pokoje[0]= 0;
+  for ($i=11; $i<=29; $i++) $luzko_pokoje[$i]= 'L';     // normální pokoje
+  for ($i= 1; $i<= 2; $i++) $luzko_pokoje[$i]= 'A';     // apartmán bezbariérový
+  for ($i=14; $i<=17; $i++) $luzko_pokoje[$i]= 'S';     // apartmány
   $ds_luzko=  map_cis('ds_luzko','zkratka');  $ds_luzko[0]=  '?';
   $ds_strava= map_cis('ds_strava','zkratka'); $ds_strava[0]= '?';
 //                                                                 debug($ds_strava,(object)array('win1250'=>1));
@@ -938,7 +943,7 @@ function ds_faktury($order) {  trace('','win1250');
         $pol->pokoj= $h->pokoj;
         // ubytování
         $luzko= trim($ds_luzko[$h->luzko]);     // L|P|B
-//                                                                 debug($ds_luzko,"ds_luzko {$luzko_pokoje[$h->pokoj]}",(object)array('win1250'=>1));
+                                                                debug($ds_luzko,"ds_luzko {$luzko_pokoje[$h->pokoj]}",(object)array('win1250'=>1));
         if ( $luzko=='L' )
           $luzko= $luzko_pokoje[$h->pokoj];
         if ( $luzko )
