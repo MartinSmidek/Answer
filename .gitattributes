@@ -1,4 +1,6 @@
 * text=auto !eol
+/answer.inc -text
+/answer.php -text
 /ch.inc -text
 /ch.php -text
 ch/$.ezer -text
