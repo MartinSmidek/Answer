@@ -2482,7 +2482,7 @@ function data_transform($par) { trace();
         $r_kontakt= substr($o->_kontakt_r,1);
         $o_kontakt= $o->_kontakt_o;
         //
-        if ( !$o->_rodin ) {                                    // x.0
+        if ( !$o->_rodin ) {                                    // x.0    -- nemá rodinu
           $tab[$stav][5]++;
           $tos[$stav][5]+= $kontakt;
           if ( $update && !$kontakt ) {
@@ -2576,10 +2576,10 @@ function data_transform($par) { trace();
       $tos= array(array(0,0,0,0,0,0),array(0,0,0,0,0,0));           // počet osobních
       $AND= $par->akce ? " AND id_akce={$par->akce}" : "";
       $qo= mysql_qry("
-        SELECT o.id_osoba,o.adresa,
+        SELECT o.id_osoba,o.adresa,r.id_rodina,
           COUNT(DISTINCT r.id_rodina) AS _rodin, COUNT(rt.id_tvori) AS _clenu,
           TRIM(CONCAT(o.ulice,o.psc,o.obec,o.stat)) AS _adresa_o,
-          IFNULL(MIN(CONCAT(t.role,TRIM(CONCAT(r.ulice,r.psc,r.obec,r.stat)))),'') AS _adresa_r
+          IFNULL(SUBSTR(MIN(CONCAT(t.role,TRIM(CONCAT(r.ulice,r.psc,r.obec,r.stat)))),2),'') AS _adresa_r
         FROM osoba AS o
         LEFT JOIN tvori AS t USING(id_osoba)
         LEFT JOIN rodina AS r ON r.id_rodina=t.id_rodina
@@ -2592,14 +2592,14 @@ function data_transform($par) { trace();
         if ( $o->_rodin>1 ) {
           $k++;                                 //continue; ????????????????
         }
-        $stav= $o->_clenu>1 ? 1 : 0;
+        $stav= $o->_clenu>1 ? 1 : 0;            //0: singl, 1: netriviální rodina
         $id_osoba= $o->id_osoba;
         $adresa= $o->adresa;
-        $r_adresa= substr($o->_adresa_r,1);
+        $r_adresa= $o->_adresa_r;
         $r_adresa= $r_adresa=="CZ" ? "" : $r_adresa;
         $o_adresa= $o->_adresa_o=="CZ" ? "" : $o->_adresa_o;
         //
-        if ( !$o->_rodin ) {                                    // x.0
+        if ( !$o->_rodin ) {                                    // x.0      -- nemá rodinu
           $tab[$stav][5]++;
           $tos[$stav][5]+= $adresa;
           if ( $update && !$adresa ) {
@@ -2635,8 +2635,21 @@ function data_transform($par) { trace();
           $tab[$stav][3]++;
           $tos[$stav][3]+= $adresa;
           if ( $update ) {
-            $ok= query("UPDATE osoba SET adresa=0,ulice='',psc='',obec='',stat='' WHERE id_osoba=$id_osoba");
-            $updated+= $ok ? 1 : 0;
+            if ( $stav==0 ) {
+              // pro singla smažeme adresu v rodině
+              $ok= query("UPDATE osoba  SET adresa=0 WHERE id_osoba=$id_osoba");
+              $updated+= $ok ? 1 : 0;
+              if ( $o->_rodin==1 ) {
+                // ale jen je-li rodina jednoznačná
+                $ok= query("UPDATE rodina SET ulice='',psc='',obec='',stat='' WHERE id_rodina=$i->id_rodina");
+                $updated+= $ok ? 1 : 0;
+              }
+            }
+            else {
+              // pro člena normální rodiny smažeme (duplikovanou) adresu v osobě
+              $ok= query("UPDATE osoba SET adresa=0,ulice='',psc='',obec='',stat='' WHERE id_osoba=$id_osoba");
+              $updated+= $ok ? 1 : 0;
+            }
           }
         }
         elseif ( $o_adresa!=$r_adresa ) {                       // x.y

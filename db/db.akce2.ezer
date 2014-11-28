@@ -529,7 +529,8 @@ map ms_akce_dieta:    table _cis {where:"druh='ms_akce_dieta'",     order:'porad
 map ms_akce_dite_kat: table _cis {where:"druh='ms_akce_dite_kat'",  order:'poradi', key_id:'data'}
 map ms_akce_s_role:   table _cis {where:"druh='ms_akce_s_role'",    order:'poradi', key_id:'data'}
 map ms_akce_t_role:   table _cis {where:"druh='ms_akce_t_role'",    order:'poradi', key_id:'data'}
-map map_evi_vyber_o:  table _cis {where:"druh='evi_vyber_o'",       order:'poradi', key_id:'data'}
+map map_evi_vyber_o:  table _cis {where:"druh='evi_vyber_o' AND data<50",  order:'poradi', key_id:'data'}
+map map_evi_vyber_x:  table _cis {where:"druh='evi_vyber_o' AND data>50",  order:'poradi', key_id:'data'}
 map map_evi_vyber_r:  table _cis {where:"druh='evi_vyber_r'",       order:'poradi', key_id:'data'}
 
 # ============================================================================================= TEST
