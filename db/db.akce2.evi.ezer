@@ -36,16 +36,16 @@ menu m {type:'left', active:*, format:'f-'
                                                 cnd:"o.id_osoba IN (2015,4504,2938)"},skill:'m'}
   }
   menu s {title:'hromadné úpravy evidence',type:'group', skill:'yad;fad'
-    item   {title:'[fa-phone]OSOBY: kontakt osobní/rodinný'     par:°{lst:'x',mod:'k',tit:'opravy kontaktů',cnd:"1"},skill:'m'}
-    item   {title:'[fa-envelope-o]OSOBY: adresa osobní/rodinná' par:°{lst:'x',mod:'a',tit:'opravy adres',cnd:"1"},skill:'m'}
+    item   {title:'[fa-phone]OSOBY: kontakt osobní/rodinný'     par:°{lst:'x',mod:'k',tit:'opravy kontaktů osob',cnd:"1"},skill:'yad;fad'}
+    item   {title:'[fa-envelope-o]OSOBY: adresa osobní/rodinná' par:°{lst:'x',mod:'a',tit:'opravy adres osob',   cnd:"1"},skill:'yad;fad'}
     item   {title:'[fa-wrench fa-red]OPRAVIT osoba.kontakt,adresa' ,skill:'yad;fad'
       proc onclick() {
         confirm2(ask('data_transform',object('cmd','kontakty,adresy')),"<br>provést transformaci dat?");
         alert(ask('data_transform',object('cmd','kontakty+,adresy+')))
     }}
-    item   {title:'[fa-group]tipy duplicit rodin'               par:°{lst:'y',tit:'nejedinečné názvy',cnd:"y.deleted=''"},skill:'m'}
-    item   {title:'[fa-user]tipy duplicit osob'                 par:°{lst:'z',tit:'nejedinečná příjmení',cnd:"z.deleted=''"},skill:'m'}
-    item   {title:'[fa-female]tipy duplicit žen'                par:°{lst:'z',tit:'příjmení & rodné',cnd:"z.deleted=''"},skill:'m'
+    item   {title:'[fa-group]tipy duplicit rodin' par:°{lst:'y',tit:'nejedinečné názvy',   cnd:"y.deleted=''"},skill:'yad;fad'}
+    item   {title:'[fa-user]tipy duplicit osob'   par:°{lst:'z',tit:'nejedinečná příjmení',cnd:"z.deleted=''"},skill:'yad;fad'}
+    item   {title:'[fa-female]tipy duplicit žen'  par:°{lst:'z',tit:'příjmení & rodné',    cnd:"z.deleted=''"},skill:'yad;fad'
       proc onclick(i) { alert(ask('elim_rodne')) }}
     proc onclick(i) {
       page.oso.set_mode(1); lst.idx.set(0); lst.bx_mode.set(i.par.mod);
@@ -85,6 +85,7 @@ form _lst [,,370,*] {
   proc refresh() {                              // zobrazí rodiny či osoby podle starých podmínek
     _reload(mode.get,cnd.get,ido.get,idr.get) }
   # ---------------------------------------------- stav a inicializace
+  var virgin=1
   var mode:text,                                // o|r
       cnd:text                                  // zapamatovaná podmínka
   var idr= 0                                    // naposledy vybraná rodina
@@ -93,12 +94,14 @@ form _lst [,,370,*] {
   var idz= 0                                    // naposledy vybraná osoba pro tip na eliminaci
   var idy= 0                                    // naposledy vybraná rodina pro tip na eliminaci
   proc start() { [                              // při startu vynecháme prázdná příjmení
-    o_vyber.key(1); bo_filtr.set(o_vyber.get);
-    r_vyber.key(1); br_filtr.set(r_vyber.get);
+    o_vyber.key( 1); o_vyber.refresh; //bo_filtr.set(o_vyber.get);
+    x_vyber.key(51); x_vyber.refresh;
+    r_vyber.key( 1); r_vyber.refresh; //br_filtr.set(r_vyber.get);
     [ by.nazev.set_query(1,"B",0) ];            // ... kvůli pomalosti dotazu
     [ bz.prijmeni.set_query(1,"Ba",0) ];        // ... kvůli pomalosti dotazu
     [ br.nazev.set_query(1,"-$",0) ];
     [ bo.prijmeni.set_query(1,"-$",0) ];
+    virgin.set(0);
   ] }
   # ---------------------------------------------- společné prvky
   label [10,2,347,25] { css:'ae_work' }
@@ -112,8 +115,9 @@ form _lst [,,370,*] {
 #       proc onclick () { idr.get; elim.cleni(idr.get); refresh } }
 #   }
   # ============================================== X - ÚPRAVY OSOB
-  var bx_cnd=1, bx_filtr= 1, bx_mode= 'k'
-  proc bx_reload(cnd) {
+  var bx_cnd=1, bx_filtr=1, bx_having=1, bx_mode='k'
+  proc bx_reload(cnd) { echo("bx_reload ",virgin.get);
+    [ virgin.get; start ];
     [ eq(bx_mode.get,'k');
       bx.a.width( 0); bx.ax.width( 0); bx.ar.width( 0);
       bx.k.width(15); bx.kx.width(80); bx.kr.width(80)
@@ -122,16 +126,31 @@ form _lst [,,370,*] {
     bx_cnd.set(cnd);
     idx.get; bx.browse_seek(conc("id_osoba=",idx.get)); bx.onrowclick;
   | bx.browse_load(conc(cnd," AND ",bx_filtr.get),'',
-      cconc(eq(bx_mode.get,'k'),"kx!='' AND kr!='' AND kx!=kr",
-        "ax!='' AND ax!='CZ' AND ar!='' AND ar!='CZ' AND ax!=ar"))
+      conc(cconc(eq(bx_mode.get,'k'),"kx!='' AND kr!='' AND kx!=kr",
+        "ax!='' AND ax!='CZ' AND ar!='' AND ar!='CZ' AND ax!=ar")," AND ",bx_having.get));
+  }
+  select x_vyber [163,5,189,] {tag:'x', type:'map'
+    map_pipe:map_evi_vyber_x.hodnota, options:map_evi_vyber_x.zkratka, format:'t'
+    help:'výběrová podmínka, doplňující případně zadaná kritéria'
+    proc onchange() { refresh; idx.set(0); bx_reload(bx_cnd.get) }
+    proc refresh() {
+      bx_filtr.set(this.get);
+      bx_having.set(ask('select','ikona','_cis',conc("druh='evi_vyber_o' AND data=",this.key)));
+      echo("bx_having=",bx_having.get);
+      [ bx_having.get | bx_having.set(1) ] }
   }
   view x: table osoba
   view xt: table tvori  { join:"USING(id_osoba)" }
   view xr: table rodina { join:"ON xr.id_rodina=xt.id_rodina" }
+  view xrt: table tvori { join:"ON xrt.id_rodina=xr.id_rodina" }
   browse bx [10,30,,] {tag:'x', group_by:'x.id_osoba'
       rows:27, buf_rows:60, qry_rows:1, css_rows:'barva,0:neucast'
     show id_o { data:x.id_osoba }
+    show id_t { data:xt.id_tvori }
+    show id_r { data:xr.id_rodina }
     show barva { expr:"x.deleted=''" }
+    show _rodin { expr:"COUNT(DISTINCT xt.id_rodina)" }
+    show _clenu { expr:"COUNT(DISTINCT xrt.id_tvori)" }
     show prijmeni [,,70,] { data:x.prijmeni, title:'příjmení', format:'q*s+' }
     show jmeno [,,70,] { data:x.jmeno, title:'jméno', format:'q*s' }
     show k [,,15,] { title:'o', help:'osobní', data:x.kontakt, format:'q*s' }
@@ -140,10 +159,10 @@ form _lst [,,370,*] {
     show kr [,,80,] { title:'kon.rodinný', format:'q*s', expr:"
       IFNULL(SUBSTR(MIN(CONCAT(xt.role,REPLACE(REPLACE(CONCAT(xr.telefony,xr.emaily),' ',''),';',','))),2),'')" }
     show a [,,0,] { title:'o', help:'osobní', data:x.adresa, format:'q*s' }
-    show ax [,,0,] { title:'adr.osobní', format:'tq*s',
-      expr:"TRIM(CONCAT(x.ulice,x.psc,x.obec,x.stat))" }
+    show ax [,,0,] { title:'adr.osobní', format:'tq*s',expr:"
+      TRIM(CONCAT(x.psc,x.obec,x.ulice,x.stat))" }
     show ar [,,0,] { title:'adr.rodinná', format:'q*s', expr:"
-      IFNULL(SUBSTR(MIN(CONCAT(xt.role,TRIM(CONCAT(xr.ulice,xr.psc,xr.obec,xr.stat)))),2),'')" }
+      IFNULL(SUBSTR(MIN(CONCAT(xt.role,TRIM(CONCAT(xr.psc,xr.obec,xr.ulice,xr.stat)))),2),'')" }
 
     proc onrowclick() { idx.set(id_o.get); page.evid_load(idx.get,0); }
   }
@@ -205,7 +224,8 @@ form _lst [,,370,*] {
   select o_vyber [163,5,189,] {tag:'o', type:'map'
     map_pipe:map_evi_vyber_o.hodnota, options:map_evi_vyber_o.zkratka, format:'t'
     help:'výběrová podmínka, doplňující případně zadaná kritéria'
-    proc onchange() { bo_filtr.set(this.get); ido.set(0); bo_reload(bo_cnd.get) }
+    proc onchange() { refresh; ido.set(0); bo_reload(bo_cnd.get) }
+    proc refresh() { bo_filtr.set(this.get) }
   }
   view o: table osoba
   view ot: table tvori  { join_type:"LEFT", join:"USING(id_osoba)" }
@@ -224,16 +244,20 @@ form _lst [,,370,*] {
     proc onrowclick() { ido.set(id_o.get); page.evid_load(ido.get,0); }
   }
   # ============================================== R - RODINY
-  var br_cnd=1, br_filtr= 1
+  var br_cnd=1, br_filtr= 1, br_having= 1
   proc br_reload(cnd) {
     br_cnd.set(cnd);
     idr.get; br.browse_seek(conc("id_rodina=",idr.get)); bo.onrowclick;
-  | br.browse_load(conc(cnd," AND ",br_filtr.get),'');
+  | br.browse_load(conc(cnd," AND ",br_filtr.get),'',br_having.get);
   }
   select r_vyber [163,5,189,] {tag:'r', type:'map'
     map_pipe:map_evi_vyber_r.hodnota, options:map_evi_vyber_r.zkratka, format:'t'
     help:'výběrová podmínka, doplňující případně zadaná kritéria'
-    proc onchange() { br_filtr.set(this.get); idr.set(0); br_reload(br_cnd.get) }
+    proc onchange() { refresh; idr.set(0); br_reload(br_cnd.get) }
+    proc refresh() {
+      br_filtr.set(this.get);
+      br_having.set(ask('select','ikona','_cis',conc("druh='evi_vyber_r' AND data=",this.key)));
+      [ br_having.get | br_having.set(1) ] }
   }
   view r: table rodina
   view rt: table tvori { join:"USING(id_rodina)" }
@@ -242,6 +266,7 @@ form _lst [,,370,*] {
     show id_r { data:r.id_rodina }
     show id_t { data:rt.id_tvori }
     show barva { expr:"r.deleted=''" }
+    show _clenu { expr:"COUNT(*)" }
     show nazev [,,70,] { data:r.nazev, title:'rodina', format:'q*s+' }
     show jmena [,,130,] { expr:"GROUP_CONCAT(rto.jmeno ORDER BY rt.role)", title:'jména', format:'tq%s' }
     show [,,50,] { title:'obec', data:r.obec, format:'q*s' }
