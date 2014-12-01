@@ -129,11 +129,10 @@ proc change_height(x) { x.property(object('stretch',curr_h.get))}//,'smooth',1))
 proc akce_load(id_akce) { lst.akce_work(id_akce); onfocus(); }
 
 # zobrazí dočasně jinou akci s tlačítkem ZPĚT  (jen z podzáložky Aktivita)
-proc akce_show(xakce,xpobyt,xnadpis,xback) {
+proc akce_show(xakce,xpobyt,xnadpis,xback) { var idp:number
   page.page_start;
-  back.set(object('ida',the_duakce.get,
-    'idp',if(u.b.browse_count,u.b.key_pobyt.get,0),
-    'tit',the_title.get,'bck',xback));
+  [ u.b.browse_count; idp.set(u.b.key_pobyt) ];
+  back.set(object('ida',the_duakce.get,'idp',idp,'tit',the_title.get,'bck',xback));
   header.zpet.display(1);
   panel.focus(1); // bez vyvolání onfocus
   the_duakce.set(xakce);
@@ -241,7 +240,7 @@ form _cmd2 [,,623,30] { css:'ae_work'
     'show', {form.enable(1,'s|x')},
     'hide',{form.enable(0,'s|x')}
   )}
-  label [63,9,43,] { title:"<b>Přidat na akci:</b>" }
+  label [63,9,80,] { title:"<b>Přidat na akci:</b>" }
   // PŘIDAT RODINU
   button pridat_2   [147,5,,] {tag:'x', title:'[fa-plug] ... rodinu',
     skill:'yaa+|yaa+;faa+|faa+;caa+|caa+', help:'Přidání manželského páru a dětí podle jména'
