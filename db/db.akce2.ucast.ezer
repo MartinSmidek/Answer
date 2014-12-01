@@ -80,7 +80,7 @@ var   curr_w: number      // 1024 nebo 1280
 proc onfirstloaded() {    // zavolá se po prvním dokončení u.b.browse_load
   w_change_all
 }
-proc onresize(w,h) {
+proc onresize(w,h) { // echo('ucast2 onresize(',w,',',h,')');
 #                                         page.my_set(conc("resize(",w,",",h,") ... w=",
 #                                             sys('screen','width'),", h=",sys('screen','height')));
   [ and(lt(h,min_h.get),not(eq(curr_h.get,min_h.get)));
@@ -866,7 +866,7 @@ form _pobyt [,,0,62] {
   menu { type:'context', join:frame
     item { title:'konfigurace formuláře', proc onclick () { pobyt_config.tune } }
     item { title:'ukázat změny', proc onclick () { track.back_show('pobyt',the_pobyt.get) } }
-    item { title:'-naplnit i0_rodina', skill:'a|a',proc onclick () { alert(ask('akce_i0_rodina',the_duakce.get)) }}
+#     item { title:'-naplnit i0_rodina', skill:'a|a',proc onclick () { alert(ask('akce_i0_rodina',the_duakce.get)) }}
   }
 
   // p = poznámka
