@@ -36,7 +36,7 @@ echo <<<__EOD
 .ae_butt_on {
   cursor:default; background-color:$b_work; z-index:0; border-radius:5px; text-align:center; }
 .ae_butt_off {
-  cursor:default; background-color:#effdf1; z-index:0; border-radius:5px; text-align:center; }
+  cursor:default; background-color:$b8_brow; z-index:0; border-radius:5px; text-align:center; }
 .ae_butt_on:hover {
   background:url("../../skins/ck/label_switch_on_hover.png") repeat-x scroll 0 -1px transparent !important; }
 .ae_butt_off:hover {

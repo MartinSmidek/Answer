@@ -2446,6 +2446,31 @@ function data_transform($par) { trace();
   foreach (explode(',',$par->cmd) as $cmd ) {
     $update= false;
     switch ($cmd ) {
+    // ---------------------------------------------- rodina: nazev
+    // doplní chybějící název rodiny z hlavního člena
+    case 'nazvy+':
+      $update= true;
+    // zobrazení počtu rodin bez názvu
+    case 'nazvy':
+      $n= 0;
+      $qo= mysql_qry("
+        SELECT r.id_rodina,SUBSTR(MIN(CONCAT(role,prijmeni)),2) AS _hlava
+        FROM rodina AS r
+        JOIN tvori AS t USING(id_rodina)
+        JOIN osoba AS o USING(id_osoba)
+        WHERE r.deleted='' AND TRIM(nazev)='' $AND
+        GROUP BY r.id_rodina
+      ");
+      while ( $qo && ($o= mysql_fetch_object($qo)) ) {
+        $n++;
+        if ( $update ) {
+          $ok= query("UPDATE rodina SET nazev='$o->_hlava' WHERE id_rodina=$o->id_rodina");
+          $updated+= $ok ? 1 : 0;
+        }
+      }
+      $html.= "rodin bez názvu je $n";
+      $html.= $update ? ($updated ? "<br> opraveno $updated údajů<br>" : "<br>beze změn<br>") : '';
+      break;
     // ---------------------------------------------- osoba: kontakty
     // opraví pole osoba.kontakt
     case 'kontakty+':

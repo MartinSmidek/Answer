@@ -52,7 +52,7 @@ body { position:absolute; width:100%; height:100%; }
 .elim_goal { outline:3px solid $s1_brow; z-index:1 !important; }
 
 .shift_up   { z-index:1; }
-.shift_up[class*=ae_frame],.shift_up[class*=ae_form2]  {
+.shift_up[class*=ae_frame],.shift_up[class*=ae_form2] {
               z-index:1; box-shadow:2px 2px 10px #333; }
 .shift_down { z-index:0; }
 .datepicker_vista { z-index:3 !important; }

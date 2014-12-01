@@ -346,6 +346,55 @@ function akce_evid($id_osoba,$id_rodina,$filtr) { trace();
 //                                                         debug($ret);
   return $ret;
 }
+# ======================================================================= EVIDENCE - BROWSE - ÚČASTI
+# ------------------------------------------------------------------------------ evid_browse_act_ask
+# obsluha browse s optimize:ask
+# x->order= {a|d} polozka
+# x->show=  {polozka:[formát,vzor/1,...],...} pro položky s neprázdným vzorem
+#                                             kde formát=/ = # $ % @ * .
+# x->cond= podmínka
+function evid_browse_act_ask($x) {
+  global $y;
+  $y= (object)array('ok'=>0);
+  foreach(explode(',','cmd,rows,quiet,key_id,oldkey') as $i) $y->$i= $x->$i;
+  switch ($x->cmd) {
+  case 'browse_load':  # ------------------------------------- browse_load
+    $n= 0;
+    $order= $x->order[0]=='a' ? substr($x->order,2).' ASC,' : (
+            $x->order[0]=='d' ? substr($x->order,2).' DESC,' : '');
+    $y->from= 0;
+    $y->cursor= 0;
+    $y->values= array();
+    $qp= mysql_qry("
+      SELECT a.id_duakce as ida,p.id_pobyt as idp,s.id_spolu as ids,p.funkce as fce,
+        YEAR(a.datum_od) as rok,a.nazev as akce,p.funkce as _fce,narozeni,datum_od
+      FROM akce AS a
+      JOIN pobyt AS p ON a.id_duakce=p.id_akce
+      JOIN spolu AS s USING(id_pobyt)
+      JOIN osoba AS o USING(id_osoba)
+      WHERE $x->cond
+      ORDER BY $order a.id_duakce
+      LIMIT 0,50
+    ");
+    while ( $qp && ($p= mysql_fetch_object($qp)) ) {
+      $n++;
+      $p->_vek= $p->narozeni!='0000-00-00' ? roku_k($p->narozeni,$p->datum_od) : '?';      // výpočet věku
+      if ( $p->_vek<18 ) { $p->fce= 0; $p->_fce= '_'; }
+      unset($p->datum_od,$p->narozeni);
+      $y->values[]= $p;
+    }
+    array_unshift($y->values,null);
+    $y->count= $n;
+    $y->rows= $n;
+    $y->ok= 1;
+    break;
+  default:
+    fce_warning("N.Y.I. evid_browse_act_ask/{$x->cmd}");
+    $y->ok= 0;
+    break;
+  }
+  return $y;
+}
 # ======================================================================================== ÚČASTNÍCI
 # ---------------------------------------------------------------------------- akce2_pridej_k_pobytu
 # ASK získání pobytu účastníka na akci
@@ -387,6 +436,26 @@ function akce2_pridej_k_pobytu($id_akce,$id_pobyt,$info,$cnd='') { trace();
     else  $ret->msg= 'chyba při vkládání';
   }
                                                 debug($ret,"$vek $kat $srole");
+  return $ret;
+}
+# ----------------------------------------------------------------------------- evid_pridej_k_rodine
+# ASK přidání do dané rodiny, pokud ještě osoba v rodině není
+# spolupracuje s: evid_auto_jmena1,akce2_auto_jmena1L
+# info = {id,nazev,role}
+function evid_pridej_k_rodine($id_rodina,$info,$cnd='') { trace();
+  $ret= (object)array('tvori'=>0,'msg'=>'');
+  $ido= $info->id;
+  $je= select("COUNT(*)","tvori","id_rodina=$id_rodina AND id_osoba=$ido");
+  if ( $je ) {
+    $ret->msg= "$info->nazev už v rodině je";
+  }
+  else {
+    if ( query("INSERT INTO tvori (id_rodina,id_osoba,role) VALUE ($id_rodina,$ido,'p')") ) {
+      $ret->tvori= mysql_insert_id();
+      $ret->ok= 1;
+    }
+    else  $ret->msg= 'chyba při vkládání';
+  }
   return $ret;
 }
 # -------------------------------------------------------------------------------- akce2_auto_jmena1
@@ -652,9 +721,9 @@ function akce_browse_ask($x) {
             $s->_barva= $s->id_tvori ? 1 : 2;               // barva: 1=člen rodiny, 2=nečlen
         }
         # sestavení informace pro browse_fill
-        $cleni.= "$del$ido~{$o->jmeno}"; $del= "~";
-        $cleni.= "~" . roku_k($o->narozeni,$akce->datum_od);      // výpočet věku
-        $cleni.= "~{$s->id_tvori}~{$s->id_rodina}~{$s->role}";
+        $vek= $o->narozeni!='0000-00-00' ? roku_k($o->narozeni,$akce->datum_od) : '?'; // výpočet věku
+        $cleni.= "$del$ido~{$o->jmeno}~$vek~{$s->id_tvori}~{$s->id_rodina}~{$s->role}";
+        $del= "~";
         # rodiny a kmenová rodina
         $rody= explode(',',$o->_rody);
         $r= "-:0"; $kmen= '';
@@ -717,6 +786,7 @@ function akce_browse_ask($x) {
           $del= '~';
         }
       }
+      if ( !isset($zz[$idp]) ) $zz[$idp]= (object)array();
       $zz[$idp]->skup= $s;
     }
     # případný výběr - zjednodušeno na show=[*,vzor]

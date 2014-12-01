@@ -58,9 +58,7 @@ panel lst {type:'right', _sys:'*', title:'AKCE', include:'onload,db.akce.lst',sk
   use the_akce: form _the_akce         // zatím nezobrazená data nastavené akce s klíčem id_duakce
   proc akce_work(id) {}                // nastaví akci jako vybranou
 }
-panel ucast {type:'plain', _sys:'*',
-    title:"Účastníci2",
-    include:'onload,db.akce2.ucast',skill:'yaa;faa;caa'
+panel ucast {type:'plain', _sys:'*', title:"Účastníci2", include:'onload,db.akce2.ucast',skill:'yaa;faa;caa'
   proc init_ucast2() {}
   proc akce_show() {}
   proc osoby_show() {}                          // obnova údajů o osobě (osobách)
@@ -646,7 +644,7 @@ form _osoba2x [,,244,322] {css:'ae_frame', proc onclick() { on_click }
   field rodne    [5,66,63,] {tag:'i', data:o.rodne, format:'n', help:'rodné příjmení', title:'^rodné příjmení'}
   field jmeno    [120,32,89,] {tag:'i,I', data:o.jmeno, format:'n', title:'^jméno'}
   field role     [218,32,10,] {tag:'y', title:"^role", format:'n' }
-  radio sex      [73,54,47,32] {tag:'i,I', data:o.sex, format:'n', value:'1'
+  radio sex      [73,54,46,32] {tag:'i,I', data:o.sex, format:'n', value:'1'
     case [0,2,47,] { title:'muž', expr:'1' }
     case [0,15,47,] { title:'žena', expr:'2' }
     proc onchange() { }
@@ -889,7 +887,8 @@ form _rodina2p [,,188,229] { css:'ae_frame'
   select rodiny  [Lp+0,Ts+32,110,] {tag:'a,R', format:'tT', title:"^zobrazená rodina", help:'výběr jiné rodiny'
     proc onchanged() { rodina_changed}
   }
-  button [Lp+115,Ts+32,,] {tag:'a,o,R', type:'html', title:"[fa-chevron-left]", css:'button' //style:"padding-left:0px"
+  button [Lp+111,Ts+32,,] {tag:'a,o,R', type:'html', title:"[fa-chevron-left]", css:'button' //style:"padding-left:0px"
+    help:"oprava názvu zobrazené rodiny"
     proc onclick() { form.display(0,'a'); form.display(1,'m'); rodiny1.set(rodiny.get);
       rodiny1.change; rodina_edit
   }}
