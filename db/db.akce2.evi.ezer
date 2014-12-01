@@ -19,6 +19,7 @@ proc rodina_show()      { page.rod.show_rodina; }       // obnova údajů o rodi
 proc onfirstfocus() { lst.start; page.start; cmd.start; }
 # --------------------------------------------------------------------------------------------- menu
 var menu_item=0
+var menu_par=0
 menu m {type:'left', active:*, format:'f-'
   menu r {title:'rodiny',type:'group', skill:'yae;fae;cae'
     item a {title:'[fa-group]všechny rodiny'    par:°{lst:'r',tit:'všechny rodiny, co ',cnd:"1"}}
@@ -35,6 +36,16 @@ menu m {type:'left', active:*, format:'f-'
                                                 cnd:"TIMESTAMPDIFF(YEAR,narozeni,NOW())<18"}}
     item t {title:'[fa-wrench](test)'           par:°{lst:'o',tit:'testovací osoby, co ',
                                                 cnd:"o.id_osoba IN (679,2015,4504,2938)"},skill:'m'}
+  }
+  menu h {title:'provedené úpravy evidence',type:'group', skill:'yad;fad'
+    item   {title:'[fa-medkit fa-red]dnes'    par:°{lst:'h',tit:'během 24 hodin',days:'1',cnd:"1"}}
+    item   {title:'[fa-medkit fa-red]včera'   par:°{lst:'h',tit:'během 48 hodin',days:'2',cnd:"1"}}
+    item   {title:'[fa-medkit fa-red]týden'   par:°{lst:'h',tit:'úpravy za 7 dnů',days:'7',cnd:"1"}}
+    item   {title:'[fa-medkit fa-red]měsíc'   par:°{lst:'h',tit:'úpravy za 30 dnů',days:'30',cnd:"1"}}
+    item   {title:'[fa-medkit fa-red]rok'     par:°{lst:'h',tit:'úpravy za 365 dnů',days:'365',cnd:"1"}}
+    item   {title:'[fa-medkit fa-red]všechny' par:°{lst:'h',tit:'všechny úpravy',days:'99999',cnd:"1"}}
+#     item   {title:'[fa-medkit fa-red]podle pachatele' par:°{lst:'h',tit:'úpravy, které provedl(a)',days:'99999',cnd:"1"}
+#     }
   }
   menu s {title:'hromadné úpravy evidence',type:'group', skill:'yad;fad'
     item   {title:'[fa-phone]OSOBY: kontakt osobní/rodinný'     par:°{lst:'x',mod:'k',tit:'opravy kontaktů osob',cnd:"1"},skill:'yad;fad'}
@@ -58,7 +69,7 @@ menu m {type:'left', active:*, format:'f-'
       lst.reload(i.par.lst,i.par.cnd,i.par.tit);
     }
   }
-  proc onclick (i) { menu_item.set(i);
+  proc onclick (i) { menu_item.set(i); menu_par.set(i.par);
     page.oso.set_mode(0);
     lst.reload(i.par.lst,i.par.cnd,i.par.tit);
   }
@@ -87,6 +98,7 @@ form _lst [,,370,*] {
   | eq(_mode,'y'); idy.set(_idr); [_idr; by.init_queries ]; [ by_reload(_cnd) ]
   | eq(_mode,'z'); idz.set(_idr); [_idr; bz.init_queries ]; [ bz_reload(_cnd) ]
   | eq(_mode,'o'); ido.set(_ido); [_ido; bo.init_queries ]; [ bo_reload(_cnd) ]
+  | eq(_mode,'h'); idh.set(_ido); [_ido; bh.init_queries ]; [ bh_reload(_cnd) ]
   | eq(_mode,'r'); idr.set(_idr); [_idr; br.init_queries ]; br_reload(_cnd) }
   proc refresh() {                              // zobrazí rodiny či osoby podle starých podmínek
     _reload(mode.get,cnd.get,ido.get,idr.get) }
@@ -96,6 +108,7 @@ form _lst [,,370,*] {
       cnd:text                                  // zapamatovaná podmínka
   var idr= 0                                    // naposledy vybraná rodina
   var ido= 0                                    // naposledy vybraná osoba
+  var idh= 0                                    // naposledy vybraná osoba při prohlídce historie změn
   var idx= 0                                    // naposledy vybraná osoba pro opravy kontaktu
   var idz= 0                                    // naposledy vybraná osoba pro tip na eliminaci
   var idy= 0                                    // naposledy vybraná rodina pro tip na eliminaci
@@ -120,6 +133,35 @@ form _lst [,,370,*] {
 #     item { title:'sjednotit kopie členů rodiny', skill:'fad|fad'
 #       proc onclick () { idr.get; elim.cleni(idr.get); refresh } }
 #   }
+  # ============================================== H - HISTORIE ZMĚN OSOB
+  var bh_cnd=1, bh_filtr=1
+  proc bh_reload(cnd) { echo("bh_reload ",virgin.get);
+    [ virgin.get; start ];
+    evi_barvit_zmeny.set(1); bh_cnd.set(cnd);
+    idh.get; bh.browse_seek(conc("id_osoba=",idh.get)); bh.onrowclick;
+  | bh.browse_load(conc(cnd," AND ",bh_filtr.get,
+      " AND kdy BETWEEN ADDDATE(NOW(),-",menu_par.get('days'),") AND NOW()"
+    ));
+  }
+  view h: table osoba
+  view ht: table tvori  { join_type:"LEFT", join:"USING(id_osoba)" }
+  view hh: table _track { join:"ON kde='osoba' AND klic=id_osoba" }
+  browse bh [10,30,,] {tag:'h', group_by:'h.id_osoba'
+      rows:27, buf_rows:60, qry_rows:1, css_rows:'barva,0:neucast'
+    show id_o { data:h.id_osoba }
+    show id_r { data:ht.id_rodina }
+    show id_h { data:hh.id_track }
+    show barva { expr:"h.deleted=''" }
+    show prijmeni [,,70,] { data:h.prijmeni, title:'příjmení', format:'q*s+' }
+    show jmeno [,,70,] { data:h.jmeno, title:'jméno', format:'q*s' }
+    show [,,54,] { title:'obec', data:h.obec, format:'q*s' }
+    show kdo [,,30,] { title:'kdo', expr:"SUBSTR(MAX(CONCAT(kdy,kdo)),20)", format:'q*s'
+      help:'kdo naposledy provedl změnu'}
+    show kdy [,,65,] { title:"kdy", expr:"SUBSTR(MAX(CONCAT(kdy,kdo)),1,10)", sql_pipe:'sql_date1',
+      format:'q*s', help:'kdy byla naposledy provedana změna'}
+    show [,,20,] { title:"změn", expr:"COUNT(*)", help:'celkem změn v daném období', format:'rq*s' }
+    proc onrowclick() { idh.set(id_o.get); page.evid_load(idh.get,0); }
+  }
   # ============================================== X - ÚPRAVY OSOB
   var bx_cnd=1, bx_filtr=1, bx_having=1, bx_mode='k'
   proc bx_reload(cnd) { echo("bx_reload ",virgin.get);
@@ -677,6 +719,7 @@ proc h_change_b() { var r1:number, r2:number, h:number
   lst.br.set_attrib('rows',r1);
   lst.bo.set_attrib('rows',r1);
   lst.bx.set_attrib('rows',r1);
+  lst.bh.set_attrib('rows',r1);
   page.act.akc.set_attrib('rows',r2);
   page.act.property(object('height',sum(72,multiply(r2,18))));
 }
