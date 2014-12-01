@@ -41,9 +41,9 @@ const min_h=550           // minimální výška (nelze jednoduše měnit - jsou
 var   curr_h: number      // výška nad základní výšku
 var   curr_w: number      // 1024 nebo 1280
 
-proc onresize(w,h) {
-#   echo("resize(",w,",",h,") ... w=",sys('screen','width'));
-  [ and(lt(h,min_h.get),not(eq(curr_h.get,min_h.get)));
+proc onresize(w,h) { // echo('lst onresize(',w,',',h,')');
+  eq(curr_h.get,minus(h,min_h.get))                     // změnu šířky ignorujeme
+| [ and(lt(h,min_h.get),not(eq(curr_h.get,min_h.get)));
     curr_h.set(0); h_change_all()
   | and(gt(h,min_h.get),not(eq(h,sum(curr_h.get,min_h.get))));
     curr_h.set(minus(h,min_h.get)); h_change_all() ];

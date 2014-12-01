@@ -2750,40 +2750,40 @@ function data_transform($par) { trace();
       $AND= $par->akce ? " AND id_akce={$par->akce}" : "";
       $AND.= $par->pobyt ? " AND id_pobyt={$par->pobyt}" : "";
       $qp= mysql_qry("
-        SELECT GROUP_CONCAT(role ORDER BY role SEPARATOR '') AS _roles,id_pobyt
+        SELECT CONCAT(pouze,GROUP_CONCAT(role ORDER BY role SEPARATOR '')) AS _roles,id_pobyt,
+          a.nazev,YEAR(a.datum_od)
         FROM akce AS a
         JOIN pobyt AS p ON a.id_duakce=p.id_akce
         JOIN spolu AS s USING (id_pobyt)
         JOIN rodina AS r ON r.id_rodina=i0_rodina
         JOIN tvori AS t ON t.id_osoba=s.id_osoba AND t.id_rodina=i0_rodina
-        WHERE i0_rodina!=0 AND pouze=0 $AND
-        GROUP BY id_pobyt ");
+        WHERE i0_rodina!=0
+        GROUP BY id_pobyt HAVING
+          (LEFT(_roles,1)='0' AND LEFT(_roles,3)!='0ab')
+          OR (LEFT(_roles,1)='1' AND LEFT(_roles,2)!='1a')
+          OR (LEFT(_roles,1)='2' AND LEFT(_roles,2)!='2b')
+      ");
       while ( $qp && ($p= mysql_fetch_object($qp)) ) {
-        $roles= $p->_roles;
-        $pouze= $roles[0]=='b' ? 2 : (
-                $roles[0]=='a' && $roles[1]!='b'? 1 : 0);
-        if ( $pouze ) {
-          $n++;
-          display("$roles:mysql_qry(\"UPDATE pobyt SET pouze=$pouze WHERE id_pobyt={$p->id_pobyt}\")");
-        }
+        $n++;
       }
-      $html.= "<br>doplněno $n x pobyt.pouze";
+      $html.= "<br>zjištěno $n rozporů mezi spolu a pouze";
       break;
     // ---------------------------------------------- pobyt: i0_rodina ... do starých
     // doplní i0_rodina pokud rodina má jméno a je jednoznačná pro všechny osoby pobytu
+    //   pokud jich je >1
     // podle spolu --> osoba --> tvori --> rodina.nazev,id_rodina
     case 'i0_rodina':
       $n= 0;
       $AND= $par->akce ? " AND id_akce={$par->akce}" : "";
       $qp= mysql_qry("
-        SELECT COUNT(DISTINCT id_rodina) AS _pocet,id_pobyt,id_rodina
+        SELECT COUNT(*) AS _ucastniku,COUNT(DISTINCT id_rodina) AS _pocet,id_pobyt,id_rodina
         FROM akce AS a
         JOIN pobyt AS p ON a.id_duakce=p.id_akce
         JOIN spolu AS s USING (id_pobyt)
         JOIN tvori AS t USING(id_osoba)
         JOIN rodina AS r USING(id_rodina)
         WHERE i0_rodina=0 AND r.nazev!='' $AND
-        GROUP BY id_pobyt HAVING _pocet=1 ");
+        GROUP BY id_pobyt HAVING _ucastniku>1 AND _pocet=1 ");
       while ( $qp && ($p= mysql_fetch_object($qp)) ) {
         $n++;
         mysql_qry("UPDATE pobyt SET i0_rodina={$p->id_rodina} WHERE id_pobyt={$p->id_pobyt}");
@@ -2801,6 +2801,8 @@ function data_transform($par) { trace();
   //       WHERE
   //        id_akce=394 AND s1.pecovane!=0
       break;
+    default:
+      fce_error("transformaci $cmd neumím");
     }
   }
   return $html;

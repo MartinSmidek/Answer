@@ -38,12 +38,12 @@ menu m {type:'left', active:*, format:'f-'
                                                 cnd:"o.id_osoba IN (679,2015,4504,2938)"},skill:'m'}
   }
   menu h {title:'provedené úpravy evidence',type:'group', skill:'yad;fad'
-    item   {title:'[fa-medkit fa-red]dnes'    par:°{lst:'h',tit:'během 24 hodin',days:'1',cnd:"1"}}
-    item   {title:'[fa-medkit fa-red]včera'   par:°{lst:'h',tit:'během 48 hodin',days:'2',cnd:"1"}}
-    item   {title:'[fa-medkit fa-red]týden'   par:°{lst:'h',tit:'úpravy za 7 dnů',days:'7',cnd:"1"}}
-    item   {title:'[fa-medkit fa-red]měsíc'   par:°{lst:'h',tit:'úpravy za 30 dnů',days:'30',cnd:"1"}}
-    item   {title:'[fa-medkit fa-red]rok'     par:°{lst:'h',tit:'úpravy za 365 dnů',days:'365',cnd:"1"}}
-    item   {title:'[fa-medkit fa-red]všechny' par:°{lst:'h',tit:'všechny úpravy',days:'99999',cnd:"1"}}
+    item   {title:'[fa-medkit]dnes'    par:°{lst:'h',tit:'úpravy během 24 hodin',days:'1',cnd:"1"}}
+    item   {title:'[fa-medkit]včera'   par:°{lst:'h',tit:'úpravy během 48 hodin',days:'2',cnd:"1"}}
+    item   {title:'[fa-medkit]týden'   par:°{lst:'h',tit:'úpravy za 7 dnů',days:'7',cnd:"1"}}
+    item   {title:'[fa-medkit]měsíc'   par:°{lst:'h',tit:'úpravy za 30 dnů',days:'30',cnd:"1"}}
+    item   {title:'[fa-medkit]rok'     par:°{lst:'h',tit:'úpravy za 365 dnů',days:'365',cnd:"1"}}
+    item   {title:'[fa-medkit]všechny' par:°{lst:'h',tit:'všechny úpravy',days:'99999',cnd:"1"}}
 #     item   {title:'[fa-medkit fa-red]podle pachatele' par:°{lst:'h',tit:'úpravy, které provedl(a)',days:'99999',cnd:"1"}
 #     }
   }
@@ -695,13 +695,15 @@ panel PridaniJmenem1 [,,320,280] {type:'popup', title:'Přidání osoby do rodin
 }
 # ---------------------------------------------------------- reakce na změny rozměrů okna prohlížeče
 var  curr_h: number     // výška nad základní výšku
-proc onresize(w,h) {
-  [ and(lt(h,min_h.get),not(eq(curr_h.get,min_h.get)));
-    curr_h.set(0); h_change_all()
+proc onresize(w,h) { // echo('evid2 onresize(',w,',',h,')');
+  eq(curr_h.get,minus(h,min_h.get))                     // změnu šířky ignorujeme
+| [ and(lt(h,min_h.get),not(eq(curr_h.get,min_h.get)));
+    curr_h.set(0); h_change_all();
+    menu_item.get; m.onclick(menu_item.get);
   | and(gt(h,min_h.get),not(eq(h,sum(curr_h.get,min_h.get))));
-    curr_h.set(minus(h,min_h.get)); h_change_all()
+    curr_h.set(minus(h,min_h.get)); h_change_all();
+    menu_item.get; m.onclick(menu_item.get);
   ];
-  menu_item.get; m.onclick(menu_item.get);
 }
 # změna výšky oproti základní min_h
 proc h_change_all() {

@@ -456,9 +456,9 @@ form _evidence {
     item { title:'-sjednocování rodin', skill:'a|a'
       proc onclick () { elim.call('rodiny',u.b.key_rodina.get,rod._nazev.get) }
     }
-    item { title:'-naplnit i0_rodina', skill:'a|a'
-      proc onclick () { alert(ask('akce_i0_rodina',the_duakce.get)) }
-    }
+#     item { title:'-naplnit i0_rodina', skill:'a|a'
+#       proc onclick () { alert(ask('akce_i0_rodina',the_duakce.get)) }
+#     }
 #     item { title:'-sjednotit kopie osob', skill:'a|a'
 #       proc onclick () { elim.mode.set('osoba'); elim.modal(30,100) }
 #     }

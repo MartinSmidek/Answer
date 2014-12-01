@@ -34,7 +34,7 @@ proc onfocus() {
 const min_h=540           // minimální výška (nelze jednoduše měnit - jsou k ní vztaženy souřadnice)
 var   curr_h: number      // výška nad základní výšku
 
-proc onresize(w,h) {
+proc onresize(w,h) {  // echo('pece onresize(',w,',',h,')');
 #   echo("resize(",w,",",h,") ... w=",sys('screen','width'));
   [ and(lt(h,min_h.get),not(eq(curr_h.get,min_h.get)));
     curr_h.set(0); h_change_all()
