@@ -35,15 +35,15 @@ menu ys2 { type:'main', active:* //ys.pok
             info.fill('',ask('akce_data_survey',i.par));
           }
         }
-        menu {title:'Eliminace duplicit',type:'group', _sys:'*', skill:'m'
-          item {title:'vyprázdnit duplo'                ,par:°{duplo:'truncate'}}
-          item {title:'+ tipy na osoby => duplo'        ,par:°{duplo:'+osoby'}}
-          item {title:'+ tranzitivní obal rodin'        ,par:°{duplo:'+rodiny'}}
-          proc onclick (i) {
-            info.fill(conc(i.owner.title,' - ',i.title),' ... probíhá výpočet ...');
-            info.fill('',ask('akce_data_duplo',i.par));
-          }
-        }
+#         menu {title:'Eliminace duplicit',type:'group', _sys:'*', skill:'m'
+#           item {title:'vyprázdnit duplo'                ,par:°{duplo:'truncate'}}
+#           item {title:'+ tipy na osoby => duplo'        ,par:°{duplo:'+osoby'}}
+#           item {title:'+ tranzitivní obal rodin'        ,par:°{duplo:'+rodiny'}}
+#           proc onclick (i) {
+#             info.fill(conc(i.owner.title,' - ',i.title),' ... probíhá výpočet ...');
+#             info.fill('',ask('akce_data_duplo',i.par));
+#           }
+#         }
         menu {title:'Opravy dat',type:'group', _sys:'*'
           item {title:'kontroly databáze'               ,par:°{opravit:0}}
           item {title:'kontroly databáze s opravou'     ,par:°{opravit:1}, skill:'m'}
@@ -74,7 +74,7 @@ menu ys2 { type:'main', active:* //ys.pok
       }
       use info: form right [12,4,,]
     }
-    panel dat {type:'right', title:"Zálohování", _sys:'*', skill:'m', include:'onclick' }
+    panel dat {type:'right', title:"Zálohování", _sys:'*', skill:'m', include:'onclick,ys.syst.dat' }
   }
   tabs doc  {title:"Nápověda", _sys:'nap',  include:'onload,ezer2.help' }
   tabs tst {title:"Testy",skill:'m'
