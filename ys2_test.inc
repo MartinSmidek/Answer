@@ -10,9 +10,9 @@
   global $ezer_path_root;
   $dbs_plus= array(
     array( // ostré
-      'setkani' =>      array(0,'192.168.1.146','gandi','','cp1250')),
+      'setkani' =>      array(0,'192.168.1.146','gandi','','cp1250','setkani',1)), // 1=vynechat zálohování
     array( // lokální
-      'setkani' =>      array(0,'localhost','gandi','','utf8'))
+      'setkani' =>      array(0,'localhost','gandi','','utf8','setkani',1))        // 1=vynechat zálohování
   );
   answer_ini('ys2_test','ezer_ys',$dbs_plus,array("ds/ds_fce.php"));
   // SPECIFICKÉ PARAMETRY
