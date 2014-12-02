@@ -78,6 +78,7 @@ function elim_copy_test_db($db) {  trace();
     if ( $xtab[0]!='*' )
       if ( $ok ) $ok= mysql_qry("INSERT INTO ezer_{$db}_test.$tab SELECT * FROM ezer_{$db}.$tab");
   }
+  ezer_connect("ezer_{$db}");   // jinak zůstane přepnuté na test
   return $ok ? 'ok' : 'ko';
 }
 # ---------------------------------------------------------------------------------- elim_data_osoba
