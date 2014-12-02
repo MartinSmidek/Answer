@@ -1,7 +1,7 @@
 # Systém Ans(w)er pro YMCA Setkání
 # (c) 2008-2010 Martin Šmídek <martin@smidek.eu>
 
-menu ys2 { type:'main', active:* //ys.pok
+menu ys2_test { type:'main', active:* //ys.pok
   var global: text,
 #   tabs info {title:"Archiv", _sys:'inf',  include:'onclick', active:*, skill:'yc' }
 #   tabs pok {title:"Pokladna", _sys:'*',  include:'onclick', active:*, skill:'yp' }
@@ -74,7 +74,7 @@ menu ys2 { type:'main', active:* //ys.pok
       }
       use info: form right [12,4,,]
     }
-    panel dat {type:'right', title:"Zálohování", _sys:'*', skill:'m', include:'onclick' }
+    panel dat {type:'right', title:"Zálohování", _sys:'*', skill:'m', include:'onclick,ys.syst.dat' }
   }
   tabs doc  {title:"Nápověda", _sys:'nap',  include:'onload,ezer2.help' }
   tabs tst {title:"Testy",skill:'m'
