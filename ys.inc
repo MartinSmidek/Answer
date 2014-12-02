@@ -2,11 +2,10 @@
 
   # nastavení systému Ans(w)er před voláním AJAX
   #   $app        = kořenová podsložka aplikace ... ys/ys2/fa/fa2/cr
-  #   $db_name    = hlavní databáze ... bylo-li v URL &test=1 přidá se '_test'
+  #   $answer_db  = logický název hlavní databáze (s případným '_test')
   #   $dbs_plus   = pole s dalšími databázemi ve formátu $dbs
   #   $php_lib    = pole s *.php - pro 'ini'
 
-  global $ezer_path_root;
   require_once("answer.inc");
   $dbs_plus= array(
     array( // ostré

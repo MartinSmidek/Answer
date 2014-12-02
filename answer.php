@@ -29,16 +29,24 @@ function answer_php($app,$app_name,$db_name,$skin,$js_lib,$css_lib,$options) {
   $EZER= (object)array();
 
   // inicializace SESSION
+  session_unset();
   session_start();
   $_SESSION[$app]['GET']= array();
 
-  // ošetření běhu s testovací databází
-  $tabu_db= '';
+//   // ošetření běhu s testovací databází DEPRECATED
+//   $tabu_db= '';
   if ( isset($_GET['test']) && $_GET['test'] ) {
+    die("POZOR: prace s testovaci databazi byla zmenena (Martin vysvetli) ");
+//     $title_style.= 'background-color:#ffffaa';
+//     $app_name.= " ! TEST";
+//     $_SESSION[$app]['GET']['test']= 1;
+//     $tabu_db= $db_name;          // $db_name.= '_test'; v answer_ini
+  }
+
+  // ošetření běhu s testovací databází
+  if ( substr($app,-5)=='_test' ) {
     $title_style.= 'background-color:#ffffaa';
     $app_name.= " ! TEST";
-    $_SESSION[$app]['GET']['test']= 1;
-    $tabu_db= $db_name;          // $db_name.= '_test'; v answer_ini
   }
 
   $title_style= $title_style ? " style='$title_style'" : '';
@@ -93,7 +101,7 @@ function answer_php($app,$app_name,$db_name,$skin,$js_lib,$css_lib,$options) {
   // doplnění Ezer.options a $EZER->options
   $options->awesome=    $awesome;           // zda použít v elementech ikony awesome fontu
   $options->answer_db=  "'$answer_db'";     // hlavní pracovní databáze
-  $options->tabu_db=    "'$tabu_db'";       // zakázaná databáze (ostrá) - hlídá se select na ni
+//   $options->tabu_db=    "'$tabu_db'";       // zakázaná databáze (ostrá) - hlídá se select na ni
 
   $kontakt= " V případě zjištění problému nebo <br/>potřeby konzultace mi prosím napište<br/>
         na mail&nbsp;<a href='mailto:{$EZER->options->mail}{$EZER->options->mail_subject}'>{$EZER->options->mail}</a> "

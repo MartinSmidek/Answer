@@ -3,12 +3,14 @@
 # nastavení systémů Ans(w)er před voláním AJAX
 #
 #   $app        = kořenová podsložka aplikace ... ys/ys2/fa/fa2/cr
-#   $db_name    = hlavní databáze ... bylo-li v URL &test=1 přidá se '_test'
+#   $answer_db  = logický název hlavní databáze
+#   $answer_dbx = fyzický název hlavní databáze (s případným '_test')
 #   $dbs_plus   = pole s dalšími databázemi ve formátu $dbs
 #   $php_lib    = pole s *.php - pro 'ini'
 #
 function answer_ini($app,$answer_db,$dbs_plus,$php_lib) {
   global $EZER,$ezer_local,$ezer_root,$ezer_path_root,$path_backup,$ezer_mysql_path,$path_url,$path_pspad;
+
   $EZER= (object)array();
   $ezer_root= $app;                                             // adresář a hlavní objekt aplikace
 
@@ -23,10 +25,11 @@ function answer_ini($app,$answer_db,$dbs_plus,$php_lib) {
 
   require_once("{$EZER->version}/server/ae_slib.php");
 
+  // ošetření běhu s testovací databází
+  $answer_dbx= substr($app,-5)=='_test' ? "{$answer_db}_test" : $answer_db;
+
   // databáze s první hodnotou pro server a druhou (případně) pro local
   $db= array($answer_db,$answer_db);
-  $answer_dbx= $answer_db
-    . (isset($_SESSION[$ezer_root]['GET']['test']) && $_SESSION[$ezer_root]['GET']['test'] ? '_test' : ''); // hlavní databáze
   $dbs= array(
     array_merge(array( /* ostré */
       $answer_db =>     array(0,'localhost','gandi','r8d0st','utf8',$answer_dbx),

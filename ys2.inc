@@ -1,5 +1,11 @@
 <?php # Systém An(w)er/Ezer/YMCA Setkání, (c) 2008-2014 Martin Šmídek <martin@smidek.eu>
-  global $ezer_path_root;
+
+  # nastavení systému Ans(w)er před voláním AJAX
+  #   $app        = kořenová podsložka aplikace ... ys/ys2/fa/fa2/cr
+  #   $answer_db  = logický název hlavní databáze (s případným '_test')
+  #   $dbs_plus   = pole s dalšími databázemi ve formátu $dbs
+  #   $php_lib    = pole s *.php - pro 'ini'
+
   require_once("answer.inc");
   $dbs_plus= array(
     array( // ostré
