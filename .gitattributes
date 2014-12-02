@@ -311,4 +311,12 @@ ys2/img/ys-logo.gif -text
 ys2/img/ys2.png -text
 ys2/img/ys2_local.png -text
 ys2/img/ys_local.png -text
+/ys2_test.inc -text
+/ys2_test.php -text
+ys2_test/$.ezer -text
+ys2_test/code/comp2tab.php -text
+ys2_test/img/+logo.gif -text
+ys2_test/img/-logo.gif -text
+ys2_test/img/ys2_test.png -text
+ys2_test/img/ys2_test_local.png -text
 /zaloha.php -text
