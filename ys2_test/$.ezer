@@ -52,6 +52,17 @@ menu ys2 { type:'main', active:* //ys.pok
             info.fill('',ask('akce_kontrola_dat',i.par));
           }
         }
+        menu {title:'Transformace 2014',type:'group', _sys:'*'
+          item {title:'pobyt: i0_rodina'                ,par:°{cmd:'i0_rodina'} }
+          item {title:'pobyt: pouze'                    ,par:°{cmd:'pouze'} }
+          item {title:'spolu: pečované,pečující'        ,par:°{cmd:'osobni_pece'}, format:'d' }
+          proc onclick (i) {
+            info.fill(conc(i.owner.title,' - ',i.title),' ');
+            confirm("spustit transformaci databáze?");
+            info.fill('',' ... probíhá transformace dat ...');
+            info.fill('',ask('data_transform',i.par));
+          }
+        }
 #         menu {title:'Importy ...',type:'group', _sys:'*'
 #           item {title:'přehled dat',                          par:°{cmd:'survey'}, skill:'m' }
 #           item {title:'import pečovatelů MS',                 par:°{cmd:'MS-pec'}, skill:'m' }
