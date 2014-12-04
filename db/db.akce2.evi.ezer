@@ -96,7 +96,7 @@ form _lst [,,370,*] {
     form.display(2,_mode);
     eq(_mode,'x'); idx.set(_ido); [_ido; bx.init_queries ]; [ bx_reload(_cnd) ]
   | eq(_mode,'y'); idy.set(_idr); [_idr; by.init_queries ]; [ by_reload(_cnd) ]
-  | eq(_mode,'z'); idz.set(_idr); [_idr; bz.init_queries ]; [ bz_reload(_cnd) ]
+  | eq(_mode,'z'); idz.set(_ido); [_ido; bz.init_queries ]; [ bz_reload(_cnd) ]
   | eq(_mode,'o'); ido.set(_ido); [_ido; bo.init_queries ]; [ bo_reload(_cnd) ]
   | eq(_mode,'h'); idh.set(_ido); [_ido; bh.init_queries ]; [ bh_reload(_cnd) ]
   | eq(_mode,'r'); idr.set(_idr); [_idr; br.init_queries ]; br_reload(_cnd) }
@@ -218,7 +218,8 @@ form _lst [,,370,*] {
   var bz_cnd=1
   proc bz_reload(cnd) {
     bz_cnd.set(cnd);
-    bz.browse_load(conc(cnd,' AND ISNULL(klic)'),'',"_pocet>1")
+    idz.get; bz.browse_seek(conc("id_osoba=",idz.get)); bz.onrowclick;
+  | bz.browse_load(conc(cnd,' AND ISNULL(klic)'),'',"_pocet>1")
   }
   view z: table osoba
   view zt: table _track { join_type:"LEFT", join:"ON klic=z.id_osoba AND op='r' AND kde='osoba'" }
@@ -243,7 +244,8 @@ form _lst [,,370,*] {
   var by_cnd=1
   proc by_reload(cnd) {
     by_cnd.set(cnd);
-    by.browse_load(conc(cnd,' AND ISNULL(klic)'),'',"_pocet>1")
+    idy.get; by.browse_seek(conc("id_osoba=",idy.get)); by.onrowclick;
+  | by.browse_load(conc(cnd,' AND ISNULL(klic)'),'',"_pocet>1")
   }
   view y: table rodina
   view yt: table _track { join_type:"LEFT", join:"ON klic=y.id_rodina AND op='r' AND kde='rodina'" }
