@@ -224,8 +224,10 @@ form _osoby [,,Wr,Hr] {
     rs.browse_load(conc("id_osoba=",ido," AND ",smazane_r.get));
   }
   proc show_osoba() {
-    oso.enable(oso.kontakt.get,'k'); [ oso.kontakt.get | oso.kontakt_r.set(oso.kmen.get) ];
-    oso.enable(oso.adresa.get,'b');  [ oso.adresa.get  | oso.adresa_r.set(oso.kmen.get) ];
+    oso.enable(oso.kontakt.get,'k');
+    [ oso.kontakt.get; oso.kontakt_r.set('') | oso.kontakt_r.set(oso.kmen.get) ];
+    oso.enable(oso.adresa.get,'b');
+    [ oso.adresa.get; oso.adresa_r.set('')   | oso.adresa_r.set(oso.kmen.get) ];
   }
   # --------------------------------------------------  seznam osob
   label [0,15,229,165] { tag:'r3', css:'ae_parm' }
