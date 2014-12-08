@@ -22,6 +22,304 @@ function data_mrop_save($par,$save=0) {
   }
   return $txt;
 }
+# ======================================================================================= STATISTIKA
+# ----------------------------------------------------------------------------------- sta_ukaz_osobu
+# zobrazí odkaz na osobu v evidenci
+function sta_ukaz_osobu($ido,$barva='') {
+  $style= $barva ? "style='color:$barva'" : '';
+  return "<b><a $style href='ezer://db2.evi.evid_osoba/$ido'>$ido</a></b>";
+}
+# -------------------------------------------------------------------------------------- sta_sestava
+# sestavy pro evidenci
+function sta_sestava($title,$par,$export=false) {
+//                                                 debug($par,"sta_sestava($title,...,$export)");
+  $ret= (object)array('html'=>'','err'=>0);
+  // dekódování parametrů
+  $tits= explode(',',$par->tit);
+  $flds= explode(',',$par->fld);
+  $clmn= array();
+  $expr= array();       // pro výrazy
+  // získání dat
+  switch ($par->typ) {
+  # Sestava ukazuje celkový počet účastníků resp. pečovatelů na akcích letošního roku,
+  # rozdělený podle věku. Účastník resp. pečovatel je započítán jen jednou,
+  # bez ohledu na počet akcí, jichž se zúčastnil
+  case 'ucast-vek':
+    $rok= date('Y')-$par->rok;
+    $rx= mysql_qry("
+      SELECT YEAR(a.datum_od)-YEAR(o.narozeni) AS _vek,MAX(p.funkce) AS _fce
+      FROM osoba AS o
+      JOIN spolu AS s USING(id_osoba)
+      JOIN pobyt AS p USING (id_pobyt)
+      JOIN akce  AS a ON id_akce=id_duakce
+      WHERE o.deleted='' AND YEAR(datum_od)=$rok
+      GROUP BY o.id_osoba
+      ORDER BY $par->ord
+      ");
+    while ( $rx && ($x= mysql_fetch_object($rx)) ) {
+      $vek= $x->_vek==$rok ? '?' : $x->_vek;    // ošetření nedefinovaného data narození
+      if ( !isset($clmn[$vek]) ) $clmn[$vek]= array('_vek'=>$vek,'_uca'=>0,'_pec'=>0);
+      if ( $x->_fce==99 )
+        $clmn[$vek]['_pec']++;
+      else
+        $clmn[$vek]['_uca']++;
+    }
+    break;
+  # Seznam obsahuje účastníky akcí v posledních letech (parametr 'parm' určuje počet let zpět) —
+  case 'adresy':
+    $rok= date('Y')-$par->rok;
+    // úprava title pro případný export do xlsx
+    $par->title= $title.($par->rok ? " akcí za poslední ".($par->rok+1)." roky" : " letošních akcí");
+    $idr0= -1; $ido= 0;
+    $jmena= $prijmeni= $akce= array();
+    $adresa= '';
+    // funkce pro přidání nové adresy do clmn: prijmeni,jmena,ulice,psc,obec,stat,akce
+    $add_address= function() use (&$clmn,&$jmena,&$prijmeni,&$adresa,&$akce,&$ido) {
+      list($pr,$ul,$ps,$ob,$st)= explode('—',$adresa);
+      if ( count($jmena)==1 ) {                 // nahrazení názvu příjmením u jediného člena
+        $jm= "$jmena[0] $prijmeni[0]";
+      }
+      elseif ( preg_match("/\w[\s\-]\w/",$pr) ) { // rodina s různým příjmením
+        $jm= ''; $del= '';
+        for ($i= 0; $i<count($jmena); $i++) {
+          $jm.= "$del $jmena[$i] $prijmeni[$i]";
+          $del= ' a ';
+        }
+      }
+      else {
+        $jm= implode(' a ',$jmena)." $pr";
+      }
+      $ak= implode(' a ',$akce);
+      $clmn[]= array('jmena'=>$jm,'ulice'=>$ul,'psc'=>$ps,'obec'=>$ob,'stat'=>$st,
+                     'akce'=>$ak,'prijmeni'=>$pr,'id_osoba'=>$ido);
+    };
+    $rx= mysql_qry("
+      SELECT
+        IFNULL(IF(adresa=0,SUBSTR(MIN(CONCAT(t.role,r.nazev,'—')),2),prijmeni),prijmeni) AS _order,
+        IFNULL(IF(adresa=0,SUBSTR(MIN(CONCAT(t.role,id_rodina)),2),0),0) AS _idr,
+        IFNULL(IF(adresa=0,MIN(t.role),'-'),'-') AS _role,
+        IFNULL(IF(adresa=0,SUBSTR(MIN(
+          CONCAT(t.role,r.nazev,'—',r.ulice,'—',r.psc,'—',r.obec,'—',r.stat)),2),''),'') AS _rodina,
+        id_osoba,prijmeni,jmeno,adresa,
+        MAX(CONCAT(YEAR(datum_od),' - ',a.nazev)) as _akce,
+        IF(ISNULL(id_rodina) OR adresa=1,CONCAT(o.ulice,'—',o.psc,'—',o.obec,'—',o.stat),'') AS _osoba
+      FROM osoba AS o
+        LEFT JOIN tvori AS t USING(id_osoba)
+        LEFT JOIN rodina AS r USING (id_rodina)
+        JOIN spolu AS s USING(id_osoba)
+        JOIN pobyt AS p USING (id_pobyt)
+        JOIN akce  AS a ON id_akce=id_duakce
+      WHERE o.deleted=''
+        -- AND YEAR(datum_od)>=$rok AND spec=0
+        AND o.id_osoba IN(4537,13,14,3751)
+         -- AND o.id_osoba IN(4503,4504,4507,679,680,3612,4531,4532,206,207)
+         -- AND id_duakce=394
+      GROUP BY o.id_osoba
+      ORDER BY _order
+      -- LIMIT 10
+      ");
+    while ( $rx && ($x= mysql_fetch_object($rx)) ) {
+      $idr= $x->_idr;
+      if ( $idr0 && $idr0==$idr ) {
+        // zůstává rodina a tedy stejná adresa - jen zapamatuj další jméno, příjmení a akci
+        $jmena[]= $x->jmeno;
+        $prijmeni[]= $x->prijmeni;
+        $akce[]= $x->_akce;
+      }
+      else {
+        // uložíme rodinu
+        if ( $idr0!=-1 ) $add_address();
+        // inicializace údajů další rodiny
+        $ido= $x->id_osoba;
+        $jmena= array($x->jmeno);
+        $prijmeni= array($x->prijmeni);
+        $akce= array($x->_akce);
+        $adresa= $x->_osoba ? "{$x->prijmeni}—$x->_osoba" : $x->_rodina;
+        $idr0= $idr;
+      }
+    }
+    $add_address();
+    break;
+  }
+end:
+  if ( $ret->err )
+    return $ret;
+  else
+    return sta_table($tits,$flds,$clmn,$export);
+}
+# ---------------------------------------------------- sta_excel_subst
+function sta_sestava_adresy_fill($matches) { trace();
+  global $xA, $xn;
+//                                                 debug($xA);
+//                                                 debug($matches);
+  if ( !isset($xA[$matches[1]]) ) fce_error("sta_excel_subst: chybný název sloupce '{$matches[1]}'");
+  $A= $xA[$matches[1]];
+  $n= $xn+$matches[2];
+  return "$A$n";
+}
+# ---------------------------------------------------------------------------------------- sta_table
+function sta_table($tits,$flds,$clmn,$export=false) {
+  $ret= (object)array();
+  // zobrazení tabulkou
+  $tab= '';
+  $thd= '';
+  $n= 0;
+  if ( $export ) {
+    $ret->tits= $tits;
+    $ret->flds= $flds;
+    $ret->clmn= $clmn;
+  }
+  else {
+    // titulky
+    foreach ($tits as $idw) {
+      list($id)= explode(':',$idw);
+      $ths.= "<th>$id</th>";
+    }
+    foreach ($clmn as $i=>$c) {
+      $tab.= "<tr>";
+      foreach ($flds as $f) {
+        if ( $f=='id_osoba' ) {
+          $tab.= "<td style='text-align:right'>".sta_ukaz_osobu($c[$f])."</td>";
+        }
+        else {
+          $tab.= "<td style='text-align:left'>{$c[$f]}</td>";
+        }
+      }
+      $tab.= "</tr>";
+      $n++;
+    }
+    $ret->html= "<div class='stat'><table class='stat'><tr>$ths</tr>$tab</table>$n řádků</div>";
+  }
+  return $ret;
+}
+# obsluha různých forem výpisů karet AKCE
+# ---------------------------------------------------------------------------------------- sta_excel
+# generování tabulky do excelu
+function sta_excel($title,$par,$tab=null) {  trace();
+  global $xA, $xn;
+  $result= (object)array('_error'=>0);
+  $html= '';
+  // získání dat
+  $title= str_replace('&nbsp;',' ',$title);
+  $subtitle= "ke dni ".date("j. n. Y");
+  if ( !$tab ) {
+    $tab= sta_sestava($title,$par,true);
+    $title= $par->title ?: $title;
+  }
+  // vlastní export do Excelu
+  $name= cz2ascii("vypis_").date("Ymd_Hi");
+  $xls= <<<__XLS
+    |open $name
+    |sheet vypis;;L;page
+    |A1 $title ::bold size=14 |A2 $subtitle ::bold size=12
+__XLS;
+  // titulky a sběr formátů
+  $fmt= $sum= array();
+  $n= 4;
+  $lc= 0;
+  $clmns= $del= '';
+  $xA= array();                                 // překladová tabulka: název sloupce => písmeno
+  if ( $tab->flds ) foreach ($tab->flds as $f) {
+    $A= Excel5_n2col($lc);
+    $xA[$f]= $A;
+    $lc++;
+  }
+  $lc= 0;
+  if ( $tab->tits ) foreach ($tab->tits as $idw) {
+    $A= Excel5_n2col($lc);
+    list($id,$w,$f,$s)= explode(':',$idw);      // název sloupce : šířka : formát : suma
+    if ( $f ) $fmt[$A]= $f;
+    if ( $s ) $sum[$A]= true;
+    $xls.= "|$A$n $id";
+    if ( $w ) {
+      $clmns.= "$del$A=$w";
+      $del= ',';
+    }
+    $lc++;
+  }
+  if ( $clmns ) $xls.= "\n|columns $clmns ";
+  $xls.= "\n|A$n:$A$n bcolor=ffffbb00 wrap border=+h|A$n:$A$n border=t\n";
+  $n1= $n= 5;                                   // první řádek dat (pro sumy)
+  // datové řádky
+  if ( $tab->clmn ) foreach ($tab->clmn as $i=>$c) {
+    $xls.= "\n";
+    $lc= 0;
+    foreach ($c as $id=>$val) {
+      $A= Excel5_n2col($lc);
+      $format= '';
+      if (isset($tab->expr[$i][$id]) ) {
+        // buňka obsahuje vzorec
+        $val= $tab->expr[$i][$id];
+        $format.= ' bcolor=ffdddddd';
+        $xn= $n;
+        $val= preg_replace_callback("/\[([^,]*),([^\]]*)\]/","sta_excel_subst",$val);
+      }
+      else {
+        // buňka obsahuje hodnotu
+        $val= strtr($val,"\n\r","  ");
+        if ( isset($fmt[$A]) ) {
+          switch ($fmt[$A]) {
+          // aplikace formátů
+          case 'd': $val= sql2xls($val); $format.= ' right date'; break;
+          }
+        }
+      }
+      $format= $format ? "::$format" : '';
+      $xls.= "|$A$n $val $format";
+      $lc++;
+    }
+    $n++;
+  }
+  $n--;
+  $xls.= "\n|A$n1:$A$n border=+h|A$n1:$A$n border=t";
+  // sumy sloupců
+  if ( count($sum) ) {
+    $xls.= "\n";
+    $nn= $n;
+    $ns= $n+2;
+    foreach ($sum as $A=>$x) {
+      $xls.= "|$A$ns =SUM($A$n1:$A$nn) :: bcolor=ffdddddd";
+    }
+  }
+  // konec
+  $xls.= <<<__XLS
+    \n|close
+__XLS;
+  // výstup
+  $inf= Excel2007($xls,1);
+  if ( $inf ) {
+    $html= " se nepodařilo vygenerovat - viz začátek chybové hlášky";
+    fce_error($inf);
+  }
+  else {
+    $html= " Výpis byl vygenerován ve formátu <a href='docs/$name.xlsx' target='xlsx'>Excel</a>.";
+  }
+  $result->html= $html;
+  return $result;
+}
+# ---------------------------------------------------- sta_excel_subst
+function sta_excel_subst($matches) { trace();
+  global $xA, $xn;
+//                                                 debug($xA);
+//                                                 debug($matches);
+  if ( !isset($xA[$matches[1]]) ) fce_error("sta_excel_subst: chybný název sloupce '{$matches[1]}'");
+  $A= $xA[$matches[1]];
+  $n= $xn+$matches[2];
+  return "$A$n";
+}
+// # ---------------------------------------------------- sql2xls
+// // datum bez dne v týdnu
+// function sql2xls($datum) {
+//   // převeď sql tvar na uživatelskou podobu (default)
+//   $text= ''; $del= '.';
+//   if ( $datum && substr($datum,0,10)!='0000-00-00' ) {
+//     $y=substr($datum,0,4);
+//     $m=substr($datum,5,2);
+//     $d=substr($datum,8,2);
+//     $text.= date("j{$del}n{$del}Y",strtotime($datum));
+//   }
+//   return $text;
+// }
 # ========================================================================================= EVIDENCE
 # --------------------------------------------------------------------------------------- elim_rodne
 function elim_rodne() {

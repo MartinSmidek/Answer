@@ -86,6 +86,7 @@ panel mai {type:'right', title:'MAILY', _sys:'*', include:'onclick,db.akce2.mai'
 # panel eli {type:'right', _sys:'*'
 #   title:'&nbsp;.&nbsp;&nbsp;.&nbsp;&nbsp;.&nbsp;&nbsp;.&nbsp;&nbsp;.&nbsp;&nbsp;.&nbsp;&nbsp;.&nbsp;&nbsp;.&nbsp;&nbsp;.&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(duplicity)',
 #   include:'onclick,db.akce.eli', skill:'m;fad' }
+panel sta {type:'right', title:'Výpisy evidence', _sys:'*', include:'onclick,db.akce2.sta', skill:'yaa;faa;cas'  }
 
 # =========================================================================================== COMMON
 # ------------------------------------------------------------------ _the_akce
@@ -101,11 +102,12 @@ form _the_akce {
 form right [,,*,50] {
   label head [0,0,*,50]  { title:'' }
   label msg  [0,35,*,20] { title:'' }
-  label note [50,57,,550] { title:'' }
+  label note [0,57,,550] { title:'' }
   proc fill(x,y) {
     [ x; head.set(conc("<div class='karta'>",x,"</div>")) ];
     [ y; note.set(y) ]
   }
+  proc append(x) { note.get; note.set(conc(note.get,'<br>',x)) | note.set(x) }
 }
 # ------------------------------------------------------------------ obecné tabulky
 table _file_ {
