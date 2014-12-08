@@ -608,11 +608,11 @@ form _osoba2x [,,244,322] {css:'ae_frame', proc onclick() { on_click }
     [ contains('K',osoba_config.grp.get); { or(mode.get,kontakt.get);
       tags.set(conc(tags,',j,k')); kontakt_r.set('');
       [ mode.get; form.enable(kontakt.get,'j|k') ]
-    | tags.set(conc(tags,',j,J')); kontakt_r.set(kmen.get) }];
+    | tags.set(conc(tags,',j,J')); kontakt_r.set(conc(kmen.get,'/',id_kmen.get)) }];
     [ contains('A',osoba_config.grp.get); { or(mode.get,adresa.get);
       tags.set(conc(tags,',a,b')); adresa_r.set('');
       [ mode.get; form.enable(adresa.get,'a|b') ]
-    | tags.set(conc(tags,',a,A')); adresa_r.set(kmen.get) }];
+    | tags.set(conc(tags,',a,A')); adresa_r.set(conc(kmen.get,'/',id_kmen.get)) }];
     [ or(even,key_spolu.get);
       [ contains('O',osoba_config.grp.get); tags.set(conc(tags,',o')) ];
       [ contains('C',osoba_config.grp.get); tags.set(conc(tags,',c')) ];
@@ -632,8 +632,10 @@ form _osoba2x [,,244,322] {css:'ae_frame', proc onclick() { on_click }
   field key_osoba [186,0,50,] {tag:'f', format:'or', css:'Label', help:' ', data:o.id_osoba }
   field key_tvori [186,10,50,] {tag:'f', format:'or', css:'Label', help:' ' }
   field key_spolu
-  field kmen  { expr:"IFNULL(SUBSTR((SELECT MIN(CONCAT(role,nazev))
-                      FROM tvori AS ot JOIN rodina AS r USING (id_rodina) WHERE ot.id_osoba=o.id_osoba),2),'-')" }
+  field kmen    { expr:"IFNULL(SUBSTR((SELECT MIN(CONCAT(role,nazev))
+                        FROM tvori AS ot JOIN rodina AS r USING (id_rodina) WHERE ot.id_osoba=o.id_osoba),2),'-')" }
+  field id_kmen { expr:"IFNULL(SUBSTR((SELECT MIN(CONCAT(role,id_rodina))
+                        FROM tvori AS ot JOIN rodina AS r USING (id_rodina) WHERE ot.id_osoba=o.id_osoba),2),'-')" }
   field deleted { expr:"LEFT(o.deleted,1)='D'" }
 
   menu detail { type:'context'
@@ -658,7 +660,7 @@ form _osoba2x [,,244,322] {css:'ae_frame', proc onclick() { on_click }
 
   // j,k = kontakt - rodinný=0, osobní=1
   label [5,3,50,] {tag:'j', title:'kontakt je' }
-  radio kontakt [50,0,120,18] {tag:'j', format:'n', value:'0', data:o.kontakt
+  radio kontakt [50,0,185,18] {tag:'j', format:'n', value:'0', data:o.kontakt
     case [0,0,70,] { title:'osobní', expr:'1' }
     case [56,0,70,] { title:'rodinný:', expr:'0' }
     proc onchange() { show_osoba(0) }
@@ -676,7 +678,7 @@ form _osoba2x [,,244,322] {css:'ae_frame', proc onclick() { on_click }
 
   // a,b = adresa - rodinná=0, osobní=1.
   label [5,3,50,12] {tag:'a', title:'adresa je' }
-  radio adresa [50,0,120,18] {tag:'a', format:'n', value:'0', data:o.adresa
+  radio adresa [50,0,185,18] {tag:'a', format:'n', value:'0', data:o.adresa
     case [0,0,70,] { title:'osobní', expr:'1' }
     case [56,0,70,] { title:'rodinná:', expr:'0' }
     proc onchange() { show_osoba(0) }

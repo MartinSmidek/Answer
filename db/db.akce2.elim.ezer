@@ -216,7 +216,7 @@ form _osoby [,,Wr,Hr] {
   proc bs_load(ido) { var ret: object
     oso.set_helps(0,'zluty','oranzovy');
     ret.set(ask('elim_data_osoba',ido));
-    oso.load(ido); oso.kmen.set(ret.kmen); show_osoba;
+    oso.load(ido); oso.kmen.set(ret.kmen); oso.id_kmen.set(ret.id_kmen); show_osoba;
     [ ret.id_kmen; kmen.load(ret.id_kmen) | kmen.init ];
     last_akce.set(sql2date(ret.last_akce,'.'));
     last_chng.set(sql2date(ret.last_chng,'.'));
@@ -225,9 +225,11 @@ form _osoby [,,Wr,Hr] {
   }
   proc show_osoba() {
     oso.enable(oso.kontakt.get,'k');
-    [ oso.kontakt.get; oso.kontakt_r.set('') | oso.kontakt_r.set(oso.kmen.get) ];
+    [ oso.kontakt.get; oso.kontakt_r.set('')
+    | oso.kontakt_r.set(conc(oso.kmen.get,'/',oso.id_kmen.get)) ];
     oso.enable(oso.adresa.get,'b');
-    [ oso.adresa.get; oso.adresa_r.set('')   | oso.adresa_r.set(oso.kmen.get) ];
+    [ oso.adresa.get; oso.adresa_r.set('')
+    | oso.adresa_r.set(conc(oso.kmen.get,'/',oso.id_kmen.get)) ];
   }
   # --------------------------------------------------  seznam osob
   label [0,15,229,165] { tag:'r3', css:'ae_parm' }
