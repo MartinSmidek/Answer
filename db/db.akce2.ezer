@@ -78,8 +78,8 @@ panel evi {type:'right', _sys:'*', title:'EVIDENCE2', include:'onload,db.akce2.e
     style:"overflow-y:hidden"
   proc rodina_show() {}
   proc osoby_show() {}
-  proc evid_osoba(_ido) { }
-  proc evid_rodina(_idr) { }
+  proc evid_osoba(_ido) { }                     // zobrazení osoby v evidenci
+  proc evid_rodina(_idr) { }                    // zobrazení rodiny v evidenci
 }
 # panel dup {type:'right', _sys:'*', title:'(duplicity)', include:'onclick,db.akce.dup', skill:'m+' }
 panel mai {type:'right', title:'MAILY', _sys:'*', include:'onclick,db.akce2.mai', skill:'yam;fam;cam'  }

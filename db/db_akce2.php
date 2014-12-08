@@ -123,7 +123,7 @@ function sta_ukaz_osobu($ido,$barva='') {
 # -------------------------------------------------------------------------------------- sta_sestava
 # sestavy pro evidenci
 function sta_sestava($title,$par,$export=false) {
-//                                                 debug($par,"sta_sestava($title,...,$export)");
+                                                debug($par,"sta_sestava($title,...,$export)");
   $ret= (object)array('html'=>'','err'=>0);
   // dekódování parametrů
   $tits= explode(',',$par->tit);
@@ -158,31 +158,38 @@ function sta_sestava($title,$par,$export=false) {
     break;
   # Seznam obsahuje účastníky akcí v posledních letech (parametr 'parm' určuje počet let zpět) —
   case 'adresy':
-    $rok= date('Y')-$par->rok;
+    $rok= date('Y') - $par->parm;
+    $rok18= date('Y')-18;
     // úprava title pro případný export do xlsx
     $par->title= $title.($par->rok ? " akcí za poslední ".($par->rok+1)." roky" : " letošních akcí");
     $idr0= -1; $ido= 0;
-    $jmena= $prijmeni= $akce= array();
+    $jmena= $role= $prijmeni= $akce= array();
     $adresa= '';
-    // funkce pro přidání nové adresy do clmn: prijmeni,jmena,ulice,psc,obec,stat,akce
-    $add_address= function() use (&$clmn,&$jmena,&$prijmeni,&$adresa,&$akce,&$ido) {
+    // funkce pro přidání nové adresy do clmn: jmena,ulice,psc,obec,stat,akce,prijmeni,_clenu,id_osoba
+    $add_address= function() use (&$clmn,&$jmena,&$role,&$prijmeni,&$adresa,&$akce,&$ido) {
       list($pr,$ul,$ps,$ob,$st)= explode('—',$adresa);
-      if ( count($jmena)==1 ) {                 // nahrazení názvu příjmením u jediného člena
+      $cl= count($jmena);
+      if ( $cl==1 ) {                             // nahrazení názvu příjmením u jediného člena
         $jm= "$jmena[0] $prijmeni[0]";
       }
-      elseif ( preg_match("/\w[\s\-]\w/",$pr) ) { // rodina s různým příjmením
-        $jm= ''; $del= '';
+      else {                                      // klasická rodina
+        $xy= preg_match("/\w+[\s\-]+\w+/u",$pr);   //   a rodina s různým příjmením
+                                                display("$pr = $xy");
+        $jm= $pr1= $del= ''; $n= 0;
         for ($i= 0; $i<count($jmena); $i++) {
-          $jm.= "$del $jmena[$i] $prijmeni[$i]";
-          $del= ' a ';
+          if ( $role[$i]=='a' || $role[$i]=='b' ) {
+            $n++;
+            $pr1= $prijmeni[$i];
+            $jm.= "$del $jmena[$i]".($xy ? " $prijmeni[$i]" : '');
+            $del= ' a ';
+          }
         }
+        $jm.= $n==1 ? " $pr1" : ($xy ? '' : " $pr");
       }
-      else {
-        $jm= implode(' a ',$jmena)." $pr";
-      }
+      $jc= implode(', ',$jmena);
       $ak= implode(' a ',$akce);
       $clmn[]= array('jmena'=>$jm,'ulice'=>$ul,'psc'=>$ps,'obec'=>$ob,'stat'=>$st,
-                     'akce'=>$ak,'prijmeni'=>$pr,'id_osoba'=>$ido);
+                     'prijmeni'=>$pr,'_cleni'=>$jc,'akce'=>$ak,'_clenu'=>$cl,'id_osoba'=>$ido);
     };
     $rx= mysql_qry("
       SELECT
@@ -199,13 +206,14 @@ function sta_sestava($title,$par,$export=false) {
         LEFT JOIN rodina AS r USING (id_rodina)
         JOIN spolu AS s USING(id_osoba)
         JOIN pobyt AS p USING (id_pobyt)
-        JOIN akce  AS a ON id_akce=id_duakce
-      WHERE o.deleted=''
-        -- AND YEAR(datum_od)>=$rok AND spec=0
-        AND o.id_osoba IN(4537,13,14,3751)
-         -- AND o.id_osoba IN(4503,4504,4507,679,680,3612,4531,4532,206,207)
-         -- AND id_duakce=394
-      GROUP BY o.id_osoba
+        JOIN akce  AS a ON id_akce=id_duakce AND spec=0
+      WHERE o.deleted='' AND YEAR(narozeni)<$rok18
+        AND YEAR(datum_od)>=$rok AND spec=0
+        -- AND o.id_osoba IN(3726,3727,5210)
+        -- AND o.id_osoba IN(4537,13,14,3751)
+        -- AND o.id_osoba IN(4503,4504,4507,679,680,3612,4531,4532,206,207)
+        -- AND id_duakce=394
+      GROUP BY o.id_osoba HAVING _role!='p'
       ORDER BY _order
       -- LIMIT 10
       ");
@@ -214,6 +222,7 @@ function sta_sestava($title,$par,$export=false) {
       if ( $idr0 && $idr0==$idr ) {
         // zůstává rodina a tedy stejná adresa - jen zapamatuj další jméno, příjmení a akci
         $jmena[]= $x->jmeno;
+        $role[]= $x->_role;
         $prijmeni[]= $x->prijmeni;
         $akce[]= $x->_akce;
       }
@@ -223,6 +232,7 @@ function sta_sestava($title,$par,$export=false) {
         // inicializace údajů další rodiny
         $ido= $x->id_osoba;
         $jmena= array($x->jmeno);
+        $role= array($x->_role);
         $prijmeni= array($x->prijmeni);
         $akce= array($x->_akce);
         $adresa= $x->_osoba ? "{$x->prijmeni}—$x->_osoba" : $x->_rodina;
@@ -279,7 +289,7 @@ function sta_table($tits,$flds,$clmn,$export=false) {
       $tab.= "</tr>";
       $n++;
     }
-    $ret->html= "<div class='stat'><table class='stat'><tr>$ths</tr>$tab</table>$n řádků</div>";
+    $ret->html= "Seznam má $n řádků<br><br><div class='stat'><table class='stat'><tr>$ths</tr>$tab</table></div>";
   }
   return $ret;
 }

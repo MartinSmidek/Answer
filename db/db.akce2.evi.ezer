@@ -10,8 +10,8 @@
 
 proc evid_load(ido,idr) { page.evid_load(ido,idr) }
 
-proc evid_osoba(_ido)  { panel.focus; m.o.a.click(0,1); lst.load_osoba(_ido) }
-proc evid_rodina(_idr) { panel.focus; m.r.a.click(0,1); lst.load_rodina(_idr) }
+proc evid_osoba(_ido)  { panel.focus; m.o.a.click(0,1); lst.seek_osoba(_ido,m.o.a.par) }
+proc evid_rodina(_idr) { panel.focus; m.r.a.click(0,1); lst.seek_rodina(_idr,m.o.a.par) }
 
 proc osoby_show()       { page.oso.show_osoba(1); }     // obnova údajů o osobě  (z konfigurace)
 proc rodina_show()      { page.rod.show_rodina; }       // obnova údajů o rodině (z konfigurace)
@@ -114,6 +114,20 @@ form _lst [,,370,*] {
   | eq(mode.get,'o'); [ bo_reload(cnd.get) ]
   | eq(mode.get,'h'); [ bh_reload(cnd.get) ]
   | eq(mode.get,'r'); [ br_reload(cnd.get) ]
+  }
+  proc seek_osoba(_ido,par) {                   // zviditelní seznam všech osob a zobrazí osobu
+    [ virgin.get; start ];
+    tit.set(par.tit); [ eq(mode.get,'o') | mode.set('o');form.display(2,'o') ];
+    bo_cnd.set(1); bo_filtr.set(1); bo_having.set(1); o_vyber.key(1);
+    bo.init_queries(0); ido.set(_ido);
+    bo.browse_seek(conc("id_osoba=",_ido),1,1); page.evid_load(_ido,0);
+  }
+  proc seek_rodina(_idr,par) {                  // zviditelní seznam všech osob a zobrazí osobu
+    [ virgin.get; start ];
+    tit.set(par.tit); [ eq(mode.get,'r') | mode.set('r');form.display(2,'r') ];
+    br_cnd.set(1); br_filtr.set(1); br_having.set(1); r_vyber.key(1);
+    br.init_queries(0); idr.set(_idr);
+    br.browse_seek(conc("id_rodina=",_idr),1,1); page.evid_load(0,_idr);
   }
   # ---------------------------------------------- stav a inicializace
   var virgin=1
@@ -275,7 +289,7 @@ form _lst [,,370,*] {
   proc bo_reload(cnd) {
     [ virgin.get; start ];
     bo_cnd.set(cnd);
-    ido.get; [ bo.browse_seek(conc("id_osoba=",ido.get)); bo.onrowclick ]
+    ido.get; [ bo.browse_seek(conc("id_osoba=",ido.get)); /*bo.onrowclick*/ ]
   | bo.browse_load(conc(cnd," AND ",bo_filtr.get),'',bo_having.get);
   | page.page_init
   }
@@ -301,16 +315,22 @@ form _lst [,,370,*] {
     show [,,60,] { title:'obec', data:o.obec, format:'q*s' }
     show nar [,,50,] { title:'rrmmdd', data:o.narozeni, sql_pipe:'sql_yymmdd', format:'q@s'
       help:'datum narození ve tvaru rrmmdd'}
-    show _vek [,,20,] { title:"věk", expr:"TIMESTAMPDIFF(YEAR,narozeni,NOW())", format:'s' }
-    show mail [,,44,] { data:o.email, title:'emaily',help:'osobní emaily', format:'tq%s' }
+    show _vek [,,20,] { title:"věk", expr:"TIMESTAMPDIFF(YEAR,narozeni,NOW())", format:'rsq*' }
+    // volitelná položka
+    show mail  [,,44,] { data:o.email, title:'emaily',help:'osobní emaily', format:'tq%s' }
+    show _id_o [,,0,] { data:o.id_osoba, title:'ID osoby',help:'osobní číslo', format:'rq*s' }
     proc onrowclick() { ido.set(id_o.get); page.evid_load(ido.get,0); }
+    proc onclick() {
+      mail.width; mail.width(0);  _id_o.width(44)
+    |             mail.width(44); _id_o.width(0)
+    }
   }
   # ============================================== R - RODINY
   var br_cnd=1, br_filtr= 1, br_having= 1
   proc br_reload(cnd) {
     [ virgin.get; start ];
     br_cnd.set(cnd);
-    idr.get; [ br.browse_seek(conc("id_rodina=",idr.get)); bo.onrowclick ]
+    idr.get; [ br.browse_seek(conc("id_rodina=",idr.get)); br.onrowclick ]
   | br.browse_load(conc(cnd," AND ",br_filtr.get),'',br_having.get);
   }
   select r_vyber [163,5,189,] {tag:'r', type:'map'
@@ -333,8 +353,14 @@ form _lst [,,370,*] {
     show nazev [,,70,] { data:r.nazev, title:'rodina', format:'q*s+' }
     show jmena [,,130,] { expr:"GROUP_CONCAT(rto.jmeno ORDER BY rt.role)", title:'jména', format:'tq%s' }
     show [,,50,] { title:'obec', data:r.obec, format:'q*s' }
+    // volitelná položka
     show maily [,,66,] { data:r.emaily, title:'emaily', help:'rodinné emaily', format:'tq%s' }
+    show _id_r [,,0,] { data:r.id_rodina, title:'ID rodiny',help:'číslo rodiny', format:'rq*s' }
     proc onrowclick() {  idr.set(id_r.get); page.evid_load(0,idr.get); }
+    proc onclick() {
+      maily.width; maily.width(0);  _id_r.width(66)
+    |              maily.width(66); _id_r.width(0)
+    }
   }
 }
 # ============================================================================================ _page
