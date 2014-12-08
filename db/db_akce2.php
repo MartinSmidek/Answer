@@ -22,6 +22,97 @@ function data_mrop_save($par,$save=0) {
   }
   return $txt;
 }
+# ======================================================================================== ELIMINACE
+# --------------------------------------------------------------------------------------- eli_single
+# je voláno po kladné odpovědi na otázku položenou fcí eli_osoba - vstupem jej její výstup
+function eli_single($ret) { trace();
+  global $USER;
+  $now= date("Y-m-d H:i:s");
+  $user= $USER->abbr;
+  query("UPDATE rodina SET deleted='D rodina=$ret->r_idr' WHERE id_rodina=$ret->s_idr");
+  // zápis o smazání kopie do _track jako op=x (eXtract)
+  query("INSERT INTO _track (kdy,kdo,kde,klic,fld,op,old,val)
+         VALUES ('$now','$user','rodina',$ret->r_idr,'','x','kopie',$ret->s_idr)");
+  // odstranění vazby v tabulce TVORI
+  query("DELETE FROM tvori WHERE id_tvori=$ret->s_idt");
+  // nastavení adresy jako rodinné
+  list($ulice,$psc,$obec,$stat)= select("ulice,psc,obec,stat","osoba","id_osoba=$ret->s_ido");
+  query("UPDATE osoba SET adresa=0,ulice='',psc='',obec='',stat='' WHERE id_osoba=$ret->s_ido");
+  if ( $ulice!='' ) query("INSERT INTO _track (kdy,kdo,kde,klic,fld,op,old,val)
+     VALUES ('$now','$user','osoba',$ret->s_ido,'ulice','u','$ulice','')");
+  if ( $psc!='' ) query("INSERT INTO _track (kdy,kdo,kde,klic,fld,op,old,val)
+     VALUES ('$now','$user','osoba',$ret->s_ido,'psc','u','$psc','')");
+  if ( $obec!='' ) query("INSERT INTO _track (kdy,kdo,kde,klic,fld,op,old,val)
+     VALUES ('$now','$user','osoba',$ret->s_ido,'obec','u','$obec','')");
+  if ( $stat!='' ) query("INSERT INTO _track (kdy,kdo,kde,klic,fld,op,old,val)
+     VALUES ('$now','$user','osoba',$ret->s_ido,'stat','u','$stat','')");
+  return 1;
+}
+# ---------------------------------------------------------------------------------------- eli_osoba
+# zamění všechny výskyty kopie za originál v TVORI, SPOLU, DAR, PLATBA, MAIL a kopii smaže
+# pokud je originál v kmenové rodině single, vrátí potom text otázky, zda tuto rodinu zrušit
+# a v případě kladné odpovědi volat eli_single
+function eli_osoba($id_orig,$id_copy) { trace();
+  global $USER;
+  $ret= (object)array('err'=>'','continue'=>'');
+  $now= date("Y-m-d H:i:s");
+  query("UPDATE tvori  SET id_osoba=$id_orig WHERE id_osoba=$id_copy");
+  query("UPDATE spolu  SET id_osoba=$id_orig WHERE id_osoba=$id_copy");
+  query("UPDATE dar    SET id_osoba=$id_orig WHERE id_osoba=$id_copy");
+  query("UPDATE platba SET id_osoba=$id_orig WHERE id_osoba=$id_copy");
+  //query("UPDATE mail  SET id_osoba=$id_orig WHERE id_osoba=$id_copy"); -- po úpravě
+  query("UPDATE osoba SET deleted='D osoba=$id_orig' WHERE id_osoba=$id_copy");
+  // zápis o ztotožnění osob do _track jako op=d (duplicita)
+  $user= $USER->abbr;
+  query("INSERT INTO _track (kdy,kdo,kde,klic,fld,op,old,val)
+         VALUES ('$now','$user','osoba',$id_orig,'','d','osoba',$id_copy)");    // d=duplicita
+  // zápis o smazání kopie do _track jako op=x (eXtract)
+  query("INSERT INTO _track (kdy,kdo,kde,klic,fld,op,old,val)
+         VALUES ('$now','$user','osoba',$id_copy,'','x','single',$id_orig)");    // x=smazání
+  // případné nabídnutí dalších úprav
+  $s_nazev= $s_adresa= ''; $s_idr= $s_idt= 0;
+  $r_nazev= $r_adresa= '';
+  $n= 0;
+  $rx= mysql_qry("
+    SELECT id_rodina,id_tvori,role,id_osoba,prijmeni,jmeno,
+      adresa,CONCAT(o.ulice,',',o.psc,',',o.obec) AS o_adresa,
+      nazev,CONCAT(r.ulice,',',r.psc,',',r.obec) AS r_adresa,
+      (SELECT COUNT(*) FROM tvori WHERE tvori.id_rodina=r.id_rodina) AS _clenu
+    FROM osoba AS o
+      LEFT JOIN tvori AS t USING(id_osoba)
+      LEFT JOIN rodina AS r USING (id_rodina)
+    WHERE id_osoba=$id_orig
+    ORDER BY role
+  ");
+  while ( $rx && ($x= mysql_fetch_object($rx)) ) {
+    $n++;
+    switch ($n) {
+    case 1:   // "kmenová" rodina musí být triviální
+      if ( $x->role!='a' && $x->role!='b' && $x->_clenu=1 ) goto end;
+      $s_adresa= $x->adresa ? $x->o_adresa : $x->r_adresa;
+      $s_nazev= $x->nazev;
+      $ret->s_idr= $x->id_rodina;
+      $ret->s_idt= $x->id_tvori;
+      break;
+    case 2:   // původní rodina
+      if ( $x->role!='d' ) goto end;
+      $r_adresa= $x->r_adresa;
+      $r_nazev= $x->nazev;
+      $ret->r_idr= $x->id_rodina;
+      break;
+    default:
+      goto end;
+    }
+  }
+  $ret->s_ido= $id_orig;
+  $ret->continue= "originál je jako jediný člen v nové 'rodině'
+    <br><b>$s_nazev</b>/$ret->s_idr s adresou $s_adresa
+    <br>ale je také v původní rodině
+    <br><b>$r_nazev</b>/$ret->r_idr s adresou $r_adresa,
+    <br>mám tu první 'rodinu' ($s_nazev) zrušit ?";
+end:
+  return $ret;
+}
 # ======================================================================================= STATISTIKA
 # ----------------------------------------------------------------------------------- sta_ukaz_osobu
 # zobrazí odkaz na osobu v evidenci
