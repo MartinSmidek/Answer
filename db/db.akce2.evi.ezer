@@ -23,7 +23,7 @@ var menu_par=0
 menu m {type:'left', active:*, format:'f-'
   menu r {title:'rodiny',type:'group', skill:'yae;fae;cae'
     item a {title:'[fa-group]všechny rodiny'    par:°{lst:'r',tit:'všechny rodiny, co ',cnd:"1"}}
-    item t {title:'[fa-wrench](test)'           par:°{lst:'r',tit:'testovací rodiny, co ',
+    item t {title:'[fa-wrench fa-red](test)'           par:°{lst:'r',tit:'testovací rodiny, co ',
                                                 cnd:"r.id_rodina IN (383,1143,1513,1664)"},skill:'m'}
   }
   menu o {title:'osoby',type:'group', skill:'yae;fae;cae'
@@ -34,7 +34,7 @@ menu m {type:'left', active:*, format:'f-'
                                                 cnd:"o.sex=2 AND TIMESTAMPDIFF(YEAR,narozeni,NOW())>=18"}}
     item   {title:'[fa-child]děti'              par:°{lst:'o',tit:'všechny děti, co ',
                                                 cnd:"TIMESTAMPDIFF(YEAR,narozeni,NOW())<18"}}
-    item t {title:'[fa-wrench](test)'           par:°{lst:'o',tit:'testovací osoby, co ',
+    item t {title:'[fa-wrench fa-red](test)'           par:°{lst:'o',tit:'testovací osoby, co ',
                                                 cnd:"o.id_osoba IN (679,2015,4504,2938)"},skill:'m'}
   }
   menu h {title:'provedené úpravy evidence',type:'group', skill:'yad;fad'
@@ -50,12 +50,12 @@ menu m {type:'left', active:*, format:'f-'
   menu s {title:'hromadné úpravy evidence',type:'group', skill:'yad;fad'
     item   {title:'[fa-phone]OSOBY: kontakt osobní/rodinný'     par:°{lst:'x',mod:'k',tit:'opravy kontaktů osob',cnd:"1"},skill:'yad;fad'}
     item   {title:'[fa-envelope-o]OSOBY: adresa osobní/rodinná' par:°{lst:'x',mod:'a',tit:'opravy adres osob',   cnd:"1"},skill:'yad;fad'}
-    item   {title:'[fa-wrench fa-red]OPRAVIT osoba.kontakt,adresa' ,skill:'yad;fad'
+    item   {title:'[fa-wrench fa-red]OPRAVIT osoba.kontakt,adresa' ,skill:'m'
       proc onclick(i) { menu_item.set(i);
         confirm2(ask('data_transform',object('cmd','kontakty,adresy')),"<br>provést transformaci dat?");
         alert(ask('data_transform',object('cmd','kontakty+,adresy+')));
     }}
-    item   {title:'[fa-wrench fa-red]OPRAVIT rodina.nazev' ,skill:'yad;fad'
+    item   {title:'[fa-wrench fa-red]OPRAVIT rodina.nazev' ,skill:'m'
       proc onclick(i) { menu_item.set(i);
         confirm2(ask('data_transform',object('cmd','nazvy')),"<br>provést transformaci dat?");
         alert(ask('data_transform',object('cmd','nazvy+')));

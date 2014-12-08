@@ -104,14 +104,15 @@ form _cmd [,,425,30] { css:'ae_parm'
     proc onclick() { panel.close(1) }}
   // LINK
   button [61,5,,] { type:'html', title:"[fa-save] [fa-link] Ulož změny a proveď sjednocení",
-    proc onclick() {
+    proc onclick() { var ret:object
       eq(mode.get,'osoba');
       { [ o1.oso.same | o1.oso.save; o1.oso.load ];
         eq(o1.bs.ido.get,o2.bs.ido.get);
         alert("vlevo i vpravo je stejná osoba!");
       | confirm2("opravdu zrušit <b>",o2.bs._nazev.get,"</b> (",o2.bs.ido.get,
           ") a přidat účasti,dar,... k <b>",o1.bs._nazev.get,"</b> (",o1.bs.ido.get,") ?");
-        ask('elim_osoba',o1.bs.ido.get,o2.bs.ido.get);
+        ret.set(ask('eli_osoba',o1.bs.ido.get,o2.bs.ido.get));
+        [ ret.continue; confirm2(ret.continue); ask('eli_single',ret) ];
         o1.bs.browse_row; o1.bs_load(o1.bs.browse_key);
         o2.bs.browse_row; o2.bs_load(o2.bs.browse_key);
       }
