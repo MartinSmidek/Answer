@@ -11,11 +11,11 @@ proc onfirstfocus() {  }
 var menu_item=0
 var menu_par=0
 menu m {type:'left', active:*, format:'f+'
-  menu l {title:'SEZNAM',type:'group',                                                  skill:'m'
+  menu l {title:'SEZNAM',type:'group',                                                //  skill:'m'
     item u {title:'adresy účastníků'  ,par:°{typ:'adresy',rok:0,xls:'Excel',pdf:'Štítky',parm_tit:'roky zpět:'
       ,dsc:'Seznam obsahuje účastníky akcí v posledních letech (parametr určuje počet let zpět, default=0 tj. jen letošní)<br>'
-      ,tit:'jména:30,ulice:20,psč:6,obec:20,stát:6,(poslední akce):80,(příjmení):15,(ID osoby):10)'
-      ,fld:'jmena,ulice,psc,obec,stat,akce,prijmeni,id_osoba',ord:'prijmeni'}}
+      ,tit:'jména:30,ulice:20,psč:6,obec:20,stát:6,(příjmení):15,(aktivní členi):20,(poslední akce):80,(akt.členů):11,(ID osoby):10'
+      ,fld:'jmena,ulice,psc,obec,stat,prijmeni,_cleni,akce,_clenu,id_osoba',ord:'prijmeni'}}
   }
   menu s {title:'STATISTIKA',type:'group'
     item u {title:'letošní účastníci podle věku'  ,par:°{typ:'ucast-vek',rok:0,xls:'Excel',pdf:0
@@ -27,7 +27,7 @@ menu m {type:'left', active:*, format:'f+'
     the_vypis.set(conc(i.owner.title,' - ',i.title));
     [ i.par.xls; info.ex_xls.display(1); info.ex_xls.set(i.par.xls) | info.ex_xls.display(0) ];
     [ i.par.pdf; info.ex_pdf.display(1); info.ex_pdf.set(i.par.pdf) | info.ex_pdf.display(0) ];
-    [ echo(i.par.parm_tit); i.par.parm_tit; info.display(1,'p');
+    [ echo(i.par.parm_tit,info.parm.get); i.par.parm_tit; info.display(1,'p');
       info.parm_tit.set(i.par.parm_tit); menu_par.set(info.parm.get,'parm') | info.display(0,'p') ];
     info.fill(the_vypis.get,i.par.dsc);
     ret.set(ask('sta_sestava',the_vypis.get,menu_par.get));
