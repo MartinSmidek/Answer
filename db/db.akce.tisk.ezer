@@ -9,7 +9,7 @@ var the_par: object
 var the_vypis: text
 
 use info: form right [12,4,,] {
-  button export2 [-80,4,100,16] { title:'PDF...', style:'display:block;zIndex:2',
+  button export2 [-80,4,,] { title:'PDF...', style:'display:block;zIndex:2',
     proc onclick() {
       var res: object
       switch(export2.get,
@@ -20,7 +20,7 @@ use info: form right [12,4,,] {
       })
     }
   }
-  button export [-20,4,100,16] { title:'Excel', style:'display:block;zIndex:2',
+  button export [-20,4,,] { title:'Excel', style:'display:block;zIndex:2',
     proc onclick() {
       var res: object
       switch(export.get,
