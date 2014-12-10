@@ -15,6 +15,7 @@
   );
   answer_ini('ys','ezer_ys',$dbs_plus,array("ys/ys_fce.php","ys/ys_lide.php","ds/ds_fce.php"));
   // SPECIFICKÉ PARAMETRY
+  global $ezer_path_root;
   $VPS= 'VPS';
   $path_banka['5500']= "$ezer_path_root/banky/5500/";
   $EZER->options->org= 'YMCA Setkání';
