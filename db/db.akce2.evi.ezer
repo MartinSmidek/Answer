@@ -38,8 +38,8 @@ menu m {type:'left', active:*, format:'f-'
                                                 cnd:"o.id_osoba IN (679,2015,4504,2938)"},skill:'m'}
   }
   menu h {title:'provedené úpravy evidence',type:'group', skill:'yad;fad'
-    item   {title:'[fa-medkit]dnes'    par:°{lst:'h',tit:'úpravy během 24 hodin',days:'1',cnd:"1"}}
-    item   {title:'[fa-medkit]včera'   par:°{lst:'h',tit:'úpravy během 48 hodin',days:'2',cnd:"1"}}
+    item   {title:'[fa-medkit]dnes'    par:°{lst:'h',tit:'úpravy za 24 hodin',days:'1',cnd:"1"}}
+    item   {title:'[fa-medkit]včera'   par:°{lst:'h',tit:'úpravy za 48 hodin',days:'2',cnd:"1"}}
     item   {title:'[fa-medkit]týden'   par:°{lst:'h',tit:'úpravy za 7 dnů',days:'7',cnd:"1"}}
     item   {title:'[fa-medkit]měsíc'   par:°{lst:'h',tit:'úpravy za 30 dnů',days:'30',cnd:"1"}}
     item   {title:'[fa-medkit]rok'     par:°{lst:'h',tit:'úpravy za 365 dnů',days:'365',cnd:"1"}}
@@ -629,7 +629,7 @@ form _cmd [,,706,32] { css:'ae_frame'
       { eq(ret.ok,1);                           // rodinu lze smazat
         [ confirm2(ret.html);
           ret.set(ask('evid_delete',0,page.idr.get,'del_rod')); warning(ret.html);
-          reload('lst');
+          reload('page');
         ]
       | alert(ret.html) }                       // nastal problém
   } }
@@ -697,7 +697,7 @@ form _cmd [,,706,32] { css:'ae_frame'
       | alert(ret.html) }                       // nastal problém
   } }
   // OBNOVIT
-  button o_obnov [519,6,,] {tag:'x', title:'[fa-plus fa-red] Obnovit', skill:'yaa+|yaa+;faa+|faa+;caa+|caa+',
+  button o_obnov [630,6,,] {tag:'x', title:'[fa-plus fa-red] Obnovit', skill:'yaa+|yaa+;faa+|faa+;caa+|caa+',
     help:'Obnovení informací o smazané osobě', format:'n'
     proc onclick() { var ret:object
       ret.set(ask('evid_delete',page.ido.get,page.idr.get,'undel_oso'));
