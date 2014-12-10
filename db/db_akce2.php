@@ -93,7 +93,7 @@ function eli_osoba($id_orig,$id_copy) { trace();
       $s_nazev= $x->nazev;
       $ret->s_idr= $x->id_rodina;
       $ret->s_idt= $x->id_tvori;
-      break;
+      break 2;  // konec cyklu
     case 2:   // původní rodina
       if ( $x->role!='d' ) goto end;
       $r_adresa= $x->r_adresa;
