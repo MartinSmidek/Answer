@@ -629,9 +629,9 @@ function evid_delete($id_osoba,$id_rodina,$cmd='confirm') { trace();
     }
     break;
   case 'conf_mem':
-    $x= select1('COUNT(*)','tvori',"id_osoba=$id_osoba AND id_rodina!=$id_rodina");
-    if ( !$x ) $duvod[]= "není členem žádné další rodiny";
-    $ret->ok= count($duvod) ? 0 : 1;
+//     $x= select1('COUNT(*)','tvori',"id_osoba=$id_osoba AND id_rodina!=$id_rodina");
+//     if ( !$x ) $duvod[]= "není členem žádné další rodiny";
+//     $ret->ok= count($duvod) ? 0 : 1;
     if ( $ret->ok ) {                   // lze vyjmout, nezůstane ale rodina prázdná?
       $x= select1('COUNT(*)','tvori',"id_rodina=$id_rodina");
       $ret->html= $x==1 ? "$name je jediným členem rodiny $nazev, smazat ji?"
@@ -641,6 +641,12 @@ function evid_delete($id_osoba,$id_rodina,$cmd='confirm') { trace();
     else {                              // nelze smazat - existují odkazy
       $ret->html= "$name nejde vyjmout z $nazev, protože ".implode(',',$duvod);
     }
+    break;
+  case 'conf_rod':
+    $x= select1('COUNT(*)','tvori',"id_rodina=$id_rodina");
+    $ret->html= $x==0 ? "Opravdu smazat prázdnou rodinu $nazev?"
+      : "Rodinu $nazev nelze smazat, protože obsahuje $x členů - nejprve je třeba je vyjmout nebo vymazat";
+    $ret->ok= $x==0 ? 1 : 0;
     break;
   case 'del_mem':
     $ret->ok= query("DELETE FROM tvori WHERE id_osoba=$id_osoba AND id_rodina=$id_rodina") ? 1 : 0;
@@ -671,6 +677,12 @@ function evid_delete($id_osoba,$id_rodina,$cmd='confirm') { trace();
     $ami= $no==1 ? "ou" : "ami";
     $ret->html= "Byla smazána rodina s $no osob$ami";
     break;
+  case 'undel_rod':
+    $ret->ok= query("UPDATE rodina SET deleted='' WHERE id_rodina=$id_rodina") ? 1 : 0;
+    query("INSERT INTO _track (kdy,kdo,kde,klic,fld,op,old,val)
+           VALUES ('$now','$user','rodina',$id_rodina,'','o','','')");    // o=obnova
+    $ret->html= "rodina $nazev byla obnovena";
+    break;
   }
   return $ret;
 }
@@ -679,9 +691,10 @@ function evid_delete($id_osoba,$id_rodina,$cmd='confirm') { trace();
 function akce_save_role($id_tvori,$role) { //trace();
   return mysql_qry("UPDATE tvori SET role='$role' WHERE id_tvori=$id_tvori");
 }
-# ---------------------------------------------------------------------------------------- akce_evid
+# --------------------------------------------------------------------------------------- evid_cleni
 # hledání a) osoby a jejích rodin b) rodiny (pokud je id_osoba=0)
-function akce_evid($id_osoba,$id_rodina,$filtr) { trace();
+function evid_cleni($id_osoba,$id_rodina,$filtr) { trace();
+  $msg= '';
   $cleni= "";
   $rodiny= array();
   $rodina= $rodina1= $id_rodina;
@@ -689,12 +702,13 @@ function akce_evid($id_osoba,$id_rodina,$filtr) { trace();
   if ( $id_osoba ) { // ------------------------ osoby
     $clen= array();
     $qc= mysql_qry("
-      SELECT rto.id_osoba,rto.jmeno,rto.prijmeni,rto.narozeni,rt.id_tvori,rt.role,r.id_rodina,nazev
+      SELECT rto.id_osoba,rto.jmeno,rto.prijmeni,rto.narozeni,rt.id_tvori,rt.role,o.deleted,
+        r.id_rodina,nazev
       FROM osoba AS o
-      JOIN tvori AS ot ON ot.id_osoba=o.id_osoba
-      JOIN rodina AS r ON r.id_rodina=ot.id_rodina
-      JOIN tvori AS rt ON rt.id_rodina=r.id_rodina
-      JOIN osoba AS rto ON rto.id_osoba=rt.id_osoba
+        JOIN tvori AS ot ON ot.id_osoba=o.id_osoba
+        JOIN rodina AS r ON r.id_rodina=ot.id_rodina
+        JOIN tvori AS rt ON rt.id_rodina=r.id_rodina
+        JOIN osoba AS rto ON rto.id_osoba=rt.id_osoba
       WHERE o.id_osoba=$id_osoba AND $filtr
       ORDER BY rt.role,rto.narozeni
     ");
@@ -714,19 +728,20 @@ function akce_evid($id_osoba,$id_rodina,$filtr) { trace();
       if ( $rodina && ($c->id_rodina==$rodina ||$c->id_osoba==$id_osoba)) {
         $rodiny= substr($clen[0][$ido],1);
         $role= $c->role;
-        $cleni.= "|$ido|$c->id_tvori|$rodiny|$c->prijmeni $c->jmeno|$c->_vek|$role";
+        $barva= $c->deleted=='';  // nesmazaný
+        $cleni.= "|$ido|$c->id_tvori|$barva|$rodiny|$c->prijmeni $c->jmeno|$c->_vek|$role";
       }
     }
   }
   else { // ------------------------------------ rodiny
     $qc= mysql_qry("
       SELECT rto.id_osoba,rto.jmeno,rto.prijmeni,rto.narozeni,rt.id_tvori,rt.role,r.id_rodina,r.nazev,
-        GROUP_CONCAT(CONCAT(otr.nazev,':',otr.id_rodina)) AS _rodiny
+        GROUP_CONCAT(CONCAT(otr.nazev,':',otr.id_rodina)) AS _rodiny,rto.deleted
       FROM rodina AS r
-      JOIN tvori AS rt ON rt.id_rodina=r.id_rodina
-      JOIN osoba AS rto ON rto.id_osoba=rt.id_osoba
-      JOIN tvori AS ot ON ot.id_osoba=rto.id_osoba
-      JOIN rodina AS otr ON otr.id_rodina=ot.id_rodina
+        JOIN tvori AS rt ON rt.id_rodina=r.id_rodina
+        JOIN osoba AS rto ON rto.id_osoba=rt.id_osoba
+        JOIN tvori AS ot ON ot.id_osoba=rto.id_osoba
+        JOIN rodina AS otr ON otr.id_rodina=ot.id_rodina
       WHERE r.id_rodina=$id_rodina AND $filtr
       GROUP BY id_osoba
       ORDER BY rt.role,rto.narozeni
@@ -738,11 +753,13 @@ function akce_evid($id_osoba,$id_rodina,$filtr) { trace();
       }
       if ( $c->id_rodina!=$rodina ) continue;
       $vek= $c->narozeni=='0000-00-00' ? '?' : roku_k($c->narozeni);
-      $cleni.= "|$c->id_osoba|$c->id_tvori|$c->_rodiny|$c->prijmeni $c->jmeno|$vek|$c->role";
+      $barva= $c->deleted=='';  // nesmazaný
+      $cleni.= "|$c->id_osoba|$c->id_tvori|$barva|$c->_rodiny|$c->prijmeni $c->jmeno|$vek|$c->role";
 //                                                         display("{$c->jmeno} {$c->narozeni} $vek");
     }
+    $msg= $cleni ? '' : "rodina neobsahuje žádné členy";
   }
-  $ret= (object)array('cleni'=>substr($cleni,1),'rodina'=>$rodina);
+  $ret= (object)array('cleni'=>$cleni ? substr($cleni,1) : '','rodina'=>$rodina,'msg'=>$msg);
 //                                                         debug($ret);
   return $ret;
 }
@@ -874,7 +891,7 @@ function akce2_auto_jmena1($patt,$par) {  #trace();
   $qry= "SELECT prijmeni, jmeno, id_osoba AS _key
          FROM osoba
          LEFT JOIN tvori USING(id_osoba)
-         WHERE concat(trim(prijmeni),' ',jmeno) LIKE '$patt%' AND prijmeni!='' $AND
+         WHERE deleted='' AND concat(trim(prijmeni),' ',jmeno) LIKE '$patt%' AND prijmeni!='' $AND
          ORDER BY prijmeni,jmeno LIMIT $limit";
   $res= mysql_qry($qry);
   while ( $res && $t= mysql_fetch_object($res) ) {

@@ -592,7 +592,10 @@ function ds_zaloha($order) {  #trace('','win1250');
     // ubytování mùže mít slevu
     $polozky= array();
     $sleva= $o->sleva ? $o->sleva/100 : '';
-    $x->polozky[]= ds_c('noc_L',$dnu*($o->adults+$o->kids_10_15+$o->kids_3_9),$sleva);
+    $x->polozky[]= ds_c('noc_L',$dnu*($o->adults + $o->kids_10_15 + $o->kids_3_9),$sleva);
+    $x->polozky[]= ds_c('ubyt_C',$dnu*($o->adults));
+    $x->polozky[]= ds_c('ubyt_S',$dnu*($o->adults));
+    $x->polozky[]= ds_c('ubyt_P',$dnu*($o->kids_10_15 + $o->kids_3_9 + $o->kids_3));
     $x->polozky[]= ds_c('noc_B',$dnu*$o->kids_3,$sleva);
     switch ( $o->board ) {
     case 1:     // penze

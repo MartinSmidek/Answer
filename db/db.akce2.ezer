@@ -364,6 +364,7 @@ table dar { key_id:'id_dar'
 table rodina { key_id:'id_rodina'
   number id_rodina
   number id_dupary
+  text   deleted
   number typ            // 10,11,20,21
   text nazev
   text fotka
@@ -900,7 +901,8 @@ form _rodina2p [,,188,229] { css:'ae_frame'
   // rodinné údaje
   field r_spz      [Lp+ 0,Tp+20,58,]  {tag:'r', data:r.spz, title:'^SPZ auta'}
   label spolu      [Lp+143,Tp+7,37,] {tag:'r' }
-  field r_svatba   {data:rodina.svatba}
+  field r_svatba   {data:r.svatba}
+  field r_deleted  {data:r.deleted}
   field r_datsvatba[Lp+90,Tp+20,85,] {tag:'r', type:'date', data:r.datsvatba, format:'rR:e',title:'^od svatby'}
   // kontakt
   field r_ulice    [Lp+0,Tp+55,176,] {tag:'r,N', data:r.ulice, title:'^ulice'}

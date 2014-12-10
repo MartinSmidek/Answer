@@ -351,6 +351,7 @@ table dar { key_id:'id_dar'
 table rodina { key_id:'id_rodina'
   number id_rodina
   number id_dupary
+  text   deleted
   number typ            // 10,11,20,21
   text nazev
   text fotka

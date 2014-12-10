@@ -20,7 +20,7 @@ proc onfirstfocus() { lst.start; page.start; cmd.start; }
 # --------------------------------------------------------------------------------------------- menu
 var menu_item=0
 var menu_par=0
-menu m {type:'left', active:*, format:'f+'
+menu m {type:'left', active:*, format:'f-'
   menu r {title:'rodiny',type:'group', skill:'yae;fae;cae'
     item a {title:'[fa-group]všechny rodiny'    par:°{lst:'r',tit:'všechny rodiny, co ',cnd:"1"}}
     item t {title:'[fa-wrench fa-red](test)'           par:°{lst:'r',tit:'testovací rodiny, co ',
@@ -343,8 +343,8 @@ form _lst [,,370,*] {
       [ br_having.get | br_having.set(1) ] }
   }
   view r: table rodina
-  view rt: table tvori { join:"USING(id_rodina)" }
-  view rto: table osoba { join:"USING(id_osoba)" }
+  view rt: table tvori { join_type:'LEFT', join:"USING(id_rodina)" }
+  view rto: table osoba { join_type:'LEFT', join:"USING(id_osoba)" }
   browse br [10,30,,] {tag:'r', rows:27, buf_rows:60, qry_rows:1, group_by:'r.id_rodina', css_rows:'barva,0:neucast'
     show id_r { data:r.id_rodina }
     show id_t { data:rt.id_tvori }
@@ -387,8 +387,9 @@ form _page {
   # načtení osoby a jeho rodin
   proc page_load() { var x:object
     page_init;
-    x.set(ask('akce_evid',ido.get,idr.get,cconc(ido.get,lst.bo_filtr.get,lst.br_filtr.get)));
-    idr.set(x.rodina); x.rodina; rod.enable(1,'.*');
+    x.set(ask('evid_cleni',ido.get,idr.get,cconc(ido.get,lst.bo_filtr.get,lst.br_filtr.get)));
+    x.msg; alert(x.msg)
+  | idr.set(x.rodina); x.rodina; rod.enable(1,'.*');
     cleni.browse_fill(x.cleni); cleni.raise('onrowclick',ido.get);
     rod_load(x.rodina);  // rod.r.load(x.rodina); rod.call('od_svatby');
   | rod.enable(0,'.*'); osoba_load
@@ -423,12 +424,13 @@ form _page {
   }
   # načíst rodinu s doplněním informací z _track je-li lst.mode='x'
   proc rod_load(idr) { var ret: object
-    or(evi_barvit_zmeny.get,eq(lst.mode.get,'x'));
-#     rod.set_helps(0,'zluty','oranzovy');
-    ret.set(ask('elim_data_rodina',idr));
-    rod.r.load(idr); rod.call('od_svatby');
-    rod.set_helps(ret.chng,'zluty','oranzovy');
-  | rod.r.load(idr); rod.call('od_svatby');
+    [ or(evi_barvit_zmeny.get,eq(lst.mode.get,'x'));
+      ret.set(ask('elim_data_rodina',idr));
+      rod.r.load(idr); rod.call('od_svatby');
+      rod.set_helps(ret.chng,'zluty','oranzovy');
+    | rod.r.load(idr); rod.call('od_svatby')
+    ];
+    cmd.r_smaz.display(not(page.rod.r_deleted.get)); cmd.r_obnov.display(page.rod.r_deleted.get);
   }
   # ---------------------------------------------- záložky
   var curr:object                               // aktuální záložka
@@ -457,9 +459,10 @@ form _page {
   }
   // získání rodin
   label [10,40,200,] {tag:'C', title:"členi zobrazené rodiny" }
-  browse cleni [10,54,107,191] {tag:'Cb', rows:8, buf_rows:50
+  browse cleni [10,54,107,191] {tag:'Cb', rows:8, buf_rows:50, css_rows:'barva,0:neucast'
     show id_osoba
     show id_tvori
+    show barva
     show rodiny
     show jmeno [,,110,] {title:'jména'}
     show vek   [,,30,] {title:'věk', format:'r' }
@@ -608,17 +611,39 @@ form _cmd [,,706,32] { css:'ae_frame'
     | error("Uložit co?")
     }
   }
+  # RODINA
+  label [144,9,80,] { title:"<b>Rodina:</b>" }
   // NOVÁ RODINA a ČLEN
-  button [158,6,,] {tag:'x', type:'html', title:'[fa-heart] Nová rodina',
+  button [188,6,,] {tag:'x', type:'html', title:'[fa-heart] Nová rodina',
     skill:'yaa+|yaa+;faa+|faa+;caa+|caa+', help:'Vytvoření nové rodiny s prvním členem'
     proc onclick() {
       set_state('newr');
       foreach(page.oso.tagged('I'),change_x);
       foreach(page.rod.tagged('N'),change_x);
   }}
-  // NOVÝ ČLEN rodiny
+  // VYMAZAT
+  button r_smaz [287,6,,] {tag:'x', title:'[fa-times fa-red] Vymazat', skill:'yaa+|yaa+;faa+|faa+;caa+|caa+',
+    help:'Vymazání informací o rodině z evidence', format:'d'
+    proc onclick() { var ret:object
+      ret.set(ask('evid_delete',0,page.idr.get,'conf_rod'));
+      { eq(ret.ok,1);                           // rodinu lze smazat
+        [ confirm2(ret.html);
+          ret.set(ask('evid_delete',0,page.idr.get,'del_rod')); warning(ret.html);
+          reload('lst');
+        ]
+      | alert(ret.html) }                       // nastal problém
+  } }
+  button r_obnov [287,6,,] {tag:'x', title:'[fa-plus fa-red] Obnovit', skill:'yaa+|yaa+;faa+|faa+;caa+|caa+',
+    help:'Obnovení informací o smazané rodině', format:'n'
+    proc onclick() { var ret:object
+      ret.set(ask('evid_delete',0,page.idr.get,'undel_rod'));
+      warning(ret.html); reload('lst')
+  }}
+  # ČLENI
+  label [371,9,80,] { title:"<b>Členi:</b>" }
+  // NOVÝ
   proc change_x(elem) { elem.change(1) }
-  button novy_clen [258,6,,] {tag:'x', type:'html', title:'[fa-heart-o] Nový člen',
+  button novy_clen [404,6,,] {tag:'x', type:'html', title:'[fa-heart-o] Nový člen',
     skill:'yaa+|yaa+;faa+|faa+;caa+|caa+', help:'Vytvoření nové osoby a její zapojení do rodiny'
     proc onclick() { var _sex:number, _prijmeni:text
       _sex.set(page.oso.sex.get); _prijmeni.set(page.oso.prijmeni.get);
@@ -627,13 +652,13 @@ form _cmd [,,706,32] { css:'ae_frame'
       page.rod.t_role.set('d');
       foreach(page.oso.tagged('I'),change_x); page.rod.t_role.change(1);
   } }
-  // PŘIDAT DO RODINY
-  button [360,6,,] {tag:'x', title:'[fa-plug] Přidat', skill:'yaa+|yaa+;faa+|faa+;caa+|caa+',
+  // PŘIDAT
+  button [490,6,,] {tag:'x', title:'[fa-plug] Přidat', skill:'yaa+|yaa+;faa+|faa+;caa+|caa+',
     help:'Výběr osoby z evidovaných a jeho připojení k rodině', format:'d'
     proc onclick() { PridaniJmenem1.modal(240,50)
   } }
-  // VYJMOUT Z RODINY
-  button [426,6,,] {tag:'x', title:'[fa-plug fa-rotate-180 fa-red] Vyjmout',
+  // VYJMOUT
+  button [554,6,,] {tag:'x', title:'[fa-plug fa-rotate-180 fa-red] Vyjmout',
     skill:'yaa+|yaa+;faa+|faa+;caa+|caa+', help:'Vyjmutí osoby z rodiny', format:'d'
     proc onclick() { var ret:object
       ret.set(ask('evid_delete',page.ido.get,page.idr.get,'conf_mem'));
@@ -652,8 +677,8 @@ form _cmd [,,706,32] { css:'ae_frame'
           lst.ido.set(0); lst.idr.set(0); reload('lst') ]
       | alert(ret.html) }                       // nastal problém
   } }
-  // VYMAZAT OSOBU
-  button o_smaz [519,6,,] {tag:'x', title:'[fa-times fa-red] Vymazat', skill:'yaa+|yaa+;faa+|faa+;caa+|caa+',
+  // VYMAZAT
+  button o_smaz [630,6,,] {tag:'x', title:'[fa-times fa-red] Vymazat', skill:'yaa+|yaa+;faa+|faa+;caa+|caa+',
     help:'Vymazání informací o osobě nebo jednočlenné rodině z evidence', format:'d'
     proc onclick() { var ret:object
       ret.set(ask('evid_delete',page.ido.get,page.idr.get,'conf_oso'));
@@ -671,7 +696,7 @@ form _cmd [,,706,32] { css:'ae_frame'
           lst.ido.set(0); lst.idr.set(0); reload('lst') ]
       | alert(ret.html) }                       // nastal problém
   } }
-  // OBNOVIT OSOBU
+  // OBNOVIT
   button o_obnov [519,6,,] {tag:'x', title:'[fa-plus fa-red] Obnovit', skill:'yaa+|yaa+;faa+|faa+;caa+|caa+',
     help:'Obnovení informací o smazané osobě', format:'n'
     proc onclick() { var ret:object
@@ -712,6 +737,9 @@ panel PridaniJmenem1 [,,320,280] {type:'popup', title:'Přidání osoby do rodin
         each(rod.get,jmenovci); // nesmí volat asynchronní operace
       }
     }
+    check deti [258,0,46,] { title:"i děti", value:'0', format:'t'
+      proc onchange() { jmena.add_attrib('par.deti',this.get)
+    }}
     proc jmenovci(p,i) {
       last.set(L.add);
       popis.set(p.nazev);
