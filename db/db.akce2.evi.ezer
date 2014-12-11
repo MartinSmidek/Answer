@@ -388,7 +388,7 @@ form _page {
   proc page_load() { var x:object
     page_init;
     x.set(ask('evid_cleni',ido.get,idr.get,cconc(ido.get,lst.bo_filtr.get,lst.br_filtr.get)));
-    x.msg; alert(x.msg)
+    x.msg; [ x.rodina; rod_load(x.rodina) ]; alert(x.msg)
   | idr.set(x.rodina); x.rodina; rod.enable(1,'.*');
     cleni.browse_fill(x.cleni); cleni.raise('onrowclick',ido.get);
     rod_load(x.rodina);  // rod.r.load(x.rodina); rod.call('od_svatby');
