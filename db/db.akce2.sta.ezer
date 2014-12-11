@@ -29,7 +29,7 @@ menu m {type:'left', active:*, format:'f+'
     [ i.par.pdf; info.ex_pdf.display(1); info.ex_pdf.set(i.par.pdf) | info.ex_pdf.display(0) ];
     [ echo(i.par.parm_tit,info.parm.get); i.par.parm_tit; info.display(1,'p');
       info.parm_tit.set(i.par.parm_tit); menu_par.set(info.parm.get,'parm') | info.display(0,'p') ];
-    info.fill(the_vypis.get,i.par.dsc);
+    info.fill(the_vypis.get,i.par.dsc); info.msg.set('');
     ret.set(ask('sta_sestava',the_vypis.get,menu_par.get));
     info.append(ret.html);
   }

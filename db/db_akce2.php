@@ -123,7 +123,7 @@ function sta_ukaz_osobu($ido,$barva='') {
 # -------------------------------------------------------------------------------------- sta_sestava
 # sestavy pro evidenci
 function sta_sestava($title,$par,$export=false) {
-                                                debug($par,"sta_sestava($title,...,$export)");
+//                                                 debug($par,"sta_sestava($title,...,$export)");
   $ret= (object)array('html'=>'','err'=>0);
   // dekódování parametrů
   $tits= explode(',',$par->tit);
@@ -174,7 +174,7 @@ function sta_sestava($title,$par,$export=false) {
       }
       else {                                      // klasická rodina
         $xy= preg_match("/\w+[\s\-]+\w+/u",$pr);   //   a rodina s různým příjmením
-                                                display("$pr = $xy");
+//                                                 display("$pr = $xy");
         $jm= $pr1= $del= ''; $n= 0;
         for ($i= 0; $i<count($jmena); $i++) {
           if ( $role[$i]=='a' || $role[$i]=='b' ) {
@@ -259,7 +259,7 @@ function sta_sestava_adresy_fill($matches) { trace();
   return "$A$n";
 }
 # ---------------------------------------------------------------------------------------- sta_table
-function sta_table($tits,$flds,$clmn,$export=false) {
+function sta_table($tits,$flds,$clmn,$export=false) {  trace();
   $ret= (object)array();
   // zobrazení tabulkou
   $tab= '';
@@ -387,13 +387,14 @@ __XLS;
     \n|close
 __XLS;
   // výstup
-  $inf= Excel2007($xls,1);
+//   $inf= Excel2007($xls,1);
+  $inf= Excel5($xls,1);
   if ( $inf ) {
     $html= " se nepodařilo vygenerovat - viz začátek chybové hlášky";
     fce_error($inf);
   }
   else {
-    $html= " Výpis byl vygenerován ve formátu <a href='docs/$name.xlsx' target='xlsx'>Excel</a>.";
+    $html= " Výpis byl vygenerován ve formátu <a href='docs/$name.xls' target='xlsx'>Excel</a>.";
   }
   $result->html= $html;
   return $result;
