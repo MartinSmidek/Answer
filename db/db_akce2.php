@@ -165,9 +165,9 @@ function sta_sestava($title,$par,$export=false) {
     $idr0= -1; $ido= 0;
     $jmena= $role= $prijmeni= $akce= array();
     $adresa= '';
-    $mrop= 0;
+    $mrop= $pps= 0;
     // funkce pro přidání nové adresy do clmn: jmena,ulice,psc,obec,stat,akce,prijmeni,_clenu,id_osoba
-    $add_address= function() use (&$clmn,&$jmena,&$role,&$prijmeni,&$adresa,&$akce,&$mrop,&$ido) {
+    $add_address= function() use (&$clmn,&$jmena,&$role,&$prijmeni,&$adresa,&$akce,&$mrop,&$ido,&$pps) {
       list($pr,$ul,$ps,$ob,$st)= explode('—',$adresa);
       $cl= count($jmena);
       if ( $cl==1 ) {                             // nahrazení názvu příjmením u jediného člena
@@ -190,8 +190,9 @@ function sta_sestava($title,$par,$export=false) {
       $jc= implode(', ',$jmena);
       $ak= implode(' a ',$akce);
       $mr= $mrop?:'';
+      $pp= $pps?:'';
       $clmn[]= array('jmena'=>$jm,'ulice'=>$ul,'psc'=>$ps,'obec'=>$ob,'stat'=>$st,
-                     'prijmeni'=>$pr,'_cleni'=>$jc,'akce'=>$ak,'_mrop'=>$mr,'_clenu'=>$cl,'id_osoba'=>$ido);
+                     'prijmeni'=>$pr,'_cleni'=>$jc,'akce'=>$ak,'_mrop'=>$mr,'_pps'=>$pp,'_clenu'=>$cl,'id_osoba'=>$ido);
     };
     $rx= mysql_qry("
       SELECT
@@ -201,7 +202,8 @@ function sta_sestava($title,$par,$export=false) {
         IFNULL(IF(adresa=0,SUBSTR(MIN(
           CONCAT(t.role,r.nazev,'—',r.ulice,'—',r.psc,'—',r.obec,'—',r.stat)),2),''),'') AS _rodina,
         id_osoba,prijmeni,jmeno,adresa,iniciace,
-        -- MAX(CONCAT(YEAR(datum_od),' - ',a.nazev)) as _akce,
+        MAX(IF(t.role IN ('a','b') AND p.funkce=1,YEAR(datum_od),0)) as _pps,
+        -- IF(roleMAX(CONCAT(YEAR(datum_od),' - ',a.nazev)) as _akce,
         MAX(CONCAT(datum_od,' - ',a.nazev)) as _akce,
         IF(ISNULL(id_rodina) OR adresa=1,CONCAT(o.ulice,'—',o.psc,'—',o.obec,'—',o.stat),'') AS _osoba
       FROM osoba AS o
@@ -229,6 +231,7 @@ function sta_sestava($title,$par,$export=false) {
         $prijmeni[]= $x->prijmeni;
         $akce[]= substr($x->_akce,0,4).substr($x->_akce,10);
         $mrop= max($mrop,$x->iniciace);
+        $pps= max($pps,$x->_pps);
       }
       else {
         // uložíme rodinu
@@ -240,6 +243,7 @@ function sta_sestava($title,$par,$export=false) {
         $prijmeni= array($x->prijmeni);
         $akce= array(substr($x->_akce,0,4).substr($x->_akce,10));
         $mrop= $x->iniciace;
+        $pps= $x->_pps;
         $adresa= $x->_osoba ? "{$x->prijmeni}—$x->_osoba" : $x->_rodina;
         $idr0= $idr;
       }
@@ -1009,7 +1013,7 @@ function akce_browse_ask($x) {
     ");
     while ( $qu && ($u= mysql_fetch_object($qu)) ) {
       $cleni.= ",{$u->id_osoba}";
-      $rodiny.= ",".substr($u->_role,1);
+      $rodiny.= substr($u->_role,1) ? ",".substr($u->_role,1) : '';
       $pobyt[$u->id_pobyt]->cleni[$u->id_osoba]= $u;
       $spolu[$u->id_osoba]= $u->id_pobyt;
     }
@@ -1024,7 +1028,7 @@ function akce_browse_ask($x) {
     ");
     while ( $qp && ($p= mysql_fetch_object($qp)) ) {
       $osoby.= ",{$p->id_osoba}";
-      $rodiny.= ",{$p->id_rodina}";
+      $rodiny.= $p->id_rodina ? ",{$p->id_rodina}" : '';
       if ( !isset($pobyt[$p->id_pobyt]->cleni[$p->id_osoba]) )
         $pobyt[$p->id_pobyt]->cleni[$p->id_osoba]= (object)array();
       $pobyt[$p->id_pobyt]->cleni[$p->id_osoba]->id_tvori= $p->id_tvori;
