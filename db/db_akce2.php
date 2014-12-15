@@ -164,9 +164,9 @@ function sta_sestava($title,$par,$export=false) {
     $par->title= $title.($par->rok ? " akcí za poslední ".($par->rok+1)." roky" : " letošních akcí");
     $idr0= -1; $ido= 0;
     $jmena= $role= $prijmeni= $akce= array();
-    $adresa= '';
+    $adresa= $mrop= '';
     // funkce pro přidání nové adresy do clmn: jmena,ulice,psc,obec,stat,akce,prijmeni,_clenu,id_osoba
-    $add_address= function() use (&$clmn,&$jmena,&$role,&$prijmeni,&$adresa,&$akce,&$ido) {
+    $add_address= function() use (&$clmn,&$jmena,&$role,&$prijmeni,&$adresa,&$akce,&$mrop,&$ido) {
       list($pr,$ul,$ps,$ob,$st)= explode('—',$adresa);
       $cl= count($jmena);
       if ( $cl==1 ) {                             // nahrazení názvu příjmením u jediného člena
@@ -189,7 +189,7 @@ function sta_sestava($title,$par,$export=false) {
       $jc= implode(', ',$jmena);
       $ak= implode(' a ',$akce);
       $clmn[]= array('jmena'=>$jm,'ulice'=>$ul,'psc'=>$ps,'obec'=>$ob,'stat'=>$st,
-                     'prijmeni'=>$pr,'_cleni'=>$jc,'akce'=>$ak,'_clenu'=>$cl,'id_osoba'=>$ido);
+                     'prijmeni'=>$pr,'_cleni'=>$jc,'akce'=>$ak,'_mrop'=>$mrop,'_clenu'=>$cl,'id_osoba'=>$ido);
     };
     $rx= mysql_qry("
       SELECT
@@ -199,7 +199,7 @@ function sta_sestava($title,$par,$export=false) {
         IFNULL(IF(adresa=0,SUBSTR(MIN(
           CONCAT(t.role,r.nazev,'—',r.ulice,'—',r.psc,'—',r.obec,'—',r.stat)),2),''),'') AS _rodina,
         id_osoba,prijmeni,jmeno,adresa,
-        MAX(CONCAT(YEAR(datum_od),' - ',a.nazev)) as _akce,
+        MAX(CONCAT(YEAR(datum_od),' - ',a.nazev)) as _akce,iniciace,
         IF(ISNULL(id_rodina) OR adresa=1,CONCAT(o.ulice,'—',o.psc,'—',o.obec,'—',o.stat),'') AS _osoba
       FROM osoba AS o
         LEFT JOIN tvori AS t USING(id_osoba)
@@ -225,6 +225,7 @@ function sta_sestava($title,$par,$export=false) {
         $role[]= $x->_role;
         $prijmeni[]= $x->prijmeni;
         $akce[]= $x->_akce;
+        $mrop= $x->iniciace?:'';
       }
       else {
         // uložíme rodinu
@@ -235,6 +236,7 @@ function sta_sestava($title,$par,$export=false) {
         $role= array($x->_role);
         $prijmeni= array($x->prijmeni);
         $akce= array($x->_akce);
+        $mrop= $x->iniciace?:'';
         $adresa= $x->_osoba ? "{$x->prijmeni}—$x->_osoba" : $x->_rodina;
         $idr0= $idr;
       }

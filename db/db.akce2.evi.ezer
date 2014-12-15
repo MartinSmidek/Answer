@@ -532,13 +532,16 @@ form _aktivity [,,248,min_h-160] {css:'ae_frame shift_up'
     show _vek [,, 20,] { title:'věk', help:"stáří v době konání akce" }
     show _fce [,, 30,] { title:'fce', help:"funkce na akci"
       data:p.funkce, map_pipe:ms_akce_funkce.zkratka, format:'q*s' }
-    proc onsubmit() {
+    proc onsubmit() { na_akci }
+    proc na_akci() {
       has_skill('yaa;faa;caa');
       [ eq(fce.get,99);
         pece.akce_show(ida.get,ids.get,conc(akce.get,' (',rok.get,')'),'EVIDENCE')
       | ucast.akce_show(ida.get,idp.get,conc(akce.get,' (',rok.get,')'),'EVIDENCE')
     ] }
   }
+  button [-5,18,,] { title:'^akce', css:'db_evidence', help:'též lze skočit dvojklikem na řádku s akcí'
+    proc onclick() { akc.na_akci } }
   proc ucasti(_ido,_jmeno) {
     form.display(_ido); _ido; ido.set(_ido); jmeno.set(_jmeno);
     akc.browse_load(conc('a.spec=0 AND s.id_osoba=',_ido),"datum_od DESC")
