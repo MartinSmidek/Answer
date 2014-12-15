@@ -12,9 +12,9 @@ var menu_item=0
 var menu_par=0
 menu m {type:'left', active:*, format:'f+'
   menu l {title:'SEZNAM',type:'group',                                                //  skill:'m'
-    item u {title:'adresy účastníků'  ,par:°{typ:'adresy',rok:0,xls:'Excel',pdf:'Štítky',parm_tit:'roky zpět:'
+    item u {title:'adresy účastníků'  ,par:°{typ:'adresy',rok:0,xls:'Excel',/*pdf:'Štítky',*/parm_tit:'roky zpět:'
       ,dsc:'Seznam obsahuje účastníky akcí v posledních letech (parametr určuje počet let zpět, default=0 tj. jen letošní).<br>Kliknutí na číslo ve sloupci <b>ID osoby</b> zobrazí první osobu na kartě EVIDENCE.<br>'
-      ,tit:'jména:30,ulice:20,psč:6,obec:20,stát:6,(příjmení):15,(aktivní členi):20,(poslední akce):80,(mrop):6,(akt.členů):11,(ID osoby):10'
+      ,tit:'jména:30,ulice:20,psč:6,obec:20,stát:6,(příjmení):15,(aktivní členi):20,(poslední akce):80,(mrop):7,(akt.členů):11,(ID osoby):10'
       ,fld:'jmena,ulice,psc,obec,stat,prijmeni,_cleni,akce,_mrop,_clenu,id_osoba',ord:'prijmeni'}}
   }
   menu s {title:'STATISTIKA',type:'group'
