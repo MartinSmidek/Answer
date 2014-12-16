@@ -6,7 +6,7 @@
 
 # globální proměnné pro modul Databáze
 
-var staty='CZ,SK,A,D,PL,UA,H,FIN,BG,CDN,NL' // seznam států, (později) naplněný při startu z mapy map_stat
+var staty='CZ,SK,A,D,PL,UA,H,FIN,BG,CDN,NL,USA,?' // seznam států, (později) naplněný při startu z mapy map_stat
 
 # hodnoty pamatované v cookies
 var the_source: text            // forma seznamu akcí google|sey                           -- cookie

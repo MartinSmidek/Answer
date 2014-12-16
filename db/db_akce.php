@@ -2434,6 +2434,35 @@ function akce_kontrola_dat($par) { trace();
   return $html;
 }
 # ===================================================================================== TRANSFORMACE
+function adresa2stat($adresa,$psc) { trace();
+  $stat= '?';
+  $url= "http://maps.google.com/maps/api/geocode/json?sensor=false&address=".urlencode($adresa);
+  $json= file_get_contents($url);
+  $data= json_decode($json, TRUE);
+//                                                         debug($data,$adresa);
+  if ( $data['status']!='OK' ) goto end;
+  foreach ($data['results'] as $result) {
+//                                                         debug($result,1);
+    $stat1= '?';
+    foreach ($result['address_components'] as $part) {
+//                                                         debug($part,2);
+      if ( $part['types'][0]=='country' ) {
+        $stat1= $part['short_name'];
+//                                                         display($stat1);
+      }
+      if ( $part['types'][0]=='postal_code' ) {
+        $psc1= str_replace(' ','',$part['short_name']);
+//                                                         display($psc1);
+        if ( $psc1==$psc ) {
+          $stat= $stat1;
+          goto end;
+        }
+      }
+    }
+  }
+end:
+  return $stat;
+}
 # ----------------------------------------------------------------------------------- data_transform
 # transformace na schema 2014
 # par.cmd = seznam transformací
@@ -2452,17 +2481,30 @@ function data_transform($par) { trace();
       $update= true;
     // zobrazení počtu rodin bez státu
     case 'stat':
+      $AND= $par->cnd ? " AND $par->cnd" : "";
       $n= 0;
       $qo= mysql_qry("
-        SELECT r.id_rodina,stat,obec,psc
+        SELECT r.id_rodina,stat,obec,psc,ulice
         FROM rodina AS r
-        WHERE r.deleted='' AND stat='' $AND
+        WHERE r.deleted='' AND obec!='' AND psc!='' AND stat='' $AND
       ");
       while ( $qo && ($o= mysql_fetch_object($qo)) ) {
         $n++;
+        $adresa= "$o->ulice,$o->psc $o->obec";
+        $html.= "<br>$o->id_rodina:$adresa";
+        if ( $update ) {
+          $stat= adresa2stat($adresa,$o->psc);
+          $html.= "=$stat";
+          $ok= query("UPDATE rodina SET stat='$stat' WHERE deleted='' AND obec='$o->obec' AND psc='$o->psc' AND stat='' ");
+          $updated+= mysql_affected_rows();
+          $ok= query("UPDATE osoba SET stat='$stat' WHERE deleted='' AND adresa=1 AND obec='$o->obec' AND psc='$o->psc' AND stat='' ");
+          $updated+= mysql_affected_rows();
+        }
+        if ( $n==5 ) break;
       }
-      $html.= "rodin bez státu je $n";
-      $html.= $update ? ($updated ? "<br> opraveno $updated údajů<br>" : "<br>beze změn<br>") : '';
+      $html.= $update
+            ? ($updated ? "<br> opraveno $updated údajů<br>" : "<br>beze změn<br>")
+            : "<hr>rodin bez státu je $n";
       break;
     // ---------------------------------------------- rodina: nazev
     // doplní chybějící název rodiny z hlavního člena

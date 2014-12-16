@@ -207,7 +207,8 @@ function sta_sestava($title,$par,$export=false) {
         -- IF(roleMAX(CONCAT(YEAR(datum_od),' - ',a.nazev)) as _akce,
         MAX(CONCAT(datum_od,' - ',a.nazev)) as _akce,
         IF(ISNULL(id_rodina) OR adresa=1,CONCAT(o.ulice,'—',o.psc,'—',o.obec,'—',o.stat),'') AS _osoba,
-        IF(ISNULL(id_rodina) OR adresa=1,o.psc,r.psc) AS _psc
+        IF(ISNULL(id_rodina) OR adresa=1,o.psc,r.psc) AS _psc,
+        IF(ISNULL(id_rodina) OR adresa=1,o.stat,r.stat) AS _stat
       FROM osoba AS o
         LEFT JOIN tvori AS t USING(id_osoba)
         LEFT JOIN rodina AS r USING (id_rodina)

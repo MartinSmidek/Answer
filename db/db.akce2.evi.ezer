@@ -60,11 +60,11 @@ menu m {type:'left', active:*, format:'f-'
         confirm2(ask('data_transform',object('cmd','nazvy')),"<br>provést transformaci dat?");
         alert(ask('data_transform',object('cmd','nazvy+')));
     }}
-    item   {title:'[fa-wrench fa-red]OPRAVIT *.stat' ,skill:'m'
-      proc onclick(i) { menu_item.set(i);
-        confirm2(ask('data_transform',object('cmd','stat')),"<br>provést transformaci dat?");
-        alert(ask('data_transform',object('cmd','stat+')));
-    }}
+#     item   {title:'[fa-wrench fa-red]OPRAVIT *.stat' ,skill:'m'
+#       proc onclick(i) { menu_item.set(i);
+#         confirm2(ask('data_transform',°{cmd:'stat'}),"<br>provést transformaci dat?");
+#         alert(ask('data_transform',°{cmd:'stat+'}));
+#     }}
     item   {title:'[fa-group]tipy duplicit rodin' par:°{lst:'y',tit:'nejedinečné názvy',   cnd:"y.deleted=''"},skill:'yad;fad'}
     item   {title:'[fa-user]tipy duplicit osob'   par:°{lst:'z',tit:'nejedinečná příjmení',cnd:"z.deleted=''"},skill:'yad;fad'}
     item   {title:'[fa-female]tipy duplicit žen'  par:°{lst:'z',tit:'příjmení & rodné',    cnd:"z.deleted=''"},skill:'yad;fad'
