@@ -16,6 +16,10 @@ menu m {type:'left', active:*, format:'f+'
       ,dsc:'Seznam obsahuje účastníky akcí v posledních letech (parametr určuje počet let zpět, default=0 tj. jen letošní).<br>Kliknutí na číslo ve sloupci <b>ID osoby</b> zobrazí první osobu na kartě EVIDENCE.<br>'
       ,tit:'jména:30,ulice:20,psč:6,obec:20,stát:6,(příjmení):15,(aktivní členi):20,(poslední akce):80,(mrop):7,(PPS):7,(akt.členů):11,(ID osoby):10'
       ,fld:'jmena,ulice,psc,obec,stat,prijmeni,_cleni,akce,_mrop,_pps,_clenu,id_osoba',ord:'prijmeni'}}
+    item {title:'... bez PSČ'  ,par:°{typ:'adresy',rok:0,xls:'Excel',/*pdf:'Štítky',*/parm_tit:'roky zpět:'
+      ,dsc:'Seznam obsahuje účastníky akcí v posledních letech (parametr určuje počet let zpět, default=0 tj. jen letošní).<br>Kliknutí na číslo ve sloupci <b>ID osoby</b> zobrazí první osobu na kartě EVIDENCE.<br>'
+      ,tit:'jména:30,ulice:20,psč:6,obec:20,stát:6,(příjmení):15,(aktivní členi):20,(poslední akce):80,(mrop):7,(PPS):7,(akt.členů):11,(ID osoby):10'
+      ,fld:'jmena,ulice,psc,obec,stat,prijmeni,_cleni,akce,_mrop,_pps,_clenu,id_osoba',ord:'prijmeni',cnd:"_psc=''"}}
   }
   menu s {title:'STATISTIKA',type:'group'
     item u {title:'letošní účastníci podle věku'  ,par:°{typ:'ucast-vek',rok:0,xls:'Excel',pdf:0

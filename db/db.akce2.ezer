@@ -4,7 +4,9 @@
 # Systém Ans(w)er - modul Akce
 # (c) 2008-2010 Martin Šmídek <martin@smidek.eu>
 
-# globální proměnné pro modul Databáze - týkají se vlastností nastavené akce
+# globální proměnné pro modul Databáze
+
+var staty='CZ,SK,A,D,PL,UA,H,FIN,BG,CDN,NL' // seznam států, (později) naplněný při startu z mapy map_stat
 
 # hodnoty pamatované v cookies
 var the_source: text            // forma seznamu akcí google|sey                           -- cookie
@@ -533,6 +535,7 @@ map ms_akce_t_role:   table _cis {where:"druh='ms_akce_t_role'",    order:'porad
 map map_evi_vyber_o:  table _cis {where:"druh='evi_vyber_o' AND data<50",  order:'poradi', key_id:'data'}
 map map_evi_vyber_x:  table _cis {where:"druh='evi_vyber_o' AND data>50",  order:'poradi', key_id:'data'}
 map map_evi_vyber_r:  table _cis {where:"druh='evi_vyber_r'",       order:'poradi', key_id:'data'}
+map map_stat:         table _cis {where:"druh='stat'",              order:'poradi', key_id:'data'}
 
 # ============================================================================================= TEST
 # panel test {type:'plain', _sys:'*', title:"TEST", include:'onload,db.akce2.test',skill:'m'}
@@ -594,6 +597,7 @@ panel osoba_config [,,200,150] {type:'popup', title:"Podrobnosti údajů"
 }
 form _osoba2x [,,244,322] {css:'ae_frame', proc onclick() { on_click }
   var mode=0            // jak zobrazit osobní kontakt a adresu je-li rodinná: 0=hide | 1=disable
+  proc onstart() { stat.selects(staty.get,',',1) }
   // globální procedury
   proc set_mode(_mode) { mode.set(_mode); form.enable(1,'a|b|j|k') }
   proc onchanged() { }
@@ -689,7 +693,7 @@ form _osoba2x [,,244,322] {css:'ae_frame', proc onclick() { on_click }
   field ulice    [52, 2,182,] {tag:'b', data:o.ulice, format:'n', title:'ulice'}
   field psc      [5, 35, 40,] {tag:'b', data:o.psc, format:'n', title:'^psč'}
   field obec     [52,35,135,] {tag:'b', data:o.obec, format:'n', title:'^obec'}
-  select stat    [193,35,45,] {tag:'b', format:'nr:e', title:'^stát'}
+  select stat    [193,35,45,] {tag:'b', data:o.stat, format:'nr:e', title:'^stát' }
   label [0,55,,9] {tag:'b,S', format:'n', css:'db_sep' } // zarovnání
 
   // o = organizační údaje - budou vidět jen pro oprávněné
@@ -745,6 +749,7 @@ panel rodina_config [,,200,60] {type:'popup', title:"Podrobnosti údajů"
 }
 form _rodina2 [,,360,229]  { css:'ae_frame', proc onclick() { on_click }
   var key_pobyt: number
+  proc onstart() { r_stat.selects(staty.get,',',1) }
 
   // globální procedury
   proc onchanged() { }
@@ -806,10 +811,10 @@ form _rodina2 [,,360,229]  { css:'ae_frame', proc onclick() { on_click }
   field r_datsvatba[Lr+82,20,85,] {tag:'r', type:'date', data:r.datsvatba, format:'rR:e',title:'^od svatby'}
 
   // kontakt
-  field r_ulice    [Lr+ 5,55,161,] {tag:'r', data:r.ulice,title:'^ulice'}
-  field r_psc      [Lr+ 5,90, 40,] {tag:'r', data:r.psc,title:'^psč'}
-  field r_obec     [Lr+52,90, 61,] {tag:'r', data:r.obec,title:'^obec'}
-  select r_stat    [Lr+121,90,45,] {tag:'r', format:'r:e', title:'^stát'}
+  field r_ulice    [Lr+ 5,55,161,] {tag:'r', data:r.ulice, title:'^ulice'}
+  field r_psc      [Lr+ 5,90, 40,] {tag:'r', data:r.psc, title:'^psč'}
+  field r_obec     [Lr+52,90, 61,] {tag:'r', data:r.obec, title:'^obec'}
+  select r_stat    [Lr+121,90,45,] {tag:'r', data:r.stat, format:'r:e', title:'^stát'}
   field r_telefony [Lr+5,125,160,] {tag:'r', type:'list', data:r.telefony,title:'^telefony'}
   field r_emaily   [Lr+5,160,160,] {tag:'r', type:'list', data:r.emaily, title:'^e-maily'}
 
@@ -871,6 +876,7 @@ form _rodina2p [,,188,229] { css:'ae_frame'
   const Ts=190; Tp=0 // 0
   view r: table rodina
   view t: table tvori
+  proc onstart() { r_stat.selects(staty.get,',',1) }
   proc onchanged() { }
   proc show_rodina() { var tags:text
     form.display(0,'[^f]');
@@ -908,7 +914,7 @@ form _rodina2p [,,188,229] { css:'ae_frame'
   field r_ulice    [Lp+0,Tp+55,176,] {tag:'r,N', data:r.ulice, title:'^ulice'}
   field r_psc      [Lp+ 0,Tp+90, 40,] {tag:'r,N', data:r.psc, title:'^psč'}
   field r_obec     [Lp+47,Tp+90,78,] {tag:'r,N', data:r.obec, title:'^obec'}
-  select r_stat    [Lp+132,Tp+90,45,] {tag:'r', format:'r:e', title:'^stát'}
+  select r_stat    [Lp+132,Tp+90,45,] {tag:'r', data:r.stat, format:'r:e', title:'^stát'}
   field r_telefony [Lp+0,Tp+125,176,] {tag:'r', type:'list', data:r.telefony,title:'^telefony'}
   field r_emaily   [Lp+0,Tp+160,176,] {tag:'r', type:'list', data:r.emaily, title:'^e-maily'}
   // rodinná poznámka
