@@ -160,6 +160,7 @@ function sta_sestava($title,$par,$export=false) {
   case 'adresy':
     $rok= date('Y') - $par->parm;
     $rok18= date('Y')-18;
+    $AND= $par->cnd ? " AND $par->cnd " : '';
     // úprava title pro případný export do xlsx
     $par->title= $title.($par->rok ? " akcí za poslední ".($par->rok+1)." roky" : " letošních akcí");
     $idr0= -1; $ido= 0;
@@ -205,7 +206,8 @@ function sta_sestava($title,$par,$export=false) {
         MAX(IF(t.role IN ('a','b') AND p.funkce=1,YEAR(datum_od),0)) as _pps,
         -- IF(roleMAX(CONCAT(YEAR(datum_od),' - ',a.nazev)) as _akce,
         MAX(CONCAT(datum_od,' - ',a.nazev)) as _akce,
-        IF(ISNULL(id_rodina) OR adresa=1,CONCAT(o.ulice,'—',o.psc,'—',o.obec,'—',o.stat),'') AS _osoba
+        IF(ISNULL(id_rodina) OR adresa=1,CONCAT(o.ulice,'—',o.psc,'—',o.obec,'—',o.stat),'') AS _osoba,
+        IF(ISNULL(id_rodina) OR adresa=1,o.psc,r.psc) AS _psc
       FROM osoba AS o
         LEFT JOIN tvori AS t USING(id_osoba)
         LEFT JOIN rodina AS r USING (id_rodina)
@@ -218,7 +220,7 @@ function sta_sestava($title,$par,$export=false) {
         -- AND o.id_osoba IN(4537,13,14,3751)
         -- AND o.id_osoba IN(4503,4504,4507,679,680,3612,4531,4532,206,207)
         -- AND id_duakce=394
-      GROUP BY o.id_osoba HAVING _role!='p'
+      GROUP BY o.id_osoba HAVING _role!='p' $AND
       ORDER BY _order
       -- LIMIT 10
       ");

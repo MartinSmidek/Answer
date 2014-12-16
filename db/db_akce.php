@@ -2446,6 +2446,24 @@ function data_transform($par) { trace();
   foreach (explode(',',$par->cmd) as $cmd ) {
     $update= false;
     switch ($cmd ) {
+    // ---------------------------------------------- rodina,osoba: stat
+    // doplní do adresy chybějící stát
+    case 'stat+':
+      $update= true;
+    // zobrazení počtu rodin bez státu
+    case 'stat':
+      $n= 0;
+      $qo= mysql_qry("
+        SELECT r.id_rodina,stat,obec,psc
+        FROM rodina AS r
+        WHERE r.deleted='' AND stat='' $AND
+      ");
+      while ( $qo && ($o= mysql_fetch_object($qo)) ) {
+        $n++;
+      }
+      $html.= "rodin bez státu je $n";
+      $html.= $update ? ($updated ? "<br> opraveno $updated údajů<br>" : "<br>beze změn<br>") : '';
+      break;
     // ---------------------------------------------- rodina: nazev
     // doplní chybějící název rodiny z hlavního člena
     case 'nazvy+':

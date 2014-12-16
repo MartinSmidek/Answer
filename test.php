@@ -31,10 +31,11 @@
     $dbg ? array("$licensed/jush/mini_jush.js"):array(),                              /* debugger */
     // pluginy
     array("$licensed/zeroclipboard/ZeroClipboard.js","$licensed/mootree.js"),
-    // uživatelské skripty - v lokálu bez síťových přístupů
-    $ezer_local
-    ? array("test/fce.js","test/test_google.js")
-    : array("test/fce.js","test/test_google.js",
+//     // uživatelské skripty - v lokálu bez síťových přístupů
+//     $ezer_local
+//     ? array("test/fce.js","test/test_google.js")
+//     :
+      array("test/fce.js","test/test_google.js",
         "http://api4.mapy.cz/loader.js",
         "http://maps.googleapis.com/maps/api/js?libraries=geometry&sensor=false")
   );
