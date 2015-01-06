@@ -4956,6 +4956,7 @@ function akce_text_prehled($akce,$par,$title,$vypis,$export=false) { trace();
     // předání výsledku
     return $html;
   }
+  $result= (object)array();
   $html= '';
   // pfunkce: 0 4 5 8 92 95
   $html.= "<h3>Celkový počet dětí na akci podle stáří (v době začátku akce)</h3>";
@@ -4985,6 +4986,7 @@ function akce_text_prehled($akce,$par,$title,$vypis,$export=false) { trace();
 }
 # --------------------------------------------------------------------------------- akce_text_vyroci
 function akce_text_vyroci($akce,$par,$title,$vypis,$export=false) { trace();
+  $result= (object)array('_error'=>0);
   $html= '';
   // data akce
   $vyroci= array();
@@ -5839,15 +5841,15 @@ function akce_vyuctov_pary($akce,$par,$title,$vypis,$export=false) { trace();
       . ",str. celá:5:r:S,str. pol.:5:r:s"
       . ",platba ubyt.:7:r:s,platba strava:7:r:s,platba režie:7:r:s,sleva:7:r:s,CD:6:r:s,celkem:7:r:s"
       . ",na účet:7:r:s,datum platby:10:d"
-      . ",nedo platek:6:r:s,č.příspěvky:6,pokladna:6:r:s,přepl.:6:r:s,poznámka:50,SPZ:9,.:7"
+      . ",nedo platek:6:r:s,č.příspěvky:6,pokladna:6:r:s,datum platby:10:d,přepl.:6:r:s,poznámka:50,SPZ:9,.:7"
       . ",ubyt.:8:r:s,DPH:6:r:s,strava:8:r:s,DPH:6:r:s,režie:8:r:s,zapla ceno:8:r:s"
       . ",dota ce:6:r:s,nedo platek:6:r:s,dar:7:r:s,rozpočet organizace:10:r:s"
       . "";
   $fld= "manzele"
 //       . ",id_pobyt"
       . ",pokoj,_deti,luzka,pristylky,kocarek,=pocetnoci,strava_cel,strava_pol"
-      . ",platba1,platba2,platba3,platba4,=cd,=platit,platba,datplatby"
-      . ",=nedoplatek,prispevky,=pokladna,=preplatek,poznamka,spz,"
+      . ",platba1,platba2,platba3,platba4,=cd,=platit,=uctem,=datucet"
+      . ",=nedoplatek,prispevky,=pokladna,=datpokl,=preplatek,poznamka,spz,"
       . ",=ubyt,=ubytDPH,=strava,=stravaDPH,=rezie,=zaplaceno,=dotace,=nedopl,=dar,=naklad"
       . "";
   $cnd= 1;
@@ -5873,7 +5875,9 @@ function akce_vyuctov_pary($akce,$par,$title,$vypis,$export=false) { trace();
   // data akce
   $qry=  "SELECT id_pobyt,
           p.pouze,pokoj,luzka,pristylky,kocarek,pocetdnu,strava_cel,strava_pol,
-            platba1,platba2,platba3,platba4,platba,datplatby,cd,p.poznamka,
+            platba1,platba2,platba3,platba4,
+            platba,zpusobplat,c.ikona as pokladnou,datplatby,
+            cd,p.poznamka,
           r.nazev as nazev,r.ulice,r.psc,r.obec,r.telefony,r.emaily,r.spz,
           SUM(IF(t.role='d',1,0)) as _deti,
           GROUP_CONCAT(DISTINCT IF(t.role='a',o.clen,'')     SEPARATOR '') as clen_m,
@@ -5894,6 +5898,7 @@ function akce_vyuctov_pary($akce,$par,$title,$vypis,$export=false) { trace();
           JOIN akce AS a ON a.id_duakce=p.id_akce
           LEFT JOIN dar AS d ON d.id_osoba=s.id_osoba AND d.ukon='p'
             AND YEAR(a.datum_do) BETWEEN YEAR(d.dat_od) AND YEAR(d.dat_do)
+          JOIN _cis AS c ON c.druh='ms_akce_platba' AND c.data=zpusobplat
           WHERE p.id_akce='$akce' AND funkce!=99 AND $cond
           GROUP BY id_pobyt
           ORDER BY $ord";
@@ -5919,10 +5924,13 @@ function akce_vyuctov_pary($akce,$par,$title,$vypis,$export=false) { trace();
         case '=platit':     $val= $predpis;
                             $exp= "=[platba1,0]+[platba2,0]+[platba3,0]+[platba4,0]"; break;
         case '=preplatek':  $val= $preplatek;
-                            $exp= "=IF([platba,0]>[=platit,0],[platba,0]-[=platit,0],0)"; break;
+                            $exp= "=IF([=pokladna,0]+[=uctem,0]>[=platit,0],[=pokladna,0]+[=uctem,0]-[=platit,0],0)"; break;
         case '=nedoplatek': $val= $nedoplatek; break;
                             $exp= "=IF([=zaplaceno,0]<[=platit,0],[=platit,0]-[=zaplaceno,0],0)"; break;
-        case '=pokladna':   $val= ''; break;
+        case '=uctem':      $val= $x->pokladnou ? '' : 0+$x->platba; break;
+        case '=datucet':    $val= $x->pokladnou ? '' : $x->datplatby; break;
+        case '=pokladna':   $val= $x->pokladnou ? 0+$x->platba : ''; break;
+        case '=datpokl':    $val= $x->pokladnou ? $x->datplatby : ''; break;
         case '=cd':         $val= 100.00*$x->cd; break;
         case '=ubyt':       $val= round($x->platba1/(1+$DPH1));
                             $exp= "=ROUND([platba1,0]/(1+$DPH1),0)"; break;
@@ -5935,7 +5943,7 @@ function akce_vyuctov_pary($akce,$par,$title,$vypis,$export=false) { trace();
         case '=rezie':      $val= 0+$x->platba3;
                             $exp= "=[platba3,0]"; break;
         case '=zaplaceno':  $val= 0+$x->platba;
-                            $exp= "=[platba,0]+[=pokladna,0]"; break;
+                            $exp= "=[=uctem,0]+[=pokladna,0]"; break;
         case '=dotace':     $val= -$x->platba4;
                             $exp= "=-[platba4,0]"; break;
         case '=nedopl':     $val= $nedoplatek;
