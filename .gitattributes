@@ -315,6 +315,12 @@ ys2/img/ys-logo.gif -text
 ys2/img/ys2.png -text
 ys2/img/ys2_local.png -text
 ys2/img/ys_local.png -text
+ys2/ys2.ds.ezer -text
+ys2/ys2.ds.kl.ezer -text
+ys2/ys2.ds.tab.ezer -text
+ys2/ys2.pok.den.ezer -text
+ys2/ys2.pok.ezer -text
+ys2/ys2.pok.nas.ezer -text
 /ys2_test.inc -text
 /ys2_test.php -text
 ys2_test/$.ezer -text

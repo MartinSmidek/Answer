@@ -1,0 +1,202 @@
+# Systém Ans(w)er - modul Dům
+# (c) 2008-2010 Martin Šmídek <martin@smidek.eu>
+
+# ================================================================================================== OBJEDNÁVKY
+panel dum {type:'right', title:"Objednávky", _sys:'obj',
+        include:'onload,ds' // musí být onload aby se natáhla knihovna
+  menu mo {type:'left'
+    proc onclick(x) { show_order(x.par.uid) }
+  }
+  proc onstart() {
+    var mn: object
+    mn.set(ask('ds_obj_menu')); //debug(mn.get);
+    mo.attach_code(mn.cd.get);
+    mo.part(mn.th.get).click(1)
+  }
+  proc show_order (o) { echo('nic') }
+}
+group tab { /*include:'static'*/
+  # ------------------------------------------------------------------------------------------------ tabulky
+  table ds_cena {  db:'setkani', key_id:'id_cena'
+    number id_cena
+    number rok
+    text polozka         { sql_pipe:'wu' }
+    text druh            { sql_pipe:'wu' }
+    text typ             { sql_pipe:'wu' }
+    number od
+    number do
+    number cena
+    number dph
+  }
+  table ds_osoba { db:'setkani', key_id:'id_osoba'
+    number id_osoba
+    number id_order       // tx_gnalberice_order.uid
+    text   rodina         { sql_pipe:'wu' }
+    text   prijmeni       { sql_pipe:'wu' }
+    text   jmeno          { sql_pipe:'wu' }
+    date   narozeni       { sql_pipe:'sql_date1' }
+    text   psc
+    text   obec           { sql_pipe:'wu' }
+    text   ulice          { sql_pipe:'wu' }
+    text   email          { sql_pipe:'wu' }
+    text   telefon
+    // ubytování
+    number pokoj
+    number luzko          // L|P|B|DP
+    number postylka       // 0|1
+    number strava         // L|P|B|DP
+    date   fromday        { sql_pipe:'sql_date1' }
+    date   untilday       { sql_pipe:'sql_date1' }
+    text   pozn           { sql_pipe:'wu' }
+  }
+  table tx_gnalberice_room { db:'setkani', key_id:'uid'
+    number uid
+    number deleted
+    number hidden
+    number number
+    text   category
+    number bads
+    number addbeds
+    number etage
+    text   note         { sql_pipe:'wu' }
+  }
+  table tx_gnalberice_order { db:'setkani', key_id:'uid'
+    number uid
+    number crdate       { sql_pipe:'stamp_date' }
+    number deleted
+    number hidden
+    text   name         { sql_pipe:'wu' }
+    number room
+    number fromday      { sql_pipe:'stamp_date' }
+    number untilday     { sql_pipe:'stamp_date' }
+    number confirmed
+    number state
+    number akce         { help:"akce|číslo akce z číselníku akcí" }
+    text   note         { sql_pipe:'wu' }
+    text   rooms        { sql_pipe:'wu' }
+    text   rooms1       { sql_pipe:'wu' }
+    number adults
+    number kids_10_15
+    number kids_3_9
+    number kids_3
+    number board
+    number prog_cely
+    number prog_polo
+    text   address      { sql_pipe:'wu' }
+    text   zip
+    text   city         { sql_pipe:'wu' }
+    text   telephone
+    text   email
+    number fe_user_id
+    // přidané polozky
+    text   firstname    { sql_pipe:'wu' }
+    text   org          { sql_pipe:'wu' }
+    number ic
+    number ucast        // 1 => účastní se pobytu
+    number skoleni      // 1 => školení, neplatí se rekreační poplatek
+  }
+  table _cis { key_id:'id_cis'
+  # ------------------------------------------------------------------------------------------------ číselníky,mapy
+    number id_cis, text druh, text data, text hodnota, text zkratka, number poradi, text barva, text ikona
+  }
+  map ds_stav:   table _cis {where:"druh='ds_stav'", order:'poradi', key_id:'data'}
+  map ds_strava: table _cis {where:"druh='ds_strava'", order:'poradi', key_id:'data'}
+  map ds_luzko:  table _cis {where:"druh='ds_luzko'", order:'poradi', key_id:'data'}
+}
+# ================================================================================================== HOSTÉ
+panel kl {type:'right', title:"Hosté", _sys:'kli', include:'onload' }
+# ================================================================================================== CENY
+var rok: number
+panel cen [,,,543] {type:'right', title:'Ceny'
+  menu {type:'left', active:*
+    menu m {title:'Ceny roku ',type:'group'
+      item {title:'2015',par:°{rok:'2015'} }
+      item {title:'2014',par:°{rok:'2014'} }
+      item {title:'2013',par:°{rok:'2013'} }
+      item {title:'2012',par:°{rok:'2012'} }
+      item {title:'2011',par:°{rok:'2011'} }
+      item {title:'2010',par:°{rok:'2010'} }
+      item {title:'2009',par:°{rok:'2009'} }
+      item {title:'2008',par:°{rok:'2008'} }
+      item {title:'2007',par:°{rok:'2007'} }
+      proc onclick (i) {
+        rok.set(i.par.rok);
+        info.fill(conc(i.owner.title,i.title),'');
+        info.ceny.browse_load(conc("rok=",rok.get));
+      }
+    }
+    menu {title:'Ceník dalšího roku ',type:'group'
+      item {title:'kopie letos => příští rok',  par:°{op:'kopie',z:'0',na:'1'} }
+      item {title:'kopie loni => letos',        par:°{op:'kopie',z:'-1',na:'0'} }
+      proc onclick (i) { var na:text var z:text
+        na.set(sum(fdate('Y'),i.par.na));
+        z.set(sum(fdate('Y'),i.par.z));
+        confirm("Ceník roku ",na," bude nahrazen kopií ceníku roku ",z,". Pokračovat?");
+        info.fill(conc(i.owner.title,i.title),ask('ds_ceny_uprava',i.par));
+        info.ceny.browse_load(conc("rok=",na));
+      }
+    }
+  }
+  use info: form right [12,4,,],
+  # ------------------------------------------------------------------------------------------------ right
+  # formulář pro levostranné menu s permanentním nadpisem
+  form right [,,640,50] {
+  #   button export [620,18,100,16] { title:'Export', style:'display:none;zIndex:2'
+  #     proc onclick() {
+  #       note.set(ask('lide_cleni_kurs',rok.get,1));
+  #     }
+  #   }
+    label info [0,0,680,600] { title:'' }
+    label head [0,0,680,50]  { title:'' }
+    label note [0,50,680,550] { title:'' }
+    proc fill(x,y) {
+      [ x; head.set(conc("<div class='CSection CMenu'><h3 class='CTitle'>",x,"</h3></div>")) ];
+      [ y; note.set(y) ]
+    }
+    browse ceny [10,76,,] { rows:30
+      show id [,,0,] { data:tab.ds_cena.id_cena }
+      show rok [,,0,] { data:tab.ds_cena.rok }
+      show [,,240,] {title:'položka ceníku',  data:tab.ds_cena.polozka }
+      show [,,100,] {title:'druh',  data:tab.ds_cena.druh format:'s+'}
+      show [,,60,] {title:'typ',  data:tab.ds_cena.typ format:'s+'}
+      show [,,50,] {title:'od vč.',  data:tab.ds_cena.od, format:'r' }
+      show [,,50,] {title:'do nevč.',  data:tab.ds_cena.do, format:'r' }
+      show [,,80,] {title:'cena s DPH',  data:tab.ds_cena.cena, format:'r' }
+      show [,,40,] {title:'DPH',  data:tab.ds_cena.dph, format:'r' }
+      proc onsubmit (id) {
+        oprava.modal(300,100)
+      }
+    }
+  }
+  # ================================================================================================ z_oprava
+  panel oprava [0,0,300,135] { title:'oprava položky ceníku', type:'popup', css:'dialog'
+    use f: form formular [1,9,,],
+    proc onfocus() { f.load(info.ceny.id.get); }
+  }
+  # ================================================================================================ z_novy
+  panel novy [0,0,300,125] { title:'nová položka ceníku', type:'popup', css:'dialog'
+    use z: form formular [1,9,,],
+  }
+  # ------------------------------------------------------------------------------------------------ formular
+  form formular [,,300,125] {
+    label [  0,10, 80,17] { title:'položka', format:'r' },
+    field [ 90,10,200,17] { data:tab.ds_cena.polozka },
+    label [  0,35, 80,17] { title:'věkové pásmo', format:'r' },
+    field [ 90,35, 40,17] { data:tab.ds_cena.od, format:'r'  },
+    field [140,35, 40,17] { data:tab.ds_cena.do, format:'r'  },
+    label [  0,60, 80,17] { title:'druh', format:'r' },
+    field [ 90,60, 90,17] { data:tab.ds_cena.druh },
+    label [190,60, 20,17] { title:'typ', format:'r' },
+    field [220,60, 70,17] { data:tab.ds_cena.typ },
+    label [  0,85, 80,17] { title:'cena', format:'r' },
+    field [ 90,85, 40,17] { data:tab.ds_cena.cena, format:'r'  },
+    label [190,85, 20,17] { title:'DPH', format:'r' },
+    field [220,85, 40,17] { data:tab.ds_cena.dph, format:'r'  },
+    button save [90,115,45,20] { type:'submit', title:'Uložit', help:'uložit změny',
+      proc onclick () { the_formsave(form,info.ceny); panel.hide(form.key) }
+    }
+    button cancel [150,115,45,20] { title:'Zpět', help:'zadané údaje neukládat, vrátit se zpět'
+      proc onclick () { panel.hide(0) }
+    }
+  }
+}
