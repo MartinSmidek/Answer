@@ -48,11 +48,6 @@ group foto { include:'onload,db.akce2.foto'
     proc galery(fotka) {}
   }
 }
-panel elim [0,0,965,582] { type:'popup', title:'Duplicity', format:'c', include:'onload,db.akce2.elim'
-  proc osoby  (ido,jmeno,prijmeni) {}           // sjednocení dvou osob
-  proc rodiny (idr,nazev) {}                    // sjednocení dvou rodin
-  proc cleni  (idr) {}                          // sjednocení členů dané rodiny
-}
 # =========================================================================================== CHLAPI
 # panel chl {type:'right', _sys:'*', title:'Chlapi', include:'onclick,db.akce.chl',skill:'yac;xa' }
 # ============================================================================================= AKCE
@@ -91,7 +86,12 @@ panel dop {type:'right', title:'Dopisy', _sys:'*', include:'onclick,db.akce2.dop
 #   title:'&nbsp;.&nbsp;&nbsp;.&nbsp;&nbsp;.&nbsp;&nbsp;.&nbsp;&nbsp;.&nbsp;&nbsp;.&nbsp;&nbsp;.&nbsp;&nbsp;.&nbsp;&nbsp;.&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(duplicity)',
 #   include:'onclick,db.akce.eli', skill:'m;fad' }
 panel sta {type:'right', title:'Výpisy evidence', _sys:'*', include:'onclick,db.akce2.sta', skill:'yaa;faa;cas'  }
-
+# =========================================================================================== POPUPS
+panel elim [0,0,965,582] { type:'popup', title:'Duplicity', format:'c', include:'onload,db.akce2.elim'
+  proc osoby  (ido,jmeno,prijmeni) {}           // sjednocení dvou osob
+  proc rodiny (idr,nazev) {}                    // sjednocení dvou rodin
+  proc cleni  (idr) {}                          // sjednocení členů dané rodiny
+}
 # =========================================================================================== COMMON
 # ------------------------------------------------------------------ _the_akce
 # zatím nezobrazená data nastavené akce s klíčem id_duakce
