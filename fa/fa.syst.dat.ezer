@@ -11,7 +11,7 @@ menu zaloha {type:'left',
     item { title:"obnova ze zálohy"       ,par:°{typ:'restore'}, skill:'m' }
     proc onclick(i) {
       u.fill(conc(i.owner.title,' - ',i.title),' ');
-      confirm2("Pokračovat?");
+      confirm("Pokračovat?");
       u.append(ask('sys_backup_make',i.par));
     }
   }

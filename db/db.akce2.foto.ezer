@@ -25,7 +25,7 @@ form _alb [,,600,357] {
     proc onclick() { n.set(sum(n.get,1)); drop_galery }}
   button smazat [469,4,,] { type:'html', title:'[fa-times fa-2x fa-red]', format:'d'
     proc onclick() {
-      confirm2("Opravdu odstranit tuto fotografii?");
+      confirm("Opravdu odstranit tuto fotografii?");
 #       { ask('album_delete2',u.b.key_rodina.get); u.b.fotka.let(''); foto.set('');
 #       | warning("fotografii nebylo možné smazat");
 #       }

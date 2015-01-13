@@ -109,10 +109,10 @@ form _cmd [,,425,30] { css:'ae_parm'
       { [ o1.oso.same | o1.oso.save; o1.oso.load ];
         eq(o1.bs.ido.get,o2.bs.ido.get);
         alert("vlevo i vpravo je stejná osoba!");
-      | confirm2("opravdu zrušit <b>",o2.bs._nazev.get,"</b> (",o2.bs.ido.get,
+      | confirm("opravdu zrušit <b>",o2.bs._nazev.get,"</b> (",o2.bs.ido.get,
           ") a přidat účasti,dar,... k <b>",o1.bs._nazev.get,"</b> (",o1.bs.ido.get,") ?");
         ret.set(ask('eli_osoba',o1.bs.ido.get,o2.bs.ido.get));
-        [ ret.continue; confirm2(ret.continue); ask('eli_single',ret) ];
+        [ ret.continue; confirm(ret.continue); ask('eli_single',ret) ];
         o1.bs.browse_row; o1.bs_load(o1.bs.browse_key);
         o2.bs.browse_row; o2.bs_load(o2.bs.browse_key);
       }
@@ -120,7 +120,7 @@ form _cmd [,,425,30] { css:'ae_parm'
       { [ c1.oso.same | c1.oso.save; c1.oso.load ];
         eq(c1.bs.ido.get,c2.bs.ido.get);
         alert("vlevo i vpravo je stejná osoba!");
-      | confirm2("opravdu zrušit <b>",c2.bs._nazev.get,"</b> (",c2.bs.ido.get,
+      | confirm("opravdu zrušit <b>",c2.bs._nazev.get,"</b> (",c2.bs.ido.get,
           ") a přidat účasti,dar,... k <b>",c1.bs._nazev.get,"</b> (",c1.bs.ido.get,") ?");
         ask('elim_clen',c1.rs.idr.get,c1.bs.ido.get,c2.bs.ido.get);
         c1.bs.browse_seek;
@@ -130,7 +130,7 @@ form _cmd [,,425,30] { css:'ae_parm'
       { [ r1.same | r1.save; r1.load ];
         eq(r1.br.idr.get,r2.br.idr.get);
         alert("vlevo i vpravo je stejná rodina!");
-      | confirm2("opravdu sjednotit rodiny <b>",r2.br._nazev.get,"</b> (",r2.br.idr.get,
+      | confirm("opravdu sjednotit rodiny <b>",r2.br._nazev.get,"</b> (",r2.br.idr.get,
           ") a <b>",r1.br._nazev.get,"</b> (",r1.br.idr.get,") ?");
         ask('elim_rodina',r1.br.idr.get,r2.br.idr.get);
         r1.br.browse_row; r1.br_load(r1.br.browse_key);
@@ -144,7 +144,7 @@ form _cmd [,,425,30] { css:'ae_parm'
       { [ o1.oso.same | o1.oso.save; o1.oso.load ];
         eq(o1.bs.ido.get,o2.bs.ido.get);
         alert("vlevo i vpravo je stejná osoba!");
-      | confirm2("opravdu jsou <b>",o2.bs._nazev.get,"</b> (",o2.bs.ido.get,
+      | confirm("opravdu jsou <b>",o2.bs._nazev.get,"</b> (",o2.bs.ido.get,
           ") a <b>",o1.bs._nazev.get,"</b> (",o1.bs.ido.get,") různé osoby?");
         ask('elim_differ',o1.bs.ido.get,o2.bs.ido.get,'osoba');
       }
@@ -152,7 +152,7 @@ form _cmd [,,425,30] { css:'ae_parm'
       { [ r1.same | r1.save; r1.load ];
         eq(r1.br.idr.get,r2.br.idr.get);
         alert("vlevo i vpravo je stejná rodina!");
-      | confirm2("opravdu jsou <b>",r2.br._nazev.get,"</b> (",r2.br.idr.get,
+      | confirm("opravdu jsou <b>",r2.br._nazev.get,"</b> (",r2.br.idr.get,
           ") a <b>",r1.br._nazev.get,"</b> (",r1.br.idr.get,") různé rodiny?");
         ask('elim_differ',r1.br.idr.get,r2.br.idr.get,'rodina');
       }

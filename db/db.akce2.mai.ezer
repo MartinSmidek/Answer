@@ -55,7 +55,7 @@ proc ini(i,k,uq,on,off) {
        {et.get.display(0); es.get.display(0)});
 }
 
-menu m {type:'left',
+menu m {type:'left', format:'f+'
   menu g {title:'Příprava mailů ', type:'group'
     item i {title:'všem účastníkům této akce', _sys:'akc'
       proc onclick (i) { ini(i,'et','U','akce','gen|skup'); vy.fill(the_title.get); } }

@@ -90,26 +90,26 @@ Ezer.Form.implement({
         if ( field.data && pairs[field.data.id] ) {
           var title= pairs[field.data.id];
           var css= title[0]=='!' ? css2 : css1;
-          if ( field instanceof Ezer.Elem && field.DOM_Input ) {
-            field.DOM_Input.set('title',title||'?');
-            field.DOM_Input.addClass(css);
-          }
-          else if ( field instanceof Ezer.Radio ) {
+          if ( field instanceof Ezer.Radio || field instanceof Ezer.Check ) {
             field.DOM_Block.set('title',title||'?');
             field.DOM_Block.addClass(css);
+          }
+          else if ( field instanceof Ezer.Elem && field.DOM_Input ) {
+            field.DOM_Input.set('title',title||'?');
+            field.DOM_Input.addClass(css);
           }
         }
       },this);
     }
     else {
       $each(this.part,function(field,id) {
-        if ( field instanceof Ezer.Elem && field.DOM_Input ) {
-          field.DOM_Input.set('title','');
-          field.DOM_Input.removeClass(css1).removeClass(css2);
-        }
-        else if ( field instanceof Ezer.Radio ) {
+        if ( field instanceof Ezer.Radio || field instanceof Ezer.Check ) {
           field.DOM_Block.set('title','');
           field.DOM_Block.removeClass(css1).removeClass(css2);
+        }
+        else if ( field instanceof Ezer.Elem && field.DOM_Input ) {
+          field.DOM_Input.set('title','');
+          field.DOM_Input.removeClass(css1).removeClass(css2);
         }
       },this);
     }

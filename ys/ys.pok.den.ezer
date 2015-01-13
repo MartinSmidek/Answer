@@ -132,12 +132,12 @@ form _d_denik [,,539,510] {
 }
 # -------------------------------------------------------------------------------------------------- _d_cmd
 form _d_cmd [,,300,20] {
-  button oprav [18,-1,100,16] { type:'submit', title:'Opravit', skill:'yp+|yp+' },
-  button kopie [123,0,50,17] { title:'Zkopírovat', skill:'yp+|yp+' },
-  button novy [214,0,50,17] { title:'Nový', skill:'yp+|yp+' },
-  button smazat [272,0,50,17] { title:'Smazat', skill:'yp+|yp+' },
-  button tisk1 [381,0,50,17] { title:'Vytisknout', skill:'yp+|yp+' },
-  button tiskn [481,0,50,17] { title:'Vytisknout nevytištěné', skill:'yp+|yp+' },
+  button oprav [18,-1,,] { type:'submit', title:'Opravit', skill:'yp+|yp+' },
+  button kopie [123,0,,] { title:'Zkopírovat', skill:'yp+|yp+' },
+  button novy [214,0,,] { title:'Nový', skill:'yp+|yp+' },
+  button smazat [272,0,,] { title:'Smazat', skill:'yp+|yp+' },
+  button tisk1 [381,0,,] { title:'Vytisknout', skill:'yp+|yp+' },
+  button tiskn [481,0,,] { title:'Vytisknout nevytištěné', skill:'yp+|yp+' },
 }
 # -------------------------------------------------------------------------------------------------- _d_vyber
 form _d_vyber [,,294,270] { style:'border:1px solid #f5f5f5;backgroundColor:#ffeed6;MozBorderRadius:5px;zIndex:0'
@@ -284,8 +284,8 @@ panel d_ucely [0,0,294,370] { title:' výběr účelu', type:'popup', css:'dialo
 # ================================================================================================== společné
 # -------------------------------------------------------------------------------------------------- _d_vyber_cmd
 form _d_vyber_cmd [,,260,30] {
-  button vyber [227,0,50,17] { type:'submit', title:'Vybrat' },
-  button [152,0,50,17] { title:'storno',
+  button vyber [227,0,,] { type:'submit', title:'Vybrat' },
+  button [152,0,,] { title:'storno',
     proc onclick () { panel.hide(0); stop}
   }
 }
@@ -318,7 +318,7 @@ form _d_doklad [,,419,354] {
   field priloh [320,311,24,17] { data:pdenik.priloh },
   check vytisten [391,313,73,17] { data:pdenik.vytisten },
   label [415,315,73,17] { title:'vytištěno' },
-  button save [422,338,45,20] { type:'submit', title:'OK', help:'uložit změny',
+  button save [422,338,,] { type:'submit', title:'OK', help:'uložit změny',
     proc onclick () { _d_save }
   },
   proc _d_save () { _d_save1; panel.hide(form.key); stop }
@@ -329,16 +329,16 @@ form _d_doklad [,,419,354] {
     ,sel_typ.key,org.key,pokl.get(org.key,'abbr'),datum.get);
     form.load; den.d_browse_seek(form.key)
   }
-  button cancel [316,337,45,20] { title:'Storno', help:'zadané údaje neukládat, vrátit se zpět'
+  button cancel [316,337,,] { title:'Storno', help:'zadané údaje neukládat, vrátit se zpět'
     proc onclick () { panel.hide(0); stop}
   },
 #   button _d_clen [411,63,50,17] { title:'člen >'
 #     proc onclick () { result.set(d_clen.modal(584,100)); result.get; komu.set(result.get); komu.change }
 #   },
-  button _d_zam [411,87,50,17] { title:'zam >'
+  button _d_zam [411,87,,] { title:'zam >'
     proc onclick () { result.set(d_zam.modal(584,100)); result.get; komu.set(result.get); komu.change }
   },
-  button [411,138,50,17] { title:'účel >'
+  button [411,138,,] { title:'účel >'
     proc onclick () { result.set(d_ucely.modal(584,100)); result.get; ucel.set(result.get); ucel.change }
   },
   # události

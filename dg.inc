@@ -6,6 +6,12 @@
 #                                                   (c) 2007-2011 Martin Šmídek <martin@smidek.eu> #
 # ------------------------------------------------------------------------------------------------ #
 
+  $ezer_root= 'dg';             // jméno adresáøe a hlavního objektu aplikace
+
+  // nastavení verze jádra
+  $EZER= (object)array();
+  $EZER->version= $_GET['ezer'] ? "ezer{$_GET['ezer']}" : 'ezer2.2';
+
   $ezer_local= preg_match('/^\w+\.ezer/',$_SERVER["SERVER_NAME"]); // identifikace ladícího serveru
 
   require_once("ezer2/server/ae_slib.php");
