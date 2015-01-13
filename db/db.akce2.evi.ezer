@@ -535,11 +535,11 @@ form _page {
   use dar: form _dary     [  5,-57,,]  { tag:'D', format:'n' }
   # ============================================== KONTEXTOVÉ MENU
   menu ctx { type:'context', join:frame
-    item { title:'sjednotit kopie osob', skill:'fad|fad'
+    item { title:'sjednotit kopie osob', skill:'fad|fad;yad|yad'
       proc onclick () { elim.osoby(ido.get,oso.jmeno.get,oso.prijmeni.get); }} //lst.refresh2 } }
-    item { title:'sjednotit kopie rodin', skill:'fad|fad'
+    item { title:'sjednotit kopie rodin', skill:'fad|fad;yad|yad'
       proc onclick () { elim.rodiny(idr.get,rod.rodiny.get); }} // lst.refresh2 } }
-    item { title:'sjednotit kopie členů rodiny', skill:'fad|fad'
+    item { title:'sjednotit kopie členů rodiny', skill:'fad|fad;yad|yad'
       proc onclick () { idr.get; elim.cleni(idr.get); }} //lst.refresh2 } }
     item { title:'-zvýrazňovat změněné údaje'  proc onclick () { evi_barvit_zmeny.set(1)} }
     item { title:'nezvýrazňovat změněné údaje' proc onclick () { evi_barvit_zmeny.set(0)} }

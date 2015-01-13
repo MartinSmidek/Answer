@@ -4,10 +4,10 @@
 menu ys2 { type:'main', active:* //ys.pok
   var global: text,
 #   tabs info {title:"Archiv", _sys:'inf',  include:'onclick', active:*, skill:'yc' }
-#   tabs pok {title:"Pokladna", _sys:'*',  include:'onclick', active:*, skill:'yp' }
+#   tabs pok {title:"Pokladna", _sys:'*',  include:'onload,ys.pok', active:*, skill:'yp' }
 #   tabs ban {title:"Banka", _sys:'*',  include:'onclick', active:*, skill:'yb' }
 #   tabs eko {title:"Ekonomika", _sys:'*',  include:'onclick', active:*, skill:'ye' }
-#   tabs ds {title:"Dům", _sys:'dum', include:'onclick', active:*, skill:'yd' }
+#   tabs ds {title:"Dům", _sys:'dum', include:'onload,ys.ds', active:*, skill:'yd' }
 ##  tabs chl {title:"Chlapi",  include:'onclick' }
 #   tabs akce {title:"Akce", _sys:'akce', include:'onclick', active:*, skill:'ya' }
 #   tabs db {title:"Databáze", _sys:'db', include:'onclick,db.akce', active:*, skill:'ya' }
