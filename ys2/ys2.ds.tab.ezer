@@ -1,0 +1,85 @@
+# -------------------------------------------------------------------------------------------------- tabulky
+table ds_cena {  db:'setkani', key_id:'id_cena'
+  number id_cena
+  number rok
+  text polozka         { sql_pipe:'wu' }
+  text druh            { sql_pipe:'wu' }
+  text typ             { sql_pipe:'wu' }
+  number od
+  number do
+  number cena
+  number dph
+}
+table ds_osoba { db:'setkani', key_id:'id_osoba'
+  number id_osoba
+  number id_order       // tx_gnalberice_order.uid
+  text   rodina         { sql_pipe:'wu' }
+  text   prijmeni       { sql_pipe:'wu' }
+  text   jmeno          { sql_pipe:'wu' }
+  date   narozeni       { sql_pipe:'sql_date1' }
+  text   psc
+  text   obec           { sql_pipe:'wu' }
+  text   ulice          { sql_pipe:'wu' }
+  text   email          { sql_pipe:'wu' }
+  text   telefon
+  // ubytování
+  number pokoj
+  number luzko          // L|P|B|DP
+  number strava         // L|P|B|DP
+  date   fromday        { sql_pipe:'sql_date1' }
+  date   untilday       { sql_pipe:'sql_date1' }
+  text   pozn           { sql_pipe:'wu' }
+}
+table tx_gnalberice_room { db:'setkani', key_id:'uid'
+  number uid
+  number deleted
+  number hidden
+  number number
+  text   category
+  number bads
+  number addbeds
+  number etage
+  text   note         { sql_pipe:'wu' }
+}
+table tx_gnalberice_order { db:'setkani', key_id:'uid'
+  number uid
+  number crdate       { sql_pipe:'stamp_date' }
+  number deleted
+  number hidden
+  text   name         { sql_pipe:'wu' }
+  number room
+  number fromday      { sql_pipe:'stamp_date' }
+  number untilday     { sql_pipe:'stamp_date' }
+  number confirmed
+  number state
+  number akce         { help:"akce|číslo akce z číselníku akcí" }
+  text   note         { sql_pipe:'wu' }
+  text   rooms        { sql_pipe:'wu' }
+  text   rooms1       { sql_pipe:'wu' }
+  number adults
+  number kids_10_15
+  number kids_3_9
+  number kids_3
+  number board
+  number prog_cely
+  number prog_polo
+  text   address      { sql_pipe:'wu' }
+  text   zip
+  text   city         { sql_pipe:'wu' }
+  text   telephone
+  text   email
+  number fe_user_id
+  // přidané polozky
+  text   firstname    { sql_pipe:'wu' }
+  text   org          { sql_pipe:'wu' }
+  number ic
+  number ucast        // 1 => účastní se pobytu
+  number skoleni      // 1 => školení, neplatí se rekreační poplatek
+}
+table _cis { key_id:'id_cis'
+# -------------------------------------------------------------------------------------------------- číselníky,mapy
+  number id_cis, text druh, text data, text hodnota, text zkratka, number poradi, text barva, text ikona
+}
+map ds_stav:   table _cis {where:"druh='ds_stav'", order:'poradi', key_id:'data'}
+map ds_strava: table _cis {where:"druh='ds_strava'", order:'poradi', key_id:'data'}
+map ds_luzko:  table _cis {where:"druh='ds_luzko'", order:'poradi', key_id:'data'}
