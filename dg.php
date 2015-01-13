@@ -6,6 +6,8 @@
 #                                                   (c) 2007-2011 Martin Šmídek <martin@smidek.eu> #
 # ------------------------------------------------------------------------------------------------ #
 
+  dyi("NEKOMPATIBILNI");
+
   $ezer_local= preg_match('/^\w+\.ezer/',$_SERVER["SERVER_NAME"]); // identifikace ladícího serveru
 
   $app=      'dg';

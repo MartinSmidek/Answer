@@ -2463,6 +2463,31 @@ function adresa2stat($adresa,$psc) { trace();
 end:
   return $stat;
 }
+# -------------------------------------------------------------------------------------- data_update
+# provede změny v dané tabulce pro dané položky a naplní tabulku _track informací o změně
+#   $chngs = val1:fld11,fld12,...;val2:...
+function data_update ($tab,$id_tab,$chngs) { trace();
+  global $USER;
+  $now= date("Y-m-d H:i:s");
+  $user= $USER->abbr;
+  $updated= 0;
+  foreach (explode(';',$chngs) as $val_flds) {
+    list($val,$flds)= explode(':',$val_flds);
+    foreach (explode(',',$flds) as $fld) {
+      $old= select($fld,$tab,"id_{$tab}=$id_tab");
+      if ( $old!=$val ) {
+        $ok= query("INSERT INTO _track (kdy,kdo,kde,klic,fld,op,old,val)
+                    VALUES ('$now','$user','$tab',$id_tab,'$fld','U','$old','$val')");
+        if ( !$ok ) goto end;
+        $ok= query("UPDATE $tab SET $fld='$val' WHERE id_$tab=$id_tab");
+        $updated+= $ok ? 1 : 0;
+      }
+    }
+  }
+  goto end;
+err: fce_error("ERROR IN: data_update ($tab,$id_tab,$chngs)");
+end: return $updated;
+}
 # ----------------------------------------------------------------------------------- data_transform
 # transformace na schema 2014
 # par.cmd = seznam transformací
@@ -2524,12 +2549,13 @@ function data_transform($par) { trace();
       while ( $qo && ($o= mysql_fetch_object($qo)) ) {
         $n++;
         if ( $update ) {
-          $ok= query("UPDATE rodina SET nazev='$o->_hlava' WHERE id_rodina=$o->id_rodina");
-          $updated+= $ok ? 1 : 0;
+          $updated+= data_update('rodina',$o->id_rodina,"$o->_hlava:nazev");
         }
       }
       $html.= "rodin bez názvu je $n";
-      $html.= $update ? ($updated ? "<br> opraveno $updated údajů<br>" : "<br>beze změn<br>") : '';
+      $html.= $update ? "<br> opraveno $updated údajů<br>" : (
+              $n      ? "<br>provést $n změn údajů?<br>"
+                      : '<br>bez možných automatických úprav, přesto zkusit?<br>');
       break;
     // ---------------------------------------------- osoba: kontakty
     // opraví pole osoba.kontakt
@@ -2541,10 +2567,11 @@ function data_transform($par) { trace();
       // -.- x.- -.x x.x x.y x.0   osobní.rodinná; single=0,clen=1
       $tab= array(array(0,0,0,0,0,0),array(0,0,0,0,0,0));
       $tos= array(array(0,0,0,0,0,0),array(0,0,0,0,0,0));           // počet osobních
+      $xta= array(array(0,0,0,0,0,0),array(0,0,0,0,0,0));           // změny
       $n= $k= 0;
       $AND= $par->akce ? " AND id_akce={$par->akce}" : "";
       $qo= mysql_qry("
-        SELECT o.id_osoba,t.role,o.kontakt,
+        SELECT o.id_osoba,t.role,o.kontakt,r.id_rodina,
           COUNT(DISTINCT r.id_rodina) AS _rodin, COUNT(rt.id_tvori) AS _clenu,
           REPLACE(REPLACE(CONCAT(o.telefon,o.email),' ',''),';',',') AS _kontakt_o,
           IFNULL(MIN(CONCAT(t.role,REPLACE(REPLACE(CONCAT(r.telefony,r.emaily),' ',''),';',','))),'')
@@ -2570,55 +2597,71 @@ function data_transform($par) { trace();
         if ( !$o->_rodin ) {                                    // x.0    -- nemá rodinu
           $tab[$stav][5]++;
           $tos[$stav][5]+= $kontakt;
-          if ( $update && !$kontakt ) {
-            $ok= query("UPDATE osoba SET kontakt=1 WHERE id_osoba=$id_osoba");
-            $updated+= $ok ? 1 : 0;
+          if ( !$kontakt ) {
+            $xta[$stav][5]++;
+            if ( $update ) $updated+= data_update('osoba',$id_osoba,'1:kontakt');
           }
         }
         elseif ( $o_kontakt=='' && $r_kontakt=='' ) {           // -.-
           $tab[$stav][0]++;
           $tos[$stav][0]+= $kontakt;
-          if ( $update && $kontakt ) {
-            $ok= query("UPDATE osoba SET kontakt=0 WHERE id_osoba=$id_osoba");
-            $updated+= $ok ? 1 : 0;
+          if ( $kontakt ) {
+            $xta[$stav][0]++;
+            if ( $update ) $updated+= data_update('osoba',$id_osoba,'0:kontakt');
           }
         }
         elseif ( $o_kontakt!='' && $r_kontakt=='' ) {           // x.-
           $tab[$stav][1]++;
           $tos[$stav][1]+= $kontakt;
-          if ( $update && !$kontakt ) {
-            $ok= query("UPDATE osoba SET kontakt=1 WHERE id_osoba=$id_osoba");
-            $updated+= $ok ? 1 : 0;
+          if ( !$kontakt ) {
+            $xta[$stav][1]++;
+            if ( $update ) $updated+= data_update('osoba',$id_osoba,'1:kontakt');
           }
         }
         elseif ( $o_kontakt=='' && $r_kontakt!='' ) {           // -.x
           $tab[$stav][2]++;
           $tos[$stav][2]+= $kontakt;
-          if ( $update && $kontakt ) {
-            $ok= query("UPDATE osoba SET kontakt=0 WHERE id_osoba=$id_osoba");
-            $updated+= $ok ? 1 : 0;
+          if ( $kontakt ) {
+            $xta[$stav][2]++;
+            if ( $update ) $updated+= data_update('osoba',$id_osoba,'0:kontakt');
           }
         }
         elseif ( $o_kontakt==$r_kontakt ) {                     // x.x
           $tab[$stav][3]++;
           $tos[$stav][3]+= $kontakt;
-          if ( $update && $kontakt ) {
-            $ok= query("UPDATE osoba SET kontakt=0 WHERE id_osoba=$id_osoba");
-            $updated+= $ok ? 1 : 0;
+          if ( $stav==0 ) {
+            // pro singla
+            if ( !$kontakt ) {
+              // vnutíme kontakt jako osobní
+              $xta[$stav][3]++;
+              if ( $update ) $updated+= data_update('osoba',$id_osoba,'1:kontakt');
+            }
+            if ( $o->_rodin==1 ) {
+              // je-li rodina jednoznačná smažeme kontakt v rodině
+              $xta[$stav][3]++;
+              if ( $update ) $updated+= data_update('rodina',$o->id_rodina,':telefony,emaily;0:nomaily');
+            }
+          }
+          else if ( $o->_rodin==1 ) {
+            // pro člena vícečlenné a jedinečné rodiny smažeme (duplikovaný) kontakt v osobě
+            $xta[$stav][3]++;
+            if ( $update ) $updated+= data_update('osoba',$id_osoba,':telefon,email;0:kontakt,nomail');
           }
         }
         elseif ( $o_kontakt!=$r_kontakt ) {                     // x.y
+          // u odlišného osobního od rodinného dáme přednost osobnímu
           $tab[$stav][4]++;
           $tos[$stav][4]+= $kontakt;
-          if ( $update && !$kontakt ) {
-            $ok= query("UPDATE osoba SET kontakt=1 WHERE id_osoba=$id_osoba");
-            $updated+= $ok ? 1 : 0;
+          if ( !$kontakt ) {
+            $xta[$stav][4]++;
+            if ( $update ) $updated+= data_update('osoba',$id_osoba,'1:kontakt');
           }
         }
         else fce_warning("?");
       }
 //                                                           debug($tos);
       // formátování
+      $zmen= 0;
       $hr= array('single','člen rodiny');
       $hd= array('-.-','x.-','-.x','x.x','x.y','x.0');
       $hdr= "kontakty $ezer_root";
@@ -2632,7 +2675,9 @@ function data_transform($par) { trace();
         $sum= 0;
         foreach($row as $i=>$clmn) {
           $sum+= $clmn;
-          $t.= "<td align='right'>$clmn</td>";
+          $zmen+= $xta[$s][$i];
+          $style= $xta[$s][$i] ? " style='background-color:yellow'" : '';
+          $t.= "<td align='right'$style>$clmn</td>";
         }
         $t.= "<th align='right'>$sum</th></tr>";
         $row= $tos[$s];
@@ -2646,7 +2691,9 @@ function data_transform($par) { trace();
       }
       $t.= "</table>";
       $html.= "<br>probráno $n osob, z toho $k je ve více rodinách $t";
-      $html.= $update ? ($updated ? "<br> opraveno $updated údajů<br>" : "<br>beze změn<br>") : '';
+      $html.= $update ? "<br> opraveno $updated údajů<br>" : (
+              $zmen   ? "<br>provést $zmen změn údajů ve žlutých polích?<br>"
+                      : '<br>bez možných automatických úprav, přesto zkusit?<br>');
       break;
     // ---------------------------------------------- osoba: adresy
     // opraví pole osoba.adresa
@@ -2657,6 +2704,7 @@ function data_transform($par) { trace();
       //  0   1   2   3   4   5
       // -.- x.- -.x x.x x.y x.0    osobní.rodinná; single=0,clen=1
       $tab= array(array(0,0,0,0,0,0),array(0,0,0,0,0,0));
+      $xta= array(array(0,0,0,0,0,0),array(0,0,0,0,0,0));           // změny
       $n= $k= 0;
       $tos= array(array(0,0,0,0,0,0),array(0,0,0,0,0,0));           // počet osobních
       $AND= $par->akce ? " AND id_akce={$par->akce}" : "";
@@ -2687,54 +2735,56 @@ function data_transform($par) { trace();
         if ( !$o->_rodin ) {                                    // x.0      -- nemá rodinu
           $tab[$stav][5]++;
           $tos[$stav][5]+= $adresa;
+          // změny
+          $xta[$stav][5]+= !$adresa;
           if ( $update && !$adresa ) {
-            $ok= query("UPDATE osoba SET adresa=1 WHERE id_osoba=$id_osoba");
-            $updated+= $ok ? 1 : 0;
+            if ( $update ) $updated+= data_update('osoba',$id_osoba,'1:adresa');
           }
         }
         elseif ( $o_adresa=='' && $r_adresa=='' ) {             // -.-
           $tab[$stav][0]++;
           $tos[$stav][0]+= $adresa;
-          if ( $update && $adresa ) {
-            $ok= query("UPDATE osoba SET adresa=0 WHERE id_osoba=$id_osoba");
-            $updated+= $ok ? 1 : 0;
+          if ( $adresa ) {
+            $xta[$stav][0]++;
+            if ( $update ) $updated+= data_update('osoba',$id_osoba,'0:adresa');
           }
         }
         elseif ( $o_adresa!='' && $r_adresa=='' ) {             // x.-
           $tab[$stav][1]++;
           $tos[$stav][1]+= $adresa;
-          if ( $update && !$adresa ) {
-            $ok= query("UPDATE osoba SET adresa=1 WHERE id_osoba=$id_osoba");
-            $updated+= $ok ? 1 : 0;
+          if ( !$adresa ) {
+            $xta[$stav][1]++;
+            if ( $update ) $updated+= data_update('osoba',$id_osoba,'1:adresa');
           }
         }
         elseif ( $o_adresa=='' && $r_adresa!='' ) {             // -.x
           $tab[$stav][2]++;
           $tos[$stav][2]+= $adresa;
-          if ( $update && $adresa ) {
-            $ok= query("UPDATE osoba SET adresa=0 WHERE id_osoba=$id_osoba");
-            $updated+= $ok ? 1 : 0;
+          if ( $adresa ) {
+            $xta[$stav][2]++;
+            if ( $update ) $updated+= data_update('osoba',$id_osoba,'0:adresa');
           }
         }
         elseif ( $o_adresa==$r_adresa ) {                       // x.x
           $tab[$stav][3]++;
           $tos[$stav][3]+= $adresa;
-          if ( $update ) {
-            if ( $stav==0 ) {
-              // pro singla smažeme adresu v rodině
-              $ok= query("UPDATE osoba  SET adresa=0 WHERE id_osoba=$id_osoba");
-              $updated+= $ok ? 1 : 0;
-              if ( $o->_rodin==1 ) {
-                // ale jen je-li rodina jednoznačná
-                $ok= query("UPDATE rodina SET ulice='',psc='',obec='',stat='' WHERE id_rodina=$i->id_rodina");
-                $updated+= $ok ? 1 : 0;
-              }
+          if ( $stav==0 ) {
+          // pro singla
+            if ( !$adresa ) {
+              // vnutíme adresu jako osobní
+              $xta[$stav][3]++;
+              if ( $update ) $updated+= data_update('osoba',$id_osoba,"1:adresa");
             }
-            else {
-              // pro člena normální rodiny smažeme (duplikovanou) adresu v osobě
-              $ok= query("UPDATE osoba SET adresa=0,ulice='',psc='',obec='',stat='' WHERE id_osoba=$id_osoba");
-              $updated+= $ok ? 1 : 0;
+            if ( $o->_rodin==1 ) {
+              // je-li rodina jedinečná smažeme adresu v rodině
+              $xta[$stav][3]++;
+              if ( $update ) $updated+= data_update('rodina',$o->id_rodina,':ulice,psc,obec,stat;0:noadresa');
             }
+          }
+          else if ( $o->_rodin==1 ) {
+            // pro člena vícečlenné a jedinečné rodiny smažeme (duplikovanou) adresu v osobě
+              $xta[$stav][3]++;
+              if ( $update ) $updated+= data_update('osoba',$id_osoba,':ulice,psc,obec,stat;0:adresa,noadresa');
           }
         }
         elseif ( $o_adresa!=$r_adresa ) {                       // x.y
@@ -2743,8 +2793,9 @@ function data_transform($par) { trace();
         }
         else fce_warning("?");
       }
-//                                                           debug($tab);
+//                                                           debug($xta);
       // formátování
+      $zmen= 0;
       $hr= array('single','člen rodiny');
       $hd= array('-.-','x.-','-.x','x.x','x.y','x.0');
       $hdr= "adresy $ezer_root";
@@ -2758,7 +2809,9 @@ function data_transform($par) { trace();
         $sum= 0;
         foreach($row as $i=>$clmn) {
           $sum+= $clmn;
-          $t.= "<td align='right'>$clmn</td>";
+          $zmen+= $xta[$s][$i];
+          $style= $xta[$s][$i] ? " style='background-color:yellow'" : '';
+          $t.= "<td align='right'$style>$clmn</td>";
         }
         $t.= "<th align='right'>$sum</th></tr>";
         $row= $tos[$s];
@@ -2772,7 +2825,9 @@ function data_transform($par) { trace();
       }
       $t.= "</table>";
       $html.= "<br>probráno $n osob, z toho $k je ve více rodinách $t";
-      $html.= $update ? ($updated ? "<br> opraveno $updated údajů<br>" : "<br>beze změn<br>") : '';
+      $html.= $update ? "<br> opraveno $updated údajů<br>" : (
+              $zmen   ? "<br>provést $zmen změn údajů ve žlutých polích?<br>"
+                      : '<br>bez možných automatických úprav, přesto zkusit?<br>');
       break;
     // ---------------------------------------------- osoba: adresa
     // nastaví osoba.adresa=1 pokud je adresa osobní tj. různá od rodinné
@@ -3423,7 +3478,7 @@ end:
 function akce_vzorec($id_pobyt) {  trace();
   $id_akce= 0;
   $ok= true;
-  $ret= (object)array('navrh'=>'cenu nelze spočítat','eko'=>(object)array());
+  $ret= (object)array('navrh'=>'cenu nelze spočítat','eko'=>(object)array('vzorec'=>(object)array()));
   // parametry pobytu
   $x= (object)array();
   $ubytovani= 0;
@@ -5925,7 +5980,7 @@ function akce_vyuctov_pary($akce,$par,$title,$vypis,$export=false) { trace();
                             $exp= "=[platba1,0]+[platba2,0]+[platba3,0]+[platba4,0]"; break;
         case '=preplatek':  $val= $preplatek;
                             $exp= "=IF([=pokladna,0]+[=uctem,0]>[=platit,0],[=pokladna,0]+[=uctem,0]-[=platit,0],0)"; break;
-        case '=nedoplatek': $val= $nedoplatek; break;
+        case '=nedoplatek': $val= $nedoplatek;
                             $exp= "=IF([=zaplaceno,0]<[=platit,0],[=platit,0]-[=zaplaceno,0],0)"; break;
         case '=uctem':      $val= $x->pokladnou ? '' : 0+$x->platba; break;
         case '=datucet':    $val= $x->pokladnou ? '' : $x->datplatby; break;

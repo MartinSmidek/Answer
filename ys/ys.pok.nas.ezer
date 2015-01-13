@@ -26,13 +26,13 @@ form _o_seznam [,,348,164] { css:'ae_parm'
 }
 # -------------------------------------------------------------------------------------------------- _o_cmd
 form _o_cmd [,,300,20] {
-  button oprav [18,1,100,16] { type:'submit', title:'Opravit'
+  button oprav [18,1,,] { type:'submit', title:'Opravit'
     proc onclick () { o_oprava.modal(300,100) }
   }
-  button novy [214,1,50,17] { title:'Nová'
+  button novy [214,1,,] { title:'Nová'
     proc onclick () { o_novy.modal(300,100) }
   }
-  button smazat [272,1,50,17] { title:'Smazat'
+  button smazat [272,1,,] { title:'Smazat'
     proc onclick () {
       confirm(conc('Opravdu smazat pokladnu ',os.seznam.abbr.get,'?'));
       pokladna.delete_record(conc('id_pokladna=',os.seznam.id.get));
@@ -58,17 +58,17 @@ form _z_seznam [,,708,354] { css:'ae_parm'
 }
 # -------------------------------------------------------------------------------------------------- _z_cmd
 form _z_cmd [,,300,20] {
-  button oprav [18,0,100,16] { type:'submit', title:'Opravit'
+  button oprav [18,0,,] { type:'submit', title:'Opravit'
     proc onclick () {
       z_oprava.modal(300,100);
     }
   }
-  button novy [214,0,50,17] { title:'Nový'
+  button novy [214,0,,] { title:'Nový'
     proc onclick () {
       z_novy.modal(300,100)
     }
   }
-  button smazat [272,1,50,17] { title:'Smazat'
+  button smazat [272,1,,] { title:'Smazat'
     proc onclick () {
       confirm(conc('Opravdu smazat zaměstnance ',zs.seznam.jmeno.get,'?'));
       person.delete_record(conc('id_person=',zs.seznam.id.get));
@@ -103,10 +103,10 @@ form _o_org [,,300,100] {
   label [255,79,30,17] { title:'DIČ' },
   field [172,78,65,17] { data:pokladna.ic },
   field [297,79,81,17] { data:pokladna.dic },
-  button save [337,108,45,20] { type:'submit', title:'OK', help:'uložit změny',
+  button save [337,108,,] { type:'submit', title:'OK', help:'uložit změny',
     proc onclick () {   the_formsave(form,os.seznam); panel.hide(form.key); stop }
   },
-  button cancel [242,109,45,20] { title:'Storno', help:'zadané údaje neukládat, vrátit se zpět'
+  button cancel [242,109,,] { title:'Storno', help:'zadané údaje neukládat, vrátit se zpět'
     proc onclick () { panel.hide(0) }
   },
 }
@@ -139,10 +139,10 @@ form _z_zam [,,300,100] {
   field [68,97,65,17] { data:person.psc },
   label [145,100,30,17] { title:'Obec' },
   field [187,97,89,17] { data:person.obec },
-  button save [240,124,45,20] { type:'submit', title:'OK', help:'uložit změny',
+  button save [240,124,,] { type:'submit', title:'OK', help:'uložit změny',
     proc onclick () { the_formsave(form,zs.seznam); panel.hide(form.key) }
   }
-  button cancel [143,124,45,20] { title:'Storno', help:'zadané údaje neukládat, vrátit se zpět'
+  button cancel [143,124,,] { title:'Storno', help:'zadané údaje neukládat, vrátit se zpět'
     proc onclick () { panel.hide(0) }
   }
 }

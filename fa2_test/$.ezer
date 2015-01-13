@@ -15,7 +15,7 @@ menu fa2_test { type:'main', active:* //ys.pok
             proc onclick (i) { info.fill(conc(i.owner.title,' - ',i.title),ask('elim_stav',i.par.db)) }}
           item {title:'kopírovat ostrou db do testovací', par:°{db:'fa'} }
           proc onclick (i) {
-            confirm2("vytvořit znovu kopii ostré databáze?");
+            confirm("vytvořit znovu kopii ostré databáze?");
             info.fill(conc(i.owner.title,' - ',i.title),' ... probíhá update ...');
             info.fill('',ask('elim_copy_test_db',i.par.db));
           }
@@ -29,7 +29,7 @@ menu fa2_test { type:'main', active:* //ys.pok
           item {title:'zápis iniciovaných'              ,par:°{akce:403,rok:2014}
             proc onclick (i) {
               info.fill(conc(i.owner.title,' - ',i.title),' ');
-              confirm2(ask('data_mrop_save',i.par,0));
+              confirm(ask('data_mrop_save',i.par,0));
               info.fill('',ask('data_mrop_save',i.par,1));
           }}
         }

@@ -13,7 +13,7 @@
     array( // lokální
       'setkani' =>      array(0,'localhost','gandi','','utf8','setkani',1))        // 1=vynechat zálohování
   );
-  answer_ini('ys2','ezer_ys',$dbs_plus,array("ds/ds_fce.php"));
+  answer_ini('ys2','ezer_ys',$dbs_plus,array("ds/ds_fce.php","ys/ys_fce.php"));
   // SPECIFICKÉ PARAMETRY
   $VPS= 'VPS';
   global $ezer_path_root;

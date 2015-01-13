@@ -23,7 +23,7 @@ menu ys2 { type:'main', active:* //ys.pok
             proc onclick (i) { info.fill(conc(i.owner.title,' - ',i.title),ask('elim_stav',i.par.db)) }}
           item {title:'kopírovat ostrou db do testovací', par:°{db:'ys'} }
           proc onclick (i) {
-            confirm2("vytvořit znovu kopii ostré databáze?");
+            confirm("vytvořit znovu kopii ostré databáze?");
             info.fill(conc(i.owner.title,' - ',i.title),' ... probíhá update ...');
             info.fill('',ask('elim_copy_test_db',i.par.db));
           }
@@ -35,15 +35,6 @@ menu ys2 { type:'main', active:* //ys.pok
             info.fill('',ask('akce_data_survey',i.par));
           }
         }
-#         menu {title:'Eliminace duplicit',type:'group', _sys:'*', skill:'m'
-#           item {title:'vyprázdnit duplo'                ,par:°{duplo:'truncate'}}
-#           item {title:'+ tipy na osoby => duplo'        ,par:°{duplo:'+osoby'}}
-#           item {title:'+ tranzitivní obal rodin'        ,par:°{duplo:'+rodiny'}}
-#           proc onclick (i) {
-#             info.fill(conc(i.owner.title,' - ',i.title),' ... probíhá výpočet ...');
-#             info.fill('',ask('akce_data_duplo',i.par));
-#           }
-#         }
         menu {title:'Opravy dat',type:'group', _sys:'*'
           item {title:'kontroly databáze'               ,par:°{opravit:0}}
           item {title:'kontroly databáze s opravou'     ,par:°{opravit:1}, skill:'m'}
@@ -63,27 +54,19 @@ menu ys2 { type:'main', active:* //ys.pok
             info.fill('',ask('data_transform',i.par));
           }
         }
-#         menu {title:'Importy ...',type:'group', _sys:'*'
-#           item {title:'přehled dat',                          par:°{cmd:'survey'}, skill:'m' }
-#           item {title:'import pečovatelů MS',                 par:°{cmd:'MS-pec'}, skill:'m' }
-#           proc onclick (i) {
-#             info.fill(conc(i.owner.title,' - ',i.title),' ... probíhá import dat ...');
-#             info.fill('',ask('ys_import_dat',i.par));
-#           }
-#         }
       }
       use info: form right [12,4,,]
     }
     panel dat {type:'right', title:"Zálohování", _sys:'*', skill:'m', include:'onclick,ys.syst.dat' }
   }
   tabs doc  {title:"Nápověda", _sys:'nap',  include:'onload,ezer2.help' }
-  tabs tst {title:"Testy",skill:'m'
-    panel one {type:'plain', title:'One',
-      use u: form right
-      proc onfocus() { clear; speed('clear'); u.info.set(debug(ask('test_one'))) }
-    }
-    panel two {type:'plain', title:'Two', proc onfocus() { echo(debug(ask('test_two'))) }}
-  }
+#   tabs tst {title:"Testy",skill:'m'
+#     panel one {type:'plain', title:'One',
+#       use u: form right
+#       proc onfocus() { clear; speed('clear'); u.info.set(debug(ask('test_one'))) }
+#     }
+#     panel two {type:'plain', title:'Two', proc onfocus() { echo(debug(ask('test_two'))) }}
+#   }
   tabs off  {title:"Odhlásit", type:'logoff' }
 
 //#   tabs test {title:"Test",  where:'http://ys2.ezer/test.html' }

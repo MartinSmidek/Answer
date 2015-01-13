@@ -53,7 +53,7 @@ panel elim [0,0,807,480] { type:'popup', title:'eliminace duplicit', include:'on
 # ================================================================================================== CHLAPI
 panel chl {type:'right', _sys:'*', title:'Chlapi', include:'onclick,db.akce.chl',skill:'yac;xa' }
 # ================================================================================================== AKCE
-panel lst {type:'right', _sys:'*', title:'AKCE', include:'onload,db.akce.lst',skill:'yaa;faa;caa'
+panel lst {type:'right', _sys:'*', title:'AKCE1', include:'onload,db.akce.lst',skill:'yaa;faa;caa'
   use the_akce: form _the_akce         // zatím nezobrazená data nastavené akce s klíčem id_duakce
   proc akce_work(id) {}                // nastaví akci jako vybranou
 }
