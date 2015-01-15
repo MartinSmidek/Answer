@@ -120,9 +120,9 @@ end:
 function akce2_info($id_akce) {  trace();
   $html= '';
   if ( $id_akce ) {
-      $ucasti= $rodiny= $dosp= $muzi= $zeny= $deti= $err= 0;
+      $ucasti= $rodiny= $dosp= $muzi= $zeny= $deti= $pecounu= $err= 0;
       $akce= $chybi_nar= '';
-      $qry= "SELECT nazev, datum_od, datum_do, now() as _ted,i0_rodina,
+      $qry= "SELECT nazev, datum_od, datum_do, now() as _ted,i0_rodina,funkce,
                COUNT(id_spolu) AS _clenu,
                SUM(IF(ROUND(DATEDIFF(a.datum_od,o.narozeni)/365.2425,1)<18,1,0)) AS _deti,
                SUM(IF(ROUND(DATEDIFF(a.datum_od,o.narozeni)/365.2425,1)>=18 AND sex=1,1,0)) AS _muzu,
@@ -146,6 +146,8 @@ function akce2_info($id_akce) {  trace();
         $err+= $p->_err;
         $rodiny+= i0_rodina && $p->_clenu>1 ? 1 : 0;
         $chybi_nar.= $p->_kdo;
+        if ( $p->funkce==99 )
+          $pecounu+= $p->_clenu;
         // údaje akce
         $akce= $p->nazev;
         $cas1= $p->_ted>$p->datum_od ? "byla" : "bude";
@@ -156,23 +158,29 @@ function akce2_info($id_akce) {  trace();
       }
       if ( $chybi_nar ) $chybi_nar= substr($chybi_nar,2);
       $dosp+= $muzi + $zeny;
+      $skupin= $ucasti - ( $pecounu ? 1 : 0 );
       // čeština
-      $_skupin=    je_1_2_5($ucasti,"skupina,skupiny,skupin");
+      $_skupin=    je_1_2_5($skupin,"skupina,skupiny,skupin");
+      $_pecounu=   je_1_2_5($pecounu,"pečoun,pečouni,pečounů");
       $_dospelych= je_1_2_5($dosp,"dospělý,dospělí,dospělých");
       $_muzu=      je_1_2_5($muzi,"muž,muži,mužů");
       $_zen=       je_1_2_5($zeny,"žena,ženy,žen");
       $_deti=      je_1_2_5($deti,"dítě,děti,dětí");
       $_osob=      je_1_2_5($dosp+$deti,"osoba,osoby,osob");
       $_err=       je_1_2_5($err,"osoby,osob,osob");
+      $_rodiny=    je_1_2_5($rodiny,"rodina,rodiny,rodin");
       // html
       $html= $dosp+$deti>0
-       ? "Akce <b>$akce</b><br>$cas1 $dne<br><br>$cas2
-         <br>$_skupin účastníků"
-           .($rodiny ? ($rodiny==$ucasti ? ", všechny jako rodiny" : ", z toho $rodiny jako rodiny") :'')
-       . "<br><br> $_dospelych ($_muzu, $_zen a $_deti),"
-       . "<br>celkem $_osob"
+       ? "Akce <b>$akce</b><br>$cas1 $dne<br><hr>$cas2"
+       . ($skupin ? "<br>$_skupin účastníků"
+           .($rodiny ? ($rodiny==$ucasti ? " (všechny jako rodiny)" : " (z toho $_rodiny)") :''):'')
+       . ($pecounu ? " ".($skupin?"<br>a ":'')."$_pecounu" : '')
+       . ",<br><br> $_dospelych ($_muzu, $_zen a $_deti),"
+       . "<br><b>celkem $_osob</b>"
        : "Akce byla vložena do databáze<br>ale nemá zatím žádné účastníky";
-      $html.= $err>0 ? "<br><br>POZOR: u $_err chybí datum narození <br>($chybi_nar)<br>proto mohou být počty divné" : '';
+      $html.= $err>0 ? "<br><hr>POZOR: u $_err chybí datum narození:<br> <i>$chybi_nar</i>
+                        <br>(proto mohou být počty divné)" : '';
+      $html.= $deti ? "<hr>Poznámka: jako děti se počítají osoby, které v době zahájení akce ještě nemají 18 let" : '';
   }
   else {
     $html= "Tato akce ještě nebyla

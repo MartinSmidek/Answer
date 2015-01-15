@@ -7,7 +7,7 @@
 var zalozka: text           // inf | cor | cen
 
 use info: form _akce [12,4,,]
-use page: form _page [480,40,,]
+use page: form _page [512,40,,]
 
 # ------------------------------------------------------------------------------- globální procedury
 # nastaví akci jako pracovní
@@ -378,10 +378,12 @@ form _akce [,,*,50] {
     show rok  {data:ga.g_rok}
     show curr {expr:"IF(da.id_duakce=@curr,1,0)" }
     show kod   [,,30,] {title:'kód',    data:ga.g_kod, format:'rs+q*'}
-    show nazev [,,210,] {title:'název', data:ga.g_nazev, format:'tsq*'
+    show nazev [,,211,] {title:'název', data:ga.g_nazev, format:'tsq*'
       css_cell:"curr,1:curr_akce"}
-    show ucast [,,30,] {title:'účast', format:'rtsq=',
-      expr:"SUM((SELECT IF(COUNT(*)>0,1,0) FROM spolu WHERE id_pobyt=pa.id_pobyt))"}
+    show ucast [,,30,] {title:'úč.', format:'rtsq=', help:'počet skupin účastníků',
+      expr:"SUM((SELECT IF(COUNT(*)>0,1,0) FROM spolu WHERE id_pobyt=pa.id_pobyt AND funkce!=99))"}
+    show pecou [,,30,] {title:'pč.', format:'rtsq=', help:'počet pečounů'
+      expr:"SUM((SELECT COUNT(*) FROM spolu WHERE id_pobyt=pa.id_pobyt AND funkce=99))"}
     show od    [,,65,] {title:'od',     data:ga.g_od, format:'rsq*'}
     show do    [,,65,] {title:'do',     data:ga.g_do, format:'rsq*'}
     proc onsubmit() {
@@ -419,8 +421,10 @@ form _akce [,,*,50] {
     show kod   [,,30,] {title:'účet',   expr:"IF(ga2.g_kod,ga2.g_kod,da2.ciselnik_akce)", format:'rsq*' }
     show nazev [,,120,] {title:'název', expr:"IF(da2.nazev='',ga2.g_nazev,da2.nazev)", format:'tsq*',
       css_cell:"curr,1:curr_akce"}
-    show ucast [,,30,] {title:'účast', format:'rtsq=',
-      expr:"SUM((SELECT IF(COUNT(*)>0,1,0) FROM spolu WHERE id_pobyt=pa2.id_pobyt))"}
+    show ucast [,,30,] {title:'úč.', format:'rtsq=', help:'počet skupin účastníků',
+      expr:"SUM((SELECT IF(COUNT(*)>0,1,0) FROM spolu WHERE id_pobyt=pa2.id_pobyt AND funkce!=99))"}
+    show pecou [,,30,] {title:'pč.', format:'rtsq=', help:'počet pečounů'
+      expr:"SUM((SELECT COUNT(*) FROM spolu WHERE id_pobyt=pa2.id_pobyt AND funkce=99))"}
     show misto [,,60,] {title:'místo',  data:da2.misto, format:'tsq*'}
     show od    [,,65,] {title:'od',     data:da2.datum_od, format:'rs+q*'}
     show do    [,,65,] {title:'do',     data:da2.datum_do, format:'rsq*'}
