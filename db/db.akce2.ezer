@@ -773,6 +773,7 @@ form _rodina2 [,,360,229]  { css:'ae_frame', proc onclick() { on_click }
   # show_rodina - zobrazuje formulář podle: key_rodina
   proc show_rodina() { var tags:text
     form.display(0,'[^f]'); cleni.display(1);
+    evidence.display(key_rodina.get);
     tags.set('a');
     { or(key_rodina.get,not(ucast.the_pobyt.get));
       frame.set('účastníci pobytu + rodina');
@@ -794,7 +795,7 @@ form _rodina2 [,,360,229]  { css:'ae_frame', proc onclick() { on_click }
   const Lr=187; Tr=10
   view r: table rodina
   label frame [0,2,360,20] {tag:'f', title:'rodinné údaje', css:'frame_label_up' }
-  button [193,0,,] {tag:'f', title:'^evidence', css:'db_evidence'
+  button evidence [193,0,,] {tag:'f', title:'^evidence', css:'db_evidence'
     proc onclick() { evi.evid_rodina(key_rodina.get) } }
   field key_rodina [304,0,50,] {tag:'f', format:'or', css:'Label', help:' '  }
 
