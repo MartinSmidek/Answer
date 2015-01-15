@@ -11,7 +11,7 @@ menu ys2 { type:'main', active:* //ys.pok
 ##  tabs chl {title:"Chlapi",  include:'onclick' }
 #   tabs akce {title:"Akce", _sys:'akce', include:'onclick', active:*, skill:'ya' }
 #   tabs db {title:"Databáze", _sys:'db', include:'onclick,db.akce', active:*, skill:'ya' }
-  tabs db2 {title:"Databáze2", _sys:'db', include:'onload,db.akce2', active:*, skill:'test' }
+  tabs db2 {title:"Databáze2", _sys:'*', include:'onload,db.akce2', active:*, skill:'test' }
 #   tabs lide {title:"Lidé", _sys:'lid', include:'onclick', skill:'yl' }
 
   tabs syst {title:"Systém", _sys:'sys',  include:'onclick,ezer2.syst', active:*
