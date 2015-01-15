@@ -114,6 +114,83 @@ function eli_osoba($id_orig,$id_copy) { trace();
 end:
   return $ret;
 }
+# ============================================================================================= AKCE
+# --------------------------------------------------------------------------------------- akce2_info
+# rozšířené informace o akci
+function akce2_info($id_akce) {  trace();
+  $html= '';
+  if ( $id_akce ) {
+      $ucasti= $rodiny= $dosp= $muzi= $zeny= $deti= $err= 0;
+      $akce= $chybi_nar= '';
+      $qry= "SELECT nazev, datum_od, datum_do, now() as _ted,i0_rodina,
+               COUNT(id_spolu) AS _clenu,
+               SUM(IF(ROUND(DATEDIFF(a.datum_od,o.narozeni)/365.2425,1)<18,1,0)) AS _deti,
+               SUM(IF(ROUND(DATEDIFF(a.datum_od,o.narozeni)/365.2425,1)>=18 AND sex=1,1,0)) AS _muzu,
+               SUM(IF(ROUND(DATEDIFF(a.datum_od,o.narozeni)/365.2425,1)>=18 AND sex=2,1,0)) AS _zen,
+               SUM(IF(o.narozeni='0000-00-00',1,0)) AS _err,
+               GROUP_CONCAT(IF(o.narozeni='0000-00-00',CONCAT(', ',jmeno,' ',prijmeni),'') SEPARATOR '') AS _kdo
+             FROM akce AS a
+             JOIN pobyt AS p ON a.id_duakce=p.id_akce
+             JOIN spolu AS s ON p.id_pobyt=s.id_pobyt
+             JOIN osoba AS o ON s.id_osoba=o.id_osoba
+             -- LEFT JOIN tvori AS t ON t.id_osoba=o.id_osoba
+             WHERE id_duakce='$id_akce'
+             GROUP BY p.id_pobyt";
+      $res= mysql_qry($qry);
+      while ( $res && $p= mysql_fetch_object($res) ) {
+        // údaje účastníků jednoho pobytu
+        $ucasti++;
+        $muzi+= $p->_muzu;
+        $zeny+= $p->_zen;
+        $deti+= $p->_deti;
+        $err+= $p->_err;
+        $rodiny+= i0_rodina && $p->_clenu>1 ? 1 : 0;
+        $chybi_nar.= $p->_kdo;
+        // údaje akce
+        $akce= $p->nazev;
+        $cas1= $p->_ted>$p->datum_od ? "byla" : "bude";
+        $cas2= $p->_ted>$p->datum_od ? "Akce se zúčastnilo" : "Na akci je přihlášeno";
+        $od= sql_date1($p->datum_od);
+        $do= sql_date1($p->datum_do);
+        $dne= $p->datum_od==$p->datum_do ? "dne $od" : "ve dnech $od do $do";
+      }
+      if ( $chybi_nar ) $chybi_nar= substr($chybi_nar,2);
+      $dosp+= $muzi + $zeny;
+      // čeština
+      $_skupin=    je_1_2_5($ucasti,"skupina,skupiny,skupin");
+      $_dospelych= je_1_2_5($dosp,"dospělý,dospělí,dospělých");
+      $_muzu=      je_1_2_5($muzi,"muž,muži,mužů");
+      $_zen=       je_1_2_5($zeny,"žena,ženy,žen");
+      $_deti=      je_1_2_5($deti,"dítě,děti,dětí");
+      $_osob=      je_1_2_5($dosp+$deti,"osoba,osoby,osob");
+      $_err=       je_1_2_5($err,"osoby,osob,osob");
+      // html
+      $html= $dosp+$deti>0
+       ? "Akce <b>$akce</b><br>$cas1 $dne<br><br>$cas2
+         <br>$_skupin účastníků"
+           .($rodiny ? ($rodiny==$ucasti ? ", všechny jako rodiny" : ", z toho $rodiny jako rodiny") :'')
+       . "<br><br> $_dospelych ($_muzu, $_zen a $_deti),"
+       . "<br>celkem $_osob"
+       : "Akce byla vložena do databáze<br>ale nemá zatím žádné účastníky";
+      $html.= $err>0 ? "<br><br>POZOR: u $_err chybí datum narození <br>($chybi_nar)<br>proto mohou být počty divné" : '';
+  }
+  else {
+    $html= "Tato akce ještě nebyla
+            <br>vložena do databáze
+            <br><br>Vložení se provádí dvojklikem
+            <br>na řádek s akcí";
+  }
+  return $html;
+}
+# ----------------------------------------------------------------------------------------- je_1_2_5
+# výběr správného tvaru slova podle množství a tabulky tvarů pro 1,2-4,více jak 5
+# např. je_1_2_5($dosp,"dospělý,dospělí,dospělých")
+function je_1_2_5($kolik,$tvary) { trace();
+  list($tvar1,$tvar2,$tvar5)= explode(',',$tvary);
+  return $kolik>4 ? "$kolik $tvar5" : (
+         $kolik>1 ? "$kolik $tvar2" : (
+         $kolik>0 ? "1 $tvar1"      : "0 $tvar5"));
+}
 # =========================================================================================== VÝPISY
 # ------------------------------------------------------------------------------------- tisk_sestava
 # generování sestav

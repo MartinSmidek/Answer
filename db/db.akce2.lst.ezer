@@ -7,7 +7,7 @@
 var zalozka: text           // inf | cor | cen
 
 use info: form _akce [12,4,,]
-use page: form _page [450,40,,]
+use page: form _page [480,40,,]
 
 # ------------------------------------------------------------------------------- globální procedury
 # nastaví akci jako pracovní
@@ -88,21 +88,21 @@ menu m {type:'left', format:'f+'
         the_source.set('sey'); akce_roku(info.rok.get);
   } }
   menu g {title:'Výběr akce zadaného roku',type:'group', skill:'y;f'
-    item {title:'podle číselníku akcí z intranetu', skill:'y'          // jen pro YS
+    item {title:'[fa-google] podle číselníku akcí z intranetu', skill:'y'          // jen pro YS
       proc onclick (i) {
         info.rok.display(1); info.google.display(1); info.sey.display(0);
         the_source.set('google'); akce_roku(info.rok.get);
     } }
-    item sey {title:'ze seznamu všech akcí'
+    item sey {title:'[fa-search] ze seznamu všech akcí'
       proc onclick (i) {
         // skryjeme rok - po výběru zase zobrazíme - tento režim je lokální pro AKCE
         info.rok.display(1); info.sey.display(1); info.google.display(0);
         the_source.set('sey'); akce_roku(info.rok.get);
   } } }
   menu {title:'Výběr ze všech roků',type:'group', skill:'y;f'
-    item sey {title:'ze seznamu všech akcí',    par:°{cond:'1'} }
-    item  {title:'... opravdové akce',          par:°{cond:'da2.spec=0'} }
-    item  {title:'... jen různé seznamy',       par:°{cond:'da2.spec=1'} }
+    item sey {title:'[fa-search] ze seznamu všech akcí',    par:°{cond:'1'} }
+    item  {title:'[fa-search-plus]... opravdové akce',          par:°{cond:'da2.spec=0'} }
+    item  {title:'[fa-search-minus] ... jen různé seznamy',       par:°{cond:'da2.spec=1'} }
     proc onclick (i) {
       info.rok.display(0); info.sey.display(1); info.google.display(0);
       the_source.set('sey'); akce_vsechny(i.par.cond)
@@ -151,7 +151,7 @@ form _page [,,285,500] {
   proc show_page(id_akce) {
     cen_copy.enable(0); cen_copy.key(0);
     switch(zalozka.get,
-    'inf',{ note.set(ask('akce_info',id_akce)) },
+    'inf',{ note.set(ask('akce2_info',id_akce)) },
     'cor',{ form.load(id_akce);
             [ has_skill('f'); soubezna.set(cconc(id_hlavni.get,1,0)) ];
             info.sey.browse_focus },
@@ -366,18 +366,22 @@ form _akce [,,*,50] {
   view ga: table g_akce
   view ja: table join_akce {join_type:'LEFT',join:'USING(g_rok,g_kod)'}
   view da: table akce      {join_type:'LEFT',join:'ON ja.id_akce=da.id_duakce'}
-  browse google [0,36,200,500] { type:'smart', rows:27, qry_rows:1, buf_rows:120,
+  view pa: table pobyt     {join_type:'LEFT',join:'ON pa.id_akce=da.id_duakce'}
+  browse google [0,36,200,500] { rows:27, qry_rows:1, buf_rows:120, group_by:"da.id_duakce"
     show id_gakce {data:ga.id_gakce}
     show id_akce [,,30,] {title:'akce', data:ja.id_akce, format:'rsqu', css_cell:'id_akce,0:yellow'}
     show naz_akce {data:da.nazev}
     show ma_cenik {data:da.ma_cenik}
     show ma_cenu {data:da.ma_cenu}
     show cena {data:da.cena}
-    show rok {data:ga.g_rok}
-    show curr { expr:"IF(da.id_duakce=@curr,1,0)" }
+    show      {data:pa.id_pobyt}
+    show rok  {data:ga.g_rok}
+    show curr {expr:"IF(da.id_duakce=@curr,1,0)" }
     show kod   [,,30,] {title:'kód',    data:ga.g_kod, format:'rs+q*'}
     show nazev [,,210,] {title:'název', data:ga.g_nazev, format:'tsq*'
       css_cell:"curr,1:curr_akce"}
+    show ucast [,,30,] {title:'účast', format:'rtsq=',
+      expr:"SUM((SELECT IF(COUNT(*)>0,1,0) FROM spolu WHERE id_pobyt=pa.id_pobyt))"}
     show od    [,,65,] {title:'od',     data:ga.g_od, format:'rsq*'}
     show do    [,,65,] {title:'do',     data:ga.g_do, format:'rsq*'}
     proc onsubmit() {
@@ -397,10 +401,12 @@ form _akce [,,*,50] {
   view ja2: table join_akce {join_type:'LEFT',join:'ON ja2.id_akce=da2.id_duakce'}
   view ga2: table g_akce    {join_type:'LEFT',join:'USING(g_rok,g_kod)'}
   view sa2: table akce      {join_type:'LEFT',join:'ON sa2.id_hlavni=da2.id_duakce'}
-  browse sey [0,36,200,500] { type:'smart', rows:27, qry_rows:1, buf_rows:120,
+  view pa2: table pobyt     {join_type:'LEFT',join:'ON pa2.id_akce=da2.id_duakce'}
+  browse sey [0,36,200,500] { rows:27, qry_rows:1, buf_rows:120, group_by:"da2.id_duakce"
       css_rows:"barva,1:cerveny,2:zluty" // 1=hlavní akce, 2=souběžná akce
     show id_akce  {data:da2.id_duakce}
     show          {data:ja2.id_akce}
+    show          {data:pa2.id_pobyt}
     show ma_cenik {data:da2.ma_cenik}
     show ma_cenu {data:da2.ma_cenu}
     show cena {data:da2.cena}
@@ -413,6 +419,8 @@ form _akce [,,*,50] {
     show kod   [,,30,] {title:'účet',   expr:"IF(ga2.g_kod,ga2.g_kod,da2.ciselnik_akce)", format:'rsq*' }
     show nazev [,,120,] {title:'název', expr:"IF(da2.nazev='',ga2.g_nazev,da2.nazev)", format:'tsq*',
       css_cell:"curr,1:curr_akce"}
+    show ucast [,,30,] {title:'účast', format:'rtsq=',
+      expr:"SUM((SELECT IF(COUNT(*)>0,1,0) FROM spolu WHERE id_pobyt=pa2.id_pobyt))"}
     show misto [,,60,] {title:'místo',  data:da2.misto, format:'tsq*'}
     show od    [,,65,] {title:'od',     data:da2.datum_od, format:'rs+q*'}
     show do    [,,65,] {title:'do',     data:da2.datum_do, format:'rsq*'}
