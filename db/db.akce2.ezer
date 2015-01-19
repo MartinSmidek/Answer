@@ -575,8 +575,8 @@ panel track [,,540,276] { title:'Historie oprav', type:'popup', css:'dialog'
 # ================================================================================================== formuláře
 # ------------------------------------------------------------------------------------------ _osoba2x
 panel osoba_config [,,200,150] {type:'popup', title:"Podrobnosti údajů"
-  var tit='osobní údaje', grp='ZKAS', var ucast:object
-  proc start() { grp.set(get_cookie('db_conf_osoba',grp.get)); cnfg._back; }
+  var tit='osobní údaje', grp='Z,K,A,S', var ucast:object
+  proc start() { grp.set(get_cookie(conc(sys('root'),'_conf_osoba'),grp.get)); cnfg._back; }
   proc tune(calee) {
     ucast.set(calee); _old.set(grp.get); [ ucast.call('evid.z_change','o') ]; panel.modal(500,200) }
   use cnfg: form _cnfg
@@ -741,7 +741,7 @@ form _osoba2x [,,244,322] {css:'ae_frame', proc onclick() { on_click }
 # ----------------------------------------------------------------------------------------- _rodina2
 panel rodina_config [,,200,60] {type:'popup', title:"Podrobnosti údajů"
   var tit='osobní údaje', grp='Z', var ucast:object
-  proc start() { grp.set(get_cookie('db_conf_rodina',grp.get)); cnfg._back;  }
+  proc start() { grp.set(get_cookie(conc(sys('root'),'_conf_rodina'),grp.get)); cnfg._back;  }
   proc tune(from) { ucast.set(from); _old.set(grp.get);
     [ ucast.call('evid.z_change','o') ]; panel.modal(500,200) }
   use cnfg: form _cnfg

@@ -16,7 +16,9 @@ proc evid_rodina(_idr) { panel.focus; m.r.a.click(0,1); lst.seek_rodina(_idr,m.o
 proc osoby_show()       { page.oso.show_osoba(1); }     // obnova údajů o osobě  (z konfigurace)
 proc rodina_show()      { page.rod.show_rodina; }       // obnova údajů o rodině (z konfigurace)
 # ------------------------------------------------------------------------------------- inicializace
-proc onfirstfocus() { lst.start; page.start; cmd.start; }
+proc onfirstfocus() {
+  osoba_config.start; rodina_config.start;
+  lst.start; page.start; cmd.start; }
 proc up(x)   { x.get.set_css('shift_up','shift_down'); x.set_css('shift_up','shift_down','.*') }
 proc down(x) { x.get.set_css('shift_down','shift_up'); x.set_css('shift_down','shift_up','.*') }
 # --------------------------------------------------------------------------------------------- menu
