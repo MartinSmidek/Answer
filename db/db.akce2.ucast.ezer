@@ -810,7 +810,7 @@ form _evidence {
 # ------------------------------------------------------------------------------------------- _pobyt
 panel pobyt_config [,,200,120] {type:'popup', title:"Podrobnosti údajů"
   var tit='společné údaje o pobytu', grp='Z'
-  proc start() { grp.set(get_cookie('db_conf_pobyt',grp.get));
+  proc start() { grp.set(get_cookie(conc(sys('root'),'_conf_pobyt'),grp.get));
     cnfg._back;  evid.pob.id.get; evid.pob.show_pobyt | evid.pob.init_pobyt }
   proc tune() { _old.set(grp.get); evid.z_change('p'); panel.modal }
   use cnfg: form _cnfg
@@ -913,7 +913,7 @@ form _pobyt [,,0,62] {
 # ------------------------------------------------------------------------------------------- _spolu
 panel spolu_config [,,200,60] {type:'popup', title:"Podrobnosti údajů"
   var grp='Z'
-  proc start() { grp.set(get_cookie('db_conf_spolu',grp.get)); cnfg._back; spolu_show; }
+  proc start() { grp.set(get_cookie(conc(sys('root'),'_conf_spolu'),grp.get)); cnfg._back; spolu_show; }
   proc tune() { _old.set(grp.get); evid.z_change('o'); panel.modal }
   use cnfg: form _cnfg
   form _cnfg {
