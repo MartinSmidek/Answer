@@ -9759,12 +9759,13 @@ function dop_mai_send($id_dopis,$kolik,$from,$fromname,$test='',$id_mail=0) { tr
   $mail= new PHPMailer;
   $mail->SetLanguage('cz',"$phpmailer_path/language/");
   $mail->Host= "192.168.1.1";
-  $mail->CharSet = "utf-8";
+  $mail->CharSet = "UTF-8";
   $mail->From= $from;
   $mail->AddReplyTo($from);
 //   $mail->ConfirmReadingTo= $jarda;
   $mail->FromName= "$fromname";
   $mail->Subject= $d->nazev;
+                                        display($mail->Subject);
   $mail->IsHTML(true);
   $mail->Mailer= "smtp";
   attach($mail,$d->prilohy);

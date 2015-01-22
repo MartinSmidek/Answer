@@ -58,6 +58,7 @@
     "{$EZER->version}/ezer2_fce.php",
 //     'test/test_fce_fis.php',      /* různé API od Google */
     'test/test_fis_google.php',
+    'test/test.tut.php',
     'test/test.cg.php',
     'test/cg.php'
   );
