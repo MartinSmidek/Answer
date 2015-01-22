@@ -6,7 +6,7 @@
   $app_name= 'Test/Answer';
   $skin=     'ck';
   $CKEditor= isset($_GET['editor']) ? $_GET['editor'] : '4';
-  $dbg=      isset($_GET['dbg']) ? 1 : 0;                                                    /* debugger */
+  $dbg=      isset($_GET['dbg']) ? $_GET['dbg'] : 1;                                  /* debugger */
   $awesome=  isset($_GET['awesome']) ? $_GET['awesome'] : 1;
 
   require_once("$app.inc");
