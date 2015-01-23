@@ -56,19 +56,19 @@ proc ini(i,k,uq,on,off) {
 }
 
 menu m {type:'left', format:'f+'
-  menu g {title:'Příprava mailů ', type:'group'
-    item i {title:'všem účastníkům této akce', _sys:'akc'
-      proc onclick (i) { ini(i,'et','U','akce','gen|skup'); vy.fill(the_title.get); } }
-    item {title:'... VPS,SVPS,hospodářům akce'
-      proc onclick (i) { ini(i,'et','U2','akce','gen|skup'); vy.fill(the_title.get); } }
-    item {title:'... dlužníkům akce'
-      proc onclick (i) { ini(i,'et','U3','akce','gen|skup'); vy.fill(the_title.get); } }
+  menu g {title:'Vytvoření hromadného mailu', type:'group'
+#     item i {title:'všem účastníkům této akce', _sys:'akc'
+#       proc onclick (i) { ini(i,'et','U','akce','gen|skup'); vy.fill(the_title.get); } }
+#     item {title:'... VPS,SVPS,hospodářům akce'
+#       proc onclick (i) { ini(i,'et','U2','akce','gen|skup'); vy.fill(the_title.get); } }
+#     item {title:'... dlužníkům akce'
+#       proc onclick (i) { ini(i,'et','U3','akce','gen|skup'); vy.fill(the_title.get); } }
     item {title:'členům skupiny', _sys:'sku'
       proc onclick (i) {
         ini(i,'et','Q','skup','gen|akce');
         [ vy.komu_Q.key | et.get.enable(0,'n') ]
     } }
-    item {title:'podle zvoleného mail-listu', _sys:'gen'
+    item i {title:'podle zvoleného mail-listu', _sys:'gen'
       proc onclick (i) {
         ini(i,'et','G','gen','skup|akce');
 #         [ vy.komu_Q.key | et.get.enable(0,'n') ]
@@ -77,12 +77,12 @@ menu m {type:'left', format:'f+'
       proc onclick (i) { alert(ask('db_mail_copy_ds')); } }
   }
   menu {title:'Rozesílání mailů ', type:'group', _sys:'snd'
-    item {title:'všem účastníkům této akce',
-      proc onclick (i) { ini(i,'es','U','akce','gen|skup'); vy.fill(the_title.get); } }
-    item {title:'... VPS,SVPS,hospodářům akce'
-      proc onclick (i) { ini(i,'es','U2','akce','gen|skup'); vy.fill(the_title.get); } }
-    item {title:'... dlužníkům akce'
-      proc onclick (i) { ini(i,'es','U3','akce','gen|skup'); vy.fill(the_title.get); } }
+#     item {title:'všem účastníkům této akce',
+#       proc onclick (i) { ini(i,'es','U','akce','gen|skup'); vy.fill(the_title.get); } }
+#     item {title:'... VPS,SVPS,hospodářům akce'
+#       proc onclick (i) { ini(i,'es','U2','akce','gen|skup'); vy.fill(the_title.get); } }
+#     item {title:'... dlužníkům akce'
+#       proc onclick (i) { ini(i,'es','U3','akce','gen|skup'); vy.fill(the_title.get); } }
     item {title:'členům skupin',
       proc onclick (i) { ini(i,'es','Q','skup','gen|akce'); } }
     item {title:'podle zvoleného mail-listu'
