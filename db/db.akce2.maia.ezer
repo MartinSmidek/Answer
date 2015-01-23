@@ -41,7 +41,7 @@ proc ini(i,k,uq,on,off) {
 }
 
 menu m {type:'left',
-  menu g {title:'Příprava mailů ', type:'group'
+  menu g {title:'Vytvoření mailu k akci', type:'group'
     item i {title:'všem účastníkům této akce', _sys:'akc'
       proc onclick (i) { ini(i,'et','U','akce','gen|skup'); vy.fill(the_title.get); } }
     item {title:'... VPS,SVPS,hospodářům akce'
