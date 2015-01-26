@@ -43,6 +43,11 @@ menu m {type:'left', active:*, format:'f-'
   }
   menu f {title:'poslední úpravy rodin',type:'group', skill:'yad;fad'
     item   {title:'[fa-medkit]dnes'    par:°{lst:'f',tit:'úpravy za 24 hodin',days:'1',cnd:"1"}}
+    item   {title:'[fa-medkit]včera'   par:°{lst:'f',tit:'úpravy za 48 hodin',days:'2',cnd:"1"}}
+    item   {title:'[fa-medkit]týden'   par:°{lst:'f',tit:'úpravy za 7 dnů',days:'7',cnd:"1"}}
+    item   {title:'[fa-medkit]měsíc'   par:°{lst:'f',tit:'úpravy za 30 dnů',days:'30',cnd:"1"}}
+    item   {title:'[fa-medkit]rok'     par:°{lst:'f',tit:'úpravy za 365 dnů',days:'365',cnd:"1"}}
+    item   {title:'[fa-medkit]všechny' par:°{lst:'f',tit:'všechny úpravy',days:'99999',cnd:"1"}}
   }
   menu h {title:'poslední úpravy osob',type:'group', skill:'yad;fad'
     item   {title:'[fa-medkit]dnes'    par:°{lst:'h',tit:'úpravy za 24 hodin',days:'1',cnd:"1"}}
@@ -114,6 +119,7 @@ form _lst [,,370,*] {
   | eq(_mode,'z'); idz.set(_ido); [_ido; bz.init_queries ]; [ bz_reload(_cnd) ]
   | eq(_mode,'o'); ido.set(_ido); [_ido; bo.init_queries ]; [ bo_reload(_cnd) ]
   | eq(_mode,'h'); idh.set(_ido); [_ido; bh.init_queries ]; [ bh_reload(_cnd) ]
+  | eq(_mode,'f'); idf.set(_idr); [_idr; bf.init_queries ]; [ bf_reload(_cnd) ]
   | eq(_mode,'r'); idr.set(_idr); [_idr; br.init_queries ]; [ br_reload(_cnd) ]
   }
   proc refresh() {                              // zobrazí rodiny či osoby podle starých podmínek
@@ -125,6 +131,7 @@ form _lst [,,370,*] {
   | eq(mode.get,'z'); [ bz_reload(cnd.get) ]
   | eq(mode.get,'o'); [ bo_reload(cnd.get) ]
   | eq(mode.get,'h'); [ bh_reload(cnd.get) ]
+  | eq(mode.get,'f'); [ bf_reload(cnd.get) ]
   | eq(mode.get,'r'); [ br_reload(cnd.get) ]
   }
   proc seek_osoba(_ido,par) {                   // zviditelní seznam všech osob a zobrazí osobu
