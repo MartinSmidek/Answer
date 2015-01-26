@@ -1667,7 +1667,7 @@ function akce_browse_ask($x) {
     $tvori= array();              // $tvori[id_pobyt,id_osoba]    id_tvori,id_rodina,role,rodiny
     # ladění
     $AND= "";
-//     $AND= "AND p.id_pobyt IN (20825) -- Brtník";
+    $AND= "AND p.id_pobyt IN (15177,15178,15174,15200) -- NULL";
 //     $AND= "AND p.id_pobyt IN (20488) -- Bajerovi";
 //     $AND= "AND p.id_pobyt IN (20749) -- Buchtovi";
 //     $AND= "AND p.id_pobyt IN (20493) -- Dykastovi";
@@ -1756,7 +1756,7 @@ function akce_browse_ask($x) {
       $osoba[$or->id_osoba]->_rody= $or->_rody;
     }
     # seznamy položek
-    $fpob1= flds("key_pobyt=id_pobyt,key_akce=id_akce,key_osoba,key_spolu,key_rodina=i0_rodina,"
+    $fpob1= flds("key_pobyt=id_pobyt,_empty=0,key_akce=id_akce,key_osoba,key_spolu,key_rodina=i0_rodina,"
            . "c_suma,platba,xfunkce=funkce,funkce,skupina,dluh");
     $fakce= flds("dnu,datum_od");
     $frod=  flds("fotka,r_spz=spz,r_svatba=svatba,r_datsvatba=datsvatba,r_ulice=ulice,r_psc=psc,"
@@ -1810,7 +1810,7 @@ function akce_browse_ask($x) {
     # 2. průchod - kompletace pobytu pro browse_load/ask
     $zz= array();
     foreach ($pobyt as $idp=>$p) {
-      if ( !count($p->cleni) ) continue;
+      if ( !count($p->cleni) ) goto p_end;
       $idr= $p->i0_rodina ?: 0;
       $z= (object)array();
       $_ido1= $_ido2= 0;
@@ -1895,6 +1895,9 @@ function akce_browse_ask($x) {
       $z->ido2= $_ido2;
       # ok
       $zz[$idp]= $z;
+      continue;
+    p_end: // varianta pro prázdný pobyt - definování položky _empty:1
+      $zz[$idp]= (object)array('key_pobyt'=>$idp,'_empty'=>1);
     }
     # 3. průchod - kompletace údajů mezi pobyty
     foreach ($pobyt as $idp=>$p) {
@@ -1993,7 +1996,7 @@ function akce_browse_ask($x) {
 //                                                 debug($pobyt,'pobyt');
 //                                                 debug($rodina,'rodina');
 //                                                 debug($osoba,'osoba');
-//                                                 debug($y);
+                                                debug($y);
   return $y;
 }
 ?>
