@@ -479,6 +479,7 @@ form _ucast [,,400,] { css:'ds_form'
     optimize:°{ask:'akce_browse_ask'}, css_rows:"dluh,1:yellow,2:blue"
     // klíče
     show key_pobyt
+    show _empty         // 1 pokud je pobyt prázdný
     show key_akce
     show key_spolu
     show key_osoba
@@ -572,8 +573,14 @@ form _ucast [,,400,] { css:'ds_form'
       ucast.evid.pob1.init; ucast.evid.pob2.init;
       ucast.evid.rod.key_pobyt.set(key_pobyt.get);
       the_pobyt.set(key_pobyt.get);
-      copy_by_name(b,ucast.evid.pob.get);
-      load_zalozka }
+      { _empty.get; ucast.evid.pob.init; the_pobyt.set(key_pobyt.get);
+        ucast.evid.rod.init; ucast.evid.rod.cleni.browse_init;
+        confirm("Tento pobyt je bez účastníků, mám jej smazat?");
+        pobyt.delete_record(conc('id_pobyt=',key_pobyt.get));
+        reload(0)
+      | not(_empty.get); copy_by_name(b,ucast.evid.pob.get);
+        load_zalozka
+    } }
     proc onclick() {
 #       _vek.width;   _vek.width(0); _vzd.width(0); fotka.width(0);
 #                     platba.width(50); c_suma.width(50); _jmena.width(78)
@@ -843,6 +850,7 @@ form _pobyt [,,0,62] {
     tags.set(conc(tags,',a'));
     [ contains('S',pobyt_config.grp.get); tags.set(conc(tags,',s')) ];
     height.set(sum(stack_forms(form,tags,0,'up'),10));
+    //height.set(sum(form.stacks(tags,'up',0),10));
     frame.property(object('top',minus(60,height),'height',sum(height,-10)));   //-7
     [ contains('S',pobyt_config.grp.get); skupina.display(1);
       skupina.get; skup.display(1) ];
@@ -951,6 +959,7 @@ form _spolu [,,0,270] {
     };
     frame.set(tit);
     height.set(sum(stack_forms(form,tags,10,'up'),0));
+  //height.set(sum(form.stacks(tags,'up',10),0));
     frame.property(object('top',minus(265,height),'height',sum(height,10)));
   }
   // globální procedury

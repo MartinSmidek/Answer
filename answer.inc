@@ -9,7 +9,8 @@
 #   $php_lib    = pole s *.php - pro 'ini'
 #
 function answer_ini($app,$answer_db,$dbs_plus,$php_lib) {
-  global $EZER,$ezer_local,$ezer_root,$ezer_path_root,$ezer_comp_ezer,$path_backup,$ezer_mysql_path,$path_url,$path_pspad;
+  global $EZER,$ezer_local,$ezer_root,$ezer_path_root,$ezer_comp_ezer,$ezer_comp_root,
+         $path_backup,$ezer_mysql_path,$path_url,$path_pspad;
 
   $EZER= (object)array();
   $ezer_root= $app;                                             // adresář a hlavní objekt aplikace
