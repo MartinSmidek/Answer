@@ -1667,7 +1667,7 @@ function akce_browse_ask($x) {
     $tvori= array();              // $tvori[id_pobyt,id_osoba]    id_tvori,id_rodina,role,rodiny
     # ladění
     $AND= "";
-    $AND= "AND p.id_pobyt IN (15177,15178,15174,15200) -- NULL";
+//     $AND= "AND p.id_pobyt IN (15177,15178,15174,15200) -- NULL";
 //     $AND= "AND p.id_pobyt IN (20488) -- Bajerovi";
 //     $AND= "AND p.id_pobyt IN (20749) -- Buchtovi";
 //     $AND= "AND p.id_pobyt IN (20493) -- Dykastovi";
@@ -1830,7 +1830,8 @@ function akce_browse_ask($x) {
           elseif ( !$_ido2 )
             $_ido2= $ido;
           # výpočet jmen pobytu
-          $_jmena.= "$o->jmeno ";
+//           $_jmena.= "$o->jmeno ";
+          $_jmena.= str_replace(' ','-',$o->jmeno)." ";
           if ( !$idr ) {
             # výpočet názvu pobyt
             $prijmeni= $o->prijmeni;
