@@ -7595,9 +7595,9 @@ function chlapi_auto_jmenovci($id,$db) {  #trace();
 //                                                                 debug($a,$id_chlapi);
   return $a;
 }
-# ================================================================================================== PRIDEJ
+/** ========================================================================================= PRIDEJ **/
 # funkce pro spolupráci se select
-# --------------------------------------------------------------------------------- akce_auto_jmena2
+# -------------------------------------------------------------------------------------- akce_pridej
 # ASK přidání pobytu do akce, pokud ještě nebyly tyto osoby/osoba přidány
 function akce_pridej($id_akce,$info,$cnd='') { trace();
   $ret= (object)array('ok'=>0,'msg'=>'chyba při vkládání');
@@ -7672,35 +7672,36 @@ end:
 # --------------------------------------------------------------------------------- akce_auto_jmena2
 # SELECT autocomplete - výběr z párů
 function akce_auto_jmena2($patt) {  #trace();
-  $a= array();
+  $res= array();
   $limit= 20;
   $n= 0;
   $is= strpos($patt,' ');
   $patt= $is ? substr($patt,0,$is) : $patt;
   // páry
-  $qry= "SELECT nazev, r.obec, id_rodina AS _key,
+  $qr= "SELECT nazev, r.obec, id_rodina AS _key,
            GROUP_CONCAT(DISTINCT IF(t.role='a',o.jmeno,'') SEPARATOR '') AS _muz,
            GROUP_CONCAT(DISTINCT IF(t.role='b',o.jmeno,'') SEPARATOR '') AS _zena
          FROM rodina AS r
          JOIN tvori AS t USING(id_rodina)
          JOIN osoba AS o USING(id_osoba)
          WHERE nazev LIKE '$patt%'
-         GROUP BY id_rodina HAVING _muz!='' AND _zena!=''
+         GROUP BY id_rodina HAVING nazev!='' -- _muz!='' AND _zena!=''
          ORDER BY nazev,_muz,_zena
          LIMIT $limit";
-  $res= mysql_qry($qry);
-  while ( $res && $t= mysql_fetch_object($res) ) {
+  $rs= mysql_qry($qr);
+  while ( $rs && $t= mysql_fetch_object($rs) ) {
     if ( ++$n==$limit ) break;
     $key= $t->_key;
-    $a[$key]= "{$t->nazev} {$t->_muz} a {$t->_zena}";
+    $a= $t->_muz && $t->_zena ? 'a' : '';
+    $res[$key]= "{$t->nazev} {$t->_muz} $a {$t->_zena}";
   }
   // obecné položky
   if ( !$n )
-    $a[0]= "... žádné jméno nezačíná '$patt'";
+    $res[0]= "... žádné jméno nezačíná '$patt'";
   elseif ( $n==$limit )
-    $a[-999999]= "... a další";
-//                                                                 debug($a,$patt);
-  return $a;
+    $res[-999999]= "... a další";
+//                                                                 debug($res,$patt);
+  return $res;
 }
 # --------------------------------------- akce_auto_jmena2L
 # formátování autocomplete
