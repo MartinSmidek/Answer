@@ -308,6 +308,10 @@ form _cmd [,,623,30] { css:'ae_work'
   // ULOŽIT
   button [60,6,,] { tag:'s', title:'[fa-save] Uložit',  help:'Uložit změněná data', skill:'yaa+|yaa+;faa+|faa+;caa+|caa+'
     proc onclick() { var ok:number, idr:number, ido:number
+      // pohlídání koerktnosti případné úpravy
+      [ ucast.evid.os1.same | ucast.evid.os1.correct | return(0) ];
+      [ ucast.evid.os2.same | ucast.evid.os2.correct | return(0) ];
+      // uložení změn
       eq(mode.get,'novy_clen');
       # ------------------------ vytvoření nového člena rodiny: osoba+tvori
       [ ucast.evid.os1.same

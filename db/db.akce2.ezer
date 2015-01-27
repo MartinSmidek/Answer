@@ -608,6 +608,11 @@ form _osoba2x [,,244,322] {css:'ae_frame', proc onclick() { on_click }
   // globální procedury
   proc set_mode(_mode) { mode.set(_mode); form.enable(1,'a|b|j|k') }
   proc onchanged() { }
+  proc correct() { var ok:number
+   ok.set(1);
+   adresa.get; eq(ulice.get,''); eq(ulice.get,''); warning("osobní adresa nesmí být prázdná"); ok.set(0);
+   return(ok);
+  }
   proc new_osoba() { form.init; role.display(1); }
   proc on_click() {}
   proc init_osoba() {
