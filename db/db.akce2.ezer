@@ -575,14 +575,16 @@ panel track [,,540,276] { title:'Historie oprav', type:'popup', css:'dialog'
 # ================================================================================================== formuláře
 # ------------------------------------------------------------------------------------------ _osoba2x
 panel osoba_config [,,200,150] {type:'popup', title:"Podrobnosti údajů"
-  var tit='osobní údaje', grp='Z,K,A,S', var ucast:object
-  proc start() { grp.set(get_cookie(conc(sys('root'),'_conf_osoba'),grp.get)); cnfg._back; }
+  var tit='osobní údaje', grp='ZKAS', var ucast:object
+  proc start() { grp.set(get_cookie(conc(sys('root'),'_conf_osoba'),grp.get));
+    [ contains('Z',grp.get) | grp.set(conc('Z',grp.get)) ];
+    cnfg._back; }
   proc tune(calee) {
     ucast.set(calee); _old.set(grp.get); [ ucast.call('evid.z_change','o') ]; panel.modal(500,200) }
   use cnfg: form _cnfg
   form _cnfg {
-    check s [ 100,0,110,] { title:"oddělovat skupiny",   format:'t', proc onchange() { _tuned }}
     check z [ 0,  0,100,] { title:"základní údaje",      format:'d', value:'1'}
+    check s [ 100,0,110,] { title:"oddělovat skupiny",   format:'t', proc onchange() { _tuned }}
     check k [ 0, 20,200,] { title:"kontaktní údaje",     format:'t', proc onchange() { _tuned }}
     check a [ 0, 40,200,] { title:"poštovní adresa",     format:'t', proc onchange() { _tuned }}
     check o [ 0, 60,200,] { title:"organizační údaje",   format:'t', proc onchange() { _tuned }}
@@ -592,7 +594,7 @@ panel osoba_config [,,200,150] {type:'popup', title:"Podrobnosti údajů"
       set_cookie(conc(sys('root'),'_conf_osoba'),grp.get); panel.close(1) }}
     button  [85,130,,] { title:'Zpět', proc onclick() {
       grp.set(_old.get); _back; ucast.call('osoby_show'); panel.close(1) }}
-    proc _tuned() { grp.set(cconc(s.get,'S,',k.get,'K,',a.get,'A,',o.get,'O,',c.get,'C,',p.get,'P,','Z'));
+    proc _tuned() { grp.set(cconc(s.get,'S',k.get,'K',a.get,'A',o.get,'O',c.get,'C',p.get,'P','Z'));
       ucast.call('osoby_show') }
     proc _back() { z.set(1); s.set(contains('S',grp.get));
       k.set(contains('K',grp.get)); a.set(contains('A',grp.get)); o.set(contains('O',grp.get));
@@ -741,7 +743,9 @@ form _osoba2x [,,244,322] {css:'ae_frame', proc onclick() { on_click }
 # ----------------------------------------------------------------------------------------- _rodina2
 panel rodina_config [,,200,60] {type:'popup', title:"Podrobnosti údajů"
   var tit='osobní údaje', grp='Z', var ucast:object
-  proc start() { grp.set(get_cookie(conc(sys('root'),'_conf_rodina'),grp.get)); cnfg._back;  }
+  proc start() { grp.set(get_cookie(conc(sys('root'),'_conf_rodina'),grp.get));
+    [ contains('Z',grp.get) | grp.set(conc('Z',grp.get)) ];
+    cnfg._back;  }
   proc tune(from) { ucast.set(from); _old.set(grp.get);
     [ ucast.call('evid.z_change','o') ]; panel.modal(500,200) }
   use cnfg: form _cnfg
@@ -752,7 +756,7 @@ panel rodina_config [,,200,60] {type:'popup', title:"Podrobnosti údajů"
       set_cookie(conc(sys('root'),'_conf_rodina'),grp.get); panel.close(1) }}
     button  [85,40,,] { title:'Zpět', proc onclick() {
       grp.set(_old.get); _back; ucast.call('rodina_show'); panel.close(1) }}
-    proc _tuned() { grp.set(cconc(p.get,'P,','Z')); ucast.call('rodina_show') }
+    proc _tuned() { grp.set(cconc(p.get,'P','Z')); ucast.call('rodina_show') }
     proc _back() { z.set(1); p.set(contains('P',grp.get)); }
   }
   var _old= 'Z'
