@@ -818,6 +818,7 @@ form _evidence {
 panel pobyt_config [,,200,120] {type:'popup', title:"Podrobnosti údajů"
   var tit='společné údaje o pobytu', grp='Z'
   proc start() { grp.set(get_cookie(conc(sys('root'),'_conf_pobyt'),grp.get));
+    [ contains('Z',grp.get) | grp.set(conc('Z',grp.get)) ];
     cnfg._back;  evid.pob.id.get; evid.pob.show_pobyt | evid.pob.init_pobyt }
   proc tune() { _old.set(grp.get); evid.z_change('p'); panel.modal }
   use cnfg: form _cnfg
@@ -833,7 +834,7 @@ panel pobyt_config [,,200,120] {type:'popup', title:"Podrobnosti údajů"
       grp.set(_old.get); _back; evid.pob.show_pobyt; panel.close(1) }}
     proc _tuned() { grp.set(cconc(p.get,'P,',s.get,'S,',u.get,'U,',d.get,'D,','Z'));
       evid.pob.show_pobyt }
-    proc _back() { z.set(1); p.set(contains('P',grp.get));
+    proc _back() { z.set(contains('Z',grp.get)); p.set(contains('P',grp.get));
       s.set(contains('S',grp.get)); u.set(contains('U',grp.get)); d.set(contains('D',grp.get)); }
   }
   var _old= 'Z'
@@ -921,7 +922,9 @@ form _pobyt [,,0,62] {
 # ------------------------------------------------------------------------------------------- _spolu
 panel spolu_config [,,200,60] {type:'popup', title:"Podrobnosti údajů"
   var grp='Z'
-  proc start() { grp.set(get_cookie(conc(sys('root'),'_conf_spolu'),grp.get)); cnfg._back; spolu_show; }
+  proc start() { grp.set(get_cookie(conc(sys('root'),'_conf_spolu'),grp.get));
+    [ contains('Z',grp.get) | grp.set(conc('Z',grp.get)) ];
+    cnfg._back; spolu_show; }
   proc tune() { _old.set(grp.get); evid.z_change('o'); panel.modal }
   use cnfg: form _cnfg
   form _cnfg {
@@ -931,8 +934,8 @@ panel spolu_config [,,200,60] {type:'popup', title:"Podrobnosti údajů"
       set_cookie(conc(sys('root'),'_conf_spolu'),grp.get); panel.close(1) }}
     button  [85,40,,] { title:'Zpět', proc onclick() {
       grp.set(_old.get); _back; ucast.spolu_show; panel.close(1) }}
-    proc _tuned() { grp.set(cconc(p.get,'P','Z')); ucast.spolu_show }
-    proc _back() { z.set(1); p.set(contains('P',grp.get)); }
+    proc _tuned() { grp.set(cconc(p.get,'P',1,'Z')); ucast.spolu_show }
+    proc _back() { z.set(contains('Z',grp.get)); p.set(contains('P',grp.get)); }
   }
   var _old= 'Z'
 }
@@ -944,7 +947,7 @@ form _spolu [,,0,270] {
     { key_spolu.get;
       # je na akci
       tit.set('účastník akce ...'); tags.set('S');
-      [ s_role.key; contains('P',spolu_config.grp.get); tags.set(conc(tags,',p')) ];
+      [ /*s_role.key;*/ contains('P',spolu_config.grp.get); tags.set(conc(tags,',p')) ];
       switch(s_role.key,
       0, { tit.set('jako host') },
       1, { tit.set('účastník akce') },
