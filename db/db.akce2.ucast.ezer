@@ -833,7 +833,7 @@ panel pobyt_config [,,200,120] {type:'popup', title:"Podrobnosti údajů"
       grp.set(_old.get); _back; evid.pob.show_pobyt; panel.close(1) }}
     proc _tuned() { grp.set(cconc(p.get,'P,',s.get,'S,',u.get,'U,',d.get,'D,','Z'));
       evid.pob.show_pobyt }
-    proc _back() { z.set(contains('Z',grp.get)); p.set(contains('P',grp.get));
+    proc _back() { z.set(1); p.set(contains('P',grp.get));
       s.set(contains('S',grp.get)); u.set(contains('U',grp.get)); d.set(contains('D',grp.get)); }
   }
   var _old= 'Z'
@@ -879,7 +879,7 @@ form _pobyt [,,0,62] {
 
   // p = poznámka
   edit  p_poznamka [5,0,349,74] {tag:'p', data:p.poznamka, title:'^poznámka k pobytu'}
-  label [5,74,1,1] { tag:'p' } // oprava
+  label [5,74,1,3] { tag:'p' } // oprava
 
   // u = úhrada
   field celkem      [5,0,50,] {tag:'u', format:'dr', title:'^poplatek'}
@@ -932,7 +932,7 @@ panel spolu_config [,,200,60] {type:'popup', title:"Podrobnosti údajů"
     button  [85,40,,] { title:'Zpět', proc onclick() {
       grp.set(_old.get); _back; ucast.spolu_show; panel.close(1) }}
     proc _tuned() { grp.set(cconc(p.get,'P','Z')); ucast.spolu_show }
-    proc _back() { z.set(contains('Z',grp.get)); p.set(contains('P',grp.get)); }
+    proc _back() { z.set(1); p.set(contains('P',grp.get)); }
   }
   var _old= 'Z'
 }
@@ -1266,7 +1266,7 @@ panel PridaniJmenem1 [,,320,280] {type:'popup', title:'Přidání známých dosp
   }
 }
 # ================================================================================= Přidání jménem 2
-panel PridaniJmenem2 [,,320,280] {type:'popup', title:'Přidání známých párů jménem'
+panel PridaniJmenem2 [,,320,280] {type:'popup', title:'Přidání známých rodin jménem'
   use fl: form _fl [12,10,,]
   form _fl [,,300,200] {
     var last: number
