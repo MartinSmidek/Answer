@@ -482,7 +482,7 @@ panel mapa [,,640,400] { type:'popup', title:'mapa účastníků'
   proc ukaz_psc() {
     var ret: object
     google_maps('mark_new');
-    ret.set(ask('akce_mapa',id_akce.get));
+    ret.set(ask('akce2_mapa',id_akce.get));
     google_maps('mark_put',object('mark',ret.mark));
   }
   use f: form _f [0,10,,]

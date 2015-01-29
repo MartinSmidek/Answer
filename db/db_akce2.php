@@ -114,7 +114,59 @@ function eli_osoba($id_orig,$id_copy) { trace();
 end:
   return $ret;
 }
-/** =========================================================================================== AKCE **/
+/** ========================================================================================== AKCE2 **/
+# --------------------------------------------------------------------------------------- akce2_mapa
+# získání seznamu souřadnic bydlišť účastníků akce
+function akce2_mapa($akce) {  trace();
+  global $ezer_root;
+  $ret= (object)array('mark'=>'','n'=>0);
+  // dotaz
+  $marks= $del= ''; $n= 0;
+  $err_psc= $psc= array();
+  $qo=  "
+    SELECT prijmeni,adresa,psc,obec,
+      (SELECT MIN(CONCAT(role,psc,'x',obec))
+       FROM tvori AS ot JOIN rodina AS r USING (id_rodina)
+       WHERE ot.id_osoba=o.id_osoba
+      ) AS r_psc
+    FROM pobyt
+    JOIN spolu USING (id_pobyt)
+    JOIN osoba AS o USING (id_osoba)
+    WHERE id_akce='$akce'
+    GROUP BY id_osoba
+    ";
+  // najdeme použitá PSČ
+  $ro= mysql_qry($qo);
+  while ( $ro && ($o= mysql_fetch_object($ro)) ) {
+    $n++;
+    if ( $o->adresa ) {
+      $psc[$o->psc].= $o->prijmeni;
+    }
+    else {
+      $psc[substr($o->r_psc,1,5)].= "$o->prijmeni ";
+    }
+//                                         break;
+  }
+//                                         debug($psc);
+  // k PSČ zjistíme LAN,LNG
+  $n= 0; $del= '';
+  foreach ($psc as $p=>$tit) {
+    $qs= "SELECT psc,lat,lng FROM uir_adr.psc_axy WHERE psc='$p'";
+    $rs= mysql_qry($qs);
+    if ( $rs && ($s= mysql_fetch_object($rs)) ) {
+      $n++;
+      $title= str_replace(',','',"$p:$tit");
+      $marks.= "$del{$s->lat},{$s->lng},$title"; $del= ';';
+    }
+    else {
+      $err_psc[$p].= " $tit";
+    }
+  }
+  $ret= (object)array('mark'=>$marks,'n'=>$n);
+                                        debug($err_psc,"CHYBY");
+//                                         debug($ret,"mapa_akce");
+  return $ret;
+}
 # --------------------------------------------------------------------------------------- akce2_info
 # rozšířené informace o akci
 function akce2_info($id_akce) {  trace();
@@ -510,7 +562,7 @@ function tisk_sestava_pary($akce,$par,$title,$vypis,$export=false) { trace();
   foreach ($y->values as $x) {
 //     if ( !in_array($x->key_pobyt,array(15209,15217,15213,15192,15199)) ) continue;
 //     if ( !in_array($x->key_pobyt,array(15192)) ) continue;
-    if ( !in_array($x->key_pobyt,array(15202)) ) continue;
+//     if ( !in_array($x->key_pobyt,array(15202)) ) continue;
 //                                                         debug($x);
     $n++;
     # rozbor osobních údajů: adresa nebo kontakt se získá 3 způsoby
@@ -524,7 +576,7 @@ function tisk_sestava_pary($akce,$par,$title,$vypis,$export=false) { trace();
     $osoba_note= "";
     foreach ($xs as $i=>$xi) {
       $o= explode('~',$xi);
-                                                        debug($o,"xi/$i");
+//                                                         debug($o,"xi/$i");
       if ( $o[$i_key_spolu] ) {
         $pocet++;
         $jmeno= str_replace(' ','-',$o[$i_jmeno]);
@@ -599,7 +651,7 @@ function tisk_sestava_pary($akce,$par,$title,$vypis,$export=false) { trace();
     }
 //     break;
   }
-                                        debug($clmn,"sestava pro $akce,$typ,$fld,$cnd");
+//                                         debug($clmn,"sestava pro $akce,$typ,$fld,$cnd");
   return sta_table($tits,$flds,$clmn,$export);
 }
 # --------------------------------------------------------------------------------- tisk_text_vyroci
@@ -1283,7 +1335,7 @@ function elim_data_osoba($ido) {  trace();
   }
   $ret->kmen= $kmen;
   $ret->id_kmen= $idk;
-                                                        debug($ret,"elim_data_osoba");
+//                                                         debug($ret,"elim_data_osoba");
   return $ret;
 }
 # --------------------------------------------------------------------------------- elim_data_rodina
@@ -1593,7 +1645,7 @@ function akce2_pridej_k_pobytu($id_akce,$id_pobyt,$info,$cnd='') { trace();
     }
     else  $ret->msg= 'chyba při vkládání';
   }
-                                                debug($ret,"$vek $kat $srole");
+//                                                 debug($ret,"$vek $kat $srole");
   return $ret;
 }
 # ----------------------------------------------------------------------------- evid_pridej_k_rodine
@@ -1689,7 +1741,7 @@ function akce_browse_ask($x,$tisk=false) {
     return $fp;
   }
   global $test_clmn,$test_asc, $y;
-                                                        debug($x,"akce_browse_ask");
+//                                                         debug($x,"akce_browse_ask");
 //                                                         return;
   $y= (object)array('ok'=>0);
   foreach(explode(',','cmd,rows,quiet,key_id,oldkey') as $i) $y->$i= $x->$i;
@@ -1709,7 +1761,7 @@ function akce_browse_ask($x,$tisk=false) {
     $tvori= array();              // $tvori[id_pobyt,id_osoba]    id_tvori,id_rodina,role,rodiny
     # ladění
     $AND= "";
-    $AND= "AND p.id_pobyt IN (15202) -- NULL";
+//     $AND= "AND p.id_pobyt IN (15202) -- NULL";
 //     $AND= "AND p.id_pobyt IN (20488) -- Bajerovi";
 //     $AND= "AND p.id_pobyt IN (20749) -- Buchtovi";
 //     $AND= "AND p.id_pobyt IN (20493) -- Dykastovi";
@@ -1799,7 +1851,7 @@ function akce_browse_ask($x,$tisk=false) {
       $osoba[$or->id_osoba]->_kmen= $kmen;
       if ( !$rodina[$kmen] ) {
         # doplnění (potřebných) rodinných údajů pro kmenové rodiny
-                                                        display("{$or->id_osoba} - $kmen");
+//                                                         display("{$or->id_osoba} - $kmen");
         $qr= mysql_qry("
           SELECT * -- id_rodina,nazev,ulice,obec,psc,stat,telefony,emaily
           FROM rodina AS r WHERE id_rodina=$kmen");
@@ -1808,8 +1860,8 @@ function akce_browse_ask($x,$tisk=false) {
         }
       }
     }
-                                                        display("rodiny:$rodiny");
-                                                        debug($rodina,$rodiny);
+//                                                         display("rodiny:$rodiny");
+//                                                         debug($rodina,$rodiny);
     # seznamy položek
     $fpob1= flds("key_pobyt=id_pobyt,_empty=0,key_akce=id_akce,key_osoba,key_spolu,key_rodina=i0_rodina,"
            . "c_suma,platba,xfunkce=funkce,funkce,skupina,dluh");
@@ -1915,8 +1967,8 @@ function akce_browse_ask($x,$tisk=false) {
         $o->_kmen= "$kmen/$id_kmen";
         $cleni.= "~" . sql_date1($o->narozeni);                   // narozeniny d.m.r
         # doplnění textů z kmenové rodiny pro zobrazení rodinných adres (jako disabled)
-                                                debug($o,"browse - o");
-                                                debug($rodina[$id_kmen],"browse - kmen=$id_kmen");
+//                                                 debug($o,"browse - o");
+//                                                 debug($rodina[$id_kmen],"browse - kmen=$id_kmen");
         if ( !$o->adresa ) {
           $o->ulice= "®".$rodina[$id_kmen]->ulice;
           $o->psc=   "®".$rodina[$id_kmen]->psc;
