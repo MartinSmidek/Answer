@@ -82,12 +82,12 @@ menu m {type:'left', active:*, format:'f-'
     item   {title:'[fa-female]tipy duplicit žen'  par:°{lst:'z',tit:'příjmení & rodné',    cnd:"z.deleted=''"},skill:'yad;fad'
       proc onclick(i) { menu_item.set(i); alert(ask('elim_rodne')) }}
     proc onclick(i) { menu_item.set(i);
-      page.oso.set_mode(1); lst.mode.set('x'); lst.bx_mode.set(i.par.mod); lst.idx.set(0);
+      page.oso.set_mode(1,'E'); lst.mode.set('x'); lst.bx_mode.set(i.par.mod); lst.idx.set(0);
       lst.reload(i.par.lst,i.par.cnd,i.par.tit);
     }
   }
   proc onclick (i) { menu_item.set(i); menu_par.set(i.par);
-    page.oso.set_mode(0);
+    page.oso.set_mode(0,'E');
     lst.reload(i.par.lst,i.par.cnd,i.par.tit);
   }
 }
@@ -535,6 +535,9 @@ form _page {
   use oso: form _osoba2x  [200,20,,] { tag:'O'  // view o:osoba
     proc on_click() { up(page.oso); up(page.rod); down(page.dar) }
     proc onchanged() { page.d_change('o') }
+    menu detail { type:'context'
+      item { title:'EVID konfigurace formuláře', proc onclick () { osoba_config.tune(panel) } }
+    }
   }
   # ============================================== B: ÚČASTI OSOBY
   use act: form _aktivity [450, 20,,]  { tag:'B', format:'n' }

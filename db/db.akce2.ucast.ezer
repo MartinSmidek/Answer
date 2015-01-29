@@ -44,6 +44,10 @@ proc onfocus() {
 }
 
 # ------------------------------------------------------------------------------- globální procedury
+# ukázání pobytu
+proc ucast_pobyt(_idp)  {
+  panel.focus; u.b.raise('onrowclick',_idp);
+}
 # zobrazení osob - nastavených účastníků
 proc osoby_show() {                             // obnova údajů o osobách
   [ evid.os1.key; evid.os1.show_osoba(0) | evid.os1.init_osoba ];
@@ -734,8 +738,8 @@ form _evidence {
     cmode.set(2); rmode.set(1);
     osoba_config.start; spolu_config.start; pobyt_config.start; rodina_config.start;
     [ lt(sys('screen','width'),1280); c_change(1) ];
-    ucast.evid.os1.init; ucast.evid.os1.set_mode(0);
-    ucast.evid.os2.init; ucast.evid.os2.set_mode(0);
+    ucast.evid.os1.init; ucast.evid.os1.set_mode(2,'U');
+    ucast.evid.os2.init; ucast.evid.os2.set_mode(2,'U');
     ucast.evid.pob1.init; ucast.evid.pob1.pece_sel.set_attrib('par',
       object('fce','akce_auto_deti','akce',the_duakce.get,'save','value'));
     ucast.evid.pob2.init; ucast.evid.pob2.pece_sel.set_attrib('par',
