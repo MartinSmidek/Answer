@@ -483,6 +483,7 @@ panel mapa [,,640,400] { type:'popup', title:'mapa účastníků'
     var ret: object
     google_maps('mark_new');
     ret.set(ask('akce2_mapa',id_akce.get));
+    [ ret.err; warning(ret.err) ];
     google_maps('mark_put',object('mark',ret.mark));
   }
   use f: form _f [0,10,,]

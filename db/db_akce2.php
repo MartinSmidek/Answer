@@ -121,7 +121,7 @@ function akce2_mapa($akce) {  trace();
   global $ezer_root;
   $ret= (object)array('mark'=>'','n'=>0);
   // dotaz
-  $marks= $del= ''; $n= 0;
+  $marks= $err= '';
   $err_psc= $psc= array();
   $qo=  "
     SELECT prijmeni,adresa,psc,obec,
@@ -138,9 +138,8 @@ function akce2_mapa($akce) {  trace();
   // najdeme použitá PSČ
   $ro= mysql_qry($qo);
   while ( $ro && ($o= mysql_fetch_object($ro)) ) {
-    $n++;
     if ( $o->adresa ) {
-      $psc[$o->psc].= $o->prijmeni;
+      $psc[$o->psc].= "$o->prijmeni ";
     }
     else {
       $psc[substr($o->r_psc,1,5)].= "$o->prijmeni ";
@@ -162,8 +161,12 @@ function akce2_mapa($akce) {  trace();
       $err_psc[$p].= " $tit";
     }
   }
-  $ret= (object)array('mark'=>$marks,'n'=>$n);
+  // zjištění chyb
+  if ( ($ne= count($err_psc)) ) {
+    $err= "$ne PSČ se nepovedlo lokalizovat. Týká se to: ".implode(' a ',$err_psc);
                                         debug($err_psc,"CHYBY");
+  }
+  $ret= (object)array('mark'=>$marks,'n'=>$n,'err'=>$err);
 //                                         debug($ret,"mapa_akce");
   return $ret;
 }
@@ -1606,6 +1609,42 @@ function evid_browse_act_ask($x) {
   return $y;
 }
 /** ====================================================================================== ÚČASTNÍCI **/
+# ------------------------------------------------------------------------------------ akce2_osoba2x
+# ASK volané z formuláře _osoba2x při onchange.adresa a onchange.kontakt
+# v ret vrací o_kontakt, r_kontakt, o_adresa, r_adresa
+function akce2_osoba2x($id_osoba) { trace();
+  $rets= "o_kontakt,r_kontakt,o_adresa,r_adresa";
+  $adresa= "ulice,psc,obec,stat,noadresa";
+  $kontakt= "telefon,email,nomail";         // rodina s -y na konci
+  $kontakty= "telefony,emaily,nomaily";
+  $k= sql_query("
+    SELECT IFNULL(SUBSTR(
+      (SELECT MIN(CONCAT(role,id_rodina))
+        FROM tvori AS ot JOIN rodina AS r USING (id_rodina) WHERE ot.id_osoba=o.id_osoba
+      ),2),0) AS id_rodina
+    FROM osoba AS o
+    WHERE o.id_osoba=$id_osoba
+    GROUP BY o.id_osoba");
+  $o= sql_query("SELECT $adresa,$kontakt FROM osoba WHERE id_osoba=$id_osoba");
+  $r= sql_query("SELECT $adresa,$kontakty FROM rodina WHERE id_rodina=$k->id_rodina");
+//                                                         debug($k,"kmen");
+//                                                         debug($r,"rodina");
+//                                                         debug($o,"osoba");
+  $ret= (object)array();
+  foreach(explode(',',$rets) as $f) {
+    $ret->$f= (object)array();
+  }
+  foreach(explode(',',$adresa) as $f) {
+    $ret->o_adresa->$f= $o->$f;
+    $ret->r_adresa->$f= ($f=='noadresa'||$f=='stat'?'':'®').$r->$f;
+  }
+  foreach(explode(',',$kontakt) as $f) { $fy= $f.'y';
+    $ret->o_kontakt->$f= $o->$f;
+    $ret->r_kontakt->$f= ($f=='nomail'?'':'®').$r->$fy;
+  }
+//                                                         debug($ret,"akce2__osoba2x");
+  return $ret;
+}
 # ------------------------------------------------------------------------------------ akce2_ido2idp
 # ASK získání pobytu účastníka na akci
 function akce2_ido2idp($id_osoba,$id_akce) { trace();
