@@ -472,23 +472,17 @@ form _akce [,,*,50] {
 // ------------------------------------------- mapa
 panel mapa [,,640,400] { type:'popup', title:'mapa účastníků'
   var id_akce: number
-  proc onfirstfocus() {
-    google_maps('mapa_cr',object('label',f.cr));
-    ukaz_psc;
-  }
-  proc onfocus() {
-    ukaz_psc;
-  }
+  proc onfirstfocus() { f.cr.init('ROADMAP'); ukaz_psc;  }
+  proc onfocus() { ukaz_psc; }
   proc ukaz_psc() {
     var ret: object
-    google_maps('mark_new');
     ret.set(ask('akce2_mapa',id_akce.get));
     [ ret.err; warning(ret.err) ];
-    google_maps('mark_put',object('mark',ret.mark));
+    f.cr.set(object('mark',ret.mark));
   }
   use f: form _f [0,10,,]
   form _f [,,700,400] {
-    label cr [0,0,640,400]
+    label cr [0,0,640,400] { type:'map' }
   }
 }
 
