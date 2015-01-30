@@ -404,7 +404,7 @@ function tisk_sestava_lidi($akce,$par,$title,$vypis,$export=false) { trace();
     $cnd.= " AND p.id_pobyt IN ($par->selected)";
   }
   // data akce
-  $r_fld= "id_rodina,nazev,ulice,psc,obec,stat,note";
+  $r_fld= "id_rodina,nazev,ulice,psc,obec,stat,note,emaily,telefony";
   $qry=  "
     SELECT
       p.pouze,p.poznamka,p.platba,
@@ -415,6 +415,8 @@ function tisk_sestava_lidi($akce,$par,$title,$vypis,$export=false) { trace();
       IF(o.adresa,o.psc,IFNULL(r2.psc,r1.psc)) AS psc,
       IF(o.adresa,o.obec,IFNULL(r2.obec,r1.obec)) AS obec,
       IF(o.adresa,o.stat,IFNULL(r2.stat,r1.stat)) AS stat,
+      IF(o.kontakt,o.telefon,IFNULL(r2.telefony,r1.telefony)) AS telefony,
+      IF(o.kontakt,o.email,IFNULL(r2.emaily,r1.emaily)) AS emaily,
       s.poznamka AS s_note,s.pfunkce,s.dite_kat,
       IFNULL(r2.note,r1.note) AS r_note,
       IFNULL(r2.role,r1.role) AS r_role,
