@@ -122,7 +122,7 @@ function akce2_mapa($akce) {  trace();
   $ret= (object)array('mark'=>'','n'=>0);
   // dotaz
   $marks= $err= '';
-  $err_psc= $psc= array();
+  $err_psc= $psc= $obec= array();
   $qo=  "
     SELECT prijmeni,adresa,psc,obec,
       (SELECT MIN(CONCAT(role,psc,'x',obec))
@@ -138,12 +138,10 @@ function akce2_mapa($akce) {  trace();
   // najdeme použitá PSČ
   $ro= mysql_qry($qo);
   while ( $ro && ($o= mysql_fetch_object($ro)) ) {
-    if ( $o->adresa ) {
-      $psc[$o->psc].= "$o->prijmeni ";
-    }
-    else {
-      $psc[substr($o->r_psc,1,5)].= "$o->prijmeni ";
-    }
+    $p= $o->adresa ? $o->psc : substr($o->r_psc,1,5);
+    $m= $o->adresa ? $o->obec : substr($o->r_psc,7);
+    $psc[$p].= "$o->prijmeni ";
+    $obec[$p]= $obec[$p] ?: $m;
 //                                         break;
   }
 //                                         debug($psc);
@@ -154,20 +152,23 @@ function akce2_mapa($akce) {  trace();
     $rs= mysql_qry($qs);
     if ( $rs && ($s= mysql_fetch_object($rs)) ) {
       $n++;
-      $title= str_replace(',','',"$p:$tit");
-      $marks.= "$del{$s->lat},{$s->lng},$title"; $del= ';';
+      $o= $obec[$p];
+      $title= str_replace(',','',"$o:$tit");
+//       $marks.= "$del{$s->lat},{$s->lng},$title"; $del= ';';
+      $marks.= "{$del}$n,{$s->lat},{$s->lng},$title"; $del= ';';
     }
     else {
       $err_psc[$p].= " $tit";
     }
+//     if ( $n==2 ) break;
   }
   // zjištění chyb
   if ( ($ne= count($err_psc)) ) {
     $err= "$ne PSČ se nepovedlo lokalizovat. Týká se to: ".implode(' a ',$err_psc);
-                                        debug($err_psc,"CHYBY");
+//                                         debug($err_psc,"CHYBY");
   }
   $ret= (object)array('mark'=>$marks,'n'=>$n,'err'=>$err);
-//                                         debug($ret,"mapa_akce");
+//                                         debug(explode(';',$ret->mark),"mapa_akce");
   return $ret;
 }
 # --------------------------------------------------------------------------------------- akce2_info
