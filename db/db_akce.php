@@ -9383,7 +9383,7 @@ function dop_mai_pocet($id_dopis,$dopis_var,$cond='',$recall=false) {  trace();
          : " --- chybné komu --- " ));
     // využívá se toho, že role rodičů 'a','b' jsou před dětskou 'd', takže v seznamech
     // GROUP_CONCAT jsou rodiče, byli-li na akci. Emaily se ale vezmou ode všech
-    $qry= "SELECT a.nazev,id_pobyt,pouze,avizo,
+    $qry= "SELECT a.nazev,id_pobyt,pouze,COUNT(*) AS _na_akci,avizo,
            GROUP_CONCAT(DISTINCT o.id_osoba ORDER BY t.role) AS _id,
            GROUP_CONCAT(DISTINCT CONCAT(prijmeni,' ',jmeno) ORDER BY t.role) AS _jm,
            GROUP_CONCAT(DISTINCT o.email) AS email, GROUP_CONCAT(DISTINCT r.emaily) AS emaily
@@ -9392,8 +9392,8 @@ function dop_mai_pocet($id_dopis,$dopis_var,$cond='',$recall=false) {  trace();
            JOIN pobyt AS p ON d.id_duakce=p.id_akce
            JOIN spolu AS s USING(id_pobyt)
            JOIN osoba AS o ON s.id_osoba=o.id_osoba
-           JOIN tvori AS t ON t.id_osoba=o.id_osoba
-           JOIN rodina AS r USING (id_rodina)
+           LEFT JOIN tvori AS t ON t.id_osoba=o.id_osoba
+           LEFT JOIN rodina AS r USING (id_rodina)
            WHERE id_dopis=$id_dopis $AND GROUP BY id_pobyt";
     $res= mysql_qry($qry);
     while ( $res && ($d= mysql_fetch_object($res)) ) {
@@ -9407,7 +9407,8 @@ function dop_mai_pocet($id_dopis,$dopis_var,$cond='',$recall=false) {  trace();
       if ( strpos($er,'*')!==false ) { $mimo.= "$delm$jm"; $delm= ', '; $mx++; $er= ''; }
       // pokud je na akci pouze jeden, pošli jen na jeho mail - pokud oba, pošli na všechny maily
       if ( $eo!='' || $er!='' ) {
-        $em= $d->pouze && $eo!='' ? $eo : (             // na akci pouze jeden => osobní mail
+//         $em= $d->pouze && $eo!='' ? $eo : (             // na akci pouze jeden => osobní mail
+        $em= $d->_na_akci==1 && $eo!='' ? $eo : (       // na akci pouze jeden => osobní mail
           $eo!='' && $er!='' ? "$eo,$er" : $eo.$er      // jinak cokoliv půjde
         );
         $emaily[]= $em;
