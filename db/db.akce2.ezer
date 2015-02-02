@@ -679,9 +679,9 @@ form _osoba2x [,,244,322] {css:'ae_frame', proc onclick() { on_click }
 
   // i = základní údaje - jsou vždy vidět
   field prijmeni [5,32,106,] {tag:'i,I', data:o.prijmeni, format:'n', help:'příjmení', title:'^příjmení'}
-  field rodne    [5,66,63,] {tag:'i', data:o.rodne, format:'n', help:'rodné příjmení', title:'^rodné příjmení'}
   field jmeno    [120,32,89,] {tag:'i,I', data:o.jmeno, format:'n', title:'^jméno'}
   field role     [218,32,10,] {tag:'y', title:"^role", format:'n' }
+  field rodne    [5,66,63,] {tag:'i', data:o.rodne, format:'n', help:'rodné příjmení', title:'^rodné příjmení'}
   radio sex      [73,54,46,32] {tag:'i,I', data:o.sex, format:'n', value:'1'
     case [0,2,47,] { title:'muž', expr:'1' }
     case [0,15,47,] { title:'žena', expr:'2' }
@@ -730,14 +730,14 @@ form _osoba2x [,,244,322] {css:'ae_frame', proc onclick() { on_click }
   label adresa_r [169,3,75,12] {tag:'a', format:'n', style:"z-index:3;background-color:inherit" }
   label [0,0,,3] {tag:'A,S', format:'n', css:'db_sep' } // zarovnání
   field ulice    [31,2,157,] {tag:'b', data:o.ulice, format:'n', title:'ulice'}
-  field psc      [5,38,47,] {tag:'b', data:o.psc, format:'n', title:'^psč'}
+  select stat    [195,2,45,] {tag:'b', data:o.stat, format:'nr:e', title:'^stát'}
   check noadresa [104,19,126,] {tag:'b', title:"nespolehlivá adresa", data:o.noadresa,
     help:"pošta vrací zásilky", format:'n'
     proc onchange() {
       alert("napiš prosím do poznámky důvod a datum zjištění neplatnosti")
   } }
+  field psc      [5,38,47,] {tag:'b', data:o.psc, format:'n', title:'^psč'}
   field obec     [59,38,179,] {tag:'b', data:o.obec, format:'n', title:'^obec'}
-  select stat    [195,2,45,] {tag:'b', data:o.stat, format:'nr:e', title:'^stát'}
   label [0,58,,9] {tag:'b,S', format:'n', css:'db_sep' } // zarovnání
 
   // o = organizační údaje - budou vidět jen pro oprávněné
@@ -746,8 +746,8 @@ form _osoba2x [,,244,322] {css:'ae_frame', proc onclick() { on_click }
   field rc_xxxx  [199,4,37,] {tag:'o', data:o.rc_xxxx, format:'n:e', title:'/'}
   select clen    [34,26,70,] {tag:'o', type:'map', format:'n', data:o.clen,
                                 options:ms_akce_clen.zkratka, title:'YMCA'}
-  field iniciace [196,26,40,] {tag:'o', data:o.iniciace, format:'nr:e', title:'mrop'}
   field uvitano  [126,26,40,] {tag:'o', data:o.uvitano, format:'nr:e', title:'vítej'}
+  field iniciace [196,26,40,] {tag:'o', data:o.iniciace, format:'nr:e', title:'mrop'}
   label [0,46,,6] {tag:'o,S', format:'n', css:'db_sep' } // zarovnání
 
   // c = citlivé údaje - budou vidět jen pro oprávněné
@@ -755,9 +755,9 @@ form _osoba2x [,,244,322] {css:'ae_frame', proc onclick() { on_click }
   select cirkev  [44,Tq+110,70,] {tag:'c', type:'map', data:o.cirkev, format:'n',
                                 options:ms_akce_cirkev.zkratka, title:'církev'}
   field aktivita [143,Tq+110,92,] {tag:'c', data:o.aktivita, format:'n', title:'aktiv.'}
+  field jazyk    [44,Tq+131,94,] {tag:'c', data:o.jazyk, format:'n', title:'jazyky'}
   select dieta   [171,Tq+131,64,] {tag:'c', type:'map', data:o.dieta, format:'n',
                                 options:ms_akce_dieta.zkratka, title:'dieta'}
-  field jazyk    [44,Tq+131,94,] {tag:'c', data:o.jazyk, format:'n', title:'jazyky'}
   select vzdelani[44,Tq+152,114,] {tag:'c', type:'map', data:o.vzdelani, format:'n',
                                 options:ms_akce_vzdelani.zkratka, title:'vzděl.'}
   select titul   [181,Tq+152,54,] {tag:'c', type:'map', data:o.titul, format:'n',
@@ -830,6 +830,10 @@ form _rodina2 [,,360,229]  { css:'ae_frame', proc onclick() { on_click }
   # údaje o rodině
   const Lr=187; Tr=10
   view r: table rodina
+  view o: table osoba
+  view tr: table tvori {join_type:"LEFT", join:"ON tr.id_osoba=o.id_osoba AND tr.id_rodina=@rodina"}
+  view so: table spolu {join_type:"LEFT", join:"ON so.id_osoba=o.id_osoba AND so.id_pobyt=@pobyt"}
+
   label frame [0,2,360,20] {tag:'f', title:'rodinné údaje', css:'frame_label_up' }
   button evidence [193,0,,] {tag:'f', title:'^evidence', css:'db_evidence'
     proc onclick() { evi.evid_rodina(key_rodina.get) } }
@@ -852,6 +856,9 @@ form _rodina2 [,,360,229]  { css:'ae_frame', proc onclick() { on_click }
     proc onclick() {
       form.display(0,'a'); form.display(1,'m'); rodiny1.set(rodiny.get); rodiny1.change;
   }}
+  select t_role [Lr+131,Tr+22,35,] {tag:'n,a', type:'map', options:ms_akce_t_role.hodnota, format:'wn'
+    data:tr.role, title:'^role'}
+
   field r_spz      [Lr+5,20,58,]  {tag:'r', data:r.spz, title:'^SPZ auta'}
   label spolu      [Lr+134,7,37,] {tag:'r' }
   field r_svatba   {data:rodina.svatba}
@@ -859,14 +866,14 @@ form _rodina2 [,,360,229]  { css:'ae_frame', proc onclick() { on_click }
 
   // kontakt
   field r_ulice    [Lr+5,55,108,] {tag:'r', data:r.ulice, title:'^ulice'}
-  field r_psc      [Lr+ 5,90, 40,] {tag:'r', data:r.psc, title:'^psč'}
+  select r_stat    [Lr+121,55,45,] {tag:'r', data:r.stat, format:'r:e', title:'^stát'}
   check noadresa   [Lr+80,71,89,] {tag:'r', title:"chyba adresy", data:r.noadresa,
     help:"pošta vrací zásilky", format:'n'
     proc onchange() {
       alert("napiš prosím do poznámky důvod a datum zjištění neplatnosti")
   } }
+  field r_psc      [Lr+ 5,90, 40,] {tag:'r', data:r.psc, title:'^psč'}
   field r_obec     [Lr+52,90,113,] {tag:'r', data:r.obec, title:'^obec'}
-  select r_stat    [Lr+121,55,45,] {tag:'r', data:r.stat, format:'r:e', title:'^stát'}
   field r_telefony [Lr+5,125,160,] {tag:'r', type:'list', data:r.telefony,title:'^telefony'}
   check nomaily    [Lr+42,141,121,] {tag:'r', title:"neposílat hromadné", data:r.nomaily,
     help:"nepoužívat mailovou adresu pro rozesílání hromadných nabídek a informací", format:'n'
@@ -876,13 +883,6 @@ form _rodina2 [,,360,229]  { css:'ae_frame', proc onclick() { on_click }
   field r_emaily   [Lr+5,160,160,] {tag:'r', type:'list', data:r.emaily, title:'^e-maily'}
 
   // členové rodiny
-  view o: table osoba
-  view tr: table tvori {join_type:"LEFT", join:"ON tr.id_osoba=o.id_osoba AND tr.id_rodina=@rodina"}
-  view so: table spolu {join_type:"LEFT", join:"ON so.id_osoba=o.id_osoba AND so.id_pobyt=@pobyt"}
-
-  select t_role [Lr+131,Tr+22,35,] {tag:'n,a', type:'map', options:ms_akce_t_role.hodnota, format:'wn'
-    data:tr.role, title:'^role'}
-
   label [7,19,200,] { title:"členi resp. <span class='blue'>nečleni</span> nastavené rodiny" }
   browse cleni [5,35,107,191] { rows:9, buf_rows:100,
       css_rows:'barva,0:neucast,2:blue,3:cerveny,5:zeleny'
@@ -947,8 +947,6 @@ form _rodina2p [,,188,229] { css:'ae_frame'
     spolu.set(cconc(r_datsvatba.get,conc(roku(r_datsvatba.get,r_svatba.get),' let'),'?')) }
   label frame      [0,2,188,20]   {tag:'f', title:'společné rodinné údaje', css:'frame_label_up' }
   field key_rodina [130,0,50,] {tag:'f', format:'or', css:'Label', data:r.id_rodina  }
-  select t_role    [Lp+141,Ts+32,35,] {tag:'a,N', type:'map', data:t.role
-    options:ms_akce_t_role.hodnota, format:'wn', title:'^role'}
 
   // výběr rodiny
   proc rodina_changed() {}
@@ -956,13 +954,15 @@ form _rodina2p [,,188,229] { css:'ae_frame'
   field  rodiny0 [Lp+0,Ts+32,104,] {tag:'n,N', title:"^název nové rodiny", data:r.nazev, format:'n' }
   field  rodiny1 [Lp+0,Ts+32,104,] {tag:'m', title:"^oprava názvu rodiny", data:r.nazev, format:'n' }
   select rodiny  [Lp+0,Ts+32,110,] {tag:'a,R', format:'tT', title:"^zobrazená rodina", help:'výběr jiné rodiny'
-    proc onchanged() { rodina_changed}
-  }
+    proc onchanged() { rodina_changed}}
   button [Lp+111,Ts+32,,] {tag:'a,o,R', type:'html', title:"[fa-chevron-left]", css:'button' //style:"padding-left:0px"
     help:"oprava názvu zobrazené rodiny"
     proc onclick() { form.display(0,'a'); form.display(1,'m'); rodiny1.set(rodiny.get);
-      rodiny1.change; rodina_edit
-  }}
+      rodiny1.change; rodina_edit }}
+
+  // role v rodině
+  select t_role    [Lp+141,Ts+32,35,] {tag:'a,N', type:'map', data:t.role
+    options:ms_akce_t_role.hodnota, format:'wn', title:'^role'}
 
   // rodinné údaje
   field r_spz      [Lp+ 0,Tp+20,58,]  {tag:'r', data:r.spz, title:'^SPZ auta'}
@@ -970,16 +970,19 @@ form _rodina2p [,,188,229] { css:'ae_frame'
   field r_svatba   {data:r.svatba}
   field r_deleted  {data:r.deleted}
   field r_datsvatba[Lp+90,Tp+20,85,] {tag:'r', type:'date', data:r.datsvatba, format:'rR:e',title:'^od svatby'}
-  // kontakt
+
+  // adresa
   field r_ulice    [Lp+0,Tp+55,125,] {tag:'r,N', data:r.ulice, title:'^ulice'}
-  field r_psc      [Lp+0,Tp+90, 40,] {tag:'r,N', data:r.psc, title:'^psč'}
+  select r_stat    [Lp+132,Tp+55,45,] {tag:'r', data:r.stat, format:'r:e', title:'^stát'}
   check noadresa   [Lp+75,Tp+72,126,] {tag:'r', title:"nespolehlivá adr.", data:r.noadresa,
     help:"pošta vrací zásilky", format:'n'
     proc onchange() {
       alert("napiš prosím do poznámky důvod a datum zjištění neplatnosti")
   } }
+  field r_psc      [Lp+0,Tp+90, 40,] {tag:'r,N', data:r.psc, title:'^psč'}
   field r_obec     [Lp+47,Tp+90,128,] {tag:'r,N', data:r.obec, title:'^obec'}
-  select r_stat    [Lp+132,Tp+55,45,] {tag:'r', data:r.stat, format:'r:e', title:'^stát'}
+
+  // kontakty
   field r_telefony [Lp+0,Tp+125,176,] {tag:'r', type:'list', data:r.telefony,title:'^telefony'}
   check nomaily    [Lp+38,Tp+142,140,] {tag:'r', title:"neposílat hromadné info.", data:r.nomaily,
     help:"nepoužívat mailovou adresu pro rozesílání hromadných nabídek a informací", format:'n'

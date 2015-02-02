@@ -352,8 +352,9 @@ form _cmd [,,623,30] { css:'ae_work'
     | the_pobyt.get;
       # ------------------------ oprava
       [ ucast.evid.rod.same
-      | ucast.evid.rod.r.key(ucast.evid.rod.key_rodina.get); ucast.evid.rod.r.save;
-        ucast.evid.rod.tr.key(ucast.evid.rod.cleni.key_tvori.get); ucast.evid.rod.tr.save; ];
+      | ucast.evid.rod.r.key(ucast.evid.rod.key_rodina.get); [ ucast.evid.rod.r.save ];
+        ucast.evid.rod.t_role.changed;
+        ask('akce_save_role',ucast.evid.rod.cleni.key_tvori.get,ucast.evid.rod.t_role.get) ];
       [ ucast.evid.pob.same | ucast.evid.pob.save; ];
       [ ucast.evid.os1.same | ucast.evid.os1.key; ucast.evid.os1.save; ];
       [ ucast.evid.os2.same | ucast.evid.os2.key; ucast.evid.os2.save; ];
@@ -907,12 +908,6 @@ form _pobyt [,,0,62] {
   // ubytování
   field pokoj     [7,0,82,] {tag:'a', data:p.pokoj, title:'^pokoj(e)', format:'n'}
   field budova    [95,0,56,] {tag:'a', data:p.budova, title:'^budova', format:'n'}
-  // funkce
-  select funkce   [7,35,82,] {tag:'a', type:'map', data:p.funkce, format:'un',
-    options:ms_akce_funkce.zkratka, title:'^společná funkce' }
-  select prednasi [96,35,101,] {tag:'a', type:'map', data:p.prednasi, format:'un',
-    options:ms_akce_prednasi.zkratka, title:'^přednáš(ej)í' }
-  label [5,65,1,1] { tag:'a' } // oprava
 
   // skupinka
   label [5,0,1,35] { tag:'s' } // výplň pro skupinky
@@ -926,6 +921,13 @@ form _pobyt [,,0,62] {
       this.browse_active(line);
     }
   }
+
+  // funkce
+  select funkce   [7,35,82,] {tag:'a', type:'map', data:p.funkce, format:'un',
+    options:ms_akce_funkce.zkratka, title:'^společná funkce' }
+  select prednasi [96,35,101,] {tag:'a', type:'map', data:p.prednasi, format:'un',
+    options:ms_akce_prednasi.zkratka, title:'^přednáš(ej)í' }
+  label [5,65,1,1] { tag:'a' } // oprava
 }
 # ------------------------------------------------------------------------------------------- _spolu
 panel spolu_config [,,200,60] {type:'popup', title:"Podrobnosti údajů"
@@ -997,6 +999,9 @@ form _spolu [,,0,270] {
       key_spolu.get; track.back_show('spolu',key_spolu.get) } }
   }
 
+  // s = poznámka
+  edit  s_poznamka [5,0,231,74] {tag:'p', data:s.poznamka, title:'^poznámka k účasti', format:'n'}
+
   // r = role
   select s_role [55,2,90,] {tag:'r', type:'map', options:ms_akce_s_role.zkratka, format:'nu'
     data:s.s_role, title:'účast jako:', proc onchanged() { show_spolu }}
@@ -1036,9 +1041,6 @@ form _spolu [,,0,270] {
 
 #   field s_dite_kat [70,0,44,] {tag:'r', data:s.dite_kat, title:'role na akci'}
 #   check          [5,Hz+20,80,] {tag:'z,r', data:s.dite_kat, title:'účastník'}
-
-  // s = poznámka
-  edit  s_poznamka [5,0,231,74] {tag:'p', data:s.poznamka, title:'^poznámka k účasti', format:'n'}
 
   # --------------------------- přidat/vyřadit
   proc _reload_spolu(ido) { var ido1: number, ido2: number
@@ -1156,7 +1158,7 @@ form _platba { key_id:'id_pobyt'
   proc nove() {
     navrh.set(''); doslo.set('');
   }
-  // data
+  // parametry pro tvorbu ceny
   field luzka       [10,Td+56,11,] {tag:'b', data:pobyt.luzka}
   field pristylky   [30,Td+56,11,] {tag:'b', data:pobyt.pristylky}
   field pocetdnu    [51,Td+56,11,] {tag:'b', data:pobyt.pocetdnu}                  // sémantika: počet nocí
@@ -1164,6 +1166,12 @@ form _platba { key_id:'id_pobyt'
   field strava_cel  [94,Td+56,11,] {tag:'b', data:pobyt.strava_cel}
   field strava_pol  [112,Td+56,11,] {tag:'b', data:pobyt.strava_pol}
   field svp         [136,Td+56,11,] {tag:'b', data:pobyt.svp, help:"počet dětí s vlastním pečovatelem"}
+  // pouze u hlavní akce - platba za souběžnou
+  field platba_d      [283,Td+48,50,] {tag:'b,deti', data:pobyt.platba_d, format:'nr'}
+  select zpusobplat_d [339,Td+48,86,] {tag:'b,deti', type:'map', data:pobyt.zpusobplat_d,
+                                     options:ms_akce_platba.zkratka, format:'nu'}
+  field datplatby_d   [430,Td+48,84,] {tag:'b,deti', type:'date', data:pobyt.datplatby_d, format:'n'}
+  // rozpis plateb
   field celkem      [225,Td+91,50,] {tag:'b', format:'dr', help:'částka požadovaná po účastníkovi'}
   field poplatek_d  [225,Td+48,50,] {tag:'b,deti', format:'dr', data:pobyt.poplatek_d,
                                    help:'částka požadovaná po účastníkovi za děti'}
@@ -1176,15 +1184,10 @@ form _platba { key_id:'id_pobyt'
   field c_program   [110,Td+91,47,] {tag:'b', data:pobyt.platba3, format:'r'}
   field c_sleva     [160,Td+91,47,] {tag:'b', data:pobyt.platba4, format:'r'}
   field platba      [283,Td+91,50,] {tag:'b', data:pobyt.platba, format:'r'}
-  check avizo       [275,Td+107,50,] {tag:'b', title:"avízo", data:pobyt.avizo, format:'r'}
   select zpusobplat [339,Td+91,86,] {tag:'b', type:'map', data:pobyt.zpusobplat,
                                    options:ms_akce_platba.zkratka, format:'u'}
   field datplatby   [430,Td+91,84,] {tag:'b', type:'date', data:pobyt.datplatby}
-  // pouze u hlavní akce - platba za souběžnou
-  field platba_d      [283,Td+48,50,] {tag:'b,deti', data:pobyt.platba_d, format:'nr'}
-  select zpusobplat_d [339,Td+48,86,] {tag:'b,deti', type:'map', data:pobyt.zpusobplat_d,
-                                     options:ms_akce_platba.zkratka, format:'nu'}
-  field datplatby_d   [430,Td+48,84,] {tag:'b,deti', type:'date', data:pobyt.datplatby_d, format:'n'}
+  check avizo       [275,Td+107,50,] {tag:'b', title:"avízo", data:pobyt.avizo, format:'r'}
   // pevné texty
   label [13,32,,]   { tag:'cenik', title:'Rozpis ceny akce podle cenového vzorce akce a přehled příchozích plateb' }
   label [5,Td+128,,]  {tag:'b', title:'Cena zapsaná v evidenční kartě (použitá pro export do Excelu)',

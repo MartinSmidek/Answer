@@ -355,7 +355,7 @@ form _akce [,,*,50] {
     akce_choose(id_akce);
     lst.info.fill(conc(the_title.get,' '));
     [ ucast.call('init_ucast2') ];
-    [ has_skill('yam;fam;cam'); mai.call('init_ucast') ];
+    [ has_skill('yam;fam;cam'); maia.call('init_ucast') ];
     [ pece.call('init_pece') ];
     // ošetření souběžných akcí - 0=normální akce, 1=hlavní akce, 2=souběžná akce
     [ has_skill('f'); page.soubezna.set(eq(the_soubeh.get,2)) ];
