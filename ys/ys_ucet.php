@@ -47,7 +47,7 @@ function ucet_potv($par) { trace();
   $darce= array();
   $xls= "prijate_dary";
   $max= 9999;
-//   $max= 2;
+//   $max= 30;
   $rok= date('Y')+$par->rok;
   $let18= date('Y')-18;
   $cells= google_sheet($rok,$xls,'answer@smidek.eu',$google);
@@ -79,6 +79,7 @@ function ucet_potv($par) { trace();
     if ( !$auto && !$manual && !$opakovane ) {
       // pokusíme se nalézt dárce
       $idss= array();
+      $ids= '';
       $qo= mysql_qry("
         SELECT id_osoba FROM osoba AS o
         WHERE jmeno='$jmeno' AND prijmeni='$prijmeni'
@@ -95,14 +96,14 @@ function ucet_potv($par) { trace();
           $jmeno_id["$prijmeni$jmeno"]= $ids;
         }
         else
-          $prblm1.= ($prblm1?"<br>":'')."? $datum $jmeno $prijmeni $castka ($ids)";
+          $prblm1.= ($prblm1?"<br>":'')."$i: $datum $prijmeni $jmeno $castka ($ids)";
       }
       else {
-        $prblm2.= ($prblm2?"<br>":'')."? $datum $jmeno $prijmeni $castka ($ids)";
+        $prblm2.= ($prblm2?"<br>":'')."$i: $datum $prijmeni $jmeno $castka";
       }
     }
     elseif ( strpos($auto,',') && !$manual && !$ref ) {
-      $prblm1.= ($prblm1?"<br>":'')."? $datum $jmeno $prijmeni $castka ($auto)";
+      $prblm1.= ($prblm1?"<br>":'')."$i: $datum $prijmeni $jmeno $castka ($auto)";
     }
     elseif ( $manual ) {
       if ( $manual=='x' )
@@ -127,7 +128,7 @@ function ucet_potv($par) { trace();
     if ( --$max <= 0 ) break;
   }
   $reseni= "<br><br>doplň v intranetovém sešitu <b>$xls</b> v listu <b>$rok</b> do sloupce <b>F</b>
-            správné osobní číslo dárce (zjistí se v Evidenci), je do prvního výskytu dárce";
+            správné osobní číslo dárce (zjistí se v Evidenci), jen do prvního výskytu dárce";
   if ( $prblm1 ) $html.= "<h3>Nejednoznačná jména v rámci evidence YS</h3>$prblm1$reseni";
   if ( $prblm2 ) $html.= "<h3>Neznámá jména v rámci evidence YS</h3>$prblm2$reseni";
   if ( $prblm3 ) $html.= "<h3>Ručně napsaná potvrzení</h3>$prblm3";

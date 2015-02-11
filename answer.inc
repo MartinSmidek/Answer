@@ -34,11 +34,15 @@ function answer_ini($app,$answer_db,$dbs_plus,$php_lib) {
   $dbs= array(
     array_merge(array( /* ostré */
       $answer_db =>     array(0,'localhost','gandi','r8d0st','utf8',$answer_dbx),
-      'ezer_system' =>  array(0,'localhost','gandi','r8d0st','utf8',$answer_dbx)
+      'ezer_system' =>  array(0,'localhost','gandi','r8d0st','utf8',$answer_dbx),
+      'ezer_group'  =>  array(0,'localhost','gandi','r8d0st','utf8','ezer_answer'), // $_SESSION[$app]['group_db']
+      'ezer_kernel' =>  array(0,'localhost','gandi','r8d0st','utf8')                // sys('options','group_db')
     ), $dbs_plus[0]),
     array_merge(array( /* lokální */
       $answer_db =>     array(0,'localhost','gandi','','utf8',$answer_dbx),
-      'ezer_system' =>  array(0,'localhost','gandi','','utf8',$answer_dbx)
+      'ezer_system' =>  array(0,'localhost','gandi','','utf8',$answer_dbx),
+      'ezer_group'  =>  array(0,'localhost','gandi','','utf8','ezer_answer'), // $_SESSION[$app]['group_db']
+      'ezer_kernel' =>  array(0,'localhost','gandi','','utf8')                // sys('options','group_db')
     ), $dbs_plus[1])
   );
   // kořeny cest
@@ -64,7 +68,7 @@ function answer_ini($app,$answer_db,$dbs_plus,$php_lib) {
   $bank= $ezer_local ? "C:/Apache/htdocs/ezer/www-ys2" : "/home/www/ezer/www-ys/2";
 
   // moduly interpreta zahrnuté do aplikace - budou zpracovány i reference.i_doc pro tabulky kompilátoru
-  $ezer_comp_ezer= "app,ezer,ezer_report,ezer_fdom1,ezer_fdom2";
+  $ezer_comp_ezer= "app,area,ezer,ezer_report,ezer_fdom1,ezer_fdom2";
   $ezer_comp_root= "ds/fce,db/db_fce";
   // moduly v Ezerscriptu mimo složku aplikace
   $ezer_ezer= array(
