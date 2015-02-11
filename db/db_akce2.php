@@ -1832,7 +1832,7 @@ function akce_browse_ask($x,$tisk=false) {
     }
     # seznam účastníků akce - podle podmínky
     $qu= mysql_qry("
-      SELECT s.*,o.narozeni,MIN(CONCAT(role,id_rodina)) AS _role
+      SELECT s.*,o.narozeni,MIN(CONCAT(IF(role='','?',role),id_rodina)) AS _role
       FROM osoba AS o
       JOIN spolu AS s USING (id_osoba)
       JOIN pobyt AS p USING (id_pobyt)
@@ -1880,7 +1880,7 @@ function akce_browse_ask($x,$tisk=false) {
     $qor= mysql_qry("
       SELECT id_osoba,
         IFNULL(GROUP_CONCAT(CONCAT(role,':',id_rodina) SEPARATOR ','),'') AS _rody,
-        SUBSTR(MIN(CONCAT(role,id_rodina)),2) AS _kmen
+        SUBSTR(MIN(CONCAT(IF(role='','?',role),id_rodina)),2) AS _kmen
       FROM osoba
       JOIN tvori USING(id_osoba)
       WHERE deleted='' AND id_osoba IN (0$osoby)
