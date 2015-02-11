@@ -1011,14 +1011,16 @@ form _spolu [,,0,270] {
   # d: skupinka dítěte a kategorie
   field skupinka [216,0,20,]   { tag:'d', data:s.skupinka, help:'skupinka', title:"skup.", format:'n' }
   // cenová kategorie pro FA
-#     field kat_orig { /*data:s.dite_kat */}
+  field kat_orig { data:s.dite_kat }
   select s_dite_kat [54,0,130,] { tag:'d', type:'map', options:ms_akce_dite_kat.hodnota,
-    data:s.dite_kat, title:'kategorie:', format:'nw'
-#     /*  proc onchanged() { var a:object
-#         a.set(ask('akce_test_dite_kat',this.key,narozeni.get,the_duakce.get)); a.ok
-#       | alert("POZOR: kategorie '",this.get,"' neodpovídá věku dítěte ",a.vek," let (k začátku akce)");
-#         this.key(kat_orig.get); this.plain; } */
-    }
+    data:s.dite_kat, title:'kategorie:', format:'nuw'
+    proc onchanged() { var a:object
+      // kategorii kontrolujeme pouze pro FA
+      eq(substr(sys('ezer','options','app'),0,2),'fa');
+      { a.set(ask('akce_test_dite_kat',this.key,evid.rod.cleni.narozeni.get,the_duakce.get)); a.ok
+      | alert("POZOR: kategorie '",this.get,"' neodpovídá věku dítěte ",a.vek," let (k začátku akce)");
+        this.key(kat_orig.get); this.plain; }
+  }}
 
   # o: osobně opečovávané dítě + info "je pečoun"
   field pece_val [70,0,160,] { tag:'o', format:'no', title:'pečovatel:     ' }
