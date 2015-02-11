@@ -878,7 +878,8 @@ form _pobyt [,,0,62] {
   label frame [0,0,360,50] {tag:'f', css:'ae_form2', title:'společné údaje o pobytu',
     proc onclick() { on_click }
   }
-  field id [304,-12,50,] {tag:'F', data:p.id_pobyt, format:'ro', style:'color:white', css:'Label', help:' ' }
+  field id [304,-12,50,] {tag:'F', data:p.id_pobyt, format:'ro', style:'color:white', css:'Label',
+                          help:' ', tabindex:0 }
   field key_akce { data:p.id_akce }
   field i0_rodina { data:p.i0_rodina }
   menu { type:'context', join:frame
@@ -991,7 +992,7 @@ form _spolu [,,0,270] {
     proc onclick() { on_click }
   }
   field key_spolu [186,0,50,] {tag:'S', data:s.id_pobyt, format:'ro',
-    style:'color:white', css:'Label', help:' ' }
+    style:'color:white', css:'Label', help:' ', tabindex:0 }
   field key_osoba { data:s.id_osoba }
   menu detail { type:'context', join:frame
     item { title:'konfigurace formuláře', proc onclick () { spolu_config.tune } }
