@@ -668,8 +668,8 @@ form _osoba2x [,,244,322] {css:'ae_frame', proc onclick() { on_click }
   label frame [0,2,242,50] {tag:'f', css:'frame_label_up', title:'osobní údaje'}
   button go_evi [121,1,,] {tag:'f', title:'^evidence', css:'db_evidence'
     proc onclick() { evi.evid_osoba(key_osoba.get) } }
-  field key_osoba [186,0,50,] {tag:'f', format:'or', css:'Label', help:' ', data:o.id_osoba }
-  field key_tvori [186,10,50,] {tag:'f', format:'or', css:'Label', help:' ' }
+  field key_osoba [186,0,50,] {tag:'f', format:'or', css:'Label', help:' ', data:o.id_osoba, tabindex:0 }
+  field key_tvori [186,10,50,] {tag:'f', format:'or', css:'Label', help:' ', tabindex:0 }
   field key_spolu
   field kmen    { expr:"IFNULL(SUBSTR((SELECT MIN(CONCAT(role,nazev))
                         FROM tvori AS ot JOIN rodina AS r USING (id_rodina) WHERE ot.id_osoba=o.id_osoba),2),'-')" }
@@ -708,7 +708,8 @@ form _osoba2x [,,244,322] {css:'ae_frame', proc onclick() { on_click }
   label [0,0,,3] {tag:'J,S', format:'n', css:'db_sep' } // zarovnání
   field telefon  [41,2,197,] {tag:'k', type:'list', data:o.telefon, format:'n', title:'telefon'}
   check nomail   [48,19,169,] {tag:'k', title:"neposílat hromadné informace", data:o.nomail,
-    help:"nepoužívat mailovou adresu pro rozesílání hromadných nabídek a informací", format:'n'
+    help:"nepoužívat mailovou adresu pro rozesílání hromadných nabídek a informací",
+    format:'n', tabindex:0
     proc onchange() {
       alert("napiš prosím do poznámky důvod a datum odmítnutí hromadně rozesílaných informací")
   } }
@@ -732,7 +733,7 @@ form _osoba2x [,,244,322] {css:'ae_frame', proc onclick() { on_click }
   field ulice    [31,2,157,] {tag:'b', data:o.ulice, format:'n', title:'ulice'}
   select stat    [195,2,45,] {tag:'b', data:o.stat, format:'nr:e', title:'^stát'}
   check noadresa [104,19,126,] {tag:'b', title:"nespolehlivá adresa", data:o.noadresa,
-    help:"pošta vrací zásilky", format:'n'
+    help:"pošta vrací zásilky", format:'n', tabindex:0
     proc onchange() {
       alert("napiš prosím do poznámky důvod a datum zjištění neplatnosti")
   } }
@@ -837,7 +838,7 @@ form _rodina2 [,,360,229]  { css:'ae_frame', proc onclick() { on_click }
   label frame [0,2,360,20] {tag:'f', title:'rodinné údaje', css:'frame_label_up' }
   button evidence [193,0,,] {tag:'f', title:'^evidence', css:'db_evidence'
     proc onclick() { evi.evid_rodina(key_rodina.get) } }
-  field key_rodina [304,0,50,] {tag:'f', format:'or', css:'Label', help:' '  }
+  field key_rodina [304,0,50,] {tag:'f', format:'or', css:'Label', help:' ', tabindex:0  }
 
   menu detail { type:'context'
     item { title:'konfigurace formuláře', proc onclick () { rodina_config.tune(ucast) } }
@@ -867,7 +868,7 @@ form _rodina2 [,,360,229]  { css:'ae_frame', proc onclick() { on_click }
   // kontakt
   field r_ulice    [Lr+5,55,108,] {tag:'r', data:r.ulice, title:'^ulice'}
   select r_stat    [Lr+121,55,45,] {tag:'r', data:r.stat, format:'r:e', title:'^stát'}
-  check noadresa   [Lr+80,71,89,] {tag:'r', title:"chyba adresy", data:r.noadresa,
+  check noadresa   [Lr+80,71,89,] {tag:'r', title:"chyba adresy", data:r.noadresa, tabindex:0
     help:"pošta vrací zásilky", format:'n'
     proc onchange() {
       alert("napiš prosím do poznámky důvod a datum zjištění neplatnosti")
@@ -875,7 +876,7 @@ form _rodina2 [,,360,229]  { css:'ae_frame', proc onclick() { on_click }
   field r_psc      [Lr+ 5,90, 40,] {tag:'r', data:r.psc, title:'^psč'}
   field r_obec     [Lr+52,90,113,] {tag:'r', data:r.obec, title:'^obec'}
   field r_telefony [Lr+5,125,160,] {tag:'r', type:'list', data:r.telefony,title:'^telefony'}
-  check nomaily    [Lr+42,141,121,] {tag:'r', title:"neposílat hromadné", data:r.nomaily,
+  check nomaily    [Lr+42,141,121,] {tag:'r', title:"neposílat hromadné", data:r.nomaily, tabindex:0
     help:"nepoužívat mailovou adresu pro rozesílání hromadných nabídek a informací", format:'n'
     proc onchange() {
       alert("napiš prosím do poznámky důvod a datum odmítnutí hromadně rozesílaných informací")
@@ -946,7 +947,7 @@ form _rodina2p [,,188,229] { css:'ae_frame'
   proc od_svatby() {
     spolu.set(cconc(r_datsvatba.get,conc(roku(r_datsvatba.get,r_svatba.get),' let'),'?')) }
   label frame      [0,2,188,20]   {tag:'f', title:'společné rodinné údaje', css:'frame_label_up' }
-  field key_rodina [130,0,50,] {tag:'f', format:'or', css:'Label', data:r.id_rodina  }
+  field key_rodina [130,0,50,] {tag:'f', format:'or', css:'Label', data:r.id_rodina, tabindex:0  }
 
   // výběr rodiny
   proc rodina_changed() {}
@@ -975,7 +976,7 @@ form _rodina2p [,,188,229] { css:'ae_frame'
   field r_ulice    [Lp+0,Tp+55,125,] {tag:'r,N', data:r.ulice, title:'^ulice'}
   select r_stat    [Lp+132,Tp+55,45,] {tag:'r', data:r.stat, format:'r:e', title:'^stát'}
   check noadresa   [Lp+75,Tp+72,126,] {tag:'r', title:"nespolehlivá adr.", data:r.noadresa,
-    help:"pošta vrací zásilky", format:'n'
+    help:"pošta vrací zásilky", format:'n', tabindex:0
     proc onchange() {
       alert("napiš prosím do poznámky důvod a datum zjištění neplatnosti")
   } }
@@ -984,7 +985,7 @@ form _rodina2p [,,188,229] { css:'ae_frame'
 
   // kontakty
   field r_telefony [Lp+0,Tp+125,176,] {tag:'r', type:'list', data:r.telefony,title:'^telefony'}
-  check nomaily    [Lp+38,Tp+142,140,] {tag:'r', title:"neposílat hromadné info.", data:r.nomaily,
+  check nomaily    [Lp+38,Tp+142,140,] {tag:'r', title:"neposílat hromadné info.", data:r.nomaily, tabindex:0
     help:"nepoužívat mailovou adresu pro rozesílání hromadných nabídek a informací", format:'n'
     proc onchange() {
       alert("napiš prosím do poznámky důvod a datum odmítnutí hromadně rozesílaných informací")
