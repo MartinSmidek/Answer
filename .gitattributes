@@ -162,6 +162,8 @@ skins/ch/clientcide/full.png -text
 skins/ch/clientcide/icon_problems_sm.gif -text
 skins/ch/clientcide/left_fold.png -text
 skins/ch/clientcide/left_unfold.png -text
+skins/ch/clientcide/stickyWinHTML/big_button.gif -text
+skins/ch/clientcide/stickyWinHTML/big_button_over.gif -text
 skins/ch/clientcide/stickyWinHTML/body.png -text
 skins/ch/clientcide/stickyWinHTML/calendar.gif -text
 skins/ch/clientcide/stickyWinHTML/closebtn.gif -text
@@ -224,6 +226,8 @@ skins/ck/class.png -text
 skins/ck/clientcide/calendar.gif -text
 skins/ck/clientcide/left_fold.png -text
 skins/ck/clientcide/left_unfold.png -text
+skins/ck/clientcide/stickyWinHTML/big_button.gif -text
+skins/ck/clientcide/stickyWinHTML/big_button_over.gif -text
 skins/ck/clientcide/stickyWinHTML/body.png -text
 skins/ck/clientcide/stickyWinHTML/closebtn.gif -text
 skins/ck/clientcide/stickyWinHTML/drag_corner.gif -text

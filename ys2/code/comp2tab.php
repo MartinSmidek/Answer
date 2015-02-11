@@ -72,6 +72,7 @@ $names= array(
  'eq' => (object)array('op'=>'ff'),
  'erase' => (object)array('op'=>'ff'),
  'error' => (object)array('op'=>'ff'),
+ 'exec' => (object)array('op'=>'fj'),
  'expr' => (object)array('op'=>'os'),
  'fdate' => (object)array('op'=>'ff'),
  'file_drop' => (object)array('op'=>'fm'),

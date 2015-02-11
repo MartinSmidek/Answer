@@ -9128,6 +9128,7 @@ function dop_mai_potvr($druh,$o,$rok) {  trace();
   }
   // úprava lámání textu kolem jednopísmenných předložek a přilepení Kč k částce
   $text= preg_replace(array('/ ([v|k|z|s|a|o|u|i]) /u','/ Kč/u'),array(' \1&nbsp;','&nbsp;Kč'),$text);
+  $texty[$n]= (object)array();
   $texty[$n]->adresa= "<b>$Osloveni<br>$jmeno $prijmeni<br>$ulice<br>$psc $obec</b>";
   $texty[$n]->odeslano= $odeslano;
   $texty[$n]->text= $text;

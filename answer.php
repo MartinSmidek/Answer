@@ -99,9 +99,10 @@ function answer_php($app,$app_name,$db_name,$skin,$js_lib,$css_lib,$options) {
   global $answer_db;
 
   // doplnění Ezer.options a $EZER->options
-  $options->awesome=    $awesome;           // zda použít v elementech ikony awesome fontu
-  $options->answer_db=  "'$answer_db'";     // hlavní pracovní databáze
-//   $options->tabu_db=    "'$tabu_db'";       // zakázaná databáze (ostrá) - hlídá se select na ni
+  $options->awesome=    $awesome;        // zda použít v elementech ikony awesome fontu
+  $options->answer_db=  "'$answer_db'";  // hlavní pracovní databáze
+  $options->curr_version= 0;             // při přihlášení je nahrazeno nejvyšší ezer_kernel.version
+  $options->group_db=   "'ezer_answer'"; // databáze se společnými údaji pro skupinu aplikací Answer
 
   $kontakt= " V případě zjištění problému nebo <br/>potřeby konzultace mi prosím napište<br/>
         na mail&nbsp;<a href='mailto:{$EZER->options->mail}{$EZER->options->mail_subject}'>{$EZER->options->mail}</a> "

@@ -68,7 +68,7 @@ menu fa { type:'main', active:* //ys.pok
     }
     panel dat {type:'right', title:"Zálohování", _sys:'*', skill:'m', include:'onclick' }
   }
-  tabs doc  {title:"Nápověda", _sys:'nap',  include:'onclick,ezer2.help' }
+  tabs doc  {title:"Nápověda", _sys:'*',  include:'onclick,ezer2.help' }
   tabs off  {title:"Odhlásit", type:'logoff' }
   // univerzální procedury
   proc the_formsave (f,b) {
