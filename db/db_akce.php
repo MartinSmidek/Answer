@@ -7004,6 +7004,7 @@ function akce_roku_update($rok) {  trace();
         $kod= $cells['B'][$i];
         $id= 1000*rok+$kod;
         $nazev= mysql_real_escape_string($cells['C'][$i]);
+                                                        display("$kod:$nazev");
         // data akce - jen je-li syntax ok
         $od= $do= '';
         $x= $cells['D'][$i];
