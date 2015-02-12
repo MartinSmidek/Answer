@@ -3719,6 +3719,7 @@ function akce_vzorec($id_pobyt) {  trace();
       if ( $sleva!=0 ) {
         $cena-= $sleva;
         $ret->c_sleva-= $sleva;
+        if ( !isset($ret->eko->slevy) ) $ret->eko->slevy= (object)array();
         $ret->eko->slevy->kc+= $sleva;
         $html.= "<tr><td>sleva z ceny</td><td align='right'>$sleva</td></tr>";
       }

@@ -532,6 +532,7 @@ form _ucast [,,400,] { css:'ds_form'
       switch(zalozka.get,
       'evid', {
         ucast.evid.pob.id.set(key_pobyt.get);
+        page.evd.last.set(key_pobyt.get);
         ucast.evid.pob.key(the_pobyt.get);
         ucast.evid.rod.cleni.browse_fill(r_cleni.get,'~');
         ucast.evid.pob.skup.browse_fill(skup.get,'~');
@@ -542,14 +543,16 @@ form _ucast [,,400,] { css:'ds_form'
         reload_evid
       },
       'plat',{
-        pla.key(key_pobyt.get); pla.nove; copy_by_name(b,pla.get); pla.ini
+        pla.key(key_pobyt.get); pla.nove; copy_by_name(b,pla.get); pla.ini;
+        page.plt.last.set(key_pobyt.get);
       },
       'akce',{
-        act1.ucasti(ido1.get);
-        act2.ucasti(ido2.get);
+        act1.ucasti(ido1.get); act2.ucasti(ido2.get);
+        page.jin.last.set(key_pobyt.get);
       },
       'foto',{
         alb.galery('rodina',key_rodina.get);
+        page.fot.last.set(key_pobyt.get);
       },
       {stop}
       );
