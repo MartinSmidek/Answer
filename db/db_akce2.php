@@ -964,31 +964,11 @@ function akce2_strava_pary($akce,$par,$title,$vypis,$export=false,$id_pobyt=0) {
   $cond.= $id_pobyt ? " AND id_pobyt=$id_pobyt" : " AND funkce NOT IN (9)";
   $jsou_pecouni= false;
   // data akce
-//   $qry=  "SELECT COUNT(*) AS _pocet,funkce,pfunkce,
-//             r.nazev as nazev,strava_cel,strava_pol,cstrava_cel,cstrava_pol,p.pouze,
-//             GROUP_CONCAT(DISTINCT IF(t.role='a',o.prijmeni,'') SEPARATOR '') as prijmeni_m,
-//             GROUP_CONCAT(DISTINCT IF(t.role='a',o.jmeno,'')    SEPARATOR '') as jmeno_m,
-//             GROUP_CONCAT(DISTINCT IF(t.role='b',o.prijmeni,'') SEPARATOR '') as prijmeni_z,
-//             GROUP_CONCAT(DISTINCT IF(t.role='b',o.jmeno,'')    SEPARATOR '') as jmeno_z
-//           FROM pobyt AS p
-//           JOIN spolu AS s USING(id_pobyt)
-//           JOIN osoba AS o ON s.id_osoba=o.id_osoba
-//           LEFT JOIN tvori AS t ON t.id_osoba=o.id_osoba
-//           LEFT JOIN rodina AS r USING(id_rodina)
-//           WHERE p.id_akce='$akce' AND IF(funkce=99,s_rodici=0 AND pfunkce,1) AND $cond
-//           GROUP BY id_pobyt
-//           ORDER BY $ord";
-//   $res= mysql_qry($qry);
-//   while ( $res && ($x= mysql_fetch_object($res)) ) {
-
   $res= tisk_qry('pobyt_dospeli_ucastnici',
     "COUNT(*) AS _pocet,funkce,pfunkce,strava_cel,strava_pol,cstrava_cel,cstrava_pol",
     "p.id_akce='$akce' AND IF(funkce=99,s_rodici=0 AND pfunkce,1) AND $cond",
     "","_jm");
   while ( $res && ($x= mysql_fetch_object($res)) ) {
-
-
-
 //                                                         debug($x,"hodnoty");
     $n++;
     $clmn[$n]= array();

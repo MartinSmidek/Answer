@@ -3198,7 +3198,7 @@ function akce_pobyt_default($id_pobyt,$zapsat=0) {  trace();
   $luzka= $bez= $cele= $polo= 0;
   $msg= '';
   $qo= "SELECT o.jmeno,o.narozeni,a.datum_od,DATEDIFF(datum_do,datum_od) AS _noci,p.funkce,
-         s.pecovane,s.dite_kat,(SELECT CONCAT(osoba.id_osoba,',',pobyt.id_pobyt)
+         s.pecovane,s.s_role,s.dite_kat,(SELECT CONCAT(osoba.id_osoba,',',pobyt.id_pobyt)
           FROM pobyt
           JOIN spolu ON spolu.id_pobyt=pobyt.id_pobyt
           JOIN osoba ON osoba.id_osoba=spolu.id_osoba
@@ -3217,8 +3217,8 @@ function akce_pobyt_default($id_pobyt,$zapsat=0) {  trace();
     $fce= $o->funkce;
     $vek= narozeni2roky(sql2stamp($o->narozeni),sql2stamp($o->datum_od));
     $msg.= " {$o->jmeno}:$vek";
-    if ( $o->dite_kat ) {
-      // pokud je definována kategorie podle _cis/ms_akce_dite_kat
+    if ( !$o->s_role && $o->dite_kat ) {
+      // pokud je definována kategorie podle _cis/ms_akce_dite_kat ALE dítě není pečoun
       $dite++;
       list($spani,$strava)= explode(',',$ms_akce_dite_kat[$o->dite_kat]);
       if ( $spani=='L' )      $luzka++;
