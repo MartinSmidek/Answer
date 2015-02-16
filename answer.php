@@ -134,7 +134,7 @@ function answer_php($app,$app_name,$db_name,$skin,$js_lib,$css_lib,$options) {
       }
     }"
   );
-  root_php($app,$app_name,'news',$skin,$options,$js,$css,$pars,null,false);
+  root_php($app,$app_name,'chngs',$skin,$options,$js,$css,$pars,null,false);
 }
 
 ?>
