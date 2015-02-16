@@ -3187,15 +3187,18 @@ function akce_platby($id_pobyt) {  trace();
   return $html;
 }
 # ------------------------------------------------------------------------------- akce_pobyt_default
-# definice položek v POBYT podle počtu a věku účastníků
+# definice položek v POBYT podle počtu a věku účastníků - viz akce_vzorec_soubeh
+# 150216 při vyplnění dite_kat budou stravy počítány podle _cis/ms_akce_dite_kat.barva
 # 130522 údaje za chůvu budou připsány na rodinu chovaného dítěte
 # 130524 oživena položka SVP
 function akce_pobyt_default($id_pobyt,$zapsat=0) {  trace();
+  $ms_akce_dite_kat= map_cis('ms_akce_dite_kat','barva'); // {L|-},{c|p} = lůžko/bez, celá/poloviční
   // projítí společníků v pobytu
   $dosp= $deti= $koje= $noci= $sleva= $fce= $svp= 0;
+  $luzka= $bez= $cele= $polo= 0;
   $msg= '';
   $qo= "SELECT o.jmeno,o.narozeni,a.datum_od,DATEDIFF(datum_do,datum_od) AS _noci,p.funkce,
-         s.pecovane,(SELECT CONCAT(osoba.id_osoba,',',pobyt.id_pobyt)
+         s.pecovane,s.dite_kat,(SELECT CONCAT(osoba.id_osoba,',',pobyt.id_pobyt)
           FROM pobyt
           JOIN spolu ON spolu.id_pobyt=pobyt.id_pobyt
           JOIN osoba ON osoba.id_osoba=spolu.id_osoba
@@ -3214,17 +3217,34 @@ function akce_pobyt_default($id_pobyt,$zapsat=0) {  trace();
     $fce= $o->funkce;
     $vek= narozeni2roky(sql2stamp($o->narozeni),sql2stamp($o->datum_od));
     $msg.= " {$o->jmeno}:$vek";
-    if     ( $vek<3  ) $koje++;
-    elseif ( $vek<10 ) $deti++;
-    else               $dosp++;
+    if ( $o->dite_kat ) {
+      // pokud je definována kategorie podle _cis/ms_akce_dite_kat
+      $dite++;
+      list($spani,$strava)= explode(',',$ms_akce_dite_kat[$o->dite_kat]);
+      if ( $spani=='L' )      $luzka++;
+      elseif ( $spani=='-' )  $bez++;
+      else $err+= "chybná kategorie dítěte";
+      if ( $strava=='c' )     $cela++;
+      elseif ( $strava=='p' ) $polo++;
+      else $err+= "chybná kategorie dítěte";
+    }
+    else {
+      // jinak se orientujeme podle věkových hranic: 0-3-10-18
+      if     ( $vek<3  ) { $koje++;  $bez++; }                  // dítě bez lůžka a stravy
+      elseif ( $vek<10 ) { $deti++;  $luzka++; $polo++; }       // dítě lůžko poloviční
+      elseif ( $vek<18 ) { $deti++;  $luzka++; $cela++; }       // dítě lůžko celá
+      else               { $dosp++;  $luzka++; $cela++; }       // dospělý lůžko celá
+    }
   }
   // zápis do pobytu
   if ( $zapsat ) {
     query("UPDATE pobyt SET luzka=".($dosp+$deti).",kocarek=$koje,strava_cel=$dosp,strava_pol=$deti,
              pocetdnu=$noci,svp=$svp WHERE id_pobyt=$id_pobyt");
   }
-  $ret= (object)array('luzka'=>$dosp+$deti,'kocarek'=>$koje,'pocetdnu'=>$noci,'svp'=>$svp,
-                      'strava_cel'=>$dosp,'strava_pol'=>$deti,'vzorec'=>$fce);
+  //$ret= (object)array('luzka'=>$dosp+$deti,'kocarek'=>$koje,'pocetdnu'=>$noci,'svp'=>$svp,
+  //                    'strava_cel'=>$dosp,'strava_pol'=>$deti,'vzorec'=>$fce);
+  $ret= (object)array('luzka'=>$luzka,'kocarek'=>$bez,'pocetdnu'=>$noci,'svp'=>$svp,
+                      'strava_cel'=>$cela,'strava_pol'=>$polo,'vzorec'=>$fce);
 //                                                 debug($ret,"osob:$koje,$deti,$dosp $msg fce=$fce");
   return $ret;
 }
