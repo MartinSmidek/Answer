@@ -127,6 +127,11 @@ form _d_denik [,,539,510] {
     show kat [,,40,] { title:'kateg.', data:pdenik.kat, format:'sq*'  },
     show vytisten [,,0,] { data:pdenik.vytisten },
     show id [,,0,] { data:pdenik.id_pokl },
+    menu { type:'context'
+      item { title:'export vybraných řádků', proc onclick() {
+        seznam.browse_export(°{file:'p_denik_cast',type:'xlsx'});
+        alert("soubor lze stáhnout <a href='docs/p_denik_cast.xlsx'>zde</a>"); }}
+    }
   },
 #   label [8,8,116,17] { title:'<b>Pokladní deník</b>' },
 }
