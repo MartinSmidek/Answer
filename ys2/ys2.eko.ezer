@@ -337,8 +337,8 @@ panel roz [,,,750] {type:'right', title:'Kapitoly',_sys:'*'
         }
         menu { type:'context'
           item { title:'export vybraných řádků', proc onclick() {
-            denik.browse_export(°{dir:'ys2',file:'uc_denik_osnova',type:'xlsx'});
-            alert("soubor lze stáhnout <a href='docs/ys2/uc_denik_osnova.xlsx'>zde</a>"); }}
+            kapitoly.browse_export(°{dir:'ys2',file:'uc_denik_kapitoly',type:'xlsx'});
+            alert("soubor lze stáhnout <a href='docs/ys2/uc_denik_kapitoly.xlsx'>zde</a>"); }}
         }
       }
     }
