@@ -20,7 +20,9 @@ panel den [,,,750] {type:'right', title:'Účetní deník',_sys:'den'
       item {title:'Rok 2009'                   ,par:°{s:'u-show',c:'2009'}}
       item {title:'Rok 2010'                   ,par:°{s:'u-show',c:'2010'}}
       item {title:'Rok 2011'                   ,par:°{s:'u-show',c:'2011'}}
-      item a {title:'Rok 2012'                 ,par:°{s:'u-show',c:'2012'}}
+      item {title:'Rok 2012'                   ,par:°{s:'u-show',c:'2012'}}
+      item {title:'Rok 2013'    format:'d'     ,par:°{s:'u-show',c:'2013'}}
+      item a {title:'Rok 2014'                 ,par:°{s:'u-show',c:'2014'}}
       item {title:'Import deníku, akcí, osnovy',par:°{s:'u-load',c:''}}
     }
     menu {title:'Přehledy',type:'group',_sys:'pre'
@@ -146,11 +148,11 @@ panel den [,,,750] {type:'right', title:'Účetní deník',_sys:'den'
   }
   # ------------------------------------------------------------------------------------------------ _CMD
   form _cmd [,,500,200] {
-    button import_denik [0,0,100,20] { title:'import deníku' }
-    button import_odhad [150,0,100,20] { title:'import odhadu' }
-    button import_osnova [300,0,100,20] { title:'import osnovy' }
-    button import_akce [450,0,100,20] { title:'import akcí' }
-    button import_akce2 [550,0,100,20] { title:'import akcí 2010' }
+    button import_denik [0,0,,] { title:'import deníku' }
+    button import_odhad [150,0,,] { title:'import odhadu' }
+    button import_osnova [300,0,,] { title:'import osnovy' }
+    button import_akce [450,0,,] { title:'import akcí' }
+    button import_akce2 [550,0,,] { title:'import akcí 2010' }
     label result [0,30,700,600] { title:'...' },
   }
   # ------------------------------------------------------------------------------------------------ D_show_surv
@@ -435,10 +437,10 @@ panel akc [,,,750] {type:'right', title:'Akce',_sys:'*'
       field [70,110,50,17] { data:uakce.osob, format:'r' },
       label [10,130,50,17] { title:'kapitola', format:'r' },
       field [70,130,50,17] { data:uakce.kapitola },
-      button save [240,160,45,20] { type:'submit', title:'OK', help:'uložit změny',
+      button save [240,160,,] { type:'submit', title:'OK', help:'uložit změny',
         proc onclick () { the_formsave(form,a.seznam); panel.hide(form.key) }
       }
-      button cancel [143,160,45,20] { title:'Storno', help:'zadané údaje neukládat, vrátit se zpět'
+      button cancel [143,160,,] { title:'Storno', help:'zadané údaje neukládat, vrátit se zpět'
         proc onclick () { panel.hide(0) }
       }
     }
@@ -502,7 +504,7 @@ panel pot [,,,750] {type:'right', title:'Potvrzení',_sys:'*'
   # ------------------------------------------------------------------------------------------------ right
   # formulář pro levostranné menu s tlačítkem OPRAVIT
   form right [,,*,600] {
-    button opravit [-24,4,100,16] { title:'Upravit', style:'display:none;zIndex:2'
+    button opravit [-24,4,,] { title:'Upravit', style:'display:none;zIndex:2'
       proc onclick() { D_dopis.modal(50,50) }
     }
     label head [0,0,*,50] { title:'' }
@@ -527,9 +529,9 @@ panel pot [,,,750] {type:'right', title:'Potvrzení',_sys:'*'
     form _dopis [10,10,600,460] {
       label [0,12,60,20] { title:'Aktuální:' }
       check nazev [50,10,50,20] { data:dopis.aktualni },
-      button  [540,9,45,20] { title:'Uložit', help:'ukončit editor a uložit změny'
+      button  [540,9,,] { title:'Uložit', help:'ukončit editor a uložit změny'
         proc onclick() { form.save; panel.hide(1); ii.nadpis('',html.get) } }
-      button  [600,9,45,20] { title:'Zpět', help:'ukončit editor bez uložení změn'
+      button  [600,9,,] { title:'Zpět', help:'ukončit editor bez uložení změn'
         proc onclick() { panel.hide(0); }
       }
       edit html [0,40,655,480] {type:'html', data:dopis.obsah, par:°{toolbar:'EzerLetter'} },
@@ -568,7 +570,7 @@ panel pot [,,,750] {type:'right', title:'Potvrzení',_sys:'*'
       edit obsah [95,63,547,200] { data:dopis_cast.obsah },
       label [23,275,640,17] { title:"<u>orientační</u> ukázka (přesná viz menu 'Ukázkové tisky šablon'):" },
       label ukazka [23,295,640,500]
-      button uloz [590,0,100,17] { title:'Uložit'
+      button uloz [590,0,,] { title:'Uložit'
         proc onclick () { form.save; form.load; ukazka.set(obsah.get) }
       }
     }
