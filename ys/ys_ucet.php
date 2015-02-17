@@ -1409,11 +1409,23 @@ function ucet_load_akce2($rok) {  #trace();
 }
 # -------------------------------------------------------------------------------------------------- ucet_load_denik
 # import účetního deníku a osnovy
+# 2012: UsrOrder;X;TpUD;RelDruhUD;Datum;Zdplnění;Číslo;OrderFld;RelUdAg;Zdroj;RelAgID;Text;MD;DAL;
+#   Částka;RefCM;Cizí měna;Deneura;CM množství;CM kurz;CM částka;OrigKc1;RefStr;Středisko;Zakázka;RefCin;Činnost;
+#   Pársym;
+#   Vazba adresy;Firma;Jméno;IČ;Označil;Editoval;Vytvořil;Zámek;Zámek I;Poznámka
+# 2014: UsrOrder;X;TpUD;RelDruhUD;Datum;Zdplnění;Číslo;OrderFld;RelUdAg;Zdroj;RelAgID;Text;MD;DAL;
+#   Částka;RefCM;Cizí měna;Deneura;CM množství;CM kurz;CM částka;OrigKc1;RefStr;Středisko;Zakázka;RefCin;Činnost;
+#  +Úč znak MD;Úč znak DAL;    27,28
+#   Pársym;
+#  +Pársymzálohy;              30
+#   Vazba adresy;Firma;Jméno;IČ;Označil;Editoval;Vytvořil;Zámek;Zámek I;Poznámka;
+#  +Vytvořeno;Uloženo          41,42
 function ucet_load_denik($rok) { #trace();
   // import účetního deníku
   global $ezer_path_docs;
   $err= "";
-  $sloupcu= 38;
+  $sloupcu=  $rok==2014 ? 43 : 38;
+  $vynechat= $rok==2014 ? array(27,28,30,41,42) : array();
   $fname= "$ezer_path_docs/{$rok}_udenik.txt";
   $f= fopen($fname, "r");
   if ( !$f ) { $err= "importní soubor $fname neexistuje"; goto end; }
@@ -1426,7 +1438,7 @@ function ucet_load_denik($rok) { #trace();
     $num= count($data);
     if ( $line==1 ) {
       // kontrola hlaviček
-                                                        debug($data);
+//                                                         debug($data);
       if ( $num!=$sloupcu ) { // problém
         $err= "soubor $fname má $num sloupců - očekává se $sloupcu";
         goto end_read;
@@ -1438,14 +1450,23 @@ function ucet_load_denik($rok) { #trace();
     $value= '';
     $empty= true;
     for ($clmn= 0; $clmn < $num; $clmn++) {
+      if ( in_array($clmn,$vynechat) ) continue;
       $val= $data[$clmn];
       if ( $val && $val!='@' && $val!='0' ) $empty= false;
       switch ($clmn) {
       case 4: case 5:                   // datum
+//                                                         display($val);
+        if ( $rok==2014 ) {
+          $val= substr($val,0,-8);
+          $val= strtr($val,array(' '=>''));
+        }
+//                                                         display($val);
         $val= substr(sql_time($val,1),0,10);
+//                                                         display($val);
         break;
       case 14: case 20:                 // Kč
-        $val= strtr($val,array(","=>"."," "=>""));
+        $val= strtr($val,array(","=>"."," "=>"","Kč"=>''));
+//                                                         display($val);
         break;
 //         $val= substr(str_replace(",",".",$val),0,-3); break;
       case 24:                          // dotace
@@ -1458,14 +1479,17 @@ function ucet_load_denik($rok) { #trace();
         }
         break;
       }
-      $value.= ', "'.win2utf($val,true).'"';
+      if ( $rok==2014 )
+        $value.= ', "'.$val.'"';
+      else
+        $value.= ', "'.win2utf($val,true).'"';
     }
     // přidat jen neprázdné řádky
     if ( !$empty ) {
       $values.= "$del\n(\"$key\"$value)";
       $del= ',';
     }
-//     if ( $line>20 ) break;
+//                                                 if ( $line>2 ) break;
   }
   $html.= "ok <br>";
 end_read:
@@ -1478,6 +1502,7 @@ end_read:
     $html.= "rok $rok smazán<br>";
     // vložení nových
     $qry= "INSERT INTO udenik VALUES $values;";
+//                                                 display($qry);
     $res= @mysql_qry($qry,0,'-'); if ( !$res ) { $err= mysql_error(); goto end; }
     $n= mysql_affected_rows();
     if ( $res ) $html.= "pro rok $rok vloženo $n řádků<br>";
