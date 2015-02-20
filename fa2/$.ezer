@@ -1,7 +1,7 @@
 # Systém Ans(w)er pro YMCA Familia
 # (c) 2008-2010 Martin Šmídek <martin@smidek.eu>
 
-menu fa2 { type:'main', active:* //ys.pok
+menu fa2 { type:'main', title:'fa2', active:*, _sys:'*'
   var global: text,
 #   tabs db {title:"Databáze", _sys:'db', include:'onclick,db.akce', active:*, skill:'fa' }
   tabs db2 {title:"Databáze2", _sys:'*', include:'onload,db.akce2', active:*, skill:'test' }
