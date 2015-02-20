@@ -88,8 +88,8 @@ menu m {type:'left', format:'f+'
     item {title:'podle zvoleného mail-listu'
       proc onclick (i) { ini(i,'es','G','gen','akce|skup'); } }
   }
-  menu {title:'Obecné rozesílací seznamy', type:'group', skill:'yamg;famg;camg', _sys:'lst'
-    item {title:'Definování seznamů (mail-list)'
+  menu {title:'Obecné rozesílací seznamy', type:'group', skill:'yamg;famg;camg'
+    item {title:'Definování seznamů (mail-list)', _sys:'lst'
       proc onclick (i) {
         ini(i,'gq','G','gen','akce|skup');
         gq.get.display(1,'def'); gq.get.display(0,'send');
