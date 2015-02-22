@@ -3209,10 +3209,12 @@ function akce_pobyt_default($id_pobyt,$zapsat=0) {  trace();
   $ro= mysql_qry($qo);
   while ( $ro && ($o= mysql_fetch_object($ro)) ) {
     if ( $o->_chuva ) {
-      $dosp++;                          // platíme za chůvu vlastního dítěte
+      $dosp++; $luzka++; $cela++;       // platíme za chůvu vlastního dítěte
       $svp++;                           // ale ne za obecného pečouna
     }
-    if ( $o->pecovane) $dosp--;         // za dítě-chůvu platí rodič pečovaného dítěte
+    if ( $o->pecovane) {                // za dítě-chůvu platí rodič pečovaného dítěte
+      $dosp--; $luzka--; $cela--;
+    }
     $noci= $o->_noci;
     $fce= $o->funkce;
     $vek= narozeni2roky(sql2stamp($o->narozeni),sql2stamp($o->datum_od));
@@ -3238,7 +3240,9 @@ function akce_pobyt_default($id_pobyt,$zapsat=0) {  trace();
   }
   // zápis do pobytu
   if ( $zapsat ) {
-    query("UPDATE pobyt SET luzka=".($dosp+$deti).",kocarek=$koje,strava_cel=$dosp,strava_pol=$deti,
+//     query("UPDATE pobyt SET luzka=".($dosp+$deti).",kocarek=$koje,strava_cel=$dosp,strava_pol=$deti,
+//              pocetdnu=$noci,svp=$svp WHERE id_pobyt=$id_pobyt");
+    query("UPDATE pobyt SET luzka=$luzka,kocarek=$bez,strava_cel=$cela,strava_pol=$polo,
              pocetdnu=$noci,svp=$svp WHERE id_pobyt=$id_pobyt");
   }
   //$ret= (object)array('luzka'=>$dosp+$deti,'kocarek'=>$koje,'pocetdnu'=>$noci,'svp'=>$svp,
