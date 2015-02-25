@@ -23,8 +23,8 @@ var the_cenik: text             // pracovní akce: má ceník
 var the_cena:  number           // pracovní akce: má pevnou cenu pro dospělého
 
 # inicializace modulu Databáze - nastavení globálních proměnných the_* tohoto modulu
-var dirty: number       // 1 => byla začata inicializace modulu
-proc onstart() { dirty.get; akce_onstart }
+var dirty=0                     // 1 => byla ukončena inicializace modulu
+proc onstart() { dirty.get | akce_onstart }
 proc akce_onstart() {
   dirty.get
 | dirty.set(1);
@@ -57,7 +57,8 @@ panel lst {type:'right', _sys:'*', title:'[fa-futbol-o] AKCE', include:'onload,d
 }
 panel ucast {type:'plain', _sys:'*', title:"Účastníci2", include:'onload,db.akce2.ucast',skill:'yaa;faa;caa'
   proc ucast_pobyt()  {}                        // ukázání pobytu
-  proc init_ucast2() {}
+  proc clear_ucast2() {}                        // volání zajistí obnovu při onfucus
+  #proc init_ucast2() {}
   proc akce_show() {}
   proc osoby_show() {}                          // obnova údajů o osobě (osobách)
   proc rodina_show() {}                         // obnova údajů o rodině
@@ -574,6 +575,8 @@ panel track [,,540,276] { title:'Historie oprav', type:'popup', css:'dialog'
   }
 }
 # ================================================================================================== formuláře
+# společné procedury
+proc obligatory(elem) { elem.init; elem.change }
 # ------------------------------------------------------------------------------------------ _osoba2x
 panel osoba_config [,,200,150] {type:'popup', title:"Podrobnosti údajů"
   var tit='osobní údaje', grp='ZKAS', var ucast:object
@@ -620,7 +623,9 @@ form _osoba2x [,,244,322] {css:'ae_frame', proc onclick() { on_click }
     adresa.get; eq(ulice.get,''); eq(obec.get,''); warning("osobní adresa nesmí být prázdná"); ok.set(0);
     return(ok);
   }
-  proc new_osoba() { form.init; role.display(1); }
+  proc new_osoba() { form.init; role.display(1);
+#     foreach(array(jmeno,prijmeni,role,sex,narozeni),obligatory);
+  }
   proc on_click() {}
   proc init_osoba() {
     form.display(0,'[^f]');
@@ -802,8 +807,13 @@ form _rodina2 [,,360,229]  { css:'ae_frame', proc onclick() { on_click }
   proc onchanged() { }
   proc neni_ulozen() {}
   proc on_click() {}
-  proc new_rodina() { form.init; form.display(1,'r|n'); form.display(0,'a|s');
-    cleni.browse_init; cleni.enable(0) }
+  proc new_rodina() {
+    form.init;
+    form.stacks('n,r','down',0,0,10);
+    form.display(1,'r|n'); form.display(0,'a|s');
+#     foreach(array(rodiny0),obligatory);
+    cleni.browse_init; cleni.enable(0);
+  }
   proc init_rodina() {
     form.display(0,'[^f]'); cleni.display(1);
   }
