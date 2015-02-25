@@ -354,7 +354,7 @@ form _akce [,,*,50] {
   proc volba_akce(id_akce) {
     akce_choose(id_akce);
     lst.info.fill(conc(the_title.get,' '));
-    [ ucast.call('init_ucast2') ];
+    [ ucast.call('clear_ucast2') ];
     [ has_skill('yam;fam;cam'); maia.call('init_ucast') ];
     [ pece.call('init_pece') ];
     // ošetření souběžných akcí - 0=normální akce, 1=hlavní akce, 2=souběžná akce
