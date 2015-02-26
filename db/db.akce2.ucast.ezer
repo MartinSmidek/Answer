@@ -300,7 +300,7 @@ form _cmd2 [,,623,30] { css:'ae_work'
 # --------------------------------------------------------------------------------------------- _cmd
 # změny v evidenci konkrétního pobytu a jeho účastníků
 form _cmd [,,623,30] { css:'ae_work'
-  var mode:text  // 'novy_clen' nebo 'novy_pobyt' nebo ''
+  var mode=''           // 'novy_clen' nebo 'novy_pobyt' nebo ''
   proc set_state(_mode) { switch(_mode,
     'new', {form.enable(1,'z'); form.enable(0,'x')},
     'new2',{form.enable(1,'z'); form.enable(0,'x')},
