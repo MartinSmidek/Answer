@@ -176,15 +176,17 @@ function akce2_mapa($akce) {  trace();
 function akce2_info($id_akce) {  trace();
   $html= '';
   if ( $id_akce ) {
-      $ucasti= $rodiny= $dosp= $muzi= $zeny= $deti= $pecounu= $err= 0;
-      $akce= $chybi_nar= '';
+      $ucasti= $rodiny= $dosp= $muzi= $zeny= $deti= $pecounu= $err= $err2= 0;
+      $akce= $chybi_nar= $chybi_sex= '';
       $qry= "SELECT nazev, datum_od, datum_do, now() as _ted,i0_rodina,funkce,
                COUNT(id_spolu) AS _clenu,
                SUM(IF(ROUND(DATEDIFF(a.datum_od,o.narozeni)/365.2425,1)<18,1,0)) AS _deti,
                SUM(IF(ROUND(DATEDIFF(a.datum_od,o.narozeni)/365.2425,1)>=18 AND sex=1,1,0)) AS _muzu,
                SUM(IF(ROUND(DATEDIFF(a.datum_od,o.narozeni)/365.2425,1)>=18 AND sex=2,1,0)) AS _zen,
                SUM(IF(o.narozeni='0000-00-00',1,0)) AS _err,
-               GROUP_CONCAT(IF(o.narozeni='0000-00-00',CONCAT(', ',jmeno,' ',prijmeni),'') SEPARATOR '') AS _kdo
+               GROUP_CONCAT(IF(o.narozeni='0000-00-00',CONCAT(', ',jmeno,' ',prijmeni),'') SEPARATOR '') AS _kdo,
+               SUM(IF(o.sex NOT IN (1,2),1,0)) AS _err2,
+               GROUP_CONCAT(IF(o.sex NOT IN (1,2),CONCAT(', ',jmeno,' ',prijmeni),'') SEPARATOR '') AS _kdo2
              FROM akce AS a
              JOIN pobyt AS p ON a.id_duakce=p.id_akce
              JOIN spolu AS s ON p.id_pobyt=s.id_pobyt
@@ -200,8 +202,10 @@ function akce2_info($id_akce) {  trace();
         $zeny+= $p->_zen;
         $deti+= $p->_deti;
         $err+= $p->_err;
+        $err2+= $p->_err2;
         $rodiny+= i0_rodina && $p->_clenu>1 ? 1 : 0;
         $chybi_nar.= $p->_kdo;
+        $chybi_sex.= $p->_kdo2;
         if ( $p->funkce==99 )
           $pecounu+= $p->_clenu;
         // údaje akce
@@ -213,6 +217,7 @@ function akce2_info($id_akce) {  trace();
         $dne= $p->datum_od==$p->datum_do ? "dne $od" : "ve dnech $od do $do";
       }
       if ( $chybi_nar ) $chybi_nar= substr($chybi_nar,2);
+      if ( $chybi_sex ) $chybi_sex= substr($chybi_sex,2);
       $dosp+= $muzi + $zeny;
       $skupin= $ucasti - ( $pecounu ? 1 : 0 );
       // čeština
@@ -224,6 +229,7 @@ function akce2_info($id_akce) {  trace();
       $_deti=      je_1_2_5($deti,"dítě,děti,dětí");
       $_osob=      je_1_2_5($dosp+$deti,"osoba,osoby,osob");
       $_err=       je_1_2_5($err,"osoby,osob,osob");
+      $_err2=      je_1_2_5($err2,"osoby,osob,osob");
       $_rodiny=    je_1_2_5($rodiny,"rodina,rodiny,rodin");
       // html
       $html= $dosp+$deti>0
@@ -231,11 +237,15 @@ function akce2_info($id_akce) {  trace();
        . ($skupin ? "<br>$_skupin účastníků"
            .($rodiny ? ($rodiny==$ucasti ? " (všechny jako rodiny)" : " (z toho $_rodiny)") :''):'')
        . ($pecounu ? " ".($skupin?"<br>a ":'')."$_pecounu" : '')
-       . ",<br><br> $_dospelych ($_muzu, $_zen a $_deti),"
+       . ",<br><br> $_dospelych ($_muzu, $_zen) a $_deti,"
        . "<br><b>celkem $_osob</b>"
        : "Akce byla vložena do databáze<br>ale nemá zatím žádné účastníky";
-      $html.= $err>0 ? "<br><hr>POZOR: u $_err chybí datum narození:<br> <i>$chybi_nar</i>
-                        <br>(proto mohou být počty divné)" : '';
+      if ( $err + $err2 > 0 ) {
+        $html.= "<br><hr>POZOR: ";
+        $html.= $err>0  ? "<br>u $_err chybí datum narození:<br> <i>$chybi_nar</i>" : '';
+        $html.= $err2>0 ? "<br>u $_err2 chybí údaj muž/žena:<br> <i>$chybi_sex</i>" : '';
+        $html.= "<br>(kvůli chybějícím údajům mohou být počty divné)";
+      }
       $html.= $deti ? "<hr>Poznámka: jako děti se počítají osoby, které v době zahájení akce ještě nemají 18 let" : '';
   }
   else {
