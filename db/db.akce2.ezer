@@ -623,7 +623,11 @@ form _osoba2x [,,244,322] {css:'ae_frame', proc onclick() { on_click }
     adresa.get; eq(ulice.get,''); eq(obec.get,''); warning("osobní adresa nesmí být prázdná"); ok.set(0);
     return(ok);
   }
-  proc new_osoba() { form.init; role.display(1);
+  proc new_osoba(_clen_rodiny) { form.init; role.display(_clen_rodiny);
+    kontakt_r.set(''); adresa_r.set('');
+    [ _clen_rodiny; kontakt.set(0); adresa.set(0);
+    | kontakt.enable(0); kontakt.set(1); form.enable(1,'k');
+      adresa.enable(0);  adresa.set(1);  form.enable(1,'b'); ];
 #     foreach(array(jmeno,prijmeni,role,sex,narozeni),obligatory);
   }
   proc on_click() {}
@@ -633,6 +637,7 @@ form _osoba2x [,,244,322] {css:'ae_frame', proc onclick() { on_click }
   proc refresh() { eq(host.get,'U'); ucast.call('osoby_show') | evi.call('osoby_show') }
   proc show_osoba(even) { var tags:text
     form.display(0,'[^f]'); go_evi.display(not(even));
+    kontakt.enable(1); adresa.enable(1);
     frame.set(osoba_config.tit.get);
     tags.set('i,ii');
     [ contains('K',osoba_config.grp.get); {
@@ -684,8 +689,9 @@ form _osoba2x [,,244,322] {css:'ae_frame', proc onclick() { on_click }
 
   // i = základní údaje - jsou vždy vidět
   field prijmeni [5,32,106,] {tag:'i,I', data:o.prijmeni, format:'n', help:'příjmení', title:'^příjmení'}
-  field jmeno    [120,32,89,] {tag:'i,I', data:o.jmeno, format:'n', title:'^jméno'}
-  field role     [218,32,10,] {tag:'y', title:"^role", format:'n' }
+  field jmeno    [120,32,83,] {tag:'i,I', data:o.jmeno, format:'n', title:'^jméno'}
+  //field role   [218,32,10,] {tag:'y', title:"^role", format:'n' }
+  select role    [210,32,31,] {tag:'y', type:'map', options:ms_akce_t_role.hodnota, format:'wn', title:'^role'}
   field rodne    [5,66,63,] {tag:'i', data:o.rodne, format:'n', help:'rodné příjmení', title:'^rodné příjmení'}
   radio sex      [73,54,46,32] {tag:'i,I', data:o.sex, format:'n', value:'1'
     case [0,2,47,] { title:'muž', expr:'1' }

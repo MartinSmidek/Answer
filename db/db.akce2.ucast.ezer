@@ -258,16 +258,16 @@ form _cmd2 [,,623,30] { css:'ae_work'
     'show', {form.enable(1,'s|x')},
     'hide',{form.enable(0,'s|x')}
   )}
-  label [63,9,80,] { title:"<b>Přidat na akci:</b>" }
+  label [4,9,80,] { title:"<b>Přidat na akci:</b>" }
   // PŘIDAT RODINU
-  button pridat_2   [147,5,,] {tag:'x', title:'[fa-plug] ... rodinu',
+  button pridat_2   [86,5,,] {tag:'x', title:'[fa-plug] ... rodinu',
     skill:'yaa+|yaa+;faa+|faa+;caa+|caa+', help:'Přidání manželského páru a dětí podle jména'
     proc onclick() {
       neni_ulozeno // warning
     | PridaniJmenem2.modal(240,50)
   } }
   // PŘIDAT OSOBU
-  button pridat_1   [229,5,,] {tag:'x', title:'[fa-plug] ... osobu',
+  button pridat_1   [166,5,,] {tag:'x', title:'[fa-plug] ... osobu',
     skill:'yaa+|yaa+;faa+|faa+;caa+|caa+',
     help:'Přidání účastníka podle jména - samostatně nebo přidat k jiným'
     proc onclick() {
@@ -275,35 +275,50 @@ form _cmd2 [,,623,30] { css:'ae_work'
     | PridaniJmenem1.modal(240,50)
   } }
   // PŘIDAT z AKCE
-  button pridat_a   [310,5,,] {tag:'x', title:'[fa-plug] ... účastníky jiné akce',
+  button pridat_a   [245,5,,] {tag:'x', title:'[fa-plug] ... z jiné akce',
     skill:'yaa+|yaa+;faa+|faa+;caa+|caa+', help:'Hromadné přidání účastníků z jiné akce'
     proc onclick() {
       neni_ulozeno // warning
     | PridaniAkce.modal(240,50)
   } }
-  // NOVÝ POBYT
-  button [459,5,,] {tag:'s', title:'[fa-heart] .. neevidovanou rodinu', skill:'yaa+|yaa+;faa+|faa+;caa+|caa+',
-    help:'Vytvoření nového pobytu s novými osobami a jejich vložení jako účastníků akce'
+  // NOVÝ POBYT - SINGL
+  button [356,5,,] {tag:'s', title:'[fa-heart-o] .. neevidovanou osobu', skill:'yaa+|yaa+;faa+|faa+;caa+|caa+'
+    help:'Vytvoření nového pobytu s novou osobou bez rodiny a vložení jako účastníka'
     proc onclick() {
-      cmd.mode.set('novy_pobyt'); // příznak pro "nový"
+      cmd.mode.set('novy_singl'); // příznak pro "nová osoba + pobyt" (bez rodiny)
+      cmd.b_display(0);
+      // skryj data pro rodinu a 3. sloupec
+      ucast.evid.rod.new_rodina; ucast.evid.pob.new_pobyt;
+      ucast.evid.rod.enable(0,'.*');
+      ucast.evid.os2.enable(0,'.*'); ucast.evid.pob2.enable(0,'.*');
+      ucast.evid.os2.new_osoba(0); ucast.evid.pob2.new_spolu;
+      // inicializuj osobu + vyznač povinná pole
+      ucast.evid.os1.new_osoba(0); ucast.evid.pob1.new_spolu;
+      // uprav viditelnost tlačítek
+      set_state2('hide'); cmd.set_state('new');
+  } }
+  // NOVÝ POBYT - RODINA
+  button [514,5,,] {tag:'s', title:'[fa-heart] .. neev. rodinu', skill:'yaa+|yaa+;faa+|faa+;caa+|caa+',
+    help:'Vytvoření nového pobytu s novou rodinou a 1-2 příslušníky (a vložení jako účastníků)'
+    proc onclick() {
+      cmd.mode.set('novy_pobyt'); // příznak pro "nová rodina + pobyt"
       cmd.b_display(0);
       // inicializuj rodinu jako skupinu, pobyt + vyznač povinná pole
       ucast.evid.rod.new_rodina; ucast.evid.pob.new_pobyt;
       // inicializuj osoby vč. případně i neviditelnou druhou + vyznač povinná pole
-      ucast.evid.os1.new_osoba; ucast.evid.pob1.new_spolu;
-      ucast.evid.os2.new_osoba; ucast.evid.pob2.new_spolu;
+      ucast.evid.os1.new_osoba(1); ucast.evid.pob1.new_spolu;
+      ucast.evid.os2.new_osoba(1); ucast.evid.pob2.new_spolu;
       ucast.evid.os2.enable(1,'.*'); ucast.evid.pob2.enable(1,'.*');
       // uprav viditelnost tlačítek
-      set_state2('hide'); cmd.set_state('new2');
+      set_state2('hide'); cmd.set_state('new');
   } }
 }
 # --------------------------------------------------------------------------------------------- _cmd
 # změny v evidenci konkrétního pobytu a jeho účastníků
 form _cmd [,,623,30] { css:'ae_work'
-  var mode=''           // 'novy_clen' nebo 'novy_pobyt' nebo ''
+  var mode=''           // novy_clen | novy_pobyt | novy_singl | ''
   proc set_state(_mode) { switch(_mode,
     'new', {form.enable(1,'z'); form.enable(0,'x')},
-    'new2',{form.enable(1,'z'); form.enable(0,'x')},
     'edit',{form.enable(1,'s'); form.enable(0,'x')},
     'show',{form.enable(0,'s'); form.enable(1,'x')}
   )}
@@ -321,20 +336,40 @@ form _cmd [,,623,30] { css:'ae_work'
     [ ido; ucast.evid.rod.cleni.raise('onrowclick',ido) ];
     mode.set('');
   }
-  button [7,6,,] { tag:'s,z', title:'[fa-undo] Zpět',  help:'Neměnit změněná data', skill:'yaa+|yaa+;faa+|faa+;caa+|caa+'
+  button [7,6,,] { tag:'s,z', title:'[fa-undo] Zpět',  help:'Neměnit změněná data',
+                skill:'yaa+|yaa+;faa+|faa+;caa+|caa+'
     proc onclick() {
-      eq(mode.get,'novy_pobyt'); _reload(0,0); //b_display(1); u.b.raise('onrowclick')
+      eq(mode.get,'novy_pobyt'); _reload(0,0);
+    | eq(mode.get,'novy_singl'); _reload(0,0);
     | ucast.evid.rod.cleni.browse_count; _reload(0,ucast.evid.rod.cleni.key_osoba.get)
     | _reload(1,0);
   } }
   // ULOŽIT
-  button [60,6,,] { tag:'s', title:'[fa-save] Uložit',  help:'Uložit změněná data', skill:'yaa+|yaa+;faa+|faa+;caa+|caa+'
+  button [60,6,,] { tag:'s', title:'[fa-save] Uložit',  help:'Uložit změněná data',
+                skill:'yaa+|yaa+;faa+|faa+;caa+|caa+'
     proc onclick() { var ok:number, idr:number, ido:number, war:text
       war.set('');
-      // pohlídání korektnosti případné úpravy
-      [ ucast.evid.os1.same | ucast.evid.os1.correct | return(0) ];
-      [ ucast.evid.os2.same | ucast.evid.os2.correct | return(0) ];
       // uložení změn
+      eq(mode.get,'novy_singl');
+      # ------------------------ vytvoření pobyt+osoba+spolu
+      // kontrola dostatečnosti údajů
+      [ ucast.evid.os1.jmeno.get    | war.set(conc(war,' křestní jméno, ')) ];
+      [ ucast.evid.os1.prijmeni.get | war.set(conc(war,' příjmení, ')) ];
+      [ war; alert("Pozor: aspoň ",war," ... musí být vyplněné"); return ];
+      // pobyt
+      ucast.evid.pob.key_akce.set(the_duakce.get); ucast.evid.pob.key_akce.change;
+      ucast.evid.pob.i0_rodina.set(0); ucast.evid.pob.i0_rodina.change;
+      the_pobyt.set(ucast.evid.pob.insert);
+      // osoba a spolu a tvori
+      ucast.evid.os1.kontakt.change; ucast.evid.os1.adresa.change; // singl má jen osobní údaje
+      ido.set(ucast.evid.os1.insert);
+      ucast.evid.pob1.key_spolu.set(the_pobyt.get); ucast.evid.pob1.key_spolu.change;
+      ucast.evid.pob1.key_osoba.set(ido); ucast.evid.pob1.key_osoba.change;
+      ucast.evid.pob1.insert;
+      _reload(1,ido)
+    | // pohlídání korektnosti případné úpravy pro ne-singla
+      //[ ucast.evid.os1.same | ucast.evid.os1.correct | return(0) ];
+      //[ ucast.evid.os2.same | ucast.evid.os2.correct | return(0) ];
       eq(mode.get,'novy_clen');
       # ------------------------ vytvoření nového člena rodiny: osoba+tvori
       [ ucast.evid.os1.same
@@ -415,7 +450,7 @@ form _cmd [,,623,30] { css:'ae_work'
     | ucast.evid.rod.key_rodina.get;
       mode.set('novy_clen');
       _prijmeni.set(ucast.evid.os1.prijmeni.get); _sex.set(ucast.evid.os1.sex.get);
-      ucast.evid.os1.new_osoba;
+      ucast.evid.os1.new_osoba(1);
       ucast.evid.os1.role.set('d'); ucast.evid.os1.role.change;
       ucast.evid.os1.sex.set(_sex); ucast.evid.os1.sex.change;
       ucast.evid.os1.prijmeni.set(_prijmeni); ucast.evid.os1.prijmeni.change;
@@ -1081,12 +1116,12 @@ form _spolu [,,0,270] {
 
   # c: osobní pečovatel pro dítě ...
   field pece_key { data:s.pecovane }
-  select pece_sel [70,0,160,17] { tag:'c', type:'auto', par:°{fce:'akce_auto_deti'},
-    title:"pečuje o:     ", format:'n'
+  label [10,3,45,17] { tag:'c', title:"pečuje o:", format:'n'}
+  select pece_sel [70,0,160,17] { tag:'c', type:'auto', par:°{fce:'akce_auto_deti'}, format:'n'
     proc onchanged() { pece_key.set(pece_sel.key); pece_key.change; }  }
   button [55,3,,] { tag:'c', title:'^', css:'db_evidence',
     proc onclick() { jump(evid.rod.cleni.pece_ido.get) } }
-  check pecoun [36,27,200,17] { tag:'c', title:"je v kolektivu pečounů", format:'n', value:'0'
+  check pecoun [36,27,130,17] { tag:'c', title:"je v kolektivu pečounů", format:'n', value:'0'
   /*  // 0 => osobní & 'dědeček'
       proc onchange () {
         and(eq(pfunkce.get,5),eq(pecoun.get,0)); pfunkce.set(95); pfunkce.change

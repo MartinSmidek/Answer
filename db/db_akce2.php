@@ -1809,26 +1809,26 @@ function akce2_osoba2x($id_osoba) { trace();
         FROM tvori AS ot JOIN rodina AS r USING (id_rodina) WHERE ot.id_osoba=o.id_osoba
       ),2),0) AS id_rodina
     FROM osoba AS o
-    WHERE o.id_osoba=$id_osoba
+    WHERE o.id_osoba='$id_osoba'
     GROUP BY o.id_osoba");
-  $o= sql_query("SELECT $adresa,$kontakt FROM osoba WHERE id_osoba=$id_osoba");
-  $r= sql_query("SELECT $adresa,$kontakty FROM rodina WHERE id_rodina=$k->id_rodina");
-//                                                         debug($k,"kmen");
-//                                                         debug($r,"rodina");
-//                                                         debug($o,"osoba");
+  $o= sql_query("SELECT $adresa,$kontakt FROM osoba WHERE id_osoba='$id_osoba'");
+  $r= sql_query("SELECT $adresa,$kontakty FROM rodina WHERE id_rodina='$k->id_rodina'");
+                                                        debug($k,"kmen");
+                                                        debug($r,"rodina");
+                                                        debug($o,"osoba ".(empty($o)?'e':'f'));
   $ret= (object)array();
   foreach(explode(',',$rets) as $f) {
     $ret->$f= (object)array();
   }
   foreach(explode(',',$adresa) as $f) {
-    $ret->o_adresa->$f= $o->$f;
-    $ret->r_adresa->$f= ($f=='noadresa'||$f=='stat'?'':'®').$r->$f;
+    $ret->o_adresa->$f= empty($o) ? '' : $o->$f;
+    $ret->r_adresa->$f= empty($r) ? '' : ($f=='noadresa'||$f=='stat'?'':'®').$r->$f;
   }
   foreach(explode(',',$kontakt) as $f) { $fy= $f.'y';
-    $ret->o_kontakt->$f= $o->$f;
-    $ret->r_kontakt->$f= ($f=='nomail'?'':'®').$r->$fy;
+    $ret->o_kontakt->$f= empty($o) ? '' : $o->$f;
+    $ret->r_kontakt->$f= empty($r) ? '' : ($f=='nomail'?'':'®').$r->$fy;
   }
-//                                                         debug($ret,"akce2__osoba2x");
+                                                        debug($ret,"akce2__osoba2x");
   return $ret;
 }
 # ------------------------------------------------------------------------------------ akce2_ido2idp
