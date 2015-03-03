@@ -2508,10 +2508,21 @@ function data_import_pecouni($par) { trace();
     $jmeno= $Sheet->getCell("E6")->getCalculatedValue();
     $html.= "C3R6=$prijmeni  ;E6=$jmeno; highestRow=$highestRow";
   }
-  if ($par->cmd=='read'||$par->cmd=='update') { # zobrazení jmen všech pečounů
+  if ($par->cmd=='read'||$par->cmd=='join'||$par->cmd=='update') { # zobrazení jmen všech pečounů
+    $last_kod= -1;
     for ($row= 3; $row<=$highestRow; $row++ ) {
       $rok= $Sheet->getCellByColumnAndRow(1, $row)->getCalculatedValue();
+      $kod= $Sheet->getCellByColumnAndRow(2, $row)->getCalculatedValue();
       if ( !$rok ) continue;
+      if ( $par->cmd=='join' && $kod != $last_kod ) {
+        $id_akce= select("id_akce","join_akce","g_rok=$rok AND g_kod=$kod");
+        if ( !$id_akce ) { $err.= "akce s kódem $kod/$rok není v AKCE"; goto end; }
+        $id_pobyt= select("id_pobyt","pobyt","id_akce=$id_akce AND funkce=99");
+        if ( !$id_pobyt ) {
+          mysql_qry("INSERT INTO pobyt (id_akce,funkce) VALUE ($id_akce,99)");
+          $id_pobyt= mysql_insert_id();
+        }
+      }
 //       if ( $row==7 ) break;
       $stav=     $Sheet->getCellByColumnAndRow(0,$row)->getCalculatedValue();
       if ( $stav==1 ) continue; // už jsme zvládli
@@ -2524,12 +2535,27 @@ function data_import_pecouni($par) { trace();
         WHERE deleted='' AND prijmeni='$prijmeni' AND jmeno='$jmeno' AND narozeni='$narozeni' ");
       $n= mysql_num_rows($ro);
       $o= mysql_fetch_object($ro);
+      $id_osoba= $o->id_osoba;
       // zpráva
-      $html.= "<br>$n: ".sta_ukaz_osobu($o->id_osoba)." $prijmeni $jmeno $narozeni ($funkce)";
+      $html.= $n==1
+            ? "<br>$n: ".sta_ukaz_osobu($id_osoba)." <b>$prijmeni $jmeno $narozeni</b> ($funkce)"
+            : "<br>$n: ".sta_ukaz_osobu($id_osoba)." $prijmeni $jmeno $narozeni ($funkce)";
       // případně zápis
       if ( $par->cmd=='update' ) {
         $Sheet->setCellValueByColumnAndRow(0,$row,$n);
         $html.= " - zapsáno";
+      }
+      // případně svázání s akcí
+      if ( $par->cmd=='join' && $n==1 ) {
+        $id_spolu= select("id_spolu","spolu","id_osoba=$id_osoba AND id_pobyt=$id_pobyt");
+        if ( !$id_spolu ) {
+          // pfunkce: 1=hlavoun, 7=team
+          $fce= trim($funkce);
+          $fce= $fce=='' ? 0 : ($fce=='V' ? 1 : 7);
+          mysql_qry("INSERT INTO spolu (id_pobyt,id_osoba,pfunkce) VALUE ($id_pobyt,$id_osoba,$fce)");
+          $id_spolu= mysql_insert_id();
+        }
+        $html.= " - přidán na akci ($id_spolu)";
       }
     }
   }
