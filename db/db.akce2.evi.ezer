@@ -736,11 +736,11 @@ form _cmd [,,706,32] { css:'ae_frame'
              page.display(1,'C'); page.cleni.enable(1); page.rod.enable(1,'r|R'); }
     );
   }
-  proc reload(depth) { // depth=lst|page|oso ... hloubka znovunačtení
+  proc reload(depth) { // depth ... hloubka znovunačtení
     set_state('show'); page.page_plain; warning;
     page.rod.display(1,'a'); page.rod.display(0,'m|n');
     switch(depth,
-    'curr',{ [ page.cleni.raise('onrowclick'); page.rod.r.load(page.idr.get) ] },
+    'curr',{ [ page.cleni.raise('onrowclick',page.oso.key); page.rod.r.load(page.idr.get) ] },
     'page',{ page.refresh },
     'lst', { lst.refresh });
   }

@@ -805,10 +805,10 @@ panel rodina_config [,,200,60] {type:'popup', title:"Podrobnosti údajů"
   }
   var _old= 'Z'
 }
-form _rodina2 [,,360,229]  { css:'ae_frame', proc onclick() { on_click }
+form _rodina2 [,,360,229]  { css:'ae_frame'
   var key_pobyt: number
   proc onstart() { r_stat.selects(staty.get,',',1) }
-
+  proc onclick() { on_click }
   // globální procedury
   proc onchanged() { }
   proc neni_ulozen() {}
@@ -865,14 +865,13 @@ form _rodina2 [,,360,229]  { css:'ae_frame', proc onclick() { on_click }
   // identifikace
   field  rodiny0   [Lr+5,32,104,] {tag:'n', title:"^název nové rodiny", data:r.nazev, format:'n' }
   field  rodiny1   [Lr+5,32,104,] {tag:'m', title:"^oprava názvu rodiny", data:r.nazev, format:'n' }
-  select rodiny    [Lr+5,32,104,] {tag:'a', format:'t', title:"^rodina&nbsp;('-'&nbsp;jednotlivec)",
-    help:'výběr rodiny podle nastaveného účastníka a její přiřazení k pobytu', proc onchanged() {
-      ask('akce_pobyt_rodinny',key_pobyt.get,this.key); zmena_rodiny;
-  }}
+  select rodiny    [Lr+5,32,104,] {tag:'a', format:'tT', title:"^rodina&nbsp;('-'&nbsp;jednotlivec)",
+    help:'výběr rodiny podle nastaveného účastníka a její přiřazení k pobytu',
+    proc onchanged() {
+      ask('akce_pobyt_rodinny',key_pobyt.get,this.key); zmena_rodiny; }}
   button [Lr+108,34,15,16] {tag:'a,o', type:'html', title:"[fa-chevron-left]", style:"padding-left:0px"
     proc onclick() {
-      form.display(0,'a'); form.display(1,'m'); rodiny1.set(rodiny.get); rodiny1.change;
-  }}
+      form.display(0,'a'); form.display(1,'m'); rodiny1.set(rodiny.get); rodiny1.change; }}
   select t_role [Lr+131,Tr+22,35,] {tag:'n,a', type:'map', options:ms_akce_t_role.hodnota, format:'wn'
     data:tr.role, title:'^role'}
 
@@ -971,7 +970,7 @@ form _rodina2p [,,188,229] { css:'ae_frame'
   field  rodiny0 [Lp+0,Ts+32,104,] {tag:'n,N', title:"^název nové rodiny", data:r.nazev, format:'n' }
   field  rodiny1 [Lp+0,Ts+32,104,] {tag:'m', title:"^oprava názvu rodiny", data:r.nazev, format:'n' }
   select rodiny  [Lp+0,Ts+32,110,] {tag:'a,R', format:'tT', title:"^zobrazená rodina", help:'výběr jiné rodiny'
-    proc onchanged() { rodina_changed}}
+    proc onchanged() { rodina_changed }}
   button [Lp+111,Ts+32,,] {tag:'a,o,R', type:'html', title:"[fa-chevron-left]", css:'button' //style:"padding-left:0px"
     help:"oprava názvu zobrazené rodiny"
     proc onclick() { form.display(0,'a'); form.display(1,'m'); rodiny1.set(rodiny.get);
