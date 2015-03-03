@@ -1838,6 +1838,42 @@ function akce2_ido2idp($id_osoba,$id_akce) { trace();
     "spolu.id_osoba=$id_osoba AND id_akce=$id_akce");
   return $idp;
 }
+# ------------------------------------------------------------------------------------- akce2_pridej
+# ASK přidání pobytu do akce, pokud ještě nebyly tyto osoby/osoba přidány
+function akce2_pridej($id_akce,$info) { trace();
+  $ret= (object)array('ok'=>0,'msg'=>'chyba při vkládání');
+//                                                         debug($info);
+  $ids= array();
+  if ( $info->id )  array_push($ids,$info->id);
+  if ( $info->muz ) array_push($ids,$info->muz);
+  if ( $info->zen ) array_push($ids,$info->zen);
+  $note= $info->nazev;
+  // kontrola nepřítomnosti
+  $qp= "SELECT id_pobyt FROM pobyt AS p JOIN spolu AS s USING(id_pobyt)
+        WHERE id_akce=$id_akce AND id_osoba IN (".implode(',',$ids).")";
+  $rp= mysql_qry($qp);
+  $jsou= mysql_num_rows($rp);
+  if ( $jsou ) { // už jsou na akci
+    $ret->msg= "... již jsou mezi účastníky akce";
+  }
+  else {
+    // vložení nového pobytu
+    $rod= $pouze==0 && $info->rod ? $info->rod : 0;
+    $qi= "INSERT pobyt (id_akce,i0_rodina) VALUES ($id_akce,$rod)";
+    $ri= mysql_qry($qi); if ( !$ri ) goto end;
+    $ret->pobyt= mysql_insert_id();
+    // vložení účastníků
+    foreach ($ids as $id) {
+      $qi= "INSERT spolu (id_pobyt,id_osoba,s_role) VALUES ({$ret->pobyt},$id,1)";
+      $ri= mysql_qry($qi); if ( !$ri ) goto end;
+    }
+    $ret->ok= 1;
+    $ret->msg= "... vloženo";
+  }
+end:
+//                                                         debug($ret,"akce2_pridej");
+  return $ret;
+}
 # ---------------------------------------------------------------------------- akce2_pridej_k_pobytu
 # ASK přidání do daného pobytu akce, pokud ještě osoba na akci není
 # spolupracuje s: akce2_auto_jmena1,akce2_auto_jmena1L a číselníky: ms_akce_s_role,ms_akce_dite_kat
@@ -1857,8 +1893,8 @@ function akce2_pridej_k_pobytu($id_akce,$id_pobyt,$info,$cnd='') { trace();
     $role= $info->role;
     $kat= $srole= 0;                                            // host
     // odhad typu účasti podle stáří a role
-    if ( $role=='a' || $info->role=='b' )        $srole= 1;     // účastník
-    elseif ( $role=='p' || $vek>=18 )            $srole= 5;     // osob.peč.
+    if     ( $role=='p' || $vek>=18 )            $srole= 5;     // osob.peč.
+    elseif ( $vek>=18 )                          $srole= 1;     // účastník
     elseif ( $role=='d' && $vek>=17 )            $srole= 6;     // dítě - G
     elseif ( $role=='d' && $vek>=13 ) { $kat= 1; $srole= 2; }   // dítě - A
     elseif ( $role=='d' && $vek>=3 )  { $kat= 3; $srole= 2; }   // dítě - C

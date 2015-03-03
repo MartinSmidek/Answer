@@ -2554,8 +2554,8 @@ function data_import_pecouni($par) { trace();
           $fce= $fce=='' ? 0 : ($fce=='V' ? 1 : 7);
           mysql_qry("INSERT INTO spolu (id_pobyt,id_osoba,pfunkce) VALUE ($id_pobyt,$id_osoba,$fce)");
           $id_spolu= mysql_insert_id();
+          $html.= " - přidán na akci ($id_spolu)";
         }
-        $html.= " - přidán na akci ($id_spolu)";
       }
     }
   }
