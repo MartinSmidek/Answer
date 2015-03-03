@@ -2488,6 +2488,59 @@ function data_update ($tab,$id_tab,$chngs) { trace();
 err: fce_error("ERROR IN: data_update ($tab,$id_tab,$chngs)");
 end: return $updated;
 }
+# ------------------------------------------------------------------------------ data_import_pecouni
+# doplnění dat o pečovatelích pro YS
+# par.file = soubor v docs/ys2
+function data_import_pecouni($par) { trace();
+  global $ezer_path_root, $ezer_path_serv;
+  $err= '';
+  $html= " ";
+  require_once "$ezer_path_serv/licensed/xls2/Classes/PHPExcel.php";
+  // otevření souboru
+  $file= "$ezer_path_root/docs/ys2/doplneni_hadinek.xlsx";
+  $err= ($Excel= PHPExcel_IOFactory::load($file)) ? '' : 'load failed';
+  if ( $err ) goto end;
+  // orientace v souboru
+  $Sheet= $Excel->getActiveSheet();
+  $highestRow= $Sheet->getHighestRow();
+  if ($par->cmd=='test' ) {      # zobrazení jmen 1. pečouna
+    $prijmeni= $Excel->getActiveSheet()->getCellByColumnAndRow(3, 6)->getCalculatedValue();
+    $jmeno= $Sheet->getCell("E6")->getCalculatedValue();
+    $html.= "C3R6=$prijmeni  ;E6=$jmeno; highestRow=$highestRow";
+  }
+  if ($par->cmd=='read'||$par->cmd=='update') { # zobrazení jmen všech pečounů
+    for ($row= 3; $row<=$highestRow; $row++ ) {
+      $rok= $Sheet->getCellByColumnAndRow(1, $row)->getCalculatedValue();
+      if ( !$rok ) continue;
+//       if ( $row==7 ) break;
+      $stav=     $Sheet->getCellByColumnAndRow(0,$row)->getCalculatedValue();
+      if ( $stav==1 ) continue; // už jsme zvládli
+      $prijmeni= $Sheet->getCellByColumnAndRow(3,$row)->getCalculatedValue();
+      $jmeno=    $Sheet->getCellByColumnAndRow(4,$row)->getCalculatedValue();
+      $funkce=   $Sheet->getCellByColumnAndRow(5,$row)->getCalculatedValue();
+      $narozeni= $Sheet->getCellByColumnAndRow(6,$row)->getCalculatedValue();
+      // pokus lokalizovat osobu
+      $ro= mysql_qry("SELECT id_osoba FROM osoba
+        WHERE deleted='' AND prijmeni='$prijmeni' AND jmeno='$jmeno' AND narozeni='$narozeni' ");
+      $n= mysql_num_rows($ro);
+      $o= mysql_fetch_object($ro);
+      // zpráva
+      $html.= "<br>$n: ".sta_ukaz_osobu($o->id_osoba)." $prijmeni $jmeno $narozeni ($funkce)";
+      // případně zápis
+      if ( $par->cmd=='update' ) {
+        $Sheet->setCellValueByColumnAndRow(0,$row,$n);
+        $html.= " - zapsáno";
+      }
+    }
+  }
+  if ( $par->cmd=='update' ) {
+    $err.= ($Writer= PHPExcel_IOFactory::createWriter($Excel, 'Excel2007'))  ? '' : 'writer failed';
+    if ( $err ) goto end;
+    $Writer->save($file);
+  }
+end:
+  return ($err?"$err<hr>":'').$html;
+}
 # ----------------------------------------------------------------------------------- data_transform
 # transformace na schema 2014
 # par.cmd = seznam transformací

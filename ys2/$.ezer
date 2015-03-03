@@ -54,6 +54,17 @@ menu ys2 { type:'main', active:*, _sys:'*', title:'y2'
             info.fill('',ask('data_transform',i.par));
           }
         }
+        menu {title:'Transformace 2015',type:'group', _sys:'*'
+          item {title:'pečouni: doplnění Hadinek/test'   ,par:°{cmd:'test',confirm:'0'}}
+          item {title:'pečouni: doplnění Hadinek/read'   ,par:°{cmd:'read',confirm:'0'}}
+          item {title:'pečouni: doplnění Hadinek/update' ,par:°{cmd:'update',confirm:'1'}}
+          proc onclick (i) {
+            info.fill(conc(i.owner.title,' - ',i.title),' ');
+            { not(i.par.confirm) | confirm("spustit doplnění databáze?") };
+            info.fill('',' ... probíhá doplnění dat ...');
+            info.fill('',ask('data_import_pecouni',i.par));
+          }
+        }
       }
       use info: form right [12,4,,]
     }
