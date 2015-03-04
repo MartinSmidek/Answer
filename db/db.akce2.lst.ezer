@@ -111,7 +111,7 @@ menu m {type:'left', format:'f+'
 proc akce_roku(rok) {
   page.init_page;
   [ eq(the_source.get,'google');
-    { gt(rok,2010);  // intranet YS obsahuje akce od roku 2010 (ale 2010 jw nutné doplnit)
+    { gt(rok,2009);  // intranet YS obsahuje akce od roku 2010 včetně
       info.google.browse_load(conc("g_kat='a' AND g_rok=",rok),
       '','','','','',
       conc('SET @curr:=',the_duakce.get));
