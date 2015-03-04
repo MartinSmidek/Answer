@@ -4,7 +4,8 @@
 #                                                                                                  #
 # Ans(w)er/Ezer                                     (c) 2007-2014 Martin Šmídek <martin@smidek.eu> #
 # ------------------------------------------------------------------------------------------------ #
-# ----------------------------------------------------------------------------------- globální jména
+
+# --------------------------------------------------------------------------------==> globální jména
 # načtení rodiny a osoby
 # stačí udat jedno z nich - osoba musí být udané členem rodiny
 
@@ -15,13 +16,13 @@ proc evid_rodina(_idr) { panel.focus; m.r.a.click(0,1); lst.seek_rodina(_idr,m.o
 
 proc osoby_show()       { page.oso.show_osoba(1); }     // obnova údajů o osobě  (z konfigurace)
 proc rodina_show()      { page.rod.show_rodina; }       // obnova údajů o rodině (z konfigurace)
-# ------------------------------------------------------------------------------------- inicializace
+# ----------------------------------------------------------------------------------==> inicializace
 proc onfirstfocus() {
   osoba_config.start; rodina_config.start;
   lst.start; page.start; cmd.start; }
 proc up(x)   { x.get.set_css('shift_up','shift_down'); x.set_css('shift_up','shift_down','.*') }
 proc down(x) { x.get.set_css('shift_down','shift_up'); x.set_css('shift_down','shift_up','.*') }
-# --------------------------------------------------------------------------------------------- menu
+# ------------------------------------------------------------------------------------------==> menu
 var menu_item=0
 var menu_par=0
 menu m {type:'left', active:*, format:'f-'
@@ -104,7 +105,7 @@ const min_h=395           // minimální výška (nelze jednoduše měnit - jsou
 use lst:  form _lst  [0,0,,]
 use page: form _page [370,10,,]
 use cmd:  form _cmd  [370,min_h-120,,]
-# ============================================================================================= _lst
+# ============================================================================================> _lst
 form _lst [,,370,*] {
   # ---------------------------------------------- interface
   proc load_osoba(_ido) {                       // zobrazí rodinu v kontextu všech
@@ -177,7 +178,7 @@ form _lst [,,370,*] {
   # ---------------------------------------------- společné prvky
   label [10,2,347,25] { css:'ae_work' }
   label tit [16,8,137,14] { format:'r', css:'frame_label_big' }
-  # ============================================== H - HISTORIE ZMĚN OSOB
+  # ==============================================> H - HISTORIE ZMĚN OSOB
   var bh_cnd=1, bh_filtr=1
   proc bh_reload(cnd) { echo("bh_reload ",virgin.get);
     [ virgin.get; start ];
@@ -206,7 +207,7 @@ form _lst [,,370,*] {
     show [,,20,] { title:"změn", expr:"COUNT(*)", help:'celkem změn v daném období', format:'rq*s' }
     proc onrowclick() { idh.set(id_o.get); page.evid_load(idh.get,0); }
   }
-  # ============================================== F - HISTORIE ZMĚN RODIN
+  # ==============================================> F - HISTORIE ZMĚN RODIN
   var bf_cnd=1, bf_filtr=1
   proc bf_reload(cnd) { echo("bf_reload ",virgin.get);
     [ virgin.get; start ];
@@ -235,7 +236,7 @@ form _lst [,,370,*] {
     show [,,20,] { title:"změn", expr:"COUNT(*)", help:'celkem změn v daném období', format:'rq*s' }
     proc onrowclick() { idf.set(id_r.get); page.evid_load(0,idf.get); }
   }
-  # ============================================== X - ÚPRAVY OSOB
+  # ==============================================> X - ÚPRAVY OSOB
   var bx_cnd=1, bx_filtr=1, bx_having=1, bx_mode='k'
   proc bx_reload(cnd) { echo("bx_reload ",virgin.get);
     [ virgin.get; start ];
@@ -287,7 +288,7 @@ form _lst [,,370,*] {
 
     proc onrowclick() { idx.set(id_o.get); page.evid_load(idx.get,0); }
   }
-  # ============================================== Z - NEJEDNOZNAČNÉ OSOBY
+  # ==============================================> Z - NEJEDNOZNAČNÉ OSOBY
   var bz_cnd=1
   proc bz_reload(cnd) {
     [ virgin.get; start ];
@@ -314,7 +315,7 @@ form _lst [,,370,*] {
 
     proc onrowclick() { idz.set(id_o.get); page.evid_load(idz.get,0); }
   }
-  # ============================================== Y - NEJEDNOZNAČNÉ RODINY
+  # ==============================================> Y - NEJEDNOZNAČNÉ RODINY
   var by_cnd=1
   proc by_reload(cnd) {
     [ virgin.get; start ];
@@ -338,7 +339,7 @@ form _lst [,,370,*] {
 
     proc onrowclick() { idy.set(id_r.get); page.evid_load(0,idy.get); }
   }
-  # ============================================== O - OSOBY
+  # ==============================================> O - OSOBY
   var bo_cnd=1, bo_filtr= 1, bo_having= 1
   proc bo_reload(cnd) {
     [ virgin.get; start ];
@@ -383,7 +384,7 @@ form _lst [,,370,*] {
     |             mail.width(44); _id_o.width(0)
     }
   }
-  # ============================================== R - RODINY
+  # ==============================================> R - RODINY
   var br_cnd=1, br_filtr= 1, br_having= 1
   proc br_reload(cnd) {
     [ virgin.get; start ];
@@ -421,7 +422,7 @@ form _lst [,,370,*] {
     }
   }
 }
-# ============================================================================================ _page
+# ===========================================================================================> _page
 # formulář se záložkami
 form _page {
   # ---------------------------------------------- interface
@@ -492,7 +493,7 @@ form _page {
     ];
     cmd.r_smaz.display(not(page.rod.r_deleted.get)); cmd.r_obnov.display(page.rod.r_deleted.get);
   }
-  # ---------------------------------------------- záložky
+  # ----------------------------------------------==> záložky
   var curr:object                               // aktuální záložka
   proc cvak(i) {
     form.set_css('ae_butt_off','ae_butt_on','_'); i.set_css('ae_butt_on','ae_butt_off');
@@ -507,7 +508,7 @@ form _page {
     proc onclick() { cvak(this); osoba_load }}
   label frame [0,16,706,min_h-150] { css:'ae_work'
     proc onclick() { cmd.get.set_css('shift_down','shift_up') }}
-  # ============================================== C: EVIDENCE RODINY
+  # ==============================================> C: EVIDENCE RODINY
   view r: table rodina
   use rod: form _rodina2p [5,20,,] { tag:'Cf'   // view r:rodina
     proc on_click() { up(page.oso); up(page.rod); down(page.dar) }
@@ -540,7 +541,7 @@ form _page {
       osoba_load
     }
   }
-  # ============================================== O: EVIDENCE OSOBY
+  # ==============================================> O: EVIDENCE OSOBY
   use oso: form _osoba2x  [200,20,,] { tag:'O'  // view o:osoba
     proc on_click() { up(page.oso); up(page.rod); down(page.dar) }
     proc onchanged() { page.d_change('o') }
@@ -548,13 +549,13 @@ form _page {
       item { title:'EVID konfigurace formuláře', proc onclick () { osoba_config.tune(panel) } }
     }
   }
-  # ============================================== B: ÚČASTI OSOBY
+  # ==============================================> B: ÚČASTI OSOBY
   use act: form _aktivity [450, 20,,]  { tag:'B', format:'n' }
-  # ============================================== F: FOTKY
+  # ==============================================> F: FOTKY
   use alb: form foto._alb [200, 20,,]  { tag:'F', format:'n' }
-  # ============================================== D: DARY
+  # ==============================================> D: DARY
   use dar: form _dary     [  5,-57,,]  { tag:'D', format:'n' }
-  # ============================================== KONTEXTOVÉ MENU
+  # ==============================================> KONTEXTOVÉ MENU
   menu ctx { type:'context', join:frame
     item { title:'sjednotit kopie osob', skill:'fad|fad;yad|yad'
       proc onclick () { elim.osoby(ido.get,oso.jmeno.get,oso.prijmeni.get); }} //lst.refresh2 } }
@@ -581,7 +582,7 @@ form _page {
 #       elim.rodiny(idr.get,rod.rodiny.get)
 #   }}
 }
-# -------------------------------------------------------------------------------------------- _dary
+# -----------------------------------------------------------------------------------------==> _dary
 form _dary [,,440,min_h-160] {css:'ae_frame shift_down'
   proc onclick() { up(page.dar); down(page.oso); down(page.rod) }
   label frame [2,3,78,] { css:'frame_label_up', title:'přehled darů - '}
@@ -668,7 +669,7 @@ form _dary [,,440,min_h-160] {css:'ae_frame shift_down'
       refresh
   }}
 }
-# ---------------------------------------------------------------------------------------- _aktivity
+# -------------------------------------------------------------------------------------==> _aktivity
 form _aktivity [,,248,min_h-160] {css:'ae_frame shift_up'
   view a: table akce
   view p: table pobyt { join:'ON a.id_duakce=p.id_akce' }
@@ -701,7 +702,7 @@ form _aktivity [,,248,min_h-160] {css:'ae_frame shift_up'
     akc.browse_load(conc('a.spec=0 AND s.id_osoba=',_ido),"datum_od DESC")
   }
 }
-# ============================================================================================= _cmd
+# ============================================================================================> _cmd
 # změny v evidenci
 form _cmd [,,706,32] { css:'ae_frame'
   # ---------------------------------------------- stav a inicializace
@@ -744,7 +745,7 @@ form _cmd [,,706,32] { css:'ae_frame'
     'page',{ page.refresh },
     'lst', { lst.refresh });
   }
-  // ZPĚT
+  // ZPĚT  @ToDo doplnit
   label  [0,0,136,30] { css:'ae_parm', skill:'yaa+;faa+;caa+' }
   button [7,6,,] {tag:'s', type:'html', title:'[fa-undo] Zpět',  help:'Neměnit změněná data', skill:'yaa+|yaa+;faa+|faa+;caa+|caa+'
     proc onclick() { reload('curr') } }
@@ -881,7 +882,7 @@ form _cmd [,,706,32] { css:'ae_frame'
       warning(ret.html); reload('lst')
   }}
 }
-# ================================================================================= Přidání jménem 1
+# ================================================================================> Přidání jménem 1
 var pall: object
 proc rodina_add(p,i) {  // používá panel PridaniJmenem1
   var ret: object

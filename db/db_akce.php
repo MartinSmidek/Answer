@@ -2510,7 +2510,9 @@ function data_import_pecouni($par) { trace();
   }
   if ($par->cmd=='read'||$par->cmd=='join'||$par->cmd=='update') { # zobrazení jmen všech pečounů
     $last_kod= -1;
-    for ($row= 3; $row<=$highestRow; $row++ ) {
+    $row0= 0;
+    //$row0= 133    ;
+    for ($row= $row0; $row<=$highestRow; $row++ ) {
       $rok= $Sheet->getCellByColumnAndRow(1, $row)->getCalculatedValue();
       $kod= $Sheet->getCellByColumnAndRow(2, $row)->getCalculatedValue();
       if ( !$rok ) continue;
@@ -2529,7 +2531,7 @@ function data_import_pecouni($par) { trace();
       $prijmeni= $Sheet->getCellByColumnAndRow(3,$row)->getCalculatedValue();
       $jmeno=    $Sheet->getCellByColumnAndRow(4,$row)->getCalculatedValue();
       $funkce=   $Sheet->getCellByColumnAndRow(5,$row)->getCalculatedValue();
-      $narozeni= $Sheet->getCellByColumnAndRow(6,$row)->getCalculatedValue();
+      $narozeni= $Sheet->getCellByColumnAndRow(6,$row)->getFormattedValue();
       // pokus lokalizovat osobu
       $ro= mysql_qry("SELECT id_osoba FROM osoba
         WHERE deleted='' AND prijmeni='$prijmeni' AND jmeno='$jmeno' AND narozeni='$narozeni' ");
@@ -7097,7 +7099,7 @@ function akce_roku_update($rok) {  trace();
     // zrušení daného roku v GAKCE
     $qry= "DELETE FROM g_akce WHERE g_rok=$rok";
     $res= mysql_qry($qry);
-    // výběr a-záznamů a zápis do GAKCE
+    // výběr a-záznamů a zápis do G_AKCE
     $values= ''; $del= '';
     for ($i= 1; $i<$max_n; $i++) {
       $kat= $cells['A'][$i];
