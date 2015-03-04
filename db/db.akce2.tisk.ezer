@@ -309,6 +309,10 @@ menu m {type:'left', active:*
                                         ,par:°{typ:'d',exp:'Excel',cnd:'1'
                                         ,tit:'příjmení:15,jméno:15,narození:12,obec:25,psč:7,ulice:25,telefon:20,e-mail:30'
                                         ,fld:'prijmeni,jmeno,narozeni,obec,psc,ulice,telefon,email'}}
+    item {title:'Pečouni - formace'                                                                     skill:'y'
+                                        ,par:°{typ:'d',exp:'Excel',cnd:'1'
+                                        ,tit:'příjmení:15,jméno:15,narození:12,obec:25,školení:25,služba:25,reflexe:25,^' //,(18 v roce):15,^'
+                                        ,fld:'prijmeni,jmeno,narozeni,obec,_skoleni,_sluzba,_reflexe,^id_osoba'}}         //,_18,^id_osoba'}}
     item {title:'Pečouni s poznámkami'                                                                  skill:'y;f'
                                         ,par:°{typ:'d',exp:'Excel',cnd:'1'
                                         ,tit:'příjmení:15,jméno:15,narození:12,/rč:5,obec:25,psč:7,ulice:25,telefon:20,e-mail:30,funkce:10,poznámky:30'
