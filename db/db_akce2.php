@@ -286,7 +286,7 @@ function tisk_sestava($akce,$par,$title,$vypis,$export=false) {
 //      : ( $par->typ=='ve' ? akce_text_eko($akce,$par,$title,$vypis,$export)
 //      : ( $par->typ=='sk' ? akce_skupinky($akce,$par,$title,$vypis,$export)
 //      : ( $par->typ=='sd' ? akce_skup_deti($akce,$par,$title,$vypis,$export)
-//      : ( $par->typ=='d'  ? akce_sestava_pecouni($akce,$par,$title,$vypis,$export)
+     : ( $par->typ=='d'  ? akce2_sestava_pecouni($akce,$par,$title,$vypis,$export)
 //      : ( $par->typ=='fs' ? akce_fotoseznam($akce,$par,$title,$vypis,$export)
 //      : ( $par->typ=='fx' ? akce_sestava_spec($akce,$par,$title,$vypis,$export)
 //      : ( $par->typ=='fp' ? akce_sestava_pred($akce,$par,$title,$vypis,$export)
@@ -294,8 +294,8 @@ function tisk_sestava($akce,$par,$title,$vypis,$export=false) {
 //      : ( $par->typ=='cz' ? akce_cerstve_zmeny($akce,$par,$title,$vypis,$export)
      : (object)array('html'=>"<i>Tato sestava zatím není převedena do nové verze systému,
           <a href='mailto:martin@smidek.eu'>upozorněte mě</a>, že ji už potřebujete</i>")
-//        ))))))))))))))))
-     ))));
+//        )))))))))))))))
+     )))));
 }
 # ----------------------------------------------------------------------------------------- tisk_qry
 # frekventované SQL dotazy s parametry
@@ -1076,6 +1076,66 @@ function akce2_strava_pary($akce,$par,$title,$vypis,$export=false,$id_pobyt=0) {
   }
   return $result;
 }
+# ---------------------------------------------------------------------------- akce2_sestava_pecouni
+# generování sestavy pro účastníky $akce - pečouny
+#   $fld = seznam položek s prefixem
+#   $cnd = podmínka
+function akce2_sestava_pecouni($akce,$par,$title,$vypis,$export=false) { trace();
+  $result= (object)array();
+  $typ= $par->typ;
+  $tit= $par->tit;
+  $fld= $par->fld;
+  $cnd= $par->cnd;
+  $ord= $par->ord ? $par->ord : "CONCAT(o.prijmeni,' ',o.jmeno)";
+  $html= '';
+  $href= '';
+  $n= 0;
+  // dekódování parametrů
+  $tits= explode(',',$tit);
+  $flds= explode(',',$fld);
+  // číselníky
+  $pfunkce= map_cis('ms_akce_pfunkce','zkratka');  $pfunkce[0]= '?';
+  // získání dat - podle $kdo
+  $clmn= array();
+  $expr= array();       // pro výrazy
+  // data akce
+  $rel= '';
+  $rel= "-YEAR(narozeni)";
+  $qry= " SELECT o.prijmeni,o.jmeno,o.narozeni,o.rc_xxxx,o.ulice,o.psc,o.obec,o.telefon,o.email,
+            id_osoba,s.skupinka as skupinka,s.pfunkce,
+            IF(o.note='' AND s.poznamka='','',CONCAT(o.note,' / ',s.poznamka)) AS _poznamky,
+            GROUP_CONCAT(DISTINCT g_kod) AS _akce,
+            GROUP_CONCAT(IF(g_kod IN (421,422,423),YEAR(xa.datum_od)$rel,'') ORDER BY xa.datum_od DESC SEPARATOR ' ') AS _skoleni,
+            GROUP_CONCAT(IF(g_kod IN (412),YEAR(xa.datum_od)$rel,'') ORDER BY xa.datum_od DESC SEPARATOR ' ') AS _sluzba,
+            GROUP_CONCAT(IF(g_kod IN (424,425),YEAR(xa.datum_od)$rel,'') ORDER BY xa.datum_od DESC SEPARATOR ' ') AS _reflexe,
+            YEAR(narozeni)+18 AS _18
+          FROM pobyt AS p
+          JOIN spolu AS s USING (id_pobyt)
+          JOIN osoba AS o USING (id_osoba)
+          JOIN akce  AS a ON a.id_duakce=p.id_akce
+          JOIN spolu AS xs USING (id_osoba)
+          JOIN pobyt AS xp ON xp.id_pobyt=xs.id_pobyt AND xp.funkce=99
+          JOIN akce  AS xa ON xa.id_duakce=xp.id_akce AND YEAR(xa.datum_od)<=YEAR(a.datum_od)
+          JOIN join_akce AS xg ON xg.id_akce=xp.id_akce
+          WHERE p.funkce=99 AND p.id_akce='$akce' AND $cnd
+          GROUP BY id_osoba
+          ORDER BY $ord";
+  $res= mysql_qry($qry);
+  while ( $res && ($x= mysql_fetch_object($res)) ) {
+    $n++;
+    $clmn[$n]= array();
+    foreach($flds as $f) {
+      switch ($f) {
+      case 'pfunkce':   $clmn[$n][$f]= $pfunkce[$x->$f]; break;
+//       case '^id_osoba': $clmn[$n][$f]= "<td style='text-align:right'>".sta_ukaz_osobu($x->id_osoba)."</td>"; break;
+      case '^id_osoba': $clmn[$n][$f]= $x->id_osoba; break;
+      default:          $clmn[$n][$f]= $x->$f;
+      }
+    }
+  }
+//                                         debug($clmn,"sestava pro $akce,$typ,$fld,$cnd");
+  return sta_table($tits,$flds,$clmn,$export);
+}
 /** ===================================================================================== STATISTIKA **/
 # ----------------------------------------------------------------------------------- sta_ukaz_osobu
 # zobrazí odkaz na osobu v evidenci
@@ -1260,7 +1320,7 @@ function sta_table($tits,$flds,$clmn,$export=false) {  trace();
     foreach ($clmn as $i=>$c) {
       $tab.= "<tr>";
       foreach ($flds as $f) {
-        if ( $f=='id_osoba' )
+        if ( $f=='id_osoba' || $f=='^id_osoba' )
           $tab.= "<td style='text-align:right'>".sta_ukaz_osobu($c[$f])."</td>";
         elseif ( $f=='^id_pobyt' )
           $tab.= "<td style='text-align:right'>".sta_ukaz_pobyt($c['^id_pobyt'])."</td>";

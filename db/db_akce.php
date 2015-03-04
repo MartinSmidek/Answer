@@ -2510,8 +2510,8 @@ function data_import_pecouni($par) { trace();
   }
   if ($par->cmd=='read'||$par->cmd=='join'||$par->cmd=='update') { # zobrazení jmen všech pečounů
     $last_kod= -1;
-    $row0= 0;
-    //$row0= 133    ;
+    $row0= 4;
+//     $row0= 98    ;
     for ($row= $row0; $row<=$highestRow; $row++ ) {
       $rok= $Sheet->getCellByColumnAndRow(1, $row)->getCalculatedValue();
       $kod= $Sheet->getCellByColumnAndRow(2, $row)->getCalculatedValue();
@@ -2531,7 +2531,11 @@ function data_import_pecouni($par) { trace();
       $prijmeni= $Sheet->getCellByColumnAndRow(3,$row)->getCalculatedValue();
       $jmeno=    $Sheet->getCellByColumnAndRow(4,$row)->getCalculatedValue();
       $funkce=   $Sheet->getCellByColumnAndRow(5,$row)->getCalculatedValue();
-      $narozeni= $Sheet->getCellByColumnAndRow(6,$row)->getFormattedValue();
+      $narozeni= $Sheet->getCellByColumnAndRow(6,$row)->getCalculatedValue();
+      $narozeni= PHPExcel_Style_NumberFormat::toFormattedString($narozeni,'yyyy-mm-dd');
+      if ( strpos($narozeni,'.') ) {
+        $narozeni= sql_date1($narozeni,1);
+      }
       // pokus lokalizovat osobu
       $ro= mysql_qry("SELECT id_osoba FROM osoba
         WHERE deleted='' AND prijmeni='$prijmeni' AND jmeno='$jmeno' AND narozeni='$narozeni' ");
@@ -2541,7 +2545,7 @@ function data_import_pecouni($par) { trace();
       // zpráva
       $html.= $n==1
             ? "<br>$n: ".sta_ukaz_osobu($id_osoba)." <b>$prijmeni $jmeno $narozeni</b> ($funkce)"
-            : "<br>$n: ".sta_ukaz_osobu($id_osoba)." $prijmeni $jmeno $narozeni ($funkce)";
+            : "<br>$n: ".sta_ukaz_osobu($id_osoba,'red')." $prijmeni $jmeno $narozeni ($funkce)";
       // případně zápis
       if ( $par->cmd=='update' ) {
         $Sheet->setCellValueByColumnAndRow(0,$row,$n);
