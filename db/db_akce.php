@@ -2509,27 +2509,34 @@ function data_import_pecouni($par) { trace();
     $html.= "C3R6=$prijmeni  ;E6=$jmeno; highestRow=$highestRow";
   }
   if ($par->cmd=='read'||$par->cmd=='join'||$par->cmd=='update') { # zobrazení jmen všech pečounů
-    $last_kod= -1;
+    $last_ida= -1;
     $row0= 4;
-//     $row0= 98    ;
+//     $row0= 518 ;
+    $mezera= 0; $note= '';
     for ($row= $row0; $row<=$highestRow; $row++ ) {
       $rok= $Sheet->getCellByColumnAndRow(1, $row)->getCalculatedValue();
-      $kod= $Sheet->getCellByColumnAndRow(2, $row)->getCalculatedValue();
-      if ( !$rok ) continue;
-      if ( $par->cmd=='join' && $kod != $last_kod ) {
-        $id_akce= select("id_akce","join_akce","g_rok=$rok AND g_kod=$kod");
-        if ( !$id_akce ) { $err.= "akce s kódem $kod/$rok není v AKCE"; goto end; }
-        $id_pobyt= select("id_pobyt","pobyt","id_akce=$id_akce AND funkce=99");
-        if ( !$id_pobyt ) {
-          mysql_qry("INSERT INTO pobyt (id_akce,funkce) VALUE ($id_akce,99)");
-          $id_pobyt= mysql_insert_id();
+      $ida= $Sheet->getCellByColumnAndRow(2, $row)->getCalculatedValue();
+      $prijmeni= $Sheet->getCellByColumnAndRow(3,$row)->getCalculatedValue();
+      $jmeno=    $Sheet->getCellByColumnAndRow(4,$row)->getCalculatedValue();
+      if ( !$rok ) { $mezera++; if ( $prijmeni||$jmeno ) $note= "$prijmeni $jmeno"; continue; }
+      if ( $mezera ) { $html.= "<hr>"; if ( $note ) $html.= "<b>$note</b>"; $note= ''; }
+      $mezera= 0;
+      if ( $ida != $last_ida ) {
+        $last_ida= $ida;
+        if ( $par->cmd=='join' ) {
+          if ( !$ida ) { $err.= "na řádku $row chybí číslo akce"; goto end; }
+          $id_akce= select("id_duakce","akce","YEAR(datum_od)=$rok AND id_duakce=$ida");
+          if ( !$id_akce ) { $err.= "na řádku $row akce s ID=$id není v roce $rok AKCE"; goto end; }
+          $id_pobyt= select("id_pobyt","pobyt","id_akce=$id_akce AND funkce=99");
+          if ( !$id_pobyt ) {
+            mysql_qry("INSERT INTO pobyt (id_akce,funkce) VALUE ($id_akce,99)");
+            $id_pobyt= mysql_insert_id();
+          }
         }
       }
 //       if ( $row==7 ) break;
       $stav=     $Sheet->getCellByColumnAndRow(0,$row)->getCalculatedValue();
-      if ( $stav==1 ) continue; // už jsme zvládli
-      $prijmeni= $Sheet->getCellByColumnAndRow(3,$row)->getCalculatedValue();
-      $jmeno=    $Sheet->getCellByColumnAndRow(4,$row)->getCalculatedValue();
+      if ( $par->cmd=='update' ) continue; // už jsme zvládli
       $funkce=   $Sheet->getCellByColumnAndRow(5,$row)->getCalculatedValue();
       $narozeni= $Sheet->getCellByColumnAndRow(6,$row)->getCalculatedValue();
       $narozeni= PHPExcel_Style_NumberFormat::toFormattedString($narozeni,'yyyy-mm-dd');
