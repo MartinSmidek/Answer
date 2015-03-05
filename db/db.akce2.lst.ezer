@@ -132,7 +132,7 @@ form _page [,,285,500] {
   proc tags(a,on,off) {
     form.set_css('ae_butt_off','ae_butt_on','p');
     a.set_css('ae_butt_on','ae_butt_off');
-    form.display(1,on); form.display(0,off);
+    form.display(0,off); form.display(1,on);
   }
   label inf [ 12,0,80,20] {tag:'p', title:'<b>Info</b>', format:'c', css:'ae_butt_on'
     proc onclick() { tags(this,'inf','cor|cen'); zalozka.set('inf'); show_akce(a_akce.get)
@@ -151,8 +151,8 @@ form _page [,,285,500] {
   proc show_page(id_akce) {
     cen_copy.enable(0); cen_copy.key(0);
     switch(zalozka.get,
-    'inf',{ note.set(ask('akce2_info',id_akce)) },
-    'cor',{ form.load(id_akce);
+    'inf',{ note.set(ask('akce2_info',id_akce)); key_akce.set(id_akce) },
+    'cor',{ form.load(id_akce); key_akce.set(id_akce);
             [ has_skill('f'); soubezna.set(cconc(id_hlavni.get,1,0)) ];
             info.sey.browse_focus },
     'cen',{ form.init; c.browse_load(conc("id_akce=",id_akce)) });
@@ -161,10 +161,11 @@ form _page [,,285,500] {
     page.a_akce.set(0);
     cen_copy.enable(0); cen_copy.key(0);
     form.init;
-    note.set('');
+    note.set(''); key_akce.set(' ');
   }
   # --------------------------- informace
-  label note [10,25,283,193] { tag:'inf', title:'', style:'color:black;font-size:12px' }
+  field key_akce [233,25,50,] {tag:'inf,cor', format:'or', css:'Label', style:'color:white', help:' ', tabindex:0 }
+  label note [10,45,283,193] { tag:'inf', title:'', style:'color:black;font-size:12px' }
   label web_href [30,265,264,50] { tag:'inf,web' }
   label [31,210,315,] {tag:'inf,web', title:'<h3>Propagace a dokumentace akce</h3>', skill:'demo|demo'}
   check web [10,240,114,] { tag:'inf,web', title:'svázat s webem', format:'t', skill:'demo|demo',

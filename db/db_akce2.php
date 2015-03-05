@@ -1093,7 +1093,7 @@ function akce2_sestava_pecouni($akce,$par,$title,$vypis,$export=false) { trace()
   // dekódování parametrů
   $tits= explode(',',$tit);
   $flds= explode(',',$fld);
-  // číselníky
+  // číselníky                 akce.druh = ms_akce_typ:pečovatelé=7,kurz=1
   $pfunkce= map_cis('ms_akce_pfunkce','zkratka');  $pfunkce[0]= '?';
   // získání dat - podle $kdo
   $clmn= array();
@@ -1104,10 +1104,13 @@ function akce2_sestava_pecouni($akce,$par,$title,$vypis,$export=false) { trace()
   $qry= " SELECT o.prijmeni,o.jmeno,o.narozeni,o.rc_xxxx,o.ulice,o.psc,o.obec,o.telefon,o.email,
             id_osoba,s.skupinka as skupinka,s.pfunkce,
             IF(o.note='' AND s.poznamka='','',CONCAT(o.note,' / ',s.poznamka)) AS _poznamky,
-            GROUP_CONCAT(DISTINCT g_kod) AS _akce,
-            GROUP_CONCAT(IF(g_kod IN (421,422,423),YEAR(xa.datum_od)$rel,'') ORDER BY xa.datum_od DESC SEPARATOR ' ') AS _skoleni,
-            GROUP_CONCAT(IF(g_kod IN (412),YEAR(xa.datum_od)$rel,'') ORDER BY xa.datum_od DESC SEPARATOR ' ') AS _sluzba,
-            GROUP_CONCAT(IF(g_kod IN (424,425),YEAR(xa.datum_od)$rel,'') ORDER BY xa.datum_od DESC SEPARATOR ' ') AS _reflexe,
+            -- GROUP_CONCAT(DISTINCT g_kod) AS _akce,
+            -- GROUP_CONCAT(IF(g_kod IN (421,422,423),YEAR(xa.datum_od)$rel,'') ORDER BY xa.datum_od DESC SEPARATOR ' ') AS _skoleni,
+            -- GROUP_CONCAT(IF(g_kod IN (412),YEAR(xa.datum_od)$rel,'') ORDER BY xa.datum_od DESC SEPARATOR ' ') AS _sluzba,
+            -- GROUP_CONCAT(IF(g_kod IN (424,425),YEAR(xa.datum_od)$rel,'') ORDER BY xa.datum_od DESC SEPARATOR ' ') AS _reflexe,
+            GROUP_CONCAT(IF(xa.druh=7 AND MONTH(xa.datum_od)<=7,YEAR(xa.datum_od)$rel,'') ORDER BY xa.datum_od DESC SEPARATOR ' ') AS _skoleni,
+            GROUP_CONCAT(IF(xa.druh=1,YEAR(xa.datum_od)$rel,'') ORDER BY xa.datum_od DESC SEPARATOR ' ') AS _sluzba,
+            GROUP_CONCAT(IF(xa.druh=7 AND MONTH(xa.datum_od)>7,YEAR(xa.datum_od)$rel,'') ORDER BY xa.datum_od DESC SEPARATOR ' ') AS _reflexe,
             YEAR(narozeni)+18 AS _18
           FROM pobyt AS p
           JOIN spolu AS s USING (id_pobyt)
@@ -1116,7 +1119,7 @@ function akce2_sestava_pecouni($akce,$par,$title,$vypis,$export=false) { trace()
           JOIN spolu AS xs USING (id_osoba)
           JOIN pobyt AS xp ON xp.id_pobyt=xs.id_pobyt AND xp.funkce=99
           JOIN akce  AS xa ON xa.id_duakce=xp.id_akce AND YEAR(xa.datum_od)<=YEAR(a.datum_od)
-          JOIN join_akce AS xg ON xg.id_akce=xp.id_akce
+          -- JOIN join_akce AS xg ON xg.id_akce=xp.id_akce
           WHERE p.funkce=99 AND p.id_akce='$akce' AND $cnd
           GROUP BY id_osoba
           ORDER BY $ord";
