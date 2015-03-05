@@ -53,16 +53,16 @@ use info: form right [12,4,,] {
 }
 
 proc onfocus() {
-  [ [ dirty.get | akce_onstart ];
-    eq(the_duakce_local.get,the_duakce.get)
-  | the_duakce_local.set(the_duakce.get);
-    info.msg.set('');
-    info.fill(conc(the_title.get,' / ',the_vypis.get),' ');
-  ];
+  [ dirty.get | akce_onstart ];
+  eq(the_duakce_local.get,the_duakce.get)
+| the_duakce_local.set(the_duakce.get);
+  info.msg.set('');
+  info.fill(conc(the_title.get,' / ',the_vypis.get),' ');
   // volba správné akce a příslušného menu
-  eq(the_soubeh.get,2);
-  the_akce.set(the_hlavni.get); m.display(2,'d'); m.d.i.click
-| the_akce.set(the_duakce.get); m.display(2,'a'); m.n.i.click
+  { eq(the_soubeh.get,2);
+    the_akce.set(the_hlavni.get); m.display(2,'d'); m.d.i.click
+  | the_akce.set(the_duakce.get); m.display(2,'a'); m.n.i.click
+  };
 }
 
 menu m {type:'left', active:*
@@ -311,7 +311,7 @@ menu m {type:'left', active:*
                                         ,fld:'prijmeni,jmeno,narozeni,obec,psc,ulice,telefon,email'}}
     item {title:'Pečouni - formace'                                                                     skill:'y'
                                         ,par:°{typ:'d',exp:'Excel',cnd:'1'
-                                        ,tit:'příjmení:15,jméno:15,narození:12,obec:25,školení:25,služba:25,reflexe:25,^' //,(18 v roce):15,^'
+                                        ,tit:'příjmení:15,jméno:15,narození:12,obec:25,JARO:25,LÉTO:25,PODZIM:25,^' //,(18 v roce):15,^'
                                         ,fld:'prijmeni,jmeno,narozeni,obec,_skoleni,_sluzba,_reflexe,^id_osoba'}}         //,_18,^id_osoba'}}
     item {title:'Pečouni s poznámkami'                                                                  skill:'y;f'
                                         ,par:°{typ:'d',exp:'Excel',cnd:'1'
