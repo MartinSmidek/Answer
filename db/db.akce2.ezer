@@ -42,7 +42,7 @@ proc akce_choose(id_akce) { var a:object
   the_hlavni.set(a.hlavni); the_soubezna.set(a.soubezna); the_cenik.set(a.cenik);
   the_cena.set(a.cena);
 }
-# =========================================================================================== MODULY
+# ==========================================================================================> MODULY
 group foto { include:'onload,db.akce2.foto'
   form _alb {
     proc galery(fotka) {}
@@ -50,7 +50,7 @@ group foto { include:'onload,db.akce2.foto'
 }
 # =========================================================================================== CHLAPI
 # panel chl {type:'right', _sys:'*', title:'Chlapi', include:'onclick,db.akce.chl',skill:'yac;xa' }
-# ============================================================================================= AKCE
+# ============================================================================================> AKCE
 panel lst {type:'right', _sys:'*', title:'[fa-futbol-o] AKCE', include:'onload,db.akce2.lst',skill:'yaa;faa;caa'
   use the_akce: form _the_akce         // zatím nezobrazená data nastavené akce s klíčem id_duakce
   proc akce_work(id) {}                // nastaví akci jako vybranou
@@ -73,7 +73,7 @@ panel pece {type:'plain', _sys:'*', title:'Pečouni', include:'onload,db.akce.pe
 }
 panel tisk [,,,] {type:'right', _sys:'*', title:'Výpisy akce2', include:'onclick,db.akce2.tisk',skill:'yaa;faa;caa'  }
 panel maia {type:'right', title:'Maily akce', _sys:'*', include:'onclick,db.akce2.maia', skill:'yam;fam;cam'  }
-# ========================================================================================= EVIDENCE
+# ========================================================================================> EVIDENCE
 panel evi {type:'right', _sys:'*', title:'[fa-briefcase] EVIDENCE2', include:'onload,db.akce2.evi', skill:'yae;fae;caa',
     style:"overflow-y:hidden"
   proc rodina_show() {}
@@ -88,13 +88,13 @@ panel dop {type:'right', title:'Dopisy', _sys:'*', include:'onclick,db.akce2.dop
 #   title:'&nbsp;.&nbsp;&nbsp;.&nbsp;&nbsp;.&nbsp;&nbsp;.&nbsp;&nbsp;.&nbsp;&nbsp;.&nbsp;&nbsp;.&nbsp;&nbsp;.&nbsp;&nbsp;.&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(duplicity)',
 #   include:'onclick,db.akce.eli', skill:'m;fad' }
 panel sta {type:'right', title:'Výpisy evidence', _sys:'*', include:'onclick,db.akce2.sta', skill:'yaa;faa;cas'  }
-# =========================================================================================== POPUPS
+# ==========================================================================================> POPUPS
 panel elim [0,0,965,582] { type:'popup', title:'Duplicity', format:'c', include:'onload,db.akce2.elim'
   proc osoby  (ido,jmeno,prijmeni) {}           // sjednocení dvou osob
   proc rodiny (idr,nazev) {}                    // sjednocení dvou rodin
   proc cleni  (idr) {}                          // sjednocení členů dané rodiny
 }
-# =========================================================================================== COMMON
+# ==========================================================================================> COMMON
 # ------------------------------------------------------------------ _the_akce
 # zatím nezobrazená data nastavené akce s klíčem id_duakce
 form _the_akce {
@@ -546,7 +546,7 @@ map map_stat:         table _cis {where:"druh='stat'",              order:'porad
 
 # ============================================================================================= TEST
 # panel test {type:'plain', _sys:'*', title:"TEST", include:'onload,db.akce2.test',skill:'m'}
-# ============================================================================================ TRACK
+# ===========================================================================================> TRACK
 # přehled provedených změn
 panel track [,,540,276] { title:'Historie oprav', type:'popup', css:'dialog'
   use back: form _back [0,16,,] { tabindex:20 },
@@ -574,10 +574,10 @@ panel track [,,540,276] { title:'Historie oprav', type:'popup', css:'dialog'
 #     }
   }
 }
-# ================================================================================================== formuláře
+# =======================================================================================> formuláře
 # společné procedury
 proc obligatory(elem) { elem.init; elem.change }
-# ------------------------------------------------------------------------------------------ _osoba2x
+# --------------------------------------------------------------------------------------==> _osoba2x
 panel osoba_config [,,200,150] {type:'popup', title:"Podrobnosti údajů"
   var tit='osobní údaje', grp='ZKAS', var ucast:object
   proc start() { grp.set(get_cookie(conc(sys('root'),'_conf_osoba'),grp.get));
@@ -784,7 +784,7 @@ form _osoba2x [,,244,322] {css:'ae_frame', proc onclick() { on_click }
   // x = upozornění o omezení údajů neúčastníků
   label [5,4,235,] {tag:'x', format:'n', title:'<i>neúčastník má zobrazeny jen identifikační údaje</i>'}
 }
-# ----------------------------------------------------------------------------------------- _rodina2
+# --------------------------------------------------------------------------------------==> _rodina2
 panel rodina_config [,,200,60] {type:'popup', title:"Podrobnosti údajů"
   var tit='osobní údaje', grp='Z', var ucast:object
   proc start() { grp.set(get_cookie(conc(sys('root'),'_conf_rodina'),grp.get));
@@ -944,7 +944,7 @@ form _rodina2 [,,360,229]  { css:'ae_frame'
     rodiny.key(key_rodina.get);
   }
 }
-# ---------------------------------------------------------------------------------------- _rodina2p
+# -------------------------------------------------------------------------------------==> _rodina2p
 form _rodina2p [,,188,229] { css:'ae_frame'
   const Lp=5 // 187
   const Ts=190; Tp=0 // 0

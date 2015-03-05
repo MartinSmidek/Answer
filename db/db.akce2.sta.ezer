@@ -29,6 +29,9 @@ menu m {type:'left', active:*, format:'f+'
     item u {title:'letošní účastníci podle věku'  ,par:°{typ:'ucast-vek',rok:0,xls:'Excel',pdf:0
       ,dsc:'Sestava ukazuje celkový počet účastníků resp. pečovatelů na akcích letošního roku, rozdělený podle věku. <br>Účastník resp. pečovatel je započítán jen jednou, bez ohledu na počet akcí, jichž se zúčastnil.<br>'
       ,tit:'věk:4,účastníků:10,pečovatelů:10',fld:'_vek,_uca,_pec',ord:'_vek'}}
+    item  {title:'Letní kurzy MS a pečovatelé'  ,par:°{typ:'ms-pecouni',rok:0,xls:'Excel',pdf:0
+      ,dsc:'Sestava ukazuje letní kurzy s počtem pečovatelů a jejich proškolením<br>'
+      ,tit:'rok:5,pečounů:5,proškolených:5,=%:5,poznámka:20',fld:'_rok,_pec,_sko,_proc,_note',ord:'_rok DESC'}}
   }
   proc onclick (i) { var ret: object
     menu_item.set(i); menu_par.set(i.par);

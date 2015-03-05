@@ -747,7 +747,6 @@ function tisk_vyp_excel($akce,$par,$title,$vypis,$tab=null) {  trace();
   $title= str_replace('&nbsp;',' ',$title);
   if ( !$tab )
     $tab= tisk_sestava($akce,$par,$title,$vypis,true);
-//                                         debug($tab,"akce_sestava($akce,...)"); return;
   // vlastní export do Excelu
   $name= cz2ascii("vypis_").date("Ymd_Hi");
   $xls= <<<__XLS
@@ -804,6 +803,7 @@ __XLS;
         if ( isset($fmt[$A]) ) {
           switch ($fmt[$A]) {
           // aplikace formátů
+          case 'l':                      $format.= ' left'; break;
           case 'd': $val= sql2xls($val); $format.= ' right date'; break;
           }
         }
@@ -1090,27 +1090,33 @@ function akce2_sestava_pecouni($akce,$par,$title,$vypis,$export=false) { trace()
   $html= '';
   $href= '';
   $n= 0;
-  // dekódování parametrů
-  $tits= explode(',',$tit);
-  $flds= explode(',',$fld);
   // číselníky                 akce.druh = ms_akce_typ:pečovatelé=7,kurz=1
   $pfunkce= map_cis('ms_akce_pfunkce','zkratka');  $pfunkce[0]= '?';
   // získání dat - podle $kdo
   $clmn= array();
   $expr= array();       // pro výrazy
+  _akce2_sestava_pecouni($clmn,$akce,$fld,$cnd,$ord);
+  // dekódování parametrů
+  $flds= explode(',',$fld);
+  $tits= explode(',',$tit);
+  return sta_table($tits,$flds,$clmn,$export);
+}
+# --------------------------------------------------------------------------- _akce2_sestava_pecouni
+# výpočet pro generování sestavy pro účastníky $akce - pečouny a pro statistiku
+function _akce2_sestava_pecouni(&$clmn,$akce,$fld='_skoleni,_sluzba,_reflexe',$cnd=1,$ord=1) {
+  $flds= explode(',',$fld);
   // data akce
   $rel= '';
   $rel= "-YEAR(narozeni)";
   $qry= " SELECT o.prijmeni,o.jmeno,o.narozeni,o.rc_xxxx,o.ulice,o.psc,o.obec,o.telefon,o.email,
             id_osoba,s.skupinka as skupinka,s.pfunkce,
             IF(o.note='' AND s.poznamka='','',CONCAT(o.note,' / ',s.poznamka)) AS _poznamky,
-            -- GROUP_CONCAT(DISTINCT g_kod) AS _akce,
-            -- GROUP_CONCAT(IF(g_kod IN (421,422,423),YEAR(xa.datum_od)$rel,'') ORDER BY xa.datum_od DESC SEPARATOR ' ') AS _skoleni,
-            -- GROUP_CONCAT(IF(g_kod IN (412),YEAR(xa.datum_od)$rel,'') ORDER BY xa.datum_od DESC SEPARATOR ' ') AS _sluzba,
-            -- GROUP_CONCAT(IF(g_kod IN (424,425),YEAR(xa.datum_od)$rel,'') ORDER BY xa.datum_od DESC SEPARATOR ' ') AS _reflexe,
-            GROUP_CONCAT(IF(xa.druh=7 AND MONTH(xa.datum_od)<=7,YEAR(xa.datum_od)$rel,'') ORDER BY xa.datum_od DESC SEPARATOR ' ') AS _skoleni,
-            GROUP_CONCAT(IF(xa.druh=1,YEAR(xa.datum_od)$rel,'') ORDER BY xa.datum_od DESC SEPARATOR ' ') AS _sluzba,
-            GROUP_CONCAT(IF(xa.druh=7 AND MONTH(xa.datum_od)>7,YEAR(xa.datum_od)$rel,'') ORDER BY xa.datum_od DESC SEPARATOR ' ') AS _reflexe,
+            GROUP_CONCAT(IF(xa.druh=7 AND MONTH(xa.datum_od)<=7,YEAR(xa.datum_od)$rel,'')
+              ORDER BY xa.datum_od DESC SEPARATOR ' ') AS _skoleni,
+            GROUP_CONCAT(IF(xa.druh=1,YEAR(xa.datum_od)$rel,'')
+              ORDER BY xa.datum_od DESC SEPARATOR ' ') AS _sluzba,
+            GROUP_CONCAT(IF(xa.druh=7 AND MONTH(xa.datum_od)>7,YEAR(xa.datum_od)$rel,'')
+              ORDER BY xa.datum_od DESC SEPARATOR ' ') AS _reflexe,
             YEAR(narozeni)+18 AS _18
           FROM pobyt AS p
           JOIN spolu AS s USING (id_pobyt)
@@ -1128,16 +1134,17 @@ function akce2_sestava_pecouni($akce,$par,$title,$vypis,$export=false) { trace()
     $n++;
     $clmn[$n]= array();
     foreach($flds as $f) {
+      // sumáře
       switch ($f) {
       case 'pfunkce':   $clmn[$n][$f]= $pfunkce[$x->$f]; break;
-//       case '^id_osoba': $clmn[$n][$f]= "<td style='text-align:right'>".sta_ukaz_osobu($x->id_osoba)."</td>"; break;
       case '^id_osoba': $clmn[$n][$f]= $x->id_osoba; break;
+      case '_skoleni':
+      case '_sluzba':
+      case '_reflexe':  $clmn[$n][$f]= ' '.trim(str_replace('  ',' ',$x->$f)); break;
       default:          $clmn[$n][$f]= $x->$f;
       }
     }
   }
-//                                         debug($clmn,"sestava pro $akce,$typ,$fld,$cnd");
-  return sta_table($tits,$flds,$clmn,$export);
 }
 /** ===================================================================================== STATISTIKA **/
 # ----------------------------------------------------------------------------------- sta_ukaz_osobu
@@ -1164,6 +1171,30 @@ function sta_sestava($title,$par,$export=false) {
   $expr= array();       // pro výrazy
   // získání dat
   switch ($par->typ) {
+  # Sestava ukazuje ...
+  # fld:'_rok,_pec,_sko,_proc,_note'
+  case 'ms-pecouni': // >> proškolení pečounů během let
+    # _pec,_sko,_proc
+    list($od,$do)= select("MAX(YEAR(datum_od)),MIN(YEAR(datum_od))","akce","druh=1");
+    for ($rok=$od; $rok>=$do; $rok--) {
+      $kurz= select1("id_duakce","akce","druh=1 AND YEAR(datum_od)=$rok");
+      $akci= select1("COUNT(*)","akce","druh=7 AND YEAR(datum_od)=$rok");
+      $akci= $akci ? "$akci školení" : '';
+      // získání dat
+      $data= array();
+      _akce2_sestava_pecouni($data,$kurz);
+      $pecounu= count($data);
+      $skolenych= 0;
+      foreach ($data as $d) {
+//                                                 debug($d);
+        if ( trim($d['_skoleni']) || trim($d['_reflexe']) ) $skolenych++;
+      }
+      $proc= $pecounu ? round(100*$skolenych/$pecounu).'%' : '';
+      // zobrazení výsledků
+      $clmn[]= array('_rok'=>$rok,'_pec'=>$pecounu,'_sko'=>$skolenych,'_proc'=>$proc,'_note'=>$akci);
+//       if ( $rok==2014) break;
+    }
+    break;
   # Sestava ukazuje celkový počet účastníků resp. pečovatelů na akcích letošního roku,
   # rozdělený podle věku. Účastník resp. pečovatel je započítán jen jednou,
   # bez ohledu na počet akcí, jichž se zúčastnil
