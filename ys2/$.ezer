@@ -11,7 +11,7 @@ menu ys2 { type:'main', active:*, _sys:'*', title:'y2'
 ##  tabs chl {title:"Chlapi",  include:'onclick' }
 #   tabs akce {title:"Akce", _sys:'akce', include:'onclick', active:*, skill:'ya' }
 #   tabs db {title:"Databáze", _sys:'db', include:'onclick,db.akce', active:*, skill:'ya' }
-  tabs db2 {title:"Databáze2", _sys:'*', include:'onload,db.akce2', active:*, skill:'test' }
+  tabs db2 {title:"Databáze2", _sys:'*', include:'onload,db.akce2', active:*, skill:'ya' }
 #   tabs lide {title:"Lidé", _sys:'lid', include:'onclick', skill:'yl' }
 
   tabs syst {title:"Systém", _sys:'sys',  include:'onclick,ezer2.syst', active:*
@@ -71,7 +71,7 @@ menu ys2 { type:'main', active:*, _sys:'*', title:'y2'
     }
     panel dat {type:'right', title:"Zálohování", _sys:'*', skill:'m', include:'onclick,ys.syst.dat' }
   }
-  tabs doc  {title:"Nápověda", _sys:'*',  include:'onload,ezer2.help' }
+  tabs doc  {title:"Nápověda", _sys:'*',  include:'onload,ezer2.help', skill:'ah' }
 #   tabs tst {title:"Testy",skill:'m'
 #     panel one {type:'plain', title:'One',
 #       use u: form right

@@ -10,9 +10,24 @@ proc onfirstfocus() {  }
 # --------------------------------------------------------------------------------------------- menu
 var menu_item=0
 var menu_par=0
-menu m {type:'left', active:*, format:'f+'
-  menu l {title:'SEZNAM',type:'group',                                                //  skill:'m'
-    item u {title:'adresy účastníků'  ,par:°{typ:'adresy',rok:0,xls:'Excel',/*pdf:'Štítky',*/parm_tit:'roky zpět:'
+menu m {type:'left', format:'f+' //, active:*
+  menu s {title:'STATISTIKA',type:'group'
+    item {title:'Struktura letních kurzů MS',      skill:'y;m', par:°{old:1,typ:'e-s',xls:'Excel'
+      ,dsc:'Sestava ukazuje počty rodin a jejich dětí s rozlišením na nové, dvouročáky a VPS.<br>'}}
+    item {title:'Letní kurzy MS a pečovatelé'  ,par:°{typ:'ms-pecouni',rok:0,xls:'Excel',pdf:0
+      ,dsc:'Sestava ukazuje přehled letních kurzů s počtem rodin, jejich dětí a pečovatelů.
+        <br>Je uveden počet pečovatelů, kteří se před službou účastnili školení a kolik je z toho nových pečovatelů.
+        <br>V poznámce je počet pořádaných školení a poměr dětí/pečovatele.
+        <br>V počtu školení objeví jen ta, která jsou evidovaná v databázi<br>'
+      ,tit:'rok:5,rodin:5,dětí:5,pečounů:5,školených:5,%:5,nových:5,školených:5,%:5,poznámka:20'
+      ,fld:'_rok,_rodi,_deti,_pec,_sko,_proc,_pecN,_skoN,_procN,_note',ord:'_rok DESC'}}
+    item {title:'Letošní účastníci podle věku'  ,par:°{typ:'ucast-vek',rok:0,xls:'Excel',pdf:0
+      ,dsc:'Sestava ukazuje celkový počet účastníků resp. pečovatelů na akcích letošního roku, rozdělený podle věku.
+        <br>Účastník resp. pečovatel je započítán jen jednou, bez ohledu na počet akcí, jichž se zúčastnil.<br>'
+      ,tit:'věk:4,účastníků:10,pečovatelů:10',fld:'_vek,_uca,_pec',ord:'_vek'}}
+  }
+  menu l {title:'SEZNAMY',type:'group',                                                skill:'yae;fae'
+    item {title:'adresy účastníků'  ,par:°{typ:'adresy',rok:0,xls:'Excel',/*pdf:'Štítky',*/parm_tit:'roky zpět:'
       ,dsc:'Seznam obsahuje účastníky akcí v posledních letech (parametr určuje počet let zpět, default=0 tj. jen letošní).<br>Kliknutí na číslo ve sloupci <b>ID osoby</b> zobrazí první osobu na kartě EVIDENCE.<br>'
       ,tit:'jména:30,ulice:20,psč:6,obec:20,stát:6,(příjmení):15,(aktivní členi):20,(poslední akce):80,(mrop):7,(PPS):7,(akt.členů):11,(ID osoby):10'
       ,fld:'jmena,ulice,psc,obec,stat,prijmeni,_cleni,akce,_mrop,_pps,_clenu,id_osoba',ord:'prijmeni'}}
@@ -25,14 +40,6 @@ menu m {type:'left', active:*, format:'f+'
       ,tit:'jména:30,ulice:20,psč:6,obec:20,stát:6,(příjmení):15,(aktivní členi):20,(poslední akce):80,(mrop):7,(PPS):7,(akt.členů):11,(ID osoby):10'
       ,fld:'jmena,ulice,psc,obec,stat,prijmeni,_cleni,akce,_mrop,_pps,_clenu,id_osoba',ord:'prijmeni',cnd:"_psc!='' AND _stat IN ('','?')"}}
   }
-  menu s {title:'STATISTIKA',type:'group'
-    item u {title:'letošní účastníci podle věku'  ,par:°{typ:'ucast-vek',rok:0,xls:'Excel',pdf:0
-      ,dsc:'Sestava ukazuje celkový počet účastníků resp. pečovatelů na akcích letošního roku, rozdělený podle věku. <br>Účastník resp. pečovatel je započítán jen jednou, bez ohledu na počet akcí, jichž se zúčastnil.<br>'
-      ,tit:'věk:4,účastníků:10,pečovatelů:10',fld:'_vek,_uca,_pec',ord:'_vek'}}
-    item  {title:'Letní kurzy MS a pečovatelé'  ,par:°{typ:'ms-pecouni',rok:0,xls:'Excel',pdf:0
-      ,dsc:'Sestava ukazuje letní kurzy s počtem pečovatelů a jejich proškolením<br>'
-      ,tit:'rok:5,pečounů:5,proškolených:5,=%:5,poznámka:20',fld:'_rok,_pec,_sko,_proc,_note',ord:'_rok DESC'}}
-  }
   proc onclick (i) { var ret: object
     menu_item.set(i); menu_par.set(i.par);
     the_vypis.set(conc(i.owner.title,' - ',i.title));
@@ -41,7 +48,9 @@ menu m {type:'left', active:*, format:'f+'
     [ echo(i.par.parm_tit,info.parm.get); i.par.parm_tit; info.display(1,'p');
       info.parm_tit.set(i.par.parm_tit); menu_par.set(info.parm.get,'parm') | info.display(0,'p') ];
     info.fill(the_vypis.get,i.par.dsc); info.msg.set('');
-    ret.set(ask('sta_sestava',the_vypis.get,menu_par.get));
+    { i.par.old; ret.set(ask('sta_sestava_1',i.par,the_title.get));
+    | not(i.par.old); ret.set(ask('sta_sestava',the_vypis.get,menu_par.get));
+    };
     info.append(ret.html);
   }
 }

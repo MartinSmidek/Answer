@@ -501,12 +501,12 @@ panel PridaniJmenem3 [,,320,280] {type:'popup', title:'Přidání známých peč
     var last: number
     var rod: object
     var popis: text
-    button [0,250,50,16] { title:'přidat do pečounů akce', proc onclick() {
+    button [0,250,,] { title:'přidat do pečounů akce', proc onclick() {
       each(L,pecouni_add); reload(0); panel.hide(0)
     } }
-    button [144,250,50,16] { title:'jiná jména', proc onclick() {
+    button [144,250,,] { title:'jiná jména', proc onclick() {
       jmena.init; vse.init; L.init } }
-    button [230,250,50,16] { title:'konec', proc onclick() {
+    button [230,250,,] { title:'konec', proc onclick() {
       jmena.init; vse.init; L.init; panel.hide(0) } }
     // výběr z databáze MS
     select jmena [100,0,200,17] { type:'auto', format:'t',
@@ -543,12 +543,12 @@ panel PridaniAkce [,,320,280] {type:'popup', title:'Přidání pečounů známý
     var last: number
     var pary: object
     var popis: text
-    button [0,250,50,16] { title:'přidat mezi pečouny', proc onclick() {
+    button [0,250,,] { title:'přidat mezi pečouny', proc onclick() {
       each(L,pecouni_add); reload(0);
     } }
-    button [130,250,50,16] { title:'jiná akce', proc onclick() {
+    button [130,250,,] { title:'jiná akce', proc onclick() {
       akce.init; vse.init; L.init } }
-    button [220,250,50,16] { title:'konec', proc onclick() {
+    button [220,250,,] { title:'konec', proc onclick() {
       akce.init; vse.init; L.init; panel.hide(0) } }
     // výběr z akcí
     select akce [100,0,200,17] { type:'auto', par:°{fce:'akce_auto_pece'}, format:'t'
@@ -599,7 +599,7 @@ panel BackTrace [,,540,250] { title:'histore oprav', type:'popup', css:'dialog'
       show val [,,120,] { title:'změněná hodnota', data:_track.val, format:'t' },
       show id_track [,,0,] { data:_track.id_track },
     },
-    button zpet [500,515,80,20] { title:'Zpět'
+    button zpet [500,515,,] { title:'Zpět'
       proc onclick() { panel.close(0) }
     }
   }

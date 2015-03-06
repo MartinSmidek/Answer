@@ -2511,7 +2511,7 @@ function data_import_pecouni($par) { trace();
   if ($par->cmd=='read'||$par->cmd=='join'||$par->cmd=='update') { # zobrazení jmen všech pečounů
     $last_ida= -1;
     $row0= 4;
-//     $row0= 518 ;
+//     $row0= 983 ;
     $mezera= 0; $note= '';
     for ($row= $row0; $row<=$highestRow; $row++ ) {
       $rok= $Sheet->getCellByColumnAndRow(1, $row)->getCalculatedValue();
@@ -2544,8 +2544,11 @@ function data_import_pecouni($par) { trace();
         $narozeni= sql_date1($narozeni,1);
       }
       // pokus lokalizovat osobu
+      $rok_narozeni= substr($narozeni,0,4);
       $ro= mysql_qry("SELECT id_osoba FROM osoba
-        WHERE deleted='' AND prijmeni='$prijmeni' AND jmeno='$jmeno' AND narozeni='$narozeni' ");
+        WHERE deleted='' AND prijmeni='$prijmeni' AND jmeno='$jmeno' AND YEAR(narozeni)='$rok_narozeni' ");
+//       $ro= mysql_qry("SELECT id_osoba FROM osoba
+//         WHERE deleted='' AND prijmeni='$prijmeni' AND jmeno='$jmeno' AND narozeni='$narozeni' ");
       $n= mysql_num_rows($ro);
       $o= mysql_fetch_object($ro);
       $id_osoba= $o->id_osoba;

@@ -323,7 +323,7 @@ form _cmd [,,623,30] { css:'ae_work'
     'show',{form.enable(0,'s'); form.enable(1,'x')}
   )}
   // ZPĚT
-  label  [1,0,119,30] { css:'ae_parm', skill:'yaa+;faa+;caa+' }
+  label  [1,0,119,30] { css:'ae_parm', skill:'yaa;faa;caa' }
   proc _reload(renew,ido) { // renew=0 vrácení původních dat a zhasnutí warningu, jinak znovunačtení
     set_state('show'); cmd2.set_state2('show');
     evid.evid_plain;
@@ -336,8 +336,7 @@ form _cmd [,,623,30] { css:'ae_work'
     [ ido; ucast.evid.rod.cleni.raise('onrowclick',ido) ];
     mode.set('');
   }
-  button [7,6,,] { tag:'s,z', title:'[fa-undo] Zpět',  help:'Neměnit změněná data',
-                skill:'yaa+|yaa+;faa+|faa+;caa+|caa+'
+  button [7,6,,] { tag:'s,z',title:'[fa-undo] Zpět',help:'Neměnit změněná data',skill:'yaa;faa;caa'
     proc onclick() {
       eq(mode.get,'novy_pobyt'); _reload(0,0);
     | eq(mode.get,'novy_singl'); _reload(0,0);
