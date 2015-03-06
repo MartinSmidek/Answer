@@ -866,6 +866,7 @@ form _rodina2 [,,360,229]  { css:'ae_frame'
   field  rodiny0   [Lr+5,32,104,] {tag:'n', title:"^název nové rodiny", data:r.nazev, format:'n' }
   field  rodiny1   [Lr+5,32,104,] {tag:'m', title:"^oprava názvu rodiny", data:r.nazev, format:'n' }
   select rodiny    [Lr+5,32,104,] {tag:'a', format:'tT', title:"^rodina&nbsp;('-'&nbsp;jednotlivec)",
+    skill:'yaa|yaa+;faa|faa+;caa|caa+'
     help:'výběr rodiny podle nastaveného účastníka a její přiřazení k pobytu',
     proc onchanged() {
       ask('akce_pobyt_rodinny',key_pobyt.get,this.key); zmena_rodiny; }}
@@ -924,7 +925,7 @@ form _rodina2 [,,360,229]  { css:'ae_frame'
     proc onrowclick() {
       neni_ulozen
     | key_rodina.set(idr.get); form.key(idr.get);
-      ucast.part('cmd.novy_clen').enable(key_rodina.get);
+      [ ucast.part('cmd.novy_clen'); ucast.part('cmd.novy_clen').enable(key_rodina.get) ];
       od_svatby;
       show_rodina;
       show_osoby(key_osoba.get,key_spolu.get,cleni);
