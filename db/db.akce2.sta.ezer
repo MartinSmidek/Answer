@@ -12,7 +12,7 @@ var menu_item=0
 var menu_par=0
 menu m {type:'left', format:'f+' //, active:*
   menu s {title:'STATISTIKA',type:'group'
-    item {title:'Struktura letních kurzů MS',      skill:'y;m', par:°{old:1,typ:'e-s',xls:'Excel'
+    item {title:'Struktura letních kurzů MS',      skill:'yae;fae', par:°{old:1,typ:'e-s',xls:'Excel'
       ,dsc:'Sestava ukazuje počty rodin a jejich dětí s rozlišením na nové, dvouročáky a VPS.<br>'}}
     item {title:'Letní kurzy MS a pečovatelé'  ,par:°{typ:'ms-pecouni',rok:0,xls:'Excel',pdf:0
       ,dsc:'Sestava ukazuje přehled letních kurzů s počtem rodin, jejich dětí a pečovatelů.

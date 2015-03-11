@@ -13,6 +13,7 @@ function answer_php($app,$app_name,$db_name,$skin,$js_lib,$css_lib,$options) {
 
   $ezer_local= preg_match('/^\w+\.ezer/',$_SERVER["SERVER_NAME"]); // identifikace ladícího serveru
   $android=    preg_match('/android|x11/i',$_SERVER['HTTP_USER_AGENT']);
+  $ipad=       preg_match('/iPad/i',$_SERVER['HTTP_USER_AGENT']);
   $ezer_ksweb= $android && $_SERVER["SERVER_NAME"]=="localhost"; // identifikace ladícího serveru KSWEB/Android
 
   //$app=      ys/ys2/fa/fa2/cr             // jméno adresáře a hlavního objektu aplikace == $ezer_root!
@@ -63,7 +64,7 @@ function answer_php($app,$app_name,$db_name,$skin,$js_lib,$css_lib,$options) {
     $EZER->version=='ezer2'
     ? array("$licensed/mootools/asset.js","$licensed/mootools/slider.js"):array(),
     // pro Android
-    $android
+    $android || $ipad
     ? array("$licensed/Mslider.js","$licensed/Mdrag.js") : array(),
     // pro verzi 2.2
     $EZER->version=='ezer2.2'
@@ -93,7 +94,9 @@ function answer_php($app,$app_name,$db_name,$skin,$js_lib,$css_lib,$options) {
     $EZER->version=='ezer2.2'
     ? array("$licensed/datepicker/datepicker_vista/datepicker_vista.css"):array(),
     // uživatelské css
-    $css_lib
+    $css_lib,
+    // css pro dotykového klienta
+    $ipad ? array("$client/ipad.css") : array()
   );
 
   global $answer_db;
@@ -109,13 +112,13 @@ function answer_php($app,$app_name,$db_name,$skin,$js_lib,$css_lib,$options) {
       . ($EZER->options->phone ? "případně zavolejte&nbsp;{$EZER->options->phone} " : '')
       . ($EZER->options->skype ? "nebo použijte Skype&nbsp;<a href='skype:{$EZER->options->skype}?chat'>{$EZER->options->skype}</a>" : '')
       . "<br/><br/>Za spolupráci děkuje <br/>{$EZER->options->author}";
+  $menu= "<button id='android_menu' class='fa'><i class='fa fa-bars'></i></button>";
   $pars= (object)array(
 //     'no_local' => true,                // true = nezohledňovat lokální přístup pro watch_key,watch_ip
     'dbg' => $dbg,                     // true = povolit podokno debuggeru v trasování
     'watch_key' => !$ezer_ksweb,       // true = povolit přístup jen po vložení klíče
     'watch_ip' => !$ezer_ksweb,        // true = povolit přístup jen ze známých IP adres
-    'title_right' => "<span$title_style>$app_name</span>"
-                     . ($android ? "<button id='android_menu'><i class='fa fa-bars'></i></button>" : ""),
+    'title_right' => "<span$title_style>$app_name</span>" . ($android || $ipad ? $menu : ""),
     'contact' => $kontakt,
     'CKEditor' => "{
       version:'$CKEditor',

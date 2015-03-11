@@ -3314,13 +3314,15 @@ function akce_pobyt_default($id_pobyt,$zapsat=0) {  trace();
     $fce= $o->funkce;
     $vek= narozeni2roky(sql2stamp($o->narozeni),sql2stamp($o->datum_od));
     $msg.= " {$o->jmeno}:$vek";
-    if ( !$o->s_role && $o->dite_kat ) {
+    if ( in_array($o->s_role,array(2,3,4)) && $o->dite_kat ) {
       // pokud je definována kategorie podle _cis/ms_akce_dite_kat ALE dítě není pečoun
       $dite++;
       list($spani,$strava)= explode(',',$ms_akce_dite_kat[$o->dite_kat]);
+      // lůžka
       if ( $spani=='L' )      $luzka++;
       elseif ( $spani=='-' )  $bez++;
       else $err+= "chybná kategorie dítěte";
+      // strava
       if ( $strava=='c' )     $cela++;
       elseif ( $strava=='p' ) $polo++;
       else $err+= "chybná kategorie dítěte";
@@ -3344,7 +3346,7 @@ function akce_pobyt_default($id_pobyt,$zapsat=0) {  trace();
   //                    'strava_cel'=>$dosp,'strava_pol'=>$deti,'vzorec'=>$fce);
   $ret= (object)array('luzka'=>$luzka,'kocarek'=>$bez,'pocetdnu'=>$noci,'svp'=>$svp,
                       'strava_cel'=>$cela,'strava_pol'=>$polo,'vzorec'=>$fce);
-//                                                 debug($ret,"osob:$koje,$deti,$dosp $msg fce=$fce");
+                                                debug($ret,"osob:$koje,$deti,$dosp $msg fce=$fce");
   return $ret;
 }
 # --------------------------------------------------------------------------------- akce_vzorec_test
@@ -7334,6 +7336,7 @@ function akce_test_dite_kat($kat,$narozeni,$id_akce) {  trace();
   $date2 = new DateTime($akce_od);
   $diff= $date2->diff($date1,1);
   $x= $diff->y . " years, " . $diff->m." months, ".$diff->d." days ";
+  $roku= $diff->y;
   $vek= $diff->y+($diff->m+$diff->d/30)/12;
 //   $d= array($diff->y,$diff->m,$diff->d,$diff->days);
 //                                               debug($d,"$vek: $x, narozen:$narozeni, akce:$akce_od");
