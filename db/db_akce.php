@@ -3631,7 +3631,8 @@ function akce_vzorec($id_pobyt) {  trace();
         JOIN osoba AS o ON s.id_osoba=o.id_osoba
         JOIN pobyt AS p USING(id_pobyt)
         LEFT JOIN tvori AS t ON t.id_osoba=o.id_osoba
-        WHERE id_pobyt=$id_pobyt";
+        WHERE id_pobyt=$id_pobyt
+        GROUP BY o.id_osoba";
   $ro= mysql_qry($qo);
   while ( $ro && ($o= mysql_fetch_object($ro)) ) {
     if ( $o->role=='d' ) {

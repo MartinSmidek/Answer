@@ -278,11 +278,11 @@ function je_1_2_5($kolik,$tvary) {
          $kolik>0 ? "1 $tvar1"      : "0 $tvar5"));
 }
 /** ===================================================================================== ÚČASTNÍCI2 */
-/** ========================================================================================= VÝPISY */
+/** =======================================================================================>> VÝPISY */
 # ------------------------------------------------------------------------------------- tisk_sestava
 # generování sestav
 #   $typ = j | p | vp | vp2 | vs | vn | vv | vj | sk | sd | d | fs | ...
-function tisk_sestava($akce,$par,$title,$vypis,$export=false) {
+function tisk_sestava($akce,$par,$title,$vypis,$export=false) { trace();
   return 0 ? 0
      : ( $par->typ=='p'  ? tisk_sestava_pary($akce,$par,$title,$vypis,$export)
 //      : ( $par->typ=='P'  ? akce_sestava_pobyt($akce,$par,$title,$vypis,$export)
@@ -1163,7 +1163,138 @@ function _akce2_sestava_pecouni(&$clmn,$akce,$fld='_skoleni,_sluzba,_reflexe',$c
     }
   }
 }
-/** ===================================================================================== STATISTIKA 1 **/
+/** ==========================================================================================>> PDF **/
+# -------------------------------------------------------------------------------- tisk_pdf_jmenovky
+# vygenerování PDF s vizitkami s rozměrem 55x90 na rozstříhání
+#   $the_json obsahuje  title:'{jmeno}<br>{prijmeni}'
+function tisk_pdf_jmenovky($akce,$par,$title,$vypis,$report_json) {  trace();
+  global $json, $ezer_path_docs;
+  $result= (object)array('_error'=>0);
+  $html= '';
+  // získání dat
+  mb_internal_encoding('UTF-8');
+  $tab= tisk_sestava($akce,$par,$title,$vypis,true);
+//                                         display($report_json);
+//                                         debug($tab,"akce_sestava($akce,...)"); //return;
+  $report_json= "{'format':'A4:15,10,90,55','boxes':["
+    . "{'type':'text','left':0,'top':0,'width':90,'height':55,'id':'ram','style':'1,L,LTRB:0.05 dotted 250',txt:' '},"
+    . "{'type':'text','left':10,'top':10,'width':80,'height':40,'id':'jmeno','txt':'{jmeno}<br />{prijmeni}','style':'30,L'}]}";
+  $report_json= "{'format':'A4:15,10,90,55','boxes':["
+    . "{'type':'text','left':0,'top':0,'width':90,'height':55,'id':'ram','style':'1,L,LTRB:0.05 dotted',txt:' '},"
+    . "{'type':'text','left':10,'top':10,'width':80,'height':40,'id':'jmeno','txt':'{jmeno}<br />{prijmeni}','style':'30,L'}]}";
+//                                         display($report_json);
+  // projdi vygenerované záznamy
+  $n= 0;
+  $parss= array();
+  foreach ( $tab->clmn as $xa ) {
+    // definice pole substitucí
+    $x= (object)$xa;
+    $parss[$n]= (object)array();
+    $fsize= mb_strlen($x->jmeno)>8 ? 13 : 14;
+    $parss[$n]->jmeno= "<span style=\"font-size:{$fsize}mm;font-weight:bold\">{$x->jmeno}</span>";
+    list($prijmeni)= explode(' ',$x->prijmeni);
+    $fsize= mb_strlen($prijmeni)>10 ? 10 : 12;
+    $parss[$n]->prijmeni= "<span style=\"font-size:{$fsize}mm;font-weight:bold\">{$prijmeni}</span>";
+    $n++;
+  }
+  // předání k tisku
+  $fname= 'jmenovky_'.date("Ymd_Hi");
+  $fpath= "$ezer_path_docs/$fname.pdf";
+  dop_rep_ids($report_json,$parss,$fpath);
+  $result->html= " Výpis byl vygenerován ve formátu <a href='docs/$fname.pdf' target='pdf'>PDF</a>.";
+  return $result;
+}
+# ------------------------------------------------------------------------------- tisk_pdf_stravenky
+# generování štítků se stravenkami pro rodinu účastníka a pro pečouny do PDF
+# pomocí akce_sestava se do objektu $x->tab vygeneruje pole s elementy pro tisk stravenky
+function tisk_pdf_stravenky($akce,$par,$title,$vypis,$report_json) {  trace();
+  global $json, $ezer_path_docs, $EZER;
+  $result= (object)array('_error'=>0);
+  $html= '';
+  // získání dat
+  $x= tisk_sestava($akce,$par,$title,$vypis,true);
+  $header= "{$EZER->options->org}, {$x->akce->misto} {$x->akce->rok}";
+  $sob= array('s'=>'snídaně','o'=>'oběd','v'=>'večeře');
+  $cp=  array('c'=>'1','p'=>'1/2');
+  // projdi vygenerované záznamy
+  $n= 0;
+  $parss= array();
+  foreach ( $x->tab as $jmeno=>$dny ) {
+    // vynechání prázdných míst, aby jméno bylo v prvním sloupci ze 4
+    $k= 4*ceil($n/4)-$n;
+    for ($i= 0; $i<$k; $i++) {
+      $parss[$n]= (object)array();
+      $parss[$n]->header= $parss[$n]->line1= $parss[$n]->line2= '';
+      $parss[$n]->rect= $parss[$n]->ram= $parss[$n]->end= '';
+      $n++;
+    }
+    // stravenky pro účastníka
+    list($prijmeni,$jmena)= explode('|',$jmeno);
+//                                                         if ( $prijmeni!="Bučkovi" ) continue;
+    $parss[$n]= (object)array();
+    $parss[$n]->header= $header;
+    $parss[$n]->line1= "<b>$prijmeni</b>";
+    $parss[$n]->line2= "$jmena";
+    $parss[$n]->rect= '';
+    $parss[$n]->ram= ' ';
+    $parss[$n]->end= '';
+    $n++;
+    foreach ( $dny as $den=>$jidla ) {
+      // stravenky na jeden den
+      foreach ( $jidla as $jidlo=>$porce ) {
+        // denní jídlo
+        foreach ( $porce as $velikost=>$pocet ) {
+          // porce
+          for ($i= 1; $i<=$pocet; $i++) {
+            // na začátku stránky dej příznak pokračování
+            if ( ($n % (4*12) )==0 ) {
+              $parss[$n]= (object)array();
+              $parss[$n]->header= $header;
+              $parss[$n]->line1= "<b>... $prijmeni</b>";
+              $parss[$n]->line2= "... $jmena";
+              $parss[$n]->rect= $parss[$n]->ram= $parss[$n]->end= '';
+              $n++;
+            }
+            // text stravenky na jedno jídlo
+            $parss[$n]= (object)array();
+            $parss[$n]->header= $header;
+            $parss[$n]->line1= "$den";
+            $parss[$n]->line2= "<b>{$sob[$jidlo]}</b>";
+            if ( $velikost=='c' ) {
+              // celá porce
+              $parss[$n]->ram= '<img src="db/img/stravenky-rastr-1.png"'
+                             . ' style="width:48mm" border="0" />';
+              $parss[$n]->rect=  " ";
+            }
+            else {
+              // poloviční porce
+              $parss[$n]->ram= '';
+              $parss[$n]->rect=  "<b>1/2</b>";
+            }
+            $parss[$n]->end= '';
+            $n++;
+          }
+        }
+      }
+    }
+    // na konec dej koncovou značku
+    $parss[$n]= (object)array();
+    $parss[$n]->header= $header;
+    $parss[$n]->line1= "<b>$prijmeni</b>";
+    $parss[$n]->line2= "(konec stravenek)";
+    $parss[$n]->rect= $parss[$n]->ram= '';
+    $parss[$n]->end= ' ';
+    $n++;
+  }
+  // předání k tisku
+//                                         debug($parss,"akce_pdf_stravenky");
+  $fname= 'stravenky_'.date("Ymd_Hi");
+  $fpath= "$ezer_path_docs/$fname.pdf";
+  dop_rep_ids($report_json,$parss,$fpath);
+  $result->html= " Výpis byl vygenerován ve formátu <a href='docs/$fname.pdf' target='pdf'>PDF</a>.";
+  return $result;
+}
+/** =================================================================================>> STATISTIKA 1 **/
 # ----------------------------------------------------------------------------------- evid_sestava_1
 # tabulka struktury kurzu (noví,podruhé,vícekrát,odpočívající VPS,VPS)
 function sta_sestava_1($par,$title,$export=false) {
