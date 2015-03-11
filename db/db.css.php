@@ -65,8 +65,6 @@ body { position:absolute; width:100%; height:100%; }
               background-position:368px 0,619px 0;
               background-repeat:repeat-y,repeat-y;}
 
-#android_menu { position:fixed; z-index:999; top:0; right:0; font-size:20px; }
-
 /* barvení časových změn ve formulářích */
 .zmeneny, .zmeneny input {
   background-color:#ffaa00 !important; }
