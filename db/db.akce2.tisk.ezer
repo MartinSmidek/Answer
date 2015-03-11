@@ -15,7 +15,8 @@ use info: form right [12,4,,] {
       switch(export2.get,
       'PDF-jmenovky',{
         sti_V.report_init; sti_V.report_check;
-        res.set(ask('tisk_pdf_jmenovky',the_akce.get,the_par.get,sti_V.get_json));
+        res.set(ask('tisk_pdf_jmenovky',the_akce.get,the_par.get,the_title.get,the_vypis.get,sti_V.get_json));
+#     x.set(ask('tisk_sestava',the_akce.get,the_par.get,the_title.get,the_vypis.get));
         form.msg.set(res.html);
       })
     }
