@@ -326,7 +326,7 @@ function tisk_qry($typ,$flds='',$where='',$having='',$order='') { trace();
         JOIN pobyt AS p ON a.id_duakce=p.id_akce
         JOIN spolu AS s USING(id_pobyt)
         JOIN osoba AS o ON s.id_osoba=o.id_osoba AND o.deleted=''
-        LEFT JOIN tvori AS t ON t.id_osoba=o.id_osoba
+        LEFT JOIN tvori AS t ON t.id_osoba=o.id_osoba AND t.id_rodina=p.i0_rodina
       $where
       GROUP BY o.id_osoba $having $order
     ";

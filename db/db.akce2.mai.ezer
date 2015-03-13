@@ -39,14 +39,14 @@ proc ini(i,k,uq,on,off) {
   ii.fill(conc(i.owner.title,' - ',i.title),' ');
   vy.get.display(1,on); vy.get.display(0,off);
   dopis_var.set(uq); karta.set(k); dopis_id.set(0); dopis_akce.set(the_duakce.get);
-  et.form_init;
+  et.form_init; vy.note_Q.display(0);
 #   if(eq(k,'gq'),{et.get.display(0); es.get.display(0); sq.get.display(0); vy.get.display(0,'es')});
   switch(k,
   'gq',{et.get.display(0); es.get.display(0); gq.get.display(1);
         sq.get.display(0); vy.get.display(0,'es'); gq.reload},
 #   'gs',{et.get.display(0); es.get.display(0); gq.get.display(1);
 #         sq.get.display(0); vy.get.display(1,'es'); gq.reload},
-  'et',{et.get.display(1); es.get.display(0); gq.get.display(0);
+  'et',{et.get.display(1); es.get.display(0); gq.get.display(0); vy.note_Q.display(1);
         sq.get.display(0); vy.get.display(0,'es'); et.reload},
   'sq',{et.get.display(0); es.get.display(0); gq.get.display(0);
         sq.get.display(1); vy.get.display(0,'es'); sq.reload},
@@ -125,17 +125,23 @@ menu m {type:'left', format:'f+'
 # -------------------------------------------------------------------------------------------------- _vyber
 form _vyber {
   # --------------------------- jméno akce
-  label txt [0,10,380,28] { tag:'akce' }
-  proc fill(x) { txt.set(conc("<div class='karta'>",x,"</div>")) }
+#   label txt [0,10,380,28] { tag:'akce' }
+#   proc fill(x) { txt.set(conc("<div class='karta'>",x,"</div>")) }
   # --------------------------- výběr skupiny (nejde-li o maily akce)
   label  [0,10,380,28] { tag:'skup', css:'ae_parm' }
   label [7,17,100,17] { tag:'skup', title:'výběr skupiny:' }
   select komu_Q  [82,15,289,17] { tag:'skup', type:'map', options:map_db_maily_sql.zkratka, format:'t'
     help:'komu|výběr skupiny adresátů'
     proc onchange() {
-      switch(karta.get,'et',{et.reload},'es',{es.reload},'sq',{sq.reload})
+      switch(karta.get,
+      'et',{et.reload; sql_cis.load(0,conc("druh='db_maily_sql' AND data=",this.key)) },
+      'es',{es.reload},
+      'sq',{sq.reload})
     }
   }
+  view sql_cis: table _cis
+  edit note_Q [391,6,361,39] { tag:'skup', data:sql_cis.popis, format:'o',
+    style:'font-size:10px;overflow:auto' }
   # --------------------------- výběr mail-listu
   label  [0,10,380,28] { tag:'gen', css:'ae_parm', format:'n' }
   label [7,19,100,17] { tag:'gen', title:'výběr mail-listu:', format:'n' }
@@ -736,7 +742,7 @@ form _etext  {
     show x { data:etm.id_davka },
     show datum [,,60,] { title:'datum', data:etd.datum, format:'rs-' }
 #     show vyber{ data:etd.vyber }
-    show komu_U [,,100,] { title:'účastníkům', data:eta.nazev, format:'s' },
+#     show komu_U [,,100,] { title:'účastníkům', data:eta.nazev, format:'s' },
     show komu_Q [,,0,] { title:'skupině', data:etc.zkratka, format:'s' },
     show komu_G [,,0,] { title:'mail-list', data:etl.ucel, format:'s' },
     show predmet [,,160,] { title:'předmět', data:etd.nazev, format:'sq', css_cell:'stav2,3:zluty,4:zeleny,5:cerveny' },
@@ -764,17 +770,16 @@ form _etext  {
   # společné údaje mailu
   const L=390
   field id_davka { data:dopis.id_davka }
-  label [L+0,20,365,150] { css:'ae_work' }
-  label [L+10,23,100,17] { title:'datum odeslání' }
-  field datum [L+10,38,80,17] { data:dopis.datum, help:'datum|datum emailu', skill:'yam|yams;fam|fams;cam|cams' }
-  label [L+307,23,45,17] { title:'ID dopisu' }
-  field id_dopis [L+307,38,43,17] { data:dopis.id_dopis, format:'rd' }
-  label [L+10,62,100,17] { title:'předmět mailu' }
-  field predmet [L+10,77,340,17] { data:dopis.nazev, help:'předmět|předmět emailu', skill:'yam|yams;fam|fams;cam|cams' }
+  label [L+0,35,365,150] { css:'ae_work' }
+  field datum [L+10,53,80,17] { data:dopis.datum, help:'datum|datum emailu',
+    skill:'yam|yams;fam|fams;cam|cams', title:'^datum odeslání' }
+  field id_dopis [L+307,53,43,17] { data:dopis.id_dopis, format:'rd', title:'^ID dopisu' }
+  field predmet [L+10,92,340,17] { data:dopis.nazev, help:'předmět|předmět emailu',
+    skill:'yam|yams;fam|fams;cam|cams', title:'^předmět mailu' }
   // připojení příloh - nově od 20130604
   field attach {data:dopis.prilohy}                     // datové pole se seznamem příloh
-  label [L+10,100,,] {title:'sem lze přetáhnout přílohy'}   // nadpis na vnějším obalem
-  label drop [L+10,115,340,45] { type:'drop'
+  label [L+10,115,,] {title:'sem lze přetáhnout přílohy'}   // nadpis na vnějším obalem
+  label drop [L+10,130,340,45] { type:'drop'
     proc onload(f) {                                    // po dokončení přenosu
       ask('dop_mai_attach',form.key,f);                 // přidání souboru k dávce
     }
@@ -792,9 +797,9 @@ form _etext  {
     drop.set(attach.get);
   }
   # příkazy 1
-  label  [L+0,180,200,78] { css:'ae_parm' }
-  label [L+8,232,184,] { title:"přegenerováním jsou také přepočteny všechny {proměnné}" }
-  button uloz [L+8,186,,] { tag:'u', type:'submit', title:'Uložit',
+  label  [L+0,195,200,78] { css:'ae_parm' }
+  label [L+8,247,184,] { title:"přegenerováním jsou také přepočteny všechny {proměnné}" }
+  button uloz [L+8,201,,] { tag:'u', type:'submit', title:'Uložit',
     help:'uložit opravené hodnoty', skill:'yam|yams;fam|fams;cam|cams'
     proc onclick () {
       form.same
@@ -807,13 +812,13 @@ form _etext  {
       form_state('n|s','u|z');
     }
   }
-  button [L+64,186,,] { tag:'z', title:'Zpět', help:'neukládat hodnoty', skill:'yam|yams;fam|fams;cam|cams'
+  button [L+64,201,,] { tag:'z', title:'Zpět', help:'neukládat hodnoty', skill:'yam|yams;fam|fams;cam|cams'
     proc onclick () {
       adopis.get; form.load(adopis.get); form_state('n|s','u|z'); texty.browse_focus
     | form.init; drop.set(''); form_state('n','u|z|s')
     }
   }
-  button oprav [L+113,186,,] { tag:'s', title:'Opravit text', help:'opravit text mailu',
+  button oprav [L+113,201,,] { tag:'s', title:'Opravit text', help:'opravit text mailu',
     skill:'yam|yams;fam|fams;cam|cams'
     proc onclick () {
       gt(texty.stav2.get,2); not(confirm("Tento dopis již byl rozesílán, opravdu chceš opravit jeho text?"))
@@ -821,8 +826,8 @@ form _etext  {
     }
   }
   # příkazy 2
-  label  [L+246,178,120,32] { css:'ae_parm' }
-  button novy [L+254,184,,] { tag:'n', title:'Nový', help:'vytvořit nový e-mail',
+  label  [L+246,193,120,32] { css:'ae_parm' }
+  button novy [L+254,199,,] { tag:'n', title:'Nový', help:'vytvořit nový e-mail',
     skill:'yam|yams;fam|fams;cam|cams'
     proc onclick () {
       form.init; drop.set(''); form_state('u|z','n|s'); drop_init;
@@ -830,16 +835,16 @@ form _etext  {
       datum.set(now); datum.change; id_davka.set(1); id_davka.change; druh.set('@'); druh.change;
       cis_skupina.init; id_mailist.init; id_duakce.init; komu.init;
       switch(dopis_var.get,
-      'U', { id_duakce.set(dopis_akce.get); komu.set(0); },
-      'U2',{ id_duakce.set(dopis_akce.get); komu.set(1); },
-      'U3',{ id_duakce.set(dopis_akce.get); komu.set(2); },
+#       'U', { id_duakce.set(dopis_akce.get); komu.set(0); },
+#       'U2',{ id_duakce.set(dopis_akce.get); komu.set(1); },
+#       'U3',{ id_duakce.set(dopis_akce.get); komu.set(2); },
       'Q', { cis_skupina.set(vy.komu_Q.key); },
       'G', { id_mailist.set(vy.komu_G.key); }
       );
       id_duakce.change; komu.change; cis_skupina.change; id_mailist.change;
     }
   }
-  button smaz [L+303,184,,] { tag:'s', title:'Smazat', help:'smazat mail a jeho rozesílání',
+  button smaz [L+303,199,,] { tag:'s', title:'Smazat', help:'smazat mail a jeho rozesílání',
     skill:'yam|yams;fam|fams;cam|cams'
     proc onclick () {
       confirm(conc("Opravdu smazat mail '",texty.predmet.get,"' a jeho rozesílací seznam?"));
@@ -848,7 +853,7 @@ form _etext  {
     }
   }
   var et_prazdy: number
-  button generovat [L+8,211,,] { tag:'s', title:'Vygenerovat rozesílací seznam',
+  button generovat [L+8,226,,] { tag:'s', title:'Vygenerovat rozesílací seznam',
     help:'připravit rozesílání', skill:'yam|yams;fam|fams;cam|cams'
     proc onclick () {
       var conf: object
@@ -901,20 +906,21 @@ form _etext  {
     form.init;
     obsah.set(''); texty.browse_init;
     switch(dopis_var.get,
-    // účastníci akce  (dopis.komu=0)
-    'U',{ texty.komu_U.width(100); texty.komu_Q.width(0); texty.komu_G.width(0);
-          texty.browse_load(conc("etd.id_duakce='",dopis_akce.get,"'"," AND etd.komu=0"));
-    },
-    // organizátoři akce (dopis.komu=1)
-    'U2',{ texty.komu_U.width(100); texty.komu_Q.width(0); texty.komu_G.width(0);
-           texty.browse_load(conc("etd.id_duakce='",dopis_akce.get,"'"," AND etd.komu=1"));
-    },
-    // dlužníci akce (dopis.komu=2)
-    'U3',{ texty.komu_U.width(100); texty.komu_Q.width(0); texty.komu_G.width(0);
-           texty.browse_load(conc("etd.id_duakce='",dopis_akce.get,"'"," AND etd.komu=2"));
-    },
+#     // účastníci akce  (dopis.komu=0)
+#     'U',{ texty.komu_U.width(100); texty.komu_Q.width(0); texty.komu_G.width(0);
+#           texty.browse_load(conc("etd.id_duakce='",dopis_akce.get,"'"," AND etd.komu=0"));
+#     },
+#     // organizátoři akce (dopis.komu=1)
+#     'U2',{ texty.komu_U.width(100); texty.komu_Q.width(0); texty.komu_G.width(0);
+#            texty.browse_load(conc("etd.id_duakce='",dopis_akce.get,"'"," AND etd.komu=1"));
+#     },
+#     // dlužníci akce (dopis.komu=2)
+#     'U3',{ texty.komu_U.width(100); texty.komu_Q.width(0); texty.komu_G.width(0);
+#            texty.browse_load(conc("etd.id_duakce='",dopis_akce.get,"'"," AND etd.komu=2"));
+#     },
     // SQL
-    'Q',{ texty.komu_U.width(0); texty.komu_Q.width(100); texty.komu_G.width(0);
+    'Q',{ //texty.komu_U.width(0);
+          texty.komu_Q.width(100); texty.komu_G.width(0);
           vy.komu_Q.key;
           form_state('n','s|u|z');
           [ texty.browse_load(conc("etd.id_duakce=0 AND etd.cis_skupina=",vy.komu_Q.key)) ]
@@ -922,7 +928,8 @@ form _etext  {
           form_state('','n|s|u|z');
     },
     // mail-listy
-    'G',{ texty.komu_U.width(0); texty.komu_Q.width(0); texty.komu_G.width(100);
+    'G',{ //texty.komu_U.width(0);
+          texty.komu_Q.width(0); texty.komu_G.width(100);
           vy.komu_G.key;
           form_state('n','s|u|z');
           [ vy.komu_G.key; texty.browse_load(conc("etd.id_mailist=",vy.komu_G.key)) ]
@@ -936,7 +943,7 @@ form _etext  {
     { dopis_id.get; texty.raise('onrowclick',dopis_id.get) | texty.raise('onrowclick') }
   }
   # text mailu
-  label obsah [0,263,645,200] { title:'zobrazení předmětu a textu mailu' }
+  label obsah [0,278,645,200] { title:'zobrazení předmětu a textu mailu' }
 }
 # ================================================================================================== E_dopis
 panel E_dopis [0,0,645,520] { title:' Úprava textu mailu', type:'popup', css:'dialog', skill:'yams;fams;cams'
@@ -975,7 +982,7 @@ form _esady  {
     show id_duakce { data:etd.id_duakce }
     show cis_skupina { data:etd.cis_skupina }
     show datum [,,60,] { title:'datum', data:etd.datum, format:'s-' },
-    show komu_U [,,100,] { title:'účastníkům' , data:eta.nazev, format:'s' },
+    //show komu_U [,,100,] { title:'účastníkům' , data:eta.nazev, format:'s' },
     show komu_Q [,,0,] { title:'skupině' , data:etc.zkratka, format:'s' },
     show komu_Qn       { data:etc.barva },
     show komu_G [,,0,] { title:'mail-list' , data:etl.ucel, format:'s' },
@@ -1066,20 +1073,21 @@ form _esady  {
     maily.browse_init;
     texty.browse_init;
     switch(dopis_var.get,
-    // účastnící akce  (dopis.komu=0)
-    'U',{ texty.komu_U.width(100); texty.komu_Q.width(0); texty.komu_G.width(0);
-          texty.browse_load(conc("etd.id_duakce='",dopis_akce.get,"'"," AND etd.komu=0"));
-    },
-    // organizátoři akce (dopis.komu=1)
-    'U2',{ texty.komu_U.width(100); texty.komu_Q.width(0); texty.komu_G.width(0);
-           texty.browse_load(conc("etd.id_duakce='",dopis_akce.get,"'"," AND etd.komu=1"));
-    },
-    // dlužníci akce (dopis.komu=2)
-    'U3',{ texty.komu_U.width(100); texty.komu_Q.width(0); texty.komu_G.width(0);
-           texty.browse_load(conc("etd.id_duakce='",dopis_akce.get,"'"," AND etd.komu=2"));
-    },
+#     // účastnící akce  (dopis.komu=0)
+#     'U',{ texty.komu_U.width(100); texty.komu_Q.width(0); texty.komu_G.width(0);
+#           texty.browse_load(conc("etd.id_duakce='",dopis_akce.get,"'"," AND etd.komu=0"));
+#     },
+#     // organizátoři akce (dopis.komu=1)
+#     'U2',{ texty.komu_U.width(100); texty.komu_Q.width(0); texty.komu_G.width(0);
+#            texty.browse_load(conc("etd.id_duakce='",dopis_akce.get,"'"," AND etd.komu=1"));
+#     },
+#     // dlužníci akce (dopis.komu=2)
+#     'U3',{ texty.komu_U.width(100); texty.komu_Q.width(0); texty.komu_G.width(0);
+#            texty.browse_load(conc("etd.id_duakce='",dopis_akce.get,"'"," AND etd.komu=2"));
+#     },
     // SQL
-    'Q',{ texty.komu_U.width(0); texty.komu_Q.width(100); texty.komu_G.width(0);
+    'Q',{ //texty.komu_U.width(0);
+          texty.komu_Q.width(100); texty.komu_G.width(0);
           maily.prijmeni.set_attrib('expr',
             "IF(etmc.barva=1,etmx.prijmeni,IF(etmc.barva=4,etms.prijmeni,IF(etmc.barva=3,etmr.nazev,IF(etmc.barva=2,etmo.prijmeni,'?'))))");
           vy.komu_Q.key;
@@ -1088,7 +1096,8 @@ form _esady  {
         | texty.browse_init
     },
     // mail-listy
-    'G',{ texty.komu_U.width(0); texty.komu_Q.width(0); texty.komu_G.width(100);
+    'G',{ //texty.komu_U.width(0);
+          texty.komu_Q.width(0); texty.komu_G.width(100);
           maily.prijmeni.set_attrib('title',"příjmení");
           maily.prijmeni.set_attrib('expr',"etmo.prijmeni");
           vy.komu_G.key;
