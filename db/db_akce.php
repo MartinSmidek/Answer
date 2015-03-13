@@ -3459,7 +3459,7 @@ function akce_vzorec_soubeh($id_pobyt,$id_hlavni,$id_soubezna,$dosp=0,$deti=0,$k
           FROM spolu AS s
           JOIN osoba AS o ON s.id_osoba=o.id_osoba
           JOIN pobyt AS p USING(id_pobyt)
-          LEFT JOIN tvori AS t ON t.id_osoba=o.id_osoba
+          LEFT JOIN tvori AS t ON t.id_osoba=o.id_osoba AND t.id_rodina=p.i0_rodina
           WHERE id_pobyt=$id_pobyt";
     $ro= mysql_qry($qo);
     while ( $ro && ($o= mysql_fetch_object($ro)) ) {
@@ -3630,7 +3630,7 @@ function akce_vzorec($id_pobyt) {  trace();
         FROM spolu AS s
         JOIN osoba AS o ON s.id_osoba=o.id_osoba
         JOIN pobyt AS p USING(id_pobyt)
-        LEFT JOIN tvori AS t ON t.id_osoba=o.id_osoba
+        LEFT JOIN tvori AS t ON t.id_osoba=o.id_osoba AND t.id_rodina=p.i0_rodina
         WHERE id_pobyt=$id_pobyt
         GROUP BY o.id_osoba";
   $ro= mysql_qry($qo);
