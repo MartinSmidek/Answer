@@ -99,7 +99,7 @@ function answer_php($app,$app_name,$db_name,$skin,$js_lib,$css_lib,$options) {
     // uživatelské css
     $css_lib,
     // css pro dotykového klienta
-    $ipad ? array("$client/ipad.css") : array()
+    $ipad || $android ? array("$client/ipad.css") : array()
   );
 
   global $answer_db;
