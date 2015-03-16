@@ -387,7 +387,13 @@ form _akce [,,*,50] {
       expr:"SUM((SELECT COUNT(*) FROM spolu WHERE id_pobyt=pa.id_pobyt AND funkce=99))"}
     show od    [,,65,] {title:'od',     data:ga.g_od, format:'rsq*'}
     show do    [,,65,] {title:'do',     data:ga.g_do, format:'rsq*'}
-    proc onsubmit() {
+    proc onsubmit() { pracovni }
+    proc onrowclick() { page.show_akce(id_akce.get); }
+    menu { type:'context'
+      item { title:'Vybrat akci jako pracovní', proc onclick() { pracovni }}
+    }
+    // označení akce jako pracovní
+    proc pracovni() {
       id_akce.get; volba_akce(id_akce.get)
     | not(eq(fdate('Y',od.get),rok.get));
       alert('Akce má na intranetu uvedeno chybné datum zahájení (např. chybějící nebo z jiného roku)');
@@ -397,7 +403,6 @@ form _akce [,,*,50] {
       join_akce.insert_record(object('id_akce',the_duakce.get,'g_rok',rok.get,'g_kod',kod.get));
       google.browse_row; volba_akce(id_akce.get) //,nazev.get,ma_cenik.get,ma_cenu.get,cena.get)
     }
-    proc onrowclick() { page.show_akce(id_akce.get); }
   }
   // ------------------------------------------- akce (všechny akce) pro YS, FA, CR
   view da2: table akce
@@ -429,11 +434,16 @@ form _akce [,,*,50] {
     show misto [,,60,] {title:'místo',  data:da2.misto, format:'tsq*'}
     show od    [,,65,] {title:'od',     data:da2.datum_od, format:'rs+q*'}
     show do    [,,65,] {title:'do',     data:da2.datum_do, format:'rsq*'}
-    proc onsubmit() {
+    proc onsubmit() { pracovni }
+    proc onrowclick() { page.show_akce(id_akce.get); }
+    menu { type:'context'
+      item { title:'Vybrat akci jako pracovní', proc onclick() { pracovni }}
+    }
+    // označení akce jako pracovní
+    proc pracovni() {
       volba_akce(id_akce.get);
       curr.set_attrib('expr',conc("IF(da2.id_duakce=",id_akce.get,",1,0)"));
       this.browse_seek;  }
-    proc onrowclick() { page.show_akce(id_akce.get); }
   }
   label head [0,0,*,30] { title:'' }
   # volba pracovní akce

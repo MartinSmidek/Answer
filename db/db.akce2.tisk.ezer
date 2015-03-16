@@ -72,7 +72,7 @@ proc onfocus() {
 }
 
 menu m {type:'left', active:*
-  # ---------------------------- výpisy souběžné akce
+  # ------------------------------------------------------------------------------------------------ výpisy souběžné akce
   menu d {tag:'d', title:'výpisy souběžné akce',type:'group',_sys:'*'
     item i {title:'Seznam dětí'                                                                         skill:'f'
                                         ,par:°{typ:'j',exp:'Excel2',ord:"prijmeni,jmeno"
@@ -93,7 +93,7 @@ menu m {type:'left', active:*
                                         ,tit:'příjmení:15,jméno:15,narození:12,/rč:5,obec:25,psč:7,ulice:25,telefon:20,e-mail:30,funkce:10,poznámky:30'
                                         ,fld:'prijmeni,jmeno,narozeni,rc_xxxx,obec,psc,ulice,telefon,email,pfunkce,_poznamky'}}
   }
-  # ---------------------------- adresář
+  # ------------------------------------------------------------------------------------------------ adresář
   menu n {tag:'a', title:'adresář',type:'group',_sys:'*'
     item i {title:'Základní pro rodiny' ,par:°{typ:'p',exp:'Excel2',cnd:'funkce!=99'
                                         ,tit:'příjmení:15,jména:20,obec:25,psč:7,ulice:25,^'
@@ -135,7 +135,7 @@ menu m {type:'left', active:*
                                         ,tit:'příjmení:15,jméno:12,věk:5,narození:12,/rč:5,obec:25,psč:7,ulice:25,telefon:25,email:25,dieta:12'
                                         ,fld:'prijmeni,jmeno,_vek,narozeni,rc_xxxx,obec,psc,ulice,telefony,emaily,dieta'}}
   }
-  # ---------------------------- seznamy
+  # ------------------------------------------------------------------------------------------------ seznamy
   menu {tag:'a', title:'seznamy',type:'group',_sys:'*'
     item {title:'VPS na akci'                                                                           skill:'y;c'
                                         ,par:°{typ:'p',exp:'Excel2',cnd:"funkce IN (1,2)"
@@ -186,7 +186,7 @@ menu m {type:'left', active:*
                                         ,tit:'jméno a příjmení:30,bydliště:50,narození:10'
                                         ,fld:'_jmenoY,_adresaY,_narozeniY'}}
   }
-  # ---------------------------- DS
+  # ------------------------------------------------------------------------------------------------ DS
   menu {tag:'a', title:'seznamy DS',type:'group',_sys:'*'                                               skill:'y'
     item {title:'&half; Všichni, s poznámkami'
                                         ,par:°{typ:'P',exp:'Excel',cnd:"funkce!=99"
@@ -199,7 +199,7 @@ menu m {type:'left', active:*
     item {title:'&half; Všichni, skupinky tisk'
                                         ,par:°{typ:'sk',exp:'Excel',cnd:'1',fce:'tisk',verze:'2'}}
   }
-  # ---------------------------- info
+  # ------------------------------------------------------------------------------------------------ info
   menu {tag:'a', title:'informace o akci',type:'group',_sys:'*'
     item {title:'Narozeniny, výročí'    ,par:°{typ:'vv',cnd:'1'}}
     item {title:'&half; Přehled o akci (děti,pečouni)', par:°{typ:'vi',cnd:'1'}}
@@ -211,7 +211,7 @@ menu m {type:'left', active:*
                                         ,fld:'prijmeni,jmena,prednasi,^id_pobyt',ord:'prednasi'}}
     item {title:'&half; Seznam čerstvých změn' ,par:°{typ:'cz',cnd:'1'}, skill:'a'}
   }
-  # ---------------------------- jmenovky
+  # ------------------------------------------------------------------------------------------------ jmenovky
   menu {tag:'a', title:'jmenovky na akci',type:'group',_sys:'*'
     item {title:'Účastníci bez funkce'                                                                  skill:'f'
                                         ,par:°{typ:'j',exp:'Excel',exp2:'PDF-jmenovky'
@@ -268,7 +268,7 @@ menu m {type:'left', active:*
                                         ,cnd:"funkce NOT IN (0,1,2,3,4,5)",ord:"prijmeni",hav:"_vek>=18"
                                         ,tit:'jméno:20, příjmení:15',fld:'jmeno,prijmeni'}}
   }
-  # ---------------------------- PDF
+  # ------------------------------------------------------------------------------------------------ PDF
   menu {tag:'a', title:'tisky do PDF',type:'group',_sys:'*'
     item {title:'Adresní štítky rodin'  ,par:°{typ:'p',exp:'PDF-adresy',cnd:'funkce!=99'
                                         ,tit:'příjmení:15,jména:20,obec:25,psč:7,ulice:25,stát:10'
@@ -290,7 +290,7 @@ menu m {type:'left', active:*
         info.export.display(0);
         info.fill(conc(i.owner.title,' - ',i.title),' ');
         sti_C.report_init; sti_C.report_check;
-        res.set(ask('tisk_pdf_stravenky0',the_akce.get,the_par.get,sti_C.get_json));
+        res.set(ask('akce_pdf_stravenky0',the_akce.get,the_par.get,sti_C.get_json));
         info.fill('',res.html);
       }
     }
@@ -357,14 +357,18 @@ menu m {type:'left', active:*
 #                                         ,tit:'Hebrejsky:40,Česky:30'
 #                                         ,fld:'=pozpatku,=par',ord:'prijmeni'}}
   }
-  proc onclick (i) { var x: object
-    the_par.set(i.par); clear;
-    [ the_par.get('sel'); the_par.set(ucast.call('ucast_selected'),'selected') ]; // doplnění výběru id_pobyt
+  proc onclick (i) { var x: object, note: text
+    the_par.set(i.par); clear; note.set('');
+    // ošetření výpisů umožňujících tisk jen výběru pobytů
+    [ the_par.get('sel'); the_par.set(ucast.call('ucast_selected'),'selected');
+      note.set("Výběr se provede klávesou Ins v seznamu na kartě Účastníci2 -
+        tisknout se budou jen údaje z červeně označených řádků");
+    ];
     the_vypis.set(conc(i.owner.title,' - ',replace(i.title,'&half;','')));
     { i.par.exp; info.export.display(1); info.export.set(i.par.exp) | info.export.display(0) };
     { i.par.exp2; info.export2.display(1); info.export2.set(i.par.exp2) | info.export2.display(0) };
     info.fill(conc(the_title.get,' / ',the_vypis.get),' ');
-    info.msg.set('');
+    info.msg.set(note);
     // symbolem 1/2 jsou označeny výpisy přejaté z verze 1
     { eq(substr(i.title,0,6),'&half;');
       x.set(ask('akce_sestava',the_akce.get,the_par.get,the_title.get,the_vypis.get))
