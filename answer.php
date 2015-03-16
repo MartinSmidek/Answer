@@ -63,9 +63,12 @@ function answer_php($app,$app_name,$db_name,$skin,$js_lib,$css_lib,$options) {
     // pro verzi 2.1
     $EZER->version=='ezer2'
     ? array("$licensed/mootools/asset.js","$licensed/mootools/slider.js"):array(),
-    // pro Android
+    // pro Android a iPad
     $android || $ipad
     ? array("$licensed/Mslider.js","$licensed/Mdrag.js") : array(),
+    // pro Android a iPad
+    $android || $ipad
+    ? array("$licensed/hammer.js") : array(),
     // pro verzi 2.2
     $EZER->version=='ezer2.2'
     ? array("$licensed/datepicker.js"):array(),

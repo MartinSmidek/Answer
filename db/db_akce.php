@@ -4956,6 +4956,7 @@ function akce_sestava_pobyt($akce,$par,$title,$vypis,$export=false) { trace();
 # ================================================================================================== TEXTY
 # ------------------------------------------------------------------------------------ akce_text_eko
 function akce_text_eko($akce,$par,$title,$vypis,$export=false) { trace();
+  $result= (object)array();
   $html= '';
   $prijmy= 0;
   $vydaje= 0;
@@ -4977,6 +4978,7 @@ function akce_text_eko($akce,$par,$title,$vypis,$export=false) { trace();
 //                                                         debug($ret->eko->slevy,"sleva pro fce={$p->funkce}");
     if ( $ret->eko->vzorec ) {
       foreach ($ret->eko->vzorec as $x=>$kc) {
+        if ( !isset($prijem[$x]) ) $prijem[$x]= (object)array();
         $prijem[$x]->vzorec+= $kc;
         $corr= false;
         $slevy= $ret->eko->slevy;
@@ -5266,6 +5268,7 @@ function akce_text_vyroci($akce,$par,$title,$vypis,$export=false) { trace();
 #   člověkolůžka, člověkopřistýlky
 function akce_sestava_noci($akce,$par,$title,$vypis,$export=false) { trace();
   // definice sloupců
+  $result= (object)array();
   $tit= "Manželé:25,pokoj:8:r,dnů:5:r,nocí:5:r,lůžek:5:r:s,lůžko nocí:5:r:s,přis týlek:5:r:s,přis týlko nocí:5:r:s";
   $fld= "manzele,pokoj,pocetdnu,=noci,luzka,=luzkonoci,pristylky,=pristylkonoci";
   $ord= $par->ord ? $par->ord : "IF(funkce<=2,1,funkce),IF(pouze=0,r.nazev,o.prijmeni)";
@@ -6629,6 +6632,7 @@ function akce_skup_hist($akce,$par,$title,$vypis,$export) { trace();
 # ------------------------------------------------------------------------------------- akce_plachta
 # podklad pro tvorbu skupinek
 function akce_plachta($akce,$par,$title,$vypis,$export=0) { trace();
+  $result= (object)array();
   // číselníky
   $c_vzdelani= map_cis('ms_akce_vzdelani','zkratka');  $c_vzdelani[0]= '?';
   $c_cirkev= map_cis('ms_akce_cirkev','zkratka');      $c_cirkev[0]= '?';  $c_cirkev[1]= 'kat';
