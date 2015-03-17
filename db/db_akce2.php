@@ -2461,7 +2461,7 @@ function akce_browse_ask($x,$tisk=false) {
     $fpob1= flds("key_pobyt=id_pobyt,_empty=0,key_akce=id_akce,key_osoba,key_spolu,key_rodina=i0_rodina,"
            . "c_suma,platba,xfunkce=funkce,funkce,skupina,dluh");
     $fakce= flds("dnu,datum_od");
-    $frod=  flds("fotka,r_spz=spz,r_svatba=svatba,r_datsvatba=datsvatba,r_ulice=ulice,r_psc=psc,"
+    $frod=  flds("fotka,r_spz=spz,r_svatba=svatba,r_datsvatba=datsvatba,r_rozvod=rozvod,r_ulice=ulice,r_psc=psc,"
           . "r_obec=obec,r_stat=stat,r_telefony=telefony,r_emaily=emaily,r_note=note");
     $fpob2= flds("p_poznamka=poznamka,pokoj,budova,prednasi,luzka,pristylky,kocarek,pocetdnu"
           . ",strava_cel,strava_pol,c_nocleh=platba1,c_strava=platba2,c_program=platba3,c_sleva=platba4"

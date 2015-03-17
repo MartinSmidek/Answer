@@ -386,6 +386,7 @@ table rodina { key_id:'id_rodina'
   text spz
   number svatba
   date datsvatba { sql_pipe:'sql_date1'}
+  number rozvod
   text note
   text origin
   text historie
@@ -839,7 +840,8 @@ form _rodina2 [,,360,229]  { css:'ae_frame'
     t_role.display(key_rodina.get); form.display(key_rodina.get,'o');
   }
   proc od_svatby() {
-    spolu.set(cconc(r_datsvatba.get,conc(roku(r_datsvatba.get,r_svatba.get),' let'),' ')) }
+    r_rozvod.get; spolu.set("<span style='background:yellow'>jsou rozvedeni</span>")
+  | spolu.set(cconc(r_datsvatba.get,conc('od svatby ',roku(r_datsvatba.get,r_svatba.get),' let'))) }
   proc zmena_rodiny() { }
   // alternující procedury
   proc show_osoby(ido,ids,cleni) { }
@@ -877,9 +879,10 @@ form _rodina2 [,,360,229]  { css:'ae_frame'
     data:tr.role, title:'^role'}
 
   field r_spz      [Lr+5,20,58,]  {tag:'r', data:r.spz, title:'^SPZ auta'}
-  label spolu      [Lr+134,7,37,] {tag:'r' }
-  field r_svatba   {data:rodina.svatba}
-  field r_datsvatba[Lr+82,20,85,] {tag:'r', type:'date', data:r.datsvatba, format:'rR:e',title:'^od svatby'}
+  label spolu      [Lr+82,7,85,] {tag:'r' }
+  field r_svatba   {data:r.svatba}
+  field r_datsvatba[Lr+82,20,85,] {tag:'r', type:'date', data:r.datsvatba, format:'rR:e'}
+  field r_rozvod   { data:r.rozvod }
 
   // kontakt
   field r_ulice    [Lr+5,55,108,] {tag:'r', data:r.ulice, title:'^ulice'}
@@ -961,7 +964,8 @@ form _rodina2p [,,188,229] { css:'ae_frame'
   }
   proc on_click() {}
   proc od_svatby() {
-    spolu.set(cconc(r_datsvatba.get,conc(roku(r_datsvatba.get,r_svatba.get),' let'),'?')) }
+    r_rozvod.get; spolu.set("<span style='background:yellow'>jsou rozvedeni</span>")
+  | spolu.set(cconc(r_datsvatba.get,conc('od svatby ',roku(r_datsvatba.get,r_svatba.get),' let'))) }
   label frame      [0,2,188,20]   {tag:'f', title:'společné rodinné údaje', css:'frame_label_up' }
   field key_rodina [130,0,50,] {tag:'f', format:'or', css:'Label', data:r.id_rodina, tabindex:0  }
 
@@ -983,10 +987,11 @@ form _rodina2p [,,188,229] { css:'ae_frame'
 
   // rodinné údaje
   field r_spz      [Lp+ 0,Tp+20,58,]  {tag:'r', data:r.spz, title:'^SPZ auta'}
-  label spolu      [Lp+143,Tp+7,37,] {tag:'r' }
+  label spolu      [Lp+63,Tp+7,85,] {tag:'r' }
   field r_svatba   {data:r.svatba}
   field r_deleted  {data:r.deleted}
-  field r_datsvatba[Lp+90,Tp+20,85,] {tag:'r', type:'date', data:r.datsvatba, format:'rR:e',title:'^od svatby'}
+  field r_datsvatba[Lp+63,Tp+20,85,] {tag:'r', type:'date', data:r.datsvatba, format:'rR:e'}
+  field r_rozvod   [Lp+150,Tp+20,28,] {tag:'r', format:'r:e', data:r.rozvod, title:'^rozv.', help:'rok rozvodu'}
 
   // adresa
   field r_ulice    [Lp+0,Tp+55,125,] {tag:'r,N', data:r.ulice, title:'^ulice'}

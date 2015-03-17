@@ -569,7 +569,7 @@ form _ucast [,,400,] { css:'ds_form'
     // barvení
     show dluh
     // údaje ucast.evid.rod
-    show r_spz, show r_svatba, show r_datsvatba,
+    show r_spz, show r_svatba, show r_datsvatba, show r_rozvod,
     show r_ulice, show r_psc, show r_obec, show r_stat,
     show r_telefony, show r_emaily, show r_note
     // údaje ucast.evid.rod.cleni
@@ -1090,7 +1090,7 @@ form _spolu [,,0,270] {
       key_spolu.get; track.back_show('spolu',key_spolu.get) } }
   }
 
-  // s = poznámka
+  // p = poznámka
   edit  s_poznamka [5,0,231,74] {tag:'p', data:s.poznamka, title:'^poznámka k účasti', format:'n'}
 
   // r = role
@@ -1124,7 +1124,7 @@ form _spolu [,,0,270] {
   select pece_sel [70,0,160,17] { tag:'c', type:'auto', par:°{fce:'akce_auto_deti'}, format:'n'
     proc onchanged() { pece_key.set(pece_sel.key); pece_key.change; }  }
   button [55,3,,] { tag:'c', title:'^', css:'db_evidence',
-    proc onclick() { jump(evid.rod.cleni.pece_ido.get) } }
+   proc onclick() { jump(evid.rod.cleni.pece_ido.get) } }
   check pecoun [36,27,130,17] { tag:'c', title:"je v kolektivu pečounů", format:'n', value:'0'
   /*  // 0 => osobní & 'dědeček'
       proc onchange () {
