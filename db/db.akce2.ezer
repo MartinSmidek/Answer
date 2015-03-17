@@ -841,7 +841,8 @@ form _rodina2 [,,360,229]  { css:'ae_frame'
   }
   proc od_svatby() {
     r_rozvod.get; spolu.set("<span style='background:yellow'>jsou rozvedeni</span>")
-  | spolu.set(cconc(r_datsvatba.get,conc('od svatby ',roku(r_datsvatba.get,r_svatba.get),' let'))) }
+  | r_datsvatba.get; spolu.set(conc('od svatby ',roku(r_datsvatba.get,r_svatba.get),' let'))
+  | spolu.set('datum svatby') }
   proc zmena_rodiny() { }
   // alternující procedury
   proc show_osoby(ido,ids,cleni) { }
@@ -958,14 +959,15 @@ form _rodina2p [,,188,229] { css:'ae_frame'
   proc onclick() { on_click }
   proc onchanged() { }
   proc show_rodina() { var tags:text
-    form.display(0,'[^f]');
+    form.display(0,'[^f]'); spolu.set('datum svatby');
     tags.set(cconc(1,'a,r',contains('P',rodina_config.grp.get),',p'));
     form.stacks(tags,'down',0,0,10);
   }
   proc on_click() {}
   proc od_svatby() {
     r_rozvod.get; spolu.set("<span style='background:yellow'>jsou rozvedeni</span>")
-  | spolu.set(cconc(r_datsvatba.get,conc('od svatby ',roku(r_datsvatba.get,r_svatba.get),' let'))) }
+  | r_datsvatba.get; spolu.set(conc('od svatby ',roku(r_datsvatba.get,r_svatba.get),' let'))
+  | spolu.set('datum svatby') }
   label frame      [0,2,188,20]   {tag:'f', title:'společné rodinné údaje', css:'frame_label_up' }
   field key_rodina [130,0,50,] {tag:'f', format:'or', css:'Label', data:r.id_rodina, tabindex:0  }
 
