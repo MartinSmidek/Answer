@@ -46,7 +46,8 @@ use info: form right [12,4,,] {
       },
       'PDF-prijem',{
         sti_B.report_init; sti_B.report_check;
-        res.set(ask('akce_pdf_prijem',the_akce.get,the_par.get,sti_B.get_json));
+#         res.set(ask('akce_pdf_prijem',the_akce.get,the_par.get,sti_B.get_json));
+        res.set(ask('tisk_pdf_prijem',the_akce.get,the_par.get,sti_B.get_json));
         form.msg.set(res.html);
       },
       'PDF-stravenky',{
