@@ -634,51 +634,51 @@ function tisk_sestava_pary($akce,$par,$title,$vypis,$export=false) { trace();
       case '_pocet':    $c= $pocet; break;
       case 'poznamka':  $c= $x->p_poznamka . ($spolu_note ?: ''); break;
       case 'note':      $c= $x->r_note . ($osoba_note ?: ''); break;
-      default:          $c= '?'; break;
+      default:          $c= $x->$f; break;
       }
       $clmn[$n][$f]= $c;
     }
 
 //     break;
-    continue;
-
-    $x->prijmeni= $x->pouze==1 ? $x->prijmeni_m : ($x->pouze==2 ? $x->prijmeni_z : $x->nazev);
-    $x->jmena=    $x->pouze==1 ? $x->jmeno_m    : ($x->pouze==2 ? $x->jmeno_z : "{$x->jmeno_m} a {$x->jmeno_z}");
-    $x->_pocet= ($x->pouze?" 1":" 2").($x->_deti?"+{$x->_deti}":'');
-    // emaily
-    $a_emaily_m= preg_split("/,\s*|;\s*/",trim($x->email_m ? $x->email_m : $x->emaily," ,;"));
-    $a_emaily_z= preg_split("/,\s*|;\s*/",trim($x->email_z ? $x->email_z : $x->emaily," ,;"));
-    $a_emaily= preg_split("/,\s*|;\s*/",trim($x->emaily," ,;"));
-    $emaily= implode(';',array_diff(array_unique(array_merge($a_emaily,$a_emaily_m,$a_emaily_z)),array('')));
-    $emaily_m= implode(';',$a_emaily_m);
-    $emaily_z= implode(';',$a_emaily_z);
-    $x->emaily= $x->pouze==1 ? $emaily_m  : ($x->pouze==2 ? $emaily_z : $emaily);
-    $x->emaily.= $x->emaily ? ';' : '';
-    // telefony
-    $a_telefony_m= preg_split("/,\s*|;\s*/",trim($x->telefon_m ? $x->telefon_m : $x->telefony," ,;"));
-    $a_telefony_z= preg_split("/,\s*|;\s*/",trim($x->telefon_z ? $x->telefon_z : $x->telefony," ,;"));
-    $a_telefony= preg_split("/,\s*|;\s*/",trim($x->telefony," ,;"));
-    $telefony= implode(';',array_diff(array_unique(array_merge($a_telefony,$a_telefony_m,$a_telefony_z)),array('')));
-    $telefony_m= implode(';',$a_telefony_m);
-    $telefony_z= implode(';',$a_telefony_z);
-    $x->telefony= $x->pouze==1 ? $telefony_m  : ($x->pouze==2 ? $telefony_z : $telefony);
-    // podle číselníku
-    $x->ubytovani= $c_ubytovani[$x->ubytovani];
-    $x->prednasi= $c_prednasi[$x->prednasi];
-    $x->zpusobplat= $c_platba[$x->zpusobplat];
-    // další
-    $n++;
-    $clmn[$n]= array();
-    foreach($flds as $f) {
-//       $clmn[$n][$f]= $f=='poznamka' && $x->r_note ? ($x->$f.' / '.$x->r_note) : $x->$f;
-      switch ($f) {
-      case '=par':      $clmn[$n][$f]= "{$x->prijmeni} {$x->jmena}"; break;
-      // fonty: ISOCTEUR, Tekton Pro
-      case '=pozpatku': $clmn[$n][$f]= otoc("{$x->prijmeni} {$x->jmena}"); break;
-      default:          $clmn[$n][$f]= $x->$f; break;
-      }
-    }
-//     break;
+//     continue;
+//
+//     $x->prijmeni= $x->pouze==1 ? $x->prijmeni_m : ($x->pouze==2 ? $x->prijmeni_z : $x->nazev);
+//     $x->jmena=    $x->pouze==1 ? $x->jmeno_m    : ($x->pouze==2 ? $x->jmeno_z : "{$x->jmeno_m} a {$x->jmeno_z}");
+//     $x->_pocet= ($x->pouze?" 1":" 2").($x->_deti?"+{$x->_deti}":'');
+//     // emaily
+//     $a_emaily_m= preg_split("/,\s*|;\s*/",trim($x->email_m ? $x->email_m : $x->emaily," ,;"));
+//     $a_emaily_z= preg_split("/,\s*|;\s*/",trim($x->email_z ? $x->email_z : $x->emaily," ,;"));
+//     $a_emaily= preg_split("/,\s*|;\s*/",trim($x->emaily," ,;"));
+//     $emaily= implode(';',array_diff(array_unique(array_merge($a_emaily,$a_emaily_m,$a_emaily_z)),array('')));
+//     $emaily_m= implode(';',$a_emaily_m);
+//     $emaily_z= implode(';',$a_emaily_z);
+//     $x->emaily= $x->pouze==1 ? $emaily_m  : ($x->pouze==2 ? $emaily_z : $emaily);
+//     $x->emaily.= $x->emaily ? ';' : '';
+//     // telefony
+//     $a_telefony_m= preg_split("/,\s*|;\s*/",trim($x->telefon_m ? $x->telefon_m : $x->telefony," ,;"));
+//     $a_telefony_z= preg_split("/,\s*|;\s*/",trim($x->telefon_z ? $x->telefon_z : $x->telefony," ,;"));
+//     $a_telefony= preg_split("/,\s*|;\s*/",trim($x->telefony," ,;"));
+//     $telefony= implode(';',array_diff(array_unique(array_merge($a_telefony,$a_telefony_m,$a_telefony_z)),array('')));
+//     $telefony_m= implode(';',$a_telefony_m);
+//     $telefony_z= implode(';',$a_telefony_z);
+//     $x->telefony= $x->pouze==1 ? $telefony_m  : ($x->pouze==2 ? $telefony_z : $telefony);
+//     // podle číselníku
+//     $x->ubytovani= $c_ubytovani[$x->ubytovani];
+//     $x->prednasi= $c_prednasi[$x->prednasi];
+//     $x->zpusobplat= $c_platba[$x->zpusobplat];
+//     // další
+//     $n++;
+//     $clmn[$n]= array();
+//     foreach($flds as $f) {
+// //       $clmn[$n][$f]= $f=='poznamka' && $x->r_note ? ($x->$f.' / '.$x->r_note) : $x->$f;
+//       switch ($f) {
+//       case '=par':      $clmn[$n][$f]= "{$x->prijmeni} {$x->jmena}"; break;
+//       // fonty: ISOCTEUR, Tekton Pro
+//       case '=pozpatku': $clmn[$n][$f]= otoc("{$x->prijmeni} {$x->jmena}"); break;
+//       default:          $clmn[$n][$f]= $x->$f; break;
+//       }
+//     }
+// //     break;
   }
 //                                         debug($clmn,"sestava pro $akce,$typ,$fld,$cnd");
   return sta_table($tits,$flds,$clmn,$export);
