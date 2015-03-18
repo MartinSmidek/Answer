@@ -339,9 +339,9 @@ function tisk_qry($typ,$flds='',$where='',$having='',$order='') { trace();
            GROUP_CONCAT(IF(pso.kontakt,pso.telefon,''))) AS _telefony
         ,CONCAT(IF(pr.emaily!='',CONCAT(pr.emaily,','),''),
            GROUP_CONCAT(IF(pso.kontakt,pso.email,''))) AS _emaily
-        ,IF(i0_rodina,CONCAT(pr.nazev,' ',GROUP_CONCAT(REPLACE(pso.jmeno,' ','-') ORDER BY role SEPARATOR ' a '))
-          ,GROUP_CONCAT(DISTINCT CONCAT(pso.prijmeni,' ',REPLACE(pso.jmeno,' ','-')) ORDER BY role SEPARATOR ' a ')) as _jmena
-        ,GROUP_CONCAT(CONCAT(ps.id_spolu,'|',REPLACE(jmeno,' ','-'),'|',prijmeni,'|',adresa,'|',pso.obec,'|'
+        ,IF(i0_rodina,CONCAT(pr.nazev,' ',GROUP_CONCAT(REPLACE(TRIM(pso.jmeno),' ','-') ORDER BY role SEPARATOR ' a '))
+          ,GROUP_CONCAT(DISTINCT CONCAT(pso.prijmeni,' ',REPLACE(TRIM(pso.jmeno),' ','-')) ORDER BY role SEPARATOR ' a ')) as _jmena
+        ,GROUP_CONCAT(CONCAT(ps.id_spolu,'|',REPLACE(TRIM(jmeno),' ','-'),'|',prijmeni,'|',adresa,'|',pso.obec,'|'
           ,IFNULL(( SELECT CONCAT(id_tvori,'/',role)
              FROM tvori
              JOIN rodina USING (id_rodina)
@@ -533,6 +533,43 @@ function tisk_sestava_lidi($akce,$par,$title,$vypis,$export=false) { trace();
   }
 //                                         debug($clmn,"sestava pro $akce,$typ,$fld,$cnd");
   return sta_table($tits,$flds,$clmn,$export);
+}
+# ---------------------------------------------------------------------------------- akce_pdf_prijem
+# generování štítků se stručnými informace k nalepení na obálku účastníka do PDF
+function tisk_pdf_prijem($akce,$par,$report_json) {  trace();
+  global $json, $ezer_path_docs;
+  $result= (object)array('_error'=>0);
+  $html= '';
+  // získání dat
+  $tab= tisk_sestava_pary($akce,$par,$title,$vypis,true);
+//                                         debug($tab,"tisk_sestava_pary($akce,...)"); //return;
+  // projdi vygenerované záznamy
+  $n= 0;
+  $parss= array();
+  foreach ( $tab->clmn as $xa ) {
+    // definice pole substitucí
+    $x= (object)$xa;
+    $parss[$n]= (object)array();
+    $parss[$n]->line1= "<b>{$x->prijmeni} {$x->jmena}</b>";
+    $parss[$n]->line2= ($x->skupina?"skupinka <b>{$x->skupina}</b> ":'')
+                     . ($x->pokoj?"pokoj <b>{$x->pokoj}</b>":'');
+    $parss[$n]->line3= $x->luzka || $x->pristylky || $x->kocarek ? (
+                       ($x->luzka?"lůžka <b>{$x->luzka}</b> ":'')
+                     . ($x->pristylky?"přistýlky <b>{$x->pristylky} </b>":'')
+                     . ($x->kocarek?"kočárek <b>{$x->kocarek}</b>":'')
+                       ) : "bez ubytování";
+    $parss[$n]->line4= $x->strava_cel || $x->strava_pol ? ( "strava: "
+                     . ($x->strava_cel?"celá <b>{$x->strava_cel}</b> ":'')
+                     . ($x->strava_pol?"poloviční <b>{$x->strava_pol}</b>":'')
+                       ) : "bez stravy";
+    $n++;
+  }
+  // předání k tisku
+  $fname= 'stitky_'.date("Ymd_Hi");
+  $fpath= "$ezer_path_docs/$fname.pdf";
+  dop_rep_ids($report_json,$parss,$fpath);
+  $result->html= " Výpis byl vygenerován ve formátu <a href='docs/$fname.pdf' target='pdf'>PDF</a>.";
+  return $result;
 }
 # -------------------------------------------------------------------------------- tisk_sestava_pary
 # generování sestavy pro účastníky $akce - rodiny
