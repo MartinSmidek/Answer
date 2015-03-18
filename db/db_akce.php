@@ -4786,7 +4786,8 @@ function akce_sestava_pary($akce,$par,$title,$vypis,$export=false) { trace();
           JOIN spolu AS s USING(id_pobyt)
           JOIN osoba AS o ON s.id_osoba=o.id_osoba
           LEFT JOIN tvori AS t ON t.id_osoba=o.id_osoba
-          LEFT JOIN rodina AS r USING(id_rodina)
+          -- LEFT JOIN rodina AS r USING(id_rodina)
+          LEFT JOIN rodina AS r ON r.id_rodina=IFNULL(p.i0_rodina,t.id_rodina)
           WHERE p.id_akce='$akce' AND $cnd
           GROUP BY id_pobyt $hav
           ORDER BY $ord";
@@ -4906,7 +4907,8 @@ function akce_sestava_pobyt($akce,$par,$title,$vypis,$export=false) { trace();
           JOIN spolu AS s USING(id_pobyt)
           JOIN osoba AS o ON s.id_osoba=o.id_osoba
           LEFT JOIN tvori AS t ON t.id_osoba=o.id_osoba
-          LEFT JOIN rodina AS r USING(id_rodina)
+          -- LEFT JOIN rodina AS r USING(id_rodina)
+          LEFT JOIN rodina AS r ON r.id_rodina=IFNULL(p.i0_rodina,t.id_rodina)
           WHERE p.id_akce='$akce' AND $cnd
           GROUP BY id_pobyt $hav
           ORDER BY $ord";
@@ -5299,12 +5301,12 @@ function akce_sestava_noci($akce,$par,$title,$vypis,$export=false) { trace();
             GROUP_CONCAT(DISTINCT IF(t.role='a',o.jmeno,'')    SEPARATOR '') as jmeno_m,
             GROUP_CONCAT(DISTINCT IF(t.role='b',o.prijmeni,'') SEPARATOR '') as prijmeni_z,
             GROUP_CONCAT(DISTINCT IF(t.role='b',o.jmeno,'')    SEPARATOR '') as jmeno_z,
-            p.pouze,r.nazev as nazev
+            p.pouze,r.nazev
           FROM pobyt AS p
           JOIN spolu AS s USING(id_pobyt)
           JOIN osoba AS o ON s.id_osoba=o.id_osoba
           LEFT JOIN tvori AS t ON t.id_osoba=o.id_osoba
-          LEFT JOIN rodina AS r USING(id_rodina)
+          LEFT JOIN rodina AS r ON r.id_rodina=IFNULL(i0_rodina,t.id_rodina)
           WHERE p.id_akce='$akce' AND funkce NOT IN (9,10) AND $cond
           GROUP BY id_pobyt
           ORDER BY $ord";
@@ -5865,7 +5867,7 @@ function akce_vyuctov_pary2($akce,$par,$title,$vypis,$export=false) { trace();
           JOIN spolu AS s USING(id_pobyt)
           JOIN osoba AS o ON s.id_osoba=o.id_osoba
           LEFT JOIN tvori AS t ON t.id_osoba=o.id_osoba
-          LEFT JOIN rodina AS r USING(id_rodina)
+          LEFT JOIN rodina AS r ON r.id_rodina=IFNULL(i0_rodina,t.id_rodina)
           WHERE p.id_akce='$akce' AND funkce!=99 AND $cond
           GROUP BY id_pobyt
           ORDER BY $ord";
