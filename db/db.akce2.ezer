@@ -996,15 +996,15 @@ form _rodina2p [,,188,229] { css:'ae_frame'
   field r_rozvod   [Lp+150,Tp+20,28,] {tag:'r', format:'r:e', data:r.rozvod, title:'^rozv.', help:'rok rozvodu'}
 
   // adresa
-  field r_ulice    [Lp+0,Tp+55,125,] {tag:'r,N', data:r.ulice, title:'^ulice'}
+  field r_ulice    [Lp+0,Tp+55,125,] {tag:'r', data:r.ulice, title:'^ulice'}
   select r_stat    [Lp+132,Tp+55,45,] {tag:'r', data:r.stat, format:'r:e', title:'^stát'}
   check noadresa   [Lp+75,Tp+72,126,] {tag:'r', title:"nespolehlivá adr.", data:r.noadresa,
     help:"pošta vrací zásilky", format:'n', tabindex:0
     proc onchange() {
       alert("napiš prosím do poznámky důvod a datum zjištění neplatnosti")
   } }
-  field r_psc      [Lp+0,Tp+90, 40,] {tag:'r,N', data:r.psc, title:'^psč'}
-  field r_obec     [Lp+47,Tp+90,128,] {tag:'r,N', data:r.obec, title:'^obec'}
+  field r_psc      [Lp+0,Tp+90, 40,] {tag:'r', data:r.psc, title:'^psč'}
+  field r_obec     [Lp+47,Tp+90,128,] {tag:'r', data:r.obec, title:'^obec'}
 
   // kontakty
   field r_telefony [Lp+0,Tp+125,176,] {tag:'r', type:'list', data:r.telefony,title:'^telefony'}
