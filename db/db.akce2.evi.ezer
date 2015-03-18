@@ -722,7 +722,7 @@ form _cmd [,,706,32] { css:'ae_frame'
              m.enable(0); form.enable(1,'s'); form.enable(0,'x'); lst.bo.enable(0); lst.br.enable(0);
              page.oso.enable(0,'.*'); page.rod.t.init; page.rod.init;
              page.display(0,'Cb'); page.cleni.enable(0);
-             page.rod.display(0,'R'); page.rod.display(1,'r|n'); },
+             page.rod.display(0,'R'); page.rod.display(1,'r|n'); page.rod.enable(1,'.*'); },
     'newro',{ # nová rodina s novým členem
              m.enable(0); form.enable(1,'s'); form.enable(0,'x'); lst.bo.enable(0); lst.br.enable(0);
              page.oso.init; page.rod.t.init; page.rod.init;
