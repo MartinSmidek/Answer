@@ -3345,7 +3345,7 @@ function akce_pobyt_default($id_pobyt,$zapsat=0) {  trace();
   //$ret= (object)array('luzka'=>$dosp+$deti,'kocarek'=>$koje,'pocetdnu'=>$noci,'svp'=>$svp,
   //                    'strava_cel'=>$dosp,'strava_pol'=>$deti,'vzorec'=>$fce);
   $ret= (object)array('luzka'=>$luzka,'kocarek'=>$bez,'pocetdnu'=>$noci,'svp'=>$svp,
-                      'strava_cel'=>$cela,'strava_pol'=>$polo,'vzorec'=>$fce);
+                      'strava_cel'=>$cela,'strava_pol'=>$polo,'vzorec'=>$fce,'vek'=>$vek);
                                                 debug($ret,"osob:$koje,$deti,$dosp $msg fce=$fce");
   return $ret;
 }
