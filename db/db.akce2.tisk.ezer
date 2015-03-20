@@ -222,7 +222,7 @@ menu m {type:'left', active:*
                                         ,par:°{typ:'j',exp:'Excel',exp2:'PDF-jmenovky'
                                         ,cnd:"funkce IN (0,1,2)",hav:"_vek>=18 OR r_role IN ('a','b')",ord:"prijmeni"
                                         ,tit:'jméno:20, příjmení:15',fld:'jmeno,prijmeni'}}
-    item {title:'Účastníci (výběr)'                                                                     skill:'y;c'
+    item {title:'Účastníci (výběr)'                                                                     skill:'y;f;c'
                                         ,par:°{typ:'j',exp:'Excel',exp2:'PDF-jmenovky',sel:'yes'
                                         ,cnd:"funkce IN (0,1,2)",hav:"_vek>=18 OR r_role IN ('a','b')",ord:"prijmeni"
                                         ,tit:'jméno:20, příjmení:15',fld:'jmeno,prijmeni'}}
