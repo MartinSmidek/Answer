@@ -21,6 +21,8 @@ var the_hlavni: number          // 0=normální akce, id=akce k the_duakce hlavn
 var the_soubezna: number        // 0=normální akce, id=akce s the_duakce souběžná
 var the_cenik: text             // pracovní akce: má ceník
 var the_cena:  number           // pracovní akce: má pevnou cenu pro dospělého
+var form_mode: text             // informace pro zobrazení formulářů: new|show
+
 
 # inicializace modulu Databáze - nastavení globálních proměnných the_* tohoto modulu
 var dirty=0                     // 1 => byla ukončena inicializace modulu
@@ -641,27 +643,35 @@ form _osoba2x [,,244,322] {css:'ae_frame', proc onclick() { on_click }
     kontakt.enable(1); adresa.enable(1);
     frame.set(osoba_config.tit.get);
     tags.set('i,ii');
-    [ contains('K',osoba_config.grp.get); {
-      [ kontakt.get; kontakt_r.set('') | kontakt_r.set(kmen.get) ];
-      eq(mode.get,0);   // 0: pro kontakt=0 jen kontakt_r
-      [ kontakt.get; tags.set(conc(tags,',j,k')) | tags.set(conc(tags,',j,J')) ]
-    | // 2: pro kontakt=0 ®rodinné+disabled, 1: kontakt=0 osobní+disabled (měly by být prázdné)
-      tags.set(conc(tags,',j,k')); form.enable(kontakt.get,'k');
-    }];
-    [ contains('A',osoba_config.grp.get); {
-      [ adresa.get; adresa_r.set('') | adresa_r.set(kmen.get) ];
-      eq(mode.get,0);   // 0: pro adresa=0 jen adresa_r
-      [ adresa.get; tags.set(conc(tags,',a,b')) | tags.set(conc(tags,',a,A')) ]
-    | // 2: pro adresa=0 ®rodinné+disabled, 1: adresa=0 osobní+disabled (měly by být prázdné)
-      tags.set(conc(tags,',a,b')); form.enable(adresa.get,'b');
-    }];
-    [ or(even,key_spolu.get);
+    [ contains('K',osoba_config.grp.get);
+      { eq(form_mode.get,'new');
+        kontakt.set(0); kontakt_r.set('');
+        tags.set(conc(tags,',j,k')); form.enable(1,'k');
+      | [ kontakt.get; kontakt_r.set('') | kontakt_r.set(kmen.get) ];
+        eq(mode.get,0);   // 0: pro kontakt=0 jen kontakt_r
+        [ kontakt.get; tags.set(conc(tags,',j,k')) | tags.set(conc(tags,',j,J')) ]
+      | // 2: pro kontakt=0 ®rodinné+disabled, 1: kontakt=0 osobní+disabled (měly by být prázdné)
+        tags.set(conc(tags,',j,k')); form.enable(kontakt.get,'k');
+      }
+    ];
+    [ contains('A',osoba_config.grp.get);
+      { eq(form_mode.get,'new');
+        adresa.set(0); adresa_r.set('');
+        tags.set(conc(tags,',a,b')); form.enable(1,'b');
+      | [ adresa.get; adresa_r.set('') | adresa_r.set(kmen.get) ];
+        eq(mode.get,0);   // 0: pro adresa=0 jen adresa_r
+        [ adresa.get; tags.set(conc(tags,',a,b')) | tags.set(conc(tags,',a,A')) ]
+      | // 2: pro adresa=0 ®rodinné+disabled, 1: adresa=0 osobní+disabled (měly by být prázdné)
+        tags.set(conc(tags,',a,b')); form.enable(adresa.get,'b');
+      }
+    ];
+    [ or(even,key_spolu.get,eq(form_mode.get,'new'));
       [ contains('O',osoba_config.grp.get); tags.set(conc(tags,',o')) ];
       [ contains('C',osoba_config.grp.get); tags.set(conc(tags,',c')) ];
       [ contains('P',osoba_config.grp.get); tags.set(conc(tags,',p')) ];
     ];
     [ contains('S',osoba_config.grp.get); form.set_css('db_hr','','S') | form.set_css('','db_hr','S') ];
-    [ or(even,key_spolu.get) | tags.set(conc(tags,',x')) ];
+    [ or(even,key_spolu.get,eq(form_mode.get,'new')) | tags.set(conc(tags,',x')) ];
     form.stacks(tags,'down',0,0,10);
   }
 
@@ -713,7 +723,7 @@ form _osoba2x [,,244,322] {css:'ae_frame', proc onclick() { on_click }
       eq(host.get,'E'); show_osoba(0)
     | eq(host.get,'U'); r.set(ask('akce2_osoba2x',key_osoba.get)); // varianty kontaktu
       [ this.get; copy_by_name(r.o_kontakt,form) | copy_by_name(r.r_kontakt,form) ];
-      show_osoba(0)
+      [ eq(form_mode.get,'new') | show_osoba(0) ]
     }
   }
   label kontakt_r [169,3,75,] {tag:'j', format:'n'}
@@ -737,7 +747,7 @@ form _osoba2x [,,244,322] {css:'ae_frame', proc onclick() { on_click }
       eq(host.get,'E'); show_osoba(0)
     | eq(host.get,'U'); r.set(ask('akce2_osoba2x',key_osoba.get)); // varianty adres
       [ this.get; copy_by_name(r.o_adresa,form) | copy_by_name(r.r_adresa,form) ];
-      show_osoba(0)
+      [ eq(form_mode.get,'new') | show_osoba(0) ]
     }
   }
   label adresa_r [169,3,75,12] {tag:'a', format:'n', style:"z-index:3;background-color:inherit" }

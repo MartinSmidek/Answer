@@ -318,9 +318,9 @@ form _cmd2 [,,623,30] { css:'ae_work'
 form _cmd [,,623,30] { css:'ae_work'
   var mode=''           // novy_clen | novy_pobyt | novy_singl | ''
   proc set_state(_mode) { switch(_mode,
-    'new', {form.enable(1,'z'); form.enable(0,'x')},
+    'new', {form.enable(1,'z'); form.enable(0,'x'); form_mode.set('new')}, // blok umístění role
     'edit',{form.enable(1,'s'); form.enable(0,'x')},
-    'show',{form.enable(0,'s'); form.enable(1,'x')}
+    'show',{form.enable(0,'s'); form.enable(1,'x'); form_mode.set('show')}
   )}
   // ZPĚT
   label  [1,0,119,30] { css:'ae_parm', skill:'yaa;faa;caa' }
