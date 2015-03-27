@@ -98,8 +98,9 @@ function answer_php($app,$app_name,$db_name,$skin,$js_lib,$css_lib,$options) {
     ? array("$licensed/datepicker/datepicker_vista/datepicker_vista.css"):array(),
     // uživatelské css
     $css_lib,
-    // css pro dotykového klienta
-    $ipad || $android ? array("$client/ipad.css") : array()
+    // css pro dotykové klienty
+    $android ? array("$client/android.css") : array(),
+    $ipad ? array("$client/ipad.css") : array()
   );
 
   global $answer_db;
