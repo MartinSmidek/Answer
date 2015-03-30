@@ -1422,12 +1422,53 @@ function sta_sestava($title,$par,$export=false) {
 //                                                 debug($par,"sta_sestava($title,...,$export)");
   $ret= (object)array('html'=>'','err'=>0);
   // dekódování parametrů
-  $tits= explode(',',$par->tit);
-  $flds= explode(',',$par->fld);
+  $tits= $par->tit ? explode(',',$par->tit) : array();
+  $flds= $par->fld ? explode(',',$par->fld) : array();
   $clmn= array();
   $expr= array();       // pro výrazy
   // získání dat
   switch ($par->typ) {
+  # Sestava přednášejících na letních kurzech, rok= kolik let dozadu (0=jen letos)
+  case 'prednasejici': // --------------------------------------->> sta přednášející na LK během let
+    $do= date('Y');
+    $od= $do - $par->parm + 1;
+    $tits[]= "přednáška:20";
+    $flds[]= 1;
+    for ($rok= $do; $rok>=$od; $rok--) {
+      $tits[]= "$rok:26";
+      $flds[]= $rok;
+    }
+    $prednasky= map_cis('ms_akce_prednasi','zkratka');
+    foreach ($prednasky as $pr=>$prednaska) {
+      $clmn[$pr][1]= $prednaska;
+      $rx= mysql_qry("SELECT prednasi,YEAR(a.datum_od) AS _rok,
+          GROUP_CONCAT(DISTINCT IF(t.role='a',o.prijmeni,'') SEPARATOR '') as prijmeni_m,
+          GROUP_CONCAT(DISTINCT IF(t.role='a',o.jmeno,'')    SEPARATOR '') as jmeno_m,
+          GROUP_CONCAT(DISTINCT IF(t.role='b',o.prijmeni,'') SEPARATOR '') as prijmeni_z,
+          GROUP_CONCAT(DISTINCT IF(t.role='b',o.jmeno,'')    SEPARATOR '') as jmeno_z,
+          p.pouze,r.nazev
+        FROM pobyt AS p
+        JOIN spolu AS s USING(id_pobyt)
+        JOIN osoba AS o ON s.id_osoba=o.id_osoba
+        LEFT JOIN tvori AS t ON t.id_osoba=o.id_osoba
+        LEFT JOIN rodina AS r ON r.id_rodina=IFNULL(i0_rodina,t.id_rodina)
+        JOIN akce AS a ON a.id_duakce=p.id_akce
+        WHERE a.druh=1 AND p.prednasi=$pr AND YEAR(a.datum_od) BETWEEN $od AND $do
+        GROUP BY id_pobyt -- ,_rok
+        ORDER BY _rok DESC");
+      while ( $rx && ($x= mysql_fetch_object($rx)) ) {
+        $jm= $x->pouze==1 ? "{$x->prijmeni_m} {$x->jmeno_m}"
+           : ($x->pouze==2 ? "{$x->prijmeni_z} {$x->jmeno_z}"
+           : "{$x->nazev} {$x->jmeno_m} a {$x->jmeno_z}");
+        if ( isset($clmn[$pr][$x->_rok]) ) {
+          $xx= "{$prednasky[$x->prednasi]}/{$x->_rok}";
+          fce_warning("POZOR: přednáška $xx má více přednášejících");
+        }
+        $clmn[$pr][$x->_rok].= "$jm ";
+      }
+    }
+//                                                 debug($clmn,"$od - $do");
+    break;
   # Sestava ukazuje letní kurzy
   # fld:'_rok,_pec,_sko,_proc,_pecN,_skoN,_procN,_note'
   case 'ms-pecouni': // ----------------------------------------->> sta proškolení pečounů během let
@@ -1592,6 +1633,9 @@ function sta_sestava($title,$par,$export=false) {
       }
     }
     $add_address();
+    break;
+  default:
+    $ret->err= $ret->html= 'N.Y.I.';
     break;
   }
 end:
