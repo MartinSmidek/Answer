@@ -27,6 +27,9 @@ menu m {type:'left', format:'f+' //, active:*
       ,tit:'věk:4,účastníků:10,pečovatelů:10',fld:'_vek,_uca,_pec',ord:'_vek'}}
   }
   menu l {title:'SEZNAMY',type:'group',                                                skill:'yae;fae'
+    item {title:'přednášející LK MS'  ,par:°{typ:'prednasejici',rok:5,xls:'Excel',parm_tit:'roky zpět:'
+      ,dsc:"Tabulka obsahuje historii přednášejících na letních kurzech MS. <br>Hloubku historie je třeba nastavit parametrem 'roky zpět'.<br>"
+      ,tit:'',fld:'',ord:''}}
     item {title:'adresy účastníků'  ,par:°{typ:'adresy',rok:0,xls:'Excel',/*pdf:'Štítky',*/parm_tit:'roky zpět:'
       ,dsc:'Seznam obsahuje účastníky akcí v posledních letech (parametr určuje počet let zpět, default=0 tj. jen letošní).<br>Kliknutí na číslo ve sloupci <b>ID osoby</b> zobrazí první osobu na kartě EVIDENCE.<br>'
       ,tit:'jména:30,ulice:20,psč:6,obec:20,stát:6,(příjmení):15,(aktivní členi):20,(poslední akce):80,(mrop):7,(PPS):7,(akt.členů):11,(ID osoby):10'
@@ -41,7 +44,7 @@ menu m {type:'left', format:'f+' //, active:*
       ,fld:'jmena,ulice,psc,obec,stat,prijmeni,_cleni,akce,_mrop,_pps,_clenu,id_osoba',ord:'prijmeni',cnd:"_psc!='' AND _stat IN ('','?')"}}
   }
   proc onclick (i) { var ret: object
-    menu_item.set(i); menu_par.set(i.par);
+    menu_item.set(i); menu_par.set(i.par); clear;
     the_vypis.set(conc(i.owner.title,' - ',i.title));
     [ i.par.xls; info.ex_xls.display(1); info.ex_xls.set(i.par.xls) | info.ex_xls.display(0) ];
     [ i.par.pdf; info.ex_pdf.display(1); info.ex_pdf.set(i.par.pdf) | info.ex_pdf.display(0) ];
