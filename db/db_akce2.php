@@ -179,6 +179,7 @@ function akce2_info($id_akce,$text=1) {  trace();
   $info= (object)array('muzi'=>0,'zeny'=>0,'deti'=>0,'peco'=>0,'rodi'=>0,'skup'=>0);
   if ( $id_akce ) {
     $ucasti= $rodiny= $dosp= $muzi= $zeny= $deti= $pecounu= $err= $err2= 0;
+    $odhlaseni= $neprijeli= $nahradnici= $nahradnici_osoby= 0;
     $akce= $chybi_nar= $chybi_sex= '';
     $qry= "SELECT nazev, datum_od, datum_do, now() as _ted,i0_rodina,funkce,
              COUNT(id_spolu) AS _clenu,
@@ -198,18 +199,28 @@ function akce2_info($id_akce,$text=1) {  trace();
            GROUP BY p.id_pobyt";
     $res= mysql_qry($qry);
     while ( $res && $p= mysql_fetch_object($res) ) {
-      // údaje účastníků jednoho pobytu
-      $ucasti++;
-      $muzi+= $p->_muzu;
-      $zeny+= $p->_zen;
-      $deti+= $p->_deti;
-      $err+= $p->_err;
-      $err2+= $p->_err2;
-      $rodiny+= i0_rodina && $p->_clenu>1 ? 1 : 0;
-      $chybi_nar.= $p->_kdo;
-      $chybi_sex.= $p->_kdo2;
-      if ( $p->funkce==99 )
-        $pecounu+= $p->_clenu;
+      $fce= $p->funkce;
+      // diskuse funkce=odhlášen/14 a funkce=nepřijel/10 a funkce=náhradník/9
+      if ( in_array($fce,array(14,10,9) ) ) {
+        $odhlaseni+= $fce==14 ? 1 : 0;
+        $neprijeli+= $fce==10 ? 1 : 0;
+        $nahradnici+= $fce==9 ? 1 : 0;
+        $nahradnici_osoby+= $fce==9 ? $p->_clenu : 0;
+      }
+      else {
+        // údaje účastníků jednoho pobytu
+        $ucasti++;
+        $muzi+= $p->_muzu;
+        $zeny+= $p->_zen;
+        $deti+= $p->_deti;
+        $err+= $p->_err;
+        $err2+= $p->_err2;
+        $rodiny+= i0_rodina && $p->_clenu>1 ? 1 : 0;
+        $chybi_nar.= $p->_kdo;
+        $chybi_sex.= $p->_kdo2;
+        if ( $p->funkce==99 )
+          $pecounu+= $p->_clenu;
+      }
       // údaje akce
       $akce= $p->nazev;
       $cas1= $p->_ted>$p->datum_od ? "byla" : "bude";
@@ -234,6 +245,10 @@ function akce2_info($id_akce,$text=1) {  trace();
       $_err=       je_1_2_5($err,"osoby,osob,osob");
       $_err2=      je_1_2_5($err2,"osoby,osob,osob");
       $_rodiny=    je_1_2_5($rodiny,"rodina,rodiny,rodin");
+      $_pobyt_o=   je_1_2_5($odhlaseni,"pobyt,pobyty,pobytů");
+      $_pobyt_x=   je_1_2_5($neprijeli,"pobyt,pobyty,pobytů");
+      $_pobyt_n=   je_1_2_5($nahradnici,"přihláška,přihlášky,přihlášek");
+      $_pobyt_no=  je_1_2_5($nahradnici_osoby,"osoba,osoby,osob");
       // html
       $html= $dosp+$deti>0
        ? "Akce <b>$akce</b><br>$cas1 $dne<br><hr>$cas2"
@@ -243,6 +258,14 @@ function akce2_info($id_akce,$text=1) {  trace();
        . ",<br><br> $_dospelych ($_muzu, $_zen) a $_deti,"
        . "<br><b>celkem $_osob</b>"
        : "Akce byla vložena do databáze<br>ale nemá zatím žádné účastníky";
+      if ( $odhlaseni + $neprijeli + $nahradnici > 0 ) {
+        $html.= "<br><hr>";
+        $msg= array();
+        if ( $odhlaseni ) $msg[]= "odhlášeno: $_pobyt_o (bez storna)";
+        if ( $neprijeli ) $msg[]= "zrušeno: $_pobyt_x (nepřijeli, aplikovat storno)";
+        if ( $nahradnici ) $msg[]= "náhradníci: $_pobyt_n, celkem $_pobyt_no";
+        $html.= implode('<br>',$msg);
+      }
       if ( $err + $err2 > 0 ) {
         $html.= "<br><hr>POZOR: ";
         $html.= $err>0  ? "<br>u $_err chybí datum narození:<br> <i>$chybi_nar</i>" : '';
@@ -2294,6 +2317,7 @@ end:
 # spolupracuje s: akce2_auto_jmena1,akce2_auto_jmena1L a číselníky: ms_akce_s_role,ms_akce_dite_kat
 # info = {id,nazev,role}
 function akce2_pridej_k_pobytu($id_akce,$id_pobyt,$info,$cnd='') { trace();
+//                                                 debug($info,"akce2_pridej_k_pobytu");
   $ret= (object)array('spolu'=>0,'msg'=>'');
   $ido= $info->id;
   $je= select("COUNT(*)","pobyt JOIN spolu USING(id_pobyt)","id_akce=$id_akce AND id_osoba=$ido");
@@ -2306,17 +2330,18 @@ function akce2_pridej_k_pobytu($id_akce,$id_pobyt,$info,$cnd='') { trace();
     $narozeni= select("narozeni","osoba","id_osoba=$ido");
     $vek= roku_k($narozeni,$datum_od);
     $role= $info->role;
-    $kat= $srole= 0;                                            // host
+    $kat= 0; $srole= 1;                                         // default= účastník, nedítě
     // odhad typu účasti podle stáří a role
-    if     ( $role=='p' || $vek>=18 )            $srole= 5;     // osob.peč.
-    elseif ( $vek>=18 )                          $srole= 1;     // účastník
-    elseif ( $role=='d' && $vek>=17 )            $srole= 6;     // dítě - G
-    elseif ( $role=='d' && $vek>=13 ) { $kat= 1; $srole= 2; }   // dítě - A
-    elseif ( $role=='d' && $vek>=3 )  { $kat= 3; $srole= 2; }   // dítě - C
-    elseif ( $role=='d' && $vek>=2 )  { $kat= 5; $srole= 2; }   // dítě - E
-    elseif ( $role=='d' && $vek>0 )   { $kat= 6; $srole= 2; }   // dítě - F
+    if     ( $role=='p' )                         { $kat= 0; $srole= 5; }   // osob.peč.
+    elseif ( $vek>=18 || $narozeni=='0000-00-00') { $kat= 0; $srole= 1; }   // účastník
+    elseif ( (!$role || $role=='d') && $vek>=17 ) { $kat= 1; $srole= 2; }   // dítě - A|G
+    elseif ( (!$role || $role=='d') && $vek>=13 ) { $kat= 1; $srole= 2; }   // dítě - A
+    elseif ( (!$role || $role=='d') && $vek>=3 )  { $kat= 3; $srole= 2; }   // dítě - C
+    elseif ( (!$role || $role=='d') && $vek>=2 )  { $kat= 5; $srole= 2; }   // dítě - E
+    elseif ( (!$role || $role=='d') && $vek>=0 )  { $kat= 6; $srole= 3; }   // dítě - F
+//                                                 display("$vek= roku_k($narozeni,$datum_od), role=$role");
     if ( query("INSERT INTO spolu (id_pobyt,id_osoba,s_role,dite_kat)
-         VALUE ($id_pobyt,$ido,$srole,$kat)") ) {
+         VALUE ($id_pobyt,$ido,$srole,$kat)") ) { // ms_akce_s_role, ms_akce_dite_kat
       $ret->spolu= mysql_insert_id();
     }
     else  $ret->msg= 'chyba při vkládání';
@@ -2690,6 +2715,8 @@ function akce_browse_ask($x,$tisk=false) {
       $z->key_spolu= 0;
       $z->ido1= $_ido1;
       $z->ido2= $_ido2;
+      $z->datplatby= sql_date1($z->datplatby);                   // d.m.r
+      $z->datplatby_d= sql_date1($z->datplatby_d);               // d.m.r
       # ok
       $zz[$idp]= $z;
       continue;
