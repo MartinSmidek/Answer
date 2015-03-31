@@ -939,6 +939,7 @@ panel pobyt_config [,,200,120] {type:'popup', title:"Podrobnosti údajů"
 }
 form _pobyt [,,0,62] {
   proc onchanged() { evid.d_change('p') }
+  proc onclick() { on_click }
   proc init_pobyt() { evid.pob.display(0,'[^f]'); }
   proc show_pobyt() { var height:number, tags:text, tit:text
     form.display(0,'[^f]');
@@ -964,9 +965,7 @@ form _pobyt [,,0,62] {
   proc on_click() { evid.z_change('p') }
   view p: table pobyt
   const Lr=0
-  label frame [0,0,360,50] {tag:'f', css:'ae_form2', title:'společné údaje o pobytu',
-    proc onclick() { on_click }
-  }
+  label frame [0,0,360,50] {tag:'f', css:'ae_form2', title:'společné údaje o pobytu' }
   field id [304,-12,50,] {tag:'F', data:p.id_pobyt, format:'ro', style:'color:white', css:'Label',
                           help:' ', tabindex:0 }
   field key_akce { data:p.id_akce }
@@ -1014,9 +1013,9 @@ form _pobyt [,,0,62] {
 
   // funkce
   select funkce   [7,35,82,] {tag:'a', type:'map', data:p.funkce, format:'un',
-    options:ms_akce_funkce.zkratka, title:'^společná funkce' }
+    options:ms_akce_funkce.zkratka, title:'^společná funkce'}
   select prednasi [96,35,101,] {tag:'a', type:'map', data:p.prednasi, format:'un',
-    options:ms_akce_prednasi.zkratka, title:'^přednáš(ej)í' }
+    options:ms_akce_prednasi.zkratka, title:'^přednáš(ej)í'}
   label [5,65,1,1] { tag:'a' } // oprava
 }
 # ----------------------------------------------------------------------------------------==> _spolu
@@ -1042,6 +1041,7 @@ panel spolu_config [,,200,60] {type:'popup', title:"Podrobnosti údajů"
 form _spolu [,,0,270] {
   var os: object
   proc onchanged() { }
+  proc onclick() { on_click }
   proc on_click() {}
   proc show_spolu() { var height:number, tags:text, tit:text
     form.display(0,'[^f]');
@@ -1078,9 +1078,7 @@ form _spolu [,,0,270] {
 
   view s: table spolu
 
-  label frame [0,0,242,50] {tag:'f', css:'ae_form2', title:'osobní údaje o pobytu',
-    proc onclick() { on_click }
-  }
+  label frame [0,0,242,50] {tag:'f', css:'ae_form2', title:'osobní údaje o pobytu' }
   field key_spolu [186,0,50,] {tag:'S', data:s.id_pobyt, format:'ro',
     style:'color:white', css:'Label', help:' ', tabindex:0 }
   field key_osoba { data:s.id_osoba }
@@ -1095,7 +1093,9 @@ form _spolu [,,0,270] {
 
   // r = role
   select s_role [55,2,90,] {tag:'r', type:'map', options:ms_akce_s_role.zkratka, format:'nu'
-    data:s.s_role, title:'účast jako:', proc onchanged() { show_spolu }}
+    data:s.s_role, title:'účast jako:',
+      proc onchanged() { show_spolu }
+  }
 
   // informace závislé na s_roli
 
@@ -1155,7 +1155,7 @@ form _spolu [,,0,270] {
       // přidání se zamezením duplicit
       ido.set(os.key_osoba.get);
       ret.set(ask('akce2_pridej_k_pobytu',the_duakce.get,the_pobyt.get,
-        object('id',ido,'role',os.role.key)));
+        object('id',ido,'role',ucast.evid.rod.cleni.role.get)));
       ret.spolu;
       load_spolu(ret.spolu,ucast.evid.rod.cleni);
       _reload_spolu(ido);
@@ -1169,7 +1169,9 @@ form _platba { key_id:'id_pobyt'
   label [2,27,527,Td+95] //{title:"<img src='img/ms2p.png'>" }
   proc ini() {
     // výpočet součtu cen a rozpis, došlé platby
-    [ has_skill("yaa;faa;caa"); dosle_platby; rozpis_ceny;
+    [ has_skill("yaa;faa;caa");
+#       dosle_platby;
+      rozpis_ceny;
       celkem.set(sum(c_nocleh.get,c_strava.get,c_program.get,c_sleva.get));
       naklad.set(sum(celkem.get,minus(c_sleva.get)));
 #       the_soubeh.get; naklad_d.set(cena.get('naklad_d')); poplatek_d.set(cena.get('poplatek_d'))
@@ -1178,9 +1180,9 @@ form _platba { key_id:'id_pobyt'
     or(u.b.cstrava_cel.get,u.b.cstrava_pol.get); stravy.set_css('cervena','cerna');
   | stravy.set_css('cerna','cervena')
   }
-  proc dosle_platby() {
-    doslo.set(ask('akce_platby',the_pobyt.get));
-  }
+#   proc dosle_platby() {
+#     doslo.set(ask('akce_platby',the_pobyt.get));
+#   }
   // rozpis a zápis ceny
   button [10,47,,] { tag:'cenik', title:"Návrh ceny", help:"zapíše počet lůžek a strav"
     var ret: object
@@ -1227,17 +1229,17 @@ form _platba { key_id:'id_pobyt'
   }
   label navrh [10,119,280,Td-87] { tag:'cenik', css:'karta_info' }
   edit duvod_text [10,119,280,Td-87] { tag:'cenik', /*type:'html',*/ data:pobyt.duvod_text }
-  // platby
-  button [307,70,,] { title:"Aktualizace bankovních výpisů", skill:'yaa|yaa'
-    proc onclick() {
-      var msg: text
-      // aktualizace tabulky PLATBA
-      msg.set(ask('akce_rb_platby'));
-      [ eq(msg,'Nepřišly nové platby') | alert(substr(msg,0,300),' ...') ];
-  } }
-  button [491,70,,] { title:"Došlé platby", skill:'yaa|yaa'
-    proc onclick() { dosle_platby }
-  }
+#   // platby
+#   button [307,70,,] { title:"Aktualizace bankovních výpisů", skill:'yaa|yaa'
+#     proc onclick() {
+#       var msg: text
+#       // aktualizace tabulky PLATBA
+#       msg.set(ask('akce_rb_platby'));
+#       [ eq(msg,'Nepřišly nové platby') | alert(substr(msg,0,300),' ...') ];
+#   } }
+#   button [491,70,,] { title:"Došlé platby", skill:'yaa|yaa'
+#     proc onclick() { dosle_platby }
+#   }
   label doslo [300,99,281,170] { style:"border-left:2px solid grey" }
   // nestandardní strava
   button stravy     [89,Td+37,37,] {tag:'b', title:'Str Po', style:'font-size:10px;height:19px;width:40px',
@@ -1280,7 +1282,7 @@ form _platba { key_id:'id_pobyt'
   field platba      [283,Td+91,50,] {tag:'b', data:pobyt.platba, format:'r'}
   select zpusobplat [339,Td+91,86,] {tag:'b', type:'map', data:pobyt.zpusobplat,
                                    options:ms_akce_platba.zkratka, format:'u'}
-  field datplatby   [430,Td+91,84,] {tag:'b', type:'date', data:pobyt.datplatby}
+  field datplatby   [430,Td+91,84,] {tag:'b', type:'date', format:'RUr:e', data:pobyt.datplatby}
   check avizo       [275,Td+107,50,] {tag:'b', title:"avízo", data:pobyt.avizo, format:'r'}
   // pevné texty
   label [13,32,,]   { tag:'cenik', title:'Rozpis ceny akce podle cenového vzorce akce a přehled příchozích plateb' }
