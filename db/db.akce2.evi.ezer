@@ -359,19 +359,22 @@ form _lst [,,370,*] {
   }
   view o: table osoba
   view ot: table tvori  { join_type:"LEFT", join:"USING(id_osoba)" }
+  view of: table rodina { join_type:"LEFT", join:"USING(id_rodina)" }
   view os: table spolu  { join_type:"LEFT", join:"USING(id_osoba)" }
   view op: table pobyt  { join_type:"LEFT", join:"USING(id_pobyt)" }
   browse bo [10,30,,] {tag:'o', group_by:'o.id_osoba'
       rows:27, buf_rows:60, qry_rows:1, css_rows:'barva,0:neucast'
     show id_o { data:o.id_osoba }
-    show id_r { data:ot.id_rodina }
+    show id_t { data:ot.id_tvori }
+    show id_r { data:of.id_rodina }
     show id_p { data:os.id_pobyt }
     show _rodin { expr:"COUNT(*)" }
     show barva { expr:"o.deleted=''" }
     show _funkce { expr:"GROUP_CONCAT(DISTINCT op.funkce)" }
     show prijmeni [,,70,] { data:o.prijmeni, title:'příjmení', format:'q*s+' }
     show jmeno [,,70,] { data:o.jmeno, title:'jméno', format:'q*s' }
-    show [,,60,] { title:'obec', data:o.obec, format:'q*s' }
+#     show [,,60,] { title:'obec', data:o.obec, format:'q*s' }
+    show [,,60,] { title:'obec', expr:"IF(o.adresa,o.obec,of.obec)", format:'q*s' }
     show nar [,,50,] { title:'rrmmdd', data:o.narozeni, sql_pipe:'sql_yymmdd', format:'q@s'
       help:'datum narození ve tvaru rrmmdd'}
     show _vek [,,20,] { title:"věk", expr:"TIMESTAMPDIFF(YEAR,narozeni,NOW())", format:'rsq*' }

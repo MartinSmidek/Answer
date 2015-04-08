@@ -644,20 +644,27 @@ function tisk_sestava_pary($akce,$par,$title,$vypis,$export=false) { trace();
   # rozbor výsledku browse/ask
   $i_jmeno=       1;
   $i_adresa=     12;
-  $i_key_spolu=  35;
-  $i_spolu_note= 39;
-  $i_osoba_note= 33;
+  $i_key_spolu=   36;
+  $i_spolu_note=  40;
+  $i_osoba_note=    33;
+  $i_osoba_kontakt= 17;
+  $i_osoba_telefon= 18;
+  $i_osoba_email=   20;
   array_shift($y->values);
   foreach ($y->values as $x) {
 //     if ( !in_array($x->key_pobyt,array(15209,15217,15213,15192,15199)) ) continue;
 //     if ( !in_array($x->key_pobyt,array(15192)) ) continue;
 //     if ( !in_array($x->key_pobyt,array(15202)) ) continue;
-//                                                         debug($x);
+                                                        if ( $x->key_pobyt==21339 ) debug($x,"$x->key_pobyt");
     $n++;
-    # rozbor osobních údajů: adresa nebo kontakt se získá 3 způsoby
+    # rozbor osobních údajů: adresa nebo základní kontakt se získá 3 způsoby
     # 1. první osoba má osobní údaje - ty se použijí
     # 2. první osoba má rodinné údaje, které se shodují s i0_rodina - použijí se ty z i0_rodina
     # 3. první osoba má rodinné údaje, které se neshodují s i0_rodina - použijí se tedy její
+    $telefony= $emaily= array();
+    if ( $x->r_telefony ) $telefony[]= trim($x->r_telefony,",; ");
+    if ( $x->r_emaily )   $emaily[]=   trim($x->r_emaily,",; ");
+    # rozšířené spojení se získá slepením údajů všech účastníků
     $xs= explode('≈',$x->r_cleni);
 //                                                         debug($xs,"xs");
     $pocet= 0;
@@ -665,12 +672,16 @@ function tisk_sestava_pary($akce,$par,$title,$vypis,$export=false) { trace();
     $osoba_note= "";
     foreach ($xs as $i=>$xi) {
       $o= explode('~',$xi);
-//                                                         debug($o,"xi/$i");
+                                                        if ( $x->key_pobyt==21339 ) debug($o,"xi/$i");
       if ( $o[$i_key_spolu] ) {
         $pocet++;
         $jmeno= str_replace(' ','-',$o[$i_jmeno]);
         if ( $o[$i_spolu_note] ) $spolu_note.= " + $jmeno:$o[$i_spolu_note]";
         if ( $o[$i_osoba_note] ) $osoba_note.= " + $jmeno:$o[$i_osoba_note]";
+        if ( $o[$i_osoba_kontakt] && $o[$i_osoba_telefon] )
+          $telefony[]= trim($o[$i_osoba_telefon],",; ");
+        if ( $o[$i_osoba_kontakt] && $o[$i_osoba_email] )
+          $emaily[]= trim($o[$i_osoba_email],",; ");
       }
     }
     $o= explode('~',$xs[0]);
@@ -689,8 +700,10 @@ function tisk_sestava_pary($akce,$par,$title,$vypis,$export=false) { trace();
       case 'ulice':     $c= $adresa  ? $ulice   : substr($ulice,$r); break;
       case 'psc':       $c= $adresa  ? $psc     : substr($psc,$r);   break;
       case 'obec':      $c= $adresa  ? $obec    : substr($obec,$r);  break;
-      case 'telefony':  $c= $kontakt ? $telefon : substr($telefon,$r);  break;
-      case 'emaily':    $c= $kontakt ? $email   : substr($email,$r);  break;
+      case 'telefon':   $c= trim($kontakt ? $telefon : substr($telefon,$r),",; ");  break;
+      case 'telefony':  $c= implode(', ',$telefony); break;
+      case 'email':     $c= trim($kontakt ? $email   : substr($email,$r),",; ");  break;
+      case 'emaily':    $c= implode(', ',$emaily); break;
       case '_pocet':    $c= $pocet; break;
       case 'poznamka':  $c= $x->p_poznamka . ($spolu_note ?: ''); break;
       case 'note':      $c= $x->r_note . ($osoba_note ?: ''); break;
@@ -2568,7 +2581,7 @@ function akce_browse_ask($x,$tisk=false) {
            . "c_suma,platba,xfunkce=funkce,funkce,skupina,dluh");
     $fakce= flds("dnu,datum_od");
     $frod=  flds("fotka,r_spz=spz,r_svatba=svatba,r_datsvatba=datsvatba,r_rozvod=rozvod,r_ulice=ulice,r_psc=psc,"
-          . "r_obec=obec,r_stat=stat,r_telefony=telefony,r_emaily=emaily,r_note=note");
+          . "r_obec=obec,r_stat=stat,r_telefony=telefony,r_emaily=emaily,r_umi,r_note=note");
     $fpob2= flds("p_poznamka=poznamka,pokoj,budova,prednasi,luzka,pristylky,kocarek,pocetdnu"
           . ",strava_cel,strava_pol,c_nocleh=platba1,c_strava=platba2,c_program=platba3,c_sleva=platba4"
           . ",datplatby,cstrava_cel,cstrava_pol,svp,zpusobplat,naklad_d,poplatek_d,platba_d"

@@ -96,12 +96,16 @@ menu m {type:'left', active:*
   }
   # ------------------------------------------------------------------------------------------------ adresář
   menu n {tag:'a', title:'adresář',type:'group',_sys:'*'
-    item i {title:'Základní pro rodiny' ,par:°{typ:'p',exp:'Excel2',cnd:'funkce!=99'
+    item i {title:'Rodinný' ,par:°{typ:'p',exp:'Excel2',cnd:'funkce!=99'
                                         ,tit:'příjmení:15,jména:20,obec:25,psč:7,ulice:25,^'
                                         ,fld:'prijmeni,jmena,obec,psc,ulice,^id_pobyt'}}
-    item {title:'Základní pro rodiny + spojení'                                                           skill:'y;f'
+    item {title:'Rodinný + základní spojení'                                                            skill:'y;f'
                                         ,par:°{typ:'p',exp:'Excel2',cnd:'funkce!=99'
                                         ,tit:'příjmení:15,jména:20,obec:25,psč:7,ulice:25,telefon:40,e-mail:60,^'
+                                        ,fld:'prijmeni,jmena,obec,psc,ulice,telefon,email,^id_pobyt'}}
+    item {title:'Rodinný + rozšířená spojení'                                                           skill:'y;f'
+                                        ,par:°{typ:'p',exp:'Excel2',cnd:'funkce!=99'
+                                        ,tit:'příjmení:15,jména:20,obec:25,psč:7,ulice:25,telefony:40,e-maily:60,^'
                                         ,fld:'prijmeni,jmena,obec,psc,ulice,telefony,emaily,^id_pobyt'}}
 #     item {title:'Základní pro rodiny + spojení'                                                           skill:'c'
 #                                         ,par:°{typ:'p',exp:'Excel2',cnd:'funkce!=99'

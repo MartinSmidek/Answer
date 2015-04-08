@@ -571,7 +571,7 @@ form _ucast [,,400,] { css:'ds_form'
     // údaje ucast.evid.rod
     show r_spz, show r_svatba, show r_datsvatba, show r_rozvod,
     show r_ulice, show r_psc, show r_obec, show r_stat,
-    show r_telefony, show r_emaily, show r_note
+    show r_telefony, show r_emaily, show r_umi, show r_note
     // údaje ucast.evid.rod.cleni
     show r_cleni // naplní browse pro rodinu daty jejích členů
     // údaje ucast.evid.pob
