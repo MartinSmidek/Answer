@@ -344,6 +344,7 @@ table osoba { key_id:'id_osoba'
   text jazyk
   number cirkev
   text aktivita
+  text o_umi      // #ms_umi
   number clen
   text note
   text origin
@@ -389,6 +390,7 @@ table rodina { key_id:'id_rodina'
   number svatba
   date datsvatba { sql_pipe:'sql_date1'}
   number rozvod
+  text r_umi      // #ms_umi
   text note
   text origin
   text historie
@@ -542,6 +544,7 @@ map ms_akce_dieta:    table _cis {where:"druh='ms_akce_dieta'",     order:'porad
 map ms_akce_dite_kat: table _cis {where:"druh='ms_akce_dite_kat'",  order:'poradi', key_id:'data'}
 map ms_akce_s_role:   table _cis {where:"druh='ms_akce_s_role'",    order:'poradi', key_id:'data'}
 map ms_akce_t_role:   table _cis {where:"druh='ms_akce_t_role'",    order:'poradi', key_id:'data'}
+map ms_umi:           table _cis {where:"druh='answer_umi'",        order:'poradi', key_id:'data', db:'ezer_group' }
 map map_evi_vyber_o:  table _cis {where:"druh='evi_vyber_o' AND data<50",  order:'poradi', key_id:'data'}
 map map_evi_vyber_x:  table _cis {where:"druh='evi_vyber_o' AND data>50",  order:'poradi', key_id:'data'}
 map map_evi_vyber_r:  table _cis {where:"druh='evi_vyber_r'",       order:'poradi', key_id:'data'}
@@ -596,7 +599,8 @@ panel osoba_config [,,200,150] {type:'popup', title:"Podrobnosti údajů"
     check a [ 0, 40,200,] { title:"poštovní adresa",     format:'t', proc onchange() { _tuned }}
     check o [ 0, 60,200,] { title:"organizační údaje",   format:'t', proc onchange() { _tuned }}
     check c [ 0, 80,200,] { title:"citlivé údaje",       format:'t', proc onchange() { _tuned }}
-    check p [ 0,100,200,] { title:"trvalá poznámka",     format:'t', proc onchange() { _tuned }}
+    check p [ 0,100,200,] { title:"trvalá poznámka, schopnosti",
+                                                         format:'t', proc onchange() { _tuned }}
     button  [ 0,130,,] { type:'submit', title:'Nastav', proc onclick() {
       set_cookie(conc(sys('root'),'_conf_osoba'),grp.get); panel.close(1) }}
     button  [85,130,,] { title:'Zpět', proc onclick() {
@@ -789,8 +793,10 @@ form _osoba2x [,,244,322] {css:'ae_frame', proc onclick() { on_click }
   field zajmy    [44,Tq+194,191,] {tag:'c', data:o.zajmy, format:'n', title:'zájmy'}
   label [0,Tq+214,,6] {tag:'c,S', format:'n', css:'db_sep' } // zarovnání
 
-  // p = osobní poznámka
-  edit  note     [5,14,231,74] {tag:'p', data:o.note, format:'n', title:'^poznámka'}
+  // p = osobní schopnosti a poznámka
+  select o_umi     [65,0,172,] {tag:'p', type:'map+', data:o.o_umi, options:ms_umi.hodnota,
+    title:'schopnosti:', format:'n'}
+  edit  note     [5,26,231,74] {tag:'p', data:o.note, format:'n', title:'^poznámka'}
 
   // x = upozornění o omezení údajů neúčastníků
   label [5,4,235,] {tag:'x', format:'n', title:'<i>neúčastník má zobrazeny jen identifikační údaje</i>'}
@@ -805,8 +811,8 @@ panel rodina_config [,,200,60] {type:'popup', title:"Podrobnosti údajů"
     [ ucast.call('evid.z_change','o') ]; panel.modal(500,200) }
   use cnfg: form _cnfg
   form _cnfg {
-    check z [ 0, 0,200,] { title:"základní údaje",      format:'d', value:'1'}
-    check p [ 0,20,200,] { title:"trvalá poznámka",     format:'t', proc onchange() { _tuned }}
+    check z [ 0, 0,200,] { title:"základní údaje", format:'d', value:'1'}
+    check p [ 0,20,200,] { title:"trvalá poznámka, schopnosti", format:'t', proc onchange() { _tuned }}
     button  [ 0,40,,] { type:'submit', title:'Nastav', proc onclick() {
       set_cookie(conc(sys('root'),'_conf_rodina'),grp.get); panel.close(1) }}
     button  [85,40,,] { title:'Zpět', proc onclick() {
@@ -950,8 +956,10 @@ form _rodina2 [,,360,229]  { css:'ae_frame'
   }
 
   label [7,0,1,170] {tag:'x', title:" " } // výplň pro případ ne-rodiny
-  // rodinná poznámka
-  edit  r_note     [5,22,302+44,74] {tag:'p', data:r.note, title:'^poznámka k rodině'}
+  // rodinné schopnosti a poznámka
+  select r_umi     [192,6,160,] {tag:'p', type:'map+', data:r.r_umi, options:ms_umi.hodnota,
+    title:'schopnosti:', format:'n'}
+  edit  r_note     [5,28,302+44,74] {tag:'p', data:r.note, title:'^poznámka k rodině'}
 
   // nastavení účasti jako rodinné
   proc show_rodiny() {
@@ -1024,8 +1032,10 @@ form _rodina2p [,,188,229] { css:'ae_frame'
       alert("napiš prosím do poznámky důvod a datum odmítnutí hromadně rozesílaných informací")
   } }
   field r_emaily   [Lp+0,Tp+160,176,] {tag:'r', type:'list', data:r.emaily, title:'^e-maily'}
-  // rodinná poznámka
-  edit  r_note     [Lp+ 0,22,175,74] {tag:'p', data:r.note, title:'^poznámka k rodině', format:'n'}
+  // rodinné schopnosti a poznámka
+  select r_umi     [Lp+60,10,116,] {tag:'p', type:'map+', data:r.r_umi, options:ms_umi.hodnota,
+    title:'schopnosti:', format:'n'}
+  edit  r_note     [Lp+ 0,36,175,74] {tag:'p', data:r.note, title:'^poznámka', format:'n'}
   // menu
   menu detail { type:'context'
     item { title:'konfigurace formuláře',  proc onclick () { rodina_config.tune(evi) } }
