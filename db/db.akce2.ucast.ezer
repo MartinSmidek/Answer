@@ -1329,9 +1329,9 @@ form _aktivity {
   }
 }
 # ================================================================================= Přidání jménem 1
-panel PridaniJmenem1 [,,320,280] {type:'popup', title:'Přidání známých dospělých jménem'
+panel PridaniJmenem1 [,,320,280] {type:'popup', title:'Přidání známých (nejen) dospělých jménem'
   use fl: form _fl [12,10,,]
-  proc onfocus() { fl.jmena.focus }
+  proc onfocus() { fl.jmena.init; fl.vse.init; fl.L.init; fl.jmena.focus }
   form _fl [,,300,200] {
     var last: number
     var rod: object
