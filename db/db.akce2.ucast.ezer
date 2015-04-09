@@ -375,6 +375,9 @@ form _cmd [,,623,30] { css:'ae_work'
       | ido.set(ucast.evid.os1.insert);
         tvori.insert_record(object('id_osoba',ido,'id_rodina',ucast.evid.rod.key_rodina.get,
           'role',ucast.evid.os1.role.get));
+        // možná přidáme do pobytu
+        confirm("Rovnou přidat na akci?");
+        ucast.evid.pob1.pridat.na_akci(ido);
       ];
       _reload(1,ido)
     | eq(mode.get,'novy_pobyt');
@@ -1150,10 +1153,10 @@ form _spolu [,,0,270] {
     _reload_spolu(ucast.evid.rod.cleni.key_osoba.get)
   }}
   button pridat [150,7,,] { tag:'a', title:"Přidat na akci", format:'n',
-    proc onclick() { var ret:object, ido:number
+    proc onclick() { na_akci(os.key_osoba.get) }
+    proc na_akci(ido) { var ret:object
       on_click;
       // přidání se zamezením duplicit
-      ido.set(os.key_osoba.get);
       ret.set(ask('akce2_pridej_k_pobytu',the_duakce.get,the_pobyt.get,
         object('id',ido,'role',ucast.evid.rod.cleni.role.get)));
       ret.spolu;
