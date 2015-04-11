@@ -7,7 +7,7 @@
   #   $php_lib    = pole s *.php - pro 'ini'
 
   require_once("answer.inc");
-  answer_ini('fa','ezer_fa',array(array(),array()),array());
+  answer_ini('fa2','ezer_fa',array(array(),array()),array());
   // SPECIFICKÉ PARAMETRY
   $VPS= 'PPS';
   $EZER->options->org= 'YMCA Familia';
