@@ -14,5 +14,5 @@
     'skill'      => "'f'",
     'autoskill'  => "'!f'"
   );
-  answer_php('fa','Ans(w)er - Familia','ezer_fa','ch',array(),array("./fa/fa.css.php"),$options);
+  answer_php('fa2','Ans(w)er - Familia','ezer_fa','ch',array(),array("./fa/fa.css.php"),$options);
 ?>
