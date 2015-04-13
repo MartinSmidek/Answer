@@ -4,7 +4,7 @@
 menu fa2 { type:'main', title:'fa2', active:*, _sys:'*'
   var global: text,
 #   tabs db {title:"Databáze", _sys:'db', include:'onclick,db.akce', active:*, skill:'fa' }
-  tabs db2 {title:"Databáze2", _sys:'*', include:'onload,db.akce2', active:*, skill:'test' }
+  tabs db2 {title:"Databáze2", _sys:'*', include:'onload,db.akce2', active:*, skill:'fa' }
 #   tabs lide {title:"Lidé", _sys:'lid', include:'onclick', skill:'a' }
   tabs syst {title:"Systém", _sys:'sys',  include:'onclick,ezer2.syst', active:*
     panel oso {type:'right', title:'Osobní nastavení', _sys:'*', include:'onclick,ezer2.pers' }
