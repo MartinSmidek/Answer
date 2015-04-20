@@ -1,5 +1,5 @@
 <?php # (c) 2009-2010 Martin Smidek <martin@smidek.eu>
-# ================================================================================================== TEST
+# =================================================================================================> TEST
 # ------------------------------------------------------------------------------------- test1
 function fiserka() {
   $n= 0;
@@ -45,7 +45,7 @@ function test1() {
 end:
   return $x;
 }
-# ================================================================================================== ÚČASTNÍCI 2
+# =================================================================================================> ÚČASTNÍCI 2
 # -------------------------------------------------------------------------------- akce_osoba_rodiny
 # vrátí rodiny dané osoby ve formátu pro select (název:id_rodina;...)
 function akce_osoba_rodiny($id_osoba) {
@@ -84,7 +84,7 @@ function akce_pobyt_skupinka($id_akce,$skup) { trace();
   }
   return implode('|',$data);
 }
-# ================================================================================================== ELIM
+# =================================================================================================> ELIM
 # -------------------------------------------------------------------------------------- elim_differ
 # do _track potvrdí, že $id_orig,$id_copy jsou různé osoby nebo rodiny
 function elim_differ($id_orig,$id_copy,$table) { trace();
@@ -208,7 +208,7 @@ function elim_recovery_rodina($idr) { trace();
   }
   return $deleted;
 }
-# ================================================================================================== DUPL
+# =================================================================================================> DUPL
 # ------------------------------------------------------------------------------------- ROLLBACK_ALL
 # jen pro ladění - vrácení do původního stavu
 function ROLLBACK_ALL() { trace();
@@ -651,7 +651,7 @@ function data_eli_track($insert='test') { trace();
 // end:
   return $ret;
 }
-# ================================================================================================== DUPLICITY
+# =================================================================================================> DUPLICITY
 # ---------------------------------------------------------------------------------- akce_data_single
 # načte data OSOBA včetně záznamů v _track (pro chybějici spojku v TVORI)
 function akce_data_single($ido) {  trace();
@@ -1533,7 +1533,7 @@ function akce_eli_navrh($typ,$id1,$id2) { trace();
 end:
   return 1;
 }
-# ================================================================================================== PF
+# =================================================================================================> PF
 # ------------------------------------------------------------------------------------------- adresy
 # generování adres pro PF2013
 function adresy($roku,$patt='') { trace();
@@ -1742,7 +1742,7 @@ function adresy($roku,$patt='') { trace();
 end:
   return $html;
 }
-# ================================================================================================== DUPLICITY - OLDIES
+# =================================================================================================> DUPLICITY - OLDIES
 # ---------------------------------------------------------------------------------- akce_data_duplo
 function akce_data_duplo($par,$ids=null) {  trace();
   # vrácení počtu záznamů DUPLO
@@ -1971,7 +1971,7 @@ end:
 // end:
 //   return $html;
 // }
-# ================================================================================================== ALBUM
+# =================================================================================================> ALBUM
 # funkce s dvojkou zacházejí se seznamem fotek:
 #   set=přidání na konec, get=vrácení n-té, del=smazání n-té a vrácení n-1 nebo n+1
 # --------------------------------------------------------------------------------------- album_get2
@@ -2171,7 +2171,7 @@ function album_resample($source, $dest, &$width, &$height,$copy_bigger=0,$copy_s
   }
   return $ok;
 }
-# ================================================================================================== KONTROLY
+# =================================================================================================> KONTROLY
 # --------------------------------------------------------------------------------- akce_data_survey
 # přehled dat
 # 'clear-all' -- výmaz tabulek OSOBA, TVORI, RODINA, POBYT, SPOLU
@@ -2433,7 +2433,7 @@ function akce_kontrola_dat($par) { trace();
     : "<h3>Následující tabulky jsou konzistentní</h3>$html";
   return $html;
 }
-# ===================================================================================== TRANSFORMACE
+# ====================================================================================> TRANSFORMACE
 function adresa2stat($adresa,$psc) { trace();
   $stat= '?';
   $url= "http://maps.google.com/maps/api/geocode/json?sensor=false&address=".urlencode($adresa);
@@ -3065,7 +3065,7 @@ function akce_i0_rodina($akce) {
 //   }
   return "doplněno $n x i0_rodina";//, $r x s_role";
 }
-# ================================================================================================== AKCE
+# =================================================================================================> AKCE
 # --------------------------------------------------------------------------------------- akce_zmeny
 # vrácení klíčů pobyt u kterých došlo ke změně po daném datu a čase
 function akce_zmeny($id_akce,$h) {  trace();
@@ -3210,7 +3210,7 @@ function akce_delete($id_akce,$ret) {  trace();
 end:
   return $msg;
 }
-# ======================================================================================= CENÍK AKCE
+# ======================================================================================> CENÍK AKCE
 function akce_platby_xls($id_akce) {  trace();
   $ret= (object)array('ok'=>0,'xhref'=>'','msg'=>'');
   $test= 0;
@@ -3884,7 +3884,7 @@ function akce_vzorec($id_pobyt) {  trace();
   }
   return $ret;
 }
-# ================================================================================================== PDF
+# =================================================================================================> PDF
 # ------------------------------------------------------------------------------ akce_pdf_stravenky0
 # generování stránky stravenek pro ruční vyplnění do PDF
 function akce_pdf_stravenky0($akce,$par,$report_json) {  trace();
@@ -4230,8 +4230,8 @@ function dop_rep_ids($report_json,$parss,$fname) { trace();
 //                                                         debug($texty,'dop_rep_ids');
   tc_report($report,$texty,$fname);
 }
-# ================================================================================================== SYSTEM-DATA
-# ================================================================================================== VÝPISY
+# =================================================================================================> SYSTEM-DATA
+# =================================================================================================> VÝPISY
 # výběr generátoru sestavy
 # ------------------------------------------------------------------------------------ akce_sestava2
 # generování sestav
@@ -4955,7 +4955,7 @@ function akce_sestava_pobyt($akce,$par,$title,$vypis,$export=false) { trace();
 //                                         debug($clmn,"sestava pro $akce,$typ,$fld,$cnd");
   return akce_table($tits,$flds,$clmn,$export);
 }
-# ================================================================================================== TEXTY
+# =================================================================================================> TEXTY
 # ------------------------------------------------------------------------------------ akce_text_eko
 function akce_text_eko($akce,$par,$title,$vypis,$export=false) { trace();
   $result= (object)array();
@@ -5260,7 +5260,7 @@ function akce_text_vyroci($akce,$par,$title,$vypis,$export=false) { trace();
   $result->html= $html;
   return $result;
 }
-# ================================================================================================== VYÚČTOVÁNÍ ETC.
+# =================================================================================================> VYÚČTOVÁNÍ ETC.
 # -------------------------------------------------------------------------------- akce_sestava_noci
 # generování sestavy přehledu člověkonocí pro účastníky $akce - páry
 #   $cnd = podmínka
@@ -6227,7 +6227,7 @@ function akce_sestava_td_style($fmt) {
   return count($style)
     ? " style='".implode(';',$style)."'" : '';
 }
-# ================================================================================================== SKUPINKY DĚTÍ
+# =================================================================================================> SKUPINKY DĚTÍ
 # -------------------------------------------------------------------------------- narozeni2roky_sql
 # zjistí aktuální věk v rocích z data narození (typu mktime) zjištěného třeba rc2time          ?????
 # pokud je předáno $now(jako timestamp) bere se věk k tomu
@@ -6318,7 +6318,7 @@ function akce_skup_deti($akce,$par,$title,$vypis,$export) {
 //                                                         debug($result,"result");
   return $result;
 }
-# ================================================================================================== SKUPINKY
+# =================================================================================================> SKUPINKY
 # ------------------------------------------------------------------------------------ akce_skupinky
 # generování pomocných sestav pro tvorbu skupinek
 #   $par->fce = plachta | prehled
@@ -6838,7 +6838,7 @@ function akce_plachta_export($line,$file) { trace();
   }
   return $html;
 }
-# ================================================================================================== BANKA
+# =================================================================================================> BANKA
 # ------------------------------------------------------------------------------------- akce_rb_urci
 # pokus o určení plátce a účelu platby
 function akce_rb_urci($vs,$ss,$datum) {  trace();
@@ -7012,7 +7012,7 @@ function dom_hasChild($p) {
   }
   return false;
 }
-# ================================================================================================== GOOGLE
+# =================================================================================================> GOOGLE
 # -------------------------------------------------------------------------------- akce_google_cleni
 # přečtení listu "Kroměříž 10" z tabulky "ČlenovéYS_2010-2011"
 # načítají se jen řádky ve kterých typ je číslo
@@ -7113,37 +7113,99 @@ function akce_roku_id($id_akce,$kod,$rok) {
 # --------------------------------------------------------------------------------- akce_roku_update
 # přečtení listu $rok z tabulky ciselnik_akci a zapsání dat do tabulky
 # načítají se jen řádky ve kterých typ='a'
+# OD DUBNA 2015 google_sheet NEFUNGUJE (tzv. nové tabulky google)
+// function akce_roku_update($rok) {  trace();
+//   $n= 0;
+//   try {
+//     $cells= google_sheet($rok,"ciselnik_akci",'answer@smidek.eu',$google);
+//   }
+//   catch (Exception $e) {
+//     fce_warning("přístup k dokumentům Google se nezdařil");
+//     goto end;
+//   }
+//     goto end;
+// //                                                 debug($cells,"akce $rok");
+//   if ( $cells ) {
+//     list($max_A,$max_n)= $cells['dim'];
+//     // zrušení daného roku v GAKCE
+//     $qry= "DELETE FROM g_akce WHERE g_rok=$rok";
+//     $res= mysql_qry($qry);
+//     // výběr a-záznamů a zápis do G_AKCE
+//     $values= ''; $del= '';
+//     for ($i= 1; $i<$max_n; $i++) {
+//       $kat= $cells['A'][$i];
+//       if ( strpos(' au',$kat) ) {
+// //       if ( strpos(' a',$kat) ) {
+//         $n++;
+//         $kod= $cells['B'][$i];
+//         $id= 1000*rok+$kod;
+//         $nazev= mysql_real_escape_string($cells['C'][$i]);
+//                                                         display("$kod:$nazev");
+//         // data akce - jen je-li syntax ok
+//         $od= $do= '';
+//         $x= $cells['D'][$i];
+//         if ( preg_match("/\d+\.\d+\.\d+/",$x) )
+//           $od= sql_date($x,1);
+//         $x= $cells['E'][$i];
+//         if ( preg_match("/\d+\.\d+\.\d+/",$x) )
+//           $do= sql_date($x,1);
+//         $uc= $cells['F'][$i];
+//         $typ= $cells['G'][$i];
+//         $kap= $cells['H'][$i];
+//         $values.= "$del($id,$rok,'$kod',\"$nazev\",'$od','$do','$uc','$typ','$kap','$kat')";
+//         $del= ',';
+//       }
+//     }
+//     $qry= "INSERT INTO g_akce (id_gakce,g_rok,g_kod,g_nazev,g_od,g_do,g_ucast,g_typ,g_kap,g_kat)
+//            VALUES $values";
+//     $res= mysql_qry($qry);
+//   }
+//   // konec
+// end:
+//   return $n;
+// }
+# -------------------------------------------------------------------------------- akce_roku_update
+# přečtení listu $rok (>2010) z tabulky ciselnik_akci a zapsání dat do tabulky
+# načítají se jen řádky ve kterých typ='a'
+# funguje pro "nové tabulky google" - od dubna 2015
 function akce_roku_update($rok) {  trace();
+  global $json;
+  $key= "1RKnvU7EJG7YtBDjnSpQfwg3kjOCBEV_w8bMlJcdV8Nc";         // ciselnik_akci
+  $sheet= $rok>2010 ? $rok-1997 : ($rok==2010 ? 10 : -1);
+  $x= file_get_contents("https://docs.google.com/spreadsheets/d/$key/gviz/tq?tqx=out:json&gid=$sheet");
+  $x= substr($x,strlen("google.visualization.Query.setResponse("),-2);
+//                                         display($x);
+  $tab= $json->decode($x)->table;
+//                                         debug($tab,$sheet);
+  // projdeme získaná data
   $n= 0;
-  $cells= google_sheet($rok,"ciselnik_akci",'answer@smidek.eu',$google);
-//                                                 debug($cells,"akce $rok");
-  if ( $cells ) {
-    list($max_A,$max_n)= $cells['dim'];
+  if ( $tab ) {
     // zrušení daného roku v GAKCE
     $qry= "DELETE FROM g_akce WHERE g_rok=$rok";
     $res= mysql_qry($qry);
     // výběr a-záznamů a zápis do G_AKCE
     $values= ''; $del= '';
-    for ($i= 1; $i<$max_n; $i++) {
-      $kat= $cells['A'][$i];
+    foreach ($tab->rows as $crow) {
+      $row= $crow->c;
+      $kat= $row[0]->v;
       if ( strpos(' au',$kat) ) {
-//       if ( strpos(' a',$kat) ) {
+//                                                         debug($row,$row[2]->v);
         $n++;
-        $kod= $cells['B'][$i];
+        $kod= $row[1]->f;
         $id= 1000*rok+$kod;
-        $nazev= mysql_real_escape_string($cells['C'][$i]);
+        $nazev= mysql_real_escape_string($row[2]->v);
                                                         display("$kod:$nazev");
         // data akce - jen je-li syntax ok
         $od= $do= '';
-        $x= $cells['D'][$i];
+        $x= $row[3]->f;
         if ( preg_match("/\d+\.\d+\.\d+/",$x) )
           $od= sql_date($x,1);
-        $x= $cells['E'][$i];
+        $x= $row[4]->f;
         if ( preg_match("/\d+\.\d+\.\d+/",$x) )
           $do= sql_date($x,1);
-        $uc= $cells['F'][$i];
-        $typ= $cells['G'][$i];
-        $kap= $cells['H'][$i];
+        $uc=  $row[5]->f;
+        $typ= $row[6]->f;
+        $kap= $row[7]->f;
         $values.= "$del($id,$rok,'$kod',\"$nazev\",'$od','$do','$uc','$typ','$kap','$kat')";
         $del= ',';
       }
@@ -7153,6 +7215,7 @@ function akce_roku_update($rok) {  trace();
     $res= mysql_qry($qry);
   }
   // konec
+end:
   return $n;
 }
 # ---------------------------------------------------------------------------------------- akce_mapa
@@ -7178,7 +7241,7 @@ function akce_mapa($akce) {  trace();
 //                                                 debug($ret,"mapa_akce");
   return $ret;
 }
-# ================================================================================================== ÚČASTNÍCI
+# =================================================================================================> ÚČASTNÍCI
 # ---------------------------------------------------------------------------------- akce_ucast_load
 # načte informace o účastnících pro browse
 // function akce_ucast_load($id_akce,$soubeh,$app) {  trace();
@@ -7397,7 +7460,7 @@ function akce_strava_denne_save($id_pobyt,$dnu,$cela,$cela_def,$cela_str,$polo,$
 //                                                 display("akce_strava_denne_save(($id_pobyt,$dnu,$cela,$cela_def,$polo,$polo_def) $set");
   return 1;
 }
-# ================================================================================================== CHLAPI AKCE
+# =================================================================================================> CHLAPI AKCE
 # funkce pro kartu CHLAPI
 # ------------------------------------------------------------------------------- chlapi_mrop_export
 # export iniciovaných chlapů do Excelu
@@ -7616,7 +7679,7 @@ function chlapi_akce_mapa($id_akce) {  trace();
 //                                                 debug($ret,"mapa_akce");
   return $ret;
 }
-# ============================================================================= PRIDEJ JMENEM CHLAPA
+# ============================================================================> PRIDEJ JMENEM CHLAPA
 # funkce pro spolupráci se select
 # -------------------------------------------------------------------------------- chlapi_auto_jmena
 # kontrola, zda chlap ještě na akci není
@@ -7726,7 +7789,7 @@ function chlapi_auto_jmenovci($id,$db) {  #trace();
 //                                                                 debug($a,$id_chlapi);
   return $a;
 }
-/** ========================================================================================= PRIDEJ **/
+/** ========================================================================================> PRIDEJ **/
 # funkce pro spolupráci se select
 # -------------------------------------------------------------------------------------- akce_pridej
 # ASK přidání pobytu do akce, pokud ještě nebyly tyto osoby/osoba přidány
@@ -8010,7 +8073,7 @@ function akce_auto_jmena3L($id_osoba) {  #trace();
 //                                                                 debug($pecouni,$id_akce);
   return $pecouni;
 }
-# ==================================================================================== PRIDEJ z AKCE
+# ===================================================================================> PRIDEJ z AKCE
 # ----------------------------------------------------------------------------------- akce_auto_akce
 # SELECT autocomplete - výběr z akcí
 function akce_auto_akce($patt) {  #trace();
@@ -8117,7 +8180,7 @@ function akce_auto_peceL($id_akce) {  #trace();
 //                                                                 debug($pecouni,$id_akce);
   return $pecouni;
 }
-# ================================================================================================== PLATBY
+# =================================================================================================> PLATBY
 # záložka Platba za akci
 # --------------------------------------------------------------------------- akce_platba_prispevek1
 # členské příspěvky - zjištění zda jsou dospělí co jsou na pobytu členy a mají-li zaplaceno
@@ -8191,7 +8254,7 @@ function akce_platba_prispevek2($id_pobyt) {  trace();
   $ret->msg= "Za členy $jmena je potřeba vložit do pokladny $celkem,- Kč";
   return $ret;
 }
-# ================================================================================================== INFORMACE
+# =================================================================================================> INFORMACE
 # výpisy informací o akci
 # -------------------------------------------------------------------------------- akce_select_cenik
 # seznam akcí s ceníkem pro select
@@ -8274,7 +8337,7 @@ function akce_info($id_akce) {  trace();
   }
   return $html;
 }
-# ================================================================================================== EVIDENCE
+# =================================================================================================> EVIDENCE
 # obsluha karet EVIDENCE
 # -------------------------------------------------------------------------------------------------- evid_separ_emaily
 # separace emailů
@@ -8323,7 +8386,7 @@ function evid_separ_emaily($id_rodina,$typ,$op='confirm') { trace();
   }
   return $html;
 }
-# ================================================================================================== VYPISY EVIDENCE
+# =================================================================================================> VYPISY EVIDENCE
 # obsluha různých forem výpisů karty EVIDENCE
 # -------------------------------------------------------------------------------------------------- evid_sestava
 # generování sestav
@@ -8761,7 +8824,7 @@ function evid_sestava_x($par,$title,$export) {
     .$result->html;
   return $result;
 }
-# ================================================================================================== VYPISY AKCE
+# =================================================================================================> VYPISY AKCE
 # obsluha různých forem výpisů karet AKCE
 # -------------------------------------------------------------------------------------------------- akce_vyp_excel
 # generování tabulky do excelu
@@ -8928,7 +8991,7 @@ function sql2xls($datum) {
   }
   return $text;
 }
-# ================================================================================================== EMAILY - SQL
+# =================================================================================================> EMAILY - SQL
 # vytváření a testování SQL dotazů pro definici mailů
 # -------------------------------------------------------------------------------------------------- db_mail_copy_ds
 # ASK - kopie tabulky SETKANI.DS_OSOBA do EZER_YS.DS_OSOBA_COPY
@@ -9053,7 +9116,7 @@ function db_mail_sql_try($qry,$vsechno=0) {  trace();
 //                                                 debug($emails,"db_mail_sql_try");
   return $html;
 }
-# ================================================================================================== EMAILY
+# =================================================================================================> EMAILY
 # podpora přihlášek do Klubu
 # -------------------------------------------------------------------------------------------------- db_mail_confirm_yes
 # ASK
@@ -9143,7 +9206,7 @@ function db_mail_send($from,$to,$subj,$text) { trace();
   $result->_html= $html;
   return $result;
 }
-# ================================================================================================== EMAILY
+# =================================================================================================> EMAILY
 # jednotlivé maily posílané v sadách příložitostně skupinám
 #   DOPIS(id_dopis=key,id_davka=1,druh='@',nazev=předmět,datum=datum,obsah=obsah,komu=komu(číselník),
 #         nw=min(MAIL.stav,nh=max(MAIL.stav)})
@@ -10029,7 +10092,7 @@ function dop_mai_detach($id_dopis,$name) { trace();
   query("UPDATE dopis SET prilohy='$names2' WHERE id_dopis=$id_dopis");
   return 1;
 }
-# ================================================================================================== Generátor SQL
+# =================================================================================================> Generátor SQL
 # -------------------------------------------------------------------------------------- dop_gen_pdf
 # vygenerování PDF se samolepkami - adresními štítky
 #   $the_json obsahuje  title:'{jmeno_postovni}<br>{adresa_postovni}'
