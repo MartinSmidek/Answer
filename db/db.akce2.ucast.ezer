@@ -286,10 +286,9 @@ form _cmd2 [,,623,30] { css:'ae_work'
     help:'Vytvoření nového pobytu s novou osobou bez rodiny a vložení jako účastníka'
     proc onclick() {
       cmd.mode.set('novy_singl'); // příznak pro "nová osoba + pobyt" (bez rodiny)
-      evid.evid_clear;
       cmd.b_display(0);
       // skryj data pro rodinu a 3. sloupec
-      ucast.evid.rod.not_rodina; ucast.evid.pob.new_pobyt;
+      ucast.evid.rod.hide_rodina; ucast.evid.pob.new_pobyt;
       ucast.evid.rod.enable(0,'.*');
       ucast.evid.os2.enable(0,'.*'); ucast.evid.pob2.enable(0,'.*');
       ucast.evid.os2.init_osoba(0); ucast.evid.pob2.new_spolu;
@@ -305,7 +304,6 @@ form _cmd2 [,,623,30] { css:'ae_work'
     help:'Vytvoření nového pobytu s novou rodinou a 1-2 příslušníky (a vložení jako účastníků)'
     proc onclick() {
       cmd.mode.set('novy_pobyt'); // příznak pro "nová rodina + pobyt"
-      evid.evid_clear;
       cmd.b_display(0);
       // inicializuj rodinu jako skupinu, pobyt + vyznač povinná pole
       ucast.evid.rod.new_rodina; ucast.evid.pob.new_pobyt;
@@ -839,13 +837,14 @@ form _evidence {
   proc evid_same() { return(and(rod.same,os1.same,pob.same,pob1.same,pob2.same,os2.same)) }
   proc evid_plain() { rod.plain; os1.plain; pob.plain; pob1.plain; pob2.plain; os2.plain }
 # --------------------------------------------------==> evid_clear
-  proc evid_clear() {
-    ucast.evid.os1.clear_osoba; ucast.evid.os1.show_osoba(0);
-    ucast.evid.os2.clear_osoba; ucast.evid.os2.show_osoba(0);
-    ucast.evid.pob1.new_spolu;
-    ucast.evid.pob2.new_spolu;
-    ucast.evid.pob.init_pobyt;
-  }
+#   proc evid_clear() {
+#     ucast.evid.rod.not_rodina;
+#     ucast.evid.os1.clear_osoba; ucast.evid.os1.show_osoba(0);
+#     ucast.evid.os2.clear_osoba; ucast.evid.os2.show_osoba(0);
+#     ucast.evid.pob1.new_spolu;
+#     ucast.evid.pob2.new_spolu;
+#     ucast.evid.pob.init_pobyt;
+#   }
   proc evid_init() {
     cmode.set(2); rmode.set(1);
     osoba_config.start; spolu_config.start; pobyt_config.start; rodina_config.start;
@@ -859,6 +858,7 @@ form _evidence {
     ucast.evid.pob.init; ucast.evid.rod.init; ucast.evid.rod.cleni.browse_init;
     ucast.evid.pob1.os.set(ucast.evid.os1);
     ucast.evid.pob2.os.set(ucast.evid.os2);
+#     evid_clear;
   }
   # změny sloupců
   proc c_change(n) {

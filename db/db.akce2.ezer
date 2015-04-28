@@ -50,11 +50,11 @@ group foto { include:'onload,db.akce2.foto'
     proc galery(fotka) {}
   }
 }
-group file { include:'onload,db.akce2.file'
-  form _fil {
-    proc galery(soubor) {}
-  }
-}
+# group file { include:'onload,db.akce2.file'
+#   form _fil {
+#     proc galery(soubor) {}
+#   }
+# }
 # =========================================================================================== CHLAPI
 # panel chl {type:'right', _sys:'*', title:'Chlapi', include:'onclick,db.akce.chl',skill:'yac;xa' }
 # ============================================================================================> AKCE
@@ -841,16 +841,11 @@ form _rodina2 [,,360,229]  { css:'ae_frame'
   proc neni_ulozen() {}
   proc on_click() {}
   proc new_rodina() {
+    form.display(0,'[^f]'); cleni.display(1); form.enable(1,'.*');
     form.init;
     form.stacks('n,r','down',0,0,10);
     form.display(1,'r|n'); form.display(0,'a|s');
     foreach(array(rodiny0),obligatory);
-    cleni.browse_init; cleni.enable(0);
-  }
-  proc not_rodina() {
-    form.init;
-    form.stacks('n,r','down',0,0,10);
-    form.display(1,'r|n'); form.display(0,'a|s');
     cleni.browse_init; cleni.enable(0);
   }
   proc init_rodina() {
@@ -858,7 +853,7 @@ form _rodina2 [,,360,229]  { css:'ae_frame'
   }
   # show_rodina - zobrazuje formulář podle: key_rodina
   proc show_rodina() { var tags:text
-    form.display(0,'[^f]'); cleni.display(1);
+    form.display(0,'[^f]'); cleni.display(1); form.enable(1,'.*');
     evidence.display(key_rodina.get);
     tags.set('a');
     { or(key_rodina.get,not(ucast.the_pobyt.get));
@@ -870,6 +865,11 @@ form _rodina2 [,,360,229]  { css:'ae_frame'
     };
     form.stacks(tags,'down',0,0,10);
     t_role.display(key_rodina.get); form.display(key_rodina.get,'o');
+  }
+  # hide rodina - skryje všechna data bez změny tvaru
+  proc hide_rodina() {
+    form.init; form.enable(0,'.*');
+    cleni.browse_init; cleni.enable(0);
   }
   proc od_svatby() {
     r_rozvod.get; spolu.set("<span style='background:yellow'>jsou rozvedeni</span>")
