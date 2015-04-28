@@ -50,6 +50,11 @@ group foto { include:'onload,db.akce2.foto'
     proc galery(fotka) {}
   }
 }
+group file { include:'onload,db.akce2.file'
+  form _fil {
+    proc galery(soubor) {}
+  }
+}
 # =========================================================================================== CHLAPI
 # panel chl {type:'right', _sys:'*', title:'Chlapi', include:'onclick,db.akce.chl',skill:'yac;xa' }
 # ============================================================================================> AKCE
@@ -630,12 +635,17 @@ form _osoba2x [,,244,322] {css:'ae_frame', proc onclick() { on_click }
     adresa.get; eq(ulice.get,''); eq(obec.get,''); warning("osobní adresa nesmí být prázdná"); ok.set(0);
     return(ok);
   }
+  proc clear_osoba() { form.init; role.display(0);
+    kontakt_r.set(''); adresa_r.set('');
+    kontakt.enable(0); kontakt.set(1); form.enable(1,'k');
+    adresa.enable(0);  adresa.set(1);  form.enable(1,'b');
+  }
   proc new_osoba(_clen_rodiny) { form.init; role.display(_clen_rodiny);
     kontakt_r.set(''); adresa_r.set('');
     [ _clen_rodiny; kontakt.set(0); adresa.set(0);
     | kontakt.enable(0); kontakt.set(1); form.enable(1,'k');
       adresa.enable(0);  adresa.set(1);  form.enable(1,'b'); ];
-#     foreach(array(jmeno,prijmeni,role,sex,narozeni),obligatory);
+    foreach(array(jmeno,prijmeni,sex),obligatory);
   }
   proc on_click() {}
   proc init_osoba() {
@@ -834,7 +844,13 @@ form _rodina2 [,,360,229]  { css:'ae_frame'
     form.init;
     form.stacks('n,r','down',0,0,10);
     form.display(1,'r|n'); form.display(0,'a|s');
-#     foreach(array(rodiny0),obligatory);
+    foreach(array(rodiny0),obligatory);
+    cleni.browse_init; cleni.enable(0);
+  }
+  proc not_rodina() {
+    form.init;
+    form.stacks('n,r','down',0,0,10);
+    form.display(1,'r|n'); form.display(0,'a|s');
     cleni.browse_init; cleni.enable(0);
   }
   proc init_rodina() {
