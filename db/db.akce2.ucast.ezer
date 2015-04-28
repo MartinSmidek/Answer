@@ -286,14 +286,17 @@ form _cmd2 [,,623,30] { css:'ae_work'
     help:'Vytvoření nového pobytu s novou osobou bez rodiny a vložení jako účastníka'
     proc onclick() {
       cmd.mode.set('novy_singl'); // příznak pro "nová osoba + pobyt" (bez rodiny)
+      evid.evid_clear;
       cmd.b_display(0);
       // skryj data pro rodinu a 3. sloupec
-      ucast.evid.rod.new_rodina; ucast.evid.pob.new_pobyt;
+      ucast.evid.rod.not_rodina; ucast.evid.pob.new_pobyt;
       ucast.evid.rod.enable(0,'.*');
       ucast.evid.os2.enable(0,'.*'); ucast.evid.pob2.enable(0,'.*');
-      ucast.evid.os2.new_osoba(0); ucast.evid.pob2.new_spolu;
+      ucast.evid.os2.init_osoba(0); ucast.evid.pob2.new_spolu;
       // inicializuj osobu + vyznač povinná pole
       ucast.evid.os1.new_osoba(0); ucast.evid.pob1.new_spolu;
+      // změnit způsob pobytu lze až po vložení osoby
+      ucast.evid.pob1.enable(0,'.*');
       // uprav viditelnost tlačítek
       set_state2('hide'); cmd.set_state('new');
   } }
@@ -302,13 +305,16 @@ form _cmd2 [,,623,30] { css:'ae_work'
     help:'Vytvoření nového pobytu s novou rodinou a 1-2 příslušníky (a vložení jako účastníků)'
     proc onclick() {
       cmd.mode.set('novy_pobyt'); // příznak pro "nová rodina + pobyt"
+      evid.evid_clear;
       cmd.b_display(0);
       // inicializuj rodinu jako skupinu, pobyt + vyznač povinná pole
       ucast.evid.rod.new_rodina; ucast.evid.pob.new_pobyt;
       // inicializuj osoby vč. případně i neviditelnou druhou + vyznač povinná pole
       ucast.evid.os1.new_osoba(1); ucast.evid.pob1.new_spolu;
       ucast.evid.os2.new_osoba(1); ucast.evid.pob2.new_spolu;
-      ucast.evid.os2.enable(1,'.*'); ucast.evid.pob2.enable(1,'.*');
+      ucast.evid.os2.enable(1,'.*');
+      // změnit způsob pobytu lze až po vložení osob
+      ucast.evid.pob1.enable(0,'.*'); ucast.evid.pob2.enable(0,'.*');
       // uprav viditelnost tlačítek
       set_state2('hide'); cmd.set_state('new');
   } }
@@ -382,11 +388,20 @@ form _cmd [,,623,30] { css:'ae_work'
       _reload(1,ido)
     | eq(mode.get,'novy_pobyt');
       # ---------------------==> vytvoření pobyt+osoby+spolu [+rodina+tvori]
-      // kontrola dostatečnosti údajů
-      [ ucast.evid.rod.rodiny0.get | war.set(conc(war,' název rodiny, ')) ];
-      [ ucast.evid.os1.jmeno.get   | war.set(conc(war,' křestní jméno, ')) ];
-      [ ucast.evid.os1.role.get    | war.set(conc(war,' role, ')) ];
-      [ war; alert("Pozor: aspoň ",war," ... musí být vyplněné"); return ];
+      // 1.osoba a rodina - kontrola dostatečnosti údajů
+      [ ucast.evid.rod.rodiny0.get  | war.set(conc(war,' název rodiny, ')) ];
+      [ ucast.evid.os1.prijmeni.get | war.set(conc(war,' příjmení, ')) ];
+      [ ucast.evid.os1.jmeno.get    | war.set(conc(war,' křestní jméno, ')) ];
+      [ ucast.evid.os1.role.get     | war.set(conc(war,' role, ')) ];
+      [ war; alert("Pozor: u první osoby chybí ",war," ... doplň údaje před uložením"); return ];
+      // 2.osoba - kontrola dostatečnosti údajů (pokud je vyplněno aspoň jméno nebo příjmení)
+      [ and(eq(ucast.evid.os2.prijmeni.get,''),eq(ucast.evid.os2.jmeno.get,''))
+      | war.set('');
+        [ ucast.evid.os2.prijmeni.get | war.set(conc(war,' příjmení, ')) ];
+        [ ucast.evid.os2.jmeno.get    | war.set(conc(war,' křestní jméno, ')) ];
+        [ ucast.evid.os2.role.get     | war.set(conc(war,' role, ')) ];
+        [ war; alert("Pozor: u druhé osoby chybí ",war," ... doplň údaje před uložením"); return ]
+      ];
       // rodina
       [ ucast.evid.rod.same; idr.set(0) | idr.set(ucast.evid.rod.insert); ucast.evid.rod.plain ];
       // pobyt
@@ -401,8 +416,8 @@ form _cmd [,,623,30] { css:'ae_work'
         ucast.evid.pob1.key_spolu.set(the_pobyt.get); ucast.evid.pob1.key_spolu.change;
         ucast.evid.pob1.key_osoba.set(ido); ucast.evid.pob1.key_osoba.change;
         ucast.evid.pob1.insert; ];
-      // 2. osoba a spolu
-      [ ucast.evid.os2.same
+      // 2. osoba a spolu - nevloží se, pokud nemá vyplněné aspoň jméno
+      [ eq(ucast.evid.os2.jmeno.get,'')
       | ido.set(ucast.evid.os2.insert);
         [ idr; tvori.insert_record(
             object('id_osoba',ido,'id_rodina',idr,'role',ucast.evid.os2.role.get)) ];
@@ -823,6 +838,14 @@ form _evidence {
   }
   proc evid_same() { return(and(rod.same,os1.same,pob.same,pob1.same,pob2.same,os2.same)) }
   proc evid_plain() { rod.plain; os1.plain; pob.plain; pob1.plain; pob2.plain; os2.plain }
+# --------------------------------------------------==> evid_clear
+  proc evid_clear() {
+    ucast.evid.os1.clear_osoba; ucast.evid.os1.show_osoba(0);
+    ucast.evid.os2.clear_osoba; ucast.evid.os2.show_osoba(0);
+    ucast.evid.pob1.new_spolu;
+    ucast.evid.pob2.new_spolu;
+    ucast.evid.pob.init_pobyt;
+  }
   proc evid_init() {
     cmode.set(2); rmode.set(1);
     osoba_config.start; spolu_config.start; pobyt_config.start; rodina_config.start;
@@ -867,16 +890,16 @@ form _evidence {
   proc z_up(x)   { x.get.set_css('shift_up','shift_down'); x.set_css('shift_up','shift_down','.*') }
   proc z_down(x) { x.get.set_css('shift_down','shift_up'); x.set_css('shift_down','shift_up','.*') }
   # osoba 1 a 2
-  use os1: form _osoba2x [372,20,,] { //format:'n' left=5
+  use os1: form _osoba2x [372,20,,] { //format:'n' left=5                     // ==> use os1
     proc on_click() { evid.z_change('o') }
     proc onchanged() { evid.d_change('o1') }
   }
-  use os2: form _osoba2x [623,20,,] {tag:'2', //format:'n' left=255
+  use os2: form _osoba2x [623,20,,] {tag:'2', //format:'n' left=255           // ==> use os2
     proc on_click() { evid.z_change('o') }
     proc onchanged() { evid.d_change('o2') }
   }
   # rodina
-  use rod: form _rodina2 [4,20,,] { //format:'n' left=505
+  use rod: form _rodina2 [4,20,,] { //format:'n' left=505                     // ==> use rod
     // pozor - proměnné jsou vzhledem k db.akce2._rodina2
     proc onchanged() { evid.d_change('r') }
     proc on_click() { evid.z_change('o') }
@@ -905,11 +928,11 @@ form _evidence {
     }
   }
   # pobyt
-  use pob1: form _spolu  [372,min_h-235,,] { //format:'n'
+  use pob1: form _spolu  [372,min_h-235,,] { //format:'n'                     // ==> use pob1
     proc on_click() { evid.z_change('p') }
     proc onchanged() { evid.d_change('p1') }
   }
-  use pob2: form _spolu  [623,min_h-235,,] {tag:'2', //format:'n'
+  use pob2: form _spolu  [623,min_h-235,,] {tag:'2', //format:'n'             // ==> use pob2
     proc on_click() { evid.z_change('p') }
     proc onchanged() { evid.d_change('p2') }
   }

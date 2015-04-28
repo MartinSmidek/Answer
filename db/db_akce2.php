@@ -114,7 +114,7 @@ function eli_osoba($id_orig,$id_copy) { trace();
 end:
   return $ret;
 }
-/** ========================================================================================== AKCE2 **/
+/** =========================================================================================> AKCE2 **/
 # --------------------------------------------------------------------------------------- akce2_mapa
 # získání seznamu souřadnic bydlišť účastníků akce
 function akce2_mapa($akce) {  trace();
@@ -299,6 +299,55 @@ function je_1_2_5($kolik,$tvary) {
   return $kolik>4 ? "$kolik $tvar5" : (
          $kolik>1 ? "$kolik $tvar2" : (
          $kolik>0 ? "1 $tvar1"      : "0 $tvar5"));
+}
+# =================================================================================================> FILES
+# funkce pro svázání souborů s tabulkou FILE
+#   add=přidání, list=vrácení seznamu, del=smazání, del_all=mazání všech
+# ---------------------- file_folder
+# pomocná: vrátí složku podle aplikace a prefix podle tabulky
+function file_folder($table,$id,&$abspath,&$relpath,&$prefix) { trace();
+  global $ezer_path_root, $ezer_root;
+  $t= substr($table,0,1);
+  $f= substr($ezer_root,0,2);
+  $r= substr($ezer_root,0,2)=='fa' ? 'f' : (
+      substr($ezer_root,0,2)=='ys' ? 's' : (
+      substr($ezer_root,0,2)=='cr' ? 'c' : 'x'));
+  $test= substr($ezer_root,-5)=='_test';
+  $relpath= $test ? "files/_test/$f/" : "files/$f/";
+  $abspath= "$ezer_path_root/$relpath";
+  $prefix=  "$r$t{$id}_";
+}
+# ----------------------------------------------------------------------------------------- file_add
+# přidá soubor do tabulky a do složky (akce|pobyt|rodina|osoba), vrátí nový jednoznačný název
+function file_add($table,$id,$f,$note='') { trace();
+  $msg= '';
+  query("INSERT INTO file (tab,id_tab,filename,filesize,note) VALUES ('$table',$id,'{$f->name}','{$f->size}','$note')");
+  return $msg;
+}
+# ---------------------------------------------------------------------------------------- file_list
+# vrátí seznam souborů patřící k danému záznamu a složku dané aplikace
+function file_list($table,$id) { trace();
+  $ret= (object)array('list'=>'','folder'=>'','prefix'=>''); $del= '';
+  file_folder($table,$id,$ret->abspath,$ret->relpath,$ret->prefix);
+  $qf= "SELECT * FROM file WHERE deleted='' AND tab='$table' AND id_tab='$id' ";
+  $rf= mysql_qry($qf);
+  while ( $rf && ($f= mysql_fetch_object($rf)) ) {
+    $ret->list.= "$del{$f->filename}:{$f->filesize}";
+    $del= ',';
+  }
+  return $ret;
+}
+# ----------------------------------------------------------------------------------------- file_del
+# poznačí soubor jako smazaný
+function file_del($table,$id,$name) { trace();
+  $ok= query("UPDATE file SET deleted='D' WHERE tab='$table' AND id_tab='$id' AND filename='$name'");
+  return $ok ? '' : mysql_error();
+}
+# ------------------------------------------------------------------------------------- file_del_all
+# odstraní všechny soubory patřící k danému záznamu
+function file_del_all($table,$id) { trace();
+//   query("UPDATE dopis SET prilohy='' WHERE id_dopis=$id_dopis");
+  return 1;
 }
 /** ===================================================================================== ÚČASTNÍCI2 */
 /** =======================================================================================>> VÝPISY */
@@ -701,9 +750,9 @@ function tisk_sestava_pary($akce,$par,$title,$vypis,$export=false) { trace();
       case 'psc':       $c= $adresa  ? $psc     : substr($psc,$r);   break;
       case 'obec':      $c= $adresa  ? $obec    : substr($obec,$r);  break;
       case 'telefon':   $c= trim($kontakt ? $telefon : substr($telefon,$r),",; ");  break;
-      case 'telefony':  $c= implode(', ',$telefony); break;
+      case 'telefony':  $c= count($telefony) ? implode(', ',$telefony).';' : ''; break;
       case 'email':     $c= trim($kontakt ? $email   : substr($email,$r),",; ");  break;
-      case 'emaily':    $c= implode(', ',$emaily); break;
+      case 'emaily':    $c= count($emaily) ? implode(', ',$emaily).';' : ''; break;
       case '_pocet':    $c= $pocet; break;
       case 'poznamka':  $c= $x->p_poznamka . ($spolu_note ?: ''); break;
       case 'note':      $c= $x->r_note . ($osoba_note ?: ''); break;
@@ -894,6 +943,7 @@ __XLS;
         }
       }
       $format= $format ? "::$format" : '';
+      $val= str_replace("\n","{}",$val);        // ochrana proti řádkům v hodnotě - viz ae_slib
       $xls.= "|$A$n $val $format";
       $lc++;
     }
@@ -955,7 +1005,7 @@ __XLS;
     \n|close
 __XLS;
   // výstup
-//                                                                 display($xls);
+                                                                display($xls);
   $inf= Excel5($xls,1);
   if ( $inf ) {
     $html= " se nepodařilo vygenerovat - viz začátek chybové hlášky";
