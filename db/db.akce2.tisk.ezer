@@ -207,7 +207,7 @@ menu m {type:'left', active:*
   # ------------------------------------------------------------------------------------------------ info
   menu {tag:'a', title:'informace o akci',type:'group',_sys:'*'
     item {title:'Narozeniny, výročí'    ,par:°{typ:'vv',cnd:'1'}}
-    item {title:'&half; Přehled o akci (děti,pečouni)', par:°{typ:'vi',cnd:'1'}}
+    item {title:'Přehled o akci (děti,pečouni)', par:°{typ:'vi',cnd:'1'}}
     item {title:'&half; Ekonomické ukazatele'  ,par:°{typ:'ve',cnd:'1'}}
     item {title:'&half; Udržet kontakt'        ,par:°{typ:'12',cnd:'1'}, skill:'y;f'}
     item {title:'Přednášející'                                                                          skill:'y;f;c'
