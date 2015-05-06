@@ -250,6 +250,7 @@ table akce { key_id:'id_duakce'
   number ciselnik_akce
   number ciselnik_rok
   text note
+  text archiv
 }
 
 table pobyt { key_id:'id_pobyt'
