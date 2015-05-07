@@ -15,7 +15,10 @@ var zmeny: object               // objekt naplněný požadavkem zobrazení ned�
 proc onstart() {
   the_duakce_local.set(0);
 }
-proc onfirstfocus() { init_forms; akce_onstart; onfocus }
+proc onfirstfocus() {
+  alert(PLS.get);
+  init_forms; akce_onstart; onfocus
+}
 proc onfocus() {
     echo(the_soubeh.get," local:",the_duakce_local.get,",",the_duakce.get);
   [ [ dirty.get | akce_onstart ];

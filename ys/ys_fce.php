@@ -257,10 +257,15 @@ function google_sheet($list,$sheet,$user='answer@smidek.eu',&$keys) {  trace();
   if ( $pass[$user] ) {
     $authService= Zend_Gdata_Spreadsheets::AUTH_SERVICE_NAME;
     $httpClient= Zend_Gdata_ClientLogin::getHttpClient($user,$pass[$user], $authService);
+                                        display("Answer autorizovan: ".($httpClient?1:0));
     // nalezení tabulky
     $gdClient= new Zend_Gdata_Spreadsheets($httpClient);
+                                        display("new Zend_Gdata_Spreadsheets".($gdClient?1:0));
     $keys->service= $gdClient;
+                                        display("getSpreadsheetFeed - před");
     $feed= $gdClient->getSpreadsheetFeed();
+                                        display("getSpreadsheetFeed - po");
+                                        goto end;
     $table= getFirstFeed($feed,$sheet);
     if ( $table ) {
       // pokud tabulka existuje
@@ -297,6 +302,7 @@ function google_sheet($list,$sheet,$user='answer@smidek.eu',&$keys) {  trace();
       $cells['dim']= array($max_A,$max_n);
     }
   }
+end:
   return $cells;
 }
 # --------------------
