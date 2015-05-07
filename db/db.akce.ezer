@@ -3,6 +3,8 @@
 # Systém Ans(w)er - modul Akce
 # (c) 2008-2010 Martin Šmídek <martin@smidek.eu>
 
+const PLS = "Používej prosím <a href='http://answer.setkani.org/ys2.php'>novou verzi databáze</a>.<br>Děkuje Martin."
+
 # globální proměnné pro modul Databáze - týkají se vlastností nastavené akce
 
 # hodnoty pamatované v cookies
@@ -54,6 +56,8 @@ panel elim [0,0,807,480] { type:'popup', title:'eliminace duplicit', include:'on
 panel chl {type:'right', _sys:'*', title:'Chlapi', include:'onclick,db.akce.chl',skill:'yac;xa' }
 # ================================================================================================== AKCE
 panel lst {type:'right', _sys:'*', title:'AKCE1', include:'onload,db.akce.lst',skill:'yaa;faa;caa'
+  proc onfirstfocus() { alert(PLS.get) }
+  proc onfocus() { alert(PLS.get) }
   use the_akce: form _the_akce         // zatím nezobrazená data nastavené akce s klíčem id_duakce
   proc akce_work(id) {}                // nastaví akci jako vybranou
 }
@@ -61,24 +65,39 @@ panel ucast {type:'plain', _sys:'*',
   /*title:"<img src='img/icon_new.gif' style='float:left;margin-top:-5px;padding-right:5px;'>Účastníci",*/
     title:"Účastníci",
     include:'onload,db.akce.ucast',skill:'yaa;faa;caa'
+  proc onfirstfocus() { alert(PLS.get) }
+  proc onfocus() { alert(PLS.get) }
   proc init_ucast2() { alert('napřed klikni na Databáze|Účastníci') }
   proc akce_show() { alert('napřed klikni na Databáze|Účastníci') }
   proc ucast_selected() {}
 }
 panel pece {type:'plain', _sys:'*', title:'Pečouni', include:'onload,db.akce.pece',skill:'yaa;faa;caa'
+  proc onfirstfocus() { alert(PLS.get) }
+  proc onfocus() { alert(PLS.get) }
   proc init_pece() { alert('napřed klikni na Databáze|Pečouni') }
   proc akce_show() { alert('napřed klikni na Databáze|Pečouni') }
 }
 panel tisk [,,,] {type:'right', _sys:'*', title:'Výpisy akce', include:'onclick,db.akce.tisk',skill:'yaa;faa;caa'  }
 # ================================================================================================== EVIDENCE
 panel evi {type:'right', _sys:'*', title:'EVIDENCE', include:'onclick,db.akce.evi', skill:'yae;fae;caa'
+  proc onfirstfocus() { alert(PLS.get) }
+  proc onfocus() { alert(PLS.get) }
   proc evid_show() { alert('napřed klikni na Databáze|EVIDENCE') }
 }
-panel dup {type:'right', _sys:'*', title:'(duplicity)', include:'onclick,db.akce.dup', skill:'m+' }
-panel mai {type:'right', title:'MAILY', _sys:'*', include:'onclick,db.akce.mai', skill:'yam;fam;cam'  }
+panel dup {type:'right', _sys:'*', title:'(duplicity)', include:'onclick,db.akce.dup', skill:'m+'
+  proc onfirstfocus() { alert(PLS.get) }
+  proc onfocus() { alert(PLS.get) }
+}
+panel mai {type:'right', title:'MAILY', _sys:'*', include:'onclick,db.akce.mai', skill:'yam;fam;cam'
+  proc onfirstfocus() { alert(PLS.get) }
+  proc onfocus() { alert(PLS.get) }
+}
 panel eli {type:'right', _sys:'*'
   title:'&nbsp;.&nbsp;&nbsp;.&nbsp;&nbsp;.&nbsp;&nbsp;.&nbsp;&nbsp;.&nbsp;&nbsp;.&nbsp;&nbsp;.&nbsp;&nbsp;.&nbsp;&nbsp;.&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(duplicity)',
-  include:'onclick,db.akce.eli', skill:'m;fad' }
+  include:'onclick,db.akce.eli', skill:'m;fad'
+  proc onfirstfocus() { alert(PLS.get) }
+  proc onfocus() { alert(PLS.get) }
+}
 
 # ================================================================================================== COMMON
 # ------------------------------------------------------------------ _the_akce

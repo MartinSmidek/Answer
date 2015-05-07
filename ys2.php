@@ -12,7 +12,11 @@
   require_once("answer.php");
   $options= (object)array(
     'skill'      => "'y'",
-    'autoskill'  => "'!y'"
+    'autoskill'  => "'!y'",
+    'Google' => "{                      // definice oprávnění přístupu na Google
+        CLIENT_ID:'854681585120-rla91b0i46oei7njt6f32mst668871sa.apps.googleusercontent.com'
+      }"
   );
-  answer_php('ys2','Ans(w)er','ezer_ys','ck',array("ds/fce.js"),array("./ys/ys.css.php"),$options);
+  $js= array("https://apis.google.com/js/client.js?onload=Ezer.Google.ApiLoaded","ds/fce.js");
+  answer_php('ys2','Ans(w)er','ezer_ys','ck',$js,array("./ys/ys.css.php"),$options);
 ?>

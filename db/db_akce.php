@@ -4787,7 +4787,7 @@ function akce_sestava_pary($akce,$par,$title,$vypis,$export=false) { trace();
           JOIN osoba AS o ON s.id_osoba=o.id_osoba
           LEFT JOIN tvori AS t ON t.id_osoba=o.id_osoba
           -- LEFT JOIN rodina AS r USING(id_rodina)
-          LEFT JOIN rodina AS r ON r.id_rodina=IFNULL(p.i0_rodina,t.id_rodina)
+          LEFT JOIN rodina AS r ON r.id_rodina=IF(p.i0_rodina,p.i0_rodina,t.id_rodina)
           WHERE p.id_akce='$akce' AND $cnd
           GROUP BY id_pobyt $hav
           ORDER BY $ord";
@@ -4908,7 +4908,7 @@ function akce_sestava_pobyt($akce,$par,$title,$vypis,$export=false) { trace();
           JOIN osoba AS o ON s.id_osoba=o.id_osoba
           LEFT JOIN tvori AS t ON t.id_osoba=o.id_osoba
           -- LEFT JOIN rodina AS r USING(id_rodina)
-          LEFT JOIN rodina AS r ON r.id_rodina=IFNULL(p.i0_rodina,t.id_rodina)
+          LEFT JOIN rodina AS r ON r.id_rodina=IF(p.i0_rodina,p.i0_rodina,t.id_rodina)
           WHERE p.id_akce='$akce' AND $cnd
           GROUP BY id_pobyt $hav
           ORDER BY $ord";

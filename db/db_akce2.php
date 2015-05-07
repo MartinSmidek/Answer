@@ -366,7 +366,7 @@ function tisk_sestava($akce,$par,$title,$vypis,$export=false) { trace();
 //      : ( $par->typ=='vjp'? akce_stravenky($akce,$par,$title,$vypis,$export)
 //      : ( $par->typ=='vn' ? akce_sestava_noci($akce,$par,$title,$vypis,$export)
      : ( $par->typ=='vv' ? tisk_text_vyroci($akce,$par,$title,$vypis,$export)
-//      : ( $par->typ=='vi' ? akce_text_prehled($akce,$par,$title,$vypis,$export)
+     : ( $par->typ=='vi' ? akce2_text_prehled($akce,$par,$title,$vypis,$export)
 //      : ( $par->typ=='ve' ? akce_text_eko($akce,$par,$title,$vypis,$export)
 //      : ( $par->typ=='sk' ? akce_skupinky($akce,$par,$title,$vypis,$export)
 //      : ( $par->typ=='sd' ? akce_skup_deti($akce,$par,$title,$vypis,$export)
@@ -379,7 +379,7 @@ function tisk_sestava($akce,$par,$title,$vypis,$export=false) { trace();
      : (object)array('html'=>"<i>Tato sestava zatím není převedena do nové verze systému,
           <a href='mailto:martin@smidek.eu'>upozorněte mě</a>, že ji už potřebujete</i>")
 //        )))))))))))))))
-     )))));
+     ))))));
 }
 # ----------------------------------------------------------------------------------------- tisk_qry
 # frekventované SQL dotazy s parametry
@@ -1039,6 +1039,111 @@ __XLS;
 //   }
 //   return $text;
 // }
+# ----------------------------------------------------------------------------==> akce2_text_prehled
+function akce2_text_prehled($akce,$par,$title,$vypis,$export=false) { trace();
+  $pocet= 0;
+  # zobrazí odkaz na řádek s pobytem
+  $sta_ukaz_pobyt= function ($idp,$jmeno) {
+    return "<b><a href='ezer://db2.ucast.ucast_pobyt/$idp'>$jmeno</a></b>";
+  };
+  # naplní histogram podle $cond
+  $akce_text_prehled_x= function ($akce,$cond,$uvest_jmena=false,$bez_tabulky=false)
+                        use (&$pocet,$sta_ukaz_pobyt) {
+    $html= '';
+    // data akce
+    $veky= $kluci= $holky= array();
+    $nveky= $nkluci= $nholky= 0;
+    $jmena= $deljmena= '';
+    $bez= $del= '';
+    // histogram věku dětí parametrizovaný přes $cond
+    $qo=  "SELECT prijmeni,jmeno,narozeni,IFNULL(role,0),a.datum_od,o.sex,id_pobyt
+           FROM akce AS a
+           JOIN pobyt AS p ON a.id_duakce=p.id_akce
+           JOIN spolu AS s USING(id_pobyt)
+           JOIN osoba AS o ON s.id_osoba=o.id_osoba
+           LEFT JOIN tvori AS t ON t.id_osoba=o.id_osoba AND IF(p.i0_rodina,t.id_rodina=p.i0_rodina,1)
+           WHERE a.id_duakce='$akce' AND $cond AND funkce NOT IN (9,10,13,14) ORDER BY prijmeni ";
+    $ro= mysql_qry($qo);
+    while ( $ro && ($o= mysql_fetch_object($ro)) ) {
+      $pocet++;
+      $vek= narozeni2roky_sql($o->narozeni,$o->datum_od);
+      $sex= $o->sex;
+      $veky[$vek]++;
+      $nveky++;
+      if ( $sex==1 ) { $kluci[$vek]++; $nkluci++; }
+      elseif ( $sex==2 ) { $holky[$vek]++; $nholky++; }
+      else { $bez.= "$del{$o->prijmeni} {$o->jmeno}"; $del= ", "; }
+      if ( $uvest_jmena ) {
+        $jmena.= $deljmena;
+        $jmena.= $sta_ukaz_pobyt($o->id_pobyt,"{$o->prijmeni} {$o->jmeno}/$vek");
+        $deljmena= ", ";
+      }
+    }
+    ksort($veky);
+    // formátování výsledku
+    if ( !$bez_tabulky ) {
+      $html.= "<table class='stat'>";
+      $r1= $r2= $r3= $r4= '';
+      foreach($veky as $v=>$n) {
+        $r1.= "<th align='right' width='20'>$v</th>";
+        $style= $n==$kluci[$v]+$holky[$v] ? '' : " style='background-color:yellow'";
+        $r2.= "<td align='right'$style>$n</td>";
+        $r3.= "<td align='right'>{$kluci[$v]}</td>";
+        $r4.= "<td align='right'>{$holky[$v]}</td>";
+      }
+      $r1.= "<th align='right'>celkem</th>";
+      $style= $nveky==$nkluci+$nholky ? '' : " style='background-color:yellow'";
+      $r2.= "<td align='right'$style>$nveky</td>";
+      $r3.= "<td align='right'>$nkluci</td>";
+      $r4.= "<td align='right'>$nholky</td>";
+      $html.= "<tr><th>věk</th>$r1</tr><tr><th>počet</th>$r2</tr><tr>"
+            . "<th>kluci</th>$r3</tr><tr><th>holky</th>$r4</tr></table>";
+    }
+    // jména
+    if ( $jmena ) $html.= "<b>($jmena)</b>";
+    // upozornění
+    if ( $bez ) $html.= ($jmena?"<br>":'')."<i>(ani holka ani kluk: $bez)</i>";
+    // předání výsledku
+    return $html;
+  };
+  $result= (object)array();
+  $html= '';
+  $nedeti= $akce_text_prehled_x($akce,"t.role='d' AND p.funkce!=99 AND s.s_role NOT IN (2,3,4,5)",1,1);
+  if ( $pocet>0 )
+    $html.= "<h3 style='color:red'>POZOR! Děti vedené chybně jako účastníci nebo hosté</h3>$nedeti";
+  // pfunkce: 0 4 5 8 92 95
+  // pfunkce: 1=hlavoun, 2=instruktor, 3=pečovatel, 4=pomocný, 5=osobní, 6=mimořádný, 7=team, 8=člen G
+  // funkce=99  -- pečoun, funkce=9,10,13,14 -- není na akci
+  // s_role=2   -- dítě, s_role=3  -- dítě s os.peč, s_role=4  -- pom.peč, s_role=5  -- os.peč
+  // dite_kat=7 -- skupina G
+  // děti
+  $html.= "<h2>Informace z karty Účastníci2 (bez náhradníků)</h2><h3>Celkový počet dětí na akci podle stáří (v době začátku akce) - bez os.pečounů včetně pom.pečounů</h3>";
+  $html.= $akce_text_prehled_x($akce,"t.role='d' AND p.funkce!=99 AND s.s_role IN (0,1,2,3,4)");
+  $html.= "<h3>Děti ve skupinkách (mimo G a osobně opečovávaných)</h3>";
+  $html.= $akce_text_prehled_x($akce,"t.role='d' AND p.funkce!=99 AND s.s_role IN (2,4) AND s.dite_kat!=7");
+  $html.= "<h3>Děti v péči osobního pečovatele</h3>";
+  $html.= $akce_text_prehled_x($akce,"t.role='d' AND p.funkce!=99 AND s.s_role IN (3)",1);
+  $html.= "<h3>Děti ve skupině G</h3>";
+  $html.= $akce_text_prehled_x($akce,"t.role='d' AND p.funkce!=99 AND s.dite_kat=7",true);
+  $html.= "<h3>Pomocní pečovatelé</h3>";
+  $html.= $akce_text_prehled_x($akce,"t.role='d' AND p.funkce!=99 AND s.s_role IN (4)",1);
+  $html.= "<h3>Osobní pečovatelé (nezařazení mezi Pečovatele)</h3>";
+  $html.= $akce_text_prehled_x($akce,"p.funkce!=99 AND s.s_role IN (5) AND s.pfunkce NOT IN (5)",true);
+  // osobní mezi pečouny
+  $html.= "<br><hr><h3>Osobní pečovatelé (zařazení mezi Pečovatele)</h3>";
+  $html.= $akce_text_prehled_x($akce,"p.funkce!=99 AND s.pfunkce IN (5)",true);
+  // pečouni
+  $html.= "<br><hr><h2>Informace z karty Pečouni</h2><h3>Řádní pečovatelé</h3>";
+  $html.= $akce_text_prehled_x($akce,"p.funkce=99 AND s.pfunkce IN (1,2,3) ");
+  $html.= "<h3>Mimořádní pečovatelé</h3>";
+  $html.= $akce_text_prehled_x($akce,"p.funkce=99 AND s.pfunkce=6 ",true);
+  $html.= "<h3>Team pečovatelů (s touto funkcí)</h3>";
+  $html.= $akce_text_prehled_x($akce,"p.funkce=99 AND s.pfunkce IN (7) ",true);
+  $html.= "<h3>Team pečovatelů (bez přiřazené funkce)</h3>";
+  $html.= $akce_text_prehled_x($akce,"p.funkce=99 AND s.pfunkce IN (0) ",true);
+  $result->html= "$html<br><br>";
+  return $result;
+}
 # -------------------------------------------------------------------------------- akce2_strava_pary
 # generování sestavy přehledu strav pro účastníky $akce - páry
 #   $cnd = podmínka

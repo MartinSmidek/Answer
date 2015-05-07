@@ -59,7 +59,8 @@ proc onstart () {
   mode.set('o'); osoby_vyber.set(1);
 }
 
-proc onfirstfocus() {
+proc onfirstfocus() { alert(PLS.get);
+# proc onfirstfocus() {
 #   evid.page_init; dary.page_init;
 #   osoby.b.browse_load;
 #   evid.oso.onclick;

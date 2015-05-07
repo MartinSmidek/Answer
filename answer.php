@@ -52,6 +52,16 @@ function answer_php($app,$app_name,$db_name,$skin,$js_lib,$css_lib,$options) {
 
   $title_style= $title_style ? " style='$title_style'" : '';
 
+  // cesty
+  $path= $_SERVER['PHP_SELF'];
+  $path= substr($path,0,strrpos($path,'/'));
+  $path= substr($path,0,strrpos($path,'/'));
+  $abs_root= $_SERVER['DOCUMENT_ROOT'].$path;
+  $rel_root= $_SERVER['HTTP_HOST'].$path;
+  $_SESSION[$app]['app_path']= $path;
+
+  set_include_path(get_include_path().PATH_SEPARATOR.$abs_root);
+
   require_once("$app.inc");
   require_once("{$EZER->version}/server/ae_slib.php");
 

@@ -8,7 +8,7 @@ var zalozka: text           // inf | cor | cen
 
 use info: form _akce [12,4,,]
 use page: form _page [512,40,,]
-use fil:  form file._fil [512,72,,]  { tag:'file', format:'n' }
+# use fil:  form file._fil [512,72,,]  { tag:'file', format:'n' }
 
 # ----------------------------------------------------------------------------==> globální procedury
 # nastaví akci jako pracovní
@@ -37,6 +37,17 @@ proc onfirstfocus() {
   page.inf.onclick;
   echo('db.akce.lst.onfirstfocus end');
 }
+# -----------------------------------------------------------------------------==> lokální procedury
+# vrátí hodnotu položky z google resp. sey
+proc akce_get(_fld) { var fld:object
+  { eq(the_source.get,'sey'); fld.set(info.sey.part(_fld).get) | fld.set(info.google.part(_fld).get) };
+  return(fld);
+}
+# zapíše hodnotu akce.archiv (a zapíše ji i do google resp. sey)
+proc akce_set_archiv(folder) {
+  ask('query',conc("UPDATE akce SET archiv='",folder,"' WHERE id_duakce=",page.a_akce.get));
+  { eq(the_source.get,'sey'); info.sey.archiv.let(folder) | info.sey.google.let(folder) };
+}
 # -------------------------------------------------------==> reakce na změny rozměrů okna prohlížeče
 const min_h=550           // minimální výška (nelze jednoduše měnit - jsou k ní vztaženy souřadnice)
 var   curr_h: number      // výška nad základní výšku
@@ -61,6 +72,7 @@ proc w_change_all() {}
 proc h_change_all() {
   page.property(object('down',curr_h.get),'b');      // posunutí proti původnímu - omezeno na min_h
   page.frame.property(object('stretch',curr_h.get)); // protažení proti původnímu
+  page.drop.property(object('stretch',curr_h.get));
   h_change_b;
 }
 # změna počtu řádků browse oproti aktuálním řádkům
@@ -89,7 +101,11 @@ menu m {type:'left', format:'f+'
         the_source.set('sey'); akce_roku(info.rok.get);
   } }
   menu g {title:'Výběr akce zadaného roku',type:'group', skill:'y;f'
-    item {title:'[fa-google] podle číselníku akcí z intranetu', skill:'y'          // jen pro YS
+    item {title:'[fa-google] přihlášení do intranetu', skill:'y'                // jen pro YS
+      proc onclick (i) {
+        alert("answer@smidek.eu: ",function('return Ezer.Google.authorize();'));
+    } }
+    item {title:'[fa-google] podle číselníku akcí z intranetu', skill:'y'       // jen pro YS
       proc onclick (i) {
         info.rok.display(1); info.google.display(1); info.sey.display(0);
         the_source.set('google'); akce_roku(info.rok.get);
@@ -156,14 +172,14 @@ form _page [,,285,670] {
   | eq(the_source.get,'google'); [ id_akce; show_page(id_akce) | init_page ]
   }
   proc show_page(id_akce) {
-    cen_copy.enable(0); cen_copy.key(0); fil.display(0);
+    cen_copy.enable(0); cen_copy.key(0); //fil.display(0);
     switch(zalozka.get,
     'inf',{ note.set(ask('akce2_info',id_akce)); key_akce.set(id_akce) },
     'cor',{ form.load(id_akce); key_akce.set(id_akce);
             [ has_skill('f'); soubezna.set(cconc(id_hlavni.get,1,0)) ];
             info.sey.browse_focus },
     'cen',{ form.init; c.browse_load(conc("id_akce=",id_akce)) },
-    'doc',{ form.init; drop._init },
+    'doc',{ form.init; archiv.ukaz(akce_get('archiv')) },
 #     'doc',{ form.init; fil.galery('akce',a_akce.get); fil.display(1); }
     );
   }
@@ -194,24 +210,18 @@ form _page [,,285,670] {
 #   label drop [10,384,283,113] { tag:'inf,web', type:'drop', skill:'demo|demo'  }
   # --------------------------- položky akce
   field id_hlavni { data:akce.id_hlavni }
-  label [17,32,104,] { tag:'cor', title:'název akce *' }
-  field [17,49,218,] { tag:'cor', data:akce.nazev }
-  label [17,72,104,] { tag:'cor', title:'místo' }
-  field [17,89,218,] { tag:'cor', data:akce.misto }
-  label [18,116,65,] { tag:'cor', title:'začátek *' }
-  field datum_od [18,133,83,] { tag:'cor', type:'date', data:akce.datum_od }
-  label [118,116,64,] { tag:'cor', title:'ukončení' }
-  field [118,133,83,] { tag:'cor', type:'date', data:akce.datum_do }
+  field [17,49,218,] { tag:'cor', title:'^název akce *', data:akce.nazev }
+  field [17,89,218,] { tag:'cor', title:'^místo', data:akce.misto }
+  field datum_od [18,133,83,] { tag:'cor', title:'^začátek *', type:'date', data:akce.datum_od }
+  field [118,133,83,] { tag:'cor', title:'^ukončení', type:'date', data:akce.datum_do }
   check [205,166,83,] { tag:'cor', title:'jen seznam', data:akce.spec, format:'r' }
-  label [18,173,,]     { tag:'cor', title:'typ akce *' }
-  select [71,169,139,] { tag:'cor', type:'map', data:akce.druh, options:ms_akce_typ.zkratka, format:'n' }
+  select [71,169,139,] { tag:'cor', title:'typ akce *', type:'map', data:akce.druh, options:ms_akce_typ.zkratka, format:'n' }
   radio [213,117,86,35] { tag:'cor', data:akce.strava_oddo, value:'vo'
     case [0,2,83,] { title:'večeře-oběd', expr:'vo' }
     case [0,17,76,] { title:'oběd-oběd', expr:'oo' }
     proc onchange() { echo('strava=',this.get) }
   }
-  label [18,204,,] { tag:'cor', title:'účetní symbol:', skill:'faa;caa' } //skill:'faa;caa|faa;caa;' }
-  field [96,202,54,] { tag:'cor', data:akce.ciselnik_akce, skill:'faa|faa;caa|caa' }
+  field [96,202,54,] { tag:'cor', title:'účetní symbol:', data:akce.ciselnik_akce, skill:'faa|faa;caa|caa' }
   // zobrazení a nastavení akce jako souběžné (stejné datum a místo)
   check soubezna [157,200,120,] { tag:'cor', title:'akce je souběžná', skill:'faa|faa',
     proc onchange() {
@@ -342,37 +352,67 @@ form _page [,,285,670] {
   | alert("pro testování ceníku musí být akce nastavena jako pracovní")
   }
   label xhref [122,bc+9,173,]
-  # ------------------------==> dokumentace
-  button archiv [10,20,,] { tag:'doc', title:'zobrazit'
-    proc onclick() {}
-    proc skryt() {}
+  # ------------------------==> archiv
+  # tags:   doc_show=pro zobrazení složky, doc_crea=nabídka vytvoření složky
+  var archiv_slozka:object
+  label popis [15,35,440,] { tag:'doc_show', format:'n' }
+  button archiv [15,35,,] { tag:'doc_crea', title:'vytvořit', format:'n'
+    const gd = "https://drive.google.com/folderview?id="
+    proc ukaz(folder) { // ukáže tlačítko jako vytvořit pokud akce.archiv='' jinak zobrazí folder
+      folder;
+      { eq(substr(folder,0,6),'files/');
+        popis.set(conc("Archiv je obsažen ve složce <b>",folder,"</b> na serveru"));
+        drop.init(folder);
+      | popis.set(conc("Archiv je obsažen na <a target='GD' href='",gd.get,folder,"'>Google Disku</a>"));
+        drop.init(folder,'GoogleDisk');
+      };
+      drop.lsdir;
+      form.display(1,'doc_show'); form.display(0,'doc_crea');
+    | drop.init('?');
+      form.display(0,'doc_show'); form.display(1,'doc_crea');
+    }
+    proc onclick() { var path: text, folder:text
+      [ koren.key | alert("Před vytvořením je nutné zvolit kořen složky"); return ];
+      path.set(conc(koren.get,'/',path_rok.get,'/',path_kod.get));
+      confirm("Mám vytvořit složku pro dokumenty akce<br><b>",
+        akce_get('nazev'),'</b> ve složce<br><b>',path,'</b> ?');
+      // vytvoření složky na serveru
+      drop.init(archiv_slozka.get('popis'),archiv_slozka.get('hodnota'));
+      folder.set(drop.mkdir(path_rok.get)); // přepne na vytvořenou složku
+      folder.set(drop.mkdir(path_kod.get)); // takže tato je v ní vnořená
+      akce_set_archiv(folder); ukaz(folder)
+    }
   }
-  select [100,20,100,] { tag:'doc', type:'map', options:akce_slozka.zkratka }
-  label [10,80,455,] { tag:'doc', title:'sem lze vložit soubory, které budou svázány s akcí' }
-  label drop [10,100,455,150] { tag:'doc', type:'drop'
-    var prefix: text
-    proc _init() { var ret:object
-      ret.set(ask('file_list','akce',a_akce.get));
-      this.init(ret.relpath);
-      prefix.set(ret.prefix);
-      this.set(ret.list) }
-    proc ondrop(f) { var name:text
+  select koren [90,35,150,] { tag:'doc_crea', title:'^kořenná složka', type:'map', format:'nt',
+    options:akce_slozka.zkratka
+    proc onchange() {
+      archiv_slozka.set(ask('select_object','hodnota,ikona,barva,popis','_cis',
+        conc("druh='akce_slozka' AND data=",this.key)));
+      path_rok.set(replace(archiv_slozka.get('ikona'),'{rok}',akce_get('rok')));
+      path_kod.set(replace(archiv_slozka.get('barva'),'{kod}',akce_get('kod')));
+    }
+  }
+  field path_rok [250,35,100,] { tag:'doc_crea', title:'^složka pro rok', format:'dn' }
+  field path_kod [360,35,100,] { tag:'doc_crea', title:'^podsložka akcí', format:'dn' }
+  label [15,60,455,] { tag:'doc_show', format:'n',
+    title:'archivované soubory svázané s akcí - lze k nim přidat další přetáhnutím myší' }
+  label drop [15,80,445,315] { tag:'doc_show', type:'drop', format:'n'
+    proc ondrop(f) {
       gt(f.size,5242880); warning('odmítnuto ',f.name,' má více jak 5MB');
       return(0)
-    | name.set(conc(prefix.get,f.name));
-      return(name);
+    | return(1); // return(conc(prefix.get,f.name)) - případné přejmenování
     }
-    proc onload(f) { var msg:text
-      msg.set(ask('file_add','akce',a_akce.get,f));
-      msg; warning(msg)
-    }
+    proc onload(f) { warning("přeneseno:",f.name) } // po dokončení přenosu
     proc onerror(e) { warning(e.msg); return(1) } // vrácení 0 způsobí standardní hlášení chyby
-    proc onmenu(op,name) {  // op=remove|remove-all
-      { eq(op,'remove');     warning(ask('file_del','akce',a_akce.get,name)) // odebrání souboru
-      | eq(op,'remove-all'); warning(ask('file_del_all','akce',a_akce.get))  // odebrání všech souborů
-      | alert('N.Y.I')
-      };
-      _init
+    proc onmenu(op,title,ref) { // op=remove|remove-all
+#       test na DG;
+#       [ eq(op,'viewer'); function('url',"window.open(url,'viewer')",ref)
+#       | eq(op,'remove'); function('fileId',"var request=gapi.client.drive.files.trash({'fileId':fileId});request.execute(function(resp){});",ref)
+#       | alert('N.Y.I') ]
+#     | [ eq(op,'remove');     warning(ask('file_del','akce',a_akce.get,name)) // odebrání souboru
+#       | eq(op,'remove-all'); warning(ask('file_del_all','akce',a_akce.get))  // odebrání všech souborů
+#       | alert('N.Y.I') ];
+#       drop.lsdir;
     }
   }
   # --------------------------- pozadí stránky nakonec
@@ -420,6 +460,7 @@ form _akce [,,*,50] {
     show cena {data:da.cena}
     show      {data:pa.id_pobyt}
     show rok  {data:ga.g_rok}
+    show archiv {data:da.archiv}
     show curr {expr:"IF(da.id_duakce=@curr,1,0)" }
     show kod   [,,30,] {title:'kód',    data:ga.g_kod, format:'rs+q*'}
     show nazev [,,211,] {title:'název', data:ga.g_nazev, format:'tsq*'
@@ -464,6 +505,8 @@ form _akce [,,*,50] {
     show id_gakce {data:ga2.id_gakce}
     show id_hlavni {data:da2.id_hlavni}
     show id_soubeh {data:sa2.id_duakce}
+    show archiv {data:da2.archiv}
+    show rok {expr:"YEAR(da2.datum_od)"}
     show curr { expr:"IF(da2.id_duakce=@curr,1,0)" }
     show barva { expr:"CASE WHEN da2.id_hlavni THEN 2 WHEN sa2.id_duakce THEN 1 ELSE 0 END" }
 /**/show druh  [,,60,] {title:'typ',    data:da2.druh, map_pipe:ms_akce_typ.zkratka, format:'sq#'}
