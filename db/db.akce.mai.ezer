@@ -25,7 +25,7 @@ proc test_dbg() {
   echo(dopis_id.get)
 }
 proc onfirstfocus() {
-  alert(PLS.get);
+  deprecated;
   [ dirty.get | akce_onstart ];
   gq.reinit;
   m.g.i.click

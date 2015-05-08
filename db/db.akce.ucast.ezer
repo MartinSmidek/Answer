@@ -16,7 +16,7 @@ proc onstart() {
   the_duakce_local.set(0);
 }
 proc onfirstfocus() {
-  alert(PLS.get);
+  deprecated;
   init_forms; akce_onstart; onfocus
 }
 proc onfocus() {

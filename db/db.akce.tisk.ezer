@@ -52,9 +52,9 @@ use info: form right [12,4,,] {
   }
 }
 
-proc onfirstfocus() { alert(PLS.get); }
+proc onfirstfocus() { deprecated; }
 proc onfocus() {
-  alert(PLS.get);
+  deprecated;
   [ [ dirty.get | akce_onstart ];
     eq(the_duakce_local.get,the_duakce.get)
   | the_duakce_local.set(the_duakce.get);
