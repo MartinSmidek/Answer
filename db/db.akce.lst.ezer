@@ -17,7 +17,7 @@ proc akce_work(id_akce) {
 # ------------------------------------------------------------------------------- inicializace
 # inicializace panelu proběhne po akce.onstart, zobrazí seznam akcí daného roku podle the_source
 proc onfirstfocus() {
-  alert(PLS.get);
+  deprecated;
   [ dirty.get | akce_onstart ]; // zavolá akce_work
   echo('db.akce.lst.onfirstfocus');
   // zobrazení akce

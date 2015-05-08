@@ -4,6 +4,7 @@
 # (c) 2008-2010 Martin Šmídek <martin@smidek.eu>
 
 const PLS = "Používej prosím <a href='http://answer.setkani.org/ys2.php'>novou verzi databáze</a>.<br>Děkuje Martin."
+proc deprecated() { has_skill('c') | alert(PLS.get) }
 
 # globální proměnné pro modul Databáze - týkají se vlastností nastavené akce
 
