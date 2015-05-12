@@ -177,6 +177,10 @@ function akce2_mapa($akce) {  trace();
 function akce2_info($id_akce,$text=1) {  trace();
   $html= '';
   $info= (object)array('muzi'=>0,'zeny'=>0,'deti'=>0,'peco'=>0,'rodi'=>0,'skup'=>0);
+  $zpusoby= map_cis('ms_akce_platba','zkratka'); // způsob => částka
+  $platby= array();
+  $celkem= 0;
+  $aviz= 0;
   if ( $id_akce ) {
     $ucasti= $rodiny= $dosp= $muzi= $zeny= $deti= $pecounu= $err= $err2= 0;
     $odhlaseni= $neprijeli= $nahradnici= $nahradnici_osoby= 0;
@@ -189,7 +193,8 @@ function akce2_info($id_akce,$text=1) {  trace();
              SUM(IF(o.narozeni='0000-00-00',1,0)) AS _err,
              GROUP_CONCAT(IF(o.narozeni='0000-00-00',CONCAT(', ',jmeno,' ',prijmeni),'') SEPARATOR '') AS _kdo,
              SUM(IF(o.sex NOT IN (1,2),1,0)) AS _err2,
-             GROUP_CONCAT(IF(o.sex NOT IN (1,2),CONCAT(', ',jmeno,' ',prijmeni),'') SEPARATOR '') AS _kdo2
+             GROUP_CONCAT(IF(o.sex NOT IN (1,2),CONCAT(', ',jmeno,' ',prijmeni),'') SEPARATOR '') AS _kdo2,
+             avizo,platba,datplatby,zpusobplat
            FROM akce AS a
            JOIN pobyt AS p ON a.id_duakce=p.id_akce
            JOIN spolu AS s ON p.id_pobyt=s.id_pobyt
@@ -200,6 +205,14 @@ function akce2_info($id_akce,$text=1) {  trace();
     $res= mysql_qry($qry);
     while ( $res && $p= mysql_fetch_object($res) ) {
       $fce= $p->funkce;
+      // záznam plateb
+      if ( $p->platba ) {
+        $celkem+= $p->platba;
+        $platby[$p->zpusobplat]+= $p->platba;
+      }
+      if ( $p->avizo ) {
+        $aviz++;
+      }
       // diskuse funkce=odhlášen/14 a funkce=nepřijel/10 a funkce=náhradník/9
       if ( in_array($fce,array(14,10,9) ) ) {
         $odhlaseni+= $fce==14 ? 1 : 0;
@@ -249,15 +262,16 @@ function akce2_info($id_akce,$text=1) {  trace();
       $_pobyt_x=   je_1_2_5($neprijeli,"pobyt,pobyty,pobytů");
       $_pobyt_n=   je_1_2_5($nahradnici,"přihláška,přihlášky,přihlášek");
       $_pobyt_no=  je_1_2_5($nahradnici_osoby,"osoba,osoby,osob");
+      $_aviz=      je_1_2_5($aviz,"avízo,avíza,avíz");
       // html
       $html= $dosp+$deti>0
-       ? "Akce <b>$akce</b><br>$cas1 $dne<br><hr>$cas2"
-       . ($skupin ? "<br>$_skupin účastníků"
+       ? $html.= "<h3 style='margin:0px 0px 3px 0px;'>$akce</h3>akce $cas1 $dne<br><hr>$cas2"
+       . ($skupin ? " $_skupin účastníků"
            .($rodiny ? ($rodiny==$ucasti ? " (všechny jako rodiny)" : " (z toho $_rodiny)") :''):'')
-       . ($pecounu ? " ".($skupin?"<br>a ":'')."$_pecounu" : '')
-       . ",<br><br> $_dospelych ($_muzu, $_zen) a $_deti,"
-       . "<br><b>celkem $_osob</b>"
-       : "Akce byla vložena do databáze<br>ale nemá zatím žádné účastníky";
+       . ($pecounu ? " ".($skupin?" a ":'')."$_pecounu" : '')
+       . ",<br><br>tj. $_dospelych ($_muzu, $_zen) a $_deti,"
+       . " <b>celkem $_osob</b>"
+       : "Akce byla vložena do databáze ale nemá zatím žádné účastníky";
       if ( $odhlaseni + $neprijeli + $nahradnici > 0 ) {
         $html.= "<br><hr>";
         $msg= array();
@@ -268,11 +282,11 @@ function akce2_info($id_akce,$text=1) {  trace();
       }
       if ( $err + $err2 > 0 ) {
         $html.= "<br><hr>POZOR: ";
-        $html.= $err>0  ? "<br>u $_err chybí datum narození:<br> <i>$chybi_nar</i>" : '';
-        $html.= $err2>0 ? "<br>u $_err2 chybí údaj muž/žena:<br> <i>$chybi_sex</i>" : '';
+        $html.= $err>0  ? "<br>u $_err chybí datum narození: <i>$chybi_nar</i>" : '';
+        $html.= $err2>0 ? "<br>u $_err2 chybí údaj muž/žena: <i>$chybi_sex</i>" : '';
         $html.= "<br>(kvůli chybějícím údajům mohou být počty divné)";
       }
-      $html.= $deti ? "<hr>Poznámka: jako děti se počítají osoby, které v době zahájení akce ještě nemají 18 let" : '';
+      $html.= $deti ? "<hr>Poznámka: jako děti se počítají osoby, které v době zahájení akce nemají 18 let" : '';
     }
     else {
       $info->muzi= $muzi;
@@ -282,12 +296,23 @@ function akce2_info($id_akce,$text=1) {  trace();
       $info->rodi= $rodiny;
       $info->skup= $skupin;
     }
+    // zobrazení přehledu plateb
+    if ( $celkem ) {
+      $html.= "<h3 style='margin-bottom:3px;'>Přehled plateb za akci</h3><table>";
+      foreach ($zpusoby as $i=>$zpusob) {
+        if ( $platby[$i] )
+          $html.= "<tr><td>$zpusob</td><td align='right'>{$platby[$i]}</td></tr>";
+      }
+      $st= "style='border-top:1px solid black'";
+      $av= $aviz ? "<td $st> a $_aviz platby</td>" : '';
+      $html.= "<tr><td $st>CELKEM</td><td align='right' $st><b>$celkem</b></td>$av</tr>";
+      $html.= "</table>";
+    }
   }
   else {
-    $html= "Tato akce ještě nebyla
-            <br>vložena do databáze
+    $html= "Tato akce ještě nebyla vložena do databáze
             <br><br>Vložení se provádí dvojklikem
-            <br>na řádek s akcí";
+            na řádek s akcí";
   }
   return $text ? $html : $info;
 }
@@ -300,55 +325,55 @@ function je_1_2_5($kolik,$tvary) {
          $kolik>1 ? "$kolik $tvar2" : (
          $kolik>0 ? "1 $tvar1"      : "0 $tvar5"));
 }
-# =================================================================================================> FILES
-# funkce pro svázání souborů s tabulkou FILE
-#   add=přidání, list=vrácení seznamu, del=smazání, del_all=mazání všech
-# ---------------------- file_folder
-# pomocná: vrátí složku podle aplikace a prefix podle tabulky
-function file_folder($table,$id,&$abspath,&$relpath,&$prefix) { trace();
-  global $ezer_path_root, $ezer_root;
-  $t= substr($table,0,1);
-  $f= substr($ezer_root,0,2);
-  $r= substr($ezer_root,0,2)=='fa' ? 'f' : (
-      substr($ezer_root,0,2)=='ys' ? 's' : (
-      substr($ezer_root,0,2)=='cr' ? 'c' : 'x'));
-  $test= substr($ezer_root,-5)=='_test';
-  $relpath= $test ? "files/_test/$f/" : "files/$f/";
-  $abspath= "$ezer_path_root/$relpath";
-  $prefix=  "$r$t{$id}_";
-}
-# ----------------------------------------------------------------------------------------- file_add
-# přidá soubor do tabulky a do složky (akce|pobyt|rodina|osoba), vrátí nový jednoznačný název
-function file_add($table,$id,$f,$note='') { trace();
-  $msg= '';
-  query("INSERT INTO file (tab,id_tab,filename,filesize,note) VALUES ('$table',$id,'{$f->name}','{$f->size}','$note')");
-  return $msg;
-}
-# ---------------------------------------------------------------------------------------- file_list
-# vrátí seznam souborů patřící k danému záznamu a složku dané aplikace
-function file_list($table,$id) { trace();
-  $ret= (object)array('list'=>'','folder'=>'','prefix'=>''); $del= '';
-  file_folder($table,$id,$ret->abspath,$ret->relpath,$ret->prefix);
-  $qf= "SELECT * FROM file WHERE deleted='' AND tab='$table' AND id_tab='$id' ";
-  $rf= mysql_qry($qf);
-  while ( $rf && ($f= mysql_fetch_object($rf)) ) {
-    $ret->list.= "$del{$f->filename}:{$f->filesize}";
-    $del= ',';
-  }
-  return $ret;
-}
-# ----------------------------------------------------------------------------------------- file_del
-# poznačí soubor jako smazaný
-function file_del($table,$id,$name) { trace();
-  $ok= query("UPDATE file SET deleted='D' WHERE tab='$table' AND id_tab='$id' AND filename='$name'");
-  return $ok ? '' : mysql_error();
-}
-# ------------------------------------------------------------------------------------- file_del_all
-# odstraní všechny soubory patřící k danému záznamu
-function file_del_all($table,$id) { trace();
-//   query("UPDATE dopis SET prilohy='' WHERE id_dopis=$id_dopis");
-  return 1;
-}
+// # =================================================================================================> FILES
+// # funkce pro svázání souborů s tabulkou FILE
+// #   add=přidání, list=vrácení seznamu, del=smazání, del_all=mazání všech
+// # ---------------------- file_folder
+// # pomocná: vrátí složku podle aplikace a prefix podle tabulky
+// function file_folder($table,$id,&$abspath,&$relpath,&$prefix) { trace();
+//   global $ezer_path_root, $ezer_root;
+//   $t= substr($table,0,1);
+//   $f= substr($ezer_root,0,2);
+//   $r= substr($ezer_root,0,2)=='fa' ? 'f' : (
+//       substr($ezer_root,0,2)=='ys' ? 's' : (
+//       substr($ezer_root,0,2)=='cr' ? 'c' : 'x'));
+//   $test= substr($ezer_root,-5)=='_test';
+//   $relpath= $test ? "files/_test/$f/" : "files/$f/";
+//   $abspath= "$ezer_path_root/$relpath";
+//   $prefix=  "$r$t{$id}_";
+// }
+// # ----------------------------------------------------------------------------------------- file_add
+// # přidá soubor do tabulky a do složky (akce|pobyt|rodina|osoba), vrátí nový jednoznačný název
+// function file_add($table,$id,$f,$note='') { trace();
+//   $msg= '';
+//   query("INSERT INTO file (tab,id_tab,filename,filesize,note) VALUES ('$table',$id,'{$f->name}','{$f->size}','$note')");
+//   return $msg;
+// }
+// # ---------------------------------------------------------------------------------------- file_list
+// # vrátí seznam souborů patřící k danému záznamu a složku dané aplikace
+// function file_list($table,$id) { trace();
+//   $ret= (object)array('list'=>'','folder'=>'','prefix'=>''); $del= '';
+//   file_folder($table,$id,$ret->abspath,$ret->relpath,$ret->prefix);
+//   $qf= "SELECT * FROM file WHERE deleted='' AND tab='$table' AND id_tab='$id' ";
+//   $rf= mysql_qry($qf);
+//   while ( $rf && ($f= mysql_fetch_object($rf)) ) {
+//     $ret->list.= "$del{$f->filename}:{$f->filesize}";
+//     $del= ',';
+//   }
+//   return $ret;
+// }
+// # ----------------------------------------------------------------------------------------- file_del
+// # poznačí soubor jako smazaný
+// function file_del($table,$id,$name) { trace();
+//   $ok= query("UPDATE file SET deleted='D' WHERE tab='$table' AND id_tab='$id' AND filename='$name'");
+//   return $ok ? '' : mysql_error();
+// }
+// # ------------------------------------------------------------------------------------- file_del_all
+// # odstraní všechny soubory patřící k danému záznamu
+// function file_del_all($table,$id) { trace();
+// //   query("UPDATE dopis SET prilohy='' WHERE id_dopis=$id_dopis");
+//   return 1;
+// }
 /** ===================================================================================== ÚČASTNÍCI2 */
 /** =======================================================================================>> VÝPISY */
 # ------------------------------------------------------------------------------------- tisk_sestava

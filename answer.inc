@@ -10,7 +10,7 @@
 #
 function answer_ini($app,$answer_db,$dbs_plus,$php_lib) {
   global $EZER,$ezer_local,$ezer_root,$ezer_path_root,$ezer_comp_ezer,$ezer_comp_root,
-         $path_backup,$ezer_mysql_path,$path_url,$path_pspad;
+         $path_backup,$ezer_mysql_path,$path_url,$path_pspad,$path_files;
 
   $EZER= (object)array();
   $ezer_root= $app;                                             // adresář a hlavní objekt aplikace
@@ -48,6 +48,11 @@ function answer_ini($app,$answer_db,$dbs_plus,$php_lib) {
   // kořeny cest
   $path_root=  array($ezer_ksweb?"/storage/sdcard0/htdocs/www-ys2":
     "/home/www/ezer/www-ys/2","C:/Apache/htdocs/ezer/www-ys2");
+  // kořen pro LabelDrop
+  $abs_root= $path_root[$ezer_local?1:0];
+  $path_files= substr($abs_root,0,strrpos($abs_root,'/'))."/files/".substr($ezer_root,0,2)."/";
+  $_SESSION[$app]['HTTP_EZER_FILE_ABSPATH']= $path_files;
+
   $path_pspad= array(null,"C:/Program Files (x86)/PSPad editor/Syntax");
   // cesty pro zálohy
   $path_backup= array("{$path_root[0]}/zalohy","C:/Apache/htdocs/ezer/www-ys2/zalohy");

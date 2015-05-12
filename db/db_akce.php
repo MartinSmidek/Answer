@@ -2360,7 +2360,6 @@ function akce_kontrola_dat($par) { trace();
   ");
   while ( $rx && ($x= mysql_fetch_object($rx)) ) {
     $n++;
-    $msg.= "<dd>fantómová osoba {$x->id_osoba} v rodině {$x->id_rodina} {$x->nazev} v roli {$x->role} $ok</dd>";
     if ( $opravit ) {
       $ok= '';
       if ( !$x->id_dar && !$x->id_platba ) {
@@ -2372,6 +2371,7 @@ function akce_kontrola_dat($par) { trace();
       else
         $ok= " = vazba na dar či platbu";
     }
+    $msg.= "<dd>fantómová osoba {$x->id_osoba} v rodině {$x->id_rodina} {$x->nazev} v roli {$x->role} $ok</dd>";
   }
   $html.= "<dt style='margin-top:5px'>tabulka <b>osoba</b>: fantómové osoby"
     .($msg?$msg:"<dd>ok</dd>")."</dt>";
@@ -2394,16 +2394,21 @@ function akce_kontrola_dat($par) { trace();
   // ---------------------------------------------------- triviální POBYT
   $msg= '';
   $rx= mysql_qry("
-    SELECT id_spolu,COUNT(*) AS _pocet
-    FROM pobyt AS p JOIN spolu USING (id_pobyt)
+    SELECT id_pobyt,nazev,YEAR(datum_od) AS _rok
+    FROM pobyt AS p
+    LEFT JOIN spolu USING (id_pobyt)
     LEFT JOIN akce AS a ON a.id_duakce=p.id_akce
-    /*LEFT JOIN mail USING(id_pobyt)*/
-    GROUP BY id_pobyt HAVING _pocet=0
+    -- LEFT JOIN mail USING(id_pobyt)
+    WHERE ISNULL(id_spolu)
+    GROUP BY id_pobyt -- HAVING _pocet=0
   ");
   while ( $rx && ($x= mysql_fetch_object($rx)) ) {
     $n++;
-    $msg.= "<dd>triviální pobyt {$x->nazev} $ok</dd>";
-    # if ( $opravit ) ... zkontrolovat mail
+    if ( $opravit ) { // ... zkontrolovat mail
+      $ok= mysql_qry("DELETE FROM pobyt WHERE id_pobyt={$x->id_pobyt}",1)
+         ? " = SMAZÁNO" : ' !!!!!CHYBA při mazání' ;
+    }
+    $msg.= "<dd>triviální pobyt {$x->id_pobyt}: rok {$x->_rok} {$x->nazev} $ok</dd>";
   }
   $html.= "<dt style='margin-top:5px'>tabulka <b>pobyt</b>: pobyt bez osob"
     .($msg?$msg:"<dd>ok</dd>")."</dt>";
