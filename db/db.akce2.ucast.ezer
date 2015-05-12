@@ -1012,6 +1012,7 @@ form _pobyt [,,0,62] {
   select zpusobplat [120,0,86,] {tag:'u', type:'map', data:p.zpusobplat, title:'^jak',
                                  options:ms_akce_platba.zkratka, format:'u'}
   field datplatby   [216,0,84,] {tag:'u', type:'date', data:p.datplatby, title:'^kdy'}
+  check avizo       [300,0,50,] {tag:'u', title:"avízo", data:p.avizo, format:'r'}
 
   // d = úhrada za děti
   field poplatek_d [5,0,50,] {tag:'d', data:p.poplatek_d, format:'r', title:'^poplatek/d'}

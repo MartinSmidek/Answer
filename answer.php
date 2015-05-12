@@ -9,7 +9,7 @@
 #   $css_lib    = pole s *.css
 #   $options    = doplnění Ezer.options
 function answer_php($app,$app_name,$db_name,$skin,$js_lib,$css_lib,$options) {
-  global $EZER,$ezer_local;
+  global $EZER,$ezer_local,$path_files;
 
   $ezer_local= preg_match('/^\w+\.ezer/',$_SERVER["SERVER_NAME"]); // identifikace ladícího serveru
   $android=    preg_match('/android|x11/i',$_SERVER['HTTP_USER_AGENT']);
@@ -120,6 +120,7 @@ function answer_php($app,$app_name,$db_name,$skin,$js_lib,$css_lib,$options) {
   $options->answer_db=  "'$answer_db'";  // hlavní pracovní databáze
   $options->curr_version= 0;             // při přihlášení je nahrazeno nejvyšší ezer_kernel.version
   $options->group_db=   "'ezer_answer'"; // databáze se společnými údaji pro skupinu aplikací Answer
+  $options->path_files= "'$path_files'"; // absolutní cesta do složky files/{root}
 
   $kontakt= " V případě zjištění problému nebo <br/>potřeby konzultace mi prosím napište<br/>
         na mail&nbsp;<a href='mailto:{$EZER->options->mail}{$EZER->options->mail_subject}'>{$EZER->options->mail}</a> "
