@@ -1385,7 +1385,7 @@ form _documents {
     drop.lsdir;
   }
   label jmena [15,30,595,]
-  label [15,51,600,] { title:'k těmto dokumentům lze přidat další přetáhnutím myší; manipulace s dokumenty je přes kontextové menu (pravé ucho myši)' }
+  label [15,51,610,] { title:'k těmto dokumentům lze přidat další přetáhnutím myší; manipulace s dokumenty je přes kontextové menu (pravé ucho myši)' }
   label drop [15,74,595,285] { type:'drop'
     proc ondrop(f) {
       gt(f.size,5242880); alert('odmítnuto ',f.name,' má více jak 5MB');
@@ -1396,7 +1396,9 @@ form _documents {
     proc onerror(e) { warning(e.msg); return(1) } // vrácení 0 způsobí standardní hlášení chyby
     proc onmenu(op,title,ref) { // op=remove|remove-all
       [ eq(op,'viewer'); [ function('ref',"window.open(ref,'viewer')",ref) ]
-      | eq(op,'remove'); warning(ask('drop_unlink',folder.get,title)) // odebrání souboru
+      | eq(op,'remove');                                 // odebrání souboru
+        [ confirm("Opravdu smazat ",title," ?");
+          warning(ask('drop_unlink',folder.get,ref)) ]
       | alert('N.Y.I') ];
       drop.lsdir;
     }
