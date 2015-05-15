@@ -2899,6 +2899,9 @@ function akce_browse_ask($x,$tisk=false) {
       foreach($fakce as $fz=>$fp) { $z->$fz= $akce->$fp; }
       $z->_nazev= $_nazev;
       $z->_jmena= $_jmena;
+      # jestli jsou dokumenty
+      $z->_docs= drop_find("pobyt/","^(.*)_$idp\$") ? 'D' : '';
+//                                         display("drop_find(pobyt/,^(.*)_$idp\$)={$z->_docs}");
       # rodina
       foreach($frod as $fz=>$fr) { $z->$fz= $rodina[$idr]->$fr; }
       # členové

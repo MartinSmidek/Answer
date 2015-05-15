@@ -577,6 +577,8 @@ form _ucast [,,400,] { css:'ds_form'
     # varianta A plná jména
     show _jmena [,,180,] { title:'jméno/a', format:'tsq%' }
     # varianta B na úkor _jmena
+    show _docs   [,,0,] { title:'dokumenty', help:'D pokud má dokumenty', format:"sq" }
+    show _foto   [,,0,] { title:'fotky', help:'F pokud má fotky', format:"sq" }
     show c_suma  [,,0,] { title:'cena', format:"r" }
     show platba  [,,0,] { title:'platba', format:"rsq=" }
     # varianta C na úkor _jmena
@@ -691,8 +693,8 @@ form _ucast [,,400,] { css:'ds_form'
 #                     platba.width(50); c_suma.width(50); _jmena.width(78)
 #     | platba.width; platba.width(0); c_suma.width(0); _jmena.width(180)
 #     | _vek.width(20); _vzd.width(20); fotka.width(20); _jmena.width(117)
-      platba.width; platba.width(0); c_suma.width(0); _jmena.width(180)
-    | platba.width(35); c_suma.width(35); _jmena.width(108)
+      platba.width; platba.width(0); c_suma.width(0); _docs.width(0); _jmena.width(180)
+    | platba.width(35); c_suma.width(35); _docs.width(15); _jmena.width(92)
     }
     proc onrefreshed() { h_change_b }
   }
