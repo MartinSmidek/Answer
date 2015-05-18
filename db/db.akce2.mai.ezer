@@ -778,15 +778,14 @@ form _etext  {
     skill:'yam|yams;fam|fams;cam|cams', title:'^předmět mailu' }
   // ==> připojení příloh
   field attach {data:dopis.prilohy}                     // datové pole se seznamem příloh
-  label [L+10,115,,] {title:'sem lze přetáhnout přílohy'}   // nadpis na vnějším obalem
+  label [L+10,115,,] {title:'sem lze přetáhnout přílohy, zrušit a stáhnout pak kontextovým menu'}
   label drop [L+10,130,340,45] { type:'drop'
     proc onload(f) {                                    // po dokončení přenosu
       ask('dop_mai_attach',form.key,f);                 // přidání souboru k dávce
     }
-    proc onmenu(op,name,ref) {  // op=remove|remove-all
-      { eq(op,'viewer'); [ function('ref',"window.open(ref,'viewer')",ref) ]
-      | eq(op,'remove');     ask('dop_mai_detach',form.key,ref) // odebrání přílohy
-#       | eq(op,'remove-all'); ask('dop_mai_detach_all',form.key)  // odebrání všech příloh
+    proc onmenu(op,name) {  // op=remove|remove-all     // pro S: jen 2 parametry
+      { eq(op,'remove');     ask('dop_mai_detach',form.key,name) // odebrání přílohy
+      | eq(op,'remove-all'); ask('dop_mai_detach_all',form.key)  // odebrání všech příloh
       | warning('zatím neimplementovaná operace')
       };
       attach.set(ask('select','prilohy','dopis',conc("id_dopis=",form.key)));
@@ -794,7 +793,7 @@ form _etext  {
     }
   }
   proc drop_init() {                                    // inicializace - je třeba na začátku
-    drop.init(conc('/docs/',sys('root'),'/'));          // naplnit pole drag&drop a definovat dir
+    drop.init(conc('docs/',sys('root'),'/'),'S:');      // naplnit pole drag&drop a definovat dir
     drop.set(attach.get);
   }
   # příkazy 1

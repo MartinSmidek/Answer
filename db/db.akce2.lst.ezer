@@ -373,10 +373,10 @@ form _page [,,275,360] {
       form.display(1,'doc_log'); form.display(0,'doc_crea|doc_show');
       return
     | _folder; cloud.set(substr(_folder,0,2)); folder.set(substr(_folder,2));
-      { eq(cloud.get,'S:');
+      { eq(cloud.get,'H:');
         popis.set(conc("Archiv pro akce roku ",akce_get('rok')," s kódem ",akce_get('kod'),
           " je obsažen ve složce <b>",folder.get,"</b> na serveru"));
-        drop.init(folder.get,'S:');
+        drop.init(folder.get,'H:');
       | eq(cloud.get,'G:');
         popis.set(conc("Archiv pro akce roku ",akce_get('rok')," s kódem ",akce_get('kod'),
           " je obsažen na <a target='GD' href='",gd.get,folder.get,"'>Google Disku</a>"));
@@ -416,8 +416,8 @@ form _page [,,275,360] {
   // zobrazení archivu
   label popis [15,45,440,] { tag:'doc_show', format:'n' }
   label [15,60,455,] { tag:'doc_show', format:'n',
-    title:'archivované soubory svázané s akcí - lze k nim přidat další přetáhnutím myší' }
-  label drop [15,90,435,315] { tag:'doc_show', type:'drop', format:'n'
+    title:'archivované soubory svázané s akcí - lze k nim přidat další přetáhnutím myší, zrušit a stáhnout je lze kontextovým menu' }
+  label drop [15,95,435,310] { tag:'doc_show', type:'drop', format:'n'
     proc ondrop(f) {
       gt(f.size,5242880); alert('odmítnuto ',f.name,' má více jak 5MB');
       return(0)
@@ -430,9 +430,9 @@ form _page [,,275,360] {
       [ eq(op,'viewer'); [ function('ref',"window.open(ref,'viewer')",ref) ]
       | eq(op,'remove'); [ function('ref',"var request=gapi.client.drive.files.trash({'fileId':ref});request.execute(function(resp){});",ref) ]
       | warning('zatím neimplementovaná operace') ]
-    | eq(cloud.get,'S:');
-      [ eq(op,'remove');     warning(ask('drop_unlink',folder.get,title)) // odebrání souboru
-      | eq(op,'remove-all'); warning(ask('drop_unlink',folder.get,'*'))   // odebrání všech souborů
+    | eq(cloud.get,'H:');
+      [ eq(op,'viewer'); [ function('ref',"window.open(ref,'viewer')",ref) ]
+      | eq(op,'remove');     warning(ask('drop_unlink',folder.get,title)) // odebrání souboru
       | warning('zatím neimplementovaná operace') ];
       drop.lsdir;
     }
