@@ -779,18 +779,17 @@ form _etext  {
     proc onload(f) {                                    // po dokončení přenosu
       ask('dop_mai_attach',form.key,f);                 // přidání souboru k dávce
     }
-    proc onmenu(op,name) {  // op=remove|remove-all
+    proc onmenu(op,name) {  // op=remove|viewer
       { eq(op,'remove');     ask('dop_mai_detach',form.key,name) // odebrání přílohy
       | eq(op,'remove-all'); ask('dop_mai_detach_all',form.key)  // odebrání všech příloh
-      | alert('N.Y.I')
+      | warning('zatím neimplementovaná operace')
       };
       attach.set(ask('select','prilohy','dopis',conc("id_dopis=",form.key)));
       drop_init
     }
   }
   proc drop_init() {                                    // inicializace - je třeba na začátku
-#     drop.init(conc('/docs/',sys('root'),'/'));          // naplnit pole drag&drop a definovat dir
-    drop.init('docs/');                                 // naplnit pole drag&drop a definovat dir
+    drop.init(conc('docs/',sys('root'),'/'),'S:');      // naplnit pole drag&drop a definovat dir
     drop.set(attach.get);
   }
   # příkazy 1

@@ -1379,11 +1379,11 @@ form _aktivity {
   }
 }
 # ------------------------------------------------------------------------------------==> _DOKUMENTY
-form _documents {
+form _documents {  // ukládají se na H: tedy mimo dosah http
   const folder= 'pobyt/'
   proc ukaz() { // ukáže soubory aktuálního pobytu
     jmena.set(conc("dokumenty svázané s pobytem <b><big>",u.b._nazev.get," ",u.b._jmena.get,"</big></b>"));
-    drop.init(folder.get,'S:',conc('^(.*)_',the_pobyt.get,'$'));
+    drop.init(folder.get,'H:',conc('^(.*)_',the_pobyt.get,'$'));
     drop.lsdir;
   }
   label jmena [15,30,595,]
