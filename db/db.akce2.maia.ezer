@@ -88,7 +88,7 @@ form _vyber {
   }
   field vynech_emaily [711,23,60,] { tag:'es', format:'t' }
 }
-# -------------------------------------------------------------------------------------------------- _etext
+# -----------------------------------------------------------------------------------------------==> _etext
 # správa mailů
 form _etext  {
   var adopis: number
@@ -140,17 +140,25 @@ form _etext  {
   field id_dopis [L+307,38,43,17] { data:dopis.id_dopis, format:'rd' }
   label [L+10,62,100,17] { title:'předmět mailu' }
   field predmet [L+10,77,340,17] { data:dopis.nazev, help:'předmět|předmět emailu', skill:'yam|yams;fam|fams;cam|cams' }
-  // připojení příloh - nově od 20130604
+  // ==> připojení příloh - nově od 20130604
   field attach {data:dopis.prilohy}                     // datové pole se seznamem příloh
   label [L+10,100,,] {title:'sem lze přetáhnout přílohy'}   // nadpis na vnějším obalem
   label drop [L+10,115,340,45] { type:'drop'
     proc onload(f) {                                    // po dokončení přenosu
       ask('dop_mai_attach',form.key,f);                 // přidání souboru k dávce
     }
-    proc onmenu(op,name) {  // op=remove|remove-all
-      { eq(op,'remove');     ask('dop_mai_detach',form.key,name) // odebrání přílohy
-      | eq(op,'remove-all'); ask('dop_mai_detach_all',form.key)  // odebrání všech příloh
-      | alert('N.Y.I')
+#     proc onmenu(op,title,ref) { // op=remove|remove-all
+#       [ eq(op,'viewer'); [ function('ref',"window.open(ref,'viewer')",ref) ]
+#       | eq(op,'remove');                                 // odebrání souboru
+#         [ confirm("Opravdu smazat ",title," ?");
+#           warning(ask('drop_unlink',folder.get,ref)) ]
+#       | alert('N.Y.I') ];
+#       drop.lsdir;
+    proc onmenu(op,name,ref) {  // op=remove|remove-all
+      { eq(op,'viewer'); [ function('ref',"window.open(ref,'viewer')",ref) ]
+      | eq(op,'remove');     ask('dop_mai_detach',form.key,ref) // odebrání přílohy
+#       | eq(op,'remove-all'); ask('dop_mai_detach_all',form.key)  // odebrání všech příloh
+      | warning('neimplementovaná operace')
       };
       attach.set(ask('select','prilohy','dopis',conc("id_dopis=",form.key)));
       drop_init
