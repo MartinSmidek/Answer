@@ -1401,8 +1401,9 @@ form _documents {
       | eq(op,'remove');                                 // odebrání souboru
         [ confirm("Opravdu smazat ",title," ?");
           warning(ask('drop_unlink',folder.get,ref)) ]
-      | alert('N.Y.I') ];
+      | warning('zatím neimplementovaná operace') ];
       drop.lsdir;
+      u.b.browse_refresh;
     }
   }
 }

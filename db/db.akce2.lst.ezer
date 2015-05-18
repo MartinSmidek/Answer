@@ -429,11 +429,11 @@ form _page [,,275,360] {
       eq(cloud.get,'G:');
       [ eq(op,'viewer'); [ function('ref',"window.open(ref,'viewer')",ref) ]
       | eq(op,'remove'); [ function('ref',"var request=gapi.client.drive.files.trash({'fileId':ref});request.execute(function(resp){});",ref) ]
-      | alert('N.Y.I') ]
+      | warning('zatím neimplementovaná operace') ]
     | eq(cloud.get,'S:');
       [ eq(op,'remove');     warning(ask('drop_unlink',folder.get,title)) // odebrání souboru
       | eq(op,'remove-all'); warning(ask('drop_unlink',folder.get,'*'))   // odebrání všech souborů
-      | alert('N.Y.I') ];
+      | warning('zatím neimplementovaná operace') ];
       drop.lsdir;
     }
   }
