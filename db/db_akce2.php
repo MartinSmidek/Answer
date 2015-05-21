@@ -2832,7 +2832,7 @@ function akce_browse_ask($x,$tisk=false) {
             $_ido2= $ido;
           # výpočet jmen pobytu
 //           $_jmena.= "$o->jmeno ";
-          $_jmena.= str_replace(' ','-',$o->jmeno)." ";
+          $_jmena.= str_replace(' ','-',trim($o->jmeno))." ";
           if ( !$idr ) {
             # výpočet názvu pobyt
             $prijmeni= $o->prijmeni;
@@ -2901,6 +2901,7 @@ function akce_browse_ask($x,$tisk=false) {
       $z->_jmena= $_jmena;
       # jestli jsou dokumenty
       $z->_docs= drop_find("pobyt/","^(.*)_$idp\$") ? 'D' : '';
+//       $z->_docs= drop_find("pobyt/","^(.*)_$idp\$");
 //                                         display("drop_find(pobyt/,^(.*)_$idp\$)={$z->_docs}");
       # rodina
       foreach($frod as $fz=>$fr) { $z->$fz= $rodina[$idr]->$fr; }
