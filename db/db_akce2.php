@@ -270,7 +270,7 @@ function akce2_info($id_akce,$text=1) {  trace();
            .($rodiny ? ($rodiny==$ucasti ? " (všechny jako rodiny)" : " (z toho $_rodiny)") :''):'')
        . ($pecounu ? " ".($skupin?" a ":'')."$_pecounu" : '')
        . ",<br><br>tj. $_dospelych ($_muzu, $_zen) a $_deti,"
-       . " <b>celkem $_osob</b>"
+       . "<br><b>celkem $_osob</b>"
        : "Akce byla vložena do databáze ale nemá zatím žádné účastníky";
       if ( $odhlaseni + $neprijeli + $nahradnici > 0 ) {
         $html.= "<br><hr>";
@@ -2622,6 +2622,7 @@ function akce2_auto_jmena1L($id_osoba) {  #trace();
 # x->show=  {polozka:[formát,vzor/1,...],...} pro položky s neprázdným vzorem
 #                                             kde formát=/ = # $ % @ * .
 # x->cond= podmínka
+# -- x->atr=  pole jmen počítaných atributů:  [_ucast]
 # pokud je tisk=true jsou je oddělovače řádků použit znak '≈' (oddělovač sloupců zůstává '~')
 function akce_browse_ask($x,$tisk=false) {
   $delim= $tisk ? '≈' : '~';
