@@ -10,7 +10,8 @@
 #
 function answer_ini($app,$answer_db,$dbs_plus,$php_lib) {
   global $EZER,$ezer_local,$ezer_root,$ezer_path_root,$ezer_comp_ezer,$ezer_comp_root,
-         $path_backup,$ezer_mysql_path,$path_url,$path_pspad,$path_files;
+         $path_backup,$ezer_mysql_path,$path_url,$path_pspad,$path_files,
+         $ezer_php_libr,$ezer_php,$ezer_ezer;
 
   $EZER= (object)array();
   $ezer_root= $app;                                             // adresář a hlavní objekt aplikace
@@ -18,11 +19,13 @@ function answer_ini($app,$answer_db,$dbs_plus,$php_lib) {
   // nastavení verze jádra
   $EZER->version= /*isset($_GET['ezer']) ? "ezer{$_GET['ezer']}" :*/ 'ezer2.2';
 
-  $ezer_local= preg_match('/^\w+\.ezer|192.168/',$_SERVER["SERVER_NAME"]); // identifikace ladícího serveru
+  $server_name= isset($_SERVER["HTTP_X_FORWARDED_SERVER"])
+    ?$_SERVER["HTTP_X_FORWARDED_SERVER"]:$_SERVER["SERVER_NAME"];
+  $ezer_local= preg_match('/^\w+\.ezer|192.168/',$server_name); // identifikace ladícího serveru
 
   // android
   $android=    preg_match('/android|x11/i',$_SERVER['HTTP_USER_AGENT']);
-  $ezer_ksweb= $android && $_SERVER["SERVER_NAME"]=="localhost"; // identifikace ladícího serveru KSWEB/Android
+  $ezer_ksweb= $android && $server_name=="localhost"; // identifikace ladícího serveru KSWEB/Android
 
   require_once("{$EZER->version}/server/ae_slib.php");
 

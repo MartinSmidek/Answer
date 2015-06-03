@@ -11,6 +11,7 @@
 
   require_once("answer.php");
   $options= (object)array(
+    'web'        => "'http://www.setkani.org'", // web organizace - pro odmítnutí odhlášení
     'skill'      => "'y'",
     'autoskill'  => "'!y'",
     'Google' => "{                      // definice oprávnění přístupu na Google

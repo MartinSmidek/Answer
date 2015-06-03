@@ -312,6 +312,11 @@ menu m {type:'left', active:*
                                         ,cnd:"p.funkce IN (0,1,2)",hav:"_ucasti=2"
                                         ,tit:'příjmení:15,jména:20,obec:25,^'
                                         ,fld:'prijmeni,jmena,obec,^id_pobyt'}}
+    item {title:'&half; VPS/PPS'                                                                    skill:'y;f;c'
+                                        ,par:°{typ:'p',exp:'Excel2'
+                                        ,cnd:"FIND_IN_SET(1,r.r_umi)"
+                                        ,tit:'příjmení:15,jména:20,obec:25,funkce,^'
+                                        ,fld:'prijmeni,jmena,obec,funkce,^id_pobyt'}}
     item {title:'Pečouni'                                                                               skill:'y;f'
                                         ,par:°{typ:'d',exp:'Excel2',cnd:'1'
                                         ,tit:'příjmení:15,jméno:15,narození:12,/rč:5,obec:25,psč:7,ulice:25,telefon:20,e-mail:30'

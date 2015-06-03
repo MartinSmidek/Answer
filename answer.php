@@ -11,10 +11,12 @@
 function answer_php($app,$app_name,$db_name,$skin,$js_lib,$css_lib,$options) {
   global $EZER,$ezer_local,$path_files;
 
-  $ezer_local= preg_match('/^\w+\.ezer/',$_SERVER["SERVER_NAME"]); // identifikace ladícího serveru
+  $server_name= isset($_SERVER["HTTP_X_FORWARDED_SERVER"])
+    ?$_SERVER["HTTP_X_FORWARDED_SERVER"]:$_SERVER["SERVER_NAME"];
+  $ezer_local= preg_match('/^\w+\.ezer/',$server_name); // identifikace ladícího serveru
   $android=    preg_match('/android|x11/i',$_SERVER['HTTP_USER_AGENT']);
   $ipad=       preg_match('/iPad/i',$_SERVER['HTTP_USER_AGENT']);
-  $ezer_ksweb= $android && $_SERVER["SERVER_NAME"]=="localhost"; // identifikace ladícího serveru KSWEB/Android
+  $ezer_ksweb= $android && $server_name=="localhost";   // identifikace ladícího serveru KSWEB/Android
 
   //$app=      ys/ys2/fa/fa2/cr             // jméno adresáře a hlavního objektu aplikace == $ezer_root!
   //$app_name= 'Ans(w)er - Familia'.($ezer_ksweb?" / test Android":"");;
