@@ -544,7 +544,7 @@ form _header [,,380,50] {
       )
   }}
 }
-# ----------------------------------------------------------------------------------------==> _ucast
+# ----------------------------------------------------------------------------------------==> _UCAST
 form _ucast [,,400,] { css:'ds_form'
   // legenda
   const NESTANOVENA = "<span class='blue'> nestanovena cena </span>"
@@ -582,7 +582,7 @@ form _ucast [,,400,] { css:'ds_form'
     show c_suma  [,,0,] { title:'cena', format:"r" }
     show platba  [,,0,] { title:'platba', format:"rsq=" }
     # varianta C na úkor _jmena
-    show fotka   [,,0,] { title:'fotka', format:'rsq*', help:'soubor s fotografií' }
+    show x_umi   [,,0,] { title:'umí', format:'sq*', help:'seznam schopností rodiny a jejích členů' }
     # je vždy vidět
     show xfunkce [,,40,] { title:'fce', format:'rq#s', map_pipe:ms_akce_funkce.zkratka, help:'funkce na akci'}
     show skupina [,,30,] { title:'sk.', format:'rq=s:e', help:'číslo skupinky'}
@@ -591,7 +591,7 @@ form _ucast [,,400,] { css:'ds_form'
     // údaje ucast.evid.rod
     show r_spz, show r_svatba, show r_datsvatba, show r_rozvod,
     show r_ulice, show r_psc, show r_obec, show r_stat,
-    show r_telefony, show r_emaily, show r_umi, show r_note
+    show r_telefony, show r_emaily, show r_umi, show fotka, show r_note
     // údaje ucast.evid.rod.cleni
     show r_cleni // naplní browse pro rodinu daty jejích členů
     // údaje ucast.evid.pob
@@ -689,11 +689,8 @@ form _ucast [,,400,] { css:'ds_form'
         load_zalozka
     } }
     proc onclick() {
-#       _vek.width;   _vek.width(0); _vzd.width(0); fotka.width(0);
-#                     platba.width(50); c_suma.width(50); _jmena.width(78)
-#     | platba.width; platba.width(0); c_suma.width(0); _jmena.width(180)
-#     | _vek.width(20); _vzd.width(20); fotka.width(20); _jmena.width(117)
-      platba.width; platba.width(0); c_suma.width(0); _docs.width(0); _jmena.width(180)
+      platba.width; platba.width(0); c_suma.width(0); x_umi.width(35); _jmena.width(128)
+    | x_umi.width; x_umi.width(0); _docs.width(0); _jmena.width(180)
     | platba.width(35); c_suma.width(35); _docs.width(15); _jmena.width(92)
     }
     proc onrefreshed() { h_change_b }

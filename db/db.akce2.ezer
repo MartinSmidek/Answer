@@ -957,7 +957,7 @@ form _rodina2 [,,360,229]  { css:'ae_frame'
     // údaje k akci
     show key_spolu, show barva, show s_role,
     show s_dite_kat, show s_poznamka, show pecovane, show pfunkce,
-    show pece_val show pece_ido /* jméno a id pečovaného nebo chůvy */
+    show pece_val show pece_ido /* jméno a id pečovaného nebo chůvy */ show o_umi
     // metody
     proc onrowclick() {
       neni_ulozen

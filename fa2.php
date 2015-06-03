@@ -11,6 +11,7 @@
 
   require_once("answer.php");
   $options= (object)array(
+    'web'        => "'http://www.familia.cz'", // web organizace - pro odmítnutí odhlášení
     'skill'      => "'f'",
     'autoskill'  => "'!f'"
   );

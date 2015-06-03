@@ -2636,6 +2636,15 @@ function akce_browse_ask($x,$tisk=false) {
     return $fp;
   }
   global $test_clmn,$test_asc, $y;
+  $map_umi= map_cis('answer_umi','zkratka','poradi','ezer_answer');
+//                                                         debug($map_umi,"map_umi");
+  $umi= function ($xs) use ($map_umi) {
+    $y= '';
+    if ( $xs ) foreach (explode(',',$xs) as $x) {
+      $y.= $map_umi[$x];
+    }
+    return $y;
+  };
 //                                                         debug($x,"akce_browse_ask");
 //                                                         return;
   $y= (object)array('ok'=>0);
@@ -2651,12 +2660,13 @@ function akce_browse_ask($x,$tisk=false) {
     $cleni= "";
     $osoby= "";
     $rodina= array();             // $rodina[id_rodina]           atributy rodin na akci
+    $rodina_pobyt= array();       // $rodina[i0_rodina]=id_pobyt  pobyt rodiny (je-li rodinný)
     $rodiny= "";
     $spolu= array();              // $spolu[id_osoba]             id_pobyt
     $tvori= array();              // $tvori[id_pobyt,id_osoba]    id_tvori,id_rodina,role,rodiny
     # ladění
     $AND= "";
-//     $AND= "AND p.id_pobyt IN (15202) -- NULL";
+//     $AND= "AND p.id_pobyt IN (21857) -- Baletkovi";
 //     $AND= "AND p.id_pobyt IN (20488) -- Bajerovi";
 //     $AND= "AND p.id_pobyt IN (20749) -- Buchtovi";
 //     $AND= "AND p.id_pobyt IN (20493) -- Dykastovi";
@@ -2682,7 +2692,11 @@ function akce_browse_ask($x,$tisk=false) {
       WHERE $cond $AND ");
     while ( $qp && ($p= mysql_fetch_object($qp)) ) {
       $pobyt[$p->id_pobyt]= $p;
+      if ( $p->i0_rodina ) {
+        $rodina_pobyt[$p->i0_rodina]= $p->id_pobyt;
+      }
     }
+//                                                         debug($rodina_pobyt,"rodina_pobyt");
     # seznam účastníků akce - podle podmínky
     $qu= mysql_qry("
       SELECT s.*,o.narozeni,MIN(CONCAT(IF(role='','?',role),id_rodina)) AS _role
@@ -2702,7 +2716,7 @@ function akce_browse_ask($x,$tisk=false) {
     $osoby.= $cleni;
     # seznam rodinných příslušníků
     $qp= mysql_qry("
-      SELECT id_pobyt,id_rodina,id_tvori,id_osoba,role,o.narozeni
+      SELECT id_pobyt,id_rodina,id_tvori,id_osoba,role,o_umi,o.narozeni
       FROM pobyt AS p
       JOIN tvori AS t ON t.id_rodina=p.i0_rodina
       JOIN osoba AS o USING(id_osoba)
@@ -2716,18 +2730,26 @@ function akce_browse_ask($x,$tisk=false) {
       $pobyt[$p->id_pobyt]->cleni[$p->id_osoba]->id_tvori= $p->id_tvori;
       $pobyt[$p->id_pobyt]->cleni[$p->id_osoba]->id_rodina= $p->id_rodina;
       $pobyt[$p->id_pobyt]->cleni[$p->id_osoba]->role= $p->role;
+      $pobyt[$p->id_pobyt]->cleni[$p->id_osoba]->o_umi= $p->o_umi;
       $pobyt[$p->id_pobyt]->cleni[$p->id_osoba]->narozeni= $p->narozeni;
-    }
-    # atributy osob
-    $qo= mysql_qry("SELECT * FROM osoba AS o WHERE deleted='' AND id_osoba IN (0$osoby)");
-    while ( $qo && ($o= mysql_fetch_object($qo)) ) {
-      $osoba[$o->id_osoba]= $o;
+      // doplnění osobního umí - malým
+      $pobyt[$p->id_pobyt]->x_umi.= strtolower($umi($p->o_umi));
     }
     # atributy rodin
     $qr= mysql_qry("SELECT * FROM rodina AS r WHERE deleted='' AND id_rodina IN (0$rodiny)");
     while ( $qr && ($r= mysql_fetch_object($qr)) ) {
       $r->datsvatba= sql_date1($r->datsvatba);                  // svatba d.m.r
+      if ( $r->r_umi && $rodina_pobyt[$r->id_rodina] ) {
+        // umí-li něco rodina a je na pobytu - velkým
+        $pobyt[$rodina_pobyt[$r->id_rodina]]->x_umi=
+          strtoupper($umi($r->r_umi)).' '.$pobyt[$rodina_pobyt[$r->id_rodina]]->x_umi;
+      }
       $rodina[$r->id_rodina]= $r;
+    }
+    # atributy osob
+    $qo= mysql_qry("SELECT * FROM osoba AS o WHERE deleted='' AND id_osoba IN (0$osoby)");
+    while ( $qo && ($o= mysql_fetch_object($qo)) ) {
+      $osoba[$o->id_osoba]= $o;
     }
     # seznam rodin osob
     $qor= mysql_qry("
@@ -2766,12 +2788,12 @@ function akce_browse_ask($x,$tisk=false) {
     $fpob2= flds("p_poznamka=poznamka,pokoj,budova,prednasi,luzka,pristylky,kocarek,pocetdnu"
           . ",strava_cel,strava_pol,c_nocleh=platba1,c_strava=platba2,c_program=platba3,c_sleva=platba4"
           . ",datplatby,cstrava_cel,cstrava_pol,svp,zpusobplat,naklad_d,poplatek_d,platba_d"
-          . ",zpusobplat_d,datplatby_d,ubytovani,cd,avizo,sleva,vzorec,duvod_typ,duvod_text");
+          . ",zpusobplat_d,datplatby_d,ubytovani,cd,avizo,sleva,vzorec,duvod_typ,duvod_text,x_umi");
     //      id_osoba,jmeno,_vek,id_tvori,id_rodina,role,_rody,narozeni
     $fos=   flds("umrti,prijmeni,rodne,sex,adresa,ulice,psc,obec,stat,kontakt,telefon,nomail,email"
           . ",iniciace,uvitano,clen,obcanka,rc_xxxx,cirkev,vzdelani,titul,zamest,zajmy,jazyk,dieta"
           . ",aktivita,note,_kmen");
-    $fspo=  flds("id_spolu,_barva,s_role,dite_kat,poznamka,pecovane,pfunkce,pece_jm,pece_id");
+    $fspo=  flds("id_spolu,_barva,s_role,dite_kat,poznamka,pecovane,pfunkce,pece_jm,pece_id,o_umi");
 
     # 1. průchod - kompletace údajů mezi pobyty
     $skup= array();

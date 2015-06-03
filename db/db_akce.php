@@ -2600,6 +2600,38 @@ function data_transform($par) { trace();
   foreach (explode(',',$par->cmd) as $cmd ) {
     $update= false;
     switch ($cmd ) {
+    // ---------------------------------------------- rodina: r_umi
+    // opraví chybějící údaj v r_umi
+    case 'vps_test':
+      $qr= mysql_qry("
+        SELECT nazev,YEAR(datum_od) AS _rok
+        FROM pobyt
+        JOIN akce ON id_akce=id_duakce
+        WHERE funkce IN (1,2) AND i0_rodina=0
+        GROUP BY id_akce
+      ");
+      while ( $qr && ($r= mysql_fetch_object($qr)) ) {
+        $n++;
+        $html.= "{$r->nazev}/{$r->_rok}<br>";
+      }
+      $html.= "Nalezeno $n akcí";
+      break;
+    // opraví chybějící údaj v r_umi
+    case 'vps_updt':
+      $qr= mysql_qry("
+        SELECT i0_rodina,funkce,r_umi
+        FROM pobyt
+        JOIN rodina ON id_rodina=i0_rodina!=0
+        WHERE funkce IN (1,2) AND NOT FIND_IN_SET(1,r_umi)
+        GROUP BY i0_rodina
+      ");
+      while ( $qr && ($r= mysql_fetch_object($qr)) ) {
+        $n++;
+        $ok= query("UPDATE rodina SET r_umi=IF(r_umi,CONCAT('1,',r_umi),'1') WHERE id_rodina={$r->i0_rodina}");
+        $updated+= $ok ? 1 : 0;
+      }
+      $html.= "Nalezeno $n rodin s funkcí VPS a u $updated doplněna tato schopnost";
+      break;
     // ---------------------------------------------- rodina,osoba: stat
     // doplní do adresy chybějící stát
     case 'stat+':
@@ -4285,7 +4317,13 @@ function akce_table($tits,$flds,$clmn,$export=false) {
     foreach ($clmn as $i=>$c) {
       $tab.= "<tr>";
       foreach ($flds as $f) {
-        $tab.= "<td style='text-align:left'>{$c[$f]}</td>";
+//         $tab.= "<td style='text-align:left'>{$c[$f]}</td>";
+        if ( $f=='id_osoba' || $f=='^id_osoba' )
+          $tab.= "<td style='text-align:right'>".sta_ukaz_osobu($c[$f])."</td>";
+        elseif ( $f=='^id_pobyt' )
+          $tab.= "<td style='text-align:right'>".sta_ukaz_pobyt($c['^id_pobyt'])."</td>";
+        else
+          $tab.= "<td style='text-align:left'>{$c[$f]}</td>";
       }
       $tab.= "</tr>";
       $n++;
@@ -4746,8 +4784,9 @@ function akce_sestava_pary($akce,$par,$title,$vypis,$export=false) { trace();
   $n= 0;
   // číselníky
   $c_ubytovani= map_cis('ms_akce_ubytovan','zkratka');  $c_ubytovani[0]= '?';
-  $c_prednasi= map_cis('ms_akce_prednasi','hodnota');  $c_ubytovani[0]= '?';
-  $c_platba= map_cis('ms_akce_platba','zkratka');  $c_ubytovani[0]= '?';
+  $c_prednasi=  map_cis('ms_akce_prednasi','hodnota');  $c_ubytovani[0]= '?';
+  $c_platba=    map_cis('ms_akce_platba','zkratka');  $c_ubytovani[0]= '?';
+  $c_funkce=    map_cis('ms_akce_funkce','zkratka');
   // dekódování parametrů
   $tits= explode(',',$tit);
   $flds= explode(',',$fld);
@@ -4758,6 +4797,7 @@ function akce_sestava_pary($akce,$par,$title,$vypis,$export=false) { trace();
   // data akce
   $qry=  "SELECT
             r.nazev as nazev,p.pouze as pouze,p.poznamka,p.platba,p.datplatby,p.zpusobplat,
+            p.funkce,p.id_pobyt,
             GROUP_CONCAT(DISTINCT IF(t.role='a',o.prijmeni,'') SEPARATOR '') as prijmeni_m,
             GROUP_CONCAT(DISTINCT IF(t.role='a',o.jmeno,'')    SEPARATOR '') as jmeno_m,
             GROUP_CONCAT(DISTINCT IF(t.role='a',o.narozeni,'') SEPARATOR '') as narozeni_m,
@@ -4831,6 +4871,8 @@ function akce_sestava_pary($akce,$par,$title,$vypis,$export=false) { trace();
       case '=par':      $clmn[$n][$f]= "{$x->prijmeni} {$x->jmena}"; break;
       // fonty: ISOCTEUR, Tekton Pro
       case '=pozpatku': $clmn[$n][$f]= otoc("{$x->prijmeni} {$x->jmena}"); break;
+      case 'funkce':    $clmn[$n][$f]= $c_funkce[$x->$f]; break;
+      case '^id_pobyt': $clmn[$n][$f]= $x->id_pobyt; break;
       default:          $clmn[$n][$f]= $x->$f; break;
       }
     }
