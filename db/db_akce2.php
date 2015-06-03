@@ -2699,7 +2699,7 @@ function akce_browse_ask($x,$tisk=false) {
 //                                                         debug($rodina_pobyt,"rodina_pobyt");
     # seznam účastníků akce - podle podmínky
     $qu= mysql_qry("
-      SELECT s.*,o.narozeni,MIN(CONCAT(IF(role='','?',role),id_rodina)) AS _role
+      SELECT s.*,o.narozeni,MIN(CONCAT(IF(role='','?',role),id_rodina)) AS _role,o_umi
       FROM osoba AS o
       JOIN spolu AS s USING (id_osoba)
       JOIN pobyt AS p USING (id_pobyt)
@@ -2712,6 +2712,10 @@ function akce_browse_ask($x,$tisk=false) {
       $rodiny.= substr($u->_role,1) ? ",".substr($u->_role,1) : '';
       $pobyt[$u->id_pobyt]->cleni[$u->id_osoba]= $u;
       $spolu[$u->id_osoba]= $u->id_pobyt;
+      // doplnění osobního umí - malým
+      if ( $u->o_umi ) {
+        $pobyt[$u->id_pobyt]->x_umi.= strtolower($umi($u->o_umi));
+      }
     }
     $osoby.= $cleni;
     # seznam rodinných příslušníků
@@ -2732,8 +2736,6 @@ function akce_browse_ask($x,$tisk=false) {
       $pobyt[$p->id_pobyt]->cleni[$p->id_osoba]->role= $p->role;
       $pobyt[$p->id_pobyt]->cleni[$p->id_osoba]->o_umi= $p->o_umi;
       $pobyt[$p->id_pobyt]->cleni[$p->id_osoba]->narozeni= $p->narozeni;
-      // doplnění osobního umí - malým
-      $pobyt[$p->id_pobyt]->x_umi.= strtolower($umi($p->o_umi));
     }
     # atributy rodin
     $qr= mysql_qry("SELECT * FROM rodina AS r WHERE deleted='' AND id_rodina IN (0$rodiny)");
@@ -3037,9 +3039,9 @@ function akce_browse_ask($x,$tisk=false) {
     $y->ok= 1;
     array_unshift($y->values,null);
   }
-//                                                 debug($pobyt,'pobyt');
+//                                                 debug($pobyt[21976],'pobyt');
 //                                                 debug($rodina,'rodina');
-//                                                 debug($osoba,'osoba');
+//                                                 debug($osoba[3506],'osoba');
 //                                                 debug($y);
   return $y;
 }
