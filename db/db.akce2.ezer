@@ -74,7 +74,7 @@ panel ucast {type:'plain', _sys:'*', title:"Účastníci2", include:'onload,db.a
 #   proc akce_evidence_os() {}
 #   proc akce_evidence_rod() {}
 }
-panel pece {type:'plain', _sys:'*', title:'Pečouni', include:'onload,db.akce.pece',skill:'yaa;faa;caa'
+panel pece {type:'plain', _sys:'*', title:'Pečouni', include:'onload,db.akce2.pece',skill:'yaa;faa;caa'
   proc init_pece() { alert('napřed klikni na Databáze|Pečouni') }
   proc akce_show() { alert('napřed klikni na Databáze|Pečouni') }
 }
