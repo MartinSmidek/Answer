@@ -342,7 +342,7 @@ form _cmd [,,623,30] { css:'ae_work'
     [ ido; ucast.evid.rod.cleni.raise('onrowclick',ido) ];
     mode.set('');
   }
-  button [7,6,,] { tag:'s,z',title:'[fa-undo] Zpět',help:'Neměnit změněná data',skill:'yaa;faa;caa'
+  button [7,6,,] { tag:'s,z',title:'[fa-undo] Zpět',help:'Neměnit změněná data'
     proc onclick() {
       eq(mode.get,'novy_pobyt'); _reload(0,0);
     | eq(mode.get,'novy_singl'); _reload(0,0);
@@ -351,7 +351,7 @@ form _cmd [,,623,30] { css:'ae_work'
   } }
   // ULOŽIT
   button [60,6,,] { tag:'s', title:'[fa-save] Uložit',  help:'Uložit změněná data',
-                skill:'yaa+|yaa+;faa+|faa+;caa+|caa+'
+                skill:'yaa|yaa+;faa|faa+;caa|caa+'
     proc onclick() { var ok:number, idr:number, ido:number, war:text
       war.set('');
       // uložení změn
@@ -1190,13 +1190,14 @@ form _spolu [,,0,270] {
     u.b.reload_evid;
     ucast.evid.rod.cleni.raise('onrowclick',ido);
   }
-  button vyradit [150,1,,] { tag:'r', title:"Vyřadit z akce", format:'n', proc onclick() {
-    pece_val.get;
-    alert("před vyřazením je třeba vyjmout z osobní péče")
-  | spolu.delete_record(conc('id_spolu=',form.key));
-    _reload_spolu(ucast.evid.rod.cleni.key_osoba.get)
+  button vyradit [150,1,,] { tag:'r', title:"Vyřadit z akce", format:'n', skill:'yaa|yaa+;faa|faa+'
+    proc onclick() {
+      pece_val.get;
+      alert("před vyřazením je třeba vyjmout z osobní péče")
+    | spolu.delete_record(conc('id_spolu=',form.key));
+      _reload_spolu(ucast.evid.rod.cleni.key_osoba.get)
   }}
-  button pridat [150,7,,] { tag:'a', title:"Přidat na akci", format:'n',
+  button pridat [150,7,,] { tag:'a', title:"Přidat na akci", format:'n',  skill:'yaa|yaa+;faa|faa+'
     proc onclick() { na_akci(os.key_osoba.get) }
     proc na_akci(ido) { var ret:object
       on_click;

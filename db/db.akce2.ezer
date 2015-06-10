@@ -604,7 +604,8 @@ panel osoba_config [,,200,150] {type:'popup', title:"Podrobnosti údajů"
     check k [ 0, 20,200,] { title:"kontaktní údaje",     format:'t', proc onchange() { _tuned }}
     check a [ 0, 40,200,] { title:"poštovní adresa",     format:'t', proc onchange() { _tuned }}
     check o [ 0, 60,200,] { title:"organizační údaje",   format:'t', proc onchange() { _tuned }}
-    check c [ 0, 80,200,] { title:"citlivé údaje",       format:'t', proc onchange() { _tuned }}
+    check c [ 0, 80,200,] { title:"citlivé údaje",       format:'t', skill:'yaa|yaa:c;faa|faa:c'
+                                                                     proc onchange() { _tuned }}
     check p [ 0,100,200,] { title:"trvalá poznámka, schopnosti",
                                                          format:'t', proc onchange() { _tuned }}
     button  [ 0,130,,] { type:'submit', title:'Nastav', proc onclick() {
@@ -790,18 +791,18 @@ form _osoba2x [,,244,322] {css:'ae_frame', proc onclick() { on_click }
 
   // c = citlivé údaje - budou vidět jen pro oprávněné
   const Tq=-106
-  select cirkev  [44,Tq+110,70,] {tag:'c', type:'map', data:o.cirkev, format:'n',
+  select cirkev  [44,Tq+110,70,] {tag:'c', type:'map', data:o.cirkev, format:'n',       skill:'yaa:c|yaa:c;faa:c|faa:c'
                                 options:ms_akce_cirkev.zkratka, title:'církev'}
-  field aktivita [143,Tq+110,92,] {tag:'c', data:o.aktivita, format:'n', title:'aktiv.'}
-  field jazyk    [44,Tq+131,94,] {tag:'c', data:o.jazyk, format:'n', title:'jazyky'}
-  select dieta   [171,Tq+131,64,] {tag:'c', type:'map', data:o.dieta, format:'n',
+  field aktivita [143,Tq+110,92,] {tag:'c', data:o.aktivita, format:'n', title:'aktiv.',skill:'yaa:c|yaa:c;faa:c|faa:c'}
+  field jazyk    [44,Tq+131,94,] {tag:'c', data:o.jazyk, format:'n', title:'jazyky',    skill:'yaa:c|yaa:c;faa:c|faa:c'}
+  select dieta   [171,Tq+131,64,] {tag:'c', type:'map', data:o.dieta, format:'n',       skill:'yaa:c|yaa:c;faa:c|faa:c',
                                 options:ms_akce_dieta.zkratka, title:'dieta'}
-  select vzdelani[44,Tq+152,114,] {tag:'c', type:'map', data:o.vzdelani, format:'n',
+  select vzdelani[44,Tq+152,114,] {tag:'c', type:'map', data:o.vzdelani, format:'n',    skill:'yaa:c|yaa:c;faa:c|faa:c',
                                 options:ms_akce_vzdelani.zkratka, title:'vzděl.'}
-  select titul   [181,Tq+152,54,] {tag:'c', type:'map', data:o.titul, format:'n',
+  select titul   [181,Tq+152,54,] {tag:'c', type:'map', data:o.titul, format:'n',       skill:'yaa:c|yaa:c;faa:c|faa:c',
                                 options:ms_akce_titul.zkratka, title:'tit.'}
-  field zamest   [44,Tq+173,191,] {tag:'c', data:o.zamest, format:'n', title:'zaměst.'}
-  field zajmy    [44,Tq+194,191,] {tag:'c', data:o.zajmy, format:'n', title:'zájmy'}
+  field zamest   [44,Tq+173,191,] {tag:'c', data:o.zamest, format:'n', title:'zaměst.', skill:'yaa:c|yaa:c;faa:c|faa:c'}
+  field zajmy    [44,Tq+194,191,] {tag:'c', data:o.zajmy, format:'n', title:'zájmy',    skill:'yaa:c|yaa:c;faa:c|faa:c'}
   label [0,Tq+214,,6] {tag:'c,S', format:'n', css:'db_sep' } // zarovnání
 
   // p = osobní schopnosti a poznámka
@@ -906,7 +907,8 @@ form _rodina2 [,,360,229]  { css:'ae_frame'
     help:'výběr rodiny podle nastaveného účastníka a její přiřazení k pobytu',
     proc onchanged() {
       ask('akce_pobyt_rodinny',key_pobyt.get,this.key); zmena_rodiny; }}
-  button [Lr+108,34,15,16] {tag:'a,o', type:'html', title:"[fa-chevron-left]", style:"padding-left:0px"
+  button [Lr+108,34,15,16] {tag:'a,o', type:'html', title:"[fa-chevron-left]",
+    style:"padding-left:0px", skill:'yaa|yaa+;faa|faa+'
     proc onclick() {
       form.display(0,'a'); form.display(1,'m'); rodiny1.set(rodiny.get); rodiny1.change; }}
   select t_role [Lr+131,Tr+22,35,] {tag:'n,a', type:'map', options:ms_akce_t_role.hodnota, format:'wn'
@@ -1013,7 +1015,7 @@ form _rodina2p [,,188,229] { css:'ae_frame'
   field  rodiny1 [Lp+0,Ts+32,104,] {tag:'m', title:"^oprava názvu rodiny", data:r.nazev, format:'n' }
   select rodiny  [Lp+0,Ts+32,110,] {tag:'a,R', format:'tT', title:"^zobrazená rodina", help:'výběr jiné rodiny'
     proc onchanged() { rodina_changed }}
-  button [Lp+111,Ts+32,,] {tag:'a,o,R', type:'html', title:"[fa-chevron-left]", css:'button' //style:"padding-left:0px"
+  button [Lp+111,Ts+32,,] {tag:'a,o,R', type:'html', title:"[fa-chevron-left]", css:'button', skill:'yaa|yaa+;faa|faa+'
     help:"oprava názvu zobrazené rodiny"
     proc onclick() { form.display(0,'a'); form.display(1,'m'); rodiny1.set(rodiny.get);
       rodiny1.change; rodina_edit }}

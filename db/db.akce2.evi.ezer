@@ -475,7 +475,8 @@ form _page {
     'albu',{ alb.galery('rodina',idr.get) },
     'dary',{ oso_load(ido.get); dar.dary(ido.get,conc(oso.prijmeni.get,' ',oso.jmeno.get)) }
     );
-    cmd.o_smaz.display(not(page.oso.deleted.get)); cmd.o_obnov.display(page.oso.deleted.get);
+    [ cmd.part('o_smaz');
+      cmd.o_smaz.display(not(page.oso.deleted.get)); cmd.o_obnov.display(page.oso.deleted.get) ];
   }
   # načíst osobu do záložky evid s doplněním informací z _track je-li lst.mode='x'
   proc oso_load(ido) { var ret: object
@@ -494,7 +495,9 @@ form _page {
       rod.set_helps(ret.chng,'zluty','oranzovy');
     | rod.r.load(idr); rod.call('od_svatby')
     ];
-    cmd.r_smaz.display(not(page.rod.r_deleted.get)); cmd.r_obnov.display(page.rod.r_deleted.get);
+    [ cmd.part('r_smaz');
+      cmd.r_smaz.display(not(page.rod.r_deleted.get));
+      cmd.r_obnov.display(page.rod.r_deleted.get) ];
   }
   # ----------------------------------------------==> záložky
   var curr:object                               // aktuální záložka
