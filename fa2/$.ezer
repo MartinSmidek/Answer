@@ -55,6 +55,8 @@ menu fa2 { type:'main', title:'fa2', active:*, _sys:'*'
         menu {title:'Transformace 2014',type:'group', _sys:'*'
           item {title:'VPS/PPS: přehled nedoplněných'   ,par:°{cmd:'vps_test',confirm:'0'} }
           item {title:'VPS/PPS: doplnění schopností'    ,par:°{cmd:'vps_updt',confirm:'1'} }
+          item {title:'Přednáší: přehled nedoplněných'  ,par:°{cmd:'lec_test',confirm:'0'} }
+          item {title:'Přednáší: doplnění schopností'   ,par:°{cmd:'lec_updt',confirm:'1'} }
           item {title:'pobyt: i0_rodina'                ,par:°{cmd:'i0_rodina',confirm:'1'} }
           item {title:'pobyt: pouze'                    ,par:°{cmd:'pouze',confirm:'1'} }
           item {title:'spolu: pečované,pečující'        ,par:°{cmd:'osobni_pece',confirm:'1'}, format:'d' }

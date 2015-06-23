@@ -1644,6 +1644,43 @@ function sta_sestava($title,$par,$export=false) {
   $expr= array();       // pro výrazy
   // získání dat
   switch ($par->typ) {
+  # Sestava sloužících na letních kurzech, rok= před kolika lety naposledy ve funkci (0=jen letos)
+  case 'slouzici':     // --------------------------------------->> sta sloužící VPS na LK během let
+    global $VPS;
+    $hranice= date('Y') - $par->parm;
+    $vps1= $VPS=='VPS' ? 17 : 3;
+    $tits= array("pár:26","poprvé:9","kolikrát:5","naposledy:9",$VPS=='VPS'?"VPS I:9":"1.školení");
+    $flds= array('jm','od','n','do','vps_i');
+    $rx= mysql_qry("SELECT
+        GROUP_CONCAT(DISTINCT IF(t.role='a',o.jmeno,'') SEPARATOR '') as jmeno_m,
+        GROUP_CONCAT(DISTINCT IF(t.role='b',o.jmeno,'') SEPARATOR '') as jmeno_z,
+        r.nazev,
+        MIN(IF(druh=1 AND funkce=1,YEAR(datum_od),9999)) AS OD,
+        CEIL(CHAR_LENGTH(GROUP_CONCAT(DISTINCT IF(druh=1 AND funkce=1,YEAR(datum_od),'') SEPARATOR ''))/4) AS Nx,
+        MAX(IF(druh=1 AND funkce=1,YEAR(datum_od),0)) AS DO,
+        MIN(IF(druh=$vps1,YEAR(datum_od),9999)) as VPS_I
+      FROM rodina AS r
+      JOIN pobyt AS p
+      JOIN akce as a ON id_akce=id_duakce
+      JOIN tvori AS t USING (id_rodina)
+      JOIN osoba AS o USING (id_osoba)
+      WHERE id_rodina=i0_rodina -- AND r.nazev LIKE 'Š%'
+        AND druh IN (1,$vps1)
+      GROUP BY id_rodina
+      HAVING -- VPS_I<9999 AND
+        DO>=$hranice
+      ORDER BY r.nazev");
+    while ( $rx && ($x= mysql_fetch_object($rx)) ) {
+      $clmn[]= array(
+        'jm'=>"{$x->jmeno_m} a {$x->jmeno_z} {$x->nazev}",
+        'od'=>$x->OD,
+        'n'=>$x->Nx,
+        'do'=>$x->DO,
+        'vps_i'=>$x->VPS_I==9999 ? '-' : $x->VPS_I
+      );
+    }
+//                                                 debug($clmn,"$hranice");
+    break;
   # Sestava přednášejících na letních kurzech, rok= kolik let dozadu (0=jen letos)
   case 'prednasejici': // --------------------------------------->> sta přednášející na LK během let
     $do= date('Y');
@@ -2307,11 +2344,12 @@ function akce_save_role($id_tvori,$role) { //trace();
 # --------------------------------------------------------------------------------------- evid_cleni
 # hledání a) osoby a jejích rodin b) rodiny (pokud je id_osoba=0)
 function evid_cleni($id_osoba,$id_rodina,$filtr) { trace();
+                                                                $filtr= 1;     // ??????????????????????????????????????????
   $msg= '';
   $cleni= "";
   $rodiny= array();
   $rodina= $rodina1= $id_rodina;
-  $id_osoba ? "o.id_osoba=$id_osoba" : "r.id_rodina=$id_rodina";
+//   $id_osoba ? "o.id_osoba=$id_osoba" : "r.id_rodina=$id_rodina";
   if ( $id_osoba ) { // ------------------------ osoby
     $clen= array();
     $qc= mysql_qry("

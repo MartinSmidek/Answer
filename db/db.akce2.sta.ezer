@@ -26,9 +26,17 @@ menu m {type:'left', format:'f+' //, active:*
         <br>Účastník resp. pečovatel je započítán jen jednou, bez ohledu na počet akcí, jichž se zúčastnil.<br>'
       ,tit:'věk:4,účastníků:10,pečovatelů:10',fld:'_vek,_uca,_pec',ord:'_vek'}}
   }
-  menu l {title:'SEZNAMY',type:'group',                                                skill:'yae;fae'
+  menu l {title:'SEZNAMY',type:'group',                                                             skill:'yae;fae'
     item {title:'přednášející LK MS'  ,par:°{typ:'prednasejici',rok:5,xls:'Excel',parm_tit:'roky zpět:'
-      ,dsc:"Tabulka obsahuje historii přednášejících na letních kurzech MS. <br>Hloubku historie je třeba nastavit parametrem 'roky zpět'.<br>"
+      ,dsc:"Tabulka obsahuje historii přednášejících párů na letních kurzech MS. <br>Hloubku historie je třeba nastavit parametrem 'roky zpět'.<br>"
+      ,tit:'',fld:'',ord:''}}
+    item {title:'sloužící VPS na LK MS'                                                             skill:'yae'
+         ,par:°{typ:'slouzici',rok:5,xls:'Excel',parm_tit:'roky zpět:'
+          ,dsc:"Tabulka obsahuje historii sloužících párů na letních kurzech MS. <br>Poslední rok služby VPS je třeba nastavit parametrem 'roky zpět'.<br>"
+      ,tit:'',fld:'',ord:''}}
+    item {title:'sloužící PPS na LK MS'                                                             skill:'fae'
+         ,par:°{typ:'slouzici',rok:5,xls:'Excel',parm_tit:'roky zpět:'
+          ,dsc:"Tabulka obsahuje historii sloužících párů na letních kurzech MS. <br>Poslední rok služby PPS je třeba nastavit parametrem 'roky zpět'.<br>1.školení je rok první účasti na nějaké akci typu 'PPS, seminář'.<br>"
       ,tit:'',fld:'',ord:''}}
     item {title:'adresy účastníků'  ,par:°{typ:'adresy',rok:0,xls:'Excel',/*pdf:'Štítky',*/parm_tit:'roky zpět:'
       ,dsc:'Seznam obsahuje účastníky akcí v posledních letech (parametr určuje počet let zpět, default=0 tj. jen letošní).<br>Kliknutí na číslo ve sloupci <b>ID osoby</b> zobrazí první osobu na kartě EVIDENCE.<br>'

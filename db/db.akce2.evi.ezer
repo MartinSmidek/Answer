@@ -171,8 +171,8 @@ form _lst [,,370,*] {
     r_vyber.key( 1); r_vyber.refresh; //br_filtr.set(r_vyber.get);
     [ by.nazev.set_query(1,"B",0) ];            // ... kvůli pomalosti dotazu
     [ bz.prijmeni.set_query(1,"Ba",0) ];        // ... kvůli pomalosti dotazu
-    [ br.nazev.set_query(1,"-$",0) ];
-    [ bo.prijmeni.set_query(1,"-$",0) ];
+#     [ br.nazev.set_query(1,"-$",0) ];
+#     [ bo.prijmeni.set_query(1,"-$",0) ];
     virgin.set(0);
   ] }
   # ---------------------------------------------- společné prvky
@@ -348,7 +348,7 @@ form _lst [,,370,*] {
   | bo.browse_load(conc(cnd," AND ",bo_filtr.get),'',bo_having.get);
   | page.page_init
   }
-  select o_vyber [163,5,189,] {tag:'o', type:'map'
+  select o_vyber [163,5,154,] {tag:'o', type:'map'
     map_pipe:map_evi_vyber_o.hodnota, options:map_evi_vyber_o.zkratka, format:'t'
     help:'výběrová podmínka, doplňující případně zadaná kritéria'
     proc onchange() { refresh; ido.set(0); bo_reload(bo_cnd.get) }
@@ -357,6 +357,13 @@ form _lst [,,370,*] {
       bo_having.set(ask('select','ikona','_cis',conc("druh='evi_vyber_o' AND data=",this.key)));
       [ bo_having.get | bo_having.set(1) ] }
   }
+  check o_filtr [320,5,50,] {tag:'o', title:"filtr", format:'t', value:'0'
+    proc onchange () {
+      bo_filtr.set(o_vyber.get);
+      { this.get; filtr_osob.modal(282,258); bo_filtr.set(conc(bo_filtr.get,filtr_osob.sql.get));
+      | this.set(0); filtr_osob.filtr_clear };
+      ido.set(0); bo_reload(bo_cnd.get);
+  }}
   view o: table osoba
   view ot: table tvori  { join_type:"LEFT", join:"USING(id_osoba)" }
   view of: table rodina { join_type:"LEFT", join:"USING(id_rodina)" }
@@ -395,7 +402,7 @@ form _lst [,,370,*] {
     idr.get; [ br.browse_seek(conc("id_rodina=",idr.get)); br.onrowclick ]
   | br.browse_load(conc(cnd," AND ",br_filtr.get),'',br_having.get);
   }
-  select r_vyber [163,5,189,] {tag:'r', type:'map'
+  select r_vyber [163,5,154,] {tag:'r', type:'map'
     map_pipe:map_evi_vyber_r.hodnota, options:map_evi_vyber_r.zkratka, format:'t'
     help:'výběrová podmínka, doplňující případně zadaná kritéria'
     proc onchange() { refresh; idr.set(0); br_reload(br_cnd.get) }
@@ -404,6 +411,13 @@ form _lst [,,370,*] {
       br_having.set(ask('select','ikona','_cis',conc("druh='evi_vyber_r' AND data=",this.key)));
       [ br_having.get | br_having.set(1) ] }
   }
+  check r_filtr [320,5,50,] {tag:'r', title:"filtr", format:'t', value:'0'
+    proc onchange () {
+      br_filtr.set(r_vyber.get);
+      { this.get; filtr_rodin.modal(282,258); br_filtr.set(conc(br_filtr.get,filtr_rodin.sql.get));
+      | this.set(0); filtr_rodin.filtr_clear };
+      idr.set(0); br_reload(br_cnd.get);
+  }}
   view r: table rodina
   view rt: table tvori { join_type:'LEFT', join:"USING(id_rodina)" }
   view rto: table osoba { join_type:'LEFT', join:"USING(id_osoba)" }
@@ -942,7 +956,87 @@ panel PridaniJmenem1 [,,320,280] {type:'popup', title:'Přidání osoby do rodin
     }
   }
 }
-# ---------------------------------------------------------- reakce na změny rozměrů okna prohlížeče
+# ======================================================================================> filtr_osob
+panel filtr_osob [,,250,175] { type:'popup', title:"doplňující podmínky výběru osob"
+  var sql=''
+  proc filtr_set() { sql.set(cconc(1,''
+    ,f.mrop.get," AND o.iniciace!=0"
+    ,f.aktiv.get,conc(" AND o.aktivita RLIKE '.*",f.aktiv.get,".*'")
+    ,f.jazyk.get,conc(" AND o.jazyk RLIKE '.*", f.jazyk.get,".*'")
+    ,f.zajmy.get,conc(" AND o.zajmy RLIKE '.*", f.zajmy.get,".*'")
+    ,f.pozn.get, conc(" AND o.note RLIKE '.*",  f.pozn.get,".*'")
+    ,f.zamest.get, conc(" AND o.zamest RLIKE '.*",  f.zamest.get,".*'")
+    ,f.slovaci.get,conc(" AND (o.stat='SK' OR IF(ISNULL(id_rodina),0,of.stat='SK'))")
+    ,f.cizinci.get,conc(" AND (o.stat!='' AND o.stat!='SK' AND o.stat!='CZ'",
+      " OR IF(ISNULL(id_rodina),0,of.stat!='' AND of.stat!='SK' AND of.stat!='CZ'))")
+    // zahrne i rodinné schopnosti, ale jen pro manžele
+    ,f.umi.key,conc(" AND (FIND_IN_SET('",f.umi.key,"',o.o_umi)",
+      " OR ot.role IN ('a','b') AND IF(ISNULL(id_rodina),0,FIND_IN_SET('",f.umi.key,"',of.r_umi)))")
+    ));
+    lst.o_filtr.set_attrib('help',cconc(1,"... "
+    ,f.mrop.get,        " a iniciovaní"
+    ,f.zajmy.get,       " a jsou aktivní"
+    ,f.jazyk.get,       " a znají jazyk"
+    ,f.zajmy.get,       " a mají zájmy"
+    ,f.zamest.get,      " a zaměstnání"
+    ,f.pozn.get,        " s poznámkou"
+    ,f.slovaci.get,     " a Slováci"
+    ,f.cizinci.get,     " a cizinci"
+    ,f.umi.get,         " a umí"
+    ));
+  }
+  proc filtr_clear() { sql.set(''); lst.o_filtr.set_attrib('help',"bez filtru") }
+  use f: form _f
+  form _f {
+    // vlevo
+    field aktiv   [53,0,79,]   { title:'aktivita',    format:'t' }
+    field jazyk   [53,25,79,]  { title:'jazyky',      format:'t' }
+    field zajmy   [53,50,79,]  { title:'zájmy',       format:'t' }
+    field zamest  [53,75,79,]  { title:'zaměst.',     format:'t' }
+    field pozn    [53,100,79,] { title:'poznámka',    format:'t' }
+    select umi    [53,125,99,] { type:'map0', options:ms_umi.hodnota, title:'schopnosti',
+                                 value:'0', format:'t', help:"zohledňuje i rodiný um" }
+    // vpravo
+    check mrop    [171,1,76,17]  { title:'iniciovaní', format:'t', skill:'f|f;y|f;c|f' }
+    check slovaci [171,26,76,17] { title:'Slováci', format:'t', help:"zohledňuje i rodinnou adresu" }
+    check cizinci [171,51,76,17] { title:'jiní cizinci', format:'t', help:"zohledňuje i rodinnou adresu" }
+    // ukončení
+    button [57,156,,] { title:'[fa-filter] filtruj', proc onclick() { filtr_set; panel.hide(1) }}
+    button [137,156,,] { title:'[fa-undo] zruš filtr', proc onclick() { filtr_clear; panel.hide(0) }}
+  }
+}
+# =====================================================================================> filtr_rodin
+panel filtr_rodin [,,250,175] { type:'popup', title:"doplňující podmínky výběru rodin"
+  var sql=''
+  proc filtr_set() { sql.set(cconc(1,''
+    ,f.pozn.get, conc(" AND r.note RLIKE '.*",  f.pozn.get,".*'")
+    ,f.slovaci.get," AND r.stat='SK'"
+    ,f.cizinci.get," AND r.stat!='' AND r.stat!='SK' AND r.stat!='CZ'"
+    ,f.umi.key,conc(" AND FIND_IN_SET('",f.umi.key,"',r.r_umi)")
+    ));
+    lst.r_filtr.set_attrib('help',cconc(1,"... "
+    ,f.pozn.get,        " s poznámkou"
+    ,f.slovaci.get,     " a Slováci"
+    ,f.cizinci.get,     " a cizinci"
+    ,f.umi.get,         " a umí"
+    ));
+  }
+  proc filtr_clear() { sql.set(''); lst.r_filtr.set_attrib('help',"bez filtru") }
+  use f: form _f
+  form _f {
+    // vlevo
+    field pozn    [53,0,79,17] { title:'poznámka',    format:'t' }
+    select umi    [53,25,99,]  { type:'map', options:ms_umi.hodnota,
+                                   title:'schopnosti:', value:'0', format:'t' }
+    // vpravo
+    check slovaci [171,1,76,17] { title:'Slováci', format:'t'}
+    check cizinci [171,26,76,17] { title:'jiní cizinci', format:'t' }
+    // ukončení
+    button [57,156,,] { title:'filtruj', proc onclick() { filtr_set; panel.hide(1) }}
+    button [137,156,,] { title:'zruš filtr', proc onclick() { filtr_clear; panel.hide(0) }}
+  }
+}
+# -------------------------------------------------------==> reakce na změny rozměrů okna prohlížeče
 var  curr_h: number     // výška nad základní výšku
 proc onresize(w,h) { // echo('evid2 onresize(',w,',',h,')');
   eq(curr_h.get,minus(h,min_h.get))                     // změnu šířky ignorujeme
