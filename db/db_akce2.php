@@ -1664,7 +1664,7 @@ function sta_sestava($title,$par,$export=false) {
       JOIN akce as a ON id_akce=id_duakce
       JOIN tvori AS t USING (id_rodina)
       JOIN osoba AS o USING (id_osoba)
-      WHERE id_rodina=i0_rodina -- AND r.nazev LIKE 'Š%'
+      WHERE spec=0 AND id_rodina=i0_rodina -- AND r.nazev LIKE 'Š%'
         AND druh IN (1,$vps1)
       GROUP BY id_rodina
       HAVING -- VPS_I<9999 AND
