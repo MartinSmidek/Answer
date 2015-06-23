@@ -160,10 +160,10 @@ menu m {type:'left', active:*
                                         ,par:°{typ:'j',exp:'Excel',cnd:"role='d' AND funkce!=99 AND pfunkce!=95",ord:"narozeni"
                                         ,tit:'příjmení:15,jméno:12,narození:12,věk:4,obec:25,psč:7,ulice:25,poznámka:100'
                                         ,fld:'prijmeni,jmeno,narozeni,_vek,obec,psc,ulice,note'}}
-    item {title:' na akci s poznámkami'                                                             skill:'c'
+    item {title:'Děti na akci ... + telefony'                                                           skill:'c'
                                         ,par:°{typ:'j',exp:'Excel',cnd:"role='d' AND funkce!=99 AND pfunkce!=95",ord:"narozeni"
-                                        ,tit:'příjmení:15,jméno:12,narození:12,věk:4,obec:25,psč:7,ulice:25,poznámka:100'
-                                        ,fld:'prijmeni,jmeno,narozeni,_vek,obec,psc,ulice,note'}}
+                                        ,tit:'příjmení:15,jméno:12,narození:12,věk:4,obec:25,psč:7,ulice:25,telefony rodičů:27,poznámka:100'
+                                        ,fld:'prijmeni,jmeno,narozeni,_vek,obec,psc,ulice,_telefony,note'}}
     item {title:'Účastníci, skupinky a pokoje'                                                          skill:'y;f'
                                         ,par:°{typ:'p',exp:'Excel',cnd:"funkce!=99"
                                         ,tit:'příjmení:15,jména:20,pokoj:10,skupinka:10'

@@ -2600,7 +2600,7 @@ function data_transform($par) { trace();
   foreach (explode(',',$par->cmd) as $cmd ) {
     $update= false;
     switch ($cmd ) {
-    // ---------------------------------------------- rodina: r_umi
+    // ---------------------------------------------- rodina: r_umi VPS
     // opraví chybějící údaj v r_umi
     case 'vps_test':
       $qr= mysql_qry("
@@ -2631,6 +2631,38 @@ function data_transform($par) { trace();
         $updated+= $ok ? 1 : 0;
       }
       $html.= "Nalezeno $n rodin s funkcí VPS a u $updated doplněna tato schopnost";
+      break;
+    // ---------------------------------------------- rodina: r_umi Přednáší
+    // opraví chybějící údaj v r_umi
+    case 'lec_test':
+      $qr= mysql_qry("
+        SELECT nazev,YEAR(datum_od) AS _rok
+        FROM pobyt
+        JOIN akce ON id_akce=id_duakce
+        WHERE prednasi AND i0_rodina=0
+        GROUP BY id_akce
+      ");
+      while ( $qr && ($r= mysql_fetch_object($qr)) ) {
+        $n++;
+        $html.= "{$r->nazev}/{$r->_rok}<br>";
+      }
+      $html.= "Nalezeno $n akcí";
+      break;
+    // opraví chybějící údaj v r_umi
+    case 'lec_updt':
+      $qr= mysql_qry("
+        SELECT i0_rodina,funkce,r_umi
+        FROM pobyt
+        JOIN rodina ON id_rodina=i0_rodina!=0
+        WHERE prednasi AND NOT FIND_IN_SET(2,r_umi)
+        GROUP BY i0_rodina
+      ");
+      while ( $qr && ($r= mysql_fetch_object($qr)) ) {
+        $n++;
+        $ok= query("UPDATE rodina SET r_umi=IF(r_umi,CONCAT('2,',r_umi),'1') WHERE id_rodina={$r->i0_rodina}");
+        $updated+= $ok ? 1 : 0;
+      }
+      $html.= "Nalezeno $n rodin, které přednáší a u $updated doplněna tato schopnost";
       break;
     // ---------------------------------------------- rodina,osoba: stat
     // doplní do adresy chybějící stát
@@ -4667,7 +4699,7 @@ function akce_sestava_lidi($akce,$par,$title,$vypis,$export=false) { trace();
   }
   // data akce
   $qry=  "SELECT
-            p.pouze,p.poznamka,p.platba,
+            p.pouze,p.poznamka,p.platba,id_rodina,
             o.prijmeni,o.jmeno,o.narozeni,o.rc_xxxx,o.note,o.obcanka,o.clen,o.dieta,
             IF(o.telefon='',r.telefony,o.telefon) AS telefon,
             IF(o.email='',r.emaily,o.email) AS email,
@@ -4701,6 +4733,21 @@ function akce_sestava_lidi($akce,$par,$title,$vypis,$export=false) { trace();
     $x->narozeni_dmy= sql_date1($x->narozeni);
     foreach($flds as $f) {
       switch ($f) {
+      case '_telefony':                                               // osoba: dieta
+        $tel= '';
+        $rt= mysql_qry("SELECT
+            GROUP_CONCAT(DISTINCT IF(t.role='a',o.telefon,'')  SEPARATOR '') as telefon_m,
+            GROUP_CONCAT(DISTINCT IF(t.role='b',o.telefon,'')  SEPARATOR '') as telefon_z
+          FROM rodina AS r
+          JOIN tvori  AS t USING(id_rodina)
+          JOIN osoba  AS o USING(id_osoba)
+          WHERE id_rodina='{$x->id_rodina}'
+          GROUP BY id_rodina");
+        if ( $rt && ($t= mysql_fetch_object($rt)) ) {
+          $tel= "m:{$t->telefon_z} o:{$t->telefon_m}";
+        }
+        $clmn[$n][$f]= $tel;
+        break;
       case 'dieta':                                                   // osoba: dieta
         $clmn[$n][$f]= $dieta[$x->$f];
         break;
