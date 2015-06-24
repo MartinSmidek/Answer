@@ -2835,7 +2835,7 @@ function akce_browse_ask($x,$tisk=false) {
     $cond= $x->cond ?: 1;
     # atributy akce
     $qa= mysql_qry("
-      SELECT @akce,@soubeh,@app,
+      SELECT @akce,@soubeh AS soubeh,@app,
         datum_od,DATEDIFF(a.datum_do,a.datum_od)+1 AS dnu,ma_cenik,ma_cenu,cena
       FROM akce AS a
       WHERE a.id_duakce=@akce ");
@@ -3068,11 +3068,12 @@ function akce_browse_ask($x,$tisk=false) {
       $platba1234= $p->platba1 + $p->platba2 + $p->platba3 + $p->platba4;
       $p->c_suma= $platba1234 + $p->poplatek_d;
       $p->dluh= $akce->soubeh==1 && $akce->ma_cenik
-        ? ( $p->c_suma = 0 ? 2 : ( $p->c_suma > $p->platba+$p->platba_d ? 1 : 0 ) )
+        ? ( $p->c_suma == 0 ? 2 : ( $p->c_suma > $p->platba+$p->platba_d ? 1 : 0 ) )
         : ( $akce->ma_cenik
-          ? ( $platba1234 = 0 ? 2 : ( $platba1234 > $p->platba ? 1 : 0) )
+          ? ( $platba1234 == 0 ? 2 : ( $platba1234 > $p->platba ? 1 : 0) )
           : ( $akce->ma_cenu ? ( $clenu * $akce->cena > $p->platba ? 1 : 0) : 0 )
           );
+//                                                         if ($idp==15826) { debug($akce);debug($p,"platba1234=$platba1234"); }
       # pobyt I
       foreach($fpob1 as $fz=>$fp) { $z->$fz= $p->$fp; }
       # akce
