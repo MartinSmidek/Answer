@@ -12,7 +12,7 @@
 proc evid_load(ido,idr) { page.evid_load(ido,idr) }
 
 proc evid_osoba(_ido)  { panel.focus; m.o.a.click(0,1); lst.seek_osoba(_ido,m.o.a.par) }
-proc evid_rodina(_idr) { panel.focus; m.r.a.click(0,1); lst.seek_rodina(_idr,m.o.a.par) }
+proc evid_rodina(_idr) { panel.focus; m.r.a.click(0,1); lst.seek_rodina(_idr,m.r.a.par) }
 
 proc osoby_show()       { page.oso.show_osoba(1); }     // obnova údajů o osobě  (z konfigurace)
 proc rodina_show()      { page.rod.show_rodina; }       // obnova údajů o rodině (z konfigurace)
@@ -140,19 +140,19 @@ form _lst [,,370,*] {
   | eq(mode.get,'f'); [ bf_reload(cnd.get) ]
   | eq(mode.get,'r'); [ br_reload(cnd.get) ]
   }
-  proc seek_osoba(_ido,par) {                   // zviditelní seznam všech osob a zobrazí osobu
+  proc seek_osoba(_ido,par) {           // zviditelní seznam nesmazaných osob a zobrazí osobu
     [ virgin.get; start ];
     tit.set(par.tit); [ eq(mode.get,'o') | mode.set('o');form.display(2,'o') ];
     bo_cnd.set(1); bo_filtr.set(1); bo_having.set(1); o_vyber.key(1);
     bo.init_queries(0); ido.set(_ido);
-    bo.browse_seek(conc("id_osoba=",_ido),1,1); page.evid_load(_ido,0);
+    bo.browse_seek(conc("id_osoba=",_ido),"o.deleted=''",1); page.evid_load(_ido,0);
   }
-  proc seek_rodina(_idr,par) {                  // zviditelní seznam všech osob a zobrazí osobu
+  proc seek_rodina(_idr,par) {          // zviditelní seznam nesmazaných rodin a zobrazí rodinu
     [ virgin.get; start ];
-    tit.set(par.tit); [ eq(mode.get,'r') | mode.set('r');form.display(2,'r') ];
+    tit.set(par.tit); [ eq(mode.get,'r') | mode.set('r'); form.display(2,'r') ];
     br_cnd.set(1); br_filtr.set(1); br_having.set(1); r_vyber.key(1);
     br.init_queries(0); idr.set(_idr);
-    br.browse_seek(conc("id_rodina=",_idr),1,1); page.evid_load(0,_idr);
+    br.browse_seek(conc("id_rodina=",_idr),"r.deleted=''",1); page.evid_load(0,_idr);
   }
   # ---------------------------------------------- stav a inicializace
   var virgin=1

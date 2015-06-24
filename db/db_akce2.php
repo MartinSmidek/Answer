@@ -1626,7 +1626,13 @@ function sta_ukaz_osobu($ido,$barva='') {
   $style= $barva ? "style='color:$barva'" : '';
   return "<b><a $style href='ezer://db2.evi.evid_osoba/$ido'>$ido</a></b>";
 }
-# ----------------------------------------------------------------------------------- sta_ukaz_osobu
+# ---------------------------------------------------------------------------------- sta_ukaz_rodinu
+# zobrazí odkaz na rodinu v evidenci
+function sta_ukaz_rodinu($idr,$barva='') {
+  $style= $barva ? "style='color:$barva'" : '';
+  return "<b><a $style href='ezer://db2.evi.evid_rodina/$idr'>$idr</a></b>";
+}
+# ----------------------------------------------------------------------------------- sta_ukaz_pobyt
 # zobrazí odkaz na řádek s pobytem
 function sta_ukaz_pobyt($idp,$barva='') {
   $style= $barva ? "style='color:$barva'" : '';
@@ -1644,40 +1650,149 @@ function sta_sestava($title,$par,$export=false) {
   $expr= array();       // pro výrazy
   // získání dat
   switch ($par->typ) {
+  # Sestava pečounů na letních kurzech, rok= před kolika lety naposledy ve funkci (0=jen letos)
+  case 'pecujici':     // --------------------------------------->> sta sloužící VPS na LK během let
+    $rok= date('Y');
+    $hranice= date('Y') - $par->parm;
+    $vps1= $VPS=='VPS' ? 17 : 3;
+    $tits= array("pečovatel:20","poprvé:10","kolikrát:10","naposledy:10","1.školení:10",
+                 "č.člen od:10","bydliště:25","narození:10","(ID osoby)");
+    $flds= array('jm','od','n','do','vps_i','clen','byd','nar','^id_osoba');
+    $rx= mysql_qry("SELECT
+        o.id_osoba,jmeno,prijmeni,o.obec,narozeni,
+        MIN(CONCAT(t.role,IF(o.adresa,o.obec,r.obec))) AS _obec,
+        MIN(IF(druh=1,YEAR(datum_od),9999)) AS OD,
+        MAX(IF(druh=1,YEAR(datum_od),0)) AS DO,
+        CEIL(CHAR_LENGTH(
+          GROUP_CONCAT(DISTINCT IF(druh=1 AND funkce=99,YEAR(datum_od),'') SEPARATOR ''))/4) AS Nx,
+        MIN(IF(druh=7,YEAR(datum_od),9999)) AS _skoleni,
+        GROUP_CONCAT(DISTINCT od.ukon ORDER BY od.ukon SEPARATOR '') as rel,
+        GROUP_CONCAT(DISTINCT CONCAT(ukon,':',YEAR(dat_od),':',YEAR(dat_do),':',castka)
+          ORDER BY dat_od DESC SEPARATOR '|') AS _ukony
+      FROM osoba AS o
+      JOIN spolu AS s USING (id_osoba)
+      JOIN pobyt AS p USING (id_pobyt)
+      JOIN akce as a ON id_akce=id_duakce
+      LEFT JOIN dar AS od ON o.id_osoba=od.id_osoba AND od.deleted=''
+      LEFT JOIN tvori AS t ON t.id_osoba=o.id_osoba
+      LEFT JOIN rodina AS r ON t.id_rodina=r.id_rodina
+      WHERE p.funkce=99
+        -- AND o.prijmeni LIKE 'D%'
+        AND druh IN (1,7)
+      GROUP BY o.id_osoba
+      HAVING
+        -- _skoleni<9999 AND
+        DO>=$hranice
+      ORDER BY o.prijmeni");
+    while ( $rx && ($x= mysql_fetch_object($rx)) ) {
+      // rozbor úkonů
+      $_clen_od= $_cinny_od= $_prisp= $prisp_letos= $_dary= 0;
+      foreach(explode('|',$x->_ukony) as $uddc) {
+        list($u,$d1,$d2,$c)= explode(':',$uddc);
+        switch ($u) {
+        case 'p': if ( $d1==$rok ) $_prisp+= $c; break;
+        case 'd': if ( $d1==$rok ) $_dary+= $c; break;
+        case 'b': if ( $d2<=$rok && (!$_clen_od && $d1<=$rok || $d1<$_clen_od) ) $_clen_od= $d1; break;
+        case 'c': if ( $d2<=$rok && (!$_cinny_od && $d1<=$rok || $d1<$_cinny_od) ) $_cinny_od= $d1; break;
+        }
+      }
+      $cclen= $_cinny_od ?: '-';
+      // odpověď
+      $clmn[]= array(
+        'jm'=>"{$x->prijmeni} {$x->jmeno}",'od'=>$x->OD,'n'=>$x->Nx,'do'=>$x->DO,
+        'vps_i'=>$x->_skoleni==9999 ? '-' : $x->_skoleni,
+        'clen'=>$cclen,
+        'byd'=>$x->_obec ? substr($x->_obec,1) : $x->obec,
+        'nar'=>$x->narozeni,
+        '^id_osoba'=>$x->id_osoba
+      );
+    }
+//                                                 debug($clmn,"$hranice");
+    break;
   # Sestava sloužících na letních kurzech, rok= před kolika lety naposledy ve funkci (0=jen letos)
   case 'slouzici':     // --------------------------------------->> sta sloužící VPS na LK během let
     global $VPS;
+    $rok= date('Y');
     $hranice= date('Y') - $par->parm;
     $vps1= $VPS=='VPS' ? 17 : 3;
-    $tits= array("pár:26","poprvé:9","kolikrát:5","naposledy:9",$VPS=='VPS'?"VPS I:9":"1.školení");
-    $flds= array('jm','od','n','do','vps_i');
+    if ( $par->podtyp=='pary' ) {
+      $tits= array("pár:26","poprvé:10","kolikrát:10","naposledy:10",
+                 $VPS=='VPS'?"VPS I:10":"1.školení:10","č.člen od:10","(ID)");
+      $flds= array('jm','od','n','do','vps_i','clen','^id_rodina');
+    }
+    else { // osoby
+      $tits= array("jméno:20","poprvé:10","kolikrát:10","naposledy:10",
+                 $VPS=='VPS'?"VPS I:10":"1.školení:10","č.člen od:10","bydliště:25","narození:10","(ID)");
+      $flds= array('jm','od','n','do','vps_i','clen','byd','nar','^id_osoba');
+    }
     $rx= mysql_qry("SELECT
+        r.id_rodina,r.nazev,
+        GROUP_CONCAT(DISTINCT IF(t.role='a',o.id_osoba,'') SEPARATOR '') as id_m,
         GROUP_CONCAT(DISTINCT IF(t.role='a',o.jmeno,'') SEPARATOR '') as jmeno_m,
+        GROUP_CONCAT(DISTINCT IF(t.role='a',o.prijmeni,'') SEPARATOR '') as prijmeni_m,
+        GROUP_CONCAT(DISTINCT IF(t.role='a',o.narozeni,'') SEPARATOR '') as narozeni_m,
+        GROUP_CONCAT(DISTINCT IF(t.role='a',IF(o.adresa,o.obec,r.obec),'') SEPARATOR '') as obec_m,
+        GROUP_CONCAT(DISTINCT IF(t.role='b',o.id_osoba,'') SEPARATOR '') as id_z,
         GROUP_CONCAT(DISTINCT IF(t.role='b',o.jmeno,'') SEPARATOR '') as jmeno_z,
-        r.nazev,
+        GROUP_CONCAT(DISTINCT IF(t.role='b',o.prijmeni,'') SEPARATOR '') as prijmeni_z,
+        GROUP_CONCAT(DISTINCT IF(t.role='b',o.narozeni,'') SEPARATOR '') as narozeni_z,
+        GROUP_CONCAT(DISTINCT IF(t.role='b',IF(o.adresa,o.obec,r.obec),'') SEPARATOR '') as obec_z,
         MIN(IF(druh=1 AND funkce=1,YEAR(datum_od),9999)) AS OD,
-        CEIL(CHAR_LENGTH(GROUP_CONCAT(DISTINCT IF(druh=1 AND funkce=1,YEAR(datum_od),'') SEPARATOR ''))/4) AS Nx,
+        CEIL(CHAR_LENGTH(
+          GROUP_CONCAT(DISTINCT IF(druh=1 AND funkce=1,YEAR(datum_od),'') SEPARATOR ''))/4) AS Nx,
         MAX(IF(druh=1 AND funkce=1,YEAR(datum_od),0)) AS DO,
-        MIN(IF(druh=$vps1,YEAR(datum_od),9999)) as VPS_I
+        MIN(IF(druh=$vps1,YEAR(datum_od),9999)) as VPS_I,
+        GROUP_CONCAT(DISTINCT od.ukon ORDER BY od.ukon SEPARATOR '') as rel,
+        GROUP_CONCAT(DISTINCT CONCAT(ukon,':',YEAR(dat_od),':',YEAR(dat_do),':',castka)
+          ORDER BY dat_od DESC SEPARATOR '|') AS _ukony
       FROM rodina AS r
       JOIN pobyt AS p
       JOIN akce as a ON id_akce=id_duakce
       JOIN tvori AS t USING (id_rodina)
       JOIN osoba AS o USING (id_osoba)
-      WHERE spec=0 AND id_rodina=i0_rodina -- AND r.nazev LIKE 'Š%'
+      LEFT JOIN dar AS od ON o.id_osoba=od.id_osoba AND od.deleted=''
+      WHERE spec=0 AND r.id_rodina=i0_rodina
+        -- AND r.nazev LIKE 'Šmí%'
         AND druh IN (1,$vps1)
-      GROUP BY id_rodina
-      HAVING -- VPS_I<9999 AND
+      GROUP BY r.id_rodina
+      HAVING
+        -- VPS_I<9999 AND
         DO>=$hranice
       ORDER BY r.nazev");
     while ( $rx && ($x= mysql_fetch_object($rx)) ) {
-      $clmn[]= array(
-        'jm'=>"{$x->jmeno_m} a {$x->jmeno_z} {$x->nazev}",
-        'od'=>$x->OD,
-        'n'=>$x->Nx,
-        'do'=>$x->DO,
-        'vps_i'=>$x->VPS_I==9999 ? '-' : $x->VPS_I
-      );
+      // rozbor úkonů
+      $_clen_od= $_cinny_od= $_prisp= $prisp_letos= $_dary= 0;
+      foreach(explode('|',$x->_ukony) as $uddc) {
+        list($u,$d1,$d2,$c)= explode(':',$uddc);
+        switch ($u) {
+        case 'p': if ( $d1==$rok ) $_prisp+= $c; break;
+        case 'd': if ( $d1==$rok ) $_dary+= $c; break;
+        case 'b': if ( $d2<=$rok && (!$_clen_od && $d1<=$rok || $d1<$_clen_od) ) $_clen_od= $d1; break;
+        case 'c': if ( $d2<=$rok && (!$_cinny_od && $d1<=$rok || $d1<$_cinny_od) ) $_cinny_od= $d1; break;
+        }
+      }
+      $cclen= $_cinny_od ?: '-';
+      // odpověď
+      if ( $par->podtyp=='pary' ) {
+        $clmn[]= array(
+          'jm'=>"{$x->jmeno_m} a {$x->jmeno_z} {$x->nazev}",
+          'od'=>$x->OD,'n'=>$x->Nx,'do'=>$x->DO,
+          'vps_i'=>$x->VPS_I==9999 ? '-' : $x->VPS_I,
+          'clen'=>$cclen,'^id_rodina'=>$x->id_rodina
+        );
+      }
+      else { // osoby
+        $clmn[]= array(
+          'jm'=>"{$x->prijmeni_m} {$x->jmeno_m}",'od'=>$x->OD,'n'=>$x->Nx,'do'=>$x->DO,
+          'vps_i'=>$x->VPS_I==9999 ? '-' : $x->VPS_I,'clen'=>$cclen,
+          'byd'=>$x->obec_m,'nar'=>$x->narozeni_m,'^id_osoba'=>$x->id_m
+        );
+        $clmn[]= array(
+          'jm'=>"{$x->prijmeni_z} {$x->jmeno_z}",'od'=>$x->OD,'n'=>$x->Nx,'do'=>$x->DO,
+          'vps_i'=>$x->VPS_I==9999 ? '-' : $x->VPS_I,'clen'=>$cclen,
+          'byd'=>$x->obec_z,'nar'=>$x->narozeni_z,'^id_osoba'=>$x->id_z
+        );
+      }
     }
 //                                                 debug($clmn,"$hranice");
     break;
@@ -1930,6 +2045,8 @@ function sta_table($tits,$flds,$clmn,$export=false) {  trace();
       foreach ($flds as $f) {
         if ( $f=='id_osoba' || $f=='^id_osoba' )
           $tab.= "<td style='text-align:right'>".sta_ukaz_osobu($c[$f])."</td>";
+        elseif ( $f=='^id_rodina' )
+          $tab.= "<td style='text-align:right'>".sta_ukaz_rodinu($c['^id_rodina'])."</td>";
         elseif ( $f=='^id_pobyt' )
           $tab.= "<td style='text-align:right'>".sta_ukaz_pobyt($c['^id_pobyt'])."</td>";
         else
