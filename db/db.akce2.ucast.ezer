@@ -1401,7 +1401,7 @@ form _documents {  // ukládají se na H: tedy mimo dosah http
           warning(ask('drop_unlink',folder.get,ref)) ]
       | warning('zatím neimplementovaná operace') ];
       drop.lsdir;
-      u.b.browse_refresh;
+      u.b.browse_refresh(u.b.key_pobyt.get);
     }
   }
 }
