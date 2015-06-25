@@ -1731,7 +1731,7 @@ function sta_sestava($title,$par,$export=false) {
       $flds= array('jm','od','n','do','vps_i','clen','^id_rodina');
     }
     else { // osoby
-      $tits= array("jméno:20","certifikát","poprvé:10","kolikrát:10","naposledy:10",
+      $tits= array("jméno:20","certifikát:20","poprvé:10","kolikrát:10","naposledy:10",
                  $VPS=='VPS'?"VPS I:10":"1.školení:10","č.člen od:10","bydliště:25","narození:10","(ID)");
       $flds= array('jm','cert','od','n','do','vps_i','clen','byd','nar','^id_osoba');
     }
@@ -2133,7 +2133,9 @@ __XLS;
   if ( $tab->clmn ) foreach ($tab->clmn as $i=>$c) {
     $xls.= "\n";
     $lc= 0;
-    foreach ($c as $id=>$val) {
+//     foreach ($c as $id=>$val) { -- míchalo sloupce
+    foreach ($tab->flds as $id) {
+      $val= $c[$id];
       $A= Excel5_n2col($lc);
       $format= '';
       if (isset($tab->expr[$i][$id]) ) {
