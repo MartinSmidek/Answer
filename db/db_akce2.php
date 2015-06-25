@@ -1652,12 +1652,12 @@ function sta_sestava($title,$par,$export=false) {
   switch ($par->typ) {
   # Sestava pečounů na letních kurzech, rok= před kolika lety naposledy ve funkci (0=jen letos)
   case 'pecujici':     // --------------------------------------->> sta sloužící VPS na LK během let
+    $cert= array(); // certifikát rok=>poslední číslo
     $rok= date('Y');
     $hranice= date('Y') - $par->parm;
-    $vps1= $VPS=='VPS' ? 17 : 3;
-    $tits= array("pečovatel:20","poprvé:10","kolikrát:10","naposledy:10","1.školení:10",
+    $tits= array("pečovatel:20","certifikát:20","poprvé:10","kolikrát:10","naposledy:10","1.školení:10",
                  "č.člen od:10","bydliště:25","narození:10","(ID osoby)");
-    $flds= array('jm','od','n','do','vps_i','clen','byd','nar','^id_osoba');
+    $flds= array('jm','cert','od','n','do','vps_i','clen','byd','nar','^id_osoba');
     $rx= mysql_qry("SELECT
         o.id_osoba,jmeno,prijmeni,o.obec,narozeni,
         MIN(CONCAT(t.role,IF(o.adresa,o.obec,r.obec))) AS _obec,
@@ -1680,11 +1680,20 @@ function sta_sestava($title,$par,$export=false) {
         -- AND o.prijmeni LIKE 'D%'
         AND druh IN (1,7)
       GROUP BY o.id_osoba
-      HAVING
+      -- HAVING
         -- _skoleni<9999 AND
-        DO>=$hranice
+        -- DO>=$hranice
       ORDER BY o.prijmeni");
     while ( $rx && ($x= mysql_fetch_object($rx)) ) {
+      // číslování certifikátů
+      $skola= $x->_skoleni==9999 ? 0 : $x->_skoleni;
+      $c1= '';
+      if ( $skola ) {
+        if ( !isset($cert[$skola]) ) $cert[$skola]= 0;
+        $cert[$skola]++; $c1= "pec_$skola/{$cert[$skola]}";
+      }
+      // ohlídání období
+      if ( $x->DO<$hranice ) continue;
       // rozbor úkonů
       $_clen_od= $_cinny_od= $_prisp= $prisp_letos= $_dary= 0;
       foreach(explode('|',$x->_ukony) as $uddc) {
@@ -1700,10 +1709,10 @@ function sta_sestava($title,$par,$export=false) {
       // odpověď
       $clmn[]= array(
         'jm'=>"{$x->prijmeni} {$x->jmeno}",'od'=>$x->OD,'n'=>$x->Nx,'do'=>$x->DO,
-        'vps_i'=>$x->_skoleni==9999 ? '-' : $x->_skoleni,
+        'vps_i'=>$skola ?: '-', 'cert'=>$c1,
         'clen'=>$cclen,
         'byd'=>$x->_obec ? substr($x->_obec,1) : $x->obec,
-        'nar'=>$x->narozeni,
+        'nar'=>substr($x->narozeni,2,2).substr($x->narozeni,5,2).substr($x->narozeni,8,2),
         '^id_osoba'=>$x->id_osoba
       );
     }
@@ -1712,6 +1721,7 @@ function sta_sestava($title,$par,$export=false) {
   # Sestava sloužících na letních kurzech, rok= před kolika lety naposledy ve funkci (0=jen letos)
   case 'slouzici':     // --------------------------------------->> sta sloužící VPS na LK během let
     global $VPS;
+    $cert= array(); // certifikát rok=>poslední číslo
     $rok= date('Y');
     $hranice= date('Y') - $par->parm;
     $vps1= $VPS=='VPS' ? 17 : 3;
@@ -1721,9 +1731,9 @@ function sta_sestava($title,$par,$export=false) {
       $flds= array('jm','od','n','do','vps_i','clen','^id_rodina');
     }
     else { // osoby
-      $tits= array("jméno:20","poprvé:10","kolikrát:10","naposledy:10",
+      $tits= array("jméno:20","certifikát","poprvé:10","kolikrát:10","naposledy:10",
                  $VPS=='VPS'?"VPS I:10":"1.školení:10","č.člen od:10","bydliště:25","narození:10","(ID)");
-      $flds= array('jm','od','n','do','vps_i','clen','byd','nar','^id_osoba');
+      $flds= array('jm','cert','od','n','do','vps_i','clen','byd','nar','^id_osoba');
     }
     $rx= mysql_qry("SELECT
         r.id_rodina,r.nazev,
@@ -1755,11 +1765,21 @@ function sta_sestava($title,$par,$export=false) {
         -- AND r.nazev LIKE 'Šmí%'
         AND druh IN (1,$vps1)
       GROUP BY r.id_rodina
-      HAVING
+      -- HAVING -- bereme vše kvůli číslům certifikátů - vyřazuje se až při průchodu
         -- VPS_I<9999 AND
-        DO>=$hranice
+        -- DO>=$hranice
       ORDER BY r.nazev");
     while ( $rx && ($x= mysql_fetch_object($rx)) ) {
+      // číslování certifikátů
+      $skola= $x->VPS_I==9999 ? 0 : $x->VPS_I;
+      $c1= $c2= '';
+      if ( $skola ) {
+        if ( !isset($cert[$skola]) ) $cert[$skola]= 0;
+        $cert[$skola]++; $c1= strtolower($VPS)."_$skola/{$cert[$skola]}";
+        $cert[$skola]++; $c2= strtolower($VPS)."_$skola/{$cert[$skola]}";
+      }
+      // ohlídání období
+      if ( $x->DO<$hranice ) continue;
       // rozbor úkonů
       $_clen_od= $_cinny_od= $_prisp= $prisp_letos= $_dary= 0;
       foreach(explode('|',$x->_ukony) as $uddc) {
@@ -1777,20 +1797,22 @@ function sta_sestava($title,$par,$export=false) {
         $clmn[]= array(
           'jm'=>"{$x->jmeno_m} a {$x->jmeno_z} {$x->nazev}",
           'od'=>$x->OD,'n'=>$x->Nx,'do'=>$x->DO,
-          'vps_i'=>$x->VPS_I==9999 ? '-' : $x->VPS_I,
+          'vps_i'=>$vps1 ?: '-',
           'clen'=>$cclen,'^id_rodina'=>$x->id_rodina
         );
       }
       else { // osoby
         $clmn[]= array(
           'jm'=>"{$x->prijmeni_m} {$x->jmeno_m}",'od'=>$x->OD,'n'=>$x->Nx,'do'=>$x->DO,
-          'vps_i'=>$x->VPS_I==9999 ? '-' : $x->VPS_I,'clen'=>$cclen,
-          'byd'=>$x->obec_m,'nar'=>$x->narozeni_m,'^id_osoba'=>$x->id_m
+          'vps_i'=>$vps1 ?: '-', 'cert'=>$c1, 'clen'=>$cclen, 'byd'=>$x->obec_m,
+          'nar'=>substr($x->narozeni_m,2,2).substr($x->narozeni_m,5,2).substr($x->narozeni_m,8,2),
+          '^id_osoba'=>$x->id_m
         );
         $clmn[]= array(
           'jm'=>"{$x->prijmeni_z} {$x->jmeno_z}",'od'=>$x->OD,'n'=>$x->Nx,'do'=>$x->DO,
-          'vps_i'=>$x->VPS_I==9999 ? '-' : $x->VPS_I,'clen'=>$cclen,
-          'byd'=>$x->obec_z,'nar'=>$x->narozeni_z,'^id_osoba'=>$x->id_z
+          'vps_i'=>$vps1 ?: '-', 'cert'=>$c2, 'clen'=>$cclen, 'byd'=>$x->obec_z,
+          'nar'=>substr($x->narozeni_z,2,2).substr($x->narozeni_z,5,2).substr($x->narozeni_z,8,2),
+          '^id_osoba'=>$x->id_z
         );
       }
     }
