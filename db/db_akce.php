@@ -6638,7 +6638,6 @@ function akce_skup_tisk($akce,$par,$title,$vypis,$export) {
 # přehled starých skupinek letního kurzu MS účastníků této akce
 function akce_skup_hist($akce,$par,$title,$vypis,$export) { trace();
   $result= (object)array();
-  $html= "<dl>";
   // letošní účastníci
   $letos= array();
   $qry=  "SELECT skupina,r.nazev,r.obec,year(datum_od) as rok,p.funkce as funkce,
@@ -6676,6 +6675,7 @@ function akce_skup_hist($akce,$par,$title,$vypis,$export) { trace();
   }
 //                                                         debug($odkud);
   // tisk
+  $html= "";
   foreach ($letos as $muz=>$info) {
     // minulé účasti
     $n= 0;
@@ -6687,6 +6687,7 @@ function akce_skup_hist($akce,$par,$title,$vypis,$export) { trace();
             ORDER BY datum_od DESC ";
     $res= mysql_qry($qry);
     $ucasti= '';
+    $html.= "\n<p>";
     while ( $res && ($r= mysql_fetch_object($res)) ) {
       $n++;
       // minulé skupinky
@@ -6710,18 +6711,25 @@ function akce_skup_hist($akce,$par,$title,$vypis,$export) { trace();
         $ucasti.= " <u>{$r->rok}</u>: $spolu";
       }
     }
+//     if ( $ucasti )
+//       $html.= "<dt><b>{$info->_nazev}</b> $n&times;</dt><dd>$ucasti</dd>";
+//     elseif ( $n )
+//       $html.= "<dt><b>{$info->_nazev}</b> $n&times;</dt>";
+//     else
+//       $html.= "<dt><b>{$info->_nazev}</b> - bude poprvé</dt>";
     if ( $ucasti )
-      $html.= "<dt><b>{$info->_nazev}</b> $n&times;<dd>$ucasti</dd></dt>";
+      $html.= "<b>{$info->_nazev}</b> $n&times;<br>$ucasti";
     elseif ( $n )
-      $html.= "<dt><b>{$info->_nazev}</b> $n&times;</dt>";
+      $html.= "<b>{$info->_nazev}</b> $n&times;";
     else
-      $html.= "<dt><b>{$info->_nazev}</b> - bude poprvé</dt>";
+      $html.= "<b>{$info->_nazev}</b> - bude poprvé";
+    $html.= "</p>";
   }
-  $html.= "</dl>";
   $note= "Abecední seznam účastníků letního kurzu roku $rok doplněný seznamem členů jeho starších
           skupinek na letních kurzech. <br>Ve skupinkách jsou uvedení jen účastníci
           kurzu roku $rok. (Pro tisk je nejjednodušší označit jako blok a vložit do Wordu.)";
   $html= "<i>$note</i><br>$html";
+  //$result->html= nl2br(htmlentities($html));
   $result->html= $html;
   return $result;
 }
