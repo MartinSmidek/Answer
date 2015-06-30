@@ -25,7 +25,7 @@ use info: form right [12,4,,] {
       var res: object
       switch(export.get,
       // verze 2
-      'Excel2',{
+      'Excel2',{ // ==> export Excel
         res.set(ask('tisk_vyp_excel',the_akce.get,the_par.get,the_title.get,the_vypis.get));
         form.msg.set(res.html);
       },
@@ -39,7 +39,7 @@ use info: form right [12,4,,] {
         form.note.set('');
         form.msg.set(res.xhref);
       },
-      'PDF-adresy',{
+      'PDF-adresy',{ // ==> export PDF
         sti_A.report_init; sti_A.report_check;
         res.set(ask('akce_pdf_stitky',conc("p.id_akce=",the_akce.get," AND ",the_par.get('cnd')),sti_A.get_json));
         form.msg.set(res.html);
@@ -53,6 +53,16 @@ use info: form right [12,4,,] {
       'PDF-stravenky',{
         sti_C.report_init; sti_C.report_check;
         res.set(ask('akce_pdf_stravenky',the_akce.get,the_par.get,sti_C.get_json));
+        form.msg.set(res.html);
+      },
+      'PDF-plachta',{
+        sti_P.report_init; sti_P.report_check;
+        res.set(ask('tisk_pdf_plachta',the_akce.get,sti_P.get_json));
+        form.msg.set(res.html);
+      },
+      'PDF-plachta0',{
+        sti_P.report_init; sti_P.report_check;
+        res.set(ask('tisk_pdf_plachta0',sti_P.get_json));
         form.msg.set(res.html);
       })
     }
@@ -73,7 +83,7 @@ proc onfocus() {
 }
 
 menu m {type:'left', active:*
-  # ------------------------------------------------------------------------------------------------ výpisy souběžné akce
+  # ---------------------------------------------------------------------------------------------==> výpisy souběžné akce
   menu d {tag:'d', title:'výpisy souběžné akce',type:'group',_sys:'*'
     item i {title:'Seznam dětí'                                                                         skill:'f'
                                         ,par:°{typ:'j',exp:'Excel2',ord:"prijmeni,jmeno"
@@ -94,7 +104,7 @@ menu m {type:'left', active:*
                                         ,tit:'příjmení:15,jméno:15,narození:12,/rč:5,obec:25,psč:7,ulice:25,telefon:20,e-mail:30,funkce:10,poznámky:30'
                                         ,fld:'prijmeni,jmeno,narozeni,rc_xxxx,obec,psc,ulice,telefon,email,pfunkce,_poznamky'}}
   }
-  # ------------------------------------------------------------------------------------------------ adresář
+  # ---------------------------------------------------------------------------------------------==> adresář
   menu n {tag:'a', title:'adresář',type:'group',_sys:'*'
     item i {title:'Rodinný' ,par:°{typ:'p',exp:'Excel2',cnd:'funkce!=99'
                                         ,tit:'příjmení:15,jména:20,obec:25,psč:7,ulice:25,^'
@@ -140,7 +150,7 @@ menu m {type:'left', active:*
                                         ,tit:'příjmení:15,jméno:12,věk:5,narození:12,/rč:5,obec:25,psč:7,ulice:25,telefon:25,email:25,dieta:12'
                                         ,fld:'prijmeni,jmeno,_vek,narozeni,rc_xxxx,obec,psc,ulice,telefony,emaily,dieta'}}
   }
-  # ------------------------------------------------------------------------------------------------ seznamy
+  # ---------------------------------------------------------------------------------------------==> seznamy
   menu {tag:'a', title:'seznamy',type:'group',_sys:'*'
     item {title:'VPS na akci'                                                                           skill:'y;c'
                                         ,par:°{typ:'p',exp:'Excel2',cnd:"funkce IN (1,2)"
@@ -191,7 +201,7 @@ menu m {type:'left', active:*
                                         ,tit:'jméno a příjmení:30,bydliště:50,narození:10'
                                         ,fld:'_jmenoY,_adresaY,_narozeniY'}}
   }
-  # ------------------------------------------------------------------------------------------------ DS
+  # ---------------------------------------------------------------------------------------------==> DS
   menu {tag:'a', title:'seznamy DS',type:'group',_sys:'*'                                               skill:'y'
     item {title:'&half; Všichni, s poznámkami'
                                         ,par:°{typ:'P',exp:'Excel',cnd:"funkce!=99"
@@ -204,7 +214,7 @@ menu m {type:'left', active:*
     item {title:'&half; Všichni, skupinky tisk'
                                         ,par:°{typ:'sk',exp:'Excel',cnd:'1',fce:'tisk',verze:'2'}}
   }
-  # ------------------------------------------------------------------------------------------------ info
+  # ---------------------------------------------------------------------------------------------==> info
   menu {tag:'a', title:'informace o akci',type:'group',_sys:'*'
     item {title:'Narozeniny, výročí'    ,par:°{typ:'vv',cnd:'1'}}
     item {title:'Přehled o akci (děti,pečouni)', par:°{typ:'vi',cnd:'1'}}
@@ -216,7 +226,7 @@ menu m {type:'left', active:*
                                         ,fld:'prijmeni,jmena,prednasi,^id_pobyt',ord:'prednasi'}}
     item {title:'&half; Seznam čerstvých změn' ,par:°{typ:'cz',cnd:'1'}, skill:'a'}
   }
-  # ------------------------------------------------------------------------------------------------ jmenovky
+  # ---------------------------------------------------------------------------------------------==> jmenovky
   menu {tag:'a', title:'jmenovky na akci',type:'group',_sys:'*'
     item {title:'Účastníci bez funkce'                                                                  skill:'f'
                                         ,par:°{typ:'j',exp:'Excel',exp2:'PDF-jmenovky'
@@ -273,7 +283,7 @@ menu m {type:'left', active:*
                                         ,cnd:"funkce NOT IN (0,1,2,3,4,5)",ord:"prijmeni",hav:"_vek>=18"
                                         ,tit:'jméno:20, příjmení:15',fld:'jmeno,prijmeni'}}
   }
-  # ------------------------------------------------------------------------------------------------ PDF
+  # ---------------------------------------------------------------------------------------------==> PDF
   menu {tag:'a', title:'tisky do PDF',type:'group',_sys:'*'
     item {title:'Adresní štítky rodin'  ,par:°{typ:'p',exp:'PDF-adresy',cnd:'funkce!=99'
                                         ,tit:'příjmení:15,jména:20,obec:25,psč:7,ulice:25,stát:10'
@@ -300,7 +310,7 @@ menu m {type:'left', active:*
       }
     }
   }
-  # ------------------------------------------------------------------------------------------------ MS
+  # ---------------------------------------------------------------------------------------------==> MS
   menu {tag:'a', title:'MS: letní kurs, obnovy',type:'group',_sys:'*'
     item {title:'&half; Noví účastníci'                                                             skill:'y;f;c'
                                         ,par:°{typ:'p',exp:'Excel2'
@@ -353,13 +363,17 @@ menu m {type:'left', active:*
                                         ,tit:':5,Příjmení:15,Jméno:12,Ulice:25,Město:25,PSČ:7,Datum nar.:12,Člen YMCA:10,věk:10'
                                         ,fld:'_1,prijmeni,jmeno,ulice,obec,psc,_narozeni6,_ymca,_vek',ord:'_zprava'}}
   }
-  # ------------------------------------------------------------------------------------------------ Technické seznamy
+  # ---------------------------------------------------------------------------------------------==> Technické seznamy
   menu {tag:'a', title:'Technické seznamy',type:'group',_sys:'*'
     item {title:'&half; Návrh ubytování'       ,par:°{typ:'p',exp:'Excel',cnd:"funkce!=99"
                                         ,tit:'příjmení:15,jména:12,obec:25,lůžka:5,přistýlka:5,kočárek:5,pokoj:5,chůvy:20,poznámka:100,^'
                                         ,fld:'prijmeni,jmena,obec,luzka,pristylky,kocarek,pokoj,_chuvy,poznamka,^id_pobyt'}}
     item {title:'&half; Návrh skupinek'                                                                        skill:'y;f'
                                         ,par:°{typ:'sk',exp:'Excel-plachta',cnd:'1',fce:'plachta'}}
+    item {title:'Štítky pro návrh skupinek' ,par:°{typ:'ss',exp:'PDF-plachta'
+                                        ,tit:'příjmení,jména'
+                                        ,fld:'prijmeni,jmena'}}
+    item {title:'... pomocné štítky' ,par:°{typ:'s0',exp:'PDF-plachta0'}}
 #     item {title:'Seznam s fotkami'      ,par:°{typ:'fs',cnd:"funkce!=99",ord:"prijmeni"}}
     item {title:'&half; Seznam emailů'         ,par:°{typ:'fx',subtyp:'emails'}}
 #     item {title:'Seznam - manzeS'                                                                       skill:'y'
@@ -386,15 +400,18 @@ menu m {type:'left', active:*
     info.fill('',x.html);
   }
 }
-# -------------------------   stitek_A - adresní štítek 3x7
+# ----------------------==>   stitek_A,P - adresní štítek 3x7
 report sti_A [0,0,200,287] { format:'A4:5,6,70,41',
   box adresa    [  2.6, 11.0, 60.0, 27.3] { style:'12,L',      title:'{jmeno_postovni}<br>{adresa_postovni}' }
 }
-# -------------------------   stitek_B - obálka účastníka 3x7
+report sti_P [0,0,200,287] { format:'A4:1,6,70,41',
+  box par       [  0, 0, 70, 41] { style:'12,L',      title:'{prijmeni}<br>{jmena}' }
+}
+# ----------------------==>   stitek_B - obálka účastníka 3x7
 report sti_B [0,0,200,287] { format:'A4:5,6,70,41',
   box lines     [  2.6, 11.0, 60.0, 27.3] { style:'12,L',      title:'{line1}<br>{line2}<br>{line3}<br>{line4}' }
 }
-# -------------------------   stitek_C - stravenky     pro LJ DN2200 je format:'A4:5,5,50,24',
+# ----------------------==>   stitek_C - stravenky     pro LJ DN2200 je format:'A4:5,5,50,24',
 report sti_C [0,0,210,297] { format:'A4:5,3,50,24',
   box ram       [  1,  1, 48, 22] { style:'8,L,LT',             title:'{ram}' }
   box end       [  1,  1, 48, 22] { style:'8,L,RB',             title:'{end}' }
@@ -402,7 +419,7 @@ report sti_C [0,0,210,297] { format:'A4:5,3,50,24',
   box lines     [  2,  8, 48, 16] { style:'14,L',               title:'{line1}<br>{line2}' }
   box rect      [ 25, 10, 20, 14] { style:'20,R',               title:'{rect}' }
 }
-# -------------------------   stitek_V - vizitky
+# ----------------------==>   stitek_V - vizitky
 report sti_V [0,0,210,297] { format:'A4:15,10,90,55',
   box ram       [  0,  0, 90, 55] { style:'1,L,LTRB:0.05 dotted 250', title:' ' }
   box jmeno     [ 10, 10, 80, 40] { style:'30,L',                     title:'{jmeno}<br>{prijmeni}' }
