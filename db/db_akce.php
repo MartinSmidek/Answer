@@ -6739,6 +6739,7 @@ function akce_plachta($akce,$par,$title,$vypis,$export=0) { trace();
   // letošní účastníci
   $qry=  "SELECT
           datum_od,
+          FIND_IN_SET(1,r_umi) AS _umi_vps,
           r.nazev as jmeno,p.pouze as pouze,r.obec as mesto,svatba,datsvatba,p.funkce as funkce,
           GROUP_CONCAT(DISTINCT IF(t.role='a',o.id_osoba,'') SEPARATOR '') as id_osoba_m,
           GROUP_CONCAT(DISTINCT IF(t.role='a',o.prijmeni,'') SEPARATOR '') as prijmeni_m,
@@ -6773,7 +6774,7 @@ function akce_plachta($akce,$par,$title,$vypis,$export=0) { trace();
           LEFT JOIN tvori AS t ON t.id_osoba=o.id_osoba
           LEFT JOIN rodina AS r USING(id_rodina)
           JOIN akce AS a ON a.id_duakce=p.id_akce
-          WHERE id_akce=$akce AND p.funkce IN (0,1,2,5)
+          WHERE id_akce=$akce AND p.funkce IN (0,1,2,5)  -- včetně hospodářů, bývají hosty skupinky
           GROUP BY id_pobyt
           ORDER BY IF(pouze=0,r.nazev,o.prijmeni) ";
 //   $qry.= " LIMIT 1";
@@ -6823,8 +6824,15 @@ function akce_plachta($akce,$par,$title,$vypis,$export=0) { trace();
     $cirkev= $u->cirkev_m==$u->cirkev_z
       ? ($u->cirkev_m==1 ? '' : ", {$c_cirkev[$u->cirkev_m]}")
       : ", {$c_cirkev[$u->cirkev_m]}/{$c_cirkev[$u->cirkev_z]}";
-    // agregace
-    $r1= ($u->funkce==1||$u->funkce==2 ? '* ' : '')."{$u->jmeno} {$u->jmeno_m} a {$u->jmeno_z} {$u->ucasti}";
+    // --------------------------------------------------------------  pro PDF
+    $vps= ($u->funkce==1||$u->funkce==2 ? '* ' : ($u->_umi_vps ? '+ ' : ''));
+    $key= str_pad($vzdelani_muze,2,' ',STR_PAD_LEFT).str_pad($vek_m,2,'0',STR_PAD_LEFT).$vps.$u->jmeno;
+    list($prijmeni1,$etc)= explode(' ',$u->jmeno);
+    if ( $etc ) $prijmeni1.= " ...";
+    $result->pdf[$key]= array(
+      'vps'=>$vps,'prijmeni'=>$prijmeni1,'jmena'=>"{$u->jmeno_m} a {$u->jmeno_z}");
+    // --------------------------------------------------------------  pro XLS
+    $r1= "$vps{$u->jmeno} {$u->jmeno_m} a {$u->jmeno_z} {$u->ucasti}";
     $r2= "věk:$vek, spolu:$spolu, dětí:$deti, {$u->mesto}, $vzdelani $cirkev";
     // atributy
     $r31= $u->aktivita_m;

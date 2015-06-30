@@ -401,10 +401,12 @@ function tisk_sestava($akce,$par,$title,$vypis,$export=false) { trace();
 //      : ( $par->typ=='fp' ? akce_sestava_pred($akce,$par,$title,$vypis,$export)
 //      : ( $par->typ=='12' ? akce_jednou_dvakrat($akce,$par,$title,$vypis,$export)
 //      : ( $par->typ=='cz' ? akce_cerstve_zmeny($akce,$par,$title,$vypis,$export)
+     : ( $par->typ=='ss' ? tisk_pdf_plachta($akce,$export)
+     : ( $par->typ=='s0' ? tisk_pdf_plachta0($export)
      : (object)array('html'=>"<i>Tato sestava zatím není převedena do nové verze systému,
           <a href='mailto:martin@smidek.eu'>upozorněte mě</a>, že ji už potřebujete</i>")
 //        )))))))))))))))
-     ))))));
+     ))))))));
 }
 # ----------------------------------------------------------------------------------------- tisk_qry
 # frekventované SQL dotazy s parametry
@@ -666,6 +668,106 @@ function tisk_pdf_prijem($akce,$par,$report_json) {  trace();
   $fpath= "$ezer_path_docs/$fname.pdf";
   dop_rep_ids($report_json,$parss,$fpath);
   $result->html= " Výpis byl vygenerován ve formátu <a href='docs/$fname.pdf' target='pdf'>PDF</a>.";
+  return $result;
+}
+# -------------------------------------------------------------------------------- tisk_pdf_plachta0
+# generování pomocných štítků
+function tisk_pdf_plachta0($report_json=0) {  trace();
+  global $json, $ezer_path_docs;
+  $result= (object)array('_error'=>0);
+  $n= 0;
+  if ( $report_json) {
+    $parss= array();
+    for ($i= 1; $i<=30; $i++ ) {
+      // definice pole substitucí
+      $parss[$n]= (object)array();  // {cislo]
+      $fs= 20;
+      $s1= "font-size:{$fs}mm;font-weight:bold";
+      $bg1= ";color:#00aa00";
+      $ii= $i<10 ? "&nbsp;$i" : $i;
+      $parss[$n]->prijmeni= "<span style=\"$s1$bg1\">$ii</span>";
+      $parss[$n]->jmena= '';
+      $n++;
+    }
+    for ($i= 1; $i<=12; $i++ ) {
+      // definice pole substitucí
+      $parss[$n]= (object)array();  // {cislo]
+      $fs= 20;
+      $s1= "font-size:{$fs}mm;font-weight:bold";
+      $bg1= ";color:#aa0000";
+      $ii= $i<10 ? "&nbsp;$i" : "&nbsp;&nbsp;&nbsp;";
+      $ia= chr(ord('a')+$i-1);
+      $parss[$n]->prijmeni= "<span style=\"$s1$bg1\">$ii &nbsp;&nbsp;  $ia</span>";
+      $parss[$n]->jmena= '';
+      $n++;
+    }
+//                                         debug($parss,"tisk_pdf_plachta..."); return $result;
+    // předání k tisku
+    $fname= 'stitky_'.date("Ymd_Hi");
+    $fpath= "$ezer_path_docs/$fname.pdf";
+    dop_rep_ids($report_json,$parss,$fpath);
+    $result->html= " Výpis byl vygenerován ve formátu <a href='docs/$fname.pdf' target='pdf'>PDF</a>.";
+  }
+  else {
+    $result->html= "pomocné šítky";
+  }
+  return $result;
+}
+# --------------------------------------------------------------------------------- tisk_pdf_plachta
+# generování štítků se jmény párů
+function tisk_pdf_plachta($akce,$report_json=0) {  trace();
+  global $json, $ezer_path_docs;
+  $result= (object)array('_error'=>0);
+  $html= '';
+  // získání dat
+  $tab= akce_plachta($akce,$par,$title,$vypis,0);
+  unset($tab->xhref);
+  unset($tab->html);
+  ksort($tab->pdf);
+  // projdi vygenerované záznamy
+  $n= 0;
+  if ( $report_json) {
+    $parss= array();
+    foreach ( $tab->pdf as $xa ) {
+      // definice pole substitucí
+      $x= (object)$xa;
+      $parss[$n]= (object)array();  // {prijmeni}<br>{jmena}
+      $prijmeni= $x->prijmeni;
+      $len= mb_strlen($prijmeni);
+      $xlen= round(tc_StringWidth($prijmeni,'B',15));
+      $fs= 20;
+      if ( $xlen<20 ) {
+        $fw= 'condensed';
+      }
+      elseif ( $xlen<27 ) {
+        $fw= 'condensed';
+      }
+      elseif ( $xlen<37 ) {
+        $fw= 'extra-condensed';
+      }
+      else {
+        $fw= 'ultra-condensed';
+      }
+      $s1= "font-stretch:$fw;font-size:{$fs}mm;font-weight:bold;text-align:center";
+      $bg1= $x->vps=='* ' ? "background-color:gold" : ($x->vps=='+ ' ? "background-color:lightblue" : '');
+      $s2= "font-size:5mm;text-align:center";
+      $bg2= $x->vps=='+ ' ? "background-color:#eeeeee" : '';
+      $bg2= '';
+      $parss[$n]->prijmeni= "<span style=\"$s1;$bg1\">$prijmeni</span>";
+
+      $parss[$n]->jmena= "<span style=\"$s2;$bg2\"><br>{$x->jmena}</span>";
+      $n++;
+    }
+//                                         debug($parss,"tisk_pdf_plachta..."); return $result;
+    // předání k tisku
+    $fname= 'stitky_'.date("Ymd_Hi");
+    $fpath= "$ezer_path_docs/$fname.pdf";
+    dop_rep_ids($report_json,$parss,$fpath);
+    $result->html= " Výpis byl vygenerován ve formátu <a href='docs/$fname.pdf' target='pdf'>PDF</a>.";
+  }
+  else {
+    $result= sta_table(array('příjmení','jména'),array('prijmeni','jmena'),$tab->pdf);
+  }
   return $result;
 }
 # -------------------------------------------------------------------------------- tisk_sestava_pary
@@ -1724,7 +1826,7 @@ function sta_sestava($title,$par,$export=false) {
     $cert= array(); // certifikát rok=>poslední číslo
     $rok= date('Y');
     $hranice= date('Y') - $par->parm;
-    $vps1= $VPS=='VPS' ? 17 : 3;
+    $vps1= $VPS=='VPS' ? '3,17' : '3';
     if ( $par->podtyp=='pary' ) {
       $tits= array("pár:26","poprvé:10","kolikrát:10","naposledy:10",
                  $VPS=='VPS'?"VPS I:10":"1.školení:10","č.člen od:10","(ID)");
@@ -1751,7 +1853,7 @@ function sta_sestava($title,$par,$export=false) {
         CEIL(CHAR_LENGTH(
           GROUP_CONCAT(DISTINCT IF(druh=1 AND funkce=1,YEAR(datum_od),'') SEPARATOR ''))/4) AS Nx,
         MAX(IF(druh=1 AND funkce=1,YEAR(datum_od),0)) AS DO,
-        MIN(IF(druh=$vps1,YEAR(datum_od),9999)) as VPS_I,
+        MIN(IF(druh IN ($vps1),YEAR(datum_od),9999)) as VPS_I,
         GROUP_CONCAT(DISTINCT od.ukon ORDER BY od.ukon SEPARATOR '') as rel,
         GROUP_CONCAT(DISTINCT CONCAT(ukon,':',YEAR(dat_od),':',YEAR(dat_do),':',castka)
           ORDER BY dat_od DESC SEPARATOR '|') AS _ukony
@@ -2046,7 +2148,7 @@ function sta_sestava_adresy_fill($matches) { trace();
 }
 # ---------------------------------------------------------------------------------------- sta_table
 function sta_table($tits,$flds,$clmn,$export=false) {  trace();
-  $ret= (object)array();
+  $ret= (object)array('html'=>'');
   // zobrazení tabulkou
   $tab= '';
   $thd= '';
@@ -2071,8 +2173,10 @@ function sta_table($tits,$flds,$clmn,$export=false) {  trace();
           $tab.= "<td style='text-align:right'>".sta_ukaz_rodinu($c['^id_rodina'])."</td>";
         elseif ( $f=='^id_pobyt' )
           $tab.= "<td style='text-align:right'>".sta_ukaz_pobyt($c['^id_pobyt'])."</td>";
-        else
+        else {
+//                                 debug($c,$f); return $ret;
           $tab.= "<td style='text-align:left'>{$c[$f]}</td>";
+        }
       }
       $tab.= "</tr>";
       $n++;
@@ -2623,9 +2727,9 @@ function akce2_osoba2x($id_osoba) { trace();
     GROUP BY o.id_osoba");
   $o= sql_query("SELECT $adresa,$kontakt FROM osoba WHERE id_osoba='$id_osoba'");
   $r= sql_query("SELECT $adresa,$kontakty FROM rodina WHERE id_rodina='$k->id_rodina'");
-                                                        debug($k,"kmen");
-                                                        debug($r,"rodina");
-                                                        debug($o,"osoba ".(empty($o)?'e':'f'));
+//                                                         debug($k,"kmen");
+//                                                         debug($r,"rodina");
+//                                                         debug($o,"osoba ".(empty($o)?'e':'f'));
   $ret= (object)array();
   foreach(explode(',',$rets) as $f) {
     $ret->$f= (object)array();

@@ -43,6 +43,7 @@ body { position:absolute; width:100%; height:100%; }
 .db_hr  { border-top:1px solid $s1_brow; }
 .db_evidence {  font-size:9px; background-color:$b_work; height:15px;
                 color:$s1_brow; font-weight:bold; padding:0 2px; }
+button.db_evidence:disabled { color:silver; }
 .curr_akce { background-color:$nazelenala !important; color:$bila; font-weight:bold; }
 .form_note { font-size:10px; color:$s1_brow }
 .title_ref { color:#ffffff !important; }
