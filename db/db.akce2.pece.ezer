@@ -314,9 +314,9 @@ form _pece [,,400,] { css:'ds_form'
 #   label         [4,516,,] {title:'pobyt - vývojářské údaje', skill:'m'}
 #   label develop [0,530,380,106] { skill:'m', style:'border:1px solid #bbb;padding:3px' }
   // legenda
-  label leg [5,5,147,11] { title:"<span class='yellow'>je v evidenci rodiny na kurzu </span>"}
+  label leg [20,6,400,17] { title:"<span class='yellow'>zobrazit (pom.peč, os.peč., člen G), zapsané u rodičů na kartě Účastníci</span>"}
   // omezení browse
-  check nevlastni [-5,3,243,15] { title:'zobrazit pom.,os.,členy G z evidence rodin', value:'0', format:'tn'
+  check nevlastni [0,2,15,15] { title:' ', value:'1', format:'tn'
     proc onchange() { reload(0) }}
   // definice pohledů
   view s: table spolu
