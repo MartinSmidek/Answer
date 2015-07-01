@@ -1144,7 +1144,6 @@ form _spolu [,,0,270] {
       proc onchanged() { show_spolu;
         eq(this.key,4); pfunkce.set(4); pfunkce.change
       | eq(this.key,5); pecoun.get; pfunkce.set(5); pfunkce.change
-      | eq(this.key,7); pfunkce.set(8); pfunkce.change
       | pfunkce.set(0); pfunkce.change
       }
   }
@@ -1158,6 +1157,8 @@ form _spolu [,,0,270] {
   select s_dite_kat [54,0,130,] { tag:'d', type:'map', options:ms_akce_dite_kat.hodnota,
     data:s.dite_kat, title:'kategorie:', format:'nuw'
     proc onchanged() { var a:object
+      [ eq(this.key,7); pfunkce.set(8); pfunkce.change
+      | pfunkce.set(0); pfunkce.change  ];
       // kategorii kontrolujeme pouze pro FA
       eq(substr(sys('ezer','options','app'),0,2),'fa');
       { a.set(ask('akce_test_dite_kat',this.key,evid.rod.cleni.narozeni.get,the_duakce.get)); a.ok
