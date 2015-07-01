@@ -6452,7 +6452,7 @@ function akce_skup_get($akce,$kontrola,&$err,$par=null) { trace();
   while ( $res && ($s= mysql_fetch_object($res)) ) {
     if ( $s->_n_svps==1 || $s->_n_vps==1 ) {
       $skupina= array();
-      if ( $par && $par->verze=='2' ) {
+      if ( $par && $par->verze=='DS' ) {
         $qryu= "
           SELECT p.id_pobyt,skupina,nazev,pokoj,
             GROUP_CONCAT(o.id_osoba) as ids_osoba,
@@ -6464,6 +6464,21 @@ function akce_skup_get($akce,$kontrola,&$err,$par=null) { trace();
           LEFT JOIN tvori AS t ON t.id_osoba=o.id_osoba
           LEFT JOIN rodina AS r USING(id_rodina)
           WHERE p.id_pobyt IN ({$s->_skupina})
+          GROUP BY id_pobyt
+          ORDER BY IF(funkce IN (1,2),1,2), nazev";
+      }
+      elseif ( $par && $par->verze=='MS' ) {
+        $qryu= "
+          SELECT p.id_pobyt,skupina,nazev,pokoj,
+            GROUP_CONCAT(o.id_osoba) as ids_osoba,
+            GROUP_CONCAT(o.id_osoba) as id_osoba_m,
+            CONCAT(nazev,' ',GROUP_CONCAT(o.jmeno SEPARATOR ' a ')) AS _nazev
+          FROM pobyt AS p
+          JOIN spolu AS s USING(id_pobyt)
+          JOIN osoba AS o ON s.id_osoba=o.id_osoba
+          LEFT JOIN tvori AS t ON t.id_osoba=o.id_osoba AND id_rodina=i0_rodina
+          LEFT JOIN rodina AS r USING(id_rodina)
+          WHERE p.id_pobyt IN ({$s->_skupina}) AND t.role IN ('a','b')
           GROUP BY id_pobyt
           ORDER BY IF(funkce IN (1,2),1,2), nazev";
       }
@@ -6552,8 +6567,12 @@ function akce_skup_get($akce,$kontrola,&$err,$par=null) { trace();
   }
 //                                                         debug($skup,"skupiny");
   // redakce chyb
-  if ( $celkem!=$n ) {
+  if ( $celkem>$n ) {
     $msg[]= ($celkem-$n)." účastníků není zařazeno do skupinek";
+    $err+= 1;
+  }
+  elseif ( $celkem<$n ) {
+    $msg[]= ($n-$celkem)." je zařazeno do skupinek navíc (třeba hospodáři?)";
     $err+= 1;
   }
   if ( count($msg) && !$kontrola )
