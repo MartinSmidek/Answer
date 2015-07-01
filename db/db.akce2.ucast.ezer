@@ -1141,7 +1141,12 @@ form _spolu [,,0,270] {
   // r = role
   select s_role [55,2,90,] {tag:'r', type:'map', options:ms_akce_s_role.zkratka, format:'nu'
     data:s.s_role, title:'účast jako:',
-      proc onchanged() { show_spolu }
+      proc onchanged() { show_spolu;
+        eq(this.key,4); pfunkce.set(4); pfunkce.change
+      | eq(this.key,5); pecoun.get; pfunkce.set(5); pfunkce.change
+      | eq(this.key,7); pfunkce.set(8); pfunkce.change
+      | pfunkce.set(0); pfunkce.change
+      }
   }
 
   // informace závislé na s_roli
@@ -1174,7 +1179,7 @@ form _spolu [,,0,270] {
    proc onclick() { jump(evid.rod.cleni.pece_ido.get) } }
   field pfunkce { data:s.pfunkce }
   check pecoun [36,27,130,17] { tag:'c', title:"je v kolektivu pečounů", format:'n', value:'0'
-    proc onchange () { // 0 => osobní & 'dědeček'
+    proc onchange () { // 0 => osobní & 'dědeček' -- nezabrazí se na kartě Pečouni
       this.get; pfunkce.set(5); pfunkce.change
     | pfunkce.set(0); pfunkce.change
   } }

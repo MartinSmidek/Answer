@@ -229,57 +229,57 @@ menu m {type:'left', active:*
   # ---------------------------------------------------------------------------------------------==> jmenovky
   menu {tag:'a', title:'jmenovky na akci',type:'group',_sys:'*'
     item {title:'Účastníci bez funkce'                                                                  skill:'f'
-                                        ,par:°{typ:'j',exp:'Excel',exp2:'PDF-jmenovky'
+                                        ,par:°{typ:'j',exp:'Excel2',exp2:'PDF-jmenovky'
                                         ,cnd:"funkce=0",hav:"_vek>=18 OR r_role IN ('a','b')",ord:"prijmeni"
                                         ,tit:'jméno:20, příjmení:15',fld:'jmeno,prijmeni'}}
     item {title:'Účastníci'                                                                             skill:'y;c'
-                                        ,par:°{typ:'j',exp:'Excel',exp2:'PDF-jmenovky'
+                                        ,par:°{typ:'j',exp:'Excel2',exp2:'PDF-jmenovky'
                                         ,cnd:"funkce IN (0,1,2)",hav:"_vek>=18 OR r_role IN ('a','b')",ord:"prijmeni"
                                         ,tit:'jméno:20, příjmení:15',fld:'jmeno,prijmeni'}}
     item {title:'Účastníci (výběr)'                                                                     skill:'y;f;c'
-                                        ,par:°{typ:'j',exp:'Excel',exp2:'PDF-jmenovky',sel:'yes'
+                                        ,par:°{typ:'j',exp:'Excel2',exp2:'PDF-jmenovky',sel:'yes'
                                         ,cnd:"funkce IN (0,1,2)",hav:"_vek>=18 OR r_role IN ('a','b')",ord:"prijmeni"
                                         ,tit:'jméno:20, příjmení:15',fld:'jmeno,prijmeni'}}
-    item {title:'Děti'                  ,par:°{typ:'j',exp:'Excel',exp2:'PDF-jmenovky'
+    item {title:'Děti'                  ,par:°{typ:'j',exp:'Excel2',exp2:'PDF-jmenovky'
                                         ,cnd:"pfunkce NOT IN (4,5,6,8) AND funkce!=99",hav:"_vek<18"
                                         ,ord:"prijmeni"
                                         ,tit:'jméno:20, příjmení:15',fld:'jmeno,prijmeni'}}
-    item {title:'Děti (výběr)'          ,par:°{typ:'j',exp:'Excel',exp2:'PDF-jmenovky',sel:'yes'
+    item {title:'Děti (výběr)'          ,par:°{typ:'j',exp:'Excel2',exp2:'PDF-jmenovky',sel:'yes'
                                         ,cnd:"pfunkce NOT IN (4,5,6,8) AND funkce!=99",hav:"_vek<18"
                                         ,ord:"prijmeni"
                                         ,tit:'jméno:20, příjmení:15',fld:'jmeno,prijmeni'}}
-    item {title:'Chůvy'                 ,par:°{typ:'j',exp:'Excel',exp2:'PDF-jmenovky'
+    item {title:'Chůvy'                 ,par:°{typ:'j',exp:'Excel2',exp2:'PDF-jmenovky'
                                         ,cnd:"pfunkce IN (5) AND funkce!=99",hav:"_vek<18"
                                         ,ord:"prijmeni"
                                         ,tit:'jméno:20, příjmení:15',fld:'jmeno,prijmeni'}}
-    item {title:'Chůvy (výběr)'         ,par:°{typ:'j',exp:'Excel',exp2:'PDF-jmenovky',sel:'yes'
+    item {title:'Chůvy (výběr)'         ,par:°{typ:'j',exp:'Excel2',exp2:'PDF-jmenovky',sel:'yes'
                                         ,cnd:"pfunkce IN (5) AND funkce!=99",hav:"_vek<18"
                                         ,ord:"prijmeni"
                                         ,tit:'jméno:20, příjmení:15',fld:'jmeno,prijmeni'}}
-    item {title:'Pečouni'               ,par:°{typ:'j',exp:'Excel',exp2:'PDF-jmenovky'
+    item {title:'Pečouni'               ,par:°{typ:'j',exp:'Excel2',exp2:'PDF-jmenovky'
                                         ,cnd:"p.funkce=99",ord:"prijmeni"
                                         ,tit:'jméno:20, příjmení:15',fld:'jmeno,prijmeni'}}
-    item {title:'Pečouni (výběr)'       ,par:°{typ:'j',exp:'Excel',exp2:'PDF-jmenovky',sel:'yes'
+    item {title:'Pečouni (výběr)'       ,par:°{typ:'j',exp:'Excel2',exp2:'PDF-jmenovky',sel:'yes'
                                         ,cnd:"p.funkce=99",ord:"prijmeni"
                                         ,tit:'jméno:20, příjmení:15',fld:'jmeno,prijmeni'}}
     item {title:'VPS'                                                                                   skill:'-'
-                                        ,par:°{typ:'j',exp:'Excel',exp2:'PDF-jmenovky'
+                                        ,par:°{typ:'j',exp:'Excel2',exp2:'PDF-jmenovky'
                                         ,cnd:"funkce IN (1,2)",ord:"prijmeni",hav:"_vek>=18 OR r_role IN ('a','b')"
                                         ,tit:'jméno:20, příjmení:15',fld:'jmeno,prijmeni'}}
     item {title:'PPS'                                                                                   skill:'f'
-                                        ,par:°{typ:'j',exp:'Excel',exp2:'PDF-jmenovky'
+                                        ,par:°{typ:'j',exp:'Excel2',exp2:'PDF-jmenovky'
                                         ,cnd:"funkce IN (1,2)",ord:"prijmeni",hav:"_vek>=18 OR r_role IN ('a','b')"
                                         ,tit:'jméno:20, příjmení:15',fld:'jmeno,prijmeni'}}
-    item {title:'Kněží'                 ,par:°{typ:'j',exp:'Excel',exp2:'PDF-jmenovky'
+    item {title:'Kněží'                 ,par:°{typ:'j',exp:'Excel2',exp2:'PDF-jmenovky'
                                         ,cnd:"funkce=3",ord:"prijmeni"
                                         ,tit:'jméno:20, příjmení:15',fld:'jmeno,prijmeni'}}
-    item {title:'Psychologové'          ,par:°{typ:'j',exp:'Excel',exp2:'PDF-jmenovky'
+    item {title:'Psychologové'          ,par:°{typ:'j',exp:'Excel2',exp2:'PDF-jmenovky'
                                         ,cnd:"funkce=4",ord:"prijmeni",hav:"_vek>=18 OR r_role IN ('a','b')"
                                         ,tit:'jméno:20, příjmení:15',fld:'jmeno,prijmeni'}}
-    item {title:'Hospodáři'             ,par:°{typ:'j',exp:'Excel',exp2:'PDF-jmenovky'
+    item {title:'Hospodáři'             ,par:°{typ:'j',exp:'Excel2',exp2:'PDF-jmenovky'
                                         ,cnd:"funkce=5",ord:"prijmeni",hav:"_vek>=18 OR r_role IN ('a','b')"
                                         ,tit:'jméno:20, příjmení:15',fld:'jmeno,prijmeni'}}
-    item {title:'... ostatní'           ,par:°{typ:'j',exp:'Excel',exp2:'PDF-jmenovky'
+    item {title:'... ostatní'           ,par:°{typ:'j',exp:'Excel2',exp2:'PDF-jmenovky'
                                         ,cnd:"funkce NOT IN (0,1,2,3,4,5)",ord:"prijmeni",hav:"_vek>=18"
                                         ,tit:'jméno:20, příjmení:15',fld:'jmeno,prijmeni'}}
   }
