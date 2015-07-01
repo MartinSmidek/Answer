@@ -5509,8 +5509,7 @@ function akce_sestava_noci($akce,$par,$title,$vypis,$export=false) { trace();
 #          (tzn. asi nejsou na celý pobyt)
 function akce_stravenky($akce,$par,$title,$vypis,$export=false) { trace();
 //                                                         debug($par,"akce_stravenky($akce,,$title,$vypis,$export)");
-//   $ord= $par->ord ? $par->ord : "IF(funkce<=2,1,funkce),IF(pouze=0,r.nazev,o.prijmeni)";
-  $ord= $par->ord ? $par->ord : "_jm";
+  $ord= $par->ord ? $par->ord : "IF(funkce<=2,1,funkce),IF(pouze=0,r.nazev,o.prijmeni)";
   $result= (object)array();
   $cnd= $par->cnd;
   $note= $delnote= $html= $href= '';
@@ -5581,21 +5580,21 @@ function akce_stravenky($akce,$par,$title,$vypis,$export=false) { trace();
           WHERE p.id_akce='$akce' AND p.funkce=99 AND s_rodici=0
           ORDER BY o.prijmeni,o.jmeno";
   else
-    $qry="SELECT r.nazev as nazev,strava_cel,strava_pol,cstrava_cel,cstrava_pol,p.pouze,
-            GROUP_CONCAT(DISTINCT IF(t.role='a',o.prijmeni,'') SEPARATOR '') as prijmeni_m,
-            GROUP_CONCAT(DISTINCT IF(t.role='a',o.jmeno,'')    SEPARATOR '') as jmeno_m,
-            GROUP_CONCAT(DISTINCT IF(t.role='b',o.prijmeni,'') SEPARATOR '') as prijmeni_z,
-            GROUP_CONCAT(DISTINCT IF(t.role='b',o.jmeno,'')    SEPARATOR '') as jmeno_z,
-            a.nazev AS akce_nazev, YEAR(a.datum_od) AS akce_rok, a.misto AS akce_misto
-          FROM pobyt AS p
-          JOIN akce  AS a ON p.id_akce=a.id_duakce
-          JOIN spolu AS s USING(id_pobyt)
-          JOIN osoba AS o ON s.id_osoba=o.id_osoba
-          LEFT JOIN tvori AS t ON t.id_osoba=o.id_osoba
-          LEFT JOIN rodina AS r USING(id_rodina)
-          WHERE p.id_akce='$akce' AND $cond
-          GROUP BY id_pobyt
-          ORDER BY $ord";
+//     $qry="SELECT r.nazev as nazev,strava_cel,strava_pol,cstrava_cel,cstrava_pol,p.pouze,
+//             GROUP_CONCAT(DISTINCT IF(t.role='a',o.prijmeni,'') SEPARATOR '') as prijmeni_m,
+//             GROUP_CONCAT(DISTINCT IF(t.role='a',o.jmeno,'')    SEPARATOR '') as jmeno_m,
+//             GROUP_CONCAT(DISTINCT IF(t.role='b',o.prijmeni,'') SEPARATOR '') as prijmeni_z,
+//             GROUP_CONCAT(DISTINCT IF(t.role='b',o.jmeno,'')    SEPARATOR '') as jmeno_z,
+//             a.nazev AS akce_nazev, YEAR(a.datum_od) AS akce_rok, a.misto AS akce_misto
+//           FROM pobyt AS p
+//           JOIN akce  AS a ON p.id_akce=a.id_duakce
+//           JOIN spolu AS s USING(id_pobyt)
+//           JOIN osoba AS o ON s.id_osoba=o.id_osoba
+//           LEFT JOIN tvori AS t ON t.id_osoba=o.id_osoba
+//           LEFT JOIN rodina AS r USING(id_rodina)
+//           WHERE p.id_akce='$akce' AND $cond
+//           GROUP BY id_pobyt
+//           ORDER BY $ord";
     $qry="SELECT strava_cel,strava_pol,cstrava_cel,cstrava_pol,p.pouze,
             IF(p.i0_rodina,CONCAT(r.nazev,' ',
               GROUP_CONCAT(po.jmeno ORDER BY role SEPARATOR ' a '))
@@ -5612,7 +5611,7 @@ function akce_stravenky($akce,$par,$title,$vypis,$export=false) { trace();
           JOIN osoba AS pso ON pso.id_osoba=ps.id_osoba
           WHERE p.id_akce='$akce' AND $cond
           GROUP BY p.id_pobyt
-          ORDER BY $ord";
+          ORDER BY _jm";
 //   $qry.=  " LIMIT 1";
   $res= mysql_qry($qry);
   // stravenky - počty po dnech
@@ -5634,14 +5633,13 @@ function akce_stravenky($akce,$par,$title,$vypis,$export=false) { trace();
     $akce_data->misto= $x->akce_misto;
     $str_kdo= array();
     $clmn[$n]= array();
-    $clmn[$n]['manzele']=
+    $stravnik=
          $par->typ=='vjp' ? "{$x->prijmeni} {$x->jmeno}"
        : ($x->pouze==1 ? "{$x->prijmeni_m} {$x->jmeno_m}"
        : ($x->pouze==2 ? "{$x->prijmeni_z} {$x->jmeno_z}"
        : "{$x->nazev} {$x->jmeno_m} a {$x->jmeno_z}"));
-    $clmn[$n]['manzele']=
-         $par->typ=='vjp' ? "{$x->prijmeni} {$x->jmeno}"
-       : $x->_jm;
+    $stravnik= $par->typ=='vjp' ? "{$x->prijmeni} {$x->jmeno}" : $x->_jm;
+    $clmn[$n]['manzele']= $stravnik;
     // stravy
     $sc= $par->typ=='vjp' ? 1 : $x->strava_cel;
     $sp= $x->strava_pol;
@@ -5690,6 +5688,7 @@ function akce_stravenky($akce,$par,$title,$vypis,$export=false) { trace();
         : ($x->pouze==1 ? "{$x->prijmeni_m}|{$x->jmeno_m}"
         : ($x->pouze==2 ? "{$x->prijmeni_z}|{$x->jmeno_z}"
         : "{$x->nazev}|{$x->jmeno_m} a {$x->jmeno_z}"));
+    $kdo= $stravnik;
     $str[$kdo]= $str_kdo;
   }
 //                                                         debug($str,"stravenky");
