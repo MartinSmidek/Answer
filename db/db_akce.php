@@ -5509,7 +5509,8 @@ function akce_sestava_noci($akce,$par,$title,$vypis,$export=false) { trace();
 #          (tzn. asi nejsou na celý pobyt)
 function akce_stravenky($akce,$par,$title,$vypis,$export=false) { trace();
 //                                                         debug($par,"akce_stravenky($akce,,$title,$vypis,$export)");
-  $ord= $par->ord ? $par->ord : "IF(funkce<=2,1,funkce),IF(pouze=0,r.nazev,o.prijmeni)";
+//   $ord= $par->ord ? $par->ord : "IF(funkce<=2,1,funkce),IF(pouze=0,r.nazev,o.prijmeni)";
+  $ord= $par->ord ? $par->ord : "_jm";
   $result= (object)array();
   $cnd= $par->cnd;
   $note= $delnote= $html= $href= '';
@@ -5595,6 +5596,23 @@ function akce_stravenky($akce,$par,$title,$vypis,$export=false) { trace();
           WHERE p.id_akce='$akce' AND $cond
           GROUP BY id_pobyt
           ORDER BY $ord";
+    $qry="SELECT strava_cel,strava_pol,cstrava_cel,cstrava_pol,p.pouze,
+            IF(p.i0_rodina,CONCAT(r.nazev,' ',
+              GROUP_CONCAT(po.jmeno ORDER BY role SEPARATOR ' a '))
+             ,GROUP_CONCAT(DISTINCT CONCAT(pso.prijmeni,' ',pso.jmeno)
+               ORDER BY role SEPARATOR ' a ')) as _jm,
+            a.nazev AS akce_nazev, YEAR(a.datum_od) AS akce_rok, a.misto AS akce_misto
+          FROM pobyt AS p
+          JOIN akce AS a ON p.id_akce=a.id_duakce
+          LEFT JOIN rodina AS r ON r.id_rodina=p.i0_rodina
+          JOIN spolu AS ps ON ps.id_pobyt=p.id_pobyt
+          LEFT JOIN tvori AS pt ON pt.id_rodina=p.i0_rodina
+            AND role IN ('a','b') AND ps.id_osoba=pt.id_osoba
+          LEFT JOIN osoba AS po ON po.id_osoba=pt.id_osoba
+          JOIN osoba AS pso ON pso.id_osoba=ps.id_osoba
+          WHERE p.id_akce='$akce' AND $cond
+          GROUP BY p.id_pobyt
+          ORDER BY $ord";
 //   $qry.=  " LIMIT 1";
   $res= mysql_qry($qry);
   // stravenky - počty po dnech
@@ -5621,6 +5639,9 @@ function akce_stravenky($akce,$par,$title,$vypis,$export=false) { trace();
        : ($x->pouze==1 ? "{$x->prijmeni_m} {$x->jmeno_m}"
        : ($x->pouze==2 ? "{$x->prijmeni_z} {$x->jmeno_z}"
        : "{$x->nazev} {$x->jmeno_m} a {$x->jmeno_z}"));
+    $clmn[$n]['manzele']=
+         $par->typ=='vjp' ? "{$x->prijmeni} {$x->jmeno}"
+       : $x->_jm;
     // stravy
     $sc= $par->typ=='vjp' ? 1 : $x->strava_cel;
     $sp= $x->strava_pol;
@@ -5697,7 +5718,8 @@ function akce_stravenky($akce,$par,$title,$vypis,$export=false) { trace();
     }
     $sum.= "</tr>";
   }
-  $result->html= "<div class='stat'><table class='stat'><tr>$ths</tr>$sum$tab</table></div>";
+  $result->html= "Seznam má $n řádků<br><br>";
+  $result->html.= "<div class='stat'><table class='stat'><tr>$ths</tr>$sum$tab</table></div>";
   $result->html.= "</br>";
   $result->href= $href;
   $result->tab= $str;
