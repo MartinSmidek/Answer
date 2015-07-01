@@ -462,7 +462,7 @@ function tisk_qry($typ,$flds='',$where='',$having='',$order='') { trace();
       GROUP BY id_pobyt $having $order
       ";
     break;
-  case 'pobyt_dospeli_ucastnici':
+  case 'pobyt_dospeli_ucastnici': // a i nedospělí pečouni
     $flds=  $flds  ? " $flds," : '';
     $qry= "
       SELECT $flds
@@ -474,8 +474,8 @@ function tisk_qry($typ,$flds='',$where='',$having='',$order='') { trace();
         JOIN spolu AS ps ON ps.id_pobyt=p.id_pobyt
         LEFT JOIN tvori AS pt ON pt.id_rodina=p.i0_rodina AND role IN ('a','b') AND ps.id_osoba=pt.id_osoba
         LEFT JOIN osoba AS po ON po.id_osoba=pt.id_osoba
-        JOIN osoba AS pso ON pso.id_osoba=ps.id_osoba AND DATEDIFF(a.datum_od,pso.narozeni)/365.2425>18
-      $where
+        JOIN osoba AS pso ON pso.id_osoba=ps.id_osoba
+      $where AND IF(funkce=99,1,DATEDIFF(a.datum_od,pso.narozeni)/365.2425>18)
       GROUP BY p.id_pobyt $having $order
     ";
     break;
@@ -1354,6 +1354,7 @@ function akce2_strava_pary($akce,$par,$title,$vypis,$export=false,$id_pobyt=0) {
       $jsou_pecouni= true;
       $clmn[$n]['manzele']= 'PEČOUNI';
       $sc= $x->_pocet;
+      $sp= 0;
       $k= 0;
       for ($i= 0; $i<=$nd; $i++) {
         if ( $i>0 || $oo[0]=='s' ) {
