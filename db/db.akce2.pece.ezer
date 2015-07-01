@@ -54,7 +54,7 @@ proc h_change_b() { var r:number, h:number
   h.set(sys('screen','height'));
   r.set(divide(sum(h.get,-175),17));
   not(eq(r,up.b.rows));
-  up.b.set_attrib('rows',max(5,r));
+  up.b.set_attrib('rows',max(5,sum(r,-1)));
   p_oso.d.set_attrib('rows',max(4,sum(r,-18)));
   p_act.akc.set_attrib('rows',max(5,sum(r,-2)));
 }
@@ -327,7 +327,7 @@ form _pece [,,400,] { css:'ds_form'
   view r: table rodina { join_type:'LEFT', join:'ON r.id_rodina=t.id_rodina' }
   view c: table osoba  { join_type:'LEFT', join:'ON c.id_osoba=s.pecovane' }
   // ==> seznam pečounů
-  browse b [0,22,,] {type:'smart', buf_rows:120, rows:27, qry_rows:1 //, group_by:"s.id_spolu"
+  browse b [0,22,,] {type:'smart', buf_rows:120, rows:27, qry_rows:1, group_by:"s.id_osoba"
 #       ?     hlavoun  pomocny  osobni   mimořádný team   skupina G
 #   css_rows:'pfunkce,0:nic,1:nic,4:zluty,5:zluty,6:nic,7:nic,8:zluty'
     css_rows:'funkce,0:nic,1:zluty'
