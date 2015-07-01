@@ -10,7 +10,7 @@ var the_pobyt: number           // klíč společného pobytu pečounů
 var back: object
 
 use header: form _header   [  4,  0,,]
-use up:     form _pece     [  6, 30,,]
+use up:     form _pece     [  6, 25,,]
 use page:   form _page     [400, 10,,]
 use p_oso:  form _osoba    [400, 10,,]       { tag:'p_oso' }
 use cmd:    form _cmd      [400,420,,]       { tag:'p_oso' }
@@ -93,8 +93,8 @@ proc reload(id_spolu) {  //==> reload pečounů
   [ the_pobyt.get
   | the_pobyt.set(pobyt.insert_record(object('id_akce',the_duakce.get,'funkce',99))) ];
   up.b.browse_load(cconc(up.nevlastni.get,
-    conc("(p.funkce=99 OR s.s_role IN (4,5) OR s.pfunkce IN (4,5,8)) AND p.id_akce=",
-      the_duakce.get),  // vyloučení dědečků =95
+    conc("(p.funkce=99 OR s.pfunkce IN (4,5,8)) AND p.id_akce=",
+      the_duakce.get),  // vyloučení dědečků ap. mají s_role=5 ale pfunkce=0
     conc("(p.funkce=99) AND p.id_akce=",the_duakce.get)));
   up.b.browse_focus;
   { id_spolu; up.b.browse_seek(conc('s.id_spolu=',id_spolu)); up.b.reload_pecoun
@@ -223,8 +223,8 @@ form _osoba { tag:'a',
   view o: table osoba,
   const L=0; T=5
   field key_osoba [L+517,T+13,50,] { data:o.id_osoba, format:'ro', css:'Label' }
-  //field key_spolu [L+517,T+25,50,] { format:'ro', style:'color:white', css:'Label' }
-  field _n        [L+517,T+25,50,] { format:'ro', style:'color:white', css:'Label' }
+  field key_spolu [L+517,T+25,50,] { format:'ro', style:'color:white', css:'Label' }
+#   field _n        [L+517,T+25,50,] { format:'ro', style:'color:white', css:'Label' }
   field key_pobyt [L+517,T+37,50,] { format:'ro', style:'color:white', css:'Label' }
   # skoky do evidence, pobyty
   button go_evi [L+474,T+14,,] {title:'^evidence', css:'db_evidence'
@@ -279,9 +279,14 @@ form _osoba { tag:'a',
   view s: table spolu
   select pfunkce [L+5,T+69,173,] {type:'map', data:s.pfunkce, options:ms_akce_pfunkce.zkratka,
     title:'^typ pečovatele'
-    proc onchange() { eq(the_pobyt.get,up.b.key_pobyt.get)
-  | this.key(up.b.pfunkce.get); this.plain;
-    alert("typ pečovatele s rodiči na kurzu je třeba změnit na kartě Úcastníci na kartě dítěte")
+    proc onchange() {
+      eq(the_pobyt.get,up.b.key_pobyt.get);
+      [ eq(this.key,4,5,8);
+        this.key(up.b.pfunkce.get); this.plain;
+        alert("typ 'pomocný', 'osobní' a 'člen G' je možné nastavit jen na kartě Účastníci u rodiny")
+      ]
+    | this.key(up.b.pfunkce.get); this.plain;
+      alert("typ pečovatele s rodiči na kurzu je třeba změnit na kartě Účastníci na kartě dítěte")
   }}
   edit  pozn_akce [L+229,T+192,336,84] {data:s.poznamka,title:'^/ poznámka k pobytu na této akci'}
   // děti
@@ -306,12 +311,12 @@ form _osoba { tag:'a',
 }
 # -----------------------------------------------------------------------------------------==> _pece
 form _pece [,,400,] { css:'ds_form'
-  label         [4,516,,] {title:'pobyt - vývojářské údaje', skill:'m'}
-  label develop [0,530,380,106] { skill:'m', style:'border:1px solid #bbb;padding:3px' }
+#   label         [4,516,,] {title:'pobyt - vývojářské údaje', skill:'m'}
+#   label develop [0,530,380,106] { skill:'m', style:'border:1px solid #bbb;padding:3px' }
   // legenda
-  label leg [5,4,250,11] { title:"<span class='yellow'> rodina na kurzu </span>"}
+  label leg [5,5,147,11] { title:"<span class='yellow'>je v evidenci rodiny na kurzu </span>"}
   // omezení browse
-  check nevlastni [-5,0,177,15] { title:'vč.nepečounských záznamů', value:'0', format:'tn'
+  check nevlastni [-5,3,243,15] { title:'zobrazit pom.,os.,členy G z evidence rodin', value:'0', format:'tn'
     proc onchange() { reload(0) }}
   // definice pohledů
   view s: table spolu
@@ -322,9 +327,10 @@ form _pece [,,400,] { css:'ds_form'
   view r: table rodina { join_type:'LEFT', join:'ON r.id_rodina=t.id_rodina' }
   view c: table osoba  { join_type:'LEFT', join:'ON c.id_osoba=s.pecovane' }
   // ==> seznam pečounů
-  browse b [0,17,,] {type:'smart', buf_rows:120, rows:27, qry_rows:1, group_by:"s.id_spolu"
+  browse b [0,22,,] {type:'smart', buf_rows:120, rows:27, qry_rows:1 //, group_by:"s.id_spolu"
 #       ?     hlavoun  pomocny  osobni   mimořádný team   skupina G
-    css_rows:'pfunkce,0:nic,1:nic,4:zluty,5:zluty,6:nic,7:nic,8:zluty'
+#   css_rows:'pfunkce,0:nic,1:nic,4:zluty,5:zluty,6:nic,7:nic,8:zluty'
+    css_rows:'funkce,0:nic,1:zluty'
     optimize:°{qry:'noseek'},
     // klíče
     show key_spolu  {data:s.id_spolu}
@@ -334,7 +340,7 @@ form _pece [,,400,] { css:'ds_form'
     show key_osoba  {data:o.id_osoba}
     show key_rodina {data:t.id_rodina}
     show role       {data:t.role}
-    show _n         {expr:"CONCAT(s.id_spolu,'/',COUNT(*))"}
+#     show _n         {expr:"CONCAT(s.id_spolu,'/',COUNT(*))"}
     // data
 #     show barva     { expr:"IF(pecovane,1,0)"}
     show fotka     { data:o.fotka }
@@ -361,9 +367,10 @@ form _pece [,,400,] { css:'ds_form'
     show pfunkce   { data:s.pfunkce }
     show pulstrava { data:s.pulstrava }
     // zobrazení
-    show _nazev    [,,130,] { title:'příjmení jméno', format:'s+q*', css_cell:"funkce,0:nic,1:zluty"
+    show _nazev    [,,110,] { title:'příjmení jméno', format:'s+q*', css_cell:"funkce,0:nic,1:zluty"
                               expr:"CONCAT(o.prijmeni,' ',o.jmeno)" }
-    show _pfunkce  [,,40,]  { title:'funkce', data:s.pfunkce, map_pipe:ms_akce_pfunkce.zkratka, format:'q*s' }
+    show _pfunkce  [,,60,]  { title:'funkce', data:s.pfunkce, map_pipe:ms_akce_pfunkce.zkratka, format:'q*s' }
+#     show _pfunkce  [,,60,]  { title:'funkce', expr:"IF(s.pfunkce,s.pfunkce,s.s_role)", map_pipe:ms_akce_pfunkce.zkratka, format:'q*s' }
     show skupinka  [,,20,]  { title:'sk.', data:s.skupinka, format:'rqs:e'}
     show _vek      [,,0,]  { title:'věk', expr:"TIMESTAMPDIFF(YEAR,o.narozeni,datum_od)", format:'rsq*' }
     show _poznamka [,,160,] { title:'osobní pozn. / pozn. k akci', format:'qs', expr:"CONCAT
@@ -392,12 +399,12 @@ form _pece [,,400,] { css:'ds_form'
     proc reload_pecoun() {
       [ has_skill('m');
         { b.browse_count;
-        develop.set(conc(
-           'id_akce=',key_akce.get,', id_pobyt=',key_pobyt.get,', pecovane=',pecovane.get
-          ,'<br>m: id_spolu=', key_spolu.get, ', id_osoba=', key_osoba.get
-          , ', id_rodina=', key_rodina.get, '/', role.get
-        ))
-        | develop.set('') }
+#         develop.set(conc(
+#            'id_akce=',key_akce.get,', id_pobyt=',key_pobyt.get,', pecovane=',pecovane.get
+#           ,'<br>m: id_spolu=', key_spolu.get, ', id_osoba=', key_osoba.get
+#           , ', id_rodina=', key_rodina.get, '/', role.get
+#         ))
+#         | develop.set('') }
       ];
       // ochrana proti neuložené změně, pokud je možné údaje měnit
       has_skill('yaa+;faa+'); not(and(p_oso.same));
