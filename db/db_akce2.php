@@ -1458,8 +1458,6 @@ function akce2_sestava_pecouni($akce,$par,$title,$vypis,$export=false) { trace()
   $html= '';
   $href= '';
   $n= 0;
-  // číselníky                 akce.druh = ms_akce_typ:pečovatelé=7,kurz=1
-  $pfunkce= map_cis('ms_akce_pfunkce','zkratka');  $pfunkce[0]= '?';
   // získání dat - podle $kdo
   $clmn= array();
   $expr= array();       // pro výrazy
@@ -1473,6 +1471,8 @@ function akce2_sestava_pecouni($akce,$par,$title,$vypis,$export=false) { trace()
 # výpočet pro generování sestavy pro účastníky $akce - pečouny a pro statistiku
 function _akce2_sestava_pecouni(&$clmn,$akce,$fld='_skoleni,_sluzba,_reflexe',$cnd=1,$ord=1) {
   $flds= explode(',',$fld);
+  // číselníky                 akce.druh = ms_akce_typ:pečovatelé=7,kurz=1
+  $pfunkce= map_cis('ms_akce_pfunkce','zkratka');  $pfunkce[0]= '?';
   // data akce
   $rel= '';
   $rel= "-YEAR(narozeni)";
