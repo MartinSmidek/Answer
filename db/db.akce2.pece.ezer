@@ -316,7 +316,7 @@ form _pece [,,400,] { css:'ds_form'
   // legenda
   label leg [20,6,400,17] { title:"<span class='yellow'>zobrazit (pom.peč, os.peč., člen G), zapsané u rodičů na kartě Účastníci</span>"}
   // omezení browse
-  check nevlastni [0,2,15,15] { title:' ', value:'1', format:'tn'
+  check nevlastni [0,2,15,15] { title:' ', value:'1', format:'t'
     proc onchange() { reload(0) }}
   // definice pohledů
   view s: table spolu
