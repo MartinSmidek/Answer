@@ -19,7 +19,7 @@ use alb:    form _album    [400, 10,,]       { tag:'p_fot' }
 
 # -----------------------------------------------------------------------------==> inicializace
 proc onstart() {
-  has_skill('a'); up.nevlastni.display(1);
+#   has_skill('a'); up.nevlastni.display(1);
 }
 
 proc onfocus() {
