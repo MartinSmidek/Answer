@@ -4639,7 +4639,7 @@ function akce_sestava_pecouni($akce,$par,$title,$vypis,$export=false) { trace();
           FROM pobyt AS p
           JOIN spolu AS s USING(id_pobyt)
           JOIN osoba AS o ON s.id_osoba=o.id_osoba
-          WHERE p.funkce=99 AND p.id_akce='$akce' AND $cnd
+          WHERE p.funkce=99  AND p.id_akce='$akce' AND $cnd
           ORDER BY $ord";
   $res= mysql_qry($qry);
   while ( $res && ($x= mysql_fetch_object($res)) ) {
