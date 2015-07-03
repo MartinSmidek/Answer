@@ -257,10 +257,10 @@ menu m {type:'left', active:*
                                         ,ord:"prijmeni"
                                         ,tit:'jméno:20, příjmení:15',fld:'jmeno,prijmeni'}}
     item {title:'Pečouni'               ,par:°{typ:'j',exp:'Excel2',exp2:'PDF-jmenovky'
-                                        ,cnd:"p.funkce=99",ord:"prijmeni"
+                                        ,cnd:"(p.funkce=99 OR s.pfunkce IN (4,5,8))",ord:"prijmeni"
                                         ,tit:'jméno:20, příjmení:15',fld:'jmeno,prijmeni'}}
     item {title:'Pečouni (výběr)'       ,par:°{typ:'j',exp:'Excel2',exp2:'PDF-jmenovky',sel:'yes'
-                                        ,cnd:"p.funkce=99",ord:"prijmeni"
+                                        ,cnd:"(p.funkce=99 OR s.pfunkce IN (4,5,8))",ord:"prijmeni"
                                         ,tit:'jméno:20, příjmení:15',fld:'jmeno,prijmeni'}}
     item {title:'VPS'                                                                                   skill:'-'
                                         ,par:°{typ:'j',exp:'Excel2',exp2:'PDF-jmenovky'
@@ -270,12 +270,12 @@ menu m {type:'left', active:*
                                         ,par:°{typ:'j',exp:'Excel2',exp2:'PDF-jmenovky'
                                         ,cnd:"funkce IN (1,2)",ord:"prijmeni",hav:"_vek>=18 OR r_role IN ('a','b')"
                                         ,tit:'jméno:20, příjmení:15',fld:'jmeno,prijmeni'}}
-    item {title:'Kněží'                 ,par:°{typ:'j',exp:'Excel2',exp2:'PDF-jmenovky'
-                                        ,cnd:"funkce=3",ord:"prijmeni"
+    item {title:'Kněží a psychologové'  ,par:°{typ:'j',exp:'Excel2',exp2:'PDF-jmenovky'
+                                        ,cnd:"funkce IN (3,4)",ord:"prijmeni"
                                         ,tit:'jméno:20, příjmení:15',fld:'jmeno,prijmeni'}}
-    item {title:'Psychologové'          ,par:°{typ:'j',exp:'Excel2',exp2:'PDF-jmenovky'
-                                        ,cnd:"funkce=4",ord:"prijmeni",hav:"_vek>=18 OR r_role IN ('a','b')"
-                                        ,tit:'jméno:20, příjmení:15',fld:'jmeno,prijmeni'}}
+#     item {title:'Psychologové'          ,par:°{typ:'j',exp:'Excel2',exp2:'PDF-jmenovky'
+#                                         ,cnd:"funkce=4",ord:"prijmeni",hav:"_vek>=18 OR r_role IN ('a','b')"
+#                                         ,tit:'jméno:20, příjmení:15',fld:'jmeno,prijmeni'}}
     item {title:'Hospodáři'             ,par:°{typ:'j',exp:'Excel2',exp2:'PDF-jmenovky'
                                         ,cnd:"funkce=5",ord:"prijmeni",hav:"_vek>=18 OR r_role IN ('a','b')"
                                         ,tit:'jméno:20, příjmení:15',fld:'jmeno,prijmeni'}}

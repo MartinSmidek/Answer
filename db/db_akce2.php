@@ -1491,10 +1491,10 @@ function _akce2_sestava_pecouni(&$clmn,$akce,$fld='_skoleni,_sluzba,_reflexe',$c
           JOIN osoba AS o USING (id_osoba)
           JOIN akce  AS a ON a.id_duakce=p.id_akce
           JOIN spolu AS xs USING (id_osoba)
-          JOIN pobyt AS xp ON xp.id_pobyt=xs.id_pobyt AND xp.funkce=99
+          JOIN pobyt AS xp ON xp.id_pobyt=xs.id_pobyt -- AND xp.funkce=99
           JOIN akce  AS xa ON xa.id_duakce=xp.id_akce AND YEAR(xa.datum_od)<=YEAR(a.datum_od)
           -- JOIN join_akce AS xg ON xg.id_akce=xp.id_akce
-          WHERE p.funkce=99 AND p.id_akce='$akce' AND $cnd
+          WHERE (p.funkce=99 OR s.pfunkce IN (4,5,8)) AND p.id_akce='$akce' AND $cnd
           GROUP BY id_osoba
           ORDER BY $ord";
   $res= mysql_qry($qry);
