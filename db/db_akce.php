@@ -5391,6 +5391,7 @@ function akce_sestava_noci($akce,$par,$title,$vypis,$export=false) { trace();
   // data akce
   $qry=  "SELECT
             pokoj,luzka,pristylky,pocetdnu,
+            r.id_rodina,prijmeni,jmeno,
             GROUP_CONCAT(DISTINCT IF(t.role='a',o.prijmeni,'') SEPARATOR '') as prijmeni_m,
             GROUP_CONCAT(DISTINCT IF(t.role='a',o.jmeno,'')    SEPARATOR '') as jmeno_m,
             GROUP_CONCAT(DISTINCT IF(t.role='b',o.prijmeni,'') SEPARATOR '') as prijmeni_z,
@@ -5401,7 +5402,7 @@ function akce_sestava_noci($akce,$par,$title,$vypis,$export=false) { trace();
           JOIN osoba AS o ON s.id_osoba=o.id_osoba
           LEFT JOIN tvori AS t ON t.id_osoba=o.id_osoba
           LEFT JOIN rodina AS r ON r.id_rodina=IFNULL(i0_rodina,t.id_rodina)
-          WHERE p.id_akce='$akce' AND funkce NOT IN (9,10) AND $cond
+          WHERE p.id_akce='$akce' AND funkce NOT IN (9,10,99) AND $cond
           GROUP BY id_pobyt
           ORDER BY $ord";
 //   $qry.=  " LIMIT 1";
@@ -5432,14 +5433,15 @@ function akce_sestava_noci($akce,$par,$title,$vypis,$export=false) { trace();
         case 'manzele':
           $val= $x->pouze==1 ? "{$x->prijmeni_m} {$x->jmeno_m}"
              : ($x->pouze==2 ? "{$x->prijmeni_z} {$x->jmeno_z}"
-             : "{$x->nazev} {$x->jmeno_m} a {$x->jmeno_z}");
+             : ($x->id_rodina ? "{$x->nazev} {$x->jmeno_m} a {$x->jmeno_z}"
+             : "{$x->prijmeni} {$x->jmeno}"));
           break;
         case 'jmena':
           $val= $x->pouze==1
               ? $x->jmeno_m : ($x->pouze==2 ? $x->jmeno_z : "{$x->jmeno_m} a {$x->jmeno_z}");
           break;
         case 'prijmeni':
-          $val= $x->pouze==1 ? $x->prijmeni_m : ($x->pouze==2 ? $x->prijmeni_z : $x->nazev);
+          $val= $x->pouze==1 ? $x->prijmeni_m : ($x->pouze==2 ? $x->prijmeni_z : ($x->id_rodina ? $x->nazev : $x->prijmeni));
           break;
         default:
           $val= $f ? $x->$f : '';
@@ -5457,6 +5459,9 @@ function akce_sestava_noci($akce,$par,$title,$vypis,$export=false) { trace();
 //                                         debug($clmn,"sestava pro $akce,$typ,$fld,$cnd");
 //                                         debug($expr,"vzorce pro $akce,$typ,$fld,$cnd");
 //                                         debug($suma,"sumy pro $akce B");
+  // doplnění počtu pečovatelů do poznámky
+  $pecounu= select1("COUNT(*)","pobyt JOIN spolu USING (id_pobyt)","id_akce='$akce' AND funkce IN (99)");
+  $note= $pecounu ? "K údajům v tabulce je třeba přičíst ubytování <b>$pecounu</b> pečounů<br><br>" : "";
   // zobrazení tabulkou
   $tab= '';
   $thd= '';
@@ -5491,7 +5496,7 @@ function akce_sestava_noci($akce,$par,$title,$vypis,$export=false) { trace();
       }
       $sum.= "</tr>";
     }
-    $result->html= "<div class='stat'><table class='stat'><tr>$ths</tr>$sum$tab</table></div>";
+    $result->html= "$note<div class='stat'><table class='stat'><tr>$ths</tr>$sum$tab</table></div>";
     $result->html.= "</br>";
     $result->href= $href;
   }
