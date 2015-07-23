@@ -211,6 +211,10 @@ menu m {type:'left', active:*
                                         ,par:°{typ:'P',exp:'Excel',cnd:"funkce!=99"
                                         ,tit:'příjmení:15,jména:12,obec:25,počet:5,poznámka k akci:50,trvalá poznámka:50'
                                         ,fld:'prijmeni,jmena,obec,_pocet,poznamka,note'}}
+    item {title:'&half; Všichni, pokoje, počty, ...'
+                                        ,par:°{typ:'P',exp:'Excel',cnd:"funkce!=99"
+                                        ,tit:'příjmení:15,jména:30,pokoj:10,dospěli:7,děti:5,poznámka k akci:50,trvalá poznámka:50'
+                                        ,fld:'prijmeni,jmena,pokoj,_pocetA,_pocetD,poznamka,note'}}
     item {title:'&half; Všichni, skupinky a pokoje'
                                         ,par:°{typ:'P',exp:'Excel',cnd:"funkce!=99"
                                         ,tit:'příjmení:15,jména:20,pokoj:10,skupinka:10'
