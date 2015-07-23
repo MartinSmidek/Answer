@@ -4976,6 +4976,7 @@ function akce_sestava_pobyt($akce,$par,$title,$vypis,$export=false) { trace();
   $qry=  "SELECT
             r.nazev as nazev,p.pouze as pouze,p.poznamka,p.platba,p.datplatby,p.zpusobplat,
             COUNT(o.id_osoba) AS _pocet,
+            SUM(IF(t.role IN ('a','b'),1,0)) AS _pocetA,
             GROUP_CONCAT(o.prijmeni ORDER BY t.role DESC) as _prijmeni,
             GROUP_CONCAT(o.jmeno    ORDER BY t.role DESC) as _jmena,
             GROUP_CONCAT(o.email    ORDER BY t.role DESC SEPARATOR ';') as _emaily,
@@ -5038,6 +5039,7 @@ function akce_sestava_pobyt($akce,$par,$title,$vypis,$export=false) { trace();
     foreach($flds as $f) {
 //       $clmn[$n][$f]= $f=='poznamka' && $x->r_note ? ($x->$f.' / '.$x->r_note) : $x->$f;
       switch ($f) {
+      case '_pocetD':   $clmn[$n][$f]= $x->_pocet - $x->_pocetA; break;
       case '=par':      $clmn[$n][$f]= "{$x->prijmeni} {$x->jmena}"; break;
       // fonty: ISOCTEUR, Tekton Pro
       case '=pozpatku': $clmn[$n][$f]= otoc("{$x->prijmeni} {$x->jmena}"); break;
