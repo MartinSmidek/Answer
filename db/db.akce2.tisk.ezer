@@ -178,8 +178,8 @@ menu m {type:'left', active:*
                                         ,fld:'prijmeni,jmeno,obcanka,narozeni_dmy,obec,psc,ulice'}}
     item {title:'Děti na akci s poznámkami'                                                             skill:'y;f'
                                         ,par:°{typ:'j',exp:'Excel2',cnd:"funkce!=99 AND pfunkce!=95",hav:"_vek<18",ord:"narozeni"
-                                        ,tit:'příjmení:15,jméno:12,narození:12,/rč:5,věk:4,obec:25,psč:7,ulice:25,na kurzu jako:20,poznámka k akci:50,trvalá poznámka:50'
-                                        ,fld:'prijmeni,jmeno,narozeni,rc_xxxx,_vek,obec,psc,ulice,pfunkce,_a_note,_t_note'}}
+                                        ,tit:'příjmení:15,jméno:12,narození:12,/rč:5,věk:4,kategorie:10,obec:25,psč:7,ulice:25,na kurzu jako:20,poznámka k akci:50,trvalá poznámka:50'
+                                        ,fld:'prijmeni,jmeno,narozeni,rc_xxxx,_vek,dite_kat,obec,psc,ulice,pfunkce,_a_note,_t_note'}}
     item {title:'Děti na akci s poznámkami'                                                             skill:'c'
                                         ,par:°{typ:'j',exp:'Excel2',cnd:"funkce!=99 AND pfunkce!=95",hav:"_vek<18",ord:"narozeni"
                                         ,tit:'příjmení:15,jméno:12,narození:12,věk:4,obec:25,psč:7,ulice:25,poznámka:100'
