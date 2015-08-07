@@ -8035,7 +8035,7 @@ function akce_auto_jmena2($patt) {  #trace();
          FROM rodina AS r
          JOIN tvori AS t USING(id_rodina)
          JOIN osoba AS o USING(id_osoba)
-         WHERE nazev LIKE '$patt%'
+         WHERE r.deleted='' AND nazev LIKE '$patt%'
          GROUP BY id_rodina HAVING nazev!='' -- _muz!='' AND _zena!=''
          ORDER BY nazev,_muz,_zena
          LIMIT $limit";
@@ -8071,7 +8071,7 @@ function akce_auto_jmena2L($id_rodina) {  #trace();
          FROM rodina AS r
          LEFT JOIN tvori AS t USING(id_rodina)
          LEFT JOIN osoba AS o USING(id_osoba)
-         WHERE id_rodina='$id_rodina'
+         WHERE r.deleted='' AND id_rodina='$id_rodina'
 	 GROUP BY id_rodina ORDER BY nazev";
   $res= mysql_qry($qry);
   while ( $res && $p= mysql_fetch_object($res) ) {
@@ -8101,7 +8101,7 @@ function akce_auto_jmena1($patt,$par) {  #trace();
   $qry= "SELECT prijmeni, jmeno, id_osoba AS _key
          FROM osoba
          LEFT JOIN tvori USING(id_osoba)
-         WHERE concat(trim(prijmeni),' ',jmeno) LIKE '$patt%' AND prijmeni!='' $AND
+         WHERE deleted='' AND concat(trim(prijmeni),' ',jmeno) LIKE '$patt%' AND prijmeni!='' $AND
          ORDER BY prijmeni,jmeno LIMIT $limit";
   $res= mysql_qry($qry);
   while ( $res && $t= mysql_fetch_object($res) ) {
@@ -8133,7 +8133,7 @@ function akce_auto_jmena1L($id_osoba) {  #trace();
          FROM osoba AS o
          LEFT JOIN tvori AS t USING(id_osoba)
          LEFT JOIN rodina AS r USING(id_rodina)
-         WHERE id_osoba='$id_osoba'
+         WHERE o.deleted='' AND id_osoba='$id_osoba'
          GROUP BY id_rodina";
   $res= mysql_qry($qry);
   while ( $res && $p= mysql_fetch_object($res) ) {
@@ -8164,7 +8164,7 @@ function akce_auto_deti($patt,$par) {  #trace();
          JOIN spolu AS s USING(id_osoba)
          JOIN pobyt AS p USING(id_pobyt)
          LEFT JOIN tvori AS t ON s.id_osoba=t.id_osoba
-         WHERE prijmeni LIKE '$patt%' AND role='d' AND id_akce='{$par->akce}'
+         WHERE o.deleted='' AND prijmeni LIKE '$patt%' AND role='d' AND id_akce='{$par->akce}'
          ORDER BY prijmeni,jmeno LIMIT $limit";
   $res= mysql_qry($qry);
   while ( $res && $t= mysql_fetch_object($res) ) {
@@ -8197,7 +8197,7 @@ function akce_auto_jmena3($patt,$par) {  #trace();
          FROM osoba
          JOIN spolu USING(id_osoba)
          JOIN pobyt USING(id_pobyt)
-         WHERE concat(trim(prijmeni),' ',jmeno) LIKE '$patt%' AND prijmeni!='' $AND
+         WHERE deleted='' AND concat(trim(prijmeni),' ',jmeno) LIKE '$patt%' AND prijmeni!='' $AND
          GROUP BY id_osoba
          ORDER BY prijmeni,jmeno LIMIT $limit";
   $res= mysql_qry($qry);
