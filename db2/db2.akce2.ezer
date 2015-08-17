@@ -1,0 +1,998 @@
+#pragma library
+#pragma test
+
+# Systém Ans(w)er - modul Akce
+# (c) 2008-2010 Martin Šmídek <martin@smidek.eu>
+
+# globální proměnné pro modul Databáze
+
+var staty='CZ,SK,A,D,PL,UA,H,FIN,BG,I,NL,CDN,USA,?' // seznam států, (později) naplněný při startu z mapy map_stat
+
+# dotaz na datovou oprávněnost
+var access=0                    // datová práva přihlášeného uživatele
+proc accessed(org) {
+  return(function('x','y','return x&y;',org,access.get));
+}
+
+# hodnoty pamatované v cookies
+var the_source: text            // forma seznamu akcí google|sey                           -- cookie
+var the_omezeni: text           // pro skill=c obsahuje podmínku přístupných akcí          -- cookie
+var the_duakce: number          // pracovní akce: id_akce (id_dukace)                      -- cookie
+
+# hodnoty udržované funkcí akce_change
+var the_title: text             // pracovní akce: název do titulků
+var the_rok: number             // pracovní akce: rok konání
+var the_soubeh: number          // 0=normální akce, 1=hlavní akce, 2=souběžná akce
+var the_hlavni: number          // 0=normální akce, id=akce k the_duakce hlavní
+var the_soubezna: number        // 0=normální akce, id=akce s the_duakce souběžná
+var the_cenik: text             // pracovní akce: má ceník
+var the_cena:  number           // pracovní akce: má pevnou cenu pro dospělého
+var form_mode: text             // informace pro zobrazení formulářů: new|show
+
+
+# inicializace modulu Databáze - nastavení globálních proměnných the_* tohoto modulu
+var dirty=0                     // 1 => byla ukončena inicializace modulu
+proc onstart() { dirty.get | akce_onstart }
+proc akce_onstart() {
+  dirty.get
+| dirty.set(1);
+  access.set(sys('user','access'));
+  # hodnoty zapamatované pro navázání na předchozí session
+  the_source.set(get_cookie(conc(sys('root'),'_akce_source'),'sey'));
+  the_omezeni.set(get_cookie(conc(sys('root'),'_akce_omezeni'),1));
+  # příprava zobrazení v AKCE - volá akce_choose
+  lst.akce_work(get_cookie(conc(sys('root'),'_akce_id'),0));
+}
+# nastavení akce jako the_duakce, dopočítání stavových hodnot
+proc akce_choose(id_akce) { var a:object
+  the_duakce.set(id_akce);
+  a.set(ask('akce_id2a',id_akce)); // nastaví i nulové hodnoty pro id_akce=0
+  the_rok.set(a.rok);       the_title.set(a.title);       the_soubeh.set(a.soubeh);
+  the_hlavni.set(a.hlavni); the_soubezna.set(a.soubezna); the_cenik.set(a.cenik);
+  the_cena.set(a.cena);
+}
+# ==========================================================================================> MODULY
+group foto { include:'onload,db2.akce2.foto'
+  form _alb {
+    proc galery(fotka) {}
+  }
+}
+# ============================================================================================> AKCE
+panel lst {type:'right', _sys:'*', title:'[fa-futbol-o] AKCE', include:'onload,db2.akce2.lst',
+  skill:'yaa;faa;caa'
+  use the_akce: form _the_akce         // zatím nezobrazená data nastavené akce s klíčem id_duakce
+  proc akce_work(id) {}                // nastaví akci jako vybranou
+}
+panel ucast {type:'plain', _sys:'*', title:"Účastníci2", include:'onload,db2.akce2.ucast',skill:'yaa;faa;caa'
+  proc ucast_pobyt()  {}                        // ukázání pobytu
+  proc clear_ucast2() {}                        // volání zajistí obnovu při onfucus
+  #proc init_ucast2() {}
+  proc akce_show() {}
+  proc osoby_show() {}                          // obnova údajů o osobě (osobách)
+  proc rodina_show() {}                         // obnova údajů o rodině
+  proc ucast_selected() {}                      // seznam vybraných účastníků
+  proc z_change() {}
+}
+var pece: object
+var maia: object
+# panel pece {type:'plain', _sys:'*', title:'Pečouni', include:'onload,db2.akce2.pece',skill:'yaa;faa;caa'
+#   proc init_pece() { alert('napřed klikni na Databáze|Pečouni') }
+#   proc akce_show() { alert('napřed klikni na Databáze|Pečouni') }
+# }
+# panel tisk [,,,] {type:'right', _sys:'*', title:'Výpisy akce2', include:'onclick,db2.akce2.tisk',skill:'yaa;faa;caa'  }
+# panel maia {type:'right', title:'Maily akce', _sys:'*', include:'onclick,db2.akce2.maia', skill:'yam;fam;cam'  }
+# ========================================================================================> EVIDENCE
+panel evi {type:'right', _sys:'*', title:'[fa-briefcase] EVIDENCE2', include:'onload,db2.akce2.evi', skill:'yae;fae;caa',
+    style:"overflow-y:hidden"
+  proc rodina_show() {}
+  proc osoby_show() {}
+  proc evid_osoba(_ido) { }                     // zobrazení osoby v evidenci
+  proc evid_rodina(_idr) { }                    // zobrazení rodiny v evidenci
+}
+# panel mai {type:'right', title:'Maily', _sys:'*', include:'onclick,db2.akce2.mai', skill:'yam;fam;cam'  }
+# panel dop {type:'right', title:'Dopisy', _sys:'*', include:'onclick,db2.akce2.dop', skill:'yam;fam;cam'  }
+# panel sta {type:'right', title:'Výpisy evidence', _sys:'*', include:'onclick,db2.akce2.sta', skill:'yaa;faa;cas'  }
+# ==========================================================================================> POPUPS
+panel elim [0,0,965,582] { type:'popup', title:'Duplicity', format:'c', include:'onload,db2.akce2.elim'
+  proc osoby  (ido,jmeno,prijmeni) {}           // sjednocení dvou osob
+  proc rodiny (idr,nazev) {}                    // sjednocení dvou rodin
+  proc cleni  (idr) {}                          // sjednocení členů dané rodiny
+}
+# ==========================================================================================> COMMON
+# ------------------------------------------------------------------ _the_akce
+# zatím nezobrazená data nastavené akce s klíčem id_duakce
+form _the_akce {
+  field id_duakce   { data:akce.id_duakce }
+  field nazev       { data:akce.nazev }
+  field datum_od    { data:akce.datum_od }
+  field datum_do    { data:akce.datum_do }
+  field strava_oddo { data:akce.strava_oddo }
+}
+# ------------------------------------------------------------------ right
+form right [,,*,50] {
+  label head [0,0,*,50]  { title:'' }
+  label msg  [0,35,*,20] { title:'' }
+  label note [0,57,,550] { title:'' }
+  proc fill(x,y) {
+    [ x; head.set(conc("<div class='karta'>",x,"</div>")) ];
+    [ y; note.set(y) ]
+  }
+  proc append(x) { note.get; note.set(conc(note.get,'<br>',x)) | note.set(x) }
+}
+# ------------------------------------------------------------------ obecné tabulky
+table _file_ {
+  text fid
+  date fdate
+  text fname
+  text ftype
+  text finfo
+}
+table _cis { key_id:'id_cis'
+  number id_cis
+  text druh,
+  text data,
+  text zkratka,
+  number poradi,
+  text hodnota,
+  text popis,
+  text barva,
+  text ikona
+}
+table _user { key_id:'id_user', db:'ezer_system'
+  number id_user
+  text deleted,
+  text abbr,
+  text skills,
+  text options { help:'privátní nastavení|ve formátu JSON' }
+  text username,
+  text password,
+  number state,
+  text forename,
+  text surname,
+  text login,
+  text history,
+  text sess_id,
+  text sess_time,
+  text sess_data,
+  number zmena_kdo,
+  date zmena_kdy {  },
+}
+table _track { key_id:'id_track'
+  number id_track { key:'primary' },
+  date kdy { help:'datum změny' },
+  text kdo { help:'pachatel' },
+  text kde { help:'tabulka' },
+  number klic { help:'klíč' },
+  text fld { help:'položka' },
+  text op { help:'operace' },
+  text old { help:'původní hodnota' },
+  text val { help:'nová hodnota' },
+}
+# =========================================================================================== CHLAPI
+# table chlapi { key_id:'id_chlapi', db:'ezer_ys'
+#   number id_chlapi
+#   text prijmeni
+#   text jmeno
+#   number sex
+#   date narozeni  { sql_pipe:'sql_date1' }
+#   text rc_xxxx {help:'3-4 rozlišovací číslice rodného čísla'}
+#   text ulice
+#   text psc
+#   text obec
+#   text telefon
+#   text email
+#   number iniciace
+#   text note // pozn
+#   text origin  // databáze,id,datum vkopírování
+# }
+# table ch_ucast { key_id:'id_ucast', db:'ezer_ys'
+#   number id_ucast
+#   number id_chlapi
+#   number id_akce
+#   number stupen    { help:"vztah k akci" }
+#   number cena      { help:"cena akce pro účastníka" }
+#   number avizo     { help:"přišlo potvrzení o platbě" }
+#   number uctem     { help:"zaplaceno převodem" }
+#   date uctem_dne   { help:"datum převodu", sql_pipe:'sql_date1' }
+#   number pokladnou { help:"zaplaceno v hotovosti" }
+#   text pozn
+# }
+# table ch_akce { key_id:'id_akce', db:'ezer_ys'
+#   number id_akce
+#   text nazev
+#   number cena      { help:"cena akce" }
+#   date datum_od    { sql_pipe:'sql_date1' }
+#   date datum_do    { sql_pipe:'sql_date1' }
+# }
+map akce_ucast: table _cis {where:"druh='akce_ucast'", order:'poradi', key_id:'data'}
+
+# ------------------------------------------------------------------ pohledy
+table $osoba { key_id:'id_osoba'
+  number id_osoba
+  text tab
+  number id
+  text prijmeni
+  text jmeno
+  text rodcis
+  date narozeni
+  text ulice
+  text psc
+  text obec
+  text telefon
+  text email
+  text info
+}
+
+table ds_osoba_copy { key_id:'id_osoba'
+  number id_osoba
+  text prijmeni
+}
+
+# ============================================================================================= AKCE
+table akce { key_id:'id_duakce'
+  number id_duakce
+  number id_hlavni // 0 nebo id_duakce hlavní akce souběžné akce
+  number access
+  number typ
+  number ma_cenik  // 1 znamená, že bereme v úvahu tabulku cenik
+  number ma_cenu   // 1 znamená, že bereme v úvahu položku cena (pro 1 dospělého)
+  number cena      // cena akce pro dospělého (je-li ma_cenu=1)
+  number spec      // 1 znamená ne-akci, starý způsob příležitostných seznamů
+  text nazev
+  text misto
+  number druh
+  number poradatel
+  date datum_od    { sql_pipe:'sql_date1'}    // SQL tvar se používá v ys.akce
+  date datum_do    { sql_pipe:'sql_date1'}
+  text strava_oddo { help:'2 písmena označující první a poslední stravu (sov)' }
+  number ciselnik_akce
+  number ciselnik_rok
+  text note
+  text archiv
+}
+
+table pobyt { key_id:'id_pobyt'
+  number id_pobyt
+  number id_akce
+  number i0_rodina // jen pro rodinný pobyt
+  # number id_osoba -- 131004 zrušeno
+  number typ            // 10,11,20,21
+  number skupina
+  number funkce
+  number prednasi      // číselník ms_akce_prednasi
+  text aktivita
+  date datplatby        { sql_pipe:'sql_date1'}
+  number zpusobplat
+  number platba
+  number avizo          { help:"přišlo prohlášení o platbě" }
+  number naklad_d
+  number poplatek_d
+  date datplatby_d      { sql_pipe:'sql_date1'} // platba za děti v souběžné akci
+  number zpusobplat_d
+  number platba_d
+  text budova
+  text pokoj
+  number ubytovani      // číselník ms_akce_ubytovan
+  number luzka
+  number strava_cel
+  number strava_pol
+  text cstrava_cel      // číslice jsou seřazeny jako počty snídaní,obědů,večeří po dnech
+  text cstrava_pol
+  number kocarek
+  text pecovatel
+  text poznamka
+  number pristylky
+  number pocetdnu       // počet nocí!
+  number svp            // počet dětí s vlastním pečovatelem
+  number cd
+  number dorazil
+  number pouze
+  number akce
+  number platba1
+  number platba2
+  number platba3
+  number platba4
+  number sleva
+  number vzorec //#
+  number duvod_typ	// 0: zdůvodnění podle ceníku, 1: vlastním textem
+  text   duvod_text	// vlastní text zdůvodňující cenu
+}
+
+table spolu { key_id:'id_spolu'
+  number id_spolu
+  number id_pobyt
+  number id_osoba
+  number s_role   // #ms_akce_s_role -- role osoby na akci
+  number skupinka
+  text poznamka
+  number s_rodici
+  number pulstrava
+  number pecovane // id_osoba pečovaného dítěte
+  number pfunkce  // #ms_akce_pfunkce -- funkce pečovatelská, jinak 0
+  number dite_kat // #ms_akce_dite_kat -- cenová kategorie
+}
+
+table osoba { key_id:'id_osoba'
+  number id_osoba
+  number access
+  number id_dupary
+  number id_dudeti
+  text   deleted     { help:'ok|prázdné nebo D=značka smazání osoby' },
+  text jmeno
+  text prijmeni
+  text rodne
+  number sex
+  number dieta  // #ms_akce_dieta
+  text fotka
+  number adresa // 0=viz rodinná, 1=osobní zde
+  number noadresa { help:"adresa je nespolehlivá - viz poznámka" }
+  text ulice
+  text psc
+  text obec
+  text stat
+  number kontakt // 0=viz rodinný, 1=osobní zde
+  text email
+  number nomail { help:"nomail|nechce přijímat hromadně rozesílané informace" }
+  text telefon
+  text spz
+  date narozeni { sql_pipe:'sql_date1'}
+  number uvitano { help:"uvítáno|bylo uvítáno ve společenství" }
+  number iniciace { help:"mrop|rok iniciace nebo 0" }
+  text rc_xxxx
+  number umrti // rok úmrtí
+  text poznamka
+  text obcanka
+  number vzdelani
+  text titul
+  text zamest
+  text zajmy
+  text jazyk
+  number cirkev
+  text aktivita
+  text o_umi      // #ms_umi
+  number clen
+  text note
+  text origin
+  text historie
+}
+
+table tvori { key_id:'id_tvori'
+  number id_tvori
+  number id_osoba
+  number id_rodina
+  number role
+}
+
+table dar { key_id:'id_dar'
+  number id_dar
+  number id_osoba
+  number id_rodina
+  text   deleted{ help:'ok|prázdné nebo D=značka smazání daru' },
+  text   ukon   { help:'b-člen běžný,c-člen činný,d-dar,p-členský příspěvek' }
+  text   zpusob { help:'b-banka,s-složenka,p-pokladna' }
+  number castka
+  date   dat_od { sql_pipe:'sql_date1', help:'datum darování nebo vzniku členství' }
+  date   dat_do { sql_pipe:'sql_date1', help:'datum zaslání potvrzení nebo datum pokrytí členství příspěvkem nebo datum zániku členství' }
+  text   note
+}
+
+table rodina { key_id:'id_rodina'
+  number id_rodina
+  number access
+  number id_dupary
+  text   deleted
+  number typ            // 10,11,20,21
+  text nazev
+  text fotka
+  text ulice
+  text psc
+  text obec
+  text stat
+  number noadresa { help:"adresa je nespolehlivá - viz poznámka" }
+  text telefony
+  text emaily
+  number nomaily { help:"nomaily|nechtějí přijímat hromadně rozesílané informace - viz poznámka" }
+  text spz
+  number svatba
+  date datsvatba { sql_pipe:'sql_date1'}
+  number rozvod
+  text r_umi      // #ms_umi
+  text note
+  text origin
+  text historie
+}
+
+table platba { key_id:'id_platba'
+  number id_platba
+  text   ucet           // M=514048001, D=514048044
+  number id_osoba
+  number id_rodina
+  number id_duakce
+  number id_pokl
+  number ucel
+  number castka
+  date   datum          { sql_pipe:'sql_date1'}
+  text   poznamka
+  number zpusob
+  text   ucet_nazev
+  text   vs
+  text   ks
+  text   ss
+  text   ss2            // ručně opravený SS
+  text   tipy           // vytipované možnosti plátce
+}
+
+table cenik { key_id:'id_cenik'
+  number id_cenik
+  number id_akce
+  number poradi
+  text   polozka
+  text   za             // N: noc, S:snídaně, O:oběd, V:večeře, P:pobyt
+  number typ            // index typu ubytování
+  number od
+  number do
+  number cena
+  number dph
+}
+
+# -------------------------------------------------------------------------- webform
+table webform { key_id:'id_webform'
+  number id_webform
+  number id_osoba       { help:"int(11)	přiřazená osoba (u firmy kontaktní)" }
+  number typ_osoby      { help:"1:jednotlivec, 2:rodina, 3:firma" }
+  number id_rodina      { help:"přiřazená rodina, pokud typ=2" }
+  text firma_nazev      { help:"jméno firmy pokud typ_osoby=3" }
+  number firma_ic       { help:"" }
+  text jmeno
+  text prijmeni
+  number sex
+  text ulice
+  text psc
+  text obec
+  text stat
+  text email
+  text telefon
+  date narozeni         { sql_pipe:'sql_date1'}
+  text rc_xxxx
+  text zamest
+  number dary_frekvence { help:"předpokládaná frekvence darů" } // db_dary_frek
+  number dary_potvrzeni { help:"potřebuje potvrzení pro daňový odečet" }
+  number potvrzeno      { help:"bylo kliknuto na URL zaslané mailem" }
+  text historie
+}
+map db_dary_frek:  table _cis {where:"druh='db_dary_frek'",  order:'poradi', key_id:'data'}
+
+table join_akce { // spojení číselníku akcí s MS
+  number id_akce   { help:"klíč akce v tabulce akce" }
+  number g_rok     { help:"rok akce podle číselníku akcí" }
+  number g_kod     { help:"kód akce podle číselníku akcí" }
+  text   source    { help:"L:Lídino M:Milošovo MS.EXE" }
+  number akce      { help:"staré číslo akce podle MS.EXE" }
+}
+
+table g_akce { key_id:'id_gakce' // kopie číselníku akcí z intranetu
+  number id_gakce
+  number g_rok     { help:"rok akce podle číselníku akcí" }
+  number g_kod     { help:"kód akce podle číselníku akcí" }
+  text   g_nazev   { help:"název akce z číselníku akcí" }
+  date   g_od      { help:"začátek akce z číselníku akcí", sql_pipe:'sql_date1' }
+  date   g_do      { help:"ukončení akce z číselníku akcí", sql_pipe:'sql_date1' }
+  number g_ucast   { help:"počet účastníků akce z číselníku akcí" }
+  text   g_typ     { help:"typ akce z číselníku akcí" }
+  text   g_kap     { help:"účetní kapitola akce z číselníku akcí" }
+}
+
+table mail { key_id:'id_mail'
+  number id_mail { key:'primary' },
+  number id_dopis { help:'mail|index mailu' }, // nepoužívá se pro dopisy s druh!='@'
+  number id_pobyt { help:'pobyt|ID pobytu na akci' } // jen pro maily 'U' = účastníkům akce
+  number id_davka
+  number id_znacka                             // nepoužívá se pro dopisy s druh=='@'
+  number id_clen
+  text znacka
+  text email
+  number stav
+  text msg
+  text body
+}
+
+table mailist { key_id:'id_mailist'
+  number id_mailist
+  number specialni   // 1 znamená speciální mail-list, definovaný obsahem parms
+  number blokovano
+  text   nazev
+  text   ucel
+  text   parms  // json
+  text   sexpr
+}
+
+table dopis { key_id:'id_dopis'
+  number id_dopis { key:'primary' },
+  number id_davka { help:'dávka|číslo rozesílání dávky dopisů' },
+  text nazev
+  text prilohy
+  number potvrzeni { help:"potvrzení|vyžádat zaslání potvrzení o přečtení" }
+  number kopie	{ help:"poslat slepou kopii 'odesílateli'" }
+  number id_duakce   // pouze pro maily: id akce
+  number id_mailist  // pouze pro maily přes mail-list: id mailist
+  number cis_skupina // pouze pro maily: _cis.data položky se SQL (_cis.druh='db_maily_sql')
+  text druh { help:'druh|D-dopis, S-samolepka,legitimace, N-nesamostatná složka' },
+  text typ { help:'typ|značka dopisu' },
+  number nw
+  number nh
+  number komu     // pouze pro maily
+  number pocet    // pouze pro maily
+  text report { help:'vzor|identifikátor reportu' },
+  number aktualni { help:'aktualni|text dopisu je připraven k tisku' },
+  date datum { help:'datum|vročení dopisu', sql_pipe:'sql_date1' },
+  text obsah { help:'obsah|text dopisu' },
+  text var_list { help:'seznam proměnných'}
+  text post_vars { help:'seznam proměnných počítaných po generování'}
+  text nest_list { help:'seznam složek (druh=N)'}
+  text add_list
+}
+
+map ms_akce_typ:      table _cis {where:"druh='ms_akce_typ'",       order:'poradi', key_id:'data'}  // ikona=1 pro muže, 2 pro ženy, jinak 0
+map ms_akce_clen:     table _cis {where:"druh='ms_akce_clen'",      order:'poradi', key_id:'data'}
+map ms_akce_pouze:    table _cis {where:"druh='ms_akce_pouze'",     order:'poradi', key_id:'data'}
+map ms_akce_funkce:   table _cis {where:"druh='ms_akce_funkce'",    order:'poradi', key_id:'data'}
+map ms_akce_pfunkce:  table _cis {where:"druh='ms_akce_pfunkce'",   order:'poradi', key_id:'data'}
+map ms_akce_prednasi: table _cis {where:"druh='ms_akce_prednasi'",  order:'poradi', key_id:'data'}
+map ms_akce_cirkev:   table _cis {where:"druh='ms_akce_cirkev'",    order:'poradi', key_id:'data'}
+map ms_akce_vzdelani: table _cis {where:"druh='ms_akce_vzdelani'",  order:'poradi', key_id:'data'}
+map ms_akce_titul:    table _cis {where:"druh='ms_akce_titul'",     order:'poradi', key_id:'data'}
+map ms_akce_platba:   table _cis {where:"druh='ms_akce_platba'",    order:'poradi', key_id:'data'}
+map ms_akce_sex:      table _cis {where:"druh='ms_akce_sex'",       order:'poradi', key_id:'data'}
+map ms_akce_ucastnik: table _cis {where:"druh='ms_akce_ucastnik'",  order:'poradi', key_id:'data'}
+map ms_cena_vzorec:   table _cis {where:"druh='ms_cena_vzorec'",    order:'poradi', key_id:'data'}
+map ms_akce_ubytovan: table _cis {where:"druh='ms_akce_ubytovan'",  order:'poradi', key_id:'data'}
+map ms_akce_dieta:    table _cis {where:"druh='ms_akce_dieta'",     order:'poradi', key_id:'data'}
+map ms_akce_dite_kat: table _cis {where:"druh='ms_akce_dite_kat'",  order:'poradi', key_id:'data'}
+map ms_akce_s_role:   table _cis {where:"druh='ms_akce_s_role'",    order:'poradi', key_id:'data'}
+map ms_akce_t_role:   table _cis {where:"druh='ms_akce_t_role'",    order:'poradi', key_id:'data'}
+map ms_umi:           table _cis {where:"druh='answer_umi'",        order:'poradi', key_id:'data', db:'ezer_group' }
+map map_evi_vyber_o:  table _cis {where:"druh='evi_vyber_o' AND data<50",  order:'poradi', key_id:'data'}
+map map_evi_vyber_x:  table _cis {where:"druh='evi_vyber_o' AND data>50",  order:'poradi', key_id:'data'}
+map map_evi_vyber_r:  table _cis {where:"druh='evi_vyber_r'",       order:'poradi', key_id:'data'}
+map map_stat:         table _cis {where:"druh='stat'",              order:'poradi', key_id:'data'}
+
+# ===========================================================================================> TRACK
+# přehled provedených změn
+panel track [,,540,276] { title:'Historie oprav', type:'popup', css:'dialog'
+  use back: form _back [0,16,,] { tabindex:20 },
+  proc back_show(kde,klic) {
+    panel.popup(0,1);
+    back.list.browse_load(
+      conc("(kde='",kde,"' AND klic=",klic,")"),"kdy DESC");
+    back.list.raise('onrowclick')
+  }
+  # ------------------------------------------------------------- _back
+  # id_track,kdy,kdo,kde,klic,zmena:fld,op,val,old
+  form _back [,,255,250] {
+    browse list [0,0,150,100] { rows:12,
+      show kdy [,,90,] { title:'kdy', data:_track.kdy, sql_pipe:'sql_time1' },
+      show kdn [,,30,] { title:'kdn', data:_track.kdo },
+      show op [,,12,] { title:'?', data:_track.op },
+      show fld [,,60,] { title:'položka', data:_track.fld },
+      show old [,,200,] { title:'původní hodnota', data:_track.old, format:'t' },
+      show val [,,120,] { title:'změněná hodnota', data:_track.val, format:'t' },
+      show id_track [,,0,] { data:_track.id_track },
+    },
+    label [0,250,545,] { title:'ÚDAJE: i=vložení (insert), u=úprava, U= hromadná úprava<br>ZÁZNAM: x=smazano, o=obnoveno, d=vzniklo spojením duplicitních údajů, r=různé od uvedeného záznamu' }
+  }
+}
+# =======================================================================================> formuláře
+# společné procedury
+proc obligatory(elem) { elem.enable(1); elem.change(1) }
+# -----------------------------------------------------------------------------------------==> OSOBA
+panel osoba_config [,,200,150] {type:'popup', title:"Podrobnosti údajů"
+  var tit='osobní údaje', grp='ZKAS', var ucast:object
+  proc start() { grp.set(get_cookie(conc(sys('root'),'_conf_osoba'),grp.get));
+    [ contains('Z',grp.get) | grp.set(conc('Z',grp.get)) ];
+    cnfg._back; }
+  proc tune(calee) {
+    ucast.set(calee); _old.set(grp.get); [ ucast.call('evid.z_change','o') ]; panel.modal(500,200) }
+  use cnfg: form _cnfg
+  form _cnfg {
+    check z [ 0,  0,100,] { title:"základní údaje",      format:'d', value:'1'}
+    check s [ 100,0,110,] { title:"oddělovat skupiny",   format:'t', proc onchange() { _tuned }}
+    check k [ 0, 20,200,] { title:"kontaktní údaje",     format:'t', proc onchange() { _tuned }}
+    check a [ 0, 40,200,] { title:"poštovní adresa",     format:'t', proc onchange() { _tuned }}
+    check o [ 0, 60,200,] { title:"organizační údaje",   format:'t', proc onchange() { _tuned }}
+    check c [ 0, 80,200,] { title:"citlivé údaje",       format:'t', skill:'yaa|yaa:c;faa|faa:c'
+                                                                     proc onchange() { _tuned }}
+    check p [ 0,100,200,] { title:"trvalá poznámka, schopnosti",
+                                                         format:'t', proc onchange() { _tuned }}
+    button  [ 0,130,,] { type:'submit', title:'Nastav', proc onclick() {
+      set_cookie(conc(sys('root'),'_conf_osoba'),grp.get); panel.close(1) }}
+    button  [85,130,,] { title:'Zpět', proc onclick() {
+      grp.set(_old.get); _back; ucast.call('osoby_show'); panel.close(1) }}
+    proc _tuned() { grp.set(cconc(s.get,'S',k.get,'K',a.get,'A',o.get,'O',c.get,'C',p.get,'P','Z'));
+      ucast.call('osoby_show') }
+    proc _back() { z.set(1); s.set(contains('S',grp.get));
+      k.set(contains('K',grp.get)); a.set(contains('A',grp.get)); o.set(contains('O',grp.get));
+      c.set(contains('C',grp.get)); p.set(contains('P',grp.get)); }
+  }
+  var _old= 'Z'
+}
+form _osoba2x [,,244,322] {css:'ae_frame', proc onclick() { on_click }
+  var host=''           // 'U' - použito z Uživatelé, 'E' - použito z Evidence
+  var idr=0             // klíč rodiny pro rodinné údaje (pro akce2_osoba2)
+  var mode=0            // 0 zobrazit jen osobní kontakt a adresu, rodinnou skrýt
+                        // 2 zobrazí pro adresa=0 kopie rodinných údajů uvozené ®
+                        // 1 (jen EVID) zobrazí i pro adresa=0 osobní údaje (měly by být prázdné)
+  proc onstart() { stat.selects(staty.get,',',1) }
+  // globální procedury
+  proc set_mode(_mode,_host) {
+    mode.set(_mode); host.set(_host); form.enable(1,'a|b|j|k');
+    [ eq(_host,'U'); detail.r.enable(1); | detail.r.enable(0) ];
+  }
+  proc onchanged() { }
+  proc see_new_osoba() { }
+  proc see_old_osoba() { }
+  proc correct() { var ok:number
+    ok.set(1);
+    adresa.get; eq(ulice.get,''); eq(obec.get,''); warning("osobní adresa nesmí být prázdná"); ok.set(0);
+    return(ok);
+  }
+  proc clear_osoba() { form.init; role.display(0);
+    kontakt_r.set(''); adresa_r.set('');
+    kontakt.enable(0); kontakt.set(1); form.enable(1,'k');
+    adresa.enable(0);  adresa.set(1);  form.enable(1,'b');
+  }
+#   proc new_osoba(_clen_rodiny) { form.init; role.display(_clen_rodiny);
+#     kontakt_r.set(''); adresa_r.set(''); access.set(sys('user','org'));
+#     [ _clen_rodiny; kontakt.set(0); adresa.set(0);
+#     | kontakt.enable(0); kontakt.set(1); form.enable(1,'k');
+#       adresa.enable(0);  adresa.set(1);  form.enable(1,'b'); ];
+#     foreach(array(jmeno,prijmeni,sex,access),obligatory);
+#   }
+  proc on_click() {}
+  proc init_osoba() {
+    form.display(0,'[^f]'); access.display(1);
+  }
+  proc refresh() { eq(host.get,'U');
+    ucast.call('osoby_show')
+  | evi.call('osoby_show') }
+  proc show_osoba(even) { var tags:text
+    form.display(0,'[^f]'); access.display(1); go_evi.display(not(even));
+    kontakt.enable(1); adresa.enable(1);
+    frame.set(osoba_config.tit.get);
+    tags.set('i,ii');
+    [ contains('K',osoba_config.grp.get);
+      { eq(form_mode.get,'new');
+        kontakt.set(0); kontakt_r.set('');
+        tags.set(conc(tags,',j,k')); form.enable(1,'k');
+      | [ kontakt.get; kontakt_r.set('') | kontakt_r.set(kmen.get) ];
+        eq(mode.get,0);   // 0: pro kontakt=0 jen kontakt_r
+        [ kontakt.get; tags.set(conc(tags,',j,k')) | tags.set(conc(tags,',j,J')) ]
+      | // 2: pro kontakt=0 ®rodinné+disabled, 1: kontakt=0 osobní+disabled (měly by být prázdné)
+        tags.set(conc(tags,',j,k')); form.enable(kontakt.get,'k');
+      }
+    ];
+    [ contains('A',osoba_config.grp.get);
+      { eq(form_mode.get,'new');
+        adresa.set(0); adresa_r.set('');
+        tags.set(conc(tags,',a,b')); form.enable(1,'b');
+      | [ adresa.get; adresa_r.set('') | adresa_r.set(kmen.get) ];
+        eq(mode.get,0);   // 0: pro adresa=0 jen adresa_r
+        [ adresa.get; tags.set(conc(tags,',a,b')) | tags.set(conc(tags,',a,A')) ]
+      | // 2: pro adresa=0 ®rodinné+disabled, 1: adresa=0 osobní+disabled (měly by být prázdné)
+        tags.set(conc(tags,',a,b')); form.enable(adresa.get,'b');
+      }
+    ];
+    [ or(even,key_spolu.get,eq(form_mode.get,'new'));
+      [ contains('O',osoba_config.grp.get); tags.set(conc(tags,',o')) ];
+      [ contains('C',osoba_config.grp.get); tags.set(conc(tags,',c')) ];
+      [ contains('P',osoba_config.grp.get); tags.set(conc(tags,',p')) ];
+    ];
+    [ contains('S',osoba_config.grp.get); form.set_css('db_hr','','S') | form.set_css('','db_hr','S') ];
+    [ or(even,key_spolu.get,eq(form_mode.get,'new')) | tags.set(conc(tags,',x')) ];
+    form.stacks(tags,'down',0,0,10);
+  }
+
+  // kontextové menu
+  menu detail { type:'context'
+    item { title:'konfigurace formuláře', proc onclick () { osoba_config.tune(panel) } }
+    item { title:'ukázat změny os. údajů',proc onclick () { track.back_show('osoba',key_osoba.get) }}
+    item r { title:'-zobrazovat ®rodinné údaje',  proc onclick () { set_mode(2,host.get); refresh }}
+    item o { title:'nezobrazovat ®rodinné údaje', proc onclick () { set_mode(0,host.get); refresh }}
+  }
+
+  // společné
+  view o: table osoba
+
+  label frame [0,2,242,50] {tag:'f', css:'frame_label_up', title:'osobní údaje'}
+  button go_evi [121,1,,] {tag:'f', title:'^evidence', css:'db_evidence'
+    proc onclick() { evi.evid_osoba(key_osoba.get) } }
+  field access    [186,0,10,] {tag:'f,I', format:'or', css:'Label', data:o.access, tabindex:0  }
+  field key_osoba [196,0,40,] {tag:'f', format:'or', css:'Label', help:' ', data:o.id_osoba, tabindex:0 }
+  field key_tvori [186,10,50,] {tag:'f', format:'or', css:'Label', help:' ', tabindex:0 }
+  field key_spolu
+  field kmen    { expr:"IFNULL(SUBSTR((SELECT MIN(CONCAT(role,nazev))
+                        FROM tvori AS ot JOIN rodina AS r USING (id_rodina) WHERE ot.id_osoba=o.id_osoba),2),'-')" }
+  field id_kmen { expr:"IFNULL(SUBSTR((SELECT MIN(CONCAT(role,id_rodina))
+                        FROM tvori AS ot JOIN rodina AS r USING (id_rodina) WHERE ot.id_osoba=o.id_osoba),2),'-')" }
+  field deleted { expr:"LEFT(o.deleted,1)='D'" }
+
+  #==> . see+new_osoba
+  # vytvoření osoby: 1.see_osoba 2.new_osoba
+  # úprava formuláře pro prohledání db
+  proc see_osoba(_clen_rodiny,_prijmeni,_jmeno,_idr) { form.init;
+    idr.set(_idr);
+    prijmeni1.set(_prijmeni); jmeno1.set(_jmeno);
+    kontakt_r.set(''); adresa_r.set('');
+    [ _clen_rodiny; role.display(1);
+      kontakt.enable(1); kontakt.set(0);
+      adresa.enable(1); adresa.set(0);
+      [ idr; adresa.rodinna]
+    | role.display(1);
+      kontakt.enable(0); kontakt.set(1); form.enable(1,'k');
+      adresa.enable(0);  adresa.set(1);  form.enable(1,'b'); ];
+    see.see_n.set(0); see.see_beg;
+    foreach(array(jmeno1,prijmeni1),obligatory);
+  }
+  # úprava formuláře pro vytvoření osoby
+  proc new_osoba(_clen_rodiny,_prijmeni,_jmeno,_idr) { form.init;
+    see.see_end;
+    idr.set(_idr);
+    prijmeni.set(_prijmeni); jmeno.set(_jmeno);
+    kontakt_r.set(''); adresa_r.set(''); access.set(sys('user','org'));
+    [ _clen_rodiny; role.display(1);
+      kontakt.enable(1); kontakt.set(0);
+      adresa.enable(1); adresa.set(0);
+      [ idr; adresa.rodinna]
+    | role.display(1);
+      kontakt.enable(0); kontakt.set(1); form.enable(1,'k');
+      adresa.enable(0);  adresa.set(1);  form.enable(1,'b'); ];
+  }
+  #==> . hledání dle příjmení a jména
+  field prijmeni1 [5,32,106,] {tag:'w', format:'n', title:'^příjmení?', style:'z-index:3', format:'T'
+    proc onchanged() { this.get; jmeno1.get; see.see_show(1);
+  }}
+  field jmeno1    [120,32,83,] {tag:'w', format:'n', title:'^jméno?', style:'z-index:3', format:'T'
+    proc onchanged() { prijmeni1.get; this.get; see.see_show(1);
+  }}
+  label see [41,2,72,26] { tag:'W', css:'ae_parm search', format:'n'
+    const css_all = 'ezer_ys ezer_fa ezer_db'
+    var see_n=0
+    proc see_show(n) { var ret:object
+      ret.set(ask('db2_oso_show',prijmeni1.get,jmeno1.get,n));
+      see_next.enable(ret.next); see_back.enable(ret.back); see_use.enable(ret.n); see_new.enable(1);
+      see_n.set(ret.n); form.set_css(ret.css,css_all.get,'w'); ret.n;
+      copy_by_name(ret.oso,form); form.key(key_osoba.get);
+      warning
+    | form.set_css('',css_all.get,'w');
+      warning("osoba '",prijmeni1.get,' ',jmeno1.get,"' ještě není v evidenci, použij ",
+        replace_fa('[fa-heart-o]')," pro založení");
+    }
+    proc see_beg() {
+      function("return Ezer.Shield.show();"); form.set_css('search');
+      form.enable(0,'[abiyjkocpsW]'); form.display(1,'[wW]');
+    }
+    proc see_end() {[
+      function("return Ezer.Shield.hide();"); form.set_css('','search');
+      form.set_css('',css_all.get,'w');
+      form.enable(1,'[abiyjkocp]'); form.display(0,'[wW]');
+    ]}
+  }
+  button see_back [44,6,15,20] {tag:'W', type:'html', title:"[fa-chevron-left]", format:'n'
+    css:"search", help:"předchozí osoba se stejným příjmením a jménem"
+    proc onclick() {
+      see.see_show(sum(see.see_n.get,-1))
+  }}
+  button see_next [61,6,15,20] {tag:'W', type:'html', title:"[fa-chevron-right]", format:'n'
+    css:"search", help:"následující osoba se stejným příjmením a jménem"
+    proc onclick() {
+      see.see_show(sum(see.see_n.get,1))
+  }}
+  button see_use [78,6,15,20] {tag:'W', type:'html', title:"[fa-plug]", format:'n'
+    css:"search", help:"potvrzení nalezené osoby a její přidání k pobytu"
+    proc onclick() { var ret:object
+      see.see_end;
+      warning; see_old_osoba                             // dokončení v účastnících nebo evidenci
+  }}
+  button see_new [95,6,15,20] {tag:'W', type:'html', title:"[fa-heart]", format:'n'
+    css:"search", help:'Vytvoření nové osoby s daným příjmením a jménem'
+    proc onclick() {
+      warning; see_new_osoba                             // dokončení v účastnících nebo evidenci
+  } }
+  #==> . základní údaje: i,y (jsou vždy vidět)
+  field prijmeni [5,32,106,] {tag:'i,I', data:o.prijmeni, format:'n', help:'příjmení', title:'^příjmení' }
+  field jmeno    [120,32,83,] {tag:'i,I', data:o.jmeno, format:'n', title:'^jméno' }
+  //field role   [218,32,10,] {tag:'y', title:"^role", format:'n' }
+  select role    [210,32,31,] {tag:'y', type:'map', options:ms_akce_t_role.hodnota, format:'wn', title:'^role'}
+  field rodne    [5,66,63,] {tag:'i', data:o.rodne, format:'n', help:'rodné příjmení', title:'^rodné příjmení'}
+  radio sex      [73,54,46,32] {tag:'i,I', data:o.sex, format:'n', value:'1'
+    case [0,2,47,] { title:'muž', expr:'1' }
+    case [0,15,47,] { title:'žena', expr:'2' }
+    proc onchange() { }
+  }
+  label vek      [210,52,24,] {tag:'i', format:'nr'}
+  field narozeni [120,66,85,] {tag:'i,I', type:'date', data:o.narozeni, format:'nrR:e',title:'^narození'}
+  field umrti    [208,66,28,] {tag:'i', data:o.umrti, format:'nr:e',title:'^rok úmrtí'}
+  label [0,0,,3] {tag:'ii,S', format:'n', css:'db_sep' } // zarovnání
+
+  #==> . kontakt: j,k  (rodinný=0, osobní=1)
+  label [5,3,50,] {tag:'j', title:'kontakt je' }
+  radio kontakt [50,0,185,18] {tag:'j', format:'n', value:'0', data:o.kontakt
+    case [0,0,70,] { title:'osobní', expr:'1' }
+    case [56,0,70,] { title:'rodinný:', expr:'0' }
+    proc onchange() { var r:object
+      eq(host.get,'E'); show_osoba(0)
+    | eq(host.get,'U'); r.set(ask('akce2_osoba2x',key_osoba.get,idr.get)); // varianty kontaktu
+      [ this.get; copy_by_name(r.o_kontakt,form) | copy_by_name(r.r_kontakt,form) ];
+      [ eq(form_mode.get,'new') | show_osoba(0) ]
+    }
+  }
+  label kontakt_r [169,3,75,] {tag:'j', format:'n'}
+  label [0,0,,3] {tag:'J,S', format:'n', css:'db_sep' } // zarovnání
+  field telefon  [41,2,197,] {tag:'k', type:'list', data:o.telefon, format:'n', title:'telefon'}
+  check nomail   [48,19,169,] {tag:'k', title:"neposílat hromadné informace", data:o.nomail,
+    help:"nepoužívat mailovou adresu pro rozesílání hromadných nabídek a informací",
+    format:'n', tabindex:0
+    proc onchange() {
+      alert("napiš prosím do poznámky důvod a datum odmítnutí hromadně rozesílaných informací")
+  } }
+  field email    [5,38,233,] {tag:'k', type:'list', data:o.email, format:'n', title:'^e-mail'}
+  label [0,58,,5] {tag:'k,S', format:'n', css:'db_sep' } // zarovnání
+
+  #==> . adresa: a,b (rodinná=0, osobní=1)
+  label [5,3,49,12] {tag:'a', title:'adresa je' }
+  radio adresa [50,0,189,18] {tag:'a', format:'n', value:'0', data:o.adresa
+    case [0,0,70,] { title:'osobní', expr:'1' }
+    case [56,0,70,] { title:'rodinná:', expr:'0' }
+    proc onchange() {
+      eq(host.get,'E'); show_osoba(0)
+    | eq(host.get,'U'); rodinna
+    }
+    proc rodinna() { var r:object
+      r.set(ask('akce2_osoba2x',key_osoba.get,idr.get)); // varianty adres
+      [ this.get; copy_by_name(r.o_adresa,form) | copy_by_name(r.r_adresa,form) ];
+      [ eq(form_mode.get,'new'); form.enable(this.get,'b') | show_osoba(0) ]
+    }
+  }
+  label adresa_r [169,3,75,12] {tag:'a', format:'n', style:"z-index:3;background-color:inherit" }
+  label [0,0,,3] {tag:'A,S', format:'n', css:'db_sep' } // zarovnání
+  field ulice    [31,2,157,] {tag:'b', data:o.ulice, format:'n', title:'ulice'}
+  select stat    [195,2,45,] {tag:'b', data:o.stat, format:'nr:e', title:'^stát'}
+  check noadresa [104,19,126,] {tag:'b', title:"nespolehlivá adresa", data:o.noadresa,
+    help:"pošta vrací zásilky", format:'n', tabindex:0
+    proc onchange() {
+      alert("napiš prosím do poznámky důvod a datum zjištění neplatnosti")
+  } }
+  field psc      [5,38,47,] {tag:'b', data:o.psc, format:'n', title:'^psč'}
+  field obec     [59,38,179,] {tag:'b', data:o.obec, format:'n', title:'^obec'}
+  label [0,58,,9] {tag:'b,S', format:'n', css:'db_sep' } // zarovnání
+
+  #==> . organizační údaje: o (jen pro oprávněné)
+  field obcanka  [22,4,70,] {tag:'o', data:o.obcanka, format:'n', title:'OP:'}
+  field rc       [119,4,70,] {tag:'o', format:'nd', title:'RČ:'}
+  field rc_xxxx  [199,4,37,] {tag:'o', data:o.rc_xxxx, format:'n:e', title:'/'}
+  select clen    [34,26,70,] {tag:'o', type:'map', format:'n', data:o.clen,
+                                options:ms_akce_clen.zkratka, title:'YMCA'}
+  field uvitano  [126,26,40,] {tag:'o', data:o.uvitano, format:'nr:e', title:'vítej'}
+  field iniciace [196,26,40,] {tag:'o', data:o.iniciace, format:'nr:e', title:'mrop'}
+  label [0,46,,6] {tag:'o,S', format:'n', css:'db_sep' } // zarovnání
+
+  #==> . citlivé údaje: c (jen pro oprávněné)
+  const Tq=-106
+  select cirkev  [44,Tq+110,70,] {tag:'c', type:'map', data:o.cirkev, format:'n',       skill:'yaa:c|yaa:c;faa:c|faa:c'
+                                options:ms_akce_cirkev.zkratka, title:'církev'}
+  field aktivita [143,Tq+110,92,] {tag:'c', data:o.aktivita, format:'n', title:'aktiv.',skill:'yaa:c|yaa:c;faa:c|faa:c'}
+  field jazyk    [44,Tq+131,94,] {tag:'c', data:o.jazyk, format:'n', title:'jazyky',    skill:'yaa:c|yaa:c;faa:c|faa:c'}
+  select dieta   [171,Tq+131,64,] {tag:'c', type:'map', data:o.dieta, format:'n',       skill:'yaa:c|yaa:c;faa:c|faa:c',
+                                options:ms_akce_dieta.zkratka, title:'dieta'}
+  select vzdelani[44,Tq+152,114,] {tag:'c', type:'map', data:o.vzdelani, format:'n',    skill:'yaa:c|yaa:c;faa:c|faa:c',
+                                options:ms_akce_vzdelani.zkratka, title:'vzděl.'}
+  select titul   [181,Tq+152,54,] {tag:'c', type:'map', data:o.titul, format:'n',       skill:'yaa:c|yaa:c;faa:c|faa:c',
+                                options:ms_akce_titul.zkratka, title:'tit.'}
+  field zamest   [44,Tq+173,191,] {tag:'c', data:o.zamest, format:'n', title:'zaměst.', skill:'yaa:c|yaa:c;faa:c|faa:c'}
+  field zajmy    [44,Tq+194,191,] {tag:'c', data:o.zajmy, format:'n', title:'zájmy',    skill:'yaa:c|yaa:c;faa:c|faa:c'}
+  label [0,Tq+214,,6] {tag:'c,S', format:'n', css:'db_sep' } // zarovnání
+
+  #==> . osobní schopnosti a poznámka: p
+  select o_umi     [65,0,172,] {tag:'p', type:'map+', data:o.o_umi, options:ms_umi.hodnota,
+    title:'schopnosti:', format:'n'}
+  edit  note     [5,26,231,74] {tag:'p', data:o.note, format:'n', title:'^poznámka'}
+
+  // x = upozornění o omezení údajů neúčastníků
+  label [5,4,235,] {tag:'x', format:'n', title:'<i>neúčastník má zobrazeny jen identifikační údaje</i>'}
+}
+# ----------------------------------------------------------------------------------------==> RODINA
+panel rodina_config [,,200,60] {type:'popup', title:"Podrobnosti údajů"
+  var tit='osobní údaje', grp='Z', var ucast:object
+  proc start() { grp.set(get_cookie(conc(sys('root'),'_conf_rodina'),grp.get));
+    [ contains('Z',grp.get) | grp.set(conc('Z',grp.get)) ];
+    cnfg._back;  }
+  proc tune(from) { ucast.set(from); _old.set(grp.get);
+    [ ucast.call('evid.z_change','o') ]; panel.modal(500,200) }
+  use cnfg: form _cnfg
+  form _cnfg {
+    check z [ 0, 0,200,] { title:"základní údaje", format:'d', value:'1'}
+    check p [ 0,20,200,] { title:"trvalá poznámka, schopnosti", format:'t', proc onchange() { _tuned }}
+    button  [ 0,40,,] { type:'submit', title:'Nastav', proc onclick() {
+      set_cookie(conc(sys('root'),'_conf_rodina'),grp.get); panel.close(1) }}
+    button  [85,40,,] { title:'Zpět', proc onclick() {
+      grp.set(_old.get); _back; ucast.call('rodina_show'); panel.close(1) }}
+    proc _tuned() { grp.set(cconc(p.get,'P','Z')); ucast.call('rodina_show') }
+    proc _back() { z.set(1); p.set(contains('P',grp.get)); }
+  }
+  var _old= 'Z'
+}
+form _rodina2p [,,188,229] { css:'ae_frame'
+  const Lp=5 // 187
+  const Ts=190; Tp=0 // 0
+  view r: table rodina
+  view t: table tvori
+  proc onstart() { r_stat.selects(staty.get,',',1) }
+  proc onclick() { on_click }
+  proc onchanged() { }
+  proc show_rodina() { var tags:text
+    form.display(0,'[^f]'); access.display(1);
+    spolu.set('datum svatby');
+    tags.set(cconc(1,'a,r',contains('P',rodina_config.grp.get),',p'));
+    form.stacks(tags,'down',0,0,10);
+  }
+  proc on_click() {}
+  proc od_svatby() {
+    r_rozvod.get; spolu.set("<span style='background:yellow'>jsou rozvedeni</span>")
+  | r_datsvatba.get; spolu.set(conc('od svatby ',roku(r_datsvatba.get,r_svatba.get),' let'))
+  | spolu.set('datum svatby') }
+  label frame      [0,2,188,20]   {tag:'f', title:'společné rodinné údaje', css:'frame_label_up' }
+  field access     [130,0,10,] {tag:'f,N', format:'or', css:'Label', data:r.access, tabindex:0  }
+  field key_rodina [130,0,50,] {tag:'f', format:'or', css:'Label', data:r.id_rodina, tabindex:0  }
+
+  // výběr rodiny
+  proc rodina_changed() {}
+  proc rodina_edit() {}
+  field  rodiny0 [Lp+0,Ts+32,104,] {tag:'n,N', title:"^název nové rodiny", data:r.nazev, format:'n' }
+  field  rodiny1 [Lp+0,Ts+32,104,] {tag:'m', title:"^oprava názvu rodiny", data:r.nazev, format:'n' }
+  select rodiny  [Lp+0,Ts+32,110,] {tag:'a,R', format:'tT', title:"^zobrazená rodina", help:'výběr jiné rodiny'
+    proc onchanged() { rodina_changed }}
+  button [Lp+111,Ts+32,,] {tag:'a,o,R', type:'html', title:"[fa-chevron-left]", css:'button', skill:'yaa|yaa+;faa|faa+'
+    help:"oprava názvu zobrazené rodiny"
+    proc onclick() { form.display(0,'a'); form.display(1,'m'); rodiny1.set(rodiny.get);
+      rodiny1.change; rodina_edit }}
+
+  // role v rodině
+  select t_role    [Lp+141,Ts+32,35,] {tag:'a,N', type:'map', data:t.role
+    options:ms_akce_t_role.hodnota, format:'wn', title:'^role'}
+
+  // rodinné údaje
+  field r_spz      [Lp+ 0,Tp+20,58,]  {tag:'r', data:r.spz, title:'^SPZ auta'}
+  label spolu      [Lp+63,Tp+7,85,] {tag:'r' }
+  field r_svatba   {data:r.svatba}
+  field r_deleted  {data:r.deleted}
+  field r_datsvatba[Lp+63,Tp+20,85,] {tag:'r', type:'date', data:r.datsvatba, format:'rR:e'}
+  field r_rozvod   [Lp+150,Tp+20,28,] {tag:'r', format:'r:e', data:r.rozvod, title:'^rozv.', help:'rok rozvodu'}
+
+  // adresa
+  field r_ulice    [Lp+0,Tp+55,125,] {tag:'r', data:r.ulice, title:'^ulice'}
+  select r_stat    [Lp+132,Tp+55,45,] {tag:'r', data:r.stat, format:'r:e', title:'^stát'}
+  check noadresa   [Lp+75,Tp+72,126,] {tag:'r', title:"nespolehlivá adr.", data:r.noadresa,
+    help:"pošta vrací zásilky", format:'n', tabindex:0
+    proc onchange() {
+      alert("napiš prosím do poznámky důvod a datum zjištění neplatnosti")
+  } }
+  field r_psc      [Lp+0,Tp+90, 40,] {tag:'r', data:r.psc, title:'^psč'}
+  field r_obec     [Lp+47,Tp+90,128,] {tag:'r', data:r.obec, title:'^obec'}
+
+  // kontakty
+  field r_telefony [Lp+0,Tp+125,176,] {tag:'r', type:'list', data:r.telefony,title:'^telefony'}
+  check nomaily    [Lp+38,Tp+142,140,] {tag:'r', title:"neposílat hromadné info.", data:r.nomaily, tabindex:0
+    help:"nepoužívat mailovou adresu pro rozesílání hromadných nabídek a informací", format:'n'
+    proc onchange() {
+      alert("napiš prosím do poznámky důvod a datum odmítnutí hromadně rozesílaných informací")
+  } }
+  field r_emaily   [Lp+0,Tp+160,176,] {tag:'r', type:'list', data:r.emaily, title:'^e-maily'}
+  // rodinné schopnosti a poznámka
+  select r_umi     [Lp+60,10,116,] {tag:'p', type:'map+', data:r.r_umi, options:ms_umi.hodnota,
+    title:'schopnosti:', format:'n'}
+  edit  r_note     [Lp+ 0,36,175,74] {tag:'p', data:r.note, title:'^poznámka', format:'n'}
+  // menu
+  menu detail { type:'context'
+    item { title:'konfigurace formuláře',  proc onclick () { rodina_config.tune(evi) } }
+    item { title:'ukázat změny rod. údajů',proc onclick () { key_rodina.get; track.back_show('rodina',key_rodina.get) }}
+  }
+}
