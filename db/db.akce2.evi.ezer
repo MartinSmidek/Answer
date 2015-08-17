@@ -814,9 +814,9 @@ form _cmd [,,706,32] { css:'ae_frame'
       switch(choose(conc("Mám vytvořit novou rodinu s novým členem, <br>nebo s ",jmeno,"?"),
           conc("nový člen:2,",jmeno,":1,Zpět:0")),
       0,{ stop },
-      1,{ set_state('newr'); foreach(page.rod.tagged('N'),change_x); },
+      1,{ set_state('newr'); foreach(page.rod.tagged('N'),change_x); stop},
       2,{ set_state('newro'); foreach(page.rod.tagged('N'),change_x);
-          foreach(page.oso.tagged('I'),change_x); }
+          foreach(page.oso.tagged('I'),change_x); stop}
       )
   }}
   // VYMAZAT
