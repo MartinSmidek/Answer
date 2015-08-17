@@ -8,6 +8,32 @@ global $skin, $path, $c, $b, $ab, $c_appl,
   $c_kuk, $c2_kuk, $b_kuk, $s_kuk, $b_doc_modul, $b_doc_menu, $b_doc_form;
 # c_=color, b_=background-color, a?_=aktivní, f?_=focus, s_=speciál
 switch ($skin) {
+case 'db': // --------------------------------------------------------- db: barvy společného Answeru
+  $path= "../../skins/$skin";                     // cesta k background-image
+  $bila= '#ffffff'; $cerna= '#000000';            // základní barvy
+  // barvy specifické pro styl
+  $nasedla= '#e6e6e6'; $seda= '#4d4d4d';
+  $cervena= '#a90533'; $oranzova= '#ef7f13';  $lososova= '#F0E2C2';
+  $zelena= '#317676'; $nazelenala= '#299C9C'; $zelenkava= '#C2E2E2'; $zelenoucka= '#F1FCFD';
+  // prvky - musí být v global
+  $c= $cerna; $b= $nasedla; $ab= $bila;
+  $c_appl= $zelena;
+  $c_menu= $bila; $b_menu= $seda;
+  $c_main= $zelena; $b_main= $seda;
+  $c_group= $bila; $b_group= $nazelenala; $s_group= $seda;
+  $c_item= $seda; $b_item= $zelenkava; $bd_item= '#ddd'; $fb_item= $oranzova; $fc_item= $bila;
+    $s_item= $s2_item= $seda;
+//   $b_brow= '#ccc'; $b2_brow= $lososova; $b3_brow= $bila; $b4_brow= $zelenkava;
+  $b_brow= '#ccc'; $b2_brow= $bila; $b3_brow= $bila; $b4_brow= $nasedla;
+    $b5_brow= $nasedla; $b6_brow= $nasedla; $b7_brow= $zelenkava; $b8_brow= $zelenoucka;
+    $c_brow= $seda; $s1_brow= $nazelenala; $s2_brow= $cervena;
+  $c_kuk= $zelena; $c2_kuk= $bila; $c3_kuk= $cerna; $b_kuk= $oranzova; $s_kuk= $oranzova;
+  $b_warn= '#adff2f'; $c_warn= '#000000';
+  $b_doc_modul= $oranzova; $b_doc_menu= $zelena; $b_doc_form= $zelena;
+  $b_parm= $oranzova; $b_part= $zelenkava; $b_work= $zelenkava;
+  // úpravy ezer.css.php
+  $w_right= 750;        // šířka panel.right
+  break;
 case 'ck': // --------------------------------------------------------- ck: barvy webu www.hospic.cz
   $path= "../../skins/$skin";                     // cesta k background-image
   $bila= '#ffffff'; $cerna= '#000000';            // základní barvy
