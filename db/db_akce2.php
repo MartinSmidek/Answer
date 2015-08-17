@@ -831,7 +831,7 @@ function tisk_sestava_pary($akce,$par,$title,$vypis,$export=false) { trace();
 //     if ( !in_array($x->key_pobyt,array(15209,15217,15213,15192,15199)) ) continue;
 //     if ( !in_array($x->key_pobyt,array(15192)) ) continue;
 //     if ( !in_array($x->key_pobyt,array(15202)) ) continue;
-                                                        if ( $x->key_pobyt==21339 ) debug($x,"$x->key_pobyt");
+//                                                         if ( $x->key_pobyt==21339 ) debug($x,"$x->key_pobyt");
     $n++;
     # rozbor osobních údajů: adresa nebo základní kontakt se získá 3 způsoby
     # 1. první osoba má osobní údaje - ty se použijí
@@ -848,7 +848,7 @@ function tisk_sestava_pary($akce,$par,$title,$vypis,$export=false) { trace();
     $osoba_note= "";
     foreach ($xs as $i=>$xi) {
       $o= explode('~',$xi);
-                                                        if ( $x->key_pobyt==21339 ) debug($o,"xi/$i");
+//                                                         if ( $x->key_pobyt==21339 ) debug($o,"xi/$i");
       if ( $o[$i_key_spolu] ) {
         $pocet++;
         $jmeno= str_replace(' ','-',$o[$i_jmeno]);
@@ -2715,25 +2715,43 @@ function evid_browse_act_ask($x) {
 # ------------------------------------------------------------------------------------ akce2_osoba2x
 # ASK volané z formuláře _osoba2x při onchange.adresa a onchange.kontakt
 # v ret vrací o_kontakt, r_kontakt, o_adresa, r_adresa
-function akce2_osoba2x($id_osoba) { trace();
+# pokud je id_osoba=0 tzn. jde o novou osobu, vrací se v r_* údaje pro id_rodina
+function akce2_osoba2x($id_osoba,$id_rodina=0) { trace();
   $rets= "o_kontakt,r_kontakt,o_adresa,r_adresa";
   $adresa= "ulice,psc,obec,stat,noadresa";
   $kontakt= "telefon,email,nomail";         // rodina s -y na konci
   $kontakty= "telefony,emaily,nomaily";
-  $k= sql_query("
-    SELECT IFNULL(SUBSTR(
-      (SELECT MIN(CONCAT(role,id_rodina))
-        FROM tvori AS ot JOIN rodina AS r USING (id_rodina) WHERE ot.id_osoba=o.id_osoba
-      ),2),0) AS id_rodina
-    FROM osoba AS o
-    WHERE o.id_osoba='$id_osoba'
-    GROUP BY o.id_osoba");
-  $o= sql_query("SELECT $adresa,$kontakt FROM osoba WHERE id_osoba='$id_osoba'");
-  $r= sql_query("SELECT $adresa,$kontakty FROM rodina WHERE id_rodina='$k->id_rodina'");
-//                                                         debug($k,"kmen");
-//                                                         debug($r,"rodina");
-//                                                         debug($o,"osoba ".(empty($o)?'e':'f'));
   $ret= (object)array();
+  if ( $id_osoba ) {
+    $k= sql_query("
+      SELECT IFNULL(SUBSTR(
+        (SELECT MIN(CONCAT(role,id_rodina))
+          FROM tvori AS ot JOIN rodina AS r USING (id_rodina) WHERE ot.id_osoba=o.id_osoba
+        ),2),0) AS id_rodina
+      FROM osoba AS o
+      WHERE o.id_osoba='$id_osoba'
+      GROUP BY o.id_osoba");
+    $o= sql_query("SELECT $adresa,$kontakt FROM osoba WHERE id_osoba='$id_osoba'");
+    $r= sql_query("SELECT $adresa,$kontakty FROM rodina WHERE id_rodina='$k->id_rodina'");
+  //                                                         debug($k,"kmen");
+  //                                                         debug($r,"rodina");
+  //                                                         debug($o,"osoba ".(empty($o)?'e':'f'));
+    foreach(explode(',',$rets) as $f) {
+      $ret->$f= (object)array();
+    }
+    foreach(explode(',',$adresa) as $f) {
+      $ret->o_adresa->$f= empty($o) ? '' : $o->$f;
+      $ret->r_adresa->$f= empty($r) ? '' : ($f=='noadresa'||$f=='stat'?'':'®').$r->$f;
+    }
+    foreach(explode(',',$kontakt) as $f) { $fy= $f.'y';
+      $ret->o_kontakt->$f= empty($o) ? '' : $o->$f;
+      $ret->r_kontakt->$f= empty($r) ? '' : ($f=='nomail'?'':'®').$r->$fy;
+    }
+  }
+  elseif ( $id_rodina ) {
+    $o= (object)array();
+    $r= sql_query("SELECT $adresa,$kontakty FROM rodina WHERE id_rodina='$id_rodina'");
+  }
   foreach(explode(',',$rets) as $f) {
     $ret->$f= (object)array();
   }

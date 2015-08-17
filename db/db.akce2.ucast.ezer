@@ -902,7 +902,7 @@ form _evidence {
   # změny překryvu formulářů
   proc z_change(x) {
     and(eq(x,'o'),not(eq(zmode.get,x))); zmode.set('o');
-    foreach(array(os1,os2,rod),z_up); foreach(array(pob1,pob2,pob),z_down);
+    foreach(array(os1,os2,rod),z_up); foreach(array(pob1,pob2,pob),z_down); stop
   | and(eq(x,'p'),not(eq(zmode.get,x))); zmode.set('p');
     foreach(array(os1,os2,rod),z_down); foreach(array(pob1,pob2,pob),z_up);
   }
