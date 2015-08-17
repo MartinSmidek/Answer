@@ -16,6 +16,12 @@ function answer_ini($app,$answer_db,$dbs_plus,$php_lib) {
   $EZER= (object)array();
   $ezer_root= $app;                                             // adresář a hlavní objekt aplikace
 
+  // nastavení zobrazení PHP-chyb klientem při &err=1
+  if ( isset($_GET['err']) && $_GET['err'] ) {
+    error_reporting(E_ALL ^ E_NOTICE);
+    ini_set('display_errors', 'On');
+  }
+
   // nastavení verze jádra
   $EZER->version= /*isset($_GET['ezer']) ? "ezer{$_GET['ezer']}" :*/ 'ezer2.2';
 
