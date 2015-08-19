@@ -194,8 +194,8 @@ use u2:    form _ucast2  [   6, 20,,]  { tag:'akce2', format:'n' }   // seznam d
 
 proc page_clear() {
   evid.Plain;
-#   muz.init(1); zen.init(1); rod.init(1); pob.init(1); pob.s.browse_init; pob.d.browse_init;
-#   [ has_skill('m'); u.develop.set('') ];
+  rod.nerodina.Init;
+  evid.Init;
 }
 # --------------------------------------------------==> . reload
 proc reload(id_pobyt) { var filtr:text
@@ -216,6 +216,8 @@ proc reload(id_pobyt) { var filtr:text
     { id_pobyt; { u.b.raise('onrowclick',id_pobyt)
                 | u.b.browse_seek(conc('p.id_pobyt=',id_pobyt)) }
     | u.b.raise('onrowclick') }
+  | // žádný pobyt
+    cmd.set_state('none');
   ];
 }
 # --------------------------------------------------==> . jump
@@ -250,6 +252,7 @@ form _cmd [,,623,30] {
   proc set_state(_mode) { switch(_mode,
     'new', {form.enable(1,'z'); form.enable(0,'x'); form_mode.set('new')}, // blok umístění role
     'edit',{form.enable(1,'s'); form.enable(0,'x')},
+    'none',{form.enable(0,'s|r|x'); form.enable(1,'n')},
     'show',{form.enable(0,'s'); form.enable(1,'x'); form_mode.set('show')}
   )}
   label [141,0,482,30] { tag:'x', css:'ae_work' }
@@ -263,7 +266,7 @@ form _cmd [,,623,30] {
     pob.enable(1,'.*'); rod.enable(1,'.*');
     rod.cleni.enable(1);
     warning;
-    [ renew; reload(the_pobyt.get) | u.b.load_zalozka ];
+    [ renew; reload(the_pobyt.get) | u.b.browse_count; u.b.load_zalozka | evid.Init; ];
     [ ido; rod.cleni.raise('onrowclick',ido) ];
     mode.set('');
   }
@@ -284,7 +287,7 @@ form _cmd [,,623,30] {
   # ----------------------------------------------- přidat
   label [149,3,44,] { title:"<b>Přidat <br>pobyt:</b>" }
   #==> . + rodina
-  button [197,5,,] {tag:'x', title:'[fa-heart] rodina',
+  button [197,5,,] {tag:'x,n', title:'[fa-heart] rodina',
     skill:'yaa+|yaa+;faa+|faa+;caa+|caa+', help:'Přidání celé rodiny'
     proc onclick() {
       set_state('new'); mode.set('rodiny');
@@ -293,11 +296,11 @@ form _cmd [,,623,30] {
       rod.new_rodina('');
   }}
   #==> . + skupina
-  button [265,5,,] {tag:'x', title:'[fa-heart] skupina',
+  button [265,5,,] {tag:'x,n', title:'[fa-heart] skupina',
     skill:'yaa+|yaa+;faa+|faa+;caa+|caa+', help:'Přidání skupiny osob'
     proc onclick() {
-      set_state('new'); mode.set('rodiny');
-      os1.clear_osoba; os2.clear_osoba;
+      rod.nerodina.Init;
+      pridat_osobu.Init
   }}
   # ----------------------------------------------- změnit
   label [343,3,54,] { title:"<b>Změny <br>pobytu:</b>" }
@@ -313,9 +316,10 @@ form _cmd [,,623,30] {
       reload(0);
   } }
   #==> . + osoba
-  button [492,5,,] {tag:'x', title:'[fa-heart-o] Přidat osobu', skill:'yaa+|yaa+;faa+|faa+;caa+|caa+',
+  button pridat_osobu [492,5,,] {tag:'x', title:'[fa-heart-o] Přidat osobu', skill:'yaa+|yaa+;faa+|faa+;caa+|caa+',
     help:'Přidání nového člena skupiny případně i rodiny'
-    proc onclick() { var _prijmeni:text
+    proc onclick() { Init }
+    proc Init() { var _prijmeni:text
       set_state('new'); mode.set('osoby');
       os1.clear_osoba; os2.clear_osoba;
       [ _prijmeni.set(''); rod.cleni.browse_count; _prijmeni.set(rod.cleni.prijmeni.get) ];
@@ -656,7 +660,8 @@ form _page {
       neni_ulozeno // warning
     | tags(this,'z','h|o|f|d');
       zalozka.set('evid');
-      [ u.b.browse_count; evid.Display(1); cmd.display(1) | evid.Display(0); cmd.display(0) ];
+      [ u.b.browse_count; evid.Display(1); cmd.display(1); cmd.set_state('show')
+      | evid.Display(0); cmd.display(1); cmd.set_state('none') ];
       pla.display(0); cmdp.display(0);
       alb.display(0); docu.display(0);
       act1.display(0); act2.display(0);
@@ -751,8 +756,8 @@ form _evidence {
       proc onclick () { alert(ask('data_transform',object('cmd','i0_rodina,pouze','akce',the_duakce.get))) } }
   }
   proc Display(on) {
-    form.display(on); rod.display(on); pob.display(on);
-    os1.display(on); sp1.display(on);
+#     form.display(on); rod.display(on); pob.display(on);
+#     os1.display(on); sp1.display(on);
     [ eq(cmode.get,2); os2.display(on); sp2.display(on); ]
   }
   proc Same() { return(and(rod.same,os1.same,pob.same,sp1.same,sp2.same,os2.same)) }
@@ -1133,7 +1138,9 @@ form _rodina2 [,,360,229]  { css:'ae_frame'
       key_rodina.get; track.back_show('rodina',key_rodina.get) } }
   }
   // ==> . nerodina
-  field  nerodina  [Lr+5,32,90,] {tag:'y', title:"^skupina osob", format:'dnTt', css:'nerodina' }
+  field  nerodina  [Lr+5,32,90,] {tag:'y', title:"^skupina osob", format:'dnTt', css:'nerodina'
+    proc Init() { form.init; key_rodina.set(0); show_rodina }
+  }
   // ==> . hledání dle názvu
   field  rodiny0   [Lr+5,32,90,] {tag:'s', title:"^název nové rodiny", data:r.nazev, format:'nT'
     const css_all = 'ezer_ys ezer_fa ezer_db'

@@ -107,11 +107,18 @@ menu m {type:'left', format:'f+'
         info.rok.display(1); info.google.display(1); info.sey.display(0);
         the_source.set('google'); akce_roku(info.rok.get);
     } }
-    item sey {title:'[fa-search] ze seznamu všech akcí'
+    item sey {title:'[fa-search] ze seznamu všech našich akcí'
       proc onclick (i) {
         // skryjeme rok - po výběru zase zobrazíme - tento režim je lokální pro AKCE
         info.rok.display(1); info.sey.display(1); info.google.display(0);
+        the_omezeni.set(conc("da2.access & ",sys('user','org')));
         the_source.set('sey'); akce_roku(info.rok.get);
+    } }
+    item {title:'[fa-search] ze seznamu všech akcí'
+      proc onclick (i) {
+        // skryjeme rok - po výběru zase zobrazíme - tento režim je lokální pro AKCE
+        info.rok.display(1); info.sey.display(1); info.google.display(0);
+        the_omezeni.set(1); the_source.set('sey'); akce_roku(info.rok.get);
   } } }
   menu {title:'Výběr ze všech roků',type:'group', skill:'y;f'
     item sey {title:'[fa-search] ze seznamu všech akcí',    par:°{cond:'1'} }

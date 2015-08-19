@@ -8,7 +8,7 @@
 #   $dbs_plus   = pole s dalšími databázemi ve formátu $dbs
 #   $php_lib    = pole s *.php - pro 'ini'
 #
-function answer_ini($app,$answer_db,$dbs_plus,$php_lib) {
+function answer_ini($app,$answer_db,$dbs_plus,$php_lib,$ezer_mod=array()) {
   global $EZER,$ezer_local,$ezer_root,$ezer_path_root,$ezer_comp_ezer,$ezer_comp_root,
          $path_backup,$ezer_mysql_path,$path_url,$path_pspad,$path_files,
          $ezer_php_libr,$ezer_php,$ezer_ezer;
@@ -85,15 +85,17 @@ function answer_ini($app,$answer_db,$dbs_plus,$php_lib) {
   $ezer_comp_ezer= "app,area,ezer,ezer_report,ezer_fdom1,ezer_fdom2";
   $ezer_comp_root= "ds/fce,db/db_fce";
   // moduly v Ezerscriptu mimo složku aplikace
-  $ezer_ezer= array(
-    "ds/ds.dum",
-    "ds/ds.tab",
-    "db/db.akce",
-    "db/db.akce.chl",
-    "db/db.akce.lst",
-    "db/db.akce.ducast",
-    "db/db.akce.evi",
-    "db/db.akce.ema"
+  $ezer_ezer= array_merge(array(
+//     "ds/ds.dum",
+//     "ds/ds.tab",
+//     "db/db.akce",
+//     "db/db.akce.chl",
+//     "db/db.akce.lst",
+//     "db/db.akce.ducast",
+//     "db/db.akce.evi",
+//     "db/db.akce.ema"
+    ),
+    $ezer_mod
   );
   // standardní moduly v PHP obsažené v $ezer_path_root/ezer2 - vynechané v dokumentaci
   $ezer_php_libr= array(
@@ -106,8 +108,8 @@ function answer_ini($app,$answer_db,$dbs_plus,$php_lib) {
   );
   // uživatelské i knihovní moduly v PHP obsažené v $ezer_path_root
   $ezer_php= array_merge(array(
-    "ys/ys_ucet.php",
-    "ys/ys.ban.php",
+//     "ys/ys_ucet.php",       YS
+//     "ys/ys.ban.php",        YS
     "db/db_akce.php",
     "db/db_akce2.php",
     "fis/fis_tcpdf.php"),

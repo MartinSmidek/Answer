@@ -16,7 +16,7 @@ proc accessed(org) {
 
 # hodnoty pamatované v cookies
 var the_source: text            // forma seznamu akcí google|sey                           -- cookie
-var the_omezeni: text           // pro skill=c obsahuje podmínku přístupných akcí          -- cookie
+var the_omezeni: text           // podmínka přístupných akcí                               -- cookie
 var the_duakce: number          // pracovní akce: id_akce (id_dukace)                      -- cookie
 
 # hodnoty udržované funkcí akce_change
@@ -57,7 +57,7 @@ group foto { include:'onload,db2.akce2.foto'
     proc galery(fotka) {}
   }
 }
-# ============================================================================================> AKCE
+# ==========================================================================================> . AKCE
 panel lst {type:'right', _sys:'*', title:'[fa-futbol-o] AKCE', include:'onload,db2.akce2.lst',
   skill:'yaa;faa;caa'
   use the_akce: form _the_akce         // zatím nezobrazená data nastavené akce s klíčem id_duakce
@@ -81,7 +81,7 @@ var maia: object
 # }
 # panel tisk [,,,] {type:'right', _sys:'*', title:'Výpisy akce2', include:'onclick,db2.akce2.tisk',skill:'yaa;faa;caa'  }
 # panel maia {type:'right', title:'Maily akce', _sys:'*', include:'onclick,db2.akce2.maia', skill:'yam;fam;cam'  }
-# ========================================================================================> EVIDENCE
+# ======================================================================================> . EVIDENCE
 panel evi {type:'right', _sys:'*', title:'[fa-briefcase] EVIDENCE2', include:'onload,db2.akce2.evi', skill:'yae;fae;caa',
     style:"overflow-y:hidden"
   proc rodina_show() {}
@@ -89,10 +89,10 @@ panel evi {type:'right', _sys:'*', title:'[fa-briefcase] EVIDENCE2', include:'on
   proc evid_osoba(_ido) { }                     // zobrazení osoby v evidenci
   proc evid_rodina(_idr) { }                    // zobrazení rodiny v evidenci
 }
-# panel mai {type:'right', title:'Maily', _sys:'*', include:'onclick,db2.akce2.mai', skill:'yam;fam;cam'  }
+panel mai {type:'right', title:'Maily', _sys:'*', include:'onclick,db2.akce2.mai', skill:'yam;fam;cam'  }
 # panel dop {type:'right', title:'Dopisy', _sys:'*', include:'onclick,db2.akce2.dop', skill:'yam;fam;cam'  }
-# panel sta {type:'right', title:'Výpisy evidence', _sys:'*', include:'onclick,db2.akce2.sta', skill:'yaa;faa;cas'  }
-# ==========================================================================================> POPUPS
+panel sta {type:'right', title:'Výpisy evidence', _sys:'*', include:'onclick,db2.akce2.sta', skill:'yaa;faa;cas'  }
+# ========================================================================================> . POPUPS
 panel elim [0,0,965,582] { type:'popup', title:'Duplicity', format:'c', include:'onload,db2.akce2.elim'
   proc osoby  (ido,jmeno,prijmeni) {}           // sjednocení dvou osob
   proc rodiny (idr,nazev) {}                    // sjednocení dvou rodin
