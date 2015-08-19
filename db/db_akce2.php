@@ -831,7 +831,7 @@ function tisk_sestava_pary($akce,$par,$title,$vypis,$export=false) { trace();
 //     if ( !in_array($x->key_pobyt,array(15209,15217,15213,15192,15199)) ) continue;
 //     if ( !in_array($x->key_pobyt,array(15192)) ) continue;
 //     if ( !in_array($x->key_pobyt,array(15202)) ) continue;
-//                                                         if ( $x->key_pobyt==21339 ) debug($x,"$x->key_pobyt");
+//                                                         if ( $x->key_pobyt==22141 ) debug($x,"$x->key_pobyt");
     $n++;
     # rozbor osobních údajů: adresa nebo základní kontakt se získá 3 způsoby
     # 1. první osoba má osobní údaje - ty se použijí
@@ -848,7 +848,7 @@ function tisk_sestava_pary($akce,$par,$title,$vypis,$export=false) { trace();
     $osoba_note= "";
     foreach ($xs as $i=>$xi) {
       $o= explode('~',$xi);
-//                                                         if ( $x->key_pobyt==21339 ) debug($o,"xi/$i");
+//                                                         if ( $x->key_pobyt==22141 ) debug($o,"xi/$i");
       if ( $o[$i_key_spolu] ) {
         $pocet++;
         $jmeno= str_replace(' ','-',$o[$i_jmeno]);
@@ -865,6 +865,15 @@ function tisk_sestava_pary($akce,$par,$title,$vypis,$export=false) { trace();
     $io= $i_adresa;
     $adresa=  $o[$io++]; $ulice= $o[$io++]; $psc= $o[$io++]; $obec= $o[$io++]; $stat= $o[$io++];
     $kontakt= $o[$io++]; $telefon= $o[$io++]; $nomail= $o[$io++]; $email= $o[$io++];
+    // úpravy
+    $emaily= count($emaily) ? implode(', ',$emaily).';' : '';
+    $email=  trim($kontakt ? $email   : substr($email,$r),",; ") ?: $emaily;
+    $emaily= $emaily ?: $email;
+    $telefony= count($telefony) ? implode(', ',$telefony).';' : '';
+    $telefon=  trim($kontakt ? $telefon : substr($telefon,$r),",; ") ?: $telefony;
+    $telefony= $telefony ?: $telefon;
+//                                                         if ( $x->key_pobyt==22141 )
+//                                                         display("email=$email, emaily=$emaily, telefon=$telefon, telefony=$telefony");
     // přepsání do výstupního pole
     $clmn[$n]= array();
     $r= 0; // 1 ukáže bez (r)
@@ -878,10 +887,10 @@ function tisk_sestava_pary($akce,$par,$title,$vypis,$export=false) { trace();
       case 'ulice':     $c= $adresa  ? $ulice   : substr($ulice,$r); break;
       case 'psc':       $c= $adresa  ? $psc     : substr($psc,$r);   break;
       case 'obec':      $c= $adresa  ? $obec    : substr($obec,$r);  break;
-      case 'telefon':   $c= trim($kontakt ? $telefon : substr($telefon,$r),",; ");  break;
-      case 'telefony':  $c= count($telefony) ? implode(', ',$telefony).';' : ''; break;
-      case 'email':     $c= trim($kontakt ? $email   : substr($email,$r),",; ");  break;
-      case 'emaily':    $c= count($emaily) ? implode(', ',$emaily).';' : ''; break;
+      case 'telefon':   $c= $telefon;  break;
+      case 'telefony':  $c= $telefony; break;
+      case 'email':     $c= $email;  break;
+      case 'emaily':    $c= $emaily; break;
       case '_pocet':    $c= $pocet; break;
       case 'poznamka':  $c= $x->p_poznamka . ($spolu_note ?: ''); break;
       case 'note':      $c= $x->r_note . ($osoba_note ?: ''); break;
@@ -889,47 +898,6 @@ function tisk_sestava_pary($akce,$par,$title,$vypis,$export=false) { trace();
       }
       $clmn[$n][$f]= $c;
     }
-
-//     break;
-//     continue;
-//
-//     $x->prijmeni= $x->pouze==1 ? $x->prijmeni_m : ($x->pouze==2 ? $x->prijmeni_z : $x->nazev);
-//     $x->jmena=    $x->pouze==1 ? $x->jmeno_m    : ($x->pouze==2 ? $x->jmeno_z : "{$x->jmeno_m} a {$x->jmeno_z}");
-//     $x->_pocet= ($x->pouze?" 1":" 2").($x->_deti?"+{$x->_deti}":'');
-//     // emaily
-//     $a_emaily_m= preg_split("/,\s*|;\s*/",trim($x->email_m ? $x->email_m : $x->emaily," ,;"));
-//     $a_emaily_z= preg_split("/,\s*|;\s*/",trim($x->email_z ? $x->email_z : $x->emaily," ,;"));
-//     $a_emaily= preg_split("/,\s*|;\s*/",trim($x->emaily," ,;"));
-//     $emaily= implode(';',array_diff(array_unique(array_merge($a_emaily,$a_emaily_m,$a_emaily_z)),array('')));
-//     $emaily_m= implode(';',$a_emaily_m);
-//     $emaily_z= implode(';',$a_emaily_z);
-//     $x->emaily= $x->pouze==1 ? $emaily_m  : ($x->pouze==2 ? $emaily_z : $emaily);
-//     $x->emaily.= $x->emaily ? ';' : '';
-//     // telefony
-//     $a_telefony_m= preg_split("/,\s*|;\s*/",trim($x->telefon_m ? $x->telefon_m : $x->telefony," ,;"));
-//     $a_telefony_z= preg_split("/,\s*|;\s*/",trim($x->telefon_z ? $x->telefon_z : $x->telefony," ,;"));
-//     $a_telefony= preg_split("/,\s*|;\s*/",trim($x->telefony," ,;"));
-//     $telefony= implode(';',array_diff(array_unique(array_merge($a_telefony,$a_telefony_m,$a_telefony_z)),array('')));
-//     $telefony_m= implode(';',$a_telefony_m);
-//     $telefony_z= implode(';',$a_telefony_z);
-//     $x->telefony= $x->pouze==1 ? $telefony_m  : ($x->pouze==2 ? $telefony_z : $telefony);
-//     // podle číselníku
-//     $x->ubytovani= $c_ubytovani[$x->ubytovani];
-//     $x->prednasi= $c_prednasi[$x->prednasi];
-//     $x->zpusobplat= $c_platba[$x->zpusobplat];
-//     // další
-//     $n++;
-//     $clmn[$n]= array();
-//     foreach($flds as $f) {
-// //       $clmn[$n][$f]= $f=='poznamka' && $x->r_note ? ($x->$f.' / '.$x->r_note) : $x->$f;
-//       switch ($f) {
-//       case '=par':      $clmn[$n][$f]= "{$x->prijmeni} {$x->jmena}"; break;
-//       // fonty: ISOCTEUR, Tekton Pro
-//       case '=pozpatku': $clmn[$n][$f]= otoc("{$x->prijmeni} {$x->jmena}"); break;
-//       default:          $clmn[$n][$f]= $x->$f; break;
-//       }
-//     }
-// //     break;
   }
 //                                         debug($clmn,"sestava pro $akce,$typ,$fld,$cnd");
   return sta_table($tits,$flds,$clmn,$export);
@@ -1902,20 +1870,20 @@ function sta_sestava($title,$par,$export=false) {
         $clmn[]= array(
           'jm'=>"{$x->jmeno_m} a {$x->jmeno_z} {$x->nazev}",
           'od'=>$x->OD,'n'=>$x->Nx,'do'=>$x->DO,
-          'vps_i'=>$vps1 ?: '-',
+          'vps_i'=>$skola ?: '-',
           'clen'=>$cclen,'^id_rodina'=>$x->id_rodina
         );
       }
       else { // osoby
         $clmn[]= array(
           'jm'=>"{$x->prijmeni_m} {$x->jmeno_m}",'od'=>$x->OD,'n'=>$x->Nx,'do'=>$x->DO,
-          'vps_i'=>$vps1 ?: '-', 'cert'=>$c1, 'clen'=>$cclen, 'byd'=>$x->obec_m,
+          'vps_i'=>$skola ?: '-', 'cert'=>$c1, 'clen'=>$cclen, 'byd'=>$x->obec_m,
           'nar'=>substr($x->narozeni_m,2,2).substr($x->narozeni_m,5,2).substr($x->narozeni_m,8,2),
           '^id_osoba'=>$x->id_m
         );
         $clmn[]= array(
           'jm'=>"{$x->prijmeni_z} {$x->jmeno_z}",'od'=>$x->OD,'n'=>$x->Nx,'do'=>$x->DO,
-          'vps_i'=>$vps1 ?: '-', 'cert'=>$c2, 'clen'=>$cclen, 'byd'=>$x->obec_z,
+          'vps_i'=>$skola ?: '-', 'cert'=>$c2, 'clen'=>$cclen, 'byd'=>$x->obec_z,
           'nar'=>substr($x->narozeni_z,2,2).substr($x->narozeni_z,5,2).substr($x->narozeni_z,8,2),
           '^id_osoba'=>$x->id_z
         );
@@ -2900,7 +2868,7 @@ function akce2_auto_jmena1($patt,$par) {  #trace();
 }
 # ------------------------------------------------------------------------------- akce2_auto_jmena1L
 # formátování autocomplete
-function akce2_auto_jmena1L($id_osoba) {  #trace();
+function akce2_auto_jmena1L ($id_osoba) {  #trace();
   $osoba= array();
   $qry= "SELECT prijmeni, jmeno, id_osoba, YEAR(narozeni) AS rok, role,
            IF(adresa,o.ulice,r.ulice) AS ulice,
