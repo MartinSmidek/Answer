@@ -4,7 +4,8 @@
 # Ans(w)er/Ezer                                     (c) 2007-2013 Martin Šmídek <martin@smidek.eu> #
 # ------------------------------------------------------------------------------------------------ #
 
-var zalozka: text           // inf | cor | cen
+var zalozka: text               // inf | cor | cen
+var the_omezeni: text           // podmínka omezující akce podle access
 
 use info: form _akce [12,4,,]
 use page: form _page [512,40,,]
@@ -30,11 +31,7 @@ proc onfirstfocus() {
   page.cen_copy.selects("neměnit:0");
   zalozka.set('inf');
   // zobrazení seznamu akcí
-  akce_roku(the_rok.get);
-  [ has_skill('y;f');  m.g.sey.click
-  | has_skill('caam'); m.c.m.click
-  | has_skill('caar'); m.c.r.click
-  | has_skill('a');    m.c.a.click ];
+  m.g.sey.click;
   page.inf.onclick;
 }
 # -----------------------------------------------------------------------------==> lokální procedury
@@ -92,15 +89,6 @@ proc h_change_b() { var r:number, h:number
 #   'sey' používá pouze tabulku AKCE
 
 menu m {type:'left', format:'f+'
-  menu c {title:'Výběr akce',type:'group',   skill:'c'             // jen pro CR
-    item m {title:'program Manželská setkání', skill:'caam', par:°{omez:'da2.druh IN (1,2,3,4)'} }
-    item r {title:'programy Rodina mimo MS',   skill:'caar', par:°{omez:'da2.druh NOT IN (1,2,3,4)'} }
-    item a {title:'... bez omezení',           skill:'a',    par:°{omez:'1'} }
-      proc onclick (i) {
-        info.rok.display(1); info.sey.display(1); info.google.display(0);
-        the_omezeni.set(i.par.omez);
-        the_source.set('sey'); akce_roku(info.rok.get);
-  } }
   menu g {title:'Výběr akce zadaného roku',type:'group', skill:'y;f'
     item {title:'[fa-google] podle číselníku akcí z intranetu', skill:'y'       // jen pro YS
       proc onclick (i) {
@@ -122,8 +110,8 @@ menu m {type:'left', format:'f+'
   } } }
   menu {title:'Výběr ze všech roků',type:'group', skill:'y;f'
     item sey {title:'[fa-search] ze seznamu všech akcí',    par:°{cond:'1'} }
-    item  {title:'[fa-search-plus]... opravdové akce',          par:°{cond:'da2.spec=0'} }
-    item  {title:'[fa-search-minus] ... jen různé seznamy',       par:°{cond:'da2.spec=1'} }
+    item  {title:'[fa-search-plus]... opravdové akce',      par:°{cond:'da2.spec=0'} }
+    item  {title:'[fa-search-minus] ... jen různé seznamy', par:°{cond:'da2.spec=1'} }
     proc onclick (i) {
       info.rok.display(0); info.sey.display(1); info.google.display(0);
       the_source.set('sey'); akce_vsechny(i.par.cond)

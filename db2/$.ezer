@@ -23,21 +23,12 @@ menu db2 { type:'main', title:'fa2', active:*, _sys:'*'
           item {title:'DB2<+YS: import'         ,par:°{cmd:'imp_YS',confirm:'1'} }
           item {title:'DB2<+FA: import'         ,par:°{cmd:'imp_FA',confirm:'1'} }
           item {title:'DB2: úpravy uživatelů'   ,par:°{cmd:'imp_user',confirm:'1'} }
+          item {title:'DB2: ... all in one ...' ,par:°{cmd:'imp_clear,imp_YS,imp_FA,imp_user',confirm:'1'} }
           proc onclick (i) { clear;
             info.fill(conc(i.owner.title,' - ',i.title),' ');
             { not(i.par.confirm) | confirm("spustit úpravy databáze EZER_DB2?") };
             info.fill('',' ... probíhá transformace dat ...');
             info.fill('',ask('db2_sys_transform',i.par));
-          }
-          item {title:'DB2: ... all in one ...'
-            proc onclick (i) { clear;
-              info.fill(conc(i.owner.title,' - ',i.title),' ');
-              confirm("spustit NOVÉ NAPLNĚNÍ databáze EZER_DB2?");
-              info.append(ask('db2_sys_transform',°{cmd:'imp_clear'}));
-              info.append(ask('db2_sys_transform',°{cmd:'imp_YS'}));
-              info.append(ask('db2_sys_transform',°{cmd:'imp_FA'}));
-              info.append(ask('db2_sys_transform',°{cmd:'imp_user'}));
-            }
           }
         }
       }

@@ -147,7 +147,7 @@ form _vyber {
     help:'vynechání adresátů z mailu s daným id_dopis'
     proc onclick () {
       es.msg.set('čekej ...');
-      es.msg.set(ask('dop_mai_omitt',dopis_id.get,vynech_id.get));
+      es.msg.set(ask('mail2_mai_omitt',dopis_id.get,vynech_id.get));
     }
   }
   field vynech_id [711,3,60,] { tag:'es', format:'t' }
@@ -156,7 +156,7 @@ form _vyber {
     help:'vynechání adresátů daných adres'
     proc onclick () {
       es.msg.set('čekej ...');
-      es.msg.set(ask('dop_mai_omitt2',dopis_id.get,vynech_emaily.get));
+      es.msg.set(ask('mail2_mai_omitt2',dopis_id.get,vynech_emaily.get));
     }
   }
   field vynech_emaily [711,23,60,] { tag:'es', format:'t' }
@@ -196,11 +196,11 @@ form _gsql {
   }}
   button [l_butt+130,t_butt+5,,] {tag:'def', title:'Excel', help:'Export emaily a adres do Excelu',
     proc onclick(){
-      save_sql(0); sql_export.set(gsql.get); xls.set(ask('dop_gen_excel',sql_export.get,ucel.get))
+      save_sql(0); sql_export.set(gsql.get); xls.set(ask('mail2_gen_excel',sql_export.get,ucel.get))
   } }
   button [l_butt+175,t_butt+5,,] {tag:'def', title:'PDF', help:'Export adres do PDF', format:'d'
     proc onclick(){
-      save_sql(0); sql_export.set(gsql.get); xls.set(ask('dop_gen_excel',sql_export.get,ucel.get))
+      save_sql(0); sql_export.set(gsql.get); xls.set(ask('mail2_gen_excel',sql_export.get,ucel.get))
   } }
   label xls [l_butt+130,t_butt+30,100,] { tag:'def' }
   # ------------------------------------- výběr typů akcí
@@ -398,7 +398,7 @@ form _gsql {
     var p: object
     var ids: text
     parm;
-    p.set(ask('dop_gen_read',parm));
+    p.set(ask('mail2_gen_read',parm));
     not(eq(p,0));
     # ano-akce
     ano_akce.set(p.ano_akce.typy); ano_akce.onchange;
@@ -489,7 +489,7 @@ form _gsql {
     cond.set(conc(cond.get,' AND ',pro_mrop.code_mrop));
     # sestavení SELECT pro osobu
     gsql.set(conc(
-      "SELECT COUNT(*) AS _ucasti,iniciace,o.id_osoba AS _id,CONCAT(prijmeni,' ',jmeno) AS _name,",chr(10),
+      "SELECT o.access,COUNT(*) AS _ucasti,iniciace,o.id_osoba AS _id,CONCAT(prijmeni,' ',jmeno) AS _name,",chr(10),
       "  IF(o.psc!='',o.psc,r.psc) AS _psc,",chr(10),
       "  IF(o.psc!='' OR r.psc!='',o.ulice,r.ulice) AS _ulice,",chr(10),
       "  IF(o.psc!='' OR r.psc!='',o.obec,r.obec) AS _obec,",chr(10),
@@ -503,10 +503,10 @@ form _gsql {
         from.get,chr(10),
         "WHERE p.id_akce IN (SELECT id_duakce FROM akce WHERE spec=0 AND ",akce_ne,")",chr(10),
         ")",chr(10))),
-      "GROUP BY o.id_osoba ",pro_ucast.code_ucasti,chr(10),
+      "GROUP BY o.id_osoba [HAVING_ACCESS] ",pro_ucast.code_ucasti,chr(10),
       "ORDER BY prijmeni",chr(10)
     ));
-    [ to_show; tsql.set(ask('dop_gen_try',gsql.get,1)) ];
+    [ to_show; tsql.set(ask('mail2_gen_try',gsql.get,1)) ];
   }
   proc save_sql(to_reload) {
     ucel.get;
@@ -530,8 +530,8 @@ form _gsql {
     vy.komu_G.selects(id_mailist.get);
   | warning('název je povinný');
   }
-  proc run_sql() { tsql.set(ask('dop_gen_try',gsql.get)) }
-  proc run_sql1() { tsql.set(conc(ask('dop_gen_try',gsql.get,1),'<hr>',ask('dop_gen_try',gsql.get))) }
+  proc run_sql() { tsql.set(ask('mail2_gen_try',gsql.get)) }
+  proc run_sql1() { tsql.set(conc(ask('mail2_gen_try',gsql.get,1),'<hr>',ask('mail2_gen_try',gsql.get))) }
   label tsql [5,t_pro+154,750,] { tag:'def', style:"background-color:#e6e6e6" }
   button [742,t_pro+153,,] { tag:'def', title:'!' proc onclick() { make_sql(0); run_sql1 }}
   # -------------------------------------==> . procedury
@@ -734,7 +734,7 @@ form _etext  {
       dopis_id.set(id_dopis.get);
       form.load(dopis_id.get);
       drop_init;
-      obsah.set(ask('dop_mai_text',dopis_id.get));
+      obsah.set(ask('mail2_mai_text',dopis_id.get));
       adopis.set(id_dopis.get);
       form_state('n|s','u|z');
       generovat.set(conc(cconc(pocet.get,"Přegenerovat","Vygenerovat")," rozesílací seznam"))
@@ -760,11 +760,11 @@ form _etext  {
   label [L+10,115,,] {title:'sem lze přetáhnout přílohy, zrušit a stáhnout pak kontextovým menu'}
   label drop [L+10,130,340,45] { type:'drop'
     proc onload(f) {                                    // po dokončení přenosu
-      ask('dop_mai_attach',form.key,f);                 // přidání souboru k dávce
+      ask('mail2_mai_attach',form.key,f);                 // přidání souboru k dávce
     }
     proc onmenu(op,name) {  // op=remove|remove-all     // pro S: jen 2 parametry
-      { eq(op,'remove');     ask('dop_mai_detach',form.key,name) // odebrání přílohy
-      | eq(op,'remove-all'); ask('dop_mai_detach_all',form.key)  // odebrání všech příloh
+      { eq(op,'remove');     ask('mail2_mai_detach',form.key,name) // odebrání přílohy
+      | eq(op,'remove-all'); ask('mail2_mai_detach_all',form.key)  // odebrání všech příloh
       | warning('zatím neimplementovaná operace')
       };
       attach.set(ask('select','prilohy','dopis',conc("id_dopis=",form.key)));
@@ -824,7 +824,7 @@ form _etext  {
     skill:'yam|yams;fam|fams;cam|cams'
     proc onclick () {
       confirm(conc("Opravdu smazat mail '",texty.predmet.get,"' a jeho rozesílací seznam?"));
-      ask('dop_mai_smaz',texty.id_dopis.get);
+      ask('mail2_mai_smaz',texty.id_dopis.get);
       reload
     }
   }
@@ -843,10 +843,10 @@ form _etext  {
         blokovano.get; alert("použití skupiny <b>",vy.komu_Q.get,"</b> je zablokováno - asi probíhá úprava dotazu",
           ", kontaktuj administrátora aplikace ...");
       | prazdny; et_prazdy.get;
-        E_info.set(ask('dop_mai_pocet',dopis_id.get,dopis_var.get));
+        E_info.set(ask('mail2_mai_pocet',dopis_id.get,dopis_var.get));
         confirm(E_info.get('_html'));
         E_info.get('_count');
-        err.set(ask('dop_mai_posli',dopis_id.get,E_info.get));
+        err.set(ask('mail2_mai_posli',dopis_id.get,E_info.get));
         [ err; alert(err) ];
         texty.browse_seek; texty.browse_focus;
       }
@@ -854,26 +854,26 @@ form _etext  {
       # rozesílání podle mail-listu
       { blokovano.set(ask('select','blokovano','mailist',conc("id_mailist=",vy.komu_G.key)));
         blokovano.get; alert("použití tohoto mail-listu je zablokováno - asi probíhá úprava dotazu");
-      | conf.set(ask('dop_mai_confirm_spec',vy.komu_G.key,dopis_id.get));
+      | conf.set(ask('mail2_mai_confirm_spec',vy.komu_G.key,dopis_id.get));
         conf.specialni;
         [ { not(conf.prepsat) | confirm(conf.prepsat) };
           confirm(conf.pocet);
-          E_info.set(ask('dop_mai_posli_spec',dopis_id.get));
+          E_info.set(ask('mail2_mai_posli_spec',dopis_id.get));
           texty.browse_seek; texty.browse_focus;
           alert(E_info.get('msg'))
         ]
       | prazdny; et_prazdy.get;
-        E_info.set(ask('dop_mai_pocet',dopis_id.get,dopis_var.get));
+        E_info.set(ask('mail2_mai_pocet',dopis_id.get,dopis_var.get));
         confirm(E_info.get('_html'));
         E_info.get('_count');
-        err.set(ask('dop_mai_posli',dopis_id.get,E_info.get));
+        err.set(ask('mail2_mai_posli',dopis_id.get,E_info.get));
         [ err; alert(err) ];
         texty.browse_seek; texty.browse_focus;
       }
     }
   }
   proc prazdny() {
-    E_info.set(ask('dop_mai_prazdny',texty.id_dopis.get));
+    E_info.set(ask('mail2_mai_prazdny',texty.id_dopis.get));
     et_prazdy.set(E_info.get('_prazdny')); et_prazdy.get
   | et_prazdy.set(confirm(E_info.get('_html')))
   }
@@ -975,7 +975,7 @@ form _esady  {
     proc onclick () {
       msg.set('');
       confirm('Poslat zkušební mail na ',zkus.get,' ?');
-      E_info.set(ask('dop_mai_send',dopis_id.get,0,from.get,name.get,zkus.get,maily.id_mail.get));
+      E_info.set(ask('mail2_mai_send',dopis_id.get,0,from.get,name.get,zkus.get,maily.id_mail.get));
       msg.set(E_info.get('_html'));
     }
   }
@@ -989,7 +989,7 @@ form _esady  {
     proc onclick () {
       msg.set('');
       confirm(conc('Opravdu poslat dalších ',davka.get,' mailů "z adresy" ',from.get,'?'));
-      E_info.set(ask('dop_mai_send',dopis_id.get,davka.get,from.get,name.get));
+      E_info.set(ask('mail2_mai_send',dopis_id.get,davka.get,from.get,name.get));
       msg.set(E_info.get('_html'));
       maily.browse_seek; texty.browse_seek;
     }
@@ -1019,11 +1019,11 @@ form _esady  {
     show msg     [,,50,]  { title:'chyba', data:etmm.msg, format:'tsq' }
     show body             { data:etmm.body }
     proc onsubmit() {
-      ask('dop_mai_stav',id_mail.get,cconc(eq(stav.get,5),3,5));
+      ask('mail2_mai_stav',id_mail.get,cconc(eq(stav.get,5),3,5));
       this.browse_row;
     }
     proc onrowclick () {
-      info.set(ask('dop_mai_info',id_clen.get,email.get,dopis_id.get,dopis_var.get,id_mail.get));
+      info.set(ask('mail2_mai_info',id_clen.get,email.get,dopis_id.get,dopis_var.get,id_mail.get));
       [ body.get; obsah.set(body.get)
       | obsah.set(ask('select','obsah','dopis',conc('id_dopis=',id_dopis.get))) ]
     }
