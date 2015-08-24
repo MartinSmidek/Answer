@@ -9,7 +9,7 @@ function db2_rod_show($nazev,$n) {
   $rod= array(null);
   // načtení rodin
   $qr= mysql_qry("SELECT id_rodina AS key_rodina,ulice AS r_ulice,psc AS r_psc,obec AS r_obec,
-      telefony AS r_telefony,emaily AS r_emaily,spz AS r_spz,datsvatba,access
+      telefony AS r_telefony,emaily AS r_emaily,spz AS r_spz,datsvatba,access AS r_access
     FROM rodina WHERE deleted='' AND nazev='$nazev'");
   while ( $qr && ($r= mysql_fetch_object($qr)) ) {
     $r->r_datsvatba= sql_date1($r->datsvatba);
@@ -23,7 +23,7 @@ function db2_rod_show($nazev,$n) {
     $ret->rod= $rod[$n];
     $ret->back= $n>1 ?1:0;
     $ret->next= $n<count($rod)-1 ?1:0;
-    $ret->css= $css[$ret->rod->access];
+    $ret->css= $css[$ret->rod->r_access];
     // seznam členů rodiny
     $cleni= $del= '';
     $idr= $ret->rod->key_rodina;
@@ -109,7 +109,7 @@ function ucast2_browse_ask($x,$tisk=false) {
   $y= (object)array('ok'=>0);
   foreach(explode(',','cmd,rows,quiet,key_id,oldkey') as $i) $y->$i= $x->$i;
   switch ($x->cmd) {
-  case 'browse_load':  # -----------------------------------==> browse_load
+  case 'browse_load':  # -----------------------------------==> . browse_load
   default:
     # vnořené SQL definující @akce, @soubeh, @app
     if ( $x->sql ) mysql_qry($x->sql);
@@ -151,10 +151,12 @@ function ucast2_browse_ask($x,$tisk=false) {
       WHERE $cond $AND ");
     while ( $qp && ($p= mysql_fetch_object($qp)) ) {
       $pobyt[$p->id_pobyt]= $p;
-      if ( $p->i0_rodina ) {
-        $rodina_pobyt[$p->i0_rodina]= $p->id_pobyt;
+      $i0r= $p->i0_rodina;
+      if ( $i0r ) {
+        $rodina_pobyt[$i0r]= $p->id_pobyt;
         $pobyt[$p->id_pobyt]->access= $p;
-        $rodiny.= ($rodiny?',':'').$p->i0_rodina;
+        if ( !strpos(",$rodiny,",",$i0r,") )
+          $rodiny.= ",$i0r";
       }
     }
 //                                                         debug($rodina_pobyt,"rodina_pobyt");
@@ -170,7 +172,9 @@ function ucast2_browse_ask($x,$tisk=false) {
     ");
     while ( $qu && ($u= mysql_fetch_object($qu)) ) {
       $cleni.= ",{$u->id_osoba}";
-      $rodiny.= substr($u->_role,1) ? ",".substr($u->_role,1) : '';
+      $idr= substr($u->_role,1);
+      if ( $idr && !strpos(",$rodiny,",",$idr,") )
+        $rodiny.= ",$idr";
       $pobyt[$u->id_pobyt]->cleni[$u->id_osoba]= $u;
       $spolu[$u->id_osoba]= $u->id_pobyt;
       // doplnění osobního umí - malým
@@ -189,11 +193,13 @@ function ucast2_browse_ask($x,$tisk=false) {
     ");
     while ( $qp && ($p= mysql_fetch_object($qp)) ) {
       $osoby.= ",{$p->id_osoba}";
-      $rodiny.= $p->id_rodina ? ",{$p->id_rodina}" : '';
+      $idr= $p->id_rodina;
+      if ( $idr && !strpos(",$rodiny,",",$idr,") )
+        $rodiny.= ",$idr";
       if ( !isset($pobyt[$p->id_pobyt]->cleni[$p->id_osoba]) )
         $pobyt[$p->id_pobyt]->cleni[$p->id_osoba]= (object)array();
       $pobyt[$p->id_pobyt]->cleni[$p->id_osoba]->id_tvori= $p->id_tvori;
-      $pobyt[$p->id_pobyt]->cleni[$p->id_osoba]->id_rodina= $p->id_rodina;
+      $pobyt[$p->id_pobyt]->cleni[$p->id_osoba]->id_rodina= $idr;
       $pobyt[$p->id_pobyt]->cleni[$p->id_osoba]->role= $p->role;
       $pobyt[$p->id_pobyt]->cleni[$p->id_osoba]->o_umi= $p->o_umi;
       $pobyt[$p->id_pobyt]->cleni[$p->id_osoba]->narozeni= $p->narozeni;
@@ -247,7 +253,7 @@ function ucast2_browse_ask($x,$tisk=false) {
       }
     }
 //                                                         display("rodiny:$rodiny");
-//                                                         debug($rodina,$rodiny);
+                                                        debug($rodina,$rodiny);
 //                                                         debug($osoba,'osoby po _rody');
     # seznamy položek
     $fpob1= flds("key_pobyt=id_pobyt,_empty=0,key_akce=id_akce,key_osoba,key_spolu,key_rodina=i0_rodina,"
@@ -387,7 +393,7 @@ function ucast2_browse_ask($x,$tisk=false) {
       }
 //                                                   debug($p->cleni,"členi");
 //                                                   display($cleni);
-      $_nazev= $idr ? $rodina[$idr]->nazev : ($nazev ? implode(' ',$nazev) : '-');
+      $_nazev= $idr ? $rodina[$idr]->nazev : ($nazev ? implode(' ',$nazev) : '(pobyt bez členů)');
       # zjištění dluhu
       $platba1234= $p->platba1 + $p->platba2 + $p->platba3 + $p->platba4;
       $p->c_suma= $platba1234 + $p->poplatek_d;
@@ -410,7 +416,7 @@ function ucast2_browse_ask($x,$tisk=false) {
       # rodina
       foreach($frod as $fz=>$fr) { $z->$fz= $rodina[$idr]->$fr; }
       # ... oprava obarvení
-      $z->r_access= $p_access;
+      $z->r_access|= $p_access;
       # členové
       $z->r_cleni= $cleni;
       # pobyt II
@@ -526,6 +532,30 @@ function ucast2_browse_ask($x,$tisk=false) {
 //                                                 debug($y->values);
   return $y;
 }
+# =======================================================================================> . pomocné
+# ----------------------------------------------------------------------------- ucast2_rodina_access
+# ASK přidání access členům rodiny
+function ucast2_rodina_access($idr,$access) {
+  $qo= mysql_qry("SELECT id_osoba,o.access,r.access AS r_access FROM rodina AS r
+                  LEFT JOIN tvori USING (id_rodina) LEFT JOIN osoba AS o USING (id_osoba)
+                  WHERE id_rodina=$idr");
+  while ( $qo && ($o= mysql_fetch_object($qo)) ) {
+    $r_access= $o->r_access;
+    # úprava access členů
+    if ( $access!=$o->access) {
+      ezer_qry("UPDATE",'osoba',$o->id_osoba,array(
+        (object)array('fld'=>'access', 'op'=>'u','val'=>$access,'old'=>$o->access)
+      ));
+    }
+  }
+  # úprava access rodiny
+  if ( $access!=$o->access) {
+    ezer_qry("UPDATE",'rodina',$idr,array(
+      (object)array('fld'=>'access', 'op'=>'u','val'=>$access,'old'=>$r_access)
+    ));
+  }
+  return 1;
+}
 # ----------------------------------------------------------------------------- ucast2_pridej_rodinu
 # ASK přidání rodinného pobytu do akce (pokud ještě nebyla rodina přidána)
 function ucast2_pridej_rodinu($id_akce,$id_rodina) { trace();
@@ -555,12 +585,15 @@ end:
 #   je-li zadána rodina, přidá TVORI s rolí - hlídá duplicity
 # spolupracuje s číselníky: ms_akce_s_role,ms_akce_dite_kat
 #   podle stáří resp. role odhadne hodnotu SPOLU.s_role a SPOLU.dite_kat
+#  vrací
+#   ret.spolu,tvori - klíče vytvořených záznamů stejnojmenných tabulek nebo 0
+#   ret.pobyt - parametr nebo nové vytvořený pobyt
 function ucast2_pridej_osobu($ido,$access,$ida,$idp,$idr=0,$role=0) { trace();
-  $ret= (object)array('spolu'=>0,'tvori'=>0,'msg'=>'');
+  $ret= (object)array('pobyt'=>$idp,'spolu'=>0,'tvori'=>0,'msg'=>'');
   list($narozeni,$old_access)= select("narozeni,access","osoba","id_osoba=$ido");
   # případné vytvoření pobytu
   if ( !$idp ) {
-    $idp= ezer_qry("INSERT",'pobyt',0,array(
+    $idp= $ret->pobyt= ezer_qry("INSERT",'pobyt',0,array(
     (object)array('fld'=>'id_akce',   'op'=>'i','val'=>$ida),
     (object)array('fld'=>'i0_rodina', 'op'=>'i','val'=>$idr)
   ));
@@ -1745,8 +1778,197 @@ function elim2_data_rodina($idr) {  trace();
 //                                                         debug($ret,"elim_data_rodina");
   return $ret;
 }
+/** =========================================================================================> MAIL2 **/
+# =================================================================================> . Generátor SQL
+# ------------------------------------------------------------------------------------ mail2_gen_pdf
+# vygenerování PDF se samolepkami - adresními štítky
+#   $the_json obsahuje  title:'{jmeno_postovni}<br>{adresa_postovni}'
+function mail2_gen_pdf($gq,$report_json) { trace();
+  global $ezer_root, $json, $ezer_path_docs;
+  $href= "CHYBA!";
+  // projdi požadované adresy rodin
+  $n= 0;
+  $parss= array();
+  $qry=  "SELECT
+          r.nazev as nazev,p.pouze as pouze,
+          GROUP_CONCAT(DISTINCT IF(t.role='a',o.prijmeni,'') SEPARATOR '') as prijmeni_m,
+          GROUP_CONCAT(DISTINCT IF(t.role='a',o.jmeno,'')    SEPARATOR '') as jmeno_m,
+          GROUP_CONCAT(DISTINCT IF(t.role='a',o.narozeni,'') SEPARATOR '') as narozeni_m,
+          GROUP_CONCAT(DISTINCT IF(t.role='a',o.rc_xxxx,'')  SEPARATOR '') as rc_xxxx_m,
+          GROUP_CONCAT(DISTINCT IF(t.role='b',o.prijmeni,'') SEPARATOR '') as prijmeni_z,
+          GROUP_CONCAT(DISTINCT IF(t.role='b',o.jmeno,'')    SEPARATOR '') as jmeno_z,
+          GROUP_CONCAT(DISTINCT IF(t.role='b',o.narozeni,'') SEPARATOR '') as narozeni_z,
+          GROUP_CONCAT(DISTINCT IF(t.role='b',o.rc_xxxx,'')  SEPARATOR '') as rc_xxxx_z,
+          r.ulice,r.psc,r.obec,r.stat,r.telefony,r.emaily,p.poznamka
+          FROM pobyt AS p
+          JOIN spolu AS s USING(id_pobyt)
+          JOIN osoba AS o ON s.id_osoba=o.id_osoba
+          LEFT JOIN tvori AS t ON t.id_osoba=o.id_osoba
+          LEFT JOIN rodina AS r USING(id_rodina)
+          WHERE $cond
+          GROUP BY id_pobyt
+          ORDER BY IF(funkce<=2,1,funkce),IF(pouze=0,r.nazev,o.prijmeni)";
+  $res= mysql_qry($qry);
+  while ( $res && ($x= mysql_fetch_object($res)) ) {
+    $x->prijmeni= $x->pouze==1 ? $x->prijmeni_m : ($x->pouze==2 ? $x->prijmeni_z : $x->nazev);
+    $x->jmena=    $x->pouze==1 ? $x->jmeno_m    : ($x->pouze==2 ? $x->jmeno_z : "{$x->jmeno_m} a {$x->jmeno_z}");
+    // formátované PSČ (tuzemské a slovenské)
+    $psc= (!$x->stat||$x->stat=='CZ'||$x->stat=='SK')
+      ? substr($x->psc,0,3).' '.substr($x->psc,3,2)
+      : $x->psc;
+    $stat= $x->stat=='CZ' ? '' : $x->stat;
+    // definice pole substitucí
+    $parss[$n]= (object)array();
+    $parss[$n]->jmeno_postovni= "{$x->jmena} {$x->prijmeni}";
+    $parss[$n]->adresa_postovni= "{$x->ulice}<br/>$psc  {$x->obec}".( $stat ? "<br/>        $stat" : "");
+    $n++;
+  }
+  // předání k tisku
+  $fname= 'stitky_'.date("Ymd_Hi");
+  $fpath= "$ezer_path_docs/$ezer_root/$fname.pdf";
+  dop_rep_ids($report_json,$parss,$fpath);
+  $href= "soubor v <a href='docs/$ezer_root/$fname.pdf' target='pdf'>PDF</a>.";
+  return $result;
+}
+# ---------------------------------------------------------------------------------- mail2_gen_excel
+# vygeneruje do Excelu seznam adresátů
+function mail2_gen_excel($gq,$nazev) { trace();
+  global $ezer_root;
+  $href= "CHYBA!";
+  // úprava dotazu
+  $gq= str_replace('&gt;','>',$gq);
+  $gq= str_replace('&lt;','<',$gq);
+                                                        display($gq);
+  // export do Excelu
+  // zahájení exportu
+  $ymd_hi= date('Ymd_Hi');
+  $dnes= date('j. n. Y');
+  $t= "$nazev, stav ke dni $dnes";
+  $file= "maillist_$ymd_hi";
+  $type= 'xls';
+  $par= (object)array('dir'=>$ezer_root,'file'=>$file,'type'=>$type,'title'=>$t,'color'=>'aac0cae2');
+  $clmns= "_name:příjmení jméno,_email:email,_ulice:ulice,_psc:PSČ,_obec:obec,_stat:stát,_ucasti:účastí";
+  if ( preg_match("/iniciace/i",$gq) ) {
+    // přidání sloupce iniciace, pokud se vyskytuje v dotazu
+    $clmns.= ",iniciace:iniciace";
+  }
+  $titles= $del= '';
+  $fields= $values= array();
+  foreach (explode(',',$clmns) as $clmn) {
+    list($field,$title)= explode(':',trim($clmn));
+    $title= $title ? $title : $field;
+    $titles.= "$del$title";
+    $fields[]= $field;
+    $values[$field]= "";
+    $del= ',';
+  }
+  $pipe= array('narozeni'=>'sql_date1');
+  export_head($par,$titles,":: bcolor=ffc0e2c2 wrap border=+h");
+  // dotaz
+  $gr= @mysql_query($gq);
+  if ( !$gr ) { fce_warning(mysql_error()); goto end; }
+  while ( $gr && ($g= mysql_fetch_object($gr)) ) {
+    foreach ($g as $f => $val) {
+      if ( in_array($f,$fields) ) {
+        $a= $val;
+        if ( isset($pipe[$f]) ) $a= $pipe[$f]($a);
+        $values[$f]= $a;
+      }
+    }
+    export_row($values,":: border=+h");
+  }
+  export_tail();
+//                                                 display(export_tail(1));
+  // odkaz pro stáhnutí
+  $href= "soubor pro <a href='docs/$ezer_root/$file.$type' target='xls'>Excel</a>";
+end:
+  return $href;
+}
+# ------------------------------------------------------------------------------------ mail2_gen_try
+# mode=0 -- spustit a ukázat dotaz a také výsledek
+# mode=1 -- zobrazit argument jako html
+function mail2_gen_try($gq,$mode=0) { trace();
+  global $USER;                                         // debug($USER);
+  $access= $USER->access;
+  $html= $del= '';
+  if ( !strpos($gq,'[HAVING_ACCESS]') ) {
+    fce_warning("dotaz zatím není uzpůsoben pro obě databáze - stačí jej znovu uložit"); goto end;
+  }
+  switch ($mode) {
+  case 0:
+    $n= $nw= $nm= $nx= 0;
+    $gq= str_replace('&gt;','>',$gq);
+    $gq= str_replace('&lt;','<',$gq);
+    // doplnění práv uživatele
+    $gq= str_replace('[HAVING_ACCESS]',"HAVING o.access&$access",$gq);
+    $gr= @mysql_qry($gq);
+    if ( !$gr ) {
+      $html= mysql_error()."<hr>".nl2br($gq);
+      goto end;
+    }
+    else while ( $gr && ($g= mysql_fetch_object($gr)) ) {
+      $n++;
+      $name= str_replace(' ','&nbsp;',$g->_name);
+      if ( !$g->_email ) {
+        $nw++;
+        $name= "<span style='color:darkred'>$name</span>";
+      }
+      if ( $g->nomail ) {
+        $nm++;
+        $name= "<span style='background-color:yellow'>$name</span>";
+      }
+      if ( $g->_email[0]=='*' ) {
+        // vyřazený mail
+        $nx++;
+        $name= "<strike><b>$name</b></strike>";
+      }
+      $html.= "$del$name";
+      $del= ', ';
+    }
+    $warn= $nw+$nm+$nx ? " (" : '';
+    $warn.= $nw ? "$nw <span style='color:darkred'>nemá email</span> ani rodinný" : '';
+    $warn.= $nw && $nm ? ", " : '';
+    $warn.= $nm ? "$nm <span style='background-color:yellow'>nechce hromadné</span> informace
+      - budou vyňati z mail-listu" : '';
+    $warn.= ($nw||$nm) && $nx ? ", " : '';
+    $warn.= $nx ? "$nx má <strike>zneplatněný email</strike>" : '';
+    $warn.= $nw+$nm+$nx ? ")" : '';
+    $html= "<b>Nalezeno $n adresátů$warn:</b><br>$html";
+    break;
+  case 1:
+    $html= nl2br($gq);
+    break;
+  }
+end:
+  return $html;
+}
+# ----------------------------------------------------------------------------------- mail2_gen_json
+# test json
+function mail2_gen_json($js) { //trace();
+  global $json;
+//                                                         display($js);
+  $obj= $json->decode($js);
+//                                                         debug($obj);
+//   $obj= json_decode($js);
+//                                                         debug($obj);
+  return 1;
+}
+# ----------------------------------------------------------------------------------- mail2_gen_read
+# převod parm do objektu
+function mail2_gen_read($parm) { trace();
+  global $json;
+                                                        display($parm);
+  $obj= $json->decode($parm);
+//                                                         debug($obj);
+//   $obj= json_decode($js);
+                                                        display("isset=".isset($obj->ano_akce));
+  $obj= isset($obj->ano_akce) ? $obj : 0;
+                                                        debug($obj);
+//                                                         display("obj=".$obj);
+  return $obj;
+}
 /** ========================================================================================> SYSTEM **/
-# -----------------------------------------------------------------------------==> db2_sys_transform
+# ---------------------------------------------------------------------------==> . db2_sys_transform
 # transformace na schema 2015
 # par.cmd = seznam transformací
 # par.akce = id_akce | 0
@@ -1780,7 +2002,7 @@ function db2_sys_transform($par) { trace();
     $db= 'ezer_fa';
     $ok= 1;
     switch ($cmd ) {
-    // ---------------------------------------------- import: clear
+    // ---------------------------------------------- import: imp_clear
     // vyčistí databázi ezer_db2, založí uživatele GAN
     case 'imp_clear':
       // vyprázdnění tabulek
@@ -1789,11 +2011,12 @@ function db2_sys_transform($par) { trace();
         if ( $ok ) $ok= mysql_qry("ALTER TABLE ezer_db2.rodina
           CHANGE ulice ulice tinytext COLLATE 'utf8_czech_ci' NOT NULL AFTER fotka,
           CHANGE obec obec tinytext COLLATE 'utf8_czech_ci' NOT NULL AFTER psc");
-        if ( $ok ) {
-          $html.= "<br>$tab: vymazáno";
-        }
-        if ( $ok ) $ok= mysql_qry("INSERT INTO _skill (skill_abbr, skill_desc) VALUES ('d', 'DB2')");
+        if ( $ok ) $html.= "<br>$tab: vymazáno";
       }
+      if ( $ok ) $ok= mysql_qry("DROP TABLE IF EXISTS ezer_db2._skill");
+      if ( $ok ) $ok= mysql_qry("CREATE TABLE ezer_db2._skill LIKE ezer_ys._skill");
+      if ( $ok ) $ok= mysql_qry("INSERT INTO ezer_db2._skill SELECT * FROM ezer_ys._skill");
+      if ( $ok ) $html.= "<br>_skill: zkopírováno";
       break;
     // ---------------------------------------------- import: YS
     // provede import z ezer_ys=>ezer_db (klíče na dvojnásobek+1 pro nenulové,access=1)
@@ -1828,8 +2051,8 @@ function db2_sys_transform($par) { trace();
         mysql_qry("DROP TABLE IF EXISTS ezer_db2._tmp_");
       }
       break;
-    // ---------------------------------------------- import: clear
-    // vyčistí databázi ezer_db2, založí uživatele GAN
+    // ---------------------------------------------- import: imp_user
+    // vyčistí databázi ezer_db2, založí uživatele GAN a upraví ZMI,HAN,MSM
     case 'imp_user':
       // výmaz GAN/1,2 a ZMI/1
       if ( $ok ) $ok= mysql_qry("DELETE FROM ezer_db2._user
@@ -1839,17 +2062,23 @@ function db2_sys_transform($par) { trace();
         (id_user,abbr,username,password,state,org,access,forename,surname,skills) VALUES
         (1,'GAN','gandi','radost','+-Uu',1,3,'Martin','Šmídek',
           'a ah f fa faa faa+ faa:c faan fad fae fam fam famg fams d m mg r sp spk spv test')");
-      //  úprava skill a access pro MSM a ZMI
-      if ( $ok ) $ok= mysql_qry("UPDATE ezer_db2._user SET org=1,access=1,skills=CONCAT('d ',skills) WHERE abbr='MSM'");
-      if ( $ok ) $ok= mysql_qry("UPDATE ezer_db2._user SET org=2,access=2,skills=CONCAT('d ',skills) WHERE abbr='ZMI'");
+      //  úprava skill a access pro MSM,HAN,ZMI
+      if ( $ok ) $ok= mysql_qry("UPDATE ezer_db2._user SET org=1,access=1,skills=CONCAT('d ',skills)
+                                 WHERE abbr='MSM' AND skills NOT LIKE 'd %'");
+      if ( $ok ) $ok= mysql_qry("UPDATE ezer_db2._user SET org=2,access=2,skills=CONCAT('d ',skills)
+                                 WHERE abbr='HAN' AND skills NOT LIKE 'd %'");
+      if ( $ok ) $ok= mysql_qry("UPDATE ezer_db2._user SET org=2,access=3,skills=CONCAT('d ',skills)
+                                 WHERE abbr='ZMI' AND skills NOT LIKE 'd %'");
+      // vymazat přístup přes IP
+      if ( $ok ) $ok= mysql_qry("UPDATE ezer_db2._user SET ips=''");
       // doplnit skill d a sjednotit FA a YS skills
       if ( $ok ) {
         if ( !select('COUNT(*)','ezer_db2._skill',"skill_abbr='d'") ) {
           $ok= mysql_qry("INSERT INTO ezer_db2._skill (skill_abbr, skill_desc) VALUES ('d', 'DB2')");
         }
-        $qs= mysql_qry("SELECT skill_abbr, skill_desc FROM ezer_ys._skill");
+        $qs= mysql_qry("SELECT skill_abbr, skill_desc FROM ezer_fa._skill");
         while ( $qs && ($s= mysql_fetch_object($qs)) ) {
-          if ( !select('COUNT(*)','_skill',"skill_abbr='{$s->skill_abbr}'") ) {
+          if ( !select('COUNT(*)','ezer_db2._skill',"skill_abbr='{$s->skill_abbr}'") ) {
             $ok= mysql_qry("INSERT INTO ezer_db2._skill (skill_abbr, skill_desc)
                             VALUES ('{$s->skill_abbr}', '{$s->skill_desc}')");
           }

@@ -16,7 +16,6 @@ proc accessed(org) {
 
 # hodnoty pamatované v cookies
 var the_source: text            // forma seznamu akcí google|sey                           -- cookie
-var the_omezeni: text           // podmínka přístupných akcí                               -- cookie
 var the_duakce: number          // pracovní akce: id_akce (id_dukace)                      -- cookie
 
 # hodnoty udržované funkcí akce_change
@@ -39,7 +38,6 @@ proc akce_onstart() {
   access.set(sys('user','access'));
   # hodnoty zapamatované pro navázání na předchozí session
   the_source.set(get_cookie(conc(sys('root'),'_akce_source'),'sey'));
-  the_omezeni.set(get_cookie(conc(sys('root'),'_akce_omezeni'),1));
   # příprava zobrazení v AKCE - volá akce_choose
   lst.akce_work(get_cookie(conc(sys('root'),'_akce_id'),0));
 }
@@ -729,6 +727,7 @@ form _osoba2x [,,244,322] {css:'ae_frame', proc onclick() { on_click }
     | role.display(1);
       kontakt.enable(0); kontakt.set(1); form.enable(1,'k');
       adresa.enable(0);  adresa.set(1);  form.enable(1,'b'); ];
+    show_osoba(1);
     see.see_n.set(0); see.see_beg;
     foreach(array(jmeno1,prijmeni1),obligatory);
   }

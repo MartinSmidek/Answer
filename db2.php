@@ -12,7 +12,10 @@
   require_once("answer.php");
   $options= (object)array(
     'watch_access' => 3,
-//     'watch_access' => "{1:'ezer_ys',2:'ezer_db',3:'ezer_db'}",  ... barvení v Uživatelé + selecty
+    'watch_access_opt' => // ... barvení v Uživatelé + select v ezer2.syst.ezer
+       "{name:{1:'Setkání',2:'Familia',3:'Setkání+Familia'},
+         abbr:{1:'S',2:'F',3:'S+F'},
+         css:{1:'ezer_ys',2:'ezer_fa',3:'ezer_db'}}",
     'web'          => "''", // web organizace - pro odmítnutí odhlášení
     'skill'        => "'d'",
     'autoskill'    => "'!d'"

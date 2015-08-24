@@ -1411,7 +1411,7 @@ form _documents {  // ukládají se na H: tedy mimo dosah http
     }
   }
 }
-# ================================================================================= Přidání jménem 1
+# ================================================================================> Přidání jménem 1
 panel PridaniJmenem1 [,,320,280] {type:'popup', title:'Přidání známých (nejen) dospělých jménem'
   use fl: form _fl [12,10,,]
   proc onfocus() { fl.jmena.init; fl.vse.init; fl.L.init; fl.jmena.focus }
@@ -1458,7 +1458,7 @@ panel PridaniJmenem1 [,,320,280] {type:'popup', title:'Přidání známých (nej
     }
   }
 }
-# ================================================================================= Přidání jménem 2
+# ================================================================================> Přidání jménem 2
 panel PridaniJmenem2 [,,320,280] {type:'popup', title:'Přidání známých rodin jménem'
   use fl: form _fl [12,10,,]
   form _fl [,,300,200] {
@@ -1498,7 +1498,7 @@ panel PridaniJmenem2 [,,320,280] {type:'popup', title:'Přidání známých rodi
     }
   }
 }
-# ===================================================================================== Přidání akce
+# ==================================================================================> Přidání z akce
 panel PridaniAkce [,,320,280] {type:'popup', title:'Přidání účastníků známých z jiných akcí'
   use fl: form _fl [12,10,,]
   form _fl [,,300,200] {
@@ -1537,7 +1537,7 @@ panel PridaniAkce [,,320,280] {type:'popup', title:'Přidání účastníků zn�
     }
   }
 }
-# =========================================================================================== Strava
+# ==========================================================================================> Strava
 panel Strava [,,320,280] {type:'popup', title:'Nastavení nestandardního počtu strav'
   var dnu: number
   var arr: object

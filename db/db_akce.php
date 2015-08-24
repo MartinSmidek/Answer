@@ -10237,7 +10237,7 @@ function dop_mai_detach_all($id_dopis) { trace();
 # ----------------------------------------------------------------------------------- dop_mai_detach
 # odebere soubor z příloh
 function dop_mai_detach($id_dopis,$name) { trace();
-  // nalezení záznamu v tabulce a přidání názvu souboru
+  // nalezení záznamu v tabulce a odebrání názvu souboru
   $names= select('prilohy','dopis',"id_dopis=$id_dopis");
   $as= explode(',',$names);
   $as2= array();
