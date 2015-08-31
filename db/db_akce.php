@@ -7328,9 +7328,13 @@ function akce_roku_id($id_akce,$kod,$rok) {
 function akce_roku_update($rok) {  trace();
   global $json;
   $key= "1RKnvU7EJG7YtBDjnSpQfwg3kjOCBEV_w8bMlJcdV8Nc";         // ciselnik_akci
+  $prefix= "google.visualization.Query.setResponse(";           // přefix json objektu
   $sheet= $rok>2010 ? $rok-1997 : ($rok==2010 ? 10 : -1);
   $x= file_get_contents("https://docs.google.com/spreadsheets/d/$key/gviz/tq?tqx=out:json&gid=$sheet");
-  $x= substr($x,strlen("google.visualization.Query.setResponse("),-2);
+  $xi= strpos($x,$prefix);
+  $xl= strlen($prefix);
+//                                         display("xi=$xi,$xl");
+  $x= substr(substr($x,$xi+$xl),0,-2);
 //                                         display($x);
   $tab= $json->decode($x)->table;
 //                                         debug($tab,$sheet);
