@@ -71,16 +71,294 @@ function db2_oso_show($prijmeni,$jmeno,$n) {
     $ret->next= $n<count($oso)-1 ?1:0;
     $ret->css= $css[$ret->oso->access];
   }
-                                                        debug($ret,'db2_oso_show');
+//                                                         debug($ret,'db2_oso_show');
   return $ret;
 }
 /** ========================================================================================> UCAST2 **/
+# --------------------------------------------------------------------------------- ucast2_chain_rod
+# ==> . chain rod
+# upozorní na pravděpodobnost duplicity rodiny
+function ucast2_chain_rod($idro) {
+  $items2array= function($items,$omit='\s') {
+    $items= preg_replace("/[$omit]/",'',$items);
+    $arr= preg_split("/,;/",trim($items,",;"),-1,PREG_SPLIT_NO_EMPTY);
+    return $arr;
+  };
+  $ret= (object)array('msg'=>'');
+  if ( !$idro ) goto end;
+  $nr= 0;
+  $ro= (object)array();
+  $rs= $x= array();
+  $nazev= '';
+  // srovnávané prvky
+  $flds_r= "id_rodina,access,nazev,obec,emaily,telefony,datsvatba";
+  $flds_o= "jmeno,kontakt,email,telefon,narozeni";
+  // dotazovaná rodina
+  $jmena= $telefony= $emaily= $narozeni= array();
+  $qr= mysql_qry("SELECT $flds_r FROM rodina WHERE id_rodina=$idro");
+  while ( $qr && ($rx= mysql_fetch_object($qr)) ) {
+    $ro= $rx;
+    $nazev= $rx->nazev;
+    $emaily= $items2array($rx->emaily);
+    $telefony= $items2array($rx->telefony);
+    $qc= mysql_qry("SELECT $flds_o FROM osoba JOIN tvori USING (id_osoba)
+      WHERE id_rodina={$rx->id_rodina}");
+    while ( $qc && ($cx= mysql_fetch_object($qc)) ) {
+      $ro->cleni[]= $cx;
+      $jmena[]= $cx->jmeno;
+      if ( $cx->narozeni!='0000-00-00' ) $narozeni[]= $cx->narozeni;
+      if ( $cx->kontakt ) {
+        foreach($items2array($cx->email) as $em) if ( !in_array($em,$emaily) )
+          $emaily[]= $em;
+        foreach($items2array($cx->telefon,'^\d') as $tf) if ( !in_array($tf,$telefony) )
+          $telefony[]= $tf;
+      }
+      $ro->telefony= $telefony;
+      $ro->emaily= $emaily;
+    }
+  }
+//                                                 debug($ro);
+//   goto end;
+  // . vzory faktorů
+
+  // podobné rodiny
+  $qr= mysql_qry("SELECT $flds_r FROM rodina WHERE nazev='$nazev' AND id_rodina!=$idro AND !deleted");
+  while ( $qr && ($rx= mysql_fetch_object($qr)) ) {
+    $rs[$rx->id_rodina]= $rx;
+    $qc= mysql_qry("SELECT $flds_o FROM osoba JOIN tvori USING (id_osoba)
+      WHERE id_rodina={$rx->id_rodina}");
+    while ( $qc && ($cx= mysql_fetch_object($qc)) ) {
+      $rs[$rx->id_rodina]->cleni[]= $cx;
+    }
+  }
+//                                                 debug($rs);
+  // porovnání
+  $nr= 0;
+  foreach ($rs as $idr=>$rx) {
+    $xi= (object)array('idr'=>$idr,'asi'=>'','orgs'=>0);
+    $nt= $n_jmeno= $n_kontakt= $n_narozeni= 0;
+    // . členové rodiny
+    if ( $rx->cleni ) foreach ($rx->cleni as $cx) {
+      $nt++;
+      // .. jména
+      if ( in_array($cx->jmeno,$jmena) )  $n_jmeno++;
+      // .. kontakty
+      if ( $cx->kontakt ) {
+        foreach($items2array($cx->email) as $em) if ( in_array($em,$emaily) ) $n_kontakt++;
+        foreach($items2array($cx->telefon,'^\d') as $tf) if ( in_array($tf,$telefony) ) $n_kontakt++;
+      }
+      // .. narození
+      if ( in_array($cx->narozeni,$narozeni) )  $n_narozeni++;
+    }
+    $xi->cleni=    $n_jmeno;
+    // . narození členů +1 * n
+    $xi->narozeni= $n_narozeni;
+    // . bydliště rodiny +5
+    $xi->bydliste= $rx->obec==$ro->obec ? 1 : 0;
+    // . svatba +10
+    $xi->svatba= $rx->datsvatba!='0000-00-00' && $rx->datsvatba==$ro->datsvatba ? 1 : 0;
+    // . kontakty +1 * n
+    foreach($items2array($rx->email) as $em) if ( in_array($em,$emaily) ) $n_kontakt++;
+    foreach($items2array($rx->telefon,'^\d') as $tf) if ( in_array($tf,$telefony) ) $n_kontakt++;
+    $xi->kontakty= $n_kontakt;
+    // organizace
+    $xi->org= $rx->access;
+    // zápis
+    $x[$idr]= $xi;
+    $nr++;
+  }
+  // míra podobnosti rodin
+  $nx0= count($x);
+  $idr= 0;
+  $orgs= $ro->access;
+  foreach ($x as $i=>$xi) {
+    $xi->asi.= $xi->svatba   ? 'S' : '';
+    $xi->asi.= $xi->bydliste ? 'B' : '';
+    $xi->asi.= $xi->cleni    ? 'C' : '';
+    $xi->asi.= $xi->narozeni ? 'N' : '';
+    $xi->asi.= $xi->kontakty ? 'K' : '';
+    if ( !strlen($xi->asi) || $xi->asi=='C' ) { unset($x[$i]); continue; }
+    $orgs|= $xi->org;
+    $idr= $i;
+  }
+//                                                 debug($x,"podobné rodiny");
+  $nx= count($x);
+  $msg= $dup= $keys= '';
+  if ( $nx==0 ) {
+    // není duplicita
+    $msg= ($nx0 ? "asi " : "určitě ")." není duplicitní";
+  }
+  elseif ( $nx==1 ) {
+    // jednoznačná duplicita
+    $keys= $idr;
+    $dup= $x[$idr]->asi;
+    $msg= "pravděpodobně ($dup) duplicitní s rodinou $idr "
+          . ($xi->org==1 ? " z YS" : ($xi->org==2 ? " z FA" : ''));
+  }
+  else {
+    // více možností
+    uasort($x,function($a,$b) { return $a->asi > $b->asi ? -1 : +1; });
+    $msg= "je $nx pravděpodobných duplicit:";
+    $del= '';
+    foreach ($x as $i=>$xi) {
+      $dupi= $xi->asi;
+      if ( !$dup ) $dup= $dupi;
+      $mira= strpos($dupi,'S')!==false || strpos($dupi,'K')!==false ? "pravděpodobně" : "možná";
+      $msg.= "<br>$mira ($dupi) duplicitní s rodinou $i"
+          . ($xi->org==1 ? " z YS" : ($xi->org==2 ? " z FA" : ''));
+      $keys.= "$del$i";
+      $del= ',';
+    }
+  }
+//                                                 debug($x);
+  $ret->msg= $msg;
+  $ret->dup= $dup;
+  $ret->keys= $keys;
+end:
+  return $ret;
+}
+# --------------------------------------------------------------------------------- ucast2_chain_oso
+# ==> . chain oso
+# upozorní na pravděpodobnost duplicity osoby
+function ucast2_chain_oso($idoo) {
+  $items2array= function($items,$omit='\s') {
+    $items= preg_replace("/[$omit]/",'',$items);
+    $arr= preg_split("/,;/",trim($items,",;"),-1,PREG_SPLIT_NO_EMPTY);
+    return $arr;
+  };
+  $ret= (object)array('msg'=>'','dup'=>'');
+  $nr= 0;
+  $o= (object)array();
+  $os= $x= array();
+  $nazev= '';
+  // srovnávané prvky
+  $flds= "id_osoba,o.access,prijmeni,jmeno,narozeni,kontakt,email,telefon,adresa,o.obec";
+  // dotazovaná rodina
+  $jmena= $telefony= $emaily= array();
+  $narozeni= '';
+  $qo= mysql_qry("SELECT $flds FROM osoba AS o WHERE id_osoba=$idoo");
+  if ( !$qo ) { $msg= "$idoo není osoba"; goto end; }
+  $o= mysql_fetch_object($qo);
+  $jmeno= $o->jmeno;
+  $nazev= "{$o->prijmeni} $jmeno";
+  $obec= $o->adresa ? $o->obec : '';
+  $emaily= $items2array($ox->email);
+  $narozeni= $o->narozeni=='0000-00-00' ? '' : $o->narozeni;
+  $emaily= $telefony= array();
+  if ( $o->kontakt ) {
+    $emaily= $items2array($o->email);
+    $telefony= $items2array($o->telefon,'^\d');
+  }
+//                                                 debug($o);
+  // . vzory faktorů
+  // podobné osoby
+  $qo= mysql_qry("
+    SELECT $flds,r.obec,
+      SUBSTR(MIN(CONCAT(IF(role='','?',role),id_rodina)),2) AS _kmen
+    FROM osoba AS o
+      JOIN tvori USING(id_osoba)
+      JOIN rodina AS r USING(id_rodina)
+    WHERE '{$o->prijmeni}' IN (prijmeni,rodne) AND id_osoba!=$idoo AND !o.deleted
+    GROUP BY id_osoba");
+  while ( $qo && ($xo= mysql_fetch_object($qo)) ) {
+    $xo_jmeno= trim($xo->jmeno);
+    if ( $jmeno=='' || $xo_jmeno=='' ) continue;
+    if ( strpos($xo_jmeno,$jmeno)===false && strpos($jmeno,$xo_jmeno)===false ) continue;
+    // vymazání chybných údajů
+    if ( !$xo->adresa ) $xo->obec= '?';
+    if ( !$xo->kontakt ) $xo->telefon= $xo->email= '?';
+    // doplnění rodinných údajů z kmenové rodiny, je-li
+    if ( (!$xo->adresa || !$xo->kontakt) && $xo->_kmen) {
+      $qr= mysql_qry("
+        SELECT obec,telefony,emaily
+        FROM rodina AS r WHERE id_rodina={$xo->_kmen}");
+      if ( $qr && ($r= mysql_fetch_object($qr)) ) {
+        if ( !$xo->adresa ) $xo->obec= $r->obec;
+        if ( !$xo->kontakt ) {
+          $xo->telefon= $r->telefony;
+          $xo->email= $r->emaily;
+        }
+//                                                 debug($r,"kmen");
+      }
+    }
+    $os[$xo->id_osoba]= $xo;
+  }
+//                                                 debug($os,"os");
+  // porovnání
+  $nr= 0;
+  foreach ($os as $ido=>$ox) {
+    $xi= (object)array('ido'=>$ido,'asi'=>'','orgs'=>0);
+    // .. kontakty
+    $xi->kontakty= 0;
+    if ( $ox->kontakt ) {
+      foreach($items2array($ox->email) as $em) if ( in_array($em,$emaily) ) $xi->kontakty++;
+      foreach($items2array($ox->telefon,'^\d') as $tf) if ( in_array($tf,$telefony) ) $xi->kontakty++;
+    }
+    // .. bydliste
+    $xi->bydliste= $ox->adresa && $ox->obec==$obec && $obec ? 1 : 0;
+    // .. narození
+    $xi->narozeni= $ox->narozeni==$narozeni ? 1 : 0;
+    // organizace
+    $xi->org= $ox->access;
+    // zápis
+    $x[$ido]= $xi;
+  }
+  // míra podobnosti osob
+  $nx0= count($x);
+  $idr= 0;
+  $orgs= $ro->access;
+  foreach ($x as $i=>$xi) {
+    $xi->asi.= $xi->bydliste ? 'b' : '';
+    $xi->asi.= $xi->narozeni ? 'n' : '';
+    $xi->asi.= $xi->kontakty ? 'k' : '';
+    if ( !strlen($xi->asi) || $xi->asi=='b' ) { unset($x[$i]); continue; }
+    $orgs|= $xi->org;
+    $idr= $i;
+  }
+//                                                 debug($x,"podobné osoby");
+//                                                 goto end;
+  $nx= count($x);
+  $msg= $dup= $keys= '';
+  if ( $nx==0 ) {
+    // není duplicita
+    $msg= ($nx0 ? "asi " : "určitě ")." není duplicitní";
+  }
+  elseif ( $nx==1 ) {
+    // jednoznačná duplicita
+    $keys= $idr;
+    $dup= $x[$idr]->asi;
+    $msg= "pravděpodobně ($dup) duplicitní s osobou $ido "
+          . ($xi->org==1 ? " z YS" : ($xi->org==2 ? " z FA" : ''));
+  }
+  else {
+    // více možností
+    uasort($x,function($a,$b) { return $a->asi > $b->asi ? -1 : +1; });
+    $msg= "je $nx pravděpodobných duplicit:";
+    $del= '';
+    foreach ($x as $i=>$xi) {
+      $dupi= $xi->asi;
+      if ( !$dup ) $dup= $dupi;
+      $mira= strpos($dupi,'n')!==false || strpos($dupi,'k')!==false ? "pravděpodobně" : "možná";
+      $msg.= "<br>$mira ($dupi) duplicitní s osobou $i"
+          . ($xi->org==1 ? " z YS" : ($xi->org==2 ? " z FA" : ''));
+      $keys.= "$del$i";
+      $del= ',';
+    }
+  }
+  $ret->msg= $msg;
+  $ret->dup= $dup;
+  $ret->keys= $keys;
+end:
+//                                                 debug($ret,$idoo);
+  return $ret;
+}
 # -------------------------------------------------------------------------------- ucast2_browse_ask
 # obsluha browse s optimize:ask
 # x->order= {a|d} polozka
 # x->show=  {polozka:[formát,vzor/1,...],...} pro položky s neprázdným vzorem
 #                                             kde formát=/ = # $ % @ * .
-# x->cond= podmínka
+# x->cond= podmínka   - pokud obsahuje /*duplicity*/ přidá se sloupec _dup
+#                       pokud obsahuje /*dokumenty*/ přidá se do sloupce _docs 'd'
 # -- x->atr=  pole jmen počítaných atributů:  [_ucast]
 # pokud je tisk=true jsou je oddělovače řádků použit znak '≈' (oddělovač sloupců zůstává '~')
 function ucast2_browse_ask($x,$tisk=false) {
@@ -126,15 +404,18 @@ function ucast2_browse_ask($x,$tisk=false) {
     # ladění
     $AND= "";
 //     $AND= "AND p.id_pobyt IN (44285,44279,44280,44281) -- prázdná rodina a pobyt";
-//     $AND= "AND p.id_pobyt IN (44279) -- test";
-//     $AND= "AND p.id_pobyt IN (20749) -- Buchtovi";
-//     $AND= "AND p.id_pobyt IN (20493) -- Dykastovi";
+//     $AND= "AND p.id_pobyt IN (43387,32218,32024) -- test";
+//     $AND= "AND p.id_pobyt IN (43113,43385,43423) -- test Šmídkovi+Nečasovi+Novotní/LK2015";
+//     $AND= "AND p.id_pobyt IN (43423) -- test Novotní/LK2015";
 //     $AND= "AND p.id_pobyt IN (20487) -- Baklík Baklíková";
 //     $AND= "AND p.id_pobyt IN (20488,20344) -- Bajerovi a Kubínovi";
 //     $AND= "AND p.id_pobyt IN (20568,20793) -- Šmídkovi + Nečasovi";
 
     # kontext dotazu
     if ( !$x ) $q0= mysql_qry("SET @akce:=422,@soubeh:=0,@app:='ys';");
+    # duplicity, dokumenty?
+    $duplicity= strstr($x->cond,'/*duplicity*/') ? 1 : 0;
+    $dokumenty= strstr($x->cond,'/*dokumenty*/') ? 1 : 0;
     # podmínka
     $cond= $x->cond ?: 1;
     # atributy akce
@@ -253,11 +534,11 @@ function ucast2_browse_ask($x,$tisk=false) {
       }
     }
 //                                                         display("rodiny:$rodiny");
-                                                        debug($rodina,$rodiny);
+//                                                         debug($rodina,$rodiny);
 //                                                         debug($osoba,'osoby po _rody');
     # seznamy položek
     $fpob1= flds("key_pobyt=id_pobyt,_empty=0,key_akce=id_akce,key_osoba,key_spolu,key_rodina=i0_rodina,"
-           . "c_suma,platba,xfunkce=funkce,funkce,skupina,dluh");
+           . "keys_rodina='',c_suma,platba,xfunkce=funkce,funkce,skupina,dluh");
     $fakce= flds("dnu,datum_od");
     $frod=  flds("fotka,r_access=access,r_spz=spz,r_svatba=svatba,r_datsvatba=datsvatba,r_rozvod=rozvod,r_ulice=ulice,r_psc=psc,"
           . "r_obec=obec,r_stat=stat,r_telefony=telefony,r_emaily=emaily,r_umi,r_note=note");
@@ -351,9 +632,16 @@ function ucast2_browse_ask($x,$tisk=false) {
               $p_access|= $o->access;
             }
           }
+          # ==> .. duplicita členů
+          $keys= $dup= '';
+          if ( $duplicity ) {
+            $ret= ucast2_chain_oso($ido);
+            $dup= $s->_dup= $ret->dup;
+            $keys= $ret->keys;
+          }
           # ==> .. seznam členů pro browse_fill
           $vek= $o->narozeni!='0000-00-00' ? roku_k($o->narozeni,$akce->datum_od) : '?'; // výpočet věku
-          $cleni.= "$del$ido~{$o->access}~{$o->jmeno}~$vek~{$s->id_tvori}~{$s->id_rodina}~{$s->role}";
+          $cleni.= "$del$ido~$keys~{$o->access}~{$o->jmeno}~$dup~$vek~{$s->id_tvori}~{$s->id_rodina}~{$s->role}";
           $del= $delim;
           # ==> .. rodiny a kmenová rodina
           $rody= explode(',',$o->_rody);
@@ -410,9 +698,22 @@ function ucast2_browse_ask($x,$tisk=false) {
       foreach($fakce as $fz=>$fp) { $z->$fz= $akce->$fp; }
       $z->_nazev= $_nazev;
       $z->_jmena= $_jmena;
-      # jestli jsou dokumenty
-//       $z->_docs= drop_find("pobyt/","^(.*)_$idp\$") ? 'D' : '';  --- ucast2 musí měnit složku aplikace
-//                                         display("drop_find(pobyt/,^(.*)_$idp\$)={$z->_docs}");
+      # ==> .. dokumenty
+      #        ucast2 musí měnit složku aplikace
+      $z->_docs= '';
+      if ( $dokumenty ) $z->_docs.= drop_find("pobyt/","(.*)_$idp",'H:') ? 'd' : '';
+      # ==> .. fotky
+      if ( $idr && !$duplicity && $rodina[$idr]->fotka ) { $z->_docs.= 'f'; }
+      # ==> .. duplicity
+      if ( $duplicity ) {
+        $ret= ucast2_chain_rod($idr);
+        $_dups= $idr ? $ret->dup : '';
+        foreach ($p->cleni as $ido=>$s) {
+          $_dups.= $s->_dup;
+        }
+        $z->_docs.= count_chars($_dups,3);
+        $z->keys_rodina= $ret->keys;
+      }
       # rodina
       foreach($frod as $fz=>$fr) { $z->$fz= $rodina[$idr]->$fr; }
       # ... oprava obarvení
@@ -1779,121 +2080,97 @@ function elim2_data_rodina($idr) {  trace();
   return $ret;
 }
 /** =========================================================================================> MAIL2 **/
-# =================================================================================> . Generátor SQL
-# ------------------------------------------------------------------------------------ mail2_gen_pdf
-# vygenerování PDF se samolepkami - adresními štítky
-#   $the_json obsahuje  title:'{jmeno_postovni}<br>{adresa_postovni}'
-function mail2_gen_pdf($gq,$report_json) { trace();
-  global $ezer_root, $json, $ezer_path_docs;
-  $href= "CHYBA!";
-  // projdi požadované adresy rodin
-  $n= 0;
-  $parss= array();
-  $qry=  "SELECT
-          r.nazev as nazev,p.pouze as pouze,
-          GROUP_CONCAT(DISTINCT IF(t.role='a',o.prijmeni,'') SEPARATOR '') as prijmeni_m,
-          GROUP_CONCAT(DISTINCT IF(t.role='a',o.jmeno,'')    SEPARATOR '') as jmeno_m,
-          GROUP_CONCAT(DISTINCT IF(t.role='a',o.narozeni,'') SEPARATOR '') as narozeni_m,
-          GROUP_CONCAT(DISTINCT IF(t.role='a',o.rc_xxxx,'')  SEPARATOR '') as rc_xxxx_m,
-          GROUP_CONCAT(DISTINCT IF(t.role='b',o.prijmeni,'') SEPARATOR '') as prijmeni_z,
-          GROUP_CONCAT(DISTINCT IF(t.role='b',o.jmeno,'')    SEPARATOR '') as jmeno_z,
-          GROUP_CONCAT(DISTINCT IF(t.role='b',o.narozeni,'') SEPARATOR '') as narozeni_z,
-          GROUP_CONCAT(DISTINCT IF(t.role='b',o.rc_xxxx,'')  SEPARATOR '') as rc_xxxx_z,
-          r.ulice,r.psc,r.obec,r.stat,r.telefony,r.emaily,p.poznamka
-          FROM pobyt AS p
-          JOIN spolu AS s USING(id_pobyt)
-          JOIN osoba AS o ON s.id_osoba=o.id_osoba
-          LEFT JOIN tvori AS t ON t.id_osoba=o.id_osoba
-          LEFT JOIN rodina AS r USING(id_rodina)
-          WHERE $cond
-          GROUP BY id_pobyt
-          ORDER BY IF(funkce<=2,1,funkce),IF(pouze=0,r.nazev,o.prijmeni)";
-  $res= mysql_qry($qry);
-  while ( $res && ($x= mysql_fetch_object($res)) ) {
-    $x->prijmeni= $x->pouze==1 ? $x->prijmeni_m : ($x->pouze==2 ? $x->prijmeni_z : $x->nazev);
-    $x->jmena=    $x->pouze==1 ? $x->jmeno_m    : ($x->pouze==2 ? $x->jmeno_z : "{$x->jmeno_m} a {$x->jmeno_z}");
-    // formátované PSČ (tuzemské a slovenské)
-    $psc= (!$x->stat||$x->stat=='CZ'||$x->stat=='SK')
-      ? substr($x->psc,0,3).' '.substr($x->psc,3,2)
-      : $x->psc;
-    $stat= $x->stat=='CZ' ? '' : $x->stat;
-    // definice pole substitucí
-    $parss[$n]= (object)array();
-    $parss[$n]->jmeno_postovni= "{$x->jmena} {$x->prijmeni}";
-    $parss[$n]->adresa_postovni= "{$x->ulice}<br/>$psc  {$x->obec}".( $stat ? "<br/>        $stat" : "");
-    $n++;
+# =======================================================================================> . MAILIST
+# --------------------------------------------------------------------------------- mail2_lst_access
+# vrátí údaje daného maillistu s provedenou substitucí podle access uživatele
+function mail2_lst_access($id_mailist) {  trace();
+  global $USER;                                         // debug($USER);
+  $ml= select_object('*','mailist',"id_mailist=$id_mailist");
+  if ( !strpos($ml->sexpr,'[HAVING_ACCESS]') ) {
+    fce_warning("dotaz zatím není uzpůsoben pro obě databáze - stačí jej znovu uložit");
+    $ml->warning= 1;
+    goto end;
   }
-  // předání k tisku
-  $fname= 'stitky_'.date("Ymd_Hi");
-  $fpath= "$ezer_path_docs/$ezer_root/$fname.pdf";
-  dop_rep_ids($report_json,$parss,$fpath);
-  $href= "soubor v <a href='docs/$ezer_root/$fname.pdf' target='pdf'>PDF</a>.";
-  return $result;
+  $ml->sexpr= str_replace('&lt;','<',str_replace('&gt;','>',$ml->sexpr));
+  // doplnění práv uživatele
+  $ml->sexpr= str_replace('[HAVING_ACCESS]',"HAVING o.access&{$USER->access}",$ml->sexpr);
+end:
+  return $ml;
 }
-# ---------------------------------------------------------------------------------- mail2_gen_excel
-# vygeneruje do Excelu seznam adresátů
-function mail2_gen_excel($gq,$nazev) { trace();
-  global $ezer_root;
-  $href= "CHYBA!";
-  // úprava dotazu
-  $gq= str_replace('&gt;','>',$gq);
-  $gq= str_replace('&lt;','<',$gq);
-                                                        display($gq);
-  // export do Excelu
-  // zahájení exportu
-  $ymd_hi= date('Ymd_Hi');
-  $dnes= date('j. n. Y');
-  $t= "$nazev, stav ke dni $dnes";
-  $file= "maillist_$ymd_hi";
-  $type= 'xls';
-  $par= (object)array('dir'=>$ezer_root,'file'=>$file,'type'=>$type,'title'=>$t,'color'=>'aac0cae2');
-  $clmns= "_name:příjmení jméno,_email:email,_ulice:ulice,_psc:PSČ,_obec:obec,_stat:stát,_ucasti:účastí";
-  if ( preg_match("/iniciace/i",$gq) ) {
-    // přidání sloupce iniciace, pokud se vyskytuje v dotazu
-    $clmns.= ",iniciace:iniciace";
-  }
-  $titles= $del= '';
-  $fields= $values= array();
-  foreach (explode(',',$clmns) as $clmn) {
-    list($field,$title)= explode(':',trim($clmn));
-    $title= $title ? $title : $field;
-    $titles.= "$del$title";
-    $fields[]= $field;
-    $values[$field]= "";
-    $del= ',';
-  }
-  $pipe= array('narozeni'=>'sql_date1');
-  export_head($par,$titles,":: bcolor=ffc0e2c2 wrap border=+h");
-  // dotaz
-  $gr= @mysql_query($gq);
-  if ( !$gr ) { fce_warning(mysql_error()); goto end; }
-  while ( $gr && ($g= mysql_fetch_object($gr)) ) {
-    foreach ($g as $f => $val) {
-      if ( in_array($f,$fields) ) {
-        $a= $val;
-        if ( isset($pipe[$f]) ) $a= $pipe[$f]($a);
-        $values[$f]= $a;
+# --------------------------------------------------------------------------- mail2_lst_confirm_spec
+# spočítá maily podle daného maillistu
+function mail2_lst_confirm_spec($id_mailist,$id_dopis) {  trace();
+  $ret= (object)array('specialni'=>0, 'prepsat'=>'', 'pocet'=>'');
+  // speciální?
+  list($ret->specialni,$qry)= select('specialni,sexpr','mailist',"id_mailist=$id_mailist");
+  if ( !$ret->specialni ) goto end;
+  // jsou už vygenerované maily
+  $ret->prepsat= select('COUNT(*)','mail',"id_dopis=$id_dopis")
+    ? "Opravdu přepsat předchozí maily?" : '';
+  // počet nově vygenerovaných
+  $res= mysql_qry($qry);
+  $ret->pocet= "Opravdu vygenerovat maily na ".mysql_num_rows($res)." adres?";
+end:
+  return $ret;
+}
+# ----------------------------------------------------------------------------- mail2_lst_posli_spec
+# vygeneruje sadu mailů podle daného maillistu s nastaveným specialni a parms
+function mail2_lst_posli_spec($id_dopis) {  trace();
+  $ret= (object)array('msg'=>'');
+  $id_mailist= select('id_mailist','dopis',"id_dopis=$id_dopis");
+  $ml= mail2_lst_access($id_mailist);
+  $parms= json_decode($ml->parms);
+  switch ($parms->specialni) {
+  case 'potvrzeni':
+    // smaž starý seznam
+    mysql_qry("DELETE FROM mail WHERE id_dopis=$id_dopis");
+    $num= 0;
+    $nomail= array();
+    $rok= date('Y')+$parms->rok;
+    // projdi všechny relevantní dárce podle dotazu z maillistu
+    $os= mysql_qry($ml->sexpr);
+    while ($os && ($o= mysql_fetch_object($os))) {
+      $email= $o->email;
+      if ( $email ) {
+        // vygeneruj PDF s potvrzením do $x->path
+        $x= mail2_mai_potvr("Pf",$o,$rok);
+        // vlož mail
+        mysql_qry(
+          "INSERT mail (id_davka,znacka,stav,id_dopis,id_clen,email,priloha)
+             VALUE (1,'@',0,$id_dopis,$o->id_osoba,'$email','{$x->fname}')");
+        $num+= mysql_affected_rows();
+      }
+      else {
+        $nomail[]= "{$o->jmeno} {$o->prijmeni}";
       }
     }
-    export_row($values,":: border=+h");
+    // oprav počet v DOPIS
+    mysql_qry("UPDATE dopis SET pocet=$num WHERE id_dopis=$id_dopis");
+    // informační zpráva
+    $ret->msg= "Bylo vygenerováno $num mailů";
+    if ( count($nomail) ) $ret->msg.= ", emailovou adresu nemají:<hr>".implode(', ',$nomail);
+    break;
+  default:
+    fce_error("není implemntováno");
   }
-  export_tail();
-//                                                 display(export_tail(1));
-  // odkaz pro stáhnutí
-  $href= "soubor pro <a href='docs/$ezer_root/$file.$type' target='xls'>Excel</a>";
-end:
-  return $href;
+//                                                         debug($ret,"mail2_lst_posli_spec end");
+  return $ret;
 }
-# ------------------------------------------------------------------------------------ mail2_gen_try
+# ----------------------------------------------------------------------------------- mail2_lst_read
+# převod parm do objektu
+function mail2_lst_read($parm) { trace();
+  global $json;
+  $obj= $json->decode($parm);
+  $obj= isset($obj->ano_akce) ? $obj : 0;
+  return $obj;
+}
+# ------------------------------------------------------------------------------------ mail2_lst_try
 # mode=0 -- spustit a ukázat dotaz a také výsledek
 # mode=1 -- zobrazit argument jako html
-function mail2_gen_try($gq,$mode=0) { trace();
+function mail2_lst_try($gq,$mode=0) { trace();
   global $USER;                                         // debug($USER);
   $access= $USER->access;
   $html= $del= '';
-  if ( !strpos($gq,'[HAVING_ACCESS]') ) {
-    fce_warning("dotaz zatím není uzpůsoben pro obě databáze - stačí jej znovu uložit"); goto end;
-  }
   switch ($mode) {
   case 0:
     $n= $nw= $nm= $nx= 0;
@@ -1942,30 +2219,889 @@ function mail2_gen_try($gq,$mode=0) { trace();
 end:
   return $html;
 }
-# ----------------------------------------------------------------------------------- mail2_gen_json
-# test json
-function mail2_gen_json($js) { //trace();
-  global $json;
-//                                                         display($js);
-  $obj= $json->decode($js);
-//                                                         debug($obj);
-//   $obj= json_decode($js);
-//                                                         debug($obj);
+# ========================================================================================> . EMAILY
+# jednotlivé maily posílané v sadách příložitostně skupinám
+#   DOPIS(id_dopis=key,id_davka=1,druh='@',nazev=předmět,datum=datum,obsah=obsah,komu=komu(číselník),
+#         nw=min(MAIL.stav,nh=max(MAIL.stav)})
+#   MAIL(id_mail=key,id_davka=1,id_dopis=DOPIS.id_dopis,znacka='@',id_clen=clen,email=adresa,
+#         stav={0:nový,3:rozesílaný,4:ok,5:chyba})
+# formát zápisu dotazu v číselníku viz fce mail2_mai_qry
+# ---------------------------------------------------------------------------------- mail2_mai_potvr
+# vygeneruje PDF s daňovým potvrzením s výsledkem
+# ret->fname - jméno vygenerovaného PDF souboru
+# ret->href  - odkaz na soubor
+# ret->fpath - úplná lokální cesta k souboru
+# ret->log   - log
+function mail2_mai_potvr($druh,$o,$rok) {  trace();
+  $ret= (object)array('msg'=>'');
+  // report
+  $d= select("*","dopis","typ='$druh'");
+  $vzor= $d->obsah;
+  $sablona= $d->sablona;
+  $texty= array();
+  $parss= array();
+  // výpočet proměnných použitých v dopisu
+  $is_vars= preg_match_all("/[\{]([^}]+)[}]/",$vzor,$list);
+  $vars= array_merge($list[1],array('vyrizeno'));
+//                                                         debug($vars,"vars");
+  $dary= json_decode($o->pars);
+  $data= $dary->data;
+  $castka= number_format($o->castka, 0, '.', ' ');
+  $id_osoba= $o->id_osoba;
+  $prijmeni= $o->prijmeni;
+  $jmeno= $o->jmeno;
+  $sex= $o->sex;
+  $ulice= $o->ulice;
+  $psc= $o->psc;
+  $obec= $o->obec;
+  $osloveni= $sex==1 ? "pan" : ($sex==2 ? "paní" : "");
+  $Osloveni= $sex==1 ? "Pan" : ($sex==2 ? "Paní" : "");
+  $adr= "$osloveni,$prijmeni,$jmeno,$sex,$ulice,$psc,$obec";
+  $html= "<table>";
+  $html.= "<tr><td>$id</td><td>$castka</td><td>$adr</td><td>$data</td></tr>";
+  // definice parametrů pro potvrzující dopis
+  $parss[$n]= (object)array();
+  $parss[$n]->dar_datum= $data;
+  $parss[$n]->dar_castka= str_replace(' ','&nbsp;',$castka);
+  $parss[$n]->darce= "$osloveni <b>$jmeno $prijmeni</b>";
+  $parss[$n]->darce_a= $sex==2 ? "a" : "";
+  $parss[$n]->vyrizeno= date('j. n. Y');
+  // substituce v 'text' a 'odeslano'
+  $text= $vzor;
+  $odeslano= select('obsah','dopis_cast',"name='odeslano'");
+  if ( $is_vars ) foreach ($vars as $var ) {
+    $text= str_replace('{'.$var.'}',$parss[$n]->$var,$text);
+    $odeslano= str_replace('{'.$var.'}',$parss[$n]->$var,$odeslano);
+  }
+  // úprava lámání textu kolem jednopísmenných předložek a přilepení Kč k částce
+  $text= preg_replace(array('/ ([v|k|z|s|a|o|u|i]) /u','/ Kč/u'),array(' \1&nbsp;','&nbsp;Kč'),$text);
+  $texty[$n]= (object)array();
+  $texty[$n]->adresa= "<b>$Osloveni<br>$jmeno $prijmeni<br>$ulice<br>$psc $obec</b>";
+  $texty[$n]->odeslano= $odeslano;
+  $texty[$n]->text= $text;
+  $n++;
+  $html.= "<hr>$text";
+  $html.= "</table>";
+  // předání k tisku
+//                                                 debug($parss);
+//                                                 display($html);
+  global $ezer_path_docs, $ezer_root;
+  $ret->fname= "potvrzeni_{$rok}_$id_osoba.pdf";
+  $ret->fpath= "$ezer_path_docs/$ezer_root/{$ret->fname}";
+  $dlouhe= tc_dopisy($texty,$ret->fpath,'','_user',$listu);
+  $ret->href= "<a href='docs/$ezer_root/{$ret->fname}' target='pdf'>{$ret->fname}</a>";
+//   $html.= " Bylo vygenerováno $listu potvrzení do $href.";
+  // konec
+  $ret->log= $html;
+  return $ret;
+}
+# ----------------------------------------------------------------------------------- mail2_mai_text
+# přečtení mailu
+function mail2_mai_text($id_dopis) {  trace();
+  $d= null;
+  try {
+    $qry= "SELECT * FROM dopis WHERE id_dopis=$id_dopis ";
+    $res= mysql_qry($qry,1,null,1);
+    $d= mysql_fetch_object($res);
+  }
+  catch (Exception $e) { display($e); fce_error("mail2_mai_text: průběžný dopis No.'$id_dopis' nebyl nalezen"); }
+  $html.= "<b>{$d->nazev}</b><br/><hr/>{$d->obsah}";
+  // příloha?
+  if ( $d->prilohy ) {
+    foreach ( explode(',',$d->prilohy) as $priloha ) {
+      $priloha= $priloha;
+      $html.= "<hr/><b>Příloha:</b> $priloha";
+      $typ= strtolower(substr($priloha,-4));
+      if ( $typ=='.jpg' || $typ=='.gif' || $typ=='.png' ) {
+        $html.= "<img src='docs/$priloha' />";
+      }
+    }
+  }
+//                                                         debug($d,"mail2_mai_text($id_dopis)");
+  return $html;
+}
+# -------------------------------------------------------------------------------- mail2_mai_prazdny
+# zjistí zda neexistuje starý seznam adresátů
+function mail2_mai_prazdny($id_dopis) {  trace();
+  $result= array('_error'=>0, '_prazdny'=> 1);
+  // ověř prázdnost MAIL
+  $qry= "SELECT * FROM mail WHERE id_dopis=$id_dopis";
+  $res= mysql_qry($qry);
+  if ( mysql_num_rows($res)>0 ) {
+    $result['_html']= "Rozesílací seznam pro tento mail již existuje, stiskni OK pokud má být přepsán novým";
+    $result['_prazdny']= 0;
+  }
+  return $result;
+}
+# ------------------------------------------------------------------------------------ mail2_mai_qry
+# sestaví SQL dotaz podle položky DOPIS.komu
+# formát zápisu dotazu v číselníku:  A[|D[|cond]]
+#   kde A je seznam aktivit oddělený čárkami
+#   a D=1 pokud mají být začleněni pouze letošní a loňští dárci
+#   a cond je obecná podmínka na položky tabulky CLEN
+function mail2_mai_qry($komu) {  trace();
+  list($aktivity,$is_dary,$cond)= explode('|',$komu);
+  $and= $aktivity=='*' ? '' : "AND FIND_IN_SET(aktivita,'$aktivity')";
+  if ( $cond ) $and.= " AND $cond";
+  $letos= date('Y'); $loni= $letos-1;
+  $qry= $is_dary
+    ? "SELECT id_clen, email,
+         BIT_OR(IF((YEAR(datum) BETWEEN $loni AND $letos) AND LEFT(dar.deleted,1)!='D'
+           AND castka>0 AND akce='G',1,0)) AS is_darce
+       FROM clen LEFT JOIN dar USING (id_clen)
+       WHERE LEFT(clen.deleted,1)!='D' AND umrti=0 AND aktivita!=9 AND email!='' $and
+       GROUP BY id_clen HAVING is_darce=1"
+    : "SELECT id_clen, email FROM clen
+       WHERE left(deleted,1)!='D' AND umrti=0 AND email!='' $and";
+  return $qry;
+}
+# ---------------------------------------------------------------------------------- mail2_mai_omitt
+# v tabulce MAIL(id_dopis=$dopis) označí jako neposlatelné emailu z MAIL($id_dopis=$vynech)
+# to je funkce určená k zamezení duplicit
+function mail2_mai_omitt($id_dopis,$ids_vynech) {  trace();
+  $msg= "Z mailů podle dopisu $id_dopis budou vynechány adresy z mailů podle dopisu $ids_vynech";
+  // seznam vynechaných adres
+  $vynech= array();
+  $qv= "SELECT email FROM mail WHERE id_dopis IN ($ids_vynech) ";
+  $rv= mysql_qry($qv);
+  while ( $rv && ($v= mysql_fetch_object($rv)) ) {
+    foreach(explode(',',str_replace(';','',str_replace(' ','',$v->email))) as $em) {
+      $vynech[]= $em;
+    }
+  }
+//                                                         debug($vynech,"vynechané adresy");
+  $msg.= "<br>podezřelých je ".count($vynech)." adres";
+  // probírka adresátů
+  $n= 0;
+  $qd= "SELECT id_mail,email FROM mail WHERE id_dopis=$id_dopis ";
+  $rd= mysql_qry($qd);
+  while ( $rd && ($d= mysql_fetch_object($rd)) ) {
+    $emaily= $d->email;
+    foreach(explode(',',str_replace(';','',str_replace(' ','',$emaily))) as $em) {
+      if ( in_array($em,$vynech) ) {
+        $n++;
+        $qu= "UPDATE mail SET stav=5,msg='- $ids_vynech' WHERE id_mail={$d->id_mail} ";
+        $ru= mysql_qry($qu);
+      }
+    }
+  }
+  $msg.= "<br>označeno bylo $n adres";
+  return $msg;
+}
+# --------------------------------------------------------------------------------- mail2_mai_omitt2
+# v tabulce MAIL(id_dopis=$dopis) označí jako neposlatelné emaily $vynech (čárkami oddělený seznam)
+function mail2_mai_omitt2($id_dopis,$lst_vynech) {  trace();
+  // seznam vynechaných adres
+  $vynech= explode(',',str_replace(' ','',$lst_vynech));
+  $msg= "Z mailů podle dopisu $id_dopis bude vynecháno ".count($vynech)." adres";
+//                                                         debug($vynech,"vynechané adresy");
+  // probírka adresátů
+  $n= 0;
+  $qd= "SELECT id_mail,email FROM mail WHERE id_dopis=$id_dopis ";
+  $rd= mysql_qry($qd);
+  while ( $rd && ($d= mysql_fetch_object($rd)) ) {
+    $emaily= $d->email;
+    foreach(explode(',',str_replace(';','',str_replace(' ','',$emaily))) as $em) {
+//                                         display("'$em'=".(in_array($em,$vynech)?1:0));
+      if ( in_array($em,$vynech) ) {
+        $n++;
+        $qu= "UPDATE mail SET stav=5,msg='viz' WHERE id_mail={$d->id_mail} ";
+        $ru= mysql_qry($qu);
+      }
+    }
+  }
+  $msg.= "<br>označeno bylo $n adres";
+  return $msg;
+}
+# ---------------------------------------------------------------------------------- mail2_mai_pocet
+# zjistí počet adresátů pro rozesílání a sestaví dotaz pro confirm
+# $dopis_var určuje zdroj adres
+#   'U' - rozeslat účastníkům akce dopis.id_duakce ukazující do akce
+#         do seznamu se dostanou pouze účastnící s funkcí:0,1,2,6 (-,VPS,SVPS,hospodář)
+#   'U2'- rozeslat účastníkům akce dopis.id_duakce ukazující do akce
+#         do seznamu se dostanou pouze organizující účastnící s funkcí:1,2,6 (VPS,SVPS,hospodář)
+#   'U3'- rozeslat účastníkům akce dopis.id_duakce ukazující do akce
+#         do seznamu se dostanou pouze dlužníci (bez avíza)
+#   'Q' - rozeslat na adresy vygenerované dopis.cis_skupina => hodnota
+#   'G' - rozeslat podle mailistu
+# pokud _cis.data=9999 jde o speciální seznam definovaný funkcí mail2_mai_skupina - ZRUŠENO
+# $cond = dodatečná podmínka POUZE pro volání z mail2_mai_stav
+function mail2_mai_pocet($id_dopis,$dopis_var,$cond='',$recall=false) {  trace();
+  $result= (object)array('_error'=>0, '_count'=> 0, '_cond'=>false);
+  $result->_html= 'Rozesílání mailu nemá určené adresáty, stiskni ZRUŠIT';
+  $emaily= $ids= $jmena= $pobyty= array();
+  $spatne= $nema= $mimo= $nomail= '';
+  $n= $ns= $nt= $nx= $mx= $nm= 0;
+  $dels= $deln= $delm= $delnm= '';
+  $nazev= '';
+  switch ($dopis_var) {
+  // mail-list
+  case 'G':
+    $id_mailist= select('id_mailist','dopis',"id_dopis=$id_dopis");
+//     list($qry,$ucel)= select('sexpr,ucel','mailist',"id_mailist=$id");
+    $ml= mail2_lst_access($id_mailist);
+    // SQL dotaz z mail-listu obsahuje _email,_nazev,_id
+    $res= mysql_qry($ml->sexpr);
+    while ( $res && ($d= mysql_fetch_object($res)) ) {
+      $n++;
+      $nazev= "'{$ml->ucel}'";
+      if ( $d->nomail ) {
+        // nechce dostávat maily
+        $nomail.= "$delnm{$d->_name}"; $delnm= ', '; $nm++;
+        continue;
+      }
+      if ( $d->_email ) {
+        // přidej každý mail zvlášť do seznamu
+        foreach(preg_split('/\s*[,;]\s*/',trim($d->_email,",; \n\r"),0,PREG_SPLIT_NO_EMPTY) as $adr) {
+          // pokud tam ještě není
+          if ( $adr && !in_array($adr,$emaily) ) {
+            if ( $adr[0]=='*' ) {
+              // vyřazený mail
+              $mimo.= "$delm{$d->_name}"; $delm= ', '; $mx++;
+            }
+            else {
+              $emaily[]= $adr;
+              $ids[]= $d->_id;
+              $jmena[]= $d->_name;
+            }
+          }
+        }
+      }
+      else {
+        $nema.= "$deln{$d->_name}"; $deln= ', ';
+        $nx++;
+      }
+    }
+    break;
+  // obecný SQL dotaz - skupina
+  case 'Q':
+    $qryQ= "SELECT _cis.hodnota,_cis.zkratka FROM dopis
+           JOIN _cis ON _cis.data=dopis.cis_skupina AND _cis.druh='db_maily_sql'
+           WHERE id_dopis=$id_dopis ";
+    $resQ= mysql_qry($qryQ);
+    if ( $resQ && ($q= mysql_fetch_object($resQ)) ) {
+      $qry= $q->hodnota;
+      $qry= db_mail_sql_subst($qry);
+      $res= mysql_qry($qry);
+      while ( $res && ($d= mysql_fetch_object($res)) ) {
+        $n++;
+        $nazev= "Členů {$q->zkratka}";
+        $jm= "{$d->prijmeni} {$d->jmeno}";
+        if ( $d->nomail ) {
+          // nechce dostávat maily
+          $nomail.= "$delnm$jm"; $delnm= ', '; $nm++;
+          continue;
+        }
+        if ( $d->_email ) {
+          // přidej každý mail zvlášť do seznamu
+          foreach(preg_split('/\s*[,;]\s*/',trim($d->_email,",; \n\r"),0,PREG_SPLIT_NO_EMPTY) as $adr) {
+            // pokud tam ještě není
+            if ( $adr && !in_array($adr,$emaily) ) {
+              if ( $adr[0]=='*' ) {
+                // vyřazený mail
+                $mimo.= "$delm$jm"; $delm= ', '; $mx++;
+              }
+              else {
+                $emaily[]= $adr;
+                $ids[]= $d->_id;
+                $jmena[]= $jm;
+              }
+            }
+          }
+        }
+        else {
+          $nema.= "$deln{$d->prijmeni} {$d->jmeno}"; $deln= ', ';
+          $nx++;
+        }
+      }
+    }
+    break;
+  // účastníci akce
+  case 'U3':    // dlužníci
+  case 'U2':    // sloužící
+  case 'U':
+    $AND= $cond ? "AND $cond" : '';
+    $AND.= $dopis_var=='U'  ? " AND p.funkce IN (0,1,2,5)" : (
+           $dopis_var=='U2' ? " AND p.funkce IN (1,2,5)"   : (
+           $dopis_var=='U3' ?
+             " AND p.funkce IN (0,1,2,5) AND
+               IF(a.ma_cenu AND p.avizo=0,
+                 IF(p.platba1+p.platba2+p.platba3+p.platba4>0,
+                   p.platba1+p.platba2+p.platba3+p.platba4,
+                   IF(pouze>0,1,2)*a.cena)>platba,
+                 p.platba1+p.platba2+p.platba3+p.platba4+p.poplatek_d>platba+platba_d)"
+         : " --- chybné komu --- " ));
+    // využívá se toho, že role rodičů 'a','b' jsou před dětskou 'd', takže v seznamech
+    // GROUP_CONCAT jsou rodiče, byli-li na akci. Emaily se ale vezmou ode všech, mají-li osobní
+    $qry= "SELECT a.nazev,id_pobyt,pouze,COUNT(*) AS _na_akci,avizo,
+             GROUP_CONCAT(DISTINCT o.id_osoba ORDER BY t.role) AS _id,
+             GROUP_CONCAT(DISTINCT CONCAT(prijmeni,' ',jmeno) ORDER BY t.role) AS _jm,
+             GROUP_CONCAT(DISTINCT IF(o.kontakt,o.email,'')) AS email,
+             GROUP_CONCAT(DISTINCT r.emaily) AS emaily
+           FROM dopis AS d
+           JOIN akce AS a ON d.id_duakce=a.id_duakce
+           JOIN pobyt AS p ON d.id_duakce=p.id_akce
+           JOIN spolu AS s USING(id_pobyt)
+           JOIN osoba AS o ON s.id_osoba=o.id_osoba
+           LEFT JOIN tvori AS t ON t.id_osoba=o.id_osoba
+           LEFT JOIN rodina AS r USING (id_rodina)
+           WHERE id_dopis=$id_dopis $AND GROUP BY id_pobyt";
+    $res= mysql_qry($qry);
+    while ( $res && ($d= mysql_fetch_object($res)) ) {
+      $n++;
+      $nazev= "Účastníků {$d->nazev}";
+      list($jm)= explode(',',$d->_jm);
+      // kontrola vyřazených mailů
+      $eo= $d->email;
+      if ( strpos($eo,'*')!==false ) { $mimo.= "$delm$jm"; $delm= ', '; $mx++; $eo= ''; }
+      $er= $d->emaily;
+      if ( strpos($er,'*')!==false ) { $mimo.= "$delm$jm"; $delm= ', '; $mx++; $er= ''; }
+      // pokud je na akci pouze jeden, pošli jen na jeho mail - pokud oba, pošli na všechny maily
+      if ( $eo!='' || $er!='' ) {
+//         $em= $d->pouze && $eo!='' ? $eo : (             // na akci pouze jeden => osobní mail
+        $em= $d->_na_akci==1 && $eo!='' ? $eo : (       // na akci pouze jeden => osobní mail
+          $eo!='' && $er!='' ? "$eo,$er" : $eo.$er      // jinak cokoliv půjde
+        );
+        $emaily[]= $em;
+        $pobyty[]= $d->id_pobyt;
+        list($ids[])= explode(',',$d->_id);
+        list($jmena[])= explode(',',$d->_jm);
+      }
+      else {
+        $nema.= "$deln$jm"; $deln= ', ';
+        $nx++;
+      }
+    }
+    break;
+  }
+  // projdi adresy
+//                                                 debug($emaily,"emaily");
+  for ($i= 0; $i<count($ids); $i++) {
+    $email= ''; $del= '';
+    foreach(preg_split('/\s*[,;]\s*/',$emaily[$i],0,PREG_SPLIT_NO_EMPTY) as $adr) {
+//                                                 debug(preg_split('/\s*[,;]\s*/',$emaily[$i],0,PREG_SPLIT_NO_EMPTY),$emaily[$i]); break;
+      $chyba= '';
+//                                                 display("$adr");
+      if ( emailIsValid($adr,$chyba) ) {
+        $email.= $del.$adr;                     // první dobrý bude adresou
+        $del= ',';                              // zbytek pro CC
+      }
+    }
+    if ( $email ) {
+      $emaily[$i]= $email;
+      $nt++;
+    }
+    else {                                      // žádný nebyl ok
+      $spatne.= "$dels{$jmena[$i]}"; $dels= ', ';
+      unset($emaily[$i],$ids[$i],$jmena[$i],$pobyty[$i]);
+      $ns++;
+    }
+  }
+  $result->_adresy= $emaily;
+  $result->_pobyty= $pobyty;
+  $result->_ids= $ids;
+  $html.= "$nazev je $n celkem\n";
+  $html.= $ns ? "$ns má chybný mail ($spatne)\n" : '';
+  $html.= $nx ? "$nx nemají mail ($nema)\n" : '';
+  $html.= $nm ? "$nm nechtějí hromadné informace ($nomail)\n" : '';
+  $html.= $mx ? "$mx mají mail označený '*' jako nedostupný ($mimo)" : '';
+  $result->_html= $nt>0
+    ? "Opravdu vygenerovat seznam pro rozeslání\n'$nazev'\nna $nt adres?"
+    : "Mail '$nazev' nemá žádného adresáta, stiskni ZRUŠIT";
+  $result->_html.= "\n\n$html";
+  $result->_count= $nt;
+  if ( !$recall ) {
+    // pro delší seznamy
+    $result->_dopis_var= $dopis_var;
+    $result->_cond= $cond ? $cond : '';
+    $result->_adresy= array();
+    $result->_ids= array();
+  }
+//                                                 debug($result,"mail2_mai_pocet.result");
+  return $result;
+}
+# ---------------------------------------------------------------------------------- mail2_mai_posli
+# do tabulky MAIL dá seznam emailových adres pro rozeslání (je volána po mail2_mai_pocet)
+# $id_dopis => dopis(&pocet)
+# $info = {_adresy,_ids[,_cond]}   _cond
+function mail2_mai_posli($id_dopis,$info) {  trace();
+  $num= 0;
+  $err= '';
+//                                                         debug($info);
+  // smaž starý seznam
+  $qry= "DELETE FROM mail WHERE id_dopis=$id_dopis ";
+//                                                         fce_log("mail2_mai_posli: $qry");
+  $res= mysql_qry($qry);
+  if ( !$res ) fce_error("mail2_mai_smaz: mazání rozesílání mailu No.'$id_dopis' se nepovedlo");
+
+  if ( isset($info->_dopis_var) ) {
+    // přepočítej adresy
+    $info= mail2_mai_pocet($id_dopis,$info->_dopis_var,$info->_cond,true);
+//     $info->_adresy= $result->_adresy;
+  }
+  if ( isset($info->_adresy) ) {
+    // zjisti text dopisu a jestli obsahuje proměnné
+    $obsah= select('obsah','dopis',"id_dopis=$id_dopis");
+    $is_vars= preg_match_all("/[\{]([^}]+)[}]/",$obsah,$list);
+    $vars= $list[1];
+//                                                                 debug($vars);
+    // pokud jsou přímo známy adresy, pošli na ně
+    $ids= array();
+    foreach($info->_ids as $i=>$id) $ids[$i]= $id;
+    if ( $info->_pobyty ) foreach($info->_pobyty as $i=>$pobyt) $pobyty[$i]= $pobyt;
+    foreach ($info->_adresy as $i=>$email) {
+      $id= $ids[$i];
+      // vlož do MAIL - pokud nezačíná *
+      if ( $email[0]!='*' ) {
+        $id_pobyt= isset($pobyty[$i]) ? $pobyty[$i] : 0;
+        // pokud dopis obsahuje proměnné, personifikuj obsah
+        $body= $is_vars ? mail2_personify($obsah,$vars,$id_pobyt,$err) : '';
+        $qr= "INSERT mail (id_davka,znacka,stav,id_dopis,id_clen,id_pobyt,email,body)
+              VALUE (1,'@',0,$id_dopis,$id,$id_pobyt,'$email','$body')";
+//                                         display("$i:$qr");
+        $rs= mysql_qry($qr);
+        $num+= mysql_affected_rows();
+      }
+    }
+  }
+  else {
+    // jinak zjisti adresy z databáze
+    $qry= mail2_mai_qry($info->_cond);
+    $res= mysql_qry($qry);
+    while ( $res && $c= mysql_fetch_object($res) ) {
+      // vlož do MAIL
+      if ( $c->email[0]!='*' ) {
+        $qr= "INSERT mail (id_davka,znacka,stav,id_dopis,id_clen,email)
+              VALUE (1,'@',0,$id_dopis,{$c->id_clen},'{$c->email}')";
+        $rs= mysql_qry($qr);
+        $num+= mysql_affected_rows();
+      }
+    }
+  }
+  // oprav počet v DOPIS
+  $qr= "UPDATE dopis SET pocet=$num WHERE id_dopis=$id_dopis";
+//                                                         fce_log("mail2_mai_posli: UPDATE");
+  $rs= mysql_qry($qr);
+  return $err;
+}
+# ---------------------------------------------------------------------------------- mail2_personify
+# spočítá proměnné podle id_pobyt a dosadí do textu dopisu
+# vrátí celý text
+function mail2_personify($obsah,$vars,$id_pobyt,&$err) {
+  $text= $obsah;
+  list($duvod_typ,$duvod_text,$id_hlavni,$id_soubezna,
+       $platba1,$platba2,$platba3,$platba4,$poplatek_d)=
+    select('duvod_typ,duvod_text,IFNULL(id_hlavni,0),id_duakce,
+      platba1,platba2,platba3,platba4,poplatek_d',
+    "pobyt LEFT JOIN akce ON id_hlavni=pobyt.id_akce",
+    "id_pobyt=$id_pobyt");
+  foreach($vars as $var) {
+    $val= '';
+    switch ($var) {
+    case 'akce_cena':
+      // zjisti, zda je cena stanovena
+      if ($platba1+$platba2+$platba3+$platba4+$poplatek_d==0) {
+        // není :-(
+        $err.= "<br>POZOR: všichni účastníci nemají stanovenu cenu (pobyt=$id_pobyt)";
+        break;
+      }
+      if ( $duvod_typ ) {
+        $val= $duvod_text;
+      }
+      elseif ( $id_hlavni ) {
+        $ret= akce_vzorec_soubeh($id_pobyt,$id_hlavni,$id_soubezna);
+        $val= $ret->mail;
+      }
+      else {
+        $ret= akce_vzorec($id_pobyt);
+        $val= $ret->mail;
+      }
+      break;
+    }
+    $text= str_replace('{'.$var.'}',$val,$text);
+  }
+  $text= mysql_real_escape_string($text);
+  return $text;
+}
+# ----------------------------------------------------------------------------------- mail2_mai_info
+# informace o členovi
+# $id - klíč osoby nebo chlapa
+# $zdroj určuje zdroj adres
+#   'U','U2','U3' - rozeslat účastníkům akce dopis.id_duakce ukazující do akce
+#   'C' - rozeslat účastníkům akce dopis.id_duakce ukazující do ch_ucast
+#   'Q' - rozeslat na adresy vygenerované dopis.cis_skupina => hodnota
+#   'G' - maillist
+function mail2_mai_info($id,$email,$id_dopis,$zdroj,$id_mail) {  trace();
+  $html= '';
+  switch ($zdroj) {
+  case 'C':                     // chlapi
+    $qry= "SELECT * FROM ezer_ys.chlapi WHERE id_chlapi=$id ";
+    $res= mysql_qry($qry);
+    if ( $res && $c= mysql_fetch_object($res) ) {
+      $html.= "{$c->prijmeni} {$c->jmeno}<br>";
+      $html.= "{$c->ulice}, {$c->psc} {$c->obec}<br><br>";
+      if ( $c->telefon )
+        $html.= "Telefon: {$c->telefon}<br>";
+    }
+    break;
+  case 'Q':                     // číselník
+    $qryQ= "SELECT _cis.hodnota,_cis.zkratka,_cis.barva FROM dopis
+           JOIN _cis ON _cis.data=dopis.cis_skupina AND _cis.druh='db_maily_sql'
+           WHERE id_dopis=$id_dopis ";
+    $resQ= mysql_qry($qryQ);
+    if ( $resQ && ($q= mysql_fetch_object($resQ)) ) {
+      if ( $q->barva==1 ) {
+        // databáze CHLAPI
+        $qry= "SELECT * FROM ezer_ys.chlapi WHERE id_chlapi=$id ";
+        $res= mysql_qry($qry);
+        if ( $res && $c= mysql_fetch_object($res) ) {
+          $html.= "{$c->prijmeni} {$c->jmeno}<br>";
+          $html.= "{$c->ulice}, {$c->psc} {$c->obec}<br><br>";
+          if ( $c->telefon )
+            $html.= "Telefon: {$c->telefon}<br>";
+        }
+      }
+      elseif ( $q->barva==4 ) {
+        // kopie databáze DS = ds_osoba_copy
+        $qry= "SELECT * FROM ds_osoba_copy WHERE id_osoba=$id ";
+        $res= mysql_qry($qry);
+        if ( $res && $c= mysql_fetch_object($res) ) {
+          $html.= "{$c->prijmeni} {$c->jmeno}<br>";
+          $html.= "{$c->ulice}, {$c->psc} {$c->obec}<br><br>";
+          if ( $c->telefon )
+            $html.= "Telefon: {$c->telefon}<br>";
+        }
+      }
+      elseif ( $q->barva==2 ) {
+        // databáze osob
+        $qry= "SELECT * FROM osoba WHERE id_osoba=$id ";
+        $res= mysql_qry($qry);
+        if ( $res && $c= mysql_fetch_object($res) ) {
+          $html.= "{$c->prijmeni} {$c->jmeno}<br>";
+          $html.= "{$c->ulice}, {$c->psc} {$c->obec}<br><br>";
+          if ( $c->telefon )
+            $html.= "Telefon: {$c->telefon}<br>";
+        }
+      }
+      else {
+        // databáze MS
+        // SELECT vrací (_id,prijmeni,jmeno,ulice,psc,obec,email,telefon)
+        $qry= $q->hodnota;
+        $qry= db_mail_sql_subst($qry);
+        if ( strpos($qry,"GROUP BY") ) {
+          if ( strpos($qry,"HAVING") )
+            $qry= str_replace("HAVING","HAVING _id=$id AND ",$qry);
+          else
+            $qry= str_replace("GROUP BY","GROUP BY _id HAVING _id=$id AND ",$qry);
+          // zatém jen pro tuto větev
+          $res= mysql_qry($qry);
+          while ( $res && ($c= mysql_fetch_object($res)) ) {
+            $html.= "{$c->prijmeni} {$c->jmeno}<br>";
+            $html.= "{$c->ulice}, {$c->psc} {$c->obec}<br><br>";
+            if ( $c->telefon )
+              $html.= "Telefon: {$c->telefon}<br>";
+          }
+        }
+        else {
+          // způsobuje chybu  GROUP BY vyžaduje nějakou agregační funkci
+//           $qry.= " GROUP BY _id HAVING _id=$id ";
+        }
+      }
+    }
+    break;
+  case 'U':                     // účastníci akce
+  case 'U2':                    // sloužící účastníci akce
+  case 'U3':                    // dlužníci
+    $qry= "SELECT * FROM osoba WHERE id_osoba=$id ";
+    $res= mysql_qry($qry);
+    if ( $res && $c= mysql_fetch_object($res) ) {
+      $html.= "{$c->id_osoba}: {$c->jmeno} {$c->prijmeni}<br>";
+      $html.= "{$c->ulice}, {$c->psc} {$c->obec}<br><br>";
+      if ( $c->telefony )
+        $html.= "Telefon: {$c->telefony}<br>";
+    }
+    break;
+  case 'G':                     // mail-list
+    function href($fnames) {
+      global $ezer_root;
+      $href= array();
+      foreach(explode(',',$fnames) as $fnamesize) {
+        list($fname)= explode(':',$fnamesize);
+        $href[]= "<a href='docs/$ezer_root/$fname' target='pdf'>$fname</a>";
+      }
+      return implode(', ',$href);
+    }
+    list($obsah,$prilohy)= select('obsah,prilohy','dopis',"id_dopis=$id_dopis");
+    $priloha= select('priloha','mail',"id_mail=$id_mail");
+    $c= select("*",'osoba',"id_osoba=$id");
+    $html.= "{$c->id_osoba}: {$c->jmeno} {$c->prijmeni}<br>";
+    $html.= "{$c->ulice}, {$c->psc} {$c->obec}<br><br>";
+    if ( $c->telefony )
+      $html.= "Telefon: {$c->telefony}<br>";
+    // přílohy ke kontrole
+    if ( $prilohy )
+      $html.= "<br>Společné přílohy: ".href($prilohy);
+    if ( $priloha )
+      $html.= "<br>Vlastní přílohy: ".href($priloha);
+    break;
+  }
+  return $html;
+}
+# ----------------------------------------------------------------------------------- mail2_mai_smaz
+# smazání mailu v DOPIS a jeho rozesílání v MAIL
+function mail2_mai_smaz($id_dopis) {  trace();
+  $qry= "DELETE FROM dopis WHERE id_dopis=$id_dopis ";
+  $res= mysql_qry($qry);
+  if ( !$res ) fce_error("mail2_mai_smaz: mazání mailu No.'$id_dopis' se nepovedlo");
+  $qry= "DELETE FROM mail WHERE id_dopis=$id_dopis ";
+  $res= mysql_qry($qry);
+  if ( !$res ) fce_error("mail2_mai_smaz: mazání rozesílání mailu No.'$id_dopis' se nepovedlo");
+  return true;
+}
+# ----------------------------------------------------------------------------------- mail2_mai_stav
+# úprava stavu mailové adresy
+# ZATIM BEZ: (maže maily - nutné zohlednit i id_clen==id_osoba aj.) včetně znovuzískání mailové adresy s karty účastníka
+function mail2_mai_stav($id_mail,$stav) {  trace();
+
+  list($id_dopis,$id_pobyt)= select("id_dopis,id_pobyt","mail","id_mail=$id_mail");
+  $novy_mail= '';
+//   if ( $id_pobyt) {
+//     $oprava= mail2_mai_pocet($id_dopis,'U',$cond="id_pobyt=$id_pobyt");
+//     $emaily= $oprava->_adresy[0];
+//     $novy_mail= ",email='$emaily'";
+//                                                   debug($oprava,"mail2_mai_stav:$emaily.");
+//   }
+  $qry= "UPDATE mail SET stav=$stav$novy_mail WHERE id_mail=$id_mail ";
+  $res= mysql_qry($qry);
+  if ( !$res ) fce_error("mail2_mai_stav: změna stavu mailu No.'$id_mail' se nepovedla");
+  return true;
+}
+# -------------------------------------------------------------------------------------------------- mail2_mai_send
+# ASK
+# odešli dávku $kolik mailů ($kolik=0 znamená testovací poslání)
+# $from,$fromname = From,ReplyTo
+# $test = 1 mail na tuto adresu (pokud je $kolik=0)
+# pokud je definováno $id_mail s definovaným text MAIL.body, použije se - jinak DOPIS.obsah
+function mail2_mai_send($id_dopis,$kolik,$from,$fromname,$test='',$id_mail=0) { trace();
+  // připojení případné přílohy
+  $attach= function($mail,$fname) {
+    global $ezer_root;
+    if ( $fname ) {
+      foreach ( explode(',',$fname) as $fnamesb ) {
+        list($fname,$bytes)= explode(':',$fnamesb);
+        $fpath= "docs/$ezer_root/".trim($fname);
+        $mail->AddAttachment($fpath);
+  } } };
+  //
+  global $ezer_path_serv, $ezer_root;
+  $phpmailer_path= "$ezer_path_serv/licensed/phpmailer";
+  require_once("$phpmailer_path/class.phpmailer.php");
+  $result= (object)array('_error'=>0);
+  $pro= '';
+  // přečtení rozesílaného mailu
+  $qry= "SELECT * FROM dopis WHERE id_dopis=$id_dopis ";
+  $res= mysql_qry($qry,1,null,1);
+  $d= mysql_fetch_object($res);
+  // napojení na mailer
+  $html= '';
+//   $klub= "klub@proglas.cz";
+  $martin= "martin@smidek.eu";
+//   $jarda= "cerny.vavrovice@seznam.cz";
+//   $jarda= $martin;
+  // poslání mailů
+  $mail= new PHPMailer;
+  $mail->SetLanguage('cz',"$phpmailer_path/language/");
+  $mail->Host= "192.168.1.1";
+  $mail->CharSet = "UTF-8";
+  $mail->From= $from;
+  $mail->AddReplyTo($from);
+//   $mail->ConfirmReadingTo= $jarda;
+  $mail->FromName= "$fromname";
+  $mail->Subject= $d->nazev;
+//                                         display($mail->Subject);
+  $mail->IsHTML(true);
+  $mail->Mailer= "smtp";
+  $attach($mail,$d->prilohy);
+//   if ( $d->prilohy ) {
+//     foreach ( explode(',',$d->prilohy) as $fnamesb ) {
+//       list($fname,$bytes)= explode(':',$fnamesb);
+//       $fpath= "docs/$ezer_root/".trim($fname);
+//       $mail->AddAttachment($fpath);
+//     }
+//   }
+  if ( $kolik==0 ) {
+    // testovací poslání sobě
+    if ( $id_mail ) {
+      // přečtení personifikace rozesílaného mailu
+      $qry= "SELECT * FROM mail WHERE id_mail=$id_mail ";
+      $res= mysql_qry($qry,1,null,1);
+      $m= mysql_fetch_object($res);
+      if ( $m->body ) {
+        $obsah= $m->body;
+        $pro= "s personifikací pro {$m->email}";
+      }
+      else {
+        // jinak obecný z DOPIS
+        $obsah= $d->obsah;
+        $pro= '';
+      }
+      $attach($mail,$m->priloha);
+    }
+    $mail->Body= $obsah;
+    $mail->AddAddress($test);   // pošli sám sobě
+    // pošli
+    $ok= $mail->Send();
+    if ( $ok  )
+      $html.= "<br><b style='color:#070'>Byl odeslán mail na $test $pro - je zapotřebí zkontrolovat obsah</b>";
+    else {
+      $err= $mail->ErrorInfo;
+      $html.= "<br><b style='color:#700'>Při odesílání mailu došlo k chybě: $err</b>";
+      $result->_error= 1;
+    }
+//                                                 display($html);
+  }
+  else {
+    // poslání dávky $kolik mailů
+    $n= $nko= 0;
+    $qry= "SELECT * FROM mail WHERE id_dopis=$id_dopis AND stav IN (0,3)";
+    $res= mysql_qry($qry);
+    while ( $res && ($z= mysql_fetch_object($res)) ) {
+      // posílej mail za mailem
+      if ( $n>=$kolik ) break;
+      $n++;
+      $i= 0;
+      $mail->ClearAddresses();
+      $mail->ClearCCs();
+      if ( $z->body ) {
+        // pokud má mail definován obsah (personifikovaný mail) ber z MAIL
+        $obsah= $z->body;
+      }
+      else {
+        // jinak obecný z DOPIS
+        $obsah= $d->obsah;
+      }
+      // přílohy - pokud jsou vlastní, pak je třeba staré vymazat a vše vložit
+      if ( $z->priloha ) {
+        $mail->ClearAttachments();
+        $attach($mail,$d->prilohy);
+        $attach($mail,$z->priloha);
+      }
+      $mail->Body= $obsah;
+      foreach(preg_split("/,\s*|;\s*|\s+/",trim($z->email," ,;"),-1,PREG_SPLIT_NO_EMPTY) as $adresa) {
+        if ( !$i++ )
+          $mail->AddAddress($adresa);   // pošli na 1. adresu
+        else                            // na další jako kopie
+          $mail->AddCC($adresa);
+      }
+//       $mail->AddBCC($klub);
+      // zkus poslat mail
+      try { $ok= $mail->Send(); } catch(Exception $e) { $ok= false; }
+      if ( !$ok  ) {
+        $ident= $z->id_clen ? $z->id_clen : $adresa;
+        $err= $mail->ErrorInfo;
+        $html.= "<br><b style='color:#700'Při odesílání mailu pro $ident došlo k chybě: $err</b>";
+        $result->_error= 1;
+        $nko++;
+      }
+      // zapiš výsledek do tabulky
+      $stav= $ok ? 4 : 5;
+      $msg= $ok ? '' : $mail->ErrorInfo;
+      $qry1= "UPDATE mail SET stav=$stav,msg=\"$msg\" WHERE id_mail={$z->id_mail}";
+      $res1= mysql_qry($qry1);
+    }
+    $html.= "<br><b style='color:#070'>Bylo odesláno $n emailů ";
+    $html.= $nko ? "s $nko chybami " : "bez chyb";
+    $html.= "</b>";
+  }
+  // zpráva o výsledku
+  $result->_html= $html;
+//                                                 debug($result,"mail2_mai_send");
+  return $result;
+}
+# --------------------------------------------------------------------------------- mail2_mai_attach
+# přidá další přílohu k mailu (soubor je v docs/$ezer_root)
+function mail2_mai_attach($id_dopis,$f) { trace();
+  // nalezení záznamu v tabulce a přidání názvu souboru
+  $names= select('prilohy','dopis',"id_dopis=$id_dopis");
+  $names= ($names ? "$names," : '')."{$f->name}:{$f->size}";
+  query("UPDATE dopis SET prilohy='$names' WHERE id_dopis=$id_dopis");
   return 1;
 }
-# ----------------------------------------------------------------------------------- mail2_gen_read
-# převod parm do objektu
-function mail2_gen_read($parm) { trace();
-  global $json;
-                                                        display($parm);
-  $obj= $json->decode($parm);
-//                                                         debug($obj);
-//   $obj= json_decode($js);
-                                                        display("isset=".isset($obj->ano_akce));
-  $obj= isset($obj->ano_akce) ? $obj : 0;
-                                                        debug($obj);
-//                                                         display("obj=".$obj);
-  return $obj;
+# ----------------------------------------------------------------------------- mail2_mai_detach_all
+# odstraní všechny přílohy mailu
+function mail2_mai_detach_all($id_dopis) { trace();
+  query("UPDATE dopis SET prilohy='' WHERE id_dopis=$id_dopis");
+  return 1;
+}
+# --------------------------------------------------------------------------------- mail2_mai_detach
+# odebere soubor z příloh
+function mail2_mai_detach($id_dopis,$name) { trace();
+  // nalezení záznamu v tabulce a odebrání názvu souboru
+  $names= select('prilohy','dopis',"id_dopis=$id_dopis");
+  $as= explode(',',$names);
+  $as2= array();
+  foreach($as as $a) {
+    list($an,$ab)= explode(':',$a);
+    if ( $an!=$name )$as2[]= $a;
+  }
+  $names2= implode(',',$as2);
+  query("UPDATE dopis SET prilohy='$names2' WHERE id_dopis=$id_dopis");
+  return 1;
+}
+# =================================================================================> . Generátor SQL
+# ---------------------------------------------------------------------------------- mail2_gen_excel
+# vygeneruje do Excelu seznam adresátů
+function mail2_gen_excel($gq,$nazev) { trace();
+  global $ezer_root;
+  $href= "CHYBA!";
+  // úprava dotazu
+  $gq= str_replace('&gt;','>',$gq);
+  $gq= str_replace('&lt;','<',$gq);
+//                                                         display($gq);
+  // export do Excelu
+  // zahájení exportu
+  $ymd_hi= date('Ymd_Hi');
+  $dnes= date('j. n. Y');
+  $t= "$nazev, stav ke dni $dnes";
+  $file= "maillist_$ymd_hi";
+  $type= 'xls';
+  $par= (object)array('dir'=>$ezer_root,'file'=>$file,'type'=>$type,'title'=>$t,'color'=>'aac0cae2');
+  $clmns= "_name:příjmení jméno,_email:email,_ulice:ulice,_psc:PSČ,_obec:obec,_stat:stát,_ucasti:účastí";
+  if ( preg_match("/iniciace/i",$gq) ) {
+    // přidání sloupce iniciace, pokud se vyskytuje v dotazu
+    $clmns.= ",iniciace:iniciace";
+  }
+  $titles= $del= '';
+  $fields= $values= array();
+  foreach (explode(',',$clmns) as $clmn) {
+    list($field,$title)= explode(':',trim($clmn));
+    $title= $title ? $title : $field;
+    $titles.= "$del$title";
+    $fields[]= $field;
+    $values[$field]= "";
+    $del= ',';
+  }
+  $pipe= array('narozeni'=>'sql_date1');
+  export_head($par,$titles,":: bcolor=ffc0e2c2 wrap border=+h");
+  // dotaz
+  $gr= @mysql_query($gq);
+  if ( !$gr ) { fce_warning(mysql_error()); goto end; }
+  while ( $gr && ($g= mysql_fetch_object($gr)) ) {
+    foreach ($g as $f => $val) {
+      if ( in_array($f,$fields) ) {
+        $a= $val;
+        if ( isset($pipe[$f]) ) $a= $pipe[$f]($a);
+        $values[$f]= $a;
+      }
+    }
+    export_row($values,":: border=+h");
+  }
+  export_tail();
+//                                                 display(export_tail(1));
+  // odkaz pro stáhnutí
+  $href= "soubor pro <a href='docs/$ezer_root/$file.$type' target='xls'>Excel</a>";
+end:
+  return $href;
 }
 /** ========================================================================================> SYSTEM **/
 # ---------------------------------------------------------------------------==> . db2_sys_transform
@@ -1974,7 +3110,7 @@ function mail2_gen_read($parm) { trace();
 # par.akce = id_akce | 0
 # par.pobyt = id_pobyt | 0
 function db2_sys_transform($par) { trace();
-  global $ezer_root;
+  global $ezer_root, $ezer_path_root;
   $html= '';
   $updated= 0;
   $fs= array(
@@ -1982,8 +3118,8 @@ function db2_sys_transform($par) { trace();
     'akce' =>    array('access','id_duakce','id_hlavni'),
     'g_akce' =>  array(         'id_gakce'),
     'cenik' =>   array(         'id_cenik','id_akce'),
-    'dar' =>     array(         'id_dar','id_osoba','id_rodina'),
-    'dopis' =>   array(         'id_dopis','id_duakce','id_mailist'),
+    'dar' =>     array('access','id_dar','id_osoba','id_rodina'),
+    'dopis' =>   array('access','id_dopis','id_duakce','id_mailist'),
     'join_akce'=>array(         'id_akce'),
     'mailist' => array(         'id_mailist'),
     'osoba' =>   array('access','id_osoba'),
@@ -1996,10 +3132,17 @@ function db2_sys_transform($par) { trace();
     '_user' =>  array('id_user'),
     '_track' => array('id_track','klic'),
   );
+  $ds= array(
+    // dokumenty s _id^ na konci
+//     'pobyt' =>  array('modi'),
+    // dokumenty odkázané původním jménem s ^ na konci
+    'akce' =>   array('copy')
+  );
   foreach (explode(',',$par->cmd) as $cmd ) {
     $update= false;
     $limit= "LIMIT 3";
     $db= 'ezer_fa';
+    $root= 'fa';
     $ok= 1;
     switch ($cmd ) {
     // ---------------------------------------------- import: imp_clear
@@ -2017,6 +3160,60 @@ function db2_sys_transform($par) { trace();
       if ( $ok ) $ok= mysql_qry("CREATE TABLE ezer_db2._skill LIKE ezer_ys._skill");
       if ( $ok ) $ok= mysql_qry("INSERT INTO ezer_db2._skill SELECT * FROM ezer_ys._skill");
       if ( $ok ) $html.= "<br>_skill: zkopírováno";
+      break;
+    // ---------------------------------------------- dokumenty: YS
+    // vloží zástupce dokumentů do files/db/... podle files/ys/... (klíče na dvojnásobek+1)
+    case 'doc_YS':
+      $root= 'ys';
+    // ---------------------------------------------- dokumenty: FA
+    // vloží zástupce dokumentů do files/db/... podle files/fa/... (klíče na dvojnásobek)
+    case 'doc_FA':
+      $files= substr($ezer_path_root,0,strrpos($ezer_path_root,'/'))."/files";
+      foreach ( $ds as $sub=>$par) {
+        list($stg)= $par;
+        switch ($stg) {
+        case 'modi':                          // dokumenty s modifikovaným klíčem _id^ na konci
+          $dir= "$files/$root/$sub";
+//                                                         display($dir);
+          if ($dh= opendir($dir)) {
+            while (($file= readdir($dh)) !== false) {
+              if ( $file=='.' || $file=='..')  continue;
+              // vyrob soubor s odkazem
+              preg_match("@^(.*)_(\d+)$@",$file,$m);
+//                                                         debug($m,$file);
+              $key= $m[2];
+              $key2= $cmd=='doc_FA' ? $key*2 : $key*2+1;
+              $path2= "$files/db/$sub/{$m[1]}_$key2^";
+//                                                 display("$path2:$file");
+              file_put_contents($path2,"$root/$sub/$file");
+//               break;
+            }
+          }
+          break;
+        case 'copy':                          // dokumenty bez klíče s ^ na konci
+          $source= "$files/$root/$sub";
+          if ( !file_exists($source) ) break;
+          $dest= "$files/db/$sub";
+          foreach ( $iterator= new RecursiveIteratorIterator(
+              new RecursiveDirectoryIterator($source, RecursiveDirectoryIterator::SKIP_DOTS),
+              RecursiveIteratorIterator::SELF_FIRST) as $item ) {
+            $subpath= str_replace("\\","/",$iterator->getSubPathName());
+            $path= "$dest/$subpath";
+            if ($item->isDir() ) {
+              if ( !file_exists($path) ) {
+                                                                display("mkdir $path");
+                mkdir($path);
+              }
+            }
+            else {
+                                display("file_put_contents($path^,$root/$sub/$subpath");
+              file_put_contents("$path^","$root/$sub/$subpath");
+//               break;
+            }
+          }
+          break;
+        }
+      }
       break;
     // ---------------------------------------------- import: YS
     // provede import z ezer_ys=>ezer_db (klíče na dvojnásobek+1 pro nenulové,access=1)

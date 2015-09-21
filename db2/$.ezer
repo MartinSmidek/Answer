@@ -22,8 +22,10 @@ menu db2 { type:'main', title:'fa2', active:*, _sys:'*'
           item {title:'DB2: clear'              ,par:°{cmd:'imp_clear',confirm:'1'} }
           item {title:'DB2<+YS: import'         ,par:°{cmd:'imp_YS',confirm:'1'} }
           item {title:'DB2<+FA: import'         ,par:°{cmd:'imp_FA',confirm:'1'} }
+          item {title:'DB2: dokumenty YS'       ,par:°{cmd:'doc_YS',confirm:'1'} }
+          item {title:'DB2: dokumenty FA'       ,par:°{cmd:'doc_FA',confirm:'1'} }
           item {title:'DB2: úpravy uživatelů'   ,par:°{cmd:'imp_user',confirm:'1'} }
-          item {title:'DB2: ... all in one ...' ,par:°{cmd:'imp_clear,imp_YS,imp_FA,imp_user',confirm:'1'} }
+          item {title:'DB2: ... all in one ...' ,par:°{cmd:'imp_clear,imp_YS,imp_FA,doc_YS,doc_FA,imp_user',confirm:'1'} }
           proc onclick (i) { clear;
             info.fill(conc(i.owner.title,' - ',i.title),' ');
             { not(i.par.confirm) | confirm("spustit úpravy databáze EZER_DB2?") };

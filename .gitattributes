@@ -68,7 +68,10 @@ db2/db2.akce2.ezer -text
 db2/db2.akce2.foto.ezer -text
 db2/db2.akce2.lst.ezer -text
 db2/db2.akce2.mai.ezer -text
+db2/db2.akce2.maia.ezer -text
+db2/db2.akce2.pece.ezer -text
 db2/db2.akce2.sta.ezer -text
+db2/db2.akce2.tisk.ezer -text
 db2/db2.akce2.ucast.ezer -text
 db2/db2.css.php -text
 db2/db2_fce.php -text
@@ -78,6 +81,7 @@ db2/img/db2.png -text
 db2/img/db2_local.png -text
 db2/img/page_vr.png -text
 db2/img/schema_db_2014.png -text
+db2/img/schema_db_2015.PNG -text
 /dbg.html -text
 /dg.inc -text
 /dg.php -text

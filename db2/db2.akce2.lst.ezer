@@ -369,7 +369,7 @@ form _page [,,275,360] {
       { eq(cloud.get,'H:');
         popis.set(conc("Archiv pro akce roku ",akce_get('rok')," s kódem ",akce_get('kod'),
           " je obsažen ve složce <b>",folder.get,"</b> na serveru"));
-        drop.init(folder.get,'H:');
+        drop.init(folder.get,'H:','.*');
       | eq(cloud.get,'G:');
         popis.set(conc("Archiv pro akce roku ",akce_get('rok')," s kódem ",akce_get('kod'),
           " je obsažen na <a target='GD' href='",gd.get,folder.get,"'>Google Disku</a>"));
@@ -425,7 +425,8 @@ form _page [,,275,360] {
       | warning('zatím neimplementovaná operace') ]
     | eq(cloud.get,'H:');
       [ eq(op,'viewer'); [ function('ref',"window.open(ref,'viewer')",ref) ]
-      | eq(op,'remove');     warning(ask('drop_unlink',folder.get,title)) // odebrání souboru
+      | eq(op,'remove'); [ confirm("Opravdu smazat ",title," ?");
+                           warning(ask('drop_unlink',folder.get,ref,'H:')) ] // odebrání souboru
       | warning('zatím neimplementovaná operace') ];
       drop.lsdir;
     }
@@ -454,8 +455,8 @@ form _akce [,,*,50] {
     akce_choose(id_akce);
     lst.info.fill(conc(the_title.get,' '));
     [ ucast.call('clear_ucast2') ];
-    [ has_skill('yam;fam;cam'); maia.get; maia.call('init_ucast') ];
-    [ pece.get; pece.call('init_pece') ];
+    [ has_skill('yam;fam;cam'); maia.call('init_ucast') ];
+    [ pece.call('init_pece') ];
     // ošetření souběžných akcí - 0=normální akce, 1=hlavní akce, 2=souběžná akce
     [ has_skill('f'); page.soubezna.set(eq(the_soubeh.get,2)) ];
     // nastavení cookies

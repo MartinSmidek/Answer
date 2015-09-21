@@ -287,7 +287,7 @@ form _rodiny [,,Wr,Hr] {
   view rt: table tvori  { join:"USING(id_rodina)" }
   view rto: table osoba  { join:"USING(id_osoba)" }
   const Lr=79, Tr=270
-  # -----------------------------------------------==>  metody
+  # -----------------------------------------------==> . metody
   proc init_all(tit,miror) {
     cap.set(conc("<b>Rodiny - ",tit,"</b>"));
     { miror; form.property(°{aside:-215},'rr');
@@ -313,10 +313,10 @@ form _rodiny [,,Wr,Hr] {
   }
   # bro
   proc bro_list(idr) { bro.browse_load(conc("id_rodina=",idr," AND ",smazane_r.get)); }
-  # -----------------------------------------------==>  nadpis a orámování
+  # -----------------------------------------------==> . nadpis a orámování
   label     [0,0,Wr,Hr] { style:"border:1px solid green;background-color:rgba(0,128,0,.1);z-index:0" }
   label cap [0,0,Wr-4,15] { style:"color:white;background-color:green;padding-left:5px", format:'c' }
-  # -----------------------------------------------==>  seznam rodin
+  # -----------------------------------------------==> . seznam rodin
   browse br [10,40,,] { tag:'r2', rows:6, qry_rows:1, css_rows:'barva,0:neucast'
     show idr [,,50,] { title:'rodina', data:r.id_rodina, format:'sr' }
     show barva { expr:"r.deleted=''" }
@@ -329,11 +329,11 @@ form _rodiny [,,Wr,Hr] {
       }}
     }
   }
-  # -----------------------------------------------==>  nejčerstvější údaje
+  # -----------------------------------------------==> . nejčerstvější údaje
   label           [10,201,204,72] {tag:'r2', css:'ae_part' }
   field last_akce [20,218,190,]   {tag:'r2', format:'o', title:'^poslední akce'}
   field last_chng [20,253,71,]    {tag:'r2', format:'o', title:'^poslední změna'}
-  # -----------------------------------------------==>  seznam členů
+  # -----------------------------------------------==> . seznam členů
   label [219,34,257,234] { tag:'rr', css:'ae_parm' }
   browse bro [225,40,,] { tag:'rr', rows:11
     show idr { data:r.id_rodina}
@@ -346,7 +346,7 @@ form _rodiny [,,Wr,Hr] {
       item { title:'přejít na osobu', proc onclick () { elim_osoby(ido.get,nazev.get) }}
     }
   }
-  # -----------------------------------------------==>  údaje rodiny
+  # -----------------------------------------------==> . údaje rodiny
   label frame    [Lr-10,Tr+9,400,254]{tag:'r1', css:'ae_part' }
   field id_rodina[Lr+333,Tr+11,40,]  {tag:'r1', format:'or', css:'Label', help:' ', data:r.id_rodina }
   field nazev    [Lr+4,Tr+30,100,]   {tag:'r1', data:r.nazev, help:'příjmení', title:'^společné příjmení'}
