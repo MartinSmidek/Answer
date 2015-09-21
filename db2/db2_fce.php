@@ -258,7 +258,7 @@ function ucast2_chain_oso($idoo) {
     FROM osoba AS o
       JOIN tvori USING(id_osoba)
       JOIN rodina AS r USING(id_rodina)
-    WHERE '{$o->prijmeni}' IN (prijmeni,rodne) AND id_osoba!=$idoo AND !o.deleted
+    WHERE (prijmeni='{$o->prijmeni}' OR rodne='{$o->prijmeni}') AND id_osoba!=$idoo AND !o.deleted
     GROUP BY id_osoba");
   while ( $qo && ($xo= mysql_fetch_object($qo)) ) {
     $xo_jmeno= trim($xo->jmeno);
