@@ -358,9 +358,9 @@ form _gsql {
       [ this.get;
         json_akce.set(conc(json_akce.get,',"kolik":',pro_kolik.get,',"jak":',pro_jak.key));
         having.set(cconc(
-          eq(pro_jak.key,1),conc("HAVING _ucasti=",pro_kolik.get),
-          eq(pro_jak.key,2),conc("HAVING _ucasti>=",pro_kolik.get),
-          eq(pro_jak.key,3),conc("HAVING _ucasti<=",pro_kolik.get)
+          eq(pro_jak.key,1),conc("AND _ucasti=",pro_kolik.get),
+          eq(pro_jak.key,2),conc("AND _ucasti>=",pro_kolik.get),
+          eq(pro_jak.key,3),conc("AND _ucasti<=",pro_kolik.get)
       ))];
       json_akce.set(conc(json_akce.get,'}'));
       return(having);
@@ -398,7 +398,7 @@ form _gsql {
     var p: object
     var ids: text
     parm;
-    p.set(ask('mail2_gen_read',parm));
+    p.set(ask('mail2_lst_read',parm));
     not(eq(p,0));
     # ano-akce
     ano_akce.set(p.ano_akce.typy); ano_akce.onchange;
@@ -506,7 +506,7 @@ form _gsql {
       "GROUP BY o.id_osoba [HAVING_ACCESS] ",pro_ucast.code_ucasti,chr(10),
       "ORDER BY prijmeni",chr(10)
     ));
-    [ to_show; tsql.set(ask('mail2_gen_try',gsql.get,1)) ];
+    [ to_show; tsql.set(ask('mail2_lst_try',gsql.get,1)) ];
   }
   proc save_sql(to_reload) {
     ucel.get;
@@ -530,8 +530,8 @@ form _gsql {
     vy.komu_G.selects(id_mailist.get);
   | warning('název je povinný');
   }
-  proc run_sql() { tsql.set(ask('mail2_gen_try',gsql.get)) }
-  proc run_sql1() { tsql.set(conc(ask('mail2_gen_try',gsql.get,1),'<hr>',ask('mail2_gen_try',gsql.get))) }
+  proc run_sql() { tsql.set(ask('mail2_lst_try',gsql.get)) }
+  proc run_sql1() { tsql.set(conc(ask('mail2_lst_try',gsql.get,1),'<hr>',ask('mail2_lst_try',gsql.get))) }
   label tsql [5,t_pro+154,750,] { tag:'def', style:"background-color:#e6e6e6" }
   button [742,t_pro+153,,] { tag:'def', title:'!' proc onclick() { make_sql(0); run_sql1 }}
   # -------------------------------------==> . procedury
@@ -702,7 +702,7 @@ form _esql {
   | form.init
   }
 }
-# ----------------------------------------------------------------------------------------==> _etext
+# ---------------------------------------------------------------------------------==> DOPISY _etext
 # správa mailů
 form _etext  {
   var adopis: number
@@ -723,7 +723,9 @@ form _etext  {
   browse texty [0,34,150,200] { rows:10, qry_rows:1, group_by:'id_dopis', css_rows:'stav1,3:zluty,4:zeleny,5:cerveny'
     show id_dopis { data:etd.id_dopis }
     show x { data:etm.id_davka },
-    show datum [,,60,] { title:'datum', data:etd.datum, format:'rs-' }
+    show access { data:etd.access }
+    show datum [,,60,] { title:'datum', data:etd.datum, format:'rs-'
+      css_cell:'access,0:,1:ezer_ys,2:ezer_fa,3:ezer_db' }
     show komu_Q [,,0,] { title:'skupině', data:etc.zkratka, format:'s' },
     show komu_G [,,0,] { title:'mail-list', data:etl.ucel, format:'s' },
     show predmet [,,160,] { title:'předmět', data:etd.nazev, format:'sq', css_cell:'stav2,3:zluty,4:zeleny,5:cerveny' },
@@ -772,7 +774,7 @@ form _etext  {
     }
   }
   proc drop_init() {                                    // inicializace - je třeba na začátku
-    drop.init(conc('docs/',sys('root'),'/'),'S:');      // naplnit pole drag&drop a definovat dir
+    drop.init('','S:');                                 // naplnit pole drag&drop a definovat dir
     drop.set(attach.get);
   }
   # příkazy 1
@@ -854,11 +856,11 @@ form _etext  {
       # rozesílání podle mail-listu
       { blokovano.set(ask('select','blokovano','mailist',conc("id_mailist=",vy.komu_G.key)));
         blokovano.get; alert("použití tohoto mail-listu je zablokováno - asi probíhá úprava dotazu");
-      | conf.set(ask('mail2_mai_confirm_spec',vy.komu_G.key,dopis_id.get));
+      | conf.set(ask('mail2_lst_confirm_spec',vy.komu_G.key,dopis_id.get));
         conf.specialni;
         [ { not(conf.prepsat) | confirm(conf.prepsat) };
           confirm(conf.pocet);
-          E_info.set(ask('mail2_mai_posli_spec',dopis_id.get));
+          E_info.set(ask('mail2_lst_posli_spec',dopis_id.get));
           texty.browse_seek; texty.browse_focus;
           alert(E_info.get('msg'))
         ]

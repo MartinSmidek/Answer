@@ -207,6 +207,9 @@ proc reload(id_pobyt) { var filtr:text
   [ u.lid.get; u.tym.get
   | u.lid.get; filtr.set("funkce IN (0,1,2)")
   | u.tym.get; filtr.set("funkce NOT IN (0,1,2)") ];
+  // vynucení výpočtu duplicit a příznaku dokumentů
+  [ u.dup.get; filtr.set(conc('/*duplicity*/',filtr)) ];
+  [ u.doc.get; filtr.set(conc('/*dokumenty*/',filtr)) ];
   [ u.b.browse_load(conc(filtr," AND funkce!=99 AND p.id_akce=",the_duakce.get),
       "IF(funkce<=2,1,funkce),_nazev",
       '','','','norowclick',
@@ -475,8 +478,18 @@ form _ucast [,,400,] { css:'ds_form'
   }
   label leg [10,12,232,11]
   // omezení browse
-  check lid [273,7,65,15] { title:'účastníci', format:'t', value:'1', proc onchange() { reload(0) }}
-  check tym [340,7,43,15] { title:'tým', format:'t', value:'1', proc onchange() { reload(0) }}
+  proc show_dup(on) { rod.cleni.show_dup(on); b.show_dup(on); }
+  check dup [194,7,54,15] { title:'dupl.', format:'t', value:'0', proc onchange() {
+    [ this.get; doc.get; doc.set(0) ];
+    show_dup(this.get);
+    reload(0)
+  }}
+  check doc [236,7,48,15] { title:'docs.', format:'t', value:'0', proc onchange() {
+    [ this.get; dup.get; dup.set(0); show_dup(0) ];
+    reload(0)
+  }}
+  check lid [278,7,65,15] { title:'účastníci', format:'t', value:'1', proc onchange() { reload(0) }}
+  check tym [344,7,43,15] { title:'tým', format:'t', value:'1', proc onchange() { reload(0) }}
   // seznam účastníků
   browse b [0,26,,] {buf_rows:200, rows:21, qry_rows:1, key_id:'key_pobyt',
     optimize:°{ask:'ucast2_browse_ask'}, css_rows:"dluh,1:yellow,2:blue"
@@ -487,6 +500,7 @@ form _ucast [,,400,] { css:'ds_form'
     show key_spolu
     show key_osoba
     show key_rodina
+    show keys_rodina [,,50,] {format:'t'}  // seznam duplicitních rodin
     // akce
     show dnu
     show datum_od
@@ -496,7 +510,7 @@ form _ucast [,,400,] { css:'ds_form'
     # varianta A plná jména
     show _jmena [,,180,] { title:'jméno/a', format:'tsq%' }
     # varianta B na úkor _jmena
-    show _docs   [,,0,] { title:'dokumenty', help:'D pokud má dokumenty', format:"sq" }
+    show _docs   [,,0,] { title:'dokumenty', help:'D pokud má dokumenty', format:"tsq" }
     show _foto   [,,0,] { title:'fotky', help:'F pokud má fotky', format:"sq" }
     show c_suma  [,,0,] { title:'cena', format:"r" }
     show platba  [,,0,] { title:'platba', format:"rsq=" }
@@ -523,7 +537,6 @@ form _ucast [,,400,] { css:'ds_form'
     show sleva, show vzorec, show duvod_typ, show duvod_text,
     // klíč první a druhé osoby na akci
     show ido1, show ido2
-
     // změna
     proc load_zalozka { // ==> . load_zalozka
       switch(zalozka.get,
@@ -618,8 +631,14 @@ form _ucast [,,400,] { css:'ds_form'
       copy_by_name(b,pob.get);
       load_zalozka
     }
+    # ==> . sloupce
+    proc show_dup(on) { on;
+      _jmena.width(130); _docs.width(49); c_suma.width(0); platba.width(0); x_umi.width(0)
+    | _jmena.width(180); _docs.width(0); c_suma.width(0); platba.width(0); x_umi.width(0)
+    }
     proc onclick() {
-      platba.width; platba.width(0); c_suma.width(0); x_umi.width(35); _jmena.width(128)
+      eq(_docs.width,49); show_dup(0)
+    | platba.width; platba.width(0); c_suma.width(0); x_umi.width(35); _jmena.width(128)
     | x_umi.width; x_umi.width(0); _docs.width(0); _jmena.width(180)
     | platba.width(35); c_suma.width(35); _docs.width(15); _jmena.width(92)
     }
@@ -1091,7 +1110,7 @@ form _rodina2 [,,360,229]  { css:'ae_frame'
   # show_rodina - zobrazuje formulář podle: key_rodina
   proc show_rodina() { var tags:text
     form.display(0,'[^f]'); r_access.display(1); cleni.display(1); form.enable(1,'.*');
-    evidence.display(key_rodina.get);
+    evidence.display(key_rodina.get); chain.display(key_rodina.get);
     tags.set('a');
     { or(key_rodina.get,not(ucast.the_pobyt.get));
       frame.set('účastníci pobytu + rodina');
@@ -1146,6 +1165,9 @@ form _rodina2 [,,360,229]  { css:'ae_frame'
   view so: table spolu {join_type:"LEFT", join:"ON so.id_osoba=o.id_osoba AND so.id_pobyt=@pobyt"}
 
   label frame [0,2,360,20] {tag:'f', title:'rodinné údaje', css:'frame_label_up' }
+  button chain [174,0,,] {tag:'f', title:'[fa-chain]', css:'db_evidence'
+    proc onclick() { var ret:object clear;
+      ret.set(ask('ucast2_chain_rod',key_rodina.get)); warning(ret.msg); } }
   button evidence [193,0,,] {tag:'f', title:'^evidence', css:'db_evidence'
     proc onclick() { evi.evid_rodina(key_rodina.get) } }
   field r_access   [304,0,10,] {tag:'f', format:'or', css:'Label', data:r.access, tabindex:0  }
@@ -1270,9 +1292,11 @@ form _rodina2 [,,360,229]  { css:'ae_frame'
   browse cleni [5,35,107,191] { rows:9, buf_rows:100,
       css_rows:'barva,0:neucast,2:nerodina,3:cerveny,5:zeleny'
     show key_osoba
+    show keys_osoba [,,50,] {format:'t'}    // seznam duplicitních osob
     show access
     show jmeno [,,110,] {title:'jméno'
       css_cell:'access,0:,1:ezer_ys,2:ezer_fa,3:ezer_db' }
+    show _dup  [,,0,] { title:'duplicita', help:'n-narození, k-kontakty, b-bydliště', format:"tsq" }
     show vek   [,,30,] {title:'věk', format:'r' }
     show key_tvori
     show idr
@@ -1290,6 +1314,8 @@ form _rodina2 [,,360,229]  { css:'ae_frame'
     show s_dite_kat, show s_poznamka, show pecovane, show pfunkce,
     show pece_val show pece_ido /* jméno a id pečovaného nebo chůvy */ show o_umi
     // metody
+    proc show_dup(on) { on; jmeno.width(60); _dup.width(49) | jmeno.width(110); _dup.width(0) }
+    proc onclick() {}
     proc onrowclick() {
       neni_ulozen
     | key_rodina.set(idr.get); form.key(idr.get);
@@ -1509,7 +1535,7 @@ form _documents {  // ukládají se na H: tedy mimo dosah http
   const folder= 'pobyt/'
   proc ukaz() { // ukáže soubory aktuálního pobytu
     jmena.set(conc("dokumenty svázané s pobytem <b><big>",u.b._nazev.get," ",u.b._jmena.get,"</big></b>"));
-    drop.init(folder.get,'H:',conc('^(.*)_',the_pobyt.get,'$'));
+    drop.init(folder.get,'H:',conc('(.*)_',the_pobyt.get));
     drop.lsdir;
   }
   label jmena [15,30,595,]
@@ -1526,7 +1552,7 @@ form _documents {  // ukládají se na H: tedy mimo dosah http
       [ eq(op,'viewer'); [ function('ref',"window.open(ref,'viewer')",ref) ]
       | eq(op,'remove');                                 // odebrání souboru
         [ confirm("Opravdu smazat ",title," ?");
-          warning(ask('drop_unlink',folder.get,ref)) ]
+          warning(ask('drop_unlink',folder.get,ref,'H:')) ]
       | warning('zatím neimplementovaná operace') ];
       drop.lsdir;
       u.b.browse_refresh(u.b.key_pobyt.get);

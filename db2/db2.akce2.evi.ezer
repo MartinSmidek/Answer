@@ -22,14 +22,14 @@ proc onfirstfocus() {
   lst.start; page.start; cmd.start; }
 proc up(x)   { x.get.set_css('shift_up','shift_down'); x.set_css('shift_up','shift_down','.*') }
 proc down(x) { x.get.set_css('shift_down','shift_up'); x.set_css('shift_down','shift_up','.*') }
-# ------------------------------------------------------------------------------------------==> menu
+# ------------------------------------------------------------------------------------------==> MENU
 var menu_item=0
 var menu_par=0
 menu m {type:'left', active:*, format:'f-'
   menu r {title:'rodiny',type:'group', skill:'yae;fae;cae'
     item a {title:'[fa-group]všechny rodiny'    par:°{lst:'r',tit:'všechny rodiny, co ',cnd:"1"}}
     item t {title:'[fa-wrench fa-red](test)'           par:°{lst:'r',tit:'testovací rodiny, co ',
-                                                cnd:"r.id_rodina IN (383,1143,1513,1664)"},skill:'m'}
+                                                cnd:"r.id_rodina IN (383,2287,14,3329)"},skill:'m'}
   }
   menu o {title:'osoby',type:'group', skill:'yae;fae;cae'
     item a {title:'[fa-user]všechny kontakty'   par:°{lst:'o',tit:'všechny osoby, co ',cnd:'1'}}
@@ -40,7 +40,7 @@ menu m {type:'left', active:*, format:'f-'
     item   {title:'[fa-child]děti'              par:°{lst:'o',tit:'všechny děti, co ',
                                                 cnd:"TIMESTAMPDIFF(YEAR,narozeni,NOW())<18"}}
     item t {title:'[fa-wrench fa-red](test)'           par:°{lst:'o',tit:'testovací osoby, co ',
-                                                cnd:"o.id_osoba IN (679,2015,4504,2938)"},skill:'m'}
+                                                cnd:"o.id_osoba IN (679,4031,4504,5877)"},skill:'m'}
   }
   menu f {title:'poslední úpravy rodin',type:'group', skill:'yad;fad'
     item   {title:'[fa-medkit]dnes'    par:°{lst:'f',tit:'úpravy za 24 hodin',days:'1',cnd:"1"}}
@@ -581,13 +581,7 @@ form _page {
       item { title:'EVID konfigurace formuláře', proc onclick () { osoba_config.tune(panel) } }
     }
   }
-  # ==============================================> B: ÚČASTI OSOBY
-  use act: form _aktivity [450, 20,,]  { tag:'B', format:'n' }
-  # ==============================================> F: FOTKY
-  use alb: form foto._alb [200, 20,,]  { tag:'F', format:'n' }
-  # ==============================================> D: DARY
-  use dar: form _dary     [  5,-57,,]  { tag:'D', format:'n' }
-  # ==============================================> KONTEXTOVÉ MENU
+  # ==============================================> kontextové menu
   menu ctx { type:'context', join:frame
     item { title:'sjednotit kopie osob', skill:'fad|fad;yad|yad'
       proc onclick () { elim.osoby(ido.get,oso.jmeno.get,oso.prijmeni.get); }} //lst.refresh2 } }
@@ -598,44 +592,35 @@ form _page {
     item { title:'-zvýrazňovat změněné údaje'  proc onclick () { evi_barvit_zmeny.set(1)} }
     item { title:'nezvýrazňovat změněné údaje' proc onclick () { evi_barvit_zmeny.set(0)} }
   }
-  # ------------------------- TEST
-#   button [385,9,,] {type:'html', title:"ff", style:'z-index:5;margin-top:-16px', skill:'m|m'
-#     proc onclick() { onfirstfocus }}
-#   button [485,9,,] {type:'html', title:"[fa-cogs] O", style:'z-index:5;margin-top:-16px', skill:'m|m'
-#     proc onclick() {
-#       elim.osoby(ido.get,oso.jmeno.get,oso.prijmeni.get)
-#   }}
-#   button [529,9,,] {type:'html', title:"[fa-cogs] Č", style:'z-index:5;margin-top:-16px', skill:'m|m'
-#     proc onclick() {
-#       elim.cleni(idr.get)
-#   }}
-#   button [573,9,,] {type:'html', title:"[fa-cogs] R", style:'z-index:5;margin-top:-16px', skill:'m|m'
-#     proc onclick() {
-#       elim.rodiny(idr.get,rod.rodiny.get)
-#   }}
+  use act: form _aktivity [450, 20,,]  { tag:'B', format:'n' }
+  use alb: form foto._alb [200, 20,,]  { tag:'F', format:'n' }
+  use dar: form _dary     [  5,-57,,]  { tag:'D', format:'n' }
 }
-# -----------------------------------------------------------------------------------------==> _dary
+# ------------------------------------------------------------------------------------------==> DARY
 form _dary [,,440,min_h-160] {css:'ae_frame shift_down'
   proc onclick() { up(page.dar); down(page.oso); down(page.rod) }
   label frame [2,3,78,] { css:'frame_label_up', title:'přehled darů - '}
   label jmeno [79,3,172,] { css:'frame_label_up'}
-  label ido   [378,3,50,] { format:'r' } //format:'or', css:'Label' }
+  label ido   [378,3,50,] { format:'r' }
+  label idd   [378,18,50,] { format:'r' }
   proc dary(_ido,_jmeno) {
     form.init; ido.set(_ido); jmeno.set(_jmeno);
-    b.browse_load(conc("da.deleted='' AND ukon='d' AND id_osoba=",ido.get))
+    b.browse_load(conc("da.deleted='' AND ukon='d' AND id_osoba=",_ido))
   }
-  proc refresh() { dary(ido.get,jmeno.get) }
+  proc refresh() { dary(id_o.get,jmeno.get) }
   # seznam darů
   view da: table dar
   view do: table osoba { join:"USING(id_osoba)" }
   browse b [5,20,,] { rows:9, qry_rows:1
     show id_d { data:da.id_dar }
     show id_o { data:do.id_osoba }
-    show [,,13,] { data:da.ukon, title:'způsob', format:'q*s' }
+    show access { data:da.access }
+    show [,,13,] { data:da.ukon, title:'způsob', format:'q*s'
+      css_cell:'access,0:,1:ezer_ys,2:ezer_fa,3:ezer_db' }
     show castka [,,70,] { data:da.castka, title:'částka', format:'rq*s' }
     show [,,80,] { data:da.dat_od, title:'přijetí', format:'rq*s' }
     show [,,80,] { data:da.dat_do, title:'potvrzení', format:'rq*s' }
-    proc onrowclick() { form.load(id_d.get); form_state('n|s','u|z'); }
+    proc onrowclick() { form.load(id_d.get); idd.set(id_d.get); form_state('n|s','u|z'); }
   }
   # formulář pro úpravu darů
   # skryté položky
@@ -701,7 +686,7 @@ form _dary [,,440,min_h-160] {css:'ae_frame shift_down'
       refresh
   }}
 }
-# -------------------------------------------------------------------------------------==> _AKTIVITY
+# --------------------------------------------------------------------------------------==> AKTIVITY
 # jsou vidět všechny aktivity dané osoby ve všech organizacích,
 # k přepnutí na akci musí být dostatečná funkční i datová oprávnění
 form _aktivity [,,248,min_h-160] {css:'ae_frame shift_up'

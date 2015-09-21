@@ -71,14 +71,12 @@ panel ucast {type:'plain', _sys:'*', title:"Účastníci2", include:'onload,db2.
   proc ucast_selected() {}                      // seznam vybraných účastníků
   proc z_change() {}
 }
-var pece: object
-var maia: object
-# panel pece {type:'plain', _sys:'*', title:'Pečouni', include:'onload,db2.akce2.pece',skill:'yaa;faa;caa'
-#   proc init_pece() { alert('napřed klikni na Databáze|Pečouni') }
-#   proc akce_show() { alert('napřed klikni na Databáze|Pečouni') }
-# }
-# panel tisk [,,,] {type:'right', _sys:'*', title:'Výpisy akce2', include:'onclick,db2.akce2.tisk',skill:'yaa;faa;caa'  }
-# panel maia {type:'right', title:'Maily akce', _sys:'*', include:'onclick,db2.akce2.maia', skill:'yam;fam;cam'  }
+panel pece {type:'plain', _sys:'*', title:'Pečouni', include:'onload,db2.akce2.pece',skill:'yaa;faa;caa'
+  proc init_pece() { alert('napřed klikni na Databáze|Pečouni') }
+  proc akce_show() { alert('napřed klikni na Databáze|Pečouni') }
+}
+panel tisk [,,,] {type:'right', _sys:'*', title:'Výpisy akce2', include:'onclick,db2.akce2.tisk',skill:'yaa;faa;caa'  }
+panel maia {type:'right', title:'Maily akce', _sys:'*', include:'onclick,db2.akce2.maia', skill:'yam;fam;cam'  }
 # ======================================================================================> . EVIDENCE
 panel evi {type:'right', _sys:'*', title:'[fa-briefcase] EVIDENCE2', include:'onload,db2.akce2.evi', skill:'yae;fae;caa',
     style:"overflow-y:hidden"
@@ -363,6 +361,7 @@ table tvori { key_id:'id_tvori'
 
 table dar { key_id:'id_dar'
   number id_dar
+  number access
   number id_osoba
   number id_rodina
   text   deleted{ help:'ok|prázdné nebo D=značka smazání daru' },
@@ -506,6 +505,7 @@ table mailist { key_id:'id_mailist'
 
 table dopis { key_id:'id_dopis'
   number id_dopis { key:'primary' },
+  number access
   number id_davka { help:'dávka|číslo rozesílání dávky dopisů' },
   text nazev
   text prilohy
@@ -653,7 +653,8 @@ form _osoba2x [,,244,322] {css:'ae_frame', proc onclick() { on_click }
     ucast.call('osoby_show')
   | evi.call('osoby_show') }
   proc show_osoba(even) { var tags:text
-    form.display(0,'[^f]'); access.display(1); go_evi.display(not(even));
+    form.display(0,'[^f]'); access.display(1);
+    go_evi.display(not(even)); chain.display(not(even));
     kontakt.enable(1); adresa.enable(1);
     frame.set(osoba_config.tit.get);
     tags.set('i,ii');
@@ -701,6 +702,9 @@ form _osoba2x [,,244,322] {css:'ae_frame', proc onclick() { on_click }
   view o: table osoba
 
   label frame [0,2,242,50] {tag:'f', css:'frame_label_up', title:'osobní údaje'}
+  button chain [102,1,,] {tag:'f', title:'[fa-chain]', css:'db_evidence'
+    proc onclick() { var ret:object clear;
+      ret.set(ask('ucast2_chain_oso',key_osoba.get)); warning(ret.msg); } }
   button go_evi [121,1,,] {tag:'f', title:'^evidence', css:'db_evidence'
     proc onclick() { evi.evid_osoba(key_osoba.get) } }
   field access    [186,0,10,] {tag:'f,I', format:'or', css:'Label', data:o.access, tabindex:0  }
