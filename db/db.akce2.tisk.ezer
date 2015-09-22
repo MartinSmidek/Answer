@@ -204,6 +204,10 @@ menu m {type:'left', active:*
                                         ,par:°{typ:'j',exp:'Excel2',cnd:'1',ord:'o.prijmeni,o.jmeno'
                                         ,tit:'jméno a příjmení:30,bydliště:50,narození:10'
                                         ,fld:'_jmenoY,_adresaY,_narozeniY'}}
+    item {title:'Hlášení tábora pro YMCA v ČR'                                                          skill:'y;f'
+                                        ,par:°{typ:'j',exp:'Excel2',cnd:'1',ord:'o.prijmeni,o.jmeno'
+                                        ,tit:':3,Příjmeni:15,Jméno:15,Ulice:24,Město:13,PSČ:7,Datum nar.:10,Člen YMCA:10'
+                                        ,fld:'1,prijmeni,jmeno,ulice,obec,psc,_narozeni6,_ymca'}}
   }
   # ---------------------------------------------------------------------------------------------==> DS
   menu {tag:'a', title:'seznamy DS',type:'group',_sys:'*'                                               skill:'y'
