@@ -26,7 +26,7 @@ menu fa2 { type:'main', title:'fa2', active:*, _sys:'*'
             info.fill(conc(i.owner.title,' - ',i.title),' ... probíhá výpočet ...');
             info.fill('',ask('akce_data_survey',i.par));
           }
-          item {title:'zápis iniciovaných'              ,par:°{akce:403,rok:2014}
+          item {title:'zápis iniciovaných'              ,par:°{akce:440,rok:2015}
             proc onclick (i) {
               info.fill(conc(i.owner.title,' - ',i.title),' ');
               confirm(ask('data_mrop_save',i.par,0));
