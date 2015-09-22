@@ -574,6 +574,9 @@ function tisk_sestava_lidi($akce,$par,$title,$vypis,$export=false) { trace();
     $x->narozeni_dmy= sql_date1($x->narozeni);
     foreach($flds as $f) {
       switch ($f) {
+      case '1':                                                       // 1
+        $clmn[$n][$f]= 1;
+        break;
       case 'dieta':                                                   // osoba: dieta
         $clmn[$n][$f]= $dieta[$x->$f];
         break;
@@ -3197,8 +3200,8 @@ function akce_browse_ask($x,$tisk=false) {
       foreach($fakce as $fz=>$fp) { $z->$fz= $akce->$fp; }
       $z->_nazev= $_nazev;
       $z->_jmena= $_jmena;
-      # jestli jsou dokumenty
-      $z->_docs= drop_find("pobyt/","^(.*)_$idp\$") ? 'D' : '';
+      # ==> .. dokumenty
+      $z->_docs= drop_find("pobyt/","^(.*)_$idp\$",'H:') ? 'D' : '';
 //       $z->_docs= drop_find("pobyt/","^(.*)_$idp\$");
 //                                         display("drop_find(pobyt/,^(.*)_$idp\$)={$z->_docs}");
       # rodina
