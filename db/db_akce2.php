@@ -503,6 +503,7 @@ function tisk_sestava_lidi($akce,$par,$title,$vypis,$export=false) { trace();
   $tits= explode(',',$tit);
   $flds= explode(',',$fld);
   // číselníky
+  $funkce= map_cis('ms_akce_funkce','zkratka');  $funkce[0]= '';
   $pfunkce= map_cis('ms_akce_pfunkce','zkratka');  $pfunkce[0]= '?';
   $dieta= map_cis('ms_akce_dieta','zkratka');  $dieta[0]= '';
   $dite_kat= map_cis('ms_akce_dite_kat','zkratka');  $dite_kat[0]= '?';
@@ -529,7 +530,7 @@ function tisk_sestava_lidi($akce,$par,$title,$vypis,$export=false) { trace();
   $r_fld= "id_rodina,nazev,ulice,psc,obec,stat,note,emaily,telefony";
   $qry=  "
     SELECT
-      p.pouze,p.poznamka,p.platba,
+      p.pouze,p.poznamka,p.platba,p.funkce,
       o.prijmeni,o.jmeno,o.narozeni,o.rc_xxxx,o.note,o.obcanka,o.clen,o.dieta,
       IFNULL(r2.id_rodina,r1.id_rodina) AS id_rodina,
       IFNULL(r2.nazev,r1.nazev) AS r_nazev,
@@ -563,7 +564,7 @@ function tisk_sestava_lidi($akce,$par,$title,$vypis,$export=false) { trace();
       AS r2 ON r2.id_osoba=o.id_osoba AND r2.role IN ('a','b')
       -- akce
       JOIN akce AS a ON a.id_duakce=p.id_akce
-      WHERE p.id_akce=$akce AND $cnd
+    WHERE p.id_akce=$akce AND $cnd
       GROUP BY o.id_osoba $hav
       ORDER BY $ord";
   $res= mysql_qry($qry);
@@ -606,6 +607,9 @@ function tisk_sestava_lidi($akce,$par,$title,$vypis,$export=false) { trace();
         break;
       case '_ymca':
         $clmn[$n][$f]= $x->clen ? $x->clen : '';
+        break;
+      case '_funkce':
+        $clmn[$n][$f]= $funkce[$x->funkce];
         break;
       case 'pfunkce':
         $pf= $x->$f;
