@@ -81,8 +81,10 @@ proc elim_rodiny(idr,nazev) {
     r2.br._nazev.set_query(1,trim(nazev),1)
   ];
 }
-proc elim_rodiny_lst(idr,idrs) { var ret:object
-  split(idrs,'|',0);
+proc elim_rodiny_lst(idr,idrs) { var keys:text, ret:object
+  keys.set(split(idrs,'|',0));
+  ret.set(ask('elim2_split_keys',split(idrs,'|',1)));
+  keys;
   mode.set('rodina_lst');
   panel.set_attrib('title',"Eliminace navržených kopií rodin");
   r1.display(1); o1.display(0); c1.display(0);
@@ -91,10 +93,9 @@ proc elim_rodiny_lst(idr,idrs) { var ret:object
     [ r1.br._nazev.get_query(0,1); r1.br._nazev.set_query(1,'',0) ];
     [ r1.br.browse_load(conc("r.id_rodina IN (",idr,")")); r1.br.raise('onrowclick') ];
     [ r2.br._nazev.get_query(0,1); r2.br._nazev.set_query(1,'',0) ];
-    [ r2.br.browse_load(conc("r.id_rodina IN (",idrs,")")); r2.br.raise('onrowclick') ];
+    [ r2.br.browse_load(conc("r.id_rodina IN (",keys,")")); r2.br.raise('onrowclick') ];
   ];
-| ret.set(ask('elim2_split_keys',split(idrs,'|',1)));
-  idr;
+| idr;
   mode.set('cleni');
   panel.set_attrib('title',"Eliminace navržených kopií členů rodin");
   r1.display(0); o1.display(0); c1.display(1);
