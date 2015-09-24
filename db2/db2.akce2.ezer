@@ -88,10 +88,12 @@ panel evi {type:'right', _sys:'*', title:'[fa-briefcase] EVIDENCE2', include:'on
 panel mai {type:'right', title:'Maily', _sys:'*', include:'onclick,db2.akce2.mai', skill:'yam;fam;cam'  }
 # panel dop {type:'right', title:'Dopisy', _sys:'*', include:'onclick,db2.akce2.dop', skill:'yam;fam;cam'  }
 panel sta {type:'right', title:'Výpisy evidence', _sys:'*', include:'onclick,db2.akce2.sta', skill:'yaa;faa;cas'  }
-# ========================================================================================> . POPUPS
+# ==========================================================================================> . ELIM
 panel elim [0,0,965,582] { type:'popup', title:'Duplicity', format:'c', include:'onload,db2.akce2.elim'
   proc osoby  (ido,jmeno,prijmeni) {}           // sjednocení dvou osob
+  proc osoby_lst (ido,idos) {}                  // sjednocení navržených kandidátů na duplicitu
   proc rodiny (idr,nazev) {}                    // sjednocení dvou rodin
+  proc rodiny_lst (idr,idrs) {}                 // sjednocení navržených kandidátů na duplicitu
   proc cleni  (idr) {}                          // sjednocení členů dané rodiny
 }
 # ==========================================================================================> COMMON
@@ -620,12 +622,14 @@ form _osoba2x [,,244,322] {css:'ae_frame', proc onclick() { on_click }
                         // 2 zobrazí pro adresa=0 kopie rodinných údajů uvozené ®
                         // 1 (jen EVID) zobrazí i pro adresa=0 osobní údaje (měly by být prázdné)
   proc onstart() { stat.selects(staty.get,',',1) }
-  // globální procedury
+  # ==> . globální procedury
   proc set_mode(_mode,_host) {
     mode.set(_mode); host.set(_host); form.enable(1,'a|b|j|k');
     [ eq(_host,'U'); detail.r.enable(1); | detail.r.enable(0) ];
   }
+  # ==> . přepisované procedury
   proc onchanged() { }
+  proc elim_kopie() { }
   proc see_new_osoba() { }
   proc see_old_osoba() { }
   proc correct() { var ok:number
@@ -655,6 +659,8 @@ form _osoba2x [,,244,322] {css:'ae_frame', proc onclick() { on_click }
   proc show_osoba(even) { var tags:text
     form.display(0,'[^f]'); access.display(1);
     go_evi.display(not(even)); chain.display(not(even));
+    { keys_osoba.get; chain.set_css('db_chain','db_evidence')
+    | chain.set_css('db_evidence','db_chain') };
     kontakt.enable(1); adresa.enable(1);
     frame.set(osoba_config.tit.get);
     tags.set('i,ii');
@@ -702,13 +708,16 @@ form _osoba2x [,,244,322] {css:'ae_frame', proc onclick() { on_click }
   view o: table osoba
 
   label frame [0,2,242,50] {tag:'f', css:'frame_label_up', title:'osobní údaje'}
-  button chain [102,1,,] {tag:'f', title:'[fa-chain]', css:'db_evidence'
-    proc onclick() { var ret:object clear;
-      ret.set(ask('ucast2_chain_oso',key_osoba.get)); warning(ret.msg); } }
+  button chain [102,1,,] {tag:'f', title:'[fa-chain]', css:'db_evidence', proc onclick() {
+    elim_kopie()
+#     var ret:object clear;
+#     ret.set(ask('ucast2_chain_oso',key_osoba.get)); warning(ret.msg);
+  }}
   button go_evi [121,1,,] {tag:'f', title:'^evidence', css:'db_evidence'
     proc onclick() { evi.evid_osoba(key_osoba.get) } }
   field access    [186,0,10,] {tag:'f,I', format:'or', css:'Label', data:o.access, tabindex:0  }
   field key_osoba [196,0,40,] {tag:'f', format:'or', css:'Label', help:' ', data:o.id_osoba, tabindex:0 }
+  field keys_osoba // seznam pravděpodobných kopií
   field key_tvori [186,10,50,] {tag:'f', format:'or', css:'Label', help:' ', tabindex:0 }
   field key_spolu
   field kmen    { expr:"IFNULL(SUBSTR((SELECT MIN(CONCAT(role,nazev))

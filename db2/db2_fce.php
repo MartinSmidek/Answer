@@ -122,7 +122,7 @@ function ucast2_chain_rod($idro) {
   // . vzory faktorů
 
   // podobné rodiny
-  $qr= mysql_qry("SELECT $flds_r FROM rodina WHERE nazev='$nazev' AND id_rodina!=$idro AND !deleted");
+  $qr= mysql_qry("SELECT $flds_r FROM rodina WHERE nazev='$nazev' AND id_rodina!=$idro AND deleted=''");
   while ( $qr && ($rx= mysql_fetch_object($qr)) ) {
     $rs[$rx->id_rodina]= $rx;
     $qc= mysql_qry("SELECT $flds_o FROM osoba JOIN tvori USING (id_osoba)
@@ -240,7 +240,8 @@ function ucast2_chain_oso($idoo) {
   if ( !$qo ) { $msg= "$idoo není osoba"; goto end; }
   $o= mysql_fetch_object($qo);
   $jmeno= $o->jmeno;
-  $nazev= "{$o->prijmeni} $jmeno";
+  $prijmeni= $o->prijmeni;
+  if ( !trim($prijmeni) ) { goto end; }
   $obec= $o->adresa ? $o->obec : '';
   $emaily= $items2array($ox->email);
   $narozeni= $o->narozeni=='0000-00-00' ? '' : $o->narozeni;
@@ -258,7 +259,7 @@ function ucast2_chain_oso($idoo) {
     FROM osoba AS o
       JOIN tvori USING(id_osoba)
       JOIN rodina AS r USING(id_rodina)
-    WHERE (prijmeni='{$o->prijmeni}' OR rodne='{$o->prijmeni}') AND id_osoba!=$idoo AND !o.deleted
+    WHERE (prijmeni='{$o->prijmeni}' OR rodne='{$o->prijmeni}') AND id_osoba!=$idoo AND o.deleted=''
     GROUP BY id_osoba");
   while ( $qo && ($xo= mysql_fetch_object($qo)) ) {
     $xo_jmeno= trim($xo->jmeno);
@@ -352,13 +353,14 @@ end:
 //                                                 debug($ret,$idoo);
   return $ret;
 }
-# -------------------------------------------------------------------------------- ucast2_browse_ask
+/** ------------------------------------------------------------------------------ ucast2_browse_ask **/
 # obsluha browse s optimize:ask
 # x->order= {a|d} polozka
 # x->show=  {polozka:[formát,vzor/1,...],...} pro položky s neprázdným vzorem
 #                                             kde formát=/ = # $ % @ * .
 # x->cond= podmínka   - pokud obsahuje /*duplicity*/ přidá se sloupec _dup
 #                       pokud obsahuje /*dokumenty*/ přidá se do sloupce _docs 'd'
+#                       pokud obsahuje /*css*/ bude se barvit _nazev,cleni.jmeno,rodiny
 # -- x->atr=  pole jmen počítaných atributů:  [_ucast]
 # pokud je tisk=true jsou je oddělovače řádků použit znak '≈' (oddělovač sloupců zůstává '~')
 function ucast2_browse_ask($x,$tisk=false) {
@@ -382,7 +384,7 @@ function ucast2_browse_ask($x,$tisk=false) {
     }
     return $y;
   };
-//                                                         debug($x,"akce_browse_ask");
+                                                        debug($x,"akce_browse_ask");
 //                                                         return;
   $y= (object)array('ok'=>0);
   foreach(explode(',','cmd,rows,quiet,key_id,oldkey') as $i) $y->$i= $x->$i;
@@ -410,12 +412,16 @@ function ucast2_browse_ask($x,$tisk=false) {
 //     $AND= "AND p.id_pobyt IN (20487) -- Baklík Baklíková";
 //     $AND= "AND p.id_pobyt IN (20488,20344) -- Bajerovi a Kubínovi";
 //     $AND= "AND p.id_pobyt IN (20568,20793) -- Šmídkovi + Nečasovi";
-
+    # pro browse_row přidáme klíč
+    if ( $x->subcmd=='browse_row' ) {
+      $AND= "AND p.id_pobyt={$y->oldkey}";
+    }
     # kontext dotazu
     if ( !$x ) $q0= mysql_qry("SET @akce:=422,@soubeh:=0,@app:='ys';");
-    # duplicity, dokumenty?
+    # duplicity, dokumenty, css?
     $duplicity= strstr($x->cond,'/*duplicity*/') ? 1 : 0;
     $dokumenty= strstr($x->cond,'/*dokumenty*/') ? 1 : 0;
+    $barvit=    strstr($x->cond,'/*css*/')       ? 1 : 0;
     # podmínka
     $cond= $x->cond ?: 1;
     # atributy akce
@@ -502,11 +508,11 @@ function ucast2_browse_ask($x,$tisk=false) {
       $osoba[$o->id_osoba]= $o;
     }
     # seznam rodin osob
+    $css= $barvit
+        ? "IF(r.access=1,':ezer_ys',IF(r.access=2,':ezer_fa',IF(r.access=3,':ezer_db','')))" : "''";
     $qor= mysql_qry("
       SELECT id_osoba,
-        IFNULL(GROUP_CONCAT(CONCAT(role,':',id_rodina,
-          IF(r.access=1,':ezer_ys',IF(r.access=2,':ezer_fa',IF(r.access=3,':ezer_db','')))
-        ) SEPARATOR ','),'') AS _rody,
+        IFNULL(GROUP_CONCAT(CONCAT(role,':',id_rodina,$css) SEPARATOR ','),'') AS _rody,
         SUBSTR(MIN(CONCAT(IF(role='','?',role),id_rodina)),2) AS _kmen
       FROM osoba AS o
       JOIN tvori USING(id_osoba)
@@ -600,10 +606,11 @@ function ucast2_browse_ask($x,$tisk=false) {
       $nazev= array();
       $_jmena= "";
       $clenu= 0;
-      $cleni= ""; $del= "";
+      $cleni= ""; $del= ""; $pecouni= 0;
       if ( count($p->cleni) ) {
         foreach ($p->cleni as $ido=>$s) {
           $o= $osoba[$ido];
+          if ( $p->funkce==99 ) $pecouni++;
           # první 2 členi v rodině
           if ( !$_ido01 )
             $_ido01= $ido;
@@ -637,11 +644,12 @@ function ucast2_browse_ask($x,$tisk=false) {
           if ( $duplicity ) {
             $ret= ucast2_chain_oso($ido);
             $dup= $s->_dup= $ret->dup;
-            $keys= $ret->keys;
+            $keys= $s->_keys= $ret->keys;
           }
           # ==> .. seznam členů pro browse_fill
           $vek= $o->narozeni!='0000-00-00' ? roku_k($o->narozeni,$akce->datum_od) : '?'; // výpočet věku
-          $cleni.= "$del$ido~$keys~{$o->access}~{$o->jmeno}~$dup~$vek~{$s->id_tvori}~{$s->id_rodina}~{$s->role}";
+          $jmeno= $p->funkce==99 ? "{$o->prijmeni} {$o->jmeno}" : $o->jmeno ;
+          $cleni.= "$del$ido~$keys~{$o->access}~$jmeno~$dup~$vek~{$s->id_tvori}~{$s->id_rodina}~{$s->role}";
           $del= $delim;
           # ==> .. rodiny a kmenová rodina
           $rody= explode(',',$o->_rody);
@@ -679,18 +687,27 @@ function ucast2_browse_ask($x,$tisk=false) {
           }
         }
       }
+      # vynechání prázdného pobytu pečounů
+      if ( $p->funkce==99 && !$pecouni ) {
+        unset($pobyt[$idp]);
+        continue;
+      }
 //                                                   debug($p->cleni,"členi");
 //                                                   display($cleni);
-      $_nazev= $idr ? $rodina[$idr]->nazev : ($nazev ? implode(' ',$nazev) : '(pobyt bez členů)');
+      $_nazev= $p->funkce==99 ? "(pečouni)" : (
+               $idr ? $rodina[$idr]->nazev : (
+               $nazev ? implode(' ',$nazev) : '(pobyt bez členů)'));
+      $_jmena= $p->funkce==99 ? "(celkem $pecouni)" : $_jmena;
       # zjištění dluhu
       $platba1234= $p->platba1 + $p->platba2 + $p->platba3 + $p->platba4;
       $p->c_suma= $platba1234 + $p->poplatek_d;
-      $p->dluh= $akce->soubeh==1 && $akce->ma_cenik
+      $p->dluh= $p->funkce==99 ? 0 : (
+                $akce->soubeh==1 && $akce->ma_cenik
         ? ( $p->c_suma == 0 ? 2 : ( $p->c_suma > $p->platba+$p->platba_d ? 1 : 0 ) )
         : ( $akce->ma_cenik
           ? ( $platba1234 == 0 ? 2 : ( $platba1234 > $p->platba ? 1 : 0) )
           : ( $akce->ma_cenu ? ( $clenu * $akce->cena > $p->platba ? 1 : 0) : 0 )
-          );
+          ));
 //                                                         if ($idp==15826) { debug($akce);debug($p,"platba1234=$platba1234"); }
       # pobyt I
       foreach($fpob1 as $fz=>$fp) { $z->$fz= $p->$fp; }
@@ -706,13 +723,25 @@ function ucast2_browse_ask($x,$tisk=false) {
       if ( $idr && !$duplicity && $rodina[$idr]->fotka ) { $z->_docs.= 'f'; }
       # ==> .. duplicity
       if ( $duplicity ) {
-        $ret= ucast2_chain_rod($idr);
-        $_dups= $idr ? $ret->dup : '';
-        foreach ($p->cleni as $ido=>$s) {
-          $_dups.= $s->_dup;
+        $del= "|";
+        if ( $p->funkce==99 ) {
+          $_dups= '';
+          $_keys= '';
+        }
+        else {
+          $ret= ucast2_chain_rod($idr);
+          $_dups= $idr ? $ret->dup : '';
+          $_keys= $ret->keys;
+        }
+        if ( $p->cleni ) foreach ($p->cleni as $ido=>$s) {
+          if ( $s->_dup ) {
+            $_dups.= $s->_dup;
+            $_keys.= "$del$ido,{$s->_keys}";
+            $del= ";";
+          }
         }
         $z->_docs.= count_chars($_dups,3);
-        $z->keys_rodina= $ret->keys;
+        $z->keys_rodina= $_keys;
       }
       # rodina
       foreach($frod as $fz=>$fr) { $z->$fz= $rodina[$idr]->$fr; }
@@ -1825,6 +1854,29 @@ function sta2_excel_subst($matches) { trace();
   return "$A$n";
 }
 /** =========================================================================================> ELIM2 **/
+# --------------------------------------------------------------------------------- elim2_split_keys
+# rozdělí klíče v řetězci pro elim_rodiny na dvě půlky
+function elim2_split_keys($keys) { trace();
+  $ret= (object)array('c1'=>'','c2'=>'');
+  $k1= $k2= array();
+  foreach (explode(';',$keys) as $cs) {
+    $cs= explode(',',$cs);
+    $c0= array_shift($cs);
+                                                        debug($cs,$c0);
+    if ( !in_array($c0,$k2) ) {
+      $k1[]= $c0;
+    }
+    foreach ($cs as $c) {
+      if ( !in_array($c,$k1) && !in_array($c,$k2) ) {
+        $k2[]= $c;
+      }
+    }
+  }
+  $ret->c1= implode(',',$k1);
+  $ret->c2= implode(',',$k2);
+                                                        debug($ret);
+  return $ret;
+}
 # ------------------------------------------------------------------------------------- elim2_differ
 # do _track potvrdí, že $id_orig,$id_copy jsou různé osoby nebo rodiny
 function elim2_differ($id_orig,$id_copy,$table) { trace();
@@ -1842,7 +1894,7 @@ end:
 }
 # -------------------------------------------------------------------------------------- elim2_osoba
 # zamění všechny výskyty kopie za originál v TVORI, SPOLU, DAR, PLATBA, MAIL a kopii smaže
-function elim2_osoba($id_orig,$id_copy) { trace();
+function elim2_osoba($id_orig,$id_copy) { //trace();
   global $USER;
   $ret= (object)array('err'=>'');
   $now= date("Y-m-d H:i:s");
@@ -1965,7 +2017,7 @@ function elim2_recovery_rodina($idr) { trace();
 }
 # --------------------------------------------------------------------------------- elim2_data_osoba
 # načte data OSOBA+TVORI včetně záznamů v _track
-function elim2_data_osoba($ido) {  trace();
+function elim2_data_osoba($ido) {  //trace();
   $ret= (object)array();
   // načtení změn
   $chng_kdy= $chng_kdo= $chng_val= array();
@@ -2030,7 +2082,7 @@ function elim2_data_osoba($ido) {  trace();
 }
 # -------------------------------------------------------------------------------- elim2_data_rodina
 # načte data RODINA včetně záznamů v _track
-function elim2_data_rodina($idr) {  trace();
+function elim2_data_rodina($idr) {  //trace();
   $ret= (object)array();
   // načtení změn
   $chng_kdy= $chng_kdo= $chng_val= array();

@@ -3192,7 +3192,7 @@ function akce_zmeny($id_akce,$h) {  trace();
 }
 # ---------------------------------------------------------------------------------------- akce_id2a
 # vrácení hodnot akce
-function akce_id2a($id_akce) {  trace();
+function akce_id2a($id_akce) {  //trace();
   $a= (object)array('title'=>'?','cenik'=>0,'cena'=>0,'soubeh'=>0,'hlavni'=>0,'soubezna'=>0);
   list($a->title,$a->rok,$a->cenik,$a->cena,$a->hlavni,$a->soubezna)=
     select("a.nazev,YEAR(a.datum_od),a.ma_cenik,a.cena,a.id_hlavni,IFNULL(s.id_duakce,0)",
@@ -9738,11 +9738,12 @@ function dop_mai_pocet($id_dopis,$dopis_var,$cond='',$recall=false) {  trace();
                  p.platba1+p.platba2+p.platba3+p.platba4+p.poplatek_d>platba+platba_d)"
          : " --- chybné komu --- " ));
     // využívá se toho, že role rodičů 'a','b' jsou před dětskou 'd', takže v seznamech
-    // GROUP_CONCAT jsou rodiče, byli-li na akci. Emaily se ale vezmou ode všech
+    // GROUP_CONCAT jsou rodiče, byli-li na akci. Emaily se ale vezmou ode všech, mají-li osobní
     $qry= "SELECT a.nazev,id_pobyt,pouze,COUNT(*) AS _na_akci,avizo,
            GROUP_CONCAT(DISTINCT o.id_osoba ORDER BY t.role) AS _id,
            GROUP_CONCAT(DISTINCT CONCAT(prijmeni,' ',jmeno) ORDER BY t.role) AS _jm,
-           GROUP_CONCAT(DISTINCT o.email) AS email, GROUP_CONCAT(DISTINCT r.emaily) AS emaily
+           GROUP_CONCAT(DISTINCT IF(o.kontakt,o.email,'')) AS email,
+           GROUP_CONCAT(DISTINCT r.emaily) AS emaily
            FROM dopis AS d
            JOIN akce AS a ON d.id_duakce=a.id_duakce
            JOIN pobyt AS p ON d.id_duakce=p.id_akce

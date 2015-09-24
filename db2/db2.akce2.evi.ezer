@@ -581,7 +581,7 @@ form _page {
       item { title:'EVID konfigurace formuláře', proc onclick () { osoba_config.tune(panel) } }
     }
   }
-  # ==============================================> kontextové menu
+  # ==============================================> . kontextové menu
   menu ctx { type:'context', join:frame
     item { title:'sjednotit kopie osob', skill:'fad|fad;yad|yad'
       proc onclick () { elim.osoby(ido.get,oso.jmeno.get,oso.prijmeni.get); }} //lst.refresh2 } }
