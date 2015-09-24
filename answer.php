@@ -9,7 +9,7 @@
 #   $css_lib    = pole s *.css
 #   $options    = doplnění Ezer.options
 function answer_php($app,$app_name,$db_name,$skin,$js_lib,$css_lib,$options) {
-  global $EZER,$ezer_local,$path_files;
+  global $EZER,$ezer_local,$path_files_h,$path_files_s,$path_files_href;
 
   $server_name= isset($_SERVER["HTTP_X_FORWARDED_SERVER"])
     ?$_SERVER["HTTP_X_FORWARDED_SERVER"]:$_SERVER["SERVER_NAME"];
@@ -60,6 +60,7 @@ function answer_php($app,$app_name,$db_name,$skin,$js_lib,$css_lib,$options) {
   $path= substr($path,0,strrpos($path,'/'));
   $abs_root= $_SERVER['DOCUMENT_ROOT'].$path;
   $rel_root= $_SERVER['HTTP_HOST'].$path;
+  $app_rel_path= $path;
   $_SESSION[$app]['app_path']= $path;
 
   set_include_path(get_include_path().PATH_SEPARATOR.$abs_root);
@@ -122,7 +123,9 @@ function answer_php($app,$app_name,$db_name,$skin,$js_lib,$css_lib,$options) {
   $options->answer_db=  "'$answer_db'";  // hlavní pracovní databáze
   $options->curr_version= 0;             // při přihlášení je nahrazeno nejvyšší ezer_kernel.version
   $options->group_db=   "'ezer_answer'"; // databáze se společnými údaji pro skupinu aplikací Answer
-  $options->path_files= "'$path_files'"; // absolutní cesta do složky files/{root}
+  $options->path_files_href= "'$path_files_href'"; // relativní cesta do složky docs/{root}
+  $options->path_files_s=    "'$path_files_s'";    // absolutní cesta do složky docs/{root}
+  $options->path_files_h=    "'$path_files_h'";    // absolutní cesta do složky ../files/{root}
 
   $kontakt= " V případě zjištění problému nebo <br/>potřeby konzultace mi prosím napište<br/>
         na mail&nbsp;<a href='mailto:{$EZER->options->mail}{$EZER->options->mail_subject}'>{$EZER->options->mail}</a> "

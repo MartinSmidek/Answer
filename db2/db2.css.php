@@ -44,13 +44,13 @@ body { position:absolute; width:100%; height:100%; }
 
 /* specifické barvy pro odlišení záznamů YS, FA, DB */
 
-tr td.ezer_ys, li.ezer_ys, input.ezer_ys, .ezer_ys input
+tr td.ezer_ys, li.ezer_ys, input.ezer_ys, .ezer_ys input, span.ezer_ys
                 { background-color:#af8 !important; }
 tr td.ezer_ys_  { background-color:#af8 !important; color:#fff !important; }
-tr td.ezer_fa, li.ezer_fa, input.ezer_fa, .ezer_fa input
+tr td.ezer_fa, li.ezer_fa, input.ezer_fa, .ezer_fa input, span.ezer_fa
                 { background-color:#acf !important; }
 tr td.ezer_fa_  { background-color:#acf !important; color:#fff !important; }
-tr td.ezer_db, li.ezer_db, input.ezer_db, .ezer_db input
+tr td.ezer_db, li.ezer_db, input.ezer_db, .ezer_db input, span.ezer_db
                 { background-color:#aff !important; }
 .nerodina,.nerodina input
                 { background-color:#e8e !important; }
@@ -66,6 +66,9 @@ button.search   { padding-left:0px; }
 .db_evidence {  font-size:9px; background-color:$b_work; height:15px;
                 color:$s1_brow; font-weight:bold; padding:0 2px; }
 button.db_evidence:disabled { color:silver; }
+.db_chain {  font-size:9px; background-color:$b_parm; height:15px;
+             color:white; font-weight:bold; padding:0 2px; }
+button.db_chain:disabled { color:silver; }
 .curr_akce { background-color:$nazelenala !important; color:$bila; font-weight:bold; }
 .form_note { font-size:10px; color:$s1_brow }
 .title_ref { color:#ffffff !important; }

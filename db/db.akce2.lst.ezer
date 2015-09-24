@@ -432,7 +432,8 @@ form _page [,,275,360] {
       | warning('zatím neimplementovaná operace') ]
     | eq(cloud.get,'H:');
       [ eq(op,'viewer'); [ function('ref',"window.open(ref,'viewer')",ref) ]
-      | eq(op,'remove');     warning(ask('drop_unlink',folder.get,title)) // odebrání souboru
+      | eq(op,'remove'); [ confirm("Opravdu smazat ",title," ?");
+                           warning(ask('drop_unlink',folder.get,ref,'H:')) ] // odebrání souboru
       | warning('zatím neimplementovaná operace') ];
       drop.lsdir;
     }

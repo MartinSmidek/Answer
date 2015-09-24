@@ -10,7 +10,8 @@
 #
 function answer_ini($app,$answer_db,$dbs_plus,$php_lib,$ezer_mod=array()) {
   global $EZER,$ezer_local,$ezer_root,$ezer_path_root,$ezer_comp_ezer,$ezer_comp_root,
-         $path_backup,$ezer_mysql_path,$path_url,$path_pspad,$path_files,
+         $path_backup,$ezer_mysql_path,$path_url,$path_pspad,
+         $path_files_h,$path_files_s,$path_files_href,
          $ezer_php_libr,$ezer_php,$ezer_ezer;
 
   $EZER= (object)array();
@@ -59,8 +60,10 @@ function answer_ini($app,$answer_db,$dbs_plus,$php_lib,$ezer_mod=array()) {
     "/home/www/ezer/www-ys/2","C:/Apache/htdocs/ezer/www-ys2");
   // kořen pro LabelDrop
   $abs_root= $path_root[$ezer_local?1:0];
-  $path_files= substr($abs_root,0,strrpos($abs_root,'/'))."/files/".substr($ezer_root,0,2)."/";
-  $_SESSION[$app]['HTTP_EZER_FILE_ABSPATH']= $path_files;
+  $path_files_href= "/docs/$app/";
+  $path_files_s= "$abs_root$path_files_href";
+  $path_files_h= substr($abs_root,0,strrpos($abs_root,'/'))."/files/".substr($ezer_root,0,2)."/";
+//   $_SESSION[$app]['HTTP_EZER_FILE_ABSPATH']= $path_files;
 
   $path_pspad= array(null,"C:/Program Files (x86)/PSPad editor/Syntax");
   // cesty pro zálohy

@@ -1404,7 +1404,7 @@ form _documents {  // ukládají se na H: tedy mimo dosah http
       [ eq(op,'viewer'); [ function('ref',"window.open(ref,'viewer')",ref) ]
       | eq(op,'remove');                                 // odebrání souboru
         [ confirm("Opravdu smazat ",title," ?");
-          warning(ask('drop_unlink',folder.get,ref)) ]
+          warning(ask('drop_unlink',folder.get,ref,'H:')) ]
       | warning('zatím neimplementovaná operace') ];
       drop.lsdir;
       u.b.browse_refresh(u.b.key_pobyt.get);
