@@ -3186,7 +3186,7 @@ function db2_sys_transform($par) { trace();
   );
   $ds= array(
     // dokumenty s _id^ na konci
-//     'pobyt' =>  array('modi'),
+    'pobyt' =>  array('modi'),
     // dokumenty odkázané původním jménem s ^ na konci
     'akce' =>   array('copy')
   );
