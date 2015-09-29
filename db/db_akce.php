@@ -9634,6 +9634,7 @@ function dop_mai_omitt2($id_dopis,$lst_vynech) {  trace();
 # pokud _cis.data=9999 jde o speciální seznam definovaný funkcí dop_mai_skupina - ZRUŠENO
 # $cond = dodatečná podmínka POUZE pro volání z dop_mai_stav
 function dop_mai_pocet($id_dopis,$dopis_var,$cond='',$recall=false) {  trace();
+  global $ezer_root;
   $result= (object)array('_error'=>0, '_count'=> 0, '_cond'=>false);
   $result->_html= 'Rozesílání mailu nemá určené adresáty, stiskni ZRUŠIT';
   $emaily= $ids= $jmena= $pobyty= array();
@@ -9739,10 +9740,12 @@ function dop_mai_pocet($id_dopis,$dopis_var,$cond='',$recall=false) {  trace();
          : " --- chybné komu --- " ));
     // využívá se toho, že role rodičů 'a','b' jsou před dětskou 'd', takže v seznamech
     // GROUP_CONCAT jsou rodiče, byli-li na akci. Emaily se ale vezmou ode všech, mají-li osobní
+    // CPR ještě nemá rozlišeny osobní údaje
+    $osobni_email= $ezer_root=='cr' ? "o.email" : "IF(o.kontakt,o.email,'')";
     $qry= "SELECT a.nazev,id_pobyt,pouze,COUNT(*) AS _na_akci,avizo,
            GROUP_CONCAT(DISTINCT o.id_osoba ORDER BY t.role) AS _id,
            GROUP_CONCAT(DISTINCT CONCAT(prijmeni,' ',jmeno) ORDER BY t.role) AS _jm,
-           GROUP_CONCAT(DISTINCT IF(o.kontakt,o.email,'')) AS email,
+           GROUP_CONCAT(DISTINCT $osobni_email) AS email,
            GROUP_CONCAT(DISTINCT r.emaily) AS emaily
            FROM dopis AS d
            JOIN akce AS a ON d.id_duakce=a.id_duakce
