@@ -764,7 +764,7 @@ form _etext  {
     proc onload(f) {                                    // po dokončení přenosu
       ask('mail2_mai_attach',form.key,f);                 // přidání souboru k dávce
     }
-    proc onmenu(op,name) {  // op=remove|remove-all     // pro S: jen 2 parametry
+    proc onmenu(op,name,ref) {  // op=remove|remove-all
       { eq(op,'remove');     ask('mail2_mai_detach',form.key,name) // odebrání přílohy
       | eq(op,'remove-all'); ask('mail2_mai_detach_all',form.key)  // odebrání všech příloh
       | warning('zatím neimplementovaná operace')
