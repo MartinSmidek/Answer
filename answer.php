@@ -36,6 +36,9 @@ function answer_php($app,$app_name,$db_name,$skin,$js_lib,$css_lib,$options) {
   session_start();
   $_SESSION[$app]['GET']= array();
 
+  // zapnutí příznaku pro ochranu souborů v docs (do konce session)
+  setcookie("EZER",$app,0,"/");
+
 //   // ošetření běhu s testovací databází DEPRECATED
 //   $tabu_db= '';
   if ( isset($_GET['test']) && $_GET['test'] ) {
