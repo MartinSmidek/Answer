@@ -848,6 +848,7 @@ function ucast2_browse_ask($x,$tisk=false) {
       // výběr řazení: numerické | alfanumerické
       $numeric= in_array($test_clmn,array('skupina'));
       if ( $numeric ) {
+                                        display("usort $test_clmn $test_asc/numeric");
         usort($zz,function($a,$b) {
           global $test_clmn,$test_asc;
           $c= $a->$test_clmn == $b->$test_clmn ? 0 : ($a->$test_clmn > $b->$test_clmn ? 1 : -1);
@@ -872,7 +873,17 @@ function ucast2_browse_ask($x,$tisk=false) {
           setlocale(LC_ALL, "cs_CZ.utf8","Czech");
           usort($zz,function($a,$b) {
             global $test_clmn,$test_asc;
-            $c= $test_asc * strcoll($a->$test_clmn,$b->$test_clmn);
+            $a0= mb_substr($a->$test_clmn,0,1);
+            $b0= mb_substr($b->$test_clmn,0,1);
+            if ( $a0=='(' ) {
+              $c= -$test_asc;
+            }
+            elseif ( $b0=='(' ) {
+              $c= $test_asc;
+            }
+            else {
+              $c= $test_asc * strcoll($a->$test_clmn,$b->$test_clmn);
+            }
             return $c;
           });
         }
@@ -904,35 +915,103 @@ function ucast2_flds($fstr) {
   return $fp;
 }
 # ====================================================================================> . autoselect
+# -------------------------------------------------------------------------------- ucast2_auto_jmeno
+# test autocomplete
+function ucast2_auto_jmeno($patt,$par) {  trace();
+  $a= (object)array();
+  $limit= 10;
+  $n= 0;
+  if ( !$patt ) {
+    $a->{0}= "... zadejte jméno";
+  }
+  else {
+    if ( $par->prefix ) {
+      $patt= "{$par->prefix}$patt";
+    }
+    // zpracování vzoru
+    $qry= "SELECT id_jmena AS _key,jmeno AS _value
+           FROM _jmena
+           WHERE jmeno LIKE '$patt%' ORDER BY jmeno LIMIT $limit";
+    $res= mysql_qry($qry);
+    while ( $res && $t= mysql_fetch_object($res) ) {
+      if ( ++$n==$limit ) break;
+      $a->{$t->_key}= $t->_value;
+    }
+    // obecné položky
+    if ( !$n )
+      $a->{0}= "... nic nezačíná $patt";
+    elseif ( $n==$limit )
+      $a->{999999}= "... a další";
+  }
+  return $a;
+}
+# ----------------------------------------------------------------------------- ucast2_auto_prijmeni
+# SELECT autocomplete - výběr ze jmen rodin
+function ucast2_auto_prijmeni($patt,$par) {  #trace();
+  $a= (object)array();
+  $limit= 11;
+  $n= 0;
+  if ( !$patt ) {
+    $a->{0}= "... zadávejte jméno osoby";
+  }
+  else {
+    if ( $par->prefix ) {
+      $patt= "{$par->prefix}$patt";
+    }
+    // zpracování vzoru
+    $qry= "SELECT prijmeni AS _value, id_osoba AS _key
+           FROM osoba
+           WHERE deleted='' AND prijmeni LIKE '$patt%'
+           GROUP BY prijmeni
+           ORDER BY prijmeni
+           LIMIT $limit";
+    $res= mysql_qry($qry);
+    while ( $res && $t= mysql_fetch_object($res) ) {
+      if ( ++$n==$limit ) break;
+      $key= $t->_key;
+      $a->{$t->_key}= $t->_value;
+    }
+    // obecné položky
+    if ( !$n )
+      $a->{0}= "... žádná osoba nezačíná '$patt'";
+    elseif ( $n==$limit )
+      $a->{999999}= "... a další";
+  }
+                                                                debug($a,$patt);
+  return $a;
+}
 # ------------------------------------------------------------------------------- ucast2_auto_rodiny
 # SELECT autocomplete - výběr ze jmen rodin
 function ucast2_auto_rodiny($patt,$par) {  #trace();
   $a= (object)array();
-  $limit= 20;
-  $dnes= date("Y-m-d");
+  $limit= 11;
   $n= 0;
-//   if ( $par->patt!='whole' ) {
-//     $is= strpos($patt,' ');
-//     $patt= $is ? substr($patt,0,$is) : $patt;
-//   }
-  // jména rodin
-  $qry= "SELECT nazev AS _value, id_rodina AS _key
-         FROM rodina
-         WHERE deleted='' AND nazev LIKE '$patt%'
-         GROUP BY nazev
-         ORDER BY nazev
-         LIMIT $limit";
-  $res= mysql_qry($qry);
-  while ( $res && $t= mysql_fetch_object($res) ) {
-    if ( ++$n==$limit ) break;
-    $key= $t->_key;
-    $a->{$t->_key}= $t->_value;
+  if ( !$patt ) {
+    $a->{0}= "... zadávejte jméno rodiny";
   }
-  // obecné položky
-  if ( !$n )
-    $a->{0}= "... žádná rodina nezačíná '$patt'";
-  elseif ( $n==$limit )
-    $a->{999999}= "... a další";
+  else {
+    if ( $par->prefix ) {
+      $patt= "{$par->prefix}$patt";
+    }
+    // zpracování vzoru
+    $qry= "SELECT nazev AS _value, id_rodina AS _key
+           FROM rodina
+           WHERE deleted='' AND nazev LIKE '$patt%'
+           GROUP BY nazev
+           ORDER BY nazev
+           LIMIT $limit";
+    $res= mysql_qry($qry);
+    while ( $res && $t= mysql_fetch_object($res) ) {
+      if ( ++$n==$limit ) break;
+      $key= $t->_key;
+      $a->{$t->_key}= $t->_value;
+    }
+    // obecné položky
+    if ( !$n )
+      $a->{0}= "... žádná rodina nezačíná '$patt'";
+    elseif ( $n==$limit )
+      $a->{999999}= "... a další";
+  }
                                                                 debug($a,$patt);
   return $a;
 }
@@ -1004,7 +1083,7 @@ function ucast2_pridej_osobu($ido,$access,$ida,$idp,$idr=0,$role=0) { trace();
   }
   # přidání k pobytu
   $je= select("COUNT(*)","pobyt JOIN spolu USING(id_pobyt)","id_akce=$ida AND id_osoba=$ido");
-  if ( $je ) { $ret->msg= "osoba už na této akci je"; goto end; }
+  if ( $je ) { $ret->msg.= "osoba už na této akci je"; goto end; }
   // pokud na akci ještě není, zjisti pro děti (<18 let) s_role a dite_kat
   $datum_od= select("datum_od","akce","id_duakce=$ida");
   $vek= roku_k($narozeni,$datum_od);
@@ -1027,7 +1106,7 @@ function ucast2_pridej_osobu($ido,$access,$ida,$idp,$idr=0,$role=0) { trace();
   # přidání do rodiny
   if ( $idr && $role ) {
     $je= select("COUNT(*)","tvori","id_rodina=$idr AND id_osoba=$ido");
-    if ( $je ) { $ret->msg= "osoba už v této rodině je"; goto end; }
+    if ( $je ) { $ret->msg.= "osoba už v této rodině je"; goto end; }
     // pokud v rodině ještě není, přidej
     $ret->tvori= ezer_qry("INSERT",'tvori',0,array(
       (object)array('fld'=>'id_osoba', 'op'=>'i','val'=>$ido),

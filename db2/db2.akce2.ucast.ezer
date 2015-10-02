@@ -280,9 +280,9 @@ form _cmd [,,623,30] {
     'none',{form.enable(0,'s|r|x'); form.enable(1,'n')},
     'show',{form.enable(0,'s'); form.enable(1,'x'); form_mode.set('show')}
   )}
-  label [141,0,482,30] { tag:'x', css:'ae_work' }
+  label [141,0,474,30] { tag:'x', css:'ae_work', style:"z-index:1;border:1px solid #f5f5f5;box-shadow: 2px 2px 10px #333" }
   //==> .. [zpět]
-  label  [0,0,121,30] { tag:'r', css:'ae_parm search', skill:'yaa;faa;caa' }
+  label  [0,0,121,30] { tag:'r', css:'ae_parm search', skill:'yaa;faa;caa', style:"box-shadow:2px 2px 10px #333" }
   proc _reload(renew,ido) { // renew=0 vrácení původních dat a zhasnutí warningu, jinak znovunačtení
     set_state('show');
     evid.Plain;
@@ -295,7 +295,7 @@ form _cmd [,,623,30] {
     [ ido; rod.cleni.raise('onrowclick',ido) ];
     mode.set('');
   }
-  button zpet [7,6,,] { tag:'s,z,r',title:'[fa-undo] Zpět',help:'Neměnit změněná data',css:'search'
+  button zpet [7,6,,] { /*tag:'s,z,r',*/ title:'[fa-undo] Zpět',help:'Neměnit změněná data',css:'search'
     proc onclick() { Click }
     proc Click() {
       eq(mode.get,'novy_pobyt'); rod.rodiny0.rod_end; _reload(the_pobyt.get,0);
@@ -374,8 +374,10 @@ form _cmd [,,623,30] {
     // vlastní vložení se zamezením duplicit a s definicí kategorie pro děti
     ret.set(ask('ucast2_pridej_osobu',
       os1.key,os1.access.get,the_duakce.get,pob.key,rod.key,os1.role.get));
-    the_pobyt.set(ret.pobyt);
-    _reload(1,os1.key);
+    { ret.msg; alert(ret.msg)
+    | the_pobyt.set(ret.pobyt);
+      _reload(1,os1.key);
+    }
   }
   // procedury
   proc b_display(on) {
@@ -1228,19 +1230,16 @@ form _rodina2 [,,360,229]  { css:'ae_frame'
     proc Init() { form.init; key_rodina.set(0); show_rodina }
   }
   // ==> . hledání dle názvu
-  select rodiny0   [Lr+5,32,92,] {tag:'s', type:'auto', format:'t'
-    par:°{fce:'ucast2_auto_rodiny'}
-#     proc onchanged() {
-#       rod.set(ask('akce2_auto_jmena1L',this.key));
-#       each(rod.get,jmenovci); // nesmí volat asynchronní operace
-#     }
-#   field  rodiny0   [Lr+5,32,90,] {tag:'s', title:"^název rodiny", data:r.nazev, format:'nT'
+  select rodiny0   [Lr+5,32,95,] {tag:'s', type:'auto', format:'t', par:°{fce:'ucast2_auto_rodiny'}
     const css_all = 'ezer_ys ezer_fa ezer_db'
     var mode=0  // 1 znamená výběr
     var rod_n=0
     proc Init() { rod_n.set(0); mode.set(0); rod_beg; }
 #     proc onchanged() { rod_end; rod_beg; rod_show(1); }
-    proc onchanged() { mode.get; rod_show(1) | Init; rod_show(1); }
+    proc onchanged() {
+      echo(this.get,"/",this.key);
+      mode.get; rod_show(1) | Init; rod_show(1);
+    }
     proc rod_show(n) { var ret:object
       ret.set(ask('db2_rod_show',this.get,n));
       rod_next.enable(ret.next); rod_back.enable(ret.back); rod_use.enable(ret.n); rod_new.enable(1);
