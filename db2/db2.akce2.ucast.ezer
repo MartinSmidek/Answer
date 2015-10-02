@@ -255,6 +255,12 @@ proc neni_ulozeno() { var no: number
     u.b.browse_active(u.old_row.get) ];
   return(no)
 }
+proc neni_ulozen_clen() { var no: number
+  no.set(not(and(os1.same,sp1.same,sp2.same,os2.same)));
+  [ no; echo('neni_ulozeno!');
+    warning('neuložené změny pro osobu použij [Zpět] nebo [Uložit]') ];
+  return(no)
+}
 # --------------------------------------------------==> . clear_zmeny
 # obsluha označení změněných polí
 proc clear_zmeny(tables) {
@@ -303,7 +309,7 @@ form _cmd [,,623,30] {
   button [60,6,,] { tag:'s,r', title:'[fa-save] Uložit',help:'Uložit změněná data',css:'search'
                 skill:'yaa|yaa+;faa|faa+;caa|caa+'
     proc onclick() { ulozit } }
-  # ----------------------------------------------- přidat
+  # ----------------------------------------------- přidat pobyt
   label [149,3,44,] { title:"<b>Přidat <br>pobyt:</b>" }
   #==> . + rodina
   button [197,5,,] {tag:'x,n', title:'[fa-heart] rodina',
@@ -312,6 +318,7 @@ form _cmd [,,623,30] {
       set_state('new'); mode.set('rodiny'); pob.new_pobyt;
       os1.clear_osoba; os2.clear_osoba;
       rod.rodiny0.Init;
+      rod.cleni.show_dup(1);
       rod.new_rodina('');
   }}
   #==> . + skupina
@@ -319,6 +326,7 @@ form _cmd [,,623,30] {
     skill:'yaa+|yaa+;faa+|faa+;caa+|caa+', help:'Přidání skupiny osob'
     proc onclick() {
       rod.nerodina.Init; pob.new_pobyt;
+      rod.cleni.show_dup(1);
       rod.hide_rodina;
       pridat_osobu.Init
   }}
@@ -1124,7 +1132,7 @@ form _rodina2 [,,360,229]  { css:'ae_frame'
     form.stacks('n,r','down',0,0,10);
     form.display(1,'[rns]'); form.display(0,'a');
     foreach(array(rodiny0),obligatory);
-    cleni.browse_init; cleni.enable(0);
+    cleni.browse_init; //cleni.enable(0);
   }
   proc init_rodina() {
     form.display(0,'[^f]'); r_access.display(1); cleni.display(1);
@@ -1161,7 +1169,6 @@ form _rodina2 [,,360,229]  { css:'ae_frame'
   | spolu.set('datum svatby') }
   // pozor - proměnné jsou vzhledem k db.akce2._rodina2
   proc onchanged() { evid.d_change }
-  proc neni_ulozen() { return(neni_ulozeno) }
   proc show_osoby(ido,ids,cleni) {
     eq(ucast.evid.cmode.get,2); os1.key;   // 2 sloupce a 1. neprázdný
     [ eq(ido,os1.key);                     //   čteme do 1.
@@ -1221,7 +1228,13 @@ form _rodina2 [,,360,229]  { css:'ae_frame'
     proc Init() { form.init; key_rodina.set(0); show_rodina }
   }
   // ==> . hledání dle názvu
-  field  rodiny0   [Lr+5,32,90,] {tag:'s', title:"^název rodiny", data:r.nazev, format:'nT'
+  select rodiny0   [Lr+5,32,92,] {tag:'s', type:'auto', format:'t'
+    par:°{fce:'ucast2_auto_rodiny'}
+#     proc onchanged() {
+#       rod.set(ask('akce2_auto_jmena1L',this.key));
+#       each(rod.get,jmenovci); // nesmí volat asynchronní operace
+#     }
+#   field  rodiny0   [Lr+5,32,90,] {tag:'s', title:"^název rodiny", data:r.nazev, format:'nT'
     const css_all = 'ezer_ys ezer_fa ezer_db'
     var mode=0  // 1 znamená výběr
     var rod_n=0
@@ -1233,6 +1246,7 @@ form _rodina2 [,,360,229]  { css:'ae_frame'
       rod_next.enable(ret.next); rod_back.enable(ret.back); rod_use.enable(ret.n); rod_new.enable(1);
       rod_n.set(ret.n); rodiny0.set_css(ret.css,css_all.get); ret.n;
       copy_by_name(ret.rod,form); form.key(key_rodina.get); cleni.browse_fill(ret.cleni,'~');
+      cleni.raise('onrowclick');
       warning
     | warning("rodina '",this.get,"' ještě není v evidenci, použij ",
         replace_fa('[fa-heart]')," pro založení");
@@ -1285,6 +1299,8 @@ form _rodina2 [,,360,229]  { css:'ae_frame'
 #       os1.enable(0,'.*'); os2.enable(0,'.*');
 #       sp1.enable(0,'.*'); sp2.enable(0,'.*');
       // uprav viditelnost tlačítek
+      rod.rodiny1.set(rodiny0.get); rod.rodiny1.change; rodiny0.plain;
+      rod.display(0,'[abnsy]'); rod.display(1,'[mo]'); rod.enable(1,'[m]');
       form.display(0,'[b]'); cmd.set_state('new');
   } }
   // ==> . oprava názvu rodiny
@@ -1355,7 +1371,9 @@ form _rodina2 [,,360,229]  { css:'ae_frame'
     proc show_dup(on) { on; jmeno.width(80); _dup.width(29) | jmeno.width(110); _dup.width(0) }
     proc onclick() {}
     proc onrowclick() {
-      neni_ulozen
+      eq(cmd.mode.get,'rodiny');
+      show_osoby(key_osoba.get,key_spolu.get,cleni);
+    | neni_ulozen_clen
     | key_rodina.set(idr.get); form.key(idr.get);
       [ ucast.part('cmd.novy_clen'); ucast.part('cmd.novy_clen').enable(key_rodina.get) ];
       od_svatby;

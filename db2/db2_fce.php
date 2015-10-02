@@ -7,6 +7,11 @@ function db2_rod_show($nazev,$n) {
   $css= array('','ezer_ys','ezer_fa','ezer_db');
   $nazev= trim($nazev);
   $rod= array(null);
+  // seznamy položek pro browse_fill kopírované z ucast2_browse_ask
+  $fos=   ucast2_flds("umrti,prijmeni,rodne,sex,adresa,ulice,psc,obec,stat,kontakt,telefon,nomail,email"
+        . ",iniciace,uvitano,clen,obcanka,rc_xxxx,cirkev,vzdelani,titul,zamest,zajmy,jazyk,dieta"
+        . ",aktivita,note,_kmen");
+  $fspo=  ucast2_flds("id_spolu,_barva,s_role,dite_kat,poznamka,pecovane,pfunkce,pece_jm,pece_id,o_umi");
   // načtení rodin
   $qr= mysql_qry("SELECT id_rodina AS key_rodina,ulice AS r_ulice,psc AS r_psc,obec AS r_obec,
       telefony AS r_telefony,emaily AS r_emaily,spz AS r_spz,datsvatba,access AS r_access
@@ -19,28 +24,64 @@ function db2_rod_show($nazev,$n) {
   // diskuse
   $ret->last= count($rod)-1;
   if ( isset($rod[$n]) ) {
+    $idr= $rod[$n]->id_rodina;
     $ret->n= $n;
     $ret->rod= $rod[$n];
     $ret->back= $n>1 ?1:0;
     $ret->next= $n<count($rod)-1 ?1:0;
     $ret->css= $css[$ret->rod->r_access];
+
+    # ==> .. duplicity
+    $rr= ucast2_chain_rod($idr);
+    $_dups= $rr->dup;
+    $_keys= $rr->keys;
+
     // seznam členů rodiny
     $cleni= $del= '';
     $idr= $ret->rod->key_rodina;
     $qc= mysql_qry("
-      SELECT id_osoba,id_tvori,access,prijmeni,jmeno,role,narozeni
+      SELECT id_tvori,role,o.*
       FROM osoba AS o
       JOIN tvori AS t USING(id_osoba)
       WHERE t.id_rodina=$idr
       ORDER BY role,narozeni
     ");
-    while ( $qc && ($c= mysql_fetch_object($qc)) ) {
-      $vek= $c->narozeni!='0000-00-00' ? roku_k($c->narozeni) : '?'; // výpočet věku
-      $cleni.= "$del$ido~{$c->access}~{$c->jmeno}~$vek~{$o->id_tvori}~$idr~{$c->role}";
-      $cleni.= str_repeat('~',32).'1'.str_repeat('~',8);;
-      $del= '~';
+    while ( $qc && ($o= mysql_fetch_object($qc)) ) {
+      $ido= $o->id_osoba;
+
+      # ==> .. duplicita členů
+      $rc= ucast2_chain_oso($ido);
+      $dup= $rc->dup;
+      $keys= $ret->keys;
+      if ( $dup ) {
+        $_dups.= $dup;
+        $_keys.= ";$ido,{$s->_keys}";
+      }
+      $vek= $o->narozeni!='0000-00-00' ? roku_k($o->narozeni) : '?'; // výpočet věku
+      $cleni.= "$del$ido~$keys~{$o->access}~{$o->jmeno}~$dup~$vek~{$o->id_tvori}~$idr~{$o->role}";
+      $cleni.= "~~" . sql_date1($o->narozeni);
+      if ( !$o->adresa ) {
+        $o->ulice= "®".$rod[$n]->r_ulice;
+        $o->psc=   "®".$rod[$n]->r_psc;
+        $o->obec=  "®".$rod[$n]->r_obec;
+      }
+      if ( !$o->kontakt ) {
+        $o->email=   "®".$rod[$n]->r_emaily;
+        $o->telefon= "®".$rod[$n]->r_telefony;
+      }
+      # informace z osoba
+      foreach($fos as $f=>$filler) {
+        $cleni.= "~{$o->$f}";
+      }
+      # informace ze spolu
+      foreach($fspo as $f=>$filler) {
+        $cleni.= "~{$o->$f}";
+      }
+      $cleni.= "~";
     }
     $ret->cleni= $cleni;
+    $ret->_docs.= count_chars($_dups,3);
+    $ret->keys_rodina= $_keys;
   }
 //                                                         debug($ret,'db2_rod_show');
   return $ret;
@@ -365,15 +406,6 @@ end:
 # pokud je tisk=true jsou je oddělovače řádků použit znak '≈' (oddělovač sloupců zůstává '~')
 function ucast2_browse_ask($x,$tisk=false) {
   $delim= $tisk ? '≈' : '~';
-  // dekódování seznamu položek na pole ...x,y=z... na [...x=>x,y=>z...]
-  function flds($fstr) {
-    $fp= array();
-    foreach(explode(',',$fstr) as $fzp) {
-      list($fz,$f)= explode('=',$fzp);
-      $fp[$fz]= $f ?: $fz ;
-    }
-    return $fp;
-  }
   global $test_clmn,$test_asc, $y;
   $map_umi= map_cis('answer_umi','zkratka','poradi','ezer_answer');
 //                                                         debug($map_umi,"map_umi");
@@ -384,7 +416,7 @@ function ucast2_browse_ask($x,$tisk=false) {
     }
     return $y;
   };
-                                                        debug($x,"akce_browse_ask");
+//                                                         debug($x,"akce_browse_ask");
 //                                                         return;
   $y= (object)array('ok'=>0);
   foreach(explode(',','cmd,rows,quiet,key_id,oldkey') as $i) $y->$i= $x->$i;
@@ -543,20 +575,20 @@ function ucast2_browse_ask($x,$tisk=false) {
 //                                                         debug($rodina,$rodiny);
 //                                                         debug($osoba,'osoby po _rody');
     # seznamy položek
-    $fpob1= flds("key_pobyt=id_pobyt,_empty=0,key_akce=id_akce,key_osoba,key_spolu,key_rodina=i0_rodina,"
+    $fpob1= ucast2_flds("key_pobyt=id_pobyt,_empty=0,key_akce=id_akce,key_osoba,key_spolu,key_rodina=i0_rodina,"
            . "keys_rodina='',c_suma,platba,xfunkce=funkce,funkce,skupina,dluh");
-    $fakce= flds("dnu,datum_od");
-    $frod=  flds("fotka,r_access=access,r_spz=spz,r_svatba=svatba,r_datsvatba=datsvatba,r_rozvod=rozvod,r_ulice=ulice,r_psc=psc,"
+    $fakce= ucast2_flds("dnu,datum_od");
+    $frod=  ucast2_flds("fotka,r_access=access,r_spz=spz,r_svatba=svatba,r_datsvatba=datsvatba,r_rozvod=rozvod,r_ulice=ulice,r_psc=psc,"
           . "r_obec=obec,r_stat=stat,r_telefony=telefony,r_emaily=emaily,r_umi,r_note=note");
-    $fpob2= flds("p_poznamka=poznamka,pokoj,budova,prednasi,luzka,pristylky,kocarek,pocetdnu"
+    $fpob2= ucast2_flds("p_poznamka=poznamka,pokoj,budova,prednasi,luzka,pristylky,kocarek,pocetdnu"
           . ",strava_cel,strava_pol,c_nocleh=platba1,c_strava=platba2,c_program=platba3,c_sleva=platba4"
           . ",datplatby,cstrava_cel,cstrava_pol,svp,zpusobplat,naklad_d,poplatek_d,platba_d"
           . ",zpusobplat_d,datplatby_d,ubytovani,cd,avizo,sleva,vzorec,duvod_typ,duvod_text,x_umi");
     //      id_osoba,jmeno,_vek,id_tvori,id_rodina,role,_rody,narozeni
-    $fos=   flds("umrti,prijmeni,rodne,sex,adresa,ulice,psc,obec,stat,kontakt,telefon,nomail,email"
+    $fos=   ucast2_flds("umrti,prijmeni,rodne,sex,adresa,ulice,psc,obec,stat,kontakt,telefon,nomail,email"
           . ",iniciace,uvitano,clen,obcanka,rc_xxxx,cirkev,vzdelani,titul,zamest,zajmy,jazyk,dieta"
           . ",aktivita,note,_kmen");
-    $fspo=  flds("id_spolu,_barva,s_role,dite_kat,poznamka,pecovane,pfunkce,pece_jm,pece_id,o_umi");
+    $fspo=  ucast2_flds("id_spolu,_barva,s_role,dite_kat,poznamka,pecovane,pfunkce,pece_jm,pece_id,o_umi");
 
     # 1. průchod - kompletace údajů mezi pobyty
     $skup= array();
@@ -861,6 +893,48 @@ function ucast2_browse_ask($x,$tisk=false) {
 //                                                 debug($osoba[3506],'osoba');
 //                                                 debug($y->values);
   return $y;
+}
+# dekódování seznamu položek na pole ...x,y=z... na [...x=>x,y=>z...]
+function ucast2_flds($fstr) {
+  $fp= array();
+  foreach(explode(',',$fstr) as $fzp) {
+    list($fz,$f)= explode('=',$fzp);
+    $fp[$fz]= $f ?: $fz ;
+  }
+  return $fp;
+}
+# ====================================================================================> . autoselect
+# ------------------------------------------------------------------------------- ucast2_auto_rodiny
+# SELECT autocomplete - výběr ze jmen rodin
+function ucast2_auto_rodiny($patt,$par) {  #trace();
+  $a= (object)array();
+  $limit= 20;
+  $dnes= date("Y-m-d");
+  $n= 0;
+//   if ( $par->patt!='whole' ) {
+//     $is= strpos($patt,' ');
+//     $patt= $is ? substr($patt,0,$is) : $patt;
+//   }
+  // jména rodin
+  $qry= "SELECT nazev AS _value, id_rodina AS _key
+         FROM rodina
+         WHERE deleted='' AND nazev LIKE '$patt%'
+         GROUP BY nazev
+         ORDER BY nazev
+         LIMIT $limit";
+  $res= mysql_qry($qry);
+  while ( $res && $t= mysql_fetch_object($res) ) {
+    if ( ++$n==$limit ) break;
+    $key= $t->_key;
+    $a->{$t->_key}= $t->_value;
+  }
+  // obecné položky
+  if ( !$n )
+    $a->{0}= "... žádná rodina nezačíná '$patt'";
+  elseif ( $n==$limit )
+    $a->{999999}= "... a další";
+                                                                debug($a,$patt);
+  return $a;
 }
 # =======================================================================================> . pomocné
 # ----------------------------------------------------------------------------- ucast2_rodina_access
