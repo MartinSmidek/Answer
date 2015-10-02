@@ -161,9 +161,12 @@ function ucast2_chain_rod($idro) {
 //                                                 debug($ro);
 //   goto end;
   // . vzory faktorů
-
+  // vyloučené shody
+  $ids= select1("GROUP_CONCAT(DISTINCT val)","_track","kde='rodina' AND op='r' AND klic='$idro'");
+  $ruzne= $ids ? "AND id_rodina NOT IN ($ids)" : "";
   // podobné rodiny
-  $qr= mysql_qry("SELECT $flds_r FROM rodina WHERE nazev='$nazev' AND id_rodina!=$idro AND deleted=''");
+  $qr= mysql_qry("SELECT $flds_r FROM rodina
+    WHERE nazev='$nazev' AND id_rodina!=$idro AND deleted='' $ruzne");
   while ( $qr && ($rx= mysql_fetch_object($qr)) ) {
     $rs[$rx->id_rodina]= $rx;
     $qc= mysql_qry("SELECT $flds_o FROM osoba JOIN tvori USING (id_osoba)
@@ -261,7 +264,8 @@ end:
 # --------------------------------------------------------------------------------- ucast2_chain_oso
 # ==> . chain oso
 # upozorní na pravděpodobnost duplicity osoby
-function ucast2_chain_oso($idoo) {
+# pokud je zadáno $idr doplní i pravděpodobné duplicity v této rodině - na základě narození a jmen
+function ucast2_chain_oso($idoo,$idr=0) {
   $items2array= function($items,$omit='\s') {
     $items= preg_replace("/[$omit]/",'',$items);
     $arr= preg_split("/,;/",trim($items,",;"),-1,PREG_SPLIT_NO_EMPTY);
@@ -274,7 +278,7 @@ function ucast2_chain_oso($idoo) {
   $nazev= '';
   // srovnávané prvky
   $flds= "id_osoba,o.access,prijmeni,jmeno,narozeni,kontakt,email,telefon,adresa,o.obec";
-  // dotazovaná rodina
+  // dotazovaná osoba
   $jmena= $telefony= $emaily= array();
   $narozeni= '';
   $qo= mysql_qry("SELECT $flds FROM osoba AS o WHERE id_osoba=$idoo");
@@ -286,24 +290,27 @@ function ucast2_chain_oso($idoo) {
   $obec= $o->adresa ? $o->obec : '';
   $emaily= $items2array($ox->email);
   $narozeni= $o->narozeni=='0000-00-00' ? '' : $o->narozeni;
+  $narozeni_yyyy= substr($o->narozeni,0,4);
+  $narozeni_11= substr($o->narozeni,5,5)=="01-01" ? $narozeni_yyyy : '';
   $emaily= $telefony= array();
   if ( $o->kontakt ) {
     $emaily= $items2array($o->email);
     $telefony= $items2array($o->telefon,'^\d');
   }
-//                                                 debug($o);
+//                                                 debug($o,"originál");
   // . vzory faktorů
-  // podobné osoby
+  // podobné osoby tzn. stejné příjmení
   $qo= mysql_qry("
     SELECT $flds,r.obec,
       SUBSTR(MIN(CONCAT(IF(role='','?',role),id_rodina)),2) AS _kmen
     FROM osoba AS o
       JOIN tvori USING(id_osoba)
       JOIN rodina AS r USING(id_rodina)
-    WHERE (prijmeni='{$o->prijmeni}' OR rodne='{$o->prijmeni}') AND id_osoba!=$idoo AND o.deleted=''
+    WHERE (prijmeni='{$o->prijmeni}' /*OR rodne='{$o->prijmeni}'*/) AND id_osoba!=$idoo AND o.deleted=''
     GROUP BY id_osoba");
   while ( $qo && ($xo= mysql_fetch_object($qo)) ) {
     $xo_jmeno= trim($xo->jmeno);
+//                                                 display($xo_jmeno);
     if ( $jmeno=='' || $xo_jmeno=='' ) continue;
     if ( strpos($xo_jmeno,$jmeno)===false && strpos($jmeno,$xo_jmeno)===false ) continue;
     // vymazání chybných údajů
@@ -325,7 +332,19 @@ function ucast2_chain_oso($idoo) {
     }
     $os[$xo->id_osoba]= $xo;
   }
-//                                                 debug($os,"os");
+  // podezřelí členi rodiny: jsou se stejným datem narození (nebo 1.1.rok kde rok=+-1 )
+  if ( $idr ) {
+    $qc= mysql_qry("
+      SELECT id_osoba,prijmeni,jmeno,narozeni FROM osoba JOIN tvori USING (id_osoba)
+      WHERE id_rodina=$idr AND deleted='' AND id_osoba!=$idoo AND (narozeni='$narozeni'
+        OR DAY(narozeni)=1 AND MONTH(narozeni)=1 AND YEAR(narozeni)=$narozeni_yyyy)");
+    while ( $qc && ($xc= mysql_fetch_object($qc)) ) {
+      $idc= $xc->id_osoba;
+      if ( !isset($os[$idc]) ) $os[$idc]= (object)array('id_osoba'=>$idc);
+      $os[$idc]->narozeni= $xc->narozeni;
+    }
+  }
+//                                                 debug($os,"kopie $idoo");
   // porovnání
   $nr= 0;
   foreach ($os as $ido=>$ox) {
@@ -339,7 +358,12 @@ function ucast2_chain_oso($idoo) {
     // .. bydliste
     $xi->bydliste= $ox->adresa && $ox->obec==$obec && $obec ? 1 : 0;
     // .. narození
-    $xi->narozeni= $ox->narozeni==$narozeni ? 1 : 0;
+    $rok= substr($ox->narozeni,0,4);
+    $xi->narozeni= $ox->narozeni==$narozeni
+                || $rok==$narozeni_11
+                || substr($ox->narozeni,5,5)=="01-01" && $narozeni_yyyy==$rok
+                 ? 1 : 0;
+//                                                 display("$jmeno: {$ox->narozeni}~$narozeni ==> {$xi->narozeni}");
     // organizace
     $xi->org= $ox->access;
     // zápis
@@ -347,7 +371,7 @@ function ucast2_chain_oso($idoo) {
   }
   // míra podobnosti osob
   $nx0= count($x);
-  $idr= 0;
+  $i0= 0;
   $orgs= $ro->access;
   foreach ($x as $i=>$xi) {
     $xi->asi.= $xi->bydliste ? 'b' : '';
@@ -355,7 +379,7 @@ function ucast2_chain_oso($idoo) {
     $xi->asi.= $xi->kontakty ? 'k' : '';
     if ( !strlen($xi->asi) || $xi->asi=='b' ) { unset($x[$i]); continue; }
     $orgs|= $xi->org;
-    $idr= $i;
+    $i0= $i;
   }
 //                                                 debug($x,"podobné osoby");
 //                                                 goto end;
@@ -367,8 +391,8 @@ function ucast2_chain_oso($idoo) {
   }
   elseif ( $nx==1 ) {
     // jednoznačná duplicita
-    $keys= $idr;
-    $dup= $x[$idr]->asi;
+    $keys= $i0;
+    $dup= $x[$i0]->asi;
     $msg= "pravděpodobně ($dup) duplicitní s osobou $ido "
           . ($xi->org==1 ? " z YS" : ($xi->org==2 ? " z FA" : ''));
   }
@@ -438,6 +462,7 @@ function ucast2_browse_ask($x,$tisk=false) {
     # ladění
     $AND= "";
 //     $AND= "AND p.id_pobyt IN (44285,44279,44280,44281) -- prázdná rodina a pobyt";
+//    $AND= "AND p.id_pobyt IN (44381) -- test";
 //     $AND= "AND p.id_pobyt IN (43387,32218,32024) -- test";
 //     $AND= "AND p.id_pobyt IN (43113,43385,43423) -- test Šmídkovi+Nečasovi+Novotní/LK2015";
 //     $AND= "AND p.id_pobyt IN (43423) -- test Novotní/LK2015";
@@ -674,7 +699,7 @@ function ucast2_browse_ask($x,$tisk=false) {
           # ==> .. duplicita členů
           $keys= $dup= '';
           if ( $duplicity ) {
-            $ret= ucast2_chain_oso($ido);
+            $ret= ucast2_chain_oso($ido,$idr);
             $dup= $s->_dup= $ret->dup;
             $keys= $s->_keys= $ret->keys;
           }

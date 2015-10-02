@@ -201,7 +201,7 @@ proc elim_kopie_osob(os) { var zmena:number, ido:number, idos:text
     idos;
     zmena.set(elim.osoby_lst(ido,idos));
     echo("elim.osoby_lst(",ido,",",idos,")=",zmena);
-    [ u.b.browse_row ];
+    [ u.b.browse_row; u.b.raise('onrowclick') ];
     jump(ido)
   | warning("nebyla nalezena podezřelá kopie") }
 | alert("pro sjednocování kopií je zapotřebí zaškrtnout 'kopie?' nad seznamem účastníků");
@@ -1209,7 +1209,7 @@ form _rodina2 [,,360,229]  { css:'ae_frame'
         idrs;
         zmena.set(elim.rodiny_lst(idr,idrs));
         echo("elim.rodiny_lst(",idr,",",idrs,")=",zmena);
-        [ u.b.browse_row ];
+        [ u.b.browse_row; u.b.raise('onrowclick') ];
         jump(ido)
       | warning("nebyla nalezena podezřelá kopie") }
     | alert("pro sjednocování kopií je zapotřebí zaškrtnout 'kopie?' nad seznamem účastníků");
