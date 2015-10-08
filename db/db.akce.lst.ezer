@@ -423,7 +423,7 @@ form _akce [,,*,50] {
       this.browse_seek;  }
     proc onrowclick() { page.show_akce(id_akce.get); }
   }
-  label head [0,0,*,30] { title:'' }
+  label head [0,0,*,30] { title:'', style:'z-index:0' }
   # volba pracovní akce
   button [376,3,,] { title:'Pracovní', proc onclick() {
     volba_akce(if(eq(the_source.get,'sey'),sey.id_akce.get,google.id_akce.get))
