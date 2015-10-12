@@ -6789,12 +6789,13 @@ function akce_plachta($akce,$par,$title,$vypis,$export=0) { trace();
   $c_cirkev= map_cis('ms_akce_cirkev','zkratka');      $c_cirkev[0]= '?';  $c_cirkev[1]= 'kat';
   $letos= date('Y');
   $html= "";
+  $err= "";
   $excel= array();
 //   $html.= "<table class='vypis'>";
   // letošní účastníci
   $qry=  "SELECT
           datum_od,
-          FIND_IN_SET(1,r_umi) AS _umi_vps,
+          FIND_IN_SET(1,r_umi) AS _umi_vps,o.jmeno AS jmeno_o,o.prijmeni AS prijmeni_o,
           r.nazev as jmeno,p.pouze as pouze,r.obec as mesto,svatba,datsvatba,p.funkce as funkce,
           GROUP_CONCAT(DISTINCT IF(t.role='a',o.id_osoba,'') SEPARATOR '') as id_osoba_m,
           GROUP_CONCAT(DISTINCT IF(t.role='a',o.prijmeni,'') SEPARATOR '') as prijmeni_m,
@@ -6836,6 +6837,13 @@ function akce_plachta($akce,$par,$title,$vypis,$export=0) { trace();
   $res= mysql_qry($qry);
   while ( $res && ($u= mysql_fetch_object($res)) ) {
     $muz= $u->id_osoba_m;
+    $zen= $u->id_osoba_z;
+    if ( !$muz || !$zen ) {
+      $jmena= "{$u->jmeno_o} {$u->prijmeni_o}";
+      $err.= "<b style='color:darkred'>POZOR: účastník akce pro páry $jmena není pár
+             - z tabulky je vynechán(a)</b><br><br>";
+      continue;
+    }
     // minulé účasti
     $rqry= "SELECT count(*) as _pocet
             FROM akce AS a
@@ -6912,7 +6920,8 @@ function akce_plachta($akce,$par,$title,$vypis,$export=0) { trace();
   if ( $export ) {
     $result->xhref= akce_plachta_export($excel,'plachta');
   }
-  $result->html= $html;
+end:
+  $result->html= "$err$html";
   return $result;
 }
 // ---------------------------------------------- roku
