@@ -9,7 +9,7 @@ Ezer.Form.implement({
     var form= this instanceof Ezer.Var ? this.value : this;
     goal= goal instanceof Ezer.Var ? goal.value : goal;
     $each(form.part,function(field,id) {
-      if ( (field instanceof Ezer.Field || field instanceof Ezer.Edit)
+      if ( (field instanceof Ezer.Field || field instanceof Ezer.Edit || field instanceof Ezer.Select)
         && field.DOM_Input ) {
 //                                                         Ezer.trace('*',id);
         field.DOM_Input.addEvents({
