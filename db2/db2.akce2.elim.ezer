@@ -165,8 +165,8 @@ form _cmd [,,425,30] { css:'ae_parm'
       { [ o1.oso.same | o1.oso.save; o1.oso.load ];
         eq(o1.bs.ido.get,o2.bs.ido.get);
         alert("vlevo i vpravo je stejná osoba!");
-      | and(o2.oso.iniciace.get,not(o1.oso.iniciace.get));
-        not(confirm("opravdu uložit bez informace o roku iniciace (MROP)?"))
+      | and(o2.oso.iniciace.get,not(eq(o2.oso.iniciace.get,o1.oso.iniciace.get)));
+        alert("informace o roku iniciace (mrop) musí být zachována")
       | confirm("opravdu zrušit <b>",o2.bs._nazev.get,"</b> (",o2.bs.ido.get,
           ") a přidat účasti,dar,... k <b>",o1.bs._nazev.get,"</b> (",o1.bs.ido.get,") ?");
         ret.set(ask('elim2_osoba',o1.bs.ido.get,o2.bs.ido.get)); // bylo eli_osoba
@@ -178,8 +178,8 @@ form _cmd [,,425,30] { css:'ae_parm'
       { [ c1.oso.same | c1.oso.save; c1.oso.load ];
         eq(c1.bs.ido.get,c2.bs.ido.get);
         alert("vlevo i vpravo je stejná osoba!");
-      | and(c2.oso.iniciace.get,not(c1.oso.iniciace.get));
-        not(confirm("opravdu uložit bez informace o roku iniciace (MROP)?"))
+      | and(c2.oso.iniciace.get,not(eq(c2.oso.iniciace.get,c1.oso.iniciace.get)));
+        alert("informace o roku iniciace (mrop) musí být zachována")
       | confirm("opravdu zrušit <b>",c2.bs._nazev.get,"</b> (",c2.bs.ido.get,
           ") a přidat účasti,dar,... k <b>",c1.bs._nazev.get,"</b> (",c1.bs.ido.get,") ?");
         ask('elim2_clen',c1.rs.idr.get,c1.bs.ido.get,c2.bs.ido.get);
@@ -220,6 +220,7 @@ form _cmd [,,425,30] { css:'ae_parm'
       }
     | eq(mode.get,'cleni'); warning("toto tlačítko má smysl jen pro osoby nebo rodiny")
   }}
+  #==> .. originál
   button [452,4,,] { type:'html', title:"originál [fa-exchange] kopie", proc onclick() {
     var qry:text, x1:number, x2:number, x:object
       eq(mode.get,'osoba','osoba_lst','cleni_lst');
@@ -359,15 +360,14 @@ form _rodiny [,,Wr,Hr] {
   view r: table rodina
   view rt: table tvori  { join:"USING(id_rodina)" }
   view rto: table osoba  { join:"USING(id_osoba)" }
-  const Lr=79, Tr=270
+  const Lr=255, Lc=10, Tr=270-17
   # -----------------------------------------------==> . metody
   proc init_all(tit,miror) {
     cap.set(conc("<b>Rodiny - ",tit,"</b>"));
-    { miror; form.property(°{aside:-215},'rr');
-      form.property(°{aside:-60},'r1'); form.property(°{aside:257},'r2');
+    { miror;
+      form.property(°{aside:215},'rr'); form.property(°{aside:-255},'r2');
       frame.set_css('','elim_goal')
-    | form.property(°{aside:0},'rr');
-      form.property(°{aside:0},'r1'); form.property(°{aside:0},'r2');
+    | form.property(°{aside:0},'rr'); form.property(°{aside:0},'r2');
       frame.set_css('elim_goal');
     }
   }
@@ -390,7 +390,8 @@ form _rodiny [,,Wr,Hr] {
   label     [0,0,Wr,Hr] { style:"border:1px solid green;background-color:rgba(0,128,0,.1);z-index:0" }
   label cap [0,0,Wr-4,15] { style:"color:white;background-color:green;padding-left:5px", format:'c' }
   # -----------------------------------------------==> . seznam rodin
-  browse br [10,40,,] { tag:'r2', rows:6, qry_rows:1, css_rows:'barva,0:neucast'
+  label [Lr+4,34,215,148] { tag:'r2', css:'ae_parm' }
+  browse br [Lr+10,40,,] { tag:'r2', rows:5, qry_rows:1, css_rows:'barva,0:neucast'
     show access { data:r.access }
     show idr [,,50,] { title:'rodina', data:r.id_rodina, format:'sr'
       css_cell:'access,0:,1:ezer_ys,2:ezer_fa,3:ezer_db' }
@@ -404,37 +405,100 @@ form _rodiny [,,Wr,Hr] {
       }}
     }
   }
+  # -----------------------------------------------==> . údaje rodiny
+  label frame    [Lr+10,Tr+9,204,275] {tag:'r2', css:'ae_part' }
+  field id_rodina[Lr+168,Tr+11,40,]   {tag:'r2', format:'or', css:'Label', help:' ', data:r.id_rodina }
+  field nazev    [Lr+20,Tr+24,100,]   {tag:'r2', data:r.nazev, help:'příjmení', title:'^společné příjmení'}
+  field svatba   [Lr+91,Tr+59,36,]    {tag:'r2', data:r.svatba, title:'^svatba'}
+  field ulice    [Lr+20,Tr+92,162,]   {tag:'r2', data:r.ulice, title:'^ulice'}
+  field psc      [Lr+20,Tr+126,39,]   {tag:'r2', data:r.psc, title:'^psč'}
+  field obec     [Lr+69,Tr+126,124,]  {tag:'r2', data:r.obec, title:'^obec'}
+  field datsvatba[Lr+132,Tr+59,80,]   {tag:'r2', type:'date', data:r.datsvatba}
+  field spz      [Lr+20,Tr+58,62,]    {tag:'r2', data:r.spz, title:'^SPZ'}
+  field telefony [Lr+20,Tr+160,187,]  {tag:'r2', type:'list', data:r.telefony, par:°{delim:',|;'}, title:'^telefon' }
+  field emaily   [Lr+20,Tr+193,187,]  {tag:'r2', type:'list', data:r.emaily, par:°{delim:',|;'}, title:'^e-mail'}
+  edit  note     [Lr+20,Tr+225,184,53]{tag:'r2', data:r.note, title:'^poznámka k rodině'}
   # -----------------------------------------------==> . nejčerstvější údaje
-  label           [10,201,204,72] {tag:'r2', css:'ae_part' }
-  field last_akce [20,218,190,]   {tag:'r2', format:'o', title:'^poslední akce'}
-  field last_chng [20,253,71,]    {tag:'r2', format:'o', title:'^poslední změna'}
+  label           [Lr+10,200+-18,204,72] {tag:'r2', css:'ae_part' }
+  field last_akce [Lr+20,217+-18,190,]   {tag:'r2', format:'o', title:'^poslední akce někoho z rodiny'}
+  field last_chng [Lr+20,252+-18,71,]    {tag:'r2', format:'o', title:'^poslední změna rodinných údajů'}
   # -----------------------------------------------==> . seznam členů
-  label [219,34,257,234] { tag:'rr', css:'ae_parm' }
-  browse bro [225,40,,] { tag:'rr', rows:11
+  browse bro [Lc,40,,] { tag:'rr', rows:10
     show idr { data:r.id_rodina}
     show idt { data:rt.id_tvori}
-    show ido [,,50,] { title:'osoba', data:rto.id_osoba, format:'rq=s+'  }
+    show access { data:rto.access }
+    show ido [,,50,] { title:'osoba', data:rto.id_osoba, format:'rq=s+'
+      css_cell:'access,0:,1:ezer_ys,2:ezer_fa,3:ezer_db' }
     show [,,126,] { title:'jmeno', format:'tsq*', expr:"CONCAT(rto.prijmeni,' ',rto.jmeno)" }
     show nazev {expr:"CONCAT(rto.prijmeni,' ',rto.jmeno)" }
-    show [,,40,] { title:'role', format:'rsq*', data:rt.role }
+    show t_role [,,40,] { title:'role', format:'rsq*', data:rt.role }
     menu { type:'context'
       item { title:'přejít na osobu', proc onclick () { elim_osoby(ido.get,nazev.get) }}
     }
+    proc onrowclick() {
+      c_load(ido.get); oso.role.set(t_role.get);
+    }
   }
-  # -----------------------------------------------==> . údaje rodiny
-  label frame    [Lr-10,Tr+9,400,254]{tag:'r1', css:'ae_part' }
-  field id_rodina[Lr+333,Tr+11,40,]  {tag:'r1', format:'or', css:'Label', help:' ', data:r.id_rodina }
-  field nazev    [Lr+4,Tr+30,100,]   {tag:'r1', data:r.nazev, help:'příjmení', title:'^společné příjmení'}
-  field _spolu   [Lr+149,Tr+32,23,]  {tag:'r1', format:'o', value:'?'}
-  field svatba   [Lr+178,Tr+31,36,]  {tag:'r1', data:r.svatba, title:'^svatba'}
-  field ulice    [Lr+4,Tr+78,162,]   {tag:'r1', data:r.ulice, title:'^ulice'}
-  field psc      [Lr+179,Tr+78,39,]  {tag:'r1', data:r.psc, title:'^psč'}
-  field obec     [Lr+255,Tr+78,124,] {tag:'r1', data:r.obec, title:'^obec'}
-  field datsvatba[Lr+236,Tr+31,,]    {tag:'r1', type:'date', data:r.datsvatba}
-  field spz      [Lr+313,Tr+31,62,]  {tag:'r1', data:r.spz, title:'^SPZ'}
-  field telefony [Lr+51,Tr+115,212,] {tag:'r1', type:'list', data:r.telefony, par:°{delim:',|;'}, title:'telefon' }
-  field emaily   [Lr+52,Tr+150,330,] {tag:'r1', type:'list', data:r.emaily, par:°{delim:',|;'}, title:'e-mail'}
-  edit  note    [Lr+52,Tr+186,329,60]{tag:'r1', data:r.note, title:'poznámka'}
+  field kmen
+  field id_kmen
+  proc c_load(ido) { var ret: object
+    oso.set_helps(0,'zluty','oranzovy');
+    ret.set(ask('elim2_data_osoba',ido));
+    oso.load(ido); kmen.set(ret.kmen); id_kmen.set(ret.id_kmen);
+    show_osoba;
+    oso.set_helps(ret.chng,'zluty','oranzovy');
+  }
+  proc show_osoba() {
+    oso.enable(oso.kontakt.get,'k');
+    [ oso.kontakt.get; oso.kontakt_r.set('')
+    | oso.kontakt_r.set(conc(kmen.get,'/',id_kmen.get)) ];
+    oso.enable(oso.adresa.get,'b');
+    [ oso.adresa.get; oso.adresa_r.set('')
+    | oso.adresa_r.set(conc(kmen.get,'/',id_kmen.get)) ];
+  }
+  use oso: form _oso [Lc,260,,] { tag:'rr' }
+  form _oso [,,249,285] {
+    # -----------------------------------------------==> . vybrané údaje člena
+    view o: table osoba
+    label          [0,0,246,275]{css:'ae_part' }
+    #==> .. základní údaje: i,y (jsou vždy vidět)
+    field [5,32,106,] {data:o.prijmeni, format:'d', help:'příjmení', title:'^příjmení' }
+    field [120,32,83,] {data:o.jmeno, format:'d', title:'^jméno' }
+    field role [210,32,31,] {title:"^role", format:'d' }
+    field [5,66,63,] {data:o.rodne, format:'d', help:'rodné příjmení', title:'^rodné příjmení'}
+    radio [73,54,46,32] {data:o.sex, format:'d', value:'1'
+      case [0,2,47,] { title:'muž', expr:'1' }
+      case [0,15,47,] { title:'žena', expr:'2' }
+      proc onchange() { }
+    }
+    label vek      [210,52,24,] {format:'dr'}
+    field [120,66,85,] {type:'date', data:o.narozeni, format:'drR:e',title:'^narození'}
+    field [208,66,28,] {data:o.umrti, format:'dr:e',title:'^rok úmrtí'}
+
+    #==> .. kontakt: j,k  (rodinný=0, osobní=1)
+    label [5,93,50,] {title:'kontakt je' }
+    radio kontakt [50,90,185,18] {format:'d', value:'0', data:o.kontakt
+      case [0,0,70,] { title:'osobní', expr:'1' }
+      case [56,0,70,] { title:'rodinný:', expr:'0' }
+    }
+    label kontakt_r [169,93,75,] {format:'d'}
+    field [41,113,197,] {type:'list', data:o.telefon, format:'d', title:'telefon'}
+    field [5,147,233,] {type:'list', data:o.email, format:'d', title:'^e-mail'}
+
+    #==> .. adresa: a,b (rodinná=0, osobní=1)
+    label [5,176,49,12] {title:'adresa je' }
+    radio adresa [50,173,189,18] {format:'d', value:'0', data:o.adresa
+      case [0,0,70,] { title:'osobní', expr:'1' }
+      case [56,0,70,] { title:'rodinná:', expr:'0' }
+    }
+    label adresa_r [169,176,75,12] {format:'d', style:"z-index:3;background-color:inherit" }
+    field [31,194,157,] {data:o.ulice, format:'d', title:'ulice'}
+    select [195,194,45,] {data:o.stat, format:'dr:e', title:'^stát'}
+    check [104,211,126,] {title:"nespolehlivá adresa", data:o.noadresa,
+      help:"pošta vrací zásilky", format:'rr' }
+    field [5,230,47,] {data:o.psc, format:'d', title:'^psč'}
+    field [59,230,179,] {data:o.obec, format:'d', title:'^obec'}
+  }
 }
 # ==========================================================================================> _CLENI
 form _cleni [,,Wr,Hr] {
@@ -486,7 +550,9 @@ form _cleni [,,Wr,Hr] {
   # -----------------------------------------------==>  seznam osob
   label [0,15,229,165] { tag:'r3', css:'ae_parm' }
   browse bs [5,21,,] { tag:'r3', rows:6, qry_rows:1, css_rows:'barva,0:neucast'
-    show ido [,,50,] { title:'osoba', data:o.id_osoba, format:'sr' }
+    show access { data:o.access }
+    show ido [,,50,] { title:'osoba', data:o.id_osoba, format:'sr'
+      css_cell:'access,0:,1:ezer_ys,2:ezer_fa,3:ezer_db' }
     show barva { expr:"o.deleted=''" }
     show _nazev [,,141,] { title:'jmeno', format:'tsq*', expr:"CONCAT(o.prijmeni,' ',o.jmeno)" }
     proc onrowclick() { form.enable(barva.get,'o'); bs_load(ido.get);  }
@@ -509,7 +575,9 @@ form _cleni [,,Wr,Hr] {
   field last_chng [88,500,67,]   {tag:'r2', format:'ro', title:'^poslední změna'}
   # -----------------------------------------------==>  seznam rodin
   browse rs [5,182,,] { tag:'r3', rows:3, format:'d'
-    show idr [,,50,] { title:'rodina', data:r.id_rodina, format:'r' }
+    show access { data:r.access }
+    show idr [,,50,] { title:'rodina', data:r.id_rodina, format:'r'
+      css_cell:'access,0:,1:ezer_ys,2:ezer_fa,3:ezer_db' }
     show nazev [,,100,] { title:'název', data:r.nazev }
   }
   # -----------------------------------------------==>  kontakt a adresa rodiny

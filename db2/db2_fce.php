@@ -333,11 +333,12 @@ function ucast2_chain_oso($idoo,$idr=0) {
     $os[$xo->id_osoba]= $xo;
   }
   // podezřelí členi rodiny: jsou se stejným datem narození (nebo 1.1.rok kde rok=+-1 )
+  $narozeni_od_do= ($narozeni_yyyy-1).','.($narozeni_yyyy).','.($narozeni_yyyy+1);
   if ( $idr ) {
     $qc= mysql_qry("
       SELECT id_osoba,prijmeni,jmeno,narozeni FROM osoba JOIN tvori USING (id_osoba)
       WHERE id_rodina=$idr AND deleted='' AND id_osoba!=$idoo AND (narozeni='$narozeni'
-        OR DAY(narozeni)=1 AND MONTH(narozeni)=1 AND YEAR(narozeni)=$narozeni_yyyy)");
+        OR DAY(narozeni)=1 AND MONTH(narozeni)=1 AND YEAR(narozeni) IN ($narozeni_od_do))");
     while ( $qc && ($xc= mysql_fetch_object($qc)) ) {
       $idc= $xc->id_osoba;
       if ( !isset($os[$idc]) ) $os[$idc]= (object)array('id_osoba'=>$idc);
@@ -361,9 +362,9 @@ function ucast2_chain_oso($idoo,$idr=0) {
     $rok= substr($ox->narozeni,0,4);
     $xi->narozeni= $ox->narozeni==$narozeni
                 || $rok==$narozeni_11
-                || substr($ox->narozeni,5,5)=="01-01" && $narozeni_yyyy==$rok
+                || substr($ox->narozeni,5,5)=="01-01" && abs($narozeni_yyyy-$rok)<=1
                  ? 1 : 0;
-//                                                 display("$jmeno: {$ox->narozeni}~$narozeni ==> {$xi->narozeni}");
+//                                                 display("{$ox->jmeno}/$jmeno: {$ox->narozeni}/$narozeni ==> {$xi->narozeni}");
     // organizace
     $xi->org= $ox->access;
     // zápis

@@ -130,9 +130,9 @@ div.Element .Label, div.Select .Label, div.FieldDate .Label { margin-top:1px }
 .ae_butt_off {
   cursor:default; background-color:$b8_brow; z-index:0; border-radius:5px; text-align:center;  }
 .ae_butt_on:hover {
-  background:url("../../skins/ck/label_switch_on_hover.png") repeat-x scroll 0 -1px transparent; }
+  background:url("../../skins/db/label_switch_on_hover.png") repeat-x scroll 0 -1px transparent; }
 .ae_butt_off:hover {
-  background:url("../../skins/ck/label_switch_off_hover.png") repeat-x scroll 0 -1px transparent; }
+  background:url("../../skins/db/label_switch_off_hover.png") repeat-x scroll 0 -1px transparent; }
 /* přenesení barev */
 .frame_label_big { color:$s1_brow; font-weight:bold; padding-left:5px; font-size:13px; }
 .frame_label_up { color:$s1_brow; font-weight:bold; padding-left:5px; }

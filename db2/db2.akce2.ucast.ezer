@@ -213,9 +213,10 @@ proc page_clear() {
   evid.Init;
 }
 # --------------------------------------------------==> . reload
-proc reload(id_pobyt) { var filtr:text
+proc reload(id_pobyt) { var filtr:text, id_pobyt0:number
   cmd.b_display(1);
   the_duakce.get;
+  [ u.b.browse_count; id_pobyt0.set(u.b.key_pobyt.get) | id_pobyt0.set(0) ];
   lst.the_akce.load(the_duakce.get);
   page_clear;
   filtr.set(1);
@@ -228,12 +229,13 @@ proc reload(id_pobyt) { var filtr:text
   [ u.doc.get; filtr.set(conc('/*dokumenty*/',filtr)) ];
   [ u.b.browse_load(conc(filtr," /*AND funkce!=99*/ AND p.id_akce=",the_duakce.get),
       "IF(funkce<=2,1,funkce),_nazev",
-      '','','','norowclick',
+      '',0,0,1/*1=quiet*/,
       conc('SET @akce:=',the_duakce.get,",@soubeh:=",the_soubeh.get,
               ",@app:='",sys('ezer','options','app'),"'"));
     u.b.browse_focus;
-    { id_pobyt; { u.b.raise('onrowclick',id_pobyt)
-                | u.b.browse_seek(conc('p.id_pobyt=',id_pobyt)) }
+    [ id_pobyt; id_pobyt0.set(id_pobyt) ];
+    { id_pobyt0; { u.b.raise('onrowclick',id_pobyt0)
+                 | u.b.browse_seek(conc('p.id_pobyt=',id_pobyt0)) }
     | u.b.raise('onrowclick') }
   | // žádný pobyt
     cmd.set_state('none');
@@ -280,7 +282,7 @@ form _cmd [,,623,30] {
     'none',{form.enable(0,'s|r|x'); form.enable(1,'n')},
     'show',{form.enable(0,'s'); form.enable(1,'x'); form_mode.set('show')}
   )}
-  label [141,0,474,30] { tag:'x', css:'ae_work', style:"z-index:1;border:1px solid #f5f5f5;box-shadow: 2px 2px 10px #333" }
+  label [140,0,584,30] { tag:'x', css:'ae_work', style:"z-index:1;border:1px solid #f5f5f5;box-shadow: 2px 2px 10px #333" }
   //==> .. [zpět]
   label  [0,0,121,30] { tag:'r', css:'ae_parm search', skill:'yaa;faa;caa', style:"box-shadow:2px 2px 10px #333" }
   proc _reload(renew,ido) { // renew=0 vrácení původních dat a zhasnutí warningu, jinak znovunačtení
@@ -322,7 +324,7 @@ form _cmd [,,623,30] {
       rod.new_rodina('');
   }}
   #==> . + skupina
-  button [265,5,,] {tag:'x,n', title:'[fa-heart] skupina',
+  button [265,5,,] {tag:'x,n', title:'[fa-heart] jednotlivci',
     skill:'yaa+|yaa+;faa+|faa+;caa+|caa+', help:'Přidání skupiny osob'
     proc onclick() {
       rod.nerodina.Init; pob.new_pobyt;
@@ -331,9 +333,9 @@ form _cmd [,,623,30] {
       pridat_osobu.Init
   }}
   # ----------------------------------------------- změnit
-  label [343,3,54,] { title:"<b>Změny <br>pobytu:</b>" }
+  label [354,3,54,] { title:"<b>Změny <br>pobytu:</b>" }
   #==> . - pobyt
-  button [394,5,,] {tag:'x', title:'[fa-plug fa-rotate-180 fa-red] Zrušit pobyt',
+  button [405,5,,] {tag:'x', title:'[fa-plug fa-rotate-180 fa-red] Zrušit pobyt',
     skill:'yaa+|yaa+;faa+|faa+;caa+|caa+',
     help:'Vyřazení účastníka nebo páru z účasti na akci'
     proc onclick() {
@@ -344,7 +346,8 @@ form _cmd [,,623,30] {
       reload(0);
   } }
   #==> . + osoba
-  button pridat_osobu [492,5,,] {tag:'x', title:'[fa-heart-o] Přidat osobu', skill:'yaa+|yaa+;faa+|faa+;caa+|caa+',
+  button pridat_osobu [501,5,,] {tag:'x', title:'[fa-heart-o] Vytvořit osobu',
+    skill:'yaa+|yaa+;faa+|faa+;caa+|caa+',
     help:'Přidání nového člena skupiny případně i rodiny'
     proc onclick() { Init }
     proc Init() { var _prijmeni:text
@@ -379,6 +382,24 @@ form _cmd [,,623,30] {
       _reload(1,os1.key);
     }
   }
+  button zrušit_osobu [611,5,,] {tag:'x', title:'[fa-times fa-red] Vymazat osobu',
+    skill:'yaa+|yaa+;faa+|faa+;caa+|caa+', help:'Vymazání osoby z databáze'
+    proc onclick() { var ret:object
+      ret.set(ask('evid_delete',rod.cleni.key_osoba.get,rod.key,'conf_oso'));
+      { eq(ret.ok,1);                           // osobu lze smazat
+        [ confirm(ret.html);
+          ret.set(ask('evid_delete',rod.cleni.key_osoba.get,rod.key,'del_oso'));
+          warning(ret.html);
+          _reload(the_pobyt.get,0);
+        ]
+      | eq(ret.ok,2);                           // nutno (a lze) smazat i s rodinou
+        [ confirm(ret.html);
+          ret.set(ask('evid_delete',rod.cleni.key_osoba.get,rod.key,'del_rod'));
+          warning(ret.html);
+          _reload(the_pobyt.get,0);
+        ]
+      | alert(ret.html) }                       // nastal problém
+  } }
   // procedury
   proc b_display(on) {
     u.b.enable(on);
@@ -762,7 +783,12 @@ form _page {
       pla.display(0); cmdp.display(0);
       alb.display(0); docu.display(0);
       act1.display(1); act2.display(1);
-      [ eq(last.get,the_pobyt.get) | u.b.load_zalozka; last.set(the_pobyt.get) ];
+      [ eq(rod.cleni.key_osoba.get,act1.ido,act2.ido)
+      | act1.ucasti(rod.cleni.key_osoba.get); act2.ucasti(0)
+      ]
+#       [ eq(last.get,the_pobyt.get);
+#       | u.b.load_zalozka; last.set(the_pobyt.get)
+#       ];
     }
   }
   label fot [390,0,63,20] {tag:'p', _sys:'*', title:'<b>Fotky</b>', format:'c', /*skill:'a'*/
@@ -1202,6 +1228,7 @@ form _rodina2 [,,360,229]  { css:'ae_frame'
   view so: table spolu {join_type:"LEFT", join:"ON so.id_osoba=o.id_osoba AND so.id_pobyt=@pobyt"}
 
   label frame [0,2,360,20] {tag:'f', title:'rodinné údaje', css:'frame_label_up' }
+  #==> . elim
   button chain [174,0,,] {tag:'f', title:'[fa-chain]', css:'db_evidence',
     proc onclick() { var zmena:number, ido:number, idr:number, idrs:text
       u.dup.get;
@@ -1209,7 +1236,7 @@ form _rodina2 [,,360,229]  { css:'ae_frame'
         idrs;
         zmena.set(elim.rodiny_lst(idr,idrs));
         echo("elim.rodiny_lst(",idr,",",idrs,")=",zmena);
-        [ u.b.browse_row; u.b.raise('onrowclick') ];
+        [ u.b.browse_row; u.b.raise('onrowclick',u.b.browse_key) ];
         jump(ido)
       | warning("nebyla nalezena podezřelá kopie") }
     | alert("pro sjednocování kopií je zapotřebí zaškrtnout 'kopie?' nad seznamem účastníků");
