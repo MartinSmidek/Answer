@@ -1,0 +1,239 @@
+[Config]
+Compilator.SaveAll=0
+Compilator.Capture=0
+Compilator.HideOutput=0
+Compilator.ProgSaveAll=0
+Compilator.ProgRunSelection=0
+Compilator.LogType=0
+DefaultCPIndex=0
+LogtoEnd=1
+DontOpen=0
+AbsolutePath=0
+FileFormat=0
+ProjectFilesOnly=0
+[Project tree]
+kEzer-tut
+	+TUT
+		tut\$.ezer
+		tut\.htaccess
+		tut\i_fce.js
+		ezer2.2\client\ipad.css
+		tut\tut.dbg.ezer
+		tut\tut.inc
+		tut\tut.php
+		tut\tut.the.ezer
+		tut\tut.the.php
+	-ezer2.2
+		+client
+			ezer2.2\client\_code.js
+			ezer2.2\client\_test.html
+			ezer2.2\client\app.js
+			ezer2.2\client\area.js
+			ezer2.2\client\dbg.css
+			ezer2.2\client\dbg.js
+			ezer2.2\client\ezer.css.php
+			ezer2.2\client\ezer.js
+			ezer2.2\client\ezer_report.js
+			ezer2.2\client\licensed\fancyupload.css
+			ezer2.2\client\licensed\fancyupload.js
+			ezer2.2\client\lib.js
+		+client f
+			ezer2.2\client\android.css
+			ezer2.2\client\appf.css
+			dbg.html
+			ezer2.2\client\dbgf.html
+			ezer2.2\client\ezer_fdom1.js
+			ezer2.2\client\ezer_fdom2.js
+			ezer2.2\client\ipad.css
+			ezer2.2\client\natdocs.css
+		-libr
+			ezer2.2\$.ezer
+			ezer2.2\ezer2.help.ezer
+			ezer2.2\ezer2.pers.ezer
+			ezer2.2\ezer2.syst.ezer
+			ezer2.2\ezer2_fce.php
+		-server
+			ezer2.2\server\ae_slib.php
+			ezer2.2\comp.css
+			ezer2.2\comp.php
+			ezer2.2\server\comp2.php
+			ezer2.2\server\comp2def.php
+			ezer2.2\server\comp2tab.php
+			ezer2.2\dbg.php
+			ezer2.2.inc
+			ezer2.2\server\ezer2.php
+			ezer2.2\server\file_send.php
+			ezer2.2\server\init.php
+			ezer2.2\server\reference.php
+			ezer2.2\server\session.php
+			ezer2.2\server\sys_doc.php
+		-wiki
+			ezer2.2\wiki\guide.wiki
+	-skins
+		skins\colors.php
+	-system
+		..\..\..\..\WINDOWS\system32\drivers\etc\hosts
+		..\..\..\Apache\conf\extra\httpd-vhosts-ezer.conf
+		..\..\..\php\php.ini
+	-test
+		+$
+			test\$.ezer
+			test\cg.php
+			test\fce.js
+			test\test.css
+			test.inc
+			test\test.inc.ezer
+			test\test.klu.ezer
+			test.php
+			test\test.stx.ezer
+			test\test_fce_fis.php
+			test\test_fis_google.php
+		-TestyA
+			test\test.cg.php
+			test\test.fce.dbg.ezer
+			test\test.fce.ezer
+		-TestyB
+			test\test.elem.bro.ezer
+			test\test.elem.bro2.ezer
+			test\test.elem.bro3.ezer
+			test\test.elem.bro4.ezer
+			test\test.elem.bro5.ezer
+			test\test.elem.ctx.ezer
+			test\test.elem.dat.ezer
+			test\test.elem.err.ezer
+			test\test.elem.ezer
+			test\test.elem.frm.ezer
+			test\test.elem.htm.ezer
+			test\test.elem.cha.ezer
+			test\test.elem.chk.ezer
+			test\test.elem.men.ezer
+			test\test.elem.pop.ezer
+			test\test.elem.rad.ezer
+			test\test.elem.rep.ezer
+			test\test.elem.ski.ezer
+			test\test.elem.tab.ezer
+			test\test.elem.tst.ezer
+			test\test.elem.vie.ezer
+		-TestyF
+			test\test.frm.ezer
+		+TestyG
+			test\test.gug.ezer
+		-TestyM
+			test\test.men.ezer
+		-TestyP
+			test\test.pan.ezer
+		-TestyS
+			test\test.sel.auto.ezer
+			test\test.sel.ezer
+		-TestyW
+			test\test.web.ezer
+			test\test.web.new.ezer
+			test\test.web.pag.ezer
+		wiki\test_main.wiki
+[Open project files]
+0=tut\i_fce.js
+1=tut\tut.the.php
+2=tut\tut.the.ezer
+3=tut\tut.dbg.ezer
+4=ezer2.2\dbg.php
+5=ezer2.2\client\app.js
+6=ezer2.2\server\ae_slib.php
+7=ezer2.2\server\ezer2.php
+8=ezer2.2\client\ezer.js
+9=ezer2.2\client\area.js
+10=ezer2.2\client\ezer_fdom1.js
+11=ezer2.2\client\ezer_fdom2.js
+12=ezer2.2\ezer2_fce.php
+13=ezer2.2\server\comp2.php
+14=tut\tut.php
+15=ezer2.2\ezer2.help.ezer
+16=ezer2.2\client\ezer.css.php
+17=db\db.css.php
+18=tut\tut.css.php
+19=ezer2.2\client\ezer.css
+20=skins\colors.php
+[Selected Project Files]
+Main=
+Selected=tut\tut.the.ezer
+[tut\i_fce.js]
+TopLine=1
+Caret=20,3
+[tut\tut.the.php]
+TopLine=97
+Caret=31,105
+[tut\tut.the.ezer]
+TopLine=347
+Caret=71,362
+[tut\tut.dbg.ezer]
+TopLine=1
+Caret=1,11
+[ezer2.2\dbg.php]
+TopLine=32
+Caret=34,61
+[ezer2.2\client\app.js]
+TopLine=405
+Caret=33,426
+BookMark1=29,693
+[ezer2.2\server\ae_slib.php]
+TopLine=482
+Caret=67,510
+BookMark1=11,419
+BookMark2=15,700
+[ezer2.2\server\ezer2.php]
+TopLine=2337
+Caret=73,2348
+BookMark1=95,1538
+BookMark2=25,2358
+[ezer2.2\client\ezer.js]
+TopLine=6793
+Caret=60,6797
+BookMark1=1,2124
+Mark1=33,2136
+Mark2=25,6604
+Mark3=25,6757
+Mark4=54,6795
+Mark5=28,7675
+[ezer2.2\client\area.js]
+TopLine=477
+Caret=14,496
+BookMark1=41,486
+BookMark2=54,348
+[ezer2.2\client\ezer_fdom1.js]
+TopLine=227
+Caret=1,268
+BookMark1=29,471
+BookMark2=30,444
+[ezer2.2\client\ezer_fdom2.js]
+TopLine=274
+Caret=76,293
+BookMark1=48,3527
+BookMark2=1,2349
+Mark1=43,3539
+Mark2=48,3518
+[ezer2.2\ezer2_fce.php]
+TopLine=570
+Caret=1,610
+[ezer2.2\server\comp2.php]
+TopLine=1
+Caret=1,1
+[tut\tut.php]
+TopLine=55
+Caret=70,88
+[ezer2.2\ezer2.help.ezer]
+TopLine=488
+Caret=1,525
+[ezer2.2\client\ezer.css.php]
+TopLine=1
+Caret=78,25
+[db\db.css.php]
+TopLine=15
+Caret=62,15
+[tut\tut.css.php]
+TopLine=1
+Caret=44,21
+[ezer2.2\client\ezer.css]
+TopLine=4
+Caret=36,19
+[skins\colors.php]
+TopLine=24
+Caret=87,69

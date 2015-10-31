@@ -36,6 +36,8 @@ proc akce_onstart() {
   dirty.get
 | dirty.set(1);
   access.set(sys('user','access'));
+  # úprava vzhledu aplikace pro uživatele s org=1|2
+  function('access',"return personify(access);",access.get);
   # hodnoty zapamatované pro navázání na předchozí session
   the_source.set(get_cookie(conc(sys('root'),'_akce_source'),'sey'));
   # příprava zobrazení v AKCE - volá akce_choose
@@ -44,7 +46,7 @@ proc akce_onstart() {
 # nastavení akce jako the_duakce, dopočítání stavových hodnot
 proc akce_choose(id_akce) { var a:object
   the_duakce.set(id_akce);
-  a.set(ask('akce_id2a',id_akce)); // nastaví i nulové hodnoty pro id_akce=0
+  a.set(ask('akce2_id2a',id_akce)); // nastaví i nulové hodnoty pro id_akce=0
   the_rok.set(a.rok);       the_title.set(a.title);       the_soubeh.set(a.soubeh);
   the_hlavni.set(a.hlavni); the_soubezna.set(a.soubezna); the_cenik.set(a.cenik);
   the_cena.set(a.cena);

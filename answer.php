@@ -4,7 +4,7 @@
 #   $app        = kořenová podsložka aplikace ... ys/ys2/fa/fa2/cr
 #   $app_name   = jméno aplikace
 #   $db_name    = hlavní databáze ... bylo-li v URL &test=1 přidá se do options.tabu_db
-#   $skin       = ck|ch
+#   $skin       = ck|ch|db
 #   $js_lib     = pole s *.js
 #   $css_lib    = pole s *.css
 #   $options    = doplnění Ezer.options
@@ -99,25 +99,37 @@ function answer_php($app,$app_name,$db_name,$skin,$js_lib,$css_lib,$options) {
     // rozhodnout zda používat online mapy
     $gmap ? array("http://maps.googleapis.com/maps/api/js?sensor=false") : array(),
     // skripty pro Answer
-    array("db/db_fce.js"),
+    array("db2/db2_fce.js"),
     // uživatelské skripty
     $js_lib
   );
 
   $css= array_merge(
+    $css_lib,    // = uživatelské css
     $dbg ? array("./$licensed/jush/mini_jush.css") : array(),
-    array(
-      "./$client/ezer.css.php",
-      "./$client/licensed/font-awesome/css/font-awesome.min.css",
-      "./db/db.css.php"),
+    array("./$client/licensed/font-awesome/css/font-awesome.min.css"),
     $EZER->version=='ezer2.2'
     ? array("$licensed/datepicker/datepicker_vista/datepicker_vista.css"):array(),
-    // uživatelské css
-    $css_lib,
     // css pro dotykové klienty
     $android ? array("$client/android.css") : array(),
     $ipad ? array("$client/ipad.css") : array()
   );
+
+//   $css= array_merge(
+//     $dbg ? array("./$licensed/jush/mini_jush.css") : array(),
+//     array(
+//       "./$client/ezer.css.php",
+//       "./$client/licensed/font-awesome/css/font-awesome.min.css"
+// //       ,"./db/db.css.php"
+//       ),
+//     $EZER->version=='ezer2.2'
+//     ? array("$licensed/datepicker/datepicker_vista/datepicker_vista.css"):array(),
+//     // uživatelské css
+//     $css_lib,
+//     // css pro dotykové klienty
+//     $android ? array("$client/android.css") : array(),
+//     $ipad ? array("$client/ipad.css") : array()
+//   );
 
   global $answer_db;
 

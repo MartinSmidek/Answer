@@ -73,7 +73,9 @@ db2/db2.akce2.pece.ezer -text
 db2/db2.akce2.sta.ezer -text
 db2/db2.akce2.tisk.ezer -text
 db2/db2.akce2.ucast.ezer -text
+db2/db2.css -text
 db2/db2.css.php -text
+db2/db2_fce.js -text
 db2/db2_fce.php -text
 db2/img/+logo.gif -text
 db2/img/-logo.gif -text
@@ -141,6 +143,7 @@ img/ms1.png -text
 img/ms2.png -text
 img/ms2p.png -text
 img/ms3.png -text
+/kEzer-tut.ppr -text
 /kEzer-ys2.2.ppr -text
 /robots.txt -text
 /rr.inc -text
@@ -153,6 +156,7 @@ rr/img/ch-logo.gif -text
 rr/img/ch.png -text
 rr/img/ch_local.png -text
 rr/rr_fce.php -text
+skins/ch.ezer.css -text
 skins/ch/$logo.gif -text
 skins/ch/ajax_wait.gif -text
 skins/ch/big_text.css -text
@@ -221,6 +225,7 @@ skins/ch/sort_d.png -text
 skins/ch/sort_n.png -text
 skins/ch/submenu_bg.png -text
 skins/ch/tree.png -text
+skins/ck.ezer.css -text
 skins/ck/$logo.gif -text
 skins/ck/ajax_wait.gif -text
 skins/ck/big_text.css -text
@@ -287,6 +292,7 @@ skins/ck/submenu_bg.png -text
 skins/ck/tab_top.png -text
 skins/ck/tree.png -text
 skins/colors.php -text
+skins/db.ezer.css -text
 skins/db/$logo.gif -text
 skins/db/ajax_wait.gif -text
 skins/db/big_text.css -text
@@ -344,6 +350,8 @@ skins/db/sort_d.png -text
 skins/db/sort_n.png -text
 skins/db/submenu_bg.png -text
 skins/db/tree.png -text
+skins/img/doc_menu.gif -text
+skins/img/srafa.png -text
 sql/ms_mysql.PRG -text
 sql/ms_mysql.bat -text
 sql/mysql.bat -text

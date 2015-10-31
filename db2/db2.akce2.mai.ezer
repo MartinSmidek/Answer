@@ -64,7 +64,7 @@ menu m {type:'left', format:'f+'
         ini(i,'et','G','gen','skup|akce');
     } }
     item {title:'Kopie emailů z Domu setkání', skill:'yae'
-      proc onclick (i) { alert(ask('db_mail_copy_ds')); } }
+      proc onclick (i) { alert(ask('mail2_copy_ds')); } }
   }
   menu {title:'Rozesílání mailů ', type:'group', _sys:'snd'
     item {title:'členům skupin',
@@ -672,7 +672,7 @@ form _esql {
   button [456,9,,] { tag:'def', title:'Zpět',  help:'Neuložit změny', proc onclick() { form.load } }
   button [504,9,,] { tag:'def', title:'Nový',  help:'Nový filtr skupiny', proc onclick() {
     form.init; vy.komu_Q.init;
-    new_sql.set(ask('db_mail_sql_new'));
+    new_sql.set(ask('mail2_sql_new'));
     dat.set(new_sql.get('data')); dat.change;
     id_cis.set(new_sql.get('id')); id_cis.change; zkratka.init(2); druh.init(2);
     query.set(new_sql.get('qry'))
@@ -687,11 +687,11 @@ form _esql {
   label  [620,5,131,55] { css:'ae_parm' }
   button [627,9,,] {title:'Test',  help:'Uložit změny a otestovat dotaz', proc onclick() {
     { has_skill('m'); qry_save.onclick | form.same | alert('pro změnu SQL dotazu nemáš oprávnění') };
-    anwer.set(ask('db_mail_sql_try',query.get,vsechno.get))
+    anwer.set(ask('mail2_sql_try',query.get,vsechno.get))
   } }
   check vsechno [670,9,80,15] {title:'zobraz vše', format:'t'}
   button [627,34,,] {title:'Možné parametry',  help:'Ukázat seznam možných parametrů', proc onclick() {
-    alert(ask('db_mail_sql_subst'));
+    alert(ask('mail2_sql_subst'));
   } }
   proc reload() {
     var akey:number

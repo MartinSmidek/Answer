@@ -837,8 +837,8 @@ function tisk_sestava_pary($akce,$par,$title,$vypis,$export=false) { trace();
   foreach ($y->values as $x) {
 //     if ( !in_array($x->key_pobyt,array(15209,15217,15213,15192,15199)) ) continue;
 //     if ( !in_array($x->key_pobyt,array(15192)) ) continue;
-//     if ( !in_array($x->key_pobyt,array(15202)) ) continue;
-//                                                         if ( $x->key_pobyt==22141 ) debug($x,"$x->key_pobyt");
+//     if ( !in_array($x->key_pobyt,array(21976)) ) continue;
+//                                                         if ( $x->key_pobyt==21976 ) debug($x,"$x->key_pobyt");
     $n++;
     # rozbor osobních údajů: adresa nebo základní kontakt se získá 3 způsoby
     # 1. první osoba má osobní údaje - ty se použijí
@@ -1523,7 +1523,7 @@ function tisk_pdf_jmenovky($akce,$par,$title,$vypis,$report_json) {  trace();
     // definice pole substitucí
     $x= (object)$xa;
     $parss[$n]= (object)array();
-    $fsize= mb_strlen($x->jmeno)>8 ? 13 : 14;
+    $fsize= mb_strlen($x->jmeno)>9 ? 12 : (mb_strlen($x->jmeno)>8 ? 13 : 14);
     $parss[$n]->jmeno= "<span style=\"font-size:{$fsize}mm;font-weight:bold\">{$x->jmeno}</span>";
     list($prijmeni)= explode(' ',$x->prijmeni);
     $fsize= mb_strlen($prijmeni)>10 ? 10 : 12;
@@ -2487,7 +2487,9 @@ function evid_delete($id_osoba,$id_rodina,$cmd='confirm') { trace();
     if ( $x) $duvod[]= "je dárcem $x Kč";
     $x= select1('SUM(castka)','platba',"id_osoba=$id_osoba");
     if ( $x) $duvod[]= "zaplatil$a $x Kč";
-    $x= select1('COUNT(*)','spolu',"id_osoba=$id_osoba");
+    $xr= mysql_qry("SELECT COUNT(*) AS _x_ FROM spolu JOIN pobyt USING (id_pobyt)
+                    JOIN akce ON id_akce=id_duakce WHERE id_osoba=$id_osoba AND spec=0");
+    list($x)= mysql_fetch_array($xr);
     if ( $x) $duvod[]= "se zúčastnil$a $x akcí";
     $x= select1('COUNT(*)','tvori',"id_osoba=$id_osoba AND id_rodina!=$id_rodina");
     if ( $x) $duvod[]= "je členem dalších $x rodin";

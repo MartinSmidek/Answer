@@ -1,0 +1,20 @@
+/* obecné barvy pozadí */
+.bily           { background-color:#ffffff !important; }
+
+/* specifické barvy pro odlišení záznamů YS, FA, DB */
+
+tr td.ezer_ys, li.ezer_ys, input.ezer_ys, .ezer_ys input, span.ezer_ys
+                { background-color:#af8 !important; }
+tr td.ezer_ys_  { background-color:#af8 !important; color:#fff !important; }
+tr td.ezer_fa, li.ezer_fa, input.ezer_fa, .ezer_fa input, span.ezer_fa
+                { background-color:#acf !important; }
+tr td.ezer_fa_  { background-color:#acf !important; color:#fff !important; }
+tr td.ezer_db, li.ezer_db, input.ezer_db, .ezer_db input, span.ezer_db
+                { background-color:#aff !important; }
+.nerodina,.nerodina input
+                { background-color:#e8e !important; }
+/* */
+
+button.search   { padding-left:0px; }
+.search         { z-index:3 !important; }
+

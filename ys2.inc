@@ -13,7 +13,8 @@
     array( // lokální
       'setkani' =>      array(0,'localhost','gandi','','utf8','setkani',1))        // 1=vynechat zálohování
   );
-  $php_plus= array("ds/ds_fce.php","ys/ys_fce.php","ys/ys_ucet.php","ys/ys.ban.php");
+  $php_plus= array("ds/ds_fce.php","ys/ys_fce.php","ys/ys_ucet.php","ys/ys.ban.php",
+    "db/db_akce.php","db/db_akce2.php");
   answer_ini('ys2','ezer_ys',$dbs_plus,$php_plus);
   // SPECIFICKÉ PARAMETRY
   $VPS= 'VPS';
