@@ -15,7 +15,7 @@ use info: form right [12,4,,] {
       switch(export2.get,
       'PDF-jmenovky',{
         sti_V.report_init; sti_V.report_check;
-        res.set(ask('tisk_pdf_jmenovky',the_akce.get,the_par.get,the_title.get,the_vypis.get,sti_V.get_json));
+        res.set(ask('tisk2_pdf_jmenovky',the_akce.get,the_par.get,the_title.get,the_vypis.get,sti_V.get_json));
         form.msg.set(res.html);
       })
     }
@@ -26,43 +26,37 @@ use info: form right [12,4,,] {
       switch(export.get,
       // verze 2
       'Excel2',{ // ==> export Excel
-        res.set(ask('tisk_vyp_excel',the_akce.get,the_par.get,the_title.get,the_vypis.get));
-        form.msg.set(res.html);
-      },
-      // verze 1
-      'Excel',{
-        res.set(ask('akce_vyp_excel',the_akce.get,the_par.get,the_title.get,the_vypis.get));
+        res.set(ask('tisk2_vyp_excel',the_akce.get,the_par.get,the_title.get,the_vypis.get));
         form.msg.set(res.html);
       },
       'Excel-plachta',{
-        res.set(ask('akce_plachta',the_akce.get,the_par.get,the_title.get,the_vypis.get,1));
+        res.set(ask('akce2_plachta',the_akce.get,the_par.get,the_title.get,the_vypis.get,1));
         form.note.set('');
         form.msg.set(res.xhref);
       },
       'PDF-adresy',{ // ==> export PDF
         sti_A.report_init; sti_A.report_check;
-        res.set(ask('akce_pdf_stitky',conc("p.id_akce=",the_akce.get," AND ",the_par.get('cnd')),sti_A.get_json));
+        res.set(ask('akce2_pdf_stitky',conc("p.id_akce=",the_akce.get," AND ",the_par.get('cnd')),sti_A.get_json));
         form.msg.set(res.html);
       },
       'PDF-prijem',{
         sti_B.report_init; sti_B.report_check;
-#         res.set(ask('akce_pdf_prijem',the_akce.get,the_par.get,sti_B.get_json));
-        res.set(ask('tisk_pdf_prijem',the_akce.get,the_par.get,sti_B.get_json));
+        res.set(ask('tisk2_pdf_prijem',the_akce.get,the_par.get,sti_B.get_json));
         form.msg.set(res.html);
       },
       'PDF-stravenky',{
         sti_C.report_init; sti_C.report_check;
-        res.set(ask('akce_pdf_stravenky',the_akce.get,the_par.get,sti_C.get_json));
+        res.set(ask('akce2_pdf_stravenky',the_akce.get,the_par.get,sti_C.get_json));
         form.msg.set(res.html);
       },
       'PDF-plachta',{
         sti_P.report_init; sti_P.report_check;
-        res.set(ask('tisk_pdf_plachta',the_akce.get,sti_P.get_json));
+        res.set(ask('tisk2_pdf_plachta',the_akce.get,sti_P.get_json));
         form.msg.set(res.html);
       },
       'PDF-plachta0',{
         sti_P.report_init; sti_P.report_check;
-        res.set(ask('tisk_pdf_plachta0',sti_P.get_json));
+        res.set(ask('tisk2_pdf_plachta0',sti_P.get_json));
         form.msg.set(res.html);
       })
     }
@@ -204,35 +198,39 @@ menu m {type:'left', active:*
                                         ,par:°{typ:'j',exp:'Excel2',cnd:'1',ord:'o.prijmeni,o.jmeno'
                                         ,tit:'jméno a příjmení:30,bydliště:50,narození:10'
                                         ,fld:'_jmenoY,_adresaY,_narozeniY'}}
+    item {title:'Hlášení tábora pro YMCA v ČR'                                                          skill:'y;f'
+                                        ,par:°{typ:'j',exp:'Excel2',cnd:'1',ord:'o.prijmeni,o.jmeno'
+                                        ,tit:':3,Příjmeni:15,Jméno:15,Ulice:24,Město:13,PSČ:7,Datum nar.:10,Člen YMCA:10,(věk):5,(funkce):12'
+                                        ,fld:'1,prijmeni,jmeno,ulice,obec,psc,_narozeni6,_ymca,_vek,_funkce'}}
   }
   # ---------------------------------------------------------------------------------------------==> DS
   menu {tag:'a', title:'seznamy DS',type:'group',_sys:'*'                                               skill:'y'
-    item {title:'&half; Všichni, s poznámkami'
-                                        ,par:°{typ:'P',exp:'Excel',cnd:"funkce!=99"
+    item {title:'Všichni, s poznámkami'
+                                        ,par:°{typ:'P',exp:'Excel2',cnd:"funkce!=99"
                                         ,tit:'příjmení:15,jména:12,obec:25,počet:5,poznámka k akci:50,trvalá poznámka:50'
                                         ,fld:'prijmeni,jmena,obec,_pocet,poznamka,note'}}
-    item {title:'&half; Všichni, pokoje, počty, ...'
-                                        ,par:°{typ:'P',exp:'Excel',cnd:"funkce!=99"
+    item {title:'Všichni, pokoje, počty, ...'
+                                        ,par:°{typ:'P',exp:'Excel2',cnd:"funkce!=99"
                                         ,tit:'příjmení:15,jména:30,pokoj:10,dospěli:7,děti:5,poznámka k akci:50,trvalá poznámka:50'
                                         ,fld:'prijmeni,jmena,pokoj,_pocetA,_pocetD,poznamka,note'}}
-    item {title:'&half; Všichni, skupinky a pokoje'
-                                        ,par:°{typ:'P',exp:'Excel',cnd:"funkce!=99"
+    item {title:'Všichni, skupinky a pokoje'
+                                        ,par:°{typ:'P',exp:'Excel2',cnd:"funkce!=99"
                                         ,tit:'příjmení:15,jména:20,pokoj:10,skupinka:10'
                                         ,fld:'prijmeni,jmena,pokoj,skupina'}}
-    item {title:'&half; Všichni, skupinky tisk'
-                                        ,par:°{typ:'sk',exp:'Excel',cnd:'1',fce:'tisk',verze:'DS'}}
+    item {title:'Všichni, skupinky tisk'
+                                        ,par:°{typ:'skti',exp:'Excel2',cnd:'1',verze:'DS'}} // fce:'tisk'
   }
   # ---------------------------------------------------------------------------------------------==> info
   menu {tag:'a', title:'informace o akci',type:'group',_sys:'*'
     item {title:'Narozeniny, výročí'    ,par:°{typ:'vv',cnd:'1'}}
     item {title:'Přehled o akci (děti,pečouni)', par:°{typ:'vi',cnd:'1'}}
-    item {title:'&half; Ekonomické ukazatele'  ,par:°{typ:'ve',cnd:'1'}}
-    item {title:'&half; Udržet kontakt'        ,par:°{typ:'12',cnd:'1'}, skill:'y;f'}
+    item {title:'Ekonomické ukazatele'  ,par:°{typ:'ve',cnd:'1'}}
+    item {title:'Udržet kontakt'        ,par:°{typ:'12',cnd:'1'}, skill:'y;f'}
     item {title:'Přednášející'                                                                          skill:'y;f;c'
                                         ,par:°{typ:'p',exp:'Excel2',cnd:"prednasi"
                                         ,tit:'příjmení:15,jména:20,přednáška,^'
                                         ,fld:'prijmeni,jmena,prednasi,^id_pobyt',ord:'prednasi'}}
-    item {title:'&half; Seznam čerstvých změn' ,par:°{typ:'cz',cnd:'1'}, skill:'a'}
+    item {title:'Seznam čerstvých změn' ,par:°{typ:'cz',cnd:'1'}, skill:'a'}
   }
   # ---------------------------------------------------------------------------------------------==> jmenovky
   menu {tag:'a', title:'jmenovky na akci',type:'group',_sys:'*'
@@ -303,36 +301,33 @@ menu m {type:'left', active:*
     item {title:'Štítky na obálku účastníka' ,par:°{typ:'p',exp:'PDF-prijem',cnd:"funkce!=99"
                                         ,tit:'příjmení:15,jména:20,_deti:7,skupinka:7,pokoj:12,lůžka:7,kočárek:7,přistýlky:7,strava celá:7,poloviční:7,^'
                                         ,fld:'prijmeni,jmena,_deti,skupina,pokoj,luzka,kocarek,pristylky,strava_cel,strava_pol,^id_pobyt'}}
-#     item {title:'Stravenky - test LK'   ,par:°{typ:'vj',exp:'PDF-stravenky',cnd:"id_pobyt IN (14139)"}}
-#     item {title:'Stravenky - test PO'   ,par:°{typ:'vj',exp:'PDF-stravenky',cnd:"id_pobyt IN (17384,17405)",ord:"r.nazev DESC"}}
-    item {title:'&half; Stravenky - rodiny'    ,par:°{typ:'vj',exp:'PDF-stravenky',cnd:"funkce!=99"}}
-    item {title:'&half; Stravenky - pečouni'   ,par:°{typ:'vjp',exp:'PDF-stravenky',cnd:"1"}}
-    item {title:'&half; Stravenky - prázdné'   ,par:°{exp:''}
-      proc onclick(i) {
-        var res: object
-        info.export.display(0);
+    item {title:'Stravenky - rodiny'    ,par:°{typ:'vj',exp:'PDF-stravenky',cnd:"funkce!=99"}}
+    item {title:'Stravenky - pečouni'   ,par:°{typ:'vjp',exp:'PDF-stravenky',cnd:"1"}}
+    item {title:'Stravenky - prázdné'   ,par:°{exp:''}
+      proc onclick(i) { var res: object
+        clear; info.export.display(0);
         info.fill(conc(i.owner.title,' - ',i.title),' ');
         sti_C.report_init; sti_C.report_check;
-        res.set(ask('akce_pdf_stravenky0',the_akce.get,the_par.get,sti_C.get_json));
+        res.set(ask('akce2_pdf_stravenky0',the_akce.get,the_par.get,sti_C.get_json));
         info.fill('',res.html);
       }
     }
   }
   # ---------------------------------------------------------------------------------------------==> MS
   menu {tag:'a', title:'MS: letní kurs, obnovy',type:'group',_sys:'*'
-    item {title:'&half; Noví účastníci'                                                             skill:'y;f;c'
+    item {title:'Noví účastníci'                                                             skill:'y;f;c'
                                         ,par:°{typ:'p',exp:'Excel2'
-                                        ,cnd:"p.funkce IN (0,1,2)",hav:"_ucasti=1"
+                                        ,cnd:"p.funkce IN (0,1,2)",filtr:°{ucasti_ms:1}
                                         ,tit:'příjmení:15,jména:20,obec:25,^'
                                         ,fld:'prijmeni,jmena,obec,^id_pobyt'}}
-    item {title:'&half; Účastníci podruhé'                                                          skill:'y;f;c'
+    item {title:'Účastníci podruhé'                                                          skill:'y;f;c'
                                         ,par:°{typ:'p',exp:'Excel2'
-                                        ,cnd:"p.funkce IN (0,1,2)",hav:"_ucasti=2"
+                                        ,cnd:"p.funkce IN (0,1,2)",filtr:°{ucasti_ms:2}
                                         ,tit:'příjmení:15,jména:20,obec:25,^'
                                         ,fld:'prijmeni,jmena,obec,^id_pobyt'}}
-    item {title:'&half; VPS/PPS'                                                                    skill:'y;f;c'
+    item {title:'VPS/PPS'                                                                    skill:'y;f;c'
                                         ,par:°{typ:'p',exp:'Excel2'
-                                        ,cnd:"FIND_IN_SET(1,r.r_umi)"
+                                        ,cnd:"p.funkce IN (0,1,2,5)",filtr:°{r_umi:1}
                                         ,tit:'příjmení:15,jména:20,obec:25,funkce,^'
                                         ,fld:'prijmeni,jmena,obec,funkce,^id_pobyt'}}
     item {title:'Pečouni'                                                                               skill:'y;f'
@@ -355,17 +350,16 @@ menu m {type:'left', active:*
                                         ,par:°{typ:'d',exp:'Excel2',cnd:'1'
                                         ,tit:'příjmení:15,jméno:15,narození:12,obec:25,psč:7,ulice:25,telefon:20,e-mail:30,poznámky:30'
                                         ,fld:'prijmeni,jmeno,narozeni,obec,psc,ulice,telefon,email,_poznamky'}}
-    item {title:'&half; Platby vč.DPH'                                                                         skill:'y;c'
-                                        ,par:°{typ:'vp',exp:'Excel',cnd:'1'}}
-    item {title:'&half; Platby bez DPH'                                                                        skill:'f'
-                                        ,par:°{typ:'vp2',exp:'Excel',cnd:'1'}}
+    item {title:'Platby vč.DPH'                                                                         skill:'y;c'
+                                        ,par:°{typ:'vp',exp:'Excel2',cnd:'1'}}
+    item {title:'Platby bez DPH'                                                                        skill:'f'
+                                        ,par:°{typ:'vp2',exp:'Excel2',cnd:'1'}}
     item {title:'Počty strav'           ,par:°{typ:'vs',exp:'Excel2',cnd:'1'}}
-    item {title:'&half; Člověkolůžka'          ,par:°{typ:'vn',exp:'Excel',cnd:'1'}}
-    item {title:'&half; Skupinky'              ,par:°{typ:'sk',exp:'Excel',cnd:'1',fce:'tisk',verze:'MS'}}
-    item {title:'&half; Skupinky dětí'         ,par:°{typ:'sd',exp:'Excel',cnd:'1',fce:'tisk'}}
-    item {title:'&half; Skupinky (* noví)'     ,par:°{typ:'sk',exp:'Excel',cnd:'1',fce:'tisk',verze:'MS',mark:'novic'}}
-    item {title:'&half; Skupinky - přehled historie' ,par:°{typ:'sk',cnd:'1',fce:'prehled'}}
-#     item {title:'Skupinky - tisk+'      ,par:°{typ:'sk',exp:'Excel',cnd:'1',fce:'tisk',mark:'novic'}}
+    item {title:'Člověkolůžka'          ,par:°{typ:'vn',exp:'Excel2',cnd:'1'}}
+    item {title:'Skupinky'              ,par:°{typ:'skti',exp:'Excel2',cnd:'1',verze:'MS'}} // fce:'tisk'
+    item {title:'Skupinky dětí'         ,par:°{typ:'sd',exp:'Excel2',cnd:'1',fce:'tisk'}}
+    item {title:'Skupinky (* noví)'     ,par:°{typ:'skti',exp:'Excel2',cnd:'1',verze:'MS',mark:'novic'}} // fce:'tisk'
+    item {title:'Skupinky - přehled historie' ,par:°{typ:'skpr',cnd:'1'}} // fce:'prehled'
     item {title:'pro Závěrečnou zprávu'                                                                 skill:'y;f'
                                         ,par:°{typ:'j',exp:'Excel2',cnd:'1',ord:'o.prijmeni,o.jmeno'
                                         ,tit:':5,Příjmení:15,Jméno:12,Ulice:25,Město:25,PSČ:7,Datum nar.:12,Člen YMCA:10,věk:10'
@@ -373,17 +367,17 @@ menu m {type:'left', active:*
   }
   # ---------------------------------------------------------------------------------------------==> Technické seznamy
   menu {tag:'a', title:'Technické seznamy',type:'group',_sys:'*'
-    item {title:'&half; Návrh ubytování'       ,par:°{typ:'p',exp:'Excel',cnd:"funkce!=99"
+    item {title:'Návrh ubytování'       ,par:°{typ:'p',exp:'Excel2',cnd:"funkce!=99"
                                         ,tit:'příjmení:15,jména:12,obec:25,lůžka:5,přistýlka:5,kočárek:5,pokoj:5,chůvy:20,poznámka:100,^'
                                         ,fld:'prijmeni,jmena,obec,luzka,pristylky,kocarek,pokoj,_chuvy,poznamka,^id_pobyt'}}
-    item {title:'&half; Návrh skupinek'                                                                        skill:'y;f'
-                                        ,par:°{typ:'sk',exp:'Excel-plachta',cnd:'1',fce:'plachta'}}
+    item {title:'Návrh skupinek'                                                                        skill:'y;f'
+                                        ,par:°{typ:'skpl',exp:'Excel-plachta',cnd:'1'}} // fce:'plachta'
     item {title:'Štítky pro návrh skupinek' ,par:°{typ:'ss',exp:'PDF-plachta'
                                         ,tit:'příjmení,jména'
                                         ,fld:'prijmeni,jmena'}}
     item {title:'... pomocné štítky' ,par:°{typ:'s0',exp:'PDF-plachta0'}}
 #     item {title:'Seznam s fotkami'      ,par:°{typ:'fs',cnd:"funkce!=99",ord:"prijmeni"}}
-    item {title:'&half; Seznam emailů'         ,par:°{typ:'fx',subtyp:'emails'}}
+#     item {title:'Seznam emailů'         ,par:°{typ:'fx',subtyp:'emails'}}
 #     item {title:'Seznam - manzeS'                                                                       skill:'y'
 #                                         ,par:°{typ:'p',exp:'Excel',cnd:"funkce!=99"
 #                                         ,tit:'Hebrejsky:40,Česky:30'
@@ -396,15 +390,12 @@ menu m {type:'left', active:*
       note.set("Výběr se provede klávesou Ins v seznamu na kartě Účastníci2 -
         tisknout se budou jen údaje z červeně označených řádků");
     ];
-    the_vypis.set(conc(i.owner.title,' - ',replace(i.title,'&half;','')));
+    the_vypis.set(conc(i.owner.title,' - ',i.title));
     { i.par.exp; info.export.display(1); info.export.set(i.par.exp) | info.export.display(0) };
     { i.par.exp2; info.export2.display(1); info.export2.set(i.par.exp2) | info.export2.display(0) };
     info.fill(conc(the_title.get,' / ',the_vypis.get),' ');
     info.msg.set(note);
-    // symbolem 1/2 jsou označeny výpisy přejaté z verze 1
-    { eq(substr(i.title,0,6),'&half;');
-      x.set(ask('akce_sestava',the_akce.get,the_par.get,the_title.get,the_vypis.get))
-    | x.set(ask('tisk_sestava',the_akce.get,the_par.get,the_title.get,the_vypis.get)) };
+    x.set(ask('tisk2_sestava',the_akce.get,the_par.get,the_title.get,the_vypis.get));
     info.fill('',x.html);
   }
 }
@@ -421,8 +412,10 @@ report sti_B [0,0,200,287] { format:'A4:5,6,70,41',
 }
 # ----------------------==>   stitek_C - stravenky     pro LJ DN2200 je format:'A4:5,5,50,24',
 report sti_C [0,0,210,297] { format:'A4:5,3,50,24',
-  box ram       [  1,  1, 48, 22] { style:'8,L,LT',             title:'{ram}' }
-  box end       [  1,  1, 48, 22] { style:'8,L,RB',             title:'{end}' }
+#   box ram       [  1,  1, 48, 22] { style:'8,L,LT',             title:'{ram}' }
+#   box end       [  1,  1, 48, 22] { style:'8,L,RB',             title:'{end}' }
+  box ram       [  1,  1, 48, 22] { style:'8,L',                title:'{ram}' }
+  box end       [  1,  1, 48, 22] { style:'8,L',                title:'{end}' }
   box header    [  2,  4, 45,  4] { style:'8,L',                title:'{header}' }
   box lines     [  2,  8, 48, 16] { style:'14,L',               title:'{line1}<br>{line2}' }
   box rect      [ 25, 10, 20, 14] { style:'20,R',               title:'{rect}' }

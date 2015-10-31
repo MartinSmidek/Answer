@@ -26,16 +26,17 @@ form _alb [,,600,357] {
   button smazat [469,4,,] { type:'html', title:'[fa-times fa-2x fa-red]', format:'d'
     proc onclick() {
       confirm("Opravdu odstranit tuto fotografii?");
-#       { ask('album_delete2',u.b.key_rodina.get); u.b.fotka.let(''); foto.set('');
+#       { ask('foto2_delete',u.b.key_rodina.get); u.b.fotka.let(''); foto.set('');
 #       | warning("fotografii nebylo možné smazat");
 #       }
   }}
   # layout
-  label drop [70,6,393,18] { format:'c' style:'padding-top:8px' }
-  label foto [0,41,500,300] { format:'c' }
+  label drop  [70,6,393,18] { format:'c' style:'padding-top:8px' }
+  label jmeno [0,41,500,300] { format:'c' }
+  label foto  [0,61,500,300] { format:'c' }
   proc ondrop(fileinfo) { var name: text
     drop.set_css('','drop_area drop_area_hover');
-    name.set(ask('album_add2',tab.get,rec.get,fileinfo));
+    name.set(ask('foto2_add',tab.get,rec.get,fileinfo));
     smazat.enable(1);
     n.set(-1); drop_galery;
     drop.set_css('','drop_area drop_area_hover drop_area_run');
@@ -49,10 +50,11 @@ form _alb [,,600,357] {
   }
   # zobrazí n-tou fotku
   proc drop_galery() { var ret:object
-    ret.set(ask('album_get2',tab.get,rec.get,n.get,foto._w,foto._h));
+    ret.set(ask('foto2_get',tab.get,rec.get,n.get,foto._w,foto._h));
     go_left.enable(ret.left);
     n.set(sum(ret.left,1));
     go_right.enable(ret.right);
     foto.set(ret.html);
+    jmeno.set(ret.jmeno);
   }
 }

@@ -19,5 +19,7 @@
       }"
   );
   $js= array("https://apis.google.com/js/client.js?onload=Ezer.Google.ApiLoaded","ds/fce.js");
-  answer_php('ys2','Ans(w)er','ezer_ys','ck',$js,array("./ys/ys.css.php"),$options);
+//   $css= array("./ezer2.2/client/ezer.css.php","./db/db.css.php","./ys/ys.css.php");
+  $css= array("skins/ck.ezer.css");
+  answer_php('ys2','Ans(w)er','ezer_ys','ck',$js,$css,$options);
 ?>

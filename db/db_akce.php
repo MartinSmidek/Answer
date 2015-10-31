@@ -1983,10 +1983,34 @@ end:
 # ? out   = seznam s vynecháním
 function album_get2($table,$id,$n,$w,$h) {  trace();
   global $ezer_path_root;
-  $ret= (object)array('img'=>'','left'=>0,'right'=>0,'msg'=>'');
+  $ret= (object)array('img'=>'','left'=>0,'right'=>0,'msg'=>'','tit'=>'');
+  $fotky= '';
+  // názvy fotek
+  $osobnich= 0;
+  if ( $table=='rodina' ) {
+    list($fotky,$rodinna)= select('fotka,nazev','rodina',"id_$table=$id");
+  }
+  elseif ( $table=='osoba' ) {
+    $rf= mysql_qry("
+      SELECT GROUP_CONCAT(r.fotka) AS fotky,r.nazev,
+        o.fotka,o.prijmeni,o.jmeno
+      FROM rodina AS r JOIN tvori USING (id_rodina) JOIN osoba AS o USING (id_osoba)
+      WHERE id_osoba=$id AND r.fotka!='' ");
+    $x= mysql_fetch_object($rf);
+    $rodinna= $x->nazev;
+    $fotky= $x->fotky;
+    $fotka= $x->fotka;
+    if ( $fotka ) {
+      $osobnich= substr_count($fotka,',')+1;
+      $osobni= "{$x->prijmeni} {$x->jmeno}";
+      $fotky= $fotky ? "$fotka,$fotky" : $fotka;
+    }
+  }
+  if ( $fotky=='' ) { $ret->html= "žádná fotka"; goto end; }
+  $nazvy= explode(',',$fotky);
   // název n-té fotky
-  $nazvy= explode(',',select('fotka',$table,"id_$table=$id"));
   $n= $n==-1 ? count($nazvy) : $n;
+//                                         display("fotky='$fotky', n=$n");
   if ( !(1<=$n && $n<=count($nazvy)) ) { $ret->html= "$n je chybné pořadí fotky"; goto end; }
   // výpočet left, right, out
   $ret->left= $n-1;
@@ -1994,8 +2018,11 @@ function album_get2($table,$id,$n,$w,$h) {  trace();
   // zpracování
   $nazev= $nazvy[$n-1];
   $orig= "$ezer_path_root/fotky/$nazev";
-                                        display("file_exists($orig)=".file_exists($orig));
-  if ( !file_exists($orig) ) { $ret->html= "fotka <b>$nazev</b> není dostupná"; goto end; }
+//                                         display("file_exists($orig)=".file_exists($orig));
+  if ( !file_exists($orig) ) {
+    $ret->html= "fotka <b>$nazev</b> není dostupná";
+    goto end;
+  }
   // zmenšení na požadovanou velikost, pokud již není
   $dest= "$ezer_path_root/fotky/copy/$nazev";
   if ( !file_exists($dest) ) {
@@ -2003,9 +2030,14 @@ function album_get2($table,$id,$n,$w,$h) {  trace();
     if ( !$ok ) { $ret->html= "fotka </b>$nazev</b> nešla zmenšit ($ok)"; goto end; }
   }
   // html-kód s žádostí o zaostření na straně klienta
-  $ret->html= "<a href='fotky/$nazev' target='_album' title='$nazev'><img src='fotky/copy/$nazev'
-    width='$w' onload='var x=arguments[0];img_filter(x.target,\"sharpen\",0.7,1);'/></a>";
+  $ret->nazev= $nazev;
+  $jmeno= $n>$osobnich ? $rodinna : $osobni;
+  $ret->jmeno= "<span style='font-weight:bold;font-size:120%'>$jmeno</span>";
+//                                                 display("$n>$osobnich ? $rodinna : $osobni");
+  $ret->html= "<a href='fotky/$nazev' target='_album' title='$jmeno'><img src='fotky/copy/$nazev'
+    onload='var x=arguments[0];img_filter(x.target,\"sharpen\",0.7,1);'/></a>";
 end:
+//                                                 debug($ret,"album_get2($table,$id,$n,$w,$h)");
   return $ret;
 }
 # --------------------------------------------------------------------------------------- album_add2

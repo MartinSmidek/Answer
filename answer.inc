@@ -113,8 +113,8 @@ function answer_ini($app,$answer_db,$dbs_plus,$php_lib,$ezer_mod=array()) {
   $ezer_php= array_merge(array(
 //     "ys/ys_ucet.php",       YS
 //     "ys/ys.ban.php",        YS
-    "db/db_akce.php",
-    "db/db_akce2.php",
+//     "db/db_akce.php",       YS YS2 FA2 CR
+//     "db/db_akce2.php",      YS YS2 FA2 CR
     "fis/fis_tcpdf.php"),
     $php_lib
   );
@@ -137,7 +137,7 @@ function answer_ini($app,$answer_db,$dbs_plus,$php_lib,$ezer_mod=array()) {
   // knihovní moduly
   require_once("$ezer_path_root/{$EZER->version}/ezer2_fce.php");
   // PDF knihovny
-  require_once('tcpdf/config/lang/eng.php');
+//   require_once('tcpdf/config/lang/eng.php');
   require_once('tcpdf/tcpdf.php');
   // vložení modulů
   foreach($ezer_php as $php) {

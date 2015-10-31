@@ -15,7 +15,8 @@ use page:   form _page     [400, 10,,]
 use p_oso:  form _osoba    [400, 10,,]       { tag:'p_oso' }
 use cmd:    form _cmd      [400,420,,]       { tag:'p_oso' }
 use p_act:  form _aktivity [400, 10,,]       { tag:'p_act' }
-use alb:    form _album    [400, 10,,]       { tag:'p_fot' }
+# use alb:    form _album    [400, 10,,]       { tag:'p_fot' }
+use alb:    form foto._alb [440, 30,,]       { tag:'p_fot' }
 
 # -----------------------------------------------------------------------------==> inicializace
 proc onstart() {
@@ -187,36 +188,36 @@ form _aktivity {
   }
 }
 # --------------------------------------------------------------------==> _album
-form _album {
-  label drop [38,35,500,45] { format:'c' }
-  label foto [38,85,500,400] { format:'c' }
-  button smazat [250,500,,] { title:'Odstranit fotografii', format:'n'
-    proc onclick() {
-      confirm("Opravdu odstranit tuto fotografii?");
-      { ask('album_delete',up.b.key_osoba.get); up.b.fotka.let(''); foto.set('');
-      | warning("fotografii nebylo možné smazat");
-      }
-  }}
-  proc ondrop(fileinfo) {
-    var name: text
-    drop.set_css('','drop_area drop_area_hover');
-    name.set(ask('album_set',up.b.key_osoba.get,fileinfo,
-      conc(up.b.prijmeni.get,' ',up.b.jmeno.get)));
-    up.b.fotka.let(name);
-    smazat.display(1);
-    drop_set(0);
-    drop.set_css('','drop_area drop_area_hover drop_area_run');
-    drop_init;
-  }
-  proc drop_init() {
-    form.file_drop(drop,°{css_hover:'drop_area_hover',css_run:'drop_area_run',handler:'ondrop',
-      max_width:1200,max_height:960});
-  }
-  proc drop_set(sharp) {
-    foto.set(ask('album_get',up.b.fotka.get,500,400));
+# form _album {
+#   label drop [38,35,500,45] { format:'c' }
+#   label foto [38,85,500,400] { format:'c' }
+#   button smazat [250,500,,] { title:'Odstranit fotografii', format:'n'
+#     proc onclick() {
+#       confirm("Opravdu odstranit tuto fotografii?");
+#       { ask('album_delete',up.b.key_osoba.get); up.b.fotka.let(''); foto.set('');
+#       | warning("fotografii nebylo možné smazat");
+#       }
+#   }}
+#   proc ondrop(fileinfo) {
+#     var name: text
+#     drop.set_css('','drop_area drop_area_hover');
+#     name.set(ask('album_set',up.b.key_osoba.get,fileinfo,
+#       conc(up.b.prijmeni.get,' ',up.b.jmeno.get)));
+#     up.b.fotka.let(name);
+#     smazat.display(1);
+#     drop_set(0);
+#     drop.set_css('','drop_area drop_area_hover drop_area_run');
+#     drop_init;
+#   }
+#   proc drop_init() {
+#     form.file_drop(drop,°{css_hover:'drop_area_hover',css_run:'drop_area_run',handler:'ondrop',
+#       max_width:1200,max_height:960});
+#   }
+#   proc drop_set(sharp) {
+#     foto.set(ask('album_get',up.b.fotka.get,500,400));
 #     [ sharp; foto.image_filter('sharpen') ]
-  }
-}
+#   }
+# }
 # -------------------------------------------------------------------==> _osoba
 form _osoba { tag:'a',
   # ------------------------ osoba
@@ -424,21 +425,7 @@ form _pece [,,400,] { css:'ds_form'
         p_act.ucasti(key_osoba.get,prijmeni.get,jmeno.get)
       },
       'foto',{
-#         stop
-        { has_skill("yaa+;faa+;caa+");
-          { up.b.fotka.get;
-            // známe fotku
-            alb.drop.set("<br>Fotografii můžeš nahradit přetažením myší ze složky svého počítače sem");
-            alb.smazat.display(1);
-            alb.drop_set(1); alb.drop_init
-          | // není žádná fotka
-            alb.smazat.display(0);
-            alb.drop.set("<br>Sem můžeš přidat fotografii přetažením myší ze složky svého počítače");
-            alb.drop.set_css('drop_area',''); alb.foto.set(''); alb.drop_init
-          | echo('file_drop nelze zahájit')
-          }
-        | up.b.fotka.get; alb.drop_set(1)
-        }
+        key_osoba.get; alb.galery('osoba',key_osoba.get);
       },
       {stop}
     )}
@@ -492,24 +479,24 @@ form _cmd [,,200,] { css:'ds_form'
     [ the_pobyt.get | the_pobyt.set(pobyt.insert_record(object('id_akce',the_duakce.get))) ];
     return(the_pobyt.get);
   }
-  // PŘIDAT z AKCE
-  button pridat_a   [69,Tc+5,,] {title:'Přidat: z akce', skill:'yaap+|yaap+;faa+|faa+;caa+|caa+',
-    help:'Přidání účastníky jiných akcí'
-    proc onclick() {
-      PridaniAkce.modal(240,50)
-  } }
+#   // PŘIDAT z AKCE
+#   button pridat_a   [69,Tc+5,,] {title:'Přidat: z akce', skill:'yaap+|yaap+;faa+|faa+;caa+|caa+',
+#     help:'Přidání účastníky jiných akcí'
+#     proc onclick() {
+#       PridaniAkce.modal(240,50)
+#   } }
   // PŘIDAT z pečounů
-  button [155,Tc+5,,] {title:'... jménem', skill:'yaap+|yaap+;faa+|faa+;caa+|caa+',
+  button [100,Tc+5,,] {title:'Přidat jménem', skill:'yaap+|yaap+;faa+|faa+;caa+|caa+',
     help:'Přidání pečouna podle jména - výběr z EVIDENCE'
     proc onclick() {
-      PridaniJmenem3.fl.jmena.set_attrib('par.fce','akce_auto_jmena1');
+      PridaniJmenem3.fl.jmena.set_attrib('par.fce','akce2_auto_jmena1');
       PridaniJmenem3.modal(240,50)
   } }
   // PŘIDAT z evidence
   button [228,Tc+5,,] {title:'... jménem pečouna', skill:'yaap+|yaap+;faa+|faa+;caa+|caa+',
     help:'Přidání pečouna podle jména - výběr z pečounů'
     proc onclick() {
-      PridaniJmenem3.fl.jmena.set_attrib('par.fce','akce_auto_jmena3');
+      PridaniJmenem3.fl.jmena.set_attrib('par.fce','akce2_auto_jmena3');
       PridaniJmenem3.modal(240,50)
   } }
   // VYŘADIT a VYMAZAT
@@ -554,10 +541,10 @@ panel PridaniJmenem3 [,,320,280] {type:'popup', title:'Přidání známých peč
       jmena.init; vse.init; L.init; panel.hide(0) } }
     // výběr z databáze MS
     select jmena [100,0,200,17] { type:'auto', format:'t',
-      par:°{fce:'akce_auto_jmena3',patt:'whole',cond:'funkce=99',save:'key_only'},
+      par:°{fce:'akce2_auto_jmena3',patt:'whole',cond:'funkce=99',save:'key_only'},
       // par.cond je měněno při volání
       proc onchanged() {
-        rod.set(ask('akce_auto_jmena3L',this.key));
+        rod.set(ask('akce2_auto_jmena3L',this.key));
         each(rod.get,jmenovci); // nesmí volat asynchronní operace
       }
     }
@@ -580,42 +567,42 @@ panel PridaniJmenem3 [,,320,280] {type:'popup', title:'Přidání známých peč
   }
 }
 # ==================================================================================> Přidání z akce
-panel PridaniAkce [,,320,280] {type:'popup', title:'Přidání pečounů známých z jiných akcí'
-  use fl: form _fl [12,10,,]
-  proc onfocus() { fl.akce.init; fl.vse.init; fl.L.init; fl.akce.focus }
-  form _fl [,,300,200] {
-    var last: number
-    var pary: object
-    var popis: text
-    button [0,250,,] { title:'přidat mezi pečouny', proc onclick() {
-      each(L,pecouni_add); reload(0);
-    } }
-    button [130,250,,] { title:'jiná akce', proc onclick() {
-      akce.init; vse.init; L.init } }
-    button [220,250,,] { title:'konec', proc onclick() {
-      akce.init; vse.init; L.init; panel.hide(0) } }
-    // výběr z akcí
-    select akce [100,0,200,17] { type:'auto', par:°{fce:'akce_auto_pece'}, format:'t'
-      proc onchanged() {
-        pary.set(ask('akce_auto_peceL',this.key));
-        each(pary.get,ucastnici); // nesmí volat asynchronní operace
-      }
-    }
-    proc ucastnici(p,i) {
-      last.set(L.add);
-      popis.set(p.nazev);
-      L.part(last.get).part('info').set(popis.get);
-      L.part(last.get).part('all').set(p);
-    }
-    // nastavení výběru
-    check vse [4,0,80,16] { title:'všichni', format:'t'
-      proc onchange() { each(L,nastav) }
-      proc nastav (x,i) { x.chck.set(form.vse.get) }
-    }
-    list L [0,23,300,200] {rows:22      // anonymní group
-      check chck [4,0,50,16] { title:' ', format:'t'  /*, proc onchange() { echo('jo/ne') }*/ }
-      label info [23,4,300,16] {style:'white-space:nowrap', format:'t'}
-      var all: object
-    }
-  }
-}
+# panel PridaniAkce [,,320,280] {type:'popup', title:'Přidání pečounů známých z jiných akcí'
+#   use fl: form _fl [12,10,,]
+#   proc onfocus() { fl.akce.init; fl.vse.init; fl.L.init; fl.akce.focus }
+#   form _fl [,,300,200] {
+#     var last: number
+#     var pary: object
+#     var popis: text
+#     button [0,250,,] { title:'přidat mezi pečouny', proc onclick() {
+#       each(L,pecouni_add); reload(0);
+#     } }
+#     button [130,250,,] { title:'jiná akce', proc onclick() {
+#       akce.init; vse.init; L.init } }
+#     button [220,250,,] { title:'konec', proc onclick() {
+#       akce.init; vse.init; L.init; panel.hide(0) } }
+#     // výběr z akcí
+#     select akce [100,0,200,17] { type:'auto', par:°{fce:'akce2_auto_pece'}, format:'t'
+#       proc onchanged() {
+#         pary.set(ask('akce2_auto_peceL',this.key));
+#         each(pary.get,ucastnici); // nesmí volat asynchronní operace
+#       }
+#     }
+#     proc ucastnici(p,i) {
+#       last.set(L.add);
+#       popis.set(p.nazev);
+#       L.part(last.get).part('info').set(popis.get);
+#       L.part(last.get).part('all').set(p);
+#     }
+#     // nastavení výběru
+#     check vse [4,0,80,16] { title:'všichni', format:'t'
+#       proc onchange() { each(L,nastav) }
+#       proc nastav (x,i) { x.chck.set(form.vse.get) }
+#     }
+#     list L [0,23,300,200] {rows:22      // anonymní group
+#       check chck [4,0,50,16] { title:' ', format:'t'  /*, proc onchange() { echo('jo/ne') }*/ }
+#       label info [23,4,300,16] {style:'white-space:nowrap', format:'t'}
+#       var all: object
+#     }
+#   }
+# }

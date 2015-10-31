@@ -18,6 +18,8 @@ var zmeny: object               // objekt naplněný požadavkem zobrazení ned�
 # události panelu
 proc onstart() {}
 proc onfirstfocus() {
+  // povolení "[]kopie?" jen pro access=3
+  [ eq(3,sys('user','access')) | u.dup.set(0); u.dup.display(0); u.sf.set(0); u.sf.change;];
   the_duakce_local.set(0);
   curr_h.set(0);
   curr_w.set(cconc(lt(sys('screen','width'),1280),1024,1280));
@@ -230,7 +232,9 @@ proc reload(id_pobyt) { var filtr:text, id_pobyt0:number
   [ u.b.browse_load(conc(filtr," /*AND funkce!=99*/ AND p.id_akce=",the_duakce.get),
       "IF(funkce<=2,1,funkce),_nazev",
       '',0,0,1/*1=quiet*/,
-      conc('SET @akce:=',the_duakce.get,",@soubeh:=",the_soubeh.get,
+      conc('SET @akce:=',the_duakce.get,
+              ",@soubeh:=",the_soubeh.get,
+              ",@access:=",access.get,
               ",@app:='",sys('ezer','options','app'),"'"));
     u.b.browse_focus;
     [ id_pobyt; id_pobyt0.set(id_pobyt) ];
@@ -385,16 +389,16 @@ form _cmd [,,623,30] {
   button zrušit_osobu [611,5,,] {tag:'x', title:'[fa-times fa-red] Vymazat osobu',
     skill:'yaa+|yaa+;faa+|faa+;caa+|caa+', help:'Vymazání osoby z databáze'
     proc onclick() { var ret:object
-      ret.set(ask('evid_delete',rod.cleni.key_osoba.get,rod.key,'conf_oso'));
+      ret.set(ask('evid2_delete',rod.cleni.key_osoba.get,rod.key,'conf_oso'));
       { eq(ret.ok,1);                           // osobu lze smazat
         [ confirm(ret.html);
-          ret.set(ask('evid_delete',rod.cleni.key_osoba.get,rod.key,'del_oso'));
+          ret.set(ask('evid2_delete',rod.cleni.key_osoba.get,rod.key,'del_oso'));
           warning(ret.html);
           _reload(the_pobyt.get,0);
         ]
       | eq(ret.ok,2);                           // nutno (a lze) smazat i s rodinou
         [ confirm(ret.html);
-          ret.set(ask('evid_delete',rod.cleni.key_osoba.get,rod.key,'del_rod'));
+          ret.set(ask('evid2_delete',rod.cleni.key_osoba.get,rod.key,'del_rod'));
           warning(ret.html);
           _reload(the_pobyt.get,0);
         ]
@@ -478,7 +482,7 @@ form _cmd [,,623,30] {
     [ rod.same
     | rod.r.key(rod.key_rodina.get); [ rod.r.save ];
       rod.t_role.changed;
-      ask('akce_save_role',rod.cleni.key_tvori.get,rod.t_role.get) ];
+      ask('akce2_save_role',rod.cleni.key_tvori.get,rod.t_role.get) ];
     [ pob.same | pob.save; ];
     [ os1.same | os1.key; os1.save; ];
     [ os2.same | os2.key; os2.save; ];
@@ -621,8 +625,9 @@ form _ucast [,,400,] { css:'ds_form'
         page.jin.last.set(key_pobyt.get);
       },
       'foto',{
-        alb.galery('rodina',key_rodina.get);
-        page.fot.last.set(key_pobyt.get);
+        [ key_rodina.get; alb.galery('rodina',key_rodina.get)
+        | ido1.get; alb.galery('osoba',ido1.get) ];
+        page.fot.last.set(key_pobyt.get)
       },
       'docu',{
         docu.ukaz;
@@ -700,6 +705,11 @@ form _ucast [,,400,] { css:'ds_form'
     | platba.width(35); c_suma.width(35); _docs.width(15); _jmena.width(92)
     }
     proc onrefreshed() { h_change_b }
+    # ------------------------==> . kontextové_menu
+    menu { type:'context' //, join:frame
+      item { title:'zrušit výběr'
+        proc onclick () { b.selected('clear') } }
+    }
   }
 }
 # ----------------------------------------------------------------------------==> _ucast2 - jen děti
@@ -832,14 +842,14 @@ form _evidence {
   # ------------------------==> . kontextové_menu
   menu { type:'context', join:frame
     item { title:'zkontrolovat skupinky', skill:'yaa+;faa+;caa+',
-      proc onclick () { alert(ask('akce_skup_check',the_duakce.get)) } }
+      proc onclick () { alert(ask('akce2_skup_check',the_duakce.get)) } }
     item { title:'přečíslovat skupinky podle VPS', skill:'yaa+;caa+',
-      proc onclick () { alert(ask('akce_skup_renum',the_duakce.get)) } }
+      proc onclick () { alert(ask('akce2_skup_renum',the_duakce.get)) } }
     item { title:'přečíslovat skupinky podle PPS', skill:'faa+',
-      proc onclick () { alert(ask('akce_skup_renum',the_duakce.get)) } }
+      proc onclick () { alert(ask('akce2_skup_renum',the_duakce.get)) } }
     item { title:'-obarvit změněné údaje'
       proc onclick () { var ret:object
-        ret.set(ask('akce_zmeny',the_duakce.get,
+        ret.set(ask('akce2_zmeny',the_duakce.get,
           prompt("zadej stáří obarvených změn v hodinách",72)));
         not(ret.errs);
         zmeny.set(ret);
@@ -848,7 +858,9 @@ form _evidence {
     item { title:'... zrušit obarvení změn' proc onclick () {
     } }
     item { title:'-m: opravit i0_rodina,pouze', skill:'m'
-      proc onclick () { alert(ask('data_transform',object('cmd','i0_rodina,pouze','akce',the_duakce.get))) } }
+      proc onclick () {
+        alert(ask('data2_transform_2014',
+          object('cmd','i0_rodina,pouze','akce',the_duakce.get))) } }
   }
   proc Display(on) {  // 2 = jako 1 ale prázdná akce
     eq(on,2); rod.no_rodina; rod.display(1); pob.display(0);
@@ -865,9 +877,9 @@ form _evidence {
     os1.init; os1.set_mode(2,'U');
     os2.init; os2.set_mode(2,'U');
     sp1.init; sp1.pece_sel.set_attrib('par',
-      object('fce','akce_auto_deti','akce',the_duakce.get,'save','value'));
+      object('fce','akce2_auto_deti','akce',the_duakce.get,'save','value'));
     sp2.init; sp2.pece_sel.set_attrib('par',
-      object('fce','akce_auto_deti','akce',the_duakce.get,'save','value'));
+      object('fce','akce2_auto_deti','akce',the_duakce.get,'save','value'));
     pob.init; rod.init; rod.cleni.browse_init;
     sp1.os.set(os1);
     sp2.os.set(os2);
@@ -1112,7 +1124,7 @@ form _spolu [,,0,270] {
   # c: osobní pečovatel pro dítě ...
   field pece_key { data:s.pecovane }
   label [10,3,45,17] { tag:'c', title:"pečuje o:", format:'n'}
-  select pece_sel [70,0,160,17] { tag:'c', type:'auto', par:°{fce:'akce_auto_deti'}, format:'n'
+  select pece_sel [70,0,160,17] { tag:'c', type:'auto', par:°{fce:'akce2_auto_deti'}, format:'n'
     proc onchanged() { pece_key.set(pece_sel.key); pece_key.change; }  }
   button [55,3,,] { tag:'c', title:'^', css:'db_evidence',
    proc onclick() { jump(rod.cleni.pece_ido.get) } }
@@ -1335,7 +1347,7 @@ form _rodina2 [,,360,229]  { css:'ae_frame'
     skill:'yaa|yaa+;faa|faa+;caa|caa+'
     help:'výběr rodiny podle nastaveného účastníka a její přiřazení k pobytu',
     proc onchanged() {
-      ask('akce_pobyt_rodinny',key_pobyt.get,this.key); zmena_rodiny; }}
+      ask('akce2_pobyt_rodinny',key_pobyt.get,this.key); zmena_rodiny; }}
   button [Lr+108,34,15,16] {tag:'o', type:'html', title:"[fa-pencil]",help:"opravit název rodiny"
     style:"padding-left:0px", skill:'yaa|yaa+;faa|faa+'
     proc onclick() {
@@ -1419,7 +1431,7 @@ form _rodina2 [,,360,229]  { css:'ae_frame'
 
   // nastavení účasti jako rodinné
   proc show_rodiny() {
-    rodiny.selects(ask('akce_osoba_rodiny',cleni.key_osoba.get));
+    rodiny.selects(ask('akce2_osoba_rodiny',cleni.key_osoba.get));
     rodiny.key(key_rodina.get);
   }
 }
@@ -1443,7 +1455,7 @@ form _platba { key_id:'id_pobyt'
   button [10,47,,] { tag:'cenik', title:"Návrh ceny", help:"zapíše počet lůžek a strav"
     var ret: object
     proc onclick() {
-      ret.set(ask('akce_pobyt_default',the_pobyt.get));
+      ret.set(ask('akce2_pobyt_default',the_pobyt.get));
       copy_by_name(ret,form);
       vzorec.change; luzka.change; pocetdnu.change; svp.change;
       strava_cel.change; strava_pol.change; kocarek.change;
@@ -1458,8 +1470,8 @@ form _platba { key_id:'id_pobyt'
       | or(u.b.cstrava_cel.get,u.b.cstrava_pol.get);
         confirm("Pozor - jsou vyplněny speciální stravy. Pokračovat?")
       };
-      { the_soubeh.get; cena.set(ask('akce_vzorec_soubeh',the_pobyt.get,the_duakce.get,the_soubezna.get))
-      | cena.set(ask('akce_vzorec',the_pobyt.get)) };
+      { the_soubeh.get; cena.set(ask('akce2_vzorec_soubeh',the_pobyt.get,the_duakce.get,the_soubezna.get))
+      | cena.set(ask('akce2_vzorec',the_pobyt.get)) };
       copy_by_name(cena.get,form);
       c_nocleh.change; c_strava.change; c_program.change; c_sleva.change;
       poplatek_d.change; naklad_d.change; ini
@@ -1474,8 +1486,8 @@ form _platba { key_id:'id_pobyt'
   proc rozpis_ceny() {
     duvod_typ.get; navrh.display(0); duvod_text.display(1)
   | navrh.display(1); duvod_text.display(0);
-    { the_soubeh.get; cena.set(ask('akce_vzorec_soubeh',the_pobyt.get,the_duakce.get,the_soubezna.get))
-    | cena.set(ask('akce_vzorec',the_pobyt.get)) };
+    { the_soubeh.get; cena.set(ask('akce2_vzorec_soubeh',the_pobyt.get,the_duakce.get,the_soubezna.get))
+    | cena.set(ask('akce2_vzorec',the_pobyt.get)) };
     navrh.set(cena.get('navrh'))
   }
   radio duvod_typ [7,100,284,Td-68] { data:pobyt.duvod_typ, value:'0', style:"border:1px solid gray"
@@ -1573,10 +1585,10 @@ form _cmd_p [,,623,30] { css:'ae_work'
     skill:'yaa+|yaa+'
     proc onclick() {
       var ret: object
-      ret.set(ask('akce_platba_prispevek1',the_pobyt.get));
+      ret.set(ask('akce2_platba_prispevek1',the_pobyt.get));
       ret.platit;
       [ confirm(ret.msg," - zaplatí nyní na akci do pokladny?");
-        ret.set(ask('akce_platba_prispevek2',the_pobyt.get));
+        ret.set(ask('akce2_platba_prispevek2',the_pobyt.get));
         warning(ret.msg); ]
     | alert(ret.msg);
     }
@@ -1655,7 +1667,7 @@ panel Strava [,,320,280] {type:'popup', title:'Nastavení nestandardního počtu
     [ polo.set(u.b.cstrava_pol.get); polo.get | polo.set(strava_def(u.b.strava_pol.get)) ];
     n.L.init;
     n.cele.set(u.b.strava_cel.get); n.polo.set(u.b.strava_pol.get);
-    arr.set(ask('akce_strava_denne',u.b.datum_od.get,dnu.get,cela.get,polo.get));
+    arr.set(ask('akce2_strava_denne',u.b.datum_od.get,dnu.get,cela.get,polo.get));
     each(arr.get,den);
   }
   proc strava_def(strav) {
@@ -1747,7 +1759,7 @@ panel Strava [,,320,280] {type:'popup', title:'Nastavení nestandardního počtu
       proc onclick() {
         scele.set(''); spolo.set('');
         each(L,save_den);
-        ask('akce_strava_denne_save',u.b.key_pobyt.get,dnu.get,
+        ask('akce2_strava_denne_save',u.b.key_pobyt.get,dnu.get,
           scele.get,u.b.strava_cel.get,u.b.cstrava_cel.get,
           spolo.get,u.b.strava_pol.get,u.b.cstrava_pol.get,prvni.get);
         panel.hide(0);

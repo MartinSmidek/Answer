@@ -14,5 +14,6 @@
     'skill'      => "'y'",
     'autoskill'  => "'!y'"
   );
-  answer_php('ys','Ans(w)er','ezer_ys','ck',array("ds/fce.js"),array("./ys/ys.css.php"),$options);
+  $css= array("./ezer2.2/client/ezer.css.php","./ys/ys.css.php");
+  answer_php('ys','Ans(w)er','ezer_ys','ck',array("ds/fce.js"),$css,$options);
 ?>
