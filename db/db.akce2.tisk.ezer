@@ -143,8 +143,8 @@ menu m {type:'left', active:*
                                         ,fld:'prijmeni,jmeno,_vek,narozeni,obec,psc,ulice'}}
     item {title:'Jednotlivci všichni podrobně'                                                          skill:'y;f;c'
                                         ,par:°{typ:'j',exp:'Excel2',cnd:'1',ord:'o.prijmeni,o.jmeno'
-                                        ,tit:'příjmení:15,jméno:12,věk:5,narození:12,/rč:5,obec:25,psč:7,ulice:25,dieta:12'
-                                        ,fld:'prijmeni,jmeno,_vek,narozeni,rc_xxxx,obec,psc,ulice,dieta'}}
+                                        ,tit:'příjmení:15,jméno:12,věk:5,narození:12,/rč:5,obec:25,psč:7,ulice:25,dieta:12,SPZ:10'
+                                        ,fld:'prijmeni,jmeno,_vek,narozeni,rc_xxxx,obec,psc,ulice,dieta,r_spz'}}
     item {title:'Jednotlivci všichni podrobněji'                                                        skill:'y;f;c'
                                         ,par:°{typ:'j',exp:'Excel2',cnd:'1',ord:'o.prijmeni,o.jmeno'
                                         ,tit:'příjmení:15,jméno:12,věk:5,narození:12,/rč:5,obec:25,psč:7,ulice:25,telefon:25,email:25,dieta:12'
