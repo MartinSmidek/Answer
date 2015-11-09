@@ -20,6 +20,6 @@
   );
   $js= array("https://apis.google.com/js/client.js?onload=Ezer.Google.ApiLoaded","ds/fce.js");
 //   $css= array("./ezer2.2/client/ezer.css.php","./db/db.css.php","./ys/ys.css.php");
-  $css= array("skins/ck.ezer.css");
+  $css= array("skins/ck/ck.ezer.css");
   answer_php('ys2','Ans(w)er','ezer_ys','ck',$js,$css,$options);
 ?>

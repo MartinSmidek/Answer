@@ -8,16 +8,16 @@
 
 /* osvědčené styly */
 .page_on {
-  cursor:default; background-color:#C2E2E2; z-index:0; border-radius:5px; text-align:center; }
+  cursor:default; background-color:#C0E2C2; z-index:0 !important; border-radius:5px; text-align:center; }
 .page_off {
-  cursor:default; background-color:#F1FCFD; z-index:0; border-radius:5px; text-align:center; }
+  cursor:default; background-color:#EFFDF1; z-index:0 !important; border-radius:5px; text-align:center; }
 .page_on:hover {
-  background:url("../../skins/db/label_switch_on_hover.png") repeat-x scroll 0 -1px transparent; }
+  background:url("../../skins/ck/label_switch_on_hover.png") repeat-x scroll 0 -1px transparent; }
 .page_off:hover {
-  background:url("../../skins/db/label_switch_off_hover.png") repeat-x scroll 0 -1px transparent; }
+  background:url("../../skins/ck/label_switch_off_hover.png") repeat-x scroll 0 -1px transparent; }
 
 .ae_work {
-  background-color:#C2E2E2; z-index:0; border-radius:5px; }
+  background-color:#C0E2C2; z-index:0; border-radius:5px; }
 .ae_parm        {
   background-color:#ef7f13; border:1px solid #f5f5f5; z-index:0; border-radius:5px; }
 
@@ -33,13 +33,13 @@
   outline-color:#f00 !important; }
 
 .drop_envelope {
-  background-color:#C2E2E2; border:2px dashed white; }
+  background-color:#C0E2C2; border:2px dashed white; }
 .drop_area {
   outline:2px dashed #fff; outline-radius:5px;  }
 .drop_area_hover {
   background-color:#ef7f13; cursor:move; }
 .drop_area_run {
-  background:url(../../skins/db/ajax_wait.gif) no-repeat center center;
+  background:url(../../skins/ck/ajax_wait.gif) no-repeat center center;
   color:transparent !important; cursor:wait; }
 
 /* obecné barvy a hodnoty pro atributy css */
@@ -73,7 +73,7 @@
   background-color:#f5f5f5; border:1px solid #f5f5f5; z-index:-1;
   border-radius:5px; }
 .work        {
-  background-color:#C2E2E2; z-index:0;
+  background-color:#C0E2C2; z-index:0;
   border-radius:5px; }
 .parm        {
   background-color:#ef7f13; border:1px solid #f5f5f5; z-index:0;
@@ -82,7 +82,7 @@
 /* layout */
 
 html,body {
-  background: #e6e6e6 url(../../skins/db/body_bg.png) repeat-x; }
+  background: #e6e6e6 url(../../skins/ck/body_bg.png) repeat-x; }
 body {
   font-family:Arial,Helvetica,sans-serif; padding:0; margin:0; font-size:9pt;
   position:static; overflow:hidden; }
@@ -102,10 +102,10 @@ textarea { resize: none; }
   /*overflow:auto;*/ position:relative; }
 #dolni {
   bottom:0; margin-top:2px; color:#000000; font-size:8pt;
-  width:100%; height:240px; z-index:998; border-top:1px solid #317676;
+  width:100%; height:240px; z-index:998; border-top:1px solid #2c8931;
   position:absolute; }
 .karta {
-  background:#299C9C url(../../skins/db/doc_menu.gif) no-repeat left center; color:#ffffff; overflow:hidden;
+  background:#56a15a url(../../skins/ck/doc_menu.gif) no-repeat left center; color:#ffffff; overflow:hidden;
   font-size:14px; font-weight:bold; margin:2px 0; padding:5px 50px; clear:both; white-space:nowrap; }
 
 /* login */
@@ -114,7 +114,7 @@ textarea { resize: none; }
 #login_1  { float:left; }
 #login_1.login_chngs, #login_2.login_chngs { height:180px; }
 #login_2  { float:right; }
-#login_1, #login_2  { width:250px; border:1px solid #299C9C; height:220px; background-color:#C2E2E2; }
+#login_1, #login_2  { width:250px; border:1px solid #56a15a; height:220px; background-color:#C0E2C2; }
 #login_1 div.login_a { padding:15px; }
 #login_2 div.login_a { padding:5px; height:180px; overflow-y:auto; }
 #login_2 div.login_a_msg { padding:5px; }
@@ -122,14 +122,14 @@ textarea { resize: none; }
 #login form { margin:0; padding:0;  }
 #login span { margin:0; padding:0;  }
 #login input { margin:2px 0 10px; padding:0 2px; width:auto; overflow:visible;}
-#login h1 { background-color:#299C9C; color:#FFFFFF; font-size:9pt; margin:0; padding:2px 5px;}
+#login h1 { background-color:#56a15a; color:#FFFFFF; font-size:9pt; margin:0; padding:2px 5px;}
 #login_on { text-decoration:underline; position:absolute; }
 #login_no { position:absolute; left:110px; }
 #watch_key   { padding:5px !important; }
-#login_chngs { margin-top:193px; border:1px solid #299C9C; height:180px; background-color:#C2E2E2; }
+#login_chngs { margin-top:193px; border:1px solid #56a15a; height:180px; background-color:#C0E2C2; }
 #login_chngs > div { padding:10px 5px; overflow-x:auto; height:141px; }
 #login_chngs span { padding:1px 5px; }
-#login_chngs span.chng_day { color:#299C9C; font-weight:bold; }
+#login_chngs span.chng_day { color:#56a15a; font-weight:bold; }
 #login_chngs div.chng { margin:-5px 0px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 
 /* úpravy Clintcide a Mootools */
@@ -144,7 +144,7 @@ textarea { resize: none; }
   position:absolute; z-index:0; margin-top:-10px; cursor:pointer;
   color:#FFAD39; font-size:20pt; font-weight:bold; }
 #appl {
-  color:#317676; font-size:20pt; font-weight:bold; position:absolute; right:6px; top:1px; }
+  color:#2c8931; font-size:20pt; font-weight:bold; position:absolute; right:6px; top:1px; }
 .MainBar {
   margin:0;/*10px 0 0 0;*/ padding:0;  }
 .MainBar a {
@@ -162,21 +162,21 @@ ul.MainMenu {
 .MainMenu li { _width:0; _height:23px;
  }
 .MainMenu li.Active {
-  background:url(../../skins/db/menu_on3.png) right top no-repeat; padding:0 6px 0 0; min-height:25px; }
+  background:url(../../skins/ck/menu_on3.png) right top no-repeat; padding:0 6px 0 0; min-height:25px; }
 .MainMenu .Active div {
-  background:url(../../skins/db/menu_on1.png) left top no-repeat; min-height:25px; }
+  background:url(../../skins/ck/menu_on1.png) left top no-repeat; min-height:25px; }
 .MainMenu .Pasive a:hover {
-  background-image:url(../../skins/db/menu_of2_hover.png); color:#317676; }
+  background-image:url(../../skins/ck/menu_of2_hover.png); color:#2c8931; }
 .MainMenu .Active a {
-  background-image:url(../../skins/db/menu_on2.png); }
+  background-image:url(../../skins/ck/menu_on2.png); }
 .MainMenu .Active a:hover {
-  background:transparent url(../../skins/db/menu_of3_hover.png) repeat-x scroll 0 0 !important; }
+  background:transparent url(../../skins/ck/menu_of3_hover.png) repeat-x scroll 0 0 !important; }
 .MainMenu .Pasive a {
   color:#4d4d4d; }
 
 ul.MainTabs {
   position:relative; height:30px; margin:0; padding:0; padding-top:2px; overflow:hidden;
-  background:transparent url(../../skins/db/submenu_bg.png) repeat-x scroll center top; }
+  background:transparent url(../../skins/ck/submenu_bg.png) repeat-x scroll center top; }
 .MainTabs li {
   margin:0; padding:0; height:100%; display:block; }
 .MainTabs a {
@@ -184,10 +184,10 @@ ul.MainTabs {
 .MainTabs a {
   color:#ffffff !important; }
 .MainTabs .Active a {
-  background:transparent url(../../skins/db/menu_on_hover.png) repeat-x scroll 0 0 !important;
+  background:transparent url(../../skins/ck/menu_on_hover.png) repeat-x scroll 0 0 !important;
   color:#ffffff; }
 .MainTabs a:hover {
-  background:transparent url(../../skins/db/menu_off_hover.png) repeat-x scroll 0 0 !important;  }
+  background:transparent url(../../skins/ck/menu_off_hover.png) repeat-x scroll 0 0 !important;  }
 .MainTabs span { }
 li#_help a {
   color:#ef7f13 !important; font-weight:bold !important; }
@@ -203,7 +203,7 @@ li#_help a {
 .MGroup {
   font-weight:bold; font-size: 11px; padding: 0 0 5px; text-transform: uppercase; text-decoration: none;}
 .MGroup a {
-  padding:6px 10px; text-decoration:none; display:block; background-color:#299C9C; color:#ffffff;
+  padding:6px 10px; text-decoration:none; display:block; background-color:#56a15a; color:#ffffff;
   text-align:right; border-right:4px solid #4d4d4d;
   cursor:pointer; font-weight:bold; _width:186px;
   white-space:nowrap; }
@@ -212,7 +212,7 @@ li#_help a {
 .MGroupContent {
   font-size: 11px; padding-top: 5px; font-weight: normal; text-transform:none; }
 .MSelected, .MFile a, .MIndex a, .MFile span {
-  display: block; padding: 4px 4px 4px 30px; margin: 2px 0; background-color:#C2E2E2; color:#4d4d4d;
+  display: block; padding: 4px 4px 4px 30px; margin: 2px 0; background-color:#C0E2C2; color:#4d4d4d;
   text-decoration: none; text-align: left; _width:172px;
   border-right: 4px solid #4d4d4d; font-weight: bold; }
 .MFile span {
@@ -297,48 +297,48 @@ div.systable {
 div.PanelPopup div.body{
   font-size:11px; line-height: 13px;}
 div.PanelPopup div.top_ul {
-  background:url(../../skins/db/clientcide/stickyWinHTML/full.png) top left no-repeat; _background:url(../../skins/db/clientcide/stickyWinHTML/full.gif) top left no-repeat;
+  background:url(../../skins/ck/clientcide/stickyWinHTML/full.png) top left no-repeat; _background:url(../../skins/ck/clientcide/stickyWinHTML/full.gif) top left no-repeat;
   height:26px; width:15px; float:left}
 div.PanelPopup div.top_ur {
   position:relative; left:0px !important; left:-4px; height:26px;
-  background:url(../../skins/db/clientcide/stickyWinHTML/full.png) top right !important; _background:url(../../skins/db/clientcide/stickyWinHTML/full.gif) top right !important;
+  background:url(../../skins/ck/clientcide/stickyWinHTML/full.png) top right !important; _background:url(../../skins/ck/clientcide/stickyWinHTML/full.gif) top right !important;
   margin:0px 0px 0px 15px !important; margin-right:-4px; padding:0px}
 div.PanelPopup h1.caption {
   clear: none !important; margin:0px !important; overflow: hidden; padding:0 !important;
   font-weight:bold; color:#555; font-size:14px !important; position:relative; top:8px !important;
   left:5px !important; float: left; height: 19px !important;}
 div.PanelPopup div.middle, div.PanelPopup div.closeBody {
-  background:url(../../skins/db/clientcide/stickyWinHTML/body.png) top left repeat-y; _background:url(../../skins/db/clientcide/stickyWinHTML/body.gif) top left repeat-y;
+  background:url(../../skins/ck/clientcide/stickyWinHTML/body.png) top left repeat-y; _background:url(../../skins/ck/clientcide/stickyWinHTML/body.gif) top left repeat-y;
   margin:0px 20px 0px 0px !important;
   margin-bottom: -3px; position: relative; top: 0px !important; top: -3px;}
 div.PanelPopup div.body {
-  background:url(../../skins/db/clientcide/stickyWinHTML/body.png) top right repeat-y; _background:url(../../skins/db/clientcide/stickyWinHTML/body.gif) top right repeat-y;
+  background:url(../../skins/ck/clientcide/stickyWinHTML/body.png) top right repeat-y; _background:url(../../skins/ck/clientcide/stickyWinHTML/body.gif) top right repeat-y;
   padding:8px 30px 8px 0px !important; margin-left:5px !important; position:relative; right:-20px !important;}
 div.PanelPopup div.bottom {
   clear:both }
 div.PanelPopup div.bottom_ll {
-  background:url(../../skins/db/clientcide/stickyWinHTML/full.png) bottom left no-repeat; _background:url(../../skins/db/clientcide/stickyWinHTML/full.gif) bottom left no-repeat;
+  background:url(../../skins/ck/clientcide/stickyWinHTML/full.png) bottom left no-repeat; _background:url(../../skins/ck/clientcide/stickyWinHTML/full.gif) bottom left no-repeat;
   width:15px; height:15px; float:left}
 div.PanelPopup div.bottom_lr {
-  background:url(../../skins/db/clientcide/stickyWinHTML/full.png) bottom right; _background:url(../../skins/db/clientcide/stickyWinHTML/full.gif) bottom right;
+  background:url(../../skins/ck/clientcide/stickyWinHTML/full.png) bottom right; _background:url(../../skins/ck/clientcide/stickyWinHTML/full.gif) bottom right;
   position:relative; left:0px !important; left:-4px; margin:0px 0px 0px 15px !important; margin-right:-4px; height:15px}
 div.PanelPopup div.closeButtons {
-  background:url(../../skins/db/clientcide/stickyWinHTML/body.png) top right repeat-y; _background:url(../../skins/db/clientcide/stickyWinHTML/body.gif) top right repeat-y;
+  background:url(../../skins/ck/clientcide/stickyWinHTML/body.png) top right repeat-y; _background:url(../../skins/ck/clientcide/stickyWinHTML/body.gif) top right repeat-y;
   text-align: center; padding: 0px 30px 8px 0px; margin-left:5px; position:relative; right:-20px}
 /*
 div.PanelPopup a.button:hover {
-  background:url(../../skins/db/clientcide/stickyWinHTML/big_button_over.gif) repeat-x}
+  background:url(../../skins/ck/clientcide/stickyWinHTML/big_button_over.gif) repeat-x}
 div.PanelPopup a.button {
-  background:url(../../skins/db/clientcide/stickyWinHTML/big_button.gif) repeat-x; margin: 2px 8px 2px 8px;
+  background:url(../../skins/ck/clientcide/stickyWinHTML/big_button.gif) repeat-x; margin: 2px 8px 2px 8px;
   padding: 2px 12px; cursor:pointer; border: 1px solid #999 !important; text-decoration:none;
   color: #000 !important;}
 */
 div.PanelPopup div.closeButton {
-  width:13px; height:13px; background:url(../../skins/db/clientcide/stickyWinHTML/closebtn.gif) no-repeat;
+  width:13px; height:13px; background:url(../../skins/ck/clientcide/stickyWinHTML/closebtn.gif) no-repeat;
   position: absolute; right: 0px; margin:10px 15px 0px 0px !important; cursor:pointer;top:0px}
 div.PanelPopup div.dragHandle {
   width:11px; height:22px; position:relative; top:5px; left:-3px; cursor: move;
-  background:url(../../skins/db/clientcide/stickyWinHTML/drag_corner.gif); float: left;}
+  background:url(../../skins/ck/clientcide/stickyWinHTML/drag_corner.gif); float: left;}
 
 /* klávesnice a změny */
 
@@ -378,11 +378,11 @@ input.changed:focus, textarea.changed:focus {
 .Label h1 {
   font-size:12pt; margin:0; padding:0 }
 .Label a {
-  color:#317676 /*!important;*/ }
+  color:#2c8931 /*!important;*/ }
 .Label a:hover, .href:hover {
   background-color:#ef7f13 !important; }
 .href {
-  text-decoration:underline; color:#317676; cursor:pointer; }
+  text-decoration:underline; color:#2c8931; cursor:pointer; }
 
 div.Element {
   position:absolute; }
@@ -391,9 +391,9 @@ div.Element .Label, div.Select .Label {
 
 div.LabelDrop {
   position:absolute; z-index:1; border:1px dashed #fff;
-  outline:3px solid #317676; background-color:#317676; }
+  outline:3px solid #2c8931; background-color:#2c8931; }
 div.LabelDropHover {
-  border:3px dashed #fff; outline:1px solid #317676; }
+  border:3px dashed #fff; outline:1px solid #2c8931; }
 div.LabelDrop > div {
   color:#fff; padding:0 5px; }
 div.LabelDrop > div + div {
@@ -491,7 +491,7 @@ ul.SelectDrop {
 .SelectDrop li.selected {
   background-color:#b2b4bf; }
 .SelectDrop li.li-sel {
-  color:#a90533 !important; background-image:url(img/srafa.png); background-repeat:repeat-x; }
+  color:#a90533 !important; background-image:url(../img/srafa.png); background-repeat:repeat-x; }
 .List {
   position:absolute; z-index:1; /*outline:1px dotted #fff;*/ overflow:auto; overflow-x:hidden; }
 .ListRow {
@@ -505,16 +505,16 @@ ul.SelectDrop {
   border-spacing:0px;
   z-index:2; position:absolute; empty-cells:show; padding:0; width:0;
   margin:0; table-layout:fixed; border-collapse:separate; background-color:#ccc;
-  font-size:9pt; border:1px solid #299C9C; overflow:hidden; }
+  font-size:9pt; border:1px solid #56a15a; overflow:hidden; }
 .BrowseSmart input.BrowseFocus  {
   width:10px; padding:0; margin:0; height:10px; border:0; outline:0px !important; }
 /* hlavička */
 .BrowseSmart td.th {
-  background:url(../../skins/db/browse_header.png) repeat-x center -1px;
+  background:url(../../skins/ck/browse_header.png) repeat-x center -1px;
   color:#4d4d4d; font-size:9pt; font-weight:bold; vertical-align:middle; cursor:default;
   height:17px; line-height:12px; text-align:left; overflow:hidden; padding:0; text-indent:5px; }
 .BrowseSmart td.ShowSort:hover {
-  background:transparent url(../../skins/db/browse_sort_hover.png) repeat-x scroll 0 -1px !important;  }
+  background:transparent url(../../skins/ck/browse_sort_hover.png) repeat-x scroll 0 -1px !important;  }
 .BrowseSmart td.th span {
   display:block; margin-left:5px; margin-right:5px; overflow:hidden; }
 .BrowseSmart td img.sort {
@@ -534,7 +534,7 @@ td.BrowseNoClmn img.sort {
   border-left:1px solid #ccc; border-bottom:1px solid #ccc;
   vertical-align:top; }
 .BrowseSmart .BrowseQry input {
-  background-color:#F1FCFD; border:0; padding:0px; width:100%; height:16px; font:inherit;
+  background-color:#EFFDF1; border:0; padding:0px; width:100%; height:16px; font:inherit;
   line-height:14px; margin:-1px 0; }
 /* řádky */
 .BrowseSmart tr {
@@ -544,9 +544,9 @@ td.BrowseNoClmn img.sort {
   vertical-align:bottom; cursor:default; padding:0 2px; /*line-height:14px;*/
   border-left:1px solid #ccc; border-bottom:1px solid #ccc;  }
 .BrowseSmart td.tag0 {
-  background-color:#C2E2E2; padding:0; }
+  background-color:#C0E2C2; padding:0; }
 .BrowseSmart td.tag1 {
-  background-image:url(../../skins/db/browse_mark2.gif); width:10px; }
+  background-image:url(../../skins/ck/browse_mark2.gif); width:10px; }
 .BrowseSmart td.tr-even {
   background-color:#ffffff; }
 .BrowseSmart td.tr-odd {
@@ -558,18 +558,18 @@ td.BrowseNoClmn img.sort {
 .BrowseSmart td.BrowseNoClmn {
   padding-left:0; border-left:0; width:0; }
 .BrowseSmart .tr-sel td.tr-odd, .BrowseSmart .tr-sel td.tr-even {
-  background-image:url(img/srafa.png); background-repeat:repeat-x;  }
+  background-image:url(../img/srafa.png); background-repeat:repeat-x;  }
 /* input */
 .BrowseSmart input.td_input {
   height:15px; position:relative; margin:-1px 2px -1px -3px; padding-left:2px;
   outline:2px dotted yellow; border:0px; font:inherit; background-color:#ffffaa}
 /* reload */
 .BrowseSmart td.BrowseReload {
-  background:url(../../skins/db/browse_reload.png) no-repeat !important; cursor:pointer !important;
+  background:url(../../skins/ck/browse_reload.png) no-repeat !important; cursor:pointer !important;
   padding:0; width:8px; }
 /* posuvník */
 .BrowseSmart td.BrowseSet {
-  background:url(../../skins/db/browse_set.png) no-repeat !important; cursor:pointer !important;
+  background:url(../../skins/ck/browse_set.png) no-repeat !important; cursor:pointer !important;
   padding:0; width:16px; }
 .BrowseSmart div.BrowsePosuv {
   z-index:1; width:16px; background-color:#e6e6e6; }
@@ -578,27 +578,27 @@ td.BrowseNoClmn img.sort {
 .BrowseSmart .BrowseUp, .BrowseSmart .BrowseDn, .BrowseSmart .BrowseHandle {
   height: 16px; width: 15px;
   background-color:#e6e6e6; background-repeat:no-repeat; background-position:center; }
-.BrowseSmart .BrowseUp       { background-image:url(../../skins/db/browse_pgup0.png); }
-.BrowseSmart .BrowseUp.act   { background-image:url(../../skins/db/browse_pgup.png); }
-.BrowseSmart .BrowseUp.act:hover { background-image:url(../../skins/db/browse_pgup_act.png); }
-.BrowseSmart .BrowseDn       { background-image:url(../../skins/db/browse_pgdn0.png); }
-.BrowseSmart .BrowseDn.act   { background-image:url(../../skins/db/browse_pgdn.png); }
-.BrowseSmart .BrowseDn.act:hover { background-image:url(../../skins/db/browse_pgdn_act.png); }
+.BrowseSmart .BrowseUp       { background-image:url(../../skins/ck/browse_pgup0.png); }
+.BrowseSmart .BrowseUp.act   { background-image:url(../../skins/ck/browse_pgup.png); }
+.BrowseSmart .BrowseUp.act:hover { background-image:url(../../skins/ck/browse_pgup_act.png); }
+.BrowseSmart .BrowseDn       { background-image:url(../../skins/ck/browse_pgdn0.png); }
+.BrowseSmart .BrowseDn.act   { background-image:url(../../skins/ck/browse_pgdn.png); }
+.BrowseSmart .BrowseDn.act:hover { background-image:url(../../skins/ck/browse_pgdn_act.png); }
 .BrowseSmart .BrowseHandleUp   {
-  background-image:url(../../skins/db/browse_handle_up.png); height:6px;
+  background-image:url(../../skins/ck/browse_handle_up.png); height:6px;
   background-position: 1px top; background-repeat: no-repeat; }
 .BrowseSmart .BrowseHandleMi   {
-  background-image:url(../../skins/db/browse_handle_mi.png); height:100%;
+  background-image:url(../../skins/ck/browse_handle_mi.png); height:100%;
   background-position: 1px center; background-repeat: repeat-y; }
 .BrowseSmart .BrowseHandleMi:hover {
-  background-image:url(../../skins/db/browse_handle_act_mi.png); }
+  background-image:url(../../skins/ck/browse_handle_act_mi.png); }
 .BrowseSmart .BrowseHandleDn   {
-  background-image:url(../../skins/db/browse_handle_dn.png); height:6px; bottom:0px;
+  background-image:url(../../skins/ck/browse_handle_dn.png); height:6px; bottom:0px;
   background-position: 1px bottom; background-repeat: no-repeat; }
-.BrowseSmart div.BrowseHandle:hover { background-image:url(../../skins/db/browse_handle_act.png); }
+.BrowseSmart div.BrowseHandle:hover { background-image:url(../../skins/ck/browse_handle_act.png); }
 /* patička */
 .BrowseSmart th {
-  background:url(../../skins/db/browse_header.png) repeat-x center center; color:#4d4d4d; font-size:8pt;
+  background:url(../../skins/ck/browse_header.png) repeat-x center center; color:#4d4d4d; font-size:8pt;
   height:14px; text-align:left; border:0; white-space:nowrap; overflow:hidden; cursor:default; }
 
 /* patička */
@@ -612,14 +612,14 @@ td.BrowseNoClmn img.sort {
   position:absolute; top:-15px; right:0;
   background-color:#ef7f13; color:#ffffff;  }
 #status_bar {
-  background:#eee url(../../skins/db/foot_bg.png) repeat-x; color:#ffffff; position:absolute;
+  background:#eee url(../../skins/ck/foot_bg.png) repeat-x; color:#ffffff; position:absolute;
   height:15px; top:-16px; width:100%; padding:1px 0 0; }
 #status_bar span {
   padding:1px 4px; margin:0 2px; }
 hr.cleaner {
   clear:both; display:none; }
 #dolni a {
-  text-decoration:none; color:#317676; }
+  text-decoration:none; color:#2c8931; }
 #dolni pre {
   font-family:Consolas; }
 #dolni .line {
@@ -646,7 +646,7 @@ hr.cleaner {
 div.chng {
     width:100%; }
 span.chng_day {
-    background-color:#C2E2E2; color:#4d4d4d;padding:1px 5px; }
+    background-color:#C0E2C2; color:#4d4d4d;padding:1px 5px; }
 span.chng_hlp {
     padding:1px 5px; }
 
@@ -690,13 +690,13 @@ span.chng_hlp {
 .ae_switch_on {
   background-color:#ef7f13; color:#ffffff;  }
 .ae_switch_sel {
-  background-color:#ef7f13; color:#317676;  }
+  background-color:#ef7f13; color:#2c8931;  }
 #kuk div.trace {
   margin-left:70px; color:#000; padding:0; white-space:pre-wrap; }
 #kuk div.trace_hide {
   margin-left:70px; color:#777; height:13px; overflow:hidden; white-space:pre-line; }
 #kuk span.trace_on {
-  background:url(../../skins/db/tree.png) no-repeat 55px -104px; color:#777;
+  background:url(../../skins/ck/tree.png) no-repeat 55px -104px; color:#777;
   width:69px; margin:0; padding:0; float:left; left:0; }
 #kuk span.trace_click {
   background-color:#ddd; }
@@ -729,22 +729,22 @@ span.chng_hlp {
          	{ background: #ccc; padding: 3px 10px; font-size: 18px; text-transform: uppercase;
                   font-size: 15px;}
 .CProperty .CTitle, .CFunction .CTitle, .CMenu .CTitle, .CForm .CTitle, #Content h1
-         	{ color: #fff; background-color:#317676; padding: 6px 10px;
+         	{ color: #fff; background-color:#2c8931; padding: 6px 10px;
                    background-repeat: no-repeat; background-position: center left;
                    /*text-shadow: 2px 2px 1px #5e708e;*/ }
 .CMenu .CTitle, #Content h1
-         	{ padding-left: 50px; background-image: url(img/doc_menu.gif);}
+         	{ padding-left: 50px; background-image: url(../img/doc_menu.gif);}
 .CProperty .CTitle
-         	{ padding-left: 50px; background-image: url(img/method.png);}
+         	{ padding-left: 50px; background-image: url(../img/method.png);}
 .CFunction .CTitle
-         	{ padding-left: 60px; background-image: url(img/function.png);}
+         	{ padding-left: 60px; background-image: url(../img/function.png);}
 .CClass .CTitle
-         	{ padding-left: 40px; background-image: url(img/class.png);}
+         	{ padding-left: 40px; background-image: url(../img/class.png);}
 .CModule .CTitle
-         	{ padding-left: 40px; background-image: url(img/doc_module.gif);}
+         	{ padding-left: 40px; background-image: url(../img/doc_module.gif);}
 .CForm .CTitle
-         	{ padding-left: 40px; background-image: url(img/doc_form.gif);
-                  background-color:#317676 ; }
+         	{ padding-left: 40px; background-image: url(../img/doc_form.gif);
+                  background-color:#2c8931 ; }
 #Content pre    { font: 12px "Monaco", "Courier New", Monospace; background: #f5f5f5;
                   border: 1px solid #ddd; padding: 10px 15px; color: #444; margin-left: 30px;
                   overflow: auto !important; overflow: scroll; line-height: 1.5;}
@@ -789,7 +789,7 @@ h4.CHeading, .STitle
 /*help*/
 
 div.Form>div.ContextHelp {
-                  background:url(../../skins/db/clientcide/stickyWinHTML/body.png) scroll center bottom repeat-y;
+                  background:url(../../skins/ck/clientcide/stickyWinHTML/body.png) scroll center bottom repeat-y;
                   padding:10px 0 10px 10px; color:black; overflow:auto }
 .ContextHelp img{ padding:5px; overflow: auto; }
 .ContextHelp hr { clear:both; color:transparent }
@@ -806,13 +806,15 @@ div.HelpList    { float:right; background-color:#ffffff; padding:10px;
                   max-width: 230px; word-wrap:break-word; }
 .HelpList ul    { margin:0; padding:0 10px; }
 
+
+
 /* Android */
 body { position:absolute; width:100%; height:100%; }
 #paticka { bottom:0; }
 
 /* ladÄ›nÃ­ */
 .nogrid {
-  background:#e6e6e6 /*url(../../skins/db/ezer_layout.png)*/ !important; }
+  background:#e6e6e6 /*url(../../skins/ck/ezer_layout.png)*/ !important; }
 
 /* obecnÃ© barvy pÃ­sma */
 .cervena { color:#f00; }
@@ -829,21 +831,21 @@ body { position:absolute; width:100%; height:100%; }
 .zeleny         { background-color:#77ff77 !important; }
 .modry          { background-color:#7389ae !important; }
 .fialovy        { background-color:#d27efc !important; }
-.jemna          { background-color:#C2E2E2; }
+.jemna          { background-color:#C0E2C2; }
 
 /* specifickÃ© */
 .db_sep { margin-top:3px; width:100%; }
-.db_hr  { border-top:1px solid #299C9C; }
-.db_evidence {  font-size:9px; background-color:#C2E2E2; height:15px;
-                color:#299C9C; font-weight:bold; padding:0 2px; }
+.db_hr  { border-top:1px solid #56a15a; }
+.db_evidence {  font-size:9px; background-color:#C0E2C2; height:15px;
+                color:#56a15a; font-weight:bold; padding:0 2px; }
 button.db_evidence:disabled { color:silver; }
-.curr_akce { background-color:#299C9C !important; color:#ffffff; font-weight:bold; }
-.form_note { font-size:10px; color:#299C9C }
+.curr_akce { background-color:#56a15a !important; color:#ffffff; font-weight:bold; }
+.form_note { font-size:10px; color:#56a15a }
 .title_ref { color:#ffffff !important; }
 .title_ref a { color:#ffffff !important; }
-.karta_info { background-color:#F1FCFD; overflow: auto; }
+.karta_info { background-color:#EFFDF1; overflow: auto; }
 .neucast  { text-decoration:line-through; color:#aaaaaa; }
-.elim_goal { outline:3px solid #299C9C; z-index:1 !important; }
+.elim_goal { outline:3px solid #56a15a; z-index:1 !important; }
 
 .shift_up   { z-index:1; }
 .shift_up[class*=ae_frame],.shift_up[class*=ae_form2] {
@@ -871,7 +873,7 @@ div.ContextHelp img {
 #login_1, #login_2  { height:180px; }
 div.Element .Label, div.Select .Label, div.FieldDate .Label { margin-top:1px }
 .BrowseSmart td.BrowseQry input {
-  background-color:#F1FCFD; }
+  background-color:#EFFDF1; }
 .Panel {
   width:100%; }
 /*.SelectDrop li {
@@ -894,42 +896,42 @@ div.Element .Label, div.Select .Label, div.FieldDate .Label { margin-top:1px }
 .info-stat      { width:624px; height:100%; z-index:0; background-color:#dce7f4; padding:5px; }
 /* Label jako pÅ™epÃ­nacÃ­ tlaÄÃ­tko */
 .ae_butt_on {
-  cursor:default; background-color:#C2E2E2; z-index:0; border-radius:5px; text-align:center;  }
+  cursor:default; background-color:#C0E2C2; z-index:0; border-radius:5px; text-align:center;  }
 .ae_butt_off {
-  cursor:default; background-color:#F1FCFD; z-index:0; border-radius:5px; text-align:center;  }
+  cursor:default; background-color:#EFFDF1; z-index:0; border-radius:5px; text-align:center;  }
 .ae_butt_on:hover {
   background:url("../../skins/ck/label_switch_on_hover.png") repeat-x scroll 0 -1px transparent; }
 .ae_butt_off:hover {
   background:url("../../skins/ck/label_switch_off_hover.png") repeat-x scroll 0 -1px transparent; }
 /* pÅ™enesenÃ­ barev */
-.frame_label_big { color:#299C9C; font-weight:bold; padding-left:5px; font-size:13px; }
-.frame_label_up { color:#299C9C; font-weight:bold; padding-left:5px; }
+.frame_label_big { color:#56a15a; font-weight:bold; padding-left:5px; font-size:13px; }
+.frame_label_up { color:#56a15a; font-weight:bold; padding-left:5px; }
 .frame_label_dn { color:white;    font-weight:bold; padding-left:5px; }
 /* rÃ¡meÄky formulÃ¡Å™Å¯ */
 .ae_info        {
   background-color:#f5f5f5; border:1px solid #f5f5f5; z-index:-1;
   border-radius:5px; }
 .ae_work        {
-  background-color:#C2E2E2; z-index:0;
+  background-color:#C0E2C2; z-index:0;
   border-radius:5px; }
 .ae_form        {
-  background-color:#C2E2E2; z-index:0; border:1px solid #299C9C; color:#299C9C;
+  background-color:#C0E2C2; z-index:0; border:1px solid #56a15a; color:#56a15a;
   border-radius:3px; text-indent:7px; font-weight:bold; }
 .ae_form2       {
-  background-color:#C2E2E2; z-index:0; border:1px solid white; color:white;
+  background-color:#C0E2C2; z-index:0; border:1px solid white; color:white;
   border-radius:3px; text-indent:7px; font-weight:bold; }
 .form_switch    {
-  background-color:#C2E2E2; cursor:default; font-weight:bold; }
+  background-color:#C0E2C2; cursor:default; font-weight:bold; }
 .ae_part        {
-  background-color:#C2E2E2; border:1px solid #299C9C; z-index:0;
+  background-color:#C0E2C2; border:1px solid #56a15a; z-index:0;
   border-radius:5px;  }
 .ae_part_label {
-  background-color:#C2E2E2; color:#299C9C; padding:0 5px; z-index:0; }
+  background-color:#C0E2C2; color:#56a15a; padding:0 5px; z-index:0; }
 .ae_parm        {
   background-color:#ef7f13; border:1px solid #f5f5f5; z-index:0;
   border-radius:5px; }
 .ae_frame       {
-  background-color:#C2E2E2; z-index:0; border:1px solid #299C9C; border-radius:3px;  }
+  background-color:#C0E2C2; z-index:0; border:1px solid #56a15a; border-radius:3px;  }
 /* barvenÃ­ Å™Ã¡dkÅ¯ browse */
 .nakursu        { background-color:#dfa66f !important; }
 .fis_red        { background-color:#933; }
@@ -969,7 +971,7 @@ table.dary      { width:200px; }
 div.stat        { padding-right:15px; }
 table.stat      { border-collapse:collapse; font-size:8pt; /*width:100%;*/ }
 .stat td        { border:1px solid #777; background-color:#fff; padding:0 3px;}
-.stat th        { border:1px solid #777; background-color:#C2E2E2; }
+.stat th        { border:1px solid #777; background-color:#C0E2C2; }
 .stat dt        { margin:10px 0 0 0; }
 #proj table     { border-collapse:collapse; }
 #proj td        { border:1px solid #aaa;font:x-small Arial;color:#777;padding:0 3px;}

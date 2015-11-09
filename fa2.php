@@ -16,6 +16,6 @@
     'autoskill'  => "'!f'"
   );
 //   $css= array("./ezer2.2/client/ezer.css.php","./db/db.css.php","./fa/fa.css.php");
-  $css= array("skins/ch.ezer.css");
+  $css= array("skins/ch/ch.ezer.css");
   answer_php('fa2','Ans(w)er - Familia','ezer_fa','ch',array(),$css,$options);
 ?>

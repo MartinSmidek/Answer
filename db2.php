@@ -21,6 +21,6 @@
     'autoskill'    => "'!d'"
   );
 //   $css= array("./ezer2.2/client/ezer.css.php","./db/db.css.php","./db2/db2.css.php");
-  $css= array("skins/db.ezer.css","./db2/db2.css");
+  $css= array("skins/db/db.ezer.css","./db2/db2.css");
   answer_php('db2','Answer (společný)','ezer_db2','db',array(),$css,$options);
 ?>

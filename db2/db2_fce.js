@@ -13,6 +13,15 @@ function personify(access) {
   }
   return 1;
 }
+// ---------------------------------------------------------------------------------------- je_1_2_5
+// výběr správného tvaru slova podle množství a tabulky tvarů pro 1,2-4,5 a více
+// např. je_1_2_5(dosp,"dospělý,dospělí,dospělých")
+function je_1_2_5(kolik,tvary) {
+  tvar= tvary.split(',');
+  return kolik>4 ? tvar[2] : (
+         kolik>1 ? tvar[1] : (
+         kolik>0 ? tvar[0] : tvar[2]));
+}
 // ======================================================================================> Ezer.Form
 Ezer.Form.implement({
 // ------------------------------------------------------------------------------- on_dblclk_copy_to
