@@ -10,6 +10,7 @@ var staty='CZ,SK,A,D,PL,UA,H,FIN,BG,I,NL,CDN,USA,?' // seznam států, (později
 
 # dotaz na datovou oprávněnost
 var access=0                    // datová práva přihlášeného uživatele
+var my_org=0                    // datová příslušnost přihlášeného uživatele
 proc accessed(org) {
   return(function('x','y','return x&y;',org,access.get));
 }
@@ -36,6 +37,7 @@ proc akce_onstart() {
   dirty.get
 | dirty.set(1);
   access.set(sys('user','access'));
+  my_org.set(sys('user','org'));
   # úprava vzhledu aplikace pro uživatele s org=1|2
   function('access',"return personify(access);",access.get);
   # hodnoty zapamatované pro navázání na předchozí session

@@ -57,14 +57,24 @@ function answer_php($app,$app_name,$db_name,$skin,$js_lib,$css_lib,$options) {
 
   $title_style= $title_style ? " style='$title_style'" : '';
 
-  // cesty
+//   // cesty
+//   $path= $_SERVER['PHP_SELF'];
+//   $path= substr($path,0,strrpos($path,'/'));
+//   $path= substr($path,0,strrpos($path,'/'));
+//   $abs_root= $_SERVER['DOCUMENT_ROOT'].$path;
+//   $rel_root= $_SERVER['HTTP_HOST'].$path;
+//   $app_rel_path= $path;
+//   $_SESSION[$app]['app_path']= $path;
+
+  // cesty II
   $path= $_SERVER['PHP_SELF'];
   $path= substr($path,0,strrpos($path,'/'));
   $path= substr($path,0,strrpos($path,'/'));
-  $abs_root= $_SERVER['DOCUMENT_ROOT'].$path;
-  $rel_root= $_SERVER['HTTP_HOST'].$path;
-  $app_rel_path= $path;
-  $_SESSION[$app]['app_path']= $path;
+  $rel_root= str_replace('//','/',$_SERVER['HTTP_HOST'].$path);
+  $abs_root= str_replace('//','/',$_SERVER['DOCUMENT_ROOT'].$path);
+  $_SESSION[$app]['abs_root']= $abs_root;
+  $_SESSION[$app]['rel_root']= $rel_root;
+  $_SESSION[$app]['app_path']= "";
 
   set_include_path(get_include_path().PATH_SEPARATOR.$abs_root);
 

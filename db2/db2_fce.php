@@ -2873,13 +2873,14 @@ function tisk2_sestava_lidi($akce,$par,$title,$vypis,$export=false) { trace();
     $cnd.= " AND p.id_pobyt IN ($par->selected)";
   }
   // data akce
-  $r_fld= "id_rodina,nazev,ulice,psc,obec,stat,note,emaily,telefony";
+  $r_fld= "id_rodina,nazev,ulice,psc,obec,stat,note,emaily,telefony,spz";
   $qry=  "
     SELECT
       p.pouze,p.poznamka,p.platba,p.funkce,
       o.prijmeni,o.jmeno,o.narozeni,o.rc_xxxx,o.note,o.obcanka,o.clen,o.dieta,
       IFNULL(r2.id_rodina,r1.id_rodina) AS id_rodina,
       IFNULL(r2.nazev,r1.nazev) AS r_nazev,
+      IFNULL(r2.spz,r1.spz) AS r_spz,
       IF(o.adresa,o.ulice,IFNULL(r2.ulice,r1.ulice)) AS ulice,
       IF(o.adresa,o.psc,IFNULL(r2.psc,r1.psc)) AS psc,
       IF(o.adresa,o.obec,IFNULL(r2.obec,r1.obec)) AS obec,
@@ -7173,18 +7174,18 @@ function elim2_data_rodina($idr) {  //trace();
 /** =========================================================================================> MAIL2 **/
 # =======================================================================================> . mailist
 # --------------------------------------------------------------------------------- mail2_lst_access
-# vrátí údaje daného maillistu s provedenou substitucí podle access uživatele
+# vrátí údaje daného maillistu (ZRUŠENO: s provedenou substitucí podle access uživatele)
 function mail2_lst_access($id_mailist) {  trace();
   global $USER;                                         // debug($USER);
   $ml= select_object('*','mailist',"id_mailist=$id_mailist");
-  if ( !strpos($ml->sexpr,'[HAVING_ACCESS]') ) {
-    fce_warning("dotaz zatím není uzpůsoben pro obě databáze - stačí jej znovu uložit");
-    $ml->warning= 1;
-    goto end;
-  }
+//   if ( !strpos($ml->sexpr,'[HAVING_ACCESS]') ) {
+//     fce_warning("dotaz zatím není uzpůsoben pro obě databáze - stačí jej znovu uložit");
+//     $ml->warning= 1;
+//     goto end;
+//   }
   $ml->sexpr= str_replace('&lt;','<',str_replace('&gt;','>',$ml->sexpr));
-  // doplnění práv uživatele
-  $ml->sexpr= str_replace('[HAVING_ACCESS]',"HAVING o.access&{$USER->access}",$ml->sexpr);
+//   // doplnění práv uživatele
+//   $ml->sexpr= str_replace('[HAVING_ACCESS]',"HAVING o.access&{$USER->access}",$ml->sexpr);
 end:
   return $ml;
 }
@@ -7249,10 +7250,11 @@ function mail2_lst_posli_spec($id_dopis) {  trace();
 }
 # ----------------------------------------------------------------------------------- mail2_lst_read
 # převod parm do objektu
-function mail2_lst_read($parm) { trace();
+function mail2_lst_read($parm) { //trace();
   global $json;
   $obj= $json->decode($parm);
   $obj= isset($obj->ano_akce) ? $obj : 0;
+                                                debug($obj,"mail2_lst_read($parm)");
   return $obj;
 }
 # ------------------------------------------------------------------------------------ mail2_lst_try
@@ -7262,13 +7264,17 @@ function mail2_lst_try($gq,$mode=0) { trace();
   global $USER;                                         // debug($USER);
   $access= $USER->access;
   $html= $del= '';
+  if ( !$gq ) {
+    $html= "mail-list nebyl uložen";
+    goto end;
+  }
   switch ($mode) {
   case 0:
     $n= $nw= $nm= $nx= 0;
     $gq= str_replace('&gt;','>',$gq);
     $gq= str_replace('&lt;','<',$gq);
-    // doplnění práv uživatele
-    $gq= str_replace('[HAVING_ACCESS]',"HAVING o.access&$access",$gq);
+    // ZRUŠENO: doplnění práv uživatele
+    // $gq= str_replace('[HAVING_ACCESS]',"HAVING o.access&$access",$gq);
     $gr= @mysql_qry($gq);
     if ( !$gr ) {
       $html= mysql_error()."<hr>".nl2br($gq);
@@ -7388,7 +7394,7 @@ function mail2_mai_potvr($druh,$o,$rok) {  trace();
 }
 # ----------------------------------------------------------------------------------- mail2_mai_text
 # přečtení mailu
-function mail2_mai_text($id_dopis) {  trace();
+function mail2_mai_text($id_dopis) {  //trace();
   $d= null;
   try {
     $qry= "SELECT * FROM dopis WHERE id_dopis=$id_dopis ";
@@ -8278,7 +8284,7 @@ function mail2_gen_excel($gq,$nazev) { trace();
   // zahájení exportu
   $ymd_hi= date('Ymd_Hi');
   $dnes= date('j. n. Y');
-  $t= "$nazev, stav ke dni $dnes";
+  $t= "mail-list $nazev, stav ke dni $dnes";
   $file= "maillist_$ymd_hi";
   $type= 'xls';
   $par= (object)array('dir'=>$ezer_root,'file'=>$file,'type'=>$type,'title'=>$t,'color'=>'aac0cae2');
@@ -8303,11 +8309,13 @@ function mail2_gen_excel($gq,$nazev) { trace();
   $gr= @mysql_query($gq);
   if ( !$gr ) { fce_warning(mysql_error()); goto end; }
   while ( $gr && ($g= mysql_fetch_object($gr)) ) {
+                                                display('');
     foreach ($g as $f => $val) {
       if ( in_array($f,$fields) ) {
         $a= $val;
         if ( isset($pipe[$f]) ) $a= $pipe[$f]($a);
         $values[$f]= $a;
+                                                display_("$a ");
       }
     }
     export_row($values,":: border=+h");
@@ -9006,7 +9014,7 @@ function db2_sys_transform($par) { trace();
     'dar' =>     array('access','id_dar','id_osoba','id_rodina'),
     'dopis' =>   array('access','id_dopis','id_duakce','id_mailist'),
     'join_akce'=>array(         'id_akce'),
-    'mailist' => array(         'id_mailist'),
+    'mailist' => array('access','id_mailist'),
     'osoba' =>   array('access','id_osoba'),
     'platba' =>  array(         'id_platba','id_osoba','id_rodina','id_duakce','id_pokl'),
     'pobyt' =>   array(         'id_pobyt','id_akce','i0_rodina'),
@@ -9131,6 +9139,11 @@ function db2_sys_transform($par) { trace();
           $html.= "<br>$tab: vloženo $nr záznamů";
         }
         mysql_qry("DROP TABLE IF EXISTS ezer_db2._tmp_");
+        // pročištění mailist
+        if ( $ok && $tab=='mailist' ) {
+          $ok= mysql_qry("DELETE mailist FROM mailist LEFT JOIN dopis USING (id_mailist)
+                          WHERE ISNULL(id_dopis)");
+        }
       }
       break;
     // ---------------------------------------------- import: imp_user

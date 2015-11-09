@@ -1,9 +1,9 @@
 # Systém Ans(w)er pro YMCA Familia a YMCA Setkání
 # (c) 2008-2010 Martin Šmídek <martin@smidek.eu>
 
-menu db2 { type:'main', title:'fa2', active:*, _sys:'*'
+menu db2 { type:'main', title:'db2', active:*, _sys:'*'
   var global: text,
-  tabs db2 {title:"Databáze2", _sys:'*', include:'onload,db2.akce2', active:*, skill:'fa;ya' }
+  tabs akce2 {title:"Databáze2", _sys:'*', include:'onload,db2.akce2', active:*, skill:'fa;ya' }
   tabs syst {title:"Systém", _sys:'sys',  include:'onclick,ezer2.syst', active:*
     panel oso {type:'right', title:'Osobní nastavení', _sys:'*', include:'onclick,ezer2.pers' }
     panel nas {type:'right', title:'Data', _sys:'nas', skill:'a'
@@ -38,7 +38,7 @@ menu db2 { type:'main', title:'fa2', active:*, _sys:'*'
       use info: form right [12,4,,]
     }
   }
-  tabs doc  {title:"Nápověda", _sys:'*',  include:'onclick,ezer2.help' }
+  tabs doc  {title:"Nápověda", _sys:'*',  include:'onload,ezer2.help' }
   tabs off  {title:"Odhlásit", type:'logoff' }
   // univerzální procedury
   proc the_formsave (f,b) {
@@ -177,15 +177,8 @@ table _file_ {
 }
 
 table _cis { key_id:'id_cis'
-  number id_cis
-  text druh,
-  text data,
-  text zkratka,
-  number poradi,
-  text hodnota,
-  text popis,
-  text barva,
-  text ikona
+  number id_cis text druh, text data, text zkratka, number poradi,
+  text hodnota, text popis, text barva, text ikona
 }
 
 map ms_akce_clen:     table _cis {where:"druh='ms_akce_clen'",     order:'poradi', key_id:'data'}
