@@ -41,7 +41,7 @@ proc ini(i,k,uq,on,off) {
   et.form_init; vy.note_Q.display(0);
   switch(k,
   'gq',{et.get.display(0); es.get.display(0); gq.get.display(1);        // mail-listy
-        sq.get.display(0); vy.get.display(0,'es'); gq.reload},
+        sq.get.display(0); vy.get.display(0,'es'); gq.m_reload},
   'et',{et.get.display(1); es.get.display(0); gq.get.display(0); vy.note_Q.display(1);
         sq.get.display(0); vy.get.display(0,'es'); et.reload},
   'sq',{et.get.display(0); es.get.display(0); gq.get.display(0);
@@ -52,7 +52,7 @@ proc ini(i,k,uq,on,off) {
 }
 
 # ------------------------------------------------------------------------------------------==> menu
-menu m {type:'left', format:'f-'
+menu m {type:'left', format:'f+'
   menu g {title:'Vytvoření hromadného mailu', type:'group'
     item i {title:'[fa-envelope-o] podle zvoleného mail-listu', _sys:'gen'
       proc onclick (i) {
@@ -134,7 +134,8 @@ form _vyber {
   select komu_G  [82,15,289,17] { tag:'gen', type:'map', options:map_db_mailist.ucel, format:'nt'
     help:'komu|výběr mail-listu'
     proc onchange() {
-      switch(karta.get,'et',{et.reload},'es',{es.reload},'sq',{sq.reload},'gq',{gq.reload})
+      switch(karta.get,'et',{et.reload},'es',{es.reload},'sq',{sq.reload},
+        'gq',{gq.id_mailist.set(this.key); gq.m_reload})
   } }
   # --------------------------- rozesílání
   label popis [391,19,240,19] { tag:'es', format:'n', title:"
@@ -169,6 +170,7 @@ var sql_dirty: number  // nuluje se fcí dirty
 form _gsql {
   view g: table mailist
   field id_mailist { data:g.id_mailist }
+  field access { data:g.access }
   label [5,44,76,17] { title:'název:', format:'r' }
   field ucel  [83,40,267,]  { data:g.ucel, value:'' proc onchange() {
     eq(vy.komu_G.key,1);
@@ -185,7 +187,7 @@ form _gsql {
   button qry_save [l_butt+7,t_butt+5,,] { tag:'def',title:'Uložit',  help:'Uložit mail-list',
     proc onclick() { spec.get; warning("speciální mail-list nelze měnit") | save_sql(1) } }
   button [l_butt+55,t_butt+5,,] { tag:'def', title:'Zpět',  help:'Neuložit změny',
-    proc onclick() { reload } }
+    proc onclick() { m_reload } }
   button [l_butt+7,t_butt+30,,] { tag:'def', title:'Nový',  help:'Nový mail-list', proc onclick() {
     reinit; akce_show; vy.komu_G.key(0);
   } }
@@ -492,9 +494,8 @@ form _gsql {
     ano_cas.onclick;
     L_ano.part(last_ano.get).part('kdy').key(xi.akey);
     L_ano.part(last_ano.get).part('kdy').call('onchange');
-    [ gt(xi.akey,4);
-      L_ano.part(last_ano.get).part('vzor').set(xi.val);
-    | L_ano.part(last_ano.get).part('rok').set(xi.val)
+    [ gt(xi.akey,10); L_ano.part(last_ano.get).part('vzor').set(xi.val);
+    | gt(xi.akey,4);  L_ano.part(last_ano.get).part('rok').set(xi.val)
     ];
   }
   proc read_cas_ne(xi) {
@@ -502,9 +503,8 @@ form _gsql {
     ne_cas.onclick;
     L_ne.part(last_ne.get).part('kdy').key(xi.akey);
     L_ne.part(last_ne.get).part('kdy').call('onchange');
-    [ gt(xi.akey,4);
-      L_ne.part(last_ne.get).part('vzor').set(xi.val);
-    | L_ne.part(last_ne.get).part('rok').set(xi.val)
+    [ gt(xi.akey,10); L_ne.part(last_ne.get).part('vzor').set(xi.val);
+    | gt(xi.akey,4);  L_ne.part(last_ne.get).part('rok').set(xi.val)
     ];
   }
   # ------------------------------------- zobrazení akcí a výpočet podmínek
@@ -571,7 +571,7 @@ form _gsql {
     ));
     [ to_show; tsql.set(ask('mail2_lst_try',gsql.get,1)) ];
   }
-  proc save_sql(to_reload) {
+  proc save_sql(to_reload) { #==> .. save_sql
     ucel.get;
     { form.same; not(sql_dirty.get)
     | parms.set(make_json); parms.change; make_sql(0); gsql.change;
@@ -581,16 +581,17 @@ form _gsql {
         "parms='",parms.get,"',",       "sexpr=",'"',gsql.get,'",',
         "ucel='",ucel.get,"',",         "blokovano=",blokovano.get,
         ' WHERE id_mailist=',id_mailist.get));
-      [ to_reload; reload | form.plain; sql_dirty.set(0) ];
+      [ to_reload; m_reload | form.plain; sql_dirty.set(0) ];
       warning("QUERY SAVED")
     | not(id_mailist.get);
       or(not(form.same),sql_dirty.get);
+      access.set(my_org.get); access.change;
       id_mailist.set(form.insert);
-      reload;
+      vy.komu_G.selects(id_mailist.get,conc("access=",my_org.get));
+      m_reload;
       warning("QUERY CREATED")
     | warning("QUERY SAVE ERROR id_mailist=",id_mailist.get,", sql_dirty=",sql_dirty.get)
     };
-    vy.komu_G.selects(id_mailist.get,conc("access=",my_org.get));
   | warning('název je povinný');
   }
   proc run_sql() { tsql.set(ask('mail2_lst_try',gsql.get)) }
@@ -633,12 +634,15 @@ form _gsql {
     tsql.set('');
     sql_dirty.set(0);
   }
-  proc reload() { #==> .. reload
+  proc m_reload() { #==> .. m_reload
     var akey:number
+    akey.set(id_mailist.get);
     reinit;
-    [ vy.komu_G.key | vy.komu_G.key(1) ];
-    akey.set(ask('select','id_mailist','mailist',conc("id_mailist=",vy.komu_G.key)));
-    akey;
+    { akey
+    | [ vy.komu_G.key | vy.komu_G.key(1) ];
+      akey.set(ask('select','id_mailist','mailist',conc("id_mailist=",vy.komu_G.key)));
+    };
+    id_mailist.set(akey);
     form.load(akey);
     [ spec.get; warning("speciální předdefinovaný mail-list nelze měnit")
     | read_json(parms.get) ];

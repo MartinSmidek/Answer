@@ -7254,7 +7254,7 @@ function mail2_lst_read($parm) { //trace();
   global $json;
   $obj= $json->decode($parm);
   $obj= isset($obj->ano_akce) ? $obj : 0;
-                                                debug($obj,"mail2_lst_read($parm)");
+//                                                 debug($obj,"mail2_lst_read($parm)");
   return $obj;
 }
 # ------------------------------------------------------------------------------------ mail2_lst_try
@@ -9143,6 +9143,8 @@ function db2_sys_transform($par) { trace();
         if ( $ok && $tab=='mailist' ) {
           $ok= mysql_qry("DELETE mailist FROM mailist LEFT JOIN dopis USING (id_mailist)
                           WHERE ISNULL(id_dopis)");
+          mysql_qry("UPDATE mailist SET parms=REPLACE(parms,'\"akey\":3','\"akey\":5')");
+          mysql_qry("UPDATE mailist SET parms=REPLACE(parms,'\"akey\":4','\"akey\":6')");
         }
       }
       break;
