@@ -5,11 +5,11 @@
 function personify(access) {
   if ( access==1 ) {
     $$('#appl span')[0].setProperty('text',"Answer Setkání");
-    Asset.css("skins/ck.ezer.css");
+    Asset.css("skins/ck/ck.ezer.css");
   }
   else if ( access==2 ) {
     $$('#appl span')[0].setProperty('text',"Answer Familia");
-    Asset.css("skins/ch.ezer.css");
+    Asset.css("skins/ch/ch.ezer.css");
   }
   return 1;
 }
