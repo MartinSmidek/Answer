@@ -14,5 +14,6 @@
     'skill'      => "'c'",
     'autoskill'  => "'!c'"
   );
-  answer_php('cr','Ans(w)er - Centrum pro rodinu','ezer_cr','ck',array("ds/fce.js"),array("./cr/cr.css.php"),$options);
+  answer_php('cr','Ans(w)er - Centrum pro rodinu','ezer_cr','ck',
+    array("ds/fce.js"),array("skins/ck/ck.ezer.css","cr/cr.css.php"),$options);
 ?>
