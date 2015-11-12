@@ -23,8 +23,8 @@ kEzer-tut
 		tut\tut.php
 		tut\tut.the.ezer
 		tut\tut.the.php
-	-ezer2.2
-		+client
+	+ezer2.2
+		-client
 			ezer2.2\client\_code.js
 			ezer2.2\client\_test.html
 			ezer2.2\client\app.js
@@ -37,7 +37,7 @@ kEzer-tut
 			ezer2.2\client\licensed\fancyupload.css
 			ezer2.2\client\licensed\fancyupload.js
 			ezer2.2\client\lib.js
-		+client f
+		-client f
 			ezer2.2\client\android.css
 			ezer2.2\client\appf.css
 			dbg.html
@@ -52,7 +52,7 @@ kEzer-tut
 			ezer2.2\ezer2.pers.ezer
 			ezer2.2\ezer2.syst.ezer
 			ezer2.2\ezer2_fce.php
-		-server
+		+server
 			ezer2.2\server\ae_slib.php
 			ezer2.2\comp.css
 			ezer2.2\comp.php
@@ -63,6 +63,7 @@ kEzer-tut
 			ezer2.2.inc
 			ezer2.2\server\ezer2.php
 			ezer2.2\server\file_send.php
+			ezer2.2\help.php
 			ezer2.2\server\init.php
 			ezer2.2\server\reference.php
 			ezer2.2\server\session.php
@@ -131,11 +132,11 @@ kEzer-tut
 			test\test.web.pag.ezer
 		wiki\test_main.wiki
 [Open project files]
-0=tut\i_fce.js
-1=tut\tut.the.php
-2=tut\tut.the.ezer
-3=tut\tut.dbg.ezer
-4=ezer2.2\dbg.php
+0=tut\tut.the.php
+1=tut\tut.the.ezer
+2=tut\tut.dbg.ezer
+3=ezer2.2\dbg.php
+4=ezer2.2\client\lib.js
 5=ezer2.2\client\app.js
 6=ezer2.2\server\ae_slib.php
 7=ezer2.2\server\ezer2.php
@@ -146,18 +147,10 @@ kEzer-tut
 12=ezer2.2\ezer2_fce.php
 13=ezer2.2\server\comp2.php
 14=tut\tut.php
-15=ezer2.2\ezer2.help.ezer
-16=ezer2.2\client\ezer.css.php
-17=db\db.css.php
-18=tut\tut.css.php
-19=ezer2.2\client\ezer.css
-20=skins\colors.php
+15=ezer2.2\help.php
 [Selected Project Files]
 Main=
-Selected=tut\tut.the.ezer
-[tut\i_fce.js]
-TopLine=1
-Caret=20,3
+Selected=ezer2.2\client\lib.js
 [tut\tut.the.php]
 TopLine=97
 Caret=31,105
@@ -166,13 +159,17 @@ TopLine=347
 Caret=71,362
 [tut\tut.dbg.ezer]
 TopLine=1
-Caret=1,11
+Caret=39,26
 [ezer2.2\dbg.php]
-TopLine=32
-Caret=34,61
+TopLine=320
+Caret=42,338
+BookMark1=44,255
+[ezer2.2\client\lib.js]
+TopLine=1
+Caret=30,21
 [ezer2.2\client\app.js]
-TopLine=405
-Caret=33,426
+TopLine=49
+Caret=1,54
 BookMark1=29,693
 [ezer2.2\server\ae_slib.php]
 TopLine=482
@@ -180,13 +177,12 @@ Caret=67,510
 BookMark1=11,419
 BookMark2=15,700
 [ezer2.2\server\ezer2.php]
-TopLine=2337
-Caret=73,2348
-BookMark1=95,1538
-BookMark2=25,2358
+TopLine=2445
+Caret=40,2404
+BookMark2=8,231
 [ezer2.2\client\ezer.js]
-TopLine=6793
-Caret=60,6797
+TopLine=988
+Caret=1,1046
 BookMark1=1,2124
 Mark1=33,2136
 Mark2=25,6604
@@ -194,8 +190,8 @@ Mark3=25,6757
 Mark4=54,6795
 Mark5=28,7675
 [ezer2.2\client\area.js]
-TopLine=477
-Caret=14,496
+TopLine=334
+Caret=47,347
 BookMark1=41,486
 BookMark2=54,348
 [ezer2.2\client\ezer_fdom1.js]
@@ -217,23 +213,8 @@ Caret=1,610
 TopLine=1
 Caret=1,1
 [tut\tut.php]
-TopLine=55
-Caret=70,88
-[ezer2.2\ezer2.help.ezer]
-TopLine=488
-Caret=1,525
-[ezer2.2\client\ezer.css.php]
+TopLine=6
+Caret=1,35
+[ezer2.2\help.php]
 TopLine=1
-Caret=78,25
-[db\db.css.php]
-TopLine=15
-Caret=62,15
-[tut\tut.css.php]
-TopLine=1
-Caret=44,21
-[ezer2.2\client\ezer.css]
-TopLine=4
-Caret=36,19
-[skins\colors.php]
-TopLine=24
-Caret=87,69
+Caret=1,15

@@ -151,6 +151,7 @@ function answer_php($app,$app_name,$db_name,$skin,$js_lib,$css_lib,$options) {
   $options->path_files_href= "'$path_files_href'"; // relativní cesta do složky docs/{root}
   $options->path_files_s=    "'$path_files_s'";    // absolutní cesta do složky docs/{root}
   $options->path_files_h=    "'$path_files_h'";    // absolutní cesta do složky ../files/{root}
+  $options->help= "{width:600,height:500}"; // větší HELP
 
   $kontakt= " V případě zjištění problému nebo <br/>potřeby konzultace mi prosím napište<br/>
         na mail&nbsp;<a href='mailto:{$EZER->options->mail}{$EZER->options->mail_subject}'>{$EZER->options->mail}</a> "

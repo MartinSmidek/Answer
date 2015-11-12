@@ -854,10 +854,10 @@ button.db_evidence:disabled { color:silver; }
 .datepicker_vista { z-index:3 !important; }
 
 .page { font-size:9pt !important; padding:10px; line-height:13pt; }
-.page_2clmn { background-image:url(img/page_vr.png);
+.page_2clmn { background-image:url(../img/page_vr.png);
               background-position:368px 0;
               background-repeat:repeat-y;}
-.page_3clmn { background-image:url(img/page_vr.png),url(img/page_vr.png);
+.page_3clmn { background-image:url(img/../page_vr.png),url(../img/page_vr.png);
               background-position:368px 0,619px 0;
               background-repeat:repeat-y,repeat-y;}
 
