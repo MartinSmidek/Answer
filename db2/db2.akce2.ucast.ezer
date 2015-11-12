@@ -1395,7 +1395,7 @@ form _rodina2 [,,360,229]  { css:'ae_frame'
     show role  [,,10,] {title:'role'}
     show rody
     // osobní údaje - OSOBA
-    // POZOR: přo změně je třeba otestovat funkci tisk_sestava_pary, která užívá toto browse/ask
+    // POZOR: při změně je třeba otestovat funkci tisk_sestava_pary, která užívá toto browse/ask
     show narozeni, show umrti, show prijmeni, show rodne, show sex,
     show adresa, show ulice, show psc, show obec, show stat,
     show kontakt, show telefon, show nomail, show email, show iniciace, show uvitano,

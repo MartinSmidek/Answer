@@ -1,6 +1,8 @@
 <?php # (c) 2009-2010 Martin Smidek <martin@smidek.eu>
 /** ===========================================================================================> DB2 **/
 # ------------------------------------------------------------------------------------- db2_rod_show
+# BROWSE ASK
+# načtení návrhu rodiny pro Účastníci2
 # vrátí objekt {n:int,next:bool,back:bool,css:string,rod:položky z rodina nebo null}
 function db2_rod_show($nazev,$n) {
   $ret= (object)array('n'=>0,'next'=>0,'back'=>0,'css'=>'','rod'=>null);
@@ -74,6 +76,7 @@ function db2_rod_show($nazev,$n) {
         $cleni.= "~{$o->$f}";
       }
       # informace ze spolu
+      $o->_spolu= 0;
       foreach($fspo as $f=>$filler) {
         $cleni.= "~{$o->$f}";
       }
@@ -1573,6 +1576,7 @@ end:
   return $ret;
 }
 /** ------------------------------------------------------------------------------ ucast2_browse_ask **/
+# BROWSE ASK
 # obsluha browse s optimize:ask
 # x->order= {a|d} polozka
 # x->show=  {polozka:[formát,vzor/1,...],...} pro položky s neprázdným vzorem
@@ -1854,9 +1858,11 @@ function ucast2_browse_ask($x,$tisk=false) {
             if ( !$s->_barva )
               $s->_barva= $s->id_tvori ? 1 : 2;               // barva: 1=člen rodiny, 2=nečlen
             # barva nerodinného pobytu
-            if ( 1 ) {
-              $p_access|= $o->access;
-            }
+            $p_access|= $o->access;
+          }
+          else {
+            # neúčastník
+            $s->_barva= 0;
           }
           # ==> .. duplicita členů
           $keys= $dup= '';
@@ -2091,7 +2097,7 @@ function ucast2_browse_ask($x,$tisk=false) {
 //                                                 debug($pobyt[21976],'pobyt');
 //                                                 debug($rodina,'rodina');
 //                                                 debug($osoba[3506],'osoba');
-//                                                 debug($y->values);
+//                                                  debug($y->values);
   return $y;
 }
 # dekódování seznamu položek na pole ...x,y=z... na [...x=>x,y=>z...]
