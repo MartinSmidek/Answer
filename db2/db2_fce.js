@@ -1,15 +1,51 @@
 // uživatelské funkce aplikace Ans(w)er
 // =========================================================================================> funkce
+// ---------------------------------------------------------------------------------------- ON login
+Ezer.onlogin= function() {
+  personify(Ezer.sys.user.access);
+}
 // --------------------------------------------------------------------------------------- personify
-// upraví vzhled aplikace pro uživatele s omezenými datovými právy
+// upraví datová práva a vzhled aplikace
+// před přihlášením:    každému (po přihlášení bude případně zredukováno)
+// po přihlášení:       pokud má tato datová práva
 function personify(access) {
-  if ( access==1 ) {
-    $$('#appl span')[0].setProperty('text',"Answer Setkání");
-    Asset.css("skins/ck/ck.ezer.css");
+  var menu= $('access_menu'), body= $(document.body), timer;
+  var off= function(e) {
+    menu.setStyle('display','none');
+    body.removeEvent('click',off);
   }
-  else if ( access==2 ) {
-    $$('#appl span')[0].setProperty('text',"Answer Familia");
-    Asset.css("skins/ch/ch.ezer.css");
+  if ( access=='menu_on' ) {
+    menu.setStyle('display','block');
+    $clear(timer);
+    timer= (function(){
+      body.addEvent('click',off);
+    }).delay(1);
+  }
+  else {
+    var enabled= 3;
+    off();
+    if ( Ezer.sys.user && Ezer.sys.user.id_user ) {
+      enabled= Ezer.sys.user.has_access;
+    }
+    var orgs= ['','YMCA Setkání','YMCA Familia','obou organizací'];
+    if ( enabled & access ) {
+      // přeznač aplikaci
+      var tits= ['','Answer Setkání','Answer Familia','Ans(w)er (společný)'];
+      var skin= ['','ck/ck.ezer.css','ch/ch.ezer.css','db/db.ezer.css'];
+      Ezer.sys.user.access= access;
+      $('access').setProperty('text',tits[access]);
+      var old_skin= $('skin');
+      Asset.css("skins/"+skin[access],{id:'skin'});
+      old_skin.destroy();
+      // zavolej ezer-funkci v kořenu reaccess, pokud je uživatel přihlášený
+      if ( Ezer.sys.user && Ezer.sys.user.id_user ) {
+        Ezer.run.$.part.db2.callProc('reaccess',[orgs[access]]);
+      }
+    }
+    else {
+      // uživatel nemá datové oprávnění
+      Ezer.fce.alert("Nemáte oprávnění pracovat s daty "+orgs[access]);
+    }
   }
   return 1;
 }

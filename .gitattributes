@@ -350,7 +350,13 @@ skins/db/sort_d.png -text
 skins/db/sort_n.png -text
 skins/db/submenu_bg.png -text
 skins/db/tree.png -text
+skins/img/class.png -text
+skins/img/doc_form.gif -text
 skins/img/doc_menu.gif -text
+skins/img/doc_module.gif -text
+skins/img/function.png -text
+skins/img/method.png -text
+skins/img/page_vr.png -text
 skins/img/srafa.png -text
 sql/ms_mysql.PRG -text
 sql/ms_mysql.bat -text

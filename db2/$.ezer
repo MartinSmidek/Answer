@@ -40,6 +40,11 @@ menu db2 { type:'main', title:'db2', active:*, _sys:'*'
   }
   tabs doc  {title:"Nápověda", _sys:'*',  include:'onload,ezer2.help' }
   tabs off  {title:"Odhlásit", type:'logoff' }
+  // přepnutí access - refresh formulářů
+  proc reaccess(msg) {
+    echo("přepnutí přístupu na data ",msg);
+    [ akce2.call('reaccess') ];
+  }
   // univerzální procedury
   proc the_formsave (f,b) {
     f.same

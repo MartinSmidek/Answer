@@ -6,16 +6,19 @@
 # ------------------------------------------------------------------------------------------------ #
 # ----------------------------------------------------------------------------------- globální jména
 # ----------------------------------------------------------------------------------==> inicializace
-proc onfirstfocus() { the_org.set(sys('user','org')) }
 # ------------------------------------------------------------------------------------------==> stav
 var the_vypis: text
-var the_org=0
-# ------------------------------------------------------------------------------------------==> menu
+# ----------------------------------------------------------------------------==> globální procedury
+proc reaccess() { #==> reaccess - změna
+  menu_item.get;
+  m.onclick(menu_item.get);
+}
+# ------------------------------------------------------------------------------------------==> MENU
 var menu_item=0
 var menu_par=0
 menu m {type:'left', format:'f+' //, active:*
   menu s {title:'STATISTIKA',type:'group'
-    item {title:'Struktura letních kurzů MS',                                                       skill:'yae;fae'
+    item {title:'Struktura letních kurzů MS',                                        skill:'yae;fae'
       ,par:°{typ:'ms_struktura',xls:'Excel',pdf:0
         ,dsc:'Sestava ukazuje počty rodin a jejich dětí s rozlišením na nové, dvouročáky a VPS.<br>'}}
     item {title:'Letní kurzy MS a pečovatelé'  ,par:°{typ:'ms-pecouni',rok:0,xls:'Excel',pdf:0
@@ -30,30 +33,22 @@ menu m {type:'left', format:'f+' //, active:*
         <br>Účastník resp. pečovatel je započítán jen jednou, bez ohledu na počet akcí, jichž se zúčastnil.<br>'
       ,tit:'věk:4,účastníků:10,pečovatelů:10',fld:'_vek,_uca,_pec',ord:'_vek'}}
   }
-  menu l {title:'SEZNAMY',type:'group',                                                             skill:'yae;fae'
+  menu l {title:'SEZNAMY',type:'group',                                              skill:'yae;fae'
     // přednášející
     item {title:'přednášející LK MS'  ,par:°{typ:'prednasejici',rok:5,xls:'Excel',parm_tit:'roky zpět:'
       ,dsc:"Tabulka obsahuje historii přednášejících párů na letních kurzech MS. <br>Hloubku historie je třeba nastavit parametrem 'roky zpět'.<br>"
       ,tit:'',fld:'',ord:''}}
     // VPS-PPS
-    item {title:'sloužící VPS na LK MS'                                                             skill:'yae'
+    item {title:'sloužící VPS na LK MS (páry)'                                       skill:'yae;fae'
          ,par:°{typ:'slouzici',podtyp:'pary',xls:'Excel',parm_tit:'roky zpět:'
           ,dsc:"Tabulka obsahuje historii sloužících párů na letních kurzech MS. <br>Poslední rok služby VPS je třeba nastavit parametrem 'roky zpět'.<br>"
       ,tit:'',fld:'',ord:''}}
-    item {title:' ... sloužící VPS (jako jednotlivci)'                                              skill:'yae'
+    item {title:' ... sloužící VPS/PPS (jednotlivci)'                                skill:'yae;fae'
          ,par:°{typ:'slouzici',podtyp:'osoby',xls:'Excel',parm_tit:'roky zpět:'
           ,dsc:"Tabulka obsahuje historii sloužících párů na letních kurzech MS. <br>Poslední rok služby VPS je třeba nastavit parametrem 'roky zpět'.<br>"
-      ,tit:'',fld:'',ord:''}}
-    item {title:'sloužící PPS na LK MS'                                                             skill:'fae'
-         ,par:°{typ:'slouzici',podtyp:'pary',xls:'Excel',parm_tit:'roky zpět:'
-          ,dsc:"Tabulka obsahuje historii sloužících párů na letních kurzech MS. <br>Poslední rok služby PPS je třeba nastavit parametrem 'roky zpět'.<br>1.školení je rok první účasti na nějaké akci typu 'PPS,seminář'.<br>"
-      ,tit:'',fld:'',ord:''}}
-    item {title:'... sloužící PPS (jako jednotlivci)'                                               skill:'fae'
-         ,par:°{typ:'slouzici',podtyp:'osoby',xls:'Excel',parm_tit:'roky zpět:'
-          ,dsc:"Tabulka obsahuje historii sloužících párů na letních kurzech MS. <br>Poslední rok služby PPS je třeba nastavit parametrem 'roky zpět'.<br>1.školení je rok první účasti na nějaké akci typu 'PPS,seminář'.<br>"
       ,tit:'',fld:'',ord:''}}
     // pečouni
-    item {title:'pečovatelé na LK MS'                                                               skill:'yae;fae'
+    item {title:'pečovatelé na LK MS'                                                skill:'yae;fae'
          ,par:°{typ:'pecujici',rok:5,xls:'Excel',parm_tit:'roky zpět:'
           ,dsc:"Tabulka obsahuje historii pečovatelů na letních kurzech MS. <br>Poslední rok pečovatele je třeba nastavit parametrem 'roky zpět'.<br>1.školení je rok první účasti na akci typu 'pečovatelé'.<br>"
       ,tit:'',fld:'',ord:''}}
@@ -79,8 +74,8 @@ menu m {type:'left', format:'f+' //, active:*
     [ echo(i.par.parm_tit,info.parm.get); i.par.parm_tit; info.display(1,'p');
       info.parm_tit.set(i.par.parm_tit); menu_par.set(info.parm.get,'parm') | info.display(0,'p') ];
     info.fill(the_vypis.get,i.par.dsc); info.msg.set('');
-    { eq(i.par.typ,'ms_struktura'); ret.set(ask('sta2_struktura',the_org.get,i.par,the_title.get));
-    | ret.set(ask('sta2_sestava',the_org.get,the_vypis.get,menu_par.get));
+    { eq(i.par.typ,'ms_struktura'); ret.set(ask('sta2_struktura',my_org.get,i.par,the_title.get));
+    | ret.set(ask('sta2_sestava',my_org.get,the_vypis.get,menu_par.get));
     };
     info.append(ret.html);
   }
@@ -97,7 +92,7 @@ use info: form right [12,4,,] {
     proc onclick() { var res: object
       switch(this.get,
       'Excel',{
-        res.set(ask('sta2_excel',the_org.get,the_vypis.get,menu_par.get));
+        res.set(ask('sta2_excel',my_org.get,the_vypis.get,menu_par.get));
         form.msg.set(res.html);
       })
     }

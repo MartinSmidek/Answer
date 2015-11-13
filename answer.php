@@ -1,9 +1,9 @@
 <?php # Systém An(w)er/Ezer, (c) 2008-2014 Martin Šmídek <martin@smidek.eu>
 
 # inicializace systémů Ans(w)er
-#   $app        = kořenová podsložka aplikace ... ys/ys2/fa/fa2/cr
+#   $app        = kořenová podsložka aplikace ... ys/ys2/fa/fa2/cr/db2
 #   $app_name   = jméno aplikace
-#   $db_name    = hlavní databáze ... bylo-li v URL &test=1 přidá se do options.tabu_db
+#   $db_name    = hlavní databáze
 #   $skin       = ck|ch|db
 #   $js_lib     = pole s *.js
 #   $css_lib    = pole s *.css
@@ -16,18 +16,12 @@ function answer_php($app,$app_name,$db_name,$skin,$js_lib,$css_lib,$options) {
   $ezer_local= preg_match('/^\w+\.ezer/',$server_name); // identifikace ladícího serveru
   $android=    preg_match('/android|x11/i',$_SERVER['HTTP_USER_AGENT']);
   $ipad=       preg_match('/iPad/i',$_SERVER['HTTP_USER_AGENT']);
-  $ezer_ksweb= $android && $server_name=="localhost";   // identifikace ladícího serveru KSWEB/Android
 
-  //$app=      ys/ys2/fa/fa2/cr             // jméno adresáře a hlavního objektu aplikace == $ezer_root!
-  //$app_name= 'Ans(w)er - Familia'.($ezer_ksweb?" / test Android":"");;
-  //$skin=     'default';
-  //$skin=     'ch';
-
-  $app_name.= ($ezer_ksweb?" / test Android":"");
   $title_style= $ezer_local ? 'color:#ef7f13;' : '';
+  $title_flag=  $ezer_local ? 'lokální ' : '';
   $CKEditor= isset($_GET['editor']) ? $_GET['editor'] : '4';
   $dbg=      isset($_GET['dbg']) ? $_GET['dbg'] : 0;
-  $gmap=     isset($_GET['gmap']) ? true : !($ezer_local || $ezer_ksweb);
+  $gmap=     isset($_GET['gmap']) ? true : !$ezer_local;
   $awesome=  isset($_GET['awesome']) ? $_GET['awesome'] : 3;
   $EZER= (object)array();
 
@@ -39,32 +33,13 @@ function answer_php($app,$app_name,$db_name,$skin,$js_lib,$css_lib,$options) {
   // zapnutí příznaku pro ochranu souborů v docs (do konce session)
   setcookie("EZER",$app,0,"/");
 
-//   // ošetření běhu s testovací databází DEPRECATED
-//   $tabu_db= '';
-  if ( isset($_GET['test']) && $_GET['test'] ) {
-    die("POZOR: prace s testovaci databazi byla zmenena (Martin vysvetli) ");
-//     $title_style.= 'background-color:#ffffaa';
-//     $app_name.= " ! TEST";
-//     $_SESSION[$app]['GET']['test']= 1;
-//     $tabu_db= $db_name;          // $db_name.= '_test'; v answer_ini
-  }
-
-  // ošetření běhu s testovací databází
+  // ošetření běhu s testovací databází - zobrazit příznak
   if ( substr($app,-5)=='_test' ) {
     $title_style.= 'background-color:#ffffaa';
-    $app_name.= " ! TEST";
+    $title_flag.= "testovací databáze ";
   }
 
   $title_style= $title_style ? " style='$title_style'" : '';
-
-//   // cesty
-//   $path= $_SERVER['PHP_SELF'];
-//   $path= substr($path,0,strrpos($path,'/'));
-//   $path= substr($path,0,strrpos($path,'/'));
-//   $abs_root= $_SERVER['DOCUMENT_ROOT'].$path;
-//   $rel_root= $_SERVER['HTTP_HOST'].$path;
-//   $app_rel_path= $path;
-//   $_SESSION[$app]['app_path']= $path;
 
   // cesty II
   $path= $_SERVER['PHP_SELF'];
@@ -125,22 +100,6 @@ function answer_php($app,$app_name,$db_name,$skin,$js_lib,$css_lib,$options) {
     $ipad ? array("$client/ipad.css") : array()
   );
 
-//   $css= array_merge(
-//     $dbg ? array("./$licensed/jush/mini_jush.css") : array(),
-//     array(
-//       "./$client/ezer.css.php",
-//       "./$client/licensed/font-awesome/css/font-awesome.min.css"
-// //       ,"./db/db.css.php"
-//       ),
-//     $EZER->version=='ezer2.2'
-//     ? array("$licensed/datepicker/datepicker_vista/datepicker_vista.css"):array(),
-//     // uživatelské css
-//     $css_lib,
-//     // css pro dotykové klienty
-//     $android ? array("$client/android.css") : array(),
-//     $ipad ? array("$client/ipad.css") : array()
-//   );
-
   global $answer_db;
 
   // doplnění Ezer.options a $EZER->options
@@ -154,17 +113,48 @@ function answer_php($app,$app_name,$db_name,$skin,$js_lib,$css_lib,$options) {
   $options->help= "{width:600,height:500}"; // větší HELP
 
   $kontakt= " V případě zjištění problému nebo <br/>potřeby konzultace mi prosím napište<br/>
-        na mail&nbsp;<a href='mailto:{$EZER->options->mail}{$EZER->options->mail_subject}'>{$EZER->options->mail}</a> "
+        na mail&nbsp;<a href='mailto:{$EZER->options->mail}{$EZER->options->mail_subject}'>
+        {$EZER->options->mail}</a> "
       . ($EZER->options->phone ? "případně zavolejte&nbsp;{$EZER->options->phone} " : '')
-      . ($EZER->options->skype ? "nebo použijte Skype&nbsp;<a href='skype:{$EZER->options->skype}?chat'>{$EZER->options->skype}</a>" : '')
+      . ($EZER->options->skype ? "nebo použijte Skype&nbsp;
+         <a href='skype:{$EZER->options->skype}?chat'>{$EZER->options->skype}</a>" : '')
       . "<br/><br/>Za spolupráci děkuje <br/>{$EZER->options->author}";
   $menu= "<button id='android_menu' class='fa'><i class='fa fa-bars'></i></button>";
+
+  if ( $app=='db2' ) {
+    // nová verze db2
+    $cookie= 3;
+    if ( isset($_COOKIE['last_access'])
+      && $_COOKIE['last_access']>0 &&  $_COOKIE['last_access']<4 )
+      $cookie= $_COOKIE['last_access'];
+
+    $access_app= array(1=>"Setkání","Familia","(společný)");
+    $access_app= $access_app[$cookie];
+    $choice_js= "personify('menu_on'); return false;";
+    $title= "
+      <span $title_style>"
+      . $title_flag
+      ."<span id='access' onclick=\"$choice_js\">
+          Ans(w)er $access_app
+        </span>
+        <div id='access_menu'>
+          <span onclick='personify(1);'>Ans(w)er Setkání</span>
+          <span onclick='personify(2);'>Ans(w)er Familia</span>
+          <span onclick='personify(3);' class='separator'>Ans(w)er (společný)</span>
+        </div>
+      </span>"
+      . ($android || $ipad ? $menu : "");
+  }
+  else {
+    // starší verze ys, ys2, fa, fa2 a cr - Centrum pro rodinu
+    $title= "<span $title_style>$title_flag $app_name</span>" . ($android || $ipad ? $menu : "");
+  }
+
   $pars= (object)array(
-//     'no_local' => true,                // true = nezohledňovat lokální přístup pro watch_key,watch_ip
-    'dbg' => $dbg,                     // true = povolit podokno debuggeru v trasování
-    'watch_key' => !$ezer_ksweb,       // true = povolit přístup jen po vložení klíče
-    'watch_ip' => !$ezer_ksweb,        // true = povolit přístup jen ze známých IP adres
-    'title_right' => "<span$title_style>$app_name</span>" . ($android || $ipad ? $menu : ""),
+    'dbg' => $dbg,      // true = povolit podokno debuggeru v trasování a okno se zdrojovými texty
+    'watch_key' => 1,   // true = povolit přístup jen po vložení klíče
+    'watch_ip' => 1,    // true = povolit přístup jen ze známých IP adres
+    'title_right' => $title,
     'contact' => $kontakt,
     'CKEditor' => "{
       version:'$CKEditor',

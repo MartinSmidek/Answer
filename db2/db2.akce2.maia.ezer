@@ -1,27 +1,11 @@
 #pragma test
+# ------------------------------------------------------------------------------------------------ #
+# Karta pro rozesílání mailů účastníků akce                                                        #
+#                                                                                                  #
+# Ans(w)er/Ezer                                     (c) 2008-2015 Martin Šmídek <martin@smidek.eu> #
+# ------------------------------------------------------------------------------------------------ #
 
-# Systém Ans(w)er - modul Akce.MailyAkce
-# (c) 2008-2014 Martin Šmídek <martin@smidek.eu>
-
-# ================================================================================================== MAIL
-# rozesílání jednotlivých dopisů
-
-var the_duakce_local: number    // zobrazená akce - pokud se liší od the_duakce, je třeba překreslit
-var E_info: text
-var dopis_id: text
-var dopis_var: text             // typ rozesílání: U/U2/U3 - účastníci akce
-var dopis_akce: number          // id_akce|0
-var karta: text                 // et|es
-var sql_export:text
-
-use ii: form right [12,4,,]
-use vy: form _vyber [10,30,,]   // výběr skupiny | zobrazené akce
-use et: form _etext [10,40,,]   // editace mailu
-use es: form _esady [10,74,,]   // rozesílání
-
-proc test_dbg() {
-  echo(dopis_id.get)
-}
+# ----------------------------------------------------------------------------------==> inicializace
 proc onfirstfocus() {
   [ dirty.get | akce_onstart ];
   m.g.i.click
@@ -29,36 +13,61 @@ proc onfirstfocus() {
 proc init_ucast() { echo('mai:init_ucast ',the_title.get);
   vy.fill(the_title.get);
 }
-proc ini(i,k,uq,on,off) {
-  ii.fill(conc(i.owner.title,' - ',i.title),' ');
-  vy.get.display(1,on); vy.get.display(0,off);
-  dopis_var.set(uq); karta.set(k); dopis_id.set(0); dopis_akce.set(the_duakce.get);
-  et.form_init;
-  switch(k,
-  'et',{et.get.display(1); es.get.display(0); vy.get.display(0,'es'); et.reload},
-  'es',{et.get.display(0); es.get.display(1); vy.get.display(1,'es'); es.reload},
-       {et.get.display(0); es.get.display(0)});
-}
 
+# ------------------------------------------------------------------------------------------==> stav
+var the_duakce_local: number    // zobrazená akce - pokud se liší od the_duakce, je třeba překreslit
+var E_info: text
+var dopis_id: text
+var dopis_var: text             // typ rozesílání: U/U2/U3 - účastníci akce
+var dopis_akce: number          // id_akce|0
+var karta: text                 // et|es
+var sql_export:text
+var menu_item=0
+
+# ----------------------------------------------------------------------------==> globální procedury
+proc reaccess() { #==> reaccess - změna
+  menu_item.get;
+  m.onclick(menu_item.get);
+}
+# -------------------------------------------------------------------------------------------==> use
+use ii: form right [12,4,,]
+use vy: form _vyber [10,30,,]   // výběr skupiny | zobrazené akce
+use et: form _etext [10,40,,]   // editace mailu
+use es: form _esady [10,74,,]   // rozesílání
+
+# ------------------------------------------------------------------------------------------==> MENU
 menu m {type:'left',
   menu g {title:'Vytvoření mailu k akci', type:'group'
     item i {title:'všem účastníkům této akce', _sys:'akc'
-      proc onclick (i) { ini(i,'et','U','akce','gen|skup'); vy.fill(the_title.get); } }
+      par:°{k:'et',uq:'U',on:'akce',off:'gen|skup'} }
     item {title:'... VPS,SVPS,hospodářům akce'
-      proc onclick (i) { ini(i,'et','U2','akce','gen|skup'); vy.fill(the_title.get); } }
+      par:°{k:'et',uq:'U2',on:'akce',off:'gen|skup'} }
     item {title:'... dlužníkům akce'
-      proc onclick (i) { ini(i,'et','U3','akce','gen|skup'); vy.fill(the_title.get); } }
+      par:°{k:'et',uq:'U3',on:'akce',off:'gen|skup'} }
   }
   menu {title:'Rozesílání mailů ', type:'group', _sys:'snd'
     item {title:'všem účastníkům této akce',
-      proc onclick (i) { ini(i,'es','U','akce','gen|skup'); vy.fill(the_title.get); } }
+      par:°{k:'es',uq:'U',on:'akce',off:'gen|skup'} }
     item {title:'... VPS,SVPS,hospodářům akce'
-      proc onclick (i) { ini(i,'es','U2','akce','gen|skup'); vy.fill(the_title.get); } }
+      par:°{k:'es',uq:'U2',on:'akce',off:'gen|skup'} }
     item {title:'... dlužníkům akce'
-      proc onclick (i) { ini(i,'es','U3','akce','gen|skup'); vy.fill(the_title.get); } }
+      par:°{k:'es',uq:'U3',on:'akce',off:'gen|skup'} }
+  }
+  proc onclick (i) {
+    menu_item.set(i);
+    ii.fill(conc(i.owner.title,' - ',i.title),' ');
+    vy.get.display(1,i.par.on); vy.get.display(0,i.par.off);
+    dopis_var.set(i.par.uq); karta.set(i.par.k);
+    dopis_id.set(0); dopis_akce.set(the_duakce.get);
+    et.form_init;
+    switch(i.par.k,
+    'et',{et.get.display(1); es.get.display(0); vy.get.display(0,'es'); et.reload},
+    'es',{et.get.display(0); es.get.display(1); vy.get.display(1,'es'); es.reload},
+         {et.get.display(0); es.get.display(0)});
+    vy.fill(the_title.get);
   }
 }
-# -------------------------------------------------------------------------------------------------- _vyber
+# ------------------------------------------------------------------------------------------- _vyber
 form _vyber {
   # --------------------------- jméno akce
   label txt [0,10,380,28] { tag:'akce' }
@@ -88,7 +97,7 @@ form _vyber {
   }
   field vynech_emaily [711,23,60,] { tag:'es', format:'t' }
 }
-# -----------------------------------------------------------------------------------------------==> _etext
+# ----------------------------------------------------------------------------------------==> _etext
 # správa mailů
 form _etext  {
   var adopis: number
@@ -259,7 +268,7 @@ form _etext  {
   # text mailu
   label obsah [0,263,645,200] { title:'zobrazení předmětu a textu mailu' }
 }
-# ================================================================================================== E_dopis
+# ========================================================================================== E_dopis
 panel E_dopis [0,0,645,520] { title:' Úprava textu mailu', type:'popup', css:'dialog', skill:'yams;fams;cams'
   use mail: form _edopis [0,0,,],
   proc onfocus () {
@@ -280,7 +289,7 @@ panel E_dopis [0,0,645,520] { title:' Úprava textu mailu', type:'popup', css:'d
     edit [0,40,645,480] {type:'html', data:dopis.obsah, par:°{toolbar:'EzerMail'} },
   }
 }
-# -------------------------------------------------------------------------------------------------- _esady
+# ------------------------------------------------------------------------------------------- _esady
 # rozesílání připraveného mailu - zakládání, aktualizace a rušení - obsluha front s maily
 form _esady  {
   # ------------------------ připravené dopisy

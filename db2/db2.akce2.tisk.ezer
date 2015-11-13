@@ -3,11 +3,29 @@
 
 # ================================================================================================== Tisk
 
+# ------------------------------------------------------------------------------------------==> stav
 var the_duakce_local: number    // zobrazená akce - pokud se liší od the_duakce, je třeba překreslit
 var the_akce: number            // hlavní nebo souběžná akce podle the_soubeh
 var the_par: object
 var the_vypis: text
-
+# -------------------------------------------------------------------------==> . inicializace panelu
+proc onfocus() {
+  [ dirty.get | akce_onstart ];
+  eq(the_duakce_local.get,the_duakce.get)
+| the_duakce_local.set(the_duakce.get);
+  info.msg.set('');
+  info.fill(conc(the_title.get,' / ',the_vypis.get),' ');
+  // volba správné akce a příslušného menu
+  { eq(the_soubeh.get,2);
+    the_akce.set(the_hlavni.get); m.display(2,'d'); m.d.i.click
+  | the_akce.set(the_duakce.get); m.display(2,'a'); m.n.i.click
+  };
+}
+# ----------------------------------------------------------------------------==> globální procedury
+proc reaccess() { #==> . reaccess - změna
+  onfocus
+}
+# -------------------------------------------------------------------------------------------==> use
 use info: form right [12,4,,] {
   button export2 [-80,4,,] { title:'PDF...', style:'display:block;zIndex:2',
     proc onclick() {
@@ -63,21 +81,9 @@ use info: form right [12,4,,] {
   }
 }
 
-proc onfocus() {
-  [ dirty.get | akce_onstart ];
-  eq(the_duakce_local.get,the_duakce.get)
-| the_duakce_local.set(the_duakce.get);
-  info.msg.set('');
-  info.fill(conc(the_title.get,' / ',the_vypis.get),' ');
-  // volba správné akce a příslušného menu
-  { eq(the_soubeh.get,2);
-    the_akce.set(the_hlavni.get); m.display(2,'d'); m.d.i.click
-  | the_akce.set(the_duakce.get); m.display(2,'a'); m.n.i.click
-  };
-}
-
+# ------------------------------------------------------------------------------------------==> MENU
 menu m {type:'left', active:*
-  # ---------------------------------------------------------------------------------------------==> výpisy souběžné akce
+  # ------------------------------------------------------------------------==> výpisy souběžné akce
   menu d {tag:'d', title:'výpisy souběžné akce',type:'group',_sys:'*'
     item i {title:'Seznam dětí'                                                                         skill:'f'
                                         ,par:°{typ:'j',exp:'Excel2',ord:"prijmeni,jmeno"
