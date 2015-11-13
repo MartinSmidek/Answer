@@ -20,7 +20,15 @@
     'skill'        => "'d'",
     'autoskill'    => "'!d'"
   );
-//   $css= array("./ezer2.2/client/ezer.css.php","./db/db.css.php","./db2/db2.css.php");
-  $css= array("skins/db/db.ezer.css","./db2/db2.css");
-  answer_php('db2','Answer (společný)','ezer_db2','db',array(),$css,$options);
+
+  $cookie= 3;
+  if ( isset($_COOKIE['last_access'])
+    && $_COOKIE['last_access']>0 &&  $_COOKIE['last_access']<4 )
+    $cookie= $_COOKIE['last_access'];
+  $choice_css=
+    $cookie==1 ? "skins/ys/ys.ezer.css=skin" : (
+    $cookie==2 ? "skins/fa/fa.ezer.css=skin" : "skins/db/db.ezer.css=skin" );
+
+  $css= array($choice_css,"./db2/db2.css");
+  answer_php('db2',"Answer ...",'ezer_db2','db',array(),$css,$options);
 ?>

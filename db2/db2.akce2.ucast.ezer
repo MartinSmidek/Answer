@@ -46,6 +46,10 @@ proc onfocus() {
 }
 
 # --------------------------------------------------------------------------==> . globální procedury
+# přepnutí organizace
+proc reaccess() { #==> . reaccess - změna
+  init_ucast2
+}
 # ukázání pobytu
 proc ucast_pobyt(_idp)  {
   panel.focus; u.b.raise('onrowclick',_idp);
@@ -373,7 +377,7 @@ form _cmd [,,623,30] {
   }
   proc see_old_osoba() { var ret:object // po rozhodnutí uživatele přidat nalezenou osobu k pobytu
     // kontrola oprávněnosti - dotazem
-    { function('x','y','return x&y;',sys('user','org'),os1.access.get)  // stejná org
+    { function('x','y','return x&y;',my_org.get,os1.access.get)  // stejná org
     | confirm("máme od této osoby souhlas?");                           // čestné prohlášení
       os1.access.set(3); os1.access.change
     | zpet.Click; return                                                // nic
@@ -1168,7 +1172,7 @@ form _rodina2 [,,360,229]  { css:'ae_frame'
   // globální procedury
   proc new_rodina(nazev) {
     form.display(0,'[^f]'); r_access.display(1); cleni.display(1); form.enable(1,'.*');
-    form.init; rodiny0.set(nazev); r_access.set(sys('user','org'));
+    form.init; rodiny0.set(nazev); r_access.set(my_org.get);
     form.stacks('n,r','down',0,0,10);
     form.display(1,'[rns]'); form.display(0,'a');
     foreach(array(rodiny0),obligatory);
@@ -1311,7 +1315,7 @@ form _rodina2 [,,360,229]  { css:'ae_frame'
     css:"search", help:"potvrzení nalezené rodiny a vložení do akce jako rodinný pobyt"
     proc onclick() { var ret:object
       // kontrola oprávněnosti - dotazem
-      { function('x','y','return x&y;',sys('user','org'),r_access.get) // stejná org
+      { function('x','y','return x&y;',my_org.get,r_access.get) // stejná org
       | confirm("máme od této rodiny souhlas?");                       // čestné prohlášení
         ask('ucast2_rodina_access',key_rodina.get,3);
       | return                                                         // nic

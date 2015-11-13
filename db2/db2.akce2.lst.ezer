@@ -1,22 +1,14 @@
 # ------------------------------------------------------------------------------------------------ #
 # Karta pro výběr akce                                                                             #
 #                                                                                                  #
-# Ans(w)er/Ezer                                     (c) 2007-2013 Martin Šmídek <martin@smidek.eu> #
+# Ans(w)er/Ezer                                     (c) 2007-2015 Martin Šmídek <martin@smidek.eu> #
 # ------------------------------------------------------------------------------------------------ #
 
+# ------------------------------------------------------------------------------------------==> stav
 var zalozka: text               // inf | cor | cen
 var the_omezeni: text           // podmínka omezující akce podle access
-
-use info: form _akce [12,4,,]
-use page: form _page [512,40,,]
-# use fil:  form file._fil [512,72,,]  { tag:'file', format:'n' }
-
-# ----------------------------------------------------------------------------==> globální procedury
-# nastaví akci jako pracovní
-proc akce_work(id_akce) {
-  info.volba_akce(id_akce)
-}
-# ----------------------------------------------------------------------------==> inicializace
+var menu_item:object            // aktivní menu
+# ----------------------------------------------------------------------------------==> inicializace
 # inicializace panelu proběhne po akce.onstart, zobrazí seznam akcí daného roku podle the_source
 proc onfirstfocus() {
   [ dirty.get | akce_onstart ]; // zavolá akce_work
@@ -34,6 +26,28 @@ proc onfirstfocus() {
   m.g.sey.click;
   page.inf.onclick;
 }
+# -------------------------------------------------------------------------------------------==> use
+use info: form _info [12,4,,]
+use page: form _page [512,40,,]
+# use fil:  form file._fil [512,72,,]  { tag:'file', format:'n' }
+
+# ----------------------------------------------------------------------------==> globální procedury
+# nastaví akci jako pracovní
+proc akce_work(id_akce) {
+  info.volba_akce(id_akce)
+}
+proc reaccess() { #==> . reaccess - změna
+  # intranet povol jen Setkání
+  m.g.goo.enable(eq(my_org.get,1));
+  # přenastav pracovní akci podle my_org
+  { eq(my_org.get,1);
+    akce_work(the_akce_ys.get)
+  | akce_work(the_akce_fa.get)
+  };
+  # překresli aktivní kartu
+  menu_item.get;
+  m.onclick(menu_item.get);
+}
 # -----------------------------------------------------------------------------==> lokální procedury
 # vrátí hodnotu položky z google resp. sey
 proc akce_get(_fld) { var fld:object
@@ -46,7 +60,7 @@ proc akce_set_archiv(cloud,folder) { var path:text
   ask('query',conc("UPDATE akce SET archiv='",path,"' WHERE id_duakce=",page.a_akce.get));
   { eq(the_source.get,'sey'); info.sey.archiv.let(path) | info.sey.google.let(path) };
 }
-# -------------------------------------------------------==> reakce na změny rozměrů okna prohlížeče
+# -----------------------------------------------------==> . reakce na změny rozměrů okna prohlížeče
 const min_h=550           // minimální výška (nelze jednoduše měnit - jsou k ní vztaženy souřadnice)
 var   curr_h: number      // výška nad základní výšku
 var   curr_w: number      // 1024 nebo 1280
@@ -83,39 +97,38 @@ proc h_change_b() { var r:number, h:number
   page.c.set_attrib('rows',sum(r,-2));
 }
 
-# ------------------------------------------------------------------------------------------==> menu
+# ------------------------------------------------------------------------------------------==> MENU
 # Výběr akce má dvě možnosti, uchované v proměnné the_source:
 #   'google' používá jako primárná data spreadsheet v intranetu YS a z něj upravuje tabulku AKCE
 #   'sey' používá pouze tabulku AKCE
 
 menu m {type:'left', format:'f+'
-  menu g {title:'Výběr akce zadaného roku',type:'group', skill:'y;f'
-    item {title:'[fa-google] podle číselníku akcí z intranetu', skill:'y'       // jen pro YS
-      proc onclick (i) {
-        info.rok.display(1); info.google.display(1); info.sey.display(0);
-        the_source.set('google'); akce_roku(info.rok.get);
-    } }
+  # it: info.tag
+  # s:  source
+  # o:  omezeni  org|access
+  # a:  rok=akce_roku | akce_vsechny
+  # cond
+  menu g {title:'Výběr akce zadaného roku',type:'group',                                 skill:'y;f'
+    item goo {title:'[fa-google] podle číselníku akcí z intranetu',                      skill:'y'
+      par:°{it:'g|r',s:'google',o:'',a:'rok'}}
     item sey {title:'[fa-search] ze seznamu všech našich akcí'
-      proc onclick (i) {
-        // skryjeme rok - po výběru zase zobrazíme - tento režim je lokální pro AKCE
-        info.rok.display(1); info.sey.display(1); info.google.display(0);
-        the_omezeni.set(conc("da2.access & ",sys('user','org')));
-        the_source.set('sey'); akce_roku(info.rok.get);
-    } }
+      par:°{it:'s|r',s:'sey',o:'org',a:'rok'}}
     item {title:'[fa-search] ze seznamu všech akcí'
-      proc onclick (i) {
-        // skryjeme rok - po výběru zase zobrazíme - tento režim je lokální pro AKCE
-        info.rok.display(1); info.sey.display(1); info.google.display(0);
-        the_omezeni.set(1); the_source.set('sey'); akce_roku(info.rok.get);
-  } } }
+      par:°{it:'s|r',s:'sey',o:'access',a:'rok'}}
+  }
   menu {title:'Výběr ze všech roků',type:'group', skill:'y;f'
-    item sey {title:'[fa-search] ze seznamu všech akcí',    par:°{cond:'1'} }
-    item  {title:'[fa-search-plus]... opravdové akce',      par:°{cond:'da2.spec=0'} }
-    item  {title:'[fa-search-minus] ... jen různé seznamy', par:°{cond:'da2.spec=1'} }
-    proc onclick (i) {
-      info.rok.display(0); info.sey.display(1); info.google.display(0);
-      the_source.set('sey'); akce_vsechny(i.par.cond)
-} } }
+    item sey {title:'[fa-search] ze seznamu všech akcí',    par:°{it:'s',cond:'1'} }
+    item  {title:'[fa-search-plus]... opravdové akce',      par:°{it:'s',cond:'da2.spec=0'} }
+    item  {title:'[fa-search-minus] ... jen různé seznamy', par:°{it:'s',cond:'da2.spec=1'} }
+  }
+  proc onclick (i) {
+    menu_item.set(i);
+    info.display(2,i.par.it); the_source.set(i.par.s);
+    [ i.par.o; the_omezeni.set(conc(
+        "da2.access & ",cconc(eq(i.par.o,'org'),my_org.get,access.get))) ];
+    { i.par.a; akce_roku(info.rok.get) | akce_vsechny(i.par.cond) }
+  }
+}
 #==> . akce definovaného roku
 proc akce_roku(rok) {
   page.init_page;
@@ -134,10 +147,10 @@ proc akce_roku(rok) {
 proc akce_vsechny(cond) {
   [ info.sey.browse_load(cond) ];
 }
-# -----------------------------------------------------------------------------------------==> _PAGE
+# ------------------------------------------------------------------------------------------==> AKCE
 form _page [,,275,360] {
   var a_akce: number
-  # --------------------------- záložky
+  # ---------------------------==> . záložky
   proc tags(a,on,off) {
     form.set_css('ae_butt_off','ae_butt_on','p');
     a.set_css('ae_butt_on','ae_butt_off');
@@ -180,38 +193,26 @@ form _page [,,275,360] {
     form.init;
     note.set(''); key_akce.set(' ');
   }
-  # ------------------------==> informace
+  # ------------------------==> . informace
   field key_akce [408,19,46,] {format:'or', css:'Label',
     style:'color:white', help:' ', tabindex:0 }
   label note [10,35,455,193] { tag:'inf', title:'', style:'color:black;font-size:12px' }
-#   label web_href [30,265,436,50] { tag:'inf,web' }
-#   label [31,210,315,] {tag:'inf,web', title:'<h3>Propagace a dokumentace akce</h3>', skill:'demo|demo'}
-#   check web [10,240,114,] { tag:'inf,web', title:'svázat s webem', format:'t', skill:'demo|demo',
-#     proc onchange() {
-#       web_href.set(ask('web_akce',a_akce.get,this.get));
-#   }}
-#   check cal [10,310,114,] { tag:'inf,web', title:'vložit do kalendáře', format:'t', skill:'demo|demo',
-#     proc onchange() {
-#       web_href.set(ask('cal_akce',a_akce.get,this.get));
-#   }}
-#   check [10,337,21,] { tag:'inf,web', format:'t', skill:'demo|demo' }
-#   label [30,342,246,] { tag:'inf,web', skill:'demo|demo',
-#     title:"vložit na <a href='www.kalendar-nasich-akci.cz' target='web'>kalendar-nasich-akci.cz</a>"}
-#   check [196,337,100,] { tag:'inf,web', title:'s přihláškou', format:'t', skill:'demo|demo' }
-  # ---------------------------==> položky akce
+  # ---------------------------==> . položky akce
   field id_hlavni { data:akce.id_hlavni }
   field [17,49,218,] { tag:'cor', title:'^název akce *', data:akce.nazev }
   field [17,89,218,] { tag:'cor', title:'^místo', data:akce.misto }
   field datum_od [18,133,83,] { tag:'cor', title:'^začátek *', type:'date', data:akce.datum_od }
   field [118,133,83,] { tag:'cor', title:'^ukončení', type:'date', data:akce.datum_do }
   check [205,166,83,] { tag:'cor', title:'jen seznam', data:akce.spec, format:'r' }
-  select [71,169,139,] { tag:'cor', title:'typ akce *', type:'map', data:akce.druh, options:ms_akce_typ.zkratka, format:'n' }
+  select [71,169,139,] { tag:'cor', title:'typ akce *', type:'map', data:akce.druh,
+    options:ms_akce_typ.zkratka, format:'n' }
   radio [213,117,86,35] { tag:'cor', data:akce.strava_oddo, value:'vo'
     case [0,2,83,] { title:'večeře-oběd', expr:'vo' }
     case [0,17,76,] { title:'oběd-oběd', expr:'oo' }
     proc onchange() { echo('strava=',this.get) }
   }
-  field [96,202,54,] { tag:'cor', title:'účetní symbol:', data:akce.ciselnik_akce, skill:'faa|faa;caa|caa' }
+  field [96,202,54,] { tag:'cor', title:'účetní symbol:', data:akce.ciselnik_akce,
+    skill:'faa|faa;caa|caa' }
   // zobrazení a nastavení akce jako souběžné (stejné datum a místo)
   check soubezna [157,200,120,] { tag:'cor', title:'akce je souběžná', skill:'faa|faa',
     proc onchange() {
@@ -280,7 +281,7 @@ form _page [,,275,360] {
       | msg.set(ask('akce2_delete',form.key,ret));
         akce_roku(info.rok.get); alert(msg.get);
   } } }
-  # ------------------------==> ceník
+  # ------------------------==> . ceník
   browse c [10,25,,] { tag:'cen', rows:26, qry_rows:1, css_rows:"barva,1:grey"
     show id_cenik { data:cenik.id_cenik }
     show id_akce  { data:cenik.id_akce }
@@ -343,7 +344,7 @@ form _page [,,275,360] {
   | alert("pro testování ceníku musí být akce nastavena jako pracovní")
   }
   label xhref [122,bc+9,173,]
-  # ------------------------==> archiv
+  # ------------------------==> . archiv
   # tags:   doc_show=pro zobrazení složky, doc_crea=nabídka vytvoření složky
   var autorized= 0
   var archiv_slozka:object
@@ -434,40 +435,15 @@ form _page [,,275,360] {
   # --------------------------- pozadí stránky nakonec
   label frame [2,16,443,385] { title:'', css:'ae_work page' }
 }
-# -------------------------------------------------------------------------------------------- _akce
-# formulář pro výběr akce pro další práci
-form _akce [,,*,50] {
-  select rok [4,5,52,] { format:'t', proc onchange() { akce_roku(this.get) }}
-  # je voláno s kontextem správného the_source
-  proc nazev_akce(id_akce) {
-    var nazev: text
-    { and(id_akce,not(eq(id_akce,'0')));
-      { eq(the_source.get,'google');
-        nazev.set(conc(' Akce ',google.kod.get,'/',google.rok.get,' - ',google.nazev.get));
-      | eq(the_source.get,'sey');
-        nazev.set(conc(' ',conc(sey.nazev.get,', ',fdate('Y',sey.od.get))));
-      | alert('V levém menu je třeba vybrat typ akcí (na které máte oprávnění)')
-      };
-    };
-    return (nazev);
-  }
-  proc volba_akce(id_akce) {
-    akce_choose(id_akce);
-    lst.info.fill(conc(the_title.get,' '));
-    [ ucast.call('clear_ucast2') ];
-    [ has_skill('yam;fam;cam'); maia.call('init_ucast') ];
-    [ pece.call('init_pece') ];
-    // ošetření souběžných akcí - 0=normální akce, 1=hlavní akce, 2=souběžná akce
-    [ has_skill('f'); page.soubezna.set(eq(the_soubeh.get,2)) ];
-    // nastavení cookies
-    set_cookie(conc(sys('root'),'_akce_id'),the_duakce.get);
-  }
-  # ----------------------------------------==>  G_AKCE (KOPIE ČÍSELNÍKU Z INTRANETU) PRO YS
+# ==> VÝBĚR AKCE
+form _info [,,*,50] {
+  # -----------------------------------------------------------------------------==> . seznam GOOGLE
+  # kopie číselníku z intranetu -  pro ys
   view ga: table g_akce
   view ja: table join_akce {join_type:'LEFT',join:'USING(g_rok,g_kod)'}
   view da: table akce      {join_type:'LEFT',join:'ON ja.id_akce=da.id_duakce'}
   view pa: table pobyt     {join_type:'LEFT',join:'ON pa.id_akce=da.id_duakce'}
-  browse google [0,36,200,500] { rows:27, qry_rows:1, buf_rows:120, group_by:"id_gakce"
+  browse google [0,36,200,500] { tag:'g', rows:27, qry_rows:1, buf_rows:120, group_by:"id_gakce"
     show id_gakce {data:ga.id_gakce}
     show id_akce [,,30,] {title:'akce', data:ja.id_akce, format:'rsqu', css_cell:'id_akce,0:yellow'}
     show org {data:da.access}
@@ -495,7 +471,7 @@ form _akce [,,*,50] {
       item { title:'Vybrat akci jako pracovní', proc onclick() { pracovni }}
     }
     // označení akce jako pracovní
-    proc pracovni() {
+    proc pracovni() { #==> .. pracovní
       not(accessed(org.get));
       alert("nemáte oprávnění označit jako pracovní akci jiné organizace");
     | id_akce.get; volba_akce(id_akce.get)
@@ -508,14 +484,14 @@ form _akce [,,*,50] {
       google.browse_row; volba_akce(id_akce.get) //,nazev.get,ma_cenik.get,ma_cenu.get,cena.get)
     }
   }
-  # ----------------------------------------==> AKCE (VŠECHNY AKCE) PRO YS, FA, CR
+  # --------------------------------------------------------------------------------==> . seznam SEY
   # přechod na účastníky je omezen datovými právy
   view da2: table akce
   view ja2: table join_akce {join_type:'LEFT',join:'ON ja2.id_akce=da2.id_duakce'}
   view ga2: table g_akce    {join_type:'LEFT',join:'USING(g_rok,g_kod)'}
   view sa2: table akce      {join_type:'LEFT',join:'ON sa2.id_hlavni=da2.id_duakce'}
   view pa2: table pobyt     {join_type:'LEFT',join:'ON pa2.id_akce=da2.id_duakce'}
-  browse sey [0,36,200,500] { rows:27, qry_rows:1, buf_rows:120, group_by:"da2.id_duakce"
+  browse sey [0,36,200,500] { tag:'s', rows:27, qry_rows:1, buf_rows:120, group_by:"da2.id_duakce"
       css_rows:"barva,1:cerveny,2:zluty" // 1=hlavní akce, 2=souběžná akce
     show id_akce  {data:da2.id_duakce}
     show          {data:ja2.id_akce}
@@ -552,19 +528,49 @@ form _akce [,,*,50] {
       item { title:'Vybrat akci jako pracovní', proc onclick() { pracovni }}
     }
     // označení akce jako pracovní
-    proc pracovni() {
+    proc pracovni() { #==> .. pracovní
       not(accessed(org.get));
       alert("nemáte oprávnění označit jako pracovní akci jiné organizace");
     | volba_akce(id_akce.get);
       curr.set_attrib('expr',conc("IF(da2.id_duakce=",id_akce.get,",1,0)"));
       this.browse_seek;  }
   }
+  # --------------------------------------------------------------------------------------==> . akce
+  select rok [4,5,52,] { tag:'r', format:'t', proc onchange() { akce_roku(this.get) }}
+  # je voláno s kontextem správného the_source
+  proc nazev_akce(id_akce) {
+    var nazev: text
+    { and(id_akce,not(eq(id_akce,'0')));
+      { eq(the_source.get,'google');
+        nazev.set(conc(' Akce ',google.kod.get,'/',google.rok.get,' - ',google.nazev.get));
+      | eq(the_source.get,'sey');
+        nazev.set(conc(' ',conc(sey.nazev.get,', ',fdate('Y',sey.od.get))));
+      | alert('V levém menu je třeba vybrat typ akcí (na které máte oprávnění)')
+      };
+    };
+    return (nazev);
+  }
+  proc volba_akce(id_akce) { #==> . volba_akce
+    akce_choose(id_akce);
+    lst.info.fill(conc(the_title.get,' '));
+    [ ucast.call('clear_ucast2') ];
+    [ has_skill('yam;fam;cam'); maia.call('init_ucast') ];
+    [ pece.call('init_pece') ];
+    // ošetření souběžných akcí - 0=normální akce, 1=hlavní akce, 2=souběžná akce
+    [ has_skill('f'); page.soubezna.set(eq(the_soubeh.get,2)) ];
+    // nastavení cookies podle organizace
+    { eq(the_org.get,1);
+      the_akce_ys.set(the_duakce.get);
+      set_cookie(conc(sys('root'),'_akce_ys'),the_akce_ys.get)
+    | the_akce_fa.set(the_duakce.get);
+      set_cookie(conc(sys('root'),'_akce_fa'),the_akce_fa.get) };
+  }
   label head [0,0,*,30] { title:'', style:'z-index:0' }
   # volba pracovní akce
   button [376,3,,] { title:'Pracovní', proc onclick() {
     eq(the_source.get,'sey'); info.sey.pracovni | info.google.pracovni
   }}
-  # ==> ... načtení akcí z intranetu
+  # ==> .. načtení akcí z intranetu
   button [-160,3,,] { title:'Obnovit rok z intranetu', skill:'y|yaa+'
     help:"obnoví akce roku z http://intranet.setkani.org"
     # získání seznamu akcí z docs.google.com pomocí API spredsheet
@@ -580,7 +586,7 @@ form _akce [,,*,50] {
     sey.browse_count; sey.browse_export(°{file:'akce',type:'xls'});
     alert("vygenerovaný sešit lze stáhnout <a href='docs/akce.xls' target='xls'>zde</a>");
   }}
-  # ==> ... zobrazení mapy s pozicí míst účastníků dané akce
+  # ==> .. zobrazení mapy s pozicí míst účastníků dané akce
   button [-30,3,,] { title:'Mapa', //skill:'a|a'
     help:"mapa s bydlišti účastníků akcí"
     proc onclick() {
@@ -594,7 +600,7 @@ form _akce [,,*,50] {
     [ x; head.set(conc("<div class='karta' style='padding-left:60px'>",x,"</div>")) ];
   }
 }
-// ----------------------------------------==> mapa
+// ===========================================================================================> MAPA
 panel mapa [,,640,400] { type:'popup', title:'mapa účastníků'
   var id_akce: number
   proc onfirstfocus() { f.cr.init('ROADMAP'); ukaz_psc;  }

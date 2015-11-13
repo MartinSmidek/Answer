@@ -333,8 +333,8 @@ function je_1_2_5($kolik,$tvary) {
 # vrácení hodnot akce
 function akce2_id2a($id_akce) {  //trace();
   $a= (object)array('title'=>'?','cenik'=>0,'cena'=>0,'soubeh'=>0,'hlavni'=>0,'soubezna'=>0);
-  list($a->title,$a->rok,$a->cenik,$a->cena,$a->hlavni,$a->soubezna)=
-    select("a.nazev,YEAR(a.datum_od),a.ma_cenik,a.cena,a.id_hlavni,IFNULL(s.id_duakce,0)",
+  list($a->title,$a->rok,$a->cenik,$a->cena,$a->hlavni,$a->soubezna,$a->org)=
+    select("a.nazev,YEAR(a.datum_od),a.ma_cenik,a.cena,a.id_hlavni,IFNULL(s.id_duakce,0),a.access",
       "akce AS a
        LEFT JOIN akce AS s ON s.id_hlavni=a.id_duakce",
       "a.id_duakce=$id_akce");
@@ -5816,7 +5816,7 @@ function evid2_delete($id_osoba,$id_rodina,$cmd='confirm') { trace();
 }
 # --------------------------------------------------------------------------------------- evid2_cleni
 # hledání a) osoby a jejích rodin b) rodiny (pokud je id_osoba=0)
-function evid2_cleni($id_osoba,$id_rodina,$filtr) { trace();
+function evid2_cleni($id_osoba,$id_rodina,$filtr) { //trace();
   global $USER;
   $access= $USER->access;
   $msg= '';
@@ -6212,8 +6212,8 @@ function sta2_struktura($org,$par,$title,$export=false) {
   $par->tit= $tit;
   $par->fld= $fld;
   $par->grf= "x:n,p,v,vo,vs,d";
-  $par->txt= "Pozn. Graficky je znázorněn relativní počet vzhledem k počtu párů.;
-    <br>Pokud v nějakém roce bylo více běhů je zobrazen jejich součet.";
+  $par->txt= "Pozn. Graficky je znázorněn absolutní počet." //relativní počet vzhledem k počtu párů.;
+    . "<br>Pokud v nějakém roce bylo více běhů je zobrazen jejich součet.";
   return sta2_table_graph($par,$tits,$flds,$clmn,$export);
 }
 # --------------------------------------------------------------------------------- sta2_akcnost_vps
@@ -6302,9 +6302,9 @@ function sta2_table_graph($par,$tits,$flds,$clmn,$export=false) {
         // přidání grafu
         $g= '';
         if ( strpos(",$grf,",",$f,")!==false ) {
-          $g= $c[$norm] ? round(100*($c[$f]/$c[$norm]),0) : 0;
-          $g= "<img src='skins/$skin/pixel.png'
-            style='height:4px;width:{$g}px;float:left;margin-top:5px'>";
+          //$w= $c[$norm] ? round(100*($c[$f]/$c[$norm]),0) : 0;     -- relativní počet
+          $w= $c[$f];
+          $g= "<div class='curr_akce' style='height:4px;width:{$w}px;float:left;margin-top:5px'>";
         }
         $align= is_numeric($c[$f]) || preg_match("/\d+\.\d+\.\d+/",$c[$f]) ? "right" : "left";
         $tab.= "<td style='text-align:$align'>{$c[$f]}$g</td>";
@@ -7063,15 +7063,17 @@ function elim2_recovery_rodina($idr) { trace();
 }
 # --------------------------------------------------------------------------------- elim2_data_osoba
 # načte data OSOBA+TVORI včetně záznamů v _track
-function elim2_data_osoba($ido) {  //trace();
+# cond může omezit čas barvení změn
+function elim2_data_osoba($ido,$cond='') {  //trace();
   $ret= (object)array();
   // načtení změn
   $chng_kdy= $chng_kdo= $chng_val= array();
   $max_kdy= '';
+  $AND_kdy= $cond ? "AND $cond" : '';
   $zs= mysql_qry("
     SELECT fld,kdo,kdy,val,op
     FROM _track
-    WHERE kde='osoba' AND klic=$ido
+    WHERE kde='osoba' AND klic=$ido $AND_kdy
   ");
   while (($z= mysql_fetch_object($zs))) {
     $fld= $z->fld;
@@ -7128,15 +7130,17 @@ function elim2_data_osoba($ido) {  //trace();
 }
 # -------------------------------------------------------------------------------- elim2_data_rodina
 # načte data RODINA včetně záznamů v _track
-function elim2_data_rodina($idr) {  //trace();
+# cond může omezit čas barvení změn
+function elim2_data_rodina($idr,$cond='') {  //trace();
   $ret= (object)array();
   // načtení změn
   $chng_kdy= $chng_kdo= $chng_val= array();
   $max_kdy= '';
+  $AND_kdy= $cond ? "AND $cond" : '';
   $zs= mysql_qry("
     SELECT fld,kdo,kdy,val,op
     FROM _track
-    WHERE kde='rodina' AND klic=$idr
+    WHERE kde='rodina' AND klic=$idr $AND_kdy
   ");
   while (($z= mysql_fetch_object($zs))) {
     $fld= $z->fld;
