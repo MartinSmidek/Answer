@@ -38,7 +38,7 @@ proc akce_work(id_akce) {
 }
 proc reaccess() { #==> . reaccess - změna
   # intranet povol jen Setkání
-  m.g.goo.enable(eq(my_org.get,1));
+  [ m.g.part('goo'); m.g.goo.enable(eq(my_org.get,1)) ];
   # přenastav pracovní akci podle my_org
   { eq(my_org.get,1);
     akce_work(the_akce_ys.get)

@@ -44,7 +44,8 @@ function personify(access) {
     }
     else {
       // uživatel nemá datové oprávnění
-      Ezer.fce.alert("Nemáte oprávnění pracovat s daty "+orgs[access]);
+      Ezer.fce.alert("Nemáte oprávnění pracovat s daty "+orgs[access]
+        +'enabled='+enabled+',access='+access);
     }
   }
   return 1;
