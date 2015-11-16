@@ -34,7 +34,8 @@ use page: form _page [512,40,,]
 # ----------------------------------------------------------------------------==> globální procedury
 # nastaví akci jako pracovní
 proc akce_work(id_akce) {
-  info.volba_akce(id_akce)
+  info.volba_akce(id_akce);
+  info.rok.set(the_rok.get);
 }
 proc reaccess() { #==> . reaccess - změna
   # intranet povol jen Setkání
@@ -143,6 +144,7 @@ proc akce_roku(rok) {
     info.sey.browse_load(conc("YEAR(da2.datum_od)='",rok,"' AND da2.spec=0 AND ",the_omezeni.get),
       '','','','','',
       conc('SET @curr:=',the_duakce.get));
+    info.sey.browse_seek(conc("da2.id_duakce=",the_duakce.get));
 }
 proc akce_vsechny(cond) {
   [ info.sey.browse_load(cond) ];
