@@ -44,7 +44,9 @@ proc onfocus() {
   page.page_start;
   h_change_all;
 }
-
+proc onblur() {
+  [ track.display; track.hide ];
+}
 # --------------------------------------------------------------------------==> . globální procedury
 # přepnutí organizace
 proc reaccess() { #==> . reaccess - změna
@@ -238,7 +240,7 @@ proc reload(id_pobyt) { var filtr:text, id_pobyt0:number
       '',0,0,1/*1=quiet*/,
       conc('SET @akce:=',the_duakce.get,
               ",@soubeh:=",the_soubeh.get,
-              ",@access:=",access.get,
+              ",@access:=",my_access.get,
               ",@app:='",sys('ezer','options','app'),"'"));
     u.b.browse_focus;
     [ id_pobyt; id_pobyt0.set(id_pobyt) ];
@@ -544,7 +546,7 @@ form _ucast [,,400,] { css:'ds_form'
   label [127,13,40,15] { title:
     "<span class='ezer_ys'>S</span><span class='ezer_db' style='margin:2px'>+</span><span class='ezer_fa'>F</span>" }
   check dup [150,7,63,15] { title:'kopie?', help:'zobrazit tipy na kopie osob a rodin',
-    format:'t', value:'0', proc onchange() {
+    format:'t', value:'1', proc onchange() {
     show_dup(this.get);
     { this.get; doc.set(0); sf.set(1); sf.change | reload(0) }
   }}
@@ -1413,6 +1415,7 @@ form _rodina2 [,,360,229]  { css:'ae_frame'
     proc show_dup(on) { on; jmeno.width(80); _dup.width(29) | jmeno.width(110); _dup.width(0) }
     proc onclick() {}
     proc onrowclick() {
+      [ track.display; track.back_show('osoba',key_osoba.get) ];
       eq(cmd.mode.get,'rodiny');
       show_osoby(key_osoba.get,key_spolu.get,cleni);
     | neni_ulozen_clen

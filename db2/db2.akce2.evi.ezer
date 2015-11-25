@@ -20,6 +20,7 @@ proc rodina_show()      { page.rod.show_rodina; }       // obnova údajů o rodi
 proc onfirstfocus() {
   osoba_config.start; rodina_config.start;
   lst.start; page.start; cmd.start; }
+proc onblur() { [ track.display; track.hide ] }
 proc up(x)   { x.get.set_css('shift_up','shift_down'); x.set_css('shift_up','shift_down','.*') }
 proc down(x) { x.get.set_css('shift_down','shift_up'); x.set_css('shift_down','shift_up','.*') }
 # ------------------------------------------------------------------------------------------==> MENU
@@ -147,7 +148,7 @@ form _lst [,,370,*] {
     idh.get; [ bh.browse_seek(conc("id_osoba=",idh.get)); bh.onrowclick ]
   | track_past.set(conc("kdy BETWEEN ADDDATE(NOW(),-",menu_par.get('days'),") AND NOW()"));
     bh.browse_load(conc(
-      'h.access & ',access.get,' AND ',cnd," AND ",bh_filtr.get," AND ",track_past.get));
+      'h.access & ',my_access.get,' AND ',cnd," AND ",bh_filtr.get," AND ",track_past.get));
   }
   view h: table osoba
   view ht: table tvori  { join_type:"LEFT", join:"USING(id_osoba)" }
@@ -178,7 +179,7 @@ form _lst [,,370,*] {
     idf.get; [ bf.browse_seek(conc("id_osoba=",idf.get)); bf.onrowclick ]
   | track_past.set(conc("kdy BETWEEN ADDDATE(NOW(),-",menu_par.get('days'),") AND NOW()"));
     bf.browse_load(conc(
-      'f.access & ',access.get,' AND ',cnd," AND ",bf_filtr.get," AND ",track_past.get));
+      'f.access & ',my_access.get,' AND ',cnd," AND ",bf_filtr.get," AND ",track_past.get));
   }
   view f: table rodina
   view fh: table _track { join:"ON kde='rodina' AND klic=id_rodina" }
@@ -204,7 +205,7 @@ form _lst [,,370,*] {
     [ virgin.get; start ];
     bo_cnd.set(cnd);
     ido.get; [ bo.browse_seek(conc("id_osoba=",ido.get)); /*bo.onrowclick*/ ]
-  | bo.browse_load(conc('o.access & ',access.get,' AND ',cnd," AND ",bo_filtr.get),'',bo_having.get);
+  | bo.browse_load(conc('o.access & ',my_access.get,' AND ',cnd," AND ",bo_filtr.get),'',bo_having.get);
   | page.page_init
   }
   select o_vyber [163,5,154,] {tag:'o', type:'map'
@@ -260,7 +261,7 @@ form _lst [,,370,*] {
     [ virgin.get; start ];
     br_cnd.set(cnd);
     idr.get; [ br.browse_seek(conc("id_rodina=",idr.get)); br.onrowclick ]
-  | br.browse_load(conc('r.access & ',access.get,' AND ',cnd," AND ",br_filtr.get),'',br_having.get);
+  | br.browse_load(conc('r.access & ',my_access.get,' AND ',cnd," AND ",br_filtr.get),'',br_having.get);
   }
   select r_vyber [163,5,154,] {tag:'r', type:'map'
     map_pipe:map_evi_vyber_r.hodnota, options:map_evi_vyber_r.zkratka, format:'t'
@@ -311,7 +312,9 @@ form _page {
   proc evid_load(ido,idr) { var x:object        // zobrazí a zapamatuje podmínky
     idr0.set(idr); ido0.set(ido);
     form.idr.set(idr); form.ido.set(ido);
-    page_load; }
+    page_load;
+    [ track.display; { ido; track.back_show('osoba',ido) | idr; track.back_show('rodina',idr) ]
+  }
   proc refresh() {                              // zobrazí rodiny či osoby podle starých podmínek
     evid_load(ido0.get,idr0.get) }
   # ---------------------------------------------- stav a inicializace
@@ -327,7 +330,9 @@ form _page {
     x.set(ask('evid2_cleni',ido.get,idr.get,conc(cconc(ido.get,lst.bo_filtr.get,lst.br_filtr.get))));
     x.msg; [ x.rodina; rod_load(x.rodina) ]; alert(x.msg)
   | idr.set(x.rodina); x.rodina; rod.enable(1,'.*');
-    cleni.browse_fill(x.cleni); cleni.raise('onrowclick',ido.get);
+    cleni.browse_fill(x.cleni);
+    //cleni.cleni_click(ido.get);
+    cleni.raise('onrowclick',ido.get);
     rod_load(x.rodina);
   | rod.enable(0,'.*'); osoba_load
   }
@@ -414,10 +419,14 @@ form _page {
     show vek   [,,30,] {title:'věk', format:'r' }
     show role  [,,10,] {title:'role'}
     proc onrowclick() {
+      cleni_click(id_osoba.get);
+      [ track.display; track.back_show('osoba',ido.get) ];
+    }
+    proc cleni_click(id) {
       accessed(org.get);
       // zobrazení člena rodiny, případná úprava focus
       last.set(this.browse_active);
-      ido.set(id_osoba.get);                    // změna lokálního ido
+      ido.set(id);                              // změna lokálního ido
       rod.t.key(id_tvori.get); rod.t_role.set(role.get);
       rod.rodiny.selects(rodiny.get); rod.rodiny.key(idr.get);
       [ eq(lst.mode.get,'o');                   // pokud jde o jinou osobu než je v lst
@@ -616,7 +625,7 @@ form _cmd [,,706,32] { css:'ae_frame'
     set_state('show'); page.page_plain; warning;
     page.rod.display(1,'a'); page.rod.display(0,'m|n');
     switch(depth,
-    'curr',{ [ page.cleni.raise('onrowclick',page.oso.key); page.rod.r.load(page.idr.get) ] },
+    'curr',{ [ page.cleni.cleni_click(page.oso.key); page.rod.r.load(page.idr.get) ] },
     'page',{ page.refresh },
     'lst', { lst.refresh });
   }
@@ -670,10 +679,10 @@ form _cmd [,,706,32] { css:'ae_frame'
           conc("nový člen:2,",jmeno,":1,Zpět:0")),
       0,{ stop },
       1,{ set_state('newr');
-          page.rod.access.set(access.get); foreach(page.rod.tagged('N'),change_x); },
+          page.rod.access.set(my_access.get); foreach(page.rod.tagged('N'),change_x); },
       2,{ set_state('newro');
-          page.rod.access.set(access.get); foreach(page.rod.tagged('N'),change_x);
-          page.oso.access.set(access.get); foreach(page.oso.tagged('I'),change_x); }
+          page.rod.access.set(my_access.get); foreach(page.rod.tagged('N'),change_x);
+          page.oso.access.set(my_access.get); foreach(page.oso.tagged('I'),change_x); }
       )
   }}
   // vymazat
@@ -705,7 +714,7 @@ form _cmd [,,706,32] { css:'ae_frame'
       _sex.set(page.oso.sex.get); _prijmeni.set(page.oso.prijmeni.get);
       set_state('newo');
       page.oso.sex.set(_sex); page.oso.prijmeni.set(_prijmeni); page.oso.narozeni.set(now);
-      page.oso.access.set(access.get);
+      page.oso.access.set(my_access.get);
       page.rod.t_role.set('d');
       foreach(page.oso.tagged('I'),change_x); page.rod.t_role.change(1);
   } }

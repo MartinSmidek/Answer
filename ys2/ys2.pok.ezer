@@ -1,3 +1,4 @@
+#pragma library
 # Systém Ans(w)er - modul Pokladna
 # (c) 2008-2010 Martin Šmídek <martin@smidek.eu>
 
@@ -6,7 +7,7 @@
 var d_cond: text
 var d_day: text
 
-panel den {type:'plain', title:"Deník", _sys:'den',  include:'onclick' }
+panel den {type:'plain', title:"Deník", _sys:'den',  include:'onclick,ys2.pok.den' }
 
 panel inf {type:'right', title:"Informace", _sys:'inf'
   menu {type:'left', active:*
@@ -34,7 +35,7 @@ panel inf {type:'right', title:"Informace", _sys:'inf'
   }
 }
 
-panel nas {type:'plain', title:"Nastavení", _sys:'nas',   skill:'yp+|yp+', include:'onclick' }
+panel nas {type:'plain', title:"Nastavení", _sys:'nas',   skill:'yp+|yp+', include:'onclick,ys2.pok.nas' }
 
 proc the_formsave (f,b) {
   f.same
@@ -58,7 +59,7 @@ table _cis { key_id:'id_cis'
   text ikona
 }
 
-table pdenik { key_id:'id_pokl'
+table pdenik { key_id:'id_pokl', db:'ezer_ys'
   number id_pokl { key:'primary' },
   number ident { help:'identifikace|jednoznačná identifikace dokladu' },
   number cislo { help:'číslo|číslo dokladu' },
@@ -74,7 +75,7 @@ table pdenik { key_id:'id_pokl'
   text kat { help:'kategorie' },
 }
 
-table person { key_id:'id_person'
+table person { key_id:'id_person', db:'ezer_ys'
   number id_person { key:'primary' },
   text abbr { help:'organizace|značka zaměstnavatele' },
   text jmeno { help:'jméno|křestní jméno' },
@@ -86,7 +87,7 @@ table person { key_id:'id_person'
   text obec { help:'obec|obec trvalého bydliště' },
 }
 
-table pokladna {  key_id:'id_pokladna'
+table pokladna {  key_id:'id_pokladna', db:'ezer_ys'
   number id_pokladna { key:'primary' },
   text abbr { help:'označení|značka pokladny' },
   text nazev { help:'název|název organizace' },

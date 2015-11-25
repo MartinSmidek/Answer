@@ -1,4 +1,4 @@
-<?php # (c) 2009-2010 Martin Smidek <martin@smidek.eu>
+<?php # (c) 2009-2015 Martin Smidek <martin@smidek.eu>
 /** ===========================================================================================> DB2 **/
 # ------------------------------------------------------------------------------------- db2_rod_show
 # BROWSE ASK
@@ -178,7 +178,7 @@ function akce2_mapa($akce) {  trace();
 # --------------------------------------------------------------------------------------- akce2_info
 # rozšířené informace o akci
 # text=1 v textové verzi, text=0 jako objekt s počty
-function akce2_info($id_akce,$text=1) {  trace();
+function akce2_info($id_akce,$text=1) { // trace();
   $html= '';
   $info= (object)array('muzi'=>0,'zeny'=>0,'deti'=>0,'peco'=>0,'rodi'=>0,'skup'=>0);
   $zpusoby= map_cis('ms_akce_platba','zkratka'); // způsob => částka
@@ -817,8 +817,8 @@ function akce2_vzorec_soubeh($id_pobyt,$id_hlavni,$id_soubezna,$dosp=0,$deti=0,$
   // načtení ceníků
   $sleva= 0;
   $ret= (object)array('navrh'=>'','err'=>'','naklad_d'=>0,'poplatek_d'=>0);
-  akce_nacti_cenik($id_hlavni,$cenik_dosp,$ret->navrh);   if ( $html ) goto end;
-  akce_nacti_cenik($id_soubezna,$cenik_deti,$ret->navrh); if ( $html ) goto end;
+  akce2_nacti_cenik($id_hlavni,$cenik_dosp,$ret->navrh);   if ( $html ) goto end;
+  akce2_nacti_cenik($id_soubezna,$cenik_deti,$ret->navrh); if ( $html ) goto end;
   $map_kat= map_cis('ms_akce_dite_kat','zkratka');
   if ( $id_pobyt ) {
     // zjištění parametrů pobytu podle hlavní akce
@@ -978,6 +978,26 @@ end:
   $ret->mail= "<div style='background-color:#eeeeee;margin-left:15px'>$html</div>";
 //                                                         debug($ret,"akce_vzorec_soubeh");
   return $ret;
+}
+# -------------------------------------------------------------------------------- akce2_nacti_cenik
+# lokální pro akce_vzorec_soubeh a akce_sestava_lidi
+function akce2_nacti_cenik($id_akce,&$cenik,&$html) {
+  $qa= "SELECT * FROM cenik WHERE id_akce=$id_akce ORDER BY poradi";
+  $ra= mysql_qry($qa);
+  if ( !mysql_num_rows($ra) ) {
+    $html.= "akce $id_akce nemá ceník";
+  }
+  else {
+    $cenik= array();
+    while ( $ra && ($a= mysql_fetch_object($ra)) ) {
+      $za= $a->za;
+      if ( !$za ) continue;
+      $cc= (object)array();
+      if ( isset($cenik[$za]) ) $html.= "v ceníku se opakují kódy za=$za";
+      $cenik[$za]= (object)array('c'=>$a->cena,'txt'=>$a->polozka);
+    }
+                                                        debug($cenik,"ceník pro $id_akce");
+  }
 }
 # ------------------------------------------------------------------------------------- akce2_vzorec
 # výpočet platby za pobyt na akci
@@ -2862,7 +2882,7 @@ function tisk2_sestava_lidi($akce,$par,$title,$vypis,$export=false) { trace();
   // načtení ceníku pro dite_kat, pokud se chce _poplatek
   if ( strpos($fld,"_poplatek") ) {
     $soubezna= select("id_duakce","akce","id_hlavni=$akce");
-    akce_nacti_cenik($soubezna,$cenik,$html);
+    akce2_nacti_cenik($soubezna,$cenik,$html);
   }
   // získání dat - podle $kdo
   $clmn= array();
@@ -6938,16 +6958,28 @@ function elim2_differ($id_orig,$id_copy,$table) { trace();
 end:
   return $ret;
 }
-# -------------------------------------------------------------------------------------- elim2_osoba
-# zamění všechny výskyty kopie za originál v TVORI, SPOLU, DAR, PLATBA, MAIL a kopii smaže
+# ---------------------------------------------------------------------------------==> . elim2_osoba
+# zamění všechny výskyty kopie za originál v TVORI, SPOLU, DAR, PLATBA, MAIL
+# a kopii poznačí jako smazanou
 function elim2_osoba($id_orig,$id_copy) { //trace();
   global $USER;
   $ret= (object)array('err'=>'');
   $now= date("Y-m-d H:i:s");
+  // tvori
+  $tvori= select("GROUP_CONCAT(id_tvori)","tvori", "id_osoba=$id_copy");
   query("UPDATE tvori  SET id_osoba=$id_orig WHERE id_osoba=$id_copy");
+  // spolu
+  $spolu= select("GROUP_CONCAT(id_spolu)","spolu","id_osoba=$id_copy");
   query("UPDATE spolu  SET id_osoba=$id_orig WHERE id_osoba=$id_copy");
+  // dar
+  $dar=   select("GROUP_CONCAT(id_dar)",  "dar",  "id_osoba=$id_copy");
   query("UPDATE dar    SET id_osoba=$id_orig WHERE id_osoba=$id_copy");
+  // platba
+  $platba= select("GROUP_CONCAT(id_platba)","platba","id_osoba=$id_copy");
   query("UPDATE platba SET id_osoba=$id_orig WHERE id_osoba=$id_copy");
+  // mail
+  $mail= select("GROUP_CONCAT(id_mail)","mail","id_clen=$id_copy");
+  query("UPDATE mail SET id_clen=$id_orig WHERE id_clen=$id_copy");
   // smazání kopie
   query("UPDATE osoba SET deleted='D osoba=$id_orig' WHERE id_osoba=$id_copy");
   // opravy v originálu
@@ -6957,24 +6989,36 @@ function elim2_osoba($id_orig,$id_copy) { //trace();
   query("UPDATE osoba SET access=$access WHERE id_osoba=$id_orig");
   // zápis o ztotožnění osob do _track jako op=d (duplicita)
   $user= $USER->abbr;
+  $info= "access:$access_orig;tvori:$tvori;spolu:$spolu;dar:$dar;platba:$platba;mail:$mail";
   query("INSERT INTO _track (kdy,kdo,kde,klic,fld,op,old,val)
-         VALUES ('$now','$user','osoba',$id_orig,'','d','osoba',$id_copy)");    // d=duplicita
+         VALUES ('$now','$user','osoba',$id_orig,'osoba','d','$info',$id_copy)");    // d=duplicita
   // zápis o smazání kopie do _track jako op=x (eXtract)
   query("INSERT INTO _track (kdy,kdo,kde,klic,fld,op,old,val)
-         VALUES ('$now','$user','osoba',$id_copy,'','x','kopie',$id_orig)");    // x=smazání
+         VALUES ('$now','$user','osoba',$id_copy,'','x','smazaná kopie',$id_orig)");    // x=smazání
 end:
   return $ret;
 }
-# --------------------------------------------------------------------------------------- elim2_clen
+# ----------------------------------------------------------------------------------==> . elim2_clen
 # zamění všechny výskyty kopie za originál v TVORI, SPOLU, DAR, PLATBA, MAIL a kopii smaže
 function elim2_clen($id_rodina,$id_orig,$id_copy) { trace();
   global $USER;
   $ret= (object)array('err'=>'');
   $now= date("Y-m-d H:i:s");
+  // tvori - vymazat => do _track napsat id_rodina.role
+  $tvori= select1("CONCAT(id_rodina,'.',role)","tvori", "id_rodina=$id_rodina AND id_osoba=$id_copy");
   query("DELETE FROM tvori WHERE id_rodina=$id_rodina AND id_osoba=$id_copy");
+  // spolu
+  $spolu= select("GROUP_CONCAT(id_spolu)","spolu","id_osoba=$id_copy");
   query("UPDATE spolu  SET id_osoba=$id_orig WHERE id_osoba=$id_copy");
+  // dar
+  $dar=   select("GROUP_CONCAT(id_dar)",  "dar",  "id_osoba=$id_copy");
   query("UPDATE dar    SET id_osoba=$id_orig WHERE id_osoba=$id_copy");
+  // platba
+  $platba= select("GROUP_CONCAT(id_platba)","platba","id_osoba=$id_copy");
   query("UPDATE platba SET id_osoba=$id_orig WHERE id_osoba=$id_copy");
+  // mail
+  $mail= select("GROUP_CONCAT(id_mail)","mail","id_clen=$id_copy");
+  query("UPDATE mail SET id_clen=$id_orig WHERE id_clen=$id_copy");
   // smazání kopie
   query("UPDATE osoba SET deleted='D osoba=$id_orig' WHERE id_osoba=$id_copy");
   // opravy v originálu
@@ -6983,25 +7027,34 @@ function elim2_clen($id_rodina,$id_orig,$id_copy) { trace();
   $access= $access_orig | $access_copy;
   query("UPDATE osoba SET access=$access WHERE id_osoba=$id_orig");
   // zápis o ztotožnění osob do _track jako op=d (duplicita)
+  $info= "access:$access_orig;xtvori:$tvori;spolu:$spolu;dar:$dar;platba:$platba;mail:$mail";
   $user= $USER->abbr;
   query("INSERT INTO _track (kdy,kdo,kde,klic,fld,op,old,val)
-         VALUES ('$now','$user','osoba',$id_orig,'','d','osoba',$id_copy)");
+         VALUES ('$now','$user','osoba',$id_orig,'clen','d','$info',$id_copy)");
   // zápis o smazání kopie do _track jako op=x (eXtract)
   query("INSERT INTO _track (kdy,kdo,kde,klic,fld,op,old,val)
-         VALUES ('$now','$user','osoba',$id_copy,'','x','kopie',$id_orig)");
+         VALUES ('$now','$user','osoba',$id_copy,'','x','smazaná kopie',$id_orig)");
 end:
   return $ret;
 }
-# ------------------------------------------------------------------------------------- elim2_rodina
-# zamění všechny výskyty kopie za originál v POBYT, TVORI, DAR, PLATBA, MAIL a kopii smaže
+# --------------------------------------------------------------------------------==> . elim2_rodina
+# zamění všechny výskyty kopie za originál v POBYT, TVORI, DAR, PLATBA a kopii smaže
 function elim2_rodina($id_orig,$id_copy) { trace();
   global $USER;
   $ret= (object)array('err'=>'');
   if ( $id_orig!=$id_copy ) {
     $now= date("Y-m-d H:i:s");
+    // pobyt
+    $pobyt= select("GROUP_CONCAT(id_pobyt)","pobyt", "i0_rodina=$id_copy");
     query("UPDATE pobyt  SET i0_rodina=$id_orig WHERE i0_rodina=$id_copy");
+    // tvori
+    $tvori= select("GROUP_CONCAT(id_tvori)","tvori", "id_rodina=$id_copy");
     query("UPDATE tvori  SET id_rodina=$id_orig WHERE id_rodina=$id_copy");
+    // dar
+    $dar=   select("GROUP_CONCAT(id_dar)",  "dar",  "id_rodina=$id_copy");
     query("UPDATE dar    SET id_rodina=$id_orig WHERE id_rodina=$id_copy");
+    // platba
+    $platba= select("GROUP_CONCAT(id_platba)","platba","id_rodina=$id_copy");
     query("UPDATE platba SET id_rodina=$id_orig WHERE id_rodina=$id_copy");
     // smazání kopie
     query("UPDATE rodina SET deleted='D rodina=$id_orig' WHERE id_rodina=$id_copy");
@@ -7011,12 +7064,13 @@ function elim2_rodina($id_orig,$id_copy) { trace();
     $access= $access_orig | $access_copy;
     query("UPDATE rodina SET access=$access WHERE id_rodina=$id_orig");
     // zápis o ztotožnění rodin do _track jako op=d (duplicita)
+    $info= "access:$access_orig;pobyt:$pobyt;tvori:$tvori;dar:$dar;platba:$platba";
     $user= $USER->abbr;
     query("INSERT INTO _track (kdy,kdo,kde,klic,fld,op,old,val)
-           VALUES ('$now','$user','rodina',$id_orig,'','d','orig',$id_copy)");
+           VALUES ('$now','$user','rodina',$id_orig,'','d','$info',$id_copy)");
     // zápis o smazání kopie do _track jako op=x (eXtract)
     query("INSERT INTO _track (kdy,kdo,kde,klic,fld,op,old,val)
-           VALUES ('$now','$user','rodina',$id_copy,'','x','kopie',$id_orig)");
+           VALUES ('$now','$user','rodina',$id_copy,'rodina','x','smazaná kopie',$id_orig)");
   }
   // odstranění duplicit v tabulce TVORI
   $qt= mysql_qry("
@@ -7183,6 +7237,18 @@ function elim2_data_rodina($idr,$cond='') {  //trace();
 }
 /** =========================================================================================> MAIL2 **/
 # =======================================================================================> . mailist
+# ------------------------------------------------------------------------------------ mail2_mailist
+# vrátí daný mailist ve tvaru pro selects
+function mail2_mailist($access) {
+  $sel= '';
+  $mr= mysql_qry("SELECT id_mailist,ucel,access FROM mailist WHERE access=$access");
+  while ($mr && ($m= mysql_fetch_object($mr))) {
+    $a= $m->access;
+    $css= $a==1 ? 'ezer_ys' : ($a==2 ? 'ezer_fa' : ($a==3 ? 'ezer_db' : ''));
+    $sel.= ",{$m->ucel}:{$m->id_mailist}:$css";
+  }
+  return $sel ? substr($sel,1) : '';
+}
 # --------------------------------------------------------------------------------- mail2_lst_access
 # vrátí údaje daného maillistu (ZRUŠENO: s provedenou substitucí podle access uživatele)
 function mail2_lst_access($id_mailist) {  trace();
@@ -7536,14 +7602,16 @@ function mail2_mai_omitt2($id_dopis,$lst_vynech) {  trace();
 function mail2_mai_pocet($id_dopis,$dopis_var,$cond='',$recall=false) {  trace();
   $result= (object)array('_error'=>0, '_count'=> 0, '_cond'=>false);
   $result->_html= 'Rozesílání mailu nemá určené adresáty, stiskni ZRUŠIT';
+  $html= '';
   $emaily= $ids= $jmena= $pobyty= array();
   $spatne= $nema= $mimo= $nomail= '';
   $n= $ns= $nt= $nx= $mx= $nm= 0;
   $dels= $deln= $delm= $delnm= '';
   $nazev= '';
   switch ($dopis_var) {
-  // mail-list
+  // --------------------------------------------------- mail-list
   case 'G':
+    $html.= "Vybraných adresátů ";
     $id_mailist= select('id_mailist','dopis',"id_dopis=$id_dopis");
 //     list($qry,$ucel)= select('sexpr,ucel','mailist',"id_mailist=$id");
     $ml= mail2_lst_access($id_mailist);
@@ -7580,8 +7648,9 @@ function mail2_mai_pocet($id_dopis,$dopis_var,$cond='',$recall=false) {  trace()
       }
     }
     break;
-  // obecný SQL dotaz - skupina
+  // --------------------------------------------------- obecný SQL dotaz - skupina
   case 'Q':
+    $html.= "Vybraných adresátů ";
     $qryQ= "SELECT _cis.hodnota,_cis.zkratka FROM dopis
            JOIN _cis ON _cis.data=dopis.cis_skupina AND _cis.druh='db_maily_sql'
            WHERE id_dopis=$id_dopis ";
@@ -7623,10 +7692,11 @@ function mail2_mai_pocet($id_dopis,$dopis_var,$cond='',$recall=false) {  trace()
       }
     }
     break;
-  // účastníci akce
+  // --------------------------------------------------- účastníci akce
   case 'U3':    // dlužníci
   case 'U2':    // sloužící
   case 'U':
+    $html.= "Obeslaných účastníků ";
     $AND= $cond ? "AND $cond" : '';
     $AND.= $dopis_var=='U'  ? " AND p.funkce IN (0,1,2,5)" : (
            $dopis_var=='U2' ? " AND p.funkce IN (1,2,5)"   : (
@@ -7681,7 +7751,7 @@ function mail2_mai_pocet($id_dopis,$dopis_var,$cond='',$recall=false) {  trace()
     }
     break;
   }
-  // projdi adresy
+  // --------------------------------------------------- projdi a verifikuj adresy
 //                                                 debug($emaily,"emaily");
   for ($i= 0; $i<count($ids); $i++) {
     $email= ''; $del= '';
@@ -7712,10 +7782,9 @@ function mail2_mai_pocet($id_dopis,$dopis_var,$cond='',$recall=false) {  trace()
   $html.= $nx ? "$nx nemají mail ($nema)\n" : '';
   $html.= $nm ? "$nm nechtějí hromadné informace ($nomail)\n" : '';
   $html.= $mx ? "$mx mají mail označený '*' jako nedostupný ($mimo)" : '';
-  $result->_html= $nt>0
+  $result->_html= "$html<br><br>" . ($nt>0
     ? "Opravdu vygenerovat seznam pro rozeslání\n'$nazev'\nna $nt adres?"
-    : "Mail '$nazev' nemá žádného adresáta, stiskni ZRUŠIT";
-  $result->_html.= "\n\n$html";
+    : "Mail '$nazev' nemá žádného adresáta, stiskni ZRUŠIT");
   $result->_count= $nt;
   if ( !$recall ) {
     // pro delší seznamy
@@ -7929,7 +7998,7 @@ function mail2_mai_info($id,$email,$id_dopis,$zdroj,$id_mail) {  trace();
     }
     break;
   case 'G':                     // mail-list
-    function href($fnames) {
+    $make_href= function ($fnames) {
       global $ezer_root;
       $href= array();
       foreach(explode(',',$fnames) as $fnamesize) {
@@ -7937,7 +8006,7 @@ function mail2_mai_info($id,$email,$id_dopis,$zdroj,$id_mail) {  trace();
         $href[]= "<a href='docs/$ezer_root/$fname' target='pdf'>$fname</a>";
       }
       return implode(', ',$href);
-    }
+    };
     list($obsah,$prilohy)= select('obsah,prilohy','dopis',"id_dopis=$id_dopis");
     $priloha= select('priloha','mail',"id_mail=$id_mail");
     $c= select("*",'osoba',"id_osoba=$id");
@@ -7947,9 +8016,9 @@ function mail2_mai_info($id,$email,$id_dopis,$zdroj,$id_mail) {  trace();
       $html.= "Telefon: {$c->telefony}<br>";
     // přílohy ke kontrole
     if ( $prilohy )
-      $html.= "<br>Společné přílohy: ".href($prilohy);
+      $html.= "<br>Společné přílohy: ".$make_href($prilohy);
     if ( $priloha )
-      $html.= "<br>Vlastní přílohy: ".href($priloha);
+      $html.= "<br>Vlastní přílohy: ".$make_href($priloha);
     break;
   }
   return $html;
@@ -9025,6 +9094,7 @@ function db2_sys_transform($par) { trace();
     'dopis' =>   array('access','id_dopis','id_duakce','id_mailist'),
     'join_akce'=>array(         'id_akce'),
     'mailist' => array('access','id_mailist'),
+    'mail' =>    array(         'id_mail','id_dopis','id_pobyt','id_clen'),
     'osoba' =>   array('access','id_osoba'),
     'platba' =>  array(         'id_platba','id_osoba','id_rodina','id_duakce','id_pokl'),
     'pobyt' =>   array(         'id_pobyt','id_akce','i0_rodina'),
@@ -9033,7 +9103,7 @@ function db2_sys_transform($par) { trace();
     'tvori' =>   array(         'id_tvori','id_rodina','id_osoba'),
     // systém
     '_user' =>  array('id_user'),
-    '_track' => array('id_track','klic'),
+    //'_track' => array('id_track','klic'), -- zvláštní běh imp_track
   );
   $ds= array(
     // dokumenty s _id^ na konci
@@ -9122,6 +9192,7 @@ function db2_sys_transform($par) { trace();
     // provede import z ezer_ys=>ezer_db (klíče na dvojnásobek+1 pro nenulové,access=1)
     case 'imp_YS':
       $db= 'ezer_ys';
+      $root= 'ys';
     // ---------------------------------------------- import: FA
     // provede import z ezer_fa=>ezer_db (klíče na dvojnásobek,access=2)
     case 'imp_FA':
@@ -9140,23 +9211,94 @@ function db2_sys_transform($par) { trace();
               $main= $main ?: $key;
             }
           }
+          // aplikace změn
           $updt= substr($updt,1);
           $ok= mysql_qry("UPDATE ezer_db2._tmp_ SET $updt ORDER BY $main DESC");
           $nr= mysql_affected_rows();
         }
         if ( $ok ) $ok= mysql_qry("INSERT INTO ezer_db2.$tab SELECT * FROM ezer_db2._tmp_");
-        if ( $ok ) {
-          $html.= "<br>$tab: vloženo $nr záznamů";
-        }
+        if ( $ok ) $html.= "<br>$tab: vloženo $nr záznamů";
         mysql_qry("DROP TABLE IF EXISTS ezer_db2._tmp_");
-        // pročištění mailist
-        if ( $ok && $tab=='mailist' ) {
-          $ok= mysql_qry("DELETE mailist FROM mailist LEFT JOIN dopis USING (id_mailist)
-                          WHERE ISNULL(id_dopis)");
-          mysql_qry("UPDATE mailist SET parms=REPLACE(parms,'\"akey\":3','\"akey\":5')");
-          mysql_qry("UPDATE mailist SET parms=REPLACE(parms,'\"akey\":4','\"akey\":6')");
-        }
       }
+      break;
+    // ---------------------------------------------- import: cor_mailist
+    // pročištění mailist
+    case 'cor_mailist':
+      //mysql_qry("DELETE mailist FROM ezer_db2.mailist LEFT JOIN ezer_db2.dopis USING (id_mailist)
+      //           WHERE ISNULL(id_dopis)");
+      mysql_qry("UPDATE ezer_db2.mailist SET parms=REPLACE(parms,'\"akey\":3','\"akey\":5')");
+      mysql_qry("UPDATE ezer_db2.mailist SET parms=REPLACE(parms,'\"akey\":4','\"akey\":6')");
+      // 3 testovací mailisty
+      $json= '{"ano_akce":{"typy":"1","keys":"1","cas":[{"akey":3}]},'
+           . '"ne_akce":0,"ucasti":{"funkce":1,"fce_keys":"3,4","muzi":1,"zeny":1,'
+           . '"ucasti":{"ucast":0},"mrop":0,"email":1}}';
+      $sql= function ($acc) { return '"'.str_replace('  ',' ',str_replace("\n"," ",
+         "SELECT o.access,COUNT(*) AS _ucasti,iniciace,o.id_osoba AS _id,
+          CONCAT(prijmeni,' ',jmeno) AS _name,
+          IF(o.adresa,o.psc,IFNULL(r.psc,'')) AS _psc,
+          IF(o.adresa,o.ulice,IFNULL(r.ulice,'')) AS _ulice,
+          IF(o.adresa,o.obec,IFNULL(r.obec,'')) AS _obec,
+          IF(o.adresa,o.stat,IFNULL(r.stat,'')) AS _stat,
+          IF(o.kontakt,o.email,IFNULL(r.emaily,'')) AS _email,nomail
+          FROM pobyt AS p JOIN spolu AS s USING (id_pobyt)
+          JOIN osoba AS o ON s.id_osoba=o.id_osoba JOIN akce AS a ON a.id_duakce=p.id_akce
+          LEFT JOIN tvori AS t ON t.id_osoba=o.id_osoba LEFT JOIN rodina AS r USING (id_rodina)
+          WHERE o.deleted='' AND TRUE AND (IF(o.kontakt,o.email!='',FALSE) OR r.emaily!='') AND
+          IFNULL(t.role,'?')!='d' AND p.funkce IN (3,4) AND 1 AND p.id_akce IN
+            (SELECT id_duakce FROM akce
+            WHERE spec=0 AND access&$acc
+            AND spec=0 AND YEAR(datum_od)=YEAR(CURDATE()) AND druh IN (1))
+          GROUP BY o.id_osoba
+          ORDER BY prijmeni")).'"'; };
+      mysql_qry("DELETE FROM ezer_db2.mailist WHERE id_mailist<=3");
+      mysql_qry("DELETE FROM ezer_db2.dopis WHERE id_mailist BETWEEN 1 AND 3");
+      mysql_qry("INSERT INTO ezer_db2.mailist (id_mailist,access,ucel,parms,sexpr)
+         VALUES (1,1,'testovací mailist Setkání','$json',".$sql(1).")");
+      mysql_qry("INSERT INTO ezer_db2.mailist (id_mailist,access,ucel,parms,sexpr)
+         VALUES (2,2,'testovací mailist Familia','$json',".$sql(2).")");
+      mysql_qry("INSERT INTO ezer_db2.mailist (id_mailist,access,ucel,parms,sexpr)
+         VALUES (3,3,'testovací mailist společný','$json',".$sql(3).")");
+      break;
+    // ---------------------------------------------- import: imp_clear_track
+    // vyprázdní tabulku ezer_db2._track
+    case 'imp_clear_track':
+      if ( $ok ) $ok= mysql_qry("TRUNCATE TABLE ezer_db2._track");
+      if ( $ok ) $html.= "<br>_track: vyprázdněno";
+      break;
+    // ---------------------------------------------- import: YS (_track)
+    // provede import z ezer_ys=>ezer_db (klíče na dvojnásobek+1 pro vybrané kombinace)
+    case 'imp_YS_track':
+      $db= 'ezer_ys';
+      $root= 'ys';
+    // ---------------------------------------------- import: FA (_track)
+    // provede import z ezer_fa=>ezer_db (klíče na dvojnásobek pro vybrané kombinace)
+    case 'imp_FA_track':
+      $tab= '_track';
+      if ( $ok ) $ok= mysql_qry("DROP TABLE IF EXISTS ezer_db2._tmp_");
+      if ( $ok ) $ok= mysql_qry("CREATE TABLE ezer_db2._tmp_ LIKE $db.$tab");
+      if ( $ok ) $ok= mysql_qry("INSERT INTO ezer_db2._tmp_ SELECT * FROM $db.$tab");
+      if ( $ok ) {
+        // id_track, klic
+        $key= 'id_track';
+        $updt= $cmd=='imp_FA_track' ? "$key=$key*2" : "$key=IF($key,$key*2+1,0)";
+        $key= 'klic';
+        $updt.= $cmd=='imp_FA_track' ? ",$key=$key*2" : ",$key=IF($key,$key*2+1,0)";
+        $ok= mysql_qry("UPDATE ezer_db2._tmp_ SET $updt ORDER BY id_track DESC");
+        // *.r,*.d, tvori, spolu, pobyt
+        $key= 'val';
+        $updt= $cmd=='imp_FA_track' ? "$key=$key*2" : "$key=IF($key,$key*2+1,0)";
+        $ok= mysql_qry("UPDATE ezer_db2._tmp_ SET $updt
+          WHERE op='r'
+             OR (op='d' AND old!='chlapi')
+             OR (kde='spolu' AND fld IN ('id_osoba','id_pobyt','pecovane'))
+             OR (kde='pobyt' AND fld IN ('i0_rodina','id_akce'))
+             OR (kde='tvori' AND fld IN ('id_rodina','id_osoba'))
+          ");
+        $nr= mysql_affected_rows();
+      }
+      if ( $ok ) $ok= mysql_qry("INSERT INTO ezer_db2.$tab SELECT * FROM ezer_db2._tmp_");
+      if ( $ok ) $html.= "<br>$root $tab: upraveno $nr záznamů";
+      mysql_qry("DROP TABLE IF EXISTS ezer_db2._tmp_");
       break;
     // ---------------------------------------------- import: imp_user
     // vyčistí databázi ezer_db2, založí uživatele GAN a upraví ZMI,HAN,MSM
@@ -9168,7 +9310,7 @@ function db2_sys_transform($par) { trace();
       if ( $ok ) $ok= mysql_qry("INSERT INTO ezer_db2._user
         (id_user,abbr,username,password,state,org,access,forename,surname,skills) VALUES
         (1,'GAN','gandi','radost','+-Uu',1,3,'Martin','Šmídek',
-          'a ah f fa faa faa+ faa:c faan fad fae fam fam famg fams d m mg r sp spk spv y')");
+          'a ah f fa faa faa+ faa:c faan fad fae fam fam famg fams d m mg r sp spk spv y yp yd yaed')");
       //  úprava skill a access pro MSM,HAN,ZMI
       if ( $ok ) $ok= mysql_qry("UPDATE ezer_db2._user SET org=1,access=1,skills=CONCAT('d ',skills)
                                  WHERE abbr='MSM' AND skills NOT LIKE 'd %'");
@@ -9215,7 +9357,7 @@ function db2_sys_transform($par) { trace();
                    "fa" => "0,1,3,4,5,6,7,8,9,10,12,13,14,99"
                  ),
                  "ms_akce_typ" => array(
-                   "tables" => "akce.druh",
+                   "tables" => "akce.druh,mailist",
                    "ys" => "1,2,3,5,6,7,8,9,11,17,18,19,20,21,22,23",
                    "fa" => "4,5-24,8-25,9-26,10,12,13,14,15,16"
                  ),
@@ -9259,13 +9401,23 @@ function db2_sys_transform($par) { trace();
               // transformace hodnoty v tabulkách
               if ( $key2 && isset($desc['tables']) ) {
                 foreach(explode(',',$desc['tables']) as $tab_fld) {
-                  $nt= 0;
-                  list($tab,$fld)= explode('.',$tab_fld);
-                  $access= $org=="ys" ? 1 : 2;
-                  query("UPDATE ezer_db2.$tab SET $fld=$key2
-                         WHERE $fld=$key1 AND access=$access");
-                  $nt+= mysql_affected_rows();
-                  $html.= "<br>$tab: upraveno $nt záznamů ($org: $fld=$key1=>$key2)";
+                  if ( $tab_fld=='mailist' ) {
+                    $acc= $org=='fa' ? 2 : 1;
+                    query("UPDATE ezer_db2.mailist
+                           SET parms=REPLACE(parms,'\"keys\":\"$key1\"','\"keys\":\"$key2\"')
+                           WHERE access=$acc");
+                    $nk= mysql_affected_rows();
+                    $html.= "<br>mailist/$org: oprava $key1 na $key2 - $nk x";
+                  }
+                  else {
+                    $nt= 0;
+                    list($tab,$fld)= explode('.',$tab_fld);
+                    $access= $org=="ys" ? 1 : 2;
+                    query("UPDATE ezer_db2.$tab SET $fld=$key2
+                           WHERE $fld=$key1 AND access=$access");
+                    $nt+= mysql_affected_rows();
+                    $html.= "<br>$tab: upraveno $nt záznamů ($org: $fld=$key1=>$key2)";
+                  }
                 }
               }
             }
@@ -9320,5 +9472,105 @@ function db2_copy_test_db($db) {  trace();
   }
   ezer_connect("ezer_{$db}");   // jinak zůstane přepnuté na test
   return $ok ? 'ok' : 'ko';
+}
+# -----------------------------------------------------------------------------------==> . track ops
+# --------------------------------------------------------------------------------------- track_like
+# vrátí změny podobné předané (stejný uživatel, tabulka, čas +-10s)
+function track_like($id) {  trace();
+  $ret= (object)array('ok'=>1);
+  $ids= $id;
+  list($kdo,$kde,$kdy,$klic,$op)= select('kdo,kde,kdy,klic,op','_track',"id_track=$id");
+  if ( strpos("uU",$op)===false ) {
+    $ret->ok= 0;
+    $ret->msg= "Bohužel, vrácení úprav typu '$op' není podporováno";
+    goto end;
+  }
+  // nalezení podobných
+  $diff= "10 SECOND";
+  $xr= mysql_qry(
+    "SELECT COUNT(*) AS _pocet,GROUP_CONCAT(id_track) AS _ids
+     FROM _track
+     WHERE kdo='$kdo' AND kde='$kde' AND klic='$klic' AND op='$op'
+       AND kdy BETWEEN DATE_ADD('$kdy',INTERVAL -$diff) AND DATE_ADD('$kdy',INTERVAL $diff)");
+  $x= mysql_fetch_object($xr);
+  $ret->ids= $x->_ids;
+  if ( $x->_pocet > 10 ) {
+    $ret->msg= "pozor je příliš mnoho změn - {$x->_pocet}";
+    $ret->ok= 0;
+  }
+end:
+  return $ret;
+}
+# ------------------------------------------------------------------------------------- track_revert
+# pokusí se vrátit učiněné změny - $ids je seznam id_track
+function track_revert($ids) {  trace();
+  global $USER;
+  $now= date("Y-m-d H:i:s");
+  $user= $USER->abbr;
+  $ret= (object)array('ok'=>1);
+  $xr= mysql_qry("SELECT * FROM _track WHERE id_track IN ($ids)");
+  while ( $xr && ($x= mysql_fetch_object($xr)) ) {
+    $table= $x->kde; $id= $x->klic; $op= $x->op; $fld= $x->fld;
+    $old= $x->old; $val= $x->val;
+    $ret->tab= $table;
+    $ret->klic= $id;
+    switch ($op ) {
+    case 'd': // ------------------------------- vrácení sjednocení
+      if ( $table=='osoba' || $table=='rodina' ) {
+        $chngs= explode(';',$old); // seznam změn k vrácení pro id_osoba=$val
+        foreach ($chngs as $chng) {
+          list($fld,$lst)= explode(':',$chng);
+          $_id= $fld=='pobyt' ? 'i0_rodina' : (
+                $fld=='mail'  ? 'id_clen'   :  "id_$table");
+          switch ($fld) {
+          case 'access': // -------------------- zápis o vrácení a obnově
+            // obnov smazanou osobu nebo rodinu
+            query("UPDATE $table SET deleted='' WHERE id_$table=$val");
+            query("INSERT INTO _track (kdy,kdo,kde,klic,fld,op,old,val)
+                   VALUES ('$now','$user','$table',$val,'','o','obnovená kopie','$id')");     // o=obnova
+            // zapiš info o vrácení jako V
+            query("UPDATE $table SET access=$lst WHERE id_$table=$id");
+            query("INSERT INTO _track (kdy,kdo,kde,klic,fld,op,old,val)
+                   VALUES ('$now','$user','$table',$id,'$table','V','vrácené sjednocení','$val')");  // V=vrácení
+            break;
+          case 'pobyt':
+          case 'mail':
+          case 'tvori':
+          case 'spolu':
+          case 'dar':
+          case 'platba':
+            if ( $lst ) {
+              query("UPDATE $fld SET $_id=$val WHERE id_$fld IN ($lst)");
+            }
+            break;
+          case 'xtvori':
+            list($idr,$role)= explode('.',$lst);
+            query("INSERT INTO tvori (id_rodina,id_osoba,role) VALUES ($idr,$val,'$role')");
+            break;
+          default:
+            $ret->ok= 0;
+            $ret->msg= "Bohužel, vrácení úprav typu '$op/$fld' není podporováno";
+          }
+        }
+      }
+      else {
+        $ret->ok= 0;
+        $ret->msg= "Bohužel, toto sjednocení již nelze vrátit";
+      }
+      break;
+    case 'u': // ------------------------------- vrácení změny
+    case 'U':
+      $curr= select($fld,$table,"id_$table=$id");
+      if ( $curr==$val )
+        ezer_qry("UPDATE",$table,$id,array(
+          (object)array('fld'=>$fld, 'op'=>'u','val'=>$old,'old'=>$curr)
+        ));
+      break;
+    default:
+      $ret->ok= 0;
+      $ret->msg= "Vrácení úprav typu '$op' není podporováno";
+    }
+  }
+  return $ret;
 }
 ?>

@@ -838,6 +838,9 @@ body { position:absolute; width:100%; height:100%; }
 .db_evidence {  font-size:9px; background-color:#C2E2E2; height:15px;
                 color:#299C9C; font-weight:bold; padding:0 2px; }
 button.db_evidence:disabled { color:silver; }
+.db_chain {  font-size:9px; background-color:#C2E2E2; height:15px;
+             color:white; font-weight:bold; padding:0 2px; }
+button.db_chain:disabled { color:silver; }
 .curr_akce { background-color:#299C9C !important; color:#ffffff; font-weight:bold; }
 .form_note { font-size:10px; color:#299C9C }
 .title_ref { color:#ffffff !important; }

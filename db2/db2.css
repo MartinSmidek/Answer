@@ -21,7 +21,7 @@ button.search   { padding-left:0px; }
 /* výběr access */
 
 #appl {
-  z-index: 99; padding-left: 70px; }
+  z-index: 99; }
 #access {
   cursor: pointer; }
 #access_menu {

@@ -124,9 +124,9 @@ function answer_php($app,$app_name,$db_name,$skin,$js_lib,$css_lib,$options) {
   if ( $app=='db2' ) {
     // nová verze db2
     $cookie= 3;
-    if ( isset($_COOKIE['last_access'])
-      && $_COOKIE['last_access']>0 &&  $_COOKIE['last_access']<4 )
-      $cookie= $_COOKIE['last_access'];
+    if ( isset($_COOKIE['db2_last_access'])
+      && $_COOKIE['db2_last_access']>0 &&  $_COOKIE['db2_last_access']<4 )
+      $cookie= $_COOKIE['db2_last_access'];
 
     $access_app= array(1=>"Setkání","Familia","(společný)");
     $access_app= $access_app[$cookie];
@@ -134,7 +134,7 @@ function answer_php($app,$app_name,$db_name,$skin,$js_lib,$css_lib,$options) {
     $title= "
       <span $title_style>"
       . $title_flag
-      ."<span id='access' onclick=\"$choice_js\">
+      ."<span id='access' onclick=\"$choice_js\" oncontextmenu=\"$choice_js\">
           Ans(w)er $access_app
         </span>
         <div id='access_menu'>

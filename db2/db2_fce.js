@@ -1,51 +1,58 @@
 // uživatelské funkce aplikace Ans(w)er
 // =========================================================================================> funkce
-// ---------------------------------------------------------------------------------------- ON login
+// -----------------------------------------------------------------------------------==> . ON login
 Ezer.onlogin= function() {
-  personify(Ezer.sys.user.access);
+  if ( Ezer.root=='db2' ) {
+    var a1= Ezer.sys.user.access;
+    var a2= Ezer.fce.get_cookie('db2_last_access',a1);
+    var a= a1 & a2 ? a1 & a2 : a1;
+    personify(a,1);
+  }
 }
-// --------------------------------------------------------------------------------------- personify
+// ----------------------------------------------------------------------------------==> . personify
 // upraví datová práva a vzhled aplikace
 // před přihlášením:    každému (po přihlášení bude případně zredukováno)
 // po přihlášení:       pokud má tato datová práva
-function personify(access) {
+function personify(access,from) {
   var menu= $('access_menu'), body= $(document.body), timer;
+  var orgs= ['','YMCA Setkání','YMCA Familia','obou organizací'];
+  var tits= ['','Answer Setkání','Answer Familia','Ans(w)er (společný)'];
+  var skin= ['','ck/ck.ezer.css','ch/ch.ezer.css','db/db.ezer.css'];
   var off= function(e) {
     menu.setStyle('display','none');
-    body.removeEvent('click',off);
+    body.removeEvents({click:off,contextmenu:off});
   }
   if ( access=='menu_on' ) {
     menu.setStyle('display','block');
     $clear(timer);
     timer= (function(){
-      body.addEvent('click',off);
+      body.addEvents({click:off,contextmenu:off});
     }).delay(1);
   }
   else {
-    var enabled= 3;
     off();
-    if ( Ezer.sys.user && Ezer.sys.user.id_user ) {
-      enabled= Ezer.sys.user.has_access;
-    }
-    var orgs= ['','YMCA Setkání','YMCA Familia','obou organizací'];
-    if ( enabled & access ) {
-      // přeznač aplikaci
-      var tits= ['','Answer Setkání','Answer Familia','Ans(w)er (společný)'];
-      var skin= ['','ck/ck.ezer.css','ch/ch.ezer.css','db/db.ezer.css'];
-      Ezer.sys.user.access= access;
-      $('access').setProperty('text',tits[access]);
+    var access1= Ezer.sys.user && Ezer.sys.user.id_user
+               ? Ezer.sys.user.has_access & access              // přihlášený - ověřeně
+               : access;                                        // nepřihlášený - podle přání
+    // u přihlášeného již víme skutečná práva tj. has_access
+    // nepřihlášenému obarvíme přihlášení podle přání - po přihlášení se to ověří
+    if ( access1 ) {
+      // přepni aplikaci podle access a zapiš do cookie 'db2_last_access'
+      Ezer.sys.user.access= access1;
+      $('access').setProperty('text',tits[access1]);
       var old_skin= $('skin');
-      Asset.css("skins/"+skin[access],{id:'skin'});
+      Asset.css("skins/"+skin[access1],{id:'skin'});
       old_skin.destroy();
-      // zavolej ezer-funkci v kořenu reaccess, pokud je uživatel přihlášený
-      if ( Ezer.sys.user && Ezer.sys.user.id_user ) {
-        Ezer.run.$.part.db2.callProc('reaccess',[orgs[access]]);
+      Ezer.fce.set_cookie('db2_last_access',access1);
+      // přihlášenému zavolej ezer-funkci v kořenu reaccess
+      if ( Ezer.sys.user && Ezer.sys.user.id_user && Ezer.run && Ezer.run.$
+           && Ezer.run.$.part && Ezer.run.$.part.db2 ) {
+        Ezer.run.$.part.db2.callProc('reaccess',[orgs[access1]]);
       }
     }
     else {
       // uživatel nemá datové oprávnění
-      Ezer.fce.alert("Nemáte oprávnění pracovat s daty "+orgs[access]
-        +'enabled='+enabled+',access='+access);
+      Ezer.fce.alert("Nemáte oprávnění pracovat s daty "+orgs[access]);
     }
   }
   return 1;
@@ -71,10 +78,8 @@ Ezer.Form.implement({
     $each(form.part,function(field,id) {
       if ( (field instanceof Ezer.Field || field instanceof Ezer.Edit || field instanceof Ezer.Select)
         && field.DOM_Input ) {
-//                                                         Ezer.trace('*',id);
         field.DOM_Input.addEvents({
           dblclick: function(el) {
-//                                                         Ezer.trace('*','DblClick '+this.id+'='+this.value);
             if ( field2= goal.part[this.id] ) {
               field2.set(this.value);
               field2.change();
