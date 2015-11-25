@@ -22,13 +22,18 @@
   );
 
   $cookie= 3;
-  if ( isset($_COOKIE['last_access'])
-    && $_COOKIE['last_access']>0 &&  $_COOKIE['last_access']<4 )
-    $cookie= $_COOKIE['last_access'];
+  if ( isset($_COOKIE['db2_last_access'])
+    && $_COOKIE['db2_last_access']>0 &&  $_COOKIE['db2_last_access']<4 )
+    $cookie= $_COOKIE['db2_last_access'];
   $choice_css=
-    $cookie==1 ? "skins/ys/ys.ezer.css=skin" : (
-    $cookie==2 ? "skins/fa/fa.ezer.css=skin" : "skins/db/db.ezer.css=skin" );
+    $cookie==1 ? "skins/ck/ck.ezer.css=skin" : (
+    $cookie==2 ? "skins/ch/ch.ezer.css=skin" : "skins/db/db.ezer.css=skin" );
 
-  $css= array($choice_css,"./db2/db2.css");
-  answer_php('db2',"Answer ...",'ezer_db2','db',array(),$css,$options);
+  $js= array(
+    "ds/fce.js"
+  );
+  $css= array($choice_css,
+    "db2/db2.css"
+  );
+  answer_php('db2',"Answer ...",'ezer_db2','db',$js,$css,$options);
 ?>

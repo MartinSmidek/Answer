@@ -318,7 +318,6 @@ group ucastnici {
     label [400,20,300,] { title:"<h3 style='margin:0'>Údaje vybraného účastníka</h3>" }
 
     button [200,10,,] { title:'TEST', skill:'m|m'
-      proc onclick () { ask('test_020811') }
     }
   }
   // ------------------------------------------------------------------ AKCE

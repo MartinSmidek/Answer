@@ -21,7 +21,6 @@ var dopis_id: text
 var dopis_var: text             // typ rozesílání: U/U2/U3 - účastníci akce
 var dopis_akce: number          // id_akce|0
 var karta: text                 // et|es
-var sql_export:text
 var menu_item=0
 
 # ----------------------------------------------------------------------------==> globální procedury

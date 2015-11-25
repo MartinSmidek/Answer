@@ -1,5 +1,13 @@
+#pragma library
 # Systém Ans(w)er - modul Dům
 # (c) 2008-2010 Martin Šmídek <martin@smidek.eu>
+
+  proc the_formsave (f,b) {
+    f.same
+  | f.key; f.save; f.load; b.browse_seek
+  | f.insert; f.load;
+    b.raise('onrowclick',b.browse_seek(conc(f.key_id,'=',f.key)))
+  }
 
 # ================================================================================================== OBJEDNÁVKY
 panel dum {type:'right', title:"Objednávky", _sys:'obj',
@@ -104,7 +112,7 @@ group tab { /*include:'static'*/
   map ds_luzko:  table _cis {where:"druh='ds_luzko'", order:'poradi', key_id:'data'}
 }
 # ================================================================================================== HOSTÉ
-panel kl {type:'right', title:"Hosté", _sys:'kli', include:'onload' }
+panel kl {type:'right', title:"Hosté", _sys:'kli', include:'onload,ys2.ds.kl' }
 # ================================================================================================== CENY
 var rok: number
 panel cen [,,,543] {type:'right', title:'Ceny'

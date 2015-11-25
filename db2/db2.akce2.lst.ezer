@@ -6,7 +6,7 @@
 
 # ------------------------------------------------------------------------------------------==> stav
 var zalozka: text               // inf | cor | cen
-var the_omezeni: text           // podmínka omezující akce podle access
+var the_omezeni: text           // podmínka omezující akce podle my_access
 var menu_item:object            // aktivní menu
 # ----------------------------------------------------------------------------------==> inicializace
 # inicializace panelu proběhne po akce.onstart, zobrazí seznam akcí daného roku podle the_source
@@ -126,7 +126,7 @@ menu m {type:'left', format:'f+'
     menu_item.set(i);
     info.display(2,i.par.it); the_source.set(i.par.s);
     [ i.par.o; the_omezeni.set(conc(
-        "da2.access & ",cconc(eq(i.par.o,'org'),my_org.get,access.get))) ];
+        "da2.access & ",cconc(eq(i.par.o,'org'),my_org.get,my_access.get))) ];
     { i.par.a; akce_roku(info.rok.get) | akce_vsechny(i.par.cond) }
   }
 }
@@ -328,7 +328,7 @@ form _page [,,275,360] {
     proc onclick() {
       var ret: object
       ret.set(ask('akce2_platby_xls',a_akce.get));
-      ret.ok; xhref.set(ret.xhref);
+      ret.ok; alert(ret.xhref);
     | warning(ret.msg);
   } }
   label  [lc+20,bc+49,211,] { tag:'b,cen', title:"příklady poplatků" }
@@ -345,7 +345,6 @@ form _page [,,275,360] {
     alert(cena.navrh)
   | alert("pro testování ceníku musí být akce nastavena jako pracovní")
   }
-  label xhref [122,bc+9,173,]
   # ------------------------==> . archiv
   # tags:   doc_show=pro zobrazení složky, doc_crea=nabídka vytvoření složky
   var autorized= 0
@@ -611,6 +610,7 @@ panel mapa [,,640,400] { type:'popup', title:'mapa účastníků'
     var ret: object
     ret.set(ask('akce2_mapa',id_akce.get));
     [ ret.err; warning(ret.err) ];
+    f.cr.set(object('mark',''));
     f.cr.set(object('mark',ret.mark));
   }
   use f: form _f [0,10,,]
