@@ -19,7 +19,7 @@ var zmeny: object               // objekt naplněný požadavkem zobrazení ned�
 proc onstart() {}
 proc onfirstfocus() {
   // povolení "[]kopie?" jen pro access=3
-  [ eq(3,sys('user','access')) | u.dup.set(0); u.dup.display(0); u.sf.set(0); u.sf.change;];
+  [ eq(3,my_access.get) | u.dup.set(0); u.dup.display(0); u.sf.set(0); u.sf.change;];
   the_duakce_local.set(0);
   curr_h.set(0);
   curr_w.set(cconc(lt(sys('screen','width'),1280),1024,1280));
@@ -50,6 +50,11 @@ proc onblur() {
 # --------------------------------------------------------------------------==> . globální procedury
 # přepnutí organizace
 proc reaccess() { #==> . reaccess - změna
+  // povolení "[]kopie?" pro access=3
+  [ eq(3,my_access.get);
+    u.dup.set(1); u.dup.display(1);
+  | u.dup.set(0); u.dup.display(0);
+  ];
   init_ucast2
 }
 # ukázání pobytu
