@@ -8604,7 +8604,9 @@ function evid_sestava($par,$title,$export=false) {
           GROUP BY id_akce ORDER BY datum_od DESC")
      : ( $par->typ=='e-x' ? evid_sestava_x($par,$title,$export)
      : ( $par->typ=='e-cleni' ? evid_sestava_cleni($par,$title,$export)
-     : fce_error("evid_sestava: N.Y.I.") )))));
+     : ( $par->typ=='e-recyklace1' ? evid_sestava_recyklace($par,$title,0)
+     : ( $par->typ=='e-recyklace2' ? evid_sestava_recyklace($par,$title,1)
+     : fce_error("evid_sestava: N.Y.I.") )))))));
 }
 # -------------------------------------------------------------------------------------------------- evid_vyp_excel
 # generování tabulky do excelu
@@ -8852,6 +8854,79 @@ function evid_sestava_j($par,$title,$export=false) {
     }
   }
   return evid_table($par,$tits,$flds,$clmn,$export);
+}
+# -------------------------------------------------------------------------------------------------- evid_sestava_j
+# generování přehledu pečounů pro recyklaci
+function evid_sestava_recyklace($par,$title,$provest) {
+  $ret= (object)array('html'=>'');
+  $html= '';
+  $pryc= $nechat= $novi= array();
+  // průzkum pečounů
+  $pr= mysql_qry("
+    SELECT id_osoba,prijmeni,jmeno,ukon,pfunkce,
+      MIN(YEAR(dat_od)) AS _od,
+      MAX(YEAR(dat_do)) AS _do,
+      MIN(YEAR(a.datum_od)) AS _poprve,
+      MAX(YEAR(a.datum_od)) AS _naposled,
+      GROUP_CONCAT(DISTINCT ukon SEPARATOR '') AS _ukony,
+      SUM(IF(YEAR(a.datum_od)=2014,1,0)) AS _loni,
+      SUM(IF(YEAR(a.datum_od)=2015,1,0)) AS _letos,
+      MAX(pfunkce) AS _pfunkce,
+      narozeni
+    FROM osoba AS o
+    LEFT JOIN dar AS d USING (id_osoba)
+    JOIN spolu AS s USING (id_osoba)
+    JOIN pobyt AS p USING (id_pobyt)
+    JOIN akce AS a ON id_akce=id_duakce
+    WHERE d.deleted='' AND funkce=99 -- AND pfunkce=0
+    GROUP BY id_osoba
+    ORDER BY prijmeni");
+  while ( $pr && ($p= mysql_fetch_object($pr)) ) {
+    $pec= (object)array('id'=>$p->id_osoba,'jmeno'=>"{$p->prijmeni} {$p->jmeno}");
+    // přeskočit činné členy a team
+    if ( strpos($p->_ukony,'c')!==false ) continue;
+    if ( $p->_pfunkce==7 ) continue;
+    if ( $p->_poprve==2015 ) {
+      $novi[]= $pec;
+    }
+    else if ( $p->_naposled<2015 && strpos($p->_ukony,'b')!==false && $p->_do==0 ) {
+      $pryc[]= $pec;
+    }
+    else if ( $p->_naposled==2015 ) {
+      $nechat[]= $pec;
+    }
+  }
+                                                debug($novi,"noví");
+//                                                 debug($pryc,"pryč");
+//                                                 debug($nechat,"nechat");
+  // noví pečouni
+  $html.= "<h3>Noví členové tj. noví letošní pečouni</h3>";
+  $del= '';
+  foreach ($novi as $nov) {
+    $html.= "$del{$nov->jmeno}"; $del= ', ';
+//     if ( $provest ) {
+//       query("UPDATE
+//     }
+  }
+  // staří pečouni
+  $html.= "<h3>Ponechaní členové tj. i letos aktivní pečouni</h3>";
+  $del= '';
+  foreach ($nechat as $nec) {
+    $html.= "$del{$nec->jmeno}"; $del= ', ';
+  }
+  // nečinní pečouni
+  $html.= "<h3>Vyřazení členové tj. letos neaktivní pečouni</h3>";
+  $del= '';
+  foreach ($pryc as $pry) {
+    $html.= "$del{$pry->jmeno}"; $del= ', ';
+    if ( $provest ) {
+      query("UPDATE dar SET dat_do='2014-12-31'
+             WHERE id_osoba={$pry->id} AND ukon='b' AND dat_do='0000-00-00'");
+    }
+  }
+  // návrat
+  $ret->html= $html;
+  return $ret;
 }
 # -------------------------------------------------------------------------------------------------- evid_sestava_j
 # generování přehledu členstva
