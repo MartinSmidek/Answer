@@ -8859,6 +8859,11 @@ function evid_sestava_j($par,$title,$export=false) {
 # generování přehledu pečounů pro recyklaci
 function evid_sestava_recyklace($par,$title,$provest) {
   $ret= (object)array('html'=>'');
+  $letos= date('Y');
+  $rok_od= $letos;
+  $rok_do= $rok_od-1;
+  $den_do= "$rok_do-12-31";
+  $den_od= "$rok_od-01-01";
   $html= '';
   $pryc= $nechat= $novi= array();
   // průzkum pečounů
@@ -8878,7 +8883,7 @@ function evid_sestava_recyklace($par,$title,$provest) {
     JOIN spolu AS s USING (id_osoba)
     JOIN pobyt AS p USING (id_pobyt)
     JOIN akce AS a ON id_akce=id_duakce
-    WHERE d.deleted='' AND funkce=99 -- AND pfunkce=0
+    WHERE IFNULL(d.deleted,'')='' AND funkce=99 -- AND pfunkce=0
     GROUP BY id_osoba
     ORDER BY prijmeni");
   while ( $pr && ($p= mysql_fetch_object($pr)) ) {
@@ -8886,41 +8891,44 @@ function evid_sestava_recyklace($par,$title,$provest) {
     // přeskočit činné členy a team
     if ( strpos($p->_ukony,'c')!==false ) continue;
     if ( $p->_pfunkce==7 ) continue;
-    if ( $p->_poprve==2015 ) {
+    if ( $p->_poprve==$rok_od && strpos($p->_ukony,'b')===false
+    || ( $p->_naposled==$rok_od && strpos($p->_ukony,'b')===false )
+    ) {
       $novi[]= $pec;
     }
-    else if ( $p->_naposled<2015 && strpos($p->_ukony,'b')!==false && $p->_do==0 ) {
+    else if ( $p->_naposled<$rok_od && strpos($p->_ukony,'b')!==false && $p->_do==0 ) {
       $pryc[]= $pec;
     }
-    else if ( $p->_naposled==2015 ) {
+    else if ( $p->_naposled==$rok_od ) {
       $nechat[]= $pec;
     }
   }
-                                                debug($novi,"noví");
+//                                                 debug($novi,"noví");
 //                                                 debug($pryc,"pryč");
 //                                                 debug($nechat,"nechat");
   // noví pečouni
-  $html.= "<h3>Noví členové tj. noví letošní pečouni</h3>";
+  $html.= "<h3>Noví členové tj. letošní pečouni, kteří nejsou členy</h3>";
   $del= '';
   foreach ($novi as $nov) {
     $html.= "$del{$nov->jmeno}"; $del= ', ';
-//     if ( $provest ) {
-//       query("UPDATE
-//     }
+    if ( $provest ) {
+      query("INSERT INTO dar (id_osoba,ukon,dat_od,note)
+             VALUES ($nov->id,'b','$den_od','pečoun $rok_od')");
+    }
   }
   // staří pečouni
-  $html.= "<h3>Ponechaní členové tj. i letos aktivní pečouni</h3>";
+  $html.= "<h3>Ponechaní členové tj. dříve i letos aktivní pečouni, kteří jsou již členy</h3>";
   $del= '';
   foreach ($nechat as $nec) {
     $html.= "$del{$nec->jmeno}"; $del= ', ';
   }
   // nečinní pečouni
-  $html.= "<h3>Vyřazení členové tj. letos neaktivní pečouni</h3>";
+  $html.= "<h3>Členové, kteří budou vyřazeni tj. letos už neaktivní pečouni, kteří jsou dosud členy</h3>";
   $del= '';
   foreach ($pryc as $pry) {
     $html.= "$del{$pry->jmeno}"; $del= ', ';
     if ( $provest ) {
-      query("UPDATE dar SET dat_do='2014-12-31'
+      query("UPDATE dar SET dat_do='$den_do'
              WHERE id_osoba={$pry->id} AND ukon='b' AND dat_do='0000-00-00'");
     }
   }
