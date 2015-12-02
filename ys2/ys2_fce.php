@@ -240,7 +240,7 @@ function ds_compare($order) {  #trace('','win1250');
   }
   $form= (object)array('adults'=>$n_a,'kids_10_15'=>$n_15,'kids_3_9'=>$n_9,'kids_3'=>$n_3,
     'nevek'=>$n_0, 'noroom'=>$noroom);
-  $result= (object)array('html'=>wu($html),'form'=>$form,'err'=>$err,'pozn'=>$pozn);
+  $result= (object)array('html'=>/*wu*/($html),'form'=>$form,'err'=>$err,'pozn'=>$pozn);
   return $result;
 }
 # ===========================================================================================> hosté
@@ -337,7 +337,7 @@ function ds_obj_menu() {
       $yyyy= $start+$y;
       $group= "$yyyy$mm";
       $gr= (object)array('type'=>'menu.group'
-        ,'options'=>(object)array('title'=>wu($mesice[$m])." $yyyy"),'part'=>(object)array());
+        ,'options'=>(object)array('title'=>($mesice[$m])." $yyyy"),'part'=>(object)array());
       $mn->part->$group= $gr;
 
       $from= mktime(0,0,0,$m,1,$yyyy);
