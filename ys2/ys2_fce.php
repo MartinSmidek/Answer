@@ -625,9 +625,9 @@ function ds_hoste($orders,$rok) {  #trace('','win1250');
       $popl= $ds_cena['ubyt_P']->cena;
     // připsání řádku
     $host= array();
-    $host[]= $h->jmeno;
-    $host[]= $h->prijmeni;
-    $host[]= "{$h->psc} {$h->obec}, {$h->ulice}";
+    $host[]= wu($h->jmeno);
+    $host[]= wu($h->prijmeni);
+    $host[]= wu("{$h->psc} {$h->obec}, {$h->ulice}");
     $host[]= $narozeni;
     $host[]= $h->telefon;
     $host[]= $h->p_email;
@@ -696,8 +696,8 @@ function ds_zaloha($order) {  #trace('','win1250');
     $platce= array();
     $platce[]= $o->ic ? $o->ic : '';
     $platce[]= $o->dic ? $o->dic : '';
-    $platce[]= ($o->org ? "{$o->org}{}" : '')."{$o->firstname} {$o->name}{}".
-              "{$o->address}{}{$o->zip} {$o->city}";
+    $platce[]= wu(($o->org ? "{$o->org}{}" : '')."{$o->firstname} {$o->name}{}".
+              "{$o->address}{}{$o->zip} {$o->city}");
     $platce[]= $o->akce;
     $platce[]= $obdobi;
     $x->platce= $platce;
@@ -1000,8 +1000,8 @@ function ds_faktury($order) {  trace('','win1250');
     $platce= array();
     $platce[]= $o->ic ? $o->ic : '';
     $platce[]= $o->dic ? $o->dic : '';
-    $platce[]= ($o->org ? "{$o->org}{}" : '')."{$o->firstname} {$o->name}{}".
-              "{$o->address}{}{$o->zip} {$o->city}";
+    $platce[]= wu(($o->org ? "{$o->org}{}" : '')."{$o->firstname} {$o->name}{}".
+              "{$o->address}{}{$o->zip} {$o->city}");
     $platce[]= $o->akce;
     $platce[]= $obdobi;
     $x->objednavka= array($obdobi);
@@ -1038,11 +1038,11 @@ function ds_faktury($order) {  trace('','win1250');
         $strava= $h->strava ? $h->strava : $o->board;
         // připsání řádku
         $host= array();
-        $host[]= $h->rodina;
-        $host[]= $h->jmeno;
-        $host[]= $h->prijmeni;
-        $host[]= $h->ulice;
-        $host[]= "{$h->psc} {$h->obec}";
+        $host[]= wu($h->rodina);
+        $host[]= wu($h->jmeno);
+        $host[]= wu($h->prijmeni);
+        $host[]= wu($h->ulice);
+        $host[]= wu("{$h->psc} {$h->obec}");
         $host[]= $narozeni;
         $host[]= $vek;
         $host[]= $h->telefon;
@@ -1432,7 +1432,10 @@ function ds_cenik($rok) {  #trace('','win1250');
   $qry2= "SELECT * FROM ds_cena WHERE rok=$rok";
   $res2= mysql_qry($qry2);
   while ( $res2 && $c= mysql_fetch_object($res2) ) {
-    $ds_cena[$c->typ]= $c;
+    $wc= $c;
+    $wc->polozka= wu($c->polozka);
+    $wc->druh= wu($c->druh);
+    $ds_cena[$c->typ]= $wc;
   }
 //                                                 debug($cena,'cena',(object)array('win1250'=>1));
 }
