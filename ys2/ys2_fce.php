@@ -183,7 +183,7 @@ function ds_compare_list($orders) {  #trace('','win1250');
   if ( $orders ) {
     foreach (explode(',',$orders) as $order) {
       $x= ds_compare($order);
-      $html.= /*wu*/("<dt>Objednávka <b>$order</b> {$x->pozn}</dt>");
+      $html.= /*w*u*/("<dt>Objednávka <b>$order</b> {$x->pozn}</dt>");
       $html.= "<dd>{$x->html}</dd>";
       $errs+= $x->err;
       $n++;
@@ -192,7 +192,7 @@ function ds_compare_list($orders) {  #trace('','win1250');
   $html.= "</dl>";
   $msg= "V tomto období je celkem $n objednávek";
   $msg.= $errs ? ", z toho $errs neúplné." : "." ;
-  $result= (object)array('html'=>$html,'msg'=>/*wu*/($msg));
+  $result= (object)array('html'=>$html,'msg'=>/*w*u*/($msg));
   return $result;
 }
 # --------------------------------------------------------------------------------------- ds_compare
@@ -201,7 +201,7 @@ function ds_compare($order) {  #trace('','win1250');
   // údaje z objednávky
   $qry= "SELECT * FROM setkani.tx_gnalberice_order WHERE uid=$order";
   $res= mysql_qry($qry);
-  if ( !$res ) fce_error(/*wu*/("$order není platné číslo objednávky"));
+  if ( !$res ) fce_error(/*w*u*/("$order není platné číslo objednávky"));
   $o= mysql_fetch_object($res);
   // projití seznamu
   $qry= "SELECT * FROM setkani.ds_osoba WHERE id_order=$order ";
@@ -240,7 +240,7 @@ function ds_compare($order) {  #trace('','win1250');
   }
   $form= (object)array('adults'=>$n_a,'kids_10_15'=>$n_15,'kids_3_9'=>$n_9,'kids_3'=>$n_3,
     'nevek'=>$n_0, 'noroom'=>$noroom);
-  $result= (object)array('html'=>/*wu*/($html),'form'=>$form,'err'=>$err,'pozn'=>$pozn);
+  $result= (object)array('html'=>/*w*u*/($html),'form'=>$form,'err'=>$err,'pozn'=>$pozn);
   return $result;
 }
 # ===========================================================================================> hosté
@@ -286,10 +286,10 @@ function ds_kli_menu() {
       if ( $resp && $op= mysql_fetch_object($resp) ) {
         $klientu= $op->klientu;
       }
-      $tit= /*wu*/($mesice[$m])." - $celkem ($klientu)";
+      $tit= /*w*u*/($mesice[$m])." - $celkem ($klientu)";
       $par= (object)array('od'=>$od,'do'=>$do,
         'celkem'=>$celkem,'klientu'=>$klientu,'objednavek'=>$objednavek,'uids'=>$uids,
-        'mesic_rok'=>/*wu*/($mesice[$m])." $rok");
+        'mesic_rok'=>/*w*u*/($mesice[$m])." $rok");
       $tm= (object)array('type'=>'item','options'=>(object)array('title'=>$tit,'par'=>$par));
       $gr->part->$m= $tm;
       if ( !$the && $yyyymm>=$ted ) {
@@ -397,9 +397,9 @@ function lide_ms($patt) {  #trace('','win1250');
   }
   // obecné položky
   if ( !$n )
-    $a[0]= /*wu*/("... žádné jméno nezačíná '")."$patt'";
+    $a[0]= /*w*u*/("... žádné jméno nezačíná '")."$patt'";
   elseif ( $n==$limit )
-    $a[-999999]= /*wu*/("... a další");
+    $a[-999999]= /*w*u*/("... a další");
 //                                                                 debug($a,$patt,(object)array('win1250'=>1));
   return $a;
 }
@@ -442,7 +442,7 @@ function roku($rc) {
          $r==1        ? "rok" : (
          ($r % 10)==1 ? "let" : (
          $r<=4        ? "roky" : "roků" )));
-  return wu("$r $roku, rč:$rc");
+  return /*w*u*/("$r $roku, rč:$rc");
 }
 # ------------------------------------------------------------------------------------------ lide_ds
 # SELECT autocomplete - výběr z databáze DS
@@ -471,9 +471,9 @@ function lide_ds($patt0) {  #trace('','win1250');
   }
   // obecné položky
   if ( !$n )
-    $a[0]= /*wu*/("... žádné jméno nezačíná '")."$patt0'";//."INFO='$info'";
+    $a[0]= /*w*u*/("... žádné jméno nezačíná '")."$patt0'";//."INFO='$info'";
   elseif ( $n==$limit )
-    $a[-999999]= /*wu*/("... a další");//."INFO='$info0'";
+    $a[-999999]= /*w*u*/("... a další");//."INFO='$info0'";
 //                                                      debug($a,$patt,(object)array('win1250'=>1));
   return $a;
 }
@@ -531,7 +531,7 @@ function ds_ceny_uprava($par) { trace('','win1250');
       while ( $res && $c= mysql_fetch_object($res) ) {
         $ins= "INSERT INTO ds_cena (rok,polozka,druh,typ,od,do,cena,dph)
                VALUES ($na,'{$c->polozka}','{$c->druh}','{$c->typ}',{$c->od},{$c->do},{$c->cena},{$c->dph})";
-        display(wu($ins));
+        display(/*w*u*/($ins));
         $n++;
         $ires= mysql_qry($ins);
         $ok&= mysql_affected_rows()==1 ? 1 : 0;
@@ -570,18 +570,18 @@ __XLS;
   $xls.= <<<__XLS
     |close
 __XLS;
-//                                                                 display(wu($xls));
+//                                                                 display(/*w*u*/($xls));
   $test= 1;
   if ( $test )
     file_put_contents("xls.txt",$xls);
-  $inf= Excel5(wu($xls),1);
+  $inf= Excel5(/*w*u*/($xls),1);
   if ( $inf ) {
     $html= " se nepodařilo vygenerovat - viz začátek chybové hlášky";
-    fce_error(wu($inf));
+    fce_error(/*w*u*/($inf));
   }
   else
     $html= " Byl vygenerován seznam hostů ve formátu <a href='docs/$name.xls' target='xls'>Excel</a>.";
-  return wu($html);
+  return /*w*u*/($html);
 }
 # ----------------------------------------------------------------------------------------- ds_hoste
 # vytvoří seznam hostů
@@ -658,15 +658,15 @@ function ds_xls_zaloha($order) {  #trace('','win1250');
   $test= 1;
   if ( $test )
     file_put_contents("xls.txt",$xls);
-  $inf= Excel5(wu($xls),1);
+  $inf= Excel5(/*w*u*/($xls),1);
   if ( $inf ) {
     $html= " nastala chyba";
-    fce_error(wu($inf));
+    fce_error(/*w*u*/($inf));
   }
   else
     $html= " <a href='docs/$name.xls' target='xls'>zálohová faktura</a>.";
 end:
-  return wu($html);
+  return /*w*u*/($html);
 }
 # ---------------------------------------------------------------------------------------- ds_zaloha
 # data zálohové faktury
@@ -684,7 +684,7 @@ function ds_zaloha($order) {  #trace('','win1250');
   if ( $res && $o= mysql_fetch_object($res) ) {
     $o->rooms= $o->rooms1;
     foreach ((array)$o as $on) if ( strstr($on,'|')!==false ) { // test na |
-      fce_warning(/*wu*/("nepřípustný znak '|' v '$on'"));
+      fce_warning(/*w*u*/("nepřípustný znak '|' v '$on'"));
       goto end;
     }
     $obdobi= date('j.n',$o->fromday).' - '.date('j.n.Y',$o->untilday);
@@ -942,22 +942,22 @@ __XLS;
     |rows $n=60
     |$xls|close 1";
 //                                                                 display("rodiny=$faktury");
-//                                                                 display(nl2br(wu($xls)));
+//                                                                 display(nl2br(/*w*u*/($xls)));
   $test= 1;
   if ( $test )
     file_put_contents("xls.txt",$final_xls);
   time_mark('ds_xls_faktury Excel5');
-  $inf= Excel5(wu($final_xls),1);
+  $inf= Excel5(/*w*u*/($final_xls),1);
   if ( $inf ) {
     $html= " nastala chyba";
-    fce_error(wu($inf));
+    fce_error(/*w*u*/($inf));
   }
   else
     $html= " <a href='docs/$name.xls' target='xls'>konečná faktura</a>.";
   // případný testovací výpis
   time_mark('ds_xls_faktury end');
 end:
-  return wu($html);
+  return /*w*u*/($html);
 }
 # --------------------------------------------------------------------------------------- ds_faktury
 # podklady ke konečné fakturaci
@@ -991,7 +991,7 @@ function ds_faktury($order) {  trace('','win1250');
   if ( $res && $o= mysql_fetch_object($res) ) {
     $o->rooms= $o->rooms1;
     foreach ((array)$o as $on) if ( strstr($on,'|')!==false ) { // test na |
-      fce_warning(/*wu*/("nepřípustný znak '|' v '$on'"));
+      fce_warning(/*w*u*/("nepřípustný znak '|' v '$on'"));
       goto end;
     }
     $obdobi= date('j.n',$o->fromday).' - '.date('j.n.Y',$o->untilday);
@@ -1027,7 +1027,7 @@ function ds_faktury($order) {  trace('','win1250');
       $reso= mysql_qry($qry);
       while ( $reso && $h= mysql_fetch_object($reso) ) {
         foreach ((array)$h as $on) if ( strstr($on,'|')!==false ) { // test na |
-          fce_warning(/*wu*/("nepřípustný znak '|' v '$on'"));
+          fce_warning(/*w*u*/("nepřípustný znak '|' v '$on'"));
           goto end;
         }
         $hf= sql2stamp($h->fromday); $hu= sql2stamp($h->untilday);
@@ -1052,14 +1052,12 @@ function ds_faktury($order) {  trace('','win1250');
         // položky hosta
         $pol= (object)array();
         $pol->test= "{$h->strava} : {$o->board} - $strava = {$ds_strava[$strava]}";
-//                                                 display(wu("{$h->jmeno} {$h->prijmeni} $pol->test}"));
         $noci= round(($do_ts-$od_ts)/(60*60*24));
         $pol->vek= $vek;
         $pol->noci= $noci;
         $pol->pokoj= $h->pokoj;
         // ubytování
         $luzko= trim($ds_luzko[$h->luzko]);     // L|P|B
-//                 debug($ds_luzko,"ds_luzko {$luzko_pokoje[$h->pokoj]}",(object)array('win1250'=>1));
         if ( $luzko=='L' )
           $luzko= $luzko_pokoje[$h->pokoj];
         if ( $luzko )
@@ -1094,7 +1092,7 @@ function ds_faktury($order) {  trace('','win1250');
     }
   }
   else
-    fce_error(/*wu*/("neúplná objednávka $order"));
+    fce_error(/*w*u*/("neúplná objednávka $order"));
 //                                      debug($ds_cena,'ds_cena',(object)array('win1250'=>1));
 //                                      debug($x,'faktura',(object)array('win1250'=>1));
 end:
