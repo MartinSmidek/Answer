@@ -36,7 +36,7 @@ function answer_php($app,$app_name,$db_name,$skin,$js_lib,$css_lib,$options) {
   // ošetření běhu s testovací databází - zobrazit příznak
   if ( substr($app,-5)=='_test' ) {
     $title_style.= 'background-color:#ffffaa';
-    $title_flag.= "testovací databáze ";
+    $title_flag.= "testovací ";
   }
 
   $title_style= $title_style ? " style='$title_style'" : '';
@@ -121,13 +121,14 @@ function answer_php($app,$app_name,$db_name,$skin,$js_lib,$css_lib,$options) {
       . "<br/><br/>Za spolupráci děkuje <br/>{$EZER->options->author}";
   $menu= "<button id='android_menu' class='fa'><i class='fa fa-bars'></i></button>";
 
-  if ( $app=='db2' ) {
+  if ( $app=='db2' || $app=='db2_test' ) {
     // nová verze db2
     $cookie= 3;
-    if ( isset($_COOKIE['db2_last_access'])
-      && $_COOKIE['db2_last_access']>0 &&  $_COOKIE['db2_last_access']<4 )
-      $cookie= $_COOKIE['db2_last_access'];
-
+    $app_last_access= "{$app}_last_access";
+    if ( isset($_COOKIE[$app_last_access])
+      && $_COOKIE[$app_last_access]>0 &&  $_COOKIE[$app_last_access]<4 ) {
+      $cookie= $_COOKIE[$app_last_access];
+    }
     $access_app= array(1=>"Setkání","Familia","(společný)");
     $access_app= $access_app[$cookie];
     $choice_js= "personify('menu_on'); return false;";

@@ -386,7 +386,7 @@ input.changed:focus, textarea.changed:focus {
 
 div.Element {
   position:absolute; }
-div.Element .Label, div.Select .Label {
+div.Element .Label, div.Select .Label, div.FieldDate .Label {
   white-space: pre; }
 
 div.LabelDrop {
@@ -896,11 +896,13 @@ div.Element .Label, div.Select .Label, div.FieldDate .Label { margin-top:1px }
 .zIndex1        { z-index:1; }
 .info           { min-height:545px; height:100%; z-index:0; }
 .info-stat      { width:624px; height:100%; z-index:0; background-color:#dce7f4; padding:5px; }
-/* Label jako pÅ™epÃ­nacÃ­ tlaÄÃ­tko */
+/* Label jako přepínací tlačítko */
 .ae_butt_on {
-  cursor:default; background-color:#C2E2E2; z-index:0; border-radius:5px; text-align:center;  }
+  cursor:default; background-color:#C2E2E2; z-index:0; border-radius:5px; text-align:center;
+  padding-top: 2px; }
 .ae_butt_off {
-  cursor:default; background-color:#F1FCFD; z-index:0; border-radius:5px; text-align:center;  }
+  cursor:default; background-color:#F1FCFD; z-index:0; border-radius:5px; text-align:center;
+  padding-top: 2px; }
 .ae_butt_on:hover {
   background:url("../../skins/ck/label_switch_on_hover.png") repeat-x scroll 0 -1px transparent; }
 .ae_butt_off:hover {
