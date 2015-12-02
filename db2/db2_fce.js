@@ -2,9 +2,9 @@
 // =========================================================================================> funkce
 // -----------------------------------------------------------------------------------==> . ON login
 Ezer.onlogin= function() {
-  if ( Ezer.root=='db2' ) {
+  if ( Ezer.root=='db2' || Ezer.root=='db2_test' ) {
     var a1= Ezer.sys.user.access;
-    var a2= Ezer.fce.get_cookie('db2_last_access',a1);
+    var a2= Ezer.fce.get_cookie(Ezer.root+'_last_access',a1);
     var a= a1 & a2 ? a1 & a2 : a1;
     personify(a,1);
   }
@@ -37,13 +37,13 @@ function personify(access,from) {
     // u přihlášeného již víme skutečná práva tj. has_access
     // nepřihlášenému obarvíme přihlášení podle přání - po přihlášení se to ověří
     if ( access1 ) {
-      // přepni aplikaci podle access a zapiš do cookie 'db2_last_access'
+      // přepni aplikaci podle access a zapiš do cookie 'db2[_test]_last_access'
       Ezer.sys.user.access= access1;
       $('access').setProperty('text',tits[access1]);
       var old_skin= $('skin');
       Asset.css("skins/"+skin[access1],{id:'skin'});
       old_skin.destroy();
-      Ezer.fce.set_cookie('db2_last_access',access1);
+      Ezer.fce.set_cookie(Ezer.root+'_last_access',access1);
       // přihlášenému zavolej ezer-funkci v kořenu reaccess
       if ( Ezer.sys.user && Ezer.sys.user.id_user && Ezer.run && Ezer.run.$
            && Ezer.run.$.part && Ezer.run.$.part.db2 ) {

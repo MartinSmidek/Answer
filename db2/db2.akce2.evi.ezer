@@ -24,8 +24,9 @@ proc onblur() { [ track.display; track.hide ] }
 proc up(x)   { x.get.set_css('shift_up','shift_down'); x.set_css('shift_up','shift_down','.*') }
 proc down(x) { x.get.set_css('shift_down','shift_up'); x.set_css('shift_down','shift_up','.*') }
 # ------------------------------------------------------------------------------------------==> MENU
-var menu_item=0
-var menu_par=0
+var menu_item=0                 // běžný item
+var menu_par=0                  // ... jeho parametry
+var menu_title=''               // ... a název
 menu m {type:'left', active:*, format:'f-'
   menu r {title:'rodiny',type:'group', skill:'yae;fae;cae'
     item a {title:'[fa-group]všechny rodiny'    par:°{lst:'r',tit:'všechny rodiny, co ',cnd:"1"}}
@@ -43,6 +44,24 @@ menu m {type:'left', active:*, format:'f-'
     item t {title:'[fa-wrench fa-red](test)'           par:°{lst:'o',tit:'testovací osoby, co ',
                                                 cnd:"o.id_osoba IN (679,4031,4504,5877)"},skill:'m'}
   }
+  menu c {title:'členové YMCA',type:'group', skill:'dec'
+    item {title:'[fa-file-text-o] letošní přehled'
+          par:°{op:'letos',exp:'Excel',cnd:1,hav:1,rok:0,del:0,
+                tit:'příjmení:15,jméno:10,datum nar.:10,obec:20,člen od:5,činný od:5,letos přísp.:6,letos dary:6',
+                fld:'prijmeni,jmeno,_naroz,obec,_clen_od,_cinny_od,_prisp,_dary'}}
+    item {title:'[fa-retweet] recyklace pečounů (do 31.12!)'
+          par:°{op:'zmeny',rok:0} }
+    //item {title:'[fa-retweet] recyklace pečounů (loňský kurz)'
+    //      par:°{op:'zmeny',rok:1} }
+    item {title:'[fa-send] statistický list YMCA v ČR'
+          par:°{op:'hlaseni',exp:'Excel',cnd:1,hav:1,rok:0,del:0,
+                tit:'?:2,příjmení:15,jméno:10,ulice:20,město:20,PSČ:7,datum nar.:10,členství:5,čl. přísp.:6,KČ:12,e-mail:40,činný od letos:6,dobrovolník:6',
+                fld:'1,prijmeni,jmeno,ulice,obec,psc,_naroz_ymd,_b_c,_prisp,_YS,email,_cinny_letos,_dobro'}}
+    item {title:'[fa-file-text] loňský přehled'
+          par:°{op:'loni',exp:'Excel',cnd:1,hav:1,rok:1,
+                tit:'příjmení:15,jméno:10,datum nar.:10,obec:20,člen od:5,činný od:5,letos přísp.:6,letos dary:6',
+                fld:'prijmeni,jmeno,_naroz,obec,_clen_od,_cinny_od,_prisp,_dary'}}
+  }
   menu f {title:'poslední úpravy rodin',type:'group', skill:'yad;fad'
     item   {title:'[fa-medkit]dnes'    par:°{lst:'f',tit:'úpravy za 24 hodin',days:'1',cnd:"1"}}
     item   {title:'[fa-medkit]včera'   par:°{lst:'f',tit:'úpravy za 48 hodin',days:'2',cnd:"1"}}
@@ -59,10 +78,29 @@ menu m {type:'left', active:*, format:'f-'
     item   {title:'[fa-medkit]rok'     par:°{lst:'h',tit:'úpravy za 365 dnů',days:'365',cnd:"1"}}
     item   {title:'[fa-medkit]všechny' par:°{lst:'h',tit:'všechny úpravy',days:'99999',cnd:"1"}}
   }
-  proc onclick (i) {
-    menu_item.set(i); menu_par.set(i.par);
-    page.oso.set_mode(0,'E');
-    lst.reload(i.par.lst,i.par.cnd,i.par.tit);
+  proc onclick (i) { var ret:object
+    menu_item.set(i); menu_par.set(i.par); menu_title.set(conc(i.owner.title,' - ',i.title));
+    { // podmenu s browse
+      i.par.lst;
+      panel.display(0,'i'); panel.display(1,'e');
+      page.oso.set_mode(0,'E');
+      lst.reload(i.par.lst,i.par.cnd,i.par.tit);
+    | // podmenu pro členství - bez browse
+      not(i.par.lst);
+      panel.display(1,'i'); panel.display(0,'e'); info.export.set(i.par.exp);
+      info.fill(replace_fa(menu_title.get),' '); info.msg.set('');
+      menu_title.set(replace_fa(menu_title.get,1));
+      ret.set(ask('evid2_ymca_sprava',my_access.get,i.par,menu_title.get));
+      { ret.err; alert(ret.err)
+      | info.fill('',ret.html);
+        // pokračování podmenu pro recyklaci pečounů
+        [ eq(i.par.op,'zmeny');
+          confirm("Provést navržené změny?");
+          ret.set(ask('evid2_recyklace_pecounu',my_access.get,i.par,the_title.get,1));
+          alert("Hotovo");
+        ]
+      }
+    }
   }
 }
 proc reaccess() { #==> reaccess - změna
@@ -74,9 +112,18 @@ var evi_barvit_zmeny=0          // 1: v page.evid budou zvýrazněna pole se zm�
 # --------------------------------------------------------------------------------------------- uses
 # const min_h=540           // minimální výška (nelze jednoduše měnit - jsou k ní vztaženy souřadnice)
 const min_h=395           // minimální výška (nelze jednoduše měnit - jsou k ní vztaženy souřadnice)
-use lst:  form _lst  [0,0,,]
-use page: form _page [370,10,,]
-use cmd:  form _cmd  [370,min_h-120,,]
+use lst:  form _lst  [0,0,,]            { tag:'e' }
+use page: form _page [370,10,,]         { tag:'e' }
+use cmd:  form _cmd  [370,min_h-120,,]  { tag:'e' }
+use info: form right [12,4,,]           { tag:'i'
+  button export [-20,4,,] { title:'Excel', style:'display:block;zIndex:2',
+    proc onclick() { var ret: object
+      //ret.set(ask('evid_vyp_excel',menu_par.get,menu_title.get));
+      ret.set(ask('sta2_excel',my_org.get,menu_title.get,menu_par.get));
+      form.msg.set(ret.html);
+    }
+  }
+}
 # ============================================================================================> _lst
 form _lst [,,370,*] {
   # ---------------------------------------------- interface
@@ -302,7 +349,7 @@ form _lst [,,370,*] {
     }
   }
 }
-# ===========================================================================================> _page
+# ============================================================================================> PAGE
 # formulář se záložkami
 form _page {
   # ---------------------------------------------- interface
@@ -313,7 +360,11 @@ form _page {
     idr0.set(idr); ido0.set(ido);
     form.idr.set(idr); form.ido.set(ido);
     page_load;
-    [ track.display; { ido; track.back_show('osoba',ido) | idr; track.back_show('rodina',idr) ]
+    [ track.display;
+      { ido; track.back_show('osoba',ido)
+      | idr; track.back_show('rodina',idr)
+      }
+    ]
   }
   proc refresh() {                              // zobrazí rodiny či osoby podle starých podmínek
     evid_load(ido0.get,idr0.get) }
@@ -352,7 +403,10 @@ form _page {
     'evid',{ oso_load(ido.get) },
     'akce',{ oso_load(ido.get); act.ucasti(ido.get,conc(oso.prijmeni.get,' ',oso.jmeno.get)) },
     'albu',{ alb.galery('rodina',idr.get) },
-    'dary',{ oso_load(ido.get); dar.dary(ido.get,conc(oso.prijmeni.get,' ',oso.jmeno.get)) }
+    'dary',{ oso_load(ido.get); pri.dary(ido.get,conc(oso.prijmeni.get,' ',oso.jmeno.get)) },
+    'clen',{ oso_load(ido.get);
+             cle.dary(ido.get,conc(oso.prijmeni.get,' ',oso.jmeno.get));
+             pri.dary(ido.get,conc(oso.prijmeni.get,' ',oso.jmeno.get)) }
     );
     [ cmd.part('o_smaz');
       cmd.o_smaz.display(not(page.oso.deleted.get)); cmd.o_obnov.display(page.oso.deleted.get) ];
@@ -379,24 +433,26 @@ form _page {
       cmd.r_obnov.display(page.rod.r_deleted.get) ];
   }
   # ----------------------------------------------==> záložky
-  var curr:object                               // aktuální záložka
+  var curr:object // aktuální záložka
   proc cvak(i) {
     form.set_css('ae_butt_off','ae_butt_on','_'); i.set_css('ae_butt_on','ae_butt_off');
     curr.set(i._id); form.display(0,i.par.off); form.display(1,i.par.on)  }
-  label evid [ 12,0,120,20] {par:°{on:'C|O',off:'B|F|D'}, tag:'_', title:'<b>Osobní údaje</b>',
+  label evid [12,0,105,20] {par:°{on:'C|O',off:'B|F|D|M'}, tag:'_', title:'<b>Osobní údaje</b>',
+    proc onclick() { cvak(this); osoba_load; oso.on_click }}
+  label akce [142,0,105,20] {par:°{on:'C|O|B',off:'F|D|M'}, tag:'_', title:'<b>Účast na akcích</b>',
     proc onclick() { cvak(this); osoba_load }}
-  label akce [152,0,120,20] {par:°{on:'C|O|B',off:'F|D'}, tag:'_', title:'<b>Účast na akcích</b>',
+  label albu [272,0,105,20] {par:°{on:'C|F',off:'O|B|D|M'}, tag:'_', title:'<b>Fotografie</b>',
     proc onclick() { cvak(this); osoba_load }}
-  label albu [292,0,120,20] {par:°{on:'C|F',off:'O|B|D'}, tag:'_', title:'<b>Fotografie</b>',
-    proc onclick() { cvak(this); osoba_load }}
-  label dary [452,0,120,20] {par:°{on:'C|O|D',off:'F'},   tag:'_', title:'<b>Dary</b>',
-    proc onclick() { cvak(this); osoba_load }}
+  label dary [402,0,105,20] {par:°{on:'C|O|D',off:'F|M'},   tag:'_', title:'<b>Dary</b>',
+    proc onclick() { cvak(this); osoba_load; dar.onclick }}
+  label clen [532,0,105,20] {par:°{on:'C|O|M',off:'F|D'},  tag:'_', title:'<b>Členství YMCA</b>',
+    proc onclick() { cvak(this); osoba_load; cle.onclick }}
   label frame [0,16,706,min_h-150] { css:'ae_work'
     proc onclick() { cmd.get.set_css('shift_down','shift_up') }}
   # ==============================================> C: EVIDENCE RODINY
   view r: table rodina
   use rod: form _rodina2p [5,20,,] { tag:'Cf'   // view r:rodina
-    proc on_click() { up(page.oso); up(page.rod); down(page.dar) }
+    proc on_click() { up(page.oso); up(page.rod); down(page.dar); down(page.cle); down(page.pri) }
     proc onchanged() { page.d_change('r') }     // reakce na změnu ve formuláři => změna tlačítek
     proc rodina_changed() {                     // reakce na změnu select:rodiny => výměna členů
       eq(page.idr.get,rod.rodiny.key)
@@ -434,13 +490,14 @@ form _page {
         | lst.bo.blur(1) }
       ];
       osoba_load
-    | warning("nemáte oprávnění vidět údaje o osobě z jiné organizace");
+    | not(accessed(org.get));
+      warning("nemáte oprávnění vidět údaje o osobě z jiné organizace");
       this.browse_active(last.get)
     }
   }
   # ==============================================> O: EVIDENCE OSOBY
   use oso: form _osoba2x  [200,20,,] { tag:'O'  // view o:osoba
-    proc on_click() { up(page.oso); up(page.rod); down(page.dar) }
+    proc on_click() { up(page.oso); up(page.rod); down(page.dar); down(page.cle); down(page.pri) }
     proc onchanged() { page.d_change('o') }
     menu detail { type:'context'
       item { title:'EVID konfigurace formuláře', proc onclick () { osoba_config.tune(panel) } }
@@ -457,13 +514,15 @@ form _page {
     item { title:'-zvýrazňovat změněné údaje'  proc onclick () { evi_barvit_zmeny.set(1)} }
     item { title:'nezvýrazňovat změněné údaje' proc onclick () { evi_barvit_zmeny.set(0)} }
   }
-  use act: form _aktivity [450, 20,,]  { tag:'B', format:'n' }
-  use alb: form foto._alb [200, 20,,]  { tag:'F', format:'n' }
-  use dar: form _dary     [  5,-57,,]  { tag:'D', format:'n' }
+  use act: form _aktivity  [450, 20,,]  { tag:'B', format:'n' }
+  use alb: form foto._alb  [200, 20,,]  { tag:'F', format:'n' }
+  use dar: form _dary      [  5,-57,,]  { tag:'D', format:'n' }
+  use cle: form _clenstvi  [  5,-57,,]  { tag:'M', format:'n' }
+  use pri: form _prispevky [326,-57,,]  { tag:'M', format:'n' }
 }
 # ------------------------------------------------------------------------------------------==> DARY
 form _dary [,,440,min_h-160] {css:'ae_frame shift_down'
-  proc onclick() { up(page.dar); down(page.oso); down(page.rod) }
+  proc onclick() { up(page.dar); down(page.pri); down(page.cle); down(page.oso); down(page.rod) }
   label frame [2,3,78,] { css:'frame_label_up', title:'přehled darů - '}
   label jmeno [79,3,172,] { css:'frame_label_up'}
   label ido   [378,3,50,] { format:'r' }
@@ -495,19 +554,12 @@ form _dary [,,440,min_h-160] {css:'ae_frame shift_down'
   # viditelné položky
   const Ld=293
   field castka [Ld,40,65,] {data:da.castka, help:'darovaná částka', format:'xr', title:'^částka'}
-  field datum  [Ld,75,85,] {type:'date', data:da.dat_od, help:'datum přijetí daru', format:'xRUr', title:'^dar přijat dne'}
-  field potvrz [Ld,110,85,] {type:'date', data:da.dat_do, help:'datum odeslání potvrzení', format:'RUr', title:'^potvrzeno dne'}
+  field datum  [Ld,75,85,] {type:'date', data:da.dat_od, help:'datum přijetí daru',
+    format:'xRUr', title:'^dar přijat dne'}
+  field potvrz [Ld,110,85,] {type:'date', data:da.dat_do, help:'datum odeslání potvrzení',
+    format:'RUr', title:'^potvrzeno dne'}
   field pozn   [Ld,145,137,] {data:da.note, help:'poznámka', format:'x', title:'^poznámka'}
-  # --------------------------- fixované údaje
-  var _dar_fixovan: number
-  proc onstart() { _dar_fixovan.set(0) }
-  menu { type:'context'
-    item fix { title:'zapamatuj fixované údaje'
-      proc onclick () { form.option('x:1'); _dar_fixovan.set(1);  form.focus } }
-    item unfix { title:'zapomeň fixované údaje'
-      proc onclick () { form.option('x:0'); _dar_fixovan.set(0); form.focus } }
-  }
-  # tlačítka a obslužné procedury
+  # ==> . tlačítka a obslužné procedury
   proc form_init() {
     b.browse_init; form.init; form_state('n','u|z|s'); }
   proc form_state(on,off) {
@@ -516,15 +568,17 @@ form _dary [,,440,min_h-160] {css:'ae_frame shift_down'
     form_state('u|z','n|s') }
   label cmd [Ld,175,137,50] { css:'ae_parm', style:'z-index:1' }
   # -------------------------- Nový
-  button [cmd.l+6,cmd.t+5,,] { tag:'n', title:'[fa-database] Nový',  help:'Vložit nový dar', style:'z-index:2'
+  button [cmd.l+6,cmd.t+5,,] { tag:'n', title:'[fa-database] Nový',
+    help:'Vložit nový dar', style:'z-index:2'
     proc onclick() {
       form.init(2); form_state('u|z','n|s');
       id_o.set(ido.get); id_o.change(1); del.set(''); del.change(1);
       ukon.set('d'); ukon.change(1); castka.change(1);
-      { _dar_fixovan.get | datum.set(now); datum.change(1) };
+      datum.set(now); datum.change(1);
   }}
   # -------------------------- Uložit
-  button [cmd.l+63,cmd.t+5,,] {tag:'u', title:'[fa-save] Uložit',  help:'Uložit změněná data', style:'z-index:2'
+  button [cmd.l+63,cmd.t+5,,] {tag:'u', title:'[fa-save] Uložit',
+    help:'Uložit změněná data', style:'z-index:2'
     proc onclick() {
       form.same
     | // oprava
@@ -538,15 +592,197 @@ form _dary [,,440,min_h-160] {css:'ae_frame shift_down'
     | error('chyba při vkládání daru - nenastavený člen')
   }}
   # -------------------------- Zpět
-  button [cmd.l+6,cmd.t+27,,] {tag:'z', title:'[fa-undo] Zpět',  help:'Neměnit změněná data', style:'z-index:2'
+  button [cmd.l+6,cmd.t+27,,] {tag:'z', title:'[fa-undo] Zpět',
+    help:'Neměnit změněná data', style:'z-index:2'
     proc onclick() {
       b.browse_count; form.load(b.id_d.get); form_state('n|s','u|z')
     | form.init; form_state('n','u|z|s')
   }}
   # -------------------------- Smazat
-  button [cmd.l+63,cmd.t+27,,] {tag:'s', title:'[fa-times fa-red] Vymazat',  help:'Smazat tento dar', style:'z-index:2'
+  button [cmd.l+63,cmd.t+27,,] {tag:'s', title:'[fa-times fa-red] Vymazat',
+    help:'Smazat tento dar', style:'z-index:2'
     proc onclick() {
       confirm("opravdu smazat dar ",b.castka.get," od ",jmeno.get,"?");
+      del.set(conc('D ',sys('user','abbr'),' ',now)); del.change; form.save;
+      refresh
+  }}
+}
+# -------------------------------------------------------------------------------------==> PŘÍSPĚVKY
+form _prispevky [,,375,min_h+-180] {css:'ae_frame shift_down'
+  proc onclick() { up(page.pri); down(page.dar); down(page.oso); down(page.rod); down(page.cle) }
+  label frame [2,3,163,] { css:'frame_label_up', title:'přehled členských příspěvků - '}
+  label jmeno [163,3,147,] { css:'frame_label_up'}
+  label ido   [318,3,50,] { format:'r' }
+  label idd   [318,18,50,] { format:'r' }
+  proc dary(_ido,_jmeno) {
+    form.init; ido.set(_ido); jmeno.set(_jmeno);
+    b.browse_load(conc("da.deleted='' AND ukon='p' AND id_osoba=",_ido))
+  }
+  proc refresh() { dary(id_o.get,jmeno.get) }
+  # seznam darů
+  view da: table dar
+  view do: table osoba { join:"USING(id_osoba)" }
+  browse b [5,20,,] { rows:8, qry_rows:1
+    show id_d { data:da.id_dar }
+    show id_o { data:do.id_osoba }
+    show access { data:da.access }
+    show [,,13,] { data:da.ukon, title:'způsob', format:'q*s'
+      css_cell:'access,0:,1:ezer_ys,2:ezer_fa,3:ezer_db' }
+    show castka [,,40,] { data:da.castka, title:'výše', format:'rq*s' }
+    show [,,70,] { data:da.dat_od, title:'přijetí', format:'rq*s' }
+    show [,,70,] { data:da.dat_do, title:'potvrzení', format:'rq*s' }
+    proc onrowclick() { form.load(id_d.get); idd.set(id_d.get); form_state('n|s','u|z'); }
+  }
+  # formulář pro úpravu darů
+  # skryté položky
+  field id_o { data:da.id_osoba }
+  field ukon { data:da.ukon }
+  field del  { data:da.deleted }
+  # viditelné položky
+  const Lp=235
+  field castka [Lp,29,65,] {data:da.castka, help:'výše členského příspěvku',
+    format:'xr', title:'^částka'}
+  field datum  [Lp,63,85,] {type:'date', data:da.dat_od, help:'datum přijetí příspěvku',
+    format:'xRUr', title:'^dar přijat dne'}
+  field platnost[Lp,98,85,] {type:'date', data:da.dat_do, help:'zaplaceno do',
+    format:'xRUr', title:'^zaplaceno do ...'}
+  field pozn   [Lp,134,130,] {data:da.note, help:'poznámka', format:'x', title:'^poznámka'}
+  # ==> . tlačítka a obslužné procedury
+  proc form_init() {
+    b.browse_init; form.init; form_state('n','u|z|s'); }
+  proc form_state(on,off) {
+    form.enable(1,on); form.enable(0,off); }
+  proc onchanged () {
+    form_state('u|z','n|s') }
+  label cmd [Lp,159,132,50] { css:'ae_parm', style:'z-index:1' }
+  # -------------------------- Nový
+  button [cmd.l+6,cmd.t+5,,] { tag:'n', title:'[fa-database] Nový',  help:'Vložit nový dar',
+    style:'z-index:2'
+    proc onclick() {
+      form.init(2); form_state('u|z','n|s');
+      id_o.set(ido.get); id_o.change(1); del.set(''); del.change(1);
+      ukon.set('p'); ukon.change(1); castka.change(1);
+      datum.set(now); datum.change(1);
+  }}
+  # -------------------------- Uložit
+  button [cmd.l+63,cmd.t+5,,] {tag:'u', title:'[fa-save] Uložit',  help:'Uložit změněná data',
+    style:'z-index:2'
+    proc onclick() {
+      form.same
+    | // oprava
+      form.key; form.save; form.load;
+      [ b.browse_seek; form_state('n|s','u|z') ]
+    | // přidání
+      id_o.get;
+      form.insert; form.load;
+      b.raise('onrowclick',b.browse_seek(conc('id_dar=',form.key))); form_state('n|s','u|z');
+#       [ osoby.b.browse_row | osoby.b.browse_init ]
+    | error('chyba při vkládání příspěvku - nenastavený člen')
+  }}
+  # -------------------------- Zpět
+  button [cmd.l+6,cmd.t+27,,] {tag:'z', title:'[fa-undo] Zpět',
+    help:'Neměnit změněná data', style:'z-index:2'
+    proc onclick() {
+      b.browse_count; form.load(b.id_d.get); form_state('n|s','u|z')
+    | form.init; form_state('n','u|z|s')
+  }}
+  # -------------------------- Smazat
+  button [cmd.l+58,cmd.t+27,,] {tag:'s', title:'[fa-times fa-red] Vymazat',
+    help:'Smazat tento příspěvek', style:'z-index:2'
+    proc onclick() {
+      confirm("opravdu smazat příspěvek ",b.castka.get," od ",jmeno.get,"?");
+      del.set(conc('D ',sys('user','abbr'),' ',now)); del.change; form.save;
+      refresh
+  }}
+}
+# --------------------------------------------------------------------------------------==> ČLENSTVÍ
+form _clenstvi [,,320,min_h+-180] {css:'ae_frame shift_down'
+  proc onclick() { down(page.pri); down(page.dar); down(page.oso); down(page.rod); up(page.cle); }
+
+#   proc onclick() { up(page.cle); down(page.dar); down(page.oso); down(page.rod); down(page.pri) }
+  label frame [2,3,98,] { css:'frame_label_up', title:'přehled členství - '}
+  label jmeno [96,3,160,] { css:'frame_label_up'}
+  label ido   [264,3,50,] { format:'r' }
+  label idd   [264,18,50,] { format:'r' }
+  proc dary(_ido,_jmeno) {
+    form.init; ido.set(_ido); jmeno.set(_jmeno);
+    b.browse_load(conc("da.deleted='' AND ukon IN ('b','c','k') AND id_osoba=",_ido))
+  }
+  proc refresh() { dary(id_o.get,jmeno.get) }
+  # seznam darů
+  view da: table dar
+  view do: table osoba { join:"USING(id_osoba)" }
+  browse b [5,17,,] { rows:8, qry_rows:1
+    show id_d { data:da.id_dar }
+    show id_o { data:do.id_osoba }
+    show access { data:da.access }
+    show ukon [,,10,] { data:da.ukon, title:'způsob', format:'q*s'
+      css_cell:'access,0:,1:ezer_ys,2:ezer_fa,3:ezer_db' }
+    show [,,65,] { data:da.dat_od, title:'vznik', format:'rq*s' }
+    show [,,65,] { data:da.dat_do, title:'zánik', format:'rq*s' }
+    proc onrowclick() { form.load(id_d.get); idd.set(id_d.get); form_state('n|s','u|z'); }
+  }
+  # formulář pro úpravu členství
+  # skryté položky
+  field id_o { data:da.id_osoba }
+  field ukon { data:da.ukon }
+  field del  { data:da.deleted }
+  # viditelné položky
+  const Lc=180
+  select typ   [Lc,27,65,] {type:'map', help:'typ členství', options:ms_akce_clen.zkratka
+    title:'^typ členství'
+    proc onchange() {
+      eq(typ.key,2); alert("účastníci nejsou evidováni jako členové YMCA")
+    | ukon.set(cconc(eq(typ.key,0),'b',eq(typ.key,1),'c','k')); ukon.change(1) }
+  }
+  field datum  [Lc,62,85,] {type:'date', data:da.dat_od, help:'datum přijetí',
+    format:'RUr', title:'^člen ode dne' }
+  field konec  [Lc,97,85,] {type:'date', data:da.dat_do, help:'datum zrušení',
+    format:'RUr', title:'^členství ukončeno dne' }
+  field pozn   [Lc,132,134,] {data:da.note, help:'poznámka', title:'^poznámka'}
+
+  # ==> . tlačítka a obslužné procedury
+  proc form_init() {
+    b.browse_init; typ.plain; form.init; form_state('n','u|z|s'); }
+  proc form_state(on,off) {
+    form.enable(1,on); form.enable(0,off); }
+  proc onchanged () {
+    form_state('u|z','n|s') }
+  proc onload () { typ.key(cconc(eq(ukon.get,'b'),0,1)); typ.plain }
+  label cmd [Lc,158,132,50] { css:'ae_parm' }
+  # -------------------------- Nový
+  button [cmd.l+6,cmd.t+5,,] { tag:'n', title:'[fa-database] Nový',  help:'Vložit nový dar',
+    proc onclick() {
+      form.init; form_state('u|z','n|s');
+      id_o.set(ido.get); id_o.change(1); del.set(''); del.change(1);
+      typ.key(0); typ.change; datum.set(now); datum.change(1);
+  }}
+  # -------------------------- Uložit
+  button [cmd.l+64,cmd.t+5,,] {tag:'u', title:'[fa-save] Uložit',  help:'Uložit změněná data',
+    proc onclick() {
+      form.same
+    | // oprava
+      form.key; form.save; form.load;
+      [ b.browse_seek; form_state('n|s','u|z') ];
+      [ b.browse_row | b.browse_init ]
+    | // přidání
+      id_o.get;
+      form.insert; form.load;
+      b.raise('onrowclick',b.browse_seek(conc('id_dar=',form.key))); form_state('n|s','u|z');
+#       [ osoby.b.browse_row | osoby.b.browse_init ]
+    | error('chyba při vkládání členství - nenastavený člen')
+  }}
+  # -------------------------- Zpět
+  button [cmd.l+6,cmd.t+27,,] {tag:'z', title:'[fa-undo] Zpět',  help:'Neměnit změněná data',
+    proc onclick() {
+      b.browse_count; form.load(b.id_d.get); form_state('n|s','u|z')
+    | form.init; form_state('n','u|z|s')
+  }}
+  # -------------------------- Vymazat
+  button [cmd.l+58,cmd.t+27,,] {tag:'s', title:'[fa-times fa-red] Vymazat',
+    help:'Zcela zrušit (ne ukončit) členství',
+    proc onclick() {
+      confirm("opravdu zrušit (ne ukončit) členství ",jmeno.get,"?");
       del.set(conc('D ',sys('user','abbr'),' ',now)); del.change; form.save;
       refresh
   }}

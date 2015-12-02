@@ -3848,13 +3848,8 @@ function tisk2_text_vyroci($akce,$par,$title,$vypis,$export=false) { trace();
 # ------------------------------------------------------------------------------- akce2_text_prehled
 function akce2_text_prehled($akce,$par,$title,$vypis,$export=false) { trace();
   $pocet= 0;
-  # zobrazí odkaz na řádek s pobytem
-  $sta_ukaz_pobyt= function ($idp,$jmeno) {
-    return "<b><a href='ezer://db2.ucast.ucast_pobyt/$idp'>$jmeno</a></b>";
-  };
   # naplní histogram podle $cond
-  $akce_text_prehled_x= function ($akce,$cond,$uvest_jmena=false,$bez_tabulky=false)
-                        use (&$pocet,$sta_ukaz_pobyt) {
+  $akce_text_prehled_x= function ($akce,$cond,$uvest_jmena=false,$bez_tabulky=false) use (&$pocet) {
     $html= '';
     // data akce
     $veky= $kluci= $holky= array();
@@ -3881,7 +3876,7 @@ function akce2_text_prehled($akce,$par,$title,$vypis,$export=false) { trace();
       else { $bez.= "$del{$o->prijmeni} {$o->jmeno}"; $del= ", "; }
       if ( $uvest_jmena ) {
         $jmena.= $deljmena;
-        $jmena.= $sta_ukaz_pobyt($o->id_pobyt,"{$o->prijmeni} {$o->jmeno}/$vek");
+        $jmena.= tisk2_ukaz_pobyt($o->id_pobyt,"{$o->prijmeni} {$o->jmeno}/$vek");
         $deljmena= ", ";
       }
     }
@@ -3956,19 +3951,19 @@ function akce2_text_prehled($akce,$par,$title,$vypis,$export=false) { trace();
 # zobrazí odkaz na osobu v evidenci
 function tisk2_ukaz_osobu($ido,$barva='') {
   $style= $barva ? "style='color:$barva'" : '';
-  return "<b><a $style href='ezer://db2.evi.evid_osoba/$ido'>$ido</a></b>";
+  return "<b><a $style href='ezer://akce2.evi.evid_osoba/$ido'>$ido</a></b>";
 }
 # -------------------------------------------------------------------------------- tisk2_ukaz_rodinu
 # zobrazí odkaz na rodinu v evidenci
 function tisk2_ukaz_rodinu($idr,$barva='') {
   $style= $barva ? "style='color:$barva'" : '';
-  return "<b><a $style href='ezer://db2.evi.evid_rodina/$idr'>$idr</a></b>";
+  return "<b><a $style href='ezer://akce2.evi.evid_rodina/$idr'>$idr</a></b>";
 }
 # --------------------------------------------------------------------------------- tisk2_ukaz_pobyt
 # zobrazí odkaz na řádek s pobytem
 function tisk2_ukaz_pobyt($idp,$barva='') {
   $style= $barva ? "style='color:$barva'" : '';
-  return "<b><a $style href='ezer://db2.ucast.ucast_pobyt/$idp'>$idp</a></b>";
+  return "<b><a $style href='ezer://akce2.ucast.ucast_pobyt/$idp'>$idp</a></b>";
 }
 # -------------------------------------------------------------------------------- narozeni2roky_sql
 # zjistí aktuální věk v rocích z data narození (typu mktime) zjištěného třeba rc2time          ?????
@@ -5981,7 +5976,232 @@ function evid2_pridej_k_rodine($id_rodina,$info,$cnd='') { trace();
   }
   return $ret;
 }
-# =================================================================================================> SKUPINKY
+# ============================================================================================> YMCA
+# ---------------------------------------------------------------------------==> . evid2_ymca_sprava
+# správa členů pro YS
+function evid2_ymca_sprava($org,$par,$title,$export=false) {
+  $ret= (object)array('error'=>0,'html'=>'');
+  switch ($par->op) {
+  case 'hlaseni':
+  case 'letos':
+  case 'loni':
+    $ret= evid2_ymca_sestava($org,$par,$title,$export);
+    break;
+  case 'zmeny':
+    $ret= evid2_recyklace_pecounu($org,$par,$title,0);
+    break;
+  }
+  return $ret;
+}
+# ------------------------------------------------------------------------------- evid2_ymca_sestava
+# generování přehledu členstva
+#   $fld = seznam položek s prefixem
+#   $cnd = podmínka
+# _clen_od,_cinny_od,_prisp,_dary
+function evid2_ymca_sestava($org,$par,$title,$export=false) {
+  $ret= (object)array('html'=>'','err'=>'');
+  $rok= date('Y') - $par->rok;
+  // dekódování parametrů
+  $tits= explode(',',$par->tit);
+  $flds= explode(',',$par->fld);
+  // test korektnosti organizace
+  $organizace= $org==1 ? 'YMCA Setkání' : ( $org==2 ? "YMCA Familia" : '');
+  if ( !$organizace ) {
+    $ret->err= "Musí být zvolena organizace (barva aplikace)";
+    goto end;
+  }
+  // získání dat
+  $n= 0;
+  $clmn= array();
+  $expr= array();       // pro výrazy
+  $clenu= $cinnych= $prispevku= $daru= $dobrovolniku= $novych= 0;
+  $qry= "SELECT
+           MAX(IF(YEAR(datum_od)=$rok AND p.funkce=1,1,0)) AS _vps,
+           os.id_osoba,os.prijmeni,os.jmeno,os.narozeni,os.sex,
+           IF(os.obec='',r.obec,os.obec) AS obec,
+           IF(os.ulice='',r.ulice,os.ulice) AS ulice,
+           IF(os.psc='',r.psc,os.psc) AS psc,
+           IF(os.email='',r.emaily,os.email) AS email,
+           GROUP_CONCAT(DISTINCT od.ukon ORDER BY od.ukon SEPARATOR '') as rel,
+           GROUP_CONCAT(DISTINCT CONCAT(ukon,':',YEAR(dat_od),':',YEAR(dat_do),':',castka) ORDER BY dat_od DESC SEPARATOR '|') AS _ukony
+         FROM osoba AS os
+         LEFT JOIN tvori AS ot ON os.id_osoba=ot.id_osoba
+         LEFT JOIN rodina AS r USING(id_rodina)
+         LEFT JOIN dar AS od ON os.id_osoba=od.id_osoba AND od.deleted=''
+         LEFT JOIN spolu AS s ON s.id_osoba=os.id_osoba
+         LEFT JOIN pobyt AS p USING (id_pobyt)
+         LEFT JOIN akce AS a ON a.id_duakce=p.id_akce
+         WHERE os.deleted='' AND {$par->cnd} AND (dat_do='0000-00-00' OR YEAR(dat_do)>=$rok)
+           AND os.access&$org AND r.access&$org AND od.access&$org AND a.access&$org
+         GROUP BY os.id_osoba HAVING {$par->hav}
+         ORDER BY os.prijmeni";
+  $res= mysql_qry($qry);
+  while ( $res && ($x= mysql_fetch_object($res)) ) {
+    $id_osoba= $x->id_osoba;
+    // rozbor úkonů
+    $_clen_od= $_cinny_od= $_prisp= $prisp_letos= $_dary= 0;
+    foreach(explode('|',$x->_ukony) as $uddc) {
+      list($u,$d1,$d2,$c)= explode(':',$uddc);
+      switch ($u) {
+      case 'p': if ( $d1==$rok ) $_prisp+= $c; break;
+      case 'd': if ( $d1==$rok ) $_dary+= $c; break;
+      case 'b': if ( $d2<=$rok && (!$_clen_od && $d1<=$rok || $d1<$_clen_od) ) $_clen_od= $d1; break;
+      case 'c': if ( $d2<=$rok && (!$_cinny_od && $d1<=$rok || $d1<$_cinny_od) ) $_cinny_od= $d1; break;
+      }
+    }
+//                                 display("$x->jmeno $_clen_od= $_cinny_od= $_prisp= $_dary");
+    $prispevku+= $_prisp;
+    $daru+= $_dary;
+    if ( !$_clen_od && !$_cinny_od ) continue;
+    $clenu+= $_clen_od ? 1 : 0;
+    $cinnych+= $_cinny_od ? 1 : 0;
+    $dobrovolniku+= $x->_vps && $_cinny_od>0 ? 1 : 0;
+    $novych+= $_cinny_od==2014 ? 1 : 0;
+    // pokračujeme jen s členy
+    $n++;
+    $clmn[$n]= array();
+    foreach($flds as $f) {
+//  '1,prijmeni,jmeno,ulice,obec,psc,_naroz,_b_c,_prisp,_YS,_email,_cinny_letos,_dobro'}}
+      switch ( $f ) {
+      // export
+      case '1':         $clmn[$n][$f]= 1; break;
+      case '_naroz_ymd':$clmn[$n][$f]= substr($x->narozeni,2,2).substr($x->narozeni,5,2).substr($x->narozeni,8,2); break;
+      case '_b_c':      $clmn[$n][$f]= $_cinny_od>0 ? 'č' : 'b'; break;
+      case '_YS':       $clmn[$n][$f]= 'YMCA Setkání'; break;
+      case '_cinny_letos':$clmn[$n][$f]= $_cinny_od==2014 ? 1 : ''; break;
+      case '_dobro':    $clmn[$n][$f]= $x->_vps && $_cinny_od>0 ? 1 : ''; break;
+      // přehled
+      case '_clen_od':  $clmn[$n][$f]= $_clen_od; break;
+      case '_cinny_od': $clmn[$n][$f]= $_cinny_od; break;
+      case '_prisp':    $clmn[$n][$f]= $_prisp; break;
+      case '_dary':     $clmn[$n][$f]= $_dary; break;
+      case '_naroz':    $clmn[$n][$f]= sql_date1($x->narozeni); break;
+      case '_zrus':     $del= $_clen_od<2014 && !$_cinny_od && !$_prisp ? 'x' : '';
+        if ( $par->del && $del=='x' ) {
+          // výjimky
+          if ( in_array(substr($x->prijmeni,0,4),array("Fisc","Gada","Hora","Horo","Jaku","Ulri")) )
+            $del= '';
+          // SMAZAT!
+          if ( $del=='x' ) {
+            $qd= "UPDATE dar SET dat_do='2013-12-30',note=CONCAT(note,' inventura 2014') /* $x->prijmeni */ WHERE id_osoba=$id_osoba AND ukon IN ('c','b') AND dat_do='0000-00-00'";
+                                                display($qd);
+            $ok= query($qd);
+            if ( !$ok ) $del= "X?";
+          }
+        }
+        $clmn[$n][$f]= $del;
+        break;
+      default:
+        $clmn[$n][$f]= $x->$f;
+      }
+    }
+  }
+  // přidání sumarizace
+  $n++;
+  $clmn[$n]['obec']= '.SUMA:.';
+  $clmn[$n]['_clen_od']= $clenu;
+  $clmn[$n]['_cinny_od']= $cinnych;
+  $clmn[$n]['_prisp']= $prispevku;
+  $clmn[$n]['_dary']= $daru;
+  $clmn[$n]['_dobro']= $dobrovolniku;
+  $clmn[$n]['_cinny_letos']= $novych;
+  $ret= sta2_table_graph($par,$tits,$flds,$clmn,$export);
+end:
+  return $ret;
+}
+# ---------------------------------------------------------------------==> . evid2_recyklace_pecounu
+# generování přehledu pečounů pro recyklaci
+# - předpokládá se spuštění ve stejném roce jako byl letní kurz pokud par.rok=0
+# - nebo v loňském roce, pokud je rok=1
+function evid2_recyklace_pecounu($org,$par,$title,$provest) {
+  $ret= (object)array('html'=>'','err'=>'');
+  // test korektnosti organizace
+  $organizace= $org==1 ? 'YMCA Setkání' : ( $org==2 ? "YMCA Familia" : '');
+  if ( !$organizace ) {
+    $ret->err= "Musí být zvolena organizace (barva aplikace)";
+    goto end;
+  }
+  $letos= date('Y') - $par->rok;
+  $rok_od= $letos;
+  $rok_do= $rok_od-1;
+  $den_do= "$rok_do-12-31";
+  $den_od= "$rok_od-01-01";
+  $html= '';
+  $pryc= $nechat= $novi= array();
+  // průzkum pečounů
+  $pr= mysql_qry("
+    SELECT id_osoba,prijmeni,jmeno,ukon,pfunkce,
+      MIN(YEAR(dat_od)) AS _od,
+      MAX(YEAR(dat_do)) AS _do,
+      MIN(YEAR(a.datum_od)) AS _poprve,
+      MAX(YEAR(a.datum_od)) AS _naposled,
+      GROUP_CONCAT(DISTINCT ukon SEPARATOR '') AS _ukony,
+      SUM(IF(YEAR(a.datum_od)=$rok_do,1,0)) AS _loni,
+      SUM(IF(YEAR(a.datum_od)=$rok_od,1,0)) AS _letos,
+      MAX(pfunkce) AS _pfunkce,
+      narozeni
+    FROM osoba AS o
+    LEFT JOIN dar AS d USING (id_osoba)
+    JOIN spolu AS s USING (id_osoba)
+    JOIN pobyt AS p USING (id_pobyt)
+    JOIN akce AS a ON id_akce=id_duakce
+    WHERE IFNULL(d.deleted,'')='' AND funkce=99
+      AND o.access&$org AND IFNULL(d.access,3)&$org AND a.access&$org
+    GROUP BY id_osoba
+    ORDER BY prijmeni");
+  while ( $pr && ($p= mysql_fetch_object($pr)) ) {
+    $pec= (object)array('id'=>$p->id_osoba,'jmeno'=>"{$p->prijmeni} {$p->jmeno}");
+    // přeskočit činné členy a team
+    if ( strpos($p->_ukony,'c')!==false ) continue;
+    if ( $p->_pfunkce==7 ) continue;
+    if ( $p->_poprve==$rok_od && strpos($p->_ukony,'b')===false
+    || ( $p->_naposled==$rok_od && strpos($p->_ukony,'b')===false )
+    ) {
+      $novi[]= $pec;
+    }
+    else if ( $p->_naposled<$rok_od && strpos($p->_ukony,'b')!==false && $p->_do==0 ) {
+      $pryc[]= $pec;
+    }
+    else if ( $p->_naposled==$rok_od ) {
+      $nechat[]= $pec;
+    }
+  }
+//                                                 debug($novi,"noví");
+//                                                 debug($pryc,"pryč");
+//                                                 debug($nechat,"nechat");
+  // noví pečouni
+  $html.= "<h3>Úprava členství pečounů v $organizace</h2>";
+  $html.= "<h3>Noví členové tj. letošní pečouni, kteří nejsou členy</h3>";
+  $del= '';
+  foreach ($novi as $nov) {
+    $html.= "$del{$nov->jmeno}"; $del= ', ';
+    if ( $provest ) {
+      query("INSERT INTO dar (access,id_osoba,ukon,dat_od,note)
+             VALUES ($org,$nov->id,'b','$den_od','pečoun $rok_od')");
+    }
+  }
+  // staří pečouni
+  $html.= "<h3>Ponechaní členové tj. dříve i letos aktivní pečouni, kteří jsou již členy</h3>";
+  $del= '';
+  foreach ($nechat as $nec) {
+    $html.= "$del{$nec->jmeno}"; $del= ', ';
+  }
+  // nečinní pečouni
+  $html.= "<h3>Členové, kteří budou vyřazeni tj. letos už neaktivní pečouni, kteří jsou dosud členy</h3>";
+  $del= '';
+  foreach ($pryc as $pry) {
+    $html.= "$del{$pry->jmeno}"; $del= ', ';
+    if ( $provest ) {
+      query("UPDATE dar SET dat_do='$den_do'
+             WHERE access=$org AND id_osoba={$pry->id} AND ukon='b' AND dat_do='0000-00-00'");
+    }
+  }
+  // návrat
+  $ret->html= $html;
+end:
+  return $ret;
+}
+# ========================================================================================> SKUPINKY
 # --------------------------------------------------------------------------------- akce2_skup_check
 # zjištění konzistence skupinek podle příjmení VPS/PPS
 function akce2_skup_check($akce) {
@@ -6734,24 +6954,6 @@ end:
   else
     return sta2_table($tits,$flds,$clmn,$export);
 }
-# ---------------------------------------------------------------------------------- sta2_ukaz_osobu
-# zobrazí odkaz na osobu v evidenci
-function sta2_ukaz_osobu($ido,$barva='') {
-  $style= $barva ? "style='color:$barva'" : '';
-  return "<b><a $style href='ezer://db2.evi.evid_osoba/$ido'>$ido</a></b>";
-}
-# --------------------------------------------------------------------------------- sta2_ukaz_rodinu
-# zobrazí odkaz na rodinu v evidenci
-function sta2_ukaz_rodinu($idr,$barva='') {
-  $style= $barva ? "style='color:$barva'" : '';
-  return "<b><a $style href='ezer://db2.evi.evid_rodina/$idr'>$idr</a></b>";
-}
-# ---------------------------------------------------------------------------------- sta2_ukaz_pobyt
-# zobrazí odkaz na řádek s pobytem
-function sta2_ukaz_pobyt($idp,$barva='') {
-  $style= $barva ? "style='color:$barva'" : '';
-  return "<b><a $style href='ezer://db2.ucast.ucast_pobyt/$idp'>$idp</a></b>";
-}
 # --------------------------------------------------------------------------------- sta2_excel_subst
 function sta2_sestava_adresy_fill($matches) { trace();
   global $xA, $xn;
@@ -6784,11 +6986,11 @@ function sta2_table($tits,$flds,$clmn,$export=false) {  trace();
       $tab.= "<tr>";
       foreach ($flds as $f) {
         if ( $f=='id_osoba' || $f=='^id_osoba' )
-          $tab.= "<td style='text-align:right'>".sta2_ukaz_osobu($c[$f])."</td>";
+          $tab.= "<td style='text-align:right'>".tisk2_ukaz_osobu($c[$f])."</td>";
         elseif ( $f=='^id_rodina' )
-          $tab.= "<td style='text-align:right'>".sta2_ukaz_rodinu($c['^id_rodina'])."</td>";
+          $tab.= "<td style='text-align:right'>".tisk2_ukaz_rodinu($c['^id_rodina'])."</td>";
         elseif ( $f=='^id_pobyt' )
-          $tab.= "<td style='text-align:right'>".sta2_ukaz_pobyt($c['^id_pobyt'])."</td>";
+          $tab.= "<td style='text-align:right'>".tisk2_ukaz_pobyt($c['^id_pobyt'])."</td>";
         else {
 //                                 debug($c,$f); return $ret;
           $tab.= "<td style='text-align:left'>{$c[$f]}</td>";
@@ -9117,6 +9319,7 @@ function db2_sys_transform($par) { trace();
     $db= 'ezer_fa';
     $root= 'fa';
     $ok= 1;
+    $html.= "<br><b>$cmd</b>";
     switch ($cmd ) {
     // ---------------------------------------------- import: imp_clear
     // vyčistí databázi ezer_db2, založí uživatele GAN
@@ -9379,6 +9582,12 @@ function db2_sys_transform($par) { trace();
       query("INSERT INTO ezer_db2._cis SELECT * FROM ezer_fa._cis
              WHERE FIND_IN_SET(druh,'$cis_fa') OR (druh='_meta_' AND FIND_IN_SET(zkratka,'$cis_fa'))");
       $nc+= mysql_affected_rows();
+      // zvláštní úpravy
+      if ( !select("COUNT(*)","ezer_db2._cis","id_cis=5803") ) {
+      query("INSERT INTO ezer_db2._cis (id_cis,druh,data,zkratka,poradi)
+             VALUES ('5803','ms_akce_clen','3','klub','3')");
+      $nc+= mysql_affected_rows();
+      }
       foreach($cis_xx as $cis=>$desc) {
         // vložení meta
         query("INSERT INTO ezer_db2._cis SELECT * FROM ezer_ys._cis
