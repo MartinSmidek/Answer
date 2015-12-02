@@ -13,7 +13,7 @@ FileFormat=0
 ProjectFilesOnly=0
 [Project tree]
 kEzer-ys2
-	+db2
+	-db2
 		db2\$.ezer
 		db2\db2.akce2.elim.ezer
 		db2\db2.akce2.evi.ezer
@@ -170,7 +170,7 @@ kEzer-ys2
 		fa\fa_fce.js
 		fa\fa_fce.php
 		fa\fa_lide.php
-	-fa2
+	+fa2
 		fa2\$.ezer
 		fa2.inc
 		fa2.php
@@ -264,7 +264,7 @@ kEzer-ys2
 			ys\ys.syst.ezer
 			ys\ys.syst.oso.ezer
 		ys\ys.doc.ezer
-	-ys2
+	+ys2
 		ys2\$.ezer
 		ys2\ys2.eko.ezer
 		ys2.inc
@@ -293,10 +293,16 @@ kEzer-ys2
 13=db\db_akce.php
 14=ezer2.2\dbg.php
 15=db2\db2.akce2.ucast.ezer
-16=Novy1.js
+16=db2\db2.akce2.evi.ezer
+17=ys.php
+18=fa2.php
+19=ys2.inc
+20=ys2.php
+21=fa2.inc
+22=ys.inc
 [Selected Project Files]
 Main=
-Selected=Novy1.js
+Selected=fa2.php
 [tut\.htaccess]
 TopLine=1
 Caret=2,9
@@ -366,6 +372,24 @@ Caret=75,80
 [db2\db2.akce2.ucast.ezer]
 TopLine=15
 Caret=79,35
-[Novy1.js]
+[db2\db2.akce2.evi.ezer]
 TopLine=1
-Caret=1,1
+Caret=48,151
+[ys.php]
+TopLine=1
+Caret=31,17
+[fa2.php]
+TopLine=1
+Caret=6,25
+[ys2.inc]
+TopLine=1
+Caret=43,28
+[ys2.php]
+TopLine=1
+Caret=47,44
+[fa2.inc]
+TopLine=1
+Caret=9,25
+[ys.inc]
+TopLine=1
+Caret=3,25
