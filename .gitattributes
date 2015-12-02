@@ -85,6 +85,15 @@ db2/img/db2_local.png -text
 db2/img/page_vr.png -text
 db2/img/schema_db_2014.png -text
 db2/img/schema_db_2015.png -text
+db2_test/$.ezer -text
+db2_test/code/comp2tab.php -text
+db2_test/img/+logo.gif -text
+db2_test/img/-logo.gif -text
+db2_test/img/db2_test.png -text
+db2_test/img/db2_test_local.png -text
+db2_test/img/page_vr.png -text
+db2_test/img/schema_db_2014.png -text
+db2_test/img/schema_db_2015.png -text
 /dbg.html -text
 /dg.inc -text
 /dg.php -text

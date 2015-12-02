@@ -1,0 +1,204 @@
+# Systém Ans(w)er pro YMCA Familia a YMCA Setkání
+# (c) 2008-2010 Martin Šmídek <martin@smidek.eu>
+
+menu db2 { type:'main', title:'db2', active:*, _sys:'*'
+  var global: text,
+# v testovací verzi lze pracovat jen s modulem Databáze
+#   tabs pok {title:"Pokladna", _sys:'*',  include:'onclick,ys2.pok', active:*, skill:'yp' }
+#   tabs eko {title:"Ekonomika", _sys:'*',  include:'onclick,ys2.eko', active:*, skill:'ye' }
+#   tabs ds {title:"Dům", _sys:'*',  include:'onclick,ys2.ds', active:*, skill:'yd' }
+  tabs akce2 {title:"[fa-database] Databáze", _sys:'*', include:'onload,db2.akce2', active:*, skill:'fa;ya' }
+  tabs syst {title:"[fa-cog] Systém", _sys:'sys',  include:'onclick,ezer2.syst', active:*
+    panel oso {type:'right', title:'Osobní nastavení', _sys:'*', include:'onclick,ezer2.pers' }
+    panel nas {type:'right', title:'Data', _sys:'nas', skill:'a'
+      menu {type:'left', active:*
+        menu {title:'Testovací databáze',type:'group', _sys:'*'
+          item {title:'stav ...', par:°{db:'ys'}
+            proc onclick (i) { info.fill(conc(i.owner.title,' - ',i.title),ask('db2_stav',i.par.db)) }}
+          item {title:'kopírovat ostrou db do testovací', par:°{db:'db2'} }
+          proc onclick (i) {
+            confirm("vytvořit znovu kopii ostré databáze?");
+            info.fill(conc(i.owner.title,' - ',i.title),' ... probíhá update ...');
+            info.fill('',ask('db2_copy_test_db',i.par.db));
+          }
+        }
+        menu {title:'Transformace 2015',type:'group', _sys:'*'
+          item {title:'DB2: clear'              ,par:°{cmd:'imp_clear',confirm:'1'} }
+          item {title:'DB2<+YS: import'         ,par:°{cmd:'imp_YS',confirm:'1'} }
+          item {title:'DB2<+FA: import'         ,par:°{cmd:'imp_FA',confirm:'1'} }
+          item {title:'DB2 clear _track'        ,par:°{cmd:'imp_clear_track',confirm:'1'} }
+          item {title:'DB2<+YS: import _track'  ,par:°{cmd:'imp_YS_track',confirm:'1'} }
+          item {title:'DB2<+FA: import _track'  ,par:°{cmd:'imp_FA_track',confirm:'1'} }
+          item {title:'DB2: úprava mailistů'    ,par:°{cmd:'cor_mailist',confirm:'1'} }
+          item {title:'DB2: dokumenty YS'       ,par:°{cmd:'doc_YS',confirm:'1'} }
+          item {title:'DB2: dokumenty FA'       ,par:°{cmd:'doc_FA',confirm:'1'} }
+          item {title:'DB2: úpravy uživatelů'   ,par:°{cmd:'imp_user',confirm:'1'} }
+          item {title:'DB2: úpravy číselníků'   ,par:°{cmd:'imp_cis',confirm:'1'} }
+          item {title:'DB2: ... all in one ...' ,par:°{
+            cmd:'imp_clear,imp_clear_track,imp_YS,imp_FA,cor_mailist,imp_YS_track,imp_FA_track,doc_YS,doc_FA,imp_user,imp_cis',confirm:'1'} }
+          proc onclick (i) { clear;
+            info.fill(conc(i.owner.title,' - ',i.title),' ');
+            { not(i.par.confirm) | confirm("spustit úpravy databáze EZER_DB2?") };
+            info.fill('',' ... probíhá transformace dat ...');
+            info.fill('',ask('db2_sys_transform',i.par));
+          }
+        }
+      }
+      use info: form right [12,4,,]
+    }
+  }
+  tabs doc  {title:"[fa-question] Nápověda", _sys:'*',  include:'onload,ezer2.help' }
+  tabs off  {title:"[fa-power-off] Odhlásit", type:'logoff' }
+  // přepnutí access - refresh formulářů
+  proc reaccess(msg) {
+    echo("přepnutí přístupu na data ",msg);
+    [ akce2.call('reaccess') ];
+  }
+  // univerzální procedury
+  proc the_formsave (f,b) {
+    f.same
+  | f.key; f.save; f.load; b.browse_seek
+  | f.insert; f.load;
+    b.raise('onrowclick',b.browse_seek(conc(f.key_id,'=',f.key)))
+  }
+}
+// univerzální formulář pro levostranné menu
+form right [,,700,50] {
+  label info [0,0,680,600] { title:'' }
+  label head [0,0,680,50]  { title:'' }
+  label note [0,50,680,550] { title:'' }
+  proc fill(x,y) {
+    [ x; head.set(conc("<div class='CSection CMenu'><h3 class='CTitle'>",x,"</h3></div>")) ];
+    [ y; note.set(y) ]
+  }
+  proc append(x) { note.get; note.set(conc(note.get,'<br>',x)) | note.set(x) }
+}
+
+table akce { key_id:'id_duakce'
+  number id_duakce
+  number typ
+}
+
+table join_akce { // spojení číselníku akcí s MS
+  number g_rok     { help:"rok akce podle číselníku akcí" }
+  number g_kod     { help:"kód akce podle číselníku akcí" }
+  text   source    { help:"L:Lídino M:Milošovo MS.EXE" }
+  number akce      { help:"staré číslo akce podle MS.EXE" }
+}
+
+# kopie číselníků akcí z intranetu YS
+table uakce { key_id:'id_uakce'
+  number id_uakce
+  number id_akce
+  text ms_source
+  number ms_akce
+  number rok
+  text akce
+  text nazev_akce
+  date datum { sql_pipe:'sql_date1' }
+  number dnu
+  number osob
+  number typ
+  text kapitola
+}
+
+table ms_akce { key_id:'id_akce'  // Sey
+  number id_akce
+  text source
+  text nazev
+  number akce
+  number druh
+  number poradatel
+  date datum_od        // SQL tvar se používá v ys.akce
+  date datum_do
+  text misto
+}
+
+table g_akce { key_id:'id_gakce' // kopie číselníku akcí z intranetu
+  number id_gakce
+  number g_rok     { help:"rok akce podle číselníku akcí" }
+  number g_kod     { help:"kód akce podle číselníku akcí" }
+  text   g_nazev   { help:"název akce z číselníku akcí" }
+  date   g_od      { help:"začátek akce z číselníku akcí", sql_pipe:'sql_date1' }
+  date   g_do      { help:"ukončení akce z číselníku akcí", sql_pipe:'sql_date1' }
+  number g_ucast   { help:"počet účastníků akce z číselníku akcí" }
+  text   g_typ     { help:"typ akce z číselníku akcí" }
+  text   g_kap     { help:"účetní kapitola akce z číselníku akcí" }
+}
+
+table mail { key_id:'id_mail'
+  number id_mail { key:'primary' },
+  number id_dopis { help:'mail|index mailu' }, // nepoužívá se pro dopisy s druh!='@'
+  number id_davka
+  number id_znacka                             // nepoužívá se pro dopisy s druh=='@'
+  number id_clen
+  text znacka
+  text email
+  number stav
+  text msg
+  text body
+}
+
+table dopis { key_id:'id_dopis'
+  number id_dopis { key:'primary' },
+  number id_davka { help:'dávka|číslo rozesílání dávky dopisů' },
+  text nazev
+  text prilohy
+  number potvrzeni { help:"potvrzení|vyžádat zaslání potvrzení o přečtení" }
+  number kopie	{ help:"poslat slepou kopii 'odesílateli'" }
+  text druh { help:'druh|D-dopis, S-samolepka,legitimace, N-nesamostatná složka' },
+  text typ { help:'typ|značka dopisu' },
+  number nw
+  number nh
+  number komu     // pouze pro maily
+  number pocet    // pouze pro maily
+  text report { help:'vzor|identifikátor reportu' },
+  number aktualni { help:'aktualni|text dopisu je připraven k tisku' },
+  date datum { help:'datum|vročení dopisu', sql_pipe:'sql_date1' },
+  text obsah { help:'obsah|text dopisu' },
+  text var_list { help:'seznam proměnných'}
+  text post_vars { help:'seznam proměnných počítaných po generování'}
+  text nest_list { help:'seznam složek (druh=N)'}
+  text add_list
+}
+
+table _user { key_id:'id_user', db:'ezer_system'
+  number id_user
+  text deleted,
+  text abbr,
+  text skills,
+  text options { help:'privátní nastavení|ve formátu JSON' }
+  text username,
+  text password,
+  number state,
+  text forename,
+  text surname,
+  text login,
+  text history,
+  text sess_id,
+  text sess_time,
+  text sess_data,
+  number zmena_kdo,
+  date zmena_kdy {  },
+}
+
+table _file_ {
+  text fid
+  date fdate
+  text fname
+  text ftype
+  text finfo
+}
+
+table _cis { key_id:'id_cis'
+  number id_cis text druh, text data, text zkratka, number poradi,
+  text hodnota, text popis, text barva, text ikona
+}
+
+map ms_akce_clen:     table _cis {where:"druh='ms_akce_clen'",     order:'poradi', key_id:'data'}
+map ms_akce_pouze:    table _cis {where:"druh='ms_akce_pouze'",    order:'poradi', key_id:'data'}
+map ms_akce_funkce:   table _cis {where:"druh='ms_akce_funkce'",   order:'poradi', key_id:'data'}
+map ms_akce_prednasi: table _cis {where:"druh='ms_akce_prednasi'", order:'poradi', key_id:'data'}
+map ms_akce_cirkev:   table _cis {where:"druh='ms_akce_cirkev'",   order:'poradi', key_id:'data'}
+map ms_akce_vzdelani: table _cis {where:"druh='ms_akce_vzdelani'", order:'poradi', key_id:'data'}
+map ms_akce_platba:   table _cis {where:"druh='ms_akce_platba'",   order:'poradi', key_id:'data'}
