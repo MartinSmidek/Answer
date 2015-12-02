@@ -380,8 +380,33 @@ function pin_test ($x,$pin) {
 }
 # ==========================================================================================> rodina
 # ------------------------------------------------------------------------------------------ lide_ms
-# SELECT autocomplete - výběr z databází MS (Miloš, Lída)
+# SELECT autocomplete - výběr z databáze db2:rodina+členi
 function lide_ms($patt) {  #trace('','win1250');
+  $a= array();
+  $limit= 10;
+  $n= 0;
+  // rodina
+  $qry= "SELECT access,id_rodina AS _key,concat(nazev,' - ',obec) AS _value
+         FROM rodina
+         WHERE nazev LIKE '$patt%' ORDER BY nazev LIMIT $limit";
+  $res= mysql_qry($qry);
+  while ( $res && $t= mysql_fetch_object($res) ) {
+    if ( ++$n==$limit ) break;
+    $key= $t->_key;
+    $org= $t->access==1 ? 'S' : ( $t->access==2 ? 'F' : '*');
+    $a[$key]= "$org:{$t->_value}";
+  }
+  // obecné položky
+  if ( !$n )
+    $a[0]= /*w*u*/("... žádné jméno nezačíná '")."$patt'";
+  elseif ( $n==$limit )
+    $a[-999999]= /*w*u*/("... a další");
+//                                                      debug($a,$patt,(object)array('win1250'=>1));
+  return $a;
+}
+# ------------------------------------------------------------------------------------------ lide_ms
+# SELECT autocomplete - výběr z databází MS (Miloš, Lída)
+function xxxlide_ms($patt) {  #trace('','win1250');
   $a= array();
   $limit= 10;
   $n= 0;
@@ -404,37 +429,41 @@ function lide_ms($patt) {  #trace('','win1250');
   return $a;
 }
 # ------------------------------------------------------------------------------------------- rodina
-# formátování autocomplete
-function rodina($xcislo) {  #trace('','win1250');
+# formátování autocomplete - verze pro db2
+function rodina($idr) {  #trace('','win1250');
   $rod= array();
-  // rodiče
-  $source= $xcislo % 2 ? 'M' : 'L';
-  $cislo= round($xcislo/10);
-  $qry= "SELECT * FROM ms_pary WHERE source='$source' AND cislo=$cislo";
-  $res= mysql_qry($qry);
-  if ( $res && $p= mysql_fetch_object($res) ) {
-    rodina_add($rod,$p->prijmeni_m,$p->jmeno_m,$p->rodcislo_m,$p->telefon,$p->email,$p);
-//                                              display("{$p->prijmeni_m}:{$p->rodcislo_m}:$narozeni");
-    rodina_add($rod,$p->prijmeni_z,$p->jmeno_z,$p->rodcislo_z,$p->telefon,$p->email,$p);
+  // členové rodiny
+  ezer_connect('ezer_db2');
+  $rc= mysql_qry("
+    SELECT
+      IF(o.adresa,o.ulice,r.ulice) AS _ulice,
+      IF(o.adresa,o.psc,r.psc) AS _psc,
+      IF(o.adresa,o.obec,r.obec) AS _obec,
+      IF(o.adresa,o.stat,r.stat) AS _stat,
+      IF(o.kontakt,o.telefon,r.telefony) AS _telefon,
+      IF(o.kontakt,o.email,r.emaily) AS _email,
+      prijmeni,jmeno,narozeni,rc_xxxx,sex
+    FROM rodina AS r
+    JOIN tvori AS t USING (id_rodina)
+    JOIN osoba AS o USING (id_osoba)
+    WHERE id_rodina=$idr AND o.deleted=''
+    ORDER BY t.role
+  ");
+  while ( $rc && $c= mysql_fetch_object($rc) ) {
+    $narozeni= sql_date1($c->narozeni);
+    $rodcis= rodcis($c->narozeni,$c->sex).$c->rc_xxxx;
+    $roky= roku($rodcis);
+    $rod[]= (object)array('prijmeni'=>$c->prijmeni,'jmeno'=>$c->jmeno,'stari'=>$roky,
+      'psc'=>$c->_psc,'mesto'=>$c->_obec,'ulice'=>$c->_ulice,
+      'telefon'=>$c->telefon,'email'=>$c->email,'narozeni'=>$narozeni);
   }
-  // děti
-  $qry= "SELECT * FROM ms_deti WHERE source='$source' AND cislo=$cislo";
-  $res= mysql_qry($qry);
-  while ( $res && $d= mysql_fetch_object($res) ) {
-    $prijmeni= rc2man($d->rodcislo) ? $p->prijmeni_m : $p->prijmeni_z;
-    rodina_add($rod,$prijmeni,$d->jmeno,$d->rodcislo,' ',' ',$p);
-  }
-//                                              debug($rod,$cislo,(object)array('win1250'=>1));
   return $rod;
 }
-function rodina_add(&$rod,$prijmeni,$jmeno,$rc,$telefon,$email,$p) { trace('','win1250');
-  if ( $prijmeni || $jmeno ) {
-    $roky= roku($rc);
-    $narozeni= rc2dmy($rc);
-    $rod[]= (object)array('prijmeni'=>$prijmeni,'jmeno'=>$jmeno,'stari'=>$roky,
-      'psc'=>$p->psc,'mesto'=>$p->mesto,'ulice'=>$p->adresa,
-      'telefon'=>$telefon,'email'=>$email,'narozeni'=>$narozeni);
-  }
+function rodcis($nar,$sex) {
+  $m= substr($nar,5,2);
+  $m= str_pad($m + ($sex==2 ? 50 : 0), 2, '0', STR_PAD_LEFT);
+  $rc= substr($nar,2,2).$m.substr($nar,8,2);
+  return $rc;
 }
 function roku($rc) {
   $r= rc2roky($rc);
