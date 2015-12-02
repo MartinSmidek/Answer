@@ -455,7 +455,7 @@ function rodina($idr) {  #trace('','win1250');
     $roky= roku($rodcis);
     $rod[]= (object)array('prijmeni'=>$c->prijmeni,'jmeno'=>$c->jmeno,'stari'=>$roky,
       'psc'=>$c->_psc,'mesto'=>$c->_obec,'ulice'=>$c->_ulice,
-      'telefon'=>$c->telefon,'email'=>$c->email,'narozeni'=>$narozeni);
+      'telefon'=>$c->_telefon,'email'=>$c->_email,'narozeni'=>$narozeni);
   }
   return $rod;
 }
