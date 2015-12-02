@@ -183,7 +183,7 @@ function ds_compare_list($orders) {  #trace('','win1250');
   if ( $orders ) {
     foreach (explode(',',$orders) as $order) {
       $x= ds_compare($order);
-      $html.= wu("<dt>Objednávka <b>$order</b> {$x->pozn}</dt>");
+      $html.= /*wu*/("<dt>Objednávka <b>$order</b> {$x->pozn}</dt>");
       $html.= "<dd>{$x->html}</dd>";
       $errs+= $x->err;
       $n++;
@@ -192,7 +192,7 @@ function ds_compare_list($orders) {  #trace('','win1250');
   $html.= "</dl>";
   $msg= "V tomto období je celkem $n objednávek";
   $msg.= $errs ? ", z toho $errs neúplné." : "." ;
-  $result= (object)array('html'=>$html,'msg'=>wu($msg));
+  $result= (object)array('html'=>$html,'msg'=>/*wu*/($msg));
   return $result;
 }
 # --------------------------------------------------------------------------------------- ds_compare
@@ -201,7 +201,7 @@ function ds_compare($order) {  #trace('','win1250');
   // údaje z objednávky
   $qry= "SELECT * FROM setkani.tx_gnalberice_order WHERE uid=$order";
   $res= mysql_qry($qry);
-  if ( !$res ) fce_error(wu("$order není platné číslo objednávky"));
+  if ( !$res ) fce_error(/*wu*/("$order není platné číslo objednávky"));
   $o= mysql_fetch_object($res);
   // projití seznamu
   $qry= "SELECT * FROM setkani.ds_osoba WHERE id_order=$order ";
@@ -286,10 +286,10 @@ function ds_kli_menu() {
       if ( $resp && $op= mysql_fetch_object($resp) ) {
         $klientu= $op->klientu;
       }
-      $tit= wu($mesice[$m])." - $celkem ($klientu)";
+      $tit= /*wu*/($mesice[$m])." - $celkem ($klientu)";
       $par= (object)array('od'=>$od,'do'=>$do,
         'celkem'=>$celkem,'klientu'=>$klientu,'objednavek'=>$objednavek,'uids'=>$uids,
-        'mesic_rok'=>wu($mesice[$m])." $rok");
+        'mesic_rok'=>/*wu*/($mesice[$m])." $rok");
       $tm= (object)array('type'=>'item','options'=>(object)array('title'=>$tit,'par'=>$par));
       $gr->part->$m= $tm;
       if ( !$the && $yyyymm>=$ted ) {
@@ -397,9 +397,9 @@ function lide_ms($patt) {  #trace('','win1250');
   }
   // obecné položky
   if ( !$n )
-    $a[0]= wu("... žádné jméno nezačíná '")."$patt'";
+    $a[0]= /*wu*/("... žádné jméno nezačíná '")."$patt'";
   elseif ( $n==$limit )
-    $a[-999999]= wu("... a další");
+    $a[-999999]= /*wu*/("... a další");
 //                                                                 debug($a,$patt,(object)array('win1250'=>1));
   return $a;
 }
@@ -471,9 +471,9 @@ function lide_ds($patt0) {  #trace('','win1250');
   }
   // obecné položky
   if ( !$n )
-    $a[0]= wu("... žádné jméno nezačíná '")."$patt0'";//."INFO='$info'";
+    $a[0]= /*wu*/("... žádné jméno nezačíná '")."$patt0'";//."INFO='$info'";
   elseif ( $n==$limit )
-    $a[-999999]= wu("... a další");//."INFO='$info0'";
+    $a[-999999]= /*wu*/("... a další");//."INFO='$info0'";
 //                                                      debug($a,$patt,(object)array('win1250'=>1));
   return $a;
 }
@@ -684,7 +684,7 @@ function ds_zaloha($order) {  #trace('','win1250');
   if ( $res && $o= mysql_fetch_object($res) ) {
     $o->rooms= $o->rooms1;
     foreach ((array)$o as $on) if ( strstr($on,'|')!==false ) { // test na |
-      fce_warning(wu("nepřípustný znak '|' v '$on'"));
+      fce_warning(/*wu*/("nepřípustný znak '|' v '$on'"));
       goto end;
     }
     $obdobi= date('j.n',$o->fromday).' - '.date('j.n.Y',$o->untilday);
@@ -991,7 +991,7 @@ function ds_faktury($order) {  trace('','win1250');
   if ( $res && $o= mysql_fetch_object($res) ) {
     $o->rooms= $o->rooms1;
     foreach ((array)$o as $on) if ( strstr($on,'|')!==false ) { // test na |
-      fce_warning(wu("nepřípustný znak '|' v '$on'"));
+      fce_warning(/*wu*/("nepřípustný znak '|' v '$on'"));
       goto end;
     }
     $obdobi= date('j.n',$o->fromday).' - '.date('j.n.Y',$o->untilday);
@@ -1027,7 +1027,7 @@ function ds_faktury($order) {  trace('','win1250');
       $reso= mysql_qry($qry);
       while ( $reso && $h= mysql_fetch_object($reso) ) {
         foreach ((array)$h as $on) if ( strstr($on,'|')!==false ) { // test na |
-          fce_warning(wu("nepřípustný znak '|' v '$on'"));
+          fce_warning(/*wu*/("nepřípustný znak '|' v '$on'"));
           goto end;
         }
         $hf= sql2stamp($h->fromday); $hu= sql2stamp($h->untilday);
@@ -1094,7 +1094,7 @@ function ds_faktury($order) {  trace('','win1250');
     }
   }
   else
-    fce_error(wu("neúplná objednávka $order"));
+    fce_error(/*wu*/("neúplná objednávka $order"));
 //                                      debug($ds_cena,'ds_cena',(object)array('win1250'=>1));
 //                                      debug($x,'faktura',(object)array('win1250'=>1));
 end:
