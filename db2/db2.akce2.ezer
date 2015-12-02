@@ -12,7 +12,8 @@ var staty='CZ,SK,A,D,PL,UA,H,FIN,BG,I,NL,CDN,USA,?' // seznam států, (později
 
 # ------------------------------------------------------------------------------------------==> stav
 # dotaz na datovou oprávněnost
-var my_access=0                 // datová práva přihlášeného uživatele
+var has_access=0                // maximální datová práva přihlášeného uživatele
+var my_access=0                 // zvolená datová práva přihlášeného uživatele
 var my_org=0                    // datová příslušnost přihlášeného uživatele
 
 # hodnoty pamatované v cookies
@@ -39,8 +40,12 @@ proc onstart() { dirty.get | akce_onstart }
 proc akce_onstart() {
   dirty.get
 | dirty.set(1);
+#   [ eq(sys('ezer','options','root'),'db2_test'); alert('testovací databáze')
+#   | alert('ostrá databáze') ];
+  has_access.set(sys('user','has_access'));
   my_access.set(sys('user','access'));
   my_org.set(cconc(eq(my_access.get,3),sys('user','org'),my_access.get));
+#   echo("my_org=",my_org.get,debug(sys));
   # hodnoty zapamatované pro navázání na předchozí session
   the_source.set(get_cookie(conc(sys('root'),'_akce_source'),'sey'));
   # příprava zobrazení v AKCE - volá akce_choose
@@ -53,6 +58,7 @@ proc akce_onstart() {
 }
 # změna datového přístupu
 proc reaccess() { #==> . reaccess
+  has_access.set(sys('user','has_access'));
   my_access.set(sys('user','access'));
   my_org.set(cconc(eq(my_access.get,3),sys('user','org'),my_access.get));
   lst.reaccess;
@@ -654,6 +660,7 @@ panel track [,,540,276] { title:'Historie oprav', type:'popup', css:'dialog'
         ret.set(ask('track_revert',lst.selected('get',0)));
         { ret.ok; warning("změny byly vráceny");
           reverted_table.set(ret.tab); reverted_key.set(ret.klic);
+          lst.browse_refresh;
         | alert(ret.msg) }
       }
     },

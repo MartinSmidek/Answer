@@ -563,7 +563,8 @@ form _info [,,*,50] {
     { eq(the_org.get,1);
       the_akce_ys.set(the_duakce.get);
       set_cookie(conc(sys('root'),'_akce_ys'),the_akce_ys.get)
-    | the_akce_fa.set(the_duakce.get);
+    | eq(the_org.get,2);
+      the_akce_fa.set(the_duakce.get);
       set_cookie(conc(sys('root'),'_akce_fa'),the_akce_fa.get) };
   }
   label head [0,0,*,30] { title:'', style:'z-index:0' }

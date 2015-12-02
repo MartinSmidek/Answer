@@ -3,11 +3,11 @@
 
 menu db2 { type:'main', title:'db2', active:*, _sys:'*'
   var global: text,
-  tabs pok {title:"Pokladna", _sys:'*',  include:'onclick,ys2.pok', active:*, skill:'yp' }
-  tabs eko {title:"Ekonomika", _sys:'*',  include:'onclick,ys2.eko', active:*, skill:'ye' }
-  tabs ds {title:"Dům", _sys:'*',  include:'onclick,ys2.ds', active:*, skill:'yd' }
-  tabs akce2 {title:"Databáze", _sys:'*', include:'onload,db2.akce2', active:*, skill:'fa;ya' }
-  tabs syst {title:"Systém", _sys:'sys',  include:'onclick,ezer2.syst', active:*
+  tabs pok {title:"[fa-eur] Pokladna", _sys:'*',  include:'onclick,ys2.pok', active:*, skill:'yp' }
+  tabs eko {title:"[fa-stack-overflow] Ekonomika", _sys:'*',  include:'onclick,ys2.eko', active:*, skill:'ye' }
+  tabs ds {title:"[fa-home] Dům", _sys:'*',  include:'onclick,ys2.ds', active:*, skill:'yd' }
+  tabs akce2 {title:"[fa-database] Databáze", _sys:'*', include:'onload,db2.akce2', active:*, skill:'fa;ya' }
+  tabs syst {title:"[fa-cog] Systém", _sys:'sys',  include:'onclick,ezer2.syst', active:*
     panel oso {type:'right', title:'Osobní nastavení', _sys:'*', include:'onclick,ezer2.pers' }
     panel nas {type:'right', title:'Data', _sys:'nas', skill:'a'
       menu {type:'left', active:*
@@ -46,8 +46,8 @@ menu db2 { type:'main', title:'db2', active:*, _sys:'*'
       use info: form right [12,4,,]
     }
   }
-  tabs doc  {title:"Nápověda", _sys:'*',  include:'onload,ezer2.help' }
-  tabs off  {title:"Odhlásit", type:'logoff' }
+  tabs doc  {title:"[fa-question] Nápověda", _sys:'*',  include:'onload,ezer2.help' }
+  tabs off  {title:"[fa-power-off] Odhlásit", type:'logoff' }
   // přepnutí access - refresh formulářů
   proc reaccess(msg) {
     echo("přepnutí přístupu na data ",msg);
