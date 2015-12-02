@@ -25,7 +25,8 @@ panel inf {type:'right', title:"Informace", _sys:'inf'
     }
     proc onclick (m) {
       i.result.set(conc("<div id='info'>",
-        ask('kasa_menu_show','informace',m.par.s,m.par.c,d_cond.get,d_day.get),"</div>"));
+        ask('kasa_menu_show',
+          'informace',m.par.s,m.par.c,d_cond.get,d_day.get,pokladna.db),"</div>"));
       panel.property(°{height:'*',min_height:500})
     }
   }

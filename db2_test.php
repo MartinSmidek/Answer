@@ -9,7 +9,7 @@
   #   $css_lib    = pole s *.css
   #   $options    = doplnění Ezer.options
 
-  $app=  'db2';
+  $app=  'db2_test';
 
   require_once("answer.php");
   $options= (object)array(

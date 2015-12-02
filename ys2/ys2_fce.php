@@ -45,7 +45,7 @@ function p_pdenik_insert($typ,$org,$org_abbr,$datum) {
 # ki - menu
 # $cond = podmínka pro pdenik nastavená ve fis_kasa.ezer
 # $day =  má formát d.m.yyyy
-function kasa_menu_show($k1,$k2,$k3,$cond=1,$day='') {
+function kasa_menu_show($k1,$k2,$k3,$cond=1,$day='',$db='ezer_ys') {
   $html= "<div class='CSection CMenu'>";
   switch ( "$k2 $k3" ) {
   case 'stav aktualne':
@@ -54,11 +54,11 @@ function kasa_menu_show($k1,$k2,$k3,$cond=1,$day='') {
     $html.= "<h3 class='CTitle'>Aktuální stav pokladen ke dni $dnes</h3>";
     $year= date('Y');
     $interval= " datum BETWEEN '$year-01-01' AND '$dnes_mysql'";
-    $html.= kasa_menu_comp($interval);
+    $html.= kasa_menu_comp($interval,$db);
     break;
   case 'stav s_filtrem':
     $html.= "<h3 class='CTitle'>Stav pokladen podle nastavení </h3>";
-    $html.= kasa_menu_comp($cond);
+    $html.= kasa_menu_comp($cond,$db);
     $html.= "<p><i>filtr: $cond</i></p>";
     break;
   case 'stav k_datu':
@@ -66,26 +66,26 @@ function kasa_menu_show($k1,$k2,$k3,$cond=1,$day='') {
     $until= sql_date1($day,1);
     $year= substr($until,0,4);
     $interval= " datum BETWEEN '$year-01-01' AND '$until'";
-    $html.= kasa_menu_comp($interval);
+    $html.= kasa_menu_comp($interval,$db);
     break;
   case 'export letos':
     $rok= date('Y');
     $html.= "<h3 class='CTitle'>Export pokladních deníků roku $rok</h3>";
     $cond= " datum BETWEEN '$rok-01-01' AND '$rok-12-31'";
-    $html.= kasa_export($cond,"pokladna_{$rok}");
+    $html.= kasa_export($cond,"pokladna_{$rok}",$db);
     break;
   case 'export vloni':
     $rok= date('Y')-1;
     $html.= "<h3 class='CTitle'>Export pokladních deníků roku $rok</h3>";
     $cond= " datum BETWEEN '$rok-01-01' AND '$rok-12-31'";
-    $html.= kasa_export($cond,"pokladna_{$rok}");
+    $html.= kasa_export($cond,"pokladna_{$rok}",$db);
     break;
   }
   $html.= "</div>";
   return $html;
 }
 # -------------------------------------------------------------------------------------- kasa_export
-function kasa_export($cond,$file) {
+function kasa_export($cond,$file,$db) {
                                                 display("kasa_export($cond,$file)");
   global $ezer_path_serv, $ezer_path_docs;
   require_once("$ezer_path_serv/licensed/xls/OLEwriter.php");
@@ -94,7 +94,7 @@ function kasa_export($cond,$file) {
   require_once("$ezer_path_serv/licensed/xls/Workbook.php");
   $table= "$file.xls";
   $wb= new Workbook("docs/$table");
-  $qry_p= "SELECT * FROM pokladna ";
+  $qry_p= "SELECT * FROM $db.pokladna ";
   $res_p= mysql_qry($qry_p);
   while ( $res_p && $p= mysql_fetch_object($res_p) ) {
     $ws= $wb->add_worksheet($p->abbr);
@@ -116,7 +116,7 @@ function kasa_export($cond,$file) {
       $ws->write_string($sy,$sx,utf2win_sylk($title,true),$format_hd);
     }
     // data
-    $qry= "SELECT * FROM pdenik WHERE $cond AND pdenik.org={$p->id_pokladna} ORDER BY datum";
+    $qry= "SELECT * FROM $db.pdenik WHERE $cond AND pdenik.org={$p->id_pokladna} ORDER BY datum";
     $res= mysql_qry($qry);
     while ( $res && $d= mysql_fetch_object($res) ) {
       $sy++; $sx= 0;
@@ -153,10 +153,10 @@ function kasa_export($cond,$file) {
   return $html;
 }
 # ----------------------------------------------------------------------------------- kasa_menu_comp
-function kasa_menu_comp($cond) {
+function kasa_menu_comp($cond,$db) {
   $celkem= 0;
   $html= "<table>";
-  $qry= "SELECT nazev, sum(if(typ=2,castka,-castka)) as s, abbr FROM pdenik
+  $qry= "SELECT nazev, sum(if(typ=2,castka,-castka)) as s, abbr FROM $db.pdenik
         LEFT JOIN $db.pokladna ON pdenik.org=id_pokladna WHERE $cond GROUP BY pdenik.org";
   $res= mysql_qry($qry);
   while ( $res && $row= mysql_fetch_assoc($res) ) {
