@@ -391,7 +391,7 @@ group ucastnici {
       proc onrowclick() { osoba_load(id_osoba.get); echo('click=',akc.seznam.browse_key); }
     }
     // ================================================================ Rodina
-    panel Rodina [,,320,300] {type:'popup', title:'Výběr členů rodiny z databáze MS'
+    panel Rodina [,,320,300] {type:'popup', title:'Výběr rodiny z databází Setkání a Familia'
       use fl: form _fl [12,10,,]
       form _fl [,,300,200] {
         var last: number
