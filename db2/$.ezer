@@ -11,15 +11,22 @@ menu db2 { type:'main', title:'db2', active:*, _sys:'*'
     panel oso {type:'right', title:'Osobní nastavení', _sys:'*', include:'onclick,ezer2.pers' }
     panel nas {type:'right', title:'Data', _sys:'nas', skill:'a'
       menu {type:'left', active:*
+        menu {title:'Ostrá databáze',type:'group', _sys:'*'
+          item {title:'stav sjednocování kopií', par:°{db:'db2'}
+            proc onclick (i) {
+              info.fill(conc(i.owner.title,' - ',i.title),'... probíhá výpočet ...');
+              info.fill('',ask('db2_stav',i.par.db)) }}
+        }
         menu {title:'Testovací databáze',type:'group', _sys:'*'
-          item {title:'stav ...', par:°{db:'ys'}
-            proc onclick (i) { info.fill(conc(i.owner.title,' - ',i.title),ask('db2_stav',i.par.db)) }}
-          item {title:'kopírovat ostrou db do testovací', par:°{db:'db2'} }
-          proc onclick (i) {
-            confirm("vytvořit znovu kopii ostré databáze?");
-            info.fill(conc(i.owner.title,' - ',i.title),' ... probíhá update ...');
-            info.fill('',ask('db2_copy_test_db',i.par.db));
-          }
+          item {title:'stav sjednocování kopií', par:°{db:'db2_test'}
+            proc onclick (i) {
+              info.fill(conc(i.owner.title,' - ',i.title),'... probíhá výpočet ...');
+              info.fill('',ask('db2_stav',i.par.db)) }}
+          item {title:'obnovit testovací db z ostré', par:°{db:'db2'}
+            proc onclick (i) {
+              confirm("vytvořit znovu testovací databázi z aktuálního stavu ostré databáze?");
+              info.fill(conc(i.owner.title,' - ',i.title),' ... probíhá update ...');
+              info.fill('',ask('db2_copy_test_db',i.par.db)); }}
         }
 #         menu {title:'Transformace 2015',type:'group', _sys:'*'
 #           item {title:'DB2: clear'              ,par:°{cmd:'imp_clear',confirm:'1'} }

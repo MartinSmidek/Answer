@@ -6964,7 +6964,7 @@ function sta2_sestava_adresy_fill($matches) { trace();
   $n= $xn+$matches[2];
   return "$A$n";
 }
-# --------------------------------------------------------------------------------------- sta2_table
+# -----------------------------------------------------------------------------------=> . sta2_table
 function sta2_table($tits,$flds,$clmn,$export=false) {  trace();
   $ret= (object)array('html'=>'');
   // zobrazení tabulkou
@@ -9646,18 +9646,52 @@ function db2_sys_transform($par) { trace();
   }
   return $html;
 }
-# --------------------------------------------------------------------------------==> . testovací db
+# ---------------------------------------------------------------------------==> . datové statistiky
 # ----------------------------------------------------------------------------------------- db2_stav
-function db2_stav() {
-  global $ezer_root,$dbs;
+function db2_stav($db) {
+  global $ezer_root,$ezer_db;
+  $tabs= array(
+    '_user'  => (object)array('cond'=>"deleted=''"      ,'obe'=>1),
+    'rodina' => (object)array('cond'=>"deleted=''"      ,'obe'=>1),
+    'osoba'  => (object)array('cond'=>"deleted=''"      ,'obe'=>1)
+  );
+  $html= '';
+  // přehled tabulek podle access
+  $html= "Seznam tabulek s rozdělením podle příslušnosti k organizacím<br><br>";
+  $html.= "<div class='stat'><table class='stat'>";
+  $html.= "<tr><th>tabulka</th><th>Setkání</th><th>Familia</th><th>sjednocené</th></tr>";
+  foreach ($tabs as $tab=>$desc) {
+    $html.= "<tr><th>$tab</th>";
+    $obe= 0;
+    $rt= mysql_qry("
+      SELECT access,COUNT(*) AS _pocet FROM ezer_$db.$tab
+      WHERE {$desc->cond} GROUP BY access ORDER BY access");
+    while ( $rt && ($t= mysql_fetch_object($rt)) ) {
+      $html.= "<td style='text-align:right' title='{$t->access}'>{$t->_pocet}</td>";
+      if ( $t->access==3 ) $obe= 1;
+    }
+    if ( !$desc->obe ) {
+      $html.= "<td style='text-align:right' title='nemá smysl'>-</td>";
+    }
+    elseif ( !$obe ) {
+      $html.= "<td style='text-align:right' title='3'>0</td>";
+    }
+    $html.= "</tr>";
+  }
+  $html.= "</table></div>";
+  // technický stav
+  $dbs= array();
+  foreach ($ezer_db as $db=>$desc) {
+    $dbs[$db]= $desc[5];
+  }
   $stav= array(
     "ezer_root"=>$ezer_root,
     "dbs"=>$dbs
   );
                                         debug($stav);
-//                                         debug($_SESSION);
-  return 1;
+  return $html;
 }
+# --------------------------------------------------------------------------------==> . testovací db
 # --------------------------------------------------------------------------------- db2_copy_test_db
 # zkopíruje důležité tabulky z ezer_$db do ezer_$db_test
 function db2_copy_test_db($db) {  trace();

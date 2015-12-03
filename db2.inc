@@ -9,25 +9,15 @@
   require_once("answer.inc");
   $dbs_plus= array(
     array( // ostré
-      'ezer_ys' =>      array(0,'localhost','gandi','r8d0st','utf8','ezer_ys'),
       'setkani' =>      array(0,'192.168.1.146','gandi','','cp1250','setkani',1)), // 1=vynechat zálohování
     array( // lokální
-      'ezer_ys' =>      array(0,'localhost','gandi','','utf8','ezer_ys'),
       'setkani' =>      array(0,'localhost','gandi','','utf8','setkani',1))        // 1=vynechat zálohování
   );
   $php= array(
     'db2/db2_fce.php',
-    'ys2/ys2_fce.php'
+    'db2/ys2_fce.php'
   );
   $ezer= array(
-    'ys2/ys2.pok',
-    'ys2/ys2.pok.den',
-    'ys2/ys2.pok.nas',
-    'ys2/ys2.ds',
-    'ys2/ys2.ds.kl',
-    'ds/ds',
-    'ds/ds.tab',
-    'ds/ds.dum'
   );
   answer_ini('db2','ezer_db2',$dbs_plus,$php,$ezer);
   // SPECIFICKÉ PARAMETRY
