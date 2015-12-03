@@ -1,6 +1,6 @@
 <?php # Systém An(w)er/YMCA Setkání/YMCA Familia, (c) 2008-2015 Martin Šmídek <martin@smidek.eu>
 
-if ( !isset($_COOKIE['ezer_db2_go']) ) {
+if ( !isset($_COOKIE['ezer_db2_go']) && !isset($_GET['martin']) ) {
 
 echo(<<<__EOD
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en" dir="ltr" slick-uniqueid="1" spellcheck="false">
