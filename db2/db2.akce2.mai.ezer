@@ -526,7 +526,7 @@ form _gsql {
     [ ctrl_akce_ne.browse_load(akce_ne.get) ];
     [ ctrl_akce_ano.browse_load(akce_ano.get) ];
   }
-  # ------------------------------------- tvorba a úschova SQL dotazu a testy
+  # ------------------------------------- tvorba a úschova SQL dotazu, testy, mapa
   var from: text
   var cond: text
   label  [620,t_pro+12,132,55] { tag:'def', css:'ae_parm' }
@@ -534,6 +534,12 @@ form _gsql {
     save_sql(0); run_sql } }
   button [678,t_pro+17,,] { tag:'def', title:'(jen SQL)',  help:'otestovat dotaz', proc onclick() {
     make_sql(1); save_sql(0) } }
+  button [628,t_pro+42,,] { tag:'def', title:'MAPA',  help:'zobrazit mapu adresátů', //==> .. mapa
+    proc onclick() {
+      mapa.id_mailist.set(id_mailist.get);
+      mapa.metoda.set('mail');
+      mapa.modal(20,100,ucel.get);
+  } }
   button [678,t_pro+42,,] { tag:'def', title:'(jen JSON)',  proc onclick() {
     tsql.set(make_json) } }
   proc make_sql(to_show) { #==> .. make_sql
