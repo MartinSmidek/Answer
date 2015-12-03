@@ -58,7 +58,8 @@ menu db2 { type:'main', title:'db2', active:*, _sys:'*'
   // přepnutí access - refresh formulářů
   proc reaccess(msg) {
     echo("přepnutí přístupu na data ",msg);
-    [ akce2.call('reaccess') ];
+    akce2.call('reaccess');
+    echo("přepnuto");
   }
   // univerzální procedury
   proc the_formsave (f,b) {
