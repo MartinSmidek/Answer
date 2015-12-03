@@ -595,28 +595,12 @@ form _info [,,*,50] {
       [ eq(the_source.get,'google'); mapa.id_akce.set(google.id_akce.get)
       | eq(the_source.get,'sey'); mapa.id_akce.set(sey.id_akce.get) ];
       mapa.id_akce.get;
+      mapa.metoda.set('akce');
       mapa.modal(20,100,nazev_akce(mapa.id_akce.get))
     }
   }
   proc fill(x) {
     [ x; head.set(conc("<div class='karta' style='padding-left:60px'>",x,"</div>")) ];
-  }
-}
-// ===========================================================================================> MAPA
-panel mapa [,,640,400] { type:'popup', title:'mapa účastníků'
-  var id_akce: number
-  proc onfirstfocus() { f.cr.init('ROADMAP'); ukaz_psc;  }
-  proc onfocus() { ukaz_psc; }
-  proc ukaz_psc() {
-    var ret: object
-    ret.set(ask('akce2_mapa',id_akce.get));
-    [ ret.err; warning(ret.err) ];
-    f.cr.set(object('mark',''));
-    f.cr.set(object('mark',ret.mark));
-  }
-  use f: form _f [0,10,,]
-  form _f [,,700,400] {
-    label cr [0,0,640,400] { type:'map' }
   }
 }
 

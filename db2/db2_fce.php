@@ -118,15 +118,43 @@ function db2_oso_show($prijmeni,$jmeno,$n) {
 //                                                         debug($ret,'db2_oso_show');
   return $ret;
 }
+/** =========================================================================================> MAPA2 **/
+# -----------------------------------------------------------------------------------==> . mapa2_psc
+# vrátí strukturu pro gmap
+function mapa2_psc($psc,$obec) {
+  // k PSČ zjistíme LAN,LNG
+  $ret= (object)array('mark'=>'','n'=>0);
+  $marks= $err= '';
+  $err_psc= array();
+  $n= 0; $del= '';
+  foreach ($psc as $p=>$tit) {
+    $qs= "SELECT psc,lat,lng FROM uir_adr.psc_axy WHERE psc='$p'";
+    $rs= mysql_qry($qs);
+    if ( $rs && ($s= mysql_fetch_object($rs)) ) {
+      $n++;
+      $o= $obec[$p];
+      $title= str_replace(',','',"$o:$tit");
+      $marks.= "{$del}$n,{$s->lat},{$s->lng},$title"; $del= ';';
+    }
+    else {
+      $err_psc[$p].= " $tit";
+    }
+  }
+  // zjištění chyb
+  if ( ($ne= count($err_psc)) ) {
+    $err= "$ne PSČ se nepovedlo lokalizovat. Týká se to: ".implode(' a ',$err_psc);
+//                                         debug($err_psc,"CHYBY");
+  }
+  $ret= (object)array('mark'=>$marks,'n'=>$n,'err'=>$err);
+//                                         debug(explode(';',$ret->mark),"mapa_akce");
+  return $ret;
+}
 /** =========================================================================================> AKCE2 **/
 # --------------------------------------------------------------------------------------- akce2_mapa
 # získání seznamu souřadnic bydlišť účastníků akce
 function akce2_mapa($akce) {  trace();
-  global $ezer_root;
-  $ret= (object)array('mark'=>'','n'=>0);
   // dotaz
-  $marks= $err= '';
-  $err_psc= $psc= $obec= array();
+  $psc= $obec= array();
   $qo=  "
     SELECT prijmeni,adresa,psc,obec,
       (SELECT MIN(CONCAT(role,psc,'x',obec))
@@ -146,34 +174,9 @@ function akce2_mapa($akce) {  trace();
     $m= $o->adresa ? $o->obec : substr($o->r_psc,7);
     $psc[$p].= "$o->prijmeni ";
     $obec[$p]= $obec[$p] ?: $m;
-//                                         break;
   }
 //                                         debug($psc);
-  // k PSČ zjistíme LAN,LNG
-  $n= 0; $del= '';
-  foreach ($psc as $p=>$tit) {
-    $qs= "SELECT psc,lat,lng FROM uir_adr.psc_axy WHERE psc='$p'";
-    $rs= mysql_qry($qs);
-    if ( $rs && ($s= mysql_fetch_object($rs)) ) {
-      $n++;
-      $o= $obec[$p];
-      $title= str_replace(',','',"$o:$tit");
-//       $marks.= "$del{$s->lat},{$s->lng},$title"; $del= ';';
-      $marks.= "{$del}$n,{$s->lat},{$s->lng},$title"; $del= ';';
-    }
-    else {
-      $err_psc[$p].= " $tit";
-    }
-//     if ( $n==2 ) break;
-  }
-  // zjištění chyb
-  if ( ($ne= count($err_psc)) ) {
-    $err= "$ne PSČ se nepovedlo lokalizovat. Týká se to: ".implode(' a ',$err_psc);
-//                                         debug($err_psc,"CHYBY");
-  }
-  $ret= (object)array('mark'=>$marks,'n'=>$n,'err'=>$err);
-//                                         debug(explode(';',$ret->mark),"mapa_akce");
-  return $ret;
+  return mapa2_psc($psc,$obec); // vrací (object)array('mark'=>$marks,'n'=>$n,'err'=>$err);
 }
 # --------------------------------------------------------------------------------------- akce2_info
 # rozšířené informace o akci
@@ -7535,12 +7538,38 @@ function mail2_lst_read($parm) { //trace();
 //                                                 debug($obj,"mail2_lst_read($parm)");
   return $obj;
 }
+# --------------------------------------------------------------------------------------- mail2_mapa
+# ASK
+# získání seznamu souřadnic bydlišť adresátů mailistu
+function mail2_mapa($id_mailist) {  trace();
+  $psc= $obec= array();
+  // dotaz
+  $gq= select("sexpr","mailist","id_mailist=$id_mailist");
+//                                         display($gq);
+  $gq= str_replace('&gt;','>',$gq);
+  $gq= str_replace('&lt;','<',$gq);
+  $gr= @mysql_qry($gq);
+  if ( !$gr ) {
+    $html= mysql_error()."<hr>".nl2br($gq);
+    goto end;
+  }
+  else while ( $gr && ($g= mysql_fetch_object($gr)) ) {
+    // najdeme použitá PSČ
+    $p= $g->_psc;
+    list($prijmeni,$jmeno)= explode(' ',$g->_name);
+    $psc[$p].= "$prijmeni ";
+    $obec[$p]= $obec[$p] ?: $g->_obec;
+  }
+//                                         debug($psc);
+end:
+  return mapa2_psc($psc,$obec); // vrací (object)array('mark'=>$marks,'n'=>$n,'err'=>$err);
+}
 # ------------------------------------------------------------------------------------ mail2_lst_try
 # mode=0 -- spustit a ukázat dotaz a také výsledek
 # mode=1 -- zobrazit argument jako html
 function mail2_lst_try($gq,$mode=0) { trace();
-  global $USER;                                         // debug($USER);
-  $access= $USER->access;
+//   global $USER;                                         // debug($USER);
+//   $access= $USER->access;
   $html= $del= '';
   if ( !$gq ) {
     $html= "mail-list nebyl uložen";

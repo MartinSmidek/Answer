@@ -667,6 +667,25 @@ panel track [,,540,276] { title:'Historie oprav', type:'popup', css:'dialog'
     label [0,250,545,] { title:"ÚDAJE: i=vložení (insert), u=úprava, U= hromadná úprava<div style='float:right'>V=vrácení spojených záznamů</div><br>ZÁZNAM: x=smazano, o=obnoveno, d=vzniklo spojením duplicitních záznamů, r=různé od uvedeného záznamu" }
   }
 }
+// ===========================================================================================> MAPA
+panel mapa [,,640,400] { type:'popup', title:'mapa účastníků'
+  var metoda='', id_akce: number, id_mailist: number
+  proc onfirstfocus() { f.cr.init('ROADMAP'); ukaz_psc; }
+  proc onfocus() { ukaz_psc; }
+  proc ukaz_psc() { var ret: object
+    metoda.get;
+    { eq(metoda.get,'akce'); ret.set(ask('akce2_mapa',id_akce.get))
+    | eq(metoda.get,'mail'); ret.set(ask('mail2_mapa',id_mailist.get))
+    };
+    [ ret.err; warning(ret.err) ];
+    f.cr.set(object('mark',''));
+    f.cr.set(object('mark',ret.mark));
+  }
+  use f: form _f [0,10,,]
+  form _f [,,700,400] {
+    label cr [0,0,640,400] { type:'map' }
+  }
+}
 # =======================================================================================> formuláře
 # společné procedury
 proc obligatory(elem) { elem.enable(1); elem.change(1) }
