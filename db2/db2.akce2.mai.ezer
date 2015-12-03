@@ -174,8 +174,10 @@ form _vyber {
 # snd = rozesílání
 var sql_dirty: number  // nuluje se fcí dirty
 form _gsql {
+  const t_butt = 5; l_butt = 530
+  const t_akce = 60; l_ne_akce = 380
   view g: table mailist
-  field id_mailist { data:g.id_mailist }
+  field id_mailist [309,t_akce+12,60,] { data:g.id_mailist, format:'ro', css:'Label' }
   field access { data:g.access }
   label [5,44,76,17] { title:'název:', format:'r' }
   field ucel  [83,40,267,]  { data:g.ucel, value:'' proc onchange() {
@@ -188,7 +190,6 @@ form _gsql {
   field parms { data:g.parms }
   field gsql { data:g.sexpr }
   # -----------------==> . příkazy
-  const t_butt = 5; l_butt = 530
   label  [l_butt,t_butt,222,55] { tag:'def', css:'ae_parm' }
   button qry_save [l_butt+7,t_butt+5,,] { tag:'def',title:'Uložit',  help:'Uložit mail-list',
     proc onclick() { spec.get; warning("speciální mail-list nelze měnit") | save_sql(1) } }
@@ -204,11 +205,16 @@ form _gsql {
       ucel.set(nazev); id_mailist.set(idm);
       akce_show; }}
   button [l_butt+113,t_butt+30,,] { tag:'def', title:'Odstranit', help:'smazat SQL mail-list',
-    proc onclick() {
+    proc onclick() { var ret:object
       spec.get; warning("speciální mail-list nelze smazat")
-    | confirm('opravdu smazat mail-list ',ucel.get,'?');
-      // budou smazány i odeslané maily (nebyly by přístupné)
-      warning('N.Y.I.')
+    | ret.set(ask('mail2_lst_delete',id_mailist.get,0));
+      ret.ok;
+      [ confirm('opravdu smazat mail-list <i>',ucel.get,'</i>?');
+        ask('mail2_lst_delete',id_mailist.get,1);
+        // po smazání nastav první mailist
+        init_mailist
+      ]
+    | alert(ret.msg)
   }}
   button [l_butt+130,t_butt+5,,] {tag:'def', title:'Excel', help:'Export emaily a adres do Excelu',
     proc onclick(){
@@ -217,8 +223,6 @@ form _gsql {
   } }
   button [l_butt+175,t_butt+5,,] {tag:'def', title:'PDF', help:'Export adres do PDF', format:'d'
     proc onclick(){ warning('N.Y.I.') } }
-  # ------------------------------------- výběr typů akcí
-  const t_akce = 60; l_ne_akce = 380
   # ----------------------==> . výběr typu ano-akce
   label [10,t_akce,300,] { tag:'def', title:"<h3>obeslat účastníky akcí</h3>" }
   label [5,t_akce+10,370,435] { tag:'def', css:'ae_work'}
@@ -625,10 +629,14 @@ form _gsql {
     fces.browse_load("druh='ms_akce_funkce' ");
     reinit;
     akce_show;
+    init_mailist;
+  }
+  proc init_mailist() {
     // zobraz mailist podle access
     mailist_load;
     vy.komu_G.key(
       function('select',"for (var key in select.Items) return key; return 0;",vy.komu_G));
+    vy.komu_G.change;
   }
   proc reinit() { #==> .. reinit
     form.init(1);

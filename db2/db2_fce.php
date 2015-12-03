@@ -7454,6 +7454,30 @@ function mail2_mailist($access) {
   }
   return $sel ? substr($sel,1) : '';
 }
+# --------------------------------------------------------------------------------- mail2_lst_delete
+# ASK
+# zjisté možnost smazání mailistu (to_delete=0) tzn. že na něj není vázán žádný dopis
+# a pro to_delete=1 jej smaže
+function mail2_lst_delete($id_mailist,$to_delete=0) {
+  $ret= (object)array('ok'=>0,'msg'=>'');
+  if ( !$to_delete ) {
+    if ( $id_mailist<=3 ) {
+      $ret->msg= "testovací mail-listy nelze smazat";
+    }
+    else {
+      $n= select('COUNT(*)','mailist JOIN dopis USING (id_mailist)',"id_mailist=$id_mailist");
+      if ( $n )
+        $ret->msg= "nelze smazat, je použit v $n dopisech
+          <br>(nejprve je třeba smazat všechny dopisy)";
+      else
+        $ret->ok= 1;
+    }
+  }
+  else {
+    $ret->ok= query("DELETE FROM mailist WHERE id_mailist=$id_mailist");
+  }
+  return $ret;
+}
 # --------------------------------------------------------------------------------- mail2_lst_access
 # vrátí údaje daného maillistu (ZRUŠENO: s provedenou substitucí podle access uživatele)
 function mail2_lst_access($id_mailist) {  trace();
