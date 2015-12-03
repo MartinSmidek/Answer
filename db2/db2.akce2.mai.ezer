@@ -130,7 +130,7 @@ form _vyber {
   # --------------------------- výběr mail-listu
   label  [0,10,380,28] { tag:'gen', css:'ae_parm', format:'n' }
   label [7,19,100,17] { tag:'gen', title:'výběr mail-listu:', format:'n'
-    proc onclick() { gq.mailist_load } }
+    proc onclick() { gq.init_mailist } }
   select komu_G  [82,15,289,17] { tag:'gen', format:'nt'
     help:'komu|výběr mail-listu'
     proc onchange() {
@@ -530,6 +530,8 @@ form _gsql {
     [ ctrl_akce_ne.browse_load(akce_ne.get) ];
     [ ctrl_akce_ano.browse_load(akce_ano.get) ];
   }
+  # -------------------------------------==> . přehled použití mailistu
+  label using [l_ne_akce+5,t_pro+15,207,54] { tag:'def', css:'ae_work', style:"padding:10px"}
   # ------------------------------------- tvorba a úschova SQL dotazu, testy, mapa
   var from: text
   var cond: text
@@ -669,6 +671,7 @@ form _gsql {
     | read_json(parms.get) ];
     # zobrazení akcí
     akce_show;
+    using.set(ask('mail2_lst_using',id_mailist.get));
   }
   var gen_cas_del:text
   proc gen_cas(L) { #==> .. gen_cas

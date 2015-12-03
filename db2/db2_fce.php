@@ -7442,6 +7442,28 @@ function elim2_data_rodina($idr,$cond='') {  //trace();
 }
 /** =========================================================================================> MAIL2 **/
 # =======================================================================================> . mailist
+# ---------------------------------------------------------------------------------- mail2_lst_using
+# vrátí informaci o použití mailistu
+function mail2_lst_using($id_mailist) {
+  $dopisy= $poslane= $neposlane= $err= 0;
+  $rs= mysql_qry("
+    SELECT COUNT(DISTINCT id_dopis) AS _dopisy,SUM(IF(m.stav=4,1,0)) AS _poslane,
+      IF(sexpr LIKE '%access%',0,1) AS _ok
+    FROM mailist AS l
+    LEFT JOIN dopis AS d USING (id_mailist)
+    LEFT JOIN mail AS m USING (id_dopis)
+    WHERE id_mailist=$id_mailist
+    GROUP BY id_dopis");
+  while ($rs && ($s= mysql_fetch_object($rs))) {
+    $dopisy= $s->_dopisy;
+    $poslane+= $s->_poslane ? 1 : 0;
+    $neposlane+= $s->poslane ? 0 : 1;
+    $err+= $s->_ok;
+  }
+  $html= "Použití: v $dopisy dopisech, z toho <br>$poslane rozeslaných a $neposlane nerozeslaných";
+  $html.= $err ? "<br><br><span style='background-color:yellow'>POZOR - nutno znovu uložit</span>" : '';
+  return $html;
+}
 # ------------------------------------------------------------------------------------ mail2_mailist
 # vrátí daný mailist ve tvaru pro selects
 function mail2_mailist($access) {
