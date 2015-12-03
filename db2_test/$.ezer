@@ -3,46 +3,20 @@
 
 menu db2 { type:'main', title:'db2', active:*, _sys:'*'
   var global: text,
-# v testovací verzi lze pracovat jen s modulem Databáze
-#   tabs pok {title:"Pokladna", _sys:'*',  include:'onclick,ys2.pok', active:*, skill:'yp' }
-#   tabs eko {title:"Ekonomika", _sys:'*',  include:'onclick,ys2.eko', active:*, skill:'ye' }
-#   tabs ds {title:"Dům", _sys:'*',  include:'onclick,ys2.ds', active:*, skill:'yd' }
+  # v testovací verzi lze pracovat jen s modulem Databáze
   tabs akce2 {title:"[fa-database] Databáze", _sys:'*', include:'onload,db2.akce2', active:*, skill:'fa;ya' }
   tabs syst {title:"[fa-cog] Systém", _sys:'sys',  include:'onclick,ezer2.syst', active:*
     panel oso {type:'right', title:'Osobní nastavení', _sys:'*', include:'onclick,ezer2.pers' }
     panel nas {type:'right', title:'Data', _sys:'nas', skill:'a'
       menu {type:'left', active:*
         menu {title:'Testovací databáze',type:'group', _sys:'*'
-          item {title:'stav ...', par:°{db:'ys'}
-            proc onclick (i) { info.fill(conc(i.owner.title,' - ',i.title),ask('db2_stav',i.par.db)) }}
-          item {title:'kopírovat ostrou db do testovací', par:°{db:'db2'} }
-          proc onclick (i) {
-            confirm("vytvořit znovu kopii ostré databáze?");
-            info.fill(conc(i.owner.title,' - ',i.title),' ... probíhá update ...');
-            info.fill('',ask('db2_copy_test_db',i.par.db));
+          item {title:'stav sjednocování kopií', par:°{db:'db2_test'}
+            proc onclick (i) {
+              info.fill(conc(i.owner.title,' - ',i.title),'... probíhá výpočet ...');
+              info.fill('',ask('db2_stav',i.par.db))
+            }
           }
         }
-#         menu {title:'Transformace 2015',type:'group', _sys:'*'
-#           item {title:'DB2: clear'              ,par:°{cmd:'imp_clear',confirm:'1'} }
-#           item {title:'DB2<+YS: import'         ,par:°{cmd:'imp_YS',confirm:'1'} }
-#           item {title:'DB2<+FA: import'         ,par:°{cmd:'imp_FA',confirm:'1'} }
-#           item {title:'DB2 clear _track'        ,par:°{cmd:'imp_clear_track',confirm:'1'} }
-#           item {title:'DB2<+YS: import _track'  ,par:°{cmd:'imp_YS_track',confirm:'1'} }
-#           item {title:'DB2<+FA: import _track'  ,par:°{cmd:'imp_FA_track',confirm:'1'} }
-#           item {title:'DB2: úprava mailistů'    ,par:°{cmd:'cor_mailist',confirm:'1'} }
-#           item {title:'DB2: dokumenty YS'       ,par:°{cmd:'doc_YS',confirm:'1'} }
-#           item {title:'DB2: dokumenty FA'       ,par:°{cmd:'doc_FA',confirm:'1'} }
-#           item {title:'DB2: úpravy uživatelů'   ,par:°{cmd:'imp_user',confirm:'1'} }
-#           item {title:'DB2: úpravy číselníků'   ,par:°{cmd:'imp_cis',confirm:'1'} }
-#           item {title:'DB2: ... all in one ...' ,par:°{
-#             cmd:'imp_clear,imp_clear_track,imp_YS,imp_FA,cor_mailist,imp_YS_track,imp_FA_track,doc_YS,doc_FA,imp_user,imp_cis',confirm:'1'} }
-#           proc onclick (i) { clear;
-#             info.fill(conc(i.owner.title,' - ',i.title),' ');
-#             { not(i.par.confirm) | confirm("spustit úpravy databáze EZER_DB2?") };
-#             info.fill('',' ... probíhá transformace dat ...');
-#             info.fill('',ask('db2_sys_transform',i.par));
-#           }
-#         }
       }
       use info: form right [12,4,,]
     }

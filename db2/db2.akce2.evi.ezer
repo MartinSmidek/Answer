@@ -812,8 +812,10 @@ form _aktivity [,,248,min_h-160] {css:'ae_frame shift_up'
     proc onsubmit() { na_akci }
     proc na_akci() {
       has_skill('yaa;faa;caa'); accessed(org.get);
-      echo('přepnuto na akci ',akce.get);
-    }
+      [ eq(fce.get,99);
+        pece.akce_show(ida.get,ids.get,conc(akce.get,' (',rok.get,')'),'EVIDENCE')
+      | ucast.akce_show(ida.get,idp.get,conc(akce.get,' (',rok.get,')'),'EVIDENCE')
+    ] }
   }
   button [-40,2,,] { title:'^akce', css:'db_evidence', help:'též lze skočit dvojklikem na řádku s akcí'
     proc onclick() { akc.na_akci } }
