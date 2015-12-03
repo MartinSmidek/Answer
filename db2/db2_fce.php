@@ -7457,10 +7457,10 @@ function mail2_lst_using($id_mailist) {
   while ($rs && ($s= mysql_fetch_object($rs))) {
     $dopisy= $s->_dopisy;
     $poslane+= $s->_poslane ? 1 : 0;
-    $neposlane+= $s->poslane ? 0 : 1;
+    $neposlane+= $s->_poslane ? 0 : 1;
     $err+= $s->_ok;
   }
-  $html= "Použití: v $dopisy dopisech, z toho <br>$poslane rozeslaných a $neposlane nerozeslaných";
+  $html= "Použití: v $dopisy dopisech, z toho <br>$poslane rozeslané a $neposlane nerozeslané";
   $html.= $err ? "<br><br><span style='background-color:yellow'>POZOR - nutno znovu uložit</span>" : '';
   return $html;
 }
