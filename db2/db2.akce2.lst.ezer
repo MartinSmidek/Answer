@@ -48,6 +48,7 @@ proc reaccess() { #==> . reaccess - změna
   # překresli aktivní kartu
   menu_item.get;
   m.onclick(menu_item.get);
+  { eq(the_source.get,'sey'); info.sey.pracovni | info.google.pracovni }
 }
 # -----------------------------------------------------------------------------==> lokální procedury
 # vrátí hodnotu položky z google resp. sey
@@ -532,9 +533,13 @@ form _info [,,*,50] {
     proc pracovni() { #==> .. pracovní
       not(accessed(org.get));
       alert("nemáte oprávnění označit jako pracovní akci jiné organizace");
-    | volba_akce(id_akce.get);
+    | pracovni_curr
+    }
+    proc pracovni_curr() {
+      volba_akce(id_akce.get);
       curr.set_attrib('expr',conc("IF(da2.id_duakce=",id_akce.get,",1,0)"));
-      this.browse_seek;  }
+      this.browse_seek;
+    }
   }
   # --------------------------------------------------------------------------------------==> . akce
   select rok [4,5,52,] { tag:'r', format:'t', proc onchange() { akce_roku(this.get) }}
