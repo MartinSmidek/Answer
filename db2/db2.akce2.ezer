@@ -57,10 +57,15 @@ proc akce_onstart() {
   }
 }
 # změna datového přístupu
+proc spinner(on) { on;
+  function("$('wait_mask').setStyle('display','block'); return 1;");
+| function("$('wait_mask').setStyle('display', 'none'); return 1;");
+}
 proc reaccess() { #==> . reaccess
   has_access.set(sys('user','has_access'));
   my_access.set(sys('user','access'));
   my_org.set(cconc(eq(my_access.get,3),sys('user','org'),my_access.get));
+  spinner(1);
   lst.reaccess;
   ucast.reaccess;
   pece.reaccess;
@@ -70,7 +75,7 @@ proc reaccess() { #==> . reaccess
   mai.reaccess;
   sta.reaccess;
   elim.reaccess;
-  //alert('hotovo');
+  spinner(0);
 }
 # ----------------------------------------------------------------------------==> globální procedury
 # nastavení akce jako the_duakce, dopočítání stavových hodnot
