@@ -6391,20 +6391,24 @@ function akce2_skup_renum($akce) {
 /** ==========================================================================================> STA2 **/
 # ================================================================================> . sta2_struktura
 # tabulka struktury kurzu (noví,podruhé,vícekrát,odpočívající VPS,VPS)
+# par.od= rok počátku statistik
 function sta2_struktura($org,$par,$title,$export=false) {
+  $od_roku= $par->od ?: 0;
   $par->fld= 'nazev';
   $par->tit= 'nazev';
   $tab= sta2_akcnost_vps($org,$par,$title,true);
 //                                                    debug($tab,"evid_sestava_v(,$title,$export)");
   $clmn= $suma= array();
-  $tit= "rok,rodin,u nás - noví,podruhé,vícekrát,vps - odpočívající,ve službě,dětí na kurzu";
+  $tit= "rok,rodin,u nás - noví,podruhé,vícekrát,vps - odpočívající,ve službě,pečounů,"
+      . "dětí na kurzu,dětí<18 let nechaných doma,manželství,věk muže,věk ženy";
   $tits= explode(',',$tit);
-  $fld= "rr,x,n,p,v,vo,vs,d";
+  $fld= "rr,u,n,p,v,vo,vs,pec,d,x,m,a,b";
   $flds= explode(',',$fld);
   $flds_rr= explode(',',substr($fld,3));
   for ($rrrr=date('Y');$rrrr>=1990;$rrrr--) {
+    if ( $rrrr<$od_roku ) continue;
     $rr= substr($rrrr,-2);
-    $clmn[$rr]= array('rr'=>$rrrr,'x'=>0);
+    $clmn[$rr]= array('rr'=>$rrrr,'u'=>0);
     $rows= count($tab->clmn);
     for ($n= 1; $n<=$rows; $n++) {
       if ( $xrr= $tab->clmn[$n][$rr] ) {
@@ -6429,21 +6433,29 @@ function sta2_struktura($org,$par,$title,$export=false) {
       $suma[$rr]+= $clmn[$rr][$fld];
     }
   }
-  // doplnění počtů dětí
-  $qry= "SELECT YEAR(datum_od) AS _rok,id_akce,count(DISTINCT id_pobyt) AS _pary,
-           SUM(IF(role='d',1,0)) AS _deti
-         FROM pobyt AS p
-         JOIN spolu AS s USING(id_pobyt)
-         JOIN osoba AS o ON o.id_osoba=s.id_osoba
-         JOIN tvori AS t ON t.id_osoba=o.id_osoba
-         JOIN akce AS a ON a.id_duakce=p.id_akce
-         WHERE a.druh=1 AND p.funkce IN (0,1) AND spec=0 AND a.access & $org
-         GROUP BY id_akce";
-  $res= mysql_qry($qry);
-  while ( $res && ($x= mysql_fetch_object($res)) ) {
-    $rr= substr($x->_rok,-2);
-    $clmn[$rr]['d']+= $x->_deti;
-    $clmn[$rr]['x']+= $x->_pary;
+  // doplnění informací o rodinách
+  $rod= sta2_rodiny($org);
+//                                         debug($rod,"rodiny");
+  foreach ($rod as $rok=>$r) {
+    if ( $rok<$od_roku ) continue;
+    $rr= substr($rok,-2);
+    $clmn[$rr]['u']= $r['r'];
+    $clmn[$rr]['d']= $r['d'];
+    $clmn[$rr]['x']= $r['x'];
+    $clmn[$rr]['m']= $r['m'];
+    $clmn[$rr]['a']= $r['a'];
+    $clmn[$rr]['b']= $r['b'];
+  }
+  // doplnění počtu pečounů
+  $pec= sta2_pecouni($org);
+//                                         debug($pec,"pečouni");
+  foreach ($pec as $p) {
+    $rrrr= $p['_rok'];
+    if ( $rrrr<$od_roku ) continue;
+    $rr= substr($rrrr,-2);
+    $clmn[$rr]['pec']= $p['_pec'];
+//                                         debug($p,"pečouni {$p->_rok}=$rr");
+//     break;
   }
   // smazání prázdných
   foreach ($clmn as $r=>$c) {
@@ -6454,7 +6466,7 @@ function sta2_struktura($org,$par,$title,$export=false) {
 //                                                         debug($clmn,"evid_sestava_s:$tit;$fld");
   $par->tit= $tit;
   $par->fld= $fld;
-  $par->grf= "x:n,p,v,vo,vs,d";
+  $par->grf= "u:n,p,v,vo,vs,pec,d,x";
   $par->txt= "Pozn. Graficky je znázorněn absolutní počet." //relativní počet vzhledem k počtu párů.;
     . "<br>Pokud v nějakém roce bylo více běhů je zobrazen jejich součet.";
   return sta2_table_graph($par,$tits,$flds,$clmn,$export);
@@ -6560,6 +6572,107 @@ function sta2_table_graph($par,$tits,$flds,$clmn,$export=false) {
   }
 //                                                 debug($result);
   return $result;
+}
+# ---------------------------------------------------------------------------------==> . sta2_rodiny
+# clmn: rok -> r:rodin, d:dětí na akci, x:dětí<18 doma, m:délka manželství, a,b:věk muže, ženy
+function sta2_rodiny($org,$rok=0) {
+  $clmn= array();
+  $ms= array();
+  // ms => r=rodin, d=dětí na akci, D=dětí mladších 18 v rodině,
+  //       va=věk muže, na=počet mužů s věkem, vb=věk ženy, nb=.., vm=délka manželství, nm=..
+  $HAVING= $rok ? "HAVING _rok=$rok" : '';
+  $rx= mysql_qry("
+    SELECT id_akce, YEAR(datum_od) AS _rok,
+      COUNT(id_osoba) AS _clenu, COUNT(id_spolu) AS _spolu,
+      SUM(IF(t.role='d' AND id_spolu,1,0)) AS _sebou,
+      SUM(IF(t.role='d' AND DATEDIFF(a.datum_od,o.narozeni)/365.2425 < 18,1,0)) AS _deti,
+      SUM(IF(t.role='a',DATEDIFF(a.datum_od,o.narozeni)/365.2425,0)) AS _vek_a,
+      SUM(IF(t.role='b',DATEDIFF(a.datum_od,o.narozeni)/365.2425,0)) AS _vek_b,
+      IF(r.datsvatba,DATEDIFF(a.datum_od,r.datsvatba)/365.2425,
+        IF(r.svatba,YEAR(a.datum_od)-svatba,0)) AS _vek_m
+    FROM pobyt AS p
+    JOIN akce AS a ON id_akce=id_duakce
+    JOIN rodina AS r ON id_rodina=i0_rodina
+    JOIN tvori AS t USING (id_rodina)
+    JOIN osoba AS o USING (id_osoba)
+    LEFT JOIN spolu USING (id_pobyt,id_osoba)
+    WHERE a.druh=1 AND p.funkce IN (0,1) AND a.access & $org
+    GROUP BY id_pobyt $HAVING
+  ");
+  while ( $rx && ($x= mysql_fetch_object($rx)) ) {
+    $r= $x->_rok;
+    $ms[$r]['r']++;
+    $ms[$r]['d']+= $x->_sebou;
+    $ms[$r]['D']+= $x->_deti;
+    if ( $x->_vek_a ) {
+      $ms[$r]['va']+= $x->_vek_a;
+      $ms[$r]['na']++;
+    }
+    if ( $x->_vek_b ) {
+      $ms[$r]['vb']+= $x->_vek_b;
+      $ms[$r]['nb']++;
+    }
+    if ( $x->_vek_m ) {
+      $ms[$r]['vm']+= $x->_vek_m;
+      $ms[$r]['nm']++;
+    }
+  }
+  foreach (array_keys($ms) as $r) {
+    $clmn[$r]['r']= $ms[$r]['r'];
+    $clmn[$r]['d']= $ms[$r]['d'];
+    $clmn[$r]['x']= $ms[$r]['D'] - $ms[$r]['d'];
+    $clmn[$r]['m']= round($ms[$r]['nm'] ? $ms[$r]['vm']/$ms[$r]['nm'] : 0);
+    $clmn[$r]['a']= round($ms[$r]['na'] ? $ms[$r]['va']/$ms[$r]['na'] : 0);
+    $clmn[$r]['b']= round($ms[$r]['nb'] ? $ms[$r]['vb']/$ms[$r]['nb'] : 0);
+  }
+                                                        debug($clmn,"sta2_rodiny($org,$rok)");
+  return $clmn;
+}
+# --------------------------------------------------------------------------------==> . sta2_pecouni
+function sta2_pecouni($org) {
+//   case 'ms-pecouni': // -------------------------------------==> .. ms-pecouni
+  # _pec,_sko,_proc
+  $clmn= array();
+  list($od,$do)= select("MAX(YEAR(datum_od)),MIN(YEAR(datum_od))","akce","druh=1 AND access&$org");
+  for ($rok=$od; $rok>=$do; $rok--) {
+    $kurz= select1("id_duakce","akce","druh=1 AND YEAR(datum_od)=$rok AND access&$org");
+    $akci= select1("COUNT(*)","akce","druh=7 AND YEAR(datum_od)=$rok AND access&$org");
+    $akci= $akci ? "$akci školení" : '';
+    $info= akce2_info($kurz,0); //muzi,zeny,deti,peco,rodi,skup
+    // získání dat
+    $_pec= $_sko= $_proc= $_pecN= $_skoN= $_procN= 0;
+    $data= array();
+    _akce2_sestava_pecouni($data,$kurz);
+    $_pec= count($data);
+    if ( !$_pec ) continue;
+    foreach ($data as $d) {
+      $skoleni= 0;
+      $sko= array_unique(preg_split("/\s+/",$d['_skoleni'], -1, PREG_SPLIT_NO_EMPTY));
+      $slu= array_unique(preg_split("/\s+/",$d['_sluzba'],  -1, PREG_SPLIT_NO_EMPTY));
+      $ref= array_unique(preg_split("/\s+/",$d['_reflexe'], -1, PREG_SPLIT_NO_EMPTY));
+      $leto= $slu[0];
+      // výpočet školení všech
+      $skoleni+= count($sko);
+      foreach ($ref as $r) if ( $r<$leto ) $skoleni++;
+      $_sko+= $skoleni>0 ? 1 : 0;
+      // noví
+      if ( count($slu)==1 ) {
+        $_pecN++;
+        $_skoN+= $skoleni>0 ? 1 : 0;
+      }
+    }
+    $_proc= $_pec ? round(100*$_sko/$_pec).'%' : '';
+    $_procN= $_pecN ? round(100*$_skoN/$_pecN).'%' : '';
+    $note= $akci;
+    $ratio= round($info->deti/$_pec,1);
+    $note.= ", $ratio";
+    // zobrazení výsledků
+    $clmn[]= array('_rok'=>$rok,'_rodi'=>$info->rodi,'_deti'=>$info->deti,
+      '_pec'=>$_pec,'_sko'=>$_sko,'_proc'=>$_proc,
+      '_pecN'=>$_pecN,'_skoN'=>$_skoN,'_procN'=>$_procN,'_note'=>$note);
+//       if ( $rok==2014) break;
+  }
+  return $clmn;
 }
 # ==================================================================================> . sta2_sestava
 # sestavy pro evidenci
@@ -6786,6 +6899,8 @@ function sta2_sestava($org,$title,$par,$export=false) {
   # fld:'_rok,_pec,_sko,_proc,_pecN,_skoN,_procN,_note'
   case 'ms-pecouni': // -------------------------------------==> .. ms-pecouni
     # _pec,_sko,_proc
+    $clmn= sta2_pecouni($org);
+    break;
     list($od,$do)= select("MAX(YEAR(datum_od)),MIN(YEAR(datum_od))","akce","druh=1 AND access&$org");
     for ($rok=$od; $rok>=$do; $rok--) {
       $kurz= select1("id_duakce","akce","druh=1 AND YEAR(datum_od)=$rok AND access&$org");

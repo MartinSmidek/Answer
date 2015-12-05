@@ -70,6 +70,7 @@ proc reaccess() { #==> . reaccess
   mai.reaccess;
   sta.reaccess;
   elim.reaccess;
+  //alert('hotovo');
 }
 # ----------------------------------------------------------------------------==> globální procedury
 # nastavení akce jako the_duakce, dopočítání stavových hodnot

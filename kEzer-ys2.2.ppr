@@ -77,7 +77,7 @@ kEzer-ys2
 		db.inc
 		db\db_akce.php
 		db\db_fce.js
-	-db
+	+db
 		db\db.akce2.dop.ezer
 		db\db.akce2.elim.ezer
 		db\db.akce2.evi.ezer
@@ -170,7 +170,7 @@ kEzer-ys2
 		fa\fa_fce.js
 		fa\fa_fce.php
 		fa\fa_lide.php
-	+fa2
+	-fa2
 		fa2\$.ezer
 		fa2.inc
 		fa2.php
@@ -264,7 +264,7 @@ kEzer-ys2
 			ys\ys.syst.ezer
 			ys\ys.syst.oso.ezer
 		ys\ys.doc.ezer
-	+ys2
+	-ys2
 		ys2\$.ezer
 		ys2\ys2.eko.ezer
 		ys2.inc
@@ -303,9 +303,12 @@ kEzer-ys2
 23=ys\ys.ds.ezer
 24=ds\ds.tab.ezer
 25=ds\ds.ezer
+26=answer.php
+27=answer.inc
+28=tut\tut.php
 [Selected Project Files]
 Main=
-Selected=ys.inc
+Selected=db\db.akce2.evi.ezer
 [tut\.htaccess]
 TopLine=1
 Caret=2,9
@@ -364,8 +367,8 @@ Caret=70,16
 TopLine=117
 Caret=41,150
 [db\db.akce2.evi.ezer]
-TopLine=531
-Caret=1,531
+TopLine=696
+Caret=23,714
 [db\db_akce.php]
 TopLine=3499
 Caret=1,3526
@@ -376,20 +379,20 @@ Caret=75,80
 TopLine=15
 Caret=79,35
 [db2\db2.akce2.evi.ezer]
-TopLine=1
+TopLine=114
 Caret=48,151
 [ys.php]
 TopLine=1
 Caret=44,7
 [fa2.php]
-TopLine=17
+TopLine=1
 Caret=1,72
 [ys2.inc]
 TopLine=1
-Caret=1,2
+Caret=1,23
 [ys2.php]
 TopLine=1
-Caret=1,3
+Caret=30,3
 [fa2.inc]
 TopLine=1
 Caret=1,2
@@ -405,3 +408,12 @@ Caret=1,93
 [ds\ds.ezer]
 TopLine=1
 Caret=37,10
+[answer.php]
+TopLine=105
+Caret=60,26
+[answer.inc]
+TopLine=1
+Caret=1,1
+[tut\tut.php]
+TopLine=1
+Caret=1,7

@@ -21,6 +21,9 @@ menu m {type:'left', format:'f+' //, active:*
     item {title:'Struktura letních kurzů MS',                                        skill:'yae;fae'
       ,par:°{typ:'ms_struktura',xls:'Excel',pdf:0
         ,dsc:'Sestava ukazuje počty rodin a jejich dětí s rozlišením na nové, dvouročáky a VPS.<br>'}}
+    item {title:'Struktura LK MS od roku 2005',                                      skill:'yae;fae'
+      ,par:°{typ:'ms_struktura',xls:'Excel',pdf:0,od:2005
+        ,dsc:'Sestava ukazuje počty rodin a jejich dětí s rozlišením na nové, dvouročáky a VPS.<br>'}}
     item {title:'Letní kurzy MS a pečovatelé'  ,par:°{typ:'ms-pecouni',rok:0,xls:'Excel',pdf:0
       ,dsc:'Sestava ukazuje přehled letních kurzů s počtem rodin, jejich dětí a pečovatelů.
         <br>Je uveden počet pečovatelů, kteří se před službou účastnili školení a kolik je z toho nových pečovatelů.
