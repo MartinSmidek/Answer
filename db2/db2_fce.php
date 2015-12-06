@@ -9839,7 +9839,7 @@ function db2_sys_transform($par) { trace();
 # ---------------------------------------------------------------------------==> . datové statistiky
 # ----------------------------------------------------------------------------------------- db2_stav
 function db2_stav($db) {
-  global $ezer_root,$ezer_db;
+  global $ezer_root,$ezer_db,$USER;
   $tabs= array(
     '_user'  => (object)array('cond'=>"deleted=''"      ,'obe'=>1),
     'rodina' => (object)array('cond'=>"deleted=''"      ,'obe'=>1),
@@ -9847,7 +9847,7 @@ function db2_stav($db) {
   );
   $html= '';
   // přehled tabulek podle access
-  $html= "Seznam tabulek s rozdělením podle příslušnosti k organizacím<br><br>";
+  $html= "<h3>Seznam tabulek s rozdělením podle příslušnosti k organizacím</h3>";
   $html.= "<div class='stat'><table class='stat'>";
   $html.= "<tr><th>tabulka</th><th>Setkání</th><th>Familia</th><th>sjednocené</th></tr>";
   foreach ($tabs as $tab=>$desc) {
@@ -9869,6 +9869,14 @@ function db2_stav($db) {
     $html.= "</tr>";
   }
   $html.= "</table></div>";
+  $vidi= array('ZMI','GAN');
+  if ( in_array($USER->abbr,$vidi) ) {
+    $html.= "<h3>Sjednocování podrobněji (informace pro ".implode(',',$vidi).")</h3>";
+    $html.= db2_stav_kdo($db,"kdy > '2015-12-01'",
+      "Od prosince 2015 - sjednocování Setkání & Familia");
+    $html.= db2_stav_kdo($db,"kdy <= '2015-12-01'",
+      "<br><br>Do prosince 2015 - sjednocení v oddělených databázích");
+  }
   // technický stav
   $dbs= array();
   foreach ($ezer_db as $db=>$desc) {
@@ -9879,6 +9887,32 @@ function db2_stav($db) {
     "dbs"=>$dbs
   );
                                         debug($stav);
+  return $html;
+}
+function db2_stav_kdo($db,$desc,$tit) {
+  // sjednotitelé - výpočet
+  $sje= array();
+  $rt= mysql_qry("
+    SELECT kdo,
+      SUM(IF(kde='osoba',IF(op='d',1,-1),0)) AS _osob,
+      SUM(IF(kde='rodina',IF(op='d',1,-1),0)) AS _rodin
+    FROM ezer_$db._track WHERE op IN ('d','V') AND $desc
+    GROUP BY kdo");
+  while ( $rt && ($t= mysql_fetch_object($rt)) ) {
+    $sje[$t->kdo]['o']+= $t->_osob;
+    $sje[$t->kdo]['r']+= $t->_rodin;
+  }
+  // sjednotitelé - zobrazení
+  $html= "$tit<br><br>";
+  $html.= "<div class='stat'><table class='stat'>";
+  $html.= "<tr><th>kdo</th><th>rodin</th><th>osob</th></tr>";
+  foreach ($sje as $s=>$or) {
+    $html.= "<tr><th>$s</th>";
+    $html.= "<td style='text-align:right'>{$or['r']}</td>";
+    $html.= "<td style='text-align:right'>{$or['o']}</td>";
+    $html.= "</tr>";
+  }
+  $html.= "</table></div>";
   return $html;
 }
 # --------------------------------------------------------------------------------==> . testovací db
