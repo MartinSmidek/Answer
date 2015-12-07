@@ -15,7 +15,7 @@ ProjectFilesOnly=0
 kEzer-ys2
 	-poznámky
 		sql\answer_dotazy.sql
-	+$
+	-$
 		+skins
 			skins\ck\ck.ezer.css
 			skins\colors.php
@@ -29,7 +29,7 @@ kEzer-ys2
 		db2_test.php
 		index.php
 		robots.txt
-	+db2
+	-db2
 		+$ test
 			db2_test\$.ezer
 		+$
@@ -60,7 +60,7 @@ kEzer-ys2
 		+pokladna
 			db2\db2.pok.ezer
 		-ekonomika
-	-ezer2.2
+	+ezer2.2
 		+client
 			ezer2.2\client\_code.js
 			ezer2.2\client\_test.html
@@ -83,7 +83,7 @@ kEzer-ys2
 			ezer2.2\client\ezer_fdom2.js
 			ezer2.2\client\ipad.css
 			ezer2.2\client\natdocs.css
-		-libr
+		+libr
 			ezer2.2\$.ezer
 			ezer2.2\ezer2.help.ezer
 			ezer2.2\ezer2.pers.ezer
@@ -134,16 +134,12 @@ kEzer-ys2
 24=db2.inc
 25=db2_test\$.ezer
 26=db2_test.inc
-27=skins\db\db.ezer.css
-28=skins\ck\ck.ezer.css
-29=skins\ch\ch.ezer.css
-30=sql\answer_dotazy.sql
-31=ezer2.2\client\ezer.css.php
-32=ezer2.2\client\ezer.css
-33=db2\db2.css
+27=sql\answer_dotazy.sql
+28=db2\db2.css
+29=ezer2.2\ezer2.syst.ezer
 [Selected Project Files]
 Main=
-Selected=skins\ch\ch.ezer.css
+Selected=db2\$.ezer
 [ezer2.2\client\app.js]
 TopLine=623
 Caret=18,655
@@ -162,8 +158,8 @@ Caret=37,1125
 BookMark1=95,1540
 BookMark2=25,2360
 [ezer2.2\client\ezer.js]
-TopLine=8764
-Caret=1,8797
+TopLine=3282
+Caret=45,3294
 BookMark1=13,2143
 BookMark2=44,6809
 BookMark3=47,7127
@@ -200,38 +196,38 @@ Caret=52,451
 BookMark1=14,469
 Mark1=40,243
 [db2\db2_fce.php]
-TopLine=6565
-Caret=40,6579
+TopLine=6201
+Caret=22,6241
 Mark1=55,1563
 Mark2=23,1475
 Mark3=37,1454
 Mark4=1,3945
-Mark5=74,9683
-Mark6=31,6456
-BookMark1=18,6578
-BookMark2=65,6436
+Mark5=74,9735
+Mark6=31,6508
+BookMark1=18,6630
+BookMark2=65,6488
 [db2\db2.akce2.maia.ezer]
 TopLine=15
 Caret=1,31
 [db2\db2.akce2.ezer]
-TopLine=36
-Caret=3,61
-BookMark1=12,924
+TopLine=33
+Caret=1,77
+BookMark1=12,922
 Mark1=1,54
 [db2\db2.akce2.lst.ezer]
-TopLine=573
-Caret=1,600
+TopLine=32
+Caret=48,45
 BookMark1=1,36
-BookMark2=18,554
+BookMark2=18,559
 [db2\db2.akce2.mai.ezer]
-TopLine=517
-Caret=27,537
+TopLine=549
+Caret=34,557
 BookMark1=24,543
-BookMark2=1,666
-Mark1=20,636
+BookMark2=1,667
+Mark1=20,637
 [db2\db2.akce2.ucast.ezer]
-TopLine=199
-Caret=77,225
+TopLine=541
+Caret=1,530
 Mark1=9,798
 Mark2=1,1599
 Mark3=1,1385
@@ -245,9 +241,12 @@ Mark2=1,365
 TopLine=109
 Caret=41,132
 [db2\db2.akce2.evi.ezer]
-TopLine=14
-Caret=1,26
-BookMark2=1,401
+TopLine=62
+Caret=1,112
+Mark1=22,142
+Mark2=38,89
+BookMark1=1,196
+BookMark2=1,327
 [db2\db2.akce2.sta.ezer]
 TopLine=1
 Caret=38,18
@@ -255,8 +254,8 @@ Caret=38,18
 TopLine=11
 Caret=39,13
 [db2\$.ezer]
-TopLine=42
-Caret=1,62
+TopLine=12
+Caret=1,63
 [db2.php]
 TopLine=43
 Caret=1,1
@@ -265,29 +264,16 @@ TopLine=1
 Caret=47,27
 [db2_test\$.ezer]
 TopLine=1
-Caret=53,19
+Caret=1,31
 [db2_test.inc]
 TopLine=1
 Caret=75,20
-[skins\db\db.ezer.css]
-TopLine=1
-Caret=1,24
-[skins\ck\ck.ezer.css]
-TopLine=1
-Caret=1,24
-[skins\ch\ch.ezer.css]
-TopLine=1
-Caret=1,24
 [sql\answer_dotazy.sql]
 TopLine=1
 Caret=82,11
-[ezer2.2\client\ezer.css.php]
-TopLine=46
-Caret=1,70
-Mark1=18,70
-[ezer2.2\client\ezer.css]
-TopLine=1
-Caret=1,26
 [db2\db2.css]
 TopLine=1
-Caret=1,14
+Caret=40,24
+[ezer2.2\ezer2.syst.ezer]
+TopLine=292
+Caret=12,264

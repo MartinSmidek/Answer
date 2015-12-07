@@ -6204,6 +6204,58 @@ function evid2_recyklace_pecounu($org,$par,$title,$provest) {
 end:
   return $ret;
 }
+/** --------------------------------------------------------------------------- evid2_browse_mailist **/
+# BROWSE ASK
+# obsluha browse s optimize:ask
+# x->cond = id_mailist
+# x->order= {a|d} polozka
+# x->show=  {polozka:[formát,vzor/1,...],...} pro položky s neprázdným vzorem
+#                                             kde formát=/ = # $ % @ * .
+# x->cond= podmínka   - pokud obsahuje /*duplicity*/ přidá se sloupec _dup
+function evid2_browse_mailist($x) {
+//                                                         debug($x,"akce_browse_ask");
+//                                                         return;
+  $y= (object)array('ok'=>0);
+  foreach(explode(',','cmd,rows,quiet,key_id,oldkey') as $i) $y->$i= $x->$i;
+  switch ($x->cmd) {
+  case 'browse_load':  # -----------------------------------==> . browse_load mailist
+    $zz= array();
+    # získej sexpr z mailistu id=c.cond
+    $qo= select('sexpr','mailist',"id_mailist={$x->cond}");
+                                                                display($qo);
+    $ro= mysql_qry($qo);
+    while ( $ro && ($o= mysql_fetch_object($ro)) ) {
+      list($prijmeni,$jmeno)= explode(' ',$o->_name);
+      $zz[]= array(
+      'id_o'=>$o->_id,
+#     show id_t
+#     show id_r
+#     show id_p
+#     show _rodin
+#     show barva
+#     show _funkce
+      'access'=>$o->access,
+      'prijmeni'=>$prijmeni,
+      'jmeno'=>$jmeno,
+      'obec'=>$o->_obec,
+      'psc'=>$o->_psc,
+      '_vek'=>$o->_vek,
+      'mail'=>$o->_email,
+      '_id_o'=>$o->_id
+      );
+    }
+    # předání pro browse
+    $y->values= $zz;
+    $y->from= 0;
+    $y->cursor= 0;
+    $y->rows= count($zz);
+    $y->count= count($zz);
+    $y->ok= 1;
+    array_unshift($y->values,null);
+  }
+//                                                              debug($y);
+  return $y;
+}
 # ========================================================================================> SKUPINKY
 # --------------------------------------------------------------------------------- akce2_skup_check
 # zjištění konzistence skupinek podle příjmení VPS/PPS
@@ -9849,7 +9901,11 @@ function db2_stav($db) {
   // přehled tabulek podle access
   $html= "<h3>Seznam tabulek s rozdělením podle příslušnosti k organizacím</h3>";
   $html.= "<div class='stat'><table class='stat'>";
-  $html.= "<tr><th>tabulka</th><th>Setkání</th><th>Familia</th><th>sjednocené</th></tr>";
+  $html.= "<tr><th>tabulka</th>
+    <th style='background-color:#af8'>Setkání</th>
+    <th style='background-color:#acf'>Familia</th>
+    <th style='background-color:#aff'>sdílené</th>
+    <th style='background-color:#aaa'>eliminováno</th></tr>";
   foreach ($tabs as $tab=>$desc) {
     $html.= "<tr><th>$tab</th>";
     $obe= 0;
@@ -9866,14 +9922,20 @@ function db2_stav($db) {
     elseif ( !$obe ) {
       $html.= "<td style='text-align:right' title='3'>0</td>";
     }
+    $rt= mysql_qry("
+      SELECT COUNT(*) AS _pocet FROM ezer_$db._track
+      WHERE op='x' AND kde='$tab' AND old='smazaná kopie' ");
+    if ( $rt && ($t= mysql_fetch_object($rt)) ) {
+      $html.= "<td style='text-align:right'>{$t->_pocet}</td>";
+    }
     $html.= "</tr>";
   }
   $html.= "</table></div>";
   $vidi= array('ZMI','GAN');
   if ( in_array($USER->abbr,$vidi) ) {
-    $html.= "<h3>Sjednocování podrobněji (informace pro ".implode(',',$vidi).")</h3>";
+    $html.= "<br><hr><h3>Sjednocování podrobněji (informace pro ".implode(',',$vidi).")</h3>";
     $html.= db2_stav_kdo($db,"kdy > '2015-12-01'",
-      "Od prosince 2015 - sjednocování Setkání & Familia");
+      "Od prosince 2015 - (převážně) sjednocování Setkání & Familia");
     $html.= db2_stav_kdo($db,"kdy <= '2015-12-01'",
       "<br><br>Do prosince 2015 - sjednocení v oddělených databázích");
   }
