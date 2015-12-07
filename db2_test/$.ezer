@@ -4,8 +4,11 @@
 menu db2 { type:'main', title:'db2', active:*, _sys:'*'
   var global: text,
   # v testovací verzi lze pracovat jen s modulem Databáze
-  tabs akce2 {title:"[fa-database] Databáze", _sys:'*', include:'onload,db2.akce2', active:*, skill:'fa;ya' }
+  tabs akce2 {title:"[fa-database] Databáze", _sys:'*', include:'onload,db2.akce2', active:*, skill:'fa;ya'
+    proc reaccess() {}
+  }
   tabs syst {title:"[fa-cog] Systém", _sys:'sys',  include:'onclick,ezer2.syst', active:*
+    proc reaccess() {}
     panel oso {type:'right', title:'Osobní nastavení', _sys:'*', include:'onclick,ezer2.pers' }
     panel nas {type:'right', title:'Data', _sys:'nas', skill:'a'
       menu {type:'left', active:*
@@ -29,10 +32,11 @@ menu db2 { type:'main', title:'db2', active:*, _sys:'*'
   | function("$('wait_mask').setStyle('display', 'none'); return 1;");
   }
   proc reaccess(msg) {
+    echo(msg); set_trace('E',1,'spinner,reaccess');
     spinner(1);
     akce2.reaccess;
     syst.reaccess;
-    spinner(0);
+    spinner(0); set_trace('E',0,'spinner,reaccess');
   }
   // univerzální procedury
   proc the_formsave (f,b) {
