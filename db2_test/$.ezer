@@ -24,9 +24,15 @@ menu db2 { type:'main', title:'db2', active:*, _sys:'*'
   tabs doc  {title:"[fa-question] Nápověda", _sys:'*',  include:'onload,ezer2.help' }
   tabs off  {title:"[fa-power-off] Odhlásit", type:'logoff' }
   // přepnutí access - refresh formulářů
+  proc spinner(on) { on;
+    function("$('wait_mask').setStyle('display','block'); return 1;");
+  | function("$('wait_mask').setStyle('display', 'none'); return 1;");
+  }
   proc reaccess(msg) {
-    echo("přepnutí přístupu na data ",msg);
-    [ akce2.call('reaccess') ];
+    spinner(1);
+    akce2.reaccess;
+    syst.reaccess;
+    spinner(0);
   }
   // univerzální procedury
   proc the_formsave (f,b) {

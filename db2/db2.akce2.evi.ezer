@@ -35,6 +35,7 @@ menu m {type:'left', active:*, format:'f-'
   }
   menu o {title:'osoby',type:'group', skill:'yae;fae;cae'
     item a {title:'[fa-user]všechny kontakty'   par:°{lst:'o',tit:'všechny osoby, co ',cnd:'1'}}
+    item m {title:'[fa-send-o] podle mail-listu'par:°{lst:'m',tit:'MAILIST',cnd:'1'}}
     item   {title:'[fa-male]muži'               par:°{lst:'o',tit:'všichni muži, co ',
                                                 cnd:"o.sex=1 AND TIMESTAMPDIFF(YEAR,narozeni,NOW())>=18"}}
     item   {title:'[fa-female]ženy'             par:°{lst:'o',tit:'všechny ženy, co ',
@@ -53,7 +54,7 @@ menu m {type:'left', active:*, format:'f-'
           par:°{op:'zmeny',rok:0} }
     //item {title:'[fa-retweet] recyklace pečounů (loňský kurz)'
     //      par:°{op:'zmeny',rok:1} }
-    item {title:'[fa-send] statistický list YMCA v ČR'
+    item {title:'[fa-upload] statistický list YMCA v ČR'
           par:°{op:'hlaseni',exp:'Excel',cnd:1,hav:1,rok:0,del:0,
                 tit:'?:2,příjmení:15,jméno:10,ulice:20,město:20,PSČ:7,datum nar.:10,členství:5,čl. přísp.:6,KČ:12,e-mail:40,činný od letos:6,dobrovolník:6',
                 fld:'1,prijmeni,jmeno,ulice,obec,psc,_naroz_ymd,_b_c,_prisp,_YS,email,_cinny_letos,_dobro'}}
@@ -84,7 +85,11 @@ menu m {type:'left', active:*, format:'f-'
       i.par.lst;
       panel.display(0,'i'); panel.display(1,'e');
       page.oso.set_mode(0,'E');
-      lst.reload(i.par.lst,i.par.cnd,i.par.tit);
+#       { eq(i.par.tit,'MAILIST');
+#         lst.reload_mailist
+#       |
+        lst.reload(i.par.lst,i.par.cnd,i.par.tit);
+#       }
     | // podmenu pro členství - bez browse
       not(i.par.lst);
       panel.display(1,'i'); panel.display(0,'e'); info.export.set(i.par.exp);
@@ -105,6 +110,7 @@ menu m {type:'left', active:*, format:'f-'
 }
 proc reaccess() { #==> reaccess - změna
   menu_item.get;
+  lst.init_mailist;
   m.onclick(menu_item.get);
 }
 # --------------------------------------------------------------------------------------------- stav
@@ -124,7 +130,7 @@ use info: form right [12,4,,]           { tag:'i'
     }
   }
 }
-# ============================================================================================> _lst
+# =========================================================================================> SEZNAMY
 form _lst [,,370,*] {
   # ---------------------------------------------- interface
   proc load_osoba(_ido) {                       // zobrazí rodinu v kontextu všech
@@ -140,6 +146,7 @@ form _lst [,,370,*] {
     mode.set(_mode); cnd.set(_cnd);             // - zapamatuje podmínky pro refresh
     form.display(2,_mode);
     eq(_mode,'o'); ido.set(_ido); [_ido; bo.init_queries ]; [ bo_reload(_cnd) ]
+  | eq(_mode,'m'); idm.set(_ido); [_ido; bm.init_queries ]; [ bm_reload(_cnd) ]
   | eq(_mode,'h'); idh.set(_ido); [_ido; bh.init_queries ]; [ bh_reload(_cnd) ]
   | eq(_mode,'f'); idf.set(_idr); [_idr; bf.init_queries ]; [ bf_reload(_cnd) ]
   | eq(_mode,'r'); idr.set(_idr); [_idr; br.init_queries ]; [ br_reload(_cnd) ]
@@ -149,13 +156,14 @@ form _lst [,,370,*] {
   }
   proc refresh2() {                             // zobrazí rodiny či osoby podle starých podmínek
     eq(mode.get,'o'); [ bo_reload(cnd.get) ]
+  | eq(mode.get,'m'); [ bm_reload(cnd.get) ]
   | eq(mode.get,'h'); [ bh_reload(cnd.get) ]
   | eq(mode.get,'f'); [ bf_reload(cnd.get) ]
   | eq(mode.get,'r'); [ br_reload(cnd.get) ]
   }
   proc seek_osoba(_ido,par) {           // zviditelní seznam nesmazaných osob a zobrazí osobu
     [ virgin.get; start ];
-    tit.set(par.tit); [ eq(mode.get,'o') | mode.set('o');form.display(2,'o') ];
+    tit.set(par.tit); [ eq(mode.get,'o') | mode.set('o'); form.display(2,'o') ];
     bo_cnd.set(1); bo_filtr.set(1); bo_having.set(1); o_vyber.key(1);
     bo.init_queries(0); ido.set(_ido);
     bo.browse_seek(conc("id_osoba=",_ido),"o.deleted=''",1); page.evid_load(_ido,0);
@@ -173,16 +181,23 @@ form _lst [,,370,*] {
       cnd:text                                  // zapamatovaná podmínka
   var idr= 0                                    // naposledy vybraná rodina
   var ido= 0                                    // naposledy vybraná osoba
+  var idm= 0                                    // naposledy vybraná osoba v mapě
   var idh= 0                                    // naposledy vybraná osoba  při prohlídce historie změn
   var idf= 0                                    // naposledy vybraná rodina při prohlídce historie změn
   var idx= 0                                    // naposledy vybraná osoba pro opravy kontaktu
   var idz= 0                                    // naposledy vybraná osoba pro tip na eliminaci
   var idy= 0                                    // naposledy vybraná rodina pro tip na eliminaci
   proc start() { [                              // při startu vynecháme prázdná příjmení
+    virgin.set(0);
     o_vyber.key( 1); o_vyber.refresh; //bo_filtr.set(o_vyber.get);
     r_vyber.key( 1); r_vyber.refresh; //br_filtr.set(r_vyber.get);
-    virgin.set(0);
+    init_mailist;
   ] }
+  proc init_mailist() { // zobraz mailist podle access
+    om_vyber.selects(ask('mail2_mailist',my_access.get));
+    om_vyber.key(function('select',"for (var key in select.Items) return key; return 0;",om_vyber));
+    om_vyber.change;
+  }
   # ---------------------------------------------- společné prvky
   label [10,2,347,25] { css:'ae_work' }
   label tit [16,8,137,14] { format:'r', css:'frame_label_big' }
@@ -296,6 +311,45 @@ form _lst [,,370,*] {
     // volitelná položka
     show mail  [,,44,] { data:o.email, title:'emaily',help:'osobní emaily', format:'tq%s' }
     show _id_o [,,0,] { data:o.id_osoba, title:'ID osoby',help:'osobní číslo', format:'rq*s' }
+    proc onrowclick() { ido.set(id_o.get); page.evid_load(ido.get,0); }
+    proc onclick() {
+      mail.width; mail.width(0);  _id_o.width(44)
+    |             mail.width(44); _id_o.width(0)
+    }
+  }
+  # ==============================================> M - OSOBY+MAPA
+  var bm_having= 1, bm_qry= "SELECT 1 AS id_o,1 AS access,'Kamarád' AS prijmeni"
+  proc bm_reload(cnd) {
+    [ virgin.get; start ];
+#     ido.get; [ bm.browse_seek(conc("id_osoba=",ido.get)); ]
+#   | //bm.browse_load(conc('om.access & ',my_access.get,' AND ',cnd),'',bm_having.get);
+
+    bm.browse_load(om_vyber.key); //(1,'','',0,0,1/*1=quiet*/,conc("SET @qry:='",bm_qry.get,"'"));
+
+  | page.page_init
+  }
+  label [15,9,,] { tag:'m', title:'mail-list:' }
+  select om_vyber [62,5,289,] { tag:'m', format:'t', help:'komu|výběr mail-listu'
+    proc onchange() { bm_reload(1) } }
+  browse bm [10,30,,] {tag:'m', optimize:°{ask:'evid2_browse_mailist'},
+      rows:27, buf_rows:6000, qry_rows:1, //css_rows:'barva,0:neucast'
+    show id_o
+#     show id_t
+#     show id_r
+#     show id_p
+#     show _rodin
+#     show barva
+#     show _funkce
+    show access
+    show prijmeni [,,70,] { title:'příjmení', format:'q*s+'
+      css_cell:'access,0:,1:ezer_ys,2:ezer_fa,3:ezer_db' }
+    show jmeno    [,,70,] { title:'jméno', format:'q*s' }
+    show obec     [,,70,] { title:'obec', format:'q*s' }
+    show psc      [,,40,] { title:'psč', format:'q*s' }
+    show _vek     [,,20,] { title:"věk", format:'rsq*' }
+    // volitelná položka
+    show mail     [,,44,] { title:'emaily', format:'tq%s', help:'osobní emaily' }
+    show _id_o    [,,0,]  { title:'ID osoby', format:'rq*s', help:'osobní číslo' }
     proc onrowclick() { ido.set(id_o.get); page.evid_load(ido.get,0); }
     proc onclick() {
       mail.width; mail.width(0);  _id_o.width(44)
@@ -1169,6 +1223,7 @@ proc h_change_b() { var r1:number, r2:number, h:number
   r1.set(max(5,r1)); r2.set(max(3,r2));
   lst.br.set_attrib('rows',r1);
   lst.bo.set_attrib('rows',r1);
+  lst.bm.set_attrib('rows',r1);
   lst.bh.set_attrib('rows',r1);
   page.act.akc.set_attrib('rows',r2);
   page.act.property(object('height',sum(72,multiply(r2,18))));
