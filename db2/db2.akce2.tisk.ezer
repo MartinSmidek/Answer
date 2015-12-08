@@ -54,9 +54,14 @@ use info: form right [12,4,,] {
       },
       'PDF-adresy',{ // ==> export PDF
         sti_A.report_init; sti_A.report_check;
-        res.set(ask('akce2_pdf_stitky',conc("p.id_akce=",the_akce.get," AND ",the_par.get('cnd')),sti_A.get_json));
+        res.set(ask('akce2_pdf_stitky',the_akce.get,the_par.get,sti_A.get_json));
         form.msg.set(res.html);
       },
+#       'PDF-adresy',{ // ==> export PDF OLD
+#         sti_A.report_init; sti_A.report_check;
+#         res.set(ask('akce2_pdf_stitky',conc("p.id_akce=",the_akce.get," AND ",the_par.get('cnd')),sti_A.get_json));
+#         form.msg.set(res.html);
+#       },
       'PDF-prijem',{
         sti_B.report_init; sti_B.report_check;
         res.set(ask('tisk2_pdf_prijem',the_akce.get,the_par.get,sti_B.get_json));
@@ -298,12 +303,12 @@ menu m {type:'left', active:*
   # ---------------------------------------------------------------------------------------------==> PDF
   menu {tag:'a', title:'tisky do PDF',type:'group',_sys:'*'
     item {title:'Adresní štítky rodin'  ,par:°{typ:'p',exp:'PDF-adresy',cnd:'funkce!=99'
-                                        ,tit:'příjmení:15,jména:20,obec:25,psč:7,ulice:25,stát:10'
-                                        ,fld:'prijmeni,jmena,obec,psc,ulice,stat'}}
+                                        ,tit:'příjmení:15,jména dospělých:20,obec:25,psč:7,ulice:25,stát:10'
+                                        ,fld:'prijmeni,rodice,obec,psc,ulice,stat'}}
     item {title:'Adresní štítky rodin bez mailu'                                                             format:'d'
                                         ,par:°{typ:'p',exp:'PDF-adresy',cnd:"funkce!=99 AND r.emaily=''"
-                                        ,tit:'příjmení:15,jména:20,obec:25,psč:7,ulice:25,stát:10'
-                                        ,fld:'prijmeni,jmena,obec,psc,ulice,stat'}}
+                                        ,tit:'příjmení:15,jména dospělých:20,obec:25,psč:7,ulice:25,stát:10'
+                                        ,fld:'prijmeni,rodice,obec,psc,ulice,stat'}}
     item {title:'Štítky na obálku účastníka' ,par:°{typ:'p',exp:'PDF-prijem',cnd:"funkce!=99"
                                         ,tit:'příjmení:15,jména:20,_deti:7,skupinka:7,pokoj:12,lůžka:7,kočárek:7,přistýlky:7,strava celá:7,poloviční:7,^'
                                         ,fld:'prijmeni,jmena,_deti,skupina,pokoj,luzka,kocarek,pristylky,strava_cel,strava_pol,^id_pobyt'}}

@@ -2860,14 +2860,16 @@ function tisk2_sestava_pary($akce,$par,$title,$vypis,$export=false) { trace();
     'sql'=>"SET @akce:=$akce,@soubeh:=$soubeh,@app:='{$EZER->options->root}';");
   $y= ucast2_browse_ask($browse_par,true);
   # rozbor výsledku browse/ask
-  $i_adresa=        15;
-  $i_key_spolu=     39;
-  $i_spolu_note=    43;
-  $i_osoba_jmeno=    3;
-  $i_osoba_note=    36;
-  $i_osoba_kontakt= 20;
-  $i_osoba_telefon= 21;
-  $i_osoba_email=   23;
+  $i_adresa=         15;
+  $i_key_spolu=      39;
+  $i_spolu_note=     43;
+  $i_osoba_jmeno=     3;
+  $i_osoba_prijmeni= 12;
+  $i_osoba_role=      8;
+  $i_osoba_note=     36;
+  $i_osoba_kontakt=  20;
+  $i_osoba_telefon=  21;
+  $i_osoba_email=    23;
   array_shift($y->values);
   foreach ($y->values as $x) {
 //     $test_p= 43593;
@@ -2899,9 +2901,11 @@ function tisk2_sestava_pary($akce,$par,$title,$vypis,$export=false) { trace();
     $pocet= 0;
     $spolu_note= "";
     $osoba_note= "";
+    $rodice= array();
+//                                                         if ( $x->key_pobyt==32146 ) debug($x);
     foreach ($xs as $i=>$xi) {
       $o= explode('~',$xi);
-//                                                         if ( $x->key_pobyt==22141 ) debug($o,"xi/$i");
+//                                                         if ( $x->key_pobyt==32146 ) debug($o,"xi/$i");
       if ( $o[$i_key_spolu] ) {
         $pocet++;
         $jmeno= str_replace(' ','-',$o[$i_osoba_jmeno]);
@@ -2911,8 +2915,19 @@ function tisk2_sestava_pary($akce,$par,$title,$vypis,$export=false) { trace();
           $telefony[]= trim($o[$i_osoba_telefon],",; ");
         if ( $o[$i_osoba_kontakt] && $o[$i_osoba_email] )
           $emaily[]= trim($o[$i_osoba_email],",; ");
+        if ( $x->key_rodina ) {
+          if ( $o[$i_osoba_role]=='a' || $o[$i_osoba_role]=='b' ) {
+            $rodice[$o[$i_osoba_role]]['jmeno']= trim($o[$i_osoba_jmeno]);
+            $rodice[$o[$i_osoba_role]]['prijmeni']= trim($o[$i_osoba_prijmeni]);
+          }
+        }
+        else {
+            $rodice['a']['jmeno']= trim($o[$i_osoba_jmeno]);
+            $rodice['a']['prijmeni']= trim($o[$i_osoba_prijmeni]);
+        }
       }
     }
+//                                                         debug($rodice);
     $o= explode('~',$xs[0]);
     // show: adresa, ulice, psc, obec, stat, kontakt, telefon, nomail, email
     $io= $i_adresa;
@@ -2935,11 +2950,22 @@ function tisk2_sestava_pary($akce,$par,$title,$vypis,$export=false) { trace();
       case '^id_pobyt': $c= $x->key_pobyt; break;
       case 'prijmeni':  $c= $x->_nazev; break;
       case 'jmena':     $c= $x->_jmena; break;
+      case 'rodice':    $c= count($rodice)==2 && strpos($x->_nazev,'-')
+                          ? "{$rodice['a']['jmeno']} {$rodice['a']['prijmeni']}
+                             a {$rodice['b']['jmeno']} {$rodice['b']['prijmeni']}" : (
+        count($rodice)==2 ? "{$rodice['a']['jmeno']} a {$rodice['b']['jmeno']} {$x->_nazev}" : (
+             $rodice['a'] ? "{$rodice['a']['jmeno']} {$rodice['a']['prijmeni']}" : (
+             $rodice['b'] ? "{$rodice['b']['jmeno']} {$rodice['b']['prijmeni']}"
+                          : $x->_nazev )));
+                        break;
       case 'jmena2':    $c= explode(' ',$x->_jmena);
                         $c= $c[0].' '.$c[1]; break;
       case 'ulice':     $c= $adresa  ? $ulice   : substr($ulice,$r); break;
       case 'psc':       $c= $adresa  ? $psc     : substr($psc,$r);   break;
       case 'obec':      $c= $adresa  ? $obec    : substr($obec,$r);  break;
+      case 'stat':      $c= $adresa  ? $stat    : substr($stat,$r);
+                        if ( $c=='CZ' ) $c= '';
+                        break;
       case 'telefon':   $c= $telefon;  break;
       case 'telefony':  $c= $telefony; break;
       case 'email':     $c= $email;  break;
@@ -5521,7 +5547,41 @@ function tisk2_pdf_jmenovky($akce,$par,$title,$vypis,$report_json) {  trace();
 # --------------------------------------------------------------------------------- akce2_pdf_stitky
 # vygenerování PDF se samolepkami - adresními štítky
 #   $the_json obsahuje  title:'{jmeno_postovni}<br>{adresa_postovni}'
-function akce2_pdf_stitky($cond,$report_json) { trace();
+function akce2_pdf_stitky($akce,$par,$report_json) { trace();
+  global $ezer_path_docs;
+  $ret= (object)array('_error'=>0,'html'=>'testy');
+  $par->fld= "prijmeni,rodice,ulice,psc,obec,stat";
+  // projdi požadované adresy rodin
+  $tab= tisk2_sestava_pary($akce,$par,'PDF',$vypis,true);
+//                                                         debug($par);
+//                                                         debug($tab->clmn); //goto end;
+  $parss= array(); $n= 0;
+  foreach ($tab->clmn as $x) {
+    $jmena= $x['rodice'];
+    $ulice= str_replace('®','',$x['ulice']);
+    $psc=   str_replace('®','',$x['psc']);
+    $obec=  str_replace('®','',$x['obec']);
+    $stat=  str_replace('®','',$x['stat']);
+    $stat= $stat=='CZ' ? '' : $stat;
+    // definice pole substitucí
+    $parss[$n]= (object)array();
+    $parss[$n]->jmeno_postovni= $jmena;
+    $parss[$n]->adresa_postovni= "$ulice<br/>$psc  $obec".( $stat ? "<br/>        $stat" : "");
+    $n++;
+  }
+//                                                         debug($parss);
+  // předání k tisku
+  $fname= 'stitky_'.date("Ymd_Hi");
+  $fpath= "$ezer_path_docs/$fname.pdf";
+  dop_rep_ids($report_json,$parss,$fpath);
+  $ret->html= " Výpis byl vygenerován ve formátu <a href='docs/$fname.pdf' target='pdf'>PDF</a>.";
+end:
+  return $ret;
+}
+# --------------------------------------------------------------------------------- akce2_pdf_stitky
+# vygenerování PDF se samolepkami - adresními štítky
+#   $the_json obsahuje  title:'{jmeno_postovni}<br>{adresa_postovni}'
+function xxx_akce2_pdf_stitky($cond,$report_json) { trace();
   global $json, $ezer_path_docs;
   $result= (object)array('_error'=>0);
   // projdi požadované adresy rodin
