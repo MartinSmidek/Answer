@@ -328,7 +328,7 @@ form _lst [,,370,*] {
   select bm_vyber [62,5,289,] { tag:'m', format:'t', help:'komu|výběr mail-listu'
     proc onchange() { bm_reload(1) } }
   browse bm [10,30,,] {tag:'m', optimize:°{ask:'evid2_browse_mailist'}, key_id:'id_o'
-    rows:28, buf_rows:6000
+    rows:27, qry_rows:1, buf_rows:6000
     show id_o
     show lat
     show lng
@@ -336,12 +336,13 @@ form _lst [,,370,*] {
     show prijmeni [,,70,] { title:'příjmení'
       css_cell:'access,0:,1:ezer_ys,2:ezer_fa,3:ezer_db' }
     show jmeno    [,,70,] { title:'jméno' }
-    show obec     [,,70,] { title:'obec' }
+    show obec     [,,70,] { title:'obec', format:'t' }
     show psc      [,,40,] { title:'psč' }
     show _vek     [,,20,] { title:"věk", format:'r' }
     // volitelná položka
-    show mail     [,,44,] { title:'emaily', format:'tq%s', help:'osobní emaily' }
-    show _id_o    [,,0,]  { title:'ID osoby', format:'rq*s', help:'osobní číslo' }
+    show mail     [,,44,] { title:'emaily', format:'t', help:'osobní emaily' }
+    show _id_o    [,,0,]  { title:'ID osoby', format:'r', help:'osobní číslo' }
+    // events
     proc onrowclick() {
       ido.set(id_o.get);
       [ lat.get; page.map.mapa_curr(lat.get,lng.get) ];
