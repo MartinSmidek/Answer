@@ -149,6 +149,103 @@ function mapa2_psc($psc,$obec) {
 //                                         debug(explode(';',$ret->mark),"mapa_akce");
   return $ret;
 }
+# -------------------------------------------------------------------------------==> . mapa2_ctverec
+# ASK
+# obsah čtverce $clen +- $dist (km) na všechny strany
+# vrací objekt {
+#   err:  0/1
+#   msg:  text chyby
+#   rect: omezující obdélník jako SW;NE
+#   ryby: [geo_clen,...]
+function mapa2_ctverec($ido,$dist) {  trace();
+  $ret= (object)array('err'=>0,'msg'=>'');
+  // zjištění polohy člena
+  $lat0= $lng0= 0;
+  $qc= "SELECT lat,lng
+        FROM osoba AS o
+        LEFT JOIN tvori AS t USING (id_osoba)
+        LEFT JOIN rodina AS r USING (id_rodina)
+        LEFT JOIN uir_adr.psc_axy AS a ON a.psc=IF(o.adresa,o.psc,r.psc)
+        WHERE id_osoba=$ido";
+  $rc= mysql_qry($qc);
+  if ( $rc && $c= mysql_fetch_object($rc) ) {
+    $lat0= $c->lat;
+    $lng0= $c->lng;
+  }
+  if ( !$lat0 ) { $ret->msg= "nelze najít polohu osoby $ido"; $ret->err++; goto end; }
+  // čtverec  SW;NE
+  $ret->rect=($lat0-$dist*0.0089913097).",".($lng0-$dist*0.0137464041)
+        .";".($lat0+$dist*0.0089913097).",".($lng0+$dist*0.0137464041);
+end:
+//                                                 debug($ret,"geo_get_ctverec");
+  return $ret;
+}
+# --------------------------------------------------------------------------------- mapa2_ve_ctverci
+# ASK
+# vrátí jako seznam id_osoba bydlících v oblasti dané obdélníkem 'x,y;x,y'
+# podmnožinu předaných ids
+# pokud by seznam byl delší než MAX, vrátí chybu
+function mapa2_ve_ctverci($rect,$ids,$max=5000) { trace();
+  $ret= (object)array('err'=>'','rect'=>$rect,'ids'=>'','pocet'=>0);
+  list($sell,$nwll)= explode(';',$rect);
+  $se= explode(',',$sell);
+  $nw= explode(',',$nwll);
+  $qo= "SELECT id_osoba, lat, lng
+        FROM osoba AS o
+        LEFT JOIN tvori AS t USING (id_osoba)
+        LEFT JOIN rodina AS r USING (id_rodina)
+        LEFT JOIN uir_adr.psc_axy AS a ON a.psc=IF(o.adresa,o.psc,r.psc)
+        WHERE id_osoba IN ($ids)
+          AND lat BETWEEN $se[0] AND $nw[0] AND lng BETWEEN $se[1] AND $nw[1] ";
+  $ro= mysql_qry($qo);
+  if ( $ro ) {
+    $ret->pocet= mysql_num_rows($ro);
+    if ( $max && $ret->pocet > $max ) {
+      $ret->err= "Ve výřezu mapy je příliš mnoho bodů "
+        . "({$ret->pocet} nejvíc lze $max)";
+    }
+    else {
+      $del= '';
+      while ( $ro && $o= mysql_fetch_object($ro) ) {
+        $ret->ids.= "$del{$o->id_osoba}"; $del= ',';
+      }
+    }
+  }
+  return $ret;
+}
+# ------------------------------------------------------------------------------- mapa2_mimo_ctverec
+# ASK
+# vrátí jako seznam id_osoba bydlících mimo oblast danou obdélníkem 'x,y;x,y'
+# podmnožinu předaných ids
+# pokud by seznam byl delší než MAX, vrátí chybu
+function mapa2_mimo_ctverec($rect,$ids,$max=5000) { trace();
+  $ret= (object)array('err'=>'','rect'=>$rect,'ids'=>'','pocet'=>0);
+  list($sell,$nwll)= explode(';',$rect);
+  $se= explode(',',$sell);
+  $nw= explode(',',$nwll);
+  $qo= "SELECT id_osoba, lat, lng
+        FROM osoba AS o
+        LEFT JOIN tvori AS t USING (id_osoba)
+        LEFT JOIN rodina AS r USING (id_rodina)
+        LEFT JOIN uir_adr.psc_axy AS a ON a.psc=IF(o.adresa,o.psc,r.psc)
+        WHERE id_osoba IN ($ids)
+          AND NOT (lat BETWEEN $se[0] AND $nw[0] AND lng BETWEEN $se[1] AND $nw[1]) ";
+  $ro= mysql_qry($qo);
+  if ( $ro ) {
+    $ret->pocet= mysql_num_rows($ro);
+    if ( $max && $ret->pocet > $max ) {
+      $ret->err= "Ve výřezu mapy je příliš mnoho bodů "
+        . "({$ret->pocet} nejvíc lze $max)";
+    }
+    else {
+      $del= '';
+      while ( $ro && $o= mysql_fetch_object($ro) ) {
+        $ret->ids.= "$del{$o->id_osoba}"; $del= ',';
+      }
+    }
+  }
+  return $ret;
+}
 /** =========================================================================================> AKCE2 **/
 # --------------------------------------------------------------------------------------- akce2_mapa
 # získání seznamu souřadnic bydlišť účastníků akce
@@ -6204,7 +6301,7 @@ function evid2_recyklace_pecounu($org,$par,$title,$provest) {
 end:
   return $ret;
 }
-/** --------------------------------------------------------------------------- evid2_browse_mailist **/
+/** ------------------------------------------------------------------------==> evid2_browse_mailist **/
 # BROWSE ASK
 # obsluha browse s optimize:ask
 # x->cond = id_mailist
@@ -6212,22 +6309,41 @@ end:
 # x->show=  {polozka:[formát,vzor/1,...],...} pro položky s neprázdným vzorem
 #                                             kde formát=/ = # $ % @ * .
 # x->cond= podmínka   - pokud obsahuje /*duplicity*/ přidá se sloupec _dup
+# x->selected= null | seznam key_id, které mají být předány - použití v kombinaci se selected(use)
 function evid2_browse_mailist($x) {
 //                                                         debug($x,"akce_browse_ask");
 //                                                         return;
   $y= (object)array('ok'=>0);
   foreach(explode(',','cmd,rows,quiet,key_id,oldkey') as $i) $y->$i= $x->$i;
+  // předání selected
+  if ( $x->selected ) {
+    $selected= explode(',',$x->selected);
+  }
   switch ($x->cmd) {
   case 'browse_load':  # -----------------------------------==> . browse_load mailist
     $zz= array();
+    # získej pozice PSČ
+    $lat= $lng= array();
+    $qs= "SELECT psc,lat,lng FROM uir_adr.psc_axy GROUP BY psc";
+    $rs= mysql_qry($qs);
+    while ( $rs && ($s= mysql_fetch_object($rs)) ) {
+      $psc= $s->psc;
+      $lat[$psc]= $s->lat;
+      $lng[$psc]= $s->lng;
+    }
     # získej sexpr z mailistu id=c.cond
     $qo= select('sexpr','mailist',"id_mailist={$x->cond}");
-                                                                display($qo);
+//                                                                 display($qo);
     $ro= mysql_qry($qo);
     while ( $ro && ($o= mysql_fetch_object($ro)) ) {
+      $id= $o->_id;
+      if ( $x->selected && !in_array($id,$selected) ) continue;
       list($prijmeni,$jmeno)= explode(' ',$o->_name);
+      $psc= $o->_psc;
       $zz[]= array(
-      'id_o'=>$o->_id,
+      'id_o'=>$id,
+      'lat'=> isset($lat[$psc]) ? $lat[$psc] : 0,
+      'lng'=> isset($lng[$psc]) ? $lng[$psc] : 0,
 #     show id_t
 #     show id_r
 #     show id_p
@@ -6238,12 +6354,16 @@ function evid2_browse_mailist($x) {
       'prijmeni'=>$prijmeni,
       'jmeno'=>$jmeno,
       'obec'=>$o->_obec,
-      'psc'=>$o->_psc,
+      'psc'=>$psc,
       '_vek'=>$o->_vek,
       'mail'=>$o->_email,
-      '_id_o'=>$o->_id
+      '_id_o'=>$id
       );
     }
+    # řazení podle PSČ
+    usort($zz,function($a,$b) {
+      return strcmp($a['psc'],$b['psc']);
+    });
     # předání pro browse
     $y->values= $zz;
     $y->from= 0;

@@ -57,7 +57,7 @@ function personify(access,from) {
   }
   return 1;
 }
-// ---------------------------------------------------------------------------------------- je_1_2_5
+// -----------------------------------------------------------------------------------==> . je_1_2_5
 // výběr správného tvaru slova podle množství a tabulky tvarů pro 1,2-4,5 a více
 // např. je_1_2_5(dosp,"dospělý,dospělí,dospělých")
 function je_1_2_5(kolik,tvary) {
@@ -65,6 +65,60 @@ function je_1_2_5(kolik,tvary) {
   return kolik>4 ? tvar[2] : (
          kolik>1 ? tvar[1] : (
          kolik>0 ? tvar[0] : tvar[2]));
+}
+// ----------------------------------------------------------------------------------==> . evid_mapa
+// evid_mapa (label,operace[,mark[,další argumenty,...]])
+//      provede operaci nad mapou Klubu přátel a značkou kapra nebo člena
+// mark.id = členské číslo
+// mark.ezer = {
+//   a: aktivita
+//   k: číslo kapra nebo 0
+//   s: 60-kapr bez rybníku, 61-kapr s červeným rybníkem, 62-kapr se žlutým rybníkem
+// }
+var evid_mapa_last= null;                       // poslední aktivní bod
+
+// vymaže značky mimo výřez
+function evid_mapa_focus(label) {
+  var ret= 1;
+  var viewPort= label.map.getBounds();
+  for (var i in label.mark) {
+    var m= label.mark[i];
+    if ( !viewPort.contains(m.getPosition()) ) {
+      label.mark[m.id].setMap(null);
+      delete label.mark[m.id];
+    }
+  }
+  return 1;
+}
+// zobrazí v mapě všechny selected
+function evid_mapa_browse(label,browse) {
+  var id_o, lat, lng, psc, marks='', del= '';
+  for (var bi= 0; bi<browse.blen; bi++) {     // bi ukazuje do buf a keys
+    id_o= browse.buf[bi]['id_o'];
+    if ( browse.keys_sel.indexOf(id_o)<0 ) continue;
+    lat=  browse.buf[bi]['lat'];
+    lng=  browse.buf[bi]['lng'];
+    if ( !lat || !lng ) continue;
+    psc= browse.buf[bi]['psc'];
+    marks+= del+id_o+','+lat+','+lng+','+psc+',CIRCLE,green,black';
+    del= ';';
+  }
+  label.set({mark:marks});
+  return 1;
+}
+// zobrazí bod jako kroužek
+function evid_mapa_curr(label,lat,lng,color,scale) {
+  if ( evid_mapa_last ) {
+    evid_mapa_last.setMap(null);
+  }
+  var ll= new google.maps.LatLng(lat,lng);
+  var lineSymbol= {
+    path: google.maps.SymbolPath.CIRCLE, scale: scale||12,
+    fillOpacity: 0.0, strokeColor:color||'blue', strokeWeight: 2
+  };
+  evid_mapa_last= new google.maps.Polyline({
+    path: [ll,ll], icons: [{icon: lineSymbol}], map: label.map});
+  return 1;
 }
 // ======================================================================================> Ezer.Form
 Ezer.Form.implement({
