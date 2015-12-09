@@ -24,7 +24,7 @@ proc onstart() {
   m.part(mn.th.get).click(1)
 }
 
-proc tit (x) { return(conc("<div class='CSection CMenu'><h3 class='CTitle'>",x,"</h3></div>")) }
+proc tit (x) { return(conc("<div class='karta'>",x,"</div>")) }
 
 use u: form f [0,0,,]
 form f [,,720,500] {

@@ -570,7 +570,8 @@ form _gsql {
     cond.set(conc(cond.get,' AND ',pro_mrop.code_mrop));
     # sestavení SELECT pro osobu
     gsql.set(conc(
-      "SELECT o.access,COUNT(*) AS _ucasti,iniciace,o.id_osoba AS _id,CONCAT(prijmeni,' ',jmeno) AS _name,",chr(10),
+      "SELECT o.access,COUNT(*) AS _ucasti,iniciace,o.id_osoba AS _id,",chr(10),
+      "  CONCAT(TRIM(prijmeni),' ',TRIM(jmeno)) AS _name,",chr(10),
       "  IF(o.adresa,o.psc,IFNULL(r.psc,'')) AS _psc,",chr(10),
       "  IF(o.adresa,o.ulice,IFNULL(r.ulice,'')) AS _ulice,",chr(10),
       "  IF(o.adresa,o.obec,IFNULL(r.obec,'')) AS _obec,",chr(10),

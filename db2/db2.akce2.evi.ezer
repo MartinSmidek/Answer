@@ -18,7 +18,6 @@ proc osoby_show()       { page.oso.show_osoba(1); }     // obnova údajů o osob
 proc rodina_show()      { page.rod.show_rodina; }       // obnova údajů o rodině (z konfigurace)
 # ----------------------------------------------------------------------------------==> inicializace
 proc onfirstfocus() {
-  page.map.mapa_init;
   osoba_config.start; rodina_config.start;
   lst.start; page.start; cmd.start; }
 proc onblur() { [ track.display; track.hide ] }
@@ -333,26 +332,28 @@ form _lst [,,370,*] {
     show lat
     show lng
     show access
-    show prijmeni [,,70,] { title:'příjmení'
+    show prijmeni [,,70,] { title:'příjmení', format:'s'
       css_cell:'access,0:,1:ezer_ys,2:ezer_fa,3:ezer_db' }
-    show jmeno    [,,70,] { title:'jméno' }
-    show obec     [,,70,] { title:'obec', format:'t' }
-    show psc      [,,40,] { title:'psč' }
-    show _vek     [,,20,] { title:"věk", format:'r' }
+    show jmeno    [,,70,] { title:'jméno', format:'s' }
+    show obec     [,,70,] { title:'obec', format:'ts' }
+    show psc      [,,40,] { title:'psč', format:'s+' }
+    show _vek     [,,20,] { title:"věk", format:'rs' }
     // volitelná položka
-    show mail     [,,44,] { title:'emaily', format:'t', help:'osobní emaily' }
-    show _id_o    [,,0,]  { title:'ID osoby', format:'r', help:'osobní číslo' }
+    show mail     [,,44,] { title:'emaily', format:'ts', help:'osobní emaily' }
+    show _id_o    [,,0,]  { title:'ID osoby', format:'rs', help:'osobní číslo' }
     // events
     proc onrowclick() {
       ido.set(id_o.get);
-      [ lat.get; page.map.mapa_curr(lat.get,lng.get) ];
+      [ page.map.on.get; lat.get; page.map.mapa_curr(lat.get,lng.get) ];
       page.evid_load(ido.get,0);
     }
     proc onchoice(on) {
-      this.selected('this');
-      page.map.mapa_add(object('mark',
-        conc(ido.get,',',lat.get,',',lng.get,',',psc.get,',CIRCLE,green,black')));
-    | page.map.mapa_del(ido.get)
+      page.map.on.get;
+      { this.selected('this');
+        page.map.mapa_add(object('mark',
+          conc(ido.get,',',lat.get,',',lng.get,',',psc.get,',CIRCLE,green,black')));
+      | page.map.mapa_del(ido.get)
+      }
     }
     proc onclick() {
       mail.width; mail.width(0);  _id_o.width(44)
@@ -372,20 +373,24 @@ form _lst [,,370,*] {
   }
   # ==> . zobraz vybrané
   proc bm_selected() {
-    function('m','b',"evid_mapa_browse(m,b); return 1;",page.map.cr,bm);
+    page.map.on.get; function('m','b',"evid_mapa_browse(m,b); return 1;",page.map.cr,bm);
   }
   # ==> . výběr osob ve výřezu
   proc bm_select_in(rect) { var ret:object
-    ret.set(ask('mapa2_ve_ctverci',rect,bm.browse_keys,2000));
-    ret.msg; alert(ret.msg)
-  | bm.selected('clear'); page.map.mapa_clear;
-    bm.selected('set',ret.ids); bm_selected;
+    page.map.on.get;
+    { ret.set(ask('mapa2_ve_ctverci',rect,bm.browse_keys,2000));
+      ret.msg; alert(ret.msg)
+    | bm.selected('clear'); page.map.mapa_clear;
+      bm.selected('set',ret.ids); bm_selected;
+    }
   }
   # ==> . zrušit výběr osob mimo výřez
   proc bm_unselect_out(rect) { var ret:object
-    ret.set(ask('mapa2_mimo_ctverec',rect,bm.selected('get'),2000));
-    ret.msg; alert(ret.msg)
-  | bm.selected('unset',ret.ids)
+    page.map.on.get;
+    { ret.set(ask('mapa2_mimo_ctverec',rect,bm.selected('get'),2000));
+      ret.msg; alert(ret.msg)
+    | bm.selected('unset',ret.ids)
+    }
   }
   # ==============================================> R - RODINY
   var br_cnd=1, br_filtr= 1, br_having= 1
@@ -535,7 +540,7 @@ form _page {
   label clen [483,0,90,20] {par:°{on:'C|O|Y',off:'F|D|M'},  tag:'_', title:'<b>Členství YMCA</b>',
     proc onclick() { cvak(this); osoba_load; cle.onclick }}
   label mapa [601,0,90,20] {par:°{on:'C|O|M',off:'F|D|Y'},  tag:'_', title:'<b>Mapa</b>',
-    proc onclick() { has_skill('a'); cvak(this); osoba_load; }}
+    proc onclick() { has_skill('a'); cvak(this); osoba_load; map.mapa_show }}
   label frame [0,16,706,min_h-150] { css:'ae_work'
     proc onclick() { cmd.get.set_css('shift_down','shift_up') }}
   # ==============================================> C: EVIDENCE RODINY
@@ -919,9 +924,11 @@ form _aktivity [,,248,min_h-160] {css:'ae_frame shift_up'
 }
 # ------------------------------------------------------------------------------------------==> MAPA
 form _mapa [,,500,312] {css:'ae_frame shift_down'
-  var virgin=0
-  proc mapa_init() {
-    [ virgin.get | virgin.set(1); cr.init('ROADMAP') ] }
+  var on=0
+  proc mapa_show() {
+    [ on.get
+    | cr.init('ROADMAP',°{mapTypeControl:0,streetViewControl:0});
+      on.set(1); lst.bm_selected ] }
   proc onclick() {
     up(page.map); down(page.pri); down(page.dar); down(page.oso); down(page.rod); down(page.cle) }
   label cr [2,2,496,308] { type:'map'
@@ -930,6 +937,7 @@ form _mapa [,,500,312] {css:'ae_frame shift_down'
       lst.bm.raise('onrowclick',mark.id);
     }
   }
+  label [6,6,28,26] { css:'ae_parm', style:"z-index:1" }
   button op [10,10,,] { title:'[fa-navicon]'
     menu cm { type:'context', par:°{trigger:'click'} # ==> . kontextové menu
       item { title:'vyber bydlící ve výřezu'
@@ -946,21 +954,25 @@ form _mapa [,,500,312] {css:'ae_frame shift_down'
         proc onclick() { cr.fit_bounds }}
       item { title:'zoom na celou republiku'
         proc onclick() { cr.set(°{zoom:"49.0,14.6;50.5,16.4"}) }}
+      item { title:'-obnova zobrazení mapy'
+        proc onclick() { on.set(0); mapa_show }}
     }
   }
   # ==> . ukaž osobu kroužkem
   proc mapa_curr(lat,lng) {
-    function('m','lat','lng',"evid_mapa_curr(m,lat,lng,'blue',12); return 1;",cr,lat,lng) }
+    on.get; function('m','lat','lng',"evid_mapa_curr(m,lat,lng,'blue',12); return 1;",cr,lat,lng) }
   # ==> . přidej osobu na mapu
-  proc mapa_add(geo) { cr.set(geo); }
+  proc mapa_add(geo) { on.get; cr.set(geo); }
   # ==> . uber osobu z mapy
   proc mapa_del(ido) { var mark:object
+    on.get;
     mark.set(cr.get('id',ido));
     mark; cr.set_mark(mark,'delete');
   }
   # ==> . vymazání mapy
-  proc mapa_clear() { cr.set(°{zoom:'',rect:'',mark:'',poly:''}) }
+  proc mapa_clear() { on.get; cr.set(°{zoom:'',rect:'',mark:'',poly:''}) }
   proc zoom (ido,km) { var ret: object
+    on.get;
     ret.set(ask('mapa2_ctverec',ido,km));
     cr.set(object('zoom',ret.rect));
   }

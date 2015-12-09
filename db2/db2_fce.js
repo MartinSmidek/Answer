@@ -66,6 +66,16 @@ function je_1_2_5(kolik,tvary) {
          kolik>1 ? tvar[1] : (
          kolik>0 ? tvar[0] : tvar[2]));
 }
+// -------------------------------------------------------------------------==> . browse_concat_clmn
+// vrátí seznam hodnot daného sloupce
+function browse_concat_clmn(browse,clmn_id) {
+  var list='', del= '';
+  for (var bi= 0; bi<browse.blen; bi++) {     // bi ukazuje do buf a keys
+    list+= del+browse.buf[bi][clmn_id];
+    del= ',';
+  }
+  return list;
+}
 // ----------------------------------------------------------------------------------==> . evid_mapa
 // evid_mapa (label,operace[,mark[,další argumenty,...]])
 //      provede operaci nad mapou Klubu přátel a značkou kapra nebo člena

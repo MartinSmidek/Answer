@@ -1,5 +1,5 @@
 <?php # (c) 2009-2015 Martin Smidek <martin@smidek.eu>
-/** ===========================================================================================> DB2 **/
+/** ===========================================================================================> DB2 */
 # ------------------------------------------------------------------------------------- db2_rod_show
 # BROWSE ASK
 # načtení návrhu rodiny pro Účastníci2
@@ -118,135 +118,7 @@ function db2_oso_show($prijmeni,$jmeno,$n) {
 //                                                         debug($ret,'db2_oso_show');
   return $ret;
 }
-/** =========================================================================================> MAPA2 **/
-# -----------------------------------------------------------------------------------==> . mapa2_psc
-# vrátí strukturu pro gmap
-function mapa2_psc($psc,$obec) {
-  // k PSČ zjistíme LAN,LNG
-  $ret= (object)array('mark'=>'','n'=>0);
-  $marks= $err= '';
-  $err_psc= array();
-  $n= 0; $del= '';
-  foreach ($psc as $p=>$tit) {
-    $qs= "SELECT psc,lat,lng FROM uir_adr.psc_axy WHERE psc='$p'";
-    $rs= mysql_qry($qs);
-    if ( $rs && ($s= mysql_fetch_object($rs)) ) {
-      $n++;
-      $o= $obec[$p];
-      $title= str_replace(',','',"$o:$tit");
-      $marks.= "{$del}$n,{$s->lat},{$s->lng},$title"; $del= ';';
-    }
-    else {
-      $err_psc[$p].= " $tit";
-    }
-  }
-  // zjištění chyb
-  if ( ($ne= count($err_psc)) ) {
-    $err= "$ne PSČ se nepovedlo lokalizovat. Týká se to: ".implode(' a ',$err_psc);
-//                                         debug($err_psc,"CHYBY");
-  }
-  $ret= (object)array('mark'=>$marks,'n'=>$n,'err'=>$err);
-//                                         debug(explode(';',$ret->mark),"mapa_akce");
-  return $ret;
-}
-# -------------------------------------------------------------------------------==> . mapa2_ctverec
-# ASK
-# obsah čtverce $clen +- $dist (km) na všechny strany
-# vrací objekt {
-#   err:  0/1
-#   msg:  text chyby
-#   rect: omezující obdélník jako SW;NE
-#   ryby: [geo_clen,...]
-function mapa2_ctverec($ido,$dist) {  trace();
-  $ret= (object)array('err'=>0,'msg'=>'');
-  // zjištění polohy člena
-  $lat0= $lng0= 0;
-  $qc= "SELECT lat,lng
-        FROM osoba AS o
-        LEFT JOIN tvori AS t USING (id_osoba)
-        LEFT JOIN rodina AS r USING (id_rodina)
-        LEFT JOIN uir_adr.psc_axy AS a ON a.psc=IF(o.adresa,o.psc,r.psc)
-        WHERE id_osoba=$ido";
-  $rc= mysql_qry($qc);
-  if ( $rc && $c= mysql_fetch_object($rc) ) {
-    $lat0= $c->lat;
-    $lng0= $c->lng;
-  }
-  if ( !$lat0 ) { $ret->msg= "nelze najít polohu osoby $ido"; $ret->err++; goto end; }
-  // čtverec  SW;NE
-  $ret->rect=($lat0-$dist*0.0089913097).",".($lng0-$dist*0.0137464041)
-        .";".($lat0+$dist*0.0089913097).",".($lng0+$dist*0.0137464041);
-end:
-//                                                 debug($ret,"geo_get_ctverec");
-  return $ret;
-}
-# --------------------------------------------------------------------------------- mapa2_ve_ctverci
-# ASK
-# vrátí jako seznam id_osoba bydlících v oblasti dané obdélníkem 'x,y;x,y'
-# podmnožinu předaných ids
-# pokud by seznam byl delší než MAX, vrátí chybu
-function mapa2_ve_ctverci($rect,$ids,$max=5000) { trace();
-  $ret= (object)array('err'=>'','rect'=>$rect,'ids'=>'','pocet'=>0);
-  list($sell,$nwll)= explode(';',$rect);
-  $se= explode(',',$sell);
-  $nw= explode(',',$nwll);
-  $qo= "SELECT id_osoba, lat, lng
-        FROM osoba AS o
-        LEFT JOIN tvori AS t USING (id_osoba)
-        LEFT JOIN rodina AS r USING (id_rodina)
-        LEFT JOIN uir_adr.psc_axy AS a ON a.psc=IF(o.adresa,o.psc,r.psc)
-        WHERE id_osoba IN ($ids)
-          AND lat BETWEEN $se[0] AND $nw[0] AND lng BETWEEN $se[1] AND $nw[1] ";
-  $ro= mysql_qry($qo);
-  if ( $ro ) {
-    $ret->pocet= mysql_num_rows($ro);
-    if ( $max && $ret->pocet > $max ) {
-      $ret->err= "Ve výřezu mapy je příliš mnoho bodů "
-        . "({$ret->pocet} nejvíc lze $max)";
-    }
-    else {
-      $del= '';
-      while ( $ro && $o= mysql_fetch_object($ro) ) {
-        $ret->ids.= "$del{$o->id_osoba}"; $del= ',';
-      }
-    }
-  }
-  return $ret;
-}
-# ------------------------------------------------------------------------------- mapa2_mimo_ctverec
-# ASK
-# vrátí jako seznam id_osoba bydlících mimo oblast danou obdélníkem 'x,y;x,y'
-# podmnožinu předaných ids
-# pokud by seznam byl delší než MAX, vrátí chybu
-function mapa2_mimo_ctverec($rect,$ids,$max=5000) { trace();
-  $ret= (object)array('err'=>'','rect'=>$rect,'ids'=>'','pocet'=>0);
-  list($sell,$nwll)= explode(';',$rect);
-  $se= explode(',',$sell);
-  $nw= explode(',',$nwll);
-  $qo= "SELECT id_osoba, lat, lng
-        FROM osoba AS o
-        LEFT JOIN tvori AS t USING (id_osoba)
-        LEFT JOIN rodina AS r USING (id_rodina)
-        LEFT JOIN uir_adr.psc_axy AS a ON a.psc=IF(o.adresa,o.psc,r.psc)
-        WHERE id_osoba IN ($ids)
-          AND NOT (lat BETWEEN $se[0] AND $nw[0] AND lng BETWEEN $se[1] AND $nw[1]) ";
-  $ro= mysql_qry($qo);
-  if ( $ro ) {
-    $ret->pocet= mysql_num_rows($ro);
-    if ( $max && $ret->pocet > $max ) {
-      $ret->err= "Ve výřezu mapy je příliš mnoho bodů "
-        . "({$ret->pocet} nejvíc lze $max)";
-    }
-    else {
-      $del= '';
-      while ( $ro && $o= mysql_fetch_object($ro) ) {
-        $ret->ids.= "$del{$o->id_osoba}"; $del= ',';
-      }
-    }
-  }
-  return $ret;
-}
-/** =========================================================================================> AKCE2 **/
+/** =========================================================================================> AKCE2 */
 # --------------------------------------------------------------------------------------- akce2_mapa
 # získání seznamu souřadnic bydlišť účastníků akce
 function akce2_mapa($akce) {  trace();
@@ -1391,7 +1263,7 @@ function akce2_vzorec($id_pobyt) {  trace();
   }
   return $ret;
 }
-/** ========================================================================================> UCAST2 **/
+/** ========================================================================================> UCAST2 */
 # --------------------------------------------------------------------------------- ucast2_chain_rod
 # ==> . chain rod
 # upozorní na pravděpodobnost duplicity rodiny
@@ -2156,7 +2028,7 @@ function ucast2_browse_ask($x,$tisk=false) {
         display("show->{$fld}[0]='$typ' - N.Y.I");
       }
     }
-    # případné řazení
+    # ==> .. řazení
     if ( $x->order && count($zz)>0 ) {
       $test_clmn= substr($x->order,2);
       $test_asc= substr($x->order,0,1)=='a' ? 1 : -1;
@@ -2399,7 +2271,7 @@ function ucast2_auto_prijmeni($patt,$par) {  #trace();
     elseif ( $n==$limit )
       $a->{999999}= "... a další";
   }
-                                                                debug($a,$patt);
+//                                                                 debug($a,$patt);
   return $a;
 }
 # ------------------------------------------------------------------------------- ucast2_auto_rodiny
@@ -2434,7 +2306,7 @@ function ucast2_auto_rodiny($patt,$par) {  #trace();
     elseif ( $n==$limit )
       $a->{999999}= "... a další";
   }
-                                                                debug($a,$patt);
+//                                                                 debug($a,$patt);
   return $a;
 }
 # -------------------------------------------------------------------------------- akce2_auto_jmena1
@@ -2601,6 +2473,190 @@ function akce2_auto_pece($patt) {  #trace();
 //                                                                 debug($a,$qry);
   return $a;
 }
+# ========================================================================================> SKUPINKY
+# --------------------------------------------------------------------------------- akce2_skup_check
+# zjištění konzistence skupinek podle příjmení VPS/PPS
+function akce2_skup_check($akce) {
+  return akce2_skup_get($akce,1,$err);
+}
+# ------------------------------------------------------------------ akce2_skup_get
+# zjištění skupinek podle příjmení VPS/PPS
+function akce2_skup_get($akce,$kontrola,&$err,$par=null) { trace();
+  global $VPS;
+  $msg= array();
+  $skupiny= array();
+  $celkem= select('count(*)','pobyt',"id_akce=$akce AND funkce IN (0,1,2) AND skupina!=-1");
+  $n= 0;
+  $err= 0;
+  $order= $all= array();
+  $qry= "
+      SELECT skupina,
+        SUM(IF(funkce=2,1,0)) as _n_svps,
+        SUM(IF(funkce=1,1,0)) as _n_vps,
+        GROUP_CONCAT(DISTINCT IF(funkce=2,id_pobyt,'') SEPARATOR '') as _svps,
+        GROUP_CONCAT(DISTINCT IF(funkce=1,id_pobyt,'') SEPARATOR '') as _vps,
+        GROUP_CONCAT(DISTINCT id_pobyt) as _skupina
+      FROM akce AS a
+      JOIN pobyt AS p ON a.id_duakce=p.id_akce
+      WHERE p.id_akce=$akce AND skupina>0
+      GROUP BY skupina ";
+  $res= mysql_qry($qry);
+  while ( $res && ($s= mysql_fetch_object($res)) ) {
+    if ( $s->_n_svps==1 || $s->_n_vps==1 ) {
+      $skupina= array();
+      if ( $par && $par->verze=='DS' ) {
+        $qryu= "
+          SELECT p.id_pobyt,skupina,nazev,pokoj,
+            GROUP_CONCAT(o.id_osoba) as ids_osoba,
+            GROUP_CONCAT(o.id_osoba) as id_osoba_m,
+            GROUP_CONCAT(CONCAT(o.prijmeni,' ',o.jmeno,'')) AS _nazev
+          FROM pobyt AS p
+          JOIN spolu AS s USING(id_pobyt)
+          JOIN osoba AS o ON s.id_osoba=o.id_osoba
+          LEFT JOIN tvori AS t ON t.id_osoba=o.id_osoba
+          LEFT JOIN rodina AS r USING(id_rodina)
+          WHERE p.id_pobyt IN ({$s->_skupina})
+          GROUP BY id_pobyt
+          ORDER BY IF(funkce IN (1,2),1,2), nazev";
+      }
+      elseif ( $par && $par->verze=='MS' ) {
+        $qryu= "
+          SELECT p.id_pobyt,skupina,nazev,pokoj,
+            GROUP_CONCAT(o.id_osoba) as ids_osoba,
+            GROUP_CONCAT(o.id_osoba) as id_osoba_m,
+            CONCAT(nazev,' ',GROUP_CONCAT(o.jmeno SEPARATOR ' a ')) AS _nazev
+          FROM pobyt AS p
+          JOIN spolu AS s USING(id_pobyt)
+          JOIN osoba AS o ON s.id_osoba=o.id_osoba
+          LEFT JOIN tvori AS t ON t.id_osoba=o.id_osoba AND id_rodina=i0_rodina
+          LEFT JOIN rodina AS r USING(id_rodina)
+          WHERE p.id_pobyt IN ({$s->_skupina}) AND t.role IN ('a','b')
+          GROUP BY id_pobyt
+          ORDER BY IF(funkce IN (1,2),1,2), nazev";
+      }
+      else {
+        $qryu= "
+          SELECT p.id_pobyt,skupina,nazev,pokoj,
+            GROUP_CONCAT(DISTINCT IF(t.role IN ('a','b'),o.id_osoba,'')) as ids_osoba,
+            GROUP_CONCAT(DISTINCT IF(t.role='a',o.id_osoba,'') SEPARATOR '') as id_osoba_m,
+            CASE WHEN pouze=0 THEN
+              CONCAT(nazev,' ',
+                GROUP_CONCAT(DISTINCT IF(t.role='a',o.jmeno,'') SEPARATOR ''),' a ',
+                GROUP_CONCAT(DISTINCT IF(t.role='b',o.jmeno,'') SEPARATOR ''))
+            WHEN pouze=1 THEN
+              CONCAT(
+                GROUP_CONCAT(DISTINCT IF(t.role='a',o.prijmeni,'') SEPARATOR ''),' ',
+                GROUP_CONCAT(DISTINCT IF(t.role='a',o.jmeno,'') SEPARATOR ''))
+            WHEN pouze=2 THEN
+              CONCAT(
+                GROUP_CONCAT(DISTINCT IF(t.role='b',o.prijmeni,'') SEPARATOR ''),' ',
+                GROUP_CONCAT(DISTINCT IF(t.role='b',o.jmeno,'') SEPARATOR ''))
+            END AS _nazev
+          FROM pobyt AS p
+          JOIN spolu AS s USING(id_pobyt)
+          JOIN osoba AS o ON s.id_osoba=o.id_osoba
+          LEFT JOIN tvori AS t ON t.id_osoba=o.id_osoba
+          LEFT JOIN rodina AS r USING(id_rodina)
+          WHERE p.id_pobyt IN ({$s->_skupina})
+          GROUP BY id_pobyt
+          ORDER BY IF(funkce IN (1,2),1,2), nazev";
+      }
+      $resu= mysql_qry($qryu);
+      while ( $resu && ($u= mysql_fetch_object($resu)) ) {
+        $mark= '';
+        if ( $par && $par->mark=='novic' ) {
+          // minulé účasti
+          $ids= $u->ids_osoba;
+          $rqry= "SELECT count(*) as _pocet
+                  FROM akce AS a
+                  JOIN pobyt AS p ON a.id_duakce=p.id_akce
+                  JOIN spolu AS s USING(id_pobyt)
+                  WHERE a.druh=1 AND s.id_osoba IN ($ids) AND p.id_akce!=$akce";
+          $rres= mysql_qry($rqry);
+          if ( $rres && ($r= mysql_fetch_object($rres)) ) {
+            $mark= $r->_pocet;
+          }
+          $mark= $mark==0 ? '* ' : '';
+        }
+        $u->_nazev= "$mark {$u->_nazev}";
+        $skupina[$u->id_pobyt]= $u;
+        $n++;
+      }
+      $vps= $s->_svps ? $s->_svps : $s->_vps;
+      $skupiny[$vps]= $skupina;
+      $all[]= $vps;
+    }
+    elseif ( $s->_vps || $s->_vps ) {
+      $msg[]= "skupinka {$s->skupina} má nejednoznačnou $VPS";
+      $err+= 2;
+    }
+    else {
+      $msg[]= "skupinka {$s->skupina} nemá $VPS";
+      $err+= 4;
+    }
+  }
+  // řazení - v PHP nelze udělat
+  if ( count($all) ) {
+    $qryo= "SELECT GROUP_CONCAT(DISTINCT CONCAT(id_pobyt,'|',nazev) ORDER BY nazev) as _o
+            FROM pobyt AS p
+            JOIN spolu AS s USING(id_pobyt)
+            JOIN osoba AS o ON s.id_osoba=o.id_osoba
+            LEFT JOIN tvori AS t ON t.id_osoba=o.id_osoba
+            LEFT JOIN rodina AS r USING(id_rodina)
+            WHERE id_pobyt IN (".implode(',',$all).") ";
+    $reso= mysql_qry($qryo);
+    while ( $reso && ($o= mysql_fetch_object($reso)) ) {
+      foreach (explode(',',$o->_o) as $pair) {
+        list($id,$name)= explode('|',$pair);
+        $order[$id]= $name;
+      }
+    }
+  }
+//                                                         debug($order,"order");
+  $skup= array();
+  foreach($order as $i=>$nam) {
+    $skup[$i]= $skupiny[$i];
+  }
+//                                                         debug($skup,"skupiny");
+  // redakce chyb
+  if ( $celkem>$n ) {
+    $msg[]= ($celkem-$n)." účastníků není zařazeno do skupinek";
+    $err+= 1;
+  }
+  elseif ( $celkem<$n ) {
+    $msg[]= ($n-$celkem)." je zařazeno do skupinek navíc (třeba hospodáři?)";
+    $err+= 1;
+  }
+  if ( count($msg) && !$kontrola )
+    fce_warning(implode(",<br>",$msg));
+  elseif ( !count($msg) && $kontrola )
+    $msg[]= "Vše je ok";
+  // konec
+  return $kontrola ? implode(",<br>",$msg) : $skup;
+}
+
+# --------------------------------------------------------------------------------- akce2_skup_renum
+# přečíslování skupinek podle příjmení VPS/PPS
+function akce2_skup_renum($akce) {
+  $err= 0;
+  $msg= '';
+  $skupiny= akce2_skup_get($akce,0,$err);
+  if ( $err>1 ) {
+    $msg= "skupinky nejsou dobře navrženy - ještě je nelze přečíslovat";
+  }
+  else {
+    $n= 1;
+    foreach($skupiny as $ivps=>$skupina) {
+      $cleni= implode(',',array_keys($skupina));
+      $qryu= "UPDATE pobyt SET skupina=$n WHERE id_pobyt IN ($cleni) ";
+      $resu= mysql_qry($qryu);
+//                                                         display("$n: $qryu");
+      $n++;
+    }
+    $msg= "bylo přečíslováno $n skupinek";
+  }
+  return $msg;
+}
 # =======================================================================================> . pomocné
 # ------------------------------------------------------------------------------- akce2_osoba_rodiny
 # vrátí rodiny dané osoby ve formátu pro select (název:id_rodina;...)
@@ -2673,12 +2729,13 @@ function akce2_osoba2x($id_osoba,$id_rodina=0) { trace();
     $ret->o_kontakt->$f= empty($o) ? '' : $o->$f;
     $ret->r_kontakt->$f= empty($r) ? '' : ($f=='nomail'?'':'®').$r->$fy;
   }
-                                                        debug($ret,"akce2__osoba2x");
+//                                                         debug($ret,"akce2__osoba2x");
   return $ret;
 }
 # ------------------------------------------------------------------------------------ akce2_ido2idp
-# ASK získání pobytu účastníka na akci
-function akce2_ido2idp($id_osoba,$id_akce) { trace();
+# ASK
+# získání pobytu účastníka na akci
+function akce2_ido2idp($id_osoba,$id_akce) {
   $idp= select("id_pobyt","spolu JOIN pobyt USING (id_pobyt)",
     "spolu.id_osoba=$id_osoba AND id_akce=$id_akce");
   return $idp;
@@ -5896,7 +5953,7 @@ function dop_rep_ids($report_json,$parss,$fname) { trace();
 //                                                         return null;
   tc_report($report,$texty,$fname);
 }
-/** =========================================================================================> EVID2 **/
+/** =========================================================================================> EVID2 */
 # ------------------------------------------------------------------------------------- evid2_delete
 # zjistí, zda lze osobu smazat: dar, platba, spolu, tvori
 # cmd= conf_oso|conf_rod|del_oso|del_rod
@@ -6361,7 +6418,7 @@ function evid2_recyklace_pecounu($org,$par,$title,$provest) {
 end:
   return $ret;
 }
-/** ------------------------------------------------------------------------==> evid2_browse_mailist **/
+# ------------------------------------------------------------------------==> . evid2_browse_mailist
 # BROWSE ASK
 # obsluha browse s optimize:ask
 # x->cond = id_mailist
@@ -6371,7 +6428,8 @@ end:
 # x->cond= podmínka   - pokud obsahuje /*duplicity*/ přidá se sloupec _dup
 # x->selected= null | seznam key_id, které mají být předány - použití v kombinaci se selected(use)
 function evid2_browse_mailist($x) {
-//                                                         debug($x,"akce_browse_ask");
+  global $test_clmn,$test_asc, $y;
+//                                                         debug($x,"evid2_browse_mailist");
 //                                                         return;
   $y= (object)array('ok'=>0);
   foreach(explode(',','cmd,rows,quiet,key_id,oldkey') as $i) $y->$i= $x->$i;
@@ -6380,7 +6438,7 @@ function evid2_browse_mailist($x) {
     $selected= explode(',',$x->selected);
   }
   switch ($x->cmd) {
-  case 'browse_load':  # -----------------------------------==> . browse_load mailist
+  case 'browse_load':
     $zz= array();
     # získej pozice PSČ
     $lat= $lng= array();
@@ -6400,16 +6458,10 @@ function evid2_browse_mailist($x) {
       if ( $x->selected && !in_array($id,$selected) ) continue;
       list($prijmeni,$jmeno)= explode(' ',$o->_name);
       $psc= $o->_psc;
-      $zz[]= array(
+      $zz[]= (object)array(
       'id_o'=>$id,
       'lat'=> isset($lat[$psc]) ? $lat[$psc] : 0,
       'lng'=> isset($lng[$psc]) ? $lng[$psc] : 0,
-#     show id_t
-#     show id_r
-#     show id_p
-#     show _rodin
-#     show barva
-#     show _funkce
       'access'=>$o->access,
       'prijmeni'=>$prijmeni,
       'jmeno'=>$jmeno,
@@ -6420,10 +6472,55 @@ function evid2_browse_mailist($x) {
       '_id_o'=>$id
       );
     }
-    # řazení podle PSČ
-    usort($zz,function($a,$b) {
-      return strcmp($a['psc'],$b['psc']);
-    });
+    # ==> .. řazení
+    if ( $x->order && count($zz)>0 ) {
+      $test_clmn= substr($x->order,2);
+      $test_asc= substr($x->order,0,1)=='a' ? 1 : -1;
+      // výběr řazení: numerické | alfanumerické
+      $numeric= in_array($test_clmn,array('_id_o'));
+      if ( $numeric ) {
+                                        display("usort $test_clmn $test_asc/numeric");
+        usort($zz,function($a,$b) {
+          global $test_clmn,$test_asc;
+          $c= $a->$test_clmn == $b->$test_clmn ? 0 : ($a->$test_clmn > $b->$test_clmn ? 1 : -1);
+          return $test_asc * $c;
+        });
+      }
+      else {
+        // alfanumerické je řazení podle operačního systému
+        $asi_windows= preg_match('/^\w+\.ezer|192.168/',$_SERVER["SERVER_NAME"]);
+        if ( $asi_windows ) {
+          // asi Windows
+          setlocale(LC_ALL, "cs_CZ.utf8","Czech");
+          usort($zz,function($a,$b) {
+            global $test_clmn,$test_asc;
+            $ax= utf2win($a->$test_clmn,1); $bx= utf2win($b->$test_clmn,1);
+            $c= $test_asc * strcoll($ax,$bx);
+            return $c;
+          });
+        }
+        else {
+          // asi Linux
+          setlocale(LC_ALL, "cs_CZ.utf8","Czech");
+          usort($zz,function($a,$b) {
+            global $test_clmn,$test_asc;
+            $a0= mb_substr($a->$test_clmn,0,1);
+            $b0= mb_substr($b->$test_clmn,0,1);
+            if ( $a0=='(' ) {
+              $c= -$test_asc;
+            }
+            elseif ( $b0=='(' ) {
+              $c= $test_asc;
+            }
+            else {
+              $c= $test_asc * strcoll($a->$test_clmn,$b->$test_clmn);
+            }
+            return $c;
+          });
+        }
+      }
+//                                                 debug($zz);
+    }
     # předání pro browse
     $y->values= $zz;
     $y->from= 0;
@@ -6436,191 +6533,135 @@ function evid2_browse_mailist($x) {
 //                                                              debug($y);
   return $y;
 }
-# ========================================================================================> SKUPINKY
-# --------------------------------------------------------------------------------- akce2_skup_check
-# zjištění konzistence skupinek podle příjmení VPS/PPS
-function akce2_skup_check($akce) {
-  return akce2_skup_get($akce,1,$err);
-}
-# ------------------------------------------------------------------ akce2_skup_get
-# zjištění skupinek podle příjmení VPS/PPS
-function akce2_skup_get($akce,$kontrola,&$err,$par=null) { trace();
-  global $VPS;
-  $msg= array();
-  $skupiny= array();
-  $celkem= select('count(*)','pobyt',"id_akce=$akce AND funkce IN (0,1,2) AND skupina!=-1");
-  $n= 0;
-  $err= 0;
-  $order= $all= array();
-  $qry= "
-      SELECT skupina,
-        SUM(IF(funkce=2,1,0)) as _n_svps,
-        SUM(IF(funkce=1,1,0)) as _n_vps,
-        GROUP_CONCAT(DISTINCT IF(funkce=2,id_pobyt,'') SEPARATOR '') as _svps,
-        GROUP_CONCAT(DISTINCT IF(funkce=1,id_pobyt,'') SEPARATOR '') as _vps,
-        GROUP_CONCAT(DISTINCT id_pobyt) as _skupina
-      FROM akce AS a
-      JOIN pobyt AS p ON a.id_duakce=p.id_akce
-      WHERE p.id_akce=$akce AND skupina>0
-      GROUP BY skupina ";
-  $res= mysql_qry($qry);
-  while ( $res && ($s= mysql_fetch_object($res)) ) {
-    if ( $s->_n_svps==1 || $s->_n_vps==1 ) {
-      $skupina= array();
-      if ( $par && $par->verze=='DS' ) {
-        $qryu= "
-          SELECT p.id_pobyt,skupina,nazev,pokoj,
-            GROUP_CONCAT(o.id_osoba) as ids_osoba,
-            GROUP_CONCAT(o.id_osoba) as id_osoba_m,
-            GROUP_CONCAT(CONCAT(o.prijmeni,' ',o.jmeno,'')) AS _nazev
-          FROM pobyt AS p
-          JOIN spolu AS s USING(id_pobyt)
-          JOIN osoba AS o ON s.id_osoba=o.id_osoba
-          LEFT JOIN tvori AS t ON t.id_osoba=o.id_osoba
-          LEFT JOIN rodina AS r USING(id_rodina)
-          WHERE p.id_pobyt IN ({$s->_skupina})
-          GROUP BY id_pobyt
-          ORDER BY IF(funkce IN (1,2),1,2), nazev";
-      }
-      elseif ( $par && $par->verze=='MS' ) {
-        $qryu= "
-          SELECT p.id_pobyt,skupina,nazev,pokoj,
-            GROUP_CONCAT(o.id_osoba) as ids_osoba,
-            GROUP_CONCAT(o.id_osoba) as id_osoba_m,
-            CONCAT(nazev,' ',GROUP_CONCAT(o.jmeno SEPARATOR ' a ')) AS _nazev
-          FROM pobyt AS p
-          JOIN spolu AS s USING(id_pobyt)
-          JOIN osoba AS o ON s.id_osoba=o.id_osoba
-          LEFT JOIN tvori AS t ON t.id_osoba=o.id_osoba AND id_rodina=i0_rodina
-          LEFT JOIN rodina AS r USING(id_rodina)
-          WHERE p.id_pobyt IN ({$s->_skupina}) AND t.role IN ('a','b')
-          GROUP BY id_pobyt
-          ORDER BY IF(funkce IN (1,2),1,2), nazev";
-      }
-      else {
-        $qryu= "
-          SELECT p.id_pobyt,skupina,nazev,pokoj,
-            GROUP_CONCAT(DISTINCT IF(t.role IN ('a','b'),o.id_osoba,'')) as ids_osoba,
-            GROUP_CONCAT(DISTINCT IF(t.role='a',o.id_osoba,'') SEPARATOR '') as id_osoba_m,
-            CASE WHEN pouze=0 THEN
-              CONCAT(nazev,' ',
-                GROUP_CONCAT(DISTINCT IF(t.role='a',o.jmeno,'') SEPARATOR ''),' a ',
-                GROUP_CONCAT(DISTINCT IF(t.role='b',o.jmeno,'') SEPARATOR ''))
-            WHEN pouze=1 THEN
-              CONCAT(
-                GROUP_CONCAT(DISTINCT IF(t.role='a',o.prijmeni,'') SEPARATOR ''),' ',
-                GROUP_CONCAT(DISTINCT IF(t.role='a',o.jmeno,'') SEPARATOR ''))
-            WHEN pouze=2 THEN
-              CONCAT(
-                GROUP_CONCAT(DISTINCT IF(t.role='b',o.prijmeni,'') SEPARATOR ''),' ',
-                GROUP_CONCAT(DISTINCT IF(t.role='b',o.jmeno,'') SEPARATOR ''))
-            END AS _nazev
-          FROM pobyt AS p
-          JOIN spolu AS s USING(id_pobyt)
-          JOIN osoba AS o ON s.id_osoba=o.id_osoba
-          LEFT JOIN tvori AS t ON t.id_osoba=o.id_osoba
-          LEFT JOIN rodina AS r USING(id_rodina)
-          WHERE p.id_pobyt IN ({$s->_skupina})
-          GROUP BY id_pobyt
-          ORDER BY IF(funkce IN (1,2),1,2), nazev";
-      }
-      $resu= mysql_qry($qryu);
-      while ( $resu && ($u= mysql_fetch_object($resu)) ) {
-        $mark= '';
-        if ( $par && $par->mark=='novic' ) {
-          // minulé účasti
-          $ids= $u->ids_osoba;
-          $rqry= "SELECT count(*) as _pocet
-                  FROM akce AS a
-                  JOIN pobyt AS p ON a.id_duakce=p.id_akce
-                  JOIN spolu AS s USING(id_pobyt)
-                  WHERE a.druh=1 AND s.id_osoba IN ($ids) AND p.id_akce!=$akce";
-          $rres= mysql_qry($rqry);
-          if ( $rres && ($r= mysql_fetch_object($rres)) ) {
-            $mark= $r->_pocet;
-          }
-          $mark= $mark==0 ? '* ' : '';
-        }
-        $u->_nazev= "$mark {$u->_nazev}";
-        $skupina[$u->id_pobyt]= $u;
-        $n++;
-      }
-      $vps= $s->_svps ? $s->_svps : $s->_vps;
-      $skupiny[$vps]= $skupina;
-      $all[]= $vps;
-    }
-    elseif ( $s->_vps || $s->_vps ) {
-      $msg[]= "skupinka {$s->skupina} má nejednoznačnou $VPS";
-      $err+= 2;
+# ============================================================================================> MAPA
+# -----------------------------------------------------------------------------------==> . mapa2_psc
+# vrátí strukturu pro gmap
+function mapa2_psc($psc,$obec) {
+  // k PSČ zjistíme LAN,LNG
+  $ret= (object)array('mark'=>'','n'=>0);
+  $marks= $err= '';
+  $err_psc= array();
+  $n= 0; $del= '';
+  foreach ($psc as $p=>$tit) {
+    $qs= "SELECT psc,lat,lng FROM uir_adr.psc_axy WHERE psc='$p'";
+    $rs= mysql_qry($qs);
+    if ( $rs && ($s= mysql_fetch_object($rs)) ) {
+      $n++;
+      $o= $obec[$p];
+      $title= str_replace(',','',"$o:$tit");
+      $marks.= "{$del}$n,{$s->lat},{$s->lng},$title"; $del= ';';
     }
     else {
-      $msg[]= "skupinka {$s->skupina} nemá $VPS";
-      $err+= 4;
+      $err_psc[$p].= " $tit";
     }
   }
-  // řazení - v PHP nelze udělat
-  if ( count($all) ) {
-    $qryo= "SELECT GROUP_CONCAT(DISTINCT CONCAT(id_pobyt,'|',nazev) ORDER BY nazev) as _o
-            FROM pobyt AS p
-            JOIN spolu AS s USING(id_pobyt)
-            JOIN osoba AS o ON s.id_osoba=o.id_osoba
-            LEFT JOIN tvori AS t ON t.id_osoba=o.id_osoba
-            LEFT JOIN rodina AS r USING(id_rodina)
-            WHERE id_pobyt IN (".implode(',',$all).") ";
-    $reso= mysql_qry($qryo);
-    while ( $reso && ($o= mysql_fetch_object($reso)) ) {
-      foreach (explode(',',$o->_o) as $pair) {
-        list($id,$name)= explode('|',$pair);
-        $order[$id]= $name;
+  // zjištění chyb
+  if ( ($ne= count($err_psc)) ) {
+    $err= "$ne PSČ se nepovedlo lokalizovat. Týká se to: ".implode(' a ',$err_psc);
+//                                         debug($err_psc,"CHYBY");
+  }
+  $ret= (object)array('mark'=>$marks,'n'=>$n,'err'=>$err);
+//                                         debug(explode(';',$ret->mark),"mapa_akce");
+  return $ret;
+}
+# -------------------------------------------------------------------------------==> . mapa2_ctverec
+# ASK
+# obsah čtverce $clen +- $dist (km) na všechny strany
+# vrací objekt {
+#   err:  0/1
+#   msg:  text chyby
+#   rect: omezující obdélník jako SW;NE
+#   ryby: [geo_clen,...]
+function mapa2_ctverec($ido,$dist) {  trace();
+  $ret= (object)array('err'=>0,'msg'=>'');
+  // zjištění polohy člena
+  $lat0= $lng0= 0;
+  $qc= "SELECT lat,lng
+        FROM osoba AS o
+        LEFT JOIN tvori AS t USING (id_osoba)
+        LEFT JOIN rodina AS r USING (id_rodina)
+        LEFT JOIN uir_adr.psc_axy AS a ON a.psc=IF(o.adresa,o.psc,r.psc)
+        WHERE id_osoba=$ido";
+  $rc= mysql_qry($qc);
+  if ( $rc && $c= mysql_fetch_object($rc) ) {
+    $lat0= $c->lat;
+    $lng0= $c->lng;
+  }
+  if ( !$lat0 ) { $ret->msg= "nelze najít polohu osoby $ido"; $ret->err++; goto end; }
+  // čtverec  SW;NE
+  $ret->rect=($lat0-$dist*0.0089913097).",".($lng0-$dist*0.0137464041)
+        .";".($lat0+$dist*0.0089913097).",".($lng0+$dist*0.0137464041);
+end:
+//                                                 debug($ret,"geo_get_ctverec");
+  return $ret;
+}
+# --------------------------------------------------------------------------------- mapa2_ve_ctverci
+# ASK
+# vrátí jako seznam id_osoba bydlících v oblasti dané obdélníkem 'x,y;x,y'
+# podmnožinu předaných ids
+# pokud by seznam byl delší než MAX, vrátí chybu
+function mapa2_ve_ctverci($rect,$ids,$max=5000) { trace();
+  $ret= (object)array('err'=>'','rect'=>$rect,'ids'=>'','pocet'=>0);
+  list($sell,$nwll)= explode(';',$rect);
+  $se= explode(',',$sell);
+  $nw= explode(',',$nwll);
+  $qo= "SELECT id_osoba, lat, lng
+        FROM osoba AS o
+        LEFT JOIN tvori AS t USING (id_osoba)
+        LEFT JOIN rodina AS r USING (id_rodina)
+        LEFT JOIN uir_adr.psc_axy AS a ON a.psc=IF(o.adresa,o.psc,r.psc)
+        WHERE id_osoba IN ($ids)
+          AND lat BETWEEN $se[0] AND $nw[0] AND lng BETWEEN $se[1] AND $nw[1] ";
+  $ro= mysql_qry($qo);
+  if ( $ro ) {
+    $ret->pocet= mysql_num_rows($ro);
+    if ( $max && $ret->pocet > $max ) {
+      $ret->err= "Ve výřezu mapy je příliš mnoho bodů "
+        . "({$ret->pocet} nejvíc lze $max)";
+    }
+    else {
+      $del= '';
+      while ( $ro && $o= mysql_fetch_object($ro) ) {
+        $ret->ids.= "$del{$o->id_osoba}"; $del= ',';
       }
     }
   }
-//                                                         debug($order,"order");
-  $skup= array();
-  foreach($order as $i=>$nam) {
-    $skup[$i]= $skupiny[$i];
-  }
-//                                                         debug($skup,"skupiny");
-  // redakce chyb
-  if ( $celkem>$n ) {
-    $msg[]= ($celkem-$n)." účastníků není zařazeno do skupinek";
-    $err+= 1;
-  }
-  elseif ( $celkem<$n ) {
-    $msg[]= ($n-$celkem)." je zařazeno do skupinek navíc (třeba hospodáři?)";
-    $err+= 1;
-  }
-  if ( count($msg) && !$kontrola )
-    fce_warning(implode(",<br>",$msg));
-  elseif ( !count($msg) && $kontrola )
-    $msg[]= "Vše je ok";
-  // konec
-  return $kontrola ? implode(",<br>",$msg) : $skup;
+  return $ret;
 }
-
-# --------------------------------------------------------------------------------- akce2_skup_renum
-# přečíslování skupinek podle příjmení VPS/PPS
-function akce2_skup_renum($akce) {
-  $err= 0;
-  $msg= '';
-  $skupiny= akce2_skup_get($akce,0,$err);
-  if ( $err>1 ) {
-    $msg= "skupinky nejsou dobře navrženy - ještě je nelze přečíslovat";
-  }
-  else {
-    $n= 1;
-    foreach($skupiny as $ivps=>$skupina) {
-      $cleni= implode(',',array_keys($skupina));
-      $qryu= "UPDATE pobyt SET skupina=$n WHERE id_pobyt IN ($cleni) ";
-      $resu= mysql_qry($qryu);
-//                                                         display("$n: $qryu");
-      $n++;
+# ------------------------------------------------------------------------------- mapa2_mimo_ctverec
+# ASK
+# vrátí jako seznam id_osoba bydlících mimo oblast danou obdélníkem 'x,y;x,y'
+# podmnožinu předaných ids
+# pokud by seznam byl delší než MAX, vrátí chybu
+function mapa2_mimo_ctverec($rect,$ids,$max=5000) { trace();
+  $ret= (object)array('err'=>'','rect'=>$rect,'ids'=>'','pocet'=>0);
+  list($sell,$nwll)= explode(';',$rect);
+  $se= explode(',',$sell);
+  $nw= explode(',',$nwll);
+  $qo= "SELECT id_osoba, lat, lng
+        FROM osoba AS o
+        LEFT JOIN tvori AS t USING (id_osoba)
+        LEFT JOIN rodina AS r USING (id_rodina)
+        LEFT JOIN uir_adr.psc_axy AS a ON a.psc=IF(o.adresa,o.psc,r.psc)
+        WHERE id_osoba IN ($ids)
+          AND NOT (lat BETWEEN $se[0] AND $nw[0] AND lng BETWEEN $se[1] AND $nw[1]) ";
+  $ro= mysql_qry($qo);
+  if ( $ro ) {
+    $ret->pocet= mysql_num_rows($ro);
+    if ( $max && $ret->pocet > $max ) {
+      $ret->err= "Ve výřezu mapy je příliš mnoho bodů "
+        . "({$ret->pocet} nejvíc lze $max)";
     }
-    $msg= "bylo přečíslováno $n skupinek";
+    else {
+      $del= '';
+      while ( $ro && $o= mysql_fetch_object($ro) ) {
+        $ret->ids.= "$del{$o->id_osoba}"; $del= ',';
+      }
+    }
   }
-  return $msg;
+  return $ret;
 }
-/** ==========================================================================================> STA2 **/
+/** ==========================================================================================> STA2 */
 # ================================================================================> . sta2_struktura
 # tabulka struktury kurzu (noví,podruhé,vícekrát,odpočívající VPS,VPS)
 # par.od= rok počátku statistik
@@ -6857,7 +6898,7 @@ function sta2_rodiny($org,$rok=0) {
     $clmn[$r]['a']= round($ms[$r]['na'] ? $ms[$r]['va']/$ms[$r]['na'] : 0);
     $clmn[$r]['b']= round($ms[$r]['nb'] ? $ms[$r]['vb']/$ms[$r]['nb'] : 0);
   }
-                                                        debug($clmn,"sta2_rodiny($org,$rok)");
+//                                                         debug($clmn,"sta2_rodiny($org,$rok)");
   return $clmn;
 }
 # --------------------------------------------------------------------------------==> . sta2_pecouni
@@ -7473,14 +7514,15 @@ function sta2_excel_subst($matches) { trace();
 }
 /** =========================================================================================> ELIM2 **/
 # --------------------------------------------------------------------------------- elim2_split_keys
+# ASK
 # rozdělí klíče v řetězci pro elim_rodiny na dvě půlky
-function elim2_split_keys($keys) { trace();
+function elim2_split_keys($keys) {
   $ret= (object)array('c1'=>'','c2'=>'');
   $k1= $k2= array();
   foreach (explode(';',$keys) as $cs) {
     $cs= explode(',',$cs);
     $c0= array_shift($cs);
-                                                        debug($cs,$c0);
+//                                                         debug($cs,$c0);
     if ( !in_array($c0,$k2) ) {
       $k1[]= $c0;
     }
@@ -7492,7 +7534,7 @@ function elim2_split_keys($keys) { trace();
   }
   $ret->c1= implode(',',$k1);
   $ret->c2= implode(',',$k2);
-                                                        debug($ret);
+//                                                         debug($ret);
   return $ret;
 }
 # ------------------------------------------------------------------------------------- elim2_differ
@@ -7590,8 +7632,9 @@ end:
   return $ret;
 }
 # --------------------------------------------------------------------------------==> . elim2_rodina
+# ASK
 # zamění všechny výskyty kopie za originál v POBYT, TVORI, DAR, PLATBA a kopii smaže
-function elim2_rodina($id_orig,$id_copy) { trace();
+function elim2_rodina($id_orig,$id_copy) {
   global $USER;
   $ret= (object)array('err'=>'');
   if ( $id_orig!=$id_copy ) {
@@ -10084,8 +10127,8 @@ function db2_stav($db) {
   $html.= "<tr><th>tabulka</th>
     <th style='background-color:#af8'>Setkání</th>
     <th style='background-color:#acf'>Familia</th>
-    <th style='background-color:#aff'>sdílené</th>
-    <th style='background-color:#aaa'>eliminováno</th></tr>";
+    <th style='background-color:#aff'>sdíleno</th>
+    <th style='background-color:#aaa'>smazáno</th></tr>";
   foreach ($tabs as $tab=>$desc) {
     $html.= "<tr><th>$tab</th>";
     $obe= 0;
@@ -10144,6 +10187,10 @@ function db2_stav_kdo($db,$desc,$tit) {
     $sje[$t->kdo]['o']+= $t->_osob;
     $sje[$t->kdo]['r']+= $t->_rodin;
   }
+  // sjednotitelé - řazení
+  uasort($sje,function($a,$b) {
+    return $a['o']==$b['o'] ? 0 : ($a['o']<$b['o'] ? 1 : -1);
+  });
   // sjednotitelé - zobrazení
   $html= "$tit<br><br>";
   $html.= "<div class='stat'><table class='stat'>";
