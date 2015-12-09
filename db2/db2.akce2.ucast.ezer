@@ -18,8 +18,8 @@ var zmeny: object               // objekt naplněný požadavkem zobrazení ned�
 # události panelu
 proc onstart() {}
 proc onfirstfocus() {
-  // povolení "[]kopie?" jen pro access=3
-  [ eq(3,has_access.get) | u.dup.set(0); u.dup.display(0); u.sf.set(0); u.sf.change;];
+#   // povolení "[]kopie?" standardní
+#   [ eq(3,has_access.get) | u.dup.set(1); u.dup.display(0); u.sf.set(1); u.sf.change;];
   the_duakce_local.set(0);
   curr_h.set(0);
   curr_w.set(cconc(lt(sys('screen','width'),1280),1024,1280));
@@ -50,11 +50,8 @@ proc onblur() {
 # --------------------------------------------------------------------------==> . globální procedury
 # přepnutí organizace
 proc reaccess() { #==> . reaccess - změna
-  // povolení "[]kopie?" pro access=3
-  [ eq(3,has_access.get);
-    u.dup.set(1); u.dup.display(1);
-  | u.dup.set(0); u.dup.display(0);
-  ];
+#   // povolení "[]kopie?" standardní
+#   [ eq(3,has_access.get); u.dup.set(1); u.dup.display(1); | u.dup.set(0); u.dup.display(0); ];
   init_ucast2
 }
 # ukázání pobytu
@@ -208,16 +205,16 @@ use docu:  form _documents [400, 10,,]  { tag:'akce0', format:'n' }
 use u2:    form _ucast2  [   6, 20,,]  { tag:'akce2', format:'n' }   // seznam dětí
 
 proc elim_kopie_osob(os) { var zmena:number, ido:number, idos:text
-  u.dup.get;
+#   u.dup.get;
   { idos.set(os.part('keys_osoba').get);
     ido.set(os.part('key_osoba').get);
     idos;
-    zmena.set(elim.osoby_lst(ido,idos));
+    spinner(1); zmena.set(elim.osoby_lst(ido,idos)); spinner(0);
     echo("elim.osoby_lst(",ido,",",idos,")=",zmena);
     [ u.b.browse_row; u.b.raise('onrowclick') ];
     jump(ido)
   | warning("nebyla nalezena podezřelá kopie") }
-| alert("pro sjednocování kopií je zapotřebí zaškrtnout 'kopie?' nad seznamem účastníků");
+# | alert("pro sjednocování kopií je zapotřebí zaškrtnout 'kopie?' nad seznamem účastníků");
 }
 
 proc page_clear() {
@@ -541,23 +538,23 @@ form _ucast [,,400,] { css:'ds_form'
   label leg [2,12,232,11]
   // omezení browse
   proc show_dup(on) { rod.cleni.show_dup(on); b.show_dup(on); }
-  check sf [108,7,15,15] { title:'', format:'t', value:'1', proc onchange() {
-    b._nazev.set_attrib('css_cell',
-      cconc(this.get,'r_access,0:,1:ezer_ys,2:ezer_fa,3:ezer_db',''));
-    rod.cleni.jmeno.set_attrib('css_cell',
-      cconc(this.get,'access,0:,1:ezer_ys,2:ezer_fa,3:ezer_db',''));
-    reload(0)
+  check sf [108,7,15,15] { title:'', format:'nt', value:'1', proc onchange() {
+#     b._nazev.set_attrib('css_cell',
+#       cconc(this.get,'r_access,0:,1:ezer_ys,2:ezer_fa,3:ezer_db',''));
+#     rod.cleni.jmeno.set_attrib('css_cell',
+#       cconc(this.get,'access,0:,1:ezer_ys,2:ezer_fa,3:ezer_db',''));
+#     reload(0)
   }}
-  label [127,13,40,15] { title:
-    "<span class='ezer_ys'>S</span><span class='ezer_db' style='margin:2px'>+</span><span class='ezer_fa'>F</span>" }
+#   label [127,13,40,15] { title:
+#     "<span class='ezer_ys'>S</span><span class='ezer_db' style='margin:2px'>+</span><span class='ezer_fa'>F</span>" }
   check dup [150,7,63,15] { title:'kopie?', help:'zobrazit tipy na kopie osob a rodin',
-    format:'t', value:'1', proc onchange() {
-    show_dup(this.get);
-    { this.get; doc.set(0); sf.set(1); sf.change | reload(0) }
+    format:'nt', value:'1', proc onchange() {
+#     show_dup(this.get);
+#     { this.get; doc.set(0); sf.set(1); sf.change | reload(0) }
   }}
   check doc [202,7,75,15] { title:'dokumenty', help:'zobrazit příznaky existence dokumentů a fotek'
     format:'t', value:'0', proc onchange() {
-    [ this.get; dup.get; dup.set(0); show_dup(0) ];
+#     [ this.get; dup.get; dup.set(0); show_dup(0) ];
     reload(0)
   }}
   check lid [278,7,65,15] { title:'účastníci', format:'t', value:'1', proc onchange() { reload(0) }}
@@ -1254,15 +1251,15 @@ form _rodina2 [,,360,229]  { css:'ae_frame'
   #==> . elim
   button chain [174,0,,] {tag:'f', title:'[fa-chain]', css:'db_evidence',
     proc onclick() { var zmena:number, ido:number, idr:number, idrs:text
-      u.dup.get;
+#       u.dup.get;
       { ido.set(os1.key_osoba.get); idr.set(key_rodina.get); idrs.set(u.b.keys_rodina.get);
         idrs;
-        zmena.set(elim.rodiny_lst(idr,idrs));
+        spinner(1); zmena.set(elim.rodiny_lst(idr,idrs)); spinner(0);
         echo("elim.rodiny_lst(",idr,",",idrs,")=",zmena);
         [ u.b.browse_row; u.b.raise('onrowclick',u.b.browse_key) ];
         jump(ido)
       | warning("nebyla nalezena podezřelá kopie") }
-    | alert("pro sjednocování kopií je zapotřebí zaškrtnout 'kopie?' nad seznamem účastníků");
+#     | alert("pro sjednocování kopií je zapotřebí zaškrtnout 'kopie?' nad seznamem účastníků");
   }}
   button evidence [193,0,,] {tag:'f', title:'^evidence', css:'db_evidence'
     proc onclick() { evi.evid_rodina(key_rodina.get) } }

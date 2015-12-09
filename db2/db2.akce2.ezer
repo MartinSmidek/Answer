@@ -83,6 +83,10 @@ proc akce_choose(id_akce) { var a:object
 proc accessed(org) {
   return(function('x','y','return x&y;',org,my_access.get));
 }
+proc spinner(on) { on;
+  function("$('wait_mask').setStyle('display','block'); return 1;");
+| function("$('wait_mask').setStyle('display', 'none'); return 1;");
+}
 # ==========================================================================================> MODULY
 group foto { include:'onload,db2.akce2.foto'
   form _alb {
