@@ -84,7 +84,7 @@ form right [,,700,50] {
   label head [0,0,680,50]  { title:'' }
   label note [0,50,680,550] { title:'' }
   proc fill(x,y) {
-    [ x; head.set(conc("<div class='CSection CMenu'><h3 class='CTitle'>",x,"</h3></div>")) ];
+    [ x; head.set(conc("<div class='karta'>",x,"</div>")) ];
     [ y; note.set(y) ]
   }
   proc append(x) { note.get; note.set(conc(note.get,'<br>',x)) | note.set(x) }

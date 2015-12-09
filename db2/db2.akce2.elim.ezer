@@ -106,9 +106,19 @@ proc elim_rodiny_lst(idr,idrs) { var keys:text, ret:object
   c2.bs.browse_load(conc("id_osoba IN (",ret.c2,") AND ",smazane_o.get),'prijmeni,jmeno');
 | elim_cleni_lst(ret.c1,ret.c2)
 }
-proc elim_cleni_lst(cs1,cs2) {
+proc elim_cleni_lst_old(cs1,cs2) {
   mode.set('cleni_lst');
   last_ido_lst.set(cs1); last_idos_lst.set(cs2);
+  r1.display(0); o1.display(1); c1.display(0);
+  r2.display(0); o2.display(1); c2.display(0);
+  [ o1.bs._nazev.get_query(0,1); o1.bs._nazev.set_query(1,'',0) ];
+  [ o1.bs.browse_load(conc("o.id_osoba IN (",cs1,")"),'prijmeni,jmeno'); o1.bs.raise('onrowclick') ];
+  [ o2.bs._nazev.get_query(0,1); o2.bs._nazev.set_query(1,'',0) ];
+  [ o2.bs.browse_load(conc("o.id_osoba IN (",cs2,")"),'prijmeni,jmeno'); o2.bs.raise('onrowclick') ];
+}
+proc elim_cleni_lst(cs1,cs2) {
+  mode.set('cleni_lst');
+  panel.set_attrib('title',"Eliminace navržených kopií členů rodiny");
   r1.display(0); o1.display(1); c1.display(0);
   r2.display(0); o2.display(1); c2.display(0);
   [ o1.bs._nazev.get_query(0,1); o1.bs._nazev.set_query(1,'',0) ];
@@ -197,8 +207,12 @@ form _cmd [,,425,30] { css:'ae_parm'
         r1.br_load(r1.br.browse_key);
         r2.br.browse_row;
         r2.br_load(r2.br.browse_key);
+        [ eq(mode.get,'rodina_lst'); confirm("pokračovat sjednocením členů rodiny?");
+          elim_cleni_lst(browse_concat_ido(r1.bro),browse_concat_ido(r2.bro));
+        ]
       }
   }}
+  proc browse_concat_ido(b) { return(function('b',"return browse_concat_clmn(b,'ido');",b)) }
   // UNLINK
   button [286,5,,] { type:'html', title:"[fa-save] [fa-unlink] Nejde o duplicitu! "
     proc onclick() {
@@ -243,13 +257,13 @@ form _cmd [,,425,30] { css:'ae_parm'
   button [870,4,,] { type:'html', title:"osoby [fa-exchange] rodiny",
     proc onclick() { var ks: text
       eq(mode.get,'rodina');     [ elim_osoby(r1.bro.ido.get,r2.bro.nazev.get) ]
-    | eq(mode.get,'rodina_lst'); [ elim_cleni_lst(last_ido_lst.get,last_idos_lst.get) ]
-    | eq(mode.get,'cleni_lst','osoba_lst');
-      { o1.rs.browse_count; o2.rs.browse_count;
-        [ elim_rodiny_lst(o1.rs.idr.get,o2.rs.idr.get) ]
-      | ks.set(function('a','b',"return a.keys.combine(b.keys).toString();",o1.rs,o2.rs));
-        [ elim_rodiny_lst(ks,ks) ]
-      }
+#     | eq(mode.get,'rodina_lst'); [ elim_cleni_lst(last_ido_lst.get,last_idos_lst.get) ]
+#     | eq(mode.get,'cleni_lst','osoba_lst');
+#       { o1.rs.browse_count; o2.rs.browse_count;
+#         [ elim_rodiny_lst(o1.rs.idr.get,o2.rs.idr.get) ]
+#       | ks.set(function('a','b',"return a.keys.combine(b.keys).toString();",o1.rs,o2.rs));
+#         [ elim_rodiny_lst(ks,ks) ]
+#       }
     | elim_rodiny(0,'');
   }}
 }
