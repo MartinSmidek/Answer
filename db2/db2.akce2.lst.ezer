@@ -11,6 +11,7 @@ var menu_item:object            // aktivní menu
 # ----------------------------------------------------------------------------------==> inicializace
 # inicializace panelu proběhne po akce.onstart, zobrazí seznam akcí daného roku podle the_source
 proc onfirstfocus() {
+#   spinner(1);
   [ dirty.get | akce_onstart ]; // zavolá akce_work
   // detekce rozměrů
   curr_w.set(cconc(lt(sys('screen','width'),1280),1024,1280));
@@ -25,6 +26,7 @@ proc onfirstfocus() {
   // zobrazení seznamu akcí
   m.g.sey.click;
   page.inf.onclick;
+#   spinner(0);
 }
 # -------------------------------------------------------------------------------------------==> use
 use info: form _info [12,4,,]

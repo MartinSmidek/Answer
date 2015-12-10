@@ -7,8 +7,10 @@
 
 # ----------------------------------------------------------------------------------==> inicializace
 proc onfirstfocus() {
+#   spinner(1);
   [ dirty.get | akce_onstart ];
-  m.g.i.click
+  m.g.i.click;
+#   spinner(0);
 }
 proc init_ucast() { echo('mai:init_ucast ',the_title.get);
   vy.fill(the_title.get);

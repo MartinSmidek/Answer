@@ -2473,7 +2473,7 @@ function akce2_auto_pece($patt) {  #trace();
 //                                                                 debug($a,$qry);
   return $a;
 }
-# ========================================================================================> SKUPINKY
+# ======================================================================================> . SKUPINKY
 # --------------------------------------------------------------------------------- akce2_skup_check
 # zjištění konzistence skupinek podle příjmení VPS/PPS
 function akce2_skup_check($akce) {
@@ -6193,8 +6193,8 @@ function evid2_pridej_k_rodine($id_rodina,$info,$cnd='') { trace();
   }
   return $ret;
 }
-# ============================================================================================> YMCA
-# ---------------------------------------------------------------------------==> . evid2_ymca_sprava
+# ==========================================================================================> . YMCA
+# --------------------------------------------------------------------------==> .. evid2_ymca_sprava
 # správa členů pro YS
 function evid2_ymca_sprava($org,$par,$title,$export=false) {
   $ret= (object)array('error'=>0,'html'=>'');
@@ -6326,7 +6326,7 @@ function evid2_ymca_sestava($org,$par,$title,$export=false) {
 end:
   return $ret;
 }
-# ---------------------------------------------------------------------==> . evid2_recyklace_pecounu
+# --------------------------------------------------------------------==> .. evid2_recyklace_pecounu
 # generování přehledu pečounů pro recyklaci
 # - předpokládá se spuštění ve stejném roce jako byl letní kurz pokud par.rok=0
 # - nebo v loňském roce, pokud je rok=1
@@ -6418,7 +6418,8 @@ function evid2_recyklace_pecounu($org,$par,$title,$provest) {
 end:
   return $ret;
 }
-# ------------------------------------------------------------------------==> . evid2_browse_mailist
+# =======================================================================================> . MAILIST
+# -----------------------------------------------------------------------==> .. evid2_browse_mailist
 # BROWSE ASK
 # obsluha browse s optimize:ask
 # x->cond = id_mailist
@@ -6438,6 +6439,7 @@ function evid2_browse_mailist($x) {
     $selected= explode(',',$x->selected);
   }
   switch ($x->cmd) {
+  case 'browse_export':
   case 'browse_load':
     $zz= array();
     # získej pozice PSČ
@@ -6450,7 +6452,7 @@ function evid2_browse_mailist($x) {
       $lng[$psc]= $s->lng;
     }
     # získej sexpr z mailistu id=c.cond
-    $qo= select('sexpr','mailist',"id_mailist={$x->cond}");
+    list($nazev,$qo)= select('ucel,sexpr','mailist',"id_mailist={$x->cond}");
 //                                                                 display($qo);
     $ro= mysql_qry($qo);
     while ( $ro && ($o= mysql_fetch_object($ro)) ) {
@@ -6465,14 +6467,16 @@ function evid2_browse_mailist($x) {
       'access'=>$o->access,
       'prijmeni'=>$prijmeni,
       'jmeno'=>$jmeno,
-      'obec'=>$o->_obec,
+      'ulice'=>$o->_ulice,
       'psc'=>$psc,
+      'obec'=>$o->_obec,
       '_vek'=>$o->_vek,
       'mail'=>$o->_email,
+      'telefon'=>$o->_telefon,
       '_id_o'=>$id
       );
     }
-    # ==> .. řazení
+    # ==> ... řazení
     if ( $x->order && count($zz)>0 ) {
       $test_clmn= substr($x->order,2);
       $test_asc= substr($x->order,0,1)=='a' ? 1 : -1;
@@ -6519,22 +6523,50 @@ function evid2_browse_mailist($x) {
           });
         }
       }
-//                                                 debug($zz);
     }
-    # předání pro browse
-    $y->values= $zz;
-    $y->from= 0;
-    $y->cursor= 0;
-    $y->rows= count($zz);
-    $y->count= count($zz);
-    $y->ok= 1;
-    array_unshift($y->values,null);
+    if ( $x->cmd=='browse_load' ) {
+      # předání pro browse
+      $y->values= $zz;
+      $y->from= 0;
+      $y->cursor= 0;
+      $y->rows= count($zz);
+      $y->count= count($zz);
+      $y->ok= 1;
+      array_unshift($y->values,null);
+    }
+    else if ( $x->cmd=='browse_export' ) { #==> ... browse_export
+      // transformace dat
+      $clmn= array();
+      foreach($zz as $z) {
+        $row= array(
+          'jmeno'  => "{$z->jmeno} {$z->prijmeni}",
+          'ulice'  => $z->ulice,
+          'psc'    => $z->psc,
+          'obec'   => $z->obec,
+          'telefon'=> $z->telefon,
+          'mail'   => $z->mail
+        );
+        $clmn[]= $row;
+      }
+      // tisk přes sta2_excel_export
+      $tab= (object)array(
+        'tits'=>explode(',',"jmeno:30,ulice:20,psc:6,obec:20,telefon:25,mail:30"),
+        'flds'=>explode(',',"jmeno,ulice,psc,obec,telefon,mail"),
+        'clmn'=>$clmn
+      );
+      $ret= sta2_excel_export("Vybrané kontakty ze seznamu '$nazev'",$tab);
+      $y->par= $x->par;
+      $y->par->html= $ret->html;
+    }
+    break;
+  default:
+    fce_error("metoda {$x->cmd} není podporována");
   }
 //                                                              debug($y);
   return $y;
 }
-# ============================================================================================> MAPA
-# -----------------------------------------------------------------------------------==> . mapa2_psc
+# ==========================================================================================> . MAPA
+# ----------------------------------------------------------------------------------==> .. mapa2_psc
 # vrátí strukturu pro gmap
 function mapa2_psc($psc,$obec) {
   // k PSČ zjistíme LAN,LNG
@@ -6564,7 +6596,7 @@ function mapa2_psc($psc,$obec) {
 //                                         debug(explode(';',$ret->mark),"mapa_akce");
   return $ret;
 }
-# -------------------------------------------------------------------------------==> . mapa2_ctverec
+# ------------------------------------------------------------------------------==> .. mapa2_ctverec
 # ASK
 # obsah čtverce $clen +- $dist (km) na všechny strany
 # vrací objekt {
@@ -6598,25 +6630,30 @@ end:
 # --------------------------------------------------------------------------------- mapa2_ve_ctverci
 # ASK
 # vrátí jako seznam id_osoba bydlících v oblasti dané obdélníkem 'x,y;x,y'
-# podmnožinu předaných ids
+# podmnožinu předaných ids, pokud je rect prázdný - vrátí vše, co lze lokalizovat
 # pokud by seznam byl delší než MAX, vrátí chybu
 function mapa2_ve_ctverci($rect,$ids,$max=5000) { trace();
   $ret= (object)array('err'=>'','rect'=>$rect,'ids'=>'','pocet'=>0);
-  list($sell,$nwll)= explode(';',$rect);
-  $se= explode(',',$sell);
-  $nw= explode(',',$nwll);
+  if ( $rect ) {
+    list($sell,$nwll)= explode(';',$rect);
+    $se= explode(',',$sell);
+    $nw= explode(',',$nwll);
+    $poloha= "lat BETWEEN $se[0] AND $nw[0] AND lng BETWEEN $se[1] AND $nw[1]";
+  }
+  else {
+    $poloha= "lat!=0 AND lng!=0";
+  }
   $qo= "SELECT id_osoba, lat, lng
         FROM osoba AS o
         LEFT JOIN tvori AS t USING (id_osoba)
         LEFT JOIN rodina AS r USING (id_rodina)
         LEFT JOIN uir_adr.psc_axy AS a ON a.psc=IF(o.adresa,o.psc,r.psc)
-        WHERE id_osoba IN ($ids)
-          AND lat BETWEEN $se[0] AND $nw[0] AND lng BETWEEN $se[1] AND $nw[1] ";
+        WHERE id_osoba IN ($ids) AND $poloha ";
   $ro= mysql_qry($qo);
   if ( $ro ) {
     $ret->pocet= mysql_num_rows($ro);
     if ( $max && $ret->pocet > $max ) {
-      $ret->err= "Ve výřezu mapy je příliš mnoho bodů "
+      $ret->err= ($rect ? "Ve výřezu mapy je" : "Je požadováno"). " příliš mnoho bodů "
         . "({$ret->pocet} nejvíc lze $max)";
     }
     else {
@@ -7396,19 +7433,27 @@ function sta2_table($tits,$flds,$clmn,$export=false) {  trace();
 }
 # obsluha různých forem výpisů karet AKCE
 # ---------------------------------------------------------------------------------------- sta2_excel
-# generování tabulky do excelu
-function sta2_excel($org,$title,$par,$tab=null) {  trace();
-  global $xA, $xn;
-  $result= (object)array('_error'=>0);
-  $html= '';
+# ASK
+# generování statistické sestavy do excelu
+function sta2_excel($org,$title,$par,$tab=null) {
   // získání dat
-  $title= str_replace('&nbsp;',' ',$title);
-  $subtitle= "ke dni ".date("j. n. Y");
   if ( !$tab ) {
     $tab= sta2_sestava($org,$title,$par,true);
     $title= $par->title ?: $title;
   }
   // vlastní export do Excelu
+  return sta2_excel_export($title,$tab);
+}
+# ---------------------------------------------------------------------------==> . sta2_excel_export
+# local
+# generování tabulky do excelu
+function sta2_excel_export($title,$tab) {  //trace();
+//                                         debug($tab,"sta2_excel_export($title,tab)");
+  global $xA, $xn;
+  $result= (object)array('_error'=>0);
+  $html= '';
+  $title= str_replace('&nbsp;',' ',$title);
+  $subtitle= "ke dni ".date("j. n. Y");
   $name= cz2ascii("vypis_").date("Ymd_Hi");
   $xls= <<<__XLS
     |open $name
