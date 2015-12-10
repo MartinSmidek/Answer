@@ -18,8 +18,11 @@ proc osoby_show()       { page.oso.show_osoba(1); }     // obnova údajů o osob
 proc rodina_show()      { page.rod.show_rodina; }       // obnova údajů o rodině (z konfigurace)
 # ----------------------------------------------------------------------------------==> inicializace
 proc onfirstfocus() {
+#   spinner(1);
   osoba_config.start; rodina_config.start;
-  lst.start; page.start; cmd.start; }
+  lst.start; page.start; cmd.start;
+#   spinner(0);
+}
 proc onblur() { [ track.display; track.hide ] }
 proc up(x)   { x.get.set_css('shift_up','shift_down'); x.set_css('shift_up','shift_down','.*') }
 proc down(x) { x.get.set_css('shift_down','shift_up'); x.set_css('shift_down','shift_up','.*') }
@@ -331,6 +334,8 @@ form _lst [,,370,*] {
     show id_o
     show lat
     show lng
+    show ulice
+    show telefon
     show access
     show prijmeni [,,70,] { title:'příjmení', format:'s'
       css_cell:'access,0:,1:ezer_ys,2:ezer_fa,3:ezer_db' }
@@ -359,11 +364,19 @@ form _lst [,,370,*] {
       mail.width; mail.width(0);  _id_o.width(44)
     |             mail.width(44); _id_o.width(0)
     }
+    #==> . kontextové menu
     proc browse_keys() { return(function('b',"return b.keys.toString();",bm)) }
     menu { type:'context'
-      item { title:'zrušit výběr a zobrazení',
+      item { title:'export vybraných do Excelu',
+        proc onclick () { var ret:object
+          ret.set(bm.browse_export(°{type:'xls',selected:1}));
+          alert(ret.html);
+      }}
+      item { title:'-zrušit výběr a zobrazení',
         proc onclick () { bm.selected('clear'); page.map.mapa_clear; }}
-      item { title:'vybrat a zobrazit vše',
+      item { title:'vybrat vše se známou polohou',
+        proc onclick () { bm_select_in('') }}
+      item { title:'vybrat vše a zobrazit co lze',
         proc onclick () { bm.selected('set',browse_keys); bm_selected }}
       item { title:'-v seznamu jen vybraní'
         proc onclick() { bm.selected('use'); bm.browse_load(bm_vyber.key) } }

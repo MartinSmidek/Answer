@@ -18,6 +18,7 @@ var zmeny: object               // objekt naplněný požadavkem zobrazení ned�
 # události panelu
 proc onstart() {}
 proc onfirstfocus() {
+#   spinner(1);
 #   // povolení "[]kopie?" standardní
 #   [ eq(3,has_access.get) | u.dup.set(1); u.dup.display(0); u.sf.set(1); u.sf.change;];
   the_duakce_local.set(0);
@@ -27,7 +28,8 @@ proc onfirstfocus() {
   page.evd.onclick;
   akce_onstart;
   onresize(sys('screen','width'),sys('screen','height'));
-  onfocus
+  onfocus;
+#   spinner(0);
 }
 proc onfocus() {
   [ [ dirty.get | akce_onstart ];
@@ -224,6 +226,7 @@ proc page_clear() {
 }
 # --------------------------------------------------==> . reload
 proc reload(id_pobyt) { var filtr:text, id_pobyt0:number
+  spinner(1); echo("ucast.reload start");
   cmd.b_display(1);
   the_duakce.get;
   [ u.b.browse_count; id_pobyt0.set(u.b.key_pobyt.get) | id_pobyt0.set(0) ];
@@ -252,6 +255,7 @@ proc reload(id_pobyt) { var filtr:text, id_pobyt0:number
   | // žádný pobyt
     cmd.set_state('none');
   ];
+  spinner(0); echo("ucast.reload end");
 }
 # --------------------------------------------------==> . jump
 # skok na jiného účastníka akce

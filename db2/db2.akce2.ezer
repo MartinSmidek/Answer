@@ -39,7 +39,8 @@ var dirty=0                     // 1 => byla ukončena inicializace modulu
 proc onstart() { dirty.get | akce_onstart }
 proc akce_onstart() {
   dirty.get
-| dirty.set(1);
+| spinner(1);
+  dirty.set(1);
 #   [ eq(sys('ezer','options','root'),'db2_test'); alert('testovací databáze')
 #   | alert('ostrá databáze') ];
   has_access.set(sys('user','has_access'));
@@ -54,7 +55,8 @@ proc akce_onstart() {
   { eq(my_org.get,1);
     lst.akce_work(the_akce_ys.get)
   | lst.akce_work(the_akce_fa.get)
-  }
+  };
+  spinner(0);
 }
 # změna datového přístupu
 proc reaccess() { #==> . reaccess
@@ -83,9 +85,16 @@ proc akce_choose(id_akce) { var a:object
 proc accessed(org) {
   return(function('x','y','return x&y;',org,my_access.get));
 }
-proc spinner(on) { on;
-  function("$('wait_mask').setStyle('display','block'); return 1;");
-| function("$('wait_mask').setStyle('display', 'none'); return 1;");
+# var spinner_depth= 0
+proc spinner(on) {
+#   [ on; spinner_depth.set(sum(spinner_depth.get,1))
+#   | spinner_depth.set(sum(spinner_depth.get,-1))
+#   ];
+#   echo("spinner=",spinner_depth.get);
+  on;
+#   spinner_depth.get;
+  [ function("$('wait_mask').setStyle('display','block'); return 1;") ];
+| [ function("$('wait_mask').setStyle('display', 'none'); return 1;") ];
 }
 # ==========================================================================================> MODULY
 group foto { include:'onload,db2.akce2.foto'
@@ -674,7 +683,7 @@ panel track [,,540,276] { title:'Historie oprav', type:'popup', css:'dialog'
 // ===========================================================================================> MAPA
 panel mapa [,,640,400] { type:'popup', title:'mapa účastníků'
   var metoda='', id_akce: number, id_mailist: number
-  proc onfirstfocus() { f.cr.init('ROADMAP'); ukaz_psc; }
+  proc onfirstfocus() { spinner(1); f.cr.init('ROADMAP'); ukaz_psc; spinner(0) }
   proc onfocus() { ukaz_psc; }
   proc ukaz_psc() { var ret: object
     metoda.get;

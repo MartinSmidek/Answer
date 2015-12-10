@@ -32,9 +32,11 @@ proc test_dbg() {
   echo(dopis_id.get)
 }
 proc onfirstfocus() {
+#   spinner(1);
   [ dirty.get | akce_onstart ];
   gq.preload;
-  m.g.i.click
+  m.g.i.click;
+#   spinner(0);
 }
 proc init_ucast() { echo('mai:init_ucast ',the_title.get);
   vy.fill(the_title.get);
@@ -577,6 +579,7 @@ form _gsql {
       "  IF(o.adresa,o.obec,IFNULL(r.obec,'')) AS _obec,",chr(10),
       "  IF(o.adresa,o.stat,IFNULL(r.stat,'')) AS _stat,",chr(10),
       "  IF(o.kontakt,o.email,IFNULL(r.emaily,'')) AS _email,nomail,",chr(10),
+      "  IF(o.kontakt,o.telefon,IFNULL(r.telefony,'')) AS _telefon,",chr(10),
       "  narozeni,TIMESTAMPDIFF(YEAR,narozeni,NOW()) AS _vek",chr(10),
       from.get,chr(10),
       "WHERE o.deleted='' AND ",cond.get,
