@@ -32,7 +32,7 @@ kEzer-ys2
 		db2.php
 		db2\db2_fce.js
 		db2\db2_fce.php
-	+TUT
+	-TUT
 		tut\$.ezer
 		tut\.htaccess
 		tut\i_fce.js
@@ -115,7 +115,7 @@ kEzer-ys2
 		ds\ds.tab.ezer
 		ds\ds_fce.php
 		ds\fce.js
-	-ezer2.2
+	+ezer2.2
 		-client
 			ezer2.2\client\_code.js
 			ezer2.2\client\_test.html
@@ -265,7 +265,7 @@ kEzer-ys2
 			ys\ys.syst.ezer
 			ys\ys.syst.oso.ezer
 		ys\ys.doc.ezer
-	+ys2
+	-ys2
 		ys2\$.ezer
 		ys2\ys2.eko.ezer
 		ys2.inc
@@ -310,7 +310,7 @@ kEzer-ys2
 29=tut\tut.css.php
 [Selected Project Files]
 Main=
-Selected=tut\tut.the.ezer
+Selected=ezer2.2\server\ae_slib.php
 [tut\.htaccess]
 TopLine=1
 Caret=2,9
@@ -321,8 +321,8 @@ Caret=27,60
 TopLine=65
 Caret=46,84
 [ezer2.2\server\ae_slib.php]
-TopLine=397
-Caret=41,411
+TopLine=2071
+Caret=18,2092
 BookMark1=11,422
 BookMark2=15,702
 [ezer2.2\server\ezer2.php]
@@ -372,8 +372,8 @@ Caret=41,150
 TopLine=696
 Caret=23,714
 [db\db_akce.php]
-TopLine=3499
-Caret=1,3526
+TopLine=7667
+Caret=52,7688
 [ezer2.2\dbg.php]
 TopLine=67
 Caret=75,80
