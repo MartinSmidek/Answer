@@ -140,7 +140,8 @@ panel evi {type:'right', _sys:'*', title:'[fa-briefcase] EVIDENCE', include:'onl
   proc evid_osoba(_ido) { }                     // zobrazení osoby v evidenci
   proc evid_rodina(_idr) { }                    // zobrazení rodiny v evidenci
 }
-panel mai {type:'right', title:'Maily', _sys:'*', include:'onclick,db2.akce2.mai', skill:'yam;fam;cam'
+panel mai {type:'right', title:'Maily evidence', _sys:'*', include:'onclick,db2.akce2.mai',
+  skill:'yam;fam;cam'
   proc reaccess() {}
 }
 panel dop {type:'right', title:'Dopisy', _sys:'*', include:'onclick,db2.akce2.dop', skill:'yaed'  }
@@ -611,6 +612,7 @@ map ms_akce_dieta:    table _cis {where:"druh='ms_akce_dieta'",     order:'porad
 map ms_akce_dite_kat: table _cis {where:"druh='ms_akce_dite_kat'",  order:'poradi', key_id:'data'}
 map ms_akce_s_role:   table _cis {where:"druh='ms_akce_s_role'",    order:'poradi', key_id:'data'}
 map ms_akce_t_role:   table _cis {where:"druh='ms_akce_t_role'",    order:'poradi', key_id:'data'}
+map ms_akce_titul_p:  table _cis {where:"druh='ms_akce_titul_p'",   order:'poradi', key_id:'data'}
 map ms_umi:           table _cis {where:"druh='answer_umi'",        order:'poradi', key_id:'data', db:'ezer_group' }
 map map_evi_vyber_o:  table _cis {where:"druh='evi_vyber_o' AND data<50",  order:'poradi', key_id:'data'}
 map map_evi_vyber_x:  table _cis {where:"druh='evi_vyber_o' AND data>50",  order:'poradi', key_id:'data'}
@@ -929,6 +931,7 @@ form _osoba2x [,,244,322] {css:'ae_frame', proc onclick() { on_click }
   #==> . základní údaje: i,y (jsou vždy vidět)
   field prijmeni [5,32,106,] {tag:'i,I', data:o.prijmeni, format:'n', help:'příjmení', title:'^příjmení' }
   field jmeno    [120,32,83,] {tag:'i,I', data:o.jmeno, format:'n', title:'^jméno' }
+#   select titul   [218,32,10,] {tag:'y', title:"^P.", type:'map', options:ms_akce_titul_p.hodnota, format:'n' }
   //field role   [218,32,10,] {tag:'y', title:"^role", format:'n' }
   select role    [210,32,31,] {tag:'y', type:'map', options:ms_akce_t_role.hodnota, format:'wn', title:'^role'}
   field rodne    [5,66,63,] {tag:'i', data:o.rodne, format:'n', help:'rodné příjmení', title:'^rodné příjmení'}

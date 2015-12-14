@@ -5959,6 +5959,7 @@ function dop_rep_ids($report_json,$parss,$fname) { trace();
 # cmd= conf_oso|conf_rod|del_oso|del_rod
 function evid2_delete($id_osoba,$id_rodina,$cmd='confirm') { trace();
   global $USER;
+  user_test();
   $ret= (object)array('html'=>'','ok'=>1);
   $user= $USER->abbr;
   $now= date("Y-m-d H:i:s");
@@ -7586,6 +7587,7 @@ function elim2_split_keys($keys) {
 # do _track potvrdí, že $id_orig,$id_copy jsou různé osoby nebo rodiny
 function elim2_differ($id_orig,$id_copy,$table) { trace();
   global $USER;
+  user_test();
   $ret= (object)array('err'=>'');
   $now= date("Y-m-d H:i:s");
   // zápis o neztotožnění osob/rodin do _track jako op=d (duplicita)
@@ -7602,6 +7604,7 @@ end:
 # a kopii poznačí jako smazanou
 function elim2_osoba($id_orig,$id_copy) { //trace();
   global $USER;
+  user_test();
   $ret= (object)array('err'=>'');
   $now= date("Y-m-d H:i:s");
   // tvori
@@ -7641,6 +7644,7 @@ end:
 # zamění všechny výskyty kopie za originál v TVORI, SPOLU, DAR, PLATBA, MAIL a kopii smaže
 function elim2_clen($id_rodina,$id_orig,$id_copy) { trace();
   global $USER;
+  user_test();
   $ret= (object)array('err'=>'');
   $now= date("Y-m-d H:i:s");
   // tvori - vymazat => do _track napsat id_rodina.role
@@ -7681,6 +7685,7 @@ end:
 # zamění všechny výskyty kopie za originál v POBYT, TVORI, DAR, PLATBA a kopii smaže
 function elim2_rodina($id_orig,$id_copy) {
   global $USER;
+  user_test();
   $ret= (object)array('err'=>'');
   if ( $id_orig!=$id_copy ) {
     $now= date("Y-m-d H:i:s");
@@ -7729,6 +7734,7 @@ end:
 # obnoví smazanou osobu se záznamem v _track
 function elim2_recovery_osoba($ido) { trace();
   global $USER;
+  user_test();
   $deleted= select('deleted','osoba',"id_osoba=$ido");
   if ( $deleted ) {
     // obnovení
@@ -7744,6 +7750,7 @@ function elim2_recovery_osoba($ido) { trace();
 # obnoví smazanou rodinu se záznamem v _track
 function elim2_recovery_rodina($idr) { trace();
   global $USER;
+  user_test();
   $deleted= select('deleted','rodina',"id_rodina=$idr");
   if ( $deleted ) {
     // obnovení
@@ -10306,6 +10313,7 @@ end:
 # pokusí se vrátit učiněné změny - $ids je seznam id_track
 function track_revert($ids) {  trace();
   global $USER;
+  user_test();
   $now= date("Y-m-d H:i:s");
   $user= $USER->abbr;
   $ret= (object)array('ok'=>1);
