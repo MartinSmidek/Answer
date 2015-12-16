@@ -1,5 +1,5 @@
 <?php # Systém An(w)er/YMCA Setkání/YMCA Familia, (c) 2008-2015 Martin Šmídek <martin@smidek.eu>
-
+if ( !isset($_GET['martin']) ) {
 die(<<<__EOD
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en" dir="ltr" slick-uniqueid="1" spellcheck="false">
  <head>
@@ -49,23 +49,25 @@ die(<<<__EOD
 </html>
 __EOD
 );
+}
+else {
 
+  # inicializace systémů Ans(w)er
+  #   $app        = kořenová podsložka aplikace ... ys/ys2/fa/fa2/cr
+  #   $app_name   = jméno aplikace
+  #   $db_name    = hlavní databáze ... bylo-li v URL &test=1 přidá se do options.tabu_db
+  #   $skin       = ck|ch
+  #   $js_lib     = pole s *.js
+  #   $css_lib    = pole s *.css
+  #   $options    = doplnění Ezer.options
+
+  require_once("answer.php");
+  $options= (object)array(
+    'skill'      => "'y'",
+    'autoskill'  => "'!y'"
+  );
+  $css= array("./ezer2.2/client/ezer.css.php","./ys/ys.css.php");
+  answer_php('ys','Ans(w)er','ezer_ys','ck',array("ds/fce.js"),$css,$options);
 //
-//   # inicializace systémů Ans(w)er
-//   #   $app        = kořenová podsložka aplikace ... ys/ys2/fa/fa2/cr
-//   #   $app_name   = jméno aplikace
-//   #   $db_name    = hlavní databáze ... bylo-li v URL &test=1 přidá se do options.tabu_db
-//   #   $skin       = ck|ch
-//   #   $js_lib     = pole s *.js
-//   #   $css_lib    = pole s *.css
-//   #   $options    = doplnění Ezer.options
-//
-//   require_once("answer.php");
-//   $options= (object)array(
-//     'skill'      => "'y'",
-//     'autoskill'  => "'!y'"
-//   );
-//   $css= array("./ezer2.2/client/ezer.css.php","./ys/ys.css.php");
-//   answer_php('ys','Ans(w)er','ezer_ys','ck',array("ds/fce.js"),$css,$options);
-//
+}
 ?>

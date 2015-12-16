@@ -12,39 +12,12 @@ var d_day: text
 # ===========================================================================================> DENÍK
 panel den {type:'plain', title:"Deník", _sys:'den'
 
-  var printed: number
-  var pocet: number
-  var dokl: text // json
-
   use dd: form _d_denik [11,0,,]
-  use dv: form _d_vyber [695,10,,]
+  use dv: form _d_vyber [670,10,,]
   use dc: form _d_cmd [20,500,,]
 
-  proc onstart () {
-    dd.seznam.browse_focus;
-    get_cookie('p_state','1,2.1.2013,1.1.2013,31.12.2013,2,Y,Y,N,1,1,1,poštovné',
-      dv,'r_dat,rd_dne,rd_od,rd_do,r_org,ro_1,ro_n,ro_pokl,r_typ,r_sta,r_goa,rf_goal');
-    dv.cond
-  }
-#   proc dd.seznam.onsubmit (id) {
-#     has_skill('yp+'); d_oprava.d_load(dd.seznam,id); d_oprava.modal(100,100); dd.seznam.browse_focus;
-#   }
-  proc dc.oprav.onclick () {
-    d_oprava.d_load(dd.seznam,dd.seznam.id.get); d_oprava.modal(100,100)
-  }
-  proc dc.kopie.onclick () {
-    d_novy.d_copy(dd.seznam.id.get); d_novy.modal(100,100)
-  }
-  proc dc.smazat.onclick () {
-    confirm(conc('Opravdu smazat doklad ',dd.seznam.org.get,dd.seznam.typ.get,dd.seznam.cislo.get,'?'));
-    pdenik.delete_record(conc('id_pokl=',dd.seznam.id.get));
-    dd.seznam.raise('onrowclick',dd.seznam.browse_seek(1))
-  }
-  proc dc.novy.onclick () {
-    d_novy.d_init(dd.seznam,dv.r_org.get,dv.ro_1.key,dv.r_typ.get); d_novy.modal(100,100)
-  }
-  proc dd.seznam.onrowclick () {
-    d_day.set(dd.seznam.datum.get)
+  proc onfirstfocus () {
+    dd.seznam.browse_focus; dv.vyber_init;
   }
   proc reload(cond) {
     d_cond.set(cond); dd.seznam.browse_load(cond,"datum DESC, ident DESC"); dd.seznam.raise('onrowclick')
@@ -56,7 +29,8 @@ panel den {type:'plain', title:"Deník", _sys:'den'
   form _d_denik [,,539,510] {
     view v: table pdenik,
     view p: table pokladna {join:'ON id_pokladna=pdenik.org'},
-    browse seznam [3,10,200,200] { rows:24, qry_rows:2, optimize:°{qry:'noseek'}, css_rows:'vytisten,0:kas_1'
+    browse seznam [3,10,200,200] { rows:24, qry_rows:2, optimize:°{qry:'noseek'},
+        //css_rows:'vytisten,0:kas_1'
       show ident [,,80,] { title:'ident', data:pdenik.ident, format:'sq*' },
       show cislo [,,30,] { title:'číslo', data:pdenik.cislo, format:'rsq/' },
       show datum [,,70,] { title:'datum', data:pdenik.datum, format:'rsq/'  },
@@ -87,86 +61,84 @@ panel den {type:'plain', title:"Deník", _sys:'den'
   }
   # ---------------------------------------------------------------------------------------==> . cmd
   form _d_cmd [,,300,20] {
-    button oprav [18,-1,,] { type:'submit', title:'Opravit', skill:'yp+|yp+' },
-    button kopie [123,0,,] { title:'Zkopírovat', skill:'yp+|yp+' },
-    button novy [214,0,,] { title:'Nový', skill:'yp+|yp+' },
-    button smazat [272,0,,] { title:'Smazat', skill:'yp+|yp+' },
-    button tisk1 [381,0,,] { title:'Vytisknout', skill:'yp+|yp+' },
-    button tiskn [481,0,,] { title:'Vytisknout nevytištěné', skill:'yp+|yp+' },
+    button oprav [18,-1,,] { type:'submit', title:'Opravit', skill:'yp+|yp+'
+      proc onclick () {
+        d_oprava.d_load(dd.seznam,dd.seznam.id.get); d_oprava.modal(100,100)
+    }}
+    button kopie [123,0,,] { title:'Zkopírovat', skill:'yp+|yp+'
+      proc onclick () {
+        d_novy.d_copy(dd.seznam.id.get); d_novy.modal(100,100)
+    }}
+    button novy [214,0,,] { title:'Nový', skill:'yp+|yp+'
+      proc onclick () {
+        d_novy.d_init(dd.seznam,5,dv.r_typ.get); d_novy.modal(100,100)
+    }}
+    button smazat [272,0,,] { title:'Smazat', skill:'yp+|yp+'
+      proc onclick () {
+        confirm(conc('Opravdu smazat doklad ',dd.seznam.org.get,dd.seznam.typ.get,dd.seznam.cislo.get,'?'));
+        pdenik.delete_record(conc('id_pokl=',dd.seznam.id.get));
+        dd.seznam.raise('onrowclick',dd.seznam.browse_seek(1))
+    }}
   }
   # -------------------------------------------------------------------------------------==> . výběr
-  form _d_vyber [,,294,270] { style:'border:1px solid #f5f5f5;backgroundColor:#ffeed6;MozBorderRadius:5px;zIndex:0'
+  form _d_vyber [,,320,214] { css:'ae_parm'
+
+    proc vyber_init() { r_typ.set(1); r_goa.set(1); letos.onclick; }
+
     var ro_pokl: text
     var rc_dat: text
     var rc_org: text
     var rc_typ: text
     var rc_sta: text
     var rc_goa: text
-    radio r_dat [14,13,266,62] { style:'border:1px solid #ddd'
-      case [0,3,100,16] { title:'Vše', expr:'1' },
-      case [0,23,100,16] { title:'Dne', expr:'2' },
-      case [0,43,100,16] { title:'Od', expr:'3' },
-      proc onchange () { zmena }
-    },
-    field rd_dne [74,33,87,20] { help:'dne|výběr jednoho dne', type:'date', format:'t'
-      proc onchange () { r_dat.set(2); zmena }
-    },
-    field rd_od [74,56,87,17] { help:'dne_od|výběr ode dne', type:'date', format:'t'
-      proc onchange () { r_dat.set(3); zmena }
-    },
-    label [169,59,17,17] { title:'Do' },
-    field rd_do [188,56,87,17] { help:'dne_do|výběr do dne', type:'date', format:'t'
-      proc onchange () { r_dat.set(3); zmena }
-    },
-    radio r_org [14,78,266,64] { style:'border:1px solid #ddd'
-      case [0,3,200,16] { title:'Všechny pokladny', expr:'1' },
-      case [0,23,200,16] { title:'Jediná', expr:'2' },
-      case [0,43,200,16] { title:'Více', expr:'3' },
-      proc onchange () { zmena }
-    },
-    select ro_1 [140,100,134,17] { type:'map', map_pipe:pokl.abbr, options:pokl.abbr, format:'t',
-      help:'pokladna|výběr jedné pokladny',
-      proc onchange () { r_org.set(2); ro_pokl.set(this.get); zmena }
-    },
-    field ro_n [140,121,131,17] { format:'t', help:'pokladny|počáteční písmena pokladen'
-      proc onchange () { r_org.set(3); ro_pokl.set(this.get); zmena }
-    }
-    radio r_typ [14,145,116,65] { style:'border:1px solid #ddd'
+
+    button vse   [222,10,,] { title:'celá pokladna'
+      proc onclick() {
+        rd_od.set("1.1.2000"); rd_do.set("31.12.2020"); zmena
+    }}
+    button letos [7,10,,] { title:'letošní pokladna'
+      proc onclick() { var rok:number
+        rok.set(fdate('Y'));
+        rd_od.set(conc("1.1.",rok)); rd_do.set(conc("31.12.",rok)); zmena
+    }}
+    button vloni [115,10,,] { title:'loňská pokladna'
+      proc onclick() { var rok:number
+        rok.set(sum(fdate('Y'),-1));
+        rd_od.set(conc("1.1.",rok)); rd_do.set(conc("31.12.",rok)); zmena
+    }}
+    button vyber [8,46,,] { title:'výběr období'
+      proc onclick() {
+        rd_od.set(rd_od.get); rd_do.set(rd_do.get); zmena
+    }}
+    field rd_od [123,47,87,17] { title:"^ode dne", help:'výběr ode dne', type:'date', format:'t'
+      proc onchange () { zmena
+    }}
+    field rd_do [217,47,87,17] { title:"^do dne", help:'výběr do dne', type:'date', format:'t'
+      proc onchange () { zmena
+    }}
+    radio r_typ [10,80,116,65] { style:'border:1px solid #ddd', value:'1'
       case [0,3,200,16] { title:'Výdaje i příjmy', expr:'1' },
       case [0,23,200,16] { title:'Výdaje', expr:'2' },
       case [0,43,200,16] { title:'Příjmy', expr:'3' },
-      proc onchange () { zmena }
-    },
-    radio r_sta [131,145,149,65] { style:'border:1px solid #ddd'
-      case [0,3,200,16] { title:'Všechny', expr:'1' },
-      case [0,23,200,16] { title:'Nevytištěné', expr:'2' },
-      case [0,43,200,16] { title:'Vytištěné', expr:'3' },
-      proc onchange () { zmena }
-    },
-    radio r_goa [14,213,266,41] { style:'border:1px solid #ddd'
+      proc onchange () { zmena
+    }}
+    radio r_goa [10,155,300,41] { style:'border:1px solid #ddd', value:'1'
       case [0,3,200,16] { title:'Pro všechny účely', expr:'1' },
       case [0,23,200,16] { title:'Jediný', expr:'2' },
-      proc onchange () { zmena }
-    },
-    select rf_goal [140,234,136,17] { type:'map', map_pipe:p_ucel.hodnota, options:p_ucel.zkratka,
+      proc onchange () { zmena
+    }}
+    select rf_goal [136,176,170,17] { type:'map', map_pipe:p_ucel.hodnota, options:p_ucel.zkratka,
       format:'t', help:'účel|výběr účelu'
-      proc onchange () { r_goa.set(2); zmena }
-    }
-  #   button st [207,12,100,13] { title:'standard' },
+      proc onchange () { r_goa.set(2); zmena
+    }}
     proc cond () {
-      rc_dat.set(cconc(eq(r_dat.get,1),'1'
-        ,eq(r_dat.get,2),conc(" datum='",date2sql(rd_dne.get),"'")
-        ,eq(r_dat.get,3),conc(" datum BETWEEN '",date2sql(rd_od.get),"' AND '",date2sql(rd_do.get),"'")));
-      rc_org.set(cconc(eq(r_org.get,1),''
-        ,eq(r_org.get,2),conc(" AND org='",ro_1.key,"'")
-        ,eq(r_org.get,3),conc(" AND LOCATE(left(ident,1),'",ro_n.get,"')>0")));
+      rc_dat.set(conc(" datum BETWEEN '",date2sql(rd_od.get),"' AND '",date2sql(rd_do.get),"'"));
+      rc_org.set(" AND org=5 ");
       rc_typ.set(cconc(eq(r_typ.get,1),'',eq(r_typ.get,2),' AND typ=1',eq(r_typ.get,3),' AND typ=2'));
-      rc_sta.set(cconc(eq(r_sta.get,1),'',eq(r_sta.get,2),' AND vytisten=0',eq(r_sta.get,3),' AND vytisten=1'));
       rc_goa.set(cconc(eq(r_goa.get,1),'',eq(r_goa.get,2),conc(" AND LOCATE('",rf_goal.get,"',ucel)")));
-      reload(conc(rc_dat.get,rc_org.get,rc_typ.get,rc_sta.get,rc_goa.get))
+      reload(conc(rc_dat.get,rc_org.get,rc_typ.get,rc_goa.get))
     }
     proc zmena () {
-      set_cookie('p_state','',form,'r_dat,rd_dne,rd_od,rd_do,r_org,ro_1,ro_n,ro_pokl,r_typ,r_sta,r_goa,rf_goal');
       cond
     }
   }
@@ -189,12 +161,12 @@ panel den {type:'plain', title:"Deník", _sys:'den'
   # ========================================================================================> . nový
   panel d_novy [0,0,482,370] { title:' nový doklad', type:'popup', css:'dialog'
     use d: form _d_doklad [1,1,,]
-    proc d_init (brw,org1,org,typ1) { d.init;
+    proc d_init (brw,org,typ1) { d.init;
       d.datum.set(now); d.datum.change;
       // pokud je vybrán typ, použij jej
       [ eq(typ1,2,3); d.sel_typ.key(cconc(eq(typ1,2),1,2)); d.sel_typ.change ];
-      // pokud je nastavena jediná pokladna použij ji
-      [ eq(org1,2); d.org.key(org); d.org.change ];
+      // nastav pokladnu
+      [ d.org.key(org); d.org.change ];
     }
     proc d_copy (id) {
       d.load(id); d.cislo.set(0); d.vytisten.set(0); d.copy
@@ -261,7 +233,8 @@ panel den {type:'plain', title:"Deník", _sys:'den'
     field datum [74,19,95,17] { type:'date', data:pdenik.datum },
     field typ [74,38,13,17] { format:'d' },
     field cislo [90,38,79,17] { data:pdenik.cislo, format:'d' },
-    select org [253,20,61,17] { type:'map', data:pdenik.org, options:pokl.abbr, map_pipe:pokl.abbr }
+    select org [253,20,61,17] { type:'map', data:pdenik.org, options:pokl.abbr, map_pipe:pokl.abbr,
+      format:'d' }
     select sel_typ [392,20,73,17] { type:'map', data:pdenik.typ, options:p_typ.hodnota
       proc onchange () { typ.set(p_typ.get(this.key,'zkratka')) }
     },
@@ -271,7 +244,7 @@ panel den {type:'plain', title:"Deník", _sys:'den'
     edit ucel [73,111,335,47] { data:pdenik.ucel },
     edit poznamka [73,161,391,143] { data:pdenik.poznamka },
     field priloh [320,311,24,17] { data:pdenik.priloh },
-    check vytisten [391,313,73,17] { data:pdenik.vytisten },
+#     check vytisten [391,313,73,17] { data:pdenik.vytisten },
     label [415,315,73,17] { title:'vytištěno' },
     button save [422,338,,] { type:'submit', title:'OK', help:'uložit změny',
       proc onclick () { _d_save }
@@ -296,48 +269,6 @@ panel den {type:'plain', title:"Deník", _sys:'den'
     # události
     proc onsubmit () { _d_save }
     proc onload () { typ.set(p_typ.get(sel_typ.key,'zkratka')) }
-  }
-  # ===============================================================================> report - doklad
-  report doklad [10,10,180,267] { format:'A4'
-    const P= 3.4, const Q= 56, const W= 132, const W3= 44,
-    const A= 15, const B= 13,
-    const H= 5,
-
-  #   box        [ 0,  0, 190, 277] { css:'O', title:'layout A4' },
-    box        [ 0,  0, 20, H] { css:'text', title:'Organizace' },
-    box typ    [ Q,  0, 70, H] { css:'bold', title:'PŘÍJMOVÝ POKLADNÍ DOKLAD' },
-    box org    [ 0,  4, 40,  H+H] { css:'org', title:'firma' },
-    box        [ Q,  H,  6, H] { css:'text', title:'č.:' },
-    box cislo  [ ^,  ~, 10, H] { css:'bold', title:'Pnnnn' },
-    box        [ Q,  ^, 12, H] { css:'text', title:'Ze dne' },
-    box datum  [ ^,  ~, 23, H] { css:'bold', title:'dd.mm.rrrr' },
-    box        [ ^,  ~, 19, H] { css:'text', title:'Přílohy:' },
-    box priloh [ ^,  ~,  7, H] { css:'bold', title:'nn' },
-    box suma   [ 0, A, W, $] { css:'O', xactive,
-      box op1    [ P, 2, 19, H] { css:'text', title:'Přijato Kč' },
-      box celkem [ ^, ~, 23, H] { css:'bold', title:'kkkkk.hh' },
-      box        [ Q, ~, 13, H] { css:'text', title:'Slovy:' },
-      box slovy  [ ^, ~, 60, H] { css:'bold', title:'k.........cettisíck......setk.....' },
-      box op2    [ P, ^+2, 55, H] { css:'text', title:'Přijato od (jméno a adresa)' },
-      box komu   [ Q, ~, 73, *] { css:'bold', title:'Jméno Příjmení, Obec, Ulice č., \n(číslo)' },
-    }
-    box radek  [ 0, ^, W, $+4] { css:'U', xactive
-      box        [ P, 2+^,100, H] { css:'text', title:'Účel' },
-      box        [ ^, ~, 25, H] { css:'numb', title:'Částka' },
-      box dalsi  [ 0, ^, W, $] {
-        box ucel   [ P, ^,100, H] { css:'bold', title:'Účel' },
-        box castka [ ^, ~, 25, H] { css:'br', title:'Částka' },
-      }
-    }
-    box dole1  [ 0, ^, W3,  B] { css:'U', xactive
-      box schvalil [ P, 2, 40, H] { css:'text', title:'Schválil' },
-    }
-    box dole2  [ ^, ~, W3,  B] { css:'_', xactive
-      box prijem [ P, 2, 20, H] { css:'text', title:'Podpis příjemce' },
-    }
-    box        [ ^, ~, W3,  B] { css:'U', xactive
-      box        [ P, 2, 20, H] { css:'text', title:'Podpis pokladníka' },
-    }
   }
 }
 # =======================================================================================> INFORMACE
@@ -372,7 +303,6 @@ panel inf {type:'right', title:"Informace", _sys:'inf'
 panel nas {type:'plain', title:"Nastavení", _sys:'nas',   skill:'yp+|yp+'
 
   use os: form _o_seznam [12,4,,]
-  use oc: form _o_cmd [6,142,,]
   use zs: form _z_seznam [12,181,,]
   use zc: form _z_cmd [7,508,,]
 
@@ -388,25 +318,8 @@ panel nas {type:'plain', title:"Nastavení", _sys:'nas',   skill:'yp+|yp+'
       show ic [,,80,] { title:'IČ', data:pokladna.ic, format:'s' },
       show dic [,,80,] { title:'DIČ', data:pokladna.dic, format:'s' },
       show id [,,0,] { data:pokladna.id_pokladna },
-      proc onsubmit () { o_oprava.modal(300,100) }
     },
     label [6,6,267,17] { title:'<b>Seznam organizací a jejich pokladen</b>' },
-  }
-  # ----------------------------------------------------------------------------------------==> . oc
-  form _o_cmd [,,300,20] {
-    button oprav [18,1,,] { type:'submit', title:'Opravit'
-      proc onclick () { o_oprava.modal(300,100) }
-    }
-    button novy [214,1,,] { title:'Nová'
-      proc onclick () { o_novy.modal(300,100) }
-    }
-    button smazat [272,1,,] { title:'Smazat'
-      proc onclick () {
-        confirm(conc('Opravdu smazat pokladnu ',os.seznam.abbr.get,'?'));
-        pokladna.delete_record(conc('id_pokladna=',os.seznam.id.get));
-        os.seznam.raise('onrowclick',os.seznam.browse_seek(1))
-      }
-    }
   }
   # ----------------------------------------------------------------------------------------==> . zs
   form _z_seznam [,,708,354] { css:'ae_parm'
@@ -443,40 +356,6 @@ panel nas {type:'plain', title:"Nastavení", _sys:'nas',   skill:'yp+|yp+'
         zs.seznam.raise('onrowclick',zs.seznam.browse_seek(1))
       }
     }
-  }
-  # ====================================================================================> . o_oprava
-  panel o_oprava [0,0,400,160] { title:'oprava organizace', type:'popup', css:'dialog'
-    use o: form _o_org [2,19,,],
-    proc onfocus() { o_load(os.seznam.id.get); }
-    proc o_load (id) { o.load(id) }
-  }
-  # ======================================================================================> . o_novy
-  panel o_novy [0,0,400,160] { title:'nová organizace', type:'popup', css:'dialog'
-    use o: form _o_org [1,1,,],
-    proc onfocus() { o.init }
-  }
-  # ----------------------------------------------------------------------------------------==> . org
-  form _o_org [,,300,100] {
-    label [12,20,30,20] { title:'Označení' },
-    label [134,81,30,17] { title:'IČ' },
-    field [74,18,15,17] { data:pokladna.abbr },
-    field [170,18,207,17] { data:pokladna.nazev },
-    field [170,38,208,17] { data:pokladna.ulice },
-    field [170,58,65,17] { data:pokladna.psc },
-    field [297,59,81,17] { data:pokladna.obec },
-    label [131,22,30,17] { title:'Název' },
-    label [131,41,30,17] { title:'Ulice' },
-    label [132,62,30,17] { title:'Psč' },
-    label [253,61,30,17] { title:'Město' },
-    label [255,79,30,17] { title:'DIČ' },
-    field [172,78,65,17] { data:pokladna.ic },
-    field [297,79,81,17] { data:pokladna.dic },
-    button save [337,108,,] { type:'submit', title:'OK', help:'uložit změny',
-      proc onclick () {   the_formsave(form,os.seznam); panel.hide(form.key); stop }
-    },
-    button cancel [242,109,,] { title:'Storno', help:'zadané údaje neukládat, vrátit se zpět'
-      proc onclick () { panel.hide(0) }
-    },
   }
   # ----------------------------------==> . z_oprava
   panel z_oprava [0,0,300,156] { title:'oprava zaměstnance', type:'popup', css:'dialog'

@@ -1180,7 +1180,7 @@ form _rodina2 [,,360,229]  { css:'ae_frame'
   // globální procedury
   proc new_rodina(nazev) {
     form.display(0,'[^f]'); r_access.display(1); cleni.display(1); form.enable(1,'.*');
-    form.init; rodiny0.set(nazev); r_access.set(my_org.get);
+    form.init; rodiny0.set(nazev); r_access.set(my_org.get); r_access.change;
     form.stacks('n,r','down',0,0,10);
     form.display(1,'[rns]'); form.display(0,'a');
     foreach(array(rodiny0),obligatory);
