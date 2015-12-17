@@ -1536,31 +1536,43 @@ function ucast2_chain_oso($idoo,$idr=0) {
   $msg= $dup= $keys= '';
   if ( $nx==0 ) {
     // není duplicita
-    $msg= ($nx0 ? "asi " : "určitě ")." není duplicitní";
+//     $msg= ($nx0 ? "asi " : "určitě ")." není duplicitní";
   }
   elseif ( $nx==1 ) {
     // jednoznačná duplicita
     $keys= $i0;
-    $dup= $x[$i0]->asi;
-    $msg= "pravděpodobně ($dup) duplicitní s osobou $ido "
-          . ($xi->org==1 ? " z YS" : ($xi->org==2 ? " z FA" : ''));
+    // ujistíme se, že nebyli oznámeni jako různé tzv. _track(klic=idoo,op=r,val=idc)
+    $r= select("COUNT(*)","_track","klic=$idoo AND op='r' AND val=$ido");
+    if ( !$r ) {
+      $dup= $x[$i0]->asi;
+      $msg= "$idoo je pravděpodobně ($dup) kopie osoby $ido "
+            . ($xi->org==1 ? " z YS" : ($xi->org==2 ? " z FA" : ''));
+    }
   }
   else {
     // více možností
     uasort($x,function($a,$b) { return $a->asi > $b->asi ? -1 : +1; });
-    $msg= "je $nx pravděpodobných duplicit:";
+    $msg= '';
     $del= '';
+    $nx= 0;
     foreach ($x as $i=>$xi) {
-      $dupi= $xi->asi;
-      if ( !$dup ) $dup= $dupi;
-      $mira= strpos($dupi,'n')!==false || strpos($dupi,'k')!==false ? "pravděpodobně" : "možná";
-      $msg.= "<br>$mira ($dupi) duplicitní s osobou $i"
-          . ($xi->org==1 ? " z YS" : ($xi->org==2 ? " z FA" : ''));
-      $keys.= "$del$i";
-      $del= ',';
+      // ujistíme se, že nebyli oznámeni jako různé tzv. _track(klic=idoo,op=r,val=idc)
+      $r= select("COUNT(*)","_track","klic=$idoo AND op='r' AND val=$i");
+      if ( !$r ) {
+        $nx++;
+        $dupi= $xi->asi;
+        if ( !$dup ) $dup= $dupi;
+        $mira= strpos($dupi,'n')!==false || strpos($dupi,'k')!==false ? "pravděpodobně" : "možná";
+        $msg.= "$del je $mira ($dupi) kopie  osoby $i"
+            . ($xi->org==1 ? " z YS" : ($xi->org==2 ? " z FA" : ''));
+        $keys.= "$del$i";
+        $del= ',';
+      }
     }
+    $msg= $nx ? ( $nx==1 ? "$idoo$msg" : "$idoo má $nx pravděpodobných kopií:$msg" ) : '';
   }
   $ret->msg= $msg;
+                                                if ( $msg ) display($msg);
   $ret->dup= $dup;
   $ret->keys= $keys;
 end:
@@ -1875,7 +1887,7 @@ function ucast2_browse_ask($x,$tisk=false) {
             list($role,$ir,$access)= explode(':',$rod);
             $naz= $rodina[$ir]->nazev;
             $kmen= $kmen ? ($role=='a' || $role=='b' ? $naz : $kmen) : $naz;
-  //                                                 display("$o->jmeno/$role: $kmen ($naz,$ir)");
+//                                                 display("$o->jmeno/$role: $kmen ($naz,$ir)");
             $r.= ",$naz:$ir:$access";
           }
           $cleni.= "~$r";                                           // rody
@@ -1883,8 +1895,8 @@ function ucast2_browse_ask($x,$tisk=false) {
           $o->_kmen= "$kmen/$id_kmen";
           $cleni.= "~" . sql_date1($o->narozeni);                   // narozeniny d.m.r
           # doplnění textů z kmenové rodiny pro zobrazení rodinných adres (jako disabled)
-  //                                                 debug($o,"browse - o");
-  //                                                 debug($rodina[$id_kmen],"browse - kmen=$id_kmen");
+//                                                 debug($o,"browse - o");
+//                                                 debug($rodina[$id_kmen],"browse - kmen=$id_kmen");
           if ( !$o->adresa ) {
             $o->ulice= "®".$rodina[$id_kmen]->ulice;
             $o->psc=   "®".$rodina[$id_kmen]->psc;
@@ -2035,7 +2047,7 @@ function ucast2_browse_ask($x,$tisk=false) {
       // výběr řazení: numerické | alfanumerické
       $numeric= in_array($test_clmn,array('skupina'));
       if ( $numeric ) {
-                                        display("usort $test_clmn $test_asc/numeric");
+//                                         display("usort $test_clmn $test_asc/numeric");
         usort($zz,function($a,$b) {
           global $test_clmn,$test_asc;
           $c= $a->$test_clmn == $b->$test_clmn ? 0 : ($a->$test_clmn > $b->$test_clmn ? 1 : -1);
