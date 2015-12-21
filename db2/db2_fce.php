@@ -5204,24 +5204,17 @@ function akce2_vyuctov_pary2($akce,$par,$title,$vypis,$export=false) { trace();
   $tit= "Manželé:25"
       . ",pokoj:7,dětí:5:r,lůžka:5:r:s,přis týlky:5:r:s,kočá rek:5:r:s,nocí:5:r:s"
       . ",str. celá:5:r:S,str. pol.:5:r:s"
-//       . ",platba ubyt.:7:r:s,platba strava:7:r:s,platba režie:7:r:s,sleva:7:r:s"
-//       . ",CD:6:r:s"
       . ",poplatek dospělí:8:r:s"
       . ",na účet:7:r:s,datum platby:10:d"
       . ",poplatek děti:8:r:s,na účet děti:7:r:s,datum platby děti:10:d"
       . ",nedo platek:7:r:s,pokladna:6:r:s,přepl.:6:r:s,poznámka:50,SPZ:9"
-//       . ",.:7,ubyt.:8:r:s,strava:8:r:s,režie:8:r:s,zapla ceno:8:r:s"
-//       . ",dota ce:6:r:s,nedo platek:6:r:s,dar:7:r:s"
       . ",rozpočet dospělí:10:r:s,rozpočet děti:10:r:s"
       . "";
   $fld= "manzele"
       . ",pokoj,_deti,luzka,pristylky,kocarek,=pocetnoci,strava_cel,strava_pol"
-//       . ",platba1,platba2,platba3,platba4"
-//       . ",=cd"
       . ",=platit,platba,datplatby"
       . ",poplatek_d,platba_d,datplatby_d"
       . ",=nedoplatek,=pokladna,=preplatek,poznamka,spz"
-//       . ",,=ubyt,=strava,=rezie,=zaplaceno,=dotace,=nedopl,=dar"
       . ",=naklad,naklad_d"
       . "";
   $cnd= 1;
@@ -5364,12 +5357,6 @@ function akce2_vyuctov_pary2($akce,$par,$title,$vypis,$export=false) { trace();
       ,"dotace dospělí","=[=naklad,s]-[=platit,s]"
       ,"dotace děti","=[naklad_d,s]-[poplatek_d,s]"
    );
-//     $result->DPH= array(
-//       "základ","=[=ubyt,s]+[=strava,s]+[=rezie,s]"
-//      ,"DPH ".($DPH2*100)."%","=[=stravaDPH,s]"
-//      ,"DPH ".($DPH1*100)."%","=[=ubytDPH,s]"
-//      ,"předpis celkem","=[=ubyt,s]+[=strava,s]+[=rezie,s]+[=stravaDPH,s]+[=ubytDPH,s]"
-//    );
   }
   else {
     // titulky

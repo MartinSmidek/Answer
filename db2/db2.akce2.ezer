@@ -178,7 +178,7 @@ form right [,,*,50] {
   }
   proc append(x) { note.get; note.set(conc(note.get,'<br>',x)) | note.set(x) }
 }
-# ------------------------------------------------------------------ obecné tabulky
+# =========================================================================================> TABULKY
 table _file_ {
   text fid
   date fdate
@@ -226,6 +226,11 @@ table _track { key_id:'id_track'
   text op { help:'operace' },
   text old { help:'původní hodnota' },
   text val { help:'nová hodnota' },
+}
+table psc_axy { key_id:'psc', db:'uir_adr'
+  text psc
+  number lat
+  number lng
 }
 # =========================================================================================== CHLAPI
 # table chlapi { key_id:'id_chlapi', db:'ezer_ys'

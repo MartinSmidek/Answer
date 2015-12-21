@@ -11,11 +11,11 @@
     array( // ostré
       'setkani' =>      array(0,'192.168.1.146','gandi','','cp1250','setkani',1)), // 1=vynechat zálohování
     array( // lokální
-      'setkani' =>      array(0,'localhost','gandi','','utf8','setkani',1))        // 1=vynechat zálohování
+      'setkani' =>      array(0,'localhost','gandi','','cp1250','setkani',1))        // 1=vynechat zálohování
   );
   $php= array(
     'db2/db2_fce.php',
-    'db2/ys2_fce.php'
+    'db2/db2_ys2_fce.php'
   );
   $ezer= array(
   );

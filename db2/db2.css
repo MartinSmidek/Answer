@@ -4,7 +4,7 @@
 /* styly pro wait - viz Tutorial */
 
 #wait_mask {
-  display:block;
+  display:none; top:0;
   opacity: 0.9; background-color: rgba(51, 51, 51, 0.08);
   padding:30px; position:absolute; z-index:996; width:100%; height:100%; }
 #wait {

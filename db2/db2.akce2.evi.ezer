@@ -287,17 +287,20 @@ form _lst [,,370,*] {
       | this.set(0); filtr_osob.filtr_clear };
       ido.set(0); bo_reload(bo_cnd.get);
   }}
-  view o: table osoba
+  view o:  table osoba
   view ot: table tvori  { join_type:"LEFT", join:"USING(id_osoba)" }
   view of: table rodina { join_type:"LEFT", join:"USING(id_rodina)" }
   view os: table spolu  { join_type:"LEFT", join:"USING(id_osoba)" }
   view op: table pobyt  { join_type:"LEFT", join:"USING(id_pobyt)" }
+  view u: table psc_axy { join_type:"LEFT", join:"ON u.psc=IF(o.adresa,o.psc,of.psc)" }
   browse bo [10,30,,] {tag:'o', group_by:'o.id_osoba'
       rows:27, buf_rows:60, qry_rows:1, css_rows:'barva,0:neucast'
     show id_o { data:o.id_osoba }
     show id_t { data:ot.id_tvori }
     show id_r { data:of.id_rodina }
     show id_p { data:os.id_pobyt }
+    show lat  { data:u.lat }
+    show lng  { data:u.lng }
     show _rodin { expr:"COUNT(*)" }
     show barva { expr:"o.deleted=''" }
     show _funkce { expr:"GROUP_CONCAT(DISTINCT op.funkce)" }
@@ -312,14 +315,17 @@ form _lst [,,370,*] {
     // volitelná položka
     show mail  [,,44,] { data:o.email, title:'emaily',help:'osobní emaily', format:'tq%s' }
     show _id_o [,,0,] { data:o.id_osoba, title:'ID osoby',help:'osobní číslo', format:'rq*s' }
-    proc onrowclick() { ido.set(id_o.get); page.evid_load(ido.get,0); }
+    proc onrowclick() {
+      ido.set(id_o.get); page.evid_load(ido.get,0);
+      [ page.map.on.get; lat.get; page.map.mapa_curr(lat.get,lng.get) ];
+    }
     proc onclick() {
       mail.width; mail.width(0);  _id_o.width(44)
     |             mail.width(44); _id_o.width(0)
     }
   }
   # ==============================================> M - OSOBY+MAPA
-  var bm_having= 1, bm_qry= "SELECT 1 AS id_o,1 AS access,'Kamarád' AS prijmeni"
+  var bm_having= 1
   proc bm_reload(cnd) {
     [ virgin.get; start ];
     page.map.mapa_clear;

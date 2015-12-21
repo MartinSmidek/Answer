@@ -82,6 +82,7 @@ db2/db2.ds.kl.ezer -text
 db2/db2.pok.ezer -text
 db2/db2_fce.js -text
 db2/db2_fce.php -text
+db2/db2_ys2_fce.php -text
 db2/img/+logo.gif -text
 db2/img/-logo.gif -text
 db2/img/db2.png -text
@@ -90,7 +91,6 @@ db2/img/page_vr.png -text
 db2/img/schema_db_2014.png -text
 db2/img/schema_db_2015.png -text
 db2/img/spinner.gif -text
-db2/ys2_fce.php -text
 /db2_test.inc -text
 /db2_test.php -text
 db2_test/$.ezer -text
