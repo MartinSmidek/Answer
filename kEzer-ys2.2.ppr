@@ -43,7 +43,7 @@ kEzer-ys2
 		tut\tut.php
 		tut\tut.the.ezer
 		tut\tut.the.php
-	-answer
+	+answer
 		answer.inc
 		answer.php
 		index.php
@@ -310,7 +310,7 @@ kEzer-ys2
 29=tut\tut.css.php
 [Selected Project Files]
 Main=
-Selected=db\db_akce.php
+Selected=answer.inc
 [tut\.htaccess]
 TopLine=1
 Caret=2,9
@@ -321,12 +321,12 @@ Caret=24,32
 TopLine=65
 Caret=46,84
 [ezer2.2\server\ae_slib.php]
-TopLine=2071
+TopLine=2092
 Caret=18,2092
 BookMark1=11,422
 BookMark2=15,702
 [ezer2.2\server\ezer2.php]
-TopLine=2407
+TopLine=2436
 Caret=34,2439
 BookMark1=95,1540
 BookMark2=25,2360
@@ -373,7 +373,7 @@ TopLine=696
 Caret=23,714
 [db\db_akce.php]
 TopLine=7159
-Caret=69,7199
+Caret=7,7190
 [ezer2.2\dbg.php]
 TopLine=67
 Caret=75,80
@@ -411,10 +411,10 @@ Caret=1,93
 TopLine=1
 Caret=37,10
 [answer.php]
-TopLine=26
+TopLine=38
 Caret=60,26
 [answer.inc]
-TopLine=1
+TopLine=23
 Caret=1,1
 [tut\tut.php]
 TopLine=69

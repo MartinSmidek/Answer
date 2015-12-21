@@ -673,7 +673,7 @@ function ds_hoste($orders,$rok) {  #trace('','win1250');
 # ASK
 # ------------------------------------------------------------------------------------ ds_xls_zaloha
 # definice Excelovského listu - zálohové faktury
-function ds_xls_zaloha($order) {  #trace('','win1250');
+function ds_xls_zaloha($order) {  trace();//'','win1250');
   global $ezer_path_serv;
   $html= " nastala chyba";
   $name= "zal_$order";
@@ -703,7 +703,7 @@ end:
 #  platce:[nazev,adresa,telefon,ic]
 #  polozky:[[nazev,cena,dph,pocet]...]
 # }
-function ds_zaloha($order) {  #trace('','win1250');
+function ds_zaloha($order) {  trace();// '','win1250');
   global $ds_cena;
   $x= (object)array();
   // zjištění údajů objednávky
@@ -760,7 +760,7 @@ end:
 # definice Excelovského listu - faktury podle seznamu účastníků
 # položka,počet osob,počet nocí,počet nocolůžek,cena jednotková,celkem,DPH 9%,DPH 19%,základ
 # *ubytování
-function ds_xls_faktury($order) {  trace('','win1250');
+function ds_xls_faktury($order) {  trace(); //'','win1250');
   global $ds_cena;
   $html= " nastala chyba";
   $test= 1;
@@ -1138,6 +1138,7 @@ end:
 # }
 function ds_rozpis_faktura($listr,$listf,$typ,$order,$x,$polozky,$platce,$zaloha=100,$pata,$zaloha,&$suma) {
                                                 trace('','win1250');
+  $koef_dph= dph_koeficienty();
   list($ic,$dic,$adresa,$akce,$obdobi)= $platce;
 //                                              debug($platce,'platce',(object)array('win1250'=>1));
   $vystaveno= Excel5_date(time());
@@ -1205,10 +1206,12 @@ __XLS;
   $n= $D;
   if ( count($druhy) )
   foreach($druhy as $druh=>$dph) {
+    $koef= $koef_dph[round($dph*100)];
     $xls.= <<<__XLS
       |H$n $druh::right                |H$n:J$n merge right
       |K$n $dph                        ::proc border=h right
-      |L$n =SUMIF(G$P:G$Q,H$n,L$P:L$Q) ::kc   border=h right
+      |L$n =SUMIF(G$P:G$Q,H$n,L$P:L$Q) ::kc border=h right
+      |O$n $koef                       ::kc color=$c_okraj
 __XLS;
     $n++;
   }
@@ -1272,12 +1275,14 @@ __XLS;
   $n= $P;
   $d= $D;
   for ($i= 0; $i<count($druhy); $i++ ) {
+    $koef= $koef_dph[round($dph*100)];
     $xls.= <<<__XLS
       |C$n ='$listr'!H$d          |C$n:G$n merge
       |H$n ='$listr'!L$d   ::kc   |H$n:J$n merge
       |K$n ='$listr'!K$d   ::proc
       |L$n =H$n-M$n        ::kc
-      |M$n =H$n/(1+K$n)    ::kc
+      |M$n =H$n*'$listr'!O$d    ::kc
+//       |M$n =H$n/(1+K$n)    ::kc
 __XLS;
     $n++; $d++;
   }
@@ -1323,7 +1328,7 @@ __XLS;
 # platce= [nazev,adresa,telefon,ic]
 # polozky= [[nazev,cena,dph,pocet,sleva]...]
 # }
-function ds_faktura($list,$typ,$order,$polozky,$platce,$zaloha=100,$pata='') {  #trace('','win1250');
+function ds_faktura($list,$typ,$order,$polozky,$platce,$zaloha=100,$pata='') {  trace();//,'win1250');
   list($ic,$dic,$adresa,$akce,$obdobi)= $platce;
   $vystaveno= Excel5_date(time());
   $ymca_setkani= "YMCA Setkání, spolek{}Talichova 53, 62300 Brno{}".
@@ -1391,10 +1396,13 @@ __XLS;
   // řádky $P-$Q -- položky
   $n= $P;
   $sazby_dph= array();
+  $koef_dph= dph_koeficienty(); //==> . koeficienty DPH podle zákona o DPH
   foreach ($polozky as $i=>$polozka) {
     list($nazev,$cena,$dph,$pocet,$druh,$sleva)= $polozka;
     if (!in_array($dph,$sazby_dph) ) $sazby_dph[]= $dph;
     if ( $pocet ) {
+      $koef= $koef_dph[round($dph*100)];
+      if ( $dph && !$koef ) fce_error(100*$dph." je neznámá sazba");
       $xls.= <<<__XLS
         |C$n $nazev                |C$n:E$n merge
         |F$n $pocet                |F$n:G$n merge
@@ -1402,7 +1410,7 @@ __XLS;
         |J$n $sleva        ::proc
         |K$n $dph          ::proc
         |L$n =O$n-M$n      ::kc
-        |M$n =O$n/(1+K$n)  ::kc
+        |M$n =O$n*$koef    ::kc
         |O$n =F$n*H$n*(1-J$n) ::kc color=$c_okraj
 __XLS;
       $n++;
