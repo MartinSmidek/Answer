@@ -6489,7 +6489,7 @@ function evid2_browse_mailist($x) {
       // výběr řazení: numerické | alfanumerické
       $numeric= in_array($test_clmn,array('_id_o'));
       if ( $numeric ) {
-                                        display("usort $test_clmn $test_asc/numeric");
+//                                         display("usort $test_clmn $test_asc/numeric");
         usort($zz,function($a,$b) {
           global $test_clmn,$test_asc;
           $c= $a->$test_clmn == $b->$test_clmn ? 0 : ($a->$test_clmn > $b->$test_clmn ? 1 : -1);
@@ -9112,7 +9112,7 @@ function mail2_gen_excel($gq,$nazev) { trace();
   $gr= @mysql_query($gq);
   if ( !$gr ) { fce_warning(mysql_error()); goto end; }
   while ( $gr && ($g= mysql_fetch_object($gr)) ) {
-                                                display('');
+//                                                 display('');
     foreach ($g as $f => $val) {
       if ( in_array($f,$fields) ) {
         $a= $val;
@@ -10386,5 +10386,265 @@ function track_revert($ids) {  trace();
     }
   }
   return $ret;
+}
+# ================================================================================> db2_kontrola_dat
+# kontrola dat
+#  -  nulové klíče
+function db2_kontrola_dat($par) { trace();
+  $html= '';
+  $auto= " <b>LZE OPRAVIT AUTOMATICKY</b>";
+  $uziv= " <b>NUTNO OPRAVIT RUČNĚ</b>";
+  $n= 0;
+  $opravit= $par->opravit ? true : false;
+  // kontrola nenulovosti klíčů ve spojovacích záznamech
+  // ----------------------------------------------==> .. nulové klíče ve SPOLU
+  $msg= '';
+  $ok= '';
+  $cond= "id_pobyt=0 OR spolu.id_osoba=0 ";
+  $qry=  "SELECT id_spolu,spolu.id_osoba,spolu.id_pobyt,
+            CONCAT(a.nazev,' ',YEAR(datum_od)) AS nazev,prijmeni,jmeno
+          FROM spolu
+          LEFT JOIN pobyt AS p USING(id_pobyt)
+          LEFT JOIN akce  AS a ON a.id_duakce=p.id_akce
+          LEFT JOIN osoba AS o ON o.id_osoba=spolu.id_osoba
+          WHERE $cond";
+  $res= mysql_qry($qry);
+  while ( $res && ($x= mysql_fetch_object($res)) ) {
+    $n++;
+    if ( $opravit ) {
+      $ok= mysql_qry("DELETE FROM spolu WHERE id_spolu={$x->id_spolu} AND ($cond)",1)
+         ? " = SMAZÁNO" : ' !!!!!CHYBA při mazání' ;
+    }
+    if ( !$x->id_pobyt && !$x->id_osoba )
+      $msg.= "<dd>záznam spolu={$x->id_spolu} je nulový$ok</dd>";
+    if ( !$x->id_osoba )
+      $msg.= "<dd>osoba=0 v záznamu spolu={$x->id_spolu} pobytu={$x->id_pobyt} akce {$x->nazev}$ok</dd>";
+    if ( !$x->id_pobyt )
+      $msg.= "<dd>pobyt=0 v záznamu spolu={$x->id_spolu} osoby {$x->prijmeni} {$x->jmeno}$ok</dd>";
+  }
+  $html.= "<dt style='margin-top:5px'> tabulky <b>spolu</b>: nulové klíče osoby nebo pobytu"
+    .($msg?"$auto$msg":"<dd>ok</dd>")."</dt>";
+  // ----------------------------------------------==> .. násobné SPOLU
+  $msg= '';
+  $qry=  "SELECT GROUP_CONCAT(id_spolu) AS _ss,id_pobyt,s.id_osoba,count(*) AS _pocet_,
+            CONCAT(a.nazev,' ',YEAR(datum_od)) AS nazev,prijmeni,jmeno
+          FROM spolu AS s
+          LEFT JOIN pobyt AS p USING(id_pobyt)
+          LEFT JOIN akce  AS a ON a.id_duakce=p.id_akce
+          LEFT JOIN osoba AS o ON o.id_osoba=s.id_osoba
+          GROUP BY s.id_osoba,id_pobyt HAVING _pocet_>1
+          ORDER BY id_akce";
+  $res= mysql_qry($qry);
+  while ( $res && ($x= mysql_fetch_object($res)) ) {
+    $n++;
+    $ok= '';
+    if ( $opravit ) {
+      $ss= explode(',',$x->_ss);
+      unset($ss[0]);
+      $ss= implode(',',$ss);
+      if ( count($ss) ) {
+        $ok= mysql_qry("DELETE FROM spolu WHERE id_spolu IN ($ss)")
+          ? (" = spolu SMAZÁNO ".mysql_affected_rows().'x') : ' CHYBA při mazání spolu' ;
+      }
+    }
+    $ido= tisk2_ukaz_osobu($x->id_osoba);
+    $msg.= "<dd>násobný pobyt záznamem spolu={$x->id_spolu} na akci <b>{$x->nazev}</b>
+      osoby $ido:{$x->prijmeni} {$x->jmeno} $ok</dd>";
+  }
+  $html.= "<dt style='margin-top:5px'>tabulka <b>spolu</b>: zdvojení osoby ve stejném pobytu"
+    .($msg?"$auto$msg":"<dd>ok</dd>")."</dt>";
+  // ---------------------------------------==> .. zdvojení osoby v různých pobytech na stejné akci
+  $msg= '';
+  $qry=  "SELECT s.id_osoba,GROUP_CONCAT(id_pobyt) AS _sp,count(DISTINCT id_pobyt) AS _pocet_,
+            CONCAT(a.nazev,' ',YEAR(datum_od)) AS nazev,prijmeni,jmeno
+          FROM spolu AS s
+          LEFT JOIN pobyt AS p USING(id_pobyt)
+          LEFT JOIN akce  AS a ON a.id_duakce=p.id_akce
+          LEFT JOIN osoba AS o ON o.id_osoba=s.id_osoba
+          WHERE platba+platba_d=0 AND funkce!=99
+          GROUP BY id_osoba,id_akce HAVING _pocet_>1
+          ORDER BY id_akce";
+  $res= mysql_qry($qry);
+  while ( $res && ($x= mysql_fetch_object($res)) ) {
+    $n++;
+    $ok= '';
+    if ( $opravit ) {
+      $sp= explode(',',$x->_sp);
+      unset($sp[0]);
+      $sp= implode(',',$sp);
+      $ok.= mysql_qry("DELETE FROM spolu WHERE id_pobyt IN ($sp) AND id_osoba={$x->id_osoba}")
+         ? (" = spolu SMAZÁNO ".mysql_affected_rows().'x') : ' CHYBA při mazání spolu' ;
+    }
+    $ido= tisk2_ukaz_osobu($x->id_osoba);
+    $msg.= "<dd>násobný pobyt na akci {$x->nazev} - záznamy pobyt {$x->_p} pro
+      osobu $ido:{$x->prijmeni} {$x->jmeno} $ok</dd>";
+  }
+  $html.= "<dt style='margin-top:5px'>tabulka <b>pobyt</b>: zdvojení osoby v různých pobytech na stejné akci"
+    .($msg?"$auto$msg":"<dd>ok</dd>")."</dt>";
+  // ---------------------------------------==> .. nulové hodnoty v tabulce TVORI
+  $msg= '';
+  $cond= "tvori.id_rodina=0 OR tvori.id_osoba=0 ";
+  $qry=  "SELECT id_tvori,role,tvori.id_osoba,tvori.id_rodina,r.nazev,prijmeni,jmeno
+          FROM tvori
+          LEFT JOIN rodina AS r USING(id_rodina)
+          LEFT JOIN osoba AS o ON o.id_osoba=tvori.id_osoba
+          WHERE $cond ";
+  $res= mysql_qry($qry);
+  while ( $res && ($x= mysql_fetch_object($res)) ) {
+    $n++;
+    if ( $opravit ) {
+      $ok= mysql_qry("DELETE FROM tvori WHERE id_tvori={$x->id_tvori} AND ($cond)",1)
+         ? " = SMAZÁNO" : ' !!!!!CHYBA při mazání' ;
+    }
+    if ( !$x->id_pobyt && !$x->id_osoba )
+      $msg.= "<dd>záznam tvori={$x->id_tvori} je nulový</dd>";
+    if ( !$x->id_osoba )
+      $msg.= "<dd>osoba=0 v záznamu tvori={$x->id_spolu} rodiny={$x->id_rodina} {$x->nazev}$ok</dd>";
+    if ( !$x->id_rodina )
+      $msg.= "<dd>rodina=0 v záznamu tvori={$x->id_tvori} osoby {$x->prijmeni} {$x->jmeno}$ok</dd>";
+  }
+  $html.= "<dt style='margin-top:5px'>tabulka <b>tvori</b>: nulové hodnoty v tabulce TVORI"
+    .($msg?"$auto$msg":"<dd>ok</dd>")."</dt>";
+  # -----------------------------------------==> .. násobné členství v rodině
+  $msg= '';
+  $qry=  "SELECT GROUP_CONCAT(id_tvori) AS _ts,count(*) AS _pocet_,GROUP_CONCAT(DISTINCT role) AS _role_,
+            tvori.id_osoba,tvori.id_rodina,r.nazev,prijmeni,jmeno
+          FROM tvori
+          LEFT JOIN rodina AS r USING(id_rodina)
+          LEFT JOIN osoba AS o ON o.id_osoba=tvori.id_osoba
+          GROUP BY id_osoba,id_rodina HAVING _pocet_>1
+          ORDER BY id_rodina ";
+  $res= mysql_qry($qry);
+  while ( $res && ($x= mysql_fetch_object($res)) ) {
+    $n++;
+    $ok= '';
+    $ts= explode(',',$x->_ts);
+    if ( $opravit && strlen($x->_role_)==1 ) {
+      $ok.= mysql_qry("DELETE FROM tvori WHERE id_tvori={$ts[0]}",1)
+         ? " = SMAZÁNO" : ' !!!!!CHYBA při mazání' ;
+    }
+    $ido= tisk2_ukaz_osobu($x->id_osoba);
+    $idr= tisk2_ukaz_rodinu($x->id_rodina);
+    $msg.= "<dd>násobné členství záznamem tvori=({$x->_ts}) v rodině $idr:{$x->nazev}
+      osoby $ido:{$x->prijmeni} {$x->jmeno} v roli {$x->_role_}  $ok</dd>";
+  }
+  $html.= "<dt style='margin-top:5px'>tabulka <b>tvori</b>: násobné členství osoby v rodině"
+    .($msg?"{$auto} pokud osoba nemá více rolí$msg":"<dd>ok</dd>")."</dt>";
+  # -----------------------------------------==> .. mnoho otců/matek
+  $msg= '';
+  $qry=  "SELECT SUM(IF(role='a',1,0)) AS _otcu, SUM(IF(role='b',1,0)) AS _matek, id_rodina, nazev
+          FROM tvori
+          LEFT JOIN rodina AS r USING(id_rodina)
+          GROUP BY id_rodina HAVING _otcu>1 OR _matek>1
+          ORDER BY id_rodina ";
+  $res= mysql_qry($qry);
+  while ( $res && ($x= mysql_fetch_object($res)) ) {
+    $n++;
+    $idr= tisk2_ukaz_rodinu($x->id_rodina);
+    if ( $x->_otcu>1 )
+      $msg.= "<dd>{$x->_otcu} muži v roli 'a' v rodině $idr:{$x->nazev}</dd>";
+    if ( $x->_matek>1 )
+      $msg.= "<dd>{$x->_matek} ženy v roli 'b' v rodině $idr:{$x->nazev}</dd>";
+  }
+  $html.= "<dt style='margin-top:5px'>tabulka <b>tvori</b>: nestandardní počet otců='a', matek='b' v rodině"
+    .($msg?"$uziv$msg":"<dd>ok</dd>")."</dt>";
+  // -------------------------------------------==> .. tabulka OSOBA, SPOLU, TVORI
+  $msg= '';
+  $rx= mysql_qry("
+    SELECT o.id_osoba,id_dar,id_platba,s.id_spolu,p.id_pobyt,a.id_duakce,
+      a.nazev,id_tvori,r.id_rodina,r.nazev,t.role /*,o.* */
+    FROM osoba AS o
+    LEFT JOIN dar    AS d ON d.id_osoba=o.id_osoba
+    LEFT JOIN platba AS x ON x.id_osoba=o.id_osoba
+    LEFT JOIN spolu  AS s ON s.id_osoba=o.id_osoba
+    LEFT JOIN pobyt  AS p ON p.id_pobyt=s.id_pobyt
+    LEFT JOIN akce   AS a ON a.id_duakce=p.id_akce
+    LEFT JOIN tvori  AS t ON t.id_osoba=o.id_osoba
+    LEFT JOIN rodina AS r ON r.id_rodina=t.id_rodina
+    WHERE prijmeni='' AND jmeno='' AND o.origin=''
+    ORDER BY o.id_osoba DESC
+  ");
+  while ( $rx && ($x= mysql_fetch_object($rx)) ) {
+    $n++;
+    if ( $opravit ) {
+      $ok= '';
+      if ( !$x->id_dar && !$x->id_platba ) {
+        $ok.= mysql_qry("DELETE FROM spolu WHERE id_osoba={$x->id_osoba}")
+           ? (" = spolu SMAZÁNO ".mysql_affected_rows().'x') : ' CHYBA při mazání spolu' ;
+        $ok.= mysql_qry("DELETE FROM osoba WHERE id_osoba={$x->id_osoba}")
+           ? ", osoba SMAZÁNO " : ' CHYBA při mazání osoba ' ;
+      }
+      else
+        $ok= " = vazba na dar či platbu";
+    }
+    $ido= tisk2_ukaz_osobu($x->id_osoba);
+    $idr= tisk2_ukaz_rodinu($x->id_rodina);
+    $msg.= "<dd>fantómová osoba $ido v rodině $idr:{$x->nazev} v roli {$x->role} $ok</dd>";
+  }
+  $html.= "<dt style='margin-top:5px'>tabulka <b>osoba</b>: fantómové osoby"
+    .($msg?"$auto$msg":"<dd>ok</dd>")."</dt>";
+  // ---------------------------------------------==> .. triviální RODINA
+  $msg= '';
+  $rx= mysql_qry("
+    SELECT id_tvori,COUNT(*) AS _pocet,nazev,id_dar,id_platba
+    FROM rodina JOIN tvori USING (id_rodina)
+    LEFT JOIN dar    AS d USING(id_rodina)
+    LEFT JOIN platba AS x USING(id_rodina)
+    GROUP BY id_rodina HAVING _pocet=0
+  ");
+  while ( $rx && ($x= mysql_fetch_object($rx)) ) {
+    $n++;
+    $msg.= "<dd>triviální rodina {$x->nazev} $ok</dd>";
+     # if ( $opravit ) ... zkontrolovat dar,platba
+  }
+  $html.= "<dt style='margin-top:5px'>tabulka <b>rodina</b>: rodina bez členů"
+    .($msg?"$uziv$msg":"<dd>ok</dd>")."</dt>";
+  // ------------------------------------------------==> .. triviální POBYT
+  $msg= '';
+  $rx= mysql_qry("
+    SELECT id_pobyt,nazev,YEAR(datum_od) AS _rok
+    FROM pobyt AS p
+    LEFT JOIN spolu USING (id_pobyt)
+    LEFT JOIN akce AS a ON a.id_duakce=p.id_akce
+    -- LEFT JOIN mail USING(id_pobyt)
+    WHERE ISNULL(id_spolu) AND funkce!=99
+    GROUP BY id_pobyt -- HAVING _pocet=0
+  ");
+  while ( $rx && ($x= mysql_fetch_object($rx)) ) {
+    $n++;
+    if ( $opravit ) { // ... zkontrolovat mail
+      $ok= mysql_qry("DELETE FROM pobyt WHERE id_pobyt={$x->id_pobyt}",1)
+         ? " = SMAZÁNO" : ' !!!!!CHYBA při mazání' ;
+    }
+    $idp= tisk2_ukaz_pobyt($x->id_pobyt);
+    $msg.= "<dd>triviální pobyt $idp: rok {$x->_rok} {$x->nazev} $ok</dd>";
+  }
+  $html.= "<dt style='margin-top:5px'>tabulka <b>pobyt</b>: pobyt bez osob"
+    .($msg?"$auto$msg":"<dd>ok</dd>")."</dt>";
+  // ------------------------------------------------==> .. POBYT bez akce
+  $msg= '';
+  $rx= mysql_qry("
+    SELECT id_pobyt,id_spolu,id_akce,jmeno,prijmeni
+    FROM pobyt JOIN spolu USING(id_pobyt) JOIN osoba USING(id_osoba)
+    WHERE id_akce=0
+  ");
+  while ( $rx && ($x= mysql_fetch_object($rx)) ) {
+    $n++;
+    $ok= '';
+    if ( $opravit ) {
+      $ok.= mysql_qry("DELETE FROM spolu WHERE id_spolu={$x->id_spolu}")
+        ? " = spolu SMAZÁNO " : ' CHYBA při mazání spolu' ;
+      $ok.= mysql_qry("DELETE FROM pobyt WHERE id_pobyt={$x->id_pobyt}")
+        ? ", pobyt SMAZÁNO " : ' CHYBA při mazání pobyt ' ;
+    }
+    $msg.= "<dd>pobyt bez akce - {$x->pobyt} pro osobu {$x->prijmeni} {$x->jmeno} $ok</dd>";
+  }
+  $html.= "<dt style='margin-top:5px'>tabulka <b>pobyt</b>: nulová akce"
+    .($msg?"$auto$msg":"<dd>ok</dd>")."</dt>";
+  // konec
+  $html= $n
+    ? "<h3>Nalezeno $n inkonzistencí v datech</h3><dl>$html</dl>"
+    : "<h3>Následující tabulky jsou konzistentní</h3>$html";
+  return $html;
 }
 ?>
