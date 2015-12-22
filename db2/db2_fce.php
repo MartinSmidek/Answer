@@ -1425,7 +1425,7 @@ function ucast2_chain_oso($idoo,$idr=0) {
   $os= $x= array();
   $nazev= '';
   // srovnávané prvky
-  $flds= "id_osoba,o.access,prijmeni,jmeno,narozeni,kontakt,email,telefon,adresa,o.obec";
+  $flds= "id_osoba,o.access,prijmeni,jmeno,narozeni,kontakt,email,telefon,adresa,o.obec,sex";
   // dotazovaná osoba
   $jmena= $telefony= $emaily= array();
   $narozeni= '';
@@ -1440,6 +1440,7 @@ function ucast2_chain_oso($idoo,$idr=0) {
   $narozeni= $o->narozeni=='0000-00-00' ? '' : $o->narozeni;
   $narozeni_yyyy= substr($o->narozeni,0,4);
   $narozeni_11= substr($o->narozeni,5,5)=="01-01" ? $narozeni_yyyy : '';
+  $sex= $o->sex;
   $emaily= $telefony= array();
   if ( $o->kontakt ) {
     $emaily= $items2array($o->email);
@@ -1481,12 +1482,14 @@ function ucast2_chain_oso($idoo,$idr=0) {
     $os[$xo->id_osoba]= $xo;
   }
   // podezřelí členi rodiny: jsou se stejným datem narození (nebo 1.1.rok kde rok=+-1 )
+  // se stejným pohlavím
   $narozeni_od_do= ($narozeni_yyyy-1).','.($narozeni_yyyy).','.($narozeni_yyyy+1);
   if ( $idr ) {
     $qc= mysql_qry("
       SELECT id_osoba,prijmeni,jmeno,narozeni FROM osoba JOIN tvori USING (id_osoba)
-      WHERE id_rodina=$idr AND deleted='' AND id_osoba!=$idoo AND (narozeni='$narozeni'
-        OR DAY(narozeni)=1 AND MONTH(narozeni)=1 AND YEAR(narozeni) IN ($narozeni_od_do))");
+      WHERE id_rodina=$idr AND deleted='' AND id_osoba!=$idoo AND sex=$sex
+        AND (narozeni='$narozeni' OR DAY(narozeni)=1 AND MONTH(narozeni)=1
+          AND YEAR(narozeni) IN ($narozeni_od_do))");
     while ( $qc && ($xc= mysql_fetch_object($qc)) ) {
       $idc= $xc->id_osoba;
       if ( !isset($os[$idc]) ) $os[$idc]= (object)array('id_osoba'=>$idc);
@@ -1624,7 +1627,7 @@ function ucast2_browse_ask($x,$tisk=false) {
     # ladění
     $AND= "";
 //     $AND= "AND p.id_pobyt IN (44285,44279,44280,44281) -- prázdná rodina a pobyt";
-//     $AND= "AND p.id_pobyt IN (45071) -- test";
+//     $AND= "AND p.id_pobyt IN (45034) -- test";
 //     $AND= "AND p.id_pobyt IN (43387,32218,32024) -- test";
 //     $AND= "AND p.id_pobyt IN (43113,43385,43423) -- test Šmídkovi+Nečasovi+Novotní/LK2015";
 //     $AND= "AND p.id_pobyt IN (43423) -- test Novotní/LK2015";
@@ -1695,7 +1698,7 @@ function ucast2_browse_ask($x,$tisk=false) {
       FROM pobyt AS p
       JOIN tvori AS t ON t.id_rodina=p.i0_rodina
       JOIN osoba AS o USING(id_osoba)
-      WHERE o.access&@access AND $cond $AND
+      WHERE o.deleted='' AND o.access&@access AND $cond $AND
     ");
     while ( $qp && ($p= mysql_fetch_object($qp)) ) {
       $osoby.= ",{$p->id_osoba}";
@@ -1916,6 +1919,7 @@ function ucast2_browse_ask($x,$tisk=false) {
           }
         }
       }
+  problem:
       # vynechání prázdného pobytu pečounů
       if ( $p->funkce==99 && !$pecouni ) {
         unset($pobyt[$idp]);
