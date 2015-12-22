@@ -11,6 +11,8 @@ proc osoby_lst(ido,idos) {
   elim_init; c.rod_cleni.enable(0); elim_osoby_lst(ido,idos); return(elim_start) }
 proc rodiny(idr,nazev) {
   elim_init; [ elim_rodiny(idr,trim(replace(nazev,"^-",""))) ]; elim_start }
+proc rodiny_12(idr1,idr2) {
+  elim_init; [ elim_rodiny_12(idr1,idr2) ]; elim_start }
 proc rodiny_lst(idr,idrs) {
   elim_init; c.rod_cleni.enable(0); [ elim_rodiny_lst(idr,idrs) ]; return(elim_start) }
 proc cleni(idr) {
@@ -79,6 +81,18 @@ proc elim_rodiny(idr,nazev) {
     [ r1.br._nazev.get_query(0,1); r1.br._nazev.set_query(1,'',1) ];
     [ r1.br.browse_seek(conc("r.id_rodina=",idr)); r1.br.raise('onrowclick') ];
     r2.br._nazev.set_query(1,trim(nazev),1)
+  ];
+}
+proc elim_rodiny_12(idr1,idr2) {
+  mode.set('rodina');
+  panel.set_attrib('title',"Eliminace kopií rodin");
+  r1.display(1); o1.display(0); c1.display(0);
+  r2.display(1); o2.display(0); c2.display(0);
+  [ idr1; idr2;
+    [ r1.br._nazev.get_query(0,1); r1.br._nazev.set_query(1,'',1) ];
+    [ r1.br.browse_seek(conc("r.id_rodina=",idr1)); r1.br.raise('onrowclick') ];
+    [ r2.br._nazev.get_query(0,1); r2.br._nazev.set_query(1,'',1) ];
+    [ r2.br.browse_seek(conc("r.id_rodina=",idr2)); r2.br.raise('onrowclick') ];
   ];
 }
 proc elim_rodiny_lst(idr,idrs) { var keys:text, ret:object
@@ -254,7 +268,8 @@ form _cmd [,,425,30] { css:'ae_parm'
   button [870,4,,] { type:'html', title:"osoby [fa-exchange] rodiny",
     proc onclick() { var ks: text
       eq(mode.get,'rodina');     [ elim_osoby(r1.bro.ido.get,r2.bro.nazev.get) ]
-    | elim_rodiny(0,'');
+    | eq(mode.get,'cleni');      [ elim_rodiny_12(c1.rs.idr.get,c2.rs.idr.get) ]
+    | warning("z tohoto stavu zatím nelze přepnout")
   }}
 }
 # ==========================================================================================> _OSOBY
