@@ -15,10 +15,18 @@ menu db2 { type:'main', title:'db2', active:*, _sys:'*'
     panel nas {type:'right', title:'Data', _sys:'nas', skill:'a'
       menu {type:'left', active:*
         menu {title:'Ostrá databáze',type:'group', _sys:'*'
-          item {title:'stav sjednocování kopií', par:°{db:'db2'}
+          item {title:'Stav sjednocování kopií', par:°{db:'db2'}
             proc onclick (i) {
               info.fill(conc(i.owner.title,' - ',i.title),'... probíhá výpočet ...');
               info.fill('',ask('db2_stav',i.par.db)) }}
+        }
+        menu {title:'Kontroly konzistence dat',type:'group', _sys:'*'
+          item {title:'kontroly databáze'               ,par:°{opravit:0}}
+          item {title:'kontroly databáze s opravou'     ,par:°{opravit:1}, skill:'m'}
+          proc onclick (i) {
+            info.fill(conc(i.owner.title,' - ',i.title),' ... probíhá kontrola dat ...');
+            info.fill('',ask('db2_kontrola_dat',i.par));
+          }
         }
         menu {title:'Testovací databáze',type:'group', _sys:'*'
           item {title:'stav sjednocování kopií', par:°{db:'db2_test'}
