@@ -633,22 +633,7 @@ panel track [,,540,276] { title:'Historie oprav', type:'popup', css:'dialog'
     panel.popup(0,1);
     panel.set_attrib('title',conc('Historie oprav pro ',kde,' id=',klic));
     reverted_table.set(''); reverted_key.set(0);
-    {
-#       eq(kde,'rodina');
-#       back.lst.browse_load(conc(
-#             "kde='rodina' AND klic=",klic,
-#         " OR fld='id_rodina' AND val=",klic,
-#         " OR fld='i0_rodina' AND val=",klic
-#       ),"kdy DESC")
-#     | eq(kde,'osoba');
-#       back.lst.browse_load(conc(
-#             "kde='osoba' AND klic=",klic,
-#         " OR fld='id_osoba' AND val=",klic,
-#         " OR fld='pecovane' AND klic=",klic
-#       ),"kdy DESC")
-#     |
-      back.lst.browse_load(conc("(kde='",kde,"' AND klic=",klic,")"),"kdy DESC")
-    };
+    back.lst.browse_load(conc("(kde='",kde,"' AND klic=",klic,")"),"kdy DESC");
     back.lst.raise('onrowclick')
   }
   # ------------------------------------------------------------- _back

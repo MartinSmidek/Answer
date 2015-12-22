@@ -10396,6 +10396,7 @@ function db2_kontrola_dat($par) { trace();
   $uziv= " <b>NUTNO OPRAVIT RUČNĚ</b>";
   $n= 0;
   $opravit= $par->opravit ? true : false;
+goto tvori;
   // kontrola nenulovosti klíčů ve spojovacích záznamech
   // ----------------------------------------------==> .. nulové klíče ve SPOLU
   $msg= '';
@@ -10482,9 +10483,11 @@ function db2_kontrola_dat($par) { trace();
   $html.= "<dt style='margin-top:5px'>tabulka <b>pobyt</b>: zdvojení osoby v různých pobytech na stejné akci"
     .($msg?"$auto$msg":"<dd>ok</dd>")."</dt>";
   // ---------------------------------------==> .. nulové hodnoty v tabulce TVORI
+tvori:
   $msg= '';
-  $cond= "tvori.id_rodina=0 OR tvori.id_osoba=0 ";
-  $qry=  "SELECT id_tvori,role,tvori.id_osoba,tvori.id_rodina,r.nazev,prijmeni,jmeno
+  $cond= "tvori.id_rodina=0 OR tvori.id_osoba=0 OR ISNULL(o.id_osoba) OR ISNULL(r.id_rodina)";
+  $qry=  "SELECT id_tvori,role,tvori.id_osoba,tvori.id_rodina,r.nazev,prijmeni,jmeno,
+             IFNULL(o.id_osoba,0) AS _o_ido, IFNULL(r.id_rodina,0) AS _r_idr
           FROM tvori
           LEFT JOIN rodina AS r USING(id_rodina)
           LEFT JOIN osoba AS o ON o.id_osoba=tvori.id_osoba
@@ -10492,19 +10495,34 @@ function db2_kontrola_dat($par) { trace();
   $res= mysql_qry($qry);
   while ( $res && ($x= mysql_fetch_object($res)) ) {
     $n++;
-    if ( $opravit ) {
-      $ok= mysql_qry("DELETE FROM tvori WHERE id_tvori={$x->id_tvori} AND ($cond)",1)
-         ? " = SMAZÁNO" : ' !!!!!CHYBA při mazání' ;
-    }
+//     if ( $opravit ) {
+//       $ok= mysql_qry("DELETE FROM tvori WHERE id_tvori={$x->id_tvori} AND ($cond)",1)
+//          ? " = SMAZÁNO" : ' !!!!!CHYBA při mazání' ;
+//     }
     if ( !$x->id_pobyt && !$x->id_osoba )
       $msg.= "<dd>záznam tvori={$x->id_tvori} je nulový</dd>";
     if ( !$x->id_osoba )
-      $msg.= "<dd>osoba=0 v záznamu tvori={$x->id_spolu} rodiny={$x->id_rodina} {$x->nazev}$ok</dd>";
+      $msg.= "<dd>osoba=0 v záznamu tvori={$x->id_tvori} rodiny={$x->id_rodina} {$x->nazev}$ok</dd>";
     if ( !$x->id_rodina )
       $msg.= "<dd>rodina=0 v záznamu tvori={$x->id_tvori} osoby {$x->prijmeni} {$x->jmeno}$ok</dd>";
+    if ( !$x->_o_ido ) {
+      $idr= tisk2_ukaz_rodinu($x->id_rodina);
+      $track= db2_track_osoba($x->id_osoba);
+      $idt= db2_smaz_tvori($x->id_tvori);
+      $msg.= "<dd>neexistující osoba id=$track v záznamu tvori=$idt
+              rodiny $idr:{$x->nazev} $ok</dd>";
+    }
+    if ( !$x->_r_idr ) {
+      $ido= tisk2_ukaz_osobu($x->id_osoba);
+      $track= db2_track_rodina($x->id_rodina);
+      $idt= db2_smaz_tvori($x->id_tvori);
+      $msg.= "<dd>neexistující rodina id=$track v záznamu tvori=$idt
+              osoby $ido:{$x->prijmeni} {$x->jmeno}$ok</dd>";
+    }
   }
-  $html.= "<dt style='margin-top:5px'>tabulka <b>tvori</b>: nulové hodnoty v tabulce TVORI"
-    .($msg?"$auto$msg":"<dd>ok</dd>")."</dt>";
+  $html.= "<dt style='margin-top:5px'>tabulka <b>tvori</b>: nulové a neexistující hodnoty v tabulce"
+    .($msg?"$uziv$msg":"<dd>ok</dd>")."</dt>";
+// goto end;
   # -----------------------------------------==> .. násobné členství v rodině
   $msg= '';
   $qry=  "SELECT GROUP_CONCAT(id_tvori) AS _ts,count(*) AS _pocet_,GROUP_CONCAT(DISTINCT role) AS _role_,
@@ -10532,7 +10550,9 @@ function db2_kontrola_dat($par) { trace();
     .($msg?"{$auto} pokud osoba nemá více rolí$msg":"<dd>ok</dd>")."</dt>";
   # -----------------------------------------==> .. mnoho otců/matek
   $msg= '';
-  $qry=  "SELECT SUM(IF(role='a',1,0)) AS _otcu, SUM(IF(role='b',1,0)) AS _matek, id_rodina, nazev
+  $qry=  "SELECT SUM(IF(role='a',1,0)) AS _otcu, GROUP_CONCAT(IF(role='a',id_tvori,'')) AS _otci,
+            SUM(IF(role='b',1,0)) AS _matek, GROUP_CONCAT(IF(role='b',id_tvori,'')) AS _matky,
+            id_rodina, nazev
           FROM tvori
           LEFT JOIN rodina AS r USING(id_rodina)
           GROUP BY id_rodina HAVING _otcu>1 OR _matek>1
@@ -10541,14 +10561,16 @@ function db2_kontrola_dat($par) { trace();
   while ( $res && ($x= mysql_fetch_object($res)) ) {
     $n++;
     $idr= tisk2_ukaz_rodinu($x->id_rodina);
+    $otci= trim(str_replace(',,',',',$x->_otci),',');
+    $matky= trim(str_replace(',,',',',$x->_matky),',');
     if ( $x->_otcu>1 )
-      $msg.= "<dd>{$x->_otcu} muži v roli 'a' v rodině $idr:{$x->nazev}</dd>";
+      $msg.= "<dd>{$x->_otcu} muži v roli 'a' v rodině $idr:{$x->nazev} ($otci)</dd>";
     if ( $x->_matek>1 )
-      $msg.= "<dd>{$x->_matek} ženy v roli 'b' v rodině $idr:{$x->nazev}</dd>";
+      $msg.= "<dd>{$x->_matek} ženy v roli 'b' v rodině $idr:{$x->nazev} ($matky)</dd>";
   }
   $html.= "<dt style='margin-top:5px'>tabulka <b>tvori</b>: nestandardní počet otců='a', matek='b' v rodině"
     .($msg?"$uziv$msg":"<dd>ok</dd>")."</dt>";
-  // -------------------------------------------==> .. tabulka OSOBA, SPOLU, TVORI
+  // -------------------------------------------==> .. fantómová osoba
   $msg= '';
   $rx= mysql_qry("
     SELECT o.id_osoba,id_dar,id_platba,s.id_spolu,p.id_pobyt,a.id_duakce,
@@ -10566,23 +10588,23 @@ function db2_kontrola_dat($par) { trace();
   ");
   while ( $rx && ($x= mysql_fetch_object($rx)) ) {
     $n++;
-    if ( $opravit ) {
-      $ok= '';
-      if ( !$x->id_dar && !$x->id_platba ) {
-        $ok.= mysql_qry("DELETE FROM spolu WHERE id_osoba={$x->id_osoba}")
-           ? (" = spolu SMAZÁNO ".mysql_affected_rows().'x') : ' CHYBA při mazání spolu' ;
-        $ok.= mysql_qry("DELETE FROM osoba WHERE id_osoba={$x->id_osoba}")
-           ? ", osoba SMAZÁNO " : ' CHYBA při mazání osoba ' ;
-      }
-      else
-        $ok= " = vazba na dar či platbu";
-    }
+//     if ( $opravit ) {
+//       $ok= '';
+//       if ( !$x->id_dar && !$x->id_platba ) {
+//         $ok.= mysql_qry("DELETE FROM spolu WHERE id_osoba={$x->id_osoba}")
+//            ? (" = spolu SMAZÁNO ".mysql_affected_rows().'x') : ' CHYBA při mazání spolu' ;
+//         $ok.= mysql_qry("DELETE FROM osoba WHERE id_osoba={$x->id_osoba}")
+//            ? ", osoba SMAZÁNO " : ' CHYBA při mazání osoba ' ;
+//       }
+//       else
+//         $ok= " = vazba na dar či platbu";
+//     }
     $ido= tisk2_ukaz_osobu($x->id_osoba);
     $idr= tisk2_ukaz_rodinu($x->id_rodina);
     $msg.= "<dd>fantómová osoba $ido v rodině $idr:{$x->nazev} v roli {$x->role} $ok</dd>";
   }
   $html.= "<dt style='margin-top:5px'>tabulka <b>osoba</b>: fantómové osoby"
-    .($msg?"$auto$msg":"<dd>ok</dd>")."</dt>";
+    .($msg?"$uziv$msg":"<dd>ok</dd>")."</dt>";
   // ---------------------------------------------==> .. triviální RODINA
   $msg= '';
   $rx= mysql_qry("
@@ -10641,10 +10663,29 @@ function db2_kontrola_dat($par) { trace();
   }
   $html.= "<dt style='margin-top:5px'>tabulka <b>pobyt</b>: nulová akce"
     .($msg?"$auto$msg":"<dd>ok</dd>")."</dt>";
+end:
   // konec
   $html= $n
     ? "<h3>Nalezeno $n inkonzistencí v datech</h3><dl>$html</dl>"
     : "<h3>Následující tabulky jsou konzistentní</h3>$html";
   return $html;
+}
+# -----------------------------------------------------------------------------==> . db2_track_osoba
+# zobrazí odkaz na rodinu v evidenci
+function db2_track_osoba($ido,$barva='') {
+  $style= $barva ? "style='color:$barva'" : '';
+  return "<b><a $style href='ezer://syst.nas.track_osoba/$ido'>$ido</a></b>";
+}
+# ----------------------------------------------------------------------------==> . db2_track_rodina
+# zobrazí odkaz na rodinu v evidenci
+function db2_track_rodina($idr,$barva='') {
+  $style= $barva ? "style='color:$barva'" : '';
+  return "<b><a $style href='ezer://syst.nas.track_rodina/$idr'>$idr</a></b>";
+}
+# ------------------------------------------------------------------------------==> . db2_smaz_tvori
+# zobrazí odkaz na rodinu v evidenci
+function db2_smaz_tvori($idt,$barva='red') {
+  $style= $barva ? "style='color:$barva'" : '';
+  return "<b><a $style href='ezer://syst.nas.smaz_tvori/$idt'>$idt</a></b>";
 }
 ?>
