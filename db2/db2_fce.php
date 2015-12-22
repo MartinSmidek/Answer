@@ -1512,7 +1512,7 @@ function ucast2_chain_oso($idoo,$idr=0) {
                 || $rok==$narozeni_11
                 || substr($ox->narozeni,5,5)=="01-01" && abs($narozeni_yyyy-$rok)<=1
                  ? 1 : 0;
-//                                                 display("{$ox->jmeno}/$jmeno: {$ox->narozeni}/$narozeni => {$xi->narozeni}");
+//                                                 display("$ido:{$ox->jmeno}/$idoo:$jmeno: {$ox->narozeni}/$narozeni => {$xi->narozeni}");
     // organizace
     $xi->org= $ox->access;
     // zápis
@@ -1540,13 +1540,13 @@ function ucast2_chain_oso($idoo,$idr=0) {
   }
   elseif ( $nx==1 ) {
     // jednoznačná duplicita
-    $keys= $i0;
     // ujistíme se, že nebyli oznámeni jako různé tzv. _track(klic=idoo,op=r,val=idc)
     $r= select("COUNT(*)","_track","klic=$idoo AND op='r' AND val=$ido");
     if ( !$r ) {
       $dup= $x[$i0]->asi;
       $msg= "$idoo je pravděpodobně ($dup) kopie osoby $ido "
             . ($xi->org==1 ? " z YS" : ($xi->org==2 ? " z FA" : ''));
+      $keys= $i0;
     }
   }
   else {
@@ -1624,7 +1624,7 @@ function ucast2_browse_ask($x,$tisk=false) {
     # ladění
     $AND= "";
 //     $AND= "AND p.id_pobyt IN (44285,44279,44280,44281) -- prázdná rodina a pobyt";
-//    $AND= "AND p.id_pobyt IN (44381) -- test";
+//     $AND= "AND p.id_pobyt IN (45071) -- test";
 //     $AND= "AND p.id_pobyt IN (43387,32218,32024) -- test";
 //     $AND= "AND p.id_pobyt IN (43113,43385,43423) -- test Šmídkovi+Nečasovi+Novotní/LK2015";
 //     $AND= "AND p.id_pobyt IN (43423) -- test Novotní/LK2015";
@@ -1952,6 +1952,7 @@ function ucast2_browse_ask($x,$tisk=false) {
       if ( $r_fotek ) { $z->_docs.= 'F'; }
       if ( $o_fotek ) { $z->_docs.= 'f'; }
       # ==> .. duplicity
+      $z->_dupl= 0;
       if ( $duplicity ) {
         if ( $r_fotek || $o_fotek ) { $z->_docs.= ' '; }
         $del= "|";
@@ -1973,6 +1974,7 @@ function ucast2_browse_ask($x,$tisk=false) {
         }
         $z->_docs.= count_chars($_dups,3);
         $z->keys_rodina= $_keys;
+        $z->_dupl= $_keys ? 1 : 0;
       }
       # rodina
       foreach($frod as $fz=>$fr) { $z->$fz= $rodina[$idr]->$fr; }

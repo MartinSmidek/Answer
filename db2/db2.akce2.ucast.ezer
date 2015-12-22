@@ -18,7 +18,7 @@ var zmeny: object               // objekt naplněný požadavkem zobrazení ned�
 # události panelu
 proc onstart() {}
 proc onfirstfocus() {
-#   spinner(1);
+  spinner(1);
 #   // povolení "[]kopie?" standardní
 #   [ eq(3,has_access.get) | u.dup.set(1); u.dup.display(0); u.sf.set(1); u.sf.change;];
   the_duakce_local.set(0);
@@ -29,7 +29,7 @@ proc onfirstfocus() {
   akce_onstart;
   onresize(sys('screen','width'),sys('screen','height'));
   onfocus;
-#   spinner(0);
+  spinner(0);
 }
 proc onfocus() {
   [ [ dirty.get | akce_onstart ];
@@ -583,8 +583,10 @@ form _ucast [,,400,] { css:'ds_form'
     # varianta A plná jména
     show _jmena [,,180,] { title:'jméno/a', format:'tsq%' }
     # varianta B na úkor _jmena
-    show _docs   [,,0,] { title:'dokumenty', help:'D pokud má dokumenty', format:"tsq" }
-    show _foto   [,,0,] { title:'fotky', help:'F pokud má fotky', format:"sq" }
+    show _docs   [,,0,] { title:'dokumenty', format:"tsq", css_cell:'_dupl,0:,1:ezer_db',
+      help:'d pokud má dokumenty, F/f pokud jsou fotky, popis možných kopií'
+    }
+    show _dupl  // 1 pokud jsou duplicity
     show c_suma  [,,0,] { title:'cena', format:"r" }
     show platba  [,,0,] { title:'platba', format:"rsq=" }
     # varianta C na úkor _jmena
@@ -712,7 +714,8 @@ form _ucast [,,400,] { css:'ds_form'
     }
     proc onclick() {
       eq(_docs.width,49); show_dup(0)
-    | platba.width; platba.width(0); c_suma.width(0); x_umi.width(35); _jmena.width(128)
+    | platba.width; platba.width(0); c_suma.width(0); _docs.width(35); x_umi.width(35);
+      _jmena.width(108)
     | x_umi.width; x_umi.width(0); _docs.width(0); _jmena.width(180)
     | platba.width(35); c_suma.width(35); _docs.width(15); _jmena.width(92)
     }

@@ -57,7 +57,7 @@ function answer_ini($app,$answer_db,$dbs_plus,$php_lib,$ezer_mod=array()) {
   );
   // kořeny cest
   $path_root=  array($ezer_ksweb?"/storage/sdcard0/htdocs/www-ys2":
-    "/home/www/ezer/www-ys/2","C:/Apache/htdocs/ezer/www-ys2");
+    "/home/www/ezer/www-ys/2","C:/Ezer/www-ys2");
   // kořen pro LabelDrop
   $abs_root= $path_root[$ezer_local?1:0];
   $path_files_href= "/docs/$app/";
@@ -67,7 +67,7 @@ function answer_ini($app,$answer_db,$dbs_plus,$php_lib,$ezer_mod=array()) {
 
   $path_pspad= array(null,"C:/Program Files (x86)/PSPad editor/Syntax");
   // cesty pro zálohy
-  $path_backup= array("{$path_root[0]}/zalohy","C:/Apache/htdocs/ezer/www-ys2/zalohy");
+  $path_backup= array("{$path_root[0]}/zalohy","C:/Ezer/www-ys2/zalohy");
   $path_backup= $path_backup[$ezer_local?1:0];          // složka záloh databází
   $ezer_mysql_path= array("/usr/bin/","c:/apache/mysql/bin/");
   $ezer_mysql_path= $ezer_mysql_path[$ezer_local?1:0];  // cesta k utilitě mysql (i s lomítkem)
@@ -82,7 +82,7 @@ function answer_ini($app,$answer_db,$dbs_plus,$php_lib,$ezer_mod=array()) {
   // PARAMETRY SPECIFICKÉ PRO ANSWER
 
   // specifické cesty
-  $bank= $ezer_local ? "C:/Apache/htdocs/ezer/www-ys2" : "/home/www/ezer/www-ys/2";
+  $bank= $ezer_local ? "C:/Ezer/www-ys2" : "/home/www/ezer/www-ys/2";
 
   // moduly interpreta zahrnuté do aplikace - budou zpracovány i reference.i_doc pro tabulky kompilátoru
   $ezer_comp_ezer= "app,area,ezer,ezer_report,ezer_fdom1,ezer_fdom2";
