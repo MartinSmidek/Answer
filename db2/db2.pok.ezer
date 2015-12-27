@@ -244,7 +244,7 @@ panel den {type:'plain', title:"Deník", _sys:'den'
     edit ucel [73,111,335,47] { data:pdenik.ucel },
     edit poznamka [73,161,391,143] { data:pdenik.poznamka },
     field priloh [320,311,24,17] { data:pdenik.priloh },
-#     check vytisten [391,313,73,17] { data:pdenik.vytisten },
+    check vytisten [391,313,73,17] { data:pdenik.vytisten },
     label [415,315,73,17] { title:'vytištěno' },
     button save [422,338,,] { type:'submit', title:'OK', help:'uložit změny',
       proc onclick () { _d_save }
