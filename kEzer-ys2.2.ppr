@@ -217,13 +217,13 @@ kEzer-ys2
 		zaloha.php
 	-system
 		.htaccess
-		..\..\..\..\WINDOWS\system32\drivers\etc\hosts
-		..\..\..\Apache\conf\extra\httpd-vhosts-ezer.conf
+		..\..\WINDOWS\system32\drivers\etc\hosts
+		..\..\Apache\conf\extra\httpd-vhosts-ezer.conf
 		sql\import_fa.bat
-		..\..\..\php\php.ini
-		..\..\..\..\Dropbox\PersonalWiki\pristupy.wiki
-		..\..\..\..\Users\Martin\Documents\Vario Dokumenty\Wiki\ruzne\ruzne.wiki
-		..\..\..\Apache\logs\ys2-error.log
+		..\..\php\php.ini
+		..\..\Dropbox\PersonalWiki\pristupy.wiki
+		..\..\Users\Martin\Documents\Vario Dokumenty\Wiki\ruzne\ruzne.wiki
+		..\..\Apache\logs\ys2-error.log
 	-wiki
 		-cr
 		-db
@@ -265,7 +265,7 @@ kEzer-ys2
 			ys\ys.syst.ezer
 			ys\ys.syst.oso.ezer
 		ys\ys.doc.ezer
-	-ys2
+	+ys2
 		ys2\$.ezer
 		ys2\ys2.eko.ezer
 		ys2.inc
@@ -308,9 +308,11 @@ kEzer-ys2
 27=answer.inc
 28=tut\tut.php
 29=tut\tut.css.php
+30=ys\$.ezer
+31=ys2\$.ezer
 [Selected Project Files]
 Main=
-Selected=answer.inc
+Selected=db\db_akce.php
 [tut\.htaccess]
 TopLine=1
 Caret=2,9
@@ -372,8 +374,8 @@ Caret=41,150
 TopLine=696
 Caret=23,714
 [db\db_akce.php]
-TopLine=7159
-Caret=7,7190
+TopLine=2437
+Caret=48,2480
 [ezer2.2\dbg.php]
 TopLine=67
 Caret=75,80
@@ -411,7 +413,7 @@ Caret=1,93
 TopLine=1
 Caret=37,10
 [answer.php]
-TopLine=38
+TopLine=26
 Caret=60,26
 [answer.inc]
 TopLine=23
@@ -422,3 +424,9 @@ Caret=39,80
 [tut\tut.css.php]
 TopLine=1
 Caret=38,19
+[ys\$.ezer]
+TopLine=1
+Caret=37,41
+[ys2\$.ezer]
+TopLine=1
+Caret=48,43

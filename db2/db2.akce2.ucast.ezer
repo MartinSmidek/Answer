@@ -385,7 +385,7 @@ form _cmd [,,623,30] {
   }
   proc see_old_osoba() { var ret:object // po rozhodnutí uživatele přidat nalezenou osobu k pobytu
     // kontrola oprávněnosti - dotazem
-    { function('x','y','return x&y;',my_org.get,os1.access.get)  // stejná org
+    { function('x','y','return x&y;',the_org.get,os1.access.get)        // stejná org jako má akce?
     | confirm("máme od této osoby souhlas?");                           // čestné prohlášení
       os1.access.set(3); os1.access.change
     | zpet.Click; return                                                // nic
@@ -872,7 +872,7 @@ form _evidence {
     } }
     item { title:'... zrušit obarvení změn' proc onclick () {
     } }
-    item { title:'-m: opravit i0_rodina,pouze', skill:'m'
+    item { title:'=m: opravit i0_rodina,pouze', skill:'m'
       proc onclick () {
         alert(ask('data2_transform_2014',
           object('cmd','i0_rodina,pouze','akce',the_duakce.get))) } }
@@ -981,6 +981,7 @@ form _pobyt [,,0,62] {
                           help:' ', tabindex:0 }
   field key_akce { data:p.id_akce }
   field i0_rodina { data:p.i0_rodina }
+  # ------------------------==> . kontextové_menu
   menu { type:'context', join:frame
     item { title:'konfigurace formuláře', proc onclick () { pobyt_config.tune } }
     item { title:'ukázat změny', proc onclick () { track.back_show('pobyt',the_pobyt.get) } }
@@ -1094,6 +1095,7 @@ form _spolu [,,0,270] {
   field key_spolu [186,0,50,] {tag:'S', data:s.id_pobyt, format:'ro',
     style:'color:white', css:'Label', help:' ', tabindex:0 }
   field key_osoba { data:s.id_osoba }
+  # ------------------------==> . kontextové_menu
   menu detail { type:'context', join:frame
     item { title:'konfigurace formuláře', proc onclick () { spolu_config.tune } }
     item { title:'ukázat změny', proc onclick () {
@@ -1183,7 +1185,7 @@ form _rodina2 [,,360,229]  { css:'ae_frame'
   // globální procedury
   proc new_rodina(nazev) {
     form.display(0,'[^f]'); r_access.display(1); cleni.display(1); form.enable(1,'.*');
-    form.init; rodiny0.set(nazev); r_access.set(my_org.get); r_access.change;
+    form.init; rodiny0.set(nazev); r_access.set(the_org.get); r_access.change;
     form.stacks('n,r','down',0,0,10);
     form.display(1,'[rns]'); form.display(0,'a');
     foreach(array(rodiny0),obligatory);
@@ -1273,11 +1275,13 @@ form _rodina2 [,,360,229]  { css:'ae_frame'
   field r_access   [304,0,10,] {tag:'f', format:'or', css:'Label', data:r.access, tabindex:0  }
   field key_rodina [304,0,50,] {tag:'f', format:'or', css:'Label', help:' ', tabindex:0  }
   field keys_rodina // seznam pravděpodobných kopií
-
+  # ------------------------==> . kontextové_menu
   menu detail { type:'context'
     item { title:'konfigurace formuláře', proc onclick () { rodina_config.tune(ucast) } }
     item { title:'ukázat změny', proc onclick () {
       key_rodina.get; track.back_show('rodina',key_rodina.get) } }
+    item { title:'=m: zazurovění účastníků', skill:'m', proc onclick () {
+      ask('ucast2_pobyt_access',key_pobyt.get,3) } }
   }
   // ==> . nerodina
   field  nerodina  [Lr+5,32,90,] {tag:'y', title:"^skupina osob", format:'dnTt', css:'nerodina'
@@ -1326,7 +1330,7 @@ form _rodina2 [,,360,229]  { css:'ae_frame'
     css:"search", help:"potvrzení nalezené rodiny a vložení do akce jako rodinný pobyt"
     proc onclick() { var ret:object
       // kontrola oprávněnosti - dotazem
-      { function('x','y','return x&y;',my_org.get,r_access.get) // stejná org
+      { function('x','y','return x&y;',the_org.get,r_access.get)       // stejná org jako akce
       | confirm("máme od této rodiny souhlas?");                       // čestné prohlášení
         ask('ucast2_rodina_access',key_rodina.get,3);
       | return                                                         // nic

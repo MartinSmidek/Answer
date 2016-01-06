@@ -1264,6 +1264,33 @@ function akce2_vzorec($id_pobyt) {  trace();
   return $ret;
 }
 /** ========================================================================================> UCAST2 */
+# ------------------------------------------------------------------------------ ucast2_pobyt_access
+# ==> . chain rod
+# účastníci pobytu a případná rodina budou mít daný access (3)
+function ucast2_pobyt_access($idp,$access=3) {
+  // změna pro rodinu
+  $idr= select("i0_rodina","pobyt","id_pobyt=$idp");
+  if ( $idr ) {
+    $r_access= select("access","rodina","id_rodina=$idr");
+    if ( $r_access!=$access ) {
+      ezer_qry("UPDATE",'rodina',$idr,array(
+        (object)array('fld'=>'access', 'op'=>'u','val'=>$access,'old'=>$r_access)
+      ));
+    }
+  }
+  // změna pro účastníky
+  $qo= mysql_qry("SELECT access,id_osoba FROM spolu JOIN osoba USING (id_osoba) WHERE id_pobyt=$idp");
+  while ( $qo && ($o= mysql_fetch_object($qo)) ) {
+    $ido= $o->id_osoba;
+    $o_access= $o->access;
+    if ( $o_access!=$access ) {
+      ezer_qry("UPDATE",'osoba',$ido,array(
+        (object)array('fld'=>'access', 'op'=>'u','val'=>$access,'old'=>$o_access)
+      ));
+    }
+  }
+  return 1;
+}
 # --------------------------------------------------------------------------------- ucast2_chain_rod
 # ==> . chain rod
 # upozorní na pravděpodobnost duplicity rodiny
