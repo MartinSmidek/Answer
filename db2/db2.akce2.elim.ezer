@@ -261,9 +261,10 @@ form _cmd [,,425,30] { css:'ae_parm'
       r1.init_all("ORIGINÁL",0); r1.property(°{left:0});
       r2.init_all("KOPIE",1);    r2.property(°{left:490});
   }}
-  button rod_cleni [726,4,,] { type:'html', title:"rodina|osoba [fa-long-arrow-right] cleni", proc onclick() {
-    eq(mode.get,'rodina'); elim_cleni(r1.br.idr.get)
-  | eq(mode.get,'osoba');  elim_cleni(o1.rs.idr.get)
+  button rod_cleni [726,4,,] { type:'html', title:"rodina|osoba [fa-long-arrow-right] cleni",
+    proc onclick() {
+      eq(mode.get,'rodina'); elim_cleni(r1.br.idr.get)
+    | eq(mode.get,'osoba');  elim_cleni(o1.rs.idr.get)
   }}
   button [870,4,,] { type:'html', title:"osoby [fa-exchange] rodiny",
     proc onclick() { var ks: text
