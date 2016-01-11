@@ -3236,7 +3236,7 @@ function tisk2_sestava_lidi($akce,$par,$title,$vypis,$export=false) { trace();
         $clmn[$n][$f]= "$x->ulice, $x->psc, $x->obec";
         break;
       case '_narozeniY':
-        $clmn[$n][$f]= $x->narozeni;
+        $clmn[$n][$f]= str_replace('-','/',$x->narozeni);
         break;
       default: $clmn[$n][$f]= $x->$f;
       }
