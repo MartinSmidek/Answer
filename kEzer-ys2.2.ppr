@@ -230,7 +230,7 @@ kEzer-ys2
 		+ezer
 			wiki\ezer_nastaveni.wiki
 		wiki\cr_system.wiki
-	+ys
+	-ys
 		+$
 			ys\$.ezer
 			skins\colors.php
@@ -265,7 +265,7 @@ kEzer-ys2
 			ys\ys.syst.ezer
 			ys\ys.syst.oso.ezer
 		ys\ys.doc.ezer
-	+ys2
+	-ys2
 		ys2\$.ezer
 		ys2\ys2.eko.ezer
 		ys2.inc

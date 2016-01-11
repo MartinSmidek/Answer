@@ -373,8 +373,8 @@ menu m {type:'left', active:*
     item {title:'Skupinky - přehled historie' ,par:°{typ:'skpr',cnd:'1'}} // fce:'prehled'
     item {title:'pro Závěrečnou zprávu'                                                                 skill:'y;f'
                                         ,par:°{typ:'j',exp:'Excel2',cnd:'1',ord:'o.prijmeni,o.jmeno'
-                                        ,tit:':5,Příjmení:15,Jméno:12,Ulice:25,Město:25,PSČ:7,Datum nar.:12,Člen YMCA:10,věk:10'
-                                        ,fld:'_1,prijmeni,jmeno,ulice,obec,psc,_narozeni6,_ymca,_vek',ord:'_zprava'}}
+                                        ,tit:':5,Příjmení:15,Jméno:12,Ulice:25,Město:25,PSČ:7,Datum nar.:12,Člen YMCA:10,věk:10,typ:10'
+                                        ,fld:'_1,prijmeni,jmeno,ulice,obec,psc,_narozeni6,_ymca,_vek,_typ',ord:'_zprava'}}
   }
   # ---------------------------------------------------------------------------------------------==> Technické seznamy
   menu {tag:'a', title:'Technické seznamy',type:'group',_sys:'*'

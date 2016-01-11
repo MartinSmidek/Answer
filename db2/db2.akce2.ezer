@@ -111,7 +111,8 @@ panel lst {type:'right', _sys:'*', title:'[fa-futbol-o] AKCE', include:'onload,d
 }
 panel ucast {type:'plain', _sys:'*', title:"Účastníci", include:'onload,db2.akce2.ucast',skill:'yaa;faa;caa'
   proc reaccess() {}
-  proc ucast_pobyt()  {}                        // ukázání pobytu
+  proc ucast_pobyt()  {}                        // ukázání pobytu na běžné akci
+  proc ucast_pobyt_akce() {}                    // ukázání pobytu na dané akci
   proc clear_ucast2() {}                        // volání zajistí obnovu při onfucus
   #proc init_ucast2() {}
   proc akce_show() {}

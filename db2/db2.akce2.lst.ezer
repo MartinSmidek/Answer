@@ -203,6 +203,7 @@ form _page [,,275,360] {
     style:'color:white', help:' ', tabindex:0 }
   label note [10,35,455,193] { tag:'inf', title:'', style:'color:black;font-size:12px' }
   # ---------------------------==> . položky akce
+  field access { data:akce.access }
   field id_hlavni { data:akce.id_hlavni }
   field [17,49,218,] { tag:'cor', title:'^název akce *', data:akce.nazev }
   field [17,89,218,] { tag:'cor', title:'^místo', data:akce.misto }
@@ -268,12 +269,18 @@ form _page [,,275,360] {
   label  [10,351,164,30] { tag:'cor', css:'ae_parm', style:'z-index:1', skill:'faan;caan;yaan' }
   button [16,356,,] {tag:'cor', title:'Nová akce', format:'c', skill:'faan|faan;caan|caan;yaan|yaan'
     proc onclick() {
-      has_skill('yaan'); {
-        eq(the_source.get,'google'); alert("Vkládat lze jen do seznamu všech akcí")
-      | gt(info.rok.get,2009); alert("Vkládat lze jen 'historické akce', po roce 2010 jen přes intranet")
-      | form.init; info.sey.blur(1)
+      eq(my_org.get,1);
+      // Setkání
+      { has_skill('yaan'); {
+          eq(the_source.get,'google'); alert("Vkládat lze jen do seznamu všech akcí")
+        | gt(info.rok.get,2009); alert("Vkládat lze jen 'historické akce', po roce 2010 jen přes intranet")
+        | form.init; access.set(1); access.change; info.sey.blur(1)
+        }
+      | alert("Nemáš oprávnění vytvořit novou akci (kontaktuj administrátora např. Martina)")
       }
-    | form.init; info.sey.blur(1)
+    | eq(my_org.get,2);
+      // Familia
+      form.init; access.set(2); access.change; info.sey.blur(1)
   } }
   button [91,356,,] {tag:'cor', title:'Smazat akci', format:'c', skill:'faan|faan;caan|caan;yaan|yaan'
     proc onclick() {
