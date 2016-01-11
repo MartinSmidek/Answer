@@ -3220,6 +3220,10 @@ function tisk2_sestava_lidi($akce,$par,$title,$vypis,$export=false) { trace();
             $pf==8 ? 'skupina G' : (
             $pf==92 ? "os.peč. je: {$x->_chuva}" : '?'))));
         break;
+      case '_typ':                                      // 1: dítě, pečoun  2: zbytek
+        $clmn[$n][$f]= $x->funkce==99 ? 1 : (
+                       $x->_vek<18 ? 1 : 2);
+        break;
       case '_poplatek':                                               // poplatek/dítě dle číselníku
         $kat= $dite_kat[$x->dite_kat];             // $cenik[p$kat|d$kat]= {c:cena,txt:popis}
         $clmn[$n][$f]= $kat=="?" ? "?" : $cenik["p$kat"]->c - $cenik["d$kat"]->c;
@@ -4192,6 +4196,12 @@ function tisk2_ukaz_rodinu($idr,$barva='') {
 function tisk2_ukaz_pobyt($idp,$barva='') {
   $style= $barva ? "style='color:$barva'" : '';
   return "<b><a $style href='ezer://akce2.ucast.ucast_pobyt/$idp'>$idp</a></b>";
+}
+# --------------------------------------------------------------------------------- tisk2_ukaz_pobyt
+# zobrazí odkaz na řádek s pobytem s případným přepnutím akce
+function tisk2_ukaz_pobyt_akce($idp,$ida,$barva='') {
+  $style= $barva ? "style='color:$barva'" : '';
+  return "<b><a $style href='ezer://akce2.ucast.ucast_pobyt_akce/$idp/$ida'>$idp</a></b>";
 }
 # -------------------------------------------------------------------------------- narozeni2roky_sql
 # zjistí aktuální věk v rocích z data narození (typu mktime) zjištěného třeba rc2time          ?????
@@ -10423,7 +10433,7 @@ function db2_kontrola_dat($par) { trace();
   $uziv= " <b>NUTNO OPRAVIT RUČNĚ</b>";
   $n= 0;
   $opravit= $par->opravit ? true : false;
-goto tvori;
+// goto tvori;
   // kontrola nenulovosti klíčů ve spojovacích záznamech
   // ----------------------------------------------==> .. nulové klíče ve SPOLU
   $msg= '';
@@ -10450,7 +10460,7 @@ goto tvori;
     if ( !$x->id_pobyt )
       $msg.= "<dd>pobyt=0 v záznamu spolu={$x->id_spolu} osoby {$x->prijmeni} {$x->jmeno}$ok</dd>";
   }
-  $html.= "<dt style='margin-top:5px'> tabulky <b>spolu</b>: nulové klíče osoby nebo pobytu"
+  $html.= "<dt style='margin-top:5px'> tabulka <b>spolu</b>: nulové klíče osoby nebo pobytu"
     .($msg?"$auto$msg":"<dd>ok</dd>")."</dt>";
   // ----------------------------------------------==> .. násobné SPOLU
   $msg= '';
@@ -10476,7 +10486,7 @@ goto tvori;
       }
     }
     $ido= tisk2_ukaz_osobu($x->id_osoba);
-    $msg.= "<dd>násobný pobyt záznamem spolu={$x->id_spolu} na akci <b>{$x->nazev}</b>
+    $msg.= "<dd>násobný pobyt záznamy spolu={$x->_ss} na akci <b>{$x->nazev}</b>
       osoby $ido:{$x->prijmeni} {$x->jmeno} $ok</dd>";
   }
   $html.= "<dt style='margin-top:5px'>tabulka <b>spolu</b>: zdvojení osoby ve stejném pobytu"
@@ -10484,7 +10494,7 @@ goto tvori;
   // ---------------------------------------==> .. zdvojení osoby v různých pobytech na stejné akci
   $msg= '';
   $qry=  "SELECT s.id_osoba,GROUP_CONCAT(id_pobyt) AS _sp,count(DISTINCT id_pobyt) AS _pocet_,
-            CONCAT(a.nazev,' ',YEAR(datum_od)) AS nazev,prijmeni,jmeno
+            CONCAT(a.nazev,' ',YEAR(datum_od)) AS nazev,id_akce,prijmeni,jmeno
           FROM spolu AS s
           LEFT JOIN pobyt AS p USING(id_pobyt)
           LEFT JOIN akce  AS a ON a.id_duakce=p.id_akce
@@ -10504,7 +10514,13 @@ goto tvori;
          ? (" = spolu SMAZÁNO ".mysql_affected_rows().'x') : ' CHYBA při mazání spolu' ;
     }
     $ido= tisk2_ukaz_osobu($x->id_osoba);
-    $msg.= "<dd>násobný pobyt na akci {$x->nazev} - záznamy pobyt {$x->_p} pro
+    $pp= $del= '';
+    $ida= $x->id_akce;
+    foreach (explode(',',$x->_sp) as $idp) {
+      $pp.= $del.tisk2_ukaz_pobyt_akce($idp,$ida);
+      $del= ", ";
+    }
+    $msg.= "<dd>násobný pobyt na akci {$x->nazev} - pobyty $pp pro
       osobu $ido:{$x->prijmeni} {$x->jmeno} $ok</dd>";
   }
   $html.= "<dt style='margin-top:5px'>tabulka <b>pobyt</b>: zdvojení osoby v různých pobytech na stejné akci"
