@@ -376,6 +376,11 @@ menu m {type:'left', active:*
                                         ,tit:':5,Příjmení:15,Jméno:12,Ulice:25,Město:25,PSČ:7,Datum nar.:12,Člen YMCA:10,věk:10,typ:10'
                                         ,fld:'_1,prijmeni,jmeno,ulice,obec,psc,_narozeni6,_ymca,_vek,_typ'
                                         ,ord:'_zprava'}}
+    item {title:'pro Závěrečnou zprávu II'                                                              skill:'y;f'
+                                        ,par:°{typ:'j',exp:'Excel2',cnd:'1',ord:'o.prijmeni,o.jmeno'
+                                        ,tit:':5,Jméno a příjmení:20,Adresa:40,Datum nar.:12,Člen YMCA:10,věk:10,typ:10'
+                                        ,fld:'_1,_jmenoY,_adresaY,_narozeniY,_ymca,_vek,_typ'
+                                        ,ord:'_zprava'}}
   }
   # ---------------------------------------------------------------------------------------------==> Technické seznamy
   menu {tag:'a', title:'Technické seznamy',type:'group',_sys:'*'
