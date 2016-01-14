@@ -8418,7 +8418,7 @@ function mail2_mai_pocet($id_dopis,$dopis_var,$cond='',$recall=false) {  trace()
     $resQ= mysql_qry($qryQ);
     if ( $resQ && ($q= mysql_fetch_object($resQ)) ) {
       $qry= $q->hodnota;
-      $qry= db_mail_sql_subst($qry);
+      $qry= mail2_sql_subst($qry);
       $res= mysql_qry($qry);
       while ( $res && ($d= mysql_fetch_object($res)) ) {
         $n++;
@@ -8724,7 +8724,7 @@ function mail2_mai_info($id,$email,$id_dopis,$zdroj,$id_mail) {  trace();
         // databáze MS
         // SELECT vrací (_id,prijmeni,jmeno,ulice,psc,obec,email,telefon)
         $qry= $q->hodnota;
-        $qry= db_mail_sql_subst($qry);
+        $qry= mail2_sql_subst($qry);
         if ( strpos($qry,"GROUP BY") ) {
           if ( strpos($qry,"HAVING") )
             $qry= str_replace("HAVING","HAVING _id=$id AND ",$qry);
@@ -9037,8 +9037,11 @@ function mail2_sql_new() {  #trace();
 # ASK - parametrizace SQL dotazů pro definici mailů, vrací modifikovaný dotaz
 # nebo pokud je prázdný tak přehled možných parametrizací dotazu
 function mail2_sql_subst($qry='') {  trace();
+  global $USER;
+  $org= $USER->org==1 ? "1 /*YMCA Setkání*/" : "2 /*YMCA Familia*/";
   // parametry
   $parms= array (
+   'org'   => array ($org,'moje organizace'),
    'letos' => array (date('Y'),'letošní rok'),
    'vloni' => array (date('Y')-1,'loňský rok'),
    'pred2' => array (date('Y')-2,'předloni'),
