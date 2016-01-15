@@ -183,7 +183,7 @@ form _gsql {
   field access { data:g.access }
   label [5,44,76,17] { title:'název:', format:'r' }
   field ucel  [83,40,267,]  { data:g.ucel, value:'' proc onchange() {
-    lt(vy.komu_G.key,4);
+    and(vy.komu_G.key,lt(vy.komu_G.key,4));
     alert("název testovacího mail-listu není možné měnit");
     this.set(vy.komu_G.get); this.plain
   } }
