@@ -482,15 +482,17 @@ form _info [,,*,50] {
       item { title:'Vybrat akci jako pracovní', proc onclick() { pracovni }}
     }
     // označení akce jako pracovní
-    proc pracovni() { #==> .. pracovní
-      not(accessed(1)); // jen YS používá intranet
+    proc pracovni() { #==> .. pracovní YS
+      var org_ys:number
+      org_ys.set(1);
+      not(accessed(org_ys)); // jen YS používá intranet
       alert("nemáte oprávnění označit jako pracovní akci jiné organizace");
     | id_akce.get; volba_akce(id_akce.get)
     | not(eq(fdate('Y',od.get),rok.get));
       alert('Akce má na intranetu uvedeno chybné datum zahájení (např. chybějící nebo z jiného roku)');
     | confirm('akce ',nazev.get,' zatím není v databázi, mám ji založit?');
       the_duakce.set(akce.insert_record(
-        object('nazev',nazev.get,'datum_od',date2sql(od.get),'datum_do',date2sql(do.get))));
+        object('access',org_ys,'nazev',nazev.get,'datum_od',date2sql(od.get),'datum_do',date2sql(do.get))));
       join_akce.insert_record(object('id_akce',the_duakce.get,'g_rok',rok.get,'g_kod',kod.get));
       google.browse_row; volba_akce(id_akce.get) //,nazev.get,ma_cenik.get,ma_cenu.get,cena.get)
     }
