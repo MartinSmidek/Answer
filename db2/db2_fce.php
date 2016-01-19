@@ -2290,30 +2290,27 @@ function ucast2_auto_jmeno2($patt,$par) {  trace();
   $a= (object)array();
   $limit= 10;
   $n= 0;
-//   if ( !$patt ) {
-//     $a->{0}= "... zadejte jméno";
-//   }
-//   else {
-    if ( $par->prefix ) {
-      $patt= "{$par->prefix}$patt";
-    }
-    // zpracování vzoru
-    $qry= "SELECT id_osoba AS _key,jmeno AS _value
-           FROM osoba
-           WHERE prijmeni='{$par->prijmeni}' AND jmeno LIKE '$patt%'
-           GROUP BY jmeno
-           ORDER BY jmeno LIMIT $limit";
-    $res= mysql_qry($qry);
-    while ( $res && $t= mysql_fetch_object($res) ) {
-      if ( ++$n==$limit ) break;
-      $a->{$t->_key}= $t->_value;
-    }
-    // obecné položky
-    if ( !$n )
-      $a->{0}= "... nic nezačíná $patt";
-    elseif ( $n==$limit )
-      $a->{999999}= "... a další";
-//   }
+  if ( $par->prefix ) {
+    $patt= "{$par->prefix}$patt";
+  }
+  // zpracování vzoru
+  $qry= "SELECT TRIM(jmeno) AS _value
+         FROM osoba
+         WHERE prijmeni='{$par->prijmeni}' AND TRIM(jmeno)!='' AND jmeno LIKE '$patt%'
+         GROUP BY _value
+         ORDER BY _value LIMIT $limit
+         ";
+  $res= mysql_qry($qry);
+  while ( $res && $t= mysql_fetch_object($res) ) {
+    ++$n;
+    if ( $n==$limit ) break;
+    $a->{$n}= $t->_value;
+  }
+  // obecné položky
+  if ( !$n )
+    $a->{0}= "... nic nezačíná $patt";
+  elseif ( $n==$limit )
+    $a->{999999}= "... a další";
   return $a;
 }
 # ----------------------------------------------------------------------------- ucast2_auto_prijmeni
