@@ -2284,6 +2284,38 @@ function ucast2_auto_jmeno($patt,$par) {  trace();
   }
   return $a;
 }
+# ------------------------------------------------------------------------------- ucast2_auto_jmeno2
+# test autocomplete - hledá jména ve všech organizacích, použité v příjmení
+function ucast2_auto_jmeno2($patt,$par) {  trace();
+  $a= (object)array();
+  $limit= 10;
+  $n= 0;
+//   if ( !$patt ) {
+//     $a->{0}= "... zadejte jméno";
+//   }
+//   else {
+    if ( $par->prefix ) {
+      $patt= "{$par->prefix}$patt";
+    }
+    // zpracování vzoru
+    $qry= "SELECT id_osoba AS _key,jmeno AS _value
+           FROM osoba
+           WHERE prijmeni='{$par->prijmeni}' AND jmeno LIKE '$patt%'
+           GROUP BY jmeno
+           ORDER BY jmeno LIMIT $limit";
+    $res= mysql_qry($qry);
+    while ( $res && $t= mysql_fetch_object($res) ) {
+      if ( ++$n==$limit ) break;
+      $a->{$t->_key}= $t->_value;
+    }
+    // obecné položky
+    if ( !$n )
+      $a->{0}= "... nic nezačíná $patt";
+    elseif ( $n==$limit )
+      $a->{999999}= "... a další";
+//   }
+  return $a;
+}
 # ----------------------------------------------------------------------------- ucast2_auto_prijmeni
 # SELECT autocomplete - výběr ze jmen rodin
 function ucast2_auto_prijmeni($patt,$par) {  #trace();

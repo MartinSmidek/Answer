@@ -865,12 +865,13 @@ form _osoba2x [,,244,322] {css:'ae_frame', proc onclick() { on_click }
   #==> . hledání dle příjmení a jména
   select prijmeni1 [5,32,106,] {tag:'w', type:'auto', par:°{fce:'ucast2_auto_prijmeni'}
     format:'n', title:'^příjmení?', format:'T'
-#   field prijmeni1 [5,32,106,] {tag:'w', format:'n', title:'^příjmení?', style:'z-index:3', format:'T'
-    proc onchanged() { this.get; jmeno1.get; see.see_show(1);
+    proc onchanged() {
+      // předej nalezené příjmení jako parametr pro hledání jmen
+      this.get; jmeno1.add_attrib('par.prijmeni',this.get);
+      jmeno1.get; see.see_show(1);
   }}
-  select jmeno1 [120,32,83,] {tag:'w', type:'auto', par:°{fce:'ucast2_auto_jmeno'}
+  select jmeno1 [120,32,83,] {tag:'w', type:'auto', par:°{fce:'ucast2_auto_jmeno2',prijmeni:''}
     format:'n', title:'^jméno?', format:'T'
-#   field jmeno1    [120,32,83,] {tag:'w', format:'n', title:'^jméno?', style:'z-index:3', format:'T'
     proc onchanged() { prijmeni1.get; this.get; see.see_show(1);
   }}
   label see [41,2,72,26] { tag:'W', css:'ae_parm search', format:'n'
