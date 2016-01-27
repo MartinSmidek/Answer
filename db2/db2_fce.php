@@ -6524,13 +6524,20 @@ function evid2_browse_mailist($x) {
       $lng[$psc]= $s->lng;
     }
     # získej sexpr z mailistu id=c.cond
-    list($nazev,$qo)= select('ucel,sexpr','mailist',"id_mailist={$x->cond}");
+    list($nazev,$qo,$komu)= select('ucel,sexpr,komu','mailist',"id_mailist={$x->cond}");
 //                                                                 display($qo);
     $ro= mysql_qry($qo);
     while ( $ro && ($o= mysql_fetch_object($ro)) ) {
-      $id= $o->_id;
+      $id= $komu=='o' ? $o->_id : $o->_idr;
       if ( $x->selected && !in_array($id,$selected) ) continue;
-      list($prijmeni,$jmeno)= explode(' ',$o->_name);
+      if ( $komu=='o' ) {
+        list($prijmeni,$jmeno)= explode(' ',$o->_name);
+      }
+      else {
+        $jm= strpos($o->_name,' ');
+        $prijmeni= substr($o->_name,0,$jm);
+        $jmeno= substr($o->_name,$jm+1);
+      }
       $psc= $o->_psc;
       $zz[]= (object)array(
       'id_o'=>$id,
@@ -6542,7 +6549,7 @@ function evid2_browse_mailist($x) {
       'ulice'=>$o->_ulice,
       'psc'=>$psc,
       'obec'=>$o->_obec,
-      '_vek'=>$o->_vek,
+      '_vek'=> $komu=='o' ? $o->_vek : $o->_spolu,
       'mail'=>$o->_email,
       'telefon'=>$o->_telefon,
       '_id_o'=>$id
@@ -7979,9 +7986,11 @@ function mail2_lst_using($id_mailist) {
 }
 # ------------------------------------------------------------------------------------ mail2_mailist
 # vrátí daný mailist ve tvaru pro selects
-function mail2_mailist($access) {
+# pokud je uvedeno par.typ='o' pro osoby, 'r' pro rodiny
+function mail2_mailist($access,$par=null) {
   $sel= '';
-  $mr= mysql_qry("SELECT id_mailist,ucel,access FROM mailist WHERE access=$access");
+  $AND= $par ? "AND komu='{$par->komu}'" : '';
+  $mr= mysql_qry("SELECT id_mailist,ucel,access FROM mailist WHERE access=$access $AND");
   while ($mr && ($m= mysql_fetch_object($mr))) {
     $a= $m->access;
     $css= $a==1 ? 'ezer_ys' : ($a==2 ? 'ezer_fa' : ($a==3 ? 'ezer_db' : ''));
