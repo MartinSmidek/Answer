@@ -652,7 +652,8 @@ form _gsql {
       //form.save;
       ask('query',conc("UPDATE mailist SET ",
         "parms='",parms.get,"',",       "sexpr=",'"',gsql.get,'",',
-        "ucel='",ucel.get,"',",         "blokovano=",blokovano.get,
+        "ucel='",ucel.get,"',",         "blokovano=",blokovano.get,',',
+        "komu='",cconc(pro_pary.get,'r','o'),"'",
         ' WHERE id_mailist=',id_mailist.get));
       [ to_reload; m_reload | form.plain; sql_dirty.set(0) ];
       warning("QUERY SAVED")
