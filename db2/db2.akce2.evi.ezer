@@ -33,12 +33,13 @@ var menu_title=''               // ... a název
 menu m {type:'left', active:*, format:'f-'
   menu r {title:'rodiny',type:'group', skill:'yae;fae;cae'
     item a {title:'[fa-group]všechny rodiny'    par:°{lst:'r',tit:'všechny rodiny, co ',cnd:"1"}}
+    item m {title:'[fa-send-o] podle mail-listu'par:°{lst:'m',tit:'MAILIST',cnd:'1',komu:'r'} }
     item t {title:'[fa-wrench fa-red](test)'           par:°{lst:'r',tit:'testovací rodiny, co ',
                                                 cnd:"r.id_rodina IN (383,2287,14,3329)"},skill:'m'}
   }
   menu o {title:'osoby',type:'group', skill:'yae;fae;cae'
     item a {title:'[fa-user]všechny kontakty'   par:°{lst:'o',tit:'všechny osoby, co ',cnd:'1'}}
-    item m {title:'[fa-send-o] podle mail-listu'par:°{lst:'m',tit:'MAILIST',cnd:'1'},   skill:'a'}
+    item m {title:'[fa-send-o] podle mail-listu'par:°{lst:'m',tit:'MAILIST',cnd:'1',komu:'o'} }
     item   {title:'[fa-male]muži'               par:°{lst:'o',tit:'všichni muži, co ',
                                                 cnd:"o.sex=1 AND TIMESTAMPDIFF(YEAR,narozeni,NOW())>=18"}}
     item   {title:'[fa-female]ženy'             par:°{lst:'o',tit:'všechny ženy, co ',
@@ -108,11 +109,11 @@ menu m {type:'left', active:*, format:'f-'
     }
   }
 }
-proc reaccess() { #==> reaccess - změna
-  menu_item.get;
-  lst.init_mailist;
-  m.onclick(menu_item.get);
-}
+# proc reaccess() { #== > reaccess - změna
+#   menu_item.get;
+#   lst.init_mailist;
+#   m.onclick(menu_item.get);
+# }
 # --------------------------------------------------------------------------------------------- stav
 var evi_barvit_zmeny=0          // 1: v page.evid budou zvýrazněna pole se změnou
 # --------------------------------------------------------------------------------------------- uses
@@ -193,11 +194,15 @@ form _lst [,,370,*] {
     r_vyber.key( 1); r_vyber.refresh; //br_filtr.set(r_vyber.get);
     init_mailist;
   ] }
-  proc init_mailist() { // zobraz mailist podle access
+  // zobraz mailist podle access
+  proc init_mailist() { var sel:text
     page.map.mapa_clear;
-    bm_vyber.selects(ask('mail2_mailist',my_access.get));
+    sel.set(ask('mail2_mailist',my_access.get,menu_par.get));
+    sel;
+    bm_vyber.selects(sel);
     bm_vyber.key(function('select',"for (var key in select.Items) return key; return 0;",bm_vyber));
     bm_vyber.change;
+  | alert("Mailist pro ",cconc(eq(menu_par.get('komu'),'r'),'rodiny','osoby')," nebyl ještě vytvořen");
   }
   # ---------------------------------------------- společné prvky
   label [10,2,347,25] { css:'ae_work' }
@@ -324,10 +329,11 @@ form _lst [,,370,*] {
     |             mail.width(44); _id_o.width(0)
     }
   }
-  # ==============================================> M - OSOBY+MAPA
-  var bm_having= 1
+  # ==============================================> M - MAPA
+  var bm_having= 1, bm_komu= -1
   proc bm_reload(cnd) {
     [ virgin.get; start ];
+    [ eq(bm_komu.get,menu_par.get('komu')) | bm_komu.set(menu_par.get('komu')); init_mailist ];
     page.map.mapa_clear;
     bm.browse_load(bm_vyber.key);
   | page.page_init
@@ -354,9 +360,16 @@ form _lst [,,370,*] {
     show _id_o    [,,0,]  { title:'ID osoby', format:'rs', help:'osobní číslo' }
     // events
     proc onrowclick() {
+      eq(bm_komu.get,'o');
+      // seznam osob
       ido.set(id_o.get);
       [ page.map.on.get; lat.get; page.map.mapa_curr(lat.get,lng.get) ];
       page.evid_load(ido.get,0);
+    | eq(bm_komu.get,'r');
+      // seznam rodin
+      idr.set(id_o.get);
+      [ page.map.on.get; lat.get; page.map.mapa_curr(lat.get,lng.get) ];
+      page.evid_load(0,idr.get);
     }
     proc onchoice(on) {
       page.map.on.get;
@@ -516,7 +529,7 @@ form _page {
     'clen',{ oso_load(ido.get);
              cle.dary(ido.get,conc(oso.prijmeni.get,' ',oso.jmeno.get));
              pri.dary(ido.get,conc(oso.prijmeni.get,' ',oso.jmeno.get)) },
-    'mapa',{ oso_load(ido.get) }
+    'mapa',{ oso_load(ido.get); act.ucasti(ido.get,conc(oso.prijmeni.get,' ',oso.jmeno.get)) }
     );
     [ cmd.part('o_smaz');
       cmd.o_smaz.display(not(page.oso.deleted.get)); cmd.o_obnov.display(page.oso.deleted.get) ];

@@ -42,7 +42,7 @@ proc init_ucast() { echo('mai:init_ucast ',the_title.get);
   vy.fill(the_title.get);
 }
 # ------------------------------------------------------------------------------------------==> menu
-menu m {type:'left', format:'f+'
+menu m {type:'left', format:'f-'
   menu g {title:'Vytvoření hromadného mailu', type:'group'
     item i {title:'[fa-envelope-o] podle zvoleného mail-listu', _sys:'gen'
       par:°{k:'et',uq:'G',on:'gen',off:'skup|akce'} }
@@ -373,11 +373,12 @@ form _gsql {
   }
   // sex
   check pro_muze   [10,t_pro+60,58,] { tag:'def', title:'muže', value:'1', format:'t'
-    proc onchange() { dirty } }
+    proc onchange() { dirty; this.get | pro_pary.set(0) } }
   check pro_zeny   [65,t_pro+60,63,] { tag:'def', title:'ženy', value:'1', format:'t'
-    proc onchange() { dirty } }
-  check pro_rodiny [120,t_pro+60,63,] { tag:'def', title:'rodiny', value:'0', format:'td'
-    proc onchange() { dirty } }
+    proc onchange() { dirty; this.get | pro_pary.set(0) } }
+  check pro_pary [120,t_pro+60,110,] { tag:'def', title:'manželský pár', value:'0', format:'t'
+    help:"bude zasláno jen manželským párům"
+    proc onchange() { dirty; this.get; pro_muze.set(1); pro_zeny.set(1); } }
   // mrop
   check pro_mrop   [26,t_pro+82,50,] { tag:'def', title:'mrop', value:'0', format:'t'
     proc onchange() { form.display(this.get,'mrop'); pro_mrop_f.init(1); pro_mrop_s.key(1); dirty;}
@@ -407,15 +408,16 @@ form _gsql {
   // účasti
   check pro_ucast  [10,t_pro+104,90,] { tag:'def', title:'podle účastí?', value:'0', format:'t'
     proc onchange() { form.display(this.get,'ucast'); pro_kolik.init(1); pro_jak.key(1); dirty }
-    proc code_ucasti() { var having: text
+    proc code_ucasti(_having) { var having:text
+      // k předané klauzuli uvozené HAVING (nebo AND) přidá podle nastavených účastí
       having.set('');
       json_akce.set(conc(',"ucasti":{"ucast":',this.get));
       [ this.get;
         json_akce.set(conc(json_akce.get,',"kolik":',pro_kolik.get,',"jak":',pro_jak.key));
         having.set(cconc(
-          eq(pro_jak.key,1),conc("HAVING _ucasti=",pro_kolik.get),
-          eq(pro_jak.key,2),conc("HAVING _ucasti>=",pro_kolik.get),
-          eq(pro_jak.key,3),conc("HAVING _ucasti<=",pro_kolik.get)
+          eq(pro_jak.key,1),conc(_having," _ucasti=",pro_kolik.get),
+          eq(pro_jak.key,2),conc(_having," _ucasti>=",pro_kolik.get),
+          eq(pro_jak.key,3),conc(_having," _ucasti<=",pro_kolik.get)
       ))];
       json_akce.set(conc(json_akce.get,'}'));
       return(having);
@@ -435,19 +437,19 @@ form _gsql {
     var x: object
     json.set('');
     # ano-akce
-    code_akce_do(L_ano,ano_akce.get,ano_akces,1);
+    code_akce_do(L_ano,ano_akce.get,ano_akces,1,my_access.get);
     json.set(conc(json,'"ano_akce":',json_akce.get));
     # ne-akce
     { use_ne_akce.get;
-      [ code_akce_do(L_ne,ne_akce.get,ne_akces,0) ];
+      [ code_akce_do(L_ne,ne_akce.get,ne_akces,0,3) ];
       json.set(conc(json,',"ne_akce":',json_akce.get));
     | json.set(conc(json,',"ne_akce":0'));
     };
     # podmínky na účasti
     json.set(conc(json,',"ucasti":{'));
     [ fces.code_fce ]; json.set(conc(json,json_akce.get));
-    json.set(conc(json,',"muzi":',pro_muze.get,',"zeny":',pro_zeny.get));
-    [ pro_ucast.code_ucasti ]; json.set(conc(json,json_akce.get));
+    json.set(conc(json,',"muzi":',pro_muze.get,',"zeny":',pro_zeny.get,',"pary":',pro_pary.get));
+    [ pro_ucast.code_ucasti('') ]; json.set(conc(json,json_akce.get));
     [ pro_mrop.code_mrop ]; json.set(conc(json,json_akce.get));
     json.set(conc(json,',"email":',pro_mail.get));
     json.set(conc(json,'}'));
@@ -486,8 +488,8 @@ form _gsql {
       ids.set(ask('select',"GROUP_CONCAT(id_cis)",'_cis',
         conc("druh='ms_akce_funkce' AND data IN (",p.ucasti.fce_keys,")")));
       fces.selected('set',ids) ];
-    # muži/ženy
-    pro_muze.set(p.ucasti.muzi); pro_zeny.set(p.ucasti.zeny);
+    # muži/ženy/páry
+    pro_muze.set(p.ucasti.muzi); pro_zeny.set(p.ucasti.zeny); pro_pary.set(p.ucasti.pary);
     # mrop
     { p.ucasti.mrop;
       pro_mrop.set(p.ucasti.mrop.ucast); pro_mrop.onchange;
@@ -524,9 +526,9 @@ form _gsql {
   var akce_ano: text
   var akce_ne: text
   proc akce_show() { #==> .. akce_show
-    akce_ano.set(code_akce_do(L_ano,ano_akce.get,ano_akces,1));
+    akce_ano.set(code_akce_do(L_ano,ano_akce.get,ano_akces,1,my_access.get));
     { or(ne_akce.get,L_ne.get);
-      akce_ne.set(code_akce_do(L_ne,ne_akce.get,ne_akces,0));
+      akce_ne.set(code_akce_do(L_ne,ne_akce.get,ne_akces,0,3)); // jakákoli organizace
     | akce_ne.set("FALSE")
     };
     [ ctrl_akce_ne.browse_load(akce_ne.get) ];
@@ -550,7 +552,54 @@ form _gsql {
   } }
   button [678,t_pro+42,,] { tag:'def', title:'(jen JSON)',  proc onclick() {
     tsql.set(make_json) } }
-  proc make_sql(to_show) { #==> .. make_sql
+  proc make_sql(to_show) {
+    pro_pary.get; make_sql_pary(to_show) | make_sql_osoby(to_show)
+  }
+  proc make_sql_pary(to_show) { # --------------------------------------------- ==> .. páry make_sql
+    // dotaz založený na rodina
+    var having: text
+    having.set(''); cond.set("TRUE");
+    # výběry a zobrazení akcí
+    akce_show;
+    # ... - funkce
+    cond.set(conc(cond.get,' AND ',fces.code_fce));
+    # ... - mrop
+    cond.set(conc(cond.get,' AND ',pro_mrop.code_mrop));
+    # sestavení SELECT pro rodinu
+    gsql.set(conc(
+      "SELECT -- výběr manželského páru",chr(10),
+      "  r2._ne,id_rodina AS _idr,r.access,COUNT(DISTINCT id_pobyt) AS _ucasti,",chr(10),
+      "  r2._name,r2._ulice,r2._psc,r2._obec,r2._stat,r2._email,r2.nomaily,r2._telefon,r2._spolu,",chr(10),
+      "  MAX(iniciace) AS iniciace",chr(10),
+      "FROM pobyt AS p",chr(10),
+      "JOIN akce AS a ON a.id_duakce=p.id_akce JOIN rodina AS r ON id_rodina=i0_rodina ",chr(10),
+      "JOIN tvori AS t USING (id_rodina) JOIN osoba AS o USING (id_osoba)",chr(10),
+      "-- ---------------- výběr manželského páru - s vynechání účastníků nastavených akcí",chr(10),
+      "JOIN ( SELECT id_rodina AS _idr,",chr(10),
+      "  SUM(IF(",akce_ne.get,",1,0) ) AS _ne,",chr(10),
+      "  GROUP_CONCAT(DISTINCT role) AS _role,",chr(10),
+      "  CONCAT(r.nazev,' ',GROUP_CONCAT(DISTINCT jmeno ORDER BY role SEPARATOR ' a ')) AS _name,",chr(10),
+      "  r.psc AS _psc, r.ulice AS _ulice, r.obec AS _obec, r.stat AS _stat,",chr(10),
+      "  GROUP_CONCAT(DISTINCT IF(o.kontakt,IF(o.email='',r.emaily,o.email),r.emaily)) AS _email,nomaily,",chr(10),
+      "  GROUP_CONCAT(DISTINCT IF(o.kontakt,IF(o.telefon='',r.telefony,o.telefon),r.telefony)) AS _telefon,",chr(10),
+      "  datsvatba,TIMESTAMPDIFF(YEAR,datsvatba,NOW()) AS _spolu",chr(10),
+      "FROM rodina AS r",chr(10),
+      "JOIN pobyt AS p ON r.id_rodina=p.i0_rodina JOIN akce AS a ON a.id_duakce=p.id_akce",chr(10),
+      "JOIN tvori AS t USING (id_rodina) JOIN osoba AS o USING (id_osoba)",chr(10),
+      "WHERE r.deleted='' AND r.access&1 AND t.role IN ('a','b')",chr(10),
+      "GROUP BY id_rodina HAVING _ne=0 AND FIND_IN_SET('a',_role) AND FIND_IN_SET('b',_role)",chr(10),
+      ") AS r2 ON _idr=r.id_rodina",chr(10),
+      "-- ---------------- výběr osob - účastníků nastavených akcí ",chr(10),
+      "WHERE r.deleted='' AND ",cond.get,chr(10),
+      "  AND id_akce IN (SELECT id_duakce FROM akce WHERE spec=0 AND access&",
+      my_access.get," AND ",akce_ano.get,")",chr(10),
+      "GROUP BY id_rodina ",pro_ucast.code_ucasti("HAVING"),chr(10),
+      "ORDER BY _name",chr(10)
+    ));
+    [ to_show; tsql.set(ask('mail2_lst_try',gsql.get,1)) ];
+  }
+  proc make_sql_osoby(to_show) { # ------------------------------------------- ==> .. osoby make_sql
+    // dotaz založený na osoba
     # výběry a zobrazení akcí
     akce_show;
     from.set(conc("FROM pobyt AS p JOIN spolu AS s USING (id_pobyt) ",
@@ -590,7 +639,7 @@ form _gsql {
         from.get,chr(10),
         "WHERE p.id_akce IN (SELECT id_duakce FROM akce WHERE spec=0 AND ",akce_ne.get,")",chr(10),
         ")",chr(10))),
-      "GROUP BY o.id_osoba ",pro_ucast.code_ucasti,chr(10),
+      "GROUP BY o.id_osoba ",pro_ucast.code_ucasti("HAVING"),chr(10),
       "ORDER BY prijmeni",chr(10)
     ));
     [ to_show; tsql.set(ask('mail2_lst_try',gsql.get,1)) ];
@@ -661,7 +710,7 @@ form _gsql {
     pro_mrop_s.selects("a později:1,a dříve:2,právě:3,ještě ne:4");
     pro_fce.init; fces.selected('clear'); fces.display(0);
     pro_ucast.init; form.display(0,'ucast'); pro_kolik.init(1); pro_jak.key(1);
-    pro_muze.init(1); pro_zeny.init(1); pro_rodiny.init(1);
+    pro_muze.init(1); pro_zeny.init(1); pro_pary.init(1);
     pro_mrop.init; form.display(0,'mrop');
     # testy
     tsql.set('');
@@ -720,12 +769,12 @@ form _gsql {
   }
   # vrátí code=SQL kód a nastaví json_akce pro úschovu v make_json
   var json_akce: text
-  proc code_akce_do(L,typ_akce,akces,all) { #==> .. code_akce_do
+  proc code_akce_do(L,typ_akce,akces,all,org) { #==> .. code_akce_do
     var cond: text
     var keys: text
     var values: text
     gen_cas(L);
-    cond.set(conc("access&",my_access.get," AND spec=0",code_cas.get));
+    cond.set(conc("a.access&",org," AND spec=0",code_cas.get));
     json_akce.set(conc('"typy":"',typ_akce,'"'));
     [ typ_akce;
       keys.set(akces.selected('get'));

@@ -230,7 +230,7 @@ kEzer-ys2
 		+ezer
 			wiki\ezer_nastaveni.wiki
 		wiki\cr_system.wiki
-	-ys
+	+ys
 		+$
 			ys\$.ezer
 			skins\colors.php
@@ -265,7 +265,7 @@ kEzer-ys2
 			ys\ys.syst.ezer
 			ys\ys.syst.oso.ezer
 		ys\ys.doc.ezer
-	-ys2
+	+ys2
 		ys2\$.ezer
 		ys2\ys2.eko.ezer
 		ys2.inc
@@ -310,9 +310,10 @@ kEzer-ys2
 29=tut\tut.css.php
 30=ys\$.ezer
 31=ys2\$.ezer
+32=db2\db2_fce.php
 [Selected Project Files]
 Main=
-Selected=db\db_akce.php
+Selected=db2\db2_fce.php
 [tut\.htaccess]
 TopLine=1
 Caret=2,9
@@ -374,8 +375,8 @@ Caret=41,150
 TopLine=696
 Caret=23,714
 [db\db_akce.php]
-TopLine=2437
-Caret=48,2480
+TopLine=9303
+Caret=1,9330
 [ezer2.2\dbg.php]
 TopLine=67
 Caret=75,80
@@ -407,7 +408,7 @@ Caret=1,22
 TopLine=54
 Caret=82,95
 [ds\ds.tab.ezer]
-TopLine=48
+TopLine=52
 Caret=1,93
 [ds\ds.ezer]
 TopLine=1
@@ -428,5 +429,8 @@ Caret=38,19
 TopLine=1
 Caret=37,41
 [ys2\$.ezer]
-TopLine=1
+TopLine=2
 Caret=48,43
+[db2\db2_fce.php]
+TopLine=8370
+Caret=100,8389
