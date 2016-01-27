@@ -42,7 +42,7 @@ proc init_ucast() { echo('mai:init_ucast ',the_title.get);
   vy.fill(the_title.get);
 }
 # ------------------------------------------------------------------------------------------==> menu
-menu m {type:'left', format:'f-'
+menu m {type:'left', format:'f+'
   menu g {title:'Vytvoření hromadného mailu', type:'group'
     item i {title:'[fa-envelope-o] podle zvoleného mail-listu', _sys:'gen'
       par:°{k:'et',uq:'G',on:'gen',off:'skup|akce'} }
@@ -1127,6 +1127,7 @@ form _esady  {
     show komu_Q [,,0,] { title:'skupině' , data:etc.zkratka, format:'s' },
     show komu_Qn       { data:etc.barva },
     show komu_G [,,0,] { title:'mail-list' , data:etl.ucel, format:'s' },
+    show komu { data:etl.komu } // o-osoba, r-rodina
     show predmet [,,160,] { title:'předmět', data:etd.nazev, format:'sq', css_cell:'stav2,3:zluty,4:zeleny,5:cerveny' },
     show stav1 [,,0,] { expr:'min(etm.stav)', format:'rsq' },
     show stav2 [,,0,] { expr:'max(etm.stav)', format:'rsq' },
@@ -1144,9 +1145,12 @@ form _esady  {
   }
   label [12,214,92,17] { title:'Testovací adresa:' }
   label [35,247,66,17] { title:'Odeslat jako:' }
-  field zkus [105,210,200,17] { skill:'yam|yams;fam|fams;cam|cams', help:'email z osobního nastavení', format:'t' }
-  field from [105,236,200,17] { skill:'yam|yams;fam|fams;cam|cams', help:'email z osobního nastavení', format:'t'  }
-  field name [105,255,200,17] { skill:'yam|yams;fam|fams;cam|cams', help:"'vyřizuje' z osobního nastavení", format:'t'  }
+  field zkus [105,210,200,17] { skill:'yam|yams;fam|fams;cam|cams',
+                                help:'email z osobního nastavení', format:'t' }
+  field from [105,236,200,17] { skill:'yam|yams;fam|fams;cam|cams',
+                                help:'email z osobního nastavení', format:'t'  }
+  field name [105,255,200,17] { skill:'yam|yams;fam|fams;cam|cams',
+                                help:"'vyřizuje' z osobního nastavení", format:'t'  }
   button test [0,280,,] { title:'1 mail testovací', skill:'yam|yams;fam|fams;cam|cams',
     help:'pro kontrolu - posílá se na testovací adresu'
     proc onclick () {
@@ -1227,10 +1231,14 @@ form _esady  {
     // mail-listy
     'G',{ //texty.komu_U.width(0);
           texty.komu_Q.width(0); texty.komu_G.width(100);
-          maily.prijmeni.set_attrib('title',"příjmení");
-          maily.prijmeni.set_attrib('expr',"etmo.prijmeni");
           vy.komu_G.key;
           texty.browse_load(conc("etd.id_mailist=",vy.komu_G.key));
+          { eq(texty.komu.get,'o');
+            maily.prijmeni.set_attrib('title',"příjmení");
+            maily.prijmeni.set_attrib('expr',"etmo.prijmeni");
+          | maily.prijmeni.set_attrib('title',"rodina");
+            maily.prijmeni.set_attrib('expr',"etmr.nazev");
+          };
         | texty.browse_init
     });
     reload2

@@ -6675,7 +6675,7 @@ function mapa2_psc($psc,$obec) {
 //                                         debug(explode(';',$ret->mark),"mapa_akce");
   return $ret;
 }
-# ------------------------------------------------------------------------------==> .. mapa2_ctverec
+# ----------------------------------------------------------------------------==> .. mapa2_ctverec_o
 # ASK
 # obsah čtverce $clen +- $dist (km) na všechny strany
 # vrací objekt {
@@ -6683,7 +6683,7 @@ function mapa2_psc($psc,$obec) {
 #   msg:  text chyby
 #   rect: omezující obdélník jako SW;NE
 #   ryby: [geo_clen,...]
-function mapa2_ctverec($ido,$dist) {  trace();
+function mapa2_ctverec_o($ido,$dist) {  trace();
   $ret= (object)array('err'=>0,'msg'=>'');
   // zjištění polohy člena
   $lat0= $lng0= 0;
@@ -6706,12 +6706,41 @@ end:
 //                                                 debug($ret,"geo_get_ctverec");
   return $ret;
 }
-# --------------------------------------------------------------------------------- mapa2_ve_ctverci
+# ----------------------------------------------------------------------------==> .. mapa2_ctverec_r
+# ASK
+# obsah čtverce $clen +- $dist (km) na všechny strany
+# vrací objekt {
+#   err:  0/1
+#   msg:  text chyby
+#   rect: omezující obdélník jako SW;NE
+#   ryby: [geo_clen,...]
+function mapa2_ctverec_r($ido,$dist) {  trace();
+  $ret= (object)array('err'=>0,'msg'=>'');
+  // zjištění polohy člena
+  $lat0= $lng0= 0;
+  $qc= "SELECT lat,lng
+        FROM rodina AS r USING (id_rodina)
+        LEFT JOIN uir_adr.psc_axy AS a ON a.psc=r.psc
+        WHERE id_rodina=$ido";
+  $rc= mysql_qry($qc);
+  if ( $rc && $c= mysql_fetch_object($rc) ) {
+    $lat0= $c->lat;
+    $lng0= $c->lng;
+  }
+  if ( !$lat0 ) { $ret->msg= "nelze najít polohu rodiny $ido"; $ret->err++; goto end; }
+  // čtverec  SW;NE
+  $ret->rect=($lat0-$dist*0.0089913097).",".($lng0-$dist*0.0137464041)
+        .";".($lat0+$dist*0.0089913097).",".($lng0+$dist*0.0137464041);
+end:
+//                                                 debug($ret,"geo_get_ctverec");
+  return $ret;
+}
+# ------------------------------------------------------------------------------- mapa2_ve_ctverci_o
 # ASK
 # vrátí jako seznam id_osoba bydlících v oblasti dané obdélníkem 'x,y;x,y'
 # podmnožinu předaných ids, pokud je rect prázdný - vrátí vše, co lze lokalizovat
 # pokud by seznam byl delší než MAX, vrátí chybu
-function mapa2_ve_ctverci($rect,$ids,$max=5000) { trace();
+function mapa2_ve_ctverci_o($rect,$ids,$max=5000) { trace();
   $ret= (object)array('err'=>'','rect'=>$rect,'ids'=>'','pocet'=>0);
   if ( $rect ) {
     list($sell,$nwll)= explode(';',$rect);
@@ -6744,12 +6773,48 @@ function mapa2_ve_ctverci($rect,$ids,$max=5000) { trace();
   }
   return $ret;
 }
-# ------------------------------------------------------------------------------- mapa2_mimo_ctverec
+# ------------------------------------------------------------------------------- mapa2_ve_ctverci_r
+# ASK
+# vrátí jako seznam id_rodina bydlících v oblasti dané obdélníkem 'x,y;x,y'
+# podmnožinu předaných ids, pokud je rect prázdný - vrátí vše, co lze lokalizovat
+# pokud by seznam byl delší než MAX, vrátí chybu
+function mapa2_ve_ctverci_r($rect,$ids,$max=5000) { trace();
+  $ret= (object)array('err'=>'','rect'=>$rect,'ids'=>'','pocet'=>0);
+  if ( $rect ) {
+    list($sell,$nwll)= explode(';',$rect);
+    $se= explode(',',$sell);
+    $nw= explode(',',$nwll);
+    $poloha= "lat BETWEEN $se[0] AND $nw[0] AND lng BETWEEN $se[1] AND $nw[1]";
+  }
+  else {
+    $poloha= "lat!=0 AND lng!=0";
+  }
+  $qo= "SELECT id_rodina, lat, lng
+        FROM rodina AS r
+        LEFT JOIN uir_adr.psc_axy AS a ON a.psc=r.psc
+        WHERE id_rodina IN ($ids) AND $poloha ";
+  $ro= mysql_qry($qo);
+  if ( $ro ) {
+    $ret->pocet= mysql_num_rows($ro);
+    if ( $max && $ret->pocet > $max ) {
+      $ret->err= ($rect ? "Ve výřezu mapy je" : "Je požadováno"). " příliš mnoho bodů "
+        . "({$ret->pocet} nejvíc lze $max)";
+    }
+    else {
+      $del= '';
+      while ( $ro && $o= mysql_fetch_object($ro) ) {
+        $ret->ids.= "$del{$o->id_rodina}"; $del= ',';
+      }
+    }
+  }
+  return $ret;
+}
+# ----------------------------------------------------------------------------- mapa2_mimo_ctverec_o
 # ASK
 # vrátí jako seznam id_osoba bydlících mimo oblast danou obdélníkem 'x,y;x,y'
 # podmnožinu předaných ids
 # pokud by seznam byl delší než MAX, vrátí chybu
-function mapa2_mimo_ctverec($rect,$ids,$max=5000) { trace();
+function mapa2_mimo_ctverec_o($rect,$ids,$max=5000) { trace();
   $ret= (object)array('err'=>'','rect'=>$rect,'ids'=>'','pocet'=>0);
   list($sell,$nwll)= explode(';',$rect);
   $se= explode(',',$sell);
@@ -6772,6 +6837,37 @@ function mapa2_mimo_ctverec($rect,$ids,$max=5000) { trace();
       $del= '';
       while ( $ro && $o= mysql_fetch_object($ro) ) {
         $ret->ids.= "$del{$o->id_osoba}"; $del= ',';
+      }
+    }
+  }
+  return $ret;
+}
+# ----------------------------------------------------------------------------- mapa2_mimo_ctverec_r
+# ASK
+# vrátí jako seznam id_rodina bydlících mimo oblast danou obdélníkem 'x,y;x,y'
+# podmnožinu předaných ids
+# pokud by seznam byl delší než MAX, vrátí chybu
+function mapa2_mimo_ctverec_r($rect,$ids,$max=5000) { trace();
+  $ret= (object)array('err'=>'','rect'=>$rect,'ids'=>'','pocet'=>0);
+  list($sell,$nwll)= explode(';',$rect);
+  $se= explode(',',$sell);
+  $nw= explode(',',$nwll);
+  $qo= "SELECT id_rodina, lat, lng
+        FROM rodina AS r
+        LEFT JOIN uir_adr.psc_axy AS a ON a.psc=r.psc
+        WHERE id_rodina IN ($ids)
+          AND NOT (lat BETWEEN $se[0] AND $nw[0] AND lng BETWEEN $se[1] AND $nw[1]) ";
+  $ro= mysql_qry($qo);
+  if ( $ro ) {
+    $ret->pocet= mysql_num_rows($ro);
+    if ( $max && $ret->pocet > $max ) {
+      $ret->err= "Ve výřezu mapy je příliš mnoho bodů "
+        . "({$ret->pocet} nejvíc lze $max)";
+    }
+    else {
+      $del= '';
+      while ( $ro && $o= mysql_fetch_object($ro) ) {
+        $ret->ids.= "$del{$o->id_rodina}"; $del= ',';
       }
     }
   }
@@ -8395,7 +8491,7 @@ function mail2_mai_omitt2($id_dopis,$lst_vynech) {  trace();
 #   'U3'- rozeslat účastníkům akce dopis.id_duakce ukazující do akce
 #         do seznamu se dostanou pouze dlužníci (bez avíza)
 #   'Q' - rozeslat na adresy vygenerované dopis.cis_skupina => hodnota
-#   'G' - rozeslat podle mailistu
+#   'G' - rozeslat podle mailistu - varianta osoba/rodina
 # pokud _cis.data=9999 jde o speciální seznam definovaný funkcí mail2_mai_skupina - ZRUŠENO
 # $cond = dodatečná podmínka POUZE pro volání z mail2_mai_stav
 function mail2_mai_pocet($id_dopis,$dopis_var,$cond='',$recall=false) {  trace();
@@ -8414,7 +8510,8 @@ function mail2_mai_pocet($id_dopis,$dopis_var,$cond='',$recall=false) {  trace()
     $id_mailist= select('id_mailist','dopis',"id_dopis=$id_dopis");
 //     list($qry,$ucel)= select('sexpr,ucel','mailist',"id_mailist=$id");
     $ml= mail2_lst_access($id_mailist);
-    // SQL dotaz z mail-listu obsahuje _email,_nazev,_id
+    $result->komu= $komu= $ml->komu;
+    // SQL dotaz z mail-listu obsahuje _email,_nazev,_id (=id_osoba nebo id_rodina podle komu)
     $res= mysql_qry($ml->sexpr);
     while ( $res && ($d= mysql_fetch_object($res)) ) {
       $n++;
@@ -8425,20 +8522,38 @@ function mail2_mai_pocet($id_dopis,$dopis_var,$cond='',$recall=false) {  trace()
         continue;
       }
       if ( $d->_email ) {
-        // přidej každý mail zvlášť do seznamu
-        foreach(preg_split('/\s*[,;]\s*/',trim($d->_email,",; \n\r"),0,PREG_SPLIT_NO_EMPTY) as $adr) {
-          // pokud tam ještě není
-          if ( $adr && !in_array($adr,$emaily) ) {
+        if ( $komu=='o' ) {
+          // pro osoby přidej každý mail zvlášť do seznamu
+          foreach(preg_split('/\s*[,;]\s*/',trim($d->_email,",; \n\r"),0,PREG_SPLIT_NO_EMPTY) as $adr) {
+            // pokud tam ještě není
+            if ( $adr && !in_array($adr,$emaily) ) {
+              if ( $adr[0]=='*' ) {
+                // vyřazený mail
+                $mimo.= "$delm{$d->_name}"; $delm= ', '; $mx++;
+              }
+              else {
+                $emaily[]= $adr;
+                $ids[]= $d->_id;
+                $jmena[]= $d->_name;
+              }
+            }
+          }
+        }
+        else {
+          // pro rodiny vytvoř seznamy rodiných mailů
+          $r_emaily= array();
+          foreach(preg_split('/\s*[,;]\s*/',trim($d->_email,",; \n\r"),0,PREG_SPLIT_NO_EMPTY) as $adr) {
             if ( $adr[0]=='*' ) {
               // vyřazený mail
               $mimo.= "$delm{$d->_name}"; $delm= ', '; $mx++;
             }
             else {
-              $emaily[]= $adr;
-              $ids[]= $d->_id;
-              $jmena[]= $d->_name;
+              $r_emaily[]= $adr;
             }
           }
+          $emaily[]= implode(',',$r_emaily);
+          $ids[]= $d->_idr;
+          $jmena[]= $d->_name;
         }
       }
       else {
@@ -8592,7 +8707,7 @@ function mail2_mai_pocet($id_dopis,$dopis_var,$cond='',$recall=false) {  trace()
     $result->_adresy= array();
     $result->_ids= array();
   }
-//                                                 debug($result,"mail2_mai_pocet.result");
+                                                debug($result,"mail2_mai_pocet.result");
   return $result;
 }
 # ---------------------------------------------------------------------------------- mail2_mai_posli
@@ -8725,18 +8840,19 @@ function mail2_mai_info($id,$email,$id_dopis,$zdroj,$id_mail) {  trace();
            WHERE id_dopis=$id_dopis ";
     $resQ= mysql_qry($qryQ);
     if ( $resQ && ($q= mysql_fetch_object($resQ)) ) {
-      if ( $q->barva==1 ) {
-        // databáze CHLAPI
-        $qry= "SELECT * FROM ezer_ys.chlapi WHERE id_chlapi=$id ";
-        $res= mysql_qry($qry);
-        if ( $res && $c= mysql_fetch_object($res) ) {
-          $html.= "{$c->prijmeni} {$c->jmeno}<br>";
-          $html.= "{$c->ulice}, {$c->psc} {$c->obec}<br><br>";
-          if ( $c->telefon )
-            $html.= "Telefon: {$c->telefon}<br>";
-        }
-      }
-      elseif ( $q->barva==4 ) {
+//       if ( $q->barva==1 ) {
+//         // databáze CHLAPI
+//         $qry= "SELECT * FROM ezer_ys.chlapi WHERE id_chlapi=$id ";
+//         $res= mysql_qry($qry);
+//         if ( $res && $c= mysql_fetch_object($res) ) {
+//           $html.= "{$c->prijmeni} {$c->jmeno}<br>";
+//           $html.= "{$c->ulice}, {$c->psc} {$c->obec}<br><br>";
+//           if ( $c->telefon )
+//             $html.= "Telefon: {$c->telefon}<br>";
+//         }
+//       }
+//       else
+      if ( $q->barva==4 ) {
         // kopie databáze DS = ds_osoba_copy
         $qry= "SELECT * FROM ds_osoba_copy WHERE id_osoba=$id ";
         $res= mysql_qry($qry);
@@ -8806,13 +8922,21 @@ function mail2_mai_info($id,$email,$id_dopis,$zdroj,$id_mail) {  trace();
       }
       return implode(', ',$href);
     };
-    list($obsah,$prilohy)= select('obsah,prilohy','dopis',"id_dopis=$id_dopis");
+    list($obsah,$prilohy,$komu)= select('obsah,prilohy,mailist.komu',
+      'dopis JOIN mailist USING (id_mailist)',"id_dopis=$id_dopis");
     $priloha= select('priloha','mail',"id_mail=$id_mail");
-    $c= select("*",'osoba',"id_osoba=$id");
-    $html.= "{$c->id_osoba}: {$c->jmeno} {$c->prijmeni}<br>";
-    $html.= "{$c->ulice}, {$c->psc} {$c->obec}<br><br>";
-    if ( $c->telefony )
-      $html.= "Telefon: {$c->telefony}<br>";
+    if ( $komu=='o' ) {
+      $c= select("*",'osoba',"id_osoba=$id");
+      $html.= "{$c->id_osoba}: {$c->jmeno} {$c->prijmeni}";
+      $html.= $c->adresa ? "<br>{$c->ulice}, {$c->psc} {$c->obec}" : '';
+      if ( $c->kontakt && $c->telefon ) $html.= $c->kontakt ? "<br>Telefon: {$c->telefon}<br>" : '';
+    }
+    else { // rodina
+      $c= select("*",'rodina',"id_rodina=$id");
+      $html.= "{$c->id_rodina}: {$c->nazev}";
+      $html.= "<br>{$c->ulice}, {$c->psc} {$c->obec}";
+      if ( $c->telefony ) $html.= "<br>Telefon: {$c->telefony}<br>";
+    }
     // přílohy ke kontrole
     if ( $prilohy )
       $html.= "<br>Společné přílohy: ".$make_href($prilohy);
