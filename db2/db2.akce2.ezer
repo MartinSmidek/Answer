@@ -566,6 +566,7 @@ table mailist { key_id:'id_mailist'
   number id_mailist
   number access
   number specialni   // 1 znamená speciální mail-list, definovaný obsahem parms
+  text   komu        // o pro osoby, r pro rodiny
   number blokovano
   text   nazev
   text   ucel
