@@ -192,7 +192,7 @@ form _lst [,,370,*] {
     virgin.set(0);
     o_vyber.key( 1); o_vyber.refresh; //bo_filtr.set(o_vyber.get);
     r_vyber.key( 1); r_vyber.refresh; //br_filtr.set(r_vyber.get);
-    init_mailist;
+    //init_mailist;
   ] }
   // zobraz mailist podle access
   proc init_mailist() { var sel:text
