@@ -15,10 +15,11 @@ menu {type:'left', active:*, format:'f+'
     item {title:'Loňské dary'                 ,par:°{rok:'-1'}}
     item {title:'Loňské dary - uložení'       ,par:°{rok:'-1',save:1}}
 #     item {title:'Loňské dary - oprava'        ,par:°{rok:'-1',corr:1}}
-    item {title:'Předloňské dary'             ,par:°{rok:'-2'}}
-    item {title:'Předloňské dary - uložení'   ,par:°{rok:'-2',save:1}}
+#     item {title:'Předloňské dary'             ,par:°{rok:'-2'}}
+#     item {title:'Předloňské dary - uložení'   ,par:°{rok:'-2',save:1}}
     proc onclick (i) {
       var ret:object
+      clear;
       S_sablona.hide;
       ii.nadpis(i.title,"... probíhá výpočet");
       ret.set(ask('ucet_potv',i.par));
@@ -131,7 +132,7 @@ panel S_sablona [0,0,645,520] { title:' Úprava šablony dopisu',
   }
 }
 
-table dopis_cast { key_id:'id_dopis_cast', db:'ezer_ys'
+table dopis_cast { key_id:'id_dopis_cast'
   number id_dopis_cast { key:'primary' },
   text name
   text umisteni

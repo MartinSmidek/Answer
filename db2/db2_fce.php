@@ -522,7 +522,8 @@ function akce2_roku_update($rok) {  trace();
   $key= "1RKnvU7EJG7YtBDjnSpQfwg3kjOCBEV_w8bMlJcdV8Nc";         // ciselnik_akci
   $prefix= "google.visualization.Query.setResponse(";           // přefix json objektu
   $sheet= $rok>2010 ? $rok-1997 : ($rok==2010 ? 10 : -1);
-  $x= file_get_contents("https://docs.google.com/spreadsheets/d/$key/gviz/tq?tqx=out:json&gid=$sheet");
+  $x= file_get_contents("https://docs.google.com/spreadsheets/d/$key/gviz/tq?tqx=out:json&sheet=$sheet");
+                                        display($x);
   $xi= strpos($x,$prefix);
   $xl= strlen($prefix);
 //                                         display("xi=$xi,$xl");
@@ -7568,7 +7569,7 @@ function sta2_sestava_adresy_fill($matches) { trace();
   return "$A$n";
 }
 # -----------------------------------------------------------------------------------=> . sta2_table
-function sta2_table($tits,$flds,$clmn,$export=false) {  trace();
+function sta2_table($tits,$flds,$clmn,$export=false,$row_numbers=false) {  trace();
   $ret= (object)array('html'=>'');
   // zobrazení tabulkou
   $tab= '';
@@ -7580,13 +7581,29 @@ function sta2_table($tits,$flds,$clmn,$export=false) {  trace();
     $ret->clmn= $clmn;
   }
   else {
+    $fmt= array();
+    // písmena sloupců
+    if ( $row_numbers ) {
+      $ths.= "<th> </th>";
+      for ($a= 0; $a<count($tits); $a++) {
+        $id= chr(ord('A')+$a);
+        $ths.= "<th>$id</th>";
+      }
+      $ths.= "</tr><tr>";
+    }
     // titulky
-    foreach ($tits as $idw) {
-      list($id)= explode(':',$idw);
+    if ( $row_numbers )
+      $ths.= "<th>1</th>";
+    foreach ($tits as $i=>$idw) {
+      list($id,$len,$f)= explode(':',$idw);
       $ths.= "<th>$id</th>";
+      if ( $f ) $fmt[$flds[$i]]= $f;
     }
     foreach ($clmn as $i=>$c) {
+      $c= (array)$c;
       $tab.= "<tr>";
+      if ( $row_numbers )
+        $tab.= "<th>".($i+2)."</th>";
       foreach ($flds as $f) {
         if ( $f=='id_osoba' || $f=='^id_osoba' )
           $tab.= "<td style='text-align:right'>".tisk2_ukaz_osobu($c[$f])."</td>";
@@ -7594,8 +7611,9 @@ function sta2_table($tits,$flds,$clmn,$export=false) {  trace();
           $tab.= "<td style='text-align:right'>".tisk2_ukaz_rodinu($c['^id_rodina'])."</td>";
         elseif ( $f=='^id_pobyt' )
           $tab.= "<td style='text-align:right'>".tisk2_ukaz_pobyt($c['^id_pobyt'])."</td>";
+        elseif ( is_numeric($c[$f]) || $fmt[$f]=='d' )
+          $tab.= "<td style='text-align:right'>{$c[$f]}</td>";
         else {
-//                                 debug($c,$f); return $ret;
           $tab.= "<td style='text-align:left'>{$c[$f]}</td>";
         }
       }
@@ -7664,6 +7682,7 @@ __XLS;
   $n1= $n= 5;                                   // první řádek dat (pro sumy)
   // datové řádky
   if ( $tab->clmn ) foreach ($tab->clmn as $i=>$c) {
+    $c= (array)$c;
     $xls.= "\n";
     $lc= 0;
 //     foreach ($c as $id=>$val) { -- míchalo sloupce
@@ -10413,7 +10432,7 @@ function db2_stav($db) {
     $html.= "</tr>";
   }
   $html.= "</table></div>";
-  $vidi= array('ZMI','GAN');
+  $vidi= array('ZMI','GAN','HAN');
   if ( in_array($USER->abbr,$vidi) ) {
     $html.= "<br><hr><h3>Sjednocování podrobněji (informace pro ".implode(',',$vidi).")</h3>";
     $html.= db2_stav_kdo($db,"kdy > '2015-12-01'",
