@@ -1612,7 +1612,7 @@ function ucet_potv($par) { trace();
           AND IF(narozeni!='0000-00-00',YEAR(narozeni)<$let18,1)
       ");
       while ($qo && ($o= mysql_fetch_object($qo))) {
-        $idss[]= $o->id_osoba;
+        $idss[]= tisk2_ukaz_osobu($o->id_osoba);
       }
       if ( count($idss) ) {
         $ids= implode(', ',$idss);
