@@ -8186,14 +8186,14 @@ function mail2_lst_posli_spec($id_dopis) {  trace();
     // projdi všechny relevantní dárce podle dotazu z maillistu
     $os= mysql_qry($ml->sexpr);
     while ($os && ($o= mysql_fetch_object($os))) {
-      $email= $o->email;
+      $email= $o->_email;
       if ( $email ) {
         // vygeneruj PDF s potvrzením do $x->path
         $x= mail2_mai_potvr("Pf",$o,$rok);
         // vlož mail
         mysql_qry(
           "INSERT mail (id_davka,znacka,stav,id_dopis,id_clen,email,priloha)
-             VALUE (1,'@',0,$id_dopis,$o->id_osoba,'$email','{$x->fname}')");
+             VALUE (1,'@',0,$id_dopis,$o->_id,'$email','{$x->fname}')");
         $num+= mysql_affected_rows();
       }
       else {
@@ -8334,13 +8334,13 @@ function mail2_mai_potvr($druh,$o,$rok) {  trace();
   $dary= json_decode($o->pars);
   $data= $dary->data;
   $castka= number_format($o->castka, 0, '.', ' ');
-  $id_osoba= $o->id_osoba;
+  $id_osoba= $o->_id;
   $prijmeni= $o->prijmeni;
   $jmeno= $o->jmeno;
   $sex= $o->sex;
-  $ulice= $o->ulice;
-  $psc= $o->psc;
-  $obec= $o->obec;
+  $ulice= $o->_ulice;
+  $psc= $o->_psc;
+  $obec= $o->_obec;
   $osloveni= $sex==1 ? "pan" : ($sex==2 ? "paní" : "");
   $Osloveni= $sex==1 ? "Pan" : ($sex==2 ? "Paní" : "");
   $adr= "$osloveni,$prijmeni,$jmeno,$sex,$ulice,$psc,$obec";

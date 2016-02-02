@@ -220,7 +220,8 @@ form _gsql {
   }}
   button [l_butt+130,t_butt+5,,] {tag:'def', title:'Excel', help:'Export emaily a adres do Excelu',
     proc onclick(){
-      save_sql(0); sql_export.set(gsql.get);
+      [ spec.get | save_sql(0) ];
+      sql_export.set(gsql.get);
       alert(ask('mail2_gen_excel',sql_export.get,ucel.get))
   } }
   button [l_butt+175,t_butt+5,,] {tag:'def', title:'PDF', help:'Export adres do PDF', format:'d'
@@ -541,9 +542,9 @@ form _gsql {
   var cond: text
   label  [620,t_pro+12,132,55] { tag:'def', css:'ae_parm' }
   button [628,t_pro+17,,] { tag:'def', title:'TEST',  help:'otestovat dotaz', proc onclick() {
-    save_sql(0); run_sql } }
+    [ spec.get | save_sql(0) ]; run_sql } }
   button [678,t_pro+17,,] { tag:'def', title:'(jen SQL)',  help:'otestovat dotaz', proc onclick() {
-    make_sql(1); save_sql(0) } }
+    [ spec.get | save_sql(0) ]; save_sql(0) } }
   button [628,t_pro+42,,] { tag:'def', title:'MAPA',  help:'zobrazit mapu adresátů', //==> .. mapa
     proc onclick() {
       mapa.id_mailist.set(id_mailist.get);
