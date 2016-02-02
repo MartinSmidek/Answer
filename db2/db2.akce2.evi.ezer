@@ -531,7 +531,7 @@ form _page {
     'evid',{ oso_load(ido.get) },
     'akce',{ oso_load(ido.get); act.ucasti(ido.get,conc(oso.prijmeni.get,' ',oso.jmeno.get)) },
     'albu',{ alb.galery('rodina',idr.get) },
-    'dary',{ oso_load(ido.get); pri.dary(ido.get,conc(oso.prijmeni.get,' ',oso.jmeno.get)) },
+    'dary',{ oso_load(ido.get); dar.dary(ido.get,conc(oso.prijmeni.get,' ',oso.jmeno.get)) },
     'clen',{ oso_load(ido.get);
              cle.dary(ido.get,conc(oso.prijmeni.get,' ',oso.jmeno.get));
              pri.dary(ido.get,conc(oso.prijmeni.get,' ',oso.jmeno.get)) },

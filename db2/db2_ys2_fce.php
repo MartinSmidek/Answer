@@ -1553,8 +1553,8 @@ function ucet_potv($par) { trace();
   global $json;
   $key= "1KG943OiuVeb_S7FuCZdhPWF3fNu44hBiR2DZIsp3Pok";         // prijate_dary
   $prefix= "google.visualization.Query.setResponse(";           // přefix json objektu
-  $sheet= "Test$rok";
-//   $sheet= $rok;
+  $sheet= $rok;
+//   $sheet= "Test$rok";
   $url= "https://docs.google.com/spreadsheets/d/$key/gviz/tq?tqx=out:json&sheet=$sheet";
                                         display($url);
   $x= file_get_contents($url);
@@ -1573,6 +1573,7 @@ function ucet_potv($par) { trace();
   $jmeno_id= array();     // ke klíči $prijmeni$jmeno dá id nebo 0
   $nalezeno= 0;
   for ($i= 1; $i<count($goo->rows); $i++) {
+    $i1= $i+1;
     $grow= $goo->rows[$i]->c;
     $row= (object)array();
     $datum=     $row->a= $grow[0]->v;
@@ -1584,11 +1585,12 @@ function ucet_potv($par) { trace();
     $oprava=    $row->g= $grow[6]->v;
     $filler=    $row->h= $grow[7]->v;
     $pozn=      $row->i= $grow[8]->v;
-//                                         display("dar=$dar_jmeno");
+//                                         debug($grow,"dar=$dar_jmeno");
+//                                         debug($row,"dar=$dar_jmeno");
     // transformace do $tab[]=$row
     $jmeno= substr($dar_jmeno,0,6)=='dar - ' ? substr($dar_jmeno,6) : substr($dar_jmeno,4);
     list($prijmeni,$jmeno)= explode(' ',$jmeno);
-                                        display("'$jmeno' '$prijmeni'");
+//                                         display("'$jmeno' '$prijmeni'");
     $opakovane= $jmeno_prvni["$prijmeni$jmeno"] ?: 0;
     if ( !$datum ) break;
     // zapiš opakujícímu se dárci odkaz na řádek s jeho prvním darem
@@ -1614,7 +1616,7 @@ function ucet_potv($par) { trace();
       }
       if ( count($idss) ) {
         $ids= implode(', ',$idss);
-                                        display("$jmeno $prijmeni = $ids");
+//                                         display("$jmeno $prijmeni = $ids");
         // zápis do auto
 //         $updatedCell= $google->service->updateCell($i,5,$ids,$google->sskey,$google->wskey);
         $row->e= $ids;
@@ -1622,14 +1624,14 @@ function ucet_potv($par) { trace();
           $jmeno_id["$prijmeni$jmeno"]= $ids;
         }
         else
-          $prblm1.= ($prblm1?"<br>":'')."$i: $datum $prijmeni $jmeno $castka ($ids)";
+          $prblm1.= ($prblm1?"<br>":'')."$i1: $datum $prijmeni $jmeno $castka ($ids)";
       }
       else {
-        $prblm2.= ($prblm2?"<br>":'')."$i: $datum $prijmeni $jmeno $castka";
+        $prblm2.= ($prblm2?"<br>":'')."$i1: $datum $prijmeni $jmeno $castka";
       }
     }
     elseif ( strpos($auto,',') && !$manual && !$ref ) {
-      $prblm1.= ($prblm1?"<br>":'')."$i: $datum $prijmeni $jmeno $castka ($auto)";
+      $prblm1.= ($prblm1?"<br>":'')."$i1: $datum $prijmeni $jmeno $castka ($auto)";
     }
     elseif ( $manual ) {
       if ( $manual=='x' )
@@ -1653,8 +1655,8 @@ function ucet_potv($par) { trace();
     }
     $clmn[]= $row;
   }
-                                        debug($clmn);
-  // vytvoření tabulky pro zobrazení a tisk
+//                                         debug($clmn);
+  // -------------------- vytvoření tabulky pro zobrazení a tisk
   $tab= (object)array(
     'tits'=>explode(',',"datum:10:d,dárce:20,částka,stejný jako ř.:7,ID auto:15,ID ručně,"
                       . "oprava,zapsán,účetnictví:17"),
@@ -1664,89 +1666,6 @@ function ucet_potv($par) { trace();
   $html.= sta2_table($tab->tits,$tab->flds,$clmn,0,2)->html;
   $html.= "<br><br>";
   $html.= sta2_excel_export("Dárci '$rok'",$tab)->html;
-  goto next;
-
-
-  $cells= google_sheet($rok,$xls,'answer@smidek.eu',$google);
-  if ( !$cells ) { $html.= "Tabulka <b>$xls/$rok</b> nebyla v intranetu nalezena"; goto end; }
-  $html.= "Tabulka <b>$xls/$rok</b> byla v intranetu nalezena"; goto end;
-  list($max_A,$max_n)= $cells['dim'];
-  // výběr záznamů o darech
-  $prblm1= $prblm2= '';
-  $jmeno_prvni= array();  // ke klíči $prijmeni$jmeno dá řádek s prvním výskytem
-  $jmeno_id= array();     // ke klíči $prijmeni$jmeno dá id nebo 0
-  $nalezeno= 0;
-  for ($i= 2; $i<=$max_n; $i++) {
-    $datum= $cells['A'][$i];
-    $dar_jmeno= $cells['B'][$i];
-    $castka= $cells['C'][$i];
-    $ref= $cells['D'][$i];              // 4
-    $auto= $cells['E'][$i];             // 5
-    $manual= $cells['F'][$i];
-    list($prijmeni,$jmeno)= explode(' ',substr($dar_jmeno,6));
-    $opakovane= $jmeno_prvni["$prijmeni$jmeno"] ?: 0;
-    if ( !$datum ) break;
-    // zapiš opakujícímu se dárci odkaz na řádek s jeho prvním darem
-    if ( !$opakovane ) {
-      $jmeno_prvni["$prijmeni$jmeno"]= $i;
-    }
-    if ( !$ref && $opakovane ) {
-      $updatedCell= $google->service->updateCell($i,4,$opakovane,$google->sskey,$google->wskey);
-    }
-    // doplnění intranetové tabulky a střádání darů do tabulky $darce
-    if ( !$auto && !$manual && !$opakovane ) {
-      // pokusíme se nalézt dárce
-      $idss= array();
-      $ids= '';
-      $qo= mysql_qry("
-        SELECT id_osoba FROM osoba AS o
-        WHERE jmeno='$jmeno' AND prijmeni='$prijmeni'
-          AND IF(narozeni!='0000-00-00',YEAR(narozeni)<$let18,1)
-      ");
-      while ($qo && ($o= mysql_fetch_object($qo))) {
-        $idss[]= $o->id_osoba;
-      }
-      if ( count($idss) ) {
-        $ids= implode(', ',$idss);
-        // zápis do auto
-        $updatedCell= $google->service->updateCell($i,5,$ids,$google->sskey,$google->wskey);
-        if ( count($idss)==1 ) {
-          $jmeno_id["$prijmeni$jmeno"]= $ids;
-        }
-        else
-          $prblm1.= ($prblm1?"<br>":'')."$i: $datum $prijmeni $jmeno $castka ($ids)";
-      }
-      else {
-        $prblm2.= ($prblm2?"<br>":'')."$i: $datum $prijmeni $jmeno $castka";
-      }
-    }
-    elseif ( strpos($auto,',') && !$manual && !$ref ) {
-      $prblm1.= ($prblm1?"<br>":'')."$i: $datum $prijmeni $jmeno $castka ($auto)";
-    }
-    elseif ( $manual ) {
-      if ( $manual=='x' )
-        $prblm3.=  ($prblm3?"<br>":'')."x $dar_jmeno $castka";
-      else
-        $jmeno_id["$prijmeni$jmeno"]= $manual;
-    }
-    elseif ( $auto && strpos($auto,',')===false ) {
-      $jmeno_id["$prijmeni$jmeno"]= $auto;
-    }
-    // střádání darů od jednoznačně určeného dárce
-    $id= $jmeno_id["$prijmeni$jmeno"];
-    if ( $id && $castka ) {
-      if ( !isset($darce[$id]) ) {
-        $darce[$id]= (object)array('data'=>array(),'castka'=>0,'jmeno'=>"$prijmeni $jmeno");
-      }
-      list($d,$m,$y)= preg_split("/[\/\.]/",$datum);
-      $m= 0+$m; $d= 0+$d;
-      $darce[$id]->data[]= "$d. $m.";
-      $darce[$id]->castka+= $castka;
-    }
-//     if ( --$max <= 0 ) break;
-  }
-
-next:
   $reseni= "<br><br>doplň v intranetovém sešitu <b>$xls</b> v listu <b>$rok</b> do sloupce <b>F</b>
             správné osobní číslo dárce (zjistí se v Evidenci), jen do prvního výskytu dárce";
   if ( $prblm1 ) $html.= "<h3>Nejednoznačná jména v rámci evidence YS</h3>$prblm1$reseni";
@@ -1754,192 +1673,54 @@ next:
   if ( $prblm3 ) $html.= "<h3>Ručně napsaná potvrzení</h3>$prblm3";
   if ( !$prblm1 && !$prblm2 ) $html.= "<h3>Ok</h3>všichni dárci byli jednoznačně identifikováni :-)";
 
-//   // zápis do tabulky dar, pokud se to chce
-//   if ( $druh= $par->save ) {
-//     // smazání záznamů o účetních darech
-//     query("DELETE FROM dar WHERE YEAR(dat_od)=$rok AND zpusob='u'");
-//     // zápis zjištěných darů
-//     $n= 0;
-//     foreach ($darce as $id=>$dary) {
-//       $data= implode(', ',$dary->data)." $rok";
-//       $pars= ezer_json_encode((object)array('data'=>$data));
-//       $oki= query("INSERT INTO dar (id_osoba,ukon,zpusob,castka,dat_od,note,pars)
-//         VALUES ($id,'d','u',{$dary->castka},'$rok-12-31','daňové potvrzení','$pars')");
-//       $n+= $oki ? mysql_affected_rows () : 0;
-//     }
-//     $html.= "<br><br>vloženo $n dárců k potvrzování za rok $rok";
-//   }
-//   elseif ( $druh= $par->corr ) {
-//     // oprava záznamů o účetních darech
-//     $n1= $n2= $n3= $n4= 0;
-//     foreach ($darce as $id=>$dary) {
-//       $data= implode(', ',$dary->data)." $rok";
-//       $pars= ezer_json_encode((object)array('data'=>$data));
-//       // zjištění výše zaznamenaného daru
-//       $castka2= $dary->castka;
-//       list($id_dar,$castka1)= select("id_dar,castka","dar","id_osoba=$id AND ukon='d' AND zpusob='u'
-//         AND dat_od='$rok-12-31' AND note='daňové potvrzení'");
-//       if ( $castka2==$castka1 ) {
-//         $n1++;
-//       }
-//       elseif ( $id_dar && $castka2 >= 400 ) {
-//         $pars= ezer_json_encode((object)array('data'=>$data,'bylo'=>$castka1));
-//                                         display("{$dary->jmeno} $castka1 - $castka2");
-//         $oku= query("UPDATE dar
-//           SET castka=$castka2, note='2.daňové potvrzení', pars='$pars'
-//           WHERE id_dar=$id_dar");
-//         $n2+= $oku ? mysql_affected_rows () : 0;
-//       }
-//       elseif ( !$id_dar && $castka2 >= 400 ) {
-//         $oki= query("INSERT INTO dar (id_osoba,ukon,zpusob,castka,dat_od,note,pars)
-//           VALUES ($id,'d','u',$castka2,'$rok-12-31','2.daňové potvrzení','$pars')");
-//         $n4+= $oki ? mysql_affected_rows () : 0;
-//       }
-//       else {
-//         $n3++;
-//       }
-//     }
-//     $html.= "<br><br>dárců za rok $rok: přidáno $n4, opraveno $n2, bez opravy $n1, $n3 pod 400 Kč";
-//   }
+  // zápis do tabulky dar, pokud se to chce
+  if ( $druh= $par->save ) {
+    // smazání záznamů o účetních darech
+    query("DELETE FROM dar WHERE YEAR(dat_od)=$rok AND zpusob='u'");
+    // zápis zjištěných darů
+    $n= 0;
+    foreach ($darce as $id=>$dary) {
+      $data= implode(', ',$dary->data)." $rok";
+      $pars= ezer_json_encode((object)array('data'=>$data));
+      $oki= query("INSERT INTO dar (id_osoba,ukon,zpusob,castka,dat_od,note,pars)
+        VALUES ($id,'d','u',{$dary->castka},'$rok-12-31','daňové potvrzení','$pars')");
+      $n+= $oki ? mysql_affected_rows () : 0;
+    }
+    $html.= "<br><br>vloženo $n dárců k potvrzování za rok $rok";
+  }
+  elseif ( $druh= $par->corr ) {
+    // oprava záznamů o účetních darech
+    $n1= $n2= $n3= $n4= 0;
+    foreach ($darce as $id=>$dary) {
+      $data= implode(', ',$dary->data)." $rok";
+      $pars= ezer_json_encode((object)array('data'=>$data));
+      // zjištění výše zaznamenaného daru
+      $castka2= $dary->castka;
+      list($id_dar,$castka1)= select("id_dar,castka","dar","id_osoba=$id AND ukon='d' AND zpusob='u'
+        AND dat_od='$rok-12-31' AND note='daňové potvrzení'");
+      if ( $castka2==$castka1 ) {
+        $n1++;
+      }
+      elseif ( $id_dar && $castka2 >= 400 ) {
+        $pars= ezer_json_encode((object)array('data'=>$data,'bylo'=>$castka1));
+                                        display("{$dary->jmeno} $castka1 - $castka2");
+        $oku= query("UPDATE dar
+          SET castka=$castka2, note='2.daňové potvrzení', pars='$pars'
+          WHERE id_dar=$id_dar");
+        $n2+= $oku ? mysql_affected_rows () : 0;
+      }
+      elseif ( !$id_dar && $castka2 >= 400 ) {
+        $oki= query("INSERT INTO dar (id_osoba,ukon,zpusob,castka,dat_od,note,pars)
+          VALUES ($id,'d','u',$castka2,'$rok-12-31','2.daňové potvrzení','$pars')");
+        $n4+= $oki ? mysql_affected_rows () : 0;
+      }
+      else {
+        $n3++;
+      }
+    }
+    $html.= "<br><br>dárců za rok $rok: přidáno $n4, opraveno $n2, bez opravy $n1, $n3 pod 400 Kč";
+  }
 end:
   return (object)array('html'=>$html,'href'=>$href);
 }
-// # -------------------------------------------------------------------------------- akce2_roku_update
-// # přečtení seznamu darů z Google tabulky prijate_dary
-// function xxx_akce2_roku_update($rok) {  trace();
-//   global $json;
-//   $key= "1KG943OiuVeb_S7FuCZdhPWF3fNu44hBiR2DZIsp3Pok";         // prijate_dary
-//   $prefix= "google.visualization.Query.setResponse(";           // přefix json objektu
-//   $sheet= $rok>2010 ? $rok-1997 : ($rok==2010 ? 10 : -1);
-//   $x= file_get_contents("https://docs.google.com/spreadsheets/d/$key/gviz/tq?tqx=out:json&gid=$sheet");
-//   $xi= strpos($x,$prefix);
-//   $xl= strlen($prefix);
-// //                                         display("xi=$xi,$xl");
-//   $x= substr(substr($x,$xi+$xl),0,-2);
-// //                                         display($x);
-//   $tab= $json->decode($x)->table;
-// //                                         debug($tab,$sheet);
-//   // projdeme získaná data
-//   $n= 0;
-//   if ( $tab ) {
-//     // zrušení daného roku v GAKCE
-//     $qry= "DELETE FROM g_akce WHERE g_rok=$rok";
-//     $res= mysql_qry($qry);
-//     // výběr a-záznamů a zápis do G_AKCE
-//     $values= ''; $del= '';
-//     foreach ($tab->rows as $crow) {
-//       $row= $crow->c;
-//       $kat= $row[0]->v;
-//       if ( strpos(' au',$kat) ) {
-// //                                                         debug($row,$row[2]->v);
-//         $n++;
-//         $kod= $row[1]->f;
-//         $id= 1000*rok+$kod;
-//         $nazev= mysql_real_escape_string($row[2]->v);
-//                                                         display("$kod:$nazev");
-//         // data akce - jen je-li syntax ok
-//         $od= $do= '';
-//         $x= $row[3]->f;
-//         if ( preg_match("/\d+\.\d+\.\d+/",$x) )
-//           $od= sql_date($x,1);
-//         $x= $row[4]->f;
-//         if ( preg_match("/\d+\.\d+\.\d+/",$x) )
-//           $do= sql_date($x,1);
-//         $uc=  $row[5]->f;
-//         $typ= $row[6]->f;
-//         $kap= $row[7]->f;
-//         $values.= "$del($id,$rok,'$kod',\"$nazev\",'$od','$do','$uc','$typ','$kap','$kat')";
-//         $del= ',';
-//       }
-//     }
-//     $qry= "INSERT INTO g_akce (id_gakce,g_rok,g_kod,g_nazev,g_od,g_do,g_ucast,g_typ,g_kap,g_kat)
-//            VALUES $values";
-//     $res= mysql_qry($qry);
-//   }
-//   // konec
-// end:
-//   return $n;
-// }
-// # ------------------------------------------------------------------------------------- google_sheet
-// # přečtení listu $list z tabulky $sheet uživatele $user do pole $cell
-// # $cells['dim']= array($max_A,$max_n)
-// function google_sheet($list,$sheet,$user='answer@smidek.eu',&$keys) {  trace();
-//   $keys= (object)array();
-//   $n= 0;
-//   $cells= null;
-//   require_once 'Zend/Loader.php';
-//   Zend_Loader::loadClass('Zend_Http_Client');
-//   Zend_Loader::loadClass('Zend_Gdata');
-//   Zend_Loader::loadClass('Zend_Gdata_ClientLogin');
-//   Zend_Loader::loadClass('Zend_Gdata_Spreadsheets');
-//   // autentizace
-//   $pass= array('answer@smidek.eu'=>'8nswer','martin@smidek.eu'=>'radost2010');
-//   if ( $pass[$user] ) {
-//     $authService= Zend_Gdata_Spreadsheets::AUTH_SERVICE_NAME;
-//     $httpClient= Zend_Gdata_ClientLogin::getHttpClient($user,$pass[$user], $authService);
-// //                                         display("Answer autorizovan: ".($httpClient?1:0));
-//     // nalezení tabulky
-//     $gdClient= new Zend_Gdata_Spreadsheets($httpClient);
-// //                                         display("new Zend_Gdata_Spreadsheets".($gdClient?1:0));
-//     $keys->service= $gdClient;
-// //                                         display("getSpreadsheetFeed - před");
-//     $feed= $gdClient->getSpreadsheetFeed();
-// //                                         display("getSpreadsheetFeed - po");
-//                                         goto end;
-//     $table= getFirstFeed($feed,$sheet);
-//     if ( $table ) {
-//       // pokud tabulka existuje
-//       $table_id= explode('/', $table->id->text);
-//       $table_key= $table_id[5];
-//       $keys->sskey= $table_key;
-//       // najdi list
-//       $query= new Zend_Gdata_Spreadsheets_DocumentQuery();
-//       $query->setSpreadsheetKey($table_key);
-//       $feed= $gdClient->getWorksheetFeed($query);
-//       $ws= getFirstFeed($feed,$list);
-//     }
-//     if ( $table && $ws ) {
-//       $cells= array();
-//       // pokud list tabulky existuje
-//       $ws_id= explode('/', $ws->id->text);
-//       $ws_key= $ws_id[8];
-//       $keys->wskey= $ws_key;
-//       // načti buňky
-//       $query= new Zend_Gdata_Spreadsheets_CellQuery();
-//       $query->setSpreadsheetKey($table_key);
-//       $query->setWorksheetId($ws_key);
-//       $feed= $gdClient->getCellFeed($query);
-//       $max_n= 0;
-//       foreach($feed->entries as $entry) {
-//         if ($entry instanceof Zend_Gdata_Spreadsheets_CellEntry) {
-//           $An= $entry->title->text;
-//           $A= substr($An,0,1); $n= substr($An,1);
-//           $cells[$A][$n]= $entry->content->text;
-//           $max_A= max($max_A,$A);
-//           $max_n= max($max_n,$n);
-//         }
-//       }
-//       $cells['dim']= array($max_A,$max_n);
-//     }
-//   }
-// end:
-//   return $cells;
-// }
-// # --------------------
-// function getFirstFeed($feed,$id=null) {
-//   $entry= null;
-//   foreach($feed->entries as $e) {
-//     if ( $id ) {
-//       if ( $e->title->text==$id ) {
-//         $entry= $e;
-//         break;
-//       }
-//     }
-//     else {
-//       $entry= $e;
-//       break;
-//     }
-//   }
-//   return $entry;
-// }
 ?>
