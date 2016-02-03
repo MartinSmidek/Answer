@@ -8170,6 +8170,34 @@ end:
   return $ret;
 }
 # ----------------------------------------------------------------------------- mail2_lst_posli_spec
+# přegeneruje 1 daný mail s nastaveným specialni a parms
+function mail2_lst_regen_spec($id_dopis,$id_mail,$id_osoba) {  trace();
+  $ret= (object)array('msg'=>'','err'=>'');
+  $id_mailist= select('id_mailist','dopis',"id_dopis=$id_dopis");
+  $ml= mail2_lst_access($id_mailist);
+  $parms= json_decode($ml->parms);
+  switch ($parms->specialni) {
+  case 'potvrzeni':
+    $rok= date('Y')+$parms->rok;
+    $os= mysql_qry("{$ml->sexpr} AND id_osoba=$id_osoba");
+    if ( !$os ) {  $ret->msg= "přegenerování se nepovedlo"; goto end; }
+    $o= mysql_fetch_object($os);
+    // přegeneruj PDF s potvrzením do $x->path
+    $x= mail2_mai_potvr("Pf",$o,$rok);
+    // oprav mail
+    mysql_qry("UPDATE mail SET stav=3,email='{$o->_email}' WHERE id_mail=$id_mail");
+    $num+= mysql_affected_rows();
+    // informační zpráva
+    $ret->msg= "Mail pro {$o->_name} včetně potvrzení {$x->fname} byl přegenerován";
+    break;
+  default:
+    fce_error("není implemntováno");
+  }
+end:
+//                                                         debug($ret,"mail2_lst_posli_spec end");
+  return $ret;
+}
+# ----------------------------------------------------------------------------- mail2_lst_posli_spec
 # vygeneruje sadu mailů podle daného maillistu s nastaveným specialni a parms
 function mail2_lst_posli_spec($id_dopis) {  trace();
   $ret= (object)array('msg'=>'');
@@ -9350,6 +9378,233 @@ function mail2_gen_excel($gq,$nazev) { trace();
   $href= "soubor pro <a href='docs/$ezer_root/$file.$type' target='xls'>Excel</a>";
 end:
   return $href;
+}
+/** ========================================================================================> DOPISY */
+# =======================================================================================> . šablony
+# ------------------------------------------------------------------------------------- dop_sab_text
+# přečtení běžného dopisu daného typu
+function dop_sab_text($dopis) { //trace();
+  $d= null;
+  try {
+    $qry= "SELECT id_dopis,obsah FROM dopis WHERE typ='$dopis' AND id_davka=1 ";
+    $res= mysql_qry($qry,1,null,1);
+    $d= mysql_fetch_object($res);
+  }
+  catch (Exception $e) { display($e); fce_error("dop_sab_text: průběžný dopis '$dopis' nebyl nalezen"); }
+  return $d;
+}
+# ------------------------------------------------------------------------------------- dop_sab_cast
+# přečtení části šablony
+function dop_sab_cast($druh,$cast) { //trace();
+  $d= null;
+  try {
+    $qry= "SELECT id_dopis_cast,obsah FROM dopis_cast WHERE druh='$druh' AND name='$cast' ";
+    $res= mysql_qry($qry,1,null,1);
+    $d= mysql_fetch_object($res);
+  }
+  catch (Exception $e) { display($e); fce_error("dop_sab_cast: část '$cast' sablony nebyla nalezena"); }
+  return $d;
+}
+# ----------------------------------------------------------------------------------- dop_sab_nahled
+# ukázka šablony
+function dop_sab_nahled($k3) { trace();
+  global $ezer_path_docs;
+  $html= '';
+  $fname= "sablona.pdf";
+  $f_abs= "$ezer_path_docs/$fname";
+  $f_rel= "docs/$fname";
+//   ezer_connect('ezer_ys');
+  $html= tc_sablona($f_abs,'','D');                 // jen části bez označení v dopis_cast.pro
+  $date= @filemtime($f_abs);
+  $href= "<a target='dopis' href='$f_rel'>$fname</a>";
+  $html.= "Byl vygenerován PDF soubor: $href (verze ze ".date('d.m.Y H:i',$date).")";
+  $html.= "<br><br>Jméno za 'vyřizuje' se bere z osobního nastavení přihlášeného uživatele.";
+  return $html;
+}
+# =====================================================================================> . potvrzení
+# ---------------------------------------------------------------------------------------- ucet_potv
+# přehled podle tabulky 'prijate dary' na intranetu
+function ucet_potv($par) { trace();
+  $html= '';
+  $darce= array();
+  $xls= "prijate_dary";
+  $max= 9999;
+//   $max= 30;
+  $rok= date('Y')+$par->rok;
+  $let18= date('Y')-18;
+
+  global $json;
+  $key= "1KG943OiuVeb_S7FuCZdhPWF3fNu44hBiR2DZIsp3Pok";         // prijate_dary
+  $prefix= "google.visualization.Query.setResponse(";           // přefix json objektu
+  $sheet= $rok;
+//   $sheet= "Test$rok";
+  $url= "https://docs.google.com/spreadsheets/d/$key/gviz/tq?tqx=out:json&sheet=$sheet";
+                                        display($url);
+  $x= file_get_contents($url);
+//                                         display($x);
+  $xi= strpos($x,$prefix);
+  $xl= strlen($prefix);
+//                                         display("xi=$xi,$xl");
+  $x= substr(substr($x,$xi+$xl),0,-2);
+//                                         display($x);
+  $goo= $json->decode($x)->table;
+//                                         debug($goo,$sheet);
+  // výběr záznamů o darech
+  $tab= array();
+  $prblm1= $prblm2= '';
+  $jmeno_prvni= array();  // ke klíči $prijmeni$jmeno dá řádek s prvním výskytem
+  $jmeno_id= array();     // ke klíči $prijmeni$jmeno dá id nebo 0
+  $nalezeno= 0;
+  for ($i= 1; $i<count($goo->rows); $i++) {
+    $i1= $i+1;
+    $grow= $goo->rows[$i]->c;
+    $row= (object)array();
+    $datum=     $row->a= $grow[0]->v;
+    $dar_jmeno= $row->b= $grow[1]->v;
+    $castka=    $row->c= $grow[2]->v;
+    $ref=       $row->d= $grow[3]->v;
+    $auto=      $row->e= $grow[4]->v;
+    $manual=    $row->f= $grow[5]->v;
+    $oprava=    $row->g= $grow[6]->v;
+    $filler=    $row->h= $grow[7]->v;
+    $pozn=      $row->i= $grow[8]->v;
+//                                         debug($grow,"dar=$dar_jmeno");
+//                                         debug($row,"dar=$dar_jmeno");
+    // transformace do $tab[]=$row
+    $jmeno= substr($dar_jmeno,0,6)=='dar - ' ? substr($dar_jmeno,6) : substr($dar_jmeno,4);
+    list($prijmeni,$jmeno)= explode(' ',$jmeno);
+//                                         display("'$jmeno' '$prijmeni'");
+    $opakovane= $jmeno_prvni["$prijmeni$jmeno"] ?: 0;
+    if ( !$datum ) break;
+    // zapiš opakujícímu se dárci odkaz na řádek s jeho prvním darem
+    if ( !$opakovane ) {
+      $jmeno_prvni["$prijmeni$jmeno"]= $i+1;
+    }
+    if ( !$ref && $opakovane ) {
+//       $updatedCell= $google->service->updateCell($i,4,$opakovane,$google->sskey,$google->wskey);
+      $row->d= $opakovane;
+    }
+    // doplnění intranetové tabulky a střádání darů do tabulky $darce
+    if ( !$auto && !$manual && !$opakovane ) {
+      // pokusíme se nalézt dárce
+      $idss= array();
+      $ids= '';
+      $qo= mysql_qry("
+        SELECT id_osoba FROM osoba AS o
+        WHERE jmeno='$jmeno' AND prijmeni='$prijmeni' AND deleted='' AND access&1
+          AND IF(narozeni!='0000-00-00',YEAR(narozeni)<$let18,1)
+      ");
+      while ($qo && ($o= mysql_fetch_object($qo))) {
+        $idss[]= tisk2_ukaz_osobu($o->id_osoba);
+      }
+      if ( count($idss) ) {
+        $ids= implode(', ',$idss);
+//                                         display("$jmeno $prijmeni = $ids");
+        // zápis do auto
+//         $updatedCell= $google->service->updateCell($i,5,$ids,$google->sskey,$google->wskey);
+        $row->e= $ids;
+        if ( count($idss)==1 ) {
+          $jmeno_id["$prijmeni$jmeno"]= $ids;
+        }
+        else
+          $prblm1.= ($prblm1?"<br>":'')."$i1: $datum $prijmeni $jmeno $castka ($ids)";
+      }
+      else {
+        $prblm2.= ($prblm2?"<br>":'')."$i1: $datum $prijmeni $jmeno $castka";
+      }
+    }
+    elseif ( strpos($auto,',') && !$manual && !$ref ) {
+      $prblm1.= ($prblm1?"<br>":'')."$i1: $datum $prijmeni $jmeno $castka ($auto)";
+    }
+    elseif ( $manual ) {
+      if ( $manual=='x' )
+        $prblm3.=  ($prblm3?"<br>":'')."x $dar_jmeno $castka";
+      else
+        $jmeno_id["$prijmeni$jmeno"]= $manual;
+    }
+    elseif ( $auto && strpos($auto,',')===false ) {
+      $jmeno_id["$prijmeni$jmeno"]= $auto;
+    }
+    // střádání darů od jednoznačně určeného dárce
+    $id= $jmeno_id["$prijmeni$jmeno"];
+    if ( $id && $castka ) {
+      if ( !isset($darce[$id]) ) {
+        $darce[$id]= (object)array('data'=>array(),'castka'=>0,'jmeno'=>"$prijmeni $jmeno");
+      }
+      list($d,$m,$y)= preg_split("/[\/\.]/",$datum);
+      $m= 0+$m; $d= 0+$d;
+      $darce[$id]->data[]= "$d. $m.";
+      $darce[$id]->castka+= $castka;
+    }
+    $clmn[]= $row;
+  }
+//                                         debug($clmn);
+  // -------------------- vytvoření tabulky pro zobrazení a tisk
+  $tab= (object)array(
+    'tits'=>explode(',',"datum:10:d,dárce:20,částka,stejný jako ř.:7,ID auto:15,ID ručně,"
+                      . "oprava,zapsán,účetnictví:17"),
+    'flds'=>explode(',',"a,b,c,d,e,f,g,h,i"),
+    'clmn'=>$clmn
+  );
+  $html.= sta2_table($tab->tits,$tab->flds,$clmn,0,2)->html;
+  $html.= "<br><br>";
+  $html.= sta2_excel_export("Dárci '$rok'",$tab)->html;
+  $reseni= "<br><br>doplň v intranetovém sešitu <b>$xls</b> v listu <b>$rok</b> do sloupce <b>F</b>
+            správné osobní číslo dárce (zjistí se v Evidenci), jen do prvního výskytu dárce";
+  if ( $prblm1 ) $html.= "<h3>Nejednoznačná jména v rámci evidence YS</h3>$prblm1$reseni";
+  if ( $prblm2 ) $html.= "<h3>Neznámá jména v rámci evidence YS</h3>$prblm2$reseni";
+  if ( $prblm3 ) $html.= "<h3>Ručně napsaná potvrzení</h3>$prblm3";
+  if ( !$prblm1 && !$prblm2 ) $html.= "<h3>Ok</h3>všichni dárci byli jednoznačně identifikováni :-)";
+
+  // zápis do tabulky dar, pokud se to chce
+  if ( $druh= $par->save ) {
+    // smazání záznamů o účetních darech
+    query("DELETE FROM dar WHERE YEAR(dat_od)=$rok AND zpusob='u'");
+    // zápis zjištěných darů
+    $n= 0;
+    foreach ($darce as $id=>$dary) {
+      $data= implode(', ',$dary->data)." $rok";
+      $pars= ezer_json_encode((object)array('data'=>$data));
+      $oki= query("INSERT INTO dar (id_osoba,ukon,zpusob,castka,dat_od,note,pars)
+        VALUES ($id,'d','u',{$dary->castka},'$rok-12-31','daňové potvrzení','$pars')");
+      $n+= $oki ? mysql_affected_rows () : 0;
+    }
+    $html.= "<br><br>vloženo $n dárců k potvrzování za rok $rok";
+  }
+  elseif ( $druh= $par->corr ) {
+    // oprava záznamů o účetních darech
+    $n1= $n2= $n3= $n4= 0;
+    foreach ($darce as $id=>$dary) {
+      $data= implode(', ',$dary->data)." $rok";
+      $pars= ezer_json_encode((object)array('data'=>$data));
+      // zjištění výše zaznamenaného daru
+      $castka2= $dary->castka;
+      list($id_dar,$castka1)= select("id_dar,castka","dar","id_osoba=$id AND ukon='d' AND zpusob='u'
+        AND dat_od='$rok-12-31' AND note='daňové potvrzení'");
+      if ( $castka2==$castka1 ) {
+        $n1++;
+      }
+      elseif ( $id_dar && $castka2 >= 400 ) {
+        $pars= ezer_json_encode((object)array('data'=>$data,'bylo'=>$castka1));
+                                        display("{$dary->jmeno} $castka1 - $castka2");
+        $oku= query("UPDATE dar
+          SET castka=$castka2, note='2.daňové potvrzení', pars='$pars'
+          WHERE id_dar=$id_dar");
+        $n2+= $oku ? mysql_affected_rows () : 0;
+      }
+      elseif ( !$id_dar && $castka2 >= 400 ) {
+        $oki= query("INSERT INTO dar (id_osoba,ukon,zpusob,castka,dat_od,note,pars)
+          VALUES ($id,'d','u',$castka2,'$rok-12-31','2.daňové potvrzení','$pars')");
+        $n4+= $oki ? mysql_affected_rows () : 0;
+      }
+      else {
+        $n3++;
+      }
+    }
+    $html.= "<br><br>dárců za rok $rok: přidáno $n4, opraveno $n2, bez opravy $n1, $n3 pod 400 Kč";
+  }
+end:
+  return (object)array('html'=>$html,'href'=>$href);
 }
 /** ==========================================================================================> FOTO */
 # funkce pro práce se seznamem fotek:

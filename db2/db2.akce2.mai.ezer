@@ -1129,6 +1129,7 @@ form _esady  {
     show komu_Qn       { data:etc.barva },
     show komu_G [,,0,] { title:'mail-list' , data:etl.ucel, format:'s' },
     show komu { data:etl.komu } // o-osoba, r-rodina
+    show specialni { data:etl.specialni } // 1 => potvrzení
     show predmet [,,160,] { title:'předmět', data:etd.nazev, format:'sq', css_cell:'stav2,3:zluty,4:zeleny,5:cerveny' },
     show stav1 [,,0,] { expr:'min(etm.stav)', format:'rsq' },
     show stav2 [,,0,] { expr:'max(etm.stav)', format:'rsq' },
@@ -1137,6 +1138,7 @@ form _esady  {
       eq(this.browse_count,0);
       dopis_id.set(0);
     | dopis_id.set(id_dopis.get);
+      regenerate.display(specialni.get);
       maily.browse_load(conc("etmm.id_dopis=",dopis_id.get));
       zkus.set(sys('user','options','email'));
       from.set(sys('user','options','email'));
@@ -1176,6 +1178,14 @@ form _esady  {
       maily.browse_seek; texty.browse_seek;
     }
   }
+  # ------------------- přegenerování jednoho potvrzení
+  button regenerate [238,375,,] { title:'přegenerovat potvrzení', style:"z-index:2"
+    proc onclick() { var ret:object
+      ret.set(ask('mail2_lst_regen_spec',maily.id_dopis.get,maily.id_mail.get,maily.id_clen.get));
+      alert(ret.msg);
+      maily.browse_row;
+      maily.onrowclick;
+  }}
   # ------------------- informace
   label msg [0,305,377,67]
   label info [0,373,367,90]   { style:"overflow:auto;border:1px solid grey;padding:5px" }
