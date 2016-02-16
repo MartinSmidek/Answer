@@ -383,8 +383,10 @@ form _cmd [,,623,30] {
     [ pob.key; rod.key; confirm("patří do rodiny <b>",rod.rodiny.get,"</b> ?");
       mode.set('novy_clen');
       os1.new_osoba(1,os1.prijmeni1.get,os1.jmeno1.get,rod.key); os1.role.set('d');
+      os1.access.set(the_org.get);
       foreach(array(os1.prijmeni,os1.jmeno,os1.sex,os1.narozeni,os1.role,os1.access),obligatory); stop
     | os1.new_osoba(0,os1.prijmeni1.get,os1.jmeno1.get,0);
+      os1.access.set(the_org.get);
       mode.set('novy_singl');
       foreach(array(os1.prijmeni,os1.jmeno,os1.sex,os1.narozeni,os1.access),obligatory); ];
   }
