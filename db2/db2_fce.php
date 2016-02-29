@@ -8850,7 +8850,7 @@ function mail2_personify($obsah,$vars,$id_pobyt,&$err) {
         $val= $ret->mail;
       }
       else {
-        $ret= akce_vzorec($id_pobyt);
+        $ret= akce2_vzorec($id_pobyt);
         $val= $ret->mail;
       }
       break;

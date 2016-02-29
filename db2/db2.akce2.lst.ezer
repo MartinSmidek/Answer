@@ -345,6 +345,8 @@ form _page [,,275,360] {
   button [lc+20,bc+68,,] { tag:'b,cen', title:'pár', proc onclick() { test_ceniku(2,0,0) }}
   button [lc+20,bc+95,,] { tag:'b,cen', title:'pár+dítě', proc onclick() { test_ceniku(2,1,0) }}
   button [lc+20,bc+123,,] { tag:'b,cen', title:'pár+kojenec', proc onclick() { test_ceniku(2,0,1) }}
+  button [lc+20,bc+150,,] { tag:'b,cen', title:'dítě do 10 let', proc onclick() { test_ceniku(0,1,0) }}
+  button [lc+20,bc+177,,] { tag:'b,cen', title:'kojenec', proc onclick() { test_ceniku(0,0,1) }}
   proc test_ceniku(dosp,deti,koje) { var cena:object
     eq(the_duakce.get,a_akce.get);
     { eq(the_soubeh.get,1);
