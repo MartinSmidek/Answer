@@ -18,10 +18,15 @@ proc osoby_show()       { page.oso.show_osoba(1); }     // obnova údajů o osob
 proc rodina_show()      { page.rod.show_rodina; }       // obnova údajů o rodině (z konfigurace)
 # ----------------------------------------------------------------------------------==> inicializace
 proc onfirstfocus() {
-#   spinner(1);
+  has_skill('mrop');
+  // přístup jen k seznamu iniciovaných
+  osoba_config.start; rodina_config.start;
+  page.start; cmd.start;
+  m.o.i.click;
+| // plný přístup
   osoba_config.start; rodina_config.start;
   lst.start; page.start; cmd.start;
-#   spinner(0);
+  m.r.a.click;
 }
 proc onblur() { [ track.display; track.hide ] }
 proc up(x)   { x.get.set_css('shift_up','shift_down'); x.set_css('shift_up','shift_down','.*') }
@@ -30,22 +35,23 @@ proc down(x) { x.get.set_css('shift_down','shift_up'); x.set_css('shift_down','s
 var menu_item=0                 // běžný item
 var menu_par=0                  // ... jeho parametry
 var menu_title=''               // ... a název
-menu m {type:'left', active:*, format:'f-'
+menu m {type:'left', format:'f-'
   menu r {title:'rodiny',type:'group', skill:'yae;fae;cae'
     item a {title:'[fa-group]všechny rodiny'    par:°{lst:'r',tit:'všechny rodiny, co ',cnd:"1"}}
     item m {title:'[fa-send-o] podle mail-listu'par:°{lst:'m',tit:'MAILIST',cnd:'1',komu:'r'} }
     item t {title:'[fa-wrench fa-red](test)'           par:°{lst:'r',tit:'testovací rodiny, co ',
                                                 cnd:"r.id_rodina IN (383,2287,14,3329)"},skill:'m'}
   }
-  menu o {title:'osoby',type:'group', skill:'yae;fae;cae'
-    item a {title:'[fa-user]všechny kontakty'   par:°{lst:'o',tit:'všechny osoby, co ',cnd:'1'}}
-    item m {title:'[fa-send-o] podle mail-listu'par:°{lst:'m',tit:'MAILIST',cnd:'1',komu:'o'} }
+  menu o {title:'osoby',type:'group', skill:'yae;fae;cae;mrop'
+    item a {title:'[fa-user]všechny kontakty'   par:°{lst:'o',tit:'všechny osoby, co ',cnd:'1'}, skill:'yae;fae;cae'}
+    item m {title:'[fa-send-o] podle mail-listu'par:°{lst:'m',tit:'MAILIST',cnd:'1',komu:'o'}, skill:'yae;fae;cae' }
+    item i {title:'[fa-send-o] podle mail-listu'par:°{lst:'m',tit:'MAILIST',cnd:'1',komu:'o',ucel:'%MROP%'}, skill:'mrop' }
     item   {title:'[fa-male]muži'               par:°{lst:'o',tit:'všichni muži, co ',
-                                                cnd:"o.sex=1 AND TIMESTAMPDIFF(YEAR,narozeni,NOW())>=18"}}
+                                                cnd:"o.sex=1 AND TIMESTAMPDIFF(YEAR,narozeni,NOW())>=18"}, skill:'yae;fae;cae'}
     item   {title:'[fa-female]ženy'             par:°{lst:'o',tit:'všechny ženy, co ',
-                                                cnd:"o.sex=2 AND TIMESTAMPDIFF(YEAR,narozeni,NOW())>=18"}}
+                                                cnd:"o.sex=2 AND TIMESTAMPDIFF(YEAR,narozeni,NOW())>=18"}, skill:'yae;fae;cae'}
     item   {title:'[fa-child]děti'              par:°{lst:'o',tit:'všechny děti, co ',
-                                                cnd:"TIMESTAMPDIFF(YEAR,narozeni,NOW())<18"}}
+                                                cnd:"TIMESTAMPDIFF(YEAR,narozeni,NOW())<18"}, skill:'yae;fae;cae'}
     item t {title:'[fa-wrench fa-red](test)'           par:°{lst:'o',tit:'testovací osoby, co ',
                                                 cnd:"o.id_osoba IN (679,4031,4504,5877)"},skill:'m'}
   }
@@ -172,7 +178,7 @@ form _lst [,,370,*] {
   proc seek_rodina(_idr,par) {          // zviditelní seznam nesmazaných rodin a zobrazí rodinu
     [ virgin.get; start ];
     tit.set(par.tit); [ eq(mode.get,'r') | mode.set('r'); form.display(2,'r') ];
-    br_cnd.set(1); br_filtr.set(1); br_having.set(1); r_vyber.key(1);
+    br_cnd.set(1); br_having.set(1); r_vyber.key(1);
     br.init_queries(0); idr.set(_idr);
     br.browse_seek(conc("id_rodina=",_idr),"r.deleted=''",1); page.evid_load(0,_idr);
   }
@@ -190,8 +196,9 @@ form _lst [,,370,*] {
   var idy= 0                                    // naposledy vybraná rodina pro tip na eliminaci
   proc start() { [                              // při startu vynecháme prázdná příjmení
     virgin.set(0);
-    o_vyber.key( 1); o_vyber.refresh; //bo_filtr.set(o_vyber.get);
-    r_vyber.key( 1); r_vyber.refresh; //br_filtr.set(r_vyber.get);
+    o_vyber.key( 1); bo_filtr.set(o_vyber.get); o_vyber.refresh;
+    r_vyber.key( 1); br_filtr.set(r_vyber.get); r_vyber.refresh;
+    echo("start: br_filtr=",br_filtr.get);
     //init_mailist;
   ] }
   // zobraz mailist podle access
@@ -436,7 +443,9 @@ form _lst [,,370,*] {
     [ virgin.get; start ];
     br_cnd.set(cnd);
     idr.get; [ br.browse_seek(conc("id_rodina=",idr.get)); br.onrowclick ]
-  | br.browse_load(conc('r.access & ',my_access.get,' AND ',cnd," AND ",br_filtr.get),'',br_having.get);
+  |     echo("load: br_filtr=",br_filtr.get);
+
+    br.browse_load(conc('r.access & ',my_access.get,' AND ',cnd," AND ",br_filtr.get),'',br_having.get);
   }
   select r_vyber [163,5,154,] {tag:'r', type:'map'
     map_pipe:map_evi_vyber_r.hodnota, options:map_evi_vyber_r.zkratka, format:'t'
@@ -569,16 +578,16 @@ form _page {
     curr.set(i._id); form.display(0,i.par.off); form.display(1,i.par.on)  }
   label evid [12,0,90,20] {par:°{on:'C|O',off:'B|F|D|Y|M'}, tag:'_', title:'<b>Osobní údaje</b>',
     proc onclick() { cvak(this); osoba_load; oso.on_click }}
-  label akce [129,0,90,20] {par:°{on:'C|O|B',off:'F|D|Y|M'}, tag:'_', title:'<b>Účast na akcích</b>',
+  label akce [129,0,90,20] {par:°{on:'C|O|B',off:'F|D|Y|M'}, tag:'_', title:'<b>Účast na akcích</b>'
     proc onclick() { cvak(this); osoba_load }}
   label albu [247,0,90,20] {par:°{on:'C|F',off:'O|B|D|Y|M'}, tag:'_', title:'<b>Fotografie</b>',
     proc onclick() { cvak(this); osoba_load }}
-  label dary [365,0,90,20] {par:°{on:'C|O|D',off:'F|Y|M'},   tag:'_', title:'<b>Dary</b>',
+  label dary [365,0,90,20] {par:°{on:'C|O|D',off:'F|Y|M'},   tag:'_', title:'<b>Dary</b>', skill:'yae;fae;cae'
     proc onclick() { cvak(this); osoba_load; dar.onclick }}
-  label clen [483,0,90,20] {par:°{on:'C|O|Y',off:'F|D|M'},  tag:'_', title:'<b>Členství YMCA</b>',
+  label clen [483,0,90,20] {par:°{on:'C|O|Y',off:'F|D|M'},  tag:'_', title:'<b>Členství YMCA</b>', skill:'yae;fae;cae'
     proc onclick() { cvak(this); osoba_load; cle.onclick }}
   label mapa [601,0,90,20] {par:°{on:'C|O|M',off:'F|D|Y'},  tag:'_', title:'<b>Mapa</b>',
-    proc onclick() { has_skill('a'); cvak(this); osoba_load; map.mapa_show }}
+    proc onclick() { cvak(this); osoba_load; map.mapa_show }}
   label frame [0,16,706,min_h-150] { css:'ae_work'
     proc onclick() { cmd.get.set_css('shift_down','shift_up') }}
   # ==============================================> C: EVIDENCE RODINY
@@ -953,7 +962,7 @@ form _aktivity [,,248,min_h-160] {css:'ae_frame shift_up'
       | ucast.akce_show(ida.get,idp.get,conc(akce.get,' (',rok.get,')'),'EVIDENCE')
     ] }
   }
-  button [-40,2,,] { title:'^akce', css:'db_evidence', help:'též lze skočit dvojklikem na řádku s akcí'
+  button [-40,2,,] { title:'^akce', css:'db_evidence', help:'též lze skočit dvojklikem na řádku s akcí', skill:'yaa;faa;caa'
     proc onclick() { akc.na_akci } }
   proc ucasti(_ido,_jmeno) {
     form.display(_ido); _ido; ido.set(_ido); jmeno.set(_jmeno);
