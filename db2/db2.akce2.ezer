@@ -52,10 +52,11 @@ proc akce_onstart() {
   # příprava zobrazení v AKCE - volá akce_choose
   the_akce_ys.set(get_cookie(conc(sys('root'),'_akce_ys'),0));
   the_akce_fa.set(get_cookie(conc(sys('root'),'_akce_fa'),0));
-  { eq(my_org.get,1);
-    lst.akce_work(the_akce_ys.get)
-  | lst.akce_work(the_akce_fa.get)
-  };
+  [ not(has_skill('mrop'));    // uživatel s 'mrop' nepotřebuje seznam akcí
+    { eq(my_org.get,1);
+      lst.akce_work(the_akce_ys.get)
+    | lst.akce_work(the_akce_fa.get)
+  }];
   spinner(0);
 }
 # změna datového přístupu
@@ -133,7 +134,7 @@ panel maia {type:'right', title:'Maily akce', _sys:'*', include:'onclick,db2.akc
   proc reaccess() {}
 }
 # ======================================================================================> . EVIDENCE
-panel evi {type:'right', _sys:'*', title:'[fa-briefcase] EVIDENCE', include:'onload,db2.akce2.evi', skill:'yae;fae;caa',
+panel evi {type:'right', _sys:'*', title:'[fa-briefcase] EVIDENCE', include:'onload,db2.akce2.evi', skill:'yae;fae;caa;mrop',
     style:"overflow-y:hidden"
   proc reaccess() {}
   proc rodina_show() {}
@@ -719,11 +720,14 @@ panel osoba_config [,,200,150] {type:'popup', title:"Podrobnosti údajů"
       set_cookie(conc(sys('root'),'_conf_osoba'),grp.get); panel.close(1) }}
     button  [85,130,,] { title:'Zpět', proc onclick() {
       grp.set(_old.get); _back; ucast.call('osoby_show'); panel.close(1) }}
-    proc _tuned() { grp.set(cconc(s.get,'S',k.get,'K',a.get,'A',o.get,'O',c.get,'C',p.get,'P','Z'));
+    proc _tuned() {
+      grp.set(cconc(s.get,'S',k.get,'K',a.get,'A',o.get,'O',p.get,'P','Z'));
+      [ form.part('c'); c.get; grp.set(conc(grp.get,'C')) ];
       ucast.call('osoby_show') }
     proc _back() { z.set(1); s.set(contains('S',grp.get));
       k.set(contains('K',grp.get)); a.set(contains('A',grp.get)); o.set(contains('O',grp.get));
-      c.set(contains('C',grp.get)); p.set(contains('P',grp.get)); }
+      [ form.part('c'); c.set(contains('C',grp.get)) ];
+      p.set(contains('P',grp.get)); }
   }
   var _old= 'Z'
 }

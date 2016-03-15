@@ -6040,6 +6040,7 @@ function evid2_delete($id_osoba,$id_rodina,$cmd='confirm') { trace();
   $a= $sex==2 ? 'a' : '';
   $nazev= select("nazev",'rodina',"id_rodina=$id_rodina");
   switch ($cmd) {
+
   case 'conf_oso':
     $x= select1('SUM(castka)','dar',"id_osoba=$id_osoba");
     if ( $x) $duvod[]= "je dárcem $x Kč";
@@ -6061,6 +6062,7 @@ function evid2_delete($id_osoba,$id_rodina,$cmd='confirm') { trace();
       $ret->html= "$name nejde smazat, protože ".implode(',',$duvod);
     }
     break;
+
   case 'conf_mem':
 //     $x= select1('COUNT(*)','tvori',"id_osoba=$id_osoba AND id_rodina!=$id_rodina");
 //     if ( !$x ) $duvod[]= "není členem žádné další rodiny";
@@ -6075,16 +6077,19 @@ function evid2_delete($id_osoba,$id_rodina,$cmd='confirm') { trace();
       $ret->html= "$name nejde vyjmout z $nazev, protože ".implode(',',$duvod);
     }
     break;
+
   case 'conf_rod':
     $x= select1('COUNT(*)','tvori',"id_rodina=$id_rodina");
     $ret->html= $x==0 ? "Opravdu smazat prázdnou rodinu $nazev?"
       : "Rodinu $nazev nelze smazat, protože obsahuje $x členů - nejprve je třeba je vyjmout nebo vymazat";
     $ret->ok= $x==0 ? 1 : 0;
     break;
+
   case 'del_mem':
     $ret->ok= query("DELETE FROM tvori WHERE id_osoba=$id_osoba AND id_rodina=$id_rodina") ? 1 : 0;
     $ret->html= "$name byl$a vyjmut$a z $nazev";
     break;
+
   case 'del_oso':
     $ret->ok= query("UPDATE osoba SET deleted='D' WHERE id_osoba=$id_osoba") ? 1 : 0;
     query("INSERT INTO _track (kdy,kdo,kde,klic,fld,op,old,val)
@@ -6092,12 +6097,14 @@ function evid2_delete($id_osoba,$id_rodina,$cmd='confirm') { trace();
     query("DELETE FROM tvori WHERE id_osoba=$id_osoba AND id_rodina=$id_rodina");
     $ret->html= "$name byl$a smazán$a";
     break;
+
   case 'undel_oso':
     $ret->ok= query("UPDATE osoba SET deleted='' WHERE id_osoba=$id_osoba") ? 1 : 0;
     query("INSERT INTO _track (kdy,kdo,kde,klic,fld,op,old,val)
            VALUES ('$now','$user','osoba',$id_osoba,'','o','','')");    // o=obnova
     $ret->html= "$name byl$a obnoven$a";
     break;
+
   case 'del_rod':
     query("UPDATE osoba JOIN tvori USING (id_osoba) SET deleted='D' WHERE id_rodina=$id_rodina");
     $no= mysql_affected_rows();
@@ -6110,7 +6117,8 @@ function evid2_delete($id_osoba,$id_rodina,$cmd='confirm') { trace();
     $ami= $no==1 ? "ou" : "ami";
     $ret->html= "Byla smazána rodina s $no osob$ami";
     break;
-  case 'undel_rod':
+
+   case 'undel_rod':
     $ret->ok= query("UPDATE rodina SET deleted='' WHERE id_rodina=$id_rodina") ? 1 : 0;
     query("INSERT INTO _track (kdy,kdo,kde,klic,fld,op,old,val)
            VALUES ('$now','$user','rodina',$id_rodina,'','o','','')");    // o=obnova
@@ -8104,7 +8112,8 @@ function mail2_lst_using($id_mailist) {
 # pokud je uvedeno par.typ='o' pro osoby, 'r' pro rodiny
 function mail2_mailist($access,$par=null) {
   $sel= '';
-  $AND= $par ? "AND komu='{$par->komu}'" : '';
+  $AND=  $par && $par->komu ? "AND komu='{$par->komu}'" : '';
+  $AND.= $par && $par->ucel ? "AND ucel LIKE '{$par->ucel}'" : '';
   $mr= mysql_qry("SELECT id_mailist,ucel,access FROM mailist WHERE access=$access $AND");
   while ($mr && ($m= mysql_fetch_object($mr))) {
     $a= $m->access;
