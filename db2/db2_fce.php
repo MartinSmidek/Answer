@@ -6511,7 +6511,7 @@ end:
 # x->selected= null | seznam key_id, které mají být předány - použití v kombinaci se selected(use)
 function evid2_browse_mailist($x) {
   global $test_clmn,$test_asc, $y;
-//                                                         debug($x,"evid2_browse_mailist");
+                                                        debug($x,"evid2_browse_mailist");
 //                                                         return;
   $y= (object)array('ok'=>0);
   foreach(explode(',','cmd,rows,quiet,key_id,oldkey') as $i) $y->$i= $x->$i;
@@ -6534,7 +6534,11 @@ function evid2_browse_mailist($x) {
     }
     # získej sexpr z mailistu id=c.cond
     list($nazev,$qo,$komu)= select('ucel,sexpr,komu','mailist',"id_mailist={$x->cond}");
-//                                                                 display($qo);
+    // přidej případnou podmínku podle x.cond
+    if ( $x->cond ) {
+      $qo= str_replace("WHERE","WHERE {$x->cond} AND ",$qo);
+    }
+                                                                display($qo);
     $ro= mysql_qry($qo);
     while ( $ro && ($o= mysql_fetch_object($ro)) ) {
       $id= $komu=='o' ? $o->_id : $o->_idr;
@@ -6563,6 +6567,40 @@ function evid2_browse_mailist($x) {
       'telefon'=>$o->_telefon,
       '_id_o'=>$id
       );
+    }
+    # ==> ... případný výběr - zjednodušeno na show=[*,vzor]
+    if ( $x->show ) foreach ( $x->show as $fld => $show) {
+      $i= 0; $typ= $show->$i;
+      $i= 1; $vzor= $show->$i;
+      $beg= '^';
+      switch ($typ) {
+      case '%':
+        $beg= '';
+      case '*':
+        $end= substr($vzor,-1)=='$' ?'$' : '.*';
+        $not= substr($vzor,0,1)=='-';
+        if ( $not ) $vzor= substr($vzor,1);
+        $vzor= strtr($vzor,array('?'=>'.','*'=>'.*','$'=>''));
+        foreach ($zz as $i=>$z) {
+          $v= trim($z->$fld);
+          $m= preg_match("/$beg$vzor$end/ui",$v);
+//                                           display("/^$vzor$end/ui ? '$v' = $m");
+          $off= $not && $m || !$not && !$m;
+          if ( $off ) unset($zz[$i]);
+        }
+        break;
+      case '=':
+      case '#':
+        foreach ($zz as $i=>$z) {
+          $v= $z->$fld;
+          $ok= $z->$fld == $vzor;
+//                                           display("'$vzor'='$v' = $ok");
+          if ( !$ok ) unset($zz[$i]);
+        }
+        break;
+      default:
+        display("show->{$fld}[0]='$typ' - N.Y.I");
+      }
     }
     # ==> ... řazení
     if ( $x->order && count($zz)>0 ) {

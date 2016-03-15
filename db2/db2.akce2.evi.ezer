@@ -21,7 +21,7 @@ proc onfirstfocus() {
   has_skill('mrop');
   // přístup jen k seznamu iniciovaných
   osoba_config.start; rodina_config.start;
-  page.start; cmd.start;
+  page.start;
   m.o.i.click;
 | // plný přístup
   osoba_config.start; rodina_config.start;
@@ -45,7 +45,7 @@ menu m {type:'left', format:'f-'
   menu o {title:'osoby',type:'group', skill:'yae;fae;cae;mrop'
     item a {title:'[fa-user]všechny kontakty'   par:°{lst:'o',tit:'všechny osoby, co ',cnd:'1'}, skill:'yae;fae;cae'}
     item m {title:'[fa-send-o] podle mail-listu'par:°{lst:'m',tit:'MAILIST',cnd:'1',komu:'o'}, skill:'yae;fae;cae' }
-    item i {title:'[fa-send-o] podle mail-listu'par:°{lst:'m',tit:'MAILIST',cnd:'1',komu:'o',ucel:'%MROP%'}, skill:'mrop' }
+    item i {title:'[fa-send-o] podle mail-listu'par:°{lst:'m',tit:'MAILIST',cnd:'1',komu:'o',ucel:'%MROP%'}, skill:'mrop'}
     item   {title:'[fa-male]muži'               par:°{lst:'o',tit:'všichni muži, co ',
                                                 cnd:"o.sex=1 AND TIMESTAMPDIFF(YEAR,narozeni,NOW())>=18"}, skill:'yae;fae;cae'}
     item   {title:'[fa-female]ženy'             par:°{lst:'o',tit:'všechny ženy, co ',
@@ -356,15 +356,15 @@ form _lst [,,370,*] {
     show ulice
     show telefon
     show access
-    show prijmeni [,,70,] { title:'příjmení', format:'s'
+    show prijmeni [,,70,] { title:'příjmení', format:'sq*'
       css_cell:'access,0:,1:ezer_ys,2:ezer_fa,3:ezer_db' }
-    show jmeno    [,,70,] { title:'jméno', format:'s' }
-    show obec     [,,70,] { title:'obec', format:'ts' }
-    show psc      [,,40,] { title:'psč', format:'s+' }
-    show _vek     [,,20,] { title:"věk", format:'rs' }
+    show jmeno    [,,70,] { title:'jméno', format:'sq*' }
+    show obec     [,,70,] { title:'obec', format:'tsq*' }
+    show psc      [,,40,] { title:'psč', format:'s+q*' }
+    show _vek     [,,20,] { title:"věk", format:'rsq=' }
     // volitelná položka
-    show mail     [,,44,] { title:'emaily', format:'ts', help:'osobní emaily' }
-    show _id_o    [,,0,]  { title:'ID osoby', format:'rs', help:'osobní číslo' }
+    show mail     [,,44,] { title:'emaily', format:'tsq*', help:'osobní emaily' }
+    show _id_o    [,,0,]  { title:'ID osoby', format:'rsq=', help:'osobní číslo' }
     // events
     proc onrowclick() {
       eq(bm_komu.get,'o');
@@ -1108,7 +1108,7 @@ form _cmd [,,706,32] { css:'ae_frame'
     }
   }
   # RODINA
-  label [144,9,80,] { title:"<b>Rodina:</b>" }
+  label [144,9,80,] { title:"<b>Rodina:</b>", skill:'yaa;faa;caa' }
   // ==> ... rodina: nová, vymazat
   button [188,6,,] {tag:'x', type:'html', title:'[fa-heart] Nová rodina',
     skill:'yaa+|yaa+;faa+|faa+;caa+|caa+', help:'Vytvoření nové rodiny s prvním členem'
@@ -1145,7 +1145,7 @@ form _cmd [,,706,32] { css:'ae_frame'
       warning(ret.html); reload('lst')
   }}
   # ČLENI
-  label [371,9,80,] { title:"<b>Členi:</b>" }
+  label [371,9,80,] { title:"<b>Členi:</b>", skill:'yaa;faa;caa' }
   // ==> ... člen: nový, přidat, vyjmout
   proc change_x(elem) { elem.change(1) }
   button novy_clen [404,6,,] {tag:'x', type:'html', title:'[fa-heart-o] Nový člen',
