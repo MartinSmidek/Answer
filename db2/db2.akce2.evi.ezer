@@ -617,7 +617,8 @@ form _page {
     show vek   [,,30,] {title:'věk', format:'r' }
     show role  [,,10,] {title:'role'}
     proc onrowclick() {
-      cleni_click(id_osoba.get);
+      has_skill('mrop'); this.browse_active(last.get); cleni_click(ido0.get);
+    | cleni_click(id_osoba.get);
       [ track.display; track.back_show('osoba',ido.get) ];
     }
     proc cleni_click(id) {
@@ -642,12 +643,12 @@ form _page {
     proc on_click() {
       up(page.oso); up(page.rod); down(page.dar); down(page.cle); down(page.pri); down(page.map) }
     proc onchanged() { page.d_change('o') }
-    menu detail { type:'context'
+    menu detail { type:'context', skill:'yae;fae;cae'
       item { title:'EVID konfigurace formuláře', proc onclick () { osoba_config.tune(panel) } }
     }
   }
   # ==============================================> . kontextové menu
-  menu ctx { type:'context', join:frame
+  menu ctx { type:'context', join:frame, skill:'yae;fae;cae'
     item { title:'sjednotit kopie osob', skill:'fad|fad;yad|yad'
       proc onclick () { elim.osoby(ido.get,oso.jmeno.get,oso.prijmeni.get); }} //lst.refresh2 } }
     item { title:'sjednotit kopie rodin', skill:'fad|fad;yad|yad'
@@ -970,7 +971,7 @@ form _aktivity [,,248,min_h-160] {css:'ae_frame shift_up'
   }
 }
 # ------------------------------------------------------------------------------------------==> MAPA
-form _mapa [,,500,312] {css:'ae_frame shift_down'
+form _mapa [,,500,500] {css:'ae_frame shift_down'
   var on=0
   proc mapa_show() {
     [ on.get
@@ -978,7 +979,7 @@ form _mapa [,,500,312] {css:'ae_frame shift_down'
       on.set(1); lst.bm_selected ] }
   proc onclick() {
     up(page.map); down(page.pri); down(page.dar); down(page.oso); down(page.rod); down(page.cle) }
-  label cr [2,2,496,308] { type:'map'
+  label cr [2,2,496,496] { type:'map'
     proc onmarkclick(mark) {
       echo(mark.title,' id_osoba:',mark.id);
       lst.bm.raise('onrowclick',mark.id);
