@@ -739,9 +739,9 @@ form _osoba2x [,,244,322] {css:'ae_frame', proc onclick() { on_click }
                         // 1 (jen EVID) zobrazí i pro adresa=0 osobní údaje (měly by být prázdné)
   proc onstart() { stat.selects(staty.get,',',1) }
   # ==> . globální procedury
-  proc set_mode(_mode,_host) {
+  proc set_mode(_mode,_host) { var x:object
     mode.set(_mode); host.set(_host); form.enable(1,'a|b|j|k');
-    [ eq(_host,'U'); detail.r.enable(1); | detail.r.enable(0) ];
+    [ form.part('detail.r'); x.set(form.part('detail.r')); x.get.enable(eq(_host,'U')) ];
   }
   # ==> . přepisované procedury
   proc onchanged() { }
@@ -806,7 +806,7 @@ form _osoba2x [,,244,322] {css:'ae_frame', proc onclick() { on_click }
   }
 
   // kontextové menu
-  menu detail { type:'context'
+  menu detail { type:'context', skill:'yae;fae;cae'
     item { title:'konfigurace formuláře', proc onclick () { osoba_config.tune(panel) } }
     item { title:'ukázat změny os. údajů',proc onclick () { track.back_show('osoba',key_osoba.get) }}
     item r { title:'-zobrazovat ®rodinné údaje',  proc onclick () { set_mode(2,host.get); refresh }}
@@ -1120,7 +1120,7 @@ form _rodina2p [,,188,229] { css:'ae_frame'
     title:'schopnosti:', format:'n'}
   edit  r_note     [Lp+ 0,36,175,74] {tag:'p', data:r.note, title:'^poznámka', format:'n'}
   // menu
-  menu detail { type:'context'
+  menu detail { type:'context', skill:'yae;fae;cae'
     item { title:'konfigurace formuláře',  proc onclick () { rodina_config.tune(evi) } }
     item { title:'ukázat změny rod. údajů',proc onclick () { key_rodina.get; track.back_show('rodina',key_rodina.get) }}
   }
