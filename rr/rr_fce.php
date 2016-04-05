@@ -22,7 +22,7 @@ function rr_nastav($den,$datum,$pocet) {  trace();
 # $par = {den:ode dneška,poslat: 0/1}
 function rr_send($par) {
   global $EZER;
-  $offset= $par->den<0 ? $par->den : ($par->den>0 ? "+{$par->den}" : '');
+  $offset= $par->den<0 ? "-INTERVAL ".abs($par->den)." DAY" : ($par->den>0 ? "+INTERVAL {$par->den} DAY" : '');
   $plus= $par->den ? $par->den : 0;
   $dnes= date('j/n/Y',mktime(0,0,0,date('n'),date('j')+$plus,date('Y')));
   $html= "neni pro $dnes nastaveno! ($offset)";
