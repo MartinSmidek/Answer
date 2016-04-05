@@ -4954,7 +4954,7 @@ function akce2_sestava_noci($akce,$par,$title,$vypis,$export=false) { trace();
           JOIN spolu AS s USING(id_pobyt)
           JOIN osoba AS o ON s.id_osoba=o.id_osoba
           LEFT JOIN tvori AS t ON t.id_osoba=o.id_osoba
-          LEFT JOIN rodina AS r ON r.id_rodina=IFNULL(i0_rodina,t.id_rodina)
+          LEFT JOIN rodina AS r ON r.id_rodina=IF(i0_rodina,i0_rodina,t.id_rodina)
           WHERE p.id_akce='$akce' AND funkce NOT IN (9,10,99) AND $cond
           GROUP BY id_pobyt
           ORDER BY $ord";
@@ -5126,7 +5126,8 @@ function akce2_vyuctov_pary($akce,$par,$title,$vypis,$export=false) { trace();
           JOIN spolu AS s USING(id_pobyt)
           JOIN osoba AS o ON s.id_osoba=o.id_osoba
           LEFT JOIN tvori AS t ON t.id_osoba=o.id_osoba
-          LEFT JOIN rodina AS r USING(id_rodina)
+          LEFT JOIN rodina AS r ON r.id_rodina=IF(i0_rodina,i0_rodina,t.id_rodina)
+          -- LEFT JOIN rodina AS r USING(id_rodina)
           JOIN akce AS a ON a.id_duakce=p.id_akce
           LEFT JOIN dar AS d ON d.id_osoba=s.id_osoba AND d.ukon='p'
             AND YEAR(a.datum_do) BETWEEN YEAR(d.dat_od) AND YEAR(d.dat_do)
@@ -5195,7 +5196,9 @@ function akce2_vyuctov_pary($akce,$par,$title,$vypis,$export=false) { trace();
         case 'manzele':
           $val= $x->pouze==1 ? "{$x->prijmeni_m} {$x->jmeno_m}"
              : ($x->pouze==2 ? "{$x->prijmeni_z} {$x->jmeno_z}"
-             : "{$x->nazev} {$x->jmeno_m} a {$x->jmeno_z}");
+             : ($x->nazev ? "{$x->nazev} {$x->jmeno_m} a {$x->jmeno_z}"
+             : "{$x->prijmeni_m} {$x->jmeno_m} {$x->prijmeni_z} {$x->jmeno_z}"
+           ));
           break;
         case 'jmena':
           $val= $x->pouze==1
@@ -5330,7 +5333,7 @@ function akce2_vyuctov_pary2($akce,$par,$title,$vypis,$export=false) { trace();
           JOIN spolu AS s USING(id_pobyt)
           JOIN osoba AS o ON s.id_osoba=o.id_osoba
           LEFT JOIN tvori AS t ON t.id_osoba=o.id_osoba
-          LEFT JOIN rodina AS r ON r.id_rodina=IFNULL(i0_rodina,t.id_rodina)
+          LEFT JOIN rodina AS r ON r.id_rodina=IF(i0_rodina,i0_rodina,t.id_rodina)
           WHERE p.id_akce='$akce' AND funkce!=99 AND $cond
           GROUP BY id_pobyt
           ORDER BY $ord";
@@ -5395,7 +5398,9 @@ function akce2_vyuctov_pary2($akce,$par,$title,$vypis,$export=false) { trace();
         case 'manzele':
           $val= $x->pouze==1 ? "{$x->prijmeni_m} {$x->jmeno_m}"
              : ($x->pouze==2 ? "{$x->prijmeni_z} {$x->jmeno_z}"
-             : "{$x->nazev} {$x->jmeno_m} a {$x->jmeno_z}");
+             : ($x->nazev ? "{$x->nazev} {$x->jmeno_m} a {$x->jmeno_z}"
+             : "{$x->prijmeni_m} {$x->jmeno_m} {$x->prijmeni_z} {$x->jmeno_z}"
+           ));
           break;
         case 'jmena':
           $val= $x->pouze==1
@@ -7411,7 +7416,7 @@ function sta2_sestava($org,$title,$par,$export=false) {
         JOIN spolu AS s USING(id_pobyt)
         JOIN osoba AS o ON s.id_osoba=o.id_osoba
         LEFT JOIN tvori AS t ON t.id_osoba=o.id_osoba
-        LEFT JOIN rodina AS r ON r.id_rodina=IFNULL(i0_rodina,t.id_rodina)
+        LEFT JOIN rodina AS r ON r.id_rodina=IF(i0_rodina,i0_rodina,t.id_rodina)
         JOIN akce AS a ON a.id_duakce=p.id_akce
         WHERE a.druh=1 AND p.prednasi=$pr AND YEAR(a.datum_od) BETWEEN $od AND $do AND a.access&$org
         GROUP BY id_pobyt -- ,_rok
