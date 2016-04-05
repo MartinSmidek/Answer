@@ -5072,7 +5072,7 @@ function akce2_vyuctov_pary($akce,$par,$title,$vypis,$export=false) { trace();
       . ",str. celá:5:r:S,str. pol.:5:r:s"
       . ",platba ubyt.:7:r:s,platba strava:7:r:s,platba režie:7:r:s,sleva:7:r:s,CD:6:r:s,celkem:7:r:s"
       . ",na účet:7:r:s,datum platby:10:d"
-      . ",nedo platek:6:r:s,č.příspěvky:6,pokladna:6:r:s,datum platby:10:d,přepl.:6:r:s,poznámka:50,SPZ:9,.:7"
+      . ",nedo platek:6:r:s,č.příspěvky:6:r:s,pokladna:6:r:s,datum platby:10:d,přepl.:6:r:s,poznámka:50,SPZ:9,.:7"
       . ",ubyt.:8:r:s,DPH:6:r:s,strava:8:r:s,DPH:6:r:s,režie:8:r:s,zapla ceno:8:r:s"
       . ",dota ce:6:r:s,nedo platek:6:r:s,dar:7:r:s,rozpočet organizace:10:r:s"
       . "";
@@ -5080,7 +5080,7 @@ function akce2_vyuctov_pary($akce,$par,$title,$vypis,$export=false) { trace();
 //       . ",id_pobyt"
       . ",pokoj,_deti,luzka,pristylky,kocarek,=pocetnoci,strava_cel,strava_pol"
       . ",platba1,platba2,platba3,platba4,=cd,=platit,=uctem,=datucet"
-      . ",=nedoplatek,prispevky,=pokladna,=datpokl,=preplatek,poznamka,spz,"
+      . ",=nedoplatek,=prispevky,=pokladna,=datpokl,=preplatek,poznamka,spz,"
       . ",=ubyt,=ubytDPH,=strava,=stravaDPH,=rezie,=zaplaceno,=dotace,=nedopl,=dar,=naklad"
       . "";
   $cnd= 1;
@@ -5120,7 +5120,8 @@ function akce2_vyuctov_pary($akce,$par,$title,$vypis,$export=false) { trace();
           GROUP_CONCAT(DISTINCT IF(t.role='b',o.jmeno,'')    SEPARATOR '') as jmeno_z,
           GROUP_CONCAT(DISTINCT IF(t.role='b',o.narozeni,'') SEPARATOR '') as narozeni_z,
           GROUP_CONCAT(DISTINCT IF(t.role='b',o.rc_xxxx,'')  SEPARATOR '') as rc_xxxx_z,
-          IF(MAX(clen)>0,SUM(d.castka),'-') AS prispevky
+          MAX(clen) AS _clenstvi,
+          0+RIGHT(SUM(DISTINCT CONCAT(d.id_dar,LPAD(d.castka,10,0))),10) AS prispevky
           FROM pobyt AS p
           JOIN spolu AS s USING(id_pobyt)
           JOIN osoba AS o ON s.id_osoba=o.id_osoba
@@ -5163,6 +5164,7 @@ function akce2_vyuctov_pary($akce,$par,$title,$vypis,$export=false) { trace();
         case '=pokladna':   $val= $x->pokladnou ? 0+$x->platba : ''; break;
         case '=datpokl':    $val= $x->pokladnou ? $x->datplatby : ''; break;
         case '=cd':         $val= 100.00*$x->cd; break;
+        case '=prispevky':  $val= $x->prispevky ?: ($x->_clenstvi ? '' : '-'); break;
         case '=ubyt':       $val= round($x->platba1/(1+$DPH1));
                             $exp= "=ROUND([platba1,0]/(1+$DPH1),0)"; break;
         case '=ubytDPH':    $val= round($x->platba1*$DPH1/(1+$DPH1));
