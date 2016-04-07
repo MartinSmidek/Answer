@@ -32,7 +32,7 @@ kEzer-ys2
 		db2_test.php
 		index.php
 		robots.txt
-	-db2
+	+db2
 		-$ test
 			db2_test\$.ezer
 		+$
@@ -63,7 +63,7 @@ kEzer-ys2
 		-pokladna
 			db2\db2.pok.ezer
 		-ekonomika
-	+ezer2.2
+	-ezer2.2
 		+client
 			ezer2.2\client\_code.js
 			ezer2.2\client\_test.html
@@ -135,12 +135,9 @@ kEzer-ys2
 22=db2\db2.akce2.sta.ezer
 23=ezer2.2\ezer2.syst.ezer
 24=sql\answer_dotazy.sql
-25=..\..\Users\Martin\Documents\Novy1.sql
-26=ezer2.2\ezer2.help.ezer
-27=db2\$.ezer
 [Selected Project Files]
 Main=
-Selected=db2\db2.akce2.evi.ezer
+Selected=db2\db2_fce.php
 [ezer2.2\client\app.js]
 TopLine=521
 Caret=15,549
@@ -205,10 +202,14 @@ Caret=1,1471
 BookMark1=26,1499
 BookMark3=32,1197
 [db2\db2_fce.php]
-TopLine=6539
-Caret=42,6561
-Mark1=76,1641
-Mark2=20,6524
+TopLine=5275
+Caret=75,5299
+Mark1=25,2939
+Mark2=37,5066
+Mark3=74,5336
+Mark4=37,5123
+Mark5=1,5167
+Mark6=37,5083
 [db2\db2.akce2.lst.ezer]
 TopLine=111
 Caret=7,142
@@ -238,6 +239,7 @@ Mark2=19,597
 [db2\db2.akce2.evi.ezer]
 TopLine=952
 Caret=41,965
+BookMark1=30,620
 Mark1=17,450
 Mark2=56,159
 Mark3=32,150
@@ -245,7 +247,6 @@ Mark4=32,99
 Mark5=32,28
 Mark6=63,200
 Mark7=93,48
-BookMark1=30,620
 [db2\db2.akce2.ezer]
 TopLine=1015
 Caret=92,1049
@@ -270,12 +271,3 @@ Caret=39,315
 [sql\answer_dotazy.sql]
 TopLine=1
 Caret=77,34
-[..\..\Users\Martin\Documents\Novy1.sql]
-TopLine=1
-Caret=20,5
-[ezer2.2\ezer2.help.ezer]
-TopLine=133
-Caret=59,141
-[db2\$.ezer]
-TopLine=1
-Caret=78,1

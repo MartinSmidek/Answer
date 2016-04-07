@@ -845,7 +845,8 @@ form _osoba2x [,,244,322] {css:'ae_frame', proc onclick() { on_click }
     [ _clen_rodiny; role.display(1);
       kontakt.enable(1); kontakt.set(0);
       adresa.enable(1); adresa.set(0);
-      [ idr; adresa.rodinna]
+      [ idr; adresa.rodinna ];
+      jmeno1.add_attrib('par.prijmeni',_prijmeni);
     | role.display(1);
       kontakt.enable(0); kontakt.set(1); form.enable(1,'k');
       adresa.enable(0);  adresa.set(1);  form.enable(1,'b'); ];
