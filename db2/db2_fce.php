@@ -2774,9 +2774,9 @@ function akce2_osoba2x($id_osoba,$id_rodina=0) { trace();
       GROUP BY o.id_osoba");
     $o= sql_query("SELECT $adresa,$kontakt FROM osoba WHERE id_osoba='$id_osoba'");
     $r= sql_query("SELECT $adresa,$kontakty FROM rodina WHERE id_rodina='$k->id_rodina'");
-  //                                                         debug($k,"kmen");
-  //                                                         debug($r,"rodina");
-  //                                                         debug($o,"osoba ".(empty($o)?'e':'f'));
+//                                                         debug($k,"kmen");
+//                                                         debug($r,"rodina");
+//                                                         debug($o,"osoba ".(empty($o)?'e':'f'));
     foreach(explode(',',$rets) as $f) {
       $ret->$f= (object)array();
     }
@@ -2797,14 +2797,14 @@ function akce2_osoba2x($id_osoba,$id_rodina=0) { trace();
     $ret->$f= (object)array();
   }
   foreach(explode(',',$adresa) as $f) {
-    $ret->o_adresa->$f= empty($o) ? '' : $o->$f;
+    $ret->o_adresa->$f= isset($o->$f) ? $o->$f : '';
     $ret->r_adresa->$f= empty($r) ? '' : ($f=='noadresa'||$f=='stat'?'':'®').$r->$f;
   }
   foreach(explode(',',$kontakt) as $f) { $fy= $f.'y';
-    $ret->o_kontakt->$f= empty($o) ? '' : $o->$f;
+    $ret->o_kontakt->$f= isset($o->$f) ? $o->$f : '';
     $ret->r_kontakt->$f= empty($r) ? '' : ($f=='nomail'?'':'®').$r->$fy;
   }
-                                                        debug($ret,"akce2__osoba2x");
+//                                                         debug($ret,"akce2__osoba2x");
   return $ret;
 }
 # ------------------------------------------------------------------------------------ akce2_ido2idp
