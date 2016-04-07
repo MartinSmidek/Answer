@@ -2804,7 +2804,7 @@ function akce2_osoba2x($id_osoba,$id_rodina=0) { trace();
     $ret->o_kontakt->$f= empty($o) ? '' : $o->$f;
     $ret->r_kontakt->$f= empty($r) ? '' : ($f=='nomail'?'':'®').$r->$fy;
   }
-//                                                         debug($ret,"akce2__osoba2x");
+                                                        debug($ret,"akce2__osoba2x");
   return $ret;
 }
 # ------------------------------------------------------------------------------------ akce2_ido2idp
@@ -5127,7 +5127,6 @@ function akce2_vyuctov_pary($akce,$par,$title,$vypis,$export=false) { trace();
           JOIN osoba AS o ON s.id_osoba=o.id_osoba
           LEFT JOIN tvori AS t ON t.id_osoba=o.id_osoba
           LEFT JOIN rodina AS r ON r.id_rodina=IF(i0_rodina,i0_rodina,t.id_rodina)
-          -- LEFT JOIN rodina AS r USING(id_rodina)
           JOIN akce AS a ON a.id_duakce=p.id_akce
           LEFT JOIN dar AS d ON d.id_osoba=s.id_osoba AND d.ukon='p'
             AND YEAR(a.datum_do) BETWEEN YEAR(d.dat_od) AND YEAR(d.dat_do)

@@ -947,12 +947,19 @@ form _osoba2x [,,244,322] {css:'ae_frame', proc onclick() { on_click }
   radio kontakt [50,0,185,18] {tag:'j', format:'n', value:'0', data:o.kontakt
     case [0,0,70,] { title:'osobní', expr:'1' }
     case [56,0,70,] { title:'rodinný:', expr:'0' }
-    proc onchange() { var r:object
-      eq(host.get,'E'); show_osoba(0)
-    | eq(host.get,'U'); r.set(ask('akce2_osoba2x',key_osoba.get,idr.get)); // varianty kontaktu
-      [ this.get; copy_by_name(r.o_kontakt,form) | copy_by_name(r.r_kontakt,form) ];
-      [ eq(form_mode.get,'new') | show_osoba(0) ]
-    }
+    proc onchange() { var r:object, yes:number
+      yes.set(1);
+      // varovné confirm při existenci osobního telefonu nebo emailu a pokusu přepnutí na rodinný
+      [ and(not(this.get),or(telefon.get,email.get));
+        { yes.set(confirm("Opravdu mám zneplatnit osobní kontakt?")); yes
+        | this.set(function('x',"return x.original.value",this)); this.plain
+      }];
+      yes;
+      { eq(host.get,'E'); show_osoba(0)
+      | eq(host.get,'U'); r.set(ask('akce2_osoba2x',key_osoba.get,idr.get)); // varianty kontaktu
+        [ this.get; copy_by_name(r.o_kontakt,form,'',1) | copy_by_name(r.r_kontakt,form,'',1) ];
+        [ eq(form_mode.get,'new') | show_osoba(0) ]
+    }}
   }
   label kontakt_r [169,3,75,] {tag:'j', format:'n'}
   label [0,0,,3] {tag:'J,S', format:'n', css:'db_sep' } // zarovnání
@@ -971,13 +978,20 @@ form _osoba2x [,,244,322] {css:'ae_frame', proc onclick() { on_click }
   radio adresa [50,0,189,18] {tag:'a', format:'n', value:'0', data:o.adresa
     case [0,0,70,] { title:'osobní', expr:'1' }
     case [56,0,70,] { title:'rodinná:', expr:'0' }
-    proc onchange() {
-      eq(host.get,'E'); show_osoba(0)
-    | eq(host.get,'U'); rodinna
-    }
+    proc onchange() { var yes:number
+      yes.set(1);
+      // varovné confirm při existenci osobního adresy a pokusu přepnutí na rodinnou
+      [ and(not(this.get),or(ulice.get,obec.get));
+        { yes.set(confirm("Opravdu mám zneplatnit osobní adresu?")); yes
+        | this.set(function('x',"return x.original.value",this)); this.plain
+      }];
+      yes;
+      { eq(host.get,'E'); show_osoba(0)
+      | eq(host.get,'U'); rodinna
+    }}
     proc rodinna() { var r:object
       r.set(ask('akce2_osoba2x',key_osoba.get,idr.get)); // varianty adres
-      [ this.get; copy_by_name(r.o_adresa,form) | copy_by_name(r.r_adresa,form) ];
+      [ this.get; copy_by_name(r.o_adresa,form,'',1) | copy_by_name(r.r_adresa,form,'',1) ];
       [ eq(form_mode.get,'new'); form.enable(this.get,'b') | show_osoba(0) ]
     }
   }

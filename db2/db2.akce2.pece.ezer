@@ -253,7 +253,7 @@ form _osoba { tag:'a',
     case [90,0,70,] { title:'rodinná:', expr:'0' }
     proc onchange() { var r:object
       r.set(ask('akce2_osoba2x',key_osoba.get)); // varianty adres
-      [ this.get; copy_by_name(r.o_adresa,form) | copy_by_name(r.r_adresa,form) ];
+      [ this.get; copy_by_name(r.o_adresa,form,'',1) | copy_by_name(r.r_adresa,form,'',1) ];
       form.enable(this.get,'aa');
     }
   }
