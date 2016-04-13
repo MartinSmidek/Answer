@@ -464,7 +464,9 @@ group ucastnici {
     label       [  0, 80, 70,] { title:'ulice' }
     field ulice [  0, 95,210,] { data:ds_osoba.ulice}
     label       [  0,120, 70,] { title:'psč' }
-    field psc [  0,135, 50,] { data:ds_osoba.psc}
+    field psc   [  0,135, 50,] { data:ds_osoba.psc
+      proc onchanged() { this.let(replace(this.get,' ','')) }
+    }
     label       [ 60,120, 70,] { title:'obec' }
     field obec [ 60,135,150,] { data:ds_osoba.obec}
     label       [  0,160,300,] { title:'--- <i>upřesnění údajů o pobytu</i>' }

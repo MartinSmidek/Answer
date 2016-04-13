@@ -258,7 +258,9 @@ form _osoba { tag:'a',
     }
   }
   field ulice    [L+29,T+111,162,] {tag:'aa', data:o.ulice, title:'ulice'}
-  field psc      [L+220,T+111,44,] {tag:'aa', data:o.psc, title:'psč'}
+  field psc      [L+220,T+111,44,] {tag:'aa', data:o.psc, title:'psč'
+    proc onchanged() { this.let(replace(this.get,' ','')) }
+  }
   field obec     [L+297,T+111,135,] {tag:'aa', data:o.obec, title:'obec'}
   // kontakt - rodinný=0, osobní=1
   label [L+0,T+134,581,12] { css:'db_hr' }

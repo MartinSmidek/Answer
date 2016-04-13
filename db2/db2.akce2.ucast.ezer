@@ -41,6 +41,7 @@ proc onfocus() {
   1,{ header.soubeh.display(1); panel.display(2,'akce1'); header.soubeh.set('^Děti') },
   2,{ header.soubeh.display(1); panel.display(2,'akce2');  header.soubeh.set('^Kurs') }
   );
+  w_change_all;
   h_change_all;
 }
 proc onblur() {
@@ -96,8 +97,8 @@ proc init_ucast2() {
 # --------------------------------------------------------------------------==> . změny rozměru okna
 
 const min_h=550           // minimální výška (nelze jednoduše měnit - jsou k ní vztaženy souřadnice v use)
-var   curr_h: number      // výška nad základní výšku
-var   curr_w: number      // 1024 nebo 1280
+var   curr_h=0            // výška nad základní výšku
+var   curr_w=0            // 1024 nebo 1280
 
 proc onfirstloaded() {    // zavolá se po prvním dokončení u.b.browse_load
   w_change_all
@@ -796,8 +797,8 @@ form _page {
 }
 # --------------------------------------------------------------------------------------==> EVIDENCE
 form _evidence {
-  var cmode: number    // sloupce osob: 1=jeden, 2=dva
-  var rmode: number    // bloky osob: iae-iep-
+  var cmode=0          // sloupce osob: 1=jeden, 2=dva
+  var rmode=0          // bloky osob: iae-iep-
   var zmode: text      // o | p
   var back: text       // pozadí pro 2/3 sloupce
   label frame [0,16,873,min_h+-152] { css:'ae_work'}
@@ -828,12 +829,11 @@ form _evidence {
     eq(on,2); rod.no_rodina; rod.display(1); pob.display(0);
   | form.display(on); rod.display(on); pob.display(on);
     os1.display(on); sp1.display(on);
-    [ eq(cmode.get,2); os2.display(on); sp2.display(on); ];
+    [ eq(cmode.get,2); os2.display(on); sp2.display(on) ];
   }
   proc Same() { return(and(rod.same,os1.same,pob.same,sp1.same,sp2.same,os2.same)) }
   proc Plain() { rod.plain; os1.plain; pob.plain; sp1.plain; sp2.plain; os2.plain }
   proc Init() {
-    cmode.set(2); rmode.set(1);
     osoba_config.start; spolu_config.start; pobyt_config.start; rodina_config.start;
     [ lt(sys('screen','width'),1280); c_change(1) ];
     os1.init; os1.set_mode(2,'U');
@@ -850,11 +850,11 @@ form _evidence {
   # změny sloupců
   proc c_change(n) {
     // 1 sloupec
-    eq(n,1); eq(cmode.get,2); cmode.set(1); page.wider.set('[fa-toggle-right]');
+    eq(n,1); os2.display; cmode.set(1); page.wider.set('[fa-toggle-right]');
     os2.display(0); sp2.display(0);
     frame.set_css('page_2clmn','page_3clmn')
   | // 2 sloupce
-    eq(n,2); eq(cmode.get,1); cmode.set(2); page.wider.set('[fa-toggle-left]');
+    eq(n,2); not(os2.display); cmode.set(2); page.wider.set('[fa-toggle-left]');
     os2.display(1); sp2.display(1);
     frame.set_css('page_3clmn','page_2clmn');
   }
@@ -1325,7 +1325,9 @@ form _rodina2 [,,360,229]  { css:'ae_frame'
     proc onchange() {
       alert("napiš prosím do poznámky důvod a datum zjištění neplatnosti")
   } }
-  field r_psc      [Lr+ 5,90, 40,] {tag:'r', data:r.psc, title:'^psč'}
+  field r_psc      [Lr+ 5,90, 40,] {tag:'r', data:r.psc, title:'^psč'
+    proc onchanged() { this.let(replace(this.get,' ','')) }
+  }
   field r_obec     [Lr+52,90,113,] {tag:'r', data:r.obec, title:'^obec'}
   field r_telefony [Lr+5,125,160,] {tag:'r', type:'list', data:r.telefony,title:'^telefony'}
   check nomaily    [Lr+42,141,121,] {tag:'r', title:"neposílat hromadné", data:r.nomaily, tabindex:0
