@@ -383,7 +383,9 @@ panel nas {type:'plain', title:"Nastavení", _sys:'nas',   skill:'yp+|yp+'
     label [16,79,30,17] { title:'Ulice' },
     field [68,77,208,17] { data:person.ulice },
     label [17,99,30,17] { title:'Psč' },
-    field [68,97,65,17] { data:person.psc },
+    field [68,97,65,17] { data:person.psc
+      proc onchanged() { this.let(replace(this.get,' ','')) }
+    }
     label [145,100,30,17] { title:'Obec' },
     field [187,97,89,17] { data:person.obec },
     button save [240,124,,] { type:'submit', title:'OK', help:'uložit změny',
