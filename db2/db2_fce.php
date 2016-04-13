@@ -6701,28 +6701,39 @@ function evid2_browse_mailist($x) {
 # ----------------------------------------------------------------------------------==> .. mapa2_psc
 # vrátí strukturu pro gmap
 function mapa2_psc($psc,$obec) {
+                                                debug($psc,"mapa2_psc");
   // k PSČ zjistíme LAN,LNG
   $ret= (object)array('mark'=>'','n'=>0);
   $marks= $err= '';
+  $mis_psc= array();
   $err_psc= array();
   $n= 0; $del= '';
   foreach ($psc as $p=>$tit) {
-    $qs= "SELECT psc,lat,lng FROM uir_adr.psc_axy WHERE psc='$p'";
-    $rs= mysql_qry($qs);
-    if ( $rs && ($s= mysql_fetch_object($rs)) ) {
-      $n++;
-      $o= $obec[$p];
-      $title= str_replace(',','',"$o:$tit");
-      $marks.= "{$del}$n,{$s->lat},{$s->lng},$title"; $del= ';';
+    if ( strlen($p)==5 ) {
+      $qs= "SELECT psc,lat,lng FROM uir_adr.psc_axy WHERE psc='$p'";
+      $rs= mysql_qry($qs);
+      if ( $rs && ($s= mysql_fetch_object($rs)) ) {
+        $n++;
+        $o= $obec[$p];
+        $title= str_replace(',','',"$o:$tit");
+        $marks.= "{$del}$n,{$s->lat},{$s->lng},$title"; $del= ';';
+      }
+      else {
+        $err_psc[$p].= " $tit/$p";
+      }
     }
     else {
-      $err_psc[$p].= " $tit";
+      $mis_psc[$p].= " $tit/$p";
     }
   }
   // zjištění chyb
-  if ( ($ne= count($err_psc)) ) {
-    $err= "$ne PSČ se nepovedlo lokalizovat. Týká se to: ".implode(' a ',$err_psc);
-//                                         debug($err_psc,"CHYBY");
+  if ( count($err_psc) || count($mis_psc) ) {
+    if ( ($ne= count($mis_psc)) ) {
+      $err= "$ne PSČ chybí nebo má špatný formát. Týká se to: ".implode(' a ',$mis_psc);
+    }
+    if ( ($ne= count($err_psc)) ) {
+      $err.= "<br>$ne PSČ se nepovedlo lokalizovat. Týká se to: ".implode(' a ',$err_psc);
+    }
   }
   $ret= (object)array('mark'=>$marks,'n'=>$n,'err'=>$err);
 //                                         debug(explode(';',$ret->mark),"mapa_akce");
