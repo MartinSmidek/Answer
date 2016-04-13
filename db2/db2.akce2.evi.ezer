@@ -1066,7 +1066,10 @@ form _cmd [,,706,32] { css:'ae_frame'
     set_state('show'); page.page_plain; warning;
     page.rod.display(1,'a'); page.rod.display(0,'m|n');
     switch(depth,
-    'curr',{ [ page.cleni.cleni_click(page.oso.key); page.rod.r.load(page.idr.get) ] },
+    'curr',{ [ page.oso.key_tvori.get;
+               page.cleni.cleni_click(page.oso.key); page.rod.r.load(page.idr.get)
+             | page.osoba_load
+             ] },
     'page',{ page.refresh },
     'lst', { lst.refresh });
   }
