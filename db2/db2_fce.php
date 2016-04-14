@@ -279,7 +279,7 @@ function akce2_info($id_akce,$text=1) { // trace();
     }
     // zobrazení přehledu plateb
     if ( $celkem ) {
-      $html.= "<h3 style='margin-bottom:3px;'>Přehled plateb za akci</h3><table>";
+      $html.= "<hr style='clear:both;'><h3 style='margin-bottom:3px;'>Přehled plateb za akci</h3><table>";
       foreach ($zpusoby as $i=>$zpusob) {
         if ( $platby[$i] )
           $html.= "<tr><td>$zpusob</td><td align='right'>{$platby[$i]}</td></tr>";
@@ -367,13 +367,20 @@ function akce2_info_par($ida,$idp=0,$tab_only=0) {
   }
   else {
     $pocty= 0;
-    $tab.= "<table class='stat'>";
+    $tab.= "<div><table class='stat' style='float:left;margin-right:5px;'>";
     $tab.= "<tr><th>postup účastí</th><th> párů </th></tr>";
     foreach ($typy as $typ=>$pocet) {
       $pocty+= $pocet;
       $tab.= "<tr><th>$typ</th><td>$pocet</td></tr>";
     }
     $tab.= "<hr></table>";
+    $tab.= "Význam řádků s..bas
+        <br>s = již první akce byla společná
+        <br>as = napřed byl na nějaké akci muž, pak byli na společné
+        <br>bs = napřed byla na nějaké akci žena, pak byli na společné
+        <br>abs = napřed byl muž, potom žena, pak společně
+        <br>bas = napřed byla žena, potom muž, pak společně
+    </div>";
     if ( $pocty ) {
       $html.= $tab;
     }
