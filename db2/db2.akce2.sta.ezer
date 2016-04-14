@@ -24,6 +24,9 @@ menu m {type:'left', format:'f+' //, active:*
     item {title:'Struktura LK MS od roku 2005',                                      skill:'yae;fae'
       ,par:°{typ:'ms_struktura',xls:'Excel',pdf:0,od:2005
         ,dsc:'Sestava ukazuje počty rodin a jejich dětí s rozlišením na nové, dvouročáky a VPS.<br>'}}
+    item {title:'Cesty na LK MS od roku 2005',                                       skill:'yae;fae'
+      ,par:°{typ:'ms_cesty',xls:'Excel',pdf:0,od:2005
+        ,dsc:'Sestava ukazuje cesty, kterými procházeli účastníci LK MS předchozími akcemi.<br>'}}
     item {title:'Letní kurzy MS a pečovatelé'  ,par:°{typ:'ms-pecouni',rok:0,xls:'Excel',pdf:0
       ,dsc:'Sestava ukazuje přehled letních kurzů s počtem rodin, jejich dětí a pečovatelů.
         <br>Je uveden počet pečovatelů, kteří se před službou účastnili školení a kolik je z toho nových pečovatelů.
@@ -78,6 +81,7 @@ menu m {type:'left', format:'f+' //, active:*
       info.parm_tit.set(i.par.parm_tit); menu_par.set(info.parm.get,'parm') | info.display(0,'p') ];
     info.fill(the_vypis.get,i.par.dsc); info.msg.set('');
     { eq(i.par.typ,'ms_struktura'); ret.set(ask('sta2_struktura',my_org.get,i.par,the_title.get));
+    | eq(i.par.typ,'ms_cesty'); ret.set(ask('sta2_cesty',my_org.get,i.par,the_title.get));
     | ret.set(ask('sta2_sestava',my_org.get,the_vypis.get,menu_par.get));
     };
     info.append(ret.html);
