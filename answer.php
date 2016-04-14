@@ -106,6 +106,7 @@ function answer_php($app,$app_name,$db_name,$skin,$js_lib,$css_lib,$options) {
   $options->awesome=    $awesome;        // zda použít v elementech ikony awesome fontu
   $options->answer_db=  "'$answer_db'";  // hlavní pracovní databáze
   $options->curr_version= 0;             // při přihlášení je nahrazeno nejvyšší ezer_kernel.version
+  $options->curr_users= 1;               // zobrazovat v aktuální hodině aktivní uživatele
   $options->group_db=   "'ezer_answer'"; // databáze se společnými údaji pro skupinu aplikací Answer
   $options->path_files_href= "'$path_files_href'"; // relativní cesta do složky docs/{root}
   $options->path_files_s=    "'$path_files_s'";    // absolutní cesta do složky docs/{root}
