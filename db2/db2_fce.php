@@ -7040,12 +7040,13 @@ function sta2_cesty($org,$par,$title,$export=false) {
     if ( $rrrr<$od_roku ) continue;
     $rr= substr($rrrr,-2);
     $clmn[$rr]= array('rr'=>$rrrr,'u'=>0);
-    $ida= select1("id_duakce","akce","druh=1 AND YEAR(datum_od)=$rrrr AND access&$org");
+    $ida= select1("id_duakce","akce","druh=1 AND spec=0 AND YEAR(datum_od)=$rrrr AND access&$org");
     $tab= akce2_info_par($ida,0,1);
     foreach (explode(',',"s,as,bs,abs,bas") as $i) {
       $clmn[$rr]['u']+= $tab[$i];
       $clmn[$rr][$i]= $tab[$i];
     }
+//     $clmn[$rr]['u']+= $ida;
   }
   $par->tit= $tit;
   $par->fld= $fld;
