@@ -126,7 +126,7 @@ function akce2_mapa($akce) {  trace();
   $psc= $obec= array();
   $qo=  "
     SELECT prijmeni,adresa,psc,obec,
-      (SELECT MIN(CONCAT(role,psc,'x',obec))
+      (SELECT MIN(CONCAT(role,RPAD(psc,5,' '),'x',obec))
        FROM tvori AS ot JOIN rodina AS r USING (id_rodina)
        WHERE ot.id_osoba=o.id_osoba
       ) AS r_psc
@@ -162,7 +162,7 @@ function akce2_info($id_akce,$text=1) { // trace();
     $odhlaseni= $neprijeli= $nahradnici= $nahradnici_osoby= 0;
     $akce= $chybi_nar= $chybi_sex= '';
     $qry= "SELECT nazev, datum_od, datum_do, now() as _ted,i0_rodina,funkce,
-             COUNT(id_spolu) AS _clenu,
+             COUNT(id_spolu) AS _clenu,IF(c.ikona=2,1,0) AS _pro_pary,
              SUM(IF(ROUND(DATEDIFF(a.datum_od,o.narozeni)/365.2425,1)<18,1,0)) AS _deti,
              SUM(IF(ROUND(DATEDIFF(a.datum_od,o.narozeni)/365.2425,1)>=18 AND sex=1,1,0)) AS _muzu,
              SUM(IF(ROUND(DATEDIFF(a.datum_od,o.narozeni)/365.2425,1)>=18 AND sex=2,1,0)) AS _zen,
@@ -175,11 +175,13 @@ function akce2_info($id_akce,$text=1) { // trace();
            JOIN pobyt AS p ON a.id_duakce=p.id_akce
            JOIN spolu AS s ON p.id_pobyt=s.id_pobyt
            JOIN osoba AS o ON s.id_osoba=o.id_osoba
+           LEFT JOIN _cis AS c ON c.druh='ms_akce_typ' AND c.data=a.druh
            -- LEFT JOIN tvori AS t ON t.id_osoba=o.id_osoba
            WHERE id_duakce='$id_akce'
            GROUP BY p.id_pobyt";
     $res= mysql_qry($qry);
     while ( $res && $p= mysql_fetch_object($res) ) {
+      $pro_pary= $p->_pro_pary;
       $fce= $p->funkce;
       // záznam plateb
       if ( $p->platba ) {
@@ -263,6 +265,9 @@ function akce2_info($id_akce,$text=1) { // trace();
         $html.= "<br>(kvůli chybějícím údajům mohou být počty divné)";
       }
       $html.= $deti ? "<hr>Poznámka: jako děti se počítají osoby, které v době zahájení akce nemají 18 let" : '';
+      if ( $pro_pary ) {
+        $html.= akce2_info_par($id_akce);
+      }
     }
     else {
       $info->muzi= $muzi;
@@ -300,6 +305,82 @@ function je_1_2_5($kolik,$tvary) {
   return $kolik>4 ? "$kolik $tvar5" : (
          $kolik>1 ? "$kolik $tvar2" : (
          $kolik>0 ? "1 $tvar1"      : "0 $tvar5"));
+}
+# --------------------------------------------------------------------------- je_1_2_5
+# charakteristika účastníků z hlediska páru,
+# počítáme pouze v případě, když je definované i0_pobyt
+function akce2_info_par($ida,$idp=0,$tab_only=0) {
+  $html= '';
+  $typy= array('s'=>0,'as'=>0,'bs'=>0,'abs'=>0,'bas'=>0,);
+  // projdeme pobyty a vybereme role 'a' a 'b' - pokud nejsou oba, nelze nic spočítat
+  $cond= $idp ? "id_pobyt=$idp " : "1";
+  $rp= mysql_qry("
+    SELECT GROUP_CONCAT(CONCAT(t.role,s.id_osoba)) AS _par,i0_rodina,id_pobyt
+    FROM pobyt AS p
+    JOIN spolu AS s USING (id_pobyt)
+    LEFT JOIN tvori AS t ON t.id_rodina=i0_rodina AND t.id_osoba=s.id_osoba
+    WHERE funkce!=99 AND id_akce=$ida AND $cond AND t.role IN ('a','b')
+    GROUP BY id_pobyt
+  ");
+  while ( $rp && $p= mysql_fetch_object($rp) ) {
+    if ( !strpos($p->_par,',') ) continue;
+    $par= array();
+    $ids= '';
+    foreach (explode(',',$p->_par) as $r_id) {
+      $id= substr($r_id,1);
+      $par[$id]= substr($r_id,0,1);
+      $ids.= ($ids ? ',' : '').$id;
+    }
+//                                                 debug($par,count($par)==2);
+    $typ= '';
+    // probereme účasti na akcích (nepočítáme účasti < 18 let)
+    $rx= mysql_qry("
+      SELECT a.id_duakce as ida,p.id_pobyt as idp,
+        a.datum_od,a.nazev as akce,p.funkce as fce,a.typ,a.druh,
+        GROUP_CONCAT(s.id_osoba) AS _ucast
+      FROM ezer_db2.akce AS a
+      JOIN pobyt AS p ON a.id_duakce=p.id_akce
+      JOIN spolu AS s USING (id_pobyt)
+      JOIN osoba AS o USING (id_osoba)
+      WHERE a.spec=0 AND s.id_osoba IN ($ids) AND YEAR(a.datum_od)-YEAR(o.narozeni)>18
+      GROUP BY id_pobyt
+      ORDER BY datum_od
+    ");
+    while ( $rx && $x= mysql_fetch_object($rx) ) {
+      // určení účasti na akci: m|z|s
+      $ucast= explode(',',$x->_ucast);
+      if ( count($ucast)==2 ) {
+        $typ.= 's';
+        break;
+      }
+      $ab= $par[$ucast[0]];
+//                                                   display($ab);
+      // doplnění do typu
+      if ( strpos($typ,$ab)===false )
+        $typ.= $ab;
+    }
+//     $html.= "<br>{$p->id_pobyt}:$typ";
+    $typy[$typ]++;
+  }
+  if ( $tab_only ) {
+    $ret= $typy;
+  }
+  else {
+    $pocty= 0;
+    $tab.= "<table class='stat'>";
+    $tab.= "<tr><th>postup účastí</th><th> párů </th></tr>";
+    foreach ($typy as $typ=>$pocet) {
+      $pocty+= $pocet;
+      $tab.= "<tr><th>$typ</th><td>$pocet</td></tr>";
+    }
+    $tab.= "<hr></table>";
+    if ( $pocty ) {
+      $html.= $tab;
+    }
+    $ret= $html;
+  }
+//                                                 debug($typy);
+  return $ret;
 }
 # --------------------------------------------------------------------------------------- akce2_id2a
 # vrácení hodnot akce
@@ -1798,13 +1879,14 @@ function ucast2_browse_ask($x,$tisk=false) {
     $fpob1= ucast2_flds("key_pobyt=id_pobyt,_empty=0,key_akce=id_akce,key_osoba,key_spolu,key_rodina=i0_rodina,"
            . "keys_rodina='',c_suma,platba,xfunkce=funkce,funkce,skupina,dluh");
     $fakce= ucast2_flds("dnu,datum_od");
-    $frod=  ucast2_flds("fotka,r_access=access,r_spz=spz,r_svatba=svatba,r_datsvatba=datsvatba,r_rozvod=rozvod,r_ulice=ulice,r_psc=psc,"
+    $frod=  ucast2_flds("fotka,r_access=access,r_spz=spz,r_svatba=svatba,r_datsvatba=datsvatba,"
+          . "r_rozvod=rozvod,r_ulice=ulice,r_psc=psc,"
           . "r_obec=obec,r_stat=stat,r_telefony=telefony,r_emaily=emaily,r_umi,r_note=note");
     $fpob2= ucast2_flds("p_poznamka=poznamka,pokoj,budova,prednasi,luzka,pristylky,kocarek,pocetdnu"
           . ",strava_cel,strava_pol,c_nocleh=platba1,c_strava=platba2,c_program=platba3,c_sleva=platba4"
           . ",datplatby,cstrava_cel,cstrava_pol,svp,zpusobplat,naklad_d,poplatek_d,platba_d"
           . ",zpusobplat_d,datplatby_d,ubytovani,cd,avizo,sleva,vzorec,duvod_typ,duvod_text,x_umi");
-    //      id_osoba,jmeno,_vek,id_tvori,id_rodina,role,_rody,narozeni
+    //      id_osoba,jmeno,_vek,id_tvori,id_rodina,role,_rody,rc,narozeni
     $fos=   ucast2_flds("umrti,prijmeni,rodne,sex,adresa,ulice,psc,obec,stat,kontakt,telefon,nomail,email"
           . ",iniciace,uvitano,clen,obcanka,rc_xxxx,cirkev,vzdelani,titul,zamest,zajmy,jazyk,dieta"
           . ",aktivita,note,_kmen");
@@ -1910,6 +1992,7 @@ function ucast2_browse_ask($x,$tisk=false) {
           $vek= $o->narozeni!='0000-00-00' ? roku_k($o->narozeni,$akce->datum_od) : '?'; // výpočet věku
           $jmeno= $p->funkce==99 ? "{$o->prijmeni} {$o->jmeno}" : $o->jmeno ;
           $cleni.= "$del$ido~$keys~{$o->access}~$jmeno~$dup~$vek~{$s->id_tvori}~{$s->id_rodina}~{$s->role}";
+          $cleni.= '~'.rodcis($o->narozeni,$o->sex);
           $del= $delim;
           # ==> .. rodiny a kmenová rodina
           $rody= explode(',',$o->_rody);
@@ -2992,16 +3075,16 @@ function tisk2_sestava_pary($akce,$par,$title,$vypis,$export=false) { trace();
     'sql'=>"SET @akce:=$akce,@soubeh:=$soubeh,@app:='{$EZER->options->root}';");
   $y= ucast2_browse_ask($browse_par,true);
   # rozbor výsledku browse/ask
-  $i_adresa=         15;
-  $i_key_spolu=      39;
-  $i_spolu_note=     43;
+  $i_adresa=         15+1;
+  $i_key_spolu=      39+1;
+  $i_spolu_note=     43+1;
   $i_osoba_jmeno=     3;
-  $i_osoba_prijmeni= 12;
+  $i_osoba_prijmeni= 12+1;
   $i_osoba_role=      8;
-  $i_osoba_note=     36;
-  $i_osoba_kontakt=  20;
-  $i_osoba_telefon=  21;
-  $i_osoba_email=    23;
+  $i_osoba_note=     36+1;
+  $i_osoba_kontakt=  20+1;
+  $i_osoba_telefon=  21+1;
+  $i_osoba_email=    23+1;
   array_shift($y->values);
   foreach ($y->values as $x) {
 //     $test_p= 43593;
@@ -6709,7 +6792,8 @@ function mapa2_psc($psc,$obec) {
   $err_psc= array();
   $n= 0; $del= '';
   foreach ($psc as $p=>$tit) {
-    if ( strlen($p)==5 ) {
+    $p= trim($p);
+    if ( preg_match('/\d\d\d\d\d/',$p) ) {
       $qs= "SELECT psc,lat,lng FROM uir_adr.psc_axy WHERE psc='$p'";
       $rs= mysql_qry($qs);
       if ( $rs && ($s= mysql_fetch_object($rs)) ) {
@@ -6938,6 +7022,45 @@ function mapa2_mimo_ctverec_r($rect,$ids,$max=5000) { trace();
   return $ret;
 }
 /** ==========================================================================================> STA2 */
+# =========================================================================----=======> . sta2_cesty
+# tabulka struktury kurzu (noví,podruhé,vícekrát,odpočívající VPS,VPS)
+# par.od= rok počátku statistik
+function sta2_cesty($org,$par,$title,$export=false) {
+  $od_roku= $par->od ?: 0;
+  $par->fld= 'nazev';
+  $par->tit= 'nazev';
+                                                   debug($par,"sta2_cesty(,$title,$export)");
+  $clmn= $suma= array();
+  $tit= "rok,rodin,s,as,bs,abs,bas";
+  $tits= explode(',',$tit);
+  $fld= "rr,u,s,as,bs,abs,bas";
+  $flds= explode(',',$fld);
+  $flds_rr= explode(',',substr($fld,3));
+  for ($rrrr=date('Y');$rrrr>=1990;$rrrr--) {
+    if ( $rrrr<$od_roku ) continue;
+    $rr= substr($rrrr,-2);
+    $clmn[$rr]= array('rr'=>$rrrr,'u'=>0);
+    $ida= select1("id_duakce","akce","druh=1 AND YEAR(datum_od)=$rrrr AND access&$org");
+    $tab= akce2_info_par($ida,0,1);
+    foreach (explode(',',"s,as,bs,abs,bas") as $i) {
+      $clmn[$rr]['u']+= $tab[$i];
+      $clmn[$rr][$i]= $tab[$i];
+    }
+  }
+  $par->tit= $tit;
+  $par->fld= $fld;
+  $par->grf= "u:n,as,bs,abs,bas";
+  $par->txt= "Pozn. Graficky je znázorněn absolutní počet." //relativní počet vzhledem k počtu párů.;
+    . "<br>Pokud v nějakém roce bylo více běhů je zobrazen jejich součet."
+    . "<br><br>Význam sloupců s..bas
+        <br>s = již první akce byla společná
+        <br>as = napřed byl na nějaké akci muž, pak byli na společné
+        <br>bs = napřed byla na nějaké akci žena, pak byli na společné
+        <br>abs = napřed byl muž, potom žena, pak společně
+        <br>bas = napřed byla žena, potom muž, pak společně"
+    ;
+  return sta2_table_graph($par,$tits,$flds,$clmn,$export);
+}
 # ================================================================================> . sta2_struktura
 # tabulka struktury kurzu (noví,podruhé,vícekrát,odpočívající VPS,VPS)
 # par.od= rok počátku statistik

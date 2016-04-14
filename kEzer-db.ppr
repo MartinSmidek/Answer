@@ -63,8 +63,8 @@ kEzer-ys2
 		-pokladna
 			db2\db2.pok.ezer
 		-ekonomika
-	-ezer2.2
-		+client
+	+ezer2.2
+		-client
 			ezer2.2\client\_code.js
 			ezer2.2\client\_test.html
 			ezer2.2\client\app.js
@@ -86,13 +86,13 @@ kEzer-ys2
 			ezer2.2\client\ezer_fdom2.js
 			ezer2.2\client\ipad.css
 			ezer2.2\client\natdocs.css
-		+libr
+		-libr
 			ezer2.2\$.ezer
 			ezer2.2\ezer2.help.ezer
 			ezer2.2\ezer2.pers.ezer
 			ezer2.2\ezer2.syst.ezer
 			ezer2.2\ezer2_fce.php
-		-server
+		+server
 			ezer2.2\server\ae_slib.php
 			ezer2.2\comp.css
 			ezer2.2\comp.php
@@ -140,7 +140,7 @@ kEzer-ys2
 27=db2\db2.pok.ezer
 [Selected Project Files]
 Main=
-Selected=db2\db2.pok.ezer
+Selected=db2\db2.akce2.evi.ezer
 [ezer2.2\client\app.js]
 TopLine=521
 Caret=15,549
@@ -149,11 +149,11 @@ BookMark1=29,726
 TopLine=65
 Caret=1,98
 [ezer2.2\server\ae_slib.php]
-TopLine=1235
-Caret=1,1235
+TopLine=1380
+Caret=1,1334
 [ezer2.2\server\ezer2.php]
-TopLine=113
-Caret=41,147
+TopLine=1994
+Caret=44,2003
 BookMark2=25,2374
 Mark1=30,214
 Mark2=5,1905
@@ -200,22 +200,18 @@ TopLine=111
 Caret=42,148
 BookMark1=19,88
 [db2\db2_ys2_fce.php]
-TopLine=1471
-Caret=1,1471
+TopLine=432
+Caret=1,455
 BookMark1=26,1499
 BookMark3=32,1197
 [db2\db2_fce.php]
-TopLine=5275
-Caret=75,5299
-Mark1=25,2939
-Mark2=37,5066
-Mark3=74,5336
-Mark4=37,5123
-Mark5=1,5167
-Mark6=37,5083
+TopLine=1898
+Caret=81,1907
+Mark1=22,1915
+Mark2=42,2996
 [db2\db2.akce2.lst.ezer]
-TopLine=111
-Caret=7,142
+TopLine=528
+Caret=107,621
 BookMark1=1,38
 BookMark2=18,572
 [db2\db2.akce2.mai.ezer]
@@ -240,29 +236,24 @@ Caret=1,404
 Mark1=29,272
 Mark2=19,597
 [db2\db2.akce2.evi.ezer]
-TopLine=1051
-Caret=76,1065
-BookMark1=30,620
-Mark1=17,450
-Mark2=56,159
-Mark3=32,150
-Mark4=32,99
-Mark5=32,28
-Mark6=63,200
-Mark7=93,48
-Mark8=35,1079
+TopLine=540
+Caret=19,558
+Mark1=37,624
+Mark2=38,1069
+Mark3=26,1079
+Mark4=8,538
 [db2\db2.akce2.ezer]
-TopLine=1006
-Caret=1,1010
+TopLine=782
+Caret=95,804
 [db2\db2.akce2.ucast.ezer]
-TopLine=1297
-Caret=1,1331
+TopLine=1310
+Caret=69,1357
 Mark1=17,103
 Mark2=26,86
 Mark3=16,851
 [db2\db2.akce2.tisk.ezer]
-TopLine=356
-Caret=94,371
+TopLine=378
+Caret=91,407
 Mark1=44,231
 Mark2=1,370
 [db2\db2.akce2.maia.ezer]
@@ -278,11 +269,11 @@ Caret=39,315
 TopLine=1
 Caret=77,34
 [db2\db2.akce2.pece.ezer]
-TopLine=230
-Caret=1,264
+TopLine=1
+Caret=79,15
 [db2\db2.ds.dum.ezer]
 TopLine=442
 Caret=16,467
 [db2\db2.pok.ezer]
 TopLine=384
-Caret=65,390
+Caret=25,386

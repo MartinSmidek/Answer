@@ -1351,14 +1351,15 @@ form _rodina2 [,,360,229]  { css:'ae_frame'
     show key_tvori
     show idr
     show role  [,,10,] {title:'role'}
+    show rc
     show rody
     // osobní údaje - OSOBA
-    // POZOR: při změně je třeba otestovat funkci tisk_sestava_pary, která užívá toto browse/ask
+    // POZOR: při změně je třeba otestovat funkci tisk2_sestava_pary, která užívá toto browse/ask
     show narozeni, show umrti, show prijmeni, show rodne, show sex,
     show adresa, show ulice, show psc, show obec, show stat,
     show kontakt, show telefon, show nomail, show email, show iniciace, show uvitano,
-    show clen, show obcanka, show rc_xxxx, show cirkev, show vzdelani, show titul, show zamest,
-    show zajmy, show jazyk, show dieta, show aktivita, show note, show kmen
+    show clen, show obcanka, show rc_xxxx, show cirkev, show vzdelani, show titul,
+    show zamest, show zajmy, show jazyk, show dieta, show aktivita, show note, show kmen
     // údaje k akci
     show key_spolu, show barva, show s_role,
     show s_dite_kat, show s_poznamka, show pecovane, show pfunkce,
