@@ -86,7 +86,7 @@ function answer_ini($app,$answer_db,$dbs_plus,$php_lib,$ezer_mod=array()) {
 
   // moduly interpreta zahrnuté do aplikace - budou zpracovány i reference.i_doc pro tabulky kompilátoru
   $ezer_comp_ezer= "app,area,ezer,ezer_report,ezer_fdom1,ezer_fdom2";
-  $ezer_comp_root= "ds/fce,db/db_fce";
+  $ezer_comp_root= "ds/fce,db2/db2_fce";
   // moduly v Ezerscriptu mimo složku aplikace
   $ezer_ezer= array_merge(array(
 //     "ds/ds.dum",

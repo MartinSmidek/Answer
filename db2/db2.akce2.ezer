@@ -803,6 +803,7 @@ form _osoba2x [,,244,322] {css:'ae_frame', proc onclick() { on_click }
     [ contains('S',osoba_config.grp.get); form.set_css('db_hr','','S') | form.set_css('','db_hr','S') ];
     [ or(even,key_spolu.get,eq(form_mode.get,'new')) | tags.set(conc(tags,',x')) ];
     form.stacks(tags,'down',0,0,10);
+    rc.enable(0);
   }
 
   // kontextové menu
@@ -1012,13 +1013,14 @@ form _osoba2x [,,244,322] {css:'ae_frame', proc onclick() { on_click }
   label [0,58,,9] {tag:'b,S', format:'n', css:'db_sep' } // zarovnání
 
   #==> . organizační údaje: o (jen pro oprávněné)
-  field obcanka  [22,4,70,] {tag:'o', data:o.obcanka, format:'n', title:'OP:'}
-  field rc       [119,4,70,] {tag:'o', format:'nd', title:'RČ:'}
-  field rc_xxxx  [199,4,37,] {tag:'o', data:o.rc_xxxx, format:'n:e', title:'/'}
+  field obcanka  [34,4,70,] {tag:'o', data:o.obcanka, format:'n', title:'OP:'}
+  field rc       [138,4,45,] {tag:'o', format:'nd', title:'RČ:'}
+  field rc_xxxx  [193,4,37,] {tag:'o', data:o.rc_xxxx, format:'n:e', title:'/'}
   select clen    [34,26,70,] {tag:'o', type:'map', format:'n', data:o.clen,
                                 options:ms_akce_clen.zkratka, title:'YMCA'}
-  field uvitano  [126,26,40,] {tag:'o', data:o.uvitano, format:'nr:e', title:'vítej'}
-  field iniciace [196,26,40,] {tag:'o', data:o.iniciace, format:'nr:e', title:'mrop'}
+  check uvitano  [186,25,60,] {tag:'o', data:o.uvitano, title:'uvítáno',
+                               help:'dítě bylo slavnostně uvítáno ve společenství na nějaké akci'}
+  field iniciace [138,26,40,] {tag:'o', data:o.iniciace, format:'nr:e', title:'mrop'}
   label [0,46,,6] {tag:'o,S', format:'n', css:'db_sep' } // zarovnání
 
   #==> . citlivé údaje: c (jen pro oprávněné)
