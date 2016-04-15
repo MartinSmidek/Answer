@@ -555,9 +555,13 @@ form _page {
     evi_barvit_zmeny.get;
     oso.set_helps(0,'zluty','oranzovy');
     ret.set(ask('elim2_data_osoba',ido,cconc(eq(lst.mode.get,'f','h'),lst.track_past.get,'')));
-    oso.load(ido); oso.show_osoba(1);
+    oso.load(ido);
+    oso.rc.set(make_rc(oso.narozeni.get,oso.sex.get));
+    oso.show_osoba(1);
     oso.set_helps(ret.chng,'zluty','oranzovy');
-  | ido; oso.load(ido); oso.show_osoba(1);
+  | ido; oso.load(ido);
+    oso.rc.set(make_rc(oso.narozeni.get,oso.sex.get));
+    oso.show_osoba(1);
   }
   # načíst rodinu (případně s doplněním informací z _track) ==> . rod_load
   proc rod_load(idr) { var ret: object

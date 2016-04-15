@@ -488,6 +488,18 @@ Ezer.fce.stack_forms= function (form,tag_list,space,smer) {
   }
   return sum_h;
 }
+// --------------------------------------------------------------------------------------- load_json
+//ff: db.make_rc (narozeni,sex)
+//      vytvoří první část rodného čísla z narození a pohlaví
+Ezer.fce.make_rc= function (narozeni,sex) {
+  var rc='', dmy= narozeni.split('.');
+  if ( dmy.length==3 ) {
+    rc= dmy[2].substr(-2,2)
+      + (sex==2 ? padNum(parseInt(dmy[1])+50,2) : padNum(dmy[1],2))
+      + padNum(dmy[0],2);
+  }
+  return rc;
+}
 // ----------------------------------------------------------------------------------------- rc2roky
 //ff: ys.rc2roky (rodcis)
 //      vrací věk, zjištěný z rodného čísla
