@@ -61,6 +61,7 @@ function db2_rod_show($nazev,$n) {
       }
       $vek= $o->narozeni!='0000-00-00' ? roku_k($o->narozeni) : '?'; // výpočet věku
       $cleni.= "$del$ido~$keys~{$o->access}~{$o->jmeno}~$dup~$vek~{$o->id_tvori}~$idr~{$o->role}";
+      $cleni.= '~'.rodcis($o->narozeni,$o->sex);
       $cleni.= "~~" . sql_date1($o->narozeni);
       if ( !$o->adresa ) {
         $o->ulice= "®".$rod[$n]->r_ulice;
