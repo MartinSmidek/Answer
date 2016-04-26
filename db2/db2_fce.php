@@ -6126,6 +6126,15 @@ function dop_rep_ids($report_json,$parss,$fname) { trace();
 # ------------------------------------------------------------------------------------- evid2_delete
 # zjistí, zda lze osobu smazat: dar, platba, spolu, tvori
 # cmd= conf_oso|conf_rod|del_oso|del_rod
+function evid2_upd_gmail($id_osoba,$orig,$gmail) { trace();
+  ezer_qry("UPDATE",'osoba',$id_osoba,array(
+    (object)array('fld'=>'gmail', 'op'=>'u','val'=>$gmail,'old'=>$orig)
+  ));
+  return 1;
+}
+# ------------------------------------------------------------------------------------- evid2_delete
+# zjistí, zda lze osobu smazat: dar, platba, spolu, tvori
+# cmd= conf_oso|conf_rod|del_oso|del_rod
 function evid2_delete($id_osoba,$id_rodina,$cmd='confirm') { trace();
   global $USER;
   user_test();

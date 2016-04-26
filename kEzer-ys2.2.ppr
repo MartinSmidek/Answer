@@ -327,7 +327,7 @@ kEzer-ys2
 46=rr\$.ezer
 [Selected Project Files]
 Main=
-Selected=rr\rr_fce.php
+Selected=db\db_akce.php
 [tut\.htaccess]
 TopLine=1
 Caret=2,9
@@ -389,8 +389,8 @@ Caret=41,150
 TopLine=56
 Caret=31,79
 [db\db_akce.php]
-TopLine=3694
-Caret=1,3700
+TopLine=7167
+Caret=1,7191
 [ezer2.2\dbg.php]
 TopLine=67
 Caret=75,80

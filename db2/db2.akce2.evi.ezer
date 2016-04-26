@@ -20,7 +20,9 @@ proc rodina_show()      { page.rod.show_rodina; }       // obnova údajů o rodi
 proc onfirstfocus() {
   has_skill('mrop');
   // přístup jen k seznamu iniciovaných
-  osoba_config.start; rodina_config.start;
+  osoba_config.start;
+  osoba_config.ucast.set(panel); osoba_config.cnfg.g.set(1); osoba_config.cnfg.g.change;
+  rodina_config.start;
   page.start;
   m.o.i.click;
 | // plný přístup
