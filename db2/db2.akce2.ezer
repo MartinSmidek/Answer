@@ -397,6 +397,7 @@ table osoba { key_id:'id_osoba'
   text obec
   text stat
   number kontakt // 0=viz rodinný, 1=osobní zde
+  text gmail
   text email
   number nomail { help:"nomail|nechce přijímat hromadně rozesílané informace" }
   text telefon
@@ -710,6 +711,7 @@ panel osoba_config [,,200,150] {type:'popup', title:"Podrobnosti údajů"
     check z [ 0,  0,100,] { title:"základní údaje",      format:'d', value:'1'}
     check s [ 100,0,110,] { title:"oddělovat skupiny",   format:'t', proc onchange() { _tuned }}
     check k [ 0, 20,200,] { title:"kontaktní údaje",     format:'t', proc onchange() { _tuned }}
+    check g [100,20,110,] { title:"konference",          format:'t', proc onchange() { _tuned }}
     check a [ 0, 40,200,] { title:"poštovní adresa",     format:'t', proc onchange() { _tuned }}
     check o [ 0, 60,200,] { title:"organizační údaje",   format:'t', proc onchange() { _tuned }}
     check c [ 0, 80,200,] { title:"citlivé údaje",       format:'t', skill:'yaa|yaa:c;faa|faa:c'
@@ -721,11 +723,12 @@ panel osoba_config [,,200,150] {type:'popup', title:"Podrobnosti údajů"
     button  [85,130,,] { title:'Zpět', proc onclick() {
       grp.set(_old.get); _back; ucast.call('osoby_show'); panel.close(1) }}
     proc _tuned() {
-      grp.set(cconc(s.get,'S',k.get,'K',a.get,'A',o.get,'O',p.get,'P','Z'));
+      grp.set(cconc(s.get,'S',k.get,'K',g.get,'G',a.get,'A',o.get,'O',p.get,'P','Z'));
       [ form.part('c'); c.get; grp.set(conc(grp.get,'C')) ];
       ucast.call('osoby_show') }
     proc _back() { z.set(1); s.set(contains('S',grp.get));
-      k.set(contains('K',grp.get)); a.set(contains('A',grp.get)); o.set(contains('O',grp.get));
+      k.set(contains('K',grp.get)); g.set(contains('G',grp.get));
+      a.set(contains('A',grp.get)); o.set(contains('O',grp.get));
       [ form.part('c'); c.set(contains('C',grp.get)) ];
       p.set(contains('P',grp.get)); }
   }
@@ -799,6 +802,7 @@ form _osoba2x [,,244,322] {css:'ae_frame', proc onclick() { on_click }
       [ contains('O',osoba_config.grp.get); tags.set(conc(tags,',o')) ];
       [ contains('C',osoba_config.grp.get); tags.set(conc(tags,',c')) ];
       [ contains('P',osoba_config.grp.get); tags.set(conc(tags,',p')) ];
+      [ contains('G',osoba_config.grp.get); tags.set(conc(tags,',g')) ];
     ];
     [ contains('S',osoba_config.grp.get); form.set_css('db_hr','','S') | form.set_css('','db_hr','S') ];
     [ or(even,key_spolu.get,eq(form_mode.get,'new')) | tags.set(conc(tags,',x')) ];
@@ -1044,6 +1048,16 @@ form _osoba2x [,,244,322] {css:'ae_frame', proc onclick() { on_click }
     title:'schopnosti:', format:'n'}
   edit  note     [5,26,231,74] {tag:'p', data:o.note, format:'n', title:'^poznámka'}
 
+  #==> . konference: g (jen pro oprávněné)
+  field gmail    [5,14,178,] {tag:'g', type:'list', data:o.gmail, format:'n',           skill:'mrop|mrop',
+                              title:'^emailové adresy používané v konferencích '}
+  button         [ 188,14,,] {tag:'g', title:'[fa-save] Ulož',                          skill:'mrop|mrop'
+    proc onclick() { var old:text
+      old.set(function('x',"return x.original.value",gmail));
+      eq(old,gmail.get)
+    | ask('evid2_upd_gmail',key_osoba.get,old,gmail.get);
+      gmail.plain;
+  }}
   // x = upozornění o omezení údajů neúčastníků
   label [5,4,235,] {tag:'x', format:'n', title:'<i>neúčastník má zobrazeny jen identifikační údaje</i>'}
 }
