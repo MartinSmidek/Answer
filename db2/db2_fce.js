@@ -118,16 +118,18 @@ function evid_mapa_browse(label,browse) {
 }
 // zobrazí bod jako kroužek
 function evid_mapa_curr(label,lat,lng,color,scale) {
-  if ( evid_mapa_last ) {
-    evid_mapa_last.setMap(null);
+  if ( typeof google!="undefined" && google.maps ) {
+    if ( evid_mapa_last ) {
+      evid_mapa_last.setMap(null);
+    }
+    var ll= new google.maps.LatLng(lat,lng);
+    var lineSymbol= {
+      path: google.maps.SymbolPath.CIRCLE, scale: scale||12,
+      fillOpacity: 0.0, strokeColor:color||'blue', strokeWeight: 2
+    };
+    evid_mapa_last= new google.maps.Polyline({
+      path: [ll,ll], icons: [{icon: lineSymbol}], map: label.map});
   }
-  var ll= new google.maps.LatLng(lat,lng);
-  var lineSymbol= {
-    path: google.maps.SymbolPath.CIRCLE, scale: scale||12,
-    fillOpacity: 0.0, strokeColor:color||'blue', strokeWeight: 2
-  };
-  evid_mapa_last= new google.maps.Polyline({
-    path: [ll,ll], icons: [{icon: lineSymbol}], map: label.map});
   return 1;
 }
 // ======================================================================================> Ezer.Form
