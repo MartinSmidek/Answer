@@ -92,7 +92,7 @@ menu m {type:'left', format:'f-'
     item   {title:'[fa-medkit]všechny' par:°{lst:'h',tit:'všechny úpravy',days:'99999',cnd:"1"}}
   }
   menu x {title:'tipy na duplicitní údaje',type:'group', skill:'yad;fad'
-    item   {title:'[fa-chain] iniciovaní chlapi',par:°{lst:'o',tip:'mrop',skill:'m'}}
+    item   {title:'[fa-chain] iniciovaní chlapi',par:°{lst:'o',tip:'mrop',skill:'fad'}}
   }
   proc onclick (i) { menu_click (i,0,0) }
   proc menu_click(i,_ido,_idr) { var ret:object, cnd:text
@@ -326,7 +326,7 @@ form _lst [,,370,*] {
     show id_p { data:os.id_pobyt }
     show lat  { data:u.lat }
     show lng  { data:u.lng }
-    show tips [,,10,] { expr:'', format:'t' }
+    show tips [,,0,] { expr:'', format:'t' }
     show _rodin { expr:"COUNT(*)" }
     show barva { expr:"o.deleted=''" }
     show _funkce { expr:"GROUP_CONCAT(DISTINCT op.funkce)" }

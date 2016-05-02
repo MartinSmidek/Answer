@@ -1,5 +1,5 @@
 <?php # (c) 2009-2010 Martin Smidek <martin@smidek.eu>
-/** ========================================================================================= SYSTÉM **/
+/** ========================================================================================> SYSTÉM **/
 # ----------------------------------------------------------------------------------- data_mrop_save
 function data_mrop_save($par,$save=0) {
   switch ($save) {
@@ -22,7 +22,7 @@ function data_mrop_save($par,$save=0) {
   }
   return $txt;
 }
-/** ====================================================================================== ELIMINACE **/
+/** =====================================================================================> ELIMINACE **/
 # --------------------------------------------------------------------------------------- eli_single
 # je voláno po kladné odpovědi na otázku položenou fcí eli_osoba - vstupem jej její výstup
 function eli_single($ret) { trace();
@@ -374,8 +374,7 @@ function je_1_2_5($kolik,$tvary) {
 // //   query("UPDATE dopis SET prilohy='' WHERE id_dopis=$id_dopis");
 //   return 1;
 // }
-/** ===================================================================================== ÚČASTNÍCI2 */
-/** =======================================================================================>> VÝPISY */
+/** ========================================================================================> VÝPISY */
 # ------------------------------------------------------------------------------------- tisk_sestava
 # generování sestav
 #   $typ = j | p | vp | vp2 | vs | vn | vv | vj | sk | sd | d | fs | ...
@@ -1497,7 +1496,7 @@ function _akce2_sestava_pecouni(&$clmn,$akce,$fld='_skoleni,_sluzba,_reflexe',$c
     }
   }
 }
-/** ==========================================================================================>> PDF **/
+/** ===========================================================================================> PDF **/
 # -------------------------------------------------------------------------------- tisk_pdf_jmenovky
 # vygenerování PDF s vizitkami s rozměrem 55x90 na rozstříhání
 #   $the_json obsahuje  title:'{jmeno}<br>{prijmeni}'
@@ -1628,7 +1627,7 @@ function tisk_pdf_stravenky($akce,$par,$title,$vypis,$report_json) {  trace();
   $result->html= " Výpis byl vygenerován ve formátu <a href='docs/$fname.pdf' target='pdf'>PDF</a>.";
   return $result;
 }
-/** =================================================================================>> STATISTIKA 1 **/
+/** ==================================================================================> STATISTIKA 1 **/
 # ----------------------------------------------------------------------------------- evid_sestava_1
 # tabulka struktury kurzu (noví,podruhé,vícekrát,odpočívající VPS,VPS)
 function sta_sestava_1($par,$title,$export=false) {
@@ -1700,7 +1699,7 @@ function sta_sestava_1($par,$title,$export=false) {
   return evid_table($par,$tits,$flds,$clmn,$export);
 //     return sta_table($tits,$flds,$clmn,$export);
 }
-/** ===================================================================================== STATISTIKA 2 **/
+/** ==================================================================================> STATISTIKA 2 **/
 # ----------------------------------------------------------------------------------- sta_ukaz_osobu
 # zobrazí odkaz na osobu v evidenci
 function sta_ukaz_osobu($ido,$barva='') {
@@ -2295,7 +2294,7 @@ function sta_excel_subst($matches) { trace();
 //   }
 //   return $text;
 // }
-/** ======================================================================================= EVIDENCE **/
+/** ======================================================================================> EVIDENCE **/
 # --------------------------------------------------------------------------------------- elim_rodne
 function elim_rodne() {
   $html= "Tipy na shodu žen podle jejich rodného jména:";
@@ -2640,7 +2639,7 @@ function evid_cleni($id_osoba,$id_rodina,$filtr) { trace();
 //                                                         debug($ret);
   return $ret;
 }
-/** ===================================================================== EVIDENCE - BROWSE - ÚČASTI **/
+/** ====================================================================> EVIDENCE - BROWSE - ÚČASTI **/
 # ------------------------------------------------------------------------------ evid_browse_act_ask
 # obsluha browse s optimize:ask
 # x->order= {a|d} polozka
@@ -2689,7 +2688,7 @@ function evid_browse_act_ask($x) {
   }
   return $y;
 }
-/** ====================================================================================== ÚČASTNÍCI **/
+/** =====================================================================================> ÚČASTNÍCI **/
 # ------------------------------------------------------------------------------------ akce2_osoba2x
 # ASK volané z formuláře _osoba2x při onchange.adresa a onchange.kontakt
 # v ret vrací o_kontakt, r_kontakt, o_adresa, r_adresa
@@ -2897,7 +2896,7 @@ function akce2_auto_jmena1L ($id_osoba) {  #trace();
 //                                                                 debug($osoba,$id_akce);
   return $osoba;
 }
-/** ============================================================================= ÚČASTNÍCI - BROWSE **/
+/** ============================================================================> ÚČASTNÍCI - BROWSE **/
 # ---------------------------------------------------------------------------------- akce_browse_ask
 # obsluha browse s optimize:ask
 # x->order= {a|d} polozka
