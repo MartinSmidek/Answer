@@ -470,8 +470,9 @@ form _cmd [,,200,] { css:'ds_form'
       p_oso.plain;
       up.b.browse_row; up.b.reload_pecoun
     | // přidání
-      p_oso.insert;
-      spolu.insert_record(object('id_osoba',p_oso.key,'id_pobyt',pobyt_pecounu));
+      p_oso.o.insert;
+      p_oso.s.key(spolu.insert_record(object('id_osoba',p_oso.o.key,'id_pobyt',pobyt_pecounu)));
+      p_oso.s.save;
       p_oso.plain;
       b_display(1);
       reload(0);
