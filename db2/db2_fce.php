@@ -6123,6 +6123,35 @@ function dop_rep_ids($report_json,$parss,$fname) { trace();
   tc_report($report,$texty,$fname);
 }
 /** =========================================================================================> EVID2 */
+# ---------------------------------------------------------------------------------- evid2_elim_tips
+# tipy na duplicitu ve formě CASE ... END
+# mrop - pro iniciované muže
+function evid2_elim_tips($type) {
+  $ret= (object)array('ids'=>0,'tip'=>"''");
+  $qry= $type=='mrop' ? "
+    SELECT o.id_osoba,GROUP_CONCAT(d.id_osoba)
+    FROM osoba AS o
+    JOIN osoba AS d USING (prijmeni,jmeno,narozeni)
+    WHERE o.iniciace>0 AND d.iniciace=0 AND d.deleted=''
+    GROUP BY o.id_osoba"
+  : "";
+  if ( !$qry ) goto end;
+  // vlastní prohledání
+  $ids= "o.id_osoba IN "; $del= "(";
+  $tip= "CASE id_osoba ";
+  $zs= mysql_qry($qry);
+  while ($zs && (list($id,$tips)= mysql_fetch_row($zs))) {
+    $ids.= "$del $id,$tips"; $del= ",";
+    $tip.= " WHEN $id THEN '$tips'";
+    foreach (explode(',',$tips) as $tp) {
+      $tip.= " WHEN $tp THEN '$id'";
+    }
+  }
+  $ret->ids= "$ids )";
+  $ret->tip= "$tip ELSE 0 END";
+end:
+  return $ret;
+}
 # ------------------------------------------------------------------------------------- evid2_delete
 # zjistí, zda lze osobu smazat: dar, platba, spolu, tvori
 # cmd= conf_oso|conf_rod|del_oso|del_rod
@@ -8034,7 +8063,26 @@ function elim2_osoba($id_orig,$id_copy) { //trace();
   // zápis o smazání kopie do _track jako op=x (eXtract)
   query("INSERT INTO _track (kdy,kdo,kde,klic,fld,op,old,val)
          VALUES ('$now','$user','osoba',$id_copy,'','x','smazaná kopie',$id_orig)");    // x=smazání
+  // id pro nastavení v browse
+  $ret->ido= $id_orig;
+  // pokud je orig ve více rodinách navrhni další postup
+  $idrs= array();
+  $rr= mysql_qry("SELECT id_rodina FROM tvori AS ot JOIN tvori AS tr USING (id_rodina)
+                  WHERE ot.id_osoba=$id_orig GROUP BY id_rodina ORDER BY COUNT(*) DESC");
+  while ($rr && (list($idr)= mysql_fetch_row($rr)) ) {
+    $idrs[]= $idr;
+  }
+  $nrod= count($idrs);
+  if ( $nrod>2 ) { // více jak 2 rodiny
+    $ret->msg= "osoba $id_orig se vyskytuje ve $nrod rodinách, to je zapotřebí po 'Zpět' pořešit!";
+  }
+  elseif ( $nrod==2 ) { // právě 2 rodiny
+    $ret->msg= "osoba $id_orig se vyskytuje ve dvou rodinách, nabídnu nástroj k řešení";
+    $ret->idr1= $idrs[0];
+    $ret->idr2= $idrs[1];
+  }
 end:
+                                                        debug($ret,"elim2_osoba nrod=$nrod");
   return $ret;
 }
 # ----------------------------------------------------------------------------------==> . elim2_clen

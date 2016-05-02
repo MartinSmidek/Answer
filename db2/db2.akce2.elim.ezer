@@ -5,6 +5,7 @@
 # ------------------------------------------------------------------------------------------------ #
 
 # --------------------------------------------------------------------------------==> globální jména
+var osoby_lst_id: number // nastavené po ukončení osoby_lst
 proc osoby(ido,jmeno,prijmeni) {
   elim_init; elim_osoby(ido,conc(trim(replace(prijmeni,"^-","")),' ',trim(jmeno))); elim_start }
 proc osoby_lst(ido,idos) {
@@ -12,7 +13,7 @@ proc osoby_lst(ido,idos) {
 proc rodiny(idr,nazev) {
   elim_init; [ elim_rodiny(idr,trim(replace(nazev,"^-",""))) ]; elim_start }
 proc rodiny_12(idr1,idr2) {
-  elim_init; [ elim_rodiny_12(idr1,idr2) ]; elim_start }
+  elim_init; [ elim_rodiny_12(idr1,idr2) ]; }
 proc rodiny_lst(idr,idrs) {
   elim_init; c.rod_cleni.enable(0); [ elim_rodiny_lst(idr,idrs) ]; return(elim_start) }
 proc cleni(idr) {
@@ -143,7 +144,9 @@ proc elim_cleni(idr) { var cleni:text
   return(1)
 }
 # --------------------------------------------------==> refresh
-proc elim_start() { return(panel.modal(10,-40)) }
+proc elim_start() {
+  return(panel.modal(10,-40))
+}
 proc elim_refresh() { var os1:number, os2:number
   eq(mode.get,'osoba');
   os1.set(o1.bs.ido.get); o1.load_all;
@@ -184,9 +187,14 @@ form _cmd [,,425,30] { css:'ae_parm'
       | confirm("opravdu zrušit <b>",o2.bs._nazev.get,"</b> (",o2.bs.ido.get,
           ") a přidat účasti,dar,... k <b>",o1.bs._nazev.get,"</b> (",o1.bs.ido.get,") ?");
         ret.set(ask('elim2_osoba',o1.bs.ido.get,o2.bs.ido.get)); // bylo eli_osoba
-#         [ ret.continue; confirm(ret.continue); ask('eli_single',ret) ];
-        o1.bs.browse_row; o1.bs_load(o1.bs.browse_key);
-        o2.bs.browse_row; o2.bs_load(o2.bs.browse_key);
+        [ o1.bs.browse_row; o1.bs_load(o1.bs.browse_key) ];
+        [ o2.bs.browse_row; o2.bs_load(o2.bs.browse_key) ];
+        [ eq(mode.get,'osoba_lst');
+          // po osoby_lst se zeptáme, zda pořešit více rodin. resp nabídneme pro 2
+          osoby_lst_id.set(ret.ido);
+          ret.msg; confirm(ret.msg);
+          ret.idr1; rodiny_12(ret.idr1,ret.idr2)
+        ]
       }
     | eq(mode.get,'cleni');
       { [ c1.oso.same | c1.oso.save; c1.oso.load ];

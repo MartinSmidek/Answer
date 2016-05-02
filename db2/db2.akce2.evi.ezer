@@ -54,7 +54,7 @@ menu m {type:'left', format:'f-'
                                                 cnd:"o.sex=2 AND TIMESTAMPDIFF(YEAR,narozeni,NOW())>=18"}, skill:'yae;fae;cae'}
     item   {title:'[fa-child]děti'              par:°{lst:'o',tit:'všechny děti, co ',
                                                 cnd:"TIMESTAMPDIFF(YEAR,narozeni,NOW())<18"}, skill:'yae;fae;cae'}
-    item t {title:'[fa-wrench fa-red](test)'           par:°{lst:'o',tit:'testovací osoby, co ',
+    item t {title:'[fa-wrench fa-red](test)'    par:°{lst:'o',tit:'testovací osoby, co ',
                                                 cnd:"o.id_osoba IN (679,4031,4504,5877)"},skill:'m'}
   }
   menu c {title:'členové YMCA',type:'group', skill:'dec'
@@ -91,14 +91,24 @@ menu m {type:'left', format:'f-'
     item   {title:'[fa-medkit]rok'     par:°{lst:'h',tit:'úpravy za 365 dnů',days:'365',cnd:"1"}}
     item   {title:'[fa-medkit]všechny' par:°{lst:'h',tit:'všechny úpravy',days:'99999',cnd:"1"}}
   }
-  proc onclick (i) { var ret:object
+  menu x {title:'tipy na duplicitní údaje',type:'group', skill:'yad;fad'
+    item   {title:'[fa-chain] iniciovaní chlapi',par:°{lst:'o',tip:'mrop',skill:'m'}}
+  }
+  proc onclick (i) { menu_click (i,0,0) }
+  proc menu_click(i,_ido,_idr) { var ret:object, cnd:text
     menu_item.set(i); menu_par.set(i.par); menu_title.set(conc(i.owner.title,' - ',i.title));
     { // podmenu s browse
       i.par.lst;
-      panel.display(0,'i'); panel.display(1,'e');
+      cnd.set(i.par.cnd);
+      panel.display(0,'i'); panel.display(1,'e'); page.oso.chain.display(0);
       page.oso.set_mode(0,'E');
       [ eq(i.par.tit,'MAILIST'); page.mapa.onclick ];
-      lst.reload(i.par.lst,i.par.cnd,i.par.tit);
+      [ i.par.tip; page.oso.chain.display(1);
+        ret.set(ask('evid2_elim_tips',i.par.tip));
+        lst.bo.tips.set_attrib('expr',ret.tip);
+        cnd.set(ret.ids);
+      ];
+      lst.tit.set(i.par.tit); lst._reload(i.par.lst,cnd,_ido,_idr)
     | // podmenu pro členství - bez browse
       not(i.par.lst);
       panel.display(1,'i'); panel.display(0,'e'); info.export.set(i.par.exp);
@@ -279,6 +289,7 @@ form _lst [,,370,*] {
   # ==============================================> O - OSOBY
   var bo_cnd=1, bo_filtr= 1, bo_having= 1
   proc bo_reload(cnd) {
+                                                echo("bo_reload ido=",ido.get);
     [ virgin.get; start ];
     bo_cnd.set(cnd);
     ido.get; [ bo.browse_seek(conc("id_osoba=",ido.get)); /*bo.onrowclick*/ ]
@@ -315,6 +326,7 @@ form _lst [,,370,*] {
     show id_p { data:os.id_pobyt }
     show lat  { data:u.lat }
     show lng  { data:u.lng }
+    show tips [,,10,] { expr:'', format:'t' }
     show _rodin { expr:"COUNT(*)" }
     show barva { expr:"o.deleted=''" }
     show _funkce { expr:"GROUP_CONCAT(DISTINCT op.funkce)" }
@@ -329,7 +341,8 @@ form _lst [,,370,*] {
     // volitelná položka
     show mail  [,,44,] { data:o.email, title:'emaily',help:'osobní emaily', format:'tq%s' }
     show _id_o [,,0,] { data:o.id_osoba, title:'ID osoby',help:'osobní číslo', format:'rq*s' }
-    proc onrowclick() {
+    proc onrowclick() { bo_show }
+    proc bo_show() {
       ido.set(id_o.get); page.evid_load(ido.get,0);
       [ page.map.on.get; lat.get; page.map.mapa_curr(lat.get,lng.get) ];
     }
@@ -646,6 +659,18 @@ form _page {
   }
   # ==============================================> O: EVIDENCE OSOBY
   use oso: form _osoba2x  [200,20,,] { tag:'O'  // view o:osoba
+    button chain [102,1,,] {tag:'f', title:'[fa-chain]', css:'db_chain',
+      proc onclick() { var zmena:text, ido:number, tips:text
+        ido.set(lst.bo.id_o.get); tips.set(lst.bo.tips.get);
+        spinner(1); zmena.set(elim.osoby_lst(ido,tips)); spinner(0);
+        echo("elim.osoby_lst(",ido,",",tips,")=",zmena," ido=",elim.osoby_lst_id.get);
+        lst.bo.browse_seek(conc("o.id_osoba=",elim.osoby_lst_id.get));
+        lst.bo.raise('onrowclick',elim.osoby_lst_id.get);
+#         [ lst.bo.browse_row;
+#           lst.bo.raise('onrowclick',elim.osoby_lst_id.get);
+#           lst.bo.browse_row
+#         ];
+    }}
     proc on_click() {
       up(page.oso); up(page.rod); down(page.dar); down(page.cle); down(page.pri); down(page.map) }
     proc onchanged() { page.d_change('o') }
@@ -1360,10 +1385,14 @@ proc onresize(w,h) { // echo('evid2 onresize(',w,',',h,')');
   eq(curr_h.get,minus(h,min_h.get))                     // změnu šířky ignorujeme
 | [ and(lt(h,min_h.get),not(eq(curr_h.get,min_h.get)));
     curr_h.set(0); h_change_all();
-    menu_item.get; m.onclick(menu_item.get);
+    menu_item.get;
+#     m.onclick(menu_item.get);
+    m.menu_click(menu_item.get,lst.ido.get,lst.idr.get);
   | and(gt(h,min_h.get),not(eq(h,sum(curr_h.get,min_h.get))));
     curr_h.set(minus(h,min_h.get)); h_change_all();
-    menu_item.get; m.onclick(menu_item.get);
+    menu_item.get;
+#     m.onclick(menu_item.get);
+    m.menu_click(menu_item.get,lst.ido.get,lst.idr.get);
   ];
 }
 # změna výšky oproti základní min_h
