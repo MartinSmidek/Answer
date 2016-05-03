@@ -1148,6 +1148,8 @@ form _cmd [,,706,32] { css:'ae_frame'
   button [188,6,,] {tag:'x', type:'html', title:'[fa-heart] Nová rodina',
     skill:'yaa+|yaa+;faa+|faa+;caa+|caa+', help:'Vytvoření nové rodiny s prvním členem'
     proc onclick() { var jmeno:text
+      // ochrana před vytvářením s access=3
+      not(eq(my_access.get,3));
       // buďto úplně nová s novým členem, nebo nová s nastaveným členem
       jmeno.set(conc(page.oso.prijmeni.get," ",page.oso.jmeno.get));
       switch(choose(conc("Mám vytvořit novou rodinu s novým členem, <br>nebo s ",jmeno,"?"),
@@ -1159,6 +1161,8 @@ form _cmd [,,706,32] { css:'ae_frame'
           page.rod.access.set(my_access.get); foreach(page.rod.tagged('N'),change_x);
           page.oso.access.set(my_access.get); foreach(page.oso.tagged('I'),change_x); }
       )
+    | eq(my_access.get,3);
+      alert("Ve společném Answeru prosím vkládej rodiny a osoby na kartě Účastníci");
   }}
   // vymazat
   button r_smaz [287,6,,] {tag:'x', title:'[fa-times fa-red] Vymazat', skill:'yaa+|yaa+;faa+|faa+;caa+|caa+',
@@ -1186,12 +1190,16 @@ form _cmd [,,706,32] { css:'ae_frame'
   button novy_clen [404,6,,] {tag:'x', type:'html', title:'[fa-heart-o] Nový člen',
     skill:'yaa+|yaa+;faa+|faa+;caa+|caa+', help:'Vytvoření nové osoby a její zapojení do rodiny'
     proc onclick() { var _sex:number, _prijmeni:text
+      // ochrana před vytvářením s access=3
+      not(eq(my_access.get,3));
       _sex.set(page.oso.sex.get); _prijmeni.set(page.oso.prijmeni.get);
       set_state('newo');
       page.oso.sex.set(_sex); page.oso.prijmeni.set(_prijmeni); page.oso.narozeni.set(now);
       page.oso.access.set(my_access.get);
       page.rod.t_role.set('d');
       foreach(page.oso.tagged('I'),change_x); page.rod.t_role.change(1);
+    | eq(my_access.get,3);
+      alert("Ve společném Answeru prosím vkládej rodiny a osoby na kartě Účastníci");
   } }
   // PŘIDAT
   button [490,6,,] {tag:'x', title:'[fa-plug] Přidat', skill:'yaa+|yaa+;faa+|faa+;caa+|caa+',
