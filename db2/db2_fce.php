@@ -6123,6 +6123,29 @@ function dop_rep_ids($report_json,$parss,$fname) { trace();
   tc_report($report,$texty,$fname);
 }
 /** =========================================================================================> EVID2 */
+# -------------------------------------------------------------------------------- evid2_deti_access
+# ==> . chain rod
+# účastníci pobytu a případná rodina budou mít daný access (3)
+function evid2_deti_access($idr,$access=3) {
+  // zjištění access rodičů
+  list($min,$max)= select("MIN(access),MAX(access)","rodina JOIN tvori USING (id_rodina)",
+                          "id_rodina=$idr AND role IN ('a','b') GROUP BY id_rodina");
+  if ( $min==$access && $max==$access ) {
+    // změna dětí v rodině
+    $qo= mysql_qry("SELECT access,id_osoba FROM tvori JOIN osoba USING (id_osoba)
+                    WHERE id_rodina=$idr AND role='d' ");
+    while ( $qo && ($o= mysql_fetch_object($qo)) ) {
+      $ido= $o->id_osoba;
+      $o_access= $o->access;
+      if ( $o_access!=$access ) {
+        ezer_qry("UPDATE",'osoba',$ido,array(
+          (object)array('fld'=>'access', 'op'=>'u','val'=>$access,'old'=>$o_access)
+        ));
+      }
+    }
+  }
+  return 1;
+}
 # ---------------------------------------------------------------------------------- evid2_elim_tips
 # tipy na duplicitu ve formě CASE ... END
 # mrop - pro iniciované muže

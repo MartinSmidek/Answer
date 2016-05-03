@@ -1158,5 +1158,7 @@ form _rodina2p [,,188,229] { css:'ae_frame'
   menu detail { type:'context', skill:'yae;fae;cae'
     item { title:'konfigurace formuláře',  proc onclick () { rodina_config.tune(evi) } }
     item { title:'ukázat změny rod. údajů',proc onclick () { key_rodina.get; track.back_show('rodina',key_rodina.get) }}
+    item { title:'=zazurovění dětí', skill:'daea', proc onclick () {
+      ask('evid2_deti_access',key_rodina.get,3); panel.call('page.page_load');  } }
   }
 }
