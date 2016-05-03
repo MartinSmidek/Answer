@@ -6143,6 +6143,13 @@ function evid2_deti_access($idr,$access=3) {
         ));
       }
     }
+    // změna pro rodinu
+    $r_access= select("access","rodina","id_rodina=$idr");
+    if ( $r_access!=$access ) {
+      ezer_qry("UPDATE",'rodina',$idr,array(
+        (object)array('fld'=>'access', 'op'=>'u','val'=>$access,'old'=>$r_access)
+      ));
+    }
   }
   return 1;
 }
