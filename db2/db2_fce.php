@@ -6128,7 +6128,8 @@ function dop_rep_ids($report_json,$parss,$fname) { trace();
 # účastníci pobytu a případná rodina budou mít daný access (3)
 function evid2_deti_access($idr,$access=3) {
   // zjištění access rodičů
-  list($min,$max)= select("MIN(access),MAX(access)","rodina JOIN tvori USING (id_rodina)",
+  list($min,$max)= select("MIN(o.access),MAX(o.access)",
+                          "rodina JOIN tvori USING (id_rodina) JOIN osoba AS o USING (id_osoba)",
                           "id_rodina=$idr AND role IN ('a','b') GROUP BY id_rodina");
   if ( $min==$access && $max==$access ) {
     // změna dětí v rodině
