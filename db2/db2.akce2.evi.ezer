@@ -16,6 +16,7 @@ proc evid_rodina(_idr) { panel.focus; m.r.a.click(0,1); lst.seek_rodina(_idr,m.r
 
 proc osoby_show()       { page.oso.show_osoba(1); }     // obnova údajů o osobě  (z konfigurace)
 proc rodina_show()      { page.rod.show_rodina; }       // obnova údajů o rodině (z konfigurace)
+proc ulozen_gmail() { cmd.set_state('show'); page.page_plain; warning;  }
 # ----------------------------------------------------------------------------------==> inicializace
 proc onfirstfocus() {
   has_skill('mrop');
