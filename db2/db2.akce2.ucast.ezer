@@ -1092,7 +1092,7 @@ form _spolu [,,0,270] {
   # c: osobní pečovatel pro dítě ...
   field pece_key { data:s.pecovane }
   label [10,3,45,17] { tag:'c', title:"pečuje o:", format:'n'}
-  select pece_sel [70,0,160,17] { tag:'c', type:'auto', par:°{fce:'akce2_auto_deti'}, format:'n'
+  select pece_sel [70,0,160,17] { tag:'c', type:'auto', par:°{fce:'akce2_auto_deti'}, format:'nu'
     proc onchanged() { pece_key.set(pece_sel.key); pece_key.change; }  }
   button [55,3,,] { tag:'c', title:'^', css:'db_evidence',
    proc onclick() { jump(rod.cleni.pece_ido.get) } }

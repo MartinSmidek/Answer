@@ -2995,8 +2995,14 @@ function ucast2_pridej_osobu($ido,$access,$ida,$idp,$idr=0,$role=0) { trace();
   ));
   }
   # přidání k pobytu
-  $je= select("COUNT(*)","pobyt JOIN spolu USING(id_pobyt)","id_akce=$ida AND id_osoba=$ido");
-  if ( $je ) { $ret->msg.= "osoba už na této akci je"; goto end; }
+  list($je,$funkce)=
+    select("COUNT(*),funkce","pobyt JOIN spolu USING(id_pobyt)","id_akce=$ida AND id_osoba=$ido");
+  if ( $je ) {
+    $ret->msg.= "osoba už na této akci je".($funkce==99 ? ' jako pečovatel.
+      Pokud má být na akci jako pomocný nebo osobní pečovatel nebo bude ve skupině G, je třeba ji
+      na stránce Pečouni zrušit (zapamatovat poznámku k akci!) a odsud znovu zařadit.':'');
+    goto end;
+  }
   // pokud na akci ještě není, zjisti pro děti (<18 let) s_role a dite_kat
   $datum_od= select("datum_od","akce","id_duakce=$ida");
   $vek= roku_k($narozeni,$datum_od);
@@ -3046,6 +3052,7 @@ function tisk2_sestava($akce,$par,$title,$vypis,$export=false) { trace();
      : ( $par->typ=='P'    ? akce2_sestava_pobyt($akce,$par,$title,$vypis,$export)
      : ( $par->typ=='j'    ? tisk2_sestava_lidi($akce,$par,$title,$vypis,$export)
      : ( $par->typ=='vs'   ? akce2_strava_pary($akce,$par,$title,$vypis,$export)  // bez náhradníků
+     : ( $par->typ=='vsd'  ? akce2_strava_souhrn($akce,$par,$title,$vypis,$export)  // bez náhradníků s dietami
      : ( $par->typ=='vv'   ? tisk2_text_vyroci($akce,$par,$title,$vypis,$export)
      : ( $par->typ=='vi'   ? akce2_text_prehled($akce,$par,$title,$vypis,$export)
      : ( $par->typ=='ve'   ? akce2_text_eko($akce,$par,$title,$vypis,$export)
@@ -3065,7 +3072,7 @@ function tisk2_sestava($akce,$par,$title,$vypis,$export=false) { trace();
      : ( $par->typ=='cz'   ? akce2_cerstve_zmeny($akce,$par,$title,$vypis,$export)
      : (object)array('html'=>"<i>Tato sestava zatím není převedena do nové verze systému,
           <a href='mailto:martin@smidek.eu'>upozorněte mě</a>, že ji už potřebujete</i>")
-     )))))))))))))))))))));
+     ))))))))))))))))))))));
 }
 # =======================================================================================> . seznamy
 # ------------------------------------------------------------------------------- tisk2_sestava_pary
@@ -3789,6 +3796,21 @@ function akce2_stravenky($akce,$par,$title,$vypis,$export=false) { trace();
   $result->tab= $str;
   $result->akce= $akce_data;
   $result->note= $note ? "(bez $note, kteří nemají vyjasněnou funkci)" : '';
+  return $result;
+}
+# -------------------------------------------------------------------------------- akce2_strava_pary
+# generování sestavy přehledu strav pro účastníky $akce - páry
+#   $cnd = podmínka
+#   $id_pobyt -- je-li udáno, počítá se jen pro tento jeden pobyt (jedněch účastníků)
+# počítané položky
+#   manzele = rodina.nazev muz a zena
+# generované vzorce
+#   platit = součet předepsaných plateb
+function akce2_strava_souhrn($akce,$par,$title,$vypis,$export=false,$id_pobyt=0) { trace();
+  $result= (object)array();
+  $result->html.= "<h3>Souhrn strav podle dnů, rozdělený podle typů stravy vč. diet</h3>";
+  $result->html.= "Ještě není, potřeboval bych vědět, v jakém tvaru to od nás budou na Pavlákové
+                chtít (a jak od nich přebereme stravenky, abychom je dali účastníkům do obálek). ";
   return $result;
 }
 # -------------------------------------------------------------------------------- akce2_strava_pary
