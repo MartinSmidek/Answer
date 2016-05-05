@@ -17,14 +17,16 @@ var menu_item=0
 var menu_par=0
 menu m {type:'left', format:'f+' //, active:*
   menu {title:'Analýzy načteného přehledu',type:'group'
-    item {title:"[fa-bar-chart] analýza",                     par:°{meth:'ana'}}
-    item {title:"[fa-bar-chart] analýza - neznámé adresy",    par:°{meth:'ana_unknown'}}
-    item {title:"[fa-bar-chart] analýza - nejaktivnější ",    par:°{meth:'ana_activity'}}
-    item {title:"[fa-bar-chart] analýza - roky - lidi",       par:°{meth:'ana_lidi_y'}}
-    item {title:"[fa-bar-chart] analýza - roky - prispevky",  par:°{meth:'ana_prispevky_y'}}
-    item {title:"[fa-bar-chart] analýza - dlouhá vlakna",     par:°{meth:'ana_vlakna'}}
-#       item {title:"[fa-bar-chart] analýza - ročníky - nejdelší",par:°{meth:'ana_maxthread_y'}}
-    item {title:"[fa-bar-chart] analýza - měsíce - diskuse",  par:°{meth:'ana_diskuse_m'}}
+    item {title:"[fa-bar-chart] základní informace",            par:°{meth:'ana'}}
+    item {title:"[fa-bar-chart] analýza - neznámé adresy",      par:°{meth:'ana_unknown'}}
+    item {title:"[fa-bar-chart] analýza - nejaktivnější osoby", par:°{meth:'ana_activity'}}
+    item {title:"[fa-bar-chart] analýza - nejdelší vlakna",     par:°{meth:'ana_vlakna'}}
+    item {title:"[fa-bar-chart] analýza - roky",                par:°{meth:'ana_roky'}}
+    item {title:"[fa-bar-chart] analýza - mesice",              par:°{meth:'ana_mesice'}}
+#     item {title:"[fa-bar-chart] analýza - roky - lidi",         par:°{meth:'ana_lidi_y'}}
+#     item {title:"[fa-bar-chart] analýza - roky - prispevky",    par:°{meth:'ana_prispevky_y'}}
+#     item {title:"[fa-bar-chart] analýza - ročníky - nejdelší",  par:°{meth:'ana_maxthread_y'}}
+#     item {title:"[fa-bar-chart] analýza - měsíce - diskuse",    par:°{meth:'ana_diskuse_m'}}
   }
   menu {title:'extrakce dat',type:'group'
     item {title:"[fa-cog] 2. získání osobních údajů",         par:°{meth:'upd_copy'}}

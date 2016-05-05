@@ -1918,7 +1918,8 @@ function ucast2_browse_ask($x,$tisk=false) {
           . ",datplatby,cstrava_cel,cstrava_pol,svp,zpusobplat,naklad_d,poplatek_d,platba_d"
           . ",zpusobplat_d,datplatby_d,ubytovani,cd,avizo,sleva,vzorec,duvod_typ,duvod_text,x_umi");
     //      id_osoba,jmeno,_vek,id_tvori,id_rodina,role,_rody,rc,narozeni
-    $fos=   ucast2_flds("umrti,prijmeni,rodne,sex,adresa,ulice,psc,obec,stat,kontakt,telefon,nomail,email"
+    $fos=   ucast2_flds("umrti,prijmeni,rodne,sex,adresa,ulice,psc,obec,stat,kontakt,telefon,nomail"
+          . ",email,gmail"
           . ",iniciace,uvitano,clen,obcanka,rc_xxxx,cirkev,vzdelani,titul,zamest,zajmy,jazyk,dieta"
           . ",aktivita,note,_kmen");
     $fspo=  ucast2_flds("id_spolu,_barva,s_role,dite_kat,poznamka,pecovane,pfunkce,pece_jm,pece_id,o_umi");
@@ -11505,6 +11506,8 @@ function db2_smaz_tvori($idt,$barva='red') {
 function grp_read($par) {  trace(); debug($par);
   mb_internal_encoding("UTF-8");
   $html= $msg= '';
+  $r= " align='right'";
+  $y= " style='background-color:yellow'";
   $sav= false;
   $max= 4;
   $max= 999999;
@@ -11512,16 +11515,23 @@ function grp_read($par) {  trace(); debug($par);
                  'července'=>7,'srpna'=>8,'září'=>9,'října'=>10,'listopdu=>11','prosince'=>12);
 
   switch ($par->meth) {
-  case 'skip':
+  # -------------------------------------------------------------------------------------- INFORMACE
+  case 'ana':
+    list($zprav,$posledni,$prvni)= select("COUNT(*),MAX(datum),MIN(datum)","gg_mbox","1");
+    $prvni= sql_date1($prvni);
+    $posledni= sql_date1($posledni);
+    $html.= "Následné analýzy platí pro $zprav zpráv konference chlapi-iniciace,
+             napsaných v období $prvni až $posledni";
     break;
+
   # ----------------------------------------------------------------------------------- ANA: ANALÝZY
   #
   case 'ana_unknown':   # ------------------------------------------------------- ANA: neznámé
     $html= "<table class='stat'><tr><th>email</th><th>aktivita</th><th>od</th><th>do</th></tr>";
     $rh= mysql_qry("
-      SELECT email,aktivita,YEAR(prvni),YEAR(posledni)
+      SELECT email,zprav,YEAR(prvni),YEAR(posledni)
       FROM gg_osoba WHERE id_osoba=0
-      ORDER BY aktivita DESC
+      ORDER BY zprav DESC
     ");
     while ( $rh && (list($email,$aktivita,$prvni,$posledni)= mysql_fetch_row($rh)) ) {
       $html.= "<tr><td>$email</td><td>$aktivita</td><td>$prvni</td><td>$posledni</td></tr>";
@@ -11531,83 +11541,158 @@ function grp_read($par) {  trace(); debug($par);
 
   case 'ana_activity':  # ------------------------------------------------------- ANA: aktivní
     $mez= 0;
-    $html= "<table class='stat'><tr><th>email</th><th>aktivita</th><th>iniciace</th>
+    $html= "<table class='stat'><tr><th>email</th><th>účastník</th><th>zpráv</th><th>iniciace</th>
             <th>od</th><th>do</th></tr>";
     $rh= mysql_qry("
-      SELECT LEFT(GROUP_CONCAT(g.email),100),aktivita,iniciace,YEAR(prvni),YEAR(posledni)
+      SELECT LEFT(GROUP_CONCAT(g.email),100),SUM(zprav) AS _zprav,iniciace,
+        MIN(YEAR(prvni)),MAX(YEAR(posledni)),jmeno,prijmeni
       FROM gg_osoba AS g
-      LEFT JOIN gg_iosoba AS i USING (id_osoba)
-      WHERE aktivita>$mez
-      GROUP BY id_osoba
-      ORDER BY aktivita DESC
+      LEFT JOIN osoba AS o USING (id_osoba)
+      GROUP BY IF(id_osoba,id_osoba,g.email) HAVING _zprav>$mez
+      ORDER BY _zprav DESC
     ");
-    while ( $rh && (list($email,$aktivita,$mrop,$prvni,$posledni)= mysql_fetch_row($rh)) ) {
+    while ( $rh
+      && (list($email,$aktivita,$mrop,$prvni,$posledni,$jmeno,$prijmeni)= mysql_fetch_row($rh)) ) {
       $style1= !$mrop
             ? " style='background-color:yellow'" : '';
       $style2= $mrop<2007 && $prvni>2007 || $mrop>=2007 && $prvni!=$mrop
             ? " style='background-color:yellow'" : '';
-      $html.= "<tr><td$style1>$email</td><td>$aktivita</td><td>$mrop</td>
+      $html.= "<tr><td>$jmeno $prijmeni</td><td$style1>$email</td><td>$aktivita</td><td>$mrop</td>
                <td$style2>$prvni</td><td>$posledni</td></tr>";
     }
     $html.= "</table>";
     break;
 
-  case 'ana_lidi_y':    # ------------------------------------------------------- ANA: lidi
-    $html= "<table class='stat'><tr><th>rok</th><th>aktivních účastníků</th></tr>";
+  case 'ana_vlakna':    # ------------------------------------------------------- ANA: vlákna
+    $html= "<table class='stat'><tr><th>rok</th><th>příspěvků</th><th>diskutujících</th><th>předmět</th></tr>";
     $rh= mysql_qry("
-      SELECT COUNT(*) AS _pocet,YEAR(prvni) AS _rocnik
-      FROM gg_osoba
-      GROUP BY _rocnik
-      ORDER BY _rocnik DESC
+      SELECT COUNT(*) AS _pocet,COUNT(DISTINCT email),MIN(YEAR(datum)),MAX(YEAR(datum)),
+        LEFT(nazev,50),COUNT(DISTINCT root)
+      FROM gg_mbox
+      -- WHERE root!=0
+      GROUP BY nazev -- root
+      ORDER BY _pocet DESC
     ");
-    while ( $rh && (list($_pocet,$_rocnik)= mysql_fetch_row($rh)) ) {
-      $html.= "<tr><td>$_rocnik</td><td>$_pocet</td></tr>";
+    while ( $rh && (list($delka,$lidi,$od,$do,$nazev,$roots)= mysql_fetch_row($rh)) ) {
+      $roky= $od.($do!=$od? "-$do" : '');
+      $flame= $do-$od<2 && $delka>10 && $delka>1.8*$lidi && $roots==1 ? $y : '';
+      $html.= "<tr><td>$roky</td><td>$delka</td><td$flame>$lidi</td><td>$nazev</td>
+        <td>$roots</td></tr>";
     }
     $html.= "</table>";
     break;
 
-  case 'ana_prispevky_y': # ----------------------------------------------------- ANA: příspěvky
-    $html= "<table class='stat'><tr><th>rok</th><th>příspěvků</th></tr>";
+  case 'ana_roky':      # ------------------------------------------------------- ANA: roky
+    $html= "<table class='stat'><tr><th>rok</th><th>diskutujících</th><th>příspěvků</th><th>vláken</th>
+      <th>nejdelší</th><th>název vlákna</th></tr>";
     $rh= mysql_qry("
-      SELECT COUNT(*) AS _pocet,YEAR(datum) AS _rocnik
+      SELECT YEAR(datum) AS _rok,COUNT(*) AS _pocet,SUM(IF(back=0,1,0)),COUNT(DISTINCT email),
+        MAX(CONCAT(LPAD(reakci,4,'0'),nazev)),COUNT(DISTINCT nazev)
       FROM gg_mbox
-      GROUP BY _rocnik
-      ORDER BY _rocnik DESC
+      GROUP BY _rok
+      ORDER BY _rok DESC
     ");
-    while ( $rh && (list($_pocet,$_rocnik)= mysql_fetch_row($rh)) ) {
-      $html.= "<tr><td>$_rocnik</td><td>$_pocet</td></tr>";
+    while ( $rh && (list($rok,$prisp,$vlakna,$lidi,$nazev,$nazvu)= mysql_fetch_row($rh)) ) {
+      $max= substr($nazev,0,4)+0;
+      $nazev= substr($nazev,4);
+      $html.= "<tr><td>$rok</td><td$r>$lidi</td><td$r>$prisp</td><td$r>$vlakna</td>
+        <td$r>$max</td><td>$nazev</td><td>$nazvu</td></tr>";
     }
     $html.= "</table>";
     break;
+
+  case 'ana_mesice':    # ------------------------------------------------------- ANA: měsíce
+    $old= 0;
+    $html= "<table class='stat'><tr><th>rok</th><th>diskutujících</th><th>příspěvků</th><th>vláken</th>
+      <th>nejdelší</th><th>název vlákna</th></tr>";
+    $rh= mysql_qry("
+      SELECT LEFT(datum,7) AS _rok,COUNT(*) AS _pocet,SUM(IF(back=0,1,0)),COUNT(DISTINCT email),
+        MAX(CONCAT(LPAD(reakci,4,'0'),nazev))
+      FROM gg_mbox
+      GROUP BY _rok
+      ORDER BY _rok DESC
+    ");
+    while ( $rh && (list($mesic,$prisp,$vlakna,$lidi,$nazev)= mysql_fetch_row($rh)) ) {
+      $rok= substr($mesic,0,4);
+      $mesic= substr($mesic,5);
+      if ( $rok==$old ) $cas= $mesic;
+      else { $old= $rok; $cas= "$rok/$mesic"; }
+      $max= substr($nazev,0,4)+0;
+      $nazev= substr($nazev,4);
+      $html.= "<tr><td>$cas</td><td$r>$lidi</td><td$r>$prisp</td><td$r>$vlakna</td>
+        <td$r>$max</td><td>$nazev</td></tr>";
+    }
+    $html.= "</table>";
+    break;
+
+//   case 'ana_lidi_y':    # ------------------------------------------------------- ANA: lidi
+//     $html= "<table class='stat'><tr><th>rok</th><th>aktivních účastníků</th></tr>";
+//     $rh= mysql_qry("
+//       SELECT COUNT(*) AS _pocet,YEAR(prvni) AS _rocnik
+//       FROM gg_osoba
+//       GROUP BY _rocnik
+//       ORDER BY _rocnik DESC
+//     ");
+//     while ( $rh && (list($_pocet,$_rocnik)= mysql_fetch_row($rh)) ) {
+//       $html.= "<tr><td>$_rocnik</td><td>$_pocet</td></tr>";
+//     }
+//     $html.= "</table>";
+//     break;
+//
+//   case 'ana_prispevky_y': # ----------------------------------------------------- ANA: příspěvky
+//     $html= "<table class='stat'><tr><th>rok</th><th>příspěvků</th></tr>";
+//     $rh= mysql_qry("
+//       SELECT COUNT(*) AS _pocet,YEAR(datum) AS _rocnik
+//       FROM gg_mbox
+//       GROUP BY _rocnik
+//       ORDER BY _rocnik DESC
+//     ");
+//     while ( $rh && (list($_pocet,$_rocnik)= mysql_fetch_row($rh)) ) {
+//       $html.= "<tr><td>$_rocnik</td><td>$_pocet</td></tr>";
+//     }
+//     $html.= "</table>";
+//     break;
 
   # ------------------------------------------------------------------------------------ ZÍSKÁNÍ DAT
 
   case 'upd_copy': # ------------------------------------------------------------ UPD: kopie gg_iOSOBA
-    // zjednodušená kopie z Answer
-    query("TRUNCATE TABLE gg_iosoba");
-    // extrakce osoby, osobního mailu a gmailu
-    query("INSERT INTO gg_iosoba (id_osoba,jmeno,prijmeni,email,iniciace)
-           SELECT id_osoba,jmeno,prijmeni,CONCAT(IF(kontakt,email,''),',',gmail),iniciace
-           FROM osoba WHERE iniciace!=0 AND deleted=''");
-    // doplnění rodinného mailu, pokud není osobní
-    $rh= mysql_qry("
-      SELECT id_osoba,id_rodina,emaily
-      FROM gg_iosoba AS i
-      JOIN osoba AS o USING (id_osoba)
-      JOIN tvori AS t USING (id_osoba)
-      JOIN rodina AS r USING (id_rodina)
-      WHERE kontakt=0 AND r.deleted=''
-    ");
-    while ( $rh && ($h= mysql_fetch_object($rh)) ) {
-      query("UPDATE gg_iosoba SET email='{$h->emaily}' WHERE id_osoba={$h->id_osoba}");
-    }
+//     // zjednodušená kopie z Answer
+//     query("TRUNCATE TABLE gg_iosoba");
+//     // extrakce osoby, osobního mailu a gmailu
+//     query("INSERT INTO gg_iosoba (id_osoba,jmeno,prijmeni,email,iniciace)
+//            SELECT id_osoba,jmeno,prijmeni,CONCAT(IF(kontakt,email,''),',',gmail),iniciace
+//            FROM osoba WHERE iniciace!=0 AND deleted=''");
     // spojovací rekordy mezi maily a osoby
     query("TRUNCATE TABLE gg_osoba");
-    query("INSERT INTO gg_osoba (email,aktivita,prvni,posledni)
-           SELECT email,COUNT(*),MIN(datum),MAX(datum) FROM gg_mbox GROUP BY email");
-    query("UPDATE gg_osoba AS e JOIN gg_iosoba AS i ON e.email=i.email SET e.id_osoba=i.id_osoba");
-    query("UPDATE gg_osoba AS e JOIN gg_iosoba AS i ON i.email RLIKE e.email SET e.id_osoba=i.id_osoba
-           WHERE e.id_osoba=0");
+    query("INSERT INTO gg_osoba (email,zprav,prvni,posledni)
+           SELECT LCASE(email),COUNT(*),MIN(datum),MAX(datum) FROM gg_mbox GROUP BY email");
+    // vytvoření tabulky mailu, gmailu, případně rodinného mailu --> id_osoba
+    $id= array();
+    $rh= mysql_qry("
+      SELECT id_osoba,kontakt,LCASE(emaily),LCASE(email),LCASE(gmail)
+      FROM osoba AS o
+      JOIN tvori AS t USING (id_osoba)
+      JOIN rodina AS r USING (id_rodina)
+      WHERE iniciace!=0 AND o.deleted='' AND r.deleted=''
+    ");
+    while ( $rh && (list($ido,$kontakt,$emaily,$email,$gmail)= mysql_fetch_row($rh)) ) {
+      if ( $gmail )
+        foreach(explode(',',$gmail) as $e) if ( !isset($id[$e]) ) $id[$e]= $ido;
+      if ( $email )
+        foreach(explode(',',$email) as $e) if ( !isset($id[$e]) ) $id[$e]= $ido;
+      if ( !$kontakt && $emaily )
+        foreach(explode(',',$emaily) as $e) if ( !isset($id[$e]) ) $id[$e]= $ido;
+    }
+//                                                 debug($id);
+    $rh= mysql_qry("SELECT email FROM gg_osoba");
+    while ( $rh && (list($email)= mysql_fetch_row($rh)) ) {
+      if ( isset($id[$email]) ) {
+        query("UPDATE gg_osoba SET id_osoba={$id[$email]} WHERE email='{$email}'");
+      }
+    }
+//     query("UPDATE gg_osoba AS e JOIN gg_iosoba AS i ON e.email=i.email SET e.id_osoba=i.id_osoba");
+//     query("UPDATE gg_osoba AS e JOIN gg_iosoba AS i ON i.email RLIKE e.email SET e.id_osoba=i.id_osoba
+//            WHERE e.id_osoba=0");
     break;
 
   case 'imap_db': # ------------------------------------------------------------- IMAP: uložit do db
