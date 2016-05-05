@@ -155,13 +155,29 @@ function akce2_info($id_akce,$text=1) { // trace();
   $html= '';
   $info= (object)array('muzi'=>0,'zeny'=>0,'deti'=>0,'peco'=>0,'rodi'=>0,'skup'=>0);
   $zpusoby= map_cis('ms_akce_platba','zkratka'); // způsob => částka
+  $bad= "<b style='color:red'>!!!</b>";
   $platby= array();
   $celkem= 0;
   $aviz= 0;
   if ( $id_akce ) {
-    $ucasti= $rodiny= $dosp= $muzi= $zeny= $deti= $pecounu= $err= $err2= 0;
+    $ucasti= $rodiny= $dosp= $muzi= $zeny= $deti= $pecounu= $err= $err2= $err3= 0;
     $odhlaseni= $neprijeli= $nahradnici= $nahradnici_osoby= 0;
     $akce= $chybi_nar= $chybi_sex= '';
+    // zjistíme násobnou přítomnost
+    $rn= mysql_qry("
+      SELECT COUNT(DISTINCT id_pobyt) AS _n,MIN(funkce) AS _f1,MAX(funkce) AS _f2,prijmeni,jmeno
+      FROM spolu AS s
+      LEFT JOIN pobyt AS p USING (id_pobyt)
+      LEFT JOIN osoba AS o USING (id_osoba)
+      WHERE id_akce='$id_akce'
+      GROUP BY id_osoba HAVING _n>1
+    ");
+    while ( $rn && (list($n,$f1,$f2,$prijmeni,$jmeno)= mysql_fetch_row($rn)) ) {
+      $err3++;
+      $vic_ucasti.= ", $jmeno $prijmeni";
+      if ( $f1<99 && $f2==99 ) $vic_ucasti.= " (jako dítě a jako pečovatel)";
+    }
+    // projdeme pobyty
     $qry= "SELECT nazev, datum_od, datum_do, now() as _ted,i0_rodina,funkce,
              COUNT(id_spolu) AS _clenu,IF(c.ikona=2,1,0) AS _pro_pary,
              SUM(IF(ROUND(DATEDIFF(a.datum_od,o.narozeni)/365.2425,1)<18,1,0)) AS _deti,
@@ -223,6 +239,7 @@ function akce2_info($id_akce,$text=1) { // trace();
     }
     if ( $chybi_nar ) $chybi_nar= substr($chybi_nar,2);
     if ( $chybi_sex ) $chybi_sex= substr($chybi_sex,2);
+    if ( $vic_ucasti ) $vic_ucasti= substr($vic_ucasti,2);
     $dosp+= $muzi + $zeny;
     $skupin= $ucasti - ( $pecounu ? 1 : 0 );
     if ( $text ) {
@@ -236,6 +253,7 @@ function akce2_info($id_akce,$text=1) { // trace();
       $_osob=      je_1_2_5($dosp+$deti,"osoba,osoby,osob");
       $_err=       je_1_2_5($err,"osoby,osob,osob");
       $_err2=      je_1_2_5($err2,"osoby,osob,osob");
+      $_err3=      je_1_2_5($err3,"osoba je,osoby jsou,osob je");
       $_rodiny=    je_1_2_5($rodiny,"rodina,rodiny,rodin");
       $_pobyt_o=   je_1_2_5($odhlaseni,"pobyt,pobyty,pobytů");
       $_pobyt_x=   je_1_2_5($neprijeli,"pobyt,pobyty,pobytů");
@@ -259,11 +277,12 @@ function akce2_info($id_akce,$text=1) { // trace();
         if ( $nahradnici ) $msg[]= "náhradníci: $_pobyt_n, celkem $_pobyt_no";
         $html.= implode('<br>',$msg);
       }
-      if ( $err + $err2 > 0 ) {
+      if ( $err + $err2 + $err3 > 0 ) {
         $html.= "<br><hr>POZOR: ";
         $html.= $err>0  ? "<br>u $_err chybí datum narození: <i>$chybi_nar</i>" : '';
         $html.= $err2>0 ? "<br>u $_err2 chybí údaj muž/žena: <i>$chybi_sex</i>" : '';
-        $html.= "<br>(kvůli chybějícím údajům mohou být počty divné)";
+        $html.= $err3>0 ? "<br>$bad $_err3 na akci vícekrát: <i>$vic_ucasti</i>" : '';
+        $html.= "<br>(kvůli nesprávným údajům budou i počty nesprávné)";
       }
       $html.= $deti ? "<hr>Poznámka: jako děti se počítají osoby, které v době zahájení akce nemají 18 let" : '';
       if ( $pro_pary ) {
@@ -1709,7 +1728,7 @@ end:
 #                       pokud obsahuje /*dokumenty*/ přidá se do sloupce _docs 'd'
 #                       pokud obsahuje /*css*/ bude se barvit _nazev,cleni.jmeno,rodiny
 # -- x->atr=  pole jmen počítaných atributů:  [_ucast]
-# pokud je tisk=true jsou je oddělovače řádků použit znak '≈' (oddělovač sloupců zůstává '~')
+# pokud je tisk=true jsou oddělovače řádků '≈' (oddělovač sloupců zůstává '~')
 function ucast2_browse_ask($x,$tisk=false) {
   $delim= $tisk ? '≈' : '~';
   global $test_clmn,$test_asc, $y;
@@ -1744,7 +1763,7 @@ function ucast2_browse_ask($x,$tisk=false) {
     # ladění
     $AND= "";
 //     $AND= "AND p.id_pobyt IN (44285,44279,44280,44281) -- prázdná rodina a pobyt";
-//     $AND= "AND p.id_pobyt IN (45034) -- test";
+//     $AND= "AND p.id_pobyt IN (45424,44921) -- test";
 //     $AND= "AND p.id_pobyt IN (43387,32218,32024) -- test";
 //     $AND= "AND p.id_pobyt IN (43113,43385,43423) -- test Šmídkovi+Nečasovi+Novotní/LK2015";
 //     $AND= "AND p.id_pobyt IN (43423) -- test Novotní/LK2015";
@@ -1788,11 +1807,13 @@ function ucast2_browse_ask($x,$tisk=false) {
 //                                                         debug($rodina_pobyt,"rodina_pobyt");
     # seznam účastníků akce - podle podmínky
     $qu= mysql_qry("
-      SELECT s.*,o.narozeni,MIN(CONCAT(IF(role='','?',role),id_rodina)) AS _role,o_umi
+      SELECT GROUP_CONCAT(id_pobyt) AS _ids_pobyt,s.*,o.narozeni,
+        MIN(CONCAT(IF(role='','?',role),id_rodina)) AS _role,o_umi
       FROM osoba AS o
       JOIN spolu AS s USING (id_osoba)
       JOIN pobyt AS p USING (id_pobyt)
-      LEFT JOIN tvori AS t USING (id_osoba)
+      -- LEFT JOIN tvori AS t USING (id_osoba)
+      LEFT JOIN tvori AS t ON t.id_osoba=s.id_osoba AND t.id_rodina=p.i0_rodina
       WHERE o.deleted='' AND $cond $AND
       GROUP BY id_osoba
     ");
@@ -1801,7 +1822,9 @@ function ucast2_browse_ask($x,$tisk=false) {
       $idr= substr($u->_role,1);
       if ( $idr && !strpos(",$rodiny,",",$idr,") )
         $rodiny.= ",$idr";
-      $pobyt[$u->id_pobyt]->cleni[$u->id_osoba]= $u;
+      foreach (explode(',',$u->_ids_pobyt) as $idp) {
+        $pobyt[$idp]->cleni[$u->id_osoba]= $u;
+      }
       $spolu[$u->id_osoba]= $u->id_pobyt;
       // doplnění osobního umí - malým
       if ( $u->o_umi ) {
@@ -11222,20 +11245,20 @@ function db2_kontrola_dat($par) { trace();
           LEFT JOIN pobyt AS p USING(id_pobyt)
           LEFT JOIN akce  AS a ON a.id_duakce=p.id_akce
           LEFT JOIN osoba AS o ON o.id_osoba=s.id_osoba
-          WHERE platba+platba_d=0 AND funkce!=99
+          -- WHERE platba+platba_d=0 AND funkce!=99
           GROUP BY id_osoba,id_akce HAVING _pocet_>1
           ORDER BY id_akce";
   $res= mysql_qry($qry);
   while ( $res && ($x= mysql_fetch_object($res)) ) {
     $n++;
     $ok= '';
-    if ( $opravit ) {
-      $sp= explode(',',$x->_sp);
-      unset($sp[0]);
-      $sp= implode(',',$sp);
-      $ok.= mysql_qry("DELETE FROM spolu WHERE id_pobyt IN ($sp) AND id_osoba={$x->id_osoba}")
-         ? (" = spolu SMAZÁNO ".mysql_affected_rows().'x') : ' CHYBA při mazání spolu' ;
-    }
+//     if ( $opravit ) {
+//       $sp= explode(',',$x->_sp);
+//       unset($sp[0]);
+//       $sp= implode(',',$sp);
+//       $ok.= mysql_qry("DELETE FROM spolu WHERE id_pobyt IN ($sp) AND id_osoba={$x->id_osoba}")
+//          ? (" = spolu SMAZÁNO ".mysql_affected_rows().'x') : ' CHYBA při mazání spolu' ;
+//     }
     $ido= tisk2_ukaz_osobu($x->id_osoba);
     $pp= $del= '';
     $ida= $x->id_akce;
@@ -11453,5 +11476,274 @@ function db2_track_rodina($idr,$barva='') {
 function db2_smaz_tvori($idt,$barva='red') {
   $style= $barva ? "style='color:$barva'" : '';
   return "<b><a $style href='ezer://syst.nas.smaz_tvori/$idt'>$idt</a></b>";
+}
+/** ========================================================================================> GROUPS **/
+# ----------------------------------------------------------------------------------------- grp_read
+# par.file = stáhnutý soubor
+function grp_read($par) {  trace(); debug($par);
+  mb_internal_encoding("UTF-8");
+  $html= $msg= '';
+  $sav= false;
+  $max= 4;
+  $max= 999999;
+  $mesice= array('ledna'=>1,'února'=>2,'března'=>3,'dubna'=>4,'května'=>5,'června'=>6,
+                 'července'=>7,'srpna'=>8,'září'=>9,'října'=>10,'listopdu=>11','prosince'=>12);
+
+  switch ($par->meth) {
+  case 'skip':
+    break;
+  # ----------------------------------------------------------------------------------- ANA: ANALÝZY
+  #
+  case 'ana_unknown':   # ------------------------------------------------------- ANA: neznámé
+    $html= "<table class='stat'><tr><th>email</th><th>aktivita</th><th>od</th><th>do</th></tr>";
+    $rh= mysql_qry("
+      SELECT email,aktivita,YEAR(prvni),YEAR(posledni)
+      FROM gg_osoba WHERE id_osoba=0
+      ORDER BY aktivita DESC
+    ");
+    while ( $rh && (list($email,$aktivita,$prvni,$posledni)= mysql_fetch_row($rh)) ) {
+      $html.= "<tr><td>$email</td><td>$aktivita</td><td>$prvni</td><td>$posledni</td></tr>";
+    }
+    $html.= "</table>";
+    break;
+
+  case 'ana_activity':  # ------------------------------------------------------- ANA: aktivní
+    $mez= 0;
+    $html= "<table class='stat'><tr><th>email</th><th>aktivita</th><th>iniciace</th>
+            <th>od</th><th>do</th></tr>";
+    $rh= mysql_qry("
+      SELECT LEFT(GROUP_CONCAT(g.email),100),aktivita,iniciace,YEAR(prvni),YEAR(posledni)
+      FROM gg_osoba AS g
+      LEFT JOIN gg_iosoba AS i USING (id_osoba)
+      WHERE aktivita>$mez
+      GROUP BY id_osoba
+      ORDER BY aktivita DESC
+    ");
+    while ( $rh && (list($email,$aktivita,$mrop,$prvni,$posledni)= mysql_fetch_row($rh)) ) {
+      $style1= !$mrop
+            ? " style='background-color:yellow'" : '';
+      $style2= $mrop<2007 && $prvni>2007 || $mrop>=2007 && $prvni!=$mrop
+            ? " style='background-color:yellow'" : '';
+      $html.= "<tr><td$style1>$email</td><td>$aktivita</td><td>$mrop</td>
+               <td$style2>$prvni</td><td>$posledni</td></tr>";
+    }
+    $html.= "</table>";
+    break;
+
+  case 'ana_lidi_y':    # ------------------------------------------------------- ANA: lidi
+    $html= "<table class='stat'><tr><th>rok</th><th>aktivních účastníků</th></tr>";
+    $rh= mysql_qry("
+      SELECT COUNT(*) AS _pocet,YEAR(prvni) AS _rocnik
+      FROM gg_osoba
+      GROUP BY _rocnik
+      ORDER BY _rocnik DESC
+    ");
+    while ( $rh && (list($_pocet,$_rocnik)= mysql_fetch_row($rh)) ) {
+      $html.= "<tr><td>$_rocnik</td><td>$_pocet</td></tr>";
+    }
+    $html.= "</table>";
+    break;
+
+  case 'ana_prispevky_y': # ----------------------------------------------------- ANA: příspěvky
+    $html= "<table class='stat'><tr><th>rok</th><th>příspěvků</th></tr>";
+    $rh= mysql_qry("
+      SELECT COUNT(*) AS _pocet,YEAR(datum) AS _rocnik
+      FROM gg_mbox
+      GROUP BY _rocnik
+      ORDER BY _rocnik DESC
+    ");
+    while ( $rh && (list($_pocet,$_rocnik)= mysql_fetch_row($rh)) ) {
+      $html.= "<tr><td>$_rocnik</td><td>$_pocet</td></tr>";
+    }
+    $html.= "</table>";
+    break;
+
+  # ------------------------------------------------------------------------------------ ZÍSKÁNÍ DAT
+
+  case 'upd_copy': # ------------------------------------------------------------ UPD: kopie gg_iOSOBA
+    // zjednodušená kopie z Answer
+    query("TRUNCATE TABLE gg_iosoba");
+    // extrakce osoby, osobního mailu a gmailu
+    query("INSERT INTO gg_iosoba (id_osoba,jmeno,prijmeni,email,iniciace)
+           SELECT id_osoba,jmeno,prijmeni,CONCAT(IF(kontakt,email,''),',',gmail),iniciace
+           FROM osoba WHERE iniciace!=0 AND deleted=''");
+    // doplnění rodinného mailu, pokud není osobní
+    $rh= mysql_qry("
+      SELECT id_osoba,id_rodina,emaily
+      FROM gg_iosoba AS i
+      JOIN osoba AS o USING (id_osoba)
+      JOIN tvori AS t USING (id_osoba)
+      JOIN rodina AS r USING (id_rodina)
+      WHERE kontakt=0 AND r.deleted=''
+    ");
+    while ( $rh && ($h= mysql_fetch_object($rh)) ) {
+      query("UPDATE gg_iosoba SET email='{$h->emaily}' WHERE id_osoba={$h->id_osoba}");
+    }
+    // spojovací rekordy mezi maily a osoby
+    query("TRUNCATE TABLE gg_osoba");
+    query("INSERT INTO gg_osoba (email,aktivita,prvni,posledni)
+           SELECT email,COUNT(*),MIN(datum),MAX(datum) FROM gg_mbox GROUP BY email");
+    query("UPDATE gg_osoba AS e JOIN gg_iosoba AS i ON e.email=i.email SET e.id_osoba=i.id_osoba");
+    query("UPDATE gg_osoba AS e JOIN gg_iosoba AS i ON i.email RLIKE e.email SET e.id_osoba=i.id_osoba
+           WHERE e.id_osoba=0");
+    break;
+
+  case 'imap_db': # ------------------------------------------------------------- IMAP: uložit do db
+    // vyprázdnit tabulku
+    query("TRUNCATE mbox");
+    $sav= true;
+
+  case 'imap': # ---------------------------------------------------------------- IMAP: test
+    if ( $par->serv=='proglas' ) {
+      $authhost= '{imap.gmail.com:993/imap/ssl}'.$par->mbox;
+      $user="smidek@proglas.cz";
+      $pass="radost2010";
+    }
+    else { // gmail
+      $authhost= '{imap.gmail.com:993/imap/ssl}'.$par->mbox;
+      $user="martin@smidek.eu";
+      $pass="radost2010";
+    }
+    $mails= array();
+    $mbox= @imap_open($authhost,$user,$pass);
+    if ( !$mbox) { $msg.= print_r(imap_errors()); break; }
+    $obj= imap_check($mbox);
+//                                                 debug($obj);
+    // zpracování vlákna
+    $tree= imap_thread($mbox,SE_UID);
+//                                                 debug($tree,count($tree));
+    $num= $child= $parent= $next= $prev= $is= array();
+    foreach ($tree as $key => $uid) {
+      list($k,$type) = explode('.',$key);
+      switch($type){
+      case 'num':
+        $is[$uid]= $k; $num[$k]= $uid; $mails[$uid]= (object)array();
+        break;
+      }
+    }
+    foreach ($tree as $key => $i) {
+      list($k,$type) = explode('.',$key);
+      switch($type){
+      case 'next':   if ( $i ) { $child[$k]= $i; $parent[$i]= $k; } break;
+      case 'branch': if ( $i ) { $next[$k]= $i; $prev[$i]= $k; } break;
+      }
+    }
+    // najdeme kořen
+    $first= -1;
+    foreach ($num as $i=>$uid) {
+      if ( !$parent[$i] && !$prev[$i] ) {
+        $first= $i;
+        break;
+      }
+    }
+//                                                 display("first=$first");
+    // poskládáme strukturu
+    $root= $first;
+    while ( $root>=0 ) {
+      $mails[$num[$root]]->root= $num[$root];
+      $root= isset($next[$root]) ? $next[$root] : -1;
+    }
+    foreach ($num as $root => $uid) {
+      $family= array();
+      $i= $root;
+      $otec= -1;
+      while ( $i>=0 && !isset($mails[$num[$i]]->root) ) {
+        $otec= (isset($parent[$i]) ? $parent[$i] : -1);
+        $k= isset($prev[$i]) ? $prev[$i] : $otec;
+//                                                 display("$i - $k");
+        if ( $k>=0 ) {
+          $mails[$num[$i]]->back= $num[$k];
+          $family[]= $i;
+        }
+        $i= $k;
+      }
+//                                                 debug($family,"root=$root");
+      if ( $otec>=0 ) {
+        foreach ($family as $i) {
+          $mails[$num[$i]]->xroot= $num[$otec];
+        }
+      }
+    }
+    // spočítání odkazů
+    foreach ($mails as $uid=>$mail) {
+      if ( isset($mail->xroot) ) {
+        $mails[$mail->xroot]->zprav++;
+      }
+    }
+//                                                 debug($num,'uid ');
+//                                                 debug($child,'child');
+//                                                 debug($parent,'parent');
+//                                                 debug($next,'next sibling');
+//                                                 debug($prev,'prev sibling');
+//                                                 debug($mails,'mails');
+
+
+    // výběr
+    //$cond= 'FROM "martin@smidek.eu" SINCE "10-Apr-2016"';
+    $cond= 'ALL';
+    //$cond= 'SINCE "15-Apr-2016"';
+    $idms= imap_search($mbox,$cond,SE_UID);
+//                                                 debug($idms);
+//
+
+    foreach ($idms as $idm) {
+      $im= imap_msgno($mbox,$idm);
+      $overview= imap_fetch_overview($mbox,$idm,FT_UID);
+      // získání data
+      $d= $overview[0]->date;
+      $datum= strlen($d)==30 ? substr($d,5) : $d;
+//                                                 display($datum);
+      $utime= strtotime($datum);
+      $datum= date("d.m.Y H:i:s",$utime);
+      $ymdhis= date("Y-m-d H:i:s",$utime);
+      // očištění from
+      preg_match('/.*\<(.*)>/',$overview[0]->from,$m);
+      $from= $m[1] ?: $overview[0]->from;
+      // očištění subject
+      $subj= mb_decode_mimeheader($overview[0]->subject);
+      if ( strpos($subj,'=')!==false ) {
+        $subj= "=?iso-8859-2?Q?$subj";
+        $subj= mb_decode_mimeheader($subj);
+      }
+      $subj= str_replace("_"," ",$subj);
+      $subj= preg_replace("/Re\:|re\:|RE\:|Fwd\:|fwd\:|FWD\:/i", '', $subj);
+      $subj= preg_replace("/\[chlapi-iniciace]|\[chlapi-vsichni]|\[chlapi-informace]/i", '', $subj);
+      $subj= trim($subj,"- \t\n\r\0\x0B");
+
+
+//                                                 display($is[$idm]."/$idm: $datum from $from $subj");
+      // zapiš do mails
+      if ( isset($mails[$idm]->root) ) {
+        $mails[$idm]->subj= $subj;
+      }
+      $mails[$idm]->date= $ymdhis;
+      $mails[$idm]->from= $from;
+      if ( !$sav ) {
+                                                debug($overview);
+      }
+    }
+    if ( !$sav ) {
+                                                debug($mails,'mails');
+    }
+    if ( $sav ) {
+      foreach ($mails as $uid=>$mail) {
+        if ( $uid ) {
+          // uložení do db
+          $root=  isset($mail->root) ? $mail->root : $mail->xroot;
+          $zprav= isset($mail->zprav) ? $mail->zprav : 0;
+          $back=  isset($mail->back) ? $mail->back : 0;
+          $subj=  isset($mail->subj) ? $mail->subj : '';
+          query("INSERT INTO gg_mbox (uid,root,back,reakci,datum,email,nazev)
+            VALUES ($uid,$root,$back,$zprav,'$mail->date','$mail->from','$subj')");
+        }
+      }
+    }
+    // konec
+    imap_close($mbox);
+    break;
+
+  }
+end:
+  return $msg ? "ERROR: $msg<hr>$html" : $html;
 }
 ?>

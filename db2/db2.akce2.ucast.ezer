@@ -1231,7 +1231,7 @@ form _rodina2 [,,360,229]  { css:'ae_frame'
       key_rodina.get; track.back_show('rodina',key_rodina.get) } }
     item { title:'=zazurovění účastníků', skill:'daea', proc onclick () { var idp:number
       idp.set(the_pobyt.get); ask('ucast2_pobyt_access',key_pobyt.get,3); refresh_ucast(idp) } }
-    item { title:'zazurovění dětí', skill:'daea', proc onclick () { var idp:number
+    item { title:'zazurovění dětí a rodiny', skill:'daea', proc onclick () { var idp:number
       idp.set(the_pobyt.get); ask('evid2_deti_access',key_rodina.get,3); refresh_ucast(idp) } }
   }
   // ==> . nerodina

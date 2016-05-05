@@ -62,6 +62,7 @@ db/img/stravenky-rastr-1.png -text
 /db2.inc -text
 /db2.php -text
 db2/$.ezer -text
+db2/db2.akce2.cnf.ezer -text
 db2/db2.akce2.dop.ezer -text
 db2/db2.akce2.elim.ezer -text
 db2/db2.akce2.evi.ezer -text
