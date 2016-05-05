@@ -150,6 +150,9 @@ panel dop {type:'right', title:'Dopisy', _sys:'*', include:'onclick,db2.akce2.do
 panel sta {type:'right', title:'Výpisy evidence', _sys:'*', include:'onclick,db2.akce2.sta', skill:'yaa;faa;cas'
   proc reaccess() {}
 }
+panel cnf {type:'right', title:'[fa-retweet] KONFERENCE', _sys:'*', include:'onclick,db2.akce2.cnf', skill:'mrop;dk'
+  proc reaccess() {}
+}
 # ==========================================================================================> . ELIM
 panel elim [0,0,965,582] { type:'popup', title:'Duplicity', format:'c', include:'onload,db2.akce2.elim'
   proc reaccess() {}
@@ -1049,9 +1052,9 @@ form _osoba2x [,,244,322] {css:'ae_frame', proc onclick() { on_click }
   edit  note     [5,26,231,74] {tag:'p', data:o.note, format:'n', title:'^poznámka'}
 
   #==> . konference: g (jen pro oprávněné)
-  field gmail    [5,14,178,] {tag:'g', type:'list', data:o.gmail, format:'n',           skill:'mrop|mrop',
+  field gmail    [5,14,178,] {tag:'g', type:'list', data:o.gmail, format:'n',           skill:'mrop|mrop;dk|dk',
                               title:'^emailové adresy používané v konferencích '}
-  button         [ 188,14,,] {tag:'g', title:'[fa-save] Ulož',                          skill:'mrop|mrop'
+  button         [ 188,14,,] {tag:'g', title:'[fa-save] Ulož',                          skill:'mrop|mrop;dk|dk'
     proc onclick() { var old:text
       old.set(function('x',"return x.original.value",gmail));
       eq(old,gmail.get)
@@ -1158,7 +1161,7 @@ form _rodina2p [,,188,229] { css:'ae_frame'
   menu detail { type:'context', skill:'yae;fae;cae'
     item { title:'konfigurace formuláře',  proc onclick () { rodina_config.tune(evi) } }
     item { title:'ukázat změny rod. údajů',proc onclick () { key_rodina.get; track.back_show('rodina',key_rodina.get) }}
-    item { title:'=zazurovění dětí', skill:'daea', proc onclick () {
+    item { title:'=zazurovění dětí a rodiny', skill:'daea', proc onclick () {
       ask('evid2_deti_access',key_rodina.get,3); panel.call('page.page_load');  } }
   }
 }

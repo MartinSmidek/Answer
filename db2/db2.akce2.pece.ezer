@@ -231,7 +231,7 @@ form _osoba { tag:'a',
   button go_evi [L+474,T+14,,] {title:'^evidence', css:'db_evidence'
     proc onclick() { evi.evid_osoba(key_osoba.get) } }
   button go_pob [L+474,T+35,,] {title:'^rodina', css:'db_evidence'
-    proc onclick() { ucast.ucast_pobyt(key_pobyt.get) } }
+    proc onclick() { ucast.ucast_pobyt(up.b.rod_pobyt.get) } }
   # osobní údaje
   field prijmeni [L+5,T+30,89,] {data:o.prijmeni, help:'příjmení',title:'^příjmení'}
   field jmeno    [L+109,T+30,79,] {data:o.jmeno,title:'^jméno'}
@@ -241,7 +241,8 @@ form _osoba { tag:'a',
     proc onchange() { echo('sex=',this.get) }
   }
   field narozeni [L+255,T+32,85,] {type:'date', data:o.narozeni, format:'rR:e',title:'^narození'}
-  field rodne    [L+345,T+32,37,] {data:o.rc_xxxx, format:'r:e',title:'^nnnn rč'}
+  field rc       [L+345,T+32,45,] {tag:'o', format:'d', title:'^rodné číslo'}
+  field rodne    [L+400,T+32,37,] {data:o.rc_xxxx, format:'r:e',title:'/'}
   field obcanka  [L+255,T+69,99,] {data:o.obcanka, format:'',title:'^občanka'}
   select cirkev  [L+377,T+69,96,] {type:'map', data:o.cirkev, options:ms_akce_cirkev.zkratka,title:'^církev'}
   select dieta   [L+489,T+69,80,] {type:'map', data:o.dieta, options:ms_akce_dieta.zkratka,title:'^dieta'}
@@ -323,12 +324,13 @@ form _pece [,,400,] { css:'ds_form'
     proc onchange() { reload(0) }}
   // definice pohledů
   view s: table spolu
-  view p: table pobyt  { join:'USING(id_pobyt)' }   // ON p.id_pobyt=s.id_pobyt
+  view p: table pobyt  { join:'ON p.id_pobyt=s.id_pobyt' }
   view a: table akce   { join:'ON a.id_duakce=p.id_akce' }
   view o: table osoba  { join:'ON s.id_osoba=o.id_osoba' }
   view t: table tvori  { join_type:'LEFT', join:'ON t.id_osoba=o.id_osoba' }
   view r: table rodina { join_type:'LEFT', join:'ON r.id_rodina=t.id_rodina' }
   view c: table osoba  { join_type:'LEFT', join:'ON c.id_osoba=s.pecovane' }
+  view x: table pobyt  { join_type:'LEFT', join:'ON x.i0_rodina=r.id_rodina AND x.id_akce=a.id_duakce' }
   // ==> seznam pečounů
   browse b [0,22,,] {type:'smart', buf_rows:120, rows:27, qry_rows:1, group_by:"s.id_osoba"
 #       ?     hlavoun  pomocny  osobni   mimořádný team   skupina G
@@ -339,13 +341,17 @@ form _pece [,,400,] { css:'ds_form'
     show key_spolu  {data:s.id_spolu}
     show key_pobyt  {data:p.id_pobyt}
     show key_akce   {data:a.id_duakce}
-    show pecovane   {data:s.pecovane}   // jde-li o chůvu
     show key_osoba  {data:o.id_osoba}
-    show key_rodina {data:t.id_rodina}
+    show            {data:t.id_tvori}
+    show key_rodina {data:r.id_rodina}
+    show            {data:c.id_osoba}
+    show rod_pobyt  {expr:"IFNULL(x.id_pobyt,0)"}
+    show rod_nakurzu {expr:"IF(ISNULL(x.id_pobyt),0,1)"}
     show role       {data:t.role}
 #     show _n         {expr:"CONCAT(s.id_spolu,'/',COUNT(*))"}
     // data
 #     show barva     { expr:"IF(pecovane,1,0)"}
+    show pecovane   {data:s.pecovane}   // jde-li o chůvu
     show fotka     { data:o.fotka }
     show prijmeni  { data:o.prijmeni }
     show jmeno     { data:o.jmeno }
@@ -372,7 +378,8 @@ form _pece [,,400,] { css:'ds_form'
     // zobrazení
     show _nazev    [,,110,] { title:'příjmení jméno', format:'s+q*', css_cell:"funkce,0:nic,1:zluty"
                               expr:"CONCAT(o.prijmeni,' ',o.jmeno)" }
-    show _pfunkce  [,,60,]  { title:'funkce', data:s.pfunkce, map_pipe:ms_akce_pfunkce.zkratka, format:'q*s' }
+    show _pfunkce  [,,60,]  { title:'funkce', data:s.pfunkce, map_pipe:ms_akce_pfunkce.zkratka,
+                              format:'q*s', css_cell:'rod_nakurzu,0:nic,1:zluty' }
 #     show _pfunkce  [,,60,]  { title:'funkce', expr:"IF(s.pfunkce,s.pfunkce,s.s_role)", map_pipe:ms_akce_pfunkce.zkratka, format:'q*s' }
     show skupinka  [,,20,]  { title:'sk.', data:s.skupinka, format:'rqs:e'}
     show _vek      [,,0,]  { title:'věk', expr:"TIMESTAMPDIFF(YEAR,o.narozeni,datum_od)", format:'rsq*' }
@@ -399,7 +406,7 @@ form _pece [,,400,] { css:'ds_form'
     }
     proc onrowclick() { reload_pecoun }
     // ==> změna pečouna
-    proc reload_pecoun() {
+    proc reload_pecoun() { #==> . načtení pečouna
       [ has_skill('m');
         { b.browse_count;
 #         develop.set(conc(
@@ -420,7 +427,8 @@ form _pece [,,400,] { css:'ds_form'
         copy_by_name(b,p_oso.get); p_oso.o.key(key_osoba.get); p_oso.s.key(key_spolu.get);
         p_oso.enable(adresa.get,'aa'); // správné zobrazení adresy
         p_oso.enable(kontakt.get,'ak'); // a kontaktu
-        p_oso.go_pob.enable(not(eq(the_pobyt.get,key_pobyt.get)));
+        p_oso.go_pob.enable(rod_pobyt.get);
+        p_oso.rc.set(make_rc(p_oso.narozeni.get,p_oso.sex.get));
         p_oso.d.browse_fill(skup.get);
       },
       'akce',{
