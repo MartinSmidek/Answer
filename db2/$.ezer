@@ -12,7 +12,7 @@ menu db2 { type:'main', title:'db2', active:*, _sys:'*'
       proc back_show(kde,klic) {}
     }
   }
-  tabs syst {title:"[fa-cog] Systém", _sys:'sys',  include:'onclick,ezer2.syst', active:*
+  tabs syst {title:"[fa-cog] Systém", _sys:'sys',  include:'onload,ezer2.syst', active:*
     proc reaccess() {}
     panel oso {type:'right', title:'Osobní nastavení', _sys:'*', include:'onclick,ezer2.pers' }
     panel nas {type:'right', title:'Data', _sys:'nas', skill:'a'
