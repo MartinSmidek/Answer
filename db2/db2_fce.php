@@ -11070,6 +11070,19 @@ function db2_prubeh_kdo($db,$od,$tit) {
     $sje[$kdy][$kdo]= "$osob ($rodin)";
     $mes[$kdy]+= $osob + $rodin;
   }
+  // maxima :-)
+  $kdys= array_keys($sje);
+  $maxi= array();
+  foreach ($kdys as $kdy) {
+    $max= $maxi[$kdy]= -100;
+    foreach ($kdos as $kdo) {
+      list($o,$r)= explode(' / ',$sje[$kdy][$kdo]);
+      if ( $o+$r > $max ) {
+        $max= $o+$r;
+        $maxi[$kdy]= $kdo;
+      }
+    }
+  }
   // čas
   $do= date("Y-m");
   foreach ($kdos as $kdo) {
@@ -11080,11 +11093,12 @@ function db2_prubeh_kdo($db,$od,$tit) {
       for ($m= 1; $m<=12; $m++) {
         $ym= "$y-".str_pad($m,2,'0',STR_PAD_LEFT);
         if ( $od<$ym && $ym<=$do ) {
+          $styl= $maxi[$ym]==$kdo ? " style='background-color:yellow'" : '';
           $h= $mes[$ym] / 5;
           $g= "<div class='curr_akce' style='height:{$h}px;width:50px;'>";
           $grf.= "<td style='vertical-align:bottom;border:0'>$g</td>";
           $top.= "<th>$y.$m</th>";
-          $row.= "<td align='right'>{$sje[$ym][$kdo]}</td>";
+          $row.= "<td align='right'$styl>{$sje[$ym][$kdo]}</td>";
         }
       }
     }
