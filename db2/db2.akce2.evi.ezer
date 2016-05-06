@@ -14,13 +14,14 @@ proc evid_load(ido,idr) { page.evid_load(ido,idr) }
 proc evid_osoba(_ido)  { panel.focus; m.o.a.click(0,1); lst.seek_osoba(_ido,m.o.a.par) }
 proc evid_rodina(_idr) { panel.focus; m.r.a.click(0,1); lst.seek_rodina(_idr,m.r.a.par) }
 
-proc osoby_show()       { page.oso.show_osoba(1); }     // obnova údajů o osobě  (z konfigurace)
-proc rodina_show()      { page.rod.show_rodina; }       // obnova údajů o rodině (z konfigurace)
-proc ulozen_gmail() { cmd.set_state('show'); page.page_plain; warning;  }
+proc osoby_show()      { page.oso.show_osoba(1); }     // obnova údajů o osobě  (z konfigurace)
+proc rodina_show()     { page.rod.show_rodina; }       // obnova údajů o rodině (z konfigurace)
+proc ulozen_gmail()    { cmd.set_state('show'); page.page_plain; warning;  }
 # ----------------------------------------------------------------------------------==> inicializace
 proc onfirstfocus() {
   has_skill('mrop');
-  // přístup jen k seznamu iniciovaných
+  // přístup jen k seznamu iniciovaných se zvláštním tlačítkem na opravu gmail
+  page.oso.call('gmail_save.visible');
   osoba_config.start;
   osoba_config.ucast.set(panel); osoba_config.cnfg.g.set(1); osoba_config.cnfg.g.change;
   rodina_config.start;
@@ -638,6 +639,7 @@ form _page {
     show role  [,,10,] {title:'role'}
     proc onrowclick() {
       has_skill('mrop'); this.browse_active(last.get); cleni_click(ido0.get);
+      this.blur(1);
     | cleni_click(id_osoba.get);
       [ track.display; track.back_show('osoba',ido.get) ];
     }

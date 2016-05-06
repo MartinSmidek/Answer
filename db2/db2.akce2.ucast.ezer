@@ -1183,20 +1183,20 @@ form _rodina2 [,,360,229]  { css:'ae_frame'
       copy_by_name(cleni,os1);
       os1.show_osoba(0);
       sp1.load_spolu(ids,cleni);
-      os1.gmail.enable(0); os1.gmail_save.display(0)
+      os1.gmail.enable(0)
     | os2.key(ido);                        //   nebo do 2.
       copy_by_name(cleni,os2);
       os2.enable(1,'.*');
       os2.show_osoba(0);
       sp2.enable(1,'.*');
       sp2.load_spolu(ids,cleni);
-      os2.gmail.enable(0); os2.gmail_save.display(0)
+      os2.gmail.enable(0)
     ]
   | os1.key(ido);                          // 1 sloupec nebo 1. prázdný
     copy_by_name(cleni,os1);
     os1.show_osoba(0);
     sp1.load_spolu(ids,cleni);
-    os1.gmail.enable(0); os1.gmail_save.display(0)
+    os1.gmail.enable(0)
   }
   proc zmena_rodiny() {
     reload(ucast.the_pobyt.get);
