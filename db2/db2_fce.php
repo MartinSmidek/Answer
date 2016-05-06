@@ -11022,6 +11022,8 @@ function db2_stav($db) {
     $html.= "<br><hr><h3>Sjednocování podrobněji (informace pro ".implode(',',$vidi).")</h3>";
     $html.= db2_stav_kdo($db,"kdy > '2015-12-01'",
       "Od prosince 2015 - (převážně) sjednocování Setkání & Familia");
+    $html.= db2_prubeh_kdo($db,'2015-11',
+      "Od prosince 2015 po měsících - (převážně) sjednocování Setkání & Familia");
     $html.= db2_stav_kdo($db,"kdy <= '2015-12-01'",
       "<br><br>Do prosince 2015 - sjednocení v oddělených databázích");
   }
@@ -11035,6 +11037,51 @@ function db2_stav($db) {
     "dbs"=>$dbs
   );
                                         debug($stav);
+  return $html;
+}
+function db2_prubeh_kdo($db,$od,$tit) {
+  // sjednotitelé - seznam
+  $kdos= $kolik= array();
+  $rt= mysql_qry("
+    SELECT kdo,SUM(IF(kde IN ('osoba','rodina'),IF(op='d',1,-1),0)) AS _osob
+    FROM ezer_$db._track WHERE op IN ('d','V') AND kdy>'$od'
+    GROUP BY kdo ORDER BY _osob DESC
+  ");
+  while ( $rt && (list($kdo,$celkem)= mysql_fetch_row($rt)) ) {
+    $kdos[]= $kdo;
+    $kolik[$kdo]= $celkem;
+  }
+  // sjednotitelé - výpočet
+  $sje= array();
+  $rt= mysql_qry("
+    SELECT kdo,(LEFT(kdy,7)),LEFT(kdy,7) as _ym,
+      SUM(IF(kde='osoba',IF(op='d',1,-1),0)) AS _osob,
+      SUM(IF(kde='rodina',IF(op='d',1,-1),0)) AS _rodin
+    FROM ezer_$db._track WHERE op IN ('d','V') AND kdy>'$od'
+    GROUP BY kdo,_ym ORDER BY _ym ASC
+  ");
+  while ( $rt && (list($kdo,$do,$kdy,$osob,$rodin)= mysql_fetch_row($rt)) ) {
+    $sje[$kdy][$kdo]+= "$osob/$rodin";
+  }
+  // čas
+  $do= date("Y-m");
+  foreach ($kdos as $kdo) {
+    $top= "<tr><th>osob/rodin</th>";
+    $row.= "<tr><th>$kdo</th>";
+    for ($y= 2015; $y<=substr($do,0,4); $y++) {
+      for ($m= 1; $m<=12; $m++) {
+        $ym= "$y-".str_pad($m,2,'0',STR_PAD_LEFT);
+        if ( $od<$ym && $ym<=$do ) {
+          $top.= "<th>$y.$m</th>";
+          $row.= "<td align='right'>{$sje[$ym][$kdo]}</td>";
+        }
+      }
+    }
+    $row.= "</tr>";
+    $top.= "</tr>";
+  }
+  $html.= "<br><br>$tit<br><br>";
+  $html.= "<div class='stat'><table class='stat'>$top$row</table></div>";
   return $html;
 }
 function db2_stav_kdo($db,$desc,$tit) {
@@ -11564,7 +11611,8 @@ function grp_read($par) {  trace(); debug($par);
     break;
 
   case 'ana_vlakna':    # ------------------------------------------------------- ANA: vlákna
-    $html= "<table class='stat'><tr><th>rok</th><th>příspěvků</th><th>diskutujících</th><th>předmět</th></tr>";
+    $html= "<table class='stat'><tr><th>rok</th><th>příspěvků</th><th>diskutujících</th>
+            <th>předmět</th></tr>";
     $rh= mysql_qry("
       SELECT COUNT(*) AS _pocet,COUNT(DISTINCT email),MIN(YEAR(datum)),MAX(YEAR(datum)),
         LEFT(nazev,50),COUNT(DISTINCT root)
@@ -11583,8 +11631,8 @@ function grp_read($par) {  trace(); debug($par);
     break;
 
   case 'ana_roky':      # ------------------------------------------------------- ANA: roky
-    $html= "<table class='stat'><tr><th>rok</th><th>diskutujících</th><th>příspěvků</th><th>vláken</th>
-      <th>nejdelší</th><th>název vlákna</th></tr>";
+    $html= "<table class='stat'><tr><th>rok</th><th>diskutujících</th><th>příspěvků</th>
+      <th>vláken</th><th>nejdelší</th><th>název vlákna</th><th>vláken II</th></tr>";
     $rh= mysql_qry("
       SELECT YEAR(datum) AS _rok,COUNT(*) AS _pocet,SUM(IF(back=0,1,0)),COUNT(DISTINCT email),
         MAX(CONCAT(LPAD(reakci,4,'0'),nazev)),COUNT(DISTINCT nazev)
@@ -11697,14 +11745,14 @@ function grp_read($par) {  trace(); debug($par);
 
   case 'imap_db': # ------------------------------------------------------------- IMAP: uložit do db
     // vyprázdnit tabulku
-    query("TRUNCATE mbox");
+    query("TRUNCATE gg_mbox");
     $sav= true;
 
   case 'imap': # ---------------------------------------------------------------- IMAP: test
     if ( $par->serv=='proglas' ) {
-      $authhost= '{imap.gmail.com:993/imap/ssl}'.$par->mbox;
+      $authhost= '{imap.proglas.cz:143}'.$par->mbox;
       $user="smidek@proglas.cz";
-      $pass="radost2010";
+      $pass="proglasovymail";
     }
     else { // gmail
       $authhost= '{imap.gmail.com:993/imap/ssl}'.$par->mbox;
