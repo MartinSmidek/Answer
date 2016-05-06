@@ -45,7 +45,7 @@ menu m {type:'left',
       par:°{k:'et',uq:'U2',on:'akce',off:'gen|skup'} }
     item {title:'... dlužníkům akce'
       par:°{k:'et',uq:'U3',on:'akce',off:'gen|skup'} }
-    item {title:'... staré nebo žádné OP'
+    item {title:'... s divnou/žádnou občankou'
       par:°{k:'et',uq:'U4',on:'akce',off:'gen|skup'} }
   }
   menu {title:'Rozesílání mailů ', type:'group', _sys:'snd'
