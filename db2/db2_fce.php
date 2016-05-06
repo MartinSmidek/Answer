@@ -11020,8 +11020,8 @@ function db2_stav($db) {
   $vidi= array('ZMI','GAN','HAN');
   if ( in_array($USER->abbr,$vidi) ) {
     $html.= "<br><hr><h3>Sjednocování podrobněji (informace pro ".implode(',',$vidi).")</h3>";
-    $html.= db2_stav_kdo($db,"kdy > '2015-12-01'",
-      "Od prosince 2015 - (převážně) sjednocování Setkání & Familia");
+//     $html.= db2_stav_kdo($db,"kdy > '2015-12-01'",
+//       "Od prosince 2015 - (převážně) sjednocování Setkání & Familia");
     $html.= db2_prubeh_kdo($db,'2015-11',
       "Od prosince 2015 po měsících - (převážně) sjednocování Setkání & Familia");
     $html.= db2_stav_kdo($db,"kdy <= '2015-12-01'",
@@ -11052,26 +11052,31 @@ function db2_prubeh_kdo($db,$od,$tit) {
     $kolik[$kdo]= $celkem;
   }
   // sjednotitelé - výpočet
-  $sje= array();
+  $sje= $mes= array();
   $rt= mysql_qry("
-    SELECT kdo,(LEFT(kdy,7)),LEFT(kdy,7) as _ym,
+    SELECT kdo,LEFT(kdy,7) as _ym,
       SUM(IF(kde='osoba',IF(op='d',1,-1),0)) AS _osob,
       SUM(IF(kde='rodina',IF(op='d',1,-1),0)) AS _rodin
     FROM ezer_$db._track WHERE op IN ('d','V') AND kdy>'$od'
     GROUP BY kdo,_ym ORDER BY _ym ASC
   ");
-  while ( $rt && (list($kdo,$do,$kdy,$osob,$rodin)= mysql_fetch_row($rt)) ) {
-    $sje[$kdy][$kdo]+= "$osob/$rodin";
+  while ( $rt && (list($kdo,$kdy,$osob,$rodin)= mysql_fetch_row($rt)) ) {
+    $sje[$kdy][$kdo]= "$osob ($rodin)";
+    $mes[$kdy]+= $osob + $rodin;
   }
   // čas
   $do= date("Y-m");
   foreach ($kdos as $kdo) {
-    $top= "<tr><th>osob/rodin</th>";
+    $grf= "<tr><td style='border:0'></td>";
+    $top= "<tr><th>osob (rodin)</th>";
     $row.= "<tr><th>$kdo</th>";
     for ($y= 2015; $y<=substr($do,0,4); $y++) {
       for ($m= 1; $m<=12; $m++) {
         $ym= "$y-".str_pad($m,2,'0',STR_PAD_LEFT);
         if ( $od<$ym && $ym<=$do ) {
+          $h= $mes[$ym] / 5;
+          $g= "<div class='curr_akce' style='height:{$h}px;width:50px;'>";
+          $grf.= "<td style='vertical-align:bottom;border:0'>$g</td>";
           $top.= "<th>$y.$m</th>";
           $row.= "<td align='right'>{$sje[$ym][$kdo]}</td>";
         }
@@ -11079,9 +11084,10 @@ function db2_prubeh_kdo($db,$od,$tit) {
     }
     $row.= "</tr>";
     $top.= "</tr>";
+    $grf.= "</tr>";
   }
-  $html.= "<br><br>$tit<br><br>";
-  $html.= "<div class='stat'><table class='stat'>$top$row</table></div>";
+  $html.= "$tit<br><br>";
+  $html.= "<div class='stat'><table class='stat'>$grf$top$row</table></div>";
   return $html;
 }
 function db2_stav_kdo($db,$desc,$tit) {
