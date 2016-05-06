@@ -8773,7 +8773,7 @@ function mail2_mai_prazdny($id_dopis) {  trace();
   $qry= "SELECT * FROM mail WHERE id_dopis=$id_dopis";
   $res= mysql_qry($qry);
   if ( mysql_num_rows($res)>0 ) {
-    $result['_html']= "Rozesílací seznam pro tento mail již existuje, stiskni OK pokud má být přepsán novým";
+    $result['_html']= "Rozesílací seznam pro tento mail již existuje, stiskni ANO pokud má být přepsán novým";
     $result['_prazdny']= 0;
   }
   return $result;
@@ -8875,7 +8875,7 @@ function mail2_mai_omitt2($id_dopis,$lst_vynech) {  trace();
 # $cond = dodatečná podmínka POUZE pro volání z mail2_mai_stav
 function mail2_mai_pocet($id_dopis,$dopis_var,$cond='',$recall=false) {  trace();
   $result= (object)array('_error'=>0, '_count'=> 0, '_cond'=>false);
-  $result->_html= 'Rozesílání mailu nemá určené adresáty, stiskni ZRUŠIT';
+  $result->_html= 'Rozesílání mailu nemá určené adresáty, stiskni NE';
   $html= '';
   $emaily= $ids= $jmena= $pobyty= array();
   $spatne= $nema= $mimo= $nomail= '';
@@ -9080,7 +9080,7 @@ function mail2_mai_pocet($id_dopis,$dopis_var,$cond='',$recall=false) {  trace()
   $html.= $mx ? "$mx mají mail označený '*' jako nedostupný ($mimo)" : '';
   $result->_html= "$html<br><br>" . ($nt>0
     ? "Opravdu vygenerovat seznam pro rozeslání\n'$nazev'\nna $nt adres?"
-    : "Mail '$nazev' nemá žádného adresáta, stiskni ZRUŠIT");
+    : "Mail '$nazev' nemá žádného adresáta, stiskni NE");
   $result->_count= $nt;
   if ( !$recall ) {
     // pro delší seznamy
