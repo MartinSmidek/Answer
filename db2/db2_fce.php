@@ -8867,6 +8867,8 @@ function mail2_mai_omitt2($id_dopis,$lst_vynech) {  trace();
 #         do seznamu se dostanou pouze organizující účastnící s funkcí:1,2,6 (VPS,SVPS,hospodář)
 #   'U3'- rozeslat účastníkům akce dopis.id_duakce ukazující do akce
 #         do seznamu se dostanou pouze dlužníci (bez avíza)
+#   'U4'- rozeslat účastníkům akce dopis.id_duakce ukazující do akce
+#         do seznamu se dostanou pouze dospělí s chybějícím nebo zjevně starým OP
 #   'Q' - rozeslat na adresy vygenerované dopis.cis_skupina => hodnota
 #   'G' - rozeslat podle mailistu - varianta osoba/rodina
 # pokud _cis.data=9999 jde o speciální seznam definovaný funkcí mail2_mai_skupina - ZRUŠENO
@@ -8984,6 +8986,7 @@ function mail2_mai_pocet($id_dopis,$dopis_var,$cond='',$recall=false) {  trace()
     }
     break;
   // --------------------------------------------------- účastníci akce
+  case 'U4':    // divný OP
   case 'U3':    // dlužníci
   case 'U2':    // sloužící
   case 'U':
@@ -8997,8 +9000,10 @@ function mail2_mai_pocet($id_dopis,$dopis_var,$cond='',$recall=false) {  trace()
                  IF(p.platba1+p.platba2+p.platba3+p.platba4>0,
                    p.platba1+p.platba2+p.platba3+p.platba4,
                    IF(pouze>0,1,2)*a.cena)>platba,
-                 p.platba1+p.platba2+p.platba3+p.platba4+p.poplatek_d>platba+platba_d)"
-         : " --- chybné komu --- " ));
+                 p.platba1+p.platba2+p.platba3+p.platba4+p.poplatek_d>platba+platba_d)" : (
+           $dopis_var=='U4' ?
+             " AND IF(role IN ('a','b'),REPLACE(o.obcanka,' ','') NOT RLIKE '^[0-9]{9}$',0)"
+         : " --- chybné komu --- " )));
     // využívá se toho, že role rodičů 'a','b' jsou před dětskou 'd', takže v seznamech
     // GROUP_CONCAT jsou rodiče, byli-li na akci. Emaily se ale vezmou ode všech, mají-li osobní
     $qry= "SELECT a.nazev,id_pobyt,pouze,COUNT(*) AS _na_akci,avizo,
@@ -9194,7 +9199,7 @@ function mail2_personify($obsah,$vars,$id_pobyt,&$err) {
 # informace o členovi
 # $id - klíč osoby nebo chlapa
 # $zdroj určuje zdroj adres
-#   'U','U2','U3' - rozeslat účastníkům akce dopis.id_duakce ukazující do akce
+#   'U','U2','U3','U4' - rozeslat účastníkům akce dopis.id_duakce ukazující do akce
 #   'C' - rozeslat účastníkům akce dopis.id_duakce ukazující do ch_ucast
 #   'Q' - rozeslat na adresy vygenerované dopis.cis_skupina => hodnota
 #   'G' - maillist
@@ -9280,6 +9285,7 @@ function mail2_mai_info($id,$email,$id_dopis,$zdroj,$id_mail) {  trace();
   case 'U':                     // účastníci akce
   case 'U2':                    // sloužící účastníci akce
   case 'U3':                    // dlužníci
+  case 'U4':                    // divný OP
     $qry= "SELECT * FROM osoba WHERE id_osoba=$id ";
     $res= mysql_qry($qry);
     if ( $res && $c= mysql_fetch_object($res) ) {

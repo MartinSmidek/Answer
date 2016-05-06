@@ -20,7 +20,7 @@ proc init_ucast() { echo('mai:init_ucast ',the_title.get);
 var the_duakce_local: number    // zobrazená akce - pokud se liší od the_duakce, je třeba překreslit
 var E_info: text
 var dopis_id: text
-var dopis_var: text             // typ rozesílání: U/U2/U3 - účastníci akce
+var dopis_var: text             // typ rozesílání: U/U2/U3/U4 - účastníci akce
 var dopis_akce: number          // id_akce|0
 var karta: text                 // et|es
 var menu_item=0
@@ -45,6 +45,8 @@ menu m {type:'left',
       par:°{k:'et',uq:'U2',on:'akce',off:'gen|skup'} }
     item {title:'... dlužníkům akce'
       par:°{k:'et',uq:'U3',on:'akce',off:'gen|skup'} }
+    item {title:'... staré nebo žádné OP'
+      par:°{k:'et',uq:'U4',on:'akce',off:'gen|skup'} }
   }
   menu {title:'Rozesílání mailů ', type:'group', _sys:'snd'
     item {title:'všem účastníkům této akce',
@@ -53,6 +55,8 @@ menu m {type:'left',
       par:°{k:'es',uq:'U2',on:'akce',off:'gen|skup'} }
     item {title:'... dlužníkům akce'
       par:°{k:'es',uq:'U3',on:'akce',off:'gen|skup'} }
+    item {title:'... staré nebo žádné OP'
+      par:°{k:'es',uq:'U4',on:'akce',off:'gen|skup'} }
   }
   proc onclick (i) {
     menu_item.set(i);
@@ -139,7 +143,7 @@ form _etext  {
   field id_duakce { data:dopis.id_duakce }
   field id_mailist { data:dopis.id_mailist }
   field cis_skupina { data:dopis.cis_skupina }
-  field komu  { data:dopis.komu }       // 0:všem, 1:VPS..., 2:dlužníci
+  field komu  { data:dopis.komu }       // 0:všem, 1:VPS..., 2:dlužníci, 3:OP
   # společné údaje mailu
   const L=390
   field id_davka { data:dopis.id_davka }
@@ -211,7 +215,8 @@ form _etext  {
       switch(dopis_var.get,
       'U', { id_duakce.set(dopis_akce.get); komu.set(0); },
       'U2',{ id_duakce.set(dopis_akce.get); komu.set(1); },
-      'U3',{ id_duakce.set(dopis_akce.get); komu.set(2); }
+      'U3',{ id_duakce.set(dopis_akce.get); komu.set(2); },
+      'U4',{ id_duakce.set(dopis_akce.get); komu.set(3); }
       );
       id_duakce.change; komu.change; cis_skupina.change; id_mailist.change;
     }
@@ -232,7 +237,7 @@ form _etext  {
       var blokovano: number
       var pocet: number
       var err: text
-      eq(dopis_var.get,'U','U2','U3');
+      eq(dopis_var.get,'U','U2','U3','U4');
       # rozesílání podle nastavené akce
         prazdny; et_prazdy.get;
         E_info.set(ask('mail2_mai_pocet',dopis_id.get,dopis_var.get));
@@ -258,7 +263,9 @@ form _etext  {
     // organizátoři akce (dopis.komu=1)
     'U2',{ texty.browse_load(conc("etd.id_duakce='",dopis_akce.get,"'"," AND etd.komu=1")); },
     // dlužníci akce (dopis.komu=2)
-    'U3',{ texty.browse_load(conc("etd.id_duakce='",dopis_akce.get,"'"," AND etd.komu=2")); }
+    'U3',{ texty.browse_load(conc("etd.id_duakce='",dopis_akce.get,"'"," AND etd.komu=2")); },
+    // špatné OP (dopis.komu=3)
+    'U4',{ texty.browse_load(conc("etd.id_duakce='",dopis_akce.get,"'"," AND etd.komu=3")); }
     );
     reload2
   }
@@ -395,7 +402,9 @@ form _esady  {
     // organizátoři akce (dopis.komu=1)
     'U2',{ texty.browse_load(conc("etd.id_duakce='",dopis_akce.get,"'"," AND etd.komu=1")); },
     // dlužníci akce (dopis.komu=2)
-    'U3',{ texty.browse_load(conc("etd.id_duakce='",dopis_akce.get,"'"," AND etd.komu=2")); }
+    'U3',{ texty.browse_load(conc("etd.id_duakce='",dopis_akce.get,"'"," AND etd.komu=2")); },
+    // špatné OP (dopis.komu=3)
+    'U4',{ texty.browse_load(conc("etd.id_duakce='",dopis_akce.get,"'"," AND etd.komu=3")); }
     );
     reload2
   }
