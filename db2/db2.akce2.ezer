@@ -1055,7 +1055,7 @@ form _osoba2x [,,244,322] {css:'ae_frame', proc onclick() { on_click }
   #==> . konference: g (jen pro oprávněné)
   field gmail    [5,14,178,] {tag:'g', type:'list', data:o.gmail, format:'n' //,           skill:'mrop|mrop;dk|dk',
                               title:'^emailové adresy používané v konferencích '}
-  button gmail_save [ 188,14,,] {tag:'g', title:'[fa-save] Ulož',                       skill:'mrop|mrop;dk|dk'
+  button gmail_save [ 188,14,,] {tag:'g', title:'[fa-save] Ulož' //,                       skill:'mrop|mrop;dk|dk'
     proc onclick() { var old:text
       old.set(function('x',"return x.original.value",gmail));
       eq(old,gmail.get)
