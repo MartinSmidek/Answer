@@ -10,7 +10,8 @@ function db2_rod_show($nazev,$n) {
   $nazev= trim($nazev);
   $rod= array(null);
   // seznamy položek pro browse_fill kopírované z ucast2_browse_ask
-  $fos=   ucast2_flds("umrti,prijmeni,rodne,sex,adresa,ulice,psc,obec,stat,kontakt,telefon,nomail,email"
+  $fos=   ucast2_flds("umrti,prijmeni,rodne,sex,adresa,ulice,psc,obec,stat,kontakt,telefon"
+        . ",nomail,email,gmail"
         . ",iniciace,uvitano,clen,obcanka,rc_xxxx,cirkev,vzdelani,titul,zamest,zajmy,jazyk,dieta"
         . ",aktivita,note,_kmen");
   $fspo=  ucast2_flds("id_spolu,_barva,s_role,dite_kat,poznamka,pecovane,pfunkce,pece_jm,pece_id,o_umi");
@@ -9002,7 +9003,7 @@ function mail2_mai_pocet($id_dopis,$dopis_var,$cond='',$recall=false) {  trace()
                    IF(pouze>0,1,2)*a.cena)>platba,
                  p.platba1+p.platba2+p.platba3+p.platba4+p.poplatek_d>platba+platba_d)" : (
            $dopis_var=='U4' ?
-             " AND IF(role IN ('a','b'),REPLACE(o.obcanka,' ','') NOT RLIKE '^[0-9]{9}$',0)"
+             " AND IF(IFNULL(role,'a') IN ('a','b'),REPLACE(o.obcanka,' ','') NOT RLIKE '^[0-9]{9}$',0)"
          : " --- chybné komu --- " )));
     // využívá se toho, že role rodičů 'a','b' jsou před dětskou 'd', takže v seznamech
     // GROUP_CONCAT jsou rodiče, byli-li na akci. Emaily se ale vezmou ode všech, mají-li osobní
