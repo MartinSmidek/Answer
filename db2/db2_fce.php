@@ -1722,6 +1722,7 @@ end:
 /** ------------------------------------------------------------------------------ ucast2_browse_ask **/
 # BROWSE ASK
 # obsluha browse s optimize:ask
+#                                       !!! při změně je třeba ošetřit použití v sestavách
 # x->order= {a|d} polozka
 # x->show=  {polozka:[formát,vzor/1,...],...} pro položky s neprázdným vzorem
 #                                             kde formát=/ = # $ % @ * .
@@ -3116,12 +3117,12 @@ function tisk2_sestava_pary($akce,$par,$title,$vypis,$export=false) { trace();
   $y= ucast2_browse_ask($browse_par,true);
   # rozbor výsledku browse/ask
   $i_adresa=         15+1;
-  $i_key_spolu=      39+1;
-  $i_spolu_note=     43+1;
+  $i_key_spolu=      39+2;
+  $i_spolu_note=     43+2;
   $i_osoba_jmeno=     3;
   $i_osoba_prijmeni= 12+1;
   $i_osoba_role=      8;
-  $i_osoba_note=     36+1;
+  $i_osoba_note=     36+2;
   $i_osoba_kontakt=  20+1;
   $i_osoba_telefon=  21+1;
   $i_osoba_email=    23+1;
@@ -11276,11 +11277,52 @@ function db2_kontrola_dat($par) { trace();
   $uziv= " <b>NUTNO OPRAVIT RUČNĚ</b>";
   $n= 0;
   $opravit= $par->opravit ? true : false;
-// goto tvori;
-  // kontrola nenulovosti klíčů ve spojovacích záznamech
-  // ----------------------------------------------==> .. nulové klíče ve SPOLU
   $msg= '';
   $ok= '';
+  // testy nových kontrol
+  // ----------------------------------------------==> .. testy
+  if ( isset($par->test) ) {
+    switch ($par->test) {
+    case 'tvori':
+      $rr= mysql_qry("
+        SELECT BIT_OR(a.access) AS _aa,r.access,
+          GROUP_CONCAT(DISTINCT CONCAT(o.access,':',o.id_osoba)) AS _oas,id_rodina,r.nazev
+        FROM rodina AS r JOIN tvori AS t USING (id_rodina)
+        JOIN osoba AS o USING (id_osoba) JOIN spolu AS s USING (id_osoba)
+        JOIN pobyt AS p USING (id_pobyt) JOIN akce AS a ON id_akce=id_duakce
+        WHERE o.access=3 OR r.access=3
+        GROUP BY id_rodina
+        HAVING _aa<3
+      ");
+      while ( $rr && (list($aa,$ra,$oas,$idr,$jm)= mysql_fetch_row($rr) ) ) {
+        $osoby= '';
+        foreach (explode(',',$oas) as $oa) {
+          list($fill,$oa1)= explode(':',$oa);
+          $osoby.= " $oa1 ";
+        }
+        $html.= "<br>rodina $jm/$idr jezdí jen na akce $aa ale má zapsáno, že je společná";
+        $html.= " jakož i její členové $osoby";
+      }
+      break;
+    case 'access':
+      $rr= mysql_qry("
+        SELECT o.access,BIT_OR(a.access) AS _aa,id_osoba,CONCAT(jmeno,' ',prijmeni)
+        FROM osoba AS o JOIN spolu AS s USING (id_osoba)
+        JOIN pobyt AS p USING (id_pobyt) JOIN akce AS a ON id_akce=id_duakce
+        WHERE o.access=3
+        GROUP BY id_osoba
+        HAVING _aa<3
+      ");
+      while ( $rr && (list($oa,$aa,$ido,$jm)= mysql_fetch_row($rr) ) ) {
+        $html.= "<br>$oa/$aa - $ido: $jm";
+      }
+      break;
+    }
+    goto end;
+  }
+  goto access;
+  // kontrola nenulovosti klíčů ve spojovacích záznamech
+  // ----------------------------------------------==> .. nulové klíče ve SPOLU
   $cond= "id_pobyt=0 OR spolu.id_osoba=0 ";
   $qry=  "SELECT id_spolu,spolu.id_osoba,spolu.id_pobyt,
             CONCAT(a.nazev,' ',YEAR(datum_od)) AS nazev,prijmeni,jmeno
@@ -11409,6 +11451,25 @@ tvori:
   $html.= "<dt style='margin-top:5px'>tabulka <b>tvori</b>: nulové a neexistující hodnoty v tabulce"
     .($msg?"$uziv$msg":"<dd>ok</dd>")."</dt>";
 // goto end;
+  # -----------------------------------------==> .. tvori vede na smazanou osobu/rodinu
+  $msg= $ok= '';
+  $rr= mysql_qry("
+    SELECT id_tvori,id_osoba,id_rodina,r.nazev,CONCAT(jmeno,' ',prijmeni),o.deleted,r.deleted
+    FROM tvori JOIN osoba AS o USING (id_osoba) JOIN rodina AS r USING (id_rodina)
+    WHERE o.deleted!='' OR r.deleted!=''
+    ORDER BY id_rodina
+  ");
+  while ( $rr && (list($idt,$ido,$idr,$nazev,$jm,$od,$rd)= mysql_fetch_row($rr) ) ) {
+    $sod= $od ? "smazaný" : '';
+    $srd= $rd ? "smazané" : '';
+    if ( $opravit ) {
+      $ok.= mysql_qry("DELETE FROM tvori WHERE id_tvori=$idt",1)
+         ? " = SMAZÁNO" : ' !!!!!CHYBA při mazání' ;
+    }
+    $msg.= "<dd>v $srd rodině $nazev/$idr je $sod člen $jm/$ido$ok</dd>";
+  }
+  $html.= "<dt style='margin-top:5px'>tabulka <b>tvori</b>: vazby mezi smazanými záznamy"
+    .($msg?"$auto$msg":"<dd>ok</dd>")."</dt>";
   # -----------------------------------------==> .. násobné členství v rodině
   $msg= '';
   $qry=  "SELECT GROUP_CONCAT(id_tvori) AS _ts,count(*) AS _pocet_,GROUP_CONCAT(DISTINCT role) AS _role_,
@@ -11549,6 +11610,41 @@ tvori:
   }
   $html.= "<dt style='margin-top:5px'>tabulka <b>pobyt</b>: nulová akce"
     .($msg?"$auto$msg":"<dd>ok</dd>")."</dt>";
+  // ------------------------------------------------==> .. ACCESS=3 ale pobyty tomu neodpovídají
+access:
+  $msg= $ok= '';
+  $rr= mysql_qry("
+    SELECT BIT_OR(a.access) AS _aa,r.access,
+      GROUP_CONCAT(DISTINCT CONCAT(o.access,':',o.id_osoba)) AS _oas,id_rodina,r.nazev
+    FROM rodina AS r JOIN tvori AS t USING (id_rodina)
+    JOIN osoba AS o USING (id_osoba) JOIN spolu AS s USING (id_osoba)
+    JOIN pobyt AS p USING (id_pobyt) JOIN akce AS a ON id_akce=id_duakce
+    WHERE o.access=3 OR r.access=3
+    GROUP BY id_rodina
+    HAVING _aa<3
+  ");
+  while ( $rr && (list($aa,$ra,$oas,$idr,$jm)= mysql_fetch_row($rr) ) ) {
+    $osoby_o= $osoby_a= array();
+    foreach (explode(',',$oas) as $oa) {
+      list($aa1,$oa1)= explode(':',$oa);
+      $osoby_o[]= $oa1;
+      $osoby_a[]= $aa1;
+    }
+    if ( $opravit ) {
+      ezer_qry("UPDATE","rodina",$idr,array(
+        (object)array('fld'=>'access', 'op'=>'U','val'=>$aa,'old'=>$ra)
+      ));
+      foreach ($osoby_o as $i=>$ido) {
+        ezer_qry("UPDATE","osoba",$ido,array(
+          (object)array('fld'=>'access', 'op'=>'U','val'=>$aa,'old'=>$osoby_a[$i])
+        ));
+      }
+    }
+    $msg.= "<br>rodina $jm/$idr jezdí jen na akce $aa i její členové ".implode(', ',$osoby_o);
+  }
+  $html.= "<dt style='margin-top:5px'>tabulka <b>rodina, osoba</b>: jsou vedeni jako společní
+          ale jezdí jen na akce jedné organizace" .($msg?"$auto$msg":"<dd>ok</dd>")."</dt>";
+
 end:
   // konec
   $html= $n

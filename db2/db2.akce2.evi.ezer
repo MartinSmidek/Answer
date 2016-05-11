@@ -342,7 +342,7 @@ form _lst [,,370,*] {
     show _vek [,,20,] { title:"věk", expr:"TIMESTAMPDIFF(YEAR,narozeni,NOW())", format:'rsq*' }
     // volitelná položka
     show mail  [,,44,] { data:o.email, title:'emaily',help:'osobní emaily', format:'tq%s' }
-    show _id_o [,,0,] { data:o.id_osoba, title:'ID osoby',help:'osobní číslo', format:'rq*s' }
+    show _id_o [,,0,] { data:o.id_osoba, title:'ID osoby',help:'osobní číslo', format:'rq=s' }
     proc onrowclick() { bo_show }
     proc bo_show() {
       ido.set(id_o.get); page.evid_load(ido.get,0);
@@ -495,7 +495,7 @@ form _lst [,,370,*] {
     show [,,50,] { title:'obec', data:r.obec, format:'q*s' }
     // volitelná položka
     show maily [,,66,] { data:r.emaily, title:'emaily', help:'rodinné emaily', format:'tq%s' }
-    show _id_r [,,0,] { data:r.id_rodina, title:'ID rodiny',help:'číslo rodiny', format:'rq*s' }
+    show _id_r [,,0,] { data:r.id_rodina, title:'ID rodiny',help:'číslo rodiny', format:'rq=s' }
     proc onrowclick() {  idr.set(id_r.get); page.evid_load(0,idr.get); }
     proc onclick() {
       maily.width; maily.width(0);  _id_r.width(66)
