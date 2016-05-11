@@ -11272,6 +11272,10 @@ function track_revert($ids) {  trace();
 # kontrola dat
 #  -  nulové klíče
 function db2_kontrola_dat($par) { trace();
+  global $USER;
+  user_test();
+  $now= date("Y-m-d H:i:s");
+  $user= $USER->abbr;
   $html= '';
   $auto= " <b>LZE OPRAVIT AUTOMATICKY</b>";
   $uziv= " <b>NUTNO OPRAVIT RUČNĚ</b>";
@@ -11543,19 +11547,27 @@ tvori:
   // ---------------------------------------------==> .. triviální RODINA
   $msg= '';
   $rx= mysql_qry("
-    SELECT id_tvori,COUNT(*) AS _pocet,nazev,id_dar,id_platba
-    FROM rodina JOIN tvori USING (id_rodina)
-    LEFT JOIN dar    AS d USING(id_rodina)
-    LEFT JOIN platba AS x USING(id_rodina)
-    GROUP BY id_rodina HAVING _pocet=0
+    SELECT id_rodina,IFNULL(MAX(id_tvori),0) AS _idt,nazev,COUNT(*) AS _pocet
+    FROM rodina AS r LEFT JOIN tvori USING (id_rodina)
+    LEFT JOIN dar    AS d USING (id_rodina)
+    LEFT JOIN platba AS x USING (id_rodina)
+    LEFT JOIN pobyt AS p ON r.id_rodina=p.i0_rodina
+    WHERE r.deleted=''
+    GROUP BY id_rodina HAVING _idt=0 AND _pocet=1
   ");
-  while ( $rx && ($x= mysql_fetch_object($rx)) ) {
+  while ( $rx && (list($idr,$idts,$nazev)= mysql_fetch_row($rx)) ) {
     $n++;
-    $msg.= "<dd>triviální rodina {$x->nazev} $ok</dd>";
-     # if ( $opravit ) ... zkontrolovat dar,platba
+    $ok= '';
+    if ( $opravit ) {
+      $ok= query("UPDATE rodina SET deleted='D' WHERE id_rodina=$idr")
+         ? ", SMAZÁNO " : ' CHYBA při mazání rodina ' ;
+      query("INSERT INTO _track (kdy,kdo,kde,klic,fld,op,old,val)
+             VALUES ('$now','$user','rodina',$idr,'','x','','')");
+    }
+    $msg.= "<dd>triviální rodina bez závazků $nazev/$idr $ok</dd>";
   }
   $html.= "<dt style='margin-top:5px'>tabulka <b>rodina</b>: rodina bez členů"
-    .($msg?"$uziv$msg":"<dd>ok</dd>")."</dt>";
+    .($msg?"$auto<br>$msg":"<dd>ok</dd>")."</dt>";
   // ------------------------------------------------==> .. triviální POBYT
   $msg= '';
   $rx= mysql_qry("
