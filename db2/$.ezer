@@ -30,6 +30,7 @@ menu db2 { type:'main', title:'db2', active:*, _sys:'*'
               info.fill('',ask('db2_stav',i.par.db)) }}
         }
         menu {title:'Kontroly konzistence dat',type:'group', _sys:'*'
+          item {title:'kontroly databáze - test'        ,par:°{opravit:0,test:'test'}, skill:'m'}
           item {title:'kontroly databáze'               ,par:°{opravit:0}}
           item {title:'kontroly databáze s opravou'     ,par:°{opravit:1}, skill:'m'}
           proc onclick (i) {
