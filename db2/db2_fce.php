@@ -11283,7 +11283,7 @@ function db2_kontrola_dat($par) { trace();
   // ----------------------------------------------==> .. testy
   if ( isset($par->test) ) {
     switch ($par->test) {
-    case 'tvori':
+    case 'test':
       $rr= mysql_qry("
         SELECT BIT_OR(a.access) AS _aa,r.access,
           GROUP_CONCAT(DISTINCT CONCAT(o.access,':',o.id_osoba)) AS _oas,id_rodina,r.nazev
@@ -11304,23 +11304,10 @@ function db2_kontrola_dat($par) { trace();
         $html.= " jakož i její členové $osoby";
       }
       break;
-    case 'access':
-      $rr= mysql_qry("
-        SELECT o.access,BIT_OR(a.access) AS _aa,id_osoba,CONCAT(jmeno,' ',prijmeni)
-        FROM osoba AS o JOIN spolu AS s USING (id_osoba)
-        JOIN pobyt AS p USING (id_pobyt) JOIN akce AS a ON id_akce=id_duakce
-        WHERE o.access=3
-        GROUP BY id_osoba
-        HAVING _aa<3
-      ");
-      while ( $rr && (list($oa,$aa,$ido,$jm)= mysql_fetch_row($rr) ) ) {
-        $html.= "<br>$oa/$aa - $ido: $jm";
-      }
-      break;
     }
     goto end;
   }
-  goto access;
+//   goto access;
   // kontrola nenulovosti klíčů ve spojovacích záznamech
   // ----------------------------------------------==> .. nulové klíče ve SPOLU
   $cond= "id_pobyt=0 OR spolu.id_osoba=0 ";
@@ -11452,7 +11439,7 @@ tvori:
     .($msg?"$uziv$msg":"<dd>ok</dd>")."</dt>";
 // goto end;
   # -----------------------------------------==> .. tvori vede na smazanou osobu/rodinu
-  $msg= $ok= '';
+  $msg= '';
   $rr= mysql_qry("
     SELECT id_tvori,id_osoba,id_rodina,r.nazev,CONCAT(jmeno,' ',prijmeni),o.deleted,r.deleted
     FROM tvori JOIN osoba AS o USING (id_osoba) JOIN rodina AS r USING (id_rodina)
@@ -11460,6 +11447,7 @@ tvori:
     ORDER BY id_rodina
   ");
   while ( $rr && (list($idt,$ido,$idr,$nazev,$jm,$od,$rd)= mysql_fetch_row($rr) ) ) {
+    $ok= '';
     $sod= $od ? "smazaný" : '';
     $srd= $rd ? "smazané" : '';
     if ( $opravit ) {
@@ -11613,37 +11601,45 @@ tvori:
   // ------------------------------------------------==> .. ACCESS=3 ale pobyty tomu neodpovídají
 access:
   $msg= $ok= '';
+  $osoby_upd= array();
   $rr= mysql_qry("
     SELECT BIT_OR(a.access) AS _aa,r.access,
       GROUP_CONCAT(DISTINCT CONCAT(o.access,':',o.id_osoba)) AS _oas,id_rodina,r.nazev
     FROM rodina AS r JOIN tvori AS t USING (id_rodina)
     JOIN osoba AS o USING (id_osoba) JOIN spolu AS s USING (id_osoba)
     JOIN pobyt AS p USING (id_pobyt) JOIN akce AS a ON id_akce=id_duakce
-    WHERE o.access=3 OR r.access=3
+    WHERE r.access=3
     GROUP BY id_rodina
     HAVING _aa<3
   ");
   while ( $rr && (list($aa,$ra,$oas,$idr,$jm)= mysql_fetch_row($rr) ) ) {
+    $n++;
     $osoby_o= $osoby_a= array();
     foreach (explode(',',$oas) as $oa) {
       list($aa1,$oa1)= explode(':',$oa);
       $osoby_o[]= $oa1;
       $osoby_a[]= $aa1;
+      $n++;
     }
     if ( $opravit ) {
       ezer_qry("UPDATE","rodina",$idr,array(
         (object)array('fld'=>'access', 'op'=>'U','val'=>$aa,'old'=>$ra)
       ));
       foreach ($osoby_o as $i=>$ido) {
-        ezer_qry("UPDATE","osoba",$ido,array(
-          (object)array('fld'=>'access', 'op'=>'U','val'=>$aa,'old'=>$osoby_a[$i])
-        ));
+        if ( !in_array($ido,$osoby_upd) ) {
+          ezer_qry("UPDATE","osoba",$ido,array(
+            (object)array('fld'=>'access', 'op'=>'U','val'=>$aa,'old'=>$osoby_a[$i])
+          ));
+          $osoby_upd[]= $ido;
+        }
       }
+      $ok= " OPRAVENO";
     }
-    $msg.= "<br>rodina $jm/$idr jezdí jen na akce $aa i její členové ".implode(', ',$osoby_o);
+    $msg.= "<dd>rodina $jm/$idr jezdí jen na akce $aa i její členové ".implode(', ',$osoby_o)." $ok</dd>";
   }
-  $html.= "<dt style='margin-top:5px'>tabulka <b>rodina, osoba</b>: jsou vedeni jako společní
-          ale jezdí jen na akce jedné organizace" .($msg?"$auto$msg":"<dd>ok</dd>")."</dt>";
+  $html.= "<dt style='margin-top:5px'>tabulka <b>rodina</b>: je označena jako společná
+             ale její členové jezdí býhradně na akce jedné organizace"
+        . ($msg?"$auto<br>$msg":"<dd>ok</dd>")."</dt>";
 
 end:
   // konec
