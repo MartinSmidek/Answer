@@ -179,7 +179,9 @@ form _cmd [,,425,30] { css:'ae_parm'
   button [61,5,,] { type:'html', title:"[fa-save] [fa-link] Ulož změny a proveď sjednocení",
     proc onclick() { var ret:object
       eq(mode.get,'osoba','osoba_lst','cleni_lst');
-      { [ o1.oso.same | o1.oso.save; o1.oso.load ];
+      { not(and(o1.bs.nesmazan.get,o2.bs.nesmazan.get));
+        alert("Pozor! Nelze sjednocovat se smazanou kopií!")
+      | [ o1.oso.same | o1.oso.save; o1.oso.load ];
         eq(o1.bs.ido.get,o2.bs.ido.get);
         alert("vlevo i vpravo je stejná osoba!");
       | and(o2.oso.iniciace.get,not(eq(o2.oso.iniciace.get,o1.oso.iniciace.get)));
@@ -197,7 +199,9 @@ form _cmd [,,425,30] { css:'ae_parm'
         ]
       }
     | eq(mode.get,'cleni');
-      { [ c1.oso.same | c1.oso.save; c1.oso.load ];
+      { not(and(c1.bs.nesmazan.get,c2.bs.nesmazan.get));
+        alert("Pozor! Nelze sjednocovat se smazanou kopií!")
+      | [ c1.oso.same | c1.oso.save; c1.oso.load ];
         eq(c1.bs.ido.get,c2.bs.ido.get);
         alert("vlevo i vpravo je stejná osoba!");
       | and(c2.oso.iniciace.get,not(eq(c2.oso.iniciace.get,c1.oso.iniciace.get)));
@@ -209,7 +213,9 @@ form _cmd [,,425,30] { css:'ae_parm'
         c2.bs.browse_seek;
       }
     | eq(mode.get,'rodina','rodina_lst');
-      { [ r1.same | r1.save; r1.load ];
+      { not(and(r1.br.nesmazana.get,r2.br.nesmazana.get));
+        alert("Pozor! Nelze sjednocovat se smazanou kopií!")
+      | [ r1.same | r1.save; r1.load ];
         eq(r1.br.idr.get,r2.br.idr.get);
         alert("vlevo i vpravo je stejná rodina!");
       | confirm("opravdu sjednotit rodiny <b>",r2.br._nazev.get,"</b> (",r2.br.idr.get,
@@ -229,7 +235,9 @@ form _cmd [,,425,30] { css:'ae_parm'
   button [286,5,,] { type:'html', title:"[fa-save] [fa-unlink] Nejde o duplicitu! "
     proc onclick() {
       eq(mode.get,'osoba','osoba_lst','cleni_lst');
-      { [ o1.oso.same | o1.oso.save; o1.oso.load ];
+      { not(and(o1.bs.nesmazan.get,o2.bs.nesmazan.get));
+        alert("Pozor! Nemá smysl se smazanou kopií!")
+      | [ o1.oso.same | o1.oso.save; o1.oso.load ];
         eq(o1.bs.ido.get,o2.bs.ido.get);
         alert("vlevo i vpravo je stejná osoba!");
       | confirm("opravdu jsou <b>",o2.bs._nazev.get,"</b> (",o2.bs.ido.get,
@@ -237,7 +245,9 @@ form _cmd [,,425,30] { css:'ae_parm'
         ask('elim2_differ',o1.bs.ido.get,o2.bs.ido.get,'osoba');
       }
     | eq(mode.get,'rodina','rodina_lst');
-      { [ r1.same | r1.save; r1.load ];
+      { not(and(r1.br.nesmazana.get,r2.br.nesmazana.get));
+        alert("Pozor! Nemá smysl se smazanou kopií!")
+      | [ r1.same | r1.save; r1.load ];
         eq(r1.br.idr.get,r2.br.idr.get);
         alert("vlevo i vpravo je stejná rodina!");
       | confirm("opravdu jsou <b>",r2.br._nazev.get,"</b> (",r2.br.idr.get,
@@ -245,7 +255,9 @@ form _cmd [,,425,30] { css:'ae_parm'
         ask('elim2_differ',r1.br.idr.get,r2.br.idr.get,'rodina');
       }
     | eq(mode.get,'cleni'); //warning("toto tlačítko má smysl jen pro osoby nebo rodiny")
-      { [ c1.oso.same | c1.oso.save; c1.oso.load ];
+      { not(and(c1.bs.nesmazan.get,c2.bs.nesmazan.get));
+        alert("Pozor! Nemá smysl se smazanou kopií!")
+      | [ c1.oso.same | c1.oso.save; c1.oso.load ];
         eq(c1.bs.ido.get,c2.bs.ido.get);
         alert("vlevo i vpravo je stejná osoba!");
       | confirm("opravdu jsou <b>",c2.bs._nazev.get,"</b> (",c2.bs.ido.get,
@@ -333,13 +345,13 @@ form _osoby [,,Wr,Hr] {
   }
   # -----------------------------------------------==>  seznam osob
   label [0,15,229,165] { tag:'r3', css:'ae_parm' }
-  browse bs [5,21,,] { tag:'r3', rows:6, qry_rows:1, css_rows:'barva,0:neucast'
+  browse bs [5,21,,] { tag:'r3', rows:6, qry_rows:1, css_rows:'nesmazan,0:neucast'
     show access { data:o.access }
     show ido [,,50,] { title:'osoba', data:o.id_osoba, format:'sr'
       css_cell:'access,0:,1:ezer_ys,2:ezer_fa,3:ezer_db' }
-    show barva { expr:"o.deleted=''" }
+    show nesmazan { expr:"o.deleted=''" }
     show _nazev [,,141,] { title:'jmeno', format:'tsq*', expr:"CONCAT(o.prijmeni,' ',o.jmeno)" }
-    proc onrowclick() { form.enable(barva.get,'o'); bs_load(ido.get);  }
+    proc onrowclick() { form.enable(nesmazan.get,'o'); bs_load(ido.get);  }
     menu { type:'context'
       item { title:'obnovit smazanou osobu', proc onclick () {
         ask('elim2_recovery_osoba',ido.get); bs.browse_row; bs.raise('onrowclick')
@@ -419,13 +431,13 @@ form _rodiny [,,Wr,Hr] {
   label cap [0,0,Wr-4,15] { style:"color:white;background-color:green;padding-left:5px", format:'c' }
   # -----------------------------------------------==> . seznam rodin
   label [Lr+4,34,215,148] { tag:'r2', css:'ae_parm' }
-  browse br [Lr+10,40,,] { tag:'r2', rows:5, qry_rows:1, css_rows:'barva,0:neucast'
+  browse br [Lr+10,40,,] { tag:'r2', rows:5, qry_rows:1, css_rows:'nesmazana,0:neucast'
     show access { data:r.access }
     show idr [,,50,] { title:'rodina', data:r.id_rodina, format:'sr'
       css_cell:'access,0:,1:ezer_ys,2:ezer_fa,3:ezer_db' }
-    show barva { expr:"r.deleted=''" }
+    show nesmazana { expr:"r.deleted=''" }
     show _nazev [,,126,] { title:'rodina', format:'ts+q*', data:r.nazev }
-    proc onrowclick() { idr.get; /*form.enable(barva.get,'r');*/ br_load(idr.get); bro_list(idr.get) }
+    proc onrowclick() { idr.get; /*form.enable(nesmazana.get,'r');*/ br_load(idr.get); bro_list(idr.get) }
     menu { type:'context'
       item { title:'obnovit smazanou rodinu', proc onclick () {
         ask('elim2_recovery_rodina',idr.get); br.browse_row; br.raise('onrowclick')
@@ -577,13 +589,13 @@ form _cleni [,,Wr,Hr] {
   }
   # -----------------------------------------------==>  seznam osob
   label [0,15,229,165] { tag:'r3', css:'ae_parm' }
-  browse bs [5,21,,] { tag:'r3', rows:6, qry_rows:1, css_rows:'barva,0:neucast'
+  browse bs [5,21,,] { tag:'r3', rows:6, qry_rows:1, css_rows:'nesmazan,0:neucast'
     show access { data:o.access }
     show ido [,,50,] { title:'osoba', data:o.id_osoba, format:'sr'
       css_cell:'access,0:,1:ezer_ys,2:ezer_fa,3:ezer_db' }
-    show barva { expr:"o.deleted=''" }
+    show nesmazan { expr:"o.deleted=''" }
     show _nazev [,,141,] { title:'jmeno', format:'tsq*', expr:"CONCAT(o.prijmeni,' ',o.jmeno)" }
-    proc onrowclick() { form.enable(barva.get,'o'); bs_load(ido.get);  }
+    proc onrowclick() { form.enable(nesmazan.get,'o'); bs_load(ido.get);  }
     menu { type:'context'
       item { title:'obnovit smazanou osobu', proc onclick () {
         ask('elim2_recovery_osoba',ido.get); bs.browse_row; bs.raise('onrowclick')
