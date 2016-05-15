@@ -1,0 +1,30 @@
+# Aplikace bez menu - pouze s hlavním panelem
+# (c) 2016 Martin Šmídek <martin@smidek.eu>
+
+panel p { type:'main'
+  use w: form _w [116,0,,]
+  use f: form _f [10,10,,]
+  proc onstart() { go('home') }
+  proc cms_go(ref) { echo("přepnutí webu na ",ref); go(ref) }
+  proc q() { pop.modal }
+  proc go(ref) { w.page.set(ask('page',function("return Ezer.app_root;"),ref)) }
+  form _f [,,100,100] { css:'white'
+    button [10,10,,] { title:"clear" proc onclick() { w.page.set(''); clear } }
+    button [10,40,,] { title:"popup" proc onclick() { q } }
+    button [10,70,,] { title:"web" proc onclick() {
+#       go('home')
+#       go('home')
+#       go('my!96#clanek')
+      go('archiv_akci!manzele,letos')
+    }}
+  }
+  form _w [,,600,600] { style:"background-color:#fff"
+    label page
+  }
+}
+
+panel pop [,,200,100] { type:'popup'
+  use g: form _g [10,10,,]
+  form _g [,,100,100] { css:'white'
+  }
+}
