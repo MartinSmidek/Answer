@@ -9,7 +9,7 @@
   // rozlišení lokální a ostré verze
   $ezer_local= preg_match('/^\w+\.ezer/',$_SERVER["SERVER_NAME"]); // identifikace ladícího serveru
 
-  $ezer_root= 'panel';
+  $ezer_root= 'cms';
   $skin= 'ck';
 
   // detekce dotykových zařízení
@@ -18,7 +18,7 @@
   $ezer_ksweb= $android && $_SERVER["SERVER_NAME"]=="localhost"; // identifikace ladícího serveru KSWEB/Android
 
   // parametry aplikace
-  $app=      'panel';
+  $app=      'cms';
   $app_name= 'WEB';
   $CKEditor= isset($_GET['editor'])  ? $_GET['editor']  : '4';
   $dbg=      isset($_GET['dbg'])     ? $_GET['dbg']     : 1;                          /* debugger */
@@ -80,17 +80,19 @@
     // Google Maps - pokud používat online mapy lokálně
     $gmap ? array("http://maps.googleapis.com/maps/api/js?sensor=false") : array(),
     // vlastní funkce aplikace
-    array("$panel/panel.js")
+    array("$panel/cms.js")
   );
   $css= array(
-//     $dbg ? "$licensed/jush/mini_jush.css" : '',                                     /* debugger */
-    "$ezer_root/mini.css",
+    $dbg ? "$licensed/jush/mini_jush.css" : '',                                     /* debugger */
+    "$ezer_root/mini.css", "$ezer_root/web.css",
     "$client/licensed/datepicker/datepicker_vista/datepicker_vista.css",
     "$client/licensed/font-awesome/css/font-awesome.min.css",
     $android ? "$client/android.css" : "",
     $ipad ? "$client/ipad.css" : ""
   );
   $options= (object)array(              // přejde do Ezer.options...
+    'skill'        => "'w'",
+    'autoskill'    => "'!w'",
     'awesome' => $awesome,              // použít v elementech ikony awesome fontu
     'curr_version' => 0,                // při přihlášení je nahrazeno nejvyšší ezer_kernel.version
     'Google' => "{                      // definice oprávnění přístupu na Google
@@ -107,46 +109,30 @@
       . "<br/>Za spolupráci děkuje <br/>{$EZER->options->author}";
   $touch_title= "Tutorial ".date("H:i")."<button id='android_menu' class='fa'><i class='fa fa-bars'></i></button>";
   $pars= (object)array(
-    'template' => "mini",
+    'template' => "mini+",
     'app_root' => "$rel_root/$ezer_root",       // startovní soubory tut.php a tut.inc jsou ve složce tut
     'dbg' => $dbg,                                                                    /* debugger */
-    'watch_ip' => false,
-    'watch_key' => false,
-    'autologin' => 'Guest/',
+//     'watch_ip' => false,
+//     'watch_key' => false,
+//     'autologin' => 'Guest/',
+    'watch_key' => 1,   // true = povolit přístup jen po vložení klíče
+    'watch_ip' => 1,    // true = povolit přístup jen ze známých IP adres
     'title_right' => $ipad || $android ? $touch_title
                   : ($ezer_local ? "<span style='color:#ef7f13'>$app_name</span>" : $app_name),
     'contact' => $kontakt,
     'gc_maxlifetime'    => 12*60*60,    // životnost SESSION v sekundách - 12 hodin
     'CKEditor' => "{
       version:'$CKEditor',
-      Minimal:{toolbar:[['Bold','Italic','Source']]},
-      IntranetSlim:{
-        toolbar:[['Bold','Italic','-','Link','Unlink','-','Source']],
-        removePlugins:'wsc,elementspath,scayt'
-      },
-      Tutorial:{
-        toolbar:[['Bold','Italic','TextColor','BGColor',
-          '-','JustifyLeft','JustifyCenter','JustifyRight',
-          '-','Link','Unlink','Image',
-          '-','NumberedList','BulletedList',
-          '-','Source']],
-        extraPlugins:'justify'
-      },
-      EzerHelp2:{
-        toolbar:[['PasteFromWord','-','Bold','Italic','TextColor','BGColor',
-          '-','JustifyLeft','JustifyCenter','JustifyRight',
-          '-','Link','Unlink','HorizontalRule','Image',
-          '-','NumberedList','BulletedList',
-          '-','Outdent','Indent',
-          '-','Source','ShowBlocks','RemoveFormat']],
-        extraPlugins:'ezersave,imageresize', removePlugins:'image'
+      EzerMail:{toolbar:[['PasteFromWord',
+        '-','Format','Bold','Italic','TextColor','BGColor',
+        '-','JustifyLeft','JustifyCenter','JustifyRight',
+        '-','Link','Unlink','HorizontalRule','Image',
+        '-','NumberedList','BulletedList',
+        '-','Outdent','Indent',
+        '-','Source','ShowBlocks','RemoveFormat']]
       }
     }"
   );
-  $const= (object)array();
-  $const->const_rows= 7;
-  $const->const_left= 200;
-  $const->const_width= 200;
-  root_php($app,$app_name,'test',$skin,$options,$js,$css,$pars,$const);
+  root_php($app,$app_name,'chngs',$skin,$options,$js,$css,$pars);
 
 ?>
