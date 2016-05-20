@@ -2,23 +2,33 @@
 # (c) 2016 Martin Šmídek <martin@smidek.eu>
 
 panel p { type:'main'
-  use w: form _w [116,0,,]
-  use f: form _f [10,10,,]
-  proc onstart() { go('home') }
+  var last='home'
+  use w: form _w [0,30,,]
+  use f: form _f [0,0,,]
+  proc onstart() { var gets:object
+    gets.set(function('return Ezer.get;'));
+    last.set(cconc(gets.page,gets.page,'home'));
+    go(last.get)
+  }
   proc cms_go(ref) { echo("přepnutí webu na ",ref); go(ref) }
   proc q() { pop.modal }
-  proc go(ref) { w.page.set(ask('page',function("return Ezer.app_root;"),ref)) }
-  form _f [,,100,100] { css:'white'
-    button [10,10,,] { title:"clear" proc onclick() { w.page.set(''); clear } }
-    button [10,40,,] { title:"popup" proc onclick() { q } }
-    button [10,70,,] { title:"web" proc onclick() {
-#       go('home')
-#       go('home')
+  proc go(ref) { last.set(ref); w.page.set(ask('page',function("return Ezer.app_root;"),ref)) }
+  proc opravit(typ,id) { oprava.start(typ,id); go(last.get) }
+  proc vytvorit(typ,id) { alert("vytváření ještě není dostupné",id); }
+  proc zrusit(typ,id) { alert("delete:",id); }
+  form _f [,,*,30] { css:'grey'
+    button [10,5,,] { title:"clear" proc onclick() { w.page.set(''); clear } }
+    button [100,5,,] { title:"popup" proc onclick() { q } }
+    button [200,5,,] { title:"web" proc onclick() {
+      go('home')
+#       go('test')
+#       go('home!1331')
 #       go('my!96#clanek')
-      go('archiv_akci!manzele,letos')
+#       go('archiv_akci!manzele,letos')
     }}
+    button [300,5,,] { title:"odhlásit" proc onclick() { logout } }
   }
-  form _w [,,600,600] { style:"background-color:#fff"
+  form _w [,,*,*] { style:"background-color:#fff;overflow-x:hidden;overflow-y:scroll"
     label page
   }
 }
@@ -26,5 +36,29 @@ panel p { type:'main'
 panel pop [,,200,100] { type:'popup'
   use g: form _g [10,10,,]
   form _g [,,100,100] { css:'white'
+  }
+}
+
+# ---------------------------------------------------------------------------- oprava
+panel oprava [0,0,645,520] { title:' Úprava článku', type:'popup', css:'dialog'
+  var id:number
+  use f: form _edit [0,0,,]
+  proc start(typ,_id) { var ret:object
+    id.set(_id);
+    ret.set(ask('clanek',_id));
+    f.obsah.set(ret.obsah);
+    f.nadpis.set(ret.nadpis);
+    panel.modal(10,10);
+  }
+  form _edit {
+    label [0,12,60,20] { title:'Nadpis:' }
+    field nadpis [50,10,480,20]
+    button  [540,9,,] { title:'Uložit', help:'ukončit editor a uložit změny'
+      proc onclick() { ask('save_clanek',id.get,nadpis.get,obsah.get); panel.hide(1); }
+    }
+    button  [600,9,,] { title:'Zpět', help:'ukončit editor bez uložení změn'
+      proc onclick() { panel.hide(0); }
+    }
+    edit obsah [0,40,647,480] {type:'html', par:°{toolbar:'EzerMail'} },
   }
 }

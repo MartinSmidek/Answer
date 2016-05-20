@@ -1,7 +1,7 @@
 <?php
 # --------------------------------------------------------------------------------------==> page
-function page($app_root,$page) {  trace();
-  global $CMS;
+function page($app_root,$page) {  //trace();
+  global $CMS, $USER, $login;
   $CMS= true;
   ezer_connect('setkani');
   $href= "http://$app_root/panel.php?trace=uU&page=";
@@ -9,16 +9,19 @@ function page($app_root,$page) {  trace();
   $path= $page ? explode('!',$page) : array('home');
                                                 debug($path,"path");
   $user= isset($_GET['user']) ? $_GET['user'] : 0;
+//   $login= "<a href='./panel/web.php?page=$page'>odhlásit se</a>";
+  $login= "přihlášen {$USER->username}";
+
   return template($href,$path,$user,0);
 }
 # --------------------------------------------------------------------------------------==> template
 # path= [stranka, id2, ...] jako rozklad předaného url
 #   stránka = home | kontakty | search | mapa
-function template($href,$path,$user=0,$echo=1) { trace();
-global $CMS;
+function template($href,$path,$user=0,$echo=1) { //trace();
+global $CMS, $login;
 global $def_pars, $eb_link, $eb_script, $href0, $edit;
 ezer_connect('setkani');
-$edit= $user==1024;
+// $edit= $user==1024;
 // $edit= 1;
 global $trace, $ezer_local;
 $href0= $href;
@@ -36,7 +39,7 @@ $list= <<<__EOD
 __EOD;
 
 $clanek= <<<__EOD
-  <div id='clanek' class='x' onclick="history.back();">
+  <div id='clanek' class='x' onclick="history_back();">
     <div class='clanek x'>
       článek
     </div>
@@ -63,8 +66,8 @@ $def_block= array(
   'objednavky'  => 'sm::  Objednávky:::                        proc=objednavky',
   # speciální stránky
   'home'        => 'tm::  Domů:::                              home',
-  'kontakty'    => 'tm: 9:Kontakty:::                          clanek=79', //kontakty',
-  'test'        => 'tm: 9:TEST:::                              clanek=31', //admin/try/test',
+  'kontakty'    => 'tm: 9:Kontakty:::                          clanek=97', //kontakty',
+  'test'        => 'tm: 9:TEST:::                              clanek=36', //admin/try/test',
 //   'mapa'        => 'tm::  Mapa webu:::                         block=clanek',
   'hledej'      => 'tm::  Hledej:::                            block=clanek',
 );
@@ -137,7 +140,9 @@ foreach ($def_block as $ref=>$def) {
         }
          # doplnění defaultní cesty
         $ref2.= $default2 ? '!'.str_replace(',','!',$default2) : '';
-        $submenu.= " <a href='$href{$path[0]}!$ref2' class='jump$active2'>$nazev2</a>";
+        $submenu.= $CMS
+          ? " <a onclick='go(\"$href{$path[0]}!$ref2\");' class='jump$active2'>$nazev2</a>"
+          : " <a href='$href{$path[0]}!$ref2' class='jump$active2'>$nazev2</a>";
       }
       $submenu.= "</div>";
       array_shift($path);
@@ -168,15 +173,23 @@ foreach (explode(';',$elems) as $elem) {
     break;
 
   case 'clanek': # ---------------------------------------------==> . clanek
-    # článek zadaný názvem nebo cid
-    if ( $edit ) {
-      $body.= "<div id='clanek' class='x'>
-                 <script>clanek('clanek','$ids')</script></div>";
+    # článek zadaný názvem nebo uid
+    $x= clanek($ids);
+    if ( $CMS ) {
+      $menu= "oncontextmenu=\"
+        Ezer.fce.contextmenu([
+          ['editovat',function(el){ opravit('clanek','$ids'); }],
+          ['nový',function(el){ vytvorit('clanek','$ids'); }],
+          ['vymazat',function(el){ zrusit('clanek','$ids'); }]
+        ],arguments[0],'clanek');return false;\"";
+      $body.= "<div id='clanek' class='clanek x' $menu>
+                 <h1>$x->nadpis</h1>$x->obsah
+               </div>";
     }
     else {
-      $x= clanek($ids);
       $body.= "<div id='clanek' class='x'><div class='clanek x'>
-                 <h1>$x->nadpis</h1>$x->obsah</div></div>";
+                 <h1>$x->nadpis</h1>$x->obsah
+               </div></div>";
     }
     break;
 
@@ -188,16 +201,32 @@ foreach (explode(';',$elems) as $elem) {
     list($id)= explode('#',$id);
     $xx= clanky($ids,$id);
     foreach($xx as $x) {
-                                                        display("čláky {$x->ident} ? $id");
-      $body.= $x->ident==$id
-            ? "<div id='clanek' class='x'><div class='clanek x' onclick='history.back();'>
-               <h1>$x->nadpis</h1>$x->abstract</div></div>"
-//             : "<div class='x'>
-//                  <div class='abstrakt x' onclick=\"location.href='$href0!$x->ident#clanek';\">
-//                    <b>$x->nadpis:</b> $x->abstract</div></div>";
-            : "<div class='x'>
-                 <div class='abstrakt x' onclick=\"go('$href0!$x->ident#clanek');\">
-                   <b>$x->nadpis:</b> $x->abstract</div></div>";
+                                                        display("články {$x->ident} ? $id");
+      $menu= "oncontextmenu=\"
+        Ezer.fce.contextmenu([
+          ['editovat clanky',function(el){ opravit('clanky','$id'); }],
+          ['nová clanky',function(el){ vytvorit('clanky','$ids'); }],
+          ['vymazat clanky',function(el){ zrusit('clanky','$ids'); }]
+        ],arguments[0],'clanek');return false;\"";
+      $body.= $CMS
+        ? ( $x->ident==$id
+          ? "<div id='clanek' class='clanek x' onclick=\"go('$href0');\" $menu>
+               <h1>$x->nadpis</h1>$x->abstract
+             </div>"
+          : "<div class='x'>
+               <div class='abstrakt x' onclick=\"go('$href0!$x->ident#clanek');\">
+                 <span class='datum'>$x->datum $x->dnu</span> <b>$x->nadpis:</b> $x->abstract
+               </div></div>"
+          )
+        : (  $x->ident==$id
+          ? "<div id='clanek' class='x'><div class='clanek x' onclick='history.back();'>
+               <h1>$x->nadpis</h1>$x->abstract
+             </div></div>"
+          : "<div class='x'>
+               <div class='abstrakt x' onclick=\"location.href='$href0!$x->ident#clanek';\">
+                 <b>$x->nadpis:</b> $x->abstract
+             </div></div>"
+          );
     }
     $body.= "</div>";
     break;
@@ -209,13 +238,31 @@ foreach (explode(';',$elems) as $elem) {
     $id= array_shift($path);
     $xx= home($id);
     foreach($xx as $x) {
-      $abs.= $x->ident==$id
-            ? "<div id='clanek' class='x'><div class='clanek x' onclick='history.back();'>
-               <h1>$x->nadpis</h1>$x->abstract</div></div>"
-            : "<div class='x'>
-                 <div class='abstrakt x' onclick=\"location.href='{$href0}home!$x->ident#clanek';\">
-                   <span class='datum'>$x->datum $x->dnu</span> <b>$x->nadpis:</b> $x->abstract
-                 </div></div>";
+      $menu= "oncontextmenu=\"
+        Ezer.fce.contextmenu([
+          ['editovat home',function(el){ opravit('home','$id'); }],
+          ['nová akce',function(el){ vytvorit('home','$id'); }],
+          ['vymazat akci',function(el){ zrusit('home','$id'); }]
+        ],arguments[0],'clanek');return false;\"";
+      $abs.= $CMS
+        ? ( $x->ident==$id
+          ? "<div id='clanek' class='clanek x' onclick=\"go('{$href0}home');\" $menu>
+               <h1>$x->nadpis</h1>$x->abstract
+             </div>"
+          : "<div class='x'>
+               <div class='abstrakt x' onclick=\"go('{$href0}home!$x->ident#clanek');\">
+                 <span class='datum'>$x->datum $x->dnu</span> <b>$x->nadpis:</b> $x->abstract
+             </div></div>"
+          )
+        : (  $x->ident==$id
+          ? "<div id='clanek' class='x'><div class='clanek x' onclick='history.back();'>
+               <h1>$x->nadpis</h1>$x->abstract
+             </div></div>"
+          : "<div class='x'>
+               <div class='abstrakt x' onclick=\"location.href='{$href0}home!$x->ident#clanek';\">
+                 <span class='datum'>$x->datum $x->dnu</span> <b>$x->nadpis:</b> $x->abstract
+             </div></div>"
+          );
     }
     $body.= <<<__EOD
   <div id='home' class='x'>
@@ -249,13 +296,31 @@ __EOD;
     $kdy= $ids=='bude' ? $ids : $par_bylo;
     $xx= akce2($vyber,$ids,$id);
     foreach($xx as $x) {
-      $body.= $x->ident==$id
-            ? "<div id='clanek' class='x'><div class='clanek x' onclick='history.back();'>
-               <h1>$x->nadpis</h1>$x->abstract</div></div>"
-            : "<div class='x'>
-                 <div class='abstrakt x' onclick=\"location.href='$href0!$vyber!$x->ident#clanek';\">
-                   <span class='datum'>$x->datum $x->dnu</span> <b>$x->nadpis:</b> $x->abstract
-                 </div></div>";
+      $menu= "oncontextmenu=\"
+        Ezer.fce.contextmenu([
+          ['editovat akci',function(el){ opravit('akce','$id'); }],
+          ['nová akce',function(el){ vytvorit('akce','$id'); }],
+          ['vymazat akci',function(el){ zrusit('akce','$id'); }]
+        ],arguments[0],'clanek');return false;\"";
+      $body.= $CMS
+        ? ( $x->ident==$id
+          ? "<div id='clanek' class='clanek x' onclick=\"go('$href0!$vyber');\" $menu>
+               <h1>$x->nadpis</h1>$x->abstract
+             </div>"
+          : "<div class='x'>
+               <div class='abstrakt x' onclick=\"go('$href0!$vyber!$x->ident#clanek');\">
+                 <span class='datum'>$x->datum $x->dnu</span> <b>$x->nadpis:</b> $x->abstract
+             </div></div>"
+          )
+        : (  $x->ident==$id
+          ? "<div id='clanek' class='x'><div class='clanek x' onclick='history.back();'>
+               <h1>$x->nadpis</h1>$x->abstract
+             </div></div>"
+          : "<div class='x'>
+               <div class='abstrakt x' onclick=\"location.href='$href0!$vyber!$x->ident#clanek';\">
+                 <span class='datum'>$x->datum $x->dnu</span> <b>$x->nadpis:</b> $x->abstract
+             </div></div>"
+          );
     }
     $body.= "</div>";
     break;
@@ -312,7 +377,7 @@ __EOD;
       break;
 
     case 'objednavky': # ------------------------------------------ . proc objednávky
-      $body.= "<div id='clanek' class='x' onclick='history.back();'>
+      $body.= "<div id='clanek' class='x' onclick='history_back();'>
                  <div class='clanek x'>objednávky pobytů v Albeřicích</div>
                </div>";
       break;
@@ -326,7 +391,7 @@ end:
 # --------------------------------------------------------------------------------------==> template
 $icon= $ezer_local ? "web_local.png" : "web.png";
 $xtrace= $echo ? $trace : '';
-$template=  <<<__EOD
+$head=  <<<__EOD
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en" dir="ltr">
 <head>
@@ -340,89 +405,11 @@ $template=  <<<__EOD
   <script type="text/javascript">
   $eb_script
   </script>
-  <style>
-/*  div.x {outline:1px dotted silver; } */
-  a.dbg { outline:1px solid red; }
-
-  /* stránka na mobilu a tabletu */
-  body {margin:0px; padding:0; font-size:10pt; }
-  @media all and (min-width: 80em) {
-    /* stránka na velkém monitoru */
-    body {width:80em; margin:auto; }
-  }
-  a.jump { display:inline-block; padding:0.1em 0.3em; height:1.2em; font-weight:bold;
-           text-decoration:none; font-family:sans-serif; font-size:small;}
-  a.active { background-color:orange !important; }
-  span.datum { background-color:orange }
-  /* top menu */
-  #page_tm {width:100%; text-align:right; min-height:2em;}
-  #page_tm input {display:inline-block; float:right; border:1px solid silver; }
-  #page_tm a.jump { margin:0.1em 0.1em; background-color:gray; color:white; }
-  @media all and (max-width:30em) {
-    #page_tm a.jump { width:12%; white-space:wrap; overflow:hidden; }
-  }
-
-  /* main menu */
-  #page_hm {width:100%; display:inline-flex;}
-  #page_hm a.jump { margin:0.1em 0.3em; background-color:silver; color:black; }
-  @media all and (max-width: 30em) {
-    #page_hm a.jump { width:16.6667%; white-space:wrap; overflow:hidden; }
-  }
-  #vyber {width:100%; }
-
-  /* sub menu */
-  #page_sm {width:100%; display:inline-flex; margin-top: 0.3em;}
-  #page_sm a.jump { margin:0.1em 0.3em; background-color:silver; color:black; }
-  @media all and (max-width: 30em) {
-    #page_sm a.jump, #page_sm span.label {
-            width:16.6667%; white-space:wrap; overflow:hidden; }
-  }
-  @media all and (max-width: 40em) {
-    #page_sm span.label { padding-top:0.4em; }
-    #page_sm a.jump, #page_hm a.jump {
-            border-bottom:0.5em solid silver; border-top:0.5em solid silver; }
-    #page_tm a.jump {
-            border-bottom:0.5em solid gray; border-top:0.5em solid gray; }
-    #page_sm a.active, #page_hm a.active, #page_tm a.active {
-            border-bottom:0.5em solid orange; border-top:0.5em solid orange; }
-  }
-  #page_sm span.label { display:inline-block; margin:0.3em 0.4em; height:1.2em;
-           font-family:sans-serif; font-size:small; }
-
-  /* patička */
-  #page_foo {width:100%; display:table; clear:both; height:3em; }
-  div.page_foo {background-color:#eee; min-height:3em; text-align:center; }
-
-  /* seznamy abstraktů */
-  #list {width:100%; }
-  div.abstrakt { background-color:#eef; margin:0.5em; cursor:pointer;}
-
-  /* článek */
-  #clanek {width:100%; }
-  div.clanek { background-color:#fee; /*min-height:20em;*/ margin:0.5em; }
-
-  /* plán */
-  #plan {width:100%; }
-
-  /* home page na mobilu */
-  #home {width: 100%; }
-
-  #home_akce {width: 100%; display:inline-block; }
-  div.home_akce { background-color:#efe; margin:0.5em; }
-
-  #home_telo {width: 100%; display:inline-block; }
-
-  #home_info {width: 100%; display:inline-block; }
-  div.home_info { background-color:#efe; min-height:5em; margin:0.5em; }
-
-  @media all and (min-width: 30em) {
-    /* home page na na šířku nebo na tabletu */
-    #home_akce {float: left; width: 20%; min-height:5em; }
-    #home_telo {float: left; width: 60%; margin-top:0; }
-    #home_info {float: left; width: 20%; margin-top:0; }
-  }
-  </style>
+  <link rel="stylesheet" href="web.css" type="text/css" media="screen" charset="utf-8">
 </head>
+__EOD;
+
+$body=  <<<__EOD
 <body>
   <div id='page_tm' class='x'>$topmenu <input size=10></div>
   <div id='page_hm' class='x'>$mainmenu</div>
@@ -430,6 +417,7 @@ $template=  <<<__EOD
   <div id='page_foo' class='x'>
     <div class='page_foo x'>
       patička - tady bude možnost se přihlásit, základní informace pro dárce, zkratky na důležité stránky atd.
+      <div><b>$login</b></div>
     </div>
   </div>
   $xtrace
@@ -437,25 +425,25 @@ $template=  <<<__EOD
 </html>
 __EOD;
 if ( $echo )
-  echo $template;
+  echo $head.$body;
 else
-  return $template;
+  return $body;
 }
 /** ====================================================================================> JAVASCRIPT */
 function javascript_init() {
   global $eb_script, $eb_link, $edit;
-  if ( $edit ) {
-    $licensed= "ezer2.2/client/licensed";
-    $eb_link= <<<__EOJ
-    <script src="$licensed/ckeditor4/ckeditor.js" type="text/javascript" charset="utf-8"></script>
-    <script src="$licensed/clientcide.js"         type="text/javascript" charset="utf-8"></script>
-__EOJ;
-  }
-  else {
+//   if ( $edit ) {
+//     $licensed= "ezer2.2/client/licensed";
+//     $eb_link= <<<__EOJ
+//     <script src="$licensed/ckeditor4/ckeditor.js" type="text/javascript" charset="utf-8"></script>
+//     <script src="$licensed/clientcide.js"         type="text/javascript" charset="utf-8"></script>
+// __EOJ;
+//   }
+//   else {
     $eb_link= <<<__EOJ
     <script src="MooTools-Core-1.6.0-compressed.js" type="text/javascript" charset="utf-8"></script>
 __EOJ;
-  }
+//   }
   $eb_script= <<<__EOJ
   // -------------------------------------------------------------------------------------------- go
   function go(ref) {
@@ -472,6 +460,10 @@ __EOJ;
       });
     });
     location.href= href+'!'+ref;
+  }
+  // ---------------------------------------------------------------------------------- history_back
+  function history_back() {
+    history.back();
   }
   // ------------------------------------------------------------------------------------------- ask
   // ask(x,then): dotaz na server se jménem funkce po dokončení
@@ -491,14 +483,14 @@ __EOJ;
   function error(msg) {
     alert(msg);
   }
-  // -------------------------------------------------------------------------------==> . clanek
-  function clanek(idd,idc) {
-    ask({cmd:'clanek',id:idc},clanek_,{elem:idd});
-  }
-  function clanek_(y,ctx) {
-    var elem= $(ctx.elem);
-    elem.set('html',"<div class='clanek' contenteditable='true'><h1>"+y.row.nadpis+"</h1>"+y.row.obsah+"</div>");
-  }
+//   // -------------------------------------------------------------------------------==> . clanek
+//   function clanek(idd,idc) {
+//     ask({cmd:'clanek',id:idc},clanek_,{elem:idd});
+//   }
+//   function clanek_(y,ctx) {
+//     var elem= $(ctx.elem);
+//     elem.set('html',"<div class='clanek' contenteditable='true'><h1>"+y.row.nadpis+"</h1>"+y.row.obsah+"</div>");
+//   }
   window.addEvent('domready', function() {
   });
 __EOJ;
@@ -557,13 +549,20 @@ function closetags($html) {
 function clanek($id) { trace();
   $x= (object)array();
   if ( is_numeric($id) ) {
-    list($x->nadpis,$x->obsah)= select("title,text","setkani.tx_gncase_part","cid='$id'");
+    list($x->uid,$x->nadpis,$x->obsah)= select("uid,title,text","setkani.tx_gncase_part","uid='$id'");
   }
   else {
     list($x->nadpis,$x->obsah)= select("nadpis,obsah","clanek","zkratka='$id'");
   }
-                                                        display("článek=$x->nadpis");
+                                                        debug($x,"článek=$x->nadpis");
   return $x;
+}
+# ---------------------------------------------------------------------------------==> . save_clanek
+function save_clanek($id,$nadpis,$obsah) { trace();
+  $nadpis= mysql_real_escape_string($nadpis);
+  $obsah= mysql_real_escape_string($obsah);
+  query("UPDATE setkani.tx_gncase_part SET title='$nadpis',text='$obsah' WHERE uid='$id'");
+  return 1;
 }
 # ------------------------------------------------------------------------------------------- clanky
 # id=pid nebo název menu
@@ -619,7 +618,7 @@ function akce2($vyber,$kdy,$id=0) { trace();
   }
                                                        display("kdy=$c_kdy");
   $cr= mysql_qry("
-    SELECT cid, program, tema, title, text,
+    SELECT p.uid, program, tema, title, text,
       DATEDIFF(FROM_UNIXTIME(untilday),FROM_UNIXTIME(fromday))+1 AS _dnu,
       FROM_UNIXTIME(fromday) AS _od, FROM_UNIXTIME(untilday) AS _do
     FROM setkani.tx_gncase AS c
@@ -635,68 +634,10 @@ function akce2($vyber,$kdy,$id=0) { trace();
     $datum= sql_date1($c->_od);
     $dnu= $c->_dnu;
     $dnu= $dnu==1 ? '' : ($dnu<5 ? " - $dnu dny" : " - $dnu dnů");
-    if ( $c->cid!=$id ) {
+    if ( $c->uid!=$id ) {
       $tail= x_shorting($tail).' ...';
     }
-    $x[]= (object)array('ident'=>$c->cid,'datum'=>$datum,'dnu'=>$dnu,
-      'nadpis'=>$c->title,'abstract'=>$tail);
-  }
-//                                                         debug($x);
-  return $x;
-}
-# --------------------------------------------------------------------------------------------- akce
-# id=pid nebo název menu
-function akce($komu,$kdy,$id=0) { trace();
-  global $def_pars;
-  $x= array();
-  $ukazat= 200;
-  // překlad $komu na regexpr
-  $rkomu= array();
-  foreach(explode(',',$komu) as $kdo) {
-    $ki= $def_pars['komu'][$kdo];
-    if ( $ki ) {
-      list($k,$i)= explode(':',$ki);
-      $rkomu[]= $i;
-    }
-  }
-  $c_komu= "program REGEXP '".implode('|',$rkomu)."'";
-                                                       display("komu=$c_komu");
-  // překlad $kdy na podmínku
-  $c_kdy= 0;
-  if ( $kdy=='bude' || $kdy=='bude_alberice' ) {
-    $c_kdy= "FROM_UNIXTIME(fromday)>=NOW()";
-    $ORDER= "ASC";
-  }
-  else {
-    $ki= $def_pars['bylo'][$kdy];
-    if ( $ki ) {
-      list($k,$c_kdy)= explode(':',$ki);
-    }
-    $c_kdy.= " AND FROM_UNIXTIME(fromday)<NOW()";
-    $ORDER= "DESC";
-  }
-                                                       display("kdy=$c_kdy");
-  $cr= mysql_qry("
-    SELECT cid, program, tema, title, text,
-      DATEDIFF(FROM_UNIXTIME(untilday),FROM_UNIXTIME(fromday))+1 AS _dnu,
-      FROM_UNIXTIME(fromday) AS _od, FROM_UNIXTIME(untilday) AS _do
-    FROM setkani.tx_gncase AS c
-    JOIN setkani.tx_gncase_part AS p ON p.cid=c.uid
-    WHERE !c.deleted AND !c.hidden AND !p.deleted AND !p.hidden AND tags='A'
-      AND c.pid IN (55,46,98,99,120,197,237,247,260,265,266,267,268,269,270,
-                    271,272,273,274,275,276,277,278,279,280,281,282)
-      AND $c_komu AND $c_kdy
-    ORDER BY fromday $ORDER
-  ");
-  while ( $cr && ($c= mysql_fetch_object($cr)) ) {
-    $tail= $c->text;
-    $datum= sql_date1($c->_od);
-    $dnu= $c->_dnu;
-    $dnu= $dnu==1 ? '' : ($dnu<5 ? " - $dnu dny" : " - $dnu dnů");
-    if ( $c->cid!=$id ) {
-      $tail= x_shorting($tail).' ...';
-    }
-    $x[]= (object)array('ident'=>$c->cid,'datum'=>$datum,'dnu'=>$dnu,
+    $x[]= (object)array('ident'=>$c->uid,'datum'=>$datum,'dnu'=>$dnu,
       'nadpis'=>$c->title,'abstract'=>$tail);
   }
 //                                                         debug($x);
@@ -709,7 +650,7 @@ function home($id=0) { trace();
   $x= array();
   $ukazat= 200;
   $cr= mysql_qry("
-    SELECT cid, program, tema, title, text,
+    SELECT p.uid, program, tema, title, text,
       DATEDIFF(FROM_UNIXTIME(untilday),FROM_UNIXTIME(fromday))+1 AS _dnu,
       FROM_UNIXTIME(fromday) AS _od, FROM_UNIXTIME(untilday) AS _do
     FROM setkani.tx_gncase AS c
@@ -723,10 +664,10 @@ function home($id=0) { trace();
     $datum= sql_date1($c->_od);
     $dnu= $c->_dnu;
     $dnu= $dnu==1 ? '' : ($dnu<5 ? " - $dnu dny" : " - $dnu dnů");
-    if ( $c->cid!=$id ) {
+    if ( $c->uid!=$id ) {
       $tail= x_shorting($tail).' ...';
     }
-    $x[]= (object)array('ident'=>$c->cid,'datum'=>$datum,'dnu'=>$dnu,
+    $x[]= (object)array('ident'=>$c->uid,'datum'=>$datum,'dnu'=>$dnu,
       'nadpis'=>$c->title,'abstract'=>$tail);
   }
 //                                                         debug($x);

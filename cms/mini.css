@@ -1,9 +1,8 @@
-<br />
-<b>Notice</b>:  Undefined variable: c3_kuk in <b>C:\Apache\htdocs\ezer\www-ys2\ezer2.2\client\ezer.css.php</b> on line <b>166</b><br />
-<br />
-<b>Notice</b>:  Undefined variable: oranzova in <b>C:\Apache\htdocs\ezer\www-ys2\ezer2.2\client\ezer.css.php</b> on line <b>216</b><br />
-<br />
-<b>Notice</b>:  Undefined variable: oranzova in <b>C:\Apache\htdocs\ezer\www-ys2\ezer2.2\client\ezer.css.php</b> on line <b>222</b><br />
+/* nez menu */
+#work { height:100%; }
+#work .Panel { position:initial; }
+#stred { height:100%; }
+
 
 /* endora */
 
@@ -250,7 +249,8 @@ i.efa { width:30px; margin-left:-30px; }
 .ContextMenu li a.disabled:hover {
   background-color:#eee; }
 .ContextFocus { /* viz taky LabelDrop */
-  background-color:#ffa !important; }
+  outline: 3px solid red;
+  /*background-color:#ffa !important;*/ }
 #clipboard {
   width:150px; height:15px; cursor:default; position:relative; z-index:1; }
 .ContextMenu li #clipboard a {

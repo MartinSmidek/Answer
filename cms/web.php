@@ -28,6 +28,7 @@ $href= $_SERVER['REQUEST_SCHEME'].'://'.$_SERVER['SERVER_NAME'].':'.$_SERVER['SE
 $path= isset($_GET['page']) ? explode('!',$_GET['page']) : array('home');
 $user= isset($_GET['user']) ? $_GET['user'] : 0;
 javascript_init();
+$login= "<a href='./cms.php?page={$_GET['page']}'>přihlásit se</a>";
 template($href,$path,$user);
 die();
 ?>

@@ -1,7 +1,7 @@
 <?php # (c) 2010 Martin Smidek <martin@smidek.eu>
   error_reporting(E_ALL ^ E_NOTICE);
   global $ezer_root;
-  $ezer_root= 'panel';
+  $ezer_root= 'cms';
 
   chdir("../..");
   // nastavení verze jádra
@@ -80,7 +80,7 @@
   // uživatelské i knihovní moduly v PHP obsažené v $ezer_path_root
   $ezer_php= array(
     "{$EZER->version}/ezer2_fce.php",
-    "panel/template.php",
+    "$ezer_root/template.php",
   );
 
   // parametrizace $EZER

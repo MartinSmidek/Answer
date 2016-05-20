@@ -4,7 +4,8 @@
 function go(href) {
   var url= href.split('page=');
   url= url.length==2 ? url[1] : url[0];
-  Ezer.run.$.part.p._call(0,'cms_go',url)
+  url= url.split('#');
+  Ezer.run.$.part.p._call(0,'cms_go',url[0])
 };
 
 
@@ -20,4 +21,16 @@ function history_push(href,checks) {
   });
   var url= href.split('page=');
   go(url[1]+'!'+ref);
+}
+// ---------------------------------------------------------------------------------------- vytvorit
+function vytvorit(typ,id) {
+  Ezer.run.$.part.p._call(0,'vytvorit',typ,id);
+}
+// ----------------------------------------------------------------------------------------- opravit
+function opravit(typ,id) {
+  Ezer.run.$.part.p._call(0,'opravit',typ,id);
+}
+// ------------------------------------------------------------------------------------------ zrusit
+function zrusit(typ,id) {
+  Ezer.run.$.part.p._call(0,'zrusit',typ,id);
 }
