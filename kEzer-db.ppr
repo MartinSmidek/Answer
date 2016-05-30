@@ -13,12 +13,12 @@ FileFormat=0
 ProjectFilesOnly=0
 [Project tree]
 kEzer-ys2
-	+system
+	-system
 		..\..\bin\apache\apache2.4.9\conf\httpd.conf
 		..\..\Apache\bin\apache\apache2.4.9\conf\extra\httpd-vhosts-ezer.conf
-	+poznámky
+	-poznámky
 		sql\answer_dotazy.sql
-	+$
+	-$
 		-skins
 			skins\ck\ck.ezer.css
 			skins\colors.php
@@ -32,7 +32,7 @@ kEzer-ys2
 		db2_test.php
 		index.php
 		robots.txt
-	+db2
+	-db2
 		-$ test
 			db2_test\$.ezer
 		+$
@@ -63,7 +63,7 @@ kEzer-ys2
 		+pokladna
 			db2\db2.pok.ezer
 		-ekonomika
-	+ezer2.2
+	-ezer2.2
 		+client
 			ezer2.2\client\_code.js
 			ezer2.2\client\_test.html
@@ -143,7 +143,7 @@ kEzer-ys2
 30=answer.php
 [Selected Project Files]
 Main=
-Selected=db2\db2.akce2.maia.ezer
+Selected=db2\db2.akce2.elim.ezer
 [ezer2.2\client\app.js]
 TopLine=104
 Caret=39,125
@@ -215,13 +215,13 @@ BookMark3=32,1197
 [db2\db2_fce.php]
 TopLine=8739
 Caret=1,8745
+BookMark1=23,11079
+BookMark2=28,1826
 Mark1=20,7141
 Mark2=1,2027
 Mark3=33,6206
 Mark4=30,6187
-BookMark2=28,1826
 Mark5=64,284
-BookMark1=23,11079
 [db2\db2.akce2.cnf.ezer]
 TopLine=1
 Caret=67,28
@@ -236,7 +236,7 @@ Caret=58,1168
 Mark1=19,1237
 Mark2=5,216
 [db2\db2.akce2.mai.ezer]
-TopLine=1
+TopLine=336
 Caret=35,383
 BookMark1=24,684
 Mark1=88,474
@@ -252,10 +252,12 @@ Mark9=36,1210
 TopLine=1
 Caret=50,24
 [db2\db2.akce2.elim.ezer]
-TopLine=62
-Caret=71,67
-Mark1=37,196
-Mark2=46,211
+TopLine=185
+Caret=33,204
+Mark1=45,596
+Mark2=37,352
+Mark3=1,438
+Mark4=59,215
 [db2\db2.akce2.evi.ezer]
 TopLine=618
 Caret=48,654
@@ -265,7 +267,7 @@ Mark3=26,1084
 Mark4=8,539
 Mark5=13,554
 [db2\db2.akce2.ezer]
-TopLine=1054
+TopLine=1047
 Caret=169,1047
 Mark1=40,1056
 Mark2=31,732
