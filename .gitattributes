@@ -12,15 +12,6 @@ ch/img/+logo.gif -text
 ch/img/-logo.gif -text
 ch/img/ch-logo.gif -text
 ch/img/ch.png -text
-cms/$.ezer -text
-cms/cms.inc -text
-cms/cms.js -text
-cms/cms.php -text
-cms/mini.css -text
-cms/mini.php -text
-cms/template.php -text
-cms/web.css -text
-cms/web.php -text
 /cr.inc -text
 /cr.php -text
 cr/$.ezer -text

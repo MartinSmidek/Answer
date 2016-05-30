@@ -1062,7 +1062,7 @@ end:
   return $ret;
 }
 # -------------------------------------------------------------------------------- akce2_nacti_cenik
-# lokální pro akce_vzorec_soubeh a akce_sestava_lidi
+# lokální pro akce2_vzorec_soubeh a tisk2_sestava_lidi
 function akce2_nacti_cenik($id_akce,&$cenik,&$html) {
   $qa= "SELECT * FROM cenik WHERE id_akce=$id_akce ORDER BY poradi";
   $ra= mysql_qry($qa);
@@ -9183,7 +9183,7 @@ function mail2_personify($obsah,$vars,$id_pobyt,&$err) {
         $val= $duvod_text;
       }
       elseif ( $id_hlavni ) {
-        $ret= akce_vzorec_soubeh($id_pobyt,$id_hlavni,$id_soubezna);
+        $ret= akce2_vzorec_soubeh($id_pobyt,$id_hlavni,$id_soubezna);
         $val= $ret->mail;
       }
       else {
