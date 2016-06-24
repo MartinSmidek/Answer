@@ -705,8 +705,10 @@ proc obligatory(elem) { elem.enable(1); elem.change(1) }
 # -----------------------------------------------------------------------------------------==> OSOBA
 panel osoba_config [,,200,150] {type:'popup', title:"Podrobnosti údajů"
   var tit='osobní údaje', grp='ZKAS', var ucast:object
-  proc start() { grp.set(get_cookie(conc(sys('root'),'_conf_osoba'),grp.get));
+  proc start() {
+    grp.set(get_cookie(conc(sys('root'),'_conf_osoba'),grp.get));
     [ contains('Z',grp.get) | grp.set(conc('Z',grp.get)) ];
+    [ has_skill('yaa:c;faa:c') | grp.set(replace(grp.get,'C','')) ];
     cnfg._back; }
   proc tune(calee) {
     ucast.set(calee); _old.set(grp.get); [ ucast.call('evid.z_change','o') ]; panel.modal(500,200) }
