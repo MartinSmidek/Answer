@@ -347,7 +347,8 @@ form _pece [,,400,] { css:'ds_form'
     show key_rodina {data:r.id_rodina}
     show            {data:c.id_osoba}
     show rod_pobyt  {expr:"IFNULL(x.id_pobyt,0)"}
-    show rod_nakurzu {expr:"IF(ISNULL(x.id_pobyt),0,1)"}
+    // zjištění rodiny na kurzu - vyjma:nepřijel,náhradník,odhlášen
+    show rod_nakurzu {expr:"IF(ISNULL(x.id_pobyt),0,x.funkce NOT IN (10,9,14))"}
     show role       {data:t.role}
 #     show _n         {expr:"CONCAT(s.id_spolu,'/',COUNT(*))"}
     // data
@@ -380,7 +381,7 @@ form _pece [,,400,] { css:'ds_form'
     show _nazev    [,,110,] { title:'příjmení jméno', format:'s+q*', css_cell:"funkce,0:nic,1:zluty"
                               expr:"CONCAT(o.prijmeni,' ',o.jmeno)" }
     show _pfunkce  [,,60,]  { title:'funkce', data:s.pfunkce, map_pipe:ms_akce_pfunkce.zkratka,
-                              format:'q*s', css_cell:'rod_nakurzu,0:nic,1:zluty' }
+                              format:'q*s', css_cell:'rod_nakurzu,0:nic,1:oranzovy' }
 #     show _pfunkce  [,,60,]  { title:'funkce', expr:"IF(s.pfunkce,s.pfunkce,s.s_role)", map_pipe:ms_akce_pfunkce.zkratka, format:'q*s' }
     show skupinka  [,,20,]  { title:'sk.', data:s.skupinka, format:'rqs:e'}
     show _vek      [,,0,]  { title:'věk', expr:"TIMESTAMPDIFF(YEAR,o.narozeni,datum_od)", format:'rsq*' }
