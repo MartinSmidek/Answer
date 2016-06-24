@@ -1099,8 +1099,13 @@ form _spolu [,,0,270] {
   field pfunkce { data:s.pfunkce }
   check pecoun [36,27,130,17] { tag:'c', title:"je v kolektivu pečounů", format:'n', value:'0'
     proc onchange () { // 0 => osobní & 'dědeček' -- nezabrazí se na kartě Pečouni
-      this.get; pfunkce.set(5); pfunkce.change
+    {  this.get; pfunkce.set(5); pfunkce.change
     | pfunkce.set(0); pfunkce.change
+    };
+    // hlavounům se povoluje zápis změny - nemají aktivní [save]
+    [ has_skill("yaap+");
+      ask('akce2_save_pfunkce',key_spolu.get,pfunkce.get);
+      pfunkce.plain; this.plain ]
   } }
   # ------------------------==> . přidat/vyřadit
   proc _reload_spolu(ido) { var ido1: number, ido2: number
