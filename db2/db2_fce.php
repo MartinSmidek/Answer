@@ -2870,6 +2870,15 @@ function akce2_pobyt_rodinny($id_pobyt,$id_rodina) { trace();
 function akce2_save_role($id_tvori,$role) { //trace();
   return mysql_qry("UPDATE tvori SET role='$role' WHERE id_tvori=$id_tvori");
 }
+# ------------------------------------------------------------------------------- akce2_save_pfunkce
+# ASK
+# zapíše spolu.pfunkce - funkce pro hlavouny
+function akce2_save_pfunkce($ids,$pfunkce) { //trace();
+  ezer_qry("UPDATE","spolu",$ids,array(
+    (object)array('fld'=>'pfunkce', 'op'=>'u','val'=>$pfunkce,'old'=>$pfunkce?0:5)
+  ));
+  return 1;
+}
 # ------------------------------------------------------------------------------------ akce2_osoba2x
 # ASK volané z formuláře _osoba2x při onchange.adresa a onchange.kontakt
 # v ret vrací o_kontakt, r_kontakt, o_adresa, r_adresa
