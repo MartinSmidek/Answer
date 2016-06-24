@@ -2875,7 +2875,7 @@ function akce2_save_role($id_tvori,$role) { //trace();
 # zapíše spolu.pfunkce - funkce pro hlavouny
 function akce2_save_pfunkce($ids,$pfunkce) { //trace();
   ezer_qry("UPDATE","spolu",$ids,array(
-    (object)array('fld'=>'pfunkce', 'op'=>'u','val'=>$pfunkce,'old'=>$pfunkce?0:5)
+    (object)array('fld'=>'pfunkce', 'op'=>'u','val'=>$pfunkce)
   ));
   return 1;
 }
