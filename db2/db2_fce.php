@@ -599,11 +599,14 @@ function akce2_strava_denne($od,$dnu,$cela,$polo) {  #trace('');
   return $strava;
 }
 # -------------------------------------------------------------------------- akce2_strava_denne_save
-# zapsání výjimek z providelné stravy - pokud není výjimka zapíše prázdný string
+# zapsání výjimek z pravidelné stravy - pokud není výjimka zapíše prázdný string
+#   $x= ''|'_bm'|'bl'  - kód typu diety
 #   $prvni - kód první stravy na akci
-function akce2_strava_denne_save($id_pobyt,$dnu,$cela,$cela_def,$cela_str,$polo,$polo_def,$polo_str,$prvni) {  #trace('');
+function akce2_strava_denne_save($id_pobyt,$dnu,$x,
+    $cela,$cela_def,$cela_str,$polo,$polo_def,$polo_str,$prvni) {  trace('');
   $cela_ruzna= $polo_ruzna= 0;
   $i0= $prvni=='s' ? 0 : ($prvni=='o' ? 1 : ($prvni=='v' ? 2 : 2));
+  // zjístíme, zda je vůbec nějaká výjimka
   for ($i= $i0; $i<3*$dnu-1; $i++) {
     if ( substr($cela,$i,1)!=$cela_def ) $cela_ruzna= 1;
     if ( substr($polo,$i,1)!=$polo_def ) $polo_ruzna= 1;
@@ -612,8 +615,8 @@ function akce2_strava_denne_save($id_pobyt,$dnu,$cela,$cela_def,$cela_str,$polo,
   if ( !$polo_ruzna ) $polo= '';
   // příprava update
   $set= '';
-  if ( ";$cela"!=";$cela_str" ) $set.= "cstrava_cel='$cela'";           // ; jako ochrana pro pochopení jako čísla
-  if ( ";$polo"!=";$polo_str" ) $set.= ($set?',':'')."cstrava_pol='$polo'";
+  if ( ";$cela"!=";$cela_str" ) $set.= "cstrava_cel$x='$cela'";     // ; jako ochrana pro pochopení jako čísla
+  if ( ";$polo"!=";$polo_str" ) $set.= ($set?',':'')."cstrava_pol$x='$polo'";
   if ( $set ) {
     $qry= "UPDATE pobyt SET $set WHERE id_pobyt=$id_pobyt";
     $res= mysql_qry($qry);
@@ -1916,8 +1919,10 @@ function ucast2_browse_ask($x,$tisk=false) {
           . "r_rozvod=rozvod,r_ulice=ulice,r_psc=psc,"
           . "r_obec=obec,r_stat=stat,r_telefony=telefony,r_emaily=emaily,r_umi,r_note=note");
     $fpob2= ucast2_flds("p_poznamka=poznamka,pokoj,budova,prednasi,luzka,pristylky,kocarek,pocetdnu"
-          . ",strava_cel,strava_pol,c_nocleh=platba1,c_strava=platba2,c_program=platba3,c_sleva=platba4"
-          . ",datplatby,cstrava_cel,cstrava_pol,svp,zpusobplat,naklad_d,poplatek_d,platba_d"
+          . ",strava_cel,strava_cel_bm,strava_cel_bl,strava_pol,strava_pol_bm,strava_pol_bl,"
+          . "c_nocleh=platba1,c_strava=platba2,c_program=platba3,c_sleva=platba4,datplatby,"
+          . "cstrava_cel,cstrava_cel_bm,cstrava_cel_bl,cstrava_pol,cstrava_pol_bm,cstrava_pol_bl,"
+          . "svp,zpusobplat,naklad_d,poplatek_d,platba_d"
           . ",zpusobplat_d,datplatby_d,ubytovani,cd,avizo,sleva,vzorec,duvod_typ,duvod_text,x_umi");
     //      id_osoba,jmeno,_vek,id_tvori,id_rodina,role,_rody,rc,narozeni
     $fos=   ucast2_flds("umrti,prijmeni,rodne,sex,adresa,ulice,psc,obec,stat,kontakt,telefon,nomail"
@@ -2149,10 +2154,6 @@ function ucast2_browse_ask($x,$tisk=false) {
       # doplnění skupinek
       $s= $del= '';
       if ( ($sk= $p->skupina) && $skup[$sk]) {
-//         foreach($skup[$sk] as $ip) {
-//           $s.= "$del$ip~{$zz[$ip]->_nazev}";
-//           $del= $delim;
-//         }
         $skupinka= array();
         foreach($skup[$sk] as $ip) {
           $skupinka[]= array($ip,$zz[$ip]->_nazev,$zz[$ip]->funkce==1?1:0);
@@ -3845,9 +3846,11 @@ function akce2_strava_souhrn($akce,$par,$title,$vypis,$export=false,$id_pobyt=0)
 #   manzele = rodina.nazev muz a zena
 # generované vzorce
 #   platit = součet předepsaných plateb
-function akce2_strava_pary($akce,$par,$title,$vypis,$export=false,$id_pobyt=0) { trace();
+function akce2_strava_pary($akce,$par,$title,$vypis,$export=false,$id_pobyt=0) { //trace();
   $ord= $par->ord ? $par->ord : "IF(funkce<=2,1,funkce),IF(pouze=0,r.nazev,o.prijmeni)";
   $result= (object)array();
+  $diety= array('','_bm','_bl');  // postfix položek strava_cel,cstrava_cel,strava_pol,cstrava_pol
+//   $diety= array('');
   $cnd= 1;
   $html= '';
   $href= '';
@@ -3865,31 +3868,33 @@ function akce2_strava_pary($akce,$par,$title,$vypis,$export=false,$id_pobyt=0) {
 //                                                         debug($a,"akce {$a->_dnu}");
     $oo= $a->strava_oddo ? $a->strava_oddo : 'vo';
     $nd= $a->_dnu;
-    for ($i= 0; $i<=$nd; $i++) {
-      $den= $dny[($a->_den1+$i)%7].date('d',sql2stamp($a->datum_od)+$i*60*60*24).' ';
-      if ( $i>0 || $oo[0]=='s' ) {
-        $tit.= ",{$den}sc:4:r:s";
-        $tit.= ",{$den}sp:4:r:s";
-        $fld.= ",{$den}sc,{$den}sp";
-      }
-      if ( $i>0 && $i<$nd
-        || $i==0   && ($oo[0]=='s' || $oo[0]=='o')
-        || $i==$nd && ($oo[1]=='o' || $oo[1]=='v') ) {
-        $tit.= ",{$den}oc:4:r:s";
-        $tit.= ",{$den}op:4:r:s";
-        $fld.= ",{$den}oc,{$den}op";
-      }
-      if ( $i<$nd || $oo[1]=='v' ) {
-        $tit.= ",{$den}vc:4:r:s";
-        $tit.= ",{$den}vp:4:r:s";
-        $fld.= ",{$den}vc,{$den}vp";
+    foreach ($diety as $dieta) {
+      for ($i= 0; $i<=$nd; $i++) {
+        $den= $dny[($a->_den1+$i)%7].date('d',sql2stamp($a->datum_od)+$i*60*60*24).' ';
+        if ( $i>0 || $oo[0]=='s' ) {
+          $tit.= ",{$den}sc $dieta:4:r:s";
+          $tit.= ",{$den}sp $dieta:4:r:s";
+          $fld.= ",{$den}sc $dieta,{$den}sp $dieta";
+        }
+        if ( $i>0 && $i<$nd
+          || $i==0   && ($oo[0]=='s' || $oo[0]=='o')
+          || $i==$nd && ($oo[1]=='o' || $oo[1]=='v') ) {
+          $tit.= ",{$den}oc $dieta:4:r:s";
+          $tit.= ",{$den}op $dieta:4:r:s";
+          $fld.= ",{$den}oc $dieta,{$den}op $dieta";
+        }
+        if ( $i<$nd || $oo[1]=='v' ) {
+          $tit.= ",{$den}vc $dieta:4:r:s";
+          $tit.= ",{$den}vp $dieta:4:r:s";
+          $fld.= ",{$den}vc $dieta,{$den}vp $dieta";
+        }
       }
     }
-//                                                         display($tit);
   }
   // dekódování parametrů
   $tits= explode(',',$tit);
   $flds= explode(',',$fld);
+//                                                         debug($flds);
   $cond= $cnd;
   // získání dat - podle $kdo
   $clmn= array();       // pro hodnoty
@@ -3903,69 +3908,91 @@ function akce2_strava_pary($akce,$par,$title,$vypis,$export=false,$id_pobyt=0) {
     if ( $sum=='s' ) $suma[$fld]= 0;
     if ( isset($f) ) $fmts[$fld]= $f;
   }
-  // pokud není id_pobyt tak vyloučíme náhradníky
-  $cond.= $id_pobyt ? " AND p.id_pobyt=$id_pobyt" : " AND funkce NOT IN (9)";
+//                                                         debug($suma);
+  // pokud není id_pobyt tak vyloučíme náhradníky + nepřijel + odhlášen + přihláška
+  $cond.= $id_pobyt ? " AND p.id_pobyt=$id_pobyt" : " AND funkce NOT IN (9,10,14,13)";
   $jsou_pecouni= false;
   // data akce
   $res= tisk2_qry('pobyt_dospeli_ucastnici',
-    "COUNT(*) AS _pocet,funkce,pfunkce,strava_cel,strava_pol,cstrava_cel,cstrava_pol",
-    "p.id_akce='$akce' AND IF(funkce=99,s_rodici=0 AND pfunkce,1) AND $cond",
+     "strava_cel,strava_pol,cstrava_cel,cstrava_pol,
+      strava_cel_bm,strava_pol_bm,cstrava_cel_bm,cstrava_pol_bm,
+      strava_cel_bl,strava_pol_bl,cstrava_cel_bl,cstrava_pol_bl,
+      COUNT(*) AS _pocet,
+      SUM(IF(pso.dieta=0,1,0)) AS _dieta,
+      SUM(IF(pso.dieta=1,1,0)) AS _dieta_bl,
+      SUM(IF(pso.dieta=4,1,0)) AS _dieta_bm,
+      funkce,pfunkce",
+    "p.id_akce='$akce' AND IF(funkce=99,s_rodici=0 AND pfunkce,1)"
+//    . " AND p.id_pobyt IN (45406,44921)"
+//    . " AND p.id_pobyt IN (44921)"
+   . " AND $cond",
     "","_jm");
   while ( $res && ($x= mysql_fetch_object($res)) ) {
 //                                                         debug($x,"hodnoty");
     $n++;
     $clmn[$n]= array();
     if ( $x->funkce==99 && $x->pfunkce ) {
-      // stravy pro pečouny - mají jednotně celou stravu - (s_rodici=0,pfunkce!=0 viz SQL)
-      $jsou_pecouni= true;
-      $clmn[$n]['manzele']= 'PEČOUNI';
-      $sc= $x->_pocet;
-      $sp= 0;
       $k= 0;
-      for ($i= 0; $i<=$nd; $i++) {
-        if ( $i>0 || $oo[0]=='s' ) {
-          $k++; $suma[$flds[$k]]+= $clmn[$n][$flds[$k]]= $sc;
-          $k++; $suma[$flds[$k]]+= $clmn[$n][$flds[$k]]= $sp;
-        }
-        if ( $i>0 && $i<$nd
-          || $i==0   && ($oo[0]=='s' || $oo[0]=='o')
-          || $i==$nd && ($oo[1]=='o' || $oo[1]=='v') ) {
-          $k++; $suma[$flds[$k]]+= $clmn[$n][$flds[$k]]= $sc;
-          $k++; $suma[$flds[$k]]+= $clmn[$n][$flds[$k]]= $sp;
-        }
-        if ( $i<$nd || $oo[1]=='v' ) {
-          $k++; $suma[$flds[$k]]+= $clmn[$n][$flds[$k]]= $sc;
-          $k++; $suma[$flds[$k]]+= $clmn[$n][$flds[$k]]= $sp;
+      foreach ($diety as $dieta) {
+        // stravy pro pečouny - mají jednotně celou stravu - (s_rodici=0,pfunkce!=0 viz SQL)
+        // mají diety podle osobního nastavení diety: 0=, 1=_bl, 4=_bm
+        $jsou_pecouni= true;
+        $clmn[$n]['manzele']= 'PEČOUNI';
+//         $sc= $x->_pocet;
+        $f= "_dieta$dieta"; $sc= $x->$f;
+        $sp= 0;
+//         $k= 0;
+        for ($i= 0; $i<=$nd; $i++) {
+          if ( $i>0 || $oo[0]=='s' ) {
+            $k++; $suma[$flds[$k]]+= $clmn[$n][$flds[$k]]= $sc;
+            $k++; $suma[$flds[$k]]+= $clmn[$n][$flds[$k]]= $sp;
+          }
+          if ( $i>0 && $i<$nd
+            || $i==0   && ($oo[0]=='s' || $oo[0]=='o')
+            || $i==$nd && ($oo[1]=='o' || $oo[1]=='v') ) {
+            $k++; $suma[$flds[$k]]+= $clmn[$n][$flds[$k]]= $sc;
+            $k++; $suma[$flds[$k]]+= $clmn[$n][$flds[$k]]= $sp;
+          }
+          if ( $i<$nd || $oo[1]=='v' ) {
+            $k++; $suma[$flds[$k]]+= $clmn[$n][$flds[$k]]= $sc;
+            $k++; $suma[$flds[$k]]+= $clmn[$n][$flds[$k]]= $sp;
+          }
         }
       }
     }
     elseif ( $x->funkce!=99 ) {
-      // stravy pro manžele
-      $clmn[$n]['manzele']= $x->_jm;
-//             $x->pouze==1 ? "{$x->prijmeni_m} {$x->jmeno_m}"
-//          : ($x->pouze==2 ? "{$x->prijmeni_z} {$x->jmeno_z}"
-//          : "{$x->nazev} {$x->jmeno_m} a {$x->jmeno_z}");
-      $sc= $x->strava_cel;
-      $sp= $x->strava_pol;
-      $csc= $x->cstrava_cel;
-      $csp= $x->cstrava_pol;
       $k= 0;
-      for ($i= 0; $i<=$nd; $i++) {
-        if ( $i>0 || $oo[0]=='s' ) {
-          $k++; $suma[$flds[$k]]+= $clmn[$n][$flds[$k]]= $csc ? $csc[3*$i+0] : $sc;
-          $k++; $suma[$flds[$k]]+= $clmn[$n][$flds[$k]]= $csp ? $csp[3*$i+0] : $sp;
+      foreach ($diety as $dieta) {
+        // stravy pro manžele podle diet
+        $clmn[$n]['manzele']= $x->_jm;
+        $f=  "strava_cel$dieta"; $sc= $x->$f;
+        $f=  "strava_pol$dieta"; $sp= $x->$f;
+        $f= "cstrava_cel$dieta"; $csc= $x->$f;
+        $f= "cstrava_pol$dieta"; $csp= $x->$f;
+//         $sc= $x->strava_cel;
+//         $sp= $x->strava_pol;
+//         $csc= $x->cstrava_cel;
+//         $csp= $x->cstrava_pol;
+//         $k= 0;
+        for ($i= 0; $i<=$nd; $i++) {
+          if ( $i>0 || $oo[0]=='s' ) {
+            $k++; $suma[$flds[$k]]+= $clmn[$n][$flds[$k]]= $csc ? $csc[3*$i+0] : $sc;
+            $k++; $suma[$flds[$k]]+= $clmn[$n][$flds[$k]]= $csp ? $csp[3*$i+0] : $sp;
+          }
+          if ( $i>0 && $i<$nd
+            || $i==0   && ($oo[0]=='s' || $oo[0]=='o')
+            || $i==$nd && ($oo[1]=='o' || $oo[1]=='v') ) {
+            $k++; $suma[$flds[$k]]+= $clmn[$n][$flds[$k]]= $csc ? $csc[3*$i+1] : $sc;
+            $k++; $suma[$flds[$k]]+= $clmn[$n][$flds[$k]]= $csp ? $csp[3*$i+1] : $sp;
+          }
+          if ( $i<$nd || $oo[1]=='v' ) {
+            $k++; $suma[$flds[$k]]+= $clmn[$n][$flds[$k]]= $csc ? $csc[3*$i+2] : $sc;
+            $k++; $suma[$flds[$k]]+= $clmn[$n][$flds[$k]]= $csp ? $csp[3*$i+2] : $sp;
+          }
         }
-        if ( $i>0 && $i<$nd
-          || $i==0   && ($oo[0]=='s' || $oo[0]=='o')
-          || $i==$nd && ($oo[1]=='o' || $oo[1]=='v') ) {
-          $k++; $suma[$flds[$k]]+= $clmn[$n][$flds[$k]]= $csc ? $csc[3*$i+1] : $sc;
-          $k++; $suma[$flds[$k]]+= $clmn[$n][$flds[$k]]= $csp ? $csp[3*$i+1] : $sp;
-        }
-        if ( $i<$nd || $oo[1]=='v' ) {
-          $k++; $suma[$flds[$k]]+= $clmn[$n][$flds[$k]]= $csc ? $csc[3*$i+2] : $sc;
-          $k++; $suma[$flds[$k]]+= $clmn[$n][$flds[$k]]= $csp ? $csp[3*$i+2] : $sp;
-        }
+//                                                         debug($clmn,$x->_jm);
       }
+//                                                         debug($clmn,$x->_jm);
     }
   }
 //                                                         debug($suma,"sumy");
