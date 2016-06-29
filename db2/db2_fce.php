@@ -3238,6 +3238,9 @@ function tisk2_sestava_pary($akce,$par,$title,$vypis,$export=false) { trace();
       case '_pocet':    $c= $pocet; break;
       case 'poznamka':  $c= $x->p_poznamka . ($spolu_note ?: ''); break;
       case 'note':      $c= $x->r_note . ($osoba_note ?: ''); break;
+      case 'pok1':      list($c)= explode(',',$x->pokoj); $c= trim($c); break;
+      case 'pok2':      list($_,$c)= explode(',',$x->pokoj); $c= trim($c); break;
+      case 'pok3':      list($_,$_,$c)= explode(',',$x->pokoj); $c= trim($c); break;
       default:          $c= $x->$f; break;
       }
       $clmn[$n][$f]= $c;
@@ -4694,8 +4697,8 @@ function akce2_skup_hist($akce,$par,$title,$vypis,$export) { trace();
       $html.= "<b>{$info->_nazev}</b> $n&times;<br>$ucasti";
     elseif ( $n )
       $html.= "<b>{$info->_nazev}</b> $n&times;";
-    else
-      $html.= "<b>{$info->_nazev}</b> - bude poprvé";
+//     else
+//       $html.= "<b>{$info->_nazev}</b> - bude poprvé";
     $html.= "</p>";
   }
   $note= "Abecední seznam účastníků letního kurzu roku $rok doplněný seznamem členů jeho starších
@@ -4813,8 +4816,8 @@ function tisk2_pdf_plachta0($report_json=0) {  trace();
       $fs= 20;
       $s1= "font-size:{$fs}mm;font-weight:bold";
       $bg1= ";color:#aa0000";
-      $ii= $i<10 ? "&nbsp;$i" : "&nbsp;&nbsp;&nbsp;";
-      $ia= chr(ord('a')+$i-1);
+      $ii= $i<=10 ? "&nbsp;$i" : "&nbsp;&nbsp;&nbsp;";
+      $ia= chr(ord('A')+$i-1);
       $parss[$n]->prijmeni= "<span style=\"$s1$bg1\">$ii &nbsp;&nbsp;  $ia</span>";
       $parss[$n]->jmena= '';
       $n++;
@@ -4843,9 +4846,9 @@ function akce2_plachta($akce,$par,$title,$vypis,$export=0) { trace();
   $err= "";
   $excel= array();
 //   $html.= "<table class='vypis'>";
-  // letošní účastníci
+  // letošní účastníci - mají jistě definováno i0_rodina
   $qry=  "SELECT
-          datum_od,
+          datum_od, i0_rodina,
           FIND_IN_SET(1,r_umi) AS _umi_vps,o.jmeno AS jmeno_o,o.prijmeni AS prijmeni_o,
           r.nazev as jmeno,p.pouze as pouze,r.obec as mesto,svatba,datsvatba,p.funkce as funkce,
           GROUP_CONCAT(DISTINCT IF(t.role='a',o.id_osoba,'') SEPARATOR '') as id_osoba_m,
@@ -4878,15 +4881,17 @@ function akce2_plachta($akce,$par,$title,$vypis,$export=0) { trace();
           FROM pobyt AS p
           JOIN spolu AS s USING(id_pobyt)
           JOIN osoba AS o ON s.id_osoba=o.id_osoba
-          LEFT JOIN tvori AS t ON t.id_osoba=o.id_osoba
+          LEFT JOIN tvori AS t ON t.id_osoba=o.id_osoba AND t.id_rodina=i0_rodina
           LEFT JOIN rodina AS r USING(id_rodina)
           JOIN akce AS a ON a.id_duakce=p.id_akce
           WHERE id_akce=$akce AND p.funkce IN (0,1,2,5)  -- včetně hospodářů, bývají hosty skupinky
+--  AND id_pobyt=46459
           GROUP BY id_pobyt
           ORDER BY IF(pouze=0,r.nazev,o.prijmeni) ";
 //   $qry.= " LIMIT 1";
   $res= mysql_qry($qry);
   while ( $res && ($u= mysql_fetch_object($res)) ) {
+    $rod= $u->i0_rodina;
     $muz= $u->id_osoba_m;
     $zen= $u->id_osoba_z;
     if ( !$muz || !$zen ) {
@@ -4895,12 +4900,12 @@ function akce2_plachta($akce,$par,$title,$vypis,$export=0) { trace();
              - z tabulky je vynechán(a)</b><br><br>";
       continue;
     }
-    // minulé účasti
+    // minulé účasti - ale ne jako děti účastnické rodiny
     $rqry= "SELECT count(*) as _pocet
             FROM akce AS a
             JOIN pobyt AS p ON a.id_duakce=p.id_akce
             JOIN spolu AS s USING(id_pobyt)
-            WHERE a.druh=1 AND s.id_osoba=$muz AND p.id_akce!=$akce";
+            WHERE a.druh=1 AND a.spec=0 AND s.id_osoba=$muz AND i0_rodina=$rod AND p.id_akce!=$akce";
     $rres= mysql_qry($rqry);
     while ( $rres && ($r= mysql_fetch_object($rres)) ) {
       $u->ucasti= $r->_pocet ? "  {$r->_pocet}x" : '';
@@ -5950,20 +5955,34 @@ function tisk2_pdf_prijem($akce,$par,$report_json) {  trace();
 }
 # -------------------------------------------------------------------------------- tisk2_pdf_plachta
 # generování štítků se jmény párů
+# POZOR - je nutno 2x přidat výjimku v číslování kvůli zarovnání na vzdělání v plachtě
 function tisk2_pdf_plachta($akce,$report_json=0) {  trace();
   global $ezer_path_docs;
+  setlocale(LC_ALL, 'cs_CZ.utf8');
   $result= (object)array('_error'=>0);
   $html= '';
+  $A= 'A';
+  $n= 1;
+  $i= 0;
   // získání dat
   $tab= akce2_plachta($akce,$par,$title,$vypis,0);
   unset($tab->xhref);
   unset($tab->html);
-  ksort($tab->pdf);
+  ksort($tab->pdf,SORT_LOCALE_STRING);
+//                                                debug($tab->pdf);
   // projdi vygenerované záznamy
   $n= 0;
   if ( $report_json) {
     $parss= array();
-    foreach ( $tab->pdf as $xa ) {
+    foreach ( $tab->pdf as $par=>$xa ) {
+      // souřadnice s opravou
+      if ( $i==34) $i= 36;                              // <<====================== výjimka č.1
+      if ( $i==113) $i= 117;
+      $Ai= $i%12;
+      $ni= ceil(($i+1)/12);
+      $A1= chr(ord('A')+$Ai).$ni;
+      $tab->pdf[$par]['a1']= $A1;
+      $i++;
       // definice pole substitucí
       $x= (object)$xa;
       $parss[$n]= (object)array();  // {prijmeni}<br>{jmena}
@@ -5971,37 +5990,41 @@ function tisk2_pdf_plachta($akce,$report_json=0) {  trace();
       $len= mb_strlen($prijmeni);
       $xlen= round(tc_StringWidth($prijmeni,'B',15));
       $fs= 20;
-      if ( $xlen<20 ) {
-        $fw= 'condensed';
-      }
-      elseif ( $xlen<27 ) {
-        $fw= 'condensed';
-      }
-      elseif ( $xlen<37 ) {
-        $fw= 'extra-condensed';
-      }
-      else {
-        $fw= 'ultra-condensed';
-      }
+      if ( $prijmeni=="Beszédešovi" ) { $fw= 'ultra-condensed'; }
+      elseif ( $xlen<20 ) {     $fw= 'condensed'; }
+      elseif ( $xlen<27 ) {     $fw= 'condensed'; }
+      elseif ( $xlen<37 ) {     $fw= 'extra-condensed'; }
+      else {                    $fw= 'ultra-condensed'; }
       $s1= "font-stretch:$fw;font-size:{$fs}mm;font-weight:bold;text-align:center";
       $bg1= $x->vps=='* ' ? "background-color:gold" : ($x->vps=='+ ' ? "background-color:lightblue" : '');
       $s2= "font-size:5mm;text-align:center";
-      $bg2= $x->vps=='+ ' ? "background-color:#eeeeee" : '';
       $bg2= '';
+      $s3= "font-size:8mm;font-weight:bold;text-align:right";
+      $bg3= "background-color:silver";
       $parss[$n]->prijmeni= "<span style=\"$s1;$bg1\">$prijmeni</span>";
-
-      $parss[$n]->jmena= "<span style=\"$s2;$bg2\"><br>{$x->jmena}</span>";
+      $parss[$n]->jmena= "<span style=\"$s3;$bg3\">$A1</span>&nbsp;&nbsp;&nbsp;&nbsp;"
+                       . "<span style=\"$s2;$bg2\"><br>{$x->jmena}</span>";
       $n++;
     }
-//                                         debug($parss,"tisk2_pdf_plachta..."); return $result;
+//                                         debug($parss,"tisk2_pdf_plachta..."); //return $result;
     // předání k tisku
     $fname= 'stitky_'.date("Ymd_Hi");
     $fpath= "$ezer_path_docs/$fname.pdf";
     dop_rep_ids($report_json,$parss,$fpath);
     $result->html= " Výpis byl vygenerován ve formátu <a href='docs/$fname.pdf' target='pdf'>PDF</a>.";
+//                                                     debug($tab->pdf);
   }
   else {
-    $result= tisk2_table(array('příjmení','jména'),array('prijmeni','jmena'),$tab->pdf);
+    foreach ( $tab->pdf as $par=>$xa ) {
+      if ( $i==34) $i= 36;                              // <<====================== výjimka č.2
+      if ( $i==113) $i= 117;
+      $Ai= $i%12;
+      $ni= ceil(($i+1)/12);
+      $tab->pdf[$par]['a1']= chr(ord('A')+$Ai).$ni;
+      $i++;
+    }
+                                                    debug($tab->pdf);
+    $result= tisk2_table(array('příjmení','jména','a1'),array('prijmeni','jmena','a1'),$tab->pdf);
   }
   return $result;
 }
