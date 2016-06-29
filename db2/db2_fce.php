@@ -3831,23 +3831,99 @@ function akce2_stravenky($akce,$par,$title,$vypis,$export=false) { trace();
 #   manzele = rodina.nazev muz a zena
 # generované vzorce
 #   platit = součet předepsaných plateb
-function akce2_strava_souhrn($akce,$par,$title,$vypis,$export=false,$id_pobyt=0) { trace();
+function akce2_strava_souhrn($akce,$par,$title,$vypis,$export=false,$id_pobyt=0) { //trace();
+//                                                                 debug($par,"akce2_strava_souhrn");
   $result= (object)array();
+  $diety= array('','_bm','_bl');  // postfix položek strava_cel,cstrava_cel,strava_pol,cstrava_pol
+  $diety_= array(''=>'normal','_bm'=>'bezmas','_bl'=>'bezlep');
+  $jidlo_= array('sc'=>'snídaně celá','sp'=>'snídaně dětská','oc'=>'oběd celý',
+                 'op'=>'oběd dětský','vc'=>'večeře celá','vp'=>'večeře dětská');
+  // získání dat - podle $kdo
+  $clmn= array();       // pro hodnoty
+  $expr= array();       // pro výrazy
+  $suma= array();       // pro sumy sloupců id:::s
+  $fmts= array();       // pro formáty sloupců id::f:
+  $flds= array();
+
+  $par->souhrn= 1;
+  $ret= akce2_strava_pary($akce,$par,$title,$vypis,$export,0);
+  //
+  $tits[0]= "den:10";
+  $flds[0]= "day";
+  foreach ($diety as $dieta) {
+    foreach (explode(',','sc,sp,oc,op,vc,vp') as $jidlo) {
+      $tits[]= "{$jidlo_[$jidlo]} {$diety_[$dieta]}:8:r:s";
+      $flds[]= "$jidlo $dieta";
+    }
+  }
+//                                                         debug($tits);
+//                                                         debug($flds);
+//                                                         debug($ret->suma,'suma');
+//                                                         display("so 2/7 oc ={$ret->suma['so 2/7 oc ']}");
+  // součet přes lidi
+  $d= 0;
+  foreach ($ret->days as $day) {
+    $d++;
+    $clmn[$day]['day']= $day;
+    foreach ($diety as $dieta) {
+      foreach (explode(',','sc,sp,oc,op,vc,vp') as $jidlo) {
+        $fld= "$day$jidlo $dieta";
+        $clmn[$day][$fld]= $ret->suma[$fld];
+      }
+    }
+  }
+//                                                         debug($clmn,'clmn');
+  // zobrazení a export
+  if ( $export ) {
+    $result->tits= $tits;
+    $result->flds= $flds;
+    $result->clmn= $clmn;
+    $result->expr= $expr;
+    $result->suma= $suma;
+  }
+  else {
+    // titulky
+    foreach ($tits as $idw) {
+      list($id)= explode(':',$idw);
+      $ths.= "<th>$id</th>";
+    }
+    // data
+    foreach ($clmn as $i=>$c) {
+      foreach ($c as $id=>$val) {
+        $style= akce2_sestava_td_style($fmts[$id]);
+        $tab.= "<td$style>$val</td>";
+      }
+      $tab.= "</tr>";
+    }
+    // sumy
+    $sum= '';
+    if ( count($suma)>0 ) {
+      $sum.= "<tr>";
+      foreach ($flds as $f) {
+        $val= isset($suma[$f]) ? $suma[$f] : '';
+        $sum.= "<th style='text-align:right'>$val</th>";
+      }
+      $sum.= "</tr>";
+    }
+  }
   $result->html.= "<h3>Souhrn strav podle dnů, rozdělený podle typů stravy vč. diet</h3>";
-  $result->html.= "Ještě není, potřeboval bych vědět, v jakém tvaru to od nás budou na Pavlákové
-                chtít (a jak od nich přebereme stravenky, abychom je dali účastníkům do obálek). ";
+  $result->html.= "<div class='stat'><table class='stat'><tr>$ths</tr>$sum$tab</table></div>";
+  $result->href= $href;
   return $result;
 }
 # -------------------------------------------------------------------------------- akce2_strava_pary
 # generování sestavy přehledu strav pro účastníky $akce - páry
 #   $cnd = podmínka
-#   $id_pobyt -- je-li udáno, počítá se jen pro tento jeden pobyt (jedněch účastníků)
+#   $id_pobyt = je-li udáno, počítá se jen pro tento jeden pobyt (jedněch účastníků)
+#   $souhrn = indexy jsou upravené pro fci akce2_strava_souhrn
 # počítané položky
 #   manzele = rodina.nazev muz a zena
 # generované vzorce
 #   platit = součet předepsaných plateb
 function akce2_strava_pary($akce,$par,$title,$vypis,$export=false,$id_pobyt=0) { //trace();
+//                                                                 debug($par,"akce2_strava_pary");
   $ord= $par->ord ? $par->ord : "IF(funkce<=2,1,funkce),IF(pouze=0,r.nazev,o.prijmeni)";
+  $souhrn= $par->souhrn?:0;
   $result= (object)array();
   $diety= array('','_bm','_bl');  // postfix položek strava_cel,cstrava_cel,strava_pol,cstrava_pol
 //   $diety= array('');
@@ -3858,8 +3934,8 @@ function akce2_strava_pary($akce,$par,$title,$vypis,$export=false,$id_pobyt=0) {
   // zjištění sloupců (0=ne)
   $tit= "Manželé a pečouni:25";  // bude opraveno podle skutečnosti před exportem
   $fld= "manzele";
-  $dny= array('ne','po','út','st','čt','pá','so');
-  $dny= array('n','p','ú','s','č','p','s');
+  $dny= $souhrn ? array('ne','po','út','st','čt','pá','so') : array('n','p','ú','s','č','p','s');
+  $days= array();       // pro souhrn
   $qrya= "SELECT strava_oddo,datum_od,datum_do,DATEDIFF(datum_do,datum_od) AS _dnu
             ,DAYOFWEEK(datum_od)-1 AS _den1
           FROM akce WHERE id_duakce=$akce ";
@@ -3870,7 +3946,8 @@ function akce2_strava_pary($akce,$par,$title,$vypis,$export=false,$id_pobyt=0) {
     $nd= $a->_dnu;
     foreach ($diety as $dieta) {
       for ($i= 0; $i<=$nd; $i++) {
-        $den= $dny[($a->_den1+$i)%7].date('d',sql2stamp($a->datum_od)+$i*60*60*24).' ';
+        $den= $dny[($a->_den1+$i)%7].date($souhrn?' j/n':'d',sql2stamp($a->datum_od)+$i*60*60*24).' ';
+        if ( !$dieta ) $days[]= $den;
         if ( $i>0 || $oo[0]=='s' ) {
           $tit.= ",{$den}sc $dieta:4:r:s";
           $tit.= ",{$den}sp $dieta:4:r:s";
@@ -3992,10 +4069,16 @@ function akce2_strava_pary($akce,$par,$title,$vypis,$export=false,$id_pobyt=0) {
         }
 //                                                         debug($clmn,$x->_jm);
       }
-//                                                         debug($clmn,$x->_jm);
     }
   }
+//                                                         debug($clmn,"clmn");
 //                                                         debug($suma,"sumy");
+  // souhrn
+  if ( $souhrn ) {
+    $result->days= $days;
+    $result->suma= $suma;
+  }
+  // zobrazení a export
   $tits[0]= $jsou_pecouni ? "Manželé a pečouni:25" : "Manželé:25";
   if ( $export ) {
     $result->tits= $tits;
@@ -4035,6 +4118,7 @@ function akce2_strava_pary($akce,$par,$title,$vypis,$export=false,$id_pobyt=0) {
     $result->html.= "</br>";
     $result->href= $href;
   }
+//                                                         debug($result);
   return $result;
 }
 # ----------------------------------------------------- akce2_sestava_td_style
@@ -5785,7 +5869,7 @@ __XLS;
   }
   // časová značka
   $kdy= date("j. n. Y v H:i");
-  $n+= 2;
+  $n+= 4;
   $xls.= "|A$n Výpis byl vygenerován $kdy :: italic";
   // konec
   $xls.= <<<__XLS
