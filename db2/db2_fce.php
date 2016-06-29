@@ -2149,8 +2149,17 @@ function ucast2_browse_ask($x,$tisk=false) {
       # doplnění skupinek
       $s= $del= '';
       if ( ($sk= $p->skupina) && $skup[$sk]) {
+//         foreach($skup[$sk] as $ip) {
+//           $s.= "$del$ip~{$zz[$ip]->_nazev}";
+//           $del= $delim;
+//         }
+        $skupinka= array();
         foreach($skup[$sk] as $ip) {
-          $s.= "$del$ip~{$zz[$ip]->_nazev}";
+          $skupinka[]= array($ip,$zz[$ip]->_nazev,$zz[$ip]->funkce==1?1:0);
+        }
+        usort($skupinka,function($a,$b){return $b[2]-$a[2];});
+        foreach($skupinka as $par) {
+          $s.= "$del$par[0]~$par[1]";
           $del= $delim;
         }
       }
