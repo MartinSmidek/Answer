@@ -344,10 +344,16 @@ table pobyt { key_id:'id_pobyt'
   text pokoj
   number ubytovani      // číselník ms_akce_ubytovan
   number luzka
-  number strava_cel
-  number strava_pol
-  text cstrava_cel      // číslice jsou seřazeny jako počty snídaní,obědů,večeří po dnech
-  text cstrava_pol
+
+  // stravy a diety
+  number strava_cel, number strava_pol
+  number strava_cel_bm, number strava_pol_bm
+  number strava_cel_bl, number strava_pol_bl
+  // výjimky ze strav: číslice jsou seřazeny jako počty snídaní,obědů,večeří po dnech
+  text cstrava_cel,  text cstrava_pol
+  text cstrava_cel_bm,  text cstrava_pol_bm
+  text cstrava_cel_bl,  text cstrava_pol_bl
+
   number kocarek
   text pecovatel
   text poznamka
