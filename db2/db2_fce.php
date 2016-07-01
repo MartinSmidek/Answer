@@ -1,5 +1,11 @@
 <?php # (c) 2009-2015 Martin Smidek <martin@smidek.eu>
 /** ===========================================================================================> DB2 */
+# ---------------------------------------------------------------------------------- ==> . konstanty
+global $diety,$diety_,$jidlo_;
+$diety= array('','_bm','_bl');  // postfix položek strava_cel,cstrava_cel,strava_pol,cstrava_pol
+$diety_= array(''=>'normal','_bm'=>'veget','_bl'=>'bezlep');
+$jidlo_= array('sc'=>'snídaně celá','sp'=>'snídaně dětská','oc'=>'oběd celý',
+               'op'=>'oběd dětský','vc'=>'večeře celá','vp'=>'večeře dětská');
 # ------------------------------------------------------------------------------------- db2_rod_show
 # BROWSE ASK
 # načtení návrhu rodiny pro Účastníci2
@@ -3251,6 +3257,11 @@ function tisk2_sestava_pary($akce,$par,$title,$vypis,$export=false) { trace();
       case 'pok1':      list($c)= explode(',',$x->pokoj); $c= trim($c); break;
       case 'pok2':      list($_,$c)= explode(',',$x->pokoj); $c= trim($c); break;
       case 'pok3':      list($_,$_,$c)= explode(',',$x->pokoj); $c= trim($c); break;
+      case '_diety':    $c=  $x->strava_cel_bm!=0 || $x->strava_pol_bm!=0 ? '_bm' : '';
+                        $c.= $x->strava_cel_bl!=0 || $x->strava_cel_bl!=0 ? '_bl' : ''; break;
+      case '_vyjimky':  $c= $x->cstrava_cel!=''    || $x->cstrava_pol!=''
+                         || $x->cstrava_cel_bm!='' || $x->cstrava_pol_bm!=''
+                         || $x->cstrava_cel_bl!='' || $x->cstrava_cel_bl!='' ? 1 : 0; break;
       default:          $c= $x->$f; break;
       }
       $clmn[$n][$f]= $c;
@@ -3832,12 +3843,9 @@ function akce2_stravenky($akce,$par,$title,$vypis,$export=false) { trace();
 # generované vzorce
 #   platit = součet předepsaných plateb
 function akce2_strava_souhrn($akce,$par,$title,$vypis,$export=false,$id_pobyt=0) { //trace();
+  global $diety,$diety_,$jidlo_;
 //                                                                 debug($par,"akce2_strava_souhrn");
   $result= (object)array();
-  $diety= array('','_bm','_bl');  // postfix položek strava_cel,cstrava_cel,strava_pol,cstrava_pol
-  $diety_= array(''=>'normal','_bm'=>'bezmas','_bl'=>'bezlep');
-  $jidlo_= array('sc'=>'snídaně celá','sp'=>'snídaně dětská','oc'=>'oběd celý',
-                 'op'=>'oběd dětský','vc'=>'večeře celá','vp'=>'večeře dětská');
   // získání dat - podle $kdo
   $clmn= array();       // pro hodnoty
   $expr= array();       // pro výrazy
@@ -3922,11 +3930,10 @@ function akce2_strava_souhrn($akce,$par,$title,$vypis,$export=false,$id_pobyt=0)
 #   platit = součet předepsaných plateb
 function akce2_strava_pary($akce,$par,$title,$vypis,$export=false,$id_pobyt=0) { //trace();
 //                                                                 debug($par,"akce2_strava_pary");
+  global $diety,$diety_,$jidlo_;
   $ord= $par->ord ? $par->ord : "IF(funkce<=2,1,funkce),IF(pouze=0,r.nazev,o.prijmeni)";
   $souhrn= $par->souhrn?:0;
   $result= (object)array();
-  $diety= array('','_bm','_bl');  // postfix položek strava_cel,cstrava_cel,strava_pol,cstrava_pol
-//   $diety= array('');
   $cnd= 1;
   $html= '';
   $href= '';
@@ -3947,6 +3954,7 @@ function akce2_strava_pary($akce,$par,$title,$vypis,$export=false,$id_pobyt=0) {
     foreach ($diety as $dieta) {
       for ($i= 0; $i<=$nd; $i++) {
         $den= $dny[($a->_den1+$i)%7].date($souhrn?' j/n':'d',sql2stamp($a->datum_od)+$i*60*60*24).' ';
+        $den= date($souhrn?' j/n':'d',sql2stamp($a->datum_od)+$i*60*60*24).' ';
         if ( !$dieta ) $days[]= $den;
         if ( $i>0 || $oo[0]=='s' ) {
           $tit.= ",{$den}sc $dieta:4:r:s";
@@ -6038,40 +6046,127 @@ function xxx_akce2_pdf_stitky($cond,$report_json) { trace();
 }
 # --------------------------------------------------------------------------------- tisk2_pdf_prijem
 # generování štítků se stručnými informace k nalepení na obálku účastníka do PDF
-function tisk2_pdf_prijem($akce,$par,$report_json) {  trace();
+# pokud jsou iregularity strav a dietní stravy, generuje se i přetokový soubor
+function tisk2_pdf_prijem($akce,$par,$stitky_json,$popis_json) {  trace();
+  global $diety,$diety_,$jidlo_;
   global $ezer_path_docs;
   $result= (object)array('_error'=>0);
+  $popisy= false;
   $html= '';
   // získání dat
   $tab= tisk2_sestava_pary($akce,$par,$title,$vypis,true);
 //                                         debug($tab,"tisk2_sestava_pary($akce,...)"); //return;
   // projdi vygenerované záznamy
-  $n= 0;
-  $parss= array();
+  $n= $n2= 0;
+  $parss= $parss2= array();
+  // omezení pro testy
+//   foreach ( $tab->clmn as $i=>$xa ) { // reprezentatnti
+//     if ( strpos('Zelinkovi',$xa['prijmeni'])===false )
+//     if ( strpos('BáčoviBarotoviDrvotoviZelinkovi',$xa['prijmeni'])===false )
+//     unset($tab->clmn[$i]);
+//   }
+//                                                 debug($tab->clmn); //goto end;
   foreach ( $tab->clmn as $xa ) {
-    // definice pole substitucí
+    $idp= $xa['^id_pobyt'];
     $x= (object)$xa;
+    // výpočet strav včetně přetokového souboru na iregularity a diety
+    if ( $x->_vyjimky || $x->_diety ) {
+      $par->souhrn= 1;
+      $ret= akce2_strava_pary($akce,$par,'','',0,$idp);
+//                                                 debug($ret,"akce2_strava_pary");
+      if ( !$x->_vyjimky ) {
+        // pravidelná strava s dietami
+        $strava= "strava: ";
+        if ( $x->strava_cel || $x->strava_pol )
+          $strava.= " <b>{$x->strava_cel}/{$x->strava_pol}</b>";
+        if ( $x->strava_cel_bm || $x->strava_pol_bm )
+          $strava.= " veget. <b>{$x->strava_cel_bm}/{$x->strava_pol_bm}</b>";
+        if ( $x->strava_cel_bl || $x->strava_pol_bl )
+          $strava.= " bezlep. <b>{$x->strava_cel_bl}/{$x->strava_pol_bl}</b>";
+      }
+      else {
+        // nepravidelná strava
+        $popisy= true;
+        $strava= "strava: viz popis v obálce";
+        $h= tisk2_pdf_prijem_ireg("{$x->prijmeni}: {$x->jmena}",$x->_diety,$x,$ret);
+                                                display("$h");
+        $parss2[$n2]= (object)array();
+        $parss2[$n2]->tab= $h;
+        $n2++;
+      }
+    }
+    else {
+      // normální pravidelná strava (bez diet)
+      $strava= $x->strava_cel || $x->strava_pol ? ( "strava: "
+             . ($x->strava_cel?"celá <b>{$x->strava_cel}</b> ":'')
+             . ($x->strava_pol?"poloviční <b>{$x->strava_pol}</b>":'')) : "bez stravy";
+    }
+    // definice pole substitucí
     $parss[$n]= (object)array();
-    $parss[$n]->line1= "<b>{$x->prijmeni} {$x->jmena}</b>";
-    $parss[$n]->line2= ($x->skupina?"skupinka <b>{$x->skupina}</b> ":'')
-                     . ($x->pokoj?"pokoj <b>{$x->pokoj}</b>":'');
+    $parss[$n]->line1= "<b>{$x->prijmeni}: {$x->jmena}</b>";
+    $parss[$n]->line2= ($x->pokoj?"pok. <b>{$x->pokoj}</b> ":'')
+                     . ($x->skupina?"skup. <b>{$x->skupina}</b>":'');
     $parss[$n]->line3= $x->luzka || $x->pristylky || $x->kocarek ? (
                        ($x->luzka?"lůžka <b>{$x->luzka}</b> ":'')
                      . ($x->pristylky?"přistýlky <b>{$x->pristylky} </b>":'')
                      . ($x->kocarek?"kočárek <b>{$x->kocarek}</b>":'')
                        ) : "bez ubytování";
-    $parss[$n]->line4= $x->strava_cel || $x->strava_pol ? ( "strava: "
-                     . ($x->strava_cel?"celá <b>{$x->strava_cel}</b> ":'')
-                     . ($x->strava_pol?"poloviční <b>{$x->strava_pol}</b>":'')
-                       ) : "bez stravy";
+    $parss[$n]->line4= $strava;
     $n++;
   }
   // předání k tisku
   $fname= 'stitky_'.date("Ymd_Hi");
   $fpath= "$ezer_path_docs/$fname.pdf";
-  dop_rep_ids($report_json,$parss,$fpath);
+  dop_rep_ids($stitky_json,$parss,$fpath);
   $result->html= " Výpis byl vygenerován ve formátu <a href='docs/$fname.pdf' target='pdf'>PDF</a>.";
+  if ( $popisy ) {
+    $fname2= 'popisy_'.date("Ymd_Hi");
+    $fpath2= "$ezer_path_docs/$fname2.pdf";
+    dop_rep_ids($popis_json,$parss2,$fpath2);
+    $result->html.= " a doplněn popisy do obálek ve formátu <a href='docs/$fname2.pdf' target='pdf'>PDF</a>.";
+  }
+end:
   return $result;
+}
+# ------------------------------------------------------- tisk2_pdf_prijem_ireg
+# generování tabulky s nepravidelnou stravou
+function tisk2_pdf_prijem_ireg($nazev,$adiety,$x,$ret) {  trace();
+  global $diety,$diety_,$jidlo_;
+  $s= " style=\"background-color:#DDDDDD\"";
+  $h= "<h3>$nazev</h3>";
+  $h.= '<small><table border="1" cellpadding="2" cellspacing="0" align="center">';
+  // nadhlavička
+  $h.= "<tr><th$s>dieta:</th>";
+  foreach ($diety as $dieta) {
+    if ( $dieta && strpos($adiety,$dieta)===false ) continue;
+    $h.= "<th$s colspan=\"6\">{$diety_[$dieta]}</th>";
+  }
+  $h.= "</tr>";
+  // hlavička
+  $h.= "<tr><th$s>den</th>";
+  foreach ($diety as $dieta) {
+    if ( $dieta && strpos($adiety,$dieta)===false ) continue;
+    foreach (explode(',','sc,sp,oc,op,vc,vp') as $jidlo) {
+      $h.= "<th$s>{$jidlo_[$jidlo]}</th>";
+    }
+  }
+  $h.= "</tr>";
+  // dny
+  foreach ($ret->days as $day) {
+    $h.= "<tr><th$s>$day</th>";
+    foreach ($diety as $dieta) {
+      if ( $dieta && strpos($adiety,$dieta)===false ) continue;
+      foreach (explode(',','sc,sp,oc,op,vc,vp') as $jidlo) {
+        $fld= "$day$jidlo $dieta";
+        $pocet= $ret->suma[$fld] ?: '';
+        $h.= "<td>$pocet</td>";
+      }
+    }
+    $h.= "</tr>";
+  }
+  // konec
+  $h.= "</table></small>";
+  return $h;
 }
 # -------------------------------------------------------------------------------- tisk2_pdf_plachta
 # generování štítků se jmény párů
@@ -6143,7 +6238,7 @@ function tisk2_pdf_plachta($akce,$report_json=0) {  trace();
       $tab->pdf[$par]['a1']= chr(ord('A')+$Ai).$ni;
       $i++;
     }
-                                                    debug($tab->pdf);
+//                                                     debug($tab->pdf);
     $result= tisk2_table(array('příjmení','jména','a1'),array('prijmeni','jmena','a1'),$tab->pdf);
   }
   return $result;
