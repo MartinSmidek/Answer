@@ -18,7 +18,7 @@ kEzer-ys2
 		..\..\Apache\bin\apache\apache2.4.9\conf\extra\httpd-vhosts-ezer.conf
 	-poznámky
 		sql\answer_dotazy.sql
-	-$
+	+$
 		-skins
 			skins\ck\ck.ezer.css
 			skins\colors.php
@@ -32,7 +32,7 @@ kEzer-ys2
 		db2_test.php
 		index.php
 		robots.txt
-	-db2
+	+db2
 		-$ test
 			db2_test\$.ezer
 		+$
@@ -141,9 +141,10 @@ kEzer-ys2
 28=db2\db2.pok.ezer
 29=answer.inc
 30=answer.php
+31=Novy1.sql
 [Selected Project Files]
 Main=
-Selected=db2\db2.akce2.elim.ezer
+Selected=Novy1.sql
 [ezer2.2\client\app.js]
 TopLine=104
 Caret=39,125
@@ -152,8 +153,8 @@ BookMark1=29,726
 TopLine=65
 Caret=1,98
 [ezer2.2\server\ae_slib.php]
-TopLine=1385
-Caret=58,1413
+TopLine=138
+Caret=28,155
 [ezer2.2\server\ezer2.php]
 TopLine=300
 Caret=1,302
@@ -161,8 +162,8 @@ BookMark2=25,2389
 Mark1=13,2070
 Mark2=30,159
 [ezer2.2\client\ezer.js]
-TopLine=310
-Caret=32,330
+TopLine=7298
+Caret=13,7345
 BookMark1=19,7869
 Mark1=26,1163
 Mark2=21,5869
@@ -208,20 +209,18 @@ Caret=17,496
 BookMark1=19,88
 Mark1=43,503
 [db2\db2_ys2_fce.php]
-TopLine=1204
-Caret=1,1251
+TopLine=37
+Caret=29,41
 BookMark1=26,1499
 BookMark3=32,1197
 [db2\db2_fce.php]
-TopLine=8739
-Caret=1,8745
-BookMark1=23,11079
-BookMark2=28,1826
-Mark1=20,7141
-Mark2=1,2027
-Mark3=33,6206
-Mark4=30,6187
-Mark5=64,284
+TopLine=6051
+Caret=32,6083
+Mark1=54,625
+Mark2=54,624
+BookMark3=5,6067
+BookMark4=21,3260
+Mark3=14,3873
 [db2\db2.akce2.cnf.ezer]
 TopLine=1
 Caret=67,28
@@ -231,12 +230,21 @@ Caret=1,368
 BookMark1=1,38
 BookMark2=18,572
 [db2\db2.akce2.ucast.ezer]
-TopLine=1157
-Caret=58,1168
-Mark1=19,1237
+TopLine=1757
+Caret=1,1771
+Mark1=19,1241
 Mark2=5,216
+Mark3=65,972
+BookMark1=22,1483
+Mark4=23,1525
+BookMark2=11,1667
+Mark5=1,1787
+Mark6=1,1788
+Mark7=1,1692
+Mark8=31,1687
+Mark9=31,1688
 [db2\db2.akce2.mai.ezer]
-TopLine=336
+TopLine=346
 Caret=35,383
 BookMark1=24,684
 Mark1=88,474
@@ -267,20 +275,20 @@ Mark3=26,1084
 Mark4=8,539
 Mark5=13,554
 [db2\db2.akce2.ezer]
-TopLine=1047
-Caret=169,1047
-Mark1=40,1056
-Mark2=31,732
-Mark3=24,711
-Mark4=7,837
+TopLine=335
+Caret=95,335
+Mark1=40,1062
+Mark2=31,738
+Mark3=24,717
+Mark4=7,843
 [db2\db2.akce2.tisk.ezer]
-TopLine=342
-Caret=118,354
-Mark1=44,231
+TopLine=310
+Caret=65,329
+Mark1=57,48
 Mark2=1,372
 [db2\db2.akce2.maia.ezer]
-TopLine=217
-Caret=40,243
+TopLine=140
+Caret=1,174
 [db2\db2.akce2.sta.ezer]
 TopLine=14
 Caret=47,32
@@ -303,5 +311,8 @@ Caret=41,391
 TopLine=45
 Caret=25,77
 [answer.php]
-TopLine=19
-Caret=1,1
+TopLine=131
+Caret=44,155
+[Novy1.sql]
+TopLine=1
+Caret=73,9

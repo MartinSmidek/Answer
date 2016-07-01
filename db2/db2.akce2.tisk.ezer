@@ -30,6 +30,7 @@ use info: form right [12,4,,] {
   button export2 [-80,4,,] { title:'PDF...', style:'display:block;zIndex:2',
     proc onclick() {
       var res: object
+      clear;
       switch(export2.get,
       'PDF-jmenovky',{
         sti_V.report_init; sti_V.report_check;
@@ -41,6 +42,7 @@ use info: form right [12,4,,] {
   button export [-20,4,,] { title:'Excel', style:'display:block;zIndex:2',
     proc onclick() {
       var res: object
+      clear;
       switch(export.get,
       // verze 2
       'Excel2',{ // ==> export Excel
@@ -64,7 +66,8 @@ use info: form right [12,4,,] {
 #       },
       'PDF-prijem',{
         sti_B.report_init; sti_B.report_check;
-        res.set(ask('tisk2_pdf_prijem',the_akce.get,the_par.get,sti_B.get_json));
+        sti_D.report_init; sti_D.report_check;
+        res.set(ask('tisk2_pdf_prijem',the_akce.get,the_par.get,sti_B.get_json,sti_D.get_json));
         form.msg.set(res.html);
       },
       'PDF-stravenky',{
@@ -311,8 +314,8 @@ menu m {type:'left', active:*
                                         ,tit:'příjmení:15,jména dospělých:20,obec:25,psč:7,ulice:25,stát:10'
                                         ,fld:'prijmeni,rodice,obec,psc,ulice,stat'}}
     item {title:'Štítky na obálku účastníka' ,par:°{typ:'p',exp:'PDF-prijem',cnd:"funkce!=99"
-                                        ,tit:'příjmení:15,jména:20,_deti:7,skupinka:7,pokoj:12,lůžka:7,kočárek:7,přistýlky:7,strava celá:7,poloviční:7,^'
-                                        ,fld:'prijmeni,jmena,_deti,skupina,pokoj,luzka,kocarek,pristylky,strava_cel,strava_pol,^id_pobyt'}}
+                                        ,tit:'příjmení:15,jména:20,_deti:7,skupinka:7,pokoj:12,lůžka:7,kočárek:7,přistýlky:7,strava vyjímky:5,diety:5,normal:7,normal/2:7,veget:7,veget/2:7,bezlep:7,bezlep/2:7,^'
+                                        ,fld:'prijmeni,jmena,_deti,skupina,pokoj,luzka,kocarek,pristylky,_vyjimky,_diety,strava_cel,strava_pol,strava_cel_bm,strava_pol_bm,strava_cel_bl,strava_pol_bl,^id_pobyt'}}
     item {title:'Stravenky - rodiny'    ,par:°{typ:'vj',exp:'PDF-stravenky',cnd:"funkce!=99"}}
     item {title:'Stravenky - pečouni'   ,par:°{typ:'vjp',exp:'PDF-stravenky',cnd:"1"}}
     item {title:'Stravenky - prázdné'   ,par:°{exp:''}
@@ -429,6 +432,10 @@ report sti_P [0,0,200,287] { format:'A4:1,6,70,41',
 # ----------------------==>   stitek_B - obálka účastníka 3x7
 report sti_B [0,0,200,287] { format:'A4:5,6,70,41',
   box lines     [  2.6, 11.0, 60.0, 27.3] { style:'12,L',      title:'{line1}<br>{line2}<br>{line3}<br>{line4}' }
+}
+# ----------------------==>   stitek_D - popis iregulárních strav do obálky účastníka
+report sti_D [0,0,200,287] { format:'A4:5,6,210,80',
+  box lines     [ 10, 10, 170, 70] { style:'12,L',      title:'{tab}' }
 }
 # ----------------------==>   stitek_C - stravenky     pro LJ DN2200 je format:'A4:5,5,50,24',
 report sti_C [0,0,210,297] { format:'A4:5,3,50,24',
