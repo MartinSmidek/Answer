@@ -3257,11 +3257,11 @@ function tisk2_sestava_pary($akce,$par,$title,$vypis,$export=false) { trace();
       case 'pok1':      list($c)= explode(',',$x->pokoj); $c= trim($c); break;
       case 'pok2':      list($_,$c)= explode(',',$x->pokoj); $c= trim($c); break;
       case 'pok3':      list($_,$_,$c)= explode(',',$x->pokoj); $c= trim($c); break;
-      case '_diety':    $c=  $x->strava_cel_bm!=0 || $x->strava_pol_bm!=0 ? '_bm' : '';
-                        $c.= $x->strava_cel_bl!=0 || $x->strava_cel_bl!=0 ? '_bl' : ''; break;
+      case '_diety':    $c=  $x->strava_cel_bm!=0  || $x->strava_pol_bm!=0 ? '_bm' : '';
+                        $c.= $x->strava_cel_bl!=0  || $x->strava_pol_bl!=0 ? '_bl' : ''; break;
       case '_vyjimky':  $c= $x->cstrava_cel!=''    || $x->cstrava_pol!=''
                          || $x->cstrava_cel_bm!='' || $x->cstrava_pol_bm!=''
-                         || $x->cstrava_cel_bl!='' || $x->cstrava_cel_bl!='' ? 1 : 0; break;
+                         || $x->cstrava_cel_bl!='' || $x->cstrava_pol_bl!='' ? 1 : 0; break;
       default:          $c= $x->$f; break;
       }
       $clmn[$n][$f]= $c;
