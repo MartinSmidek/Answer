@@ -181,10 +181,19 @@ menu m {type:'left', active:*
                                         ,par:°{typ:'j',exp:'Excel2',cnd:"funkce!=99"
                                         ,tit:'příjmení:15,jména:12,poznámka k akci:50,platba:12'
                                         ,fld:'prijmeni,jmeno,poznamka,platba'}}
+#     item {title:'Účastníci akce pro ubytování'
+#                                         ,par:°{typ:'j',exp:'Excel2',cnd:"funkce!=99",hav:"_vek>=18 OR r_role IN ('a','b')"
+#                                         ,tit:'příjmení:15,jméno:12,OP:12,narození:12,obec:25,psč:7,ulice:25'
+#                                         ,fld:'prijmeni,jmeno,obcanka,narozeni_dmy,obec,psc,ulice'}}
     item {title:'Účastníci akce pro ubytování'
-                                        ,par:°{typ:'j',exp:'Excel2',cnd:"funkce!=99",hav:"_vek>=18 OR r_role IN ('a','b')"
-                                        ,tit:'příjmení:15,jméno:12,OP:12,narození:12,obec:25,psč:7,ulice:25'
-                                        ,fld:'prijmeni,jmeno,obcanka,narozeni_dmy,obec,psc,ulice'}}
+                                        ,par:°{typ:'j',exp:'Excel2',cnd:"funkce!=99",hav:"1"
+                                        ,tit:'příjmení:15,jméno:12,OP:12,narození:12,věk:4,obec:25,psč:7,ulice:25'
+                                        ,fld:'prijmeni,jmeno,obcanka,narozeni_dmy,_vek,obec,psc,ulice'}}
+    item {title:'Pečouni pro ubytování'
+                                        ,par:°{typ:'j',exp:'Excel2',cnd:"funkce=99",hav:"1"
+                                        ,ord:"prijmeni,jmeno"
+                                        ,tit:'příjmení:15,jméno:12,OP:12,narození:12,věk:4,obec:25,psč:7,ulice:25'
+                                        ,fld:'prijmeni,jmeno,obcanka,narozeni_dmy,_vek,obec,psc,ulice'}}
     item {title:'Děti na akci s poznámkami'                                                             skill:'y;f'
                                         ,par:°{typ:'j',exp:'Excel2',cnd:"funkce!=99 AND pfunkce!=95",hav:"_vek<18",ord:"narozeni"
                                         ,tit:'příjmení:15,jméno:12,narození:12,/rč:5,věk:4,kategorie:10,obec:25,psč:7,ulice:25,na kurzu jako:20,poznámka k akci:50,trvalá poznámka:50'
@@ -431,7 +440,7 @@ report sti_P [0,0,200,287] { format:'A4:1,6,70,41',
 }
 # ----------------------==>   stitek_B - obálka účastníka 3x7
 report sti_B [0,0,200,287] { format:'A4:5,6,70,41',
-  box lines     [  2.6, 11.0, 60.0, 27.3] { style:'12,L',      title:'{line1}<br>{line2}<br>{line3}<br>{line4}' }
+  box lines     [  2.6, 0.0, 60.0, 27.3] { style:'12,L',      title:'{line1}<br>{line2}<br>{line3}<br>{line4}' }
 }
 # ----------------------==>   stitek_D - popis iregulárních strav do obálky účastníka
 report sti_D [0,0,200,287] { format:'A4:5,6,210,80',
