@@ -181,14 +181,14 @@ menu m {type:'left', active:*
                                         ,par:°{typ:'j',exp:'Excel2',cnd:"funkce!=99"
                                         ,tit:'příjmení:15,jména:12,poznámka k akci:50,platba:12'
                                         ,fld:'prijmeni,jmeno,poznamka,platba'}}
-#     item {title:'Účastníci akce pro ubytování'
-#                                         ,par:°{typ:'j',exp:'Excel2',cnd:"funkce!=99",hav:"_vek>=18 OR r_role IN ('a','b')"
-#                                         ,tit:'příjmení:15,jméno:12,OP:12,narození:12,obec:25,psč:7,ulice:25'
-#                                         ,fld:'prijmeni,jmeno,obcanka,narozeni_dmy,obec,psc,ulice'}}
     item {title:'Účastníci akce pro ubytování'
                                         ,par:°{typ:'j',exp:'Excel2',cnd:"funkce!=99",hav:"1"
                                         ,tit:'příjmení:15,jméno:12,OP:12,narození:12,věk:4,obec:25,psč:7,ulice:25'
                                         ,fld:'prijmeni,jmeno,obcanka,narozeni_dmy,_vek,obec,psc,ulice'}}
+    item {title:'Dsopělí úč. akce pro ubytování'
+                                        ,par:°{typ:'j',exp:'Excel2',cnd:"funkce!=99",hav:"_vek>=18 OR r_role IN ('a','b')"
+                                        ,tit:'příjmení:15,jméno:12,OP:12,narození:12,obec:25,psč:7,ulice:25'
+                                        ,fld:'prijmeni,jmeno,obcanka,narozeni_dmy,obec,psc,ulice'}}
     item {title:'Pečouni pro ubytování'
                                         ,par:°{typ:'j',exp:'Excel2',cnd:"funkce=99",hav:"1"
                                         ,ord:"prijmeni,jmeno"
