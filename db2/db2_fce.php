@@ -1801,10 +1801,11 @@ function ucast2_browse_ask($x,$tisk=false) {
       WHERE a.id_duakce=@akce ");
     $akce= mysql_fetch_object($qa);
     # atributy pobytu
+    $cond_p= str_replace("role IN ('a','b')","1",$cond);
     $qp= mysql_qry("
       SELECT *
       FROM pobyt AS p
-      WHERE $cond $AND ");
+      WHERE $cond_p $AND ");
     while ( $qp && ($p= mysql_fetch_object($qp)) ) {
       $pobyt[$p->id_pobyt]= $p;
       $i0r= $p->i0_rodina;

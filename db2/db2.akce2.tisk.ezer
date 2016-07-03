@@ -126,6 +126,10 @@ menu m {type:'left', active:*
                                         ,par:°{typ:'p',exp:'Excel2',cnd:'funkce!=99'
                                         ,tit:'příjmení:15,jména:20,obec:25,psč:7,ulice:25,telefony:40,e-maily:60,^'
                                         ,fld:'prijmeni,jmena,obec,psc,ulice,telefony,emaily,^id_pobyt'}}
+    item {title:'Páry + rozšířená spojení'                                                              skill:'y;f'
+                                        ,par:°{typ:'p',exp:'Excel2',cnd:"funkce!=99 AND i0_rodina AND role IN ('a','b')"
+                                        ,tit:'příjmení:15,jména:20,obec:25,psč:7,ulice:25,telefony:40,e-maily:60,^'
+                                        ,fld:'prijmeni,jmena,obec,psc,ulice,telefony,emaily,^id_pobyt'}}
 #     item {title:'Základní pro rodiny + spojení'                                                           skill:'c'
 #                                         ,par:°{typ:'p',exp:'Excel2',cnd:'funkce!=99'
 #                                         ,tit:'příjmení:15,jména:20,obec:25,psč:7,ulice:25,telefon-m:12,email-m:28,telefon-z:12,e-mail_z:28'
