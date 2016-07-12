@@ -471,7 +471,11 @@ form _cmd [,,623,30] {
     [ pob.same | pob.save; ];
     [ os1.same | os1.key; os1.save; ];
     [ os2.same | os2.key; os2.save; ];
-    [ sp1.same | sp1.key; sp1.save; ];
+    [ sp1.same
+    | sp1.key;
+      // pokud byl chůvou nebo chovaným dítětem, je třeba ošetřit vazbu
+      [ eq(sp1.s_role.key,3,5);          ];
+      sp1.save; ];
     [ sp2.same | sp2.key; sp2.save; ];
     [ rod.cleni.browse_count; _reload(1,rod.cleni.key_osoba.get) | _reload(1,0) ]
   | error("Uložit co?")
@@ -1060,10 +1064,13 @@ form _spolu [,,0,270] {
   // p = poznámka
   edit  s_poznamka [5,0,231,74] {tag:'p', data:s.poznamka, title:'^poznámka k účasti', format:'n'}
 
-  // r = role
+  // r = s_role
   select s_role [55,2,90,] {tag:'r', type:'map', options:ms_akce_s_role.zkratka, format:'nu'
     data:s.s_role, title:'účast jako:',
-      proc onchanged() { show_spolu;
+      proc onchanged() {
+        // pokud není chůvou pak nemá chované dítě
+        [ pece_key.get; { eq(this.key,5) | pece_key.set(0); pece_sel.key(0); pece_key.change; }  ];
+        show_spolu;
         eq(this.key,4); pfunkce.set(4); pfunkce.change
       | eq(this.key,5); pecoun.get; pfunkce.set(5); pfunkce.change
       | pfunkce.set(0); pfunkce.change
@@ -1380,7 +1387,7 @@ form _rodina2 [,,360,229]  { css:'ae_frame'
     show zamest, show zajmy, show jazyk, show dieta, show aktivita, show note, show kmen
     // údaje k akci
     show key_spolu, show barva, show s_role,
-    show s_dite_kat, show s_poznamka, show pecovane, show pfunkce,
+    show s_dite_kat, show s_poznamka, show pece_key /*pecovane*/, show pfunkce,
     show pece_val show pece_ido /* jméno a id pečovaného nebo chůvy */ show o_umi
     // metody
     proc show_dup(on) { on; jmeno.width(80); _dup.width(29) | jmeno.width(110); _dup.width(0) }
