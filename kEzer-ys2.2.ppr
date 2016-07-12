@@ -13,7 +13,7 @@ FileFormat=0
 ProjectFilesOnly=0
 [Project tree]
 kEzer-ys2
-	+db2
+	-db2
 		db2\$.ezer
 		db2\db2.akce2.elim.ezer
 		db2\db2.akce2.evi.ezer
@@ -115,7 +115,7 @@ kEzer-ys2
 		ds\ds.tab.ezer
 		ds\ds_fce.php
 		ds\fce.js
-	+ezer2.2
+	-ezer2.2
 		-client
 			ezer2.2\client\_code.js
 			ezer2.2\client\_test.html
@@ -348,9 +348,9 @@ Mark2=55,378
 [ezer2.2\client\ezer_fdom2.js]
 TopLine=3022
 Caret=102,3040
+BookMark1=19,3054
 BookMark2=1,2370
 Mark1=48,3527
-BookMark1=19,3054
 [ezer2.2\ezer2_fce.php]
 TopLine=1015
 Caret=1,1042
@@ -365,8 +365,8 @@ Caret=66,123
 [db2\db2_fce.php]
 TopLine=4679
 Caret=13,4697
-Mark1=47,2880
 BookMark1=27,5954
+Mark1=47,2880
 [db2\db2.akce2.evi.ezer]
 TopLine=1383
 Caret=1,1420
