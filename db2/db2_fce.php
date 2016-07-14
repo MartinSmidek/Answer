@@ -1778,7 +1778,7 @@ function ucast2_browse_ask($x,$tisk=false) {
 //     $AND= "AND p.id_pobyt IN (43387,32218,32024) -- test";
 //     $AND= "AND p.id_pobyt IN (43113,43385,43423) -- test Šmídkovi+Nečasovi+Novotní/LK2015";
 //     $AND= "AND p.id_pobyt IN (43423) -- test Novotní/LK2015";
-//     $AND= "AND p.id_pobyt IN (20487) -- Baklík Baklíková";
+//     $AND= "AND p.id_pobyt IN (45429) -- Barabášovi";
 //     $AND= "AND p.id_pobyt IN (20488,20344) -- Bajerovi a Kubínovi";
 //     $AND= "AND p.id_pobyt IN (20568,20793) -- Šmídkovi + Nečasovi";
     # pro browse_row přidáme klíč
@@ -1803,19 +1803,25 @@ function ucast2_browse_ask($x,$tisk=false) {
     # atributy pobytu
     $cond_p= str_replace("role IN ('a','b')","1",$cond);
     $qp= mysql_qry("
-      SELECT *
+      SELECT p.*,SUM(IF(ax.datum_od<'{$akce->datum_od}',1,0))+r.r_ms as x_ms
       FROM pobyt AS p
-      WHERE $cond_p $AND ");
+      JOIN rodina AS r ON r.id_rodina=p.i0_rodina
+      LEFT JOIN pobyt AS px ON r.id_rodina=px.i0_rodina
+      LEFT JOIN akce AS ax ON ax.id_duakce=px.id_akce
+      WHERE $cond_p $AND AND ax.druh=1
+      GROUP BY p.id_pobyt
+      ");
     while ( $qp && ($p= mysql_fetch_object($qp)) ) {
       $pobyt[$p->id_pobyt]= $p;
       $i0r= $p->i0_rodina;
       if ( $i0r ) {
         $rodina_pobyt[$i0r]= $p->id_pobyt;
-        $pobyt[$p->id_pobyt]->access= $p;
+//         $pobyt[$p->id_pobyt]->access= $p;
         if ( !strpos(",$rodiny,",",$i0r,") )
           $rodiny.= ",$i0r";
       }
     }
+//                                                         debug($pobyt,"pobyt");
 //                                                         debug($rodina_pobyt,"rodina_pobyt");
     # seznam účastníků akce - podle podmínky
     $qu= mysql_qry("
@@ -1920,11 +1926,11 @@ function ucast2_browse_ask($x,$tisk=false) {
 //                                                         debug($osoba,'osoby po _rody');
     # seznamy položek
     $fpob1= ucast2_flds("key_pobyt=id_pobyt,_empty=0,key_akce=id_akce,key_osoba,key_spolu,key_rodina=i0_rodina,"
-           . "keys_rodina='',c_suma,platba,xfunkce=funkce,funkce,skupina,dluh");
+           . "keys_rodina='',c_suma,platba,x_ms,xfunkce=funkce,funkce,skupina,dluh");
     $fakce= ucast2_flds("dnu,datum_od");
     $frod=  ucast2_flds("fotka,r_access=access,r_spz=spz,r_svatba=svatba,r_datsvatba=datsvatba,"
           . "r_rozvod=rozvod,r_ulice=ulice,r_psc=psc,"
-          . "r_obec=obec,r_stat=stat,r_telefony=telefony,r_emaily=emaily,r_umi,r_note=note");
+          . "r_obec=obec,r_stat=stat,r_telefony=telefony,r_emaily=emaily,r_ms,r_umi,r_note=note");
     $fpob2= ucast2_flds("p_poznamka=poznamka,pokoj,budova,prednasi,luzka,pristylky,kocarek,pocetdnu"
           . ",strava_cel,strava_cel_bm,strava_cel_bl,strava_pol,strava_pol_bm,strava_pol_bl,"
           . "c_nocleh=platba1,c_strava=platba2,c_program=platba3,c_sleva=platba4,datplatby,"
@@ -2213,7 +2219,7 @@ function ucast2_browse_ask($x,$tisk=false) {
       $test_clmn= substr($x->order,2);
       $test_asc= substr($x->order,0,1)=='a' ? 1 : -1;
       // výběr řazení: numerické | alfanumerické
-      $numeric= in_array($test_clmn,array('skupina'));
+      $numeric= in_array($test_clmn,array('skupina','x_ms'));
       if ( $numeric ) {
 //                                         display("usort $test_clmn $test_asc/numeric");
         usort($zz,function($a,$b) {
@@ -3154,20 +3160,20 @@ function tisk2_sestava_pary($akce,$par,$title,$vypis,$export=false) { trace();
   $i_osoba_email=    23+1;
   array_shift($y->values);
   foreach ($y->values as $x) {
-//     $test_p= 43593;
-//     if ( !in_array($x->key_pobyt,array($test_p)) ) continue; else debug($x,"$x->key_pobyt");
     // aplikace neosobních filtrů
     if ( $fil && $fil->r_umi ) {
       $umi= explode(',',$x->r_umi);
       if ( !in_array($fil->r_umi,$umi) ) continue;
     }
-    if ( $fil && $fil->ucasti_ms ) {
-      $ru= mysql_qry("SELECT COUNT(*) as _pocet FROM akce AS a
-              JOIN pobyt AS p ON a.id_duakce=p.id_akce
-              WHERE a.druh=1 AND p.i0_rodina={$x->key_rodina} AND a.datum_od<='{$x->datum_od}'");
-      $xu= mysql_fetch_object($ru);
-      if ( $xu->_pocet!=$fil->ucasti_ms ) continue;
-    }
+//     // ke spočítaným účastím přidej r_ms
+//     if ( $fil && $fil->ucasti_ms ) {
+//       $ru= mysql_qry("SELECT COUNT(*)+r_ms as _pocet FROM akce AS a
+//               JOIN pobyt AS p ON a.id_duakce=p.id_akce
+//               JOIN rodina AS r ON r.id_rodina=p.i0_rodina
+//               WHERE a.druh=1 AND p.i0_rodina={$x->key_rodina} AND a.datum_od<='{$x->datum_od}'");
+//       $xu= mysql_fetch_object($ru);
+//       if ( $xu->_pocet!=$fil->ucasti_ms ) continue;
+//     }
     // pokračování, pokud záznam vyhověl filtrům
     $n++;
     # rozbor osobních údajů: adresa nebo základní kontakt se získá 3 způsoby
@@ -3263,6 +3269,7 @@ function tisk2_sestava_pary($akce,$par,$title,$vypis,$export=false) { trace();
       case '_vyjimky':  $c= $x->cstrava_cel!=''    || $x->cstrava_pol!=''
                          || $x->cstrava_cel_bm!='' || $x->cstrava_pol_bm!=''
                          || $x->cstrava_cel_bl!='' || $x->cstrava_pol_bl!='' ? 1 : 0; break;
+      case '_vps':      $c= $x->funkce==1 ? 'VPS' : (strpos($x->r_umi,'1')!==false ? '(vps)' : ''); break;
       default:          $c= $x->$f; break;
       }
       $clmn[$n][$f]= $c;
@@ -12116,7 +12123,8 @@ function grp_read($par) {  trace(); debug($par);
     // spojovací rekordy mezi maily a osoby
     query("TRUNCATE TABLE gg_osoba");
     query("INSERT INTO gg_osoba (email,zprav,prvni,posledni)
-           SELECT LCASE(email),COUNT(*),MIN(datum),MAX(datum) FROM gg_mbox GROUP BY email");
+           SELECT LCASE(email),COUNT(*),MIN(datum),MAX(datum) FROM gg_mbox
+           WHERE email!='chlapi-iniciace+noreply@googlegroups.com' GROUP BY email");
     // vytvoření tabulky mailu, gmailu, případně rodinného mailu --> id_osoba
     $id= array();
     $rh= mysql_qry("
@@ -12285,7 +12293,7 @@ function grp_read($par) {  trace(); debug($par);
     }
     if ( $sav ) {
       foreach ($mails as $uid=>$mail) {
-        if ( $uid ) {
+        if ( $uid && $mail!='chlapi-iniciace+noreply@googlegroups.com' ) {
           // uložení do db
           $root=  isset($mail->root) ? $mail->root : $mail->xroot;
           $zprav= isset($mail->zprav) ? $mail->zprav : 0;
