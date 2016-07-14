@@ -237,8 +237,8 @@ proc reload(id_pobyt) { var filtr:text, id_pobyt0:number
   page_clear;
   filtr.set(1);
   [ u.lid.get; u.tym.get
-  | u.lid.get; filtr.set("funkce IN (0,1,2)")
-  | u.tym.get; filtr.set("funkce NOT IN (0,1,2)") ];
+  | u.lid.get; filtr.set("p.funkce IN (0,1,2)")
+  | u.tym.get; filtr.set("p.funkce NOT IN (0,1,2)") ];
   // vynucení výpočtu duplicit a příznaku dokumentů
   [ u.sf.get;  filtr.set(conc('/*css*/',filtr)) ];
   [ u.dup.get; filtr.set(conc('/*duplicity*/',filtr)) ];
@@ -557,16 +557,18 @@ form _ucast [,,400,] { css:'ds_form'
     show c_suma  [,,0,] { title:'cena', format:"r" }
     show platba  [,,0,] { title:'platba', format:"rsq=" }
     # varianta C na úkor _jmena
+    show x_ms    [,,0,] { title:'lk;', format:'rq=s', help:'počet účastí páru na LK MS' }
     show x_umi   [,,0,] { title:'umí', format:'sq*', help:'seznam schopností rodiny a jejích členů' }
     # je vždy vidět
-    show xfunkce [,,40,] { title:'fce', format:'rq#s', map_pipe:ms_akce_funkce.zkratka, help:'funkce na akci'}
+    show xfunkce [,,40,] { title:'fce', format:'rq#s', map_pipe:ms_akce_funkce.zkratka,
+      help:'funkce na akci', css_cell:"x_ms,0:zeleny,1:oranzovy,2:oranzovy"}
     show skupina [,,30,] { title:'sk.', format:'rq=s:e', help:'číslo skupinky'}
     // barvení
-    show dluh, show r_access
+    show dluh, show _ms, show r_access
     // údaje rod
     show r_spz, show r_svatba, show r_datsvatba, show r_rozvod,
     show r_ulice, show r_psc, show r_obec, show r_stat,
-    show r_telefony, show r_emaily, show r_umi, show fotka, show r_note
+    show r_telefony, show r_emaily, show r_ms, show r_umi, show fotka, show r_note
     // údaje rod.cleni
     show r_cleni // naplní browse pro rodinu daty jejích členů
     // údaje pob
@@ -678,9 +680,9 @@ form _ucast [,,400,] { css:'ds_form'
     }
     proc onclick() {
       eq(_docs.width,49); show_dup(0)
-    | platba.width; platba.width(0); c_suma.width(0); _docs.width(35); x_umi.width(35);
-      _jmena.width(108)
-    | x_umi.width; x_umi.width(0); _docs.width(0); _jmena.width(180)
+    | platba.width; platba.width(0); c_suma.width(0); _docs.width(30);
+      x_umi.width(28); x_ms.width(19); _jmena.width(100)
+    | x_umi.width; x_umi.width(0); x_ms.width(0); _docs.width(0); _jmena.width(180)
     | platba.width(35); c_suma.width(35); _docs.width(15); _jmena.width(92)
     }
     proc onrefreshed() { h_change_b }
@@ -1409,10 +1411,14 @@ form _rodina2 [,,360,229]  { css:'ae_frame'
   }
 
   label [7,0,1,170] {tag:'x', title:" " } // výplň pro případ ne-rodiny
+  // účast na jiných MS
+  field r_ms       [91,4,14,] {tag:'p', data:r.r_ms, title:'MS mimo YS/FA:', format:'r:e',
+                   help:'zadej počet účastí na MS mimo YS,FA' }
+  label            [108,9,5,] {tag:'p', title:'&times;' }
   // rodinné schopnosti a poznámka
   select r_umi     [192,6,160,] {tag:'p', type:'map+', data:r.r_umi, options:ms_umi.hodnota,
     title:'schopnosti:', format:'n'}
-  edit  r_note     [5,28,302+44,74] {tag:'p', data:r.note, title:'^poznámka k rodině'}
+  edit  r_note     [5,36,302+44,66] {tag:'p', data:r.note, title:'^rodinná poznámka'}
 
   // nastavení účasti jako rodinné
   proc show_rodiny() {

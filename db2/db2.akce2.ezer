@@ -475,6 +475,7 @@ table rodina { key_id:'id_rodina'
   date datsvatba { sql_pipe:'sql_date1'}
   number rozvod
   text r_umi      // #ms_umi
+  number r_ms     // počet účastí na MS mimo YS,FA
   text note
   text origin
   text historie
@@ -1170,7 +1171,11 @@ form _rodina2p [,,188,229] { css:'ae_frame'
   // rodinné schopnosti a poznámka
   select r_umi     [Lp+60,10,116,] {tag:'p', type:'map+', data:r.r_umi, options:ms_umi.hodnota,
     title:'schopnosti:', format:'n'}
-  edit  r_note     [Lp+ 0,36,175,74] {tag:'p', data:r.note, title:'^poznámka', format:'n'}
+  // účast na jiných MS
+  field r_ms       [Lp+150,34,14,] {tag:'p', data:r.r_ms, title:'MS mimo YS/FA:', format:'r:e',
+                   help:'zadej počet účastí na MS mimo YS,FA' }
+  label            [Lp+170,39,5,] {tag:'p', title:'&times;' }
+  edit  r_note     [Lp+ 0,56,175,74] {tag:'p', data:r.note, title:'^poznámka', format:'n'}
   // menu
   menu detail { type:'context', skill:'yae;fae;cae'
     item { title:'konfigurace formuláře',  proc onclick () { rodina_config.tune(evi) } }
