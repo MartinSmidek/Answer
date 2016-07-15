@@ -31,11 +31,12 @@ proc onfirstfocus() {
 }
 proc onfocus() {
   [ [ dirty.get | akce_onstart ];
+    u.legenda(the_cenik.get,the_cena.get);
+    u.b.xfunkce.set_attrib('css_cell',cconc(the_ms.get,"x_ms,1:zeleny,2:oranzovy,3:oranzovy",''));
     eq(the_duakce_local.get,the_duakce.get)
   | init_ucast2;
     the_duakce_local.set(the_duakce.get)
   ];
-  u.legenda(the_cenik.get,the_cena.get);
   switch(the_soubeh.get,
   0,{ header.soubeh.display(0) },
   1,{ header.soubeh.display(1); panel.display(2,'akce1'); header.soubeh.set('^Děti') },
@@ -557,11 +558,11 @@ form _ucast [,,400,] { css:'ds_form'
     show c_suma  [,,0,] { title:'cena', format:"r" }
     show platba  [,,0,] { title:'platba', format:"rsq=" }
     # varianta C na úkor _jmena
-    show x_ms    [,,0,] { title:'lk;', format:'rq=s', help:'počet účastí páru na LK MS' }
+    show x_ms    [,,0,] { title:'lk;', format:'rq=s:e', help:'počet účastí páru na LK MS (včetně tohoto)' }
     show x_umi   [,,0,] { title:'umí', format:'sq*', help:'seznam schopností rodiny a jejích členů' }
     # je vždy vidět
     show xfunkce [,,40,] { title:'fce', format:'rq#s', map_pipe:ms_akce_funkce.zkratka,
-      help:'funkce na akci', css_cell:"x_ms,0:zeleny,1:oranzovy,2:oranzovy"}
+      help:'funkce na akci', css_cell:""} // nastavuje se v panel.onfocus pro LK a obnovy
     show skupina [,,30,] { title:'sk.', format:'rq=s:e', help:'číslo skupinky'}
     // barvení
     show dluh, show _ms, show r_access

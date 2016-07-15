@@ -420,8 +420,9 @@ function akce2_info_par($ida,$idp=0,$tab_only=0) {
 # vrácení hodnot akce
 function akce2_id2a($id_akce) {  //trace();
   $a= (object)array('title'=>'?','cenik'=>0,'cena'=>0,'soubeh'=>0,'hlavni'=>0,'soubezna'=>0);
-  list($a->title,$a->rok,$a->cenik,$a->cena,$a->hlavni,$a->soubezna,$a->org)=
-    select("a.nazev,YEAR(a.datum_od),a.ma_cenik,a.cena,a.id_hlavni,IFNULL(s.id_duakce,0),a.access",
+  list($a->title,$a->rok,$a->cenik,$a->cena,$a->hlavni,$a->soubezna,$a->org,$a->ms)=
+    select("a.nazev,YEAR(a.datum_od),a.ma_cenik,a.cena,a.id_hlavni,"
+      . "IFNULL(s.id_duakce,0),a.access,IF(a.druh IN (1,2),1,0)",
       "akce AS a
        LEFT JOIN akce AS s ON s.id_hlavni=a.id_duakce",
       "a.id_duakce=$id_akce");
@@ -1795,28 +1796,35 @@ function ucast2_browse_ask($x,$tisk=false) {
     $cond= $x->cond ?: 1;
     # atributy akce
     $qa= mysql_qry("
-      SELECT @akce,@soubeh AS soubeh,@app,
+      SELECT @akce,@soubeh AS soubeh,@app,druh IN (1,2) AS _ms,
         datum_od,DATEDIFF(a.datum_do,a.datum_od)+1 AS dnu,ma_cenik,ma_cenu,cena
       FROM akce AS a
       WHERE a.id_duakce=@akce ");
     $akce= mysql_fetch_object($qa);
     # atributy pobytu
     $cond_p= str_replace("role IN ('a','b')","1",$cond);
+    $ms1= $akce->_ms ? ",IFNULL(_ucasti._n,0)+IFNULL(r.r_ms,0) AS x_ms" : '';
+    $ms2= $akce->_ms ? "
+      LEFT JOIN (SELECT COUNT(*) AS _n,px.i0_rodina
+        FROM pobyt AS px
+        JOIN akce AS ax ON ax.id_duakce=px.id_akce
+        WHERE ax.datum_od<='{$akce->datum_od}' AND ax.druh=1
+        GROUP BY  px.i0_rodina
+      ) AS _ucasti ON _ucasti.i0_rodina=p.i0_rodina AND p.i0_rodina
+    " : '';
     $qp= mysql_qry("
-      SELECT p.*,SUM(IF(ax.datum_od<'{$akce->datum_od}',1,0))+r.r_ms as x_ms
+      SELECT p.* $ms1
       FROM pobyt AS p
-      JOIN rodina AS r ON r.id_rodina=p.i0_rodina
-      LEFT JOIN pobyt AS px ON r.id_rodina=px.i0_rodina
-      LEFT JOIN akce AS ax ON ax.id_duakce=px.id_akce
-      WHERE $cond_p $AND AND ax.druh=1
-      GROUP BY p.id_pobyt
-      ");
+      LEFT JOIN rodina AS r ON r.id_rodina=p.i0_rodina
+      $ms2
+      WHERE $cond_p $AND
+    ");
     while ( $qp && ($p= mysql_fetch_object($qp)) ) {
       $pobyt[$p->id_pobyt]= $p;
       $i0r= $p->i0_rodina;
       if ( $i0r ) {
         $rodina_pobyt[$i0r]= $p->id_pobyt;
-//         $pobyt[$p->id_pobyt]->access= $p;
+        $pobyt[$p->id_pobyt]->access= $p;
         if ( !strpos(",$rodiny,",",$i0r,") )
           $rodiny.= ",$i0r";
       }

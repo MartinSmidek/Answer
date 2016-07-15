@@ -24,6 +24,7 @@ var the_akce_fa: number         // poslední pracovní akce Familia             
 
 # hodnoty udržované funkcí akce_change
 var the_org: number             // pracovní akce: organizace
+var the_ms: number              // pracovní akce: letní kurs nebo obnova
 var the_title: text             // pracovní akce: název do titulků
 var the_rok: number             // pracovní akce: rok konání
 var the_soubeh: number          // 0=normální akce, 1=hlavní akce, 2=souběžná akce
@@ -81,7 +82,7 @@ proc akce_choose(id_akce) { var a:object
   a.set(ask('akce2_id2a',id_akce)); // nastaví i nulové hodnoty pro id_akce=0
   the_rok.set(a.rok);       the_title.set(a.title);       the_soubeh.set(a.soubeh);
   the_hlavni.set(a.hlavni); the_soubezna.set(a.soubezna); the_cenik.set(a.cenik);
-  the_cena.set(a.cena);     the_org.set(a.org);
+  the_cena.set(a.cena);     the_org.set(a.org);           the_ms.set(a.ms);
 }
 proc accessed(org) {
   return(function('x','y','return x&y;',org,my_access.get));
