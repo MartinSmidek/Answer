@@ -11551,49 +11551,26 @@ function db2_kontrola_dat($par) { trace();
   if ( isset($par->test) ) {
     switch ($par->test) {
     case 'test':
-//       $rr= mysql_qry("
-//         SELECT BIT_OR(a.access) AS _aa,r.access,
-//           GROUP_CONCAT(DISTINCT CONCAT(o.access,':',o.id_osoba)) AS _oas,id_rodina,r.nazev
-//         FROM rodina AS r JOIN tvori AS t USING (id_rodina)
-//         JOIN osoba AS o USING (id_osoba) JOIN spolu AS s USING (id_osoba)
-//         JOIN pobyt AS p USING (id_pobyt) JOIN akce AS a ON id_akce=id_duakce
-//         WHERE o.access=3 OR r.access=3
-//         GROUP BY id_rodina
-//         HAVING _aa<3
-//       ");
-//       while ( $rr && (list($aa,$ra,$oas,$idr,$jm)= mysql_fetch_row($rr) ) ) {
-//         $osoby= '';
-//         foreach (explode(',',$oas) as $oa) {
-//           list($fill,$oa1)= explode(':',$oa);
-//           $osoby.= " $oa1 ";
-//         }
-//         $html.= "<br>rodina $jm/$idr jezdí jen na akce $aa ale má zapsáno, že je společná";
-//         $html.= " jakož i její členové $osoby";
-//       }
-      $msg= '';
-      $qry=  "SELECT GROUP_CONCAT(id_tvori) AS _ts,count(*) AS _pocet_,GROUP_CONCAT(DISTINCT role) AS _role_,
-                tvori.id_osoba,tvori.id_rodina,r.nazev,prijmeni,jmeno
-              FROM tvori
-              LEFT JOIN rodina AS r USING(id_rodina)
-              LEFT JOIN osoba AS o ON o.id_osoba=tvori.id_osoba
-              GROUP BY id_osoba,id_rodina HAVING _pocet_>1
-              ORDER BY id_rodina ";
-      $res= mysql_qry($qry);
-      while ( $res && ($x= mysql_fetch_object($res)) ) {
-        $n++;
-        $ok= '';
-        $ts= explode(',',$x->_ts);
-        if ( $opravit && strlen($x->_role_)==1 ) {
-          $ok.= mysql_qry("DELETE FROM tvori WHERE id_tvori={$ts[0]}",1)
-             ? " = SMAZÁNO" : ' !!!!!CHYBA při mazání' ;
-        }
-        $ido= tisk2_ukaz_osobu($x->id_osoba);
-        $idr= tisk2_ukaz_rodinu($x->id_rodina);
-        $msg.= "<dd>násobné členství záznamem tvori=({$x->_ts}) v rodině $idr:{$x->nazev}
-          osoby $ido:{$x->prijmeni} {$x->jmeno} v roli {$x->_role_}  $ok</dd>";
-      }
-      $html.= "<dt style='margin-top:5px'>tabulka <b>tvori</b>: násobné členství osoby v rodině"
-        .($msg?"{$auto} pokud osoba nemá více rolí$msg":"<dd>ok</dd>")."</dt>";
+  # -----------------------------------------==> .. spolu vede na smazanou osobu
+  $msg= '';
+  $rr= mysql_qry("
+    SELECT id_spolu,id_osoba,id_pobyt,CONCAT(jmeno,' ',prijmeni),o.deleted,a.nazev
+    FROM spolu JOIN osoba AS o USING (id_osoba) JOIN pobyt AS p USING (id_pobyt)
+      LEFT JOIN akce  AS a ON a.id_duakce=p.id_akce
+    WHERE o.deleted!=''
+    ORDER BY id_pobyt
+  ");
+  while ( $rr && (list($ids,$ido,$idp,$jm,$od,$nazev)= mysql_fetch_row($rr) ) ) {
+    $ok= '';
+    $sod= $od ? "smazaný" : '';
+    if ( $opravit ) {
+      $ok.= mysql_qry("DELETE FROM spolu WHERE id_spolu=$ids",1)
+         ? " = SMAZÁNO" : ' !!!!!CHYBA při mazání' ;
+    }
+    $msg.= "<dd>v $srd pobytu $nazev/$idp je $sod člen $jm/$ido$ok</dd>";
+  }
+  $html.= "<dt style='margin-top:5px'>tabulka <b>spolu</b>: vazba na smazané osoby"
+    .($msg?"$auto$msg":"<dd>ok</dd>")."</dt>";
       break;
     }
     goto end;
@@ -11624,6 +11601,26 @@ function db2_kontrola_dat($par) { trace();
       $msg.= "<dd>pobyt=0 v záznamu spolu={$x->id_spolu} osoby {$x->prijmeni} {$x->jmeno}$ok</dd>";
   }
   $html.= "<dt style='margin-top:5px'> tabulka <b>spolu</b>: nulové klíče osoby nebo pobytu"
+    .($msg?"$auto$msg":"<dd>ok</dd>")."</dt>";
+  # -----------------------------------------==> .. spolu vede na smazanou osobu
+  $msg= '';
+  $rr= mysql_qry("
+    SELECT id_spolu,id_osoba,id_pobyt,CONCAT(jmeno,' ',prijmeni),o.deleted,a.nazev
+    FROM spolu JOIN osoba AS o USING (id_osoba) JOIN pobyt AS p USING (id_pobyt)
+      LEFT JOIN akce  AS a ON a.id_duakce=p.id_akce
+    WHERE o.deleted!=''
+    ORDER BY id_pobyt
+  ");
+  while ( $rr && (list($ids,$ido,$idp,$jm,$od,$nazev)= mysql_fetch_row($rr) ) ) {
+    $ok= '';
+    $sod= $od ? "smazaný" : '';
+    if ( $opravit ) {
+      $ok.= mysql_qry("DELETE FROM spolu WHERE id_spolu=$ids",1)
+         ? " = SMAZÁNO" : ' !!!!!CHYBA při mazání' ;
+    }
+    $msg.= "<dd>v $srd pobytu $nazev/$idp je $sod člen $jm/$ido$ok</dd>";
+  }
+  $html.= "<dt style='margin-top:5px'>tabulka <b>spolu</b>: vazba na smazané osoby"
     .($msg?"$auto$msg":"<dd>ok</dd>")."</dt>";
   // ----------------------------------------------==> .. násobné SPOLU
   $msg= '';
