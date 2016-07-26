@@ -5901,7 +5901,7 @@ __XLS;
 __XLS;
   // výstup
                                                                 display($xls);
-  $inf= Excel5($xls,1);
+  $inf= Excel2007($xls,1);
   if ( $inf ) {
     $html= " se nepodařilo vygenerovat - viz začátek chybové hlášky";
     fce_error($inf);
@@ -11605,7 +11605,8 @@ function db2_kontrola_dat($par) { trace();
   # -----------------------------------------==> .. spolu vede na smazanou osobu
   $msg= '';
   $rr= mysql_qry("
-    SELECT id_spolu,id_osoba,id_pobyt,CONCAT(jmeno,' ',prijmeni),o.deleted,a.nazev
+    SELECT id_spolu,id_osoba,id_pobyt,CONCAT(jmeno,' ',prijmeni),o.deleted,
+      CONCAT(a.nazev,' ',YEAR(datum_od)) AS nazev
     FROM spolu JOIN osoba AS o USING (id_osoba) JOIN pobyt AS p USING (id_pobyt)
       LEFT JOIN akce  AS a ON a.id_duakce=p.id_akce
     WHERE o.deleted!=''
