@@ -687,13 +687,13 @@ function ds_xls_zaloha($order) {  trace();//'','win1250');
   $test= 1;
   if ( $test )
     file_put_contents("xls.txt",$xls);
-  $inf= Excel5(/*w*u*/($xls),1);
+  $inf= Excel2007(/*w*u*/($xls),1);
   if ( $inf ) {
     $html= " nastala chyba";
     fce_error(/*w*u*/($inf));
   }
   else
-    $html= " <a href='docs/$name.xls' target='xls'>zálohová faktura</a>.";
+    $html= " <a href='docs/$name.xlsx' target='xls'>zálohová faktura</a>.";
 end:
   return /*w*u*/($html);
 }
@@ -976,13 +976,13 @@ __XLS;
   if ( $test )
     file_put_contents("xls.txt",$final_xls);
   time_mark('ds_xls_faktury Excel5');
-  $inf= Excel5(/*w*u*/($final_xls),1);
+  $inf= Excel2007(/*w*u*/($final_xls),1);
   if ( $inf ) {
     $html= " nastala chyba";
     fce_error(/*w*u*/($inf));
   }
   else
-    $html= " <a href='docs/$name.xls' target='xls'>konečná faktura</a>.";
+    $html= " <a href='docs/$name.xlsx' target='xls'>konečná faktura</a>.";
   // případný testovací výpis
   time_mark('ds_xls_faktury end');
 end:
@@ -1278,12 +1278,12 @@ __XLS;
     $koef= $koef_dph[round($dph*100)];
     $xls.= <<<__XLS
       |C$n ='$listr'!H$d          |C$n:G$n merge
-      |H$n ='$listr'!L$d   ::kc   |H$n:J$n merge
-      |K$n ='$listr'!K$d   ::proc
-      |L$n =H$n-M$n        ::kc
-      |M$n =H$n*'$listr'!O$d    ::kc
-//       |M$n =H$n/(1+K$n)    ::kc
+      |H$n ='$listr'!L$d     ::kc |H$n:J$n merge
+      |K$n ='$listr'!K$d     ::proc
+      |L$n =H$n*'$listr'!O$d ::kc
+      |M$n =H$n-L$n          ::kc
 __XLS;
+//       |M$n =H$n/(1+K$n)    ::kc
     $n++; $d++;
   }
   $xls.= <<<__XLS
@@ -1335,7 +1335,7 @@ function ds_faktura($list,$typ,$order,$polozky,$platce,$zaloha=100,$pata='') {  
                  "zaregistrovaný Krajským soudem v Brně{}spisová značka: L 8556{}".
                  "IČ: 26531135  DIČ: CZ26531135";
   $dum_setkani=  "Dolní Albeřice 1, 542 26 Horní Maršov{}".
-                 "telefon: 499 874 152, 736 537 122{}dum@setkani.org{}www.alberice.setkani.org";
+                 "telefon: 736 537 122{}dum@setkani.org{}www.alberice.setkani.org";
   // pojmenované řádky (P,Q,R,S)
   $P= 22;               // výčet položek
   $Q= 36;               // poslední položka
@@ -1409,8 +1409,8 @@ __XLS;
         |H$n $cena         ::kc    |H$n:I$n merge
         |J$n $sleva        ::proc
         |K$n $dph          ::proc
-        |L$n =O$n-M$n      ::kc
-        |M$n =O$n*$koef    ::kc
+        |L$n =O$n*$koef    ::kc
+        |M$n =O$n-L$n      ::kc
         |O$n =F$n*H$n*(1-J$n) ::kc color=$c_okraj
 __XLS;
       $n++;
@@ -1438,16 +1438,16 @@ __XLS;
   $xls.= <<<__XLS
     |K$R Rozpis DPH ::bold
     |K$n Sazba::middle bold border=h right
-    |L$n Základ  ::middle bold border=h right
-    |M$n Daň     ::middle bold border=h right
+    |L$n Daň     ::middle bold border=h right
+    |M$n Základ  ::middle bold border=h right
 __XLS;
   sort($sazby_dph);
   foreach($sazby_dph as $sazba) {
     $n++;
     $xls.= <<<__XLS
       |K$n $sazba                                    ::proc border=h right
-      |L$n =SUMIF(K$P:K$Q,K$n,M$P:M$Q)*($zaloha/100) ::kc   border=h right
-      |M$n =SUMIF(K$P:K$Q,K$n,L$P:L$Q)*($zaloha/100) ::kc   border=h right
+      |L$n =SUMIF(K$P:K$Q,K$n,L$P:L$Q)*($zaloha/100) ::kc   border=h right
+      |M$n =SUMIF(K$P:K$Q,K$n,M$P:M$Q)*($zaloha/100) ::kc   border=h right
 __XLS;
   }
   // řádky R,S (viz výše) -- spodek faktury

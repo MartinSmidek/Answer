@@ -6,8 +6,8 @@
 # ------------------------------------------------------------------------------------------------ #
 
 
-var d_cond: text
-var d_day: text
+var d_cond=0
+var d_day=''
 
 # ===========================================================================================> DENÍK
 panel den {type:'plain', title:"Deník", _sys:'den'
@@ -20,7 +20,7 @@ panel den {type:'plain', title:"Deník", _sys:'den'
     dd.seznam.browse_focus; dv.vyber_init;
   }
   proc reload(cond) {
-    d_cond.set(cond); dd.seznam.browse_load(cond,"datum DESC, ident DESC"); dd.seznam.raise('onrowclick')
+    dd.seznam.browse_load(cond,"datum DESC, ident DESC"); dd.seznam.raise('onrowclick')
   }
   proc d_browse_seek (k) {
     dd.seznam.raise('onrowclick',dd.seznam.browse_seek(conc("id_pokl=",k)))
@@ -136,7 +136,8 @@ panel den {type:'plain', title:"Deník", _sys:'den'
       rc_org.set(" AND org=5 ");
       rc_typ.set(cconc(eq(r_typ.get,1),'',eq(r_typ.get,2),' AND typ=1',eq(r_typ.get,3),' AND typ=2'));
       rc_goa.set(cconc(eq(r_goa.get,1),'',eq(r_goa.get,2),conc(" AND LOCATE('",rf_goal.get,"',ucel)")));
-      reload(conc(rc_dat.get,rc_org.get,rc_typ.get,rc_goa.get))
+      d_cond.set(conc(rc_dat.get,rc_org.get,rc_typ.get,rc_goa.get));
+      reload(d_cond.get)
     }
     proc zmena () {
       cond
@@ -273,6 +274,9 @@ panel den {type:'plain', title:"Deník", _sys:'den'
 }
 # =======================================================================================> INFORMACE
 panel inf {type:'right', title:"Informace", _sys:'inf'
+  proc onfirstfocus () {
+    d_cond.get | den.dv.vyber_init;
+  }
   menu {type:'left', active:*
     menu {title:'Stavy pokladen',type:'group', _sys:'akt'
       item {title:'Aktuální stav pokladen',                     par:°{s:'stav',c:'aktualne'} }
@@ -282,9 +286,6 @@ panel inf {type:'right', title:"Informace", _sys:'inf'
     menu {title:'Exporty',type:'group', _sys:'exp'
       item {title:'Letošní pokladní deník',                     par:°{s:'export',c:'letos'} }
       item {title:'Loňský pokladní deník',                      par:°{s:'export',c:'vloni'} }
-    }
-    proc onstart () {
-      d_cond.set(''); d_day.set(now);
     }
     proc onclick (m) {
       i.result.set(conc("<div id='info'>",
