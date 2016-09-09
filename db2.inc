@@ -21,6 +21,7 @@
   );
   answer_ini('db2','ezer_db2',$dbs_plus,$php,$ezer);
   // SPECIFICKÉ PARAMETRY
-  $VPS= 'PPS';
+  global $USER;
+  $VPS= $USER->org==1 ? 'VPS' : 'PPS';
   $EZER->options->org= 'YMCA Familia, YMCA Setkání';
 ?>

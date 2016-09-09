@@ -352,6 +352,12 @@ menu m {type:'left', active:*
                                         ,cnd:"p.funkce IN (0,1,2,5) AND p.i0_rodina AND role IN ('a','b')"
                                         ,tit:'příjmení:15,jména:20,na MS:6,VPS:6,obec:25,^'
                                         ,fld:'prijmeni,jmena,x_ms,_vps,obec,^id_pobyt'}}
+    item {title:'Účastníci / tabulka'                                                        skill:'y;f;c'
+                                        ,par:°{typ:'tab',exp:'Excel2'
+                                        ,cnd:"p.funkce NOT IN (99)"
+#                                         ,cnd:"p.funkce NOT IN (99) AND p.i0_rodina AND role IN ('a','b')"
+                                        ,tit:'příjmení:15,jména:20,na MS:6,funkce,VPS:6,^'
+                                        ,fld:'prijmeni,jmena,x_ms,_vps,funkce,^id_pobyt'}}
 #     item {title:'Noví účastníci'                                                             skill:'y;f;c'
 #                                         ,par:°{typ:'p',exp:'Excel2'
 #                                         ,cnd:"p.funkce IN (0,1,2)",filtr:°{ucasti_ms:1}
