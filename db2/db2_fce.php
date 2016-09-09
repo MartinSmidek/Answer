@@ -2700,14 +2700,28 @@ function akce2_auto_pece($patt) {  #trace();
 # --------------------------------------------------------------------------------- akce2_skup_check
 # zjištění konzistence skupinek podle příjmení VPS/PPS
 function akce2_skup_check($akce) {
-  return akce2_skup_get($akce,1,$err);
+  $ret= akce2_skup_get($akce,1,$err);
+  return $ret->msg;
 }
 # ------------------------------------------------------------------ akce2_skup_get
 # zjištění skupinek podle příjmení VPS/PPS
+# pokud je par.mark=LK vrátí se skupinky z letního kurzu s informací, jestli jsou na této akci
 function akce2_skup_get($akce,$kontrola,&$err,$par=null) { trace();
+                                                        debug($par,"akce2_skup_get");
   global $VPS;
+  $ret= (object)array();
   $msg= array();
   $skupiny= array();
+  // přechod na LK pro par->mark=LK ... a pokud jde o obnovu
+  if ( $par->mark=='LK' ) {
+    list($access,$druh,$kdy)= select('access,druh,datum_od','akce',"id_duakce=$akce");
+    if ( $druh==2 /*MS obnova*/ ) {
+      $akce= select('id_duakce','akce',
+        "access=$access AND druh=1 AND datum_od<'$kdy' ORDER BY datum_od DESC LIMIT 1");
+      $ret->lk= $akce;
+    }
+    else { $msg[]= "tento výpis má smysl jen pro obnovy MS"; $err= -1; $kontrola= 1; goto end; }
+  }
   $celkem= select('count(*)','pobyt',"id_akce=$akce AND funkce IN (0,1,2) AND skupina!=-1");
   $n= 0;
   $err= 0;
@@ -2744,7 +2758,7 @@ function akce2_skup_get($akce,$kontrola,&$err,$par=null) { trace();
       }
       elseif ( $par && $par->verze=='MS' ) {
         $qryu= "
-          SELECT p.id_pobyt,skupina,nazev,pokoj,
+          SELECT p.id_pobyt,skupina,nazev,pokoj,i0_rodina,
             GROUP_CONCAT(o.id_osoba) as ids_osoba,
             GROUP_CONCAT(o.id_osoba) as id_osoba_m,
             CONCAT(nazev,' ',GROUP_CONCAT(o.jmeno SEPARATOR ' a ')) AS _nazev
@@ -2855,7 +2869,10 @@ function akce2_skup_get($akce,$kontrola,&$err,$par=null) { trace();
   elseif ( !count($msg) && $kontrola )
     $msg[]= "Vše je ok";
   // konec
-  return $kontrola ? implode(",<br>",$msg) : $skup;
+end:
+  $ret->skupiny= $skup;
+  $ret->msg= implode(",<br>",$msg);
+  return $ret;
 }
 
 # --------------------------------------------------------------------------------- akce2_skup_renum
@@ -2863,7 +2880,8 @@ function akce2_skup_get($akce,$kontrola,&$err,$par=null) { trace();
 function akce2_skup_renum($akce) {
   $err= 0;
   $msg= '';
-  $skupiny= akce2_skup_get($akce,0,$err);
+  $ret= akce2_skup_get($akce,0,$err);
+  $skupiny= $ret->skupiny;
   if ( $err>1 ) {
     $msg= "skupinky nejsou dobře navrženy - ještě je nelze přečíslovat";
   }
@@ -4780,11 +4798,44 @@ function akce2_jednou_dvakrat($akce,$par,$title,$vypis,$export=false) { trace();
 }
 # ---------------------------------------------------------------------------------- akce2_skup_tisk
 # tisk skupinek akce
-function akce2_skup_tisk($akce,$par,$title,$vypis,$export) {
+function akce2_skup_tisk($akce,$par,$title,$vypis,$export) {  trace();
   global $VPS;
   $result= (object)array();
   $html= "<table>";
-  $skupiny= akce2_skup_get($akce,0,$err,$par);
+  $ret= akce2_skup_get($akce,0,$err,$par);
+  $skupiny= $ret->skupiny;
+  // pro par.mark=LK zjistíme účasti rodin na obnově
+  $lk= 0;
+  $na_kurzu= $na_obnove= array();
+  if ( $par->mark=='LK' ) {
+    // chyba=-1 pro kombinaci par.mark=LK a akce není obnova MS
+    if ( $err==-1 ) { $result->html= $ret->msg; display("err=$err");  goto end; }
+    $lk= 1;
+    // seznam rodin letního kurzu
+    $rr= mysql_qry("SELECT i0_rodina FROM pobyt AS p WHERE p.id_akce={$ret->lk}");
+    while ( $rr && (list($idr,$nazev)= mysql_fetch_array($rr)) ) {
+      $na_kurzu[$idr]= 1;
+    }
+    // seznam rodin obnovy
+    $lk_nebyli= 0;
+    $rr= mysql_qry("
+      SELECT i0_rodina,CONCAT(nazev,' ',GROUP_CONCAT(jmeno ORDER BY role SEPARATOR ' a '))
+      FROM pobyt AS p
+      JOIN rodina AS r ON r.id_rodina=i0_rodina
+      JOIN tvori AS t USING (id_rodina)
+      JOIN osoba AS o USING (id_osoba)
+      WHERE id_akce=$akce AND role IN ('a','b')
+      GROUP BY i0_rodina
+      ORDER BY nazev");
+    while ( $rr && (list($idr,$nazev)= mysql_fetch_array($rr)) ) {
+      $x= '';
+      if ( !isset($na_kurzu[$idr]) ) {
+        $lk_nebyli++;
+        $x= $nazev;
+      }
+      $na_obnove[$idr]= $x;
+    }
+  }
   $n= 0;
   if ( $export ) {
     $clmn= array();
@@ -4804,13 +4855,20 @@ function akce2_skup_tisk($akce,$par,$title,$vypis,$export) {
     $result->expr= null;
   }
   else {
+    if ( $lk ) {
+      $html.= "<h3>Skupinky z posledního letního kurzu se škrtnutými nepřihlášenými na obnovu</h3>";
+    }
     foreach ($skupiny as $i=>$s) {
       $tab= "<table>";
       foreach ($s as $c) {
+        $nazev= $c->_nazev;
+        $pokoj= $lk ? '' : $c->pokoj;
+        if ( $lk && !isset($na_obnove[$c->i0_rodina]) )
+          $nazev= "<s>$nazev</s>";
         if ( $i==$c->id_pobyt )
-          $tab.= "<tr><th>{$c->skupina}</th><th>{$c->_nazev}</th><th>{$c->pokoj}</th></tr>";
+          $tab.= "<tr><th>{$c->skupina}</th><th>$nazev</th><th>$pokoj</th></tr>";
         else
-          $tab.= "<tr><td></td><td>{$c->_nazev}</td><td></td></tr>";
+          $tab.= "<tr><td></td><td>$nazev</td><td></td></tr>";
       }
       $tab.= "</table>";
       if ( $n%2==0 )
@@ -4822,8 +4880,24 @@ function akce2_skup_tisk($akce,$par,$title,$vypis,$export) {
     if ( $n%2==1 )
       $html.= "<td></td></tr>";
     $html.= "</table>";
+    // pro mark=LK zobraz ty, co nebyly na kurzu
+    if ( $lk ) {
+      if ( $lk_nebyli ) {
+        $html.= "<h3>Na posledním letním kurzu nebyli</h3>";
+        foreach ($na_obnove as $nazev) {
+          if ( $nazev ) {
+            $html.= "$nazev<br>";
+          }
+        }
+      }
+      else {
+        $html.= "<h3>Všichni přihlášení byli na posledním letním kurzu</h3>";
+      }
+    }
     $result->html= $html;
   }
+end:
+//                                                 debug($result,"akce2_skup_tisk($akce,,$title,$vypis,$export)");
   return $result;
 }
 # ---------------------------------------------------------------------------------- akce2_skup_hist
