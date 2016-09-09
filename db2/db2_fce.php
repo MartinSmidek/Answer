@@ -3113,16 +3113,87 @@ function tisk2_sestava($akce,$par,$title,$vypis,$export=false) { trace();
      : ( $par->typ=='12'   ? akce2_jednou_dvakrat($akce,$par,$title,$vypis,$export)
      : ( $par->typ=='sd'   ? akce2_skup_deti($akce,$par,$title,$vypis,$export)
      : ( $par->typ=='cz'   ? akce2_cerstve_zmeny($akce,$par,$title,$vypis,$export)
+     : ( $par->typ=='tab'  ? akce2_tabulka($akce,$par,$title,$vypis,$export)
      : (object)array('html'=>"<i>Tato sestava zatím není převedena do nové verze systému,
           <a href='mailto:martin@smidek.eu'>upozorněte mě</a>, že ji už potřebujete</i>")
-     ))))))))))))))))))))));
+     )))))))))))))))))))))));
 }
 # =======================================================================================> . seznamy
+function mb_strcasecmp($str1, $str2, $encoding = null) {
+    if (null === $encoding) { $encoding = mb_internal_encoding(); }
+    return strcmp(mb_strtoupper($str1, $encoding), mb_strtoupper($str2, $encoding));
+}
+# ------------------------------------------------------------------------------- akce2_tabulka
+# generování tabulky účastníků $akce typu LK
+function akce2_tabulka($akce,$par,$title,$vypis,$export=false) { trace();
+  global $VPS;
+  $map_fce= map_cis('ms_akce_funkce','zkratka');
+  $res= (object)array('html'=>'...');
+  $clmn= tisk2_sestava_pary($akce,$par,$title,$vypis,false,true);
+//                                         debug($clmn,"akce2_tabulka {$clmn[1]['prijmeni']}");
+  // seřazení podle příjmení
+  usort($clmn,function($a,$b) { return mb_strcasecmp($a['prijmeni'],$b['prijmeni']); });
+//                                         debug($clmn,"akce2_tabulka");
+  // odstranění jednoznačných jmen
+  $clmn[-1]['prijmeni']= $clmn[count($clmn)]['prijmeni']= ''; // zarážky
+  for ($i= 0; $i<count($clmn); $i++) {
+    if ( $clmn[$i-1]['prijmeni'] != $clmn[$i]['prijmeni']
+      && $clmn[$i+1]['prijmeni'] != $clmn[$i]['prijmeni'] ) {
+      $clmn[$i]['jmena']= '';
+    }
+  }
+  unset($clmn[-1]); unset($clmn[count($clmn)-1]);
+  // zkrácení zbylých jmen
+  for ($i= 0; $i<count($clmn); $i++) {
+    if ( $clmn[$i]['jmena'] ) {
+      list($m,$z)= explode(' ',$clmn[$i]['jmena']);
+      $clmn[$i]['jmena']= $m[0].'+'.$z[0];
+    }
+  }
+  // vložení do tabulky
+  $tab= array();
+  for ($i= 0; $i<count($clmn); $i++) {
+    $x= $clmn[$i]['x_ms'];
+    $v= $clmn[$i]['_vps'];
+    $f= $clmn[$i]['funkce'];
+    $c= $f==9 ? 6 : ($f!=0 && $f!=1 && $f!=2 ? 7
+     : ($v=='VPS' ? 0 : ($v=='(vps)' ? 5
+     : ($x==1 ? 1 : ($x==2 ? 2 : ($x==3 ? 3 : 4))))));
+    $tab[$c][]= $i;
+  }
+  // export HTML a do Excelu
+  $ids= array("$VPS","Prvňáci","Druháci","Třeťáci","Víceročáci","$VPS mimo službu","Náhradníci","Ostatní");
+  $max_r= 0;
+  for ($c= 0; $c<=7; $c++) {
+    $ths.= "<th>$ids[$c] (".count($tab[$c]).")</th>";
+    $max_r= max($max_r,count($tab[$c]));
+  }
+  for ($r= 0; $r<$max_r; $r++) {
+    $trs.= "<tr>";
+    for ($c= 0; $c<=7; $c++) {
+      if ( isset($tab[$c][$r]) ) {
+        $i= $tab[$c][$r];
+        $ci= $clmn[$i]; $x= $ci['x_ms']; $v= $ci['_vps']; $f= $ci['funkce'];
+        $style= $v ? " style='background-color:yellow'" : '';
+        $ucasti= $c==7 ? "($map_fce[$f])" : ($c==4 ? "($x)" : '');
+        $trs.= "<td$style>{$ci['prijmeni']} {$ci['jmena']} $ucasti</td>";
+      }
+      else {
+        $trs.= "<td></td>";
+      }
+    }
+    $trs.= "</tr>";
+  }
+                                        debug($tab,"akce2_tabulka");
+                                        debug($clmn,"akce2_tabulka");
+  $res->html= "<div class='stat'><table class='stat'><tr>$ths</tr>$trs</table></div>";
+  return $res;
+}
 # ------------------------------------------------------------------------------- tisk2_sestava_pary
 # generování sestavy pro účastníky $akce - rodiny
 #   $fld = seznam položek s prefixem
 #   $cnd = podmínka
-function tisk2_sestava_pary($akce,$par,$title,$vypis,$export=false) { trace();
+function tisk2_sestava_pary($akce,$par,$title,$vypis,$export=false,$internal=false) { trace();
   global $EZER;
   $result= (object)array();
   $typ= $par->typ;
@@ -3284,7 +3355,8 @@ function tisk2_sestava_pary($akce,$par,$title,$vypis,$export=false) { trace();
     }
   }
 //                                         debug($clmn,"sestava pro $akce,$typ,$fld,$cnd");
-  return tisk2_table($tits,$flds,$clmn,$export);
+  $res= $internal ? $clmn : tisk2_table($tits,$flds,$clmn,$export);
+  return $res;
 }
 # -------------------------------------------------------------------------------- tisk_sestava_lidi
 # generování sestavy pro účastníky $akce - jednotlivce
