@@ -4838,20 +4838,47 @@ function akce2_skup_tisk($akce,$par,$title,$vypis,$export) {  trace();
   }
   $n= 0;
   if ( $export ) {
-    $clmn= array();
+    $clmn= $atrs= array();
     foreach ($skupiny as $i=>$s) {
       foreach ($s as $c) {
         $clmn[$n]['skupina']= $i==$c->id_pobyt ? $c->skupina : '';
         $clmn[$n]['jmeno']= $c->_nazev;
-        $clmn[$n]['pokoj']= $i==$c->id_pobyt ? $c->pokoj : '';
+        if ( !$lk )
+          $clmn[$n]['pokoj']= $i==$c->id_pobyt ? $c->pokoj : '';
+        else {
+          // pro LK přidáme atribut nezúčastněným
+          if ( !isset($na_obnove[$c->i0_rodina]) )
+            $atrs[$n]['jmeno']= "bcolor=ffdddddd";
+        }
         $n++;
       }
-      $clmn[$n]['skupina']= $clmn[$n]['jmeno']= $clmn[$n]['pokoj']= '';
+      $clmn[$n]['skupina']= $clmn[$n]['jmeno']= '';
+      if ( !$lk )
+        $clmn[$n]['pokoj']= '';
       $n++;
     }
-    $result->tits= explode(',',"skupinka:10,jméno:30,pokoj $VPS:10:r");
-    $result->flds= explode(',',"skupina,jmeno,pokoj");
+    // pro LK přidáme seznam, co nebyli v létě
+    $skup= 'bez LK';
+    if ( $lk ) {
+      if ( $lk_nebyli ) {
+        foreach ($na_obnove as $nazev) {
+          if ( $nazev ) {
+            $clmn[$n]['skupina']= $skup; $skup= '';
+            $clmn[$n]['jmeno']= $nazev;
+            $n++;
+          }
+        }
+      }
+      else {
+        $clmn[$n]['skupina']= $skup;
+        $clmn[$n]['jmeno']= '-';
+      }
+    }
+    // předání pro tisk2_vyp_excel
+    $result->tits= explode(',',"skupinka:10,jméno:30".($lk ? '' : ",pokoj $VPS:10:r"));
+    $result->flds= explode(',',"skupina,jmeno".($lk ? '' : ",pokoj"));
     $result->clmn= $clmn;
+    $result->atrs= $atrs;
     $result->expr= null;
   }
   else {
@@ -5914,6 +5941,12 @@ function akce2_vyuctov_pary2($akce,$par,$title,$vypis,$export=false) { trace();
 # =====================================================================================> . XLS tisky
 # ---------------------------------------------------------------------------------- tisk2_vyp_excel
 # generování tabulky do excelu
+# tab.tits = názvy sloupců
+# tab.flds = názvy položek
+# tab.clmn = hodnoty položek
+# tab.atrs = formáty
+# tab.expr = vzorce
+#    .DPH, .X = specifické tabulky
 function tisk2_vyp_excel($akce,$par,$title,$vypis,$tab=null) {  trace();
   global $xA, $xn;
   $result= (object)array('_error'=>0);
@@ -5982,6 +6015,10 @@ __XLS;
           case 'd': $val= sql2xls($val); $format.= ' right date'; break;
           }
         }
+      }
+      if (isset($tab->atrs[$i][$id]) ) {
+        // buňka má nastavený formát
+        $format.= ' '.$tab->atrs[$i][$id];
       }
       $format= $format ? "::$format" : '';
       $val= str_replace("\n","{}",$val);        // ochrana proti řádkům v hodnotě - viz ae_slib
