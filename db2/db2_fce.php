@@ -3722,10 +3722,34 @@ function _akce2_sestava_pecouni(&$clmn,$akce,$fld='_skoleni,_sluzba,_reflexe',$c
 #   note = pro pečouny seznam jmen, pro které nejsou stravenky, protože nemají funkci
 #          (tzn. asi nejsou na celý pobyt)
 function akce2_stravenky($akce,$par,$title,$vypis,$export=false) { trace();
-//                                                         debug($par,"akce_stravenky($akce,,$title,$vypis,$export)");
+  $res_all= (object)array('res'=>array());
+  $diety= array('','_bm','_bl');
+//   $diety= array('_bm');
+  $nazev_diety= array('normální','bezmasá','bezlepková');
+  foreach ($diety as $i=>$d) {
+    // generování stravenek pro konkrétní dietu (normální strava=dieta 0)
+    $par->dieta= $d;
+    $res= akce2_stravenky_diety($akce,$par,"$title {$nazev_diety[$i]}","$vypis$d",$export);
+    $res->dieta= $d;
+    $res->nazev_diety= $nazev_diety[$i];
+    $res_all->res[]= $res;
+    $res_all->html.= "<h3>Strava {$nazev_diety[$i]}</h3>";
+    $res_all->html.= $res->html;
+                                                        debug($res,$nazev_diety[$i]);
+//     $res_all->href= $href;
+//     $res_all->tab= $str;
+//     $res_all->akce= $akce_data;
+//     $res_all->note= $note ? "(bez $note, kteří nemají vyjasněnou funkci)" : '';
+  }
+  return $res_all;
+}
+# ---------------------------------------------------------------------------- akce2_stravenky_diety
+function akce2_stravenky_diety($akce,$par,$title,$vypis,$export=false) { trace();
+//                                 debug($par,"akce_stravenky_diety($akce,,$title,$vypis,$export)");
   $ord= $par->ord ? $par->ord : "IF(funkce<=2,1,funkce),IF(pouze=0,r.nazev,o.prijmeni)";
   $result= (object)array();
   $cnd= $par->cnd;
+  $dieta= $par->dieta;
   $note= $delnote= $html= $href= '';
   $n= 0;
   // zjištění sloupců (0=ne)
@@ -3784,7 +3808,7 @@ function akce2_stravenky($akce,$par,$title,$vypis,$export=false) { trace();
   // data akce
   $akce_data= (object)array();
   $dny= array('ne','po','út','st','čt','pá','so');
-  if ( $par->typ=='vjp' )
+  if ( $par->typ=='vjp' ) // pečouni
     $qry="SELECT o.prijmeni,o.jmeno,s.pfunkce,YEAR(datum_od) AS _rok,
             a.nazev AS akce_nazev, YEAR(a.datum_od) AS akce_rok, a.misto AS akce_misto
           FROM pobyt AS p
@@ -3793,23 +3817,10 @@ function akce2_stravenky($akce,$par,$title,$vypis,$export=false) { trace();
           JOIN osoba AS o ON s.id_osoba=o.id_osoba
           WHERE p.id_akce='$akce' AND p.funkce=99 AND s_rodici=0
           ORDER BY o.prijmeni,o.jmeno";
-  else
-//     $qry="SELECT r.nazev as nazev,strava_cel,strava_pol,cstrava_cel,cstrava_pol,p.pouze,
-//             GROUP_CONCAT(DISTINCT IF(t.role='a',o.prijmeni,'') SEPARATOR '') as prijmeni_m,
-//             GROUP_CONCAT(DISTINCT IF(t.role='a',o.jmeno,'')    SEPARATOR '') as jmeno_m,
-//             GROUP_CONCAT(DISTINCT IF(t.role='b',o.prijmeni,'') SEPARATOR '') as prijmeni_z,
-//             GROUP_CONCAT(DISTINCT IF(t.role='b',o.jmeno,'')    SEPARATOR '') as jmeno_z,
-//             a.nazev AS akce_nazev, YEAR(a.datum_od) AS akce_rok, a.misto AS akce_misto
-//           FROM pobyt AS p
-//           JOIN akce  AS a ON p.id_akce=a.id_duakce
-//           JOIN spolu AS s USING(id_pobyt)
-//           JOIN osoba AS o ON s.id_osoba=o.id_osoba
-//           LEFT JOIN tvori AS t ON t.id_osoba=o.id_osoba
-//           LEFT JOIN rodina AS r USING(id_rodina)
-//           WHERE p.id_akce='$akce' AND $cond
-//           GROUP BY id_pobyt
-//           ORDER BY $ord";
-    $qry="SELECT strava_cel,strava_pol,cstrava_cel,cstrava_pol,p.pouze,
+  else // rodiny
+    $qry="SELECT strava_cel$dieta AS strava_cel,strava_pol$dieta AS strava_pol,
+            cstrava_cel$dieta AS cstrava_cel,cstrava_pol$dieta AS cstrava_pol,
+            p.pouze,
             IF(p.i0_rodina,CONCAT(r.nazev,' ',
               GROUP_CONCAT(po.jmeno ORDER BY role SEPARATOR ' a '))
              ,GROUP_CONCAT(DISTINCT CONCAT(pso.prijmeni,' ',pso.jmeno)
@@ -3913,13 +3924,21 @@ function akce2_stravenky($akce,$par,$title,$vypis,$export=false) { trace();
     $ths.= "<th>$id</th>";
   }
   // data
+  $radku= 0;
   foreach ($clmn as $i=>$c) {
-    $tab.= "<tr>";
-    foreach ($c as $id=>$val) {
-      $style= akce2_sestava_td_style($fmts[$id]);
-      $tab.= "<td$style>$val</td>";
+    $pocet= 0;
+    foreach ($c as $val) {
+      $pocet+= $val;
     }
-    $tab.= "</tr>";
+    if ( $pocet ) {
+      $tab.= "<tr>";
+      foreach ($c as $id=>$val) {
+        $style= akce2_sestava_td_style($fmts[$id]);
+        $tab.= "<td$style>$val</td>";
+      }
+      $tab.= "</tr>";
+      $radku++;
+    }
   }
   // sumy
   $sum= '';
@@ -3931,7 +3950,7 @@ function akce2_stravenky($akce,$par,$title,$vypis,$export=false) { trace();
     }
     $sum.= "</tr>";
   }
-  $result->html= "Seznam má $n řádků<br><br>";
+  $result->html= "Seznam má $radku řádků<br><br>";
   $result->html.= "<div class='stat'><table class='stat'><tr>$ths</tr>$sum$tab</table></div>";
   $result->html.= "</br>";
   $result->href= $href;
@@ -4847,8 +4866,10 @@ function akce2_skup_tisk($akce,$par,$title,$vypis,$export) {  trace();
           $clmn[$n]['pokoj']= $i==$c->id_pobyt ? $c->pokoj : '';
         else {
           // pro LK přidáme atribut nezúčastněným
-          if ( !isset($na_obnove[$c->i0_rodina]) )
+          if ( !isset($na_obnove[$c->i0_rodina]) ) {
             $atrs[$n]['jmeno']= "bcolor=ffdddddd";
+            $clmn[$n]['jmeno']= '- '.$clmn[$n]['jmeno'];
+          }
         }
         $n++;
       }
@@ -6446,11 +6467,26 @@ function tisk2_pdf_plachta($akce,$report_json=0) {  trace();
 # generování štítků se stravenkami pro rodinu účastníka a pro pečouny do PDF
 # pomocí tisk2_sestava se do objektu $x->tab vygeneruje pole s elementy pro tisk stravenky
 function akce2_pdf_stravenky($akce,$par,$report_json) {  trace();
+  $res_all= (object)array('_error'=>0);
+  $res_all->html= "<br>Stravenky jsou v souborech: ";
+  // získání dat
+  $res_vse= tisk2_sestava($akce,$par,$title,$vypis,true);
+  foreach ($res_vse->res as $x) {
+    $res= akce2_pdf_stravenky_dieta($x,$report_json);
+    $res_all->html.= " {$res->href} - strava {$x->nazev_diety}, ";
+  }
+  return $res_all;
+}
+# ------------------------------------------------------------------------ akce2_pdf_stravenky_dieta
+# generování štítků se stravenkami pro rodinu účastníka a pro pečouny do PDF
+# pomocí tisk2_sestava se do objektu $x->tab vygeneruje pole s elementy pro tisk stravenky
+function akce2_pdf_stravenky_dieta($x,$report_json) {  trace();
+// function akce2_pdf_stravenky_dieta($akce,$par,$report_json) {  trace();
   global $ezer_path_docs, $EZER, $USER;
   $result= (object)array('_error'=>0);
   $html= '';
   // získání dat
-  $x= tisk2_sestava($akce,$par,$title,$vypis,true);
+//   $x= tisk2_sestava($akce,$par,$title,$vypis,true);
   $org= $USER->org==1 ? "YMCA Setkání" : "YMCA Familia";
   $header= "$org, {$x->akce->misto} {$x->akce->rok}";
   $sob= array('s'=>'snídaně','o'=>'oběd','v'=>'večeře');
@@ -6459,6 +6495,16 @@ function akce2_pdf_stravenky($akce,$par,$report_json) {  trace();
   $n= 0;
   $parss= array();
   foreach ( $x->tab as $jmeno=>$dny ) {
+    // zjistíme, zda nějaké stravenky má - pokud ne, řádek netiskneme
+    $ma= 0;
+    foreach ( $dny as $den=>$jidla ) {
+      foreach ( $jidla as $jidlo=>$porce ) {
+        foreach ( $porce as $velikost=>$pocet ) {
+          $ma+= $pocet;
+        }
+      }
+    }
+    if ( !$ma ) continue;
     // vynechání prázdných míst, aby jméno bylo v prvním sloupci ze 4
     $k= 4*ceil($n/4)-$n;
     for ($i= 0; $i<$k; $i++) {
@@ -6529,10 +6575,10 @@ function akce2_pdf_stravenky($akce,$par,$report_json) {  trace();
 //                                         debug($parss,"akce_pdf_stravenky");
 //                                         debug($report_json,"report");
 //                                         return $result;
-  $fname= 'stravenky_'.date("Ymd_Hi");
+  $fname= "stravenky{$x->dieta}_".date("Ymd_Hi");
   $fpath= "$ezer_path_docs/$fname.pdf";
   dop_rep_ids($report_json,$parss,$fpath);
-  $result->html= " Výpis byl vygenerován ve formátu <a href='docs/$fname.pdf' target='pdf'>PDF</a>.";
+  $result->href= "<a href='docs/$fname.pdf' target='pdf'>PDF{$x->dieta}</a>";
   return $result;
 }
 # ----------------------------------------------------------------------------- akce2_pdf_stravenky0
@@ -9306,16 +9352,143 @@ function mail2_mai_omitt2($id_dopis,$lst_vynech) {  trace();
   $msg.= "<br>označeno bylo $n adres";
   return $msg;
 }
+# -------------------------------------------------------------------------------- mail2_mai_doplnit
+# zjistí počet adresátů pro doplnění rozesílání a sestaví dotaz pro confirm
+# pokud $doplnit=1 tak přímo doplní tabulku mail
+function mail2_mai_doplnit($id_dopis,$id_akce,$doplnit) {  trace();
+  $ret= (object)array('err'=>1, 'html'=>'?');
+  // zjistíme dopis.komu= 0:všem, 1:VPS..., 2:dlužníci, 3:OP
+  list($komu,$obsah)= select('komu,obsah','dopis',"id_dopis=$id_dopis AND id_duakce=$id_akce");
+  // zjistíme počet - POZOR KOPIE KÓDU SQL z mail2_mai_pocet
+  $AND= $komu==0 ? " AND p.funkce IN (0,1,2,5)" : (
+        $komu==1 ? " AND p.funkce IN (1,2,5)"   : (
+        $komu==2 ?
+           " AND p.funkce IN (0,1,2,5) AND
+             IF(a.ma_cenu AND p.avizo=0,
+               IF(p.platba1+p.platba2+p.platba3+p.platba4>0,
+                 p.platba1+p.platba2+p.platba3+p.platba4,
+                 IF(pouze>0,1,2)*a.cena)>platba,
+               p.platba1+p.platba2+p.platba3+p.platba4+p.poplatek_d>platba+platba_d)" : (
+         $komu==3 ?
+           " AND IF(IFNULL(role,'a') IN ('a','b'),REPLACE(o.obcanka,' ','') NOT RLIKE '^[0-9]{9}$',0)"
+       : " --- chybné komu --- " )));
+  // využívá se toho, že role rodičů 'a','b' jsou před dětskou 'd', takže v seznamech
+  // GROUP_CONCAT jsou rodiče, byli-li na akci. Emaily se ale vezmou ode všech, mají-li osobní
+  $n_neobeslani= $n_novi= $n_pridano= $n_err= 0; $err= $dele= '';
+  $x_pm= array(); // pole mailů pro daný pobyt
+  $x_om= array(); // pole platných mailů dané osoby
+  $o_jm= array(); // jména osob
+  $x_po= array(); // osoby daného pobytu
+  $rr= mysql_qry("
+    SELECT s.id_osoba,p.id_pobyt,
+    --  a.nazev,pouze,
+      COUNT(*) AS _na_akci,
+    --  avizo,
+    --  GROUP_CONCAT(DISTINCT o.id_osoba ORDER BY t.role) AS _id,
+      GROUP_CONCAT(DISTINCT CONCAT(prijmeni,' ',jmeno)) AS _jm,
+      GROUP_CONCAT(DISTINCT IF(o.kontakt,o.email,'')) AS email,
+      IF(o.kontakt,'-',IFNULL(GROUP_CONCAT(DISTINCT r.emaily),'')) AS emaily
+    FROM dopis AS d
+      JOIN akce AS a ON d.id_duakce=a.id_duakce
+      JOIN pobyt AS p ON d.id_duakce=p.id_akce
+      JOIN spolu AS s USING (id_pobyt)
+      JOIN osoba AS o ON s.id_osoba=o.id_osoba
+      LEFT JOIN mail AS m ON m.id_dopis=d.id_dopis AND m.id_pobyt=p.id_pobyt
+      LEFT JOIN tvori AS t ON t.id_osoba=o.id_osoba
+      LEFT JOIN rodina AS r ON IF(p.i0_rodina,r.id_rodina=p.i0_rodina,r.id_rodina=t.id_rodina)
+    WHERE d.id_dopis=$id_dopis AND ISNULL(id_mail) $AND
+    GROUP BY s.id_osoba");
+  while ( $rr && (list($ido,$idp,$na_akci,$jm,$email,$emaily)= mysql_fetch_array($rr)) ) {
+    // osoby pobytu
+    if ( !isset($x_po[$idp]) ) $x_po[$idp]= array();
+    $x_po[$idp][]= $ido;
+    $o_jm[$ido]= $jm;
+    // zjištění mailů jednotlivých osob
+    $x_om[$ido]= array();
+    foreach(preg_split('/\s*[,;]\s*/',$email,0,PREG_SPLIT_NO_EMPTY) as $m)
+      $x_om[$ido][]= $m;
+    if ( !count($x_om[$ido]) && $emaily!='-' )
+      foreach(preg_split('/\s*[,;]\s*/',$emaily,0,PREG_SPLIT_NO_EMPTY) as $m)
+        $x_om[$ido][]= $m;
+  }
+  $n_neobeslani= count($x_po);
+  // očištění mailů
+  foreach ($x_po as $idp=>$idos) {
+    $ms= $delm= '';
+    foreach ($idos as $ido) {
+      foreach ($x_om[$ido] as $im=>$m) {
+        if ( strpos($m,'*')===false ) {
+          if ( emailIsValid($m,$chyba) ) {
+            $ms.= "$delm$m"; $delm= ',';
+          }
+          else {
+            $err.= "$dele{$o_jm[$ido]} má chybnou adresu $m ($chyba)"; $dele= ', ';
+            unset($x_om[$ido][$im]);
+          }
+        }
+        else {
+          $err.= "$dele{$o_jm[$ido]} má zneplatněnou adresu $m"; $dele= ', ';
+          unset($x_om[$ido][$im]);
+        }
+      }
+    }
+    $x_pm[$idp]= $ms;
+    if ( $ms ) {
+      $n_novi++;
+    }
+    else {
+      $n_err++;
+      $err.= "$dele{$o_jm[$ido]} nemá žádnou adresu"; $dele= ', ';
+    }
+  }
+//                                                         debug($x_om); debug($x_po);
+  if ( $doplnit ) {
+    // zjisti jestli text dopisu obsahuje proměnné
+    $is_vars= preg_match_all("/[\{]([^}]+)[}]/",$obsah,$list);
+    $vars= $list[1];
+    // projdi všechny pobyty s alespoň jedním mailem
+    foreach ($x_po as $idp=>$idos) if ( $x_pm[$idp] ) {
+      // pokud dopis obsahuje proměnné, personifikuj obsah
+      $body= $is_vars ? mail2_personify($obsah,$vars,$id_pobyt,$err) : '';
+      // a vytvoř mail
+      $qr= "INSERT mail (id_davka,znacka,stav,id_dopis,id_clen,id_pobyt,email,body)
+            VALUE (1,'@',0,$id_dopis,{$x_po[$idp][0]},$idp,'{$x_pm[$idp]}','$body')";
+      $rs= mysql_qry($qr);
+      $n_pridano+= mysql_affected_rows();
+//                                                         display($qr);
+    }
+  }
+  // čeština
+  $_pobytu= je_1_2_5($n_neobeslani,"pobyt,pobyty,pobytů");
+  $ret->html= "Dosud neobeslaných jsou $_pobytu";
+  if ( $doplnit ) {
+    $_mailu=  je_1_2_5($n_pridano,"mail,maily,mailů");
+    $ret->html.= "<br><br><b>Bylo přidáno $_mailu pro dosud neobeslané pobyty?</b>";
+    if ( $err ) {
+      $_pobytu= je_1_2_5($n_err,"pobyt,pobyty,pobytů");
+      $ret->html.= "<br><br><i>Bohužel $_pobytu doplnit nešlo.<br><br>$err</i>";
+    }
+  }
+  else {
+    $_mailu=  je_1_2_5($n_novi,"mail,maily,mailů");
+    $ret->html.= "<br><br><b>Mám doplnit $_mailu pro neobeslané pobyty?</b>";
+    if ( $err ) {
+      $_pobytu= je_1_2_5($n_err,"pobyt,pobyty,pobytů");
+      $ret->html.= "<br><br><i>Bohužel $_pobytu doplnit nepůjde.<br><br>Problémy: $err</i>";
+    }
+  }
+  return $ret;
+}
 # ---------------------------------------------------------------------------------- mail2_mai_pocet
 # zjistí počet adresátů pro rozesílání a sestaví dotaz pro confirm
 # $dopis_var určuje zdroj adres
-#   'U' - rozeslat účastníkům akce dopis.id_duakce ukazující do akce
+#   'U' - (komu=0) rozeslat účastníkům akce dopis.id_duakce ukazující do akce
 #         do seznamu se dostanou pouze účastnící s funkcí:0,1,2,6 (-,VPS,SVPS,hospodář)
-#   'U2'- rozeslat účastníkům akce dopis.id_duakce ukazující do akce
+#   'U2'- (komu=1) rozeslat účastníkům akce dopis.id_duakce ukazující do akce
 #         do seznamu se dostanou pouze organizující účastnící s funkcí:1,2,6 (VPS,SVPS,hospodář)
-#   'U3'- rozeslat účastníkům akce dopis.id_duakce ukazující do akce
+#   'U3'- (komu=2) rozeslat účastníkům akce dopis.id_duakce ukazující do akce
 #         do seznamu se dostanou pouze dlužníci (bez avíza)
-#   'U4'- rozeslat účastníkům akce dopis.id_duakce ukazující do akce
+#   'U4'- (komu=3) rozeslat účastníkům akce dopis.id_duakce ukazující do akce
 #         do seznamu se dostanou pouze dospělí s chybějícím nebo zjevně starým OP
 #   'Q' - rozeslat na adresy vygenerované dopis.cis_skupina => hodnota
 #   'G' - rozeslat podle mailistu - varianta osoba/rodina
@@ -9439,6 +9612,7 @@ function mail2_mai_pocet($id_dopis,$dopis_var,$cond='',$recall=false) {  trace()
   case 'U2':    // sloužící
   case 'U':
     $html.= "Obeslaných účastníků ";
+    // POZOR KOPIE KÓDU z mail2_mai_doplnit
     $AND= $cond ? "AND $cond" : '';
     $AND.= $dopis_var=='U'  ? " AND p.funkce IN (0,1,2,5)" : (
            $dopis_var=='U2' ? " AND p.funkce IN (1,2,5)"   : (
