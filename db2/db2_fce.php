@@ -692,6 +692,67 @@ end:
   return $n;
 }
 # ====================================================================================> . ceník akce
+# ------------------------------------------------------------------------------- akce2_confirm_mrop
+# zjištění, zda lze účastníků akce zapsat běžný rok jako datum iniciace
+# zapsání roku iniciace účastníkům akce (write=1)
+function akce2_confirm_mrop($ida,$write=0) {  trace();
+  $ret= (object)array('ok'=>0,'msg'=>'ERROR');
+  $letos= date('Y');
+  if ( !$write ) {
+    // jen sestavení confirm
+    $ra= mysql_qry("
+      SELECT nazev, mrop, YEAR(datum_od) AS _rok,
+        SUM((SELECT IF(COUNT(*)>0,1,0) FROM spolu JOIN osoba USING (id_osoba)
+          WHERE id_pobyt=p.id_pobyt AND funkce=0 AND iniciace IN (0,$letos))) as _mladi,
+        SUM((SELECT IF(COUNT(*)>0,1,0) FROM spolu JOIN osoba USING (id_osoba)
+          WHERE id_pobyt=p.id_pobyt AND funkce=0 AND iniciace NOT IN (0,$letos))) as _starsi
+      FROM akce AS a
+      LEFT JOIN pobyt AS p ON p.id_akce=a.id_duakce
+      WHERE id_duakce=$ida
+      GROUP BY id_duakce
+    ");
+    if ( !$ra ) goto end;
+    list($nazev,$mrop,$rok,$mladi,$starsi)= mysql_fetch_array($ra);
+    $ret->ok= $mrop && $rok==$letos && !$starsi && $mladi;
+    $ret->msg= $ret->ok
+      ? "Opravdu mám pro $mladi účastníků akce <b>\"$nazev/$rok\"</b>
+        potvrdit rok $letos jako rok jejich iniciace (MROP)?"
+      : "CHYBA";
+  }
+  else {
+    // zápis roku iniciace, včetně záznamu do _track
+    global $USER;
+    $user= $USER->abbr;
+    $now= date("Y-m-d H:i:s");
+    $n= $n1= $n2= 0;
+    $ra= mysql_qry("
+      SELECT COUNT(*),GROUP_CONCAT(id_osoba)
+      FROM pobyt AS p
+      JOIN spolu USING (id_pobyt)
+      JOIN osoba USING (id_osoba)
+      WHERE id_akce=$ida AND funkce=0 AND iniciace IN (0)
+      GROUP BY id_akce
+    ");
+    if ( !$ra ) goto end;
+    list($n,$ids)= mysql_fetch_array($ra);
+    if ( $n ) {
+      query("UPDATE osoba SET iniciace=$letos WHERE id_osoba IN ($ids)");
+      $n1= mysql_affected_rows();
+      // zápis do _track
+      foreach ( explode(',',$ids) as $ido) {
+        query("INSERT INTO _track (kdy,kdo,kde,klic,fld,op,old,val)
+               VALUES ('$now','$user','osoba',$ido,'iniciace','u','0','$letos')");
+        $n2+= mysql_affected_rows();
+      }
+    }
+    $ret->ok= $n>0 && $n==$n1 && $n==$n2;
+    $ret->msg= $ret->ok
+      ? "$n účastníkům byl zapsán rok $letos jako rok jejich iniciace"
+      : "ERROR ($n,$n1,$n2)";
+  }
+end:
+  return $ret;
+}
 # ------------------------------------------------------------------------------- akce2_select_cenik
 # seznam akcí s ceníkem pro select
 function akce2_select_cenik($id_akce) {  trace();
