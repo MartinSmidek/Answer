@@ -364,9 +364,9 @@ form _cmd [,,623,30] {
       reload(0);
   } }
   #==> . + osoba
-  button pridat_osobu [501,5,,] {tag:'x', title:'[fa-heart-o] Vytvořit osobu',
+  button pridat_osobu [501,5,,] {tag:'x', title:'[fa-heart-o] Přidat osobu',
     skill:'yaa+|yaa+;faa+|faa+;caa+|caa+',
-    help:'Přidání nového člena skupiny případně i rodiny'
+    help:'Přidání nové nebo již existující osoby k pobytu (případně do rodiny)'
     proc onclick() { Init }
     proc Init() { var _prijmeni:text
       set_state('new'); mode.set('osoby');
