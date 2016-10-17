@@ -37,6 +37,7 @@ proc onfocus() {
   | init_ucast2;
     the_duakce_local.set(the_duakce.get)
   ];
+  evid.ctx.obn.enable(eq(the_druh.get,2)); // jen pro obnovy
   switch(the_soubeh.get,
   0,{ header.soubeh.display(0) },
   1,{ header.soubeh.display(1); panel.display(2,'akce1'); header.soubeh.set('^Děti') },
@@ -818,13 +819,15 @@ form _evidence {
   var back: text       // pozadí pro 2/3 sloupce
   label frame [0,16,873,min_h+-152] { css:'ae_work'}
   # ------------------------==> . kontextové_menu
-  menu { type:'context', join:frame
+  menu ctx { type:'context', join:frame
     item { title:'zkontrolovat skupinky', skill:'yaa+;faa+;caa+',
       proc onclick () { alert(ask('akce2_skup_check',the_duakce.get)) } }
     item { title:'přečíslovat skupinky podle VPS', skill:'yaa+;caa+',
       proc onclick () { alert(ask('akce2_skup_renum',the_duakce.get)) } }
     item { title:'přečíslovat skupinky podle PPS', skill:'faa+',
       proc onclick () { alert(ask('akce2_skup_renum',the_duakce.get)) } }
+    item obn { title:'zapsat skupinky podle LK', skill:'faa+;yaa+;caa+',
+      proc onclick () { alert(ask('akce2_skup_copy',the_duakce.get)); reload(0) } }
     item { title:'-obarvit změněné údaje'
       proc onclick () { var ret:object
         ret.set(ask('akce2_zmeny',the_duakce.get,

@@ -607,7 +607,9 @@ td.BrowseNoClmn img.sort {
 #status, #status_left, #status_right {
   cursor:default; }
 #status_right {
-  right:0; }
+  position:absolute; right:0; }
+#status_center {
+  position: absolute; top: -24px; background-color: orange;}
 #status_right span.measures {
   position:absolute; top:-15px; right:0;
   background-color:#ef7f13; color:#ffffff;  }
