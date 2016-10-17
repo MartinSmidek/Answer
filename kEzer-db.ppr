@@ -35,7 +35,7 @@ kEzer-ys2
 	+db2
 		-$ test
 			db2_test\$.ezer
-		-$
+		+$
 			db2\$.ezer
 			db2\db2.akce2.elim.ezer
 			db2\db2.akce2.ezer
@@ -45,13 +45,13 @@ kEzer-ys2
 			db2\db2_fce.js
 			db2\db2_fce.php
 			db2\db2_ys2_fce.php
-		-akce
+		+akce
 			db2\db2.akce2.lst.ezer
 			db2\db2.akce2.maia.ezer
 			db2\db2.akce2.pece.ezer
 			db2\db2.akce2.tisk.ezer
 			db2\db2.akce2.ucast.ezer
-		-evidence
+		+evidence
 			db2\db2.akce2.dop.ezer
 			db2\db2.akce2.evi.ezer
 			db2\db2.akce2.mai.ezer
@@ -112,16 +112,16 @@ kEzer-ys2
 [Open project files]
 0=db2\db2_fce.js
 1=db2\db2_fce.php
-2=db2\db2.akce2.foto.ezer
-3=db2\db2.akce2.cnf.ezer
-4=db2\db2.akce2.lst.ezer
-5=db2\db2.akce2.ucast.ezer
-6=db2\db2.akce2.tisk.ezer
-7=db2\db2.akce2.mai.ezer
-8=db2\db2.akce2.dop.ezer
-9=db2\db2.akce2.evi.ezer
-10=db2\db2.akce2.ezer
-11=db2\db2.akce2.maia.ezer
+2=db2\db2.akce2.maia.ezer
+3=db2\db2.akce2.foto.ezer
+4=db2\db2.akce2.cnf.ezer
+5=db2\db2.akce2.lst.ezer
+6=db2\db2.akce2.ucast.ezer
+7=db2\db2.akce2.tisk.ezer
+8=db2\db2.akce2.mai.ezer
+9=db2\db2.akce2.dop.ezer
+10=db2\db2.akce2.evi.ezer
+11=db2\db2.akce2.ezer
 12=db2\db2.akce2.sta.ezer
 13=db2\db2.akce2.pece.ezer
 14=db2\db2.akce2.elim.ezer
@@ -133,30 +133,32 @@ kEzer-ys2
 20=db2\db2.pok.ezer
 21=db2\db2_ys2_fce.php
 22=Novy1.php
+23=ezer2.2\server\ae_slib.php
+24=ezer2.2\ezer2_fce.php
+25=ezer2.2\client\ezer_fdom1.js
 [Selected Project Files]
 Main=
-Selected=Novy1.php
+Selected=db2\db2_fce.php
 [db2\db2_fce.js]
-TopLine=465
-Caret=46,485
+TopLine=61
+Caret=1,63
 BookMark1=19,88
 Mark1=43,503
 [db2\db2_fce.php]
-TopLine=5853
-Caret=78,5883
-BookMark1=41,3176
-BookMark2=10,1744
-BookMark3=31,6107
-BookMark4=21,3275
-Mark1=54,626
-Mark2=54,625
-Mark3=14,3889
-Mark4=14,3947
-Mark5=21,6185
-Mark6=19,12131
-Mark7=31,1822
-Mark8=31,11556
-Mark9=1,11586
+TopLine=4904
+Caret=30,4894
+BookMark2=71,6505
+Mark1=45,3937
+Mark2=34,9485
+Mark3=43,9670
+Mark4=1,9760
+Mark5=31,9383
+Mark6=11,9467
+BookMark1=31,4882
+[db2\db2.akce2.maia.ezer]
+TopLine=212
+Caret=4,265
+BookMark1=23,249
 [db2\db2.akce2.foto.ezer]
 TopLine=17
 Caret=60,38
@@ -169,25 +171,25 @@ Caret=68,52
 BookMark1=1,38
 BookMark2=18,572
 [db2\db2.akce2.ucast.ezer]
-TopLine=27
-Caret=1,33
-Mark1=29,1073
-Mark2=8,1020
-Mark3=11,1109
+TopLine=788
+Caret=51,829
+Mark1=29,1075
+Mark2=8,1022
+Mark3=11,1111
 Mark4=40,682
 Mark5=53,565
 Mark6=25,40
 [db2\db2.akce2.tisk.ezer]
-TopLine=27
-Caret=37,49
+TopLine=371
+Caret=109,412
 Mark1=57,48
 Mark2=1,395
 Mark3=34,459
 Mark4=1,192
 Mark5=20,349
 [db2\db2.akce2.mai.ezer]
-TopLine=590
-Caret=1,606
+TopLine=252
+Caret=1,257
 BookMark1=24,684
 Mark1=88,474
 Mark2=63,380
@@ -216,9 +218,6 @@ Mark1=40,1064
 Mark2=31,740
 Mark3=24,719
 Mark4=7,845
-[db2\db2.akce2.maia.ezer]
-TopLine=140
-Caret=1,174
 [db2\db2.akce2.sta.ezer]
 TopLine=14
 Caret=47,32
@@ -241,8 +240,8 @@ Caret=55,3545
 TopLine=1
 Caret=10,38
 [ezer2.2\server\ezer2.php]
-TopLine=1
-Caret=55,15
+TopLine=1110
+Caret=19,1131
 [db2\db2.pok.ezer]
 TopLine=1
 Caret=22,5
@@ -257,3 +256,12 @@ Mark4=21,1277
 [Novy1.php]
 TopLine=132
 Caret=68,141
+[ezer2.2\server\ae_slib.php]
+TopLine=1241
+Caret=1,1259
+[ezer2.2\ezer2_fce.php]
+TopLine=1082
+Caret=27,1100
+[ezer2.2\client\ezer_fdom1.js]
+TopLine=87
+Caret=37,116

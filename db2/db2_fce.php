@@ -420,9 +420,9 @@ function akce2_info_par($ida,$idp=0,$tab_only=0) {
 # vrácení hodnot akce
 function akce2_id2a($id_akce) {  //trace();
   $a= (object)array('title'=>'?','cenik'=>0,'cena'=>0,'soubeh'=>0,'hlavni'=>0,'soubezna'=>0);
-  list($a->title,$a->rok,$a->cenik,$a->cena,$a->hlavni,$a->soubezna,$a->org,$a->ms)=
+  list($a->title,$a->rok,$a->cenik,$a->cena,$a->hlavni,$a->soubezna,$a->org,$a->ms,$a->druh)=
     select("a.nazev,YEAR(a.datum_od),a.ma_cenik,a.cena,a.id_hlavni,"
-      . "IFNULL(s.id_duakce,0),a.access,IF(a.druh IN (1,2),1,0)",
+      . "IFNULL(s.id_duakce,0),a.access,IF(a.druh IN (1,2),1,0),a.druh",
       "akce AS a
        LEFT JOIN akce AS s ON s.id_hlavni=a.id_duakce",
       "a.id_duakce=$id_akce");
@@ -3484,7 +3484,7 @@ function tisk2_sestava_lidi($akce,$par,$title,$vypis,$export=false) { trace();
   $r_fld= "id_rodina,nazev,ulice,psc,obec,stat,note,emaily,telefony,spz";
   $qry=  "
     SELECT
-      p.pouze,p.poznamka,p.platba,p.funkce,
+      p.pouze,p.poznamka,p.platba,p.funkce,s.s_role,
       o.prijmeni,o.jmeno,o.narozeni,o.rc_xxxx,o.note,o.obcanka,o.clen,o.dieta,
       IFNULL(r2.id_rodina,r1.id_rodina) AS id_rodina,
       IFNULL(r2.nazev,r1.nazev) AS r_nazev,
@@ -4876,6 +4876,35 @@ function akce2_jednou_dvakrat($akce,$par,$title,$vypis,$export=false) { trace();
   $result->html= $html;
   return $result;
 }
+# ---------------------------------------------------------------------------------- akce2_skup_copy
+# ASK
+# přenese skupinky z LK do Obnovy
+function akce2_skup_copy($obnova) { trace();
+  $msg= "Kopii nelze provést";
+  // najdeme LK
+  list($access,$druh,$kdy)= select('access,druh,datum_od','akce',"id_duakce=$obnova");
+  if ( $druh==2 /*MS obnova*/ ) {
+    $lk= select('id_duakce','akce',
+      "access=$access AND druh=1 /*MS LK*/ AND datum_od<'$kdy' ORDER BY datum_od DESC LIMIT 1");
+  }
+  else { $msg= "Skupinky z LK lze zkopírovat jen pro obnovy MS"; goto end; }
+  // nesmí být rozpracované skupinky
+  $skupinky= select('COUNT(*)','pobyt',"skupina!=0 AND id_akce=$obnova");
+  if ( $skupinky ) {
+    $msg= "Skupinky na této obnově jsou již částečně navrženy, kopii z LK nelze provést";
+    goto end;
+  }
+  // vše ok, provedeme přenos
+  $n= 0;
+  $rr= mysql_qry("SELECT i0_rodina,skupina FROM pobyt AS p WHERE id_akce=$lk");
+  while ( $rr && (list($idr,$skupina)= mysql_fetch_array($rr)) ) {
+    query("UPDATE pobyt SET skupina=$skupina WHERE id_akce=$obnova AND i0_rodina=$idr");
+    $n+= mysql_affected_rows();
+  }
+  $msg= "Na obnovu bylo pro $n párů zkopírováno číslo skupinky z LK";
+end:
+  return $msg;
+}
 # ---------------------------------------------------------------------------------- akce2_skup_tisk
 # tisk skupinek akce
 function akce2_skup_tisk($akce,$par,$title,$vypis,$export) {  trace();
@@ -4891,8 +4920,9 @@ function akce2_skup_tisk($akce,$par,$title,$vypis,$export) {  trace();
     // chyba=-1 pro kombinaci par.mark=LK a akce není obnova MS
     if ( $err==-1 ) { $result->html= $ret->msg; display("err=$err");  goto end; }
     $lk= 1;
-    // seznam rodin letního kurzu
-    $rr= mysql_qry("SELECT i0_rodina FROM pobyt AS p WHERE p.id_akce={$ret->lk}");
+    // seznam rodin letního kurzu - účastníci
+    $rr= mysql_qry("SELECT i0_rodina FROM pobyt AS p
+    WHERE p.id_akce={$ret->lk} AND funkce IN (0,1,2,5,6) ");
     while ( $rr && (list($idr,$nazev)= mysql_fetch_array($rr)) ) {
       $na_kurzu[$idr]= 1;
     }
