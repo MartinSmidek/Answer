@@ -2768,7 +2768,7 @@ function akce2_skup_check($akce) {
 # zjištění skupinek podle příjmení VPS/PPS
 # pokud je par.mark=LK vrátí se skupinky z letního kurzu s informací, jestli jsou na této akci
 function akce2_skup_get($akce,$kontrola,&$err,$par=null) { trace();
-                                                        debug($par,"akce2_skup_get");
+//                                                         debug($par,"akce2_skup_get");
   global $VPS;
   $ret= (object)array();
   $msg= array();
@@ -3263,8 +3263,8 @@ function akce2_tabulka($akce,$par,$title,$vypis,$export=false) { trace();
     }
     $trs.= "</tr>";
   }
-                                        debug($tab,"akce2_tabulka");
-                                        debug($clmn,"akce2_tabulka");
+//                                         debug($tab,"akce2_tabulka");
+//                                         debug($clmn,"akce2_tabulka");
   $res->html= "<div class='stat'><table class='stat'><tr>$ths</tr>$trs</table></div>";
   return $res;
 }
@@ -3476,9 +3476,9 @@ function tisk2_sestava_lidi($akce,$par,$title,$vypis,$export=false) { trace();
     break;
   }
   // případné omezení podle selected na seznam pobytů
-  if ( $par->sel && $par->selected ) {
-                                                display("i.par.sel=$par->sel");
-    $cnd.= " AND p.id_pobyt IN ($par->selected)";
+  if ( $par->sel ) {
+//                                                 display("i.par.sel=$par->sel");
+    $cnd.= $par->selected ? " AND p.id_pobyt IN ($par->selected)" : ' AND 0';
   }
   // data akce
   $r_fld= "id_rodina,nazev,ulice,psc,obec,stat,note,emaily,telefony,spz";
@@ -3796,7 +3796,7 @@ function akce2_stravenky($akce,$par,$title,$vypis,$export=false) { trace();
     $res_all->res[]= $res;
     $res_all->html.= "<h3>Strava {$nazev_diety[$i]}</h3>";
     $res_all->html.= $res->html;
-                                                        debug($res,$nazev_diety[$i]);
+//                                                         debug($res,$nazev_diety[$i]);
 //     $res_all->href= $href;
 //     $res_all->tab= $str;
 //     $res_all->akce= $akce_data;
@@ -6563,6 +6563,8 @@ function akce2_pdf_stravenky($akce,$par,$report_json) {  trace();
   // získání dat
   $res_vse= tisk2_sestava($akce,$par,$title,$vypis,true);
   foreach ($res_vse->res as $x) {
+//                                                         if ( $x->dieta != '_bl' ) continue;
+    $x->nazev= $x->nazev_diety=='normální' ? '' : $x->nazev_diety;
     $res= akce2_pdf_stravenky_dieta($x,$report_json);
     $res_all->html.= " {$res->href} - strava {$x->nazev_diety}, ";
   }
@@ -6572,6 +6574,7 @@ function akce2_pdf_stravenky($akce,$par,$report_json) {  trace();
 # generování štítků se stravenkami pro rodinu účastníka a pro pečouny do PDF
 # pomocí tisk2_sestava se do objektu $x->tab vygeneruje pole s elementy pro tisk stravenky
 function akce2_pdf_stravenky_dieta($x,$report_json) {  trace();
+                                                debug($x,"akce2_pdf_stravenky_dieta");
 // function akce2_pdf_stravenky_dieta($akce,$par,$report_json) {  trace();
   global $ezer_path_docs, $EZER, $USER;
   $result= (object)array('_error'=>0);
@@ -6600,7 +6603,7 @@ function akce2_pdf_stravenky_dieta($x,$report_json) {  trace();
     $k= 4*ceil($n/4)-$n;
     for ($i= 0; $i<$k; $i++) {
       $parss[$n]= (object)array();
-      $parss[$n]->header= $parss[$n]->line1= $parss[$n]->line2= '';
+      $parss[$n]->header= $parss[$n]->line1= $parss[$n]->line2= $parss[$n]->line3= '';
       $parss[$n]->rect= $parss[$n]->ram= $parss[$n]->end= '';
       $n++;
     }
@@ -6611,6 +6614,7 @@ function akce2_pdf_stravenky_dieta($x,$report_json) {  trace();
     $parss[$n]->header= $header;
     $parss[$n]->line1= "<b>$prijmeni</b>";
     $parss[$n]->line2= "$jmena";
+    $parss[$n]->line3= '';
     $parss[$n]->rect= '';
     $parss[$n]->ram= ' ';
     $parss[$n]->end= '';
@@ -6628,6 +6632,7 @@ function akce2_pdf_stravenky_dieta($x,$report_json) {  trace();
               $parss[$n]->header= $header;
               $parss[$n]->line1= "<b>... $prijmeni</b>";
               $parss[$n]->line2= "... $jmena";
+              $parss[$n]->line3= '';
               $parss[$n]->rect= $parss[$n]->ram= $parss[$n]->end= '';
               $n++;
             }
@@ -6636,6 +6641,7 @@ function akce2_pdf_stravenky_dieta($x,$report_json) {  trace();
             $parss[$n]->header= $header;
             $parss[$n]->line1= "$den";
             $parss[$n]->line2= "<b>{$sob[$jidlo]}</b>";
+            $parss[$n]->line3= "<small>{$x->nazev}</small>";
             if ( $velikost=='c' ) {
               // celá porce
               $parss[$n]->ram= '<img src="db/img/stravenky-rastr-1.png"'
@@ -6658,6 +6664,7 @@ function akce2_pdf_stravenky_dieta($x,$report_json) {  trace();
     $parss[$n]->header= $header;
     $parss[$n]->line1= "<b>$prijmeni</b>";
     $parss[$n]->line2= "(konec stravenek)";
+    $parss[$n]->line3= " ";
     $parss[$n]->rect= $parss[$n]->ram= '';
     $parss[$n]->end= ' ';
     $n++;
