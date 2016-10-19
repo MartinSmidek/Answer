@@ -268,31 +268,34 @@ menu m {type:'left', active:*
   menu {tag:'a', title:'jmenovky na akci',type:'group',_sys:'*'
     item {title:'Účastníci bez funkce'                                                       skill:'f'
                                         ,par:°{typ:'j',exp:'Excel2',exp2:'PDF-jmenovky'
-                                        ,cnd:"funkce=0",hav:"_vek>=18 OR r_role IN ('a','b')",ord:"prijmeni"
+                                        ,cnd:"funkce=0",hav:"_vek>=18 OR r_role IN ('a','b')"
+                                        ,ord:"IFNULL(r2.nazev,CONCAT('ZZ',prijmeni))"
                                         ,tit:'jméno:20, příjmení:15',fld:'jmeno,prijmeni'}}
     item {title:'Účastníci'                                                                  skill:'y;c'
                                         ,par:°{typ:'j',exp:'Excel2',exp2:'PDF-jmenovky'
-                                        ,cnd:"funkce IN (0,1,2)",hav:"_vek>=18 OR r_role IN ('a','b')",ord:"prijmeni"
+                                        ,cnd:"funkce IN (0,1,2)",hav:"_vek>=18 OR r_role IN ('a','b')"
+                                        ,ord:"IFNULL(r2.nazev,CONCAT('ZZ',prijmeni))"
                                         ,tit:'jméno:20, příjmení:15',fld:'jmeno,prijmeni'}}
     item {title:'Účastníci (výběr)'                                                          skill:'y;f;c'
                                         ,par:°{typ:'j',exp:'Excel2',exp2:'PDF-jmenovky',sel:'yes'
-                                        ,cnd:"funkce IN (0,1,2)",hav:"_vek>=18 OR r_role IN ('a','b')",ord:"prijmeni"
+                                        ,cnd:"funkce IN (0,1,2)",hav:"_vek>=18 OR r_role IN ('a','b')"
+                                        ,ord:"IFNULL(r2.nazev,CONCAT('ZZ',prijmeni))"
                                         ,tit:'jméno:20, příjmení:15',fld:'jmeno,prijmeni'}}
     item {title:'Děti'                  ,par:°{typ:'j',exp:'Excel2',exp2:'PDF-jmenovky'
                                         ,cnd:"pfunkce NOT IN (4,5,6,8) AND funkce!=99",hav:"_vek<18"
-                                        ,ord:"prijmeni"
+                                        ,ord:"IFNULL(r2.nazev,CONCAT('ZZ',prijmeni))"
                                         ,tit:'jméno:20, příjmení:15',fld:'jmeno,prijmeni'}}
     item {title:'Děti (výběr)'          ,par:°{typ:'j',exp:'Excel2',exp2:'PDF-jmenovky',sel:'yes'
                                         ,cnd:"pfunkce NOT IN (4,5,6,8) AND funkce!=99",hav:"_vek<18"
-                                        ,ord:"prijmeni"
+                                        ,ord:"IFNULL(r2.nazev,CONCAT('ZZ',prijmeni))"
                                         ,tit:'jméno:20, příjmení:15',fld:'jmeno,prijmeni'}}
     item {title:'Chůvy'                 ,par:°{typ:'j',exp:'Excel2',exp2:'PDF-jmenovky'
-                                        ,cnd:"pfunkce IN (5) AND funkce!=99",hav:"_vek<18"
-                                        ,ord:"prijmeni"
+                                        ,cnd:"funkce!=99",hav:"s.s_role IN (5)"
+                                        ,ord:"IFNULL(r2.nazev,CONCAT('ZZ',prijmeni))"
                                         ,tit:'jméno:20, příjmení:15',fld:'jmeno,prijmeni'}}
     item {title:'Chůvy (výběr)'         ,par:°{typ:'j',exp:'Excel2',exp2:'PDF-jmenovky',sel:'yes'
-                                        ,cnd:"pfunkce IN (5) AND funkce!=99",hav:"_vek<18"
-                                        ,ord:"prijmeni"
+                                        ,cnd:"funkce!=99",hav:"s.s_role IN (5)"
+                                        ,ord:"IFNULL(r2.nazev,CONCAT('ZZ',prijmeni))"
                                         ,tit:'jméno:20, příjmení:15',fld:'jmeno,prijmeni'}}
     item {title:'Pečouni'               ,par:°{typ:'j',exp:'Excel2',exp2:'PDF-jmenovky'
                                         ,cnd:"(p.funkce=99 OR s.pfunkce IN (4,5,8))",ord:"prijmeni"
@@ -302,11 +305,13 @@ menu m {type:'left', active:*
                                         ,tit:'jméno:20, příjmení:15',fld:'jmeno,prijmeni'}}
     item {title:'VPS'                                                                        skill:'-'
                                         ,par:°{typ:'j',exp:'Excel2',exp2:'PDF-jmenovky'
-                                        ,cnd:"funkce IN (1,2)",ord:"prijmeni",hav:"_vek>=18 OR r_role IN ('a','b')"
+                                        ,cnd:"funkce IN (1,2)",hav:"_vek>=18 OR r_role IN ('a','b')"
+                                        ,ord:"IFNULL(r2.nazev,CONCAT('ZZ',prijmeni))"
                                         ,tit:'jméno:20, příjmení:15',fld:'jmeno,prijmeni'}}
     item {title:'PPS'                                                                        skill:'f'
                                         ,par:°{typ:'j',exp:'Excel2',exp2:'PDF-jmenovky'
-                                        ,cnd:"funkce IN (1,2)",ord:"prijmeni",hav:"_vek>=18 OR r_role IN ('a','b')"
+                                        ,cnd:"funkce IN (1,2)",hav:"_vek>=18 OR r_role IN ('a','b')"
+                                        ,ord:"IFNULL(r2.nazev,CONCAT('ZZ',prijmeni))"
                                         ,tit:'jméno:20, příjmení:15',fld:'jmeno,prijmeni'}}
     item {title:'Kněží a psychologové'  ,par:°{typ:'j',exp:'Excel2',exp2:'PDF-jmenovky'
                                         ,cnd:"funkce IN (3,4)",ord:"prijmeni"
@@ -315,10 +320,12 @@ menu m {type:'left', active:*
 #                                         ,cnd:"funkce=4",ord:"prijmeni",hav:"_vek>=18 OR r_role IN ('a','b')"
 #                                         ,tit:'jméno:20, příjmení:15',fld:'jmeno,prijmeni'}}
     item {title:'Hospodáři'             ,par:°{typ:'j',exp:'Excel2',exp2:'PDF-jmenovky'
-                                        ,cnd:"funkce=5",ord:"prijmeni",hav:"_vek>=18 OR r_role IN ('a','b')"
+                                        ,cnd:"funkce=5",hav:"_vek>=18 OR r_role IN ('a','b')"
+                                        ,ord:"IFNULL(r2.nazev,CONCAT('ZZ',prijmeni))"
                                         ,tit:'jméno:20, příjmení:15',fld:'jmeno,prijmeni'}}
     item {title:'... ostatní'           ,par:°{typ:'j',exp:'Excel2',exp2:'PDF-jmenovky'
-                                        ,cnd:"funkce NOT IN (0,1,2,3,4,5)",ord:"prijmeni",hav:"_vek>=18"
+                                        ,cnd:"funkce NOT IN (0,1,2,3,4,5)",hav:"_vek>=18"
+                                        ,ord:"IFNULL(r2.nazev,CONCAT('ZZ',prijmeni))"
                                         ,tit:'jméno:20, příjmení:15',fld:'jmeno,prijmeni'}}
   }
   # ---------------------------------------------------------------------------------------------==> PDF
@@ -374,7 +381,7 @@ menu m {type:'left', active:*
 #                                         ,tit:'příjmení:15,jména:20,obec:25,funkce,^'
 #                                         ,fld:'prijmeni,jmena,obec,funkce,^id_pobyt'}}
     item {title:'Chůvy'                                                                      skill:'y;f;c'
-                                        ,par:°{typ:'j',exp:'Excel2',cnd:"funkce!=99",hav:"s.s_role IN (5) "
+                                        ,par:°{typ:'j',exp:'Excel2',cnd:"funkce!=99",hav:"s.s_role IN (5)"
                                         ,tit:'příjmení:15,jméno:12,věk:5,obec:25,psč:7,ulice:25,telefon:20,e-mail:30,pečuje o:20,poznámky:30,poznámka k pobytu rodiny:30'
                                         ,fld:'prijmeni,jmeno,_vek,obec,psc,ulice,telefon,email,_chovany,_poznamky,poznamka'}}
     item {title:'Pečouni'                                                                    skill:'y;f'
@@ -477,7 +484,7 @@ report sti_C [0,0,210,297] { format:'A4:5,3,50,24',
   box ram       [  1,  1, 48, 22] { style:'8,L',                title:'{ram}' }
   box end       [  1,  1, 48, 22] { style:'8,L',                title:'{end}' }
   box header    [  2,  4, 45,  4] { style:'8,L',                title:'{header}' }
-  box lines     [  2,  8, 48, 16] { style:'14,L',               title:'{line1}<br>{line2}' }
+  box lines     [  2,  8, 48, 16] { style:'14,L',               title:'{line1}<br>{line2}<br>{line3}' }
   box rect      [ 25, 10, 20, 14] { style:'20,R',               title:'{rect}' }
 }
 # ----------------------==>   stitek_V - vizitky
