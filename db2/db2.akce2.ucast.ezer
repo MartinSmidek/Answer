@@ -991,7 +991,7 @@ form _pobyt [,,0,62] {
   // funkce
   select funkce   [7,35,82,] {tag:'a', type:'map', data:p.funkce, format:'un',
     options:ms_akce_funkce.zkratka, title:'^společná funkce'}
-  select prednasi [96,35,101,] {tag:'a', type:'map', data:p.prednasi, format:'un',
+  select prednasi [96,35,101,] {tag:'a', type:'map0', data:p.prednasi, format:'un',
     options:ms_akce_prednasi.zkratka, title:'^přednáš(ej)í'}
   label [5,65,1,1] { tag:'a' } // oprava
 }
