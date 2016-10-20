@@ -1755,7 +1755,7 @@ function ucast2_chain_oso($idoo,$idr=0) {
     $r= select("COUNT(*)","_track","klic=$idoo AND op='r' AND val=$ido");
     if ( !$r ) {
       $dup= $x[$i0]->asi;
-      $msg= "$idoo je pravděpodobně ($dup) kopie osoby $ido "
+      $msg= "$idoo je pravděpodobně ($dup) kopie osoby $ido '$prijmeni $jmeno'"
             . ($xi->org==1 ? " z YS" : ($xi->org==2 ? " z FA" : ''));
       $keys= $i0;
     }
@@ -4044,26 +4044,34 @@ function akce2_strava_souhrn($akce,$par,$title,$vypis,$export=false,$id_pobyt=0)
   //
   $tits[0]= "den:10";
   $flds[0]= "day";
-  foreach ($diety as $dieta) {
-    foreach (explode(',','sc,sp,oc,op,vc,vp') as $jidlo) {
+//   foreach (explode(',','sc,sp,oc,op,vc,vp') as $jidlo) {
+  foreach (explode(',','s,o,v') as $jidlo1) {
+    foreach ($diety as $dieta) {
+  foreach (explode(',','c,p') as $porce) {
+    $jidlo= $jidlo1.$porce;
       $tits[]= "{$jidlo_[$jidlo]} {$diety_[$dieta]}:8:r:s";
       $flds[]= "$jidlo $dieta";
+    }
     }
   }
 //                                                         debug($tits);
 //                                                         debug($flds);
 //                                                         debug($ret->suma,'suma');
-//                                                         display("so 2/7 oc ={$ret->suma['so 2/7 oc ']}");
   // součet přes lidi
   $d= 0;
   foreach ($ret->days as $day) {
     $d++;
     $clmn[$day]['day']= $day;
+//     foreach (explode(',','sc,sp,oc,op,vc,vp') as $jidlo) {
+//       foreach ($diety as $dieta) {
+  foreach (explode(',','s,o,v') as $jidlo1) {
     foreach ($diety as $dieta) {
-      foreach (explode(',','sc,sp,oc,op,vc,vp') as $jidlo) {
+  foreach (explode(',','c,p') as $porce) {
+    $jidlo= $jidlo1.$porce;
         $fld= "$day$jidlo $dieta";
         $clmn[$day][$fld]= $ret->suma[$fld];
       }
+    }
     }
   }
 //                                                         debug($clmn,'clmn');
@@ -4137,16 +4145,19 @@ function akce2_strava_pary($akce,$par,$title,$vypis,$export=false,$id_pobyt=0) {
 //                                                         debug($a,"akce {$a->_dnu}");
     $oo= $a->strava_oddo ? $a->strava_oddo : 'vo';
     $nd= $a->_dnu;
-    foreach ($diety as $dieta) {
-      for ($i= 0; $i<=$nd; $i++) {
+    for ($i= 0; $i<=$nd; $i++) {
+//       foreach ($diety as $dieta) {
         $den= $dny[($a->_den1+$i)%7].date($souhrn?' j/n':'d',sql2stamp($a->datum_od)+$i*60*60*24).' ';
         $den= date($souhrn?' j/n':'d',sql2stamp($a->datum_od)+$i*60*60*24).' ';
+      foreach ($diety as $dieta) {
         if ( !$dieta ) $days[]= $den;
         if ( $i>0 || $oo[0]=='s' ) {
           $tit.= ",{$den}sc $dieta:4:r:s";
           $tit.= ",{$den}sp $dieta:4:r:s";
           $fld.= ",{$den}sc $dieta,{$den}sp $dieta";
         }
+        }
+      foreach ($diety as $dieta) {
         if ( $i>0 && $i<$nd
           || $i==0   && ($oo[0]=='s' || $oo[0]=='o')
           || $i==$nd && ($oo[1]=='o' || $oo[1]=='v') ) {
@@ -4154,12 +4165,15 @@ function akce2_strava_pary($akce,$par,$title,$vypis,$export=false,$id_pobyt=0) {
           $tit.= ",{$den}op $dieta:4:r:s";
           $fld.= ",{$den}oc $dieta,{$den}op $dieta";
         }
+        }
+      foreach ($diety as $dieta) {
         if ( $i<$nd || $oo[1]=='v' ) {
           $tit.= ",{$den}vc $dieta:4:r:s";
           $tit.= ",{$den}vp $dieta:4:r:s";
           $fld.= ",{$den}vc $dieta,{$den}vp $dieta";
         }
-      }
+        }
+//       }
     }
   }
   // dekódování parametrů
@@ -4204,65 +4218,82 @@ function akce2_strava_pary($akce,$par,$title,$vypis,$export=false,$id_pobyt=0) {
     $clmn[$n]= array();
     if ( $x->funkce==99 && $x->pfunkce ) {
       $k= 0;
-      foreach ($diety as $dieta) {
-        // stravy pro pečouny - mají jednotně celou stravu - (s_rodici=0,pfunkce!=0 viz SQL)
-        // mají diety podle osobního nastavení diety: 0=, 1=_bl, 4=_bm
-        $jsou_pecouni= true;
-        $clmn[$n]['manzele']= 'PEČOUNI';
-//         $sc= $x->_pocet;
-        $f= "_dieta$dieta"; $sc= $x->$f;
-        $sp= 0;
-//         $k= 0;
-        for ($i= 0; $i<=$nd; $i++) {
+      for ($i= 0; $i<=$nd; $i++) {
+//         foreach ($diety as $dieta) {
+          // stravy pro pečouny - mají jednotně celou stravu - (s_rodici=0,pfunkce!=0 viz SQL)
+          // mají diety podle osobního nastavení diety: 0=, 1=_bl, 4=_bm
+          $jsou_pecouni= true;
+          $clmn[$n]['manzele']= 'PEČOUNI';
           if ( $i>0 || $oo[0]=='s' ) {
+        foreach ($diety as $dieta) {
+            $sp= 0;
+            $f= "_dieta$dieta"; $sc= $x->$f;
             $k++; $suma[$flds[$k]]+= $clmn[$n][$flds[$k]]= $sc;
             $k++; $suma[$flds[$k]]+= $clmn[$n][$flds[$k]]= $sp;
+          }
           }
           if ( $i>0 && $i<$nd
             || $i==0   && ($oo[0]=='s' || $oo[0]=='o')
             || $i==$nd && ($oo[1]=='o' || $oo[1]=='v') ) {
+        foreach ($diety as $dieta) {
+            $sp= 0;
+            $f= "_dieta$dieta"; $sc= $x->$f;
             $k++; $suma[$flds[$k]]+= $clmn[$n][$flds[$k]]= $sc;
             $k++; $suma[$flds[$k]]+= $clmn[$n][$flds[$k]]= $sp;
+          }
           }
           if ( $i<$nd || $oo[1]=='v' ) {
+        foreach ($diety as $dieta) {
+            $sp= 0;
+            $f= "_dieta$dieta"; $sc= $x->$f;
             $k++; $suma[$flds[$k]]+= $clmn[$n][$flds[$k]]= $sc;
             $k++; $suma[$flds[$k]]+= $clmn[$n][$flds[$k]]= $sp;
           }
-        }
+          }
+//         }
       }
     }
     elseif ( $x->funkce!=99 ) {
       $k= 0;
-      foreach ($diety as $dieta) {
-        // stravy pro manžele podle diet
-        $clmn[$n]['manzele']= $x->_jm;
-        $f=  "strava_cel$dieta"; $sc= $x->$f;
-        $f=  "strava_pol$dieta"; $sp= $x->$f;
-        $f= "cstrava_cel$dieta"; $csc= $x->$f;
-        $f= "cstrava_pol$dieta"; $csp= $x->$f;
-//         $sc= $x->strava_cel;
-//         $sp= $x->strava_pol;
-//         $csc= $x->cstrava_cel;
-//         $csp= $x->cstrava_pol;
-//         $k= 0;
-        for ($i= 0; $i<=$nd; $i++) {
+      for ($i= 0; $i<=$nd; $i++) {
+//         foreach ($diety as $dieta) {
+          // stravy pro manžele podle diet
+          $clmn[$n]['manzele']= $x->_jm;
           if ( $i>0 || $oo[0]=='s' ) {
+        foreach ($diety as $dieta) {
+          $f=  "strava_cel$dieta"; $sc= $x->$f;
+          $f=  "strava_pol$dieta"; $sp= $x->$f;
+          $f= "cstrava_cel$dieta"; $csc= $x->$f;
+          $f= "cstrava_pol$dieta"; $csp= $x->$f;
             $k++; $suma[$flds[$k]]+= $clmn[$n][$flds[$k]]= $csc ? $csc[3*$i+0] : $sc;
             $k++; $suma[$flds[$k]]+= $clmn[$n][$flds[$k]]= $csp ? $csp[3*$i+0] : $sp;
+          }
           }
           if ( $i>0 && $i<$nd
             || $i==0   && ($oo[0]=='s' || $oo[0]=='o')
             || $i==$nd && ($oo[1]=='o' || $oo[1]=='v') ) {
+        foreach ($diety as $dieta) {
+          $f=  "strava_cel$dieta"; $sc= $x->$f;
+          $f=  "strava_pol$dieta"; $sp= $x->$f;
+          $f= "cstrava_cel$dieta"; $csc= $x->$f;
+          $f= "cstrava_pol$dieta"; $csp= $x->$f;
             $k++; $suma[$flds[$k]]+= $clmn[$n][$flds[$k]]= $csc ? $csc[3*$i+1] : $sc;
             $k++; $suma[$flds[$k]]+= $clmn[$n][$flds[$k]]= $csp ? $csp[3*$i+1] : $sp;
           }
+          }
           if ( $i<$nd || $oo[1]=='v' ) {
+        foreach ($diety as $dieta) {
+          $f=  "strava_cel$dieta"; $sc= $x->$f;
+          $f=  "strava_pol$dieta"; $sp= $x->$f;
+          $f= "cstrava_cel$dieta"; $csc= $x->$f;
+          $f= "cstrava_pol$dieta"; $csp= $x->$f;
             $k++; $suma[$flds[$k]]+= $clmn[$n][$flds[$k]]= $csc ? $csc[3*$i+2] : $sc;
             $k++; $suma[$flds[$k]]+= $clmn[$n][$flds[$k]]= $csp ? $csp[3*$i+2] : $sp;
           }
+          }
         }
 //                                                         debug($clmn,$x->_jm);
-      }
+//       }
     }
   }
 //                                                         debug($clmn,"clmn");

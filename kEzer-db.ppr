@@ -19,10 +19,12 @@ kEzer-ys2
 	-poznámky
 		sql\answer_dotazy.sql
 	-$
-		-skins
+		+skins
 			skins\ck\ck.ezer.css
 			skins\colors.php
 			skins\db\db.ezer.css
+			db2\db2.css
+			db2\db2.css.php
 			skins\ch\ch.ezer.css
 		answer.inc
 		answer.php
@@ -40,8 +42,6 @@ kEzer-ys2
 			db2\db2.akce2.elim.ezer
 			db2\db2.akce2.ezer
 			db2\db2.akce2.foto.ezer
-			db2\db2.css
-			db2\db2.css.php
 			db2\db2_fce.js
 			db2\db2_fce.php
 			db2\db2_ys2_fce.php
@@ -63,8 +63,8 @@ kEzer-ys2
 		-pokladna
 			db2\db2.pok.ezer
 		-ekonomika
-	-ezer2.2
-		+client
+	+ezer2.2
+		-client
 			ezer2.2\client\_code.js
 			ezer2.2\client\_test.html
 			ezer2.2\client\app.js
@@ -77,7 +77,7 @@ kEzer-ys2
 			ezer2.2\client\licensed\fancyupload.css
 			ezer2.2\client\licensed\fancyupload.js
 			ezer2.2\client\lib.js
-		+client f
+		-client f
 			ezer2.2\client\android.css
 			ezer2.2\client\appf.css
 			dbg.html
@@ -92,7 +92,7 @@ kEzer-ys2
 			ezer2.2\ezer2.pers.ezer
 			ezer2.2\ezer2.syst.ezer
 			ezer2.2\ezer2_fce.php
-		+server
+		-server
 			ezer2.2\server\ae_slib.php
 			ezer2.2\comp.css
 			ezer2.2\comp.php
@@ -112,16 +112,16 @@ kEzer-ys2
 [Open project files]
 0=db2\db2_fce.js
 1=db2\db2_fce.php
-2=db2\db2.akce2.maia.ezer
-3=db2\db2.akce2.foto.ezer
-4=db2\db2.akce2.cnf.ezer
-5=db2\db2.akce2.lst.ezer
-6=db2\db2.akce2.ucast.ezer
-7=db2\db2.akce2.tisk.ezer
-8=db2\db2.akce2.mai.ezer
-9=db2\db2.akce2.dop.ezer
-10=db2\db2.akce2.evi.ezer
-11=db2\db2.akce2.ezer
+2=db2\db2.akce2.ezer
+3=db2\db2.akce2.maia.ezer
+4=db2\db2.akce2.foto.ezer
+5=db2\db2.akce2.cnf.ezer
+6=db2\db2.akce2.lst.ezer
+7=db2\db2.akce2.ucast.ezer
+8=db2\db2.akce2.tisk.ezer
+9=db2\db2.akce2.mai.ezer
+10=db2\db2.akce2.dop.ezer
+11=db2\db2.akce2.evi.ezer
 12=db2\db2.akce2.sta.ezer
 13=db2\db2.akce2.pece.ezer
 14=db2\db2.akce2.elim.ezer
@@ -136,6 +136,10 @@ kEzer-ys2
 23=ezer2.2\server\ae_slib.php
 24=ezer2.2\ezer2_fce.php
 25=ezer2.2\client\ezer_fdom1.js
+26=db2\db2.css
+27=skins\db\db.ezer.css
+28=skins\ck\ck.ezer.css
+29=skins\ch\ch.ezer.css
 [Selected Project Files]
 Main=
 Selected=db2\db2_fce.php
@@ -145,16 +149,17 @@ Caret=1,63
 BookMark1=19,88
 Mark1=43,503
 [db2\db2_fce.php]
-TopLine=4904
-Caret=30,4894
-BookMark2=71,6505
-Mark1=45,3937
-Mark2=34,9485
-Mark3=43,9670
-Mark4=1,9760
-Mark5=31,9383
-Mark6=11,9467
-BookMark1=31,4882
+TopLine=4245
+Caret=1,4213
+Mark1=29,4047
+Mark2=30,4139
+[db2\db2.akce2.ezer]
+TopLine=25
+Caret=18,42
+Mark1=40,1065
+Mark2=31,741
+Mark3=24,720
+Mark4=7,846
 [db2\db2.akce2.maia.ezer]
 TopLine=212
 Caret=4,265
@@ -171,22 +176,18 @@ Caret=68,52
 BookMark1=1,38
 BookMark2=18,572
 [db2\db2.akce2.ucast.ezer]
-TopLine=788
-Caret=51,829
-Mark1=29,1075
-Mark2=8,1022
-Mark3=11,1111
-Mark4=40,682
-Mark5=53,565
-Mark6=25,40
+TopLine=14
+Caret=71,37
+Mark1=51,830
 [db2\db2.akce2.tisk.ezer]
-TopLine=371
-Caret=109,412
+TopLine=379
+Caret=63,412
 Mark1=57,48
-Mark2=1,395
-Mark3=34,459
-Mark4=1,192
-Mark5=20,349
+Mark2=1,406
+Mark3=34,470
+Mark4=26,383
+Mark5=1,137
+Mark6=18,296
 [db2\db2.akce2.mai.ezer]
 TopLine=252
 Caret=1,257
@@ -211,13 +212,6 @@ Mark2=38,1074
 Mark3=26,1084
 Mark4=8,539
 Mark5=13,554
-[db2\db2.akce2.ezer]
-TopLine=1
-Caret=11,27
-Mark1=40,1064
-Mark2=31,740
-Mark3=24,719
-Mark4=7,845
 [db2\db2.akce2.sta.ezer]
 TopLine=14
 Caret=47,32
@@ -237,8 +231,8 @@ Caret=15,7313
 TopLine=3525
 Caret=55,3545
 [db2\db2.css.php]
-TopLine=1
-Caret=10,38
+TopLine=24
+Caret=1,69
 [ezer2.2\server\ezer2.php]
 TopLine=1110
 Caret=19,1131
@@ -265,3 +259,15 @@ Caret=27,1100
 [ezer2.2\client\ezer_fdom1.js]
 TopLine=87
 Caret=37,116
+[db2\db2.css]
+TopLine=1
+Caret=75,40
+[skins\db\db.ezer.css]
+TopLine=865
+Caret=1,847
+[skins\ck\ck.ezer.css]
+TopLine=827
+Caret=53,844
+[skins\ch\ch.ezer.css]
+TopLine=827
+Caret=53,845
