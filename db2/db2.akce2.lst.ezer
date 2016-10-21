@@ -185,7 +185,8 @@ form _page [,,275,360] {
     cen_copy.enable(0); cen_copy.key(0); key_akce.set(id_akce); //fil.display(0);
     switch(zalozka.get,
     'inf',{ note.set(ask('akce2_info',id_akce));  },
-    'cor',{ form.load(id_akce); form.display(mrop.get,'corm');
+    'cor',{ form.load(id_akce);
+            [ has_skill('faan'); form.display(mrop.get,'corm') ];
             [ has_skill('f'); soubezna.set(cconc(id_hlavni.get,1,0)) ];
             info.sey.browse_focus },
     'cen',{ c.browse_load(conc("id_akce=",id_akce)) },
