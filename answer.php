@@ -73,10 +73,13 @@ function answer_php($app,$app_name,$db_name,$skin,$js_lib,$css_lib,$options) {
     // pro verzi 2.2
     $EZER->version=='ezer2.2'
     ? array("$licensed/datepicker.js"):array(),
+    // clipboard.js
+    array("$licensed/clipboard.min.js"),
     // jádro Ezer
     array("$client/lib.js","$client/ezer_fdom1.js","$client/ezer.js","$client/area.js",
       "$client/ezer_report.js","$client/ezer_fdom2.js","$client/app.js",
-      "$licensed/zeroclipboard/ZeroClipboard.js","$licensed/mootree.js"),
+//       "$licensed/zeroclipboard/ZeroClipboard.js",
+      "$licensed/mootree.js"),
     // debugger
     $dbg ? array("$licensed/jush/mini_jush.js"):array(),
     // další knihovny

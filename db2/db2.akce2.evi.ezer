@@ -415,6 +415,8 @@ form _lst [,,370,*] {
           ret.set(bm.browse_export(°{type:'xls',selected:1}));
           alert(ret.html);
       }}
+      item { type:'clipboard', title:'vybraná ID dát do schránky',
+        proc onclick () { clipboard(bm.selected('get')) }}
       item { title:'-zrušit výběr a zobrazení',
         proc onclick () { bm.selected('clear'); page.map.mapa_clear; }}
       item { title:'vybrat vše se známou polohou',
