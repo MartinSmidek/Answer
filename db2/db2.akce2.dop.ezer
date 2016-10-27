@@ -22,7 +22,7 @@ menu {type:'left', active:*, format:'f+'
       clear;
       S_sablona.hide;
       ii.nadpis(i.title,"... probíhá výpočet");
-      ret.set(ask('ucet_potv',i.par));
+      ret.set(ask('ucet_potv',i.par,my_org.get));
       ii.nadpis('',ret.html);
     }
   }

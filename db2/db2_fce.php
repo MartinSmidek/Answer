@@ -2405,7 +2405,7 @@ function akce2_platba_prispevek2($id_pobyt) {  trace();
   $nazev= $rok= '';
   $values= $del= $jmena= '';
   $celkem= 0;
-  $qp= "SELECT o.id_osoba,a.nazev,datum_do,YEAR(datum_do) AS _rok,jmeno
+  $qp= "SELECT o.id_osoba,a.nazev,datum_do,YEAR(datum_do) AS _rok,jmeno,a.access
           FROM pobyt AS p
           JOIN akce AS a ON a.id_duakce=p.id_akce
           JOIN spolu AS s ON p.id_pobyt=s.id_pobyt
@@ -2418,13 +2418,13 @@ function akce2_platba_prispevek2($id_pobyt) {  trace();
     $rok= $p->_rok;
     $datum= $p->datum_do;
     $nazev= "$rok - {$p->nazev}";
-    $values.= "$del($osoba,'p',$prispevek,'$datum','$rok-12-31','$nazev')";
+    $values.= "$del({$p->access},$osoba,'p',$prispevek,'$datum','$rok-12-31','$nazev')";
     $jmena.= "$del{$p->jmeno}";
     $del= ', ';
     $celkem+= $prispevek;
   }
 //                                                         display($values);
-  $qi= "INSERT dar (id_osoba,ukon,castka,dat_od,dat_do,note) VALUES $values";
+  $qi= "INSERT dar (access,id_osoba,ukon,castka,dat_od,dat_do,note) VALUES $values";
   $ri= mysql_qry($qi);
   // odpověď
   $ret->msg= "Za členy $jmena je potřeba vložit do pokladny $celkem,- Kč";
@@ -10511,9 +10511,13 @@ function dop_sab_nahled($k3) { trace();
 # =====================================================================================> . potvrzení
 # ---------------------------------------------------------------------------------------- ucet_potv
 # přehled podle tabulky 'prijate dary' na intranetu
-function ucet_potv($par) { trace();
+function ucet_potv($par,$access) { trace();
   $html= '';
   $darce= array();
+  if ( $access!=1  ) {
+    $html.= "POZOR: přehled darů na GoogleDisk je (zatím) pouze pro Setkání";
+    goto end;
+  }
   $xls= "prijate_dary";
   $max= 9999;
 //   $max= 30;
@@ -10652,8 +10656,8 @@ function ucet_potv($par) { trace();
     foreach ($darce as $id=>$dary) {
       $data= implode(', ',$dary->data)." $rok";
       $pars= ezer_json_encode((object)array('data'=>$data));
-      $oki= query("INSERT INTO dar (id_osoba,ukon,zpusob,castka,dat_od,note,pars)
-        VALUES ($id,'d','u',{$dary->castka},'$rok-12-31','daňové potvrzení','$pars')");
+      $oki= query("INSERT INTO dar (access,id_osoba,ukon,zpusob,castka,dat_od,note,pars)
+        VALUES ($access,$id,'d','u',{$dary->castka},'$rok-12-31','daňové potvrzení','$pars')");
       $n+= $oki ? mysql_affected_rows () : 0;
     }
     $html.= "<br><br>vloženo $n dárců k potvrzování za rok $rok";
