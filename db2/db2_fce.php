@@ -5677,7 +5677,7 @@ function akce2_sestava_noci($akce,$par,$title,$vypis,$export=false) { trace();
 # generované vzorce
 #   platit = součet předepsaných plateb
 function akce2_vyuctov_pary($akce,$par,$title,$vypis,$export=false) { trace();
-  $ord= $par->ord ? $par->ord : "IF(funkce<=2,1,funkce),IF(pouze=0,r.nazev,o.prijmeni)";
+  $ord= $par->ord ? $par->ord : "IF(funkce<=2,1,funkce),_jm";
   $result= (object)array();
   $tit= "Manželé:25"
 //       . ",id_pobyt"
@@ -5685,11 +5685,11 @@ function akce2_vyuctov_pary($akce,$par,$title,$vypis,$export=false) { trace();
       . ",str. celá:5:r:S,str. pol.:5:r:s"
       . ",platba ubyt.:7:r:s,platba strava:7:r:s,platba režie:7:r:s,sleva:7:r:s,CD:6:r:s,celkem:7:r:s"
       . ",na účet:7:r:s,datum platby:10:d"
-      . ",nedo platek:6:r:s,č.příspěvky:6:r:s,pokladna:6:r:s,datum platby:10:d,přepl.:6:r:s,poznámka:50,SPZ:9,.:7"
+      . ",nedo platek:6:r:s,člen. nedo platek:6:r:s,pokladna:6:r:s,datum platby:10:d,přepl.:6:r:s,poznámka:50,SPZ:9,.:7"
       . ",ubyt.:8:r:s,DPH:6:r:s,strava:8:r:s,DPH:6:r:s,režie:8:r:s,zapla ceno:8:r:s"
       . ",dota ce:6:r:s,nedo platek:6:r:s,dar:7:r:s,rozpočet organizace:10:r:s"
       . "";
-  $fld= "manzele"
+  $fld= "=jmena"
 //       . ",id_pobyt"
       . ",pokoj,_deti,luzka,pristylky,kocarek,=pocetnoci,strava_cel,strava_pol"
       . ",platba1,platba2,platba3,platba4,=cd,=platit,=uctem,=datucet"
@@ -5717,37 +5717,32 @@ function akce2_vyuctov_pary($akce,$par,$title,$vypis,$export=false) { trace();
     if ( isset($f) ) $fmts[$fld]= $f;
   }
   // data akce
-  $qry=  "SELECT id_pobyt,
-          p.pouze,pokoj,luzka,pristylky,kocarek,pocetdnu,strava_cel,strava_pol,
-            platba1,platba2,platba3,platba4,
-            platba,zpusobplat,c.ikona as pokladnou,datplatby,
-            cd,p.poznamka,
-          r.nazev as nazev,r.ulice,r.psc,r.obec,r.telefony,r.emaily,r.spz,
-          SUM(IF(t.role='d',1,0)) as _deti,
-          GROUP_CONCAT(DISTINCT IF(t.role='a',o.clen,'')     SEPARATOR '') as clen_m,
-          GROUP_CONCAT(DISTINCT IF(t.role='a',o.prijmeni,'') SEPARATOR '') as prijmeni_m,
-          GROUP_CONCAT(DISTINCT IF(t.role='a',o.jmeno,'')    SEPARATOR '') as jmeno_m,
-          GROUP_CONCAT(DISTINCT IF(t.role='a',o.narozeni,'') SEPARATOR '') as narozeni_m,
-          GROUP_CONCAT(DISTINCT IF(t.role='a',o.rc_xxxx,'')  SEPARATOR '') as rc_xxxx_m,
-          GROUP_CONCAT(DISTINCT IF(t.role='b',o.prijmeni,'') SEPARATOR '') as prijmeni_z,
-          GROUP_CONCAT(DISTINCT IF(t.role='b',o.jmeno,'')    SEPARATOR '') as jmeno_z,
-          GROUP_CONCAT(DISTINCT IF(t.role='b',o.narozeni,'') SEPARATOR '') as narozeni_z,
-          GROUP_CONCAT(DISTINCT IF(t.role='b',o.rc_xxxx,'')  SEPARATOR '') as rc_xxxx_z,
-          MAX(clen) AS _clenstvi,
-          0+RIGHT(SUM(DISTINCT CONCAT(d.id_dar,LPAD(d.castka,10,0))),10) AS prispevky
+  $qry=  "SELECT
+            id_pobyt,pokoj,luzka,pristylky,kocarek,pocetdnu,strava_cel,strava_pol,
+            platba1,platba2,platba3,platba4,platba,zpusobplat,c.ikona as pokladnou,datplatby,
+            cd,p.poznamka,r.nazev as nazev,r.spz,
+            SUM(IF(t.role='d',1,0)) as _deti,
+            IF(p.i0_rodina
+              ,CONCAT(r.nazev,' ',GROUP_CONCAT(IF(role IN ('a','b'),o.jmeno,'') ORDER BY role SEPARATOR ' '))
+              ,GROUP_CONCAT(DISTINCT CONCAT(so.prijmeni,' ',so.jmeno) SEPARATOR ' ')) as _jm,
+            COUNT(dc.id_dar) AS _clenstvi,
+            0+RIGHT(SUM(DISTINCT CONCAT(d.id_dar,LPAD(d.castka,10,0))),10) AS prispevky
           FROM pobyt AS p
-          JOIN spolu AS s USING(id_pobyt)
-          JOIN osoba AS o ON s.id_osoba=o.id_osoba
-          LEFT JOIN tvori AS t ON t.id_osoba=o.id_osoba
-          LEFT JOIN rodina AS r ON r.id_rodina=IF(i0_rodina,i0_rodina,t.id_rodina)
-          JOIN akce AS a ON a.id_duakce=p.id_akce
-          LEFT JOIN dar AS d ON d.id_osoba=s.id_osoba AND d.ukon='p'
-            AND YEAR(a.datum_do) BETWEEN YEAR(d.dat_od) AND YEAR(d.dat_do)
-          JOIN _cis AS c ON c.druh='ms_akce_platba' AND c.data=zpusobplat
+            JOIN spolu AS s USING(id_pobyt)
+            JOIN osoba AS o ON s.id_osoba=o.id_osoba
+            JOIN osoba AS so ON so.id_osoba=s.id_osoba
+            LEFT JOIN rodina AS r ON r.id_rodina=i0_rodina
+            LEFT JOIN tvori AS t ON t.id_osoba=o.id_osoba AND t.id_rodina=i0_rodina
+            JOIN akce AS a ON a.id_duakce=p.id_akce
+            LEFT JOIN dar AS d ON d.id_osoba=s.id_osoba AND d.ukon='p'
+              AND YEAR(a.datum_do) BETWEEN YEAR(d.dat_od) AND YEAR(d.dat_do)
+            LEFT JOIN dar AS dc ON dc.id_osoba=s.id_osoba AND dc.ukon='c'
+              AND YEAR(a.datum_do)>=YEAR(dc.dat_od)
+              AND (YEAR(a.datum_do) <= YEAR(dc.dat_do) OR !YEAR(dc.dat_do))
+            JOIN _cis AS c ON c.druh='ms_akce_platba' AND c.data=zpusobplat
           WHERE p.id_akce='$akce' AND funkce!=99 AND $cond
           GROUP BY id_pobyt
           ORDER BY $ord";
-//   $qry.=  " LIMIT 10";
   $res= mysql_qry($qry);
   while ( $res && ($x= mysql_fetch_object($res)) ) {
 //                                         debug($x,"hodnoty");
@@ -5777,7 +5772,8 @@ function akce2_vyuctov_pary($akce,$par,$title,$vypis,$export=false) { trace();
         case '=pokladna':   $val= $x->pokladnou ? 0+$x->platba : ''; break;
         case '=datpokl':    $val= $x->pokladnou ? $x->datplatby : ''; break;
         case '=cd':         $val= 100.00*$x->cd; break;
-        case '=prispevky':  $val= $x->prispevky ?: ($x->_clenstvi ? '' : '-'); break;
+        // nedoplatek členského příspěvku činného člena
+        case '=prispevky':  $val= ($x->_clenstvi && $x->prispevky!=200 ? 200-$x->prispevky : '-'); break;
         case '=ubyt':       $val= round($x->platba1/(1+$DPH1));
                             $exp= "=ROUND([platba1,0]/(1+$DPH1),0)"; break;
         case '=ubytDPH':    $val= round($x->platba1*$DPH1/(1+$DPH1));
@@ -5798,31 +5794,14 @@ function akce2_vyuctov_pary($akce,$par,$title,$vypis,$export=false) { trace();
                             $exp= "=IF([=zaplaceno,0]>[=platit,0],[=zaplaceno,0]-[=platit,0],0)"; break;
         case '=naklad':     $val= $naklad;
                             $exp= "=[=platit,0]-[platba4,0]"; break;
+        case '=jmena':      $val= $x->_jm; break;
         default:            $val= '???'; break;
         }
         $clmn[$n][$f]= $val;
         if ( $exp ) $expr[$n][$f]= $exp;
       }
       else {
-        switch ($f) {
-        case 'manzele':
-          $val= $x->pouze==1 ? "{$x->prijmeni_m} {$x->jmeno_m}"
-             : ($x->pouze==2 ? "{$x->prijmeni_z} {$x->jmeno_z}"
-             : ($x->nazev ? "{$x->nazev} {$x->jmeno_m} a {$x->jmeno_z}"
-             : "{$x->prijmeni_m} {$x->jmeno_m} {$x->prijmeni_z} {$x->jmeno_z}"
-           ));
-          break;
-        case 'jmena':
-          $val= $x->pouze==1
-              ? $x->jmeno_m : ($x->pouze==2 ? $x->jmeno_z : "{$x->jmeno_m} a {$x->jmeno_z}");
-          break;
-        case 'prijmeni':
-          $val= $x->pouze==1 ? $x->prijmeni_m : ($x->pouze==2 ? $x->prijmeni_z : $x->nazev);
-          break;
-        default:
-          $val= $f ? $x->$f : '';
-          break;
-        }
+        $val= $f ? $x->$f : '';
         if ( $f ) $clmn[$n][$f]= $val; else $clmn[$n][]= $val;
       }
       // případný výpočet sumy
