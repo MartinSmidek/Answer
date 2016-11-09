@@ -10465,6 +10465,7 @@ function dop_gen_excel($gq,$nazev) { trace();
     $del= ',';
   }
   $pipe= array('narozeni'=>'sql_date1');
+                                                                debug($par,"export_head");
   export_head($par,$titles,":: bcolor=ffc0e2c2 wrap border=+h");
   // dotaz
   $gr= @mysql_query($gq);
@@ -10482,7 +10483,8 @@ function dop_gen_excel($gq,$nazev) { trace();
   export_tail();
 //                                                 display(export_tail(1));
   // odkaz pro stáhnutí
-  $href= "soubor pro <a href='docs/$ezer_root/$file.$type' target='xls'>Excel</a>";
+  $href= "soubor pro <a href='docs/$ezer_root/$file.$type' target='xls'>Excel</a>"; // SPRÁVNĚ
+//   $href= "soubor pro <a href='docs/$file.$type' target='xls'>Excel</a>";   // KOREKCE CHYBY
 end:
   return $href;
 }

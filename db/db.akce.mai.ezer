@@ -502,9 +502,9 @@ form _gsql {
     gsql.set(conc(
       "SELECT COUNT(*) AS _ucasti,iniciace,o.id_osoba AS _id,CONCAT(prijmeni,' ',jmeno) AS _name,",chr(10),
       "  IF(o.psc!='',o.psc,r.psc) AS _psc,",chr(10),
-      "  IF(o.psc!='' OR r.psc!='',o.ulice,r.ulice) AS _ulice,",chr(10),
-      "  IF(o.psc!='' OR r.psc!='',o.obec,r.obec) AS _obec,",chr(10),
-      "  IF(o.psc!='' OR r.psc!='',o.stat,r.stat) AS _stat,",chr(10),
+      "  IF(o.psc!='',o.ulice,r.ulice) AS _ulice,",chr(10),
+      "  IF(o.psc!='',o.obec,r.obec) AS _obec,",chr(10),
+      "  IF(o.psc!='',o.stat,r.stat) AS _stat,",chr(10),
       "  IF(email!='',email,r.emaily) AS _email,nomail",chr(10),
       from.get,chr(10),
       "WHERE ",cond.get,
