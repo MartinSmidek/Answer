@@ -15,7 +15,7 @@ ProjectFilesOnly=0
 kEzer-ys2
 	+Answer
 		answer.php
-	-TUT
+	+TUT
 		tut\$.ezer
 		tut\.htaccess
 		tut\i_fce.js
@@ -78,7 +78,7 @@ kEzer-ys2
 		doc\poznamky.txt
 		doc\Skype-Putzlachers.txt
 		wiki\todo.wiki
-	-ezer2.2
+	+ezer2.2
 		+client
 			ezer2.2\client\_code.js
 			ezer2.2\client\_test.html
@@ -162,9 +162,12 @@ kEzer-ys2
 4=db\db.akce.ucast.ezer
 5=db\db.akce.mai.ezer
 6=db\db.akce.lst.ezer
+7=db\db_akce.php
+8=ezer2.2\client\android.css
+9=tut\tut.the.ezer
 [Selected Project Files]
 Main=
-Selected=answer.php
+Selected=tut\tut.the.ezer
 [cr.php]
 TopLine=1
 Caret=32,14
@@ -181,8 +184,17 @@ Caret=1,1
 TopLine=1
 Caret=1,1
 [db\db.akce.mai.ezer]
-TopLine=58
-Caret=39,82
+TopLine=461
+Caret=32,491
 [db\db.akce.lst.ezer]
 TopLine=1
 Caret=1,1
+[db\db_akce.php]
+TopLine=10433
+Caret=1,10443
+[ezer2.2\client\android.css]
+TopLine=1
+Caret=1,1
+[tut\tut.the.ezer]
+TopLine=203
+Caret=23,230

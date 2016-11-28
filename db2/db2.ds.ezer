@@ -9,16 +9,18 @@
     b.raise('onrowclick',b.browse_seek(conc(f.key_id,'=',f.key)))
   }
 
-# ================================================================================================== OBJEDNÁVKY
+# ======================================================================================> OBJEDNÁVKY
 panel dum {type:'right', title:"Objednávky", _sys:'obj',include:'onload' // musí být onload aby se natáhla knihovna
 }
-# ================================================================================================== HOSTÉ
+# ===========================================================================================> HOSTÉ
 panel kl {type:'right', title:"Hosté", _sys:'kli', include:'onload' }
-# ================================================================================================== CENY
+# ============================================================================================> CENY
 var rok: number
 panel cen [,,,543] {type:'right', title:'Ceny'
   menu {type:'left', active:*
     menu m {title:'Ceny roku ',type:'group'
+      item {title:'2017',par:°{rok:'2017'} }
+      item {title:'2016',par:°{rok:'2016'} }
       item {title:'2015',par:°{rok:'2015'} }
       item {title:'2014',par:°{rok:'2014'} }
       item {title:'2013',par:°{rok:'2013'} }
@@ -47,7 +49,7 @@ panel cen [,,,543] {type:'right', title:'Ceny'
     }
   }
   use info: form right [12,4,,],
-  # ------------------------------------------------------------------------------------------------ right
+  # ---------------------------------------------------------------------------------------==> right
   # formulář pro levostranné menu s permanentním nadpisem
   form right [,,640,50] {
   #   button export [620,18,100,16] { title:'Export', style:'display:none;zIndex:2'
@@ -77,16 +79,16 @@ panel cen [,,,543] {type:'right', title:'Ceny'
       }
     }
   }
-  # ================================================================================================ z_oprava
+  # ======================================================================================> z_oprava
   panel oprava [0,0,300,135] { title:'oprava položky ceníku', type:'popup', css:'dialog'
     use f: form formular [1,9,,],
     proc onfocus() { f.load(info.ceny.id.get); }
   }
-  # ================================================================================================ z_novy
+  # ========================================================================================> z_novy
   panel novy [0,0,300,125] { title:'nová položka ceníku', type:'popup', css:'dialog'
     use z: form formular [1,9,,],
   }
-  # ------------------------------------------------------------------------------------------------ formular
+  # ------------------------------------------------------------------------------------==> formular
   form formular [,,300,125] {
     label [  0,10, 80,17] { title:'položka', format:'r' },
     field [ 90,10,200,17] { data:ds_cena.polozka },
@@ -109,7 +111,7 @@ panel cen [,,,543] {type:'right', title:'Ceny'
     }
   }
 }
-# -------------------------------------------------------------------------------------------------- tabulky
+# ---------------------------------------------------------------------------------------==> tabulky
 table ds_cena {  db:'setkani', key_id:'id_cena'
   number id_cena
   number rok
@@ -192,7 +194,7 @@ table tx_gnalberice_order { db:'setkani', key_id:'uid'
   number skoleni      // 1 => školení, neplatí se rekreační poplatek
 }
 table _cis { key_id:'id_cis'
-# -------------------------------------------------------------------------------------------------- číselníky,mapy
+# --------------------------------------------------------------------------------==> číselníky,mapy
   number id_cis, text druh, text data, text hodnota, text zkratka, number poradi, text barva, text ikona
 }
 

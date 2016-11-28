@@ -10411,6 +10411,7 @@ function mail2_gen_excel($gq,$nazev) { trace();
     // přidání sloupce iniciace, pokud se vyskytuje v dotazu
     $clmns.= ",iniciace:iniciace";
   }
+  $clmns.= ",_id:ID";
   $titles= $del= '';
   $fields= $values= array();
   foreach (explode(',',$clmns) as $clmn) {

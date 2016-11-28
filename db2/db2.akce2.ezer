@@ -137,8 +137,6 @@ panel maia {type:'right', title:'Maily akce', _sys:'*', include:'onclick,db2.akc
 }
 # ======================================================================================> . EVIDENCE
 panel evi [,,,] {type:'right', _sys:'*', title:'[fa-briefcase] EVIDENCE', include:'onload,db2.akce2.evi', skill:'yae;fae;caa;mrop',
-#     style:"overflow-y:hidden"
-#     style:"height:100%"
   proc reaccess() {}
   proc rodina_show() {}
   proc osoby_show() {}
