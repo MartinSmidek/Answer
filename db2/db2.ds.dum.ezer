@@ -1,5 +1,5 @@
 # Systém Ans(w)er - modul Dům
-# (c) 2008-2010 Martin Šmídek <martin@smidek.eu>
+# (c) 2008-2016 Martin Šmídek <martin@smidek.eu>
 
 var the_order: number
 var authorized: number
@@ -51,7 +51,7 @@ proc cast { ds_web.get; javascript("window.resizeTo(720,330);",1) }
 
 proc cely { ds_web.get; javascript("window.resizeTo(720,680);",1); pobyt.popis.ukaz.display(0); }
 
-// ================================================================================================= pobyt
+// ==========================================================================================> pobyt
 // ukáže a obslouží horní polovinu formuláře
 const PQ=50             // posun pro nové pokoje
 group pobyt {
@@ -92,7 +92,7 @@ group pobyt {
     ucastnici.to_show.get
   | ucastnici.to_show.set(1); ucastnici.formular; ucastnici.cti(obj.rooms1.get)
   }
-  // ------------------------------------------------------------------ záhlaví
+  // ------------------------------------------------------------------==> záhlaví
   form zahlavi [,,600,30] { css:'ds_form'
     label tit [ 10,  0,300,] { title:'<h3>Objednávka pobytu</h3>' }
     button pin [180,2,,] { title:'pin',  skill:'yd|yd', help:'zobrazí PIN umožňující objednateli zapsat a opravovat účastníky',
@@ -108,7 +108,7 @@ group pobyt {
     }
     label [400,  0,300,] { title:'<h3>Fakturační adresa objednavatele</h3>' }
   }
-  // ------------------------------------------------------------------ OBJEDNÁVKA
+  // ------------------------------------------------------------------==> OBJEDNÁVKA
   form objednavka /*[,,300,100]*/ { css:'ds_form'
     const PL=0; PT=92; QT=PT+PQ-4; FT=120+PQ
     label       [  0,  0,100,] { title:'stav objednávky' }
@@ -200,7 +200,7 @@ group pobyt {
     proc onstart() { foreach(ask('ds_rooms_help'),set_help) }
     proc set_help(x) { form.part(x.fld).set_attrib('help',x.hlp) }
   }
-  // ------------------------------------------------------------------ FAKTURACE
+  // ------------------------------------------------------------------==> FAKTURACE
   form fakturace /*[,,300,100]*/ { css:'ds_form'
     label       [  0,  0,210,] { title:'název organizace (plátce faktury)' }
     field       [  0, 15,210,] { data:tx_gnalberice_order.org }
@@ -238,7 +238,7 @@ group pobyt {
   }
 }
 
-// ================================================================================================= účastníci
+// ======================================================================================> účastníci
 // ukáže a obslouží spodní polovinu formuláře tj. zobrazení účastníků akce
 // vnější proměnná the_order obsahuje číslo objednávky
 group ucastnici {
@@ -326,7 +326,7 @@ group ucastnici {
     akc.seznam.browse_load(conc('id_order=',the_order.get));
     akc.seznam.browse_focus; pobyt.compare
   }
-  // ------------------------------------------------------------------ záhlaví
+  // ------------------------------------------------------------------==> záhlaví
   form zahlavi [,,600,30] { css:'ds_form'
     label [ 10,0,694,] { title:'<hr>' }
     label [ 10,20,300,] { title:"<h3 style='margin:0'>Seznam účastníků pobytu</h3>"  }
@@ -335,7 +335,7 @@ group ucastnici {
     button [200,10,,] { title:'TEST', skill:'m|m'
     }
   }
-  // ------------------------------------------------------------------ AKCE
+  // ------------------------------------------------------------------==> AKCE
   form akce /*[,,300,100]*/ { css:'ds_form'
     var novi: object
     button [  0,0,,] { title:'+ rodina', help:'výběr rodiny z databází MS'
@@ -390,7 +390,7 @@ group ucastnici {
 #       }
       proc onrowclick() { osoba_load(id_osoba.get); echo('click=',akc.seznam.browse_key); }
     }
-    // ================================================================ Rodina
+    // ================================================================> Rodina
     panel Rodina [,,320,300] {type:'popup', title:'Výběr rodiny z databází Setkání a Familia'
       use fl: form _fl [12,10,,]
       form _fl [,,300,200] {
@@ -444,7 +444,7 @@ group ucastnici {
       }
     }
   }
-  // ------------------------------------------------------------------ OSOBA
+  // ------------------------------------------------------------------==> OSOBA
   form _osoba /*[,,300,100]*/ { css:'ds_form'
     field id_osoba { data:ds_osoba.id_osoba }
     field id_order { data:ds_osoba.id_order }

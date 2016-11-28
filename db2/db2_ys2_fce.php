@@ -316,6 +316,27 @@ function ds_rooms_help($version=1) {
 //                                                         debug($hlp);
   return $hlp;
 }
+# -------------------------------------------------------------------------------------- ds_cen_menu
+# vygeneruje menu pro loňský, letošní a příští rok ve tvaru objektu pro menu.group
+# ve tvaru item {title:'2016',par:°{rok:'2016'} }
+function ds_cen_menu($tit='Ceny roku') {
+
+
+  $gr= (object)array(
+    'type'=>'menu.group',
+    'options'=>(object)array('title'=>$tit,'part'=>(object)array())
+  );
+
+    $rok= 2018;
+    $par= (object)array('rok'=>$rok);
+    $tm= (object)array('type'=>'item','options'=>(object)array('title'=>$rok,'par'=>$par));
+    $gr->part->$iid= $tm;
+
+
+
+  $result= (object)array('th'=>$the,'cd'=>$mn);
+  return $result;
+}
 # -------------------------------------------------------------------------------------- ds_obj_menu
 # vygeneruje menu pro loňský, letošní a příští rok ve tvaru objektu pro ezer2 pro zobrazení objednávek
 # určující je datum zahájení pobytu v objednávce
@@ -680,6 +701,8 @@ function ds_xls_zaloha($order) {  trace();//'','win1250');
   // vytvoření sešitu s fakturou
   $xls= "|open  $name|";
   $x= ds_zaloha($order);
+  if ( $x->err ) { $html= $x->err; goto end; }
+//                                                         debug($x,"ds_zaloha");
   if ( !count((array)$x) ) goto end;
   $xls.= ds_faktura('zalohova_faktura','ZÁLOHOVÁ FAKTURA',$order,$x->polozky,$x->platce,50,
     "Těšíme se na Váš pobyt v Domě setkání");
@@ -695,7 +718,7 @@ function ds_xls_zaloha($order) {  trace();//'','win1250');
   else
     $html= " <a href='docs/$name.xlsx' target='xls'>zálohová faktura</a>.";
 end:
-  return /*w*u*/($html);
+  return $html;
 }
 # ---------------------------------------------------------------------------------------- ds_zaloha
 # data zálohové faktury
@@ -720,7 +743,9 @@ function ds_zaloha($order) {  trace();// '','win1250');
     $dnu= ($o->untilday-$o->fromday)/(60*60*24);
 //                                                         display("pocet dnu=$dnu");
     // přečtení ceníku daného roku
-    ds_cenik(date('Y',$o->untilday));
+    $rok= date('Y',$o->untilday);
+    ds_cenik($rok);
+    if ( !count($ds_cena) ) { $x->err= "není ceník pro $rok"; goto end; }
     // údaje o plátci: $ic,$dic,$adresa,$akce
     $platce= array();
     $platce[]= $o->ic ? $o->ic : '';
@@ -735,6 +760,11 @@ function ds_zaloha($order) {  trace();// '','win1250');
     $polozky= array();
     $sleva= $o->sleva ? $o->sleva/100 : '';
     $x->polozky[]= ds_c('noc_L',$dnu*($o->adults + $o->kids_10_15 + $o->kids_3_9),$sleva);
+    $x->polozky[]= ds_c('noc_A',0,$sleva,1);
+    $x->polozky[]= ds_c('noc_B',0,$sleva,1);
+    $x->polozky[]= ds_c('noc_P',0,$sleva,1);
+    $x->polozky[]= ds_c('noc_S',0,$sleva,1);
+    $x->polozky[]= ds_c('noc_Z',0,$sleva,1);
     $x->polozky[]= ds_c('ubyt_C',$dnu*($o->adults));
     $x->polozky[]= ds_c('ubyt_S',$dnu*($o->adults));
     $x->polozky[]= ds_c('ubyt_P',$dnu*($o->kids_10_15 + $o->kids_3_9 + $o->kids_3));
@@ -765,6 +795,7 @@ function ds_xls_faktury($order) {  trace(); //'','win1250');
   $html= " nastala chyba";
   $test= 1;
   $x= ds_faktury($order);
+  if ( $x->err ) { $html= $x->err; goto end; }
   if ( !count((array)$x->rodiny) ) goto end;
   $ds_cena['zzz_zzz']= 0;    // přidání prázdného řádku
   ksort($ds_cena);
@@ -1036,7 +1067,9 @@ function ds_faktury($order) {  trace('','win1250');
     $x->objednavka= array($obdobi);
     $x->platce= $platce;
     // přečtení ceníku daného roku
-    ds_cenik(date('Y',$o->untilday));
+    $rok= date('Y',$o->untilday);
+    ds_cenik($rok);
+    if ( !count($ds_cena) ) { $x->err= "není ceník pro $rok"; goto end; }
     // úprava ceny programu na této akci
     $ds_cena['prog_C']->cena= $o->prog_cely;
     $ds_cena['prog_P']->cena= $o->prog_polo;
@@ -1182,10 +1215,10 @@ __XLS;
   $n= $P;
   $sazby_dph= array();
   foreach ($polozky as $i=>$polozka) {
-    list($nazev,$cena,$dph,$pocet,$druh,$sleva)= $polozka;
+    list($nazev,$cena,$dph,$pocet,$druh,$sleva,$inuly)= $polozka;
     if (!in_array($dph,$sazby_dph) ) $sazby_dph[]= $dph;
     if (!isset($druhy[$druh]) ) $druhy[$druh]= $dph;
-    if ( $pocet ) {
+    if ( $pocet || $inuly ) {
       $xls.= <<<__XLS
         |C$n $nazev                |C$n:E$n merge
         |F$n $pocet
@@ -1398,9 +1431,9 @@ __XLS;
   $sazby_dph= array();
   $koef_dph= dph_koeficienty(); //==> . koeficienty DPH podle zákona o DPH
   foreach ($polozky as $i=>$polozka) {
-    list($nazev,$cena,$dph,$pocet,$druh,$sleva)= $polozka;
+    list($nazev,$cena,$dph,$pocet,$druh,$sleva,$inuly)= $polozka;
     if (!in_array($dph,$sazby_dph) ) $sazby_dph[]= $dph;
-    if ( $pocet ) {
+    if ( $pocet || $inuly ) {
       $koef= $koef_dph[round($dph*100)];
       if ( $dph && !$koef ) fce_error(100*$dph." je neznámá sazba");
       $xls.= <<<__XLS
@@ -1479,10 +1512,12 @@ function ds_cenik($rok) {  #trace('','win1250');
 # --------------------------------------------------------------------------------------------- ds_c
 # položka faktury
 # id,pocet => název,cena,dph%,pocet
-function ds_c ($id,$pocet,$sleva='') {
+# inuly - zapsat do faktury i nuly
+function ds_c ($id,$pocet,$sleva='',$inuly=0) { trace();
   global $ds_cena;
-  $c= array($ds_cena[$id]->polozka,$ds_cena[$id]->cena,$ds_cena[$id]->dph/100,$pocet,trim($ds_cena[$id]->druh));
-  if ( $sleva ) $c[]= $sleva;
+  $c= array($ds_cena[$id]->polozka,$ds_cena[$id]->cena,$ds_cena[$id]->dph/100,
+    $pocet,trim($ds_cena[$id]->druh),$sleva,$inuly);
+//   if ( $sleva ) $c[]= $sleva;
   return $c;
 }
 # ------------------------------------------------------------------------------------------- ds_vek

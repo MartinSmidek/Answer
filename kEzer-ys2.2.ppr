@@ -13,7 +13,7 @@ FileFormat=0
 ProjectFilesOnly=0
 [Project tree]
 kEzer-ys2
-	+db2
+	-db2
 		db2\$.ezer
 		db2\db2.akce2.elim.ezer
 		db2\db2.akce2.evi.ezer
@@ -78,7 +78,7 @@ kEzer-ys2
 		db.inc
 		db\db_akce.php
 		db\db_fce.js
-	-db
+	+db
 		db\db.akce2.dop.ezer
 		db\db.akce2.elim.ezer
 		db\db.akce2.evi.ezer
@@ -319,9 +319,11 @@ kEzer-ys2
 37=skins\ch\ch.ezer.css
 38=db\db.akce2.ezer
 39=db2\db2.akce2.lst.ezer
+40=db\db.akce2.foto.ezer
+41=db\db.akce2.maia.ezer
 [Selected Project Files]
 Main=
-Selected=db2\db2.akce2.ucast.ezer
+Selected=db\db.akce2.maia.ezer
 [tut\.htaccess]
 TopLine=1
 Caret=2,9
@@ -332,7 +334,7 @@ Caret=1,313
 TopLine=65
 Caret=46,84
 [ezer2.2\server\ae_slib.php]
-TopLine=2702
+TopLine=2694
 Caret=1,2694
 BookMark1=11,422
 BookMark2=15,702
@@ -493,3 +495,9 @@ Mark2=75,213
 Mark3=30,303
 Mark4=30,302
 Mark5=75,184
+[db\db.akce2.foto.ezer]
+TopLine=1
+Caret=36,6
+[db\db.akce2.maia.ezer]
+TopLine=21
+Caret=39,46
