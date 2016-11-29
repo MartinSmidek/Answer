@@ -146,29 +146,50 @@ form _vyber {
 #         'gq',{gq.id_mailist.set(this.key); gq.m_reload})
 #   } }
   # --------------------------- rozesílání
-  label popis [391,19,240,19] { tag:'es', format:'n', title:"
+  label popis [391,21,240,19] { tag:'es', format:'n', title:"
     <span class='zeleny'> posláno </span>&nbsp;&nbsp;
     <span class='cerveny'> chyba resp. neposílat </span>&nbsp;&nbsp;
     <span class='zluty'> poslat znovu </span>
    "}
-  # vynechání adresátů daného dopisu
-  button [644,0,,] { tag:'es', title:'neposlat',
-    help:'vynechání adresátů z mailu s daným id_dopis'
-    proc onclick () {
-      es.msg.set('čekej ...');
-      es.msg.set(ask('mail2_mai_omitt',dopis_id.get,vynech_id.get));
+  # úprava seznamů adresátů
+  button [660,12,,] { tag:'es', title:"upravit adresáty"
+    proc onclick() { vynechej.modal }}
+  panel vynechej [0,0,400,160] { type:'popup', title:"úprava seznamu adresátů"
+    use f:form _f [0,0,,]
+    form _f [,,400,100] {
+      label [10,10,380,] { title:"Ze seznamu adresátů chci odstranit (označit červeně):" }
+      # vynechání adresátů daného dopisu
+      label [10,30,380,] { title:"a) adresáty ze seznamu jiných dopisů (podle jejich ID)" }
+      button [10,45,,] { title:'neposlat', help:'vynechání adresátů z mailu s daným id_dopis'
+        proc onclick () {
+          es.msg.set('čekej ...');
+          es.msg.set(ask('mail2_mai_omitt',dopis_id.get,vynech_dopisy.get));
+          es.maily.browse_refresh; panel.close
+        }
+      }
+      field vynech_dopisy [100,45,280,] { format:'t' }
+      # vynechání adresátů daných adres
+      label [10,76,380,] { title:"b) adresáty s danými emailovými adresami" }
+      button [10,91,,] { title:'neposlat', help:'vynechání adresátů daných adres'
+        proc onclick () {
+          es.msg.set('čekej ...');
+          es.msg.set(ask('mail2_mai_omitt2',dopis_id.get,vynech_emaily.get));
+          es.maily.browse_refresh; panel.close
+        }
+      }
+      field vynech_emaily [100,91,280,] { format:'t' }
+      # vynechání adresátů podle jejich ID
+      label [10,122,380,] { title:"c) adresáty podle jejich ID" }
+      button [10,137,,] { title:'neposlat', help:'vynechání adresátů s danými ID'
+        proc onclick () {
+          es.msg.set('čekej ...');
+          es.msg.set(ask('mail2_mai_omitt3',dopis_id.get,vynech_osoby.get));
+          es.maily.browse_refresh; panel.close
+        }
+      }
+      field vynech_osoby [100,137,280,] { format:'t' }
     }
   }
-  field vynech_id [711,3,60,] { tag:'es', format:'t' }
-  # vynechání adresátů daných adres
-  button [644,20,,] { tag:'es', title:'neposlat',
-    help:'vynechání adresátů daných adres'
-    proc onclick () {
-      es.msg.set('čekej ...');
-      es.msg.set(ask('mail2_mai_omitt2',dopis_id.get,vynech_emaily.get));
-    }
-  }
-  field vynech_emaily [711,23,60,] { tag:'es', format:'t' }
 }
 # ---------------------------------------------------------------------------------==> MAILIST _gsql
 # mail-listy - generátor SQL dotazů, tags:
