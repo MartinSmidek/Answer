@@ -9406,7 +9406,7 @@ function mail2_mai_qry($komu) {  trace();
 # v tabulce MAIL(id_dopis=$dopis) označí jako neposlatelné emailu z MAIL($id_dopis=$vynech)
 # to je funkce určená k zamezení duplicit
 function mail2_mai_omitt($id_dopis,$ids_vynech) {  trace();
-  $msg= "Z mailů podle dopisu $id_dopis budou vynechány adresy z mailů podle dopisu $ids_vynech";
+  $msg= "Z mailů podle dopisu $id_dopis chci vynechat adresy z mailů podle dopisu $ids_vynech";
   // seznam vynechaných adres
   $vynech= array();
   $qv= "SELECT email FROM mail WHERE id_dopis IN ($ids_vynech) ";
@@ -9432,7 +9432,7 @@ function mail2_mai_omitt($id_dopis,$ids_vynech) {  trace();
       }
     }
   }
-  $msg.= "<br>označeno bylo $n adres";
+  $msg.= "<br>označeno bylo $n řádků";
   return $msg;
 }
 # --------------------------------------------------------------------------------- mail2_mai_omitt2
@@ -9440,7 +9440,7 @@ function mail2_mai_omitt($id_dopis,$ids_vynech) {  trace();
 function mail2_mai_omitt2($id_dopis,$lst_vynech) {  trace();
   // seznam vynechaných adres
   $vynech= explode(',',str_replace(' ','',$lst_vynech));
-  $msg= "Z mailů podle dopisu $id_dopis bude vynecháno ".count($vynech)." adres";
+  $msg= "Z mailů podle dopisu $id_dopis chci vynechat ".count($vynech)." adres";
 //                                                         debug($vynech,"vynechané adresy");
   // probírka adresátů
   $n= 0;
@@ -9458,6 +9458,22 @@ function mail2_mai_omitt2($id_dopis,$lst_vynech) {  trace();
     }
   }
   $msg.= "<br>označeno bylo $n adres";
+  return $msg;
+}
+# --------------------------------------------------------------------------------- mail2_mai_omitt3
+# v tabulce MAIL(id_dopis=$dopis) označí jako neposlatelné emaily $vynech (čárkami oddělený seznam)
+# obsahující id_osoba adresátů
+function mail2_mai_omitt3($id_dopis,$lst_vynech) {  trace();
+  // seznam vynechaných adres
+  $lst_vynech= str_replace(' ','',$lst_vynech);
+  $vynech= explode(',',$lst_vynech);
+  $msg= "Ze seznamu adresátů dopisu $id_dopis chci vynechat ".count($vynech)." řádků";
+//                                                         debug($vynech,"vynechané adresy");
+  // probírka adresátů
+  $qu= "UPDATE mail SET stav=5,msg='dle ID' WHERE id_dopis=$id_dopis AND id_clen IN ($lst_vynech) ";
+  $ru= mysql_qry($qu);
+  $n= mysql_affected_rows();
+  $msg.= "<br>označeno bylo $n řádků";
   return $msg;
 }
 # -------------------------------------------------------------------------------- mail2_mai_doplnit
