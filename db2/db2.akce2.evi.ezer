@@ -59,23 +59,29 @@ menu m {type:'left', format:'f-'
     item t {title:'[fa-wrench fa-red](test)'    par:°{lst:'o',tit:'testovací osoby, co ',
                                                 cnd:"o.id_osoba IN (679,4031,4504,5877)"},skill:'m'}
   }
-  menu c {title:'členové YMCA',type:'group', skill:'dec'
+  menu c {title:'členové YMCA (lonští)',type:'group', skill:'dec'
+    item {title:'[fa-file-text] přehled'
+          par:°{op:'loni',exp:'Excel',cnd:1,hav:1,rok:1,
+                tit:'příjmení:15,jméno:10,datum nar.:10,obec:20,člen od:5,činný od:5,letos přísp.:6,letos dary:6',
+                fld:'prijmeni,jmeno,_naroz,obec,_clen_od,_cinny_od,_prisp,_dary'}}
+    item {title:'[fa-retweet] recyklace pečounů'
+          par:°{op:'zmeny',rok:1} }
+    item {title:'[fa-upload] statistický list YMCA v ČR'
+          par:°{op:'hlaseni',exp:'Excel',cnd:1,hav:1,rok:1,del:0,
+                tit:'?:2,příjmení:15,jméno:10,ulice:20,město:20,PSČ:7,datum nar.:10,členství:5,čl. přísp.:6,KČ:12,e-mail:40,činný od letos:6,dobrovolník:6',
+                fld:'1,prijmeni,jmeno,ulice,obec,psc,_naroz_ymd,_b_c,_prisp,_YS,email,_cinny_letos,_dobro'}}
+  }
+  menu {title:'členové YMCA (letošní - pro info)',type:'group', skill:'dec'
     item {title:'[fa-file-text-o] letošní přehled'
           par:°{op:'letos',exp:'Excel',cnd:1,hav:1,rok:0,del:0,
                 tit:'příjmení:15,jméno:10,datum nar.:10,obec:20,člen od:5,činný od:5,letos přísp.:6,letos dary:6',
                 fld:'prijmeni,jmeno,_naroz,obec,_clen_od,_cinny_od,_prisp,_dary'}}
-    item {title:'[fa-retweet] recyklace pečounů (do 31.12!)'
-          par:°{op:'zmeny',rok:0} }
-    //item {title:'[fa-retweet] recyklace pečounů (loňský kurz)'
-    //      par:°{op:'zmeny',rok:1} }
+#     item {title:'[fa-retweet] recyklace pečounů'
+#           par:°{op:'zmeny',rok:0} }
     item {title:'[fa-upload] statistický list YMCA v ČR'
           par:°{op:'hlaseni',exp:'Excel',cnd:1,hav:1,rok:0,del:0,
                 tit:'?:2,příjmení:15,jméno:10,ulice:20,město:20,PSČ:7,datum nar.:10,členství:5,čl. přísp.:6,KČ:12,e-mail:40,činný od letos:6,dobrovolník:6',
                 fld:'1,prijmeni,jmeno,ulice,obec,psc,_naroz_ymd,_b_c,_prisp,_YS,email,_cinny_letos,_dobro'}}
-    item {title:'[fa-file-text] loňský přehled'
-          par:°{op:'loni',exp:'Excel',cnd:1,hav:1,rok:1,
-                tit:'příjmení:15,jméno:10,datum nar.:10,obec:20,člen od:5,činný od:5,letos přísp.:6,letos dary:6',
-                fld:'prijmeni,jmeno,_naroz,obec,_clen_od,_cinny_od,_prisp,_dary'}}
   }
   menu f {title:'poslední úpravy rodin',type:'group', skill:'yad;fad'
     item   {title:'[fa-medkit]dnes'    par:°{lst:'f',tit:'úpravy za 24 hodin',days:'1',cnd:"1"}}
@@ -412,7 +418,7 @@ form _lst [,,370,*] {
     menu { type:'context'
       item { title:'export vybraných do Excelu',
         proc onclick () { var ret:object
-          ret.set(bm.browse_export(°{type:'xls',selected:1}));
+          ret.set(bm.browse_export(°{type:'xlsx',selected:1}));
           alert(ret.html);
       }}
       item { type:'clipboard', title:'vybraná ID dát do schránky',
