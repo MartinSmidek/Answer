@@ -7098,12 +7098,15 @@ function evid2_ymca_sprava($org,$par,$title,$export=false) {
   case 'letos':
   case 'loni':
     $ret= evid2_ymca_sestava($org,$par,$title,$export);
+//                                                         debug($ret,"evid2_ymca_sestava");
     break;
   case 'zmeny':
     $ret= evid2_recyklace_pecounu($org,$par,$title,0);
     break;
   }
-  return $ret;
+  // případně export do Excelu
+  return $export ? sta2_excel_export($title,$ret) : $ret;
+//   return $ret;
 }
 # ------------------------------------------------------------------------------- evid2_ymca_sestava
 # generování přehledu členstva
@@ -7217,7 +7220,8 @@ function evid2_ymca_sestava($org,$par,$title,$export=false) {
   $clmn[$n]['_dary']= $daru;
   $clmn[$n]['_dobro']= $dobrovolniku;
   $clmn[$n]['_cinny_letos']= $novych;
-  $ret= sta2_table_graph($par,$tits,$flds,$clmn,$export);
+//   $ret= sta2_table_graph($par,$tits,$flds,$clmn,$export);
+  $ret= sta2_table($tits,$flds,$clmn,$export);
 end:
   return $ret;
 }
@@ -8074,7 +8078,7 @@ function sta2_pecouni($org) {
 }
 # ==================================================================================> . sta2_sestava
 # sestavy pro evidenci
-function sta2_sestava($org,$title,$par,$export=false) {
+function sta2_sestava($org,$title,$par,$export=false) { trace();
 //                                                 debug($par,"sta2_sestava($title,...,$export)");
   $ret= (object)array('html'=>'','err'=>0);
   // dekódování parametrů
@@ -8540,7 +8544,8 @@ function sta2_table($tits,$flds,$clmn,$export=false,$row_numbers=false) {  trace
 # ---------------------------------------------------------------------------------------- sta2_excel
 # ASK
 # generování statistické sestavy do excelu
-function sta2_excel($org,$title,$par,$tab=null) {
+function sta2_excel($org,$title,$par,$tab=null) {       trace();
+//                                                         debug($par,"sta2_excel($org,$title,...)");
   // získání dat
   if ( !$tab ) {
     $tab= sta2_sestava($org,$title,$par,true);
@@ -8641,8 +8646,8 @@ __XLS;
     \n|close
 __XLS;
   // výstup
-//   $inf= Excel2007($xls,1);
-  $inf= Excel5($xls,1);
+  $inf= Excel2007($xls,1);
+//   $inf= Excel5($xls,1);
   if ( $inf ) {
     $html= " se nepodařilo vygenerovat - viz začátek chybové hlášky";
     fce_error($inf);

@@ -122,13 +122,13 @@ menu m {type:'left', format:'f-'
       panel.display(1,'i'); panel.display(0,'e'); info.export.set(i.par.exp);
       info.fill(replace_fa(menu_title.get),' '); info.msg.set('');
       menu_title.set(replace_fa(menu_title.get,1));
-      ret.set(ask('evid2_ymca_sprava',my_access.get,i.par,menu_title.get));
+      ret.set(ask('evid2_ymca_sprava',my_org.get,i.par,menu_title.get));
       { ret.err; alert(ret.err)
       | info.fill('',ret.html);
         // pokračování podmenu pro recyklaci pečounů
         [ eq(i.par.op,'zmeny');
           confirm("Provést navržené změny?");
-          ret.set(ask('evid2_recyklace_pecounu',my_access.get,i.par,the_title.get,1));
+          ret.set(ask('evid2_recyklace_pecounu',my_org.get,i.par,the_title.get,1));
           alert("Hotovo");
         ]
       }
@@ -152,7 +152,8 @@ use info: form right [12,4,,]           { tag:'i'
   button export [-20,4,,] { title:'Excel', style:'display:block;zIndex:2',
     proc onclick() { var ret: object
       //ret.set(ask('evid_vyp_excel',menu_par.get,menu_title.get));
-      ret.set(ask('sta2_excel',my_org.get,menu_title.get,menu_par.get));
+      //ret.set(ask('sta2_excel',my_org.get,menu_title.get,menu_par.get));
+      ret.set(ask('evid2_ymca_sprava',my_org.get,menu_par.get,menu_title.get,1));
       form.msg.set(ret.html);
     }
   }
