@@ -8653,7 +8653,7 @@ __XLS;
     fce_error($inf);
   }
   else {
-    $html= " Výpis byl vygenerován ve formátu <a href='docs/$name.xls' target='xlsx'>Excel</a>.";
+    $html= " Výpis byl vygenerován ve formátu <a href='docs/$name.xlsx' target='xlsx'>Excel</a>.";
   }
   $result->html= $html;
   return $result;
