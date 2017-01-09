@@ -7132,6 +7132,7 @@ function evid2_ymca_sestava($org,$par,$title,$export=false) {
   $clenu= $cinnych= $prispevku= $daru= $dobrovolniku= $novych= 0;
   $qry= "SELECT
            MAX(IF(YEAR(datum_od)=$rok AND p.funkce=1,1,0)) AS _vps,
+           MAX(IF(YEAR(datum_od)=$rok AND p.funkce=99,1,0)) AS _pec,
            os.id_osoba,os.prijmeni,os.jmeno,os.narozeni,os.sex,
            IF(os.obec='',r.obec,os.obec) AS obec,
            IF(os.ulice='',r.ulice,os.ulice) AS ulice,
@@ -7147,7 +7148,7 @@ function evid2_ymca_sestava($org,$par,$title,$export=false) {
          LEFT JOIN pobyt AS p USING (id_pobyt)
          LEFT JOIN akce AS a ON a.id_duakce=p.id_akce
          WHERE os.deleted='' AND {$par->cnd} AND (dat_do='0000-00-00' OR YEAR(dat_do)>=$rok)
-           AND os.access&$org AND r.access&$org AND od.access&$org AND a.access&$org
+           AND os.access&$org AND od.access&$org AND a.access&$org
          GROUP BY os.id_osoba HAVING {$par->hav}
          ORDER BY os.prijmeni";
   $res= mysql_qry($qry);
@@ -7170,7 +7171,7 @@ function evid2_ymca_sestava($org,$par,$title,$export=false) {
     if ( !$_clen_od && !$_cinny_od ) continue;
     $clenu+= $_clen_od ? 1 : 0;
     $cinnych+= $_cinny_od ? 1 : 0;
-    $dobrovolniku+= $x->_vps && $_cinny_od>0 ? 1 : 0;
+    $dobrovolniku+= $x->_vps && $_cinny_od>0 || $x->_pec ? 1 : 0;
     $novych+= $_cinny_od==2014 ? 1 : 0;
     // pokračujeme jen s členy
     $n++;
@@ -7184,7 +7185,7 @@ function evid2_ymca_sestava($org,$par,$title,$export=false) {
       case '_b_c':      $clmn[$n][$f]= $_cinny_od>0 ? 'č' : 'b'; break;
       case '_YS':       $clmn[$n][$f]= 'YMCA Setkání'; break;
       case '_cinny_letos':$clmn[$n][$f]= $_cinny_od==2014 ? 1 : ''; break;
-      case '_dobro':    $clmn[$n][$f]= $x->_vps && $_cinny_od>0 ? 1 : ''; break;
+      case '_dobro':    $clmn[$n][$f]= $x->_vps && $_cinny_od>0  || $x->_pec ? 1 : ''; break;
       // přehled
       case '_clen_od':  $clmn[$n][$f]= $_clen_od; break;
       case '_cinny_od': $clmn[$n][$f]= $_cinny_od; break;
