@@ -53,7 +53,7 @@ function answer_php($app,$app_name,$db_name,$skin,$js_lib,$css_lib,$options) {
 
   set_include_path(get_include_path().PATH_SEPARATOR.$abs_root);
 
-  require_once("$app.inc");
+  require_once("$app.inc.php");
   require_once("{$EZER->version}/server/ae_slib.php");
 
   $client= "{$EZER->version}/client";

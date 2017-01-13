@@ -759,7 +759,7 @@ form _page {
       evid.Display(0); cmd.display(0);
       pla.display(1); cmdp.display(1);
       alb.display(0); docu.display(0);
-      pla.get.display(the_cenik.get,'cenik'); // omezení výpisu pokud není definován ceník
+      pla.get.display(gt(the_cenik.get,0),'cenik'); // omezení výpisu pokud není definován ceník
       pla.display(eq(the_soubeh.get,1),'deti'); // platby za děti
       act1.display(0); act2.display(0);
       [ eq(last.get,the_pobyt.get) | u.b.load_zalozka; last.set(the_pobyt.get) ];
@@ -1174,7 +1174,7 @@ form _rodina2 [,,360,229]  { css:'ae_frame'
   # show_rodina - zobrazuje formulář podle: key_rodina
   proc show_rodina() { var tags:text
     form.display(0,'[^f]'); r_access.display(1); cleni.display(1); form.enable(1,'.*');
-    evidence.display(key_rodina.get); chain.display(or(key_rodina.get,eq(pob.funkce.key,99)));
+    evidence.display(gt(key_rodina.get,0)); chain.display(or(key_rodina.get,eq(pob.funkce.key,99)));
     { keys_rodina.get; chain.set_css('db_chain','db_evidence')
     | chain.set_css('db_evidence','db_chain') };
     tags.set('a');
@@ -1186,7 +1186,7 @@ form _rodina2 [,,360,229]  { css:'ae_frame'
       tags.set(conc(tags,',x'));
     };
     form.stacks(tags,'down',0,0,10);
-    t_role.display(key_rodina.get); form.display(key_rodina.get,'o');
+    t_role.display(gt(key_rodina.get,0)); form.display(gt(key_rodina.get,0),'o');
   }
   # hide rodina - skryje všechna data bez změny tvaru
   proc hide_rodina() {

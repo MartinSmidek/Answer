@@ -13,13 +13,20 @@ FileFormat=0
 ProjectFilesOnly=0
 [Project tree]
 kEzer-ys2
+	+cr2
+		+cr (old)
+			cr.inc.php
+			cr.php
+		cr2\$.ezer
+		cr2.inc.php
+		cr2.php
 	-system
 		.htaccess
 		..\..\bin\apache\apache2.4.9\conf\httpd.conf
 		..\..\Apache\bin\apache\apache2.4.9\conf\extra\httpd-vhosts-ezer.conf
-	+poznámky
+	-poznámky
 		sql\answer_dotazy.sql
-	+$
+	-$
 		-skins
 			skins\ck\ck.ezer.css
 			skins\colors.php
@@ -27,9 +34,9 @@ kEzer-ys2
 			db2\db2.css
 			db2\db2.css.php
 			skins\ch\ch.ezer.css
-		answer.inc
+		answer.inc.php
 		answer.php
-		db2.inc
+		db2.inc.php
 		db2.php
 		db2_test.inc
 		db2_test.php
@@ -38,7 +45,7 @@ kEzer-ys2
 	+db2
 		-$ test
 			db2_test\$.ezer
-		-$
+		+$
 			db2\$.ezer
 			db2\db2.akce2.elim.ezer
 			db2\db2.akce2.ezer
@@ -46,7 +53,7 @@ kEzer-ys2
 			db2\db2_fce.js
 			db2\db2_fce.php
 			db2\db2_ys2_fce.php
-		-akce
+		+akce
 			db2\db2.akce2.lst.ezer
 			db2\db2.akce2.maia.ezer
 			db2\db2.akce2.pece.ezer
@@ -64,7 +71,7 @@ kEzer-ys2
 		-pokladna
 			db2\db2.pok.ezer
 		-ekonomika
-	-ezer2.2
+	+ezer2.2
 		-client
 			ezer2.2\client\_code.js
 			ezer2.2\client\_test.html
@@ -111,193 +118,66 @@ kEzer-ys2
 		-wiki
 			ezer2.2\wiki\guide.wiki
 [Open project files]
-0=db2\db2_fce.js
-1=db2\db2_fce.php
+0=db2\db2_fce.php
+1=cr2\$.ezer
 2=db2\db2.akce2.ezer
-3=db2\db2.akce2.maia.ezer
-4=db2\db2.akce2.foto.ezer
-5=db2\db2.akce2.cnf.ezer
-6=db2\db2.akce2.lst.ezer
-7=db2\db2.akce2.ucast.ezer
-8=db2\db2.akce2.tisk.ezer
-9=db2\db2.akce2.mai.ezer
-10=db2\db2.akce2.dop.ezer
-11=db2\db2.akce2.evi.ezer
-12=db2\db2.akce2.sta.ezer
-13=db2\db2.akce2.pece.ezer
-14=db2\db2.akce2.elim.ezer
-15=db2\$.ezer
-16=ezer2.2\client\ezer.js
-17=ezer2.2\client\ezer_fdom2.js
-18=db2\db2.css.php
-19=ezer2.2\server\ezer2.php
-20=db2\db2.pok.ezer
-21=db2\db2_ys2_fce.php
-22=ezer2.2\server\ae_slib.php
-23=ezer2.2\ezer2_fce.php
-24=ezer2.2\client\ezer_fdom1.js
-25=db2\db2.css
-26=skins\db\db.ezer.css
-27=skins\ck\ck.ezer.css
-28=skins\ch\ch.ezer.css
-29=answer.php
-30=ezer2.2\client\lib.js
-31=ezer2.2\client\ezer.css.php
-32=.htaccess
-33=db2\db2.ds.ezer
-34=sql\answer_dotazy.sql
-35=answer.inc
+3=db2\db2.akce2.ucast.ezer
+4=db2\db2.akce2.lst.ezer
+5=db2\db2.akce2.evi.ezer
+6=cr2.php
+7=cr2.inc.php
+8=sql\answer_dotazy.sql
+9=ezer2.2\ezer2.syst.ezer
+10=ezer2.2\ezer2_fce.php
 [Selected Project Files]
 Main=
-Selected=db2\db2.akce2.evi.ezer
-[db2\db2_fce.js]
-TopLine=57
-Caret=15,70
-BookMark1=19,88
-Mark1=43,503
+Selected=sql\answer_dotazy.sql
 [db2\db2_fce.php]
-TopLine=7206
-Caret=62,7238
-BookMark1=20,5720
-BookMark2=27,4799
-Mark1=29,4048
-Mark2=30,4148
-Mark3=54,5784
-Mark4=54,5782
+TopLine=12050
+Caret=33,12075
+Mark1=29,1839
+Mark2=11,12060
+Mark3=1,11336
+[cr2\$.ezer]
+TopLine=1
+Caret=39,8
 [db2\db2.akce2.ezer]
-TopLine=136
-Caret=1,140
-Mark1=40,1064
-Mark2=31,740
-Mark3=24,719
-Mark4=7,845
-[db2\db2.akce2.maia.ezer]
-TopLine=228
-Caret=4,265
-BookMark1=23,249
-[db2\db2.akce2.foto.ezer]
-TopLine=17
-Caret=60,38
-[db2\db2.akce2.cnf.ezer]
-TopLine=1
-Caret=67,28
-[db2\db2.akce2.lst.ezer]
-TopLine=587
-Caret=1,630
-BookMark1=1,38
-BookMark2=18,573
+TopLine=1077
+Caret=43,1099
 [db2\db2.akce2.ucast.ezer]
-TopLine=524
-Caret=67,551
-Mark1=51,830
-[db2\db2.akce2.tisk.ezer]
-TopLine=381
-Caret=63,412
-Mark1=57,48
-Mark2=1,406
-Mark3=34,470
-Mark4=26,383
-Mark5=1,137
-Mark6=18,296
-[db2\db2.akce2.mai.ezer]
-TopLine=762
-Caret=49,767
-BookMark1=24,705
-Mark1=88,495
-Mark2=63,401
-Mark3=70,538
-Mark4=26,691
-Mark5=1,665
-Mark6=49,763
-Mark7=77,437
-Mark8=36,1082
-Mark9=36,1231
-[db2\db2.akce2.dop.ezer]
-TopLine=1
-Caret=40,25
+TopLine=835
+Caret=53,838
+Mark1=29,1409
+Mark2=30,639
+Mark3=19,1175
+Mark4=19,1202
+Mark5=38,921
+Mark6=12,627
+[db2\db2.akce2.lst.ezer]
+TopLine=106
+Caret=52,125
+Mark1=51,645
+Mark2=1,55
 [db2\db2.akce2.evi.ezer]
-TopLine=50
-Caret=67,86
-Mark1=37,637
-Mark2=38,1082
-Mark3=26,1092
-Mark4=8,547
-Mark5=13,562
-[db2\db2.akce2.sta.ezer]
-TopLine=14
-Caret=47,32
-[db2\db2.akce2.pece.ezer]
-TopLine=341
-Caret=91,360
-[db2\db2.akce2.elim.ezer]
-TopLine=209
-Caret=24,211
-[db2\$.ezer]
+TopLine=1345
+Caret=44,1392
+Mark1=29,474
+Mark2=19,246
+Mark3=50,1332
+Mark4=1,544
+Mark5=44,1392
+[cr2.php]
+TopLine=7
+Caret=18,17
+[cr2.inc.php]
 TopLine=1
-Caret=73,34
-[ezer2.2\client\ezer.js]
-TopLine=8633
-Caret=1,8670
-[ezer2.2\client\ezer_fdom2.js]
-TopLine=3894
-Caret=1,3931
-Mark1=1,561
-[db2\db2.css.php]
-TopLine=32
-Caret=1,69
-[ezer2.2\server\ezer2.php]
-TopLine=1110
-Caret=19,1131
-[db2\db2.pok.ezer]
-TopLine=1
-Caret=22,5
-Mark1=20,290
-[db2\db2_ys2_fce.php]
-TopLine=1271
-Caret=70,1275
-Mark1=38,696
-Mark2=40,1412
-Mark3=37,1449
-Mark4=21,1277
-[ezer2.2\server\ae_slib.php]
-TopLine=1241
-Caret=1,1259
-[ezer2.2\ezer2_fce.php]
-TopLine=1082
-Caret=27,1100
-[ezer2.2\client\ezer_fdom1.js]
-TopLine=87
-Caret=37,116
-[db2\db2.css]
-TopLine=3
-Caret=75,40
-[skins\db\db.ezer.css]
-TopLine=847
-Caret=1,847
-[skins\ck\ck.ezer.css]
-TopLine=828
-Caret=39,865
-[skins\ch\ch.ezer.css]
-TopLine=831
-Caret=67,866
-[answer.php]
-TopLine=45
-Caret=55,61
-[ezer2.2\client\lib.js]
-TopLine=248
-Caret=45,264
-[ezer2.2\client\ezer.css.php]
-TopLine=773
-Caret=62,810
-[.htaccess]
-TopLine=1
-Caret=81,11
-[db2\db2.ds.ezer]
-TopLine=35
-Caret=1,78
+Caret=36,22
 [sql\answer_dotazy.sql]
-TopLine=729
-Caret=3545,731
-[answer.inc]
-TopLine=77
-Caret=82,80
+TopLine=11
+Caret=100,32
+[ezer2.2\ezer2.syst.ezer]
+TopLine=369
+Caret=1,406
+[ezer2.2\ezer2_fce.php]
+TopLine=36
+Caret=1,67
