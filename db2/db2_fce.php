@@ -1836,7 +1836,7 @@ function ucast2_browse_ask($x,$tisk=false) {
     # ladění
     $AND= "";
 //     $AND= "AND p.id_pobyt IN (44285,44279,44280,44281) -- prázdná rodina a pobyt";
-//     $AND= "AND p.id_pobyt IN (45424,44921) -- test";
+//     $AND= "AND p.id_pobyt IN (5477) -- test";
 //     $AND= "AND p.id_pobyt IN (43387,32218,32024) -- test";
 //     $AND= "AND p.id_pobyt IN (43113,43385,43423) -- test Šmídkovi+Nečasovi+Novotní/LK2015";
 //     $AND= "AND p.id_pobyt IN (43423) -- test Novotní/LK2015";
@@ -2344,7 +2344,7 @@ function ucast2_browse_ask($x,$tisk=false) {
 //                                                 debug($pobyt[21976],'pobyt');
 //                                                 debug($rodina,'rodina');
 //                                                 debug($osoba[3506],'osoba');
-//                                                  debug($y->values);
+                                                 debug($y->values);
   return $y;
 }
 # dekódování seznamu položek na pole ...x,y=z... na [...x=>x,y=>z...]
@@ -6956,11 +6956,11 @@ function evid2_cleni($id_osoba,$id_rodina,$filtr) { //trace();
     $css= array('','ezer_ys','ezer_fa','ezer_db');
     $qc= mysql_qry("
       SELECT rto.id_osoba,rto.jmeno,rto.prijmeni,rto.narozeni,rto.access AS o_access,
-        rt.id_tvori,rt.role,o.deleted,r.id_rodina,nazev,r.access AS r_access
+        rt.id_tvori,rt.role,o.deleted,of.id_rodina,nazev,of.access AS r_access
       FROM osoba AS o
         JOIN tvori AS ot ON ot.id_osoba=o.id_osoba
-        JOIN rodina AS r ON r.id_rodina=ot.id_rodina -- AND r.access & $access
-        JOIN tvori AS rt ON rt.id_rodina=r.id_rodina
+        JOIN rodina AS of ON of.id_rodina=ot.id_rodina -- AND of.access & $access
+        JOIN tvori AS rt ON rt.id_rodina=of.id_rodina
         JOIN osoba AS rto ON rto.id_osoba=rt.id_osoba
       WHERE o.id_osoba=$id_osoba AND $filtr -- AND rto.access & $access
       ORDER BY rt.role,rto.narozeni
@@ -11738,6 +11738,28 @@ function db2_sys_transform($par) { trace();
   return $html;
 }
 # ---------------------------------------------------------------------------==> . datové statistiky
+# ----------------------------------------------------------------------------------------- db2_info
+function db2_info($db) {
+  global $ezer_root,$ezer_db,$USER;
+  $tabs= array(
+    '_user'  => (object)array('cond'=>"deleted=''"),
+    'akce'   => (object)array('cond'=>"deleted=''"),
+    'rodina' => (object)array('cond'=>"deleted=''"),
+    'osoba'  => (object)array('cond'=>"deleted=''")
+  );
+  $html= '';
+  $db= select('DATABASE()','DUAL',1);
+  // přehled tabulek podle access
+  $html= "<h3>Přehled tabulek $db</h3>";
+  $html.= "<div class='stat'><table class='stat'>";
+  $html.= "<tr><th>tabulka</th><th>záznamů</th></tr>";
+  foreach ($tabs as $tab=>$desc) {
+    $pocet= select("COUNT(*)","$db.$tab",1);
+    $html.= "<tr><th>$db.$tab</th><td style='text-align:right'>$pocet</td></tr>";
+  }
+  $html.= "</table></div>";
+  return $html;
+}
 # ----------------------------------------------------------------------------------------- db2_stav
 function db2_stav($db) {
   global $ezer_root,$ezer_db,$USER;
@@ -12023,9 +12045,123 @@ function track_revert($ids) {  trace();
   }
   return $ret;
 }
-# ================================================================================> db2_kontrola_dat
+# =======================================================================> db2 kontrola a oprava dat
+# ----------------------------------------------------------------------------------- db2 oprava_dat
+# opravy dat
+function db2_oprava_dat($par) { trace();
+  global $USER;
+  user_test();
+  $now= date("Y-m-d H:i:s");
+  $opravit= $par->opravit ? true : false;
+  $cmd= $par->cmd;
+  $html= '';
+  $ok= '';
+  switch ($cmd) {
+  // -------------------------------------------- přenesení pobyt.funkce do o_umi r_umi
+  //
+  // doplní o_umi(L,K,P) r_umi(S,L)
+  //   pokud jich je >1
+  // podle spolu --> osoba --> tvori --> rodina.nazev,id_rodina
+  case 'umi':
+    $no= $nr= $nou= $nru= 0;
+    $AND= $par->akce ? " AND id_akce={$par->akce}" : "";
+    $qp= mysql_qry("
+      SELECT id_pobyt,i0_rodina,id_osoba,funkce,COUNT(DISTINCT id_osoba),
+        o_umi,IFNULL(r_umi,'')
+      FROM pobyt AS p
+      JOIN spolu AS s USING (id_pobyt)
+      JOIN osoba AS o USING (id_osoba)
+      LEFT JOIN rodina AS r ON id_rodina=i0_rodina
+      WHERE funkce IN (1,12,3,4) $AND
+      GROUP BY id_pobyt
+    ");
+    while ( $qp && (list($idp,$idr,$ido,$fce,$pocet,$o_umi,$r_umi)= mysql_fetch_array($qp)) ) {
+      $o= $r= 0;
+//                         display("$idp,$idr,$ido,$fce,$pocet,$o_umi,$r_umi");
+      switch ($fce) {
+      case 1: // VPS -> r_umi
+                                display("strpos($r_umi,$fce)=".strpos($r_umi,$fce));
+        if ( strpos($r_umi,$fce)===false ) {
+          $r_umi= $r_umi ? "$fce,$r_umi" : $fce;
+          $r++;
+          $nr++;
+        }
+//                         display("$nr: $idp,$idr,$ido,$fce,$pocet,$o_umi,$r_umi");
+        break;
+      case 3: // kněz  -> o_umi
+      case 4: // psych -> o_umi
+        if ( $pocet==1 && strpos($o_umi,$fce)===false ) {
+          $o_umi= $o_umi ? "$fce,$o_umi" : $fce;
+          $o++;
+          $no++;
+        }
+        break;
+      case 12: // lektor -> o_umi (pro pocet=1) resp. r_umi
+        $fce= 2;
+        if ( $pocet==1 ) {
+          if ( strpos($o_umi,$fce)===false ) {
+            $o_umi= $o_umi ? "$fce,$o_umi" : $fce;
+            $o++;
+            $no++;
+          }
+        }
+        else {
+          if ( strpos($r_umi,$fce)===false ) {
+            $r_umi= $r_umi ? "$fce,$r_umi" : $fce;
+            $r++;
+            $nr++;
+          }
+        }
+        break;
+      }
+      if ( $opravit ) {
+        if ( $o ) {
+          mysql_qry("UPDATE osoba SET o_umi='$o_umi' WHERE id_osoba=$ido");
+          $nou+= mysql_affected_rows();
+        }
+        if ( $r ) {
+          mysql_qry("UPDATE rodina SET r_umi='$r_umi' WHERE id_rodina=$idr");
+          $nru+= mysql_affected_rows();
+        }
+      }
+    }
+    $html.= "<br>zjištěno $no nových osobních a $nr nových rodinných schopností";
+    $html.= "<br>doplněno $nou nových osobních a $nru nových rodinných schopností";
+    break;
+  // ---------------------------------------------- pobyt: i0_rodina ... do starých
+  // doplní i0_rodina pokud rodina má jméno a je jednoznačná pro všechny osoby pobytu
+  //   pokud jich je >1
+  // podle spolu --> osoba --> tvori --> rodina.nazev,id_rodina
+  case 'i0_rodina':
+    $n= $nu= 0;
+    $AND= $par->akce ? " AND id_akce={$par->akce}" : "";
+    $qp= mysql_qry("
+      SELECT COUNT(*) AS _ucastniku,COUNT(DISTINCT id_rodina) AS _pocet,id_pobyt,id_rodina
+      FROM akce AS a
+      JOIN pobyt AS p ON a.id_duakce=p.id_akce
+      JOIN spolu AS s USING (id_pobyt)
+      JOIN tvori AS t USING(id_osoba)
+      JOIN rodina AS r USING(id_rodina)
+      WHERE i0_rodina=0 AND r.nazev!='' $AND
+      GROUP BY id_pobyt HAVING _ucastniku>1 AND _pocet=1 ");
+    while ( $qp && ($p= mysql_fetch_object($qp)) ) {
+      $n++;
+      if ( $opravit ) {
+        mysql_qry("UPDATE pobyt SET i0_rodina={$p->id_rodina} WHERE id_pobyt={$p->id_pobyt}");
+        $nu+= mysql_affected_rows();
+      }
+    }
+    $html.= "<br>zjištěno $n x pobyt.i0_rodina=0
+      pro pobyty s jednoznačnou rodinou pro všechny osoby pobytu";
+    $html.= "<br>doplněno $nu x pobyt.i0_rodina";
+    break;
+  default:
+    $html.= "transformaci $cmd neumím";
+  }
+  return $html;
+}
+# --------------------------------------------------------------------------------- db2 kontrola_dat
 # kontrola dat
-#  -  nulové klíče
 function db2_kontrola_dat($par) { trace();
   global $USER;
   user_test();

@@ -1329,12 +1329,12 @@ panel filtr_osob [,,250,175] { type:'popup', title:"doplňující podmínky výb
     ,f.zajmy.get,conc(" AND o.zajmy RLIKE '.*", f.zajmy.get,".*'")
     ,f.pozn.get, conc(" AND o.note RLIKE '.*",  f.pozn.get,".*'")
     ,f.zamest.get, conc(" AND o.zamest RLIKE '.*",  f.zamest.get,".*'")
-    ,f.slovaci.get,conc(" AND (o.stat='SK' OR IF(ISNULL(id_rodina),0,of.stat='SK'))")
+    ,f.slovaci.get,conc(" AND (o.stat='SK' OR IF(ISNULL(of.id_rodina),0,of.stat='SK'))")
     ,f.cizinci.get,conc(" AND (o.stat!='' AND o.stat!='SK' AND o.stat!='CZ'",
-      " OR IF(ISNULL(id_rodina),0,of.stat!='' AND of.stat!='SK' AND of.stat!='CZ'))")
+      " OR IF(ISNULL(of.id_rodina),0,of.stat!='' AND of.stat!='SK' AND of.stat!='CZ'))")
     // zahrne i rodinné schopnosti, ale jen pro manžele
     ,f.umi.key,conc(" AND (FIND_IN_SET('",f.umi.key,"',o.o_umi)",
-      " OR ot.role IN ('a','b') AND IF(ISNULL(id_rodina),0,FIND_IN_SET('",f.umi.key,"',of.r_umi)))")
+      " OR ot.role IN ('a','b') AND IF(ISNULL(of.id_rodina),0,FIND_IN_SET('",f.umi.key,"',of.r_umi)))")
     ));
     lst.o_filtr.set_attrib('help',cconc(1,"... "
     ,f.mrop.get,        " a iniciovaní"
@@ -1389,7 +1389,7 @@ panel filtr_rodin [,,250,175] { type:'popup', title:"doplňující podmínky vý
   form _f {
     // vlevo
     field pozn    [53,0,79,17] { title:'poznámka',    format:'t' }
-    select umi    [53,25,99,]  { type:'map', options:ms_umi.hodnota,
+    select umi    [53,25,99,]  { type:'map0', options:ms_umi.hodnota,
                                    title:'schopnosti:', value:'0', format:'t' }
     // vpravo
     check slovaci [171,1,76,17] { title:'Slováci', format:'t'}

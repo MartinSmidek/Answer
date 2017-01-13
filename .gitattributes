@@ -1,5 +1,5 @@
 * text=auto !eol
-/answer.inc -text
+/answer.inc.php -text
 /answer.php -text
 /ch.inc -text
 /ch.php -text
@@ -59,7 +59,7 @@ db/img/page_vr.png -text
 db/img/schema_db_2014.png -text
 db/img/select_edit.gif -text
 db/img/stravenky-rastr-1.png -text
-/db2.inc -text
+/db2.inc.php -text
 /db2.php -text
 db2/$.ezer -text
 db2/db2.akce2.cnf.ezer -text
