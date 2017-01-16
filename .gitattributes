@@ -28,6 +28,7 @@ cr/img/cr.png -text
 cr/img/cr_local.png -text
 /cr2.inc.php -text
 /cr2.php -text
+cr2/$.ezer -text
 /db.inc -text
 db/$.ezer -text
 db/code/comp2tab.php -text
