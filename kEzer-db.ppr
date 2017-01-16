@@ -26,7 +26,7 @@ kEzer-ys2
 		..\..\Apache\bin\apache\apache2.4.9\conf\extra\httpd-vhosts-ezer.conf
 	-poznámky
 		sql\answer_dotazy.sql
-	-$
+	+$
 		-skins
 			skins\ck\ck.ezer.css
 			skins\colors.php
@@ -42,7 +42,7 @@ kEzer-ys2
 		db2_test.php
 		index.php
 		robots.txt
-	+db2
+	-db2
 		-$ test
 			db2_test\$.ezer
 		+$
@@ -71,7 +71,7 @@ kEzer-ys2
 		-pokladna
 			db2\db2.pok.ezer
 		-ekonomika
-	-ezer2.2
+	+ezer2.2
 		-client
 			ezer2.2\client\_code.js
 			ezer2.2\client\_test.html
@@ -94,7 +94,7 @@ kEzer-ys2
 			ezer2.2\client\ezer_fdom2.js
 			ezer2.2\client\ipad.css
 			ezer2.2\client\natdocs.css
-		-libr
+		+libr
 			ezer2.2\$.ezer
 			ezer2.2\ezer2.help.ezer
 			ezer2.2\ezer2.pers.ezer
@@ -124,76 +124,62 @@ kEzer-ys2
 3=db2\db2.akce2.ucast.ezer
 4=db2\db2.akce2.lst.ezer
 5=db2\db2.akce2.evi.ezer
-6=cr2.php
-7=cr2.inc.php
-8=sql\answer_dotazy.sql
-9=ezer2.2\ezer2.syst.ezer
-10=ezer2.2\ezer2_fce.php
-11=sql\import_cr.bat
-12=sql\import_db2.bat
-13=ezer2.2\server\ae_slib.php
-14=db2\db2.akce2.pece.ezer
+6=db2\db2.akce2.foto.ezer
+7=sql\answer_dotazy.sql
+8=db2\db2.akce2.pece.ezer
+9=db2\db2.akce2.elim.ezer
 [Selected Project Files]
 Main=
-Selected=db2\db2_fce.php
+Selected=db2\db2.akce2.evi.ezer
 [db2\db2_fce.php]
-TopLine=2305
-Caret=52,2347
-Mark1=29,1839
-Mark2=11,12060
-Mark3=1,11336
+TopLine=10990
+Caret=1,10904
+Mark1=11,12099
+Mark2=1,10909
+Mark3=1,11039
+Mark4=1,11177
 [cr2\$.ezer]
 TopLine=1
-Caret=39,8
+Caret=1,25
 [db2\db2.akce2.ezer]
-TopLine=1106
-Caret=128,1138
+TopLine=789
+Caret=50,790
+Mark1=1,843
+Mark2=21,789
+Mark3=28,791
+Mark4=14,819
+Mark5=14,826
 [db2\db2.akce2.ucast.ezer]
-TopLine=1593
-Caret=1,1611
-Mark1=29,1409
-Mark2=30,639
-Mark3=19,1175
-Mark4=19,1202
-Mark5=38,921
-Mark6=12,627
+TopLine=60
+Caret=38,69
+Mark1=29,1413
+Mark2=12,1241
+BookMark1=25,529
+Mark3=37,869
+Mark4=23,1181
+Mark5=3,68
 [db2\db2.akce2.lst.ezer]
 TopLine=106
 Caret=52,125
 Mark1=51,645
 Mark2=1,55
 [db2\db2.akce2.evi.ezer]
-TopLine=1345
-Caret=44,1392
+TopLine=564
+Caret=21,589
 Mark1=29,474
 Mark2=19,246
 Mark3=50,1332
 Mark4=1,544
 Mark5=44,1392
-[cr2.php]
-TopLine=1
-Caret=74,8
-[cr2.inc.php]
-TopLine=1
-Caret=53,21
+[db2\db2.akce2.foto.ezer]
+TopLine=3
+Caret=46,42
 [sql\answer_dotazy.sql]
 TopLine=5
-Caret=52,20
-[ezer2.2\ezer2.syst.ezer]
-TopLine=369
-Caret=1,406
-[ezer2.2\ezer2_fce.php]
-TopLine=36
-Caret=1,67
-[sql\import_cr.bat]
-TopLine=1
-Caret=42,1
-[sql\import_db2.bat]
-TopLine=1
-Caret=1,1
-[ezer2.2\server\ae_slib.php]
-TopLine=224
-Caret=1,252
+Caret=73,19
 [db2\db2.akce2.pece.ezer]
 TopLine=390
 Caret=32,422
+[db2\db2.akce2.elim.ezer]
+TopLine=306
+Caret=1,338

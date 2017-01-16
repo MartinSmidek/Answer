@@ -65,8 +65,8 @@ proc ucast_pobyt_akce(_idp,_ida)  {
 }
 # zobrazení osob - nastavených účastníků
 proc osoby_show() {                             // obnova údajů o osobách
-  [ os1.key; os1.show_osoba(0) | os1.init_osoba ];
-  [ os2.key; os2.show_osoba(0) | os2.init_osoba ];
+  [ os1.key; os1.show_osoba(u.dup.get) | os1.init_osoba ];
+  [ os2.key; os2.show_osoba(u.dup.get) | os2.init_osoba ];
 }
 proc rodina_show() {                            // obnova údajů o rodině
   rod.key_rodina.get; rod.show_rodina | rod.init_rodina }
@@ -1207,20 +1207,20 @@ form _rodina2 [,,360,229]  { css:'ae_frame'
     eq(ucast.evid.cmode.get,2); os1.key;   // 2 sloupce a 1. neprázdný
     [ eq(ido,os1.key);                     //   čteme do 1.
       copy_by_name(cleni,os1);
-      os1.show_osoba(0);
+      os1.show_osoba(u.dup.get);
       sp1.load_spolu(ids,cleni);
       os1.gmail.enable(0)
     | os2.key(ido);                        //   nebo do 2.
       copy_by_name(cleni,os2);
       os2.enable(1,'.*');
-      os2.show_osoba(0);
+      os2.show_osoba(u.dup.get);
       sp2.enable(1,'.*');
       sp2.load_spolu(ids,cleni);
       os2.gmail.enable(0)
     ]
   | os1.key(ido);                          // 1 sloupec nebo 1. prázdný
     copy_by_name(cleni,os1);
-    os1.show_osoba(0);
+    os1.show_osoba(u.dup.get);
     sp1.load_spolu(ids,cleni);
     os1.gmail.enable(0)
   }

@@ -24,20 +24,22 @@ form _alb [,,600,357] {
   button go_right [35,4,,] { type:'html', title:'[fa-chevron-right fa-2x]'
     proc onclick() { n.set(sum(n.get,1)); drop_galery }}
   button smazat [469,4,,] { type:'html', title:'[fa-times fa-2x fa-red]', format:'d'
-    proc onclick() {
+    proc onclick() { var ret:object
       confirm("Opravdu odstranit tuto fotografii?");
-#       { ask('foto2_delete',u.b.key_rodina.get); u.b.fotka.let(''); foto.set('');
-#       | warning("fotografii nebylo možné smazat");
-#       }
+      { ret.set(ask('foto2_delete',tab.get,rec.get,n.get));
+        ret.ok;
+        n.set(ret.n);
+        drop_galery;
+      | warning("fotografii nebylo možné smazat");
+      }
   }}
   # layout
   label drop  [70,6,393,18] { format:'c' style:'padding-top:8px' }
-  label jmeno [0,41,500,300] { format:'c' }
-  label foto  [0,61,500,300] { format:'c' }
+  label jmeno [0,41,500,400] { format:'c' }
+  label foto  [0,61,500,400] { format:'c' }
   proc ondrop(fileinfo) { var name: text
     drop.set_css('','drop_area drop_area_hover');
     name.set(ask('foto2_add',tab.get,rec.get,fileinfo));
-    smazat.enable(1);
     n.set(-1); drop_galery;
     drop.set_css('','drop_area drop_area_hover drop_area_run');
     drop_init;
@@ -56,5 +58,6 @@ form _alb [,,600,357] {
     go_right.enable(ret.right);
     foto.set(ret.html);
     jmeno.set(ret.jmeno);
+    smazat.enable(jmeno.get);
   }
 }
