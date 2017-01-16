@@ -419,7 +419,7 @@ form _pece [,,400,] { css:'ds_form'
 #         | develop.set('') }
       ];
       // ochrana proti neuložené změně, pokud je možné údaje měnit
-      has_skill('yaa+;faa+'); not(and(p_oso.same));
+      has_skill('yaa+;faa+;caa+'); not(and(p_oso.same));
       warning('neuložené změny pro pečouna <b>',p_oso.prijmeni.get,'</b> použij [Zpět] nebo [Uložit]');
     | not(b.browse_count);
       p_oso.init; p_oso.d.browse_init
