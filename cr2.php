@@ -10,7 +10,7 @@
   #   $options    = doplnění Ezer.options
 
   $app=  'cr2';
-  $app_name= "<span style:red>testování Answer CPR</span>";
+  $app_name= "<span style='color:red'>testování Answer CPR</span>";
 
   require_once("answer.php");
   $options= (object)array(

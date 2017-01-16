@@ -10734,7 +10734,11 @@ function foto2_get($table,$id,$n,$w,$h) {  trace();
       $fotky= $fotky ? "$fotka,$fotky" : $fotka;
     }
   }
-  if ( $fotky=='' ) { $ret->html= "žádná fotka"; goto end; }
+  if ( $fotky=='' ) {
+    $ret->html= "žádná fotka";
+    $ret->jmeno= '';
+    goto end;
+  }
   $nazvy= explode(',',$fotky);
   // název n-té fotky
   $n= $n==-1 ? count($nazvy) : $n;
@@ -10790,11 +10794,11 @@ function foto2_add($table,$id,$fileinfo) { trace();
   }
   return $name;
 }
-# -------------------------------------------------------------------------------------- foto_delete
-# zruší n-tou fotografii ze seznamu v albu a vrátí tu nyní n-tou nebo předchozí
-function foto_delete($table,$id,$n) { trace();
-  global $ezer_path_root;
-  $ok= 0;
+# ------------------------------------------------------------------------------------- foto2_delete
+# zruší n-tou fotografii ze seznamu v albu a vrátí pořadí následující nebo předchozí nebo 0
+function foto2_delete($table,$id,$n) { trace();
+  global $ezer_path_root, $ezer_root;
+  $ret= (object)array('ok'=>0,'n'=>0);
   // nalezení seznamu názvů fotek
   $fotky= explode(',',select('fotka',$table,"id_$table=$id"));
   if ( 1<=$n && $n<=count($fotky) ) {
@@ -10803,12 +10807,14 @@ function foto_delete($table,$id,$n) { trace();
     $nazvy= implode(',',$fotky);
     query("UPDATE $table SET fotka='$nazvy' WHERE id_$table=$id");
     // smazání fotky a miniatury
-    $ok= unlink("$ezer_path_root/fotky/$nazev");
+    $ret->ok= unlink("$ezer_path_root/fotky/$nazev");
 //                                         display("unlink('$ezer_path_root/fotky/$name')=$ok");
-    $ok&= unlink("$ezer_path_root/fotky/copy/$nazev");
+    $ret->ok&= unlink("$ezer_path_root/fotky/copy/$nazev");
 //                                         display("unlink('$ezer_path_root/fotky/copy/$name')=$ok");
   }
-  return $ok;
+  // vrať nějakou nesmazanou nebo 0
+  $ret->n= $n>1 ? $n-1 : (count($fotky) ? 1 : 0);
+  return $ret;
 }
 # ----------------------------------------------------------------------------------- foto2_resample
 function foto2_resample($source, $dest, &$width, &$height,$copy_bigger=0,$copy_smaller=1) { #trace();
@@ -10870,6 +10876,31 @@ function foto2_resample($source, $dest, &$width, &$height,$copy_bigger=0,$copy_s
   return $ok;
 }
 /** =========================================================================================> DATA2 **/
+# -------------------------------------------------------------------------------------- data_update
+# provede změny v dané tabulce pro dané položky a naplní tabulku _track informací o změně
+#   $chngs = val1:fld11,fld12,...;val2:...
+function data_update ($tab,$id_tab,$chngs) { trace();
+  global $USER;
+  $now= date("Y-m-d H:i:s");
+  $user= $USER->abbr;
+  $updated= 0;
+  foreach (explode(';',$chngs) as $val_flds) {
+    list($val,$flds)= explode(':',$val_flds);
+    foreach (explode(',',$flds) as $fld) {
+      $old= select($fld,$tab,"id_{$tab}=$id_tab");
+      if ( $old!=$val ) {
+        $ok= query("INSERT INTO _track (kdy,kdo,kde,klic,fld,op,old,val)
+                    VALUES ('$now','$user','$tab',$id_tab,'$fld','U','$old','$val')");
+        if ( !$ok ) goto end;
+        $ok= query("UPDATE $tab SET $fld='$val' WHERE id_$tab=$id_tab");
+        $updated+= $ok ? 1 : 0;
+      }
+    }
+  }
+  goto end;
+err: fce_error("ERROR IN: data_update ($tab,$id_tab,$chngs)");
+end: return $updated;
+}
 # ----------------------------------------------------------------------------- data2_transform_2014
 # transformace na schema 2014
 # par.cmd = seznam transformací
@@ -12048,7 +12079,7 @@ function track_revert($ids) {  trace();
 # =======================================================================> db2 kontrola a oprava dat
 # ----------------------------------------------------------------------------------- db2 oprava_dat
 # opravy dat
-function db2_oprava_dat($par) { trace();
+function db2_oprava_dat($par) { trace(); debug($par);
   global $USER;
   user_test();
   $now= date("Y-m-d H:i:s");
@@ -12057,6 +12088,14 @@ function db2_oprava_dat($par) { trace();
   $html= '';
   $ok= '';
   switch ($cmd) {
+  // -------------------------------------------- schema 2014
+  case 'kontakty':
+  case 'kontakty+':
+  case 'adresy':
+  case 'adresy+':
+    $html.= data2_transform_2014($par);
+    break;
+  case 'umi':
   // -------------------------------------------- přenesení pobyt.funkce do o_umi r_umi
   //
   // doplní o_umi(L,K,P) r_umi(S,L)

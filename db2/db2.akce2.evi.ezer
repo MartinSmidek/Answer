@@ -14,7 +14,7 @@ proc evid_load(ido,idr) { page.evid_load(ido,idr) }
 proc evid_osoba(_ido)  { panel.focus; m.o.a.click(0,1); lst.seek_osoba(_ido,m.o.a.par) }
 proc evid_rodina(_idr) { panel.focus; m.r.a.click(0,1); lst.seek_rodina(_idr,m.r.a.par) }
 
-proc osoby_show()      { page.oso.show_osoba(1); }     // obnova údajů o osobě  (z konfigurace)
+proc osoby_show()      { page.oso.show_osoba(2); }     // obnova údajů o osobě  (z konfigurace)
 proc rodina_show()     { page.rod.show_rodina; }       // obnova údajů o rodině (z konfigurace)
 proc ulozen_gmail()    { cmd.set_state('show'); page.page_plain; warning;  }
 # ----------------------------------------------------------------------------------==> inicializace
@@ -535,7 +535,7 @@ form _page {
   var idr0=0, idr=0     // původní a zobrazená rodina
   var ido0=0, ido=0     // původní a zobrazený člen (jehož rodina, role, rodiny jsou zobrazeny)
   proc start() {
-    cvak(evid); oso.show_osoba(1); rod.show_rodina; up(oso); up(rod); down(dar)
+    cvak(evid); oso.show_osoba(2); rod.show_rodina; up(oso); up(rod); down(dar)
   }
   # ---------------------------------------------- pomocné procedury
   # načtení osoby a jeho rodin
@@ -583,11 +583,11 @@ form _page {
     ret.set(ask('elim2_data_osoba',ido,cconc(eq(lst.mode.get,'f','h'),lst.track_past.get,'')));
     oso.load(ido);
     oso.rc.set(make_rc(oso.narozeni.get,oso.sex.get));
-    oso.show_osoba(1);
+    oso.show_osoba(2);
     oso.set_helps(ret.chng,'zluty','oranzovy');
   | ido; oso.load(ido);
     oso.rc.set(make_rc(oso.narozeni.get,oso.sex.get));
-    oso.show_osoba(1);
+    oso.show_osoba(2);
   }
   # načíst rodinu (případně s doplněním informací z _track) ==> . rod_load
   proc rod_load(idr) { var ret: object

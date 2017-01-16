@@ -787,8 +787,8 @@ form _osoba2x [,,244,322] {css:'ae_frame', proc onclick() { on_click }
     ucast.call('osoby_show')
   | evi.call('osoby_show') }
   proc show_osoba(even) { var tags:text
-    form.display(0,'[^f]'); access.display(1);
-    go_evi.display(not(even)); chain.display(not(even)); // jen pro účastníky
+    form.display(0,'[^f]'); access.display(1);             // even=2 pro evidenci
+    go_evi.display(lt(even,2)); chain.display(eq(even,1)); // 0,1=jen pro účastníky, 1=zobrazí chain
     { keys_osoba.get; chain.set_css('db_chain','db_evidence')
     | chain.set_css('db_evidence','db_chain') };
     kontakt.enable(1); adresa.enable(1);
@@ -816,14 +816,14 @@ form _osoba2x [,,244,322] {css:'ae_frame', proc onclick() { on_click }
         tags.set(conc(tags,',a,b')); form.enable(adresa.get,'b');
       }
     ];
-    [ or(even,key_spolu.get,eq(form_mode.get,'new'));
+    [ or(eq(even,2),key_spolu.get,eq(form_mode.get,'new'));
       [ contains('O',osoba_config.grp.get); tags.set(conc(tags,',o')) ];
       [ contains('C',osoba_config.grp.get); tags.set(conc(tags,',c')) ];
       [ contains('P',osoba_config.grp.get); tags.set(conc(tags,',p')) ];
       [ contains('G',osoba_config.grp.get); tags.set(conc(tags,',g')) ];
     ];
     [ contains('S',osoba_config.grp.get); form.set_css('db_hr','','S') | form.set_css('','db_hr','S') ];
-    [ or(even,key_spolu.get,eq(form_mode.get,'new')) | tags.set(conc(tags,',x')) ];
+    [ or(eq(even,2),key_spolu.get,eq(form_mode.get,'new')) | tags.set(conc(tags,',x')) ];
     form.stacks(tags,'down',0,0,10);
     rc.enable(0);
   }
