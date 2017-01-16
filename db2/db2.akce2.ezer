@@ -152,7 +152,7 @@ panel mai {type:'right', title:'Maily evidence', _sys:'*', include:'onclick,db2.
   proc reaccess() {}
 }
 panel dop {type:'right', title:'Dopisy', _sys:'*', include:'onclick,db2.akce2.dop', skill:'yaed'  }
-panel sta {type:'right', title:'Výpisy evidence', _sys:'*', include:'onclick,db2.akce2.sta', skill:'yaa;faa;cas'
+panel sta {type:'right', title:'Výpisy evidence', _sys:'*', include:'onclick,db2.akce2.sta', skill:'yaa;faa;caa'
   proc reaccess() {}
 }
 panel cnf {type:'right', title:'[fa-retweet] KONFERENCE', _sys:'*', include:'onclick,db2.akce2.cnf', skill:'mrop;dk'
@@ -720,7 +720,7 @@ panel osoba_config [,,200,150] {type:'popup', title:"Podrobnosti údajů"
   proc start() {
     grp.set(get_cookie(conc(sys('root'),'_conf_osoba'),grp.get));
     [ contains('Z',grp.get) | grp.set(conc('Z',grp.get)) ];
-    [ has_skill('yaa:c;faa:c') | grp.set(replace(grp.get,'C','')) ];
+    [ has_skill('yaa:c;faa:c;caa:c') | grp.set(replace(grp.get,'C','')) ];
     cnfg._back; }
   proc tune(calee) {
     ucast.set(calee); _old.set(grp.get); [ ucast.call('evid.z_change','o') ]; panel.modal(500,200) }
@@ -732,7 +732,7 @@ panel osoba_config [,,200,150] {type:'popup', title:"Podrobnosti údajů"
     check g [100,20,110,] { title:"konference",          format:'t', proc onchange() { _tuned }}
     check a [ 0, 40,200,] { title:"poštovní adresa",     format:'t', proc onchange() { _tuned }}
     check o [ 0, 60,200,] { title:"organizační údaje",   format:'t', proc onchange() { _tuned }}
-    check c [ 0, 80,200,] { title:"citlivé údaje",       format:'t', skill:'yaa|yaa:c;faa|faa:c'
+    check c [ 0, 80,200,] { title:"citlivé údaje",       format:'t', skill:'yaa|yaa:c;faa|faa:c;caa|caa:c'
                                                                      proc onchange() { _tuned }}
     check p [ 0,100,200,] { title:"trvalá poznámka, schopnosti",
                                                          format:'t', proc onchange() { _tuned }}
@@ -788,7 +788,7 @@ form _osoba2x [,,244,322] {css:'ae_frame', proc onclick() { on_click }
   | evi.call('osoby_show') }
   proc show_osoba(even) { var tags:text
     form.display(0,'[^f]'); access.display(1);
-    go_evi.display(not(even)); chain.display(not(even));
+    go_evi.display(not(even)); chain.display(not(even)); // jen pro účastníky
     { keys_osoba.get; chain.set_css('db_chain','db_evidence')
     | chain.set_css('db_evidence','db_chain') };
     kontakt.enable(1); adresa.enable(1);
@@ -1047,18 +1047,18 @@ form _osoba2x [,,244,322] {css:'ae_frame', proc onclick() { on_click }
 
   #==> . citlivé údaje: c (jen pro oprávněné)
   const Tq=-106
-  select cirkev  [44,Tq+110,70,] {tag:'c', type:'map', data:o.cirkev, format:'n',       skill:'yaa:c|yaa:c;faa:c|faa:c'
+  select cirkev  [44,Tq+110,70,] {tag:'c', type:'map', data:o.cirkev, format:'n',       skill:'yaa:c|yaa:c;faa:c|faa:c;caa:c|caa:c'
                                 options:ms_akce_cirkev.zkratka, title:'církev'}
-  field aktivita [143,Tq+110,92,] {tag:'c', data:o.aktivita, format:'n', title:'aktiv.',skill:'yaa:c|yaa:c;faa:c|faa:c'}
-  field jazyk    [44,Tq+131,94,] {tag:'c', data:o.jazyk, format:'n', title:'jazyky',    skill:'yaa:c|yaa:c;faa:c|faa:c'}
-  select dieta   [171,Tq+131,64,] {tag:'c', type:'map', data:o.dieta, format:'n',       skill:'yaa:c|yaa:c;faa:c|faa:c',
+  field aktivita [143,Tq+110,92,] {tag:'c', data:o.aktivita, format:'n', title:'aktiv.',skill:'yaa:c|yaa:c;faa:c|faa:c;caa:c|caa:c'}
+  field jazyk    [44,Tq+131,94,] {tag:'c', data:o.jazyk, format:'n', title:'jazyky',    skill:'yaa:c|yaa:c;faa:c|faa:c;caa:c|caa:c'}
+  select dieta   [171,Tq+131,64,] {tag:'c', type:'map', data:o.dieta, format:'n',       skill:'yaa:c|yaa:c;faa:c|faa:c;caa:c|caa:c',
                                 options:ms_akce_dieta.zkratka, title:'dieta'}
-  select vzdelani[44,Tq+152,114,] {tag:'c', type:'map', data:o.vzdelani, format:'n',    skill:'yaa:c|yaa:c;faa:c|faa:c',
+  select vzdelani[44,Tq+152,114,] {tag:'c', type:'map', data:o.vzdelani, format:'n',    skill:'yaa:c|yaa:c;faa:c|faa:c;caa:c|caa:c',
                                 options:ms_akce_vzdelani.zkratka, title:'vzděl.'}
-  select titul   [181,Tq+152,54,] {tag:'c', type:'map', data:o.titul, format:'n',       skill:'yaa:c|yaa:c;faa:c|faa:c',
+  select titul   [181,Tq+152,54,] {tag:'c', type:'map', data:o.titul, format:'n',       skill:'yaa:c|yaa:c;faa:c|faa:c;caa:c|caa:c',
                                 options:ms_akce_titul.zkratka, title:'tit.'}
-  field zamest   [44,Tq+173,191,] {tag:'c', data:o.zamest, format:'n', title:'zaměst.', skill:'yaa:c|yaa:c;faa:c|faa:c'}
-  field zajmy    [44,Tq+194,191,] {tag:'c', data:o.zajmy, format:'n', title:'zájmy',    skill:'yaa:c|yaa:c;faa:c|faa:c'}
+  field zamest   [44,Tq+173,191,] {tag:'c', data:o.zamest, format:'n', title:'zaměst.', skill:'yaa:c|yaa:c;faa:c|faa:c;caa:c|caa:c'}
+  field zajmy    [44,Tq+194,191,] {tag:'c', data:o.zajmy, format:'n', title:'zájmy',    skill:'yaa:c|yaa:c;faa:c|faa:c;caa:c|caa:c'}
   label [0,Tq+214,,6] {tag:'c,S', format:'n', css:'db_sep' } // zarovnání
 
   #==> . osobní schopnosti a poznámka: p
@@ -1135,7 +1135,7 @@ form _rodina2p [,,188,229] { css:'ae_frame'
   field  rodiny1 [Lp+0,Ts+32,104,] {tag:'m', title:"^oprava názvu rodiny", data:r.nazev, format:'n' }
   select rodiny  [Lp+0,Ts+32,110,] {tag:'a,R', format:'tT', title:"^zobrazená rodina", help:'výběr jiné rodiny'
     proc onchanged() { rodina_changed }}
-  button [Lp+111,Ts+32,,] {tag:'a,o,R', type:'html', title:"[fa-chevron-left]", css:'button', skill:'yaa|yaa+;faa|faa+'
+  button [Lp+111,Ts+32,,] {tag:'a,o,R', type:'html', title:"[fa-chevron-left]", css:'button', skill:'yaa|yaa+;faa|faa+;caa|caa+'
     help:"oprava názvu zobrazené rodiny"
     proc onclick() { form.display(0,'a'); form.display(1,'m'); rodiny1.set(rodiny.get);
       rodiny1.change; rodina_edit }}

@@ -521,11 +521,14 @@ form _ucast [,,400,] { css:'ds_form'
   label leg [2,12,232,11]
   // omezení browse
   proc show_dup(on) { rod.cleni.show_dup(on); b.show_dup(on); }
+  proc show_chain() {
+    rod.chain.display(dup.get); os1.chain.display(dup.get); os2.chain.display(dup.get);
+  }
   check sf [108,7,15,15] { title:'', format:'nt', value:'1', proc onchange() {
   }}
   check dup [150,7,63,15] { title:'kopie?', help:'zobrazit tipy na kopie osob a rodin',
-    format:'nt', value:'1', proc onchange() {
-  }}
+    format:'t', value:'0', proc onchange() { show_chain }
+  }
   check doc [202,7,75,15] { title:'dokumenty', help:'zobrazit příznaky existence dokumentů a fotek'
     format:'t', value:'0', proc onchange() {
     reload(0)
@@ -863,7 +866,7 @@ form _evidence {
     pob.init; rod.init; rod.cleni.browse_init;
     sp1.os.set(os1);
     sp2.os.set(os2);
-    rod.show_rodina; pob.show_pobyt
+    rod.show_rodina; pob.show_pobyt;
   }
   # změny sloupců
   proc c_change(n) {
@@ -1132,14 +1135,14 @@ form _spolu [,,0,270] {
     u.b.reload_evid;
     rod.cleni.raise('onrowclick',ido);
   }
-  button vyradit [150,1,,] { tag:'r', title:"Vyřadit z akce", format:'n', skill:'yaa|yaa+;faa|faa+'
+  button vyradit [150,1,,] { tag:'r', title:"Vyřadit z akce", format:'n', skill:'yaa|yaa+;faa|faa+;caa|caa+'
     proc onclick() {
       pece_val.get;
       alert("před vyřazením je třeba vyjmout z osobní péče")
     | spolu.delete_record(conc('id_spolu=',form.key));
       { rod.key_rodina.get; _reload_spolu(rod.cleni.key_osoba.get) | cmd._reload(1,0) }
   }}
-  button pridat [150,7,,] { tag:'a', title:"Přidat na akci", format:'n',  skill:'yaa|yaa+;faa|faa+'
+  button pridat [150,7,,] { tag:'a', title:"Přidat na akci", format:'n',  skill:'yaa|yaa+;faa|faa+;caa|caa+'
     proc onclick() { na_akci(os.key_osoba.get,rod.key_rodina.get,os.role.get) }
     proc na_akci(ido,idr,role) { var ret:object
       Onclick;
@@ -1174,7 +1177,8 @@ form _rodina2 [,,360,229]  { css:'ae_frame'
   # show_rodina - zobrazuje formulář podle: key_rodina
   proc show_rodina() { var tags:text
     form.display(0,'[^f]'); r_access.display(1); cleni.display(1); form.enable(1,'.*');
-    evidence.display(gt(key_rodina.get,0)); chain.display(or(key_rodina.get,eq(pob.funkce.key,99)));
+    evidence.display(gt(key_rodina.get,0));
+    chain.display(and(u.dup.get,or(key_rodina.get,eq(pob.funkce.key,99))));
     { keys_rodina.get; chain.set_css('db_chain','db_evidence')
     | chain.set_css('db_evidence','db_chain') };
     tags.set('a');
@@ -1336,7 +1340,7 @@ form _rodina2 [,,360,229]  { css:'ae_frame'
     proc onchanged() {
       ask('akce2_pobyt_rodinny',key_pobyt.get,this.key); zmena_rodiny; }}
   button [Lr+108,34,15,16] {tag:'o', type:'html', title:"[fa-pencil]",help:"opravit název rodiny"
-    style:"padding-left:0px", skill:'yaa|yaa+;faa|faa+'
+    style:"padding-left:0px", skill:'yaa|yaa+;faa|faa+;caa|caa+'
     proc onclick() {
       form.display(0,'a'); form.display(1,'m'); rodiny1.set(rodiny.get); rodiny1.change; }}
   select t_role [Lr+131,Tr+22,35,] {tag:'n,a', type:'map', options:ms_akce_t_role.hodnota, format:'wn'
@@ -1499,7 +1503,6 @@ form _platba { key_id:'id_pobyt'
   label doslo [300,99,281,170] { style:"border-left:2px solid grey" }
   // nestandardní strava
   button stravy     [89,Td+-5,37,] {tag:'b', title:'Str Po', style:'font-size:10px;height:19px;width:40px',
-    //skill:'yaa+|yaa+;faa+|faa+',
     proc onclick() {
       has_skill("yaa+;faa+;caa+");
       Strava.dnu.set(u.b.dnu.get); // pokud jsou definovány výjimky z pravidelné stravy
@@ -1507,7 +1510,6 @@ form _platba { key_id:'id_pobyt'
       Strava.x.set(''); Strava.modal(240,50,'Nestandardní počet strav - normálních')
   } }
   button stravy_bm  [140,Td+-5,37,] {tag:'b', title:'Str Po', style:'font-size:10px;height:19px;width:40px',
-    //skill:'yaa+|yaa+;faa+|faa+',
     proc onclick() {
       has_skill("yaa+;faa+;caa+");
       Strava.dnu.set(u.b.dnu.get); // pokud jsou definovány výjimky z pravidelné stravy
@@ -1515,7 +1517,6 @@ form _platba { key_id:'id_pobyt'
       Strava.x.set('_bm'); Strava.modal(240,50,'Nestandardní počet strav - bezmasých')
   } }
   button stravy_bl  [190,Td+-5,37,] {tag:'b', title:'Str Po', style:'font-size:10px;height:19px;width:40px',
-    //skill:'yaa+|yaa+;faa+|faa+',
     proc onclick() {
       has_skill("yaa+;faa+;caa+");
       Strava.dnu.set(u.b.dnu.get); // pokud jsou definovány výjimky z pravidelné stravy

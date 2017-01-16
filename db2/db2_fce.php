@@ -2344,7 +2344,7 @@ function ucast2_browse_ask($x,$tisk=false) {
 //                                                 debug($pobyt[21976],'pobyt');
 //                                                 debug($rodina,'rodina');
 //                                                 debug($osoba[3506],'osoba');
-                                                 debug($y->values);
+//                                                 debug($y->values);
   return $y;
 }
 # dekódování seznamu položek na pole ...x,y=z... na [...x=>x,y=>z...]
