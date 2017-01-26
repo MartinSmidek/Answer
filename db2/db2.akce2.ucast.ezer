@@ -829,7 +829,7 @@ form _evidence {
       proc onclick () { alert(ask('akce2_skup_renum',the_duakce.get)) } }
     item { title:'přečíslovat skupinky podle PPS', skill:'faa+',
       proc onclick () { alert(ask('akce2_skup_renum',the_duakce.get)) } }
-    item obn { title:'zapsat skupinky podle LK', skill:'faa+;yaa+;caa+',
+    item obn { title:'zapsat skupinky podle LK', skill:'faa|faa+;yaa|yaa+;caa|caa+',
       proc onclick () { alert(ask('akce2_skup_copy',the_duakce.get)); reload(0) } }
     item { title:'-obarvit změněné údaje'
       proc onclick () { var ret:object
