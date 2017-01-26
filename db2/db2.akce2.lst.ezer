@@ -239,7 +239,7 @@ form _page [,,275,360] {
   field [96,202,54,] { tag:'cor', title:'účetní symbol:', data:akce.ciselnik_akce,
     skill:'faa|faa;caa|caa' }
   // zobrazení a nastavení akce jako souběžné (stejné datum a místo)
-  check soubezna [157,200,120,] { tag:'cor', title:'akce je souběžná', skill:'faa|faa',
+  check soubezna [157,200,120,] { tag:'cor', title:'akce je souběžná', skill:'faa|faan',
     proc onchange() {
       { info.sey.id_hlavni.get;
         [ confirm("opravdu zrušit souběh této akce?"); ask('akce2_soubeh_nastav',form.key,0) ]
@@ -248,8 +248,8 @@ form _page [,,275,360] {
   }}
   // Změna ceníku
   check [134,254,93,] { tag:'cor', title:'používat ceník', data:akce.ma_cenik,
-                        format:'', skill:'yaa|yaa;caa|caa;faa|faa' }
-  button [14,230,,] { tag:'cor', title:'Změnit ceník podle', skill:'yaa|yaa;caa|caa;faa|faa'
+                        format:'', skill:'yaa|yaan;caa|caan;faa|faan' }
+  button [14,230,,] { tag:'cor', title:'Změnit ceník podle', skill:'yaa|yaan;caa|caan;faa|faan'
     proc onclick() {
       cen_copy.enable(1);
       cen_copy.selects(ask('akce2_select_cenik',form.key))
@@ -262,8 +262,8 @@ form _page [,,275,360] {
   }}
   // jednotná cena / dospělý
   check [134,284,93,] { tag:'cor', title:'používat cenu', data:akce.ma_cenu,
-                        format:'', skill:'yaa|yaa;caa|caa;faa|faa' }
-  field [230,286,43,] { tag:'cor', data:akce.cena, format:'r', skill:'yaa|yaa;caa|caa;faa|faa',
+                        format:'', skill:'yaa|yaan;caa|caan;faa|faan' }
+  field [230,286,43,] { tag:'cor', data:akce.cena, format:'r', skill:'yaa|yaan;caa|caan;faa|faan',
                         help:'pro 1 dospělého' }
   label [279,289,20,] { tag:'cor', title:'Kč' }
   // Zpět a Uložit
@@ -272,7 +272,7 @@ form _page [,,275,360] {
     help:'Neměnit změněná data'
     proc onclick() { form.load(page.a_akce.get);
   }}
-  button [245,356,,] { tag:'cor', title:'Uložit', skill:'yaa+|yaa+;faa+|faa+;caa+|caa+'
+  button [245,356,,] { tag:'cor', title:'Uložit', skill:'yaa+|yaan;faa+|faan;caa+|caan'
     help:'Uložit změněná data',
     proc onclick() {
       form.same
@@ -403,7 +403,8 @@ form _page [,,275,360] {
     | warning("přístup na Goggle Disk zamítnut")
   }}
   // vytvoření archivu
-  button archiv [15,45,,] { tag:'doc_crea', title:'vytvořit', format:'n'
+  button archiv [15,45,,] { tag:'doc_crea', title:'vytvořit', format:'n',
+    skill:'faa|faan;caa|caan;yaa|yaan'
     const gd = "https://drive.google.com/folderview?id="
     proc ukaz(_folder) { // ukáže tlačítko jako vytvořit pokud akce.archiv='' jinak zobrazí folder
       has_skill('y'); not(autorized.get);
