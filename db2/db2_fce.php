@@ -9107,7 +9107,7 @@ function mail2_lst_confirm_spec($id_mailist,$id_dopis) {  trace();
 end:
   return $ret;
 }
-# ----------------------------------------------------------------------------- mail2_lst_posli_spec
+# ----------------------------------------------------------------------------- mail2 lst_regen_spec
 # přegeneruje 1 daný mail s nastaveným specialni a parms
 function mail2_lst_regen_spec($id_dopis,$id_mail,$id_osoba) {  trace();
   $ret= (object)array('msg'=>'','err'=>'');
@@ -9129,13 +9129,13 @@ function mail2_lst_regen_spec($id_dopis,$id_mail,$id_osoba) {  trace();
     $ret->msg= "Mail pro {$o->_name} včetně potvrzení {$x->fname} byl přegenerován";
     break;
   default:
-    fce_error("není implemntováno");
+    fce_error("není implementováno");
   }
 end:
 //                                                         debug($ret,"mail2_lst_posli_spec end");
   return $ret;
 }
-# ----------------------------------------------------------------------------- mail2_lst_posli_spec
+# ----------------------------------------------------------------------------- mail2 lst_posli_spec
 # vygeneruje sadu mailů podle daného maillistu s nastaveným specialni a parms
 function mail2_lst_posli_spec($id_dopis) {  trace();
   $ret= (object)array('msg'=>'');
@@ -10543,12 +10543,13 @@ function ucet_potv($par,$access) { trace();
   $goo= $json->decode($x)->table;
 //                                         debug($goo,$sheet);
   // výběr záznamů o darech
-  $tab= array();
+  $tab= $clmn= array();
   $prblm1= $prblm2= '';
   $jmeno_prvni= array();  // ke klíči $prijmeni$jmeno dá řádek s prvním výskytem
   $jmeno_id= array();     // ke klíči $prijmeni$jmeno dá id nebo 0
   $nalezeno= 0;
   for ($i= 1; $i<count($goo->rows); $i++) {
+//   for ($i= 1; $i<2; $i++) {
     $i1= $i+1;
     $grow= $goo->rows[$i]->c;
     $row= (object)array();
@@ -10578,6 +10579,7 @@ function ucet_potv($par,$access) { trace();
       $row->d= $opakovane;
     }
     // doplnění intranetové tabulky a střádání darů do tabulky $darce
+    $ido= 0;
     if ( !$auto && !$manual && !$opakovane ) {
       // pokusíme se nalézt dárce
       $idss= array();
@@ -10588,6 +10590,7 @@ function ucet_potv($par,$access) { trace();
           AND IF(narozeni!='0000-00-00',YEAR(narozeni)<$let18,1)
       ");
       while ($qo && ($o= mysql_fetch_object($qo))) {
+        $ido= $o->id_osoba;
         $idss[]= tisk2_ukaz_osobu($o->id_osoba);
       }
       if ( count($idss) ) {
@@ -10599,8 +10602,10 @@ function ucet_potv($par,$access) { trace();
         if ( count($idss)==1 ) {
           $jmeno_id["$prijmeni$jmeno"]= $ids;
         }
-        else
+        else {
+          $ido= 0;
           $prblm1.= ($prblm1?"<br>":'')."$i1: $datum $prijmeni $jmeno $castka ($ids)";
+        }
       }
       else {
         $prblm2.= ($prblm2?"<br>":'')."$i1: $datum $prijmeni $jmeno $castka";
@@ -10622,7 +10627,8 @@ function ucet_potv($par,$access) { trace();
     $id= $jmeno_id["$prijmeni$jmeno"];
     if ( $id && $castka ) {
       if ( !isset($darce[$id]) ) {
-        $darce[$id]= (object)array('data'=>array(),'castka'=>0,'jmeno'=>"$prijmeni $jmeno");
+        $darce[$id]= (object)array('data'=>array(),'castka'=>0,'jmeno'=>"$prijmeni $jmeno",'ido'=>$ido);
+        if ( $ido && $id!=tisk2_ukaz_osobu($ido) ) fce_error("ucet_potv: chyba indexu $ido");
       }
       list($d,$m,$y)= preg_split("/[\/\.]/",$datum);
       $m= 0+$m; $d= 0+$d;
@@ -10631,7 +10637,8 @@ function ucet_potv($par,$access) { trace();
     }
     $clmn[]= $row;
   }
-//                                         debug($clmn);
+                                        debug($darce,'dárce');
+                                        debug($clmn,'clmn');
   // -------------------- vytvoření tabulky pro zobrazení a tisk
   $tab= (object)array(
     'tits'=>explode(',',"datum:10:d,dárce:20,částka,stejný jako ř.:7,ID auto:15,ID ručně,"
@@ -10643,7 +10650,7 @@ function ucet_potv($par,$access) { trace();
   $html.= "<br><br>";
   $html.= sta2_excel_export("Dárci '$rok'",$tab)->html;
   $reseni= "<br><br>doplň v intranetovém sešitu <b>$prijate_dary</b> v listu <b>$rok</b> do sloupce <b>F</b>
-            správné osobní číslo dárce (zjistí se v Evidenci), jen do prvního výskytu dárce";
+            správné osobní číslo dárce (zjistí se v Evidenci), jen do prvního výskytu dárce<br><br>";
   if ( $prblm1 ) $html.= "<h3>Nejednoznačná jména v rámci evidence YS</h3>$prblm1$reseni";
   if ( $prblm2 ) $html.= "<h3>Neznámá jména v rámci evidence YS</h3>$prblm2$reseni";
   if ( $prblm3 ) $html.= "<h3>Ručně napsaná potvrzení</h3>$prblm3";
@@ -10655,11 +10662,12 @@ function ucet_potv($par,$access) { trace();
     query("DELETE FROM dar WHERE YEAR(dat_od)=$rok AND zpusob='u'");
     // zápis zjištěných darů
     $n= 0;
-    foreach ($darce as $id=>$dary) {
+    foreach ($darce as $ido=>$dary) {
+      $ido= $dary->ido;
       $data= implode(', ',$dary->data)." $rok";
       $pars= ezer_json_encode((object)array('data'=>$data));
       $oki= query("INSERT INTO dar (access,id_osoba,ukon,zpusob,castka,dat_od,note,pars)
-        VALUES ($access,$id,'d','u',{$dary->castka},'$rok-12-31','daňové potvrzení','$pars')");
+        VALUES ($access,$ido,'d','u',{$dary->castka},'$rok-12-31','daňové potvrzení','$pars')");
       $n+= $oki ? mysql_affected_rows () : 0;
     }
     $html.= "<br><br>vloženo $n dárců k potvrzování za rok $rok";
@@ -10677,7 +10685,7 @@ function ucet_potv($par,$access) { trace();
       if ( $castka2==$castka1 ) {
         $n1++;
       }
-      elseif ( $id_dar && $castka2 >= 400 ) {
+      elseif ( $id_dar && $castka2 >= 500 ) {
         $pars= ezer_json_encode((object)array('data'=>$data,'bylo'=>$castka1));
                                         display("{$dary->jmeno} $castka1 - $castka2");
         $oku= query("UPDATE dar
@@ -10685,16 +10693,17 @@ function ucet_potv($par,$access) { trace();
           WHERE id_dar=$id_dar");
         $n2+= $oku ? mysql_affected_rows () : 0;
       }
-      elseif ( !$id_dar && $castka2 >= 400 ) {
+      elseif ( !$id_dar && $castka2 >= 500 ) {
+        $ido= $dary->ido;
         $oki= query("INSERT INTO dar (id_osoba,ukon,zpusob,castka,dat_od,note,pars)
-          VALUES ($id,'d','u',$castka2,'$rok-12-31','2.daňové potvrzení','$pars')");
+          VALUES ($ido,'d','u',$castka2,'$rok-12-31','2.daňové potvrzení','$pars')");
         $n4+= $oki ? mysql_affected_rows () : 0;
       }
       else {
         $n3++;
       }
     }
-    $html.= "<br><br>dárců za rok $rok: přidáno $n4, opraveno $n2, bez opravy $n1, $n3 pod 400 Kč";
+    $html.= "<br><br>dárců za rok $rok: přidáno $n4, opraveno $n2, bez opravy $n1, $n3 pod 500 Kč";
   }
 end:
   return (object)array('html'=>$html,'href'=>$href);
