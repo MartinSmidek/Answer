@@ -10530,7 +10530,7 @@ function ucet_potv($par,$access) { trace();
   $prefix= "google.visualization.Query.setResponse(";           // přefix json objektu
   $sheet= $rok;
 //   $sheet= "Test$rok";
-  $href= "<a href='https://drive.google.com/open?id=$key'>prijate_dary</a>";
+  $prijate_dary= "<a target='xls' href='https://drive.google.com/open?id=$key'>prijate_dary</a>";
   $url= "https://docs.google.com/spreadsheets/d/$key/gviz/tq?tqx=out:json&sheet=$sheet";
                                         display($url);
   $x= file_get_contents($url);
@@ -10642,7 +10642,7 @@ function ucet_potv($par,$access) { trace();
   $html.= sta2_table($tab->tits,$tab->flds,$clmn,0,2)->html;
   $html.= "<br><br>";
   $html.= sta2_excel_export("Dárci '$rok'",$tab)->html;
-  $reseni= "<br><br>doplň v intranetovém sešitu <b>$xls</b> v listu <b>$rok</b> do sloupce <b>F</b>
+  $reseni= "<br><br>doplň v intranetovém sešitu <b>$prijate_dary</b> v listu <b>$rok</b> do sloupce <b>F</b>
             správné osobní číslo dárce (zjistí se v Evidenci), jen do prvního výskytu dárce";
   if ( $prblm1 ) $html.= "<h3>Nejednoznačná jména v rámci evidence YS</h3>$prblm1$reseni";
   if ( $prblm2 ) $html.= "<h3>Neznámá jména v rámci evidence YS</h3>$prblm2$reseni";
