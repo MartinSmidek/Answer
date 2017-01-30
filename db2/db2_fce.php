@@ -10520,7 +10520,6 @@ function ucet_potv($par,$access) { trace();
     $html.= "POZOR: přehled darů na GoogleDisk je (zatím) pouze pro Setkání";
     goto end;
   }
-  $xls= "prijate_dary";
   $max= 9999;
 //   $max= 30;
   $rok= date('Y')+$par->rok;
@@ -10531,6 +10530,7 @@ function ucet_potv($par,$access) { trace();
   $prefix= "google.visualization.Query.setResponse(";           // přefix json objektu
   $sheet= $rok;
 //   $sheet= "Test$rok";
+  $href= "<a href='https://drive.google.com/open?id=$key'>prijate_dary</a>";
   $url= "https://docs.google.com/spreadsheets/d/$key/gviz/tq?tqx=out:json&sheet=$sheet";
                                         display($url);
   $x= file_get_contents($url);

@@ -100,7 +100,7 @@ kEzer-ys2
 			ezer2.2\ezer2.pers.ezer
 			ezer2.2\ezer2.syst.ezer
 			ezer2.2\ezer2_fce.php
-		-server
+		+server
 			ezer2.2\server\ae_slib.php
 			ezer2.2\comp.css
 			ezer2.2\comp.php
@@ -128,11 +128,12 @@ kEzer-ys2
 7=sql\answer_dotazy.sql
 8=db2\db2.akce2.pece.ezer
 9=db2\db2.akce2.elim.ezer
+10=ezer2.2\server\ae_slib.php
 [Selected Project Files]
 Main=
-Selected=db2\db2.akce2.evi.ezer
+Selected=db2\db2.akce2.lst.ezer
 [db2\db2_fce.php]
-TopLine=10990
+TopLine=10904
 Caret=1,10904
 Mark1=11,12099
 Mark2=1,10909
@@ -150,22 +151,24 @@ Mark3=28,791
 Mark4=14,819
 Mark5=14,826
 [db2\db2.akce2.ucast.ezer]
-TopLine=60
-Caret=38,69
+TopLine=796
+Caret=46,820
+BookMark1=25,529
 Mark1=29,1413
 Mark2=12,1241
-BookMark1=25,529
 Mark3=37,869
 Mark4=23,1181
 Mark5=3,68
+Mark6=11,40
 [db2\db2.akce2.lst.ezer]
-TopLine=106
-Caret=52,125
-Mark1=51,645
+TopLine=391
+Caret=33,407
+Mark1=51,646
 Mark2=1,55
+Mark3=7,397
 [db2\db2.akce2.evi.ezer]
 TopLine=564
-Caret=21,589
+Caret=41,577
 Mark1=29,474
 Mark2=19,246
 Mark3=50,1332
@@ -183,3 +186,6 @@ Caret=32,422
 [db2\db2.akce2.elim.ezer]
 TopLine=306
 Caret=1,338
+[ezer2.2\server\ae_slib.php]
+TopLine=1
+Caret=34,34
