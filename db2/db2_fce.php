@@ -9342,7 +9342,7 @@ function mail2_mai_potvr($druh,$o,$rok) {  //trace();
   global $ezer_path_docs, $ezer_root;
   $ret->fname= "potvrzeni_{$rok}_$id_osoba.pdf";
   $ret->fpath= "$ezer_path_docs/$ezer_root/{$ret->fname}";
-//   $dlouhe= tc_dopisy($texty,$ret->fpath,'','_user',$listu); !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+  $dlouhe= tc_dopisy($texty,$ret->fpath,'','_user',$listu);
   $ret->href= "<a href='docs/$ezer_root/{$ret->fname}' target='pdf'>{$ret->fname}</a>";
 //   $html.= " Bylo vygenerováno $listu potvrzení do $href.";
   // konec
