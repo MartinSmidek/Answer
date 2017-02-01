@@ -10553,7 +10553,6 @@ function ucet_potv($par,$access) { trace();
   $radku= count($goo->rows);
   //$radku= 300;
   for ($i= 1; $i<$radku; $i++) {
-//   for ($i= 1; $i<2; $i++) {
     $i1= $i+1;
     $grow= $goo->rows[$i]->c;
     $row= (object)array();
@@ -10562,11 +10561,11 @@ function ucet_potv($par,$access) { trace();
     $castka=    $row->c= $grow[2]->v;
     $ref=       $row->d= $grow[3]->v;
     $auto=      $row->e= $grow[4]->v;
-    $manual=    $row->f= $grow[5]->v;
+    $manual=    $row->f= $grow[5]->v=='0' ? 'O' : $grow[5]->v;
     $oprava=    $row->g= $grow[6]->v;
     $filler=    $row->h= $grow[7]->v;
     $pozn=      $row->i= $grow[8]->v;
-//                                         debug($grow,"dar=$dar_jmeno");
+//                                         debug($goo->rows[$i],"dar=$dar_jmeno");
 //                                         debug($row,"dar=$dar_jmeno");
     // transformace do $tab[]=$row
     $jmeno= substr($dar_jmeno,0,6)=='dar - ' ? substr($dar_jmeno,6) : substr($dar_jmeno,4);
@@ -10619,8 +10618,8 @@ function ucet_potv($par,$access) { trace();
       $prblm1.= ($prblm1?"<br>":'')."$i1: $datum $prijmeni $jmeno $castka ($auto)";
     }
     elseif ( $manual ) {
-      if ( $manual=='x' )
-        $prblm3.=  ($prblm3?"<br>":'')."x $dar_jmeno $castka";
+      if ( $manual=='O' )
+        $prblm3.=  ($prblm3?"<br>":'')."0 $dar_jmeno $castka";
       else {
         $jmeno_id["$prijmeni$jmeno"]= tisk2_ukaz_osobu($manual);
         $ido= $manual;
@@ -10680,10 +10679,10 @@ function ucet_potv($par,$access) { trace();
     $n_darce/$n_jmeno_id ($vic) dárců (z toho $rucne poznáno ručně),
     $malo dárců dalo méně jak $mez_daru";
   if ( count($chibi) ) $html.= "<h3>Chybně označené řádky</h3> ve sloupci D,E,F musí být aspoň
-    jeden údaj - aspoň 'x'. Týká se to řádků: ".implode(', ',$chibi);
+    jeden údaj - aspoň '0'. Týká se to řádků: ".implode(', ',$chibi);
   if ( $prblm1 ) $html.= "<h3>Nejednoznačná jména v rámci evidence YS</h3>$prblm1$reseni";
   if ( $prblm2 ) $html.= "<h3>Neznámá jména v rámci evidence YS</h3>$prblm2$reseni";
-  if ( $prblm3 ) $html.= "<h3>Ručně napsaná nebo vynechaná potvrzení</h3>$prblm3";
+  if ( $prblm3 ) $html.= "<h3>Vynechaná potvrzení (později ručně napsaná)</h3>$prblm3";
   if ( !$prblm1 && !$prblm2 ) $html.= "<h3>Ok</h3>všichni dárci byli jednoznačně identifikováni :-)";
 
   // -------------------- zápis do tabulky dar, pokud se to chce

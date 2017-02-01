@@ -91,16 +91,8 @@ proc akce_choose(id_akce) { var a:object
 proc accessed(org) {
   return(function('x','y','return x&y;',org,my_access.get));
 }
-# var spinner_depth= 0
 proc spinner(on) {
-#   [ on; spinner_depth.set(sum(spinner_depth.get,1))
-#   | spinner_depth.set(sum(spinner_depth.get,-1))
-#   ];
-#   echo("spinner=",spinner_depth.get);
-  on;
-#   spinner_depth.get;
-  [ function("$('wait_mask').setStyle('display','block'); return 1;") ];
-| [ function("$('wait_mask').setStyle('display', 'none'); return 1;") ];
+  [ function('on',"waiting(on);",on) ];
 }
 # ==========================================================================================> MODULY
 group foto { include:'onload,db2.akce2.foto'
