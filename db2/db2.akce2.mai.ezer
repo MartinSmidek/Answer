@@ -1031,7 +1031,7 @@ form _etext  {
   button novy [L+254,199,,] { tag:'n', title:'Nový', help:'vytvořit nový e-mail',
     skill:'yam|yams;fam|fams;cam|cams'
     proc onclick () {
-      { eq(my_access.get,1,2)
+      { eq(my_access.get,1,2,4)
       | confirm("Mail bude posílán účastníkům akcí Setkání i Familia. Bude tomu odpovídat text?")
       };
       form.init; drop.set(''); form_state('u|z','n|s'); drop_init;

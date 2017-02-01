@@ -79,9 +79,7 @@ menu db2 { type:'main', title:'db2', active:*, _sys:'*'
   tabs off  {title:"[fa-power-off] Odhlásit", type:'logoff' }
   // přepnutí access - refresh formulářů
   proc spinner(on) {
-    on;
-    function("$('wait_mask').setStyle('display','block'); return 1;");
-  | function("$('wait_mask').setStyle('display', 'none'); return 1;");
+    [ function('on',"waiting(on);",on) ];
   }
   proc reaccess(msg) {
     echo(msg); set_trace('E',1,'spinner,reaccess');
