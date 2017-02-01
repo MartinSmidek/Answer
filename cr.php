@@ -24,7 +24,7 @@ die(<<<__EOD
  </head>
  <body style="padding:100px">
   <div style="background-color:#cec; width:700px">
-   <div style="float:right;padding:5px;text-align:right">1.2.2017<br>na Hromnice<br>o verzi více</div>
+   <div style="float:right;padding:5px;text-align:right">1. 2. 2017<br>na Hromnice<br>o verzi více</div>
    <div style="padding:50px;">
     Vážení klienti, milí kamarádi,
     <br><br>na serveru je od začátku února 2017 podle domluvy
@@ -40,9 +40,11 @@ die(<<<__EOD
     Přeji vám dobré dny
     <br>Martin Šmídek
     <br><br>
-    <!-- button onclick="window.location.href='http://answer.setkani.org/cr2.php';">
+    <button onclick="window.location.href='http://answer.setkani.org/cr2.php';">
       Pracovat s novou verzí
-    </button -->
+    </button>
+    <br><br>P.S.: Pokud byste měli problém s přihlášením, požádejte prosím
+    <br>Vojtu, aby vám vymazal cookies a mezipaměť v prohlížeči (on bude vědět).
    </div>
   </div>
  </body>
