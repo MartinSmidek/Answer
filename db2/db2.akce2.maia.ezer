@@ -328,15 +328,18 @@ form _esady  {
     show stav1 [,,0,] { expr:'min(etm.stav)', format:'rsq' },
     show stav2 [,,0,] { expr:'max(etm.stav)', format:'rsq' },
     show pocet [,,30,] { title:'#', data:etd.pocet, format:'rs' },
-    proc onrowclick () {
+    proc onrowclick () { var old_dopis:number
+      old_dopis.set(dopis_id.get);
       eq(this.browse_count,0);
       dopis_id.set(0);
     | dopis_id.set(id_dopis.get);
       maily.browse_load(conc("etmm.id_dopis=",dopis_id.get));
-      zkus.set(sys('user','options','email'));
-      from.set(sys('user','options','email'));
-      name.set(sys('user','options','vyrizuje'));
-      davka.set(20);
+      [ eq(dopis_id.get,old_dopis)
+      | zkus.set(sys('user','options','email'));
+        from.set(sys('user','options','email'));
+        name.set(sys('user','options','vyrizuje'));
+        davka.set(20); davka.change
+      ]
     }
   }
   label [12,214,92,17] { title:'Testovací adresa:' }
