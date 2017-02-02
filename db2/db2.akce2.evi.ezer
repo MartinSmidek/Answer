@@ -1216,7 +1216,15 @@ form _cmd [,,706,32] { css:'ae_frame'
   // PŘIDAT
   button [490,6,,] {tag:'x', title:'[fa-plug] Přidat', skill:'yaa+|yaa+;faa+|faa+;caa+|caa+',
     help:'Výběr osoby z evidovaných a jeho připojení k rodině', format:'d'
-    proc onclick() { PridaniJmenem1.modal(240,50)
+    proc onclick() { var ret:object, bo: text, bh:text, br:text, bf:text
+      bo.set(lst.bo.selected('get')); bh.set(lst.bh.selected('get'));
+      br.set(lst.br.selected('get')); bf.set(lst.bf.selected('get'));
+      ret.set(ask('evid2_spoj_osoba_rodina',bo,bh,br,bf,0));
+      ret.ok; confirm(ret.msg);
+      ask('evid2_spoj_osoba_rodina',bo,bh,br,bf,1);
+      lst.bo.selected('clear'); lst.bh.selected('clear');
+      lst.br.selected('clear'); lst.bf.selected('clear')
+    | PridaniJmenem1.modal(240,50)
   } }
   // VYJMOUT
   button [554,6,,] {tag:'x', title:'[fa-plug fa-rotate-180 fa-red] Vyjmout',

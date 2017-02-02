@@ -7088,6 +7088,31 @@ function evid2_pridej_k_rodine($id_rodina,$info,$cnd='') { trace();
   }
   return $ret;
 }
+# -------------------------------------------------------------------------- evid2_spoj_osoba_rodina
+# ASK přidání do dané rodiny, pokud ještě osoba v rodině není
+# pokud idr, ido nejsou jediné klíče, vrátí ok=0
+# pro spoj = 0 vrátí otázku
+function evid2_spoj_osoba_rodina($ido1,$ido2,$idr1,$idr2,$spoj) { trace();
+  $ret= (object)array('ok'=>0,'msg'=>'');
+  $ido= $ido1 ?: $ido2;
+  $idr= $idr1 ?: $idr2;
+                                                display("ido=$ido,idr=$idr");
+  if ( !is_numeric($idr) || !is_numeric($ido) ) goto end;
+  $je= select("COUNT(*)","tvori","id_rodina=$idr AND id_osoba=$ido");
+  if ( $je ) goto end;
+  // jinak je spoj, nebo se poptej
+  $ret->ok= 1;
+  if ( $spoj ) {
+    query("INSERT INTO tvori (id_rodina,id_osoba,role) VALUE ($idr,$ido,'d')");
+  }
+  else {
+    $o= select1("concat(prijmeni,' ',jmeno,'/',id_osoba)",'osoba',"id_osoba=$ido");
+    $r= select1("concat(nazev,'/',id_rodina)",'rodina',"id_rodina=$idr");
+    $ret->msg= "Opravdu mám spojit rodinu $r a osobu $o? (role bude nastavena jako 'd' - nutno upravit)";
+  }
+end:
+  return $ret;
+}
 # ==========================================================================================> . YMCA
 # --------------------------------------------------------------------------==> .. evid2_ymca_sprava
 # správa členů pro YS
