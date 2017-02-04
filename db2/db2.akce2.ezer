@@ -119,7 +119,7 @@ panel ucast {type:'plain', _sys:'*', title:"Účastníci", include:'onload,db2.a
   proc ucast_selected() {}                      // seznam vybraných účastníků
   proc z_change() {}
 }
-panel pece {type:'plain', _sys:'*', title:'Pečouni', include:'onload,db2.akce2.pece',skill:'yaa;faa;caa'
+panel pece {type:'plain', _sys:'*', title:'Pečouni', include:'onload,db2.akce2.pece',skill:'yaa;faa;caa#crz'
   proc reaccess() {}
   proc init_pece() { alert('napřed klikni na Databáze|Pečouni') }
   proc akce_show() { alert('napřed klikni na Databáze|Pečouni') }

@@ -24,7 +24,7 @@ proc onfirstfocus() {
   page.cen_copy.selects("neměnit:0");
   zalozka.set('inf');
   // zobrazení seznamu akcí
-  [ has_skill('y;f');  m.g.sey.click
+  [ has_skill('y;f;crz');  m.g.sey.click
   | has_skill('caam'); m.c.m.click
   | has_skill('caar'); m.c.r.click
   | has_skill('a');    m.c.a.click
@@ -118,7 +118,7 @@ menu m {type:'left', format:'f+'
   # o:  omezeni  org|access
   # a:  rok=akce_roku | akce_vsechny
   # cond
-  menu c {title:'Výběr akce',type:'group',                                                 skill:'c'
+  menu c {title:'Výběr akce',type:'group',                                                 skill:'c#crz'
     // jen pro CR
     item m {title:'[MS] program Manželská setkání', skill:'caam', par:°{omez:'da2.druh IN (1,2,3,4)'} }
     item r {title:'[R] programy Rodina mimo MS',    skill:'caar', par:°{omez:'da2.druh NOT IN (1,2,3,4)'} }
@@ -128,15 +128,15 @@ menu m {type:'left', format:'f+'
         the_omezeni.set(i.par.omez);
         the_source.set('sey'); akce_roku(info.rok.get);
   } }
-  menu g {title:'Výběr akce zadaného roku',type:'group',                                 skill:'y;f'
+  menu g {title:'Výběr akce zadaného roku',type:'group',                                 skill:'y;f;crz'
     item goo {title:'[fa-google] podle číselníku akcí z intranetu',                      skill:'y'
       par:°{it:'g|r',s:'google',o:'',a:'rok'}}
     item sey {title:'[fa-search] ze seznamu všech našich akcí'
       par:°{it:'s|r',s:'sey',o:'org',a:'rok'}}
-    item {title:'[fa-search] ze seznamu všech akcí'
+    item {title:'[fa-search] ze seznamu všech akcí'                                      skill:'#crz'
       par:°{it:'s|r',s:'sey',o:'access',a:'rok'}}
   }
-  menu {title:'Výběr ze všech roků',type:'group', skill:'y;f'
+  menu {title:'Výběr ze všech roků',type:'group',                                        skill:'y;f;c'
     item sey {title:'[fa-search] ze seznamu všech akcí',    par:°{it:'s',cond:'1'} }
     item  {title:'[fa-search-plus]... opravdové akce',      par:°{it:'s',cond:'da2.spec=0'} }
     item  {title:'[fa-search-minus] ... jen různé seznamy', par:°{it:'s',cond:'da2.spec=1'} }
@@ -609,7 +609,7 @@ form _info [,,*,50] {
     lst.info.fill(conc(the_title.get,' '));
     [ ucast.call('clear_ucast2') ];
     [ has_skill('yam;fam;cam'); maia.call('init_ucast') ];
-    [ pece.call('init_pece') ];
+    [ has_skill('crz') | this.call('pece.init_pece') ]; // CRŽ
     // ošetření souběžných akcí - 0=normální akce, 1=hlavní akce, 2=souběžná akce
     [ has_skill('f'); page.soubezna.set(eq(the_soubeh.get,2)) ];
     // nastavení cookies podle organizace

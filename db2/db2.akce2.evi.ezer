@@ -42,13 +42,13 @@ var menu_title=''               // ... a název
 menu m {type:'left', format:'f-'
   menu r {title:'rodiny',type:'group', skill:'yae;fae;cae'
     item a {title:'[fa-group]všechny rodiny'    par:°{lst:'r',tit:'všechny rodiny, co ',cnd:"1"}}
-    item m {title:'[fa-send-o] podle mail-listu'par:°{lst:'m',tit:'MAILIST',cnd:'1',komu:'r'} }
+    item m {title:'[fa-send-o] podle mail-listu'par:°{lst:'m',tit:'MAILIST',cnd:'1',komu:'r'}  skill:'#crz' }
     item t {title:'[fa-wrench fa-red](test)'           par:°{lst:'r',tit:'testovací rodiny, co ',
                                                 cnd:"r.id_rodina IN (383,2287,14,3329)"},skill:'m'}
   }
   menu o {title:'osoby',type:'group', skill:'yae;fae;cae;mrop'
     item a {title:'[fa-user]všechny kontakty'   par:°{lst:'o',tit:'všechny osoby, co ',cnd:'1'}, skill:'yae;fae;cae'}
-    item m {title:'[fa-send-o] podle mail-listu'par:°{lst:'m',tit:'MAILIST',cnd:'1',komu:'o'}, skill:'yae;fae;cae' }
+    item m {title:'[fa-send-o] podle mail-listu'par:°{lst:'m',tit:'MAILIST',cnd:'1',komu:'o'}, skill:'yae;fae;cae#crz' }
     item i {title:'[fa-send-o] podle mail-listu'par:°{lst:'m',tit:'MAILIST',cnd:'1',komu:'o',ucel:'%MROP%'}, skill:'mrop'}
     item   {title:'[fa-male]muži'               par:°{lst:'o',tit:'všichni muži, co ',
                                                 cnd:"o.sex=1 AND TIMESTAMPDIFF(YEAR,narozeni,NOW())>=18"}, skill:'yae;fae;cae'}
