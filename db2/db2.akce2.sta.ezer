@@ -27,7 +27,8 @@ menu m {type:'left', format:'f+' //, active:*
     item {title:'Cesty na LK MS od roku 2005',                                       skill:'yae;fae'
       ,par:°{typ:'ms_cesty',xls:'Excel',pdf:0,od:2005
         ,dsc:'Sestava ukazuje cesty, kterými procházeli účastníci LK MS předchozími akcemi.<br>'}}
-    item {title:'Letní kurzy MS a pečovatelé'  ,par:°{typ:'ms-pecouni',rok:0,xls:'Excel',pdf:0
+    item {title:'Letní kurzy MS a pečovatelé',                                       skill:'#crz'
+      ,par:°{typ:'ms-pecouni',rok:0,xls:'Excel',pdf:0
       ,dsc:'Sestava ukazuje přehled letních kurzů s počtem rodin, jejich dětí a pečovatelů.
         <br>Je uveden počet pečovatelů, kteří se před službou účastnili školení a kolik je z toho nových pečovatelů.
         <br>V poznámce je počet pořádaných školení a poměr dětí/pečovatele.
