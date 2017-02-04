@@ -40,22 +40,23 @@ menu m {type:'left', format:'f+' //, active:*
         <br>Účastník resp. pečovatel je započítán jen jednou, bez ohledu na počet akcí, jichž se zúčastnil.<br>'
       ,tit:'věk:4,účastníků:10,pečovatelů:10',fld:'_vek,_uca,_pec',ord:'_vek'}}
   }
-  menu l {title:'SEZNAMY',type:'group',                                              skill:'yae;fae'
+  menu l {title:'SEZNAMY',type:'group',                                              skill:'yae;fae;cae'
     // přednášející
-    item {title:'přednášející LK MS'  ,par:°{typ:'prednasejici',rok:5,xls:'Excel',parm_tit:'roky zpět:'
+    item {title:'přednášející LK MS',                                                skill:'yae;fae;cae#crz'
+         ,par:°{typ:'prednasejici',rok:5,xls:'Excel',parm_tit:'roky zpět:'
       ,dsc:"Tabulka obsahuje historii přednášejících párů na letních kurzech MS. <br>Hloubku historie je třeba nastavit parametrem 'roky zpět'.<br>"
       ,tit:'',fld:'',ord:''}}
     // VPS-PPS
-    item {title:'sloužící VPS na LK MS (páry)'                                       skill:'yae;fae'
+    item {title:'sloužící VPS na LK MS (páry)'                                       skill:'yae;fae;cae#crz'
          ,par:°{typ:'slouzici',podtyp:'pary',xls:'Excel',parm_tit:'roky zpět:'
           ,dsc:"Tabulka obsahuje historii sloužících párů na letních kurzech MS. <br>Poslední rok služby VPS je třeba nastavit parametrem 'roky zpět'.<br>"
       ,tit:'',fld:'',ord:''}}
-    item {title:' ... sloužící VPS/PPS (jednotlivci)'                                skill:'yae;fae'
+    item {title:' ... sloužící VPS/PPS (jednotlivci)'                                skill:'yae;fae;cae#crz'
          ,par:°{typ:'slouzici',podtyp:'osoby',xls:'Excel',parm_tit:'roky zpět:'
           ,dsc:"Tabulka obsahuje historii sloužících párů na letních kurzech MS. <br>Poslední rok služby VPS je třeba nastavit parametrem 'roky zpět'.<br>"
       ,tit:'',fld:'',ord:''}}
     // pečouni
-    item {title:'pečovatelé na LK MS'                                                skill:'yae;fae'
+    item {title:'pečovatelé na LK MS'                                                skill:'yae;fae;cae#crz'
          ,par:°{typ:'pecujici',rok:5,xls:'Excel',parm_tit:'roky zpět:'
           ,dsc:"Tabulka obsahuje historii pečovatelů na letních kurzech MS. <br>Poslední rok pečovatele je třeba nastavit parametrem 'roky zpět'.<br>1.školení je rok první účasti na akci typu 'pečovatelé'.<br>"
       ,tit:'',fld:'',ord:''}}
