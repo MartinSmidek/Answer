@@ -13,8 +13,13 @@ FileFormat=0
 ProjectFilesOnly=0
 [Project tree]
 kEzer-ys2
+	-skins
+	+crz
+		crz\$.ezer
+		crz.inc.php
+		crz.php
 	+cr2
-		-cr (old)
+		+cr (old)
 			cr.inc.php
 			cr.php
 		cr2\$.ezer
@@ -26,8 +31,8 @@ kEzer-ys2
 		..\..\Apache\bin\apache\apache2.4.9\conf\extra\httpd-vhosts-ezer.conf
 	-poznámky
 		sql\answer_dotazy.sql
-	-$
-		-skins
+	+$
+		+skins
 			skins\ck\ck.ezer.css
 			skins\colors.php
 			skins\db\db.ezer.css
@@ -42,7 +47,7 @@ kEzer-ys2
 		db2_test.php
 		index.php
 		robots.txt
-	-db2
+	+db2
 		-$ test
 			db2_test\$.ezer
 		+$
@@ -72,7 +77,7 @@ kEzer-ys2
 			db2\db2.pok.ezer
 		-ekonomika
 	+ezer2.2
-		+client
+		-client
 			ezer2.2\client\_code.js
 			ezer2.2\client\_test.html
 			ezer2.2\client\app.js
@@ -85,7 +90,7 @@ kEzer-ys2
 			ezer2.2\client\licensed\fancyupload.css
 			ezer2.2\client\licensed\fancyupload.js
 			ezer2.2\client\lib.js
-		+client f
+		-client f
 			ezer2.2\client\android.css
 			ezer2.2\client\appf.css
 			dbg.html
@@ -100,7 +105,7 @@ kEzer-ys2
 			ezer2.2\ezer2.pers.ezer
 			ezer2.2\ezer2.syst.ezer
 			ezer2.2\ezer2_fce.php
-		-server
+		+server
 			ezer2.2\server\ae_slib.php
 			ezer2.2\comp.css
 			ezer2.2\comp.php
@@ -140,25 +145,40 @@ kEzer-ys2
 19=cr.inc.php
 20=cr2.php
 21=ezer2.2\client\ezer_fdom2.js
+22=cr.php
+23=answer.php
+24=answer.inc.php
+25=db2.php
+26=ys.php
+27=db2\db2.akce2.maia.ezer
+28=crz\$.ezer
+29=crz.inc.php
+30=crz.php
+31=skins\ck\ck.ezer.css
+32=skins\db\db.ezer.css
+33=skins\ch\ch.ezer.css
+34=ezer2.2\server\ezer2.php
+35=ezer2.2\client\ezer_fdom1.js
+36=ezer2.2\ezer2_fce.php
 [Selected Project Files]
 Main=
-Selected=cr2.inc.php
+Selected=answer.inc.php
 [db2\db2_fce.php]
-TopLine=12118
-Caret=1,12120
-BookMark1=18,10517
-Mark1=11,12137
-Mark2=1,10947
-Mark3=1,11077
-Mark4=1,11215
-Mark5=26,10603
-Mark6=84,10581
+TopLine=7728
+Caret=19,7760
+BookMark1=18,10542
+Mark1=11,12162
+Mark2=1,10972
+Mark3=1,11102
+Mark4=1,11240
+Mark5=26,10628
+Mark6=84,10606
 [cr2\$.ezer]
-TopLine=11
-Caret=45,36
+TopLine=124
+Caret=1,149
 [db2\db2.akce2.ezer]
-TopLine=66
-Caret=29,90
+TopLine=200
+Caret=29,232
 Mark1=1,835
 Mark2=21,781
 Mark3=28,783
@@ -181,19 +201,20 @@ Mark1=51,646
 Mark2=1,55
 Mark3=7,397
 [db2\db2.akce2.evi.ezer]
-TopLine=564
-Caret=41,577
+TopLine=1192
+Caret=28,1226
+BookMark1=14,1220
 Mark1=29,474
 Mark2=19,246
-Mark3=50,1332
+Mark3=50,1340
 Mark4=1,544
-Mark5=44,1392
+Mark5=44,1400
 [db2\db2.akce2.foto.ezer]
 TopLine=3
 Caret=46,42
 [sql\answer_dotazy.sql]
-TopLine=5
-Caret=73,19
+TopLine=1
+Caret=33,18
 [db2\db2.akce2.pece.ezer]
 TopLine=390
 Caret=32,422
@@ -201,26 +222,27 @@ Caret=32,422
 TopLine=306
 Caret=1,338
 [ezer2.2\server\ae_slib.php]
-TopLine=536
-Caret=40,592
+TopLine=68
+Caret=66,82
 [db2\db2.akce2.dop.ezer]
 TopLine=5
 Caret=1,25
 [db2\db2.akce2.mai.ezer]
-TopLine=689
-Caret=1,703
+TopLine=1163
+Caret=1,1193
+BookMark1=7,1192
 [ezer2.2\client\app.js]
 TopLine=285
 Caret=43,288
 [ezer2.2\client\ezer.js]
-TopLine=1
-Caret=1,1
+TopLine=4805
+Caret=30,4810
 [ezer2.2\client\lib.js]
 TopLine=217
-Caret=23,241
+Caret=55,246
 [db2\$.ezer]
-TopLine=35
-Caret=1,80
+TopLine=137
+Caret=1,163
 [ezer2.2\server\file_send.php]
 TopLine=1
 Caret=1,1
@@ -232,7 +254,53 @@ TopLine=1
 Caret=1,1
 [cr2.php]
 TopLine=1
-Caret=37,41
+Caret=79,14
 [ezer2.2\client\ezer_fdom2.js]
 TopLine=186
 Caret=1,188
+[cr.php]
+TopLine=1
+Caret=52,42
+[answer.php]
+TopLine=1
+Caret=50,24
+[answer.inc.php]
+TopLine=29
+Caret=75,47
+[db2.php]
+TopLine=1
+Caret=67,22
+[ys.php]
+TopLine=33
+Caret=1,54
+[db2\db2.akce2.maia.ezer]
+TopLine=293
+Caret=15,312
+[crz\$.ezer]
+TopLine=117
+Caret=1,149
+[crz.inc.php]
+TopLine=1
+Caret=103,6
+[crz.php]
+TopLine=1
+Caret=73,39
+[skins\ck\ck.ezer.css]
+TopLine=494
+Caret=1,494
+[skins\db\db.ezer.css]
+TopLine=1
+Caret=1,1
+[skins\ch\ch.ezer.css]
+TopLine=522
+Caret=64,534
+[ezer2.2\server\ezer2.php]
+TopLine=88
+Caret=63,112
+BookMark2=1,2086
+[ezer2.2\client\ezer_fdom1.js]
+TopLine=824
+Caret=11,855
+[ezer2.2\ezer2_fce.php]
+TopLine=1
+Caret=1,30

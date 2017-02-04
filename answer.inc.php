@@ -39,14 +39,28 @@ function answer_ini($app,$answer_db,$dbs_plus,$php_lib,$ezer_mod=array()) {
   // ošetření běhu s testovací databází
   $answer_dbx= substr($app,-5)=='_test' ? "{$answer_db}_test" : $answer_db;
 
+  // ošetření serveru ado.cz pro Centrum pro rodinný život
+  $ezer_answer= 'ezer_answer';
+  $ezer_kernel= 'ezer_kernel';
+  $host= 'localhost';
+  $name= 'gandi';
+  $pass= 'pr0gl8s';
+  if ( $server_name=='casopisrz.ado.cz' ) {
+    $answer_dbx=  'adocz03';
+    $ezer_answer= 'adocz03';
+    $ezer_kernel= 'adocz02';
+    $host= '127.0.0.1';
+    $name= 'adocz002';
+    $pass= 'LxUfz@n35Z33';
+  }
   // databáze s první hodnotou pro server a druhou (případně) pro local
   $db= array($answer_db,$answer_db);
   $dbs= array(
     array_merge(array( /* ostré */
-      $answer_db =>     array(0,'localhost','gandi','r8d0st','utf8',$answer_dbx),
-      'ezer_system' =>  array(0,'localhost','gandi','r8d0st','utf8',$answer_dbx),
-      'ezer_group'  =>  array(0,'localhost','gandi','r8d0st','utf8','ezer_answer'), // $_SESSION[$app]['group_db']
-      'ezer_kernel' =>  array(0,'localhost','gandi','r8d0st','utf8')                // sys('options','group_db')
+      $answer_db =>     array(0,$host,$name,$pass,'utf8',$answer_dbx),
+      'ezer_system' =>  array(0,$host,$name,$pass,'utf8',$answer_dbx),
+      'ezer_group'  =>  array(0,$host,$name,$pass,'utf8',$ezer_answer), // $_SESSION[$app]['group_db']
+      'ezer_kernel' =>  array(0,$host,$name,$pass,'utf8',$ezer_kernel)  // sys('options','group_db')
     ), $dbs_plus[0]),
     array_merge(array( /* lokální */
       $answer_db =>     array(0,'localhost','gandi','','utf8',$answer_dbx),

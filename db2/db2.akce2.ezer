@@ -229,7 +229,7 @@ table _track { key_id:'id_track'
   text old { help:'původní hodnota' },
   text val { help:'nová hodnota' },
 }
-table psc_axy { key_id:'psc', db:'uir_adr'
+table psc_axy { key_id:'psc'
   text psc
   number lat
   number lng

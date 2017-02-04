@@ -21,7 +21,7 @@ function answer_php($app,$app_name,$db_name,$skin,$js_lib,$css_lib,$options) {
   $title_flag=  $ezer_local ? 'lokální ' : '';
   $CKEditor= isset($_GET['editor']) ? $_GET['editor'] : '4';
   $dbg=      isset($_GET['dbg']) ? $_GET['dbg'] : 0;
-  $gmap=     isset($_GET['gmap']) ? true : !$ezer_local;
+  $gmap=     isset($_GET['gmap']) ? $_GET['gmap'] : !$ezer_local;
   $awesome=  isset($_GET['awesome']) ? $_GET['awesome'] : 3;
   $EZER= (object)array();
 

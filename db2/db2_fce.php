@@ -7369,7 +7369,7 @@ function evid2_browse_mailist($x) {
     $zz= array();
     # získej pozice PSČ
     $lat= $lng= array();
-    $qs= "SELECT psc,lat,lng FROM uir_adr.psc_axy GROUP BY psc";
+    $qs= "SELECT psc,lat,lng FROM psc_axy GROUP BY psc";
     $rs= mysql_qry($qs);
     while ( $rs && ($s= mysql_fetch_object($rs)) ) {
       $psc= $s->psc;
@@ -7549,7 +7549,7 @@ function mapa2_psc($psc,$obec) {
   foreach ($psc as $p=>$tit) {
     $p= trim($p);
     if ( preg_match('/\d\d\d\d\d/',$p) ) {
-      $qs= "SELECT psc,lat,lng FROM uir_adr.psc_axy WHERE psc='$p'";
+      $qs= "SELECT psc,lat,lng FROM psc_axy WHERE psc='$p'";
       $rs= mysql_qry($qs);
       if ( $rs && ($s= mysql_fetch_object($rs)) ) {
         $n++;
@@ -7594,7 +7594,7 @@ function mapa2_ctverec_o($ido,$dist) {  trace();
         FROM osoba AS o
         LEFT JOIN tvori AS t USING (id_osoba)
         LEFT JOIN rodina AS r USING (id_rodina)
-        LEFT JOIN uir_adr.psc_axy AS a ON a.psc=IF(o.adresa,o.psc,r.psc)
+        LEFT JOIN psc_axy AS a ON a.psc=IF(o.adresa,o.psc,r.psc)
         WHERE id_osoba=$ido";
   $rc= mysql_qry($qc);
   if ( $rc && $c= mysql_fetch_object($rc) ) {
@@ -7623,7 +7623,7 @@ function mapa2_ctverec_r($ido,$dist) {  trace();
   $lat0= $lng0= 0;
   $qc= "SELECT lat,lng
         FROM rodina AS r USING (id_rodina)
-        LEFT JOIN uir_adr.psc_axy AS a ON a.psc=r.psc
+        LEFT JOIN psc_axy AS a ON a.psc=r.psc
         WHERE id_rodina=$ido";
   $rc= mysql_qry($qc);
   if ( $rc && $c= mysql_fetch_object($rc) ) {
@@ -7658,7 +7658,7 @@ function mapa2_ve_ctverci_o($rect,$ids,$max=5000) { trace();
         FROM osoba AS o
         LEFT JOIN tvori AS t USING (id_osoba)
         LEFT JOIN rodina AS r USING (id_rodina)
-        LEFT JOIN uir_adr.psc_axy AS a ON a.psc=IF(o.adresa,o.psc,r.psc)
+        LEFT JOIN psc_axy AS a ON a.psc=IF(o.adresa,o.psc,r.psc)
         WHERE id_osoba IN ($ids) AND $poloha ";
   $ro= mysql_qry($qo);
   if ( $ro ) {
@@ -7694,7 +7694,7 @@ function mapa2_ve_ctverci_r($rect,$ids,$max=5000) { trace();
   }
   $qo= "SELECT id_rodina, lat, lng
         FROM rodina AS r
-        LEFT JOIN uir_adr.psc_axy AS a ON a.psc=r.psc
+        LEFT JOIN psc_axy AS a ON a.psc=r.psc
         WHERE id_rodina IN ($ids) AND $poloha ";
   $ro= mysql_qry($qo);
   if ( $ro ) {
@@ -7726,7 +7726,7 @@ function mapa2_mimo_ctverec_o($rect,$ids,$max=5000) { trace();
         FROM osoba AS o
         LEFT JOIN tvori AS t USING (id_osoba)
         LEFT JOIN rodina AS r USING (id_rodina)
-        LEFT JOIN uir_adr.psc_axy AS a ON a.psc=IF(o.adresa,o.psc,r.psc)
+        LEFT JOIN psc_axy AS a ON a.psc=IF(o.adresa,o.psc,r.psc)
         WHERE id_osoba IN ($ids)
           AND NOT (lat BETWEEN $se[0] AND $nw[0] AND lng BETWEEN $se[1] AND $nw[1]) ";
   $ro= mysql_qry($qo);
@@ -7757,7 +7757,7 @@ function mapa2_mimo_ctverec_r($rect,$ids,$max=5000) { trace();
   $nw= explode(',',$nwll);
   $qo= "SELECT id_rodina, lat, lng
         FROM rodina AS r
-        LEFT JOIN uir_adr.psc_axy AS a ON a.psc=r.psc
+        LEFT JOIN psc_axy AS a ON a.psc=r.psc
         WHERE id_rodina IN ($ids)
           AND NOT (lat BETWEEN $se[0] AND $nw[0] AND lng BETWEEN $se[1] AND $nw[1]) ";
   $ro= mysql_qry($qo);
