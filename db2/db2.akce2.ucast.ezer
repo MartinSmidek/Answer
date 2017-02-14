@@ -1713,9 +1713,9 @@ panel Strava [,,320,280] {type:'popup', title:'Nestandardní počet strav - xxx'
     each(arr.get,den);
   }
   proc strava_def(strav) {
-    return(conc('0',if(eq(prvni.get,'o'),strav,'0'),strav,
+    return(conc('0',cconc(eq(prvni.get,'o'),strav,'0'),strav,
       repeat(strav,multiply(3,sum(dnu.get,-2))),
-      strav,strav,'0'))
+      strav,strav,'0'));
   }
   # přidání řádku pro i-tý den
   proc den (p,i) {
@@ -1732,7 +1732,7 @@ panel Strava [,,320,280] {type:'popup', title:'Nestandardní počet strav - xxx'
   proc strava_set(i,s,val,norm) {
     var s1:text
     s1.set(substr(s,0,1));
-    { or(and(eq(i,0),if(eq(prvni.get,'o'),eq(s1,'s'),eq(s1,'s','o')))   // první den
+    { or(and(eq(i,0),cconc(eq(prvni.get,'o'),eq(s1,'s'),eq(s1,'s','o')))   // první den
         ,and(eq(i,sum(dnu.get,-1)),eq(s1,'v')));                        // poslední den
       n.L.part(i).part(s).enable(0);
     | n.L.part(i).part(s).set(val);
