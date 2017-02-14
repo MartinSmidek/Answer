@@ -389,7 +389,11 @@ form _gsql {
         [ ids; keys.set(ask('select',"GROUP_CONCAT(data)",'_cis',conc("id_cis IN (",ids,")")))
         | keys.set(fce.get) ];
         json_akce.set(conc(json_akce.get,',"fce_keys":"',keys,'"'));
-        cond.set(conc("p.funkce IN (",keys,")")) ];
+        cond.set(conc("p.funkce IN (",keys,")"))
+      | // vyloučíme funkce znamenající neúčast - mají v číselníku ikona=1
+        ids.set(ask('select1',"GROUP_CONCAT(data)",'_cis',"druh='ms_akce_funkce' AND ikona=1"));
+        cond.set(conc("p.funkce NOT IN (",ids,")"))
+      ];
       return(cond);
     }
   }
