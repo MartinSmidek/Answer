@@ -333,12 +333,13 @@ function je_1_2_5($kolik,$tvary) {
          $kolik>1 ? "$kolik $tvar2" : (
          $kolik>0 ? "1 $tvar1"      : "0 $tvar5"));
 }
-# --------------------------------------------------------------------------- je_1_2_5
+# --------------------------------------------------------------------------- akce2 info_par
 # charakteristika účastníků z hlediska páru,
 # počítáme pouze v případě, když je definované i0_pobyt
 function akce2_info_par($ida,$idp=0,$tab_only=0) {
   $html= '';
   $typy= array('s'=>0,'as'=>0,'bs'=>0,'abs'=>0,'bas'=>0,);
+  $neucasti= select1("GROUP_CONCAT(data)",'_cis',"druh='ms_akce_funkce' AND ikona=1");
   // projdeme pobyty a vybereme role 'a' a 'b' - pokud nejsou oba, nelze nic spočítat
   $cond= $idp ? "id_pobyt=$idp " : "1";
   $rp= mysql_qry("
@@ -370,6 +371,7 @@ function akce2_info_par($ida,$idp=0,$tab_only=0) {
       JOIN spolu AS s USING (id_pobyt)
       JOIN osoba AS o USING (id_osoba)
       WHERE a.spec=0 AND s.id_osoba IN ($ids) AND YEAR(a.datum_od)-YEAR(o.narozeni)>18
+        AND p.funkce NOT IN ($neucasti)
       GROUP BY id_pobyt
       ORDER BY datum_od
     ");
@@ -1817,6 +1819,7 @@ function ucast2_browse_ask($x,$tisk=false) {
 //                                                         debug($x,"akce_browse_ask");
 //                                                         return;
   $y= (object)array('ok'=>0);
+  $neucasti= select1("GROUP_CONCAT(data)",'_cis',"druh='ms_akce_funkce' AND ikona=1");
   foreach(explode(',','cmd,rows,quiet,key_id,oldkey') as $i) $y->$i= $x->$i;
   switch ($x->cmd) {
   case 'browse_load':  # -----------------------------------==> . browse_load
@@ -1869,7 +1872,8 @@ function ucast2_browse_ask($x,$tisk=false) {
       LEFT JOIN (SELECT COUNT(*) AS _n,px.i0_rodina
         FROM pobyt AS px
         JOIN akce AS ax ON ax.id_duakce=px.id_akce
-        WHERE ax.datum_od<='{$akce->datum_od}' AND ax.druh=1
+        WHERE ax.datum_od<='{$akce->datum_od}' AND ax.druh=1 AND ax.spec=0
+          AND px.funkce NOT IN ($neucasti)
         GROUP BY  px.i0_rodina
       ) AS _ucasti ON _ucasti.i0_rodina=p.i0_rodina AND p.i0_rodina
     " : '';
