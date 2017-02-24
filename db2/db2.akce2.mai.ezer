@@ -581,7 +581,7 @@ form _gsql {
   proc akce_show() { #==> .. akce_show
     akce_ano.set(code_akce_do(L_ano,ano_akce.get,ano_akces,1,my_access.get));
     { or(ne_akce.get,L_ne.get);
-      akce_ne.set(code_akce_do(L_ne,ne_akce.get,ne_akces,0,3)); // jakákoli organizace
+      akce_ne.set(code_akce_do(L_ne,ne_akce.get,ne_akces,0,255)); // jakákoli organizace = 255
     | akce_ne.set("FALSE")
     };
     [ ctrl_akce_ne.browse_load(akce_ne.get) ];
@@ -639,7 +639,7 @@ form _gsql {
       "FROM rodina AS r",chr(10),
       "JOIN pobyt AS p ON r.id_rodina=p.i0_rodina JOIN akce AS a ON a.id_duakce=p.id_akce",chr(10),
       "JOIN tvori AS t USING (id_rodina) JOIN osoba AS o USING (id_osoba)",chr(10),
-      "WHERE r.deleted='' AND r.access&1 AND t.role IN ('a','b')",chr(10),
+      "WHERE r.deleted='' AND r.access&",my_access.get," AND t.role IN ('a','b')",chr(10),
       "GROUP BY id_rodina HAVING _ne=0 AND FIND_IN_SET('a',_role) AND FIND_IN_SET('b',_role)",chr(10),
       ") AS r2 ON _idr=r.id_rodina",chr(10),
       "-- ---------------- výběr osob - účastníků nastavených akcí ",chr(10),
