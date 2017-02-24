@@ -47,7 +47,7 @@ function answer_ini($app,$answer_db,$dbs_plus,$php_lib,$ezer_mod=array()) {
   $pass= 'pr0gl8s';
   if ( $server_name=='casopisrz.ado.cz' ) {
     $answer_dbx=  'adocz03';
-    $ezer_answer= 'adocz03';
+    $ezer_answer= 'adocz04';
     $ezer_kernel= 'adocz02';
     $host= '127.0.0.1';
     $name= 'adocz002';
