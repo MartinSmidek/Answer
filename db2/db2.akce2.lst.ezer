@@ -49,7 +49,7 @@ proc reaccess() { #==> . reaccess - změna
   # přenastav pracovní akci podle my_org
   { eq(my_org.get,1);
     akce_work(the_akce_ys.get)
-  | eq(my_org.get,2);
+  | eq(my_org.get,2,4);
     akce_work(the_akce_fa.get)
   | akce_work(the_duakce.get)
   };
@@ -297,7 +297,7 @@ form _page [,,275,360] {
         }
       | alert("Nemáš oprávnění vytvořit novou akci (kontaktuj administrátora např. Martina)")
       }
-    | eq(my_org.get,2);
+    | eq(my_org.get,2,4);
       // Familia
       form.init; access.set(2); access.change; info.sey.blur(1)
   } }
