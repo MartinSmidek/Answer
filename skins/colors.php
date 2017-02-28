@@ -7,6 +7,7 @@ global $skin, $path, $c, $b, $ab, $c_appl,
   $b_brow, $b2_brow, $b3_brow, $b4_brow, $b5_brow, $b6_brow, $c_brow, $s1_brow, $s2_brow,
   $c_kuk, $c2_kuk, $b_kuk, $s_kuk, $b_doc_modul, $b_doc_menu, $b_doc_form;
 # c_=color, b_=background-color, a?_=aktivní, f?_=focus, s_=speciál
+  $path_img= "../../skins/img";                   // cesta k obecným background-image
 switch ($skin) {
 case 'db': // --------------------------------------------------------- db: barvy společného Answeru
   $path= "../../skins/$skin";                     // cesta k background-image
