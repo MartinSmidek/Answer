@@ -692,11 +692,11 @@ form _page {
   }
   # ==============================================> . kontextové menu
   menu ctx { type:'context', join:frame, skill:'yae;fae;cae'
-    item { title:'sjednotit kopie osob', skill:'fad|fad;yad|yad'
+    item { title:'sjednotit kopie osob', skill:'fad|fad;yad|yad;cad|cad'
       proc onclick () { elim.osoby(ido.get,oso.jmeno.get,oso.prijmeni.get); }} //lst.refresh2 } }
-    item { title:'sjednotit kopie rodin', skill:'fad|fad;yad|yad'
+    item { title:'sjednotit kopie rodin', skill:'fad|fad;yad|yad;cad|cad'
       proc onclick () { elim.rodiny(idr.get,rod.rodiny.get); }} // lst.refresh2 } }
-    item { title:'sjednotit kopie členů rodiny', skill:'fad|fad;yad|yad'
+    item { title:'sjednotit kopie členů rodiny', skill:'fad|fad;yad|yad;cad|cad'
       proc onclick () { idr.get; elim.cleni(idr.get); }} //lst.refresh2 } }
     item { title:'-zvýrazňovat změněné údaje'  proc onclick () { evi_barvit_zmeny.set(1)} }
     item { title:'nezvýrazňovat změněné údaje' proc onclick () { evi_barvit_zmeny.set(0)} }
