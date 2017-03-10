@@ -3082,8 +3082,10 @@ function ucast2_rodina_access($idr,$access) {
 # ASK přidání rodinného pobytu do akce (pokud ještě nebyla rodina přidána)
 function ucast2_pridej_rodinu($id_akce,$id_rodina) { trace();
   $ret= (object)array('idp'=>0,'msg'=>'');
+  // kontrola definice rodiny
+  if ( !$id_rodina ) { $ret->msg= "Nelze přidat pobyt neznámé rodiny"; goto end; }
   // kontrola nepřítomnosti
-  $jsou= select1('COUNT(*)','pobyt',"id_akce=$id_akce AND i0_rodina=$id_rodina");
+  $jsou= select1('COUNT(*)','pobyt',"id_akce=$id_akce AND i0_rodina='$id_rodina'");
   if ( $jsou ) { // už jsou na akci
     $ret->msg= "... rodina již je přihlášena na akci";
   }
