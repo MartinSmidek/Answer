@@ -1,6 +1,6 @@
 <?php # (c) 2009-2015 Martin Smidek <martin@smidek.eu>
 /** ======================================================================================> POKLADNA **/
-# ---------------------------------------------------------------------------------- pipe_pdenik_typ
+# ---------------------------------------------------------------------------------- pipe pdenik_typ
 // 0=V 1=P
 function pipe_pdenik_typ ($x,$save=0) {
   if ( $save ) {     // převeď zobrazení na uložení
@@ -11,7 +11,7 @@ function pipe_pdenik_typ ($x,$save=0) {
   }
   return $z;
 }
-# ---------------------------------------------------------------------------------- p_pdenik_insert
+# ---------------------------------------------------------------------------------- p pdenik_insert
 # form_make
 # $cislo==0 způsobí nalezení nového čísla dokladu
 function p_pdenik_insert($typ,$org,$org_abbr,$datum) {
@@ -41,7 +41,7 @@ function p_pdenik_insert($typ,$org,$org_abbr,$datum) {
     $y->key= mysql_insert_id();
   }
 }
-# ----------------------------------------------------------------------------------- kasa_menu_show
+# ----------------------------------------------------------------------------------- kasa menu_show
 # ki - menu
 # $cond = podmínka pro pdenik nastavená ve fis_kasa.ezer
 # $day =  má formát d.m.yyyy
@@ -84,7 +84,7 @@ function kasa_menu_show($k1,$k2,$k3,$cond=1,$day='',$db='ezer_db2') {
   $html.= "</div>";
   return $html;
 }
-# -------------------------------------------------------------------------------------- kasa_export
+# -------------------------------------------------------------------------------------- kasa export
 function kasa_export($cond,$file,$db) {
                                                 display("kasa_export($cond,$file)");
   global $ezer_path_serv, $ezer_path_docs;
@@ -152,7 +152,7 @@ function kasa_export($cond,$file,$db) {
   $html.= "Byl vygenerován soubor pro Excel: <a href='docs/$table'>$table</a>";
   return $html;
 }
-# ----------------------------------------------------------------------------------- kasa_menu_comp
+# ----------------------------------------------------------------------------------- kasa menu_comp
 function kasa_menu_comp($cond,$db) {
   $celkem= 0;
   $html= "<table>";
@@ -175,7 +175,7 @@ function kasa_menu_comp($cond,$db) {
   return $html;
 }
 /** ===========================================================================================> DŮM **/
-# ---------------------------------------------------------------------------------- ds_compare_list
+# ---------------------------------------------------------------------------------- ds compare_list
 function ds_compare_list($orders) {  #trace('','win1250');
   $errs= 0;
   $html= "<dl>";
@@ -195,7 +195,7 @@ function ds_compare_list($orders) {  #trace('','win1250');
   $result= (object)array('html'=>$html,'msg'=>/*w*u*/($msg));
   return $result;
 }
-# --------------------------------------------------------------------------------------- ds_compare
+# --------------------------------------------------------------------------------------- ds compare
 function ds_compare($order) {  #trace('','win1250');
   ezer_connect('setkani');
   // údaje z objednávky
@@ -244,7 +244,7 @@ function ds_compare($order) {  #trace('','win1250');
   return $result;
 }
 # ===========================================================================================> hosté
-# -------------------------------------------------------------------------------------- ds_kli_menu
+# -------------------------------------------------------------------------------------- ds kli_menu
 # vygeneruje menu pro loňský, letošní a příští rok ve tvaru objektu pro ezer2 pro zobrazení klientů
 # určující je datum zahájení pobytu v objednávce
 function ds_kli_menu() {
@@ -301,7 +301,7 @@ function ds_kli_menu() {
   return $result;
 }
 # ======================================================================================> objednávky
-# ------------------------------------------------------------------------------------ ds_rooms_help
+# ------------------------------------------------------------------------------------ ds rooms_help
 # vrátí popis pokojů
 function ds_rooms_help($version=1) {
   $hlp= array();
@@ -316,7 +316,7 @@ function ds_rooms_help($version=1) {
 //                                                         debug($hlp);
   return $hlp;
 }
-# -------------------------------------------------------------------------------------- ds_cen_menu
+# -------------------------------------------------------------------------------------- ds cen_menu
 # vygeneruje menu pro loňský, letošní a příští rok ve tvaru objektu pro menu.group
 # ve tvaru item {title:'2016',par:°{rok:'2016'} }
 function ds_cen_menu($tit='Ceny roku') {
@@ -337,7 +337,7 @@ function ds_cen_menu($tit='Ceny roku') {
   $result= (object)array('th'=>$the,'cd'=>$mn);
   return $result;
 }
-# -------------------------------------------------------------------------------------- ds_obj_menu
+# -------------------------------------------------------------------------------------- ds obj_menu
 # vygeneruje menu pro loňský, letošní a příští rok ve tvaru objektu pro ezer2 pro zobrazení objednávek
 # určující je datum zahájení pobytu v objednávce
 function ds_obj_menu() {
@@ -352,7 +352,7 @@ function ds_obj_menu() {
   $start= date('m') <= 6 ? date('Y')-1 : date('Y');
   $ted= date('Ym');
   ezer_connect('setkani');
-  for ($y= 0; $y<=1; $y++) {
+  for ($y= 0; $y<=2; $y++) {
     for ($m= 1; $m<=12; $m++) {
       $mm= sprintf('%02d',$m);
       $yyyy= $start+$y;
@@ -553,7 +553,7 @@ function klienti($id_osoba) {  #trace('','win1250');
   return $rod;
 }
 # ============================================================================================> ceny
-# ------------------------------------------------------------------------------------- ds_xls_hoste
+# ------------------------------------------------------------------------------------- ds xls_hoste
 # kopie ceníku
 # par:
 #   .op='kopie'
@@ -592,7 +592,7 @@ function ds_ceny_uprava($par) { trace('','win1250');
   return $html;
 }
 # =========================================================================================> exporty
-# ------------------------------------------------------------------------------------- ds_xls_hoste
+# ------------------------------------------------------------------------------------- ds xls_hoste
 # definice Excelovského listu - seznam hostů
 function ds_xls_hoste($orders,$mesic_rok) {  #trace('','win1250');
   $x= ds_hoste($orders,substr($mesic_rok,-4));
@@ -633,7 +633,7 @@ __XLS;
     $html= " Byl vygenerován seznam hostů ve formátu <a href='docs/$name.xls' target='xls'>Excel</a>.";
   return /*w*u*/($html);
 }
-# ----------------------------------------------------------------------------------------- ds_hoste
+# ----------------------------------------------------------------------------------------- ds hoste
 # vytvoří seznam hostů
 # ceník beer podle předaného roku
 # {table:id,obdobi:str,hoste:[[jmeno,prijmeni,adresa,narozeni,telefon,email,termin,poplatek]...]}
@@ -692,7 +692,7 @@ function ds_hoste($orders,$rok) {  #trace('','win1250');
 }
 # ================================================================================> zálohová faktura
 # ASK
-# ------------------------------------------------------------------------------------ ds_xls_zaloha
+# ------------------------------------------------------------------------------------ ds xls_zaloha
 # definice Excelovského listu - zálohové faktury
 function ds_xls_zaloha($order) {  trace();//'','win1250');
   global $ezer_path_serv;
@@ -720,7 +720,7 @@ function ds_xls_zaloha($order) {  trace();//'','win1250');
 end:
   return $html;
 }
-# ---------------------------------------------------------------------------------------- ds_zaloha
+# ---------------------------------------------------------------------------------------- ds zaloha
 # data zálohové faktury
 # {objednavka:n,
 #  platce:[nazev,adresa,telefon,ic]
@@ -785,7 +785,7 @@ end:
   return $x;
 }
 # =================================================================================> konečná faktura
-# ----------------------------------------------------------------------------------- ds_xls_faktury
+# ----------------------------------------------------------------------------------- ds xls_faktury
 # ASK
 # definice Excelovského listu - faktury podle seznamu účastníků
 # položka,počet osob,počet nocí,počet nocolůžek,cena jednotková,celkem,DPH 9%,DPH 19%,základ
@@ -1019,7 +1019,7 @@ __XLS;
 end:
   return /*w*u*/($html);
 }
-# --------------------------------------------------------------------------------------- ds_faktury
+# --------------------------------------------------------------------------------------- ds faktury
 # podklady ke konečné fakturaci
 # {platce:[ic,dic,adresa,akce],faktury:[[rodina,počet,sleva]...],rodiny:[<host>...],<ceník>,<chyby>}
 #    <host> :: {host:[jmeno,prijmeni,adresa1,adresa2,narozeni,vek,telefon,email,od,do,<ubyt>],
@@ -1161,7 +1161,7 @@ end:
   return $x;
 }
 # ==================================================================================> faktura obecně
-# -------------------------------------------------------------------------------- ds_rozpis_faktura
+# -------------------------------------------------------------------------------- ds rozpis_faktura
 # definice faktury
 # typ = Zálohová | ''
 # zaloha = 0..100  -- pokud je 100 negeneruje se řádek Záloha ...
@@ -1353,7 +1353,7 @@ __XLS;
 __XLS;
   return $xls;
 }
-# --------------------------------------------------------------------------------------- ds_faktura
+# --------------------------------------------------------------------------------------- ds faktura
 # definice faktury
 # typ = Zálohová | ''
 # zaloha = 0..100  -- pokud je 100 negeneruje se řádek Záloha ...
@@ -1493,7 +1493,7 @@ __XLS;
 __XLS;
   return $xls;
 }
-# ----------------------------------------------------------------------------------------- ds_cenik
+# ----------------------------------------------------------------------------------------- ds cenik
 # načtení ceníku pro daný rok
 function ds_cenik($rok) {  #trace('','win1250');
   global $ds_cena;
@@ -1509,7 +1509,7 @@ function ds_cenik($rok) {  #trace('','win1250');
   }
 //                                                 debug($cena,'cena',(object)array('win1250'=>1));
 }
-# --------------------------------------------------------------------------------------------- ds_c
+# --------------------------------------------------------------------------------------------- ds c
 # položka faktury
 # id,pocet => název,cena,dph%,pocet
 # inuly - zapsat do faktury i nuly
@@ -1520,7 +1520,7 @@ function ds_c ($id,$pocet,$sleva='',$inuly=0) { trace();
 //   if ( $sleva ) $c[]= $sleva;
   return $c;
 }
-# ------------------------------------------------------------------------------------------- ds_vek
+# ------------------------------------------------------------------------------------------- ds vek
 # zjištění věku v době zahájení akce
 function ds_vek($narozeni,$fromday) {
   if ( $narozeni=='0000-00-00' )
