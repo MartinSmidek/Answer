@@ -6,7 +6,7 @@ $diety= array('','_bm','_bl');  // postfix položek strava_cel,cstrava_cel,strav
 $diety_= array(''=>'normal','_bm'=>'veget','_bl'=>'bezlep');
 $jidlo_= array('sc'=>'snídaně celá','sp'=>'snídaně dětská','oc'=>'oběd celý',
                'op'=>'oběd dětský','vc'=>'večeře celá','vp'=>'večeře dětská');
-# ------------------------------------------------------------------------------------- db2_rod_show
+# ------------------------------------------------------------------------------------- db2 rod_show
 # BROWSE ASK
 # načtení návrhu rodiny pro Účastníci2
 # vrátí objekt {n:int,next:bool,back:bool,css:string,rod:položky z rodina nebo null}
@@ -97,7 +97,7 @@ function db2_rod_show($nazev,$n) {
 //                                                         debug($ret,'db2_rod_show');
   return $ret;
 }
-# ------------------------------------------------------------------------------------- db2_oso_show
+# ------------------------------------------------------------------------------------- db2 oso_show
 # vrátí objekt {n:int,next:bool,back:bool,css:string,oso:položky z osoba nebo null}
 function db2_oso_show($prijmeni,$jmeno,$n) {
   $ret= (object)array('n'=>0,'next'=>0,'back'=>0,'css'=>'','oso'=>null);
@@ -127,7 +127,7 @@ function db2_oso_show($prijmeni,$jmeno,$n) {
   return $ret;
 }
 /** =========================================================================================> AKCE2 */
-# --------------------------------------------------------------------------------------- akce2_mapa
+# --------------------------------------------------------------------------------------- akce2 mapa
 # získání seznamu souřadnic bydlišť účastníků akce
 function akce2_mapa($akce) {  trace();
   // dotaz
@@ -155,7 +155,7 @@ function akce2_mapa($akce) {  trace();
 //                                         debug($psc);
   return mapa2_psc($psc,$obec); // vrací (object)array('mark'=>$marks,'n'=>$n,'err'=>$err);
 }
-# --------------------------------------------------------------------------------------- akce2_info
+# --------------------------------------------------------------------------------------- akce2 info
 # rozšířené informace o akci
 # text=1 v textové verzi, text=0 jako objekt s počty
 function akce2_info($id_akce,$text=1) { // trace();
@@ -418,7 +418,7 @@ function akce2_info_par($ida,$idp=0,$tab_only=0) {
 //                                                 debug($typy);
   return $ret;
 }
-# --------------------------------------------------------------------------------------- akce2_id2a
+# --------------------------------------------------------------------------------------- akce2 id2a
 # vrácení hodnot akce
 function akce2_id2a($id_akce) {  //trace();
   $a= (object)array('title'=>'?','cenik'=>0,'cena'=>0,'soubeh'=>0,'hlavni'=>0,'soubezna'=>0);
@@ -435,7 +435,7 @@ function akce2_id2a($id_akce) {  //trace();
 //                                                                 debug($a,$id_akce);
   return $a;
 }
-# ------------------------------------------------------------------------------ akce2_soubeh_nastav
+# ------------------------------------------------------------------------------ akce2 soubeh_nastav
 # nastavení akce jako souběžné s jinou (která musí mít stejné datumy a místo konání)
 function akce2_soubeh_nastav($id_akce,$nastavit=1) {  trace();
   $msg= "";
@@ -467,7 +467,7 @@ function akce2_soubeh_nastav($id_akce,$nastavit=1) {  trace();
 end:
   return $msg;
 }
-# ----------------------------------------------------------------------------- akce2_delete_confirm
+# ----------------------------------------------------------------------------- akce2 delete_confirm
 # dotazy před zrušením akce
 function akce2_delete_confirm($id_akce) {  trace();
   $ret= (object)array('zrusit'=>0,'ucastnici'=>'','platby'=>'');
@@ -489,7 +489,7 @@ function akce2_delete_confirm($id_akce) {  trace();
 end:
   return $ret;
 }
-# ------------------------------------------------------------------------------------- akce2_delete
+# ------------------------------------------------------------------------------------- akce2 delete
 # zrušení akce
 function akce2_delete($id_akce,$ret) {  trace();
   list($nazev)= select("nazev",'akce',"id_duakce=$id_akce");
@@ -508,7 +508,7 @@ function akce2_delete($id_akce,$ret) {  trace();
 end:
   return $msg;
 }
-# -------------------------------------------------------------------------------------- akce2_zmeny
+# -------------------------------------------------------------------------------------- akce2 zmeny
 # vrácení klíčů pobyt u kterých došlo ke změně po daném datu a čase
 function akce2_zmeny($id_akce,$h) {  trace();
   $ret= (object)array('errs'=>'','pobyt'=>'','chngs'=>array(),'osoby'=>array());
@@ -584,7 +584,7 @@ function akce_test_dite_kat($kat,$narozeni,$id_akce) {  trace();
   $ret->ok= $vek>=$od && $vek<$do ? 1 : 0;
   return $ret;
 }
-# ------------------------------------------------------------------------------- akce2_strava_denne
+# ------------------------------------------------------------------------------- akce2 strava_denne
 # vrácení výjimek z providelné stravy jako pole
 function akce2_strava_denne($od,$dnu,$cela,$polo) {  #trace('');
   $dny= array('neděle','pondělí','úterý','středa','čtvrtek','pátek','sobota');
@@ -607,7 +607,7 @@ function akce2_strava_denne($od,$dnu,$cela,$polo) {  #trace('');
 //                                                 debug($strava,"akce_strava_denne($od,$dnu,$cela,$polo) $den0");
   return $strava;
 }
-# -------------------------------------------------------------------------- akce2_strava_denne_save
+# -------------------------------------------------------------------------- akce2 strava_denne_save
 # zapsání výjimek z pravidelné stravy - pokud není výjimka zapíše prázdný string
 #   $x= ''|'_bm'|'bl'  - kód typu diety
 #   $prvni - kód první stravy na akci
@@ -634,7 +634,7 @@ function akce2_strava_denne_save($id_pobyt,$dnu,$x,
   return 1;
 }
 # ======================================================================================> . intranet
-# -------------------------------------------------------------------------------- akce2_roku_update
+# -------------------------------------------------------------------------------- akce2 roku_update
 # přečtení listu $rok (>2010) z tabulky ciselnik_akci a zapsání dat do tabulky
 # načítají se jen řádky ve kterých typ='a'
 # funguje pro "nové tabulky google" - od dubna 2015
@@ -694,7 +694,7 @@ end:
   return $n;
 }
 # ====================================================================================> . ceník akce
-# ------------------------------------------------------------------------------- akce2_confirm_mrop
+# ------------------------------------------------------------------------------- akce2 confirm_mrop
 # zjištění, zda lze účastníků akce zapsat běžný rok jako datum iniciace
 # zapsání roku iniciace účastníkům akce (write=1)
 function akce2_confirm_mrop($ida,$write=0) {  trace();
@@ -755,7 +755,7 @@ function akce2_confirm_mrop($ida,$write=0) {  trace();
 end:
   return $ret;
 }
-# ------------------------------------------------------------------------------- akce2_select_cenik
+# ------------------------------------------------------------------------------- akce2 select_cenik
 # seznam akcí s ceníkem pro select
 function akce2_select_cenik($id_akce) {  trace();
   $max_nazev= 20;
@@ -775,7 +775,7 @@ function akce2_select_cenik($id_akce) {  trace();
   }
   return $options;
 }
-# ------------------------------------------------------------------------------- akce2_change_cenik
+# ------------------------------------------------------------------------------- akce2 change_cenik
 # změnit ceník akce za vybraný
 function akce2_change_cenik($id_akce,$id_akce_vzor) {  trace();
   $err= '';
@@ -793,7 +793,7 @@ function akce2_change_cenik($id_akce,$id_akce_vzor) {  trace();
 end:
   return $err ? $err : "hotovo, nezapomeňte jej upravit (ceny,DPH)";
 }
-# --------------------------------------------------------------------------------- akce2_platby_xls
+# --------------------------------------------------------------------------------- akce2 platby_xls
 function akce2_platby_xls($id_akce) {  trace();
   $ret= (object)array('ok'=>0,'xhref'=>'','msg'=>'');
   $test= 0;
@@ -843,7 +843,7 @@ end:
 //                                                         debug($ret);
   return $ret;
 }
-# ------------------------------------------------------------------------------ akce2_pobyt_default
+# ------------------------------------------------------------------------------ akce2 pobyt_default
 # definice položek v POBYT podle počtu a věku účastníků - viz akce_vzorec_soubeh
 # 150216 při vyplnění dite_kat budou stravy počítány podle _cis/ms_akce_dite_kat.barva
 # 130522 údaje za chůvu budou připsány na rodinu chovaného dítěte
@@ -911,7 +911,7 @@ function akce2_pobyt_default($id_pobyt,$zapsat=0) {  trace();
                                                 debug($ret,"osob:$koje,$deti,$dosp $msg fce=$fce");
   return $ret;
 }
-# --------------------------------------------------------------------------------- akce2_vzorec_test
+# --------------------------------------------------------------------------------- akce2 vzorec_test
 # test výpočtu platby za pobyt na akci
 function akce2_vzorec_test($id_akce,$nu=2,$nd=0,$nk=0) {  trace();
   $ret= (object)array('navrh'=>'','err'=>'');
@@ -965,7 +965,7 @@ end:
   $ret->navrh.= $html;
   return $ret;
 }
-# ------------------------------------------------------------------------------ akce2_vzorec_soubeh
+# ------------------------------------------------------------------------------ akce2 vzorec_soubeh
 # výpočet platby za pobyt na hlavní akci, včetně platby za souběžnou akci (děti)
 # pokud je $id_pobyt=0 provede se výpočet podle dodaných hodnot (dosp+koje)
 function akce2_vzorec_soubeh($id_pobyt,$id_hlavni,$id_soubezna,$dosp=0,$deti=0,$koje=0) { trace();
@@ -1134,7 +1134,7 @@ end:
 //                                                         debug($ret,"akce_vzorec_soubeh");
   return $ret;
 }
-# -------------------------------------------------------------------------------- akce2_nacti_cenik
+# -------------------------------------------------------------------------------- akce2 nacti_cenik
 # lokální pro akce2_vzorec_soubeh a tisk2_sestava_lidi
 function akce2_nacti_cenik($id_akce,&$cenik,&$html) {
   $qa= "SELECT * FROM cenik WHERE id_akce=$id_akce ORDER BY poradi";
@@ -1154,7 +1154,7 @@ function akce2_nacti_cenik($id_akce,&$cenik,&$html) {
                                                         debug($cenik,"ceník pro $id_akce");
   }
 }
-# ------------------------------------------------------------------------------------- akce2_vzorec
+# ------------------------------------------------------------------------------------- akce2 vzorec
 # výpočet platby za pobyt na akci
 # od 130416 přidána položka CENIK.typ - pokud je 0 tak nemá vliv,
 #                                       pokud je nenulová pak se bere hodnota podle POBYT.ubytovani
@@ -2362,7 +2362,7 @@ function ucast2_flds($fstr) {
 }
 # ========================================================================================> . platby
 # záložka Platba za akci
-# -------------------------------------------------------------------------- akce2_platba_prispevek1
+# -------------------------------------------------------------------------- akce2 platba_prispevek1
 # členské příspěvky - zjištění zda jsou dospělí co jsou na pobytu členy a mají-li zaplaceno
 function akce2_platba_prispevek1($id_pobyt) {  trace();
   $ret= (object)array('msg'=>'nejsou členy','platit'=>0);
@@ -2400,7 +2400,7 @@ function akce2_platba_prispevek1($id_pobyt) {  trace();
   }
   return $ret;
 }
-# -------------------------------------------------------------------------- akce2_platba_prispevek2
+# -------------------------------------------------------------------------- akce2 platba_prispevek2
 # členské příspěvky vložení platby do dar
 function akce2_platba_prispevek2($id_pobyt) {  trace();
   $ret= (object)array('msg'=>'');
@@ -2435,7 +2435,7 @@ function akce2_platba_prispevek2($id_pobyt) {  trace();
   return $ret;
 }
 # ====================================================================================> . autoselect
-# ---------------------------------------------------------------------------------- akce2_auto_deti
+# ---------------------------------------------------------------------------------- akce2 auto_deti
 # SELECT autocomplete - výběr z dětí na akci=par->akce
 function akce2_auto_deti($patt,$par) {  #trace();
 //                                                                 debug($par,$patt);
@@ -2597,7 +2597,7 @@ function ucast2_auto_rodiny($patt,$par) {  #trace();
 //                                                                 debug($a,$patt);
   return $a;
 }
-# -------------------------------------------------------------------------------- akce2_auto_jmena1
+# -------------------------------------------------------------------------------- akce2 auto_jmena1
 # SELECT autocomplete - výběr z dospělých osob, pokud je par.deti=1 i z deti
 function akce2_auto_jmena1($patt,$par) {  #trace();
   $a= array();
@@ -2629,7 +2629,7 @@ function akce2_auto_jmena1($patt,$par) {  #trace();
 //                                                                 debug($a,$patt);
   return $a;
 }
-# ------------------------------------------------------------------------------- akce2_auto_jmena1L
+# ------------------------------------------------------------------------------- akce2 auto_jmena1L
 # formátování autocomplete
 function akce2_auto_jmena1L ($id_osoba) {  #trace();
   $osoba= array();
@@ -2650,7 +2650,7 @@ function akce2_auto_jmena1L ($id_osoba) {  #trace();
 //                                                                 debug($osoba,$id_akce);
   return $osoba;
 }
-# -------------------------------------------------------------------------------- akce2_auto_jmena3
+# -------------------------------------------------------------------------------- akce2 auto_jmena3
 # SELECT autocomplete - výběr z pečounů
 # $par->cond může obsahovat dodatečnou podmínku např. 'funkce=99' pro zúžení na pečouny
 function akce2_auto_jmena3($patt,$par) {  #trace();
@@ -2684,7 +2684,7 @@ function akce2_auto_jmena3($patt,$par) {  #trace();
 //                                                                 debug($a,$qry);
   return $a;
 }
-# ------------------------------------------------------------------------------- akce2_auto_jmena3L
+# ------------------------------------------------------------------------------- akce2 auto_jmena3L
 # formátování autocomplete
 function akce2_auto_jmena3L($id_osoba) {  #trace();
   $pecouni= array();
@@ -2700,7 +2700,7 @@ function akce2_auto_jmena3L($id_osoba) {  #trace();
 //                                                                 debug($pecouni,$id_akce);
   return $pecouni;
 }
-# --------------------------------------------------------------------------------- akce2_auto_akceL
+# --------------------------------------------------------------------------------- akce2 auto_akceL
 # formátování autocomplete
 function akce2_auto_akceL($id_akce) {  #trace();
   $pary= array();
@@ -2734,7 +2734,7 @@ function akce2_auto_akceL($id_akce) {  #trace();
 //                                                                 debug($pary,$id_akce);
   return $pary;
 }
-# ---------------------------------------------------------------------------------- akce2_auto_pece
+# ---------------------------------------------------------------------------------- akce2 auto_pece
 # SELECT autocomplete - výběr z akcí na kterých byli pečouni
 function akce2_auto_pece($patt) {  #trace();
   $a= array();
@@ -2762,13 +2762,13 @@ function akce2_auto_pece($patt) {  #trace();
   return $a;
 }
 # ======================================================================================> . SKUPINKY
-# --------------------------------------------------------------------------------- akce2_skup_check
+# --------------------------------------------------------------------------------- akce2 skup_check
 # zjištění konzistence skupinek podle příjmení VPS/PPS
 function akce2_skup_check($akce) {
   $ret= akce2_skup_get($akce,1,$err);
   return $ret->msg;
 }
-# ------------------------------------------------------------------ akce2_skup_get
+# ------------------------------------------------------------------ akce2 skup_get
 # zjištění skupinek podle příjmení VPS/PPS
 # pokud je par.mark=LK vrátí se skupinky z letního kurzu s informací, jestli jsou na této akci
 function akce2_skup_get($akce,$kontrola,&$err,$par=null) { trace();
@@ -2940,7 +2940,7 @@ end:
   return $ret;
 }
 
-# --------------------------------------------------------------------------------- akce2_skup_renum
+# --------------------------------------------------------------------------------- akce2 skup_renum
 # přečíslování skupinek podle příjmení VPS/PPS
 function akce2_skup_renum($akce) {
   $err= 0;
@@ -2964,7 +2964,7 @@ function akce2_skup_renum($akce) {
   return $msg;
 }
 # =======================================================================================> . pomocné
-# ------------------------------------------------------------------------------- akce2_osoba_rodiny
+# ------------------------------------------------------------------------------- akce2 osoba_rodiny
 # vrátí rodiny dané osoby ve formátu pro select (název:id_rodina;...)
 function akce2_osoba_rodiny($id_osoba) {
   $rodiny= select1("GROUP_CONCAT(CONCAT(nazev,':',id_rodina) SEPARATOR ',')",
@@ -2973,18 +2973,18 @@ function akce2_osoba_rodiny($id_osoba) {
                                                 display("akce_osoba_rodiny($id_osoba)=$rodiny");
   return $rodiny;
 }
-# ------------------------------------------------------------------------------ akce2_pobyt_rodinny
+# ------------------------------------------------------------------------------ akce2 pobyt_rodinny
 # definuje pobyt jako rodinný
 function akce2_pobyt_rodinny($id_pobyt,$id_rodina) { trace();
   query("UPDATE pobyt SET i0_rodina=$id_rodina WHERE id_pobyt=$id_pobyt");
   return 1;
 }
-# ---------------------------------------------------------------------------------- akce2_save_role
+# ---------------------------------------------------------------------------------- akce2 save_role
 # zapíše roli - je to netypická číselníková položka definovaná jako VARCHAR(1)
 function akce2_save_role($id_tvori,$role) { //trace();
   return mysql_qry("UPDATE tvori SET role='$role' WHERE id_tvori=$id_tvori");
 }
-# ------------------------------------------------------------------------------- akce2_save_pfunkce
+# ------------------------------------------------------------------------------- akce2 save_pfunkce
 # ASK
 # zapíše spolu.pfunkce - funkce pro hlavouny
 function akce2_save_pfunkce($ids,$pfunkce) { //trace();
@@ -2993,7 +2993,7 @@ function akce2_save_pfunkce($ids,$pfunkce) { //trace();
   ));
   return 1;
 }
-# ------------------------------------------------------------------------------------ akce2_osoba2x
+# ------------------------------------------------------------------------------------ akce2 osoba2x
 # ASK volané z formuláře _osoba2x při onchange.adresa a onchange.kontakt
 # v ret vrací o_kontakt, r_kontakt, o_adresa, r_adresa
 # pokud je id_osoba=0 tzn. jde o novou osobu, vrací se v r_* údaje pro id_rodina
@@ -3047,7 +3047,7 @@ function akce2_osoba2x($id_osoba,$id_rodina=0) { trace();
 //                                                         debug($ret,"akce2__osoba2x");
   return $ret;
 }
-# ------------------------------------------------------------------------------------ akce2_ido2idp
+# ------------------------------------------------------------------------------------ akce2 ido2idp
 # ASK
 # získání pobytu účastníka na akci
 function akce2_ido2idp($id_osoba,$id_akce) {
@@ -3172,7 +3172,7 @@ end:
   return $ret;
 }
 /** ==========================================================================================> TISK */
-# ------------------------------------------------------------------------------------ tisk2_sestava
+# ------------------------------------------------------------------------------------ tisk2 sestava
 # generování sestav
 function tisk2_sestava($akce,$par,$title,$vypis,$export=false) { trace();
   return 0 ? 0
@@ -3208,7 +3208,7 @@ function mb_strcasecmp($str1, $str2, $encoding = null) {
     if (null === $encoding) { $encoding = mb_internal_encoding(); }
     return strcmp(mb_strtoupper($str1, $encoding), mb_strtoupper($str2, $encoding));
 }
-# ------------------------------------------------------------------------------- akce2_tabulka
+# ------------------------------------------------------------------------------- akce2 tabulka
 # generování tabulky účastníků $akce typu LK
 function akce2_tabulka($akce,$par,$title,$vypis,$export=false) { trace();
   global $VPS;
@@ -3274,7 +3274,7 @@ function akce2_tabulka($akce,$par,$title,$vypis,$export=false) { trace();
   $res->html= "<div class='stat'><table class='stat'><tr>$ths</tr>$trs</table></div>";
   return $res;
 }
-# ------------------------------------------------------------------------------- tisk2_sestava_pary
+# ------------------------------------------------------------------------------- tisk2 sestava_pary
 # generování sestavy pro účastníky $akce - rodiny
 #   $fld = seznam položek s prefixem
 #   $cnd = podmínka
@@ -3605,7 +3605,7 @@ function tisk2_sestava_lidi($akce,$par,$title,$vypis,$export=false) { trace();
 //                                         debug($clmn,"sestava pro $akce,$typ,$fld,$cnd");
   return tisk2_table($tits,$flds,$clmn,$export);
 }
-# ---------------------------------------------------------------------------- akce2_sestava_pecouni
+# ---------------------------------------------------------------------------- akce2 sestava_pecouni
 # generování sestavy pro účastníky $akce - pečouny
 #   $fld = seznam položek s prefixem
 #   $cnd = podmínka
@@ -3628,7 +3628,7 @@ function akce2_sestava_pecouni($akce,$par,$title,$vypis,$export=false) { trace()
   $tits= explode(',',$tit);
   return tisk2_table($tits,$flds,$clmn,$export);
 }
-# ------------------------------------------------------------------------------ akce2_sestava_pobyt
+# ------------------------------------------------------------------------------ akce2 sestava_pobyt
 # generování sestavy pro účastníky $akce se stejným pobytem
 #   $fld = seznam položek s prefixem
 #   $cnd = podmínka
@@ -3778,7 +3778,7 @@ function _akce2_sestava_pecouni(&$clmn,$akce,$fld='_skoleni,_sluzba,_reflexe',$c
   }
 }
 # ========================================================================================> . strava
-# ---------------------------------------------------------------------------------- akce2_stravenky
+# ---------------------------------------------------------------------------------- akce2 stravenky
 # generování stravenek účastníky $akce - rodinu ($par->typ=='vj') resp. pečouny ($par->typ=='vjp')
 #   $cnd = podmínka
 # počítané položky
@@ -3810,7 +3810,7 @@ function akce2_stravenky($akce,$par,$title,$vypis,$export=false) { trace();
   }
   return $res_all;
 }
-# ---------------------------------------------------------------------------- akce2_stravenky_diety
+# ---------------------------------------------------------------------------- akce2 stravenky_diety
 function akce2_stravenky_diety($akce,$par,$title,$vypis,$export=false) { trace();
 //                                 debug($par,"akce_stravenky_diety($akce,,$title,$vypis,$export)");
   $ord= $par->ord ? $par->ord : "IF(funkce<=2,1,funkce),IF(pouze=0,r.nazev,o.prijmeni)";
@@ -4026,7 +4026,7 @@ function akce2_stravenky_diety($akce,$par,$title,$vypis,$export=false) { trace()
   $result->note= $note ? "(bez $note, kteří nemají vyjasněnou funkci)" : '';
   return $result;
 }
-# -------------------------------------------------------------------------------- akce2_strava_pary
+# -------------------------------------------------------------------------------- akce2 strava_pary
 # generování sestavy přehledu strav pro účastníky $akce - páry
 #   $cnd = podmínka
 #   $id_pobyt -- je-li udáno, počítá se jen pro tento jeden pobyt (jedněch účastníků)
@@ -4119,7 +4119,7 @@ function akce2_strava_souhrn($akce,$par,$title,$vypis,$export=false,$id_pobyt=0)
   $result->href= $href;
   return $result;
 }
-# -------------------------------------------------------------------------------- akce2_strava_pary
+# -------------------------------------------------------------------------------- akce2 strava_pary
 # generování sestavy přehledu strav pro účastníky $akce - páry
 #   $cnd = podmínka
 #   $id_pobyt = je-li udáno, počítá se jen pro tento jeden pobyt (jedněch účastníků)
@@ -4352,7 +4352,7 @@ function akce2_strava_pary($akce,$par,$title,$vypis,$export=false,$id_pobyt=0) {
 //                                                         debug($result);
   return $result;
 }
-# ----------------------------------------------------- akce2_sestava_td_style
+# ----------------------------------------------------- akce2 sestava_td_style
 # $fmt= r|d
 function akce2_sestava_td_style($fmt) {
   $style= array();
@@ -4365,7 +4365,7 @@ function akce2_sestava_td_style($fmt) {
     ? " style='".implode(';',$style)."'" : '';
 }
 # ======================================================================================> . přehledy
-# ------------------------------------------------------------------------------ akce2_cerstve_zmeny
+# ------------------------------------------------------------------------------ akce2 cerstve_zmeny
 # generování seznamu změn v pobytech na akci od par-datetime
 function akce2_cerstve_zmeny($akce,$par,$title,$vypis,$export=false) { trace();
   $result= (object)array('html'=>'');
@@ -4416,7 +4416,7 @@ function akce2_cerstve_zmeny($akce,$par,$title,$vypis,$export=false) { trace();
 //                                         debug($clmn,"sestava pro $akce,$typ,$fld,$cnd");
   return tisk2_table($tits,$flds,$clmn,$export);
 }
-# ----------------------------------------------------------------------------------- akce2_text_eko
+# ----------------------------------------------------------------------------------- akce2 text_eko
 function akce2_text_eko($akce,$par,$title,$vypis,$export=false) { trace();
   $result= (object)array();
   $html= '';
@@ -4543,7 +4543,7 @@ function akce2_text_eko($akce,$par,$title,$vypis,$export=false) { trace();
   $result->html= $html;
   return $result;
 }
-# -------------------------------------------------------------------------------- tisk2_text_vyroci
+# -------------------------------------------------------------------------------- tisk2 text_vyroci
 function tisk2_text_vyroci($akce,$par,$title,$vypis,$export=false) { trace();
   $result= (object)array('_error'=>0);
   $html= '';
@@ -4609,7 +4609,7 @@ function tisk2_text_vyroci($akce,$par,$title,$vypis,$export=false) { trace();
   $result->html= $html;
   return $result;
 }
-# ------------------------------------------------------------------------------- akce2_text_prehled
+# ------------------------------------------------------------------------------- akce2 text_prehled
 function akce2_text_prehled($akce,$par,$title,$vypis,$export=false) { trace();
   $pocet= 0;
   # naplní histogram podle $cond
@@ -4711,25 +4711,25 @@ function akce2_text_prehled($akce,$par,$title,$vypis,$export=false) { trace();
 }
 # =======================================================================================> . pomocné
 # obsluha různých forem výpisů karet AKCE
-# --------------------------------------------------------------------------------- tisk2_ukaz_osobu
+# --------------------------------------------------------------------------------- tisk2 ukaz_osobu
 # zobrazí odkaz na osobu v evidenci
 function tisk2_ukaz_osobu($ido,$barva='') {
   $style= $barva ? "style='color:$barva'" : '';
   return "<b><a $style href='ezer://akce2.evi.evid_osoba/$ido'>$ido</a></b>";
 }
-# -------------------------------------------------------------------------------- tisk2_ukaz_rodinu
+# -------------------------------------------------------------------------------- tisk2 ukaz_rodinu
 # zobrazí odkaz na rodinu v evidenci
 function tisk2_ukaz_rodinu($idr,$barva='') {
   $style= $barva ? "style='color:$barva'" : '';
   return "<b><a $style href='ezer://akce2.evi.evid_rodina/$idr'>$idr</a></b>";
 }
-# --------------------------------------------------------------------------------- tisk2_ukaz_pobyt
+# --------------------------------------------------------------------------------- tisk2 ukaz_pobyt
 # zobrazí odkaz na řádek s pobytem
 function tisk2_ukaz_pobyt($idp,$barva='') {
   $style= $barva ? "style='color:$barva'" : '';
   return "<b><a $style href='ezer://akce2.ucast.ucast_pobyt/$idp'>$idp</a></b>";
 }
-# --------------------------------------------------------------------------------- tisk2_ukaz_pobyt
+# --------------------------------------------------------------------------------- tisk2 ukaz_pobyt
 # zobrazí odkaz na řádek s pobytem s případným přepnutím akce
 function tisk2_ukaz_pobyt_akce($idp,$ida,$barva='') {
   $style= $barva ? "style='color:$barva'" : '';
@@ -4744,7 +4744,7 @@ function narozeni2roky_sql($time_sql,$now_sql=0) {
   $roky= floor((date("Ymd",$now) - date("Ymd", $time)) / 10000);
   return $roky;
 }
-# ---------------------------------------------------------------------------------------- tisk2_qry
+# ---------------------------------------------------------------------------------------- tisk2 qry
 # frekventované SQL dotazy s parametry
 # pobyt_dospeli_ucastnici => _jm=jména dospělých účastníků (GROUP BY id_pobyt)
 # ucastnik                => každý účastník zvlášť
@@ -4819,7 +4819,7 @@ function tisk2_qry($typ,$flds='',$where='',$having='',$order='') { trace();
   $res= mysql_qry($qry);
   return $res;
 }
-# -------------------------------------------------------------------------------------- tisk2_table
+# -------------------------------------------------------------------------------------- tisk2 table
 function tisk2_table($tits,$flds,$clmn,$export=false) {  trace();
   $ret= (object)array('html'=>'');
   // zobrazení tabulkou
@@ -4859,7 +4859,7 @@ function tisk2_table($tits,$flds,$clmn,$export=false) {  trace();
   return $ret;
 }
 # ======================================================================================> . skupinky
-# ----------------------------------------------------------------------------- akce2_jednou_dvakrat
+# ----------------------------------------------------------------------------- akce2 jednou_dvakrat
 # generování seznamu jedno- a dvou-ročáků spolu s mailem na VPS
 #   $fld = seznam položek s prefixem
 #   $cnd = podmínka
@@ -4913,7 +4913,7 @@ function akce2_jednou_dvakrat($akce,$par,$title,$vypis,$export=false) { trace();
   $result->html= $html;
   return $result;
 }
-# ---------------------------------------------------------------------------------- akce2_skup_copy
+# ---------------------------------------------------------------------------------- akce2 skup_copy
 # ASK
 # přenese skupinky z LK do Obnovy
 function akce2_skup_copy($obnova) { trace();
@@ -4942,7 +4942,7 @@ function akce2_skup_copy($obnova) { trace();
 end:
   return $msg;
 }
-# ---------------------------------------------------------------------------------- akce2_skup_tisk
+# ---------------------------------------------------------------------------------- akce2 skup_tisk
 # tisk skupinek akce
 function akce2_skup_tisk($akce,$par,$title,$vypis,$export) {  trace();
   global $VPS;
@@ -5076,7 +5076,7 @@ end:
 //                                                 debug($result,"akce2_skup_tisk($akce,,$title,$vypis,$export)");
   return $result;
 }
-# ---------------------------------------------------------------------------------- akce2_skup_hist
+# ---------------------------------------------------------------------------------- akce2 skup_hist
 # přehled starých skupinek letního kurzu MS účastníků této akce
 function akce2_skup_hist($akce,$par,$title,$vypis,$export) { trace();
   $result= (object)array();
@@ -5175,7 +5175,7 @@ function akce2_skup_hist($akce,$par,$title,$vypis,$export) { trace();
   $result->html= $html;
   return $result;
 }
-# ---------------------------------------------------------------------------------- akce2_skup_deti
+# ---------------------------------------------------------------------------------- akce2 skup_deti
 # tisk skupinek akce dětí
 function akce2_skup_deti($akce,$par,$title,$vypis,$export) {
   global $VPS;
@@ -5257,7 +5257,7 @@ function akce2_skup_deti($akce,$par,$title,$vypis,$export) {
   return $result;
 }
 # =======================================================================================> . plachta
-# ------------------------------------------------------------------------------- tisk2_pdf_plachta0
+# ------------------------------------------------------------------------------- tisk2 pdf_plachta0
 # generování pomocných štítků
 function tisk2_pdf_plachta0($report_json=0) {  trace();
   global $ezer_path_docs;
@@ -5300,7 +5300,7 @@ function tisk2_pdf_plachta0($report_json=0) {  trace();
   }
   return $result;
 }
-# ------------------------------------------------------------------------------------ akce2_plachta
+# ------------------------------------------------------------------------------------ akce2 plachta
 # podklad pro tvorbu skupinek
 function akce2_plachta($akce,$par,$title,$vypis,$export=0) { trace();
   $result= (object)array();
@@ -5471,7 +5471,7 @@ function sql2stari($narozeni,$datum) {
   }
   return $roku;
 };
-# ----------------------------------------------------------------------------- akce2_plachta_export
+# ----------------------------------------------------------------------------- akce2 plachta_export
 function akce2_plachta_export($line,$file) { trace();
   require_once('./ezer2.2/server/licensed/xls/OLEwriter.php');
   require_once('./ezer2.2/server/licensed/xls/BIFFwriter.php');
@@ -5527,7 +5527,7 @@ function akce2_plachta_export($line,$file) { trace();
   return $html;
 }
 # ====================================================================================> . vyúčtování
-# ------------------------------------------------------------------------------- akce2_sestava_noci
+# ------------------------------------------------------------------------------- akce2 sestava_noci
 # generování sestavy přehledu člověkonocí pro účastníky $akce - páry
 #   $cnd = podmínka
 # počítané položky
@@ -5674,7 +5674,7 @@ function akce2_sestava_noci($akce,$par,$title,$vypis,$export=false) { trace();
   }
   return $result;
 }
-# ------------------------------------------------------------------------------- akce2_vyuctov_pary
+# ------------------------------------------------------------------------------- akce2 vyuctov_pary
 # generování sestavy vyúčtování pro účastníky $akce - páry
 #   $fld = seznam položek s prefixem
 #   $cnd = podmínka
@@ -5865,7 +5865,7 @@ function akce2_vyuctov_pary($akce,$par,$title,$vypis,$export=false) { trace();
   }
   return $result;
 }
-# ------------------------------------------------------------------------------ akce2_vyuctov_pary2
+# ------------------------------------------------------------------------------ akce2 vyuctov_pary2
 # generování sestavy vyúčtování pro účastníky $akce - bez DPH
 #   $fld = seznam položek s prefixem
 #   $cnd = podmínka
@@ -6067,7 +6067,7 @@ function akce2_vyuctov_pary2($akce,$par,$title,$vypis,$export=false) { trace();
   return $result;
 }
 # =====================================================================================> . XLS tisky
-# ---------------------------------------------------------------------------------- tisk2_vyp_excel
+# ---------------------------------------------------------------------------------- tisk2 vyp_excel
 # generování tabulky do excelu
 # tab.tits = názvy sloupců
 # tab.flds = názvy položek
@@ -6247,7 +6247,7 @@ function sql2xls($datum) {
   return $text;
 }
 # =====================================================================================> . PDF tisky
-# ------------------------------------------------------------------------------- tisk2_pdf_jmenovky
+# ------------------------------------------------------------------------------- tisk2 pdf_jmenovky
 # vygenerování PDF s vizitkami s rozměrem 55x90 na rozstříhání
 #   $the_json obsahuje  title:'{jmeno}<br>{prijmeni}'
 function tisk2_pdf_jmenovky($akce,$par,$title,$vypis,$report_json) {  trace();
@@ -6275,7 +6275,8 @@ function tisk2_pdf_jmenovky($akce,$par,$title,$vypis,$report_json) {  trace();
     $parss[$n]= (object)array();
     $fsize= mb_strlen($x->jmeno)>9 ? 12 : (mb_strlen($x->jmeno)>8 ? 13 : 14);
     $parss[$n]->jmeno= "<span style=\"font-size:{$fsize}mm;font-weight:bold\">{$x->jmeno}</span>";
-    list($prijmeni)= explode(' ',$x->prijmeni);
+    $prijmeni= $x->prijmeni;
+//     list($prijmeni)= explode(' ',$x->prijmeni);
     $fsize= mb_strlen($prijmeni)>10 ? 10 : 12;
     $parss[$n]->prijmeni= "<span style=\"font-size:{$fsize}mm;font-weight:bold\">{$prijmeni}</span>";
     $n++;
@@ -6287,7 +6288,7 @@ function tisk2_pdf_jmenovky($akce,$par,$title,$vypis,$report_json) {  trace();
   $result->html= " Výpis byl vygenerován ve formátu <a href='docs/$fname.pdf' target='pdf'>PDF</a>.";
   return $result;
 }
-# --------------------------------------------------------------------------------- akce2_pdf_stitky
+# --------------------------------------------------------------------------------- akce2 pdf_stitky
 # vygenerování PDF se samolepkami - adresními štítky
 #   $the_json obsahuje  title:'{jmeno_postovni}<br>{adresa_postovni}'
 function akce2_pdf_stitky($akce,$par,$report_json) { trace();
@@ -6321,7 +6322,7 @@ function akce2_pdf_stitky($akce,$par,$report_json) { trace();
 end:
   return $ret;
 }
-# --------------------------------------------------------------------------------- akce2_pdf_stitky
+# --------------------------------------------------------------------------------- akce2 pdf_stitky
 # vygenerování PDF se samolepkami - adresními štítky
 #   $the_json obsahuje  title:'{jmeno_postovni}<br>{adresa_postovni}'
 function xxx_akce2_pdf_stitky($cond,$report_json) { trace();
@@ -6371,7 +6372,7 @@ function xxx_akce2_pdf_stitky($cond,$report_json) { trace();
   $result->html= " Výpis byl vygenerován ve formátu <a href='docs/$fname.pdf' target='pdf'>PDF</a>.";
   return $result;
 }
-# --------------------------------------------------------------------------------- tisk2_pdf_prijem
+# --------------------------------------------------------------------------------- tisk2 pdf_prijem
 # generování štítků se stručnými informace k nalepení na obálku účastníka do PDF
 # pokud jsou iregularity strav a dietní stravy, generuje se i přetokový soubor
 function tisk2_pdf_prijem($akce,$par,$stitky_json,$popis_json) {  trace();
@@ -6455,7 +6456,7 @@ function tisk2_pdf_prijem($akce,$par,$stitky_json,$popis_json) {  trace();
 end:
   return $result;
 }
-# ------------------------------------------------------- tisk2_pdf_prijem_ireg
+# ------------------------------------------------------- tisk2 pdf_prijem_ireg
 # generování tabulky s nepravidelnou stravou
 function tisk2_pdf_prijem_ireg($nazev,$adiety,$x,$ret) {  trace();
   global $diety,$diety_,$jidlo_;
@@ -6495,7 +6496,7 @@ function tisk2_pdf_prijem_ireg($nazev,$adiety,$x,$ret) {  trace();
   $h.= "</table></small>";
   return $h;
 }
-# -------------------------------------------------------------------------------- tisk2_pdf_plachta
+# -------------------------------------------------------------------------------- tisk2 pdf_plachta
 # generování štítků se jmény párů
 # POZOR - je nutno 2x přidat výjimku v číslování kvůli zarovnání na vzdělání v plachtě
 function tisk2_pdf_plachta($akce,$report_json=0) {  trace();
@@ -6570,7 +6571,7 @@ function tisk2_pdf_plachta($akce,$report_json=0) {  trace();
   }
   return $result;
 }
-# ------------------------------------------------------------------------------ akce2_pdf_stravenky
+# ------------------------------------------------------------------------------ akce2 pdf_stravenky
 # generování štítků se stravenkami pro rodinu účastníka a pro pečouny do PDF
 # pomocí tisk2_sestava se do objektu $x->tab vygeneruje pole s elementy pro tisk stravenky
 function akce2_pdf_stravenky($akce,$par,$report_json) {  trace();
@@ -6586,7 +6587,7 @@ function akce2_pdf_stravenky($akce,$par,$report_json) {  trace();
   }
   return $res_all;
 }
-# ------------------------------------------------------------------------ akce2_pdf_stravenky_dieta
+# ------------------------------------------------------------------------ akce2 pdf_stravenky_dieta
 # generování štítků se stravenkami pro rodinu účastníka a pro pečouny do PDF
 # pomocí tisk2_sestava se do objektu $x->tab vygeneruje pole s elementy pro tisk stravenky
 function akce2_pdf_stravenky_dieta($x,$report_json) {  trace();
@@ -6695,7 +6696,7 @@ function akce2_pdf_stravenky_dieta($x,$report_json) {  trace();
   $result->href= "<a href='docs/$fname.pdf' target='pdf'>PDF{$x->dieta}</a>";
   return $result;
 }
-# ----------------------------------------------------------------------------- akce2_pdf_stravenky0
+# ----------------------------------------------------------------------------- akce2 pdf_stravenky0
 # generování stránky stravenek pro ruční vyplnění do PDF
 function akce2_pdf_stravenky0($akce,$par,$report_json) {  trace();
   global $ezer_path_docs, $EZER, $USER;
@@ -6777,7 +6778,7 @@ function dop_rep_ids($report_json,$parss,$fname) { trace();
   tc_report($report,$texty,$fname);
 }
 /** =========================================================================================> EVID2 */
-# -------------------------------------------------------------------------------- evid2_deti_access
+# -------------------------------------------------------------------------------- evid2 deti_access
 # ==> . chain rod
 # účastníci pobytu a případná rodina budou mít daný access (3)
 function evid2_deti_access($idr,$access=3) {
@@ -6808,7 +6809,7 @@ function evid2_deti_access($idr,$access=3) {
   }
   return 1;
 }
-# ---------------------------------------------------------------------------------- evid2_elim_tips
+# ---------------------------------------------------------------------------------- evid2 elim_tips
 # tipy na duplicitu ve formě CASE ... END
 # mrop - pro iniciované muže
 function evid2_elim_tips($type) {
@@ -6837,7 +6838,7 @@ function evid2_elim_tips($type) {
 end:
   return $ret;
 }
-# ------------------------------------------------------------------------------------- evid2_delete
+# ------------------------------------------------------------------------------------- evid2 delete
 # zjistí, zda lze osobu smazat: dar, platba, spolu, tvori
 # cmd= conf_oso|conf_rod|del_oso|del_rod
 function evid2_upd_gmail($id_osoba,$orig,$gmail) { trace();
@@ -6846,7 +6847,7 @@ function evid2_upd_gmail($id_osoba,$orig,$gmail) { trace();
   ));
   return 1;
 }
-# ------------------------------------------------------------------------------------- evid2_delete
+# ------------------------------------------------------------------------------------- evid2 delete
 # zjistí, zda lze osobu smazat: dar, platba, spolu, tvori
 # cmd= conf_oso|conf_rod|del_oso|del_rod
 function evid2_delete($id_osoba,$id_rodina,$cmd='confirm') { trace();
@@ -6947,7 +6948,7 @@ function evid2_delete($id_osoba,$id_rodina,$cmd='confirm') { trace();
   }
   return $ret;
 }
-# --------------------------------------------------------------------------------------- evid2_cleni
+# --------------------------------------------------------------------------------------- evid2 cleni
 # hledání a) osoby a jejích rodin b) rodiny (pokud je id_osoba=0)
 function evid2_cleni($id_osoba,$id_rodina,$filtr) { //trace();
   global $USER;
@@ -7026,7 +7027,7 @@ function evid2_cleni($id_osoba,$id_rodina,$filtr) { //trace();
 //                                                         debug($ret);
   return $ret;
 }
-# ----------------------------------------------------------------------------- evid2_browse_act_ask
+# ----------------------------------------------------------------------------- evid2 browse_act_ask
 # obsluha browse s optimize:ask pro seznam akcí dané osoby
 # x->order= {a|d} polozka
 # x->show=  {polozka:[formát,vzor/1,...],...} pro položky s neprázdným vzorem
@@ -7074,7 +7075,7 @@ function evid2_browse_act_ask($x) {
   }
   return $y;
 }
-# ---------------------------------------------------------------------------- evid2_pridej_k_rodine
+# ---------------------------------------------------------------------------- evid2 pridej_k_rodine
 # ASK přidání do dané rodiny, pokud ještě osoba v rodině není
 # spolupracuje s: akce2_auto_jmena1,akce2_auto_jmena1L
 # info = {id,nazev,role}
@@ -7094,7 +7095,7 @@ function evid2_pridej_k_rodine($id_rodina,$info,$cnd='') { trace();
   }
   return $ret;
 }
-# -------------------------------------------------------------------------- evid2_spoj_osoba_rodina
+# -------------------------------------------------------------------------- evid2 spoj_osoba_rodina
 # ASK přidání do dané rodiny, pokud ještě osoba v rodině není
 # pokud idr, ido nejsou jediné klíče, vrátí ok=0
 # pro spoj = 0 vrátí otázku
@@ -7139,7 +7140,7 @@ function evid2_ymca_sprava($org,$par,$title,$export=false) {
   return $export ? sta2_excel_export($title,$ret) : $ret;
 //   return $ret;
 }
-# ------------------------------------------------------------------------------- evid2_ymca_sestava
+# ------------------------------------------------------------------------------- evid2 ymca_sestava
 # generování přehledu členstva
 #   $fld = seznam položek s prefixem
 #   $cnd = podmínka
@@ -7542,7 +7543,7 @@ function evid2_browse_mailist($x) {
   return $y;
 }
 # ==========================================================================================> . MAPA
-# ----------------------------------------------------------------------------------==> .. mapa2_psc
+# ----------------------------------------------------------------------------------==> .. mapa2 psc
 # vrátí strukturu pro gmap
 function mapa2_psc($psc,$obec) {
                                                 debug($psc,"mapa2_psc");
@@ -7584,7 +7585,7 @@ function mapa2_psc($psc,$obec) {
 //                                         debug(explode(';',$ret->mark),"mapa_akce");
   return $ret;
 }
-# ----------------------------------------------------------------------------==> .. mapa2_ctverec_o
+# ----------------------------------------------------------------------------==> .. mapa2 ctverec_o
 # ASK
 # obsah čtverce $clen +- $dist (km) na všechny strany
 # vrací objekt {
@@ -7615,7 +7616,7 @@ end:
 //                                                 debug($ret,"geo_get_ctverec");
   return $ret;
 }
-# ----------------------------------------------------------------------------==> .. mapa2_ctverec_r
+# ----------------------------------------------------------------------------==> .. mapa2 ctverec_r
 # ASK
 # obsah čtverce $clen +- $dist (km) na všechny strany
 # vrací objekt {
@@ -7644,7 +7645,7 @@ end:
 //                                                 debug($ret,"geo_get_ctverec");
   return $ret;
 }
-# ------------------------------------------------------------------------------- mapa2_ve_ctverci_o
+# ------------------------------------------------------------------------------- mapa2 ve_ctverci_o
 # ASK
 # vrátí jako seznam id_osoba bydlících v oblasti dané obdélníkem 'x,y;x,y'
 # podmnožinu předaných ids, pokud je rect prázdný - vrátí vše, co lze lokalizovat
@@ -7682,7 +7683,7 @@ function mapa2_ve_ctverci_o($rect,$ids,$max=5000) { trace();
   }
   return $ret;
 }
-# ------------------------------------------------------------------------------- mapa2_ve_ctverci_r
+# ------------------------------------------------------------------------------- mapa2 ve_ctverci_r
 # ASK
 # vrátí jako seznam id_rodina bydlících v oblasti dané obdélníkem 'x,y;x,y'
 # podmnožinu předaných ids, pokud je rect prázdný - vrátí vše, co lze lokalizovat
@@ -7718,7 +7719,7 @@ function mapa2_ve_ctverci_r($rect,$ids,$max=5000) { trace();
   }
   return $ret;
 }
-# ----------------------------------------------------------------------------- mapa2_mimo_ctverec_o
+# ----------------------------------------------------------------------------- mapa2 mimo_ctverec_o
 # ASK
 # vrátí jako seznam id_osoba bydlících mimo oblast danou obdélníkem 'x,y;x,y'
 # podmnožinu předaných ids
@@ -7751,7 +7752,7 @@ function mapa2_mimo_ctverec_o($rect,$ids,$max=5000) { trace();
   }
   return $ret;
 }
-# ----------------------------------------------------------------------------- mapa2_mimo_ctverec_r
+# ----------------------------------------------------------------------------- mapa2 mimo_ctverec_r
 # ASK
 # vrátí jako seznam id_rodina bydlících mimo oblast danou obdélníkem 'x,y;x,y'
 # podmnožinu předaných ids
@@ -7783,7 +7784,7 @@ function mapa2_mimo_ctverec_r($rect,$ids,$max=5000) { trace();
   return $ret;
 }
 /** ==========================================================================================> STA2 */
-# =========================================================================----=======> . sta2_cesty
+# =========================================================================----=======> . sta2 cesty
 # tabulka struktury kurzu (noví,podruhé,vícekrát,odpočívající VPS,VPS)
 # par.od= rok počátku statistik
 function sta2_cesty($org,$par,$title,$export=false) {
@@ -7823,7 +7824,7 @@ function sta2_cesty($org,$par,$title,$export=false) {
     ;
   return sta2_table_graph($par,$tits,$flds,$clmn,$export);
 }
-# ================================================================================> . sta2_struktura
+# ================================================================================> . sta2 struktura
 # tabulka struktury kurzu (noví,podruhé,vícekrát,odpočívající VPS,VPS)
 # par.od= rok počátku statistik
 function sta2_struktura($org,$par,$title,$export=false) {
@@ -7905,7 +7906,7 @@ function sta2_struktura($org,$par,$title,$export=false) {
     . "<br>Pokud v nějakém roce bylo více běhů je zobrazen jejich součet.";
   return sta2_table_graph($par,$tits,$flds,$clmn,$export);
 }
-# --------------------------------------------------------------------------------- sta2_akcnost_vps
+# --------------------------------------------------------------------------------- sta2 akcnost_vps
 # generování přehledu akčnosti VPS
 function sta2_akcnost_vps($org,$par,$title,$export=false) {
   // dekódování parametrů
@@ -7961,7 +7962,7 @@ function sta2_akcnost_vps($org,$par,$title,$export=false) {
   $par->fld= $fld;
   return sta2_table_graph($par,$tits,$flds,$clmn,$export);
 }
-# --------------------------------------------------------------------------------- sta2_table_graph
+# --------------------------------------------------------------------------------- sta2 table_graph
 # pokud je $par->grf= a:b,c,... pak se zobrazí grafy normalizované podle sloupce a
 # pokud je $par->txt doplní se pod tabulku
 function sta2_table_graph($par,$tits,$flds,$clmn,$export=false) {
@@ -8007,7 +8008,7 @@ function sta2_table_graph($par,$tits,$flds,$clmn,$export=false) {
 //                                                 debug($result);
   return $result;
 }
-# ---------------------------------------------------------------------------------==> . sta2_rodiny
+# ---------------------------------------------------------------------------------==> . sta2 rodiny
 # clmn: rok -> r:rodin, d:dětí na akci, x:dětí<18 doma, m:délka manželství, a,b:věk muže, ženy
 function sta2_rodiny($org,$rok=0) {
   $clmn= array();
@@ -8062,7 +8063,7 @@ function sta2_rodiny($org,$rok=0) {
 //                                                         debug($clmn,"sta2_rodiny($org,$rok)");
   return $clmn;
 }
-# --------------------------------------------------------------------------------==> . sta2_pecouni
+# --------------------------------------------------------------------------------==> . sta2 pecouni
 function sta2_pecouni($org) {
 //   case 'ms-pecouni': // -------------------------------------==> .. ms-pecouni
   # _pec,_sko,_proc
@@ -8108,7 +8109,7 @@ function sta2_pecouni($org) {
   }
   return $clmn;
 }
-# ==================================================================================> . sta2_sestava
+# ==================================================================================> . sta2 sestava
 # sestavy pro evidenci
 function sta2_sestava($org,$title,$par,$export=false) { trace();
 //                                                 debug($par,"sta2_sestava($title,...,$export)");
@@ -8506,7 +8507,7 @@ end:
   else
     return sta2_table($tits,$flds,$clmn,$export);
 }
-# --------------------------------------------------------------------------------- sta2_excel_subst
+# --------------------------------------------------------------------------------- sta2 excel_subst
 function sta2_sestava_adresy_fill($matches) { trace();
   global $xA, $xn;
 //                                                 debug($xA);
@@ -8516,7 +8517,7 @@ function sta2_sestava_adresy_fill($matches) { trace();
   $n= $xn+$matches[2];
   return "$A$n";
 }
-# -----------------------------------------------------------------------------------=> . sta2_table
+# -----------------------------------------------------------------------------------=> . sta2 table
 function sta2_table($tits,$flds,$clmn,$export=false,$row_numbers=false) {  trace();
   $ret= (object)array('html'=>'');
   // zobrazení tabulkou
@@ -8573,7 +8574,7 @@ function sta2_table($tits,$flds,$clmn,$export=false,$row_numbers=false) {  trace
   return $ret;
 }
 # obsluha různých forem výpisů karet AKCE
-# ---------------------------------------------------------------------------------------- sta2_excel
+# ---------------------------------------------------------------------------------------- sta2 excel
 # ASK
 # generování statistické sestavy do excelu
 function sta2_excel($org,$title,$par,$tab=null) {       trace();
@@ -8586,7 +8587,7 @@ function sta2_excel($org,$title,$par,$tab=null) {       trace();
   // vlastní export do Excelu
   return sta2_excel_export($title,$tab);
 }
-# ---------------------------------------------------------------------------==> . sta2_excel_export
+# ---------------------------------------------------------------------------==> . sta2 excel_export
 # local
 # generování tabulky do excelu
 function sta2_excel_export($title,$tab) {  //trace();
@@ -8690,7 +8691,7 @@ __XLS;
   $result->html= $html;
   return $result;
 }
-# ---------------------------------------------------- sta2_excel_subst
+# ---------------------------------------------------- sta2 excel_subst
 function sta2_excel_subst($matches) { trace();
   global $xA, $xn;
 //                                                 debug($xA);
@@ -9045,7 +9046,7 @@ function elim2_data_rodina($idr,$cond='') {  //trace();
 }
 /** =========================================================================================> MAIL2 **/
 # =======================================================================================> . mailist
-# ---------------------------------------------------------------------------------- mail2_lst_using
+# ---------------------------------------------------------------------------------- mail2 lst_using
 # vrátí informaci o použití mailistu
 function mail2_lst_using($id_mailist) {
   $dopisy= $poslane= $neposlane= $err= 0;
@@ -9067,7 +9068,7 @@ function mail2_lst_using($id_mailist) {
   $html.= $err ? "<br><br><span style='background-color:yellow'>POZOR - nutno znovu uložit</span>" : '';
   return $html;
 }
-# ------------------------------------------------------------------------------------ mail2_mailist
+# ------------------------------------------------------------------------------------ mail2 mailist
 # vrátí daný mailist ve tvaru pro selects
 # pokud je uvedeno par.typ='o' pro osoby, 'r' pro rodiny
 function mail2_mailist($access,$par=null) {
@@ -9082,7 +9083,7 @@ function mail2_mailist($access,$par=null) {
   }
   return $sel ? substr($sel,1) : '';
 }
-# --------------------------------------------------------------------------------- mail2_lst_delete
+# --------------------------------------------------------------------------------- mail2 lst_delete
 # ASK
 # zjisté možnost smazání mailistu (to_delete=0) tzn. že na něj není vázán žádný dopis
 # a pro to_delete=1 jej smaže
@@ -9106,7 +9107,7 @@ function mail2_lst_delete($id_mailist,$to_delete=0) {
   }
   return $ret;
 }
-# --------------------------------------------------------------------------------- mail2_lst_access
+# --------------------------------------------------------------------------------- mail2 lst_access
 # vrátí údaje daného maillistu (ZRUŠENO: s provedenou substitucí podle access uživatele)
 function mail2_lst_access($id_mailist) {  trace();
   global $USER;                                         // debug($USER);
@@ -9122,7 +9123,7 @@ function mail2_lst_access($id_mailist) {  trace();
 end:
   return $ml;
 }
-# --------------------------------------------------------------------------- mail2_lst_confirm_spec
+# --------------------------------------------------------------------------- mail2 lst_confirm_spec
 # spočítá maily podle daného maillistu
 function mail2_lst_confirm_spec($id_mailist,$id_dopis) {  trace();
   $ret= (object)array('specialni'=>0, 'prepsat'=>'', 'pocet'=>'');
@@ -9209,7 +9210,7 @@ function mail2_lst_posli_spec($id_dopis) {  trace();
 //                                                         debug($ret,"mail2_lst_posli_spec end");
   return $ret;
 }
-# ----------------------------------------------------------------------------------- mail2_lst_read
+# ----------------------------------------------------------------------------------- mail2 lst_read
 # převod parm do objektu
 function mail2_lst_read($parm) { //trace();
   global $json;
@@ -9218,7 +9219,7 @@ function mail2_lst_read($parm) { //trace();
 //                                                 debug($obj,"mail2_lst_read($parm)");
   return $obj;
 }
-# --------------------------------------------------------------------------------------- mail2_mapa
+# --------------------------------------------------------------------------------------- mail2 mapa
 # ASK
 # získání seznamu souřadnic bydlišť adresátů mailistu
 function mail2_mapa($id_mailist) {  trace();
@@ -9244,7 +9245,7 @@ function mail2_mapa($id_mailist) {  trace();
 end:
   return mapa2_psc($psc,$obec); // vrací (object)array('mark'=>$marks,'n'=>$n,'err'=>$err);
 }
-# ------------------------------------------------------------------------------------ mail2_lst_try
+# ------------------------------------------------------------------------------------ mail2 lst_try
 # mode=0 -- spustit a ukázat dotaz a také výsledek
 # mode=1 -- zobrazit argument jako html
 function mail2_lst_try($gq,$mode=0) { trace();
@@ -9380,7 +9381,7 @@ function mail2_mai_potvr($druh,$o,$rok) {  //trace();
   $ret->log= $html;
   return $ret;
 }
-# ----------------------------------------------------------------------------------- mail2_mai_text
+# ----------------------------------------------------------------------------------- mail2 mai_text
 # přečtení mailu
 function mail2_mai_text($id_dopis) {  //trace();
   $d= null;
@@ -9405,7 +9406,7 @@ function mail2_mai_text($id_dopis) {  //trace();
 //                                                         debug($d,"mail2_mai_text($id_dopis)");
   return $html;
 }
-# -------------------------------------------------------------------------------- mail2_mai_prazdny
+# -------------------------------------------------------------------------------- mail2 mai_prazdny
 # zjistí zda neexistuje starý seznam adresátů
 function mail2_mai_prazdny($id_dopis) {  trace();
   $result= array('_error'=>0, '_prazdny'=> 1);
@@ -9418,7 +9419,7 @@ function mail2_mai_prazdny($id_dopis) {  trace();
   }
   return $result;
 }
-# ------------------------------------------------------------------------------------ mail2_mai_qry
+# ------------------------------------------------------------------------------------ mail2 mai_qry
 # sestaví SQL dotaz podle položky DOPIS.komu
 # formát zápisu dotazu v číselníku:  A[|D[|cond]]
 #   kde A je seznam aktivit oddělený čárkami
@@ -9440,7 +9441,7 @@ function mail2_mai_qry($komu) {  trace();
        WHERE left(deleted,1)!='D' AND umrti=0 AND email!='' $and";
   return $qry;
 }
-# ---------------------------------------------------------------------------------- mail2_mai_omitt
+# ---------------------------------------------------------------------------------- mail2 mai_omitt
 # v tabulce MAIL(id_dopis=$dopis) označí jako neposlatelné emailu z MAIL($id_dopis=$vynech)
 # to je funkce určená k zamezení duplicit
 function mail2_mai_omitt($id_dopis,$ids_vynech) {  trace();
@@ -9473,7 +9474,7 @@ function mail2_mai_omitt($id_dopis,$ids_vynech) {  trace();
   $msg.= "<br>označeno bylo $n řádků";
   return $msg;
 }
-# --------------------------------------------------------------------------------- mail2_mai_omitt2
+# --------------------------------------------------------------------------------- mail2 mai_omitt2
 # v tabulce MAIL(id_dopis=$dopis) označí jako neposlatelné emaily $vynech (čárkami oddělený seznam)
 function mail2_mai_omitt2($id_dopis,$lst_vynech) {  trace();
   // seznam vynechaných adres
@@ -9498,7 +9499,7 @@ function mail2_mai_omitt2($id_dopis,$lst_vynech) {  trace();
   $msg.= "<br>označeno bylo $n adres";
   return $msg;
 }
-# --------------------------------------------------------------------------------- mail2_mai_omitt3
+# --------------------------------------------------------------------------------- mail2 mai_omitt3
 # v tabulce MAIL(id_dopis=$dopis) označí jako neposlatelné emaily $vynech (čárkami oddělený seznam)
 # obsahující id_osoba adresátů
 function mail2_mai_omitt3($id_dopis,$lst_vynech) {  trace();
@@ -9514,7 +9515,7 @@ function mail2_mai_omitt3($id_dopis,$lst_vynech) {  trace();
   $msg.= "<br>označeno bylo $n řádků";
   return $msg;
 }
-# -------------------------------------------------------------------------------- mail2_mai_doplnit
+# -------------------------------------------------------------------------------- mail2 mai_doplnit
 # zjistí počet adresátů pro doplnění rozesílání a sestaví dotaz pro confirm
 # pokud $doplnit=1 tak přímo doplní tabulku mail
 function mail2_mai_doplnit($id_dopis,$id_akce,$doplnit) {  trace();
@@ -9641,7 +9642,7 @@ function mail2_mai_doplnit($id_dopis,$id_akce,$doplnit) {  trace();
   }
   return $ret;
 }
-# ---------------------------------------------------------------------------------- mail2_mai_pocet
+# ---------------------------------------------------------------------------------- mail2 mai_pocet
 # zjistí počet adresátů pro rozesílání a sestaví dotaz pro confirm
 # $dopis_var určuje zdroj adres
 #   'U' - (komu=0) rozeslat účastníkům akce dopis.id_duakce ukazující do akce
@@ -9876,7 +9877,7 @@ function mail2_mai_pocet($id_dopis,$dopis_var,$cond='',$recall=false) {  trace()
                                                 debug($result,"mail2_mai_pocet.result");
   return $result;
 }
-# ---------------------------------------------------------------------------------- mail2_mai_posli
+# ---------------------------------------------------------------------------------- mail2 mai_posli
 # do tabulky MAIL dá seznam emailových adres pro rozeslání (je volána po mail2_mai_pocet)
 # $id_dopis => dopis(&pocet)
 # $info = {_adresy,_ids[,_cond]}   _cond
@@ -9940,7 +9941,7 @@ function mail2_mai_posli($id_dopis,$info) {  trace();
   $rs= mysql_qry($qr);
   return $err;
 }
-# ---------------------------------------------------------------------------------- mail2_personify
+# ---------------------------------------------------------------------------------- mail2 personify
 # spočítá proměnné podle id_pobyt a dosadí do textu dopisu
 # vrátí celý text
 function mail2_personify($obsah,$vars,$id_pobyt,&$err) {
@@ -9979,7 +9980,7 @@ function mail2_personify($obsah,$vars,$id_pobyt,&$err) {
   $text= mysql_real_escape_string($text);
   return $text;
 }
-# ----------------------------------------------------------------------------------- mail2_mai_info
+# ----------------------------------------------------------------------------------- mail2 mai_info
 # informace o členovi
 # $id - klíč osoby nebo chlapa
 # $zdroj určuje zdroj adres
@@ -10113,7 +10114,7 @@ function mail2_mai_info($id,$email,$id_dopis,$zdroj,$id_mail) {  trace();
   }
   return $html;
 }
-# ----------------------------------------------------------------------------------- mail2_mai_smaz
+# ----------------------------------------------------------------------------------- mail2 mai_smaz
 # smazání mailu v DOPIS a jeho rozesílání v MAIL
 function mail2_mai_smaz($id_dopis) {  trace();
   $qry= "DELETE FROM dopis WHERE id_dopis=$id_dopis ";
@@ -10124,7 +10125,7 @@ function mail2_mai_smaz($id_dopis) {  trace();
   if ( !$res ) fce_error("mail2_mai_smaz: mazání rozesílání mailu No.'$id_dopis' se nepovedlo");
   return true;
 }
-# ----------------------------------------------------------------------------------- mail2_mai_stav
+# ----------------------------------------------------------------------------------- mail2 mai_stav
 # úprava stavu mailové adresy
 # ZATIM BEZ: (maže maily - nutné zohlednit i id_clen==id_osoba aj.) včetně znovuzískání mailové adresy s karty účastníka
 function mail2_mai_stav($id_mail,$stav) {  trace();
@@ -10142,7 +10143,7 @@ function mail2_mai_stav($id_mail,$stav) {  trace();
   if ( !$res ) fce_error("mail2_mai_stav: změna stavu mailu No.'$id_mail' se nepovedla");
   return true;
 }
-# -------------------------------------------------------------------------------------------------- mail2_mai_send
+# -------------------------------------------------------------------------------------------------- mail2 mai_send
 # ASK
 # odešli dávku $kolik mailů ($kolik=0 znamená testovací poslání)
 # $from,$fromname = From,ReplyTo
@@ -10284,7 +10285,7 @@ function mail2_mai_send($id_dopis,$kolik,$from,$fromname,$test='',$id_mail=0) { 
 //                                                 debug($result,"mail2_mai_send");
   return $result;
 }
-# --------------------------------------------------------------------------------- mail2_mai_attach
+# --------------------------------------------------------------------------------- mail2 mai_attach
 # přidá další přílohu k mailu (soubor je v docs/$ezer_root)
 function mail2_mai_attach($id_dopis,$f) { trace();
   // nalezení záznamu v tabulce a přidání názvu souboru
@@ -10293,13 +10294,13 @@ function mail2_mai_attach($id_dopis,$f) { trace();
   query("UPDATE dopis SET prilohy='$names' WHERE id_dopis=$id_dopis");
   return 1;
 }
-# ----------------------------------------------------------------------------- mail2_mai_detach_all
+# ----------------------------------------------------------------------------- mail2 mai_detach_all
 # odstraní všechny přílohy mailu
 function mail2_mai_detach_all($id_dopis) { trace();
   query("UPDATE dopis SET prilohy='' WHERE id_dopis=$id_dopis");
   return 1;
 }
-# --------------------------------------------------------------------------------- mail2_mai_detach
+# --------------------------------------------------------------------------------- mail2 mai_detach
 # odebere soubor z příloh
 function mail2_mai_detach($id_dopis,$name) { trace();
   // nalezení záznamu v tabulce a odebrání názvu souboru
@@ -10316,7 +10317,7 @@ function mail2_mai_detach($id_dopis,$name) { trace();
 }
 # =====================================================================================> . SQL maily
 # vytváření a testování SQL dotazů pro definici mailů
-# ------------------------------------------------------------------------------------ mail2_copy_ds
+# ------------------------------------------------------------------------------------ mail2 copy_ds
 # ASK - kopie tabulky SETKANI.DS_OSOBA do EZER_YS.DS_OSOBA_COPY
 # vrací {id_cis,data,query}
 function mail2_copy_ds() {  trace();
@@ -10351,7 +10352,7 @@ function mail2_copy_ds() {  trace();
   }
   return $html;
 }
-# ------------------------------------------------------------------------------------ mail2_sql_new
+# ------------------------------------------------------------------------------------ mail2 sql_new
 # ASK - vytvoření SQL dotazů pro definici mailů
 # vrací {id_cis,data,query}
 function mail2_sql_new() {  #trace();
@@ -10362,7 +10363,7 @@ function mail2_sql_new() {  #trace();
     'qry'=>"SELECT id_... AS _id,prijmeni,jmeno,ulice,psc,obec,email,telefon FROM ...");
   return $result;
 }
-# ---------------------------------------------------------------------------------- mail2_sql_subst
+# ---------------------------------------------------------------------------------- mail2 sql_subst
 # ASK - parametrizace SQL dotazů pro definici mailů, vrací modifikovaný dotaz
 # nebo pokud je prázdný tak přehled možných parametrizací dotazu
 function mail2_sql_subst($qry='') {  trace();
@@ -10395,7 +10396,7 @@ function mail2_sql_subst($qry='') {  trace();
   }
   return $qry;
 }
-# ------------------------------------------------------------------------------------ mail2_sql_try
+# ------------------------------------------------------------------------------------ mail2 sql_try
 # ASK - vytvoření SQL dotazů pro definici mailů
 # vrací {id_cis,data,query}
 function mail2_sql_try($qry,$vsechno=0) {  trace();
@@ -10443,7 +10444,7 @@ function mail2_sql_try($qry,$vsechno=0) {  trace();
   return $html;
 }
 # =================================================================================> . Generátor SQL
-# ---------------------------------------------------------------------------------- mail2_gen_excel
+# ---------------------------------------------------------------------------------- mail2 gen_excel
 # vygeneruje do Excelu seznam adresátů
 function mail2_gen_excel($gq,$nazev) { trace();
   global $ezer_root;
@@ -11469,7 +11470,7 @@ function data2_transform_2014($par) { trace();
   return $html;
 }
 /** ========================================================================================> SYSTEM **/
-# ---------------------------------------------------------------------------==> . db2_sys_transform
+# ---------------------------------------------------------------------------==> . db2 sys_transform
 # transformace na schema 2015
 # par.cmd = seznam transformací
 # par.akce = id_akce | 0
@@ -11838,7 +11839,7 @@ function db2_sys_transform($par) { trace();
   return $html;
 }
 # ---------------------------------------------------------------------------==> . datové statistiky
-# ----------------------------------------------------------------------------------------- db2_info
+# ----------------------------------------------------------------------------------------- db2 info
 function db2_info($db) {
   global $ezer_root,$ezer_db,$USER;
   $tabs= array(
@@ -11860,7 +11861,7 @@ function db2_info($db) {
   $html.= "</table></div>";
   return $html;
 }
-# ----------------------------------------------------------------------------------------- db2_stav
+# ----------------------------------------------------------------------------------------- db2 stav
 function db2_stav($db) {
   global $ezer_root,$ezer_db,$USER;
   $tabs= array(
@@ -12020,7 +12021,7 @@ function db2_stav_kdo($db,$desc,$tit) {
   return $html;
 }
 # --------------------------------------------------------------------------------==> . testovací db
-# --------------------------------------------------------------------------------- db2_copy_test_db
+# --------------------------------------------------------------------------------- db2 copy_test_db
 # zkopíruje důležité tabulky z ezer_$db do ezer_$db_test
 function db2_copy_test_db($db) {  trace();
   $ok= mysql_qry("SET sql_mode = 'NO_AUTO_VALUE_ON_ZERO'");
@@ -12681,19 +12682,19 @@ end:
     : "<h3>Následující tabulky jsou konzistentní</h3>$html";
   return $html;
 }
-# -----------------------------------------------------------------------------==> . db2_track_osoba
+# -----------------------------------------------------------------------------==> . db2 track_osoba
 # zobrazí odkaz na rodinu v evidenci
 function db2_track_osoba($ido,$barva='') {
   $style= $barva ? "style='color:$barva'" : '';
   return "<b><a $style href='ezer://syst.nas.track_osoba/$ido'>$ido</a></b>";
 }
-# ----------------------------------------------------------------------------==> . db2_track_rodina
+# ----------------------------------------------------------------------------==> . db2 track_rodina
 # zobrazí odkaz na rodinu v evidenci
 function db2_track_rodina($idr,$barva='') {
   $style= $barva ? "style='color:$barva'" : '';
   return "<b><a $style href='ezer://syst.nas.track_rodina/$idr'>$idr</a></b>";
 }
-# ------------------------------------------------------------------------------==> . db2_smaz_tvori
+# ------------------------------------------------------------------------------==> . db2 smaz_tvori
 # zobrazí odkaz na rodinu v evidenci
 function db2_smaz_tvori($idt,$barva='red') {
   $style= $barva ? "style='color:$barva'" : '';
