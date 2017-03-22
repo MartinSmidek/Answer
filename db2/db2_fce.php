@@ -5292,8 +5292,9 @@ function tisk2_pdf_plachta0($report_json=0) {  trace();
     // předání k tisku
     $fname= 'stitky_'.date("Ymd_Hi");
     $fpath= "$ezer_path_docs/$fname.pdf";
-    dop_rep_ids($report_json,$parss,$fpath);
-    $result->html= " Výpis byl vygenerován ve formátu <a href='docs/$fname.pdf' target='pdf'>PDF</a>.";
+    $err= dop_rep_ids($report_json,$parss,$fpath);
+    $result->html= $err ? $err
+      : " Výpis byl vygenerován ve formátu <a href='docs/$fname.pdf' target='pdf'>PDF</a>.";
   }
   else {
     $result->html= "pomocné šítky";
@@ -6284,8 +6285,9 @@ function tisk2_pdf_jmenovky($akce,$par,$title,$vypis,$report_json) {  trace();
   // předání k tisku
   $fname= 'jmenovky_'.date("Ymd_Hi");
   $fpath= "$ezer_path_docs/$fname.pdf";
-  dop_rep_ids($report_json,$parss,$fpath);
-  $result->html= " Výpis byl vygenerován ve formátu <a href='docs/$fname.pdf' target='pdf'>PDF</a>.";
+  $err= dop_rep_ids($report_json,$parss,$fpath);
+  $result->html= $err ? $err
+    : " Výpis byl vygenerován ve formátu <a href='docs/$fname.pdf' target='pdf'>PDF</a>.";
   return $result;
 }
 # --------------------------------------------------------------------------------- akce2 pdf_stitky
@@ -6317,8 +6319,9 @@ function akce2_pdf_stitky($akce,$par,$report_json) { trace();
   // předání k tisku
   $fname= 'stitky_'.date("Ymd_Hi");
   $fpath= "$ezer_path_docs/$fname.pdf";
-  dop_rep_ids($report_json,$parss,$fpath);
-  $ret->html= " Výpis byl vygenerován ve formátu <a href='docs/$fname.pdf' target='pdf'>PDF</a>.";
+  $err= dop_rep_ids($report_json,$parss,$fpath);
+  $ret->html= $err ? $err
+    : " Výpis byl vygenerován ve formátu <a href='docs/$fname.pdf' target='pdf'>PDF</a>.";
 end:
   return $ret;
 }
@@ -6368,8 +6371,9 @@ function xxx_akce2_pdf_stitky($cond,$report_json) { trace();
   // předání k tisku
   $fname= 'stitky_'.date("Ymd_Hi");
   $fpath= "$ezer_path_docs/$fname.pdf";
-  dop_rep_ids($report_json,$parss,$fpath);
-  $result->html= " Výpis byl vygenerován ve formátu <a href='docs/$fname.pdf' target='pdf'>PDF</a>.";
+  $err= dop_rep_ids($report_json,$parss,$fpath);
+  $result->html= $err ? $err
+    : " Výpis byl vygenerován ve formátu <a href='docs/$fname.pdf' target='pdf'>PDF</a>.";
   return $result;
 }
 # --------------------------------------------------------------------------------- tisk2 pdf_prijem
@@ -6445,13 +6449,15 @@ function tisk2_pdf_prijem($akce,$par,$stitky_json,$popis_json) {  trace();
   // předání k tisku
   $fname= 'stitky_'.date("Ymd_Hi");
   $fpath= "$ezer_path_docs/$fname.pdf";
-  dop_rep_ids($stitky_json,$parss,$fpath);
-  $result->html= " Výpis byl vygenerován ve formátu <a href='docs/$fname.pdf' target='pdf'>PDF</a>.";
+  $err= dop_rep_ids($stitky_json,$parss,$fpath);
+  $result->html= $err ? $err
+    : " Výpis byl vygenerován ve formátu <a href='docs/$fname.pdf' target='pdf'>PDF</a>.";
   if ( $popisy ) {
     $fname2= 'popisy_'.date("Ymd_Hi");
     $fpath2= "$ezer_path_docs/$fname2.pdf";
-    dop_rep_ids($popis_json,$parss2,$fpath2);
-    $result->html.= " a doplněn popisy do obálek ve formátu <a href='docs/$fname2.pdf' target='pdf'>PDF</a>.";
+    $err= dop_rep_ids($popis_json,$parss2,$fpath2);
+    $result->html.= $err ? $err
+      : " a doplněn popisy do obálek ve formátu <a href='docs/$fname2.pdf' target='pdf'>PDF</a>.";
   }
 end:
   return $result;
@@ -6553,8 +6559,9 @@ function tisk2_pdf_plachta($akce,$report_json=0) {  trace();
     // předání k tisku
     $fname= 'stitky_'.date("Ymd_Hi");
     $fpath= "$ezer_path_docs/$fname.pdf";
-    dop_rep_ids($report_json,$parss,$fpath);
-    $result->html= " Výpis byl vygenerován ve formátu <a href='docs/$fname.pdf' target='pdf'>PDF</a>.";
+    $err= dop_rep_ids($report_json,$parss,$fpath);
+    $result->html= $err ? $err
+      : " Výpis byl vygenerován ve formátu <a href='docs/$fname.pdf' target='pdf'>PDF</a>.";
 //                                                     debug($tab->pdf);
   }
   else {
@@ -6583,7 +6590,10 @@ function akce2_pdf_stravenky($akce,$par,$report_json) {  trace();
 //                                                         if ( $x->dieta != '_bl' ) continue;
     $x->nazev= $x->nazev_diety=='normální' ? '' : $x->nazev_diety;
     $res= akce2_pdf_stravenky_dieta($x,$report_json);
-    $res_all->html.= " {$res->href} - strava {$x->nazev_diety}, ";
+    if ( $res->_error )
+      fce_warning("{$x->nazev_diety} - {$res->_error}");
+    else
+      $res_all->html.= " {$res->href} - strava {$x->nazev_diety}, ";
   }
   return $res_all;
 }
@@ -6591,7 +6601,7 @@ function akce2_pdf_stravenky($akce,$par,$report_json) {  trace();
 # generování štítků se stravenkami pro rodinu účastníka a pro pečouny do PDF
 # pomocí tisk2_sestava se do objektu $x->tab vygeneruje pole s elementy pro tisk stravenky
 function akce2_pdf_stravenky_dieta($x,$report_json) {  trace();
-                                                debug($x,"akce2_pdf_stravenky_dieta");
+//                                                 debug($x,"akce2_pdf_stravenky_dieta");
 // function akce2_pdf_stravenky_dieta($akce,$par,$report_json) {  trace();
   global $ezer_path_docs, $EZER, $USER;
   $result= (object)array('_error'=>0);
@@ -6692,8 +6702,11 @@ function akce2_pdf_stravenky_dieta($x,$report_json) {  trace();
 //                                         return $result;
   $fname= "stravenky{$x->dieta}_".date("Ymd_Hi");
   $fpath= "$ezer_path_docs/$fname.pdf";
-  dop_rep_ids($report_json,$parss,$fpath);
-  $result->href= "<a href='docs/$fname.pdf' target='pdf'>PDF{$x->dieta}</a>";
+  $err= dop_rep_ids($report_json,$parss,$fpath);
+  if ( $err )
+    $result->_error= $err;
+  else
+    $result->href= "<a href='docs/$fname.pdf' target='pdf'>PDF{$x->dieta}</a>";
   return $result;
 }
 # ----------------------------------------------------------------------------- akce2 pdf_stravenky0
@@ -6740,11 +6753,12 @@ function akce2_pdf_stravenky0($akce,$par,$report_json) {  trace();
   $fname= 'stravenky_'.date("Ymd_Hi");
   $fpath= "$ezer_path_docs/$fname.pdf";
 //                                         return $result;
-  dop_rep_ids($report_json,$parss,$fpath);
-  $result->html= " Výpis byl vygenerován ve formátu <a href='docs/$fname.pdf' target='pdf'>PDF</a>.";
+  $err= dop_rep_ids($report_json,$parss,$fpath);
+  $result->html= $err ? $err
+    : " Výpis byl vygenerován ve formátu <a href='docs/$fname.pdf' target='pdf'>PDF</a>.";
   return $result;
 }
-# -------------------------------------------------------------------------------------- dop_rep_ids
+# -------------------------------------------------------------------------------------- dop rep_ids
 # LOCAL
 # vytvoření dopisů se šablonou pomocí TCPDF podle parametrů
 # $parss  - pole obsahující substituce parametrů pro $text
@@ -6775,7 +6789,13 @@ function dop_rep_ids($report_json,$parss,$fname) { trace();
   }
 //                                                         debug($texty,'dop_rep_ids');
 //                                                         return null;
-  tc_report($report,$texty,$fname);
+  try {
+    tc_report($report,$texty,$fname);
+  }
+  catch (Exception $e) {
+    $err= $e->getMessage();
+  }
+  return $err;
 }
 /** =========================================================================================> EVID2 */
 # -------------------------------------------------------------------------------- evid2 deti_access
@@ -10503,7 +10523,7 @@ end:
 }
 /** ========================================================================================> DOPISY */
 # =======================================================================================> . šablony
-# ------------------------------------------------------------------------------------- dop_sab_text
+# ------------------------------------------------------------------------------------- dop sab_text
 # přečtení běžného dopisu daného typu
 function dop_sab_text($dopis) { //trace();
   $d= null;
@@ -10515,7 +10535,7 @@ function dop_sab_text($dopis) { //trace();
   catch (Exception $e) { display($e); fce_error("dop_sab_text: průběžný dopis '$dopis' nebyl nalezen"); }
   return $d;
 }
-# ------------------------------------------------------------------------------------- dop_sab_cast
+# ------------------------------------------------------------------------------------- dop sab_cast
 # přečtení části šablony
 function dop_sab_cast($druh,$cast) { //trace();
   $d= null;
@@ -10527,7 +10547,7 @@ function dop_sab_cast($druh,$cast) { //trace();
   catch (Exception $e) { display($e); fce_error("dop_sab_cast: část '$cast' sablony nebyla nalezena"); }
   return $d;
 }
-# ----------------------------------------------------------------------------------- dop_sab_nahled
+# ----------------------------------------------------------------------------------- dop sab_nahled
 # ukázka šablony
 function dop_sab_nahled($k3) { trace();
   global $ezer_path_docs;

@@ -32,7 +32,7 @@ kEzer-ys2
 		db2.php
 		db2\db2_fce.js
 		db2\db2_fce.php
-	-TUT
+	+TUT
 		tut\$.ezer
 		tut\.htaccess
 		tut\i_fce.js
@@ -78,7 +78,7 @@ kEzer-ys2
 		db.inc
 		db\db_akce.php
 		db\db_fce.js
-	+db
+	-db
 		db\db.akce2.dop.ezer
 		db\db.akce2.elim.ezer
 		db\db.akce2.evi.ezer
@@ -321,7 +321,7 @@ kEzer-ys2
 39=db\db.akce2.maia.ezer
 [Selected Project Files]
 Main=
-Selected=db\db.akce2.maia.ezer
+Selected=tut\tut.the.ezer
 [tut\.htaccess]
 TopLine=1
 Caret=2,9
@@ -449,12 +449,12 @@ Caret=1,1
 TopLine=1
 Caret=42,11
 [tut\tut.the.ezer]
-TopLine=123
-Caret=46,168
+TopLine=125
+Caret=101,154
 Mark1=25,23
 Mark2=25,121
 Mark3=35,152
-Mark4=48,660
+Mark4=48,662
 [tut\tut.dbg.ezer]
 TopLine=1
 Caret=62,20

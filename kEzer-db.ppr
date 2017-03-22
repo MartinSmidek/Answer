@@ -14,7 +14,7 @@ ProjectFilesOnly=0
 [Project tree]
 kEzer-ys2
 	-skins
-	+crz
+	-crz
 		crz\$.ezer
 		crz.inc.php
 		crz.php
@@ -45,12 +45,13 @@ kEzer-ys2
 		db2.php
 		db2_test.inc
 		db2_test.php
+		fis\fis_tcpdf.php
 		index.php
 		robots.txt
 	+db2
 		-$ test
 			db2_test\$.ezer
-		+$
+		-$
 			db2\$.ezer
 			db2\db2.akce2.elim.ezer
 			db2\db2.akce2.ezer
@@ -58,25 +59,25 @@ kEzer-ys2
 			db2\db2_fce.js
 			db2\db2_fce.php
 			db2\db2_ys2_fce.php
-		+akce
+		-akce
 			db2\db2.akce2.lst.ezer
 			db2\db2.akce2.maia.ezer
 			db2\db2.akce2.pece.ezer
 			db2\db2.akce2.tisk.ezer
 			db2\db2.akce2.ucast.ezer
-		+evidence
+		-evidence
 			db2\db2.akce2.dop.ezer
 			db2\db2.akce2.evi.ezer
 			db2\db2.akce2.mai.ezer
 			db2\db2.akce2.sta.ezer
-		+dùm
+		-dùm
 			db2\db2.ds.dum.ezer
 			db2\db2.ds.ezer
 			db2\db2.ds.kl.ezer
 		-pokladna
 			db2\db2.pok.ezer
 		-ekonomika
-	-ezer2.2
+	+ezer2.2
 		-client
 			ezer2.2\client\_code.js
 			ezer2.2\client\_test.html
@@ -99,7 +100,7 @@ kEzer-ys2
 			ezer2.2\client\ezer_fdom2.js
 			ezer2.2\client\ipad.css
 			ezer2.2\client\natdocs.css
-		-libr
+		+libr
 			ezer2.2\$.ezer
 			ezer2.2\ezer2.help.ezer
 			ezer2.2\ezer2.pers.ezer
@@ -162,21 +163,28 @@ kEzer-ys2
 36=db2\db2.akce2.sta.ezer
 37=db2\db2.akce2.tisk.ezer
 38=db2\db2_ys2_fce.php
+39=db2\db2.css
+40=db2\db2_fce.js
+41=db2\db2.ds.dum.ezer
+42=db2\db2.ds.ezer
+43=db2\db2.ds.kl.ezer
+44=ezer2.2\ezer2.syst.ezer
+45=ezer2.2\server\sys_doc.php
+46=db2.inc.php
+47=fis\fis_tcpdf.php
 [Selected Project Files]
 Main=
-Selected=answer.inc.php
+Selected=fis\fis_tcpdf.php
 [db2\db2_fce.php]
-TopLine=1798
-Caret=45,1812
-BookMark1=85,342
-Mark1=61,1869
-Mark2=28,1822
+TopLine=6561
+Caret=32,6584
+Mark1=21,6593
 [cr2\$.ezer]
-TopLine=84
-Caret=1,149
+TopLine=212
+Caret=1,270
 [db2\db2.akce2.ezer]
-TopLine=649
-Caret=1,687
+TopLine=105
+Caret=34,115
 Mark1=1,835
 Mark2=21,781
 Mark3=28,783
@@ -184,8 +192,8 @@ Mark4=14,811
 Mark5=14,818
 Mark6=19,122
 [db2\db2.akce2.ucast.ezer]
-TopLine=1689
-Caret=64,1726
+TopLine=1294
+Caret=21,1300
 BookMark1=25,529
 Mark1=29,1413
 Mark2=12,1241
@@ -198,14 +206,14 @@ Mark8=32,1522
 Mark9=21,1508
 Mark10=34,1719
 [db2\db2.akce2.lst.ezer]
-TopLine=602
-Caret=91,607
-Mark1=51,646
+TopLine=599
+Caret=29,624
+Mark1=51,649
 Mark2=1,55
-Mark3=7,397
+Mark3=7,400
 [db2\db2.akce2.evi.ezer]
-TopLine=36
-Caret=39,47
+TopLine=450
+Caret=51,468
 BookMark1=14,1220
 Mark1=29,474
 Mark2=19,246
@@ -225,25 +233,28 @@ Caret=61,42
 TopLine=306
 Caret=1,338
 [ezer2.2\server\ae_slib.php]
-TopLine=2100
-Caret=89,2107
+TopLine=756
+Caret=87,791
 [db2\db2.akce2.dop.ezer]
 TopLine=5
 Caret=1,25
 [db2\db2.akce2.mai.ezer]
-TopLine=341
-Caret=1,395
-BookMark1=7,1196
+TopLine=799
+Caret=24,803
+BookMark1=37,642
 [ezer2.2\client\app.js]
 TopLine=285
 Caret=1,321
 [ezer2.2\client\ezer.js]
-TopLine=760
-Caret=22,807
+TopLine=5216
+Caret=48,5241
 Mark1=66,52
 Mark2=1,773
+Mark3=45,5524
+Mark4=10,5225
+Mark5=12,4861
 [ezer2.2\client\ezer_fdom2.js]
-TopLine=3907
+TopLine=3913
 Caret=1,3963
 [ezer2.2\client\lib.js]
 TopLine=217
@@ -256,19 +267,19 @@ TopLine=1
 Caret=28,17
 [cr.inc.php]
 TopLine=1
-Caret=1,1
+Caret=50,16
 [cr2.php]
 TopLine=1
-Caret=79,14
+Caret=39,7
 [cr.php]
 TopLine=1
 Caret=52,42
 [answer.php]
-TopLine=1
-Caret=50,24
+TopLine=101
+Caret=27,112
 [answer.inc.php]
-TopLine=41
-Caret=45,62
+TopLine=105
+Caret=76,135
 [db2.php]
 TopLine=1
 Caret=67,22
@@ -286,7 +297,7 @@ TopLine=1
 Caret=103,6
 [crz.php]
 TopLine=1
-Caret=73,39
+Caret=62,15
 [skins\ck\ck.ezer.css]
 TopLine=494
 Caret=1,494
@@ -297,9 +308,10 @@ Caret=1,1
 TopLine=522
 Caret=64,534
 [ezer2.2\server\ezer2.php]
-TopLine=88
-Caret=63,112
+TopLine=473
+Caret=22,483
 BookMark2=1,2086
+Mark1=38,974
 [ezer2.2\client\ezer_fdom1.js]
 TopLine=824
 Caret=11,855
@@ -313,5 +325,32 @@ Caret=56,41
 TopLine=375
 Caret=101,440
 [db2\db2_ys2_fce.php]
-TopLine=199
-Caret=23,215
+TopLine=325
+Caret=51,360
+[db2\db2.css]
+TopLine=1
+Caret=91,17
+[db2\db2_fce.js]
+TopLine=1
+Caret=55,17
+[db2\db2.ds.dum.ezer]
+TopLine=1
+Caret=28,20
+[db2\db2.ds.ezer]
+TopLine=1
+Caret=1,1
+[db2\db2.ds.kl.ezer]
+TopLine=1
+Caret=56,26
+[ezer2.2\ezer2.syst.ezer]
+TopLine=186
+Caret=1,248
+[ezer2.2\server\sys_doc.php]
+TopLine=396
+Caret=27,428
+[db2.inc.php]
+TopLine=1
+Caret=29,27
+[fis\fis_tcpdf.php]
+TopLine=134
+Caret=1,238
