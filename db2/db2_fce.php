@@ -7820,7 +7820,7 @@ function mapa2_mimo_ctverec_r($rect,$ids,$max=5000) { trace();
 function sta2_mrop($par,$export=false) {
   $msg= "";
   $limit= $AND= '';
-//   $AND= "AND iniciace=2002";
+//   $AND= "AND iniciace=2002 AND id_osoba=58";
   // seznam
   $ms= array();
   $mr= mysql_qry("
@@ -7832,73 +7832,68 @@ function sta2_mrop($par,$export=false) {
     GROUP BY id_osoba
   ");
   while ( $mr && list($ido,$name,$mrop,$spolu)= mysql_fetch_row($mr) ) {
-    $ms[$ido]= (object)array('name'=>$name,'mrop'=>$mrop, 'akci'=>$spolu,
-      'ms'=>0, 'ms_pred'=>0, 'm'=>0, 'm_pred'=>0, 'j'=>0, 'j_pred'=>0);
+    $ms[$ido]= (object)array('name'=>$name,'mrop'=>$mrop, 'akci'=>$spolu, 'ucast'=>0);
   }
   // vlastnosti
   $akce_muzi= "24,5,11";
-  $array_muzi= array(24,5,11);
-  $array_jine= array(1,24,5,11);
   foreach ($ms as $ido=>$m) {
     $ma= mysql_qry("
-      SELECT druh,COUNT(*),
-        MIN(IF(druh=1,YEAR(datum_od),9999)) AS min_ms,
-        MIN(IF(druh IN ($akce_muzi),YEAR(datum_od),9999)) AS min_m,
-        MIN(IF(druh NOT IN (1,$akce_muzi),YEAR(datum_od),9999)) AS min_j
+      SELECT
+        CASE WHEN druh=1 THEN 100 WHEN druh IN ($akce_muzi) THEN 10 ELSE 1 END AS _druh,
+        COUNT(*),
+        IF(MIN(IFNULL(YEAR(datum_od),9999))<=iniciace,1,0) AS _pred,
+        IF(MAX(IFNULL(YEAR(datum_od),0))>iniciace,1,0) AS _po
       FROM pobyt AS p
-      JOIN akce AS a ON id_akce=id_duakce
-      JOIN spolu AS s USING (id_pobyt)
+      LEFT JOIN akce AS a ON id_akce=id_duakce
+      LEFT JOIN spolu AS s USING (id_pobyt)
+      JOIN osoba AS o USING (id_osoba)
       WHERE id_osoba=$ido AND spec=0 AND mrop=0
-      GROUP BY druh
+      GROUP BY _druh ORDER BY _druh DESC
     ");
-    while ( $ma && list($druh,$kolikrat,$ms_od,$m_od,$j_od)= mysql_fetch_row($ma) ) {
-      // MS
-      $m->ms+= $druh==1 ? 1 : 0;
-      $m->ms_pred+= $ms_od<=$m->mrop ? 1 : 0;
-      // muži, otcové
-      $m->m+= in_array($druh,$array_muzi) ? 1 : 0;
-      $m->m_pred+= $m_od<=$m->mrop ? 1 : 0;
-      // jiné
-      $m->j+= in_array($druh,$array_jine) ? 0 : 1;
-      $m->j_pred+= $j_od<=$m->mrop ? 1 : 0;
+    while ( $ma && list($druh,$kolikrat,$pred,$po)= mysql_fetch_row($ma) ) {
+      $m->ucast+= $druh;
+      switch ($druh) {
+      case 100: $m->ms_pred= $pred*$druh; $m->ms_po= $po*$druh;  break; // MS
+      case  10: $m->m_pred=  $pred*$druh; $m->m_po=  $po*$druh;  break; // muži, otcové
+      case   1: $m->j_pred=  $pred*$druh; $m->j_po=  $po*$druh;  break; // jiné
+      case   0:   break; // žádné
+      }
     }
+    // první účast
+    $m->pred= $m->ms_pred + $m->m_pred + $m->j_pred;
+    $m->po=   $m->ms_po   + $m->m_po   + $m->j_po;
   }
 //                                                         debug($ms);
-//   // účastníci akcí celkem
-//   $manzele= $ucastnici= 0;
-//   $mm= mysql_qry("
-//     SELECT SUM(IF(druh=1,1,0)),SUM(IF(druh IN ($akce_muzi),1,0)),SUM(IF(druh NOT IN ($akce_muzi),1,0))
-//     FROM pobyt AS p
-//     JOIN akce AS a ON id_akce=id_duakce
-//     JOIN spolu AS s USING (id_pobyt)
-//     JOIN osoba AS o USING (id_osoba)
-//     WHERE sex=1 AND spec=0 AND deleted=''
-//     GROUP BY id_osoba
-//   ");
-//   while ( $mm && list($ucasti_ms,$ucasti_m,$ucasti_j)= mysql_fetch_row($mm) ) {
-//     $manzele+=  $ucasti_ms ? 1 : 0;
-//     $muzi+= $ucasti_m ? 1 : 0;
-//     $ucastnici+= $ucasti_j ? 1 : 0;
-//   }
   // statistický souhrn
   $muzu= count($ms);
-  $akce_ms= $napred_ms= $akce_m= $napred_m= $akce_j= $napred_j= 0;
-  $ids= array();
+  $ucast= $pred= $po= array();
   foreach ($ms as $ido=>$m) {
-    $akce_ms+= $m->ms;
-    $napred_ms+= $m->ms_pred;
-    $akce_m+= $m->m ? 1 : 0;
-    $napred_m+= $m->m_pred ? 1 : 0;
-    $akce_j+= $m->j ? 1 : 0;
-    $napred_j+= $m->j_pred ? 1 : 0;
-    // aktivita
-    if ( $m->akci==1 ) $ids[]= $ido;
+    // účastníci
+    $ucast[$m->ucast]++;
+    $pred[$m->pred]++;
+    $po[$m->po]++;
   }
-                                                        debug($ids);
-  $msg= "<br>Celkem $muzu iniciovaných mužů, <br>z toho $akce_ms účastníků MS - $napred_ms před mrop,
-           <br>resp. z toho $akce_m účastníků akcí pro muže - $napred_m před mrop,
-           <br>resp. z toho $akce_j účastníků jiných akcí - $napred_j před mrop";
-//   $msg.= "<br><br>".count($ids).": ".implode(' ',$ids);
+                                                        debug($ucast,'ucast');
+                                                        debug($pred,'před');
+                                                        debug($po,'po');
+  $c_pred= $c_po= $c_ucast= 0;
+  $styl= " style='text-align:right'";
+  $tab= "<div class='stat'><table class='stat'>
+         <tr><th>typ akce</th><th>před MROP</th><th>po MROP</th><th>mimo MROP</th></tr>";
+  foreach (
+    array(111=>'MS+M+J',110=>'MS+M',101=>'MS+J',100=>'MS',11=>'M+J',10=>'M',1=>'J',0=>'žádná') as $k=>$i) {
+    $tab.= "<tr><th>$i</th><td$styl>{$pred[$k]}</td><td$styl>{$po[$k]}</td><td$styl>{$ucast[$k]}</td></tr>";
+    $c_pred+= $pred[$k];
+    $c_po+= $po[$k];
+    $c_ucast+= $ucast[$k];
+  }
+  $tab.= "<tr><th>&Sigma;</th><th$styl>$c_pred</th><th$styl>$c_po</th><th$styl>$c_ucast</th></tr>";
+  $tab.= "</table>";
+
+  $msg= "Celkem $muzu iniciovaných mužů<br><br>";
+  $msg.= $tab;
+  $msg.= "<br><br>MS znamená účast na Manželských setkání, M účast na akci pro muže nebo otce,
+         J účast na jiné akci";
   return $msg;
 }
 # ====================================================================================> . sta2 cesty
