@@ -39,6 +39,14 @@ menu m {type:'left', format:'f+' //, active:*
       ,dsc:'Sestava ukazuje celkový počet účastníků resp. pečovatelů na akcích letošního roku, rozdělený podle věku.
         <br>Účastník resp. pečovatel je započítán jen jednou, bez ohledu na počet akcí, jichž se zúčastnil.<br>'
       ,tit:'věk:4,účastníků:10,pečovatelů:10',fld:'_vek,_uca,_pec',ord:'_vek'}}
+    item {title:'Iniciovaní muži', par:°{mrop:2002}
+      proc onclick (i) {
+        menu_item.set(i); menu_par.set(i.par); clear;
+        the_vypis.set(conc(i.owner.title,' - ',i.title));
+        info.fill(the_vypis.get,' '); info.msg.set('');
+        info.append(ask('sta2_mrop',i.par));
+      }
+    }
   }
   menu l {title:'SEZNAMY',type:'group',                                              skill:'yae;fae;cae'
     // přednášející

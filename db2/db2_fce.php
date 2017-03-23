@@ -6732,6 +6732,7 @@ function akce2_pdf_stravenky0($akce,$par,$report_json) {  trace();
     $parss[$n]->header= $header;
     $parss[$n]->line1= "$den";
     $parss[$n]->line2= "";
+    $parss[$n]->line3= "";
     $parss[$n]->rect=  "";
     $parss[$n]->end= '';
     $parss[$n]->ram= '<img src="db/img/stravenky-rastr-1.png" style="width:48mm;height:23mm" border="0" />';
@@ -6743,6 +6744,7 @@ function akce2_pdf_stravenky0($akce,$par,$report_json) {  trace();
     $parss[$n]->header= $header;
     $parss[$n]->line1= "$den";
     $parss[$n]->line2= "";
+    $parss[$n]->line3= "";
     $parss[$n]->rect=  "<b>1/2</b>";
     $parss[$n]->end= '';
     $parss[$n]->ram= ' ';
@@ -7804,7 +7806,93 @@ function mapa2_mimo_ctverec_r($rect,$ids,$max=5000) { trace();
   return $ret;
 }
 /** ==========================================================================================> STA2 */
-# =========================================================================----=======> . sta2 cesty
+# ====================================================================================> . sta2 mrop
+# tabulka struktury účastníků MROP
+function sta2_mrop($par,$export=false) {
+  $msg= "";
+  $limit= $AND= '';
+//   $AND= "AND iniciace=2002";
+  // seznam
+  $ms= array();
+  $mr= mysql_qry("
+    SELECT id_osoba,prijmeni,iniciace,COUNT(*)
+    FROM osoba
+    JOIN spolu USING (id_osoba)
+    WHERE deleted='' AND iniciace>0 $AND
+    -- AND id_osoba=6689
+    GROUP BY id_osoba
+  ");
+  while ( $mr && list($ido,$name,$mrop,$spolu)= mysql_fetch_row($mr) ) {
+    $ms[$ido]= (object)array('name'=>$name,'mrop'=>$mrop, 'akci'=>$spolu,
+      'ms'=>0, 'ms_pred'=>0, 'm'=>0, 'm_pred'=>0, 'j'=>0, 'j_pred'=>0);
+  }
+  // vlastnosti
+  $akce_muzi= "24,5,11";
+  $array_muzi= array(24,5,11);
+  $array_jine= array(1,24,5,11);
+  foreach ($ms as $ido=>$m) {
+    $ma= mysql_qry("
+      SELECT druh,COUNT(*),
+        MIN(IF(druh=1,YEAR(datum_od),9999)) AS min_ms,
+        MIN(IF(druh IN ($akce_muzi),YEAR(datum_od),9999)) AS min_m,
+        MIN(IF(druh NOT IN (1,$akce_muzi),YEAR(datum_od),9999)) AS min_j
+      FROM pobyt AS p
+      JOIN akce AS a ON id_akce=id_duakce
+      JOIN spolu AS s USING (id_pobyt)
+      WHERE id_osoba=$ido AND spec=0 AND mrop=0
+      GROUP BY druh
+    ");
+    while ( $ma && list($druh,$kolikrat,$ms_od,$m_od,$j_od)= mysql_fetch_row($ma) ) {
+      // MS
+      $m->ms+= $druh==1 ? 1 : 0;
+      $m->ms_pred+= $ms_od<=$m->mrop ? 1 : 0;
+      // muži, otcové
+      $m->m+= in_array($druh,$array_muzi) ? 1 : 0;
+      $m->m_pred+= $m_od<=$m->mrop ? 1 : 0;
+      // jiné
+      $m->j+= in_array($druh,$array_jine) ? 0 : 1;
+      $m->j_pred+= $j_od<=$m->mrop ? 1 : 0;
+    }
+  }
+//                                                         debug($ms);
+//   // účastníci akcí celkem
+//   $manzele= $ucastnici= 0;
+//   $mm= mysql_qry("
+//     SELECT SUM(IF(druh=1,1,0)),SUM(IF(druh IN ($akce_muzi),1,0)),SUM(IF(druh NOT IN ($akce_muzi),1,0))
+//     FROM pobyt AS p
+//     JOIN akce AS a ON id_akce=id_duakce
+//     JOIN spolu AS s USING (id_pobyt)
+//     JOIN osoba AS o USING (id_osoba)
+//     WHERE sex=1 AND spec=0 AND deleted=''
+//     GROUP BY id_osoba
+//   ");
+//   while ( $mm && list($ucasti_ms,$ucasti_m,$ucasti_j)= mysql_fetch_row($mm) ) {
+//     $manzele+=  $ucasti_ms ? 1 : 0;
+//     $muzi+= $ucasti_m ? 1 : 0;
+//     $ucastnici+= $ucasti_j ? 1 : 0;
+//   }
+  // statistický souhrn
+  $muzu= count($ms);
+  $akce_ms= $napred_ms= $akce_m= $napred_m= $akce_j= $napred_j= 0;
+  $ids= array();
+  foreach ($ms as $ido=>$m) {
+    $akce_ms+= $m->ms;
+    $napred_ms+= $m->ms_pred;
+    $akce_m+= $m->m ? 1 : 0;
+    $napred_m+= $m->m_pred ? 1 : 0;
+    $akce_j+= $m->j ? 1 : 0;
+    $napred_j+= $m->j_pred ? 1 : 0;
+    // aktivita
+    if ( $m->akci==1 ) $ids[]= $ido;
+  }
+                                                        debug($ids);
+  $msg= "<br>Celkem $muzu iniciovaných mužů, <br>z toho $akce_ms účastníků MS - $napred_ms před mrop,
+           <br>resp. z toho $akce_m účastníků akcí pro muže - $napred_m před mrop,
+           <br>resp. z toho $akce_j účastníků jiných akcí - $napred_j před mrop";
+//   $msg.= "<br><br>".count($ids).": ".implode(' ',$ids);
+  return $msg;
+}
+# ====================================================================================> . sta2 cesty
 # tabulka struktury kurzu (noví,podruhé,vícekrát,odpočívající VPS,VPS)
 # par.od= rok počátku statistik
 function sta2_cesty($org,$par,$title,$export=false) {
