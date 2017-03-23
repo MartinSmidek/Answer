@@ -7565,6 +7565,15 @@ function evid2_browse_mailist($x) {
   return $y;
 }
 # ==========================================================================================> . MAPA
+# -----------------------------------------------------------------------------==> .. mapa2 psc_list
+# vrátí strukturu pro gmap
+function mapa2_psc_list($psc_lst) {
+  $psc= $obec= array();
+  foreach (explode(',',$psc_lst) as $p) {
+    $psc[$p]= $p;
+  }
+  return mapa2_psc($psc,$obec);
+}
 # ----------------------------------------------------------------------------------==> .. mapa2 psc
 # vrátí strukturu pro gmap
 function mapa2_psc($psc,$obec) {
@@ -7582,7 +7591,7 @@ function mapa2_psc($psc,$obec) {
       $rs= mysql_qry($qs);
       if ( $rs && ($s= mysql_fetch_object($rs)) ) {
         $n++;
-        $o= $obec[$p];
+        $o= isset($obec[$p]) ? $obec[$p] : $p;
         $title= str_replace(',','',"$o:$tit");
         $marks.= "{$del}$n,{$s->lat},{$s->lng},$title"; $del= ';';
       }
@@ -7817,7 +7826,7 @@ function sta2_mrop($par,$export=false) {
   $mr= mysql_qry("
     SELECT id_osoba,prijmeni,iniciace,COUNT(*)
     FROM osoba
-    JOIN spolu USING (id_osoba)
+    LEFT JOIN spolu USING (id_osoba)
     WHERE deleted='' AND iniciace>0 $AND
     -- AND id_osoba=6689
     GROUP BY id_osoba
