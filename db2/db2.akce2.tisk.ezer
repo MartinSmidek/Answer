@@ -118,15 +118,15 @@ menu m {type:'left', active:*
     item i {title:'Rodinný' ,par:°{typ:'p',exp:'Excel2',cnd:'p.funkce!=99'
                                         ,tit:'příjmení:15,jména:20,obec:25,psč:7,ulice:25,^'
                                         ,fld:'prijmeni,jmena,obec,psc,ulice,^id_pobyt'}}
-    item {title:'Rodinný + základní spojení'                                                 skill:'y;f'
+    item {title:'Rodinný + základní spojení'                                                 skill:'c;y;f'
                                         ,par:°{typ:'p',exp:'Excel2',cnd:'p.funkce!=99'
                                         ,tit:'příjmení:15,jména:20,obec:25,psč:7,ulice:25,telefon:40,e-mail:60,^'
                                         ,fld:'prijmeni,jmena,obec,psc,ulice,telefon,email,^id_pobyt'}}
-    item {title:'Rodinný + rozšířená spojení'                                                skill:'y;f'
+    item {title:'Rodinný + rozšířená spojení'                                                skill:'c;y;f'
                                         ,par:°{typ:'p',exp:'Excel2',cnd:'p.funkce!=99'
                                         ,tit:'příjmení:15,jména:20,obec:25,psč:7,ulice:25,telefony:40,e-maily:60,^'
                                         ,fld:'prijmeni,jmena,obec,psc,ulice,telefony,emaily,^id_pobyt'}}
-    item {title:'Páry + rozšířená spojení'                                                   skill:'y;f'
+    item {title:'Páry + rozšířená spojení'                                                   skill:'c;y;f'
                                         ,par:°{typ:'p',exp:'Excel2',cnd:"p.funkce!=99 AND p.i0_rodina AND role IN ('a','b')"
                                         ,tit:'příjmení:15,jména:20,obec:25,psč:7,ulice:25,telefony:40,e-maily:60,^'
                                         ,fld:'prijmeni,jmena,obec,psc,ulice,telefony,emaily,^id_pobyt'}}
@@ -134,7 +134,7 @@ menu m {type:'left', active:*
 #                                         ,par:°{typ:'p',exp:'Excel2',cnd:'p.funkce!=99'
 #                                         ,tit:'příjmení:15,jména:20,obec:25,psč:7,ulice:25,telefon-m:12,email-m:28,telefon-z:12,e-mail_z:28'
 #                                         ,fld:'prijmeni,jmena,obec,psc,ulice,telefon_m,email_m,telefon_z,email_z'}}
-    item {title:'Jednotlivci bez dětí'                                                       skill:'y;f'
+    item {title:'Jednotlivci bez dětí'                                                       skill:'c;y;f'
                                         ,par:°{typ:'j',exp:'Excel2',cnd:"funkce!=99",hav:"_vek>=18 OR r_role IN ('a','b')"
                                         ,tit:'příjmení:15,jméno:12,věk:5,narození:12,/rč:5,obec:25,psč:7,ulice:25'
                                         ,fld:'prijmeni,jmeno,_vek,narozeni,rc_xxxx,obec,psc,ulice'}}
@@ -146,7 +146,7 @@ menu m {type:'left', active:*
                                         ,par:°{typ:'j',exp:'Excel2',cnd:'funkce!=99'
                                         ,tit:'příjmení:15,jméno:12,věk:5,narození:12,/rč:5,obec:25,psč:7,ulice:25'
                                         ,fld:'prijmeni,jmeno,_vek,narozeni,rc_xxxx,obec,psc,ulice'}}
-    item {title:'Jednotlivci vč. dětí a pečounů'                                             skill:'y;f'
+    item {title:'Jednotlivci vč. dětí a pečounů'                                             skill:'c;y;f'
                                         ,par:°{typ:'j',exp:'Excel2',cnd:'1',ord:'o.prijmeni,o.jmeno'
                                         ,tit:'příjmení:15,jméno:12,věk:5,narození:12,/rč:5,obec:25,psč:7,ulice:25'
                                         ,fld:'prijmeni,jmeno,_vek,narozeni,rc_xxxx,obec,psc,ulice'}}

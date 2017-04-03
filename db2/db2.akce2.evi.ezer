@@ -1015,8 +1015,8 @@ form _aktivity [,,248,min_h-160] {css:'ae_frame shift_up'
   }
 }
 # ------------------------------------------------------------------------------------------==> MAPA
-# form _mapa [,,500,500] {css:'ae_frame shift_down'
-form _mapa [,,650,500] {css:'ae_frame shift_down'
+form _mapa [,,500,500] {css:'ae_frame shift_down'
+# form _mapa [,,650,500] {css:'ae_frame shift_down'
   var on=0
   proc mapa_show() {
     [ on.get
@@ -1024,8 +1024,8 @@ form _mapa [,,650,500] {css:'ae_frame shift_down'
       on.set(1); lst.bm_selected ] }
   proc onclick() {
     up(page.map); down(page.pri); down(page.dar); down(page.oso); down(page.rod); down(page.cle) }
-#   label cr [2,2,496,496] { type:'map'
-  label cr [2,2,646,496] { type:'map'
+  label cr [2,2,496,496] { type:'map'
+#   label cr [2,2,646,496] { type:'map'
     proc onmarkclick(mark) {
       echo(mark.title,' id_osoba:',mark.id);
       lst.bm.raise('onrowclick',mark.id);
@@ -1048,7 +1048,7 @@ form _mapa [,,650,500] {css:'ae_frame shift_down'
         proc onclick() { cr.fit_bounds }}
       item { title:'zoom na celou republiku'
         proc onclick() { cr.set(°{zoom:"49.0,14.6;50.5,16.4"}) }}
-      item { title:'-chlapské skupiny jaro 2016'
+      item { title:'-chlapské skupiny jaro 2017'
         proc onclick() { var lst:text, ret:object
 #           on.set(0); mapa_show;
           lst.set(conc("11000,12000,12800,14200,18200,25088,25230,26301,26801,27401,27601,32300,",
