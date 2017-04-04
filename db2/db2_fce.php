@@ -7583,7 +7583,7 @@ function mapa2_skupiny() {  trace();
   $tab= $json->decode($x)->table;
 //                                         debug($tab,$sheet);
   // projdeme získaná data
-  $psc= $note= array();
+  $psc= $note= $clmns= array();
   $n= 0;
   $msg= '';
   if ( $tab ) {
@@ -7591,25 +7591,36 @@ function mapa2_skupiny() {  trace();
       $row= $crow->c;
       if ( $row[0]->v=="ZVLÁŠTNÍ SKUPINY:" ) break;     // konec seznamu
       $skupina= $row[0]->v;
-      $pozn= $row[5]->v;
       $p= $row[1]->v;
       $p= strtr($p,array(' '=>'','?'=>'',"\n"=>''));
+      $aktual= $row[2]->v;
+      if ( preg_match("/(\d+),(\d+),(\d+)/",$x,$m) )
+        $aktual= "$m[3].$m[2].$m[1]";
+      $kontakt= $row[3]->v;
+      $email= $row[4]->v;
+      $pozn= $row[5]->v;
       if ( strlen($p)==5 ) {
         $psc[$p]= $pozn;
         $note[$p]= $skupina;
         $n++;
+        // podrobnosti do pole $clmns
+        $clmns[$p]=
+          "<h3>$skupina</h3><p>Kontakt:$kontakt, <b>$email</b></p>"
+        . "<p>$pozn</p><p style='text-align:right'><i>aktualizováno: $aktual</i></p>";
       }
       else {
-                                        debug($crow,"problém");
+//                                         debug($crow,"problém");
         $msg.= " $p";
       }
     }
   }
   // konec
 end:
-  $ret= mapa2_psc($psc,$note);
+  $ret= mapa2_psc($psc,$note,1);
   $msg= $msg ? "<br><br>Problém nastal pro PSČ: $msg" : '';
   $msg.= $ret->err ? "<br><br>$ret->err" : '';
+  $ret->err= '';
+  $ret->clmns= $clmns;
   $ret->msg= "Je zobrazeno $n skupin z tabulky <b>Seznam skupin - kontakty</b>$msg";
   return $ret;
 }
@@ -7624,7 +7635,7 @@ function mapa2_psc_list($psc_lst) {
 }
 # ----------------------------------------------------------------------------------==> .. mapa2 psc
 # vrátí strukturu pro gmap
-function mapa2_psc($psc,$obec) {
+function mapa2_psc($psc,$obec,$psc_as_id=0) {
                                                 debug($psc,"mapa2_psc");
   // k PSČ zjistíme LAN,LNG
   $ret= (object)array('mark'=>'','n'=>0);
@@ -7641,7 +7652,8 @@ function mapa2_psc($psc,$obec) {
         $n++;
         $o= isset($obec[$p]) ? $obec[$p] : $p;
         $title= str_replace(',','',"$o:$tit");
-        $marks.= "{$del}$n,{$s->lat},{$s->lng},$title"; $del= ';';
+        $id= $psc_as_id ? $p : $n;
+        $marks.= "{$del}$id,{$s->lat},{$s->lng},$title"; $del= ';';
       }
       else {
         $err_psc[$p].= " $p";

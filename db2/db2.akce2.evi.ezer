@@ -1018,7 +1018,8 @@ form _aktivity [,,248,min_h-160] {css:'ae_frame shift_up'
 form _mapa [,,500,500] {css:'ae_frame shift_down'
 # form _mapa [,,650,500] {css:'ae_frame shift_down'
   var on=0,
-      mode='evidence'   // evidence|skupiny|psc
+      mode='evidence',   // evidence|skupiny|psc
+      skup:object
   proc mapa_show() {
     [ on.get
     | cr.init('ROADMAP',°{mapTypeControl:0,streetViewControl:0});
@@ -1031,8 +1032,9 @@ form _mapa [,,500,500] {css:'ae_frame shift_down'
       echo(mark.title,' id_osoba:',mark.id);
 #       echo(debug(mark));
       { eq(mark.ezer,'skupiny'); echo('skupiny');
-        mail.f.tit.set(conc("Rád bych se dozvěděl víc o skupině: ",mark.title));
-        mail.popup
+        alert(skup.get(mark.id));
+#         mail.f.tit.set(conc("Rád bych se dozvěděl víc o skupině: ",mark.title));
+#         mail.popup
       | eq(mark.ezer,'psc'); echo('psc')
       | lst.bm.raise('onrowclick',mark.id)
       };
@@ -1056,25 +1058,13 @@ form _mapa [,,500,500] {css:'ae_frame shift_down'
         proc onclick() { cr.fit_bounds }}
       item { title:'zoom na celou republiku'
         proc onclick() { cr.set(°{zoom:"49.0,14.6;50.5,16.4"}) }}
-#       item { title:'-chlapské skupiny jaro 2017'
-#         proc onclick() { var lst:text, ret:object
-#           mode.set('skupiny');
-# #           on.set(0); mapa_show;
-#           lst.set(conc("11000,12000,12800,14200,18200,25088,25230,26301,26801,27401,27601,32300,",
-#             "33202,37341,39301,41501,46001,50000,50601,51761,53002,53901,54901,54954,56151,58601,",
-#             "59101,59255,63500,66411,66431,66434,68601,68801,66901,69501,69641,69662,70800,73911,",
-#             "73938,74245,73947,74601,75501,75644,75661,75701,76502,76701,76861,77900"));
-#           ret.set(ask('mapa2_psc_list',lst));
-#           [ ret.err; warning(ret.err) ];
-# #           cr.set(object('mark',''));
-#           cr.set(object('mark',ret.mark,'ezer','skupiny'));
-#       }}
       item { title:'- aktuální chlapské skupiny'
         proc onclick() { var ret:object
           mode.set('skupiny');
           ret.set(ask('mapa2_skupiny'));
           [ ret.err; warning(ret.err) ];
           cr.set(object('mark',ret.mark,'ezer','skupiny'));
+          skup.set(ret.clmns);
           [ ret.msg; alert(ret.msg) ];
       }}
       item { title:'zobrazení seznamu PSČ'
@@ -1110,14 +1100,14 @@ form _mapa [,,500,500] {css:'ae_frame shift_down'
     };
     cr.set(object('zoom',ret.rect));
   }
-  panel mail [,,400,200] { type:'popup', title:'poslat mail organizátorům'
-    use f: form _f [0,0,,]
-    form _f [,,400,100] {
-      field muj [59,10,344,90] { title:'odesílatel' }
-      label tit [10,40,390,90]
-      edit msg [10,70,390,120]
-    }
-  }
+#   panel mail [,,400,200] { type:'popup', title:'poslat mail organizátorům'
+#     use f: form _f [0,0,,]
+#     form _f [,,400,100] {
+#       field muj [59,10,344,90] { title:'odesílatel' }
+#       label tit [10,40,390,90]
+#       edit msg [10,70,390,120]
+#     }
+#   }
 }
 # ============================================================================================> _CMD
 # změny v evidenci
