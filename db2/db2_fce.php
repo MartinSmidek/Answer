@@ -7565,6 +7565,54 @@ function evid2_browse_mailist($x) {
   return $y;
 }
 # ==========================================================================================> . MAPA
+# ------------------------------------------------------------------------------------ mapa2 skupiny
+# přečtení seznamu skupin
+function mapa2_skupiny() {  trace();
+  global $json;
+  $goo= "https://docs.google.com/spreadsheets/d";
+  $key= "1mp-xXrF1I0PAAXexDH5FA-n5L71r5y0Qsg75cU82X-4";         // Seznam skupin - kontakty
+  $prefix= "google.visualization.Query.setResponse(";           // přefix json objektu
+  $sheet= "List 1";
+  $x= file_get_contents("$goo/$key/gviz/tq?tqx=out:json"); //&sheet=$sheet");
+//                                         display($x);
+  $xi= strpos($x,$prefix);
+  $xl= strlen($prefix);
+//                                         display("xi=$xi,$xl");
+  $x= substr(substr($x,$xi+$xl),0,-2);
+//                                         display($x);
+  $tab= $json->decode($x)->table;
+//                                         debug($tab,$sheet);
+  // projdeme získaná data
+  $psc= $note= array();
+  $n= 0;
+  $msg= '';
+  if ( $tab ) {
+    foreach ($tab->rows as $crow) {
+      $row= $crow->c;
+      if ( $row[0]->v=="ZVLÁŠTNÍ SKUPINY:" ) break;     // konec seznamu
+      $skupina= $row[0]->v;
+      $pozn= $row[5]->v;
+      $p= $row[1]->v;
+      $p= strtr($p,array(' '=>'','?'=>'',"\n"=>''));
+      if ( strlen($p)==5 ) {
+        $psc[$p]= $pozn;
+        $note[$p]= $skupina;
+        $n++;
+      }
+      else {
+                                        debug($crow,"problém");
+        $msg.= " $p";
+      }
+    }
+  }
+  // konec
+end:
+  $ret= mapa2_psc($psc,$note);
+  $msg= $msg ? "<br><br>Problém nastal pro PSČ: $msg" : '';
+  $msg.= $ret->err ? "<br><br>$ret->err" : '';
+  $ret->msg= "Je zobrazeno $n skupin z tabulky <b>Seznam skupin - kontakty</b>$msg";
+  return $ret;
+}
 # -----------------------------------------------------------------------------==> .. mapa2 psc_list
 # vrátí strukturu pro gmap
 function mapa2_psc_list($psc_lst) {
@@ -7596,11 +7644,11 @@ function mapa2_psc($psc,$obec) {
         $marks.= "{$del}$n,{$s->lat},{$s->lng},$title"; $del= ';';
       }
       else {
-        $err_psc[$p].= " $tit/$p";
+        $err_psc[$p].= " $p";
       }
     }
     else {
-      $mis_psc[$p].= " $tit/$p";
+      $mis_psc[$p].= " $p";
     }
   }
   // zjištění chyb
