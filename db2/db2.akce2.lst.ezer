@@ -380,6 +380,16 @@ form _page [,,275,360] {
   button [lc+20,bc+123,,] { tag:'b,cen', title:'pár+kojenec', proc onclick() { test_ceniku(2,0,1) }}
   button [lc+20,bc+150,,] { tag:'b,cen', title:'dítě do 10 let', proc onclick() { test_ceniku(0,1,0) }}
   button [lc+20,bc+177,,] { tag:'b,cen', title:'kojenec', proc onclick() { test_ceniku(0,0,1) }}
+  // výpočet expr
+  label  [lc+20,bc+203,211,] { tag:'b,cen', title:"+ ceny na web" }
+  button [lc+20,bc+220,,] { tag:'b,cen', title:'manželský pár',    proc onclick() { expr_ceniku("2*N*Nl+2*N*sc+2*O*oc+2*N*vc+2*P") }}
+  button [lc+20,bc+240,,] { tag:'b,cen', title:'dítě od 10,celá',  proc onclick() { expr_ceniku("  N*Nl  +N*sc  +O*oc  +N*vc+1*Pd") }}
+  button [lc+20,bc+260,,] { tag:'b,cen', title:'dítě 6-10,dětská', proc onclick() { expr_ceniku("  N*Nl  +N*sp  +O*op  +N*vp+1*Pd") }}
+  button [lc+20,bc+280,,] { tag:'b,cen', title:'dítě do 6,dětská', proc onclick() { expr_ceniku("         N*sp  +O*op  +N*vp+1*Pd") }}
+  button [lc+20,bc+300,,] { tag:'b,cen', title:'dítě do 3,bez',    proc onclick() { expr_ceniku("                            1*Pk") }}
+  proc expr_ceniku(expr) {
+    alert(conc(expr,'=',ask('akce2_vzorec_expr',a_akce.get,expr),'<br><br>(N je počet nocí, O je počet obědů)'))
+  }
   proc test_ceniku(dosp,deti,koje) { var cena:object
     eq(the_duakce.get,a_akce.get);
     { eq(the_soubeh.get,1);
