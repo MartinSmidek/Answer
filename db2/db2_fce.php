@@ -916,10 +916,12 @@ function akce2_pobyt_default($id_pobyt,$zapsat=0) {  trace();
 # $expr = {n}*{n2}..*za + ...  kde N je písmeno znamenající počet nocí
 function akce2_vzorec_expr($id_akce,$expr) {  trace();
   $expr= str_replace(' ','',$expr);
+  $html= '';
   // akce
   list($ma_cenik,$noci,$strava_oddo)=
     select("ma_cenik,DATEDIFF(datum_do,datum_od),strava_oddo","akce","id_duakce=$id_akce");
-  if ( !$ma_cenik ) { $cena= 'akce nemá ceník'; goto end; }
+  $obedu= $noci + ($strava_oddo=='oo' ? 1 : 0);
+  if ( !$ma_cenik ) { $html= 'akce nemá ceník'; goto end; }
   // ceník
   $cenik= array();
   $ra= mysql_qry("SELECT cena,za FROM cenik WHERE id_akce=$id_akce AND za!=''");
@@ -928,23 +930,30 @@ function akce2_vzorec_expr($id_akce,$expr) {  trace();
   }
   // výpočet
   $cena= 0;
-  foreach(explode('+',$expr) as $term) {
+  $terms= preg_split("/([+-])/m",$expr,-1,PREG_SPLIT_DELIM_CAPTURE);
+  $count= count($terms);
+                                                debug($terms,$count);
+  for ($j= 0; $j<$count; $j= $j+2 ) {
+    $term= $terms[$j];
+    $sign= $j ? $terms[$j-1] : '+';
     $n= explode('*',$term);
     $last= count($n)-1;
     $n[$last]= $cenik[$n[$last]];
     $ns= 1;
     for ($i= 0; $i<=$last; $i++) {
-      $x= $n[$i]=='N'
-        ? $noci : ( $n[$i]=='O' && $strava_oddo=='oo'
-        ? $noci+1
+      $x=           $n[$i]=='N'
+        ? $noci : ( $n[$i]=='O'
+        ? $obedu
         : $n[$i]);
       $ns*= $x;
     }
-                                                display(" + $term=$ns");
-    $cena+= $ns;
+                                                display(" $sign $term=$ns");
+    $cena+= $sign=='-' ? -$ns : $ns;
+//                                                 break;
   }
+  $html= "$expr = <b>$cena,-</b> <br><br><i>(N=$noci je počet nocí a menu, O=$obedu je počet obědů)</i>";
 end:
-  return $cena;
+  return $html;
 }
 # -------------------------------------------------------------------------------- akce2 vzorec_test
 # test výpočtu platby za pobyt na akci
