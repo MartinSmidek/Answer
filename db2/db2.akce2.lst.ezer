@@ -334,24 +334,35 @@ form _page [,,275,360] {
     show poradi [,,25,] { title:'N', help:'pořadí ve faktuře', data:cenik.poradi, format:'ruq*s+'
       proc onsubmit() { this.save } }
     show barva { expr:"IF(LEFT(polozka,1)='-',1,0)" }
-    show [,,155,] { title:'položka', help:'... do faktury', data:cenik.polozka, skill:'y|y;f|f',
+    show [,,150,] { title:'položka', help:'... do faktury', data:cenik.polozka,                 skill:'y|y;f|f'
       format:'tuq*s'
       proc onsubmit() { this.save } }
-    show [,,105,] { title:'položka', help:'... do faktury', data:cenik.polozka,  skill:'c|c',
+    show [,,100,] { title:'položka', help:'... do faktury', data:cenik.polozka,                 skill:'c|c',
       format:'tuq*s'
       proc onsubmit() { this.save } }
     show za [,,40,] { title:'za', data:cenik.za, format:'urq=s',
       help:'noc:N, strava:(s=snídaně/o=oběd/v=večeře)(c=celá/p=poloviční), pobyt:P, slevy:S'
       proc onsubmit() { this.save } }
     show typ [,,50,] { title:'typ', data:cenik.typ, map_pipe:ms_akce_ubytovan.zkratka,
-      format:'urq#s',                                                                    skill:'c|c'
+      format:'urq#s',                                                                           skill:'c|c'
       help:'typ ubutování: 1,2,3,...'
       proc onsubmit() { this.save } }
-    show cena [,,45,] { title:'cena', help:'cena v Kč vč. DPH', data:cenik.cena, format:'urq=s'
+    show cena [,,45,] { title:'cena', help:'cena v Kč vč. DPH', data:cenik.cena, format:'urq=s:e'
       proc onsubmit() { this.save } }
-    show dph [,,35,] { title:'dph', help:'DPH v Kč', data:cenik.dph, format:'urq=s'
+    show dph [,,0,] { title:'dph', help:'DPH v Kč', data:cenik.dph, format:'urq=s:e'
       proc onsubmit() { this.save } }
-    menu { type:'context', skill:'yaa+;faa+;caa+'
+    show od [,,21,] { title:'≥', data:cenik.od, format:'urq=:e',
+      help:'od tohoto věku (včetně narozenin)'
+      proc onsubmit() { this.save } }
+    show do [,,21,] { title:'<', data:cenik.do, format:'urq=:e',
+      help:'do tohoto věku (do narozenin)'
+      proc onsubmit() { this.save } }
+    proc onclick() {
+      has_skill('y;f');
+      od.width; od.width(0); do.width(0); dph.width(43)
+    | od.width(21); do.width(21); dph.width(0)
+    }
+    menu { type:'context',                                                                      skill:'yaa+;faa+;caa+'
       item { title:'přidat nový řádek'
         proc onclick() {
           c.browse_seek(conc('id_cenik=',cenik.insert_record(
@@ -387,8 +398,9 @@ form _page [,,275,360] {
   button [lc+20,bc+260,,] { tag:'b,cen', title:'dítě 6-10,dětská', proc onclick() { expr_ceniku("  N*Nl  +N*sp  +O*op  +N*vp+1*Pd") }}
   button [lc+20,bc+280,,] { tag:'b,cen', title:'dítě do 6,dětská', proc onclick() { expr_ceniku("         N*sp  +O*op  +N*vp+1*Pd") }}
   button [lc+20,bc+300,,] { tag:'b,cen', title:'dítě do 3,bez',    proc onclick() { expr_ceniku("                            1*Pk") }}
+  button [lc+20,bc+300,,] { tag:'b,cen', title:'VPS se slevou',    proc onclick() { expr_ceniku("2*N*Nl+2*N*sc+2*O*oc+2*N*vc+2*P-1*Sv") }}
   proc expr_ceniku(expr) {
-    alert(conc(expr,'=',ask('akce2_vzorec_expr',a_akce.get,expr),'<br><br>(N je počet nocí, O je počet obědů)'))
+    alert(ask('akce2_vzorec_expr',a_akce.get,expr))
   }
   proc test_ceniku(dosp,deti,koje) { var cena:object
     eq(the_duakce.get,a_akce.get);
