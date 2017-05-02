@@ -1973,7 +1973,7 @@ function ucast2_browse_ask($x,$tisk=false) {
       FROM pobyt AS p
       JOIN tvori AS t ON t.id_rodina=p.i0_rodina
       JOIN osoba AS o USING(id_osoba)
-      WHERE o.deleted='' AND o.access&@access AND $cond $AND
+      WHERE o.deleted='' /*AND o.access&@access*/ AND $cond $AND
     ");
     while ( $qp && ($p= mysql_fetch_object($qp)) ) {
       $osoby.= ",{$p->id_osoba}";

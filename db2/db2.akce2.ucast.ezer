@@ -1146,6 +1146,13 @@ form _spolu [,,0,270] {
     proc onclick() { na_akci(os.key_osoba.get,rod.key_rodina.get,os.role.get) }
     proc na_akci(ido,idr,role) { var ret:object
       Onclick;
+      // kontrola oprávněnosti - dotazem
+      { function('x','y','return x&y;',the_org.get,os.access.get)       // stejná org jako má akce?
+      | confirm("máme od této osoby souhlas?");                         // čestné prohlášení
+        os.access.set(3); os.access.change
+      | alert('tak ji nemohu přidat'); return                           // nic
+      };
+
       // přidání se zamezením duplicit a s definicí kategorie pro děti
       ret.set(ask('ucast2_pridej_osobu',ido,os.access.get,the_duakce.get,pob.key,idr,role));
       { ret.spolu; _reload_spolu(ido)
