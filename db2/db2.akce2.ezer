@@ -32,6 +32,7 @@ var the_soubeh: number          // 0=normální akce, 1=hlavní akce, 2=souběž
 var the_hlavni: number          // 0=normální akce, id=akce k the_duakce hlavní
 var the_soubezna: number        // 0=normální akce, id=akce s the_duakce souběžná
 var the_cenik: text             // pracovní akce: má ceník
+var the_cenik_verze: text       // ... verze ceníku: 0=2016, 1=2017
 var the_cena:  number           // pracovní akce: má pevnou cenu pro dospělého
 var form_mode: text             // informace pro zobrazení formulářů: new|show
 
@@ -85,7 +86,8 @@ proc akce_choose(id_akce) { var a:object
   the_duakce.set(id_akce);
   a.set(ask('akce2_id2a',id_akce)); // nastaví i nulové hodnoty pro id_akce=0
   the_rok.set(a.rok);       the_title.set(a.title);       the_soubeh.set(a.soubeh);
-  the_hlavni.set(a.hlavni); the_soubezna.set(a.soubezna); the_cenik.set(a.cenik);
+  the_hlavni.set(a.hlavni); the_soubezna.set(a.soubezna);
+  the_cenik.set(a.cenik);   the_cenik_verze.set(a.cenik_verze);
   the_cena.set(a.cena);     the_org.set(a.org);           the_ms.set(a.ms);    the_druh.set(a.druh);
 }
 proc accessed(org) {
@@ -301,6 +303,7 @@ table akce { key_id:'id_duakce'
   number access
   number typ
   number ma_cenik  // 1 znamená, že bereme v úvahu tabulku cenik
+  number ma_cenik_verze  // podle číselníku ms_cenik_verze (0=do roku 2016)
   number ma_cenu   // 1 znamená, že bereme v úvahu položku cena (pro 1 dospělého)
   number cena      // cena akce pro dospělého (je-li ma_cenu=1)
   number spec      // 1 znamená ne-akci, starý způsob příležitostných seznamů
@@ -503,6 +506,7 @@ table cenik { key_id:'id_cenik'
   number id_akce
   number poradi
   text   polozka
+  text   pro
   text   za             // N: noc, S:snídaně, O:oběd, V:večeře, P:pobyt
   number typ            // index typu ubytování
   number od
