@@ -2702,7 +2702,7 @@ function ucast2_browse_ask($x,$tisk=false) {
 //                                                         debug($osoba,'osoby po _rody');
     # seznamy položek
     $fpob1= ucast2_flds("key_pobyt=id_pobyt,_empty=0,key_akce=id_akce,key_osoba,key_spolu,key_rodina=i0_rodina,"
-           . "keys_rodina='',c_suma,platba,x_ms,xfunkce=funkce,funkce,skupina,dluh");
+           . "keys_rodina='',c_suma,platba,potvrzeno,x_ms,xfunkce=funkce,funkce,skupina,dluh");
     $fakce= ucast2_flds("dnu,datum_od");
     $frod=  ucast2_flds("fotka,r_access=access,r_spz=spz,r_svatba=svatba,r_datsvatba=datsvatba,"
           . "r_rozvod=rozvod,r_ulice=ulice,r_psc=psc,"
@@ -2711,7 +2711,7 @@ function ucast2_browse_ask($x,$tisk=false) {
           . ",strava_cel,strava_cel_bm,strava_cel_bl,strava_pol,strava_pol_bm,strava_pol_bl,"
           . "c_nocleh=platba1,c_strava=platba2,c_program=platba3,c_sleva=platba4,datplatby,"
           . "cstrava_cel,cstrava_cel_bm,cstrava_cel_bl,cstrava_pol,cstrava_pol_bm,cstrava_pol_bl,"
-          . "svp,zpusobplat,naklad_d,poplatek_d,platba_d"
+          . "svp,zpusobplat,naklad_d,poplatek_d,platba_d,potvrzeno_d"
           . ",zpusobplat_d,datplatby_d,ubytovani,cd,avizo,sleva,vzorec,duvod_typ,duvod_text,x_umi");
     //      id_osoba,jmeno,_vek,id_tvori,id_rodina,role,_rody,rc,narozeni
     $fos=   ucast2_flds("umrti,prijmeni,rodne,sex,adresa,ulice,psc,obec,stat,kontakt,telefon,nomail"
@@ -9925,6 +9925,105 @@ function elim2_data_rodina($idr,$cond='') {  //trace();
   return $ret;
 }
 /** =========================================================================================> MAIL2 **/
+# =========================================================================================> . vzory
+# --------------------------------------------------------------------------------- mail2 vzor_pobyt
+# pošle mail daného typu účastníkovi pobytu - zatím typ=potvrzeni_platby
+#                                                                         !!! + platba souběžné akce
+function mail2_vzor_pobyt($id_pobyt,$typ,$from,$vyrizuje,$poslat=0) {
+  $ret= (object)array();
+
+  // načtení a kontrola pobytu + mail + nazev akce
+  $p= (object)array();
+  $rm= mysql_qry("
+    SELECT IFNULL(x.id_duakce,0),
+     p.platba,p.datplatby,p.potvrzeno,
+     p.platba_d,p.datplatby_d,p.potvrzeno_d,
+     GROUP_CONCAT(DISTINCT IF(o.kontakt,o.email,'')),IFNULL(GROUP_CONCAT(DISTINCT r.emaily),''),
+     a.nazev,a.access
+    FROM pobyt AS p
+    JOIN akce AS a ON p.id_akce=a.id_duakce
+    LEFT JOIN akce AS x ON x.id_hlavni=a.id_duakce
+    JOIN spolu AS s USING(id_pobyt)
+    JOIN osoba AS o ON s.id_osoba=o.id_osoba
+    LEFT JOIN tvori AS t ON t.id_osoba=o.id_osoba AND IF(p.i0_rodina,t.id_rodina=p.i0_rodina,1)
+    LEFT JOIN rodina AS r USING (id_rodina)
+    WHERE id_pobyt=$id_pobyt
+  ");
+  if (!$rm ) { $ret->err= "CHYBA záznam nenalezen"; goto end; }
+  list($soubezna,$castka,$dne,$potvrzeno,$castka_d,$dne_d,$potvrzeno_d,
+    $omaily,$rmaily,$p->platba_akce,$access)= mysql_fetch_row($rm);
+  if ( !$castka && !$castka_d ) {
+    $ret->err= "CHYBA: ještě nebylo nic zaplaceno"; goto end; }
+  if ( $castka && $dne=='0000-00-00' || $castka_d && $dne_d=='0000-00-00' ) {
+    $ret->err= "CHYBA: není zapsáno datum platby"; goto end; }
+  if ( $soubezna  ) {
+    if ( $potvrzeno && $potvrzeno_d ) {
+      $ret->err= "CHYBA: obě platby již byly potvrzeny"; goto end;
+    }
+    if ( $castka && $potvrzeno && $castka_d && $potvrzeno_d ) {
+      $ret->err= "CHYBA: platba již byla potvrzena"; goto end;
+    }
+  }
+  else {
+    if ( $castka && $potvrzeno ) { $ret->err= "CHYBA: platba již byla potvrzena"; goto end; }
+  }
+
+  // naplnění proměnných mailu
+  $p->platba_den= sql_date1($castka && !$potvrzeno ? $dne : $dne_d);
+  $p->platba_castka=
+    number_format($castka && !$potvrzeno ? $castka : $castka_d, 0, '.', '&nbsp;')."&nbsp;Kč";
+  $p->vyrizuje= $vyrizuje;
+
+  // načtení vzoru dopisu
+  list($nazev,$obsah,$vars)=
+    select('nazev,obsah,var_list','dopis',"typ='potvrzeni_platby' AND access=$access");
+
+  // personifikace
+  foreach ( explode(',',$vars) as $var ) {
+    $var= trim($var);
+    $obsah= str_replace('{'.$var.'}',$p->$var,$obsah);
+  }
+  // extrakce adresy
+  $maily= trim(str_replace(';',',',"$omaily,$rmaily")," ,");
+  if ( !$maily ) { $ret->err= "CHYBA účastníci nemají uvedené maily"; goto end; }
+  $report= "<hr>Od:$vyrizuje &lt;$from&gt;<br>Komu:$maily<br>Předmět:$nazev<hr>$obsah";
+
+  if ( $poslat ) {
+    // poslání mailu - při úspěchu zápis o potvrzení
+    global $ezer_path_serv, $ezer_root;
+    $phpmailer_path= "$ezer_path_serv/licensed/phpmailer";
+    require_once("$phpmailer_path/class.phpmailer.php");
+    $mail= new PHPMailer;
+    $mail->SetLanguage('cz',"$phpmailer_path/language/");
+    $mail->Host= "192.168.1.1";
+    $mail->CharSet = "UTF-8";
+    $mail->IsHTML(true);
+    $mail->Mailer= "smtp";
+    // proměnné údaje
+    $mail->From= $from;
+    $mail->AddReplyTo($from);
+    $mail->FromName= $vyrizuje;
+    $mail->AddAddress($maily);
+    $mail->Subject= $nazev;
+    $mail->Body= $obsah;
+    $ok= $mail->Send();
+    if ( $ok  ) {
+      // zápis o potvrzení
+      $ret->msg= "Byl odeslán mail$report";
+      $field= $castka && !$potvrzeno ? 'potvrzeno' : 'potvrzeno_d';
+      query("UPDATE pobyt SET $field=1 WHERE id_pobyt=$id_pobyt");
+    }
+    else {
+      $ret->err= "CHYBA při odesílání mailu došlo k chybě: $mail->ErrorInfo";
+      goto end;
+    }
+  }
+  else {
+    $ret->msg= "Je připraven mail - mám ho poslat?$report";
+  }
+end:
+  return $ret;
+}
 # =======================================================================================> . mailist
 # ---------------------------------------------------------------------------------- mail2 lst_using
 # vrátí informaci o použití mailistu
@@ -11023,7 +11122,7 @@ function mail2_mai_stav($id_mail,$stav) {  trace();
   if ( !$res ) fce_error("mail2_mai_stav: změna stavu mailu No.'$id_mail' se nepovedla");
   return true;
 }
-# -------------------------------------------------------------------------------------------------- mail2 mai_send
+# ----------------------------------------------------------------------------------- mail2 mai_send
 # ASK
 # odešli dávku $kolik mailů ($kolik=0 znamená testovací poslání)
 # $from,$fromname = From,ReplyTo

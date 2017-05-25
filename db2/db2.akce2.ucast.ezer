@@ -561,6 +561,7 @@ form _ucast [,,400,] { css:'ds_form'
     show _dupl  // 1 pokud jsou duplicity
     show c_suma  [,,0,] { title:'cena', format:"r" }
     show platba  [,,0,] { title:'platba', format:"rsq=" }
+    show potvrzeno
     # varianta C na úkor _jmena
     show x_ms    [,,0,] { title:'lk;', format:'rq=s:e', help:'počet účastí páru na LK MS (včetně tohoto)' }
     show x_umi   [,,0,] { title:'umí', format:'sq*', help:'seznam schopností rodiny a jejích členů' }
@@ -586,7 +587,7 @@ form _ucast [,,400,] { css:'ds_form'
     show cstrava_cel, show cstrava_cel_bm, show cstrava_cel_bl,
     show cstrava_pol, show cstrava_pol_bm, show cstrava_pol_bl,
     show svp, show zpusobplat, show naklad_d, show poplatek_d,
-    show platba_d, show zpusobplat_d, show datplatby_d, show ubytovani, show cd, show avizo,
+    show platba_d, show potvrzeno_d, show zpusobplat_d, show datplatby_d, show ubytovani, show cd, show avizo,
     show sleva, show vzorec, show duvod_typ, show duvod_text,
     // klíč první a druhé osoby na akci
     show ido1, show ido2
@@ -1555,6 +1556,7 @@ form _platba { key_id:'id_pobyt'
   field svp         [240,Td+15,11,] {tag:'b', data:pobyt.svp, help:"počet dětí s vlastním pečovatelem"}
   // pouze u hlavní akce - platba za souběžnou
   field platba_d      [283,Td+48,50,] {tag:'b,deti', data:pobyt.platba_d, format:'nr'}
+  check potvrzeno_d   [421,Td+22,73,] {tag:'b,deti', title:"potvrzeno", data:pobyt.potvrzeno_d, format:'rd'}
   select zpusobplat_d [339,Td+48,86,] {tag:'b,deti', type:'map', data:pobyt.zpusobplat_d,
                                      options:ms_akce_platba.zkratka, format:'nu'}
   field datplatby_d   [430,Td+48,84,] {tag:'b,deti', type:'date', data:pobyt.datplatby_d, format:'n'}
@@ -1575,6 +1577,7 @@ form _platba { key_id:'id_pobyt'
                                    options:ms_akce_platba.zkratka, format:'u'}
   field datplatby   [430,Td+91,84,] {tag:'b', type:'date', format:'RUr:e', data:pobyt.datplatby}
   check avizo       [275,Td+107,50,] {tag:'b', title:"avízo", data:pobyt.avizo, format:'r'}
+  check potvrzeno   [421,Td+107,73,] {tag:'b', title:"potvrzeno", data:pobyt.potvrzeno, format:'rd'}
   // pevné texty
   label [13,32,,]   { tag:'cenik', title:'Rozpis ceny akce podle cenového vzorce akce a přehled příchozích plateb' }
   label [5,Td+128,,]  {tag:'b', title:'Cena zapsaná v evidenční kartě (použitá pro export do Excelu)',
@@ -1597,14 +1600,14 @@ form _platba { key_id:'id_pobyt'
 # uložení změn v platbách
 form _cmd_p [,,623,30] { css:'ae_work'
   // Zpět a Uložit
-  label  [519,0,102,30] { css:'ae_parm', skill:'yaa+;faa+;caa+' }
-  button [525,4,,] {title:'Zpět',  help:'Neměnit změněné platby', skill:'yaa+|yaa+;faa+|faa+;caa+|caa+'
+  label  [496,0,125,30] { css:'ae_parm', skill:'yaa+;faa+;caa+' }
+  button [503,6,,] {title:'[fa-undo] Zpět',  help:'Neměnit změněné platby', skill:'yaa+|yaa+;faa+|faa+;caa+|caa+'
     proc onclick() {
       // potlačení ochrany proti neuložené změně
       pla.plain;
       reload(u.b.browse_key);
   } }
-  button [571,4,,] {title:'Uložit',  help:'Uložit změny v platbách', skill:'yaa+|yaa+;faa+|faa+;caa+|caa+'
+  button [560,6,,] {title:'[fa-save] Uložit',  help:'Uložit změny v platbách', skill:'yaa+|yaa+;faa+|faa+;caa+|caa+'
     proc onclick() {
       var ok: number
       the_pobyt.get;
@@ -1613,9 +1616,24 @@ form _cmd_p [,,623,30] { css:'ae_work'
       reload(the_pobyt.get);
     }
   }
+  # potvrzení platby zasláním mailu
+  label  [165,0,148,30] { css:'ae_parm', skill:'yaa+' }
+  button [172,6,,] { title:"[fa-send-o] Potvrdit přijetí platby",
+    help:'poslání mailu o přijetí platby podle vzoru v Maily akce'
+    proc onclick() { var y:object, from:text, name:text
+      clear;
+      not(pla.same); alert("nejprve je třeba uložit změněné údaje")
+    | from.set(sys('user','options','email'));
+      name.set(sys('user','options','vyrizuje'));
+      y.set(ask('mail2_vzor_pobyt',the_pobyt.get,'potvrzeni_platby',from,name,0));
+      y.err; alert(y.err);
+    | confirm(y.msg);
+      y.set(ask('mail2_vzor_pobyt',the_pobyt.get,'potvrzeni_platby',from,name,1));
+      { y.err; alert(y.err) | pla.load(the_pobyt.get); alert(y.msg) }
+  }}
   # uhrazení členského příspěvku na akci do pokladny
-  label  [333,0,122,30] { css:'ae_parm', skill:'yaa+' }
-  button [339,4,,] {title:'členský příspěvek',  help:'pokladna: zaplatit členský příspěvek',
+  label  [337,0,136,30] { css:'ae_parm', skill:'yaa+' }
+  button [344,6,,] {title:'[fa-coffee] členský příspěvek',  help:'pokladna: zaplatit členský příspěvek',
     skill:'yaa+|yaa+'
     proc onclick() {
       var ret: object

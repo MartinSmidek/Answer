@@ -60,7 +60,7 @@ menu {type:'left', active:*, format:'f+'
 # -------------------------------------------------------------------------------------------- right
 # formulář pro levostranné menu s tlačítkem OPRAVIT
 form right [,,*,600] {
-  button opravit [-24,4,100,16] { title:'Upravit', style:'display:none;zIndex:2'
+  button opravit [-24,4,,] { title:'Upravit', style:'display:none;zIndex:2'
     proc onclick() { D_dopis.modal(50,50) }
   }
   label head [0,0,*,50] { title:'' }
