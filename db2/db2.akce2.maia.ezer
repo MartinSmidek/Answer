@@ -35,6 +35,7 @@ use ii: form right [12,4,,]
 use vy: form _vyber [10,30,,]   // výběr skupiny | zobrazené akce
 use et: form _etext [10,40,,]   // editace mailu
 use es: form _esady [10,74,,]   // rozesílání
+use vz: form _vzory [10,0,,]    // vzory mailů
 
 # ------------------------------------------------------------------------------------------==> MENU
 menu m {type:'left',
@@ -47,6 +48,12 @@ menu m {type:'left',
       par:°{k:'et',uq:'U3',on:'akce',off:'gen|skup'} }
     item {title:'... s divnou/žádnou občankou'
       par:°{k:'et',uq:'U4',on:'akce',off:'gen|skup'} }
+    item {title:'vzor mailu: Potvrzení platby'
+      proc onclick(i) {
+        ii.fill(conc(i.owner.title,' - ',i.title),' ');
+        vy.display(0); et.display(0); es.display(0); vz.display(1);
+        vz.Init
+    }}
   }
   menu {title:'Rozesílání mailů ', type:'group', _sys:'snd'
     item {title:'všem účastníkům této akce',
@@ -60,17 +67,42 @@ menu m {type:'left',
   }
   proc onclick (i) {
     menu_item.set(i);
+    vz.display(0); vy.display(1);
     ii.fill(conc(i.owner.title,' - ',i.title),' ');
-    vy.get.display(1,i.par.on); vy.get.display(0,i.par.off);
+    vy.display(1,i.par.on); vy.display(0,i.par.off);
     dopis_var.set(i.par.uq); karta.set(i.par.k);
     dopis_id.set(0); dopis_akce.set(the_duakce.get);
     et.form_init;
     switch(i.par.k,
-    'et',{et.get.display(1); es.get.display(0); vy.get.display(0,'es'); et.reload},
-    'es',{et.get.display(0); es.get.display(1); vy.get.display(1,'es'); es.reload},
-         {et.get.display(0); es.get.display(0)});
+    'et',{et.display(1); es.display(0); vy.display(0,'es'); et.reload},
+    'es',{et.display(0); es.display(1); vy.display(1,'es'); es.reload},
+         {et.display(0); es.display(0)});
     vy.fill(the_title.get);
   }
+}
+# -------------------------------------------------------------------------------------------- vzory
+# formulář pro opravu dopisu typ='potvrzeni_platby' ve variantě podle access
+form _vzory {
+  proc Init() { var a:array
+    dopis_id.set(0);
+    form.load('',conc("typ='potvrzeni_platby' AND access=",my_access.get));
+    dopis_id.set(id_dopis.get);
+    txt.set(conc("<h1>",nazev.get,"</h1>",obsah.get));
+  }
+  button opravit [-24,8,,] { title:'Upravit', style:'zIndex:2'
+    proc onclick() {
+      E_dopis.modal(50,50); Init
+  }}
+  label txt [0,40,,]
+  label vars [-25,40,200,] { css:'ae_work', style:'padding:5px;line-height:1.5'
+    title:'<b>v mailu lze používat proměnné:</b>
+      <br>{platba_den} = z karty Platba
+      <br>{platba_castka} = z karty Platba
+      <br>{platba_akce} = název akce
+      <br>{vyrizuje} = "vyřizuje" z os.nastavení' }
+  field id_dopis { data:dopis.id_dopis }
+  field nazev    { data:dopis.nazev }
+  field obsah    { data:dopis.obsah }
 }
 # ------------------------------------------------------------------------------------------- _vyber
 form _vyber {

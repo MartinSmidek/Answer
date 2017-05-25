@@ -334,10 +334,12 @@ table pobyt { key_id:'id_pobyt'
   date datplatby        { sql_pipe:'sql_date1'}
   number zpusobplat
   number platba
+  number potvrzeno
   number avizo          { help:"přišlo prohlášení o platbě" }
   number naklad_d
   number poplatek_d
   date datplatby_d      { sql_pipe:'sql_date1'} // platba za děti v souběžné akci
+  number potvrzeno_d
   number zpusobplat_d
   number platba_d
   text budova
