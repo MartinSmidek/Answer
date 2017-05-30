@@ -9010,13 +9010,13 @@ function sta2_sestava($org,$title,$par,$export=false) { trace();
   case '4roky':     // -----------------------------------==> .. 4 roky velkých akcí
     $roky= (date('Y')-4)." AND ".(date('Y')-1);
     $tits= explode(',',
-      'rok:6,dnů:6,R/J:6,místo akce:8,název akce:22,celkem účastníků a dětí (bez týmu a pečounů a chův):10,'
+      'rok:6,dnů:6,R/J:6,místo akce:12,název akce:22,celkem účastníků a dětí (bez týmu a pečounů a chův):10,'
      . 'průměrný věk dospělých:10,dospělých mužů:10,dospělých žen:10,'
-     . 'dětí na akci:8,dětí doma (do 18):8,celkem mají účastníci dětí,'
+     . 'dětí na akci:8,~ průměrně na rodinu:10,dětí doma (do 18):8,celkem mají účastníci dětí,~ průměrně na rodinu:10,'
      . '+ počet chův na akci:8,+ počet pečounů na akci:8,průměrný věk pečounů:9,(SS):5,(ID):5');
     $flds= explode(',',
       'rok,dnu,rj,misto,nazev,n_all,a_vek,muzu,zen,'
-    . 'deti,r_dit18,r_dit,n_chu,n_pec,a_vek_pec,ucet,ID');
+    . 'deti,p_deti,r_dit18,r_deti,pr_deti,n_chu,n_pec,a_vek_pec,ucet,ID');
     // kritéria akcí
     $druh_r= $org==2 ? '200,230'          : '412';                      // MS
     $druh_j= $org==2 ? '300,301,310,410'  : '302';                      // muži, ženy
@@ -9082,12 +9082,15 @@ function sta2_sestava($org,$title,$par,$export=false) { trace();
             $r_deti18+= $deti18;
           }
         }
+        $p_deti= round($n_mat ? $n_dit/$n_mat : 0,2);
+        $pr_deti= round($n_mat ? $r_deti/$n_mat : 0,2);;
         $clmn[$ida]= array( // rodiny
           'rok'=>$rok, 'dnu'=>$dnu, 'rj'=>'R', 'nazev'=>"$nazev", 'misto'=>$misto,
-          'n_all'=>$n_all-$n_pec-$n_chu, 'a_vek'=>$a_vek, 'muzu'=>$n_ote, 'zen'=>$n_mat, 'deti'=>$n_dit,
+          'n_all'=>$n_all-$n_pec-$n_chu, 'a_vek'=>$a_vek,
+          'muzu'=>$n_ote, 'zen'=>$n_mat, 'deti'=>$n_dit, 'p_deti'=>$p_deti,
           'n_chu'=>$n_chu, 'n_pec'=>$n_pec, 'a_vek_pec'=>$a_vek_pec,
           'n_nul'=>$n_nul,
-          'r_dit'=>$r_deti, 'r_dit18'=>$r_deti18-$n_dti,
+          'r_deti'=>$r_deti, 'pr_deti'=>$pr_deti, 'r_dit18'=>$r_deti18-$n_dti,
           'a_vek'=>$a_vek,
           'ucet'=>$ucet, 'ID'=>$ida
         );
@@ -9110,7 +9113,7 @@ function sta2_sestava($org,$title,$par,$export=false) { trace();
       $suma= $row['muzu']+$row['zen']+$row['deti'];
       $pocet= $row['n_all'];
       if ( $suma != $pocet ) {
-        $note_before.= "<br>U akce $ida nesouhlasí počet mužů+žen+dětí ($suma) s účastníky celkem ($pocet)";
+        $note_before.= "<br>U akce {$row['ID']} nesouhlasí počet mužů+žen+dětí ($suma) s účastníky celkem ($pocet)";
       }
       foreach($row as $i=>$value) {
         if ( !$value ) $clmn[$j][$i]= '';
