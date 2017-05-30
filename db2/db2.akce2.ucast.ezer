@@ -1617,7 +1617,7 @@ form _cmd_p [,,623,30] { css:'ae_work'
     }
   }
   # potvrzení platby zasláním mailu
-  label  [165,0,148,30] { css:'ae_parm', skill:'yaa+' }
+  label  [165,0,148,30] { css:'ae_parm', skill:'yaa+;faa+;caa+' }
   button [172,6,,] { title:"[fa-send-o] Potvrdit přijetí platby",
     help:'poslání mailu o přijetí platby podle vzoru v Maily akce'
     proc onclick() { var y:object, from:text, name:text
