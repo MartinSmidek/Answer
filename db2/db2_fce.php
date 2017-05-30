@@ -8994,6 +8994,7 @@ function sta2_pecouni($org) {
 function sta2_sestava($org,$title,$par,$export=false) { trace();
 //                                                 debug($par,"sta2_sestava($title,...,$export)");
   $ret= (object)array('html'=>'','err'=>0);
+  $note_before= '';
   // dekódování parametrů
   $tits= $par->tit ? explode(',',$par->tit) : array();
   $flds= $par->fld ? explode(',',$par->fld) : array();
@@ -9012,7 +9013,7 @@ function sta2_sestava($org,$title,$par,$export=false) { trace();
       'rok:6,dnů:6,R/J:6,místo akce:8,název akce:22,celkem účastníků a dětí (bez týmu a pečounů a chův):10,'
      . 'průměrný věk dospělých:10,dospělých mužů:10,dospělých žen:10,'
      . 'dětí na akci:8,dětí doma (do 18):8,celkem mají účastníci dětí,'
-     . '+ počet chův:8,+ počet pečounů:8,průměrný věk pečounů:9,(SS):5,(ID):5');
+     . '+ počet chův na akci:8,+ počet pečounů na akci:8,průměrný věk pečounů:9,(SS):5,(ID):5');
     $flds= explode(',',
       'rok,dnu,rj,misto,nazev,n_all,a_vek,muzu,zen,'
     . 'deti,r_dit18,r_dit,n_chu,n_pec,a_vek_pec,ucet,ID');
@@ -9103,12 +9104,19 @@ function sta2_sestava($org,$title,$par,$export=false) { trace();
         );
       }
     }
-    // náhrada nul
+    // náhrada nul a test součtu muzu+zen+deti=n_all
+    $note_before= "";
     foreach($clmn as $j=>$row) {
+      $suma= $row['muzu']+$row['zen']+$row['deti'];
+      $pocet= $row['n_all'];
+      if ( $suma != $pocet ) {
+        $note_before.= "<br>U akce $ida nesouhlasí počet mužů+žen+dětí ($suma) s účastníky celkem ($pocet)";
+      }
       foreach($row as $i=>$value) {
         if ( !$value ) $clmn[$j][$i]= '';
       }
     }
+    if ( $note_before ) $note_before= "POZOR!$note_before<br><br>";
                                                 debug($clmn,"clmn");
     break;
 
@@ -9501,7 +9509,7 @@ end:
   if ( $ret->err )
     return $ret;
   else
-    return sta2_table($tits,$flds,$clmn,$export);
+    return sta2_table($tits,$flds,$clmn,$export,null,$note_before);
 }
 # --------------------------------------------------------------------------------- sta2 excel_subst
 function sta2_sestava_adresy_fill($matches) { trace();
@@ -9514,7 +9522,7 @@ function sta2_sestava_adresy_fill($matches) { trace();
   return "$A$n";
 }
 # -----------------------------------------------------------------------------------=> . sta2 table
-function sta2_table($tits,$flds,$clmn,$export=false,$row_numbers=false) {  trace();
+function sta2_table($tits,$flds,$clmn,$export=false,$row_numbers=false,$note='') {  trace();
   $ret= (object)array('html'=>'');
   // zobrazení tabulkou
   $tab= '';
@@ -9565,7 +9573,8 @@ function sta2_table($tits,$flds,$clmn,$export=false,$row_numbers=false) {  trace
       $tab.= "</tr>";
       $n++;
     }
-    $ret->html= "Seznam má $n řádků<br><br><div class='stat'><table class='stat'><tr>$ths</tr>$tab</table></div>";
+    $ret->html= "{$note}Seznam má $n řádků<br><br><div class='stat'>
+      <table class='stat'><tr>$ths</tr>$tab</table></div>";
   }
   return $ret;
 }
