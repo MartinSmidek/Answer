@@ -9001,6 +9001,117 @@ function sta2_sestava($org,$title,$par,$export=false) { trace();
   $expr= array();       // pro výrazy
   // získání dat
   switch ($par->typ) {
+
+  # Sestava údajů o akcích: LK MS, Glotrach, Křižanov, Nesměř ap.
+  #  item {title:'Přehled větších vícedenních akcí'  ,par:°{typ:'4roky',rok:0,xls:'Excel',pdf:0
+  #    ,dsc:'Sestava ukazuje údaje o účastnících na vybraných akcích za uplynulé 4 roky.<br>'
+  #    ,tit:'věk:4,účastníků:10,pečovatelů:10',fld:'_vek,_uca,_pec',ord:'_vek'}}
+  case '4roky':     // -----------------------------------==> .. 4 roky velkých akcí
+    $roky= (date('Y')-4)." AND ".(date('Y')-1);
+    $tits= explode(',',
+      'rok:6,dnů:6,R/J:6,místo akce:8,název akce:22,celkem účastníků a dětí (bez týmu a pečounů a chův):10,'
+     . 'průměrný věk dospělých:10,dospělých mužů:10,dospělých žen:10,'
+     . 'dětí na akci:8,dětí doma (do 18):8,celkem mají účastníci dětí,'
+     . '+ počet chův:8,+ počet pečounů:8,průměrný věk pečounů:9,(SS):5,(ID):5');
+    $flds= explode(',',
+      'rok,dnu,rj,misto,nazev,n_all,a_vek,muzu,zen,'
+    . 'deti,r_dit18,r_dit,n_chu,n_pec,a_vek_pec,ucet,ID');
+    // kritéria akcí
+    $druh_r= $org==2 ? '200,230'          : '412';                      // MS
+    $druh_j= $org==2 ? '300,301,310,410'  : '302';                      // muži, ženy
+    $druh= $druh_r . ( $druh_j ? ",$druh_j" : '');
+    $ss=     $org==2 ? "ciselnik_akce"    : "g_kod";
+    $test= "1";
+//     $test= "id_akce=694";
+//     $test= "id_akce IN (694,738)";
+//     $test= "YEAR(a.datum_od)=2013";
+    $rx= mysql_qry("
+      SELECT id_duakce,a.datum_od,$ss,nazev,misto,YEAR(a.datum_od),DATEDIFF(a.datum_do,a.datum_od),
+        x.n_all,a_vek,n_mzu,n_zen,n_dti,n_ote,n_mat,n_dit,n_chu,n_pec,a_vek_pec,n_nul,_rr
+      FROM akce AS a
+      LEFT JOIN join_akce AS aj ON aj.id_akce=a.id_duakce
+      LEFT JOIN (
+        SELECT id_akce, COUNT(*) AS n_all, GROUP_CONCAT(DISTINCT xp.i0_rodina) AS _rr,
+          ROUND(SUM(IF(funkce IN (0,1) AND ROUND(DATEDIFF(xa.datum_od,xo.narozeni)/365.2425,1)>=18,
+                             DATEDIFF(xa.datum_od,xo.narozeni)/365.2425,0))
+              / SUM(funkce IN (0,1) AND IF(ROUND(DATEDIFF(xa.datum_od,xo.narozeni)/365.2425,1)>=18,1,0)))
+            AS a_vek,
+          SUM(IF(ROUND(DATEDIFF(xa.datum_od,xo.narozeni)/365.2425,1)<18,1,0)) AS n_dti,
+          SUM(IF(ROUND(DATEDIFF(xa.datum_od,xo.narozeni)/365.2425,1)>=18 AND xo.sex=1,1,0)) AS n_mzu,
+          SUM(IF(ROUND(DATEDIFF(xa.datum_od,xo.narozeni)/365.2425,1)>=18 AND xo.sex=2,1,0)) AS n_zen,
+          SUM(IF(xst.role='a',1,0)) AS n_ote, SUM(IF(xst.role='b',1,0)) AS n_mat,
+          SUM(IF(xst.role='d',1,0)) AS n_dit, SUM(IF(xst.role NOT IN ('a','b','d'),1,0)) AS n_chu,
+          SUM(IF(ISNULL(xst.role),1,0)) AS n_nul,
+          SUM(IF(funkce=99,1,0)) AS n_pec,
+          ROUND(SUM(IF(funkce=99,DATEDIFF(xa.datum_od,xo.narozeni)/365.2425,0)) / SUM(IF(funkce=99,1,0)))
+            AS a_vek_pec
+        FROM pobyt AS xp
+        JOIN akce  AS xa ON xa.id_duakce=xp.id_akce
+        JOIN spolu AS xs USING (id_pobyt)
+        JOIN osoba AS xo ON xo.id_osoba=xs.id_osoba
+        LEFT JOIN tvori  AS xst ON xst.id_osoba=xs.id_osoba AND IF(xp.i0_rodina,xst.id_rodina=xp.i0_rodina,0)
+        WHERE funkce IN (0,1,99)
+        GROUP BY id_akce
+      ) AS x ON x.id_akce=id_duakce
+      WHERE a.access=$org AND $ss IN ($druh)
+        AND YEAR(a.datum_od) BETWEEN $roky AND DATEDIFF(a.datum_do,a.datum_od)>0
+        AND $test
+      ORDER BY a.datum_od,ciselnik_akce
+    ");
+    while ( $rx && (list(
+        $ida,$datum_od,$ucet,$nazev,$misto,$rok,$dnu,
+        $n_all,$a_vek,$n_mzu,$n_zen,$n_dti,$n_ote,$n_mat,$n_dit,$n_chu,$n_pec,$a_vek_pec,$n_nul,$rr
+      )= mysql_fetch_row($rx)) ) {
+      $r_deti= $r_deti18= 0;
+      // rozhodnutí o typu akce: rodiny / jednotlivci
+      if ( strpos(" $druh_r",$ucet) ) {
+        // dopočet údajů rodin
+        if ( $rr ) {
+          $rs= mysql_qry("
+            SELECT SUM(IF(role='d',1,0)),
+              SUM(IF(ROUND(DATEDIFF('$datum_od',o.narozeni)/365.2425,1)<18,1,0)) AS _deti
+            FROM rodina AS r
+              JOIN tvori AS t USING (id_rodina)
+              JOIN osoba AS o USING (id_osoba)
+            WHERE id_rodina IN ($rr)
+            GROUP BY id_rodina
+          ");
+          while ( $rs && (list($deti,$deti18)= mysql_fetch_row($rs)) ) {
+            $r_deti+= $deti;
+            $r_deti18+= $deti18;
+          }
+        }
+        $clmn[$ida]= array( // rodiny
+          'rok'=>$rok, 'dnu'=>$dnu, 'rj'=>'R', 'nazev'=>"$nazev", 'misto'=>$misto,
+          'n_all'=>$n_all-$n_pec-$n_chu, 'a_vek'=>$a_vek, 'muzu'=>$n_ote, 'zen'=>$n_mat, 'deti'=>$n_dit,
+          'n_chu'=>$n_chu, 'n_pec'=>$n_pec, 'a_vek_pec'=>$a_vek_pec,
+          'n_nul'=>$n_nul,
+          'r_dit'=>$r_deti, 'r_dit18'=>$r_deti18-$n_dti,
+          'a_vek'=>$a_vek,
+          'ucet'=>$ucet, 'ID'=>$ida
+        );
+      }
+      else {
+        $clmn[$ida]= array( // jednotlivci
+          'rok'=>$rok, 'dnu'=>$dnu, 'rj'=>'J', 'nazev'=>"$nazev", 'misto'=>$misto,
+          'a_vek'=>$a_vek,
+          'n_all'=>$n_all,
+          'muzu'=>$n_mzu, 'zen'=>$n_zen, 'deti'=>$n_dti,
+          'n_chu'=>$n_chu, 'n_nul'=>$n_nul,
+          'a_vek'=>$a_vek,
+          'ucet'=>$ucet, 'ID'=>$ida
+        );
+      }
+    }
+    // náhrada nul
+    foreach($clmn as $j=>$row) {
+      foreach($row as $i=>$value) {
+        if ( !$value ) $clmn[$j][$i]= '';
+      }
+    }
+                                                debug($clmn,"clmn");
+    break;
+
   # Sestava pečounů na letních kurzech, rok= před kolika lety naposledy ve funkci (0=jen letos)
   case 'pecujici':     // -----------------------------------==> .. pecujici
     $cert= array(); // certifikát rok=>poslední číslo
@@ -9069,6 +9180,7 @@ function sta2_sestava($org,$title,$par,$export=false) { trace();
     }
 //                                                 debug($clmn,"$hranice");
     break;
+
   # Sestava sloužících na letních kurzech, rok= před kolika lety naposledy ve funkci (0=jen letos)
   case 'slouzici':     // -------------------------------------==> .. slouzici
     global $VPS;
@@ -9169,6 +9281,7 @@ function sta2_sestava($org,$title,$par,$export=false) { trace();
     }
 //                                                 debug($clmn,"$hranice");
     break;
+
   # Sestava přednášejících na letních kurzech, rok= kolik let dozadu (0=jen letos)
   case 'prednasejici': // -----------------------------------==> .. prednasejici
     $do= date('Y');
@@ -9210,6 +9323,7 @@ function sta2_sestava($org,$title,$par,$export=false) { trace();
     }
 //                                                 debug($clmn,"$od - $do");
     break;
+
   # Sestava ukazuje letní kurzy
   # fld:'_rok,_pec,_sko,_proc,_pecN,_skoN,_procN,_note'
   case 'ms-pecouni': // -------------------------------------==> .. ms-pecouni
@@ -9256,6 +9370,7 @@ function sta2_sestava($org,$title,$par,$export=false) { trace();
 //       if ( $rok==2014) break;
     }
     break;
+
   # Sestava ukazuje celkový počet účastníků resp. pečovatelů na akcích letošního roku,
   # rozdělený podle věku. Účastník resp. pečovatel je započítán jen jednou,
   # bez ohledu na počet akcí, jichž se zúčastnil
@@ -9280,6 +9395,7 @@ function sta2_sestava($org,$title,$par,$export=false) { trace();
         $clmn[$vek]['_uca']++;
     }
     break;
+
   # Seznam obsahuje účastníky akcí v posledních letech (parametr 'parm' určuje počet let zpět) —
   case 'adresy': // -------------------------------------------------------==> .. adresy
     $rok= date('Y') - $par->parm;
