@@ -431,8 +431,8 @@ menu m {type:'left', active:*
   # ---------------------------------------------------------------------------------------------==> Technické seznamy
   menu {tag:'a', title:'Technické seznamy',type:'group',_sys:'*'
     item {title:'Návrh ubytování'       ,par:°{typ:'p',exp:'Excel2',cnd:"p.funkce!=99"
-                                        ,tit:'příjmení:15,jména:12,obec:25,lůžka:5,přistýlka:5,kočárek:5,pokoj:5,pok1:4,pok2:4,pok3:4,chůvy:20,poznámka:100,^'
-                                        ,fld:'prijmeni,jmena,obec,luzka,pristylky,kocarek,pokoj,pok1,pok2,pok3,_chuvy,poznamka,^id_pobyt'}}
+                                        ,tit:'příjmení:15,jména:12,obec:25,věk dětí:10,lůžka:5,přistýlka:5,kočárek:5,pokoj:5,pok1:4,pok2:4,pok3:4,chůvy:20,poznámka:100,^'
+                                        ,fld:'prijmeni,jmena,obec,vek_deti,luzka,pristylky,kocarek,pokoj,pok1,pok2,pok3,_chuvy,poznamka,^id_pobyt'}}
     item {title:'Návrh skupinek'                                                             skill:'y;f'
                                         ,par:°{typ:'skpl',exp:'Excel-plachta',cnd:'1'}} // fce:'plachta'
     item {title:'Štítky pro návrh skupinek' ,par:°{typ:'ss',exp:'PDF-plachta'
