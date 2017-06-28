@@ -411,6 +411,8 @@ menu m {type:'left', active:*
     item {title:'Počty strav'           ,par:°{typ:'vs',exp:'Excel2',cnd:'1'}}
     item {title:'Počty strav - souhrn s dietami'
                                         ,par:°{typ:'vsd',exp:'Excel2',cnd:'1',souhrn:1}}
+    item {title:'Počty strav - výlet 3.den'
+                                        ,par:°{typ:'vsd3',exp:'Excel2',cnd:'1',souhrn:1}}
     item {title:'Člověkolůžka'          ,par:°{typ:'vn',exp:'Excel2',cnd:'1'}}
     item {title:'Skupinky'              ,par:°{typ:'skti',exp:'Excel2',cnd:'1',verze:'MS'}} // fce:'tisk'
     item {title:'Skupinky dětí'         ,par:°{typ:'sd',exp:'Excel2',cnd:'1',fce:'tisk'}}
