@@ -3315,7 +3315,7 @@ function akce2_auto_jmena1($patt,$par) {  #trace();
     $patt= $is ? substr($patt,0,$is) : $patt;
   }
   // osoby
-  $AND= $par->deti ? '' : "AND (narozeni='0000-00-00' OR DATEDIFF('$dnes',narozeni)/365.2425>18)";
+  $AND= $par->deti ? '' : "AND (narozeni='0000-00-00' OR DATEDIFF('$dnes',narozeni)/365.2425>15)";
   $qry= "SELECT prijmeni, jmeno, id_osoba AS _key
          FROM osoba
          LEFT JOIN tvori USING(id_osoba)
