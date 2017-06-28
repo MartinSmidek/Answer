@@ -3885,8 +3885,9 @@ function tisk2_sestava($akce,$par,$title,$vypis,$export=false) { trace();
      : ( $par->typ=='p'    ? tisk2_sestava_pary($akce,$par,$title,$vypis,$export)
      : ( $par->typ=='P'    ? akce2_sestava_pobyt($akce,$par,$title,$vypis,$export)
      : ( $par->typ=='j'    ? tisk2_sestava_lidi($akce,$par,$title,$vypis,$export)
-     : ( $par->typ=='vs'   ? akce2_strava_pary($akce,$par,$title,$vypis,$export)  // bez náhradníků
+     : ( $par->typ=='vs'   ? akce2_strava_pary($akce,$par,$title,$vypis,$export)    // bez náhradníků
      : ( $par->typ=='vsd'  ? akce2_strava_souhrn($akce,$par,$title,$vypis,$export)  // bez náhradníků s dietami
+     : ( $par->typ=='vsd3' ? akce2_strava_vylet($akce,$par,$title,$vypis,$export)   // 3.den děti oběd
      : ( $par->typ=='vv'   ? tisk2_text_vyroci($akce,$par,$title,$vypis,$export)
      : ( $par->typ=='vi'   ? akce2_text_prehled($akce,$par,$title,$vypis,$export)
      : ( $par->typ=='ve'   ? akce2_text_eko($akce,$par,$title,$vypis,$export)
@@ -3907,7 +3908,7 @@ function tisk2_sestava($akce,$par,$title,$vypis,$export=false) { trace();
      : ( $par->typ=='tab'  ? akce2_tabulka($akce,$par,$title,$vypis,$export)
      : (object)array('html'=>"<i>Tato sestava zatím není převedena do nové verze systému,
           <a href='mailto:martin@smidek.eu'>upozorněte mě</a>, že ji už potřebujete</i>")
-     )))))))))))))))))))))));
+     ))))))))))))))))))))))));
 }
 # =======================================================================================> . seznamy
 function mb_strcasecmp($str1, $str2, $encoding = null) {
@@ -4751,7 +4752,7 @@ function akce2_stravenky_diety($akce,$par,$title,$vypis,$export=false) { trace()
   $result->note= $note ? "(bez $note, kteří nemají vyjasněnou funkci)" : '';
   return $result;
 }
-# -------------------------------------------------------------------------------- akce2 strava_pary
+# ------------------------------------------------------------------------------ akce2 strava_souhrn
 # generování sestavy přehledu strav pro účastníky $akce - páry
 #   $cnd = podmínka
 #   $id_pobyt -- je-li udáno, počítá se jen pro tento jeden pobyt (jedněch účastníků)
@@ -4842,6 +4843,106 @@ function akce2_strava_souhrn($akce,$par,$title,$vypis,$export=false,$id_pobyt=0)
   $result->html.= "<h3>Souhrn strav podle dnů, rozdělený podle typů stravy vč. diet</h3>";
   $result->html.= "<div class='stat'><table class='stat'><tr>$ths</tr>$sum$tab</table></div>";
   $result->href= $href;
+  return $result;
+}
+# ------------------------------------------------------------------------------- akce2 strava_vylet
+# generování sestavy přehledu strav pro účastníky $akce - páry
+#   $cnd = podmínka
+#   $id_pobyt -- je-li udáno, počítá se jen pro tento jeden pobyt (jedněch účastníků)
+# počítané položky
+#   manzele = rodina.nazev muz a zena
+# generované vzorce
+#   platit = součet předepsaných plateb
+function akce2_strava_vylet($akce,$par,$title,$vypis,$export=false,$id_pobyt=0) { //trace();
+  global $diety,$diety_,$jidlo_,$EZER;
+//                                                                 debug($par,"akce2_strava_souhrn");
+  $result= (object)array();
+  // získání dat - podle $kdo
+  $clmn= array();       // pro hodnoty
+  $expr= array();       // pro výrazy
+  $suma= array();       // pro sumy sloupců id:::s
+  $fmts= array();       // pro formáty sloupců id::f:
+  $flds= array();
+
+  // projdeme páry s dětmi ve věku nad 3 roky a děti sečteme
+  $den= ' 3/7';
+  $pocet_deti= $pocet_cele= $pocet_polo= 0;
+  $cnd= "p.funkce!=99";
+  $browse_par= (object)array(
+    'cmd'=>'browse_load','cond'=>"$cnd AND p.id_akce=$akce",'having'=>'','order'=>'a _nazev',
+    'sql'=>"SET @akce:=$akce,@soubeh:=0,@app:='{$EZER->options->root}';");
+  $y= ucast2_browse_ask($browse_par,true);
+  # rozbor výsledku browse/ask
+  $i_adresa=         15+1;
+  $i_key_spolu=      39+2;
+  $i_spolu_note=     43+2;
+  $i_osoba_jmeno=     3;
+  $i_osoba_prijmeni= 12+1;
+  $i_osoba_role=      8;
+  $i_osoba_vek=       5;
+  $i_osoba_note=     36+2;
+  $i_osoba_kontakt=  20+1;
+  $i_osoba_telefon=  21+1;
+  $i_osoba_email=    23+1;
+  array_shift($y->values);
+  foreach ($y->values as $x) {
+    // údaje pobytu $x->pobyt
+    $xs= explode('≈',$x->r_cleni);
+    $vek_deti= array();
+    $deti_nad3= $cel= $pol= $chuv= 0;
+    foreach ($xs as $i=>$xi) {
+      $o= explode('~',$xi);
+      if ( $o[$i_key_spolu] && $x->key_rodina ) {
+        if ( $o[$i_osoba_role]=='p' ) {
+          $chuv++;
+        }
+        if ( $o[$i_osoba_role]=='d' ) {
+          $vek= $o[$i_osoba_vek];
+          if ( $vek<3 ) break;
+          $vek_deti[]= $vek;
+          $deti_nad3++;
+          $pocet_deti++;
+        }
+      }
+    }
+    if ( !$deti_nad3 ) continue;
+//     $test= array(48838,49080,48553);
+    $test= array(48673);
+//     if ( in_array($x->key_pobyt,$test) ) {
+//       $tab.= "<br>{$x->key_pobyt} {$x->_nazev} (děti nad 3 mají roků:".implode(',',$vek_deti).") ";
+      $tab.= "<br>{$x->_nazev} (věk dětí starších 3 let: ".implode(',',$vek_deti).") ";
+//                                                         debug($x);
+      $ret= akce2_strava_pary($akce,$par,$title,$vypis,$export,$x->key_pobyt);
+//                                                         debug($ret->suma);
+      foreach ($diety as $dieta) {
+        $cel+= $ret->suma["$den oc$dieta "];
+        $pol+= $ret->suma["$den op$dieta "];
+      }
+//       $tab.= "... cele=$cel polo=$pol";
+      // odečteme stravu rodičů - asi cc cp pp
+      if ( $cel+$pol >= 2+$chuv ) {
+        // něco zůstane na děti
+        if ( $cel>=2+$chuv ) { $cel-= 2+$chuv; }
+        elseif ( $cel==1 ) { $cel--; $pol--; }
+        else { $pol-= 2; }
+      }
+      $tab.= "... objednali asi cele=$cel polo=$pol";
+      // pokud je víc strav jak děti3 tak asi je i to 3 leté
+      $pod3= ($cel+$pol) - $deti_nad3;
+      if ( $pod3 > 0 ) {
+        // tak je odečteme ... spolehneme se, že namá celou
+        if ( $pol >= $pod3 ) { $pol-= $pod3; }
+        $tab.= "...oprava: cele=$cel polo=$pol  ($deti_nad3,$pod3)";
+      }
+//     }//test
+    $pocet_cele+= $cel;
+    $pocet_polo+= $pol;
+  }
+  $sum.= "<p> Dětí nad 3 roky je $pocet_deti ... mají  objednaných asi
+    $pocet_cele celých obědů a $pocet_polo polovičních</p>";
+end:
+  $result->html.= "<h3>Odhad obědů objednaných pro děti nad 3 roky na den $den</h3>";
+  $result->html.= "$sum<br><hr>protože si myslím, že <br>$tab";
   return $result;
 }
 # -------------------------------------------------------------------------------- akce2 strava_pary
