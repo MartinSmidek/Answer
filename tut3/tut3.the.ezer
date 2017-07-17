@@ -1,0 +1,757 @@
+#pragma strings
+# ------------------------------------------------------------------------------------------------ #
+# Modul pro demonstraci a testování základních komponent jádra systému Ezer3                       #
+#                                                                                                  #
+# Ezer3                                                  (C) 2017 Martin Šmídek <martin@smidek.eu> #
+# ------------------------------------------------------------------------------------------------ #
+// info.fill('',ask('tut_phpexcel',i.par));
+
+panel lang [,,400,200] {type:'right', title:'[fa-book] Language', style:'background:white'
+  menu {type:'left', format:'f'
+    menu {title:'group 1',type:'group'
+      item {title:"[fa-at] item 1.1" proc onclick() { echo(this.title) } }
+      item {title:"[fa-at] item 1.2" proc onclick() { echo(this.title) } }
+    }
+    menu {title:'group 2',type:'group'
+      item {title:"item 2.1"  proc onclick() { echo(this.title) } }
+      item {title:"item 2.2", format:'d'  proc onclick() { echo(this.title) } }
+    }
+  }
+  const one=1
+  proc ahoj() { alert('ahoj') }
+  use u: form f
+  proc onfocus() {
+#     echo('one=',one.get); u.but.get; u.lab.set(conc(u.lab.get,'.'));
+    u.fce_ctx.Init
+  }
+  form f {
+    // elementy
+    label ram [5,5,90,20] { title:'', css:'ae_work' }
+    label lab [10,7,,] { title:"AHOJ <a href='ezer://the.lang.ahoj'>pozdrav</a>", help:'ahoj!'
+      // context menu s maskou
+      menu { type:'context', join:ram
+        item { title:'gama' proc onclick() { echo('gama') }}
+      }
+    }
+    button but [100,5,,] { title:"add ."
+      proc onclick() { echo('au'); this.set(conc(this.get,'.')); }
+    }
+    // context menu
+    menu { type:'context'
+      item { title:'alfa', format:'d' proc onclick() { echo('alfa') }}
+      item { title:'-[fa-save] beta' proc onclick() { echo('beta') }}
+      item { type:'clipboard', title:'copy to clipboard' proc onclick() { clipboard("Dobrý den!") }}
+    }
+    // test display
+    button [5,35,,] { title:"display on/off"
+      proc onclick() {
+        [ lab.display; lab.display(0) | lab.display(1) ];
+        [ but.display; but.display(0) | but.display(1) ];
+      }
+    }
+    // test enable
+    button [100,35,,] { title:"enable on/off"
+      proc onclick() {
+        [ lab.enable; lab.enable(0) | lab.enable(1) ];
+        [ but.enable; but.enable(0) | but.enable(1) ];
+      }
+    }
+    // test funkcí
+    // contextmenu
+    button fce_ctx [200,5,,] { title:"fce contextmenu"
+      proc Init() {
+        contextmenu(function(
+          "return [['try',function(){alert(13)}]];"
+        ),'',function("return this.DOM_Block;"))
+    }}
+  }
+}
+/*
+# =========================================================================================> ELEMENT
+
+panel elem {type:'right', title:'[fa-cogs] Element', _sys:'*'
+  var my_item: object
+  menu of {type:'left', active:*, format:'f'
+#     menu browse {title:'browse',type:'group'
+#       item height {title:"[fa-arrows-v]změna výšky",
+#         par:°{tg:'(br|bra)$',typ:'Block',hlp:'Browse',nt:'Ukázka změny počtu řádků v browse',tm:'br.*'}}
+#       item export {title:"[fa-file-excel-o]export do Excelu",
+#         par:°{tg:'(br|brx)$',typ:'Block',hlp:'Browse',nt:'Test exportu do Excelu s nabídkou stažení',tm:'br.*',tx:'br.*'}}
+#       item methods {title:"[fa-puzzle-piece]metody, context menu",
+#         par:°{tg:'(br|brm)$',typ:'Block',hlp:'Browse',nt:'Test metod',tm:'br.*',tx:'br.*'}}
+#       item find {title:"[fa-question]výběrové podmínky",
+#         par:°{tg:'(br2)$',proc:'u.br2.start',typ:'Block',hlp:'Browse',nt:'Test výběrových podmínek',tm:'br.*',tx:'br.*'}}
+#     }
+#     menu select {title:'select',type:'group'
+#       item fix {title:"[fa-angle-down] výběr z pevného seznamu",
+#         par:°{tg:'(s1)$',typ:'Block',hlp:'Select',nt:'nečíselný klíč',tm:'s1.*'}}
+#       item multi {title:"[fa-angle-double-down] multiselect",
+#         par:°{tg:'(s2)$',typ:'Block',hlp:'SelectMulti',nt:'výběr více hodnot s drženým Ctrl',tm:'s2.*'}}
+#       item auto {title:"[fa-eject fa-flip-vertical] autoselect",
+#         par:°{tg:'(s3)$',typ:'Block',hlp:'SelectAuto',nt:'inkrementální výběr',tm:'s3.*'}}
+#     }
+#     menu radio {title:'radio',type:'group'
+#       item methods {title:"[fa-puzzle-piece]metody",
+#         par:°{tg:'r_',typ:'Block',hlp:'Radio',nt:'Test metod',tm:'r_.*'}}
+#     }
+#     menu field {title:'field',type:'group'
+#       item normal {title:"[fa-pencil] field",
+#         par:°{tg:'f_',typ:'Block',hlp:'Field',nt:'Test metod',tm:'f_.*'}}
+#     }
+#     menu label {title:'label',type:'group'
+#       item drop_s {title:"[fa-upload] drop file/server (cloud=S:)",
+#         par:°{tg:'l_',proc:'u.l_start',x:'S:',typ:'Block',hlp:'LabelDrop',nt:'Test metod',tm:'f_.*'}}
+#       item drop_h {title:"[fa-upload fa-red] drop file/hidden (cloud=H:)",
+#         par:°{tg:'l_',proc:'u.l_start',x:'H:',typ:'Block',hlp:'LabelDrop',nt:'Test metod',tm:'f_.*'}}
+#     }
+#     menu edit {title:'edit',type:'group'
+#       item html {title:"[fa-edit] HTML editor",
+#         par:°{tg:'e_',typ:'Block',hlp:'Edit',nt:'Test metod',tm:'e_.*'}}
+#     }
+#     menu button {title:'button',type:'group'
+#       item text {title:"[fa-check]tlačítko s textem",
+#         par:°{tg:'b_',typ:'Block',hlp:'Button',nt:'Tlačítko s textem',tm:'b_.*'}}
+#       item html {title:"[fa-check-square-o]tlačítko s html",
+#         par:°{tg:'bh',typ:'Block',hlp:'ButtonHtml',nt:'Tlačítko s html textem. Pro zobrazení ikon je třeba do sekce CSS v app.php přidat cestu: <br>Ezer2.2/client/licensed/font-awesome/css/font-awesome.min.css',tm:'bh.*'}}
+#     }
+    menu area {title:'area',type:'group'
+      item tree {title:"[fa-tree]tree",
+        par:°{tg:'a_',typ:'Area',hlp:'',nt:'Test zobrazování stromů. Struktura applikace je zobrazována také přes kontextové menu v <b>debug!</b>',tm:'*',proc:'u.a.start'}}
+    }
+#     menu function {title:'funkce',type:'group'
+#       item dialogs {title:"dialogy",
+#         par:°{tg:'d.*',nt:"Testování jednoduchých dialogů"}}
+#     }
+#     menu google {title:'Google Maps',type:'group'
+#       item address {title:"verifikace adresy",
+#         par:°{tg:'g.*',nt:"integrace API Google Maps",proc:'u.g_.start'}}
+#     }
+#     menu awesome {title:'nový "awesome" vzhled',type:'group'
+#       item icons {title:"[fa-chevron-down]select, field.list, field.date",
+#         par:°{tg:'w.*',proc:'u.w_.start',typ:'Block',hlp:'Select',
+#               nt:'Testování vzhledu s tlačítky z awesomefont. V PHP hlavním modulu aplikace musí být $options= (object)array(... "awesome" => 1 ... )',tm:'w_.*'}}
+#     }
+    proc onclick(i) { my_item.set(i); u.note.background('fff'); u.note.set(''); doit }
+  }
+  proc doit() { var i: object
+    i.set(my_item.get);
+    // zapnutí trasování na probírané prvky
+    [ u.xtrace.get; set_trace(1);
+      set_trace('T*uMEefmxXaLqQ',0); set_trace('U',1); set_trace('u',1); clear;
+      [ i.par.te; set_trace('e',1,i.par.te) ];
+      [ i.par.tm; set_trace('m',1,i.par.tm) ];
+      [ i.par.tx; set_trace('x',1,i.par.tx) ];
+      [ i.par.tf; set_trace('f',1,i.par.tf) ];
+    ];
+    // zobrazení probírané části
+    u.display(2,i.par.tg);
+    // zavolání požadované procedury
+    [ i.par.proc; [ i.par.x; [ panel.call(i.par.proc,i.par.x) ] | panel.call(i.par.proc) ] ];
+    // zobrazení poznámky
+    u.display(u.xpozn.get,'_p');
+    [ and(u.xpozn.get,i.par.nt); u.poznamka.set(i.par.nt) | u.poznamka.set('') ];
+    // zobrazení helpu z dokumentace
+    u.display(u.xref.get,'_r');
+    { u.xref.get; u.popis.set(ask('i_doc_show','reference',i.par.typ,i.par.hlp))
+    | u.popis.set('') }
+#     u.popis.set(if(u.xref.get,ask('i_doc_show','reference',i.par.typ,i.par.hlp),''));
+  }
+  use u: form [,,,]  use u: form _u
+  # zajištění pružné velikosti pro popis
+  proc onfirstfocus() { set_trace(0); change_h_popis }
+#   proc onresize(w,h) { change_h_popis }
+  proc change_h_popis() { var h: number
+    h.set(sys('screen','height'));
+    u.popis.property(object('height',sum(h,-355)));
+  }
+}
+form _u { style:"background:url(tut/img/grid.png) repeat"
+  # ------------------------------------------------------------------------------------==> parametry
+  label [-5,5,150,75] { css:'ae_work' }
+  check xpozn  [-60,10,90,] { title:"poznámky?",  value:'1', format:'t', proc onchange(){elem.doit}}
+  check xref   [-60,30,90,] { title:"reference?", value:'0', format:'t', proc onchange(){elem.doit}}
+  check xtrace [-60,50,90,] { title:"trasování?", value:'0', format:'t', proc onchange(){elem.doit}}
+  # ----------------------------------------------------------------------------------------==> note
+  label note [-5,85,150,100] { style:'border:1px solid grey;border-radius:5px;overflow:hidden'
+    var cnt=0
+    proc onclick() { cnt.set(0); this.set(''); background('fff'); }
+    proc put(txt,val) { cnt.set(sum(cnt.get,1)); this.set(conc(cnt.get,': ',txt,val,'<br>',this.get)) }
+    proc background(rgb) {
+      function('x','hex',"x.DOM_Block.setStyle('backgroundColor','#'+hex)",this,rgb) }}
+  # --------------------------------------------------------------------------------------==> browse
+  browse br [10,10,,] { tag:'br', rows:5, //qry_rows:1,
+    show hodnoty [,,100,] { title:'hodnoty', format:'qsr', data:tabulka.cislo }
+    # context menu
+    menu detail { type:'context'
+      item { title:'[fa-list-ul] alfa',  proc onclick () { note.put('context ','alfa') } }
+      item { title:'[fa-list-ul] beta',  proc onclick () { note.put('context ','beta') } }
+      item { title:'[fa-list-ul] gama',  proc onclick () { note.put('context ','gama') } }
+      item { title:'[fa-list-ul] delta', proc onclick () { note.put('context ','delta') } }
+    }
+    proc onrowclick(n) { note.put("rowclick ",hodnoty.get) }
+    proc onsubmit(n)   { note.put("submit ",hodnoty.get) }
+    proc onchoice()    { note.put("choice ",hodnoty.get) }
+  }
+  button [200,10,,]   {tag:'bra', title:"browse_fill(1..20)",   proc onclick() { br.browse_fill("1|2|3|4|5|6|7|8|9|10|11|12|13|14|15|16|17|18|19|20") }}
+  button [200,40,,]   {tag:'bra', title:"set_attrib(rows,+1)",  proc onclick() { br.set_attrib('rows',sum(br.rows,1)) }}
+  button [200,70,,]   {tag:'bra', title:"set_attrib(rows,-1)",  proc onclick() { br.set_attrib('rows',sum(br.rows,-1)) }}
+  # export
+  button [200,10,,]   {tag:'brx', title:"browse_load",          proc onclick() { br.browse_load }}
+  button [200,40,,]   {tag:'brx', title:"browse_export",        proc onclick() {
+    br.browse_export(°{file:'test',type:'xlsx'}); alert("soubor lze stáhnout <a href='docs/test.xlsx'>zde</a>"); }}
+  # metody
+  button [200,10,,]   {tag:'brm', title:"focus",                proc onclick() { br.focus }}
+  button [200,40,,]   {tag:'brm', title:"blur",                 proc onclick() { br.blur }}
+  button [200,70,,]   {tag:'brm', title:"enable(0)",            proc onclick() { br.enable(0) }}
+  button [300,70,,]   {tag:'brm', title:"enable(1)",            proc onclick() { br.enable(1) }}
+  button [200,100,,]  {tag:'brm', title:"selected(get)",        proc onclick() { warning(echo('keys:',br.selected('get'))) }}
+  button [300,100,,]  {tag:'brm', title:"selected(clear)",      proc onclick() { br.selected('clear') }}
+  # browse tabulky databáze s výběrovými podmínkami
+  view t2: table _jmena
+  browse br2 [10,10,,] { tag:'br2', rows:6, qry_rows:1,
+    show id_jmena [,,30,] { title:'ID', format:'q=sr', data:t2.id_jmena }
+    show jmeno [,,70,] { title:'jméno', format:'q*s+', data:t2.jmeno }
+    show cetnost [,,50,] { title:'četnost', format:'qsr', data:t2.cetnost }
+    proc start() { this.browse_load }
+    proc onchange()   { note.put("br2.query_seek ",function('b',"return b.query_seek",this)) }
+  }
+  button [220,10,,]   {tag:'br2', title:"browse_seek('W')",   proc onclick() { br2.browse_seek("UPPER(jmeno) LIKE 'W%'") }}
+  button [220,40,,]   {tag:'br2', title:"browse_load('W')",   proc onclick() { br2.browse_load("UPPER(jmeno) LIKE 'W%'") }}
+  button [220,70,,]   {tag:'br2', title:"browse_keys",        proc onclick() { alert(br2.browse_keys) }}
+  # --------------------------------------------------------------------------------------==> select
+  field [80,10,20,] { tag:'s1' }
+  select s1 [110,10,140,] { tag:'s1', format:'', help:'HELP',   proc onchanged() { s_show(s1) }}
+  field [260,10,20,] { tag:'s1' }
+  button [300,10,,]   {tag:'s1', title:"selects(a,b,c)",        proc onclick() { s1.selects('a,b,c'); s_show(s1) }}
+  button [300,40,,]   {tag:'s1', title:"dtto, hodnota je klíč", proc onclick() { s1.selects('a,b,c',',:',1); s_show(s1) }}
+  button [450,10,,]   {tag:'s1', title:"key(1)",                proc onclick() { s1.key(1); s_show(s1) }}
+  button [500,10,,]   {tag:'s1', title:"key(2)",                proc onclick() { s1.key(2); s_show(s1) }}
+  button [450,40,,]   {tag:'s1', title:"set(b)",                proc onclick() { s1.set('b'); s_show(s1) }}
+  select s1m [110,110,140,] { tag:'s1', type:'map', options:top_jmena.jmeno, format:'ut', help:'HELP', title:'map'
+                                                                proc onchanged() { s_show(s1m) }}
+  select s0m [110,135,140,] { tag:'s1', type:'map0', options:top_jmena.jmeno, format:'ut', help:'HELP', title:'map0'
+                                                                proc onchanged() { s_show(s0m) }}
+  # ==> multiselect
+  field [80,10,20,] { tag:'s2' }
+  select s2 [110,10,140,] { tag:'s2', type:'multi', format:''  proc onstart() { s2i.onclick }
+                                                                proc onchanged() { s_show(s2);
+                                                                  note.background(function('keys',"return keys.reduce(function(a,b){return a+b},111)",this.key)); }}
+  field [260,10,20,] { tag:'s2' }
+  button s2i[300,10,,] {tag:'s2', title:"init",                 proc onclick() { s2.selects('červená:800,zelená:80,modrá:8'); s_show(s2) }}
+  button [300,40,,] {tag:'s2', title:"key(8)",                  proc onclick() { s2.key(8); s_show(s2) }}
+  button [350,40,,] {tag:'s2', title:"key(8,80)",               proc onclick() { s2.key('8,80'); s_show(s2) }}
+  select s2m [110,110,140,] { tag:'s2', type:'map+', options:top_jmena.jmeno, format:'ut',
+                                                                proc onchanged() { s_show(s2m) }}
+  button [300,110,,] {tag:'s2', title:"init",                   proc onclick() { s2m.init; s_show(s2m) }}
+  button [300,140,,] {tag:'s2', title:"_save",                  proc onclick() { note.set(function('s',"return s._save().val",s2m)) }}
+  button [350,110,,] {tag:'s2', title:"key(2,502)",             proc onclick() { s2m.key('2,502'); s_show(s2m) }}
+  proc s_show(sn) { echo('key:',sn.key,'; value:',sn.get) }
+  # ----------------------------------------------------------------------------------==> autoselect
+  select s3 [110,10,140,] { tag:'s3', type:'auto', par:°{fce:'test_auto'}, format:'', help:'HELP',
+    proc onchanged() { s_show(s3) }}
+  button [350,110,,] {tag:'s3', title:"key(2)",             proc onclick() { s3.key('2'); s_show(s3) }}
+  # ---------------------------------------------------------------------------------------==> radio
+  radio r_ [10,10,70,40]  {tag:'r_',  title:"pivo", help:"jedna-dvě", value:'1'
+    case [0, 0,60,] { tag:'r_', title:'jedna', value:'1' }
+    case [0,20,60,] { tag:'r_', title:'dvě',   value:'2' }
+    proc onchange() { note.put('onchange','') }
+    proc onchanged() { note.put('onchanged','') }
+  }
+  button   [150,10,,]   {tag:'r_',  title:"init", proc onclick() { r_.init }}
+  button   [200,10,,]   {tag:'r_',  title:"get", proc onclick() { r1.set(r_.get) }}
+  field r1 [250,10,30,] {tag:'r_' }
+  button   [300,10,,]   {tag:'r_',  title:"set", proc onclick() { r_.set(r1.get) }}
+  check  [200,40,80,] {tag:'r_',  title:"enable",  value:'1', format:'t', proc onchange() { r_.enable(this.get) }}
+  check  [200,70,80,] {tag:'r_',  title:"display", value:'1', format:'t', proc onchange() { r_.display(this.get) }}
+  # ---------------------------------------------------------------------------------------==> field
+  view f_v: table tabulka
+  field f1 [10,10,400,] {tag:'f_', data:f_v.cislo
+    proc onfocus() { note.put('onfocus','') }           proc onblur() { note.put('onblur','') }
+    proc onchange() { note.put('onchange','') }         proc onchanged() { note.put('onchanged','') }
+  }
+  button   [450,10,,]     {tag:'f_',  title:"init",                     proc onclick() { note.put('init=',f1.init)  }}
+  button   [450,40,,]     {tag:'f_',  title:"load id_tabulka=1",        proc onclick() { note.put('load=',f_v.load(1)) }}
+  button   [450,70,,]     {tag:'f_',  title:"save id_tabulka=1",        proc onclick() { f_v.key(1); note.put('save=',f_v.save) }}
+  button   [450,100,,]    {tag:'e_',  title:"change",                   proc onclick() { note.put('change=',f1.change) }}
+  button   [515,100,,]    {tag:'e_',  title:"plain",                    proc onclick() { note.put('plain=',f1.plain) }}
+  # ----------------------------------------------------------------------------------------==> drop
+  # Metody drag&drop mají tři funkcionality
+  #   cloud=S: ==> soubory jsou na serveru ve složce docs/{app} a je možné je zobrazit mimo aplikaci
+  #   cloud=H: ==> soubory jsou na serveru ve složce ../files/{app} a jsou přístupné jen programově
+  #   cloud=G: ==> soubory leží na Google Disk, metody lze testovat v menu Google
+  proc l_start(_cloud) { dcloud.set(_cloud); dfold.set(''); li.onclick; ld.onclick }
+  var  dfold: text     // podsložka bez koncového /
+  var  dcloud: text    // S: nebo H:
+  label dlab [10,8,225,] {tag:'l_', title:'... použij [init] ' }
+  label drop [10,25,225,160] {tag:'l_', type:'drop'
+    proc onstart() { li.onclick }
+    proc ondrop(f) {                                                  // možnost odmítnutí přenosu
+      eq(f.name,'ugly.jpg'); warning('fuj ',f.name); return(0)        // navrácením 0
+    | gt(f.size,5242880); warning('odmítnuto ',f.name,' má více jak 5MB'); return(0)
+    | note.put('přenášeno:',f.name)                                   // jméno nemusí být ASCII
+    }
+    proc onload(f) { note.put("loaded",f.name) } // po dokončení přenosu, jméno bude ASCII
+    proc onerror(e) { // funkce onerror nesmí obsahovat asynchronní kód a lokální proměnné, ale přes call lze zavolat už cokoliv
+      warning(e.msg); return(1) // vrácení 0 způsobí standardní hlášení chyby
+    }
+    proc onmenu(op,name,ref) {
+      eq(op,'remove'); warning(ask('drop_unlink',dfold.get,name,dcloud.get)); ld.onclick
+    | eq(op,'remove-all'); warning(ask('drop_unlink',dfold.get,'*',dcloud.get)); ld.onclick
+    | eq(op,'viewer'); function('ref',"window.open(ref,'viewer')",ref)
+    }
+  }
+  button li [250,10,,]    {tag:'l_', title:"init",     proc onclick() { drop.init(dfold.get,dcloud.get); dlab.set(conc('seznam souborů v úložišti ',dcloud.get,'/',dfold.get)) }}     // podsložka {root} s lomítkem jen na konci
+  button ld [250,40,,]    {tag:'l_', title:"lsdir",    proc onclick() { note.put('lsdir=',drop.lsdir) }}
+  button    [250,70,,]    {tag:'l_', title:"isdir",    proc onclick() { note.put('isdir=',drop.isdir(d.get)) }}
+  field d   [305,70,80,]  {tag:'l_', title:"^složka", format:'t' }
+  button    [400,70,,]    {tag:'l_', title:"mkdir",    proc onclick() { note.put('mkdir=',drop.mkdir(d.get)) }}
+  button    [250,100,,]   {tag:'l_', title:"get",      proc onclick() { note.put('get=',drop.get) }}
+  # ------------------------------------------------------------------------------------==> htmledit
+  view e_v: table tabulka
+  edit e1 [10,10,400,170] {tag:'e_', type:'html', par:°{toolbar:'Tutorial'}, data:e_v.text
+    proc onfocus() { note.put('onfocus','') }   proc onblur() { note.put('onblur','') }
+    proc onchange() { note.put('onchange','') } proc onchanged() { note.put('onchanged','') }
+  }
+  button   [450,10,,]     {tag:'e_',  title:"init",                     proc onclick() { note.put('init=',e1.init) }}
+  button   [490,10,,]     {tag:'e_',  title:"load Lorem ...",           proc onclick() { e1.set(ask('lorem_ipsum',10)) }}
+  button   [450,40,,]     {tag:'e_',  title:"load id_tabulka=1",        proc onclick() { note.put('load=',e_v.load(1)) }}
+  button   [450,70,,]     {tag:'e_',  title:"save id_tabulka=1",        proc onclick() { e_v.key(1); note.put('save=',e_v.save) }}
+  button   [450,100,,]    {tag:'e_',  title:"change",                   proc onclick() { note.put('change=',e1.change) }}
+  button   [515,100,,]    {tag:'e_',  title:"plain",                    proc onclick() { note.put('plain=',e1.plain) }}
+  button   [450,130,,]    {tag:'e_',  title:"get",                      proc onclick() { note.put('get=',e1.get) }}
+  button   [485,130,,]    {tag:'e_',  title:"changed",                  proc onclick() { note.put('changed=',e1.changed) }}
+  button   [450,160,,]    {tag:'e_',  title:"status", proc onclick() {
+    note.put("imageresize=",function("return window.CKEDITOR.plugins.registered.imageresize ? 'yes' : 'no'")) }}
+  # --------------------------------------------------------------------------------------==> button
+  button b_ [10,10,,] {tag:'b_',  title:"pivo", help:"nápoj", proc onclick() { echo('click') }}
+  button [200,10,,]   {tag:'b_',  title:"get,set", proc onclick() { b_.set(conc(b_.get,'!')) }}
+  check  [200,40,80,] {tag:'b_',  title:"enable",  value:'1', format:'t', proc onchange() { b_.enable(this.get) }}
+  check  [200,70,80,] {tag:'b_',  title:"display", value:'1', format:'t', proc onchange() { b_.display(this.get) }}
+  # buttom.html
+  button bh [10,10,,] {tag:'bhx', type:'html', help:"nápoj", title:"pivo [fa-beer fa-spin]", proc onclick() { echo('click') }}
+  button [10,40,,]    {tag:'bhx', type:'html', help:"nápoj", title:"[fa-beer fa-red] pivo!", proc onclick() { echo('click') }}
+  button [200,10,,]   {tag:'bh',  title:"get,set", proc onclick() { bh.set(conc(bh.get,"<i class='fa fa-beer'></i>")) }}
+  check  [200,40,80,] {tag:'bh',  title:"enable",  value:'1', format:'t', proc onchange() { form.enable(this.get,'bhx') }}
+  check  [200,70,80,] {tag:'bh',  title:"display", value:'1', format:'t', proc onchange() { form.display(this.get,'bhx') }}
+  # ----------------------------------------------------------------------------------------==> area
+  button [200,10,,]   {tag:'a_', title:"ONE (TWO,THREE)",            proc onclick() { a.test }}
+  button [200,40,,]   {tag:'a_', title:"struktura applikace (id)",   proc onclick() { a.appl('id') }}
+  button [200,70,,]   {tag:'a_', title:"struktura applikace (_sys)", proc onclick() { a.appl('_sys') }}
+  use a: area a_ {tag:'a_'}
+  area a_ { title:"<div id='tree' class='ae_work' style='overflow:auto;position:absolute;left:10px;top:10px;width:180px;height:180px'></div>"
+    proc test() { this.tree_show(°{prop:°{id:'ONE'},down:°[°{prop:°{id:'TWO'}},°{prop:°{id:'THREE'}}]},'tree',1) }
+    proc appl(typ) { this.tree_show(meta_tree(typ),'tree'); this.tree_expand(1) }
+    proc tree_onclick(fid,id,dat,com,x,txt,txts) { var i:text
+      i.set(replace(fid,'^[^\.]+\.',''));
+      echo("tree_onclick: txt=",txt," id=",i);
+#       echo("tree_onclick: fid=",fid,", id=",id,", data=",dat)
+    }
+  }
+  # -------------------------------------------------------------------------------------==> awesome
+  select w_ [10, 10,90,] {tag:'w_', help:"nápoje", proc start() {this.selects('voda:1,víno:2,pivo:3')}}
+  select wm [10, 35,90,] {tag:'w_', type:'multi', help:'směs', proc onstart() {this.selects('voda,víno,pivo')}}
+  select wa [10, 60,90,] {tag:'w_', type:'auto', par:°{fce:'test_auto'}}
+  field  wl [10, 85,90,] {tag:'w_', type:'list', value:'alfa,beta'}
+  field  wd [10,110,90,] {tag:'w_', type:'date', value:'8.12.2014'}
+  field  wf [10,135,90,] {tag:'w_', value:'ahoj'}
+  button [200,10,,]      {tag:'w', title:"disable", proc onclick() { form.enable(0,'w_') }}
+  button [200,35,,]      {tag:'w', title:"enable all buttons",  proc onclick() { form.enable(1,'w_') }}
+  # -------------------------------------------------------------------------------------==> dialogy
+  button [200,10,,]      {tag:'d', title:"alert",        proc onclick() { alert('test'); then }}
+  button [200,40,,]      {tag:'d', title:"confirm",      proc onclick() { dr.set(confirm('mám?')); then }}
+  button [200,70,,]      {tag:'d', title:"choose a|b|c", proc onclick() { dr.set(choose('Zvol variantu','vlevo:to the left,rovně:0,vpravo:1')); then }}
+  button [200,100,,]     {tag:'d', title:"prompt",       proc onclick() { dr.set(prompt('něco napiš:')); then }}
+  button [280,100,,]     {tag:'d', title:"prompt2",      proc onclick() { dr.set(prompt2('případně změň','název')); then }}
+  proc spinner(on) { on;
+    function("$('wait_mask').setStyle('display','block'); return 1;");
+  | function("$('wait_mask').setStyle('display', 'none'); return 1;");
+  }
+  button [200,130,,]     {tag:'d', title:"wait 5s",      proc onclick() { spinner(1); wait(5000); spinner(0); then }}
+  button [200,160,,]     {tag:'d', title:"modal",        proc onclick() { dial.modal; then }}
+  field  dr [100,40,80,] {tag:'d', title:"hodnota:" }
+  label [350,10,,]       {tag:'d', title:"<div oncontextmenu='return my_contextmenu(arguments[0]);' data-id='123'>kontext menu</div>" }
+  proc then() { echo("konec dialogu") }
+  panel dial [0,0,100,50] { type:'popup', title:'test dialogu' }
+  # ---------------------------------------------------------------------------------==> google maps
+  label g_ [400,10,280,150] {tag:'g',  type:'map',      proc start() { this.init('ROADMAP',°{zoom:5}) } }
+  field gp [60,10,60,]      {tag:'g', title:"PSČ:", format:'t' }
+  field go [160,10,112,]    {tag:'g', title:"obec:", format:'t' }
+  label [288,10,20,]        {tag:'g', title:'CZ'}
+  button [318,10,,]         {tag:'g', title:"najdi",
+    proc onclick() { geo_show(object('address',conc(gp.get,',',go.get),'region','CZ'))  }}
+  field ga [60,40,247,]     {tag:'g', title:"adresa:", format:'t' }
+  button [318,40,,]         {tag:'g', title:"najdi",
+    proc onclick() { geo_show(object('address',ga.get)) }}
+  var last_geo:object
+  button gu [318,70,,]      {tag:'g', title:"ukaž", style:'z-index:2'
+    proc onclick() { g_.set(last_geo.get) }}
+  label gr [60,70,300,80]   {tag:'g'}
+  proc geo_show(adr) { var geo:object
+    gr.set(''); gu.enable(0); geo.set(g_.geocode(adr)); echo(debug(geo));
+    geo.found; gu.enable(1); last_geo.set(geo);
+    gr.set(conc('psc=',geo.found.psc,'<br>adresa=',geo.found.addr,'<br>diff=',geo.found.diff))
+  | gr.set('nenalezeno') }
+  # ---------------------------------------------------------------------- místo pro poznámku a help
+  label [0,197,-5,16]           {tag:'_p', title:"poznámka", format:'c', style:"background-color:#8cadd9;width:100%;color:#fff" }
+  label poznamka [10,220,-5,30] {tag:'_p', style:"overflow:auto;font-style:italic" }
+  label [0,255,-5,16]           {tag:'_r', title:"reference", format:'c', style:"background-color:#80a3d0;width:100%;color:#fff" }
+  label popis [10,-1,-5,500]    {tag:'_r', style:"overflow:auto" }
+}
+
+# ==========================================================================================> LAYOUT
+# demonstrace maximálního využití okna pro práci:
+
+panel layout {type:'right', title:'[fa-columns] Layout', _sys:'fce'
+
+  # -==> reakce na změny rozměrů okna prohlížeče
+  const min_h=300         // stanovení minimální výšky okna prohlížeče pro zobrazení neskrolovaného obsahu
+  var plus_h: number      // navýšení nad min_h, udržuje ji metoda onresize
+  proc onresize(w,h) {    // volané jádrem po změně rozměrů okna, onresize může být jen v panelu
+    plus_h.set(minus(max(h,min_h.get),min_h.get)); stretch.change_h(plus_h.get,h);
+    resize }
+
+  # -==> skrývané levé menu s ikonami: formát 'f'
+  const obecne = "Zde jsou ukázány postupy, jak zvětšit pracovní prostor pro uživatele s malou obrazovkou.\n* minimalizování levého menu pomocí ikony v jejím levém rohu\n* reakce na změny rozměru okna\n* rozdělení rozsáhlého fomuláře do několika záložek\n* uživatelsky volitelné zobrazení zobrazení částí formuláře "
+  const left_menu = "==== Minimalizace levého menu ====\nAktuální levé menu je vygenerováno kódem:\n  menu {type:'left', format:'f'\n    menu {title:'1. Skrývané levé menu', type:'group'\n      item {title:'[fa-home]s ikonkou'}                    // standardní item v minimalizovatelném menu\n      item {title:'minimalizovat (m.click)'}               // příklad itemu bez ikony\n      item {title:'russians go [fa-home] (ikona v textu)'} // příklad itemu s ikonou použitou v textu\n  } }\nPro získání html kód atributu ''title'' lze použít funkci ''replace_fa''"
+  const left_menu_1 = "==== Minimalizace - ovládání ====\nProgramově lze menu minimalizovat metodou \n m.click  // kde m je element typu menu {type='left'}"
+  const design = "==== Responzivní design ====\nukázky využití události onresize + metody property\n\nv reakci na změnu výšky okna prohlížeče"
+  const zalozky = "==== Záložky ====\nVzorové řešení záložek (jakoby na sobě ležící formuláře, ovládáné pomocí oušek)\n form _page {\n  proc cvak ... krátký standardní kód ... \n  # záložky - v par jsou tagy pro zapnutí vypnutí elementů\n  label alfa ... {tag:'_', title:'Alfa', par:°{on:'A',off:'B|C'}, proc onclick() { cvak(this) } }\n  label beta ... {tag:'_', title:'Beta', par:°{on:'B',off:'A|C'}, proc onclick() { cvak(this) } }\n  label gama ... {tag:'_', title:'Gama', par:°{on:'C',off:'A|B'}, proc onclick() { cvak(this) } }\n  # pozadí pro elementy\n  label frame ... { css:'ae_work'}\n  # elementy záložky alfa\n  field ... {tag:'A', ... }\n  ...\n  # elementy záložky beta\n  field ... {tag:'B', ... }\n  ...\n  # záložka gama používá vnořený formulář\n  use ga: form _ga [10,10,,] {tag:'C'}\n }"
+  const varianty = "==== Varianty ====\nVzorové řešení formuláře s variantami, tečkovaný rámeček ukazuje původní polohu formuláře před voláním metody '''stacks'''.\n\nPomocí kontextového menu je možné vyzkoušet volbu jednotlivých podformulářů\n\nPodformulářem se rozumí skupina elementů označená stejným tagem.\n\nMetoda '''form.stacks''' zobrazí tyto části v pořadí a výběru daném seznamem zvolených tagů."
+  const skiny = "==== Skiny ====\nJe třeba všechny skiny, generované PHP pžedgenerovat a potom přepínat pomocí mootools Asset.css"
+  const nyi = "==== N.Y.I. ====\nbude doplněno"
+  menu m {type:'left', active:*, format:'f'
+    menu  {title:'1. Minimalizace levého menu',type:'group',par:°{popis:'left_menu'}
+      item  {title:"item bez ikony (je zarovnaný)"}
+      item  {title:"[fa-caret-square-o-left]minimalizovat (m.click)",par:°{popis:'left_menu_1',proc:'m_click'} }
+      item  {title:"[fa-exclamation]russians go [fa-home] (ikona v textu)"}
+    }
+    menu  {title:'2. Responzivní design',type:'group',par:°{popis:'design'}
+      item  {title:"[fa-arrows-v] změna výšky okna",par:°{on:'vzor1',posun:'320',proc:'stretch.start'}}
+      item  {title:"[fa-spinner fa-spin] změna šířky okna",par:°{popis:'nyi'}}
+    }
+    menu  {title:'3. Formulář se záložkami',type:'group',par:°{popis:'zalozky'}
+      item  {title:"[fa-copy] vzorové řešení záložek",par:°{on:'vzor2',posun:'320',proc:'tabs.start'}}
+    }
+    menu  {title:'4. Variantní formuláře',type:'group',par:°{popis:'varianty'}
+      item  {title:"[fa-eject fa-flip-vertical]skládat části dolů",par:°{on:'vzor3',posun:'270',proc:'stack.start',x:'down'}}
+      item  {title:"[fa-eject]skládat části nahoru",    par:°{on:'vzor3',posun:'270',proc:'stack.start',x:'up'}}
+    }
+    menu  {title:'5. Změna skinu',type:'group',par:°{popis:'skiny'}
+      item {title:"(default)", par:°{css:'ezer2.2/client/ezer.css'}}
+      item {title:"skin CK", par:°{css:'skins/ck/ck.ezer.css'}}
+      item {title:"skin CH", par:°{css:'skins/ch/ch.ezer.css'}}
+      item {title:"skin DB", par:°{css:'skins/db/db.ezer.css'}}
+      proc onclick(i) { i.par;
+        function('css',"return Asset.css(css);",i.par.css);
+      }
+    }
+    var posun=0
+    proc onclick(i) {
+      panel.display(2,'popis');
+      // aplikace par
+      [ i.par; i.par.on; panel.display(1,i.par.on) ];
+      [ i.par; i.par.proc; [ i.par.x; [ panel.call(i.par.proc,i.par.x) ] | panel.call(i.par.proc) ] ];
+      u.fill(conc(i.owner.title,' - ',replace_fa(i.title)),ask('wiki2html',obecne.get));
+      [ i.owner.par; i.owner.par.popis; u.append(ask('wiki2html',panel.part(i.owner.par.popis).get)) ];
+      [ i.par; i.par.popis; u.append(ask('wiki2html',panel.part(i.par.popis).get)) ];
+      // nastavení posunu label s popisem
+      posun.set(0); [ i.par; i.par.posun; posun.set(i.par.posun) ]; resize;
+    }
+    // reakce na změnu (tohoto) menu
+    proc onresize(w) { warning('menu bylo změněno, je nyní široké: ',w,'px'); resize }
+  }
+
+  # - pomocné procedury
+  proc m_click() { m.click(2) } // bez parametru jen změní, s parametrem 2 zmenší
+  // posun a zúžení label pro popis
+  proc resize() { var w:number
+    w.set(sum(m.property(°{return:'bounds'})._w,m.posun.get,30));
+    u.property(object('width',minus(sys('screen','width'),w)));
+    u.property(object('left',m.posun.get,'smooth',1));
+  }
+
+  # - instance formulářů
+  use u:       form _right                {tag:'popis'}
+  use stretch: form _stretch [10, 10,,]   {tag:'vzor1'}
+  use stack:   form _stack   [10,160,,]   {tag:'vzor3'}
+  use stack0:  form _stack0  [ 9,159,,]   {tag:'vzor3'}   // původní poloha a velikost _stack
+  form _stack0 [,,250,60] { style:'border:1px dotted' }   // pro vizuální kontrolu
+  use tabs:    form _tabs    [10, 10,,]   {tag:'vzor2'}
+}
+# ----------------------------------------------------------------------------------------==> _stack
+# formulář s proměnnou strukturou pamatovanou pomocí cookies
+# pro jednoduchost kódu jsou ve značkách pro tagy a skupiny použity (jen) písmena (a to stejná)
+panel form_config [,,200,100] {type:'popup', title:"Podrobnosti údajů"
+  var grp='za'                                  // počáteční stav
+  // iniciace s načtením z cookies
+  proc start() { grp.set(get_cookie('test_stack',grp.get)); _old.set(grp.get); c._back; c._show; }
+  proc tune() { _old.set(grp.get); panel.modal(500,200) }
+  use c: form _cnfg
+  // formulář pro volbu částí
+  var _old: text
+  form _cnfg {
+    check z [ 0, 0,200,] { title:"základní údaje",      format:'d'} // počáteční stav nedovolíme měnit
+    check t [ 0,20,200,] { title:"telefon",             format:'t', proc onchange() { _tuned }}
+    check e [ 0,40,200,] { title:"email",               format:'t', proc onchange() { _tuned }}
+    check a [ 0,60,200,] { title:"adresa",              format:'t', proc onchange() { _tuned }}
+    button  [ 0,80,,] { type:'submit', title:'Nastav', proc onclick() { set_cookie('test_stack',grp.get); panel.close(1) }}
+    button  [85,80,,] { title:'Zpět', proc onclick() { grp.set(_old.get); _back; _show; panel.close(1) }}
+    proc _tuned() { grp.set(cconc(1,'z,',t.get,'t,',e.get,'e,',a.get,'a,')); _show }
+    proc _back() { foreach(array(z,t,e,a),_set) }        // hi-tech :-) kód pro ulehčení modifikace
+    proc _set(x) { x.set(contains(x._id,grp.get)) }
+    proc _show() { layout.stack.form_show }
+  }
+}
+form _stack [,,250,60] { css:'ae_work',style:'z-index:1'
+  var smer: text
+  proc start(up_down) { smer.set(up_down); form_config.start }
+  # z - základní údaje
+  field [ 20,20, 80,] {tag:'z', title:"^jméno", value:"Jára" }
+  field [110,20,110,] {tag:'z', title:"^příjmení", value:"Cimrman" }
+  # t - telefon
+  field [ 20,20,200,] {tag:'t', title:"^telefon", value:"1" }
+  # e - email
+  field [ 20,20,200,] {tag:'e', title:"^email", value:"jara@cimrman.at" }
+  # a - adresa
+  field [ 20,20,200,] {tag:'a', title:"^ulice", value:"?" }
+  field [ 20,55, 60,] {tag:'a', title:"^PSČ",   value:"?" }
+  field [ 90,55,130,] {tag:'a', title:"^město", value:"Liptákov" }
+  # zobrazovací procedura
+  proc form_show() {
+    form.display(0,'.*');                               // vše uvnitř skrýt
+    form.stacks(form_config.grp.get,smer.get,0,0,10);   // přeskládat podle tags
+  }
+  # kontextové menu pro výběr zobrazeného
+  menu detail { type:'context'
+    item { title:'[fa-list-ul] konfigurace formuláře', proc onclick () { form_config.tune } }
+  }
+}
+# --------------------------------------------------------------------------------------==> _stretch
+# formulář reagující na změnu výšky okna
+form _stretch {
+  proc start() { var lorem:text
+    lorem.set(ask('lorem_ipsum',10));
+    f.set('lorem'); e.set(lorem); g.set('ipsum'); b.browse_fill(replace(lorem,' ','|'))
+  }
+  proc change_h(dh,h) { var r:number
+    // změna výšky pozadí
+    frame.property(object('stretch',dh));
+    // změna počtu řádků (82=výška menu+patička, 17=výška 1 řádku)
+    r.set(sum(divide(sum(h,-82),17),-5)); [ lt(r,8) | b.set_attrib('rows',r) ];
+    // prodloužení elementů s tag=s
+    form.property(object('stretch',dh),'s');
+    // posunutí elementů s tag=d
+    form.property(object('down',dh),'d');
+  }
+  # ------------------------- pozadí pro elementy
+  label frame [0,0,300,200] { css:'ae_work'}
+  # elementy
+  browse b [10,10,100,200] { rows:8
+    show [,,100,] { title:'pružný browse' }
+    # kontextové menu pro výběr zobrazeného
+    menu { type:'context'
+      item { title:'zrušit výběr', proc onclick () { this.selected('clear') } }
+      item { title:'výbrat vše',   proc onclick () { this.selected('all') } }
+    }
+  }
+  field f [150,20,130,]   {tag:'h', title:"^pevná část" }
+  edit  e [150,55,125,95] {tag:'s', title:"^protahovaná část" }
+  field g [150,170,90,]   {tag:'d', title:"^posunovaná část" }
+  check [250,170,50,]   {tag:'d', title:"vše" }
+}
+# -----------------------------------------------------------------------------------------==> _tabs
+# formulář se záložkami
+form _tabs {
+  var curr: object            // aktuální záložka (např. pro test z jiného formuláře)
+  proc start() { cvak(alfa) } // inicializace - zobrazení první záložky
+  # ------------------------- obsluha záložek
+  proc cvak(i) {
+    // přepnutí záložek
+    form.set_css('page_off','page_on','_'); i.set_css('page_on','page_off');
+    // poznačení aktivní záložky - lze testovat např. kódem eq(page.curr._id,'alfa')
+    curr.set(i._id);
+    // přepnutí elementů
+    form.display(0,i.par.off); form.display(1,i.par.on)
+  }
+  # ------------------------- záložky - v par jsou tagy pro zapnutí vypnutí elementů
+  label alfa [ 12,0,70,20] {tag:'_', title:'<b>Alfa</b>', par:°{on:'A',off:'B|C'}, proc onclick() { cvak(this) } }
+  label beta [102,0,70,20] {tag:'_', title:'<b>Beta</b>', par:°{on:'B',off:'A|C'}, proc onclick() { cvak(this) } }
+  label gama [192,0,70,20] {tag:'_', title:'<b>Gama</b>', par:°{on:'C',off:'A|B'}, proc onclick() { cvak(this) } }
+  # ------------------------- pozadí pro elementy musí být před obsahem záložek
+  label frame [0,16,300,120] { css:'ae_work'}
+  # ------------------------- elementy záložky alfa
+  field [30,30,100,] {tag:'A', title:'A1', value:'1', format:'rn' }
+  field [30,60,100,] {tag:'A', title:'A2', value:'2', format:'rn'  }
+  # ------------------------- elementy záložky beta
+  field [30,30,100,] {tag:'B', title:'B1', value:'100', format:'rn'  }
+  field [30,90,100,] {tag:'B', title:'B2', value:'200', format:'rn'  }
+  # ------------------------- záložka gama - používá vnořený formulář
+  use ga: form _ga [10,10,,] {tag:'C'}
+}
+form _ga {
+  field [20,80,100,] {title:'Cé', value:'3000', format:'r'  }
+}
+# =========================================================================================> PACKAGE
+# demonstrace integrovaných balíků:
+
+panel package {type:'right', title:'[fa-dropbox] Package', _sys:'fce'
+  menu m {type:'left', active:*, format:'f'
+    menu  {title:'PHPExcel',type:'group'
+      item  {title:"[fa-file-excel-o] load docs/test.xlsx",
+        par:°{fce:'load',file:'docs/test.xlsx'}}
+      item  {title:"[fa-file-excel-o] + read, chng A1 ",
+        par:°{fce:'load,A1',file:'docs/test.xlsx'}}
+      item  {title:"[fa-file-excel-o] + save (Excel 2003)",
+        par:°{fce:'load,A1,save5',file:'docs/test.xlsx'}}
+      item  {title:"[fa-file-excel-o] + save (Excel 2007)",
+        par:°{fce:'load,A1,save7',file:'docs/test.xlsx'}}
+      proc onclick(i) { clear; info.fill(conc(i.owner.title,' - ',i.title),' ');
+        info.fill('',ask('tut_phpexcel',i.par));
+      }
+    }
+  }
+  use info: form _right
+}
+# ==========================================================================================> GOOGLE
+# demonstrace integrovaných služeb Google
+
+panel google {type:'right', title:'[fa-google] Google', _sys:'fce'
+  const folder_Tutorial = "0B-kRC_q7qr1sfk5EN0lKYzdFNmFRenk2cHEybm51V2xDTjY4dlNXZWpmNmxPaVdYcXVxQzg"
+  menu m {type:'left', active:*, format:'f'
+    menu  {title:'Google Drive',type:'group', skill:'m'
+      item  {title:"[fa-user] Autorizace (answer@smidek.eu)"
+        proc onclick(i) {
+          info.fill(replace_fa(conc(i.owner.title,' - ',i.title)),' ');
+          info.note.set(function('return Ezer.Google.authorize();'));
+      }}
+      item  {title:"[fa-files-o] soubory složky Tutorial" }
+      proc onclick(i) {
+        clear; info.display(1,'drop'); drop_init;
+        info.fill(replace_fa(conc(i.owner.title,' - ',i.title)),' ');
+        info.fill('',info.drop.lsdir);
+      }
+    }
+    menu  {title:'Google Spreadsheet',type:'group', skill:'m'
+      item  {title:"[fa-file-excel-o] tabulka smidek.eu:cisla / html",
+             par:°{key:"1gR88s0yLs0vsiik89J-wsQCiifj-8aNn7rrDvlOgKTE",sheet:1,method:'html'}}
+      item  {title:"[fa-file-excel-o] ... range:A1:B3",
+             par:°{key:"1gR88s0yLs0vsiik89J-wsQCiifj-8aNn7rrDvlOgKTE",sheet:1,method:'html',range:'A1:B3'}}
+      item  {title:"[fa-file-excel-o] ... query:select A,C where A>1",
+             par:°{key:"1gR88s0yLs0vsiik89J-wsQCiifj-8aNn7rrDvlOgKTE",sheet:1,method:'html',query:'select A,C where A>1'}}
+      item  {title:"[fa-file-excel-o] tabulka smidek.eu:cisla / json",
+             par:°{key:"1gR88s0yLs0vsiik89J-wsQCiifj-8aNn7rrDvlOgKTE",sheet:1,method:'json'}}
+      item  {title:"[fa-file-excel-o] tabulka smidek.eu:cisla / csv",
+             par:°{key:"1gR88s0yLs0vsiik89J-wsQCiifj-8aNn7rrDvlOgKTE",sheet:1,method:'csv'}}
+      proc onclick(i) {
+        clear; info.display(0,'drop');
+        info.fill(replace_fa(conc(i.owner.title,' - ',i.title)),' ');
+        info.fill('',ask('google_sheet3',i.par));
+      }
+    }
+  }
+
+  proc drop_init() { info.drop.init(folder_Tutorial.get,'G:'); }
+  use info: form _right {
+    // trasování
+    label note [-5,60,250,100] { style:'border:1px solid grey;border-radius:5px;overflow:hidden'
+      var cnt=0
+      proc onclick() { cnt.set(0); this.set(''); }
+      proc put(txt,val) { cnt.set(sum(cnt.get,1)); this.set(conc(cnt.get,': ',txt,val,'<br>',this.get)) }}
+    // zachycení souboru
+    label drop [10,60,300,200] {tag:'drop', type:'drop'
+      proc ondrop(f) {                                                  // možnost odmítnutí přenosu
+        gt(f.size,1048576); warning('odmítnuto ',f.name,' má více jak 1MB'); return(0)
+      | note.put('přenášeno:',f.name)
+      }
+      proc onload(f) { note.put("přeneseno:",f.name) } // po dokončení přenosu
+      proc onerror(e) { // asynchronní kód nutno volat přes call
+        warning(e.msg); return(1) // vrácení 0 způsobí standardní hlášení chyby
+      }
+      proc onmenu(op,title,ref) { note.put(op,title);  // volaná z kontextového menu
+        eq(op,'viewer'); function('url',"window.open(url,'viewer')",ref)
+      | eq(op,'remove'); function('fileId',"var request=gapi.client.drive.files.trash({'fileId':fileId});request.execute(function(resp){});",ref)
+      }
+    }
+    button   [330,160,,]   {tag:'drop', title:"init",  proc onclick() { drop_init }}
+    button   [380,160,,]   {tag:'drop', title:"get",   proc onclick() { note.put('get=',drop.get) }}
+    button   [430,160,,]   {tag:'drop', title:"list",  proc onclick() { note.put('lsdir=',drop.lsdir) }}
+    button   [330,230,,]   {tag:'drop', title:"isdir", proc onclick() { note.put('isdir=',drop.isdir(d.get)) }}
+    field d  [385,230,80,] {tag:'drop', title:"^složka", format:'t' }
+    button   [480,230,,]   {tag:'drop', title:"mkdir", proc onclick() { note.put('mkdir=',drop.mkdir(d.get)); drop.lsdir }}
+  }
+}
+# ========================================================================================> SECURITY
+# demonstrace ochrany dat
+
+panel security {type:'right', title:'[fa-hand-stop-o] Security', _sys:'fce'
+  menu m {type:'left', active:*, format:'f'
+    menu  {title:'Apache',type:'group'
+      item  {title:"[fa-folder-open-o] uvolnění složky tut/docs", par:°{cmd:'on'}}
+      item  {title:"[fa-file-o] test přístupu k souboru", par:°{file:'tut/docs/pdf-sample.pdf'}}
+      item  {title:"[fa-folder-o] uzamknutí složky tut/docs", par:°{cmd:'off'}}
+      proc onclick(i) { clear;
+        info.fill(conc(i.owner.title,' - ',i.title),' ');
+        [ i.par.cmd;
+          info.append(ask('tut_security',i.par.cmd));
+        ];
+        [ i.par.file;
+          info.append(conc("<a href='",i.par.file,"' target='file'>PDF</a>"));
+        ]
+      }
+    }
+  }
+  use info: form _right
+}
+
+
+# =============================================================================> FORMS, TABLES, MAPS
+# ----------------------------------------------------------------------------------------==> _right
+# univerzální formulář pro levostranné menu
+form _right [,,*,50] {
+  label head [10,0,*,50]  { title:'' }
+  label note [10,50,*,550] { title:'' }
+  proc fill(x,y) {
+    [ x; head.set(conc("<div class='CSection CMenu'><h3 class='CTitle'>",x,"</h3></div>")) ];
+    [ y; note.set(y) ]
+  }
+  proc append(x) { note.get; note.set(conc(note.get,'<br>',x)) | note.set(x) }
+}
+
+table tabulka { key_id:'id_tabulka'
+  number id_tabulka { help:'klíč' }
+  number cislo { help:'testovací číslo' }
+  text text    { help:'testovací text' }
+  date datum   { help:'testovací datum' }
+}
+
+table _jmena { key_id:'id_jmena'
+  number id_jmena
+  text   jmeno
+  number cetnost
+}
+map top_jmena: table _jmena {where:"cetnost>250000", order:'cetnost', key_id:'id_jmena'}
+
+# ====================================================================================> PROGRAMOVÁNÍ
+# postupy a triky
+# Reusable code
+# Ezer dovoluje použití modulů, které usnadňují znovupoužití kódu a zpřehlednění aplikace
+# module x { onload: ... cesta ke zdrojovému souboru modulu (bez ".ezer") (místo module lze i group)
+#   const ...                             // výčet globálních jmen modulu
+#   var ...
+#   proc p ...
+# }
+
+# ============================================================================================> PLÁN
+# novinky syntaxe
+#
+# zápisy stringu I
+# <<<wiki
+# text ve wiki formátu (použitém v dokumentaci)
+# wiki
+#
+# zápisy stringu II
+# "x={x}"        // přeloží se jako conc("x=",x.get)
+
+
+
+*/

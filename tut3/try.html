@@ -1,0 +1,141 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en" dir="ltr">
+<head>
+  <base href="http://ys2.ezer:8080/tut3">
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=9" />
+  <link rel="shortcut icon" href="./tut3/img/tut_3_local.png" />
+  <title>TRY3</title>
+  <script src='./ezer3/client/licensed/jquery-3.2.1.min.js' type='text/javascript' charset='utf-8'></script>
+  <script src='./ezer3/client/licensed/jquery-noconflict.js' type='text/javascript' charset='utf-8'></script>
+  <link rel="stylesheet" href="http://192.168.1.5:8080/www-ys2/ezer3/client/ezer3.css" type="text/css" media="screen" charset="utf-8">
+  <!--link rel="stylesheet" href="./ezer3/client/ezer3.css.php" type="text/css" media="screen" charset="utf-8"-->
+  <link rel="stylesheet" href="./ezer2.2/client/licensed/font-awesome/css/font-awesome.min.css" type="text/css" media="screen" charset="utf-8">
+  <style>
+
+html,body{
+    height: 100%
+}
+body {
+    font-family: Arial,Helvetica,sans-serif;
+    padding: 0;
+    margin: 0;
+    font-size: 9pt;
+    position: static;
+    overflow: hidden;
+    background: #bfdbff;
+}
+
+
+#ezer {
+  display: flex;
+  height: 100%;
+}
+
+header {
+  position: fixed; top:0;
+  width:100%; height:50px; overflow:auto;
+  border-bottom: 1px solid navy;
+}
+
+section {
+  margin: 50px 0;
+  overflow:hidden;
+}
+
+div.MenuLeft3 {
+  float:left; overflow-x: hidden; overflow-y: auto; height: 100%;
+  display:block;
+}
+
+article {
+  position:relative;
+  overflow:auto;
+  height:100%;
+}
+
+#label { position:absolute; left:20px; top:20px; width:50px; height:16px; background-color:orange;}
+
+footer {
+  position: fixed; bottom:0;
+  width:100%; height:50px; overflow:auto;
+  border-top: 1px solid navy;
+}
+
+#status_bar {
+  height:16px; background-color:silver;
+}
+
+  </style>
+  <script type="text/javascript">
+
+jQuery(document).ready(function() {
+
+  jQuery('div.MenuGroup3 a').click( e => {
+    jQuery(e.target).parent().find('ul').slideToggle();
+  });
+
+  jQuery('div.MenuLeft3 > i').click( e => {
+    jQuery(e.target).parent().toggleClass('MenuLeftFolded3');
+    jQuery(e.target).parent().find('i').toggleClass('fa-caret-square-o-left').toggleClass('fa-caret-square-o-right');
+//    jQuery(this.owner.DOM_Block)
+//      .animate({width:this.owner._folded ? '+=180' : '-=180'},{duration:400,easing:'linear'});
+  });
+
+});
+  </script>
+</head>
+<body>
+<div id="ezer">
+
+  <header>
+    Logo<br>Aplikace
+    <nav id='menu_main'>
+      tabs
+    </nav>
+    <nav id='menu_tab'>
+      panels
+    </nav>
+  </header>
+
+
+  <section>
+    <div class="MenuLeft3">
+      <i class="fa fa-caret-square-o-left"></i>
+      <div class="MenuGroup3">
+        <a>alfa</a>
+        <ul>
+          <li><i class="fa fa-at fa-fw efa"></i> item 1.1</li>
+          <li class="selected3"><i class="fa fa-at fa-fw efa"></i> item 1.2</li>
+        </ul>
+      </div>
+      <div class="MenuGroup3">
+        <a>beta</a>
+        <ul>
+          <li>...</li> <li>...</li> <li>...</li> <li>...</li>
+        </ul>
+      </div>
+    </div>
+    <article class="PanelRight3">
+      <div id="label">label</div>
+      <div>
+        Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+        Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+        Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+        Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+      </div>
+    </article>
+  </section>
+
+  <footer>
+    <div id="status_bar">status</div>
+    <br>trace
+    <br>trace
+    <br>trace
+    <br>trace
+  </footer>
+
+</div>
+</body>
+</html>
