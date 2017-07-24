@@ -15,16 +15,19 @@ panel lang [,,400,200] {type:'right', title:'[fa-book] Language', style:'backgro
     menu {title:'group 2',type:'group'
       item {title:"item 2.1"  proc onclick() { echo(this.title) } }
       item {title:"item 2.2", format:'d'  proc onclick() { echo(this.title) } }
+      item {title:"item 2.3", format:'d'  proc onclick() { echo(this.title) } }
+      item {title:"item 2.4", format:'d'  proc onclick() { echo(this.title) } }
+      item {title:"item 2.5", format:'d'  proc onclick() { echo(this.title) } }
     }
   }
   const one=1
   proc ahoj() { alert('ahoj') }
-  use u: form f
+  use u: form f [0,0,,]
   proc onfocus() {
 #     echo('one=',one.get); u.but.get; u.lab.set(conc(u.lab.get,'.'));
     u.fce_ctx.Init
   }
-  form f {
+  form f [,,400,200] {
     // elementy
     label ram [5,5,90,20] { title:'', css:'ae_work' }
     label lab [10,7,,] { title:"AHOJ <a href='ezer://the.lang.ahoj'>pozdrav</a>", help:'ahoj!'

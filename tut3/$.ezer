@@ -9,7 +9,7 @@ var dbg: object
 menu tut3 { title:'tut', type:'main', active:*, _sys:'*'
   tabs the  {title:"[fa-graduation-cap] Tutorial", include:'onload', active:* }
   tabs tst  {title:"[fa-exclamation] Tests", active:*
-    panel x [,,400,200] {type:'right', title:'[fa-book] test1', style:'background:white'
+    panel x [0,0,400,200] {type:'right', title:'[fa-book] test1', style:'background:white'
       menu {type:'left', format:'f'
         menu {title:'A',type:'group'
           item {title:"[fa-at] change CSS - random" proc onclick() {
@@ -31,6 +31,14 @@ menu tut3 { title:'tut', type:'main', active:*, _sys:'*'
         }
       }
     }
+    panel y [0,0,200,400] {type:'plain', title:'[fa-book] test2', style:'background:yellow' }
+  }
+  tabs port  {title:"Systém", active:*
+    panel js {type:'plain', title:'[fa-battery-4] 2.2 => [fa-battery-1] 3'
+      use u: form f
+      proc onfocus() { clear; u.info.set(ask('port','js')) }
+      form f [,,700,50] { label info }
+    }
   }
 #   tabs dbg  {title:"[fa-wheelchair] Testy", _sys:'*', include:'onload', active:* }
 #   tabs doc  {title:"Nápověda", _sys:'*',  include:'onload,ezer2.help' active:* }
@@ -40,5 +48,5 @@ menu tut3 { title:'tut', type:'main', active:*, _sys:'*'
 }
 // univerzální formulář pro levostranné menu
 form right [,,700,50] {
-  label info [0,0,700,600]
+  label info
 }
