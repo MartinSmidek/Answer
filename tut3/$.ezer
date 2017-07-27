@@ -34,10 +34,10 @@ menu tut3 { title:'tut', type:'main', active:*, _sys:'*'
     panel y [0,0,200,400] {type:'plain', title:'[fa-book] test2', style:'background:yellow' }
   }
   tabs port  {title:"Systém", active:*
-    panel js {type:'plain', title:'[fa-battery-4] 2.2 => [fa-battery-1] 3'
+    panel js [0,0,550,] {type:'plain', title:'[fa-battery-4] 2.2 => [fa-battery-1] 3'
       use u: form f
       proc onfocus() { clear; u.info.set(ask('port','js')) }
-      form f [,,700,50] { label info }
+      form f { label info }
     }
   }
 #   tabs dbg  {title:"[fa-wheelchair] Testy", _sys:'*', include:'onload', active:* }
