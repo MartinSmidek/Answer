@@ -86,7 +86,7 @@
     // jádro Ezer 3
     $EZER->version=='ezer3'
     ? array("$licensed/jquery-3.2.1.min.js",
-//              "$licensed/jquery-ui.min.js",
+            "$licensed/jquery-ui.min.js",
             "$licensed/jquery-noconflict.js",
       "$client/ezer_app3.js","$client/ezer3.js","$client/ezer_fdom3.js","$client/ezer_lib3.js"):array(),
     // rozšíření pro CKEditor

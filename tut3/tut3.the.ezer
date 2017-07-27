@@ -9,7 +9,8 @@
 panel lang [,,400,200] {type:'right', title:'[fa-book] Language', style:'background:white'
   menu {type:'left', format:'f'
     menu {title:'group 1',type:'group'
-      item {title:"[fa-at] item 1.1" proc onclick() { echo(this.title) } }
+      item {title:"[fa-at] screen size" proc onclick() {
+        echo('w:',sys('screen','width'),', h:',sys('screen','height')) } }
       item {title:"[fa-at] item 1.2" proc onclick() { echo(this.title) } }
     }
     menu {title:'group 2',type:'group'
@@ -19,6 +20,8 @@ panel lang [,,400,200] {type:'right', title:'[fa-book] Language', style:'backgro
       item {title:"item 2.4", format:'d'  proc onclick() { echo(this.title) } }
       item {title:"item 2.5", format:'d'  proc onclick() { echo(this.title) } }
     }
+    // reakce na změnu (tohoto) menu
+    proc onresize(w) { warning('menu bylo změněno, je nyní široké: ',w,'px'); }
   }
   const one=1
   proc ahoj() { alert('ahoj') }
@@ -26,6 +29,9 @@ panel lang [,,400,200] {type:'right', title:'[fa-book] Language', style:'backgro
   proc onfocus() {
 #     echo('one=',one.get); u.but.get; u.lab.set(conc(u.lab.get,'.'));
     u.fce_ctx.Init
+  }
+  proc onresize(w,h) {    // volané jádrem po změně rozměrů okna, onresize může být jen v panelu
+    u.w.set(w); u.h.set(h);
   }
   form f [,,400,200] {
     // elementy
@@ -39,6 +45,7 @@ panel lang [,,400,200] {type:'right', title:'[fa-book] Language', style:'backgro
     button but [100,5,,] { title:"add ."
       proc onclick() { echo('au'); this.set(conc(this.get,'.')); }
     }
+    field [320,5,75,] { type:'date' }
     // context menu
     menu { type:'context'
       item { title:'alfa', format:'d' proc onclick() { echo('alfa') }}
@@ -59,14 +66,20 @@ panel lang [,,400,200] {type:'right', title:'[fa-book] Language', style:'backgro
         [ but.enable; but.enable(0) | but.enable(1) ];
       }
     }
+    // zobrazení reakce na resize
+    label [5,62,180,26] { title:'', css:'ae_work' }
+    field w [45,65,40,] { title:'width:' }
+    field h [135,65,40,] { title:'height:' }
+
     // test funkcí
-    // contextmenu
     button fce_ctx [200,5,,] { title:"fce contextmenu"
       proc Init() {
         contextmenu(function(
           "return [['try',function(){alert(13)}]];"
         ),'',function("return this.DOM_Block;"))
     }}
+    button [200,35,,] { title:"error",    proc onclick() { error('test') }}
+    button [244,35,,] { title:"warning",  proc onclick() { warning('test') }}
   }
 }
 /*
