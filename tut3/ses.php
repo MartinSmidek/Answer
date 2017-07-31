@@ -55,7 +55,7 @@ echo <<<__EOD
   <head>
   <meta http-equiv="content-type" content="text/html; charset=utf-8">
   <link rel="shortcut icon" href="$icon">
-  <link rel="stylesheet" href="../ezer3/client/ezer.css" type="text/css" media="screen" charset="utf-8">
+  <link rel="stylesheet" href="../ezer3/client/ezer.css.php" type="text/css" media="screen" charset="utf-8">
   <style>
     .Label { position:relative; }
     button { position:relative; }
@@ -65,7 +65,7 @@ echo <<<__EOD
   </script>
   <title>SESSION</title>
   </head>
-  <body>
+  <body  style="overflow:auto">
     <div id='cmd'>
       <button onclick="op('reload.');">reload</button>
       <!--
@@ -77,7 +77,7 @@ echo <<<__EOD
       <button onclick="op('phpinfo.');">phpinfo</button>
     </div>
     <div id='paticka'>
-      <div class='dbg' style="position:absolute;top:50px;width:90%;left:0%">$full</div>
+      <div class='dbg' style="position:absolute;top:50px;left:0;padding:5px;">$full</div>
       <!--
       <div class='dbg' style="position:absolute;top:50px;width:30%;left:0%">$web</div>
       <div class='dbg' style="position:absolute;top:50px;width:25%;left:30%">$ans</div>
