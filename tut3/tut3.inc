@@ -77,7 +77,7 @@
   // uživatelské i knihovní moduly v PHP obsažené v $ezer_path_root
   $ezer_php= array(
     "{$EZER->version}/ezer2_fce.php",
-    'tut3/port3.php',
+    'ezer3/cloc.php',
     'tut/tut.the.php'
   );
 

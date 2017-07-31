@@ -25,6 +25,9 @@ menu tut3 { title:'tut', type:'main', active:*, _sys:'*'
           item {title:"[fa-at] change skin - ch" proc onclick() {
             function("DOM_change_skin('ch')");
           }}
+          item {title:"[fa-at] change skin - db" proc onclick() {
+            function("DOM_change_skin('db')");
+          }}
           item {title:"[fa-at] change skin - default" proc onclick() {
             function("DOM_change_skin('default')");
           }}
@@ -34,10 +37,10 @@ menu tut3 { title:'tut', type:'main', active:*, _sys:'*'
     panel y [0,0,200,400] {type:'plain', title:'[fa-book] test2', style:'background:yellow' }
   }
   tabs port  {title:"Systém", active:*
-    panel js [0,0,550,] {type:'plain', title:'[fa-battery-4] 2.2 => [fa-battery-1] 3'
-      use u: form f
+    panel js [0,0,,] {type:'plain', title:'[fa-battery-4] 2.2 => [fa-battery-1] 3'
+      use u: form f [0,0,,]
       proc onfocus() { clear; u.info.set(ask('port','js')) }
-      form f { label info }
+      form f [,,550,]{ label info }
     }
   }
 #   tabs dbg  {title:"[fa-wheelchair] Testy", _sys:'*', include:'onload', active:* }

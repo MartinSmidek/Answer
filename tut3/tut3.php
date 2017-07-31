@@ -109,7 +109,7 @@
     $dbg ? "$licensed/jush/mini_jush.css" : '',                                       /* debugger */
 //     $EZER->version=='ezer2.2' ? "$client/ezer.css" : '',
     "$client/ezer.css",
-    $EZER->version=='ezer3'   ? "$client/ezer3.css.php" : '',
+    $EZER->version=='ezer3' ? "$client/ezer3.css.php=skin" : '',
     "$client/licensed/datepicker/datepicker_vista/datepicker_vista.css",
     "$client/licensed/font-awesome/css/font-awesome.min.css",
     $android ? "$client/android.css" : "",

@@ -6,7 +6,7 @@
 # ------------------------------------------------------------------------------------------------ #
 // info.fill('',ask('tut_phpexcel',i.par));
 
-panel lang [,,400,200] {type:'right', title:'[fa-book] Language', style:'background:white'
+panel lang [,,500,200] {type:'right', title:'[fa-book] Language', style:'background:white'
   menu {type:'left', format:'f'
     menu {title:'group 1',type:'group'
       item {title:"[fa-at] screen size" proc onclick() {
@@ -79,7 +79,27 @@ panel lang [,,400,200] {type:'right', title:'[fa-book] Language', style:'backgro
         ),'',function("return this.DOM_Block;"))
     }}
     button [200,35,,] { title:"error",    proc onclick() { error('test') }}
-    button [244,35,,] { title:"warning",  proc onclick() { warning('test') }}
+    button [245,35,,] { title:"warning",  proc onclick() { warning('test') }}
+    // popup
+    button [200,65,,] { title:"alert",    proc onclick() { alert('test'); echo('.') }}
+    button [245,65,,] { title:"confirm",
+      proc onclick() { confirm('tučný <b>dotaz</b>');echo('ano') | echo('ne') }}
+    button [305,65,,] { title:"choose",
+      proc onclick() { echo(choose('Zvol, pěkně prosím, jednu ze tří nabízených variant odpovědi',
+        'vlevo:to the left,rovně:0,vpravo:1')); echo('.') }}
+    button [366,65,,] { title:"prompt2",  proc onclick() { echo(prompt2('jméno:','Martin')); echo('.') }}
+    button [431,65,,] { title:"ALERT",    proc onclick() { javascript("alert('test')"); echo('.') }}
+    // modal
+    button [200,95,,] { title:"popup",    proc onclick() { pop.popup; echo('.') }}
+    button [260,95,,] { title:"modal",    proc onclick() { pop.modal; echo('.') }}
+    button [340,95,,] { title:"modal...", proc onclick() { pop.modal(10,10,'název'); echo('.') }}
+  }
+  panel pop [,,200,100] { type:"popup", title:"Hup!"
+    use pu: form pf
+    form pf {
+      button pb [0,0,,] { title:"down!",   proc onclick() { panel.hide }}
+      button pa [0,30,,] { title:"alert!", proc onclick() { alert('z pop') }}
+    }
   }
 }
 /*
