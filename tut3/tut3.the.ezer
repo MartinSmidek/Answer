@@ -89,11 +89,21 @@ panel lang [,,500,200] {type:'right', title:'[fa-book] Language', style:'backgro
         'vlevo:to the left,rovně:0,vpravo:1')); echo('.') }}
     button [366,65,,] { title:"prompt2",  proc onclick() { echo(prompt2('jméno:','Martin')); echo('.') }}
     button [431,65,,] { title:"ALERT",    proc onclick() { javascript("alert('test')"); echo('.') }}
-    // modal
+    // popup
     button [200,95,,] { title:"popup",    proc onclick() { pop.popup; echo('.') }}
     button [254,95,,] { title:"modal",    proc onclick() { pop.modal; echo('.') }}
     button [308,95,,] { title:"modal...", proc onclick() { pop.modal(10,10,'název'); echo('.') }}
+    // ordinary panel
+    button [200,125,,] { title:"show pan", proc onclick() { pan.popup(7,5) }}
+    button [300,125,,] { title:"hide pan", proc onclick() { pan.hide }}
   }
+  panel pan [0,0,200,100] { title:"obyčejný panel", style:"outline:1px dotted red;background:white"
+    use pu: form pf
+    form pf {
+      button pa [0,30,,] { title:"alert!", proc onclick() { alert('z pan') }}
+    }
+  }
+}
   panel pop [,,200,100] { type:"popup", title:"Hup!"
     use pu: form pf
     form pf {
@@ -102,7 +112,6 @@ panel lang [,,500,200] {type:'right', title:'[fa-book] Language', style:'backgro
       button pa [0,30,,] { title:"alert!", proc onclick() { alert('z pop') }}
     }
   }
-}
 /*
 # =========================================================================================> ELEMENT
 
