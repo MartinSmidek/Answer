@@ -29,9 +29,13 @@
     && $_COOKIE[$app_last_access]>0 &&  $_COOKIE[$app_last_access]<4 ) {
     $cookie= $_COOKIE[$app_last_access];
   }
+  $ev= isset($_GET['ezer']) && $_GET['ezer']==3 ? '3' : '';
   $choice_css=
-    $cookie==1 ? "skins/ck/ck.ezer.css=skin" : (
-    $cookie==2 ? "skins/ch/ch.ezer.css=skin" : "skins/db/db.ezer.css=skin" );
+    $cookie==1 ? "skins/ck/ck.ezer$ev.css=skin" : (
+    $cookie==2 ? "skins/ch/ch.ezer$ev.css=skin" : "skins/db/db.ezer$ev.css=skin" );
+  $skin=
+    $cookie==1 ? "ck" : (
+    $cookie==2 ? "ch" : "db" );
 
   $js= array(
     "ds/fce.js"
@@ -39,5 +43,5 @@
   $css= array($choice_css,
     "db2/db2.css"
   );
-  answer_php($app,"Answer ...",'ezer_db2','db',$js,$css,$options);
+  answer_php($app,"Answer ...",'ezer_db2',$skin,$js,$css,$options);
 ?>

@@ -131,12 +131,15 @@ function tc_html_close($fname) { trace();
 # ========================================================================================== UTILITY
 # ----------------------------------------------------------------------------------- tc StringWidth
 # funkce vrátí šířku
-function tc_StringWidth($text,$font_atr='',$font_size=12,$font_name=FIS_font) { trace();
+function tc_StringWidth($text,$font_atr='',$font_size=12,$font_name=FIS_font) { //trace();
   global $pdf;
+  $text_width= 30;
+//                                                 goto end;
   if ( !$pdf ) tc_default();
   $pdf->SetFont($font_name,$font_atr,$font_size);
   $text_width= $pdf->GetStringWidth($text);
-  return $text_width;
+end:
+  return ceil($text_width);
 }
 # =========================================================================================== REPORT
 # ---------------------------------------------------------------------------------------- tc report
