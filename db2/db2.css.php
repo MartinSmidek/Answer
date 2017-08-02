@@ -13,7 +13,7 @@ global $skin, $path, $c, $b, $ab, $c_appl,
 require_once("../skins/colors.php");
 
 echo <<<__EOD
-/* Android */
+/* Android * /
 body { position:absolute; width:100%; height:100%; }
 #paticka { bottom:0; }
 
@@ -43,6 +43,7 @@ body { position:absolute; width:100%; height:100%; }
 .jemna          { background-color:$b_item; }
 
 /* specifické barvy pro odlišení záznamů YS, FA, DB */
+#appl { color:$zelena; }
 
 tr td.ezer_ys, li.ezer_ys, input.ezer_ys, .ezer_ys input, span.ezer_ys
                 { background-color:#af8 !important; }

@@ -14,9 +14,10 @@ Ezer.onlogin= function() {
 // před přihlášením:    každému (po přihlášení bude případně zredukováno)
 // po přihlášení:       pokud má tato datová práva
 function personify(access,from) {
+  var v= Ezer.version=='ezer3' ? "<sub>3</sub>" : '';
   var menu= $('access_menu'), body= $(document.body), timer;
   var orgs= ['','YMCA Setkání','YMCA Familia','obou organizací'];
-  var tits= ['','Answer Setkání','Answer Familia','Ans(w)er (společný)'];
+  var tits= ['',`Answer${v} Setkání`,`Answer${v} Familia`,`Answer${v} (společný)`];
   var skin= ['','ck/ck.ezer.css','ch/ch.ezer.css','db/db.ezer.css'];
   var sk=   ['','ck','ch','db'];
   var off= function(e) {
@@ -40,7 +41,7 @@ function personify(access,from) {
     if ( access1 ) {
       // přepni aplikaci podle access a zapiš do cookie 'db2[_test]_last_access'
       Ezer.sys.user.access= access1;
-      $('access').setProperty('text',tits[access1]);
+      $('access').setProperty('html',tits[access1]);
       if ( Ezer.version=='ezer2.2' ) {
         var old_skin= $('skin');
         Asset.css("skins/"+skin[access1],{id:'skin'});
