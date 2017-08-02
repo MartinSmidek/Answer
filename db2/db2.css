@@ -50,3 +50,7 @@ button.search   { padding-left:0px; }
   border-top:1px solid #999; }
 #access_menu span:hover   {
   background-color:#b2b4bf; }
+
+/* úpravy standardu - k Ezer3 */
+
+textarea { resize:none; }

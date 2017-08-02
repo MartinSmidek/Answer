@@ -100,7 +100,6 @@ span.zmeneny {
 /* úpravy standardu */
 div.ContextHelp img {
   top:3px; padding:0; position:relative; }
-#login_1, #login_2  { height:180px; }
 div.Element .Label, div.Select .Label, div.FieldDate .Label { margin-top:1px }
 .BrowseSmart td.BrowseQry input {
   background-color:$b8_brow; }
