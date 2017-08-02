@@ -18,6 +18,7 @@ function personify(access,from) {
   var orgs= ['','YMCA Setkání','YMCA Familia','obou organizací'];
   var tits= ['','Answer Setkání','Answer Familia','Ans(w)er (společný)'];
   var skin= ['','ck/ck.ezer.css','ch/ch.ezer.css','db/db.ezer.css'];
+  var sk=   ['','ck','ch','db'];
   var off= function(e) {
     menu.setStyle('display','none');
     body.removeEvents({click:off,contextmenu:off});
@@ -40,9 +41,14 @@ function personify(access,from) {
       // přepni aplikaci podle access a zapiš do cookie 'db2[_test]_last_access'
       Ezer.sys.user.access= access1;
       $('access').setProperty('text',tits[access1]);
-      var old_skin= $('skin');
-      Asset.css("skins/"+skin[access1],{id:'skin'});
-      old_skin.destroy();
+      if ( Ezer.version=='ezer2.2' ) {
+        var old_skin= $('skin');
+        Asset.css("skins/"+skin[access1],{id:'skin'});
+        old_skin.destroy();
+      }
+      else if ( Ezer.version=='ezer3' ) {
+        DOM_change_skin(sk[access1]);
+      }
       Ezer.fce.set_cookie(Ezer.root+'_last_access',access1);
       // přihlášenému zavolej ezer-funkci v kořenu reaccess
       if ( Ezer.sys.user && Ezer.sys.user.id_user && Ezer.run && Ezer.run.$
