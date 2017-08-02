@@ -143,11 +143,12 @@ function answer_php($app,$app_name,$db_name,$skin,$js_lib,$css_lib,$options) {
     $access_app= array(1=>"Setkání","Familia","(společný)");
     $access_app= $access_app[$cookie];
     $choice_js= "personify('menu_on'); return false;";
+    $v= $EZER->version=='ezer3' ? "<sub>3</sub>" : '';
     $title= "
       <span $title_style>"
       . $title_flag
       ."<span id='access' onclick=\"$choice_js\" oncontextmenu=\"$choice_js\">
-          Ans(w)er $access_app
+          Answer$v $access_app
         </span>
         <div id='access_menu'>
           <span onclick='personify(1);'>Ans(w)er Setkání</span>
