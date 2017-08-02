@@ -24,7 +24,12 @@ function answer_ini($app,$answer_db,$dbs_plus,$php_lib,$ezer_mod=array()) {
   }
 
   // nastavení verze jádra
-  $EZER->version= /*isset($_GET['ezer']) ? "ezer{$_GET['ezer']}" :*/ 'ezer2.2';
+  $EZER= (object)array();
+  $ev= (isset($_GET['ezer']) ? $_GET['ezer']
+     : (isset($_SESSION['GET']['ezer']) ? $_SESSION['GET']['ezer'] : '2.2'));
+  setcookie("ev",$ev,time()+3600*24*30);
+  $EZER->version= "ezer{$ev}";
+//   $EZER->version= 'ezer2.2';
 
   $server_name= isset($_SERVER["HTTP_X_FORWARDED_SERVER"])
     ?$_SERVER["HTTP_X_FORWARDED_SERVER"]:$_SERVER["SERVER_NAME"];
@@ -35,6 +40,8 @@ function answer_ini($app,$answer_db,$dbs_plus,$php_lib,$ezer_mod=array()) {
   $ezer_ksweb= $android && $server_name=="localhost"; // identifikace ladícího serveru KSWEB/Android
 
   require_once("{$EZER->version}/server/ae_slib.php");
+  if (  $EZER->version=='ezer3' )
+    require_once("{$EZER->version}/server/ezer_lib3.php");
 
   // ošetření běhu s testovací databází
   $answer_dbx= substr($app,-5)=='_test' ? "{$answer_db}_test" : $answer_db;
@@ -44,7 +51,7 @@ function answer_ini($app,$answer_db,$dbs_plus,$php_lib,$ezer_mod=array()) {
   $ezer_kernel= 'ezer_kernel';
   $host= 'localhost';
   $name= 'gandi';
-  $pass= 'pr0gl8s';
+  $pass= 'r8d0st';
   if ( $server_name=='casopisrz.ado.cz' ) {
     $answer_dbx=  'adocz03';
     $ezer_answer= 'adocz04';
@@ -129,6 +136,7 @@ function answer_ini($app,$answer_db,$dbs_plus,$php_lib,$ezer_mod=array()) {
 //     "ys/ys.ban.php",        YS
 //     "db/db_akce.php",       YS YS2 FA2 CR
 //     "db/db_akce2.php",      YS YS2 FA2 CR
+    'ezer3/cloc.php',
     "fis/fis_tcpdf.php"),
     $php_lib
   );

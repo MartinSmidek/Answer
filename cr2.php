@@ -14,7 +14,7 @@
 
   require_once("answer.php");
   $options= (object)array(
-//     'watch_access' => 0,
+    'curr_version' => 1,                       // při přihlášení je nahrazeno nejvyšší ezer_kernel.version
     'watch_access' => 4,
     'watch_access_opt' => // ... barvení v Uživatelé + select v ezer2.syst.ezer
        "{name:{4:'CPR Ostrava'},

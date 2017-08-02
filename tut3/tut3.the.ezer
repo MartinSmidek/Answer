@@ -34,6 +34,9 @@ panel lang [,,500,200] {type:'right', title:'[fa-book] Language', style:'backgro
     u.w.set(w); u.h.set(h);
   }
   form f [,,400,200] {
+    const PQ=50             // posun pro nové pokoje
+    const PL=0; PT=92; QT=PT+PQ-4; FT=120+PQ
+    label       [0,QT+-14,356,42] { title:'nové pokoje:', style:"outline:1px dotted red" }
     // elementy
     label ram [5,5,90,20] { title:'', css:'ae_work' }
     label lab [10,7,,] { title:"AHOJ <a href='ezer://the.lang.ahoj'>pozdrav</a>", help:'ahoj!'
