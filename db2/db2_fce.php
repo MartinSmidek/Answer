@@ -11036,7 +11036,7 @@ function mail2_mai_pocet($id_dopis,$dopis_var,$cond='',$recall=false) {  trace()
          : " --- chybné komu --- " )));
     // využívá se toho, že role rodičů 'a','b' jsou před dětskou 'd', takže v seznamech
     // GROUP_CONCAT jsou rodiče, byli-li na akci. Emaily se ale vezmou ode všech, mají-li osobní
-    $qry= "SELECT a.nazev,id_pobyt,pouze,COUNT(*) AS _na_akci,avizo,
+    $qry= "SELECT a.nazev,id_pobyt,pouze,COUNT(DISTINCT s.id_osoba) AS _na_akci,avizo,
              GROUP_CONCAT(DISTINCT o.id_osoba ORDER BY t.role) AS _id,
              GROUP_CONCAT(DISTINCT CONCAT(prijmeni,' ',jmeno) ORDER BY t.role) AS _jm,
              GROUP_CONCAT(DISTINCT IF(o.kontakt,o.email,'')) AS email,
