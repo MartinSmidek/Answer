@@ -3906,9 +3906,10 @@ function tisk2_sestava($akce,$par,$title,$vypis,$export=false) { trace();
      : ( $par->typ=='sd'   ? akce2_skup_deti($akce,$par,$title,$vypis,$export)
      : ( $par->typ=='cz'   ? akce2_cerstve_zmeny($akce,$par,$title,$vypis,$export)
      : ( $par->typ=='tab'  ? akce2_tabulka($akce,$par,$title,$vypis,$export)
+     : ( $par->typ=='mrop' ? akce2_tabulka_mrop($akce,$par,$title,$vypis,$export)
      : (object)array('html'=>"<i>Tato sestava zatím není převedena do nové verze systému,
           <a href='mailto:martin@smidek.eu'>upozorněte mě</a>, že ji už potřebujete</i>")
-     ))))))))))))))))))))))));
+     )))))))))))))))))))))))));
 }
 # =======================================================================================> . seznamy
 function mb_strcasecmp($str1, $str2, $encoding = null) {
@@ -3980,6 +3981,51 @@ function akce2_tabulka($akce,$par,$title,$vypis,$export=false) { trace();
 //                                         debug($clmn,"akce2_tabulka");
   $res->html= "<div class='stat'><table class='stat'><tr>$ths</tr>$trs</table></div>";
   return $res;
+}
+# ------------------------------------------------------------------------------- akce2 tabulka_mrop
+# generování tabulky účastníků $akce typu MROP - rozpis chatek
+function akce2_tabulka_mrop($akce,$par,$title,$vypis,$export=false) { trace();
+  $result= (object)array();
+  $typ= $par->typ;
+  $tit= $par->tit;
+  $fld= $par->fld;
+  $cnd= $par->cnd;
+  $grp= $par->grp;
+  $ord= $par->ord;
+  $html= '';
+  $href= '';
+  $n= 0;
+  // dekódování parametrů
+  $tits= explode(',',$tit);
+  $flds= explode(',',$fld);
+  $clmn= array();
+  $expr= array();       // pro výrazy
+  $fld_jmena= str_replace("jmena,",'',$fld);
+  // pokud je grp sdruž podle chatek
+  $GROUP= $grp ? "GROUP BY $grp" : '';
+  $GROUP_CONCAT= $grp ? "GROUP_CONCAT(CONCAT(prijmeni,' ',jmeno) ORDER BY prijmeni) AS jmena," : '';
+  // data akce
+  $qry=  "
+    SELECT
+      $GROUP_CONCAT
+      CONCAT(prijmeni,' ',jmeno) AS pr_jm,skupina,pokoj,platba,p.poznamka,
+      '' AS filler
+    FROM pobyt AS p
+      JOIN spolu AS s USING(id_pobyt)
+      JOIN osoba AS o USING(id_osoba)
+    WHERE p.id_akce=$akce AND $cnd
+    $GROUP
+    ORDER BY $ord";
+  $res= mysql_qry($qry);
+  while ( $res && ($x= mysql_fetch_object($res)) ) {
+    $n++;
+    $clmn[$n]= array();
+    foreach($flds as $f) {
+      $clmn[$n][$f]= $x->$f;
+    }
+  }
+//                                         debug($clmn,"sestava pro $akce,$typ,$fld,$cnd");
+  return tisk2_table($tits,$flds,$clmn,$export);
 }
 # ------------------------------------------------------------------------------- tisk2 sestava_pary
 # generování sestavy pro účastníky $akce - rodiny
@@ -4203,7 +4249,7 @@ function tisk2_sestava_lidi($akce,$par,$title,$vypis,$export=false) { trace();
   $r_fld= "id_rodina,nazev,ulice,psc,obec,stat,note,emaily,telefony,spz";
   $qry=  "
     SELECT
-      p.pouze,p.poznamka,p.platba,p.funkce,s.s_role,
+      p.pouze,p.poznamka,p.platba,p.funkce,p.skupina,p.pokoj,s.s_role,
       o.prijmeni,o.jmeno,o.narozeni,o.rc_xxxx,o.note,o.obcanka,o.clen,o.dieta,
       IFNULL(r2.id_rodina,r1.id_rodina) AS id_rodina,
       IFNULL(r2.nazev,r1.nazev) AS r_nazev,
@@ -7086,6 +7132,46 @@ function sql2xls($datum) {
   return $text;
 }
 # =====================================================================================> . PDF tisky
+# ----------------------------------------------------------------------------------- tisk2 pdf_mrop
+# vygenerování PDF s vizitkami s rozměrem 55x90 na rozstříhání
+#   $the_json obsahuje  title:'{jmeno}<br>{prijmeni}'
+function tisk2_pdf_mrop($akce,$par,$title,$vypis,$report_json) {  trace();
+  global $ezer_path_docs;
+  $result= (object)array('_error'=>0);
+  $html= '';
+  // získání dat
+  mb_internal_encoding('UTF-8');
+  $tab= tisk2_sestava($akce,$par,$title,$vypis,true);
+//                                         display($report_json);
+                                        debug($tab,"tisk2_sestava($akce,...)"); //return;
+//   $report_json= "
+//   {'format':'A4:5,6,70,41','boxes':[
+//   {'type':'text','left':2.6,'top':11,'width':60,'height':27.3,'id':'jmeno','txt':'{pr_jm}','style':'16,C'},
+//   {'type':'text','left':10,'top':20,'width':15,'height':10,'id':'$100','txt':'skupina','style':'8,C'},
+//   {'type':'text','left':10,'top':25,'width':15,'height':20,'id':'skupina','txt':'{skupina}','style':'14,C'},
+//   {'type':'text','left':40,'top':20,'width':10,'height':10,'id':'$101','txt':'chata','style':'8,C'},
+//   {'type':'text','left':40,'top':25,'width':10,'height':20,'id':'chata','txt':'{chata}','style':'14,C'}]}";
+  // projdi vygenerované záznamy
+  $n= 0;
+  $parss= array();
+  foreach ( $tab->clmn as $xa ) {
+    // definice pole substitucí
+    $x= (object)$xa;
+    $parss[$n]= (object)array();
+    $parss[$n]->jmena=   strtr($x->jmena,array(','=>'<br>'));
+    $parss[$n]->pr_jm=   $x->pr_jm;
+    $parss[$n]->chata=   $x->pokoj;
+    $parss[$n]->skupina= $x->skupina;
+    $n++;
+  }
+  // předání k tisku
+  $fname= 'jmenovky_'.date("Ymd_Hi");
+  $fpath= "$ezer_path_docs/$fname.pdf";
+  $err= dop_rep_ids($report_json,$parss,$fpath);
+  $result->html= $err ? $err
+    : " Výpis byl vygenerován ve formátu <a href='docs/$fname.pdf' target='pdf'>PDF</a>.";
+  return $result;
+}
 # ------------------------------------------------------------------------------- tisk2 pdf_jmenovky
 # vygenerování PDF s vizitkami s rozměrem 55x90 na rozstříhání
 #   $the_json obsahuje  title:'{jmeno}<br>{prijmeni}'

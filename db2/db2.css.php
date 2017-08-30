@@ -101,6 +101,7 @@ span.zmeneny {
 /* úpravy standardu */
 div.ContextHelp img {
   top:3px; padding:0; position:relative; }
+div.Element3 .Label3, div.Select3 .Label3, div.FieldDate3 .Label3,            /*Ezer3*/
 div.Element .Label, div.Select .Label, div.FieldDate .Label { margin-top:1px }
 .BrowseSmart td.BrowseQry input {
   background-color:$b8_brow; }
@@ -108,6 +109,7 @@ div.Element .Label, div.Select .Label, div.FieldDate .Label { margin-top:1px }
   width:100%; }
 /*.SelectDrop li {
   white-space:normal !important; }*/
+.Label3, .Check3, .Case3,                                                        /* Ezer3*/
 .Label, .Check, .Case {
   color:#456; font-size:11px; }
 .Case input {
