@@ -11111,18 +11111,24 @@ function mail2_mai_pocet($id_dopis,$dopis_var,$cond='',$recall=false) {  trace()
     $AND.= $dopis_var=='U'  ? " AND p.funkce IN (0,1,2,5)" : (
            $dopis_var=='U2' ? " AND p.funkce IN (1,2,5)"   : (
            $dopis_var=='U3' ?
-             " AND p.funkce IN (0,1,2,5) AND
+             " AND p.funkce IN (0,1,2,5) /*AND
                IF(a.ma_cenu AND p.avizo=0,
                  IF(p.platba1+p.platba2+p.platba3+p.platba4>0,
                    p.platba1+p.platba2+p.platba3+p.platba4,
                    IF(pouze>0,1,2)*a.cena)>platba,
-                 p.platba1+p.platba2+p.platba3+p.platba4+p.poplatek_d>platba+platba_d)" : (
+                 p.platba1+p.platba2+p.platba3+p.platba4+p.poplatek_d>platba+platba_d)*/" : (
            $dopis_var=='U4' ?
              " AND IF(IFNULL(role,'a') IN ('a','b'),REPLACE(o.obcanka,' ','') NOT RLIKE '^[0-9]{9}$',0)"
          : " --- chybné komu --- " )));
+    $HAVING= $dopis_var=='U3' ? "HAVING
+               IF(a.ma_cenu AND p.avizo=0,
+                 IF(_platby>0,_platby,_na_akci*a.cena)>platba,
+                 _platby+p.poplatek_d>platba+platba_d)"
+         : "";
     // využívá se toho, že role rodičů 'a','b' jsou před dětskou 'd', takže v seznamech
     // GROUP_CONCAT jsou rodiče, byli-li na akci. Emaily se ale vezmou ode všech, mají-li osobní
-    $qry= "SELECT a.nazev,id_pobyt,pouze,COUNT(DISTINCT s.id_osoba) AS _na_akci,avizo,
+    $qry= "SELECT a.nazev,a.ma_cenu,id_pobyt,pouze,COUNT(DISTINCT s.id_osoba) AS _na_akci,avizo,
+             p.platba1+p.platba2+p.platba3+p.platba4 AS _platby,platba,a.cena,platba_d,p.poplatek_d,
              GROUP_CONCAT(DISTINCT o.id_osoba ORDER BY t.role) AS _id,
              GROUP_CONCAT(DISTINCT CONCAT(prijmeni,' ',jmeno) ORDER BY t.role) AS _jm,
              GROUP_CONCAT(DISTINCT IF(o.kontakt,o.email,'')) AS email,
@@ -11134,7 +11140,7 @@ function mail2_mai_pocet($id_dopis,$dopis_var,$cond='',$recall=false) {  trace()
            JOIN osoba AS o ON s.id_osoba=o.id_osoba
            LEFT JOIN tvori AS t ON t.id_osoba=o.id_osoba
            LEFT JOIN rodina AS r USING (id_rodina)
-           WHERE id_dopis=$id_dopis $AND GROUP BY id_pobyt";
+           WHERE id_dopis=$id_dopis $AND GROUP BY id_pobyt $HAVING";
     $res= mysql_qry($qry);
     while ( $res && ($d= mysql_fetch_object($res)) ) {
       $n++;
