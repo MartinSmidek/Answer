@@ -854,7 +854,7 @@ form _gsql {
     show [,,123,] {title:'název',  data:a.nazev, format:'ts'}
     show [,,60,] {title:'místo',   data:a.misto, format:'ts'}
     show [,,65,]  {title:'od',     data:a.datum_od, format:'rs-'}
-    proc onstart () { javascript("this.DOM_Block.setStyles({zIndex:0})") }
+    proc onstart () { javascript("if ( window.jQuery ) this.DOM_Block.css({zIndex:0}); else this.DOM_Block.setStyles({zIndex:0})") }
   }
   # ------------ ne akce
   browse ctrl_akce_ne [l_ne_akce+10,t_ctrl+20,,] { tag:'def', rows:10, format:'n'
@@ -865,7 +865,7 @@ form _gsql {
     show [,,123,] {title:'název',  data:a.nazev, format:'ts'}
     show [,,60,] {title:'místo',   data:a.misto, format:'ts'}
     show [,,65,]  {title:'od',     data:a.datum_od, format:'rs-'}
-    proc onstart () { javascript("this.DOM_Block.setStyles({zIndex:0})") }
+    proc onstart () { javascript("if ( window.jQuery ) this.DOM_Block.css({zIndex:0}); else this.DOM_Block.setStyles({zIndex:0})") }
   }
 }
 # -----------------------------------------------------------------------------------------==> SQL _esql
