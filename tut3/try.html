@@ -1,4 +1,3 @@
-
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en" dir="ltr">
 <head>
@@ -8,134 +7,124 @@
   <link rel="shortcut icon" href="./tut3/img/tut_3_local.png" />
   <title>TRY3</title>
   <script src='./ezer3/client/licensed/jquery-3.2.1.min.js' type='text/javascript' charset='utf-8'></script>
-  <script src='./ezer3/client/licensed/jquery-noconflict.js' type='text/javascript' charset='utf-8'></script>
-  <link rel="stylesheet" href="http://192.168.1.5:8080/www-ys2/ezer3/client/ezer3.css" type="text/css" media="screen" charset="utf-8">
-  <!--link rel="stylesheet" href="./ezer3/client/ezer3.css.php" type="text/css" media="screen" charset="utf-8"-->
-  <link rel="stylesheet" href="./ezer2.2/client/licensed/font-awesome/css/font-awesome.min.css" type="text/css" media="screen" charset="utf-8">
+  <script src='./ezer3/client/licensed/jquery-ui.min.js' type='text/javascript' charset='utf-8'></script>
+  <link href='./ezer3/client/licensed/jquery-ui.theme.min.css' rel="stylesheet" >
   <style>
 
-html,body{
-    height: 100%
-}
-body {
-    font-family: Arial,Helvetica,sans-serif;
-    padding: 0;
-    margin: 0;
-    font-size: 9pt;
-    position: static;
-    overflow: hidden;
-    background: #bfdbff;
-}
+html,body { width:100%; height:100%; }
+#track { position:absolute; border:1px solid black; left:10px top:10px; width:22px; height:100px; }
+#thumb { position:absolute; background:grey; width:20px; height:20px; margin:1px;}
+#info  { position:absolute; border:1px solid black; left:100px; top:10px; width:100px; height:30px; }
 
-
-#ezer {
-  display: flex;
-  height: 100%;
-}
-
-header {
-  position: fixed; top:0;
-  width:100%; height:50px; overflow:auto;
-  border-bottom: 1px solid navy;
-}
-
-section {
-  margin: 50px 0;
-  overflow:hidden;
-}
-
-div.MenuLeft3 {
-  float:left; overflow-x: hidden; overflow-y: auto; height: 100%;
-  display:block;
-}
-
-article {
-  position:relative;
-  overflow:auto;
-  height:100%;
-}
-
-#label { position:absolute; left:20px; top:20px; width:50px; height:16px; background-color:orange;}
-
-footer {
-  position: fixed; bottom:0;
-  width:100%; height:50px; overflow:auto;
-  border-top: 1px solid navy;
-}
-
-#status_bar {
-  height:16px; background-color:silver;
-}
+#slider { margin: 10px; }
 
   </style>
   <script type="text/javascript">
 
-jQuery(document).ready(function() {
+  jQuery('#slider').slider();
 
-  jQuery('div.MenuGroup3 a').click( e => {
-    jQuery(e.target).parent().find('ul').slideToggle();
-  });
+/*
+class Slider {
+  constructor($) {
+    this.thumb= document.querySelector('#thumb');
+    this.track= document.querySelector('#track');
+    this.move= this.mouseMove.bind(this);
 
-  jQuery('div.MenuLeft3 > i').click( e => {
-    jQuery(e.target).parent().toggleClass('MenuLeftFolded3');
-    jQuery(e.target).parent().find('i').toggleClass('fa-caret-square-o-left').toggleClass('fa-caret-square-o-right');
-//    jQuery(this.owner.DOM_Block)
-//      .animate({width:this.owner._folded ? '+=180' : '-=180'},{duration:400,easing:'linear'});
-  });
+    this.jBody=  $('body');
+    this.jThumb= $('#thumb');
+    this.jTrack= $('#track');
 
-});
-  </script>
+    this.top= this.jTrack.offset().top,
+    this.bot= this.top+this.jTrack.height()-1,
+    this.hei= this.jThumb.height();
+  }
+  jStart() {
+    this.jThumb.mousedown( ev => this.jDown() )
+    this.jBody.mouseup( ev => this.jUp() ) }
+  jDown(ev) {
+    this.jTrack.on('mousemove', this.jMove.bind(this)) }
+  jUp(ev) {
+    this.jTrack.off('mousemove') }
+  jMove(ev) {
+    let top= ev.pageY,
+        bot= top+this.hei;
+    $('#info').text(top-this.top);
+    if ( top>=this.top && bot<this.bot ) {
+      this.jThumb.css({top:top-this.top})
+    }
+  }
+
+  start() {
+    thumb.addEventListener('mousedown', this.mouseDown.bind(this), false);
+    window.addEventListener('mouseup', this.mouseUp.bind(this), false);
+  }
+  mouseDown(e) {
+    track.addEventListener('mousemove', this.move, true);}
+  mouseUp(e) {
+    track.removeEventListener('mousemove', this.move, true);}
+  mouseMove(e) {
+    let y= e.clientY;
+    this.thumb.style.top = y + 'px'; }
+}
+
+window.onload= function() {
+//   var slider= new Slider(jQuery);
+//   slider.jStart()
+//   slider.start()  // bez jQuery
+}
+*/
+/*
+window.onload = addListeners;
+function addListeners(){
+  document.getElementById('thumb').addEventListener('mousedown', mouseDown, false);
+  window.addEventListener('mouseup', mouseUp, false);
+}
+function mouseUp() { window.removeEventListener('mousemove', divMove, true);}
+function mouseDown(e) { window.addEventListener('mousemove', divMove, true);}
+function divMove(e){ document.getElementById('thumb').style.top = e.clientY + 'px'; }
+*/
+
+/*
+
+function addListeners(){
+   var top= jQuery('#okraj').position().top;
+   var thumb= jQuery('#thumb')
+    .mousedown( evd => {
+      thumb.mousemove( evm => {
+        thumb.css('top',evm.pageY-top)
+      })
+    })
+//   document.getElementById('thumb').addEventListener('mousedown', mouseDown, false);
+    window.addEventListener('mouseup', mouseUp, false);
+//     jQuery('body').mouseup( (ev) => {
+//       jQuery('#thumb').off('mousemove');
+//     })
+}
+
+function mouseUp() {
+    window.removeEventListener('mousemove');//, divMove, true);
+}
+
+function mouseDown(e) {
+  window.addEventListener('mousemove', divMove, true);
+}
+
+function divMove(e){
+  var div= jQuery('#thumb')[0];
+//   div.style.position = 'absolute';
+  div.style.top = e.clientY + 'px';
+//   div.style.left = e.clientX + 'px';
+}
+
+*/
+
+</script>
 </head>
 <body>
-<div id="ezer">
+  <div id='track'>
+    <div id='thumb'></div>
+  </div>
+  <div id='info'></div>
 
-  <header>
-    Logo<br>Aplikace
-    <nav id='menu_main'>
-      tabs
-    </nav>
-    <nav id='menu_tab'>
-      panels
-    </nav>
-  </header>
-
-
-  <section>
-    <div class="MenuLeft3">
-      <i class="fa fa-caret-square-o-left"></i>
-      <div class="MenuGroup3">
-        <a>alfa</a>
-        <ul>
-          <li><i class="fa fa-at fa-fw efa"></i> item 1.1</li>
-          <li class="selected3"><i class="fa fa-at fa-fw efa"></i> item 1.2</li>
-        </ul>
-      </div>
-      <div class="MenuGroup3">
-        <a>beta</a>
-        <ul>
-          <li>...</li> <li>...</li> <li>...</li> <li>...</li>
-        </ul>
-      </div>
-    </div>
-    <article class="PanelRight3">
-      <div id="label">label</div>
-      <div>
-        Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
-        Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
-        Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
-        Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
-      </div>
-    </article>
-  </section>
-
-  <footer>
-    <div id="status_bar">status</div>
-    <br>trace
-    <br>trace
-    <br>trace
-    <br>trace
-  </footer>
-
-</div>
 </body>
 </html>

@@ -78,7 +78,7 @@
   $ezer_php= array(
     "{$EZER->version}/ezer2_fce.php",
     'ezer3/cloc.php',
-    'tut/tut.the.php'
+    'tut3/tut3.the.php'
   );
 
   // parametrizace $EZER
