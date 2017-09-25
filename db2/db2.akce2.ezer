@@ -693,7 +693,7 @@ panel track [,,540,276] { title:'Historie oprav', type:'popup', css:'dialog'
 // ===========================================================================================> MAPA
 panel mapa [,,640,400] { type:'popup', title:'mapa účastníků'
   var metoda='', id_akce: number, id_mailist: number
-  proc onfirstfocus() { spinner(1); f.cr.init('ROADMAP'); ukaz_psc; spinner(0) }
+  proc onfirstfocus() { spinner(1); f.cr.init('ROADMAP',°{clustering:1}); ukaz_psc; spinner(0) }
   proc onfocus() { ukaz_psc; }
   proc ukaz_psc() { var ret: object
     metoda.get;
