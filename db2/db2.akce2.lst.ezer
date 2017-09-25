@@ -19,7 +19,7 @@ proc onfirstfocus() {
   info.fill(the_title.get);
   // inicializace zobrazení
   info.rok.selects(javascript(conc(
-    "var x='';for(i=",sum(fdate('Y'),1),";i>=1990;i--){x+=i+',';};x+='0'")));
+    "var x='';for(let i=",sum(fdate('Y'),1),";i>=1990;i--){x+=i+',';};x+='0'")));
   info.rok.set(the_rok.get);
   page.cen_copy.selects("neměnit:0");
   zalozka.set('inf');
@@ -167,6 +167,7 @@ proc akce_roku(rok) {
   ]
 }
 proc akce_vsechny(cond) {
+  the_source.set('sey');
   [ info.sey.browse_load(cond) ];
 }
 # ------------------------------------------------------------------------------------------==> AKCE
