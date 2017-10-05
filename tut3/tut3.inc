@@ -7,7 +7,7 @@
   // nastavení verze jádra
   $EZER= (object)array();
   $ev= (isset($_GET['ezer']) ? $_GET['ezer']
-     : (isset($_SESSION['GET']['ezer']) ? $_SESSION['GET']['ezer'] : '2.2'));
+      : (isset($_SESSION[$ezer_root]['GET']['ezer']) ? $_SESSION[$ezer_root]['GET']['ezer'] : '2.2'));
   setcookie("ev",$ev,time()+3600*24*30);
   $EZER->version= "ezer{$ev}";
 //   $EZER->version= "ezer2.2";
@@ -72,7 +72,8 @@
     'server/reference.php',
     'ezer2_fce.php',
     'server/sys_doc.php',
-    'server/ezer2.php'
+    'server/ezer_lib3.php',
+    'server/ezer3.php'
   );
   // uživatelské i knihovní moduly v PHP obsažené v $ezer_path_root
   $ezer_php= array(

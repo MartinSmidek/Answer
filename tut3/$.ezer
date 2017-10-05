@@ -9,6 +9,7 @@ var dbg: object
 menu tut3 { title:'tut', type:'main', active:*, _sys:'*'
   tabs the  {title:"[fa-graduation-cap] Tutorial", include:'onload', active:* }
   tabs tst  {title:"[fa-exclamation] Tests", active:*
+    panel y [0,0,200,400] {type:'plain', title:'[fa-book] test2', style:'background:transparent' }
     panel x [0,0,400,200] {type:'right', title:'[fa-book] test1', style:'background:white'
       menu {type:'left', format:'f'
         menu {title:'A',type:'group'
@@ -34,7 +35,6 @@ menu tut3 { title:'tut', type:'main', active:*, _sys:'*'
         }
       }
     }
-    panel y [0,0,200,400] {type:'plain', title:'[fa-book] test2', style:'background:yellow' }
   }
   tabs port  {title:"Systém", active:*
     panel js [0,0,,] {type:'plain', title:'[fa-battery-4] 2.2 => [fa-battery-1] 3'
@@ -44,7 +44,7 @@ menu tut3 { title:'tut', type:'main', active:*, _sys:'*'
     }
   }
 #   tabs dbg  {title:"[fa-wheelchair] Testy", _sys:'*', include:'onload', active:* }
-#   tabs doc  {title:"Nápověda", _sys:'*',  include:'onload,ezer2.help' active:* }
+  tabs doc  {title:"Nápověda", _sys:'*',  include:'onload,ezer2.help' active:* }
 #   tabs syst {title:"Systém",  include:'onload,ezer2.syst', _sys:'sys'
 #     panel pers {type:'right', title:'Osobní nastavení', _sys:'*', include:'onload,ezer2.pers'}
 #   }
