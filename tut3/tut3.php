@@ -78,15 +78,12 @@
     array("$licensed/ckeditor$CKEditor/ckeditor.js"),
     $mootools ? array("$licensed/clientcide.js") : array(),
     array("$licensed/pikaday/pikaday.js"),
-    array("$licensed/jquery-3.2.1.min.js","$licensed/jquery-noconflict.js","$client/licensed/jquery-ui.min.js"),
-    // jádro Ezer 3 s relikty verze 2.2
     array(
-      "$client/ezer_fdom1.js",
-      "$client/ezer.js",
-      "$client/ezer_fdom2.js",
-      "$client/app.js",
-      "$client/lib.js"
+      "$licensed/jquery-3.2.1.min.js",
+//       "$licensed/jquery-noconflict.js",
+      "$client/licensed/jquery-ui.min.js"
     ),
+    // jádro Ezer3
     array(
       "$client/ezer_app3.js",
       "$client/ezer3.js",
@@ -97,7 +94,7 @@
       "$client/ezer_tree3.js"
     ),
     // debugger                                                                       /* debugger */
-//     $dbg ? array("$licensed/jush/mini_jush.js"):array(),                              /* debugger */
+    $dbg ? array("$licensed/jush/mini_jush.js"):array(),                              /* debugger */
     // rozhodnout zda používat online mapy
     $gmap ? array("https://maps.googleapis.com/maps/api/js?sensor=false") : array()
     // uživatelské skripty
@@ -125,54 +122,10 @@
     // uživatelské skripty
   );
 
-//   $js= array_merge(
-//     // ckeditor a mootools
-//     array("$licensed/ckeditor$CKEditor/ckeditor.js"),
-//     $mootools ? array("$licensed/clientcide.js") : array(),
-// //     // pro Android a iPad
-// //     $android || $ipad
-// //     ? array("$licensed/Mslider.js","$licensed/Mdrag.js") : array(),
-// //     // pro Android a iPad
-// //     $android || $ipad
-// //     ? array("$licensed/hammer.js") : array(),
-//     // data picker
-//     $EZER->version=='ezer3'
-//     ? array("$licensed/pikaday/pikaday.js")
-//     : array("$licensed/datepicker.js"),
-//     // jádro Ezer 2.2 a 3
-//     array("$client/ezer_fdom1.js",
-//       "$client/ezer.js","$client/area.js",
-//       "$client/ezer_report.js","$client/ezer_fdom2.js",
-//       "$client/app.js",
-//       "$client/lib.js"
-//     ),
-//     // jádro Ezer 3
-//     $EZER->version=='ezer3'
-//     ? array("$licensed/jquery-3.2.1.min.js",
-//             "$licensed/jquery-ui.min.js",
-//             "$licensed/jquery-noconflict.js",
-//       "$client/ezer_app3.js","$client/ezer3.js","$client/ezer_area3.js","$client/ezer_rep3.js",
-//       "$client/ezer_fdom3.js","$client/ezer_lib3.js","$client/ezer_tree3.js"):array(),
-//     // rozšíření pro CKEditor
-//     array("$tut/i_fce.js"),
-//     // debugger                                                                       /* debugger */
-//     $dbg ? array("$licensed/jush/mini_jush.js"):array(),                              /* debugger */
-//     // pluginy
-//     // jen pro jádro Ezer 2.2
-//     $EZER->version=='ezer2.2' ? array("$licensed/clipboard.min.js","$licensed/mootree.js") : array(),
-// //     // jádro Ezer 2.2 i 3
-// //     array("$licensed/mootree.js"),
-// //     // Google API  - pokud používat API lokálně
-// //     $gapi ? array("https://apis.google.com/js/client.js?onload=Ezer.Google.ApiLoaded") : array(),
-// //     // Google Maps - pokud používat online mapy lokálně
-// //     $gmap ? array("http://maps.googleapis.com/maps/api/js?sensor=false") : array()
-// //     array("http://maps.googleapis.com/maps/api/js?libraries=geometry&sensor=false")
-//      array()
-//   );
   $css= $EZER->version=='ezer3'
     ? array(
       $dbg ? "$licensed/jush/mini_jush.css" : '',                                       /* debugger */
-      "$client/ezer.css",
+//       "$client/ezer.css",
       "$client/ezer3.css.php=skin",
       "$client/licensed/pikaday/pikaday.css",
       "$client/licensed/jquery-ui.min.css",
