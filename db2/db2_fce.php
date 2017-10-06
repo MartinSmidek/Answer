@@ -8811,8 +8811,55 @@ function mapa2_mimo_ctverec_r($rect,$ids,$max=5000) { trace();
 # tabulka struktury účastníků MROP
 function sta2_mrop($par,$export=false) {
   $msg= "";
+  $msg.= sta2_mrop_vek($par);
+  $msg.= sta2_mrop_vliv($par);
+  return $msg;
+}
+# -------------------------------------------------------------------------------==> . sta2 mrop vek
+# roční statistika účastníků: průměrný věk, byl předtím na MS
+function sta2_mrop_vek($par,$export=false) {
+  $msg= "<h3>Kolik jich je a jací jsou</h3>";
+  $AND= '';
+//   $AND= "AND iniciace=2002 AND o.id_osoba=5877";
+  $celkem= 0;
+  $styl= " style='text-align:right'";
+  $tab= "<div class='stat'><table class='stat'>
+         <tr><th>rok</th><th>účastníci</th><th>bylo na MS</th><th>%</th><th>prům. věk</th></tr>";
+  $mr= mysql_qry("
+    SELECT iniciace,COUNT(*) AS _kolik,SUM(IF(IFNULL(m._ms,0),1,0)) AS _ms, -- _roky,
+      ROUND(AVG(DATEDIFF(a.datum_od,o.narozeni)/365.2425),1) AS _vek
+    FROM osoba AS o
+    LEFT JOIN akce AS a ON mrop=1 AND YEAR(datum_od)=iniciace
+    LEFT JOIN
+    (SELECT mo.id_osoba,datum_od,COUNT(*) AS _ms
+      -- ,GROUP_CONCAT(YEAR(datum_od) ORDER BY datum_od) AS _roky
+      FROM akce AS ma
+      JOIN pobyt AS mp ON mp.id_akce=ma.id_duakce
+      JOIN spolu AS ms USING (id_pobyt)
+      JOIN osoba AS mo USING (id_osoba)
+       WHERE ma.druh=1
+        AND YEAR(datum_od)<=iniciace
+        AND ROUND(DATEDIFF(ma.datum_od,mo.narozeni)/365.2425,1)>18
+      GROUP BY id_osoba
+      ) AS m ON m.id_osoba=o.id_osoba  -- AND m.datum_od<a.datum_od
+    WHERE deleted='' AND iniciace>0 $AND
+    GROUP BY iniciace
+  ");
+  while ( $mr && list($mrop,$ucast,$ms,$vek)= mysql_fetch_row($mr) ) {
+    $celkem+= $ucast;
+    $pms= round(100*$ms/$ucast);
+    $tab.= "<tr><th>$mrop</th><td$styl>$ucast</td><td$styl>$ms</td><td$styl>$pms%</td><td$styl>$vek</td></tr>";
+  }
+  $tab.= "<tr><th>&Sigma;</th><th>$celkem</th></tr>";
+  $tab.= "</table></div>";
+  return $msg.$tab;
+}
+# ------------------------------------------------------------------------------==> . sta2 mrop vliv
+# rozbor podle navštěvovaných akcí
+function sta2_mrop_vliv($par,$export=false) {
+  $msg= "<h3>Odkud přicházejí a kam jdou</h3>";
   $limit= $AND= '';
-//   $AND= "AND iniciace=2002 AND id_osoba=58";
+//   $AND= "AND iniciace=2002 AND id_osoba=5877";
   // seznam
   $ms= array();
   $mr= mysql_qry("
@@ -8882,7 +8929,7 @@ function sta2_mrop($par,$export=false) {
   $tab.= "<tr><th>&Sigma;</th><th$styl>$c_pred</th><th$styl>$c_po</th><th$styl>$c_ucast</th></tr>";
   $tab.= "</table>";
 
-  $msg= "Celkem $muzu iniciovaných mužů<br><br>";
+  $msg.= "Celkem $muzu iniciovaných mužů<br><br>";
   $msg.= $tab;
   $msg.= "<br><br>MS znamená účast na Manželských setkání, M účast na akci pro muže nebo otce,
          J účast na jiné akci";
