@@ -8852,6 +8852,23 @@ function sta2_mrop_vek($par,$export=false) {
   }
   $tab.= "<tr><th>&Sigma;</th><th>$celkem</th></tr>";
   $tab.= "</table></div>";
+  // kontrola položky iniciace a úžasti a akci
+  $ehm= '';
+  $mr= mysql_qry("
+    SELECT id_osoba,YEAR(datum_od) AS _nesmer,iniciace,jmeno,prijmeni
+    FROM akce AS a
+    LEFT JOIN pobyt AS p ON p.id_akce=a.id_duakce AND funkce=0
+    JOIN spolu AS s USING (id_pobyt)
+    JOIN osoba AS o USING (id_osoba)
+    WHERE a.mrop=1 AND deleted=''
+    AND YEAR(datum_od)!=iniciace
+  ");
+  while ( $mr && list($ido,$nesmer,$iniciace,$jmeno,$prijmeni)= mysql_fetch_row($mr) ) {
+    $ehm.= "<br>$jmeno $prijmeni ($ido) byl účastník MROP $nesmer ale má zapsáno jako iniciaci rok $iniciace";
+  }
+  if ( $ehm ) {
+    $tab.= "<br>V datech jsou problémy:<br>$ehm";
+  }
   return $msg.$tab;
 }
 # ------------------------------------------------------------------------------==> . sta2 mrop vliv
