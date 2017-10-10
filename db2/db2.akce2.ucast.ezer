@@ -1266,6 +1266,9 @@ form _rodina2 [,,360,229]  { css:'ae_frame'
     item { title:'konfigurace formuláře', proc onclick () { rodina_config.tune(ucast) } }
     item { title:'ukázat změny', proc onclick () {
       key_rodina.get; track.back_show('rodina',key_rodina.get) } }
+    item { title:'historie skupinek MS', proc onclick () {
+      Skupinky.historie(key_rodina.get)
+    }}
     item { title:'=zazurovění účastníků', skill:'daea', proc onclick () { var idp:number
       idp.set(the_pobyt.get); ask('ucast2_pobyt_access',key_pobyt.get,3); refresh_ucast(idp) } }
     item { title:'zazurovění dětí a rodiny', skill:'daea', proc onclick () { var idp:number
@@ -1703,6 +1706,18 @@ form _documents {  // ukládají se na H: tedy mimo dosah http
       drop.lsdir;
       u.b.browse_refresh(u.b.key_pobyt.get);
     }
+  }
+}
+# ==========================================================================================> STRAVA
+# nastaví položky cstrava_pol{x} a cstrava_cel{x} pro x=|_bm|_bl
+panel Skupinky [,,400,400] {type:'popup', title:'Historie skupinek'
+  proc historie(idr) {
+    panel.popup;
+    f.info.set(ask("akce2_skup_paru",idr));
+  }
+  use f: form _f [0,10,,]
+  form _f {
+    label info [0,0,405,400] { style:'background:white;overflow:auto' }
   }
 }
 # ==========================================================================================> STRAVA
