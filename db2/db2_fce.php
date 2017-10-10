@@ -5961,6 +5961,34 @@ end:
 //                                                 debug($result,"akce2_skup_tisk($akce,,$title,$vypis,$export)");
   return $result;
 }
+# ---------------------------------------------------------------------------------- akce2 skup_paru
+# přehled všech skupinek letního kurzu MS daného páru (rodiny)
+function akce2_skup_paru($idr) { trace();
+  $html= '';
+  $ru= mysql_qry("
+    SELECT id_akce,skupina,YEAR(datum_od) as rok
+    FROM akce AS a
+    JOIN pobyt AS p ON a.id_duakce=p.id_akce AND i0_rodina=$idr
+    WHERE a.druh=1 AND skupina!=0
+    GROUP BY rok
+    ORDER BY datum_od DESC
+  ");
+  while ( $ru && (list($ida,$skup,$rok)= mysql_fetch_array($ru)) ) {
+    $html.= "<br>&nbsp;&nbsp;&nbsp;<b>$rok</b> ";
+    $rs= mysql_qry("
+      SELECT funkce,nazev,id_rodina
+      FROM pobyt AS p
+      JOIN rodina AS r ON r.id_rodina=p.i0_rodina
+      WHERE p.id_akce=$ida AND skupina=$skup
+      ORDER BY IF(p.funkce=1,'',nazev)
+    ");
+    while ( $rs && (list($fce,$nazev,$ir)= mysql_fetch_array($rs)) ) {
+      $par= " $nazev".($fce==1 ? ' (VPS) ' : '');
+      $html.= $ir==$idr ? "<i>$par</i>" : $par;
+    }
+  }
+  return $html;
+}
 # ---------------------------------------------------------------------------------- akce2 skup_hist
 # přehled starých skupinek letního kurzu MS účastníků této akce
 function akce2_skup_hist($akce,$par,$title,$vypis,$export) { trace();
