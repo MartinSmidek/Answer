@@ -38,7 +38,7 @@
     $cookie==2 ? "ch" : "db" );
 
   $js= array(
-    "ds/fce.js"
+    $ev=='3' ? "ds/fce3.js" : "ds/fce.js"
   );
   $css= array($choice_css,
     "db2/db2.css"

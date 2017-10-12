@@ -1,4 +1,4 @@
-<?php # Systém An(w)er/Ezer, (c) 2008-2014 Martin Šmídek <martin@smidek.eu>
+<?php # Systém An(w)er/Ezer, (c) 2008-2017 Martin Šmídek <martin@smidek.eu>
 
 # inicializace systémů Ans(w)er
 #   $app        = kořenová podsložka aplikace ... ys/ys2/fa/fa2/cr/db2
@@ -59,37 +59,56 @@ function answer_php($app,$app_name,$db_name,$skin,$js_lib,$css_lib,$options) {
 
   $client= "{$EZER->version}/client";
   $licensed= "$client/licensed";
-  $js= array_merge(
+
+  $js= $EZER->version=='ezer3'
+  // ------------------------------------------------------ JS verze Ezer 3
+  ? array_merge(
+    // ckeditor a mootools a ...
+    array("$licensed/ckeditor$CKEditor/ckeditor.js"),
+    $mootools ? array("$licensed/clientcide.js") : array(),
+    array("$licensed/pikaday/pikaday.js"),
+    array("$licensed/jquery-3.2.1.min.js","$licensed/jquery-noconflict.js","$client/licensed/jquery-ui.min.js"),
+    // jádro Ezer3
+    array(
+      "$client/ezer_app3.js",
+      "$client/ezer3.js",
+      "$client/ezer_area3.js",
+      "$client/ezer_rep3.js",
+      "$client/ezer_fdom3.js",
+      "$client/ezer_lib3.js",
+      "$client/ezer_tree3.js"
+    ),
+    // debugger                                                                       /* debugger */
+//     $dbg ? array("$licensed/jush/mini_jush.js"):array(),                              /* debugger */
+    // rozhodnout zda používat online mapy
+    $gmap ? array(
+      "https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/markerclusterer.js",
+      "https://maps.googleapis.com/maps/api/js?sensor=false") : array(),
+    // skripty pro Answer
+    array("db2/db2_fce3.js"),
+    // uživatelské skripty
+    $js_lib
+  )
+  // ----------------------------------------------------- JS verze Ezer 2.2
+  : array_merge(
     // ckeditor a mootools
     array("$licensed/ckeditor$CKEditor/ckeditor.js","$licensed/clientcide.js"),
+    // clipboard.js
+    array("$licensed/clipboard.min.js"),
     // pro verzi 2.1
     $EZER->version=='ezer2'
     ? array("$licensed/mootools/asset.js","$licensed/mootools/slider.js"):array(),
-    // pro Android a iPad
-    $android || $ipad
-    ? array("$licensed/Mslider.js","$licensed/Mdrag.js") : array(),
-    // pro Android a iPad
-    $android || $ipad
-    ? array("$licensed/hammer.js") : array(),
     // pro verzi 2.2
-    true // $EZER->version=='ezer2.2'
+    $EZER->version=='ezer2.2'
     ? array("$licensed/datepicker.js"):array(),
-    // clipboard.js
-    array("$licensed/clipboard.min.js"),
     // jádro Ezer
-    array("$client/lib.js","$client/ezer_fdom1.js","$client/ezer.js","$client/area.js",
-      "$client/ezer_report.js","$client/ezer_fdom2.js","$client/app.js",
-      "$licensed/mootree.js"),
-    // jádro Ezer 3
-    $EZER->version=='ezer3'
-    ? array("$licensed/jquery-3.2.1.min.js","$licensed/jquery-noconflict.js",
-      "$client/ezer_app3.js","$client/ezer3.js","$client/ezer_fdom3.js","$client/ezer_lib3.js"):array(),
-    // debugger
-    $dbg ? array("$licensed/jush/mini_jush.js"):array(),
-    // další knihovny
-    array("$licensed/glfx.js"),
+    array("$client/lib.js","$client/ezer_fdom1.js","$client/ezer.js","$client/ezer_report.js",
+      "$client/area.js", "$client/ezer_fdom2.js","$client/app.js",
+      /*"$licensed/zeroclipboard/ZeroClipboard.js",*/"$licensed/mootree.js"),
+    // debugger                                                                       /* debugger */
+    $dbg ? array("$licensed/jush/mini_jush.js"):array(),                              /* debugger */
     // rozhodnout zda používat online mapy
-    $gmap ? array("http://maps.googleapis.com/maps/api/js?sensor=false") : array(),
+    $gmap ? array("https://maps.googleapis.com/maps/api/js?sensor=false") : array(),
     // skripty pro Answer
     array("db2/db2_fce.js"),
     // uživatelské skripty
@@ -102,8 +121,9 @@ function answer_php($app,$app_name,$db_name,$skin,$js_lib,$css_lib,$options) {
     $EZER->version=='ezer3' ? array("db2/db2.css","db2/db2.css.php=skin") : $css_lib,    // = uživatelské css
     $dbg ? array("./$licensed/jush/mini_jush.css") : array(),
     array("./$client/licensed/font-awesome/css/font-awesome.min.css"),
-    $EZER->version=='ezer2.2'
-    ? array("$licensed/datepicker/datepicker_vista/datepicker_vista.css"):array(),
+    $EZER->version=='ezer3'
+    ? array("$client/licensed/pikaday/pikaday.css","$client/licensed/jquery-ui.min.css")
+    : array("$client/licensed/datepicker/datepicker_vista/datepicker_vista.css"),
     // css pro dotykové klienty
     $android ? array("$client/android.css") : array(),
     $ipad ? array("$client/ipad.css") : array()
