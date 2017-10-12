@@ -12,8 +12,7 @@
   $app=  'db2';
 
   require_once("answer.php");
-  $options= (object)array(
-    'watch_access' => 3,
+  $options= (object) ['watch_access' => 3,
     'watch_access_opt' => // ... barvení v Uživatelé + select v ezer2.syst.ezer
        "{name:{1:'Setkání',2:'Familia',3:'Setkání+Familia'},
          abbr:{1:'S',2:'F',3:'S+F'},
@@ -21,15 +20,16 @@
     'web'          => "''", // web organizace - pro odmítnutí odhlášení
     'skill'        => "'d'",
     'autoskill'    => "'!d'"
-  );
+   ];
 
   $cookie= 3;
   $app_last_access= "{$app}_last_access";
-  if ( isset($_COOKIE[$app_last_access])
-    && $_COOKIE[$app_last_access]>0 &&  $_COOKIE[$app_last_access]<4 ) {
-    $cookie= $_COOKIE[$app_last_access];
+  $coo= filter_input(INPUT_COOKIE,$app_last_access,FILTER_VALIDATE_INT);
+  if ( $coo && $coo>0 && $coo<4 ) {
+    $cookie= $coo;
   }
-  $ev= isset($_GET['ezer']) && $_GET['ezer']==3 ? '3' : '';
+  $get_ev= filter_input(INPUT_GET,'ezer',FILTER_SANITIZE_SPECIAL_CHARS);
+  $ev= $get_ev==3 ? '3' : '';
   $choice_css=
     $cookie==1 ? "skins/ck/ck.ezer$ev.css=skin" : (
     $cookie==2 ? "skins/ch/ch.ezer$ev.css=skin" : "skins/db/db.ezer$ev.css=skin" );
@@ -38,10 +38,11 @@
     $cookie==2 ? "ch" : "db" );
 
   $js= array(
-    $ev=='3' ? "ds/fce3.js" : "ds/fce.js"
+    $ev === '3' ? "db2/ds_fce3.js" : "db2/ds_fce.js"
   );
-  $css= array($choice_css,
+  $css= [$choice_css,
     "db2/db2.css"
-  );
+   ];
   answer_php($app,"Answer ...",'ezer_db2',$skin,$js,$css,$options);
-?>
+
+  
