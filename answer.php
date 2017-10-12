@@ -13,7 +13,7 @@ function answer_php($app,$app_name,$db_name,$skin,$js_lib,$css_lib,$options) {
 
   $server_name= isset($_SERVER["HTTP_X_FORWARDED_SERVER"])
     ?$_SERVER["HTTP_X_FORWARDED_SERVER"]:$_SERVER["SERVER_NAME"];
-  $ezer_local= preg_match('/^\w+\.ezer/',$server_name); // identifikace ladícího serveru
+  $ezer_local= preg_match('/^\w+\.(ezer|bean)/',$server_name); // identifikace ladícího serveru
   $android=    preg_match('/android|x11/i',$_SERVER['HTTP_USER_AGENT']);
   $ipad=       preg_match('/iPad/i',$_SERVER['HTTP_USER_AGENT']);
 
@@ -24,12 +24,13 @@ function answer_php($app,$app_name,$db_name,$skin,$js_lib,$css_lib,$options) {
   $gmap=     isset($_GET['gmap']) ? $_GET['gmap'] : !$ezer_local;
   $awesome=  isset($_GET['awesome']) ? $_GET['awesome'] : 3;
   $verze=    isset($_GET['ezer'])    ? $_GET['ezer']    : '?';
+  $mootools= isset($_GET['mootools'])? $_GET['mootools']: true;
   $EZER= (object)array();
 
   // inicializace SESSION
   session_unset();
   session_start();
-  $_SESSION[$app]['GET']= array();
+  $_SESSION[$app]['GET']= array('ezer'=>"'$verze'");
 
   // zapnutí příznaku pro ochranu souborů v docs (do konce session)
   setcookie("EZER",$app,0,"/");

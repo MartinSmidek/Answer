@@ -26,14 +26,14 @@ function answer_ini($app,$answer_db,$dbs_plus,$php_lib,$ezer_mod=array()) {
   // nastavení verze jádra
   $EZER= (object)array();
   $ev= (isset($_GET['ezer']) ? $_GET['ezer']
-     : (isset($_SESSION['GET']['ezer']) ? $_SESSION['GET']['ezer'] : '2.2'));
+     : (isset($_SESSION[$app]['GET']['ezer']) ? $_SESSION[$app]['GET']['ezer'] : '2.2'));
   setcookie("ev",$ev,time()+3600*24*30);
   $EZER->version= "ezer{$ev}";
 //   $EZER->version= 'ezer2.2';
 
   $server_name= isset($_SERVER["HTTP_X_FORWARDED_SERVER"])
     ?$_SERVER["HTTP_X_FORWARDED_SERVER"]:$_SERVER["SERVER_NAME"];
-  $ezer_local= preg_match('/^\w+\.ezer|192.168/',$server_name); // identifikace ladícího serveru
+  $ezer_local= preg_match('/^\w+\.(ezer|bean)|192.168/',$server_name); // identifikace ladícího serveru
 
   // android
   $android=    preg_match('/android|x11/i',$_SERVER['HTTP_USER_AGENT']);
@@ -137,7 +137,7 @@ function answer_ini($app,$answer_db,$dbs_plus,$php_lib,$ezer_mod=array()) {
 //     "db/db_akce.php",       YS YS2 FA2 CR
 //     "db/db_akce2.php",      YS YS2 FA2 CR
     'ezer3/cloc.php',
-    "fis/fis_tcpdf.php"),
+    "tcpdf/fis_tcpdf.php"),
     $php_lib
   );
 
