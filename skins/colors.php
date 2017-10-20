@@ -99,7 +99,7 @@ case 'default': // ---------------------------------------------------- default 
   $c_item= '#333'; $b_item= '#cde'; $bd_item= '#ccc'; $fb_item= '#3e4043'; $fc_item= '#faec8f';
     $s_item= '#9ab'; $s2_item= '#303234';
   $b_brow= '#ccc'; $b2_brow= '#f2f8ff'; $b3_brow= '#E5E5E6'; $b4_brow= '#d1e4ff';
-    $b5_brow= '#f0f0f0'; $b6_brow= '#f2f8ff'; $b7_brow= '#d1e4ff'; $b8_brow= '#effdf1';
+    $b5_brow= '#f0f0f0'; $b6_brow= '#f2f8ff'; $b7_brow= '#d1e4ff'; $b8_brow= '#df5f9ff';
     $c_brow= '#777'; $s1_brow= '#6593cf'; $s2_brow= '#d30';
   $c_kuk= 'navy'; $c2_kuk= $c_kuk; $b_kuk= '#fb6'; $s_kuk= '#FBC84F';
   $b_warn= $s_kuk; $c_warn= '#000000';
