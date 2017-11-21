@@ -546,8 +546,8 @@ function akce2_zmeny($id_akce,$h) {  trace();
     $pid= 0;
     switch ( $t->kde ) {
     case 'pobyt':  $pid= $k; break;
-    case 'spolu':  if ( $pid= $spolu[$k] ) $osoby[$spolu_osoba[$k]]= 1; break;
-    case 'osoba':  if ( $pid= $osoba[$k] ) $osoby[$k]= 1; break;
+    case 'spolu':  if ( ($pid= $spolu[$k]) ) $osoby[$spolu_osoba[$k]]= 1; break;
+    case 'osoba':  if ( ($pid= $osoba[$k]) ) $osoby[$k]= 1; break;
     case 'tvori':  $pid= $tvori[$k]; break;
     case 'rodina': $pid= $rodina[$k]; break;
     }
@@ -5965,6 +5965,7 @@ end:
 # přehled všech skupinek letního kurzu MS daného páru (rodiny)
 function akce2_skup_paru($idr) { trace();
   $html= '';
+  $n_ms= 0;
   $ru= mysql_qry("
     SELECT id_akce,skupina,YEAR(datum_od) as rok
     FROM akce AS a
@@ -5975,6 +5976,7 @@ function akce2_skup_paru($idr) { trace();
   ");
   while ( $ru && (list($ida,$skup,$rok)= mysql_fetch_array($ru)) ) {
     $html.= "<br>&nbsp;&nbsp;&nbsp;<b>$rok</b> ";
+    $n_ms++;
     $rs= mysql_qry("
       SELECT funkce,nazev,id_rodina
       FROM pobyt AS p
@@ -5987,6 +5989,7 @@ function akce2_skup_paru($idr) { trace();
       $html.= $ir==$idr ? "<i>$par</i>" : $par;
     }
   }
+  if ( !$n_ms ) $html= "nebyli na MS v žádné skupince";
   return $html;
 }
 # ---------------------------------------------------------------------------------- akce2 skup_hist
@@ -11223,8 +11226,8 @@ function mail2_mai_pocet($id_dopis,$dopis_var,$cond='',$recall=false) {  trace()
              p.platba1+p.platba2+p.platba3+p.platba4 AS _platby,platba,a.cena,platba_d,p.poplatek_d,
              GROUP_CONCAT(DISTINCT o.id_osoba ORDER BY t.role) AS _id,
              GROUP_CONCAT(DISTINCT CONCAT(prijmeni,' ',jmeno) ORDER BY t.role) AS _jm,
-             GROUP_CONCAT(DISTINCT IF(o.kontakt,o.email,'')) AS email,
-             GROUP_CONCAT(DISTINCT r.emaily) AS emaily
+             GROUP_CONCAT(DISTINCT IF(o.kontakt,TRIM(o.email),'')) AS email,
+             GROUP_CONCAT(DISTINCT TRIM(r.emaily)) AS emaily
            FROM dopis AS d
            JOIN akce AS a ON d.id_duakce=a.id_duakce
            JOIN pobyt AS p ON d.id_duakce=p.id_akce
