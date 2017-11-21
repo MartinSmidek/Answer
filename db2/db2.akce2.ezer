@@ -433,6 +433,8 @@ table osoba { key_id:'id_osoba'
   text note
   text origin
   text historie
+  number pin
+  date pin_vydan
 }
 
 table tvori { key_id:'id_tvori'
@@ -1068,7 +1070,9 @@ form _osoba2x [,,244,322] {css:'ae_frame', proc onclick() { on_click }
   # tlačítko gmail_save se zviditelní pouze v evidenci pro skill=mrop
   label [0,0,,3] {tag:'g,S', format:'n'} //, css:'db_sep' } // zarovnání
   field gmail    [5,14,178,] {tag:'g', type:'list', data:o.gmail, format:'n', //,           skill:'mrop|mrop;dk|dk',
-    title:'^emailové adresy používané v konferencích '}
+    title:'^emailové adresy v konferencích '}
+  field pin      [186,14,54,] {tag:'g', type:'list', title:'^pin', format:'n',
+      expr:"CONCAT(pin,',',date_format(pin_vydan,'%e.%c.%y'),',',date_format(pin_vydan,'%H:%i'))" }
   button gmail_save [ 188,14,,] {tag:'g', title:'[fa-save] Ulož', css:'hidden',         skill:'mrop|mrop'
     proc visible() { this.set_css('visible','hidden') }
     proc onclick() { var old:text
