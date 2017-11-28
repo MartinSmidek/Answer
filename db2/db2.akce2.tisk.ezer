@@ -204,9 +204,9 @@ menu m {type:'left', active:*
                                         ,tit:'příjmení:15,jméno:12,telefon:25'
                                         ,fld:'prijmeni,jmeno,telefony'}}
     item {title:'Dospělí úč. akce pro ubytování'
-                                        ,par:°{typ:'j',exp:'Excel2',cnd:"funkce!=99",hav:"_vek>=18 OR r_role IN ('a','b')"
-                                        ,tit:'příjmení:15,jméno:12,OP:12,narození:12,obec:25,psč:7,ulice:25'
-                                        ,fld:'prijmeni,jmeno,obcanka,narozeni_dmy,obec,psc,ulice'}}
+                                        ,par:°{typ:'j',exp:'Excel2',cnd:"funkce!=99 AND luzka>0",hav:"_vek>=18 OR r_role IN ('a','b')"
+                                        ,tit:'příjmení:15,jméno:12,OP:12,narození:12,obec:25,psč:7,ulice:25,stát:10'
+                                        ,fld:'prijmeni,jmeno,obcanka,narozeni_dmy,obec,psc,ulice,stat'}}
     item {title:'Pečouni pro ubytování'                                                     skill:'#crz'
                                         ,par:°{typ:'j',exp:'Excel2',cnd:"funkce=99",hav:"1"
                                         ,ord:"prijmeni,jmeno"
