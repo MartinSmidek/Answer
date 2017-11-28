@@ -4277,11 +4277,11 @@ function tisk2_sestava_lidi($akce,$par,$title,$vypis,$export=false) { trace();
       -- r1=rodina, kde je dítětem
       LEFT JOIN ( SELECT id_osoba,role,$r_fld
         FROM tvori JOIN rodina USING(id_rodina))
-      AS r1 ON r1.id_osoba=o.id_osoba AND r1.role NOT IN ('a','b')
+        AS r1 ON r1.id_osoba=o.id_osoba AND r1.role NOT IN ('a','b')
       -- r2=rodina, kde je rodičem
       LEFT JOIN ( SELECT id_osoba,role,$r_fld
         FROM tvori JOIN rodina USING(id_rodina))
-      AS r2 ON r2.id_osoba=o.id_osoba AND r2.role IN ('a','b')
+        AS r2 ON r2.id_osoba=o.id_osoba AND r2.role IN ('a','b')
       -- akce
       JOIN akce AS a ON a.id_duakce=p.id_akce
     WHERE p.id_akce=$akce AND $cnd
