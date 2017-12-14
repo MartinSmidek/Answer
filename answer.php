@@ -24,7 +24,7 @@ function answer_php($app,$app_name,$db_name,$skin,$js_lib,$css_lib,$options) {
   $gmap=     isset($_GET['gmap']) ? $_GET['gmap'] : !$ezer_local;
   $awesome=  isset($_GET['awesome']) ? $_GET['awesome'] : 3;
   $verze=    isset($_GET['ezer'])    ? $_GET['ezer']    : '?';
-  $mootools= isset($_GET['mootools'])? $_GET['mootools']: true;
+//  $mootools= isset($_GET['mootools'])? $_GET['mootools']: true;
   $EZER= (object)array();
 
   // inicializace SESSION
@@ -66,7 +66,7 @@ function answer_php($app,$app_name,$db_name,$skin,$js_lib,$css_lib,$options) {
   ? array_merge(
     // ckeditor a mootools a ...
     array("$licensed/ckeditor$CKEditor/ckeditor.js"),
-    $mootools ? array("$licensed/clientcide.js") : array(),
+//    $mootools ? array("$licensed/clientcide.js") : array(),
     array("$licensed/pikaday/pikaday.js"),
     array("$licensed/jquery-3.2.1.min.js","$licensed/jquery-noconflict.js","$client/licensed/jquery-ui.min.js"),
     // jádro Ezer3
