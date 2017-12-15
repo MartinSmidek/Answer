@@ -322,14 +322,16 @@ form _lst [,,370,*] {
       ido.set(0); bo_reload(bo_cnd.get);
   }}
   view o:  table osoba
+  view od: table dar    { join_type:"LEFT", join:"USING(id_osoba)" }
   view ot: table tvori  { join_type:"LEFT", join:"USING(id_osoba)" }
-  view of: table rodina { join_type:"LEFT", join:"USING(id_rodina)" }
+  view of: table rodina { join_type:"LEFT", join:"ON of.id_rodina=ot.id_rodina" }
   view os: table spolu  { join_type:"LEFT", join:"USING(id_osoba)" }
   view op: table pobyt  { join_type:"LEFT", join:"USING(id_pobyt)" }
   view u: table psc_axy { join_type:"LEFT", join:"ON u.psc=IF(o.adresa,o.psc,of.psc)" }
   browse bo [10,30,,] {tag:'o', group_by:'o.id_osoba'
       rows:27, buf_rows:60, qry_rows:1, css_rows:'barva,0:neucast'
     show id_o { data:o.id_osoba }
+    show id_d { data:od.id_dar }
     show id_t { data:ot.id_tvori }
     show id_r { data:of.id_rodina }
     show id_p { data:os.id_pobyt }
@@ -1382,6 +1384,10 @@ panel filtr_osob [,,250,175] { type:'popup', title:"doplňující podmínky výb
     // zahrne i rodinné schopnosti, ale jen pro manžele
     ,f.umi.key,conc(" AND (FIND_IN_SET('",f.umi.key,"',o.o_umi)",
       " OR ot.role IN ('a','b') AND IF(ISNULL(of.id_rodina),0,FIND_IN_SET('",f.umi.key,"',of.r_umi)))")
+    // členství a dárcovství
+    ,f.bcleni.get,conc(" AND od.ukon IN ('b') AND dat_do='0000-00-00'")
+    ,f.ccleni.get,conc(" AND od.ukon IN ('c') AND dat_do='0000-00-00'")
+    ,f.darci.get,conc(" AND od.ukon IN ('d') AND YEAR(dat_od)>=YEAR()-1")
     ));
     lst.o_filtr.set_attrib('help',cconc(1,"... "
     ,f.mrop.get,        " a iniciovaní"
@@ -1393,6 +1399,9 @@ panel filtr_osob [,,250,175] { type:'popup', title:"doplňující podmínky výb
     ,f.slovaci.get,     " a Slováci"
     ,f.cizinci.get,     " a cizinci"
     ,f.umi.get,         " a umí"
+    ,f.bcleni.get,      " a jsou běžnými členy"
+    ,f.ccleni.get,      " a jsou činnými členy"
+    ,f.darci.get,       " a dali vloni či letos dar"
     ));
   }
   proc filtr_clear() { sql.set(''); lst.o_filtr.set_attrib('help',"bez filtru") }
@@ -1407,9 +1416,12 @@ panel filtr_osob [,,250,175] { type:'popup', title:"doplňující podmínky výb
     select umi    [53,125,99,] { type:'map0', options:ms_umi.hodnota, title:'schopnosti',
                                  value:'0', format:'t', help:"zohledňuje i rodiný um" }
     // vpravo
-    check mrop    [171,1,76,17]  { title:'iniciovaní', format:'t', skill:'f|f;y|f;c|f' }
-    check slovaci [171,26,76,17] { title:'Slováci', format:'t', help:"zohledňuje i rodinnou adresu" }
-    check cizinci [171,51,76,17] { title:'jiní cizinci', format:'t', help:"zohledňuje i rodinnou adresu" }
+    check mrop    [160,1,95,17]  { title:'iniciovaní', format:'t', skill:'f|f;y|f;c|f' }
+    check slovaci [160,26,95,17] { title:'Slováci', format:'t', help:"zohledňuje i rodinnou adresu" }
+    check cizinci [160,51,95,17] { title:'jiní cizinci', format:'t', help:"zohledňuje i rodinnou adresu" }
+    check bcleni  [160,76,95,17] { title:'běžní členové', format:'t', help:"nezrušení běžní členové" }
+    check ccleni  [160,101,95,17] { title:'činní členové', format:'t', help:"nezrušení činní členové" }
+    check darci   [160,126,95,17] { title:'dárci', format:'t', help:"letošní as loňští dárci" }
     // ukončení
     button [57,156,,] { title:'[fa-filter] filtruj', proc onclick() { filtr_set; panel.hide(1) }}
     button [137,156,,] { title:'[fa-undo] zruš filtr', proc onclick() { filtr_clear; panel.hide(0) }}
