@@ -8191,7 +8191,7 @@ function evid2_ymca_sestava($org,$par,$title,$export=false) {
     $clenu+= $_clen_od ? 1 : 0;
     $cinnych+= $_cinny_od ? 1 : 0;
     $dobrovolniku+= $x->_vps && $_cinny_od>0 || $x->_pec ? 1 : 0;
-    $novych+= $_cinny_od==2014 ? 1 : 0;
+    $novych+= $_cinny_od==$rok ? 1 : 0;
     // pokračujeme jen s členy
     $n++;
     $clmn[$n]= array();
@@ -8203,7 +8203,7 @@ function evid2_ymca_sestava($org,$par,$title,$export=false) {
       case '_naroz_ymd':$clmn[$n][$f]= substr($x->narozeni,2,2).substr($x->narozeni,5,2).substr($x->narozeni,8,2); break;
       case '_b_c':      $clmn[$n][$f]= $_cinny_od>0 ? 'č' : 'b'; break;
       case '_YS':       $clmn[$n][$f]= 'YMCA Setkání'; break;
-      case '_cinny_letos':$clmn[$n][$f]= $_cinny_od==2014 ? 1 : ''; break;
+      case '_cinny_letos':$clmn[$n][$f]= $_cinny_od==$rok ? 1 : ''; break;
       case '_dobro':    $clmn[$n][$f]= $x->_vps && $_cinny_od>0  || $x->_pec ? 1 : ''; break;
       // přehled
       case '_clen_od':  $clmn[$n][$f]= $_clen_od; break;
