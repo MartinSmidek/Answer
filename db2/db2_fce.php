@@ -8148,6 +8148,7 @@ function evid2_ymca_sestava($org,$par,$title,$export=false) {
   $clmn= array();
   $expr= array();       // pro výrazy
   $clenu= $cinnych= $prispevku= $daru= $dobrovolniku= $novych= 0;
+  $msg= "<br><br>Ve výběru jsou účastníci akcí roku $rok";
   $qry= "SELECT
            MAX(IF(YEAR(datum_od)=$rok AND p.funkce=1,1,0)) AS _vps,
            MAX(IF(YEAR(datum_od)=$rok AND p.funkce=99,1,0)) AS _pec,
@@ -8210,19 +8211,19 @@ function evid2_ymca_sestava($org,$par,$title,$export=false) {
       case '_prisp':    $clmn[$n][$f]= $_prisp; break;
       case '_dary':     $clmn[$n][$f]= $_dary; break;
       case '_naroz':    $clmn[$n][$f]= sql_date1($x->narozeni); break;
-      case '_zrus':     $del= $_clen_od<2014 && !$_cinny_od && !$_prisp ? 'x' : '';
-        if ( $par->del && $del=='x' ) {
-          // výjimky
-          if ( in_array(substr($x->prijmeni,0,4),array("Fisc","Gada","Hora","Horo","Jaku","Ulri")) )
-            $del= '';
-          // SMAZAT!
-          if ( $del=='x' ) {
-            $qd= "UPDATE dar SET dat_do='2013-12-30',note=CONCAT(note,' inventura 2014') /* $x->prijmeni */ WHERE id_osoba=$id_osoba AND ukon IN ('c','b') AND dat_do='0000-00-00'";
-                                                display($qd);
-            $ok= query($qd);
-            if ( !$ok ) $del= "X?";
-          }
-        }
+//      case '_zrus':     $del= $_clen_od<2014 && !$_cinny_od && !$_prisp ? 'x' : '';
+//        if ( $par->del && $del=='x' ) {
+//          // výjimky
+//          if ( in_array(substr($x->prijmeni,0,4),array("Fisc","Gada","Hora","Horo","Jaku","Ulri")) )
+//            $del= '';
+//          // SMAZAT!
+//          if ( $del=='x' ) {
+//            $qd= "UPDATE dar SET dat_do='2013-12-30',note=CONCAT(note,' inventura 2014') /* $x->prijmeni */ WHERE id_osoba=$id_osoba AND ukon IN ('c','b') AND dat_do='0000-00-00'";
+//                                                display($qd);
+//            $ok= query($qd);
+//            if ( !$ok ) $del= "X?";
+//          }
+//        }
         $clmn[$n][$f]= $del;
         break;
       default:
@@ -8242,6 +8243,7 @@ function evid2_ymca_sestava($org,$par,$title,$export=false) {
 //   $ret= sta2_table_graph($par,$tits,$flds,$clmn,$export);
   $ret= sta2_table($tits,$flds,$clmn,$export);
 end:
+  $ret->html.= $msg;
   return $ret;
 }
 # --------------------------------------------------------------------==> .. evid2_recyklace_pecounu

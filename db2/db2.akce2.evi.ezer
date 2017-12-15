@@ -60,24 +60,22 @@ menu m {type:'left', format:'f-'
                                                 cnd:"o.id_osoba IN (679,4031,4504,5877)"},skill:'m'}
   }
   menu c {title:'členové YMCA (lonští)',type:'group', skill:'dec'
-    item {title:'[fa-file-text] přehled'
+    item {title:'[fa-file-text] přehled před závěrkou'
           par:°{op:'loni',exp:'Excel',cnd:1,hav:1,rok:1,
                 tit:'příjmení:15,jméno:10,datum nar.:10,obec:20,člen od:5,činný od:5,letos přísp.:6,letos dary:6',
                 fld:'prijmeni,jmeno,_naroz,obec,_clen_od,_cinny_od,_prisp,_dary'}}
-    item {title:'[fa-retweet] recyklace pečounů'
-          par:°{op:'zmeny',rok:1} }
+    item {title:'[fa-retweet] recyklace pečounů (LK byl letos)', par:°{op:'zmeny',rok:0} }
+    item {title:'[fa-retweet] recyklace pečounů (LK byl loni)',  par:°{op:'zmeny',rok:1} }
     item {title:'[fa-upload] statistický list YMCA v ČR'
           par:°{op:'hlaseni',exp:'Excel',cnd:1,hav:1,rok:1,del:0,
                 tit:'?:2,příjmení:15,jméno:10,ulice:20,město:20,PSČ:7,datum nar.:10,členství:5,čl. přísp.:6,KČ:12,e-mail:40,činný od letos:6,dobrovolník:6',
                 fld:'1,prijmeni,jmeno,ulice,obec,psc,_naroz_ymd,_b_c,_prisp,_YS,email,_cinny_letos,_dobro'}}
   }
   menu {title:'členové YMCA (letošní - pro info)',type:'group', skill:'dec'
-    item {title:'[fa-file-text-o] letošní přehled'
+    item {title:'[fa-file-text-o] letošní přehled po závěrce'
           par:°{op:'letos',exp:'Excel',cnd:1,hav:1,rok:0,del:0,
                 tit:'příjmení:15,jméno:10,datum nar.:10,obec:20,člen od:5,činný od:5,letos přísp.:6,letos dary:6',
                 fld:'prijmeni,jmeno,_naroz,obec,_clen_od,_cinny_od,_prisp,_dary'}}
-#     item {title:'[fa-retweet] recyklace pečounů'
-#           par:°{op:'zmeny',rok:0} }
     item {title:'[fa-upload] statistický list YMCA v ČR'
           par:°{op:'hlaseni',exp:'Excel',cnd:1,hav:1,rok:0,del:0,
                 tit:'?:2,příjmení:15,jméno:10,ulice:20,město:20,PSČ:7,datum nar.:10,členství:5,čl. přísp.:6,KČ:12,e-mail:40,činný od letos:6,dobrovolník:6',
@@ -1385,9 +1383,10 @@ panel filtr_osob [,,250,175] { type:'popup', title:"doplňující podmínky výb
     ,f.umi.key,conc(" AND (FIND_IN_SET('",f.umi.key,"',o.o_umi)",
       " OR ot.role IN ('a','b') AND IF(ISNULL(of.id_rodina),0,FIND_IN_SET('",f.umi.key,"',of.r_umi)))")
     // členství a dárcovství
-    ,f.bcleni.get,conc(" AND od.ukon IN ('b') AND dat_do='0000-00-00'")
-    ,f.ccleni.get,conc(" AND od.ukon IN ('c') AND dat_do='0000-00-00'")
-    ,f.darci.get,conc(" AND od.ukon IN ('d') AND YEAR(dat_od)>=YEAR()-1")
+    ,f.bcleni.get,conc(" AND od.ukon IN ('b') AND dat_do='0000-00-00' ")
+    ,f.ccleni.get,conc(" AND od.ukon IN ('c') AND dat_do='0000-00-00' ")
+    ,f.darci.get,conc(" AND od.ukon IN ('d') AND YEAR(dat_od)>=YEAR(NOW())-1 ")
+    ,f.klub.get,conc(" AND od.ukon IN ('k') AND dat_do='0000-00-00' ")
     ));
     lst.o_filtr.set_attrib('help',cconc(1,"... "
     ,f.mrop.get,        " a iniciovaní"
@@ -1402,6 +1401,7 @@ panel filtr_osob [,,250,175] { type:'popup', title:"doplňující podmínky výb
     ,f.bcleni.get,      " a jsou běžnými členy"
     ,f.ccleni.get,      " a jsou činnými členy"
     ,f.darci.get,       " a dali vloni či letos dar"
+    ,f.klub.get,        " a jsou v klubu přátel"
     ));
   }
   proc filtr_clear() { sql.set(''); lst.o_filtr.set_attrib('help',"bez filtru") }
@@ -1417,11 +1417,12 @@ panel filtr_osob [,,250,175] { type:'popup', title:"doplňující podmínky výb
                                  value:'0', format:'t', help:"zohledňuje i rodiný um" }
     // vpravo
     check mrop    [160,1,95,17]  { title:'iniciovaní', format:'t', skill:'f|f;y|f;c|f' }
-    check slovaci [160,26,95,17] { title:'Slováci', format:'t', help:"zohledňuje i rodinnou adresu" }
-    check cizinci [160,51,95,17] { title:'jiní cizinci', format:'t', help:"zohledňuje i rodinnou adresu" }
-    check bcleni  [160,76,95,17] { title:'běžní členové', format:'t', help:"nezrušení běžní členové" }
-    check ccleni  [160,101,95,17] { title:'činní členové', format:'t', help:"nezrušení činní členové" }
-    check darci   [160,126,95,17] { title:'dárci', format:'t', help:"letošní as loňští dárci" }
+    check slovaci [160,29,95,17] { title:'Slováci', format:'t', help:"zohledňuje i rodinnou adresu" }
+    check cizinci [160,46,95,17] { title:'jiní cizinci', format:'t', help:"zohledňuje i rodinnou adresu" }
+    check bcleni  [160,74,95,17] { title:'běžní členové', format:'t', help:"nezrušení běžní členové" }
+    check ccleni  [160,91,95,17] { title:'činní členové', format:'t', help:"nezrušení činní členové" }
+    check darci   [160,108,47,17] { title:'dárci', format:'t', help:"letošní as loňští dárci" }
+    check klub    [160,125,47,17] { title:'klub', format:'t', help:"jsou v klubu přátel" }
     // ukončení
     button [57,156,,] { title:'[fa-filter] filtruj', proc onclick() { filtr_set; panel.hide(1) }}
     button [137,156,,] { title:'[fa-undo] zruš filtr', proc onclick() { filtr_clear; panel.hide(0) }}
