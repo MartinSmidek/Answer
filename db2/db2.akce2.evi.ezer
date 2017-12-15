@@ -739,6 +739,7 @@ form _dary [,,440,min_h-160] {css:'ae_frame shift_down'
   # formulář pro úpravu darů
   # skryté položky
   field id_o { data:da.id_osoba }
+  field access { data:da.access }
   field ukon { data:da.ukon }
   field del  { data:da.deleted }
   # viditelné položky
@@ -763,6 +764,7 @@ form _dary [,,440,min_h-160] {css:'ae_frame shift_down'
     proc onclick() {
       form.init(2); form_state('u|z','n|s');
       id_o.set(ido.get); id_o.change(1); del.set(''); del.change(1);
+      access.set(my_access.get); access.change(1);
       ukon.set('d'); ukon.change(1); castka.change(1);
       datum.set(now); datum.change(1);
   }}
@@ -827,6 +829,7 @@ form _prispevky [,,375,min_h+-180] {css:'ae_frame shift_down'
   # formulář pro úpravu darů
   # skryté položky
   field id_o { data:da.id_osoba }
+  field access { data:da.access }
   field ukon { data:da.ukon }
   field del  { data:da.deleted }
   # viditelné položky
@@ -852,6 +855,7 @@ form _prispevky [,,375,min_h+-180] {css:'ae_frame shift_down'
     proc onclick() {
       form.init(2); form_state('u|z','n|s');
       id_o.set(ido.get); id_o.change(1); del.set(''); del.change(1);
+      access.set(my_access.get); access.change(1);
       ukon.set('p'); ukon.change(1); castka.change(1);
       datum.set(now); datum.change(1);
   }}
@@ -915,6 +919,7 @@ form _clenstvi [,,320,min_h+-180] {css:'ae_frame shift_down'
   # formulář pro úpravu členství
   # skryté položky
   field id_o { data:da.id_osoba }
+  field access  { data:da.access }
   field ukon { data:da.ukon }
   field del  { data:da.deleted }
   # viditelné položky
@@ -945,6 +950,7 @@ form _clenstvi [,,320,min_h+-180] {css:'ae_frame shift_down'
     proc onclick() {
       form.init; form_state('u|z','n|s');
       id_o.set(ido.get); id_o.change(1); del.set(''); del.change(1);
+      access.set(my_access.get); access.change(1);
       typ.key(0); typ.change; datum.set(now); datum.change(1);
   }}
   # -------------------------- Uložit
