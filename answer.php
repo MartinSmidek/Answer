@@ -23,7 +23,7 @@ function answer_php($app,$app_name,$db_name,$skin,$js_lib,$css_lib,$options) {
   $dbg=      isset($_GET['dbg']) ? $_GET['dbg'] : 0;
   $gmap=     isset($_GET['gmap']) ? $_GET['gmap'] : !$ezer_local;
   $awesome=  isset($_GET['awesome']) ? $_GET['awesome'] : 3;
-  $verze=    isset($_GET['ezer'])    ? $_GET['ezer']    : '?';
+  $verze=    isset($_GET['ezer'])    ? $_GET['ezer']    : '2.2';
 //  $mootools= isset($_GET['mootools'])? $_GET['mootools']: true;
   $EZER= (object)array();
 

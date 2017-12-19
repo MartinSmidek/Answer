@@ -14,22 +14,21 @@ function answer_ini($app,$answer_db,$dbs_plus,$php_lib,$ezer_mod=array()) {
          $path_files_h,$path_files_s,$path_files_href,
          $ezer_php_libr,$ezer_php,$ezer_ezer;
 
-  $EZER= (object)array();
   $ezer_root= $app;                                             // adresář a hlavní objekt aplikace
 
-  // nastavení zobrazení PHP-chyb klientem při &err=1
-  if ( isset($_GET['err']) && $_GET['err'] ) {
-    error_reporting(E_ALL ^ E_NOTICE);
-    ini_set('display_errors', 'On');
+  if ( !isset($EZER->version) ) {
+    // nastavení zobrazení PHP-chyb klientem při &err=1
+    if ( isset($_GET['err']) && $_GET['err'] ) {
+      error_reporting(E_ALL ^ E_NOTICE);
+      ini_set('display_errors', 'On');
+    }
+    // nastavení verze jádra
+    $EZER= (object)array();
+    $ev= (isset($_GET['ezer']) ? $_GET['ezer']
+       : (isset($_SESSION[$app]['GET']['ezer']) ? $_SESSION[$app]['GET']['ezer'] : '2.2'));
+    setcookie("ev",$ev,time()+3600*24*30);
+    $EZER->version= "ezer{$ev}";
   }
-
-  // nastavení verze jádra
-  $EZER= (object)array();
-  $ev= (isset($_GET['ezer']) ? $_GET['ezer']
-     : (isset($_SESSION[$app]['GET']['ezer']) ? $_SESSION[$app]['GET']['ezer'] : '2.2'));
-  setcookie("ev",$ev,time()+3600*24*30);
-  $EZER->version= "ezer{$ev}";
-//   $EZER->version= 'ezer2.2';
 
   $server_name= isset($_SERVER["HTTP_X_FORWARDED_SERVER"])
     ?$_SERVER["HTTP_X_FORWARDED_SERVER"]:$_SERVER["SERVER_NAME"];

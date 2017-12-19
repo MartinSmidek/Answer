@@ -6,6 +6,7 @@
 /ds.php
 ds/code
 ds/code/*.json
+/ezer2.2
 /logs
 /sql
 sql/*.FXP
