@@ -1,6 +1,8 @@
 /*.xls
 /Picasa
 /\#
+db2/@
+db2/code/*.json
 /doc
 /docs
 /ds.php

@@ -403,10 +403,14 @@ form _esady  {
       maily.browse_seek; texty.browse_seek;
     }
   }
+  check foo [306,279,59,] { title:'patička', value:'0', format:'t', proc onchange() {
+    pata.display(this.get); this.get; pata.set(sys('user','options','email_foot'));
+  } }
   # ------------------- informace
   label msg [0,305,377,67]
   label info [0,373,367,90]   { style:"overflow:auto;border:1px solid grey;padding:5px" }
   label obsah [0,474,716,246] { style:"overflow:auto;border:1px solid grey;padding:5px" }
+  label pata [0,731,716,50] { style:"overflow:auto;border:1px solid grey;padding:5px" }
   # ------------------- seznam adres
   view etmm: table mail
   view etmo: table osoba  {join_type:'LEFT' join:'ON id_clen=etmo.id_osoba'}
