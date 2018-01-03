@@ -943,7 +943,7 @@ form _clenstvi [,,320,min_h+-180] {css:'ae_frame shift_down'
     form.enable(1,on); form.enable(0,off); }
   proc onchanged () {
     form_state('u|z','n|s') }
-  proc onload () { typ.key(cconc(eq(ukon.get,'b'),0,1)); typ.plain }
+  proc onload () { typ.key(cconc(eq(ukon.get,'b'),0,eq(ukon.get,'c'),1,3)); typ.plain }
   label cmd [Lc,158,132,50] { css:'ae_parm' }
   # -------------------------- Nový
   button [cmd.l+6,cmd.t+5,,] { tag:'n', title:'[fa-database] Nový',  help:'Vložit nový dar',
