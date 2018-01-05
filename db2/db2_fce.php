@@ -646,6 +646,7 @@ function akce2_roku_update($rok) {  trace();
   $key= "1RKnvU7EJG7YtBDjnSpQfwg3kjOCBEV_w8bMlJcdV8Nc";         // ciselnik_akci
   $prefix= "google.visualization.Query.setResponse(";           // přefix json objektu
   $sheet= $rok>2010 ? $rok-1997 : ($rok==2010 ? 10 : -1);
+  // https://docs.google.com/spreadsheets/d/1RKnvU7EJG7YtBDjnSpQfwg3kjOCBEV_w8bMlJcdV8Nc/gviz/tq?tqx=out:json&sheet=
   $x= file_get_contents("https://docs.google.com/spreadsheets/d/$key/gviz/tq?tqx=out:json&sheet=$sheet");
                                         display($x);
   $xi= strpos($x,$prefix);
@@ -670,7 +671,7 @@ function akce2_roku_update($rok) {  trace();
 //                                                         debug($row,$row[2]->v);
         $n++;
         $kod= $row[1]->f;
-        $id= 1000*rok+$kod;
+        $id= 1000*$rok+$kod;
         $nazev= mysql_real_escape_string($row[2]->v);
                                                         display("$kod:$nazev");
         // data akce - jen je-li syntax ok
@@ -681,6 +682,13 @@ function akce2_roku_update($rok) {  trace();
         $x= $row[4]->f;
         if ( preg_match("/\d+\.\d+\.\d+/",$x) )
           $do= sql_date($x,1);
+        // kontrola roku
+        if ( $do && substr($do,0,4)!=$rok || $od && substr($od,0,4)!=$rok ) {
+          fce_warning("akce '$nazev' není z daného roku "
+              . "NEBO obnovovaný rok není na intranetu jako první sešit");
+          $n= 0;
+          goto end;
+        }
         $uc=  $row[5]->f;
         $typ= $row[6]->f;
         $kap= $row[7]->f;
@@ -10376,6 +10384,35 @@ function elim2_data_rodina($idr,$cond='') {  //trace();
 }
 /** =========================================================================================> MAIL2 **/
 # =========================================================================================> . vzory
+# ------------------------------------------------------------------------------------- mail2 footer
+function mail2_footer($op,$access,$access_name,$idu,$change='') { trace();
+  global $json;
+  $ans= '';
+  $org= $access_name->$access;
+  $s_options= select("options","_user","id_user='$idu'",'ezer_system');
+  $options= $json->decode($s_options);
+  switch ($op) {
+  case 'show':
+    $ans= is_array($options->email_foot) && isset($options->email_foot[$access])
+        ? $options->email_foot[$access] 
+        : "<i>patička pro $org nebyla ještě vyplněna</i>";
+    break;
+  case 'load':
+    $ans= is_array($options->email_foot) && isset($options->email_foot[$access])
+        ? $options->email_foot[$access] 
+        : "";
+    break;
+  case 'save':
+    if ( !is_array($options->email_foot) ) {
+      $options->email_foot= array("","","","","");
+    }
+    $options->email_foot[$access]= $change;
+    $options_s= ezer_json_encode($options);
+    query("UPDATE _user SET options='$options_s' WHERE id_user='$idu'",'ezer_system');
+    break;
+  }
+  return $ans;
+}
 # --------------------------------------------------------------------------------- mail2 vzor_pobyt
 # pošle mail daného typu účastníkovi pobytu - zatím typ=potvrzeni_platby
 #                                                                         !!! + platba souběžné akce
