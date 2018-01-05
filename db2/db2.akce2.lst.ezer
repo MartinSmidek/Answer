@@ -712,7 +712,8 @@ form _info [,,*,50] {
     # získání seznamu akcí z docs.google.com pomocí API spredsheet
     proc onclick() {
       lt(rok.get,2010); alert("Z intranetu lze obnovovat jen akce roku 2010 a starší");
-    | confirm("Mám pro rok ",rok.get," obnovit seznam akcí (musí mít značku 'a')?");
+    | confirm("Mám pro rok ",rok.get," obnovit seznam akcí (musí mít značku 'a')?",
+            "<hr>POZOR: v souboru ciselnik_akci musí být obnovovaný rok zcela vlevo");
       alert('bylo obnoveno ',ask('akce2_roku_update',rok.get),' záznamů o akcích');
       google.browse_seek;
     }
