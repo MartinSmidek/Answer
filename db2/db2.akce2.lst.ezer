@@ -275,6 +275,13 @@ form _page [,,275,360] {
   field [230,286,43,] { tag:'cor', data:akce.cena, format:'r', skill:'yaa|yaan;caa|caan;faa|faan',
                         help:'pro 1 dospělého' }
   label [279,289,20,] { tag:'cor', title:'Kč' }
+  // web
+  check [14,315,135,] { tag:'cor', title:'kalendář chlapi.online', data:akce.web_kalendar,
+                        format:'', skill:'yaa|yaaw;faa|faaw' }
+  button [153,317,,] { tag:'cor', title:'Upravit anotaci', skill:'yaa+|yaaw;faa+|faaw'
+    help:'úprava textu v kalendáři chlapi.online'
+    proc onclick() { page.a_akce.get; ANOTACE.oprava(page.a_akce.get);
+  }}
   // Zpět a Uložit
   label  [193,350,98,30] { tag:'cor', css:'ae_parm', style:'z-index:1', skill:'yaa+;faa+;caa+' }
   button [199,356,,] { tag:'cor', title:'Zpět', skill:'yaa+|yaa+;faa+|faa+;caa+|caa+'
@@ -629,6 +636,7 @@ form _info [,,*,50] {
     show rok {expr:"YEAR(da2.datum_od)"}
     show curr { expr:"IF(da2.id_duakce=@curr,1,0)" }
     show org { data:da2.access }
+    show web { data:da2.web_kalendar }
     show SF [,,20,] {title:'SF', expr:"IF(da2.access=1,'S',IF(da2.access=2,'F','?'))"
       help:"pořádá S=YMCA Setkání, F=YMCA Familia"
       css_cell:'org,0:,1:ezer_ys,2:ezer_fa,3:ezer_db', format:'rsq*' }
@@ -643,8 +651,10 @@ form _info [,,*,50] {
     show pecou [,,30,] {title:'pč.', format:'rtsq=', help:'počet pečounů'
       expr:"SUM((SELECT COUNT(*) FROM spolu WHERE id_pobyt=pa2.id_pobyt AND funkce=99))"}
     show misto [,,50,] {title:'místo',  data:da2.misto, format:'tsq*'}
-    show od    [,,65,] {title:'od',     data:da2.datum_od, format:'rs+q*'}
-    show do    [,,65,] {title:'do',     data:da2.datum_do, format:'rsq*'}
+    show od    [,,65,] {title:'od',     data:da2.datum_od, format:'rs+q*'
+      css_cell:'web,0:,1:ezer_db' }
+    show do    [,,65,] {title:'do',     data:da2.datum_do, format:'rsq*'
+      css_cell:'web,0:,1:ezer_db' }
     proc onsubmit() { pracovni }
     proc onrowclick() { page.show_akce(id_akce.get); }
     menu { type:'context'
@@ -738,7 +748,25 @@ form _info [,,*,50] {
     [ x; head.set(conc("<div class='karta' style='padding-left:60px'>",x,"</div>")) ];
   }
 }
-
+# =========================================================================================> anotace
+# oprava textu anotace na webu
+panel ANOTACE [0,0,645,520] { title:' Úprava textu anotace', type:'popup', css:'dialog'
+  use d: form _d [0,0,,],
+  proc oprava(_ida) {
+    _ida;
+    d.load(_ida);
+    [ panel.modal ] 
+  | alert("napřed novou akci ulož");
+  }
+  form _d [10,10,600,460] {
+    button  [540,9,45,20] { title:'Uložit', help:'ukončit editor a uložit změny'
+      proc onclick() { form.save; panel.hide(1); } }
+    button  [600,9,45,20] { title:'Zpět', help:'ukončit editor bez uložení změn'
+      proc onclick() { panel.hide(0); }
+    }
+    edit html [0,40,655,480] {type:'html', data:akce.web_anotace, par:°{toolbar:'EzerLetter'} },
+  }
+}
 map akce_cenik:  table akce {where:"ma_cenik=1", order:'datum_od', key_id:'id_duakce'}
 map akce_slozka: table _cis {where:"druh='akce_slozka'", order:'poradi', key_id:'data'}
 map ms_cenik_verze: table _cis {where:"druh='ms_cenik_verze'", order:'poradi', key_id:'data'}

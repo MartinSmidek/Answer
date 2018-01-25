@@ -12,6 +12,10 @@ menu db2 { type:'main', title:'db2', active:*, _sys:'*'
       proc back_show(kde,klic) {}
     }
   }
+//  tabs syst {title:"[fa-cog] Systém", _sys:'sys'
+//    proc reaccess() {}
+//    panel oso {type:'right', title:'Osobní nastavení', _sys:'*', include:'onload' }
+//  }
   tabs syst {title:"[fa-cog] Systém", _sys:'sys',  include:'onload,ezer2.syst', active:*
     proc reaccess() {}
     panel oso {type:'right', title:'Osobní nastavení', _sys:'*', include:'onclick,ezer2.pers' }
@@ -89,7 +93,7 @@ menu db2 { type:'main', title:'db2', active:*, _sys:'*'
   proc reaccess(msg) {
     echo(msg); set_trace('E',1,'spinner,reaccess');
     spinner(1);
-    akce2.reaccess;
+//    akce2.reaccess;
     syst.reaccess;
     spinner(0); set_trace('E',0,'spinner,reaccess');
   }

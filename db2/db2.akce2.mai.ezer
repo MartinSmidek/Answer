@@ -1319,4 +1319,4 @@ form _esady  {
 map map_dm_komu:      table _cis  {where:"druh='am_komu'",      order:'poradi',  key_id:'data'}
 map map_db_maily_sql: table _cis  {where:"druh='db_maily_sql'", order:'zkratka', key_id:'data'}
 map map_db_maily_tab: table _cis  {where:"druh='db_maily_tab'", order:'zkratka', key_id:'data'}
-map map_db_mailist: table mailist {key_id:'id_mailist', order:'ucel'}
+map map_db_mailist: table mailist {where:"1",                   order:'ucel',    key_id:'id_mailist'}
