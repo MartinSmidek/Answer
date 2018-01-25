@@ -12083,7 +12083,8 @@ function ucet_potv($par,$access) { trace();
 //                                         debug($goo->rows[$i],"dar=$dar_jmeno");
 //                                         debug($row,"dar=$dar_jmeno");
     // transformace do $tab[]=$row
-    $jmeno= substr($dar_jmeno,0,6)=='dar - ' ? substr($dar_jmeno,6) : substr($dar_jmeno,4);
+    $jmeno= substr($dar_jmeno,0,6)=='dar - ' ? substr($dar_jmeno,6) : 
+      ( substr($dar_jmeno,0,4)=='dar ' ? substr($dar_jmeno,4) : $dar_jmeno);
     list($prijmeni,$jmeno)= explode(' ',$jmeno);
 //                                         display("'$jmeno' '$prijmeni'");
     $opakovane= $jmeno_prvni["$prijmeni$jmeno"] ?: 0;
