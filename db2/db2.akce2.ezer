@@ -236,42 +236,6 @@ table psc_axy { key_id:'psc'
   number lat
   number lng
 }
-# =========================================================================================== CHLAPI
-# table chlapi { key_id:'id_chlapi', db:'ezer_ys'
-#   number id_chlapi
-#   text prijmeni
-#   text jmeno
-#   number sex
-#   date narozeni  { sql_pipe:'sql_date1' }
-#   text rc_xxxx {help:'3-4 rozlišovací číslice rodného čísla'}
-#   text ulice
-#   text psc
-#   text obec
-#   text telefon
-#   text email
-#   number iniciace
-#   text note // pozn
-#   text origin  // databáze,id,datum vkopírování
-# }
-# table ch_ucast { key_id:'id_ucast', db:'ezer_ys'
-#   number id_ucast
-#   number id_chlapi
-#   number id_akce
-#   number stupen    { help:"vztah k akci" }
-#   number cena      { help:"cena akce pro účastníka" }
-#   number avizo     { help:"přišlo potvrzení o platbě" }
-#   number uctem     { help:"zaplaceno převodem" }
-#   date uctem_dne   { help:"datum převodu", sql_pipe:'sql_date1' }
-#   number pokladnou { help:"zaplaceno v hotovosti" }
-#   text pozn
-# }
-# table ch_akce { key_id:'id_akce', db:'ezer_ys'
-#   number id_akce
-#   text nazev
-#   number cena      { help:"cena akce" }
-#   date datum_od    { sql_pipe:'sql_date1' }
-#   date datum_do    { sql_pipe:'sql_date1' }
-# }
 map akce_ucast: table _cis {where:"druh='akce_ucast'", order:'poradi', key_id:'data'}
 
 # ------------------------------------------------------------------ pohledy
@@ -319,6 +283,8 @@ table akce { key_id:'id_duakce'
   number ciselnik_rok
   text note
   text archiv
+  number web_kalendar
+  text web_anotace
 }
 
 table pobyt { key_id:'id_pobyt'

@@ -173,6 +173,7 @@ function akce2_info($id_akce,$text=1) { // trace();
     $ucasti= $rodiny= $dosp= $muzi= $zeny= $deti= $pecounu= $err= $err2= $err3= 0;
     $odhlaseni= $neprijeli= $nahradnici= $nahradnici_osoby= 0;
     $akce= $chybi_nar= $chybi_sex= '';
+    $web_kalendar= $web_anotace= '';
     // zjistíme násobnou přítomnost
     $rn= mysql_qry("
       SELECT COUNT(DISTINCT id_pobyt) AS _n,MIN(funkce) AS _f1,MAX(funkce) AS _f2,prijmeni,jmeno
@@ -197,7 +198,8 @@ function akce2_info($id_akce,$text=1) { // trace();
              GROUP_CONCAT(IF(o.narozeni='0000-00-00',CONCAT(', ',jmeno,' ',prijmeni),'') SEPARATOR '') AS _kdo,
              SUM(IF(o.sex NOT IN (1,2),1,0)) AS _err2,
              GROUP_CONCAT(IF(o.sex NOT IN (1,2),CONCAT(', ',jmeno,' ',prijmeni),'') SEPARATOR '') AS _kdo2,
-             avizo,platba,datplatby,zpusobplat
+             avizo,platba,datplatby,zpusobplat,
+             web_kalendar,web_anotace
            FROM akce AS a
            JOIN pobyt AS p ON a.id_duakce=p.id_akce
            JOIN spolu AS s ON p.id_pobyt=s.id_pobyt
@@ -210,6 +212,8 @@ function akce2_info($id_akce,$text=1) { // trace();
     while ( $res && $p= mysql_fetch_object($res) ) {
       $pro_pary= $p->_pro_pary;
       $fce= $p->funkce;
+      $web_kalendar= $p->web_kalendar;
+      $web_anotace= $p->web_anotace;
       // záznam plateb
       if ( $p->platba ) {
         $celkem+= $p->platba;
@@ -297,6 +301,13 @@ function akce2_info($id_akce,$text=1) { // trace();
       $html.= $deti ? "<hr>Poznámka: jako děti se počítají osoby, které v době zahájení akce nemají 18 let" : '';
       if ( $pro_pary ) {
         $html.= akce2_info_par($id_akce);
+      }
+      // kalendář na webu
+      if ( $web_kalendar ) {
+        $html.= "<hr><i class='fa fa-calendar-check-o'></i> Akce bude zobrazena v kalendáři webu <b>chlapi.online</b>";
+      }
+      if ( $web_anotace ) {
+        $html.= "<hr>$web_anotace";
       }
     }
     else {

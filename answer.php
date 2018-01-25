@@ -30,7 +30,7 @@ function answer_php($app,$app_name,$db_name,$skin,$js_lib,$css_lib,$options) {
   // inicializace SESSION
   session_unset();
   session_start();
-  $_SESSION[$app]['GET']= array('ezer'=>"'$verze'");
+  $_SESSION[$app]['GET']= array('ezer'=>"$verze");
 
   // zapnutí příznaku pro ochranu souborů v docs (do konce session)
   setcookie("EZER",$app,0,"/");
@@ -75,7 +75,6 @@ function answer_php($app,$app_name,$db_name,$skin,$js_lib,$css_lib,$options) {
       "$client/ezer3.js",
       "$client/ezer_area3.js",
       "$client/ezer_rep3.js",
-      "$client/ezer_fdom3.js",
       "$client/ezer_lib3.js",
       "$client/ezer_tree3.js"
     ),
