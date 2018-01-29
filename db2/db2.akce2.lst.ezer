@@ -270,25 +270,35 @@ form _page [,,275,360] {
       alert(ask('akce2_change_cenik',form.key,cen_copy.key))
   }}
   // jednotná cena / dospělý
-  check [134,284,93,] { tag:'cor', title:'používat cenu', data:akce.ma_cenu,
+  check [134,276,93,] { tag:'cor', title:'používat cenu', data:akce.ma_cenu,
                         format:'', skill:'yaa|yaan;caa|caan;faa|faan' }
-  field [230,286,43,] { tag:'cor', data:akce.cena, format:'r', skill:'yaa|yaan;caa|caan;faa|faan',
+  field [230,278,43,] { tag:'cor', data:akce.cena, format:'r', skill:'yaa|yaan;caa|caan;faa|faan',
                         help:'pro 1 dospělého' }
-  label [279,289,20,] { tag:'cor', title:'Kč' }
+  label [279,281,20,] { tag:'cor', title:'Kč' }
   // web
-  check [14,315,135,] { tag:'cor', title:'kalendář chlapi.online', data:akce.web_kalendar,
+  check [10,320,135,] { tag:'cor', title:'kalendář chlapi.online', data:akce.web_kalendar,
                         format:'', skill:'yaa|yaaw;faa|faaw' }
-  button [153,317,,] { tag:'cor', title:'Upravit anotaci', skill:'yaa+|yaaw;faa+|faaw'
+  check [250,320,135,] { tag:'cor', title:'akce je obsazena', data:akce.web_obsazeno,
+                        format:'', skill:'yaa|yaaw;faa|faaw' }
+  button [154,321,,] { tag:'cor', title:'Upravit anotaci', skill:'yaa+|yaaw;faa+|faaw'
     help:'úprava textu v kalendáři chlapi.online'
     proc onclick() { page.a_akce.get; ANOTACE.oprava(page.a_akce.get);
   }}
+  field [76,344,269,] { tag:'cor', title:'url pozvánky', data:akce.web_url,
+                        format:'', skill:'yaa|yaaw;faa|faaw' 
+    proc onchanged() {
+      match('page=',this.get); 
+      warning("odkaz na akci musí být ve formátu pro uživatele nepřihlášeného k editaci webu!",
+              "<br>Tzn. ne ve tvaru www.setkani.org/index.php?page=...");
+      this.set(''); this.plain;
+  }}
   // Zpět a Uložit
-  label  [193,350,98,30] { tag:'cor', css:'ae_parm', style:'z-index:1', skill:'yaa+;faa+;caa+' }
-  button [199,356,,] { tag:'cor', title:'Zpět', skill:'yaa+|yaa+;faa+|faa+;caa+|caa+'
+  label  [193,383,98,30] { tag:'cor', css:'ae_parm', style:'z-index:1', skill:'yaa+;faa+;caa+' }
+  button [199,389,,] { tag:'cor', title:'Zpět', skill:'yaa+|yaa+;faa+|faa+;caa+|caa+'
     help:'Neměnit změněná data'
     proc onclick() { form.load(page.a_akce.get);
   }}
-  button [245,356,,] { tag:'cor', title:'Uložit', skill:'yaa+|yaan;faa+|faan;caa+|caan'
+  button [245,389,,] { tag:'cor', title:'Uložit', skill:'yaa+|yaan;faa+|faan;caa+|caan'
     help:'Uložit změněná data',
     proc onclick() {
       form.same
@@ -301,8 +311,8 @@ form _page [,,275,360] {
     | alert("Vkládat lze jen 'historické akce', po roce 2010 jen přes intranet")                    //ys
   } }
   // jen pro YF,CR - přidání a zrušení akce
-  label  [10,350,164,30] { tag:'cor', css:'ae_parm', style:'z-index:1', skill:'faan;caan;yaan' }
-  button [16,356,,] {tag:'cor', title:'Nová akce', format:'c', skill:'faan|faan;caan|caan;yaan|yaan'
+  label  [10,383,164,30] { tag:'cor', css:'ae_parm', style:'z-index:1', skill:'faan;caan;yaan' }
+  button [16,389,,] {tag:'cor', title:'Nová akce', format:'c', skill:'faan|faan;caan|caan;yaan|yaan'
     proc onclick() {
       eq(my_org.get,1);
       // Setkání
@@ -320,7 +330,7 @@ form _page [,,275,360] {
       // CPR, CPRŽ - samostatné db
       form.init; access.set(4); access.change; info.sey.blur(1)
   } }
-  button [91,356,,] {tag:'cor', title:'Smazat akci', format:'c', skill:'faan|faan;caan|caan;yaan|yaan'
+  button [91,389,,] {tag:'cor', title:'Smazat akci', format:'c', skill:'faan|faan;caan|caan;yaan|yaan'
     proc onclick() {
       var ret:object
       var msg:text
@@ -636,7 +646,8 @@ form _info [,,*,50] {
     show rok {expr:"YEAR(da2.datum_od)"}
     show curr { expr:"IF(da2.id_duakce=@curr,1,0)" }
     show org { data:da2.access }
-    show web { data:da2.web_kalendar }
+    show web_k { data:da2.web_kalendar }
+    show web_o { data:da2.web_obsazeno }
     show SF [,,20,] {title:'SF', expr:"IF(da2.access=1,'S',IF(da2.access=2,'F','?'))"
       help:"pořádá S=YMCA Setkání, F=YMCA Familia"
       css_cell:'org,0:,1:ezer_ys,2:ezer_fa,3:ezer_db', format:'rsq*' }
@@ -647,14 +658,15 @@ form _info [,,*,50] {
     show nazev [,,104,] {title:'název', expr:"IF(da2.nazev='',ga2.g_nazev,da2.nazev)", format:'tsq*',
       css_cell:"curr,1:curr_akce"}
     show ucast [,,30,] {title:'úč.', format:'rtsq=', help:'počet skupin účastníků',
-      expr:"SUM((SELECT IF(COUNT(*)>0,1,0) FROM spolu WHERE id_pobyt=pa2.id_pobyt AND funkce!=99))"}
+      expr:"SUM((SELECT IF(COUNT(*)>0,1,0) FROM spolu WHERE id_pobyt=pa2.id_pobyt AND funkce!=99))"
+      css_cell:'web_o,0:,1:cerveny' }
     show pecou [,,30,] {title:'pč.', format:'rtsq=', help:'počet pečounů'
       expr:"SUM((SELECT COUNT(*) FROM spolu WHERE id_pobyt=pa2.id_pobyt AND funkce=99))"}
     show misto [,,50,] {title:'místo',  data:da2.misto, format:'tsq*'}
     show od    [,,65,] {title:'od',     data:da2.datum_od, format:'rs+q*'
-      css_cell:'web,0:,1:ezer_db' }
+      css_cell:'web_k,0:,1:ezer_db' }
     show do    [,,65,] {title:'do',     data:da2.datum_do, format:'rsq*'
-      css_cell:'web,0:,1:ezer_db' }
+      css_cell:'web_k,0:,1:ezer_db' }
     proc onsubmit() { pracovni }
     proc onrowclick() { page.show_akce(id_akce.get); }
     menu { type:'context'

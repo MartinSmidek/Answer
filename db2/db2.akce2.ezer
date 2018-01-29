@@ -284,7 +284,9 @@ table akce { key_id:'id_duakce'
   text note
   text archiv
   number web_kalendar
+  number web_obsazeno
   text web_anotace
+  text web_url
 }
 
 table pobyt { key_id:'id_pobyt'

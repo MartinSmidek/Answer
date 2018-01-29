@@ -173,7 +173,7 @@ function akce2_info($id_akce,$text=1) { // trace();
     $ucasti= $rodiny= $dosp= $muzi= $zeny= $deti= $pecounu= $err= $err2= $err3= 0;
     $odhlaseni= $neprijeli= $nahradnici= $nahradnici_osoby= 0;
     $akce= $chybi_nar= $chybi_sex= '';
-    $web_kalendar= $web_anotace= '';
+    $web_kalendar= $web_obsazeno= $web_anotace= $web_url= '';
     // zjistíme násobnou přítomnost
     $rn= mysql_qry("
       SELECT COUNT(DISTINCT id_pobyt) AS _n,MIN(funkce) AS _f1,MAX(funkce) AS _f2,prijmeni,jmeno
@@ -199,7 +199,7 @@ function akce2_info($id_akce,$text=1) { // trace();
              SUM(IF(o.sex NOT IN (1,2),1,0)) AS _err2,
              GROUP_CONCAT(IF(o.sex NOT IN (1,2),CONCAT(', ',jmeno,' ',prijmeni),'') SEPARATOR '') AS _kdo2,
              avizo,platba,datplatby,zpusobplat,
-             web_kalendar,web_anotace
+             web_kalendar,web_anotace, web_url, web_obsazeno
            FROM akce AS a
            JOIN pobyt AS p ON a.id_duakce=p.id_akce
            JOIN spolu AS s ON p.id_pobyt=s.id_pobyt
@@ -214,6 +214,8 @@ function akce2_info($id_akce,$text=1) { // trace();
       $fce= $p->funkce;
       $web_kalendar= $p->web_kalendar;
       $web_anotace= $p->web_anotace;
+      $web_obsazeno= $p->web_obsazeno;
+      $web_url= $p->web_url;
       // záznam plateb
       if ( $p->platba ) {
         $celkem+= $p->platba;
@@ -304,10 +306,14 @@ function akce2_info($id_akce,$text=1) { // trace();
       }
       // kalendář na webu
       if ( $web_kalendar ) {
-        $html.= "<hr><i class='fa fa-calendar-check-o'></i> Akce bude zobrazena v kalendáři webu <b>chlapi.online</b>";
-      }
-      if ( $web_anotace ) {
-        $html.= "<hr>$web_anotace";
+        $odkaz= $web_url ? "na <a href='$web_url' target='web'>pozvánku</a>" : ' na home-page';
+        $html.= "<hr><i class='fa fa-calendar-check-o'></i> 
+            Akce $cas1 zobrazena v kalendáři <b>chlapi.online</b>
+            s odkazem $odkaz";
+        if ( $web_obsazeno )
+          $html.= "<br> &nbsp;&nbsp; &nbsp; jako obsazená";
+        if ( $web_anotace ) 
+          $html.= "<hr>$web_anotace";
       }
     }
     else {
