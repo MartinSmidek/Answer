@@ -172,7 +172,7 @@ proc akce_vsechny(cond) {
 }
 # ------------------------------------------------------------------------------------------==> AKCE
 form _page [,,275,360] {
-  var a_akce: number
+  var a_akce: number, zmena_web:number
   # ---------------------------==> . záložky
   proc tags(a,on,off) {
     form.set_css('ae_butt_off','ae_butt_on','p');
@@ -201,7 +201,8 @@ form _page [,,275,360] {
   }
   proc show_page(id_akce) {
     cen_copy.enable(0); cen_copy.key(0); key_akce.set(id_akce); //fil.display(0);
-    form.load(id_akce);
+    form.load(id_akce); zmena_web.set(0); 
+    ds_order.set(ask('ds_objednavka',id_akce));
     switch(zalozka.get,
     'inf',{ note.set(ask('akce2_info',id_akce));  },
     'cor',{ //form.load(id_akce);
@@ -218,7 +219,7 @@ form _page [,,275,360] {
   proc init_page() {
     page.a_akce.set(0);
     cen_copy.enable(0); cen_copy.key(0);
-    form.init;
+    form.init; zmena_web.set(0); ds_order.set(0);
     note.set(''); key_akce.set(' ');
   }
   # ------------------------==> . informace
@@ -228,8 +229,10 @@ form _page [,,275,360] {
   # ---------------------------==> . položky akce
   field access { data:akce.access }
   field id_hlavni { data:akce.id_hlavni }
+  // ------------------------------------- základní údaje o akci
   field [17,49,218,] { tag:'cor', title:'^název akce *', data:akce.nazev }
   field [17,89,218,] { tag:'cor', title:'^místo', data:akce.misto }
+  check ds_order [250,89,200,] { tag:'cor', title:'objednávka Domu setkání', format:'d', skill:'yd' } 
   field datum_od [18,133,83,] { tag:'cor', title:'^začátek *', type:'date', data:akce.datum_od }
   field [118,133,83,] { tag:'cor', title:'^ukončení', type:'date', data:akce.datum_do }
   check [213,166,90,] { tag:'cor', title:'jen seznam', data:akce.spec }
@@ -275,34 +278,45 @@ form _page [,,275,360] {
   field [230,278,43,] { tag:'cor', data:akce.cena, format:'r', skill:'yaa|yaan;caa|caan;faa|faan',
                         help:'pro 1 dospělého' }
   label [279,281,20,] { tag:'cor', title:'Kč' }
-  // web
-  check [10,320,135,] { tag:'cor', title:'kalendář chlapi.online', data:akce.web_kalendar,
-                        format:'', skill:'yaa|yaaw;faa|faaw' }
-  check [250,320,135,] { tag:'cor', title:'akce je obsazena', data:akce.web_obsazeno,
-                        format:'', skill:'yaa|yaaw;faa|faaw' }
-  button [154,321,,] { tag:'cor', title:'Upravit anotaci', skill:'yaa+|yaaw;faa+|faaw'
-    help:'úprava textu v kalendáři chlapi.online'
-    proc onclick() { page.a_akce.get; ANOTACE.oprava(page.a_akce.get);
+  // ------------------------------------- web setkani.org a chlapi.online
+  label [10,309,384,92] { tag:'cor', css:'bily_ram', skill:'yaaw;faaw' 
+                        title:" součinnost s www.setkani.org a chlapi.online" }
+  check [16,382,135,21] { tag:'cor', title:'akce je obsazena', data:akce.web_obsazeno,
+                        skill:'yaa|yaaw;faa|faaw' }
+  check web_prihl[16,346,205,] { tag:'cor', data:akce.web_prihlasky,
+                        title:'přihlašování na www.setkani.org', skill:'yaa+|yaaw' 
+    proc onchange() { zmena_web.set(1);
   }}
-  field [76,344,269,] { tag:'cor', title:'url pozvánky', data:akce.web_url,
-                        format:'', skill:'yaa|yaaw;faa|faaw' 
+  check [16,364,135,] { tag:'cor', title:'kalendář chlapi.online', data:akce.web_kalendar,
+                        skill:'yaa|yaaw;faa|faaw' }
+  button [381,316,,] { tag:'cor', title:'[fa-question]', skill:'yaa+|yaaw'
+    help:'pokyny pro přihlašování na www.setkani.org'
+    proc onclick() { alert("V popisu akce na www.setkani.org je zapotřebí vyplnit ID akce=",a_akce.get)
+  }}
+  button [184,366,,] { tag:'cor', title:'Upravit anotaci pro chlapi.online', skill:'yaa+|yaaw;faa+|faaw'
+    help:'úprava textu v kalendáři chlapi.online'
+    proc onclick() { 
+      page.a_akce.get; ANOTACE.oprava(page.a_akce.get);
+  }}
+  field web_url [82,328,287,] { tag:'cor', title:'url pozvánky', data:akce.web_url, skill:'yaa|yaaw;faa|faaw' 
     proc onchanged() {
       match('page=',this.get); 
       warning("odkaz na akci musí být ve formátu pro uživatele nepřihlášeného k editaci webu!",
               "<br>Tzn. ne ve tvaru www.setkani.org/index.php?page=...");
       this.set(''); this.plain;
   }}
-  // Zpět a Uložit
-  label  [193,383,98,30] { tag:'cor', css:'ae_parm', style:'z-index:1', skill:'yaa+;faa+;caa+' }
-  button [199,389,,] { tag:'cor', title:'Zpět', skill:'yaa+|yaa+;faa+|faa+;caa+|caa+'
+  // ------------------------------------- Zpět a Uložit
+  label  [193,417,98,30] { tag:'cor', css:'ae_parm', style:'z-index:1', skill:'yaa+;faa+;caa+' }
+  button [199,423,,] { tag:'cor', title:'Zpět', skill:'yaa+|yaa+;faa+|faa+;caa+|caa+'
     help:'Neměnit změněná data'
-    proc onclick() { form.load(page.a_akce.get);
+    proc onclick() { form.load(page.a_akce.get); zmena_web.set(0);
   }}
-  button [245,389,,] { tag:'cor', title:'Uložit', skill:'yaa+|yaan;faa+|faan;caa+|caan'
+  button [245,423,,] { tag:'cor', title:'Uložit', skill:'yaa+|yaan;faa+|faan;caa+|caan'
     help:'Uložit změněná data',
     proc onclick() {
       form.same
     | // oprava
+      [ zmena_web.get; alert(ask('web_prihlaska',page.a_akce.get,web_url.get,web_prihl.get)) ]; 
       form.key; form.save; form.load; info.sey.browse_seek
     | // přidání
       or(has_skill("faa+;caa+"),lt(fdate("Y",datum_od.get),2011));
@@ -311,8 +325,8 @@ form _page [,,275,360] {
     | alert("Vkládat lze jen 'historické akce', po roce 2010 jen přes intranet")                    //ys
   } }
   // jen pro YF,CR - přidání a zrušení akce
-  label  [10,383,164,30] { tag:'cor', css:'ae_parm', style:'z-index:1', skill:'faan;caan;yaan' }
-  button [16,389,,] {tag:'cor', title:'Nová akce', format:'c', skill:'faan|faan;caan|caan;yaan|yaan'
+  label  [10,417,164,30] { tag:'cor', css:'ae_parm', style:'z-index:1', skill:'faan;caan;yaan' }
+  button [16,423,,] {tag:'cor', title:'Nová akce', format:'c', skill:'faan|faan;caan|caan;yaan|yaan'
     proc onclick() {
       eq(my_org.get,1);
       // Setkání
@@ -330,7 +344,7 @@ form _page [,,275,360] {
       // CPR, CPRŽ - samostatné db
       form.init; access.set(4); access.change; info.sey.blur(1)
   } }
-  button [91,389,,] {tag:'cor', title:'Smazat akci', format:'c', skill:'faan|faan;caan|caan;yaan|yaan'
+  button [91,423,,] {tag:'cor', title:'Smazat akci', format:'c', skill:'faan|faan;caan|caan;yaan|yaan'
     proc onclick() {
       var ret:object
       var msg:text

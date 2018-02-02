@@ -130,6 +130,30 @@ function db2_oso_show($prijmeni,$jmeno,$n) {
   return $ret;
 }
 /** =========================================================================================> AKCE2 */
+# ------------------------------------------------------------------------------------ web prihlaska
+# propojení s www.setkani.org - musí existovat popis akce s daným url
+#     on=1 dovolí přihlašování přes web, on=0 je zruší
+function web_prihlaska($akce,$url,$on) {  trace();
+  $html= '';
+  $ok= preg_match("~(nove|akce)/(\d+)$~",$url,$m);
+  if ( $ok ) {
+    $idp= $m[2];
+    $ida= $on ? $akce : 0;
+    $ok= select("uid","setkani.tx_gncase_part","uid=$idp AND !deleted AND !hidden");
+    if ( $ok ) {
+      $ok= query("UPDATE setkani.tx_gncase_part SET id_akce=$ida WHERE uid=$idp");
+      $html.= "na www.setkani.org bylo ".($on?"zapnuto":"vypnuto")." elektronické přihlašování";
+    }
+    else {
+      $html.= "url pozvánky není v očekávaném tvaru";
+    }
+  }
+  else {
+    $html.= "url pozvánky není v očekávaném tvaru";
+  }
+  $html.= "<hr>POZOR: tato úprava ještě není dokončena, takže na webu zatím nic není :-P";
+  return $html;
+}
 # --------------------------------------------------------------------------------------- akce2 mapa
 # získání seznamu souřadnic bydlišť účastníků akce
 function akce2_mapa($akce) {  trace();
