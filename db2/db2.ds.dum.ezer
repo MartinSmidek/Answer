@@ -2,8 +2,8 @@
 # (c) 2008-2016 Martin Šmídek <martin@smidek.eu>
 
 var the_order: number
-var authorized: number
-var ds_web: number
+//var authorized: number
+//var ds_web: number
 
 proc order_load (ord) {
   echo("ord=",ord); the_order.set(ord); pobyt.precti; pobyt.compare
@@ -25,31 +25,32 @@ proc show_order (ord) {
 
 
 proc onstart2 () {
-  ds_web.set(sys('ezer','options','ds_web'));
-  { ds_web.get; authorized.set(0);  ucastnici.to_show.set(0); cast;
-    the_order.set(javascript("Ezer.parm[1]")); pobyt.precti
-  | ucastnici.to_show.set(1); ucastnici.formular
-  }
+//  ds_web.set(sys('ezer','options','ds_web'));
+//  { ds_web.get; authorized.set(0);  ucastnici.to_show.set(0); cast;
+//    the_order.set(javascript("Ezer.parm[1]")); pobyt.precti
+//  | 
+    ucastnici.to_show.set(1); ucastnici.formular
+//  }
 }
 
-proc autorizace {
-  authorized.set(p.modal(200,20)); echo('authorized=',authorized.get);
-}
+//proc autorizace {
+//  authorized.set(p.modal(200,20)); echo('authorized=',authorized.get);
+//}
 
-panel p [,,200,70] { type:'popup', title:'Dialog'
-  use v: form f [0,0,,]
-  form f [,,200,70] {
-    label [0,10,200,40] { title:"Napište prosím PIN, který Vám byl pro tuto akci zaslaný správcem Domu setkání při potvrzení objednávky:" }
-    field pin [0,55,50,] { value:'6' }
-    button [100,55,,] { title:'Pokračovat',
-      proc onclick() { panel.hide(ask('pin_test',the_order.get,pin.get)) }
-    }
-  }
-}
+//panel p [,,200,70] { type:'popup', title:'Dialog'
+//  use v: form f [0,0,,]
+//  form f [,,200,70] {
+//    label [0,10,200,40] { title:"Napište prosím PIN, který Vám byl pro tuto akci zaslaný správcem Domu setkání při potvrzení objednávky:" }
+//    field pin [0,55,50,] { value:'6' }
+//    button [100,55,,] { title:'Pokračovat',
+//      proc onclick() { panel.hide(ask('pin_test',the_order.get,pin.get)) }
+//    }
+//  }
+//}
 
-proc cast { ds_web.get; javascript("window.resizeTo(720,330);",1) }
+//proc cast { ds_web.get; javascript("window.resizeTo(720,330);",1) }
 
-proc cely { ds_web.get; javascript("window.resizeTo(720,680);",1); pobyt.popis.ukaz.display(0); }
+//proc cely { ds_web.get; javascript("window.resizeTo(720,680);",1); pobyt.popis.ukaz.display(0); }
 
 // ==========================================================================================> pobyt
 // ukáže a obslouží horní polovinu formuláře
@@ -95,17 +96,17 @@ group pobyt {
   // ------------------------------------------------------------------==> záhlaví
   form zahlavi [,,600,30] { css:'ds_form'
     label tit [ 10,  0,300,] { title:'<h3>Objednávka pobytu</h3>' }
-    button pin [180,2,,] { title:'pin',  skill:'yd|yd', help:'zobrazí PIN umožňující objednateli zapsat a opravovat účastníky',
-      proc onclick() {
-        alert(ask('pin_make',the_order.get))
-      }
-    }
-    button ukaz [245,2,,] { title:'zobraz účastníky', help:'umožní zapsat a opravit seznam účastníků'
-      proc onclick() {
-        autorizace; authorized.get; cely; ukaz_spodek
-      | alert("Bohužel, toto není správný PIN")
-      }
-    }
+//    button pin [180,2,,] { title:'pin',  skill:'yd|yd', help:'zobrazí PIN umožňující objednateli zapsat a opravovat účastníky',
+//      proc onclick() {
+//        alert(ask('pin_make',the_order.get))
+//      }
+//    }
+//    button ukaz [245,2,,] { title:'zobraz účastníky', help:'umožní zapsat a opravit seznam účastníků'
+//      proc onclick() {
+//        autorizace; authorized.get; cely; ukaz_spodek
+//      | alert("Bohužel, toto není správný PIN")
+//      }
+//    }
     label [400,  0,300,] { title:'<h3>Fakturační adresa objednavatele</h3>' }
   }
   // ------------------------------------------------------------------==> OBJEDNÁVKA
@@ -113,7 +114,7 @@ group pobyt {
     const PL=0; PT=92; QT=PT+PQ-4; FT=120+PQ
     label       [  0,  0,100,] { title:'stav objednávky' }
     select      [  0, 15,120,] { type:'map', data:tx_gnalberice_order.state, options:ds_stav.hodnota }
-    label       [130,  0,100,] { title:'akce' }
+    label       [130,  0,100,] { title:'akce YS' }
     field       [130, 15, 40,] { data:tx_gnalberice_order.akce, format:'r' }
     label       [180,  0,200,] { title:'poznámka k objednávce' }
     edit        [180,15,164,57] { data:tx_gnalberice_order.note  }
@@ -332,8 +333,15 @@ group ucastnici {
     label [ 10,20,300,] { title:"<h3 style='margin:0'>Seznam účastníků pobytu</h3>"  }
     label [400,20,300,] { title:"<h3 style='margin:0'>Údaje vybraného účastníka</h3>" }
 
-    button [200,10,,] { title:'TEST', skill:'m|m'
-    }
+    button [196,14,,] { title:'Načtení akce YMCA Setkání'
+      proc onclick() { var ret:object
+        ret.set(ask('ds_import_ys',the_order.get));
+        [ ret.conf; confirm(ret.conf); 
+          ret.set(ask('ds_import_ys',the_order.get,1)) 
+        ];
+        alert(ret.html);
+        akc.seznam.browse_refresh;
+    }}
   }
   // ------------------------------------------------------------------==> AKCE
   form akce /*[,,300,100]*/ { css:'ds_form'

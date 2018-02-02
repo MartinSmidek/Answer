@@ -301,6 +301,85 @@ function ds_kli_menu() {
   return $result;
 }
 # ======================================================================================> objednávky
+# ------------------------------------------------------------------------------------ ds objednavka
+# vrátí ID objednávky pokud existuje k této akce
+function ds_objednavka($ida) {
+  $order= 0;
+  list($rok,$kod)= select('g_rok,g_kod','join_akce',"id_akce=$ida");
+  if ( $kod ) {
+    $order= select('uid','setkani.tx_gnalberice_order',
+        "akce=$kod AND YEAR(FROM_UNIXTIME(fromday))=$rok");
+    $order= $order ? $order : 0;
+  }
+  return $order;
+}
+# ------------------------------------------------------------------------------------- ds import_ys
+# naplní seznam účastníky dané akce
+function ds_import_ys($order,$clear=0) {
+  $ret= (object)array(html=>'',conf=>'');
+  list($rok,$kod,$from,$until,$strava)= 
+      select('YEAR(FROM_UNIXTIME(fromday)),akce,FROM_UNIXTIME(fromday),FROM_UNIXTIME(untilday),board',
+          'setkani.tx_gnalberice_order',"uid=$order");
+  if ( $kod ) {
+    // objednávka má definovaný kód akce
+    $ida= select('id_akce','ezer_db2.join_akce',"g_kod=$kod AND g_rok=$rok");
+    // zjistíme, zda je objednávka bez lidí
+    $pocet= select('COUNT(*)','setkani.ds_osoba',"id_order=$order");
+    if ( $pocet && $clear ) {
+      query("DELETE FROM setkani.ds_osoba WHERE id_order=$order");
+      $ret->html.= "Seznam účastníků pobytu byl vyprázdněn.<br>";
+    }
+    if ( $pocet && !$clear ) {
+      $ret->conf= "Seznam účastníků pobytu obsahuje $pocet lidí - mám jej vyprázdnit a načíst 
+          z akce YMCA Setkání? (Pozor, případné přiřazení pokojů, lůžek a strav bude zapomenuto)";
+      $ret->html= "Seznam účastníků pobytu nebyl změněn";
+      goto end;
+    }
+    // projdeme účastníky v ezer_db2 a přeneseme společné údaje
+    // a potom prijmeni,jmeno,narozeni,psc,obec,ulice,email,telefon 
+    $uc= array();
+    $rp= mysql_qry("
+      SELECT s.id_osoba,prijmeni,jmeno,narozeni,
+        IF(adresa,o.psc,r.psc) AS psc, 
+        IF(adresa,o.obec,r.obec) AS obec,
+        IF(adresa,o.ulice,r.ulice) AS ulice,
+        IF(kontakt,o.email,r.emaily) AS email,
+        IF(kontakt,o.telefon,r.telefony) AS telefon,
+        IFNULL(nazev,prijmeni) AS rod
+      FROM pobyt AS p
+      JOIN spolu AS s USING (id_pobyt)
+      JOIN osoba AS o USING (id_osoba)
+      LEFT JOIN tvori AS t ON t.id_rodina=i0_rodina AND t.id_osoba=s.id_osoba
+      LEFT JOIN rodina AS r USING (id_rodina)
+      WHERE id_akce=$ida 
+      GROUP BY id_osoba ORDER BY rod, narozeni
+    ");
+    while ($rp && $o= mysql_fetch_object($rp)) {
+      $uc[]= $o;
+    }
+    // doplnění účastníků do objednávky
+    foreach ( $uc as $o ) {
+      $ido= $o->id_osoba;
+      $ds_osoba= select('id_osoba','setkani.ds_osoba',"ys_osoba=$ido");
+      if ( !$ds_osoba ) {
+        $rod= substr(cz2ascii($o->rod),0,3);
+        query("INSERT INTO setkani.ds_osoba 
+          (id_order,ys_osoba,rodina,prijmeni,jmeno,narozeni,psc,obec,
+           ulice,email,telefon,fromday,untilday,strava) VALUES
+          ($order,$ido,'$rod','$o->prijmeni','$o->jmeno','$o->narozeni','$o->psc','$o->obec',
+           '$o->ulice','$o->email','$o->telefon','$from','$until',$strava)
+        ");
+//        break;
+      }
+    }
+    $ret->html.= "Seznam účastníků pobytu byl načten z akce YMCA Setkání";
+  }
+  else {
+    $ret->html.= "Akce YMCA Setkání musí mít vyplněný kód akce (vedle stavu objednávky)";
+  }
+end:  
+  return $ret;
+}
 # ------------------------------------------------------------------------------------ ds rooms_help
 # vrátí popis pokojů
 function ds_rooms_help($version=1) {

@@ -1,5 +1,7 @@
 /* obecné barvy pozadí */
 .bily           { background-color:#ffffff !important; }
+.bily_ram       { border: 1px solid #fff; border-radius: 5px; 
+                  padding: 1px 6px; color:#fff !important; font-weight: bold; }
 
 /* styly pro wait - viz Tutorial */
 

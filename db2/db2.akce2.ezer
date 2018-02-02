@@ -283,7 +283,8 @@ table akce { key_id:'id_duakce'
   number ciselnik_rok
   text note
   text archiv
-  number web_kalendar
+  number web_prihlasky // setkani.org
+  number web_kalendar  // chlapi.online
   number web_obsazeno
   text web_anotace
   text web_url
