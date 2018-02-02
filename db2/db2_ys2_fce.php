@@ -305,10 +305,10 @@ function ds_kli_menu() {
 # vrátí ID objednávky pokud existuje k této akce
 function ds_objednavka($ida) {
   $order= 0;
-  list($rok,$kod)= select('g_rok,g_kod','join_akce',"id_akce=$ida");
+  list($rok,$kod)= select('g_rok,g_kod','join_akce',"id_akce=$ida",'ezer_db2');
   if ( $kod ) {
-    $order= select('uid','setkani.tx_gnalberice_order',
-        "akce=$kod AND YEAR(FROM_UNIXTIME(fromday))=$rok");
+    $order= select('uid','tx_gnalberice_order',
+        "akce=$kod AND YEAR(FROM_UNIXTIME(fromday))=$rok",'setkani');
     $order= $order ? $order : 0;
   }
   return $order;
@@ -319,14 +319,16 @@ function ds_import_ys($order,$clear=0) {
   $ret= (object)array(html=>'',conf=>'');
   list($rok,$kod,$from,$until,$strava)= 
       select('YEAR(FROM_UNIXTIME(fromday)),akce,FROM_UNIXTIME(fromday),FROM_UNIXTIME(untilday),board',
-          'setkani.tx_gnalberice_order',"uid=$order");
+          'setkani.tx_gnalberice_order',"uid=$order",'setkani');
   if ( $kod ) {
     // objednávka má definovaný kód akce
-    $ida= select('id_akce','ezer_db2.join_akce',"g_kod=$kod AND g_rok=$rok");
+    ezer_connect('ezer_db2',true);
+    $ida= select('id_akce','ezer_db2.join_akce',"g_kod=$kod AND g_rok=$rok",'ezer_db2');
     // zjistíme, zda je objednávka bez lidí
-    $pocet= select('COUNT(*)','setkani.ds_osoba',"id_order=$order");
+    ezer_connect('setkani',true);
+    $pocet= select('COUNT(*)','ds_osoba',"id_order=$order",'setkani');
     if ( $pocet && $clear ) {
-      query("DELETE FROM setkani.ds_osoba WHERE id_order=$order");
+      query("DELETE FROM ds_osoba WHERE id_order=$order",'setkani');
       $ret->html.= "Seznam účastníků pobytu byl vyprázdněn.<br>";
     }
     if ( $pocet && !$clear ) {
@@ -338,6 +340,7 @@ function ds_import_ys($order,$clear=0) {
     // projdeme účastníky v ezer_db2 a přeneseme společné údaje
     // a potom prijmeni,jmeno,narozeni,psc,obec,ulice,email,telefon 
     $uc= array();
+    ezer_connect('ezer_db2',true);
     $rp= mysql_qry("
       SELECT s.id_osoba,prijmeni,jmeno,narozeni,
         IF(adresa,o.psc,r.psc) AS psc, 
@@ -358,17 +361,22 @@ function ds_import_ys($order,$clear=0) {
       $uc[]= $o;
     }
     // doplnění účastníků do objednávky
+    ezer_connect('setkani',true);
     foreach ( $uc as $o ) {
       $ido= $o->id_osoba;
-      $ds_osoba= select('id_osoba','setkani.ds_osoba',"ys_osoba=$ido");
+      $ds_osoba= select('id_osoba','ds_osoba',"ys_osoba=$ido",'setkani');
       if ( !$ds_osoba ) {
         $rod= substr(cz2ascii($o->rod),0,3);
+        $prijmeni= uw($o->prijmeni);
+        $jmeno= uw($o->jmeno);
+        $obec=  uw($o->obec);
+        $ulice= uw($o->ulice);
         query("INSERT INTO setkani.ds_osoba 
           (id_order,ys_osoba,rodina,prijmeni,jmeno,narozeni,psc,obec,
            ulice,email,telefon,fromday,untilday,strava) VALUES
-          ($order,$ido,'$rod','$o->prijmeni','$o->jmeno','$o->narozeni','$o->psc','$o->obec',
-           '$o->ulice','$o->email','$o->telefon','$from','$until',$strava)
-        ");
+          ($order,$ido,'$rod','$prijmeni','$jmeno','$o->narozeni','$o->psc','$obec',
+           '$ulice','$o->email','$o->telefon','$from','$until',$strava)
+        ",'setkani');
 //        break;
       }
     }
