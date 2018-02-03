@@ -29,6 +29,8 @@ proc onfirstfocus() {
   | has_skill('caar'); m.c.r.click
   | has_skill('a');    m.c.a.click
   ];
+  // zobrazení vazby na objednávky DS
+  [ has_skill('y') | page.ds_order.set_css('hidden','') ];
   page.inf.onclick;
 #   spinner(0);
 }
@@ -202,7 +204,7 @@ form _page [,,275,360] {
   proc show_page(id_akce) {
     cen_copy.enable(0); cen_copy.key(0); key_akce.set(id_akce); //fil.display(0);
     form.load(id_akce); zmena_web.set(0); 
-    ds_order.set(ask('ds_objednavka',id_akce));
+    [ has_skill('y'); ds_order.set(ask('ds_objednavka',id_akce)) ];
     switch(zalozka.get,
     'inf',{ note.set(ask('akce2_info',id_akce));  },
     'cor',{ //form.load(id_akce);
@@ -232,7 +234,7 @@ form _page [,,275,360] {
   // ------------------------------------- základní údaje o akci
   field [17,49,218,] { tag:'cor', title:'^název akce *', data:akce.nazev }
   field [17,89,218,] { tag:'cor', title:'^místo', data:akce.misto }
-  check ds_order [250,89,200,] { tag:'cor', title:'objednávka Domu setkání', format:'d', skill:'yd' } 
+  check ds_order [250,89,200,] { tag:'cor', title:'objednávka Domu setkání', format:'nd' } 
   field datum_od [18,133,83,] { tag:'cor', title:'^začátek *', type:'date', data:akce.datum_od }
   field [118,133,83,] { tag:'cor', title:'^ukončení', type:'date', data:akce.datum_do }
   check [213,166,90,] { tag:'cor', title:'jen seznam', data:akce.spec }
