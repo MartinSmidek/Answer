@@ -352,8 +352,8 @@ function ds_import_ys($order,$clear=0) {
       FROM pobyt AS p
       JOIN spolu AS s USING (id_pobyt)
       JOIN osoba AS o USING (id_osoba)
-      LEFT JOIN tvori AS t ON t.id_rodina=i0_rodina AND t.id_osoba=s.id_osoba
-      LEFT JOIN rodina AS r USING (id_rodina)
+      LEFT JOIN tvori AS t USING (id_osoba)
+      LEFT JOIN rodina AS r ON r.id_rodina=IF(p.i0_rodina,p.i0_rodina,t.id_rodina)
       WHERE id_akce=$ida 
       GROUP BY id_osoba ORDER BY rod, narozeni
     ");
