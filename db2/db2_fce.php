@@ -973,7 +973,7 @@ function akce2_pobyt_default($id_pobyt,$zapsat=0) {  trace();
   $ms_akce_dite_kat= map_cis('ms_akce_dite_kat','barva'); // {L|-},{c|p} = lůžko/bez, celá/poloviční
   // projítí společníků v pobytu
   $dosp= $deti= $koje= $noci= $sleva= $fce= $svp= 0;
-  $luzka= $bez= $cele= $polo= 0;
+  $luzka= $bez= $cela= $polo= 0;
   $msg= '';
   $qo= "SELECT o.jmeno,o.narozeni,a.datum_od,DATEDIFF(datum_do,datum_od) AS _noci,p.funkce,
          s.pecovane,s.s_role,s.dite_kat,(SELECT CONCAT(osoba.id_osoba,',',pobyt.id_pobyt)
@@ -999,7 +999,7 @@ function akce2_pobyt_default($id_pobyt,$zapsat=0) {  trace();
     $msg.= " {$o->jmeno}:$vek";
     if ( in_array($o->s_role,array(2,3,4)) && $o->dite_kat ) {
       // pokud je definována kategorie podle _cis/ms_akce_dite_kat ALE dítě není pečoun
-      $dite++;
+      $deti++;
       list($spani,$strava)= explode(',',$ms_akce_dite_kat[$o->dite_kat]);
       // lůžka
       if ( $spani=='L' )      $luzka++;
