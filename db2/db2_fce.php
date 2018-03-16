@@ -139,6 +139,7 @@ function web_prihlaska($akce,$url,$on) {  trace();
   if ( $ok ) {
     $idp= $m[2];
     $ida= $on ? $akce : 0;
+    ezer_connect('setkani');
     $ok= select("uid","setkani.tx_gncase_part","uid=$idp AND !deleted AND !hidden");
     if ( $ok ) {
       $ok= query("UPDATE setkani.tx_gncase_part SET id_akce=$ida WHERE uid=$idp");
@@ -151,7 +152,7 @@ function web_prihlaska($akce,$url,$on) {  trace();
   else {
     $html.= "url pozvánky není v očekávaném tvaru";
   }
-  $html.= "<hr>POZOR: tato úprava ještě není dokončena, takže na webu zatím nic není :-P";
+  $html.= "<hr>POZOR: na webu je přihláška vidět jen pokud je použit klíč ?try=prihlasky";
   return $html;
 }
 # --------------------------------------------------------------------------------------- akce2 mapa
