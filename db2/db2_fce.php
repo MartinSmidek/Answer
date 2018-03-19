@@ -5887,7 +5887,7 @@ function akce2_skup_tisk($akce,$par,$title,$vypis,$export) {  trace();
   $skupiny= $ret->skupiny;
   // pro par.mark=LK zjistíme účasti rodin na obnově
   $lk= 0;
-  $na_kurzu= $na_obnove= array();
+  $na_kurzu= $na_obnove= $nahrada= array();     // $nahrada = na obnově náhradnici => id_rodina->1
   if ( $par->mark=='LK' ) {
     // chyba=-1 pro kombinaci par.mark=LK a akce není obnova MS
     if ( $err==-1 ) { $result->html= $ret->msg; display("err=$err");  goto end; }
@@ -5901,21 +5901,22 @@ function akce2_skup_tisk($akce,$par,$title,$vypis,$export) {  trace();
     // seznam rodin obnovy
     $lk_nebyli= 0;
     $rr= mysql_qry("
-      SELECT i0_rodina,CONCAT(nazev,' ',GROUP_CONCAT(jmeno ORDER BY role SEPARATOR ' a '))
+      SELECT i0_rodina,CONCAT(nazev,' ',GROUP_CONCAT(jmeno ORDER BY role SEPARATOR ' a ')),funkce
       FROM pobyt AS p
       JOIN rodina AS r ON r.id_rodina=i0_rodina
       JOIN tvori AS t USING (id_rodina)
       JOIN osoba AS o USING (id_osoba)
-      WHERE id_akce=$akce AND role IN ('a','b')
+      WHERE id_akce=$akce AND role IN ('a','b') -- AND funkce NOT IN (9)
       GROUP BY i0_rodina
       ORDER BY nazev");
-    while ( $rr && (list($idr,$nazev)= mysql_fetch_array($rr)) ) {
+    while ( $rr && (list($idr,$nazev,$funkce)= mysql_fetch_array($rr)) ) {
       $x= '';
       if ( !isset($na_kurzu[$idr]) ) {
         $lk_nebyli++;
-        $x= $nazev;
+        $x= $nazev . ($funkce==9 ? " (náhradníci)" : '');
       }
       $na_obnove[$idr]= $x;
+      if ( $funkce==9 ) $nahrada[$idr]= 1;
     }
   }
   $n= 0;
@@ -5932,6 +5933,11 @@ function akce2_skup_tisk($akce,$par,$title,$vypis,$export) {  trace();
           if ( !isset($na_obnove[$c->i0_rodina]) ) {
             $atrs[$n]['jmeno']= "bcolor=ffdddddd";
             $clmn[$n]['jmeno']= '- '.$clmn[$n]['jmeno'];
+          }
+          // resp. náhradníkům
+          else if ( isset($nahrada[$c->i0_rodina]) ) {
+            $atrs[$n]['jmeno']= "bcolor=ffdddddd";
+            $clmn[$n]['jmeno']= '+ '.$clmn[$n]['jmeno'];
           }
         }
         $n++;
@@ -5976,6 +5982,8 @@ function akce2_skup_tisk($akce,$par,$title,$vypis,$export) {  trace();
         $pokoj= $lk ? '' : $c->pokoj;
         if ( $lk && !isset($na_obnove[$c->i0_rodina]) )
           $nazev= "<s>$nazev</s>";
+        elseif ( $lk && isset($nahrada[$c->i0_rodina]) )
+          $nazev= "<s>$nazev (náhradníci)</s>";
         if ( $i==$c->id_pobyt )
           $tab.= "<tr><th>{$c->skupina}</th><th>$nazev</th><th>$pokoj</th></tr>";
         else
