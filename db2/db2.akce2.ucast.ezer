@@ -396,6 +396,10 @@ form _cmd [,,623,30] {
     | zpet.Click; return                                                // nic
     };
     // vlastní vložení se zamezením duplicit a s definicí kategorie pro děti
+    [ rod.key; os1.role.get 
+    | // doplnění chybějící role v rodině
+      os1.role.set(choose("Doplň jakou roli má nová osoba v rodině","dítě:d,manžel:a,manželka:b,pomoc:p"))
+    ];
     ret.set(ask('ucast2_pridej_osobu',
       os1.key,os1.access.get,the_duakce.get,pob.key,rod.key,os1.role.get));
     { ret.msg; alert(ret.msg)
@@ -1291,9 +1295,10 @@ form _rodina2 [,,360,229]  { css:'ae_frame'
     proc rod_show(n) { var ret:object
       ret.set(ask('db2_rod_show',this.get,n));
       rod_next.enable(ret.next); rod_back.enable(ret.back); rod_use.enable(ret.n); rod_new.enable(1);
-      rod_n.set(ret.n); rodiny0.set_css(ret.css,css_all.get); ret.n;
+      rod_n.set(ret.n); rodiny0.set_css(ret.css,css_all.get); 
+      ret.n; 
       copy_by_name(ret.rod,form); form.key(key_rodina.get); cleni.browse_fill(ret.cleni,'~');
-      cleni.raise('onrowclick');
+      [ cleni.raise('onrowclick') | os1.clear_osoba; os2.clear_osoba ];
       warning
     | warning("rodina '",this.get,"' ještě není v evidenci, použij ",
         replace_fa('[fa-heart]')," pro založení");

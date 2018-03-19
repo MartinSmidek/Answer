@@ -721,7 +721,8 @@ panel osoba_config [,,200,150] {type:'popup', title:"Podrobnosti údajů"
   }
   var _old= 'Z'
 }
-form _osoba2x [,,244,322] {css:'ae_frame', proc onclick() { on_click }
+form _osoba2x [,,244,322] {css:'ae_frame', 
+  proc onclick() { on_click }
   var host=''           // 'U' - použito z Uživatelé, 'E' - použito z Evidence
   var idr=0             // klíč rodiny pro rodinné údaje (pro akce2_osoba2)
   var mode=0            // 0 zobrazit jen osobní kontakt a adresu, rodinnou skrýt
@@ -821,10 +822,8 @@ form _osoba2x [,,244,322] {css:'ae_frame', proc onclick() { on_click }
   field keys_osoba // seznam pravděpodobných kopií
   field key_tvori [186,10,50,] {tag:'f', format:'or', css:'Label', help:' ', tabindex:0 }
   field key_spolu
-  field kmen    { expr:"IFNULL(SUBSTR((SELECT MIN(CONCAT(role,nazev))
-                        FROM tvori AS ot JOIN rodina AS r USING (id_rodina) WHERE ot.id_osoba=o.id_osoba),2),'-')" }
-  field id_kmen { expr:"IFNULL(SUBSTR((SELECT MIN(CONCAT(role,id_rodina))
-                        FROM tvori AS ot JOIN rodina AS r USING (id_rodina) WHERE ot.id_osoba=o.id_osoba),2),'-')" }
+  field kmen    { expr:"IFNULL(SUBSTR((SELECT MIN(CONCAT(role,nazev)) FROM tvori AS ot JOIN rodina AS r USING (id_rodina) WHERE ot.id_osoba=o.id_osoba),2),'-')" }
+  field id_kmen { expr:"IFNULL(SUBSTR((SELECT MIN(CONCAT(role,id_rodina)) FROM tvori AS ot JOIN rodina AS r USING (id_rodina) WHERE ot.id_osoba=o.id_osoba),2),'-')" }
   field deleted { expr:"LEFT(o.deleted,1)='D'" }
 
   #==> . see+new_osoba
