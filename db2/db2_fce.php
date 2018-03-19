@@ -3914,7 +3914,7 @@ function ucast2_pridej_osobu($ido,$access,$ida,$idp,$idr=0,$role=0) { trace();
     $ret->tvori= ezer_qry("INSERT",'tvori',0,array(
       (object)array('fld'=>'id_osoba', 'op'=>'i','val'=>$ido),
       (object)array('fld'=>'id_rodina','op'=>'i','val'=>$idr),
-      (object)array('fld'=>'role',     'op'=>'i','val'=>"'$role'")
+      (object)array('fld'=>'role',     'op'=>'i','val'=>$role)
     ));
   }
   # úprava access, je-li třeba
@@ -8009,7 +8009,7 @@ function evid2_cleni($id_osoba,$id_rodina,$filtr) { //trace();
         rt.id_tvori,rt.role,o.deleted,of.id_rodina,nazev,of.access AS r_access
       FROM osoba AS o
         JOIN tvori AS ot ON ot.id_osoba=o.id_osoba
-        JOIN dar AS od ON od.id_osoba=o.id_osoba
+        LEFT JOIN dar AS od ON od.id_osoba=o.id_osoba
         JOIN rodina AS of ON of.id_rodina=ot.id_rodina -- AND of.access & $access
         JOIN tvori AS rt ON rt.id_rodina=of.id_rodina
         JOIN osoba AS rto ON rto.id_osoba=rt.id_osoba
