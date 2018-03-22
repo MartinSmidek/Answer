@@ -96,6 +96,15 @@ proc init_ucast2() {
   panel.display(1,'akce2'); panel.display(0,'akce1');
   u2.reload
 }
+proc prijeti_prihlasky () { var msg:text
+  msg.set(ask('web_zmena_ok',the_pobyt.get,0));
+  msg;
+  [ confirm(msg,"<br>Beru přihlášku a vzniklé změny na vědomí.");
+    msg.set(ask('web_zmena_ok',the_pobyt.get,1));
+    refresh_ucast(the_pobyt.get) 
+  ]
+| alert("Účast nevznikla online přihláškou nebo tato byla již vzata na vědomí - více info ve změnách.")            
+}
 # --------------------------------------------------------------------------==> . změny rozměru okna
 
 const min_h=550           // minimální výška (nelze jednoduše měnit - jsou k ní vztaženy souřadnice v use)
@@ -555,7 +564,7 @@ form _ucast [,,400,] { css:'ds_form'
     show datum_od
     // zobrazení
     show _nazev [,,100,] { title:'příjmení', format:'s+q*'
-      css_cell:'r_access,0:,1:ezer_ys,2:ezer_fa,3:ezer_db' }
+      css_cell:'p_access_web,0:,1:ezer_ys,2:ezer_fa,3:ezer_db,17:ezer_ys ezer_web,18:ezer_fa ezer_web,19:ezer_db ezer_web' }
     # varianta A plná jména
     show _jmena [,,180,] { title:'jméno/a', format:'tsq%' }
     # varianta B na úkor _jmena
@@ -574,7 +583,10 @@ form _ucast [,,400,] { css:'ds_form'
       help:'funkce na akci', css_cell:""} // nastavuje se v panel.onfocus pro LK a obnovy
     show skupina [,,30,] { title:'sk.', format:'rq=s:e', help:'číslo skupinky'}
     // barvení
-    show dluh, show _ms, show r_access
+    show dluh, show _ms
+    show r_access 
+    show p_access_web // pobyt.access + 16 pokud došlo ke změně přes web (pobyt, rodina, spolu, osoba)
+    show r_access_web // access + 16 pokud došlo ke změně přes web (rodina)
     // údaje rod
     show r_spz, show r_svatba, show r_datsvatba, show r_rozvod,
     show r_ulice, show r_psc, show r_obec, show r_stat,
@@ -642,11 +654,13 @@ form _ucast [,,400,] { css:'ds_form'
     }
     proc reload_evid() {  var id2:number, row:number
       pob.skup.display(1);
+      rod.detail.web.enable(0);
       { rod.key; rod.display(1,'r|s'); copy_by_name(b,rod.get);
         rod.rodiny1.set(_nazev.get);
         rod.display(0,'[abnsy]'); rod.display(1,'[mo]'); rod.enable(1,'[m]');
         rod.rodiny.selects(conc(_nazev.get,':',key_rodina.get)); rod.rodiny.key(key_rodina.get);
-      | rod.display(0,'[^f]'); rod.display(1,'y'); rod.enable(0,'y')
+        [ gt(r_access_web.get,15); rod.detail.web.enable(1) ]
+      | rod.display(0,'[^f]'); rod.display(1,'y'); rod.enable(0,'y');
       };
       id2.set(os2.key_osoba.get);
       { r_cleni.get;
@@ -956,7 +970,8 @@ form _pobyt [,,0,62] {
   field i0_rodina { data:p.i0_rodina }
   # ------------------------==> . kontextové_menu
   menu { type:'context', join:frame
-    item { title:'konfigurace formuláře', proc onclick () { pobyt_config.tune } }
+    item { title:'přijetí webových změn', proc onclick () { prijeti_prihlasky } }
+    item { title:'-konfigurace formuláře', proc onclick () { pobyt_config.tune } }
     item { title:'ukázat změny', proc onclick () { track.back_show('pobyt',the_pobyt.get) } }
   }
 
@@ -1267,7 +1282,12 @@ form _rodina2 [,,360,229]  { css:'ae_frame'
   field keys_rodina // seznam pravděpodobných kopií
   # ------------------------==> . kontextové_menu
   menu detail { type:'context'
-    item { title:'konfigurace formuláře', proc onclick () { rodina_config.tune(ucast) } }
+    item web { title:'přijetí webových změn', proc onclick () { 
+      confirm('Beru na vědomí změnu rodinných údajů provedenou z webu');
+      ask('web_zmena_ok','rodina',key_rodina.get);
+      refresh_ucast(the_pobyt.get)
+    } }
+    item { title:'-konfigurace formuláře', proc onclick () { rodina_config.tune(ucast) } }
     item { title:'ukázat změny', proc onclick () {
       key_rodina.get; track.back_show('rodina',key_rodina.get) } }
     item { title:'historie skupinek MS', proc onclick () {
@@ -1395,8 +1415,9 @@ form _rodina2 [,,360,229]  { css:'ae_frame'
     show key_osoba
     show keys_osoba // [,,50,] {format:'t'}    // seznam duplicitních osob
     show access
+    show access_web // access + 16 pokud došlo ke změně přes web
     show jmeno [,,110,] {title:'jméno'
-      css_cell:'access,0:,1:ezer_ys,2:ezer_fa,3:ezer_db' }
+      css_cell:'access_web,0:,1:ezer_ys,2:ezer_fa,3:ezer_db,17:ezer_ys ezer_web,18:ezer_fa ezer_web,19:ezer_db ezer_web' }
     show _dup  [,,0,] { title:'duplicita', help:'n-narození, k-kontakty, b-bydliště', format:"t" }
     show vek   [,,30,] {title:'věk', format:'r' }
     show key_tvori

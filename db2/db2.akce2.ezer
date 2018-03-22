@@ -284,8 +284,9 @@ table akce { key_id:'id_duakce'
   text note
   text archiv
   number web_prihlasky // setkani.org
-  number web_kalendar  // chlapi.online
+  number web_maximum
   number web_obsazeno
+  number web_kalendar  // chlapi.online
   text web_anotace
   text web_url
 }

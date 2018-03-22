@@ -42,7 +42,7 @@ body { position:absolute; width:100%; height:100%; }
 .fialovy        { background-color:#d27efc !important; }
 .jemna          { background-color:$b_item; }
 
-/* specifické barvy pro odlišení záznamů YS, FA, DB */
+/* specifické barvy pro odlišení záznamů YS, FA, DB a změny učiněné přes web*/
 #appl { color:$zelena; }
 
 tr td.ezer_ys, li.ezer_ys, input.ezer_ys, .ezer_ys input, span.ezer_ys
@@ -55,6 +55,7 @@ tr td.ezer_db, li.ezer_db, input.ezer_db, .ezer_db input, span.ezer_db
                 { background-color:#aff !important; }
 .nerodina,.nerodina input
                 { background-color:#e8e !important; }
+tr td.ezer_web  { outline: 3px solid #ef7f13; }
 /* */
 
 button.search   { padding-left:0px; }
