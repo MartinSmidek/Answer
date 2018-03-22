@@ -58,6 +58,10 @@ function answer_php($app,$app_name,$db_name,$skin,$js_lib,$css_lib,$options) {
   require_once("$app.inc.php");
   require_once("{$EZER->version}/server/ae_slib.php");
 
+  // detekce platformy
+  $ua= $_SERVER['HTTP_USER_AGENT'];
+  ezer_browser($browser,$browser_version,$platform,$ua);
+
   $client= "{$EZER->version}/client";
   $licensed= "$client/licensed";
 
@@ -105,6 +109,8 @@ function answer_php($app,$app_name,$db_name,$skin,$js_lib,$css_lib,$options) {
     array("$client/lib.js","$client/ezer_fdom1.js","$client/ezer.js","$client/ezer_report.js",
       "$client/area.js", "$client/ezer_fdom2.js","$client/app.js",
       /*"$licensed/zeroclipboard/ZeroClipboard.js",*/"$licensed/mootree.js"),
+    // pro dotykové platformy  
+    $platform=='A' || $platform=='I' ? array("$licensed/hammer.js") : array(),
     // debugger                                                                       /* debugger */
     $dbg ? array("$licensed/jush/mini_jush.js"):array(),                              /* debugger */
     // rozhodnout zda používat online mapy
@@ -116,7 +122,7 @@ function answer_php($app,$app_name,$db_name,$skin,$js_lib,$css_lib,$options) {
   );
 
   $css= array_merge(
-    $EZER->version=='ezer3' ? array("$client/ezer.css.php","$client/ezer3.css.php=skin") : array("$client/ezer.css"),
+    $EZER->version=='ezer3' ? array("$client/ezer.css.php","$client/ezer3.css.php=skin") : array("$client/ezer.css.php"),
 //     $EZER->version=='ezer2.2' ? $css_lib : array(),    // = uživatelské css
     $EZER->version=='ezer3' ? array("db2/db2.css","db2/db2.css.php=skin") : $css_lib,    // = uživatelské css
     $dbg ? array("./$licensed/jush/mini_jush.css") : array(),

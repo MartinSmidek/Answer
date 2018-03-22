@@ -136,7 +136,7 @@ function answer_ini($app,$answer_db,$dbs_plus,$php_lib,$ezer_mod=array()) {
 //     "db/db_akce.php",       YS YS2 FA2 CR
 //     "db/db_akce2.php",      YS YS2 FA2 CR
     'ezer3/cloc.php',
-    "tcpdf/fis_tcpdf.php"),
+    "tcpdf/db2_tcpdf.php"),
     $php_lib
   );
 
