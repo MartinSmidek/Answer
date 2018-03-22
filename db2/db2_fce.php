@@ -155,6 +155,56 @@ function web_prihlaska($akce,$url,$on) {  trace();
   $html.= "<hr>POZOR: na webu je přihláška vidět jen pokud je použit klíč ?try=prihlasky";
   return $html;
 }
+# ------------------------------------------------------------------------------------- web zmena_ok
+# propojení s www.setkani.org - informace resp. odsouhlasení změn po online přihlášce na akci
+#  - doit=0 => generování přehledové hlášky o změnách týkající se pobytu
+#  - doit=1 => nulování všech web_zmena 
+function web_zmena_ok($id_pobyt,$doit=0) {  trace();
+  $msg= '';
+  list($dp,$i0r)= select('web_zmena,i0_rodina','pobyt',"id_pobyt=$id_pobyt");
+  list($zr,$dr)= !$i0r ? 0 : select('COUNT(*),web_zmena',
+      'rodina',"id_rodina=$i0r && web_zmena!='0000-00-00'");
+  list($zs,$ds,$ks)= select('COUNT(*),MAX(spolu.web_zmena),GROUP_CONCAT(id_spolu)',
+      'spolu',"id_pobyt=$id_pobyt && web_zmena!='0000-00-00'");
+  list($zo,$do,$ko)= select('COUNT(*),MAX(osoba.web_zmena),GROUP_CONCAT(id_osoba)',
+      'spolu JOIN osoba USING (id_osoba)',"id_pobyt=$id_pobyt && osoba.web_zmena!='0000-00-00'");
+  if ( !$doit ) {
+    // vypsání informací o webovém přihlášení
+    $d= max($dp,$dr,$ds,$do);
+//    $msg= "p:$dp r:$zr $dr s:$zs $ds o:$zo $do<hr>";
+    if ( $d!='0000-00-00' || $zs || $zo ) {
+      $day= sql_date1($d);
+      $n_ucastniku= kolik_1_2_5($zs,"účastníka,účastníky,účastníků");
+      $k_ucastnika= kolik_1_2_5($zo,"účastníka,účastníků,účastníků");
+      $msg.= ( !$dp ? '' : "Dne $day byla na webu vyplněna online přihláška")
+          .  ( !$zr ? '' : " se změnou rodinného údaje")
+          .  ( !$zs ? '' : " přihlašující $n_ucastniku")
+          .  ( !$zo ? '' : " z toho u $k_ucastnika se změnou osobních údajů")
+          . ".<br>";
+    }
+  }
+  else {
+    // odstranění příznaků webového přihlášení
+    if ( $dp ) 
+      ezer_qry("UPDATE",'pobyt',$id_pobyt,array((object)
+          array('fld'=>'web_zmena','op'=>'u','val'=>'0000-00-00')));
+    if ( $i0r )
+      ezer_qry("UPDATE",'rodina',$i0r,array((object)
+          array('fld'=>'web_zmena','op'=>'u','val'=>'0000-00-00')));
+    if ( $zs )
+      foreach(explode(',',$ks) as $ids ) {
+        ezer_qry("UPDATE",'spolu',$ids,array((object)
+            array('fld'=>'web_zmena','op'=>'u','val'=>'0000-00-00')));
+      }
+    if ( $zo )
+      foreach(explode(',',$ko) as $ido ) {
+        ezer_qry("UPDATE",'osoba',$ido,array((object)
+            array('fld'=>'web_zmena','op'=>'u','val'=>'0000-00-00')));
+      }
+    $msg= "s ok";
+  }
+  return $msg;
+}
 # --------------------------------------------------------------------------------------- akce2 mapa
 # získání seznamu souřadnic bydlišť účastníků akce
 function akce2_mapa($akce) {  trace();
@@ -2591,7 +2641,6 @@ function ucast2_browse_ask($x,$tisk=false) {
     $rodina_pobyt= array();       // $rodina[i0_rodina]=id_pobyt  pobyt rodiny (je-li rodinný)
     $rodiny= "";
     $spolu= array();              // $spolu[id_osoba]             id_pobyt
-    $tvori= array();              // $tvori[id_pobyt,id_osoba]    id_tvori,id_rodina,role,rodiny
     # ladění
     $AND= "";
 //     $AND= "AND p.id_pobyt IN (44285,44279,44280,44281) -- prázdná rodina a pobyt";
@@ -2607,7 +2656,7 @@ function ucast2_browse_ask($x,$tisk=false) {
       $AND= "AND p.id_pobyt={$y->oldkey}";
     }
     # kontext dotazu
-    if ( !$x ) $q0= mysql_qry("SET @akce:=422,@soubeh:=0,@app:='ys';");
+    if ( !$x ) mysql_qry("SET @akce:=422,@soubeh:=0,@app:='ys';");
     # duplicity, dokumenty, css?
     $duplicity= strstr($x->cond,'/*duplicity*/') ? 1 : 0;
     $dokumenty= strstr($x->cond,'/*dokumenty*/') ? 1 : 0;
@@ -2685,7 +2734,7 @@ function ucast2_browse_ask($x,$tisk=false) {
       FROM pobyt AS p
       JOIN tvori AS t ON t.id_rodina=p.i0_rodina
       JOIN osoba AS o USING(id_osoba)
-      WHERE o.deleted='' /*AND o.access&@access*/ AND $cond $AND
+      WHERE o.deleted='' AND $cond $AND
     ");
     while ( $qp && ($p= mysql_fetch_object($qp)) ) {
       $osoby.= ",{$p->id_osoba}";
@@ -2714,6 +2763,7 @@ function ucast2_browse_ask($x,$tisk=false) {
     # atributy osob
     $qo= mysql_qry("SELECT * FROM osoba AS o WHERE deleted='' AND id_osoba IN (0$osoby)");
     while ( $qo && ($o= mysql_fetch_object($qo)) ) {
+      $o->access_web= $o->access | ($o->web_zmena=='0000-00-00' ? 0 : 16);
       $osoba[$o->id_osoba]= $o;
     }
     # seznam rodin osob
@@ -2757,8 +2807,8 @@ function ucast2_browse_ask($x,$tisk=false) {
     $fpob1= ucast2_flds("key_pobyt=id_pobyt,_empty=0,key_akce=id_akce,key_osoba,key_spolu,key_rodina=i0_rodina,"
            . "keys_rodina='',c_suma,platba,potvrzeno,x_ms,xfunkce=funkce,funkce,skupina,dluh");
     $fakce= ucast2_flds("dnu,datum_od");
-    $frod=  ucast2_flds("fotka,r_access=access,r_spz=spz,r_svatba=svatba,r_datsvatba=datsvatba,"
-          . "r_rozvod=rozvod,r_ulice=ulice,r_psc=psc,"
+    $frod=  ucast2_flds("fotka,r_access=access,r_access_web=access_web,r_spz=spz,"
+          . "r_svatba=svatba,r_datsvatba=datsvatba,r_rozvod=rozvod,r_ulice=ulice,r_psc=psc,"
           . "r_obec=obec,r_stat=stat,r_telefony=telefony,r_emaily=emaily,r_ms,r_umi,r_note=note");
     $fpob2= ucast2_flds("p_poznamka=poznamka,pokoj,budova,prednasi,luzka,pristylky,kocarek,pocetdnu"
           . ",strava_cel,strava_cel_bm,strava_cel_bl,strava_pol,strava_pol_bm,strava_pol_bl,"
@@ -2813,6 +2863,7 @@ function ucast2_browse_ask($x,$tisk=false) {
     $zz= array();
     foreach ($pobyt as $idp=>$p) {
       $p_access= 0;
+      $p_access_web= $p->web_zmena=='0000-00-00' ? 0 : 16;
       $idr= $p->i0_rodina ?: 0;
       $p->access= 5;
       $z= (object)array();
@@ -2857,6 +2908,7 @@ function ucast2_browse_ask($x,$tisk=false) {
               $s->_barva= $s->id_tvori ? 1 : 2;               // barva: 1=člen rodiny, 2=nečlen
             # barva nerodinného pobytu
             $p_access|= $o->access;
+            $p_access_web|= $o->access_web;
           }
           else {
             # neúčastník
@@ -2872,7 +2924,7 @@ function ucast2_browse_ask($x,$tisk=false) {
           # ==> .. seznam členů pro browse_fill
           $vek= $o->narozeni!='0000-00-00' ? roku_k($o->narozeni,$akce->datum_od) : '?'; // výpočet věku
           $jmeno= $p->funkce==99 ? "{$o->prijmeni} {$o->jmeno}" : $o->jmeno ;
-          $cleni.= "$del$ido~$keys~{$o->access}~$jmeno~$dup~$vek~{$s->id_tvori}~{$s->id_rodina}~{$s->role}";
+          $cleni.= "$del$ido~$keys~$o->access~$o->access_web~$jmeno~$dup~$vek~$s->id_tvori~$s->id_rodina~$s->role";
           $cleni.= '~'.rodcis($o->narozeni,$o->sex);
           $del= $delim;
           # ==> .. rodiny a kmenová rodina
@@ -2976,6 +3028,9 @@ function ucast2_browse_ask($x,$tisk=false) {
       foreach($frod as $fz=>$fr) { $z->$fz= $rodina[$idr]->$fr; }
       # ... oprava obarvení
       $z->r_access|= $p_access;
+      $z->r_access_web= !$idr ? 0
+          : $rodina[$idr]->access | ($rodina[$idr]->web_zmena=='0000-00-00' ? 0 : 16);
+      $z->p_access_web= $p_access_web | $z->r_access_web;
       # členové
       $z->r_cleni= $cleni;
       # pobyt II

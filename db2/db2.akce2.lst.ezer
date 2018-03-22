@@ -233,6 +233,7 @@ form _page [,,275,360] {
   field id_hlavni { data:akce.id_hlavni }
   // ------------------------------------- základní údaje o akci
   field [17,49,218,] { tag:'cor', title:'^název akce *', data:akce.nazev }
+  field [250,49,50,] { tag:'cor', title:'^pro max.účastníků', data:akce.web_maximum, format:':e' }
   field [17,89,218,] { tag:'cor', title:'^místo', data:akce.misto }
   check ds_order [250,89,200,] { tag:'cor', title:'objednávka Domu setkání', format:'nd' } 
   field datum_od [18,133,83,] { tag:'cor', title:'^začátek *', type:'date', data:akce.datum_od }
@@ -283,8 +284,8 @@ form _page [,,275,360] {
   // ------------------------------------- web setkani.org a chlapi.online
   label [10,309,384,92] { tag:'cor', css:'bily_ram', skill:'yaaw;faaw' 
                         title:" součinnost s www.setkani.org a chlapi.online" }
-  check [16,382,135,21] { tag:'cor', title:'akce je obsazena', data:akce.web_obsazeno,
-                        skill:'yaa|yaaw;faa|faaw' }
+  check [16,382,135,21] { tag:'cor', title:'další jako náhradníci', data:akce.web_obsazeno,
+                        skill:'yaa|yaaw;faa|faaw', help:"a to i tehdy, když akce není ještě naplněná" }
   check web_prihl[16,346,205,] { tag:'cor', data:akce.web_prihlasky,
                         title:'přihlašování na www.setkani.org', skill:'yaa+|yaaw' 
     proc onchange() { zmena_web.set(1);
@@ -663,7 +664,7 @@ form _info [,,*,50] {
     show curr { expr:"IF(da2.id_duakce=@curr,1,0)" }
     show org { data:da2.access }
     show web_k { data:da2.web_kalendar }
-    show web_o { data:da2.web_obsazeno }
+    show web_o { expr:"da2.web_obsazeno OR IF(da2.web_maximum,da2.web_maximum<=SUM((SELECT 1 FROM pobyt WHERE id_pobyt=pa2.id_pobyt AND funkce!=99)),0)" }
     show SF [,,20,] {title:'SF', expr:"IF(da2.access=1,'S',IF(da2.access=2,'F','?'))"
       help:"pořádá S=YMCA Setkání, F=YMCA Familia"
       css_cell:'org,0:,1:ezer_ys,2:ezer_fa,3:ezer_db', format:'rsq*' }
