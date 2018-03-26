@@ -5071,7 +5071,7 @@ function akce2_strava_vylet($akce,$par,$title,$vypis,$export=false,$id_pobyt=0) 
     }
     if ( !$deti_nad3 ) continue;
 //     $test= array(48838,49080,48553);
-    $test= array(48673);
+//    $test= array(48673);
 //     if ( in_array($x->key_pobyt,$test) ) {
 //       $tab.= "<br>{$x->key_pobyt} {$x->_nazev} (děti nad 3 mají roků:".implode(',',$vek_deti).") ";
       $tab.= "<br>{$x->_nazev} (věk dětí starších 3 let: ".implode(',',$vek_deti).") ";
