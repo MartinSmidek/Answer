@@ -70,7 +70,7 @@ function db2_rod_show($nazev,$n) {
         $_keys.= ";$ido,{$s->_keys}";
       }
       $vek= $o->narozeni!='0000-00-00' ? roku_k($o->narozeni) : '?'; // výpočet věku
-      $cleni.= "$del$ido~$keys~{$o->access}~{$o->jmeno}~$dup~$vek~{$o->id_tvori}~$idr~{$o->role}";
+      $cleni.= "$del$ido~$keys~{$o->access}~~{$o->jmeno}~$dup~$vek~{$o->id_tvori}~$idr~{$o->role}";
       $cleni.= '~'.rodcis($o->narozeni,$o->sex);
       $cleni.= "~~" . sql_date1($o->narozeni);
       if ( !$o->adresa ) {
@@ -2598,7 +2598,7 @@ end:
 //                                                 debug($ret,$idoo);
   return $ret;
 }
-/** ------------------------------------------------------------------------------ ucast2_browse_ask **/
+/** ------------------------------------------------------------------------------ ucast2 browse_ask **/
 # BROWSE ASK
 # obsluha browse s optimize:ask
 #                                       !!! při změně je třeba ošetřit použití v sestavách
@@ -4170,17 +4170,17 @@ function tisk2_sestava_pary($akce,$par,$title,$vypis,$export=false,$internal=fal
     'sql'=>"SET @akce:=$akce,@soubeh:=$soubeh,@app:='{$EZER->options->root}';");
   $y= ucast2_browse_ask($browse_par,true);
   # rozbor výsledku browse/ask
-  $i_adresa=         15+1;
-  $i_key_spolu=      39+2;
-  $i_spolu_note=     43+2;
-  $i_osoba_jmeno=     3;
-  $i_osoba_prijmeni= 12+1;
-  $i_osoba_role=      8;
-  $i_osoba_vek=       5;
-  $i_osoba_note=     36+2;
-  $i_osoba_kontakt=  20+1;
-  $i_osoba_telefon=  21+1;
-  $i_osoba_email=    23+1;
+  $i_adresa=         16+1;
+  $i_key_spolu=      41+1;
+  $i_spolu_note=     45+1;
+  $i_osoba_jmeno=     3+1;
+  $i_osoba_prijmeni= 13+1;
+  $i_osoba_role=      8+1;
+  $i_osoba_vek=       5+1;
+  $i_osoba_note=     38+1;
+  $i_osoba_kontakt=  21+1;
+  $i_osoba_telefon=  22+1;
+  $i_osoba_email=    24+1;
   array_shift($y->values);
   foreach ($y->values as $x) {
     // aplikace neosobních filtrů
@@ -5023,18 +5023,31 @@ function akce2_strava_vylet($akce,$par,$title,$vypis,$export=false,$id_pobyt=0) 
     'cmd'=>'browse_load','cond'=>"$cnd AND p.id_akce=$akce",'having'=>'','order'=>'a _nazev',
     'sql'=>"SET @akce:=$akce,@soubeh:=0,@app:='{$EZER->options->root}';");
   $y= ucast2_browse_ask($browse_par,true);
+//  # rozbor výsledku browse/ask
+//  $i_adresa=         15+1;
+//  $i_key_spolu=      39+2;
+//  $i_spolu_note=     43+2;
+//  $i_osoba_jmeno=     3;
+//  $i_osoba_prijmeni= 12+1;
+//  $i_osoba_role=      8;
+//  $i_osoba_vek=       5;
+//  $i_osoba_note=     36+2;
+//  $i_osoba_kontakt=  20+1;
+//  $i_osoba_telefon=  21+1;
+//  $i_osoba_email=    23+1;
   # rozbor výsledku browse/ask
-  $i_adresa=         15+1;
-  $i_key_spolu=      39+2;
-  $i_spolu_note=     43+2;
-  $i_osoba_jmeno=     3;
-  $i_osoba_prijmeni= 12+1;
-  $i_osoba_role=      8;
-  $i_osoba_vek=       5;
-  $i_osoba_note=     36+2;
-  $i_osoba_kontakt=  20+1;
-  $i_osoba_telefon=  21+1;
-  $i_osoba_email=    23+1;
+  $i_adresa=         16+1;
+  $i_key_spolu=      41+1;
+  $i_spolu_note=     45+1;
+  $i_osoba_jmeno=     3+1;
+  $i_osoba_prijmeni= 13+1;
+  $i_osoba_role=      8+1;
+  $i_osoba_vek=       5+1;
+  $i_osoba_note=     38+1;
+  $i_osoba_kontakt=  21+1;
+  $i_osoba_telefon=  22+1;
+  $i_osoba_email=    24+1;
+
   array_shift($y->values);
   foreach ($y->values as $x) {
     // údaje pobytu $x->pobyt

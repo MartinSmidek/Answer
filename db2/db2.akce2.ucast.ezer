@@ -654,12 +654,12 @@ form _ucast [,,400,] { css:'ds_form'
     }
     proc reload_evid() {  var id2:number, row:number
       pob.skup.display(1);
-      rod.detail.web.enable(0);
+//      rod.detail.web.enable(0);
       { rod.key; rod.display(1,'r|s'); copy_by_name(b,rod.get);
         rod.rodiny1.set(_nazev.get);
         rod.display(0,'[abnsy]'); rod.display(1,'[mo]'); rod.enable(1,'[m]');
         rod.rodiny.selects(conc(_nazev.get,':',key_rodina.get)); rod.rodiny.key(key_rodina.get);
-        [ gt(r_access_web.get,15); rod.detail.web.enable(1) ]
+//        [ gt(r_access_web.get,15); rod.detail.web.enable(1) ]
       | rod.display(0,'[^f]'); rod.display(1,'y'); rod.enable(0,'y');
       };
       id2.set(os2.key_osoba.get);
@@ -712,6 +712,8 @@ form _ucast [,,400,] { css:'ds_form'
     proc onrefreshed() { h_change_b }
     # ------------------------==> . kontextové_menu
     menu { type:'context' //, join:frame
+      item { title:'přijetí webových změn', 
+        proc onclick () { prijeti_prihlasky } }
       item { title:'zrušit výběr'
         proc onclick () { b.selected('clear') } }
     }
@@ -970,8 +972,7 @@ form _pobyt [,,0,62] {
   field i0_rodina { data:p.i0_rodina }
   # ------------------------==> . kontextové_menu
   menu { type:'context', join:frame
-    item { title:'přijetí webových změn', proc onclick () { prijeti_prihlasky } }
-    item { title:'-konfigurace formuláře', proc onclick () { pobyt_config.tune } }
+    item { title:'konfigurace formuláře', proc onclick () { pobyt_config.tune } }
     item { title:'ukázat změny', proc onclick () { track.back_show('pobyt',the_pobyt.get) } }
   }
 
@@ -1282,12 +1283,7 @@ form _rodina2 [,,360,229]  { css:'ae_frame'
   field keys_rodina // seznam pravděpodobných kopií
   # ------------------------==> . kontextové_menu
   menu detail { type:'context'
-    item web { title:'přijetí webových změn', proc onclick () { 
-      confirm('Beru na vědomí změnu rodinných údajů provedenou z webu');
-      ask('web_zmena_ok','rodina',key_rodina.get);
-      refresh_ucast(the_pobyt.get)
-    } }
-    item { title:'-konfigurace formuláře', proc onclick () { rodina_config.tune(ucast) } }
+    item { title:'konfigurace formuláře', proc onclick () { rodina_config.tune(ucast) } }
     item { title:'ukázat změny', proc onclick () {
       key_rodina.get; track.back_show('rodina',key_rodina.get) } }
     item { title:'historie skupinek MS', proc onclick () {
