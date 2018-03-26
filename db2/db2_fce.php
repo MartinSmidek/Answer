@@ -1460,7 +1460,7 @@ function akce2_vzorec($id_pobyt) {  //trace();
     $ubytovani= $p->ubytovani;
     $sleva= $p->sleva;
     $svp= $p->svp;
-    $neprijel= $p->funkce==10;
+    $neprijel= $p->funkce==10 || $p->funkce==14;
     $datum_od= $p->datum_od;
   }
   // podrobné parametry, ubytovani ma hodnoty z číselníku ms_akce_ubytovan
@@ -1756,7 +1756,7 @@ function akce2_vzorec_2017($id_pobyt,$id_akce,$verze=2017) {  //trace();
     $ubytovani= $p->ubytovani;
     $sleva= $p->sleva;
     $svp= $p->svp;
-    $neprijel= $p->funkce==10;
+    $neprijel= $p->funkce==10 || $p->funkce==14;
     $datum_od= $p->datum_od;
   }
   // podrobné parametry, ubytovani ma hodnoty z číselníku ms_akce_ubytovan
@@ -6616,7 +6616,7 @@ function akce2_sestava_noci($akce,$par,$title,$vypis,$export=false) { trace();
           JOIN osoba AS o ON s.id_osoba=o.id_osoba
           LEFT JOIN tvori AS t ON t.id_osoba=o.id_osoba
           LEFT JOIN rodina AS r ON r.id_rodina=IF(i0_rodina,i0_rodina,t.id_rodina)
-          WHERE p.id_akce='$akce' AND funkce NOT IN (9,10,99) AND $cond
+          WHERE p.id_akce='$akce' AND funkce NOT IN (9,10,14,99) AND $cond
           GROUP BY id_pobyt
           ORDER BY $ord";
 //   $qry.=  " LIMIT 1";
@@ -14303,7 +14303,7 @@ function grp_read($par) {  trace(); debug($par);
   $max= 4;
   $max= 999999;
   $mesice= array('ledna'=>1,'února'=>2,'března'=>3,'dubna'=>4,'května'=>5,'června'=>6,
-                 'července'=>7,'srpna'=>8,'září'=>9,'října'=>10,'listopdu=>11','prosince'=>12);
+                 'července'=>7,'srpna'=>8,'září'=>9,'října'=>10,'listopadu=>11','prosince'=>12);
 
   switch ($par->meth) {
   # -------------------------------------------------------------------------------------- INFORMACE
