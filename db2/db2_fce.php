@@ -4406,7 +4406,7 @@ function tisk2_sestava_lidi($akce,$par,$title,$vypis,$export=false) { trace();
         break;
       case 'prislusnost':                                             // stát.příslušnost: osoba
       case 'stat':                                                    // stát: rodina/osoba
-        $clmn[$n][$f]= $clmn[$n][$f] ?: 'CZ';
+        $clmn[$n][$f]= $x->$f ?: 'CZ';
         break;
       case 'dieta':                                                   // osoba: dieta
         $clmn[$n][$f]= $dieta[$x->$f];

@@ -8,7 +8,7 @@
 
 # globální proměnné pro modul Databáze
 
-var staty='CZ,SK,A,D,PL,UA,H,FIN,BG,I,NL,CDN,USA,?' // seznam států, (později) naplněný při startu z mapy map_stat
+var staty='CZ,SK,A,D,PL,UA,H,FIN,BG,I,NL,GB,CDN,USA,?' // seznam států, (později) naplněný při startu z mapy map_stat
 
 # ------------------------------------------------------------------------------------------==> stav
 # dotaz na datovou oprávněnost
