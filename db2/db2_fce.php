@@ -22,7 +22,7 @@ function db2_rod_show($nazev,$n) {
   $fos=   ucast2_flds("umrti,prijmeni,rodne,sex,adresa,ulice,psc,obec,stat,kontakt,telefon"
         . ",nomail,email,gmail"
         . ",iniciace,uvitano,clen,obcanka,rc_xxxx,cirkev,vzdelani,titul,zamest,zajmy,jazyk,dieta"
-        . ",aktivita,note,_kmen");
+        . ",aktivita,note,_kmen,prislusnost");
   $fspo=  ucast2_flds("id_spolu,_barva,s_role,dite_kat,poznamka,pecovane,pfunkce,pece_jm,pece_id,o_umi");
   // načtení rodin
   $qr= mysql_qry("SELECT id_rodina AS key_rodina,ulice AS r_ulice,psc AS r_psc,obec AS r_obec,
@@ -2704,7 +2704,7 @@ function ucast2_browse_ask($x,$tisk=false) {
     # seznam účastníků akce - podle podmínky
     $qu= mysql_qry("
       SELECT GROUP_CONCAT(id_pobyt) AS _ids_pobyt,s.*,o.narozeni,
-        MIN(CONCAT(IF(role='','?',role),id_rodina)) AS _role,o_umi
+        MIN(CONCAT(IF(role='','?',role),id_rodina)) AS _role,o_umi,prislusnost
       FROM osoba AS o
       JOIN spolu AS s USING (id_osoba)
       JOIN pobyt AS p USING (id_pobyt)
@@ -2821,7 +2821,8 @@ function ucast2_browse_ask($x,$tisk=false) {
           . ",email,gmail"
           . ",iniciace,uvitano,clen,obcanka,rc_xxxx,cirkev,vzdelani,titul,zamest,zajmy,jazyk,dieta"
           . ",aktivita,note,_kmen");
-    $fspo=  ucast2_flds("id_spolu,_barva,s_role,dite_kat,poznamka,pecovane,pfunkce,pece_jm,pece_id,o_umi");
+    $fspo=  ucast2_flds("id_spolu,_barva,s_role,dite_kat,poznamka,pecovane,pfunkce,pece_jm,pece_id"
+          . ",o_umi,prislusnost");
 
     # 1. průchod - kompletace údajů mezi pobyty
     $skup= array();
@@ -4355,7 +4356,7 @@ function tisk2_sestava_lidi($akce,$par,$title,$vypis,$export=false) { trace();
   $qry=  "
     SELECT
       p.pouze,p.poznamka,p.platba,p.funkce,p.skupina,p.pokoj,s.s_role,
-      o.prijmeni,o.jmeno,o.narozeni,o.rc_xxxx,o.note,o.obcanka,o.clen,o.dieta,
+      o.prijmeni,o.jmeno,o.narozeni,o.rc_xxxx,o.note,o.prislusnost,o.obcanka,o.clen,o.dieta,
       IFNULL(r2.id_rodina,r1.id_rodina) AS id_rodina,
       IFNULL(r2.nazev,r1.nazev) AS r_nazev,
       IFNULL(r2.spz,r1.spz) AS r_spz,
@@ -4402,6 +4403,10 @@ function tisk2_sestava_lidi($akce,$par,$title,$vypis,$export=false) { trace();
       switch ($f) {
       case '1':                                                       // 1
         $clmn[$n][$f]= 1;
+        break;
+      case 'prislusnost':                                             // stát.příslušnost: osoba
+      case 'stat':                                                    // stát: rodina/osoba
+        $clmn[$n][$f]= $clmn[$n][$f] ?: 'CZ';
         break;
       case 'dieta':                                                   // osoba: dieta
         $clmn[$n][$f]= $dieta[$x->$f];
@@ -5481,11 +5486,11 @@ function akce2_text_eko($akce,$par,$title,$vypis,$export=false) { trace();
   // náklad na stravu pečounů - kteří mají funkci a nemají zaškrtnuto "platí rodiče"
   $par= (object)array('typ'=>'vjp');
   $ret= akce2_stravenky($akce,$par,'','',true);
-                                                        debug($ret); goto end;
+//                                                        debug($ret); goto end;
   $ham= array('sc'=>0,'oc'=>0,'vc'=>0);
   $pecounu= 0;
   $noci= -1;
-  foreach ($ret->tab as $jmeno=>$dny) {
+  if ( $ret->tab ) foreach ($ret->tab as $jmeno=>$dny) {
 //                                                         debug($dny,"DNY");
     $pecounu++;
     foreach ( $dny as $den=>$jidla ) {

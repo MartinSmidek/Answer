@@ -378,6 +378,7 @@ table osoba { key_id:'id_osoba'
   text psc
   text obec
   text stat
+  text prislusnost // státní příslušnost
   number kontakt // 0=viz rodinný, 1=osobní zde
   text gmail
   text email
@@ -729,7 +730,7 @@ form _osoba2x [,,244,322] {css:'ae_frame',
   var mode=0            // 0 zobrazit jen osobní kontakt a adresu, rodinnou skrýt
                         // 2 zobrazí pro adresa=0 kopie rodinných údajů uvozené ®
                         // 1 (jen EVID) zobrazí i pro adresa=0 osobní údaje (měly by být prázdné)
-  proc onstart() { stat.selects(staty.get,',',1) }
+  proc onstart() { stat.selects(staty.get,',',1); prisl.selects(staty.get,',',1) }
   # ==> . globální procedury
   proc set_mode(_mode,_host) { var x:object
     mode.set(_mode); host.set(_host); form.enable(1,'a|b|j|k');
@@ -1004,14 +1005,15 @@ form _osoba2x [,,244,322] {css:'ae_frame',
   label [0,58,,9] {tag:'b,S', format:'n', css:'db_sep' } // zarovnání
 
   #==> . organizační údaje: o (jen pro oprávněné)
-  field obcanka  [34,4,70,] {tag:'o', data:o.obcanka, format:'n', title:'OP:'}
-  field rc       [138,4,45,] {tag:'o', format:'nd', title:'RČ:'}
-  field rc_xxxx  [193,4,37,] {tag:'o', data:o.rc_xxxx, format:'n:e', title:'/'}
-  select clen    [34,26,70,] {tag:'o', type:'map', format:'n', data:o.clen,
-                                options:ms_akce_clen.zkratka, title:'YMCA'}
-  check uvitano  [186,25,60,] {tag:'o', data:o.uvitano, title:'uvítáno',
+  field obcanka  [23,2,70,] {tag:'o', data:o.obcanka, format:'n', title:'OP:'}
+  field rc       [118,2,45,] {tag:'o', format:'nd', title:'RČ:'}
+  field rc_xxxx  [171,2,37,] {tag:'o', data:o.rc_xxxx, format:'n:e', title:'/'}
+  select clen    [29,26,54,] {tag:'o', type:'map', format:'n', data:o.clen,
+                                options:ms_akce_clen.zkratka, title:'ymca'}
+  check uvitano  [145,25,58,] {tag:'o', data:o.uvitano, title:'uvítáno',
                                help:'dítě bylo slavnostně uvítáno ve společenství na nějaké akci'}
-  field iniciace [138,26,40,] {tag:'o', data:o.iniciace, format:'nr:e', title:'mrop'}
+  field iniciace [113,26,31,] {tag:'o', data:o.iniciace, format:'nr:e', title:'mrop'}
+  select prisl   [205,26,35,] {tag:'o', data:o.prislusnost, format:'nr:e', title:'^   přísl.', format:'r'}
   label [0,46,,6] {tag:'o,S', format:'n', css:'db_sep' } // zarovnání
 
   #==> . citlivé údaje: c (jen pro oprávněné)
