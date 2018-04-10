@@ -3,7 +3,7 @@
 # ------------------------------------------------------------------------------------------------ #
 # Systém Ans(w)er - modul Akce - verze 2                                                           #
 #                                                                                                  #
-#                                                   (c) 2008-2015 Martin Šmídek <martin@smidek.eu> #
+#                                                   (c) 2008-2018 Martin Šmídek <martin@smidek.eu> #
 # ------------------------------------------------------------------------------------------------ #
 
 # globální proměnné pro modul Databáze
@@ -399,13 +399,16 @@ table osoba { key_id:'id_osoba'
   text jazyk
   number cirkev
   text aktivita
-  text o_umi      // #ms_umi
+  text o_umi      // #answer_umi
   number clen
   text note
   text origin
   text historie
   number pin
   date pin_vydan
+  text web_level    // #answer_web: WEB level=suma: 1=admin, 2=super, 4=redakce, 16=tester
+  date   web_zmena   { sql_pipe:'sql_date1', help:'datum vyplnění online formuláře se změnami os.údajů' }
+  date   web_souhlas { sql_pipe:'sql_date1', help:'datum udělení souhlasu se zpracováním osobních údajů' }
 }
 
 table tvori { key_id:'id_tvori'
@@ -610,6 +613,7 @@ map ms_akce_s_role:   table _cis {where:"druh='ms_akce_s_role'",    order:'porad
 map ms_akce_t_role:   table _cis {where:"druh='ms_akce_t_role'",    order:'poradi', key_id:'data'}
 map ms_akce_titul_p:  table _cis {where:"druh='ms_akce_titul_p'",   order:'poradi', key_id:'data'}
 map ms_umi:           table _cis {where:"druh='answer_umi'",        order:'poradi', key_id:'data', db:'ezer_group' }
+map ms_web:           table _cis {where:"druh='answer_web'",        order:'poradi', key_id:'data', db:'ezer_group' }
 map map_evi_vyber_o:  table _cis {where:"druh='evi_vyber_o' AND data<50",  order:'poradi', key_id:'data'}
 map map_evi_vyber_x:  table _cis {where:"druh='evi_vyber_o' AND data>50",  order:'poradi', key_id:'data'}
 map map_evi_vyber_r:  table _cis {where:"druh='evi_vyber_r'",       order:'poradi', key_id:'data'}
@@ -692,6 +696,7 @@ panel osoba_config [,,200,150] {type:'popup', title:"Podrobnosti údajů"
     grp.set(get_cookie(conc(sys('root'),'_conf_osoba'),grp.get));
     [ contains('Z',grp.get) | grp.set(conc('Z',grp.get)) ];
     [ has_skill('yaa:c;faa:c;caa:c') | grp.set(replace(grp.get,'C','')) ];
+    [ has_skill('a') | grp.set(replace(grp.get,'W','')) ];
     cnfg._back; }
   proc tune(calee) {
     ucast.set(calee); _old.set(grp.get); [ ucast.call('evid.z_change','o') ]; panel.modal(500,200) }
@@ -702,6 +707,8 @@ panel osoba_config [,,200,150] {type:'popup', title:"Podrobnosti údajů"
     check k [ 0, 20,200,] { title:"kontaktní údaje",     format:'t', proc onchange() { _tuned }}
     check g [100,20,110,] { title:"konference",          format:'t', proc onchange() { _tuned }}
     check a [ 0, 40,200,] { title:"poštovní adresa",     format:'t', proc onchange() { _tuned }}
+    check v [100,40,110,] { title:"web, souhlasy",       format:'t', skill:'a|a'
+                                                                     proc onchange() { _tuned }}
     check o [ 0, 60,200,] { title:"organizační údaje",   format:'t', proc onchange() { _tuned }}
     check c [ 0, 80,200,] { title:"citlivé údaje",       format:'t', skill:'yaa|yaa:c;faa|faa:c;caa|caa:c'
                                                                      proc onchange() { _tuned }}
@@ -714,11 +721,13 @@ panel osoba_config [,,200,150] {type:'popup', title:"Podrobnosti údajů"
     proc _tuned() {
       grp.set(cconc(s.get,'S',k.get,'K',g.get,'G',a.get,'A',o.get,'O',p.get,'P','Z'));
       [ form.part('c'); c.get; grp.set(conc(grp.get,'C')) ];
+      [ form.part('v'); v.get; grp.set(conc(grp.get,'W')) ];
       ucast.call('osoby_show') }
     proc _back() { z.set(1); s.set(contains('S',grp.get));
       k.set(contains('K',grp.get)); g.set(contains('G',grp.get));
       a.set(contains('A',grp.get)); o.set(contains('O',grp.get));
       [ form.part('c'); c.set(contains('C',grp.get)) ];
+      [ form.part('v'); v.set(contains('W',grp.get)) ];
       p.set(contains('P',grp.get)); }
   }
   var _old= 'Z'
@@ -793,6 +802,7 @@ form _osoba2x [,,244,322] {css:'ae_frame',
       [ contains('C',osoba_config.grp.get); tags.set(conc(tags,',c')) ];
       [ contains('P',osoba_config.grp.get); tags.set(conc(tags,',p')) ];
       [ contains('G',osoba_config.grp.get); tags.set(conc(tags,',g')) ];
+      [ contains('W',osoba_config.grp.get); tags.set(conc(tags,',v')) ];
     ];
     [ contains('S',osoba_config.grp.get); form.set_css('db_hr','','S') | form.set_css('','db_hr','S') ];
     [ or(eq(even,2),key_spolu.get,eq(form_mode.get,'new')) | tags.set(conc(tags,',x')) ];
@@ -1033,18 +1043,18 @@ form _osoba2x [,,244,322] {css:'ae_frame',
   label [0,Tq+214,,6] {tag:'c,S', format:'n', css:'db_sep' } // zarovnání
 
   #==> . osobní schopnosti a poznámka: p
-  select o_umi     [65,0,172,] {tag:'p', type:'map+', data:o.o_umi, options:ms_umi.hodnota,
-    title:'schopnosti:', format:'n'}
+  label [6,6,172,] {tag:'p', title:'schopnosti:', format:'n'}
+  select o_umi     [65,4,172,] {tag:'p', type:'map+', data:o.o_umi, options:ms_umi.hodnota, format:'n'}
   edit  note     [5,26,231,74] {tag:'p', data:o.note, format:'n', title:'^poznámka'}
-
+  label [0,104,,6] {tag:'p,S', format:'n', css:'db_sep' } // zarovnání
+  
   #==> . konference: g (jen pro oprávněné)
   # tlačítko gmail_save se zviditelní pouze v evidenci pro skill=mrop
-  label [0,0,,3] {tag:'g,S', format:'n'} //, css:'db_sep' } // zarovnání
   field gmail    [5,14,178,] {tag:'g', type:'list', data:o.gmail, format:'n', //,           skill:'mrop|mrop;dk|dk',
     title:'^emailové adresy v konferencích '}
   field pin      [186,14,54,] {tag:'g', type:'list', title:'^pin', format:'n',
       expr:"CONCAT(pin,',',date_format(pin_vydan,'%e.%c.%y'),',',date_format(pin_vydan,'%H:%i'))" }
-  button gmail_save [ 188,14,,] {tag:'g', title:'[fa-save] Ulož', css:'hidden',         skill:'mrop|mrop'
+  button gmail_save [ 188,14,,] {tag:'g', title:'[fa-save] Ulož', css:'hidden', skill:'mrop|mrop'
     proc visible() { this.set_css('visible','hidden') }
     proc onclick() { var old:text
       old.set(function('x',"return x.original.value",gmail));
@@ -1054,6 +1064,15 @@ form _osoba2x [,,244,322] {css:'ae_frame',
       | eq(host.get,'U'); gmail.plain
       }
   }}
+  label [0,34,,6] {tag:'g,S', format:'n', css:'db_sep' } // zarovnání
+
+  #==> . údaje související s weby: v
+  field web_souhlas [5,12,85,] {tag:'v', type:'date', data:o.web_souhlas, format:'n', title:'^souhlas'}
+  field web_zmena   [93,12,85,] {tag:'v', type:'date', data:o.web_zmena, format:'n', title:'^změna'}
+  select web_level  [182,12,59,] {tag:'v', type:'map+', data:o.web_level, options:ms_web.zkratka,
+    title:'^web', format:'n'}
+  label [0,34,,2] {tag:'v,S', format:'n', css:'db_sep' } // zarovnání
+  
   // x = upozornění o omezení údajů neúčastníků
   label [5,4,235,] {tag:'x', format:'n', title:'<i>neúčastník má zobrazeny jen identifikační údaje</i>'}
 }
