@@ -184,7 +184,8 @@ menu m {type:'left', active:*
                                         ,tit:'příjmení:15,jména:20,obec:25,^'
                                         ,fld:'prijmeni,jmena,obec,^id_pobyt'}}
     item {title:'Děti na akci'                                                               skill:'y;f'
-                                        ,par:°{typ:'j',exp:'Excel2',cnd:"funkce!=99 AND pfunkce!=95",hav:"_vek<18",ord:"narozeni"
+                                        ,par:°{typ:'j',exp:'Excel2',cnd:"funkce!=99 AND pfunkce!=95"
+                                        ,hav:"_vek<18",ord:"narozeni"
                                         ,tit:'příjmení:15,jméno:12,narození:12,/rč:5,obec:25,psč:7,ulice:25'
                                         ,fld:'prijmeni,jmeno,narozeni,rc_xxxx,obec,psc,ulice'}}
     item {title:'Účastníci akce s poznámkami'
