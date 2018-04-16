@@ -5639,8 +5639,9 @@ function akce2_text_prehled($akce,$par,$title,$vypis,$export=false) { trace();
            JOIN pobyt AS p ON a.id_duakce=p.id_akce
            JOIN spolu AS s USING(id_pobyt)
            JOIN osoba AS o ON s.id_osoba=o.id_osoba
-           LEFT JOIN tvori AS t ON t.id_osoba=o.id_osoba AND IF(p.i0_rodina,t.id_rodina=p.i0_rodina,1)
-           WHERE a.id_duakce='$akce' AND $cond AND funkce NOT IN (9,10,13,14) ORDER BY prijmeni ";
+           LEFT JOIN tvori AS t ON t.id_osoba=o.id_osoba AND IF(p.i0_rodina,t.id_rodina=p.i0_rodina,0)
+           WHERE a.id_duakce='$akce' AND $cond AND funkce NOT IN (9,10,13,14) 
+           GROUP BY o.id_osoba ORDER BY prijmeni ";
     $ro= mysql_qry($qo);
     while ( $ro && ($o= mysql_fetch_object($ro)) ) {
       $pocet++;
@@ -5686,7 +5687,7 @@ function akce2_text_prehled($akce,$par,$title,$vypis,$export=false) { trace();
   };
   $result= (object)array();
   $html= '';
-  $nedeti= $akce_text_prehled_x($akce,"t.role='d' AND p.funkce!=99 AND s.s_role NOT IN (2,3,4,5)",1,1);
+  $nedeti= $akce_text_prehled_x($akce,"t.role='d' AND p.funkce!=99 AND s.s_role NOT IN (2,3,4,5)",1,1,0);
   if ( $pocet>0 )
     $html.= "<h3 style='color:red'>POZOR! Děti vedené chybně jako účastníci nebo hosté</h3>$nedeti";
   // pfunkce: 0 4 5 8 92 95
@@ -5694,8 +5695,9 @@ function akce2_text_prehled($akce,$par,$title,$vypis,$export=false) { trace();
   // funkce=99  -- pečoun, funkce=9,10,13,14 -- není na akci
   // s_role=2   -- dítě, s_role=3  -- dítě s os.peč, s_role=4  -- pom.peč, s_role=5  -- os.peč
   // dite_kat=7 -- skupina G
-  // děti
-  $html.= "<h2>Informace z karty Účastníci2 (bez náhradníků)</h2><h3>Celkový počet dětí na akci podle stáří (v době začátku akce) - bez os.pečounů včetně pom.pečounů</h3>";
+  // děti ...
+  $html.= "<h2>Informace z karty Účastníci2 (bez náhradníků)</h2>
+    <h3>Celkový počet dětí rodin na akci podle stáří (v době začátku akce) - bez os.pečounů včetně pom.pečounů</h3>";
   $html.= $akce_text_prehled_x($akce,"t.role='d' AND p.funkce!=99 AND s.s_role IN (0,1,2,3,4)");
   $html.= "<h3>Děti ve skupinkách (mimo G a osobně opečovávaných)</h3>";
   $html.= $akce_text_prehled_x($akce,"t.role='d' AND p.funkce!=99 AND s.s_role IN (2,4) AND s.dite_kat!=7");
@@ -5705,6 +5707,7 @@ function akce2_text_prehled($akce,$par,$title,$vypis,$export=false) { trace();
   $html.= $akce_text_prehled_x($akce,"t.role='d' AND p.funkce!=99 AND s.dite_kat=7",true);
   $html.= "<h3>Pomocní pečovatelé</h3>";
   $html.= $akce_text_prehled_x($akce,"t.role='d' AND p.funkce!=99 AND s.s_role IN (4)",1);
+  // pečouni ...
   $html.= "<h3>Osobní pečovatelé (nezařazení mezi Pečovatele)</h3>";
   $html.= $akce_text_prehled_x($akce,"p.funkce!=99 AND s.s_role IN (5) AND s.pfunkce NOT IN (5)",true);
   // osobní mezi pečouny
