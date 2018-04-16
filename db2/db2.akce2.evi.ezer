@@ -56,6 +56,8 @@ menu m {type:'left', format:'f-'
                                                 cnd:"o.sex=2 AND TIMESTAMPDIFF(YEAR,narozeni,NOW())>=18"}, skill:'yae;fae;cae'}
     item   {title:'[fa-child]děti'              par:°{lst:'o',tit:'všechny děti, co ',
                                                 cnd:"TIMESTAMPDIFF(YEAR,narozeni,NOW())<18"}, skill:'yae;fae;cae'}
+    item w {title:'[fa-beer fa-red]s webovými právy'   par:°{lst:'o',tit:'práva pro úpravu webů',
+                                                cnd:"o.web_level!=''"},skill:'a'}
     item t {title:'[fa-wrench fa-red](test)'    par:°{lst:'o',tit:'testovací osoby, co ',
                                                 cnd:"o.id_osoba IN (679,4031,4504,5877)"},skill:'m'}
   }
