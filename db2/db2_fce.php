@@ -3985,34 +3985,34 @@ end:
 }
 /** ==========================================================================================> TISK */
 # ------------------------------------------------------------------------------------ tisk2 sestava
-# generování sestav
+# generování sestav - všechny sestavy s //! vynechávají nepřítomné na akci p.funkce IN (9,10,13,14)
 function tisk2_sestava($akce,$par,$title,$vypis,$export=false) { trace();
   return 0 ? 0
-     : ( $par->typ=='p'    ? tisk2_sestava_pary($akce,$par,$title,$vypis,$export)
-     : ( $par->typ=='P'    ? akce2_sestava_pobyt($akce,$par,$title,$vypis,$export)
-     : ( $par->typ=='j'    ? tisk2_sestava_lidi($akce,$par,$title,$vypis,$export)
-     : ( $par->typ=='vs'   ? akce2_strava_pary($akce,$par,$title,$vypis,$export)    // bez náhradníků
-     : ( $par->typ=='vsd'  ? akce2_strava_souhrn($akce,$par,$title,$vypis,$export)  // bez náhradníků s dietami
-     : ( $par->typ=='vsd3' ? akce2_strava_vylet($akce,$par,$title,$vypis,$export)   // 3.den děti oběd
-     : ( $par->typ=='vv'   ? tisk2_text_vyroci($akce,$par,$title,$vypis,$export)
-     : ( $par->typ=='vi'   ? akce2_text_prehled($akce,$par,$title,$vypis,$export)
-     : ( $par->typ=='ve'   ? akce2_text_eko($akce,$par,$title,$vypis,$export)
-     : ( $par->typ=='vn'   ? akce2_sestava_noci($akce,$par,$title,$vypis,$export)
-     : ( $par->typ=='vp'   ? akce2_vyuctov_pary($akce,$par,$title,$vypis,$export)
-     : ( $par->typ=='vp2'  ? akce2_vyuctov_pary2($akce,$par,$title,$vypis,$export)
-     : ( $par->typ=='vj'   ? akce2_stravenky($akce,$par,$title,$vypis,$export)
-     : ( $par->typ=='vjp'  ? akce2_stravenky($akce,$par,$title,$vypis,$export)
-     : ( $par->typ=='d'    ? akce2_sestava_pecouni($akce,$par,$title,$vypis,$export)
-     : ( $par->typ=='ss'   ? tisk2_pdf_plachta($akce,$export)
-     : ( $par->typ=='s0'   ? tisk2_pdf_plachta0($export)
-     : ( $par->typ=='skpl' ? akce2_plachta($akce,$par,$title,$vypis,$export)
-     : ( $par->typ=='skpr' ? akce2_skup_hist($akce,$par,$title,$vypis,$export)
-     : ( $par->typ=='skti' ? akce2_skup_tisk($akce,$par,$title,$vypis,$export)
-     : ( $par->typ=='12'   ? akce2_jednou_dvakrat($akce,$par,$title,$vypis,$export)
-     : ( $par->typ=='sd'   ? akce2_skup_deti($akce,$par,$title,$vypis,$export)
-     : ( $par->typ=='cz'   ? akce2_cerstve_zmeny($akce,$par,$title,$vypis,$export)
-     : ( $par->typ=='tab'  ? akce2_tabulka($akce,$par,$title,$vypis,$export)
-     : ( $par->typ=='mrop' ? akce2_tabulka_mrop($akce,$par,$title,$vypis,$export)
+     : ( $par->typ=='p'    ? tisk2_sestava_pary($akce,$par,$title,$vypis,$export)   //!
+     : ( $par->typ=='P'    ? akce2_sestava_pobyt($akce,$par,$title,$vypis,$export)  //!
+     : ( $par->typ=='j'    ? tisk2_sestava_lidi($akce,$par,$title,$vypis,$export)   //!
+     : ( $par->typ=='vs'   ? akce2_strava_pary($akce,$par,$title,$vypis,$export)    //!
+     : ( $par->typ=='vsd'  ? akce2_strava_souhrn($akce,$par,$title,$vypis,$export)  //!
+     : ( $par->typ=='vsd3' ? akce2_strava_vylet($akce,$par,$title,$vypis,$export)   //! 3.den děti oběd
+     : ( $par->typ=='vv'   ? tisk2_text_vyroci($akce,$par,$title,$vypis,$export)    //!
+     : ( $par->typ=='vi'   ? akce2_text_prehled($akce,$par,$title,$vypis,$export)   //!
+     : ( $par->typ=='ve'   ? akce2_text_eko($akce,$par,$title,$vypis,$export)       //!
+     : ( $par->typ=='vn'   ? akce2_sestava_noci($akce,$par,$title,$vypis,$export)   //!
+     : ( $par->typ=='vp'   ? akce2_vyuctov_pary($akce,$par,$title,$vypis,$export)   //!
+     : ( $par->typ=='vp2'  ? akce2_vyuctov_pary2($akce,$par,$title,$vypis,$export)  //!
+     : ( $par->typ=='vj'   ? akce2_stravenky($akce,$par,$title,$vypis,$export)      //!
+     : ( $par->typ=='vjp'  ? akce2_stravenky($akce,$par,$title,$vypis,$export)      //!
+     : ( $par->typ=='d'    ? akce2_sestava_pecouni($akce,$par,$title,$vypis,$export)//!
+     : ( $par->typ=='ss'   ? tisk2_pdf_plachta($akce,$export)                       //!
+     : ( $par->typ=='s0'   ? tisk2_pdf_plachta0($export)                            // pomocné štítky
+     : ( $par->typ=='skpl' ? akce2_plachta($akce,$par,$title,$vypis,$export)        //!
+     : ( $par->typ=='skpr' ? akce2_skup_hist($akce,$par,$title,$vypis,$export)      //!
+     : ( $par->typ=='skti' ? akce2_skup_tisk($akce,$par,$title,$vypis,$export)      //!
+     : ( $par->typ=='12'   ? akce2_jednou_dvakrat($akce,$par,$title,$vypis,$export) //!
+     : ( $par->typ=='sd'   ? akce2_skup_deti($akce,$par,$title,$vypis,$export)      //!
+     : ( $par->typ=='cz'   ? akce2_cerstve_zmeny($akce,$par,$title,$vypis,$export)  // včetně náhradníků
+     : ( $par->typ=='tab'  ? akce2_tabulka($akce,$par,$title,$vypis,$export)        //!
+     : ( $par->typ=='mrop' ? akce2_tabulka_mrop($akce,$par,$title,$vypis,$export)   //!
      : (object)array('html'=>"<i>Tato sestava zatím není převedena do nové verze systému,
           <a href='mailto:martin@smidek.eu'>upozorněte mě</a>, že ji už potřebujete</i>")
      )))))))))))))))))))))))));
@@ -4119,7 +4119,7 @@ function akce2_tabulka_mrop($akce,$par,$title,$vypis,$export=false) { trace();
     FROM pobyt AS p
       JOIN spolu AS s USING(id_pobyt)
       JOIN osoba AS o USING(id_osoba)
-    WHERE p.id_akce=$akce AND $cnd
+    WHERE p.id_akce=$akce AND $cnd AND p.funkce NOT IN (9,10,13,14)
     $GROUP
     ORDER BY $ord";
   $res= mysql_qry($qry);
@@ -4167,7 +4167,8 @@ function tisk2_sestava_pary($akce,$par,$title,$vypis,$export=false,$internal=fal
       "a.id_duakce=$akce");
   $soubeh= $soubezna ? 1 : ( $hlavni ? 2 : 0);
   $browse_par= (object)array(
-    'cmd'=>'browse_load','cond'=>"$cnd AND p.id_akce=$akce",'having'=>$hav,'order'=>$ord,
+    'cmd'=>'browse_load','cond'=>"$cnd AND p.id_akce=$akce AND p.funkce NOT IN (9,10,13,14)",
+    'having'=>$hav,'order'=>$ord,
     'sql'=>"SET @akce:=$akce,@soubeh:=$soubeh,@app:='{$EZER->options->root}';");
   $y= ucast2_browse_ask($browse_par,true);
   # rozbor výsledku browse/ask
@@ -4309,7 +4310,7 @@ function tisk2_sestava_pary($akce,$par,$title,$vypis,$export=false,$internal=fal
   return $res;
 }
 # -------------------------------------------------------------------------------- tisk_sestava_lidi
-# generování sestavy pro účastníky $akce - jednotlivce
+# generování sestavy pro účastníky $akce - jednotlivce ... jen skutečně na akci
 #   $fld = seznam položek s prefixem
 #   $cnd = podmínka
 #   $par->sel = seznam id_pobyt
@@ -4390,7 +4391,7 @@ function tisk2_sestava_lidi($akce,$par,$title,$vypis,$export=false) { trace();
         AS r2 ON r2.id_osoba=o.id_osoba AND r2.role IN ('a','b')
       -- akce
       JOIN akce AS a ON a.id_duakce=p.id_akce
-    WHERE p.id_akce=$akce AND $cnd
+    WHERE p.id_akce=$akce AND $cnd AND p.funkce NOT IN (9,10,13,14)
       GROUP BY o.id_osoba $hav
       ORDER BY $ord";
   $res= mysql_qry($qry);
@@ -4566,7 +4567,7 @@ function akce2_sestava_pobyt($akce,$par,$title,$vypis,$export=false) { trace();
           LEFT JOIN tvori AS t ON t.id_osoba=o.id_osoba
           -- LEFT JOIN rodina AS r USING(id_rodina)
           LEFT JOIN rodina AS r ON r.id_rodina=IF(p.i0_rodina,p.i0_rodina,t.id_rodina)
-          WHERE p.id_akce='$akce' AND $cnd
+          WHERE p.id_akce='$akce' AND $cnd AND p.funkce NOT IN (9,10,13,14)
           GROUP BY id_pobyt $hav
           ORDER BY $ord";
   $res= mysql_qry($qry);
@@ -4782,7 +4783,7 @@ function akce2_stravenky_diety($akce,$par,$title,$vypis,$export=false) { trace()
             AND role IN ('a','b') AND ps.id_osoba=pt.id_osoba
           LEFT JOIN osoba AS po ON po.id_osoba=pt.id_osoba
           JOIN osoba AS pso ON pso.id_osoba=ps.id_osoba
-          WHERE p.id_akce='$akce' AND $cond
+          WHERE p.id_akce='$akce' AND $cond AND p.funkce NOT IN (9,10,13,14)
           GROUP BY p.id_pobyt
           ORDER BY _jm";
   }
@@ -5023,7 +5024,7 @@ function akce2_strava_vylet($akce,$par,$title,$vypis,$export=false,$id_pobyt=0) 
   // projdeme páry s dětmi ve věku nad 3 roky a děti sečteme
   $den= ' 3/7';
   $pocet_deti= $pocet_cele= $pocet_polo= 0;
-  $cnd= "p.funkce!=99";
+  $cnd= "p.funkce NOT IN (9,10,13,14,99)";
   $browse_par= (object)array(
     'cmd'=>'browse_load','cond'=>"$cnd AND p.id_akce=$akce",'having'=>'','order'=>'a _nazev',
     'sql'=>"SET @akce:=$akce,@soubeh:=0,@app:='{$EZER->options->root}';");
@@ -5415,9 +5416,13 @@ function akce2_cerstve_zmeny($akce,$par,$title,$vypis,$export=false) { trace();
     }
     $n++;
   }
-  $result->html= "od $od bylo provedeno $n změn";
 //                                         debug($clmn,"sestava pro $akce,$typ,$fld,$cnd");
-  return tisk2_table($tits,$flds,$clmn,$export);
+  $result= tisk2_table($tits,$flds,$clmn,$export);
+  $result->html.= "<br><br> od $od bylo provedeno $n změn
+    <hr>sledují se jen <b>změny</b> (tzn. nikoliv nově zadané hodnoty) v položkách: lůžka, pokoj, přistýlky, početdnů
+    <br>.. podle přání lze toto změnit - řekni Martinovi
+    ";
+  return $result;
 }
 # ----------------------------------------------------------------------------------- akce2 text_eko
 function akce2_text_eko($akce,$par,$title,$vypis,$export=false) { trace();
@@ -5758,7 +5763,8 @@ function narozeni2roky_sql($time_sql,$now_sql=0) {
 # ucastnik                => každý účastník zvlášť
 # pobyt_rodiny            => _jmena, _adresa, _telefony, _emaily
 function tisk2_qry($typ,$flds='',$where='',$having='',$order='') { //trace();
-  $where=  $where  ? " WHERE $where " : '';
+  $where=  $where  ? " WHERE $where AND p.funkce NOT IN (9,10,13,14) " 
+                   : ' WHERE p.funkce NOT IN (9,10,13,14) ';
   $having= $having ? " HAVING $having " : '';
   $order=  $order  ? " ORDER BY $order " : '';
   switch ($typ) {
@@ -5819,7 +5825,7 @@ function tisk2_qry($typ,$flds='',$where='',$having='',$order='') { //trace();
         LEFT JOIN tvori AS pt ON pt.id_rodina=p.i0_rodina AND role IN ('a','b') AND ps.id_osoba=pt.id_osoba
         LEFT JOIN osoba AS po ON po.id_osoba=pt.id_osoba
         JOIN osoba AS pso ON pso.id_osoba=ps.id_osoba
-      $where AND IF(funkce=99,1,DATEDIFF(a.datum_od,pso.narozeni)/365.2425>18)
+      $where AND IF(funkce=99,1,DATEDIFF(a.datum_od,pso.narozeni)/365.2425>18) 
       GROUP BY p.id_pobyt $having $order
     ";
     break;
@@ -6230,7 +6236,7 @@ function akce2_skup_deti($akce,$par,$title,$vypis,$export) {
          JOIN spolu AS s ON p.id_pobyt=s.id_pobyt
          JOIN osoba AS o ON s.id_osoba=o.id_osoba
          LEFT JOIN tvori AS t ON t.id_osoba=o.id_osoba
-         WHERE id_duakce='$akce'
+         WHERE id_duakce='$akce' AND p.funkce NOT IN (9,10,13,14)
          GROUP BY id_duakce ";
   $res= mysql_qry($qry);
   $pocet= mysql_fetch_object($res);
@@ -6242,7 +6248,7 @@ function akce2_skup_deti($akce,$par,$title,$vypis,$export) {
         JOIN spolu AS s USING(id_osoba)
         JOIN pobyt AS p USING(id_pobyt)
         JOIN akce  AS a ON id_duakce='$akce'
-        WHERE  id_akce='$akce' AND skupinka!=0
+        WHERE  id_akce='$akce' AND skupinka!=0 AND p.funkce NOT IN (9,10,13,14)
         ORDER BY skupinka,IF(funkce=99,0,1),prijmeni,jmeno ";
   $res= mysql_qry($qry);
   while ( $res && ($o= mysql_fetch_object($res)) ) {
@@ -6621,7 +6627,7 @@ function akce2_sestava_noci($akce,$par,$title,$vypis,$export=false) { trace();
           JOIN osoba AS o ON s.id_osoba=o.id_osoba
           LEFT JOIN tvori AS t ON t.id_osoba=o.id_osoba
           LEFT JOIN rodina AS r ON r.id_rodina=IF(i0_rodina,i0_rodina,t.id_rodina)
-          WHERE p.id_akce='$akce' AND funkce NOT IN (9,10,14,99) AND $cond
+          WHERE p.id_akce='$akce' AND funkce NOT IN (9,10,13,14,99) AND $cond
           GROUP BY id_pobyt
           ORDER BY $ord";
 //   $qry.=  " LIMIT 1";
@@ -6793,7 +6799,7 @@ function akce2_vyuctov_pary($akce,$par,$title,$vypis,$export=false) { trace();
               AND YEAR(a.datum_do)>=YEAR(dc.dat_od)
               AND (YEAR(a.datum_do) <= YEAR(dc.dat_do) OR !YEAR(dc.dat_do))
             JOIN _cis AS c ON c.druh='ms_akce_platba' AND c.data=zpusobplat
-          WHERE p.id_akce='$akce' AND funkce!=99 AND $cond
+          WHERE p.id_akce='$akce' AND p.funkce NOT IN (9,10,13,14,99) AND $cond
           GROUP BY id_pobyt
           ORDER BY $ord";
   $res= mysql_qry($qry);
@@ -6978,7 +6984,7 @@ function akce2_vyuctov_pary2($akce,$par,$title,$vypis,$export=false) { trace();
           JOIN osoba AS o ON s.id_osoba=o.id_osoba
           LEFT JOIN tvori AS t ON t.id_osoba=o.id_osoba
           LEFT JOIN rodina AS r ON r.id_rodina=IF(i0_rodina,i0_rodina,t.id_rodina)
-          WHERE p.id_akce='$akce' AND funkce!=99 AND $cond
+          WHERE p.id_akce='$akce' AND p.funkce NOT IN (9,10,13,14) AND $cond
           GROUP BY id_pobyt
           ORDER BY $ord";
 //   $qry.=  " LIMIT 10";
