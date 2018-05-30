@@ -1356,6 +1356,7 @@ function akce2_vzorec_soubeh($id_pobyt,$id_hlavni,$id_soubezna,$dosp=0,$deti=0,$
       $slevy.= "<tr><td>$dosp x $txt ($c$Kc)</td><td align='right'>$cc$Kc</td></tr>";
       break;
     case 'Sp':
+    case 'Sv':
       if ( !$pps ) continue;
       $cena+= $cc= - $c * $dosp;
       if ( !$cc ) break;
