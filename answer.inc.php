@@ -77,7 +77,7 @@ function answer_ini($app,$answer_db,$dbs_plus,$php_lib,$ezer_mod=array()) {
   );
   // kořeny cest
   $path_root=  array($ezer_ksweb?"/storage/sdcard0/htdocs/www-ys2":
-    "/home/www/ezer/www-ys/2","C:/Ezer/www-ys2");
+    "/home/www/ezer/www-ys/2","C:/Ezer/beans/answer");
   // kořen pro LabelDrop
   $abs_root= $path_root[$ezer_local?1:0];
   $path_files_href= "/docs/$app/";

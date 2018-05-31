@@ -4012,7 +4012,7 @@ function tisk2_sestava($akce,$par,$title,$vypis,$export=false) { trace();
      : ( $par->typ=='12'   ? akce2_jednou_dvakrat($akce,$par,$title,$vypis,$export) //!
      : ( $par->typ=='sd'   ? akce2_skup_deti($akce,$par,$title,$vypis,$export)      //!
      : ( $par->typ=='cz'   ? akce2_cerstve_zmeny($akce,$par,$title,$vypis,$export)  // včetně náhradníků
-     : ( $par->typ=='tab'  ? akce2_tabulka($akce,$par,$title,$vypis,$export)        //!
+     : ( $par->typ=='tab'  ? akce2_tabulka($akce,$par,$title,$vypis,$export)        //! předává se i typ=tab => náhradníci
      : ( $par->typ=='mrop' ? akce2_tabulka_mrop($akce,$par,$title,$vypis,$export)   //!
      : (object)array('html'=>"<i>Tato sestava zatím není převedena do nové verze systému,
           <a href='mailto:martin@smidek.eu'>upozorněte mě</a>, že ji už potřebujete</i>")
@@ -4136,6 +4136,7 @@ function akce2_tabulka_mrop($akce,$par,$title,$vypis,$export=false) { trace();
 }
 # ------------------------------------------------------------------------------- tisk2 sestava_pary
 # generování sestavy pro účastníky $akce - rodiny
+# jedině pokud je $par->typ='tab' zobrazí i náhradníky
 #   $fld = seznam položek s prefixem
 #   $cnd = podmínka
 function tisk2_sestava_pary($akce,$par,$title,$vypis,$export=false,$internal=false) { trace();
@@ -4168,7 +4169,9 @@ function tisk2_sestava_pary($akce,$par,$title,$vypis,$export=false,$internal=fal
       "a.id_duakce=$akce");
   $soubeh= $soubezna ? 1 : ( $hlavni ? 2 : 0);
   $browse_par= (object)array(
-    'cmd'=>'browse_load','cond'=>"$cnd AND p.id_akce=$akce AND p.funkce NOT IN (9,10,13,14)",
+    'cmd'=>'browse_load',
+    'cond'=>"$cnd AND p.id_akce=$akce AND p.funkce NOT IN "
+      . ($par->typ=='tab' ? "(10,13,14)" : "(9,10,13,14)"),
     'having'=>$hav,'order'=>$ord,
     'sql'=>"SET @akce:=$akce,@soubeh:=$soubeh,@app:='{$EZER->options->root}';");
   $y= ucast2_browse_ask($browse_par,true);
