@@ -405,7 +405,7 @@ form _cmd [,,623,30] {
     | zpet.Click; return                                                // nic
     };
     // vlastní vložení se zamezením duplicit a s definicí kategorie pro děti
-    [ rod.key; os1.role.get 
+    [ or(not(rod.key),os1.role.get) 
     | // doplnění chybějící role v rodině
       os1.role.set(choose("Doplň jakou roli má nová osoba v rodině","dítě:d,manžel:a,manželka:b,pomoc:p"))
     ];
