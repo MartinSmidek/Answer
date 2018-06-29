@@ -381,7 +381,7 @@ form _pece [,,400,] { css:'ds_form'
     show _nazev    [,,110,] { title:'příjmení jméno', format:'s+q*', css_cell:"funkce,0:nic,1:zluty"
                               expr:"CONCAT(o.prijmeni,' ',o.jmeno)" }
     show _pfunkce  [,,60,]  { title:'funkce', data:s.pfunkce, map_pipe:ms_akce_pfunkce.zkratka,
-                              format:'q*s', css_cell:'rod_nakurzu,0:nic,1:oranzovy' }
+                              format:'q#s', css_cell:'rod_nakurzu,0:nic,1:oranzovy' }
 #     show _pfunkce  [,,60,]  { title:'funkce', expr:"IF(s.pfunkce,s.pfunkce,s.s_role)", map_pipe:ms_akce_pfunkce.zkratka, format:'q*s' }
     show skupinka  [,,20,]  { title:'sk.', data:s.skupinka, format:'rqs:e'}
     show _vek      [,,0,]  { title:'věk', expr:"TIMESTAMPDIFF(YEAR,o.narozeni,datum_od)", format:'rsq*' }
