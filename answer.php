@@ -64,6 +64,8 @@ function answer_php($app,$app_name,$db_name,$skin,$js_lib,$css_lib,$options) {
 
   $client= "{$EZER->version}/client";
   $licensed= "$client/licensed";
+  
+  $api_key= "AIzaSyA_AayjFSuyotfpUV4iqArZYTTZ2aq-xW4";
 
   $js= $EZER->version=='ezer3'
   // ------------------------------------------------------ JS verze Ezer 3
@@ -87,7 +89,7 @@ function answer_php($app,$app_name,$db_name,$skin,$js_lib,$css_lib,$options) {
     // rozhodnout zda používat online mapy
     $gmap ? array(
       "https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/markerclusterer.js",
-      "https://maps.googleapis.com/maps/api/js?sensor=false") : array(),
+      "https://maps.googleapis.com/maps/api/js?key=$api_key&sensor=false") : array(),
     // skripty pro Answer
     array("db2/db2_fce3.js"),
     // uživatelské skripty
@@ -114,7 +116,7 @@ function answer_php($app,$app_name,$db_name,$skin,$js_lib,$css_lib,$options) {
     // debugger                                                                       /* debugger */
     $dbg ? array("$licensed/jush/mini_jush.js"):array(),                              /* debugger */
     // rozhodnout zda používat online mapy
-    $gmap ? array("https://maps.googleapis.com/maps/api/js?sensor=false") : array(),
+    $gmap ? array("https://maps.googleapis.com/maps/api/js?key=$api_key&sensor=false") : array(),
     // skripty pro Answer
     array("db2/db2_fce.js"),
     // uživatelské skripty
