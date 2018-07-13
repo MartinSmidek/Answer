@@ -6597,8 +6597,8 @@ function akce2_plachta_export($line,$file) { trace();
 function akce2_sestava_noci($akce,$par,$title,$vypis,$export=false) { trace();
   // definice sloupců
   $result= (object)array();
-  $tit= "Manželé:25,pokoj:8:r,dnů:5:r,nocí:5:r,lůžek:5:r:s,lůžko nocí:5:r:s,přis týlek:5:r:s,přis týlko nocí:5:r:s";
-  $fld= "manzele,pokoj,pocetdnu,=noci,luzka,=luzkonoci,pristylky,=pristylkonoci";
+  $tit= "Manželé:25,pokoj:8:r,dnů:5:r,nocí:5:r,lůžek:5:r:s,dětí 3-6:5:r:s,lůžko nocí:5:r:s,přis týlek:5:r:s,přis týlko nocí:5:r:s";
+  $fld= "manzele,pokoj,pocetdnu,=noci,luzka,=deti_3_6,=luzkonoci,pristylky,=pristylkonoci";
   $ord= $par->ord ? $par->ord : "IF(funkce<=2,1,funkce),IF(pouze=0,r.nazev,o.prijmeni)";
   $cnd= $par->cnd;
   $html= '';
@@ -6621,7 +6621,10 @@ function akce2_sestava_noci($akce,$par,$title,$vypis,$export=false) { trace();
     if ( isset($f) ) $fmts[$fld]= $f;
   }
   // data akce
+  $datum_od= select("datum_od","akce","id_duakce=$akce");
   $qry=  "SELECT
+            ( SELECT GROUP_CONCAT(o.narozeni) FROM spolu JOIN osoba USING (id_osoba)
+              WHERE id_pobyt=p.id_pobyt GROUP BY id_pobyt ) AS _naroz,
             pokoj,luzka,pristylky,pocetdnu,
             r.id_rodina,prijmeni,jmeno,
             GROUP_CONCAT(DISTINCT IF(t.role='a',o.prijmeni,'') SEPARATOR '') as prijmeni_m,
@@ -6645,8 +6648,16 @@ function akce2_sestava_noci($akce,$par,$title,$vypis,$export=false) { trace();
     $clmn[$n]= array();
     foreach($flds as $f) {
       $exp= ''; $val= 0;
+      $deti36= 0;
+      foreach ( explode(',',$x->_naroz) as $narozeni) {
+        $vek= $narozeni!='0000-00-00' ? roku_k($narozeni,$datum_od) : 0; // výpočet věku
+        if ( $vek>=3 && $vek<6 )
+          $deti36++;
+      }
+
       if ( substr($f,0,1)=='=' ) {
         switch ($f) {
+        case '=deti_3_6':     $val= $deti36; break;
         case '=noci':         $val= $x->pocetdnu;
                               $exp= "=[pocetdnu,0]"; break;
 //         case '=noci':         $val= max(0,$x->pocetdnu-1);
