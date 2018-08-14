@@ -759,19 +759,19 @@ function akce2_roku_update($rok) {  trace();
     foreach ($tab->rows as $crow) {
       $row= $crow->c;
       $kat= $row[0]->v;
-      if ( strpos(' au',$kat) ) {
+      if ( strpos(' a',$kat) ) {
 //                                                         debug($row,$row[2]->v);
         $n++;
-        $kod= $row[1]->f;
+        $kod= isset($row[1]->f) ? $row[1]->f : $row[1]->v;
         $id= 1000*$rok+$kod;
         $nazev= mysql_real_escape_string($row[2]->v);
-                                                        display("$kod:$nazev");
+//                                                        display("$kod:$nazev");
         // data akce - jen je-li syntax ok
         $od= $do= '';
-        $x= $row[3]->f;
+        $x= isset($row[3]->f) ? $row[3]->f : $row[3]->v;
         if ( preg_match("/\d+\.\d+\.\d+/",$x) )
           $od= sql_date($x,1);
-        $x= $row[4]->f;
+        $x= isset($row[4]->f) ? $row[4]->f : $row[4]->v;
         if ( preg_match("/\d+\.\d+\.\d+/",$x) )
           $do= sql_date($x,1);
         // kontrola roku
@@ -781,9 +781,9 @@ function akce2_roku_update($rok) {  trace();
           $n= 0;
           goto end;
         }
-        $uc=  $row[5]->f;
-        $typ= $row[6]->f;
-        $kap= $row[7]->f;
+        $uc=  isset($row[5]->f) ? $row[5]->f : $row[5]->v;
+        $typ= isset($row[6]->f) ? $row[6]->f : $row[6]->v;
+        $kap= isset($row[7]->f) ? $row[7]->f : $row[7]->v;
         $values.= "$del($id,$rok,'$kod',\"$nazev\",'$od','$do','$uc','$typ','$kap','$kat')";
         $del= ',';
       }
