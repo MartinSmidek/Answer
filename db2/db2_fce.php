@@ -10996,28 +10996,65 @@ function mail2_mai_potvr($druh,$o,$rok) {  //trace();
 }
 # ----------------------------------------------------------------------------------- mail2 mai_text
 # přečtení mailu
-function mail2_mai_text($id_dopis) {  //trace();
+# pokud je $akce=1 vrátí název a rok akce nebo název mailistu
+function mail2_mai_text($id_dopis,$akce=0) {  //trace();
+  $ret= (object)array('html'=>'');
   $d= null;
+  $prilohy= $obsah= '';
+  $elem= !$akce ? '' 
+      : ",CASE "
+        . "WHEN id_duakce!=0 THEN CONCAT(a.nazev,', ',YEAR(datum_od)) "
+        . "WHEN id_mailist!=0 THEN m.ucel "
+        . "WHEN cis_skupina!=0 THEN c.zkratka "
+        . "ELSE '???' END AS _adrs,"
+      . "COUNT(*) AS _pocet";
+  $join= !$akce ? ''
+      : "LEFT JOIN akce AS a USING (id_duakce) "
+      . "LEFT JOIN mailist AS m USING (id_mailist) "
+      . "LEFT JOIN mail USING (id_dopis)"
+      . "LEFT JOIN _cis AS c ON data=cis_skupina AND c.druh='db_maily_sql'";
+  $group= !$akce ? ''
+      : "GROUP BY id_dopis";
   try {
-    $qry= "SELECT * FROM dopis WHERE id_dopis=$id_dopis ";
+    $qry= "SELECT d.nazev,obsah,prilohy,id_duakce,id_mailist,cis_skupina $elem "
+        . "FROM dopis AS d $join WHERE id_dopis=$id_dopis $group";
     $res= mysql_qry($qry,1,null,1);
     $d= mysql_fetch_object($res);
   }
-  catch (Exception $e) { display($e); fce_error("mail2_mai_text: průběžný dopis No.'$id_dopis' nebyl nalezen"); }
-  $html.= "<b>{$d->nazev}</b><br/><hr/>{$d->obsah}";
+  catch (Exception $e) { 
+    display($e); fce_error("mail2_mai_text: průběžný dopis No.'$id_dopis' nebyl nalezen"); 
+  }
+  $predmet= $d->nazev;
+  $obsah= $d->obsah;
   // příloha?
   if ( $d->prilohy ) {
     foreach ( explode(',',$d->prilohy) as $priloha ) {
-      $priloha= $priloha;
-      $html.= "<hr/><b>Příloha:</b> $priloha";
-      $typ= strtolower(substr($priloha,-4));
-      if ( $typ=='.jpg' || $typ=='.gif' || $typ=='.png' ) {
-        $html.= "<img src='docs/$priloha' />";
+      if ( $akce ) {
+        list($file)= explode(':',$priloha);
+        $prilohy.= " <a target='docs' href='/docs/db2/$file'>$priloha</a>, ";
+      }
+      else {
+        $prilohy.= "<hr/><b>Příloha:</b> $priloha";
+        $typ= strtolower(substr($priloha,-4));
+        if ( $typ=='.jpg' || $typ=='.gif' || $typ=='.png' ) {
+          $prilohy.= "<img src='docs/$priloha' />";
+        }
       }
     }
   }
-//                                                         debug($d,"mail2_mai_text($id_dopis)");
-  return $html;
+  if ( $akce ) {
+    $komu= $d->id_duakce ? "<b>AKCE:</b> $d->_adrs" : ( 
+           $d->id_mailist ? "<b>MAILIST:</b> $d->_adrs" : (
+           $d->cis_skupina ? "<b>SKUPINA:</b> $d->_adrs" : 
+           $d->_adrs ));
+    $pocet= "<hr><b>ADRESÁTŮ:</b> $d->_pocet";
+    $prilohy= $prilohy ? "<hr><b>PŘÍLOHY:</b> $prilohy" : '';
+    $ret->html= "$komu$pocet<hr><b>PŘEDMĚT:</b> $predmet$prilohy<hr>$obsah";
+  }
+  else {
+    $ret->html= "<b>$predmet</b><hr>$obsah$prilohy";
+  }
+  return $ret;
 }
 # -------------------------------------------------------------------------------- mail2 mai_prazdny
 # zjistí zda neexistuje starý seznam adresátů
