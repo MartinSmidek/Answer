@@ -160,11 +160,12 @@ form _etext  {
     show stav1 { expr:'min(etm.stav)', format:'rsq' }
     show stav2 { expr:'max(etm.stav)', format:'rsq' }
     show pocet [,,30,] { title:'#', data:etd.pocet, format:'rs' }
-    proc onrowclick () {
+    proc onrowclick () { var y:object
       dopis_id.set(id_dopis.get);
       form.load(dopis_id.get);
       drop_init;
-      obsah.set(ask('mail2_mai_text',dopis_id.get));
+      y.set(ask('mail2_mai_text',dopis_id.get));
+      obsah.set(y.html);
       adopis.set(id_dopis.get);
       form_state('n|s','u|z');
       generovat.set(conc(cconc(pocet.get,"Přegenerovat","Vygenerovat")," rozesílací seznam"))
