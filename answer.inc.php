@@ -92,8 +92,7 @@ function answer_ini($app,$answer_db,$dbs_plus,$php_lib,$ezer_mod=array()) {
   $ezer_mysql_path= array("/usr/bin/","c:/apache/mysql/bin/");
   $ezer_mysql_path= $ezer_mysql_path[$ezer_local?1:0];  // cesta k utilitě mysql (i s lomítkem)
   // cesty pro zadávání url
-  $http= $_SERVER['REQUEST_SCHEME'];
-  $path_url= array("$http://answer.setkani.org/{$ezer_root}.php","$http://ys2.ezer/{$ezer_root}.php");
+  $path_url= array("https://answer.setkani.org/{$ezer_root}.php","http://answer.bean/{$ezer_root}.php");
   $path_url= $path_url[$ezer_local?1:0];                // prefix url
   // ostatní parametry
   $tracking= '_track';

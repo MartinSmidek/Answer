@@ -19,6 +19,7 @@ function answer_php($app,$app_name,$db_name,$skin,$js_lib,$css_lib,$options) {
 
   $title_style= $ezer_local ? 'color:#ef7f13;' : '';
   $title_flag=  $ezer_local ? 'lokální ' : '';
+  $http=        $ezer_local ? 'http' : 'https';
   $CKEditor= isset($_GET['editor']) ? $_GET['editor'] : '4';
   $dbg=      isset($_GET['dbg']) ? $_GET['dbg'] : 0;
   $gmap=     isset($_GET['gmap']) ? $_GET['gmap'] : !$ezer_local;
@@ -52,8 +53,7 @@ function answer_php($app,$app_name,$db_name,$skin,$js_lib,$css_lib,$options) {
   $_SESSION[$app]['abs_root']= $abs_root;
   $_SESSION[$app]['rel_root']= $rel_root;
   $_SESSION[$app]['app_path']= "";
-  $http= $_SERVER['REQUEST_SCHEME'];
-
+  
   set_include_path(get_include_path().PATH_SEPARATOR.$abs_root);
 
   require_once("$app.inc.php");
