@@ -406,6 +406,8 @@ table osoba { key_id:'id_osoba'
   text historie
   number pin
   date pin_vydan
+  number pin_ch
+  date pin_vydan_ch
   text web_level    // #answer_web: WEB level=suma: 1=admin, 2=super, 4=redakce, 16=tester
   date   web_zmena   { sql_pipe:'sql_date1', help:'datum vyplnění online formuláře se změnami os.údajů' }
   date   web_souhlas { sql_pipe:'sql_date1', help:'datum udělení souhlasu se zpracováním osobních údajů' }
@@ -670,7 +672,10 @@ panel track [,,540,276] { title:'Historie oprav', type:'popup', css:'dialog'
 // ===========================================================================================> MAPA
 panel mapa [,,640,400] { type:'popup', title:'mapa účastníků'
   var metoda='', id_akce: number, id_mailist: number
-  proc onfirstfocus() { spinner(1); f.cr.init('ROADMAP',°{clustering:1}); ukaz_psc; spinner(0) }
+  proc onfirstfocus() { 
+    spinner(1); 
+    f.cr.init('ROADMAP',object('clustering',cconc(eq(sys('..','get','gmap'),2),1,0))); 
+    ukaz_psc; spinner(0) }
   proc onfocus() { ukaz_psc; }
   proc ukaz_psc() { var ret: object
     metoda.get;
@@ -1050,9 +1055,11 @@ form _osoba2x [,,244,322] {css:'ae_frame',
   
   #==> . konference: g (jen pro oprávněné)
   # tlačítko gmail_save se zviditelní pouze v evidenci pro skill=mrop
-  field gmail    [5,14,178,] {tag:'g', type:'list', data:o.gmail, format:'n', //,           skill:'mrop|mrop;dk|dk',
-    title:'^emailové adresy v konferencích '}
-  field pin      [186,14,54,] {tag:'g', type:'list', title:'^pin', format:'n',
+  field gmail    [5,14,118,] {tag:'g', type:'list', data:o.gmail, format:'n', //,           skill:'mrop|mrop;dk|dk',
+    title:'^adresy chlapi@groups'}
+  field pin_ch   [128,14,54,] {tag:'g', type:'list', title:'^pin/ch', format:'n',
+      expr:"CONCAT(pin_ch,',',date_format(pin_vydan_ch,'%e.%c.%y'),',',date_format(pin_vydan_ch,'%H:%i'))" }
+  field pin      [186,14,54,] {tag:'g', type:'list', title:'^pin/YS', format:'n',
       expr:"CONCAT(pin,',',date_format(pin_vydan,'%e.%c.%y'),',',date_format(pin_vydan,'%H:%i'))" }
   button gmail_save [ 188,14,,] {tag:'g', title:'[fa-save] Ulož', css:'hidden', skill:'mrop|mrop'
     proc visible() { this.set_css('visible','hidden') }

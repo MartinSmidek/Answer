@@ -14,7 +14,7 @@ function answer_php($app,$app_name,$db_name,$skin,$js_lib,$css_lib,$options) {
   $server_name= isset($_SERVER["HTTP_X_FORWARDED_SERVER"])
     ?$_SERVER["HTTP_X_FORWARDED_SERVER"]:$_SERVER["SERVER_NAME"];
   $ezer_local= preg_match('/^\w+\.(ezer|bean)/',$server_name); // identifikace ladícího serveru
-  $android=    preg_match('/android|x11/i',$_SERVER['HTTP_USER_AGENT']);
+  $android=    preg_match('/android/i',$_SERVER['HTTP_USER_AGENT']);
   $ipad=       preg_match('/iPad/i',$_SERVER['HTTP_USER_AGENT']);
 
   $title_style= $ezer_local ? 'color:#ef7f13;' : '';
@@ -52,6 +52,7 @@ function answer_php($app,$app_name,$db_name,$skin,$js_lib,$css_lib,$options) {
   $_SESSION[$app]['abs_root']= $abs_root;
   $_SESSION[$app]['rel_root']= $rel_root;
   $_SESSION[$app]['app_path']= "";
+  $http= $_SERVER['REQUEST_SCHEME'];
 
   set_include_path(get_include_path().PATH_SEPARATOR.$abs_root);
 
@@ -116,7 +117,10 @@ function answer_php($app,$app_name,$db_name,$skin,$js_lib,$css_lib,$options) {
     // debugger                                                                       /* debugger */
     $dbg ? array("$licensed/jush/mini_jush.js"):array(),                              /* debugger */
     // rozhodnout zda používat online mapy
-    $gmap ? array("https://maps.googleapis.com/maps/api/js?key=$api_key&sensor=false") : array(),
+    $gmap ? array(
+        "https://maps.googleapis.com/maps/api/js?key=$api_key&sensor=false") : array(),
+    $gmap==2 ? array(
+        "https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/markerclusterer.js") : array(),
     // skripty pro Answer
     array("db2/db2_fce.js"),
     // uživatelské skripty
@@ -149,6 +153,7 @@ function answer_php($app,$app_name,$db_name,$skin,$js_lib,$css_lib,$options) {
   $options->path_files_href= "'$path_files_href'"; // relativní cesta do složky docs/{root}
   $options->path_files_s=    "'$path_files_s'";    // absolutní cesta do složky docs/{root}
   $options->path_files_h=    "'$path_files_h'";    // absolutní cesta do složky ../files/{root}
+  $options->server_url=      "'$http://$rel_root/{$EZER->version}/server/ezer2.php'";
   $options->help= "{width:600,height:500}"; // větší HELP
 
   $kontakt= " V případě zjištění problému nebo <br/>potřeby konzultace mi prosím napište<br/>

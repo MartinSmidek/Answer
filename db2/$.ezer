@@ -78,11 +78,11 @@ menu db2 { type:'main', title:'db2', active:*, _sys:'*'
       }
       use info: form right [12,4,,]
     }
-    panel js [0,0,,] {type:'plain', title:'[fa-battery-4] 2.2 => [fa-battery-1] 3'
-      use u: form f [0,0,,]
-      proc onfocus() { clear; u.info.set(ask('port','js')) }
-      form f [,,550,]{ label info }
-    }
+//    panel js [0,0,,] {type:'plain', title:'[fa-battery-4] 2.2 => [fa-battery-1] 3'
+//      use u: form f [0,0,,]
+//      proc onfocus() { clear; u.info.set(ask('port','js')) }
+//      form f [,,550,]{ label info }
+//    }
   }
   tabs doc  {title:"[fa-question] Nápověda", _sys:'*',  include:'onload,ezer2.help' }
   tabs off  {title:"[fa-power-off] Odhlásit", type:'logoff' }
