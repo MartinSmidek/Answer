@@ -272,6 +272,7 @@ table akce { key_id:'id_duakce'
   number cena      // cena akce pro dospělého (je-li ma_cenu=1)
   number spec      // 1 znamená ne-akci, starý způsob příležitostných seznamů
   number mrop      // 1 že akce je mužskou iniciací
+  number firm      // 1 že akce je mužským firmingem
   text nazev
   text misto
   number druh
@@ -388,6 +389,7 @@ table osoba { key_id:'id_osoba'
   date narozeni { sql_pipe:'sql_date1'}
   number uvitano { help:"uvítáno|bylo uvítáno ve společenství" }
   number iniciace { help:"mrop|rok iniciace nebo 0" }
+  number firming { help:"firm|rok posledního firmingu nebo 0" }
   text rc_xxxx
   number umrti // rok úmrtí
   text poznamka
@@ -1020,15 +1022,16 @@ form _osoba2x [,,244,322] {css:'ae_frame',
   label [0,58,,9] {tag:'b,S', format:'n', css:'db_sep' } // zarovnání
 
   #==> . organizační údaje: o (jen pro oprávněné)
-  field obcanka  [23,2,70,] {tag:'o', data:o.obcanka, format:'n', title:'OP:'}
-  field rc       [118,2,45,] {tag:'o', format:'nd', title:'RČ:'}
-  field rc_xxxx  [171,2,37,] {tag:'o', data:o.rc_xxxx, format:'n:e', title:'/'}
+  field obcanka  [18,2,70,] {tag:'o', data:o.obcanka, format:'n', title:'op:'}
+  field rc       [106,2,45,] {tag:'o', format:'nd', title:'rč:'}
+  field rc_xxxx  [159,2,37,] {tag:'o', data:o.rc_xxxx, format:'n:e', title:'/'}
   select clen    [29,26,54,] {tag:'o', type:'map', format:'n', data:o.clen,
                                 options:ms_akce_clen.zkratka, title:'ymca'}
-  check uvitano  [145,25,58,] {tag:'o', data:o.uvitano, title:'uvítáno',
+  check uvitano  [190,25,58,] {tag:'o', data:o.uvitano, title:'vítáno',
                                help:'dítě bylo slavnostně uvítáno ve společenství na nějaké akci'}
   field iniciace [113,26,31,] {tag:'o', data:o.iniciace, format:'nr:e', title:'mrop'}
-  select prisl   [205,26,35,] {tag:'o', data:o.prislusnost, format:'nr:e', title:'^   přísl.', format:'r'}
+  field firming [159,26,31,] {tag:'o', data:o.firming, format:'nr:e', title:'f.'}
+  select prisl   [205,2,35,] {tag:'o', data:o.prislusnost, format:'nr:e', title:'^   přísl.', format:'r'}
   label [0,46,,6] {tag:'o,S', format:'n', css:'db_sep' } // zarovnání
 
   #==> . citlivé údaje: c (jen pro oprávněné)

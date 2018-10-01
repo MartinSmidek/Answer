@@ -156,13 +156,24 @@ function answer_php($app,$app_name,$db_name,$skin,$js_lib,$css_lib,$options) {
   $options->server_url=      "'$http://$rel_root/{$EZER->version}/server/ezer2.php'";
   $options->help= "{width:600,height:500}"; // větší HELP
 
-  $kontakt= " V případě zjištění problému nebo <br/>potřeby konzultace mi prosím napište<br/>
+  if ( !$ezer_local && !isset($_SERVER['HTTP_VIA']) ) {
+    $url= "https://answer.setkani.org{$_SERVER['PHP_SELF']}";
+    $kontakt= " <b style='color:red;background:yellow'>POZOR - od 13.9.2018 Answer běží už
+                <u>pouze</u> zabezpečeným spojením (https)</b> 
+                 <br><br>nahraďte si zpamatovaný odkaz tímto: 
+                 <br><br> <a href='$url'>$url</a>
+                 <br><br>Martin  
+              ";     
+  }
+  else
+    $kontakt= " V případě zjištění problému nebo <br/>potřeby konzultace mi prosím napište<br/>
         na mail&nbsp;<a href='mailto:{$EZER->options->mail}{$EZER->options->mail_subject}'>
         {$EZER->options->mail}</a> "
       . ($EZER->options->phone ? "případně zavolejte&nbsp;{$EZER->options->phone} " : '')
       . ($EZER->options->skype ? "nebo použijte Skype&nbsp;
          <a href='skype:{$EZER->options->skype}?chat'>{$EZER->options->skype}</a>" : '')
       . "<br/><br/>Za spolupráci děkuje <br/>{$EZER->options->author}";
+
   $menu= "<button id='android_menu' class='fa'><i class='fa fa-bars'></i></button>";
 
   if ( $app=='db2' || $app=='db2_test' ) {

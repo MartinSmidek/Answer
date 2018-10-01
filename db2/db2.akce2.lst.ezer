@@ -208,7 +208,11 @@ form _page [,,275,360] {
     switch(zalozka.get,
     'inf',{ note.set(ask('akce2_info',id_akce));  },
     'cor',{ //form.load(id_akce);
-            [ has_skill('faan'); form.display(mrop.get,'corm') ];
+            [ has_skill('faan'); 
+              form.display(0,'corm|corf'); 
+              [ mrop.get; form.display(1,'corm') ]; 
+              [ firm.get; form.display(1,'corf') ]; 
+            ];
             [ has_skill('f'); soubezna.set(cconc(id_hlavni.get,1,0)) ];
             cen_ma.onchange;
             info.sey.browse_focus },
@@ -240,6 +244,7 @@ form _page [,,275,360] {
   field [118,133,83,] { tag:'cor', title:'^ukončení', type:'date', data:akce.datum_do }
   check [213,166,90,] { tag:'cor', title:'jen seznam', data:akce.spec }
   check mrop [300,166,90,] { tag:'cor', title:'mrop', data:akce.mrop, title:'mrop', skill:'faan|faa:m' }
+  check firm [300,186,90,] { tag:'cor', title:'firm', data:akce.firm, title:'firming', skill:'faan|faa:m' }
   select [71,169,139,] { tag:'cor', title:'typ akce *', type:'map', data:akce.druh,
     options:ms_akce_typ.zkratka, format:'n' }
   radio [213,117,86,35] { tag:'cor', data:akce.strava_oddo, value:'vo'
@@ -358,14 +363,23 @@ form _page [,,275,360] {
       | msg.set(ask('akce2_delete',form.key,ret));
         akce_roku(info.rok.get); alert(msg.get);
   } } }
-  // jen pro YF - zápis roku iniciace účastníkům akce - musí být akce.mrop=1
-  label  [310,350,118,30] { tag:'corm', css:'ae_parm', format:'n', style:'z-index:1',         skill:'faan' }
-  button [316,356,,] {tag:'corm', title:'Potvrzení iniciace', format:'nc', style:'z-index:1', skill:'faan|faa:m'
+  // jen pro YF - zápis roku iniciace účastníkům akce - musí být akce.mrop=1 
+  label  [310,417,118,31] { tag:'corm,corf', css:'ae_parm', format:'n', style:'z-index:1',         skill:'faan' }
+  button [316,423,,] {tag:'corm', title:'Potvrzení iniciace', format:'nc', style:'z-index:1', skill:'faan|faa:m'
     proc onclick() { var ret:object
       has_skill('faa:m');
       ret.set(ask('akce2_confirm_mrop',form.key,0));
       { ret.ok;
         [ confirm(ret.msg); ret.set(ask('akce2_confirm_mrop',form.key,1)); alert(ret.msg) ]
+      | alert(ret.msg)
+      }
+  } }
+  button [316,423,,] {tag:'corf', title:'Potvrzení firmingu', format:'nc', style:'z-index:1', skill:'faan|faa:m'
+    proc onclick() { var ret:object
+      has_skill('faa:m');
+      ret.set(ask('akce2_confirm_firm',form.key,0));
+      { ret.ok;
+        [ confirm(ret.msg); ret.set(ask('akce2_confirm_firm',form.key,1)); alert(ret.msg) ]
       | alert(ret.msg)
       }
   } }
