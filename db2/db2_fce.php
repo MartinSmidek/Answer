@@ -871,7 +871,7 @@ function akce2_confirm_firm($ida,$write=0) {  trace();
     $ra= mysql_qry("
       SELECT nazev, firm, YEAR(datum_od) AS _rok,
         SUM((SELECT IF(COUNT(*)>0,1,0) FROM spolu JOIN osoba USING (id_osoba)
-          WHERE id_pobyt=p.id_pobyt AND funkce=0)) as _sloni
+          WHERE id_pobyt=p.id_pobyt /*AND funkce=0*/)) as _sloni
       FROM akce AS a
       LEFT JOIN pobyt AS p ON p.id_akce=a.id_duakce
       WHERE id_duakce=$ida
@@ -897,7 +897,7 @@ function akce2_confirm_firm($ida,$write=0) {  trace();
       JOIN akce AS a ON p.id_akce=a.id_duakce
       JOIN spolu USING (id_pobyt)
       JOIN osoba USING (id_osoba)
-      WHERE id_akce=$ida AND funkce=0 
+      WHERE id_akce=$ida /*AND funkce=0 */
       GROUP BY id_akce
     ");
     if ( !$ra ) goto end;
