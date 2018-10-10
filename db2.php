@@ -3,7 +3,7 @@
   # inicializace systémů Ans(w)er
   #   $app        = kořenová podsložka aplikace ... db2
   #   $app_name   = jméno aplikace
-  #   $db_name    = hlavní databáze ... bylo-li v URL &test=1 přidá se do options.tabu_db
+  #   $db_name    = hlavní databáze ... bylo-li v URL &test=1 použije se databáze s postfixem _test
   #   $skin       = ck|ch
   #   $js_lib     = pole s *.js
   #   $css_lib    = pole s *.css

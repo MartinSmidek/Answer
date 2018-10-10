@@ -24,20 +24,33 @@ function answer_php($app,$app_name,$db_name,$skin,$js_lib,$css_lib,$options) {
   $dbg=      isset($_GET['dbg']) ? $_GET['dbg'] : 0;
   $gmap=     isset($_GET['gmap']) ? $_GET['gmap'] : !$ezer_local;
   $awesome=  isset($_GET['awesome']) ? $_GET['awesome'] : 3;
-  $verze=    isset($_GET['ezer'])    ? $_GET['ezer']    : '2.2';
-//  $mootools= isset($_GET['mootools'])? $_GET['mootools']: true;
+  $verze=    isset($_GET['ezer']) ? $_GET['ezer']    : '2.2';
+  $db_test=  isset($_GET['db_test']) && $_GET['db_test'] ? 1 : 0;
+
   $EZER= (object)array();
 
   // inicializace SESSION
   session_unset();
   session_start();
-  $_SESSION[$app]['GET']= array('ezer'=>"$verze");
+  $_SESSION[$app]['GET']= array('ezer'=>"$verze",'db_test'=>$db_test);
 
+  if ( $verze=='ezer3.1' ) {
+  // ezer3.1 => přepínač pro fáze migrace pod PDO - const EZER_PDO_PORT=1|2|3
+    if ( isset($_GET['pdo']) && $_GET['pdo']==2 ) {
+      require_once("pdo.inc.php");
+      $_SESSION[$app]['pdo']= 2;
+    }
+    else {
+      require_once("mysql.inc.php");
+      $_SESSION[$app]['pdo']= 1;
+    }
+  }
+  
   // zapnutí příznaku pro ochranu souborů v docs (do konce session)
   setcookie("EZER",$app,0,"/");
 
   // ošetření běhu s testovací databází - zobrazit příznak
-  if ( substr($app,-5)=='_test' ) {
+  if ( $db_test ) {
     $title_style.= 'background-color:#ffffaa';
     $title_flag.= "testovací ";
   }
@@ -68,7 +81,7 @@ function answer_php($app,$app_name,$db_name,$skin,$js_lib,$css_lib,$options) {
   
   $api_key= "AIzaSyA_AayjFSuyotfpUV4iqArZYTTZ2aq-xW4";
 
-  $js= $EZER->version=='ezer3'
+  $js= $EZER->version=='ezer3.1'
   // ------------------------------------------------------ JS verze Ezer 3
   ? array_merge(
     // ckeditor a mootools a ...
@@ -102,9 +115,6 @@ function answer_php($app,$app_name,$db_name,$skin,$js_lib,$css_lib,$options) {
     array("$licensed/ckeditor$CKEditor/ckeditor.js","$licensed/clientcide.js"),
     // clipboard.js
     array("$licensed/clipboard.min.js"),
-    // pro verzi 2.1
-    $EZER->version=='ezer2'
-    ? array("$licensed/mootools/asset.js","$licensed/mootools/slider.js"):array(),
     // pro verzi 2.2
     $EZER->version=='ezer2.2'
     ? array("$licensed/datepicker.js"):array(),
@@ -128,12 +138,12 @@ function answer_php($app,$app_name,$db_name,$skin,$js_lib,$css_lib,$options) {
   );
 
   $css= array_merge(
-    $EZER->version=='ezer3' ? array("$client/ezer.css.php","$client/ezer3.css.php=skin") : array("$client/ezer.css.php"),
+    $EZER->version=='ezer3.1' ? array("$client/ezer.css.php","$client/ezer3.css.php=skin") : array("$client/ezer.css.php"),
 //     $EZER->version=='ezer2.2' ? $css_lib : array(),    // = uživatelské css
-    $EZER->version=='ezer3' ? array("db2/db2.css","db2/db2.css.php=skin") : $css_lib,    // = uživatelské css
+    $EZER->version=='ezer3.1' ? array("db2/db2.css","db2/db2.css.php=skin") : $css_lib,    // = uživatelské css
     $dbg ? array("./$licensed/jush/mini_jush.css") : array(),
     array("./$client/licensed/font-awesome/css/font-awesome.min.css"),
-    $EZER->version=='ezer3'
+    $EZER->version=='ezer3.1'
     ? array("$client/licensed/pikaday/pikaday.css","$client/licensed/jquery-ui.min.css")
     : array("$client/licensed/datepicker/datepicker_vista/datepicker_vista.css"),
     // css pro dotykové klienty
@@ -176,7 +186,7 @@ function answer_php($app,$app_name,$db_name,$skin,$js_lib,$css_lib,$options) {
 
   $menu= "<button id='android_menu' class='fa'><i class='fa fa-bars'></i></button>";
 
-  if ( $app=='db2' || $app=='db2_test' ) {
+  if ( $app=='db2' ) {
     // nová verze db2
     $cookie= 3;
     $app_last_access= "{$app}_last_access";
@@ -187,7 +197,7 @@ function answer_php($app,$app_name,$db_name,$skin,$js_lib,$css_lib,$options) {
     $access_app= array(1=>"Setkání","Familia","(společný)");
     $access_app= $access_app[$cookie];
     $choice_js= "personify('menu_on'); return false;";
-    $v= $EZER->version=='ezer3' ? "<sub>3</sub>" : '';
+    $v= $EZER->version=='ezer3.1' ? "<sub>3.1</sub>" : '';
     $title= "
       <span $title_style>"
       . $title_flag
@@ -203,12 +213,12 @@ function answer_php($app,$app_name,$db_name,$skin,$js_lib,$css_lib,$options) {
       . ($android || $ipad ? $menu : "");
   }
   else {
-    // starší verze ys, ys2, fa, fa2 a cr - Centrum pro rodinu
+    // verze cr - Centrum pro rodinu
     $title= "<span $title_style>$title_flag $app_name</span>" . ($android || $ipad ? $menu : "");
   }
 
   $pars= (object)array(
-    'favicon' => $EZER->version=='ezer3'
+    'favicon' => $EZER->version=='ezer3.1'
       ? ($ezer_local ? 'db3_local.png' : 'db3.png')
       : ($ezer_local ? 'db2_local.png' : 'db2.png'),
     'dbg' => $dbg,      // true = povolit podokno debuggeru v trasování a okno se zdrojovými texty
@@ -233,7 +243,7 @@ function answer_php($app,$app_name,$db_name,$skin,$js_lib,$css_lib,$options) {
       }
     }"
   );
-  if (  $EZER->version=='ezer3' )
+  if (  $EZER->version=='ezer3.1' )
     root_php3($app,$app_name,'chngs',$skin,$options,$js,$css,$pars,null,false);
   else
     root_php($app,$app_name,'chngs',$skin,$options,$js,$css,$pars,null,false);

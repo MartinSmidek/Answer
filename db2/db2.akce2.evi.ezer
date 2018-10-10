@@ -417,7 +417,7 @@ form _lst [,,370,*] {
     |             mail.width(44); _id_o.width(0)
     }
     #==> . kontextové menu
-    proc browse_keys() { return(function('b',"return b.keys.toString();",bm)) }
+    proc b_keys() { return(function('b',"return b.keys.toString();",bm)) }
     menu { type:'context'
       item { title:'export vybraných do Excelu',
         proc onclick () { var ret:object
@@ -431,7 +431,7 @@ form _lst [,,370,*] {
       item { title:'vybrat vše se známou polohou',
         proc onclick () { bm_select_in('') }}
       item { title:'vybrat vše a zobrazit co lze',
-        proc onclick () { bm.selected('set',browse_keys); bm_selected }}
+        proc onclick () { bm.selected('set',b_keys); bm_selected }}
       item { title:'-v seznamu jen vybraní'
         proc onclick() { bm.selected('use'); bm.browse_load(bm_vyber.key) } }
       item { title:'v seznamu i nevybraní'

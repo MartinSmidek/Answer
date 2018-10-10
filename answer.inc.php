@@ -30,6 +30,17 @@ function answer_ini($app,$answer_db,$dbs_plus,$php_lib,$ezer_mod=array()) {
     $EZER->version= "ezer{$ev}";
   }
 
+  // přepínač pro fáze migrace pod PDO - const EZER_PDO_PORT=1|2|3 -- pro jádro >=3
+  if ( $EZER->version=='ezer3.1' ) {
+    if ( isset($_SESSION[$ezer_root]['pdo']) && $_SESSION[$ezer_root]['pdo']==2 ) {
+      require_once("{$EZER->version}/pdo.inc.php");
+    }
+    else {
+      require_once("{$EZER->version}/mysql.inc.php");
+    }
+    require_once("{$EZER->version}/server/ezer_pdo.php");
+  }
+
   $server_name= isset($_SERVER["HTTP_X_FORWARDED_SERVER"])
     ?$_SERVER["HTTP_X_FORWARDED_SERVER"]:$_SERVER["SERVER_NAME"];
   $ezer_local= preg_match('/^\w+\.(ezer|bean)|192.168/',$server_name); // identifikace ladícího serveru
@@ -39,11 +50,13 @@ function answer_ini($app,$answer_db,$dbs_plus,$php_lib,$ezer_mod=array()) {
   $ezer_ksweb= $android && $server_name=="localhost"; // identifikace ladícího serveru KSWEB/Android
 
   require_once("{$EZER->version}/server/ae_slib.php");
-  if (  $EZER->version=='ezer3' )
+  if (  $EZER->version=='ezer3.1' )
     require_once("{$EZER->version}/server/ezer_lib3.php");
 
   // ošetření běhu s testovací databází
-  $answer_dbx= substr($app,-5)=='_test' ? "{$answer_db}_test" : $answer_db;
+  $db_test= isset($_SESSION[$app]['GET']['db_test']) && $_SESSION[$app]['GET']['db_test']; 
+  $answer_dbx= $db_test ? "{$answer_db}_test" : $answer_db;
+  $_SESSION[$app]['ezer_db']= $answer_dbx;
 
   // ošetření serveru ado.cz pro Centrum pro rodinný život
   $ezer_answer= 'ezer_answer';
