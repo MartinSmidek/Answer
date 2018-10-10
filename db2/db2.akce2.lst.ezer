@@ -72,6 +72,11 @@ proc akce_set_archiv(cloud,folder) { var path:text
   ask('query',conc("UPDATE akce SET archiv='",path,"' WHERE id_duakce=",page.a_akce.get));
   { eq(the_source.get,'sey'); info.sey.archiv.let(path) | info.sey.google.let(path) };
 }
+# obnoví zobrazení seznamu
+proc lst_refresh() {
+  eq(the_source.get,'sey');    [ info.sey.browse_refresh ]
+| eq(the_source.get,'google'); [ info.google.browse_refresh ]
+}
 # -----------------------------------------------------==> . reakce na změny rozměrů okna prohlížeče
 const min_h=550           // minimální výška (nelze jednoduše měnit - jsou k ní vztaženy souřadnice)
 var   curr_h: number      // výška nad základní výšku
@@ -361,7 +366,8 @@ form _page [,,275,360] {
       { not(ret.ucastnici) | confirm(ret.ucastnici) };  // ale akce má účastníky
       { ret.platby; alert(ret.platby)                   // nelze smazat, jsou-li platby
       | msg.set(ask('akce2_delete',form.key,ret));
-        akce_roku(info.rok.get); alert(msg.get);
+        alert(msg);
+        lst_refresh;
   } } }
   // jen pro YF - zápis roku iniciace účastníkům akce - musí být akce.mrop=1 
   label  [310,417,118,31] { tag:'corm,corf', css:'ae_parm', format:'n', style:'z-index:1',         skill:'faan' }

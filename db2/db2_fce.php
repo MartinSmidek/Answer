@@ -574,8 +574,10 @@ function akce2_delete_confirm($id_akce) {  trace();
   if ( !$nazev ) goto end;
   // má účastníky
   $ucastnici= select('COUNT(*)','pobyt',"id_akce=$id_akce");
+  $pecouni= select('COUNT(*)','pobyt LEFT JOIN spolu USING (id_pobyt)',"id_akce=$id_akce AND funkce=99");
+  $p= $pecouni ? " a $pecouni pečounů" : '';
   $ret->ucastnici= $ucastnici
-    ? "Tato akce má již zapsáno $ucastnici účastníků. Má se jejich účast zrušit a potom smazat akci?"
+    ? "Tato akce má již zapsáno $ucastnici účastníků$p. Má se jejich účast zrušit a potom smazat akci?"
     : '';
   // jsou evidovány platby
   $platby= select('COUNT(*)','platba',"id_duakce=$id_akce");
@@ -588,7 +590,7 @@ end:
 # ------------------------------------------------------------------------------------- akce2 delete
 # zrušení akce
 function akce2_delete($id_akce,$ret) {  trace();
-  list($nazev)= select("nazev",'akce',"id_duakce=$id_akce");
+  $nazev= select("nazev",'akce',"id_duakce=$id_akce");
   if ( $ret->ucastnici ) {
     // napřed zrušit účasti na akci
     query("DELETE FROM spolu USING spolu JOIN pobyt USING(id_pobyt) WHERE id_akce=$id_akce");
@@ -860,11 +862,10 @@ end:
   return $ret;
 }
 # ------------------------------------------------------------------------------- akce2 confirm_firm
-# zjištění, zda lze účastníků akce zapsat běžný rok jako datum posledního firmingu
+# zjištění, zda lze účastníků akce zapsat datum posledního firmingu
 # zapsání roku posledního firmingu účastníkům akce (write=1)
 function akce2_confirm_firm($ida,$write=0) {  trace();
   $ret= (object)array('ok'=>0,'msg'=>'ERROR');
-  $letos= date('Y');
   if ( !$write ) {
     // jen sestavení confirm
     $ra= mysql_qry("
@@ -878,10 +879,10 @@ function akce2_confirm_firm($ida,$write=0) {  trace();
     ");
     if ( !$ra ) goto end;
     list($nazev,$firm,$rok,$sloni)= mysql_fetch_array($ra);
-    $ret->ok= $firm && $rok==$letos && $sloni;
+    $ret->ok= $firm && $sloni;
     $ret->msg= $ret->ok
       ? "Opravdu mám pro $sloni účastníků akce <b>\"$nazev/$rok\"</b>
-        zapsat rok $letos jako účast na firmingu?"
+        zapsat rok $rok jako účast na firmingu?"
       : "CHYBA";
   }
   else {
@@ -891,28 +892,29 @@ function akce2_confirm_firm($ida,$write=0) {  trace();
     $now= date("Y-m-d H:i:s");
     $n= $n1= $n2= 0;
     $ra= mysql_qry("
-      SELECT COUNT(*),GROUP_CONCAT(id_osoba)
+      SELECT COUNT(*),GROUP_CONCAT(id_osoba), YEAR(a.datum_od) AS _rok
       FROM pobyt AS p
+      JOIN akce AS a ON p.id_akce=a.id_duakce
       JOIN spolu USING (id_pobyt)
       JOIN osoba USING (id_osoba)
       WHERE id_akce=$ida AND funkce=0 
       GROUP BY id_akce
     ");
     if ( !$ra ) goto end;
-    list($n,$ids)= mysql_fetch_array($ra);
+    list($n,$ids,$rok)= mysql_fetch_array($ra);
     if ( $n ) {
-      query("UPDATE osoba SET firming=$letos WHERE id_osoba IN ($ids)");
+      query("UPDATE osoba SET firming=$rok WHERE id_osoba IN ($ids)");
       $n1= mysql_affected_rows();
       // zápis do _track
       foreach ( explode(',',$ids) as $ido) {
         query("INSERT INTO _track (kdy,kdo,kde,klic,fld,op,old,val)
-               VALUES ('$now','$user','osoba',$ido,'firming','u','0','$letos')");
+               VALUES ('$now','$user','osoba',$ido,'firming','u','0','$rok')");
         $n2+= mysql_affected_rows();
       }
     }
     $ret->ok= $n>0 && $n==$n1 && $n==$n2;
     $ret->msg= $ret->ok
-      ? "$n účastníkům byl zapsán rok $letos jako rok účasti na firmingu"
+      ? "$n účastníkům byl zapsán rok $rok jako rok účasti na firmingu"
       : "ERROR ($n,$n1,$n2)";
   }
 end:
@@ -13224,6 +13226,7 @@ function db2_stav($db) {
   $html= "<h3>Seznam tabulek s rozdělením podle příslušnosti k organizacím</h3>";
   $html.= "<div class='stat'><table class='stat'>";
   $html.= "<tr><th>tabulka</th>
+    <th style='background-color:#f77'>access=0</th>
     <th style='background-color:#af8'>Setkání</th>
     <th style='background-color:#acf'>Familia</th>
     <th style='background-color:#aff'>sdíleno</th>
@@ -13233,7 +13236,16 @@ function db2_stav($db) {
     $obe= 0;
     $rt= mysql_qry("
       SELECT access,COUNT(*) AS _pocet FROM ezer_$db.$tab
-      WHERE {$desc->cond} GROUP BY access ORDER BY access");
+      WHERE access=0 AND {$desc->cond} GROUP BY access ORDER BY access");
+    if ( $rt && ($t= mysql_fetch_object($rt)) ) {
+      $html.= "<td style='text-align:right' title='{$t->access}'>{$t->_pocet}</td>";
+    }
+    else {
+      $html.= "<td style='text-align:right' title='0'>0</td>";
+    }
+    $rt= mysql_qry("
+      SELECT access,COUNT(*) AS _pocet FROM ezer_$db.$tab
+      WHERE access>0 AND {$desc->cond} GROUP BY access ORDER BY access");
     while ( $rt && ($t= mysql_fetch_object($rt)) ) {
       $html.= "<td style='text-align:right' title='{$t->access}'>{$t->_pocet}</td>";
       if ( $t->access==3 ) $obe= 1;
@@ -13259,9 +13271,9 @@ function db2_stav($db) {
 //     $html.= db2_stav_kdo($db,"kdy > '2015-12-01'",
 //       "Od prosince 2015 - (převážně) sjednocování Setkání & Familia");
     $html.= db2_prubeh_kdo($db,'2015-11',
-      "Od prosince 2015 po měsících - (převážně) sjednocování Setkání & Familia");
+      "Sjednocování Setkání & Familia - od teď do prosince 2015");
     $html.= db2_stav_kdo($db,"kdy <= '2015-12-01'",
-      "<br><br>Do prosince 2015 - sjednocení v oddělených databázích");
+      "<br><br>... a do prosince 2015 - sjednocení v oddělených databázích");
   }
   // technický stav
   $dbs= array();
@@ -13319,13 +13331,13 @@ function db2_prubeh_kdo($db,$od,$tit) {
     $grf= "<tr><td style='border:0'></td>";
     $top= "<tr><th>osob (rodin)</th>";
     $row.= "<tr><th>$kdo</th>";
-    for ($y= 2015; $y<=substr($do,0,4); $y++) {
-      for ($m= 1; $m<=12; $m++) {
+    for ($y=substr($do,0,4); $y>= 2015; $y--) {
+      for ($m= 12; $m>=1; $m--) {
         $ym= "$y-".str_pad($m,2,'0',STR_PAD_LEFT);
         if ( $od<$ym && $ym<=$do ) {
           $styl= $maxi[$ym]==$kdo ? " style='background-color:yellow'" : '';
           $h= $mes[$ym] / 5;
-          $g= "<div class='curr_akce' style='height:{$h}px;width:50px;'>";
+          $g= "<div class='curr_akce' style='height:{$h}px;width:30px;'>";
           $grf.= "<td style='vertical-align:bottom;border:0'>$g</td>";
           $top.= "<th>$y.$m</th>";
           $row.= "<td align='right'$styl>{$sje[$ym][$kdo]}</td>";
