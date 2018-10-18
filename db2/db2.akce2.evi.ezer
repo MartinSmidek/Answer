@@ -417,7 +417,7 @@ form _lst [,,370,*] {
     |             mail.width(44); _id_o.width(0)
     }
     #==> . kontextové menu
-    proc b_keys() { return(function('b',"return b.keys.toString();",bm)) }
+    proc bm_keys() { return(function('b',"return b.keys.toString();",bm)) }
     menu { type:'context'
       item { title:'export vybraných do Excelu',
         proc onclick () { var ret:object
@@ -431,7 +431,7 @@ form _lst [,,370,*] {
       item { title:'vybrat vše se známou polohou',
         proc onclick () { bm_select_in('') }}
       item { title:'vybrat vše a zobrazit co lze',
-        proc onclick () { bm.selected('set',b_keys); bm_selected }}
+        proc onclick () { bm.selected('set',bm_keys); bm_selected }}
       item { title:'-v seznamu jen vybraní'
         proc onclick() { bm.selected('use'); bm.browse_load(bm_vyber.key) } }
       item { title:'v seznamu i nevybraní'
@@ -446,8 +446,8 @@ form _lst [,,370,*] {
   proc bm_select_in(rect) { var ret:object
     page.map.on.get;
     { { eq(bm_komu.get,'o');
-        ret.set(ask('mapa2_ve_ctverci_o',rect,bm.browse_keys,2000))
-      | ret.set(ask('mapa2_ve_ctverci_r',rect,bm.browse_keys,2000))
+        ret.set(ask('mapa2_ve_ctverci_o',rect,bm.bm_keys,2000))
+      | ret.set(ask('mapa2_ve_ctverci_r',rect,bm.bm_keys,2000))
       };
       ret.msg; alert(ret.msg)
     | bm.selected('clear'); page.map.mapa_clear;
