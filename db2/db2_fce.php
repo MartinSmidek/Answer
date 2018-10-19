@@ -863,15 +863,15 @@ end:
 }
 # ------------------------------------------------------------------------------- akce2 confirm_firm
 # zjištění, zda lze účastníků akce zapsat datum posledního firmingu
-# zapsání roku posledního firmingu účastníkům akce (write=1)
+# zapsání roku posledního firmingu účastníkům akce (write=1) + hosdpodáři + lektoři
 function akce2_confirm_firm($ida,$write=0) {  trace();
   $ret= (object)array('ok'=>0,'msg'=>'ERROR');
-  if ( !$write ) {
+  if ( !$write ) {                                                            
     // jen sestavení confirm
     $ra= mysql_qry("
       SELECT nazev, firm, YEAR(datum_od) AS _rok,
         SUM((SELECT IF(COUNT(*)>0,1,0) FROM spolu JOIN osoba USING (id_osoba)
-          WHERE id_pobyt=p.id_pobyt /*AND funkce=0*/)) as _sloni
+          WHERE id_pobyt=p.id_pobyt AND funkce IN (0,5,12))) as _sloni
       FROM akce AS a
       LEFT JOIN pobyt AS p ON p.id_akce=a.id_duakce
       WHERE id_duakce=$ida
@@ -897,7 +897,7 @@ function akce2_confirm_firm($ida,$write=0) {  trace();
       JOIN akce AS a ON p.id_akce=a.id_duakce
       JOIN spolu USING (id_pobyt)
       JOIN osoba USING (id_osoba)
-      WHERE id_akce=$ida /*AND funkce=0 */
+      WHERE id_akce=$ida AND funkce IN (0,5,12) AND firming!=YEAR(a.datum_od)
       GROUP BY id_akce
     ");
     if ( !$ra ) goto end;
@@ -912,10 +912,11 @@ function akce2_confirm_firm($ida,$write=0) {  trace();
         $n2+= mysql_affected_rows();
       }
     }
-    $ret->ok= $n>0 && $n==$n1 && $n==$n2;
-    $ret->msg= $ret->ok
-      ? "$n účastníkům byl zapsán rok $rok jako rok účasti na firmingu"
-      : "ERROR ($n,$n1,$n2)";
+    else 
+      $n= 0;
+//    $ret->ok= $n>0 && $n==$n1 && $n==$n2;
+    $ret->msg= "$n účastníkům byl doplněn rok $rok jako rok účasti na firmingu";
+//      : "ERROR ($n,$n1,$n2)";
   }
 end:
   return $ret;
@@ -3248,7 +3249,7 @@ function akce2_platba_prispevek1($id_pobyt) {  trace();
         FROM pobyt AS p
         JOIN spolu AS s USING(id_pobyt)
         JOIN osoba AS o ON o.id_osoba=s.id_osoba
-        LEFT JOIN dar AS d ON d.id_osoba=o.id_osoba
+        LEFT JOIN dar AS d ON d.id_osoba=o.id_osoba AND d.deleted=''
         WHERE id_pobyt=$id_pobyt AND ukon='c'
         GROUP BY id_pobyt ";
   $rp= mysql_qry($qp);
@@ -3262,7 +3263,7 @@ function akce2_platba_prispevek1($id_pobyt) {  trace();
           FROM pobyt AS p
           JOIN spolu AS s USING(id_pobyt)
           JOIN osoba AS o ON o.id_osoba=s.id_osoba
-          LEFT JOIN dar AS d ON d.id_osoba=o.id_osoba
+          LEFT JOIN dar AS d ON d.id_osoba=o.id_osoba AND d.deleted=''
           WHERE id_pobyt=$id_pobyt AND ukon='p' AND YEAR(dat_do)>=YEAR(NOW()) ";
     $rp= mysql_qry($qp);
     if ( $rp && $p= mysql_fetch_object($rp)) {
@@ -6874,9 +6875,9 @@ function akce2_vyuctov_pary($akce,$par,$title,$vypis,$export=false) { trace();
             LEFT JOIN rodina AS r ON r.id_rodina=i0_rodina
             LEFT JOIN tvori AS t ON t.id_osoba=o.id_osoba AND t.id_rodina=i0_rodina
             JOIN akce AS a ON a.id_duakce=p.id_akce
-            LEFT JOIN dar AS d ON d.id_osoba=s.id_osoba AND d.ukon='p'
+            LEFT JOIN dar AS d ON d.id_osoba=s.id_osoba AND d.ukon='p' AND d.deleted=''
               AND YEAR(a.datum_do) BETWEEN YEAR(d.dat_od) AND YEAR(d.dat_do)
-            LEFT JOIN dar AS dc ON dc.id_osoba=s.id_osoba AND dc.ukon='c'
+            LEFT JOIN dar AS dc ON dc.id_osoba=s.id_osoba AND dc.ukon='c' AND dc.deleted=''
               AND YEAR(a.datum_do)>=YEAR(dc.dat_od)
               AND (YEAR(a.datum_do) <= YEAR(dc.dat_do) OR !YEAR(dc.dat_do))
             JOIN _cis AS c ON c.druh='ms_akce_platba' AND c.data=zpusobplat
@@ -7852,7 +7853,7 @@ function akce2_pdf_stravenky_dieta($x,$report_json) {  trace();
             $parss[$n]->line3= "<small>{$x->nazev}</small>";
             if ( $velikost=='c' ) {
               // celá porce
-              $parss[$n]->ram= '<img src="db/img/stravenky-rastr-1.png"'
+              $parss[$n]->ram= '<img src="db2/img/stravenky-rastr-1.png"'
                              . ' style="width:48mm" border="0" />';
               $parss[$n]->rect=  " ";
             }
@@ -7916,7 +7917,7 @@ function akce2_pdf_stravenky0($akce,$par,$report_json) {  trace();
     $parss[$n]->line3= "";
     $parss[$n]->rect=  "";
     $parss[$n]->end= '';
-    $parss[$n]->ram= '<img src="db/img/stravenky-rastr-1.png" style="width:48mm;height:23mm" border="0" />';
+    $parss[$n]->ram= '<img src="db2/img/stravenky-rastr-1.png" style="width:48mm;height:23mm" border="0" />';
     $n++;
   }
   for ($i= 1; $i<=$pocet; $i++) {
@@ -8169,7 +8170,7 @@ function evid2_cleni($id_osoba,$id_rodina,$filtr) { //trace();
         rt.id_tvori,rt.role,o.deleted,of.id_rodina,nazev,of.access AS r_access
       FROM osoba AS o
         JOIN tvori AS ot ON ot.id_osoba=o.id_osoba
-        LEFT JOIN dar AS od ON od.id_osoba=o.id_osoba
+        LEFT JOIN dar AS od ON od.id_osoba=o.id_osoba AND od.deleted=''
         JOIN rodina AS of ON of.id_rodina=ot.id_rodina -- AND of.access & $access
         JOIN tvori AS rt ON rt.id_rodina=of.id_rodina
         JOIN osoba AS rto ON rto.id_osoba=rt.id_osoba
@@ -8501,7 +8502,7 @@ function evid2_recyklace_pecounu($org,$par,$title,$provest) {
     JOIN pobyt AS p USING (id_pobyt)
     JOIN akce AS a ON id_akce=id_duakce
     WHERE IFNULL(d.deleted,'')='' AND funkce=99
-      AND o.access&$org AND IFNULL(d.access,3)&$org AND a.access&$org
+      AND o.access&$org AND IFNULL(d.access,3)&$org AND a.access&$org 
     GROUP BY id_osoba
     ORDER BY prijmeni");
   while ( $pr && ($p= mysql_fetch_object($pr)) ) {
