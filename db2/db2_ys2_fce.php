@@ -1,4 +1,231 @@
 <?php # (c) 2009-2015 Martin Smidek <martin@smidek.eu>
+/** ===========================================================================================> VPS **/
+# ------------------------------------------------------------------------------------- vps historie
+# 
+function vps_historie ($org,$par,$export) {
+  $cert= array(); // certifikát rok=>poslední číslo
+  $letos= date('Y');
+  list($mez1,$mez2)= explode(',',$par->parm);
+  $hrana1= $letos - $mez1;
+  $hrana2= $letos - $mez2;
+  $vps1= $org==1 ? '3,17' : '3';
+  // pole pro tabulku
+  $clmn= $css= array();
+// sloupce
+  $tits= array("pár:26","poprvé:10","kolikrát:10","naposledy:10",
+            $org==1?"VPS1:10":"1.školení:10",
+            "VPS2");
+  $flds= array('jm','od','n','do','vps_i','vps2');
+  // sloupce
+  $tits= array("pár:26","kolikrát:10","VPS2",'skupinky');
+  $flds= array('jm','n','vps2','hodn');
+  // doplnění nadpisů historie
+  for ($r=$letos; $r>=$hrana2; $r--) {
+    $r2= $r%100;
+    array_push($tits,"$r2");
+    array_push($flds,$r2);
+  }
+  // seznam VPS a základní údaje
+  $rx= mysql_qry("SELECT
+      r.id_rodina,r.nazev,
+      GROUP_CONCAT(DISTINCT IF(t.role='a',o.jmeno,'') SEPARATOR '') as jmeno_m,
+      GROUP_CONCAT(DISTINCT IF(t.role='b',o.jmeno,'') SEPARATOR '') as jmeno_z,
+      MIN(IF(druh=1 AND funkce=1,YEAR(datum_od),9999)) AS OD,
+      CEIL(CHAR_LENGTH(
+        GROUP_CONCAT(DISTINCT IF(druh=1 AND funkce=1,YEAR(datum_od),'') SEPARATOR ''))/4) AS Nx,
+      MAX(IF(druh=1 AND funkce=1,YEAR(datum_od),0)) AS DO,
+      MIN(IF(druh IN ($vps1),YEAR(datum_od),9999)) as VPS_I,
+      1
+    FROM rodina AS r
+    JOIN pobyt AS p
+    JOIN akce as a ON id_akce=id_duakce
+    JOIN tvori AS t USING (id_rodina)
+    JOIN osoba AS o USING (id_osoba)
+    WHERE spec=0 AND r.id_rodina=i0_rodina AND a.access&$org
+      AND druh IN (1,$vps1)
+      --  AND r.id_rodina=3329 
+    GROUP BY r.id_rodina
+    ORDER BY r.nazev");
+  while ( $rx && ($x= mysql_fetch_object($rx)) ) {
+    $idr= $x->id_rodina;
+    // číslování certifikátů
+    $skola= $x->VPS_I==9999 ? 0 : $x->VPS_I;
+    $c1= $c2= '';
+    if ( $skola ) {
+      if ( !isset($cert[$skola]) ) $cert[$skola]= 0;
+      $cert[$skola]++; $c1= ($org==1?'vps':'pps')."_$skola/{$cert[$skola]}";
+      $cert[$skola]++; $c2= ($org==1?'vps':'pps')."_$skola/{$cert[$skola]}";
+    }
+    // ohlídání období
+    if ( $x->DO<$hrana1 ) continue;
+    $cclen= $_cinny_od ?: '-';
+    // odpověď 1
+    $cl= array(
+      'jm'=>"{$x->jmeno_m} a {$x->jmeno_z} {$x->nazev}",
+      'od'=>$x->OD,'n'=>$x->Nx,'do'=>$x->DO,
+      'vps_i'=>$skola ?: '-'
+    );
+    // doplnění odpověďi podle mez2+1 běhů
+    if ( $org==1 
+//        && $idr==3329 
+        ) {
+      // celkový počet účastí na akcích pro činné členy
+      $cl['vps2']= select('COUNT(*)','akce JOIN pobyt ON id_akce=id_duakce',
+          "akce.druh=3 AND nazev RLIKE 'VPS *(2|II)' AND i0_rodina=$idr");
+    }
+    $clmn[$idr]= $cl;
+  }
+  // doplnění průběhu ročních běhů
+  for ($r=$letos; $r>=$hrana2; $r--) {
+    $r2= $r%100; $lk= "$r2/L"; $a[0]= "$r2/P"; $a[1]= "$r2/J"; $r1= $r+1;
+    $ida_lk= select('id_duakce','akce',"access=$org && druh=1 AND YEAR(datum_od)=$r");
+    $ida[0]= select('id_duakce','akce',"access=$org && druh=2 AND datum_od BETWEEN '$r-09-01' AND '$r-12-31'")?:0;
+    $ida[1]= select('id_duakce','akce',"access=$org && druh=2 AND datum_od BETWEEN '$r1-01-01' AND '$r1-05-31'")?:0;
+    // získej skupinky LK daného roku pro sledované VPS
+    $skups= array(); // idr_vps -> [idr_ucastnik,...]
+    $rs= mysql_qry("
+      SELECT GROUP_CONCAT(i0_rodina ORDER BY IF(funkce=1,1,0) DESC) AS _skup
+      FROM pobyt AS p
+      WHERE id_akce=$ida_lk AND skupina>0
+      GROUP BY skupina
+      ORDER BY skupina");
+    while ( $rs && (list($skup)= mysql_fetch_array($rs)) ) {
+      $idrs= explode(',',$skup);
+      $vps= array_shift($idrs);
+      if ( isset($clmn[$vps]) )
+        $skups[$vps]= $idrs;
+    }
+    // ohodnoť přítomnost na obnovách: 3=všichni; 2=někteří; 1=žádní
+    $ox= array();
+    for ($i= 0; $i<=1; $i++ ) {
+      $idrs= select("GROUP_CONCAT(i0_rodina)",'pobyt',"id_akce=$ida[$i]");
+      $ucast= explode(',',$idrs);
+      foreach ($skups as $vps => $skup) {
+        if ( $idrs ) {
+          $jo= $ne= 0;
+          foreach ($skup as $idr) {
+            if ( in_array($idr,$ucast) ) 
+              $jo++;
+            else 
+              $ne++;
+          }
+          $clmn[$vps][$r2].= 
+              $jo && !$ne ? 3 : ( $jo && $ne ? 2 : (!$jo && $ne ? 1 : 0));
+        }
+        else {
+          $clmn[$vps][$r2].= '0'; 
+        }
+      }
+    }
+  }
+  // pokus o bodovací systém
+  $bodys= array(
+      'A' => '3:33,32,23,13,30',
+      'B' => '2:22,12,20',
+      'C' => '1:11,21,10',
+      'X' => '0:00'
+  );
+  // pokus o bodovací systém
+  $bodys= array(
+      'A' => '3:33,23,13,30',
+      'B' => '2:32,22,12,20',
+      'C' => '1:11,21,31,10',
+      'X' => '0:00'
+  );
+  $body= $hodn= array(); // 32 -> 'B' ... 2
+  foreach ($bodys as $b=>$hvs) {
+    list($h,$vs)= explode(':',$hvs);
+    foreach (explode(',',$vs) as $v) {
+      $body[$v]= $b;
+      $hodn[$v]= $h;
+    }
+  }
+  foreach ($clmn as $vps => $cl) {
+    $n= $h= 0; 
+    for ($r=$letos; $r>=$hrana2; $r--) {
+      $r2= $r%100; 
+      if ( isset($cl[$r2]) ) {
+        $n++;
+        $h+= $hodn[$clmn[$vps][$r2]];
+        $clmn[$vps][$r2]= strtr($clmn[$vps][$r2],$body);
+      }
+    }
+    if ( $n ) {
+      $znamka= 4-round($h/$n,1);
+      $clmn[$vps]['hodn']= $znamka;
+//      if ( $znamka > 2 ) {
+//        $css[$vps]['hodn']= 'yellow';
+//      }
+    }
+  }
+  return vps_table($tits,$flds,$clmn,'hodn',$export);
+}
+# ------------------------------------------------------------------------------------=> . vps table
+# $css_or_sort = string znamená řazení podle toho sloupce, pole znamená aplikaci css
+function vps_table($tits,$flds,$clmn,$css_or_sort,$export=false,$row_numbers=false,$note='') {  
+  $ret= (object)array('html'=>'');
+  // zobrazení tabulkou
+  $tab= '';
+  $thd= '';
+  $n= 0;
+  if ( $export ) {
+    $ret->tits= $tits;
+    $ret->flds= $flds;
+    $ret->clmn= $clmn;
+  }
+  else {
+    // případné řazení
+    if ( is_string($css_or_sort)) {
+      usort($clmn, function($a, $b) use ($css_or_sort) {
+        return ($a[$css_or_sort] < $b[$css_or_sort]) ? -1 : 1;
+      });
+    }
+    $fmt= array();
+    // písmena sloupců
+    if ( $row_numbers ) {
+      $ths.= "<th> </th>";
+      for ($a= 0; $a<count($tits); $a++) {
+        $id= chr(ord('A')+$a);
+        $ths.= "<th>$id</th>";
+      }
+      $ths.= "</tr><tr>";
+    }
+    // titulky
+    if ( $row_numbers )
+      $ths.= "<th>1</th>";
+    foreach ($tits as $i=>$idw) {
+      list($id,$len,$f)= explode(':',$idw);
+      $ths.= "<th>$id</th>";
+      if ( $f ) $fmt[$flds[$i]]= $f;
+    }
+    foreach ($clmn as $i=>$c) {
+      $c= (array)$c;
+      $tab.= "<tr>";
+      if ( $row_numbers )
+        $tab.= "<th>".($i+2)."</th>";
+      foreach ($flds as $f) {
+        $class= is_array($css_or_sort) && isset($css_or_sort[$i][$f]) 
+            ? "class='{$css_or_sort[$i][$f]}'" : '';
+        if ( $f=='id_osoba' || $f=='^id_osoba' )
+          $tab.= "<td style='text-align:right'>".tisk2_ukaz_osobu($c[$f])."</td>";
+        elseif ( $f=='^id_rodina' )
+          $tab.= "<td style='text-align:right'>".tisk2_ukaz_rodinu($c['^id_rodina'])."</td>";
+        elseif ( $f=='^id_pobyt' )
+          $tab.= "<td style='text-align:right'>".tisk2_ukaz_pobyt($c['^id_pobyt'])."</td>";
+        elseif ( is_numeric($c[$f]) || $fmt[$f]=='d' ) 
+          $tab.= "<td $class style='text-align:right'>{$c[$f]}</td>";
+        else {
+          $tab.= "<td $class style='text-align:left'>{$c[$f]}</td>";
+        }
+      }
+      $tab.= "</tr>";
+      $n++;
+    }
+    $ret->html= "{$note}Seznam má $n řádků<br><br><div class='stat'>
+      <table class='stat'><tr>$ths</tr>$tab</table></div>";
+  }
+  return $ret;
+}
 /** ======================================================================================> POKLADNA **/
 # ---------------------------------------------------------------------------------- pipe pdenik_typ
 // 0=V 1=P
