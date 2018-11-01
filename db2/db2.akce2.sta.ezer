@@ -62,6 +62,10 @@ menu m {type:'left', format:'f+' //, active:*
          ,par:°{typ:'slouzici',podtyp:'pary',xls:'Excel',parm_tit:'roky zpět:'
           ,dsc:"Tabulka obsahuje historii sloužících párů na letních kurzech MS. <br>Poslední rok služby VPS je třeba nastavit parametrem 'roky zpět'.<br>"
       ,tit:'',fld:'',ord:''}}
+    item {title:'... přehled historie skupinek'                                      skill:'yaet'
+         ,par:°{typ:'slouzici2',xls:'Excel',parm_tit:'roky zpět:'
+          ,dsc:"Tabulka obsahuje podrobnou historii sloužících párů. <br>Poslední zkoumaný rok služby VPS je třeba nastavit parametrem 'roky zpět'.<br>"
+      ,tit:'',fld:'',ord:''}}
     item {title:' ... sloužící VPS/PPS (jednotlivci)'                                skill:'yae;fae;cae#crz'
          ,par:°{typ:'slouzici',podtyp:'osoby',xls:'Excel',parm_tit:'roky zpět:'
           ,dsc:"Tabulka obsahuje historii sloužících párů na letních kurzech MS. <br>Poslední rok služby VPS je třeba nastavit parametrem 'roky zpět'.<br>"

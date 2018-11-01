@@ -230,6 +230,10 @@ menu m {type:'left', active:*
                                         ,par:°{typ:'p',exp:'Excel2',cnd:"p.funkce<9"
                                         ,tit:'příjmení:15,jména:20,pokoj:10,skupinka:10,^'
                                         ,fld:'prijmeni,jmena,pokoj,skupina,^id_pobyt'}}
+    item {title:'Účastníci, skupinky,pokoje,tlf'                                            skill:'y'
+                                        ,par:°{typ:'p',exp:'Excel2',cnd:"p.funkce<9"
+                                        ,tit:'příjmení:15,jména:20,pokoj:10,skupinka:10,telefony:30'
+                                        ,fld:'prijmeni,jmena,pokoj,skupina,telefony'}}
     item {title:'Účastníci/pár, skupinky a pokoje'                                           skill:'y;f'
                                         ,par:°{typ:'p',exp:'Excel2',cnd:"p.funkce<9"
                                         ,tit:'příjmení:15,jména:20,pokoj:10,pok1:4,pok2:4,pok3:4,skupinka:10,^'

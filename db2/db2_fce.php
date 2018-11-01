@@ -9733,6 +9733,11 @@ function sta2_sestava($org,$title,$par,$export=false) { trace();
 //                                                 debug($clmn,"$hranice");
     break;
 
+  # Sestava historie VPS - varianta pro YS
+  case 'slouzici2':    // -------------------------------------==> .. slouzici2
+    return vps_historie($org,$par,$export);
+    break;
+  
   # Sestava sloužících na letních kurzech, rok= před kolika lety naposledy ve funkci (0=jen letos)
   case 'slouzici':     // -------------------------------------==> .. slouzici
     global $VPS;
@@ -9744,6 +9749,12 @@ function sta2_sestava($org,$title,$par,$export=false) { trace();
       $tits= array("pár:26","poprvé:10","kolikrát:10","naposledy:10",
                  $org==1?"VPS I:10":"1.školení:10","č.člen od:10","(ID)");
       $flds= array('jm','od','n','do','vps_i','clen','^id_rodina');
+    }
+    else if ( $par->podtyp=='skupinky' ) {
+      $behy= isset($par->behy) ? $par->behy : 1;
+      $tits= array("pár:26","poprvé:10","kolikrát:10","naposledy:10",
+                 $org==1?"VPS I:10":"1.školení:10");
+      $flds= array('jm','od','n','do','vps_i');
     }
     else { // osoby
       $tits= array("jméno:20","certifikát:20","poprvé:10","kolikrát:10","naposledy:10",
@@ -9814,6 +9825,13 @@ function sta2_sestava($org,$title,$par,$export=false) { trace();
           'od'=>$x->OD,'n'=>$x->Nx,'do'=>$x->DO,
           'vps_i'=>$skola ?: '-',
           'clen'=>$cclen,'^id_rodina'=>$x->id_rodina
+        );
+      }
+      elseif ( $par->podtyp=='skupinky' ) {
+        $clmn[]= array(
+          'jm'=>"{$x->jmeno_m} a {$x->jmeno_z} {$x->nazev}",
+          'od'=>$x->OD,'n'=>$x->Nx,'do'=>$x->DO,
+          'vps_i'=>$skola ?: '-'
         );
       }
       else { // osoby
@@ -12692,6 +12710,7 @@ function data_update ($tab,$id_tab,$chngs) { trace();
 err: fce_error("ERROR IN: data_update ($tab,$id_tab,$chngs)");
 end: return $updated;
 }
+/*
 # ----------------------------------------------------------------------------- data2_transform_2014
 # transformace na schema 2014
 # par.cmd = seznam transformací
@@ -13190,6 +13209,7 @@ function data2_transform_2014($par) { trace();
   }
   return $html;
 }
+*/
 /** ========================================================================================> SYSTEM **/
 # ---------------------------------------------------------------------------==> . datové statistiky
 # ----------------------------------------------------------------------------------------- db2 info
@@ -13511,6 +13531,7 @@ function track_revert($ids) {  trace();
 }
 # =======================================================================> db2 kontrola a oprava dat
 # ----------------------------------------------------------------------------------- db2 oprava_dat
+/*
 # opravy dat
 function db2_oprava_dat($par) { trace(); debug($par);
   global $USER;
@@ -13632,6 +13653,7 @@ function db2_oprava_dat($par) { trace(); debug($par);
   }
   return $html;
 }
+*/
 # --------------------------------------------------------------------------------- db2 kontrola_dat
 # kontrola dat
 function db2_kontrola_dat($par) { trace();

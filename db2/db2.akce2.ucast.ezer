@@ -862,10 +862,10 @@ form _evidence {
     } }
     item { title:'... zrušit obarvení změn' proc onclick () {
     } }
-    item { title:'=m: opravit i0_rodina,pouze', skill:'m'
-      proc onclick () {
-        alert(ask('data2_transform_2014',
-          object('cmd','i0_rodina,pouze','akce',the_duakce.get))) } }
+//    item { title:'=m: opravit i0_rodina,pouze', skill:'m'
+//      proc onclick () {
+//        alert(ask('data2_transform_2014',
+//          object('cmd','i0_rodina,pouze','akce',the_duakce.get))) } }
   }
   proc Display(on) {  // 2 = jako 1 ale prázdná akce
     eq(on,2); rod.no_rodina; rod.display(1); pob.display(0);
