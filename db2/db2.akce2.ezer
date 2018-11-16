@@ -625,9 +625,9 @@ map map_stat:         table _cis {where:"druh='stat'",              order:'porad
 
 # ===========================================================================================> TRACK
 # přehled provedených změn
-panel track [,,540,276] { title:'Historie oprav', type:'popup', css:'dialog'
+panel track [,,550,276] { title:'Historie oprav', type:'popup', css:'dialog'
   var reverted_table= '', reverted_key= 0
-  use back: form _back [0,16,,] { tabindex:20 },
+  use back: form _back [0,0,,] { tabindex:20 },
   proc back_show(kde,klic) {
     panel.popup(0,1);
     panel.set_attrib('title',conc('Historie oprav pro ',kde,' id=',klic));
@@ -637,7 +637,7 @@ panel track [,,540,276] { title:'Historie oprav', type:'popup', css:'dialog'
   }
   # ------------------------------------------------------------- _back
   # id_track,kdy,kdo,kde,klic,zmena:fld,op,val,old
-  form _back [,,255,250] {
+  form _back [,,*,*] {
     browse lst [0,0,150,100] { rows:12,
       show kdy [,,90,] { title:'kdy', data:_track.kdy, sql_pipe:'sql_time1' }
       show kdn [,,30,] { title:'kdn', data:_track.kdo }
@@ -688,8 +688,8 @@ panel mapa [,,640,400] { type:'popup', title:'mapa účastníků'
     f.cr.set(object('mark',''));
     f.cr.set(object('mark',ret.mark));
   }
-  use f: form _f [0,10,,]
-  form _f [,,700,400] {
+  use f: form _f [0,0,,]
+  form _f [,,*,*] {
     label cr [0,0,640,400] { type:'map' }
   }
 }
@@ -697,7 +697,7 @@ panel mapa [,,640,400] { type:'popup', title:'mapa účastníků'
 # společné procedury
 proc obligatory(elem) { elem.enable(1); elem.change(1) }
 # -----------------------------------------------------------------------------------------==> OSOBA
-panel osoba_config [,,200,150] {type:'popup', title:"Podrobnosti údajů"
+panel osoba_config [,,210,150] {type:'popup', title:"Podrobnosti údajů"
   var tit='osobní údaje', grp='ZKAS', var ucast:object
   proc start() {
     grp.set(get_cookie(conc(sys('root'),'_conf_osoba'),grp.get));

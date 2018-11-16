@@ -64,7 +64,7 @@ menu m {type:'left', format:'f+' //, active:*
       ,tit:'',fld:'',ord:''}}
     item {title:'... přehled historie skupinek'                                      skill:'yaet'
          ,par:°{typ:'slouzici2',xls:'Excel',parm_tit:'roky zpět:'
-          ,dsc:"Tabulka obsahuje podrobnou historii sloužících párů. <br>Poslední zkoumaný rok služby VPS je třeba nastavit parametrem 'roky zpět'.<br>"
+          ,dsc:"Tabulka ukazuje pro jednotlivé VPS účast jejich skupinek na obnovách. <br><br>Parametr 'roky zpět' je třeba nastavit jako dvojici čísel X,Y <br>kde X určuje, které VPS nás zajímají (0=jen letošní, 1=i loňské) a Y určuje na kolik let jejich služby se díváme.<br>Zkus třeba 0,2 a pak opět klikni na ... přehled historie skupinek<br>"
       ,tit:'',fld:'',ord:''}}
     item {title:' ... sloužící VPS/PPS (jednotlivci)'                                skill:'yae;fae;cae#crz'
          ,par:°{typ:'slouzici',podtyp:'osoby',xls:'Excel',parm_tit:'roky zpět:'
