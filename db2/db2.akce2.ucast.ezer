@@ -1730,16 +1730,16 @@ form _documents {  // ukládají se na H: tedy mimo dosah http
     }
   }
 }
-# ==========================================================================================> STRAVA
-# nastaví položky cstrava_pol{x} a cstrava_cel{x} pro x=|_bm|_bl
+# ========================================================================================> SKUPINKY
+# zobrazí celou historii skupinek na LK
 panel Skupinky [,,400,400] {type:'popup', title:'Historie skupinek'
   proc historie(idr) {
     panel.popup;
     f.info.set(ask("akce2_skup_paru",idr));
   }
-  use f: form _f [0,10,,]
+  use f: form _f [0,0,,]
   form _f {
-    label info [0,0,405,400] { style:'background:white;overflow:auto' }
+    label info [0,0,400,400] { style:'background:white;overflow:auto' }
   }
 }
 # ==========================================================================================> STRAVA

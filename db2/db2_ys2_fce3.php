@@ -26,7 +26,7 @@ function vps_historie ($org,$par,$export) {
     array_push($flds,$r2);
   }
   // seznam VPS a základní údaje
-  $rx= mysql_qry("SELECT
+  $rx= pdo_qry("SELECT
       r.id_rodina,r.nazev,
       GROUP_CONCAT(DISTINCT IF(t.role='a',o.jmeno,'') SEPARATOR '') as jmeno_m,
       GROUP_CONCAT(DISTINCT IF(t.role='b',o.jmeno,'') SEPARATOR '') as jmeno_z,
@@ -46,7 +46,7 @@ function vps_historie ($org,$par,$export) {
       --  AND r.id_rodina=3329 
     GROUP BY r.id_rodina
     ORDER BY r.nazev");
-  while ( $rx && ($x= mysql_fetch_object($rx)) ) {
+  while ( $rx && ($x= pdo_fetch_object($rx)) ) {
     $idr= $x->id_rodina;
     // číslování certifikátů
     $skola= $x->VPS_I==9999 ? 0 : $x->VPS_I;
@@ -83,13 +83,13 @@ function vps_historie ($org,$par,$export) {
     $ida[1]= select('id_duakce','akce',"access=$org && druh=2 AND datum_od BETWEEN '$r1-01-01' AND '$r1-05-31'")?:0;
     // získej skupinky LK daného roku pro sledované VPS
     $skups= array(); // idr_vps -> [idr_ucastnik,...]
-    $rs= mysql_qry("
+    $rs= pdo_qry("
       SELECT GROUP_CONCAT(i0_rodina ORDER BY IF(funkce=1,1,0) DESC) AS _skup
       FROM pobyt AS p
       WHERE id_akce=$ida_lk AND skupina>0
       GROUP BY skupina
       ORDER BY skupina");
-    while ( $rs && (list($skup)= mysql_fetch_array($rs)) ) {
+    while ( $rs && (list($skup)= pdo_fetch_array($rs)) ) {
       $idrs= explode(',',$skup);
       $vps= array_shift($idrs);
       if ( isset($clmn[$vps]) )
@@ -125,7 +125,7 @@ function vps_historie ($org,$par,$export) {
       'C' => '1:11,21,10',
       'X' => '0:00'
   );
-  // pokus o bodovací systém 
+  // pokus o bodovací systém
   // 3=celá skupinka, 2=částečná, 1=nikdo, 0=obnova ještě nebyla nebo VPS nepřijela
   $note= "Písmena ABC charakterizují účast na podzimní a letní obnově, jsou určena takto:";
   $bodys= array(
@@ -257,8 +257,8 @@ function p_pdenik_insert($typ,$org,$org_abbr,$datum) {
   // nalezení nového čísla dokladu (v každé pokladně se zvlášť číslují příjmy a výdaje)
   $year= substr(trim($datum),-4);
   $qry= "SELECT max(cislo) as c FROM $db.pdenik WHERE org=$org AND typ=$typ AND year(datum)=$year";
-  $res= mysql_qry($qry);
-  if ( $res && $row= mysql_fetch_assoc($res) ) {
+  $res= pdo_qry($qry);
+  if ( $res && $row= pdo_fetch_assoc($res) ) {
     $cislo= 1+$row['c'];
   }
   if ( $cislo ) {
@@ -270,8 +270,8 @@ function p_pdenik_insert($typ,$org,$org_abbr,$datum) {
     $s= implode(',',$set['pdenik']);
     $ident= $org_abbr.($typ==1?'V':'P').substr($year,2,2).'_'.str_pad($cislo,5,'0',STR_PAD_LEFT);
     $qry= "INSERT INTO $db.pdenik SET $s,org=$org,typ=$typ,cislo=$cislo,ident='$ident'";
-    $res= mysql_qry($qry);
-    $y->key= mysql_insert_id();
+    $res= pdo_qry($qry);
+    $y->key= pdo_insert_id();
   }
 }
 # ----------------------------------------------------------------------------------- kasa menu_show
@@ -328,8 +328,8 @@ function kasa_export($cond,$file,$db) {
   $table= "$file.xls";
   $wb= new Workbook("docs/$table");
   $qry_p= "SELECT * FROM $db.pokladna ";
-  $res_p= mysql_qry($qry_p);
-  while ( $res_p && $p= mysql_fetch_object($res_p) ) {
+  $res_p= pdo_qry($qry_p);
+  while ( $res_p && $p= pdo_fetch_object($res_p) ) {
     $ws= $wb->add_worksheet($p->abbr);
     // formáty
     $format_hd= $wb->add_format();
@@ -350,8 +350,8 @@ function kasa_export($cond,$file,$db) {
     }
     // data
     $qry= "SELECT * FROM $db.pdenik WHERE $cond AND pdenik.org={$p->id_pokladna} ORDER BY datum";
-    $res= mysql_qry($qry);
-    while ( $res && $d= mysql_fetch_object($res) ) {
+    $res= pdo_qry($qry);
+    while ( $res && $d= pdo_fetch_object($res) ) {
       $sy++; $sx= 0;
       $ws->write_string($sy,$sx++,utf2win_sylk($d->ident,true));
       $ws->write_number($sy,$sx++,$d->cislo);
@@ -391,8 +391,8 @@ function kasa_menu_comp($cond,$db) {
   $html= "<table>";
   $qry= "SELECT nazev, sum(if(typ=2,castka,-castka)) as s, abbr FROM $db.pdenik
         LEFT JOIN $db.pokladna ON pdenik.org=id_pokladna WHERE $cond GROUP BY pdenik.org";
-  $res= mysql_qry($qry);
-  while ( $res && $row= mysql_fetch_assoc($res) ) {
+  $res= pdo_qry($qry);
+  while ( $res && $row= pdo_fetch_assoc($res) ) {
     $popis= $row['nazev'];
     $u= $row['abbr'];
     $stav= $row['s'];
@@ -433,14 +433,14 @@ function ds_compare($order) {  #trace('','win1250');
   ezer_connect('setkani');
   // údaje z objednávky
   $qry= "SELECT * FROM setkani.tx_gnalberice_order WHERE uid=$order";
-  $res= mysql_qry($qry);
+  $res= pdo_qry($qry);
   if ( !$res ) fce_error(/*w*u*/("$order není platné číslo objednávky"));
-  $o= mysql_fetch_object($res);
+  $o= pdo_fetch_object($res);
   // projití seznamu
   $qry= "SELECT * FROM setkani.ds_osoba WHERE id_order=$order ";
-  $reso= mysql_qry($qry);
+  $reso= pdo_qry($qry);
   $n= $n_0= $n_3= $n_9= $n_15= $n_a= $noroom= 0;
-  while ( $reso && $u= mysql_fetch_object($reso) ) {
+  while ( $reso && $u= pdo_fetch_object($reso) ) {
     // rozdělení podle věku
     $n++;
     $vek= ds_vek($u->narozeni,$o->fromday);
@@ -507,16 +507,16 @@ function ds_kli_menu() {
       $qry= "SELECT uid,(adults+kids_10_15+kids_3_9+kids_3) as celkem
              FROM tx_gnalberice_order
              WHERE  NOT deleted AND NOT hidden AND untilday>=$from AND $until>fromday";
-      $res= mysql_qry($qry);
-      while ( $res && $o= mysql_fetch_object($res) ) {
+      $res= pdo_qry($qry);
+      while ( $res && $o= pdo_fetch_object($res) ) {
         $uids.= "$del{$o->uid}"; $del= ',';
         $objednavek++;
         $celkem+= $o->celkem;
       }
       $qryp= "SELECT count(*) as klientu FROM ds_osoba
              WHERE  FIND_IN_SET(id_order,'$uids')";
-      $resp= mysql_qry($qryp);
-      if ( $resp && $op= mysql_fetch_object($resp) ) {
+      $resp= pdo_qry($qryp);
+      if ( $resp && $op= pdo_fetch_object($resp) ) {
         $klientu= $op->klientu;
       }
       $tit= /*w*u*/($mesice[$m])." - $celkem ($klientu)";
@@ -574,7 +574,7 @@ function ds_import_ys($order,$clear=0) {
     // a potom prijmeni,jmeno,narozeni,psc,obec,ulice,email,telefon 
     $uc= array();
     ezer_connect('ezer_db2',true);
-    $rp= mysql_qry("
+    $rp= pdo_qry("
       SELECT s.id_osoba,prijmeni,jmeno,narozeni,
         IF(adresa,o.psc,r.psc) AS psc, 
         IF(adresa,o.obec,r.obec) AS obec,
@@ -590,7 +590,7 @@ function ds_import_ys($order,$clear=0) {
       WHERE id_akce=$ida 
       GROUP BY id_osoba ORDER BY rod, narozeni
     ");
-    while ($rp && $o= mysql_fetch_object($rp)) {
+    while ($rp && $o= pdo_fetch_object($rp)) {
       $uc[]= $o;
     }
     // doplnění účastníků do objednávky
@@ -629,8 +629,8 @@ function ds_rooms_help($version=1) {
   $qry= "SELECT number,note
          FROM tx_gnalberice_room
          WHERE  NOT deleted AND NOT hidden AND version=1";
-  $res= mysql_qry($qry);
-  while ( $res && $o= mysql_fetch_object($res) ) {
+  $res= pdo_qry($qry);
+  while ( $res && $o= pdo_fetch_object($res) ) {
     $hlp[]= (object)array('fld'=>"q$o->number",'hlp'=>wu($o->note));
   }
 //                                                         debug($hlp);
@@ -661,7 +661,7 @@ function ds_cen_menu($tit='Ceny roku') {
 # vygeneruje menu pro loňský, letošní a příští rok ve tvaru objektu pro ezer2 pro zobrazení objednávek
 # určující je datum zahájení pobytu v objednávce
 function ds_obj_menu() {
-  global $mysql_db;
+  global $pdo_db;
   $stav= map_cis('ds_stav');
   $the= '';                     // první objednávka v tomto měsíci či později
 //                                      debug($stav,'ds_obj_menu',(object)array('win1250'=>1));
@@ -686,8 +686,8 @@ function ds_obj_menu() {
       $qry= "/*ds_obj_menu*/SELECT uid,fromday,untilday,state,name,state FROM setkani.tx_gnalberice_order
              WHERE  NOT deleted AND NOT hidden AND untilday>=$from AND $until>fromday";
 //              JOIN ezer_ys._cis ON druh='ds_stav' AND data=state
-      $res= mysql_qry($qry);
-      while ( $res && $o= mysql_fetch_object($res) ) {
+      $res= pdo_qry($qry);
+      while ( $res && $o= pdo_fetch_object($res) ) {
         $iid= $o->uid;
         $zkratka= $stav[$o->state];
         $par= (object)array('uid'=>$iid);
@@ -730,8 +730,8 @@ function lide_ms($patt) {  #trace('','win1250');
   $qry= "SELECT access,id_rodina AS _key,concat(nazev,' - ',obec) AS _value
          FROM rodina
          WHERE nazev LIKE '$patt%' ORDER BY nazev LIMIT $limit";
-  $res= mysql_qry($qry);
-  while ( $res && $t= mysql_fetch_object($res) ) {
+  $res= pdo_qry($qry);
+  while ( $res && $t= pdo_fetch_object($res) ) {
     if ( ++$n==$limit ) break;
     $key= $t->_key;
     $org= $t->access==1 ? 'S' : ( $t->access==2 ? 'F' : '*');
@@ -755,8 +755,8 @@ function xxxlide_ms($patt) {  #trace('','win1250');
   $qry= "SELECT source,cislo AS _key,concat(jmeno,' ',jmeno_m,' a ',jmeno_z,' - ',mesto) AS _value
          FROM ms_pary
          WHERE jmeno LIKE '$patt%' ORDER BY jmeno LIMIT $limit";
-  $res= mysql_qry($qry);
-  while ( $res && $t= mysql_fetch_object($res) ) {
+  $res= pdo_qry($qry);
+  while ( $res && $t= pdo_fetch_object($res) ) {
     if ( ++$n==$limit ) break;
     $key= "{$t->_key}".($t->source=='L'?0:1);
     $a[$key]= "{$t->source}:{$t->_value}";
@@ -775,7 +775,7 @@ function rodina($idr) {  #trace('','win1250');
   $rod= array();
   // členové rodiny
   ezer_connect('ezer_db2');
-  $rc= mysql_qry("
+  $rc= pdo_qry("
     SELECT
       IF(o.adresa,o.ulice,r.ulice) AS _ulice,
       IF(o.adresa,o.psc,r.psc) AS _psc,
@@ -790,7 +790,7 @@ function rodina($idr) {  #trace('','win1250');
     WHERE id_rodina=$idr AND o.deleted=''
     ORDER BY t.role
   ");
-  while ( $rc && $c= mysql_fetch_object($rc) ) {
+  while ( $rc && $c= pdo_fetch_object($rc) ) {
     $narozeni= sql_date1($c->narozeni);
     $rodcis= rodcis($c->narozeni,$c->sex).$c->rc_xxxx;
     $roky= roku($rodcis);
@@ -833,8 +833,8 @@ function lide_ds($patt0) {  #trace('','win1250');
          GROUP BY _value
          ORDER BY prijmeni
          LIMIT $limit";
-  $res= mysql_qry($qry);
-  while ( $res && $t= mysql_fetch_object($res) ) {
+  $res= pdo_qry($qry);
+  while ( $res && $t= pdo_fetch_object($res) ) {
     if ( ++$n==$limit ) break;
     $key= $t->_key;
     $a[$key]= wu("D:{$t->_value}");
@@ -854,14 +854,14 @@ function klienti($id_osoba) {  #trace('','win1250');
   // rodiče
   ezer_connect('setkani');
   $qry= "SELECT * FROM ds_osoba WHERE id_osoba=$id_osoba";
-  $res= mysql_qry($qry);
-  if ( $res && $p= mysql_fetch_object($res) ) {
+  $res= pdo_qry($qry);
+  if ( $res && $p= pdo_fetch_object($res) ) {
     $cond= "id_order={$p->id_order} AND obec='{$p->obec}' AND ulice='{$p->ulice}'";
     // vybereme se stejným označením rodiny
     $qry= "SELECT * FROM ds_osoba WHERE $cond
            ORDER BY narozeni";
-    $res= mysql_qry($qry);
-    while ( $res && $o= mysql_fetch_object($res) ) {
+    $res= pdo_qry($qry);
+    while ( $res && $o= pdo_fetch_object($res) ) {
     $vek= ds_vek($o->narozeni,time());
     $narozeni= sql_date1($o->narozeni);
     $rod[]= (object)array('prijmeni'=>wu($o->prijmeni),'jmeno'=>wu($o->jmeno),'stari'=>$vek,
@@ -888,23 +888,23 @@ function ds_ceny_uprava($par) { trace('','win1250');
     $na= date('Y')+$par->na;
     // kontrola prázdnosti nového ceníku
     $qry= "SELECT count(*) as pocet FROM setkani.ds_cena  WHERE rok=$na ";
-    $res= mysql_qry($qry);
-    if ( $res && $c= mysql_fetch_object($res) ) {
+    $res= pdo_qry($qry);
+    if ( $res && $c= pdo_fetch_object($res) ) {
       if ( $c->pocet>0 )
         $html= "Cenik pro rok $na byl jiz zrejme vygenerovan. Operace prerusena.";
     }
     if ( !$html ) {
       // kopie ceníku
       $qry= "SELECT * FROM ds_cena WHERE rok=$z ORDER BY typ";
-      $res= mysql_qry($qry);
+      $res= pdo_qry($qry);
       $ok= 1; $n= 0;
-      while ( $res && $c= mysql_fetch_object($res) ) {
+      while ( $res && $c= pdo_fetch_object($res) ) {
         $ins= "INSERT INTO ds_cena (rok,polozka,druh,typ,od,do,cena,dph)
                VALUES ($na,'{$c->polozka}','{$c->druh}','{$c->typ}',{$c->od},{$c->do},{$c->cena},{$c->dph})";
         display(/*w*u*/($ins));
         $n++;
-        $ires= mysql_qry($ins);
-        $ok&= mysql_affected_rows()==1 ? 1 : 0;
+        $ires= pdo_qry($ins);
+        $ok&= pdo_affected_rows()==1 ? 1 : 0;
       }
       $html.= $ok&&$n ? "Zkopirovano" : "Kopie ceniku se nezdarila. Kontaktuj Martina Smidka";
     }
@@ -972,8 +972,8 @@ function ds_hoste($orders,$rok) {  #trace('','win1250');
          FROM setkani.ds_osoba AS p
          JOIN tx_gnalberice_order AS o ON uid=id_order
          WHERE FIND_IN_SET(id_order,'$orders') ORDER BY id_order,rodina,narozeni DESC";
-  $res= mysql_qry($qry);
-  while ( $res && $h= mysql_fetch_object($res) ) {
+  $res= pdo_qry($qry);
+  while ( $res && $h= pdo_fetch_object($res) ) {
     $pf= sql2stamp($h->_pf); $pu= sql2stamp($h->_pu);
     $od_ts= $pf ? $pf : $h->_of;
     $do_ts= $pu ? $pu : $h->_ou;
@@ -1052,8 +1052,8 @@ function ds_zaloha($order) {  trace();// '','win1250');
   // zjištění údajů objednávky
   ezer_connect('setkani');
   $qry= "SELECT * FROM tx_gnalberice_order WHERE uid=$order";
-  $res= mysql_qry($qry);
-  if ( $res && $o= mysql_fetch_object($res) ) {
+  $res= pdo_qry($qry);
+  if ( $res && $o= pdo_fetch_object($res) ) {
     $o->rooms= $o->rooms1;
     foreach ((array)$o as $on) if ( strstr($on,'|')!==false ) { // test na |
       fce_warning(/*w*u*/("nepřípustný znak '|' v '$on'"));
@@ -1367,8 +1367,8 @@ function ds_faktury($order) {  trace('','win1250');
   // kontrola objednávky
   ezer_connect('setkani');
   $qry= "SELECT * FROM setkani.tx_gnalberice_order WHERE uid=$order";
-  $res= mysql_qry($qry);
-  if ( $res && $o= mysql_fetch_object($res) ) {
+  $res= pdo_qry($qry);
+  if ( $res && $o= pdo_fetch_object($res) ) {
     $o->rooms= $o->rooms1;
     foreach ((array)$o as $on) if ( strstr($on,'|')!==false ) { // test na |
       fce_warning(/*w*u*/("nepřípustný znak '|' v '$on'"));
@@ -1396,8 +1396,8 @@ function ds_faktury($order) {  trace('','win1250');
     // zjištění počtu faktur za akci
     $qry= "SELECT rodina,count(*) as pocet FROM setkani.ds_osoba
            WHERE id_order=$order GROUP BY rodina ORDER BY if(rodina='','zzzzzz',rodina)";
-    $res= mysql_qry($qry);
-    while ( $res && $r= mysql_fetch_object($res) ) {
+    $res= pdo_qry($qry);
+    while ( $res && $r= pdo_fetch_object($res) ) {
       // seznam faktur
       $rid= $r->rodina ? $r->rodina : 'ostatni';
       $x->faktury[]= array($rid,$r->pocet,$o->sleva/100);
@@ -1406,8 +1406,8 @@ function ds_faktury($order) {  trace('','win1250');
       $err= array();
       $qry= "SELECT * FROM setkani.ds_osoba
              WHERE id_order=$order AND rodina='{$r->rodina}' ORDER BY narozeni DESC";
-      $reso= mysql_qry($qry);
-      while ( $reso && $h= mysql_fetch_object($reso) ) {
+      $reso= pdo_qry($qry);
+      while ( $reso && $h= pdo_fetch_object($reso) ) {
         foreach ((array)$h as $on) if ( strstr($on,'|')!==false ) { // test na |
           fce_warning(/*w*u*/("nepřípustný znak '|' v '$on'"));
           goto end;
@@ -1489,7 +1489,7 @@ end:
 # platce= [nazev,adresa,telefon,ic]
 # polozky= [[nazev,cena,dph,pocet,sleva]...]
 # }
-function ds_rozpis_faktura($listr,$listf,$typ,$order,$x,$polozky,$platce,$zaloha=100,$pata,$zaloha,&$suma) {
+function ds_rozpis_faktura($listr,$listf,$typ,$order,$x,$polozky,$platce,$zaloha=100,$pata,$zaloha2,&$suma) {
                                                 trace('','win1250');
   $koef_dph= dph_koeficienty();
   list($ic,$dic,$adresa,$akce,$obdobi)= $platce;
@@ -1820,8 +1820,8 @@ function ds_cenik($rok) {  #trace('','win1250');
   $ds_cena= array();
   ezer_connect('setkani');
   $qry2= "SELECT * FROM ds_cena WHERE rok=$rok";
-  $res2= mysql_qry($qry2);
-  while ( $res2 && $c= mysql_fetch_object($res2) ) {
+  $res2= pdo_qry($qry2);
+  while ( $res2 && $c= pdo_fetch_object($res2) ) {
     $wc= $c;
     $wc->polozka= wu($c->polozka);
     $wc->druh= wu($c->druh);
