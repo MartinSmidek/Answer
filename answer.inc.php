@@ -8,13 +8,8 @@
 #   $dbs_plus   = pole s dalšími databázemi ve formátu $dbs
 #   $php_lib    = pole s *.php - pro 'ini'
 #
-function answer_ini($app,$answer_db,$dbs_plus,$php_lib,$ezer_mod=array()) {
-  global $EZER,$ezer_local,$ezer_root,$ezer_path_root,$ezer_comp_ezer,$ezer_comp_root,
-         $path_backup,$ezer_mysql_path,$path_url,$path_pspad,
-         $path_files_h,$path_files_s,$path_files_href,
-         $ezer_php_libr,$ezer_php,$ezer_ezer;
-
-  $ezer_root= $app;                                             // adresář a hlavní objekt aplikace
+function answer_ezer($app) {
+  global $EZER;
 
   if ( !isset($EZER->version) ) {
     // nastavení zobrazení PHP-chyb klientem při &err=1
@@ -32,7 +27,7 @@ function answer_ini($app,$answer_db,$dbs_plus,$php_lib,$ezer_mod=array()) {
 
   // přepínač pro fáze migrace pod PDO - const EZER_PDO_PORT=1|2|3 -- pro jádro >=3
   if ( $EZER->version=='ezer3.1' ) {
-    if ( isset($_SESSION[$ezer_root]['pdo']) && $_SESSION[$ezer_root]['pdo']==2 ) {
+    if ( isset($_SESSION[$app]['pdo']) && $_SESSION[$app]['pdo']==2 ) {
       require_once("{$EZER->version}/pdo.inc.php");
     }
     else {
@@ -41,13 +36,25 @@ function answer_ini($app,$answer_db,$dbs_plus,$php_lib,$ezer_mod=array()) {
     require_once("{$EZER->version}/server/ezer_pdo.php");
   }
 
+//  // android
+//  $android=    preg_match('/android|x11/i',$_SERVER['HTTP_USER_AGENT']);
+//  $ezer_ksweb= $android && $server_name=="localhost"; // identifikace ladícího serveru KSWEB/Android
+}
+
+function answer_ini($app,$answer_db,$dbs_plus,$php_lib,$ezer_mod=array()) {
+  global $EZER,$ezer_local,$ezer_root,$ezer_path_root,$ezer_comp_ezer,$ezer_comp_root,
+         $path_backup,$ezer_mysql_path,$path_url,$path_pspad,
+         $path_files_h,$path_files_s,$path_files_href,
+         $ezer_php_libr,$ezer_php,$ezer_ezer;
+
+  $ezer_root= $app;                                             // adresář a hlavní objekt aplikace
+
+//  if ( !isset($EZER->version) ) 
+    answer_ezer($app);
+  
   $server_name= isset($_SERVER["HTTP_X_FORWARDED_SERVER"])
     ?$_SERVER["HTTP_X_FORWARDED_SERVER"]:$_SERVER["SERVER_NAME"];
   $ezer_local= preg_match('/^\w+\.(ezer|bean)|192.168/',$server_name); // identifikace ladícího serveru
-
-  // android
-  $android=    preg_match('/android|x11/i',$_SERVER['HTTP_USER_AGENT']);
-  $ezer_ksweb= $android && $server_name=="localhost"; // identifikace ladícího serveru KSWEB/Android
 
   require_once("{$EZER->version}/server/ae_slib.php");
   if (  $EZER->version=='ezer3.1' )
@@ -89,7 +96,7 @@ function answer_ini($app,$answer_db,$dbs_plus,$php_lib,$ezer_mod=array()) {
     ), $dbs_plus[1])
   );
   // kořeny cest
-  $path_root=  array($ezer_ksweb?"/storage/sdcard0/htdocs/www-ys2":
+  $path_root=  array(//$ezer_ksweb?"/storage/sdcard0/htdocs/www-ys2":
     "/home/www/ezer/www-ys/2","C:/Ezer/beans/answer");
   // kořen pro LabelDrop
   $abs_root= $path_root[$ezer_local?1:0];
@@ -105,7 +112,7 @@ function answer_ini($app,$answer_db,$dbs_plus,$php_lib,$ezer_mod=array()) {
   $ezer_mysql_path= array("/usr/bin/","c:/apache/mysql/bin/");
   $ezer_mysql_path= $ezer_mysql_path[$ezer_local?1:0];  // cesta k utilitě mysql (i s lomítkem)
   // cesty pro zadávání url
-  $path_url= array("https://answer.setkani.org/{$ezer_root}.php","http://answer.bean/{$ezer_root}.php");
+  $path_url= array("https://answer.setkani.org/{$ezer_root}.php","http://answer.bean:8080/{$ezer_root}.php");
   $path_url= $path_url[$ezer_local?1:0];                // prefix url
   // ostatní parametry
   $tracking= '_track';
@@ -118,8 +125,9 @@ function answer_ini($app,$answer_db,$dbs_plus,$php_lib,$ezer_mod=array()) {
   $bank= $ezer_local ? "C:/Ezer/www-ys2" : "/home/www/ezer/www-ys/2";
 
   // moduly interpreta zahrnuté do aplikace - budou zpracovány i reference.i_doc pro tabulky kompilátoru
+  $db2_fcex= $EZER->version=='ezer3.1' ? 'db2_fce3' : 'db2_fce';
   $ezer_comp_ezer= "app,area,ezer,ezer_report,ezer_fdom1,ezer_fdom2";
-  $ezer_comp_root= "ds/fce,db2/db2_fce";
+  $ezer_comp_root= "ds/fce,db2/$db2_fcex";
   // moduly v Ezerscriptu mimo složku aplikace
   $ezer_ezer= array_merge(array(
 //     "ds/ds.dum",
@@ -174,6 +182,7 @@ function answer_ini($app,$answer_db,$dbs_plus,$php_lib,$ezer_mod=array()) {
 //   require_once('tcpdf/config/lang/eng.php');
   require_once('tcpdf/tcpdf.php');
   // vložení modulů
+    require_once("$ezer_path_root/db2/$db2_fcex.php");
   foreach($ezer_php as $php) {
     require_once("$ezer_path_root/$php");
   }

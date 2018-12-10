@@ -24,12 +24,13 @@
 
   $cookie= 3;
   $app_last_access= "{$app}_last_access";
+  
   $coo= filter_input(INPUT_COOKIE,$app_last_access,FILTER_VALIDATE_INT);
   if ( $coo && $coo>0 && $coo<4 ) {
     $cookie= $coo;
   }
   $get_ev= filter_input(INPUT_GET,'ezer',FILTER_SANITIZE_SPECIAL_CHARS);
-  $ev= $get_ev==3 ? '3' : '';
+  $ev= $get_ev=='3.1' ? '3' : '';
   $choice_css=
     $cookie==1 ? "skins/ck/ck.ezer$ev.css=skin" : (
     $cookie==2 ? "skins/ch/ch.ezer$ev.css=skin" : "skins/db/db.ezer$ev.css=skin" );

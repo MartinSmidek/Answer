@@ -34,14 +34,15 @@ function answer_php($app,$app_name,$db_name,$skin,$js_lib,$css_lib,$options) {
   session_start();
   $_SESSION[$app]['GET']= array('ezer'=>"$verze",'db_test'=>$db_test);
 
-  if ( $verze=='ezer3.1' ) {
+  $server= "ezer$verze";
+  if ( $verze=='3.1' ) {
   // ezer3.1 => přepínač pro fáze migrace pod PDO - const EZER_PDO_PORT=1|2|3
     if ( isset($_GET['pdo']) && $_GET['pdo']==2 ) {
-      require_once("pdo.inc.php");
+      require_once("$server/pdo.inc.php");
       $_SESSION[$app]['pdo']= 2;
     }
     else {
-      require_once("mysql.inc.php");
+      require_once("$server/mysql.inc.php");
       $_SESSION[$app]['pdo']= 1;
     }
   }
@@ -214,13 +215,15 @@ function answer_php($app,$app_name,$db_name,$skin,$js_lib,$css_lib,$options) {
   }
   else {
     // verze cr - Centrum pro rodinu
-    $title= "<span $title_style>$title_flag $app_name</span>" . ($android || $ipad ? $menu : "");
+    $v= $EZER->version=='ezer3.1' ? "<sub>3.1</sub>" : '';
+    $title= "<span $title_style>$title_flag Answer$v</span>" . ($android || $ipad ? $menu : "");
   }
 
   $pars= (object)array(
     'favicon' => $EZER->version=='ezer3.1'
       ? ($ezer_local ? 'db3_local.png' : 'db3.png')
       : ($ezer_local ? 'db2_local.png' : 'db2.png'),
+    'app_root' => "$rel_root",      // startovní soubory app.php a app.inc.php jsou v kořenu
     'dbg' => $dbg,      // true = povolit podokno debuggeru v trasování a okno se zdrojovými texty
     'watch_key' => 1,   // true = povolit přístup jen po vložení klíče
     'watch_ip' => 1,    // true = povolit přístup jen ze známých IP adres
@@ -243,10 +246,12 @@ function answer_php($app,$app_name,$db_name,$skin,$js_lib,$css_lib,$options) {
       }
     }"
   );
-  if (  $EZER->version=='ezer3.1' )
+  if (  $EZER->version=='ezer3.1' ) {
     root_php3($app,$app_name,'chngs',$skin,$options,$js,$css,$pars,null,false);
-  else
+  }
+  else {
     root_php($app,$app_name,'chngs',$skin,$options,$js,$css,$pars,null,false);
+  }
 }
 
 ?>
