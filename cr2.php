@@ -14,8 +14,9 @@
 
   require_once("answer.php");
   $options= (object)array(
-    'curr_version' => 1,                       // při přihlášení je nahrazeno nejvyšší ezer_kernel.version
-    'watch_access' => 4,
+//    'clock_off' => 1,                          // vypnout minutový a hodinový chat se serverem
+//    'curr_version' => 1,                       // při přihlášení je nahrazeno nejvyšší ezer_kernel.version
+//    'watch_access' => 4,
     'watch_access_opt' => // ... barvení v Uživatelé + select v ezer2.syst.ezer
        "{name:{4:'CPR Ostrava'},
          abbr:{4:'C'},
@@ -27,11 +28,14 @@
 
   $cookie= 4;
   $app_last_access= "{$app}_last_access";
-  if ( isset($_COOKIE[$app_last_access])
-    && $_COOKIE[$app_last_access]>0 ) { //&&  $_COOKIE[$app_last_access]<4 ) {
-    $cookie= $_COOKIE[$app_last_access];
-  }
-  $choice_css= "skins/ck/ck.ezer.css=skin";
+  
+//  if ( isset($_COOKIE[$app_last_access])
+//    && $_COOKIE[$app_last_access]>0 ) { //&&  $_COOKIE[$app_last_access]<4 ) {
+//    $cookie= $_COOKIE[$app_last_access];
+//  }
+  $get_ev= filter_input(INPUT_GET,'ezer',FILTER_SANITIZE_SPECIAL_CHARS);
+  $ev= $get_ev=='3.1' ? '3' : '';
+  $choice_css= "skins/ck/ck.ezer$ev.css=skin";
 
   $js= array(
   );
