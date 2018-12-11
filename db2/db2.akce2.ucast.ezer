@@ -129,14 +129,21 @@ proc wide()   { curr_w.set(1280); w_change_all }
 proc w_change_all() {
   eq(the_soubeh.get,0,1);       // jen pro Kurs
   evid.c_change(cconc(eq(curr_w.get,1024),1,2));
-  page.pframe.property(object('widen',cconc(eq(curr_w.get,1024),-250,0)))//,'smooth',1));
+  foreach(array(
+      page.frame,evid.frame,pla.frame,act0.frame,alb0.frame,docu.frame),
+    change_width);
 }
+proc change_width(x) { x.property(object('widen',cconc(eq(curr_w.get,1024),-250,0))) }
 
 # změna výšky oproti základní min_h
 proc h_change_all() {
   foreach(array(cmd,cmdp),change_top1);
   foreach(array(sp1,sp2,pob),change_top2);
-  foreach(array(page.pframe,evid.frame,pla.duvod_text,pla.navrh,pla.duvod_typ,pla.doslo,docu.drop),change_height);
+  foreach(array(
+      evid.frame,pla.frame,act0.frame,alb0.frame,docu.frame,
+      pla.duvod_text,pla.navrh,pla.duvod_typ,pla.doslo,
+      docu.drop),
+    change_height);
   change_top3;
   h_change_b;
 }
@@ -185,7 +192,6 @@ proc akce_back() {
 # 1. zobrazení normální nebo hlavní akce
 use header:form _header   [  4,  0,,]
 use u:     form _ucast    [  6, 20,,]  { tag:'akce1' }               // seznam účastníků
-use page:  form _page     [400, 10,,]  { tag:'akce1' }
 # záložka evidence
 use evid:  form _evidence [400, 10,,]      { tag:'akce1', format:'n' }
 use rod:   form _rodina2  [404,30,,]       { tag:'akce1', format:'n' }
@@ -207,16 +213,19 @@ use sp2:   form _spolu  [1023,min_h-185,,] { tag:'2,akce1', format:'n' }
 
 use cmd:   form _cmd      [400,min_h-120,,]  { tag:'akce1', format:'n' }
 use alb:   form foto._alb [410, 32,,]  { tag:'akce0', format:'n' }
+use alb0:  form _aktivity0 [400, 10,,]  { tag:'akce0', format:'n' }
 # záložka plateb
 use pla:   form _platba   [400, 10,,]  { tag:'akce0', format:'n' }
 use cmdp:  form _cmd_p    [400,min_h-120,,]  { tag:'akce0', format:'n' }
 # záložka aktivity
 use act1:  form _aktivity [420, 10,,]  { tag:'akce0', format:'n' }
 use act2:  form _aktivity [700, 10,,]  { tag:'akce0', format:'n' }
+use act0:  form _aktivity0 [400, 10,,]  { tag:'akce0', format:'n' }
 # záložka dokumenty
 use docu:  form _documents [400, 10,,]  { tag:'akce0', format:'n' }
 # 2. zobrazení dětí
 use u2:    form _ucast2  [   6, 20,,]  { tag:'akce2', format:'n' }   // seznam dětí
+use page:  form _page     [400, 10,,]  { tag:'akce1' }
 
 proc elim_kopie_osob(os) { var zmena:number, ido:number, idos:text
   { idos.set(os.part('keys_osoba').get);
@@ -310,7 +319,7 @@ form _cmd [,,623,30] {
     'none',{form.enable(0,'s|r|x'); form.enable(1,'n')},
     'show',{form.enable(0,'s'); form.enable(1,'x'); form_mode.set('show')}
   )}
-  label [140,0,584,30] { tag:'x', css:'ae_work', style:"z-index:1;border:1px solid #f5f5f5;box-shadow: 2px 2px 10px #333" }
+  label [136,0,481,30] { tag:'x', css:'ae_work', style:"z-index:1;border:1px solid #f5f5f5;box-shadow: 2px 2px 10px #333" }
   //==> .. [zpět]
   label  [0,0,121,30] { tag:'r', css:'ae_parm search', skill:'yaa;faa;caa', style:"box-shadow:2px 2px 10px #333" }
   proc _reload(renew,ido) { // renew=0 vrácení původních dat a zhasnutí warningu, jinak znovunačtení
@@ -340,9 +349,9 @@ form _cmd [,,623,30] {
                 skill:'yaa|yaa+;faa|faa+;caa|caa+'
     proc onclick() { ulozit } }
   # ----------------------------------------------- přidat pobyt
-  label [149,3,44,] { title:"<b>Přidat <br>pobyt:</b>" }
+  label [145,3,44,] { title:"<b>Přidat <br>pobyt:</b>" }
   #==> . + rodina
-  button [197,5,,] {tag:'x,n', title:'[fa-heart] rodina',
+  button [188,5,,] {tag:'x,n', title:'[fa-heart] rodina',
     skill:'yaa+|yaa+;faa+|faa+;caa+|caa+', help:'Přidání celé rodiny'
     proc onclick() {
       set_state('new'); mode.set('rodiny'); pob.new_pobyt;
@@ -352,7 +361,7 @@ form _cmd [,,623,30] {
       rod.new_rodina('');
   }}
   #==> . + skupina
-  button [265,5,,] {tag:'x,n', title:'[fa-heart] jednotlivci',
+  button [256,5,,] {tag:'x,n', title:'[fa-heart] jednotlivci',
     skill:'yaa+|yaa+;faa+|faa+;caa+|caa+', help:'Přidání skupiny osob'
     proc onclick() {
       rod.nerodina.Init; pob.new_pobyt;
@@ -361,9 +370,9 @@ form _cmd [,,623,30] {
       pridat_osobu.Init
   }}
   # ----------------------------------------------- změnit
-  label [354,3,54,] { title:"<b>Změny <br>pobytu:</b>" }
+  label [347,3,44,] { title:"<b>Změny <br>pobytu:</b>" }
   #==> . - pobyt
-  button [405,5,,] {tag:'x', title:'[fa-plug fa-rotate-180 fa-red] Zrušit pobyt',
+  button [395,5,,] {tag:'x', title:'[fa-plug fa-rotate-180 fa-red] zruš',
     skill:'yaa+|yaa+;faa+|faa+;caa+|caa+',
     help:'Vyřazení účastníka nebo páru z účasti na akci'
     proc onclick() {
@@ -374,7 +383,8 @@ form _cmd [,,623,30] {
       reload(0);
   } }
   #==> . + osoba
-  button pridat_osobu [501,5,,] {tag:'x', title:'[fa-heart-o] Přidat osobu',
+  label [452,3,44,] { title:"<b>Osobu <br>rodině:</b>" }
+  button pridat_osobu [497,5,,] {tag:'x', title:'[fa-heart-o] přidej',
     skill:'yaa+|yaa+;faa+|faa+;caa+|caa+',
     help:'Přidání nové nebo již existující osoby k pobytu (případně do rodiny)'
     proc onclick() { Init }
@@ -416,7 +426,7 @@ form _cmd [,,623,30] {
       _reload(1,os1.key);
     }
   }
-  button zrušit_osobu [611,5,,] {tag:'x', title:'[fa-times fa-red] Vymazat osobu',
+  button zrušit_osobu [561,5,,] {tag:'x', title:'[fa-times fa-red] zruš',
     skill:'yaa+|yaa+;faa+|faa+;caa+|caa+', help:'Vymazání osoby z databáze'
     proc onclick() { var ret:object
       ret.set(ask('evid2_delete',rod.cleni.key_osoba.get,rod.key,'conf_oso'));
@@ -742,7 +752,7 @@ form _ucast2 [,,400,] { css:'ds_form'
   }
 }
 # ------------------------------------------------------------------------------------------==> PAGE
-form _page {
+form _page  [,,623,20] {
   proc Show(R,P,O,S) { //==> . Show
     [ R.n; rod.display(0) | rod.display(1) ];
     [ P.n; pob.display(0) | pob.display(1) ];
@@ -767,8 +777,8 @@ form _page {
       [ u.b.browse_count; evid.Display(1); cmd.display(1); cmd.set_state('show')
       | evid.Display(2); cmd.display(1); cmd.set_state('none') ];
       pla.display(0); cmdp.display(0);
-      alb.display(0); docu.display(0);
-      act1.display(0); act2.display(0);
+      alb0.display(0); alb.display(0); docu.display(0);
+      act0.display(0); act1.display(0); act2.display(0);
       [ eq(last.get,the_pobyt.get)
       | last.set(the_pobyt.get);
         u.b.browse_count; u.b.load_zalozka;  ];
@@ -782,10 +792,10 @@ form _page {
       zalozka.set('plat');
       evid.Display(0); cmd.display(0);
       pla.display(1); cmdp.display(1);
-      alb.display(0); docu.display(0);
+      alb0.display(0); alb.display(0); docu.display(0);
       pla.get.display(gt(the_cenik.get,0),'cenik'); // omezení výpisu pokud není definován ceník
       pla.display(eq(the_soubeh.get,1),'deti'); // platby za děti
-      act1.display(0); act2.display(0);
+      act0.display(0); act1.display(0); act2.display(0);
       [ eq(last.get,the_pobyt.get) | u.b.load_zalozka; last.set(the_pobyt.get) ];
     }
   }
@@ -797,8 +807,8 @@ form _page {
       zalozka.set('akce');
       evid.Display(0); cmd.display(0);
       pla.display(0); cmdp.display(0);
-      alb.display(0); docu.display(0);
-      act1.display(1); act2.display(1);
+      alb0.display(0); alb.display(0); docu.display(0);
+      act0.display(1); act1.display(1); act2.display(1);
       [ eq(rod.cleni.key_osoba.get,act1.ido,act2.ido)
       | act1.ucasti(rod.cleni.key_osoba.get); act2.ucasti(0)
       ]
@@ -812,8 +822,8 @@ form _page {
       zalozka.set('foto');
       evid.Display(0); cmd.display(0);
       pla.display(0); cmdp.display(0);
-      alb.display(1); docu.display(0);
-      act1.display(0); act2.display(0);
+      alb0.display(1); alb.display(1); docu.display(0);
+      act0.display(0); act1.display(0); act2.display(0);
       [ eq(last.get,the_pobyt.get) | u.b.load_zalozka; last.set(the_pobyt.get) ];
     }
   }
@@ -825,23 +835,24 @@ form _page {
       zalozka.set('docu');
       evid.Display(0); cmd.display(0);
       pla.display(0); cmdp.display(0);
-      alb.display(0); docu.display(1);
-      act1.display(0); act2.display(0);
+      alb0.display(0); alb.display(0); docu.display(1);
+      act0.display(0); act1.display(0); act2.display(0);
       [ eq(last.get,the_pobyt.get) | u.b.load_zalozka; last.set(the_pobyt.get) ];
     }
   }
   # ------------------------==> . manuální úprava šíře
   button wider [589,9,,] {type:'html', title:'[fa-toggle-right]', style:'z-index:5;margin-top:-16px'
     proc onclick() { eq(evid.cmode.get,2); ucast.narrow | ucast.wide } }
-  label pframe [0,16,873,min_h-185] { css:'ae_work'}
+//  label pframe [0,16,873,min_h-185] { css:'ae_work'} 
+  label frame [0,16,873,4] { css:'ae_work'} 
 }
 # --------------------------------------------------------------------------------------==> EVIDENCE
-form _evidence {
+form _evidence [,,623,] {
   var cmode=0          // sloupce osob: 1=jeden, 2=dva
   var rmode=0          // bloky osob: iae-iep-
   var zmode: text      // o | p
   var back: text       // pozadí pro 2/3 sloupce
-  label frame [0,16,873,min_h+-152] { css:'ae_work'}
+  label frame [0,16,873,min_h-152] { css:'ae_work'}
   # ------------------------==> . kontextové_menu
   menu ctx { type:'context', join:frame
     item { title:'zkontrolovat skupinky', skill:'yaa+;faa+;caa+',
@@ -1236,12 +1247,14 @@ form _rodina2 [,,360,229]  { css:'ae_frame'
     [ eq(ido,os1.key);                     //   čteme do 1.
       copy_by_name(cleni,os1);
       os1.show_osoba(u.dup.get);
+      copy_by_name(cleni,os1);
       sp1.load_spolu(ids,cleni);
       os1.gmail.enable(0)
     | os2.key(ido);                        //   nebo do 2.
-      copy_by_name(cleni,os2);
       os2.enable(1,'.*');
+      copy_by_name(cleni,os2);
       os2.show_osoba(u.dup.get);
+      copy_by_name(cleni,os2);
       sp2.enable(1,'.*');
       sp2.load_spolu(ids,cleni);
       os2.gmail.enable(0)
@@ -1249,6 +1262,7 @@ form _rodina2 [,,360,229]  { css:'ae_frame'
   | os1.key(ido);                          // 1 sloupec nebo 1. prázdný
     copy_by_name(cleni,os1);
     os1.show_osoba(u.dup.get);
+    copy_by_name(cleni,os1);
     sp1.load_spolu(ids,cleni);
     os1.gmail.enable(0)
   }
@@ -1620,6 +1634,7 @@ form _platba { key_id:'id_pobyt'
   label [107,Td+110,,] {tag:'b', title:'+ program'}
   label [163,Td+110,,] {tag:'b', title:'- sleva'}
   label [217,Td+110,56,] {tag:'b', title:'= poplatek'}
+  label frame [0,16,873,min_h-152] { css:'ae_work'}
 }
 # -----------------------------------------------------------------------------------------==> CMD_P
 # uložení změn v platbách
@@ -1672,6 +1687,9 @@ form _cmd_p [,,623,30] { css:'ae_work'
   }
 }
 # -------------------------------------------------------------------------------------==> _AKTIVITY
+form _aktivity0 {
+  label frame [0,16,873,min_h-152] { css:'ae_work'}
+}
 form _aktivity {
   var ido: number
   field jme [10,34,200,] { format:'o' }
@@ -1729,6 +1747,7 @@ form _documents {  // ukládají se na H: tedy mimo dosah http
       u.b.browse_refresh(u.b.key_pobyt.get);
     }
   }
+  label frame [0,16,873,min_h-152] { css:'ae_work'}
 }
 # ========================================================================================> SKUPINKY
 # zobrazí celou historii skupinek na LK
