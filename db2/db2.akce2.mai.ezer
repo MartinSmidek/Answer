@@ -28,7 +28,7 @@ proc h_change_b() { var r:number, h:number
   h.set(sys('screen','height'));
   r.set(divide(sum(h.get,-173),17));
   not(eq(r,pr.ds.rows));
-  pr.ds.set_attrib('rows',r);
+  pr.ds.set_attrib('rows',sum(r,-2)); // odečteme řádky testů
 }
 # ----------------------------------------------------------------------------==> globální procedury
 proc reaccess() { #==> reaccess - změna
@@ -85,7 +85,7 @@ menu m {type:'left', format:'f+'
       par:°{k:'sq',uq:'',on:'skup',off:'gen|akce'} }
   }
   menu  {title:'Přehled odeslaných mailů', type:'group'
-    item {title:'všechny odeslané maily'}
+    item {title:'[fa-stack-overflow] všechny odeslané maily'}
     proc onclick (i) {
       display_all_off; vy.display(0,'.*'); pr.display(1); 
       ii.fill(replace_fa(conc(i.owner.title,' - ',i.title))," ");
@@ -147,20 +147,25 @@ menu m {type:'left', format:'f+'
 # --------------------------------------------------------------------------------------==> _prehled
 form _prehled {
   view d: table dopis
-  browse ds { rows:30, qry_rows:1
+  view ma: table mail {join_type:'LEFT' join:'USING (id_dopis)'}
+  view da: table akce {join_type:'LEFT' join:'USING (id_duakce)'}
+  browse ds { rows:27, qry_rows:3, group_by:'id_dopis'
     show idd { data:d.id_dopis }
-    show org [,,20,]    { title:"odesláno", data:d.access, format:"q=" }
+    show org [,,20,]    { title:"org", data:d.access, format:"uq*" 
+      proc onsubmit() { this.save } }
     show datum [,,75,]  { title:"odesláno", data:d.datum, format:"rq*s-" }
     show akce [,,35,]   { title:"a", help:"ID akce", data:d.id_duakce, format:"rq=s" }
+    show druh [,,35,]   { title:"t", help:"typ akce", data:da.druh, format:"rq=s" }
     show list [,,35,]   { title:"m", help:"ID mailistu", data:d.id_mailist, format:"rq=s" }
-    show cis  [,,35,]   { title:"c", help:"číselník db_maily_sql", data:d.cis_skupina, format:"rq=s" }
+    show cis  [,,35,]   { title:"c", help:"ID SQL skupiny", data:d.cis_skupina, format:"rq=s" }
+    show count[,,35,]   { title:"# mailů", help:"počet mailů", expr:"COUNT(ma.id_mail)", format:"rq=s" }
     show nazev [,,200,] { title:"předmět", data:d.nazev, format:"q*st" }
     proc onrowclick () { var y:object
       y.set(ask('mail2_mai_text',idd.get,1)); // zjistit i akci nebo mailist
       obsah.set(y.html);
     }
   }
-  label obsah [445,0,315,200] { title:'zobrazení akce nebo mailistu, předmětu a textu mailu' }  
+  label obsah [515,0,315,200] { title:'zobrazení akce nebo mailistu, předmětu a textu mailu' }  
 }
 # ----------------------------------------------------------------------------------------==> _vyber
 form _vyber {
