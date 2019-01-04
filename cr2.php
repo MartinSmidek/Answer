@@ -23,8 +23,9 @@
          css:{4:'ezer_ys'}}",
     'web'          => "''", // web organizace - pro odmítnutí odhlášení
     'skill'        => "'d'",
-    'autoskill'    => "'!d'"
-  );
+    'autoskill'    => "'!d'",
+    'db_test'      => 0
+);
 
   $cookie= 4;
   $app_last_access= "{$app}_last_access";

@@ -61,7 +61,7 @@ function answer_ini($app,$answer_db,$dbs_plus,$php_lib,$ezer_mod=array()) {
     require_once("{$EZER->version}/server/ezer_lib3.php");
 
   // ošetření běhu s testovací databází
-  $db_test= isset($_SESSION[$app]['GET']['db_test']) && $_SESSION[$app]['GET']['db_test']; 
+  $db_test= isset($_SESSION[$app]['db_test']) && $_SESSION[$app]['db_test']; 
   $answer_dbx= $db_test ? "{$answer_db}_test" : $answer_db;
   $_SESSION[$app]['ezer_db']= $answer_dbx;
 

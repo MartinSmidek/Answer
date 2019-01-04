@@ -9,7 +9,7 @@
   #   $css_lib    = pole s *.css
   #   $options    = doplnění Ezer.options
 
-  $app=  'db2';
+  $app=  'dbt';
 
   require_once("answer.php");
   $options= (object) ['watch_access' => 3,
@@ -20,7 +20,7 @@
     'web'          => "''", // web organizace - pro odmítnutí odhlášení
     'skill'        => "'d'",
     'autoskill'    => "'!d'",
-    'db_test'      => 0
+    'db_test'      => 1
    ];
 
   $cookie= 3;

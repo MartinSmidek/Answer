@@ -25,14 +25,19 @@ function answer_php($app,$app_name,$db_name,$skin,$js_lib,$css_lib,$options) {
   $gmap=     isset($_GET['gmap']) ? $_GET['gmap'] : !$ezer_local;
   $awesome=  isset($_GET['awesome']) ? $_GET['awesome'] : 3;
   $verze=    isset($_GET['ezer']) ? $_GET['ezer']    : '2.2';
-  $db_test=  isset($_GET['db_test']) && $_GET['db_test'] ? 1 : 0;
+  
+  // zrušení parametru &db_test
+  if ( isset($_GET['db_test']) ) {
+    die("parametr <b>db_test</b> byl dne 4.1.2019 zrušen ...");
+  }
 
   $EZER= (object)array();
 
   // inicializace SESSION
   session_unset();
   session_start();
-  $_SESSION[$app]['GET']= array('ezer'=>"$verze",'db_test'=>$db_test);
+  $_SESSION[$app]['GET']= array('ezer'=>"$verze");
+  $_SESSION[$app]['db_test']= $options->db_test;
 
   $server= "ezer$verze";
   if ( $verze=='3.1' ) {
@@ -51,7 +56,7 @@ function answer_php($app,$app_name,$db_name,$skin,$js_lib,$css_lib,$options) {
   setcookie("EZER",$app,0,"/");
 
   // ošetření běhu s testovací databází - zobrazit příznak
-  if ( $db_test ) {
+  if ( $options->db_test ) {
     $title_style.= 'background-color:#ffffaa';
     $title_flag.= "testovací ";
   }
@@ -187,7 +192,7 @@ function answer_php($app,$app_name,$db_name,$skin,$js_lib,$css_lib,$options) {
 
   $menu= "<button id='android_menu' class='fa'><i class='fa fa-bars'></i></button>";
 
-  if ( $app=='db2' ) {
+  if ( $app=='db2' || $app=='dbt' ) {
     // nová verze db2
     $cookie= 3;
     $app_last_access= "{$app}_last_access";
