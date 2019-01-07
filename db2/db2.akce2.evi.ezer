@@ -1375,7 +1375,7 @@ panel PridaniJmenem1 [,,320,280] {type:'popup', title:'Přidání osoby do rodin
   }
 }
 # ======================================================================================> filtr_osob
-panel filtr_osob [,,250,175] { type:'popup', title:"doplňující podmínky výběru osob"
+panel filtr_osob [,,250,200] { type:'popup', title:"doplňující podmínky výběru osob"
   var sql=''
   proc filtr_set() { sql.set(cconc(1,''
     ,f.mrop.get," AND o.iniciace!=0"
@@ -1390,6 +1390,9 @@ panel filtr_osob [,,250,175] { type:'popup', title:"doplňující podmínky výb
     // zahrne i rodinné schopnosti, ale jen pro manžele
     ,f.umi.key,conc(" AND (FIND_IN_SET('",f.umi.key,"',o.o_umi)",
       " OR ot.role IN ('a','b') AND IF(ISNULL(of.id_rodina),0,FIND_IN_SET('",f.umi.key,"',of.r_umi)))")
+    // služba na pobytu ale jen pro manžele nebo single
+    ,f.slouzi.key,conc(" AND funkce=",f.slouzi.key,
+      " AND (ot.role IN ('a','b') OR ISNULL(of.id_rodina))")
     // členství a dárcovství
     ,f.bcleni.get,conc(" AND od.ukon IN ('b') AND dat_do='0000-00-00' ")
     ,f.ccleni.get,conc(" AND od.ukon IN ('c') AND dat_do='0000-00-00' ")
@@ -1406,6 +1409,7 @@ panel filtr_osob [,,250,175] { type:'popup', title:"doplňující podmínky výb
     ,f.slovaci.get,     " a Slováci"
     ,f.cizinci.get,     " a cizinci"
     ,f.umi.get,         " a umí"
+    ,f.slouzi.get,      " a slouží"
     ,f.bcleni.get,      " a jsou běžnými členy"
     ,f.ccleni.get,      " a jsou činnými členy"
     ,f.darci.get,       " a dali vloni či letos dar"
@@ -1423,6 +1427,8 @@ panel filtr_osob [,,250,175] { type:'popup', title:"doplňující podmínky výb
     field pozn    [53,100,79,] { title:'poznámka',    format:'t' }
     select umi    [53,125,99,] { type:'map0', options:ms_umi.hodnota, title:'schopnosti',
                                  value:'0', format:'t', help:"zohledňuje i rodiný um" }
+    select slouzi [53,150,99,] { type:'map0', options:ms_umi.hodnota, title:'služby',
+                                 value:'0', format:'t', help:"zohledňuje i rodinou službu" }
     // vpravo
     check mrop    [160,1,95,17]  { title:'iniciovaní', format:'t', skill:'f|f;y|f;c|f' }
     check slovaci [160,29,95,17] { title:'Slováci', format:'t', help:"zohledňuje i rodinnou adresu" }
@@ -1432,8 +1438,8 @@ panel filtr_osob [,,250,175] { type:'popup', title:"doplňující podmínky výb
     check darci   [160,108,47,17] { title:'dárci', format:'t', help:"letošní as loňští dárci" }
     check klub    [160,125,47,17] { title:'klub', format:'t', help:"jsou v klubu přátel" }
     // ukončení
-    button [57,156,,] { title:'[fa-filter] filtruj', proc onclick() { filtr_set; panel.hide(1) }}
-    button [137,156,,] { title:'[fa-undo] zruš filtr', proc onclick() { filtr_clear; panel.hide(0) }}
+    button [57,181,,] { title:'[fa-filter] filtruj', proc onclick() { filtr_set; panel.hide(1) }}
+    button [137,181,,] { title:'[fa-undo] zruš filtr', proc onclick() { filtr_clear; panel.hide(0) }}
   }
 }
 # =====================================================================================> filtr_rodin

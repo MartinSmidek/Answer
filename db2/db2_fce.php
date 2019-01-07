@@ -8163,6 +8163,11 @@ function evid2_cleni($id_osoba,$id_rodina,$filtr) { //trace();
   $cleni= "";
   $rodiny= array();
   $rodina= $rodina1= $id_rodina;
+  // pouze při použití filtru na služby během pobytu přidej tabulky spolu, pobyt
+  $join_pobyt= strpos($filtr,"AND funkce=")!==false 
+      ? "LEFT JOIN spolu AS os ON os.id_osoba=o.id_osoba
+        LEFT JOIN pobyt AS op USING (id_pobyt)"
+      : "";
 //   $id_osoba ? "o.id_osoba=$id_osoba" : "r.id_rodina=$id_rodina";
   if ( $id_osoba ) { // ------------------------ osoby
     $clen= array();
@@ -8176,6 +8181,7 @@ function evid2_cleni($id_osoba,$id_rodina,$filtr) { //trace();
         JOIN rodina AS of ON of.id_rodina=ot.id_rodina -- AND of.access & $access
         JOIN tvori AS rt ON rt.id_rodina=of.id_rodina
         JOIN osoba AS rto ON rto.id_osoba=rt.id_osoba
+        $join_pobyt 
       WHERE o.id_osoba=$id_osoba AND $filtr -- AND rto.access & $access
       ORDER BY rt.role,rto.narozeni
     ");
