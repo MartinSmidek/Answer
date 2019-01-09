@@ -9,7 +9,7 @@
 #   $css_lib    = pole s *.css
 #   $options    = doplnění Ezer.options
 function answer_php($app,$app_name,$db_name,$skin,$js_lib,$css_lib,$options) {
-  global $EZER,$ezer_local,$path_files_h,$path_files_s,$path_files_href;
+  global $EZER,$ezer_local,$path_files_h,$path_files_s,$path_files_href,$http;
 
   $server_name= isset($_SERVER["HTTP_X_FORWARDED_SERVER"])
     ?$_SERVER["HTTP_X_FORWARDED_SERVER"]:$_SERVER["SERVER_NAME"];
@@ -28,7 +28,7 @@ function answer_php($app,$app_name,$db_name,$skin,$js_lib,$css_lib,$options) {
   
   // zrušení parametru &db_test
   if ( isset($_GET['db_test']) ) {
-    die("parametr <b>db_test</b> byl dne 4.1.2019 zrušen ...");
+    die("parametr <b>db_test</b> byl dne 4.1.2019 nahrazen aplikaci dbt ...");
   }
 
   $EZER= (object)array();
@@ -72,6 +72,8 @@ function answer_php($app,$app_name,$db_name,$skin,$js_lib,$css_lib,$options) {
   $_SESSION[$app]['abs_root']= $abs_root;
   $_SESSION[$app]['rel_root']= $rel_root;
   $_SESSION[$app]['app_path']= "";
+  
+//  list($http)= explode('://',$_SERVER["HTTP_REFERER"]);
   
   set_include_path(get_include_path().PATH_SEPARATOR.$abs_root);
 

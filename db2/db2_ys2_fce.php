@@ -729,7 +729,7 @@ function lide_ms($patt) {  #trace('','win1250');
   // rodina
   $qry= "SELECT access,id_rodina AS _key,concat(nazev,' - ',obec) AS _value
          FROM rodina
-         WHERE nazev LIKE '$patt%' ORDER BY nazev LIMIT $limit";
+         WHERE nazev LIKE '$patt%' AND deleted='' ORDER BY nazev LIMIT $limit";
   $res= mysql_qry($qry);
   while ( $res && $t= mysql_fetch_object($res) ) {
     if ( ++$n==$limit ) break;
@@ -747,28 +747,28 @@ function lide_ms($patt) {  #trace('','win1250');
 }
 # ------------------------------------------------------------------------------------------ lide_ms
 # SELECT autocomplete - výběr z databází MS (Miloš, Lída)
-function xxxlide_ms($patt) {  #trace('','win1250');
-  $a= array();
-  $limit= 10;
-  $n= 0;
-  // rodiče
-  $qry= "SELECT source,cislo AS _key,concat(jmeno,' ',jmeno_m,' a ',jmeno_z,' - ',mesto) AS _value
-         FROM ms_pary
-         WHERE jmeno LIKE '$patt%' ORDER BY jmeno LIMIT $limit";
-  $res= mysql_qry($qry);
-  while ( $res && $t= mysql_fetch_object($res) ) {
-    if ( ++$n==$limit ) break;
-    $key= "{$t->_key}".($t->source=='L'?0:1);
-    $a[$key]= "{$t->source}:{$t->_value}";
-  }
-  // obecné položky
-  if ( !$n )
-    $a[0]= /*w*u*/("... žádné jméno nezačíná '")."$patt'";
-  elseif ( $n==$limit )
-    $a[-999999]= /*w*u*/("... a další");
-//                                                                 debug($a,$patt,(object)array('win1250'=>1));
-  return $a;
-}
+//function xxxlide_ms($patt) {  #trace('','win1250');
+//  $a= array();
+//  $limit= 10;
+//  $n= 0;
+//  // rodiče
+//  $qry= "SELECT source,cislo AS _key,concat(jmeno,' ',jmeno_m,' a ',jmeno_z,' - ',mesto) AS _value
+//         FROM ms_pary
+//         WHERE jmeno LIKE '$patt%' ORDER BY jmeno LIMIT $limit";
+//  $res= mysql_qry($qry);
+//  while ( $res && $t= mysql_fetch_object($res) ) {
+//    if ( ++$n==$limit ) break;
+//    $key= "{$t->_key}".($t->source=='L'?0:1);
+//    $a[$key]= "{$t->source}:{$t->_value}";
+//  }
+//  // obecné položky
+//  if ( !$n )
+//    $a[0]= /*w*u*/("... žádné jméno nezačíná '")."$patt'";
+//  elseif ( $n==$limit )
+//    $a[-999999]= /*w*u*/("... a další");
+////                                                                 debug($a,$patt,(object)array('win1250'=>1));
+//  return $a;
+//}
 # ------------------------------------------------------------------------------------------- rodina
 # formátování autocomplete - verze pro db2
 function rodina($idr) {  #trace('','win1250');
@@ -787,7 +787,7 @@ function rodina($idr) {  #trace('','win1250');
     FROM rodina AS r
     JOIN tvori AS t USING (id_rodina)
     JOIN osoba AS o USING (id_osoba)
-    WHERE id_rodina=$idr AND o.deleted=''
+    WHERE id_rodina=$idr AND o.deleted='' AND r.deleted=''
     ORDER BY t.role
   ");
   while ( $rc && $c= mysql_fetch_object($rc) ) {
