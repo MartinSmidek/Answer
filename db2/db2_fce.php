@@ -10149,7 +10149,7 @@ function sta2_table($tits,$flds,$clmn,$export=false,$row_numbers=false,$note='')
   return $ret;
 }
 # obsluha různých forem výpisů karet AKCE
-# ---------------------------------------------------------------------------------------- sta2 excel
+# --------------------------------------------------------------------------------------- sta2 excel
 # ASK
 # generování statistické sestavy do excelu
 function sta2_excel($org,$title,$par,$tab=null) {       trace();
@@ -10947,6 +10947,31 @@ function mail2_mapa($id_mailist) {  trace();
 //                                         debug($psc);
 end:
   return mapa2_psc($psc,$obec); // vrací (object)array('mark'=>$marks,'n'=>$n,'err'=>$err);
+}
+# --------------------------------------------------------------------------------- mail2 mai_export
+# vygeneruje tabulku adresátů (id_osoba, prijmeni jmeno, email)) pro Excel a vrátí na ni odkaz
+function mail2_mai_export($idd) {  trace();
+  $tab= (object)array(
+      'html'=>'',
+      'tits' => array('příjmení:15','jméno:10','email:30','id:6'),
+      'flds' => array('prijmeni','jmeno','email','id'),
+      'clmn' => array()
+      );
+  $nazev= '';
+  $rs= mysql_qry("
+    SELECT id_clen,prijmeni,jmeno,m.email,d.nazev
+    FROM mail AS m
+    JOIN dopis AS d USING (id_dopis)
+    JOIN osoba AS o ON o.id_osoba=m.id_clen
+    WHERE id_dopis=$idd AND stav=4
+    ORDER BY prijmeni,jmeno
+    ");
+  while ( $rs && (list($idc,$prijmeni,$jmeno,$email,$n)= mysql_fetch_array($rs)) ) {
+    if ( !$nazev ) $nazev= $n;
+    $tab->clmn[]= array('prijmeni'=>$prijmeni,'jmeno'=>$jmeno,'email'=>$email,'id'=>$idc);
+  }
+  $ret= sta2_excel_export("Seznam adresátů mailu $nazev",$tab);
+  return $ret->html;
 }
 # ------------------------------------------------------------------------------------ mail2 lst_try
 # mode=0 -- spustit a ukázat dotaz a také výsledek
