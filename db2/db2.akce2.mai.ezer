@@ -203,12 +203,15 @@ form _vyber {
   # --------------------------- rozesílání
   label popis [391,21,240,19] { tag:'es', format:'n', title:"
     <span class='zeleny'> posláno </span>&nbsp;&nbsp;
-    <span class='cerveny'> chyba resp. neposílat </span>&nbsp;&nbsp;
+    <span class='cerveny'> chyba či neposílat </span>&nbsp;&nbsp;
     <span class='zluty'> poslat znovu </span>
-   "}
+   "
+  }
   # úprava seznamů adresátů
-  button [660,12,,] { tag:'es', title:"upravit adresáty"
+  button [619,12,,] { tag:'es', title:"upravit adresáty"
     proc onclick() { vynechej.modal }}
+  button [725,12,,] { tag:'es', title:"export"
+    proc onclick() { alert(ask('mail2_mai_export',dopis_id.get)) }}
   panel vynechej [0,0,400,160] { type:'popup', title:"úprava seznamu adresátů"
     use f:form _f [0,0,,]
     form _f [,,400,100] {
