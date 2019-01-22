@@ -734,7 +734,7 @@ form _info [,,*,50] {
     }
   }
   # --------------------------------------------------------------------------------------==> . akce
-  select rok [4,5,52,] { tag:'r', format:'t', proc onchange() { akce_roku(this.get) }}
+  select rok [4,5,52,] { tag:'r', format:'t', proc onchanged() { akce_roku(this.get) }}
   # je voláno s kontextem správného the_source
   proc nazev_akce(id_akce) {
     var nazev: text

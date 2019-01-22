@@ -2676,8 +2676,23 @@ end:
 # -- x->atr=  pole jmen počítaných atributů:  [_ucast]
 # pokud je tisk=true jsou oddělovače řádků '≈' (oddělovač sloupců zůstává '~')
 function ucast2_browse_ask($x,$tisk=false) {
-  $delim= $tisk ? '≈' : '~';
+
   global $test_clmn,$test_asc, $y;
+  // ofsety v atributech členů pobytu - definice viz níže
+  global $i_osoba_jmeno, $i_osoba_vek, $i_osoba_role, $i_osoba_prijmeni, $i_adresa, 
+  $i_osoba_kontakt, $i_osoba_telefon, $i_osoba_email, $i_osoba_note, $i_key_spolu, $i_spolu_note;
+  $i_osoba_jmeno=     4;
+  $i_osoba_vek=       6;
+  $i_osoba_role=      9;
+  $i_osoba_prijmeni= 14;
+  $i_adresa=         17;
+  $i_osoba_kontakt=  22;
+  $i_osoba_telefon=  23;
+  $i_osoba_email=    25;
+  $i_osoba_note=     40;
+  $i_key_spolu=      43;
+  $i_spolu_note=     47;
+  $delim= $tisk ? '≈' : '~';
   $map_umi= map_cis('answer_umi','zkratka','poradi','ezer_answer');
 //                                                         debug($map_umi,"map_umi");
   $umi= function ($xs) use ($map_umi) {
@@ -4205,6 +4220,9 @@ function akce2_tabulka_mrop($akce,$par,$title,$vypis,$export=false) { trace();
 #   $cnd = podmínka
 function tisk2_sestava_pary($akce,$par,$title,$vypis,$export=false,$internal=false) { trace();
   global $EZER;
+  // ofsety v atributech členů pobytu
+  global $i_osoba_jmeno, $i_osoba_vek, $i_osoba_role, $i_osoba_prijmeni, $i_adresa, 
+  $i_osoba_kontakt, $i_osoba_telefon, $i_osoba_email, $i_osoba_note, $i_key_spolu, $i_spolu_note;
   $result= (object)array();
   $typ= $par->typ;
   $tit= $par->tit;
@@ -4240,17 +4258,17 @@ function tisk2_sestava_pary($akce,$par,$title,$vypis,$export=false,$internal=fal
     'sql'=>"SET @akce:=$akce,@soubeh:=$soubeh,@app:='{$EZER->options->root}';");
   $y= ucast2_browse_ask($browse_par,true);
   # rozbor výsledku browse/ask
-  $i_adresa=         16+1;
-  $i_key_spolu=      41+1;
-  $i_spolu_note=     45+1;
-  $i_osoba_jmeno=     3+1;
-  $i_osoba_prijmeni= 13+1;
-  $i_osoba_role=      8+1;
-  $i_osoba_vek=       5+1;
-  $i_osoba_note=     38+1;
-  $i_osoba_kontakt=  21+1;
-  $i_osoba_telefon=  22+1;
-  $i_osoba_email=    24+1;
+
+
+
+
+
+
+
+
+
+
+
   array_shift($y->values);
   foreach ($y->values as $x) {
     // aplikace neosobních filtrů
@@ -5080,6 +5098,9 @@ function akce2_strava_souhrn($akce,$par,$title,$vypis,$export=false,$id_pobyt=0)
 #   platit = součet předepsaných plateb
 function akce2_strava_vylet($akce,$par,$title,$vypis,$export=false,$id_pobyt=0) { //trace();
   global $diety,$diety_,$jidlo_,$EZER;
+  // ofsety v atributech členů pobytu
+  global $i_osoba_jmeno, $i_osoba_vek, $i_osoba_role, $i_osoba_prijmeni, $i_adresa, 
+  $i_osoba_kontakt, $i_osoba_telefon, $i_osoba_email, $i_osoba_note, $i_key_spolu, $i_spolu_note;
 //                                                                 debug($par,"akce2_strava_souhrn");
   $result= (object)array();
   // získání dat - podle $kdo
@@ -5097,30 +5118,30 @@ function akce2_strava_vylet($akce,$par,$title,$vypis,$export=false,$id_pobyt=0) 
     'cmd'=>'browse_load','cond'=>"$cnd AND p.id_akce=$akce",'having'=>'','order'=>'a _nazev',
     'sql'=>"SET @akce:=$akce,@soubeh:=0,@app:='{$EZER->options->root}';");
   $y= ucast2_browse_ask($browse_par,true);
-//  # rozbor výsledku browse/ask
-//  $i_adresa=         15+1;
-//  $i_key_spolu=      39+2;
-//  $i_spolu_note=     43+2;
-//  $i_osoba_jmeno=     3;
-//  $i_osoba_prijmeni= 12+1;
-//  $i_osoba_role=      8;
-//  $i_osoba_vek=       5;
-//  $i_osoba_note=     36+2;
-//  $i_osoba_kontakt=  20+1;
-//  $i_osoba_telefon=  21+1;
-//  $i_osoba_email=    23+1;
+
+
+
+
+
+
+
+
+
+
+
+
   # rozbor výsledku browse/ask
-  $i_adresa=         16+1;
-  $i_key_spolu=      41+1;
-  $i_spolu_note=     45+1;
-  $i_osoba_jmeno=     3+1;
-  $i_osoba_prijmeni= 13+1;
-  $i_osoba_role=      8+1;
-  $i_osoba_vek=       5+1;
-  $i_osoba_note=     38+1;
-  $i_osoba_kontakt=  21+1;
-  $i_osoba_telefon=  22+1;
-  $i_osoba_email=    24+1;
+
+
+
+
+
+
+
+
+
+
+
 
   array_shift($y->values);
   foreach ($y->values as $x) {
