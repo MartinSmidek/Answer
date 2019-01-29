@@ -371,47 +371,69 @@ form _esady  {
       | zkus.set(sys('user','options','email'));
         from.set(sys('user','options','email'));
         name.set(sys('user','options','vyrizuje'));
+        [ sys('user','options','smtp'); smtp.key(sys('user','options','smtp'))
+        | smtp.key(1); smtp.onchanged ];
         davka.set(20); davka.change
       ]
     }
   }
-  label [12,214,92,17] { title:'Testovací adresa:' }
-  label [35,247,66,17] { title:'Odeslat jako:' }
-  field zkus [105,210,200,17] { skill:'yam|yams;fam|fams;cam|cams', help:'email z osobního nastavení', format:'t' }
-  field from [105,236,200,17] { skill:'yam|yams;fam|fams;cam|cams', help:'email z osobního nastavení', format:'t'  }
-  field name [105,255,200,17] { skill:'yam|yams;fam|fams;cam|cams', help:"'vyřizuje' z osobního nastavení", format:'t'  }
-  button test [0,280,,] { title:'1 mail testovací', skill:'yam|yams;fam|fams;cam|cams',
-    help:'pro kontrolu - posílá se na testovací adresu'
-    proc onclick () {
-      msg.set('');
+  // výběr SMTP serveru
+  select smtp [105,212,202,17] { type:'map', options:map_smtp_srv.zkratka, title:'odesílat z adresy:'
+    help:'smtp|použitý odesílací server', format:'t'
+    proc onchanged() { var ok:text
+      ask('sys_user_change',sys('user','id_user'),'opt','smtp',smtp.key);
+    }
+  }
+  // odpovědi na adresu, použít patičku
+  field from [105,231,200,17] { title:'adresa pro odpovědi:'
+    skill:'yam|yams;fam|fams;cam|cams', help:'email z osobního nastavení', format:'t'  }
+  field name [105,250,200,17] { title:'... jméno:'
+    skill:'yam|yams;fam|fams;cam|cams', help:"'vyřizuje' z osobního nastavení", format:'t'  }
+  check foo [312,230,59,] { title:'patička', value:'0', format:'t', 
+    proc onchange() {
+      pata.display(this.get); this.get; pata.set(sys('user','options','email_foot'));
+    } 
+  }
+  // test
+  label [0,274,380,2] { style:'border-top:1px solid green' }
+  field zkus [105,280,200,17] { title:'poslat test na adresu:' 
+    skill:'yam|yams;fam|fams;cam|cams', help:'email z osobního nastavení', format:'t' }
+  button test [315,280,,] { title:'[fa-send-o] test', skill:'yam|yams;fam|fams;cam|cams',
+    help:'pro kontrolu - posílá se 1 mail na testovací adresu'
+    proc onclick () { var foot:text
+      msg.set(''); foot.set('');
       confirm('Poslat zkušební mail na ',zkus.get,' ?');
-      E_info.set(ask('mail2_mai_send',dopis_id.get,0,from.get,name.get,zkus.get,maily.id_mail.get));
+      [ foo.get; foot.set(sys('user','options','email_foot')) ]; 
+      E_info.set(ask('mail2_mai_send',
+          dopis_id.get,0,from.get,name.get,zkus.get,maily.id_mail.get,foot.get));
       msg.set(E_info.get('_html'));
     }
   }
-  field davka [105,281,30,17] { format:'rt', value:'10', skill:'yam|yams;fam|fams;cam|cams',
+  // postupné odesílání
+  label  [0,306,364,31] { css:'ae_parm' }
+  field davka [128,313,30,17] { title:'postupně odesílat po:'
+    format:'rt', value:'10', skill:'yam|yams;fam|fams;cam|cams',
     proc onchange () {
-      send.set(conc('až ',davka.get,'  ještě neposlaných'));
+      send.set(replace_fa(conc('[fa-send-o] až ',davka.get,'  ještě neposlaných')));
     }
   }
-  button send [150,280,,] { title:'xx ještě neposlaných', skill:'yam|yams;fam|fams;cam|cams',
+  button send [173,313,,] { title:'xx ještě neposlaných', skill:'yam|yams;fam|fams;cam|cams',
     help:'pošle další dávku - počet lze měnit políčkem vlevo'
-    proc onclick () {
-      msg.set('');
+    proc onclick () { var foot:text
+      msg.set(''); foot.set('');
       confirm(conc('Opravdu poslat dalších ',davka.get,' mailů "z adresy" ',from.get,'?'));
-      E_info.set(ask('mail2_mai_send',dopis_id.get,davka.get,from.get,name.get));
+      [ foo.get; foot.set(sys('user','options','email_foot')) ]; 
+      E_info.set(ask('mail2_mai_send',
+          dopis_id.get,davka.get,from.get,name.get,0,0,foot.get));
       msg.set(E_info.get('_html'));
       maily.browse_seek; texty.browse_seek;
     }
   }
-  check foo [306,279,59,] { title:'patička', value:'0', format:'t', proc onchange() {
-    pata.display(this.get); this.get; pata.set(sys('user','options','email_foot'));
-  } }
   # ------------------- informace
-  label msg [0,305,377,67]
-  label info [0,373,367,90]   { style:"overflow:auto;border:1px solid grey;padding:5px" }
-  label obsah [0,474,716,246] { style:"overflow:auto;border:1px solid grey;padding:5px" }
-  label pata [0,731,716,50] { style:"overflow:auto;border:1px solid grey;padding:5px" }
+  label msg [0,335,377,67]
+  label info [0,403,367,90]   { style:"overflow:auto;border:1px solid grey;padding:5px" }
+  label obsah [0,504,716,246] { style:"overflow:auto;border:1px solid grey;padding:5px" }
+  label pata [0,761,716,50] { style:"overflow:auto;border:1px solid grey;padding:5px" }
   # ------------------- seznam adres
   view etmm: table mail
   view etmo: table osoba  {join_type:'LEFT' join:'ON id_clen=etmo.id_osoba'}

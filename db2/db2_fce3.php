@@ -10701,15 +10701,15 @@ function mail2_vzor_pobyt($id_pobyt,$typ,$from,$vyrizuje,$poslat=0) {
 
   if ( $poslat ) {
     // poslání mailu - při úspěchu zápis o potvrzení
-    global $ezer_path_serv, $ezer_root;
-    $phpmailer_path= "$ezer_path_serv/licensed/phpmailer";
-    require_once("$phpmailer_path/class.phpmailer.php");
-    $mail= new PHPMailer;
-    $mail->SetLanguage('cz',"$phpmailer_path/language/");
-    $mail->Host= "192.168.1.1";
-    $mail->CharSet = "UTF-8";
-    $mail->IsHTML(true);
-    $mail->Mailer= "smtp";
+    $mail= mail2_new_PHPMailer();
+    if ( !$mail ) { 
+      $ret->err= "CHYBA při odesílání mailu došlo k chybě: odesílací adresa nelze použít (SMTP)";
+      goto end;
+    }
+
+
+
+
     // proměnné údaje
     $mail->From= $from;
     $mail->AddReplyTo($from);
@@ -10934,6 +10934,31 @@ function mail2_mapa($id_mailist) {  trace();
 //                                         debug($psc);
 end:
   return mapa2_psc($psc,$obec); // vrací (object)array('mark'=>$marks,'n'=>$n,'err'=>$err);
+}
+# --------------------------------------------------------------------------------- mail2 mai_export
+# vygeneruje tabulku adresátů (id_osoba, prijmeni jmeno, email)) pro Excel a vrátí na ni odkaz
+function mail2_mai_export($idd) {  trace();
+  $tab= (object)array(
+      'html'=>'',
+      'tits' => array('příjmení:15','jméno:10','email:30','id:6'),
+      'flds' => array('prijmeni','jmeno','email','id'),
+      'clmn' => array()
+      );
+  $nazev= '';
+  $rs= mysql_qry("
+    SELECT id_clen,prijmeni,jmeno,m.email,d.nazev
+    FROM mail AS m
+    JOIN dopis AS d USING (id_dopis)
+    JOIN osoba AS o ON o.id_osoba=m.id_clen
+    WHERE id_dopis=$idd AND stav=4
+    ORDER BY prijmeni,jmeno
+    ");
+  while ( $rs && (list($idc,$prijmeni,$jmeno,$email,$n)= mysql_fetch_array($rs)) ) {
+    if ( !$nazev ) $nazev= $n;
+    $tab->clmn[]= array('prijmeni'=>$prijmeni,'jmeno'=>$jmeno,'email'=>$email,'id'=>$idc);
+  }
+  $ret= sta2_excel_export("Seznam adresátů mailu $nazev",$tab);
+  return $ret->html;
 }
 # ------------------------------------------------------------------------------------ mail2 lst_try
 # mode=0 -- spustit a ukázat dotaz a také výsledek
@@ -11876,13 +11901,45 @@ function mail2_mai_stav($id_mail,$stav) {  trace();
   if ( !$res ) fce_error("mail2_mai_stav: změna stavu mailu No.'$id_mail' se nepovedla");
   return true;
 }
+# ------------------------------------------------------------------------------ mail2 new_PHPMailer
+# nastavení parametrů pro SMTP server podle user.options.smtp
+function mail2_new_PHPMailer() {  
+  global $ezer_path_serv, $ezer_root;
+  // získání parametrizace SMTP
+  $idu= $_SESSION[$ezer_root]['user_id'];
+  $i_smtp= sys_user_get($idu,'opt','smtp');
+  $smtp_json= select1('hodnota','_cis',"druh='smtp_srv' AND data=$i_smtp");
+  $smtp= json_decode($smtp_json);
+  if ( json_last_error() != JSON_ERROR_NONE ) {
+    $mail= null;
+    fce_warning("chyba ve volbe SMTP serveru" . json_last_error_msg());
+    goto end;
+  }
+  // inicializace phpMailer
+  $phpmailer_path= "$ezer_path_serv/licensed/phpmailer";
+  require_once("$phpmailer_path/class.phpmailer.php");
+  require_once("$phpmailer_path/class.smtp.php");
+  $mail= new PHPMailer;
+  $mail->SetLanguage('cz',"$phpmailer_path/language/");
+  $mail->IsSMTP();
+  $mail->CharSet = "UTF-8";
+  $mail->IsHTML(true);
+  $mail->Mailer= "smtp";
+  foreach ($smtp as $part=>$value) {
+    $mail->$part= $value;
+  }
+end:  
+  return $mail;
+}
 # ----------------------------------------------------------------------------------- mail2 mai_send
 # ASK
 # odešli dávku $kolik mailů ($kolik=0 znamená testovací poslání)
 # $from,$fromname = From,ReplyTo
 # $test = 1 mail na tuto adresu (pokud je $kolik=0)
 # pokud je definováno $id_mail s definovaným text MAIL.body, použije se - jinak DOPIS.obsah
-function mail2_mai_send($id_dopis,$kolik,$from,$fromname,$test='',$id_mail=0) { trace();
+# pokud je definováno $foot tj. patička, připojí se na konec
+# použije se SMTP server podle SESSION
+function mail2_mai_send($id_dopis,$kolik,$from,$fromname,$test='',$id_mail=0,$foot='') { trace();
   // připojení případné přílohy
   $attach= function($mail,$fname) {
     global $ezer_root;
@@ -11893,9 +11950,9 @@ function mail2_mai_send($id_dopis,$kolik,$from,$fromname,$test='',$id_mail=0) { 
         $mail->AddAttachment($fpath);
   } } };
   //
-  global $ezer_path_serv, $ezer_root;
-  $phpmailer_path= "$ezer_path_serv/licensed/phpmailer";
-  require_once("$phpmailer_path/class.phpmailer.php");
+
+
+
   $result= (object)array('_error'=>0);
   $pro= '';
   // přečtení rozesílaného mailu
@@ -11909,18 +11966,20 @@ function mail2_mai_send($id_dopis,$kolik,$from,$fromname,$test='',$id_mail=0) { 
 //   $jarda= "cerny.vavrovice@seznam.cz";
 //   $jarda= $martin;
   // poslání mailů
-  $mail= new PHPMailer;
-  $mail->SetLanguage('cz',"$phpmailer_path/language/");
-  $mail->Host= "192.168.1.1";
-  $mail->CharSet = "UTF-8";
+  $mail= mail2_new_PHPMailer();
+  if ( !$mail ) { 
+    $result->_html.= "<br><b style='color:#700'>odesílací adresa nelze použít (SMTP)</b>";
+    $result->_error= 1;
+    goto end;
+  }
   $mail->From= $from;
   $mail->AddReplyTo($from);
 //   $mail->ConfirmReadingTo= $jarda;
   $mail->FromName= "$fromname";
   $mail->Subject= $d->nazev;
 //                                         display($mail->Subject);
-  $mail->IsHTML(true);
-  $mail->Mailer= "smtp";
+
+
   $attach($mail,$d->prilohy);
 //   if ( $d->prilohy ) {
 //     foreach ( explode(',',$d->prilohy) as $fnamesb ) {
@@ -11947,7 +12006,7 @@ function mail2_mai_send($id_dopis,$kolik,$from,$fromname,$test='',$id_mail=0) { 
       }
       $attach($mail,$m->priloha);
     }
-    $mail->Body= $obsah;
+    $mail->Body= $obsah . $foot;
     $mail->AddAddress($test);   // pošli sám sobě
     // pošli
     $ok= $mail->Send();
@@ -11986,7 +12045,7 @@ function mail2_mai_send($id_dopis,$kolik,$from,$fromname,$test='',$id_mail=0) { 
         $attach($mail,$d->prilohy);
         $attach($mail,$z->priloha);
       }
-      $mail->Body= $obsah;
+      $mail->Body= $obsah . $foot;
       foreach(preg_split("/,\s*|;\s*|\s+/",trim($z->email," ,;"),-1,PREG_SPLIT_NO_EMPTY) as $adresa) {
         if ( !$i++ )
           $mail->AddAddress($adresa);   // pošli na 1. adresu
@@ -11999,7 +12058,7 @@ function mail2_mai_send($id_dopis,$kolik,$from,$fromname,$test='',$id_mail=0) { 
       if ( !$ok  ) {
         $ident= $z->id_clen ? $z->id_clen : $adresa;
         $err= $mail->ErrorInfo;
-        $html.= "<br><b style='color:#700'Při odesílání mailu pro $ident došlo k chybě: $err</b>";
+        $html.= "<br><b style='color:#700'>Při odesílání mailu pro $ident došlo k chybě: $err</b>";
         $result->_error= 1;
         $nko++;
       }
@@ -12016,6 +12075,7 @@ function mail2_mai_send($id_dopis,$kolik,$from,$fromname,$test='',$id_mail=0) { 
   // zpráva o výsledku
   $result->_html= $html;
 //                                                 debug($result,"mail2_mai_send");
+end:  
   return $result;
 }
 # --------------------------------------------------------------------------------- mail2 mai_attach
