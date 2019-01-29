@@ -622,6 +622,7 @@ map map_evi_vyber_o:  table _cis {where:"druh='evi_vyber_o' AND data<50",  order
 map map_evi_vyber_x:  table _cis {where:"druh='evi_vyber_o' AND data>50",  order:'poradi', key_id:'data'}
 map map_evi_vyber_r:  table _cis {where:"druh='evi_vyber_r'",       order:'poradi', key_id:'data'}
 map map_stat:         table _cis {where:"druh='stat'",              order:'poradi', key_id:'data'}
+map map_smtp_srv:     table _cis {where:"druh='smtp_srv'",          order:'poradi', key_id:'data'}
 
 # ===========================================================================================> TRACK
 # přehled provedených změn
