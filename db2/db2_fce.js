@@ -1,4 +1,5 @@
 // uživatelské funkce aplikace Ans(w)er
+/* global Ezer,Asset,fx,google */
 // =========================================================================================> funkce
 // -----------------------------------------------------------------------------------==> . ON login
 Ezer.onlogin= function() {
@@ -154,7 +155,7 @@ Ezer.Form.implement({
         && field.DOM_Input ) {
         field.DOM_Input.addEvents({
           dblclick: function(el) {
-            if ( field2= goal.part[this.id] ) {
+            if ( (field2= goal.part[this.id]) ) {
               field2.set(this.value);
               field2.change();
             }
@@ -630,7 +631,7 @@ Ezer.fce.set_css_changed= function (cases,css,chngs) {
   }
   // zrušení css ve formuláři
   for (fi= 0; fi<forms.length; fi++) {
-    form= forms[fi].type=='var' ? forms[fi].value : forms[0];
+    let form= forms[fi].type=='var' ? forms[fi].value : forms[0];
     for (var pi in form.part) {
       var p= form.part[pi];
       if ( p.data ) {
