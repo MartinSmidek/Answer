@@ -7522,6 +7522,7 @@ function akce2_pdf_stitky($akce,$par,$report_json) { trace();
 end:
   return $ret;
 }
+/*
 # --------------------------------------------------------------------------------- akce2 pdf_stitky
 # vygenerování PDF se samolepkami - adresními štítky
 #   $the_json obsahuje  title:'{jmeno_postovni}<br>{adresa_postovni}'
@@ -7573,6 +7574,7 @@ function xxx_akce2_pdf_stitky($cond,$report_json) { trace();
     : " Výpis byl vygenerován ve formátu <a href='docs/$fname.pdf' target='pdf'>PDF</a>.";
   return $result;
 }
+*/
 # --------------------------------------------------------------------------------- tisk2 pdf_prijem
 # generování štítků se stručnými informace k nalepení na obálku účastníka do PDF
 # pokud jsou iregularity strav a dietní stravy, generuje se i přetokový soubor
