@@ -129,7 +129,7 @@ panel den {type:'plain', title:"Deník", _sys:'den'
     }}
     select rf_goal [136,176,170,17] { type:'map', map_pipe:p_ucel.hodnota, options:p_ucel.zkratka,
       format:'t', help:'účel|výběr účelu'
-      proc onchange () { r_goa.set(2); zmena
+      proc onchanged () { r_goa.set(2); zmena
     }}
     proc cond () {
       rc_dat.set(conc(" datum BETWEEN '",date2sql(rd_od.get),"' AND '",date2sql(rd_do.get),"'"));
@@ -237,7 +237,7 @@ panel den {type:'plain', title:"Deník", _sys:'den'
     select org [253,20,61,17] { type:'map', data:pdenik.org, options:pokl.abbr, map_pipe:pokl.abbr,
       format:'d' }
     select sel_typ [392,20,73,17] { type:'map', data:pdenik.typ, options:p_typ.hodnota
-      proc onchange () { typ.set(p_typ.get(this.key,'zkratka')) }
+      proc onchanged () { typ.set(p_typ.get(this.key,'zkratka')) }
     },
     field castka[252,39,62,17] { data:pdenik.castka },
     field kat [392,40,73,17] { data:pdenik.kat },

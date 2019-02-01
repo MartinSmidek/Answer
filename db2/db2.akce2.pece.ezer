@@ -284,7 +284,7 @@ form _osoba [,,580,] { tag:'a',
   view s: table spolu
   select pfunkce [L+5,T+69,173,] {type:'map', data:s.pfunkce, options:ms_akce_pfunkce.zkratka,
     title:'^typ pečovatele'
-    proc onchange() {
+    proc onchanged() {
       eq(the_pobyt.get,up.b.key_pobyt.get);
       [ eq(this.key,4,5,8);
         this.key(up.b.pfunkce.get); this.plain;

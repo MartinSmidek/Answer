@@ -280,7 +280,7 @@ form _page [,,275,360] {
       cen_copy.selects(ask('akce2_select_cenik',form.key))
   }}
   select cen_copy [138,232,158,] {tag:'cor', format:'ntd', help:'vzory ceníků'
-    proc onchange() {
+    proc onchanged() {
       cen_copy.key;
       confirm("opravdu zaměnit ceník za vybraný?");
       alert(ask('akce2_change_cenik',form.key,cen_copy.key))
@@ -580,7 +580,7 @@ form _page [,,275,360] {
   }
   select koren [90,45,150,] { tag:'doc_crea', title:'^kořenná složka', type:'map', format:'nt',
     options:akce_slozka.zkratka
-    proc onchange() {
+    proc onchanged() {
       archiv_slozka.set(ask('select_object','hodnota,ikona,barva,popis','_cis',
         conc("druh='akce_slozka' AND data=",this.key)));
       path_rok.set(replace(archiv_slozka.get('ikona'),'{rok}',akce_get('rok')));
