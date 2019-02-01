@@ -11,12 +11,12 @@ var back: object
 
 use header: form _header   [  4,  0,,]
 use up:     form _pece     [  6, 25,,]
-use page:   form _page     [400, 10,,]
 use p_oso:  form _osoba    [400, 10,,]       { tag:'p_oso' }
 use cmd:    form _cmd      [400,420,,]       { tag:'p_oso' }
 use p_act:  form _aktivity [400, 10,,]       { tag:'p_act' }
 # use alb:    form _album    [400, 10,,]       { tag:'p_fot' }
-use alb:    form foto._alb [440, 30,,]       { tag:'p_fot' }
+use alb:    form foto._alb [410, 30,570,]       { tag:'p_fot' }
+use page:   form _page     [400, 10,,]
 
 # -----------------------------------------------------------------------------==> inicializace
 proc onstart() {
@@ -60,7 +60,7 @@ proc h_change_b() { var r:number, h:number
   p_act.akc.set_attrib('rows',max(5,sum(r,-2)));
 }
 # --------------------------------------------------------------------------------------------------
-proc init_pece() { echo('init_pece ',the_title.get);
+proc init_pece() { //echo('init_pece ',the_title.get);
   page.page_init;
   header.fill(the_title.get);
   reload(0);
@@ -125,7 +125,7 @@ form _header [,,380,50] {
   }
 }
 # -----------------------------------------------------------------------------------------==> _page
-form _page [,,580,*] {
+form _page [,,580,20] {
   # --------------------------- záložky
   proc tags(a,on,off) {
     form.set_css('ae_butt_off','ae_butt_on','p');
@@ -239,7 +239,7 @@ form _osoba [,,580,] { tag:'a',
   radio sex [L+200,T+15,50,35] { data:o.sex, value:'1'
     case [0,2,50,] { title:'muž', expr:'1' }
     case [0,17,50,] { title:'žena', expr:'2' }
-    proc onchange() { echo('sex=',this.get) }
+//    proc onchange() { echo('sex=',this.get) }
   }
   field narozeni [L+255,T+32,85,] {type:'date', data:o.narozeni, format:'rR:e',title:'^narození'}
   field rc       [L+345,T+32,45,] {tag:'o', format:'d', title:'^rodné číslo'}

@@ -249,7 +249,7 @@ proc page_clear() {
 }
 # --------------------------------------------------==> . reload
 proc reload(id_pobyt) { var filtr:text, id_pobyt0:number
-  spinner(1); echo("ucast.reload start");
+  spinner(1); //echo("ucast.reload start");
   cmd.b_display(1);
   the_duakce.get;
   [ u.b.browse_count; id_pobyt0.set(u.b.key_pobyt.get) | id_pobyt0.set(0) ];
@@ -278,7 +278,7 @@ proc reload(id_pobyt) { var filtr:text, id_pobyt0:number
   | // žádný pobyt
     cmd.set_state('none');
   ];
-  spinner(0); echo("ucast.reload end");
+  spinner(0); //echo("ucast.reload end");
 }
 # --------------------------------------------------==> . jump
 # skok na jiného účastníka akce
@@ -291,14 +291,14 @@ proc jump(ido) { var idp:number
 # ochrana proti neuložení změny
 proc neni_ulozeno() { var no: number
   no.set(not(evid.Same));
-  [ no; echo('neni_ulozeno!');
+  [ no; //echo('neni_ulozeno!');
     warning('neuložené změny pro pobyt <b>',u.b._nazev.get,'</b> použij [Zpět] nebo [Uložit]');
     u.b.browse_active(u.old_row.get) ];
   return(no)
 }
 proc neni_ulozen_clen() { var no: number
   no.set(not(and(os1.same,sp1.same,sp2.same,os2.same)));
-  [ no; echo('neni_ulozeno!');
+  [ no; //echo('neni_ulozeno!');
     warning('neuložené změny pro osobu použij [Zpět] nebo [Uložit]') ];
   return(no)
 }
@@ -1285,7 +1285,7 @@ form _rodina2 [,,360,229]  { css:'ae_frame'
       { ido.set(os1.key_osoba.get); idr.set(key_rodina.get); idrs.set(u.b.keys_rodina.get);
         idrs;
         spinner(1); zmena.set(elim.rodiny_lst(idr,idrs)); spinner(0);
-        echo("elim.rodiny_lst(",idr,",",idrs,")=",zmena);
+//        echo("elim.rodiny_lst(",idr,",",idrs,")=",zmena);
         [ u.b.browse_row; u.b.raise('onrowclick',u.b.browse_key) ];
         jump(ido)
       | warning("nebyla nalezena podezřelá kopie") }
@@ -1319,7 +1319,7 @@ form _rodina2 [,,360,229]  { css:'ae_frame'
     var rod_n=0
     proc Init() { rod_n.set(0); mode.set(0); rod_beg; }
     proc onchanged() {
-      echo(this.get,"/",this.key);
+//      echo(this.get,"/",this.key);
       mode.get; rod_show(1) | Init; rod_show(1);
     }
     proc rod_show(n) { var ret:object
@@ -1482,7 +1482,7 @@ form _rodina2 [,,360,229]  { css:'ae_frame'
   }
 }
 # ----------------------------------------------------------------------------------------==> PLATBA
-form _platba { key_id:'id_pobyt'
+form _platba [,,623,] { key_id:'id_pobyt'
   const Td= 230
   var cena: object
   label [2,27,527,Td+95] //{title:"<img src='img/ms2p.png'>" }
@@ -1687,10 +1687,10 @@ form _cmd_p [,,623,30] { css:'ae_work'
   }
 }
 # -------------------------------------------------------------------------------------==> _AKTIVITY
-form _aktivity0 {
+form _aktivity0 [,,623,] {
   label frame [0,16,873,min_h-152] { css:'ae_work'}
 }
-form _aktivity {
+form _aktivity [,,623,] {
   var ido: number
   field jme [10,34,200,] { format:'o' }
   button [160,20,,] { title:'^evidence', css:'db_evidence',
@@ -1708,7 +1708,7 @@ form _aktivity {
     show akce [,,150,] { title:'název', data:a.nazev, format:'q*s' }
     show fce  [,, 30,] { title:'fce', data:p.funkce, map_pipe:ms_akce_funkce.zkratka, format:'q*s' }
     proc onsubmit() {
-      accessed(org.get); echo('přepnuto na akci ',akce.get);
+      accessed(org.get); //echo('přepnuto na akci ',akce.get);
       akce_show(ida.get,idp.get,conc(akce.get,' ',rok.get),'AKTIVITA')
     | warning("nemáte oprávnění přepnout na akci této organizace")  }
   }
@@ -1720,7 +1720,7 @@ form _aktivity {
   }
 }
 # ------------------------------------------------------------------------------------==> _DOKUMENTY
-form _documents {  // ukládají se na H: tedy mimo dosah http
+form _documents [,,623,] {  // ukládají se na H: tedy mimo dosah http
   const folder= 'pobyt/'
   proc ukaz() { // ukáže soubory aktuálního pobytu
     jmena.set(conc("dokumenty svázané s pobytem <b><big>",u.b._nazev.get," ",u.b._jmena.get,"</big></b>"));

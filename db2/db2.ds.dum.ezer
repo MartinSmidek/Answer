@@ -6,10 +6,12 @@ var the_order: number
 //var ds_web: number
 
 proc order_load (ord) {
-  echo("ord=",ord); the_order.set(ord); pobyt.precti; pobyt.compare
+//  echo("ord=",ord); 
+  the_order.set(ord); pobyt.precti; pobyt.compare
 }
 proc show_order (ord) {
-  echo('order No.',ord); the_order.set(ord); order_load(ord)
+//  echo('order No.',ord); 
+  the_order.set(ord); order_load(ord)
 }
 
   menu mo {type:'left'
@@ -349,12 +351,12 @@ group ucastnici {
     button [  0,0,,] { title:'+ rodina', help:'výběr rodiny z databází MS'
       proc onclick () {
         Rodina.fl.rodiny.display(1); Rodina.fl.klienti.display(0);
-        novi.set(Rodina.modal(550,250)); echo(novi.get);
+        novi.set(Rodina.modal(550,250)); //echo(novi.get);
     } }
     button [ 72,0,,] { title:'+ hosté', help:'výběr hostů z objednávek DS'
       proc onclick () {
         Rodina.fl.rodiny.display(0); Rodina.fl.klienti.display(1);
-        novi.set(Rodina.modal(550,250)); echo(novi.get);
+        novi.set(Rodina.modal(550,250)); //echo(novi.get);
     } }
     button [138,0,,] { title:'+ 1 účastník', help:'přidání zcela nového hosta'
       proc onclick () { osoba_new} }
@@ -396,7 +398,7 @@ group ucastnici {
 #         pob_until.width; pob_until.width(0); pob_pozn.width(0); ys_osoba.width(53);
 #       |                  pob_until.width(34); pob_pozn.width(19); ys_osoba.width(0);
 #       }
-      proc onrowclick() { osoba_load(id_osoba.get); echo('click=',akc.seznam.browse_key); }
+      proc onrowclick() { osoba_load(id_osoba.get); } //echo('click=',akc.seznam.browse_key); }
     }
     // ================================================================> Rodina
     panel Rodina [,,320,300] {type:'popup', title:'Výběr rodiny z databází Setkání a Familia'

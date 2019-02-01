@@ -12,7 +12,7 @@ proc onfirstfocus() {
   m.g.i.click;
 #   spinner(0);
 }
-proc init_ucast() { echo('mai:init_ucast ',the_title.get);
+proc init_ucast() { //echo('mai:init_ucast ',the_title.get);
   vy.fill(the_title.get);
 }
 
