@@ -70,14 +70,15 @@ proc reaccess() { #==> . reaccess (jen pro YS+FA)
   has_access.set(sys('user','has_access'));
   my_access.set(sys('user','access'));
   my_org.set(cconc(eq(my_access.get,3),sys('user','org'),my_access.get));
-  lst.reaccess;
-  ucast.reaccess;
-  pece.reaccess;
-  tisk.reaccess;
-  maia.reaccess;
-  evi.reaccess;
-  mai.reaccess;
-  sta.reaccess;
+  echo('has_access=',has_access.get,', my_access=',my_access.get,', my_org=',my_org.get);
+  [ has_skill('yaa;faa;caa'); lst.reaccess ];
+  [ has_skill('yaa;faa;caa'); ucast.reaccess ];
+  [ has_skill('yaa;faa;caa#crz'); pece.reaccess ];
+  [ has_skill('yaa;faa;caa'); tisk.reaccess ];
+  [ has_skill('yam;fam;cam'); maia.reaccess ];
+  [ has_skill('yae;fae;caa;mrop'); evi.reaccess ];
+  [ has_skill('yam;fam;cam'); mai.reaccess ];
+  [ has_skill('yaa;faa;caa'); sta.reaccess ];
   elim.reaccess;
 }
 # ----------------------------------------------------------------------------==> globální procedury

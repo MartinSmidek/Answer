@@ -224,7 +224,7 @@ form _page [,,275,360] {
     'cen',{ c.browse_load(conc("id_akce=",id_akce)); },
     'doc',{ archiv.ukaz(akce_get('archiv')) },
     );
-    echo(id_akce,':',access.get,cen_ver.key);
+//    echo(id_akce,':',access.get,cen_ver.key);
     c_show;
   }
   proc init_page() {
@@ -255,7 +255,7 @@ form _page [,,275,360] {
   radio [213,117,86,35] { tag:'cor', data:akce.strava_oddo, value:'vo'
     case [0,2,83,] { title:'večeře-oběd', expr:'vo' }
     case [0,17,76,] { title:'oběd-oběd', expr:'oo' }
-    proc onchange() { echo('strava=',this.get) }
+    proc onchange() {} //echo('strava=',this.get) }
   }
   field [96,202,54,] { tag:'cor', title:'účetní symbol:', data:akce.ciselnik_akce,
     skill:'faa|faa;caa|caa' }

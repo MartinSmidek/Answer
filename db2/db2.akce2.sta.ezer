@@ -94,7 +94,8 @@ menu m {type:'left', format:'f+' //, active:*
     the_vypis.set(conc(i.owner.title,' - ',i.title));
     [ i.par.xls; info.ex_xls.display(1); info.ex_xls.set(i.par.xls) | info.ex_xls.display(0) ];
     [ i.par.pdf; info.ex_pdf.display(1); info.ex_pdf.set(i.par.pdf) | info.ex_pdf.display(0) ];
-    [ echo(i.par.parm_tit,info.parm.get); i.par.parm_tit; info.display(1,'p');
+    [ //echo(i.par.parm_tit,info.parm.get); 
+      i.par.parm_tit; info.display(1,'p');
       info.parm_tit.set(i.par.parm_tit); menu_par.set(info.parm.get,'parm') | info.display(0,'p') ];
     info.fill(the_vypis.get,i.par.dsc); info.msg.set('');
     { eq(i.par.typ,'ms_struktura'); ret.set(ask('sta2_struktura',my_org.get,i.par,the_title.get));

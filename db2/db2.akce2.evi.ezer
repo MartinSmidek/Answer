@@ -219,7 +219,7 @@ form _lst [,,370,*] {
     virgin.set(0);
     o_vyber.key( 1); bo_filtr.set(o_vyber.get); o_vyber.refresh;
     r_vyber.key( 1); br_filtr.set(r_vyber.get); r_vyber.refresh;
-    echo("start: br_filtr=",br_filtr.get);
+//    echo("start: br_filtr=",br_filtr.get);
     //init_mailist;
   ] }
   // zobraz mailist podle access
@@ -238,7 +238,7 @@ form _lst [,,370,*] {
   # ==============================================> H - HISTORIE ZMĚN OSOB
   var track_past=''
   var bh_cnd=1, bh_filtr=1
-  proc bh_reload(cnd) { echo("bh_reload ",virgin.get);
+  proc bh_reload(cnd) { //echo("bh_reload ",virgin.get);
     [ virgin.get; start ];
     evi_barvit_zmeny.set(1); bh_cnd.set(cnd);
     idh.get; [ bh.browse_seek(conc("id_osoba=",idh.get)); bh.onrowclick ]
@@ -269,7 +269,7 @@ form _lst [,,370,*] {
   }
   # ==============================================> F - HISTORIE ZMĚN RODIN
   var bf_cnd=1, bf_filtr=1
-  proc bf_reload(cnd) { echo("bf_reload ",virgin.get);
+  proc bf_reload(cnd) { //echo("bf_reload ",virgin.get);
     [ virgin.get; start ];
     evi_barvit_zmeny.set(1); bf_cnd.set(cnd);
     idf.get; [ bf.browse_seek(conc("id_osoba=",idf.get)); bf.onrowclick ]
@@ -298,7 +298,7 @@ form _lst [,,370,*] {
   # ==============================================> O - OSOBY
   var bo_cnd=1, bo_filtr= 1, bo_having= 1
   proc bo_reload(cnd) {
-                                                echo("bo_reload ido=",ido.get);
+//                                                echo("bo_reload ido=",ido.get);
     [ virgin.get; start ];
     bo_cnd.set(cnd);
     ido.get; [ bo.browse_seek(conc("id_osoba=",ido.get)); /*bo.onrowclick*/ ]
@@ -471,8 +471,7 @@ form _lst [,,370,*] {
     [ virgin.get; start ];
     br_cnd.set(cnd);
     idr.get; [ br.browse_seek(conc("id_rodina=",idr.get)); br.onrowclick ]
-  |     echo("load: br_filtr=",br_filtr.get);
-
+  |    // echo("load: br_filtr=",br_filtr.get);
     br.browse_load(conc('r.access & ',my_access.get,' AND ',cnd," AND ",br_filtr.get),'',br_having.get);
   }
   select r_vyber [163,5,154,] {tag:'r', type:'map'
@@ -677,7 +676,7 @@ form _page {
       proc onclick() { var zmena:text, ido:number, tips:text
         ido.set(lst.bo.id_o.get); tips.set(lst.bo.tips.get);
         spinner(1); zmena.set(elim.osoby_lst(ido,tips)); spinner(0);
-        echo("elim.osoby_lst(",ido,",",tips,")=",zmena," ido=",elim.osoby_lst_id.get);
+//        echo("elim.osoby_lst(",ido,",",tips,")=",zmena," ido=",elim.osoby_lst_id.get);
         lst.bo.browse_seek(conc("o.id_osoba=",elim.osoby_lst_id.get));
         lst.bo.raise('onrowclick',elim.osoby_lst_id.get);
 #         [ lst.bo.browse_row;
@@ -1037,13 +1036,13 @@ form _mapa [,,500,500] {css:'ae_frame shift_down'
   label cr [2,2,496,496] { type:'map'
 #   label cr [2,2,646,496] { type:'map'
     proc onmarkclick(mark) {
-      echo(mark.title,' id_osoba:',mark.id);
+//      echo(mark.title,' id_osoba:',mark.id);
 #       echo(debug(mark));
-      { eq(mark.ezer,'skupiny'); echo('skupiny');
+      { eq(mark.ezer,'skupiny'); //echo('skupiny');
         alert(skup.get(mark.id));
 #         mail.f.tit.set(conc("Rád bych se dozvěděl víc o skupině: ",mark.title));
 #         mail.popup
-      | eq(mark.ezer,'psc'); echo('psc')
+      | eq(mark.ezer,'psc'); //echo('psc')
       | lst.bm.raise('onrowclick',mark.id)
       };
     }

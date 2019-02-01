@@ -70,11 +70,11 @@ menu db2 { type:'main', title:'db2', active:*, _sys:'*'
     [ function('on',"waiting(on);",on) ];
   }
   proc reaccess(msg) {
-    echo(msg); set_trace('E',1,'spinner,reaccess');
+    echo(msg); //set_trace('E',1,'spinner,reaccess');
     spinner(1);
-//    akce2.reaccess;
+    akce2.reaccess;
     syst.reaccess;
-    spinner(0); set_trace('E',0,'spinner,reaccess');
+    spinner(0); //set_trace('E',0,'spinner,reaccess');
   }
   // univerzální procedury
   proc the_formsave (f,b) {
