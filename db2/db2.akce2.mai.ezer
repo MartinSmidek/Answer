@@ -174,7 +174,7 @@ form _vyber {
   label [7,17,100,17] { tag:'skup', title:'výběr skupiny:' }
   select komu_Q  [82,15,289,17] { tag:'skup', type:'map', options:map_db_maily_sql.zkratka, format:'t'
     help:'komu|výběr skupiny adresátů'
-    proc onchange() {
+    proc onchanged() {
       switch(karta.get,
       'et',{et.reload; sql_cis.load(0,conc("druh='db_maily_sql' AND data=",this.key)) },
       'es',{es.reload},
@@ -190,7 +190,7 @@ form _vyber {
     proc onclick() { gq.init_mailist } }
   select komu_G  [82,15,289,17] { tag:'gen', format:'nt'
     help:'komu|výběr mail-listu'
-    proc onchange() {
+    proc onchanged() {
       switch(karta.get,'et',{et.reload},'es',{es.reload},'sq',{sq.reload},
         'gq',{gq.id_mailist.set(this.key); gq.m_reload})
   } }
@@ -341,7 +341,7 @@ form _gsql {
   } }
   list L_ano [10,t_akce+90,215,500] { tag:'def', rows:22
     select kdy [0,4,120,] { format:'t',
-      proc onchange() {
+      proc onchanged() {
       [ rok.display(0); rokem.display(0); vzor.display(0);
         gt(this.key,10); vzor.display(1)
       | gt(this.key,4); rok.display(1); rok.set(1); rokem.display(1)
@@ -402,7 +402,7 @@ form _gsql {
   } }
   list L_ne [l_ne_akce+10,t_akce+90,215,500] { tag:'def', rows:22
     select kdy [0,4,120,] { format:'t',
-      proc onchange() {
+      proc onchanged() {
       [ rok.display(0); rokem.display(0); vzor.display(0);
         gt(this.key,10); vzor.display(1)
       | gt(this.key,4); rok.display(1); rok.set(1); rokem.display(1)
@@ -490,7 +490,7 @@ form _gsql {
   field pro_mrop_f [90,t_pro+82,30,] { tag:'def,mrop', format:'ntr', value:'2001'
     proc onchange() { dirty } }
   select pro_mrop_s [126,t_pro+82,74,] { tag:'def,mrop', format:'nt'
-    proc onchange() { pro_mrop_f.display(not(eq(this.key,4))); dirty }
+    proc onchanged() { pro_mrop_f.display(not(eq(this.key,4))); dirty }
   }
   // účasti
   check pro_ucast  [10,t_pro+104,90,] { tag:'def', title:'podle účastí?', value:'0', format:'t'
@@ -513,7 +513,7 @@ form _gsql {
   field pro_kolik [100,t_pro+104,20,] { tag:'def,ucast', format:'ntr', value:'1'
     proc onchange() { dirty } }
   select pro_jak  [125,t_pro+104,74,] { tag:'def,ucast', format:'nt'
-    proc onchange() { dirty } }
+    proc onchanged() { dirty } }
   #==> ... podle věku
   check pro_vek   [10,t_pro+126,90,] { tag:'def', title:'podle věku?', value:'0', format:'t'
     proc onchange() {

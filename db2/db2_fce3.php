@@ -737,7 +737,7 @@ function akce2_strava_denne_save($id_pobyt,$dnu,$x,
 # načítají se jen řádky ve kterých typ='a'
 # funguje pro "nové tabulky google" - od dubna 2015
 function akce2_roku_update($rok) {  trace();
-  global $json;
+//  global $json;
   $key= "1RKnvU7EJG7YtBDjnSpQfwg3kjOCBEV_w8bMlJcdV8Nc";         // ciselnik_akci
   $prefix= "google.visualization.Query.setResponse(";           // přefix json objektu
   $sheet= $rok>2010 ? $rok-1997 : ($rok==2010 ? 10 : -1);
@@ -749,7 +749,7 @@ function akce2_roku_update($rok) {  trace();
 //                                         display("xi=$xi,$xl");
   $x= substr(substr($x,$xi+$xl),0,-2);
 //                                         display($x);
-  $tab= $json->decode($x)->table;
+  $tab= json_decode($x)->table;
 //                                         debug($tab,$sheet);
   // projdeme získaná data
   $n= 0;
@@ -1587,7 +1587,7 @@ function akce2_vzorec($id_pobyt) {  //trace();
   $res= pdo_qry($qry);
   if ( $res && $c= pdo_fetch_object($res) ) {
     $vzor= $c;
-    $vzor->slevy= json_decode($vzor->ikona);
+    $vzor->slevy= ($vzor->ikona);
     $ret->eko->slevy= $vzor->slevy;
   }
 //                                                         debug($vzor);
@@ -7939,7 +7939,7 @@ function akce2_pdf_stravenky0($akce,$par,$report_json) {  trace();
 # vygenerované dopisy ve tvaru souboru PDF se umístí do ./docs/$fname
 # případná chyba se vrátí jako Exception
 function dop_rep_ids($report_json,$parss,$fname) { trace();
-  global $json;
+//  global $json;
   $err= 0;
   // transformace $parss pro strtr
   $subst= array();
@@ -7949,7 +7949,7 @@ function dop_rep_ids($report_json,$parss,$fname) { trace();
       $subst[$i]['{'.$x.'}']= $y;
     }
   }
-  $report= $json->decode($report_json);
+  $report= json_decode($report_json);
 //                                                         debug($report,"dop_rep_ids");
   // vytvoření $texty - seznam
   $texty= array();
@@ -8748,7 +8748,7 @@ function evid2_browse_mailist($x) {
 # ------------------------------------------------------------------------------------ mapa2 skupiny
 # přečtení seznamu skupin
 function mapa2_skupiny() {  trace();
-  global $json;
+//  global $json;
   $goo= "https://docs.google.com/spreadsheets/d";
   $key= "1mp-xXrF1I0PAAXexDH5FA-n5L71r5y0Qsg75cU82X-4";         // Seznam skupin - kontakty
   $prefix= "google.visualization.Query.setResponse(";           // přefix json objektu
@@ -8760,7 +8760,7 @@ function mapa2_skupiny() {  trace();
 //                                         display("xi=$xi,$xl");
   $x= substr(substr($x,$xi+$xl),0,-2);
 //                                         display($x);
-  $tab= $json->decode($x)->table;
+  $tab= json_decode($x)->table;
 //                                         debug($tab,$sheet);
   // projdeme získaná data
   $psc= $note= $clmns= array();
@@ -10610,11 +10610,11 @@ function elim2_data_rodina($idr,$cond='') {  //trace();
 # =========================================================================================> . vzory
 # ------------------------------------------------------------------------------------- mail2 footer
 function mail2_footer($op,$access,$access_name,$idu,$change='') { trace();
-  global $json;
+//  global $json;
   $ans= '';
   $org= $access_name->$access;
   $s_options= select("options","_user","id_user='$idu'",'ezer_system');
-  $options= $json->decode($s_options);
+  $options= json_decode($s_options);
   switch ($op) {
   case 'show':
     $ans= is_array($options->email_foot) && isset($options->email_foot[$access])
@@ -10903,8 +10903,8 @@ function mail2_lst_posli_spec($id_dopis) {  trace();
 # ----------------------------------------------------------------------------------- mail2 lst_read
 # převod parm do objektu
 function mail2_lst_read($parm) { //trace();
-  global $json;
-  $obj= $json->decode($parm);
+//  global $json;
+  $obj= json_decode($parm);
   $obj= isset($obj->ano_akce) ? $obj : 0;
 //                                                 debug($obj,"mail2_lst_read($parm)");
   return $obj;
@@ -12352,7 +12352,7 @@ function ucet_potv($par,$access) { trace();
   $rok= date('Y')+$par->rok;
   $let18= date('Y')-18;
 
-  global $json;
+//  global $json;
   $key= "1KG943OiuVeb_S7FuCZdhPWF3fNu44hBiR2DZIsp3Pok";         // prijate_dary
   $prefix= "google.visualization.Query.setResponse(";           // přefix json objektu
   $sheet= $rok;
@@ -12367,7 +12367,7 @@ function ucet_potv($par,$access) { trace();
 //                                         display("xi=$xi,$xl");
   $x= substr(substr($x,$xi+$xl),0,-2);
 //                                         display($x);
-  $goo= $json->decode($x)->table;
+  $goo= json_decode($x)->table;
 //                                         debug($goo,$sheet);
   // výběr záznamů o darech
   $tab= $clmn= array();

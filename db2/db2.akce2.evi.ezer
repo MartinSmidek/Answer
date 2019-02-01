@@ -308,7 +308,7 @@ form _lst [,,370,*] {
   select o_vyber [163,5,154,] {tag:'o', type:'map'
     map_pipe:map_evi_vyber_o.hodnota, options:map_evi_vyber_o.zkratka, format:'t'
     help:'výběrová podmínka, doplňující případně zadaná kritéria'
-    proc onchange() { refresh; ido.set(0); bo_reload(bo_cnd.get) }
+    proc onchanged() { refresh; ido.set(0); bo_reload(bo_cnd.get) }
     proc refresh() {
       bo_filtr.set(this.get);
       bo_having.set(ask('select','ikona','_cis',conc("druh='evi_vyber_o' AND data=",this.key)));
@@ -373,7 +373,7 @@ form _lst [,,370,*] {
   }
   label [15,9,,] { tag:'m', title:'mail-list:' }
   select bm_vyber [62,5,289,] { tag:'m', format:'t', help:'komu|výběr mail-listu'
-    proc onchange() { bm_reload(1) } }
+    proc onchanged() { bm_reload(1) } }
   browse bm [10,30,,] {tag:'m', optimize:°{ask:'evid2_browse_mailist'}, key_id:'id_o'
     rows:27, qry_rows:1, buf_rows:6000
     show id_o
@@ -477,7 +477,7 @@ form _lst [,,370,*] {
   select r_vyber [163,5,154,] {tag:'r', type:'map'
     map_pipe:map_evi_vyber_r.hodnota, options:map_evi_vyber_r.zkratka, format:'t'
     help:'výběrová podmínka, doplňující případně zadaná kritéria'
-    proc onchange() { refresh; idr.set(0); br_reload(br_cnd.get) }
+    proc onchanged() { refresh; idr.set(0); br_reload(br_cnd.get) }
     proc refresh() {
       br_filtr.set(this.get);
       br_having.set(ask('select','ikona','_cis',conc("druh='evi_vyber_r' AND data=",this.key)));
@@ -927,7 +927,7 @@ form _clenstvi [,,320,min_h+-180] {css:'ae_frame shift_down'
   const Lc=180
   select typ   [Lc,27,65,] {type:'map', help:'typ členství', options:ms_akce_clen.zkratka
     title:'^typ členství'
-    proc onchange() {
+    proc onchanged() {
       eq(typ.key,2); alert("účastníci nejsou evidováni jako členové YMCA")
     | ukon.set(cconc(eq(typ.key,0),'b',eq(typ.key,1),'c','k')); ukon.change(1) }
   }
