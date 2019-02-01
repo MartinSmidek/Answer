@@ -6816,14 +6816,14 @@ function akce2_vyuctov_pary($akce,$par,$title,$vypis,$export=false) { trace();
       . ",na účet:7:r:s,datum platby:10:d"
       . ",nedo platek:6:r:s,člen. nedo platek:6:r:s,pokladna:6:r:s,datum platby:10:d,přepl.:6:r:s,poznámka:50,SPZ:9,.:7"
       . ",ubyt.:8:r:s,DPH:6:r:s,strava:8:r:s,DPH:6:r:s,režie:8:r:s,zapla ceno:8:r:s"
-      . ",dota ce:6:r:s,nedo platek:6:r:s,dar:7:r:s,rozpočet organizace:10:r:s"
+      . ",dota ce:6:r:s,nedo platek:6:r:s,dárce:25,dar:7:r:s,rozpočet organizace:10:r:s"
       . "";
   $fld= "=jmena"
 //       . ",id_pobyt"
       . ",pokoj,_deti,luzka,pristylky,kocarek,=pocetnoci,strava_cel,strava_pol"
       . ",platba1,platba2,platba3,platba4,=cd,=platit,=uctem,=datucet"
       . ",=nedoplatek,=prispevky,=pokladna,=datpokl,=preplatek,poznamka,spz,"
-      . ",=ubyt,=ubytDPH,=strava,=stravaDPH,=rezie,=zaplaceno,=dotace,=nedopl,=dar,=naklad"
+      . ",=ubyt,=ubytDPH,=strava,=stravaDPH,=rezie,=zaplaceno,=dotace,=nedopl,=darce,=dar,=naklad"
       . "";
   $cnd= 1;
   $html= '';
@@ -6855,7 +6855,8 @@ function akce2_vyuctov_pary($akce,$par,$title,$vypis,$export=false) { trace();
               ,CONCAT(r.nazev,' ',GROUP_CONCAT(IF(role IN ('a','b'),o.jmeno,'') ORDER BY role SEPARATOR ' '))
               ,GROUP_CONCAT(DISTINCT CONCAT(so.prijmeni,' ',so.jmeno) SEPARATOR ' ')) as _jm,
             COUNT(dc.id_dar) AS _clenstvi,
-            0+RIGHT(SUM(DISTINCT CONCAT(d.id_dar,LPAD(d.castka,10,0))),10) AS prispevky
+            0+RIGHT(SUM(DISTINCT CONCAT(d.id_dar,LPAD(d.castka,10,0))),10) AS prispevky,
+            GROUP_CONCAT(DISTINCT IF(t.role='a',CONCAT(so.prijmeni,' ',so.jmeno),'') SEPARATOR '') as _darce
           FROM pobyt AS p
             JOIN spolu AS s USING(id_pobyt)
             JOIN osoba AS o ON s.id_osoba=o.id_osoba
@@ -6919,6 +6920,7 @@ function akce2_vyuctov_pary($akce,$par,$title,$vypis,$export=false) { trace();
                             $exp= "=-[platba4,0]"; break;
         case '=nedopl':     $val= $nedoplatek;
                             $exp= "=IF([=zaplaceno,0]<[=platit,0],[=platit,0]-[=zaplaceno,0],0)"; break;
+        case '=darce':      $val= $preplatek ? "dar - {$x->_darce}" : ''; break;
         case '=dar':        $val= $preplatek;
                             $exp= "=IF([=zaplaceno,0]>[=platit,0],[=zaplaceno,0]-[=platit,0],0)"; break;
         case '=naklad':     $val= $naklad;
@@ -8151,6 +8153,7 @@ function evid2_cleni($id_osoba,$id_rodina,$filtr) { //trace();
   $cleni= "";
   $rodiny= array();
   $rodina= $rodina1= $id_rodina;
+  // pouze při použití filtru na služby během pobytu přidej tabulky spolu, pobyt
   $join_pobyt= strpos($filtr,"AND funkce=")!==false 
       ? "LEFT JOIN spolu AS os ON os.id_osoba=o.id_osoba
         LEFT JOIN pobyt AS op USING (id_pobyt)"
@@ -10641,6 +10644,7 @@ function mail2_footer($op,$access,$access_name,$idu,$change='') { trace();
 # pošle mail daného typu účastníkovi pobytu - zatím typ=potvrzeni_platby
 #                                                                         !!! + platba souběžné akce
 function mail2_vzor_pobyt($id_pobyt,$typ,$from,$vyrizuje,$poslat=0) {
+  global $ezer_root;
   $ret= (object)array();
 
   // načtení a kontrola pobytu + mail + nazev akce
@@ -14346,12 +14350,12 @@ function grp_read($par) {  trace(); debug($par);
     if ( $par->serv=='proglas' ) {
       $authhost= '{imap.proglas.cz:143}'.$par->mbox;
       $user="smidek@proglas.cz";
-      $pass="proglasovymail";
+      $pass="************";
     }
     else { // gmail
       $authhost= '{imap.gmail.com:993/imap/ssl}'.$par->mbox;
-      $user="martin@smidek.eu";
-      $pass="radost2010";
+      $user="***********";
+      $pass="**********";
     }
     $mails= array();
     $mbox= @imap_open($authhost,$user,$pass);
