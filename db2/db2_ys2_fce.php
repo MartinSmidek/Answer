@@ -1489,7 +1489,7 @@ end:
 # platce= [nazev,adresa,telefon,ic]
 # polozky= [[nazev,cena,dph,pocet,sleva]...]
 # }
-function ds_rozpis_faktura($listr,$listf,$typ,$order,$x,$polozky,$platce,$zaloha=100,$pata,$zaloha,&$suma) {
+function ds_rozpis_faktura($listr,$listf,$typ,$order,$x,$polozky,$platce,$zaloha=100,$pata,$zaloha2,&$suma) {
                                                 trace('','win1250');
   $koef_dph= dph_koeficienty();
   list($ic,$dic,$adresa,$akce,$obdobi)= $platce;

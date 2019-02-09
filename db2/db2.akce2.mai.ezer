@@ -341,7 +341,7 @@ form _gsql {
   } }
   list L_ano [10,t_akce+90,215,500] { tag:'def', rows:22
     select kdy [0,4,120,] { format:'t',
-      proc onchanged() {
+      proc onchanged() { echo('kdy=',this.key);
       [ rok.display(0); rokem.display(0); vzor.display(0);
         gt(this.key,10); vzor.display(1)
       | gt(this.key,4); rok.display(1); rok.set(1); rokem.display(1)
@@ -619,7 +619,7 @@ form _gsql {
     gt(xi.akey,1); // vynecháme "neomezovat"
     ano_cas.onclick;
     L_ano.part(last_ano.get).part('kdy').key(xi.akey);
-    L_ano.part(last_ano.get).part('kdy').call('onchange');
+    L_ano.part(last_ano.get).part('kdy').call('onchanged');
     [ gt(xi.akey,10); L_ano.part(last_ano.get).part('vzor').set(xi.val);
     | gt(xi.akey,4);  L_ano.part(last_ano.get).part('rok').set(xi.val)
     ];
@@ -628,7 +628,7 @@ form _gsql {
     gt(xi.akey,1); // vynecháme "neomezovat"
     ne_cas.onclick;
     L_ne.part(last_ne.get).part('kdy').key(xi.akey);
-    L_ne.part(last_ne.get).part('kdy').call('onchange');
+    L_ne.part(last_ne.get).part('kdy').call('onchanged');
     [ gt(xi.akey,10); L_ne.part(last_ne.get).part('vzor').set(xi.val);
     | gt(xi.akey,4);  L_ne.part(last_ne.get).part('rok').set(xi.val)
     ];

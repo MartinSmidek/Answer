@@ -19,7 +19,7 @@ proc rodiny_lst(idr,idrs) {
 proc cleni(idr) {
   elim_init; elim_cleni(idr); elim_start }
 # -----------------------------------------------------------------------------------------==> coord
-const Wr= 480; Hr= 544
+const Wr= 480; Hr= 574
 # ------------------------------------------------------------------------------------------==> stav
 var mode: text                                  // osoba | osoba_lst | rodina | cleni | cleni_lst
 var virgin= 1 //, virgin_r= 1, virgin_o= 1, virgin_c= 1
@@ -28,7 +28,7 @@ var smazane_o= 1,                               // 1|o.deleted=''
 var ido=0, idr=0
 var last_ido_lst='', last_idos_lst=''
 # ------------------------------------------------------------------------------------------==> uses
-use c:  form _cmd    [0,560,,]
+use c:  form _cmd    [0,584,,]
 use o1: form _osoby  [    0, 5,,] { format:'n' }
 use o2: form _osoby  [Wr+10, 5,,] { format:'n' }
 use r1: form _rodiny [    0, 5,,] { format:'n' }
@@ -37,6 +37,7 @@ use c1: form _cleni  [    0, 5,,] { format:'n' }
 use c2: form _cleni  [Wr+10, 5,,] { format:'n' }
 # ----------------------------------------------------------------------------------==> inicializace
 proc elim_init() {
+//  function('x',"x._show(0,0);",panel);
   virgin.get; c.rod_cleni.enable(1);
   o1.init_all("ORIGINÁL",0); o2.init_all("KOPIE",1);
   o2.oso.on_dblclk_copy_to(o1.oso); o1.oso.on_dblclk_copy_to(o2.oso);
@@ -145,7 +146,7 @@ proc elim_cleni(idr) { var cleni:text
 }
 # --------------------------------------------------==> refresh
 proc elim_start() {
-  return(panel.modal(10,-40))
+  return(panel.modal(10,cconc(eq(sys('ezer','version'),'ezer3.1'),5,-40)))
 }
 proc elim_refresh() { var os1:number, os2:number
   eq(mode.get,'osoba');
