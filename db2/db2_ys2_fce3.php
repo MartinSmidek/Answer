@@ -279,23 +279,23 @@ function p_pdenik_insert($typ,$org,$org_abbr,$datum) {
 # $cond = podmínka pro pdenik nastavená ve fis_kasa.ezer
 # $day =  má formát d.m.yyyy
 function kasa_menu_show($k1,$k2,$k3,$cond=1,$day='',$db='ezer_db2') {
-  $html= "<div class='CSection CMenu'>";
+  $html= '';
   switch ( "$k2 $k3" ) {
   case 'stav aktualne':
     $dnes= date('j.n.Y');
     $dnes_mysql= date('Y-m-d');
-    $html.= "<h3 class='CTitle'>Aktuální stav pokladen ke dni $dnes</h3>";
+    $html.= "<div class='karta'>Aktuální stav pokladen ke dni $dnes</div>";
     $year= date('Y');
     $interval= " datum BETWEEN '$year-01-01' AND '$dnes_mysql'";
     $html.= kasa_menu_comp($interval,$db);
     break;
   case 'stav s_filtrem':
-    $html.= "<h3 class='CTitle'>Stav pokladen podle nastavení </h3>";
+    $html.= "<div class='karta'>Stav pokladen podle nastavení </div>";
     $html.= kasa_menu_comp($cond,$db);
     $html.= "<p><i>filtr: $cond</i></p>";
     break;
   case 'stav k_datu':
-    $html.= "<h3 class='CTitle'>Stav pokladen ke dni $day </h3>";
+    $html.= "<div class='karta'>Stav pokladen ke dni $day </div>";
     $until= sql_date1($day,1);
     $year= substr($until,0,4);
     $interval= " datum BETWEEN '$year-01-01' AND '$until'";
@@ -303,18 +303,17 @@ function kasa_menu_show($k1,$k2,$k3,$cond=1,$day='',$db='ezer_db2') {
     break;
   case 'export letos':
     $rok= date('Y');
-    $html.= "<h3 class='CTitle'>Export pokladních deníků roku $rok</h3>";
+    $html.= "<div class='karta'>Export pokladních deníků roku $rok</div>";
     $cond= " datum BETWEEN '$rok-01-01' AND '$rok-12-31'";
     $html.= kasa_export($cond,"pokladna_{$rok}",$db);
     break;
   case 'export vloni':
     $rok= date('Y')-1;
-    $html.= "<h3 class='CTitle'>Export pokladních deníků roku $rok</h3>";
+    $html.= "<div class='karta'>Export pokladních deníků roku $rok</div>";
     $cond= " datum BETWEEN '$rok-01-01' AND '$rok-12-31'";
     $html.= kasa_export($cond,"pokladna_{$rok}",$db);
     break;
   }
-  $html.= "</div>";
   return $html;
 }
 # -------------------------------------------------------------------------------------- kasa export
@@ -627,7 +626,7 @@ function ds_rooms_help($version=1) {
   $hlp= array();
   ezer_connect('setkani');
   $qry= "SELECT number,note
-         FROM tx_gnalberice_room
+         FROM setkani.tx_gnalberice_room
          WHERE  NOT deleted AND NOT hidden AND version=1";
   $res= pdo_qry($qry);
   while ( $res && $o= pdo_fetch_object($res) ) {

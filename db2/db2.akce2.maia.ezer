@@ -351,13 +351,15 @@ form _esady  {
 #   view etl: table mailist {join_type:'LEFT' join:"ON etl.id_mailist=etd.id_mailist"}
   view eto: table osoba {join_type:'LEFT' join:'ON id_clen=eto.id_osoba'}
   view etr: table rodina {join_type:'LEFT' join:'ON id_clen=etr.id_rodina'}
-  browse texty [0,0,150,200] { rows:9, qry_rows:1, group_by:'id_dopis', css_rows:'stav1,3:zluty,4:zeleny,5:cerveny'
+  browse texty [0,0,150,200] { rows:9, qry_rows:1, group_by:'id_dopis', 
+      css_rows:'stav1,3:zluty,4:zeleny,5:cerveny'
     show id_dopis  { data:etd.id_dopis },
     show id_duakce { data:etd.id_duakce }
     show cis_skupina { data:etd.cis_skupina }
     show datum [,,60,] { title:'datum', data:etd.datum, format:'s-' },
     show komu_U [,,100,] { title:'účastníkům' , data:eta.nazev, format:'s' },
-    show predmet [,,160,] { title:'předmět', data:etd.nazev, format:'sq', css_cell:'stav2,3:zluty,4:zeleny,5:cerveny' },
+    show predmet [,,160,] { title:'předmět', data:etd.nazev, format:'sq', 
+      css_cell:'stav2,3:zluty,4:zeleny,5:cerveny' },
     show stav1 [,,0,] { expr:'min(etm.stav)', format:'rsq' },
     show stav2 [,,0,] { expr:'max(etm.stav)', format:'rsq' },
     show pocet [,,30,] { title:'#', data:etd.pocet, format:'rs' },

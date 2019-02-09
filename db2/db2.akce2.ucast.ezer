@@ -232,7 +232,7 @@ proc elim_kopie_osob(os) { var zmena:number, ido:number, idos:text
     ido.set(os.part('key_osoba').get);
     idos;
     spinner(1); zmena.set(elim.osoby_lst(ido,idos)); spinner(0);
-    echo("elim.osoby_lst(",ido,",",idos,")=",zmena);
+//    echo("elim.osoby_lst(",ido,",",idos,")=",zmena);
     refresh_ucast(the_pobyt.get);
     jump(ido)
   | warning("nebyla nalezena podezřelá kopie") }
