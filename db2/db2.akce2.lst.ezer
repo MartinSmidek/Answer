@@ -294,22 +294,9 @@ form _page [,,275,360] {
   // ------------------------------------- web setkani.org a chlapi.online
   label [10,309,384,92] { tag:'cor', css:'bily_ram', skill:'yaaw;faaw' 
                         title:" součinnost s www.setkani.org a chlapi.online" }
-  check [16,382,135,21] { tag:'cor', title:'další jako náhradníci', data:akce.web_obsazeno,
-                        skill:'yaa|yaaw;faa|faaw', help:"a to i tehdy, když akce není ještě naplněná" }
-  check web_prihl[16,346,205,] { tag:'cor', data:akce.web_prihlasky,
-                        title:'přihlašování na www.setkani.org', skill:'yaa+|yaaw' 
-    proc onchange() { zmena_web.set(1);
-  }}
-  check [16,364,135,] { tag:'cor', title:'kalendář chlapi.online', data:akce.web_kalendar,
-                        skill:'yaa|yaaw;faa|faaw' }
   button [381,316,,] { tag:'cor', title:'[fa-question]', skill:'yaa+|yaaw'
     help:'pokyny pro přihlašování na www.setkani.org'
     proc onclick() { alert("V popisu akce na www.setkani.org je zapotřebí vyplnit ID akce=",a_akce.get)
-  }}
-  button [184,366,,] { tag:'cor', title:'Upravit anotaci pro chlapi.online', skill:'yaa+|yaaw;faa+|faaw'
-    help:'úprava textu v kalendáři chlapi.online'
-    proc onclick() { 
-      page.a_akce.get; ANOTACE.oprava(page.a_akce.get);
   }}
   field web_url [82,328,287,] { tag:'cor', title:'url pozvánky', data:akce.web_url, skill:'yaa|yaaw;faa|faaw' 
     proc onchanged() {
@@ -317,6 +304,19 @@ form _page [,,275,360] {
       warning("odkaz na akci musí být ve formátu pro uživatele nepřihlášeného k editaci webu!",
               "<br>Tzn. ne ve tvaru www.setkani.org/index.php?page=...");
       this.set(''); this.plain;
+  }}
+  check web_prihl[16,344,243,] { tag:'cor', data:akce.web_prihlasky,
+                        title:'ONLINE přihlašování na www.setkani.org', skill:'yaa+|yaaw' 
+    proc onchange() { zmena_web.set(1);
+  }}
+  check [16,361,214,21] { tag:'cor', title:'OBSAZENO - další jako náhradníci', data:akce.web_obsazeno,
+                        skill:'yaa|yaaw;faa|faaw', help:"a to i tehdy, když akce není ještě naplněná" }
+  check [16,378,135,] { tag:'cor', title:'kalendář chlapi.online', data:akce.web_kalendar,
+                        skill:'yaa|yaaw;faa|faaw' }
+  button [184,380,,] { tag:'cor', title:'Upravit anotaci pro chlapi.online', skill:'yaa+|yaaw;faa+|faaw'
+    help:'úprava textu v kalendáři chlapi.online'
+    proc onclick() { 
+      page.a_akce.get; ANOTACE.oprava(page.a_akce.get);
   }}
   // ------------------------------------- Zpět a Uložit
   label  [193,417,98,30] { tag:'cor', css:'ae_parm', style:'z-index:1', skill:'yaa+;faa+;caa+' }

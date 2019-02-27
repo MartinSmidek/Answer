@@ -10700,6 +10700,7 @@ function mail2_vzor_pobyt($id_pobyt,$typ,$from,$vyrizuje,$poslat=0) {
   }
   // extrakce adresy
   $maily= trim(str_replace(';',',',"$omaily,$rmaily")," ,");
+                                                              display("maily=$maily");
   if ( !$maily ) { $ret->err= "CHYBA účastníci nemají uvedené maily"; goto end; }
   $report= "<hr>Od:$vyrizuje &lt;$from&gt;<br>Komu:$maily<br>Předmět:$nazev<hr>$obsah";
 
@@ -10718,7 +10719,14 @@ function mail2_vzor_pobyt($id_pobyt,$typ,$from,$vyrizuje,$poslat=0) {
     $mail->From= $from;
     $mail->AddReplyTo($from);
     $mail->FromName= $vyrizuje;
-    $mail->AddAddress($maily);
+//    $maily= "martin@smidek.eu";
+//    $mail->AddAddress($maily);
+
+    foreach(preg_split("/,\s*|;\s*|\s+/",trim($maily," ,;"),-1,PREG_SPLIT_NO_EMPTY) as $adresa) {
+      $mail->AddAddress($adresa);   // pošli na 1. adresu
+    }
+
+
     $mail->Subject= $nazev;
     $mail->Body= $obsah;
     $ok= $mail->Send();

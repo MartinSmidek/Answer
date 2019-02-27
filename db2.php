@@ -40,7 +40,7 @@
     $cookie==2 ? "ch" : "db" );
 
   $js= array(
-    $get_ev==3 ? "db2/ds_fce3.js" : "db2/ds_fce.js"
+    $ev==3 ? "db2/ds_fce3.js" : "db2/ds_fce.js"
   );
   $css= [$choice_css,
     "db2/db2.css"
