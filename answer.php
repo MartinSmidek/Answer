@@ -146,9 +146,9 @@ function answer_php($app,$app_name,$db_name,$skin,$js_lib,$css_lib,$options) {
   );
 
   $css= array_merge(
-    $EZER->version=='ezer3.1' ? array("$client/ezer.css.php","$client/ezer3.css.php=skin") : array("$client/ezer.css.php"),
+    $EZER->version=='ezer3.1' ? array(/*"$client/ezer.css.php",*/"$client/ezer3.css.php=skin") : array("$client/ezer.css.php"),
 //     $EZER->version=='ezer2.2' ? $css_lib : array(),    // = uživatelské css
-    $EZER->version=='ezer3.1' ? array("db2/db2.css","db2/db2.css.php=skin") : $css_lib,    // = uživatelské css
+    $EZER->version=='ezer3.1' ? array("db2/db2.css","db2/db2.css.php=skin","./$client/wiki.css") : $css_lib,    // = uživatelské css
     $dbg ? array("./$licensed/jush/mini_jush.css") : array(),
     array("./$client/licensed/font-awesome/css/font-awesome.min.css"),
     $EZER->version=='ezer3.1'

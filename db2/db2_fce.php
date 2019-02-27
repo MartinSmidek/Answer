@@ -152,7 +152,7 @@ function web_prihlaska($akce,$url,$on) {  trace();
   else {
     $html.= "url pozvánky není v očekávaném tvaru";
   }
-  $html.= "<hr>POZOR: na webu je přihláška vidět jen pokud je použit klíč ?try=prihlasky";
+//  $html.= "<hr>POZOR: na webu je přihláška vidět jen pokud je použit klíč ?try=prihlasky";
   return $html;
 }
 # ------------------------------------------------------------------------------------- web zmena_ok
