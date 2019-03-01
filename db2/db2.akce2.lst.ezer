@@ -615,8 +615,12 @@ form _page [,,275,360] {
       drop.lsdir;
     }
   }
-  # --------------------------- pozadí stránky nakonec
+  # --------------------------- pozadí stránky a kontextové menu nakonec
   label frame [2,16,443,385] { title:'', css:'ae_work page' }
+  menu detail { type:'context' join:frame
+    item { title:'ukázat změny', proc onclick () {
+      key_akce.get; track.back_show('akce',key_akce.get) } }
+  }
 }
 # ==> VÝBĚR AKCE
 form _info [,,*,50] {
