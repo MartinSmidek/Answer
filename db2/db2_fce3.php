@@ -10711,22 +10711,13 @@ function mail2_vzor_pobyt($id_pobyt,$typ,$from,$vyrizuje,$poslat=0) {
       $ret->err= "CHYBA při odesílání mailu došlo k chybě: odesílací adresa nelze použít (SMTP)";
       goto end;
     }
-
-
-
-
     // proměnné údaje
     $mail->From= $from;
     $mail->AddReplyTo($from);
     $mail->FromName= $vyrizuje;
-//    $maily= "martin@smidek.eu";
-//    $mail->AddAddress($maily);
-
     foreach(preg_split("/,\s*|;\s*|\s+/",trim($maily," ,;"),-1,PREG_SPLIT_NO_EMPTY) as $adresa) {
       $mail->AddAddress($adresa);   // pošli na 1. adresu
     }
-
-
     $mail->Subject= $nazev;
     $mail->Body= $obsah;
     $ok= $mail->Send();
@@ -11932,7 +11923,7 @@ function mail2_new_PHPMailer() {
   require_once("$phpmailer_path/class.phpmailer.php");
   require_once("$phpmailer_path/class.smtp.php");
   $mail= new PHPMailer;
-  $mail->SetLanguage('cz',"$phpmailer_path/language/");
+  $mail->SetLanguage('cs',"$phpmailer_path/language/");
   $mail->IsSMTP();
   $mail->CharSet = "UTF-8";
   $mail->IsHTML(true);
