@@ -1,9 +1,0 @@
-#pragma library
-group tab { include:'onload,ds.tab'
-  var xx: number
-}
-var the_order: number
-proc show_order (ord) { echo('order No.',ord); the_order.set(ord); dum.order_load(ord) }
-group dum { include:'onload,ds.dum'
-  proc order_load (ord) { echo('nic2') }
-}
