@@ -1,7 +1,8 @@
 <?php # (c) 2010 Martin Smidek <martin@smidek.eu>
 header("Content-type: text/css");
-session_start();
-$skin= $_SESSION['skin'] ? $_SESSION['skin'] : 'default';
+if ( !isset($_SESSION) ) session_start();
+$ezer_root= $_GET['root'];
+$skin= $_SESSION[$ezer_root]['skin'] ? $_SESSION[$ezer_root]['skin'] : 'default';
 global $skin, $path, $c, $b, $ab, $c_appl,
   $c_menu, $b_menu, $c_main, $b_main,
   $c_group, $b_group, $s_group, $c_item, $b_item, $bd_item, $fb_item, $fc_item, $s_item, $s2_item,
@@ -9,8 +10,8 @@ global $skin, $path, $c, $b, $ab, $c_appl,
   $c_kuk, $c2_kuk, $b_kuk, $s_kuk, $b_doc_modul, $b_doc_menu, $b_doc_form,
   $b_parm, $b_work;
 # c_=color, b_=background-color, a?_=aktivní, f?_=focus, s_=speciál
-
-require_once("../skins/colors.php");
+$abs_root=  $_SESSION[$ezer_root]['abs_root'];
+require_once("$abs_root/skins/colors.php");
 
 echo <<<__EOD
 /* Android * /
@@ -41,6 +42,28 @@ body { position:absolute; width:100%; height:100%; }
 .azurovy        { background-color:#77ffff !important; }
 .fialovy        { background-color:#d27efc !important; }
 .jemna          { background-color:$b_item; }
+    
+/* výběr access */
+
+#appl {
+  z-index: 99; }
+#access {
+  cursor: pointer; }
+#access_menu {
+  display:none; border: 1px solid #ccc; background: #fff;
+  position: absolute; box-shadow:5px 5px 10px #567; cursor:default;
+  color: black; font-size: 9pt; font-weight: normal; z-index: 99;
+  width:150px; top: 40px; right: 10px; }
+#access_menu span   {
+  margin:0; padding: 2px 2px 2px 25px; display: block; }
+#access_menu span.separator   {
+  border-top:1px solid #999; }
+#access_menu span:hover   {
+  background-color:#b2b4bf; }
+
+/* úpravy standardu - k Ezer3 */
+
+textarea { resize:none; }    
 
 /* specifické barvy pro odlišení záznamů YS, FA, DB a změny učiněné přes web*/
 #appl { color:$zelena; }

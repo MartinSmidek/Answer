@@ -11562,11 +11562,13 @@ function mail2_mai_pocet($id_dopis,$dopis_var,$cond='',$recall=false) {  trace()
            JOIN pobyt AS p ON d.id_duakce=p.id_akce
            JOIN spolu AS s USING(id_pobyt)
            JOIN osoba AS o ON s.id_osoba=o.id_osoba
-           LEFT JOIN tvori AS t ON t.id_osoba=o.id_osoba
+           LEFT JOIN tvori AS t ON t.id_osoba=o.id_osoba AND id_rodina=i0_rodina
            LEFT JOIN rodina AS r USING (id_rodina)
-           WHERE id_dopis=$id_dopis $AND GROUP BY id_pobyt $HAVING";
-    $res= pdo_qry($qry);
-    while ( $res && ($d= pdo_fetch_object($res)) ) {
+           WHERE id_dopis=$id_dopis $AND 
+             AND IF(i0_rodina,IF(ISNULL(t.role),0,t.role IN ('a','b')),1)
+             GROUP BY id_pobyt $HAVING";
+    $res= mysql_qry($qry);
+    while ( $res && ($d= mysql_fetch_object($res)) ) {
       $n++;
       $nazev= "Účastníků {$d->nazev}";
       list($jm)= explode(',',$d->_jm);
