@@ -1,7 +1,7 @@
 <?php # (c) 2010 Martin Smidek <martin@smidek.eu>
 header("Content-type: text/css");
 if ( !isset($_SESSION) ) session_start();
-$ezer_root= $_GET['root'];
+$ezer_root= isset($_GET['root']) ? $_GET['root'] : 'db2';
 $skin= $_SESSION[$ezer_root]['skin'] ? $_SESSION[$ezer_root]['skin'] : 'default';
 global $skin, $path, $c, $b, $ab, $c_appl,
   $c_menu, $b_menu, $c_main, $b_main,

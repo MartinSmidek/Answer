@@ -3,12 +3,15 @@
 /db2/@
 /db2/code/*.json
 /db2/code/*.cpp
+/db2/code/*.key
 /dbt/@
 /dbt/code/*.json
 /dbt/code/*.cpp
+/dbt/code/*.key
 /cr2/@
 /cr2/code/*.json
 /cr2/code/*.cpp
+/cr2/code/*.key
 /doc
 /docs
 /ezer2.2
@@ -17,3 +20,4 @@
 /tcpdf
 /nbproject
 /rr
+/xls.txt

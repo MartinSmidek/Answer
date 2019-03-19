@@ -46,7 +46,8 @@ function personify(access,from) {
       if ( Ezer.version=='ezer2.2' ) {
         var old_skin= $('skin');
         Asset.css("skins/"+skin[access1],{id:'skin'});
-        old_skin.destroy();
+        if ( old_skin ) 
+          old_skin.destroy();
       }
       else if ( Ezer.version=='ezer3.1' ) {
         DOM_change_skin(sk[access1]);
