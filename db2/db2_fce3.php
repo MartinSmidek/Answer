@@ -5547,19 +5547,21 @@ function akce2_text_eko($akce,$par,$title,$vypis,$export=false) { trace();
                                                         display("cena=$cena, platba=$platba");
   // náklad na stravu pečounů - kteří mají funkci a nemají zaškrtnuto "platí rodiče"
   $par= (object)array('typ'=>'vjp');
-  $ret= akce2_stravenky($akce,$par,'','',true);
+  $ret_all= akce2_stravenky($akce,$par,'','',true);
 //                                                        debug($ret); goto end;
   $ham= array('sc'=>0,'oc'=>0,'vc'=>0);
   $pecounu= 0;
   $noci= -1;
-  if ( $ret->tab ) foreach ($ret->tab as $jmeno=>$dny) {
-//                                                         debug($dny,"DNY");
-    $pecounu++;
-    foreach ( $dny as $den=>$jidla ) {
-      if ( $pecounu==1 ) $noci++;
-      foreach ( $jidla as $jidlo=>$porce ) {
-        foreach ( $porce as $velikost=>$pocet ) {
-          $ham["$jidlo$velikost"]+= $pocet;
+  foreach ($ret_all->res as $ret) {
+    if ( $ret->tab ) foreach ($ret->tab as $jmeno=>$dny) {
+  //                                                         debug($dny,"DNY");
+      $pecounu++;
+      foreach ( $dny as $den=>$jidla ) {
+        if ( $pecounu==1 ) $noci++;
+        foreach ( $jidla as $jidlo=>$porce ) {
+          foreach ( $porce as $velikost=>$pocet ) {
+            $ham["$jidlo$velikost"]+= $pocet;
+          }
         }
       }
     }
@@ -6384,7 +6386,7 @@ function akce2_tabulka_stat($akce,$par,$title,$vypis,$export=0) { trace();
           ) AS _cleni
           FROM pobyt AS p
           JOIN rodina AS r ON r.id_rodina=i0_rodina
-          WHERE id_akce=1255 AND p.funkce IN (0,1,2,5)  -- včetně hospodářů, bývají hosty skupinky
+          WHERE id_akce=$akce AND p.funkce IN (0,1,2,5)  -- včetně hospodářů, bývají hosty skupinky
           -- AND id_pobyt=54030
           GROUP BY id_pobyt
           ORDER BY nazev
