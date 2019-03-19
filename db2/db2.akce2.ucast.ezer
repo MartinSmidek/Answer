@@ -195,7 +195,7 @@ use u:     form _ucast    [  6, 20,,]  { tag:'akce1' }               // seznam �
 # záložka evidence
 use evid:  form _evidence [400, 10,,]      { tag:'akce1', format:'n' }
 use rod:   form _rodina2  [404,30,,]       { tag:'akce1', format:'n' }
-use pob:   form _pobyt    [404,min_h+40,,] { tag:'akce1', format:'n' }
+use pob:   form _pobyt    [404,590,,] { tag:'akce1', format:'n' } // pro min_h=550, min_h+40=590
 use os1:   form _osoba2x [772,30,,] {        tag:'akce1', format:'n'
   proc on_click() { evid.z_change('o') }
   proc onchanged() { evid.d_change }
@@ -949,7 +949,7 @@ panel pobyt_config [,,200,120] {type:'popup', title:"Podrobnosti údajů"
   }
   var _old= 'Z'
 }
-form _pobyt [,,0,62] {
+form _pobyt [,,360,62] {
   proc onchanged() { evid.d_change }
   proc onclick() { evid.z_change('p') }
   proc init_pobyt() { pob.display(0,'[^f]'); }

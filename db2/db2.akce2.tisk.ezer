@@ -474,6 +474,8 @@ menu m {type:'left', active:*
                                         ,tit:'příjmení,jména'
                                         ,fld:'prijmeni,jmena'},                              skill:'#crz' }
     item {title:'... pomocné štítky' ,par:°{typ:'s0',exp:'PDF-plachta0'},                    skill:'#crz' }
+    item {title:'Statistika'                                                                 skill:'y;f'
+                                        ,par:°{typ:'stat',exp:'Excel-stat',cnd:'1'}}
 #     item {title:'Seznam s fotkami'      ,par:°{typ:'fs',cnd:"funkce!=99",ord:"prijmeni"}}
 #     item {title:'Seznam emailů'         ,par:°{typ:'fx',subtyp:'emails'}}
 #     item {title:'Seznam - manzeS'                                                          skill:'y'

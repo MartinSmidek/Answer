@@ -4095,9 +4095,10 @@ function tisk2_sestava($akce,$par,$title,$vypis,$export=false) { trace();
      : ( $par->typ=='cz'   ? akce2_cerstve_zmeny($akce,$par,$title,$vypis,$export)  // včetně náhradníků
      : ( $par->typ=='tab'  ? akce2_tabulka($akce,$par,$title,$vypis,$export)        //! předává se i typ=tab => náhradníci
      : ( $par->typ=='mrop' ? akce2_tabulka_mrop($akce,$par,$title,$vypis,$export)   //!
+     : ( $par->typ=='stat' ? akce2_tabulka_stat($akce,$par,$title,$vypis,$export)   //!
      : (object)array('html'=>"<i>Tato sestava zatím není převedena do nové verze systému,
           <a href='mailto:martin@smidek.eu'>upozorněte mě</a>, že ji už potřebujete</i>")
-     )))))))))))))))))))))))));
+     ))))))))))))))))))))))))));
 }
 # =======================================================================================> . seznamy
 function mb_strcasecmp($str1, $str2, $encoding = null) {
@@ -6362,6 +6363,152 @@ function akce2_skup_deti($akce,$par,$title,$vypis,$export) {
     $result->html= "$msg$tab";
   }
 //                                                         debug($result,"result");
+  return $result;
+}
+# ====================================================================================> . statistika
+# ------------------------------------------------------------------------------- akce2_tabulka_stat
+# statistický přehled akce typu LK nebo obnova
+function akce2_tabulka_stat($akce,$par,$title,$vypis,$export=0) { trace();
+  $result= (object)array();
+  $html= "";
+  $err= "";
+  $pobyt= array();
+  // akce
+  list($nazev_akce,$datum_od)= select('nazev,datum_od','akce',"id_duakce=$akce");
+  // účastníci
+  $qry=  "SELECT
+          id_pobyt,nazev,svatba,datsvatba,
+          ( SELECT GROUP_CONCAT(CONCAT(role,narozeni) ORDER BY role,narozeni DESC)
+            FROM osoba JOIN tvori USING (id_osoba)
+            WHERE id_rodina=i0_rodina AND role IN ('a','b','d') 
+          ) AS _cleni
+          FROM pobyt AS p
+          JOIN rodina AS r ON r.id_rodina=i0_rodina
+          WHERE id_akce=1255 AND p.funkce IN (0,1,2,5)  -- včetně hospodářů, bývají hosty skupinky
+          -- AND id_pobyt=54030
+          GROUP BY id_pobyt
+          ORDER BY nazev
+          -- LIMIT 1
+  ";
+//   $qry.= " LIMIT 1";
+  $res= pdo_qry($qry);
+  while ( $res && (list($idp,$nazev,$sv1,$sv2,$xcleni)= pdo_fetch_row($res)) ) {
+    $pobyt[$idp]['name']= $nazev;
+    // délka manželství
+    $manzelstvi= 
+        $sv2 ? sql2stari($sv2,$datum_od) : (
+        $sv1 ? sql2stari("$sv1-07-01",$datum_od) : 999);
+    $pobyt[$idp]['m'][]= $manzelstvi;
+    foreach ( explode(',',$xcleni) as $xclen) {
+      $role= substr($xclen,0,1);
+      $narozeni= substr($xclen,1);
+      $roku= sql2stari($narozeni,$datum_od);
+      $pobyt[$idp][$role][]= $roku;
+    };
+  }
+//                                                              debug($pobyt,"1");
+  // zpracování podle intervalů
+  $kat= array(
+    'm' => array('manželství',array(9,20,999)),                 // délka manželství
+    'r' => array('věk rodičů',array(30,45,60,75,999)),          // průměrný věk rodičů a/b
+    'x' => array('od sebe',   array(5,10,999)),                 // rozdíl věku rodičů a/b
+    'd' => array('věk dětí',  array(7,18,30,999)),              // věk dětí d
+  );
+  $stari= array();
+  foreach ($pobyt as $idp=>$cleni) {
+    $cleni['r'][]= round(($cleni['a'][0]+$cleni['b'][0])/2); 
+    $cleni['x'][]= abs($cleni['a'][0]-$cleni['b'][0]); 
+    foreach ($kat as $k=>$xdelims) {
+      if ( isset($cleni[$k]) )
+      foreach ($cleni[$k] as $stari) {
+        foreach ($xdelims[1] as $delim) {
+          if ( $stari < $delim) {
+            $pobyt[$idp]["-$k"][$delim]++;
+            break;
+          }
+        }
+      }
+    }
+  }
+  $title= "Statistika akce $nazev_akce roku ".substr($datum_od,0,4);
+  $html.= "<h1>$title</h1><table class='vypis'>";
+  $fname= cz2ascii("vypis_").date("Ymd_Hi");
+  $xls= "|open $fname|sheet vypis;;L;page\n";
+  $_xls= "|A1 $title ::bold size=14 \n|A2 $vypis ::bold size=12\n";
+  // hlavička
+  $html.= "<tr>";
+  $lc= 0;
+  $n= 4;
+  foreach ($kat as $k=>$xdelims) {
+    $cols= count($xdelims[1]);
+    $html.= "<th colspan=$cols>{$xdelims[0]}</th>";
+    $A= Excel5_n2col($lc);
+    $_xls.= "\n|$A$n {$xdelims[0]}";
+    $lc+= $cols;
+  }
+  $_xls.= "\n";
+  $n++;
+  $html.= "</tr>";
+  $html.= "<tr>";
+  $lc= 0;
+  foreach ($kat as $k=>$xdelims) {
+    foreach ($xdelims[1] as $delim) {
+      $border= '::border=,,t,';
+      if ( $delim==999 ) {
+        $delim= '...';
+        $border= '::border=,t,t,';
+      }
+      $html.= "<th>$delim</th>";
+      $A= Excel5_n2col($lc++);
+      $_xls.= "|$A$n $delim $border";
+    }
+    $_xls.= "\n";
+  }
+  $lw= $lc;
+  $xls.= "|columns A:$A=5";
+  $Aname= Excel5_n2col($lc++);
+  $xls.= ",$Aname=25\n";
+  $_xls.= "\n|A4:$A$n bcolor=ffc0e2c2 border=t";
+//  "|A5:{$A}5 border=t,,t,t\n";
+  $xls.= "\n$_xls";
+  $n++;
+  $html.= "</tr>";
+  // data
+  foreach ($pobyt as $idp=>$cleni) {
+    $html.= "<tr>";
+    $lc= 0;
+    foreach ($kat as $k=>$xdelims) {
+      foreach ($xdelims[1] as $delim) {
+        $kn= $pobyt[$idp]["-$k"][$delim];
+        $html.= "<td>$kn</td>";
+        if ( $kn || $delim==999 ) {
+          $A= Excel5_n2col($lc);
+          if ( $delim==999 ) $kn.= ' ::border=,t,,';
+          $xls.= "\n|$A$n $kn";
+        }
+        $lc++;
+      }
+    }
+    $name= $pobyt[$idp]['name'];
+    $html.= "<th>$name</th>";
+    $html.= "</tr>";
+    $A= Excel5_n2col($lc++);
+    $xls.= "\n|$A$n $name";
+    $xls.= "\n";
+    $n++;
+  }
+  $html.= "</table>";
+  // časová značka
+  $kdy= date("j. n. Y v H:i");
+  $n+= 4;
+  $xls.= "\n\n|A$n Výpis byl vygenerován $kdy :: italic";
+  $xls.= "\n|close";
+//                                                                display($xls);
+  $inf= Excel2007($xls);
+  $ref= " Statistika byla vygenerován ve formátu <a href='docs/$fname.xlsx' target='xls'>Excel</a>.";
+//                                                                debug($pobyt,"2");
+end:
+  $result->html= "$err$ref$html";
   return $result;
 }
 # =======================================================================================> . plachta
