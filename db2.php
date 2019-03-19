@@ -19,13 +19,14 @@
   $app_name=  "Answer";
   $app= $app_root=  'db2';
 
-  $title_style= $ezer_server ? '' : 'color:#ef7f13;';
+  $title_style= $ezer_server ? '' : "style='color:#ef7f13'";
   $title_flag=  $ezer_server ? '' : 'lokální ';
   $CKEditor= isset($_GET['editor']) ? $_GET['editor'] : '4';
   $dbg=      isset($_GET['dbg']) ? $_GET['dbg'] : 0;
   $gmap=     isset($_GET['gmap']) ? $_GET['gmap'] : $ezer_server;
-  $verze=    '3.1';
-  
+  // pro ezer2.2 nutno upravit ezer_main, ezer_ajax, ae_slib
+  $kernel=   "ezer".(isset($_GET['ezer'])?$_GET['ezer']:'3.1'); 
+
 //  echo("db2.php start, server=$ezer_server\n");
 
   // zrušení parametru &db_test
@@ -34,10 +35,27 @@
   }
 
   // cesty
-  $abs_roots= array("C:/Ezer/beans/answer","/home/www/ezer/www-ys/2","/var/services/web/www/answer");
-  $rel_roots= array("http://answer.bean:8080","https://answer.setkani.org","http://ans.setkani.org");
+  $abs_roots= array(
+      "C:/Ezer/beans/answer",
+      "/home/www/ezer/www-ys/2",
+      "/volume1/web/www/answer");
+//      "/var/services/web/www/answer");
+  $rel_roots= array(
+      "http://answer.bean:8080",
+      "https://answer.setkani.org",
+      "http://ans.setkani.org");
   $rel_root= $rel_roots[$ezer_server];
   
+  // upozornění na testovací verzi
+  $demo= '';
+  if ( $ezer_server==2 ) {
+    $click= "jQuery('#DEMO').fadeOut(1000).delay(2000).fadeIn(1000);";
+    $dstyle= "left:0; top:0; position:fixed; transform:rotate(320deg) translate(-128px,-20px); "
+        . "width:500px;height:100px;background:orange; color:white; font-weight: bolder; "
+        . "text-align: center; font-size: 40px; line-height: 96px; z-index: 16; opacity: .5;";
+    $demo= "<div id='DEMO' onclick=\"$click\" style='$dstyle'>testovací verze</div>";
+  }
+
   // skin a css
   $cookie= 3;
   $app_last_access= "{$app}_last_access";
@@ -48,8 +66,8 @@
   $access_app= array(1=>"Setkání","Familia","(společný)");
   $access_app= $access_app[$cookie];
   $choice_js= "personify('menu_on'); return false;";
-  $v= "<sub>3.1</sub>";
-  $title= "
+  $v= $kernel=='ezer3.1' ? "<sub>3.1</sub>" : '';
+  $title= "$demo
     <span $title_style>"
     . $title_flag
     ."<span id='access' onclick=\"$choice_js\" oncontextmenu=\"$choice_js\">
@@ -74,12 +92,13 @@
     $cookie==1 ? "ck" : (
     $cookie==2 ? "ch" : "db" );
 
-  $app_js= array("/db2/ds_fce.js","/db2/db2_fce3.js");
+  $k= substr($kernel,4,1)=='3' ? '3' : '';
+  $app_js= array("/db2/ds_fce$k.js","/db2/db2_fce$k.js");
   
   $app_css= [ // $choice_css,
 //      "/db2/db2.css",
-      "$rel_root/db2/db2.css.php=skin",
-      "/ezer3.1/client/wiki.css"
+      $kernel=='ezer3.1' ? "$rel_root/db2/db2.css.php?skin" : "$rel_root/db2/db2.css",
+      "/$kernel/client/wiki.css"
    ];
 
   //  require_once("answer.php");
@@ -92,11 +111,12 @@
     'skill'        => "'d'",
     'autoskill'    => "'!d'",
     'db_test'      => 0
-   ];
+  ];
 
-    // (re)definice Ezer.options
+  // (re)definice Ezer.options
+  $kk= $k ?: '2';
   $add_pars= array(
-    'favicon' => array('db3_local.png','db3.png','db3_dsm.png')[$ezer_server],
+    'favicon' => array("db{$kk}_local.png","db{$kk}.png","db{$kk}_dsm.png")[$ezer_server],
 //    'app_root' => "$rel_root",      // startovní soubory app.php a app.inc.php jsou v kořenu
 //    'dbg' => $dbg,      // true = povolit podokno debuggeru v trasování a okno se zdrojovými texty
     'watch_key' => 1,   // true = povolit přístup jen po vložení klíče
@@ -122,6 +142,6 @@
   );
 //  echo("db2.php end<br>");
   // je to aplikace se startem v kořenu
-  require_once("ezer3.1/ezer_main.php");
+  require_once("$kernel/ezer_main.php");
 
 ?>

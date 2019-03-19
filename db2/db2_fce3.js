@@ -493,7 +493,6 @@ Ezer.fce.stack_forms= function (form,tag_list,space,smer) {
   }
   return sum_h;
 };
-
 // --------------------------------------------------------------------------------------- load_json
 //ff: db.make_rc (narozeni,sex)
 //      vytvoří první část rodného čísla z narození a pohlaví
