@@ -1,4 +1,7 @@
 /*.xls
+/*.txt
+/*.bak
+/@
 /\#
 /db2/@
 /db2/code/*.json
@@ -14,10 +17,10 @@
 /cr2/code/*.key
 /doc
 /docs
+/fotky
 /ezer2.2
 /ezer3.1
 /skins
 /tcpdf
 /nbproject
 /rr
-/xls.txt

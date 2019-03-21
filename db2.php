@@ -23,11 +23,12 @@
   $title_flag=  $ezer_server ? '' : 'lokální ';
   $CKEditor= isset($_GET['editor']) ? $_GET['editor'] : '4';
   $dbg=      isset($_GET['dbg']) ? $_GET['dbg'] : 0;
-  $gmap=     isset($_GET['gmap']) ? $_GET['gmap'] : $ezer_server;
+  $gmap=     isset($_GET['gmap']) ? $_GET['gmap'] : ($ezer_server?1:0);
   // pro ezer2.2 nutno upravit ezer_main, ezer_ajax, ae_slib
   $kernel=   "ezer".(isset($_GET['ezer'])?$_GET['ezer']:'3.1'); 
 
-//  echo("db2.php start, server=$ezer_server\n");
+  // ochránění přímého přístupu do složek s .htaccess/RewriteCond "%{HTTP_COOKIE}" "!EZER"
+  setcookie("EZER",$app,0,"/");
 
   // zrušení parametru &db_test
   if ( isset($_GET['db_test']) ) {
