@@ -5579,19 +5579,21 @@ function akce2_text_eko($akce,$par,$title,$vypis,$export=false) { trace();
                                                         display("cena=$cena, platba=$platba");
   // náklad na stravu pečounů - kteří mají funkci a nemají zaškrtnuto "platí rodiče"
   $par= (object)array('typ'=>'vjp');
-  $ret= akce2_stravenky($akce,$par,'','',true);
+  $ret_all= akce2_stravenky($akce,$par,'','',true);
 //                                                        debug($ret); goto end;
   $ham= array('sc'=>0,'oc'=>0,'vc'=>0);
   $pecounu= 0;
   $noci= -1;
-  if ( $ret->tab ) foreach ($ret->tab as $jmeno=>$dny) {
+  foreach ($ret_all->res as $ret) {
+    if ( $ret->tab ) foreach ($ret->tab as $jmeno=>$dny) {
 //                                                         debug($dny,"DNY");
-    $pecounu++;
-    foreach ( $dny as $den=>$jidla ) {
-      if ( $pecounu==1 ) $noci++;
-      foreach ( $jidla as $jidlo=>$porce ) {
-        foreach ( $porce as $velikost=>$pocet ) {
-          $ham["$jidlo$velikost"]+= $pocet;
+      $pecounu++;
+      foreach ( $dny as $den=>$jidla ) {
+        if ( $pecounu==1 ) $noci++;
+        foreach ( $jidla as $jidlo=>$porce ) {
+          foreach ( $porce as $velikost=>$pocet ) {
+            $ham["$jidlo$velikost"]+= $pocet;
+          }
         }
       }
     }
