@@ -6007,14 +6007,18 @@ function akce2_skup_copy($obnova) { trace();
     $msg= "Skupinky na této obnově jsou již částečně navrženy, kopii z LK nelze provést";
     goto end;
   }
-  // vše ok, provedeme přenos
+  // vše ok, provedeme přenos ... šlo by to i čistě v SQL
+  //UPDATE pobyt AS jo
+  //JOIN pobyt AS lk ON jo.i0_rodina=lk.i0_rodina AND lk.id_akce=1131 AND lk.skupina!=0
+  //SET jo.skupina=lk.skupina
+  //WHERE jo.id_akce=1255 AND jo.skupina=0  
   $n= 0;
-  $rr= pdo_qry("SELECT i0_rodina,skupina FROM pobyt AS p WHERE id_akce=$lk");
+  $rr= pdo_qry("SELECT i0_rodina,skupina FROM pobyt AS p WHERE id_akce=$lk AND skupina!=0");
   while ( $rr && (list($idr,$skupina)= pdo_fetch_array($rr)) ) {
-    query("UPDATE pobyt SET skupina=$skupina WHERE id_akce=$obnova AND i0_rodina=$idr");
+    query("UPDATE pobyt SET skupina=$skupina WHERE id_akce=$obnova AND i0_rodina=$idr AND skupina=0");
     $n+= pdo_affected_rows();
   }
-  $msg= "Na obnovu bylo pro $n párů zkopírováno číslo skupinky z LK";
+  $msg= "Na obnovu bylo pro $n párů zkopírováno číslo skupinky z LK (pokud ještě číslo neměli)";
 end:
   return $msg;
 }
@@ -7573,13 +7577,20 @@ function tisk2_pdf_jmenovky($akce,$par,$title,$vypis,$report_json) {  trace();
   $tab= tisk2_sestava($akce,$par,$title,$vypis,true);
 //                                         display($report_json);
 //                                         debug($tab,"tisk2_sestava($akce,...)"); //return;
-  $report_json= "{'format':'A4:15,10,90,55','boxes':["
-    . "{'type':'text','left':0,'top':0,'width':90,'height':55,'id':'ram','style':'1,L,LTRB:0.05 dotted 250',txt:' '},"
-    . "{'type':'text','left':10,'top':10,'width':80,'height':40,'id':'jmeno','txt':'{jmeno}<br />{prijmeni}','style':'30,L'}]}";
-  $report_json= "{'format':'A4:15,10,90,55','boxes':["
-    . "{'type':'text','left':0,'top':0,'width':90,'height':55,'id':'ram','style':'1,L,LTRB:0.05 dotted',txt:' '},"
-    . "{'type':'text','left':10,'top':10,'width':80,'height':40,'id':'jmeno','txt':'{jmeno}<br />{prijmeni}','style':'30,L'}]}";
-//                                         display($report_json);
+  $report_json= 
+    '{"format":"A4:15,10,90,55",
+      "boxes":[
+        {"type":"text",
+         "left":0,"top":0,"width":90,"height":55,
+         "id":"ram","style":"1,L,LTRB:0.05 dotted","txt":" "
+        },
+        {"type":"text",
+         "left":10,"top":10,"width":80,"height":40,
+         "id":"jmeno","txt":"{jmeno}<br>{prijmeni}","style":"30,L"
+        }
+      ]
+    }';
+//                                            display($report_json);
   // projdi vygenerované záznamy
   $n= 0;
   $parss= array();
@@ -8100,7 +8111,11 @@ function dop_rep_ids($report_json,$parss,$fname) { trace();
       $subst[$i]['{'.$x.'}']= $y;
     }
   }
-  $report= json_decode($report_json);
+  $report= json_decode(str_replace("'",'"',$report_json));
+  if ( json_last_error() ) {
+    $err= json_last_error_msg();
+    display($err);
+  }
 //                                                         debug($report,"dop_rep_ids");
   // vytvoření $texty - seznam
   $texty= array();
