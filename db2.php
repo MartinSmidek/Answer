@@ -12,8 +12,8 @@
   $kernel= "ezer3.1"; 
   $ezer_server= 
     $_SERVER["SERVER_NAME"]=='answer.bean'    ? 0 : (        // 0:lokální 
-    $_SERVER["SERVER_NAME"]=='answer.setkani.org' ? 1 : (    // x:ostrý server
-    $_SERVER["SERVER_NAME"]=='ans.setkani.org' ? 2 : -1));
+    $_SERVER["SERVER_NAME"]=='xxx.setkani.org' ? 1 : (       // 1:Lukáš - dead
+    $_SERVER["SERVER_NAME"]=='answer.setkani.org' ? 2 : -1));// 2:Synology
 
   // parametry aplikace Answer/db2
   $app_name=  "Answer";
@@ -42,7 +42,7 @@
   $rel_roots= array(
       "http://answer.bean:8080",
       "https://answer.setkani.org",
-      "http://ans.setkani.org");
+      "http://answer.setkani.org");
   $rel_root= $rel_roots[$ezer_server];
   
   // upozornění na testovací verzi
@@ -52,7 +52,7 @@
     $dstyle= "left:0; top:0; position:fixed; transform:rotate(320deg) translate(-128px,-20px); "
         . "width:500px;height:100px;background:orange; color:white; font-weight: bolder; "
         . "text-align: center; font-size: 40px; line-height: 96px; z-index: 16; opacity: .5;";
-    $demo= "<div id='DEMO' onclick=\"$click\" style='$dstyle'>testovací verze</div>";
+    $demo= "<div id='DEMO' onclick=\"$click\" style='$dstyle'><u>ostrá</u> verze</div>";
   }
 
   // skin a css

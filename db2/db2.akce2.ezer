@@ -678,7 +678,8 @@ panel mapa [,,640,400] { type:'popup', title:'mapa účastníků'
   var metoda='', id_akce: number, id_mailist: number
   proc onfirstfocus() { 
     spinner(1); 
-    f.cr.init('ROADMAP',object('clustering',cconc(eq(sys('..','get','gmap'),2),1,0))); 
+//    f.cr.init('ROADMAP',object('clustering',cconc(eq(sys('..','get','gmap'),2),1,0))); 
+    f.cr.init('ROADMAP',object('clustering',cconc(eq(sys('options','gmap'),2),1,0))); 
     ukaz_psc; spinner(0) }
   proc onfocus() { ukaz_psc; }
   proc ukaz_psc() { var ret: object
