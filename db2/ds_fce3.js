@@ -42,11 +42,11 @@ Ezer.fce.check_rooms= function (rooms,form,prefix) {
       // checkbox označuje číslo pokoje
       var room= id.substr(prefix.length);
       var wanted= elem.get();
-      if ( wanted && !list.contains(room,',') ) {
+      if ( wanted && !list.includes(room) ) {
         list.push(room);
         change= true;
       }
-      else if ( !wanted && list.contains(room,',') ) {
+      else if ( !wanted && list.includes(room) ) {
         list.erase(room);
         change= true;
       }

@@ -42,17 +42,17 @@
   $rel_roots= array(
       "http://answer.bean:8080",
       "https://answer.setkani.org",
-      "http://answer.setkani.org");
+      "https://answer.setkani.org");
   $rel_root= $rel_roots[$ezer_server];
   
   // upozornění na testovací verzi
   $demo= '';
   if ( $ezer_server==2 ) {
-    $click= "jQuery('#DEMO').fadeOut(1000).delay(2000).fadeIn(1000);";
+    $click= "jQuery('#DEMO').fadeOut(500).delay(20000).fadeIn(2000);";
     $dstyle= "left:0; top:0; position:fixed; transform:rotate(320deg) translate(-128px,-20px); "
         . "width:500px;height:100px;background:orange; color:white; font-weight: bolder; "
         . "text-align: center; font-size: 40px; line-height: 96px; z-index: 16; opacity: .5;";
-    $demo= "<div id='DEMO' onclick=\"$click\" style='$dstyle'><u>ostrá</u> verze</div>";
+    $demo= "<div id='DEMO' onmouseover=\"$click\" style='$dstyle'>nový server</div>";
   }
 
   // skin a css

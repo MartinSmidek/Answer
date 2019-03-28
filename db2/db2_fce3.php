@@ -1509,7 +1509,13 @@ function akce2_vzorec($id_pobyt) {  //trace();
     "id_akce,ma_cenik_verze","pobyt JOIN akce ON id_akce=id_duakce","id_pobyt=$id_pobyt");
   if ( $cenik_verze==1 ) return akce2_vzorec_2017($id_pobyt,$id_akce,2017);
   $ok= true;
-  $ret= (object)array('navrh'=>'cenu nelze spočítat','eko'=>(object)array('vzorec'=>(object)array()));
+  $ret= (object)array(
+      'navrh'=>'cenu nelze spočítat',
+      'c_sleva'=>0,
+      'eko'=>(object)array(
+          'vzorec'=>(object)array(),
+          'slevy'=>(object)array('kc'=>0)
+      ));
   // parametry pobytu
   $x= (object)array();
   $ubytovani= 0;
@@ -1587,7 +1593,7 @@ function akce2_vzorec($id_pobyt) {  //trace();
   $res= pdo_qry($qry);
   if ( $res && $c= pdo_fetch_object($res) ) {
     $vzor= $c;
-    $vzor->slevy= ($vzor->ikona);
+    $vzor->slevy= json_decode($vzor->ikona);
     $ret->eko->slevy= $vzor->slevy;
   }
 //                                                         debug($vzor);
@@ -1751,7 +1757,10 @@ function akce2_vzorec($id_pobyt) {  //trace();
       if ( $sleva!=0 ) {
         $cena-= $sleva;
         $ret->c_sleva-= $sleva;
-        if ( !isset($ret->eko->slevy) ) $ret->eko->slevy= (object)array();
+//        if ( !isset($ret->eko) ) $ret->eko= (object)array();
+//        if ( !isset($ret->eko->slevy) ) $ret->eko->slevy= (object)array();
+        if ( !isset($ret->eko->slevy->kc) ) $ret->eko->slevy->kc= 0;
+//        if ( !isset($ret->eko->slevy->kc) ) { debug($ret); return $ret; }
         $ret->eko->slevy->kc+= $sleva;
         $html.= "<tr><td>sleva z ceny</td><td align='right'>$sleva</td></tr>";
       }

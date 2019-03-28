@@ -548,7 +548,7 @@ function ds_objednavka($ida) {
 # ------------------------------------------------------------------------------------- ds import_ys
 # naplní seznam účastníky dané akce
 function ds_import_ys($order,$clear=0) {
-  $ret= (object)array(html=>'',conf=>'');
+  $ret= (object)array('html'=>'','conf'=>'');
   list($rok,$kod,$from,$until,$strava)= 
       select('YEAR(FROM_UNIXTIME(fromday)),akce,FROM_UNIXTIME(fromday),FROM_UNIXTIME(untilday),board',
           'setkani.tx_gnalberice_order',"uid=$order",'setkani');
@@ -561,7 +561,7 @@ function ds_import_ys($order,$clear=0) {
     $pocet= select('COUNT(*)','ds_osoba',"id_order=$order",'setkani');
     if ( $pocet && $clear ) {
       query("DELETE FROM ds_osoba WHERE id_order=$order",'setkani');
-      $ret->html.= "Seznam účastníků pobytu byl vyprázdněn.<br>";
+      $ret->html.= "Seznam účastníků pobytu byl vyprázdněn. ";
     }
     if ( $pocet && !$clear ) {
       $ret->conf= "Seznam účastníků pobytu obsahuje $pocet lidí - mám jej vyprázdnit a načíst 
@@ -596,7 +596,7 @@ function ds_import_ys($order,$clear=0) {
     ezer_connect('setkani',true);
     foreach ( $uc as $o ) {
       $ido= $o->id_osoba;
-      $ds_osoba= select('id_osoba','ds_osoba',"ys_osoba=$ido",'setkani');
+      $ds_osoba= select('id_osoba','ds_osoba',"ys_osoba=$ido AND id_order=$order",'setkani');
       if ( !$ds_osoba ) {
         $rod= substr(cz2ascii($o->rod),0,3);
         $prijmeni= uw($o->prijmeni);
