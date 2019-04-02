@@ -4153,10 +4153,13 @@ function akce2_tabulka($akce,$par,$title,$vypis,$export=false) { trace();
     $tab[$c][]= $i;
   }
   // export HTML a do Excelu
-  $ids= array("$VPS","Prvňáci","Druháci","Třeťáci","Víceročáci","$VPS mimo službu","Náhradníci","Ostatní");
+  $ids= array(
+    "$VPS:12","Prvňáci:12","Druháci:12","Třeťáci:12","Víceročáci:14",
+    "$VPS mimo službu:18","Náhradníci:14","Ostatní:12");
   $max_r= 0;
   for ($c= 0; $c<=7; $c++) {
-    $ths.= "<th>$ids[$c] (".count($tab[$c]).")</th>";
+    list($id)= explode(':',$ids[$c]);
+    $ths.= "<th>$id (".count($tab[$c]).")</th>";
     $max_r= max($max_r,count($tab[$c]));
   }
   for ($r= 0; $r<$max_r; $r++) {
@@ -4165,7 +4168,9 @@ function akce2_tabulka($akce,$par,$title,$vypis,$export=false) { trace();
       if ( isset($tab[$c][$r]) ) {
         $i= $tab[$c][$r];
         $ci= $clmn[$i]; $x= $ci['x_ms']; $v= $ci['_vps']; $f= $ci['funkce'];
-        $style= $v ? " style='background-color:yellow'" : '';
+        $style= 
+            $v   ? " style='background-color:yellow'" : (
+            $f>1 ? " style='background-color:violet'" : '');
         $ucasti= $c==7 ? "($map_fce[$f])" : ($c==4 ? "($x)" : '');
         $trs.= "<td$style>{$ci['prijmeni']} {$ci['jmena']} $ucasti</td>";
       }
@@ -4175,8 +4180,37 @@ function akce2_tabulka($akce,$par,$title,$vypis,$export=false) { trace();
     }
     $trs.= "</tr>";
   }
-//                                         debug($tab,"akce2_tabulka");
-//                                         debug($clmn,"akce2_tabulka");
+//                                         debug($tab,"akce2_tabulka - tab");
+//                                         debug($clmn,"akce2_tabulka - clmn");
+  if ( $export ) {
+    $rc= $rc_atr= $n= $tit= array();
+    for ($c= 0; $c<=7; $c++) {
+      $n[$c]= 0;
+      for ($r= 0; $r<$max_r; $r++) {
+        $rc[$r][$c]= '';
+      }
+    }
+    foreach ($tab as $c => $radky) {
+      foreach ($radky as $r=>$ucastnik) {
+        $rc[$r][$c]= $clmn[$ucastnik]['prijmeni'];
+        if ( $clmn[$ucastnik]['_vps'] )
+          $rc_atr[$r][$c]= ' bcolor=ffffff77';
+        elseif ( $clmn[$ucastnik]['funkce'] > 1)
+          $rc_atr[$r][$c]= ' bcolor=ffff77ff';
+        $n[$c]++;
+      }
+    }
+    for ($c= 0; $c<=7; $c++) {
+      list($id,$len)= explode(':',$ids[$c]);
+      $tit[$c]= "$id ($n[$c]):$len";
+    }
+    $res->tits= $tit;
+    $res->flds= explode(',',"0,1,2,3,4,5,6,7");
+    $res->clmn= $rc;
+    $res->atrs= $rc_atr;
+    $res->expr= null;
+//                                         debug($res,"akce2_tabulka - res");
+  }
   $res->html= "<div class='stat'><table class='stat'><tr>$ths</tr>$trs</table></div>";
   return $res;
 }
@@ -7370,6 +7404,7 @@ function tisk2_vyp_excel($akce,$par,$title,$vypis,$tab=null) {  trace();
   $title= str_replace('&nbsp;',' ',$title);
   if ( !$tab )
     $tab= tisk2_sestava($akce,$par,$title,$vypis,true);
+//                                                    debug($tab,"tisk2_vyp_excel/tab");
   // vlastní export do Excelu
   $name= cz2ascii("vypis_").date("Ymd_Hi");
   $xls= <<<__XLS
