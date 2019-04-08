@@ -1136,7 +1136,7 @@ function ds_xls_faktury($order) {  trace(); //'','win1250');
     $sheet_rozpis= "{$prefix}rozpis";
     $sheet_faktura= "{$prefix}faktura";
     $faktury.= "|A$nf:F$nf border=,,h,|A$nf $rodina|B$nf $pocet|F$nf =D$nf-E$nf ::kc";
-    $faktury.= "|C$nf $sleva::proc bcolor=$c_edit|E$nf ::kc bcolor=$c_edit|D$nf =";
+    $faktury.= "|C$nf $sleva::proc bcolor=$c_edit|E$nf 0 ::kc bcolor=$c_edit|D$nf =";
     $An_sleva= "'rodiny'!C$nf";
     $An_zaloha= "'rodiny'!E$nf";
     # ------------------------------------------------------------- členové rodiny a položky faktury
@@ -1219,10 +1219,10 @@ __XLS;
             $lc++;
             $B= Excel5_n2col($lc);
             if ( $druh0=='noc' ) {
-              $row.= "|$B$n =(1-$A$n)*($suma) ::kc";
+              $row.= "|$B$n =(1-$A$n)*($suma) ::kc\n";
             }
             else {
-              $row.= "|$B$n =$suma ::kc";
+              $row.= "|$B$n =$suma ::kc\n";
             }
             $suma= '0';
             $celkem.= "+$B$n";
@@ -1232,22 +1232,22 @@ __XLS;
         if ( $cena ) {
           $lc++;
           $A= Excel5_n2col($lc);
-          $val= isset($c->$dc) ? $c->$dc : '';
+          $val= isset($c->$dc) && $c->$dc ? $c->$dc : '0';
           $suma.= "+$A$n*{$cena->cena}";
           $row.= "|$A$n $val::bcolor=$c_edit";
         }
         else {
           $lc++;
           $B= Excel5_n2col($lc);
-          $row.= "|$B$n $celkem ::kc bold";
+          $row.= "|$B$n $celkem ::kc bold\n";
         }
         $i++;
       }
 //                                                                 debug($host,'host',(object)array('win1250'=>1));
-      $xls.= "$row|A$n:$B$n border=,,h,|$soucty|";
+      $xls.= "$row|A$n:$B$n border=,,h,|$soucty|\n";
       $n++;
     }
-    $xls.= "|$soucty|";
+    $xls.= "|$soucty|\n";
     # ---------------------------------------------------------------- faktura
     # platce= [nazev,adresa,telefon,ic]
     # polozky= [[nazev,cena,dph,pocet]...]
@@ -1272,7 +1272,7 @@ __XLS;
       }
     }
     // vytvoření listu
-    $xls.= ds_rozpis_faktura($sheet_rozpis,$sheet_faktura,'FAKTURA',$order,$x,$polozky,$platce,100,
+    $xls.= ds_rozpis_faktura($sheet_rozpis,$sheet_faktura,'FAKTURA',$order,$x,$polozky,$platce,$zaloha,
       "Těšíme se na Váš další pobyt v Domě setkání",$zaloha,$suma);
     $faktury.= "";
   }
@@ -1483,12 +1483,12 @@ end:
 # -------------------------------------------------------------------------------- ds rozpis_faktura
 # definice faktury
 # typ = Zálohová | ''
-# zaloha = 0..100  -- pokud je 100 negeneruje se řádek Záloha ...
+# ??? zaloha = 0..100  -- pokud je 100 negeneruje se řádek Záloha ... -- 8/4/2019 změněno na 0
 # data zálohové faktury
 # platce= [nazev,adresa,telefon,ic]
 # polozky= [[nazev,cena,dph,pocet,sleva]...]
 # }
-function ds_rozpis_faktura($listr,$listf,$typ,$order,$x,$polozky,$platce,$zaloha=100,$pata,$zaloha2,&$suma) {
+function ds_rozpis_faktura($listr,$listf,$typ,$order,$x,$polozky,$platce,$zaloha,$pata,$zaloha2,&$suma) {
                                                 trace('','win1250');
   $koef_dph= dph_koeficienty();
   list($ic,$dic,$adresa,$akce,$obdobi)= $platce;
@@ -1503,7 +1503,7 @@ function ds_rozpis_faktura($listr,$listf,$typ,$order,$x,$polozky,$platce,$zaloha
   // ------------------------------------------------------------------- vytvoření listu s rozpisem
   // pojmenované řádky (P,Q,R,S)
   $P= 10;               // výčet položek
-  $Q= 26;               // poslední položka
+  $Q= 25;               // poslední položka
   $D= 28;               // rozpis podle druhů
   $S= 34;               // poslední řádek
   // parametrizace
@@ -1537,6 +1537,7 @@ __XLS;
     list($nazev,$cena,$dph,$pocet,$druh,$sleva,$inuly)= $polozka;
     if (!in_array($dph,$sazby_dph) ) $sazby_dph[]= $dph;
     if (!isset($druhy[$druh]) ) $druhy[$druh]= $dph;
+    $sleva= $sleva ?: 0;
     if ( $pocet || $inuly ) {
       $xls.= <<<__XLS
         |C$n $nazev                |C$n:E$n merge
@@ -1638,13 +1639,14 @@ __XLS;
 //       |M$n =H$n/(1+K$n)    ::kc
     $n++; $d++;
   }
+  $n--;
   $xls.= <<<__XLS
     |C$P:G$n border=h    |H$P:J$n border=h
     |K$P:K$n border=h    |L$P:L$n border=h    |M$P:M$n border=h
 __XLS;
   // celková cena
   $d= $n;
-  $n++;
+  $n+= 2;
   $suma= "'$listf'!L$n";
   $xls.= <<<__XLS
     |H$n Celková cena s DPH ::middle bold |H$n:K$n merge right
@@ -1675,12 +1677,12 @@ __XLS;
 # --------------------------------------------------------------------------------------- ds faktura
 # definice faktury
 # typ = Zálohová | ''
-# zaloha = 0..100  -- pokud je 100 negeneruje se řádek Záloha ...
+# // zaloha = 0..100  -- pokud je 100 negeneruje se řádek Záloha ... -- 8/4/2019 změněno na 0
 # data zálohové faktury
 # platce= [nazev,adresa,telefon,ic]
 # polozky= [[nazev,cena,dph,pocet,sleva]...]
 # }
-function ds_faktura($list,$typ,$order,$polozky,$platce,$zaloha=100,$pata='') {  trace();//,'win1250');
+function ds_faktura($list,$typ,$order,$polozky,$platce,$zaloha=0,$pata='') {  trace();//,'win1250');
   list($ic,$dic,$adresa,$akce,$obdobi)= $platce;
   $vystaveno= Excel5_date(time());
   $ymca_setkani= "YMCA Setkání, spolek{}Talichova 53, 62300 Brno{}".
@@ -1778,13 +1780,13 @@ __XLS;
     |H$n Celková cena s DPH ::middle bold |H$n:K$n merge right
     |L$n =SUM(L$P:M$Q)      ::middle kc   |L$n:M$n merge border=h
 __XLS;
-  if ( $zaloha<100 ) {
+//  if ( $zaloha<100 ) {
     $n++;
     $xls.= <<<__XLS
       |H$n Záloha $zaloha%             ::middle bold |H$n:K$n merge right
       |L$n =SUM(L$P:M$Q)*($zaloha/100) ::middle kc   |L$n:M$n merge border=h
 __XLS;
-  }
+//  }
   // řádky R... -- rozpis DPH
   $n= $R+1;
   $xls.= <<<__XLS
