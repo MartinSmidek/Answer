@@ -63,7 +63,7 @@
    ];
 
   //  require_once("answer.php");
-  $options= (object) [
+  $add_options= (object) [
 //    'watch_access' => 4,
     'watch_access_opt' => // ... barvení v Uživatelé + select v ezer2.syst.ezer
        "{name:{4:'CPR Ostrava'},
