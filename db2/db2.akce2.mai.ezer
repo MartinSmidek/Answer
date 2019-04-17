@@ -1242,10 +1242,11 @@ form _esady  {
     show komu_G [,,0,] { title:'mail-list' , data:etl.ucel, format:'s' },
     show komu { data:etl.komu } // o-osoba, r-rodina
     show specialni { data:etl.specialni } // 1 => potvrzení
-    show predmet [,,160,] { title:'předmět', data:etd.nazev, format:'sq', css_cell:'stav2,3:zluty,4:zeleny,5:cerveny' },
+    show predmet [,,130,] { title:'předmět', data:etd.nazev, format:'sq', css_cell:'stav2,3:zluty,4:zeleny,5:cerveny' },
     show stav1 [,,0,] { expr:'min(etm.stav)', format:'rsq' },
     show stav2 [,,0,] { expr:'max(etm.stav)', format:'rsq' },
-    show pocet [,,30,] { title:'#', data:etd.pocet, format:'rs' },
+    show pocet4 [,,30,] { title:'#', expr:'SUM(IF(etm.stav=4,1,0))', format:'rs', help:'počet odeslaných' },
+    show pocet [,,30,] { title:'#', data:etd.pocet, format:'rs', help:'počet celkem'  },
     proc onrowclick () { var old_dopis:number
       old_dopis.set(dopis_id.get);
       eq(this.browse_count,0);
@@ -1358,6 +1359,12 @@ form _esady  {
       info.set(ask('mail2_mai_info',id_clen.get,email.get,dopis_id.get,dopis_var.get,id_mail.get));
       [ body.get; obsah.set(body.get)
       | obsah.set(ask('select','obsah','dopis',conc('id_dopis=',id_dopis.get))) ]
+    }
+    menu { type:'context'
+      item { title:'chybové poslat znovu'
+        proc onclick() { 
+          ask("query",conc("UPDATE mail SET stav=3 WHERE stav=5 AND id_dopis=",id_dopis.get));
+          maily.browse_refresh } }
     }
   }
   # --------------------- načtení celé karty
