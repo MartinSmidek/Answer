@@ -19,10 +19,13 @@ var menu_par=0
 menu m {type:'left', format:'f+' //, active:*
   menu s {title:'STATISTIKA',type:'group'
     item {title:'Struktura letních kurzů MS',                                        skill:'yae;fae'
-      ,par:°{typ:'ms_struktura',xls:'Excel',pdf:0
+      ,par:°{typ:'ms_struktura',xls:'Excel',pdf:0,graf:1
         ,dsc:'Sestava ukazuje počty rodin a jejich dětí s rozlišením na nové, dvouročáky a VPS.<br>'}}
     item {title:'Struktura LK MS od roku 2005',                                      skill:'yae;fae'
-      ,par:°{typ:'ms_struktura',xls:'Excel',pdf:0,od:2005
+      ,par:°{typ:'ms_struktura',xls:'Excel',pdf:0,od:2005,graf:1
+        ,dsc:'Sestava ukazuje počty rodin a jejich dětí s rozlišením na nové, dvouročáky a VPS.<br>'}}
+    item {title:' ... jen tabulka',                                                  skill:'yae;fae'
+      ,par:°{typ:'ms_struktura',xls:'Excel',pdf:0,od:2005,graf:0
         ,dsc:'Sestava ukazuje počty rodin a jejich dětí s rozlišením na nové, dvouročáky a VPS.<br>'}}
     item {title:'Cesty na LK MS od roku 2005',                                       skill:'yae;fae'
       ,par:°{typ:'ms_cesty',xls:'Excel',pdf:0,od:2005
