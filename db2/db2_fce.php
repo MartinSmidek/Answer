@@ -2690,8 +2690,8 @@ function ucast2_browse_ask($x,$tisk=false) {
   $i_osoba_telefon=  23;
   $i_osoba_email=    25;
   $i_osoba_note=     41;
-  $i_key_spolu=      43;
-  $i_spolu_note=     47;
+  $i_key_spolu=      44;
+  $i_spolu_note=     48;
   $delim= $tisk ? '≈' : '~';
   $map_umi= map_cis('answer_umi','zkratka','poradi','ezer_answer');
 //                                                         debug($map_umi,"map_umi");
@@ -2900,7 +2900,7 @@ function ucast2_browse_ask($x,$tisk=false) {
     $fos=   ucast2_flds("umrti,prijmeni,rodne,sex,adresa,ulice,psc,obec,stat,kontakt,telefon,nomail"
           . ",email,gmail"
           . ",iniciace,firming,uvitano,clen,obcanka,rc_xxxx,cirkev,vzdelani,titul,zamest,zajmy,jazyk,dieta"
-          . ",aktivita,note,_kmen");
+          . ",aktivita,note,_kmen,web_souhlas");
     $fspo=  ucast2_flds("id_spolu,_barva,s_role,dite_kat,poznamka,pecovane,pfunkce,pece_jm,pece_id"
           . ",o_umi,prislusnost");
 

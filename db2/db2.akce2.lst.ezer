@@ -306,10 +306,15 @@ form _page [,,275,360] {
       warning("odkaz na akci musí být ve formátu pro uživatele nepřihlášeného k editaci webu!",
               "<br>Tzn. ne ve tvaru www.setkani.org/index.php?page=...");
       this.set(''); this.plain;
+    | zmena_web.set(1);
   }}
   check web_prihl[16,344,243,] { tag:'cor', data:akce.web_prihlasky,
                         title:'ONLINE přihlašování na www.setkani.org', skill:'yaa+|yaaw' 
     proc onchange() { zmena_web.set(1);
+  }}
+  select garant [293,355,79,] {tag:'cor', type:'map', title:'garant' , data:akce.poradatel,
+      help:'garant akce, příjemce organizačních mailů', options:akce_garant.zkratka 
+    proc onchanged() { zmena_web.set(1);
   }}
   check [16,361,214,21] { tag:'cor', title:'OBSAZENO - další jako náhradníci', data:akce.web_obsazeno,
                         skill:'yaa|yaaw;faa|faaw', help:"a to i tehdy, když akce není ještě naplněná" }
@@ -331,7 +336,7 @@ form _page [,,275,360] {
     proc onclick() {
       form.same
     | // oprava
-      [ zmena_web.get; alert(ask('web_prihlaska',page.a_akce.get,web_url.get,web_prihl.get)) ]; 
+      [ zmena_web.get; alert(ask('web_prihlaska',page.a_akce.get,web_url.get,web_prihl.get,garant.key)) ]; 
       form.key; form.save; form.load; info.sey.browse_seek
     | // přidání
       or(has_skill("faa+;caa+"),lt(fdate("Y",datum_od.get),2011));
@@ -833,3 +838,4 @@ panel ANOTACE [0,0,645,520] { title:' Úprava textu anotace', type:'popup', css:
 map akce_cenik:  table akce {where:"ma_cenik=1", order:'datum_od', key_id:'id_duakce'}
 map akce_slozka: table _cis {where:"druh='akce_slozka'", order:'poradi', key_id:'data'}
 map ms_cenik_verze: table _cis {where:"druh='ms_cenik_verze'", order:'poradi', key_id:'data'}
+map akce_garant:    table _cis {where:"druh='akce_garant'", order:'poradi', key_id:'data'}

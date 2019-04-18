@@ -133,14 +133,19 @@ function db2_oso_show($prijmeni,$jmeno,$n) {
 # ------------------------------------------------------------------------------------ web prihlaska
 # propojení s www.setkani.org - musí existovat popis akce s daným url
 #     on=1 dovolí přihlašování přes web, on=0 je zruší
-function web_prihlaska($akce,$url,$on) {  trace();
+function web_prihlaska($akce,$url,$on,$garant) {  trace();
   $html= '';
   $ok= preg_match("~(nove|akce)/(\d+)$~",$url,$m);
   if ( $ok ) {
     $idp= $m[2];
     $ida= $on ? $akce : 0;
     ezer_connect('setkani');
-    $ok= select("uid","setkani.tx_gncase_part","uid=$idp AND !deleted AND !hidden");
+    $ido= select('ikona','_cis',"druh='akce_garant' AND data='$garant'");
+    if ( !$ido ) {
+      $html.= "<hr>POZOR: chybí garant akce!";
+      goto end;
+    }
+    $ok= select("uid","setkani.tx_gncase_part","uid='$idp' AND !deleted AND !hidden");
     if ( $ok ) {
       $ok= query("UPDATE setkani.tx_gncase_part SET id_akce=$ida WHERE uid=$idp");
       $html.= "na www.setkani.org bylo ".($on?"zapnuto":"vypnuto")." elektronické přihlašování";
@@ -152,7 +157,8 @@ function web_prihlaska($akce,$url,$on) {  trace();
   else {
     $html.= "url pozvánky není v očekávaném tvaru";
   }
-  $html.= "<hr>POZOR: na webu je přihláška vidět jen pokud je použit klíč ?try=prihlasky";
+end:  
+  $html.= "<hr>DBG: $garant $ido<hr>";
   return $html;
 }
 # ------------------------------------------------------------------------------------- web zmena_ok
@@ -236,7 +242,7 @@ function akce2_mapa($akce) {  trace();
 # --------------------------------------------------------------------------------------- akce2 info
 # rozšířené informace o akci
 # text=1 v textové verzi, text=0 jako objekt s počty
-function akce2_info($id_akce,$text=1) { // trace();
+function akce2_info($id_akce,$text=1) { trace();
   $html= '';
   $info= (object)array('muzi'=>0,'zeny'=>0,'deti'=>0,'peco'=>0,'rodi'=>0,'skup'=>0);
   $zpusoby= map_cis('ms_akce_platba','zkratka'); // způsob => částka
@@ -2694,14 +2700,14 @@ function ucast2_browse_ask($x,$tisk=false) {
   $i_osoba_jmeno=     4;
   $i_osoba_vek=       6;
   $i_osoba_role=      9;
-  $i_osoba_prijmeni= 14;
-  $i_adresa=         17;
-  $i_osoba_kontakt=  22;
-  $i_osoba_telefon=  23;
-  $i_osoba_email=    25;
-  $i_osoba_note=     41;
-  $i_key_spolu=      43;
-  $i_spolu_note=     47;
+  $i_osoba_prijmeni= 15;
+  $i_adresa=         18;
+  $i_osoba_kontakt=  23;
+  $i_osoba_telefon=  24;
+  $i_osoba_email=    26;
+  $i_osoba_note=     42;
+  $i_key_spolu=      44;
+  $i_spolu_note=     48;
 
   $delim= $tisk ? '≈' : '~';
   $map_umi= map_cis('answer_umi','zkratka','poradi','ezer_answer');
@@ -2907,7 +2913,7 @@ function ucast2_browse_ask($x,$tisk=false) {
           . "cstrava_cel,cstrava_cel_bm,cstrava_cel_bl,cstrava_pol,cstrava_pol_bm,cstrava_pol_bl,"
           . "svp,zpusobplat,naklad_d,poplatek_d,platba_d,potvrzeno_d"
           . ",zpusobplat_d,datplatby_d,ubytovani,cd,avizo,sleva,vzorec,duvod_typ,duvod_text,x_umi");
-    //      id_osoba,jmeno,_vek,id_tvori,id_rodina,role,_rody,rc,narozeni
+    //      id_osoba,jmeno,_vek,id_tvori,id_rodina,role,_rody,rc,narozeni,web_souhlas
     $fos=   ucast2_flds("umrti,prijmeni,rodne,sex,adresa,ulice,psc,obec,stat,kontakt,telefon,nomail"
           . ",email,gmail"
           . ",iniciace,firming,uvitano,clen,obcanka,rc_xxxx,cirkev,vzdelani,titul,zamest,zajmy,jazyk,dieta"
@@ -3033,6 +3039,7 @@ function ucast2_browse_ask($x,$tisk=false) {
           $id_kmen= $o->_kmen;
           $o->_kmen= "$kmen/$id_kmen";
           $cleni.= "~" . sql_date1($o->narozeni);                   // narozeniny d.m.r
+          $cleni.= "~" . sql_date1($o->web_souhlas);                // souhlas d.m.r
           # doplnění textů z kmenové rodiny pro zobrazení rodinných adres (jako disabled)
 //                                                 debug($o,"browse - o");
 //                                                 debug($rodina[$id_kmen],"browse - kmen=$id_kmen");
@@ -9496,14 +9503,11 @@ function sta2_struktura($org,$par,$title,$export=false) {
     foreach($flds_rr as $fld) {
       $suma[$rr]+= $clmn[$rr][$fld];
     }
-    $pecs= sta2_pecouni_simple($org,$rrrr);
-    $clmn[$rr]['pec']= $pecs['p'];
-    $clmn[$rr]['pp']=  $pecs['pp'];
-    $clmn[$rr]['po']=  $pecs['po'];
-    $clmn[$rr]['pg']=  $pecs['pg'];
   }
   // doplnění informací o rodinách
   $rod= sta2_rodiny($org,0,$mez_k);
+  // doplnění informací o pečounech
+  $pecs= sta2_pecouni_simple($org);
 //                                         debug($rod,"rodiny");
   foreach ($rod as $rok=>$r) {
     if ( $rok<$od_roku ) continue;
@@ -9516,18 +9520,11 @@ function sta2_struktura($org,$par,$title,$export=false) {
     $clmn[$rr]['m']= $r['m'];
     $clmn[$rr]['a']= $r['a'];
     $clmn[$rr]['b']= $r['b'];
+    $clmn[$rr]['pec']= $pecs[$rok]['p'];
+    $clmn[$rr]['pp']=  $pecs[$rok]['pp'];
+    $clmn[$rr]['po']=  $pecs[$rok]['po'];
+    $clmn[$rr]['pg']=  $pecs[$rok]['pg'];
   }
-  // doplnění počtu pečounů
-//  $pec= sta2_pecouni($org);
-////                                         debug($pec,"pečouni");
-//  foreach ($pec as $p) {
-//    $rrrr= $p['_rok'];
-//    if ( $rrrr<$od_roku ) continue;
-//    $rr= substr($rrrr,-2);
-//    $clmn[$rr]['pec']= $p['_pec'];
-////                                         debug($p,"pečouni {$p->_rok}=$rr");
-////     break;
-//  }
   // smazání prázdných
   foreach ($clmn as $r=>$c) {
     if ( !$c['x'] ) unset($clmn[$r]);
@@ -9549,20 +9546,19 @@ function sta2_struktura($org,$par,$title,$export=false) {
   return sta2_table_graph($par,$tits,$flds,$clmn,$export);
 }
 # -------------------------------------------------------------------------==> . sta2 pecouni_simple
-function sta2_pecouni_simple($org,$rok) { trace();
+function sta2_pecouni_simple($org) { trace();
   $clmn= array();
-  $akce= select("id_duakce","akce","druh=1 AND access&$org AND YEAR(datum_od)=$rok");
-  $qry= " SELECT p.funkce, s.pfunkce
+  $qry= " SELECT p.funkce, s.pfunkce, YEAR(datum_od)
           FROM pobyt AS p
           JOIN spolu AS s USING (id_pobyt)
           JOIN akce  AS a ON a.id_duakce=p.id_akce
-          WHERE (p.funkce=99 OR s.pfunkce IN (4,5,8)) AND p.id_akce='$akce' ";
+          WHERE (p.funkce=99 OR s.pfunkce IN (4,5,8)) AND a.druh=1 ";
   $res= pdo_qry($qry);
-  while ( $res && (list($f,$pf)= pdo_fetch_row($res)) ) {
-    $clmn['p']++;
-    $clmn['pp']+= $pf==4 ? 1 : 0;
-    $clmn['po']+= $pf==5 ? 1 : 0;
-    $clmn['pg']+= $pf==8 ? 1 : 0;
+  while ( $res && (list($f,$pf,$rok)= pdo_fetch_row($res)) ) {
+    $clmn[$rok]['p']++;
+    $clmn[$rok]['pp']+= $pf==4 ? 1 : 0;
+    $clmn[$rok]['po']+= $pf==5 ? 1 : 0;
+    $clmn[$rok]['pg']+= $pf==8 ? 1 : 0;
   }
   return $clmn;
 }
