@@ -1080,8 +1080,8 @@ form _osoba2x [,,244,322] {css:'ae_frame',
   label [0,34,,6] {tag:'g,S', format:'n', css:'db_sep' } // zarovnání
 
   #==> . údaje související s weby: v
-  field web_souhlas [5,12,85,] {tag:'v', type:'date', data:o.web_souhlas, format:'n', title:'^souhlas'}
-  field web_zmena   [93,12,85,] {tag:'v', type:'date', data:o.web_zmena, format:'n', title:'^změna'}
+  field web_souhlas [5,12,85,] {tag:'v', type:'date', data:o.web_souhlas, format:'rn', title:'^souhlas'}
+  field web_zmena   [93,12,85,] {tag:'v', type:'date', data:o.web_zmena, format:'rn', title:'^změna'}
   select web_level  [182,12,59,] {tag:'v', type:'map+', data:o.web_level, options:ms_web.zkratka,
     title:'^web', format:'n'}
   label [0,34,,2] {tag:'v,S', format:'n', css:'db_sep' } // zarovnání
