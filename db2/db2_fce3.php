@@ -22,7 +22,7 @@ function db2_rod_show($nazev,$n) {
   $fos=   ucast2_flds("umrti,prijmeni,rodne,sex,adresa,ulice,psc,obec,stat,kontakt,telefon"
         . ",nomail,email,gmail"
         . ",iniciace,firming,uvitano,clen,obcanka,rc_xxxx,cirkev,vzdelani,titul,zamest,zajmy,jazyk,dieta"
-        . ",aktivita,note,_kmen,prislusnost");
+        . ",aktivita,note,_kmen,web_souhlas,prislusnost");
   $fspo=  ucast2_flds("id_spolu,_barva,s_role,dite_kat,poznamka,pecovane,pfunkce,pece_jm,pece_id,o_umi");
   // načtení rodin
   $qr= pdo_qry("SELECT id_rodina AS key_rodina,ulice AS r_ulice,psc AS r_psc,obec AS r_obec,
@@ -246,8 +246,10 @@ function akce2_info($id_akce,$text=1) { trace();
   $html= '';
   $info= (object)array('muzi'=>0,'zeny'=>0,'deti'=>0,'peco'=>0,'rodi'=>0,'skup'=>0);
   $zpusoby= map_cis('ms_akce_platba','zkratka'); // způsob => částka
+  $funkce=  map_cis('ms_akce_funkce','zkratka'); // funkce na akci
+  $pfunkce= map_cis('ms_akce_pfunkce','zkratka'); // funkce pečovatele na akci
   $bad= "<b style='color:red'>!!!</b>";
-  $platby= array();
+  $platby= $pfces= $fces= array();
   $celkem= 0;
   $aviz= 0;
   if ( $id_akce ) {
@@ -275,6 +277,14 @@ function akce2_info($id_akce,$text=1) { trace();
              SUM(IF(ROUND(DATEDIFF(a.datum_od,o.narozeni)/365.2425,1)<18,1,0)) AS _deti,
              SUM(IF(ROUND(DATEDIFF(a.datum_od,o.narozeni)/365.2425,1)>=18 AND sex=1,1,0)) AS _muzu,
              SUM(IF(ROUND(DATEDIFF(a.datum_od,o.narozeni)/365.2425,1)>=18 AND sex=2,1,0)) AS _zen,
+             SUM(IF(s.pfunkce=1,1,0)) AS _p1,
+             SUM(IF(s.pfunkce=2,1,0)) AS _p2,
+             SUM(IF(s.pfunkce=3,1,0)) AS _p3,
+             SUM(IF(s.pfunkce=4,1,0)) AS _p4,
+             SUM(IF(s.pfunkce=5,1,0)) AS _p5,
+             SUM(IF(s.pfunkce=6,1,0)) AS _p6,
+             SUM(IF(s.pfunkce=7,1,0)) AS _p7,
+             SUM(IF(s.pfunkce=8,1,0)) AS _p8,
              SUM(IF(o.narozeni='0000-00-00',1,0)) AS _err,
              GROUP_CONCAT(IF(o.narozeni='0000-00-00',CONCAT(', ',jmeno,' ',prijmeni),'') SEPARATOR '') AS _kdo,
              SUM(IF(o.sex NOT IN (1,2),1,0)) AS _err2,
@@ -287,7 +297,7 @@ function akce2_info($id_akce,$text=1) { trace();
            JOIN osoba AS o ON s.id_osoba=o.id_osoba
            LEFT JOIN _cis AS c ON c.druh='ms_akce_typ' AND c.data=a.druh
            -- LEFT JOIN tvori AS t ON t.id_osoba=o.id_osoba
-           WHERE id_duakce='$id_akce'
+           WHERE id_duakce='$id_akce' AND o.deleted=''
            GROUP BY p.id_pobyt";
     $res= pdo_qry($qry);
     while ( $res && $p= pdo_fetch_object($res) ) {
@@ -312,6 +322,22 @@ function akce2_info($id_akce,$text=1) { trace();
         $nahradnici+= $fce==9 ? 1 : 0;
         $nahradnici_osoby+= $fce==9 ? $p->_clenu : 0;
       }
+      else if ( in_array($fce,array(99) ) ) {
+        $pecounu+= $p->_clenu;
+        $pfces[1]+= $p->_p1;
+        $pfces[2]+= $p->_p2;
+        $pfces[3]+= $p->_p3;
+        $pfces[4]+= $p->_p4;
+        $pfces[5]+= $p->_p5;
+        $pfces[6]+= $p->_p6;
+        $pfces[7]+= $p->_p7;
+        $pfces[8]+= $p->_p9;
+      }
+      else if ( !in_array($fce,array(0,1,2,5) ) ) {
+        $fces[$fce]++;
+        $muzi+= $p->_muzu;
+        $zeny+= $p->_zen;
+      }
       else {
         // údaje účastníků jednoho pobytu
         $ucasti++;
@@ -323,8 +349,6 @@ function akce2_info($id_akce,$text=1) { trace();
         $rodiny+= i0_rodina && $p->_clenu>1 ? 1 : 0;
         $chybi_nar.= $p->_kdo;
         $chybi_sex.= $p->_kdo2;
-        if ( $p->funkce==99 )
-          $pecounu+= $p->_clenu;
       }
       // údaje akce
       $akce= $p->nazev;
@@ -338,7 +362,7 @@ function akce2_info($id_akce,$text=1) { trace();
     if ( $chybi_sex ) $chybi_sex= substr($chybi_sex,2);
     if ( $vic_ucasti ) $vic_ucasti= substr($vic_ucasti,2);
     $dosp+= $muzi + $zeny;
-    $skupin= $ucasti - ( $pecounu ? 1 : 0 );
+    $skupin= $ucasti;
     if ( $text ) {
       // čeština
       $_skupin=    je_1_2_5($skupin,"skupina,skupiny,skupin");
@@ -357,13 +381,26 @@ function akce2_info($id_akce,$text=1) { trace();
       $_pobyt_n=   je_1_2_5($nahradnici,"přihláška,přihlášky,přihlášek");
       $_pobyt_no=  je_1_2_5($nahradnici_osoby,"osoba,osoby,osob");
       $_aviz=      je_1_2_5($aviz,"avízo,avíza,avíz");
+      // sloužili
+      $sluzba= ''; $del= '<br>a dále '; 
+      foreach ($fces as $f=>$fn) {
+        $sluzba.= "$del $fn x ".$funkce[$f];
+        $del= " a ";
+      }
+      // typy pečounů
+      $sluzba= ''; $del= ' z toho '; 
+      foreach ($pfces as $f=>$fn) if ( $fn ) {
+        $sluzba.= "$del $fn x ".$pfunkce[$f];
+        $del= " a ";
+      }
       // html
       $html= $dosp+$deti>0
        ? $html.= "<h3 style='margin:0px 0px 3px 0px;'>$akce</h3>akce $cas1 $dne<br><hr>$cas2"
        . ($skupin ? " $_skupin účastníků"
            .($rodiny ? ($rodiny==$ucasti ? " (všechny jako rodiny)" : " (z toho $_rodiny)") :''):'')
-       . ($pecounu ? " ".($skupin?" a ":'')."$_pecounu" : '')
-       . ",<br><br>tj. $_dospelych ($_muzu, $_zen) a $_deti,"
+       . ($pecounu ? "<br>".($skupin?" a ":'')."$_pecounu" : '')
+       . $sluzba
+       . ",<br><br>v počtu $_dospelych ($_muzu, $_zen) a $_deti,"
        . "<br><b>celkem $_osob</b>"
        : "Akce byla vložena do databáze ale nemá zatím žádné účastníky";
       if ( $odhlaseni + $neprijeli + $nahradnici > 0 ) {
@@ -9672,13 +9709,14 @@ function sta2_rodiny($org,$rok=0,$mez_k=2.0) { trace();
   $ms= array();
   // ms => r=rodin, d=dětí na akci, D=dětí mladších 18 v rodině,
   //       va=věk muže, na=počet mužů s věkem, vb=věk ženy, nb=.., vm=délka manželství, nm=..
+  $rok= 2018; // *****************************************
   $HAVING= $rok ? "HAVING _rok=$rok" : '';
   $rx= pdo_qry("
     SELECT id_akce, YEAR(datum_od) AS _rok,
       COUNT(id_osoba) AS _clenu, COUNT(id_spolu) AS _spolu,
-      SUM(IF(t.role='d' AND id_spolu,1,0)) AS _sebou,
-      SUM(IF(t.role='d' AND DATEDIFF(a.datum_od,o.narozeni)/365.2425 < 18,1,0)) AS _deti,
-      SUM(IF(t.role='d' AND DATEDIFF(a.datum_od,o.narozeni)/365.2425 < $mez_k 
+      SUM(IF(/*t.role='d' AND*/ DATEDIFF(a.datum_od,o.narozeni)/365.2425 < 18 AND id_spolu,1,0)) AS _sebou,
+      SUM(IF(/*t.role='d' AND*/ DATEDIFF(a.datum_od,o.narozeni)/365.2425 < 18,1,0)) AS _deti,
+      SUM(IF(/*t.role='d' AND*/ DATEDIFF(a.datum_od,o.narozeni)/365.2425 < $mez_k 
         AND id_spolu,1,0)) AS _sebou_k, kocarek,
       SUM(IF(t.role='a',DATEDIFF(a.datum_od,o.narozeni)/365.2425,0)) AS _vek_a,
       SUM(IF(t.role='b',DATEDIFF(a.datum_od,o.narozeni)/365.2425,0)) AS _vek_b,
@@ -9690,7 +9728,7 @@ function sta2_rodiny($org,$rok=0,$mez_k=2.0) { trace();
     JOIN tvori AS t USING (id_rodina)
     JOIN osoba AS o USING (id_osoba)
     LEFT JOIN spolu USING (id_pobyt,id_osoba)
-    WHERE a.druh=1 AND p.funkce IN (0,1) AND a.access & $org
+    WHERE a.druh=1 AND (a.access & $org) AND p.funkce IN (0,1,2,5) -- AND p.funkce IN (0,1) 
     --  AND id_pobyt=50904
     GROUP BY id_pobyt $HAVING
   ");
@@ -9733,6 +9771,7 @@ function sta2_pecouni($org) { trace();
   # _pec,_sko,_proc
   $clmn= array();
   list($od,$do)= select("MAX(YEAR(datum_od)),MIN(YEAR(datum_od))","akce","druh=1 AND access&$org");
+  $od=$do=2018;
   for ($rok=$od; $rok>=$do; $rok--) {
     $kurz= select1("id_duakce","akce","druh=1 AND YEAR(datum_od)=$rok AND access&$org");
     $akci= select1("COUNT(*)","akce","druh=7 AND YEAR(datum_od)=$rok AND access&$org");
@@ -10143,45 +10182,45 @@ function sta2_sestava($org,$title,$par,$export=false) { trace();
     # _pec,_sko,_proc
     $clmn= sta2_pecouni($org);
     break;
-    list($od,$do)= select("MAX(YEAR(datum_od)),MIN(YEAR(datum_od))","akce","druh=1 AND access&$org");
-    for ($rok=$od; $rok>=$do; $rok--) {
-      $kurz= select1("id_duakce","akce","druh=1 AND YEAR(datum_od)=$rok AND access&$org");
-      $akci= select1("COUNT(*)","akce","druh=7 AND YEAR(datum_od)=$rok AND access&$org");
-      $akci= $akci ? "$akci školení" : '';
-      $info= akce2_info($kurz,0); //muzi,zeny,deti,peco,rodi,skup
-      // získání dat
-      $_pec= $_sko= $_proc= $_pecN= $_skoN= $_procN= 0;
-      $data= array();
-      _akce2_sestava_pecouni($data,$kurz);
-      $_pec= count($data);
-      if ( !$_pec ) continue;
-      foreach ($data as $d) {
-        $skoleni= 0;
-        $sko= array_unique(preg_split("/\s+/",$d['_skoleni'], -1, PREG_SPLIT_NO_EMPTY));
-        $slu= array_unique(preg_split("/\s+/",$d['_sluzba'],  -1, PREG_SPLIT_NO_EMPTY));
-        $ref= array_unique(preg_split("/\s+/",$d['_reflexe'], -1, PREG_SPLIT_NO_EMPTY));
-        $leto= $slu[0];
-        // výpočet školení všech
-        $skoleni+= count($sko);
-        foreach ($ref as $r) if ( $r<$leto ) $skoleni++;
-        $_sko+= $skoleni>0 ? 1 : 0;
-        // noví
-        if ( count($slu)==1 ) {
-          $_pecN++;
-          $_skoN+= $skoleni>0 ? 1 : 0;
-        }
-      }
-      $_proc= $_pec ? round(100*$_sko/$_pec).'%' : '';
-      $_procN= $_pecN ? round(100*$_skoN/$_pecN).'%' : '';
-      $note= $akci;
-      $ratio= round($info->deti/$_pec,1);
-      $note.= ", $ratio";
-      // zobrazení výsledků
-      $clmn[]= array('_rok'=>$rok,'_rodi'=>$info->rodi,'_deti'=>$info->deti,
-        '_pec'=>$_pec,'_sko'=>$_sko,'_proc'=>$_proc,
-        '_pecN'=>$_pecN,'_skoN'=>$_skoN,'_procN'=>$_procN,'_note'=>$note);
-//       if ( $rok==2014) break;
-    }
+//    list($od,$do)= select("MAX(YEAR(datum_od)),MIN(YEAR(datum_od))","akce","druh=1 AND access&$org");
+//    for ($rok=$od; $rok>=$do; $rok--) {
+//      $kurz= select1("id_duakce","akce","druh=1 AND YEAR(datum_od)=$rok AND access&$org");
+//      $akci= select1("COUNT(*)","akce","druh=7 AND YEAR(datum_od)=$rok AND access&$org");
+//      $akci= $akci ? "$akci školení" : '';
+//      $info= akce2_info($kurz,0); //muzi,zeny,deti,peco,rodi,skup
+//      // získání dat
+//      $_pec= $_sko= $_proc= $_pecN= $_skoN= $_procN= 0;
+//      $data= array();
+//      _akce2_sestava_pecouni($data,$kurz);
+//      $_pec= count($data);
+//      if ( !$_pec ) continue;
+//      foreach ($data as $d) {
+//        $skoleni= 0;
+//        $sko= array_unique(preg_split("/\s+/",$d['_skoleni'], -1, PREG_SPLIT_NO_EMPTY));
+//        $slu= array_unique(preg_split("/\s+/",$d['_sluzba'],  -1, PREG_SPLIT_NO_EMPTY));
+//        $ref= array_unique(preg_split("/\s+/",$d['_reflexe'], -1, PREG_SPLIT_NO_EMPTY));
+//        $leto= $slu[0];
+//        // výpočet školení všech
+//        $skoleni+= count($sko);
+//        foreach ($ref as $r) if ( $r<$leto ) $skoleni++;
+//        $_sko+= $skoleni>0 ? 1 : 0;
+//        // noví
+//        if ( count($slu)==1 ) {
+//          $_pecN++;
+//          $_skoN+= $skoleni>0 ? 1 : 0;
+//        }
+//      }
+//      $_proc= $_pec ? round(100*$_sko/$_pec).'%' : '';
+//      $_procN= $_pecN ? round(100*$_skoN/$_pecN).'%' : '';
+//      $note= $akci;
+//      $ratio= round($info->deti/$_pec,1);
+//      $note.= ", $ratio";
+//      // zobrazení výsledků
+//      $clmn[]= array('_rok'=>$rok,'_rodi'=>$info->rodi,'_deti'=>$info->deti,
+//        '_pec'=>$_pec,'_sko'=>$_sko,'_proc'=>$_proc,
+//        '_pecN'=>$_pecN,'_skoN'=>$_skoN,'_procN'=>$_procN,'_note'=>$note);
+////       if ( $rok==2014) break;
+//    }
     break;
 
   # Sestava ukazuje celkový počet účastníků resp. pečovatelů na akcích letošního roku,
