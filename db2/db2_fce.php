@@ -22,7 +22,7 @@ function db2_rod_show($nazev,$n) {
   $fos=   ucast2_flds("umrti,prijmeni,rodne,sex,adresa,ulice,psc,obec,stat,kontakt,telefon"
         . ",nomail,email,gmail"
         . ",iniciace,firming,uvitano,clen,obcanka,rc_xxxx,cirkev,vzdelani,titul,zamest,zajmy,jazyk,dieta"
-        . ",aktivita,note,_kmen,prislusnost");
+        . ",aktivita,note,_kmen,web_souhlas,prislusnost");
   $fspo=  ucast2_flds("id_spolu,_barva,s_role,dite_kat,poznamka,pecovane,pfunkce,pece_jm,pece_id,o_umi");
   // načtení rodin
   $qr= mysql_qry("SELECT id_rodina AS key_rodina,ulice AS r_ulice,psc AS r_psc,obec AS r_obec,
