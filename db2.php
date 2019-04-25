@@ -44,6 +44,11 @@
       "https://answer.setkani.org",
       "https://answer.setkani.org");
   $rel_root= $rel_roots[$ezer_server];
+  $path_akce= array(
+      "D:/MS/",
+      "",
+      "/volume1/YS/"
+    )[$ezer_server];
   
   // upozornění na testovací verzi
   $demo= '';
@@ -99,9 +104,9 @@
       $kernel=='ezer3.1' ? "$rel_root/db2/db2.css.php?skin" : "$rel_root/db2/db2.css",
       "/$kernel/client/wiki.css"
    ];
-
   //  require_once("answer.php");
   $add_options= (object) ['watch_access' => 3,
+    'path_akce'    => "'$path_akce'", // absolutní cesta do složky Akce
     'watch_access_opt' => // ... barvení v Uživatelé + select v ezer2.syst.ezer
        "{name:{1:'Setkání',2:'Familia',3:'Setkání+Familia'},
          abbr:{1:'S',2:'F',3:'S+F'},

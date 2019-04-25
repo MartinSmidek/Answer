@@ -1,4 +1,139 @@
 <?php # (c) 2009-2015 Martin Smidek <martin@smidek.eu>
+/** ===================================================================================> FILEBROWSER */
+# ---------------------------------------------------------------------------------------- tut mkdir
+// vytvoří adresář
+function tut_mkdir ($root,$rok,$kod,$nazev) {  trace();
+//  $nazev= utf2ascii($nazev);
+  $base= "{$root}Akce/$rok";
+  if ( is_dir($base)) {
+    $path= $kod=='*' 
+        ? "$base/$nazev"               // podsložka
+        : "$base/$kod - $nazev";       // základní složka
+    if ( $_SESSION['platform']=='W' ) // windows
+      $path= iconv("UTF-8","Windows-1250",$path);
+                                                  display("path=$path");
+    $ok= mkdir($path) ? 1 : 0;
+  }
+  else {
+                                                  display("base=$base ... není složka");
+  }
+  return $ok;
+}
+# ------------------------------------------------------------------------------------- tut dir_find
+// nalezne adresář akce
+function tut_dir_find ($root,$rok,$kod) {  trace();
+  $y= (object)array('ok'=>1);
+  $patt= "{$root}Akce/$rok/$kod*";
+  $fs= simple_glob($patt);
+                                                debug($fs,$patt);
+  if ( count($fs)==1 ) {
+    if ( $_SESSION['platform']=='W' ) // windows
+      $file= iconv("Windows-1250","UTF-8",$fs[0]);  
+    $y->aroot= "{$root}Akce/$rok/";
+    $y->droot= substr(strrchr($file,'/'),1);
+  }
+  else {
+    $y->ok= 0;
+  }
+                                                debug($y,strrchr($fs[0],'/'));
+  return $y;
+}
+# ------------------------------------------------------------------------------------- tut dir_load
+// vrátí soubory adresáře
+function tut_dir_load ($root,$rel_path) {  trace();
+  global $ezer_path_root, $rel_root;
+  $abs_path= "$root/$rel_path";
+  $html= '';
+  if ( is_dir($abs_path) ) {
+    $files= array();
+    $folders= array();
+    if (($dh= opendir($abs_path))) {
+      while (($file= readdir($dh)) !== false) {
+        if ( $file!='.') {
+          if ( is_dir("$abs_path/$file") ) {
+            if ( $_SESSION['platform']=='W' ) // windows
+              $file= iconv("Windows-1250","UTF-8",$file);  
+            $folders[]= "<li>[$file]</li>";
+          }
+          else {
+            if ( $_SESSION['platform']=='W' ) // windows
+              $file= iconv("Windows-1250","UTF-8",$file);  
+            $afile= "<a href='$rel_path/$file' target='doc'>$file</a>";
+            $onright= "oncontextmenu=\"Ezer.fce.contextmenu([
+              ['stáhnout',function(el){
+                Ezer.fce.echo('$file');}]
+              ],arguments[0],null,null,this);return false;\"";
+            $files[]= "<li $onright>$afile</li>";
+          }
+        }
+      }
+      closedir($dh);
+    }
+    $html= 
+        "<ul style='list-style-type:none;padding:0;margin:0'>"
+          .implode('',array_merge($folders,$files))
+        .'</ul>';
+  }
+  return $html;
+}
+# ------------------------------------------------------------------------------------------ tut dir
+// vrátí adresářovou strukturu pro zobrazení metodou area.tree_show
+//   node:  {prop:{text:<string>,down:nodes}}
+//   nodes: [ node, ... ]
+function tut_dir ($base,$folder) {  trace();
+  if ( $_SESSION['platform']=='W' ) // windows
+    $folder= iconv("UTF-8","Windows-1250",$folder);
+  $tree= tut_dir_walk ($base,$folder);
+//                                                  debug($tree);
+  return $tree;
+}
+function tut_dir_walk($base,$root) {  trace();
+  $path= $base.$root;
+//                                                  display("is_dir($path)=".is_dir($path));
+  if ( is_dir($path) ) {
+    $files= array();
+    if (($dh= opendir($path))) {
+      while (($file= readdir($dh)) !== false) {
+        if ( $file!='.' && $file!='..' ) {
+          $subtree= tut_dir_walk($path.'/',$file);
+          if ( $subtree )
+            $files[]= $subtree;
+        }
+      }
+      closedir($dh);
+    }
+    if ( $_SESSION['platform']=='W' ) // windows
+      $root= iconv("Windows-1250","UTF-8",$root);  
+    return (object)array('prop'=>(object)array('id'=>$root),'down'=>$files);
+  }
+  else {
+    return null;
+  }
+}
+# ------------------------------------------------------------------------------------------ session
+# getter a setter pro _SESSION
+function session($is,$value=null) {
+  $i= explode(',',$is);
+  if ( is_null($value) ) {
+    // getter
+    switch (count($i)) {
+    case 1: $value= $_SESSION[$i[0]]; break;
+    case 2: $value= $_SESSION[$i[0]][$i[1]]; break;
+    case 3: $value= $_SESSION[$i[0]][$i[1]][$i[2]]; break;
+    }
+  }
+  else {
+    // setter
+    switch (count($i)) {
+    case 1: $_SESSION[$i[0]]= $value; break;
+    case 2: $_SESSION[$i[0]][$i[1]]= $value; break;
+    case 3: $_SESSION[$i[0]][$i[1]][$i[2]]= $value; break;
+    }
+//    session_commit();
+    $value= 1;
+  }
+  return $value;
+}
 /** ===========================================================================================> VPS **/
 # ------------------------------------------------------------------------------------- vps historie
 # 

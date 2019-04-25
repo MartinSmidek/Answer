@@ -33,6 +33,7 @@ proc onfirstfocus() {
   ];
   // zobrazení vazby na objednávky DS
   [ has_skill('y') | page.ds_order.set_css('hidden','') ];
+  page.DocInit;
   page.inf.onclick;
 #   spinner(0);
 }
@@ -189,24 +190,25 @@ form _page [,,275,360] {
     form.display(0,off); form.display(1,on);
   }
   label inf [ 12,0,80,20] {tag:'p', title:'<b>Info</b>', format:'c', css:'ae_butt_on'
-    proc onclick() { tags(this,'inf','cor|cen|doc'); zalozka.set('inf'); show_akce(a_akce.get)
+    proc onclick() { tags(this,'inf','cor|cen|doc|syn'); zalozka.set('inf'); show_akce(a_akce.get)
   } }
   label cor [100,0,80,20] {tag:'p', title:'<b>Úprava</b>', format:'c'
-    proc onclick() { tags(this,'cor','inf|cen|doc'); zalozka.set('cor'); show_akce(a_akce.get)
+    proc onclick() { tags(this,'cor','inf|cen|doc|syn'); zalozka.set('cor'); show_akce(a_akce.get)
   } }
   label cen [188,0,80,20] {tag:'p', title:'<b>Ceník</b>', format:'c',
-    proc onclick() { tags(this,'cen','inf|cor|doc'); zalozka.set('cen'); show_akce(a_akce.get)
+    proc onclick() { tags(this,'cen','inf|cor|doc|syn'); zalozka.set('cen'); show_akce(a_akce.get)
   } }
   label doc [276,0,80,20] {tag:'p', title:'<b>Archiv</b>', format:'c',
-    proc onclick() { tags(this,'doc','inf|cor|cen'); zalozka.set('doc'); show_akce(a_akce.get)
+    proc onclick() { tags(this,'doc','inf|cor|cen|syn'); zalozka.set('doc'); show_akce(a_akce.get)
   } }
-#   label doc [364,0,80,20] {tag:'p', title:'<b>Dokumenty</b>', format:'c',
-#     proc onclick() { tags(this,'doc','inf|cor|cen|eko'); zalozka.set('doc'); show_akce(a_akce.get)
-#   } }
+  label syn [364,0,80,20] {tag:'p', title:'<b>Dokumenty</b>', format:'c',
+    proc onclick() { tags(this,'syn','inf|cor|cen|doc'); zalozka.set('syn'); show_akce(a_akce.get)
+  } }
   proc show_akce(id_akce) {
     page.a_akce.set(id_akce);
-    eq(the_source.get,'sey');    [ info.sey.browse_count; show_page(id_akce) | init_page ]
-  | eq(the_source.get,'google'); [ id_akce; show_page(id_akce) | init_page ]
+    [ eq(the_source.get,'sey');    [ info.sey.browse_count; show_page(id_akce) | init_page ]
+    | eq(the_source.get,'google'); [ id_akce; show_page(id_akce) | init_page ]
+    ];
   }
   proc show_page(id_akce) {
     cen_copy.enable(0); cen_copy.key(0); key_akce.set(id_akce); //fil.display(0);
@@ -225,6 +227,7 @@ form _page [,,275,360] {
             info.sey.browse_focus },
     'cen',{ c.browse_load(conc("id_akce=",id_akce)); },
     'doc',{ archiv.ukaz(akce_get('archiv')) },
+    'syn',{ has_skill('m'); DocShow(akce_get('rok'),akce_get('kod')) }
     );
 //    echo(id_akce,':',access.get,cen_ver.key);
     c_show;
@@ -556,7 +559,10 @@ form _page [,,275,360] {
       has_skill('y'); not(autorized.get);
       form.display(1,'doc_log'); form.display(0,'doc_crea|doc_show');
       return
-    | _folder; cloud.set(substr(_folder,0,2)); folder.set(substr(_folder,2));
+    | ukaz_syn(_folder)
+    }
+    proc ukaz_syn(_folder) { // ukáže tlačítko jako vytvořit pokud akce.archiv='' jinak zobrazí folder
+      _folder; cloud.set(substr(_folder,0,2)); folder.set(substr(_folder,2));
       { eq(cloud.get,'H:');
         popis.set(conc("Archiv pro akce roku ",akce_get('rok')," s kódem ",akce_get('kod'),
           " je obsažen ve složce <b>",folder.get,"</b> na serveru"));
@@ -620,6 +626,108 @@ form _page [,,275,360] {
                            warning(ask('drop_unlink',folder.get,ref,'H:')) ] // odebrání souboru
       | warning('zatím neimplementovaná operace') ];
       drop.lsdir;
+    }
+  }
+  # ------------------------==> . dokumenty na Synology
+  use folders:  area _page._folders { tag:'syn' }
+  var dcloud='U:',    // U: je třeba nastavit Ezer.options.path_files_u na složku obsahující droot
+      abase:text,     // Ezer.options.path_akce
+      aroot:text,     // absolutní adresa Ezer.options.path_files_u (má / na konci)
+      droot='docs',   // kořen pro filebrowser 
+      dfold='docs'    // zobrazená podsložka droot (bez koncového /)
+  button [15,42,,] {tag:'syn' title:'[fa-briefcase] založit archiv akce' 
+    proc onclick() {
+      ask('tut_mkdir',abase.get,akce_get('rok'),akce_get('kod'),akce_get('nazev'));
+      DocRefresh
+  }}
+  button [150,42,,] {tag:'syn' title:'2019/401' 
+    proc onclick() { DocShow(2019,401);
+  }}
+  button [220,42,,] {tag:'syn' title:'2019/601' 
+    proc onclick() { DocShow(2019,601);
+  }}
+  proc DocInit() { 
+    abase.set(function("return Ezer.options.path_akce;"))
+  }
+  proc DocRefresh() {
+    DocShow(akce_get('rok'),akce_get('kod'))
+  }
+  proc DocShow(_rok,_kod) { var y:object
+//    clear;
+    _rok; _kod;
+    y.set(ask('tut_dir_find',abase.get,_rok,_kod));
+    y.ok; 
+//    echo(debug(y));
+    aroot.set(function('aroot',"return Ezer.options.path_files_u=aroot;",y.aroot)); 
+    droot.set(y.droot); 
+    dfold.set(droot.get);
+    folders.Load(aroot.get,droot.get); 
+    files.Load;
+    fdrop.Init;
+    fdrop.on;
+  | folders.Init;
+    files.Init;
+  }
+  # složky - tree area
+  area _folders { title:"<div id='files' style='left:530px;top:112px;width:160px;height:370px;background:#EFFDF1;border-right:1px solid grey;overflow:auto;position:absolute;z-index:1'></div>"
+    var click_path:text
+    proc tree_onclick(fid,id,dat,com,x,path,txt) { var i:text
+//      echo("tree_onclick: txt=",txt," id=",i," path=",path);
+      page.dfold.set(replace(path,'\|','/'));
+      page.fdrop.Init;
+      page.files.Load;
+    }
+    proc tree_oncontextmenu(fid,id,dat,com,x,path,txt) { 
+      click_path.set(replace(path,'\|','/'));
+      echo('tree:',click_path.get);
+    }
+    menu { type:'context'
+      item { title:'vložit podsložku', proc onclick() { var folder:text
+        folder.set(prompt2('název podsložky:'));
+        ask('tut_mkdir',page.abase.get,akce_get('rok'),'*',conc(click_path.get,'/',folder));
+        page.DocRefresh
+      }}
+    }
+    proc Load(_a,_b) { 
+      this.tree_show(ask('tut_dir',_a,_b),'files',0,°{mode:'folders',theme:'mootree.gif'}); 
+      this.tree_expand(1) 
+    }
+    proc Init() { 
+      this.tree_show(°{prop:°{id:'<žádný dokument>'}},'files',0,°{mode:'folders',theme:'mootree.gif'}); 
+    }
+  }
+  # soubory - seznam
+  label files [179,72,258,360] {tag:'syn' css:'files' style:"z-index:3;background:#EFFDF1;padding:5px"
+    proc Load() { this.set(ask('tut_dir_load',aroot.get,dfold.get))}
+    proc Init() { this.set('')}
+  }
+  # soubory - drop area
+  label fdrop [192,90,241,50] {tag:'syn'type:'drop' title:'vlož soubor sem' css:'drop' style:"z-index:2"
+    proc Init() { // podsložka {root} s lomítkem jen na konci
+      fdrop.init(dfold.get,dcloud.get); 
+    }
+    proc ondrop(f) {                                                  // možnost odmítnutí přenosu
+      eq(f.name,'ugly.jpg'); warning('fuj ',f.name); return(0)        // navrácením 0
+    | gt(f.size,5242880); warning('odmítnuto ',f.name,' má více jak 5MB'); return(0)
+//      | warning('přenášeno:',f.name)                                   // jméno nemusí být ASCII
+    | return(f.name);
+    }
+    proc onload(f) { // po dokončení přenosu, jméno bude ASCII
+      files.Load;
+      off;
+    } 
+    proc onerror(e) { // funkce onerror nesmí obsahovat asynchronní kód a lokální proměnné, ale přes call lze zavolat už cokoliv
+      warning(e.msg); return(1) // vrácení 0 způsobí standardní hlášení chyby
+    }
+    proc on() {
+      function('f',
+        "jQuery('div.files').on({dragover: evt => { jQuery('div.drop').css({zIndex:4});return false; }})",
+        page.files);
+    }
+    proc off() {
+      function('f',
+        "jQuery('div.drop').css({zIndex:2});",
+        page.files);
     }
   }
   # --------------------------- pozadí stránky a kontextové menu nakonec
