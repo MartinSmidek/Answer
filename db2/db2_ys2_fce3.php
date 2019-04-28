@@ -3,20 +3,25 @@
 # ---------------------------------------------------------------------------------------- tut mkdir
 // vytvoří adresář
 function tut_mkdir ($root,$rok,$kod,$nazev) {  trace();
-//  $nazev= utf2ascii($nazev);
   $base= "{$root}Akce/$rok";
-  if ( is_dir($base)) {
+                                                  display("base? $base".(is_dir($base) ? 1 : 0)); 
+  if ( !is_dir($base)) { // založ rok
+    mkdir($base);
+  }
+  $y= tut_dir_find($root,$rok,$kod);
+  if ( $y->ok==0 ) {
     $path= $kod=='*' 
         ? "$base/$nazev"               // podsložka
         : "$base/$kod - $nazev";       // základní složka
-    if ( $_SESSION['platform']=='W' ) // windows
+    if ( stristr(PHP_OS,'WIN') && substr(PHP_VERSION_ID,0,1)=='5' ) // windows 
       $path= iconv("UTF-8","Windows-1250",$path);
                                                   display("path=$path");
     $ok= mkdir($path) ? 1 : 0;
   }
   else {
-                                                  display("base=$base ... není složka");
+                                                  fce_warning("POZOR: již existuje $base/$kod ...");
   }
+end:
   return $ok;
 }
 # ------------------------------------------------------------------------------------- tut dir_find
@@ -25,22 +30,23 @@ function tut_dir_find ($root,$rok,$kod) {  trace();
   $y= (object)array('ok'=>1);
   $patt= "{$root}Akce/$rok/$kod*";
   $fs= simple_glob($patt);
+  $file= $fs[0];
                                                 debug($fs,$patt);
   if ( count($fs)==1 ) {
-    if ( $_SESSION['platform']=='W' ) // windows
-      $file= iconv("Windows-1250","UTF-8",$fs[0]);  
+    if ( stristr(PHP_OS,'WIN') && substr(PHP_VERSION_ID,0,1)=='5' ) // windows
+      $file= iconv("Windows-1250","UTF-8",$file);  
     $y->aroot= "{$root}Akce/$rok/";
-    $y->droot= substr(strrchr($file,'/'),1);
+    $y->droot= mb_substr(strrchr($file,'/'),1);
   }
   else {
-    $y->ok= 0;
+    $y->ok= count($fs);
   }
                                                 debug($y,strrchr($fs[0],'/'));
   return $y;
 }
-# ------------------------------------------------------------------------------------- tut dir_load
+# ---------------------------------------------------------------------------------------- tut files
 // vrátí soubory adresáře
-function tut_dir_load ($root,$rel_path) {  trace();
+function tut_files ($root,$rel_path) {  trace();
   global $ezer_path_root, $rel_root;
   $abs_path= "$root/$rel_path";
   $html= '';
@@ -51,12 +57,12 @@ function tut_dir_load ($root,$rel_path) {  trace();
       while (($file= readdir($dh)) !== false) {
         if ( $file!='.') {
           if ( is_dir("$abs_path/$file") ) {
-            if ( $_SESSION['platform']=='W' ) // windows
+            if ( stristr(PHP_OS,'WIN') && substr(PHP_VERSION_ID,0,1)=='5' ) // windows
               $file= iconv("Windows-1250","UTF-8",$file);  
             $folders[]= "<li>[$file]</li>";
           }
           else {
-            if ( $_SESSION['platform']=='W' ) // windows
+            if ( stristr(PHP_OS,'WIN') && substr(PHP_VERSION_ID,0,1)=='5' ) // windows
               $file= iconv("Windows-1250","UTF-8",$file);  
             $afile= "<a href='$rel_path/$file' target='doc'>$file</a>";
             $onright= "oncontextmenu=\"Ezer.fce.contextmenu([
@@ -81,7 +87,7 @@ function tut_dir_load ($root,$rel_path) {  trace();
 //   node:  {prop:{text:<string>,down:nodes}}
 //   nodes: [ node, ... ]
 function tut_dir ($base,$folder) {  trace();
-  if ( $_SESSION['platform']=='W' ) // windows
+  if ( stristr(PHP_OS,'WIN') && substr(PHP_VERSION_ID,0,1)=='5' ) // windows
     $folder= iconv("UTF-8","Windows-1250",$folder);
   $tree= tut_dir_walk ($base,$folder);
 //                                                  debug($tree);
@@ -102,7 +108,7 @@ function tut_dir_walk($base,$root) {  trace();
       }
       closedir($dh);
     }
-    if ( $_SESSION['platform']=='W' ) // windows
+    if ( stristr(PHP_OS,'WIN') && substr(PHP_VERSION_ID,0,1)=='5' ) // windows
       $root= iconv("Windows-1250","UTF-8",$root);  
     return (object)array('prop'=>(object)array('id'=>$root),'down'=>$files);
   }

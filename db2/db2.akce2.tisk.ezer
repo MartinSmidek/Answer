@@ -427,8 +427,8 @@ menu m {type:'left', active:*
                                         ,fld:'prijmeni,jmeno,narozeni,obec,psc,ulice,telefon,email'}}
     item {title:'Pečouni - formace'                                                          skill:'y;m'
                                         ,par:°{typ:'d',exp:'Excel2',cnd:'1'
-                                        ,tit:'příjmení:15,jméno:15,narození:12,obec:25,JARO:25:l,LÉTO:25:l,PODZIM:25:l,^' //,(18 v roce):15,^'
-                                        ,fld:'prijmeni,jmeno,narozeni,obec,_skoleni,_sluzba,_reflexe,^id_osoba'}}         //,_18,^id_osoba'}}
+                                        ,tit:'příjmení:15,jméno:15,narození:12,obec:25,JARO:25:l,LÉTO:25:l,PODZIM:25:l,funkce:10,^' //,(18 v roce):15,^'
+                                        ,fld:'prijmeni,jmeno,narozeni,obec,_skoleni,_sluzba,_reflexe,pfunkce,^id_osoba'}}         //,_18,^id_osoba'}}
     item {title:'Pečouni s poznámkami'                                                       skill:'y;f'
                                         ,par:°{typ:'d',exp:'Excel2',cnd:'1'
                                         ,tit:'příjmení:15,jméno:15,narození:12,/rč:5,obec:25,psč:7,ulice:25,telefon:20,e-mail:30,funkce:10,poznámky:30'

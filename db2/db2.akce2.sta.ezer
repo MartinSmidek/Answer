@@ -36,8 +36,8 @@ menu m {type:'left', format:'f+' //, active:*
         <br>Je uveden počet pečovatelů, kteří se před službou účastnili školení a kolik je z toho nových pečovatelů.
         <br>V poznámce je počet pořádaných školení a poměr dětí/pečovatele.
         <br>V počtu školení se objeví jen ta, která jsou evidovaná v databázi<br>'
-      ,tit:'rok:5,rodin:5,dětí:5,pečounů:5,školených:5,%:5,nových:5,školených:5,%:5,poznámka:20'
-      ,fld:'_rok,_rodi,_deti,_pec,_sko,_proc,_pecN,_skoN,_procN,_note',ord:'_rok DESC'}}
+      ,tit:'rok:5,rodin:5,dětí:5,pečounů:5,+pp:3,+po:3,+pg:3,=celkem,školených:5,%:5,nových:5,školených:5,%:5,poznámka:20'
+      ,fld:'_rok,_rodi,_deti,_pec,_pp,_po,_pg,_celk,_sko,_proc,_pecN,_skoN,_procN,_note,chyba',ord:'_rok DESC'}}
     item {title:'Letošní účastníci podle věku'  ,par:°{typ:'ucast-vek',rok:0,xls:'Excel',pdf:0
       ,dsc:'Sestava ukazuje celkový počet účastníků resp. pečovatelů na akcích letošního roku, rozdělený podle věku.
         <br>Účastník resp. pečovatel je započítán jen jednou, bez ohledu na počet akcí, jichž se zúčastnil.<br>'

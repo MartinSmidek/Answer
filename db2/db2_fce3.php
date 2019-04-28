@@ -253,7 +253,8 @@ function akce2_info($id_akce,$text=1) { trace();
   $celkem= 0;
   $aviz= 0;
   if ( $id_akce ) {
-    $ucasti= $rodiny= $dosp= $muzi= $zeny= $deti= $pecounu= $err= $err2= $err3= 0;
+    $ucasti= $rodiny= $dosp= $muzi= $zeny= $chuvy= $deti= $pecounu= $pp= $po= 0;
+    $err= $err2= $err3= $err4= 0;
     $odhlaseni= $neprijeli= $nahradnici= $nahradnici_osoby= 0;
     $akce= $chybi_nar= $chybi_sex= '';
     $web_kalendar= $web_obsazeno= $web_anotace= $web_url= '';
@@ -277,6 +278,10 @@ function akce2_info($id_akce,$text=1) { trace();
              SUM(IF(ROUND(DATEDIFF(a.datum_od,o.narozeni)/365.2425,1)<18,1,0)) AS _deti,
              SUM(IF(ROUND(DATEDIFF(a.datum_od,o.narozeni)/365.2425,1)>=18 AND sex=1,1,0)) AS _muzu,
              SUM(IF(ROUND(DATEDIFF(a.datum_od,o.narozeni)/365.2425,1)>=18 AND sex=2,1,0)) AS _zen,
+             SUM(IF(s.s_role=5 AND s.pfunkce=0,1,0)) AS _chuv,
+             SUM(IF(s.s_role=5 AND s.pfunkce=5,1,0)) AS _po,
+             SUM(IF(s.s_role=4 AND s.pfunkce=4,1,0)) AS _pp,
+             SUM(IF(               s.pfunkce=8,1,0)) AS _pg,
              SUM(IF(s.pfunkce=1,1,0)) AS _p1,
              SUM(IF(s.pfunkce=2,1,0)) AS _p2,
              SUM(IF(s.pfunkce=3,1,0)) AS _p3,
@@ -298,6 +303,7 @@ function akce2_info($id_akce,$text=1) { trace();
            LEFT JOIN _cis AS c ON c.druh='ms_akce_typ' AND c.data=a.druh
            -- LEFT JOIN tvori AS t ON t.id_osoba=o.id_osoba
            WHERE id_duakce='$id_akce' AND o.deleted=''
+           --  AND p.id_pobyt=50821
            GROUP BY p.id_pobyt";
     $res= pdo_qry($qry);
     while ( $res && $p= pdo_fetch_object($res) ) {
@@ -343,6 +349,10 @@ function akce2_info($id_akce,$text=1) { trace();
         $ucasti++;
         $muzi+= $p->_muzu;
         $zeny+= $p->_zen;
+        $chuvy+= $p->_chuv;
+        $pp+= $p->_pp;
+        $po+= $p->_po;
+        $pg+= $p->_pg;
         $deti+= $p->_deti;
         $err+= $p->_err;
         $err2+= $p->_err2;
@@ -367,9 +377,13 @@ function akce2_info($id_akce,$text=1) { trace();
       // čeština
       $_skupin=    je_1_2_5($skupin,"skupina,skupiny,skupin");
       $_pecounu=   je_1_2_5($pecounu,"pečoun,pečouni,pečounů");
+      $_pp=        je_1_2_5($pp,"pom.pečoun,pom.pečouni,pom.pečounů");
+      $_po=        je_1_2_5($po,"os.pečoun,os.pečouni,os.pečounů");
+      $_pg=        je_1_2_5($pg,"člen G,členi G,členů G");
       $_dospelych= je_1_2_5($dosp,"dospělý,dospělí,dospělých");
       $_muzu=      je_1_2_5($muzi,"muž,muži,mužů");
       $_zen=       je_1_2_5($zeny,"žena,ženy,žen");
+      $_chuv=      je_1_2_5($chuvy,"chůva,chůvy,chův");
       $_deti=      je_1_2_5($deti,"dítě,děti,dětí");
       $_osob=      je_1_2_5($dosp+$deti,"osoba,osoby,osob");
       $_err=       je_1_2_5($err,"osoby,osob,osob");
@@ -389,18 +403,27 @@ function akce2_info($id_akce,$text=1) { trace();
       }
       // typy pečounů
       $sluzba= ''; $del= ' z toho '; 
-      foreach ($pfces as $f=>$fn) if ( $fn ) {
+      foreach ($pfces as $f=>$fn) { if ( $fn ) {
         $sluzba.= "$del $fn x ".$pfunkce[$f];
         $del= " a ";
-      }
+      }}
+      $sluzba2= ''; $del= ''; 
+      if ( $pp ) { $sluzba2.= "$del $_pp"; $del= ' a '; }
+      if ( $po ) { $sluzba2.= "$del $_po"; $del= ' a '; }
+      if ( $pg ) { $sluzba2.= "$del $_pg"; $del= ' a '; }
+      // jsou děti pečouni ok?
+      $prehled= akce2_text_prehled($id_akce,'');
+      if ( $prehled->pozor ) $err4++; 
       // html
       $html= $dosp+$deti>0
        ? $html.= "<h3 style='margin:0px 0px 3px 0px;'>$akce</h3>akce $cas1 $dne<br><hr>$cas2"
        . ($skupin ? " $_skupin účastníků"
            .($rodiny ? ($rodiny==$ucasti ? " (všechny jako rodiny)" : " (z toho $_rodiny)") :''):'')
-       . ($pecounu ? "<br>".($skupin?" a ":'')."$_pecounu" : '')
+       . ($pecounu ? "<br>".($skupin?"<br>a ":'')."$_pecounu" : '')
        . $sluzba
-       . ",<br><br>v počtu $_dospelych ($_muzu, $_zen) a $_deti,"
+       . ($pp+$po+$pg ? " + do skupiny pečounů patří navíc $sluzba2" : '')
+       . ",<br><br>v počtu $_dospelych ($_muzu, $_zen)"
+       . ($chuvy ? " a $_deti - z toho $_chuv," : " a $_deti")
        . "<br><b>celkem $_osob</b>"
        : "Akce byla vložena do databáze ale nemá zatím žádné účastníky";
       if ( $odhlaseni + $neprijeli + $nahradnici > 0 ) {
@@ -411,12 +434,13 @@ function akce2_info($id_akce,$text=1) { trace();
         if ( $nahradnici ) $msg[]= "náhradníci: $_pobyt_n, celkem $_pobyt_no";
         $html.= implode('<br>',$msg);
       }
-      if ( $err + $err2 + $err3 > 0 ) {
-        $html.= "<br><hr>POZOR: ";
+      if ( $err + $err2 + $err3 + $err4> 0 ) {
+        $html.= "<br><hr><b style='color:red'>POZOR:</b> ";
         $html.= $err>0  ? "<br>u $_err chybí datum narození: <i>$chybi_nar</i>" : '';
         $html.= $err2>0 ? "<br>u $_err2 chybí údaj muž/žena: <i>$chybi_sex</i>" : '';
         $html.= $err3>0 ? "<br>$bad $_err3 na akci vícekrát: <i>$vic_ucasti</i>" : '';
-        $html.= "<br>(kvůli nesprávným údajům budou i počty nesprávné)";
+        $html.= $err4>0 ? "<br>{$prehled->pozor} (po nastavení akce jako pracovní kliknutí na odkaz ukáže rodinu)" : '';
+        $html.= "<br><br>(kvůli nesprávným údajům budou počty, výpisy a statistiky také nesprávné)";
       }
       $html.= $deti ? "<hr>Poznámka: jako děti se počítají osoby, které v době zahájení akce nemají 18 let" : '';
       if ( $pro_pary ) {
@@ -441,6 +465,9 @@ function akce2_info($id_akce,$text=1) { trace();
       $info->peco= $pecounu;
       $info->rodi= $rodiny;
       $info->skup= $skupin;
+      $info->_pp=  $pp;
+      $info->_po=  $po;
+      $info->_pg=  $pg;
     }
     // zobrazení přehledu plateb
     if ( $celkem ) {
@@ -4130,7 +4157,7 @@ function tisk2_sestava($akce,$par,$title,$vypis,$export=false) { trace();
      : ( $par->typ=='vsd'  ? akce2_strava_souhrn($akce,$par,$title,$vypis,$export)  //!
      : ( $par->typ=='vsd3' ? akce2_strava_vylet($akce,$par,$title,$vypis,$export)   //! 3.den děti oběd
      : ( $par->typ=='vv'   ? tisk2_text_vyroci($akce,$par,$title,$vypis,$export)    //!
-     : ( $par->typ=='vi'   ? akce2_text_prehled($akce,$par,$title,$vypis,$export)   //!
+     : ( $par->typ=='vi'   ? akce2_text_prehled($akce,$title)                       //!
      : ( $par->typ=='ve'   ? akce2_text_eko($akce,$par,$title,$vypis,$export)       //!
      : ( $par->typ=='vn'   ? akce2_sestava_noci($akce,$par,$title,$vypis,$export)   //!
      : ( $par->typ=='vp'   ? akce2_vyuctov_pary($akce,$par,$title,$vypis,$export)   //!
@@ -4760,7 +4787,7 @@ function akce2_sestava_pobyt($akce,$par,$title,$vypis,$export=false) { trace();
 //                                         debug($clmn,"sestava pro $akce,$typ,$fld,$cnd");
   return tisk2_table($tits,$flds,$clmn,$export);
 }
-# --------------------------------------------------------------------------- _akce2_sestava_pecouni
+# --------------------------------------------------------------------------- _akce2 sestava_pecouni
 # výpočet pro generování sestavy pro účastníky $akce - pečouny a pro statistiku
 function _akce2_sestava_pecouni(&$clmn,$akce,$fld='_skoleni,_sluzba,_reflexe',$cnd=1,$ord=1) { trace();
   $flds= explode(',',$fld);
@@ -4787,7 +4814,8 @@ function _akce2_sestava_pecouni(&$clmn,$akce,$fld='_skoleni,_sluzba,_reflexe',$c
           JOIN pobyt AS xp ON xp.id_pobyt=xs.id_pobyt -- AND xp.funkce=99
           JOIN akce  AS xa ON xa.id_duakce=xp.id_akce AND YEAR(xa.datum_od)<=YEAR(a.datum_od)
           -- JOIN join_akce AS xg ON xg.id_akce=xp.id_akce
-          WHERE (p.funkce=99 OR s.pfunkce IN (4,5,8)) AND p.id_akce='$akce' AND $cnd
+          WHERE (p.funkce=99 OR (p.funkce NOT IN (9,10,13,14,99) AND s.pfunkce IN (4,5,8))) 
+            AND p.id_akce='$akce' AND $cnd
           GROUP BY id_osoba
           ORDER BY $ord";
   $res= pdo_qry($qry);
@@ -4798,6 +4826,7 @@ function _akce2_sestava_pecouni(&$clmn,$akce,$fld='_skoleni,_sluzba,_reflexe',$c
       // sumáře
       switch ($f) {
       case 'pfunkce':   $clmn[$n][$f]= $pfunkce[$x->$f]; break;
+//      case '_pp':       $clmn[$n][$f]= $x->pfunkce==4 ? 1 : 0; break;
       case '^id_osoba': $clmn[$n][$f]= $x->id_osoba; break;
       case '_skoleni':
       case '_sluzba':
@@ -5769,7 +5798,8 @@ function tisk2_text_vyroci($akce,$par,$title,$vypis,$export=false) { trace();
   return $result;
 }
 # ------------------------------------------------------------------------------- akce2 text_prehled
-function akce2_text_prehled($akce,$par,$title,$vypis,$export=false) { trace();
+# pokud $title='' negeneruje se html
+function akce2_text_prehled($akce,$title) { trace();
   $pocet= 0;
   # naplní histogram podle $cond
   $akce_text_prehled_x= function ($akce,$cond,$uvest_jmena=false,$bez_tabulky=false) use (&$pocet) {
@@ -5831,44 +5861,48 @@ function akce2_text_prehled($akce,$par,$title,$vypis,$export=false) { trace();
     // předání výsledku
     return $html;
   };
-  $result= (object)array();
+  $result= (object)array('html'=>'','pozor'=>'');
   $html= '';
   $nedeti= $akce_text_prehled_x($akce,"t.role='d' AND p.funkce!=99 AND s.s_role NOT IN (2,3,4,5)",1,1,0);
-  if ( $pocet>0 )
+  if ( $pocet>0 ) {
     $html.= "<h3 style='color:red'>POZOR! Děti vedené chybně jako účastníci nebo hosté</h3>$nedeti";
+    $result->pozor= "Děti vedené chybně jako účastníci nebo hosté: $nedeti";
+  }
   // pfunkce: 0 4 5 8 92 95
   // pfunkce: 1=hlavoun, 2=instruktor, 3=pečovatel, 4=pomocný, 5=osobní, 6=mimořádný, 7=team, 8=člen G
   // funkce=99  -- pečoun, funkce=9,10,13,14 -- není na akci
   // s_role=2   -- dítě, s_role=3  -- dítě s os.peč, s_role=4  -- pom.peč, s_role=5  -- os.peč
   // dite_kat=7 -- skupina G
   // děti ...
-  $html.= "<h2>Informace z karty Účastníci2 (bez náhradníků)</h2>
-    <h3>Celkový počet dětí rodin na akci podle stáří (v době začátku akce) - bez os.pečounů včetně pom.pečounů</h3>";
-  $html.= $akce_text_prehled_x($akce,"t.role='d' AND p.funkce!=99 AND s.s_role IN (0,1,2,3,4)");
-  $html.= "<h3>Děti ve skupinkách (mimo G a osobně opečovávaných)</h3>";
-  $html.= $akce_text_prehled_x($akce,"t.role='d' AND p.funkce!=99 AND s.s_role IN (2,4) AND s.dite_kat!=7");
-  $html.= "<h3>Děti v péči osobního pečovatele</h3>";
-  $html.= $akce_text_prehled_x($akce,"t.role='d' AND p.funkce!=99 AND s.s_role IN (3)",1);
-  $html.= "<h3>Děti ve skupině G</h3>";
-  $html.= $akce_text_prehled_x($akce,"t.role='d' AND p.funkce!=99 AND s.dite_kat=7",true);
-  $html.= "<h3>Pomocní pečovatelé</h3>";
-  $html.= $akce_text_prehled_x($akce,"t.role='d' AND p.funkce!=99 AND s.s_role IN (4)",1);
-  // pečouni ...
-  $html.= "<h3>Osobní pečovatelé (nezařazení mezi Pečovatele)</h3>";
-  $html.= $akce_text_prehled_x($akce,"p.funkce!=99 AND s.s_role IN (5) AND s.pfunkce NOT IN (5)",true);
-  // osobní mezi pečouny
-  $html.= "<br><hr><h3>Osobní pečovatelé (zařazení mezi Pečovatele)</h3>";
-  $html.= $akce_text_prehled_x($akce,"p.funkce!=99 AND s.pfunkce IN (5)",true);
-  // pečouni
-  $html.= "<br><hr><h2>Informace z karty Pečouni</h2><h3>Řádní pečovatelé</h3>";
-  $html.= $akce_text_prehled_x($akce,"p.funkce=99 AND s.pfunkce IN (1,2,3) ");
-  $html.= "<h3>Mimořádní pečovatelé</h3>";
-  $html.= $akce_text_prehled_x($akce,"p.funkce=99 AND s.pfunkce=6 ",true);
-  $html.= "<h3>Team pečovatelů (s touto funkcí)</h3>";
-  $html.= $akce_text_prehled_x($akce,"p.funkce=99 AND s.pfunkce IN (7) ",true);
-  $html.= "<h3>Team pečovatelů (bez přiřazené funkce)</h3>";
-  $html.= $akce_text_prehled_x($akce,"p.funkce=99 AND s.pfunkce IN (0) ",true);
-  $result->html= "$html<br><br>";
+  if ( $title ) {
+    $html.= "<h2>Informace z karty Účastníci2 (bez náhradníků)</h2>
+      <h3>Celkový počet dětí rodin na akci podle stáří (v době začátku akce) - bez os.pečounů včetně pom.pečounů</h3>";
+    $html.= $akce_text_prehled_x($akce,"t.role='d' AND p.funkce!=99 AND s.s_role IN (0,1,2,3,4)");
+    $html.= "<h3>Děti ve skupinkách (mimo G a osobně opečovávaných)</h3>";
+    $html.= $akce_text_prehled_x($akce,"t.role='d' AND p.funkce!=99 AND s.s_role IN (2,4) AND s.dite_kat!=7");
+    $html.= "<h3>Děti v péči osobního pečovatele</h3>";
+    $html.= $akce_text_prehled_x($akce,"t.role='d' AND p.funkce!=99 AND s.s_role IN (3)",1);
+    $html.= "<h3>Děti ve skupině G</h3>";
+    $html.= $akce_text_prehled_x($akce,"t.role='d' AND p.funkce!=99 AND s.dite_kat=7",true);
+    $html.= "<h3>Pomocní pečovatelé</h3>";
+    $html.= $akce_text_prehled_x($akce,"t.role='d' AND p.funkce!=99 AND s.s_role IN (4)",1);
+    // pečouni ...
+    $html.= "<h3>Osobní pečovatelé (nezařazení mezi Pečovatele)</h3>";
+    $html.= $akce_text_prehled_x($akce,"p.funkce!=99 AND s.s_role IN (5) AND s.pfunkce NOT IN (5)",true);
+    // osobní mezi pečouny
+    $html.= "<br><hr><h3>Osobní pečovatelé (zařazení mezi Pečovatele)</h3>";
+    $html.= $akce_text_prehled_x($akce,"p.funkce!=99 AND s.pfunkce IN (5)",true);
+    // pečouni
+    $html.= "<br><hr><h2>Informace z karty Pečouni</h2><h3>Řádní pečovatelé</h3>";
+    $html.= $akce_text_prehled_x($akce,"p.funkce=99 AND s.pfunkce IN (1,2,3) ");
+    $html.= "<h3>Mimořádní pečovatelé</h3>";
+    $html.= $akce_text_prehled_x($akce,"p.funkce=99 AND s.pfunkce=6 ",true);
+    $html.= "<h3>Team pečovatelů (s touto funkcí)</h3>";
+    $html.= $akce_text_prehled_x($akce,"p.funkce=99 AND s.pfunkce IN (7) ",true);
+    $html.= "<h3>Team pečovatelů (bez přiřazené funkce)</h3>";
+    $html.= $akce_text_prehled_x($akce,"p.funkce=99 AND s.pfunkce IN (0) ",true);
+    $result->html= "$html<br><br>";
+  }
   return $result;
 }
 # =======================================================================================> . pomocné
@@ -9506,7 +9540,8 @@ function sta2_struktura($org,$par,$title,$export=false) {
   $tab= sta2_akcnost_vps($org,$par,$title,true);
 //                                                    debug($tab,"evid_sestava_v(,$title,$export)");
   $clmn= $suma= array();
-  $tit= "rok,rodin,u nás - noví,podruhé,vícekrát,vps - odpočívající,ve službě,celkem pečounů,pp,po,pg,
+  $tit= "rok,rodin,u nás - noví,podruhé,vícekrát,vps - odpočívající,ve službě,
+        celkem pečounů,+pp,+po,+pg,
         dětí na kurzu,placených kočárků,dětí<$mez_k let s sebou,dětí<18 let doma,
         manželství,věk muže,věk ženy";
   $tits= explode(',',$tit);
@@ -9589,10 +9624,11 @@ function sta2_pecouni_simple($org) { trace();
           FROM pobyt AS p
           JOIN spolu AS s USING (id_pobyt)
           JOIN akce  AS a ON a.id_duakce=p.id_akce
-          WHERE (p.funkce=99 OR s.pfunkce IN (4,5,8)) AND a.druh=1 ";
+          WHERE (p.funkce=99 OR (p.funkce NOT IN (9,10,13,14,99) AND s.pfunkce IN (4,5,8))) 
+            AND a.druh=1 AND a.access & $org";
   $res= pdo_qry($qry);
   while ( $res && (list($f,$pf,$rok)= pdo_fetch_row($res)) ) {
-    $clmn[$rok]['p']++;
+    $clmn[$rok]['p']+=  $f==99 ? 1 : 0;
     $clmn[$rok]['pp']+= $pf==4 ? 1 : 0;
     $clmn[$rok]['po']+= $pf==5 ? 1 : 0;
     $clmn[$rok]['pg']+= $pf==8 ? 1 : 0;
@@ -9709,7 +9745,7 @@ function sta2_rodiny($org,$rok=0,$mez_k=2.0) { trace();
   $ms= array();
   // ms => r=rodin, d=dětí na akci, D=dětí mladších 18 v rodině,
   //       va=věk muže, na=počet mužů s věkem, vb=věk ženy, nb=.., vm=délka manželství, nm=..
-  $rok= 2018; // *****************************************
+//  $rok= 2016; // *****************************************
   $HAVING= $rok ? "HAVING _rok=$rok" : '';
   $rx= pdo_qry("
     SELECT id_akce, YEAR(datum_od) AS _rok,
@@ -9771,27 +9807,33 @@ function sta2_pecouni($org) { trace();
   # _pec,_sko,_proc
   $clmn= array();
   list($od,$do)= select("MAX(YEAR(datum_od)),MIN(YEAR(datum_od))","akce","druh=1 AND access&$org");
-  $od=$do=2018;
+//  $od=$do=2014;
   for ($rok=$od; $rok>=$do; $rok--) {
     $kurz= select1("id_duakce","akce","druh=1 AND YEAR(datum_od)=$rok AND access&$org");
     $akci= select1("COUNT(*)","akce","druh=7 AND YEAR(datum_od)=$rok AND access&$org");
     $akci= $akci ? "$akci školení" : '';
-    $info= akce2_info($kurz,0); //muzi,zeny,deti,peco,rodi,skup
+    $info= akce2_info($kurz,0); //muzi,zeny,deti,peco,rodi,skup,pp,po,pg
     // získání dat
     $_pec= $_sko= $_proc= $_pecN= $_skoN= $_procN= 0;
     $data= array();
     _akce2_sestava_pecouni($data,$kurz);
-    $_pec= count($data);
-    if ( !$_pec ) continue;
+//    $_pec= count($data);
+//    if ( !$_pec ) continue;
+    if ( !count($data) ) continue;
     foreach ($data as $d) {
       $skoleni= 0;
       $sko= array_unique(preg_split("/\s+/",$d['_skoleni'], -1, PREG_SPLIT_NO_EMPTY));
       $slu= array_unique(preg_split("/\s+/",$d['_sluzba'],  -1, PREG_SPLIT_NO_EMPTY));
       $ref= array_unique(preg_split("/\s+/",$d['_reflexe'], -1, PREG_SPLIT_NO_EMPTY));
       $leto= $slu[0];
+      // počty různých typů pečounů
+      $_pec++;
       // výpočet školení všech
       $skoleni+= count($sko);
-      foreach ($ref as $r) if ( $r<$leto ) $skoleni++;
+      foreach ($ref as $r) {
+        if ( $r<$leto ) 
+          $skoleni++;
+      }
       $_sko+= $skoleni>0 ? 1 : 0;
       // noví
       if ( count($slu)==1 ) {
@@ -9804,10 +9846,14 @@ function sta2_pecouni($org) { trace();
     $note= $akci;
     $ratio= round($info->deti/$_pec,1);
     $note.= ", $ratio";
+    // aserce na pečouny
+    $err= $_pec!=$info->peco+$info->_pp+$info->_po+$info->_pg
+        ? "$_pec != {$info->peco}+{$info->_pp}+{$info->_po}+{$info->_pg}" : '';
     // zobrazení výsledků
     $clmn[]= array('_rok'=>$rok,'_rodi'=>$info->rodi,'_deti'=>$info->deti,
-      '_pec'=>$_pec,'_sko'=>$_sko,'_proc'=>$_proc,
-      '_pecN'=>$_pecN,'_skoN'=>$_skoN,'_procN'=>$_procN,'_note'=>$note);
+      '_pec'=>$info->peco,'_sko'=>$_sko,'_proc'=>$_proc,
+      '_pp'=>$info->_pp,'_po'=>$info->_po,'_pg'=>$info->_pg,'_celk'=>$_pec,
+      '_pecN'=>$_pecN,'_skoN'=>$_skoN,'_procN'=>$_procN,'_note'=>$note,'chyba'=>$err);
 //       if ( $rok==2014) break;
   }
   return $clmn;
@@ -11232,7 +11278,7 @@ function mail2_mai_export($idd) {  trace();
       'clmn' => array()
       );
   $nazev= '';
-  $rs= mysql_qry("
+  $rs= pdo_qry("
     SELECT id_clen,prijmeni,jmeno,m.email,d.nazev
     FROM mail AS m
     JOIN dopis AS d USING (id_dopis)
@@ -11240,7 +11286,7 @@ function mail2_mai_export($idd) {  trace();
     WHERE id_dopis=$idd AND stav=4
     ORDER BY prijmeni,jmeno
     ");
-  while ( $rs && (list($idc,$prijmeni,$jmeno,$email,$n)= mysql_fetch_array($rs)) ) {
+  while ( $rs && (list($idc,$prijmeni,$jmeno,$email,$n)= pdo_fetch_array($rs)) ) {
     if ( !$nazev ) $nazev= $n;
     $tab->clmn[]= array('prijmeni'=>$prijmeni,'jmeno'=>$jmeno,'email'=>$email,'id'=>$idc);
   }
@@ -11407,7 +11453,7 @@ function mail2_mai_text($id_dopis,$akce=0) {  //trace();
   try {
     $qry= "SELECT d.nazev,obsah,prilohy,id_duakce,id_mailist,cis_skupina $elem "
         . "FROM dopis AS d $join WHERE id_dopis=$id_dopis $group";
-    $res= pdo_qry($qry,1,null,1);
+    $res= pdo_qry($qry);
     $d= pdo_fetch_object($res);
   }
   catch (Exception $e) { 
@@ -11851,8 +11897,8 @@ function mail2_mai_pocet($id_dopis,$dopis_var,$cond='',$recall=false) {  trace()
            WHERE id_dopis=$id_dopis $AND 
              AND IF(i0_rodina,IF(ISNULL(t.role),0,t.role IN ('a','b')),1)
              GROUP BY id_pobyt $HAVING";
-    $res= mysql_qry($qry);
-    while ( $res && ($d= mysql_fetch_object($res)) ) {
+    $res= pdo_qry($qry);
+    while ( $res && ($d= pdo_fetch_object($res)) ) {
       $n++;
       $nazev= "Účastníků {$d->nazev}";
       list($jm)= explode(',',$d->_jm);
@@ -11963,8 +12009,7 @@ function mail2_mai_posli($id_dopis,$info) {  trace();
         $qr= "INSERT mail (id_davka,znacka,stav,id_dopis,id_clen,id_pobyt,email,body)
               VALUE (1,'@',0,$id_dopis,$id,$id_pobyt,'$email','$body')";
 //                                         display("$i:$qr");
-        $rs= pdo_qry($qr);
-        $num+= pdo_affected_rows();
+        $num+= pdo_query($qr);
       }
     }
   }

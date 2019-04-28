@@ -742,7 +742,7 @@ panel osoba_config [,,210,150] {type:'popup', title:"Podrobnosti údajů"
   }
   var _old= 'Z'
 }
-form _osoba2x [,,244,322] {css:'ae_frame', 
+form _osoba2x [,,244,322] {css:'ae_frame'
   proc onclick() { on_click }
   var host=''           // 'U' - použito z Uživatelé, 'E' - použito z Evidence
   var idr=0             // klíč rodiny pro rodinné údaje (pro akce2_osoba2)
