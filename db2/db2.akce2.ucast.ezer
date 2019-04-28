@@ -194,7 +194,6 @@ use header:form _header   [  4,  0,,]
 use u:     form _ucast    [  6, 20,,]  { tag:'akce1' }               // seznam účastníků
 # záložka evidence
 use evid:  form _evidence [400, 10,,]      { tag:'akce1', format:'n' }
-use rod:   form _rodina2  [404,30,,]       { tag:'akce1', format:'n' }
 use pob:   form _pobyt    [404,590,,] { tag:'akce1', format:'n' } // pro min_h=550, min_h+40=590
 use os1:   form _osoba2x [772,30,,] {        tag:'akce1', format:'n'
   proc on_click() { evid.z_change('o') }
@@ -208,6 +207,7 @@ use os2:   form _osoba2x [1023,30,,] {tag:'2,akce1', format:'n'
   proc onchanged() { evid.d_change }
   proc elim_kopie() { elim_kopie_osob(form) }
 }
+use rod:   form _rodina2  [404,30,,]       { tag:'akce1', format:'n' }
 use sp1:   form _spolu  [772,min_h-185,,]  { tag:'akce1',   format:'n' }
 use sp2:   form _spolu  [1023,min_h-185,,] { tag:'2,akce1', format:'n' }
 

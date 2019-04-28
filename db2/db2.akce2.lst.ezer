@@ -198,10 +198,10 @@ form _page [,,275,360] {
   label cen [188,0,80,20] {tag:'p', title:'<b>Ceník</b>', format:'c',
     proc onclick() { tags(this,'cen','inf|cor|doc|syn'); zalozka.set('cen'); show_akce(a_akce.get)
   } }
-  label doc [276,0,80,20] {tag:'p', title:'<b>Archiv</b>', format:'c',
+  label doc [276,0,80,20] {tag:'p', title:'<b>Archiv</b>', format:'c', skill:'y;f'
     proc onclick() { tags(this,'doc','inf|cor|cen|syn'); zalozka.set('doc'); show_akce(a_akce.get)
   } }
-  label syn [364,0,80,20] {tag:'p', title:'<b>Dokumenty</b>', format:'c',
+  label syn [364,0,80,20] {tag:'p', title:'<b>Dokumenty</b>', format:'c', skill:'y'
     proc onclick() { tags(this,'syn','inf|cor|cen|doc'); zalozka.set('syn'); show_akce(a_akce.get)
   } }
   proc show_akce(id_akce) {
@@ -698,7 +698,7 @@ form _page [,,275,360] {
   }
   # soubory - seznam
   label files [179,72,258,360] {tag:'syn' css:'files' style:"z-index:3;background:#EFFDF1;padding:5px"
-    proc Load() { this.set(ask('tut_dir_load',aroot.get,dfold.get))}
+    proc Load() { this.set(ask('tut_files',aroot.get,dfold.get))}
     proc Init() { this.set('')}
   }
   # soubory - drop area
