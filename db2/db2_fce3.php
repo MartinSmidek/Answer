@@ -1030,9 +1030,7 @@ function akce2_change_cenik($id_akce,$id_akce_vzor) {  trace();
   $err= '';
   if ( !$id_akce || !$id_akce_vzor ) { $err= "chybné použití změny - ceník nezměněn"; goto end; }
   // výmaz položek v ceníku
-  $qa= "DELETE FROM cenik WHERE id_akce=$id_akce";
-  $ra= pdo_qry($qa);
-  if ( !$ra ) { $err= "chyba MySQL"; goto end; }
+  query("DELETE FROM cenik WHERE id_akce=$id_akce");
   // kopie ze vzoru
   $qa= "INSERT INTO cenik (id_akce,poradi,polozka,za,typ,od,do,cena,dph)
           SELECT $id_akce,poradi,polozka,za,typ,od,do,cena,dph

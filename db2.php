@@ -107,6 +107,7 @@
   //  require_once("answer.php");
   $add_options= (object) ['watch_access' => 3,
     'path_akce'    => "'$path_akce'", // absolutní cesta do složky Akce
+    'group_db'     => "'ezer_answer'",
     'watch_access_opt' => // ... barvení v Uživatelé + select v ezer2.syst.ezer
        "{name:{1:'Setkání',2:'Familia',3:'Setkání+Familia'},
          abbr:{1:'S',2:'F',3:'S+F'},
