@@ -64,8 +64,8 @@ proc elim_osoby_lst(_ido,_idos) {
   mode.set('osoba_lst'); ido.set(_ido);
   last_ido_lst.set(_ido); last_idos_lst.set(_idos);
   panel.set_attrib('title',"Eliminace navržených kopií osob");
-  r1.display(0); o1.display(1); c1.display(0);
-  r2.display(0); o2.display(1); c2.display(0);
+  r1.display(0); o1.display(1); o1.oso.display(1); c1.display(0);
+  r2.display(0); o2.display(1); o2.oso.display(1); c2.display(0);
   [ _ido;
     [ o1.bs._nazev.get_query(0,1); o1.bs._nazev.set_query(1,'',0) ];
     [ o1.bs.browse_load(conc("o.id_osoba IN (",_ido,")")); o1.bs.raise('onrowclick') ];
