@@ -576,7 +576,8 @@ form _ucast [,,400,] { css:'ds_form'
     show _nazev [,,100,] { title:'příjmení', format:'s+q*'
       css_cell:'p_access_web,0:,1:ezer_ys,2:ezer_fa,3:ezer_db,17:ezer_ys ezer_web,18:ezer_fa ezer_web,19:ezer_db ezer_web' }
     # varianta A plná jména
-    show _jmena [,,180,] { title:'jméno/a', format:'tsq%' }
+    show _jmena [,,180,] { title:'jméno/a', format:'tsq%' 
+      css_cell:'web_changes,0:,1:ezer_web1,2:ezer_web2' }
     # varianta B na úkor _jmena
     show _docs   [,,0,] { title:'dokumenty', format:"tsq", css_cell:'_dupl,0:,1:ezer_db',
       help:'d pokud má dokumenty, F/f pokud jsou fotky, popis možných kopií'
@@ -593,7 +594,7 @@ form _ucast [,,400,] { css:'ds_form'
       help:'funkce na akci', css_cell:""} // nastavuje se v panel.onfocus pro LK a obnovy
     show skupina [,,30,] { title:'sk.', format:'rq=s:e', help:'číslo skupinky'}
     // barvení
-    show dluh, show _ms
+    show dluh, show web_changes, show _ms
     show r_access 
     show p_access_web // pobyt.access + 16 pokud došlo ke změně přes web (pobyt, rodina, spolu, osoba)
     show r_access_web // access + 16 pokud došlo ke změně přes web (rodina)

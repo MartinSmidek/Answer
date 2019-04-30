@@ -253,10 +253,13 @@ function akce2_info($id_akce,$text=1) { trace();
   $celkem= 0;
   $aviz= 0;
   if ( $id_akce ) {
-    $ucasti= $rodiny= $dosp= $muzi= $zeny= $chuvy= $deti= $pecounu= $pp= $po= 0;
+    $ucasti= $rodiny= $dosp= $muzi= $zeny= $chuvy= $deti= $pecounu= $pp= $po= $web= 0;
     $err= $err2= $err3= $err4= 0;
     $odhlaseni= $neprijeli= $nahradnici= $nahradnici_osoby= 0;
     $akce= $chybi_nar= $chybi_sex= '';
+    // web_changes= 1/2 pro INSERT/UPDATE pobyt a spolu | 4/8 pro INSERT/UPDATE osoba
+    $web_online= 0;     // web_changes>0
+    $web_novi= 0;       // web_changes&4
     $web_kalendar= $web_obsazeno= $web_anotace= $web_url= '';
     // zjistíme násobnou přítomnost
     $rn= pdo_qry("
@@ -273,7 +276,7 @@ function akce2_info($id_akce,$text=1) { trace();
       if ( $f1<99 && $f2==99 ) $vic_ucasti.= " (jako dítě a jako pečovatel)";
     }
     // projdeme pobyty
-    $qry= "SELECT nazev, datum_od, datum_do, now() as _ted,i0_rodina,funkce,
+    $qry= "SELECT nazev, datum_od, datum_do, now() as _ted,i0_rodina,funkce,p.web_zmena,web_changes,
              COUNT(id_spolu) AS _clenu,IF(c.ikona=2,1,0) AS _pro_pary,
              SUM(IF(ROUND(DATEDIFF(a.datum_od,o.narozeni)/365.2425,1)<18,1,0)) AS _deti,
              SUM(IF(ROUND(DATEDIFF(a.datum_od,o.narozeni)/365.2425,1)>=18 AND sex=1,1,0)) AS _muzu,
@@ -313,6 +316,12 @@ function akce2_info($id_akce,$text=1) { trace();
       $web_anotace= $p->web_anotace;
       $web_obsazeno= $p->web_obsazeno;
       $web_url= $p->web_url;
+      // online přihlášky
+      if ( $p->web_zmena!='0000-00-00' || $p->web_changes ) {
+        $web++;
+        if ( $p->web_changes )   $web_online++;
+        if ( $p->web_changes&4 ) $web_novi++;
+      }
       // záznam plateb
       if ( $p->platba ) {
         $celkem+= $p->platba;
@@ -395,6 +404,8 @@ function akce2_info($id_akce,$text=1) { trace();
       $_pobyt_n=   je_1_2_5($nahradnici,"přihláška,přihlášky,přihlášek");
       $_pobyt_no=  je_1_2_5($nahradnici_osoby,"osoba,osoby,osob");
       $_aviz=      je_1_2_5($aviz,"avízo,avíza,avíz");
+      $_web_onln=  je_1_2_5($web_online,"pobyt,pobyty,pobytů");
+      $_web_novi=  je_1_2_5($web_novi,"nová osoba,nové osoby,nových osob");
       // sloužili
       $sluzba= ''; $del= '<br>a dále '; 
       foreach ($fces as $f=>$fn) {
@@ -425,6 +436,7 @@ function akce2_info($id_akce,$text=1) { trace();
        . ",<br><br>v počtu $_dospelych ($_muzu, $_zen)"
        . ($chuvy ? " a $_deti - z toho $_chuv," : " a $_deti")
        . "<br><b>celkem $_osob</b>"
+      . ( $web_online ? "<hr>přihlášky z webu: $_web_onln".($web_novi ? ", z toho $_web_novi" : '') : '')
        : "Akce byla vložena do databáze ale nemá zatím žádné účastníky";
       if ( $odhlaseni + $neprijeli + $nahradnici > 0 ) {
         $html.= "<br><hr>";
@@ -2966,7 +2978,7 @@ function ucast2_browse_ask($x,$tisk=false) {
 //                                                         debug($osoba,'osoby po _rody');
     # seznamy položek
     $fpob1= ucast2_flds("key_pobyt=id_pobyt,_empty=0,key_akce=id_akce,key_osoba,key_spolu,key_rodina=i0_rodina,"
-           . "keys_rodina='',c_suma,platba,potvrzeno,x_ms,xfunkce=funkce,funkce,skupina,dluh");
+           . "keys_rodina='',c_suma,platba,potvrzeno,x_ms,xfunkce=funkce,funkce,skupina,dluh,web_changes");
     $fakce= ucast2_flds("dnu,datum_od");
     $frod=  ucast2_flds("fotka,r_access=access,r_access_web=access_web,r_spz=spz,"
           . "r_svatba=svatba,r_datsvatba=datsvatba,r_rozvod=rozvod,r_ulice=ulice,r_psc=psc,"
@@ -3148,6 +3160,8 @@ function ucast2_browse_ask($x,$tisk=false) {
           ? ( $platba1234 == 0 ? 2 : ( $platba1234 > $p->platba ? 1 : 0) )
           : ( $akce->ma_cenu ? ( $clenu * $akce->cena > $p->platba ? 1 : 0) : 0 )
           ));
+      // web_changes= 1/2 pro INSERT/UPDATE pobyt a spolu | 4/8 pro INSERT/UPDATE osoba
+      $p->web_changes= $p->web_changes&4 ? 2 : ($p->web_changes ? 1 : 0);
 //                                                         if ($idp==15826) { debug($akce);debug($p,"platba1234=$platba1234"); }
       # pobyt I
       foreach($fpob1 as $fz=>$fp) { $z->$fz= $p->$fp; }
@@ -9848,7 +9862,7 @@ function sta2_pecouni($org) { trace();
     $note.= ", $ratio";
     // aserce na pečouny
     $err= $_pec!=$info->peco+$info->_pp+$info->_po+$info->_pg
-        ? "$_pec != {$info->peco}+{$info->_pp}+{$info->_po}+{$info->_pg}" : '';
+        ? "$_pec &ne; {$info->peco}+{$info->_pp}+{$info->_po}+{$info->_pg}" : '';
     // zobrazení výsledků
     $clmn[]= array('_rok'=>$rok,'_rodi'=>$info->rodi,'_deti'=>$info->deti,
       '_pec'=>$info->peco,'_sko'=>$_sko,'_proc'=>$_proc,

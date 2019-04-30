@@ -79,6 +79,8 @@ tr td.ezer_db, li.ezer_db, input.ezer_db, .ezer_db input, span.ezer_db
 .nerodina,.nerodina input
                 { background-color:#e8e !important; }
 tr td.ezer_web  { outline: 3px solid #ef7f13; }
+tr td.ezer_web1 { border-left: 5px solid darkgrey; }
+tr td.ezer_web2 { border-left: 5px solid red; }
 /* */
 
 button.search   { padding-left:0px; }
