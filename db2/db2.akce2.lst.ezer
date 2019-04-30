@@ -198,10 +198,10 @@ form _page [,,275,360] {
   label cen [188,0,80,20] {tag:'p', title:'<b>Ceník</b>', format:'c',
     proc onclick() { tags(this,'cen','inf|cor|doc|syn'); zalozka.set('cen'); show_akce(a_akce.get)
   } }
-  label doc [276,0,80,20] {tag:'p', title:'<b>Archiv</b>', format:'c', skill:'y;f'
+  label doc [364,0,80,20] {tag:'p', title:'<b>Archiv</b>', format:'c', skill:'xy;xf'
     proc onclick() { tags(this,'doc','inf|cor|cen|syn'); zalozka.set('doc'); show_akce(a_akce.get)
   } }
-  label syn [364,0,80,20] {tag:'p', title:'<b>Dokumenty</b>', format:'c', skill:'y'
+  label syn [276,0,80,20] {tag:'p', title:'<b>Dokumenty</b>', format:'c', skill:'y'
     proc onclick() { tags(this,'syn','inf|cor|cen|doc'); zalozka.set('syn'); show_akce(a_akce.get)
   } }
   proc show_akce(id_akce) {
@@ -635,16 +635,11 @@ form _page [,,275,360] {
       aroot:text,     // absolutní adresa Ezer.options.path_files_u (má / na konci)
       droot='docs',   // kořen pro filebrowser 
       dfold='docs'    // zobrazená podsložka droot (bez koncového /)
-  button [15,42,,] {tag:'syn' title:'[fa-briefcase] založit archiv akce' 
+  label [18,25,300,40] {tag:'syn' title:"Přidávat soubory lze přetažením myší, pravým tlačítkem lze přidávat podsložky (prohlížet a stahovat lze zatím jen z prostředí Synology)" }
+  button [324,42,,] {tag:'syn' title:'[fa-briefcase] založit archiv akce' 
     proc onclick() {
       ask('tut_mkdir',abase.get,akce_get('rok'),akce_get('kod'),akce_get('nazev'));
       DocRefresh
-  }}
-  button [150,42,,] {tag:'syn' title:'2019/401' 
-    proc onclick() { DocShow(2019,401);
-  }}
-  button [220,42,,] {tag:'syn' title:'2019/601' 
-    proc onclick() { DocShow(2019,601);
   }}
   proc DocInit() { 
     abase.set(function("return Ezer.options.path_akce;"))
