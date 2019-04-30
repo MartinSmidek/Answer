@@ -32,6 +32,9 @@ menu db2 { type:'main', title:'db2', active:*, _sys:'*'
             proc onclick (i) {
               info.fill(conc(i.owner.title,' - ',i.title),'... probíhá výpočet ...');
               info.fill('',ask('db2_stav',i.par.db)) }}
+          item {title:'obnova pobyt.web_changes' 
+            proc onclick() { confirm('opravit pobyt.web_changes ?'); ask('update_web_changes') }
+          }
         }
         menu {title:'Kontroly konzistence dat',type:'group', _sys:'*'
           item {title:'kontroly databáze - test'        ,par:°{opravit:0,test:'test'}, skill:'m'}
