@@ -1,26 +1,65 @@
 <?php # (c) 2009-2015 Martin Smidek <martin@smidek.eu>
+# ------------------------------------------------------------------------------- update web_changes
+# upraví položku pobyt.web_changes hodnotou
+# 1/2 pro INSERT/UPDATE pobyt a spolu | 4/8 pro INSERT/UPDATE osoba
+function update_web_changes () {
+  ezer_connect('ezer_db2');
+  // pobyt
+  $xs=pdo_qry("
+    SELECT klic,op 
+    FROM _track JOIN pobyt ON id_pobyt=klic 
+    WHERE fld='web_zmena' AND kde='pobyt'
+  "); 
+  while ($xs && (list($idp,$op)=pdo_fetch_row($xs))) {
+    $ch= $op=='i' ? 1 : 2;
+    query("UPDATE pobyt SET web_changes=web_changes|$ch WHERE id_pobyt=$idp");
+  }
+  // osoba
+  $xs=pdo_qry("
+    SELECT klic,op,id_pobyt FROM _track 
+    JOIN osoba ON id_osoba=klic 
+    JOIN spolu USING (id_osoba)
+    JOIN pobyt USING (id_pobyt)
+    WHERE fld='web_zmena' AND kde='osoba' AND web_changes>0
+  "); 
+  while ($xs && (list($ido,$op,$idp)=pdo_fetch_row($xs))) {
+    $ch= $op=='i' ? 4 : 8;
+    query("UPDATE pobyt SET web_changes=web_changes|$ch WHERE id_pobyt=$idp");
+  }
+  return 1;
+}
 /** ===================================================================================> FILEBROWSER */
 # ---------------------------------------------------------------------------------------- tut mkdir
 // vytvoří adresář
 function tut_mkdir ($root,$rok,$kod,$nazev) {  trace();
   $base= "{$root}Akce/$rok";
-                                                  display("base? $base".(is_dir($base) ? 1 : 0)); 
-  if ( !is_dir($base)) { // založ rok
-    mkdir($base);
-  }
-  $y= tut_dir_find($root,$rok,$kod);
-  if ( $y->ok==0 ) {
-    $path= $kod=='*' 
-        ? "$base/$nazev"               // podsložka
-        : "$base/$kod - $nazev";       // základní složka
-    if ( stristr(PHP_OS,'WIN') && substr(PHP_VERSION_ID,0,1)=='5' ) // windows 
-      $path= iconv("UTF-8","Windows-1250",$path);
-                                                  display("path=$path");
-    $ok= mkdir($path) ? 1 : 0;
+  if ( $kod=='*' ) {
+    // podsložka
+    $path= "$base/$nazev";
   }
   else {
-                                                  fce_warning("POZOR: již existuje $base/$kod ...");
+    // základní složka
+    if ( !is_dir($base)) { 
+      // případně založ rok
+      mkdir($base);
+                                                display("založen rok $base");
+    }
+    $y= tut_dir_find($root,$rok,$kod);
+    if ( $y->ok==0 ) {
+      // akce s tímto kódem ještě nemá složku
+      $path= "$base/$kod - $nazev";       
+    }
+    else {
+      fce_warning("POZOR: archiv akce již existuje: $base/$kod ...");
+      goto end;
+    }
   }
+  // vlastní vytvoření složky
+  if ( stristr(PHP_OS,'WIN') && substr(PHP_VERSION_ID,0,1)=='5' ) 
+    // windows a PHP5 používají cp1250
+    $path= iconv("UTF-8","Windows-1250",$path);
+                                                display("path=$path");
+  $ok= mkdir($path) ? 1 : 0;
 end:
   return $ok;
 }
