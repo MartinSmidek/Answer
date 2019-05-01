@@ -126,12 +126,23 @@ proc onresize(w,h) { // echo('ucast2 onresize(',w,',',h,')');
 # změna šířky 1024/1280
 proc narrow() { curr_w.set(1024); w_change_all }
 proc wide()   { curr_w.set(1280); w_change_all }
-proc w_change_all() {
-  eq(the_soubeh.get,0,1);       // jen pro Kurs
-  evid.c_change(cconc(eq(curr_w.get,1024),1,2));
-  foreach(array(
-      page.frame,evid.frame,pla.frame,act0.frame,alb0.frame,docu.frame),
-    change_width);
+proc w_change_all() { var dite_kat_pipe:object, dite_kat_options:object
+  // podle YS/FA zvol kategorii dětí: ys_akce_dite_kat / fa_akce_dite_kat v options, map_pipe
+  dite_kat_options.set(cconc(
+      eq(the_org.get,1),'#.ys_akce_dite_kat.hodnota',eq(the_org.get,2),'#.fa_akce_dite_kat.hodnota',''));
+  dite_kat_pipe.set(cconc(
+      eq(the_org.get,1),'#.ys_akce_dite_kat.zkratka',eq(the_org.get,2),'#.fa_akce_dite_kat.zkratka',''));
+  dite_kat_options;
+  [ eq(the_soubeh.get,0,1);       // jen pro Kurs
+    evid.c_change(cconc(eq(curr_w.get,1024),1,2));
+    foreach(array(
+        page.frame,evid.frame,pla.frame,act0.frame,alb0.frame,docu.frame),
+      change_width);
+    sp1.s_dite_kat.set_attrib('options',dite_kat_options);
+    sp2.s_dite_kat.set_attrib('options',dite_kat_options);
+    u2.b.kat.set_attrib('map_pipe',dite_kat_pipe);
+  ];
+| error('POZOR: není možné stanovit dětské kategorie')
 }
 proc change_width(x) { x.property(object('widen',cconc(eq(curr_w.get,1024),-250,0))) }
 
@@ -746,7 +757,8 @@ form _ucast2 [,,400,] { css:'ds_form'
     show key_tvori {data:t.id_tvori}
     show prijmeni [,,100,] { title:'příjmení', format:'s+q*', data:o.prijmeni }
     show jmeno    [,,180,] { title:'jméno', format:'tsq*', data:o.jmeno }
-    show kat      [,,50,]  { title:'kat', format:'tsq#', data:s.dite_kat, map_pipe:ms_akce_dite_kat.zkratka }
+    show kat      [,,50,]  { title:'kat', format:'tsq#', data:s.dite_kat, 
+        map_pipe:xx_akce_dite_kat.zkratka } 
   }
   proc reload() {
     b.browse_load(conc("p.id_akce=",the_hlavni.get," AND t.role='d'"))
@@ -856,7 +868,12 @@ form _evidence [,,623,] {
   label frame [0,16,873,min_h-152] { css:'ae_work'}
   # ------------------------==> . kontextové_menu
   menu ctx { type:'context', join:frame
-    item { title:'zkontrolovat skupinky', skill:'yaa+;faa+;caa+',
+    item { title:'všem navrhnout cenu', skill:'yaa+',
+      proc onclick () { confirm(
+            "POZOR!<br>platby a věkové kategorie dětí <b style='color:red'>budou přepsány</b> hodnotami odvozenými pouze z věku dětí");
+        alert(ask('akce2_pobyt_default_vsem',the_duakce.get));
+        u.b.browse_refresh } }
+    item { title:'-zkontrolovat skupinky', skill:'yaa+;faa+;caa+',
       proc onclick () { alert(ask('akce2_skup_check',the_duakce.get)) } }
     item { title:'přečíslovat skupinky podle VPS', skill:'yaa+;caa+',
       proc onclick () { alert(ask('akce2_skup_renum',the_duakce.get)) } }
@@ -1125,7 +1142,7 @@ form _spolu [,,0,270] {
   field skupinka [216,0,20,]   { tag:'d', data:s.skupinka, help:'skupinka', title:"skup.", format:'n' }
   // cenová kategorie pro FA
   field kat_orig { data:s.dite_kat }
-  select s_dite_kat [54,0,130,] { tag:'d', type:'map', options:ms_akce_dite_kat.hodnota,
+  select s_dite_kat [54,0,130,] { tag:'d', type:'map', options:xx_akce_dite_kat,
     data:s.dite_kat, title:'kategorie:', format:'nuw'
     proc onchanged() { var a:object
       [ eq(this.key,7); pfunkce.set(8); pfunkce.change
@@ -1506,7 +1523,7 @@ form _platba [,,623,] { key_id:'id_pobyt'
   button [10,47,,] { tag:'cenik', title:"Návrh ceny", help:"zapíše počet lůžek a strav"
     var ret: object
     proc onclick() {
-      ret.set(ask('akce2_pobyt_default',the_pobyt.get));
+      ret.set(ask('akce2_pobyt_default',the_duakce.get,the_pobyt.get));
       copy_by_name(ret,form);
       vzorec.change; luzka.change; pocetdnu.change; svp.change;
       strava_cel.change; strava_pol.change; kocarek.change;
