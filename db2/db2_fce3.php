@@ -743,12 +743,19 @@ function akce2_zmeny($id_akce,$h) {  trace();
                                         debug($ret,"$n změn po ... sql_time={$ret->kdy}");
   return $ret;
 }
+# --------------------------------------------------------------------------------- xx akce_dite_kat
+# vrátí ys_akce_dite_kat nebo fa_akce_dite_kat podle akce
+function xx_akce_dite_kat($id_akce) {  trace();
+  $org= select1("access","akce","id_duakce=$id_akce");
+  return $org==1 ? 'ys_akce_dite_kat' : ($org==1 ? 'fa_akce_dite_kat' : '');
+}
 # ------------------------------------------------------------------------------- akce_test_dite_kat
 # testuje, zda je kategorie dítěte v souladu s rozmezím věku v číselníku
 # narozeni=d.m.Y
 function akce_test_dite_kat($kat,$narozeni,$id_akce) {  trace();
   $ret= (object)array('ok'=>0,'vek'=>0.0);
-  $od_do= select1("ikona","_cis","druh='ms_akce_dite_kat' AND data=$kat");
+  $dite_kat= xx_akce_dite_kat($id_akce);
+  $od_do= select1("ikona","_cis","druh='$dite_kat' AND data=$kat");
   list($od,$do)= explode('-',$od_do);
   $akce_od= select1("datum_od","akce","id_duakce=$id_akce");
   $narozeni= sql_date1($narozeni,1);
@@ -1159,19 +1166,36 @@ end:
 //                                                 debug($ret,"osob:$koje,$deti,$dosp $msg fce=$fce");
 //   return $ret;
 // }
+# ------------------------------------------------------------------------- akce2 pobyt_default_vsem
+# provedení akce2_pobyt_default pro všechny
+function akce2_pobyt_default_vsem($id_akce) {  trace();
+  $warn= '';
+  $ro= pdo_qry("SELECT id_pobyt FROM pobyt WHERE id_akce=$id_akce AND funkce!=99 -- AND id_pobyt=54411");
+  while ( $ro && (list($id_pobyt)= pdo_fetch_row($ro)) ) {
+    $ret= akce2_pobyt_default($id_akce,$id_pobyt,1,1);
+    $warn.= $ret->warn;
+  }
+  return $warn ?: 'ok' ;
+}
 # ------------------------------------------------------------------------------ akce2 pobyt_default
 # definice položek v POBYT podle počtu a věku účastníků - viz akce_vzorec_soubeh
 # 150216 při vyplnění dite_kat budou stravy počítány podle _cis/ms_akce_dite_kat.barva
 # 130522 údaje za chůvu budou připsány na rodinu chovaného dítěte
 # 130524 oživena položka SVP
-function akce2_pobyt_default($id_pobyt,$zapsat=0) {  trace();
-  $ms_akce_dite_kat= map_cis('ms_akce_dite_kat','barva'); // {L|-},{c|p} = lůžko/bez, celá/poloviční
+# 190501 pokud je $prepsat=1 budou dětem stanoveny kategorie podle věku
+function akce2_pobyt_default($id_akce,$id_pobyt,$zapsat=0,$prepsat=0) {  trace();
+  $warn= '';
+  $dite_kat= xx_akce_dite_kat($id_akce);
+  $akce_dite_kat_Lp=  map_cis($dite_kat,'barva'); // {L|-},{c|p} = lůžko/bez, celá/poloviční
+  $akce_dite_kat_vek= map_cis($dite_kat,'ikona'); // od-do
+  $akce_funkce= map_cis('ms_akce_funkce','zkratka');
   // projítí společníků v pobytu
   $dosp= $deti= $koje= $noci= $sleva= $fce= $svp= 0;
   $luzka= $bez= $cela= $polo= 0;
   $msg= '';
-  $qo= "SELECT o.jmeno,o.narozeni,a.datum_od,DATEDIFF(datum_do,datum_od) AS _noci,p.funkce,
-         s.pecovane,s.s_role,s.dite_kat,(SELECT CONCAT(osoba.id_osoba,',',pobyt.id_pobyt)
+  $qo= "SELECT o.prijmeni,o.jmeno,o.narozeni,a.datum_od,DATEDIFF(datum_do,datum_od) AS _noci,p.funkce,
+         s.pecovane,s.s_role,s.dite_kat,id_spolu,
+         (SELECT CONCAT(osoba.id_osoba,',',pobyt.id_pobyt)
           FROM pobyt
           JOIN spolu ON spolu.id_pobyt=pobyt.id_pobyt
           JOIN osoba ON osoba.id_osoba=spolu.id_osoba
@@ -1190,27 +1214,59 @@ function akce2_pobyt_default($id_pobyt,$zapsat=0) {  trace();
     }
     $noci= $o->_noci;
     $fce= $o->funkce;
-    $vek= narozeni2roky(sql2stamp($o->narozeni),sql2stamp($o->datum_od));
+    $jmeno= "<i>{$o->prijmeni} {$o->jmeno}</i>";
+    $_fce= $akce_funkce[$fce];
+    if ( $_fce=='-' ) $_fce= 'účastník';
+    $vek0= narozeni2roky(sql2stamp($o->narozeni),sql2stamp($o->datum_od));
+    $vek= roku_k($o->narozeni,$o->datum_od);
+                                        display("$_fce $jmeno vek=$vek ($vek0)");
     $msg.= " {$o->jmeno}:$vek";
-    if ( in_array($o->s_role,array(2,3,4)) && $o->dite_kat ) {
-      // pokud je definována kategorie podle _cis/ms_akce_dite_kat ALE dítě není pečoun
-      $deti++;
-      list($spani,$strava)= explode(',',$ms_akce_dite_kat[$o->dite_kat]);
-      // lůžka
-      if ( $spani=='L' )      $luzka++;
-      elseif ( $spani=='-' )  $bez++;
-      else $err+= "chybná kategorie dítěte";
-      // strava
-      if ( $strava=='c' )     $cela++;
-      elseif ( $strava=='p' ) $polo++;
-      else $err+= "chybná kategorie dítěte";
+    // s-role: 2,3,4=dítě, s peč. ,pom.peč. - v tom případě je otevřena volba dite-kat
+    if ( in_array($o->s_role,array(2,3,4)) ) {
+      $ktg= $o->dite_kat;
+      // pokud prepsat=1 => kategorie dítěte bude stanovena podle věku
+      if ( $prepsat ) {
+        $ok= 0;
+        foreach ($akce_dite_kat_vek as $kat=>$veky) {
+          list($od,$do)= explode('-',$veky);
+          if ( $vek>=$od && $vek<$do ) {
+            query("UPDATE spolu SET dite_kat=$kat WHERE id_spolu={$o->id_spolu} ");
+            $ok= 1;
+            break;
+          }
+        }
+        if ( !$ok ) 
+          $warn.= " $_fce $jmeno nemá dětský věk, ";
+      }
+      if ( $ktg ) {
+        // pokud je definována kategorie podle _cis/akce_dite_kat ALE dítě není pečoun
+        $deti++;
+        list($spani,$strava)= explode(',',$akce_dite_kat_Lp[$ktg]);
+        // lůžka
+        if ( $spani=='L' )      $luzka++;
+        elseif ( $spani=='-' )  $bez++;
+        else $err+= "chybná kategorie dítěte";
+        // strava
+        if ( $strava=='c' )     $cela++;
+        elseif ( $strava=='p' ) $polo++;
+        else $err+= "chybná kategorie dítěte";
+      }
+      else {
+        $warn.= "$_fce $jmeno nemá nastavenou kategorii, ";
+      }
     }
     else {
-      // jinak se orientujeme podle věkových hranic: 0-3-10-18
-      if     ( $vek<3  ) { $koje++;  $bez++; }                  // dítě bez lůžka a stravy
-      elseif ( $vek<10 ) { $deti++;  $luzka++; $polo++; }       // dítě lůžko poloviční
-      elseif ( $vek<18 ) { $deti++;  $luzka++; $cela++; }       // dítě lůžko celá
-      else               { $dosp++;  $luzka++; $cela++; }       // dospělý lůžko celá
+      if ( $vek>18 ) {
+        $dosp++;  $luzka++; $cela++; // dospělý lůžko celá
+      }
+      else {
+        $warn.= " $_fce $jmeno nemá 18 let, ";
+      }
+//      // jinak se orientujeme podle věkových hranic: 0-3-10-18
+//      if     ( $vek<3  ) { $koje++;  $bez++; }                  // dítě bez lůžka a stravy
+//      elseif ( $vek<10 ) { $deti++;  $luzka++; $polo++; }       // dítě lůžko poloviční
+//      elseif ( $vek<18 ) { $deti++;  $luzka++; $cela++; }       // dítě lůžko celá
+//      else               { $dosp++;  $luzka++; $cela++; }       // dospělý lůžko celá
     }
   }
   // zápis do pobytu
@@ -1223,8 +1279,9 @@ function akce2_pobyt_default($id_pobyt,$zapsat=0) {  trace();
   //$ret= (object)array('luzka'=>$dosp+$deti,'kocarek'=>$koje,'pocetdnu'=>$noci,'svp'=>$svp,
   //                    'strava_cel'=>$dosp,'strava_pol'=>$deti,'vzorec'=>$fce);
   $ret= (object)array('luzka'=>$luzka,'kocarek'=>$bez,'pocetdnu'=>$noci,'svp'=>$svp,
-                      'strava_cel'=>$cela,'strava_pol'=>$polo,'vzorec'=>$fce,'vek'=>$vek);
-                                                debug($ret,"osob:$koje,$deti,$dosp $msg fce=$fce");
+                      'strava_cel'=>$cela,'strava_pol'=>$polo,'vzorec'=>$fce,'vek'=>$vek,
+                      'warn'=>$warn);
+//                                                debug($ret,"osob:$koje,$deti,$dosp $msg fce=$fce");
   return $ret;
 }
 # -------------------------------------------------------------------------------- akce2 vzorec_expr
@@ -1398,7 +1455,8 @@ function akce2_vzorec_soubeh($id_pobyt,$id_hlavni,$id_soubezna,$dosp=0,$deti=0,$
   $ret= (object)array('navrh'=>'','err'=>'','naklad_d'=>0,'poplatek_d'=>0);
   akce2_nacti_cenik($id_hlavni,$cenik_dosp,$ret->navrh);   if ( $html ) goto end;
   akce2_nacti_cenik($id_soubezna,$cenik_deti,$ret->navrh); if ( $html ) goto end;
-  $map_kat= map_cis('ms_akce_dite_kat','zkratka');
+  $dite_kat= xx_akce_dite_kat($id_hlavni);
+  $map_kat= map_cis($dite_kat,'zkratka');
   if ( $id_pobyt ) {
     // zjištění parametrů pobytu podle hlavní akce
     $qp= "SELECT * FROM pobyt AS p JOIN akce AS a ON p.id_akce=a.id_duakce WHERE id_pobyt=$id_pobyt";
@@ -4093,7 +4151,7 @@ end:
 #   je-li zadáno access, opraví je v OSOBA
 #   není-li zadán pobyt, vytvoří nový, přidá SPOLU - hlídá duplicity
 #   je-li zadána rodina, přidá TVORI s rolí - hlídá duplicity
-# spolupracuje s číselníky: ms_akce_s_role,ms_akce_dite_kat
+# spolupracuje s číselníky: ms_akce_s_role, ys_akce_dite_kat a fa_akce_dite_kat
 #   podle stáří resp. role odhadne hodnotu SPOLU.s_role a SPOLU.dite_kat
 #  vrací
 #   ret.spolu,tvori - klíče vytvořených záznamů stejnojmenných tabulek nebo 0
@@ -4536,7 +4594,8 @@ function tisk2_sestava_lidi($akce,$par,$title,$vypis,$export=false) { trace();
   $funkce= map_cis('ms_akce_funkce','zkratka');  $funkce[0]= '';
   $pfunkce= map_cis('ms_akce_pfunkce','zkratka');  $pfunkce[0]= '?';
   $dieta= map_cis('ms_akce_dieta','zkratka');  $dieta[0]= '';
-  $dite_kat= map_cis('ms_akce_dite_kat','zkratka');  $dite_kat[0]= '?';
+  $dite_kat= xx_akce_dite_kat($akce);
+  $dite_kat= map_cis($dite_kat,'zkratka');  $dite_kat[0]= '?';
   // načtení ceníku pro dite_kat, pokud se chce _poplatek
   if ( strpos($fld,"_poplatek") ) {
     $soubezna= select("id_duakce","akce","id_hlavni=$akce");
