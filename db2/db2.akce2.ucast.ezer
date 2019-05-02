@@ -1563,7 +1563,11 @@ form _platba [,,623,] { key_id:'id_pobyt'
     case [158,2,122,] { title:'vlastní text s cenou', expr:'1' }
     proc onchange () { rozpis_ceny }
   }
-  label navrh [10,119,280,Td+-142] { tag:'cenik', css:'karta_info' }
+  button [266,124,,] { tag:'cenik' style:"z-index:3" title:'[fa-upload]' help:'vložení tabulky do schránky'
+    proc onclick() {
+      function("clipboard_obj('div.karta_info')");
+  }}
+  label navrh [10,123,280,Td-146] { tag:'cenik', css:'karta_info' }
   edit duvod_text [8,119,280,Td-147] { tag:'cenik', /*type:'html',*/ data:pobyt.duvod_text }
   label doslo [300,99,281,170] { style:"border-left:2px solid grey" }
   // nestandardní strava
