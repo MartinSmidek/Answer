@@ -740,7 +740,7 @@ function akce2_zmeny($id_akce,$h) {  trace();
   // shrnutí změn
   $ret->osoby= implode(',',array_keys($osoby));
   $ret->pobyt= implode(',',$pobyt);
-                                        debug($ret,"$n změn po ... sql_time={$ret->kdy}");
+//                                        debug($ret,"$n změn po ... sql_time={$ret->kdy}");
   return $ret;
 }
 # --------------------------------------------------------------------------------- xx akce_dite_kat
@@ -1170,20 +1170,57 @@ end:
 # provedení akce2_pobyt_default pro všechny
 function akce2_pobyt_default_vsem($id_akce) {  trace();
   $warn= '';
-  $ro= pdo_qry("SELECT id_pobyt FROM pobyt WHERE id_akce=$id_akce AND funkce!=99 -- AND id_pobyt=54411");
-  while ( $ro && (list($id_pobyt)= pdo_fetch_row($ro)) ) {
-    $ret= akce2_pobyt_default($id_akce,$id_pobyt,1,1);
-    $warn.= $ret->warn;
+  $a= akce2_id2a($id_akce);
+  $ro= pdo_qry("
+    SELECT id_pobyt,prijmeni,
+      CONCAT(cstrava_cel,cstrava_cel_bm,cstrava_cel_bl,
+             cstrava_pol,cstrava_pol_bm,cstrava_pol_bl) AS _c
+    FROM pobyt 
+    JOIN spolu USING (id_pobyt)
+    JOIN osoba USING (id_osoba)
+    WHERE id_akce=$id_akce AND funkce!=99 
+    -- AND id_pobyt IN (54153)
+    GROUP BY id_pobyt
+  ");
+  while ( $ro && (list($id_pobyt,$prijmeni,$spec_strava)= pdo_fetch_row($ro)) ) {
+    // test prázdnosti speciálních strav tj. cstrava_cel*,cstrava_pol*
+    if ( $spec_strava ) {
+      $warn.= " $prijmeni má nastavenu speciální stravu ";
+    }
+    $x= akce2_pobyt_default($id_akce,$id_pobyt,1,1);
+    $warn.= $x->warn;
+    // pokud nebylo varování - zápis do pobytu 
+    if ( !$x->warn ) {
+      query("UPDATE pobyt SET luzka=$x->luzka,kocarek=$x->kocarek,strava_cel=$x->strava_cel,
+        strava_pol=$x->strava_pol,pocetdnu=$x->pocetdnu,svp=$x->svp,vzorec=$x->vzorec 
+        WHERE id_pobyt=$id_pobyt");
+      // aplikace vzorce
+      if ( $a->soubeh ) {
+        $c= akce2_vzorec_soubeh($id_pobyt,$id_akce,$a->soubezna); 
+        if ( $c->err ) $warn.= " {$c->err} (pobyt $id_pobyt)";
+      }
+      else {
+        $c= akce2_vzorec($id_pobyt);
+//                                              debug($c,"akce2_vzorec($id_pobyt)");
+      }
+      if ( !isset($c->err) || !$c->err ) {
+        // zápis ceny
+        query("UPDATE pobyt SET 
+          platba1='{$c->c_nocleh}',platba2='{$c->c_strava}',platba3='{$c->c_program}',
+          platba4='{$c->c_sleva}',poplatek_d='{$c->poplatek_d}',naklad_d='{$c->naklad_d}'
+          WHERE id_pobyt=$id_pobyt");
+      }
+    }
   }
-  return $warn ?: 'ok' ;
+  return $warn ? "$warn<hr>výše uvedeným nebyly platby předepsány" : 'ok' ;
 }
 # ------------------------------------------------------------------------------ akce2 pobyt_default
 # definice položek v POBYT podle počtu a věku účastníků - viz akce_vzorec_soubeh
 # 150216 při vyplnění dite_kat budou stravy počítány podle _cis/ms_akce_dite_kat.barva
 # 130522 údaje za chůvu budou připsány na rodinu chovaného dítěte
 # 130524 oživena položka SVP
-# 190501 pokud je $prepsat=1 budou dětem stanoveny kategorie podle věku
-function akce2_pobyt_default($id_akce,$id_pobyt,$zapsat=0,$prepsat=0) {  trace();
+# 190501 pokud je $zapsat=1 budou dětem stanoveny kategorie podle věku
+function akce2_pobyt_default($id_akce,$id_pobyt,$zapsat=0) {  trace();
   $warn= '';
   $dite_kat= xx_akce_dite_kat($id_akce);
   $akce_dite_kat_Lp=  map_cis($dite_kat,'barva'); // {L|-},{c|p} = lůžko/bez, celá/poloviční
@@ -1219,13 +1256,13 @@ function akce2_pobyt_default($id_akce,$id_pobyt,$zapsat=0,$prepsat=0) {  trace()
     if ( $_fce=='-' ) $_fce= 'účastník';
     $vek0= narozeni2roky(sql2stamp($o->narozeni),sql2stamp($o->datum_od));
     $vek= roku_k($o->narozeni,$o->datum_od);
-                                        display("$_fce $jmeno vek=$vek ($vek0)");
+//                                        display("$_fce $jmeno vek=$vek ($vek0)");
     $msg.= " {$o->jmeno}:$vek";
     // s-role: 2,3,4=dítě, s peč. ,pom.peč. - v tom případě je otevřena volba dite-kat
     if ( in_array($o->s_role,array(2,3,4)) ) {
       $ktg= $o->dite_kat;
       // pokud prepsat=1 => kategorie dítěte bude stanovena podle věku
-      if ( $prepsat ) {
+      if ( $zapsat ) {
         $ok= 0;
         foreach ($akce_dite_kat_vek as $kat=>$veky) {
           list($od,$do)= explode('-',$veky);
@@ -1256,7 +1293,7 @@ function akce2_pobyt_default($id_akce,$id_pobyt,$zapsat=0,$prepsat=0) {  trace()
       }
     }
     else {
-      if ( $vek>18 ) {
+      if ( $vek>18 || in_array($o->s_role,array(0,5)) ) {
         $dosp++;  $luzka++; $cela++; // dospělý lůžko celá
       }
       else {
@@ -1269,17 +1306,14 @@ function akce2_pobyt_default($id_akce,$id_pobyt,$zapsat=0,$prepsat=0) {  trace()
 //      else               { $dosp++;  $luzka++; $cela++; }       // dospělý lůžko celá
     }
   }
-  // zápis do pobytu
-  if ( $zapsat ) {
-//     query("UPDATE pobyt SET luzka=".($dosp+$deti).",kocarek=$koje,strava_cel=$dosp,strava_pol=$deti,
-//              pocetdnu=$noci,svp=$svp WHERE id_pobyt=$id_pobyt");
-    query("UPDATE pobyt SET luzka=$luzka,kocarek=$bez,strava_cel=$cela,strava_pol=$polo,
-             pocetdnu=$noci,svp=$svp WHERE id_pobyt=$id_pobyt");
-  }
-  //$ret= (object)array('luzka'=>$dosp+$deti,'kocarek'=>$koje,'pocetdnu'=>$noci,'svp'=>$svp,
-  //                    'strava_cel'=>$dosp,'strava_pol'=>$deti,'vzorec'=>$fce);
+  // určení vzorce
+  $vzorec= 
+      in_array($fce,array(1,2)) ?   1 : (
+      in_array($fce,array(5)) ?     2 : (
+      in_array($fce,array(3,4,6)) ? 3 : 0));      
+  // vrácení hodnot
   $ret= (object)array('luzka'=>$luzka,'kocarek'=>$bez,'pocetdnu'=>$noci,'svp'=>$svp,
-                      'strava_cel'=>$cela,'strava_pol'=>$polo,'vzorec'=>$fce,'vek'=>$vek,
+                      'strava_cel'=>$cela,'strava_pol'=>$polo,'vzorec'=>$vzorec,'vek'=>$vek,
                       'warn'=>$warn);
 //                                                debug($ret,"osob:$koje,$deti,$dosp $msg fce=$fce");
   return $ret;
@@ -1634,7 +1668,7 @@ function akce2_nacti_cenik($id_akce,&$cenik,&$html) {
       if ( isset($cenik[$za]) ) $html.= "v ceníku se opakují kódy za=$za";
       $cenik[$za]= (object)array('c'=>$a->cena,'txt'=>$a->polozka);
     }
-                                                        debug($cenik,"ceník pro $id_akce");
+//                                                        debug($cenik,"ceník pro $id_akce");
   }
 }
 # ------------------------------------------------------------------------------------- akce2 vzorec
@@ -5461,7 +5495,7 @@ function akce2_strava_pary($akce,$par,$title,$vypis,$export=false,$id_pobyt=0) {
     $n++;
     $clmn[$n]= array();
     if ( $x->funkce==99 && $x->pfunkce ) {
-                                                        debug($x,"hodnoty pečounů");
+//                                                        debug($x,"hodnoty pečounů");
       // --------------------------------------------- stravy pečouni
       // počet se počítá podle atributu osoba.dieta s opravou podle poskytnutých diet
       $k= 0;
@@ -5710,7 +5744,7 @@ function akce2_text_eko($akce,$par,$title,$vypis,$export=false) { trace();
       }
     }
   }
-                                                        debug($prijem,"prijem");
+//                                                        debug($prijem,"prijem");
   // výdaje za pečouny (mimo osobních a pomocných)
   $rows_vydaje= '';
   $rows_prijmy= '';
@@ -7729,7 +7763,7 @@ function tisk2_pdf_mrop($akce,$par,$title,$vypis,$report_json) {  trace();
   mb_internal_encoding('UTF-8');
   $tab= tisk2_sestava($akce,$par,$title,$vypis,true);
 //                                         display($report_json);
-                                        debug($tab,"tisk2_sestava($akce,...)"); //return;
+//                                        debug($tab,"tisk2_sestava($akce,...)"); //return;
 //   $report_json= "
 //   {'format':'A4:5,6,70,41','boxes':[
 //   {'type':'text','left':2.6,'top':11,'width':60,'height':27.3,'id':'jmeno','txt':'{pr_jm}','style':'16,C'},
@@ -8037,7 +8071,7 @@ function tisk2_pdf_plachta($akce,$report_json=0) {  trace();
   unset($tab->xhref);
   unset($tab->html);
   ksort($tab->pdf,SORT_LOCALE_STRING);
-                                               debug($tab->pdf);
+//                                               debug($tab->pdf);
   // projdi vygenerované záznamy
   $n= 0;
   if ( $report_json) {
@@ -8924,7 +8958,7 @@ end:
 # x->selected= null | seznam key_id, které mají být předány - použití v kombinaci se selected(use)
 function evid2_browse_mailist($x) {
   global $test_clmn,$test_asc, $y;
-                                                        debug($x,"evid2_browse_mailist");
+//                                                        debug($x,"evid2_browse_mailist");
 //                                                         return;
   $y= (object)array('ok'=>0);
   foreach(explode(',','cmd,rows,quiet,key_id,oldkey') as $i) $y->$i= $x->$i;
@@ -9176,7 +9210,7 @@ function mapa2_psc_list($psc_lst) {
 # ----------------------------------------------------------------------------------==> .. mapa2 psc
 # vrátí strukturu pro gmap
 function mapa2_psc($psc,$obec,$psc_as_id=0) {
-                                                debug($psc,"mapa2_psc");
+//                                                debug($psc,"mapa2_psc");
   // k PSČ zjistíme LAN,LNG
   $ret= (object)array('mark'=>'','n'=>0);
   $marks= $err= '';
@@ -9537,9 +9571,9 @@ function sta2_mrop_vliv($par,$export=false) {
     $pred[$m->pred]++;
     $po[$m->po]++;
   }
-                                                        debug($ucast,'ucast');
-                                                        debug($pred,'před');
-                                                        debug($po,'po');
+//                                                        debug($ucast,'ucast');
+//                                                        debug($pred,'před');
+//                                                        debug($po,'po');
   $c_pred= $c_po= $c_ucast= 0;
   $styl= " style='text-align:right'";
   $tab= "<div class='stat'><table class='stat'>
@@ -9567,7 +9601,7 @@ function sta2_cesty($org,$par,$title,$export=false) {
   $od_roku= $par->od ?: 0;
   $par->fld= 'nazev';
   $par->tit= 'nazev';
-                                                   debug($par,"sta2_cesty(,$title,$export)");
+//                                                   debug($par,"sta2_cesty(,$title,$export)");
   $clmn= $suma= array();
   $tit= "rok,rodin,s,as,bs,abs,bas";
   $tits= explode(',',$tit);
@@ -10060,7 +10094,7 @@ function sta2_sestava($org,$title,$par,$export=false) { trace();
       }
     }
     if ( $note_before ) $note_before= "POZOR!$note_before<br><br>";
-                                                debug($clmn,"clmn");
+//                                                debug($clmn,"clmn");
     break;
 
   # Sestava pečounů na letních kurzech, rok= před kolika lety naposledy ve funkci (0=jen letos)
@@ -10765,7 +10799,7 @@ function elim2_osoba($id_orig,$id_copy) { //trace();
     $ret->idr2= $idrs[1];
   }
 end:
-                                                        debug($ret,"elim2_osoba nrod=$nrod");
+//                                                        debug($ret,"elim2_osoba nrod=$nrod");
   return $ret;
 }
 # ----------------------------------------------------------------------------------==> . elim2_clen
@@ -12038,7 +12072,7 @@ function mail2_mai_pocet($id_dopis,$dopis_var,$cond='',$recall=false) {  trace()
     $result->_adresy= array();
     $result->_ids= array();
   }
-                                                debug($result,"mail2_mai_pocet.result");
+//                                                debug($result,"mail2_mai_pocet.result");
   return $result;
 }
 # ---------------------------------------------------------------------------------- mail2 mai_posli
@@ -12876,7 +12910,7 @@ function ucet_potv($par,$access) { trace();
     $clmn[]= $row;
   }
                                         ksort($jmeno_id); debug($jmeno_id,'jmeno_id');
-                                        debug($darce,'dárce');
+//                                        debug($darce,'dárce');
 //                                         debug($clmn,'clmn');
   // -------------------- vytvoření tabulky pro zobrazení a tisk
   $tab= (object)array(
@@ -13765,7 +13799,7 @@ function db2_stav($db) {
     "ezer_root"=>$ezer_root,
     "dbs"=>$dbs
   );
-                                        debug($stav);
+//                                        debug($stav);
   return $html;
 }
 function db2_prubeh_kdo($db,$od,$tit) {
@@ -14873,11 +14907,11 @@ function grp_read($par) {  trace(); debug($par);
       $mails[$idm]->date= $ymdhis;
       $mails[$idm]->from= $from;
       if ( !$sav ) {
-                                                debug($overview);
+//                                                debug($overview);
       }
     }
     if ( !$sav ) {
-                                                debug($mails,'mails');
+//                                                debug($mails,'mails');
     }
     if ( $sav ) {
       foreach ($mails as $uid=>$mail) {
