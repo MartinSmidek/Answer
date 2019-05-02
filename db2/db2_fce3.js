@@ -1,6 +1,20 @@
 // uživatelské funkce aplikace Ans(w)er - varianta s jQuery
 "use strict";
 // =========================================================================================> funkce
+// ----------------------------------------------------------------------------------- clipboard
+// copy message to the clipboard
+function clipboard_obj(sel) {
+  let div= jQuery(sel),
+      selection,
+      range= document.createRange();
+  // select element
+  range.selectNodeContents(div.get(0));
+  selection= window.getSelection();
+  selection.removeAllRanges();
+  selection.addRange(range);
+  // lets copy element
+  document.execCommand ("copy", false, null);
+};
 // -----------------------------------------------------------------------------------==> . ON login
 Ezer.onlogin= function() {
   if ( Ezer.root=='db2' ) {
