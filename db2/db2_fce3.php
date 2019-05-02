@@ -747,7 +747,10 @@ function akce2_zmeny($id_akce,$h) {  trace();
 # vrátí ys_akce_dite_kat nebo fa_akce_dite_kat podle akce
 function xx_akce_dite_kat($id_akce) {  trace();
   $org= select1("access","akce","id_duakce=$id_akce");
-  return $org==1 ? 'ys_akce_dite_kat' : ($org==1 ? 'fa_akce_dite_kat' : '');
+  return 
+      $org==1 ? 'ys_akce_dite_kat' : (
+      $org==2 ? 'fa_akce_dite_kat' : (
+      $org==4 ? 'ms_akce_dite_kat' : ''));
 }
 # ------------------------------------------------------------------------------- akce_test_dite_kat
 # testuje, zda je kategorie dítěte v souladu s rozmezím věku v číselníku

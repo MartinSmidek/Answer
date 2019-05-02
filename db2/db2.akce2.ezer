@@ -613,9 +613,9 @@ map ms_akce_ucastnik: table _cis {where:"druh='ms_akce_ucastnik'",  order:'porad
 map ms_cena_vzorec:   table _cis {where:"druh='ms_cena_vzorec'",    order:'poradi', key_id:'data'}
 map ms_akce_ubytovan: table _cis {where:"druh='ms_akce_ubytovan'",  order:'poradi', key_id:'data'}
 map ms_akce_dieta:    table _cis {where:"druh='ms_akce_dieta'",     order:'poradi', key_id:'data'}
-map xx_akce_dite_kat: table _cis {where:"0"} 
-map ys_akce_dite_kat: table _cis {where:"druh='ys_akce_dite_kat'",  order:'poradi', key_id:'data'}
-map fa_akce_dite_kat: table _cis {where:"druh='fa_akce_dite_kat'",  order:'poradi', key_id:'data'}
+map ms_akce_dite_kat: table _cis {where:"druh='ms_akce_dite_kat'",  order:'poradi', key_id:'data'} // cr
+map ys_akce_dite_kat: table _cis {where:"druh='ys_akce_dite_kat'",  order:'poradi', key_id:'data'} // ys
+map fa_akce_dite_kat: table _cis {where:"druh='fa_akce_dite_kat'",  order:'poradi', key_id:'data'} // fa
 map ms_akce_s_role:   table _cis {where:"druh='ms_akce_s_role'",    order:'poradi', key_id:'data'}
 map ms_akce_t_role:   table _cis {where:"druh='ms_akce_t_role'",    order:'poradi', key_id:'data'}
 map ms_akce_titul_p:  table _cis {where:"druh='ms_akce_titul_p'",   order:'poradi', key_id:'data'}
