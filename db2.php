@@ -105,7 +105,10 @@
       "/$kernel/client/wiki.css"
    ];
   //  require_once("answer.php");
-  $add_options= (object) ['watch_access' => 3,
+  $add_options= (object) [
+    'watch_git'    => 1,                // sleduj git-verzi aplikace a jádra, při změně navrhni restart
+    'curr_version' => 1,                // při přihlášení je nahrazeno nejvyšší ezer_kernel.version
+    'watch_access' => 3,
     'path_akce'    => "'$path_akce'", // absolutní cesta do složky Akce
     'group_db'     => "'ezer_answer'",
     'watch_access_opt' => // ... barvení v Uživatelé + select v ezer2.syst.ezer
