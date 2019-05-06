@@ -699,6 +699,8 @@ form _page {
       proc onclick () { elim.rodiny(idr.get,rod.rodiny.get); }} // lst.refresh2 } }
     item { title:'sjednotit kopie členů rodiny', skill:'fad|fad;yad|yad;cad|cad'
       proc onclick () { idr.get; elim.cleni(idr.get); }} //lst.refresh2 } }
+    item { title:'sjednotit označené osoby', skill:'fad|fad;yad|yad;cad|cad'
+      proc onclick () { elim.osoby_lst(ido.get,lst.bo.selected('get')); }}
     item { title:'-zvýrazňovat změněné údaje'  proc onclick () { evi_barvit_zmeny.set(1)} }
     item { title:'nezvýrazňovat změněné údaje' proc onclick () { evi_barvit_zmeny.set(0)} }
   }

@@ -154,7 +154,8 @@ Form.prototype.on_dblclk_copy_to= function(goal) {
   goal= goal instanceof Var ? goal.value : goal;
 //   $each(form.part,function(field,id) {
   for (let id in form.part) { let field= form.part[id];
-    if ( (field instanceof Field || field instanceof Edit || field instanceof Select)
+    if ( (field instanceof Field || field instanceof FieldList 
+      || field instanceof Edit || field instanceof Select)
       && field.DOM_Input ) {
       field.DOM_Input
         .dblclick( function(el) {
