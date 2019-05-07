@@ -312,16 +312,16 @@ form _page [,,275,360] {
     | zmena_web.set(1);
   }}
   check web_prihl[16,344,243,] { tag:'cor', data:akce.web_prihlasky,
-                        title:'ONLINE přihlašování na www.setkani.org', skill:'yaa+|yaaw' 
+                        title:"ONLINE <span class='zluty'>přihlašování</span> na www.setkani.org", skill:'yaa+|yaaw' 
     proc onchange() { zmena_web.set(1);
   }}
   select garant [293,355,79,] {tag:'cor', type:'map', title:'garant' , data:akce.poradatel,
       help:'garant akce, příjemce organizačních mailů', options:akce_garant.zkratka 
     proc onchanged() { zmena_web.set(1);
   }}
-  check [16,361,214,21] { tag:'cor', title:'OBSAZENO - další jako náhradníci', data:akce.web_obsazeno,
+  check [16,361,214,21] { tag:'cor', title:"<span class='cerveny'>OBSAZENO</span> - další jako náhradníci", data:akce.web_obsazeno,
                         skill:'yaa|yaaw;faa|faaw', help:"a to i tehdy, když akce není ještě naplněná" }
-  check [16,378,135,] { tag:'cor', title:'kalendář chlapi.online', data:akce.web_kalendar,
+  check [16,378,135,] { tag:'cor', title:"kalendář <span class='azurovy'>chlapi.online</span>", data:akce.web_kalendar,
                         skill:'yaa|yaaw;faa|faaw' }
   button [184,380,,] { tag:'cor', title:'Upravit anotaci pro chlapi.online', skill:'yaa+|yaaw;faa+|faaw'
     help:'úprava textu v kalendáři chlapi.online'
@@ -664,7 +664,7 @@ form _page [,,275,360] {
     files.Init;
   }
   # složky - tree area
-  area _folders { title:"<div id='files' style='left:530px;top:112px;width:160px;height:370px;background:#EFFDF1;border-right:1px solid grey;overflow:auto;position:absolute;z-index:1'></div>"
+  area _folders { title:"<div id='files' style='left:530px;top:112px;width:160px;height:370px;border-right:1px solid grey;position:absolute;z-index:1'></div>"
     var click_path:text
     proc tree_onclick(fid,id,dat,com,x,path,txt) { var i:text
 //      echo("tree_onclick: txt=",txt," id=",i," path=",path);
@@ -692,12 +692,16 @@ form _page [,,275,360] {
     }
   }
   # soubory - seznam
-  label files [179,72,258,360] {tag:'syn' css:'files' style:"z-index:3;background:#EFFDF1;padding:5px"
-    proc Load() { this.set(ask('tut_files',aroot.get,dfold.get))}
-    proc Init() { this.set('')}
+  label files [179,72,258,360] {tag:'syn' css:'files' style:"z-index:3;padding:5px"
+    proc Load() { this.set(ask('tut_files',aroot.get,dfold.get)); echo(this.self)}
+    proc Init() { this.set(''); }
+    proc Test() { alert('au')}
+    proc Menu(op,name,ref) { 
+      eq(op,'viewer'); function('url',"window.open(url,'viewer')",ask('tut_file_url',ref,name))
+    }
   }
   # soubory - drop area
-  label fdrop [192,90,241,50] {tag:'syn'type:'drop' title:'vlož soubor sem' css:'drop' style:"z-index:2"
+  label fdrop [192,90,241,50] {tag:'syn' type:'drop' title:'vlož soubor sem' css:'drop' style:"z-index:2"
     proc Init() { // podsložka {root} s lomítkem jen na konci
       fdrop.init(dfold.get,dcloud.get); 
     }
@@ -806,6 +810,7 @@ form _info [,,*,50] {
     show curr { expr:"IF(da2.id_duakce=@curr,1,0)" }
     show org { data:da2.access }
     show web_k { data:da2.web_kalendar }
+    show web_p { data:da2.web_prihlasky }
     show web_o { expr:"da2.web_obsazeno OR IF(da2.web_maximum,da2.web_maximum<=SUM((SELECT 1 FROM pobyt WHERE id_pobyt=pa2.id_pobyt AND funkce!=99)),0)" }
     show SF [,,20,] {title:'SF', expr:"IF(da2.access=1,'S',IF(da2.access=2,'F','?'))"
       help:"pořádá S=YMCA Setkání, F=YMCA Familia"
@@ -813,7 +818,8 @@ form _info [,,*,50] {
     show barva { expr:"CASE WHEN da2.id_hlavni THEN 2 WHEN sa2.id_duakce THEN 1 ELSE 0 END" }
     show kod   [,,36,] {title:'kód účetní', expr:"IF(ga2.g_kod,ga2.g_kod,da2.ciselnik_akce)"
       css_cell:'org,0:,1:ezer_ys,2:ezer_fa,3:ezer_db', format:'rsq*' }
-    show druh  [,,60,] {title:'typ',    data:da2.druh, map_pipe:ms_akce_typ.zkratka, format:'sq#'}
+    show druh  [,,60,] {title:'typ',    data:da2.druh, map_pipe:ms_akce_typ.zkratka, format:'sq#'
+      css_cell:'web_p,0:,1:zluty' }
     show nazev [,,104,] {title:'název', expr:"IF(da2.nazev='',ga2.g_nazev,da2.nazev)", format:'tsq*',
       css_cell:"curr,1:curr_akce"}
     show ucast [,,30,] {title:'úč.', format:'rtsq=', help:'počet skupin účastníků',
@@ -823,9 +829,9 @@ form _info [,,*,50] {
       expr:"SUM((SELECT COUNT(*) FROM spolu WHERE id_pobyt=pa2.id_pobyt AND funkce=99))"}
     show misto [,,50,] {title:'místo',  data:da2.misto, format:'tsq*'}
     show od    [,,65,] {title:'od',     data:da2.datum_od, format:'rs+q*'
-      css_cell:'web_k,0:,1:ezer_db' }
+      css_cell:'web_k,0:,1:azurovy' }
     show do    [,,65,] {title:'do',     data:da2.datum_do, format:'rsq*'
-      css_cell:'web_k,0:,1:ezer_db' }
+      css_cell:'web_k,0:,1:azurovy' }
     proc onsubmit() { pracovni }
     proc onrowclick() { page.show_akce(id_akce.get); }
     menu { type:'context'
