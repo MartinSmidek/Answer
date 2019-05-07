@@ -859,7 +859,7 @@ form _page  [,,623,20] {
   button wider [589,9,,] {type:'html', title:'[fa-toggle-right]', style:'z-index:5;margin-top:-16px'
     proc onclick() { eq(evid.cmode.get,2); ucast.narrow | ucast.wide } }
 //  label pframe [0,16,873,min_h-185] { css:'ae_work'} 
-  label frame [0,16,873,4] { css:'ae_work'} 
+  label frame [0,16,873,7] { css:'ae_work'} 
 }
 # --------------------------------------------------------------------------------------==> EVIDENCE
 form _evidence [,,623,] {
