@@ -99,7 +99,7 @@ function tut_files ($root,$rel_path) {  trace();
   global $ezer_path_root, $rel_root;
   $abs_path= "$root/$rel_path";
   $html= '';
-  if ( is_dir($abs_path) ) {
+  if ( $rel_path && is_dir($abs_path) ) {
     $files= array();
     $folders= array();
     if (($dh= opendir($abs_path))) {
@@ -113,12 +113,13 @@ function tut_files ($root,$rel_path) {  trace();
           else {
             if ( stristr(PHP_OS,'WIN') && substr(PHP_VERSION_ID,0,1)=='5' ) // windows
               $file= iconv("Windows-1250","UTF-8",$file);  
-            $afile= "<a href='$rel_path/$file' target='doc'>$file</a>";
+//            $afile= "<a href='$rel_path/$file' target='doc'>$file</a>";
+            $cmd= "Ezer.run.$._call(0,'db2.akce2.lst.page.files.Menu','viewer','$file','$abs_path');";
+            $onclick= "onclick=\"$cmd; return false;\"";
             $onright= "oncontextmenu=\"Ezer.fce.contextmenu([
-              ['stáhnout',function(el){
-                Ezer.fce.echo('$file');}]
+              ['stáhnout',function(el){ $cmd }]
               ],arguments[0],null,null,this);return false;\"";
-            $files[]= "<li $onright>$afile</li>";
+            $files[]= "<li class='file' $onclick $onright>$file</li>";
           }
         }
       }
@@ -131,15 +132,26 @@ function tut_files ($root,$rel_path) {  trace();
   }
   return $html;
 }
+# ------------------------------------------------------------------------------------- tut file_url
+// vrátí soubory adresáře
+function tut_file_url ($dir,$name) {  trace();
+  global $ezer_root;
+  $_SESSION[$ezer_root]['path_file']= $dir;
+  $url= "db2/file.php?title=$name";
+  return $url;
+}
 # ------------------------------------------------------------------------------------------ tut dir
 // vrátí adresářovou strukturu pro zobrazení metodou area.tree_show
 //   node:  {prop:{text:<string>,down:nodes}}
 //   nodes: [ node, ... ]
 function tut_dir ($base,$folder) {  trace();
-  if ( stristr(PHP_OS,'WIN') && substr(PHP_VERSION_ID,0,1)=='5' ) // windows
-    $folder= iconv("UTF-8","Windows-1250",$folder);
-  $tree= tut_dir_walk ($base,$folder);
-//                                                  debug($tree);
+  $tree= null;
+  if ( $base && $folder ) {
+    if ( stristr(PHP_OS,'WIN') && substr(PHP_VERSION_ID,0,1)=='5' ) // windows
+      $folder= iconv("UTF-8","Windows-1250",$folder);
+    $tree= tut_dir_walk ($base,$folder);
+  //                                                  debug($tree);
+  }
   return $tree;
 }
 function tut_dir_walk($base,$root) {  trace();
