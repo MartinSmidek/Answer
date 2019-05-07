@@ -101,7 +101,7 @@
   
   $app_css= [ // $choice_css,
 //      "/db2/db2.css",
-      $kernel=='ezer3.1' ? "$rel_root/db2/db2.css.php?skin" : "$rel_root/db2/db2.css",
+      $kernel=='ezer3.1' ? "$rel_root/db2/db2.css.php=skin" : "$rel_root/db2/db2.css",
       "/$kernel/client/wiki.css"
    ];
   //  require_once("answer.php");

@@ -9803,11 +9803,12 @@ function sta2_akcnost_vps($org,$par,$title,$export=false) {  trace();
 # pokud je $par->grf= a:b,c,... pak se zobrazí grafy normalizované podle sloupce a
 # pokud je $par->txt doplní se pod tabulku
 function sta2_table_graph($par,$tits,$flds,$clmn,$export=false) {
+  global $ezer_root;
   $result= (object)array('par'=>$par);
   if ( $par->grf ) {
     list($norm,$grf)= explode(':',$par->grf);
   }
-  $skin= $_SESSION['skin'];
+  $skin= $_SESSION[$ezer_root]['skin'];
   // zobrazení tabulkou
   $tab= '';
   $thd= '';

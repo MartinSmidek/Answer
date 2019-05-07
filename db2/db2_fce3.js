@@ -1,4 +1,5 @@
 // uživatelské funkce aplikace Ans(w)er - varianta s jQuery
+/* global Ezer, Form, Var, Field, FieldList, Edit, Select, View, Label */ // pro práci s Netbeans
 "use strict";
 // =========================================================================================> funkce
 // ----------------------------------------------------------------------------------- clipboard

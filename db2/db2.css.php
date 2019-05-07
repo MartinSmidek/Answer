@@ -14,7 +14,7 @@ $abs_root=  $_SESSION[$ezer_root]['abs_root'];
 require_once("$abs_root/skins/colors.php");
 
 echo <<<__EOD
-/* Android * /
+/* Android */
 body { position:absolute; width:100%; height:100%; }
 #paticka { bottom:0; }
 
@@ -42,6 +42,8 @@ body { position:absolute; width:100%; height:100%; }
 .azurovy        { background-color:#77ffff !important; }
 .fialovy        { background-color:#d27efc !important; }
 .jemna          { background-color:$b_item; }
+.bily_ram       { border: 1px solid #fff; border-radius: 5px; 
+                  padding: 1px 6px; color:#fff !important; font-weight: bold; }
     
 /* výběr access */
 
@@ -103,6 +105,8 @@ button.db_chain:disabled { color:silver; }
 .karta_info { background-color:$b8_brow; overflow: auto; }
 .neucast  { text-decoration:line-through; color:#aaaaaa; }
 .elim_goal { outline:3px solid $s1_brow; z-index:1 !important; }
+#files, div.files { background-color:$b8_brow; overflow: auto; }
+li.file { color:$zelena; text-decoration: underline; cursor:pointer; }
 
 .shift_up   { z-index:1; }
 .shift_up[class*=ae_frame],.shift_up[class*=ae_form2] {
@@ -154,13 +158,13 @@ div.Element .Label, div.Select .Label, div.FieldDate .Label { margin-top:1px }
 .info-stat      { width:624px; height:100%; z-index:0; background-color:#dce7f4; padding:5px; }
 /* Label jako přepínací tlačítko */
 .ae_butt_on {
-  cursor:default; background-color:$b_work; z-index:0; border-radius:5px; text-align:center;  }
+  cursor:default; background-color:$b_work; z-index:0; border-radius:5px; text-align:center;  
+  height:13px !important; border-bottom: 10px solid $b_work; }
 .ae_butt_off {
-  cursor:default; background-color:$b8_brow; z-index:0; border-radius:5px; text-align:center;  }
-.ae_butt_on:hover {
-  background:url("../../skins/db/label_switch_on_hover.png") repeat-x scroll 0 -1px transparent; }
-.ae_butt_off:hover {
-  background:url("../../skins/db/label_switch_off_hover.png") repeat-x scroll 0 -1px transparent; }
+  cursor:default; background-color:$b8_brow; z-index:0; border-radius:5px; text-align:center;  
+  height:13px !important; border-bottom: 10px solid $b8_brow; }
+.ae_butt_on:hover { border-bottom-color:#ef7f13 !important; }
+.ae_butt_off:hover { border-bottom-color:#ef7f13 !important; }
 /* přenesení barev */
 .frame_label_big { color:$s1_brow; font-weight:bold; padding-left:5px; font-size:13px; }
 .frame_label_up { color:$s1_brow; font-weight:bold; padding-left:5px; }
