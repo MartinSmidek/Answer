@@ -705,12 +705,12 @@ form _page [,,275,360] {
     proc Init() { // podsložka {root} s lomítkem jen na konci
       fdrop.init(dfold.get,dcloud.get); 
     }
-    proc ondrop(f) {                                                  // možnost odmítnutí přenosu
-      eq(f.name,'ugly.jpg'); warning('fuj ',f.name); return(0)        // navrácením 0
-    | gt(f.size,5242880); warning('odmítnuto ',f.name,' má více jak 5MB'); return(0)
-//      | warning('přenášeno:',f.name)                                   // jméno nemusí být ASCII
-    | return(f.name);
-    }
+//    proc ondrop(f) {                                                  // možnost odmítnutí přenosu
+//      eq(f.name,'ugly.jpg'); warning('fuj ',f.name); return(0)        // navrácením 0
+//    | gt(f.size,5242880); warning('odmítnuto ',f.name,' má více jak 5MB'); return(0)
+////      | warning('přenášeno:',f.name)                                   // jméno nemusí být ASCII
+//    | return(f.name);
+//    }
     proc onload(f) { // po dokončení přenosu, jméno bude ASCII
       files.Load;
       off;
