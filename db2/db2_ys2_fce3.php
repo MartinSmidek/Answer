@@ -39,6 +39,21 @@ function update_web_changes () {
   return 1;
 }
 /** ===================================================================================> FILEBROWSER */
+# ------------------------------------------------------------------------------------ tut ma_archiv
+// vytvoří adresář
+function tut_ma_archiv ($table,$idkey,$keys,$root) {
+  $values= array();
+  foreach ($keys as $key) {
+    list($kod,$rok)= select(
+        'IF(ga2.g_kod,ga2.g_kod,da2.ciselnik_akce),YEAR(datum_od)',
+        "akce AS da2 LEFT JOIN join_akce AS ja2 ON ja2.id_akce=da2.id_duakce 
+	LEFT JOIN g_akce AS ga2 USING(g_rok,g_kod) ",
+        "$idkey=$key");
+    $y= tut_dir_find ($root,$rok,$kod);
+    $values[]= $y->ok ? 1 : 0;
+  }
+  return $values;
+}
 # ---------------------------------------------------------------------------------------- tut mkdir
 // vytvoří adresář
 function tut_mkdir ($root,$rok,$kod,$nazev) {  trace();
