@@ -40,7 +40,7 @@ function update_web_changes () {
 }
 /** ===================================================================================> FILEBROWSER */
 # ------------------------------------------------------------------------------------ tut ma_archiv
-// vytvoří adresář
+// je volané metodou show.load - vrátí informace, zda existuje archiv akce v Synology
 function tut_ma_archiv ($table,$idkey,$keys,$root) {
   $values= array();
   foreach ($keys as $key) {
@@ -57,6 +57,7 @@ function tut_ma_archiv ($table,$idkey,$keys,$root) {
 # ---------------------------------------------------------------------------------------- tut mkdir
 // vytvoří adresář
 function tut_mkdir ($root,$rok,$kod,$nazev) {  trace();
+  $nazev= strtr($nazev,array('/'=>'-','.'=>' ',':'=>' '));
   $base= "{$root}Akce/$rok";
   if ( $kod=='*' ) {
     // podsložka
