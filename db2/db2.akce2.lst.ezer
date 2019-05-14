@@ -636,6 +636,10 @@ form _page [,,275,360] {
       droot='docs',   // kořen pro filebrowser 
       dfold='docs'    // zobrazená podsložka droot (bez koncového /)
   label [18,25,300,40] {tag:'syn' title:"Přidávat soubory lze přetažením myší, pravým tlačítkem lze přidávat podsložky, kliknutím stáhnout nebo zobrazit (sdílet a mazat lze jen z prostředí Synology)" }
+  button [324,20,,] {tag:'syn' title:'[fa-question] archivované' 
+    proc onclick() {
+      info.sey.ma_archiv.load('tut_ma_archiv','akce','id_duakce',abase.get);
+  }}
   button [324,42,,] {tag:'syn' title:'[fa-briefcase] založit archiv akce' 
     proc onclick() {
       ask('tut_mkdir',abase.get,akce_get('rok'),akce_get('kod'),akce_get('nazev'));
@@ -799,6 +803,7 @@ form _info [,,*,50] {
     show id_akce  {data:da2.id_duakce}
     show          {data:ja2.id_akce}
     show          {data:pa2.id_pobyt}
+    show ma_archiv // [,,10,] 
     show ma_cenik {data:da2.ma_cenik}
     show ma_cenu {data:da2.ma_cenu}
     show cena {data:da2.cena}
@@ -817,7 +822,7 @@ form _info [,,*,50] {
       css_cell:'org,0:,1:ezer_ys,2:ezer_fa,3:ezer_db', format:'rsq*' }
     show barva { expr:"CASE WHEN da2.id_hlavni THEN 2 WHEN sa2.id_duakce THEN 1 ELSE 0 END" }
     show kod   [,,36,] {title:'kód účetní', expr:"IF(ga2.g_kod,ga2.g_kod,da2.ciselnik_akce)"
-      css_cell:'org,0:,1:ezer_ys,2:ezer_fa,3:ezer_db', format:'rsq*' }
+      css_cell:'ma_archiv,0:,1:oranzovy', format:'rsq*' }
     show druh  [,,60,] {title:'typ',    data:da2.druh, map_pipe:ms_akce_typ.zkratka, format:'sq#'
       css_cell:'web_p,0:,1:zluty' }
     show nazev [,,104,] {title:'název', expr:"IF(da2.nazev='',ga2.g_nazev,da2.nazev)", format:'tsq*',
