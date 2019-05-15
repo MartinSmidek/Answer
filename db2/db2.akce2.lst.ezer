@@ -687,7 +687,7 @@ form _page [,,275,360] {
     menu { type:'context'
       item { title:'vložit podsložku', proc onclick() { var folder:text
         folder.set(prompt2('název podsložky:'));
-        ask('tut_mkdir',page.abase.get,akce_get('rok'),'*',conc(click_path.get,'/',folder));
+        ask('tut_mkdir',page.abase.get,akce_get('rok'),0,click_path.get,folder);
         page.DocRefresh
       }}
     }

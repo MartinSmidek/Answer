@@ -544,7 +544,7 @@ form _header [,,380,50] {
   }}
 }
 # -----------------------------------------------------------------------------==> u/_ucast - pobyty
-form _ucast [,,400,] { css:'ds_form'
+form _ucast [,,400,] { css:'ds_form', style:'height:fit-content'
   // legenda
   const NESTANOVENA = "<span class='blue' title:'dosud neurčená cena'> chybí </span>"
   const DLUZNIK =     " <span class='yellow' title:'dosud neuhrazená cena'> dluh </span>"
@@ -862,7 +862,7 @@ form _page  [,,623,20] {
   label frame [0,16,873,7] { css:'ae_work'} 
 }
 # --------------------------------------------------------------------------------------==> EVIDENCE
-form _evidence [,,623,] {
+form _evidence [,,623,] { style:'height:fit-content'
   var cmode=0          // sloupce osob: 1=jeden, 2=dva
   var rmode=0          // bloky osob: iae-iep-
   var zmode: text      // o | p
@@ -1505,7 +1505,7 @@ form _rodina2 [,,360,229]  { css:'ae_frame'
   }
 }
 # ----------------------------------------------------------------------------------------==> PLATBA
-form _platba [,,623,] { key_id:'id_pobyt'
+form _platba [,,623,] { key_id:'id_pobyt', style:'height:fit-content'
   const Td= 230
   var cena: object
   label [2,27,527,Td+95] //{title:"<img src='img/ms2p.png'>" }
@@ -1714,10 +1714,10 @@ form _cmd_p [,,623,30] { css:'ae_work'
   }
 }
 # -------------------------------------------------------------------------------------==> _AKTIVITY
-form _aktivity0 [,,623,] {
+form _aktivity0 [,,623,] { style:'height:fit-content'
   label frame [0,16,873,min_h-152] { css:'ae_work'}
 }
-form _aktivity [,,623,] {
+form _aktivity [,,623,] { style:'height:fit-content'
   var ido: number
   field jme [10,34,200,] { format:'o' }
   button [160,20,,] { title:'^evidence', css:'db_evidence',
@@ -1747,7 +1747,7 @@ form _aktivity [,,623,] {
   }
 }
 # ------------------------------------------------------------------------------------==> _DOKUMENTY
-form _documents [,,623,] {  // ukládají se na H: tedy mimo dosah http
+form _documents [,,623,] { style:'height:fit-content' // ukládají se na H: tedy mimo dosah http
   const folder= 'pobyt/'
   proc ukaz() { // ukáže soubory aktuálního pobytu
     jmena.set(conc("dokumenty svázané s pobytem <b><big>",u.b._nazev.get," ",u.b._jmena.get,"</big></b>"));

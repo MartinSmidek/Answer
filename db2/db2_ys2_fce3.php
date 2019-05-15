@@ -56,14 +56,11 @@ function tut_ma_archiv ($table,$idkey,$keys,$root) {
 }
 # ---------------------------------------------------------------------------------------- tut mkdir
 // vytvoří adresář
-function tut_mkdir ($root,$rok,$kod,$nazev) {  trace();
-  $nazev= strtr($nazev,array('/'=>'-','.'=>' ',':'=>' '));
+function tut_mkdir ($root,$rok,$kod,$slozka,$podslozka='') {  trace();
   $base= "{$root}Akce/$rok";
-  if ( $kod=='*' ) {
-    // podsložka
-    $path= "$base/$nazev";
-  }
-  else {
+  if ( !$podslozka ) { 
+    // základní složka archivu - odstraň zakázané znaky (Win,Mac,Linux)
+    $slozka= strtr($slozka,'\/:*"<>|?%',"----'()---");
     // základní složka
     if ( !is_dir($base)) { 
       // případně založ rok
@@ -73,12 +70,17 @@ function tut_mkdir ($root,$rok,$kod,$nazev) {  trace();
     $y= tut_dir_find($root,$rok,$kod);
     if ( $y->ok==0 ) {
       // akce s tímto kódem ještě nemá složku
-      $path= "$base/$kod - $nazev";       
+      $path= "$base/$kod - $slozka";       
     }
     else {
       fce_warning("POZOR: archiv akce již existuje: $base/$kod ...");
       goto end;
     }
+  }
+  else {
+    // podsložka - odstraň zakázané znaky
+    $podslozka= strtr($podslozka,'\/:*"<>|?%',"----'()---");
+    $path= "$base/$slozka/$podslozka";
   }
   // vlastní vytvoření složky
   if ( stristr(PHP_OS,'WIN') && substr(PHP_VERSION_ID,0,1)=='5' ) 
