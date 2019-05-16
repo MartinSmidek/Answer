@@ -228,7 +228,7 @@ form _page [,,275,360] {
             info.sey.browse_focus },
     'cen',{ c.browse_load(conc("id_akce=",id_akce)); },
     'doc',{ archiv.ukaz(akce_get('archiv')) },
-    'syn',{ has_skill('m'); DocShow(akce_get('rok'),akce_get('kod')) }
+    'syn',{ has_skill('yas'); DocShow(akce_get('rok'),akce_get('kod')) }
     );
 //    echo(id_akce,':',access.get,cen_ver.key);
     c_show;
@@ -841,6 +841,9 @@ form _info [,,*,50] {
       css_cell:'web_k,0:,1:azurovy' }
     show do    [,,65,] {title:'do',     data:da2.datum_do, format:'rsq*'
       css_cell:'web_k,0:,1:azurovy' }
+    proc onchange() {
+      [ has_skill('yas'); page.DocBrowse ]
+    }
     proc onsubmit() { pracovni }
     proc onrowclick() { page.show_akce(id_akce.get); }
     menu { type:'context'
