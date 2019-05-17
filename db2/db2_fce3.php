@@ -675,13 +675,13 @@ function akce2_delete($id_akce,$ret) {  trace();
   $nazev= select("nazev",'akce',"id_duakce=$id_akce");
   if ( $ret->ucastnici ) {
     // napřed zrušit účasti na akci
-    query("DELETE FROM spolu USING spolu JOIN pobyt USING(id_pobyt) WHERE id_akce=$id_akce");
-    $s= pdo_affected_rows();
-    query("DELETE FROM pobyt WHERE id_akce=$id_akce");
-    $p= pdo_affected_rows();
+    $rs= query("DELETE FROM spolu USING spolu JOIN pobyt USING(id_pobyt) WHERE id_akce=$id_akce");
+    $s= pdo_affected_rows($rs);
+    $rs= query("DELETE FROM pobyt WHERE id_akce=$id_akce");
+    $p= pdo_affected_rows($rs);
   }
-  query("DELETE FROM akce WHERE id_duakce=$id_akce");
-  $a= pdo_affected_rows();
+  $rs= query("DELETE FROM akce WHERE id_duakce=$id_akce");
+  $a= pdo_affected_rows($rs);
   $msg= $a
     ? "Akce '$nazev' byla smazána" . ( $p+$s ? ", včetně $p účastí $s účastníků" : '.')
     : "CHYBA: akce '$nazev' nebyla smazána";
@@ -936,13 +936,13 @@ function akce2_confirm_mrop($ida,$write=0) {  trace();
     if ( !$ra ) goto end;
     list($n,$ids)= pdo_fetch_array($ra);
     if ( $n ) {
-      query("UPDATE osoba SET iniciace=$letos WHERE id_osoba IN ($ids)");
-      $n1= pdo_affected_rows();
+      $rs= query("UPDATE osoba SET iniciace=$letos WHERE id_osoba IN ($ids)");
+      $n1= pdo_affected_rows($rs);
       // zápis do _track
       foreach ( explode(',',$ids) as $ido) {
-        query("INSERT INTO _track (kdy,kdo,kde,klic,fld,op,old,val)
+        $rs= query("INSERT INTO _track (kdy,kdo,kde,klic,fld,op,old,val)
                VALUES ('$now','$user','osoba',$ido,'iniciace','u','0','$letos')");
-        $n2+= pdo_affected_rows();
+        $n2+= pdo_affected_rows($rs);
       }
     }
     $ret->ok= $n>0 && $n==$n1 && $n==$n2;
@@ -995,13 +995,13 @@ function akce2_confirm_firm($ida,$write=0) {  trace();
     if ( !$ra ) goto end;
     list($n,$ids,$rok)= pdo_fetch_array($ra);
     if ( $n ) {
-      query("UPDATE osoba SET firming=$rok WHERE id_osoba IN ($ids)");
-      $n1= pdo_affected_rows();
+      $rs= query("UPDATE osoba SET firming=$rok WHERE id_osoba IN ($ids)");
+      $n1= pdo_affected_rows($rs);
       // zápis do _track
       foreach ( explode(',',$ids) as $ido) {
-        query("INSERT INTO _track (kdy,kdo,kde,klic,fld,op,old,val)
+        $rs= query("INSERT INTO _track (kdy,kdo,kde,klic,fld,op,old,val)
                VALUES ('$now','$user','osoba',$ido,'firming','u','0','$rok')");
-        $n2+= pdo_affected_rows();
+        $n2+= pdo_affected_rows($rs);
       }
     }
     else 
@@ -6244,8 +6244,8 @@ function akce2_skup_copy($obnova) { trace();
   $n= 0;
   $rr= pdo_qry("SELECT i0_rodina,skupina FROM pobyt AS p WHERE id_akce=$lk AND skupina!=0");
   while ( $rr && (list($idr,$skupina)= pdo_fetch_array($rr)) ) {
-    query("UPDATE pobyt SET skupina=$skupina WHERE id_akce=$obnova AND i0_rodina=$idr AND skupina=0");
-    $n+= pdo_affected_rows();
+    $rs= query("UPDATE pobyt SET skupina=$skupina WHERE id_akce=$obnova AND i0_rodina=$idr AND skupina=0");
+    $n+= pdo_affected_rows($rs);
   }
   $msg= "Na obnovu bylo pro $n párů zkopírováno číslo skupinky z LK (pokud ještě číslo neměli)";
 end:
@@ -8517,10 +8517,10 @@ function evid2_delete($id_osoba,$id_rodina,$cmd='confirm') { trace();
     break;
 
   case 'del_rod':
-    query("UPDATE osoba JOIN tvori USING (id_osoba) SET deleted='D' WHERE id_rodina=$id_rodina");
-    $no= pdo_affected_rows();
-    query("UPDATE rodina SET deleted='D' WHERE id_rodina=$id_rodina");
-    $nr= pdo_affected_rows();
+    $rs= query("UPDATE osoba JOIN tvori USING (id_osoba) SET deleted='D' WHERE id_rodina=$id_rodina");
+    $no= pdo_affected_rows($rs);
+    $rs= query("UPDATE rodina SET deleted='D' WHERE id_rodina=$id_rodina");
+    $nr= pdo_affected_rows($rs);
     query("INSERT INTO _track (kdy,kdo,kde,klic,fld,op,old,val)
            VALUES ('$now','$user','rodina',$id_rodina,'','x','','')");
     query("DELETE FROM tvori WHERE id_rodina=$id_rodina");
@@ -9916,7 +9916,7 @@ function sta2_pecouni($org) { trace();
   # _pec,_sko,_proc
   $clmn= array();
   list($od,$do)= select("MAX(YEAR(datum_od)),MIN(YEAR(datum_od))","akce","druh=1 AND access&$org");
-//  $od=$do=2014;
+//  $od=$do=2018;
   for ($rok=$od; $rok>=$do; $rok--) {
     $kurz= select1("id_duakce","akce","druh=1 AND YEAR(datum_od)=$rok AND access&$org");
     $akci= select1("COUNT(*)","akce","druh=7 AND YEAR(datum_od)=$rok AND access&$org");
@@ -11287,8 +11287,8 @@ function mail2_lst_regen_spec($id_dopis,$id_mail,$id_osoba) {  trace();
     // přegeneruj PDF s potvrzením do $x->path
     $x= mail2_mai_potvr("Pf",$o,$rok);
     // oprav mail
-    pdo_qry("UPDATE mail SET stav=3,email='{$o->_email}' WHERE id_mail=$id_mail");
-    $num+= pdo_affected_rows();
+    $rs= pdo_qry("UPDATE mail SET stav=3,email='{$o->_email}' WHERE id_mail=$id_mail");
+    $num+= pdo_affected_rows($rs);
     // informační zpráva
     $ret->msg= "Mail pro {$o->_name} včetně potvrzení {$x->fname} byl přegenerován";
     break;
@@ -11321,10 +11321,10 @@ function mail2_lst_posli_spec($id_dopis) {  trace();
         // vygeneruj PDF s potvrzením do $x->path
         $x= mail2_mai_potvr("Pf",$o,$rok);
         // vlož mail
-        pdo_qry(
+        $rs= pdo_qry(
           "INSERT mail (id_davka,znacka,stav,id_dopis,id_clen,email,priloha)
              VALUE (1,'@',0,$id_dopis,$o->_id,'$email','{$x->fname}')");
-        $num+= pdo_affected_rows();
+        $num+= pdo_affected_rows($rs);
       }
       else {
         $nomail[]= "{$o->jmeno} {$o->prijmeni}";
@@ -11705,7 +11705,7 @@ function mail2_mai_omitt3($id_dopis,$lst_vynech) {  trace();
   // probírka adresátů
   $qu= "UPDATE mail SET stav=5,msg='dle ID' WHERE id_dopis=$id_dopis AND id_clen IN ($lst_vynech) ";
   $ru= pdo_qry($qu);
-  $n= pdo_affected_rows();
+  $n= pdo_affected_rows($ru);
   $msg.= "<br>označeno bylo $n řádků";
   return $msg;
 }
@@ -11804,16 +11804,16 @@ function mail2_mai_doplnit($id_dopis,$id_akce,$doplnit) {  trace();
     $is_vars= preg_match_all("/[\{]([^}]+)[}]/",$obsah,$list);
     $vars= $list[1];
     // projdi všechny pobyty s alespoň jedním mailem
-    foreach ($x_po as $idp=>$idos) if ( $x_pm[$idp] ) {
+    foreach ($x_po as $idp=>$idos) { if ( $x_pm[$idp] ) {
       // pokud dopis obsahuje proměnné, personifikuj obsah
-      $body= $is_vars ? mail2_personify($obsah,$vars,$id_pobyt,$err) : '';
+      $body= $is_vars ? mail2_personify($obsah,$vars,$idp,$err) : '';
       // a vytvoř mail
       $qr= "INSERT mail (id_davka,znacka,stav,id_dopis,id_clen,id_pobyt,email,body)
             VALUE (1,'@',0,$id_dopis,{$x_po[$idp][0]},$idp,'{$x_pm[$idp]}','$body')";
       $rs= pdo_qry($qr);
-      $n_pridano+= pdo_affected_rows();
+      $n_pridano+= pdo_affected_rows($rs);
 //                                                         display($qr);
-    }
+    }}
   }
   // čeština
   $_pobytu= je_1_2_5($n_neobeslani,"pobyt,pobyty,pobytů");
@@ -12132,7 +12132,7 @@ function mail2_mai_posli($id_dopis,$info) {  trace();
         $qr= "INSERT mail (id_davka,znacka,stav,id_dopis,id_clen,email)
               VALUE (1,'@',0,$id_dopis,{$c->id_clen},'{$c->email}')";
         $rs= pdo_qry($qr);
-        $num+= pdo_affected_rows();
+        $num+= pdo_affected_rows($rs);
       }
     }
   }
@@ -12966,7 +12966,7 @@ function ucet_potv($par,$access) { trace();
       $pars= ezer_json_encode((object)array('data'=>$data));
       $oki= query("INSERT INTO dar (access,id_osoba,ukon,zpusob,castka,dat_od,note,pars)
         VALUES ($access,$ido,'d','u',{$dary->castka},'$rok-12-31','daňové potvrzení','$pars')");
-      $n+= $oki ? pdo_affected_rows () : 0;
+      $n+= $oki ? pdo_affected_rows($oki) : 0;
     }
     $html.= "<br><br>vloženo $n dárců k potvrzování za rok $rok";
   }
@@ -12989,13 +12989,13 @@ function ucet_potv($par,$access) { trace();
         $oku= query("UPDATE dar
           SET castka=$castka2, note='2.daňové potvrzení', pars='$pars'
           WHERE id_dar=$id_dar");
-        $n2+= $oku ? pdo_affected_rows () : 0;
+        $n2+= $oku ? pdo_affected_rows($oku) : 0;
       }
       elseif ( !$id_dar && $castka2 >= $mez_daru ) {
         $ido= $dary->ido;
         $oki= query("INSERT INTO dar (id_osoba,ukon,zpusob,castka,dat_od,note,pars)
           VALUES ($ido,'d','u',$castka2,'$rok-12-31','2.daňové potvrzení','$pars')");
-        $n4+= $oki ? pdo_affected_rows () : 0;
+        $n4+= $oki ? pdo_affected_rows($oki) : 0;
       }
       else {
         $n3++;
@@ -13208,506 +13208,6 @@ function data_update ($tab,$id_tab,$chngs) { trace();
 err: fce_error("ERROR IN: data_update ($tab,$id_tab,$chngs)");
 end: return $updated;
 }
-/*
-# ----------------------------------------------------------------------------- data2_transform_2014
-# transformace na schema 2014
-# par.cmd = seznam transformací
-# par.akce = id_akce | 0
-# par.pobyt = id_pobyt | 0
-function data2_transform_2014($par) { trace();
-  global $ezer_root;
-  $html= '';
-  $updated= 0;
-  foreach (explode(',',$par->cmd) as $cmd ) {
-    $update= false;
-    switch ($cmd ) {
-    // ---------------------------------------------- rodina: r_umi VPS
-    // opraví chybějící údaj v r_umi
-    case 'vps_test':
-      $qr= pdo_qry("
-        SELECT nazev,YEAR(datum_od) AS _rok
-        FROM pobyt
-        JOIN akce ON id_akce=id_duakce
-        WHERE funkce IN (1,2) AND i0_rodina=0
-        GROUP BY id_akce
-      ");
-      while ( $qr && ($r= pdo_fetch_object($qr)) ) {
-        $n++;
-        $html.= "{$r->nazev}/{$r->_rok}<br>";
-      }
-      $html.= "Nalezeno $n akcí";
-      break;
-    // opraví chybějící údaj v r_umi
-    case 'vps_updt':
-      $qr= pdo_qry("
-        SELECT i0_rodina,funkce,r_umi
-        FROM pobyt
-        JOIN rodina ON id_rodina=i0_rodina!=0
-        WHERE funkce IN (1,2) AND NOT FIND_IN_SET(1,r_umi)
-        GROUP BY i0_rodina
-      ");
-      while ( $qr && ($r= pdo_fetch_object($qr)) ) {
-        $n++;
-        $ok= query("UPDATE rodina SET r_umi=IF(r_umi,CONCAT('1,',r_umi),'1') WHERE id_rodina={$r->i0_rodina}");
-        $updated+= $ok ? 1 : 0;
-      }
-      $html.= "Nalezeno $n rodin s funkcí VPS a u $updated doplněna tato schopnost";
-      break;
-    // ---------------------------------------------- rodina: r_umi Přednáší
-    // opraví chybějící údaj v r_umi
-    case 'lec_test':
-      $qr= pdo_qry("
-        SELECT nazev,YEAR(datum_od) AS _rok
-        FROM pobyt
-        JOIN akce ON id_akce=id_duakce
-        WHERE prednasi AND i0_rodina=0
-        GROUP BY id_akce
-      ");
-      while ( $qr && ($r= pdo_fetch_object($qr)) ) {
-        $n++;
-        $html.= "{$r->nazev}/{$r->_rok}<br>";
-      }
-      $html.= "Nalezeno $n akcí";
-      break;
-    // opraví chybějící údaj v r_umi
-    case 'lec_updt':
-      $qr= pdo_qry("
-        SELECT i0_rodina,funkce,r_umi
-        FROM pobyt
-        JOIN rodina ON id_rodina=i0_rodina!=0
-        WHERE prednasi AND NOT FIND_IN_SET(2,r_umi)
-        GROUP BY i0_rodina
-      ");
-      while ( $qr && ($r= pdo_fetch_object($qr)) ) {
-        $n++;
-        $ok= query("UPDATE rodina SET r_umi=IF(r_umi,CONCAT('2,',r_umi),'1') WHERE id_rodina={$r->i0_rodina}");
-        $updated+= $ok ? 1 : 0;
-      }
-      $html.= "Nalezeno $n rodin, které přednáší a u $updated doplněna tato schopnost";
-      break;
-    // ---------------------------------------------- rodina,osoba: stat
-    // doplní do adresy chybějící stát
-    case 'stat+':
-      $update= true;
-    // zobrazení počtu rodin bez státu
-    case 'stat':
-      $AND= $par->cnd ? " AND $par->cnd" : "";
-      $n= 0;
-      $qo= pdo_qry("
-        SELECT r.id_rodina,stat,obec,psc,ulice
-        FROM rodina AS r
-        WHERE r.deleted='' AND obec!='' AND psc!='' AND stat='' $AND
-      ");
-      while ( $qo && ($o= pdo_fetch_object($qo)) ) {
-        $n++;
-        $adresa= "$o->ulice,$o->psc $o->obec";
-        $html.= "<br>$o->id_rodina:$adresa";
-        if ( $update ) {
-          $stat= adresa2stat($adresa,$o->psc);
-          $html.= "=$stat";
-          $ok= query("UPDATE rodina SET stat='$stat' WHERE deleted='' AND obec='$o->obec' AND psc='$o->psc' AND stat='' ");
-          $updated+= pdo_affected_rows();
-          $ok= query("UPDATE osoba SET stat='$stat' WHERE deleted='' AND adresa=1 AND obec='$o->obec' AND psc='$o->psc' AND stat='' ");
-          $updated+= pdo_affected_rows();
-        }
-        if ( $n==5 ) break;
-      }
-      $html.= $update
-            ? ($updated ? "<br> opraveno $updated údajů<br>" : "<br>beze změn<br>")
-            : "<hr>rodin bez státu je $n";
-      break;
-    // ---------------------------------------------- rodina: nazev
-    // doplní chybějící název rodiny z hlavního člena
-    case 'nazvy+':
-      $update= true;
-    // zobrazení počtu rodin bez názvu
-    case 'nazvy':
-      $n= 0;
-      $qo= pdo_qry("
-        SELECT r.id_rodina,SUBSTR(MIN(CONCAT(role,prijmeni)),2) AS _hlava
-        FROM rodina AS r
-        JOIN tvori AS t USING(id_rodina)
-        JOIN osoba AS o USING(id_osoba)
-        WHERE r.deleted='' AND TRIM(nazev)='' $AND
-        GROUP BY r.id_rodina
-      ");
-      while ( $qo && ($o= pdo_fetch_object($qo)) ) {
-        $n++;
-        if ( $update ) {
-          $updated+= data_update('rodina',$o->id_rodina,"$o->_hlava:nazev");
-        }
-      }
-      $html.= "rodin bez názvu je $n";
-      $html.= $update ? "<br> opraveno $updated údajů<br>" : (
-              $n      ? "<br>provést $n změn údajů?<br>"
-                      : '<br>bez možných automatických úprav, přesto zkusit?<br>');
-      break;
-    // ---------------------------------------------- osoba: kontakty
-    // opraví pole osoba.kontakt
-    case 'kontakty+':
-      $update= true;
-    // zobrazí přehled kontaktů
-    case 'kontakty':
-      //  0   1   2   3   4   5
-      // -.- x.- -.x x.x x.y x.0   osobní.rodinná; single=0,clen=1
-      $tab= array(array(0,0,0,0,0,0),array(0,0,0,0,0,0));
-      $tos= array(array(0,0,0,0,0,0),array(0,0,0,0,0,0));           // počet osobních
-      $xta= array(array(0,0,0,0,0,0),array(0,0,0,0,0,0));           // změny
-      $n= $k= 0;
-      $AND= $par->akce ? " AND id_akce={$par->akce}" : "";
-      $qo= pdo_qry("
-        SELECT o.id_osoba,t.role,o.kontakt,r.id_rodina,
-          COUNT(DISTINCT r.id_rodina) AS _rodin, COUNT(rt.id_tvori) AS _clenu,
-          REPLACE(REPLACE(CONCAT(o.telefon,o.email),' ',''),';',',') AS _kontakt_o,
-          IFNULL(MIN(CONCAT(t.role,REPLACE(REPLACE(CONCAT(r.telefony,r.emaily),' ',''),';',','))),'')
-            AS _kontakt_r
-        FROM osoba AS o
-        LEFT JOIN tvori AS t USING(id_osoba)
-        LEFT JOIN rodina AS r ON r.id_rodina=t.id_rodina
-        LEFT JOIN tvori AS rt ON rt.id_rodina=r.id_rodina
-        WHERE o.deleted='' AND IFNULL(r.deleted='',1) $AND
-        GROUP BY o.id_osoba
-      ");
-      while ( $qo && ($o= pdo_fetch_object($qo)) ) {
-        $n++;
-        if ( $o->_rodin>1 ) {
-          $k++;                                 //continue; ??????????????
-        }
-        $stav= $o->_clenu>1 ? 1 : 0;
-        $id_osoba= $o->id_osoba;
-        $kontakt= $o->kontakt;
-        $r_kontakt= substr($o->_kontakt_r,1);
-        $o_kontakt= $o->_kontakt_o;
-        //
-        if ( !$o->_rodin ) {                                    // x.0    -- nemá rodinu
-          $tab[$stav][5]++;
-          $tos[$stav][5]+= $kontakt;
-          if ( !$kontakt ) {
-            $xta[$stav][5]++;
-            if ( $update ) $updated+= data_update('osoba',$id_osoba,'1:kontakt');
-          }
-        }
-        elseif ( $o_kontakt=='' && $r_kontakt=='' ) {           // -.-
-          $tab[$stav][0]++;
-          $tos[$stav][0]+= $kontakt;
-          if ( $kontakt ) {
-            $xta[$stav][0]++;
-            if ( $update ) $updated+= data_update('osoba',$id_osoba,'0:kontakt');
-          }
-        }
-        elseif ( $o_kontakt!='' && $r_kontakt=='' ) {           // x.-
-          $tab[$stav][1]++;
-          $tos[$stav][1]+= $kontakt;
-          if ( !$kontakt ) {
-            $xta[$stav][1]++;
-            if ( $update ) $updated+= data_update('osoba',$id_osoba,'1:kontakt');
-          }
-        }
-        elseif ( $o_kontakt=='' && $r_kontakt!='' ) {           // -.x
-          $tab[$stav][2]++;
-          $tos[$stav][2]+= $kontakt;
-          if ( $kontakt ) {
-            $xta[$stav][2]++;
-            if ( $update ) $updated+= data_update('osoba',$id_osoba,'0:kontakt');
-          }
-        }
-        elseif ( $o_kontakt==$r_kontakt ) {                     // x.x
-          $tab[$stav][3]++;
-          $tos[$stav][3]+= $kontakt;
-          if ( $stav==0 ) {
-            // pro singla
-            if ( !$kontakt ) {
-              // vnutíme kontakt jako osobní
-              $xta[$stav][3]++;
-              if ( $update ) $updated+= data_update('osoba',$id_osoba,'1:kontakt');
-            }
-            if ( $o->_rodin==1 ) {
-              // je-li rodina jednoznačná smažeme kontakt v rodině
-              $xta[$stav][3]++;
-              if ( $update ) $updated+= data_update('rodina',$o->id_rodina,':telefony,emaily;0:nomaily');
-            }
-          }
-          else if ( $o->_rodin==1 ) {
-            // pro člena vícečlenné a jedinečné rodiny smažeme (duplikovaný) kontakt v osobě
-            $xta[$stav][3]++;
-            if ( $update ) $updated+= data_update('osoba',$id_osoba,':telefon,email;0:kontakt,nomail');
-          }
-        }
-        elseif ( $o_kontakt!=$r_kontakt ) {                     // x.y
-          // u odlišného osobního od rodinného dáme přednost osobnímu
-          $tab[$stav][4]++;
-          $tos[$stav][4]+= $kontakt;
-          if ( !$kontakt ) {
-            $xta[$stav][4]++;
-            if ( $update ) $updated+= data_update('osoba',$id_osoba,'1:kontakt');
-          }
-        }
-        else fce_warning("?");
-      }
-//                                                           debug($tos);
-      // formátování
-      $zmen= 0;
-      $hr= array('single','člen rodiny');
-      $hd= array('-.-','x.-','-.x','x.x','x.y','x.0');
-      $hdr= "kontakty $ezer_root";
-      $t= "<table class='stat'><tr><th>$hdr</th><th colspan=6>osoba.rodina</th></tr><tr><th></th>";
-      foreach($hd as $i=>$clmn) {
-        $t.= "<th>$clmn</th>";
-      }
-      $t.= "<th>&Sigma;</th></tr>";
-      foreach($tab as $s=>$row) {
-        $t.= "<tr><th>{$hr[$s]}</th>";
-        $sum= 0;
-        foreach($row as $i=>$clmn) {
-          $sum+= $clmn;
-          $zmen+= $xta[$s][$i];
-          $style= $xta[$s][$i] ? " style='background-color:yellow'" : '';
-          $t.= "<td align='right'$style>$clmn</td>";
-        }
-        $t.= "<th align='right'>$sum</th></tr>";
-        $row= $tos[$s];
-        $t.= "<tr><th>... osobní</th>";
-        $sum= 0;
-        foreach($row as $i=>$clmn) {
-          $sum+= $clmn;
-          $t.= "<td align='right'>$clmn</td>";
-        }
-        $t.= "<th align='right'>$sum</th></tr>";
-      }
-      $t.= "</table>";
-      $html.= "<br>probráno $n osob, z toho $k je ve více rodinách $t";
-      $html.= $update ? "<br> opraveno $updated údajů<br>" : (
-              $zmen   ? "<br>provést $zmen změn údajů ve žlutých polích?<br>"
-                      : '<br>bez možných automatických úprav, přesto zkusit?<br>');
-      break;
-    // ---------------------------------------------- osoba: adresy
-    // opraví pole osoba.adresa
-    case 'adresy+':
-      $update= true;
-    // zobrazí přehled adres
-    case 'adresy':
-      //  0   1   2   3   4   5
-      // -.- x.- -.x x.x x.y x.0    osobní.rodinná; single=0,clen=1
-      $tab= array(array(0,0,0,0,0,0),array(0,0,0,0,0,0));
-      $xta= array(array(0,0,0,0,0,0),array(0,0,0,0,0,0));           // změny
-      $n= $k= 0;
-      $tos= array(array(0,0,0,0,0,0),array(0,0,0,0,0,0));           // počet osobních
-      $AND= $par->akce ? " AND id_akce={$par->akce}" : "";
-      $qo= pdo_qry("
-        SELECT o.id_osoba,o.adresa,r.id_rodina,
-          COUNT(DISTINCT r.id_rodina) AS _rodin, COUNT(rt.id_tvori) AS _clenu,
-          TRIM(CONCAT(o.ulice,o.psc,o.obec,o.stat)) AS _adresa_o,
-          IFNULL(SUBSTR(MIN(CONCAT(t.role,TRIM(CONCAT(r.ulice,r.psc,r.obec,r.stat)))),2),'') AS _adresa_r
-        FROM osoba AS o
-        LEFT JOIN tvori AS t USING(id_osoba)
-        LEFT JOIN rodina AS r ON r.id_rodina=t.id_rodina
-        LEFT JOIN tvori AS rt ON rt.id_rodina=r.id_rodina
-        WHERE o.deleted='' AND IFNULL(r.deleted='',1) $AND
-        GROUP BY o.id_osoba
-      ");
-      while ( $qo && ($o= pdo_fetch_object($qo)) ) {
-        $n++;
-        if ( $o->_rodin>1 ) {
-          $k++;                                 //continue; ????????????????
-        }
-        $stav= $o->_clenu>1 ? 1 : 0;            //0: singl, 1: netriviální rodina
-        $id_osoba= $o->id_osoba;
-        $adresa= $o->adresa;
-        $r_adresa= $o->_adresa_r;
-        $r_adresa= $r_adresa=="CZ" ? "" : $r_adresa;
-        $o_adresa= $o->_adresa_o=="CZ" ? "" : $o->_adresa_o;
-        //
-        if ( !$o->_rodin ) {                                    // x.0      -- nemá rodinu
-          $tab[$stav][5]++;
-          $tos[$stav][5]+= $adresa;
-          // změny
-          $xta[$stav][5]+= !$adresa;
-          if ( $update && !$adresa ) {
-            if ( $update ) $updated+= data_update('osoba',$id_osoba,'1:adresa');
-          }
-        }
-        elseif ( $o_adresa=='' && $r_adresa=='' ) {             // -.-
-          $tab[$stav][0]++;
-          $tos[$stav][0]+= $adresa;
-          if ( $adresa ) {
-            $xta[$stav][0]++;
-            if ( $update ) $updated+= data_update('osoba',$id_osoba,'0:adresa');
-          }
-        }
-        elseif ( $o_adresa!='' && $r_adresa=='' ) {             // x.-
-          $tab[$stav][1]++;
-          $tos[$stav][1]+= $adresa;
-          if ( !$adresa ) {
-            $xta[$stav][1]++;
-            if ( $update ) $updated+= data_update('osoba',$id_osoba,'1:adresa');
-          }
-        }
-        elseif ( $o_adresa=='' && $r_adresa!='' ) {             // -.x
-          $tab[$stav][2]++;
-          $tos[$stav][2]+= $adresa;
-          if ( $adresa ) {
-            $xta[$stav][2]++;
-            if ( $update ) $updated+= data_update('osoba',$id_osoba,'0:adresa');
-          }
-        }
-        elseif ( $o_adresa==$r_adresa ) {                       // x.x
-          $tab[$stav][3]++;
-          $tos[$stav][3]+= $adresa;
-          if ( $stav==0 ) {
-          // pro singla
-            if ( !$adresa ) {
-              // vnutíme adresu jako osobní
-              $xta[$stav][3]++;
-              if ( $update ) $updated+= data_update('osoba',$id_osoba,"1:adresa");
-            }
-            if ( $o->_rodin==1 ) {
-              // je-li rodina jedinečná smažeme adresu v rodině
-              $xta[$stav][3]++;
-              if ( $update ) $updated+= data_update('rodina',$o->id_rodina,':ulice,psc,obec,stat;0:noadresa');
-            }
-          }
-          else if ( $o->_rodin==1 ) {
-            // pro člena vícečlenné a jedinečné rodiny smažeme (duplikovanou) adresu v osobě
-              $xta[$stav][3]++;
-              if ( $update ) $updated+= data_update('osoba',$id_osoba,':ulice,psc,obec,stat;0:adresa,noadresa');
-          }
-        }
-        elseif ( $o_adresa!=$r_adresa ) {                       // x.y
-          $tab[$stav][4]++;
-          $tos[$stav][4]+= $adresa;
-        }
-        else fce_warning("?");
-      }
-//                                                           debug($xta);
-      // formátování
-      $zmen= 0;
-      $hr= array('single','člen rodiny');
-      $hd= array('-.-','x.-','-.x','x.x','x.y','x.0');
-      $hdr= "adresy $ezer_root";
-      $t= "<table class='stat'><tr><th>$hdr</th><th colspan=6>osoba.rodina</th></tr><tr><th></th>";
-      foreach($hd as $i=>$clmn) {
-        $t.= "<th>$clmn</th>";
-      }
-      $t.= "<th>&Sigma;</th></tr>";
-      foreach($tab as $s=>$row) {
-        $t.= "<tr><th>{$hr[$s]}</th>";
-        $sum= 0;
-        foreach($row as $i=>$clmn) {
-          $sum+= $clmn;
-          $zmen+= $xta[$s][$i];
-          $style= $xta[$s][$i] ? " style='background-color:yellow'" : '';
-          $t.= "<td align='right'$style>$clmn</td>";
-        }
-        $t.= "<th align='right'>$sum</th></tr>";
-        $row= $tos[$s];
-        $t.= "<tr><th>... osobní</th>";
-        $sum= 0;
-        foreach($row as $i=>$clmn) {
-          $sum+= $clmn;
-          $t.= "<td align='right'>$clmn</td>";
-        }
-        $t.= "<th align='right'>$sum</th></tr>";
-      }
-      $t.= "</table>";
-      $html.= "<br>probráno $n osob, z toho $k je ve více rodinách $t";
-      $html.= $update ? "<br> opraveno $updated údajů<br>" : (
-              $zmen   ? "<br>provést $zmen změn údajů ve žlutých polích?<br>"
-                      : '<br>bez možných automatických úprav, přesto zkusit?<br>');
-      break;
-    // ---------------------------------------------- osoba: adresa
-    // nastaví osoba.adresa=1 pokud je adresa osobní tj. různá od rodinné
-    // (pokud je rodina nejednoznačná, zatím nic pak bere se ta s rolí a|b)
-    // podle osoba --> tvori.role --> rodina
-    case 'adresa':
-      $n= 0;
-      $AND= $par->akce ? " AND id_akce={$par->akce}" : "";
-      $AND.= $par->pobyt ? " AND id_pobyt={$par->pobyt}" : "";
-  //     // 1) osobní a rodinná jsou totožné => adresa=rodinná
-  //     $qo= pdo_qry("
-  //       SELECT id_osoba,adresa,COUNT(id_rodina) AS _rodin,
-  //         CONCAT(o.ulice,o.psc,o.obec,o.stat) AS _adresa_o,
-  //         CONCAT(r.ulice,r.psc,r.obec,r.stat) AS _adresa_r
-  //       FROM osoba AS o
-  //       JOIN tvori AS t USING(id_osoba)
-  //       JOIN rodina AS r USING(id_rodina)
-  //       GROUP BY id_rodina
-  //       HAVING _rodin=1 AND _adresa_o!='' AND _adresa_o!='CZ' AND _adresa_o=_adresa_r
-  //     ");
-  //     while ( $qo && ($o= pdo_fetch_object($qo)) ) {
-  //       $r_adresa= $o->ulice,$o->psc,$o->obec,$o->stat
-  //       if ( $pouze ) {
-  //         $n++;
-  //         display("$roles:pdo_qry(\"UPDATE pobyt SET pouze=$pouze WHERE id_pobyt={$p->id_pobyt}\")");
-  //       }
-  //     }
-      $html.= "<br>doplněno $n x osoba.adresa=1";
-      break;
-    // ---------------------------------------------- pobyt: pouze
-    // doplní pouze=1|2 v akcích s nastaveným i0_rodina podle role=a|b
-    // podle spolu --> osoba.role
-    case 'pouze':
-      $n= 0;
-      $AND= $par->akce ? " AND id_akce={$par->akce}" : "";
-      $AND.= $par->pobyt ? " AND id_pobyt={$par->pobyt}" : "";
-      $qp= pdo_qry("
-        SELECT CONCAT(pouze,GROUP_CONCAT(role ORDER BY role SEPARATOR '')) AS _roles,id_pobyt,
-          a.nazev,YEAR(a.datum_od)
-        FROM akce AS a
-        JOIN pobyt AS p ON a.id_duakce=p.id_akce
-        JOIN spolu AS s USING (id_pobyt)
-        JOIN rodina AS r ON r.id_rodina=i0_rodina
-        JOIN tvori AS t ON t.id_osoba=s.id_osoba AND t.id_rodina=i0_rodina
-        WHERE i0_rodina!=0
-        GROUP BY id_pobyt HAVING
-          (LEFT(_roles,1)='0' AND LEFT(_roles,3)!='0ab')
-          OR (LEFT(_roles,1)='1' AND LEFT(_roles,2)!='1a')
-          OR (LEFT(_roles,1)='2' AND LEFT(_roles,2)!='2b')
-      ");
-      while ( $qp && ($p= pdo_fetch_object($qp)) ) {
-        $n++;
-      }
-      $html.= "<br>zjištěno $n rozporů mezi spolu a pouze";
-      break;
-    // ---------------------------------------------- pobyt: i0_rodina ... do starých
-    // doplní i0_rodina pokud rodina má jméno a je jednoznačná pro všechny osoby pobytu
-    //   pokud jich je >1
-    // podle spolu --> osoba --> tvori --> rodina.nazev,id_rodina
-    case 'i0_rodina':
-      $n= 0;
-      $AND= $par->akce ? " AND id_akce={$par->akce}" : "";
-      $qp= pdo_qry("
-        SELECT COUNT(*) AS _ucastniku,COUNT(DISTINCT id_rodina) AS _pocet,id_pobyt,id_rodina
-        FROM akce AS a
-        JOIN pobyt AS p ON a.id_duakce=p.id_akce
-        JOIN spolu AS s USING (id_pobyt)
-        JOIN tvori AS t USING(id_osoba)
-        JOIN rodina AS r USING(id_rodina)
-        WHERE i0_rodina=0 AND r.nazev!='' $AND
-        GROUP BY id_pobyt HAVING _ucastniku>1 AND _pocet=1 ");
-      while ( $qp && ($p= pdo_fetch_object($qp)) ) {
-        $n++;
-        pdo_qry("UPDATE pobyt SET i0_rodina={$p->id_rodina} WHERE id_pobyt={$p->id_pobyt}");
-      }
-      $html.= "<br>doplněno $n x pobyt.i0_rodina";
-      break;
-    // ---------------------------------------------- osobni_pece
-    case 'osobni_pece':
-      $html.= "<h3>kopie spolu.pecovane na spolu.pecujici</h3>Zatím ne ...";
-  //       SELECT s1.id_spolu,s2.id_spolu
-  //       FROM spolu AS s1
-  //       JOIN pobyt AS p1 ON p1.id_pobyt=s1.id_pobyt AND p1.id_akce=
-  //       JOIN spolu AS s2 ON s2.id_osoba=s1.pecovane
-  //       JOIN pobyt AS p2 ON p2.id_pobyt=s2.id_pobyt AND p2.id_akce=
-  //       WHERE
-  //        id_akce=394 AND s1.pecovane!=0
-      break;
-    default:
-      fce_error("transformaci $cmd neumím");
-    }
-  }
-  return $html;
-}
-*/
 /** ========================================================================================> SYSTEM **/
 # ---------------------------------------------------------------------------==> . datové statistiky
 # ----------------------------------------------------------------------------------------- db2 info
@@ -13905,7 +13405,8 @@ function db2_stav_kdo($db,$desc,$tit) {
 # --------------------------------------------------------------------------------- db2 copy_test_db
 # zkopíruje důležité tabulky z ezer_$db do ezer_$db_test
 function db2_copy_test_db($db) {  trace();
-  $ok= pdo_qry("SET sql_mode = 'NO_AUTO_VALUE_ON_ZERO'");
+  $ok= 1;
+  query("SET sql_mode = 'NO_AUTO_VALUE_ON_ZERO'");
   // tabulka¨, která se má jen vytvořit, má před jménem hvězdičku
   $tabs= explode(',',
 //     "_user,_skill,"
@@ -13918,10 +13419,13 @@ function db2_copy_test_db($db) {  trace();
   foreach ($tabs as $xtab ) {
     $tab= $xtab;
     if ( $tab[0]=='*' ) $tab= substr($tab,1);
-    if ( $ok ) $ok= pdo_qry("DROP TABLE IF EXISTS ezer_{$db}_test.$tab");
-    if ( $ok ) $ok= pdo_qry("CREATE TABLE ezer_{$db}_test.$tab LIKE ezer_{$db}.$tab");
+//    if ( $ok ) $ok= 
+    query("DROP TABLE IF EXISTS ezer_{$db}_test.$tab");
+//    if ( $ok ) $ok= 
+    query("CREATE TABLE ezer_{$db}_test.$tab LIKE ezer_{$db}.$tab");
     if ( $xtab[0]!='*' )
-      if ( $ok ) $ok= pdo_qry("INSERT INTO ezer_{$db}_test.$tab SELECT * FROM ezer_{$db}.$tab");
+//      if ( $ok ) $ok= 
+      query("INSERT INTO ezer_{$db}_test.$tab SELECT * FROM ezer_{$db}.$tab");
   }
   ezer_connect("ezer_{$db}");   // jinak zůstane přepnuté na test
   return $ok ? 'ok' : 'ko';
@@ -14263,7 +13767,7 @@ function db2_kontrola_dat($par) { trace();
       $ss= implode(',',$ss);
       if ( count($ss) ) {
         $ok= pdo_qry("DELETE FROM spolu WHERE id_spolu IN ($ss)")
-          ? (" = spolu SMAZÁNO ".pdo_affected_rows().'x') : ' CHYBA při mazání spolu' ;
+          ? (" = spolu SMAZÁNO ".pdo_affected_rows($ok).'x') : ' CHYBA při mazání spolu' ;
       }
     }
     $ido= tisk2_ukaz_osobu($x->id_osoba);
@@ -14287,13 +13791,6 @@ function db2_kontrola_dat($par) { trace();
   while ( $res && ($x= pdo_fetch_object($res)) ) {
     $n++;
     $ok= '';
-//     if ( $opravit ) {
-//       $sp= explode(',',$x->_sp);
-//       unset($sp[0]);
-//       $sp= implode(',',$sp);
-//       $ok.= pdo_qry("DELETE FROM spolu WHERE id_pobyt IN ($sp) AND id_osoba={$x->id_osoba}")
-//          ? (" = spolu SMAZÁNO ".pdo_affected_rows().'x') : ' CHYBA při mazání spolu' ;
-//     }
     $ido= tisk2_ukaz_osobu($x->id_osoba);
     $pp= $del= '';
     $ida= $x->id_akce;
