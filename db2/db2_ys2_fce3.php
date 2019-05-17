@@ -40,6 +40,7 @@ function update_web_changes () {
 }
 /** ===================================================================================> FILEBROWSER */
 # ------------------------------------------------------------------------------------ tut ma_archiv
+# SHOW LOAD
 // je volané metodou show.load - vrátí informace, zda existuje archiv akce v Synology
 function tut_ma_archiv ($table,$idkey,$keys,$root) {
   $values= array();
@@ -1123,7 +1124,7 @@ function ds_ceny_uprava($par) { trace('','win1250');
         display(/*w*u*/($ins));
         $n++;
         $ires= pdo_qry($ins);
-        $ok&= pdo_affected_rows()==1 ? 1 : 0;
+        $ok&= pdo_affected_rows($ires)==1 ? 1 : 0;
       }
       $html.= $ok&&$n ? "Zkopirovano" : "Kopie ceniku se nezdarila. Kontaktuj Martina Smidka";
     }
