@@ -365,7 +365,7 @@ function akce2_info($id_akce,$text=1) { trace();
         $deti+= $p->_deti;
         $err+= $p->_err;
         $err2+= $p->_err2;
-        $rodiny+= i0_rodina && $p->_clenu>1 ? 1 : 0;
+        $rodiny+= $p->i0_rodina && $p->_clenu>1 ? 1 : 0;
         $chybi_nar.= $p->_kdo;
         $chybi_sex.= $p->_kdo2;
       }
@@ -2892,7 +2892,9 @@ function ucast2_browse_ask($x,$tisk=false) {
 //                                                         return;
   $y= (object)array('ok'=>0);
   $neucasti= select1("GROUP_CONCAT(data)",'_cis',"druh='ms_akce_funkce' AND ikona=1");
-  foreach(explode(',','cmd,rows,quiet,key_id,oldkey') as $i) $y->$i= $x->$i;
+  foreach(explode(',','cmd,rows,quiet,key_id,oldkey') as $i) {
+    $y->$i= isset($x->$i) ? $x->$i : '';
+  }
   switch ($x->cmd) {
   case 'browse_load':  # -----------------------------------==> . browse_load
   default:
@@ -2918,7 +2920,7 @@ function ucast2_browse_ask($x,$tisk=false) {
 //     $AND= "AND p.id_pobyt IN (20488,20344) -- Bajerovi a Kubínovi";
 //     $AND= "AND p.id_pobyt IN (20568,20793) -- Šmídkovi + Nečasovi";
     # pro browse_row přidáme klíč
-    if ( $x->subcmd=='browse_row' ) {
+    if ( isset($x->subcmd) && $x->subcmd=='browse_row' ) {
       $AND= "AND p.id_pobyt={$y->oldkey}";
     }
     # kontext dotazu
@@ -2989,7 +2991,8 @@ function ucast2_browse_ask($x,$tisk=false) {
       }
       $spolu[$u->id_osoba]= $u->id_pobyt;
       // doplnění osobního umí - malým
-      if ( $u->o_umi ) {
+      $pobyt[$u->id_pobyt]->x_umi= '';
+      if ( isset($u->o_umi) && $u->o_umi ) {
         $pobyt[$u->id_pobyt]->x_umi.= strtolower($umi($u->o_umi));
       }
     }
@@ -3051,10 +3054,12 @@ function ucast2_browse_ask($x,$tisk=false) {
       $osoba[$or->id_osoba]->_rody= $or->_rody;
       $kmen= $or->_kmen;
       $osoba[$or->id_osoba]->_kmen= $kmen;
+      if ( !isset($osoba[$or->id_osoba]->_rfotky) )
+        $osoba[$or->id_osoba]->_rfotky= 0;
       $osoba[$or->id_osoba]->_rfotky+= $or->_rfotky;
       foreach (explode(',',$or->_rody) as $rod) {
         list($role,$idr,$css)= explode(':',$rod);
-        if ( !$rodina[$idr] ) {
+        if ( !isset($rodina[$idr]) ) {
           # doplnění (potřebných) rodinných údajů pro kmenové rodiny
 //                                                         display("{$or->id_osoba} - $kmen");
           $qr= pdo_qry("
@@ -3096,8 +3101,10 @@ function ucast2_browse_ask($x,$tisk=false) {
       if ( !count($p->cleni) ) continue;
       # seřazení členů podle přítomnosti, role, věku
       uasort($p->cleni,function($a,$b) {
-        $wa= $a->id_spolu==0 ? 4 : ( $a->role=='a' ? 1 : ( $a->role=='b' ? 2 : 3));
-        $wb= $b->id_spolu==0 ? 4 : ( $b->role=='a' ? 1 : ( $b->role=='b' ? 2 : 3));
+        $arole= isset($a->role) ? $a->role : '';
+        $brole= isset($b->role) ? $b->role : '';
+        $wa= isset($a->id_spolu) && $a->id_spolu==0 ? 4 : ( $arole=='a' ? 1 : ( $arole=='b' ? 2 : 3));
+        $wb= isset($b->id_spolu) && $b->id_spolu==0 ? 4 : ( $brole=='a' ? 1 : ( $brole=='b' ? 2 : 3));
         return $wa == $wb ? ($a->narozeni==$b->narozeni ? 0 : ($a->narozeni > $b->narozeni ? 1 : -1))
                           : ($wa==$wb ? 0 : ($wa > $wb ? 1 : -1));
       });
@@ -3107,7 +3114,7 @@ function ucast2_browse_ask($x,$tisk=false) {
       }
       # osobní pečování
       foreach ($p->cleni as $ido=>$s) {
-        if ( $s->id_spolu && ($idop= $s->pecovane) ) {
+        if ( isset($s->id_spolu) && $s->id_spolu && ($idop= $s->pecovane) ) {
           # pecujici
           $o2= $osoba[$idop];
           $s->pece_id= $o2->id_osoba;
@@ -3154,8 +3161,8 @@ function ucast2_browse_ask($x,$tisk=false) {
           if ( $s->id_spolu ) {
             # spočítání fotek
 //             if ( $o->fotka || $o->_fotky ) $fotek++;
-            if ( $o->fotka ) $o_fotek++;
-            if ( $o->_rfotky ) $r_fotek++;
+            if ( isset($o->rfotka) && $o->fotka ) $o_fotek++;
+            if ( isset($o->_rfotky) && $o->_rfotky ) $r_fotek++;
             # spočítání účastníků kvůli platbě
             $clenu++;
             # první 2 členi na pobytu
@@ -3171,8 +3178,8 @@ function ucast2_browse_ask($x,$tisk=false) {
               if ( !in_array(trim($prijmeni),$nazev) ) $nazev[]= trim($prijmeni);
             }
             # barva
-            if ( !$s->_barva )
-              $s->_barva= $s->id_tvori ? 1 : 2;               // barva: 1=člen rodiny, 2=nečlen
+            if ( !isset($s->_barva) )
+              $s->_barva= isset($s->id_tvori) && $s->id_tvori ? 1 : 2; // barva: 1=člen rodiny, 2=nečlen
             # barva nerodinného pobytu
             $p_access|= $o->access;
             $p_access_web|= $o->access_web;
@@ -3191,11 +3198,14 @@ function ucast2_browse_ask($x,$tisk=false) {
           # ==> .. seznam členů pro browse_fill
           $vek= $o->narozeni!='0000-00-00' ? roku_k($o->narozeni,$akce->datum_od) : '?'; // výpočet věku
           $jmeno= $p->funkce==99 ? "{$o->prijmeni} {$o->jmeno}" : $o->jmeno ;
-          $cleni.= "$del$ido~$keys~$o->access~$o->access_web~$jmeno~$dup~$vek~$s->id_tvori~$s->id_rodina~$s->role";
+          $sid_tvori= isset($s->id_tvori) ? $s->id_tvori : 0;
+          $sid_rodina= isset($s->id_rodina) ? $s->id_rodina : 0;
+          $srole= isset($s->role) ? $s->role : '';
+          $cleni.= "$del$ido~$keys~$o->access~$o->access_web~$jmeno~$dup~$vek~$sid_tvori~$sid_rodina~$srole";
           $cleni.= '~'.rodcis($o->narozeni,$o->sex);
           $del= $delim;
           # ==> .. rodiny a kmenová rodina
-          $rody= explode(',',$o->_rody);
+          $rody= isset($o->_rody) ? explode(',',$o->_rody) : array();
           $r= "-:0:nerodina"; $kmen= '';
           foreach($rody as $rod) {
             list($role,$ir,$access)= explode(':',$rod);
@@ -3205,19 +3215,19 @@ function ucast2_browse_ask($x,$tisk=false) {
             $r.= ",$naz:$ir:$access";
           }
           $cleni.= "~$r";                                           // rody
-          $id_kmen= $o->_kmen;
+          $id_kmen= isset($o->_kmen) && $o->_kmen ? $o->_kmen : 0;
           $o->_kmen= "$kmen/$id_kmen";
           $cleni.= "~" . sql_date1($o->narozeni);                   // narozeniny d.m.r
           $cleni.= "~" . sql_date1($o->web_souhlas);                // souhlas d.m.r
           # doplnění textů z kmenové rodiny pro zobrazení rodinných adres (jako disabled)
 //                                                 debug($o,"browse - o");
 //                                                 debug($rodina[$id_kmen],"browse - kmen=$id_kmen");
-          if ( !$o->adresa ) {
+          if ( !$o->adresa && $id_kmen ) {
             $o->ulice= "®".$rodina[$id_kmen]->ulice;
             $o->psc=   "®".$rodina[$id_kmen]->psc;
             $o->obec=  "®".$rodina[$id_kmen]->obec;
           }
-          if ( !$o->kontakt ) {
+          if ( !$o->kontakt && $id_kmen  ) {
             $o->email=   "®".$rodina[$id_kmen]->emaily;
             $o->telefon= "®".$rodina[$id_kmen]->telefony;
           }
@@ -3227,7 +3237,7 @@ function ucast2_browse_ask($x,$tisk=false) {
           }
           # informace ze spolu
           foreach($fspo as $f=>$filler) {
-            $cleni.= "~{$s->$f}";
+            $cleni.= isset($s->$f) ? "~{$s->$f}" : '~';
           }
         }
       }
@@ -3257,9 +3267,9 @@ function ucast2_browse_ask($x,$tisk=false) {
       $p->web_changes= $p->web_changes&4 ? 2 : ($p->web_changes ? 1 : 0);
 //                                                         if ($idp==15826) { debug($akce);debug($p,"platba1234=$platba1234"); }
       # pobyt I
-      foreach($fpob1 as $fz=>$fp) { $z->$fz= $p->$fp; }
+      foreach($fpob1 as $fz=>$fp) { $z->$fz= isset($p->$fp) ? $p->$fp : ''; }
       # akce
-      foreach($fakce as $fz=>$fp) { $z->$fz= $akce->$fp; }
+      foreach($fakce as $fz=>$fp) { $z->$fz= isset($akce->$fp) ? $akce->$fp : ''; }
       $z->_nazev= $_nazev;
       $z->_jmena= $_jmena;
       # ==> .. dokumenty
@@ -3295,7 +3305,7 @@ function ucast2_browse_ask($x,$tisk=false) {
         $z->_dupl= $_keys ? 1 : 0;
       }
       # rodina
-      foreach($frod as $fz=>$fr) { $z->$fz= $rodina[$idr]->$fr; }
+      foreach($frod as $fz=>$fr) { $z->$fz= isset($rodina[$idr]->$fr) ? $rodina[$idr]->$fr : ''; }
       # ... oprava obarvení
       $z->r_access|= $p_access;
       $z->r_access_web= !$idr ? 0
@@ -3436,7 +3446,7 @@ function ucast2_browse_ask($x,$tisk=false) {
 function ucast2_flds($fstr) {
   $fp= array();
   foreach(explode(',',$fstr) as $fzp) {
-    list($fz,$f)= explode('=',$fzp);
+    list($fz,$f)= explode('=',$fzp.'=');
     $fp[$fz]= $f ?: $fz ;
   }
   return $fp;
@@ -3907,7 +3917,7 @@ function akce2_skup_get($akce,$kontrola,&$err,$par=null) { trace();
           SELECT p.id_pobyt,skupina,nazev,pokoj,i0_rodina,
             GROUP_CONCAT(o.id_osoba) as ids_osoba,
             GROUP_CONCAT(o.id_osoba) as id_osoba_m,
-            CONCAT(nazev,' ',GROUP_CONCAT(o.jmeno SEPARATOR ' a ')) AS _nazev
+            CONCAT(nazev,' ',GROUP_CONCAT(o.jmeno ORDER BY t.role SEPARATOR ' a ')) AS _nazev
           FROM pobyt AS p
           JOIN spolu AS s USING(id_pobyt)
           JOIN osoba AS o ON s.id_osoba=o.id_osoba
