@@ -64,8 +64,11 @@ group pobyt {
   use fak: form fakturace [400,30,,]
   // zobrazení objednávky
   proc precti  {
-    popis.tit.set(conc('<h3>Objednávka číslo ',the_order.get,'</h3>')); obj.load(the_order.get);
-    fak.load(the_order.get); fak.faktura.display(0); ucastnici.cti(obj.rooms1.get)
+    obj.load(the_order.get);
+    popis.tit.set(conc('<h3>Objednávka číslo ',the_order.get,
+        cconc(obj.deleted.get,' -- je smazaná!'),'</h3>')); 
+    obj.deleted.get; fak.init; obj.init
+  | fak.load(the_order.get); fak.faktura.display(0); ucastnici.cti(obj.rooms1.get)
   }
   proc obj.save_pobyt.onclick() {
     obj.save; order_load(the_order.get)
@@ -114,6 +117,7 @@ group pobyt {
   // ------------------------------------------------------------------==> OBJEDNÁVKA
   form objednavka /*[,,300,100]*/ { css:'ds_form'
     const PL=0; PT=92; QT=PT+PQ-4; FT=120+PQ
+    field deleted { data:tx_gnalberice_order.deleted }
     label       [  0,  0,100,] { title:'stav objednávky' }
     select      [  0, 15,120,] { type:'map', data:tx_gnalberice_order.state, options:ds_stav.hodnota }
     label       [130,  0,100,] { title:'akce YS' }
