@@ -12199,7 +12199,7 @@ function mail2_personify($obsah,$vars,$id_pobyt,&$err) {
 #   'C' - rozeslat účastníkům akce dopis.id_duakce ukazující do ch_ucast
 #   'Q' - rozeslat na adresy vygenerované dopis.cis_skupina => hodnota
 #   'G' - maillist
-function mail2_mai_info($id,$email,$id_dopis,$zdroj,$id_mail) {  trace();
+function mail2_mai_info($id,$email,$id_dopis,$zdroj,$id_mail) {  //trace();
   $html= '';
   switch ($zdroj) {
   case 'C':                     // chlapi
@@ -12397,6 +12397,7 @@ function mail2_mai_sending($y) {
     $y->done= 0;
     $n= select('COUNT(*)','mail',"id_dopis={$y->par->id_dopis} AND stav IN (0,3)");
     $y->todo= $y->par->davka ? ceil($n/$y->par->davka) : 0;
+    $y->last= 0; // poslední poslaný id_mail
     unset($y->par);
   }
   if ( $y->error ) { goto end; }
@@ -12410,6 +12411,8 @@ function mail2_mai_sending($y) {
   $y->done++;
   // zpráva
   $y->msg= $y->done==$y->todo ? 'konec' : "ještě ".($y->todo-$y->done); 
+  // poslední mail pro refresh
+  $y->last= $res->_last;
 //  $y->error= "au";
 end:  
   return $y;
@@ -12501,11 +12504,12 @@ function mail2_mai_send($id_dopis,$kolik,$from,$fromname,$test='',$id_mail=0,$fo
   else {
     // poslání dávky $kolik mailů
     $n= $nko= 0;
-    $qry= "SELECT * FROM mail WHERE id_dopis=$id_dopis AND stav IN (0,3)";
+    $qry= "SELECT * FROM mail WHERE id_dopis=$id_dopis AND stav IN (0,3) ORDER BY email";
     $res= pdo_qry($qry);
     while ( $res && ($z= pdo_fetch_object($res)) ) {
       // posílej mail za mailem
       if ( $n>=$kolik ) break;
+      $result->_last= $z->id_mail; // pro refresh
       $n++;
       $i= 0;
       $mail->ClearAddresses();

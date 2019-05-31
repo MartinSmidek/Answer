@@ -629,12 +629,11 @@ map map_smtp_srv:     table _cis {where:"druh='smtp_srv'",          order:'porad
 
 # ==========================================================================================> PROCES
 panel Proces [0,0,300,50] { type:'popup' title:'průběh výpočtu' 
-  var browse1:object, browse2:object // browsery pro aktualizace
+  var parent:object,  // parent je panel, ve kterém je obsažena procedura se 
+      refresh:text    // jménem v refresh volaná s id_mail po každé dávce
   use it: form _it 
   // Start - odstartuje výpočet definovaný objektem par a zobrazí jeho průběh 
-  proc Start(par,title,_browse1,_browse2) { 
-    // předání parametrů
-    browse1.set(_browse1); browse2.set(_browse2);
+  proc Start(par,title) { 
     // inicializace
     clear; continue.set(1); it.msg.set(''); Show(0,1); it.display(1,'t'); 
     panel.set_attrib('title',title);
@@ -650,8 +649,8 @@ panel Proces [0,0,300,50] { type:'popup' title:'průběh výpočtu'
     // odeslání dávky mailů - odpovídá  za done<=todo 
     y.set(ask('mail2_mai_sending',y.get)); 
     it.msg.set(cconc(1,y.get('msg'),not(continue.get),' -- PŘERUŠENO!'));
-    browse1.get.browse_seek; browse2.get.browse_seek;
     [ y.get('error'); Stop; it.msg.set(conc('CHYBA: ',y.get('error'),' -- PŘERUŠENO!')) ];
+    [ y.get('last'); refresh.get; parent.get.call(refresh.get,y.get('last')) ];
     Show(y.get('done'),y.get('todo')); // posune termometr
     [ eq(y.get('done'),y.get('todo')); Stop ]; 
     Step
