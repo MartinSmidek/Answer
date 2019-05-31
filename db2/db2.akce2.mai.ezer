@@ -1296,26 +1296,45 @@ form _esady  {
       msg.set(E_info.get('_html'));
     }
   }
-  // postupné odesílání
+  // postupné odesílání - nové
   label  [0,306,364,31] { css:'ae_parm' }
-  field davka [128,313,30,17] { title:'postupně odesílat po:'
-    format:'rt', value:'10', skill:'yam|yams;fam|fams;cam|cams',
+  field davka [128,313,30,17] { title:'odesílat po:' value:'10' format:'r' skill:'yam|yams;fam|fams;cam|cams' 
     proc onchange () {
-      send.set(replace_fa(conc('[fa-send-o] až ',davka.get,'  ještě neposlaných')));
+      send.set(replace_fa(conc('[fa-send-o] všechny maily (po ',davka.get,')')));
     }
   }
-  button send [173,313,,] { title:'xx ještě neposlaných', skill:'yam|yams;fam|fams;cam|cams',
-    help:'pošle další dávku - počet lze měnit políčkem vlevo'
-    proc onclick () { var foot:text
+  button send [170,313,,] { skill:'yam|yams;fam|fams;cam|cams',
+    help:'budu posílat mail za mailem tak, aby se server nezahltil'
+    proc onclick () { var foot:text, par:object
       msg.set(''); foot.set('');
-      confirm(conc('Opravdu poslat dalších ',davka.get,' mailů "z adresy" ',from.get,'?'));
+      confirm(conc('Opravdu postupně po ',davka.get,' mailech "z adresy" ',from.get,'?'));
       [ foo.get; foot.set(sys('user','options','email_foot')) ]; 
-      E_info.set(ask('mail2_mai_send',
-          dopis_id.get,davka.get,from.get,name.get,0,0,foot.get));
-      msg.set(E_info.get('_html'));
-      maily.browse_seek; texty.browse_seek;
+      par.set(object(
+          'id_dopis',dopis_id.get,'davka',davka.get,
+          'from',from.get,'name',name.get,'foot',foot.get));
+      Proces.Start(par,"Postupné odesílání připravených mailů",maily,texty);
     }
   }
+//  // postupné odesílání - staré
+//  label  [0,306,364,31] { css:'ae_parm' }
+//  field davka [128,313,30,17] { title:'postupně odesílat po:'
+//    format:'rt', value:'10', skill:'yam|yams;fam|fams;cam|cams',
+//    proc onchange () {
+//      send.set(replace_fa(conc('[fa-send-o] až ',davka.get,'  ještě neposlaných')));
+//    }
+//  }
+//  button send [173,313,,] { title:'xx ještě neposlaných', skill:'yam|yams;fam|fams;cam|cams',
+//    help:'pošle další dávku - počet lze měnit políčkem vlevo'
+//    proc onclick () { var foot:text
+//      msg.set(''); foot.set('');
+//      confirm(conc('Opravdu poslat dalších ',davka.get,' mailů "z adresy" ',from.get,'?'));
+//      [ foo.get; foot.set(sys('user','options','email_foot')) ]; 
+//      E_info.set(ask('mail2_mai_send',
+//          dopis_id.get,davka.get,from.get,name.get,0,0,foot.get));
+//      msg.set(E_info.get('_html'));
+//      maily.browse_seek; texty.browse_seek;
+//    }
+//  }
   # ------------------- přegenerování jednoho potvrzení
   button regenerate [238,375,,] { title:'přegenerovat potvrzení', style:"z-index:2"
     proc onclick() { var ret:object
