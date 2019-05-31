@@ -650,12 +650,13 @@ panel Proces [0,0,300,50] { type:'popup' title:'průběh výpočtu'
     continue.get;  // po Stop (třeba stisku Cancel) se výpočet přeruší
     // odeslání dávky mailů - odpovídá  za done<=todo 
     y.set(ask('mail2_mai_sending',y.get)); 
-    it.msg.set(cconc(1,y.get('msg'),not(continue.get),' -- PŘERUŠENO!'));
+    sent.set(sum(sent.get,y.get('sent')));
+    it.msg.set(conc('posláno ',sent.get,', zbývá ',y.get('msg'),
+        cconc(not(continue.get),' -- PŘERUŠENO!')));
     [ y.get('error'); Stop; problem.set(y.get('error')); 
       it.msg.set(conc('CHYBA: ',problem.get,' -- PŘERUŠENO!')) ];
     [ y.get('last'); refresh.get; parent.get.call(refresh.get,y.get('last')) ];
     Show(y.get('done'),y.get('todo')); // posune termometr
-    sent.set(sum(sent.get,y.get('sent')));
     [ eq(y.get('done'),y.get('todo')); Stop ]; 
     Step
   }
