@@ -37,6 +37,10 @@ if ( isset($_GET['op']) ) {
     break;
   case 'phpinfo':
     phpinfo();
+    break;
+  case 'cookie':
+    setcookie('error_reporting',$arg);
+    break;
   }
   header('Location: ses.php');
   exit();
@@ -49,9 +53,7 @@ $cms= debug($_GET,'GET').'<br/>';
 $cms.= debug($_POST,'POST').'<br/>';
 $cms.= debug($_COOKIE,'COOKIE').'<br/>';
 $cms.= debug($_SESSION,'SESSION',(object)array('depth'=>0)).'<br/>';
-$sess= $_SESSION;
-unset($sess['upload']);
-$cms.= debug($sess,'SESSION bez upload').'<br/>';
+$cms.= debug($_SESSION,'SESSION').'<br/>';
 $cms.= debug($_SERVER,'SERVER').'<br/>';
 
 echo <<<__EOD
@@ -85,6 +87,11 @@ echo <<<__EOD
       <button onclick="op('reload.');">reload</button>
       <button onclick="op('destroy.');">destroy SESSION</button>
       <button onclick="op('phpinfo.');">phpinfo</button>
+      <span style='font-size:12px'>COOKIE error_reporting: </span>
+      <button onclick="op('cookie.0');">0</button>
+      <button onclick="op('cookie.1');">1</button>
+      <button onclick="op('cookie.2');">2</button>
+      <button onclick="op('cookie.3');">3</button>
     </div>
       <div class='dbg' style="position:absolute;top:30px">
         $cms

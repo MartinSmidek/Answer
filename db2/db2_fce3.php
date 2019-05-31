@@ -12384,6 +12384,36 @@ function mail2_new_PHPMailer() {
 end:  
   return $mail;
 }
+# -------------------------------------------------------------------------------- mail2 mai_sending
+// y je paměť procesu, který bude krok za krokem prováděn 
+// y.todo - celkový počet kroků
+// y.done - počet provedených kroků 
+// y.error = text chyby, způsobí konec
+function mail2_mai_sending($y) { 
+  global $ezer_root;
+  // pokud je y.todo=0 provede se inicializace procesu podle y.par
+  if ( $y->todo==0 ) {
+    $_SESSION[$ezer_root]['mail_par']= $y->par;
+    $y->done= 0;
+    $n= select('COUNT(*)','mail',"id_dopis={$y->par->id_dopis} AND stav IN (0,3)");
+    $y->todo= $y->par->davka ? ceil($n/$y->par->davka) : 0;
+    unset($y->par);
+  }
+  if ( $y->error ) { goto end; }
+  if ( $y->done >= $y->todo ) { $y->done= $y->todo; $y->msg= 'konec+'; goto end; }
+  $par= (object)$_SESSION[$ezer_root]['mail_par'];
+  // vlastní proces
+  $res= mail2_mai_send($par->id_dopis,$par->davka,$par->from,$par->name,'',0,$par->foot);
+  if ( $res->_error ) {
+    $y->error= $res->_html;
+  }
+  $y->done++;
+  // zpráva
+  $y->msg= $y->done==$y->todo ? 'konec' : "ještě ".($y->todo-$y->done); 
+//  $y->error= "au";
+end:  
+  return $y;
+}
 # ----------------------------------------------------------------------------------- mail2 mai_send
 # ASK
 # odešli dávku $kolik mailů ($kolik=0 znamená testovací poslání)
@@ -12393,6 +12423,7 @@ end:
 # pokud je definováno $foot tj. patička, připojí se na konec
 # použije se SMTP server podle SESSION
 function mail2_mai_send($id_dopis,$kolik,$from,$fromname,$test='',$id_mail=0,$foot='') { trace();
+  $TEST= 0;
   // připojení případné přílohy
   $attach= function($mail,$fname) {
     global $ezer_root;
@@ -12403,9 +12434,6 @@ function mail2_mai_send($id_dopis,$kolik,$from,$fromname,$test='',$id_mail=0,$fo
         $mail->AddAttachment($fpath);
   } } };
   //
-
-
-
   $result= (object)array('_error'=>0);
   $pro= '';
   // přečtení rozesílaného mailu
@@ -12431,8 +12459,6 @@ function mail2_mai_send($id_dopis,$kolik,$from,$fromname,$test='',$id_mail=0,$fo
   $mail->FromName= "$fromname";
   $mail->Subject= $d->nazev;
 //                                         display($mail->Subject);
-
-
   $attach($mail,$d->prilohy);
 //   if ( $d->prilohy ) {
 //     foreach ( explode(',',$d->prilohy) as $fnamesb ) {
@@ -12506,8 +12532,14 @@ function mail2_mai_send($id_dopis,$kolik,$from,$fromname,$test='',$id_mail=0,$fo
           $mail->AddCC($adresa);
       }
 //       $mail->AddBCC($klub);
-      // zkus poslat mail
-      try { $ok= $mail->Send(); } catch(Exception $e) { $ok= false; }
+       if ( $TEST ) {
+         $ok= 1;
+                                          display("jako odeslaný mail pro $adresa");
+       }
+       else {
+        // zkus poslat mail
+        try { $ok= $mail->Send(); } catch(Exception $e) { $ok= false; }
+      }
       if ( !$ok  ) {
         $ident= $z->id_clen ? $z->id_clen : $adresa;
         $err= $mail->ErrorInfo;
