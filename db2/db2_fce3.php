@@ -12388,6 +12388,7 @@ end:
 // y je paměť procesu, který bude krok za krokem prováděn 
 // y.todo - celkový počet kroků
 // y.done - počet provedených kroků 
+// y.sent - počet skutečně odeslaných mailů
 // y.error = text chyby, způsobí konec
 function mail2_mai_sending($y) { 
   global $ezer_root;
@@ -12398,6 +12399,7 @@ function mail2_mai_sending($y) {
     $n= select('COUNT(*)','mail',"id_dopis={$y->par->id_dopis} AND stav IN (0,3)");
     $y->todo= $y->par->davka ? ceil($n/$y->par->davka) : 0;
     $y->last= 0; // poslední poslaný id_mail
+    $y->sent= 0; // počet poslaných
     unset($y->par);
   }
   if ( $y->error ) { goto end; }
@@ -12409,10 +12411,13 @@ function mail2_mai_sending($y) {
     $y->error= $res->_html;
   }
   $y->done++;
+  $y->sent= $res->_sent;
   // zpráva
-  $y->msg= $y->done==$y->todo ? 'konec' : "ještě ".($y->todo-$y->done); 
+  $y->msg= $y->done==$y->todo ? 'konec' : "ještě ".($y->todo-$y->done)." x {$par->davka}"; 
   // poslední mail pro refresh
   $y->last= $res->_last;
+  // před skončením počkej 1s aby šlo velikostí dávky řídit zátěž
+  sleep(1);
 //  $y->error= "au";
 end:  
   return $y;
@@ -12510,7 +12515,6 @@ function mail2_mai_send($id_dopis,$kolik,$from,$fromname,$test='',$id_mail=0,$fo
       // posílej mail za mailem
       if ( $n>=$kolik ) break;
       $result->_last= $z->id_mail; // pro refresh
-      $n++;
       $i= 0;
       $mail->ClearAddresses();
       $mail->ClearCCs();
@@ -12551,12 +12555,16 @@ function mail2_mai_send($id_dopis,$kolik,$from,$fromname,$test='',$id_mail=0,$fo
         $result->_error= 1;
         $nko++;
       }
+      else {
+        $n++;
+      }
       // zapiš výsledek do tabulky
       $stav= $ok ? 4 : 5;
       $msg= $ok ? '' : $mail->ErrorInfo;
       $qry1= "UPDATE mail SET stav=$stav,msg=\"$msg\" WHERE id_mail={$z->id_mail}";
       $res1= pdo_qry($qry1);
     }
+    $result->_sent= $n;
     $html.= "<br><b style='color:#070'>Bylo odesláno $n emailů ";
     $html.= $nko ? "s $nko chybami " : "bez chyb";
     $html.= "</b>";
