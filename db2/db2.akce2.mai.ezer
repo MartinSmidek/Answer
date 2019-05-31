@@ -1220,6 +1220,11 @@ panel E_dopis [0,0,645,520] { title:' Úprava textu mailu', type:'popup', css:'d
 }
 # ----------------------------------------------------------------------------------------==> _esady
 # rozesílání připraveného mailu - zakládání, aktualizace a rušení - obsluha front s maily
+# procedura mail_refresh je volána po odeslání dávky mailů pomocí Proces
+proc mail_refresh(idm) {
+  es.maily.browse_seek(conc('id_mail=',idm));
+  es.texty.browse_refresh;
+}
 form _esady  {
   # ------------------------ připravené dopisy
   view etd: table dopis
@@ -1260,7 +1265,7 @@ form _esady  {
         name.set(sys('user','options','vyrizuje'));
         [ sys('user','options','smtp'); smtp.key(sys('user','options','smtp'))
         | smtp.key(1); smtp.onchanged ];
-        davka.set(20); davka.change
+        davka.set(10); davka.change
       ]
     }
   }
@@ -1298,12 +1303,13 @@ form _esady  {
   }
   // postupné odesílání - nové
   label  [0,306,364,31] { css:'ae_parm' }
-  field davka [128,313,30,17] { title:'odesílat po:' value:'10' format:'r' skill:'yam|yams;fam|fams;cam|cams' 
+  field davka [108,313,30,17] { title:'odesílat po:' value:'10' format:'r' skill:'yam|yams;fam|fams;cam|cams' 
     proc onchange () {
-      send.set(replace_fa(conc('[fa-send-o] všechny maily (po ',davka.get,')')));
+      gt(davka.get,20); alert("dávky by měly být malé (do 20) aby nezahltily odesílací server");
+    | send.set(replace_fa(conc('[fa-send-o] pošli všechny maily (po ',davka.get,')')));
     }
   }
-  button send [170,313,,] { skill:'yam|yams;fam|fams;cam|cams',
+  button send [150,313,,] { skill:'yam|yams;fam|fams;cam|cams',
     help:'budu posílat mail za mailem tak, aby se server nezahltil'
     proc onclick () { var foot:text, par:object
       msg.set(''); foot.set('');
@@ -1312,7 +1318,10 @@ form _esady  {
       par.set(object(
           'id_dopis',dopis_id.get,'davka',davka.get,
           'from',from.get,'name',name.get,'foot',foot.get));
-      Proces.Start(par,"Postupné odesílání připravených mailů",maily,texty);
+      // před nastartováním procesu odesílání je třeba zajistit dostupnost procedury mail_refresh
+      Proces.parent.set(panel);
+      Proces.refresh.set('mail_refresh');
+      Proces.Start(par,"Postupné odesílání připravených mailů");
     }
   }
 //  // postupné odesílání - staré
@@ -1366,8 +1375,8 @@ form _esady  {
     show access           { data:etmo.access }
     show id_clen [,,50,]  { title:'člen', data:etmm.id_clen, format:'rsq'
       css_cell:'access,0:,1:ezer_ys,2:ezer_fa,3:ezer_db' }
-    show prijmeni [,,50,] { title:'příjmení', expr:"'-'", format:'s+q' },  // nastavuje se dynamicky v reload
-    show email   [,,180,] { title:'email', data:etmm.email, format:'tsq' },
+    show prijmeni [,,50,] { title:'příjmení', expr:"'-'", format:'sq' },  // nastavuje se dynamicky v reload
+    show email   [,,180,] { title:'email', data:etmm.email, format:'ts+q' },
     show msg     [,,50,]  { title:'chyba', data:etmm.msg, format:'tsq' }
     show body             { data:etmm.body }
     proc onsubmit() {
@@ -1380,7 +1389,7 @@ form _esady  {
       | obsah.set(ask('select','obsah','dopis',conc('id_dopis=',id_dopis.get))) ]
     }
     menu { type:'context'
-      item { title:'chybové poslat znovu'
+      item { title:'všechny chybné poslat znovu'
         proc onclick() { 
           ask("query",conc("UPDATE mail SET stav=3 WHERE stav=5 AND id_dopis=",id_dopis.get));
           maily.browse_refresh } }
