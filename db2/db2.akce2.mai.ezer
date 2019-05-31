@@ -1223,7 +1223,6 @@ panel E_dopis [0,0,645,520] { title:' Úprava textu mailu', type:'popup', css:'d
 # procedura mail_refresh je volána po odeslání dávky mailů pomocí Proces
 proc mail_refresh(idm) {
   es.maily.browse_seek(conc('id_mail=',idm));
-  es.texty.browse_refresh;
 }
 form _esady  {
   # ------------------------ připravené dopisy
@@ -1322,6 +1321,7 @@ form _esady  {
       Proces.parent.set(panel);
       Proces.refresh.set('mail_refresh');
       Proces.Start(par,"Postupné odesílání připravených mailů");
+      texty.browse_refresh;
     }
   }
 //  // postupné odesílání - staré
