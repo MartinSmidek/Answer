@@ -629,14 +629,16 @@ map map_smtp_srv:     table _cis {where:"druh='smtp_srv'",          order:'porad
 
 # ==========================================================================================> PROCES
 panel Proces [0,0,300,50] { type:'popup' title:'průběh výpočtu' 
-  var parent:object,  // parent je panel, ve kterém je obsažena procedura se 
-      refresh:text    // jménem v refresh volaná s id_mail po každé dávce
+  var parent:object,  // vstup - parent je panel, ve kterém je obsažena procedura se 
+      refresh:text,   //         jménem v refresh volaná s id_mail po každé dávce
+      sent:number,    // výstup - počet odeslaných mailů
+      problem:text    //          text případné chyby
   use it: form _it 
   // Start - odstartuje výpočet definovaný objektem par a zobrazí jeho průběh 
   proc Start(par,title) { 
     // inicializace
     clear; continue.set(1); it.msg.set(''); Show(0,1); it.display(1,'t'); 
-    panel.set_attrib('title',title);
+    panel.set_attrib('title',title); sent.set(0); problem.set(''); 
     // inicializace cyklu a předání prametrů - počáteční hodnota todo bude určena z par
     y.set(object('todo',0,'done',0,'par',par)); 
     // zahájení cyklu (rekurze je asi efektivnější než foreach s předávaným polem)
@@ -649,9 +651,11 @@ panel Proces [0,0,300,50] { type:'popup' title:'průběh výpočtu'
     // odeslání dávky mailů - odpovídá  za done<=todo 
     y.set(ask('mail2_mai_sending',y.get)); 
     it.msg.set(cconc(1,y.get('msg'),not(continue.get),' -- PŘERUŠENO!'));
-    [ y.get('error'); Stop; it.msg.set(conc('CHYBA: ',y.get('error'),' -- PŘERUŠENO!')) ];
+    [ y.get('error'); Stop; problem.set(y.get('error')); 
+      it.msg.set(conc('CHYBA: ',problem.get,' -- PŘERUŠENO!')) ];
     [ y.get('last'); refresh.get; parent.get.call(refresh.get,y.get('last')) ];
     Show(y.get('done'),y.get('todo')); // posune termometr
+    sent.set(sum(sent.get,y.get('sent')));
     [ eq(y.get('done'),y.get('todo')); Stop ]; 
     Step
   }

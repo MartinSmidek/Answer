@@ -1264,7 +1264,7 @@ form _esady  {
         name.set(sys('user','options','vyrizuje'));
         [ sys('user','options','smtp'); smtp.key(sys('user','options','smtp'))
         | smtp.key(1); smtp.onchanged ];
-        davka.set(10); davka.change
+        davka.set(1); davka.change
       ]
     }
   }
@@ -1302,7 +1302,7 @@ form _esady  {
   }
   // postupné odesílání - nové
   label  [0,306,364,31] { css:'ae_parm' }
-  field davka [108,313,30,17] { title:'odesílat po:' value:'10' format:'r' skill:'yam|yams;fam|fams;cam|cams' 
+  field davka [108,313,30,17] { title:'odesílat po:' value:'1' format:'r' skill:'yam|yams;fam|fams;cam|cams' 
     proc onchange () {
       gt(davka.get,20); alert("dávky by měly být malé (do 20) aby nezahltily odesílací server");
     | send.set(replace_fa(conc('[fa-send-o] pošli všechny maily (po ',davka.get,')')));
@@ -1320,7 +1320,9 @@ form _esady  {
       // před nastartováním procesu odesílání je třeba zajistit dostupnost procedury mail_refresh
       Proces.parent.set(panel);
       Proces.refresh.set('mail_refresh');
-      Proces.Start(par,"Postupné odesílání připravených mailů");
+      [ Proces.Start(par,"Postupné odesílání připravených mailů") ];
+      msg.set(conc("Bylo odesláno ",Proces.sent.get," mailů",
+          cconc(Proces.problem.get,conc(", s chybou ",Proces.problem.get))));
       texty.browse_refresh;
     }
   }
@@ -1353,7 +1355,7 @@ form _esady  {
       maily.onrowclick;
   }}
   # ------------------- informace
-  label msg [0,335,377,67]
+  label msg [0,344,377,60]
   label info [0,403,367,90]   { style:"overflow:auto;border:1px solid grey;padding:5px" }
   label obsah [0,504,716,246] { style:"overflow:auto;border:1px solid grey;padding:5px" }
   label pata [0,761,716,50] { style:"overflow:auto;border:1px solid grey;padding:5px" }
