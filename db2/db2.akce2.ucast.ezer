@@ -846,7 +846,8 @@ form _page  [,,623,20] {
     var last=0
     proc onclick() {
       neni_ulozeno // warning
-    | tags(this,'d','o|z|h|f');
+    | has_skill('yaa:c;faa:c;caa:c'); 
+      tags(this,'d','o|z|h|f');
       zalozka.set('docu');
       evid.Display(0); cmd.display(0);
       pla.display(0); cmdp.display(0);
