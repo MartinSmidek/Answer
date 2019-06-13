@@ -12400,6 +12400,7 @@ function mail2_mai_sending($y) {
     $y->todo= $y->par->davka ? ceil($n/$y->par->davka) : 0;
     $y->last= 0; // poslední poslaný id_mail
     $y->sent= 0; // počet poslaných
+    $y->error= '';
     unset($y->par);
   }
   if ( $y->error ) { goto end; }
@@ -12407,18 +12408,18 @@ function mail2_mai_sending($y) {
   $par= (object)$_SESSION[$ezer_root]['mail_par'];
   // vlastní proces
   $res= mail2_mai_send($par->id_dopis,$par->davka,$par->from,$par->name,'',0,$par->foot);
-  if ( $res->_error ) {
-    $y->error= $res->_html;
-  }
-  $y->done++;
   $y->sent= $res->_sent;
   // zpráva
   $y->msg= $y->done==$y->todo ? 'konec' : "ještě ".($y->todo-$y->done)." x {$par->davka}"; 
   // poslední mail pro refresh
   $y->last= $res->_last;
+  if ( $res->_error ) {
+    $y->error= $res->_html;
+    goto end;
+  }
+  $y->done++;
   // před skončením počkej 1s aby šlo velikostí dávky řídit zátěž
   sleep(1);
-//  $y->error= "au";
 end:  
   return $y;
 }
@@ -12563,6 +12564,8 @@ function mail2_mai_send($id_dopis,$kolik,$from,$fromname,$test='',$id_mail=0,$fo
       $msg= $ok ? '' : $mail->ErrorInfo;
       $qry1= "UPDATE mail SET stav=$stav,msg=\"$msg\" WHERE id_mail={$z->id_mail}";
       $res1= pdo_qry($qry1);
+      // po chybě přeruš odesílání
+      if ( !$ok ) break;
     }
     $result->_sent= $n;
     $html.= "<br><b style='color:#070'>Bylo odesláno $n emailů ";

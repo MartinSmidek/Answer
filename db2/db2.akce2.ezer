@@ -639,8 +639,9 @@ panel Proces [0,0,300,50] { type:'popup' title:'průběh výpočtu'
     // inicializace
     clear; continue.set(1); it.msg.set(''); Show(0,1); it.display(1,'t'); 
     panel.set_attrib('title',title); sent.set(0); problem.set(''); 
-    // inicializace cyklu a předání prametrů - počáteční hodnota todo bude určena z par
-    y.set(object('todo',0,'done',0,'par',par)); 
+    // inicializace cyklu a předání prametrů
+    // PHP procedura musí nastavit položky: todo, done, sent, last, error
+    y.set(object('par',par)); 
     // zahájení cyklu (rekurze je asi efektivnější než foreach s předávaným polem)
     [ panel.call('Step') ]; // asynchronní spuštění, aby bylo provedeno panel.modal
     panel.modal 
