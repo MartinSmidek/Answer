@@ -8162,7 +8162,7 @@ function akce2_pdf_stravenky($akce,$par,$report_json) {  trace();
   foreach ($res_vse->res as $x) {
 //                                                         if ( $x->dieta != '_bl' ) continue;
     $x->nazev= $x->nazev_diety=='normální' ? '' : $x->nazev_diety;
-    $res= akce2_pdf_stravenky_dieta($x,$report_json);
+    $res= akce2_pdf_stravenky_dieta($x,$par,$report_json);
     if ( $res->_error )
       fce_warning("{$x->nazev_diety} - {$res->_error}");
     else
@@ -8173,7 +8173,7 @@ function akce2_pdf_stravenky($akce,$par,$report_json) {  trace();
 # ------------------------------------------------------------------------ akce2 pdf_stravenky_dieta
 # generování štítků se stravenkami pro rodinu účastníka a pro pečouny do PDF
 # pomocí tisk2_sestava se do objektu $x->tab vygeneruje pole s elementy pro tisk stravenky
-function akce2_pdf_stravenky_dieta($x,$report_json) {  trace();
+function akce2_pdf_stravenky_dieta($x,$par,$report_json) {  trace();
 //                                                 debug($x,"akce2_pdf_stravenky_dieta");
 // function akce2_pdf_stravenky_dieta($akce,$par,$report_json) {  trace();
   global $ezer_path_docs, $EZER, $USER;
@@ -8238,12 +8238,14 @@ function akce2_pdf_stravenky_dieta($x,$report_json) {  trace();
               $n++;
             }
             // text stravenky na jedno jídlo
+            $jid= $sob[$jidlo];
             $parss[$n]= (object)array();
             $parss[$n]->header= $header;
             $parss[$n]->line1= "$den";
-            $parss[$n]->line2= "<b>{$sob[$jidlo]}</b>";
+            $parss[$n]->line2= "<b>$jid</b>";
             $parss[$n]->line3= "<small>{$x->nazev}</small>";
-            if ( $velikost=='c' ) {
+            if ( $velikost=='c' 
+              || $jid=='snídaně' && isset($par->snidane) && $par->snidane=='c' ) {
               // celá porce
               $parss[$n]->ram= '<img src="db2/img/stravenky-rastr-1.png"'
                              . ' style="width:48mm" border="0" />';
