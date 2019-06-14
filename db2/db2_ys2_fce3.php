@@ -524,85 +524,91 @@ function kasa_menu_show($k1,$k2,$k3,$cond=1,$day='',$db='ezer_db2') {
     break;
   case 'export letos':
     $rok= date('Y');
+    $title= "Pokladní deník roku $rok";
     $html.= "<div class='karta'>Export pokladních deníků roku $rok</div>";
     $cond= " datum BETWEEN '$rok-01-01' AND '$rok-12-31'";
-    $html.= kasa_export($cond,"pokladna_{$rok}",$db);
+    $html.= kasa_export($cond,"pokladna_{$rok}",$db,$title);
     break;
   case 'export vloni':
     $rok= date('Y')-1;
+    $title= "Pokladní deník roku $rok";
     $html.= "<div class='karta'>Export pokladních deníků roku $rok</div>";
     $cond= " datum BETWEEN '$rok-01-01' AND '$rok-12-31'";
-    $html.= kasa_export($cond,"pokladna_{$rok}",$db);
+    $html.= kasa_export($cond,"pokladna_{$rok}",$db,$title);
     break;
   }
   return $html;
 }
 # -------------------------------------------------------------------------------------- kasa export
-function kasa_export($cond,$file,$db) {
-                                                display("kasa_export($cond,$file)");
-  global $ezer_path_serv, $ezer_path_docs;
-  require_once("$ezer_path_serv/licensed/xls/OLEwriter.php");
-  require_once("$ezer_path_serv/licensed/xls/BIFFwriter.php");
-  require_once("$ezer_path_serv/licensed/xls/Worksheet.php");
-  require_once("$ezer_path_serv/licensed/xls/Workbook.php");
-  $table= "$file.xls";
-  $wb= new Workbook("docs/$table");
+function kasa_export($cond,$file,$db,$title) { trace();
+  $xls= "|open $file";
   $qry_p= "SELECT * FROM $db.pokladna ";
   $res_p= pdo_qry($qry_p);
   while ( $res_p && $p= pdo_fetch_object($res_p) ) {
-    $ws= $wb->add_worksheet($p->abbr);
-    // formáty
-    $format_hd= $wb->add_format();
-    $format_hd->set_bold();
-    $format_hd->set_pattern();
-    $format_hd->set_fg_color('silver');
-    $format_dec= $wb->add_format();
-    $format_dec->set_num_format("# ##0.00");
-    $format_dat= $wb->add_format();
-    $format_dat->set_num_format("d.m.yyyy");
+    $xls.= "\n|sheet vypis;;L;page";
+    $xls.= "\n|A1 $title::size=13 bold";
     // hlavička
-    $fields= explode(',','ident:11,číslo:6,datum:10,příjmy:10,výdaje:10,stav:10,od koho/komu:30,účel:30,př.:2');
-    $sy= 0;
-    foreach ($fields as $sx => $fa) {
+    $fields= explode(',','ident:11,číslo:6,datum:10,příjmy:13,výdaje:13,stav:13,'
+        . 'od koho/komu:30,účel:30,př.:5');
+    $n= 3; $a= 0; $clmns= $del= '';
+    $xls.= "\n";
+    foreach ($fields as $fa) {
       list($title,$width)= explode(':',$fa);
-      $ws->set_column($sx,$sx,$width);
-      $ws->write_string($sy,$sx,utf2win_sylk($title,true),$format_hd);
+      $A= Excel5_n2col($a++);
+      $xls.= "|$A$n $title";
+      if ( $width ) {
+        $clmns.= "$del$A=$width";
+        $del= ',';
+      }
     }
+    if ( $clmns ) $xls.= "\n|columns $clmns ";
+    $xls.= "\n|A$n:$A$n bcolor=ffc0e2c2 wrap border=+h|A$n:$A$n border=t";
     // data
+    $n0= $n= 4; 
     $qry= "SELECT * FROM $db.pdenik WHERE $cond AND pdenik.org={$p->id_pokladna} ORDER BY datum";
     $res= pdo_qry($qry);
     while ( $res && $d= pdo_fetch_object($res) ) {
-      $sy++; $sx= 0;
-      $ws->write_string($sy,$sx++,utf2win_sylk($d->ident,true));
-      $ws->write_number($sy,$sx++,$d->cislo);
-      // převod data
-      $dat_y=substr($d->datum,0,4);
-      $dat_m=substr($d->datum,5,2);
-      $dat_d=substr($d->datum,8,2);
-      $ws->write_number($sy,$sx++,(mktime(0,0,0,$dat_m,$dat_d,$dat_y)+(70*365+20)*24*60*60-82800)/(60*60*24),$format_dat);
+      $xls.= "\n|A$n {$d->ident}";
+      $xls.= "|B$n {$d->cislo}::right";
+        // převod data
+      $datum= sql2xls($d->datum);  
+      $xls.= "|C$n $datum::right date";
       if ( $d->typ==1 ) {
-        $ws->write_blank($sy,$sx++);
-        $ws->write_number($sy,$sx++,$d->castka,$format_dec);
+        $xls.= "|D$n 0";
+        $xls.= "|E$n {$d->castka}::kc right";
       } else {
-        $ws->write_number($sy,$sx++,$d->castka,$format_dec);
-        $ws->write_blank($sy,$sx++);
+        $xls.= "|D$n {$d->castka}::kc right";
+        $xls.= "|E$n 0";
       }
-      $s= $sy==1 ? "" : "F".($sy)."+";
-      $ws->write_formula($sy,$sx++,"={$s}D".($sy+1)."-E".($sy+1),$format_dec);
-
-      $ws->write_string($sy,$sx++,utf2win_sylk($d->komu,true));
-      $ws->write_string($sy,$sx++,utf2win_sylk($d->ucel,true));
-      $ws->write_number($sy,$sx++,$d->priloh);
+      $n1= $n-1;
+      $s= $n==$n0 ? "" : "F$n1+";
+      $xls.= "|F$n ={$s}D$n-E$n::kc right";
+      $xls.= "|G$n {$d->komu}";
+      $xls.= "|H$n {$d->ucel}";
+      $xls.= "|I$n {$d->priloh}";
+      $n++;
     }
-    $sy++;
-    $sy2= $sy+2;
-    $ws->write_string($sy+1,0,utf2win_sylk('CELKEM',true));
-    $ws->write_formula($sy+1,3,"=SUM(D2:D$sy)",$format_dec);
-    $ws->write_formula($sy+1,4,"=SUM(E2:E$sy)",$format_dec);
-    $ws->write_formula($sy+1,5,"=D$sy2-E$sy2",$format_dec);
+    $n1= $n-1;
+    $xls.= "\n|A$n1:$A$n1 border=,,t,";
+    $xls.= "\n|C$n CELKEM::right";
+    $xls.= "|D$n =SUM(D$n0:D$n1)::kc right";
+    $xls.= "|E$n =SUM(E$n0:E$n1)::kc right";
+    $xls.= "|F$n =D$n-E$n::kc right";
+    $xls.= "|C$n:F$n bold";
   }
-  $wb->close();
-  $html.= "Byl vygenerován soubor pro Excel: <a href='docs/$table'>$table</a>";
+  // časová značka
+  $kdy= date("j. n. Y");
+  $n+= 2;
+  $xls.= "|A$n Výpis ze dne $kdy::italic";
+  $xls.= "\n|close";
+//                                      display($xls);
+  $inf= Excel2007($xls,1);
+  if ( $inf ) {
+    $html.= "Export se nepovedlo vygenerovat ($inf)";
+  }
+  else {
+    $html.= "Byl vygenerován soubor pro Excel: <a href='docs/$file.xlsx'>$file.xlsx</a>";
+  }
   return $html;
 }
 # ----------------------------------------------------------------------------------- kasa menu_comp
