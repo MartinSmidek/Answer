@@ -288,6 +288,7 @@ panel inf {type:'right', title:"Informace", _sys:'inf'
       item {title:'Loňský pokladní deník',                      par:°{s:'export',c:'vloni'} }
     }
     proc onclick (m) {
+      clear;
       i.result.set(conc("<div id='info'>",
         ask('kasa_menu_show',
           'informace',m.par.s,m.par.c,d_cond.get,d_day.get,pokladna.db),"</div>"));
