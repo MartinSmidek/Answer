@@ -3306,8 +3306,10 @@ function ucast2_browse_ask($x,$tisk=false) {
       }
       # rodina
       foreach($frod as $fz=>$fr) { $z->$fz= isset($rodina[$idr]->$fr) ? $rodina[$idr]->$fr : ''; }
+      $z->r_access= intval($z->r_access);
       # ... oprava obarvení
-      $z->r_access|= $p_access;
+      if ( $p_access )
+        $z->r_access|= $p_access;
       $z->r_access_web= !$idr ? 0
           : $rodina[$idr]->access | ($rodina[$idr]->web_zmena=='0000-00-00' ? 0 : 16);
       $z->p_access_web= $p_access_web | $z->r_access_web;
@@ -4326,7 +4328,8 @@ function akce2_tabulka($akce,$par,$title,$vypis,$export=false) { trace();
   for ($i= 0; $i<count($clmn); $i++) {
     if ( $clmn[$i]['jmena'] ) {
       list($m,$z)= explode(' ',$clmn[$i]['jmena']);
-      $clmn[$i]['jmena']= $m[0].'+'.$z[0];
+//      $clmn[$i]['jmena']= $m[0].'+'.$z[0];
+      $clmn[$i]['jmena']= mb_substr($m,0,1).'+'.mb_substr($z,0,1);
     }
   }
   // vložení do tabulky
@@ -4342,8 +4345,8 @@ function akce2_tabulka($akce,$par,$title,$vypis,$export=false) { trace();
   }
   // export HTML a do Excelu
   $ids= array(
-    "$VPS:12","Prvňáci:12","Druháci:12","Třeťáci:12","Víceročáci:14",
-    "$VPS mimo službu:18","Náhradníci:14","Ostatní:12");
+    "$VPS:22","Prvňáci:14","Druháci:14","Třeťáci:14","Víceročáci:14",
+    "$VPS mimo službu:22","Náhradníci:14","Ostatní:26");
   $max_r= 0;
   for ($c= 0; $c<=7; $c++) {
     list($id)= explode(':',$ids[$c]);
@@ -4355,12 +4358,21 @@ function akce2_tabulka($akce,$par,$title,$vypis,$export=false) { trace();
     for ($c= 0; $c<=7; $c++) {
       if ( isset($tab[$c][$r]) ) {
         $i= $tab[$c][$r];
-        $ci= $clmn[$i]; $x= $ci['x_ms']; $v= $ci['_vps']; $f= $ci['funkce'];
+        $ci= $clmn[$i]; $x= $ci['x_ms']; $v= $ci['_vps']; $f= $ci['funkce']; $idr= $ci['key_rodina'];
         $style= 
-            $v   ? " style='background-color:yellow'" : (
-            $f>1 ? " style='background-color:violet'" : '');
+            $v   ? " style='background-color:yellow'" : ''; //(
+//            $f>1 ? " style='background-color:violet'" : '');
         $ucasti= $c==7 ? "($map_fce[$f])" : ($c==4 ? "($x)" : '');
-        $trs.= "<td$style>{$ci['prijmeni']} {$ci['jmena']} $ucasti</td>";
+        // počet služeb a rok odpočinku VPS
+        $sluzby= $poprve= '';
+        if ( $c==0 || $c==5 ) {
+          $akt= akce2_skup_paru($idr);
+          $sluzby= "({$akt->sluzba},{$akt->odpocinek})";
+          $poprve= $akt->vps==0 ? '* ' : '';
+        }
+        $prijmeni_plus= "$poprve{$ci['prijmeni']} {$ci['jmena']} $ucasti $sluzby";
+        $trs.= "<td$style>$prijmeni_plus</td>";
+        $clmn[$i]['prijmeni']= $prijmeni_plus;
       }
       else {
         $trs.= "<td></td>";
@@ -4383,8 +4395,8 @@ function akce2_tabulka($akce,$par,$title,$vypis,$export=false) { trace();
         $rc[$r][$c]= $clmn[$ucastnik]['prijmeni'];
         if ( $clmn[$ucastnik]['_vps'] )
           $rc_atr[$r][$c]= ' bcolor=ffffff77';
-        elseif ( $clmn[$ucastnik]['funkce'] > 1)
-          $rc_atr[$r][$c]= ' bcolor=ffff77ff';
+//        elseif ( $clmn[$ucastnik]['funkce'] > 1)
+//          $rc_atr[$r][$c]= ' bcolor=ffff77ff';
         $n[$c]++;
       }
     }
@@ -4399,7 +4411,11 @@ function akce2_tabulka($akce,$par,$title,$vypis,$export=false) { trace();
     $res->expr= null;
 //                                         debug($res,"akce2_tabulka - res");
   }
-  $res->html= "<div class='stat'><table class='stat'><tr>$ths</tr>$trs</table></div>";
+  $legenda= "VPS jsou označeny žlutě a hvězdička označuje nové; <br>v závorce je "
+      . "u VPS počet služeb bez odpočinku a rok posledního odpočinku, "
+      . "u víceročáků počet účastí, "
+      . "u ostatních funkce na kurzu";
+  $res->html= "$legenda<br><br><div class='stat'><table class='stat'><tr>$ths</tr>$trs</table></div>";
   return $res;
 }
 # ------------------------------------------------------------------------------- akce2 tabulka_mrop
@@ -6404,10 +6420,14 @@ end:
   return $result;
 }
 # ---------------------------------------------------------------------------------- akce2 skup_paru
-# přehled všech skupinek letního kurzu MS daného páru (rodiny)
+# přehled všech skupinek letního kurzu MS daného páru (rodiny) -> html
+# počet let aktivního VPSkování -> sluzba, počet odpočinkových skupinek -> odpocinek
+# počet účastí na MS -> ucasti
 function akce2_skup_paru($idr) { trace();
   $html= '';
+  $sluzba= $odpocinek= $vps= 0;
   $n_ms= 0;
+  // projdi LK ve kterých byli ve skupince
   $ru= pdo_qry("
     SELECT id_akce,skupina,YEAR(datum_od) as rok
     FROM akce AS a
@@ -6419,6 +6439,7 @@ function akce2_skup_paru($idr) { trace();
   while ( $ru && (list($ida,$skup,$rok)= pdo_fetch_array($ru)) ) {
     $html.= "<br>&nbsp;&nbsp;&nbsp;<b>$rok</b> ";
     $n_ms++;
+    // prober skupinku
     $rs= pdo_qry("
       SELECT funkce,nazev,id_rodina
       FROM pobyt AS p
@@ -6427,12 +6448,21 @@ function akce2_skup_paru($idr) { trace();
       ORDER BY IF(p.funkce=1,'',nazev)
     ");
     while ( $rs && (list($fce,$nazev,$ir)= pdo_fetch_array($rs)) ) {
+      if ( $ir==$idr && $fce==1  ) 
+        $vps++;
+      if ( $ir==$idr && !$odpocinek ) {
+        if ( $fce==1  ) 
+          $sluzba++;
+        else
+          $odpocinek= $rok;
+      }
       $par= " $nazev".($fce==1 ? ' (VPS) ' : '');
       $html.= $ir==$idr ? "<i>$par</i>" : $par;
     }
   }
   if ( !$n_ms ) $html= "nebyli na MS v žádné skupince";
-  return $html;
+  return (object)array('sluzba'=>$sluzba,'odpocinek'=>$odpocinek,'vps'=>$vps,
+      'ucasti'=>$n_ms,'html'=>$html);
 }
 # ---------------------------------------------------------------------------------- akce2 skup_hist
 # přehled starých skupinek letního kurzu MS účastníků této akce
