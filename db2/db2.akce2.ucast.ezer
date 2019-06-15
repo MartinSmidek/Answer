@@ -1780,9 +1780,10 @@ form _documents [,,623,] { style:'height:fit-content' // ukládají se na H: ted
 # ========================================================================================> SKUPINKY
 # zobrazí celou historii skupinek na LK
 panel Skupinky [,,400,400] {type:'popup', title:'Historie skupinek'
-  proc historie(idr) {
+  proc historie(idr) { var y:object
     panel.popup;
-    f.info.set(ask("akce2_skup_paru",idr));
+    y.set(ask("akce2_skup_paru",idr));
+    f.info.set(y.html);
   }
   use f: form _f [0,0,,]
   form _f {
