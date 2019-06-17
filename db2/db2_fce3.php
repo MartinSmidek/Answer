@@ -6445,7 +6445,7 @@ function akce2_skup_paru($idr) { trace();
       FROM pobyt AS p
       JOIN rodina AS r ON r.id_rodina=p.i0_rodina
       WHERE p.id_akce=$ida AND skupina=$skup
-      ORDER BY IF(p.funkce=1,'',nazev)
+      ORDER BY IF(p.funkce IN (1,2),'',nazev)
     ");
     while ( $rs && (list($fce,$nazev,$ir)= pdo_fetch_array($rs)) ) {
       if ( $ir==$idr && $fce==1  ) 
@@ -6456,7 +6456,7 @@ function akce2_skup_paru($idr) { trace();
         else
           $odpocinek= $rok;
       }
-      $par= " $nazev".($fce==1 ? ' (VPS) ' : '');
+      $par= " $nazev".($fce==1||$fce==2 ? ' (VPS) ' : '');
       $html.= $ir==$idr ? "<i>$par</i>" : $par;
     }
   }
