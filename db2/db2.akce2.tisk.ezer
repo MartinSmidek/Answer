@@ -310,10 +310,10 @@ menu m {type:'left', active:*
                                         ,par:°{typ:'p',exp:'Excel2',cnd:"prednasi"
                                         ,tit:'příjmení:15,jména:20,přednáška,^'
                                         ,fld:'prijmeni,jmena,prednasi,^id_pobyt',ord:'prednasi'}}
-    item {title:'Seznam změn - ubytování'                                                    skill:'a'
+    item {title:'Seznam změn - ubytování'                                                    skill:'y;f;c'
                                         ,par:°{typ:'cz',cnd:'1',tab:'pobyt',zmeny:'0'
                                         ,fld:'luzka,kocarek,pokoj,budova,pristylky,pocetdnu'}}
-    item {title:'Seznam změn - ostatní'                                                      skill:'a'
+    item {title:'Seznam změn - ostatní'                                                      skill:'m'
                                         ,par:°{typ:'cz',cnd:'1',zmeny:'0'
                                         ,tab:'rodina,pobyt,osoba,spolu',fld:'*'}}
   }
