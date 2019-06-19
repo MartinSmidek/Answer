@@ -310,7 +310,12 @@ menu m {type:'left', active:*
                                         ,par:°{typ:'p',exp:'Excel2',cnd:"prednasi"
                                         ,tit:'příjmení:15,jména:20,přednáška,^'
                                         ,fld:'prijmeni,jmena,prednasi,^id_pobyt',ord:'prednasi'}}
-    item {title:'Seznam čerstvých změn' ,par:°{typ:'cz',cnd:'1'}, skill:'a'}
+    item {title:'Seznam změn - ubytování'                                                    skill:'a'
+                                        ,par:°{typ:'cz',cnd:'1',tab:'pobyt',zmeny:'0'
+                                        ,fld:'luzka,kocarek,pokoj,budova,pristylky,pocetdnu'}}
+    item {title:'Seznam změn - ostatní'                                                      skill:'a'
+                                        ,par:°{typ:'cz',cnd:'1',zmeny:'0'
+                                        ,tab:'rodina,pobyt,osoba,spolu',fld:'*'}}
   }
   # ---------------------------------------------------------------------------------------------==> jmenovky
   menu {tag:'a', title:'jmenovky na akci',type:'group',_sys:'*'
@@ -486,6 +491,8 @@ menu m {type:'left', active:*
   }
   proc onclick (i) { var x: object, note: text
     the_par.set(i.par); clear; note.set('');
+    // doplnění intervalu posledních změn
+    the_par.set(hodin_zmeny.get,'zmeny');
     // ošetření výpisů umožňujících tisk jen výběru pobytů
     [ the_par.get('sel'); the_par.set(ucast.call('ucast_selected'),'selected');
       note.set("Výběr se provede klávesou Ins v seznamu na kartě Účastníci2 -

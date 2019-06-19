@@ -5678,57 +5678,81 @@ function akce2_sestava_td_style($fmt) {
 # ======================================================================================> . přehledy
 # ------------------------------------------------------------------------------ akce2 cerstve_zmeny
 # generování seznamu změn v pobytech na akci od par-datetime
-function akce2_cerstve_zmeny($akce,$par,$title,$vypis,$export=false) { trace();
+function akce2_cerstve_zmeny($akce,$par,$title,$vypis,$export=false) { debug($par,"akce2_cerstve_zmeny");
   $result= (object)array('html'=>'');
-  $od= $par->datetime= "2013-09-25 18:00";
-  $p_flds= "'luzka','pokoj','pristylky','pocetdnu'";
+//  $od= $par->datetime= "2013-09-25 18:00";
+  $od= '';
+  if ( $par->zmeny ) {
+    $delta= strtotime("$par->zmeny hours ago");
+    $od= date("Y-m-d H:i",$delta);
+  }
+//  $p_flds= "'luzka','pokoj','pristylky','pocetdnu'";
+  $par->fld= 'luzka,kocarek,pokoj,budova,pristylky,pocetdnu';
+  $p_flds= array();
+  foreach (explode(',',$par->fld) as $fld) { $p_flds[]= "'$fld'"; }
+  $p_flds= implode(',',$p_flds);
+  $p_tabs= array();
+  foreach (explode(',',$par->tab) as $tab) { $p_tabs[]= "'$tab'"; }
+  $p_tabs= implode(',',$p_tabs);
   //
   $tits= explode(',',"_ucastnik,kdy,fld,old,val,kdo,id_track");
   $flds= $tits;
   $clmn= array();
   $n= 0;
-  $ord= "
-    CASE
-      WHEN pouze=0 THEN r.nazev
-      WHEN pouze=1 THEN GROUP_CONCAT(DISTINCT IF(t.role='a',o.prijmeni,'') SEPARATOR '')
-      WHEN pouze=2 THEN GROUP_CONCAT(DISTINCT IF(t.role='b',o.prijmeni,'') SEPARATOR '')
-    END";
-  $rz= pdo_qry("
-    SELECT id_track,kdy,kdo,klic,fld,op,old,val,
-      GROUP_CONCAT(DISTINCT IF(t.role='a',o.prijmeni,'') SEPARATOR '') as prijmeni_m,
-      GROUP_CONCAT(DISTINCT IF(t.role='a',o.jmeno,'')    SEPARATOR '') as jmeno_m,
-      GROUP_CONCAT(DISTINCT IF(t.role='b',o.prijmeni,'') SEPARATOR '') as prijmeni_z,
-      GROUP_CONCAT(DISTINCT IF(t.role='b',o.jmeno,'')    SEPARATOR '') as jmeno_z,
-      r.nazev as nazev,p.pouze as pouze
-    FROM _track
+  $ord= "IF(i0_rodina,r.nazev,o.prijmeni)";
+//  $ord= "
+//    CASE
+//      WHEN pouze=0 THEN r.nazev
+//      WHEN pouze=1 THEN GROUP_CONCAT(DISTINCT IF(t.role='a',o.prijmeni,'') SEPARATOR '')
+//      WHEN pouze=2 THEN GROUP_CONCAT(DISTINCT IF(t.role='b',o.prijmeni,'') SEPARATOR '')
+//    END";
+  $AND_fld_in= $par->tab=='pobyt' ? "AND fld IN ($p_flds)" : "AND fld NOT IN ($p_flds)";
+  $JOIN= $par->tab=='pobyt' ? "
     JOIN pobyt AS p ON p.id_pobyt=klic
     JOIN akce AS a ON a.id_duakce=p.id_akce
     JOIN spolu AS s USING(id_pobyt)
     JOIN osoba AS o ON s.id_osoba=o.id_osoba
-    LEFT JOIN tvori AS t ON t.id_osoba=o.id_osoba
-    LEFT JOIN rodina AS r USING(id_rodina)
-    WHERE kde='pobyt' AND kdy>='$od' AND id_akce=$akce AND fld IN ($p_flds) AND old!=val AND old!=''
+    LEFT JOIN rodina AS r ON r.id_rodina=p.i0_rodina
+    LEFT JOIN tvori AS t ON t.id_osoba=o.id_osoba AND t.id_rodina=r.id_rodina
+    " : "
+    ";
+  $rz= pdo_qry("
+    SELECT id_track,kdy,kdo,klic,fld,op,old,val,
+      GROUP_CONCAT(DISTINCT IF(t.role='a',o.jmeno,'')    SEPARATOR '') as jmeno_m,
+      GROUP_CONCAT(DISTINCT IF(t.role='b',o.jmeno,'')    SEPARATOR '') as jmeno_z,
+      p.i0_rodina,r.nazev as nazev,o.prijmeni,o.jmeno
+    FROM _track $JOIN
+    WHERE kde IN ($p_tabs) AND kdy>='$od' AND id_akce=$akce $AND_fld_in AND old!=val -- AND old!=''
+      AND NOT ISNULL(p.id_pobyt)
     GROUP BY id_track,id_pobyt
-    ORDER BY $ord,kdy
+--  ORDER BY $ord,kdy
+    ORDER BY kdy DESC
   ");
   while ( $rz && ($z= pdo_fetch_object($rz)) ) {
-    $prijmeni= $z->pouze==1 ? $z->prijmeni_m : ($z->pouze==2 ? $z->prijmeni_z : $z->nazev);
-    $jmena=    $z->pouze==1 ? $z->jmeno_m    : ($z->pouze==2 ? $z->jmeno_z : "{$z->jmeno_m} a {$z->jmeno_z}");
+    $nazev= $z->i0_rodina ? "$z->nazev $z->jmeno_m a $z->jmeno_z" : "$z->prijmeni $z->jmeno";
+//    $prijmeni= $z->pouze==1 ? $z->prijmeni_m : ($z->pouze==2 ? $z->prijmeni_z : $z->nazev);
+//    $jmena=    $z->pouze==1 ? $z->jmeno_m    : ($z->pouze==2 ? $z->jmeno_z : "{$z->jmeno_m} a {$z->jmeno_z}");
     $clmn[$n]= array();
     foreach($flds as $f) {
       switch ($f) {
-      case '_ucastnik': $clmn[$n][$f]= "$prijmeni $jmena"; break;
+      case '_ucastnik': $clmn[$n][$f]= $nazev; break; // "$prijmeni $jmena"; break;
       default:          $clmn[$n][$f]= $z->$f;
       }
     }
     $n++;
   }
 //                                         debug($clmn,"sestava pro $akce,$typ,$fld,$cnd");
-  $result= tisk2_table($tits,$flds,$clmn,$export);
-  $result->html.= "<br><br> od $od bylo provedeno $n změn
-    <hr>sledují se jen <b>změny</b> (tzn. nikoliv nově zadané hodnoty) v položkách: lůžka, pokoj, přistýlky, početdnů
-    <br>.. podle přání lze toto změnit - řekni Martinovi
+  $bylo= $od ? "Od $od (podle nastavení na kartě Účastníci/obarvit změněné údaje) bylo " : "Bylo";
+//  $kde= $p_tabs=='pobyt'
+  $nadpis= "$bylo provedeno $n změn ... nahoře jsou nejnovější
+    <hr>sledují se změny jen v položkách: <b>$par->fld</b>
+    ... podle potřeby to lze změnit - řekni Martinovi<br><br>
     ";
+//  $nadpis= "$bylo provedeno $n změn
+//    <hr>sledují se jen <b>změny</b> (tzn. nikoliv nově zadané hodnoty) v položkách: $par->fld
+//    <br>.. podle přání lze toto změnit - řekni Martinovi<br><br>
+//    ";
+  $result= tisk2_table($tits,$flds,$clmn,$export,$nadpis);
   return $result;
 }
 # ----------------------------------------------------------------------------------- akce2 text_eko
@@ -6151,7 +6175,7 @@ function tisk2_qry($typ,$flds='',$where='',$having='',$order='') { //trace();
   return $res;
 }
 # -------------------------------------------------------------------------------------- tisk2 table
-function tisk2_table($tits,$flds,$clmn,$export=false) {  trace();
+function tisk2_table($tits,$flds,$clmn,$export=false,$prolog='') {  trace();
   $ret= (object)array('html'=>'');
   // zobrazení tabulkou
   $tab= '';
@@ -6185,7 +6209,8 @@ function tisk2_table($tits,$flds,$clmn,$export=false) {  trace();
       $tab.= "</tr>";
       $n++;
     }
-    $ret->html= "Seznam má $n řádků<br><br><div class='stat'><table class='stat'><tr>$ths</tr>$tab</table></div>";
+    $prolog= $prolog ?: "Seznam má $n řádků<br><br>";
+    $ret->html= "$prolog<div class='stat'><table class='stat'><tr>$ths</tr>$tab</table></div>";
   }
   return $ret;
 }
