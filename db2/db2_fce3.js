@@ -611,7 +611,7 @@ Ezer.fce.roku_k= function (dat,kdatu) {
   }
   return roku;
 };
-// --------------------------------------------------------------------------------- set_css_changed
+// --------------------------------------------------------------------------------- set css_changed
 //ff: ys.set_css_changed (cases,css[,chngs])
 // pokud je definováno chngs
 //   odstraní css v daných formulářích a poté je obnoví u změněných dat podle pole
@@ -624,8 +624,8 @@ Ezer.obj.set_css_changed= null;
 Ezer.fce.set_css_changed= function (cases,css,chngs) {
   // vymazání starých poznámek
   if ( Ezer.obj.set_css_changed ) {
-//     Ezer.obj.set_css_changed.each(function(note){note.destroy();});
-    Ezer.obj.set_css_changed.empty();
+     Ezer.obj.set_css_changed.forEach(function(note){note.remove();});
+//    Ezer.obj.set_css_changed.empty();
     Ezer.obj.set_css_changed= null;
   }
   Ezer.obj.set_css_changed= [];
@@ -633,7 +633,7 @@ Ezer.fce.set_css_changed= function (cases,css,chngs) {
   var forms;
   if ( chngs ) {
     forms= [];
-    for (ci= 0; ci<cases.length; ci++) {
+    for (let ci= 0; ci<cases.length; ci++) {
         forms.push(cases[ci][0]);
     }
   }
@@ -641,7 +641,7 @@ Ezer.fce.set_css_changed= function (cases,css,chngs) {
     forms= cases;
   }
   // zrušení css ve formuláři
-  for (fi= 0; fi<forms.length; fi++) {
+  for (let fi= 0; fi<forms.length; fi++) {
     let form= forms[fi].type=='var' ? forms[fi].value : forms[0];
     for (let pi in form.part) {
       let p= form.part[pi];
@@ -654,12 +654,12 @@ Ezer.fce.set_css_changed= function (cases,css,chngs) {
   }
   // pokud byla změna, označ ji
   if ( chngs ) {
-    for (ci= 0; ci<cases.length; ci++) {
+    for (let ci= 0; ci<cases.length; ci++) {
       let form= cases[ci][0].type=='var' ? cases[ci][0].value : cases[ci][0],
           table= cases[ci][1],
           key= cases[ci][2];
       // aplikace css podle změn
-      for (di= 0; di<chngs.length; di++) {
+      for (let di= 0; di<chngs.length; di++) {
         var t= chngs[di][0],    // tabulka změněné vět
             k= chngs[di][1];    // s klíčem
         // pokud je klíč shodný s aktivním

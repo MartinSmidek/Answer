@@ -670,7 +670,12 @@ form _ucast [,,400,] { css:'ds_form', style:'height:fit-content'
       // označ nedávno změněné hodnoty, chce-li se to
       [ zmeny.get;
         set_css_changed(array(
-            array(rod,'rodina',rod.key_rodina.get)
+            array(rod.get,'rodina',rod.key_rodina.get),
+            array(pob.get,'pobyt',u.b.key_pobyt.get),
+            array(os1.get,'osoba',os1.key_osoba.get),
+            array(sp1.get,'spolu',sp1.key_spolu.get),
+            array(os2.get,'osoba',os2.key_osoba.get),
+            array(sp2.get,'spolu',sp2.key_spolu.get)
           ),
           'zmeneny',
           zmeny.get('chngs'));
@@ -886,8 +891,8 @@ form _evidence [,,623,] { style:'height:fit-content'
       proc onclick () { alert(ask('akce2_skup_copy',the_duakce.get)); reload(0) } }
     item { title:'-obarvit změněné údaje'
       proc onclick () { var ret:object
-        ret.set(ask('akce2_zmeny',the_duakce.get,
-          prompt("zadej stáří obarvených změn v hodinách",72)));
+        hodin_zmeny.set(prompt("zadej stáří obarvených změn v hodinách",72));
+        ret.set(ask('akce2_zmeny',the_duakce.get,hodin_zmeny.get));
         not(ret.errs);
         zmeny.set(ret);
       | warning(ret.errs)

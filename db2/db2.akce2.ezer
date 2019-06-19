@@ -22,7 +22,7 @@ var the_duakce: number          // pracovní akce: id_akce (id_dukace)
 var the_akce_ys: number         // poslední pracovní akce Setkání                          -- cookie
 var the_akce_fa: number         // poslední pracovní akce Familia                          -- cookie
 
-# hodnoty udržované funkcí akce_change
+# hodnoty udržované funkcí akce_choose
 var the_org: number             // pracovní akce: organizace
 var the_ms: number              // pracovní akce: letní kurs nebo obnova
 var the_druh: number            // pracovní akce: druh podle #ms_akce_typ
@@ -35,6 +35,9 @@ var the_cenik: text             // pracovní akce: má ceník
 var the_cenik_verze: text       // ... verze ceníku: 0=2016, 1=2017
 var the_cena:  number           // pracovní akce: má pevnou cenu pro dospělého
 var form_mode: text             // informace pro zobrazení formulářů: new|show
+        
+# komunikační proměnné mezi moduly
+var hodin_zmeny= 0              // zobrazení změn za poslední hodiny a výpis čerstvých změn
 
 # ----------------------------------------------------------------------------------==> inicializace
 # inicializace modulu Databáze - nastavení globálních proměnných the_* tohoto modulu

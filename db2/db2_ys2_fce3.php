@@ -909,7 +909,7 @@ function ds_obj_menu() {
 
       $from= mktime(0,0,0,$m,1,$yyyy);
       $until= mktime(0,0,0,$m+1,1,$yyyy);
-      $qry= "/*ds_obj_menu*/SELECT uid,fromday,untilday,state,name,state FROM setkani.tx_gnalberice_order
+      $qry= "SELECT /*ds_obj_menu*/uid,fromday,untilday,state,name,state FROM setkani.tx_gnalberice_order
              WHERE  NOT deleted AND NOT hidden AND untilday>=$from AND $until>fromday";
 //              JOIN ezer_ys._cis ON druh='ds_stav' AND data=state
       $res= pdo_qry($qry);
