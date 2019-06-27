@@ -393,6 +393,9 @@ menu m {type:'left', active:*
     item {title:'Štítky na obálku účastníka' ,par:°{typ:'p',exp:'PDF-prijem',cnd:"p.funkce!=99"
                                         ,tit:'příjmení:15,jména:20,_deti:7,skupinka:7,pokoj:12,lůžka:7,kočárek:7,přistýlky:7,strava vyjímky:5,diety:5,normal:7,normal/2:7,veget:7,veget/2:7,bezlep:7,bezlep/2:7,^'
                                         ,fld:'prijmeni,jmena,_deti,skupina,pokoj,luzka,kocarek,pristylky,_vyjimky,_diety,strava_cel,strava_pol,strava_cel_bm,strava_pol_bm,strava_cel_bl,strava_pol_bl,^id_pobyt'}}
+    item {title:' ... snídaně jako celé' par:°{typ:'p',exp:'PDF-prijem',cnd:"p.funkce!=99",snidane:'c'
+                                        ,tit:'příjmení:15,jména:20,_deti:7,skupinka:7,pokoj:12,lůžka:7,kočárek:7,přistýlky:7,strava vyjímky:5,diety:5,normal:7,normal/2:7,veget:7,veget/2:7,bezlep:7,bezlep/2:7,^'
+                                        ,fld:'prijmeni,jmena,_deti,skupina,pokoj,luzka,kocarek,pristylky,_vyjimky,_diety,strava_cel,strava_pol,strava_cel_bm,strava_pol_bm,strava_cel_bl,strava_pol_bl,^id_pobyt'}}
     item {title:'Stravenky - rodiny'    ,par:°{typ:'vj',exp:'PDF-stravenky',cnd:"funkce!=99"},  skill:'#crz'}
     item {title:' ... snídaně jako celé',par:°{typ:'vj',exp:'PDF-stravenky',cnd:"funkce!=99",snidane:'c'},  skill:'#crz'}
     item {title:'Stravenky - pečouni'   ,par:°{typ:'vjp',exp:'PDF-stravenky',cnd:"1"},          skill:'#crz'}

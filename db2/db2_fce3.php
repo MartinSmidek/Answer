@@ -6875,6 +6875,7 @@ function akce2_plachta($akce,$par,$title,$vypis,$export=0) { trace();
           datum_od, i0_rodina,
           FIND_IN_SET(1,r_umi) AS _umi_vps,o.jmeno AS jmeno_o,o.prijmeni AS prijmeni_o,
           r.nazev as jmeno,p.pouze as pouze,r.obec as mesto,svatba,datsvatba,p.funkce as funkce,
+          SUM(IF(s.s_role IN (2,3),1,0)) AS _detisebou,
           GROUP_CONCAT(DISTINCT IF(t.role='a',o.id_osoba,'') SEPARATOR '') as id_osoba_m,
           GROUP_CONCAT(DISTINCT IF(t.role='a',o.prijmeni,'') SEPARATOR '') as prijmeni_m,
           GROUP_CONCAT(DISTINCT IF(t.role='a',o.jmeno,'')    SEPARATOR '') as jmeno_m,
@@ -6909,7 +6910,7 @@ function akce2_plachta($akce,$par,$title,$vypis,$export=0) { trace();
           LEFT JOIN rodina AS r USING(id_rodina)
           JOIN akce AS a ON a.id_duakce=p.id_akce
           WHERE id_akce=$akce AND p.funkce IN (0,1,2,5)  -- včetně hospodářů, bývají hosty skupinky
---  AND id_pobyt=46459
+  -- AND id_pobyt=53282
           GROUP BY id_pobyt
           ORDER BY IF(pouze=0,r.nazev,o.prijmeni) ";
 //   $qry.= " LIMIT 1";
@@ -6948,7 +6949,11 @@ function akce2_plachta($akce,$par,$title,$vypis,$export=0) { trace();
     }
     // děti
     $deti= $u->deti;
+    $sebou= 0;
     if ( $deti ) {
+      $sebou= $u->_detisebou;
+//      $nesebou= $deti-$sebou;
+//      $deti= "$sebou+$nesebou";
       if ( $u->mindeti!='0000-00-00' && $u->maxdeti!='0000-00-00' ) {
         $deti.= "(".sql2roku($u->mindeti);
         if ( $deti>1 )
@@ -6975,7 +6980,9 @@ function akce2_plachta($akce,$par,$title,$vypis,$export=0) { trace();
     $result->pdf[$key]= array(
       'vps'=>$vps,'prijmeni'=>$prijmeni1,'jmena'=>"{$u->jmeno_m} a {$u->jmeno_z}",'ucasti'=>$u->ucasti);
     // --------------------------------------------------------------  pro XLS
-    $r1= "$vps{$u->jmeno} {$u->jmeno_m} a {$u->jmeno_z} {$u->ucasti}";
+    $majiseboudeti= $sebou ? " +$sebou" : '';
+    $ucasti= $u->ucasti ? "... $u->ucasti" : 'NOVÍ';
+    $r1= "$vps{$u->jmeno} {$u->jmeno_m} a {$u->jmeno_z}$majiseboudeti $ucasti";
     $r2= "věk:$vek, spolu:$spolu, dětí:$deti, {$u->mesto}, $vzdelani $cirkev";
     // atributy
     $r31= $u->aktivita_m;
@@ -8037,15 +8044,20 @@ function tisk2_pdf_prijem($akce,$par,$stitky_json,$popis_json) {  trace();
         if ( $x->strava_cel_bl || $x->strava_pol_bl )
           $strava.= " bezlep. <b>{$x->strava_cel_bl}/{$x->strava_pol_bl}</b>";
       }
-      else {
-        // nepravidelná strava
+      else { // $x->_vyjimky
+        // nepravidelná strava příp. žádná
         $popisy= true;
-        $strava= "strava: viz popis v obálce";
-        $h= tisk2_pdf_prijem_ireg("{$x->prijmeni}: {$x->jmena}",$x->_diety,$x,$ret);
-                                                display("$h");
-        $parss2[$n2]= (object)array();
-        $parss2[$n2]->tab= $h;
-        $n2++;
+        $h= tisk2_pdf_prijem_ireg("{$x->prijmeni}: {$x->jmena}",$x->_diety,$x,$ret,$par);
+//                                                display("$h");
+        if ( $h ) {
+          $strava= "strava: viz popis v obálce";
+          $parss2[$n2]= (object)array();
+          $parss2[$n2]->tab= $h;
+          $n2++;
+        }
+        else {
+          $strava= "strava: neobjednána";
+        }
       }
     }
     else {
@@ -8085,24 +8097,29 @@ end:
 }
 # ------------------------------------------------------- tisk2 pdf_prijem_ireg
 # generování tabulky s nepravidelnou stravou
-function tisk2_pdf_prijem_ireg($nazev,$adiety,$x,$ret) {  trace();
+# pokud jsou snídaně jen celé (snidane=c) píší se do jediného sloupce
+function tisk2_pdf_prijem_ireg($nazev,$adiety,$x,$ret,$par) {  trace();
   global $diety,$diety_,$jidlo_;
+  $jidel= 0;
+  $jidla= explode(',',$par->snidane=='c' ? 'sc,oc,op,vc,vp' : 'sc,sp,oc,op,vc,vp');
   $s= " style=\"background-color:#DDDDDD\"";
   $h= "<h3>$nazev</h3>";
   $h.= '<small><table border="1" cellpadding="2" cellspacing="0" align="center">';
   // nadhlavička
+  $chodu= $par->snidane=='c' ? 5 : 6;
   $h.= "<tr><th$s>dieta:</th>";
   foreach ($diety as $dieta) {
     if ( $dieta && strpos($adiety,$dieta)===false ) continue;
-    $h.= "<th$s colspan=\"6\">{$diety_[$dieta]}</th>";
+    $h.= "<th$s colspan=\"$chodu\">{$diety_[$dieta]}</th>";
   }
   $h.= "</tr>";
   // hlavička
   $h.= "<tr><th$s>den</th>";
   foreach ($diety as $dieta) {
     if ( $dieta && strpos($adiety,$dieta)===false ) continue;
-    foreach (explode(',','sc,sp,oc,op,vc,vp') as $jidlo) {
-      $h.= "<th$s>{$jidlo_[$jidlo]}</th>";
+    foreach ($jidla as $jidlo) {
+      $chod= $jidlo=='sc' && $par->snidane=='c' ? 'snídaně' : $jidlo_[$jidlo];
+      $h.= "<th$s>$chod</th>";
     }
   }
   $h.= "</tr>";
@@ -8111,9 +8128,16 @@ function tisk2_pdf_prijem_ireg($nazev,$adiety,$x,$ret) {  trace();
     $h.= "<tr><th$s>$day</th>";
     foreach ($diety as $dieta) {
       if ( $dieta && strpos($adiety,$dieta)===false ) continue;
-      foreach (explode(',','sc,sp,oc,op,vc,vp') as $jidlo) {
+      foreach ($jidla as $jidlo) {
         $fld= "$day$jidlo $dieta";
-        $pocet= $ret->suma[$fld] ?: '';
+        $suma= $ret->suma[$fld];
+        if ( $jidlo=='sc' && $par->snidane=='c' ) {
+          // pokud jsou snídaně jen celé, přičti objednávky polovičních
+          $fld= "{$day}sp $dieta";
+          $suma+= $ret->suma[$fld];
+        }
+        $pocet= $suma ?: '';
+        $jidel+= $suma;
         $h.= "<td>$pocet</td>";
       }
     }
@@ -8121,7 +8145,7 @@ function tisk2_pdf_prijem_ireg($nazev,$adiety,$x,$ret) {  trace();
   }
   // konec
   $h.= "</table></small>";
-  return $h;
+  return $jidel ? $h : ''; // "<h3>$nazev</h3> bez stravy";
 }
 # -------------------------------------------------------------------------------- tisk2 pdf_plachta
 # generování štítků se jmény párů
