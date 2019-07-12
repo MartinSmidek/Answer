@@ -218,6 +218,10 @@ menu m {type:'left', active:*
                                         ,ord:"prijmeni,jmeno"
                                         ,tit:'příjmení:15,jméno:12,st.přísl.:10,OP:12,narození:12,věk:4,obec:25,psč:7,ulice:25'
                                         ,fld:'prijmeni,jmeno,prislusnost,obcanka,narozeni_dmy,_vek,obec,psc,ulice'}}
+    item {title:'Rodiče, pokoje, telefon'                                                    skill:'y;f;c'
+                                        ,par:°{typ:'p',exp:'Excel2',cnd:"p.funkce<9",rodiny:'1'
+                                        ,tit:'příjmení:15,jména:20,pokoj:10,telefony:30,počet'
+                                        ,fld:'prijmeni,jmena,pokoj,telefony,_pocet'}}
     item {title:'Děti na akci s poznámkami'                                                  skill:'y;f'
                                         ,par:°{typ:'j',exp:'Excel2',cnd:"funkce!=99 AND pfunkce!=95",hav:"_vek<18",ord:"narozeni"
                                         ,tit:'příjmení:15,jméno:12,narození:12,/rč:5,věk:4,kategorie:10,obec:25,psč:7,ulice:25,na kurzu jako:20,poznámka k akci:50,trvalá poznámka:50'
