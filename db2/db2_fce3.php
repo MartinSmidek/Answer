@@ -4464,7 +4464,7 @@ function akce2_tabulka_mrop($akce,$par,$title,$vypis,$export=false) { trace();
   return tisk2_table($tits,$flds,$clmn,$export);
 }
 # ------------------------------------------------------------------------------- tisk2 sestava_pary
-# generování sestavy pro účastníky $akce - rodiny
+# generování sestavy pro účastníky $akce - rodiny, pokud je par.rodiny=1 pak poze páry s dětmi
 # jedině pokud je $par->typ='tab' zobrazí i náhradníky
 #   $fld = seznam položek s prefixem
 #   $cnd = podmínka
@@ -4525,7 +4525,6 @@ function tisk2_sestava_pary($akce,$par,$title,$vypis,$export=false,$internal=fal
 //       if ( $xu->_pocet!=$fil->ucasti_ms ) continue;
 //     }
     // pokračování, pokud záznam vyhověl filtrům
-    $n++;
     # rozbor osobních údajů: adresa nebo základní kontakt se získá 3 způsoby
     # 1. první osoba má osobní údaje - ty se použijí
     # 2. první osoba má rodinné údaje, které se shodují s i0_rodina - použijí se ty z i0_rodina
@@ -4584,7 +4583,12 @@ function tisk2_sestava_pary($akce,$par,$title,$vypis,$export=false,$internal=fal
     $telefony= $telefony ?: $telefon;
 //                                                         if ( $x->key_pobyt==22141 )
 //                                                         display("email=$email, emaily=$emaily, telefon=$telefon, telefony=$telefony");
+    // pokud je omezení na rodiny s dětmi
+    if ( $par->rodiny && $pocet<=2 ) {
+      continue;
+    }  
     // přepsání do výstupního pole
+    $n++;
     $clmn[$n]= array();
     $r= 0; // 1 ukáže bez (r)
     foreach($flds as $f) {          // _pocet,poznamka,note
