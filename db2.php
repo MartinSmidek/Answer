@@ -44,6 +44,7 @@
       "https://answer.setkani.org",
       "https://answer.setkani.org");
   $rel_root= $rel_roots[$ezer_server];
+  $path_foto= "{$abs_roots[$ezer_server]}/fotky";
   $path_akce= array(
       "D:/MS/",
       "",
@@ -110,6 +111,7 @@
     'curr_version' => 1,                // při přihlášení je nahrazeno nejvyšší ezer_kernel.version
     'watch_access' => 3,
     'path_akce'    => "'$path_akce'", // absolutní cesta do složky Akce
+    'path_foto'    => "'$path_foto'", // absolutní cesta do složky fotky
     'group_db'     => "'ezer_answer'",
     'watch_access_opt' => // ... barvení v Uživatelé + select v ezer2.syst.ezer
        "{name:{1:'Setkání',2:'Familia',3:'Setkání+Familia'},
