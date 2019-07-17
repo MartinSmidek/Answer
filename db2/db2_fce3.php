@@ -13222,26 +13222,14 @@ end:
   return $ret;
 }
 # ---------------------------------------------------------------------------------------- foto2_add
-# přidá fotografii do seznamu (rodina|osoba) podle ID na konec a vrátí nové názvy
-function foto2_add($table,$id,$fileinfo) { trace();
-  global $ezer_path_root, $ezer_root;
-  $name= "{$ezer_root}_{$table}_{$id}.".utf2ascii($fileinfo->name);
-  $path= "$ezer_path_root/fotky/$name";
-  $data= $fileinfo->text;
-  // test korektnosti fotky
-  if ( substr($data,0,23)=="data:image/jpeg;base64," ) {
-    // uložení fotky na disk
-    $data= base64_decode(substr("$data==",23));
-    $bytes= file_put_contents($path,$data);
+# přidá fotografii do seznamu (rodina|osoba) podle ID na konec a vrátí její index
+function foto2_add($table,$id,$name) { trace();
     // přidání názvu fotky do záznamu v tabulce
     $fotky= select('fotka',$table,"id_$table=$id");
     $fotky.= $fotky ? ",$name" : $name;
+    $n= 1+substr_count($fotky,',');
     query("UPDATE $table SET fotka='$fotky' WHERE id_$table=$id");
-  }
-  else {
-    $name= '';          // tiché oznámení chyby
-  }
-  return $name;
+  return $n;
 }
 # ------------------------------------------------------------------------------------- foto2_delete
 # zruší n-tou fotografii ze seznamu v albu a vrátí pořadí následující nebo předchozí nebo 0

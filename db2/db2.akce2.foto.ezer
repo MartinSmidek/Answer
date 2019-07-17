@@ -13,7 +13,6 @@ form _alb [,,600,357] {
     rec.get; has_skill("yaa+;faa+;caa+");
     // lze prohlížet, mazat, přidávat
     drop_galery;
-    drop_init
   // bez oprávnění lze jen prohlížet
   | rec.get; not(has_skill("yaa+;faa+;caa+"));
     drop_galery
@@ -33,22 +32,27 @@ form _alb [,,600,357] {
       | warning("fotografii nebylo možné smazat");
       }
   }}
-  # layout
-  label drop  [70,6,393,18] { format:'c' style:'padding-top:8px' }
+  # zobrazení a vkládání fotek
   label jmeno [0,41,500,400] { format:'c' }
   label foto  [0,61,500,400] { format:'c' }
-  proc ondrop(fileinfo) { var name: text
-    drop.set_css('','drop_area drop_area_hover');
-    name.set(ask('foto2_add',tab.get,rec.get,fileinfo));
-    n.set(-1); drop_galery;
-    drop.set_css('','drop_area drop_area_hover drop_area_run');
-    drop_init;
-  }
-  proc drop_init() {
-    drop.set_css('drop_area','');
-    drop.set("Sem můžeš přidat fotografii přetažením myší ze složky svého počítače");
-    form.file_drop(drop,°{css_hover:'drop_area_hover',css_run:'drop_area_run',handler:'ondrop',
-      max_width:1200,max_height:960});
+  label drop  [70,6,393,18] { type:'drop' format:'c' style:'padding-top:8px' 
+      title:"Sem můžeš přidat fotografii přetažením myší ze složky svého počítače"
+    proc onstart() { drop.init('','U:','',°{utf8:0,list:0}) } // převod na ASCII, bez listingu
+    proc ondrop(f) { var name: text
+      function("Ezer.options.path_files_u=Ezer.options.path_foto;return 1;"); 
+      name.set(ask('utf2ascii',f.name));
+      name.set(conc(sys('root'),'_',tab.get,'_',rec.get,'.',name));
+      n.set(ask('foto2_add',tab.get,rec.get,name));
+      echo('DROP ',f.name,' aka ',name); 
+      return(name); 
+    }
+    proc onload(f) { 
+      echo('LOAD ',f.name); 
+      drop_galery; 
+    } 
+    proc onerror(e) { // funkce onerror nesmí obsahovat asynchronní kód a lokální proměnné, ale přes call lze zavolat už cokoliv
+      warning(e.msg); return(1) // vrácení 0 způsobí standardní hlášení chyby
+    }
   }
   # zobrazí n-tou fotku
   proc drop_galery() { var ret:object
