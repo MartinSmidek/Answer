@@ -13215,7 +13215,8 @@ function foto2_get($table,$id,$n,$w,$h) {  trace();
   $jmeno= $n>$osobnich ? $rodinna : $osobni;
   $ret->jmeno= "<span style='font-weight:bold;font-size:120%'>$jmeno</span>";
 //                                                 display("$n>$osobnich ? $rodinna : $osobni");
-  $ret->html= "<a href='fotky/$nazev' target='_album' title='$jmeno'><img src='fotky/copy/$nazev'
+  $stamp= "?x=".time();
+  $ret->html= "<a href='fotky/$nazev' target='_album' title='$jmeno'><img src='fotky/copy/$nazev$stamp'
     onload='var x=arguments[0];img_filter(x.target,\"sharpen\",0.7,1);'/></a>";
 end:
 //                                                 debug($ret,"album_get2($table,$id,$n,$w,$h)");
@@ -13234,7 +13235,7 @@ function foto2_add($table,$id,$name) { trace();
 # ------------------------------------------------------------------------------------- foto2_delete
 # zruší n-tou fotografii ze seznamu v albu a vrátí pořadí následující nebo předchozí nebo 0
 function foto2_delete($table,$id,$n) { trace();
-  global $ezer_path_root, $ezer_root;
+  global $ezer_path_root;
   $ret= (object)array('ok'=>0,'n'=>0);
   // nalezení seznamu názvů fotek
   $fotky= explode(',',select('fotka',$table,"id_$table=$id"));
@@ -13252,6 +13253,61 @@ function foto2_delete($table,$id,$n) { trace();
   // vrať nějakou nesmazanou nebo 0
   $ret->n= $n>1 ? $n-1 : (count($fotky) ? 1 : 0);
   return $ret;
+}
+# ------------------------------------------------------------------------------------- foto2 rotate
+# otočení obrázku, deg=90|180|270
+function foto2_rotate($nazev,$deg) {
+  global $ezer_path_root;
+  $src= "$ezer_path_root/fotky/$nazev";
+  $ok= foto2_rotate_abs($src,$deg);
+  if ( !$ok ) goto end;
+  $src= "$ezer_path_root/fotky/copy/$nazev";
+  $ok= foto2_rotate_abs($src,$deg);
+end:  
+  return $ok;
+}
+# ------------------------------------------------------------------------------------- foto2 rotate
+# otočení obrázku, deg=90|180|270
+function foto2_rotate_abs($src,$deg) { trace();
+  $err= '';
+  $ok= 0;
+  $part= pathinfo($src);
+  $ext= strtolower($part['extension']);
+//  $ysrc= "{$part['dirname']}/{$part['filename']}_$deg.$ext";
+  $ysrc= $src; // inplace
+  ini_set('memory_limit', '512M');
+  switch ($ext) {
+  case 'jpg':
+    if ( !file_exists($src) )  { $err= "$src nelze nalezt"; goto end; }
+    $img= imagecreatefromjpeg($src);
+    if ( !$img ) { $err= "$src nema format JPEG"; goto end; }
+    $img= imagerotate($img,$deg,0);
+    if ( !imagejpeg($img,$ysrc) ) { $err= "$ysrc nelze ulozit"; goto end; }
+    $ok= 1;
+    break;
+  case 'png':
+    $img= imagecreatefrompng($src);
+    if ( !$img ) { $err= "$src nema format PNG"; goto end; }
+    $img= imagerotate($img,$deg,0);
+    if ( !imagepng($img,$ysrc) ) { $err= "$ysrc nelze ulozit"; goto end; }
+    $ok= 1;
+    break;
+  case 'gif':
+    $img= imagecreatefromgif($src);
+    if ( !$img ) { $err= "$src nema format GIF"; goto end; }
+    $img= imagerotate($img,$deg,0);
+    if ( !imagegif($img,$ysrc) ) { $err= "$ysrc nelze ulozit"; goto end; }
+    $ok= 1;
+    break;
+  default:
+    $err= "neznamy typ obrazku '$src'";
+  }
+end:
+  if ( $err ) {
+    fce_warning($err); 
+    $ok= 0;
+  }
+  return $ok;
 }
 # ----------------------------------------------------------------------------------- foto2_resample
 function foto2_resample($source, $dest, &$width, &$height,$copy_bigger=0,$copy_smaller=1) { #trace();

@@ -177,6 +177,7 @@ $names= array(
  'report_check' => (object)array('op'=>'fm'),
  'report_init' => (object)array('op'=>'fm'),
  'report_repage' => (object)array('op'=>'fm'),
+ 'resample' => (object)array('op'=>'fi'),
  'roku' => (object)array('op'=>'ff'),
  'roku_k' => (object)array('op'=>'ff'),
  'rooms_check' => (object)array('op'=>'ff'),
