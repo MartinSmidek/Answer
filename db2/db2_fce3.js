@@ -117,7 +117,7 @@ function evid_mapa_focus(label) {
 function evid_mapa_browse(label,browse) {
   var id_o, lat, lng, psc, marks='', del= '';
   for (var bi= 0; bi<browse.blen; bi++) {     // bi ukazuje do buf a keys
-    id_o= browse.buf[bi].id_o;
+    id_o= Number(browse.buf[bi].id_o);
     if ( browse.keys_sel.indexOf(id_o)<0 ) continue;
     lat=  browse.buf[bi].lat;
     lng=  browse.buf[bi].lng;
