@@ -870,7 +870,8 @@ function akce2_roku_update($rok) {  trace();
         if ( preg_match("/\d+\.\d+\.\d+/",$x) )
           $do= sql_date($x,1);
         // kontrola roku
-        if ( $do && substr($do,0,4)!=$rok || $od && substr($od,0,4)!=$rok ) {
+        if ( !(($od && substr($od,0,4)==$rok) || ($do && substr($do,0,4)==$rok)) ) {
+                                                    display("od=$od do=$do rok=$rok");
           fce_warning("akce '$nazev' není z daného roku "
               . "NEBO obnovovaný rok není na intranetu jako první sešit");
           $n= 0;
@@ -4295,9 +4296,10 @@ function tisk2_sestava($akce,$par,$title,$vypis,$export=false) { trace();
      : ( $par->typ=='tab'  ? akce2_tabulka($akce,$par,$title,$vypis,$export)        //! předává se i typ=tab => náhradníci
      : ( $par->typ=='mrop' ? akce2_tabulka_mrop($akce,$par,$title,$vypis,$export)   //!
      : ( $par->typ=='stat' ? akce2_tabulka_stat($akce,$par,$title,$vypis,$export)   //!
+     : ( $par->typ=='dot'  ? dot_prehled($akce,$par,$title,$vypis,$export)          //!
      : (object)array('html'=>"<i>Tato sestava zatím není převedena do nové verze systému,
           <a href='mailto:martin@smidek.eu'>upozorněte mě</a>, že ji už potřebujete</i>")
-     ))))))))))))))))))))))))));
+     )))))))))))))))))))))))))));
 }
 # =======================================================================================> . seznamy
 function mb_strcasecmp($str1, $str2, $encoding = null) {
@@ -4934,8 +4936,16 @@ function _akce2_sestava_pecouni(&$clmn,$akce,$fld='_skoleni,_sluzba,_reflexe',$c
   // data akce
   $rel= '';
   $rel= "-YEAR(narozeni)";
-  $qry= " SELECT o.prijmeni,o.jmeno,o.narozeni,o.rc_xxxx,o.ulice,o.psc,o.obec,o.telefon,o.email,
-            id_osoba,s.skupinka as skupinka,s.pfunkce,
+  $r_fld= "id_rodina,nazev,ulice,psc,obec,stat,note,emaily,telefony,spz";
+  $qry= " SELECT o.prijmeni,o.jmeno,o.narozeni,o.rc_xxxx,
+            IFNULL(r2.spz,r1.spz) AS r_spz,
+            IF(o.adresa,o.ulice,IFNULL(r2.ulice,r1.ulice)) AS ulice,
+            IF(o.adresa,o.psc,IFNULL(r2.psc,r1.psc)) AS psc,
+            IF(o.adresa,o.obec,IFNULL(r2.obec,r1.obec)) AS obec,
+            IF(o.adresa,o.stat,IFNULL(r2.stat,r1.stat)) AS stat,
+            IF(o.kontakt,o.telefon,IFNULL(r2.telefony,r1.telefony)) AS telefon,
+            IF(o.kontakt,o.email,IFNULL(r2.emaily,r1.emaily)) AS email,
+            o.id_osoba,s.skupinka as skupinka,s.pfunkce,
             IF(o.note='' AND s.poznamka='','',CONCAT(o.note,' / ',s.poznamka)) AS _poznamky,
             GROUP_CONCAT(IF(xa.druh=7 AND MONTH(xa.datum_od)<=7,YEAR(xa.datum_od)$rel,'')
               ORDER BY xa.datum_od DESC SEPARATOR ' ') AS _skoleni,
@@ -4951,7 +4961,14 @@ function _akce2_sestava_pecouni(&$clmn,$akce,$fld='_skoleni,_sluzba,_reflexe',$c
           JOIN spolu AS xs USING (id_osoba)
           JOIN pobyt AS xp ON xp.id_pobyt=xs.id_pobyt -- AND xp.funkce=99
           JOIN akce  AS xa ON xa.id_duakce=xp.id_akce AND YEAR(xa.datum_od)<=YEAR(a.datum_od)
-          -- JOIN join_akce AS xg ON xg.id_akce=xp.id_akce
+          -- r1=rodina, kde je dítětem
+          LEFT JOIN ( SELECT id_osoba,role,$r_fld
+            FROM tvori JOIN rodina USING(id_rodina))
+            AS r1 ON r1.id_osoba=o.id_osoba AND r1.role NOT IN ('a','b')
+          -- r2=rodina, kde je rodičem
+          LEFT JOIN ( SELECT id_osoba,role,$r_fld
+            FROM tvori JOIN rodina USING(id_rodina))
+            AS r2 ON r2.id_osoba=o.id_osoba AND r2.role IN ('a','b')
           WHERE (p.funkce=99 OR (p.funkce NOT IN (9,10,13,14,99) AND s.pfunkce IN (4,5,8))) 
             AND p.id_akce='$akce' AND $cnd
           GROUP BY id_osoba
