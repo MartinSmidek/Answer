@@ -60,6 +60,53 @@ menu db2 { type:'main', title:'db2', active:*, _sys:'*'
               info.fill(conc(i.owner.title,' - ',i.title),' ... probíhá update ...');
               info.fill('',ask('db2_copy_test_db',i.par.db)); }}
         }
+        menu  {title:'Struktura dat (výběr)', type:'group', skill:'yamg;famg;camg'
+          item {title:'[fa-object-group] Přehled struktury dat'
+            proc onclick (i) {
+              info.fill(replace_fa(conc(i.owner.title,' - ',i.title)),"<br>
+                Zjednodušené schema databáze pro <b>Answer</b>
+                s uvedením podmínek pro spojení pomocí JOIN<br><br>
+                <img src='db2/img/schema_db_2015.png' />
+              ");
+            }
+          }
+          item {title:'[fa-database] tabulka AKCE',               par:°{tab:'akce'} }
+          item {title:'[fa-database] tabulka POBYT',              par:°{tab:'pobyt'} }
+          item {title:'[fa-database] tabulka SPOLU',              par:°{tab:'spolu'} }
+          item {title:'[fa-database] tabulka OSOBA',              par:°{tab:'osoba'} }
+          item {title:'[fa-database] tabulka TVORI',              par:°{tab:'tvori'} }
+          item {title:'[fa-database] tabulka RODINA',             par:°{tab:'rodina'} }
+          item {title:'[fa-database fa-red] tabulka MAILIST',     par:°{tab:'mailist'},   skill:'m' }
+          item {title:'[fa-database fa-red] tabulka DOPIS',       par:°{tab:'dopis'},     skill:'m' }
+          item {title:'[fa-database fa-red] tabulka MAIL',        par:°{tab:'mail'},      skill:'m' }
+          item {title:'[fa-database fa-red] tabulka CENIK',       par:°{tab:'cenik'},     skill:'m' }
+          item {title:'[fa-database fa-red] tabulka DAR',         par:°{tab:'dar'},       skill:'m' }
+          item {title:'[fa-database fa-red] tabulka DOTAZ'        par:°{tab:'dotaz'}      skill:'m' }
+          proc onclick (i) {
+            info.fill(replace_fa(conc(i.owner.title,' - ',i.title)),ask('i_doc_table_struct',i.par.tab,0));
+          }
+        }
+        menu {title:'Import dotazníků',type:'group', _sys:'*' skill:'m'
+          item {title:'MS2019 - účastníci' par:°{rok:'2019'}
+            proc onclick (i) { var y:object
+              info.fill(conc(i.owner.title,' - ',i.title),'... probíhá výpočet ...');
+              confirm("Mám přepočítat dotazník?");
+              clear;
+              y.set(ask('dot_import',i.par.db));
+              [ y.war; warning(y.war) ]; 
+              [ y.err; alert(y.err) ]; 
+              info.fill('',y.html) 
+          }}
+          item {title:'MS2019 - účastníci - show' par:°{id:'1'} }
+          item {title:'MS2019 - účastníci - show' par:°{id:'2'} }
+          item {title:'MS2019 - účastníci - show' par:°{id:'3'} }
+          proc onclick (i) { var y:object
+            info.fill(conc(i.owner.title,' - ',i.title),'... probíhá výpočet ...');
+            clear;
+            y.set(ask('dot_show',1,i.par.id));
+            info.fill('',y.html) 
+          }
+        }
       }
       use info: form right [12,4,,]
     }
