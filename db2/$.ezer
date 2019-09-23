@@ -26,43 +26,50 @@ menu db2 { type:'main', title:'db2', active:*, _sys:'*'
         confirm("smazat záznam ",idt," v tabulce tvori?");
         ask('query',conc("DELETE FROM tvori WHERE id_tvori=",idt));
       }
-      menu {type:'left', active:*
-        menu {title:'Ostrá databáze',type:'group', _sys:'*'
+      menu m {type:'left', format:'f+'
+        menu o {title:'Ostrá databáze',type:'group', _sys:'*'
           item {title:'Stav sjednocování kopií', par:°{db:'db2'}
             proc onclick (i) {
+              panel.display(2,'i');
               info.fill(conc(i.owner.title,' - ',i.title),'... probíhá výpočet ...');
               info.fill('',ask('db2_stav',i.par.db)) }}
           item {title:'obnova pobyt.web_changes' 
-            proc onclick() { confirm('opravit pobyt.web_changes ?'); ask('update_web_changes') }
-          }
+            proc onclick() { 
+              panel.display(2,'i');
+              confirm('opravit pobyt.web_changes ?'); ask('update_web_changes') 
+          }}
 //          item {title:'smazat platební údaje LK2019' skill:'m'
 //            proc onclick() { confirm('smazat platební údaje LK2019 ?'); ask('clear_platby_lk2019') }
 //          }
         }
-        menu {title:'Kontroly konzistence dat',type:'group', _sys:'*'
+        menu k {title:'Kontroly konzistence dat',type:'group', _sys:'*'
           item {title:'kontroly databáze - test'        ,par:°{opravit:0,test:'test'}, skill:'m'}
           item {title:'kontroly databáze - test+oprava' ,par:°{opravit:1,test:'test'}, skill:'m'}
           item {title:'kontroly databáze'               ,par:°{opravit:0}}
           item {title:'kontroly databáze s opravou'     ,par:°{opravit:1}, skill:'m'}
           proc onclick (i) {
+            panel.display(2,'i');
             info.fill(conc(i.owner.title,' - ',i.title),' ... probíhá kontrola dat ...');
             info.fill('',ask('db2_kontrola_dat',i.par));
           }
         }
-        menu {title:'Testovací databáze',type:'group', _sys:'*'
+        menu t {title:'Testovací databáze',type:'group', _sys:'*'
           item {title:'stav sjednocování kopií', par:°{db:'db2_test'}
             proc onclick (i) {
+              panel.display(2,'i');
               info.fill(conc(i.owner.title,' - ',i.title),'... probíhá výpočet ...');
               info.fill('',ask('db2_stav',i.par.db)) }}
           item {title:'obnovit testovací db z ostré', par:°{db:'db2'}
             proc onclick (i) {
+              panel.display(2,'i');
               confirm("vytvořit znovu testovací databázi z aktuálního stavu ostré databáze?");
               info.fill(conc(i.owner.title,' - ',i.title),' ... probíhá update ...');
               info.fill('',ask('db2_copy_test_db',i.par.db)); }}
         }
-        menu  {title:'Struktura dat (výběr)', type:'group', skill:'yamg;famg;camg'
+        menu s  {title:'Struktura dat (výběr)', type:'group', skill:'yamg;famg;camg'
           item {title:'[fa-object-group] Přehled struktury dat'
             proc onclick (i) {
+              panel.display(2,'i');
               info.fill(replace_fa(conc(i.owner.title,' - ',i.title)),"<br>
                 Zjednodušené schema databáze pro <b>Answer</b>
                 s uvedením podmínek pro spojení pomocí JOIN<br><br>
@@ -83,32 +90,12 @@ menu db2 { type:'main', title:'db2', active:*, _sys:'*'
           item {title:'[fa-database fa-red] tabulka DAR',         par:°{tab:'dar'},       skill:'m' }
           item {title:'[fa-database fa-red] tabulka DOTAZ'        par:°{tab:'dotaz'}      skill:'m' }
           proc onclick (i) {
+            panel.display(2,'i');
             info.fill(replace_fa(conc(i.owner.title,' - ',i.title)),ask('i_doc_table_struct',i.par.tab,0));
           }
         }
-        menu {title:'Import dotazníků',type:'group', _sys:'*' skill:'m'
-          item {title:'MS2019 - účastníci' par:°{rok:'2019'}
-            proc onclick (i) { var y:object
-              info.fill(conc(i.owner.title,' - ',i.title),'... probíhá výpočet ...');
-              confirm("Mám přepočítat dotazník?");
-              clear;
-              y.set(ask('dot_import',i.par.db));
-              [ y.war; warning(y.war) ]; 
-              [ y.err; alert(y.err) ]; 
-              info.fill('',y.html) 
-          }}
-          item {title:'MS2019 - účastníci - show' par:°{id:'1'} }
-          item {title:'MS2019 - účastníci - show' par:°{id:'2'} }
-          item {title:'MS2019 - účastníci - show' par:°{id:'3'} }
-          proc onclick (i) { var y:object
-            info.fill(conc(i.owner.title,' - ',i.title),'... probíhá výpočet ...');
-            clear;
-            y.set(ask('dot_show',1,i.par.id));
-            info.fill('',y.html) 
-          }
-        }
       }
-      use info: form right [12,4,,]
+      use info: form right [12,4,,]     { tag:'i' }
     }
 //    panel js [0,0,,] {type:'plain', title:'[fa-battery-4] 2.2 => [fa-battery-1] 3'
 //      use u: form f [0,0,,]
