@@ -1326,7 +1326,11 @@ form _rodina2 [,,360,229]  { css:'ae_frame'
   field keys_rodina // seznam pravděpodobných kopií
   # ------------------------==> . kontextové_menu
   menu detail { type:'context'
-    item { title:'konfigurace formuláře', proc onclick () { rodina_config.tune(ucast) } }
+    item { title:'maily manželů do schránky', proc onclick () { var y:object
+      y.set(ask('ucast2_clipboard',the_pobyt.get));
+      clipboard(y.clip); alert(y.msg);
+    }}
+    item { title:'-konfigurace formuláře', proc onclick () { rodina_config.tune(ucast) } }
     item { title:'ukázat změny', proc onclick () {
       key_rodina.get; track.back_show('rodina',key_rodina.get) } }
     item { title:'historie skupinek MS', proc onclick () {
