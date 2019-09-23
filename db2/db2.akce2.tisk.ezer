@@ -1,7 +1,7 @@
 # Systém Ans(w)er - modul Akce.Tisk
 # (c) 2008-2014 Martin Šmídek <martin@smidek.eu>
 
-# ================================================================================================== Tisk
+# ============================================================================================= Tisk
 
 # ------------------------------------------------------------------------------------------==> stav
 var the_duakce_local: number    // zobrazená akce - pokud se liší od the_duakce, je třeba překreslit
@@ -123,7 +123,7 @@ menu m {type:'left', active:*
                                         ,tit:'příjmení:15,jméno:15,narození:12,/rč:5,obec:25,psč:7,ulice:25,telefon:20,e-mail:30,funkce:10,poznámky:30'
                                         ,fld:'prijmeni,jmeno,narozeni,rc_xxxx,obec,psc,ulice,telefon,email,pfunkce,_poznamky'}}
   }
-  # ---------------------------------------------------------------------------------------------==> adresář
+  # -------------------------------------------------------------------------------------==> adresář
   menu n {tag:'a', title:'adresář',type:'group',_sys:'*'
     item i {title:'Rodinný' ,par:°{typ:'p',exp:'Excel2',cnd:'p.funkce!=99'
                                         ,tit:'příjmení:15,jména:20,obec:25,psč:7,ulice:25,^'
@@ -173,7 +173,7 @@ menu m {type:'left', active:*
                                         ,tit:'příjmení:15,jméno:12,věk:5,narození:12,/rč:5,obec:25,psč:7,ulice:25,telefon:25,email:25,dieta:12'
                                         ,fld:'prijmeni,jmeno,_vek,narozeni,rc_xxxx,obec,psc,ulice,telefony,emaily,dieta'}}
   }
-  # ---------------------------------------------------------------------------------------------==> seznamy
+  # -------------------------------------------------------------------------------------==> seznamy
   menu {tag:'a', title:'seznamy',type:'group',_sys:'*'
     item {title:'VPS na akci'                                                                skill:'y;c#crz'
                                         ,par:°{typ:'p',exp:'Excel2',cnd:"p.funkce IN (1,2)"
@@ -259,7 +259,7 @@ menu m {type:'left', active:*
                                         ,tit:':3,Příjmeni:15,Jméno:15,Ulice:24,Město:13,PSČ:7,Datum nar.:10,Člen YMCA:10,(věk):5,(funkce):12'
                                         ,fld:'1,prijmeni,jmeno,ulice,obec,psc,_narozeni6,_ymca,_vek,_funkce'}}
   }
-  # ---------------------------------------------------------------------------------------------==> MROP
+  # ----------------------------------------------------------------------------------------==> MROP
   menu {tag:'a', title:'sestavy MROP',type:'group',_sys:'*'                                  skill:'faa:m'
     item {title:'příjem'
                                         ,par:°{typ:'mrop',exp:'Excel2'
@@ -287,7 +287,7 @@ menu m {type:'left', active:*
                                         ,tit:'jméno:25, skupina:8, chata:8, poznámka:40'
                                         ,fld:'pr_jm,skupina,pokoj,filler'}}
   }
-  # ---------------------------------------------------------------------------------------------==> DS
+  # ------------------------------------------------------------------------------------------==> DS
   menu {tag:'a', title:'seznamy DS',type:'group',_sys:'*'                                    skill:'y'
     item {title:'Všichni, s poznámkami'
                                         ,par:°{typ:'P',exp:'Excel2',cnd:"funkce!=99"
@@ -304,24 +304,25 @@ menu m {type:'left', active:*
     item {title:'Všichni, skupinky tisk'
                                         ,par:°{typ:'skti',exp:'Excel2',cnd:'1',verze:'DS'}} // fce:'tisk'
   }
-  # ---------------------------------------------------------------------------------------------==> info
+  # ---------------------------------------------------------------------------------==> info o akci
   menu {tag:'a', title:'informace o akci',type:'group',_sys:'*'
     item {title:'Narozeniny, výročí'    ,par:°{typ:'vv',cnd:'1'}}
-    item {title:'Přehled o akci (děti,pečouni)', par:°{typ:'vi',cnd:'1'},                    skill:'#crz'}
-    item {title:'Ekonomické ukazatele'  ,par:°{typ:'ve',cnd:'1'},                            skill:'#crz' }
+    item {title:'Přehled o akci (děti,pečouni)', par:°{typ:'vi',cnd:'1'},               skill:'#crz'}
+    item {title:'Ekonomické ukazatele'  ,par:°{typ:'ve',cnd:'1'},                       skill:'#crz' }
     item {title:'Udržet kontakt'        ,par:°{typ:'12',cnd:'1'}, skill:'y;f'}
-    item {title:'Přednášející'                                                               skill:'y;f;c'
+    item {title:'Přednášející'                                                         skill:'y;f;c'
                                         ,par:°{typ:'p',exp:'Excel2',cnd:"prednasi"
                                         ,tit:'příjmení:15,jména:20,přednáška,^'
                                         ,fld:'prijmeni,jmena,prednasi,^id_pobyt',ord:'prednasi'}}
-    item {title:'Seznam změn - ubytování'                                                    skill:'y;f;c'
+    item {title:'Seznam změn - ubytování'                                              skill:'y;f;c'
                                         ,par:°{typ:'cz',cnd:'1',tab:'pobyt',zmeny:'0'
                                         ,fld:'luzka,kocarek,pokoj,budova,pristylky,pocetdnu'}}
-    item {title:'Seznam změn - ostatní'                                                      skill:'m'
+    item {title:'Seznam změn - ostatní'                                                    skill:'m'
                                         ,par:°{typ:'cz',cnd:'1',zmeny:'0'
                                         ,tab:'rodina,pobyt,osoba,spolu',fld:'*'}}
+    item {title:'Statistika akce'       ,par:°{typ:'dot',cnd:'1',zdroj:'akce',par1:'ida'} skill:'#crz'}
   }
-  # ---------------------------------------------------------------------------------------------==> jmenovky
+  # ------------------------------------------------------------------------------------==> jmenovky
   menu {tag:'a', title:'jmenovky na akci',type:'group',_sys:'*'
     item {title:'Účastníci bez funkce'                                                       skill:'f'
                                         ,par:°{typ:'j',exp:'Excel2',exp2:'PDF-jmenovky'
@@ -385,7 +386,7 @@ menu m {type:'left', active:*
                                         ,ord:"IFNULL(r2.nazev,CONCAT('ZZ',prijmeni))"
                                         ,tit:'jméno:20, příjmení:15',fld:'jmeno,prijmeni'}}
   }
-  # ---------------------------------------------------------------------------------------------==> PDF
+  # -----------------------------------------------------------------------------------------==> PDF
   menu {tag:'a', title:'tisky do PDF',type:'group',_sys:'*'
     item {title:'Adresní štítky rodin'  ,par:°{typ:'p',exp:'PDF-adresy',cnd:'p.funkce!=99'
                                         ,tit:'příjmení:15,jména dospělých:20,obec:25,psč:7,ulice:25,stát:10'
@@ -413,7 +414,7 @@ menu m {type:'left', active:*
       }
     }
   }
-  # ---------------------------------------------------------------------------------------------==> MS
+  # ------------------------------------------------------------------------------------------==> MS
   menu {tag:'a', title:'MS: letní kurs, obnovy',type:'group',_sys:'*',                       skill:'#crz'
     item {title:'Účastníci + aktivita na MS'                                                 skill:'y;f;c'
                                         ,par:°{typ:'p',exp:'Excel2'
@@ -476,7 +477,7 @@ menu m {type:'left', active:*
                                         ,fld:'_1,_jmenoY,_adresaY,_narozeniY,_ymca,_vek,_funkce,_typ'
                                         ,ord:'_zprava'}}
   }
-  # ---------------------------------------------------------------------------------------------==> Technické seznamy
+  # ---------------------------------------------------------------------------==> Technické seznamy
   menu {tag:'a', title:'Technické seznamy',type:'group',_sys:'*'
     item {title:'Návrh ubytování'       ,par:°{typ:'p',exp:'Excel2',cnd:"p.funkce NOT IN (9,10,13,14,99)"
                                         ,tit:'příjmení:15,jména:12,obec:25,věk dětí:10,lůžka:5,přistýlka:5,kočárek:5,pokoj:5,pok1:4,pok2:4,pok3:4,chůvy:20,poznámka:100,^'
