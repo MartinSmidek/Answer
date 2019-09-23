@@ -220,6 +220,823 @@ function session($is,$value=null) {
   }
   return $value;
 }
+/** =====================================================================================> DOTAZNÍKY **/
+# -------------------------------------------------------------------------------------- dot prehled
+# vrátí dostupné dotazníky Letního kurzu MS YS
+function dot_roky () { trace();
+  $y= (object)array('roky'=>'2019,2018');
+  return $y;
+}
+# -------------------------------------------------------------------------------------- dot prehled
+# statistický přehled o akci, strukturovaný podle dotazníků Letního kurzu MS YS
+#   par.zdroj= akce|dotaz
+#   par.par1= rok|ida určuje význam prvního parametru
+function dot_prehled ($rok_or_akce,$par,$title='',$vypis='',$export=0) { trace();
+  $y= (object)array('html'=>'');
+  if ( $par->par1=='rok') {
+    $rok= $rok_or_akce;
+    $akce= select('id_duakce','akce',"access=1 AND druh=1 AND YEAR(datum_od)=$rok");
+  }
+  else {
+    $akce= $rok_or_akce;
+    $rok= -1; // je pouze v kombinaci s zdroj=akce
+  }
+  $no= $n_mn= $n_mo= $n_m= $n_z= 0;
+  $vek_x= array(61,51,41,31,1,0);
+  $vek_m= $vek_z= array(0,0,0,0,0,0);
+  $man_x= array(31,21,11,6,0,-1);
+  $man_s= $man_n= $man_o= array(0,0,0,0,0,0);
+  switch ($par->zdroj) {
+  case 'akce':
+    $nadpis= "<h3>Podle údajů v Answeru</h3>";
+    $rp= pdo_qry("
+      SELECT 
+        IF(r.datsvatba,DATEDIFF(a.datum_od,r.datsvatba)/365.2425,
+          IF(r.svatba,YEAR(a.datum_od)-r.svatba,0)) AS _man,
+        ROUND(DATEDIFF(a.datum_od,o.narozeni)/365.2425,1) AS _vek,
+        sex,id_osoba,i0_rodina
+      FROM pobyt AS p
+      JOIN akce AS a ON id_akce=id_duakce
+      JOIN spolu AS s USING (id_pobyt)
+      LEFT JOIN rodina AS r ON r.id_rodina=p.i0_rodina
+      JOIN tvori AS t USING (id_rodina,id_osoba)
+      JOIN osoba AS o USING (id_osoba)
+      WHERE id_akce=$akce AND p.funkce IN (0,1,2) AND s_role=1 
+      --  AND i0_rodina IN (3329,6052)
+      GROUP BY id_osoba
+      ");
+    while ( $rp && (list($man,$vek,$sex,$ido,$idr)= pdo_fetch_array($rp)) ) {
+      $no++;
+      // minulé účasti - ale ne jako děti účastnické rodiny
+      $ucasti= select(
+          "COUNT(*)",
+          "akce AS a
+            JOIN pobyt AS p ON a.id_duakce=p.id_akce
+            JOIN spolu AS s USING(id_pobyt)",
+          "a.druh=1 AND a.spec=0 AND s.id_osoba=$ido AND i0_rodina=$idr AND p.id_akce!=$akce");
+                                                  display($ucasti);
+      // stáří
+      foreach ($vek_x as $ix=>$x) {
+        if ( $vek>=$x) {
+          if ( $sex==1 ) {
+            $vek_m[$ix]++;
+            $n_m++;
+          }
+          else {
+            $vek_z[$ix]++;
+            $n_z++;
+          }
+          break;
+        }
+      }
+      // délka manželství
+      foreach ($man_x as $ix=>$x) {
+        if ( $man>=$x) {
+          if ( $ucasti ) {
+            $man_o[$ix]++;
+            $n_mo++;
+          }
+          else {
+            $man_n[$ix]++;
+            $n_mn++;
+          }
+          $man_s[$ix]++;
+          break;
+        }
+      }
+    }
+    break;
+  case 'dotaz':
+    $nadpis= "<h3>Podle odevzdaných dotazníků</h3>";
+    $rp= pdo_qry("
+      SELECT manzel,vek,sex,IF(novic,0,1)
+      FROM dotaz
+      WHERE dotaznik=$rok
+      ");
+    while ( $rp && (list($man,$vek,$sex,$ucasti)= pdo_fetch_array($rp)) ) {
+      $no++;
+      // stáří
+      foreach ($vek_x as $ix=>$x) {
+        if ( $vek>=$x) {
+          if ( $sex==1 ) {
+            $vek_m[$ix]++;
+            $n_m++;
+          }
+          else {
+            $vek_z[$ix]++;
+            $n_z++;
+          }
+          break;
+        }
+      }
+      // délka manželství
+      foreach ($man_x as $ix=>$x) {
+        if ( $man>=$x) {
+          if ( $ucasti ) {
+            $man_o[$ix]++;
+            $n_mo++;
+          }
+          else {
+            $man_n[$ix]++;
+            $n_mn++;
+          }
+          $man_s[$ix]++;
+          break;
+        }
+      }
+    }
+    if ( !$no ) {
+      $tab= "<h3>Dotazník pro rok $rok není dostupný</h3>";
+    }
+    break;
+  }
+//                                              debug($man_s,"manželství");
+//                                              debug($man_o,"manželství O");
+//                                              debug($man_n,"manželství N");
+                                              debug($vek_m,"věk muže $n_m");
+                                              debug($vek_z,"věk ženy $n_z");
+  // tabulka trvání manželství
+  if ($no) {
+    $tab= "<h3>Přehled délky manželství</h3>";
+    $td= "td align='right'";
+    $th= "th align='right'";
+    $tab.= "<table class='stat'>";
+    $tab.= "<tr>
+        <th></th>
+        <th colspan=2>celkový počet</th>
+        <th colspan=2>noví účastníci</th>
+        <th colspan=2>opakující se</th>
+      </tr></tr>
+        <th>délka manželství</th>
+        <$th>počet</th>
+        <$th>%</th>
+        <$th>počet</hd>
+        <$th>%</th>
+        <$th>počet</th>
+        <$th>%</th>
+      </tr>";
+    // kategorie
+    for ($i= count($man_s)-2; $i>=0; $i--) {
+      $s= $man_s[$i]; $n= $man_n[$i]; $o= $man_o[$i]; 
+      $ps= number_format(100*$s/$no,1);
+      $pn= number_format(100*$n/$n_mn,1);
+      $po= number_format(100*$o/$n_mo,1);
+      $x= $i==count($man_s)-1 ? "?" : "{$vek_x[$i]}-".($i==0 ? '...' : $vek_x[$i-1]-1).' let';
+      $x1= $man_x[$i]; $x2= $i==0 ? '...' : $man_x[$i-1]-1;
+      $tab.= "<tr>
+          <th>$x1-$x2 let</th>
+          <$td>$s</td>
+          <$td>$ps %</td>
+          <$td>$n</td>
+          <$td>$pn %</td>
+          <$td>$o</td>
+          <$td>$po %</td>
+        </tr>";
+    }
+    $tab.= "<tr>
+        <th>celkem</th>
+        <$th>$no</th>
+        <$th></th>
+        <$th>$n_mn</th>
+        <$th></th>
+        <$th>$n_mo</th>
+        <th></th>
+      </tr>";
+    $tab.= "</table>";
+  }
+  // tabulka stáří účastníků
+  if ($no) {
+    $tab.= "<h3>Přehled stáří účastníků</h3>";
+    $td= "td align='right'";
+    $th= "th align='right'";
+    $tab.= "<table class='stat'>";
+    $tab.= "<tr>
+        <th></th>
+        <th colspan=2>muži</th>
+        <th colspan=2>ženy</th>
+      </tr></tr>
+        <th>věkové kategorie</th>
+        <$th>počet</th>
+        <$th>%</th>
+        <$th>počet</hd>
+        <$th>%</th>
+      </tr>";
+    // kategorie
+    for ($i= count($vek_x)-1; $i>=0; $i--) {
+      $m= $vek_m[$i]; $z= $vek_z[$i]; 
+      $pm= number_format(100*$m/$n_m,1);
+      $pz= number_format(100*$z/$n_z,1);
+      $x= $i==count($vek_x)-1 ? "?" : "{$vek_x[$i]}-".($i==0 ? '...' : $vek_x[$i-1]-1).' let';
+      $tab.= "<tr>
+          <th>$x</th>
+          <$td>$m</td>
+          <$td>$pm %</td>
+          <$td>$z</td>
+          <$td>$pz %</td>
+        </tr>";
+    }
+    $tab.= "<tr>
+        <th>celkem</th>
+        <$th>$n_m</th>
+        <$th></th>
+        <$th>$n_z</th>
+        <$th></th>
+      </tr>";
+    $tab.= "</table>";
+  }
+  $y->html.= "$nadpis$tab"; 
+  return $y;
+}
+# ------------------------------------------------------------------------------------------ dot spy
+# tipy na autory
+# kurs = {akce:id_akce,data:[{sex,vek,deti,manz,novic}...] ... data se počítají při prvním průchodu
+function dot_spy ($kurz,$dotaznik,$clmn,$pg,$back) { trace();
+  global $EZER;
+  global $i_osoba_jmeno, $i_osoba_vek, $i_osoba_role, $i_osoba_prijmeni, $i_key_spolu;
+//  $y= (object)array('html'=>'','err'=>'','war'=>'');
+  $kurz->html= '???';
+  if ( !isset($kurz->data) ) {
+    $akce= select('id_duakce','akce',"access=1 AND druh=1 AND YEAR(datum_od)=$kurz->rok");
+    $kurz->akce= $akce;
+    $zacatek_akce= select('datum_od','akce',"id_duakce=$akce");
+    $cnd= "p.funkce IN (0,1,2)";
+    $browse_par= (object)array(
+      'cmd'=>'browse_load','cond'=>"$cnd AND p.id_akce=$akce",
+      'having'=>'','order'=>'a _nazev',
+      'sql'=>"SET @akce:=$akce,@soubeh:=0,@app:='{$EZER->options->root}';");
+    $z= ucast2_browse_ask($browse_par,true);
+    $kurz->data= array();
+    foreach($z->values as $par) { if ( $par ) {
+      $idp= $par->key_pobyt;
+//      if ( $idp==54153 ) continue;
+      $novic= $par->x_ms==1 ? 1 : 0;
+      $manzele= '?';
+      if ( $par->r_datsvatba ) {
+        $datsvatba= sql_date1($par->r_datsvatba,1);
+        $manzele=  roku_k($datsvatba,$zacatek_akce);
+      }
+      elseif ( $par->r_svatba ) {
+        $manzele= $letos-$par->r_svatba;
+      }
+      $nazev= $par->_nazev;
+//      debug($m,"$nazev");
+      $cle= explode('≈',$par->r_cleni);
+      $m_vek= $z_vek= '?';
+      $m_ido= $z_ido= 0;
+      $deti= 0;
+      foreach($cle as $cl) {
+        $c= explode('~',$cl);
+        $role= $c[$i_osoba_role];
+        switch ($role) {
+        case 'a': $m_vek= $c[$i_osoba_vek]; 
+                  $m_jmeno= $c[$i_osoba_jmeno]; $m_prijmeni= $c[$i_osoba_prijmeni]; 
+                  $m_ido= $c[0]; break;
+        case 'b': $z_vek= $c[$i_osoba_vek]; 
+                  $z_jmeno= $c[$i_osoba_jmeno]; $z_prijmeni= $c[$i_osoba_prijmeni]; 
+                  $z_ido= $c[0]; break;
+        case 'd': if ( $c[$i_key_spolu] ) $deti++; break;
+        }
+      }
+      $m= (object)array('sex'=>0,'vek'=>$m_vek,'manz'=>$manzele,'deti'=>$deti,'novic'=>$novic,
+          'prijmeni'=>$m_prijmeni,'jmeno'=>$m_jmeno,'idp'=>$idp,'ido'=>$m_ido);
+      $z= (object)array('sex'=>1,'vek'=>$z_vek,'manz'=>$manzele,'deti'=>$deti,'novic'=>$novic,
+          'prijmeni'=>$z_prijmeni,'jmeno'=>$z_jmeno,'idp'=>$idp,'ido'=>$z_ido);
+//      debug($m,"muž");
+//      debug($z,"žena");
+      $kurz->data[]= $m;
+      $kurz->data[]= $z;
+//      break;
+    }}
+  }
+  list($sex,$vek,$deti,$manz,$novic)= select('sex,vek,deti,manzel,novic','dotaz',
+      "dotaznik=$dotaznik AND $clmn=$pg");
+  // hledáme shody
+  $shod= 0; 
+  $shod_max= 7;
+  $kdo= array();
+  $tit= array();
+  $pob= array();
+  $dpa= array();
+  $f= $kurz->filtr;
+  $n= 0;
+  foreach($kurz->data as $i=>$o) {
+    if ( 1
+        && ( $f->sex ? $sex==$o->sex : 1)
+        && ( $f->vek ? abs($vek-$o->vek)<=1  : 1)
+        && ( $f->det ? $deti==$o->deti  : 1)
+        && ( $f->man ? abs($manz-$o->manz)<=1 : 1)
+        && ( $f->nov ? $novic==$o->novic : 1)
+      ) {
+      if ( $shod<=$shod_max ) {
+        $kdo[$shod]= "$o->jmeno $o->prijmeni";
+        $pob[$shod]= $o->idp;
+        $tit[$shod]= "věk=$o->vek, děti/LK=$o->deti, manželství=$o->manz, "
+            . ($o->novic ? 'poprvé' : 'opakovaně');
+        // zkusíme najít dotazník partnera
+        $dpa[$shod]= array();
+        $ip= $o->sex ? $i-1 : $i+1;
+        $p= is_array($kurz->data) ? $kurz->data[$ip] : $kurz->data->$ip;
+        $rp= pdo_qry("SELECT $clmn FROM dotaz WHERE dotaznik={$kurz->rok}
+            AND sex=$p->sex 
+            AND ABS(vek-$p->vek)<=1 
+            AND deti=$p->deti 
+            AND ABS(manzel-$p->manz)<=1
+            AND novic=$p->novic
+        ");
+        while ( $rp && (list($ppage)= pdo_fetch_array($rp)) ) {
+          $dpa[$shod][]= $ppage;
+        }
+      }
+      $shod++;
+    }
+  }
+  $kurz->html= '';
+//                                                      debug($kdo);
+  $del= '';
+  for($j=0; $j<count($kdo); $j++) {
+    $dp= array();
+    foreach($dpa[$j] as $ip) {
+      $dp[]= "<a href='ezer://akce2.sta.show_obraz/$ip'>$ip</a>";
+    }
+    $partner= implode(',',$dp);
+    $kurz->html.= "$del<a href='ezer://akce2.ucast.ucast_pobyt/{$pob[$j]}' "
+      . "title='{$tit[$j]}'>{$kdo[$j]}</a> ($partner)";
+    $del= '<br>';
+  }
+  $shod= kolik_1_2_5($shod,"shoda,shody,shod");
+  $goback= $back ? "<a style='background:orange' href='ezer://akce2.sta.show_obraz/$back' "
+      . "title='$back'>&lArr;</a>" : '';
+  $kurz->html.= ($shod>$shod_max ? ' ...' : '')."<br><i>celkem je $shod</i>  $goback";
+//  unset($kurz->data);
+  return $kurz;
+}
+# ----------------------------------------------------------------------------------------- dot show
+# zobrazení digitalizovaných dotazníků
+# $dirty=1 způsobí kontrolu existence pro offset=0 a případně skok na další
+function dot_show ($dotaznik,$clmn,$pg,$offset,$cond,$dirty) { trace();
+  $y= (object)array('html'=>'','err'=>'','war'=>'','jpg'=>'');
+  $tab_class= 'stat dot';
+  // posun v dotazech
+  switch ($offset) {
+  case -2: // začátek
+    $pg= select($clmn,'dotaz',"dotaznik=$dotaznik AND $cond ORDER BY $clmn ASC LIMIT 1");
+    break;
+  case -1: // předchozí
+    $pg1= select($clmn,'dotaz',"dotaznik=$dotaznik AND $cond AND $clmn<$pg ORDER BY $clmn DESC LIMIT 1");
+    $pg= $pg1 ? $pg1 : $pg;
+    break;
+  case 0:  // tento
+    if ( $dirty ) {
+      $pg1= select($clmn,'dotaz',"dotaznik=$dotaznik AND $cond AND $clmn=$pg");
+      if ( $pg1 ) break;
+    }
+    else break;
+  case 1:  // další
+    $pg1= select($clmn,'dotaz',"dotaznik=$dotaznik AND $cond AND $clmn>$pg ORDER BY $clmn ASC LIMIT 1");
+    $pg= $pg1 ? $pg1 : $pg;
+    break;
+  case 2:  // poslední
+    $pg= select($clmn,'dotaz',"dotaznik=$dotaznik AND $cond ORDER BY $clmn DESC LIMIT 1");
+    break;
+  }
+  $x= select_object('*','dotaz',"dotaznik=$dotaznik AND $clmn=$pg");
+  $y->page= $x->page;
+  // získání obrazu
+  $jpg= str_pad($x->page,4,'0',STR_PAD_LEFT).'.jpg';
+  $img_path= "docs/import/MS$dotaznik/$jpg";
+  $y->id= $x->id;
+  if ( file_exists($img_path) ) {
+    $y->jpg= "<a href='$img_path' target='img'><img src='$img_path' width='100%'></a>";
+  }
+  else {
+    $y->jpg= " sken dotazníku není k dispozici ";
+  }
+  $tmpl= array(
+    'Statistika' => array(
+        'pohlaví'=>'sex', 'věk'=>'vek','dětí'=>'deti','manželství'=>'manzel','poprvé'=>'novic'
+    ),
+    'dozvěděl se od'=>array(
+      'přátel' => 'od_pratele', 'partnera' => 'od_partner', 'příbuzných' => 'od_pribuzni', 
+      '(pečoun)' => 'od_pecoun', 'z inzerce' => 'od_inzerce', 'chlapi' => 'od_chlapi', 
+      'YMCA' => 'od_ymca', 'jiné' => 'od_jine', ':' => 'od_jine_text'
+    ),
+    'proč jel'=>array(
+      'zlepšit manželství' => 'proc_zlepsit', 'byla krize' => 'proc_krize', 
+      'jiné' => 'proc_jine', ':' => 'proc_jine_text'
+    ),
+    'Hodnocení' => array(
+      'přednášky'=>'prednasky', 'skupinky'=>'skupinky','duchovno'=>'duchovno',
+      'ubytovani'=>'ubytovani', 'strava'=>'strava', 'péče o děti'=>'pecedeti', 
+      'motto'=>'motto', 'maturita'=>'maturita', 'hudba'=>'hudba'
+    ),
+    'Slovně' => array(
+      'Líbilo se mi' => 'libilo',
+      'Vadilo mi' => 'vadilo',
+      'Vzkaz týmu' => 'vzkaz'
+    ),
+    'Témata'=>array(
+      'výchova menších' => 'tema_male', 'výchova dospívajících' => 'tema_dosp', 
+      'vztah matka-dítě' => 'tema_matka', 'vztah otec-dítě' => 'tema_otec', 
+      'mezigenerační' => 'tema_mezigen', 'duchovní život' => 'tema_duchovni', 
+      'jiné' => 'tema_jine', ':' => 'tema_jine_text'
+    ),
+//    'Přínos'=>array(
+//      'přínos' => 'prinos', ':' => 'prinos_text'
+//    ),
+    'Přínos'=>array(
+      'významný' => 'prinos_1', 'částečně' => 'prinos_2', 'uvidí se' => 'prinos_3',
+      'beze změny' => 'prinos_4', 'spíš horší' => 'prinos_5'
+    )
+  );
+  foreach ($x as $name=>$val) {
+    switch ($name) {
+      case 'sex':   $x->sex= array('muž','žena')[$val]; break;
+      case 'vek':   $x->vek.= ' let'; break;
+      case 'deti':  $x->deti.= ' dětí/LK'; break;
+      case 'manzel':$x->manzel.= ' let manž.'; break;
+      case 'novic': $x->novic= array('opak.','poprv')[$val]; break;
+    }
+  }
+  $tab.= "<p><b>PDF={$x->page}  &nbsp;  XLS={$x->id}</b></p>";
+  foreach ($tmpl as $row => $clmns) {
+    switch ($row) {
+    case 'Hodnocení':
+      $tab.= "<br>";
+      $r1= "<table class='$tab_class'><th>$row</th>";
+      $r2= "<td></td>";
+      foreach ($clmns as $name=>$val) {
+        $r1.= "<td class='vert'><p>$name</p></td>";
+        $r2.= "<td>{$x->$val}</td>";
+      }
+      $tab.= "<tr>$r1</tr><tr>$r2</tr></table>";
+      break;
+//    case 'Přínos':
+    case 'Přínos':
+      $r1= "<table class='$tab_class'><th>$row</th><td class='vert'><p>číslem</p></td>";
+      $r2= "<td></td><td>{$x->prinos}</td>";
+      foreach ($clmns as $name=>$val) {
+        $pr= substr($val,-1,1);
+        $r1.= "<td class='vert' title='prinos=$pr'><p>$name</p></td>";
+        $r2.= $x->prinos==$pr ? "<td>1</td>" : "<td>-</td>";
+      }
+      $r3= "<td style='height:40px'>slovně:</td><td colspan='6'>{$x->prinos_text}</td>";
+      $tab.= "<tr>$r1</tr><tr>$r2</tr><tr>$r3</tr></table>";
+      break;
+//      $tab.= "<br>";
+    case 'Statistika':
+      $tab.= "<table class='$tab_class'><tr><th>$row</th>";
+      foreach ($clmns as $name=>$val) {
+        $tab.= "<td>{$x->$val}</td>";
+      }
+      $tab.= "</tr></table>";
+      break;
+    case 'proč jel':
+    case 'dozvěděl se od':
+      $tab.= "<table class='$tab_class'><tr><td class='first'>$row</td><td>";
+      $plus= '';
+      foreach ($clmns as $name=>$val) {
+        if ( $x->$val && $name!='jiné' ) {
+//          $v= $name==':' ? "jiné = {$x->$val}" : $name;
+//          $tab.= "$plus $v";
+//          $plus= ' +';
+          if ( $name==':' ) {
+            $td= $plus ? "</td><td>" : '';
+            $tab.= "$td$plus jiné = {$x->$val}";
+          }
+          else {
+            $tab.= "$plus $name";
+            $plus= ' +';
+          }
+        }
+      }
+      $tab.= "</td></tr></table>";
+      break;
+    case 'Slovně':
+      $tab.= "<br><table class='$tab_class'>";
+      foreach ($clmns as $name=>$val) {
+        $tab.= "<tr><th style='height:40px'>$name</th><td>{$x->$val}</td></tr>";
+      }
+      $tab.= "</table><br>";
+      break;
+    case 'Témata':
+      $tab.= "<table class='$tab_class'><tr><th>$row</th>";
+      foreach ($clmns as $name=>$val) {
+        if ( $x->$val ) {
+          $v= $name==':' ? $x->$val : $name;
+          $tab.= "<td>$v</td>";
+        }
+      }
+      $tab.= "</tr></table><br>";
+      break;
+    }
+  }
+  $style= "<style>
+table.dot {
+  width: 320px;
+  margin-top: -1px;
+}
+table.dot th {
+  width: 80px;
+}
+table.dot td.first {
+  width: 76px;
+}
+table.dot .vert {
+  vertical-align: bottom;
+  height: 65px;
+}
+table.dot .vert p {
+  transform: rotate(-90deg);
+  position: relative;
+  width: 18px;
+  white-space: nowrap;
+}
+</style>";
+  $y->html= $style.$tab;
+  return $y;
+}
+# ---------------------------------------------------------------------------------------- dot vyber
+# průměrné hodnoty dotazníků
+# par = {cond:sql }
+function dot_vyber ($rok,$par) { trace();
+  $y= (object)array('html'=>'','err'=>'','war'=>'','jpg'=>'',celkem=>0);
+  $cond= isset($par->cond) ? $par->cond : 1;
+  $tab_class= 'stat dot';
+  $vyber= $rok ? "dotaznik=$rok " : '1';
+  $GROUP= $rok ? "GROUP BY dotaznik" : '';
+  $x= select_object('
+    COUNT(*) AS celkem,
+    ROUND(AVG(100*sex))     AS sex,
+    ROUND(AVG(vek),1)       AS vek,
+    ROUND(AVG(deti),1)      AS deti,
+    ROUND(AVG(manzel),1)    AS manzel,
+    ROUND(AVG(100*novic))   AS novic,
+    ROUND(AVG(prednasky),1)   AS prednasky,
+    ROUND(AVG(skupinky),1)    AS skupinky,
+    ROUND(AVG(duchovno),1)    AS duchovno,
+    ROUND(AVG(ubytovani),1)   AS ubytovani,
+    ROUND(AVG(strava),1)      AS strava,
+    ROUND(AVG(pecedeti),1)    AS pecedeti,
+    ROUND(AVG(motto),1)       AS motto,
+    ROUND(AVG(maturita),1)    AS maturita,
+    ROUND(AVG(hudba),1)       AS hudba,
+    ROUND(AVG(100*tema_male))     AS tema_male,
+    ROUND(AVG(100*tema_dosp))     AS tema_dosp,
+    ROUND(AVG(100*tema_matka))    AS tema_matka,
+    ROUND(AVG(100*tema_otec))     AS tema_otec,
+    ROUND(AVG(100*tema_mezigen))  AS tema_mezigen,
+    ROUND(AVG(100*tema_duchovni)) AS tema_duchovni,
+    ROUND(AVG(100*tema_jine))     AS tema_jine,
+    ROUND(100*AVG(IF(prinos=1,1,0))) AS prinos_1,
+    ROUND(100*AVG(IF(prinos=2,1,0))) AS prinos_2,
+    ROUND(100*AVG(IF(prinos=3,1,0))) AS prinos_3,
+    ROUND(100*AVG(IF(prinos=4,1,0))) AS prinos_4,
+    ROUND(100*AVG(IF(prinos=5,1,0))) AS prinos_5,
+    ROUND(AVG(prinos),1)             AS prinos
+    ','dotaz',"$vyber AND $cond $GROUP");
+  $tmpl= array(
+    'Statistika' => array(
+        'pohlaví'=>'sex', 'věk'=>'vek','dětí'=>'deti','manželství'=>'manzel','poprvé'=>'novic'
+    ),
+    'Hodnocení' => array(
+      'přednášky'=>'prednasky', 'skupinky'=>'skupinky','duchovno'=>'duchovno',
+      'ubytování'=>'ubytovani', 'strava'=>'strava', 'péče o děti'=>'pecedeti', 
+      'motto'=>'motto', 'maturita'=>'maturita', 'hudba'=>'hudba'
+    ),
+    'Témata'=>array(
+      'malé děti' => 'tema_male', 'dospívající' => 'tema_dosp', 
+      'matka-dítě' => 'tema_matka', 'otec-dítě' => 'tema_otec', 
+      'mezigen.' => 'tema_mezigen', 'duchovní' => 'tema_duchovni', 
+      'jiné' => 'tema_jine'
+    ),
+    'Přínos'=>array(
+      'významný' => 'prinos_1', 'částečně' => 'prinos_2', 'uvidí se' => 'prinos_3',
+      'beze změny' => 'prinos_4', 'spíš horší' => 'prinos_5'
+    )
+  );
+  if ($x) foreach ($x as $name=>$val) {
+    switch ($name) {
+      case 'sex':   $x->sex.= '% žen'; break;
+      case 'vek':   $x->vek.= ' let'; break;
+      case 'deti':  $x->deti.= ' dětí/LK'; break;
+      case 'manzel':$x->manzel.= ' let manž.'; break;
+      case 'novic': $x->novic.= '% nových'; break;
+    }
+    $y->celkem= $x->celkem;
+  }
+  $tab.= $x && $x->celkem
+      ? "<p>výběru vyhovuje ".kolik_1_2_5($x->celkem,"dotazník,dotazníky,dotazníků").'</p>'
+      : "<p>výběru nevyhovuje žádný dotazník</p>";
+  foreach ($tmpl as $row => $clmns) {
+    switch ($row) {
+    case 'Přínos':
+      $r1= "<br><table class='$tab_class'><th>$row</th><td class='vert'><p>celkově</p></td>";
+      $r2= "<td></td><td>{$x->prinos}</td>";
+      foreach ($clmns as $name=>$val) {
+        $pr= substr($val,-1,1);
+        $r1.= "<td class='vert' title='prinos=$pr'><p>$name</p></td>";
+        $r2.= "<td>{$x->$val}%</td>";
+      }
+      $tab.= "<tr>$r1</tr><tr>$r2</tr></table>";
+      break;
+    case 'Hodnocení':
+      $r1= "<br><table class='$tab_class'><th>$row</th>";
+      $r2= "<td></td>";
+      foreach ($clmns as $name=>$val) {
+        $r1.= "<td title='$val' class='vert'><p>$name</p></td>";
+        $r2.= "<td>{$x->$val}</td>";
+      }
+      $tab.= "<tr>$r1</tr><tr>$r2</tr></table>";
+      break;
+    case 'Témata':
+      $r1= "<br><table class='$tab_class'><th>$row</th>";
+      $r2= "<td></td>";
+      foreach ($clmns as $name=>$val) {
+        $r1.= "<td title='$val' class='vert'><p>$name</p></td>";
+        $r2.= "<td>{$x->$val}%</td>";
+      }
+      $tab.= "<tr>$r1</tr><tr>$r2</tr></table>";
+      break;
+    case 'Statistika':
+      $tab.= "<table class='$tab_class'><tr><th>$row</th>";
+      foreach ($clmns as $name=>$val) {
+        $tab.= "<td>{$x->$val}</td>";
+      }
+      $tab.= "</tr></table>";
+      break;
+    case 'proč jel':
+    case 'dozvěděl se od':
+      $tab.= "<table class='$tab_class'><tr><td class='first'>$row</td><td>";
+      $plus= '';
+      foreach ($clmns as $name=>$val) {
+        if ( $x->$val && $name!='jiné' ) {
+//          $v= $name==':' ? "jiné = {$x->$val}" : $name;
+//          $tab.= "$plus $v";
+//          $plus= ' +';
+          if ( $name==':' ) {
+            $td= $plus ? "</td><td>" : '';
+            $tab.= "$td$plus jiné = {$x->$val}";
+          }
+          else {
+            $tab.= "$plus $name";
+            $plus= ' +';
+          }
+        }
+      }
+      $tab.= "</td></tr></table>";
+      break;
+    }
+  }
+  $style= "<style>
+table.dot {
+  width: 320px;
+  margin-top: -1px;
+}
+table.dot th {
+  width: 80px;
+}
+table.dot td.first {
+  width: 76px;
+}
+table.dot .vert {
+  vertical-align: bottom;
+  height: 65px;
+}
+table.dot .vert p {
+  transform: rotate(-90deg);
+  position: relative;
+  width: 18px;
+  white-space: nowrap;
+}
+</style>";
+  $y->html= $style.$tab;
+  return $y;
+}
+# --------------------------------------------------------------------------------------- dot import
+# import digitalizovaných dotazníků
+function dot_import ($rok) { trace();
+  global $ezer_path_docs;
+  $y= (object)array('html'=>'','err'=>'','war'=>'');
+  $n_max= 0;
+  $def= array(
+    'statistika' => array(
+       0 => '=id',
+       1 => 'page',
+       2 => '=sex', // muz/zena
+       3 => 'vek',
+       4 => 'deti',
+       5 => 'manzel',
+       6 => 'novic',
+       7 => '=',   // vynechané
+       8 => 'od_pratele', 
+       9 => 'od_partner', 
+      10 => 'od_pribuzni', 
+      11 => 'od_pecoun', 
+      12 => 'od_inzerce', 
+      13 => 'od_chlapi', 
+      14 => 'od_ymca', 
+      15 => 'od_jine', 
+      16 => 'od_jine_text',
+      17 => '=',   // vynechané
+      18 => 'proc_zlepsit',  
+      19 => 'proc_krize',  
+      20 => 'proc_opak',  
+      21 => 'proc_jine',  
+      22 => 'proc_jine_text'  
+    ),
+    'hodnoceni' => array(
+      0 => '=id',
+      1 => 'prednasky',
+      2 => 'skupinky',
+      3 => 'duchovno',
+      4 => 'ubytovani',
+      5 => 'strava',
+      6 => 'pecedeti',
+      7 => 'motto',
+      8 => 'maturita',
+      9 => 'hudba'
+    ),
+    'temata' => array(
+      0 => '=id',
+      1 => 'tema_male',
+      2 => 'tema_dosp',
+      3 => 'tema_matka',
+      4 => 'tema_otec',
+      5 => 'tema_mezigen',
+      6 => 'tema_duchovni',
+      7 => 'tema_jine',
+      8 => 'tema_jine_text'
+    ),
+    'prinos' => array(
+      0 => '=id',
+      1 => 'prinos',
+      2 => 'prinos_text'
+    ),
+    'slovne' => array(
+      0 => '=id',
+      1 => 'libilo',
+      2 => 'vadilo',
+      3 => 'vzkaz'
+    )
+  );
+  $values= array(); // id => (value)
+  query("DELETE FROM dotaz WHERE dotaznik=$rok");
+  $fpath= "$ezer_path_docs/import/MS$rok";
+  foreach ($def as $fname=>$clmn) {
+    $fullname= "$fpath/MS$rok-$fname.csv";
+    $f= @fopen($fullname, "r");
+    if ( !$f ) { $y->err= "soubor $fullname nelze otevřít"; goto end; }
+    $n= 0;
+    while (($line= fgets($f, 1000)) !== false) {
+      $n++;
+      $value= array();
+      $id= 0;
+      $line= win2utf($line,1);
+      $data= str_getcsv($line,';'); 
+      foreach ($clmn as $c => $name) {
+        if ( $name[0]=='=') {
+          $name= substr($name,1);
+          switch ($name) {
+            case 'id': $id= $data[$c]; break;
+            case 'sex':
+              $value[$name]= $data[$c]=='muž' ||$data[$c]=='Muž'  ? 0 : (
+                             $data[$c]=='žena'||$data[$c]=='Žena' ? 1 : -1); break;
+            case '': break;
+          }
+        }
+        else {
+          $value[$name]= $data[$c];
+        }
+      }
+      if ( !$id ) {
+        $y->war.= "chybí ID/$fname: $line<br>";
+        break;
+//        continue;
+      }
+      // zařazení value
+      if ( !isset($values[$id]) ) 
+        $values[$id]= (object)array('id'=>$id);
+      foreach ($value as $name => $val) {
+        $values[$id]->$name= $val;
+      }
+      if ($n_max && $n>=$n_max) break;
+    }
+    fclose($f); $f= null;
+  }
+//                                                         debug($values);
+  // zápis do tabulky DOTAZ
+  foreach ($values as $id => $value) {
+    $flds= "dotaznik";
+    $vals= "$rok";
+    foreach ($value as $name => $val) {
+      $flds.= ",$name";
+      $vals.= ",'$val'";
+    }
+    query("INSERT INTO dotaz ($flds) VALUE ($vals)");
+  }
+end:  
+  return $y;
+}
 /** ===========================================================================================> VPS **/
 # ------------------------------------------------------------------------------------- vps historie
 # 

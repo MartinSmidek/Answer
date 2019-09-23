@@ -1695,6 +1695,7 @@ form _cmd_p [,,623,30] { css:'ae_work'
     help:'poslání mailu o přijetí platby podle vzoru v Maily akce'
     proc onclick() { var y:object, from:text, name:text
       clear;
+      [ pla.datplatby.get | pla.datplatby.set(now); pla.datplatby.change ];
       not(pla.same); alert("nejprve je třeba uložit změněné údaje")
     | from.set(sys('user','options','email'));
       name.set(sys('user','options','vyrizuje'));

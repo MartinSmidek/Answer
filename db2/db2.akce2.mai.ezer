@@ -92,37 +92,37 @@ menu m {type:'left', format:'f+'
       [ not(pr.ds.browse_count); pr.ds.browse_load ]
     }
   }
-  menu  {title:'Struktura dat (výběr)', type:'group', skill:'yamg;famg;camg'
-    item {title:'[fa-object-group] Přehled struktury dat'
-      proc onclick (i) {
-        pr.display(0);
-        et.get.display(0); es.get.display(0); gq.get.display(0);
-        sq.get.display(0); vy.get.display(0,'.*');
-        ii.fill(replace_fa(conc(i.owner.title,' - ',i.title)),"<br>
-          Zjednodušené schema databáze pro <b>Answer</b>
-          s uvedením podmínek pro spojení pomocí JOIN<br><br>
-          <img src='db2/img/schema_db_2015.png' />
-        ");
-      }
-    }
-    item {title:'[fa-database] tabulka AKCE',               par:°{tab:'akce'} }
-    item {title:'[fa-database] tabulka POBYT',              par:°{tab:'pobyt'} }
-    item {title:'[fa-database] tabulka SPOLU',              par:°{tab:'spolu'} }
-    item {title:'[fa-database] tabulka OSOBA',              par:°{tab:'osoba'} }
-    item {title:'[fa-database] tabulka TVORI',              par:°{tab:'tvori'} }
-    item {title:'[fa-database] tabulka RODINA',             par:°{tab:'rodina'} }
-    item {title:'[fa-database fa-red] tabulka MAILIST',     par:°{tab:'mailist'},   skill:'m' }
-    item {title:'[fa-database fa-red] tabulka DOPIS',       par:°{tab:'dopis'},     skill:'m' }
-    item {title:'[fa-database fa-red] tabulka MAIL',        par:°{tab:'mail'},      skill:'m' }
-    item {title:'[fa-database fa-red] tabulka CENIK',       par:°{tab:'cenik'},     skill:'m' }
-    item {title:'[fa-database fa-red] tabulka DAR',         par:°{tab:'dar'},       skill:'m' }
-    proc onclick (i) {
-      pr.display(0);
-      et.get.display(0); es.get.display(0); gq.get.display(0);
-      sq.get.display(0); vy.get.display(0,'.*');
-      ii.fill(replace_fa(conc(i.owner.title,' - ',i.title)),ask('i_doc_table_struct',i.par.tab,0));
-    }
-  }
+//  menu  {title:'Struktura dat (výběr)', type:'group', skill:'yamg;famg;camg'
+//    item {title:'[fa-object-group] Přehled struktury dat'
+//      proc onclick (i) {
+//        pr.display(0);
+//        et.get.display(0); es.get.display(0); gq.get.display(0);
+//        sq.get.display(0); vy.get.display(0,'.*');
+//        ii.fill(replace_fa(conc(i.owner.title,' - ',i.title)),"<br>
+//          Zjednodušené schema databáze pro <b>Answer</b>
+//          s uvedením podmínek pro spojení pomocí JOIN<br><br>
+//          <img src='db2/img/schema_db_2015.png' />
+//        ");
+//      }
+//    }
+//    item {title:'[fa-database] tabulka AKCE',               par:°{tab:'akce'} }
+//    item {title:'[fa-database] tabulka POBYT',              par:°{tab:'pobyt'} }
+//    item {title:'[fa-database] tabulka SPOLU',              par:°{tab:'spolu'} }
+//    item {title:'[fa-database] tabulka OSOBA',              par:°{tab:'osoba'} }
+//    item {title:'[fa-database] tabulka TVORI',              par:°{tab:'tvori'} }
+//    item {title:'[fa-database] tabulka RODINA',             par:°{tab:'rodina'} }
+//    item {title:'[fa-database fa-red] tabulka MAILIST',     par:°{tab:'mailist'},   skill:'m' }
+//    item {title:'[fa-database fa-red] tabulka DOPIS',       par:°{tab:'dopis'},     skill:'m' }
+//    item {title:'[fa-database fa-red] tabulka MAIL',        par:°{tab:'mail'},      skill:'m' }
+//    item {title:'[fa-database fa-red] tabulka CENIK',       par:°{tab:'cenik'},     skill:'m' }
+//    item {title:'[fa-database fa-red] tabulka DAR',         par:°{tab:'dar'},       skill:'m' }
+//    proc onclick (i) {
+//      pr.display(0);
+//      et.get.display(0); es.get.display(0); gq.get.display(0);
+//      sq.get.display(0); vy.get.display(0,'.*');
+//      ii.fill(replace_fa(conc(i.owner.title,' - ',i.title)),ask('i_doc_table_struct',i.par.tab,0));
+//    }
+//  }
   proc onclick (i) {
     menu_item.set(i);
     ii.fill(replace_fa(conc(i.owner.title,' - ',i.title)),' ');
