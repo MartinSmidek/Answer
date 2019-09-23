@@ -2505,6 +2505,23 @@ end:
 }//akce2_vzorec_2017_0 EXPERIMENT
 */
 /** ========================================================================================> UCAST2 */
+# --------------------------------------------------------------------------------- ucast2 clipboard
+# vrácení mailů dospělých členů rodiny
+function ucast2_clipboard($idp) {
+  $y= (object)array('clip'=>'','msg'=>'funguje jen pro pobyt manželů s maily');
+  $idr= select("i0_rodina","pobyt","id_pobyt=$idp");
+  if ( !$idr ) goto end;
+  list($n,$emaily)= select("COUNT(DISTINCT role),GROUP_CONCAT(DISTINCT IF(kontakt,email,''))",
+      "pobyt JOIN spolu USING (id_pobyt) JOIN osoba USING (id_osoba) JOIN tvori USING (id_osoba)",
+      "i0_rodina=$idr AND id_rodina=$idr AND role IN ('a','b') GROUP BY id_rodina");
+  if ( $n==2 ) {
+    $y->clip= $emaily;
+    $y->msg= "osobní maily byly zkopírovány do schránky:<br><br>$emaily<br><br>";
+  }
+end:
+                                                        debug($y,$idp);
+  return $y;
+}
 # ------------------------------------------------------------------------------ ucast2_pobyt_access
 # ==> . chain rod
 # účastníci pobytu a případná rodina budou mít daný access (3)
