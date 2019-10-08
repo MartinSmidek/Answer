@@ -2515,8 +2515,13 @@ function ucast2_clipboard($idp) {
       "pobyt JOIN spolu USING (id_pobyt) JOIN osoba USING (id_osoba) JOIN tvori USING (id_osoba)",
       "i0_rodina=$idr AND id_rodina=$idr AND role IN ('a','b') GROUP BY id_rodina");
   if ( $n==2 ) {
-    $y->clip= $emaily;
-    $y->msg= "osobní maily byly zkopírovány do schránky:<br><br>$emaily<br><br>";
+    if ( $_SESSION['browser']=='CH') {
+      $y->clip= $emaily;
+      $y->msg= "osobní maily byly zkopírovány do schránky:<br><br>$emaily<br><br>";
+    }
+    else {
+      $y->msg= "osobní maily manželů (do schránky si zkopíruj):<br><br>$emaily<br><br>";
+    }
   }
 end:
                                                         debug($y,$idp);
@@ -3562,7 +3567,7 @@ function akce2_auto_deti($patt,$par) {  #trace();
          FROM osoba AS o
          JOIN spolu AS s USING(id_osoba)
          JOIN pobyt AS p USING(id_pobyt)
-         LEFT JOIN tvori AS t ON s.id_osoba=t.id_osoba
+         LEFT JOIN tvori AS t ON s.id_osoba=t.id_osoba AND t.id_rodina=p.i0_rodina
          WHERE o.deleted='' AND prijmeni LIKE '$patt%' AND role='d' AND id_akce='{$par->akce}'
          ORDER BY prijmeni,jmeno LIMIT $limit";
   $res= pdo_qry($qry);
@@ -4682,6 +4687,7 @@ function tisk2_sestava_lidi($akce,$par,$title,$vypis,$export=false) { trace();
   $dieta= map_cis('ms_akce_dieta','zkratka');  $dieta[0]= '';
   $dite_kat= xx_akce_dite_kat($akce);
   $dite_kat= map_cis($dite_kat,'zkratka');  $dite_kat[0]= '?';
+  $s_role= map_cis('ms_akce_s_role','zkratka');  $s_role[0]= '?';
   // načtení ceníku pro dite_kat, pokud se chce _poplatek
   if ( strpos($fld,"_poplatek") ) {
     $soubezna= select("id_duakce","akce","id_hlavni=$akce");
@@ -4762,7 +4768,10 @@ function tisk2_sestava_lidi($akce,$par,$title,$vypis,$export=false) { trace();
         $clmn[$n][$f]= $dieta[$x->$f];
         break;
       case 'dite_kat':                                                // osoba: kategorie dítěte
-        $clmn[$n][$f]= $dite_kat[$x->$f];
+        $clmn[$n][$f]= in_array($x->s_role,array(2,3,4)) 
+          ? $s_role[$x->s_role].'-'.$dite_kat[$x->$f]
+          : $s_role[$x->s_role];
+//        $clmn[$n][$f]= $dite_kat[$x->$f];
         break;
       case '_1':
         $clmn[$n][$f]= 1;

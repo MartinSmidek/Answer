@@ -67,16 +67,8 @@ menu db2 { type:'main', title:'db2', active:*, _sys:'*'
               info.fill('',ask('db2_copy_test_db',i.par.db)); }}
         }
         menu s  {title:'Struktura dat (výběr)', type:'group', skill:'yamg;famg;camg'
-          item {title:'[fa-object-group] Přehled struktury dat'
-            proc onclick (i) {
-              panel.display(2,'i');
-              info.fill(replace_fa(conc(i.owner.title,' - ',i.title)),"<br>
-                Zjednodušené schema databáze pro <b>Answer</b>
-                s uvedením podmínek pro spojení pomocí JOIN<br><br>
-                <img src='db2/img/schema_db_2015.png' />
-              ");
-            }
-          }
+          item {title:'[fa-object-group] Přehled struktury dat'   par:°{img:'2015'} }
+          item {title:'[fa-object-group] Podrobná struktura dat'  par:°{img:'2019'} }
           item {title:'[fa-database] tabulka AKCE',               par:°{tab:'akce'} }
           item {title:'[fa-database] tabulka POBYT',              par:°{tab:'pobyt'} }
           item {title:'[fa-database] tabulka SPOLU',              par:°{tab:'spolu'} }
@@ -91,7 +83,13 @@ menu db2 { type:'main', title:'db2', active:*, _sys:'*'
           item {title:'[fa-database fa-red] tabulka DOTAZ'        par:°{tab:'dotaz'}      skill:'m' }
           proc onclick (i) {
             panel.display(2,'i');
-            info.fill(replace_fa(conc(i.owner.title,' - ',i.title)),ask('i_doc_table_struct',i.par.tab,0));
+            info.fill(replace_fa(conc(i.owner.title,' - ',i.title)),' ');
+            { i.par.tab;  
+              info.append(ask('i_doc_table_struct',i.par.tab,0));
+            | info.append(conc("<br>Schema databáze pro <b>Answer</b>
+                s uvedením podmínek pro spojení pomocí JOIN<br><br>
+                <img src='db2/img/schema_db_",i.par.img,".png' />"));
+            }
           }
         }
       }

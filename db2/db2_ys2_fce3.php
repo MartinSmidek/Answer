@@ -221,10 +221,10 @@ function session($is,$value=null) {
   return $value;
 }
 /** =====================================================================================> DOTAZNÍKY **/
-# -------------------------------------------------------------------------------------- dot prehled
+# ----------------------------------------------------------------------------------------- dot roky
 # vrátí dostupné dotazníky Letního kurzu MS YS
 function dot_roky () { trace();
-  $y= (object)array('roky'=>'2019,2018');
+  $y= (object)array('roky'=>'2019,2018,2017'); // 2017 je rozjetý - k dispozici je jen statistika
   return $y;
 }
 # -------------------------------------------------------------------------------------- dot prehled
@@ -455,7 +455,7 @@ function dot_spy ($kurz,$dotaznik,$clmn,$pg,$back) { trace();
   global $i_osoba_jmeno, $i_osoba_vek, $i_osoba_role, $i_osoba_prijmeni, $i_key_spolu;
 //  $y= (object)array('html'=>'','err'=>'','war'=>'');
   $kurz->html= '???';
-  if ( !isset($kurz->data) ) {
+  if ( !isset($kurz->data) || $kurz->rok!=$dotaznik ) {
     $akce= select('id_duakce','akce',"access=1 AND druh=1 AND YEAR(datum_od)=$kurz->rok");
     $kurz->akce= $akce;
     $zacatek_akce= select('datum_od','akce',"id_duakce=$akce");
@@ -573,38 +573,46 @@ function dot_spy ($kurz,$dotaznik,$clmn,$pg,$back) { trace();
 # ----------------------------------------------------------------------------------------- dot show
 # zobrazení digitalizovaných dotazníků
 # $dirty=1 způsobí kontrolu existence pro offset=0 a případně skok na další
-function dot_show ($dotaznik,$clmn,$pg,$offset,$cond,$dirty) { trace();
-  $y= (object)array('html'=>'','err'=>'','war'=>'','jpg'=>'');
+function dot_show ($dotaznik,$clmn,$pg,$offset,$cond,$dirty,$rok) { trace();
+  $y= (object)array('html'=>'není zvolen žádný dotazník ','err'=>'','war'=>'','jpg'=>'','none'=>1);
   $tab_class= 'stat dot';
   // posun v dotazech
+  $cond1= $dotaznik ? "dotaznik=$dotaznik AND " : '';
+  $rok_pg= "dotaznik,$clmn";
   switch ($offset) {
   case -2: // začátek
-    $pg= select($clmn,'dotaz',"dotaznik=$dotaznik AND $cond ORDER BY $clmn ASC LIMIT 1");
+    list($rok,$pg)= select($rok_pg,'dotaz',"$cond1 $cond ORDER BY $clmn ASC LIMIT 1");
+    $y->none= 0;
     break;
   case -1: // předchozí
-    $pg1= select($clmn,'dotaz',"dotaznik=$dotaznik AND $cond AND $clmn<$pg ORDER BY $clmn DESC LIMIT 1");
-    $pg= $pg1 ? $pg1 : $pg;
+    list($rok,$pg)= select($rok_pg,'dotaz',"$cond1 $cond AND $clmn<$pg ORDER BY $clmn DESC LIMIT 1");
+    if ( !$pg ) goto end;
+    $y->none= 0;
     break;
   case 0:  // tento
     if ( $dirty ) {
-      $pg1= select($clmn,'dotaz',"dotaznik=$dotaznik AND $cond AND $clmn=$pg");
-      if ( $pg1 ) break;
+      list($rok,$pg)= select($rok_pg,'dotaz',"$cond1 $cond AND $clmn=$pg");
+      $y->none= 0;
     }
-    else break;
+    break;
   case 1:  // další
-    $pg1= select($clmn,'dotaz',"dotaznik=$dotaznik AND $cond AND $clmn>$pg ORDER BY $clmn ASC LIMIT 1");
-    $pg= $pg1 ? $pg1 : $pg;
+    list($rok,$pg)= select($rok_pg,'dotaz',"$cond1 $cond AND $clmn>$pg ORDER BY $clmn ASC LIMIT 1");
+    if ( !$pg ) goto end;
+    $y->none= 0;
     break;
   case 2:  // poslední
-    $pg= select($clmn,'dotaz',"dotaznik=$dotaznik AND $cond ORDER BY $clmn DESC LIMIT 1");
+    list($rok,$pg)= select($rok_pg,'dotaz',"$cond1 $cond ORDER BY $clmn DESC LIMIT 1");
+    $y->none= 0;
     break;
   }
-  $x= select_object('*','dotaz',"dotaznik=$dotaznik AND $clmn=$pg");
+  if ( !$pg ) goto end;
+  $x= select_object('*','dotaz',"dotaznik=$rok AND $clmn=$pg");
   $y->page= $x->page;
   // získání obrazu
   $jpg= str_pad($x->page,4,'0',STR_PAD_LEFT).'.jpg';
-  $img_path= "docs/import/MS$dotaznik/$jpg";
+  $img_path= "docs/import/MS$rok/$jpg";
   $y->id= $x->id;
+  $y->rok= $rok;
   if ( file_exists($img_path) ) {
     $y->jpg= "<a href='$img_path' target='img'><img src='$img_path' width='100%'></a>";
   }
@@ -657,7 +665,7 @@ function dot_show ($dotaznik,$clmn,$pg,$offset,$cond,$dirty) { trace();
       case 'novic': $x->novic= array('opak.','poprv')[$val]; break;
     }
   }
-  $tab.= "<p><b>PDF={$x->page}  &nbsp;  XLS={$x->id}</b></p>";
+  $tab.= "<p><b>PDF={$x->page}  &nbsp;  XLS={$x->id} &nbsp; rok=$rok</b></p>";
   foreach ($tmpl as $row => $clmns) {
     switch ($row) {
     case 'Hodnocení':
@@ -753,17 +761,18 @@ table.dot .vert p {
 }
 </style>";
   $y->html= $style.$tab;
+end:
   return $y;
 }
 # ---------------------------------------------------------------------------------------- dot vyber
 # průměrné hodnoty dotazníků
 # par = {cond:sql }
-function dot_vyber ($rok,$par) { trace();
+function dot_vyber ($par) { trace();
   $y= (object)array('html'=>'','err'=>'','war'=>'','jpg'=>'',celkem=>0);
   $cond= isset($par->cond) ? $par->cond : 1;
   $tab_class= 'stat dot';
-  $vyber= $rok ? "dotaznik=$rok " : '1';
-  $GROUP= $rok ? "GROUP BY dotaznik" : '';
+//  $vyber= $rok ? "dotaznik=$rok " : '1';
+//  $GROUP= $rok ? "GROUP BY dotaznik" : '';
   $x= select_object('
     COUNT(*) AS celkem,
     ROUND(AVG(100*sex))     AS sex,
@@ -793,7 +802,7 @@ function dot_vyber ($rok,$par) { trace();
     ROUND(100*AVG(IF(prinos=4,1,0))) AS prinos_4,
     ROUND(100*AVG(IF(prinos=5,1,0))) AS prinos_5,
     ROUND(AVG(prinos),1)             AS prinos
-    ','dotaz',"$vyber AND $cond $GROUP");
+    ','dotaz',"$cond ");
   $tmpl= array(
     'Statistika' => array(
         'pohlaví'=>'sex', 'věk'=>'vek','dětí'=>'deti','manželství'=>'manzel','poprvé'=>'novic'
@@ -984,8 +993,9 @@ function dot_import ($rok) { trace();
   $fpath= "$ezer_path_docs/import/MS$rok";
   foreach ($def as $fname=>$clmn) {
     $fullname= "$fpath/MS$rok-$fname.csv";
+    if ( !file_exists($fullname) ) { $y->war.= "soubor $fullname neexistuje "; continue; }
     $f= @fopen($fullname, "r");
-    if ( !$f ) { $y->err= "soubor $fullname nelze otevřít"; goto end; }
+    if ( !$f ) { $y->err.= "soubor $fullname nelze otevřít"; goto end; }
     $n= 0;
     while (($line= fgets($f, 1000)) !== false) {
       $n++;
@@ -2534,7 +2544,6 @@ end:
 # }
 function ds_rozpis_faktura($listr,$listf,$typ,$order,$x,$polozky,$platce,$zaloha,$pata,$zaloha2,&$suma) {
                                                 trace('','win1250');
-  $koef_dph= dph_koeficienty();
   list($ic,$dic,$adresa,$akce,$obdobi)= $platce;
 //                                              debug($platce,'platce',(object)array('win1250'=>1));
   $vystaveno= Excel5_date(time());
@@ -2603,12 +2612,10 @@ __XLS;
   $n= $D;
   if ( count($druhy) )
   foreach($druhy as $druh=>$dph) {
-    $koef= $koef_dph[round($dph*100)];
     $xls.= <<<__XLS
       |H$n $druh::right                |H$n:J$n merge right
       |K$n $dph                        ::proc border=h right
       |L$n =SUMIF(G$P:G$Q,H$n,L$P:L$Q) ::kc border=h right
-      |O$n $koef                       ::kc color=$c_okraj
 __XLS;
     $n++;
   }
@@ -2672,12 +2679,12 @@ __XLS;
   $n= $P;
   $d= $D;
   for ($i= 0; $i<count($druhy); $i++ ) {
-    $koef= $koef_dph[round($dph*100)];
+//  oprava DPH starý výpočet:   |L$n =H$n*'$listr'!O$d ::kc
     $xls.= <<<__XLS
       |C$n ='$listr'!H$d          |C$n:G$n merge
       |H$n ='$listr'!L$d     ::kc |H$n:J$n merge
       |K$n ='$listr'!K$d     ::proc
-      |L$n =H$n*'$listr'!O$d ::kc
+      |L$n =H$n-H$n/(1+K$n)  ::kc
       |M$n =H$n-L$n          ::kc
 __XLS;
 //       |M$n =H$n/(1+K$n)    ::kc
@@ -2794,22 +2801,23 @@ __XLS;
   // řádky $P-$Q -- položky
   $n= $P;
   $sazby_dph= array();
-  $koef_dph= dph_koeficienty(); //==> . koeficienty DPH podle zákona o DPH
   foreach ($polozky as $i=>$polozka) {
     list($nazev,$cena,$dph,$pocet,$druh,$sleva,$inuly)= $polozka;
     if (!in_array($dph,$sazby_dph) ) $sazby_dph[]= $dph;
     if ( $pocet || $inuly ) {
-      $koef= $koef_dph[round($dph*100)];
-      if ( $dph && !$koef ) fce_error(100*$dph." je neznámá sazba");
+      // oprava výpočtu DPH bylo: 
+      // |L$n =O$n*$koef    ::kc
+      // |M$n =O$n-L$n      ::kc
+      // |O$n =F$n*H$n*(1-J$n) ::kc color=$c_okraj
       $xls.= <<<__XLS
         |C$n $nazev                |C$n:E$n merge
         |F$n $pocet                |F$n:G$n merge
         |H$n $cena         ::kc    |H$n:I$n merge
         |J$n $sleva        ::proc
         |K$n $dph          ::proc
-        |L$n =O$n*$koef    ::kc
-        |M$n =O$n-L$n      ::kc
-        |O$n =F$n*H$n*(1-J$n) ::kc color=$c_okraj
+        |L$n =F$n*H$n-F$n*H$n/(1+K$n)  ::kc
+        |M$n =F$n*H$n-L$n  ::kc
+        |O$n ::kc color=$c_okraj
 __XLS;
       $n++;
     }
