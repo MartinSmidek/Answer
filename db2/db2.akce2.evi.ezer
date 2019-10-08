@@ -583,11 +583,11 @@ form _page {
     oso.set_helps(0,'zluty','oranzovy');
     ret.set(ask('elim2_data_osoba',ido,cconc(eq(lst.mode.get,'f','h'),lst.track_past.get,'')));
     oso.load(ido);
-    oso.rc.set(make_rc(oso.narozeni.get,oso.sex.get));
+//    oso.rc.set(make_rc(oso.narozeni.get,oso.sex.get));
     oso.show_osoba(2);
     oso.set_helps(ret.chng,'zluty','oranzovy');
   | ido; oso.load(ido);
-    oso.rc.set(make_rc(oso.narozeni.get,oso.sex.get));
+//    oso.rc.set(make_rc(oso.narozeni.get,oso.sex.get));
     oso.show_osoba(2);
   }
   # načíst rodinu (případně s doplněním informací z _track) ==> . rod_load

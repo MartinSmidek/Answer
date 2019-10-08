@@ -394,7 +394,7 @@ table osoba { key_id:'id_osoba'
   number uvitano { help:"uvítáno|bylo uvítáno ve společenství" }
   number iniciace { help:"mrop|rok iniciace nebo 0" }
   number firming { help:"firm|rok posledního firmingu nebo 0" }
-  text rc_xxxx
+//  text rc_xxxx
   number umrti // rok úmrtí
   text poznamka
   text obcanka
@@ -519,7 +519,7 @@ table webform { key_id:'id_webform'
   text email
   text telefon
   date narozeni         { sql_pipe:'sql_date1'}
-  text rc_xxxx
+//  text rc_xxxx
   text zamest
   number dary_frekvence { help:"předpokládaná frekvence darů" } // db_dary_frek
   number dary_potvrzeni { help:"potřebuje potvrzení pro daňový odečet" }
@@ -873,7 +873,7 @@ form _osoba2x [,,244,322] {css:'ae_frame'
     [ contains('S',osoba_config.grp.get); form.set_css('db_hr','','S') | form.set_css('','db_hr','S') ];
     [ or(eq(even,2),key_spolu.get,eq(form_mode.get,'new')) | tags.set(conc(tags,',x')) ];
     form.stacks(tags,'down',0,0,10);
-    rc.enable(0);
+//    rc.enable(0);
   }
 
   // kontextové menu
@@ -1082,8 +1082,8 @@ form _osoba2x [,,244,322] {css:'ae_frame'
 
   #==> . organizační údaje: o (jen pro oprávněné)
   field obcanka  [18,2,70,] {tag:'o', data:o.obcanka, format:'n', title:'op:'}
-  field rc       [106,2,45,] {tag:'o', format:'nd', title:'rč:'}
-  field rc_xxxx  [159,2,37,] {tag:'o', data:o.rc_xxxx, format:'n:e', title:'/'}
+//  field rc       [106,2,45,] {tag:'o', format:'nd', title:'rč:'}
+//  field rc_xxxx  [159,2,37,] {tag:'o', data:o.rc_xxxx, format:'n:e', title:'/'}
   select clen    [29,26,54,] {tag:'o', type:'map', format:'n', data:o.clen,
                                 options:ms_akce_clen.zkratka, title:'ymca'}
   check uvitano  [190,25,58,] {tag:'o', data:o.uvitano, title:'vítáno',
