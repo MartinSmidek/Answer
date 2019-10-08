@@ -922,8 +922,8 @@ form _info [,,*,50] {
     sey.browse_count; sey.browse_export(°{file:'akce',type:'xls'});
     alert("vygenerovaný sešit lze stáhnout <a href='docs/akce.xls' target='xls'>zde</a>");
   }}
-  # ==> .. zobrazení mapy s pozicí míst účastníků dané akce
-  button mapka [-30,3,,] { title:'Mapa',                                                      skill:'#crz'
+  # ==> .. zobrazení mapy s pozicí míst účastníků dané akce a oprava PSČ
+  button mapka [-30,3,,] { title:'Mapa',                                                skill:'#crz'
     help:"mapa s bydlišti účastníků akcí"
     proc onclick() {
       [ eq(the_source.get,'google'); mapa.id_akce.set(google.id_akce.get)

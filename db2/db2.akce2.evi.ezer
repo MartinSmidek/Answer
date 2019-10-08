@@ -350,16 +350,18 @@ form _lst [,,370,*] {
       help:'datum narození ve tvaru rrmmdd'}
     show _vek [,,20,] { title:"věk", expr:"TIMESTAMPDIFF(YEAR,narozeni,NOW())", format:'rsq*' }
     // volitelná položka
-    show mail  [,,44,] { data:o.email, title:'emaily',help:'osobní emaily', format:'tq%s' }
-    show _id_o [,,0,] { data:o.id_osoba, title:'ID osoby',help:'osobní číslo', format:'rq=s' }
+    show mail   [,,44,] { data:o.email, title:'emaily',help:'osobní emaily', format:'tq%s' }
+    show telefon [,,0,] { data:o.telefon, title:'telefony',help:'osobní telefony', format:'tq%s' }
+    show _id_o   [,,0,] { data:o.id_osoba, title:'ID osoby',help:'osobní číslo', format:'rq=s' }
     proc onrowclick() { bo_show }
     proc bo_show() {
       ido.set(id_o.get); page.evid_load(ido.get,0);
       [ page.map.on.get; lat.get; page.map.mapa_curr(lat.get,lng.get) ];
     }
     proc onclick() {
-      mail.width; mail.width(0);  _id_o.width(44)
-    |             mail.width(44); _id_o.width(0)
+      mail.width;     mail.width(0);    telefon.width(44)
+    | telefon.width;  telefon.width(0); _id_o.width(44)
+    |                 mail.width(44);   _id_o.width(0)
     }
   }
   # ==============================================> M - MAPA
