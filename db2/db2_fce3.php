@@ -9357,6 +9357,7 @@ function mapa2_psc($psc,$obec,$psc_as_id=0) {
   $marks= $err= '';
   $mis_psc= array();
   $err_psc= array();
+  $chybi= array();
   $n= 0; $del= '';
   foreach ($psc as $p=>$tit) {
     $p= trim($p);
@@ -9372,6 +9373,8 @@ function mapa2_psc($psc,$obec,$psc_as_id=0) {
       }
       else {
         $err_psc[$p].= " $p";
+        if ( !in_array($p,$chybi) ) 
+          $chybi[]= $p;
       }
     }
     else {
@@ -9387,9 +9390,24 @@ function mapa2_psc($psc,$obec,$psc_as_id=0) {
       $err.= "<br>$ne PSČ se nepovedlo lokalizovat. Týká se to: ".implode(' a ',$err_psc);
     }
   }
-  $ret= (object)array('mark'=>$marks,'n'=>$n,'err'=>$err);
-//                                         debug(explode(';',$ret->mark),"mapa_akce");
+  $ret= (object)array('mark'=>$marks,'n'=>$n,'err'=>$err,'chybi'=>$chybi);
+                                                    debug($chybi,"chybějící PSČ");
   return $ret;
+}
+# ------------------------------------------------------------------------------==> .. mapa2 psc_set
+# ASK
+function mapa2_psc_set($psc,$latlng) {  trace();
+  list($lat,$lng)= preg_split("/,\s*/",$latlng);
+  if ( !$psc || !$lat || !$lng ) goto end;
+  $ex= select("COUNT(*)",'psc_axy',"psc='$psc'");
+  if ($ex) {
+    query("UPDATE psc_axy SET lat='$lat',lng='$lng' WHERE psc='$psc'");
+  }
+  else {
+    query("INSERT INTO psc_axy (psc,lat,lng) VALUE ('$psc','$lat','$lng')");
+  }
+end:  
+  return 1;
 }
 # ----------------------------------------------------------------------------==> .. mapa2 ctverec_o
 # ASK
