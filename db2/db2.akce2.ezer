@@ -735,7 +735,8 @@ panel mapa [,,640,400] { type:'popup', title:'mapa účastníků'
   proc onfirstfocus() { 
     spinner(1); 
     f.cr.init('ROADMAP',object('clustering',cconc(eq(sys('options','gmap'),2),1,0))); 
-    ukaz_psc; spinner(0) 
+    [ ukaz_psc ]; 
+    spinner(0) 
   }
   proc onfocus() { 
     ukaz_psc; 
@@ -754,6 +755,7 @@ panel mapa [,,640,400] { type:'popup', title:'mapa účastníků'
     [ ret.err; warning(ret.err); ];
     f.cr.set(object('mark',''));
     f.cr.set(object('mark',ret.mark));
+    has_skill('yaa+;faa+;caa+');
     [ ret.err; confirm("chceš pomocí <b>mapy.cz</b> doplnit polohu PSČ?"); 
       foreach(ret.chybi,dopln_psc);
     ];
