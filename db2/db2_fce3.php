@@ -13233,7 +13233,7 @@ function foto2_get($table,$id,$n,$w,$h) {  trace();
       SELECT GROUP_CONCAT(r.fotka) AS fotky,r.nazev,
         o.fotka,o.prijmeni,o.jmeno
       FROM rodina AS r JOIN tvori USING (id_rodina) JOIN osoba AS o USING (id_osoba)
-      WHERE id_osoba=$id AND r.fotka!='' ");
+      WHERE id_osoba=$id AND r.fotka!='' AND role IN ('a','b') ");
     $x= pdo_fetch_object($rf);
     $rodinna= $x->nazev;
     $fotky= $x->fotky;
@@ -13277,8 +13277,9 @@ function foto2_get($table,$id,$n,$w,$h) {  trace();
   $ret->jmeno= "<span style='font-weight:bold;font-size:120%'>$jmeno</span>";
 //                                                 display("$n>$osobnich ? $rodinna : $osobni");
   $stamp= "?x=".time();
-  $ret->html= "<a href='fotky/$nazev' target='_album' title='$jmeno'><img src='fotky/copy/$nazev$stamp'
-    onload='var x=arguments[0];img_filter(x.target,\"sharpen\",0.7,1);'/></a>";
+  $ret->html= "<a href='fotky/$nazev' target='_album' title='$jmeno ($nazev)'>
+    <img src='fotky/copy/$nazev$stamp'
+      onload='var x=arguments[0];img_filter(x.target,\"sharpen\",0.7,1);'/></a>";
 end:
 //                                                 debug($ret,"album_get2($table,$id,$n,$w,$h)");
   return $ret;
