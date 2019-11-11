@@ -174,7 +174,7 @@ proc akce_roku(rok) {
       '','','','','',
       conc('SET @curr:=',the_duakce.get));
     info.sey.browse_seek(conc("da2.id_duakce=",the_duakce.get));
-    [ has_skill('yas'); page.DocBrowse ]
+//    [ has_skill('yas'); page.DocBrowse ]
   ]
 }
 proc akce_vsechny(cond) {
@@ -638,9 +638,12 @@ form _page [,,275,360] {
       dfold='docs'    // zobrazená podsložka droot (bez koncového /)
   label [18,25,300,40] {tag:'syn' title:"Přidávat soubory lze přetažením myší, pravým tlačítkem lze přidávat podsložky, kliknutím stáhnout nebo zobrazit (sdílet a mazat lze jen z prostředí Synology)" }
   button [324,42,,] {tag:'syn' title:'[fa-briefcase] založit archiv' 
-    proc onclick() {
-      ask('tut_mkdir',abase.get,akce_get('rok'),akce_get('kod'),akce_get('nazev'));
+    proc onclick() { var kod:number
+      kod.set(akce_get('kod'));
+      kod;
+      ask('tut_mkdir',abase.get,akce_get('rok'),kod,akce_get('nazev'));
       DocRefresh; DocBrowse
+    | not(kod); alert("akce musí mít definovaný číselný kód tzn. účetní symbol")
   }}
   button [424,42,,] {tag:'syn' title:'[fa-question]' 
     proc onclick() {
@@ -845,7 +848,10 @@ form _info [,,*,50] {
       [ has_skill('yas'); page.DocBrowse ]
     }
     proc onsubmit() { pracovni }
-    proc onrowclick() { page.show_akce(id_akce.get); }
+    proc onrowclick() { 
+      page.show_akce(id_akce.get); 
+      [ has_skill('yas'); page.DocBrowse ] 
+    }
     menu { type:'context'
       item { title:'Vybrat akci jako pracovní', proc onclick() { pracovni }}
     }

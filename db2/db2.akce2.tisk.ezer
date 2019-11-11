@@ -202,8 +202,8 @@ menu m {type:'left', active:*
                                         ,fld:'prijmeni,jmeno,prislusnost,obcanka,narozeni_dmy,_vek,obec,psc,ulice,stat'}}
     item {title:'Všichni účastníci (jako pro ubytování)'
                                         ,par:°{typ:'j',exp:'Excel2',cnd:"funkce NOT IN (9,10,13,14,99)",hav:"1"
-                                        ,tit:'příjmení:15,jméno:12,st.přísl.:10,OP:12,narození:12,věk:4,obec:25,psč:7,ulice:25,stát:10'
-                                        ,fld:'prijmeni,jmeno,prislusnost,obcanka,narozeni_dmy,_vek,obec,psc,ulice,stat'}}
+                                        ,tit:'příjmení:15,jméno:12,st.přísl.:10,OP:12,narození:12,věk:4,obec:25,psč:7,ulice:25,stát:10,pokoj:10'
+                                        ,fld:'prijmeni,jmeno,prislusnost,obcanka,narozeni_dmy,_vek,obec,psc,ulice,stat,pokoj'}}
     item {title:'Účastníci s telefony'
                                         ,par:°{typ:'j',exp:'Excel2',cnd:"funkce!=99",hav:"telefony!=''"
                                         ,tit:'příjmení:15,jméno:12,telefon:25'
