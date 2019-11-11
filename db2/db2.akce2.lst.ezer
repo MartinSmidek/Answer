@@ -653,6 +653,7 @@ form _page [,,275,360] {
     abase.set(function("return Ezer.options.path_akce;"))
   }
   proc DocBrowse() { 
+    fdrop.off;
     info.sey.ma_archiv.load('tut_ma_archiv','akce','id_duakce',abase.get);
   }
   proc DocRefresh() {
@@ -704,7 +705,7 @@ form _page [,,275,360] {
   }
   # soubory - seznam
   label files [179,72,258,360] {tag:'syn' css:'files' style:"z-index:3;padding:5px"
-    proc Load() { this.set(ask('tut_files',aroot.get,dfold.get)); echo(this.self)}
+    proc Load() { fdrop.off; this.set(ask('tut_files',aroot.get,dfold.get)); echo(this.self)}
     proc Init() { this.set(''); }
     proc Test() { alert('au')}
     proc Menu(op,name,ref) { 
