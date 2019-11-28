@@ -103,7 +103,8 @@ proc prijeti_prihlasky () { var msg:text
     msg.set(ask('web_zmena_ok',the_pobyt.get,1));
     refresh_ucast(the_pobyt.get) 
   ]
-| alert("Účast nevznikla online přihláškou nebo tato byla již vzata na vědomí - více info ve změnách.")            
+| alert("Účast ",the_pobyt.get,
+      " nevznikla online přihláškou nebo tato byla již vzata na vědomí - více info ve změnách.")            
 }
 # --------------------------------------------------------------------------==> . změny rozměru okna
 
