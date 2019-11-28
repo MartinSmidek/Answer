@@ -191,22 +191,26 @@ function web_zmena_ok($id_pobyt,$doit=0) {  trace();
   }
   else {
     // odstranění příznaků webového přihlášení
-    if ( $dp ) 
+    if ( $dp ) {
       ezer_qry("UPDATE",'pobyt',$id_pobyt,array((object)
           array('fld'=>'web_zmena','op'=>'u','val'=>'0000-00-00')));
-    if ( $i0r )
+    }
+    if ( $i0r ) {
       ezer_qry("UPDATE",'rodina',$i0r,array((object)
           array('fld'=>'web_zmena','op'=>'u','val'=>'0000-00-00')));
-    if ( $zs )
+    }
+    if ( $zs ) {
       foreach(explode(',',$ks) as $ids ) {
         ezer_qry("UPDATE",'spolu',$ids,array((object)
             array('fld'=>'web_zmena','op'=>'u','val'=>'0000-00-00')));
       }
-    if ( $zo )
+    }
+    if ( $zo ) {
       foreach(explode(',',$ko) as $ido ) {
         ezer_qry("UPDATE",'osoba',$ido,array((object)
             array('fld'=>'web_zmena','op'=>'u','val'=>'0000-00-00')));
       }
+    }
     $msg= "s ok";
   }
   return $msg;
@@ -2935,7 +2939,7 @@ function ucast2_browse_ask($x,$tisk=false) {
     # ladění
     $AND= "";
 //     $AND= "AND p.id_pobyt IN (44285,44279,44280,44281) -- prázdná rodina a pobyt";
-//     $AND= "AND p.id_pobyt IN (5477) -- test";
+//     $AND= "AND p.id_pobyt IN (55772,55689) -- test";
 //     $AND= "AND p.id_pobyt IN (43387,32218,32024) -- test";
 //     $AND= "AND p.id_pobyt IN (43113,43385,43423) -- test Šmídkovi+Nečasovi+Novotní/LK2015";
 //     $AND= "AND p.id_pobyt IN (43423) -- test Novotní/LK2015";
