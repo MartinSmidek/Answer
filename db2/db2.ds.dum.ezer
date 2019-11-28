@@ -204,8 +204,14 @@ group pobyt {
     proc onload () { rooms_check(rooms0,form,'p'); rooms_check(rooms1,form,'q') }
     proc onsave () { check_rooms(rooms0,form,'p'); check_rooms(rooms1,form,'q') }
 #     proc onstart() { foreach(°[°{fld:'q29',hlp:'MUJ POKOJ'}],set_help) }
-    proc onstart() { foreach(ask('ds_rooms_help'),set_help) }
-    proc set_help(x) { form.part(x.fld).set_attrib('help',x.hlp) }
+//    proc onstart() { foreach(ask('ds_rooms_help'),set_help) }
+//    proc set_help(x) { form.part(x.fld).set_attrib('help',x.hlp) }
+    proc onstart() { foreach(ask('ds_rooms_help'),set_help_enable) }
+    proc set_help_enable(x) { 
+      form.part(x.fld).set_attrib('help',x.hlp);
+      form.part(x.fld).enable(x.on);
+    }
+//    button [0,FT+71,,] { title:'TEST', proc onclick() {onstart} }
   }
   // ------------------------------------------------------------------==> FAKTURACE
   form fakturace /*[,,300,100]*/ { css:'ds_form'

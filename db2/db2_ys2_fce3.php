@@ -1679,12 +1679,12 @@ end:
 function ds_rooms_help($version=1) {
   $hlp= array();
   ezer_connect('setkani');
-  $qry= "SELECT number,note
+  $qry= "SELECT number,1-hidden AS enable,note
          FROM setkani.tx_gnalberice_room
-         WHERE  NOT deleted AND NOT hidden AND version=1";
+         WHERE NOT deleted AND version=$version";
   $res= pdo_qry($qry);
   while ( $res && $o= pdo_fetch_object($res) ) {
-    $hlp[]= (object)array('fld'=>"q$o->number",'hlp'=>wu($o->note));
+    $hlp[]= (object)array('fld'=>"q$o->number",'hlp'=>wu($o->note),'on'=>$o->enable);
   }
 //                                                         debug($hlp);
   return $hlp;
@@ -2380,7 +2380,8 @@ __XLS;
   if ( $test )
     file_put_contents("xls.txt",$final_xls);
   time_mark('ds_xls_faktury Excel5');
-  $inf= Excel2007(/*w*u*/($final_xls),1);
+//  display($final_xls);
+  $inf= Excel2007($final_xls,1);
   if ( $inf ) {
     $html= " nastala chyba";
     fce_error(/*w*u*/($inf));
@@ -2543,7 +2544,7 @@ end:
 # polozky= [[nazev,cena,dph,pocet,sleva]...]
 # }
 function ds_rozpis_faktura($listr,$listf,$typ,$order,$x,$polozky,$platce,$zaloha,$pata,$zaloha2,&$suma) {
-                                                trace('','win1250');
+                                                //trace('','win1250');
   list($ic,$dic,$adresa,$akce,$obdobi)= $platce;
 //                                              debug($platce,'platce',(object)array('win1250'=>1));
   $vystaveno= Excel5_date(time());
@@ -2886,7 +2887,7 @@ function ds_cenik($rok) {  #trace('','win1250');
 # položka faktury
 # id,pocet => název,cena,dph%,pocet
 # inuly - zapsat do faktury i nuly
-function ds_c ($id,$pocet,$sleva='',$inuly=0) { trace();
+function ds_c ($id,$pocet,$sleva='',$inuly=0) { //trace();
   global $ds_cena;
   $c= array($ds_cena[$id]->polozka,$ds_cena[$id]->cena,$ds_cena[$id]->dph/100,
     $pocet,trim($ds_cena[$id]->druh),$sleva,$inuly);
