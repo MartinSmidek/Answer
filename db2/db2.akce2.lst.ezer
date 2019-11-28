@@ -6,7 +6,7 @@
 
 # ------------------------------------------------------------------------------------------==> stav
 var zalozka: text               // inf | cor | cen
-var the_omezeni: text           // podmínka omezující akce podle my_access
+var the_omezeni: text           // podmínka omezující akce podle druhu - 1,2,3,4 jsou MS
 var menu_item:object            // aktivní menu
 # ----------------------------------------------------------------------------------==> inicializace
 # inicializace panelu proběhne po akce.onstart, zobrazí seznam akcí daného roku podle the_source
@@ -342,11 +342,33 @@ form _page [,,275,360] {
     | // oprava
       [ zmena_web.get; alert(ask('web_prihlaska',page.a_akce.get,web_url.get,web_prihl.get,garant.key)) ]; 
       form.key; form.save; form.load; info.sey.browse_seek
-    | // přidání
-      or(has_skill("faa+;caa+"),lt(fdate("Y",datum_od.get),2011));
-      form.insert; form.load;
-      info.sey.raise('onrowclick',info.sey.browse_seek(conc('da2.id_duakce=',form.key)))
-    | alert("Vkládat lze jen 'historické akce', po roce 2010 jen přes intranet")                    //ys
+    | // přidání Setkání
+      has_skill("yaa+");
+      { eq(fdate("Y",datum_od.get),info.rok.get);
+        [ form.insert; form.load;
+          info.sey.raise('onrowclick',info.sey.browse_seek(conc('da2.id_duakce=',form.key)))
+        | alert("Akci se nepovedlo po uložení najít")
+        ]
+      | alert("akce musí začínat v nastaveném roce")
+      }
+    | // přidání Familia
+      has_skill("faa+");
+      { eq(fdate("Y",datum_od.get),info.rok.get);
+        [ form.insert; form.load;
+          info.sey.raise('onrowclick',info.sey.browse_seek(conc('da2.id_duakce=',form.key)))
+        | alert("Akci se nepovedlo po uložení najít")
+        ]
+      | alert("akce musí začínat v nastaveném roce")
+      }
+    | // přidání CPR
+      has_skill("caa+");
+      { eq(fdate("Y",datum_od.get),info.rok.get);
+        [ form.insert; form.load;
+          info.sey.raise('onrowclick',info.sey.browse_seek(conc('da2.id_duakce=',form.key)))
+        | alert("Akci se nepovedlo po uložení najít - není skryta v jiném levém menu?")
+        ]
+      | alert("akce musí začínat v nastaveném roce")
+      }
   } }
   // jen pro YF,CR - přidání a zrušení akce
   label  [10,417,164,30] { tag:'cor', css:'ae_parm', style:'z-index:1', skill:'faan;caan;yaan' }
