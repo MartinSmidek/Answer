@@ -19,6 +19,9 @@ var rok: number
 panel cen [,,,543] {type:'right', title:'Ceny'
   menu {type:'left', active:*
     menu m {title:'Ceny roku ',type:'group'
+      item {title:'2020',par:°{rok:'2020'} }
+      item {title:'2019',par:°{rok:'2019'} }
+      item {title:'2018',par:°{rok:'2018'} }
       item {title:'2017',par:°{rok:'2017'} }
       item {title:'2016',par:°{rok:'2016'} }
       item {title:'2015',par:°{rok:'2015'} }
