@@ -11,9 +11,9 @@
 
   $kernel= "ezer3.1"; 
   $ezer_server= 
-    $_SERVER["SERVER_NAME"]=='answer.bean'    ? 0 : (        // 0:lokální 
-    $_SERVER["SERVER_NAME"]=='xxx.setkani.org' ? 1 : (       // 1:Lukáš - dead
-    $_SERVER["SERVER_NAME"]=='answer.setkani.org' ? 2 : -1));// 2:Synology
+    $_SERVER["SERVER_NAME"]=='answer.bean'        ? 0 : (      // 0:lokální 
+    $_SERVER["SERVER_NAME"]=='answer.doma'        ? 1 : (      // 1:Synology DOMA
+    $_SERVER["SERVER_NAME"]=='answer.setkani.org' ? 2 : -1));  // 2:Synology YMCA
 
   // parametry aplikace Answer/db2
   $app_name=  "Answer";
@@ -36,25 +36,29 @@
   // cesty
   $abs_roots= array(
       "C:/Ezer/beans/answer",
-      "/home/www/ezer/www-ys/2",
-      "/volume1/web/www/answer");
-//      "/var/services/web/www/answer");
+      "/volume1/web/www/answer",
+      "/volume1/web/www/answer"
+    );
   $rel_roots= array(
       "http://answer.bean:8080",
-      "https://answer.setkani.org",
-      "https://answer.setkani.org");
+      "http://answer.doma",
+      "https://answer.setkani.org"
+    );
   $rel_root= $rel_roots[$ezer_server];
   $path_foto= "{$abs_roots[$ezer_server]}/fotky";
   $path_akce= array(
       "D:/MS/",
-      "",
+      "/volume1/YS/",
       "/volume1/YS/"
     )[$ezer_server];
   
   // upozornění na testovací verzi
   $demo= '';
   if ( $ezer_server==2 ) {
-    $click= "jQuery('#DEMO').fadeOut(500).delay(300000).fadeIn(2000);";
+    // zmizí a zase se objeví
+    //$click= "jQuery('#DEMO').fadeOut(500).delay(300000).fadeIn(2000);";
+    // jen zmizí
+    $click= "jQuery('#DEMO').fadeOut(500);";
     $dstyle= "left:0; top:0; position:fixed; transform:rotate(320deg) translate(-128px,-20px); "
         . "width:500px;height:100px;background:orange; color:white; font-weight: bolder; "
         . "text-align: center; font-size: 40px; line-height: 96px; z-index: 16; opacity: .5;";

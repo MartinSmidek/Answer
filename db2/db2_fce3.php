@@ -8542,17 +8542,49 @@ function evid2_deti_access($idr,$access=3) {
   return 1;
 }
 # ---------------------------------------------------------------------------------- evid2 elim_tips
-# tipy na duplicitu ve formě CASE ... END
-# mrop - pro iniciované muže
+# tipy na duplicitu ve formě CASE ... END, type= 
+#   mrop - pro iniciované muže
+#   mail - lidi se stejným meilem
 function evid2_elim_tips($type) {
   $ret= (object)array('ids'=>0,'tip'=>"''");
-  $qry= $type=='mrop' ? "
-    SELECT o.id_osoba,GROUP_CONCAT(d.id_osoba)
-    FROM osoba AS o
-    JOIN osoba AS d USING (prijmeni,jmeno,narozeni)
-    WHERE o.iniciace>0 AND d.iniciace=0 AND d.deleted=''
-    GROUP BY o.id_osoba"
-  : "";
+  switch ($type) {
+  case 'mrop': $qry= "
+      SELECT o.id_osoba,GROUP_CONCAT(DISTINCT d.id_osoba) AS _ruzne
+      FROM osoba AS o
+      JOIN osoba AS d USING (prijmeni,jmeno,narozeni)
+      WHERE o.iniciace>0 AND d.iniciace=0 
+        AND o.deleted='' AND d.deleted='' AND o.id_osoba!=d.id_osoba
+      GROUP BY o.id_osoba HAVING LOCATE(',',_ruzne)>0    
+    ";
+    break;
+  case 'narozeni': $qry= "
+      SELECT o.id_osoba,GROUP_CONCAT(DISTINCT d.id_osoba) AS _ruzne
+      FROM osoba AS o
+      JOIN osoba AS d USING (prijmeni,jmeno,narozeni)
+      WHERE o.narozeni!='0000-00-00' AND o.prijmeni!='' AND o.jmeno NOT IN ('','???')
+        AND o.iniciace=0 AND d.iniciace=0 
+        AND o.deleted='' AND d.deleted='' AND o.id_osoba!=d.id_osoba
+      GROUP BY o.id_osoba HAVING LOCATE(',',_ruzne)>0    
+    ";
+    break;
+  case 'mail': $qry= "
+      SELECT o.id_osoba,GROUP_CONCAT(DISTINCT d.id_osoba) AS _maily
+      FROM osoba AS o
+      JOIN osoba AS d USING (email)
+      WHERE o.kontakt=1 AND d.kontakt=1 AND o.email!='' 
+        AND o.deleted='' AND d.deleted='' AND o.id_osoba!=d.id_osoba
+      GROUP BY o.email HAVING LOCATE(',',_maily)>0    
+    ";
+    break;
+  case 'telefon': $qry= "
+      SELECT o.id_osoba,GROUP_CONCAT(DISTINCT d.id_osoba) AS _telefony
+      FROM osoba AS o
+      JOIN osoba AS d USING (telefon)
+      WHERE o.kontakt=1 AND d.kontakt=1 AND o.telefon!='' 
+        AND o.deleted='' AND d.deleted='' AND o.id_osoba!=d.id_osoba
+      GROUP BY o.telefon HAVING LOCATE(',',_telefony)>0    ";
+    break;
+  }
   if ( !$qry ) goto end;
   // vlastní prohledání
   $ids= "o.id_osoba IN "; $del= "(";
