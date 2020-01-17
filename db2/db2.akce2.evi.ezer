@@ -100,7 +100,14 @@ menu m {type:'left', format:'f-'
     item   {title:'[fa-medkit]všechny' par:°{lst:'h',tit:'všechny úpravy',days:'99999',cnd:"1"}}
   }
   menu x {title:'tipy na duplicitní údaje',type:'group', skill:'yad;fad'
-    item   {title:'[fa-chain] iniciovaní chlapi',par:°{lst:'o',tip:'mrop',skill:'fad'}}
+    item   {title:'[fa-chain] stejné maily',par:°{lst:'o',tip:'mail',skill:'fad'}
+              help:'zobrazí lidi s nejednoznačným osobním mailem'}
+    item   {title:'[fa-chain] stejné telefony',par:°{lst:'o',tip:'telefon',skill:'fad'}
+              help:'zobrazí lidi s nejednoznačným osobním telefonem'}
+    item   {title:'[fa-chain] stejné narození a jméno',par:°{lst:'o',tip:'narozeni',skill:'fad'}
+              help:'zobrazí lidi se stejným jménem,příjmením a datem narození'}
+    item   {title:'[fa-chain] ... jen iniciovaní chlapi',par:°{lst:'o',tip:'mrop',skill:'fad'}
+              help:'zobrazí chlapy se stejným jménem,příjmením a datem narození'}
   }
   proc onclick (i) { menu_click (i,0,0) }
   proc menu_click(i,_ido,_idr) { var ret:object, cnd:text
