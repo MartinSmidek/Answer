@@ -11473,7 +11473,9 @@ function mail2_lst_regen_spec($id_dopis,$id_mail,$id_osoba) {  trace();
   switch ($parms->specialni) {
   case 'potvrzeni':
     $rok= date('Y')+$parms->rok;
-    $os= pdo_qry("{$ml->sexpr} AND id_osoba=$id_osoba");
+    $qry= $ml->sexpr;
+    $qry= str_replace("GROUP BY","AND id_osoba=$id_osoba GROUP BY",$qry);
+    $os= pdo_qry($qry);
     if ( !$os ) {  $ret->msg= "přegenerování se nepovedlo"; goto end; }
     $o= pdo_fetch_object($os);
     // přegeneruj PDF s potvrzením do $x->path
