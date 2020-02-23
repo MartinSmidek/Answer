@@ -52,6 +52,15 @@ menu m {type:'left', format:'f+', active:*
         info.append(ask('sta2_mrop',i.par));
       }
     }
+    item {title:'... tabulka #stat'
+      proc onclick (i) {
+        panel.display(2,'i');
+        menu_item.set(i); menu_par.set(i.par); clear;
+        the_vypis.set(conc(i.owner.title,' - ',i.title));
+        info.fill(the_vypis.get,' '); info.msg.set('');
+        info.append(ask('sta2_mrop_stat',i.par));
+      }
+    }
     item {title:'Přehled větších akcí'  ,par:°{typ:'4roky',rok:0,xls:'Excel',pdf:0
       ,dsc:'Sestava ukazuje údaje o účastnících na vybraných akcích za uplynulé 4 roky.<br>'
       ,tit:'věk:4,účastníků:10,pečovatelů:10',fld:'_vek,_uca,_pec',ord:'_vek'}}

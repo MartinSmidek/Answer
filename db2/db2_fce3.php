@@ -9650,6 +9650,77 @@ function sta2_mrop($par,$export=false) {
   $msg= "";
   $msg.= sta2_mrop_vek($par);
   $msg.= sta2_mrop_vliv($par);
+  // vytvoření tabulky #stat    
+  $msg.= sta2_mrop_stat($par);
+  return $msg;
+}
+# ------------------------------------------------------------------------------==> . sta2 mrop stat
+# rozbor podle navštěvovaných akcí
+function sta2_mrop_stat($par,$export=false) {
+  $msg= "<br><br>... vytvoření tabulky #stat";
+  // vynulování pracovní tabulky #stat
+  query("TRUNCATE TABLE `#stat`");
+  // seznam
+  $mrops= array( // year => datum ... 2001,2002 nejsou v akcích
+    2001=>'2001-08-01',2002=>'2002-09-01');
+  $ms= array();
+  // získání data mrop
+  $mr= pdo_qry("
+    SELECT YEAR(a.datum_od) AS _rok,a.datum_od FROM akce AS a WHERE a.mrop=1 ORDER BY _rok
+  ");
+  while ( $mr && list($rok,$datum)= pdo_fetch_row($mr) ) {
+    $mrops[$rok]= $datum;
+  }
+//  $mrops= array(2002=>'2002-09-01');
+  // získání individuálních a rodinných údajů
+  foreach ($mrops as $mrop=>$datum) {
+    $mr= pdo_qry("
+      SELECT o.id_osoba,o.access,CONCAT(o.jmeno,' ',o.prijmeni),
+        ROUND(DATEDIFF('$datum',o.narozeni)/365.2425) AS _vek,
+        IFNULL(svatba,0) AS _s1,IFNULL(YEAR(datsvatba),0) AS _s2,
+        MIN(IFNULL(YEAR(od.narozeni),0)) AS _s3,
+        IFNULL(tb.id_osoba,0) AS _ido_z
+      FROM osoba AS o
+      LEFT JOIN tvori AS ta ON ta.id_osoba=o.id_osoba AND ta.role='a'
+      JOIN rodina AS r ON r.id_rodina=ta.id_rodina
+      LEFT JOIN tvori AS tb ON r.id_rodina=tb.id_rodina AND tb.role='b'
+      LEFT JOIN tvori AS td ON r.id_rodina=td.id_rodina AND td.role='d'
+      LEFT JOIN osoba AS od ON od.id_osoba=td.id_osoba
+      WHERE o.deleted='' AND r.deleted='' AND o.iniciace=$mrop
+      GROUP BY o.id_osoba
+    ");
+    while ( $mr && list($ido,$access,$name,$vek,$sv1,$sv2,$sv3,$ido_z)= pdo_fetch_row($mr) ) {
+      $ms[$ido]= (object)array('name'=>$name,'mrop'=>$mrop);
+      // zápis do #stat
+      $sv= max($sv1,$sv2);
+      if ( !$sv && $ido_z ) {
+        $sv= $sv3 ? $sv3-1 : 9999;
+      }
+      query("INSERT INTO `#stat` (id_osoba,access,mrop,vek,svatba,note) 
+        VALUE ($ido,$access,$mrop,'$vek',$sv,'$name')");
+    }
+  }
+//  goto end;
+  // získání informací o akcích
+  $akce_muzi= "24,5,11";
+  $akce_manzele= "1,2,3,4,17,18,22"; // 18 je lektoři & vedoucí MS !!! TODO
+  foreach ($ms as $ido=>$m) {
+    $ma= pdo_qry("
+      SELECT IF(datum_od<'{$mrops[$mrop]}','_pred','_po'),
+        CASE WHEN druh IN ($akce_manzele) THEN 'ms' 
+             WHEN druh IN ($akce_muzi) THEN 'm' ELSE 'j' END 
+      FROM pobyt AS p
+      LEFT JOIN akce AS a ON id_akce=id_duakce
+      LEFT JOIN spolu AS s USING (id_pobyt)
+      JOIN osoba AS o USING (id_osoba)
+      WHERE id_osoba=$ido AND spec=0 AND mrop=0
+    ");
+    while ( $ma && list($kdy,$druh)= pdo_fetch_row($ma) ) {
+      // zápis do #stat
+      query("UPDATE `#stat` SET $druh$kdy=1+$druh$kdy WHERE id_osoba=$ido");
+    }
+  }
+end:  
   return $msg;
 }
 # -------------------------------------------------------------------------------==> . sta2 mrop vek
