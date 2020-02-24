@@ -962,7 +962,7 @@ form _osoba2x [,,244,322] {css:'ae_frame'
     format:'n', title:'^jméno?', format:'T'
     proc onchanged() { prijmeni1.get; this.get; see.see_show(1);
   }}
-  label see [41,2,72,26] { tag:'W', css:'ae_parm search', format:'n'
+  label see [41,2,72,22] { tag:'W', css:'ae_parm search', format:'n'
     const css_all = 'ezer_ys ezer_fa ezer_db'
     var see_n=0
     proc see_show(n) { var ret:object
@@ -987,24 +987,24 @@ form _osoba2x [,,244,322] {css:'ae_frame'
       prijmeni.display(1); jmeno.display(1);
     ]}
   }
-  button see_back [44,6,15,20] {tag:'W', type:'html', title:"[fa-chevron-left]", format:'n'
-    css:"search", help:"předchozí osoba se stejným příjmením a jménem"
+  button see_back [44,6,16,16] {tag:'W', type:'html', title:"[fa-chevron-left]", format:'n'
+    css:"search fa", help:"předchozí osoba se stejným příjmením a jménem"
     proc onclick() {
       see.see_show(sum(see.see_n.get,-1))
   }}
-  button see_next [61,6,15,20] {tag:'W', type:'html', title:"[fa-chevron-right]", format:'n'
-    css:"search", help:"následující osoba se stejným příjmením a jménem"
+  button see_next [61,6,16,16] {tag:'W', type:'html', title:"[fa-chevron-right]", format:'n'
+    css:"search fa", help:"následující osoba se stejným příjmením a jménem"
     proc onclick() {
       see.see_show(sum(see.see_n.get,1))
   }}
-  button see_use [78,6,15,20] {tag:'W', type:'html', title:"[fa-plug]", format:'n'
-    css:"search", help:"potvrzení nalezené osoby a její přidání k pobytu"
+  button see_use [78,6,16,16] {tag:'W', type:'html', title:"[fa-plug]", format:'n'
+    css:"search fa", help:"potvrzení nalezené osoby a její přidání k pobytu"
     proc onclick() { var ret:object
       see.see_end;
       warning; see_old_osoba                             // dokončení v účastnících nebo evidenci
   }}
-  button see_new [95,6,15,20] {tag:'W', type:'html', title:"[fa-heart]", format:'n'
-    css:"search", help:'Vytvoření nové osoby s daným příjmením a jménem'
+  button see_new [95,6,16,16] {tag:'W', type:'html', title:"[fa-heart]", format:'n'
+    css:"search fa", help:'Vytvoření nové osoby s daným příjmením a jménem'
     proc onclick() {
       warning; see_new_osoba                             // dokončení v účastnících nebo evidenci
   } }

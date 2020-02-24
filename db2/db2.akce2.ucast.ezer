@@ -1378,15 +1378,15 @@ form _rodina2 [,,360,229]  { css:'ae_frame'
       rodiny0.set_css('',css_all.get);
     ]}
   }
-  label  [Lr+100,28,72,26] { tag:'s', css:'ae_parm search' }
-  button rod_back [Lr+103,32,15,20] {tag:'n,b', type:'html', title:"[fa-chevron-left]",
-    css:"search", help:"předchozí rodina se stejným názvem"
+  label  [Lr+100,28,72,22] { tag:'s', css:'ae_parm search' }
+  button rod_back [Lr+103,32,16,16] {tag:'n,b', type:'html', title:"[fa-chevron-left]",
+    css:"search fa", help:"předchozí rodina se stejným názvem"
     proc onclick() { rodiny0.rod_show(sum(rodiny0.rod_n.get,-1)) }}
-  button rod_next [Lr+120,32,15,20] {tag:'n,b', type:'html', title:"[fa-chevron-right]",
-    css:"search", help:"následující rodina se stejným názvem"
+  button rod_next [Lr+120,32,16,16] {tag:'n,b', type:'html', title:"[fa-chevron-right]",
+    css:"search fa", help:"následující rodina se stejným názvem"
     proc onclick() { rodiny0.rod_show(sum(rodiny0.rod_n.get,1)) }}
-  button rod_use [Lr+137,32,15,20] {tag:'n,b', type:'html', title:"[fa-plug]",
-    css:"search", help:"potvrzení nalezené rodiny a vložení do akce jako rodinný pobyt"
+  button rod_use [Lr+137,32,16,16] {tag:'n,b', type:'html', title:"[fa-plug]",
+    css:"search fa", help:"potvrzení nalezené rodiny a vložení do akce jako rodinný pobyt"
     proc onclick() { var ret:object
       // kontrola oprávněnosti - dotazem
       { function('x','y','return x&y;',the_org.get,r_access.get)       // stejná org jako akce
@@ -1400,8 +1400,8 @@ form _rodina2 [,,360,229]  { css:'ae_frame'
     | the_pobyt.set(ret.idp); cmd._reload(1,0);
   }}
   // ==> . nová rodina
-  button rod_new [Lr+154,32,15,20] {tag:'n,b', type:'html', title:"[fa-heart]", css:"search"
-    help:'Vytvoření nového pobytu s novou rodinou (bez členů)'
+  button rod_new [Lr+154,32,16,16] {tag:'n,b', type:'html', title:"[fa-heart]", 
+    css:"search fa", help:'Vytvoření nového pobytu s novou rodinou (bez členů)'
     proc onclick() {
       cmd.mode.set('novy_pobyt'); // příznak pro "nová rodina + pobyt"
       cmd.b_display(0); warning;
@@ -1419,8 +1419,8 @@ form _rodina2 [,,360,229]  { css:'ae_frame'
     help:'výběr rodiny podle nastaveného účastníka a její přiřazení k pobytu',
     proc onchanged() {
       ask('akce2_pobyt_rodinny',key_pobyt.get,this.key); zmena_rodiny; }}
-  button [Lr+108,34,15,16] {tag:'o', type:'html', title:"[fa-pencil]",help:"opravit název rodiny"
-    style:"padding-left:0px", skill:'yaa|yaa+;faa|faa+;caa|caa+'
+  button [Lr+108,34,16,16] {tag:'o', type:'html', title:"[fa-pencil]",help:"opravit název rodiny"
+    style:"padding-left:0px", skill:'yaa|yaa+;faa|faa+;caa|caa+' css:'fa'
     proc onclick() {
       form.display(0,'a'); form.display(1,'m'); rodiny1.set(rodiny.get); rodiny1.change; }}
   select t_role [Lr+131,Tr+22,35,] {tag:'n,a', type:'map', options:ms_akce_t_role.hodnota, format:'wn'
