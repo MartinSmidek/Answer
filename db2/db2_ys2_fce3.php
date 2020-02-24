@@ -38,6 +38,206 @@ function update_web_changes () {
   }
   return 1;
 }
+/** =====================================================================================> STA2 MROP */
+# ------------------------------------------------------------------------------==> . sta2 mrop stat
+# kongregace údajů o absolventech MROP
+function sta2_mrop_stat($par) {
+  $msg= '';  
+  switch ($par->op) {
+  case 'gen':
+    $msg= sta2_mrop_stat_gen($par);
+    break;
+  case 'see':
+    $msg= sta2_mrop_stat_see($par);
+    break;
+  // načtení tabulky #psc (psc,kod_obec,kod_okres,kod_kraj)
+  // ze souboru staženého z https://www.ceskaposta.cz/ke-stazeni/zakaznicke-vystupy#1
+  //                  2 psc 3 kod_obec      5 kod_okres         7 kod_kraj
+  // (kodcobce,nazcobce,psc,kodobce,nazobce,kodokresu,nazokresu,kodkraj,nazevkraj,kodmomc,nazmomc,kodpobvod,nazpobvod)
+  case 'psc':
+    global $ezer_path_docs;
+    // vynulování pracovní tabulky #stat
+    query("TRUNCATE TABLE `#psc`");
+    $fullname= "$ezer_path_docs/import/psc/zv_cobce_psc.csv";
+    if ( !file_exists($fullname) ) { $msg.= "soubor $fullname neexistuje "; goto end; }
+    $f= @fopen($fullname, "r");
+    if ( !$f ) { $msg.= "soubor $fullname nelze otevřít"; goto end; }
+    $line= fgets($f, 1000); // hlavička
+    $pscs= array();
+    while (($line= fgets($f, 1000)) !== false) {
+      $line= win2utf($line,1);
+      $data= str_getcsv($line,';'); 
+      $psc= $data[2];
+      if ( in_array($psc,$pscs)) continue;
+      $pscs[]= $psc;
+      query("INSERT INTO `#psc` (psc,kod_obec,kod_okres,kod_kraj) 
+              VALUE ($psc,$data[3],$data[5],$data[7])");
+    }
+    fclose($f); $f= null;
+    $msg= "načteno ".count($pscs)." PSČ";
+    break;
+  }
+end:
+  return $msg;
+}
+# --------------------------------------------------------------------------==> . sta2 mrop stat gen
+# interpretace údajů o absolventech MROP
+# 1 – Praha
+# 2 – Středočeský kraj
+# 3 – Jihočeský a Západočeský kraj
+# 4 – Severočeský kraj
+# 5 – Východočeský kraj a část Jihomoravského kraje
+# 6 – Jihomoravský kraj
+# 7 – Severomoravský kraj
+function sta2_mrop_stat_see($par) {
+  $msg= '';  
+  $n= 0;
+  $pred= $po= 0;
+  $jen_pred= $jen_po= $jen_mrop= 0;
+  $zenati= $nezenati_znami= $jen_mrop_zenati= 0;
+  $svatba_po= $svatba_pred= 0;
+  $deti= $deti3plus= 0;
+  $kraj= array(0,0,0,0,0,0,0,0); 
+  $sr= pdo_qry("
+    SELECT id_osoba,vek,mrop,stat,psc,svatba,deti,ms_pred,ms_po,m_pred,m_po,j_pred,j_po
+    FROM `#stat`
+  ");
+  while ( $sr && 
+      list($ido,$vek,$mrop,$stat,$psc,$svatba,$det,$ms_pred,$ms_po,$m_pred,$m_po,$j_pred,$j_po)
+      = pdo_fetch_row($sr) ) {
+    $n++;
+    // výpočty
+    $x_pred=    $ms_pred+$m_pred+$j_pred;
+    $x_po=      $ms_po+$m_po+$j_po;
+    // sumy
+    $zenati+=   $svatba ? 1 : ($det ? 1 : 0);
+    $deti+=     $det ? 1 : 0;
+    $deti3plus+=$det>=3 ? 1 : 0;
+    $nezenati_znami+=   ($svatba || $det) ? 0 : ( $x_pred+$x_po ? 1 : 0);
+    $pred+=     $x_pred;
+    $po+=       $x_po;
+    $jen_pred+= $x_po   ? 0 : ($x_pred ? 1 : 0);
+    $jen_po+=   $x_pred ? 0 : ($x_po   ? 1 : 0);
+    $jen_mrop+= $x_pred+$x_po ? 0 : 1;
+    $jen_mrop_zenati+= $x_pred+$x_po ? 0 : ($svatba ? 1 : 0);
+    $svatba_po+=   $svatba<2222 && $svatba>$mrop ? 1 : 0;
+    $svatba_pred+= $svatba>0 && $svatba<=$mrop ? 1 : 0;
+    $svatba_nevime+= $svatba ? 0 : ($det ? 1 : 0);
+    if ( $stat=='CZ' && $psc ) {
+      $kraj[$psc[0]]++;      
+      list($k_obec,$k_okres,$k_kraj)= select('kod_obec,kod_okres,kod_kraj','`#psc`',"psc=$psc");
+      if ( !$k_kraj ) {
+        $msg.= "<br>PSČ $psc neznáme id=$ido";
+      }
+    }
+  }
+  $msg.= "$n mužů<br>
+    <br>celkem ženatí = $zenati
+    <br>... z toho před MROP = $svatba_pred
+    <br>... z toho po MROP = $svatba_po
+    <br>... to nevíme = $svatba_nevime
+    <br>mají děti = $deti, 3 a více = $deti3plus
+    <br>neženatí známí = $nezenati_znami
+    <br>
+    <br>pouze akce před = $jen_pred 
+    <br>pouze akce po = $jen_po 
+    <br>pouze MROP = $jen_mrop
+    <br>... z toho ženatí = $jen_mrop_zenati
+    <br>
+    <br>celkem akcí před = $pred 
+    <br>celkem akcí po = $po
+    <br>kraje: P=$kraj[1] SČ=$kraj[2] JČ+ZČ=$kraj[3] SeČ=$kraj[4] VČ=$kraj[5] JM=$kraj[6] SM=$kraj[7]
+   ";
+  return $msg;
+}
+# --------------------------------------------------------------------------==> . sta2 mrop stat gen
+# kongregace údajů o absolventech MROP
+function sta2_mrop_stat_gen($par) {
+  $msg= "<br><br>... vytvoření tabulky #stat";
+  // vynulování pracovní tabulky #stat
+  query("TRUNCATE TABLE `#stat`");
+  // seznam
+  $mrops= array( // year => datum ... 2001,2002 nejsou v akcích
+    2001=>'2001-08-01',2002=>'2002-09-01');
+  $ms= array();
+  // získání data mrop
+  $mr= pdo_qry("
+    SELECT YEAR(a.datum_od) AS _rok,a.datum_od FROM akce AS a WHERE a.mrop=1 ORDER BY _rok
+  ");
+  while ( $mr && list($rok,$datum)= pdo_fetch_row($mr) ) {
+    $mrops[$rok]= $datum;
+  }
+//  $mrops= array(2002=>'2002-09-01');
+  // získání individuálních a rodinných údajů
+  foreach ($mrops as $mrop=>$datum) {
+    $mr= pdo_qry("
+      SELECT o.id_osoba,o.access,CONCAT(o.jmeno,' ',o.prijmeni),
+        ROUND(DATEDIFF('$datum',o.narozeni)/365.2425) AS _vek,
+        IFNULL(svatba,0) AS _s1,IFNULL(YEAR(datsvatba),0) AS _s2,
+        MIN(IFNULL(YEAR(od.narozeni),0)) AS _s3,
+        SUM(IF(td.id_osoba,1,0)) AS _d,
+        IFNULL(tb.id_osoba,0) AS _ido_z,
+        IF(o.adresa=1,o.stat,r.stat) AS _stat,
+        IF(o.adresa=1,o.psc,r.psc) AS _psc
+      FROM osoba AS o
+      LEFT JOIN tvori AS ta ON ta.id_osoba=o.id_osoba AND ta.role='a'
+      JOIN rodina AS r ON r.id_rodina=ta.id_rodina
+      LEFT JOIN tvori AS tb ON r.id_rodina=tb.id_rodina AND tb.role='b'
+      LEFT JOIN tvori AS td ON r.id_rodina=td.id_rodina AND td.role='d'
+      LEFT JOIN osoba AS od ON od.id_osoba=td.id_osoba
+      WHERE o.deleted='' AND r.deleted='' AND o.iniciace=$mrop
+      GROUP BY o.id_osoba
+    ");
+    while ( $mr && 
+        list($ido,$access,$name,$vek,$sv1,$sv2,$sv3,$deti,$ido_z,$stat,$psc)
+        = pdo_fetch_row($mr) ) {
+      $ms[$ido]= (object)array('name'=>$name,'mrop'=>$mrop);
+      // rozbor bydliště
+      $stat= str_replace(' ','',$stat);
+      $psc= str_replace(' ','',$psc);
+      if ( $psc && is_numeric($psc)) {
+        if ( $stat=='' && in_array($psc[0],array(1,2,3,4,5,6,7)) ) {
+          $stat= 'CZ';
+        }
+        elseif ( $stat=='' && in_array($psc[0],array(0,8,9)) ) {
+          $stat= 'SK';
+        }
+      }
+      elseif ( $stat='' ) {
+        $stat= '?';
+      }
+      // zápis do #stat
+      $sv= max($sv1,$sv2);
+      if ( !$sv && $ido_z ) {
+        $sv= $sv3 ? $sv3-1 : 9999;
+      }
+      query("INSERT INTO `#stat` (id_osoba,access,mrop,stat,psc,vek,svatba,deti,note) 
+        VALUE ($ido,$access,$mrop,'$stat','$psc','$vek',$sv,$deti,'$name')");
+    }
+  }
+//  goto end;
+  // získání informací o akcích
+  $akce_muzi= "24,5,11";
+  $akce_manzele= "1,2,3,4,17,18,22"; // 18 je lektoři & vedoucí MS !!! TODO
+  foreach ($ms as $ido=>$m) {
+    $ma= pdo_qry("
+      SELECT IF(datum_od<'{$mrops[$mrop]}','_pred','_po'),
+        CASE WHEN druh IN ($akce_manzele) THEN 'ms' 
+             WHEN druh IN ($akce_muzi) THEN 'm' ELSE 'j' END 
+      FROM pobyt AS p
+      LEFT JOIN akce AS a ON id_akce=id_duakce
+      LEFT JOIN spolu AS s USING (id_pobyt)
+      JOIN osoba AS o USING (id_osoba)
+      WHERE id_osoba=$ido AND spec=0 AND mrop=0
+    ");
+    while ( $ma && list($kdy,$druh)= pdo_fetch_row($ma) ) {
+      // zápis do #stat
+      query("UPDATE `#stat` SET $druh$kdy=1+$druh$kdy WHERE id_osoba=$ido");
+    }
+  }
+end:  
+  return $msg;
+}
 /** ===================================================================================> FILEBROWSER */
 # ------------------------------------------------------------------------------------ tut ma_archiv
 # SHOW LOAD
