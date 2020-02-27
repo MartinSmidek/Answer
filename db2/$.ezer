@@ -95,6 +95,11 @@ menu db2 { type:'main', title:'db2', active:*, _sys:'*'
           item {title:'[fa-database fa-red] tabulka _TOUCH'       par:°{tab:'_touch'}     skill:'m' }
           item {title:'[fa-database fa-red] tabulka _TRACK'       par:°{tab:'_track'}     skill:'m' }
           item {title:'[fa-database fa-red] tabulka _USER'        par:°{tab:'_user'}      skill:'m' }
+          item {title:'[fa-database fa-darkviolet] tabulka #stat'  par:°{tab:'`#stat`'}   skill:'faa:m' }
+          item {title:'[fa-database fa-darkviolet] tabulka #psc'   par:°{tab:'`#psc`'}    skill:'faa:m' }
+          item {title:'[fa-database fa-darkviolet] tabulka #obec'  par:°{tab:'`#obec`'}   skill:'faa:m' }
+          item {title:'[fa-database fa-darkviolet] tabulka #okres' par:°{tab:'`#okres`'}  skill:'faa:m' }
+          item {title:'[fa-database fa-darkviolet] tabulka #kraj'  par:°{tab:'`#kraj`'}   skill:'faa:m' }
           proc onclick (i) {
             clear;
             panel.display(2,'i');
