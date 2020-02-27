@@ -6,7 +6,7 @@
 # ------------------------------------------------------------------------------------------------ #
 # ----------------------------------------------------------------------------------- globální jména
 # ----------------------------------------------------------------------------------==> inicializace
-proc onfirstfocus() { dotaz.Init; has_skill('m'); m.d.d.click }
+proc onfirstfocus() { dotaz.Init; } // has_skill('m'); has_skill('yaet'); m.d.d.click }
 # ------------------------------------------------------------------------------------------==> stav
 var the_vypis: text
 # ----------------------------------------------------------------------------==> globální procedury
@@ -56,14 +56,18 @@ menu m {type:'left', format:'f+', active:*
       ,dsc:'Sestava ukazuje údaje o účastnících na vybraných akcích za uplynulé 4 roky.<br>'
       ,tit:'věk:4,účastníků:10,pečovatelů:10',fld:'_vek,_uca,_pec',ord:'_vek'}}
   }
-  menu ch {title:'STATISTIKA MROP' type:'group'                                     skill:'m'
-    item {title:'Generování tabulky #psc'           par:°{op:'psc'} }
-    item {title:'Generování tabulky #stat'          par:°{op:'gen'} }
-    item {title:'... rozbor'                        par:°{op:'see'} }
+  menu m {title:'STATISTIKA MROP' type:'group'                                     skill:'faa:m'
+    item {title:'Vytvoř #psc,#obec,#okres,#kraj'                  par:°{op:'psc'}  skill:'r|m'}   
+    item {title:'Vytvoř #stat (dlouhý výpočet)'                   par:°{op:'gen'}  skill:'r|m'}
+    item {title:'[fa-birthday-cake] ... jak jsou staří'           par:°{op:'see',typ:'v'} }
+    item {title:'[fa-map-o] ... v kterém místě ČR žijí'           par:°{op:'see',typ:'g'} }
+    item {title:'[fa-home] ... v jak velké obci žijí'             par:°{op:'see',typ:'o'} }
+    item {title:'[fa-bar-chart] ... info z akcí YS+FA+(CPR/MS)'   par:°{op:'see',typ:'s'} }
+//  item {title:'[fa-bar-chart] ... info z akcí CPR/MS'           par:°{op:'see',typ:'c'} }
     proc onclick (i) {
       panel.display(2,'i');
       menu_item.set(i); menu_par.set(i.par); clear;
-      the_vypis.set(conc(i.owner.title,' - ',i.title));
+      the_vypis.set(replace_fa(conc(i.owner.title,' - ',i.title)));
       info.fill(the_vypis.get,' '); info.msg.set('');
       info.append(ask('sta2_mrop_stat',i.par));
     }
@@ -324,6 +328,7 @@ form _dotaz [,,163,60] { style:'position:fixed;z-index:2' css:'parm shadow'
       dirty=1,    // po změně dotazu, čistí se po prvním Show
       virgin=1
   proc Init() { 
+    has_skill('yaet'); 
     [ has_skill('a'); m.d.i.enable(1) ];
     m.d.set_attrib('title',conc("Dotazník LK YS roku ",rok.get)); 
     kurz.set(0);
