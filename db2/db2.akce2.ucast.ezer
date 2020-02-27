@@ -619,7 +619,7 @@ form _ucast [,,400,] { css:'ds_form', style:'height:fit-content'
     // údaje rod.cleni
     show r_cleni // naplní browse pro rodinu daty jejích členů
     // údaje pob
-    show p_poznamka, show pokoj, show budova, show funkce, show prednasi, show skup,
+    show p_poznamka, show p_pracovni, show pokoj, show budova, show funkce, show prednasi, show skup,
     // platby
     show luzka, show pristylky, show kocarek, show pocetdnu,
     show strava_cel, show strava_cel_bm, show strava_cel_bl,
@@ -952,7 +952,7 @@ form _evidence [,,623,] { style:'height:fit-content'
   proc z_down(x) { x.set_css('shift_down','shift_up'); x.set_css('shift_down','shift_up','.*') }
 }
 # -----------------------------------------------------------------------------------------==> POBYT
-panel pobyt_config [,,200,120] {type:'popup', title:"Podrobnosti údajů"
+panel pobyt_config [,,200,150] {type:'popup', title:"Podrobnosti údajů"
   var tit='společné údaje o pobytu', grp='Z'
   proc start() { grp.set(get_cookie(conc(sys('root'),'_conf_pobyt'),grp.get));
     [ contains('Z',grp.get) | grp.set(conc('Z',grp.get)) ];
@@ -961,17 +961,20 @@ panel pobyt_config [,,200,120] {type:'popup', title:"Podrobnosti údajů"
   use cnfg: form _cnfg
   form _cnfg {
     check z [0, 0,200,] { title:"základní údaje", format:'d', value:'1'}
+    check t [0,40,200,] { title:"(pracovní poznámka)", format:'t', skill:'yaa|yaa:t;faa|faa:t;caa|caa:t'
+                                                                          proc onchange() { _tuned }}
     check p [0,20,200,] { title:"společná poznámka k pobytu", format:'t', proc onchange() { _tuned }}
-    check u [0,40,200,] { title:"platba za pobyt", format:'t', proc onchange() { _tuned }}
-    check d [0,60,200,] { title:"platba za pobyt dětí", format:'t', proc onchange() { _tuned }}
-    check s [0,80,200,] { title:"členové skupiny", format:'t', proc onchange() { _tuned }}
-    button  [ 0,100,,] { type:'submit', title:'Nastav', proc onclick() {
+    check u [0,60,200,] { title:"platba za pobyt", format:'t', proc onchange() { _tuned }}
+    check d [0,80,200,] { title:"platba za pobyt dětí", format:'t', proc onchange() { _tuned }}
+    check s [0,100,200,] { title:"členové skupiny", format:'t', proc onchange() { _tuned }}
+    button  [ 0,130,,] { type:'submit', title:'Nastav', proc onclick() {
       set_cookie(conc(sys('root'),'_conf_pobyt'),grp.get); panel.close(1) }}
-    button  [85,100,,] { title:'Zpět', proc onclick() {
+    button  [85,130,,] { title:'Zpět', proc onclick() {
       grp.set(_old.get); _back; pob.show_pobyt; panel.close(1) }}
-    proc _tuned() { grp.set(cconc(p.get,'P,',s.get,'S,',u.get,'U,',d.get,'D,','Z'));
+    proc _tuned() { grp.set(cconc(p.get,'P,',t.get,'T,',s.get,'S,',u.get,'U,',d.get,'D,','Z'));
       pob.show_pobyt }
-    proc _back() { z.set(contains('Z',grp.get)); p.set(contains('P',grp.get));
+    proc _back() { 
+      z.set(contains('Z',grp.get)); p.set(contains('P',grp.get)); t.set(contains('T',grp.get));
       s.set(contains('S',grp.get)); u.set(contains('U',grp.get)); d.set(contains('D',grp.get)); }
   }
   var _old= 'Z'
@@ -983,6 +986,7 @@ form _pobyt [,,360,62] {
   proc show_pobyt() { var height:number, tags:text, tit:text
     form.display(0,'[^f]');
     tags.set('F');
+    [ contains('T',pobyt_config.grp.get); tags.set(conc(tags,',t')) ];
     [ contains('P',pobyt_config.grp.get); tags.set(conc(tags,',p')) ];
     [ contains('U',pobyt_config.grp.get); tags.set(conc(tags,',u')) ];
     [ contains('D',pobyt_config.grp.get); tags.set(conc(tags,',d')) ];
@@ -1014,6 +1018,11 @@ form _pobyt [,,360,62] {
     item { title:'ukázat změny', proc onclick () { track.back_show('pobyt',the_pobyt.get) } }
   }
 
+  // t = pracovní poznámka
+  edit  p_pracovni [5,0,349,74] {tag:'t', data:p.pracovni, skill:'yaa|yaa:t;faa|faa:t;caa|caa:t'
+      title:'^(pracovní poznámka)' }
+  label [5,74,1,18] { tag:'t' } // oprava
+  // u = úhrada
   // p = poznámka
   edit  p_poznamka [5,0,349,74] {tag:'p', data:p.poznamka, title:'^poznámka k pobytu'}
   label [5,74,1,18] { tag:'p' } // oprava

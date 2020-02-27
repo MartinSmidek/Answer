@@ -334,6 +334,7 @@ table pobyt { key_id:'id_pobyt'
   number kocarek
   text pecovatel
   text poznamka
+  text pracovni
   number pristylky
   number pocetdnu       // počet nocí!
   number svp            // počet dětí s vlastním pečovatelem
