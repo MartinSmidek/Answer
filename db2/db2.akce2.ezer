@@ -732,7 +732,7 @@ panel track [,,550,276] { title:'Historie oprav', type:'popup', css:'dialog'
 }
 # ============================================================================================> MAPA
 panel mapa [,,640,400] { type:'popup', title:'mapa účastníků'
-  var metoda='', id_akce: number, id_mailist: number
+  var metoda='', id_akce:number, id_mailist:number, mrop_par:object, mrop_body:number
   proc onfirstfocus() { 
     spinner(1); 
     f.cr.init('ROADMAP',object('clustering',cconc(eq(sys('options','gmap'),2),1,0))); 
@@ -748,14 +748,21 @@ panel mapa [,,640,400] { type:'popup', title:'mapa účastníků'
       "a oprav podle <b>psc.cz</b>")));
     ask('mapa2_psc_set',psc,gps);
   }
-  proc ukaz_psc() { var ret: object
+  proc ukaz_psc() { var ret: object, smazat: number
     metoda.get;
+    smazat.set(1);
     { eq(metoda.get,'akce'); ret.set(ask('akce2_mapa',id_akce.get))
     | eq(metoda.get,'mail'); ret.set(ask('mail2_mapa',id_mailist.get))
+    | eq(metoda.get,'mrop'); ret.set(ask('sta2_mrop_stat_map',mrop_par.get));
+                             smazat.set(ret.rewrite);
+                             mrop_body.set(ret.suma)
     };
     [ ret.err; warning(ret.err); ];
-    f.cr.set(object('mark',''));
+    [ smazat; f.cr.set(object('mark','')) ];
     f.cr.set(object('mark',ret.mark));
+    [ eq(metoda.get,'mrop');
+      panel.set_attrib('title',ret.title);
+    ];
     has_skill('yaa+;faa+;caa+');
     [ ret.err; confirm("chceš pomocí <b>mapy.cz</b> doplnit polohu PSČ?"); 
       foreach(ret.chybi,dopln_psc);

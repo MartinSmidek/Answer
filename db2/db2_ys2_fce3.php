@@ -136,6 +136,120 @@ function sta2_mrop_stat($par) {
 end:
   return $msg;
 }
+# --------------------------------------------------------------------------==> . sta2 mrop stat map
+# zobrazení bydliště
+# vrací ret.mark - seznam poloh PSČ
+#   .chybi -- seznam chybějících PSČ k interaktivnímu dopl
+function sta2_mrop_stat_map($par) {
+  $ret= (object)array();
+  $pscs= $notes= array();
+  switch ($par->mapa) {
+  // ------------------------------------------------------ clear
+  case 'clear':
+    $ret= mapa2_psc($pscs,$notes,1);
+    $ret->title= "ČR";
+    $ret->rewrite= 1;
+    $ret->suma= 0;
+    break;
+  // ------------------------------------------------------ Brno
+  case 'Brno':
+    $pscs['62300']= "Brno";
+    $notes['62300']= "1";
+    $ret= mapa2_psc($pscs,$notes,1,"CIRCLE,transparent,red,1,12");
+//    $ret= mapa2_psc($pscs,$notes,1,"CIRCLE,scale:12,fillOpacity:0.0,strokeColor:'blue',strokeWeight:2");
+    $ret->title= "Je zobrazeno 1 Brno";
+    $ret->rewrite= 1;
+    $ret->suma= 1;
+    break;
+  // ------------------------------------------------------ skupiny
+  case 'skupiny':
+    # přečtení seznamu skupin z tabulky
+    # https://docs.google.com/spreadsheets/d/1mp-xXrF1I0PAAXexDH5FA-n5L71r5y0Qsg75cU82X-4/edit#gid=0
+    # https://docs.google.com/spreadsheets/d/1mp-xXrF1I0PAAXexDH5FA-n5L71r5y0Qsg75cU82X-4/gviz/tq?tqx=out:json
+    # 0 - skupina; 1 - psč[,město,ulice]; 2 - aktualizace; 3 - kontakt; 4 - email; 5 - poznámka; 6 - uzavřená skupina
+    $goo= "https://docs.google.com/spreadsheets/d";
+    $key= "1mp-xXrF1I0PAAXexDH5FA-n5L71r5y0Qsg75cU82X-4";         // Seznam skupin - kontakty
+    $prefix= "google.visualization.Query.setResponse(";           // přefix json objektu
+    $x= file_get_contents("$goo/$key/gviz/tq?tqx=out:json"); //&sheet=$sheet");
+    $xi= strpos($x,$prefix);
+    $xl= strlen($prefix);
+    $x= substr(substr($x,$xi+$xl),0,-2);
+    $tab= json_decode($x)->table;
+    // projdeme získaná data
+    $adrs= $geos= $notes= $clmns= $emails= array();
+    $n= 0;
+    if ( $tab ) {
+      foreach ($tab->rows as $crow) {
+        $row= $crow->c;
+        if ( $row[0]->v=="ZVLÁŠTNÍ SKUPINY:" ) break;     // konec seznamu
+        $group= $row[0]->v;
+        $adrs= $row[1]->v;
+        $adr= strtr($adrs,array(';'=>',','?'=>'',"\n"=>''));
+        $psc= substr(strtr(trim(substr($adr,0,10)),array(' '=>'')),0,5);
+        $pscs[$psc]= $group;
+        $notes[$psc]= $adrs;
+        $n++;
+      }
+    }
+    $ret= mapa2_psc($pscs,$notes,1,"CIRCLE,yellow,red,999,12");
+    $ret->title= "Je zobrazeno $n skupin z tabulky <b>Seznam skupin - kontakty</b>";
+    $ret->rewrite= 0;
+    $ret->suma= $n;
+    break;
+  // ------------------------------------------------------ malé obce
+  case 'malé obce':
+//    $n= 0;
+//    $vsichni= select('COUNT(*)','`#stat`',"stat='CZ'");
+//    $sr= pdo_qry("
+//      SELECT psc,nazev FROM `#stat` JOIN `#psc` USING(psc) JOIN `#obec` USING (kod_obec) 
+//      WHERE muzi>{$par->od} AND muzi<={$par->do}
+//    ");
+//    while ( $sr && list($psc,$nazev)= pdo_fetch_row($sr) ) {
+//      $n++;
+//      $pscs[$psc]= $nazev;
+//      if ( !isset($notes[$psc]) ) $notes[$psc]= 0;
+//      $notes[$psc]++;
+//    }
+//    $pc= round(100*$n/$vsichni);
+//    $ret= mapa2_psc($pscs,$notes,1,"CIRCLE,blue,blue,1,8");
+//    $ret->title= "Celkem $n ($pc%) iniciovaných žije v obcích s {$par->od} až {$par->do} muži";
+//    $ret->rewrite= 0;
+//    $ret->suma= $n;
+//    $ret->total= $vsichni;
+//    break;
+  // ------------------------------------------------------ malé obce MS
+  case 'malé obce MS':
+    $n= $n2= 0;
+    $icons= array();
+    $vsichni= select('COUNT(*)','`#stat`',"stat='CZ'");
+    $sr= pdo_qry("
+      SELECT psc,nazev,ms FROM `#stat` JOIN `#psc` USING(psc) JOIN `#obec` USING (kod_obec) 
+      WHERE muzi>{$par->od} AND muzi<={$par->do}
+    ");
+    while ( $sr && list($psc,$nazev,$ms)= pdo_fetch_row($sr) ) {
+      if ( $ms>0) {
+        $n2++;
+        $icons[$psc]= isset($icons[$psc]) ? "CIRCLE,magenta,magenta,1,8" : "CIRCLE,red,red,1,8";
+      }
+      else {
+        $n++;
+        $icons[$psc]= isset($icons[$psc]) ? "CIRCLE,magenta,magenta,1,8" : "CIRCLE,blue,blue,1,8";
+      }
+      $pscs[$psc]= "$nazev $psc";
+      if ( !isset($notes[$psc]) ) $notes[$psc]= 0;
+      $notes[$psc]++;
+    }
+    $pc= round(100*($n+$n2)/$vsichni);
+    $ret= mapa2_psc($pscs,$notes,1,$icons);
+    $ret->title= "Celkem $n+$n2 ($pc%) iniciovaných žije v obcích s {$par->od} až {$par->do} muži";
+    $ret->rewrite= 0;
+    $ret->suma= $n+$n2;
+    $ret->total= $vsichni;
+    break;
+  }
+end:
+  return $ret;
+}
 # --------------------------------------------------------------------------==> . sta2 mrop stat gen
 # interpretace údajů o absolventech MROP
 # par.typ = posloupnost písmen   g=geo informace s=statistika
@@ -151,7 +265,7 @@ function sta2_mrop_stat_see($par) {
   $deti= $deti3plus= 0;
   $ms_org= array(0,0,0,0,0);
   $cizinci= 0;
-  $okres= $kraj= $pscs= array();
+  $okres= $kraj= $pscs= $mss= array();
   $sr= pdo_qry("
     SELECT id_osoba,vek,mrop,stat,psc,svatba,deti,ms,ms_pred,ms_po,m_pred,m_po,j_pred,j_po
     FROM `#stat`
@@ -189,6 +303,10 @@ function sta2_mrop_stat_see($par) {
       // geo informace
       if ( !isset($pscs[$psc]) ) $pscs[$psc]= 0;
       $pscs[$psc]++;
+      if ( $ms ) {
+        if ( !isset($mss[$psc]) ) $mss[$psc]= 0;
+        $mss[$psc]++;
+      }
       $cr_inic++;
       list($k_obec,$k_okres,$k_kraj)= select('kod_obec,kod_okres,kod_kraj','`#psc`',"psc=$psc");
       if ( !$k_kraj ) {
@@ -206,24 +324,33 @@ function sta2_mrop_stat_see($par) {
   // ------------------------------ podle věku
   if ( strstr($typ,'v')) {
     $meze= array(10,20,30,40,50,60,70,80,90,99);
+    $meze= array(15,20,25,30,35,40,45,50,55,60,65,70,75,80,85,90,95,99);
     $stari= array();
-    $s_inic= 0;
+    $s_inic= $s_ms= 0;
     // zobrazení
-    $msg.= "<b>Celkem $n iniciovaných mužů</b>";
+    $msg.= "<b>Celkem $cr_inic iniciovaných mužů z ČR</b>";
     $msg.= "<h3>Iniciovaní podle věku</h3>
-      <table class='stat'><tr><th>věk</th><th>počet</th><th>%</th></tr>";
+      <table class='stat'><tr><th>věk</th><th>počet</th><th>%</th><th>% MS</th></tr>";
     for ($i=0; $i<count($meze)-1; $i++) {
-      $m= select('COUNT(*)','`#stat`',"vek >= $meze[$i] AND vek < {$meze[$i+1]}");
+      list($m,$m2)= select('COUNT(*),SUM(IF(ms>0,1,0))','`#stat`',
+          "stat='CZ' AND vek >= $meze[$i] AND vek < {$meze[$i+1]}");
       $s_inic+= $stari[$i]= $m;
+      $s_ms+= $m2;
       $od= $i==0 ? '.' : $meze[$i]+1;
       $do= $i==count($meze)-2 ? '.' : $meze[$i+1];
       $pm= $stari[$i] ? round(100*$stari[$i]/$vsichni) : '-';
+      $pm2= $stari[$i] ? round(100*$m2/$stari[$i]) : '-';
       $msg.= "<tr><th>$od..$do</th><td align='right'>$stari[$i]</td>
-        <td align='right'>&nbsp;&nbsp;&nbsp;&nbsp;$pm</td></tr>";
+        <td align='right'>&nbsp;&nbsp;&nbsp;&nbsp;$pm</td>
+        <td align='right'>&nbsp;&nbsp;&nbsp;&nbsp;$pm2</td>
+      </tr>";
     }
     $pm= round(100*$s_inic/$vsichni);
+    $pm2= round(100*$s_ms/$s_inic);
     $msg.= "<tr><th>celkem</th><th align='right'>$s_inic</th>
-      <th align='right'>&nbsp;&nbsp;&nbsp;&nbsp;$pm</th></tr>";
+      <th align='right'>&nbsp;&nbsp;&nbsp;&nbsp;$pm</th>
+      <th align='right'>&nbsp;&nbsp;&nbsp;&nbsp;$pm2</th>
+    </tr>";
     $msg.= "</table>";
   }
   // ------------------------------ statistické informace CPR
@@ -314,39 +441,54 @@ function sta2_mrop_stat_see($par) {
   if ( strstr($typ,'o')) {
     $meze= array(0,1,10,100,1000,10000,100000,1000000);
     $meze= array(0,300,1000,3000,10000,30000,100000,300000,1000000);
-    $muzi= $obce= array();
-    $s_muzi= $s_inic= $s_obce= 0;
+    $meze= array(0,290,576,1084,2230,4650,9700,21200,46600,300000,1000000);
+    $muzi= $obce= $ms= array();
+    $s_muzi= $s_inic= $s_obce= $s_ms= 0;
     $msg.= "<h3>Iniciovaní podle velikosti obce</h3>
-      <table class='stat'><tr><th>velikost obce</th><th>počet</th><th>iniciovaní</th>
-      <th> ‰ </th><th>z mužů</th></tr>";
+      <table class='stat'><tr><th>velikost obce</th><th>počet</th>
+      <th>inic.</th><th>%</th>
+      <th> ‰ </th><th>z mužů</th><th>% MS</th></tr>";
     // výpočet počtu mužů v obcích dané velikosti
     for ($i=count($meze)-2; $i>=0; $i--) {
-      list($m,$o)= select('SUM(muzi),COUNT(*)','`#obec`',"muzi BETWEEN $meze[$i] AND {$meze[$i+1]}");
+      list($m,$o)= select('SUM(muzi),COUNT(*)','`#obec`',
+          "muzi BETWEEN $meze[$i] AND {$meze[$i+1]}");
       $s_muzi+= $muzi[$i]= $m;
       $s_obce+= $obce[$i]= $o;
     }
-                                                debug($obce,$s_obce);
+//                                                debug($obce,$s_obce);
     // výpočet počtu iniciovaných v obcích dané velikosti
     for ($i=count($meze)-2; $i>=0; $i--) {
       $od= $i==0 ? '.' : $meze[$i];
       $do= $i==count($meze)-2 ? '.' : $meze[$i+1];
       // výpočet 
-      $inic= 0;
+      $inic= $ms_inic= 0;
       foreach ($pscs as $psc=>$n) {
         $ok= select('COUNT(*)','`#psc` JOIN `#obec` USING (kod_obec)',
             "psc=$psc AND muzi BETWEEN $meze[$i] AND {$meze[$i+1]}");
         if ( $ok ) {
           $inic+= $n;
           $s_inic+= $n;
+          if ( isset($mss[$psc]))
+            $ms_inic+= $mss[$psc];
+            $s_ms+= $mss[$psc];
         }
       }
       $ppm= $muzi[$i] ? round(1000*$inic/$muzi[$i],2) : '?';
-      $msg.= "<tr><th>$od..$do</th><td align='right'>$obce[$i]</td><td align='right'>$inic</td>
-        <td>&nbsp;&nbsp;&nbsp;&nbsp;$ppm</td><td align='right'>$muzi[$i]</td></tr>";
+      $pms= $inic ? round(100*$ms_inic/$inic) : '?';
+      $pi= $inic ? round(100*$inic/$cr_inic) : '?';
+      $msg.= "<tr><th>$od..$do</th><td align='right'>$obce[$i]</td>
+        <td align='right'>$inic</td><td align='right'>$pi</td>
+        <td>&nbsp;&nbsp;&nbsp;&nbsp;$ppm</td><td align='right'>$muzi[$i]</td>
+        <td>&nbsp;&nbsp;&nbsp;&nbsp;$pms</td>
+      </tr>";
     }
     $ppm= round(1000*$s_inic/$s_muzi,2);
-    $msg.= "<tr><th>celkem</th><th align='right'>$s_obce</th><th align='right'>$s_inic</th>
-      <th align='right'>&nbsp;&nbsp;&nbsp;&nbsp;$ppm</th><th align='right'>$s_muzi</th></tr>";
+    $pms= round(100*$s_ms/$s_inic);
+    $msg.= "<tr><th>celkem</th><th align='right'>$s_obce</th>
+      <th align='right'>$s_inic</th><th>100</th>
+      <th align='right'>&nbsp;&nbsp;&nbsp;&nbsp;$ppm</th><th align='right'>$s_muzi</th>
+      <th align='right'>&nbsp;&nbsp;&nbsp;&nbsp;$pms</th>  
+    </tr>";
     $msg.= "</table>";
     $msg.= "<br><br><i>Poznámka: odchylka v počtu mužů podle obcí a PSČ vznikla tím,
       že tabulka okresu je z roku 2018, tabulka PSČ a obcí z roku 2020 </i>";
