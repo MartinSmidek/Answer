@@ -15,8 +15,8 @@ proc reaccess() { #==> reaccess - změna
   m.onclick(menu_item.get);
 }
 # ------------------------------------------------------------------------------------------==> MENU
-var menu_item=0
-var menu_par=0
+var menu_item=0,
+    menu_par=0
 menu m {type:'left', format:'f+', active:*
   menu s {title:'STATISTIKA',type:'group'
     item {title:'Struktura letních kurzů MS',                                        skill:'yae;fae'
@@ -43,15 +43,6 @@ menu m {type:'left', format:'f+', active:*
       ,dsc:'Sestava ukazuje celkový počet účastníků resp. pečovatelů na akcích letošního roku, rozdělený podle věku.
         <br>Účastník resp. pečovatel je započítán jen jednou, bez ohledu na počet akcí, jichž se zúčastnil.<br>'
       ,tit:'věk:4,účastníků:10,pečovatelů:10',fld:'_vek,_uca,_pec',ord:'_vek'}}
-    item {title:'Iniciovaní muži', par:°{mrop:2002}
-      proc onclick (i) {
-        panel.display(2,'i');
-        menu_item.set(i); menu_par.set(i.par); clear;
-        the_vypis.set(conc(i.owner.title,' - ',i.title));
-        info.fill(the_vypis.get,' '); info.msg.set('');
-        info.append(ask('sta2_mrop',i.par));
-      }
-    }
     item {title:'Přehled větších akcí'  ,par:°{typ:'4roky',rok:0,xls:'Excel',pdf:0
       ,dsc:'Sestava ukazuje údaje o účastnících na vybraných akcích za uplynulé 4 roky.<br>'
       ,tit:'věk:4,účastníků:10,pečovatelů:10',fld:'_vek,_uca,_pec',ord:'_vek'}}
@@ -63,13 +54,63 @@ menu m {type:'left', format:'f+', active:*
     item {title:'[fa-map-o] ... v kterém místě ČR žijí'           par:°{op:'see',typ:'g'} }
     item {title:'[fa-home] ... v jak velké obci žijí'             par:°{op:'see',typ:'o'} }
     item {title:'[fa-bar-chart] ... info z akcí YS+FA+(CPR/MS)'   par:°{op:'see',typ:'s'} }
-//  item {title:'[fa-bar-chart] ... info z akcí CPR/MS'           par:°{op:'see',typ:'c'} }
+    item {title:'... ročníky, cesty (bez #stat)', par:°{mrop:2002}
+      proc onclick (i) {
+        mapa.close(1);
+        panel.display(2,'i');
+        menu_item.set(i); menu_par.set(i.par); clear;
+        the_vypis.set(conc(i.owner.title,' - ',i.title));
+        info.fill(the_vypis.get,' '); info.msg.set('');
+        info.append(ask('sta2_mrop',i.par));
+      }
+    }
     proc onclick (i) {
+      mapa.close(1);
       panel.display(2,'i');
       menu_item.set(i); menu_par.set(i.par); clear;
       the_vypis.set(replace_fa(conc(i.owner.title,' - ',i.title)));
       info.fill(the_vypis.get,' '); info.msg.set('');
       info.append(ask('sta2_mrop_stat',i.par));
+    }
+  }
+  menu g {title:'MAPY MROP' type:'group'                                          skill:'faa:m'
+    var men: number
+    item {title:'[fa-globe] mapa - skupiny v ČR'        par:°{mapa:'skupiny'} }
+    item {title:'[fa-globe] mapa - všichni v ČR'        par:°{mapa:'malé obce',od:0,do:9999999} }
+//    item {title:'[fa-globe] mapa - obce 0..300'         par:°{mapa:'malé obce',od:0,do:300} }
+//    item {title:'[fa-globe] mapa - obce 300..1000'      par:°{mapa:'malé obce',od:300,do:1000} }
+//    item {title:'[fa-globe] mapa - obce 1000..3000'     par:°{mapa:'malé obce',od:1000,do:3000} }
+//    item {title:'[fa-globe] mapa - obce 3000..10000'    par:°{mapa:'malé obce',od:3000,do:10000} }
+//    item {title:'[fa-globe] mapa - obce 10000..30000'   par:°{mapa:'malé obce',od:10000,do:30000} }
+//    item {title:'[fa-globe] mapa - obce 30000..100000'  par:°{mapa:'malé obce',od:30000,do:100000} }
+//    item {title:'[fa-globe] mapa - obce 100000..300000' par:°{mapa:'malé obce',od:100000,do:300000} }
+//    item {title:'[fa-globe] mapa - obce 3000000..'      par:°{mapa:'malé obce',od:300000,do:9999999} }
+    item {title:'[fa-globe] mapa - obce 0..290'           par:°{mapa:'malé obce',od:0,do:290} }
+    item {title:'[fa-globe] mapa - obce 290..576'         par:°{mapa:'malé obce',od:290,do:576} }
+    item {title:'[fa-globe] mapa - obce 576..1084'        par:°{mapa:'malé obce',od:576,do:1084} }
+    item {title:'[fa-globe] mapa - obce 1084..2230'       par:°{mapa:'malé obce',od:1084,do:2230} }
+    item {title:'[fa-globe] mapa - obce 2230..4650'       par:°{mapa:'malé obce',od:2230,do:4650} }
+    item {title:'[fa-globe] mapa - obce 4650..9700'       par:°{mapa:'malé obce',od:4650,do:9700} }
+    item {title:'[fa-globe] mapa - obce 9700..21200'      par:°{mapa:'malé obce',od:9700,do:21200} }
+    item {title:'[fa-globe] mapa - obce 21200..46600'     par:°{mapa:'malé obce',od:21200,do:46600} }
+    item {title:'[fa-globe] mapa - obce 46600..300000'    par:°{mapa:'malé obce',od:46600,do:300000} }
+    item {title:'[fa-globe] mapa - obce 300000..'         par:°{mapa:'malé obce',od:300000,do:9999999} }
+//    item {title:'[fa-globe] mapa - Brno'                par:°{mapa:'Brno'} }
+    item {title:'[fa-globe] smazat mapu'                  par:°{mapa:'clear'} }
+    item {title:'[fa-globe] ukázat mapu a počty'            
+      proc onclick (i) { var msg:text
+        msg.set(function('mapa','celkem',"return mrop_map_count(mapa,celkem);",mapa.f.cr,1374));
+        info.fill(msg,''); 
+      }
+    }
+    proc onclick (i) {
+      menu_item.set(i); menu_par.set(i.par); clear;
+      the_vypis.set(replace_fa(conc(i.owner.title,' - ',i.title)));
+      info.fill(the_vypis.get,''); 
+      info.msg.set('xxx');
+      mapa.metoda.set('mrop');
+      mapa.mrop_par.set(i.par);
+      [ mapa.modal(490,110,i.par.mapa,0,1) ];
     }
   }
   menu l {title:'SEZNAMY',type:'group',                                              skill:'yae;fae;cae'
@@ -114,6 +155,7 @@ menu m {type:'left', format:'f+', active:*
     item {title:'[fa-calendar] volba roku dotazníku'            par:°{typ:'r'} }
     item i {title:'[fa-ban] (re)import dotazníku'               format:'d'
       proc onclick (i) { var y:object
+        mapa.close(1);
         panel.display(2,'i');
         show_dotazy;
         info.fill(conc(i.owner.title,' - ',i.title),' ');
@@ -128,6 +170,7 @@ menu m {type:'left', format:'f+', active:*
     item {title:'[fa-balance-scale] různé výběry a srovnání'    par:°{typ:'v'} }
     item d {title:'[fa-forward] procházení dotazníku'           par:°{typ:'d',id:'1'} 
       proc onclick (i) { 
+        mapa.close(1);
         show_dotazy;
         panel.display(2,'dp|do');
         obraz.fill(conc(i.owner.title,' - ',i.title),' ',' ');
@@ -138,6 +181,7 @@ menu m {type:'left', format:'f+', active:*
       }
     }
     proc onclick (i) { var x: object, y: object
+      mapa.close(1);
       panel.display(2,'do');
       obraz.fill(conc(i.owner.title,' - ',i.title),' ','');
       obraz.display(0,'x'); obraz.display(1,i.par.typ);
@@ -154,6 +198,7 @@ menu m {type:'left', format:'f+', active:*
     }
   }
   proc onclick (i) { var ret: object
+    mapa.close(1);
     panel.display(2,'i');
     menu_item.set(i); menu_par.set(i.par); clear;
     the_vypis.set(conc(i.owner.title,' - ',i.title));

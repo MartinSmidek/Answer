@@ -2,6 +2,23 @@
 /* global Ezer, Form, Var, Field, FieldList, Edit, Select, View, Label */ // pro práci s Netbeans
 "use strict";
 // =========================================================================================> funkce
+// -----------------------------------------------------------------------------==> . mrop map count
+// funkce je svázaná s PHP fcí sta2_mrop_stat_map
+// k celkem (celkem iniciovaných z ČR) se jak promile vyjádří zobrazení muži
+// v mapě jsou muži a skupiny ... muž má title ve tvaru n:obec
+function mrop_map_count(map,celkem) {
+  let men= 0, groups= 0;
+  for (let i in map.mark) {
+    let x= map.mark[i];
+    let n= x.title.split(':');
+    switch (x.icon.scale) {
+      case 8: men+= Number(n[0]); break;  
+      case 12: groups++; break;  
+    }
+  }
+  let pc= Math.round(100*men/celkem);
+  return `je zobrazeno ${men} mužů tj. ${pc}% z ${celkem} a ${groups} skupin`;
+}
 // ----------------------------------------------------------------------------------- clipboard
 // copy message to the clipboard
 function clipboard_obj(sel) {

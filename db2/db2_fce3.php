@@ -9386,10 +9386,16 @@ function mapa2_psc_list($psc_lst) {
 }
 # ----------------------------------------------------------------------------------==> .. mapa2 psc
 # vrátí strukturu pro gmap
-function mapa2_psc($psc,$obec,$psc_as_id=0) {
+# icon = CIRCLE[,scale:1-10][,ontop:1]|cesta k bitmapě nebo pole psc->icon
+function mapa2_psc($psc,$obec,$psc_as_id=0,$icon='') {
 //                                                debug($psc,"mapa2_psc");
   // k PSČ zjistíme LAN,LNG
   $ret= (object)array('mark'=>'','n'=>0);
+  $ic= '';
+  if ( $icon ) {
+    if ( !is_array($icon) )
+      $ic=",$icon";
+  }
   $marks= $err= '';
   $mis_psc= array();
   $err_psc= array();
@@ -9405,7 +9411,9 @@ function mapa2_psc($psc,$obec,$psc_as_id=0) {
         $o= isset($obec[$p]) ? $obec[$p] : $p;
         $title= str_replace(',','',"$o:$tit");
         $id= $psc_as_id ? $p : $n;
-        $marks.= "{$del}$id,{$s->lat},{$s->lng},$title"; $del= ';';
+        if ( is_array($icon) )
+          $ic= ",{$icon[$p]}";
+        $marks.= "{$del}$id,{$s->lat},{$s->lng},$title$ic"; $del= ';';
       }
       else {
         $err_psc[$p].= " $p";
@@ -9650,14 +9658,12 @@ function sta2_mrop($par,$export=false) {
   $msg= "";
   $msg.= sta2_mrop_vek($par);
   $msg.= sta2_mrop_vliv($par);
-  // vytvoření tabulky #stat    
-  $msg.= sta2_mrop_stat($par);
   return $msg;
 }
 # -------------------------------------------------------------------------------==> . sta2 mrop vek
 # roční statistika účastníků: průměrný věk, byl předtím na MS
 function sta2_mrop_vek($par,$export=false) {
-  $msg= "<h3>Kolik jich je a jací jsou</h3>";
+  $msg= "<h3>Kolik jich je a jací jsou</h3><i>Poznámka: starší, zjednodušená verze bez CPR aj.</i><br><br>";
   $AND= '';
 //   $AND= "AND iniciace=2002 AND o.id_osoba=5877";
   $celkem= 0;
@@ -9713,7 +9719,7 @@ function sta2_mrop_vek($par,$export=false) {
 # ------------------------------------------------------------------------------==> . sta2 mrop vliv
 # rozbor podle navštěvovaných akcí
 function sta2_mrop_vliv($par,$export=false) {
-  $msg= "<h3>Odkud přicházejí a kam jdou</h3>";
+  $msg= "<h3>Odkud přicházejí a kam jdou</h3><i>Poznámka: starší, zjednodušená verze bez CPR aj.</i><br><br>";
   $limit= $AND= '';
 //   $AND= "AND iniciace=2002 AND id_osoba=5877";
   // seznam

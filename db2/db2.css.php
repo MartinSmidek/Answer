@@ -18,6 +18,9 @@ echo <<<__EOD
 body { position:absolute; width:100%; height:100%; }
 #paticka { bottom:0; }
 
+/* zneviditelnění některých prvků gmap */
+div.gmnoprint div.gm-style-mtc { display:none }
+
 /* ladění */
 .nogrid {
   background:$b /*url($path/ezer_layout.png)*/ !important; }
