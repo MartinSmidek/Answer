@@ -756,11 +756,14 @@ panel mapa [,,640,400] { type:'popup', title:'mapa účastníků'
     | eq(metoda.get,'mrop'); ret.set(ask('sta2_mrop_stat_map',mrop_par.get));
                              smazat.set(ret.rewrite);
                              mrop_body.set(ret.suma)
+    | eq(metoda.get,'ms');   ret.set(ask('sta2_ms_stat_map',mrop_par.get));
+                             smazat.set(ret.rewrite);
+                             mrop_body.set(ret.suma)
     };
     [ ret.err; warning(ret.err); ];
     [ smazat; f.cr.set(object('mark','')) ];
     f.cr.set(object('mark',ret.mark));
-    [ eq(metoda.get,'mrop');
+    [ eq(metoda.get,'mrop','ms');
       panel.set_attrib('title',ret.title);
     ];
     has_skill('yaa+;faa+;caa+');

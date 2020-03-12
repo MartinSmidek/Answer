@@ -47,7 +47,45 @@ menu m {type:'left', format:'f+', active:*
       ,dsc:'Sestava ukazuje údaje o účastnících na vybraných akcích za uplynulé 4 roky.<br>'
       ,tit:'věk:4,účastníků:10,pečovatelů:10',fld:'_vek,_uca,_pec',ord:'_vek'}}
   }
-  menu m {title:'STATISTIKA MROP' type:'group'                                     skill:'faa:m'
+  menu ms {title:'STATISTIKA MS',type:'group'                                      skill:'faa:m'
+    item {title:'Vytvoř #stat_ms'                                 par:°{op:'gen'}  skill:'r|m'}
+    item {title:'[fa-birthday-cake] ... jak jsou staří'           par:°{op:'see',typ:'v'} }
+    item {title:'[fa-map-o] ... v kterém místě ČR žijí'           par:°{op:'see',typ:'g'} }
+    item {title:'[fa-home] ... v jak velké obci žijí'             par:°{op:'see',typ:'o'} }
+    item {title:'[fa-bar-chart] ... info z akcí YS+FA'            par:°{op:'see',typ:'s'} }
+    proc onclick (i) {
+      mapa.close(1);
+      panel.display(2,'i');
+      menu_item.set(i); menu_par.set(i.par); clear;
+      the_vypis.set(replace_fa(conc(i.owner.title,' - ',i.title)));
+      info.fill(the_vypis.get,' '); info.msg.set('');
+      info.append(ask('sta2_ms_stat',i.par));
+    }
+  }
+  menu mg {title:'MAPY MS' type:'group'                                          skill:'faa:m'
+    item {title:'[fa-globe] mapa - všichni v ČR'        par:°{mapa:'malé obce',od:0,do:9999999} }
+    item {title:'[fa-globe] mapa - obce ..580'          par:°{mapa:'malé obce',od:0,do:580} }
+    item {title:'[fa-globe] mapa - obce 580..1152'      par:°{mapa:'malé obce',od:580,do:1152} }
+    item {title:'[fa-globe] mapa - obce 1152..2168'     par:°{mapa:'malé obce',od:1152,do:2168} }
+    item {title:'[fa-globe] mapa - obce 2168..4460'     par:°{mapa:'malé obce',od:2168,do:4460} }
+    item {title:'[fa-globe] mapa - obce 4460..9300'     par:°{mapa:'malé obce',od:4460,do:9300} }
+    item {title:'[fa-globe] mapa - obce 9300..19400'    par:°{mapa:'malé obce',od:9300,do:19400} }
+    item {title:'[fa-globe] mapa - obce 19400..42400'   par:°{mapa:'malé obce',od:19400,do:42400} }
+    item {title:'[fa-globe] mapa - obce 42400..93200'   par:°{mapa:'malé obce',od:42400,do:93200} }
+    item {title:'[fa-globe] mapa - obce 93200..600000'  par:°{mapa:'malé obce',od:93200,do:600000} }
+    item {title:'[fa-globe] mapa - obce 600000..'       par:°{mapa:'malé obce',od:600000,do:9999999} }
+    item {title:'[fa-globe] smazat mapu'                par:°{mapa:'clear'} }
+    proc onclick (i) {
+      menu_item.set(i); menu_par.set(i.par); clear;
+      the_vypis.set(replace_fa(conc(i.owner.title,' - ',i.title)));
+      info.fill(the_vypis.get,''); 
+      info.msg.set('xxx');
+      mapa.metoda.set('ms');
+      mapa.mrop_par.set(i.par);
+      [ mapa.modal(490,110,i.par.mapa,0,1) ];
+    }
+  }
+  menu mr {title:'STATISTIKA MROP' type:'group'                                    skill:'faa:m'
     item {title:'Vytvoř #psc,#obec,#okres,#kraj'                  par:°{op:'psc'}  skill:'r|m'}   
     item {title:'Vytvoř #stat (dlouhý výpočet)'                   par:°{op:'gen'}  skill:'r|m'}
     item {title:'[fa-birthday-cake] ... jak jsou staří'           par:°{op:'see',typ:'v'} }
