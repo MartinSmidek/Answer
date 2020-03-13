@@ -393,7 +393,7 @@ function sta2_mrop_stat($par) {
       $do= $od+$delta-1;
       $par->od= $od;
       $par->do= $do;
-      $ths.= "<th>$od .. $do</th>";
+      $ths.= "<th><h2>$od .. $do</h2></th>";
       $tds.= "<td style='vertical-align:top'>".sta2_mrop_stat_see($par)."</td>";
     }
     $msg= "<table><tr>$ths</tr><tr>$tds</tr></table>";
@@ -609,7 +609,7 @@ function sta2_mrop_stat_see($par) { trace();
   $n= 0;
   $cr_inic= $vsichni= 0;
   $pred= $po= $bez_ms= $firms= 0;
-  $jen_pred= $jen_po= $jen_mrop= $pred_i_po= 0;
+  $s_ms_pred= $s_ms_po= $jen_pred= $jen_po= $jen_mrop= $pred_i_po= 0;
   $zenati= $nezenati= $nezenati_znami= $jen_mrop_zenati= 0;
   $svatba_po= $svatba_pred= 0;
   $deti= $deti3plus= 0;
@@ -619,25 +619,30 @@ function sta2_mrop_stat_see($par) { trace();
   $AND= isset($par->od) ? (
       $par->od==$par->do ? "AND $par->od=mrop" : "AND $par->od<=mrop AND mrop<$par->do") : '';
   $sr= pdo_qry("
-    SELECT id_osoba,vek,mrop,stat,psc,svatba,deti,ms,ms_pred,ms_po,m_pred,m_po,j_pred,j_po,firm
+    SELECT id_osoba,vek,mrop,stat,psc,svatba,deti,ms,lk_pred,lk_po,ms_pred,ms_po,m_pred,m_po,j_pred,j_po,firm
     FROM `#stat` WHERE 1 $AND
   ");
   while ( $sr && 
-      list($ido,$vek,$mrop,$stat,$psc,$svatba,$det,$ms,$ms_pred,$ms_po,$m_pred,$m_po,$j_pred,$j_po,$firm)
+      list($ido,$vek,$mrop,$stat,$psc,$svatba,$det,$ms,
+      $lk_pred,$lk_po,$ms_pred,$ms_po,$m_pred,$m_po,$j_pred,$j_po,$firm)
       = pdo_fetch_row($sr) ) {
     $n++;
     $vsichni++;
     // výpočty
     if ( $stat=='CZ' && $psc ) {
-      $x_pred=    $ms_pred+$m_pred+$j_pred;
-      $x_po=      $ms_po+$m_po+$j_po;
+      // napřed na MS? nebo až potom
+      $s_ms_pred+= $lk_pred ? 1 : 0;
+      $s_ms_po+=   $lk_po ? 1 : 0;
+      // další
+      $x_pred=    $lk_pred+$ms_pred+$m_pred+$j_pred;
+      $x_po=      $lk_po+$ms_po+$m_po+$j_po;
       // sumy
       $zenat=     $svatba ? 1 : ($det ? 1 : 0);
       $zenati+=   $zenat;
       $firms+= $firm>0 ? 1 : 0;
       if ( !$zenat )
         $nezenati++;
-      $bez_ms+=   $ms_pred+$ms_po ? 0 : $zenat;
+      $bez_ms+=   $lk_pred+$ms_pred+$lk_po+$ms_po ? 0 : $zenat;
       if ( $ms )
         $ms_org[$ms]++;
       $deti+=     $det ? 1 : 0;
@@ -692,7 +697,8 @@ function sta2_mrop_stat_see($par) { trace();
       $od= $i==0 ? '.' : $meze[$i]+1;
       $do= $i==count($meze)-2 ? '.' : $meze[$i+1];
       $pm= $stari[$i] ? round(100*$stari[$i]/$vsichni) : '-';
-      $pm2= $stari[$i] ? round(100*$m2/$stari[$i]) : '-';
+      $pm2= $pm < 2 ? '(-)'
+          : ($stari[$i] ? round(100*$m2/$stari[$i]) : '-');
       $msg.= "<tr><th>$od..$do</th><td align='right'>$stari[$i]</td>
         <td align='right'>&nbsp;&nbsp;&nbsp;&nbsp;$pm</td>
         <td align='right'>&nbsp;&nbsp;&nbsp;&nbsp;$pm2</td>
@@ -754,6 +760,10 @@ function sta2_mrop_stat_see($par) { trace();
       <br>... FA = $ms_org[2]
       <br>... CPR = $ms_org[4]
       <br>... YS i FA = $ms_org[3]
+      <br>
+      <br><b>kdy na MS</b>
+      <br>... před iniciací = $s_ms_pred
+      <br>... po iniciaci = $s_ms_po
       <br>
       <br><b>děti</b>
       <br>mají děti = $deti
@@ -882,6 +892,7 @@ function sta2_mrop_stat_see($par) { trace();
 # --------------------------------------------------------------------------==> . sta2 mrop stat gen
 # agregace údajů o absolventech MROP
 function sta2_mrop_stat_gen($par) {
+  $ido_test= 0;
   $msg= "<br><br>... vytvoření tabulky #stat";
   // vynulování pracovní tabulky #stat
   query("TRUNCATE TABLE `#stat`");
@@ -921,6 +932,7 @@ function sta2_mrop_stat_gen($par) {
     while ( $mr && 
         list($ido,$access,$name,$vek,$sv1,$sv2,$sv3,$deti,$ido_z,$stat,$psc,$firm)
         = pdo_fetch_row($mr) ) {
+      if ( $ido_test && $ido!=$ido_test ) continue;
       $ms[$ido]= (object)array('name'=>$name,'mrop'=>$mrop);
       // rozbor bydliště
       $stat= str_replace(' ','',$stat);
@@ -948,17 +960,21 @@ function sta2_mrop_stat_gen($par) {
 //  goto end;
   // získání informací o akcích
   $akce_muzi= "24,5,11";
-  $akce_manzele= "1,2,3,4,17,18,22"; // 18 je lektoři & vedoucí MS !!! TODO
+  $akce_manzele= "2,3,4,17,18,22"; // 18 je lektoři & vedoucí MS !!! TODO
   foreach ($ms as $ido=>$m) {
+    if ( $ido_test && $ido!=$ido_test ) continue;
     $ma= pdo_qry("
-      SELECT IF(datum_od<'{$mrops[$mrop]}','_pred','_po'),
-        CASE WHEN druh IN ($akce_manzele) THEN 'ms' 
-             WHEN druh IN ($akce_muzi) THEN 'm' ELSE 'j' END 
+      SELECT IF(datum_od<CONCAT(iniciace,'-09-11'),'_pred','_po'),
+        CASE WHEN druh IN (1) THEN 'lk' 
+             WHEN druh IN ($akce_manzele) THEN 'ms' 
+             WHEN druh IN ($akce_muzi) THEN 'm' 
+             ELSE 'j' END 
       FROM pobyt AS p
       LEFT JOIN akce AS a ON id_akce=id_duakce
       LEFT JOIN spolu AS s USING (id_pobyt)
       JOIN osoba AS o USING (id_osoba)
       WHERE id_osoba=$ido AND spec=0 AND mrop=0
+      ORDER BY datum_od
     ");
     while ( $ma && list($kdy,$druh)= pdo_fetch_row($ma) ) {
       // zápis do #stat
@@ -971,7 +987,7 @@ function sta2_mrop_stat_gen($par) {
       LEFT JOIN akce AS a ON id_akce=id_duakce
       LEFT JOIN spolu AS s USING (id_pobyt)
       JOIN osoba AS o USING (id_osoba)
-      WHERE id_osoba=$ido AND a.druh=1
+      WHERE id_osoba=$ido AND a.druh=1 AND spec=0 
     ");
     while ( $ma && list($n,$org)= pdo_fetch_row($ma) ) {
       // zápis do #stat
