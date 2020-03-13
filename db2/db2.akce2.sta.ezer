@@ -47,7 +47,7 @@ menu m {type:'left', format:'f+', active:*
       ,dsc:'Sestava ukazuje údaje o účastnících na vybraných akcích za uplynulé 4 roky.<br>'
       ,tit:'věk:4,účastníků:10,pečovatelů:10',fld:'_vek,_uca,_pec',ord:'_vek'}}
   }
-  menu ms {title:'STATISTIKA MS',type:'group'                                      skill:'faa:m'
+  menu ms /* ms */ {title:'STATISTIKA MS',type:'group'                                      skill:'faa:m'
     item {title:'Vytvoř #stat_ms'                                 par:°{op:'gen'}  skill:'r|m'}
     item {title:'[fa-birthday-cake] ... jak jsou staří'           par:°{op:'see',typ:'v'} }
     item {title:'[fa-map-o] ... v kterém místě ČR žijí'           par:°{op:'see',typ:'g'} }
@@ -85,13 +85,17 @@ menu m {type:'left', format:'f+', active:*
       [ mapa.modal(490,110,i.par.mapa,0,1) ];
     }
   }
-  menu mr {title:'STATISTIKA MROP' type:'group'                                    skill:'faa:m'
+  menu mr /* mrop */ {title:'STATISTIKA MROP' type:'group'                                    skill:'faa:m'
     item {title:'Vytvoř #psc,#obec,#okres,#kraj'                  par:°{op:'psc'}  skill:'r|m'}   
     item {title:'Vytvoř #stat (dlouhý výpočet)'                   par:°{op:'gen'}  skill:'r|m'}
-    item {title:'[fa-birthday-cake] ... jak jsou staří'           par:°{op:'see',typ:'v'} }
-    item {title:'[fa-map-o] ... v kterém místě ČR žijí'           par:°{op:'see',typ:'g'} }
-    item {title:'[fa-home] ... v jak velké obci žijí'             par:°{op:'see',typ:'o'} }
-    item {title:'[fa-bar-chart] ... info z akcí YS+FA+(CPR/MS)'   par:°{op:'see',typ:'s'} }
+    item {title:'[fa-birthday-cake] ... jak jsou staří'           par:°{op:'see',  typ:'v'} }
+    item {title:' ... ... vývoj v čase'                           par:°{op:'see-t',typ:'v'} }
+    item {title:'[fa-map-o] ... v kterém místě ČR žijí'           par:°{op:'see',  typ:'g'} }
+    item {title:' ... ... vývoj v čase'                           par:°{op:'see-t',typ:'g'} }
+    item {title:'[fa-home] ... v jak velké obci žijí'             par:°{op:'see',  typ:'o'} }
+    item {title:' ... ... vývoj v čase'                           par:°{op:'see-t',typ:'o'} }
+    item {title:'[fa-bar-chart] ... info z akcí YS+FA+(CPR/MS)'   par:°{op:'see',  typ:'s'} }
+    item {title:' ... ... vývoj v čase'                           par:°{op:'see-t',typ:'s'} }
     item {title:'... ročníky, cesty (bez #stat)', par:°{mrop:2002}
       proc onclick (i) {
         mapa.close(1);

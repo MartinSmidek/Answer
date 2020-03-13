@@ -40,7 +40,7 @@ function update_web_changes () {
 }
 /** =======================================================================================> STA2 MS */
 # ------------------------------------------------------------------------------==> . sta2 ms stat
-# kongregace údajů o účastích a účastnících MS
+# agregace údajů o účastích a účastnících MS
 # typ=0 - účasti    => věkové průměry, počty dětí, ročníky MS
 # typ=1 - účastníci => geo-info, příslušnost ke kurzu, iniciace muže ... výhledově cesta akcemi
 function sta2_ms_stat($par) {
@@ -97,13 +97,24 @@ function sta2_ms_stat($par) {
   case 'see': // ------------------------------ statistiky
     $msg= sta2_ms_stat_see($par);
     break;
+  case 'see-t': // ---------------------------- statistiky po letech
+    $delta= 10;
+    $letos= date('Y');
+    $ths= $tds= '';
+    for ($od= 2004; $od<$letos; $od+= $delta) {
+      $do= $rok+$delta-1;
+      $ths.= "<th>$od .. $do</th>";
+      $tds.= sta2_ms_stat_see($par);
+    }
+    $msg= "<table><tr>$ths</tr><tr>$tds</tr></table>";
+    break;
   }  
   return $msg;
 }
 # --------------------------------------------------------------------------==> . sta2 mrop stat gen
-# interpretace údajů o absolventech MROP
+# interpretace údajů o účastnících MS
 # par.typ = posloupnost písmen   g=geo informace s=statistika
-function sta2_ms_stat_see($par) {
+function sta2_ms_stat_see($par) { trace();
   $typ= isset($par->typ) ? $par->typ : '';
   $msg= '';  
   // proměnné pro účasti    typ=0
@@ -248,8 +259,8 @@ function sta2_ms_stat_see($par) {
 //          }
         }
       }
-      $pi= $ucasti ? round(100*$ucasti/$vsichni_1) : '?';
-      $ppm= $lidi[$i] ? round(1000*$ucasti/$lidi[$i],2) : '?';
+      $pi= $ucasti ? round(100*2*$ucasti/$vsichni_1) : '?';
+      $ppm= $lidi[$i] ? round(1000*2*$ucasti/$lidi[$i],2) : '?';
       $msg.= "<tr><th>$od..$do</th>
         <td align='right'>$obce[$i]</td>
         <td align='right'>$ucasti</td>
@@ -258,7 +269,7 @@ function sta2_ms_stat_see($par) {
         <td align='right'>$lidi[$i]</td>
       </tr>";
     }
-    $ppm= round(1000*$s_ucasti/$s_lidi,2);
+    $ppm= round(1000*2*$s_ucasti/$s_lidi,2);
     $msg.= "<tr><th>celkem</th>
       <th align='right'>$s_obce</th>
       <th align='right'>$s_ucasti</th>
@@ -275,8 +286,8 @@ function sta2_ms_stat_see($par) {
     $cr_lidi= 0;
     $kraj_lidi= $kraj_ppn= array();
     $okres_lidi= $okres_ppn= array();
-    foreach ($okres as $k_okres=>$n) {
-      list($k_kraj,$lidi)= select('kod_kraj,lidi','`#okres`',"kod_okres=$k_okres");
+    $sr= pdo_qry("SELECT kod_kraj,kod_okres,lidi FROM `#okres`");
+    while ( $sr && list($k_kraj,$k_okres,$lidi)= pdo_fetch_row($sr)) {
       if ( !isset($kraj_lidi[$k_kraj])) $kraj_lidi[$k_kraj]= 0;
       $cr_lidi+= $lidi;
       $kraj_lidi[$k_kraj]+= $lidi;
@@ -360,7 +371,7 @@ end:
 }
 /** =====================================================================================> STA2 MROP */
 # ------------------------------------------------------------------------------==> . sta2 mrop stat
-# kongregace údajů o absolventech MROP
+# agregace údajů o absolventech MROP
 function sta2_mrop_stat($par) {
   global $ezer_path_docs;
   $msg= '';  
@@ -368,8 +379,24 @@ function sta2_mrop_stat($par) {
   case 'gen':
     $msg= sta2_mrop_stat_gen($par);
     break;
-  case 'see':
+  case 'see':   // ---------------------------- statistiky
     $msg= sta2_mrop_stat_see($par);
+    break;
+  case 'see-t': // ---------------------------- statistiky po letech
+    $delta= 8;
+    $delta= 4;
+//    $delta= 2;
+//    $delta= 1;
+    $letos= date('Y');
+    $ths= $tds= '';
+    for ($od= 2004; $od<$letos; $od+= $delta) {
+      $do= $od+$delta-1;
+      $par->od= $od;
+      $par->do= $do;
+      $ths.= "<th>$od .. $do</th>";
+      $tds.= "<td style='vertical-align:top'>".sta2_mrop_stat_see($par)."</td>";
+    }
+    $msg= "<table><tr>$ths</tr><tr>$tds</tr></table>";
     break;
   // načtení tabulky #psc   (psc,kod_obec,kod_okres,kod_kraj)
   // a tabulky       #okres (kod_okres,kod_kraj,nazev)
@@ -574,12 +601,14 @@ end:
 # --------------------------------------------------------------------------==> . sta2 mrop stat gen
 # interpretace údajů o absolventech MROP
 # par.typ = posloupnost písmen   g=geo informace s=statistika
-function sta2_mrop_stat_see($par) {
+# par.od-do = pokud je zadáno, omezuje to statistiku na období <od,do)
+function sta2_mrop_stat_see($par) { trace();
   $typ= isset($par->typ) ? $par->typ : '';
   $msg= '';  
+  $main= "style='background:yellow'"; // styl hlavního sloupce
   $n= 0;
   $cr_inic= $vsichni= 0;
-  $pred= $po= $bez_ms= 0;
+  $pred= $po= $bez_ms= $firms= 0;
   $jen_pred= $jen_po= $jen_mrop= $pred_i_po= 0;
   $zenati= $nezenati= $nezenati_znami= $jen_mrop_zenati= 0;
   $svatba_po= $svatba_pred= 0;
@@ -587,12 +616,14 @@ function sta2_mrop_stat_see($par) {
   $ms_org= array(0,0,0,0,0);
   $cizinci= 0;
   $okres= $kraj= $pscs= $mss= array();
+  $AND= isset($par->od) ? (
+      $par->od==$par->do ? "AND $par->od=mrop" : "AND $par->od<=mrop AND mrop<$par->do") : '';
   $sr= pdo_qry("
-    SELECT id_osoba,vek,mrop,stat,psc,svatba,deti,ms,ms_pred,ms_po,m_pred,m_po,j_pred,j_po
-    FROM `#stat`
+    SELECT id_osoba,vek,mrop,stat,psc,svatba,deti,ms,ms_pred,ms_po,m_pred,m_po,j_pred,j_po,firm
+    FROM `#stat` WHERE 1 $AND
   ");
   while ( $sr && 
-      list($ido,$vek,$mrop,$stat,$psc,$svatba,$det,$ms,$ms_pred,$ms_po,$m_pred,$m_po,$j_pred,$j_po)
+      list($ido,$vek,$mrop,$stat,$psc,$svatba,$det,$ms,$ms_pred,$ms_po,$m_pred,$m_po,$j_pred,$j_po,$firm)
       = pdo_fetch_row($sr) ) {
     $n++;
     $vsichni++;
@@ -603,6 +634,7 @@ function sta2_mrop_stat_see($par) {
       // sumy
       $zenat=     $svatba ? 1 : ($det ? 1 : 0);
       $zenati+=   $zenat;
+      $firms+= $firm>0 ? 1 : 0;
       if ( !$zenat )
         $nezenati++;
       $bez_ms+=   $ms_pred+$ms_po ? 0 : $zenat;
@@ -649,12 +681,12 @@ function sta2_mrop_stat_see($par) {
     $stari= array();
     $s_inic= $s_ms= 0;
     // zobrazení
-    $msg.= "<b>Celkem $cr_inic iniciovaných mužů z ČR</b>";
+    $msg.= "<b>$cr_inic iniciovaných z ČR</b>";
     $msg.= "<h3>Iniciovaní podle věku</h3>
       <table class='stat'><tr><th>věk</th><th>počet</th><th>%</th><th>% MS</th></tr>";
     for ($i=0; $i<count($meze)-1; $i++) {
       list($m,$m2)= select('COUNT(*),SUM(IF(ms>0,1,0))','`#stat`',
-          "stat='CZ' AND vek >= $meze[$i] AND vek < {$meze[$i+1]}");
+          "stat='CZ' AND vek >= $meze[$i] AND vek < {$meze[$i+1]} $AND ");
       $s_inic+= $stari[$i]= $m;
       $s_ms+= $m2;
       $od= $i==0 ? '.' : $meze[$i]+1;
@@ -666,8 +698,8 @@ function sta2_mrop_stat_see($par) {
         <td align='right'>&nbsp;&nbsp;&nbsp;&nbsp;$pm2</td>
       </tr>";
     }
-    $pm= round(100*$s_inic/$vsichni);
-    $pm2= round(100*$s_ms/$s_inic);
+    $pm= $vsichni ? round(100*$s_inic/$vsichni) : '-';
+    $pm2= $s_inic ? round(100*$s_ms/$s_inic) : '-';
     $msg.= "<tr><th>celkem</th><th align='right'>$s_inic</th>
       <th align='right'>&nbsp;&nbsp;&nbsp;&nbsp;$pm</th>
       <th align='right'>&nbsp;&nbsp;&nbsp;&nbsp;$pm2</th>
@@ -681,7 +713,7 @@ function sta2_mrop_stat_see($par) {
     $sr= pdo_qry("
       SELECT id_osoba,vek,mrop,note,svatba
       FROM `#stat`
-      WHERE stat='CZ' AND ms_pred=0 AND ms_po=0 
+      WHERE stat='CZ' AND ms_pred=0 AND ms_po=0 $AND
     ");
     while ( $sr && list($ido,$vek,$mrop,$note,$svatba)= pdo_fetch_row($sr) ) {
       $no_ms++;
@@ -702,7 +734,7 @@ function sta2_mrop_stat_see($par) {
     }
     $bez_ms-= $ms_cpr;
   }
-  // ------------------------------ statistické informce YS + FA
+  // ------------------------------ statistické informce YS + FA + (CPR)
   if ( strstr($typ,'s')) {
     $x1= $nezenati-$nezenati_znami;
     $msg.= "<b>Celkem $n iniciovaných mužů z toho $cizinci cizinci</b>
@@ -731,6 +763,7 @@ function sta2_mrop_stat_see($par) {
       <br>byl pouze na akcích před MROP = $jen_pred 
       <br>... pouze na akcích po MROP = $jen_po 
       <br>... byl na akcích před i po = $pred_i_po
+      <br>... byl na firmingu = $firms
       <br>nebyl na žádné akci mimo MROP = $jen_mrop
       <br>
       <br><i>Poznámka: akcí se rozumí akce pořádaná YS a MS (mimo MROP), případně MS pořádané CPR</i>
@@ -743,8 +776,9 @@ function sta2_mrop_stat_see($par) {
     $cr_muzi= 0;
     $kraj_muzi= $kraj_ppn= array();
     $okres_muzi= $okres_ppn= array();
-    foreach ($okres as $k_okres=>$n) {
-      list($k_kraj,$muzu)= select('kod_kraj,muzi','`#okres`',"kod_okres=$k_okres");
+    $sr= pdo_qry("SELECT kod_kraj,kod_okres,muzi FROM `#okres`");
+    while ( $sr && list($k_kraj,$k_okres,$muzu)= pdo_fetch_row($sr)) {
+      $n= isset($okres[$k_okres]) ? $okres[$k_okres] : 0;
       if ( !isset($kraj_muzi[$k_kraj])) $kraj_muzi[$k_kraj]= 0;
       $cr_muzi+= $muzu;
       $kraj_muzi[$k_kraj]+= $muzu;
@@ -799,8 +833,10 @@ function sta2_mrop_stat_see($par) {
       $pms= $inic ? round(100*$ms_inic/$inic) : '?';
       $pi= $inic ? round(100*$inic/$cr_inic) : '?';
       $msg.= "<tr><th>$od..$do</th><td align='right'>$obce[$i]</td>
-        <td align='right'>$inic</td><td align='right'>$pi</td>
-        <td>&nbsp;&nbsp;&nbsp;&nbsp;$ppm</td><td align='right'>$muzi[$i]</td>
+        <td align='right'>$inic</td>
+        <td align='right' $main>$pi</td>
+        <td>&nbsp;&nbsp;&nbsp;&nbsp;$ppm</td>
+        <td align='right'>$muzi[$i]</td>
         <td>&nbsp;&nbsp;&nbsp;&nbsp;$pms</td>
       </tr>";
     }
@@ -844,7 +880,7 @@ function sta2_mrop_stat_see($par) {
   return $msg;
 }
 # --------------------------------------------------------------------------==> . sta2 mrop stat gen
-# kongregace údajů o absolventech MROP
+# agregace údajů o absolventech MROP
 function sta2_mrop_stat_gen($par) {
   $msg= "<br><br>... vytvoření tabulky #stat";
   // vynulování pracovní tabulky #stat
@@ -871,7 +907,8 @@ function sta2_mrop_stat_gen($par) {
         SUM(IF(td.id_osoba,1,0)) AS _d,
         IFNULL(tb.id_osoba,0) AS _ido_z,
         IF(o.adresa=1,o.stat,r.stat) AS _stat,
-        IF(o.adresa=1,o.psc,r.psc) AS _psc
+        IF(o.adresa=1,o.psc,r.psc) AS _psc,
+        o.firming
       FROM osoba AS o
       LEFT JOIN tvori AS ta ON ta.id_osoba=o.id_osoba AND ta.role='a'
       JOIN rodina AS r ON r.id_rodina=ta.id_rodina
@@ -882,7 +919,7 @@ function sta2_mrop_stat_gen($par) {
       GROUP BY o.id_osoba
     ");
     while ( $mr && 
-        list($ido,$access,$name,$vek,$sv1,$sv2,$sv3,$deti,$ido_z,$stat,$psc)
+        list($ido,$access,$name,$vek,$sv1,$sv2,$sv3,$deti,$ido_z,$stat,$psc,$firm)
         = pdo_fetch_row($mr) ) {
       $ms[$ido]= (object)array('name'=>$name,'mrop'=>$mrop);
       // rozbor bydliště
@@ -904,8 +941,8 @@ function sta2_mrop_stat_gen($par) {
       if ( !$sv && $ido_z ) {
         $sv= $sv3 ? $sv3-1 : 9999;
       }
-      query("INSERT INTO `#stat` (id_osoba,access,mrop,stat,psc,vek,svatba,deti,note) 
-        VALUE ($ido,$access,$mrop,'$stat','$psc','$vek',$sv,$deti,'$name')");
+      query("INSERT INTO `#stat` (id_osoba,access,mrop,firm,stat,psc,vek,svatba,deti,note) 
+        VALUE ($ido,$access,$mrop,$firm,'$stat','$psc','$vek',$sv,$deti,'$name')");
     }
   }
 //  goto end;
