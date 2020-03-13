@@ -380,7 +380,8 @@ function sta2_mrop_stat($par) {
     $msg= sta2_mrop_stat_gen($par);
     break;
   case 'see':   // ---------------------------- statistiky
-    $msg= sta2_mrop_stat_see($par);
+    $msg= sta2_mrop_stat_see($par,$title);
+    $msg= $title.$msg;
     break;
   case 'see-t': // ---------------------------- statistiky po letech
     $delta= 8;
@@ -388,15 +389,16 @@ function sta2_mrop_stat($par) {
 //    $delta= 2;
 //    $delta= 1;
     $letos= date('Y');
+    $title= '';
     $ths= $tds= '';
     for ($od= 2004; $od<$letos; $od+= $delta) {
       $do= $od+$delta-1;
       $par->od= $od;
       $par->do= $do;
-      $ths.= "<th><h2>$od .. $do</h2></th>";
-      $tds.= "<td style='vertical-align:top'>".sta2_mrop_stat_see($par)."</td>";
+      $ths.= "<th><h3>$od .. $do</h3></th>";
+      $tds.= "<td style='vertical-align:top'>".sta2_mrop_stat_see($par,$title)."</td>";
     }
-    $msg= "<table><tr>$ths</tr><tr>$tds</tr></table>";
+    $msg= "<div>$title</div><table><tr>$ths</tr><tr>$tds</tr></table>";
     break;
   // načtení tabulky #psc   (psc,kod_obec,kod_okres,kod_kraj)
   // a tabulky       #okres (kod_okres,kod_kraj,nazev)
@@ -602,7 +604,8 @@ end:
 # interpretace údajů o absolventech MROP
 # par.typ = posloupnost písmen   g=geo informace s=statistika
 # par.od-do = pokud je zadáno, omezuje to statistiku na období <od,do)
-function sta2_mrop_stat_see($par) { trace();
+# do title se píše univerzální nadpis a poznámka (společná pro vývooj v čase)
+function sta2_mrop_stat_see($par,&$title) { trace();
   $typ= isset($par->typ) ? $par->typ : '';
   $msg= '';  
   $main= "style='background:yellow'"; // styl hlavního sloupce
@@ -679,24 +682,29 @@ function sta2_mrop_stat_see($par) { trace();
     }
     else $cizinci++;
   }
-  // ------------------------------ podle věku
+  // ------------------------------ podle věku 
+  // údaj % MS znamená byl na MS před iniciací
   if ( strstr($typ,'v')) {
     $meze= array(10,20,30,40,50,60,70,80,90,99);
     $meze= array(15,20,25,30,35,40,45,50,55,60,65,70,75,80,85,90,95,99);
     $stari= array();
     $s_inic= $s_ms= 0;
+    // titulek
+    $title= "<h3>Iniciovaní podle věku</h3><i>
+      sloupec % je procento z celkem iniciovaných, 
+      <br>sloupec %MS jen procento těch, kteří před iniciací byli účastníky MS
+      </i><br><br>";
     // zobrazení
-    $msg.= "<b>$cr_inic iniciovaných z ČR</b>";
-    $msg.= "<h3>Iniciovaní podle věku</h3>
+    $msg.= "<b>$cr_inic iniciovaných z ČR</b><br>
       <table class='stat'><tr><th>věk</th><th>počet</th><th>%</th><th>% MS</th></tr>";
     for ($i=0; $i<count($meze)-1; $i++) {
-      list($m,$m2)= select('COUNT(*),SUM(IF(ms>0,1,0))','`#stat`',
+      list($m,$m2)= select('COUNT(*),SUM(IF(lk_pred>0,1,0))','`#stat`',
           "stat='CZ' AND vek >= $meze[$i] AND vek < {$meze[$i+1]} $AND ");
       $s_inic+= $stari[$i]= $m;
       $s_ms+= $m2;
       $od= $i==0 ? '.' : $meze[$i]+1;
       $do= $i==count($meze)-2 ? '.' : $meze[$i+1];
-      $pm= $stari[$i] ? round(100*$stari[$i]/$vsichni) : '-';
+      $pm= $stari[$i] ? round(100*$stari[$i]/$cr_inic) : '-';
       $pm2= $pm < 2 ? '(-)'
           : ($stari[$i] ? round(100*$m2/$stari[$i]) : '-');
       $msg.= "<tr><th>$od..$do</th><td align='right'>$stari[$i]</td>
@@ -704,7 +712,7 @@ function sta2_mrop_stat_see($par) { trace();
         <td align='right'>&nbsp;&nbsp;&nbsp;&nbsp;$pm2</td>
       </tr>";
     }
-    $pm= $vsichni ? round(100*$s_inic/$vsichni) : '-';
+    $pm= $cr_inic ? round(100*$s_inic/$cr_inic) : '-';
     $pm2= $s_inic ? round(100*$s_ms/$s_inic) : '-';
     $msg.= "<tr><th>celkem</th><th align='right'>$s_inic</th>
       <th align='right'>&nbsp;&nbsp;&nbsp;&nbsp;$pm</th>
@@ -775,8 +783,9 @@ function sta2_mrop_stat_see($par) { trace();
       <br>... byl na akcích před i po = $pred_i_po
       <br>... byl na firmingu = $firms
       <br>nebyl na žádné akci mimo MROP = $jen_mrop
-      <br>
-      <br><i>Poznámka: akcí se rozumí akce pořádaná YS a MS (mimo MROP), případně MS pořádané CPR</i>
+      <br>";
+    $title= "<h2>Iniciovaní muži - přehled</h2><i>Poznámka: 
+      akcí se rozumí akce pořádaná YS a MS (mimo MROP), případně MS pořádané CPR</i>
      ";
 //      <br>celkem účastí na akcích před = $pred 
 //      <br>celkem účastí na akcí po = $po
@@ -800,7 +809,7 @@ function sta2_mrop_stat_see($par) { trace();
     arsort($kraj_ppn);
     // geo ČR
     $ppm= round(1000*$cr_inic/$cr_muzi,2);
-    $msg.= "<h3>Iniciovaní v ČR - $cr_inic tj. $ppm ‰ mužů z $cr_muzi</h3>";
+    $msg.= "<div>celkem $cr_inic tj. $ppm ‰ iniciovaných</div>";
   }
   // ------------------------------ podle velikosti obcí
   if ( strstr($typ,'o')) {
@@ -809,8 +818,18 @@ function sta2_mrop_stat_see($par) { trace();
     $meze= array(0,290,576,1084,2230,4650,9700,21200,46600,300000,1000000);
     $muzi= $obce= $ms= array();
     $s_muzi= $s_inic= $s_obce= $s_ms= 0;
-    $msg.= "<h3>Iniciovaní podle velikosti obce</h3>
-      <table class='stat'><tr><th>velikost obce</th><th>počet</th>
+    $title= "<h2>Iniciovaní podle velikosti obce</h2><i>
+      sloupec <b>velikost obce</b> zobrazuje meze počtu mužů žijících v obci
+      <br>sloupec <b>počet</b> je počet takových obcí
+      <br>sloupec <b>inic.</b> je počet iniciovaných v takových obcích
+      <br>žlutý sloupec <b>%</b> je procento z celkem iniciovaných (v daném období)
+      <br>sloupec <b>‰</b> je promile iniciovaných mužů v takových obcích
+      <br>sloupec <b>z mužů</b> je počet mužů v takových obcích (meze jsou proto tak kostrbaté aby byly počty srovnatelné)
+      <br>sloupec <b>% MS</b> je procento absolventů MS (je jedno jestli před nebo po iniciaci)
+      <br><br>Poznámka: odchylka v počtu mužů podle obcí a PSČ vznikla tím,
+      že tabulka okresu je z roku 2018, tabulka PSČ a obcí z roku 2020 </i>
+      <br><br>";
+    $msg.= "<br><table class='stat'><tr><th>velikost obce</th><th>počet</th>
       <th>inic.</th><th>%</th>
       <th> ‰ </th><th>z mužů</th><th>% MS</th></tr>";
     // výpočet počtu mužů v obcích dané velikosti
@@ -858,14 +877,16 @@ function sta2_mrop_stat_see($par) { trace();
       <th align='right'>&nbsp;&nbsp;&nbsp;&nbsp;$pms</th>  
     </tr>";
     $msg.= "</table>";
-    $msg.= "<br><br><i>Poznámka: odchylka v počtu mužů podle obcí a PSČ vznikla tím,
-      že tabulka okresu je z roku 2018, tabulka PSČ a obcí z roku 2020 </i>";
   }
   // ------------------------------ iniciovaní okresů a krajů
   if ( strstr($typ,'g')) {
+    // titulek
+    $title= "<h2>Iniciovaní v krajích a okresech ČR</h2><i>
+      sloupec ‰ je promile iniciovaných z mužů v daném kraji nebo okresu, 
+      <br>podle tohoto údaje je tabulka také seřazena (v ČR žije $cr_muzi mužů)
+      </i><br><br>";
     // geo tabulka krajů
-    $msg.= "<h3>Iniciovaní v krajích ČR</h3>
-      <table class='stat'><tr><th>kraj</th><th>iniciovaní</th><th> ‰ mužů kraje</th></tr>";
+    $msg.= "<table class='stat'><tr><th>kraj</th><th>iniciovaní</th><th> ‰ mužů kraje</th></tr>";
     foreach ($kraj_ppn as $k_kraj=>$ppn) {
       $nazev= select('nazev','`#kraj`',"kod_kraj=$k_kraj");
       $n= $kraj[$k_kraj];
