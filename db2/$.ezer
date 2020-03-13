@@ -144,10 +144,10 @@ menu db2 { type:'main', title:'db2', active:*, _sys:'*'
 
 }
 // univerzální formulář pro levostranné menu
-form right [,,700,50] {
-  label info [0,0,680,600] { title:'' }
-  label head [0,0,680,50]  { title:'' }
-  label note [0,50,680,550] { title:'' }
+form right [,,*,*] {
+  label info [0,0,*,600] { title:'' style:'padding-right:10px'}
+  label head [0,0,*,50]  { title:'' style:'padding-right:10px'}
+  label note [0,50,,*] { title:'' style:'padding-right:10px;width:calc(100% - 15px)'}
   proc Set(x) {
     head.set(''); note.set(''); info.set(x)
   }
