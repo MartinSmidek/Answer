@@ -1,3 +1,4 @@
+#pragma test
 # ------------------------------------------------------------------------------------------------ #
 # Karta pro výběr akce                                                                             #
 #                                                                                                  #
@@ -254,8 +255,10 @@ form _page [,,275,360] {
   field datum_od [18,133,83,] { tag:'cor', title:'^začátek *', type:'date', data:akce.datum_od }
   field [118,133,83,] { tag:'cor', title:'^ukončení', type:'date', data:akce.datum_do }
   check [213,166,90,] { tag:'cor', title:'jen seznam', data:akce.spec }
-  check mrop [300,166,90,] { tag:'cor', title:'mrop', data:akce.mrop, title:'mrop', skill:'faan|faa:m' }
-  check firm [300,186,90,] { tag:'cor', title:'firm', data:akce.firm, title:'firming', skill:'faan|faa:m' }
+  check mrop [300,166,60,] { tag:'cor', title:'mrop', data:akce.mrop, title:'mrop', skill:'faan|faa:m' }
+  check firm [300,186,60,] { tag:'cor', title:'firm', data:akce.firm, title:'firming', skill:'faan|faa:m' }
+  select [367,167,89,] { tag:'cor', title:'^statistika', type:'map0', data:akce.statistika,
+    options:ms_akce_stat.zkratka, format:'n' }
   select [71,169,139,] { tag:'cor', title:'typ akce *', type:'map', data:akce.druh,
     options:ms_akce_typ.zkratka, format:'n' }
   radio [213,117,86,35] { tag:'cor', data:akce.strava_oddo, value:'vo'
@@ -800,6 +803,8 @@ form _info [,,*,50] {
       expr:"SUM((SELECT COUNT(*) FROM spolu WHERE id_pobyt=pa.id_pobyt AND funkce=99))"}
     show od    [,,65,] {title:'od',     data:ga.g_od, format:'rsq*'}
     show do    [,,65,] {title:'do',     data:ga.g_do, format:'rsq*'}
+    show stat  [,,0,] {title:'stat.',   data:da.statistika, map_pipe:ms_akce_stat.zkratka, format:'sq#'}
+    proc onclick() { stat.width; stat.width(0); do.width(65) | stat.width(65); do.width(0) }
     proc onsubmit() { pracovni }
     proc onrowclick() { page.show_akce(id_akce.get); }
     menu { type:'context'
@@ -847,6 +852,7 @@ form _info [,,*,50] {
     show web_k { data:da2.web_kalendar }
     show web_p { data:da2.web_prihlasky }
     show web_o { expr:"da2.web_obsazeno OR IF(da2.web_maximum,da2.web_maximum<=SUM((SELECT 1 FROM pobyt WHERE id_pobyt=pa2.id_pobyt AND funkce!=99)),0)" }
+    show web_m { expr:"IF(da2.mrop OR da2.firm,1,0)" }
     show SF [,,20,] {title:'SF', expr:"IF(da2.access=1,'S',IF(da2.access=2,'F','?'))"
       help:"pořádá S=YMCA Setkání, F=YMCA Familia"
       css_cell:'org,0:,1:ezer_ys,2:ezer_fa,3:ezer_db', format:'rsq*' }
@@ -867,6 +873,14 @@ form _info [,,*,50] {
       css_cell:'web_k,0:,1:azurovy' }
     show do    [,,65,] {title:'do',     data:da2.datum_do, format:'rsq*'
       css_cell:'web_k,0:,1:azurovy' }
+    show stat  [,,0,] {title:'stat.',    data:da2.statistika, map_pipe:ms_akce_stat.zkratka, format:'sq#'
+      css_cell:'web_m,0:,1:zluty' }
+    show zen   [,,0,] {title:'žen', format:'rtsq=', help:'počet žen',
+      expr:"SUM((SELECT IF(COUNT(*)>0,1,0) FROM spolu JOIN pobyt USING (id_pobyt) JOIN osoba USING (id_osoba) WHERE id_pobyt=pa2.id_pobyt AND sex=2 AND funkce=0))" }
+    proc onclick() { 
+      stat.width; stat.width(0); zen.width(0) ; do.width(65)
+    | stat.width(35); zen.width(29); do.width(0)
+    }
     proc onchange() {
       [ has_skill('yas'); page.DocBrowse ]
     }
@@ -988,4 +1002,5 @@ panel ANOTACE [0,0,645,520] { title:' Úprava textu anotace', type:'popup', css:
 map akce_cenik:  table akce {where:"ma_cenik=1", order:'datum_od', key_id:'id_duakce'}
 map akce_slozka: table _cis {where:"druh='akce_slozka'", order:'poradi', key_id:'data'}
 map ms_cenik_verze: table _cis {where:"druh='ms_cenik_verze'", order:'poradi', key_id:'data'}
+map ms_akce_stat:   table _cis {where:"druh='ms_akce_stat'", order:'poradi', key_id:'data'}
 map akce_garant:    table _cis {where:"druh='akce_garant'", order:'poradi', key_id:'data'}
