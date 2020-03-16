@@ -2503,7 +2503,7 @@ function akce2_vzorec_2017_0($id_pobyt,$id_akce) {  //trace();
   $ret->navrh= $html;
   $ret->mail= "<div style='background-color:#eeeeee;margin-left:15px'>$html</div>";
 end:
-                                                        debug($ret);
+//                                                        debug($ret);
   if ( $ret->err ) $ret->navrh= $ret->err;
   return $ret;
 }//akce2_vzorec_2017_0 EXPERIMENT
@@ -2528,7 +2528,7 @@ function ucast2_clipboard($idp) {
     }
   }
 end:
-                                                        debug($y,$idp);
+//                                                        debug($y,$idp);
   return $y;
 }
 # ------------------------------------------------------------------------------ ucast2_pobyt_access
@@ -5729,7 +5729,8 @@ function akce2_sestava_td_style($fmt) {
 # ======================================================================================> . přehledy
 # ------------------------------------------------------------------------------ akce2 cerstve_zmeny
 # generování seznamu změn v pobytech na akci od par-datetime
-function akce2_cerstve_zmeny($akce,$par,$title,$vypis,$export=false) { debug($par,"akce2_cerstve_zmeny");
+function akce2_cerstve_zmeny($akce,$par,$title,$vypis,$export=false) { 
+//                                            debug($par,"akce2_cerstve_zmeny");
   $result= (object)array('html'=>'');
 //  $od= $par->datetime= "2013-09-25 18:00";
   $od= '';
@@ -8587,8 +8588,8 @@ function evid2_elim_tips($type) {
   }
   if ( !$qry ) goto end;
   // vlastní prohledání
-  $ids= "o.id_osoba IN "; $del= "(";
-  $tip= "CASE id_osoba ";
+  $ids= ""; $del= "(";
+  $tip= "";
   $zs= pdo_qry($qry);
   while ($zs && (list($id,$tips)= pdo_fetch_row($zs))) {
     $ids.= "$del $id,$tips"; $del= ",";
@@ -8597,8 +8598,8 @@ function evid2_elim_tips($type) {
       $tip.= " WHEN $tp THEN '$id'";
     }
   }
-  $ret->ids= "$ids )";
-  $ret->tip= "$tip ELSE 0 END";
+  $ret->ids= $ids ? "o.id_osoba IN $ids )" : '0';
+  $ret->tip= $tip ? "CASE id_osoba $tip ELSE 0 END" : 0;
 end:
   return $ret;
 }
@@ -9435,7 +9436,7 @@ function mapa2_psc($psc,$obec,$psc_as_id=0,$icon='') {
     }
   }
   $ret= (object)array('mark'=>$marks,'n'=>$n,'err'=>$err,'chybi'=>$chybi);
-                                                    debug($chybi,"chybějící PSČ");
+//                                                    debug($chybi,"chybějící PSČ");
   return $ret;
 }
 # ------------------------------------------------------------------------------==> .. mapa2 psc_set
@@ -14377,7 +14378,7 @@ function db2_smaz_tvori($idt,$barva='red') {
 /** ========================================================================================> GROUPS **/
 # ----------------------------------------------------------------------------------------- grp_read
 # par.file = stáhnutý soubor
-function grp_read($par) {  trace(); debug($par);
+function grp_read($par) {  trace(); //debug($par);
   mb_internal_encoding("UTF-8");
   $html= $msg= '';
   $r= " align='right'";

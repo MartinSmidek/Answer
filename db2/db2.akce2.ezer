@@ -280,6 +280,7 @@ table akce { key_id:'id_duakce'
   text nazev
   text misto
   number druh
+  number statistika
   number poradatel
   date datum_od    { sql_pipe:'sql_date1'}    // SQL tvar se používá v ys.akce
   date datum_do    { sql_pipe:'sql_date1'}

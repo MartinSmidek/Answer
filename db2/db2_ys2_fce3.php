@@ -609,78 +609,80 @@ function sta2_mrop_stat_see($par,&$title) { trace();
   $typ= isset($par->typ) ? $par->typ : '';
   $msg= '';  
   $main= "style='background:yellow'"; // styl hlavního sloupce
-  $n= 0;
-  $cr_inic= $vsichni= 0;
-  $pred= $po= $bez_ms= $firms= 0;
-  $s_ms_pred= $s_ms_po= $jen_pred= $jen_po= $jen_mrop= $pred_i_po= 0;
-  $zenati= $nezenati= $nezenati_znami= $jen_mrop_zenati= 0;
-  $svatba_po= $svatba_pred= 0;
-  $deti= $deti3plus= 0;
-  $ms_org= array(0,0,0,0,0);
-  $cizinci= 0;
-  $okres= $kraj= $pscs= $mss= array();
   $AND= isset($par->od) ? (
       $par->od==$par->do ? "AND $par->od=mrop" : "AND $par->od<=mrop AND mrop<$par->do") : '';
-  $sr= pdo_qry("
-    SELECT id_osoba,vek,mrop,stat,psc,svatba,deti,ms,lk_pred,lk_po,ms_pred,ms_po,m_pred,m_po,j_pred,j_po,firm
-    FROM `#stat` WHERE 1 $AND
-  ");
-  while ( $sr && 
-      list($ido,$vek,$mrop,$stat,$psc,$svatba,$det,$ms,
-      $lk_pred,$lk_po,$ms_pred,$ms_po,$m_pred,$m_po,$j_pred,$j_po,$firm)
-      = pdo_fetch_row($sr) ) {
-    $n++;
-    $vsichni++;
-    // výpočty
-    if ( $stat=='CZ' && $psc ) {
-      // napřed na MS? nebo až potom
-      $s_ms_pred+= $lk_pred ? 1 : 0;
-      $s_ms_po+=   $lk_po ? 1 : 0;
-      // další
-      $x_pred=    $lk_pred+$ms_pred+$m_pred+$j_pred;
-      $x_po=      $lk_po+$ms_po+$m_po+$j_po;
-      // sumy
-      $zenat=     $svatba ? 1 : ($det ? 1 : 0);
-      $zenati+=   $zenat;
-      $firms+= $firm>0 ? 1 : 0;
-      if ( !$zenat )
-        $nezenati++;
-      $bez_ms+=   $lk_pred+$ms_pred+$lk_po+$ms_po ? 0 : $zenat;
-      if ( $ms )
-        $ms_org[$ms]++;
-      $deti+=     $det ? 1 : 0;
-      $deti3plus+=$det>=3 ? 1 : 0;
-      $nezenati_znami+=   $zenat ? 0 : ( $x_pred+$x_po ? 1 : 0);
-      $pred+=     $x_pred;
-      $po+=       $x_po;
-      $jen_pred+= $x_po   ? 0 : ($x_pred ? 1 : 0);
-      $jen_po+=   $x_pred ? 0 : ($x_po   ? 1 : 0);
-      $jen_mrop+= $x_pred+$x_po ? 0 : 1;
-      $jen_mrop_zenati+= $x_pred+$x_po ? 0 : ($svatba ? 1 : 0);
-      $pred_i_po+= $x_pred && !$x_po || !$x_pred && $po ? 1 : 0;
-      $svatba_po+=   $svatba<2222 && $svatba>$mrop ? 1 : 0;
-      $svatba_pred+= $svatba>0 && $svatba<=$mrop ? 1 : 0;
-      $svatba_nevime+= $svatba ? 0 : ($det ? 1 : 0);
-      // geo informace
-      if ( !isset($pscs[$psc]) ) $pscs[$psc]= 0;
-      $pscs[$psc]++;
-      if ( $ms ) {
-        if ( !isset($mss[$psc]) ) $mss[$psc]= 0;
-        $mss[$psc]++;
+  if ( $typ!='x') {
+    $n= 0;
+    $cr_inic= $vsichni= 0;
+    $pred= $po= $bez_ms= $firms= 0;
+    $s_ms_pred= $s_ms_po= $jen_pred= $jen_po= $jen_mrop= $pred_i_po= 0;
+    $zenati= $nezenati= $nezenati_znami= $jen_mrop_zenati= 0;
+    $svatba_po= $svatba_pred= 0;
+    $deti= $deti3plus= 0;
+    $ms_org= array(0,0,0,0,0);
+    $cizinci= 0;
+    $okres= $kraj= $pscs= $mss= array();
+    $sr= pdo_qry("
+      SELECT id_osoba,vek,mrop,stat,psc,svatba,deti,ms,lk_pred,lk_po,ms_pred,ms_po,m_pred,m_po,j_pred,j_po,firm
+      FROM `#stat` WHERE 1 $AND
+    ");
+    while ( $sr && 
+        list($ido,$vek,$mrop,$stat,$psc,$svatba,$det,$ms,
+        $lk_pred,$lk_po,$ms_pred,$ms_po,$m_pred,$m_po,$j_pred,$j_po,$firm)
+        = pdo_fetch_row($sr) ) {
+      $n++;
+      $vsichni++;
+      // výpočty
+      if ( $stat=='CZ' && $psc ) {
+        // napřed na MS? nebo až potom
+        $s_ms_pred+= $lk_pred ? 1 : 0;
+        $s_ms_po+=   $lk_po ? 1 : 0;
+        // další
+        $x_pred=    $lk_pred+$ms_pred+$m_pred+$j_pred;
+        $x_po=      $lk_po+$ms_po+$m_po+$j_po;
+        // sumy
+        $zenat=     $svatba ? 1 : ($det ? 1 : 0);
+        $zenati+=   $zenat;
+        $firms+= $firm>0 ? 1 : 0;
+        if ( !$zenat )
+          $nezenati++;
+        $bez_ms+=   $lk_pred+$ms_pred+$lk_po+$ms_po ? 0 : $zenat;
+        if ( $ms )
+          $ms_org[$ms]++;
+        $deti+=     $det ? 1 : 0;
+        $deti3plus+=$det>=3 ? 1 : 0;
+        $nezenati_znami+=   $zenat ? 0 : ( $x_pred+$x_po ? 1 : 0);
+        $pred+=     $x_pred;
+        $po+=       $x_po;
+        $jen_pred+= $x_po   ? 0 : ($x_pred ? 1 : 0);
+        $jen_po+=   $x_pred ? 0 : ($x_po   ? 1 : 0);
+        $jen_mrop+= $x_pred+$x_po ? 0 : 1;
+        $jen_mrop_zenati+= $x_pred+$x_po ? 0 : ($svatba ? 1 : 0);
+        $pred_i_po+= $x_pred && !$x_po || !$x_pred && $po ? 1 : 0;
+        $svatba_po+=   $svatba<2222 && $svatba>$mrop ? 1 : 0;
+        $svatba_pred+= $svatba>0 && $svatba<=$mrop ? 1 : 0;
+        $svatba_nevime+= $svatba ? 0 : ($det ? 1 : 0);
+        // geo informace
+        if ( !isset($pscs[$psc]) ) $pscs[$psc]= 0;
+        $pscs[$psc]++;
+        if ( $ms ) {
+          if ( !isset($mss[$psc]) ) $mss[$psc]= 0;
+          $mss[$psc]++;
+        }
+        $cr_inic++;
+        list($k_obec,$k_okres,$k_kraj)= select('kod_obec,kod_okres,kod_kraj','`#psc`',"psc=$psc");
+        if ( !$k_kraj ) {
+          $msg.= "<br>PSČ $psc neznáme id=".tisk2_ukaz_osobu($ido);
+        }
+        else {
+          if ( !isset($okres[$k_okres])) $okres[$k_okres]= 0;
+          $okres[$k_okres]++;
+          if ( !isset($kraj[$k_kraj])) $kraj[$k_kraj]= 0;
+          $kraj[$k_kraj]++;
+        }
       }
-      $cr_inic++;
-      list($k_obec,$k_okres,$k_kraj)= select('kod_obec,kod_okres,kod_kraj','`#psc`',"psc=$psc");
-      if ( !$k_kraj ) {
-        $msg.= "<br>PSČ $psc neznáme id=".tisk2_ukaz_osobu($ido);
-      }
-      else {
-        if ( !isset($okres[$k_okres])) $okres[$k_okres]= 0;
-        $okres[$k_okres]++;
-        if ( !isset($kraj[$k_kraj])) $kraj[$k_kraj]= 0;
-        $kraj[$k_kraj]++;
-      }
+      else $cizinci++;
     }
-    else $cizinci++;
   }
   // ------------------------------ podle věku 
   // údaj % MS znamená byl na MS před iniciací
@@ -908,113 +910,259 @@ function sta2_mrop_stat_see($par,&$title) { trace();
     }
     $msg.= "</table>";
   }
+  if ( strstr($typ,'x')) {
+    $ido_test= 0;
+//    $ido_test= 5877; // Já
+    // titulek
+    $title= "<h2>Tabulka vzájemného vlivu účasti na akci</h2><i>
+      zkratky znamenají typ akce: 
+      <br><b>i</b> - iniciace, <b>m</b> - manželáky, <b>k</b> - akce typu Křižanov, 
+      <br><b>a</b> - akce typu Albeřice, <b>f</b> - akce typu Fišerka, <b>o</b> - akce pro otce s dětmi, 
+      <br><b>r</b> - akce pro staré slony (firming, podpora iniciovaných)
+      <br>
+      <br>matice A vyjadřuje relaci <b>byl na nějaké ... dříve než na jakékoliv ...</b>
+      <br>matice B vyjadřuje relaci <b>byl na ... a následně na ... </b>
+      <br>údaje v maticích A% a B% jsou vztaženy k počtu iniciovaných
+      <br>
+      <br>sloupec &sum; je součet iniciovaných účastných i na akci daného typu
+      </i><br><br>";
+    // typy akcí
+    $ido_cond= $ido_test ? "id_osoba=$ido_test" : '1';
+    $akce= str_split('imkafor');
+    $_akce= select("GROUP_CONCAT(DISTINCT akce SEPARATOR '')",' `#stat`',"$ido_cond $AND");
+    $_akce= strtolower($_akce);
+    $_akce= count_chars($_akce,3);    
+    $_akce= str_split($_akce);
+    // vyhoď neexistující typ
+    foreach($akce as $i=>$a) {
+      if ( !in_array($a,$_akce) ) unset($akce[$i]);
+    }
+    foreach(array('A%','B%','A','B') as $AB) {
+      // matice A
+      $m= $s= array();
+      foreach($akce as $x) {
+        $s[$x]= 0;
+        foreach($akce as $y) {
+          $m[$x][$y]= 0;
+        }
+      }
+      // probrání #stat
+      $sr= pdo_qry("SELECT akce,id_osoba,note FROM `#stat` WHERE akce!='' AND $ido_cond $AND");
+      while ( $sr && list($xy,$ido,$name)= pdo_fetch_row($sr)) {
+        if ( $ido_test && $ido!=$ido_test ) continue;
+        if ($ido_test) display("$name: $xy");
+        foreach($akce as $x) {
+          $ix= stripos($xy,$x);
+          if ( $ix!==false ) {
+            $s[$x]++;
+          }
+          $offset= $AB[0]=='A' ? 0 : min($ix+1,strlen($xy)-1); 
+          foreach($akce as $y) {
+            $iy= stripos($xy,$y,$offset);
+            if ( $ix!==false && $iy!==false && $ix<$iy) {
+              $m[$x][$y]++;
+            }
+          }
+        }
+      }
+      // převod na procenta pro tabulku X%
+      if ( $AB[1]=='%') {
+        $si= $s['i'];
+        foreach($akce as $x) {
+          foreach($akce as $y) {
+            $m[$x][$y]= $m[$x][$y] ? round(100*$m[$x][$y]/$si) : '-';
+          }
+          $s[$x]= $s[$x] ? round(100*$s[$x]/$si) : '-';
+        }
+      }
+      // tabulka 
+      $tab= "<table class='stat'>";
+      $th=  '';
+      foreach($akce as $y) {
+        $th.= "<th>$y</th>";
+      }
+      $tab.= "<tr><th>$AB</th><th>&sum;</th>$th</tr>";
+      foreach($akce as $x) {
+        $td= '';
+        foreach($akce as $y) {
+          $style= $y=='i' ? $main : '';
+          $tx= $x==$y ? 'th' : 'td';
+          $td.= "<$tx align='right' $style>{$m[$x][$y]}</$tx>";
+        }
+        $tab.= "<tr><th>$x</th><th align='right'>{$s[$x]}</th>$td</tr>";
+      }
+      $tab.= "</table>";
+      $msg.= "<h3>Matice $AB</h3>$tab";
+    }
+    // trasování
+    $dbg= array();
+    $sr= pdo_qry("SELECT COUNT(*) AS _pocet,akce FROM `#stat` WHERE $ido_cond 
+      GROUP BY akce ORDER BY _pocet DESC");
+    while ( $sr && list($n,$xy)= pdo_fetch_row($sr)) {
+      $dbg[$xy]= $n;
+    }
+    debug($dbg);
+  }
   return $msg;
 }
 # --------------------------------------------------------------------------==> . sta2 mrop stat gen
 # agregace údajů o absolventech MROP
+# pokud je par.x=a jen doplní položku akce
 function sta2_mrop_stat_gen($par) {
   $ido_test= 0;
-  $msg= "<br><br>... vytvoření tabulky #stat";
-  // vynulování pracovní tabulky #stat
-  query("TRUNCATE TABLE `#stat`");
-  // seznam
-  $mrops= array( // year => datum ... 2001,2002 nejsou v akcích
-    2001=>'2001-08-01',2002=>'2002-09-01');
-  $ms= array();
-  // získání data mrop
-  $mr= pdo_qry("
-    SELECT YEAR(a.datum_od) AS _rok,a.datum_od FROM akce AS a WHERE a.mrop=1 ORDER BY _rok
-  ");
-  while ( $mr && list($rok,$datum)= pdo_fetch_row($mr) ) {
-    $mrops[$rok]= $datum;
-  }
-//  $mrops= array(2002=>'2002-09-01');
-  // získání individuálních a rodinných údajů
-  foreach ($mrops as $mrop=>$datum) {
+//  $ido_test= 5877; // Já
+//  $ido_test= 26;  // Ludva
+  $msg= "";
+  $par_x= isset($par->x) ? $par->x : 'x';
+  switch ($par_x) {
+  case 'x': // --------------------------------------- osobní a staré pred/po položky
+    // vynulování pracovní tabulky #stat
+    query("TRUNCATE TABLE `#stat`");
+    // seznam
+    $mrops= array( // year => datum ... 2001,2002 nejsou v akcích
+      2001=>'2001-08-01',2002=>'2002-09-01');
+    $ms= array();
+    // získání data mrop
     $mr= pdo_qry("
-      SELECT o.id_osoba,o.access,CONCAT(o.jmeno,' ',o.prijmeni),
-        ROUND(DATEDIFF('$datum',o.narozeni)/365.2425) AS _vek,
-        IFNULL(svatba,0) AS _s1,IFNULL(YEAR(datsvatba),0) AS _s2,
-        MIN(IFNULL(YEAR(od.narozeni),0)) AS _s3,
-        SUM(IF(td.id_osoba,1,0)) AS _d,
-        IFNULL(tb.id_osoba,0) AS _ido_z,
-        IF(o.adresa=1,o.stat,r.stat) AS _stat,
-        IF(o.adresa=1,o.psc,r.psc) AS _psc,
-        o.firming
-      FROM osoba AS o
-      LEFT JOIN tvori AS ta ON ta.id_osoba=o.id_osoba AND ta.role='a'
-      JOIN rodina AS r ON r.id_rodina=ta.id_rodina
-      LEFT JOIN tvori AS tb ON r.id_rodina=tb.id_rodina AND tb.role='b'
-      LEFT JOIN tvori AS td ON r.id_rodina=td.id_rodina AND td.role='d'
-      LEFT JOIN osoba AS od ON od.id_osoba=td.id_osoba
-      WHERE o.deleted='' AND r.deleted='' AND o.iniciace=$mrop
-      GROUP BY o.id_osoba
+      SELECT YEAR(a.datum_od) AS _rok,a.datum_od FROM akce AS a WHERE a.mrop=1 ORDER BY _rok
     ");
-    while ( $mr && 
-        list($ido,$access,$name,$vek,$sv1,$sv2,$sv3,$deti,$ido_z,$stat,$psc,$firm)
-        = pdo_fetch_row($mr) ) {
+    while ( $mr && list($rok,$datum)= pdo_fetch_row($mr) ) {
+      $mrops[$rok]= $datum;
+    }
+  //  $mrops= array(2002=>'2002-09-01');
+    // získání individuálních a rodinných údajů
+    foreach ($mrops as $mrop=>$datum) {
+      $mr= pdo_qry("
+        SELECT o.id_osoba,o.access,CONCAT(o.jmeno,' ',o.prijmeni),
+          ROUND(DATEDIFF('$datum',o.narozeni)/365.2425) AS _vek,
+          IFNULL(svatba,0) AS _s1,IFNULL(YEAR(datsvatba),0) AS _s2,
+          MIN(IFNULL(YEAR(od.narozeni),0)) AS _s3,
+          SUM(IF(td.id_osoba,1,0)) AS _d,
+          IFNULL(tb.id_osoba,0) AS _ido_z,
+          IF(o.adresa=1,o.stat,r.stat) AS _stat,
+          IF(o.adresa=1,o.psc,r.psc) AS _psc,
+          o.firming
+        FROM osoba AS o
+        LEFT JOIN tvori AS ta ON ta.id_osoba=o.id_osoba AND ta.role='a'
+        JOIN rodina AS r ON r.id_rodina=ta.id_rodina
+        LEFT JOIN tvori AS tb ON r.id_rodina=tb.id_rodina AND tb.role='b'
+        LEFT JOIN tvori AS td ON r.id_rodina=td.id_rodina AND td.role='d'
+        LEFT JOIN osoba AS od ON od.id_osoba=td.id_osoba
+        WHERE o.deleted='' AND r.deleted='' AND o.iniciace=$mrop
+        GROUP BY o.id_osoba
+      ");
+      while ( $mr && 
+          list($ido,$access,$name,$vek,$sv1,$sv2,$sv3,$deti,$ido_z,$stat,$psc,$firm)
+          = pdo_fetch_row($mr) ) {
+        if ( $ido_test && $ido!=$ido_test ) continue;
+        $ms[$ido]= (object)array('name'=>$name,'mrop'=>$mrop);
+        // rozbor bydliště
+        $stat= str_replace(' ','',$stat);
+        $psc= str_replace(' ','',$psc);
+        if ( $psc && is_numeric($psc)) {
+          if ( $stat=='' && in_array($psc[0],array(1,2,3,4,5,6,7)) ) {
+            $stat= 'CZ';
+          }
+          elseif ( $stat=='' && in_array($psc[0],array(0,8,9)) ) {
+            $stat= 'SK';
+          }
+        }
+        elseif ( $stat=='' ) {
+          $stat= '?';
+        }
+        // zápis do #stat
+        $sv= max($sv1,$sv2);
+        if ( !$sv && $ido_z ) {
+          $sv= $sv3 ? $sv3-1 : 9999;
+        }
+        query("INSERT INTO `#stat` (id_osoba,access,mrop,firm,stat,psc,vek,svatba,deti,note) 
+          VALUE ($ido,$access,$mrop,$firm,'$stat','$psc','$vek',$sv,$deti,'$name')");
+      }
+    }
+    // získání informací o akcích- staré
+    $akce_muzi= "24,5,11";
+    $akce_manzele= "2,3,4,17,18,22"; // 18 je lektoři & vedoucí MS !!! TODO
+    foreach ($ms as $ido=>$m) {
       if ( $ido_test && $ido!=$ido_test ) continue;
-      $ms[$ido]= (object)array('name'=>$name,'mrop'=>$mrop);
-      // rozbor bydliště
-      $stat= str_replace(' ','',$stat);
-      $psc= str_replace(' ','',$psc);
-      if ( $psc && is_numeric($psc)) {
-        if ( $stat=='' && in_array($psc[0],array(1,2,3,4,5,6,7)) ) {
-          $stat= 'CZ';
+      $ma= pdo_qry("
+        SELECT IF(datum_od<CONCAT(iniciace,'-09-11'),'_pred','_po'),
+          CASE WHEN druh IN (1) THEN 'lk' 
+               WHEN druh IN ($akce_manzele) THEN 'ms' 
+               WHEN druh IN ($akce_muzi) THEN 'm' 
+               ELSE 'j' END,
+          statistika,mrop,firm
+        FROM pobyt AS p
+        LEFT JOIN akce AS a ON id_akce=id_duakce
+        LEFT JOIN spolu AS s USING (id_pobyt)
+        JOIN osoba AS o USING (id_osoba)
+        WHERE id_osoba=$ido AND spec=0 AND mrop=0
+        ORDER BY datum_od
+      ");
+      while ( $ma && list($kdy,$druh,$stat,$mrop,$firm)= pdo_fetch_row($ma) ) {
+        // zápis do #stat - mimo iniciaci
+        query("UPDATE `#stat` SET $druh$kdy=1+$druh$kdy WHERE id_osoba=$ido");
+      }
+      // kde byl na MS
+      $ma= pdo_qry("
+        SELECT COUNT(*),BIT_OR(a.access)
+        FROM pobyt AS p
+        LEFT JOIN akce AS a ON id_akce=id_duakce
+        LEFT JOIN spolu AS s USING (id_pobyt)
+        JOIN osoba AS o USING (id_osoba)
+        WHERE id_osoba=$ido AND a.druh=1 AND spec=0 
+      ");
+      while ( $ma && list($n,$org)= pdo_fetch_row($ma) ) {
+        // zápis do #stat
+        if ( $n )
+          query("UPDATE `#stat` SET ms=$org WHERE id_osoba=$ido");
+      }
+    }
+    $msg= "vytvořena tabulka #stat";
+    break;
+  case 'a': // ---------------------------------------- posloupnost akcí
+    // vymaž starou statistiku akcí
+    query("UPDATE `#stat` SET akce='' ");
+    // vypočítej novou statistiku akcí
+    $sr= pdo_qry("SELECT id_osoba,note FROM `#stat` ");
+    while ( $sr && list($ido,$name)= pdo_fetch_row($sr) ) {
+      if ( $ido_test && $ido!=$ido_test ) continue;
+      $akce= $last_a= $opak= '';
+      $ma= pdo_qry("
+        SELECT statistika,druh,IF(funkce>0,0,mrop),firm
+        FROM pobyt AS p
+        LEFT JOIN akce AS a ON id_akce=id_duakce
+        LEFT JOIN spolu AS s USING (id_pobyt)
+        JOIN osoba AS o USING (id_osoba)
+        WHERE id_osoba=$ido AND spec=0 
+        ORDER BY datum_od
+      ");
+      while ( $ma && list($stat,$druh,$mrop,$firm)= pdo_fetch_row($ma) ) {
+        // tvorba posloupnosti akcí - mrop a firm zapíšeme jen první
+        $a=  $mrop    ? 'i' : '';
+        $a.= $stat==1 ? 'k' : '';
+        $a.= $stat==2 ? 'a' : '';
+        $a.= $stat==3 ? 'f' : '';
+        $a.= $stat==4 ? 'o' : '';
+        $a.= ($stat==5 || $firm) ? 'r' : '';
+        $a.= $druh==1 ? 'm' : '';
+        if ( $a ) {
+            $akce.= $a;
+//          if ( $a!=$last_a) {
+//            $akce.= ($opak ? strtoupper($last_a) : $last_a);
+//            $last_a= $a;
+//            $opak= 0;
+//          }
+//          else {
+//            $opak++;
+//          }
         }
-        elseif ( $stat=='' && in_array($psc[0],array(0,8,9)) ) {
-          $stat= 'SK';
-        }
       }
-      elseif ( $stat='' ) {
-        $stat= '?';
-      }
-      // zápis do #stat
-      $sv= max($sv1,$sv2);
-      if ( !$sv && $ido_z ) {
-        $sv= $sv3 ? $sv3-1 : 9999;
-      }
-      query("INSERT INTO `#stat` (id_osoba,access,mrop,firm,stat,psc,vek,svatba,deti,note) 
-        VALUE ($ido,$access,$mrop,$firm,'$stat','$psc','$vek',$sv,$deti,'$name')");
+      $akce.= $last_a ? ($opak ? strtoupper($last_a) : $last_a) : '';
+      query("UPDATE `#stat` SET akce='$akce' WHERE id_osoba=$ido");
+      if ($ido_test) display("$name: $akce");
     }
-  }
-//  goto end;
-  // získání informací o akcích
-  $akce_muzi= "24,5,11";
-  $akce_manzele= "2,3,4,17,18,22"; // 18 je lektoři & vedoucí MS !!! TODO
-  foreach ($ms as $ido=>$m) {
-    if ( $ido_test && $ido!=$ido_test ) continue;
-    $ma= pdo_qry("
-      SELECT IF(datum_od<CONCAT(iniciace,'-09-11'),'_pred','_po'),
-        CASE WHEN druh IN (1) THEN 'lk' 
-             WHEN druh IN ($akce_manzele) THEN 'ms' 
-             WHEN druh IN ($akce_muzi) THEN 'm' 
-             ELSE 'j' END 
-      FROM pobyt AS p
-      LEFT JOIN akce AS a ON id_akce=id_duakce
-      LEFT JOIN spolu AS s USING (id_pobyt)
-      JOIN osoba AS o USING (id_osoba)
-      WHERE id_osoba=$ido AND spec=0 AND mrop=0
-      ORDER BY datum_od
-    ");
-    while ( $ma && list($kdy,$druh)= pdo_fetch_row($ma) ) {
-      // zápis do #stat
-      query("UPDATE `#stat` SET $druh$kdy=1+$druh$kdy WHERE id_osoba=$ido");
-    }
-    // kde byl na MS
-    $ma= pdo_qry("
-      SELECT COUNT(*),BIT_OR(a.access)
-      FROM pobyt AS p
-      LEFT JOIN akce AS a ON id_akce=id_duakce
-      LEFT JOIN spolu AS s USING (id_pobyt)
-      JOIN osoba AS o USING (id_osoba)
-      WHERE id_osoba=$ido AND a.druh=1 AND spec=0 
-    ");
-    while ( $ma && list($n,$org)= pdo_fetch_row($ma) ) {
-      // zápis do #stat
-      if ( $n )
-        query("UPDATE `#stat` SET ms=$org WHERE id_osoba=$ido");
-    }
+    $msg= "přepočítána položka #stat.akce";
+    break;
   }
 end:  
   return $msg;
@@ -1080,7 +1228,7 @@ function tut_dir_find ($root,$rok,$kod) {  trace();
   $patt= "{$root}Akce/$rok/$kod*";
   $fs= simple_glob($patt);
   $file= $fs[0];
-                                                debug($fs,$patt);
+//                                                debug($fs,$patt);
   if ( count($fs)==1 ) {
     if ( stristr(PHP_OS,'WIN') && substr(PHP_VERSION_ID,0,1)=='5' ) // windows
       $file= iconv("Windows-1250","UTF-8",$file);  
@@ -1090,7 +1238,7 @@ function tut_dir_find ($root,$rok,$kod) {  trace();
   else {
     $y->ok= count($fs);
   }
-                                                debug($y,strrchr($fs[0],'/'));
+//                                                debug($y,strrchr($fs[0],'/'));
   return $y;
 }
 # ---------------------------------------------------------------------------------------- tut files
@@ -1334,8 +1482,8 @@ function dot_prehled ($rok_or_akce,$par,$title='',$vypis='',$export=0) { trace()
 //                                              debug($man_s,"manželství");
 //                                              debug($man_o,"manželství O");
 //                                              debug($man_n,"manželství N");
-                                              debug($vek_m,"věk muže $n_m");
-                                              debug($vek_z,"věk ženy $n_z");
+//                                              debug($vek_m,"věk muže $n_m");
+//                                              debug($vek_z,"věk ženy $n_z");
   // tabulka trvání manželství
   if ($no) {
     $tab= "<h3>Přehled délky manželství</h3>";
@@ -2279,7 +2427,7 @@ function pipe_pdenik_typ ($x,$save=0) {
 function p_pdenik_insert($typ,$org,$org_abbr,$datum) {
   global $x,$y;
   // převzetí hodnot
-                                                          debug(Array($typ,$org,$cislo,$datum),'p_denik_insert');
+//                                                          debug(Array($typ,$org,$cislo,$datum),'p_denik_insert');
   $db= $x->db;
   $select= array();
   make_get($set,$select,$fields);

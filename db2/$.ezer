@@ -162,6 +162,7 @@ form right [,,*,*] {
 table akce { key_id:'id_duakce'
   number id_duakce
   number typ
+  number statistika
 }
 
 table join_akce { // spojení číselníku akcí s MS
