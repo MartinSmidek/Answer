@@ -33,6 +33,7 @@ div.gmnoprint div.gm-style-mtc { display:none }
 .modra   { color:#00f; }
 .cerna   { color:#000; }
 .nic     { }
+.skrtnuty { text-decoration:line-through; color:#f00 }
 
 /* obecné barvy pozadí */
 .bily           { background-color:#ffffff !important; }
@@ -210,11 +211,6 @@ div.Element .Label, div.Select .Label, div.FieldDate .Label { margin-top:1px }
 .pre_7          { background-color:#7ff6ff !important; }
 .pre_9          { background-color:#77ff77 !important; }
 .sedy           { background-color:#777777 !important; }
-/*.zluty          { background-color:#ffff77 !important; }
-.cerveny        { background-color:#ff7777 !important; }
-.zeleny         { background-color:#77ff77 !important; }
-.modry          { background-color:#7389ae !important; }
-.bily           { background-color:#ffffff !important; }*/
 /* */
 .aktivni        { background-color:#ffeed6 !important; border:1px solid #ffeed6 !important; }
 .pasivni        { background-color:#f5f5f5 !important; border:1px solid #f5f5f5 !important; }

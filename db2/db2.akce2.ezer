@@ -275,6 +275,7 @@ table akce { key_id:'id_duakce'
   number ma_cenu   // 1 znamená, že bereme v úvahu položku cena (pro 1 dospělého)
   number cena      // cena akce pro dospělého (je-li ma_cenu=1)
   number spec      // 1 znamená ne-akci, starý způsob příležitostných seznamů
+  number zruseno   // 1 znamená zrušenou akci se zachovanými účastniky - pro korespondenci 
   number mrop      // 1 že akce je mužskou iniciací
   number firm      // 1 že akce je mužským firmingem
   text nazev

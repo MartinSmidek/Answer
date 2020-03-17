@@ -255,6 +255,7 @@ form _page [,,275,360] {
   field datum_od [18,133,83,] { tag:'cor', title:'^začátek *', type:'date', data:akce.datum_od }
   field [118,133,83,] { tag:'cor', title:'^ukončení', type:'date', data:akce.datum_do }
   check [213,166,90,] { tag:'cor', title:'jen seznam', data:akce.spec }
+  check [213,186,90,] { tag:'cor', title:'akce zrušena', data:akce.zruseno }
   check mrop [300,166,60,] { tag:'cor', title:'mrop', data:akce.mrop, title:'mrop', skill:'faan|faa:m' }
   check firm [300,186,60,] { tag:'cor', title:'firm', data:akce.firm, title:'firming', skill:'faan|faa:m' }
   select [367,167,89,] { tag:'cor', title:'^statistika', type:'map0', data:akce.statistika,
@@ -834,7 +835,7 @@ form _info [,,*,50] {
   view sa2: table akce      {join_type:'LEFT',join:'ON sa2.id_hlavni=da2.id_duakce'}
   view pa2: table pobyt     {join_type:'LEFT',join:'ON pa2.id_akce=da2.id_duakce'}
   browse sey [0,36,200,500] { tag:'s', rows:27, qry_rows:1, buf_rows:120, group_by:"da2.id_duakce"
-      css_rows:"barva,1:cerveny,2:zluty" // 1=hlavní akce, 2=souběžná akce
+      css_rows:"barva,1:cerveny,2:zluty,3:skrtnuty" // akce je: 1=hlavní | 2=souběžná | 3=zrušená
     show id_akce  {data:da2.id_duakce}
     show          {data:ja2.id_akce}
     show          {data:pa2.id_pobyt}
@@ -856,7 +857,8 @@ form _info [,,*,50] {
     show SF [,,20,] {title:'SF', expr:"IF(da2.access=1,'S',IF(da2.access=2,'F','?'))"
       help:"pořádá S=YMCA Setkání, F=YMCA Familia"
       css_cell:'org,0:,1:ezer_ys,2:ezer_fa,3:ezer_db', format:'rsq*' }
-    show barva { expr:"CASE WHEN da2.id_hlavni THEN 2 WHEN sa2.id_duakce THEN 1 ELSE 0 END" }
+//  show barva { expr:"CASE WHEN da2.id_hlavni THEN 2 WHEN sa2.id_duakce THEN 1 ELSE 0 END" }
+    show barva { expr:"IF(da2.zruseno,3,IF(da2.id_hlavni,2,IF(sa2.id_duakce,1,0)))" }
     show kod   [,,36,] {title:'kód účetní', expr:"IF(ga2.g_kod,ga2.g_kod,da2.ciselnik_akce)"
       css_cell:'ma_archiv,0:,1:oranzovy', format:'rsq*' }
     show druh  [,,60,] {title:'typ',    data:da2.druh, map_pipe:ms_akce_typ.zkratka, format:'sq#'

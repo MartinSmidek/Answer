@@ -61,7 +61,7 @@ function sta2_ms_stat($par) {
       JOIN rodina AS r ON r.id_rodina=i0_rodina
       JOIN tvori AS t USING (id_rodina)
       JOIN osoba AS o USING (id_osoba)
-      WHERE druh=1 AND spec=0
+      WHERE druh=1 AND spec=0 AND zruseno=0 
       -- AND id_pobyt>56600
       GROUP BY id_pobyt
       ORDER BY id_rodina;
@@ -1095,7 +1095,7 @@ function sta2_mrop_stat_gen($par) {
         LEFT JOIN akce AS a ON id_akce=id_duakce
         LEFT JOIN spolu AS s USING (id_pobyt)
         JOIN osoba AS o USING (id_osoba)
-        WHERE id_osoba=$ido AND spec=0 AND mrop=0
+        WHERE id_osoba=$ido AND spec=0 AND mrop=0 AND zruseno=0 
         ORDER BY datum_od
       ");
       while ( $ma && list($kdy,$druh,$stat,$mrop,$firm)= pdo_fetch_row($ma) ) {
@@ -1109,7 +1109,7 @@ function sta2_mrop_stat_gen($par) {
         LEFT JOIN akce AS a ON id_akce=id_duakce
         LEFT JOIN spolu AS s USING (id_pobyt)
         JOIN osoba AS o USING (id_osoba)
-        WHERE id_osoba=$ido AND a.druh=1 AND spec=0 
+        WHERE id_osoba=$ido AND a.druh=1 AND spec=0 AND zruseno=0 
       ");
       while ( $ma && list($n,$org)= pdo_fetch_row($ma) ) {
         // zápis do #stat
@@ -1133,7 +1133,7 @@ function sta2_mrop_stat_gen($par) {
         LEFT JOIN akce AS a ON id_akce=id_duakce
         LEFT JOIN spolu AS s USING (id_pobyt)
         JOIN osoba AS o USING (id_osoba)
-        WHERE id_osoba=$ido AND spec=0 
+        WHERE id_osoba=$ido AND spec=0 AND zruseno=0 
         ORDER BY datum_od
       ");
       while ( $ma && list($stat,$druh,$mrop,$firm)= pdo_fetch_row($ma) ) {
@@ -1402,7 +1402,8 @@ function dot_prehled ($rok_or_akce,$par,$title='',$vypis='',$export=0) { trace()
           "akce AS a
             JOIN pobyt AS p ON a.id_duakce=p.id_akce
             JOIN spolu AS s USING(id_pobyt)",
-          "a.druh=1 AND a.spec=0 AND s.id_osoba=$ido AND i0_rodina=$idr AND p.id_akce!=$akce");
+          "a.druh=1 AND a.spec=0 AND zruseno=0 
+            AND s.id_osoba=$ido AND i0_rodina=$idr AND p.id_akce!=$akce");
                                                   display($ucasti);
       // stáří
       foreach ($vek_x as $ix=>$x) {
@@ -2218,7 +2219,7 @@ function vps_historie ($org,$par,$export) {
     JOIN akce as a ON id_akce=id_duakce
     JOIN tvori AS t USING (id_rodina)
     JOIN osoba AS o USING (id_osoba)
-    WHERE spec=0 AND r.id_rodina=i0_rodina AND a.access&$org
+    WHERE spec=0 AND zruseno=0 AND r.id_rodina=i0_rodina AND a.access&$org
       AND druh IN (1,$vps1)
       --  AND r.id_rodina=3329 
     GROUP BY r.id_rodina
