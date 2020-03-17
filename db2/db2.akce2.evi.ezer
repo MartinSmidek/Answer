@@ -1029,7 +1029,7 @@ form _aktivity [,,248,min_h-160] {css:'ae_frame shift_up'
     proc onclick() { akc.na_akci } }
   proc ucasti(_ido,_jmeno) {
     form.display(_ido); _ido; ido.set(_ido); jmeno.set(_jmeno);
-    akc.browse_load(conc('a.spec=0 AND s.id_osoba=',_ido),"datum_od DESC")
+    akc.browse_load(conc('a.spec=0 a.zruseno=0 AND s.id_osoba=',_ido),"datum_od DESC")
   }
 }
 # ------------------------------------------------------------------------------------------==> MAPA

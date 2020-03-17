@@ -2972,7 +2972,7 @@ function ucast2_browse_ask($x,$tisk=false) {
       LEFT JOIN (SELECT COUNT(*) AS _n,px.i0_rodina
         FROM pobyt AS px
         JOIN akce AS ax ON ax.id_duakce=px.id_akce
-        WHERE ax.datum_od<='{$akce->datum_od}' AND ax.druh=1 AND ax.spec=0
+        WHERE ax.datum_od<='{$akce->datum_od}' AND ax.druh=1 AND ax.spec=0 AND ax.zruseno
           AND px.funkce NOT IN ($neucasti)
         GROUP BY  px.i0_rodina
       ) AS _ucasti ON _ucasti.i0_rodina=p.i0_rodina AND p.i0_rodina
@@ -6982,7 +6982,8 @@ function akce2_plachta($akce,$par,$title,$vypis,$export=0) { trace();
             FROM akce AS a
             JOIN pobyt AS p ON a.id_duakce=p.id_akce
             JOIN spolu AS s USING(id_pobyt)
-            WHERE a.druh=1 AND a.spec=0 AND s.id_osoba=$muz AND i0_rodina=$rod AND p.id_akce!=$akce";
+            WHERE a.druh=1 AND a.spec=0 AND a.zruseno=0
+              AND s.id_osoba=$muz AND i0_rodina=$rod AND p.id_akce!=$akce";
     $rres= pdo_qry($rqry);
     while ( $rres && ($r= pdo_fetch_object($rres)) ) {
       $u->ucasti= $r->_pocet ? "  {$r->_pocet}x" : '';
@@ -8633,7 +8634,7 @@ function evid2_delete($id_osoba,$id_rodina,$cmd='confirm') { trace();
     $x= select1('SUM(castka)','platba',"id_osoba=$id_osoba");
     if ( $x) $duvod[]= "zaplatil$a $x Kč";
     $xr= pdo_qry("SELECT COUNT(*) AS _x_ FROM spolu JOIN pobyt USING (id_pobyt)
-                    JOIN akce ON id_akce=id_duakce WHERE id_osoba=$id_osoba AND spec=0");
+                    JOIN akce ON id_akce=id_duakce WHERE id_osoba=$id_osoba AND spec=0 AND zruseno=0");
     list($x)= pdo_fetch_array($xr);
     if ( $x) $duvod[]= "se zúčastnil$a $x akcí";
     $x= select1('COUNT(*)','tvori',"id_osoba=$id_osoba AND id_rodina!=$id_rodina");
@@ -9749,7 +9750,7 @@ function sta2_mrop_vliv($par,$export=false) {
       LEFT JOIN akce AS a ON id_akce=id_duakce
       LEFT JOIN spolu AS s USING (id_pobyt)
       JOIN osoba AS o USING (id_osoba)
-      WHERE id_osoba=$ido AND spec=0 AND mrop=0
+      WHERE id_osoba=$ido AND spec=0 AND mrop=0 AND zruseno=0
       GROUP BY _druh ORDER BY _druh DESC
     ");
     while ( $ma && list($druh,$kolikrat,$pred,$po)= pdo_fetch_row($ma) ) {
@@ -9816,7 +9817,8 @@ function sta2_cesty($org,$par,$title,$export=false) {
     if ( $rrrr<$od_roku ) continue;
     $rr= substr($rrrr,-2);
     $clmn[$rr]= array('rr'=>$rrrr,'u'=>0);
-    $ida= select1("id_duakce","akce","druh=1 AND spec=0 AND YEAR(datum_od)=$rrrr AND access&$org");
+    $ida= select1("id_duakce","akce","druh=1 AND spec=0 AND zruseno=0 
+      AND YEAR(datum_od)=$rrrr AND access&$org");
     $tab= akce2_info_par($ida,0,1);
     foreach (explode(',',"s,as,bs,abs,bas") as $i) {
       $clmn[$rr]['u']+= $tab[$i];
@@ -10425,7 +10427,7 @@ function sta2_sestava($org,$title,$par,$export=false) { trace();
       JOIN tvori AS t USING (id_rodina)
       JOIN osoba AS o USING (id_osoba)
       LEFT JOIN dar AS od ON o.id_osoba=od.id_osoba AND od.deleted=''
-      WHERE spec=0 AND r.id_rodina=i0_rodina AND a.access&$org
+      WHERE spec=0 AND zruseno=0 AND r.id_rodina=i0_rodina AND a.access&$org
         -- AND r.nazev LIKE 'Šmí%'
         AND druh IN (1,$vps1)
       GROUP BY r.id_rodina
@@ -10662,9 +10664,9 @@ function sta2_sestava($org,$title,$par,$export=false) { trace();
         LEFT JOIN rodina AS r USING (id_rodina)
         JOIN spolu AS s USING(id_osoba)
         JOIN pobyt AS p USING (id_pobyt)
-        JOIN akce  AS a ON id_akce=id_duakce AND spec=0
+        JOIN akce  AS a ON id_akce=id_duakce AND spec=0 AND zruseno=0 
       WHERE o.deleted='' AND YEAR(narozeni)<$rok18 AND a.access&$org
-        AND YEAR(datum_od)>=$rok AND spec=0
+        AND YEAR(datum_od)>=$rok AND spec=0 AND zruseno=0 
         -- AND o.id_osoba IN(3726,3727,5210)
         -- AND o.id_osoba IN(4537,13,14,3751)
         -- AND o.id_osoba IN(4503,4504,4507,679,680,3612,4531,4532,206,207)
