@@ -56,6 +56,8 @@ menu m {type:'left', format:'f-'
                                                 cnd:"o.sex=2 AND TIMESTAMPDIFF(YEAR,narozeni,NOW())>=18"}, skill:'yae;fae;cae'}
     item   {title:'[fa-child]děti'              par:°{lst:'o',tit:'všechny děti, co ',
                                                 cnd:"TIMESTAMPDIFF(YEAR,narozeni,NOW())<18"}, skill:'yae;fae;cae'}
+    item   {title:'[fa-male fa-red]iniciovaní'  par:°{lst:'o',tit:'iniciovaní muži, co ',
+                                                cnd:"o.iniciace>0"}, skill:'yaa:c;faa:c'}
     item w {title:'[fa-beer fa-red]s webovými právy'   par:°{lst:'o',tit:'práva pro úpravu webů',
                                                 cnd:"o.web_level!=''"},skill:'a'}
     item t {title:'[fa-wrench fa-red](test)'    par:°{lst:'o',tit:'testovací osoby, co ',
@@ -1029,7 +1031,7 @@ form _aktivity [,,248,min_h-160] {css:'ae_frame shift_up'
     proc onclick() { akc.na_akci } }
   proc ucasti(_ido,_jmeno) {
     form.display(_ido); _ido; ido.set(_ido); jmeno.set(_jmeno);
-    akc.browse_load(conc('a.spec=0 a.zruseno=0 AND s.id_osoba=',_ido),"datum_od DESC")
+    akc.browse_load(conc('a.spec=0 AND a.zruseno=0 AND s.id_osoba=',_ido),"datum_od DESC")
   }
 }
 # ------------------------------------------------------------------------------------------==> MAPA

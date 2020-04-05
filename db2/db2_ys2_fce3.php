@@ -613,7 +613,7 @@ function sta2_mrop_stat_see($par,&$title) { trace();
       $par->od==$par->do ? "AND $par->od=mrop" : "AND $par->od<=mrop AND mrop<$par->do") : '';
   if ( $typ!='x') {
     $n= 0;
-    $cr_inic= $vsichni= 0;
+    $cr_inic= $vsichni= $veky= 0;
     $pred= $po= $bez_ms= $firms= 0;
     $s_ms_pred= $s_ms_po= $jen_pred= $jen_po= $jen_mrop= $pred_i_po= 0;
     $zenati= $nezenati= $nezenati_znami= $jen_mrop_zenati= 0;
@@ -641,6 +641,7 @@ function sta2_mrop_stat_see($par,&$title) { trace();
         $x_pred=    $lk_pred+$ms_pred+$m_pred+$j_pred;
         $x_po=      $lk_po+$ms_po+$m_po+$j_po;
         // sumy
+        $veky+= $vek;
         $zenat=     $svatba ? 1 : ($det ? 1 : 0);
         $zenati+=   $zenat;
         $firms+= $firm>0 ? 1 : 0;
@@ -697,7 +698,8 @@ function sta2_mrop_stat_see($par,&$title) { trace();
       <br>sloupec %MS jen procento těch, kteří před iniciací byli účastníky MS
       </i><br><br>";
     // zobrazení
-    $msg.= "<b>$cr_inic iniciovaných z ČR</b><br>
+    $prumer= round($veky/$cr_inic);
+    $msg.= "<b>$cr_inic inic. z ČR - $prumer roků</b><br>
       <table class='stat'><tr><th>věk</th><th>počet</th><th>%</th><th>% MS</th></tr>";
     for ($i=0; $i<count($meze)-1; $i++) {
       list($m,$m2)= select('COUNT(*),SUM(IF(lk_pred>0,1,0))','`#stat`',
@@ -710,7 +712,7 @@ function sta2_mrop_stat_see($par,&$title) { trace();
       $pm2= $pm < 2 ? '(-)'
           : ($stari[$i] ? round(100*$m2/$stari[$i]) : '-');
       $msg.= "<tr><th>$od..$do</th><td align='right'>$stari[$i]</td>
-        <td align='right'>&nbsp;&nbsp;&nbsp;&nbsp;$pm</td>
+        <td align='right' $main>&nbsp;&nbsp;&nbsp;&nbsp;$pm</td>
         <td align='right'>&nbsp;&nbsp;&nbsp;&nbsp;$pm2</td>
       </tr>";
     }
@@ -821,7 +823,7 @@ function sta2_mrop_stat_see($par,&$title) { trace();
     $muzi= $obce= $ms= array();
     $s_muzi= $s_inic= $s_obce= $s_ms= 0;
     $title= "<h2>Iniciovaní podle velikosti obce</h2><i>
-      sloupec <b>velikost obce</b> zobrazuje meze počtu mužů žijících v obci
+      sloupec <b>obce podle počtu mužů</b> zobrazuje meze počtu mužů žijících v obci
       <br>sloupec <b>počet</b> je počet takových obcí
       <br>sloupec <b>inic.</b> je počet iniciovaných v takových obcích
       <br>žlutý sloupec <b>%</b> je procento z celkem iniciovaných (v daném období)
@@ -831,7 +833,7 @@ function sta2_mrop_stat_see($par,&$title) { trace();
       <br><br>Poznámka: odchylka v počtu mužů podle obcí a PSČ vznikla tím,
       že tabulka okresu je z roku 2018, tabulka PSČ a obcí z roku 2020 </i>
       <br><br>";
-    $msg.= "<br><table class='stat'><tr><th>velikost obce</th><th>počet</th>
+    $msg.= "<br><table class='stat'><tr><th></th><th>velikost obce</th><th>počet</th>
       <th>inic.</th><th>%</th>
       <th> ‰ </th><th>z mužů</th><th>% MS</th></tr>";
     // výpočet počtu mužů v obcích dané velikosti
@@ -843,17 +845,21 @@ function sta2_mrop_stat_see($par,&$title) { trace();
     }
 //                                                debug($obce,$s_obce);
     // výpočet počtu iniciovaných v obcích dané velikosti
+    $ai= $am= array(); // A-J -> iniciovaní, MS
+    $A= ord('A');
     for ($i=count($meze)-2; $i>=0; $i--) {
       $od= $i==0 ? '.' : $meze[$i];
       $do= $i==count($meze)-2 ? '.' : $meze[$i+1];
       // výpočet 
       $inic= $ms_inic= 0;
+      $max= array(); // mez -> počet 
       foreach ($pscs as $psc=>$n) {
         $ok= select('COUNT(*)','`#psc` JOIN `#obec` USING (kod_obec)',
             "psc=$psc AND muzi BETWEEN $meze[$i] AND {$meze[$i+1]}");
         if ( $ok ) {
           $inic+= $n;
           $s_inic+= $n;
+          $max[chr($A)]= max($n,$max[chr($A)]);
           if ( isset($mss[$psc])) {
             $ms_inic+= $mss[$psc];
             $s_ms+= $mss[$psc];
@@ -863,22 +869,41 @@ function sta2_mrop_stat_see($par,&$title) { trace();
       $ppm= $muzi[$i] ? round(1000*$inic/$muzi[$i],2) : '?';
       $pms= $inic ? round(100*$ms_inic/$inic) : '?';
       $pi= $inic ? round(100*$inic/$cr_inic) : '?';
-      $msg.= "<tr><th>$od..$do</th><td align='right'>$obce[$i]</td>
+      $msg.= "<tr><th>".chr($A)."</th><th>$od..$do</th><td align='right'>$obce[$i]</td>
         <td align='right'>$inic</td>
         <td align='right' $main>$pi</td>
         <td>&nbsp;&nbsp;&nbsp;&nbsp;$ppm</td>
         <td align='right'>$muzi[$i]</td>
         <td>&nbsp;&nbsp;&nbsp;&nbsp;$pms</td>
       </tr>";
+      $ai[$A]= $pi;
+      $am[$A]= $pms;
+      $A++;
     }
+                                                  debug($max);
     $ppm= round(1000*$s_inic/$s_muzi,2);
     $pms= round(100*$s_ms/$s_inic);
-    $msg.= "<tr><th>celkem</th><th align='right'>$s_obce</th>
+    $msg.= "<tr><th></th><th>celkem</th><th align='right'>$s_obce</th>
       <th align='right'>$s_inic</th><th>100</th>
       <th align='right'>&nbsp;&nbsp;&nbsp;&nbsp;$ppm</th><th align='right'>$s_muzi</th>
       <th align='right'>&nbsp;&nbsp;&nbsp;&nbsp;$pms</th>  
     </tr>";
     $msg.= "</table>";
+    // pokus o graf
+    $tr1= $tr2= '';
+    $styl= "vertical-align:bottom;display:inline-block";
+    for ($i= ord('A'); $i<$A; $i++) {
+      $hi= $ai[$i]*5;
+      $hm= $am[$i]*2;
+      $w= 15;
+//      $wtd= 2*$w+2;
+      $wtd= $w;
+      $idiv= "<div class='curr_akce' style='height:{$hi}px;width:{$w}px;$styl'></div>";
+//      $mdiv= "<div style='background:orange;height:{$hm}px;width:{$w}px;$styl'></div>";
+      $tr1.= "<td style='height:170px;width:{$wtd}px;vertical-align:bottom'>$idiv$mdiv</td>";
+      $tr2.= "<th>".chr($i)."</th>";
+    }
+    $msg.= "<br><table class='stat'><tr>$tr1</tr><tr>$tr2</tr></table>";
   }
   // ------------------------------ iniciovaní okresů a krajů
   if ( strstr($typ,'g')) {
