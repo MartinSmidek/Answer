@@ -254,10 +254,10 @@ form _page [,,275,360] {
   check ds_order [250,89,200,] { tag:'cor', title:'objednávka Domu setkání', format:'nd' } 
   field datum_od [18,133,83,] { tag:'cor', title:'^začátek *', type:'date', data:akce.datum_od }
   field [118,133,83,] { tag:'cor', title:'^ukončení', type:'date', data:akce.datum_do }
-  check [213,166,90,] { tag:'cor', title:'jen seznam', data:akce.spec }
-  check [213,186,90,] { tag:'cor', title:'akce zrušena', data:akce.zruseno }
-  check mrop [300,166,60,] { tag:'cor', title:'mrop', data:akce.mrop, title:'mrop', skill:'faan|faa:m' }
-  check firm [300,186,60,] { tag:'cor', title:'firm', data:akce.firm, title:'firming', skill:'faan|faa:m' }
+  check [213,157,90,] { tag:'cor', title:'jen seznam', data:akce.spec }
+  check [213,177,90,] { tag:'cor', title:'akce zrušena', data:akce.zruseno }
+  check mrop [300,157,60,] { tag:'cor', title:'mrop', data:akce.mrop, title:'mrop', skill:'faan|faa:m' }
+  check firm [300,177,60,] { tag:'cor', title:'firm', data:akce.firm, title:'firming', skill:'faan|faa:m' }
   select [367,167,89,] { tag:'cor', title:'^statistika', type:'map0', data:akce.statistika,
     options:ms_akce_stat.zkratka, format:'n' }
   select [71,169,139,] { tag:'cor', title:'typ akce *', type:'map', data:akce.druh,
