@@ -25,4 +25,6 @@
 /nbproject
 /rr
 /db2/verze2.2
-"rr.inc" 
+rr.inc
+*.inc.php
+ezernote.*
