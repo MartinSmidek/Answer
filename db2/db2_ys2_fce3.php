@@ -1,14 +1,41 @@
 <?php # (c) 2009-2015 Martin Smidek <martin@smidek.eu>
-//function clear_platby_lk2019() {
-//  $ida= 1242;
-//  query("
-//    UPDATE pobyt SET
-//      luzka=0,strava_cel=0,cstrava_cel='',strava_pol=0,cstrava_pol='',
-//      kocarek=0,pristylky=0,svp=0,pocetdnu=0,sleva=0,vzorec=0,
-//      platba1=0,platba2=0,platba3=0,platba4=0,platba=0
-//    WHERE id_akce=1242
-//    ");
-//}
+/** ===========================================================================================> GIT */
+# ----------------------------------------------------------------------------------------- git make
+# provede git par.cmd>.git.log a zobrazí jej
+function git_make($par) {
+  global $abs_root;
+  $cmd= $par->cmd;
+  $msg= "";
+  // proveď operaci
+  switch ($par->op) {
+  case 'cmd':
+    $state= 0;
+    // zruš starý obsah .git.log
+    $f= @fopen("$abs_root/docs/.git.log", "r+");
+    if ($f !== false) {
+        ftruncate($f, 0);
+        fclose($f);
+    }
+    if ( $par->folder=='.') {
+      $exec= "git {$par->cmd}>$abs_root/docs/.git.log";
+      exec($exec,$lines,$state);
+    }
+    else if ( $par->folder=='ezer') {
+      chdir("ezer3.1");
+      $exec= "git {$par->cmd}>$abs_root/docs/.git.log";
+      exec($exec,$lines,$state);
+      chdir($abs_root);
+    }
+    debug($lines,$state);
+    $msg= "$state:$exec<hr>";
+  case 'show':
+    $msg.= file_get_contents("$abs_root/docs/.git.log");
+    $msg= nl2br(htmlentities($msg));
+    break;
+  }
+  return $msg;
+}
+/** ========================================================================================> online */
 # ------------------------------------------------------------------------------- update web_changes
 # upraví položku pobyt.web_changes hodnotou
 # 1/2 pro INSERT/UPDATE pobyt a spolu | 4/8 pro INSERT/UPDATE osoba
