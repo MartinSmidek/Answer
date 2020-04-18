@@ -27,6 +27,47 @@ menu db2 { type:'main', title:'db2', active:*, _sys:'*'
         ask('query',conc("DELETE FROM tvori WHERE id_tvori=",idt));
       }
       menu m {type:'left', format:'f+'
+        menu s  {title:'Struktura dat', type:'group', skill:'yamg;famg;camg;aa;a'
+          item {title:'[fa-object-group] Přehled struktury dat'   par:°{img:'2015'} }
+          item {title:'[fa-object-group] Podrobná struktura dat'  par:°{img:'2019'} }
+          item {title:'[fa-database] tabulka AKCE',               par:°{tab:'akce'} }
+          item {title:'[fa-database] tabulka POBYT',              par:°{tab:'pobyt'} }
+          item {title:'[fa-database] tabulka SPOLU',              par:°{tab:'spolu'} }
+          item {title:'[fa-database] tabulka OSOBA',              par:°{tab:'osoba'} }
+          item {title:'[fa-database] tabulka TVORI',              par:°{tab:'tvori'} }
+          item {title:'[fa-database] tabulka RODINA',             par:°{tab:'rodina'} }
+          item {title:'[fa-database] tabulka MAILIST',            par:°{tab:'mailist'} }
+          item {title:'[fa-database] tabulka DOPIS',              par:°{tab:'dopis'} }
+          item {title:'[fa-database] tabulka MAIL',               par:°{tab:'mail'}  }
+          item {title:'[fa-database] tabulka CENIK',              par:°{tab:'cenik'} }
+          item {title:'[fa-database] tabulka DAR',                par:°{tab:'dar'} }
+          item {title:'[fa-database] tabulka DOTAZ'               par:°{tab:'dotaz'}  }
+          item {title:'[fa-database] tabulka PSC_AXY'             par:°{tab:'psc_axy'}  }
+          item {title:'[fa-database fa-red] tabulka EZER_DOC2'    par:°{tab:'ezer_doc2'}  skill:'m' }
+          item {title:'[fa-database fa-red] tabulka _CIS'         par:°{tab:'_cis'}       skill:'m' }
+          item {title:'[fa-database fa-red] tabulka _GEOCODE'     par:°{tab:'_geocode'}   skill:'m' }
+          item {title:'[fa-database fa-red] tabulka _HELP'        par:°{tab:'_help'}      skill:'m' }
+          item {title:'[fa-database fa-red] tabulka _SKILL'       par:°{tab:'_skill'}     skill:'m' }
+          item {title:'[fa-database fa-red] tabulka _TOUCH'       par:°{tab:'_touch'}     skill:'m' }
+          item {title:'[fa-database fa-red] tabulka _TRACK'       par:°{tab:'_track'}     skill:'m' }
+          item {title:'[fa-database fa-red] tabulka _USER'        par:°{tab:'_user'}      skill:'m' }
+          item {title:'[fa-database fa-darkviolet] tabulka #stat'  par:°{tab:'`#stat`'}   skill:'faa:m' }
+          item {title:'[fa-database fa-darkviolet] tabulka #psc'   par:°{tab:'`#psc`'}    skill:'faa:m' }
+          item {title:'[fa-database fa-darkviolet] tabulka #obec'  par:°{tab:'`#obec`'}   skill:'faa:m' }
+          item {title:'[fa-database fa-darkviolet] tabulka #okres' par:°{tab:'`#okres`'}  skill:'faa:m' }
+          item {title:'[fa-database fa-darkviolet] tabulka #kraj'  par:°{tab:'`#kraj`'}   skill:'faa:m' }
+          proc onclick (i) {
+            clear;
+            panel.display(2,'i');
+            info.fill(replace_fa(conc(i.owner.title,' - ',i.title)),' ');
+            { i.par.tab;  
+              info.append(ask('i_doc_table_struct',i.par.tab,0));
+            | info.append(conc("<br>Schema databáze pro <b>Answer</b>
+                s uvedením podmínek pro spojení pomocí JOIN<br><br>
+                <img src='db2/img/schema_db_",i.par.img,".png' />"));
+            }
+          }
+        }
         menu o {title:'Ostrá databáze',type:'group', _sys:'*'
           item {title:'Stav sjednocování kopií', par:°{db:'db2'}
             proc onclick (i) {
@@ -69,47 +110,23 @@ menu db2 { type:'main', title:'db2', active:*, _sys:'*'
       }
       use info: form right [12,4,,]     { tag:'i' }
     }
-    panel str {type:'right', title:'Struktura aplikace', _sys:'str', skill:'a;aa'
+    panel str {type:'right', title:'Aplikace', _sys:'str', skill:'a;aa'
       menu m {type:'left', format:'f+'
-        menu s  {title:'Struktura dat', type:'group', skill:'yamg;famg;camg;aa;a'
-          item {title:'[fa-object-group] Přehled struktury dat'   par:°{img:'2015'} }
-          item {title:'[fa-object-group] Podrobná struktura dat'  par:°{img:'2019'} }
-          item {title:'[fa-database] tabulka AKCE',               par:°{tab:'akce'} }
-          item {title:'[fa-database] tabulka POBYT',              par:°{tab:'pobyt'} }
-          item {title:'[fa-database] tabulka SPOLU',              par:°{tab:'spolu'} }
-          item {title:'[fa-database] tabulka OSOBA',              par:°{tab:'osoba'} }
-          item {title:'[fa-database] tabulka TVORI',              par:°{tab:'tvori'} }
-          item {title:'[fa-database] tabulka RODINA',             par:°{tab:'rodina'} }
-          item {title:'[fa-database] tabulka MAILIST',            par:°{tab:'mailist'} }
-          item {title:'[fa-database] tabulka DOPIS',              par:°{tab:'dopis'} }
-          item {title:'[fa-database] tabulka MAIL',               par:°{tab:'mail'}  }
-          item {title:'[fa-database] tabulka CENIK',              par:°{tab:'cenik'} }
-          item {title:'[fa-database] tabulka DAR',                par:°{tab:'dar'} }
-          item {title:'[fa-database] tabulka DOTAZ'               par:°{tab:'dotaz'}  }
-          item {title:'[fa-database] tabulka PSC_AXY'             par:°{tab:'psc_axy'}  }
-          item {title:'[fa-database fa-red] tabulka EZER_DOC2'    par:°{tab:'ezer_doc2'}  skill:'m' }
-          item {title:'[fa-database fa-red] tabulka _CIS'         par:°{tab:'_cis'}       skill:'m' }
-          item {title:'[fa-database fa-red] tabulka _GEOCODE'     par:°{tab:'_geocode'}   skill:'m' }
-          item {title:'[fa-database fa-red] tabulka _HELP'        par:°{tab:'_help'}      skill:'m' }
-          item {title:'[fa-database fa-red] tabulka _SKILL'       par:°{tab:'_skill'}     skill:'m' }
-          item {title:'[fa-database fa-red] tabulka _TOUCH'       par:°{tab:'_touch'}     skill:'m' }
-          item {title:'[fa-database fa-red] tabulka _TRACK'       par:°{tab:'_track'}     skill:'m' }
-          item {title:'[fa-database fa-red] tabulka _USER'        par:°{tab:'_user'}      skill:'m' }
-          item {title:'[fa-database fa-darkviolet] tabulka #stat'  par:°{tab:'`#stat`'}   skill:'faa:m' }
-          item {title:'[fa-database fa-darkviolet] tabulka #psc'   par:°{tab:'`#psc`'}    skill:'faa:m' }
-          item {title:'[fa-database fa-darkviolet] tabulka #obec'  par:°{tab:'`#obec`'}   skill:'faa:m' }
-          item {title:'[fa-database fa-darkviolet] tabulka #okres' par:°{tab:'`#okres`'}  skill:'faa:m' }
-          item {title:'[fa-database fa-darkviolet] tabulka #kraj'  par:°{tab:'`#kraj`'}   skill:'faa:m' }
-          proc onclick (i) {
-            clear;
-            panel.display(2,'i');
-            info.fill(replace_fa(conc(i.owner.title,' - ',i.title)),' ');
-            { i.par.tab;  
-              info.append(ask('i_doc_table_struct',i.par.tab,0));
-            | info.append(conc("<br>Schema databáze pro <b>Answer</b>
-                s uvedením podmínek pro spojení pomocí JOIN<br><br>
-                <img src='db2/img/schema_db_",i.par.img,".png' />"));
-            }
+        menu { title:'GitHub',type:'group',skill:'m'
+          item { title:'[fa-question] Answer: git status'  par:°{folder:'.',op:'cmd',cmd:'status'}}
+          item { title:'[fa-gear] Answer: git log'         par:°{folder:'.',op:'cmd',cmd:'log'}}
+          item { title:'[fa-gear] Answer: git pull'        par:°{folder:'.',op:'cmd',cmd:'pull'}}
+    //    item { title:'[fa-gear] Answer: git reset --hard origin/master' 
+    //                                                par:°{folder:'cms',op:'cmd',cmd:'reset --hard origin/master'}}
+          item { title:'[fa-question] Ezer: git status' par:°{folder:'ezer',op:'cmd',cmd:'status'}}
+          item { title:'[fa-gears] Ezer: git log'       par:°{folder:'ezer',op:'cmd',cmd:'log'}}
+          item { title:'[fa-gears] Ezer: git pull'      par:°{folder:'ezer',op:'cmd',cmd:'pull'}}
+    //    item { title:'[fa-gears] Ezer: git reset --hard origin/master' 
+    //                                                par:°{folder:'ezer',op:'cmd',cmd:'reset --hard origin/master'}}
+    //    item { title:'[fa-question] poslední git.log'   par:°{op:'show'}}
+          proc onclick (i) {  
+            panel.display(2,'i'); 
+            info.fill(conc(i.owner.title,' - ',i.title),ask('git_make',i.par));
           }
         }
         menu m {title:'Struktura modulů a funkcí',type:'group'
