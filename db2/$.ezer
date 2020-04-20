@@ -68,11 +68,28 @@ menu db2 { type:'main', title:'db2', active:*, _sys:'*'
             }
           }
         }
+        menu { title:'Import a záloha databáze',type:'group',skill:'m'
+          item { title:"[fa-question] přehled záloh"          par:°{typ:'listing',direct:'1'}}
+          item { title:"[fa-upload] zálohuj teď"              par:°{typ:'special',direct:'0'}}
+          proc onclick(i) {
+            info.fill(replace_fa(conc(i.owner.title,' - ',i.title)),' ');
+            info.append(ask('sys_backup_make',i.par)) 
+          }
+          item { title:"obnova ze zálohy (jen local)" par:°{typ:'restore',direct:'1'}
+            proc onclick(i) { var heslo:text
+              info.fill(conc(i.owner.title,' - ',i.title),' ');
+              eq(sys('ezer','server'),0,1); // test na lokální server na NTB nebo Synology DOMA
+              confirm('Opravdu mám lokální databázi přepsat?'); 
+              info.append(ask('sys_backup_make',i.par))
+            | alert('obnovu ze zálohy lze provádět pouze na lokální kopii systému');
+            }
+          }
+        }
         menu o {title:'Ostrá databáze',type:'group', _sys:'*'
           item {title:'Stav sjednocování kopií', par:°{db:'db2'}
             proc onclick (i) {
               panel.display(2,'i');
-              info.fill(conc(i.owner.title,' - ',i.title),'... probíhá výpočet ...');
+              info.fill(replace_fa(conc(i.owner.title,' - ',i.title)),'... probíhá výpočet ...');
               info.fill('',ask('db2_stav',i.par.db)) }}
           item {title:'obnova pobyt.web_changes' 
             proc onclick() { 
@@ -90,7 +107,7 @@ menu db2 { type:'main', title:'db2', active:*, _sys:'*'
           item {title:'kontroly databáze s opravou'     ,par:°{opravit:1}, skill:'m'}
           proc onclick (i) {
             panel.display(2,'i');
-            info.fill(conc(i.owner.title,' - ',i.title),' ... probíhá kontrola dat ...');
+            info.fill(replace_fa(conc(i.owner.title,' - ',i.title)),' ... probíhá kontrola dat ...');
             info.fill('',ask('db2_kontrola_dat',i.par));
           }
         }
@@ -98,13 +115,13 @@ menu db2 { type:'main', title:'db2', active:*, _sys:'*'
           item {title:'stav sjednocování kopií', par:°{db:'db2_test'}
             proc onclick (i) {
               panel.display(2,'i');
-              info.fill(conc(i.owner.title,' - ',i.title),'... probíhá výpočet ...');
+              info.fill(replace_fa(conc(i.owner.title,' - ',i.title)),'... probíhá výpočet ...');
               info.fill('',ask('db2_stav',i.par.db)) }}
           item {title:'obnovit testovací db z ostré', par:°{db:'db2'}
             proc onclick (i) {
               panel.display(2,'i');
               confirm("vytvořit znovu testovací databázi z aktuálního stavu ostré databáze?");
-              info.fill(conc(i.owner.title,' - ',i.title),' ... probíhá update ...');
+              info.fill(replace_fa(conc(i.owner.title,' - ',i.title)),' ... probíhá update ...');
               info.fill('',ask('db2_copy_test_db',i.par.db)); }}
         }
       }
@@ -126,7 +143,7 @@ menu db2 { type:'main', title:'db2', active:*, _sys:'*'
     //    item { title:'[fa-question] poslední git.log'   par:°{op:'show'}}
           proc onclick (i) {  
             panel.display(2,'i'); 
-            info.fill(conc(i.owner.title,' - ',i.title),ask('git_make',i.par));
+            info.fill(replace_fa(conc(i.owner.title,' - ',i.title)),ask('git_make',i.par));
           }
         }
         menu m {title:'Struktura modulů a funkcí',type:'group'
