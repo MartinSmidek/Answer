@@ -233,7 +233,7 @@ form _lst [,,370,*] {
   ] }
   // zobraz mailist podle access
   proc init_mailist() { var sel:text
-    page.map.mapa_clear;
+    page.map.mapa_clear(1);
     sel.set(ask('mail2_mailist',my_access.get,menu_par.get));
     sel;
     bm_vyber.selects(sel);
@@ -378,7 +378,7 @@ form _lst [,,370,*] {
   proc bm_reload(cnd) {
     [ virgin.get; start ];
     [ eq(bm_komu.get,menu_par.get('komu')) | bm_komu.set(menu_par.get('komu')); init_mailist ];
-    page.map.mapa_clear;
+    page.map.mapa_clear(1);
     bm.browse_load(bm_vyber.key);
   | page.page_init
   }
@@ -438,7 +438,7 @@ form _lst [,,370,*] {
       item { type:'clipboard', title:'vybraná ID dát do schránky',
         proc onclick () { clipboard(bm.selected('get')) }}
       item { title:'-zrušit výběr a zobrazení',
-        proc onclick () { bm.selected('clear'); page.map.mapa_clear; }}
+        proc onclick () { bm.selected('clear'); page.map.mapa_clear(1); }}
       item { title:'vybrat vše se známou polohou',
         proc onclick () { bm_select_in('') }}
       item { title:'vybrat vše a zobrazit co lze',
@@ -456,24 +456,30 @@ form _lst [,,370,*] {
   # ==> . výběr osob ve výřezu
   proc bm_select_in(rect) { var ret:object
     page.map.on.get;
-    { { eq(bm_komu.get,'o');
-        ret.set(ask('mapa2_ve_ctverci_o',rect,bm.bm_keys,2000))
-      | ret.set(ask('mapa2_ve_ctverci_r',rect,bm.bm_keys,2000))
-      };
+    { ret.set(ask('mapa2_ve_ctverci',
+          cconc(eq(bm_komu.get,'o'),'osoba','rodina'),rect,bm.bm_keys,2000));
       ret.msg; alert(ret.msg)
-    | bm.selected('clear'); page.map.mapa_clear;
+    | bm.selected('clear'); page.map.mapa_clear(0);
       bm.selected('set',ret.ids); bm_selected;
     }
   }
   # ==> . zrušit výběr osob mimo výřez
   proc bm_unselect_out(rect) { var ret:object
     page.map.on.get;
-    { { eq(bm_komu.get,'o');
-        ret.set(ask('mapa2_mimo_ctverec_o',rect,bm.selected('get'),2000))
-      | ret.set(ask('mapa2_mimo_ctverec_r',rect,bm.selected('get'),2000))
-      };
+    { ret.set(ask('mapa2_mimo_ctverec',
+          cconc(eq(bm_komu.get,'o'),'osoba','rodina'),rect,bm.selected('get'),2000));
       ret.msg; alert(ret.msg)
     | bm.selected('unset',ret.ids)
+    }
+  }
+  # ==> . výběr osob v ohraničení
+  proc bm_polygon_in(poly) { var ret:object
+    page.map.on.get;
+    { ret.set(ask('mapa2_v_polynomu',
+          cconc(eq(bm_komu.get,'o'),'osoba','rodina'),poly,bm.bm_keys,2000));
+      ret.msg; alert(ret.msg)
+    | bm.selected('clear'); page.map.mapa_clear(0);
+      bm.selected('set',ret.ids); bm_selected;
     }
   }
   # ==============================================> R - RODINY
@@ -1038,8 +1044,9 @@ form _aktivity [,,248,min_h-160] {css:'ae_frame shift_up'
 form _mapa [,,500,500] {css:'ae_frame shift_down'
 # form _mapa [,,650,500] {css:'ae_frame shift_down'
   var on=0,
-      mode='evidence',   // evidence|skupiny|psc
-      skup:object
+      mode='evidence',  // evidence|skupiny|psc
+      skup:object,
+      padding= 10       // % okraje mezi zoom a polygonem
   proc mapa_show() {
     [ on.get
     | cr.init('ROADMAP',°{mapTypeControl:0,streetViewControl:0});
@@ -1047,14 +1054,9 @@ form _mapa [,,500,500] {css:'ae_frame shift_down'
   proc onclick() {
     up(page.map); down(page.pri); down(page.dar); down(page.oso); down(page.rod); down(page.cle) }
   label cr [2,2,496,496] { type:'map'
-#   label cr [2,2,646,496] { type:'map'
     proc onmarkclick(mark) {
-//      echo(mark.title,' id_osoba:',mark.id);
-#       echo(debug(mark));
       { eq(mark.ezer,'skupiny'); //echo('skupiny');
         alert(skup.get(mark.id));
-#         mail.f.tit.set(conc("Rád bych se dozvěděl víc o skupině: ",mark.title));
-#         mail.popup
       | eq(mark.ezer,'psc'); //echo('psc')
       | lst.bm.raise('onrowclick',mark.id)
       };
@@ -1066,14 +1068,22 @@ form _mapa [,,500,500] {css:'ae_frame shift_down'
     menu cm { type:'context', par:°{trigger:'click'} # ==> . kontextové menu
       item { title:'vyber bydlící ve výřezu'
         proc onclick() { lst.bm_select_in(cr.get_bounds) }}
+      item { title:'vyber bydlící v ohraničení'
+        proc onclick() { var poly:text
+          poly.set(cr.get('poly'));
+          poly;
+          lst.bm_polygon_in(poly) 
+          | alert("napřed volbou 'zoom na ... okolí' vytvoř červený ohraničující čtverec")
+      }}
       item { title:'zruš vybrané mimo výřezu'
         proc onclick() {
           lst.bm_unselect_out(cr.get_bounds);
           function('m',"return evid_mapa_focus(m);",cr); }}
       item { title:'-zoom na malé okolí'
         proc onclick() { zoom(lst.bm.id_o.get,1) }}
-      item { title:'zoom na na velké okolí'
-        proc onclick() { zoom(lst.bm.id_o.get,5) }}
+      item { title:'zoom na na velké okolí', proc onclick() { 
+          zoom(lst.bm.id_o.get,5);
+      }}
       item { title:'zoom na všechny vybrané'
         proc onclick() { cr.fit_bounds }}
       item { title:'zoom na celou republiku'
@@ -1090,10 +1100,8 @@ form _mapa [,,500,500] {css:'ae_frame shift_down'
       item { title:'zobrazení seznamu PSČ'
         proc onclick() { var lst:text, ret:object
           mode.set('psc');
-#           on.set(0); mapa_show;
           lst.set(prompt("napiš seznam PSČ"));
           ret.set(ask('mapa2_psc_list',lst));
-#           cr.set(object('mark',''));
           cr.set(object('mark',ret.mark,'ezer','psc'));
       }}
       item { title:'-obnova zobrazení mapy'
@@ -1112,22 +1120,20 @@ form _mapa [,,500,500] {css:'ae_frame shift_down'
     mark; cr.set_mark(mark,'delete');
   }
   # ==> . vymazání mapy
-  proc mapa_clear() { on.get; cr.set(°{zoom:'',rect:'',mark:'',poly:''}) }
+  proc mapa_clear(even_poly) { 
+    on.get; 
+    { even_poly; cr.set(°{zoom:'',rect:'',mark:'',poly:''}) 
+    | cr.set(°{zoom:'',rect:'',mark:''}) 
+    } 
+  }
   proc zoom (id,km) { var ret: object
     on.get;
-    { eq(lst.bm_komu.get,'o'); ret.set(ask('mapa2_ctverec_o',id,km))
-    | ret.set(ask('mapa2_ctverec_r',id,km))
-    };
+    ret.set(ask('mapa2_ctverec',cconc(eq(lst.bm_komu.get,'o'),'osoba','rodina'),id,km,5));
+    cr.set(°{zoom:'',rect:'',poly:''});
     cr.set(object('zoom',ret.rect));
+    cr.set(object('poly',ret.poly));
+    cr.option(object('poly_edit',1));
   }
-#   panel mail [,,400,200] { type:'popup', title:'poslat mail organizátorům'
-#     use f: form _f [0,0,,]
-#     form _f [,,400,100] {
-#       field muj [59,10,344,90] { title:'odesílatel' }
-#       label tit [10,40,390,90]
-#       edit msg [10,70,390,120]
-#     }
-#   }
 }
 # ============================================================================================> _CMD
 # změny v evidenci

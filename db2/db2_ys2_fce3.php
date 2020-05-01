@@ -125,10 +125,20 @@ function sta2_ms_stat($par) {
         VALUE (1,$idr,$access,'$stat','$psc',$mrop,$vps,'$nazev')");
     }
     break;
-  case 'see': // ------------------------------ statistiky
-    $msg= sta2_ms_stat_see($par);
+  case 'see':   // ------------------------------ statistiky
+    $note= '';
+    $msg= sta2_ms_stat_see($par,$note);
     break;
-  case 'see-t': // ---------------------------- statistiky po letech
+  case 'see-o': // ------------------------------ statistiky podle organizací
+    $note= '';
+    $par->org= 1;
+    $msg1= sta2_ms_stat_see($par,$note);
+    $note= '';
+    $par->org= 2;
+    $msg2= sta2_ms_stat_see($par,$note);
+    $msg= "<table><tr><td>$msg1</td><td>$msg2</td></tr></table>$note";
+    break;
+  case 'see-t': // ------------------------------ statistiky po letech
     $delta= 10;
     $letos= date('Y');
     $ths= $tds= '';
@@ -144,9 +154,12 @@ function sta2_ms_stat($par) {
 }
 # --------------------------------------------------------------------------==> . sta2 mrop stat gen
 # interpretace údajů o účastnících MS
-# par.typ = posloupnost písmen   g=geo informace s=statistika
-function sta2_ms_stat_see($par) { trace();
+# par.typ = posloupnost písmen   g=geo informace s=statistika  
+# par.org = výběr organizace (3=obě)
+function sta2_ms_stat_see($par,&$note) { trace();
   $typ= isset($par->typ) ? $par->typ : '';
+  $org= isset($par->org) ? $par->org : 3;
+  $pro= array('','YS','FA','YS+FA')[$org];
   $msg= '';  
   // proměnné pro účasti    typ=0
   $vsichni_0= 0;
@@ -159,7 +172,7 @@ function sta2_ms_stat_see($par) { trace();
   $sr= pdo_qry("
     SELECT id_rodina,deti
     FROM `#stat_ms` 
-    WHERE stat='CZ' AND typ=0
+    WHERE stat='CZ' AND typ=0 AND access & $org
   ");
   while ( $sr && 
       list($idr,$det)
@@ -173,7 +186,7 @@ function sta2_ms_stat_see($par) { trace();
   $sr= pdo_qry("
     SELECT id_rodina,(vek_a+vek_b)/2,access,stat,psc
     FROM `#stat_ms` 
-    WHERE stat='CZ' AND typ=1
+    WHERE stat='CZ' AND typ=1 AND access & $org
   ");
   while ( $sr && 
       list($idr,$vek,$access,$stat,$psc)
@@ -209,16 +222,15 @@ function sta2_ms_stat_see($par) { trace();
   }
   // ------------------------------ statistické informce YS + FA
   if ( strstr($typ,'s')) {
-    $msg.= "<h3>Celkem $vsichni_1 účastníků z ČR</h3>
+    $msg.= "<h3>Celkem $vsichni_1 párů z ČR</h3>
       <b>účastnilo se kurzu</b>
-      <br>... YS = $ms_org[1]
-      <br>... FA = $ms_org[2]
-      <br>... YS i FA = $ms_org[3]
+      <br>... YS = $ms_org[1] párů
+      <br>... FA = $ms_org[2] párů
+      <br>... YS i FA = $ms_org[3] párů
       <br>
-      <h3>Celkem $vsichni_0 účastí z ČR</h3>
+      <h3>Celkem $vsichni_0 účastí párů z ČR</h3>
       <b>děti</b>
-      <br>mají děti = $deti
-      <br>... 3 a více = $deti3plus
+      <br>$deti párů mají děti, z toho $deti3plus jich mají 3 a více
      ";
   }
   // ------------------------------ podle věku - účasti
@@ -229,11 +241,12 @@ function sta2_ms_stat_see($par) { trace();
     $s_ucasti= 0;
     // zobrazení
     $msg.= "<b>Celkem $vsichni_0 účastí z ČR</b>";
-    $msg.= "<h3>Účasti podle průměru stáří manželů</h3>
+    $msg.= "<h3>Účasti podle průměru stáří manželů pro $pro</h3>
       <table class='stat'><tr><th>věk</th><th>počet</th><th>%</th></tr>";
     for ($i=0; $i<count($meze)-1; $i++) {
       $m= select('COUNT(*)','`#stat_ms`',
-          "typ=0 AND stat='CZ' AND (vek_a+vek_b)/2 >= $meze[$i] AND (vek_a+vek_b)/2 < {$meze[$i+1]}");
+          "typ=0 AND access & $org AND stat='CZ' AND (vek_a+vek_b)/2 >= $meze[$i] "
+          . "AND (vek_a+vek_b)/2 < {$meze[$i+1]}");
       $stari[$i]= $m;
       $s_ucasti+= $m;
       $od= $i==0 ? '.' : $meze[$i]+1;
@@ -257,11 +270,11 @@ function sta2_ms_stat_see($par) { trace();
     $meze= array(0,580,1152,2168,4460,9300,19400,42400,93200,600000,2000000);
     $lidi= $obce= $ms= array();
     $s_lidi= $s_obce= $s_ucasti= 0;
-    $msg.= "<h3>Účastníci podle velikosti obce</h3>
+    $msg.= "<h3>Účastníci podle velikosti obce pro $pro</h3>
       <table class='stat'><tr>
       <th>velikost obce</th>
-      <th>počet</th>
-      <th>účastníci</th>
+      <th>počet obcí</th>
+      <th>počet párů</th>
       <th>%</th>
       <th> ‰ </th>
       <th>obyvatel</th></tr>";
@@ -284,13 +297,9 @@ function sta2_ms_stat_see($par) { trace();
         if ( $ok ) {
           $ucasti+= $n;
           $s_ucasti+= $n;
-//          if ( isset($mss[$psc])) {
-//            $ms_inic+= $mss[$psc];
-//            $s_ms+= $mss[$psc];
-//          }
         }
       }
-      $pi= $ucasti ? round(100*2*$ucasti/$vsichni_1) : '?';
+      $pi= $ucasti ? round(100*$ucasti/$vsichni_1) : '?';
       $ppm= $lidi[$i] ? round(1000*2*$ucasti/$lidi[$i],2) : '?';
       $msg.= "<tr><th>$od..$do</th>
         <td align='right'>$obce[$i]</td>
@@ -309,7 +318,9 @@ function sta2_ms_stat_see($par) { trace();
       <th align='right'>$s_lidi</th>
     </tr>";
     $msg.= "</table>";
-    $msg.= "<br><br><i>Poznámka: odchylka v počtu lidí podle obcí a PSČ vznikla tím,
+    $note.= "<br><br><i>Poznámka: 
+      sloupec % vyjadřuje procento z celkového počtu účastníků, sloupec ‰ vyjadřuje promile vůči počtu obyvatel
+      <br>odchylka v počtu lidí podle obcí a PSČ vznikla tím,
       že tabulka okresu je z roku 2018, tabulka PSČ a obcí z roku 2020 </i>";
   }
   // ------------------------------ celkově geo
@@ -332,7 +343,7 @@ function sta2_ms_stat_see($par) { trace();
   // ------------------------------ účasti z okresů a krajů
   if ( strstr($typ,'g')) {
     // geo tabulka krajů
-    $msg.= "<h3>Účasti v krajích ČR</h3>
+    $msg.= "<h3>Účasti v krajích ČR pro $pro</h3>
       <table class='stat'><tr><th>kraj</th><th>účasti</th><th> ‰ obyvatel</th></tr>";
     foreach ($kraj_ppn as $k_kraj=>$ppn) {
       $nazev= select('nazev','`#kraj`',"kod_kraj=$k_kraj");
@@ -2671,12 +2682,12 @@ function ds_compare_list($orders) {  #trace('','win1250');
 function ds_compare($order) {  #trace('','win1250');
   ezer_connect('setkani');
   // údaje z objednávky
-  $qry= "SELECT * FROM setkani.tx_gnalberice_order WHERE uid=$order";
+  $qry= "SELECT * FROM tx_gnalberice_order WHERE uid=$order";
   $res= pdo_qry($qry);
   if ( !$res ) fce_error(/*w*u*/("$order není platné číslo objednávky"));
   $o= pdo_fetch_object($res);
   // projití seznamu
-  $qry= "SELECT * FROM setkani.ds_osoba WHERE id_order=$order ";
+  $qry= "SELECT * FROM ds_osoba WHERE id_order=$order ";
   $reso= pdo_qry($qry);
   $n= $n_0= $n_3= $n_9= $n_15= $n_a= $noroom= 0;
   while ( $reso && $u= pdo_fetch_object($reso) ) {
@@ -2791,7 +2802,7 @@ function ds_import_ys($order,$clear=0) {
   $ret= (object)array('html'=>'','conf'=>'');
   list($rok,$kod,$from,$until,$strava)= 
       select('YEAR(FROM_UNIXTIME(fromday)),akce,FROM_UNIXTIME(fromday),FROM_UNIXTIME(untilday),board',
-          'setkani.tx_gnalberice_order',"uid=$order",'setkani');
+          'tx_gnalberice_order',"uid=$order",'setkani');
   if ( $kod ) {
     // objednávka má definovaný kód akce
     ezer_connect('ezer_db2',true);
@@ -2866,7 +2877,7 @@ function ds_rooms_help($version=1) {
   $hlp= array();
   ezer_connect('setkani');
   $qry= "SELECT number,1-hidden AS enable,note
-         FROM setkani.tx_gnalberice_room
+         FROM tx_gnalberice_room
          WHERE NOT deleted AND version=$version";
   $res= pdo_qry($qry);
   while ( $res && $o= pdo_fetch_object($res) ) {
@@ -2922,7 +2933,7 @@ function ds_obj_menu() {
 
       $from= mktime(0,0,0,$m,1,$yyyy);
       $until= mktime(0,0,0,$m+1,1,$yyyy);
-      $qry= "SELECT /*ds_obj_menu*/uid,fromday,untilday,state,name,state FROM setkani.tx_gnalberice_order
+      $qry= "SELECT /*ds_obj_menu*/uid,fromday,untilday,state,name,state FROM tx_gnalberice_order
              WHERE  NOT deleted AND NOT hidden AND untilday>=$from AND $until>fromday";
 //              JOIN ezer_ys._cis ON druh='ds_stav' AND data=state
       $res= pdo_qry($qry);
@@ -3126,7 +3137,7 @@ function ds_ceny_uprava($par) { trace('','win1250');
     $z= date('Y')+$par->z;
     $na= date('Y')+$par->na;
     // kontrola prázdnosti nového ceníku
-    $qry= "SELECT count(*) as pocet FROM setkani.ds_cena  WHERE rok=$na ";
+    $qry= "SELECT count(*) as pocet FROM ds_cena  WHERE rok=$na ";
     $res= pdo_qry($qry);
     if ( $res && $c= pdo_fetch_object($res) ) {
       if ( $c->pocet>0 )
@@ -3208,7 +3219,7 @@ function ds_hoste($orders,$rok) {  #trace('','win1250');
   // zjištění klientů zahajujících pobyt v daném období
   $qry= "SELECT *,o.fromday as _of,o.untilday as _ou,p.email as p_email,
          p.fromday as _pf,p.untilday as _pu,akce
-         FROM setkani.ds_osoba AS p
+         FROM ds_osoba AS p
          JOIN tx_gnalberice_order AS o ON uid=id_order
          WHERE FIND_IN_SET(id_order,'$orders') ORDER BY id_order,rodina,narozeni DESC";
   $res= pdo_qry($qry);
@@ -3606,7 +3617,7 @@ function ds_faktury($order) {  trace('','win1250');
 //                                              debug($ds_strava,(object)array('win1250'=>1));
   // kontrola objednávky
   ezer_connect('setkani');
-  $qry= "SELECT * FROM setkani.tx_gnalberice_order WHERE uid=$order";
+  $qry= "SELECT * FROM tx_gnalberice_order WHERE uid=$order";
   $res= pdo_qry($qry);
   if ( $res && $o= pdo_fetch_object($res) ) {
     $o->rooms= $o->rooms1;
@@ -3634,7 +3645,7 @@ function ds_faktury($order) {  trace('','win1250');
     $ds_cena['prog_C']->cena= $o->prog_cely;
     $ds_cena['prog_P']->cena= $o->prog_polo;
     // zjištění počtu faktur za akci
-    $qry= "SELECT rodina,count(*) as pocet FROM setkani.ds_osoba
+    $qry= "SELECT rodina,count(*) as pocet FROM ds_osoba
            WHERE id_order=$order GROUP BY rodina ORDER BY if(rodina='','zzzzzz',rodina)";
     $res= pdo_qry($qry);
     while ( $res && $r= pdo_fetch_object($res) ) {
@@ -3644,7 +3655,7 @@ function ds_faktury($order) {  trace('','win1250');
       // členové jedné rodiny s údaji
       $hoste= array();
       $err= array();
-      $qry= "SELECT * FROM setkani.ds_osoba
+      $qry= "SELECT * FROM ds_osoba
              WHERE id_order=$order AND rodina='{$r->rodina}' ORDER BY narozeni DESC";
       $reso= pdo_qry($qry);
       while ( $reso && $h= pdo_fetch_object($reso) ) {

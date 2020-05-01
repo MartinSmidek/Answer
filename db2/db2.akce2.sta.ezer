@@ -47,12 +47,15 @@ menu m {type:'left', format:'f+', active:*
       ,dsc:'Sestava ukazuje údaje o účastnících na vybraných akcích za uplynulé 4 roky.<br>'
       ,tit:'věk:4,účastníků:10,pečovatelů:10',fld:'_vek,_uca,_pec',ord:'_vek'}}
   }
-  menu ms /* ms */ {title:'STATISTIKA MS',type:'group'                                      skill:'faa:m'
+  menu ms /* ms */ {title:'STATISTIKA MS',type:'group'                             skill:'faa:m'
     item {title:'Vytvoř #stat_ms'                                 par:°{op:'gen'}  skill:'r|m'}
-    item {title:'[fa-birthday-cake] ... jak jsou staří'           par:°{op:'see',typ:'v'} }
-    item {title:'[fa-map-o] ... v kterém místě ČR žijí'           par:°{op:'see',typ:'g'} }
-    item {title:'[fa-home] ... v jak velké obci žijí'             par:°{op:'see',typ:'o'} }
-    item {title:'[fa-bar-chart] ... info z akcí YS+FA'            par:°{op:'see',typ:'s'} }
+    item {title:'[fa-birthday-cake] ... jak jsou staří'           par:°{op:'see',typ:'v',org:'3'} }
+    item {title:'... ... YS/FA'                                   par:°{op:'see-o',typ:'v'} }
+    item {title:'[fa-map-o] ... v kterém místě ČR žijí'           par:°{op:'see',typ:'g',org:'3'} }
+    item {title:'... ... YS/FA'                                   par:°{op:'see-o',typ:'g'} }
+    item {title:'[fa-home] ... v jak velké obci žijí'             par:°{op:'see',typ:'o',org:'3'} }
+    item {title:'... ... YS/FA'                                   par:°{op:'see-o',typ:'o'} }
+    item {title:'[fa-bar-chart] ... info z akcí YS+FA'            par:°{op:'see',typ:'s',org:'3'} }
     proc onclick (i) {
       mapa.close(1);
       panel.display(2,'i');
