@@ -1,21 +1,20 @@
 <?php
-# ------------------------------------------------------------------------------------------ IP test
 
-$ips= array(0,
-//   '88.86.120.249',                                   // chlapi.online
-//   '89.176.167.5','94.112.129.207',                   // zdenek
-  '83.208.101.130','80.95.103.170',                     // martin
-  '127.0.0.1','192.168.1.146'                           // local
-);
+$ezer_root= 'db2';
 
-// $ip= my_ip();
-// $ip_ok= in_array($ip,$ips);
-// if ( !$ip_ok ) die('Error 404');
+if ( !isset($_SESSION) ) session_start();
 
 # -------------------------------------------------------------------- identifikace ladícího serveru
-$ezer_localhost= preg_match('/^localhost|^192\.168\./',$_SERVER["SERVER_NAME"])?1:0;
-$ezer_local= $ezer_localhost || preg_match('/^\w+\.bean/',$_SERVER["SERVER_NAME"])?1:0;
-if ( !isset($_SESSION) ) session_start();
+// definice podporovaných serverů
+$deep_root= "../files/answer";
+require_once("$deep_root/db2.dbs.php");
+$ezer_local= $ezer_server==0;
+$paths_log= array(
+  'C:\Apache\logs\php_error.log',
+  "",
+  "/var/log/apache2/error.log",
+  "/var/log/httpd/apache24-error_log"
+);
 # ----------------------------------------------------------------------------------------------- js
 $js= <<<__EOD
 function op(op_arg) {
@@ -26,6 +25,8 @@ function op(op_arg) {
 }
 __EOD;
 # ------------------------------------------------------------------------------------------- server
+$log= '';
+//  echo("op={$_GET['op']}");
 if ( isset($_GET['op']) ) {
   list($op,$arg)= explode('.',$_GET['op']);
   switch ($op) {
@@ -38,21 +39,48 @@ if ( isset($_GET['op']) ) {
   case 'phpinfo':
     phpinfo();
     break;
+  case 'log':
+    $log= isset($paths_log[$ezer_server]) ? tailCustom($paths_log[$ezer_server],$arg) : '---';
+//    $log= isset($paths_log[$ezer_server]) ? tailShell($paths_log[$ezer_server],$arg) : '---';
+    $log= nl2br($log);
+    goto render;
+  case 'down':
+    copy($paths_log[$ezer_server],"docs/error.log");
+    goto render;
+    break;
   case 'cookie':
     setcookie('error_reporting',$arg);
+    break;
+  case 'dbg':
+    $_SESSION['dbg']= $arg;
     break;
   }
   header('Location: ses.php');
   exit();
 }
 # ------------------------------------------------------------------------------------------- client
+render:
 $all= true;
-$icon= $ezer_local ? "img/ses_local.png" : "img/ses.png";
+$icon= $ezer_local ? "$ezer_root/img/ses_local.png" : "$ezer_root/img/ses.png";
 
 $cms= debug($_GET,'GET').'<br/>';
 $cms.= debug($_POST,'POST').'<br/>';
 $cms.= debug($_COOKIE,'COOKIE').'<br/>';
 $cms.= debug($_SESSION,'SESSION',(object)array('depth'=>0)).'<br/>';
+$dbg= isset($_SESSION['dbg']) ? $_SESSION['dbg'] : '';
+$cms.= "
+  <div>
+    <button style='float:left;' onclick=\"op('dbg.'+document.getElementById('dbg').value);\">save</button>
+    <textarea id='dbg' rows='4' cols='60'>$dbg</textarea>
+  </div>
+";
+$cms.= "<div>
+         <div style='float:left'>
+           <button onclick=\"op('log.10');\">log</button><br>
+           <button onclick=\"op('down.');\" title='copy logfile to docs')>vvv</button>
+         </div>  
+         <div style='width:800px;height:100px;overflow:auto;background:white;margin:5px 40px'>$log</div>
+       </div>";
 $cms.= debug($_SESSION,'SESSION').'<br/>';
 $cms.= debug($_SERVER,'SERVER').'<br/>';
 
@@ -174,4 +202,56 @@ function my_ip() {
   return isset($_SERVER['HTTP_X_FORWARDED_FOR'])
     ? $_SERVER['HTTP_X_FORWARDED_FOR'] : $_SERVER['REMOTE_ADDR'];
 }
-?>
+# --------------------------------------------------------------------------------------- tailCustom
+	/**
+	 * Slightly modified version of http://www.geekality.net/2011/05/28/php-tail-tackling-large-files/
+	 * @author Torleif Berger, Lorenzo Stanco
+	 * @link http://stackoverflow.com/a/15025877/995958
+	 * @license http://creativecommons.org/licenses/by/3.0/
+	 */
+	function tailCustom($filepath, $lines = 1, $adaptive = true) {
+		// Open file
+		$f = @fopen($filepath, "rb");
+		if ($f === false) return "cannot read $filepath";
+		// Sets buffer size, according to the number of lines to retrieve.
+		// This gives a performance boost when reading a few lines from the file.
+		if (!$adaptive) $buffer = 4096;
+		else $buffer = ($lines < 2 ? 64 : ($lines < 10 ? 512 : 4096));
+		// Jump to last character
+		fseek($f, -1, SEEK_END);
+		// Read it and adjust line number if necessary
+		// (Otherwise the result would be wrong if file doesn't end with a blank line)
+		if (fread($f, 1) != "\n") $lines -= 1;
+		// Start reading
+		$output = '';
+		$chunk = '';
+		// While we would like more
+		while (ftell($f) > 0 && $lines >= 0) {
+			// Figure out how far back we should jump
+			$seek = min(ftell($f), $buffer);
+			// Do the jump (backwards, relative to where we are)
+			fseek($f, -$seek, SEEK_CUR);
+			// Read a chunk and prepend it to our output
+			$output = ($chunk = fread($f, $seek)) . $output;
+			// Jump back to where we started reading
+			fseek($f, -mb_strlen($chunk, '8bit'), SEEK_CUR);
+			// Decrease our line counter
+			$lines -= substr_count($chunk, "\n");
+		}
+		// While we have too many lines
+		// (Because of buffer size we might have read too many)
+		while ($lines++ < 0) {
+			// Find first newline and remove all text before that
+			$output = substr($output, strpos($output, "\n") + 1);
+		}
+        // Close file and return
+		fclose($f);
+		return trim($output);
+	}
+# ---------------------------------------------------------------------------------------- tailShell
+	function tailShell($filepath, $lines = 1) {
+		ob_start();
+		passthru('tail -'  . $lines . ' ' . escapeshellarg($filepath));
+		return trim(ob_get_clean());
+	}
+    ?>
