@@ -11,7 +11,6 @@ require_once("$deep_root/db2.dbs.php");
 $ezer_local= $ezer_server==0;
 $paths_log= array(
   'C:\Apache\logs\php_error.log',
-  "",
   "/var/log/apache2/error.log",
   "/var/log/httpd/apache24-error_log"
 );
