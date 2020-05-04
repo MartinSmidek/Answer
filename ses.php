@@ -6,14 +6,10 @@ if ( !isset($_SESSION) ) session_start();
 
 # -------------------------------------------------------------------- identifikace ladícího serveru
 // definice podporovaných serverů
+global $ezer_server, $paths_log;
 $deep_root= "../files/answer";
 require_once("$deep_root/db2.dbs.php");
 $ezer_local= $ezer_server==0;
-$paths_log= array(
-  'C:\Apache\logs\php_error.log',
-  "/var/log/apache2/error.log",
-  "/var/log/httpd/apache24-error_log"
-);
 # ----------------------------------------------------------------------------------------------- js
 $js= <<<__EOD
 function op(op_arg) {
@@ -39,7 +35,8 @@ if ( isset($_GET['op']) ) {
     phpinfo();
     break;
   case 'log':
-    $log= isset($paths_log[$ezer_server]) ? tailCustom($paths_log[$ezer_server],$arg) : '---';
+    $log= isset($log_path) ? tailCustom($paths_log[$ezer_server],$arg) 
+      : "cannot find log_path for server $ezer_server";
 //    $log= isset($paths_log[$ezer_server]) ? tailShell($paths_log[$ezer_server],$arg) : '---';
     $log= nl2br($log);
     goto render;
@@ -209,6 +206,7 @@ function my_ip() {
 	 * @license http://creativecommons.org/licenses/by/3.0/
 	 */
 	function tailCustom($filepath, $lines = 1, $adaptive = true) {
+        if ( !file_exists($filepath) ) return "cannot find $filepath";
 		// Open file
 		$f = @fopen($filepath, "rb");
 		if ($f === false) return "cannot read $filepath";
