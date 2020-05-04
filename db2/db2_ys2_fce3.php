@@ -31,6 +31,7 @@ function git_make($par) {
     // po fetch ještě nastav shodu s github
     if ( $cmd=='fetch') {
       $msg.= "$state:$exec<br>";
+      $cmd= "git reset --hard origin/master";
       $exec= "git $cmd>$abs_root/docs/.git.log";
       exec($exec,$lines,$state);
     }
