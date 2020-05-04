@@ -133,14 +133,13 @@ menu db2 { type:'main', title:'db2', active:*, _sys:'*'
           item { title:'[fa-question] Answer: git status'  par:°{folder:'.',op:'cmd',cmd:'status'}}
           item { title:'[fa-gear] Answer: git log'         par:°{folder:'.',op:'cmd',cmd:'log'}}
           item { title:'[fa-gear] Answer: git pull'        par:°{folder:'.',op:'cmd',cmd:'pull'}}
-    //    item { title:'[fa-gear] Answer: git reset --hard origin/master' 
-    //                                                par:°{folder:'cms',op:'cmd',cmd:'reset --hard origin/master'}}
+          item { title:'[fa-gear] CMS: git fetch ...'      help:"po fetch>git reset --hard origin/master"
+                                                           par:°{folder:'.',op:'cmd',cmd:'fetch'}}
           item { title:'[fa-question] Ezer: git status' par:°{folder:'ezer',op:'cmd',cmd:'status'}}
           item { title:'[fa-gears] Ezer: git log'       par:°{folder:'ezer',op:'cmd',cmd:'log'}}
           item { title:'[fa-gears] Ezer: git pull'      par:°{folder:'ezer',op:'cmd',cmd:'pull'}}
-    //    item { title:'[fa-gears] Ezer: git reset --hard origin/master' 
-    //                                                par:°{folder:'ezer',op:'cmd',cmd:'reset --hard origin/master'}}
-    //    item { title:'[fa-question] poslední git.log'   par:°{op:'show'}}
+          item { title:'[fa-gears] Ezer: git fetch ...' help:"po fetch>git reset --hard origin/master"
+                                                        par:°{folder:'ezer',op:'cmd',cmd:'fetch'}}
           proc onclick (i) {  
             panel.display(2,'i'); 
             info.fill(replace_fa(conc(i.owner.title,' - ',i.title)),ask('git_make',i.par));

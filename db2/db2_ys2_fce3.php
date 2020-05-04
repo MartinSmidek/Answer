@@ -2,41 +2,47 @@
 /** ===========================================================================================> GIT */
 # ----------------------------------------------------------------------------------------- git make
 # provede git par.cmd>.git.log a zobrazí jej
+# fetch pro lokální tj. vývojový server nepovolujeme
 function git_make($par) {
   global $abs_root;
+  $bean= preg_match('/bean/',$_SERVER['SERVER_NAME'])?1:0;
+                                                    display("bean=$bean");
   $cmd= $par->cmd;
-  $log= "$abs_root/docs/.git.log";
-  if ( file_exists($log) ) {
-    file_put_contents($log,'');
-  }
+  $folder= $par->folder;
+  $lines= '';
   $msg= "";
   // proveď operaci
   switch ($par->op) {
   case 'cmd':
+    if ( $cmd=='fetch' && $bean) {
+      $msg= "na vývojových serverech (*.bean) příkaz fetch není povolen ";
+      break;
+    }
     $state= 0;
     // zruš starý obsah .git.log
-    $f= @fopen($log, "r+");
+    $f= @fopen("$abs_root/docs/.git.log", "r+");
     if ($f !== false) {
         ftruncate($f, 0);
         fclose($f);
     }
-    if ( $par->folder=='.') {
-      $exec= "git {$par->cmd}>$log";
+    if ( $folder=='ezer') chdir("ezer3.1");
+    $exec= "git $cmd>$abs_root/docs/.git.log";
+    exec($exec,$lines,$state);
+    // po fetch ještě nastav shodu s github
+    if ( $cmd=='fetch') {
+      $msg.= "$state:$exec<br>";
+      $exec= "git $cmd>$abs_root/docs/.git.log";
       exec($exec,$lines,$state);
     }
-    else if ( $par->folder=='ezer') {
-      chdir("ezer3.1");
-      $exec= "git {$par->cmd}>$log";
-      exec($exec,$lines,$state);
-      chdir($abs_root);
-    }
+    if ( $folder=='ezer') chdir($abs_root);
     debug($lines,$state);
-    $msg= "$state:$exec<hr>";
+    $msg.= "$state:$exec<hr>";
   case 'show':
-    $msg.= file_get_contents("$log");
+    $msg.= file_get_contents("$abs_root/docs/.git.log");
     $msg= nl2br(htmlentities($msg));
     break;
   }
+  $msg= "<i>Synology: musí být spuštěný Git Server (po aktualizaci se vypíná)</i><hr>$msg";
   return $msg;
 }
 /** ========================================================================================> online */
