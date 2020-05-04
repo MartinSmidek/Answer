@@ -25,7 +25,7 @@ function git_make($par) {
         ftruncate($f, 0);
         fclose($f);
     }
-    if ( $folder=='ezer') chdir("ezer3.1");
+    if ( $folder=='ezer') chdir("../_ezer3.1");
     $exec= "git $cmd>$abs_root/docs/.git.log";
     exec($exec,$lines,$state);
     // po fetch ještě nastav shodu s github
