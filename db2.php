@@ -27,7 +27,7 @@
   
   // nastav jako default PDO=2
   if ( !isset($_GET['pdo']))
-    $_GET['pdo']==2;
+    $_GET['pdo']= 2;
 
   // ochránění přímého přístupu do složek s .htaccess/RewriteCond "%{HTTP_COOKIE}" "!EZER"
   setcookie("EZER",$app,0,"/");
