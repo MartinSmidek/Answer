@@ -1493,7 +1493,7 @@ form _rodina2 [,,360,229]  { css:'ae_frame'
     proc show_dup(on) { on; jmeno.width(80); _dup.width(29) | jmeno.width(110); _dup.width(0) }
     proc onclick() { _dup.width; show_dup(0) | show_dup(1) }
     proc onrowclick() {
-      [ track.display; track.back_show('osoba',key_osoba.get) ];
+      [ track.display; track.back_osoba_rodina(key_osoba.get,kmen.get) ];
       eq(cmd.mode.get,'rodiny');
       show_osoby(key_osoba.get,key_spolu.get,cleni);
     | neni_ulozen_clen

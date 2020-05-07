@@ -24,6 +24,10 @@
   $CKEditor= isset($_GET['editor']) ? $_GET['editor'] : '4.6';
   // pro ezer2.2 nutno upravit ezer_main, ezer_ajax, ae_slib
   $kernel=   "ezer".(isset($_GET['ezer'])?$_GET['ezer']:'3.1'); 
+  
+  // nastav jako default PDO=2
+  if ( !isset($_GET['pdo']))
+    $_GET['pdo']==2;
 
   // ochránění přímého přístupu do složek s .htaccess/RewriteCond "%{HTTP_COOKIE}" "!EZER"
   setcookie("EZER",$app,0,"/");

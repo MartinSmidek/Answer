@@ -41,7 +41,8 @@ var hodin_zmeny= 0              // zobrazení změn za poslední hodiny a výpis
 
 # ----------------------------------------------------------------------------------==> inicializace
 # inicializace modulu Databáze - nastavení globálních proměnných the_* tohoto modulu
-var dirty=0                     // 1 => byla ukončena inicializace modulu
+var dirty=0,                     // 1 => byla ukončena inicializace modulu
+    virgin_track=1    
 proc onstart() { dirty.get | akce_onstart }
 proc akce_onstart() {
   dirty.get
@@ -687,14 +688,27 @@ panel Proces [0,0,300,50] { type:'popup' title:'průběh výpočtu'
 # ===========================================================================================> TRACK
 # přehled provedených změn
 panel track [,,550,276] { title:'Historie oprav', type:'popup', css:'dialog'
-  var reverted_table= '', reverted_key= 0
+//  var reverted_table= '', reverted_key= 0
   use back: form _back [0,0,,] { tabindex:20 },
   proc back_show(kde,klic) {
-    panel.popup(0,1);
+    [ virgin_track.get; panel.popup(0,1) | panel.popup(0,0,0,1) ];
+    virgin_track.set(0);
     panel.set_attrib('title',conc('Historie oprav pro ',kde,' id=',klic));
-    reverted_table.set(''); reverted_key.set(0);
+//    reverted_table.set(''); reverted_key.set(0);
     back.lst.browse_load(conc("(kde='",kde,"' AND klic=",klic,")"),"kdy DESC");
     back.lst.raise('onrowclick')
+  }
+  proc back_double(tab1,klic1,tab2,klic2) {
+    [ virgin_track.get; panel.popup(0,1) | panel.popup(0,0,0,1) ];
+    virgin_track.set(0);
+    panel.set_attrib('title',conc('Historie oprav pro ',tab1,'/',klic1,' a ',tab2,'/',klic2));
+    back.lst.browse_load(conc(
+        "(kde='",tab1,"' AND klic=",klic1,") OR (kde='",tab2,"' AND klic=",klic2,")"),"kdy DESC");
+    back.lst.raise('onrowclick')
+  }
+  proc back_osoba_rodina(ido,kmen) { var idr:number
+    idr.set(split(kmen,'/',1));
+    idr; back_double('osoba',ido,'rodina',idr) | back_show('osoba',ido)
   }
   # ------------------------------------------------------------- _back
   # id_track,kdy,kdo,kde,klic,zmena:fld,op,val,old
@@ -724,7 +738,7 @@ panel track [,,550,276] { title:'Historie oprav', type:'popup', css:'dialog'
         confirm('mám zkusit vrátit opravy označených řádků?');
         ret.set(ask('track_revert',lst.selected('get',0)));
         { ret.ok; warning("změny byly vráceny");
-          reverted_table.set(ret.tab); reverted_key.set(ret.klic);
+//          reverted_table.set(ret.tab); reverted_key.set(ret.klic);
           lst.browse_refresh;
         | alert(ret.msg) }
       }
@@ -905,7 +919,8 @@ form _osoba2x [,,244,322] {css:'ae_frame'
   // kontextové menu
   menu detail { type:'context', skill:'yae;fae;cae'
     item { title:'konfigurace formuláře', proc onclick () { osoba_config.tune(panel) } }
-    item { title:'ukázat změny os. údajů',proc onclick () { track.back_show('osoba',key_osoba.get) }}
+    item { title:'ukázat změny os. údajů',proc onclick () { 
+      track.back_osoba_rodina(key_osoba.get,cconc(eq(host.get,'E'),id_kmen.get,kmen.get)) }}
     item r { title:'-zobrazovat ®rodinné údaje',  proc onclick () { set_mode(2,host.get); refresh }}
     item o { title:'nezobrazovat ®rodinné údaje', proc onclick () { set_mode(0,host.get); refresh }}
   }
