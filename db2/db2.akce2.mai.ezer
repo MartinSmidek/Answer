@@ -970,7 +970,11 @@ form _esql {
     anwer.set(ask('mail2_sql_try',query.get,vsechno.get))
   } }
   check vsechno [670,9,80,15] {title:'zobraz vše', format:'t'}
-  button [627,34,,] {title:'Možné parametry',  help:'Ukázat seznam možných parametrů', proc onclick() {
+  button [627,34,,] {title:'Excel',  help:'Uložit změny do Excelu', proc onclick() {
+    { has_skill('m'); qry_save.onclick | form.same | alert('pro změnu SQL dotazu nemáš oprávnění') };
+    anwer.set(ask('mail2_sql_try',query.get,vsechno.get,1))
+  } }
+  button [675,34,,] {title:'Parametry',  help:'Ukázat seznam možných parametrů', proc onclick() {
     alert(ask('mail2_sql_subst'));
   } }
   proc reload() {

@@ -12949,10 +12949,22 @@ function mail2_sql_subst($qry='') {  trace();
 # ------------------------------------------------------------------------------------ mail2 sql_try
 # ASK - vytvoření SQL dotazů pro definici mailů
 # vrací {id_cis,data,query}
-function mail2_sql_try($qry,$vsechno=0) {  trace();
+function mail2_sql_try($qry,$vsechno=0,$export=0) {  trace();
   $html= $head= $tail= '';
   $emails= array();
   try {
+    // export?
+    $href= '';
+    if ( $export ) {
+      $fname= "skupina_".date("Ymd_Hi").".csv";
+      $fpath= "docs/$fname";
+      $flds= "příjmení jméno;email;telefon;ulice, psč obec;x;y;z";
+      $f= @fopen($fpath,'w');
+      if ( !$f ) fce_error("soubor '$fpath' nelze vytvořit");
+      fputs($f,chr(0xEF).chr(0xBB).chr(0xBF));
+      fputcsv($f,explode(';',$flds),';','"');
+      $href= ". Seznam <a href='$fpath'>$fname</a> lze stáhnout do Excelu ve formátu CSV";
+    }
     // substituce
     $qry= mail2_sql_subst($qry);
     // dotaz
@@ -12974,7 +12986,11 @@ function mail2_sql_try($qry,$vsechno=0) {  trace();
       while ( $res && ($c= pdo_fetch_object($res)) ) {
         if ( $n ) {
           $tail.= "<tr><td>{$c->prijmeni} {$c->jmeno}</td><td>{$c->_email}</td><td>{$c->telefon}</td>
-            <td>{$c->ulice} {$c->psc} {$c->obec}</td><td>{$c->_x}</td><td>{$c->_y}</td><td>{$c->_z}</td></tr>";
+            <td>{$c->ulice}, {$c->psc} {$c->obec}</td><td>{$c->_x}</td><td>{$c->_y}</td><td>{$c->_z}</td></tr>";
+          if ( $export ) {
+            fputcsv($f,array("$c->prijmeni $c->jmeno",$c->_email,$c->telefon,
+                "{$c->ulice}, {$c->psc} {$c->obec}",$c->_x,$c->_y,$c->_z),';','"');
+          }
           $n--;
         }
         // počítání mailů
@@ -12986,9 +13002,12 @@ function mail2_sql_try($qry,$vsechno=0) {  trace();
       $tail.= "</table>";
       $tail.= $num>$nmax ? "..." : "";
     }
+    if ( $export ) {
+      fclose($f);  
+    }
   }
   catch (Exception $e) { $html.= "<span style='color:red'>FATAL ".pdo_error()."</span>";  }
-  $head.= "<br>Adresáti mají <b>".count($emails)."</b> různých emailových adres";
+  $head.= "<br>Adresáti mají <b>".count($emails)."</b> různých emailových adres $href";
   $html= $html ? $html : $head.$tail;
 //                                                 debug($emails,"db_mail_sql_try");
   return $html;
