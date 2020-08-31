@@ -175,7 +175,7 @@ form _cmd [,,425,30] { css:'ae_parm'
   }}
   // ZPĚT
   button [5,5,,] { type:'html', title:'[fa-undo] Zpět',  help:'Neměnit změněná data',
-    proc onclick() { panel.close(1) }}
+    proc onclick() { panel.hide(1) }}
   // LINK
   button [61,5,,] { type:'html', title:"[fa-save] [fa-link] Ulož změny a proveď sjednocení",
     proc onclick() { var ret:object

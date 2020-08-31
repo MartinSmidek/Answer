@@ -46,13 +46,13 @@
   
   // upozornění na testovací verzi
   $demo= '';
-  if ( $ezer_server==2 ) {
-    $click= "jQuery('#DEMO').fadeOut(500);";
-    $dstyle= "left:0; top:0; position:fixed; transform:rotate(320deg) translate(-128px,-20px); "
-        . "width:500px;height:100px;background:orange; color:white; font-weight: bolder; "
-        . "text-align: center; font-size: 40px; line-height: 96px; z-index: 16; opacity: .5;";
-    $demo= "<div id='DEMO' onmouseover=\"$click\" style='$dstyle'>nový server</div>";
-  }
+//  if ( $ezer_server==2 ) {
+//    $click= "jQuery('#DEMO').fadeOut(500);";
+//    $dstyle= "left:0; top:0; position:fixed; transform:rotate(320deg) translate(-128px,-20px); "
+//        . "width:500px;height:100px;background:orange; color:white; font-weight: bolder; "
+//        . "text-align: center; font-size: 40px; line-height: 96px; z-index: 16; opacity: .5;";
+//    $demo= "<div id='DEMO' onmouseover=\"$click\" style='$dstyle'>nový server</div>";
+//  }
 
   // skin a css
   $cookie= 4;
@@ -76,7 +76,8 @@
     'web'          => "''", // web organizace - pro odmítnutí odhlášení
     'skill'        => "'d'",
     'autoskill'    => "'!d'",
-    'db_test'      => 0
+    'db_test'      => 0,
+    'dbg'          => "{path:['db2','cr2']}"
   ];
 
   // (re)definice Ezer.options
@@ -90,21 +91,21 @@
     'title_right' => $title,
 //    'contact' => $kontakt,
     'CKEditor' => "{
-      version:'$CKEditor',
-      Minimal:{toolbar:[['Bold','Italic','Source']]},
-      IntranetSlim:{
-        toolbar:[['Bold','Italic','-','Link','Unlink','-','Source']],
-        removePlugins:'wsc,elementspath,scayt'
-      },
-      'EzerMail':{toolbar:[['PasteFromWord',
-        '-','Format','Bold','Italic','TextColor','BGColor',
-        '-','JustifyLeft','JustifyCenter','JustifyRight',
-        '-','Link','Unlink','HorizontalRule','Image',
-        '-','NumberedList','BulletedList',
-        '-','Outdent','Indent',
-        '-','Source','ShowBlocks','RemoveFormat']]
-      }
-    }"
+        version:'$CKEditor',
+        Minimal:{toolbar:[['Bold','Italic','Source']]},
+        IntranetSlim:{
+          toolbar:[['Bold','Italic','-','Link','Unlink','-','Source']],
+          removePlugins:'wsc,elementspath,scayt'
+        },
+        'EzerMail':{toolbar:[['PasteFromWord',
+          '-','Format','Bold','Italic','TextColor','BGColor',
+          '-','JustifyLeft','JustifyCenter','JustifyRight',
+          '-','Link','Unlink','HorizontalRule','Image',
+          '-','NumberedList','BulletedList',
+          '-','Outdent','Indent',
+          '-','Source','ShowBlocks','RemoveFormat']]
+        }
+      }"
   );
 
   // je to aplikace se startem v kořenu

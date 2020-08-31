@@ -968,9 +968,9 @@ panel pobyt_config [,,200,150] {type:'popup', title:"Podrobnosti údajů"
     check d [0,80,200,] { title:"platba za pobyt dětí", format:'t', proc onchange() { _tuned }}
     check s [0,100,200,] { title:"členové skupiny", format:'t', proc onchange() { _tuned }}
     button  [ 0,130,,] { type:'submit', title:'Nastav', proc onclick() {
-      set_cookie(conc(sys('root'),'_conf_pobyt'),grp.get); panel.close(1) }}
+      set_cookie(conc(sys('root'),'_conf_pobyt'),grp.get); panel.hide(1) }}
     button  [85,130,,] { title:'Zpět', proc onclick() {
-      grp.set(_old.get); _back; pob.show_pobyt; panel.close(1) }}
+      grp.set(_old.get); _back; pob.show_pobyt; panel.hide(1) }}
     proc _tuned() { grp.set(cconc(p.get,'P,',t.get,'T,',s.get,'S,',u.get,'U,',d.get,'D,','Z'));
       pob.show_pobyt }
     proc _back() { 
@@ -1081,9 +1081,9 @@ panel spolu_config [,,200,60] {type:'popup', title:"Podrobnosti údajů"
     check z [ 0, 0,200,] { title:"základní údaje",       format:'d', value:'1'}
     check p [ 0,20,200,] { title:"poznámka k účasti",    format:'t', proc onchange() { _tuned }}
     button  [ 0,40,,] { type:'submit', title:'Nastav', proc onclick() {
-      set_cookie(conc(sys('root'),'_conf_spolu'),grp.get); panel.close(1) }}
+      set_cookie(conc(sys('root'),'_conf_spolu'),grp.get); panel.hide(1) }}
     button  [85,40,,] { title:'Zpět', proc onclick() {
-      grp.set(_old.get); _back; ucast.spolu_show; panel.close(1) }}
+      grp.set(_old.get); _back; ucast.spolu_show; panel.hide(1) }}
     proc _tuned() { grp.set(cconc(p.get,'P',1,'Z')); ucast.spolu_show }
     proc _back() { z.set(contains('Z',grp.get)); p.set(contains('P',grp.get)); }
   }

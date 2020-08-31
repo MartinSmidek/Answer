@@ -47,6 +47,9 @@
   $tracking= '_track';
   $tracked= ',akce,pobyt,spolu,osoba,tvori,rodina,_user,';
   
+  // moduly interpreta zahrnuté do aplikace - budou zpracovány i reference.i_doc pro tabulky kompilátoru
+  $ezer_comp_root= "db2/ds_fce3";
+
   // definice modulů specifických pro Answer
   $k= substr($kernel,4,1)=='3' ? '3' : '';
   $app_php= array(
