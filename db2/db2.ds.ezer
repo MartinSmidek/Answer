@@ -10,8 +10,8 @@
   }
 
 # ======================================================================================> OBJEDNÁVKY
-panel dum {type:'right', title:"Objednávky", _sys:'obj',include:'onload' // musí být onload aby se natáhla knihovna
-}
+panel dum {type:'right', title:"Objednávky", _sys:'obj',include:'onload' } // musí být onload aby se natáhla knihovna
+panel dum2 {type:'right', title:"Objednávky2", _sys:'dum2',include:'onload' skill:'m'} 
 # ===========================================================================================> HOSTÉ
 panel kl {type:'right', title:"Hosté", _sys:'kli', include:'onload' }
 # ============================================================================================> CENY
@@ -144,6 +144,8 @@ table ds_osoba { db:'setkani', key_id:'id_osoba'
   number luzko          // L|P|B|DP
   number postylka       // 0|1
   number strava         // L|P|B|DP
+  number dar
+  text   oprava
   date   fromday        { sql_pipe:'sql_date1' }
   date   untilday       { sql_pipe:'sql_date1' }
   text   pozn           { sql_pipe:'wu' }

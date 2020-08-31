@@ -930,7 +930,7 @@ function sta2_mrop_stat_see($par,&$title) { trace();
       $am[$A]= $pms;
       $A++;
     }
-                                                  debug($max);
+//                                                  debug($max);
     $ppm= round(1000*$s_inic/$s_muzi,2);
     $pms= round(100*$s_ms/$s_inic);
     $msg.= "<tr><th></th><th>celkem</th><th align='right'>$s_obce</th>
@@ -1076,7 +1076,7 @@ function sta2_mrop_stat_see($par,&$title) { trace();
     while ( $sr && list($n,$xy)= pdo_fetch_row($sr)) {
       $dbg[$xy]= $n;
     }
-    debug($dbg);
+//    debug($dbg);
   }
   return $msg;
 }
@@ -1400,6 +1400,7 @@ function tut_dir_walk($base,$root) {  trace();
     return null;
   }
 }
+/*
 # ------------------------------------------------------------------------------------------ session
 # getter a setter pro _SESSION
 function session($is,$value=null) {
@@ -1424,6 +1425,7 @@ function session($is,$value=null) {
   }
   return $value;
 }
+*/
 /** =====================================================================================> DOTAZNÍKY **/
 # ----------------------------------------------------------------------------------------- dot roky
 # vrátí dostupné dotazníky Letního kurzu MS YS
@@ -2792,6 +2794,134 @@ function ds_kli_menu() {
   return $result;
 }
 # ======================================================================================> objednávky
+# ------------------------------------------------------------------------------------ ds cenik_list
+# vrátí seznam položek ceníku Domu setkání zadaného roku (default je letošní platný)
+# pokud je zadaný host vrátí také počet objednaných instancí položek ceníku
+# ve kterém zohlední aktuální opravy podle položky ds_osoba.oprava
+function ds_cenik_list($cenik_roku=0,$order=0,$host=0) {
+  $y= (object)array('list'=>array());
+  // najdi platný ceník 
+  ezer_connect('setkani');
+  $cenik_roku= $cenik_roku ?: date('Y');
+  $cenik_roku= select('rok','ds_cena',"rok<=$cenik_roku ORDER BY rok DESC LIMIT 1",'setkani');
+  $y->cenik_roku= $cenik_roku;
+  // projdi ceník DS
+  $rc= pdo_qry("SELECT typ,polozka FROM ds_cena WHERE rok=$cenik_roku ORDER BY druh,typ");
+  while ( $rc && list($typ,$pol)= pdo_fetch_row($rc) ) {
+    $y->list[]= (object)array('typ'=>$typ,'txt'=>wu($pol));
+  }
+  if ( $host ) {
+    $pol= (object)array();
+    $cen= (object)array();
+    $opr= (object)array();
+    $fields= (object)array();
+    // číselníky 
+    $ds_luzko=  map_cis('ds_luzko','zkratka');  $ds_luzko[0]=  '?';
+    $ds_strava= map_cis('ds_strava','zkratka'); $ds_strava[0]= '?';
+    // přepočet kategorie pokoje na typ ubytování v ceníku    
+    $luzko_pokoje= ds_cat_typ();
+    $ob= select_object('*','tx_gnalberice_order',"uid=$order",'setkani');
+    // projdeme členy rodiny
+    $ros= pdo_qry("SELECT * FROM ds_osoba WHERE id_order=$order AND id_osoba='$host'");
+    if ( $ros && $os= pdo_fetch_object($ros) ) {
+      if ( !$os->pokoj ) { $y->err= "není zapsán pokoj pro $y->prijmeni $y->jmeno "; goto end; }
+      // načtení případné opravy 
+      if ( $os->oprava ) {
+        // $opravy[0] je rok číselníku - musí se shodovat s aktuálním
+        $opravy= explode(',',$os->oprava);
+        for ($i= 1; $i<count($opravy); $i++) {
+          list($field,$val)= explode(':',$opravy[$i]);
+          $opr->$field= (int)$val;
+        }
+      }
+      // počty položek
+      $host_pol= ds_polozky_hosta($ob,$os,$luzko_pokoje,$ds_luzko,$ds_strava);
+      foreach ($host_pol->cena as $field=>$value) {
+        $pol->$field= $value;
+      }
+      // ceny za položky
+      $one= ds_platba_hosta($cenik_roku,$host_pol->cena,$fields,'',true);
+      foreach ($one as $field=>$value) {
+        $opr->$field= isset($opr->$field) ? $opr->$field : '-';
+      }
+    }
+    $y->pol= $pol;
+//    $y->cen= $cen;
+    $y->one= $one;
+    $y->opr= $opr;
+    unset($y->list);
+  }
+end:  
+  return $y;
+}
+# ----------------------------------------------------------------------------------- ds cena_pobytu
+# ASK
+# vypočítá cenu pobytu účastníka (1), rodiny (2), akce (3)
+# $id_osoba je z tabulky ds_osoba obsahující osobo-dny 
+function ds_cena_pobytu($idos,$cenik_roku) {
+  $y= (object)array('fields'=>(object)array(),'rows'=>array());
+  // číselníky 
+  $ds_luzko=  map_cis('ds_luzko','zkratka');  $ds_luzko[0]=  '?';
+  $ds_strava= map_cis('ds_strava','zkratka'); $ds_strava[0]= '?';
+  ezer_connect('setkani');
+  // přepočet kategorie pokoje na typ ubytování v ceníku    
+  $luzko_pokoje= ds_cat_typ();
+  // společná data
+  list($order,$jmeno,$prijmeni,$rodina)= 
+      select('id_order,jmeno,prijmeni,rodina','ds_osoba',"id_osoba=$idos",'setkani');
+  $y->fields->jmeno= wu($jmeno);
+  $y->fields->prijmeni= wu($prijmeni);
+  $y->fields->rodina= wu($rodina);
+  $ob= select_object('*','tx_gnalberice_order',"uid=$order",'setkani');
+  $cenik_roku= $cenik_roku?: date('Y',$ob->untilday);
+  ds_cenik($cenik_roku);
+  
+  // sběr a kontrola dat pro hosta, rodinu, celou objednávku
+  foreach (array(1=>"id_osoba=$idos",2=>"rodina='$rodina'",3=>"1") as $i=>$cond) {
+    $fields= (object)array();
+    $ros= pdo_qry("SELECT * FROM ds_osoba WHERE id_order=$order AND $cond");
+    while ( $ros && $os= pdo_fetch_object($ros) ) {
+      if ( !$os->pokoj ) { $y->err= "není zapsán pokoj pro $y->prijmeni $y->jmeno "; goto end; }
+      $host_pol= ds_polozky_hosta($ob,$os,$luzko_pokoje,$ds_luzko,$ds_strava);
+      if ( $i==1 ) {
+        $y->host= $host_pol;
+      }
+      ds_platba_hosta($cenik_roku,$host_pol->cena,$fields,$i);
+      foreach ($fields as $field=>$value) {
+        $y->fields->$field+= $value;
+      }
+    }
+  }
+end:  
+  return $y;
+}
+# -------------------------------------------------------------------------------==> ds platba_hosta
+# výpočet ceny za položky hosta jako ubyt,strav,popl,prog,celk
+function ds_platba_hosta ($cenik_roku,$polozky,$platba,$i='',$podrobne=false) {
+  $druhy= array("ubyt$i"=>'noc|pobyt',"strav$i"=>'strava',"popl$i"=>'ubyt',"prog$i"=>'prog');
+  $celki= "celk$i";
+  // výpočet
+  $one= (object)array();
+  $platba->$celki= 0;
+  foreach ( $druhy as $druh=>$prefix ) {
+    $platba->$druh= 0;
+    $rc= pdo_qry("SELECT typ,cena,dph FROM ds_cena WHERE rok=$cenik_roku AND typ RLIKE '$prefix' ");
+    while ( $rc && list($typ,$cena,$dph)= pdo_fetch_row($rc) ) {
+      $one->$typ+= $cena;
+      list($typ_)= explode('_',$typ);
+      if ( $polozky->$typ ) {
+        $za_noc= in_array($typ_,array('noc','strava','ubyt'));
+        $cena= $za_noc ? $cena*$polozky->noci : $cena;
+        $platba->$druh+= $cena;
+        if ( $podrobne ) {
+          $platba->$typ+= $cena;
+        }
+      }
+    }
+    $platba->$celki+= $platba->$druh;
+  }
+  return $one;
+}        
 # ------------------------------------------------------------------------------------ ds objednavka
 # vrátí ID objednávky pokud existuje k této akce
 function ds_objednavka($ida) {
@@ -2918,8 +3048,13 @@ function ds_cen_menu($tit='Ceny roku') {
 # -------------------------------------------------------------------------------------- ds obj_menu
 # vygeneruje menu pro loňský, letošní a příští rok ve tvaru objektu pro ezer2 pro zobrazení objednávek
 # určující je datum zahájení pobytu v objednávce
-function ds_obj_menu() {
+# $ym_list = yyyymm,yyyymm,... pro omezení levého menu pro ladění
+function ds_obj_menu($ym_list=null) {
   global $pdo_db;
+  $omezeni= false;
+  if ( $ym_list ) {
+    $omezeni= explode(',',$ym_list);
+  }
   $stav= map_cis('ds_stav');
   $the= '';                     // první objednávka v tomto měsíci či později
 //                                      debug($stav,'ds_obj_menu',(object)array('win1250'=>1));
@@ -2935,6 +3070,7 @@ function ds_obj_menu() {
       $mm= sprintf('%02d',$m);
       $yyyy= $start+$y;
       $group= "$yyyy$mm";
+      if ( $omezeni && in_array($group,$omezeni)===false ) continue;
       $gr= (object)array('type'=>'menu.group'
         ,'options'=>(object)array('title'=>($mesice[$m])." $yyyy"),'part'=>(object)array());
       $mn->part->$group= $gr;
@@ -3313,10 +3449,10 @@ function ds_zaloha($order) {  trace();// '','win1250');
   $res= pdo_qry($qry);
   if ( $res && $o= pdo_fetch_object($res) ) {
     $o->rooms= $o->rooms1;
-    foreach ((array)$o as $on) if ( strstr($on,'|')!==false ) { // test na |
+    foreach ((array)$o as $on) { if ( strstr($on,'|')!==false ) { // test na |
       fce_warning(/*w*u*/("nepřípustný znak '|' v '$on'"));
       goto end;
-    }
+    }}
     $obdobi= date('j.n',$o->fromday).' - '.date('j.n.Y',$o->untilday);
     $dnu= ($o->untilday-$o->fromday)/(60*60*24);
 //                                                         display("pocet dnu=$dnu");
@@ -3614,27 +3750,25 @@ end:
 function ds_faktury($order) {  trace('','win1250');
   global $ds_cena;
   $x= (object)array('faktury'=>array(),'rodiny'=>array());
-//// číselníky                    1   2   3   4   5   6   7   8   9   10  11  12  13  14  15  16
-//$luzko_pokoje= array(0=>'?',1=>'L','L','L','L','L','L','L','S','S','L','L','L','S','S','A','A');
-  $luzko_pokoje[0]= 0;
-  for ($i=11; $i<=29; $i++) $luzko_pokoje[$i]= 'L';     // normální pokoje
-  for ($i= 1; $i<= 2; $i++) $luzko_pokoje[$i]= 'A';     // apartmán bezbariérový
-  for ($i=14; $i<=17; $i++) $luzko_pokoje[$i]= 'S';     // apartmány
+  // číselníky
   $ds_luzko=  map_cis('ds_luzko','zkratka');  $ds_luzko[0]=  '?';
   $ds_strava= map_cis('ds_strava','zkratka'); $ds_strava[0]= '?';
+  ezer_connect('setkani');
+  // přepočet kategorie pokoje na typ ubytování v ceníku    
+  $luzko_pokoje= ds_cat_typ();
+//                                              debug($luzko_pokoje);
 //                                              debug($ds_strava,(object)array('win1250'=>1));
   // kontrola objednávky
-  ezer_connect('setkani');
   $qry= "SELECT * FROM tx_gnalberice_order WHERE uid=$order";
   $res= pdo_qry($qry);
   if ( $res && $o= pdo_fetch_object($res) ) {
     $o->rooms= $o->rooms1;
-    foreach ((array)$o as $on) if ( strstr($on,'|')!==false ) { // test na |
+    foreach ((array)$o as $on) { if ( strstr($on,'|')!==false ) { // test na |
       fce_warning(/*w*u*/("nepřípustný znak '|' v '$on'"));
       goto end;
-    }
+    }}
     $obdobi= date('j.n',$o->fromday).' - '.date('j.n.Y',$o->untilday);
-    $skoleni= $o->skoleni;
+//    $skoleni= $o->skoleni;
     // údaje o plátci: $ic,$dic,$adresa
     $platce= array();
     $platce[]= $o->ic ? $o->ic : '';
@@ -3667,66 +3801,13 @@ function ds_faktury($order) {  trace('','win1250');
              WHERE id_order=$order AND rodina='{$r->rodina}' ORDER BY narozeni DESC";
       $reso= pdo_qry($qry);
       while ( $reso && $h= pdo_fetch_object($reso) ) {
-        foreach ((array)$h as $on) if ( strstr($on,'|')!==false ) { // test na |
+        foreach ((array)$h as $on) { if ( strstr($on,'|')!==false ) { // test na |
           fce_warning(/*w*u*/("nepřípustný znak '|' v '$on'"));
           goto end;
-        }
-        $hf= sql2stamp($h->fromday); $hu= sql2stamp($h->untilday);
-        $od_ts= $hf ? $hf : $o->fromday;  $od= date('j.n',$od_ts);
-        $do_ts= $hu ? $hu : $o->untilday; $do= date('j.n',$do_ts);
-        $vek= ds_vek($h->narozeni,$o->fromday);
-        $narozeni= $h->narozeni ? sql_date1($h->narozeni): '';
-        $strava= $h->strava ? $h->strava : $o->board;
-        // připsání řádku
-        $host= array();
-        $host[]= wu($h->rodina);
-        $host[]= wu($h->jmeno);
-        $host[]= wu($h->prijmeni);
-        $host[]= wu($h->ulice);
-        $host[]= wu("{$h->psc} {$h->obec}");
-        $host[]= $narozeni;
-        $host[]= $vek;
-        $host[]= $h->telefon;
-        $host[]= $h->email;
-        $host[]= $od;
-        $host[]= $do;
-        // položky hosta
-        $pol= (object)array();
-        $pol->test= "{$h->strava} : {$o->board} - $strava = {$ds_strava[$strava]}";
-        $noci= round(($do_ts-$od_ts)/(60*60*24));
-        $pol->vek= $vek;
-        $pol->noci= $noci;
-        $pol->pokoj= $h->pokoj;
-        // ubytování
-        $luzko= trim($ds_luzko[$h->luzko]);     // L|P|B
-        if ( $luzko=='L' )
-          $luzko= $luzko_pokoje[$h->pokoj];
-        if ( $luzko )
-          $pol->{"noc_$luzko"}= $noci;
-        // strava
-        $pol->strava_CC= $ds_strava[$strava]=='C' && $vek>=$ds_cena['strava_CC']->od ? $noci : '';
-        $pol->strava_CD= $ds_strava[$strava]=='C' && $vek>=$ds_cena['strava_CD']->od
-                                                  && $vek< $ds_cena['strava_CD']->do ? $noci : '';
-        $pol->strava_PC= $ds_strava[$strava]=='P' && $vek>=$ds_cena['strava_PC']->od ? $noci : '';
-        $pol->strava_PD= $ds_strava[$strava]=='P' && $vek>=$ds_cena['strava_PD']->od
-                                                  && $vek< $ds_cena['strava_PD']->do ? $noci : '';
-        // pobyt
-        if ( $h->postylka ) {
-          $pol->pobyt_P= 1;
-        }
-        // poplatky
-        if ( $vek>=18 ) {
-          $pol->ubyt_S= $noci;
-          if ( !$skoleni ) $pol->ubyt_C= $noci;   // rekreační poplatek se neplatí za školení
-        }
-        else {
-          $pol->ubyt_P= $noci;
-        }
-        // program
-        $pol->prog_C= $vek>=$ds_cena['prog_C']->od  ? 1 : 0;
-        $pol->prog_P= $vek>=$ds_cena['prog_P']->od && $vek<$ds_cena['prog_P']->do ? 1 : 0;
+        }}
+        $host_pol= ds_polozky_hosta ($o,$h,$luzko_pokoje,$ds_luzko,$ds_strava);
         // konec
-        $hoste[]= (object)array('host'=>$host,'cena'=>$pol);
+        $hoste[]= $host_pol; //(object)array('host'=>$host,'cena'=>$pol);
       }
       $x->rodiny[]= $hoste;
       $x->chyby[]= $err;
@@ -3738,6 +3819,78 @@ function ds_faktury($order) {  trace('','win1250');
 //                                      debug($x,'faktura',(object)array('win1250'=>1));
 end:
   return $x;
+}
+# ------------------------------------------------------------------------------==> ds polozky_hosta
+# výpočet položek hosta
+function ds_polozky_hosta ($o,$h,$luzko_pokoje,$ds_luzko,$ds_strava) {
+  global $ds_cena;
+  // výpočet
+  $hf= sql2stamp($h->fromday); $hu= sql2stamp($h->untilday);
+  $od_ts= $hf ? $hf : $o->fromday;  $od= date('j.n',$od_ts);
+  $do_ts= $hu ? $hu : $o->untilday; $do= date('j.n',$do_ts);
+  $vek= ds_vek($h->narozeni,$o->fromday);
+  $narozeni= $h->narozeni ? sql_date1($h->narozeni): '';
+  $strava= $h->strava ? $h->strava : $o->board;
+  // připsání řádku
+  $host= array();
+  $host[]= wu($h->rodina);
+  $host[]= wu($h->jmeno);
+  $host[]= wu($h->prijmeni);
+  $host[]= wu($h->ulice);
+  $host[]= wu("{$h->psc} {$h->obec}");
+  $host[]= $narozeni;
+  $host[]= $vek;
+  $host[]= $h->telefon;
+  $host[]= $h->email;
+  $host[]= $od;
+  $host[]= $do;
+  // položky hosta
+  $pol= (object)array();
+  $pol->test= "{$h->strava} : {$o->board} - $strava = {$ds_strava[$strava]}";
+  $noci= round(($do_ts-$od_ts)/(60*60*24));
+  $pol->vek= $vek;
+  $pol->noci= $noci;
+  $pol->pokoj= (int)$h->pokoj;
+  // ubytování
+  $luzko= trim($ds_luzko[$h->luzko]);     // L|P|B
+  if ( $luzko=='L' )
+    $luzko= $luzko_pokoje[$h->pokoj];
+  if ( $luzko )
+    $pol->{"noc_$luzko"}= $noci;
+  // strava
+  $pol->strava_CC= $ds_strava[$strava]=='C' && $vek>=$ds_cena['strava_CC']->od ? $noci : '';
+  $pol->strava_CD= $ds_strava[$strava]=='C' && $vek>=$ds_cena['strava_CD']->od
+                                            && $vek< $ds_cena['strava_CD']->do ? $noci : '';
+  $pol->strava_PC= $ds_strava[$strava]=='P' && $vek>=$ds_cena['strava_PC']->od ? $noci : '';
+  $pol->strava_PD= $ds_strava[$strava]=='P' && $vek>=$ds_cena['strava_PD']->od
+                                            && $vek< $ds_cena['strava_PD']->do ? $noci : '';
+  // pobyt
+  if ( $h->postylka ) {
+    $pol->pobyt_P= 1;
+  }
+  // poplatky
+  if ( $vek>=18 ) {
+    $pol->ubyt_S= $noci;
+    if ( !$o->skoleni ) $pol->ubyt_C= $noci;   // rekreační poplatek se neplatí za školení
+  }
+  else {
+    $pol->ubyt_P= $noci;
+  }
+  // program
+  $pol->prog_C= $vek>=$ds_cena['prog_C']->od  ? 1 : 0;
+  $pol->prog_P= $vek>=$ds_cena['prog_P']->od && $vek<$ds_cena['prog_P']->do ? 1 : 0;
+  return (object)array('host'=>$host,'cena'=>$pol);
+}        
+# --------------------------------------------------------------------------------------- ds cat_typ
+# přepočet kategorie pokoje na typ ubytování v ceníku    
+function ds_cat_typ() {
+  $cat_typ= array('C'=>'A','B'=>'L','A'=>'S');
+  $luzko_pokoje[0]= 0;
+  $rr= pdo_qry("SELECT number,category FROM tx_gnalberice_room WHERE version=1");
+  while ( $rr && list($pokoj,$typ)= pdo_fetch_row($rr) ) {
+    $luzko_pokoje[$pokoj]= $cat_typ[$typ];
+  }
+  return $luzko_pokoje;  
 }
 # ==================================================================================> faktura obecně
 # -------------------------------------------------------------------------------- ds rozpis_faktura

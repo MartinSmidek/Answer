@@ -477,7 +477,7 @@ form _lst [,,370,*] {
     page.map.on.get;
     { ret.set(ask('mapa2_v_polynomu',
           cconc(eq(bm_komu.get,'o'),'osoba','rodina'),poly,bm.bm_keys,2000));
-      ret.msg; alert(ret.msg)
+      ret.err; alert(ret.err)
     | bm.selected('clear'); page.map.mapa_clear(0);
       bm.selected('set',ret.ids); bm_selected;
     }
@@ -1073,7 +1073,17 @@ form _mapa [,,500,500] {css:'ae_frame shift_down'
           poly.set(cr.get('poly'));
           poly;
           lst.bm_polygon_in(poly) 
-          | alert("napřed volbou 'zoom na ... okolí' vytvoř červený ohraničující čtverec")
+        | alert("napřed volbou 'zoom na ... okolí' vytvoř červený ohraničující čtverec")
+      }}
+      item { title:'vypiš PSČ ležící v ohraničení'
+        func onclick() { var poly:text, ret:object
+          poly= cr.get('poly');
+          if ( poly ) {
+            ret= php.mapa2_psc_v_polynomu(poly);
+            clipboard(ret.pscs); 
+            warning(`vybraných ${ret.pocet} PSČ je ve schránce`)
+          }
+          else alert("napřed volbou 'zoom na ... okolí' vytvoř červený ohraničující čtverec")
       }}
       item { title:'zruš vybrané mimo výřezu'
         proc onclick() {
