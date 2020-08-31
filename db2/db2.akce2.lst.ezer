@@ -947,11 +947,11 @@ form _info [,,*,50] {
   }
   label head [0,0,*,30] { title:'', style:'z-index:0' }
   # volba pracovní akce
-  button [376,3,,] { title:'Pracovní', proc onclick() {
+  button [376,5,,] { title:'Pracovní', proc onclick() {
     eq(the_source.get,'sey'); info.sey.pracovni | info.google.pracovni
   }}
   # ==> .. načtení akcí z intranetu
-  button [-160,3,,] { title:'Obnovit rok z intranetu', skill:'y|yaa+'
+  button [-216,5,,] { title:'Obnovit rok z intranetu', skill:'y|yaa+'
     help:"obnoví akce roku z http://intranet.setkani.org"
     # získání seznamu akcí z docs.google.com pomocí API spredsheet
     proc onclick() {
@@ -963,19 +963,26 @@ form _info [,,*,50] {
     }
   }
   # export vlastností akcí nastaveného roku
-  button [-88,3,,] { title:'Export', proc onclick() {
+  button [-156,5,,] { title:'Export', proc onclick() {
     sey.browse_count; sey.browse_export(°{file:'akce',type:'xls'});
     alert("vygenerovaný sešit lze stáhnout <a href='docs/akce.xls' target='xls'>zde</a>");
   }}
   # ==> .. zobrazení mapy s pozicí míst účastníků dané akce a oprava PSČ
-  button mapka [-30,3,,] { title:'Mapa',                                                skill:'#crz'
+  button mapka [-21,5,,] { title:'Mapa PSČ účastníků',                                  skill:'#crz'
     help:"mapa s bydlišti účastníků akcí"
-    proc onclick() {
-      [ eq(the_source.get,'google'); mapa.id_akce.set(google.id_akce.get)
-      | eq(the_source.get,'sey'); mapa.id_akce.set(sey.id_akce.get) ];
-      mapa.id_akce.get;
-      mapa.metoda.set('akce');
-      mapa.modal(20,100,nazev_akce(mapa.id_akce.get))
+    func onclick() {
+      if ( the_source=='google' ) { 
+        mapa.id_akce= google.id_akce;
+        mapa.pecouni= google.pecou;
+      }
+      else { // the_source=='sey' 
+        mapa.id_akce= sey.id_akce;
+        mapa.pecouni= sey.pecou;
+      }
+      if ( mapa.id_akce ) {
+        mapa.metoda= 'akce';
+        mapa.modal(20,100,nazev_akce(mapa.id_akce));
+      }
     }
   }
   proc fill(x) {

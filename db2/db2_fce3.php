@@ -216,20 +216,22 @@ function web_zmena_ok($id_pobyt,$doit=0) {  trace();
   return $msg;
 }
 # --------------------------------------------------------------------------------------- akce2 mapa
-# získání seznamu souřadnic bydlišť účastníků akce
-function akce2_mapa($akce) {  trace();
+# získání seznamu souřadnic bydlišť účastníků akce 
+# s případným filtrem - např. bez pečounů: pobyt.funkce!=99
+function akce2_mapa($akce,$filtr='') {  trace();
   // dotaz
   $psc= $obec= array();
+  $AND= $filtr ? " AND $filtr" : '';
   $qo=  "
     SELECT prijmeni,adresa,psc,obec,
       (SELECT MIN(CONCAT(role,RPAD(psc,5,' '),'x',obec))
        FROM tvori AS ot JOIN rodina AS r USING (id_rodina)
-       WHERE ot.id_osoba=o.id_osoba
+       WHERE ot.id_osoba=o.id_osoba 
       ) AS r_psc
     FROM pobyt
     JOIN spolu USING (id_pobyt)
     JOIN osoba AS o USING (id_osoba)
-    WHERE id_akce='$akce'
+    WHERE id_akce='$akce' $AND
     GROUP BY id_osoba
     ";
   // najdeme použitá PSČ
@@ -9547,6 +9549,49 @@ function mapa2_ve_ctverci($tab,$rect,$ids,$max=5000) { trace();
   }
   return $ret;
 }
+# ----------------------------------------------------------------------------- mapa2 psc_v_polynomu
+# ASK
+# vrátí jako seznam PSČ ležící v oblasti dané polynomem 'x,y;...'
+# pokud by seznam byl delší než MAX, vrátí chybu
+function mapa2_psc_v_polynomu($poly) { trace();
+  $ret= (object)array('err'=>'','pscs'=>'','pocet'=>0);
+  // nalezneme ohraničující obdélník a převedeme polygon do interního tvaru
+  $lat_min= $lng_min= 999;
+  $lng_max= $lng_max= 0;
+  $x= $y= array();
+  foreach ( explode(';',$poly) as $bod) {
+    list($lat,$lng)= explode(',',$bod);
+    $lat_min= min($lat_min,$lat);
+    $lat_max= max($lat_max,$lat);
+    $lng_min= min($lng_min,$lng);
+    $lng_max= max($lng_max,$lng);
+    $x[]= floatval($lat); 
+    $y[]= floatval($lng);
+  }
+  // uzavři polygon pokud není 
+  $n= count($x);
+  if ( $x[0]!=$x[n-1] || $y[0]!=$y[n-1] ) {
+    $x[$n]= $x[0];
+    $y[$n]= $y[0];
+  }
+  // dotaz na ohraničující obdélník
+  $poloha= "lat BETWEEN $lat_min AND $lat_max AND lng BETWEEN $lng_min AND $lng_max";
+  $qo= "SELECT psc, lat, lng
+      FROM psc_axy 
+      WHERE $poloha ";
+  $ro= pdo_qry($qo);
+  if ( $ro ) {
+    $ret->pocet= pdo_num_rows($ro);
+    $del= '';
+    while ( $ro && list($psc,$lat,$lng)= pdo_fetch_row($ro) ) {
+      // zjistíme, zda leží uvnitř polygonu
+      if ( maps_poly_cross($lat,$lng,$x,$y) ) {
+        $ret->pscs.= "$del$psc"; $del= ',';
+      }
+    }
+  }
+  return $ret;
+}
 # --------------------------------------------------------------------------------- mapa2 v_polynomu
 # ASK
 # vrátí jako seznam id_$tab bydlící v oblasti dané polynomem 'x,y;...'
@@ -9589,8 +9634,7 @@ function mapa2_v_polynomu($tab,$poly,$ids,$max=5000) { trace();
   if ( $ro ) {
     $ret->pocet= pdo_num_rows($ro);
     if ( $max && $ret->pocet > $max ) {
-      $ret->err= ($rect ? "Ve výřezu mapy je" : "Je požadováno"). " příliš mnoho bodů "
-        . "({$ret->pocet} nejvíc lze $max)";
+      $ret->err= "Je požadováno příliš mnoho bodů {$ret->pocet} nejvíc lze $max";
     }
     else {
       $del= '';

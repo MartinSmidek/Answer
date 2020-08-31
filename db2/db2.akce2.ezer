@@ -748,44 +748,57 @@ panel track [,,550,276] { title:'Historie oprav', type:'popup', css:'dialog'
 }
 # ============================================================================================> MAPA
 panel mapa [,,640,400] { type:'popup', title:'mapa účastníků'
-  var metoda='', id_akce:number, id_mailist:number, mrop_par:object, mrop_body:number
+  var metoda='', 
+      id_akce:number, pecouni:number,       // metoda=akce - id akce a počet pečounů
+      id_mailist:number,                    // metoda=mail
+      mrop_par:object, mrop_body:number     // metoda=mrop
   proc onfirstfocus() { 
     spinner(1); 
     f.cr.init('ROADMAP',object('clustering',cconc(eq(sys('options','gmap'),2),1,0))); 
     [ ukaz_psc ]; 
     spinner(0) 
   }
-  proc onfocus() { 
-    ukaz_psc; 
+  func onfocus() { 
+    ukaz_psc(); 
   }
-  proc dopln_psc(psc) { var gps:text
-    gps.set(prompt2(conc("V <b>mapy.cz</b> dej vyhledat <b>",psc,"</b> a zkopíruj GPS. ",
-      "Pokud se v mapy.cz nenajde, je asi špatně uvedeno u adresy, najdi ji (ve výpisech jednotlivců) ",
-      "a oprav podle <b>psc.cz</b>")));
-    ask('mapa2_psc_set',psc,gps);
-  }
-  proc ukaz_psc() { var ret: object, smazat: number
-    metoda.get;
-    smazat.set(1);
-    { eq(metoda.get,'akce'); ret.set(ask('akce2_mapa',id_akce.get))
-    | eq(metoda.get,'mail'); ret.set(ask('mail2_mapa',id_mailist.get))
-    | eq(metoda.get,'mrop'); ret.set(ask('sta2_mrop_stat_map',mrop_par.get));
-                             smazat.set(ret.rewrite);
-                             mrop_body.set(ret.suma)
-    | eq(metoda.get,'ms');   ret.set(ask('sta2_ms_stat_map',mrop_par.get));
-                             smazat.set(ret.rewrite);
-                             mrop_body.set(ret.suma)
-    };
-    [ ret.err; warning(ret.err); ];
-    [ smazat; f.cr.set(object('mark','')) ];
+  func ukaz_psc() { var ret: object, smazat: number, psc:text, gps:text, filtr:text
+    if ( not(metoda) ) return();
+    smazat= 1;
+    switch (metoda) {
+    case 'akce': 
+      filtr= '';
+      if ( pecouni>0 ) {
+        filtr= confirm("Mám zobrazit i PSČ pečounů?") ? '' : "pobyt.funkce!=99";
+      };
+      ret= php.akce2_mapa(id_akce,filtr); 
+      break;
+    case 'mail': 
+      ret= php.mail2_mapa(id_mailist); 
+      break;
+    case 'mrop': 
+      ret= php.sta2_mrop_stat_map(mrop_par.get);
+      smazat= ret.rewrite;
+      mrop_body= ret.suma;
+      break;
+    case 'ms':  
+      ret= php.sta2_ms_stat_map(mrop_par.get);
+      smazat= ret.rewrite;
+      mrop_body= ret.suma;
+      break;
+    }
+    if ( ret.err ) warning(ret.err);
+    if ( smazat ) f.cr.set(object('mark',''));
     f.cr.set(object('mark',ret.mark));
-    [ eq(metoda.get,'mrop','ms');
-      panel.set_attrib('title',ret.title);
-    ];
-    has_skill('yaa+;faa+;caa+');
-    [ ret.err; confirm("chceš pomocí <b>mapy.cz</b> doplnit polohu PSČ?"); 
-      foreach(ret.chybi,dopln_psc);
-    ];
+    if ( eq(metoda,'mrop','ms') ) panel.title= ret.title;
+    if ( (has_skill('yaa+;faa+;caa+') && ret.err) 
+      && confirm("chceš pomocí <b>mapy.cz</b> doplnit polohu PSČ?") ) {
+      for (psc of ret.chybi) {
+        gps= prompt2(`V <b>mapy.cz</b> dej vyhledat <b>${psc}</b> a zkopíruj GPS. 
+            Pokud se v mapy.cz nenajde, je asi špatně uvedeno u adresy, najdi ji 
+            (ve výpisech jednotlivců) a oprav podle <b>psc.cz</b>`);
+        php.mapa2_psc_set(psc,gps);
+      }
+    }
   }
   use f: form _f [0,0,,]
   form _f [,,*,*] {
@@ -821,9 +834,9 @@ panel osoba_config [,,210,150] {type:'popup', title:"Podrobnosti údajů"
     check p [ 0,100,200,] { title:"trvalá poznámka, schopnosti",
                                                          format:'t', proc onchange() { _tuned }}
     button  [ 0,130,,] { type:'submit', title:'Nastav', proc onclick() {
-      set_cookie(conc(sys('root'),'_conf_osoba'),grp.get); panel.close(1) }}
+      set_cookie(conc(sys('root'),'_conf_osoba'),grp.get); panel.hide(1) }}
     button  [85,130,,] { title:'Zpět', proc onclick() {
-      grp.set(_old.get); _back; ucast.call('osoby_show'); panel.close(1) }}
+      grp.set(_old.get); _back; ucast.call('osoby_show'); panel.hide(1) }}
     proc _tuned() {
       grp.set(cconc(s.get,'S',k.get,'K',g.get,'G',a.get,'A',o.get,'O',p.get,'P','Z'));
       [ form.part('c'); c.get; grp.set(conc(grp.get,'C')) ];
@@ -1199,9 +1212,9 @@ panel rodina_config [,,200,60] {type:'popup', title:"Podrobnosti údajů"
     check z [ 0, 0,200,] { title:"základní údaje", format:'d', value:'1'}
     check p [ 0,20,200,] { title:"trvalá poznámka, schopnosti", format:'t', proc onchange() { _tuned }}
     button  [ 0,40,,] { type:'submit', title:'Nastav', proc onclick() {
-      set_cookie(conc(sys('root'),'_conf_rodina'),grp.get); panel.close(1) }}
+      set_cookie(conc(sys('root'),'_conf_rodina'),grp.get); panel.hide(1) }}
     button  [85,40,,] { title:'Zpět', proc onclick() {
-      grp.set(_old.get); _back; ucast.call('rodina_show'); panel.close(1) }}
+      grp.set(_old.get); _back; ucast.call('rodina_show'); panel.hide(1) }}
     proc _tuned() { grp.set(cconc(p.get,'P','Z')); ucast.call('rodina_show') }
     proc _back() { z.set(1); p.set(contains('P',grp.get)); }
   }
