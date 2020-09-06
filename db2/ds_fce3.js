@@ -16,7 +16,6 @@ Ezer.fce.form_set= function (form,fields) {
 //ff: ds.rooms_check (rooms,form,prefix)
 //      nastaví hodnoty checkboxů prefix_<n> daného formuláře na 1 pokud se <n> vyskytuje v romms
 //s: ds
-Ezer.fce.rooms_check= rooms_check;
 function rooms_check(rooms,form,prefix) {
   // vynuluj vše
   for (let id in form.part) {
@@ -33,6 +32,7 @@ function rooms_check(rooms,form,prefix) {
   }
   return true;
 };
+Ezer.fce.rooms_check= rooms_check;
 // ------------------------------------------------------------------------------------------------- check_rooms
 //ff: ds.check_rooms (rooms,form,prefix)
 //      nastaví hodnoty checkboxů prefix_<n> daného formuláře na 1 pokud se <n> vyskytuje v romms
