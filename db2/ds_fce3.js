@@ -1,3 +1,5 @@
+/* global Ezer */
+
 // uživatelské funkce aplikace DS
 // ------------------------------------------------------------------------------------------------- form_set
 //ff: ds.form_set (form,fields)
@@ -14,9 +16,10 @@ Ezer.fce.form_set= function (form,fields) {
 //ff: ds.rooms_check (rooms,form,prefix)
 //      nastaví hodnoty checkboxů prefix_<n> daného formuláře na 1 pokud se <n> vyskytuje v romms
 //s: ds
-Ezer.fce.rooms_check= function (rooms,form,prefix) {
+Ezer.fce.rooms_check= rooms_check;
+function rooms_check(rooms,form,prefix) {
   // vynuluj vše
-  for (id in form.part) {
+  for (let id in form.part) {
     var elem= form.part[id];
     if ( elem.type=='check' && id.substr(0,prefix.length)==prefix ) {
       elem.set(0);
@@ -34,9 +37,10 @@ Ezer.fce.rooms_check= function (rooms,form,prefix) {
 //ff: ds.check_rooms (rooms,form,prefix)
 //      nastaví hodnoty checkboxů prefix_<n> daného formuláře na 1 pokud se <n> vyskytuje v romms
 //s: ds
-Ezer.fce.check_rooms= function (rooms,form,prefix) {
+Ezer.fce.check_rooms= check_rooms;
+function check_rooms(rooms,form,prefix) {
   var list= rooms.get().split(','), change= false;
-  for (id in form.part) {
+  for (let id in form.part) {
     var elem= form.part[id];
     if ( elem.type=='check' && id.substr(0,prefix.length)==prefix ) {
       // checkbox označuje číslo pokoje

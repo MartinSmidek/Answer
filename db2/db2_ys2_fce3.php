@@ -3056,7 +3056,7 @@ function ds_obj_menu($ym_list=null) {
     $omezeni= explode(',',$ym_list);
   }
   $stav= map_cis('ds_stav');
-  $the= '';                     // první objednávka v tomto měsíci či později
+  $the= $the_last= '';                     // první objednávka v tomto měsíci či později
 //                                      debug($stav,'ds_obj_menu',(object)array('win1250'=>1));
   $mesice= array(1=>'leden','únor','březen','duben','květen','červen',
     'červenec','srpen','září','říjen','listopad','prosinec');
@@ -3088,12 +3088,14 @@ function ds_obj_menu($ym_list=null) {
         $tit= wu("$iid - ").$zkratka.wu(" - {$o->name}");
         $tm= (object)array('type'=>'item','options'=>(object)array('title'=>$tit,'par'=>$par));
         $gr->part->$iid= $tm;
+        $the_last= "$group.$iid";
         if ( !$the && $group>=$ted ) {
           $the= "$group.$iid";
         }
       }
     }
   }
+  $the= $the ?: $the_last;
   $result= (object)array('th'=>$the,'cd'=>$mn);
   return $result;
 }
