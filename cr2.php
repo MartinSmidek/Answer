@@ -69,6 +69,7 @@
   //  require_once("answer.php");
   $add_options= (object) [
 //    'watch_access' => 4,
+    'group_db'     => "'ezer_answer'",
     'watch_access_opt' => // ... barvení v Uživatelé + select v ezer2.syst.ezer
        "{name:{4:'CPR Ostrava'},
          abbr:{4:'C'},
