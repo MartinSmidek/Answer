@@ -286,6 +286,12 @@ menu m {type:'left', active:*
                                         ,ord:"0+pokoj,skupina,prijmeni,jmeno"
                                         ,tit:'jméno:25, skupina:8, chata:8, poznámka:40'
                                         ,fld:'pr_jm,skupina,pokoj,filler'}}
+    item {title:'skupiny s maily'
+                                        ,par:°{typ:'mrop',exp:'Excel2'
+                                        ,cnd:"funkce IN (0,1)"
+                                        ,ord:"funkce DESC,skupina,prijmeni,jmeno,email"
+                                        ,tit:'jméno:25, skupina:8, mail:40'
+                                        ,fld:'pr_jm,skupina,email'}}
   }
   # ------------------------------------------------------------------------------------------==> DS
   menu {tag:'a', title:'seznamy DS',type:'group',_sys:'*'                                    skill:'y'
