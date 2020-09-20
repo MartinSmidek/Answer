@@ -289,7 +289,7 @@ menu m {type:'left', active:*
     item {title:'skupiny s maily'
                                         ,par:°{typ:'mrop',exp:'Excel2'
                                         ,cnd:"funkce IN (0,1)"
-                                        ,ord:"funkce DESC,skupina,prijmeni,jmeno,email"
+                                        ,ord:"skupina,funkce DESC,prijmeni,jmeno,email"
                                         ,tit:'jméno:25, skupina:8, mail:40'
                                         ,fld:'pr_jm,skupina,email'}}
   }
