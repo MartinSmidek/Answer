@@ -212,28 +212,59 @@ form _page [,,275,360] {
     | eq(the_source.get,'google'); [ id_akce; show_page(id_akce) | init_page ]
     ];
   }
-  proc show_page(id_akce) {
-    cen_copy.enable(0); cen_copy.key(0); key_akce.set(id_akce); //fil.display(0);
+  func show_page(id_akce) {
+    cen_copy.enable(0); cen_copy.key(0); key_akce.set(id_akce); 
     form.load(id_akce); zmena_web.set(0); 
-    [ has_skill('y'); ds_order.set(ask('ds_objednavka',id_akce)) ];
-    switch(zalozka.get,
-    'inf',{ note.set(ask('akce2_info',id_akce));  },
-    'cor',{ //form.load(id_akce);
-            [ has_skill('faan'); 
-              form.display(0,'corm|corf'); 
-              [ mrop.get; form.display(1,'corm') ]; 
-              [ firm.get; form.display(1,'corf') ]; 
-            ];
-            [ has_skill('f'); soubezna.set(cconc(id_hlavni.get,1,0)) ];
-            cen_ma.onchange;
-            info.sey.browse_focus },
-    'cen',{ c.browse_load(conc("id_akce=",id_akce)); },
-    'doc',{ archiv.ukaz(akce_get('archiv')) },
-    'syn',{ has_skill('yas'); DocShow(akce_get('rok'),akce_get('kod')) }
-    );
-//    echo(id_akce,':',access.get,cen_ver.key);
-    c_show;
+    if ( has_skill('y') ) { ds_order= php.ds_objednavka(id_akce) };
+    switch (zalozka) {
+    case 'inf': note= php.akce2_info(id_akce); break;
+    case 'cor': 
+      if ( hnizda ) {
+        is_hnizda= 1; hnizda.display(1);
+      }
+      else {
+        is_hnizda= 0; hnizda.display(0)
+      };
+      if ( has_skill('faan') ) {
+        form.display(0,'corm|corf'); 
+        if ( mrop ) form.display(1,'corm'); 
+        if ( firm ) form.display(1,'corf'); 
+      };
+      if ( has_skill('f') ) soubezna= id_hlavni ? 1 : 0;
+      cen_ma.onchange();
+      info.sey.browse_focus();
+      break;
+    case 'cen': c.browse_load(`id_akce=${id_akce}`); break;
+    case 'doc': archiv.ukaz(akce_get('archiv')); break;
+    case 'syn': if ( has_skill('yas') ) DocShow(akce_get('rok'),akce_get('kod')); break
+    };
+    c_show();
   }
+//  proc show_page(id_akce) {
+//    cen_copy.enable(0); cen_copy.key(0); key_akce.set(id_akce); //fil.display(0);
+//    form.load(id_akce); zmena_web.set(0); 
+//    [ has_skill('y'); ds_order.set(ask('ds_objednavka',id_akce)) ];
+//    switch(zalozka.get,
+//    'inf',{ note.set(ask('akce2_info',id_akce));  },
+//    'cor',{ //form.load(id_akce);
+//            { hnizda.get; is_hnizda.set(1); hnizda.display(1)
+//            | is_hnizda.set(0); hnizda.display(0)
+//            };
+//            [ has_skill('faan'); 
+//              form.display(0,'corm|corf'); 
+//              [ mrop.get; form.display(1,'corm') ]; 
+//              [ firm.get; form.display(1,'corf') ]; 
+//            ];
+//            [ has_skill('f'); soubezna.set(cconc(id_hlavni.get,1,0)) ];
+//            cen_ma.onchange;
+//            info.sey.browse_focus },
+//    'cen',{ c.browse_load(conc("id_akce=",id_akce)); },
+//    'doc',{ archiv.ukaz(akce_get('archiv')) },
+//    'syn',{ has_skill('yas'); DocShow(akce_get('rok'),akce_get('kod')) }
+//    );
+////    echo(id_akce,':',access.get,cen_ver.key);
+//    c_show;
+//  }
   proc init_page() {
     page.a_akce.set(0);
     cen_copy.enable(0); cen_copy.key(0);
@@ -278,29 +309,41 @@ form _page [,,275,360] {
       info.sey.browse_seek; show_akce(form.key);
   }}
   // Změna ceníku
-  check cen_ma [134,254,93,] { tag:'cor', title:'používat ceník', data:akce.ma_cenik,
+  check cen_ma [13,254,93,] { tag:'cor', title:'používat ceník', data:akce.ma_cenik,
                         format:'', skill:'yaa|yaan;caa|caan;faa|faan'
     proc onchange() { cen_ver.display(this.get) }
   }
-  select cen_ver [230,254,100,] {tag:'cor', type:'map', data:akce.ma_cenik_verze,
+  select cen_ver [109,254,100,] {tag:'cor', type:'map', data:akce.ma_cenik_verze,
     help:'verze ceníků', options:ms_cenik_verze.zkratka, format:'n' }
   button [14,230,,] { tag:'cor', title:'Změnit ceník podle', skill:'yaa|yaan;caa|caan;faa|faan'
     proc onclick() {
       cen_copy.enable(1);
       cen_copy.selects(ask('akce2_select_cenik',form.key))
   }}
-  select cen_copy [138,232,158,] {tag:'cor', format:'ntd', help:'vzory ceníků'
+  select cen_copy [138,232,139,] {tag:'cor', format:'ntd', help:'vzory ceníků'
     proc onchanged() {
       cen_copy.key;
       confirm("opravdu zaměnit ceník za vybraný?");
       alert(ask('akce2_change_cenik',form.key,cen_copy.key))
   }}
   // jednotná cena / dospělý
-  check [134,276,93,] { tag:'cor', title:'používat cenu', data:akce.ma_cenu,
+  check [13,276,93,] { tag:'cor', title:'používat cenu', data:akce.ma_cenu,
                         format:'', skill:'yaa|yaan;caa|caan;faa|faan' }
-  field [230,278,43,] { tag:'cor', data:akce.cena, format:'r', skill:'yaa|yaan;caa|caan;faa|faan',
+  field [109,278,43,] { tag:'cor', data:akce.cena, format:'r', skill:'yaa|yaan;caa|caan;faa|faan',
                         help:'pro 1 dospělého' }
-  label [279,281,20,] { tag:'cor', title:'Kč' }
+  label [158,281,20,] { tag:'cor', title:'Kč' }
+  // ------------------------------------- hnízda
+  var hnizda_ok: number
+  check is_hnizda [292,230,161,] { tag:'cor' title:'akce je v hnízdech' format:'t'
+      skill:'yaa|yaan;caa|caan;faa|faan' 
+    proc onchange() { this.get; hnizda.display(1) | hnizda.set(''); hnizda.change }}
+  edit hnizda [292,262,161,40] { tag:'cor' title:'^jména hnízd oddělená čárkami' 
+      data:akce.hnizda format:'n' 
+    proc onchanged() { var msg:text
+      msg.set(ask('akce2_hnizda_test',hnizda.get));
+      msg; hnizda_ok.set(0); alert(msg);
+    | hnizda_ok.set(1)
+  }}
   // ------------------------------------- web setkani.org a chlapi.online
   label [10,309,384,92] { tag:'cor', css:'bily_ram', skill:'yaaw;faaw' 
                         title:" součinnost s www.setkani.org a chlapi.online" }
@@ -342,7 +385,8 @@ form _page [,,275,360] {
   button [245,423,,] { tag:'cor', title:'Uložit', skill:'yaa+|yaan;faa+|faan;caa+|caan'
     help:'Uložit změněná data',
     proc onclick() {
-      form.same
+      not(hnizda_ok.get); warning("oprav hnízda")
+    | form.same
     | // oprava
       [ zmena_web.get; alert(ask('web_prihlaska',page.a_akce.get,web_url.get,web_prihl.get,garant.key)) ]; 
       form.key; form.save; form.load; info.sey.browse_seek
@@ -944,6 +988,8 @@ form _info [,,*,50] {
     | // mimo YS+FA
       set_cookie(conc(sys('root'),'_akce'),the_duakce.get)
     };
+    ucast.ucast_hnizda();
+    tisk.tisk_hnizda()
   }
   label head [0,0,*,30] { title:'', style:'z-index:0' }
   # volba pracovní akce

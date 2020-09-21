@@ -8,6 +8,7 @@ var the_duakce_local: number    // zobrazená akce - pokud se liší od the_duak
 var the_akce: number            // hlavní nebo souběžná akce podle the_soubeh
 var the_par: object
 var the_vypis: text
+var the_hnizdo: number, the_hnizdo_name: text   // >0 znamená filtr na účastníky v i-tém hnízdě
 # -------------------------------------------------------------------------==> . inicializace panelu
 proc onfocus() {
   [ dirty.get | akce_onstart ];
@@ -20,10 +21,24 @@ proc onfocus() {
     the_akce.set(the_hlavni.get); m.display(2,'d'); m.d.i.click
   | the_akce.set(the_duakce.get); m.display(2,'a'); m.n.i.click
   };
+  // případně nastavení hnízd
+  tisk_hnizda;
 }
 # ----------------------------------------------------------------------------==> globální procedury
 proc reaccess() { #==> . reaccess - změna
   onfocus
+}
+# nastavení pro akci v hnízdech
+proc tisk_hnizda() { var opts:object
+  echo("tisk HNIZDA=",the_hnizda.get);
+  { the_hnizdo.set(0);
+    the_hnizda.get; 
+    opts.set(ask('akce2_hnizda_options',the_hnizda.get));
+    info.hnizdo.selects(opts.long);
+    info.hnizdo.key(0);
+    info.hnizdo.display(1);
+  | info.hnizdo.display(0);
+  };
 }
 # -------------------------------------------------------------------------------------------==> use
 use info: form right [12,4,,] {
@@ -34,7 +49,7 @@ use info: form right [12,4,,] {
       switch(export2.get,
       'PDF-jmenovky',{
         sti_V.report_init; sti_V.report_check;
-        res.set(ask('tisk2_pdf_jmenovky',the_akce.get,the_par.get,the_title.get,the_vypis.get,sti_V.get_json));
+        res.set(ask('tisk2_pdf_jmenovky',the_akce.get,the_par.get,the_title.get,the_vypis.get,sti_V.get_json,the_hnizdo.get));
         form.msg.set(res.html);
       },
       'PDF-chaty',{
@@ -50,23 +65,26 @@ use info: form right [12,4,,] {
     }
   }
   button export [-20,4,,] { title:'Excel', style:'display:block;zIndex:2',
-    proc onclick() {
+    proc onclick() { var tit:text
       var res: object
       clear;
+      tit.set(cconc(the_hnizdo.get,
+        conc(the_title.get," pro účastníky v ",the_hnizdo_name.get),
+        the_title.get));
       switch(export.get,
       // verze 2
       'Excel2',{ // ==> export Excel
-        res.set(ask('tisk2_vyp_excel',the_akce.get,the_par.get,the_title.get,the_vypis.get));
+        res.set(ask('tisk2_vyp_excel',the_akce.get,the_par.get,tit,the_vypis.get,0,the_hnizdo.get));
         form.msg.set(res.html);
       },
       'Excel-plachta',{
-        res.set(ask('akce2_plachta',the_akce.get,the_par.get,the_title.get,the_vypis.get,1));
+        res.set(ask('akce2_plachta',the_akce.get,the_par.get,tit,the_vypis.get,1));
         form.note.set('');
         form.msg.set(res.xhref);
       },
       'PDF-adresy',{ // ==> export PDF
         sti_A.report_init; sti_A.report_check;
-        res.set(ask('akce2_pdf_stitky',the_akce.get,the_par.get,sti_A.get_json));
+        res.set(ask('akce2_pdf_stitky',the_akce.get,the_par.get,sti_A.get_json,the_hnizdo.get));
         form.msg.set(res.html);
       },
 #       'PDF-adresy',{ // ==> export PDF OLD
@@ -77,7 +95,7 @@ use info: form right [12,4,,] {
       'PDF-prijem',{
         sti_B.report_init; sti_B.report_check;
         sti_D.report_init; sti_D.report_check;
-        res.set(ask('tisk2_pdf_prijem',the_akce.get,the_par.get,sti_B.get_json,sti_D.get_json));
+        res.set(ask('tisk2_pdf_prijem',the_akce.get,the_par.get,sti_B.get_json,sti_D.get_json,the_hnizdo.get));
         form.msg.set(res.html);
       },
       'PDF-stravenky',{
@@ -98,6 +116,11 @@ use info: form right [12,4,,] {
       })
     }
   }
+  select hnizdo [-140,5,80,] { title:'výběr hnízda' format:'t' 
+    proc onchanged() { 
+      the_hnizdo.set(this.key);
+      the_hnizdo_name.set(this.get);
+  }}
 }
 
 # ------------------------------------------------------------------------------------------==> MENU
@@ -517,7 +540,7 @@ menu m {type:'left', active:*
     { i.par.exp2; info.export2.display(1); info.export2.set(i.par.exp2) | info.export2.display(0) };
     info.fill(conc(the_title.get,' / ',the_vypis.get),' ');
     info.msg.set(note);
-    x.set(ask('tisk2_sestava',the_akce.get,the_par.get,the_title.get,the_vypis.get));
+    x.set(ask('tisk2_sestava',the_akce.get,the_par.get,the_title.get,the_vypis.get,0,the_hnizdo.get));
     info.fill('',x.html);
   }
 }

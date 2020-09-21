@@ -29,7 +29,8 @@ proc onfirstfocus() {
   onfocus;
   spinner(0);
 }
-proc onfocus() {
+proc onfocus() { 
+//  hnizda; // pokud je the_hnizda tak pro ně nastaví select a show
   [ [ dirty.get | akce_onstart ];
     u.legenda(the_cenik.get,the_cena.get);
     u.b.xfunkce.set_attrib('css_cell',cconc(the_ms.get,"x_ms,1:zeleny,2:oranzovy,3:oranzovy",''));
@@ -38,6 +39,7 @@ proc onfocus() {
     the_duakce_local.set(the_duakce.get)
   ];
   evid.ctx.obn.enable(eq(the_druh.get,2)); // jen pro obnovy
+  // souběžné akce
   switch(the_soubeh.get,
   0,{ header.soubeh.display(0) },
   1,{ header.soubeh.display(1); panel.display(2,'akce1'); header.soubeh.set('^Děti') },
@@ -53,6 +55,27 @@ proc onblur() {
 # přepnutí organizace
 proc reaccess() { #==> . reaccess - změna
   init_ucast2
+}
+# nastavení pro akci v hnízdech
+proc ucast_hnizda() { var opts:object
+  echo("HNIZDA=",the_hnizda.get);
+  { the_hnizda.get; 
+//    set_trace('m',1,'*.selects');
+    opts.set(ask('akce2_hnizda_options',the_hnizda.get));
+    header.hnizdo.selects(opts.long);
+    ms_akce_hnizda.selects('hnizdo,i',opts.map);
+        u.b.xhnizdo.set_attrib('map_pipe','ms_akce_hnizda.hnizdo');
+        pob.hnizdo.set_attrib('options','ms_akce_hnizda.hnizdo');
+//    pob.hnizdo.selects(opts.short);
+    header.hnizdo.key(0);
+    header.hnizdo.display(1);
+    pob.hnizdo.display(1);
+    u.b._nazev.width(89); u.b.xhnizdo.width(20);
+  | header.hnizdo.display(0);
+    pob.hnizdo.display(0);
+    u.b._nazev.width(100); u.b.xhnizdo.width(0);
+    u.b.init_queries(1)
+  };
 }
 # ukázání pobytu na stejné akci
 proc ucast_pobyt(_idp)  {
@@ -527,6 +550,11 @@ form _header [,,380,50] {
     head.set(conc("<div class='karta'>",x,"</div>"))
   }
   label head [0,2,*,50]  { title:'' }
+  select hnizdo [-49,7,80,] { format:'t' 
+    proc onchanged() {
+      this.key; u.b.xhnizdo.set_query(1,substr(this.get,0,1),1)
+    | u.b.init_queries(1)
+  }}
   button zpet [-2,6,,] { title:'Zpět', help:'Navrátí zobrazení účastníků původní akce', format:'n',
     style:"z-index:5"
     proc onclick() { this.display(0); akce_back }
@@ -606,7 +634,9 @@ form _ucast [,,400,] { css:'ds_form', style:'height:fit-content'
     # je vždy vidět
     show xfunkce [,,40,] { title:'fce', format:'rq#s', map_pipe:ms_akce_funkce.zkratka,
       help:'funkce na akci', css_cell:""} // nastavuje se v panel.onfocus pro LK a obnovy
-    show skupina [,,30,] { title:'sk.', format:'rq=s:e', help:'číslo skupinky'}
+    show skupina [,,20,] { title:'sk.', format:'rq=s:e', help:'číslo skupinky'}
+    show xhnizdo [,,20,] { title:'h.', format:'rq#s:e', map_pipe:ms_akce_hnizda.hnizdo, 
+      help:'pořadí hnízda nebo 0'}
     // barvení
     show dluh, show web_changes, show _ms
     show r_access 
@@ -619,7 +649,8 @@ form _ucast [,,400,] { css:'ds_form', style:'height:fit-content'
     // údaje rod.cleni
     show r_cleni // naplní browse pro rodinu daty jejích členů
     // údaje pob
-    show p_poznamka, show p_pracovni, show pokoj, show budova, show funkce, show prednasi, show skup,
+    show p_poznamka, show p_pracovni, show pokoj, show budova, show funkce, show hnizdo, 
+    show prednasi, show skup,
     // platby
     show luzka, show pristylky, show kocarek, show pocetdnu,
     show strava_cel, show strava_cel_bm, show strava_cel_bl,
@@ -1045,14 +1076,14 @@ form _pobyt [,,360,62] {
   label [5,20,1,15] { tag:'d' } // oprava
 
   // ubytování
-  field pokoj     [7,0,82,20] {tag:'a', data:p.pokoj, title:'^pokoj(e)', format:'n'}
+  field pokoj     [7,0,81,20] {tag:'a', data:p.pokoj, title:'^pokoj(e)', format:'n'}
   field budova    [95,0,56,20] {tag:'a', data:p.budova, title:'^budova', format:'n'}
 //  label [5,15,1,20] { tag:'a' } // oprava
 
   // ==> ... skupinka
   label [5,-110,1,35] { tag:'s' } // výplň pro skupinky
   field skupina [158,-81,37,20] { tag:'x', data:p.skupina, format:'r', title:'^skupinka'}
-  browse skup [Lp+206,-105,,] { tag:'x', rows:4
+  browse skup [Lp+206,-100,,] { tag:'x', rows:4
     show id_pobyt //{data:pp.id_pobyt}
     show jmeno [,,120,] {title:'členové skupinky'}
     proc onrowclick () { var line:number
@@ -1063,10 +1094,12 @@ form _pobyt [,,360,62] {
   }
 
   // funkce
-  select funkce   [7,35,82,] {tag:'a', type:'map', data:p.funkce, format:'un',
+  select funkce   [7,35,80,] {tag:'a', type:'map', data:p.funkce, format:'un',
     options:ms_akce_funkce.zkratka, title:'^společná funkce'}
-  select prednasi [96,35,101,] {tag:'a', type:'map0', data:p.prednasi, format:'un',
+  select prednasi [93,35,66,] {tag:'a', type:'map0', data:p.prednasi, format:'un',
     options:ms_akce_prednasi.zkratka, title:'^přednáš(ej)í'}
+  select hnizdo [165,35,37,] {tag:'a', type:'map', data:p.hnizdo, format:'un', 
+    options:ms_akce_hnizda.hnizdo, title:'^hnízdo' }
   label [5,65,1,1] { tag:'a' } // oprava
 }
 # -----------------------------------------------------------------------------------------==> SPOLU

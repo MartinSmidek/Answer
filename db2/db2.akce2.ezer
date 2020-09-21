@@ -28,6 +28,7 @@ var the_ms: number              // pracovní akce: letní kurs nebo obnova
 var the_druh: number            // pracovní akce: druh podle #ms_akce_typ
 var the_title: text             // pracovní akce: název do titulků
 var the_rok: number             // pracovní akce: rok konání
+var the_hnizda: text            // pracovní akce: seznam hnízd nebo nic
 var the_soubeh: number          // 0=normální akce, 1=hlavní akce, 2=souběžná akce
 var the_hlavni: number          // 0=normální akce, id=akce k the_duakce hlavní
 var the_soubezna: number        // 0=normální akce, id=akce s the_duakce souběžná
@@ -91,6 +92,7 @@ proc akce_choose(id_akce) { var a:object
   the_duakce.set(id_akce);
   a.set(ask('akce2_id2a',id_akce)); // nastaví i nulové hodnoty pro id_akce=0
   the_rok.set(a.rok);       the_title.set(a.title);       the_soubeh.set(a.soubeh);
+  the_hnizda.set(a.hnizda); 
   the_hlavni.set(a.hlavni); the_soubezna.set(a.soubezna);
   the_cenik.set(a.cenik);   the_cenik_verze.set(a.cenik_verze);
   the_cena.set(a.cena);     the_org.set(a.org);           the_ms.set(a.ms);    the_druh.set(a.druh);
@@ -116,7 +118,8 @@ panel lst {type:'right', _sys:'*', title:'[fa-futbol-o] AKCE', include:'onload,d
 }
 panel ucast {type:'plain', _sys:'*', title:"Účastníci", include:'onload,db2.akce2.ucast',skill:'yaa;faa;caa'
   proc reaccess() {}
-  proc ucast_pobyt()  {}                        // ukázání pobytu na běžné akci
+  proc ucast_hnizda() {}                        // nastavení pro akci v hnízdech
+  proc ucast_pobyt() {}                         // ukázání pobytu na běžné akci
   proc ucast_pobyt_akce() {}                    // ukázání pobytu na dané akci
   proc clear_ucast2() {}                        // volání zajistí obnovu při onfucus
   #proc init_ucast2() {}
@@ -133,9 +136,11 @@ panel pece {type:'plain', _sys:'*', title:'Pečouni', include:'onload,db2.akce2.
 }
 panel tisk [,,,] {type:'right', _sys:'*', title:'Výpisy akce', include:'onclick,db2.akce2.tisk',skill:'yaa;faa;caa'
   proc reaccess() {}
+  proc tisk_hnizda() {}                          // nastavení pro akci v hnízdech
 }
 panel maia {type:'right', title:'Maily akce', _sys:'*', include:'onclick,db2.akce2.maia', skill:'yam;fam;cam'
   proc reaccess() {}
+  proc mail_hnizda() {}                          // nastavení pro akci v hnízdech
 }
 # ======================================================================================> . EVIDENCE
 panel evi [,,,] {type:'right', _sys:'*', title:'[fa-briefcase] EVIDENCE', include:'onload,db2.akce2.evi', skill:'yae;fae;caa;mrop',
@@ -282,6 +287,7 @@ table akce { key_id:'id_duakce'
   text nazev
   text misto
   number druh
+  text hnizda
   number statistika
   number poradatel
   date datum_od    { sql_pipe:'sql_date1'}    // SQL tvar se používá v ys.akce
@@ -306,6 +312,7 @@ table pobyt { key_id:'id_pobyt'
   # number id_osoba -- 131004 zrušeno
   number typ            // 10,11,20,21
   number skupina
+  number hnizdo
   number funkce
   number prednasi      // číselník ms_akce_prednasi
   text aktivita
@@ -605,6 +612,7 @@ table dopis { key_id:'id_dopis'
   text add_list
 }
 
+map ms_akce_hnizda:   text            // vytváří se dynamicky jako při použití select
 map ms_akce_typ:      table _cis {where:"druh='ms_akce_typ'",       order:'poradi', key_id:'data'}  // ikona=1 pro muže, 2 pro ženy, jinak 0
 map ms_akce_clen:     table _cis {where:"druh='ms_akce_clen'",      order:'poradi', key_id:'data'}
 map ms_akce_pouze:    table _cis {where:"druh='ms_akce_pouze'",     order:'poradi', key_id:'data'}
