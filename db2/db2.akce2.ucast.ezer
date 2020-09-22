@@ -60,13 +60,10 @@ proc reaccess() { #==> . reaccess - změna
 proc ucast_hnizda() { var opts:object
   echo("HNIZDA=",the_hnizda.get);
   { the_hnizda.get; 
-//    set_trace('m',1,'*.selects');
-    opts.set(ask('akce2_hnizda_options',the_hnizda.get));
-    header.hnizdo.selects(opts.long);
-    ms_akce_hnizda.selects('hnizdo,i',opts.map);
-        u.b.xhnizdo.set_attrib('map_pipe','ms_akce_hnizda.hnizdo');
-        pob.hnizdo.set_attrib('options','ms_akce_hnizda.hnizdo');
-//    pob.hnizdo.selects(opts.short);
+    ms_akce_hnizda.selects('hnizdo,zkratka,nazev',ask('akce2_hnizda_options',the_hnizda.get));
+    header.hnizdo.set_attrib('options','ms_akce_hnizda.nazev');
+    u.b.xhnizdo.set_attrib('map_pipe','ms_akce_hnizda.zkratka');
+    pob.hnizdo.set_attrib('options','ms_akce_hnizda.zkratka');
     header.hnizdo.key(0);
     header.hnizdo.display(1);
     pob.hnizdo.display(1);
@@ -550,7 +547,7 @@ form _header [,,380,50] {
     head.set(conc("<div class='karta'>",x,"</div>"))
   }
   label head [0,2,*,50]  { title:'' }
-  select hnizdo [-49,7,80,] { format:'t' 
+  select hnizdo [-49,7,80,] { format:'t' type:'map' options:ms_akce_hnizda.nazev
     proc onchanged() {
       this.key; u.b.xhnizdo.set_query(1,substr(this.get,0,1),1)
     | u.b.init_queries(1)
@@ -635,8 +632,8 @@ form _ucast [,,400,] { css:'ds_form', style:'height:fit-content'
     show xfunkce [,,40,] { title:'fce', format:'rq#s', map_pipe:ms_akce_funkce.zkratka,
       help:'funkce na akci', css_cell:""} // nastavuje se v panel.onfocus pro LK a obnovy
     show skupina [,,20,] { title:'sk.', format:'rq=s:e', help:'číslo skupinky'}
-    show xhnizdo [,,20,] { title:'h.', format:'rq#s:e', map_pipe:ms_akce_hnizda.hnizdo, 
-      help:'pořadí hnízda nebo 0'}
+    show xhnizdo [,,20,] { title:'h.', format:'rq#s:e', map_pipe:ms_akce_hnizda.zkratka, 
+      help:'pořadí hnízda nebo 0' css_cell:"hnizdo,0:,1:oranzovy,2:zluty,3:zeleny,4:modry,5:azurovy,6:fialovy"}
     // barvení
     show dluh, show web_changes, show _ms
     show r_access 
@@ -1099,7 +1096,7 @@ form _pobyt [,,360,62] {
   select prednasi [93,35,66,] {tag:'a', type:'map0', data:p.prednasi, format:'un',
     options:ms_akce_prednasi.zkratka, title:'^přednáš(ej)í'}
   select hnizdo [165,35,37,] {tag:'a', type:'map', data:p.hnizdo, format:'un', 
-    options:ms_akce_hnizda.hnizdo, title:'^hnízdo' }
+    options:ms_akce_hnizda.zkratka, title:'^hnízdo' }
   label [5,65,1,1] { tag:'a' } // oprava
 }
 # -----------------------------------------------------------------------------------------==> SPOLU

@@ -333,7 +333,7 @@ form _page [,,275,360] {
                         help:'pro 1 dospělého' }
   label [158,281,20,] { tag:'cor', title:'Kč' }
   // ------------------------------------- hnízda
-  var hnizda_ok: number
+  var hnizda_ok=1
   check is_hnizda [292,230,161,] { tag:'cor' title:'akce je v hnízdech' format:'t'
       skill:'yaa|yaan;caa|caan;faa|faan' 
     proc onchange() { this.get; hnizda.display(1) | hnizda.set(''); hnizda.change }}

@@ -1298,7 +1298,7 @@ end:
 }
 # ------------------------------------------------------------------------------------- tut dir_find
 // nalezne adresář akce
-function tut_dir_find ($root,$rok,$kod) {  trace();
+function tut_dir_find ($root,$rok,$kod) {  
   $y= (object)array('ok'=>1);
   $patt= "{$root}Akce/$rok/$kod*";
   $fs= simple_glob($patt);

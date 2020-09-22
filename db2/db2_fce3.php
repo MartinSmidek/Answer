@@ -859,21 +859,17 @@ end:
   return $msg;
 }
 # ----------------------------------------------------------------------------- akce2 hnizda_options
-# vrátí select.options {short:...,long:...}
+# vrátí definici mapy: hnizdo=klíč,zkratka,nazev
 # spoléhá na korektní definici
 function akce2_hnizda_options($hnizda_seznam) {  
-  $ret= (object)array('short'=>':0','long'=>'všichni:0','map'=>':0');
   $hnizda= preg_split("/\s*,\s*/",$hnizda_seznam);
-  $i= 1;
-  foreach($hnizda as $hnizdo) {
+  $text= "0:?:všichni";
+  foreach($hnizda as $i=>$hnizdo) {
     $h0= strtoupper($hnizdo[0]);
-    $ret->short.= ",$h0:$i";
-    $ret->long.= ",$h0-$hnizdo:$i";
-    $ret->map.= ",$h0:$i";
-    $i++;
+    $i1= $i+1;
+    $text.= ",$i1:$h0:$hnizdo";
   }
-end:  
-  return $ret;
+  return $text;
 }
 # ======================================================================================> . intranet
 # -------------------------------------------------------------------------------- akce2 roku_update
