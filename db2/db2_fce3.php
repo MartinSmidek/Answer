@@ -4245,7 +4245,7 @@ function ucast2_rodina_access($idr,$access) {
 }
 # ----------------------------------------------------------------------------- ucast2_pridej_rodinu
 # ASK přidání rodinného pobytu do akce (pokud ještě nebyla rodina přidána)
-function ucast2_pridej_rodinu($id_akce,$id_rodina) { trace();
+function ucast2_pridej_rodinu($id_akce,$id_rodina,$hnizdo=0) { trace();
   $ret= (object)array('idp'=>0,'msg'=>'');
   // kontrola definice rodiny
   if ( !$id_rodina ) { $ret->msg= "Nelze přidat pobyt neznámé rodiny"; goto end; }
@@ -4258,10 +4258,13 @@ function ucast2_pridej_rodinu($id_akce,$id_rodina) { trace();
     // vložení nového pobytu
     $rod= $pouze==0 && $info->rod ? $info->rod : 0;
     // přidej k pobytu
-    $ret->idp= ezer_qry("INSERT",'pobyt',0,array(
+    $chng= array(
       (object)array('fld'=>'id_akce',   'op'=>'i','val'=>$id_akce),
       (object)array('fld'=>'i0_rodina', 'op'=>'i','val'=>$id_rodina)
-    ));
+    );
+    if ( $hnizdo )
+      $chng[]= (object)array('fld'=>'hnizdo', 'op'=>'i','val'=>$hnizdo);
+    $ret->idp= ezer_qry("INSERT",'pobyt',0,$chng);
   }
 end:
 //                                                 debug($ret,'ucast2_pridej_rodinu');
@@ -4277,15 +4280,18 @@ end:
 #  vrací
 #   ret.spolu,tvori - klíče vytvořených záznamů stejnojmenných tabulek nebo 0
 #   ret.pobyt - parametr nebo nové vytvořený pobyt
-function ucast2_pridej_osobu($ido,$access,$ida,$idp,$idr=0,$role=0) { trace();
+function ucast2_pridej_osobu($ido,$access,$ida,$idp,$idr=0,$role=0,$hnizdo=0) { trace();
   $ret= (object)array('pobyt'=>$idp,'spolu'=>0,'tvori'=>0,'msg'=>'');
   list($narozeni,$old_access)= select("narozeni,access","osoba","id_osoba=$ido");
   # případné vytvoření pobytu
   if ( !$idp ) {
-    $idp= $ret->pobyt= ezer_qry("INSERT",'pobyt',0,array(
-    (object)array('fld'=>'id_akce',   'op'=>'i','val'=>$ida),
-    (object)array('fld'=>'i0_rodina', 'op'=>'i','val'=>$idr)
-  ));
+    $chng= array(
+      (object)array('fld'=>'id_akce',   'op'=>'i','val'=>$ida),
+      (object)array('fld'=>'i0_rodina', 'op'=>'i','val'=>$idr)
+    );
+    if ( $hnizdo )
+      $chng[]= (object)array('fld'=>'hnizdo', 'op'=>'i','val'=>$hnizdo);
+    $idp= $ret->pobyt= ezer_qry("INSERT",'pobyt',0,$chng);
   }
   # přidání k pobytu
   list($je,$funkce)=

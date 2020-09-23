@@ -441,7 +441,7 @@ form _cmd [,,623,30] {
       mode.set('novy_singl');
       foreach(array(os1.prijmeni,os1.jmeno,os1.sex,os1.narozeni,os1.access),obligatory); ];
   }
-  proc see_old_osoba() { var ret:object // po rozhodnutí uživatele přidat nalezenou osobu k pobytu
+  proc see_old_osoba() { var ret:object, h:number // po rozhodnutí uživatele přidat nalezenou osobu k pobytu
     // kontrola oprávněnosti - dotazem
     { function('x','y','return x&y;',the_org.get,os1.access.get)        // stejná org jako má akce?
     | confirm("máme od této osoby souhlas?");                           // čestné prohlášení
@@ -453,8 +453,10 @@ form _cmd [,,623,30] {
     | // doplnění chybějící role v rodině
       os1.role.set(choose("Doplň jakou roli má nová osoba v rodině","dítě:d,manžel:a,manželka:b,pomoc:p"))
     ];
+    h.set(0);
+    [ the_hnizda.get; h.set(header.hnizdo.key) ]; 
     ret.set(ask('ucast2_pridej_osobu',
-      os1.key,os1.access.get,the_duakce.get,pob.key,rod.key,os1.role.get));
+      os1.key,os1.access.get,the_duakce.get,pob.key,rod.key,os1.role.get,h));
     { ret.msg; alert(ret.msg)
     | the_pobyt.set(ret.pobyt);
       _reload(1,os1.key);
@@ -1426,7 +1428,7 @@ form _rodina2 [,,360,229]  { css:'ae_frame'
     proc onclick() { rodiny0.rod_show(sum(rodiny0.rod_n.get,1)) }}
   button rod_use [Lr+137,32,16,16] {tag:'n,b', type:'html', title:"[fa-plug]",
     css:"search fa", help:"potvrzení nalezené rodiny a vložení do akce jako rodinný pobyt"
-    proc onclick() { var ret:object
+    proc onclick() { var ret:object, h:number
       // kontrola oprávněnosti - dotazem
       { function('x','y','return x&y;',the_org.get,r_access.get)       // stejná org jako akce
       | confirm("máme od této rodiny souhlas?");                       // čestné prohlášení
@@ -1434,7 +1436,9 @@ form _rodina2 [,,360,229]  { css:'ae_frame'
       | return                                                         // nic
       };
       rodiny0.rod_end;
-      ret.set(ask('ucast2_pridej_rodinu',the_duakce.get,key_rodina.get));
+      h.set(0);
+      [ the_hnizda.get; h.set(header.hnizdo.key) ]; 
+      ret.set(ask('ucast2_pridej_rodinu',the_duakce.get,key_rodina.get,h));
       ret.msg; alert(ret.msg); cmd._reload(the_pobyt.get,0)
     | the_pobyt.set(ret.idp); cmd._reload(1,0);
   }}
