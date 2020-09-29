@@ -9,34 +9,56 @@
 proc onfirstfocus() {
 #   spinner(1);
   [ dirty.get | akce_onstart ];
+  // případně nastavení hnízd
+  mail_hnizda;
   m.g.i.click;
 #   spinner(0);
 }
 proc init_ucast() { //echo('mai:init_ucast ',the_title.get);
   vy.fill(the_title.get);
 }
-
 # ------------------------------------------------------------------------------------------==> stav
 var the_duakce_local: number    // zobrazená akce - pokud se liší od the_duakce, je třeba překreslit
 var E_info: text
 var dopis_id: text
 var dopis_var: text             // typ rozesílání: U/U2/U3/U4 - účastníci akce
 var dopis_akce: number          // id_akce|0
+var dopis_hnizdo: number, dopis_hnizdo_name: text   // >0 znamená filtr na účastníky v i-tém hnízdě
 var karta: text                 // et|es
-var menu_item=0
-
+var menu_item:ezer
 # ----------------------------------------------------------------------------==> globální procedury
 proc reaccess() { #==> reaccess - změna
   menu_item.get;
   m.onclick(menu_item.get);
 }
+# nastavení pro akci v hnízdech
+func mail_hnizda() { 
+  echo("mail HNIZDA=",the_hnizda);
+  dopis_hnizdo= 0;
+  if ( the_hnizda ) {
+    ii.hnizdo.options= 'ms_akce_hnizda.nazev';
+    ii.hnizdo.key(0);
+    ii.hnizdo.display(1);
+    et.hnizdo_txt.display(1);
+  }
+  else {
+    ii.hnizdo.display(0);
+    et.hnizdo_txt.display(0);
+  };
+}
 # -------------------------------------------------------------------------------------------==> use
-use ii: form right [12,4,,]
+use ii: form right [12,4,,] {
+  select hnizdo [-140,5,80,] { title:'výběr hnízda' format:'t' type:'map' css:'bila'
+    proc onchanged() { 
+      dopis_hnizdo.set(this.key);
+      dopis_hnizdo_name.set(this.get);
+      menu_item.click();
+  }}
+}
 use vy: form _vyber [10,30,,]   // výběr skupiny | zobrazené akce
 use et: form _etext [10,40,,]   // editace mailu
 use es: form _esady [10,74,,]   // rozesílání
 use vz: form _vzory [10,0,,]    // vzory mailů
-
 # ------------------------------------------------------------------------------------------==> MENU
 menu m {type:'left',
   menu g {title:'Vytvoření mailu k akci', type:'group'
@@ -99,7 +121,8 @@ form _vzory {
       <br>{platba_den} = z karty Platba
       <br>{platba_castka} = z karty Platba
       <br>{platba_akce} = název akce
-      <br>{vyrizuje} = "vyřizuje" z os.nastavení' }
+      <br>{vyrizuje} = "vyřizuje" z os.nastavení' 
+  }
   field id_dopis { data:dopis.id_dopis }
   field nazev    { data:dopis.nazev }
   field obsah    { data:dopis.obsah }
@@ -113,8 +136,8 @@ form _vyber {
   label popis [391,19,240,19] { tag:'es', format:'n', title:"
     <span class='zeleny'> posláno </span>&nbsp;&nbsp;
     <span class='cerveny'> chyba resp. neposílat </span>&nbsp;&nbsp;
-    <span class='zluty'> poslat znovu </span>
-   "}
+    <span class='zluty'> poslat znovu </span>"
+  }
   # vynechání adresátů daného dopisu
   button [644,0,,] { tag:'es', title:'neposlat',
     help:'vynechání adresátů z mailu s daným id_dopis'
@@ -153,6 +176,7 @@ form _etext  {
   view etc: table _cis {join_type:'LEFT' join:"ON etd.cis_skupina=etc.data AND etc.druh='db_maily_sql'"}
   browse texty [0,34,150,200] { rows:10, qry_rows:1, group_by:'id_dopis', css_rows:'stav1,3:zluty,4:zeleny,5:cerveny'
     show id_dopis { data:etd.id_dopis }
+    show hnizdo { data:etd.hnizdo }
     show x { data:etm.id_davka },
     show datum [,,60,] { title:'datum', data:etd.datum, format:'rs-' }
     show komu_U [,,100,] { title:'účastníkům', data:eta.nazev, format:'s' },
@@ -168,12 +192,14 @@ form _etext  {
       obsah.set(y.html);
       adopis.set(id_dopis.get);
       form_state('n|s','u|z');
-      generovat.set(conc(cconc(pocet.get,"Přegenerovat","Vygenerovat")," rozesílací seznam"))
+      generovat.set(conc(cconc(pocet.get,"Přegenerovat","Vygenerovat")," rozesílací seznam"));
+      [ the_hnizda.get; hnizdo_txt.set(ms_akce_hnizda.get(hnizdo.get,'nazev')) ]; 
     }
   }
   # nezobrazené údaje mailu
   field druh    { data:dopis.druh }
   field id_duakce { data:dopis.id_duakce }
+  field hnizdo { data:dopis.hnizdo }
   field id_mailist { data:dopis.id_mailist }
   field cis_skupina { data:dopis.cis_skupina }
   field komu  { data:dopis.komu }       // 0:všem, 1:VPS..., 2:dlužníci, 3:OP
@@ -182,6 +208,7 @@ form _etext  {
   field id_davka { data:dopis.id_davka }
   label [L+0,20,365,142] { css:'ae_work' }
   field datum [L+10,36,80,17] { data:dopis.datum, title:'^datum odeslání', help:'datum|datum emailu', skill:'yam|yams;fam|fams;cam|cams' }
+  field hnizdo_txt [L+100,36,80,17] { title:'^jen pro hnízdo' format:'ro' }
   field id_dopis [L+307,38,43,17] { data:dopis.id_dopis, title:'^ID dopisu', format:'rd' }
   field predmet [L+10,72,340,17] { data:dopis.nazev, title:'^předmět mailu', help:'předmět|předmět emailu', skill:'yam|yams;fam|fams;cam|cams' }
   // ==> připojení příloh
@@ -243,13 +270,14 @@ form _etext  {
       texty.blur(1); adopis.set(0);
       datum.set(now); datum.change; id_davka.set(1); id_davka.change; druh.set('@'); druh.change;
       cis_skupina.init; id_mailist.init; id_duakce.init; komu.init;
+      id_duakce.set(dopis_akce.get); hnizdo.set(ii.hnizdo.key); 
       switch(dopis_var.get,
-      'U', { id_duakce.set(dopis_akce.get); komu.set(0); },
-      'U2',{ id_duakce.set(dopis_akce.get); komu.set(1); },
-      'U3',{ id_duakce.set(dopis_akce.get); komu.set(2); },
-      'U4',{ id_duakce.set(dopis_akce.get); komu.set(3); }
+      'U', { komu.set(0); },
+      'U2',{ komu.set(1); },
+      'U3',{ komu.set(2); },
+      'U4',{ komu.set(3); }
       );
-      id_duakce.change; komu.change; cis_skupina.change; id_mailist.change;
+      id_duakce.change; hnizdo.change; komu.change; cis_skupina.change; id_mailist.change;
     }
   }
   button smaz [L+305,174,,] { tag:'s', title:'Smazat', help:'smazat mail a jeho rozesílání',
@@ -297,20 +325,23 @@ form _etext  {
   | et_prazdy.set(confirm(E_info.get('_html')))
   }
   # -------------------------- načtení celé karty přípravy mailů
-  proc reload() {
-    form.init;
-    obsah.set(''); texty.browse_init;
-    switch(dopis_var.get,
+  func reload() { var prefix:text
+    form.init();
+    obsah= ''; texty.browse_init();
+    prefix= `etd.id_duakce=${dopis_akce} AND `;
+    if ( dopis_hnizdo ) 
+      prefix= `${prefix} etd.hnizdo=${dopis_hnizdo} AND `;
+    switch (dopis_var) {
     // účastníci akce  (dopis.komu=0)
-    'U',{ texty.browse_load(conc("etd.id_duakce='",dopis_akce.get,"'"," AND etd.komu=0")); },
+    case 'U': texty.browse_load(`${prefix} etd.komu=0`); break;
     // organizátoři akce (dopis.komu=1)
-    'U2',{ texty.browse_load(conc("etd.id_duakce='",dopis_akce.get,"'"," AND etd.komu=1")); },
+    case 'U2': texty.browse_load(`${prefix} etd.komu=1`); break;
     // dlužníci akce (dopis.komu=2)
-    'U3',{ texty.browse_load(conc("etd.id_duakce='",dopis_akce.get,"'"," AND etd.komu=2")); },
+    case 'U3': texty.browse_load(`${prefix} etd.komu=2`); break;
     // špatné OP (dopis.komu=3)
-    'U4',{ texty.browse_load(conc("etd.id_duakce='",dopis_akce.get,"'"," AND etd.komu=3")); }
-    );
-    reload2
+    case 'U4': texty.browse_load(`${prefix} etd.komu=3`); break;
+    }
+    reload2()
   }
   proc reload2() {
     texty.browse_count; drop.set(''); drop_init;
@@ -357,7 +388,8 @@ form _esady  {
   view etr: table rodina {join_type:'LEFT' join:'ON id_clen=etr.id_rodina'}
   browse texty [0,0,150,200] { rows:9, qry_rows:1, group_by:'id_dopis', 
       css_rows:'stav1,3:zluty,4:zeleny,5:cerveny'
-    show id_dopis  { data:etd.id_dopis },
+    show id_dopis { data:etd.id_dopis }
+    show hnizdo { data:etd.hnizdo }
     show id_duakce { data:etd.id_duakce }
     show cis_skupina { data:etd.cis_skupina }
     show datum [,,60,] { title:'datum', data:etd.datum, format:'s-' },
@@ -501,22 +533,25 @@ form _esady  {
     }
   }
   # --------------------- načtení celé karty
-  proc reload() {
-    form.init; davka.set(20); davka.change; msg.set(''); info.set('');
-    maily.prijmeni.set_attrib('expr',"etmo.prijmeni");
-    maily.browse_init;
-    texty.browse_init;
-    switch(dopis_var.get,
-    // účastnící akce  (dopis.komu=0)
-    'U',{ texty.browse_load(conc("etd.id_duakce='",dopis_akce.get,"'"," AND etd.komu=0")); },
+  func reload() { var prefix:text
+    form.init(); davka= 20; davka.change(); msg= ''; info= '';
+    maily.prijmeni.expr= "etmo.prijmeni";
+    maily.browse_init();
+    texty.browse_init();
+    prefix= `etd.id_duakce=${dopis_akce} AND `;
+    if ( dopis_hnizdo ) 
+      prefix= `${prefix} etd.hnizdo=${dopis_hnizdo} AND `;
+    switch (dopis_var) {
+    // účastníci akce  (dopis.komu=0)
+    case 'U': texty.browse_load(`${prefix} etd.komu=0`); break;
     // organizátoři akce (dopis.komu=1)
-    'U2',{ texty.browse_load(conc("etd.id_duakce='",dopis_akce.get,"'"," AND etd.komu=1")); },
+    case 'U2': texty.browse_load(`${prefix} etd.komu=1`); break;
     // dlužníci akce (dopis.komu=2)
-    'U3',{ texty.browse_load(conc("etd.id_duakce='",dopis_akce.get,"'"," AND etd.komu=2")); },
+    case 'U3': texty.browse_load(`${prefix} etd.komu=2`); break;
     // špatné OP (dopis.komu=3)
-    'U4',{ texty.browse_load(conc("etd.id_duakce='",dopis_akce.get,"'"," AND etd.komu=3")); }
-    );
-    reload2
+    case 'U4': texty.browse_load(`${prefix} etd.komu=3`); break;
+    }
+    reload2();
   }
   proc reload2() {
     texty.browse_count;

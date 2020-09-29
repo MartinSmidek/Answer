@@ -34,6 +34,8 @@ div.gmnoprint div.gm-style-mtc { display:none }
 .cerna   { color:#000; }
 .nic     { }
 .skrtnuty { text-decoration:line-through; color:#f00 }
+    
+div.bila div.Label3 { color:#fff !important; }        
 
 /* obecné barvy pozadí */
 .bily           { background-color:#ffffff !important; }

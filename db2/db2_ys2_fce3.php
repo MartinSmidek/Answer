@@ -3265,7 +3265,7 @@ function klienti($id_osoba) {  #trace('','win1250');
       'telefon'=>$o->telefon,'email'=>$o->email,'narozeni'=>$narozeni);
     }
   }
-//                                              debug($rod,$id_osoba,(object)array('win1250'=>1));
+                                              debug($rod,$id_osoba,(object)array('win1250'=>1));
   return $rod;
 }
 # ============================================================================================> ceny

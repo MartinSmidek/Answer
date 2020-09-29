@@ -33,8 +33,7 @@ proc tisk_hnizda() { var opts:object
   echo("tisk HNIZDA=",the_hnizda.get);
   { the_hnizdo.set(0);
     the_hnizda.get; 
-    opts.set(ask('akce2_hnizda_options',the_hnizda.get));
-    info.hnizdo.selects(opts.long);
+    info.hnizdo.set_attrib('options','ms_akce_hnizda.nazev');
     info.hnizdo.key(0);
     info.hnizdo.display(1);
   | info.hnizdo.display(0);
@@ -116,7 +115,7 @@ use info: form right [12,4,,] {
       })
     }
   }
-  select hnizdo [-140,5,80,] { title:'výběr hnízda' format:'t' 
+  select hnizdo [-140,5,80,] { title:'výběr hnízda' format:'t' type:'map' css:'bila'
     proc onchanged() { 
       the_hnizdo.set(this.key);
       the_hnizdo_name.set(this.get);

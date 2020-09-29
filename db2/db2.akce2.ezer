@@ -96,6 +96,7 @@ proc akce_choose(id_akce) { var a:object
   the_hlavni.set(a.hlavni); the_soubezna.set(a.soubezna);
   the_cenik.set(a.cenik);   the_cenik_verze.set(a.cenik_verze);
   the_cena.set(a.cena);     the_org.set(a.org);           the_ms.set(a.ms);    the_druh.set(a.druh);
+  ms_akce_hnizda.selects('hnizdo,zkratka,nazev',ask('akce2_hnizda_options',the_hnizda.get));
 }
 proc accessed(org) {
   return(function('x','y','return x&y;',org,my_access.get));
@@ -594,6 +595,7 @@ table dopis { key_id:'id_dopis'
   number potvrzeni { help:"potvrzení|vyžádat zaslání potvrzení o přečtení" }
   number kopie	{ help:"poslat slepou kopii 'odesílateli'" }
   number id_duakce   // pouze pro maily: id akce
+  number hnizdo      // 0 nebo index hnizda akce
   number id_mailist  // pouze pro maily přes mail-list: id mailist
   number cis_skupina // pouze pro maily: _cis.data položky se SQL (_cis.druh='db_maily_sql')
   text druh { help:'druh|D-dopis, S-samolepka,legitimace, N-nesamostatná složka' },
@@ -784,12 +786,12 @@ panel mapa [,,640,400] { type:'popup', title:'mapa účastníků'
       ret= php.mail2_mapa(id_mailist); 
       break;
     case 'mrop': 
-      ret= php.sta2_mrop_stat_map(mrop_par.get);
+      ret= php.sta2_mrop_stat_map(mrop_par);
       smazat= ret.rewrite;
       mrop_body= ret.suma;
       break;
     case 'ms':  
-      ret= php.sta2_ms_stat_map(mrop_par.get);
+      ret= php.sta2_ms_stat_map(mrop_par);
       smazat= ret.rewrite;
       mrop_body= ret.suma;
       break;

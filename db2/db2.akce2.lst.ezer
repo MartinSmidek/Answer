@@ -212,59 +212,59 @@ form _page [,,275,360] {
     | eq(the_source.get,'google'); [ id_akce; show_page(id_akce) | init_page ]
     ];
   }
-  func show_page(id_akce) {
-    cen_copy.enable(0); cen_copy.key(0); key_akce.set(id_akce); 
-    form.load(id_akce); zmena_web.set(0); 
-    if ( has_skill('y') ) { ds_order= php.ds_objednavka(id_akce) };
-    switch (zalozka) {
-    case 'inf': note= php.akce2_info(id_akce); break;
-    case 'cor': 
-      if ( hnizda ) {
-        is_hnizda= 1; hnizda.display(1);
-      }
-      else {
-        is_hnizda= 0; hnizda.display(0)
-      };
-      if ( has_skill('faan') ) {
-        form.display(0,'corm|corf'); 
-        if ( mrop ) form.display(1,'corm'); 
-        if ( firm ) form.display(1,'corf'); 
-      };
-      if ( has_skill('f') ) soubezna= id_hlavni ? 1 : 0;
-      cen_ma.onchange();
-      info.sey.browse_focus();
-      break;
-    case 'cen': c.browse_load(`id_akce=${id_akce}`); break;
-    case 'doc': archiv.ukaz(akce_get('archiv')); break;
-    case 'syn': if ( has_skill('yas') ) DocShow(akce_get('rok'),akce_get('kod')); break
-    };
-    c_show();
-  }
-//  proc show_page(id_akce) {
-//    cen_copy.enable(0); cen_copy.key(0); key_akce.set(id_akce); //fil.display(0);
+//  func show_page(id_akce) {
+//    cen_copy.enable(0); cen_copy.key(0); key_akce.set(id_akce); 
 //    form.load(id_akce); zmena_web.set(0); 
-//    [ has_skill('y'); ds_order.set(ask('ds_objednavka',id_akce)) ];
-//    switch(zalozka.get,
-//    'inf',{ note.set(ask('akce2_info',id_akce));  },
-//    'cor',{ //form.load(id_akce);
-//            { hnizda.get; is_hnizda.set(1); hnizda.display(1)
-//            | is_hnizda.set(0); hnizda.display(0)
-//            };
-//            [ has_skill('faan'); 
-//              form.display(0,'corm|corf'); 
-//              [ mrop.get; form.display(1,'corm') ]; 
-//              [ firm.get; form.display(1,'corf') ]; 
-//            ];
-//            [ has_skill('f'); soubezna.set(cconc(id_hlavni.get,1,0)) ];
-//            cen_ma.onchange;
-//            info.sey.browse_focus },
-//    'cen',{ c.browse_load(conc("id_akce=",id_akce)); },
-//    'doc',{ archiv.ukaz(akce_get('archiv')) },
-//    'syn',{ has_skill('yas'); DocShow(akce_get('rok'),akce_get('kod')) }
-//    );
-////    echo(id_akce,':',access.get,cen_ver.key);
-//    c_show;
+//    if ( has_skill('y') ) { ds_order= php.ds_objednavka(id_akce) };
+//    switch (zalozka) {
+//    case 'inf': note= php.akce2_info(id_akce); break;
+//    case 'cor': 
+//      if ( hnizda ) {
+//        is_hnizda= 1; hnizda.display(1);
+//      }
+//      else {
+//        is_hnizda= 0; hnizda.display(0)
+//      };
+//      if ( has_skill('faan') ) {
+//        form.display(0,'corm|corf'); 
+//        if ( mrop ) form.display(1,'corm'); 
+//        if ( firm ) form.display(1,'corf'); 
+//      };
+//      if ( has_skill('f') ) soubezna= id_hlavni ? 1 : 0;
+//      cen_ma.onchange();
+//      info.sey.browse_focus();
+//      break;
+//    case 'cen': c.browse_load(`id_akce=${id_akce}`); break;
+//    case 'doc': archiv.ukaz(akce_get('archiv')); break;
+//    case 'syn': if ( has_skill('yas') ) DocShow(akce_get('rok'),akce_get('kod')); break
+//    };
+//    c_show();
 //  }
+  proc show_page(id_akce) {
+    cen_copy.enable(0); cen_copy.key(0); key_akce.set(id_akce); //fil.display(0);
+    form.load(id_akce); zmena_web.set(0); 
+    [ has_skill('y'); ds_order.set(ask('ds_objednavka',id_akce)) ];
+    switch(zalozka.get,
+    'inf',{ note.set(ask('akce2_info',id_akce));  },
+    'cor',{ //form.load(id_akce);
+            { hnizda.get; is_hnizda.set(1); hnizda.display(1)
+            | is_hnizda.set(0); hnizda.display(0)
+            };
+            [ has_skill('faan'); 
+              form.display(0,'corm|corf'); 
+              [ mrop.get; form.display(1,'corm') ]; 
+              [ firm.get; form.display(1,'corf') ]; 
+            ];
+            [ has_skill('f'); soubezna.set(cconc(id_hlavni.get,1,0)) ];
+            cen_ma.onchange;
+            info.sey.browse_focus },
+    'cen',{ c.browse_load(conc("id_akce=",id_akce)); },
+    'doc',{ archiv.ukaz(akce_get('archiv')) },
+    'syn',{ has_skill('yas'); DocShow(akce_get('rok'),akce_get('kod')) }
+    );
+//    echo(id_akce,':',access.get,cen_ver.key);
+    c_show;
+  }
   proc init_page() {
     page.a_akce.set(0);
     cen_copy.enable(0); cen_copy.key(0);
@@ -292,7 +292,7 @@ form _page [,,275,360] {
   select [367,167,89,] { tag:'cor', title:'^statistika', type:'map0', data:akce.statistika,
     options:ms_akce_stat.zkratka, format:'n' }
   select [71,169,139,] { tag:'cor', title:'typ akce *', type:'map', data:akce.druh,
-    options:ms_akce_typ.zkratka, format:'n' }
+    /*options:ms_akce_typ.zkratka,*/ format:'n' }
   radio [213,117,86,35] { tag:'cor', data:akce.strava_oddo, value:'vo'
     case [0,2,83,] { title:'večeře-oběd', expr:'vo' }
     case [0,17,76,] { title:'oběd-oběd', expr:'oo' }
@@ -989,6 +989,7 @@ form _info [,,*,50] {
       set_cookie(conc(sys('root'),'_akce'),the_duakce.get)
     };
     ucast.ucast_hnizda();
+    maia.mail_hnizda();
     tisk.tisk_hnizda()
   }
   label head [0,0,*,30] { title:'', style:'z-index:0' }

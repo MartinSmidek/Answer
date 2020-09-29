@@ -14,11 +14,11 @@ func show_order (ord) {
 }
 
 menu mo {type:'left'
-  func onclick(x) { show_order(x.par.uid) }
+  func onclick(x:ezer) { show_order(x.par.uid) }
 }
 
 func onfirstfocus() {
-  var mn: object, it: object
+  var mn: object, it: ezer
   mn= php.ds_obj_menu('202001,202006');
   mo.attach_code(mn.cd);
   obj.Init();
@@ -57,13 +57,19 @@ func make_faktury () {
   fak.faktura.display(1)
 }
 // porovnání objednávky se seznamem účastníků
-var comp: text
+//var comp: text
 var fields: text
-func compare() { proc_compare() }
-proc proc_compare () { // PROC
-  comp.set(ask('ds_compare',the_order.get));
-  form_set(obj.get,comp.get('form')); obj.info.set(comp.get('html'))
+func compare() { var comp: object
+//  proc_compare() 
+  comp= php.ds_compare(the_order);
+  copy_by_name(comp.form,obj);
+//  js.form_set(obj,comp.form); 
+  obj.info= comp.html
 }
+//proc proc_compare () { // PROC
+//  comp.set(ask('ds_compare',the_order.get));
+//  form_set(obj.get,comp.get('form')); obj.info.set(comp.get('html'))
+//}
 # =========================================================================================> záložky
 const PQ=50             // posun pro nové pokoje
 //group pobyt {
@@ -85,7 +91,7 @@ use ucet:   form _kniha   [ 20, 50,,] { tag:'ucet' format:'n' }
 form _page {
   func start() { cvak(objed) } // inicializace - zobrazení první záložky
   # ------------------------- obsluha záložek
-  func cvak(i) {
+  func cvak(i:ezer) {
     form.set_css('ae_butt_off','ae_butt_on','_'); 
     i.set_css('ae_butt_on','ae_butt_off');
     panel.display(0,i.par.off); 
@@ -93,11 +99,11 @@ form _page {
   }
   # ------------------------- záložky - v par jsou tagy pro zapnutí vypnutí elementů
   label objed [ 12,0,100,20] { tag:'_' title:'<b>Objednávka</b>', par:°{on:'objed',off:'ucast|ucet'}
-    func onclick() { cvak(this) } }
+    func onclick() { cvak(&this) } }
   label ucast [132,0,100,20] { tag:'_' title:'<b>Účastníci</b>', par:°{on:'ucast',off:'objed|ucet'}
-    func onclick() { cvak(this) } }
+    func onclick() { cvak(&this) } }
   label ucet  [252,0,100,20] { tag:'_' title:'<b>Vyúčtování</b>', par:°{on:'ucet',off:'objed|ucast'}
-    func onclick() { cvak(this) } }
+    func onclick() { cvak(&this) } }
   # ------------------------- pozadí pro elementy musí být před obsahem záložek
   label frame [0,16,717,480] { css:'ae_work'}
 }
@@ -191,20 +197,22 @@ form _objed { css:'ds_form'
   label       [338,FT+49,5,] { title:'Kč' }
   func onload () { js.rooms_check(&rooms0,form,'p'); js.rooms_check(&rooms1,form,'q') }
   func onsave () { js.check_rooms(&rooms0,form,'p'); js.check_rooms(&rooms1,form,'q') }
-  proc Init() { foreach(ask('ds_rooms_help'),set_help_enable) } // PROC
-  proc set_help_enable(x) { // PROC
-    form.part(x.fld).set_attrib('help',x.hlp);
-    form.part(x.fld).enable(x.on);
-  }
-//  func Init() { var x:object, fld: object
-//    set_trace('m',1,'set_attrib,enable');
-//    for (x of php.ds_rooms_help()) {
-//      fld= form.part(x.fld);
-//      fld.help= x.hlp;                  -- atribut nemůže být vlevo
-//      fld.enable(x.on);
-//    };
-//    set_trace('m',0);
+//  proc Init() { foreach(ask('ds_rooms_help'),set_help_enable) } // PROC
+//  proc set_help_enable(x) { // PROC
+//    form.part(x.fld).set_attrib('help',x.hlp);
+//    form.part(x.fld).enable(x.on);
 //  }
+  func Init() { var x:object, fld: ezer
+    set_trace('m',1,'set_attrib,enable');
+    for (x of php.ds_rooms_help()) {
+//      fld= form['q1'];
+//      fld= form[x.fld];
+      fld= form.part(x.fld);
+      fld.help= x.hlp;                 // -- atribut nemůže být vlevo
+      fld.enable(x.on);
+    };
+    set_trace('m',0);
+  }
 }
 // ------------------------------------------------------------------==> objednatel
 form _fakt { css:'ds_form'
@@ -322,44 +330,74 @@ panel Rodina [,,320,300] { type:'popup'
       rodiny.init(); klienti.init(); vse.init(); znacka.init(); L.init(); panel.hide(0) } }
     // výběr z databáze MS
     select rodiny [100,0,200,17] { type:'auto', par:°{fce:'lide_ms'}, format:'t'
-      proc onchanged() { // PROC
-        rod.set(ask('rodina',this.key));
-        znacka.init;
-        each(rod.get,rodina); // nesmí volat asynchronní oosobaace
-        znacka.set(ask('cz2ascii',znacka.get))
-      }
-//      func onchanged() { var p:object
-//        rod= php.rodina(this);
-//        znacka.init();
-//        for (p of rod) {
-//          rodina(p);
-//        };
-//        znacka= php.cz2ascii(znacka)
+//      proc onchanged() { // PROC
+//        rod.set(ask('rodina',this.key));
+//        znacka.init;
+//        each(rod.get,rodina); // nesmí volat asynchronní oosobaace
+//        znacka.set(ask('cz2ascii',znacka.get))
 //      }
+      func onchanged() { var p:object, Lx: object
+        rod= php.rodina(this.key());
+        znacka.init();
+        for (p of rod) {
+          last= L.add();
+          if ( znacka=='' ) znacka= substr(p.prijmeni,0,3);
+          popis= `${p.prijmeni} ${p.jmeno}, ${p.mesto}, ${p.stari}`;
+          Lx= L[last];
+          Lx.info= popis;
+          Lx.all= p;
+        };
+        znacka= php.cz2ascii(znacka)
+      }
     }
     // výběr z databáze DS
     select klienti [100,0,200,17] { type:'auto', par:°{fce:'lide_ds'}, format:'t'
-      proc onchanged() { // PROC
-        rod.set(ask('klienti',this.key));
-        znacka.init;
-        each(rod.get,rodina); // nesmí volat asynchronní oosobaace
-        znacka.set(ask('cz2ascii',znacka.get))
+      func onchanged() { var p:object, Lx: object
+        rod= php.klienti(this.key());
+        znacka.init();
+        for (p of rod) {
+          rodina(p);
+//          last= L.add();
+//          if ( znacka=='' ) znacka= substr(p.prijmeni,0,3);
+//          popis= `${p.prijmeni} ${p.jmeno}, ${p.mesto}, ${p.stari}`;
+//          Lx= L[last];
+//          Lx.info= popis;
+//          Lx.all= p;
+        }
+        znacka= php.cz2ascii(znacka)
       }
+//      proc onchanged() { // PROC
+//        rod.set(ask('klienti',this.key));
+//        znacka.init;
+//        each(rod.get,rodina); // nesmí volat asynchronní oosobaace
+//        znacka.set(ask('cz2ascii',znacka.get))
+//      }
     }
     // procedury
-    proc rodina(p,i) { // PROC
-      last.set(L.add);
-      [ eq(znacka.get,''); znacka.set(substr(p.prijmeni,0,3)) ];
-      popis.set(conc(p.prijmeni,' ',p.jmeno,', ',p.mesto,', ',p.stari));
-      L.part(last.get).part('info').set(popis.get);
-      L.part(last.get).part('all').set(p);
+    func rodina(p:object) { var Lx:ezer
+      last= L.add();
+      if ( znacka=='' ) znacka= substr(p.prijmeni,0,3);
+      popis= `${p.prijmeni} ${p.jmeno}, ${p.mesto}, ${p.stari}`;
+      Lx= L[last];
+      Lx.info= popis;
+      Lx.all= p;
     }
+//    proc rodina(p,i) { // PROC
+//      last.set(L.add);
+//      [ eq(znacka.get,''); znacka.set(substr(p.prijmeni,0,3)) ];
+//      popis.set(conc(p.prijmeni,' ',p.jmeno,', ',p.mesto,', ',p.stari));
+//      L.part(last.get).part('info').set(popis.get);
+//      L.part(last.get).part('all').set(p);
+//    }
     // nastavení výběru
     check vse [4,0,80,16] { title:'všichni', format:'t' 
       proc onchange() { // PROC
         each(L,nastav) 
       }
-      func nastav (x,i) { 
+//      func nastav (x,i) { 
+//        x.chck= form.vse 
+//      }
+      func nastav (x:ezer,i) { 
         x.chck= form.vse 
       }
     }
@@ -371,11 +409,16 @@ panel Rodina [,,320,300] { type:'popup'
   }
   // ==> přidání rodiny
   var znacka_rodiny: text
-  proc rodina_add(seznam) { // PROC
-    each(seznam,rodina_add1);
+  func rodina_add(seznam:ezer) { var clen:ezer
+    for (clen of seznam) {
+      rodina_add1(clen);
+    }
   }
+//  proc rodina_add(seznam) { // PROC
+//    each(seznam,rodina_add1);
+//  }
   var pall: object
-  func rodina_add1(p,i) {
+  func rodina_add1(p:ezer) {
     if ( p.chck ) {
       pall= p.all;
       osoba.init();
@@ -496,57 +539,78 @@ panel Upravy [,,350,400] { type:'popup' title:"Účtované položky z ceníku"
   var n: number, 
       polozky: object,
       oprava: text
-  func Init() { var ceny:array, a:object
-    n= 0;
-    ceny= php.ds_cenik_list();
-    kniha.cenik_roku= ceny.cenik_roku;
-    for (a of ceny.list) {
-      Init_do(a);
-    }
+//  func Init() { var ceny:object, a:object, x:ezer, n: number
+//    n= 0;
+//    ceny= php.ds_cenik_list();
+//    kniha.cenik_roku= ceny.cenik_roku;
+//    for (a of ceny.list) {
+//      n= c.L.add();
+//      x= c.L[n];
+//      x.typ= a.typ;
+//      x.nazev= a.txt;
+//    }
+//  }
+ proc Init() { var ceny:array, a:object
+    n.set(0);
+    ceny.set(ask('ds_cenik_list'));
+    kniha.cenik_roku.set(ceny.cenik_roku);
+    foreach(ceny.list,Init_do);
   }
   proc Init_do(a) { // PROC
     n.set(c.L.add);
     c.L.part(n.get).part('typ').set(a.typ);
     c.L.part(n.get).part('nazev').set(a.txt);
   }
-  proc Load(order,host) { // PROC 
-    polozky.set(ask('ds_cenik_list',kniha.cenik_roku.get,order,host));
-    polozky.get('err'); alert(polozky.get('err'))
-  | c.celkem.set(polozky.get('cen.celk'));
-    c.za.set(conc('Kč za pobyt hosta ',osoba.prijmeni.get,' ',osoba.jmeno.get));
-    foreach(c.L,Load_do);
-    Suma; c.celkem.plain;
-    panel.modal;
-  }
-//  func Load(order,host) { var row:object
-//    polozky= php.ds_cenik_list(kniha.cenik_roku,order,host);
-//    if ( polozky.err ) 
-//      alert(polozky.err)
-//    else {
-//      c.celkem= polozky.cen.celk;
-//      c.za= `Kč za pobyt hosta ${osoba.prijmeni} ${osoba.jmeno}`;
-//      for (row of c.L) {
-//        Load_do(row);
-//      };
-//      Suma(); 
-//      c.celkem.plain();
-//      panel.modal();
-//    }
+
+//  proc Load(order,host) { // PROC 
+//    polozky.set(ask('ds_cenik_list',kniha.cenik_roku.get,order,host));
+//    polozky.get('err'); alert(polozky.get('err'))
+//  | c.celkem.set(polozky.get('cen.celk'));
+//    c.za.set(conc('Kč za pobyt hosta ',osoba.prijmeni.get,' ',osoba.jmeno.get));
+//    foreach(c.L,Load_do);
+//    Suma; c.celkem.plain;
+//    panel.modal;
 //  }
-  proc Load_do(row) { var typ:text, pol:number, opr:number, one:number // PROC
-    // uložená položka číselníku
-    typ.set(row.part('typ').get);
-    // převzetí hodnot k této položce
-    pol.set(polozky.get(conc('pol.',typ)));
-    opr.set(polozky.get(conc('opr.',typ)));
-    one.set(polozky.get(conc('one.',typ)));
-    // uložení hodnot
-    row.part('pocet').set(pol);
-    row.part('oprava').set(opr); row.part('oprava').plain;
-    row.part('one').set(one);
-    // výpočet ceny a sumy
-    row.part('cena').set(multiply(one,cconc(eq(opr,'-'),pol,opr)));
+  func Load(ord,host) { var row:ezer, typ:text, pol:number, opr:number, one:number
+    polozky= php.ds_cenik_list(kniha.cenik_roku,ord,host);
+    if ( polozky.err ) 
+      alert(polozky.err)
+    else {
+      c.celkem= polozky.cen.celk;
+      c.za= `Kč za pobyt hosta ${osoba.prijmeni} ${osoba.jmeno}`;
+      for (row of c.L) {
+//        Load_do(row);
+        typ= row.typ;
+        // převzetí hodnot k této položce
+        pol= polozky[conc('pol.',typ)];
+        opr= polozky[conc('opr.',typ)];
+        one= polozky[conc('one.',typ)];
+        // uložení hodnot
+        row.pocet= pol;
+        row.oprava= opr; row.oprava.plain();
+        row.one= one;
+        // výpočet ceny a sumy
+        row.cena= one*((opr=='-') ? pol : opr);
+      };
+      Suma(); 
+      c.celkem.plain();
+      panel.modal();
+    }
   }
+//  proc Load_do(row) { var typ:text, pol:number, opr:number, one:number // PROC
+//    // uložená položka číselníku
+//    typ.set(row.part('typ').get);
+//    // převzetí hodnot k této položce
+//    pol.set(polozky.get(conc('pol.',typ)));
+//    opr.set(polozky.get(conc('opr.',typ)));
+//    one.set(polozky.get(conc('one.',typ)));
+//    // uložení hodnot
+//    row.part('pocet').set(pol);
+//    row.part('oprava').set(opr); row.part('oprava').plain;
+//    row.part('one').set(one);
+//    // výpočet ceny a sumy
+//    row.part('cena').set(multiply(one,cconc(eq(opr,'-'),pol,opr)));
+//  }
   proc Suma() { // PROC
     c.celkem.set(0);
     foreach(c.L,Suma_do);

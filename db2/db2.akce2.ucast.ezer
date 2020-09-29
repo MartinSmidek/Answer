@@ -60,7 +60,6 @@ proc reaccess() { #==> . reaccess - změna
 proc ucast_hnizda() { var opts:object
   echo("HNIZDA=",the_hnizda.get);
   { the_hnizda.get; 
-    ms_akce_hnizda.selects('hnizdo,zkratka,nazev',ask('akce2_hnizda_options',the_hnizda.get));
     header.hnizdo.set_attrib('options','ms_akce_hnizda.nazev');
     u.b.xhnizdo.set_attrib('map_pipe','ms_akce_hnizda.zkratka');
     pob.hnizdo.set_attrib('options','ms_akce_hnizda.zkratka');
@@ -71,7 +70,7 @@ proc ucast_hnizda() { var opts:object
   | header.hnizdo.display(0);
     pob.hnizdo.display(0);
     u.b._nazev.width(100); u.b.xhnizdo.width(0);
-    u.b.init_queries(1)
+    [ u.b.get_query; u.b.init_queries(1) ]
   };
 }
 # ukázání pobytu na stejné akci
@@ -297,13 +296,16 @@ proc reload(id_pobyt) { var filtr:text, id_pobyt0:number
   [ u.sf.get;  filtr.set(conc('/*css*/',filtr)) ];
   [ u.dup.get; filtr.set(conc('/*duplicity*/',filtr)) ];
   [ u.doc.get; filtr.set(conc('/*dokumenty*/',filtr)) ];
-  [ u.b.browse_load(conc(filtr," /*AND funkce!=99*/ AND p.id_akce=",the_duakce.get),
+  [ echo("browse_load"); 
+    set_trace('f',1);
+    u.b.browse_load(conc(filtr," /*AND funkce!=99*/ AND p.id_akce=",the_duakce.get),
       "IF(funkce<=2,1,funkce),_nazev",
       '',0,0,1/*1=quiet*/,
       conc('SET @akce:=',the_duakce.get,
               ",@soubeh:=",the_soubeh.get,
               ",@access:=",my_access.get,
               ",@app:='",sys('ezer','options','app'),"'"));
+    set_trace('f',0);
     u.b.browse_focus;
     [ id_pobyt; id_pobyt0.set(id_pobyt) ];
     { id_pobyt0; { u.b.raise('onrowclick',id_pobyt0)

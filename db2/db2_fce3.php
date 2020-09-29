@@ -2970,7 +2970,10 @@ function ucast2_browse_ask($x,$tisk=false) {
   case 'browse_load':  # -----------------------------------==> . browse_load
   default:
     # vnořené SQL definující @akce, @soubeh, @app
-    if ( $x->sql ) pdo_qry($x->sql);
+    if ( $x->sql ) 
+      pdo_qry($x->sql);
+    else 
+      fce_error("browse_load - missing kontext");
     $pobyt= array();              // $pobyt[id_pobyt]             vše
     $skup= array();               // $skup[skupina]               seznam id_pobyt
     $osoba= array();              // $osoba[id_osoba]             atributy osob na akci
@@ -2994,8 +2997,6 @@ function ucast2_browse_ask($x,$tisk=false) {
     if ( isset($x->subcmd) && $x->subcmd=='browse_row' ) {
       $AND= "AND p.id_pobyt={$y->oldkey}";
     }
-    # kontext dotazu
-    if ( !$x ) pdo_qry("SET @akce:=422,@soubeh:=0,@app:='ys';");
     # duplicity, dokumenty, css?
     $duplicity= strstr($x->cond,'/*duplicity*/') ? 1 : 0;
     $dokumenty= strstr($x->cond,'/*dokumenty*/') ? 1 : 0;
@@ -12211,19 +12212,19 @@ function mail2_mai_doplnit($id_dopis,$id_akce,$doplnit) {  trace();
 # ---------------------------------------------------------------------------------- mail2 mai_pocet
 # zjistí počet adresátů pro rozesílání a sestaví dotaz pro confirm
 # $dopis_var určuje zdroj adres
-#   'U' - (komu=0) rozeslat účastníkům akce dopis.id_duakce ukazující do akce
+#   'U' - (komu=0) rozeslat účastníkům akce a hnízda dopis.id_duakce ukazující do akce
 #         do seznamu se dostanou pouze účastnící s funkcí:0,1,2,6 (-,VPS,SVPS,hospodář)
-#   'U2'- (komu=1) rozeslat účastníkům akce dopis.id_duakce ukazující do akce
+#   'U2'- (komu=1) rozeslat účastníkům akce a hnízda dopis.id_duakce ukazující do akce
 #         do seznamu se dostanou pouze organizující účastnící s funkcí:1,2,6 (VPS,SVPS,hospodář)
-#   'U3'- (komu=2) rozeslat účastníkům akce dopis.id_duakce ukazující do akce
+#   'U3'- (komu=2) rozeslat účastníkům akce a hnízda dopis.id_duakce ukazující do akce
 #         do seznamu se dostanou pouze dlužníci (bez avíza)
-#   'U4'- (komu=3) rozeslat účastníkům akce dopis.id_duakce ukazující do akce
+#   'U4'- (komu=3) rozeslat účastníkům akce a hnízda dopis.id_duakce ukazující do akce
 #         do seznamu se dostanou pouze dospělí s chybějícím nebo zjevně starým OP
 #   'Q' - rozeslat na adresy vygenerované dopis.cis_skupina => hodnota
 #   'G' - rozeslat podle mailistu - varianta osoba/rodina
 # pokud _cis.data=9999 jde o speciální seznam definovaný funkcí mail2_mai_skupina - ZRUŠENO
 # $cond = dodatečná podmínka POUZE pro volání z mail2_mai_stav
-function mail2_mai_pocet($id_dopis,$dopis_var,$cond='',$recall=false) {  trace();
+function mail2_mai_pocet($id_dopis,$dopis_var,$cond='',$recall=false) {  
   $result= (object)array('_error'=>0, '_count'=> 0, '_cond'=>false);
   $result->_html= 'Rozesílání mailu nemá určené adresáty, stiskni NE';
   $html= '';
@@ -12343,6 +12344,7 @@ function mail2_mai_pocet($id_dopis,$dopis_var,$cond='',$recall=false) {  trace()
     $html.= "Obeslaných účastníků ";
     // POZOR KOPIE KÓDU z mail2_mai_doplnit
     $AND= $cond ? "AND $cond" : '';
+    $AND.= "AND (d.hnizdo=0 || d.hnizdo=p.hnizdo)";
     $AND.= $dopis_var=='U'  ? " AND p.funkce IN (0,1,2,5)" : (
            $dopis_var=='U2' ? " AND p.funkce IN (1,2,5)"   : (
            $dopis_var=='U3' ?

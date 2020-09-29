@@ -5,13 +5,14 @@
 //ff: ds.form_set (form,fields)
 //      nastaví hodnoty polí ve formuláři
 //s: ds
-Ezer.fce.form_set= function (form,fields) {
-  for ( fid in fields ) {
+function form_set(form,fields) {
+  for ( let fid in fields ) {
     Ezer.assert(form.part[fid] && form.part[fid].set,"form_set: formulář "+form.id+" nemá položku "+fid);
     form.part[fid].set(fields[fid]);
   }
   return true;
 };
+Ezer.fce.form_set= form_set; 
 // ------------------------------------------------------------------------------------------------- rooms_check
 //ff: ds.rooms_check (rooms,form,prefix)
 //      nastaví hodnoty checkboxů prefix_<n> daného formuláře na 1 pokud se <n> vyskytuje v romms
