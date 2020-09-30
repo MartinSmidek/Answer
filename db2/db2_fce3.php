@@ -9382,6 +9382,49 @@ function evid2_browse_mailist($x) {
   return $y;
 }
 # ==========================================================================================> . MAPA
+# ---------------------------------------------------------------------------==> .. mapa2 geo_export
+# vrátí strukturu pro gmap
+function mapa2_geo_export($par) {
+  // pro doplnění o LOC_CITY_DISTR_CODE|LOC_GEO_LATITUDE|LOC_GEO_LONGITUDE
+  $tab= $par->tab;
+  $html= '';
+  $n= 0;
+  $fpath= "docs/geo-$tab.csv";
+  $flds= "id;ulice;psc;obec;code;lat;lng";
+  $f= @fopen($fpath,'w');
+  fputs($f, chr(0xEF).chr(0xBB).chr(0xBF));  // BOM pro Excel
+  fputcsv($f,explode(';',$flds),';');
+  switch ($tab) {
+  case 'osoba': 
+    $mr= pdo_qry("
+      SELECT id_osoba,ulice,psc,obec
+      FROM osoba 
+      WHERE deleted='' AND adresa=1 AND stat IN ('','CZ') AND (ulice!='' OR obec!='')
+      ORDER BY id_osoba
+    ");
+    while ( $mr && list($id,$ulice,$psc,$obec)= pdo_fetch_row($mr) ) {
+      fputcsv($f,array($id,$ulice,$psc,$obec,0,0,0),';');
+      $n++;
+    }
+    break;
+  case 'rodina': 
+    $mr= pdo_qry("
+      SELECT id_rodina,ulice,psc,obec
+      FROM rodina
+      WHERE deleted='' AND stat IN ('','CZ') AND (ulice!='' OR obec!='')
+      ORDER BY id_rodina
+    ");
+    while ( $mr && list($id,$ulice,$psc,$obec)= pdo_fetch_row($mr) ) {
+      fputcsv($f,array($id,$ulice,$psc,$obec,0,0,0),';');
+      $n++;
+    }
+    break;
+  }
+  fclose($f);
+  $html.= "tabulka $tab má $n relevantních záznamů pro geolokaci - jsou zde ke "
+      . "<a href='$fpath'>stáhnutí</a>";
+  return $html;
+}
 # ------------------------------------------------------------------------------------ mapa2 skupiny
 # přečtení seznamu skupin
 function mapa2_skupiny() {  trace();

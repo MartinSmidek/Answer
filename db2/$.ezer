@@ -85,6 +85,15 @@ menu db2 { type:'main', title:'db2', active:*, _sys:'*'
             }
           }
         }
+        menu { title:'Export a import polí',type:'group',skill:'m'
+          item { title:"[fa-download] export adres pro geo / osoba"  par:°{tab:'osoba'}}
+          item { title:"[fa-download] export adres pro geo / rodina"  par:°{tab:'rodina'}}
+          func onclick(i:ezer) { var own:ezer
+            own= i.owner();
+            info.fill(replace_fa(`${own.title} - ${i.title}`),' ');
+            info.append(php.mapa2_geo_export(i.par)) 
+          }
+        }
         menu o {title:'Ostrá databáze',type:'group', _sys:'*'
           item {title:'Stav sjednocování kopií', par:°{db:'db2'}
             proc onclick (i) {
