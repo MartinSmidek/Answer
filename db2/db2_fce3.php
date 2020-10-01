@@ -12815,6 +12815,7 @@ function mail2_mai_sending($y) {
   $par= (object)$_SESSION[$ezer_root]['mail_par'];
   // vlastní proces
   $res= mail2_mai_send($par->id_dopis,$par->davka,$par->from,$par->name,'',0,$par->foot);
+  $y->done++;
   $y->sent= $res->_sent;
   // zpráva
   $y->msg= $y->done==$y->todo ? 'konec' : "ještě ".($y->todo-$y->done)." x {$par->davka}"; 
@@ -12824,7 +12825,6 @@ function mail2_mai_sending($y) {
     $y->error= $res->_html;
     goto end;
   }
-  $y->done++;
   // před skončením počkej 1s aby šlo velikostí dávky řídit zátěž
   sleep(1);
 end:  
@@ -12850,7 +12850,7 @@ function mail2_mai_send($id_dopis,$kolik,$from,$fromname,$test='',$id_mail=0,$fo
         $mail->AddAttachment($fpath);
   } } };
   //
-  $result= (object)array('_error'=>0);
+  $result= (object)array('_error'=>0,'_sent'=>0);
   $pro= '';
   // přečtení rozesílaného mailu
   $qry= "SELECT * FROM dopis WHERE id_dopis=$id_dopis ";
@@ -12904,7 +12904,14 @@ function mail2_mai_send($id_dopis,$kolik,$from,$fromname,$test='',$id_mail=0,$fo
     $mail->Body= $obsah . $foot;
     $mail->AddAddress($test);   // pošli sám sobě
     // pošli
-    $ok= $mail->Send();
+     if ( $TEST ) {
+       $ok= 1;
+                                        display("jako odeslaný testovací mail pro $adresa");
+     }
+     else {
+      // zkus poslat mail
+      try { $ok= $mail->Send(); } catch(Exception $e) { $ok= false; }
+    }
     if ( $ok  )
       $html.= "<br><b style='color:#070'>Byl odeslán mail na $test $pro - je zapotřebí zkontrolovat obsah</b>";
     else {
