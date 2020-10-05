@@ -168,7 +168,9 @@ panel elim [0,0,965,607] { type:'popup', title:'Duplicity', format:'c', include:
   proc reaccess() {}
   proc osoby  (ido,jmeno,prijmeni) {}           // sjednocení dvou osob
   proc osoby_lst (ido,idos) {}                  // sjednocení navržených kandidátů na duplicitu
+  proc osoby_12(ido1,ido2) {}                   // sjednocení 2 navržených kandidátů na duplicitu
   proc rodiny (idr,nazev) {}                    // sjednocení dvou rodin
+  proc rodiny_12 (idr1,idr2) {}                 // sjednocení 2 navržených kandidátů na duplicitu
   proc rodiny_lst (idr,idrs) {}                 // sjednocení navržených kandidátů na duplicitu
   proc cleni  (idr) {}                          // sjednocení členů dané rodiny
 }

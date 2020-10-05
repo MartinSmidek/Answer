@@ -174,7 +174,7 @@ proc akce_roku(rok) {
     info.sey.browse_load(conc("YEAR(da2.datum_od)='",rok,"' AND da2.spec=0 AND ",the_omezeni.get),
       '','','','','',
       conc('SET @curr:=',the_duakce.get));
-    info.sey.browse_seek(conc("da2.id_duakce=",the_duakce.get));
+    info.sey.raise('onrowclick',info.sey.browse_seek(conc("da2.id_duakce=",the_duakce.get)));
 //    [ has_skill('yas'); page.DocBrowse ]
   ]
 }
@@ -880,6 +880,7 @@ form _info [,,*,50] {
   view pa2: table pobyt     {join_type:'LEFT',join:'ON pa2.id_akce=da2.id_duakce'}
   browse sey [0,36,200,500] { tag:'s', rows:27, qry_rows:1, buf_rows:120, group_by:"da2.id_duakce"
       css_rows:"barva,1:cerveny,2:zluty,3:skrtnuty" // akce je: 1=hlavní | 2=souběžná | 3=zrušená
+      optimize:°{fetch:'all'}
     show id_akce  {data:da2.id_duakce}
     show          {data:ja2.id_akce}
     show          {data:pa2.id_pobyt}

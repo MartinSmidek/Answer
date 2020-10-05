@@ -10,10 +10,12 @@ proc osoby(ido,jmeno,prijmeni) {
   elim_init; elim_osoby(ido,conc(trim(replace(prijmeni,"^-","")),' ',trim(jmeno))); elim_start }
 proc osoby_lst(ido,idos) {
   elim_init; c.rod_cleni.enable(0); elim_osoby_lst(ido,idos); return(elim_start) }
+proc osoby_12(ido1,ido2) {
+  elim_init; [ elim_osoby_12(ido1,ido2) ]; elim_start }
 proc rodiny(idr,nazev) {
   elim_init; [ elim_rodiny(idr,trim(replace(nazev,"^-",""))) ]; elim_start }
 proc rodiny_12(idr1,idr2) {
-  elim_init; [ elim_rodiny_12(idr1,idr2) ]; }
+  elim_init; [ elim_rodiny_12(idr1,idr2) ]; elim_start }
 proc rodiny_lst(idr,idrs) {
   elim_init; c.rod_cleni.enable(0); [ elim_rodiny_lst(idr,idrs) ]; return(elim_start) }
 proc cleni(idr) {
@@ -74,6 +76,19 @@ proc elim_osoby_lst(_ido,_idos) {
   ];
   return(1)
 }
+proc elim_osoby_12(_ido1,_ido2) {
+  mode.set('osoba_lst'); 
+  panel.set_attrib('title',"Eliminace 2 kopií osob");
+  r1.display(0); o1.display(1); o1.oso.display(1); c1.display(0);
+  r2.display(0); o2.display(1); o2.oso.display(1); c2.display(0);
+  [ _ido1; _ido2;
+    [ o1.bs._nazev.get_query(0,1); o1.bs._nazev.set_query(1,'',1) ];
+    [ o1.bs.browse_load(conc("o.id_osoba=",_ido1)); o1.bs.raise('onrowclick') ];
+    [ o2.bs._nazev.get_query(0,1); o2.bs._nazev.set_query(1,'',1) ];
+    [ o2.bs.browse_load(conc("o.id_osoba=",_ido2)); o2.bs.raise('onrowclick') ];
+  ];
+  return(1)
+}
 proc elim_rodiny(idr,nazev) {
   mode.set('rodina');
   panel.set_attrib('title',"Eliminace kopií rodin");
@@ -86,15 +101,15 @@ proc elim_rodiny(idr,nazev) {
   ];
 }
 proc elim_rodiny_12(idr1,idr2) {
-  mode.set('rodina_lst');
-  panel.set_attrib('title',"Eliminace kopií rodin");
+  mode.set('rodina_12');
+  panel.set_attrib('title',"Eliminace 2 kopií rodin");
   r1.display(1); o1.display(0); c1.display(0);
   r2.display(1); o2.display(0); c2.display(0);
   [ idr1; idr2;
-    [ r1.br._nazev.get_query(0,1); r1.br._nazev.set_query(1,'',1) ];
-    [ r1.br.browse_seek(conc("r.id_rodina=",idr1)); r1.br.raise('onrowclick') ];
-    [ r2.br._nazev.get_query(0,1); r2.br._nazev.set_query(1,'',1) ];
-    [ r2.br.browse_seek(conc("r.id_rodina=",idr2)); r2.br.raise('onrowclick') ];
+    [ //r1.br._nazev.get_query(0,1); r1.br._nazev.set_query(1,'',1) ];
+    [ r1.br.browse_seek(conc("r.id_rodina=",idr1)); ]; //r1.br.raise('onrowclick') ];
+    [ //r2.br._nazev.get_query(0,1); r2.br._nazev.set_query(1,'',1) ];
+    [ r2.br.browse_seek(conc("r.id_rodina=",idr2)); ]; //r2.br.raise('onrowclick') ];
   ];
 }
 proc elim_rodiny_lst(idr,idrs) { var keys:text, ret:object
@@ -556,7 +571,7 @@ form _cleni [,,Wr,Hr] {
     cap.set(conc("<b>Členi ",cconc(eq(tit,'KOPIE'),'jiné','jedné')," rodiny - ",tit,"</b>"));
     oso.frame.set(conc('osobní údaje ',tit));
     [ virgin_c.get; virgin_c.set(0);
-      oso.display(0,'[^f]'); oso.go_evi.display(0); oso.chain.display(0);
+      oso.display(1); oso.display(0,'[^f]'); oso.go_evi.display(0); oso.chain.display(0);
       oso.set_css('db_hr','','S');
       oso.stacks('i,ii,o,c,j,k,a,b,p','down',0,0,10);
     ];

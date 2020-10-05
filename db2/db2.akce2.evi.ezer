@@ -101,14 +101,14 @@ menu m {type:'left', format:'f-'
     item   {title:'[fa-medkit]rok'     par:°{lst:'h',tit:'úpravy za 365 dnů',days:'365',cnd:"1"}}
     item   {title:'[fa-medkit]všechny' par:°{lst:'h',tit:'všechny úpravy',days:'99999',cnd:"1"}}
   }
-  menu x {title:'tipy na duplicitní údaje',type:'group', skill:'yad;fad'
-    item   {title:'[fa-chain] stejné maily',par:°{lst:'o',tip:'mail',skill:'fad'}
+  menu x {title:'tipy na duplicitní údaje',type:'group', skill:'yad;fad;cad'
+    item   {title:'[fa-chain] stejné maily',par:°{lst:'o',tip:'mail'}
               help:'zobrazí lidi s nejednoznačným osobním mailem'}
-    item   {title:'[fa-chain] stejné telefony',par:°{lst:'o',tip:'telefon',skill:'fad'}
+    item   {title:'[fa-chain] stejné telefony',par:°{lst:'o',tip:'telefon'}
               help:'zobrazí lidi s nejednoznačným osobním telefonem'}
-    item   {title:'[fa-chain] stejné narození a jméno',par:°{lst:'o',tip:'narozeni',skill:'fad'}
+    item   {title:'[fa-chain] stejné narození a jméno',par:°{lst:'o',tip:'narozeni'}
               help:'zobrazí lidi se stejným jménem,příjmením a datem narození'}
-    item   {title:'[fa-chain] ... jen iniciovaní chlapi',par:°{lst:'o',tip:'mrop',skill:'fad'}
+    item ich {title:'[fa-chain] ... jen iniciovaní chlapi',par:°{lst:'o',tip:'mrop'},skill:'#cad'
               help:'zobrazí chlapy se stejným jménem,příjmením a datem narození'}
   }
   proc onclick (i) { menu_click (i,0,0) }
@@ -372,6 +372,9 @@ form _lst [,,370,*] {
     | telefon.width;  telefon.width(0); _id_o.width(44)
     |                 mail.width(44);   _id_o.width(0)
     }
+    menu { type:'context'
+      item { title:'zrušit výběr', func onclick () { bo.selected('clear'); }}
+    }
   }
   # ==============================================> M - MAPA
   var bm_having= 1, bm_komu= -1
@@ -527,6 +530,9 @@ form _lst [,,370,*] {
     proc onclick() {
       maily.width; maily.width(0);  _id_r.width(66)
     |              maily.width(66); _id_r.width(0)
+    }
+    menu { type:'context'
+      item { title:'zrušit výběr', func onclick () { br.selected('clear'); }}
     }
   }
 }
@@ -710,14 +716,30 @@ form _page {
   }
   # ==============================================> . kontextové menu
   menu ctx { type:'context', join:frame, skill:'yae;fae;cae'
-    item { title:'sjednotit kopie osob', skill:'fad|fad;yad|yad;cad|cad'
-      proc onclick () { elim.osoby(ido.get,oso.jmeno.get,oso.prijmeni.get); }} //lst.refresh2 } }
-    item { title:'sjednotit kopie rodin', skill:'fad|fad;yad|yad;cad|cad'
-      proc onclick () { elim.rodiny(idr.get,rod.rodiny.get); }} // lst.refresh2 } }
+//    item { title:'sjednotit kopie osob', skill:'fad|fad;yad|yad;cad|cad'
+//      proc onclick () { elim.osoby(ido.get,oso.jmeno.get,oso.prijmeni.get); }} 
+//    item { title:'sjednotit kopie rodin', skill:'fad|fad;yad|yad;cad|cad'
+//      proc onclick () { elim.rodiny(idr.get,rod.rodiny.get); }} 
+    item { title:'sjednotit 2 označené rodiny', skill:'fad|fad;yad|yad;cad|cad'
+      func onclick () { var sel:array
+        sel= lst.br.selected('get');
+        sel= split(sel,',');
+        if ( array_length(sel)==2 )
+          elim.rodiny_12(sel[0],sel[1]); 
+        else 
+          warning(`Vyber právě 2 rodiny ne ${array_length(sel)}`)
+    }}
+    item { title:'sjednotit 2 označené osoby', skill:'fad|fad;yad|yad;cad|cad'
+      func onclick () { var sel:array
+        sel= lst.bo.selected('get');
+        sel= split(sel,',');
+        if ( array_length(sel)==2 )
+          elim.osoby_12(sel[0],sel[1]); 
+        else 
+          warning(`Vyber právě 2 osoby ne ${array_length(sel)}`)
+    }}
     item { title:'sjednotit kopie členů rodiny', skill:'fad|fad;yad|yad;cad|cad'
-      proc onclick () { idr.get; elim.cleni(idr.get); }} //lst.refresh2 } }
-    item { title:'sjednotit označené osoby', skill:'fad|fad;yad|yad;cad|cad'
-      proc onclick () { elim.osoby_lst(ido.get,lst.bo.selected('get')); }}
+      proc onclick () { idr.get; elim.cleni(idr.get); }} 
     item { title:'-zvýrazňovat změněné údaje'  proc onclick () { evi_barvit_zmeny.set(1)} }
     item { title:'nezvýrazňovat změněné údaje' proc onclick () { evi_barvit_zmeny.set(0)} }
   }
