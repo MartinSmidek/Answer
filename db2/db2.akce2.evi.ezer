@@ -36,14 +36,14 @@ proc onblur() { [ track.display; track.hide ] }
 proc up(x)   { x.get.set_css('shift_up','shift_down'); x.set_css('shift_up','shift_down','.*') }
 proc down(x) { x.get.set_css('shift_down','shift_up'); x.set_css('shift_down','shift_up','.*') }
 # ------------------------------------------------------------------------------------------==> MENU
-var menu_item=0                 // běžný item
-var menu_par=0                  // ... jeho parametry
-var menu_title=''               // ... a název
+var menu_item=0,                // běžný item
+    menu_par=0,                 // ... jeho parametry
+    menu_title=''               // ... a browse rodin: r/f a osob: o/h a mail-listů: m
 menu m {type:'left', format:'f-'
   menu r {title:'rodiny',type:'group', skill:'yae;fae;cae'
     item a {title:'[fa-group]všechny rodiny'    par:°{lst:'r',tit:'všechny rodiny, co ',cnd:"1"}}
     item m {title:'[fa-send-o] podle mail-listu'par:°{lst:'m',tit:'MAILIST',cnd:'1',komu:'r'}  skill:'#crz' }
-    item t {title:'[fa-wrench fa-red](test)'           par:°{lst:'r',tit:'testovací rodiny, co ',
+    item t {title:'[fa-wrench fa-red](test)'    par:°{lst:'r',tit:'testovací rodiny, co ',
                                                 cnd:"r.id_rodina IN (383,2287,14,3329)"},skill:'m'}
   }
   menu o {title:'osoby',type:'group', skill:'yae;fae;cae;mrop'
@@ -108,6 +108,8 @@ menu m {type:'left', format:'f-'
               help:'zobrazí lidi s nejednoznačným osobním telefonem'}
     item   {title:'[fa-chain] stejné narození a jméno',par:°{lst:'o',tip:'narozeni'}
               help:'zobrazí lidi se stejným jménem,příjmením a datem narození'}
+    item   {title:'[fa-chain] stejné příjmení a jméno',par:°{lst:'o',tip:'prijmeni'}
+              help:'zobrazí lidi se stejným jménem a příjmením'}
     item ich {title:'[fa-chain] ... jen iniciovaní chlapi',par:°{lst:'o',tip:'mrop'},skill:'#cad'
               help:'zobrazí chlapy se stejným jménem,příjmením a datem narození'}
   }
@@ -179,14 +181,17 @@ form _lst [,,370,*] {
   proc reload(_mode,_cnd,_tit) {                // zobrazí rodiny či osoby podle daných podmínek
     tit.set(_tit); _reload(_mode,_cnd,0,0)
   }
-  proc _reload(_mode,_cnd,_ido,_idr) {          // zobrazí rodinu či osobu podle daných podmínek
-    mode.set(_mode); cnd.set(_cnd);             // - zapamatuje podmínky pro refresh
+  func _reload(_mode,_cnd,_ido,_idr) {          // zobrazí rodinu či osobu podle daných podmínek
+    mode= _mode; cnd= _cnd;                     // - zapamatuje podmínky pro refresh
     form.display(2,_mode);
-    eq(_mode,'o'); ido.set(_ido); [_ido; bo.init_queries ]; [ bo_reload(_cnd) ]
-  | eq(_mode,'m'); idm.set(_ido); [_ido; bm.init_queries ]; [ bm_reload(_cnd) ]
-  | eq(_mode,'h'); idh.set(_ido); [_ido; bh.init_queries ]; [ bh_reload(_cnd) ]
-  | eq(_mode,'f'); idf.set(_idr); [_idr; bf.init_queries ]; [ bf_reload(_cnd) ]
-  | eq(_mode,'r'); idr.set(_idr); [_idr; br.init_queries ]; [ br_reload(_cnd) ]
+    switch(_mode){
+      case 'o': ido= _ido; if (_ido) bo.init_queries(); bo_reload(_cnd); break;
+      case 'm': idm= _ido; if (_ido) bm.init_queries(); bm_reload(_cnd); break;
+      case 'h': idh= _ido; if (_ido) bh.init_queries(); bh_reload(_cnd); break;
+      case 'f': idf= _idr; if (_idr) bf.init_queries(); bf_reload(_cnd); break;
+      case 'r': idr= _idr; if (_idr) br.init_queries(); br_reload(_cnd); break;
+    }
+    page.ctx_enable(_mode)                      // uprav kontextové menu 
   }
   proc refresh() {                              // zobrazí rodiny či osoby podle starých podmínek
     _reload(mode.get,cnd.get,ido.get,idr.get)   //   s případnou inicializací
@@ -214,7 +219,7 @@ form _lst [,,370,*] {
   }
   # ---------------------------------------------- stav a inicializace
   var virgin=1
-  var mode:text,                                // o|r
+  var mode:text,                                // o|h|r|f|m
       cnd:text                                  // zapamatovaná podmínka
   var idr= 0                                    // naposledy vybraná rodina
   var ido= 0                                    // naposledy vybraná osoba
@@ -715,31 +720,54 @@ form _page {
     }
   }
   # ==============================================> . kontextové menu
+  func ctx_enable(_mode) {
+    switch(_mode){
+      case 'o': ctx.r.enable(0); ctx.o.enable(1); ctx.c.enable(0); break;
+      case 'r': ctx.r.enable(1); ctx.o.enable(0); ctx.c.enable(1); break;
+      case 'h': case 'f': case 'm': 
+                ctx.r.enable(0); ctx.o.enable(0); ctx.c.enable(0); break;
+    };
+  }
   menu ctx { type:'context', join:frame, skill:'yae;fae;cae'
+    func vyber(kolik,ceho,kde:ezer) {
+      if (kolik<2) 
+        alert(`v levém seznamu je třeba pomocí Insert vybrat 2 ${ceho}`)
+      elseif ( confirm(`je vybráno více jak 2 ${ceho}, mám starý výběr zrušit?`) )
+        kde.selected('clear');
+    }
 //    item { title:'sjednotit kopie osob', skill:'fad|fad;yad|yad;cad|cad'
 //      proc onclick () { elim.osoby(ido.get,oso.jmeno.get,oso.prijmeni.get); }} 
 //    item { title:'sjednotit kopie rodin', skill:'fad|fad;yad|yad;cad|cad'
 //      proc onclick () { elim.rodiny(idr.get,rod.rodiny.get); }} 
-    item { title:'sjednotit 2 označené rodiny', skill:'fad|fad;yad|yad;cad|cad'
+    item r { title:'sjednotit 2 označené rodiny', skill:'fad|fad;yad|yad;cad|cad'
       func onclick () { var sel:array
         sel= lst.br.selected('get');
         sel= split(sel,',');
-        if ( array_length(sel)==2 )
-          elim.rodiny_12(sel[0],sel[1]); 
-        else 
-          warning(`Vyber právě 2 rodiny ne ${array_length(sel)}`)
+        if ( array_length(sel)==2 ) {
+          idr= elim.rodiny_12(sel[0],sel[1]); 
+          if ( idr ) lst.br.browse_refresh(idr);
+        }
+        else vyber(array_length(sel),'rodiny',lst.br)
+//          warning(`Vyber právě 2 rodiny ne ${array_length(sel)}`)
     }}
-    item { title:'sjednotit 2 označené osoby', skill:'fad|fad;yad|yad;cad|cad'
+    item o { title:'sjednotit 2 označené osoby', skill:'fad|fad;yad|yad;cad|cad'
       func onclick () { var sel:array
         sel= lst.bo.selected('get');
         sel= split(sel,',');
-        if ( array_length(sel)==2 )
-          elim.osoby_12(sel[0],sel[1]); 
-        else 
-          warning(`Vyber právě 2 osoby ne ${array_length(sel)}`)
+        if ( array_length(sel)==2 ) {
+          ido= elim.osoby_12(sel[0],sel[1]); 
+          if ( ido ) lst.bo.browse_refresh(ido);
+        }
+        else vyber(array_length(sel),'osoby',lst.bo)
+//          confirm(`nejsou vybrány právě 2 osoby (ale ${array_length(sel)})`)
     }}
-    item { title:'sjednotit kopie členů rodiny', skill:'fad|fad;yad|yad;cad|cad'
-      proc onclick () { idr.get; elim.cleni(idr.get); }} 
+    item c { title:'sjednotit kopie členů rodiny', skill:'fad|fad;yad|yad;cad|cad'
+      func onclick () { 
+        if ( idr ) {
+          idr= elim.cleni(idr); 
+          if ( idr ) lst.br.browse_refresh(idr);
+        }
+    }} 
     item { title:'-zvýrazňovat změněné údaje'  proc onclick () { evi_barvit_zmeny.set(1)} }
     item { title:'nezvýrazňovat změněné údaje' proc onclick () { evi_barvit_zmeny.set(0)} }
   }

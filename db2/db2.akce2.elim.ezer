@@ -6,20 +6,54 @@
 
 # --------------------------------------------------------------------------------==> globální jména
 var osoby_lst_id: number // nastavené po ukončení osoby_lst
+        
 proc osoby(ido,jmeno,prijmeni) {
   elim_init; elim_osoby(ido,conc(trim(replace(prijmeni,"^-","")),' ',trim(jmeno))); elim_start }
 proc osoby_lst(ido,idos) {
-  elim_init; c.rod_cleni.enable(0); elim_osoby_lst(ido,idos); return(elim_start) }
-proc osoby_12(ido1,ido2) {
-  elim_init; [ elim_osoby_12(ido1,ido2) ]; elim_start }
+  elim_init; 
+//  c.rod_cleni.enable(0); 
+  elim_osoby_lst(ido,idos); return(elim_start) }
+proc rodiny_lst(idr,idrs) {
+  elim_init; 
+//  c.rod_cleni.enable(0); 
+  [ elim_rodiny_lst(idr,idrs) ]; return(elim_start) }
 proc rodiny(idr,nazev) {
   elim_init; [ elim_rodiny(idr,trim(replace(nazev,"^-",""))) ]; elim_start }
-proc rodiny_12(idr1,idr2) {
-  elim_init; [ elim_rodiny_12(idr1,idr2) ]; elim_start }
-proc rodiny_lst(idr,idrs) {
-  elim_init; c.rod_cleni.enable(0); [ elim_rodiny_lst(idr,idrs) ]; return(elim_start) }
-proc cleni(idr) {
-  elim_init; elim_cleni(idr); elim_start }
+// řešení říjen 2020
+func osoby_12(ido1,ido2) {
+  elim_init(); 
+  elim_osoby_12(ido1,ido2); 
+  elim_start(); 
+  echo(`sjednocení osob ${ido1}+${ido2}=${ok}`);
+  if (ok) {
+    alert(`sjednocení osoby ${ok} dokončeno`);
+    return(ok) 
+  }
+  else 
+    return(0)
+}
+func rodiny_12(idr1,idr2) {
+  elim_init(); 
+  elim_rodiny_12(idr1,idr2); 
+  elim_start(); 
+  if (ok) {
+    alert(`sjednocení rodiny ${ok} dokončeno`);
+    return(ok) 
+  }
+  else 
+    return(0)
+}
+func cleni(idr) {
+  elim_init(); 
+  elim_cleni(idr); 
+  elim_start();
+  if (ok) {
+    alert(`sjednocení členů rodiny ${ok} dokončeno`);
+    return(ok) 
+  }
+  else 
+    return(0)
+}
 # -----------------------------------------------------------------------------------------==> coord
 const Wr= 480; Hr= 574
 # ------------------------------------------------------------------------------------------==> stav
@@ -27,7 +61,7 @@ var mode: text                                  // osoba | osoba_lst | rodina | 
 var virgin= 1 //, virgin_r= 1, virgin_o= 1, virgin_c= 1
 var smazane_o= 1,                               // 1|o.deleted=''
     smazane_r= 1                                // 1|r.deleted=''
-var ido=0, idr=0
+var ido=0, idr=0, ok=0                          // výsledky eliminace
 var last_ido_lst='', last_idos_lst=''
 # ------------------------------------------------------------------------------------------==> uses
 use c:  form _cmd    [0,584,,]
@@ -40,7 +74,9 @@ use c2: form _cleni  [Wr+10, 5,,] { format:'n' }
 # ----------------------------------------------------------------------------------==> inicializace
 proc elim_init() {
 //  function('x',"x._show(0,0);",panel);
-  virgin.get; c.rod_cleni.enable(1);
+  ido.set(0); idr.set(0); ok.set(0);
+  virgin.get; 
+//  c.rod_cleni.enable(1);
   o1.init_all("ORIGINÁL",0); o2.init_all("KOPIE",1);
   o2.oso.on_dblclk_copy_to(o1.oso); o1.oso.on_dblclk_copy_to(o2.oso);
   r1.init_all("ORIGINÁL",0); r2.init_all("KOPIE",1);
@@ -101,15 +137,21 @@ proc elim_rodiny(idr,nazev) {
   ];
 }
 proc elim_rodiny_12(idr1,idr2) {
-  mode.set('rodina_12');
+  mode.set('rodina_lst');
   panel.set_attrib('title',"Eliminace 2 kopií rodin");
   r1.display(1); o1.display(0); c1.display(0);
   r2.display(1); o2.display(0); c2.display(0);
   [ idr1; idr2;
-    [ //r1.br._nazev.get_query(0,1); r1.br._nazev.set_query(1,'',1) ];
-    [ r1.br.browse_seek(conc("r.id_rodina=",idr1)); ]; //r1.br.raise('onrowclick') ];
-    [ //r2.br._nazev.get_query(0,1); r2.br._nazev.set_query(1,'',1) ];
-    [ r2.br.browse_seek(conc("r.id_rodina=",idr2)); ]; //r2.br.raise('onrowclick') ];
+    [ r1.display(0,'r2br'); 
+      r1.br.browse_seek(conc("r.id_rodina=",idr1));
+      r1.br.onrowclick();
+      r1.bro.onrowclick();
+    ];
+    [ r2.display(0,'r2br'); 
+      r2.br.browse_seek(conc("r.id_rodina=",idr2));
+      r2.br.onrowclick();
+      r2.bro.onrowclick();
+    ];
   ];
 }
 proc elim_rodiny_lst(idr,idrs) { var keys:text, ret:object
@@ -157,6 +199,8 @@ proc elim_cleni(idr) { var cleni:text
   c2.rs.browse_load(conc("id_rodina=",idr," AND ",smazane_r.get));
   c1.bs.browse_load(conc("id_osoba IN (",cleni,") AND ",smazane_o.get));
   c2.bs.browse_load(conc("id_osoba IN (",cleni,") AND ",smazane_o.get));
+  c1.bs.onrowclick;
+  c2.bs.onrowclick;
   return(1)
 }
 # --------------------------------------------------==> refresh
@@ -205,13 +249,14 @@ form _cmd [,,425,30] { css:'ae_parm'
       | confirm("opravdu zrušit <b>",o2.bs._nazev.get,"</b> (",o2.bs.ido.get,
           ") a přidat účasti,dar,... k <b>",o1.bs._nazev.get,"</b> (",o1.bs.ido.get,") ?");
         ret.set(ask('elim2_osoba',o1.bs.ido.get,o2.bs.ido.get)); // bylo eli_osoba
+        [ not(ok.get); ok.set(o1.bs.ido.get) ];
         [ o1.bs.browse_row; o1.bs_load(o1.bs.browse_key) ];
         [ o2.bs.browse_row; o2.bs_load(o2.bs.browse_key) ];
         [ eq(mode.get,'osoba_lst');
           // po osoby_lst se zeptáme, zda pořešit více rodin. resp nabídneme pro 2
           osoby_lst_id.set(ret.ido);
           ret.msg; confirm(ret.msg);
-          ret.idr1; rodiny_12(ret.idr1,ret.idr2)
+          ret.idr1; elim_rodiny_12(ret.idr1,ret.idr2)
         ]
       }
     | eq(mode.get,'cleni');
@@ -225,6 +270,7 @@ form _cmd [,,425,30] { css:'ae_parm'
       | confirm("opravdu zrušit <b>",c2.bs._nazev.get,"</b> (",c2.bs.ido.get,
           ") a přidat účasti,dar,... k <b>",c1.bs._nazev.get,"</b> (",c1.bs.ido.get,") ?");
         ask('elim2_clen',c1.rs.idr.get,c1.bs.ido.get,c2.bs.ido.get);
+        [ not(ok.get); ok.set(c1.rs.idr.get) ];
         c1.bs.browse_seek;
         c2.bs.browse_seek;
       }
@@ -237,12 +283,18 @@ form _cmd [,,425,30] { css:'ae_parm'
       | confirm("opravdu sjednotit rodiny <b>",r2.br._nazev.get,"</b> (",r2.br.idr.get,
           ") a <b>",r1.br._nazev.get,"</b> (",r1.br.idr.get,") ?");
         ask('elim2_rodina',r1.br.idr.get,r2.br.idr.get);
-        r1.br.browse_row;
-        r1.br_load(r1.br.browse_key);
-        r2.br.browse_row;
-        r2.br_load(r2.br.browse_key);
-        [ eq(mode.get,'rodina_lst'); confirm("pokračovat sjednocením členů rodiny?");
-          elim_cleni_lst(browse_concat_ido(r1.bro),browse_concat_ido(r2.bro));
+        [ not(ok.get); ok.set(r1.br.idr.get) ];
+        r1.br.browse_refresh;
+        r1.br.onrowclick();
+        r2.br.browse_refresh;
+        r2.br.onrowclick();
+//        r1.br.browse_row;
+//        r1.br_load(r1.br.browse_key);
+//        r2.br.browse_row;
+//        r2.br_load(r2.br.browse_key);
+        [ eq(mode.get,'rodina_lst'); confirm("pokračovat sjednocením členů výsledné rodiny?");
+          elim_cleni(r1.br.browse_key);
+//          elim_cleni_lst(browse_concat_ido(r1.bro),browse_concat_ido(r2.bro));
         ]
       }
   }}
@@ -297,6 +349,7 @@ form _cmd [,,425,30] { css:'ae_parm'
       r1.init_all("ORIGINÁL",0); r1.property(°{left:0});
       r2.init_all("KOPIE",1);    r2.property(°{left:490});
   }}
+  /*
   button rod_cleni [726,4,,] { type:'html', title:"rodina|osoba [fa-long-arrow-right] cleni",
     proc onclick() {
       eq(mode.get,'rodina'); elim_cleni(r1.br.idr.get)
@@ -308,6 +361,7 @@ form _cmd [,,425,30] { css:'ae_parm'
     | eq(mode.get,'cleni');      [ elim_rodiny_12(c1.rs.idr.get,c2.rs.idr.get) ]
     | warning("z tohoto stavu zatím nelze přepnout")
   }}
+  */
 }
 # ==========================================================================================> _OSOBY
 form _osoby [,,Wr,Hr] {
@@ -446,8 +500,8 @@ form _rodiny [,,Wr,Hr] {
   label     [0,0,Wr,Hr] { style:"border:1px solid green;background-color:rgba(0,128,0,.1);z-index:0" }
   label cap [0,0,Wr-4,15] { style:"color:white;background-color:green;padding-left:5px", format:'c' }
   # -----------------------------------------------==> . seznam rodin
-  label [Lr+4,34,215,148] { tag:'r2', css:'ae_parm' }
-  browse br [Lr+10,40,,] { tag:'r2', rows:5, qry_rows:1, css_rows:'nesmazana,0:neucast'
+  label [Lr+4,34,215,148] { tag:'r2,r2br', css:'ae_parm' }
+  browse br [Lr+10,40,,] { tag:'r2,r2br', rows:5, qry_rows:1, css_rows:'nesmazana,0:neucast'
     show access { data:r.access }
     show idr [,,50,] { title:'rodina', data:r.id_rodina, format:'sr'
       css_cell:'access,0:,1:ezer_ys,2:ezer_fa,3:ezer_db' }

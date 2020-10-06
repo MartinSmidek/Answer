@@ -8628,7 +8628,17 @@ function evid2_elim_tips($type) {
       FROM osoba AS o
       JOIN osoba AS d USING (prijmeni,jmeno,narozeni)
       WHERE o.narozeni!='0000-00-00' AND o.prijmeni!='' AND o.jmeno NOT IN ('','???')
-        AND o.iniciace=0 AND d.iniciace=0 
+      --  AND o.iniciace=0 AND d.iniciace=0 
+        AND o.deleted='' AND d.deleted='' AND o.id_osoba!=d.id_osoba
+      GROUP BY o.id_osoba HAVING LOCATE(',',_ruzne)>0    
+    ";
+    break;
+  case 'prijmeni': $qry= "
+      SELECT o.id_osoba,GROUP_CONCAT(DISTINCT d.id_osoba) AS _ruzne
+      FROM osoba AS o
+      JOIN osoba AS d USING (prijmeni,jmeno)
+      WHERE o.narozeni!='0000-00-00' AND o.prijmeni!='' AND o.jmeno NOT IN ('','???')
+      --  AND o.iniciace=0 AND d.iniciace=0 
         AND o.deleted='' AND d.deleted='' AND o.id_osoba!=d.id_osoba
       GROUP BY o.id_osoba HAVING LOCATE(',',_ruzne)>0    
     ";
