@@ -582,6 +582,7 @@ table mailist { key_id:'id_mailist'
   number specialni   // 1 znamená speciální mail-list, definovaný obsahem parms
   text   komu        // o pro osoby, r pro rodiny
   number blokovano
+  number aktualizovat // 1 znamená požadavek přegenerovat sexpr před použitím
   text   nazev
   text   ucel
   text   parms  // json

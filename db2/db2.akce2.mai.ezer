@@ -679,7 +679,7 @@ form _gsql {
     # sestavení SELECT pro rodinu
     gsql.set(conc(
       "SELECT -- výběr manželského páru",chr(10),
-      "  r2._ne,id_rodina AS _idr,r.access,COUNT(DISTINCT id_pobyt) AS _ucasti,",chr(10),
+      "  r2._umrti,r2._ne,id_rodina AS _idr,r.access,COUNT(DISTINCT id_pobyt) AS _ucasti,",chr(10),
       "  r2._name,r2._ulice,r2._psc,r2._obec,r2._stat,r2._email,r2.nomaily,r2._telefon,r2._spolu,",chr(10),
       "  MAX(iniciace) AS iniciace",chr(10),
       "FROM pobyt AS p",chr(10),
@@ -687,7 +687,7 @@ form _gsql {
       "JOIN tvori AS t USING (id_rodina) JOIN osoba AS o USING (id_osoba)",chr(10),
       "-- ---------------- výběr manželského páru - s vynechání účastníků nastavených akcí",chr(10),
       "JOIN ( SELECT id_rodina AS _idr,",chr(10),
-      "  SUM(IF(",akce_ne.get,",1,0) ) AS _ne,",chr(10),
+      "  MAX(umrti) AS _umrti, SUM(IF(",akce_ne.get,",1,0) ) AS _ne,",chr(10),
       "  GROUP_CONCAT(DISTINCT role) AS _role,",chr(10),
       "  CONCAT(r.nazev,' ',GROUP_CONCAT(DISTINCT jmeno ORDER BY role SEPARATOR ' a ')) AS _name,",chr(10),
       "  r.psc AS _psc, r.ulice AS _ulice, r.obec AS _obec, r.stat AS _stat,",chr(10),
@@ -733,7 +733,7 @@ form _gsql {
     # sestavení SELECT pro osobu
     gsql.set(conc(
       "SELECT o.access,COUNT(*) AS _ucasti,iniciace,o.id_osoba AS _id,",chr(10),
-      "  CONCAT(TRIM(prijmeni),' ',TRIM(jmeno)) AS _name,",chr(10),
+      "  o.umrti AS _umrti,CONCAT(TRIM(prijmeni),' ',TRIM(jmeno)) AS _name,",chr(10),
       "  IF(o.adresa,o.psc,IFNULL(r.psc,'')) AS _psc,",chr(10),
       "  IF(o.adresa,o.ulice,IFNULL(r.ulice,'')) AS _ulice,",chr(10),
       "  IF(o.adresa,o.obec,IFNULL(r.obec,'')) AS _obec,",chr(10),
@@ -762,7 +762,7 @@ form _gsql {
       id_mailist.get; form.key(id_mailist.get);
       //form.save;
       ask('query',conc("UPDATE mailist SET ",
-        "parms='",parms.get,"',",       "sexpr=",'"',gsql.get,'",',
+        "parms='",parms.get,"',",       "sexpr=",'"',gsql.get,'",',     "aktualizovat=0,",
         "ucel='",ucel.get,"',",         "blokovano=",blokovano.get,',',
         "komu='",cconc(pro_pary.get,'r','o'),"'",
         ' WHERE id_mailist=',id_mailist.get));
@@ -789,7 +789,7 @@ form _gsql {
   var code_cas:text
   var json_cas:text
   proc mailist_load() {
-    vy.komu_G.selects(ask('mail2_mailist',my_access.get));
+    vy.komu_G.selects(ask('mail2_mailist',my_access.get),',:',0,'data');
   }
   proc preload() { #==> .. preload
     ano_akces.browse_load("druh='ms_akce_typ' AND zkratka NOT LIKE '-%' ");
@@ -1124,10 +1124,11 @@ form _etext  {
   button generovat [L+8,226,,] { tag:'s', title:'Vygenerovat rozesílací seznam',
     help:'připravit rozesílání', skill:'yam|yams;fam|fams;cam|cams'
     proc onclick () {
-      var conf: object
-      var blokovano: number
-      var pocet: number
-      var err: text
+      var conf: object,
+          blokovano: number,
+          re_make:number,
+          pocet: number,
+          err: text
       eq(dopis_var.get,'Q');
       # rozesílání podle SQL nebo podle nastavené akce
       { blokovano.set(ask('select','ikona','_cis',conc("druh='db_maily_sql' AND data=",vy.komu_Q.key)));
@@ -1146,7 +1147,11 @@ form _etext  {
       # rozesílání podle mail-listu
       { blokovano.set(ask('select','blokovano','mailist',conc("id_mailist=",vy.komu_G.key)));
         blokovano.get; alert("použití tohoto mail-listu je zablokováno - asi probíhá úprava dotazu");
-      | conf.set(ask('mail2_lst_confirm_spec',vy.komu_G.key,dopis_id.get));
+      | [ re_make.set(ask('select','aktualizovat','mailist',conc("id_mailist=",vy.komu_G.key)));
+          re_make.get; alert("tento mail-list bude kvůli programovým změnám automaticky obnoven ...");
+          gq.m_reload; gq.make_sql(0); gq.save_sql(1)
+        ];
+        conf.set(ask('mail2_lst_confirm_spec',vy.komu_G.key,dopis_id.get));
         conf.specialni;
         [ { not(conf.prepsat) | confirm(conf.prepsat) };
           confirm(conf.pocet);

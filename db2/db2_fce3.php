@@ -258,7 +258,7 @@ function akce2_info($id_akce,$text=1) { trace();
   $platby= $pfces= $fces= array();
   $celkem= 0;
   $aviz= 0;
-  $hnizda= '';
+  $_hnizda= '';  $hnizda= array(); $hnizdo= array();
   if ( $id_akce ) {
     $ucasti= $rodiny= $dosp= $muzi= $zeny= $chuvy= $deti= $pecounu= $pp= $po= $web= 0;
     $err= $err2= $err3= $err4= 0;
@@ -284,7 +284,7 @@ function akce2_info($id_akce,$text=1) { trace();
     }
     // projdeme pobyty
     $qry= "SELECT nazev, datum_od, datum_do, now() as _ted,i0_rodina,funkce,p.web_zmena,web_changes,
-             COUNT(id_spolu) AS _clenu,IF(c.ikona=2,1,0) AS _pro_pary,a.hnizda,
+             COUNT(id_spolu) AS _clenu,IF(c.ikona=2,1,0) AS _pro_pary,a.hnizda,p.hnizdo,
              SUM(IF(ROUND(DATEDIFF(a.datum_od,o.narozeni)/365.2425,1)<18,1,0)) AS _deti,
              SUM(IF(ROUND(DATEDIFF(a.datum_od,o.narozeni)/365.2425,1)>=18 AND sex=1,1,0)) AS _muzu,
              SUM(IF(ROUND(DATEDIFF(a.datum_od,o.narozeni)/365.2425,1)>=18 AND sex=2,1,0)) AS _zen,
@@ -376,6 +376,11 @@ function akce2_info($id_akce,$text=1) { trace();
         $chybi_nar.= $p->_kdo;
         $chybi_sex.= $p->_kdo2;
       }
+      // rozdělení podle hnízda
+      if ( $p->hnizda ) {
+        $h= $p->hnizdo;
+        $hnizdo[$h]['ucasti']++;
+      }
       // údaje akce
       $akce= $p->nazev;
       $cas1= $p->_ted>$p->datum_od ? "byla" : "bude";
@@ -383,9 +388,10 @@ function akce2_info($id_akce,$text=1) { trace();
       $od= sql_date1($p->datum_od);
       $do= sql_date1($p->datum_do);
       $dne= $p->datum_od==$p->datum_do ? "dne $od" : "ve dnech $od do $do";
-      if ( $p->hnizda ) {
-        $n_h= count(explode(',',$p->hnizda));
-        $hnizda= " <b>ve $n_h hnízdech</b>";
+      if ( $p->hnizda && !$hnizda ) {
+        $hnizda= explode(',',$p->hnizda);
+        $n_h= count($hnizda);
+        $_hnizda= " <b>ve $n_h hnízdech</b>";
       }
     }
     if ( $chybi_nar ) $chybi_nar= substr($chybi_nar,2);
@@ -438,7 +444,7 @@ function akce2_info($id_akce,$text=1) { trace();
       if ( $prehled->pozor ) $err4++; 
       // html
       $html= $dosp+$deti>0
-       ? $html.= "<h3 style='margin:0px 0px 3px 0px;'>$akce</h3>akce $cas1 $dne $hnizda<br><hr>$cas2"
+       ? $html.= "<h3 style='margin:0px 0px 3px 0px;'>$akce</h3>akce $cas1 $dne $_hnizda<br><hr>$cas2"
        . ($skupin ? " $_skupin účastníků"
            .($rodiny ? ($rodiny==$ucasti ? " (všechny jako rodiny)" : " (z toho $_rodiny)") :''):'')
        . ($pecounu ? "<br>".($skupin?"<br>a ":'')."$_pecounu" : '')
@@ -456,6 +462,14 @@ function akce2_info($id_akce,$text=1) { trace();
         if ( $neprijeli ) $msg[]= "zrušeno: $_pobyt_x (nepřijeli, aplikovat storno)";
         if ( $nahradnici ) $msg[]= "náhradníci: $_pobyt_n, celkem $_pobyt_no";
         $html.= implode('<br>',$msg);
+      }
+      if ( $_hnizda ) {
+        $html.= "<ul>";
+                                                                debug($hnizdo);
+        foreach ($hnizda as $h=>$_h) {
+          $html.= "<li>$_h - {$hnizdo[$h+1]['ucasti']} skupin účastníků";
+        }
+        $html.= "</ul>";
       }
       if ( $err + $err2 + $err3 + $err4> 0 ) {
         $html.= "<br><hr><b style='color:red'>POZOR:</b> ";
@@ -11631,7 +11645,8 @@ function mail2_mailist($access,$par=null) {
   $sel= '';
   $AND=  $par && $par->komu ? "AND komu='{$par->komu}'" : '';
   $AND.= $par && $par->ucel ? "AND ucel LIKE '{$par->ucel}'" : '';
-  $mr= pdo_qry("SELECT id_mailist,ucel,access FROM mailist WHERE access=$access $AND");
+  $mr= pdo_qry("SELECT id_mailist,ucel,access FROM mailist WHERE access=$access $AND 
+    ORDER BY UPPER(ucel)");
   while ($mr && ($m= pdo_fetch_object($mr))) {
     $a= $m->access;
     $css= $a==1 ? 'ezer_ys' : ($a==2 ? 'ezer_fa' : ($a==3 ? 'ezer_db' : ''));
@@ -11841,7 +11856,7 @@ function mail2_lst_try($gq,$mode=0) { trace();
   }
   switch ($mode) {
   case 0:
-    $n= $nw= $nm= $nx= 0;
+    $n= $nw= $nm= $nx= $nu= 0;
     $gq= str_replace('&gt;','>',$gq);
     $gq= str_replace('&lt;','<',$gq);
     // ZRUŠENO: doplnění práv uživatele
@@ -11858,6 +11873,10 @@ function mail2_lst_try($gq,$mode=0) { trace();
         $nw++;
         $name= "<span style='color:darkred'>$name</span>";
       }
+      if ( $g->_umrti ) {
+        $nu++;
+        $name= "<span style='background:silver'>+ $name</span>";
+      }
       if ( $g->nomail ) {
         $nm++;
         $name= "<span style='background-color:yellow'>$name</span>";
@@ -11870,14 +11889,16 @@ function mail2_lst_try($gq,$mode=0) { trace();
       $html.= "$del$name";
       $del= ', ';
     }
-    $warn= $nw+$nm+$nx ? " (" : '';
+    $warn= $nw+$nm+$nx+$nu ? " (" : '';
     $warn.= $nw ? "$nw <span style='color:darkred'>nemá email</span> ani rodinný" : '';
     $warn.= $nw && $nm ? ", " : '';
     $warn.= $nm ? "$nm <span style='background-color:yellow'>nechce hromadné</span> informace
       - budou vyňati z mail-listu" : '';
     $warn.= ($nw||$nm) && $nx ? ", " : '';
     $warn.= $nx ? "$nx má <strike>zneplatněný email</strike>" : '';
-    $warn.= $nw+$nm+$nx ? ")" : '';
+    $warn.= ($nw||$nm||$nx) && $nu ? ", " : '';
+    $warn.= $nu ? "$nu  <strike>zemřelo</strike>" : '';
+    $warn.= $nw+$nm+$nx+$nu ? ")" : '';
     $html= "<b>Nalezeno $n adresátů$warn:</b><br>$html";
     break;
   case 1:
@@ -12282,8 +12303,8 @@ function mail2_mai_pocet($id_dopis,$dopis_var,$cond='',$recall=false) {
   $result->_html= 'Rozesílání mailu nemá určené adresáty, stiskni NE';
   $html= '';
   $emaily= $ids= $jmena= $pobyty= array();
-  $spatne= $nema= $mimo= $nomail= '';
-  $n= $ns= $nt= $nx= $mx= $nm= 0;
+  $spatne= $nema= $mimo= $nomail= $umrti= '';
+  $n= $ns= $nt= $nx= $mx= $nm= $nu= 0;
   $dels= $deln= $delm= $delnm= '';
   $nazev= '';
   switch ($dopis_var) {
@@ -12294,7 +12315,7 @@ function mail2_mai_pocet($id_dopis,$dopis_var,$cond='',$recall=false) {
 //     list($qry,$ucel)= select('sexpr,ucel','mailist',"id_mailist=$id");
     $ml= mail2_lst_access($id_mailist);
     $result->komu= $komu= $ml->komu;
-    // SQL dotaz z mail-listu obsahuje _email,_nazev,_id (=id_osoba nebo id_rodina podle komu)
+    // SQL dotaz z mail-listu obsahuje _email,_umrti,_nazev,_id (=id_osoba nebo id_rodina podle komu)
     $res= pdo_qry($ml->sexpr);
     while ( $res && ($d= pdo_fetch_object($res)) ) {
       $n++;
@@ -12302,6 +12323,11 @@ function mail2_mai_pocet($id_dopis,$dopis_var,$cond='',$recall=false) {
       if ( $d->nomail ) {
         // nechce dostávat maily
         $nomail.= "$delnm{$d->_name}"; $delnm= ', '; $nm++;
+        continue;
+      }
+      if (  $d->_umrti ) {
+        // nemůže dostávat maily
+        $umrti.= "$delnm{$d->_name}"; $delnm= ', '; $nu++;
         continue;
       }
       if ( $d->_email ) {
@@ -12492,6 +12518,7 @@ function mail2_mai_pocet($id_dopis,$dopis_var,$cond='',$recall=false) {
   $html.= $nx ? "$nx nemají mail ($nema)\n" : '';
   $html.= $nm ? "$nm nechtějí hromadné informace ($nomail)\n" : '';
   $html.= $mx ? "$mx mají mail označený '*' jako nedostupný ($mimo)" : '';
+  $html.= $nu ? "$nu zemřelo ($umrti)" : '';
   $result->_html= "$html<br><br>" . ($nt>0
     ? "Opravdu vygenerovat seznam pro rozeslání\n'$nazev'\nna $nt adres?"
     : "Mail '$nazev' nemá žádného adresáta, stiskni NE");
