@@ -687,7 +687,7 @@ form _gsql {
       "JOIN tvori AS t USING (id_rodina) JOIN osoba AS o USING (id_osoba)",chr(10),
       "-- ---------------- výběr manželského páru - s vynechání účastníků nastavených akcí",chr(10),
       "JOIN ( SELECT id_rodina AS _idr,",chr(10),
-      "  MAX(umrti) AS _umrti, SUM(IF(",akce_ne.get,",1,0) ) AS _ne,",chr(10),
+      "  MAX(IF(role IN ('a','b'),umrti,0)) AS _umrti, SUM(IF(",akce_ne.get,",1,0) ) AS _ne,",chr(10),
       "  GROUP_CONCAT(DISTINCT role) AS _role,",chr(10),
       "  CONCAT(r.nazev,' ',GROUP_CONCAT(DISTINCT jmeno ORDER BY role SEPARATOR ' a ')) AS _name,",chr(10),
       "  r.psc AS _psc, r.ulice AS _ulice, r.obec AS _obec, r.stat AS _stat,",chr(10),
