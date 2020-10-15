@@ -6715,15 +6715,16 @@ function akce2_skup_hist($akce,$par,$title,$vypis,$export) { trace();
   return $result;
 }
 # ---------------------------------------------------------------------------------- akce2 skup_popo
-# přehled starých skupinek letního kurzu MS účastníků této akce
+# přehled pro tvorbu virtuální obnovy
 function akce2_skup_popo($akce,$par,$title,$vypis,$export) { trace();
   global $tisk_hnizdo;
   if ( 1) { // kvůli editaci
   $jen_hnizdo= $tisk_hnizdo ? " AND hnizdo=$tisk_hnizdo " : '';
   $result= (object)array();
   // letošní účastníci
-  $letos= $skup_vps= array();
+  $letos= $skup_vps= $tip_deti= array();
   $qry=  "SELECT skupina,r.nazev,r.obec,year(datum_od) as rok,p.funkce as funkce,
+            IF(FIND_IN_SET(1,r_umi),1,0) AS _vps,r_ms,
             GROUP_CONCAT(DISTINCT IF(t.role='a',o.id_osoba,'') SEPARATOR '') as id_osoba_m,
             LEFT(GROUP_CONCAT(DISTINCT IF(t.role='a',o.jmeno,'') SEPARATOR ''),1) as jmeno_m,
             LEFT(GROUP_CONCAT(DISTINCT IF(t.role='b',o.jmeno,'') SEPARATOR ''),1) as jmeno_z,
@@ -6740,13 +6741,14 @@ function akce2_skup_popo($akce,$par,$title,$vypis,$export) { trace();
           JOIN rodina AS r ON r.id_rodina=p.i0_rodina
           WHERE id_akce=$akce AND p.funkce IN (0,1,2,5) $jen_hnizdo
           GROUP BY id_pobyt
-          ORDER BY funkce,r.nazev ";
+          ORDER BY funkce,_vps,r.nazev ";
   $res= pdo_qry($qry);
   while ( $res && ($u= pdo_fetch_object($res)) ) {
     $u->nazev= str_replace(' ','-',$u->nazev);
     $muz= $u->id_osoba_m;
     $letos[$muz]= $u;
     $letos[$muz]->_nazev= $u->nazev;
+    $letos[$muz]->ms= $u->r_ms;
     if ($u->funkce==1) {
       $letos[$muz]->vps= 'VPS';
       if ($u->skupina)
@@ -6754,7 +6756,7 @@ function akce2_skup_popo($akce,$par,$title,$vypis,$export) { trace();
     }
     $letos[$muz]->skup= $u->skupina;
     // rozbor dětí
-    $deti= '-';
+    $deti= '';
     $d_nr= explode(';',$u->_deti);
     if ($d_nr[0]) {
       $d_r= explode(',',$d_nr[1]);
@@ -6763,6 +6765,9 @@ function akce2_skup_popo($akce,$par,$title,$vypis,$export) { trace();
       }
     }
     $letos[$muz]->deti= $deti;
+    // rozbor umí
+    if ($u->funkce!=1 && $u->_vps)
+      $letos[$muz]->vps= '(vps)';
     $rok= $u->rok;
   }
 //                                                         debug($letos);
@@ -6779,65 +6784,98 @@ function akce2_skup_popo($akce,$par,$title,$vypis,$export) { trace();
     $old= $muz;
     $old_nazev= $info->_nazev;
   }}
-  // tisk
-  $td= "td style='border-top:1px dotted grey'";
-  $th= "th style='border-top:1px dotted grey;text-align:right'";
-  $tl= "th style='border-top:1px dotted grey;text-align:left'";
-  $html= "<table>";
   foreach ($letos as $muz=>$info) {
     // minulé účasti na LK
     $n= 0;
     $qry= " SELECT p.id_akce,skupina,year(datum_od) as rok
             FROM akce AS a
             JOIN pobyt AS p ON a.id_duakce=p.id_akce
-            JOIN spolu AS s USING(id_pobyt)
+            JOIN spolu AS s USING (id_pobyt)
+            JOIN rodina AS r ON r.id_rodina=p.i0_rodina
             WHERE a.druh=1 AND s.id_osoba='$muz' AND p.id_akce!=$akce AND skupina!=0
             ORDER BY datum_od DESC ";
     $res= pdo_qry($qry);
     $ucasti= '';
     while ( $res && ($r= pdo_fetch_object($res)) ) {
       $n++;
-//      // minulé skupinky
-//      $qry_s= "
-//            SELECT GROUP_CONCAT(DISTINCT IF(t.role='a',o.id_osoba,'') SEPARATOR '') as id_osoba_m
-//            FROM akce AS a
-//            JOIN pobyt AS p ON a.id_duakce=p.id_akce
-//            JOIN spolu AS s USING(id_pobyt)
-//            JOIN osoba AS o ON s.id_osoba=o.id_osoba
-//            LEFT JOIN tvori AS t ON t.id_osoba=o.id_osoba
-//            WHERE p.id_akce={$r->id_akce} AND skupina={$r->skupina}
-//            GROUP BY id_pobyt HAVING FIND_IN_SET(id_osoba_m,'$letosni')
-//            ORDER BY datum_od DESC ";
-//      $res_s= pdo_qry($qry_s);
-//      $spolu= ''; $del= '';
-//      while ( $res_s && ($s= pdo_fetch_object($res_s)) ) if ( $s->id_osoba_m!=$muz ) {
-//        $spolu.= "$del{$letos[$s->id_osoba_m]->_nazev}";
-//        $del= ',&nbsp;';
-//      }
-//      if ( $spolu ) {
-//        $ucasti.= " <u>{$r->rok}</u>:&nbsp;$spolu";
-//      }
+      // minulé skupinky
+      $qry_s= "
+            SELECT GROUP_CONCAT(DISTINCT IF(t.role='a',o.id_osoba,'') SEPARATOR '') as _muz
+            FROM akce AS a
+            JOIN pobyt AS p ON a.id_duakce=p.id_akce
+            JOIN spolu AS s USING(id_pobyt)
+            JOIN osoba AS o ON s.id_osoba=o.id_osoba
+            LEFT JOIN tvori AS t ON t.id_osoba=o.id_osoba
+            WHERE p.id_akce={$r->id_akce} AND skupina={$r->skupina}
+            GROUP BY id_pobyt HAVING FIND_IN_SET(_muz,'$letosni')
+            ORDER BY datum_od DESC ";
+      $res_s= pdo_qry($qry_s);
+      $spolu= ''; $del= '';
+      while ( $res_s && ($s= pdo_fetch_object($res_s)) ) {
+        if ( $s->_muz!=$muz ) {
+          if ( $letos[$s->_muz]->vps ) {
+            $spolu.= "$del<b>{$letos[$s->_muz]->_nazev}</b>";
+            if ($info->deti && $letos[$s->_muz]->deti) {
+              $tip_deti[$s->_muz][]= " ?{$info->_nazev}";
+            }
+          }
+          else
+            $spolu.= "$del{$letos[$s->_muz]->_nazev}";
+          $del= ',&nbsp;';
+        }
+      }
+      if ( $spolu ) {
+        $ucasti.= " <u>{$r->rok}</u>:&nbsp;$spolu";
+      }
     }
-//    if ( $ucasti )
-//      $html.= "<tr><$th>{$info->_nazev}</th><$th>$n&times;LK</th><$tl>$info->deti</th><$td>$ucasti</td></tr>";
-////    elseif ( $n )
-//    else
-    
-    if ($info->skup && !$info->vps) {
+    // přidáme účasti na jiném kurzu
+    if ($info->ms) $n= "$n+{$info->ms}";
+    // redakce výpisu
+    if ($info->skup && $info->vps!='VPS') {
       $vps= isset($skup_vps[$info->skup]) ? $skup_vps[$info->skup] : '';
       if ($vps) {
         $letos[$vps]->lidi.= " + {$info->_nazev} ";
       }
     }
-    else {
-      $html.= "<tr><th>$info->vps</th><$th>{$info->_nazev}</th><$th>$n&times;LK</th>
-                   <$tl>$info->deti</th><$td></td><td>{$info->lidi}</td></tr>" ;
+    $info->ucasti= $ucasti;
+//    elseif ($info->vps!='VPS') {
+//      $html.= "<tr><th>$info->vps</th><td>{$info->_nazev}</td><$th>$n&times;LK</th>
+//                   <$tl>$info->deti</th><$td>$ucasti</td></tr>" ;
+//    }
+//    else { // VPS
+//                                                        debug($tip_deti);
+//      $tips= isset($tip_deti[$muz]) ? implode(' ',$tip_deti[$muz]) : '';
+//      $tips= $tips ? " ... ( $tips )" : '';
+//      $html.= "<tr><th>$info->vps</th><$tl>{$info->_nazev}</th><$th>$n&times;LK</th>
+//                   <$tl>$info->deti</th><$td>{$info->lidi} $tips</td></tr>" ;
+//    }
+  }
+                                                        debug($tip_deti);
+  // tisk
+  $td= "td style='border-top:1px dotted grey'";
+  $th= "th style='border-top:1px dotted grey;text-align:right'";
+  $tl= "th style='border-top:1px dotted grey;text-align:left'";
+  $html= "<table>";
+  foreach ($letos as $muz=>$info) {
+    if ($info->vps!='VPS') {
+      $html.= "<tr><td>$info->vps</td><td>{$info->_nazev}</td><$th>$n&times;LK</th>
+                   <$tl>$info->deti</th><$td>{$info->ucasti}</td></tr>" ;
+    }
+    else { // VPS
+      $tips= isset($tip_deti[$muz]) ? implode(' ',$tip_deti[$muz]) : '';
+      $tips= $tips ? " ... ( $tips )" : '';
+      $html.= "<tr><th>$info->vps</th><$tl>{$info->_nazev}</th><$th>$n&times;LK</th>
+                   <$tl>$info->deti</th><$td>{$info->lidi} $tips</td></tr>" ;
     }
   }
   $html.= "</table>";
-  $note= "Abecední seznam účastníků letního kurzu roku $rok doplněný seznamem členů jeho starších
-          skupinek na letních kurzech. <br>Ve skupinkách jsou uvedení jen účastníci
-          kurzu roku $rok. (Pro tisk je nejjednodušší označit jako blok a vložit do Wordu.)";
+  $note= "<h3>Pomůcka pro vytvoření virtuální obnovy</h3>
+    V první části jsou účastníci s údaji <ul>
+    <li> počtu účastí na LK, 
+    <li>s poznámkou <b>děti</b> pokud mají malé děti (do 8 let) 
+    <li>a se seznamem lidí, se kterými již v minulosti byli ve skupince (aktuální VPS jsou tučně)
+    </ul>
+    V druhé části jsou VPS s již jasnými skupinkami (značka +) a s tipy v závorce, zohledňující malé děti<br>";
   $html= "<i>$note</i><br>$html";
   //$result->html= nl2br(htmlentities($html));
   $result->html= $html;
