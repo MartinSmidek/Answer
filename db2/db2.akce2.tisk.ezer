@@ -494,6 +494,7 @@ menu m {type:'left', active:*
     item {title:'Skupinky (* noví)'     ,par:°{typ:'skti',exp:'Excel2',cnd:'1',verze:'MS',mark:'novic'}} // fce:'tisk'
     item {title:'Skupinky z LK (pro obnovu, značky: - nepřihlášení, + náhradníci)',par:°{typ:'skti',exp:'Excel2',cnd:'1',verze:'MS',mark:'LK'}}   // fce:'tisk'
     item {title:'Skupinky - přehled historie' ,par:°{typ:'skpr',cnd:'1'}} // fce:'prehled'
+    item {title:'Skupinky - přehled POPO'     ,par:°{typ:'skpopo',cnd:'1'}} 
     item {title:'pro Závěrečnou zprávu'                                                      skill:'y;f'
                                         ,par:°{typ:'j',exp:'Excel2',cnd:'1',ord:'o.prijmeni,o.jmeno'
                                         ,tit:':5,Příjmení:15,Jméno:12,Ulice:25,Město:25,PSČ:7,Datum nar.:12,Člen YMCA:10,věk:10,funkce:20,typ:10'

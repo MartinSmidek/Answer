@@ -4383,6 +4383,7 @@ function tisk2_sestava($akce,$par,$title,$vypis,$export=false,$hnizdo=0) { trace
      : ( $par->typ=='s0'   ? tisk2_pdf_plachta0($export)                            // pomocné štítky
      : ( $par->typ=='skpl' ? akce2_plachta($akce,$par,$title,$vypis,$export)        //!
      : ( $par->typ=='skpr' ? akce2_skup_hist($akce,$par,$title,$vypis,$export)      //!
+     : ( $par->typ=='skpopo'?akce2_skup_popo($akce,$par,$title,$vypis,$export)      //!
      : ( $par->typ=='skti' ? akce2_skup_tisk($akce,$par,$title,$vypis,$export)      //!
      : ( $par->typ=='12'   ? akce2_jednou_dvakrat($akce,$par,$title,$vypis,$export) //!
      : ( $par->typ=='sd'   ? akce2_skup_deti($akce,$par,$title,$vypis,$export)      //!
@@ -4393,7 +4394,7 @@ function tisk2_sestava($akce,$par,$title,$vypis,$export=false,$hnizdo=0) { trace
      : ( $par->typ=='dot'  ? dot_prehled($akce,$par,$title,$vypis,$export)          //!
      : (object)array('html'=>"<i>Tato sestava zatím není převedena do nové verze systému,
           <a href='mailto:martin@smidek.eu'>upozorněte mě</a>, že ji už potřebujete</i>")
-     )))))))))))))))))))))))))));
+     ))))))))))))))))))))))))))));
 }
 # =======================================================================================> . seznamy
 function mb_strcasecmp($str1, $str2, $encoding = null) {
@@ -6700,8 +6701,138 @@ function akce2_skup_hist($akce,$par,$title,$vypis,$export) { trace();
     }
     if ( $ucasti )
       $html.= "<tr><$th>{$info->_nazev}</th><$th>$n&times;</th><$td>$ucasti</td></tr>";
-    elseif ( $n )
+//    elseif ( $n )
+    else
       $html.= "<tr><$th>{$info->_nazev}</th><$th>$n&times;</th><$td>-</td></tr>" ;
+  }
+  $html.= "</table>";
+  $note= "Abecední seznam účastníků letního kurzu roku $rok doplněný seznamem členů jeho starších
+          skupinek na letních kurzech. <br>Ve skupinkách jsou uvedení jen účastníci
+          kurzu roku $rok. (Pro tisk je nejjednodušší označit jako blok a vložit do Wordu.)";
+  $html= "<i>$note</i><br>$html";
+  //$result->html= nl2br(htmlentities($html));
+  $result->html= $html;
+  return $result;
+}
+# ---------------------------------------------------------------------------------- akce2 skup_popo
+# přehled starých skupinek letního kurzu MS účastníků této akce
+function akce2_skup_popo($akce,$par,$title,$vypis,$export) { trace();
+  global $tisk_hnizdo;
+  if ( 1) { // kvůli editaci
+  $jen_hnizdo= $tisk_hnizdo ? " AND hnizdo=$tisk_hnizdo " : '';
+  $result= (object)array();
+  // letošní účastníci
+  $letos= $skup_vps= array();
+  $qry=  "SELECT skupina,r.nazev,r.obec,year(datum_od) as rok,p.funkce as funkce,
+            GROUP_CONCAT(DISTINCT IF(t.role='a',o.id_osoba,'') SEPARATOR '') as id_osoba_m,
+            LEFT(GROUP_CONCAT(DISTINCT IF(t.role='a',o.jmeno,'') SEPARATOR ''),1) as jmeno_m,
+            LEFT(GROUP_CONCAT(DISTINCT IF(t.role='b',o.jmeno,'') SEPARATOR ''),1) as jmeno_z,
+            ( SELECT CONCAT(COUNT(*),';',
+                IFNULL(GROUP_CONCAT(ROUND(DATEDIFF(a.datum_od,narozeni)/365.2425) ORDER BY narozeni DESC),''))
+              FROM tvori JOIN osoba USING (id_osoba)
+              WHERE id_rodina=i0_rodina AND role='d'
+            ) AS _deti,id_pobyt
+          FROM pobyt AS p
+          JOIN akce  AS a ON a.id_duakce=p.id_akce
+          JOIN spolu AS s USING (id_pobyt)
+          JOIN osoba AS o ON s.id_osoba=o.id_osoba
+          JOIN tvori AS t ON t.id_osoba=o.id_osoba AND t.id_rodina=p.i0_rodina
+          JOIN rodina AS r ON r.id_rodina=p.i0_rodina
+          WHERE id_akce=$akce AND p.funkce IN (0,1,2,5) $jen_hnizdo
+          GROUP BY id_pobyt
+          ORDER BY funkce,r.nazev ";
+  $res= pdo_qry($qry);
+  while ( $res && ($u= pdo_fetch_object($res)) ) {
+    $u->nazev= str_replace(' ','-',$u->nazev);
+    $muz= $u->id_osoba_m;
+    $letos[$muz]= $u;
+    $letos[$muz]->_nazev= $u->nazev;
+    if ($u->funkce==1) {
+      $letos[$muz]->vps= 'VPS';
+      if ($u->skupina)
+        $skup_vps[$u->skupina]= $muz;
+    }
+    $letos[$muz]->skup= $u->skupina;
+    // rozbor dětí
+    $deti= '-';
+    $d_nr= explode(';',$u->_deti);
+    if ($d_nr[0]) {
+      $d_r= explode(',',$d_nr[1]);
+      if ($d_r[0]<=9) {
+        $deti= 'děti';
+      }
+    }
+    $letos[$muz]->deti= $deti;
+    $rok= $u->rok;
+  }
+//                                                         debug($letos);
+  $letosni= implode(',',array_keys($letos));
+  // doplnění nejednoznačných příjmení o iniciály křestních jmen
+  $old= 0; $old_nazev= '';
+  foreach ($letos as $muz=>$info) {
+    if ( $old_nazev==$info->_nazev ) {
+      $inic_old= $letos[$old]->jmeno_m.'+'.$letos[$old]->jmeno_z;
+      $inic_muz= $letos[$muz]->jmeno_m.'+'.$letos[$muz]->jmeno_z;
+      $letos[$old]->_nazev= $letos[$old]->nazev.'&nbsp;'.$inic_old;
+      $letos[$muz]->_nazev= $letos[$muz]->nazev.'&nbsp;'.$inic_muz;
+    }
+    $old= $muz;
+    $old_nazev= $info->_nazev;
+  }}
+  // tisk
+  $td= "td style='border-top:1px dotted grey'";
+  $th= "th style='border-top:1px dotted grey;text-align:right'";
+  $tl= "th style='border-top:1px dotted grey;text-align:left'";
+  $html= "<table>";
+  foreach ($letos as $muz=>$info) {
+    // minulé účasti na LK
+    $n= 0;
+    $qry= " SELECT p.id_akce,skupina,year(datum_od) as rok
+            FROM akce AS a
+            JOIN pobyt AS p ON a.id_duakce=p.id_akce
+            JOIN spolu AS s USING(id_pobyt)
+            WHERE a.druh=1 AND s.id_osoba='$muz' AND p.id_akce!=$akce AND skupina!=0
+            ORDER BY datum_od DESC ";
+    $res= pdo_qry($qry);
+    $ucasti= '';
+    while ( $res && ($r= pdo_fetch_object($res)) ) {
+      $n++;
+//      // minulé skupinky
+//      $qry_s= "
+//            SELECT GROUP_CONCAT(DISTINCT IF(t.role='a',o.id_osoba,'') SEPARATOR '') as id_osoba_m
+//            FROM akce AS a
+//            JOIN pobyt AS p ON a.id_duakce=p.id_akce
+//            JOIN spolu AS s USING(id_pobyt)
+//            JOIN osoba AS o ON s.id_osoba=o.id_osoba
+//            LEFT JOIN tvori AS t ON t.id_osoba=o.id_osoba
+//            WHERE p.id_akce={$r->id_akce} AND skupina={$r->skupina}
+//            GROUP BY id_pobyt HAVING FIND_IN_SET(id_osoba_m,'$letosni')
+//            ORDER BY datum_od DESC ";
+//      $res_s= pdo_qry($qry_s);
+//      $spolu= ''; $del= '';
+//      while ( $res_s && ($s= pdo_fetch_object($res_s)) ) if ( $s->id_osoba_m!=$muz ) {
+//        $spolu.= "$del{$letos[$s->id_osoba_m]->_nazev}";
+//        $del= ',&nbsp;';
+//      }
+//      if ( $spolu ) {
+//        $ucasti.= " <u>{$r->rok}</u>:&nbsp;$spolu";
+//      }
+    }
+//    if ( $ucasti )
+//      $html.= "<tr><$th>{$info->_nazev}</th><$th>$n&times;LK</th><$tl>$info->deti</th><$td>$ucasti</td></tr>";
+////    elseif ( $n )
+//    else
+    
+    if ($info->skup && !$info->vps) {
+      $vps= isset($skup_vps[$info->skup]) ? $skup_vps[$info->skup] : '';
+      if ($vps) {
+        $letos[$vps]->lidi.= " + {$info->_nazev} ";
+      }
+    }
+    else {
+      $html.= "<tr><th>$info->vps</th><$th>{$info->_nazev}</th><$th>$n&times;LK</th>
+                   <$tl>$info->deti</th><$td></td><td>{$info->lidi}</td></tr>" ;
+    }
   }
   $html.= "</table>";
   $note= "Abecední seznam účastníků letního kurzu roku $rok doplněný seznamem členů jeho starších
