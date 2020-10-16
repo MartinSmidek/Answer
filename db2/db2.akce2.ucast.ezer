@@ -1077,13 +1077,13 @@ form _pobyt [,,360,62] {
   label [5,20,1,15] { tag:'d' } // oprava
 
   // ubytování
-  field pokoj     [7,0,81,20] {tag:'a', data:p.pokoj, title:'^pokoj(e)', format:'n'}
-  field budova    [95,0,56,20] {tag:'a', data:p.budova, title:'^budova', format:'n'}
+  field pokoj     [7,0,81,20] {tag:'a', data:p.pokoj, title:'^pokoj(e)', format:'nf'}
+  field budova    [95,0,56,20] {tag:'a', data:p.budova, title:'^budova', format:'nf'}
 //  label [5,15,1,20] { tag:'a' } // oprava
 
   // ==> ... skupinka
   label [5,-110,1,35] { tag:'s' } // výplň pro skupinky
-  field skupina [158,-81,37,20] { tag:'x', data:p.skupina, format:'r', title:'^skupinka'}
+  field skupina [158,-81,37,20] { tag:'x', data:p.skupina, format:'rf', title:'^skupinka'}
   browse skup [Lp+206,-100,,] { tag:'x', rows:4
     show id_pobyt //{data:pp.id_pobyt}
     show jmeno [,,120,] {title:'členové skupinky'}

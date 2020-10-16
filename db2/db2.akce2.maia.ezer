@@ -234,6 +234,10 @@ form _etext  {
   # příkazy 1
   label  [L+0,205,365,51] { css:'ae_parm' }
   label [L+8,232,184,] { title:"přegenerováním jsou také přepočteny všechny {proměnné}" }
+  button [L+168,234,,] { title:'[fa-question]' help:'zobrazí možné {proměnné}'
+    func onclick(){
+      alert(php.mail2_personify_help())
+  }}
   label [L+208,232,184,] { title:"doplněním jsou jen přidání noví adresáti, staré maily zůstávají" }
   button uloz [L+8,174,,] { tag:'u', type:'submit', title:'Uložit',
     help:'uložit opravené hodnoty', skill:'yam|yams;fam|fams;cam|cams'

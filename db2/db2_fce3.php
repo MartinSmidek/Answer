@@ -6718,7 +6718,6 @@ function akce2_skup_hist($akce,$par,$title,$vypis,$export) { trace();
 # přehled pro tvorbu virtuální obnovy
 function akce2_skup_popo($akce,$par,$title,$vypis,$export) { trace();
   global $tisk_hnizdo;
-  if ( 1) { // kvůli editaci
   $jen_hnizdo= $tisk_hnizdo ? " AND hnizdo=$tisk_hnizdo " : '';
   $result= (object)array();
   // letošní účastníci
@@ -6783,7 +6782,7 @@ function akce2_skup_popo($akce,$par,$title,$vypis,$export) { trace();
     }
     $old= $muz;
     $old_nazev= $info->_nazev;
-  }}
+  }
   foreach ($letos as $muz=>$info) {
     // minulé účasti na LK
     $n= 0;
@@ -6829,7 +6828,8 @@ function akce2_skup_popo($akce,$par,$title,$vypis,$export) { trace();
       }
     }
     // přidáme účasti na jiném kurzu
-    if ($info->ms) $n= "$n+{$info->ms}";
+//    if ($info->ms) $n= "$n+{$info->ms}";
+    $info->ms= $info->ms ? "$n+{$info->ms}" : $n;
     // redakce výpisu
     if ($info->skup && $info->vps!='VPS') {
       $vps= isset($skup_vps[$info->skup]) ? $skup_vps[$info->skup] : '';
@@ -6858,13 +6858,13 @@ function akce2_skup_popo($akce,$par,$title,$vypis,$export) { trace();
   $html= "<table>";
   foreach ($letos as $muz=>$info) {
     if ($info->vps!='VPS') {
-      $html.= "<tr><td>$info->vps</td><td>{$info->_nazev}</td><$th>$n&times;LK</th>
+      $html.= "<tr><td>$info->vps</td><td>{$info->_nazev}</td><$th>{$info->ms}&times;LK</th>
                    <$tl>$info->deti</th><$td>{$info->ucasti}</td></tr>" ;
     }
     else { // VPS
       $tips= isset($tip_deti[$muz]) ? implode(' ',$tip_deti[$muz]) : '';
       $tips= $tips ? " ... ( $tips )" : '';
-      $html.= "<tr><th>$info->vps</th><$tl>{$info->_nazev}</th><$th>$n&times;LK</th>
+      $html.= "<tr><th>$info->vps</th><$tl>{$info->_nazev}</th><$th>{$info->ms}&times;LK</th>
                    <$tl>$info->deti</th><$td>{$info->lidi} $tips</td></tr>" ;
     }
   }
@@ -12467,7 +12467,7 @@ function mail2_mai_doplnit($id_dopis,$id_akce,$doplnit) {  trace();
 #   'G' - rozeslat podle mailistu - varianta osoba/rodina
 # pokud _cis.data=9999 jde o speciální seznam definovaný funkcí mail2_mai_skupina - ZRUŠENO
 # $cond = dodatečná podmínka POUZE pro volání z mail2_mai_stav
-function mail2_mai_pocet($id_dopis,$dopis_var,$cond='',$recall=false) {  
+function mail2_mai_pocet($id_dopis,$dopis_var,$cond='',$recall=false) {  trace();
   $result= (object)array('_error'=>0, '_count'=> 0, '_cond'=>false);
   $result->_html= 'Rozesílání mailu nemá určené adresáty, stiskni NE';
   $html= '';
@@ -12709,7 +12709,7 @@ function mail2_mai_pocet($id_dopis,$dopis_var,$cond='',$recall=false) {
 function mail2_mai_posli($id_dopis,$info) {  trace();
   $num= 0;
   $err= '';
-//                                                         debug($info);
+                                                         debug($info);
   // smaž starý seznam
   $qry= "DELETE FROM mail WHERE id_dopis=$id_dopis ";
 //                                                         fce_log("mail2_mai_posli: $qry");
@@ -12768,12 +12768,12 @@ function mail2_mai_posli($id_dopis,$info) {  trace();
 # ---------------------------------------------------------------------------------- mail2 personify
 # spočítá proměnné podle id_pobyt a dosadí do textu dopisu
 # vrátí celý text
-function mail2_personify($obsah,$vars,$id_pobyt,&$err) {
+function mail2_personify($obsah,$vars,$id_pobyt,&$err) { debug($vars,"mail2_personify(...,$vars,$id_pobyt,...) ");
   $text= $obsah;
   list($duvod_typ,$duvod_text,$id_hlavni,$id_soubezna,
-       $platba1,$platba2,$platba3,$platba4,$poplatek_d)=
+       $platba1,$platba2,$platba3,$platba4,$poplatek_d,$skupina)=
     select('duvod_typ,duvod_text,IFNULL(id_hlavni,0),id_duakce,
-      platba1,platba2,platba3,platba4,poplatek_d',
+      platba1,platba2,platba3,platba4,poplatek_d,skupina',
     "pobyt LEFT JOIN akce ON id_hlavni=pobyt.id_akce",
     "id_pobyt=$id_pobyt");
   foreach($vars as $var) {
@@ -12798,11 +12798,47 @@ function mail2_personify($obsah,$vars,$id_pobyt,&$err) {
         $val= $ret->mail;
       }
       break;
+    case 'skupinka_popo':
+      $ida= select('id_akce','pobyt',"id_pobyt=$id_pobyt");
+      $tab= "<table>";
+      $s= pdo_qry("
+          SELECT 
+            CONCAT(nazev,' ',GROUP_CONCAT(o.jmeno ORDER BY t.role SEPARATOR ' a ')) AS _nazev,
+            GROUP_CONCAT(IF(kontakt,IF(o.telefon!='',o.telefon,'?'),r.telefony) 
+              ORDER BY t.role SEPARATOR ' a ') AS telefon, 
+            GROUP_CONCAT(IF(kontakt,IF(o.email!='',o.email,'?'),r.emaily) 
+              ORDER BY t.role SEPARATOR ' a ') AS email
+          FROM pobyt AS p
+          JOIN spolu AS s USING(id_pobyt)
+          JOIN osoba AS o ON s.id_osoba=o.id_osoba
+          LEFT JOIN tvori AS t ON t.id_osoba=o.id_osoba AND id_rodina=i0_rodina
+          LEFT JOIN rodina AS r USING(id_rodina)
+          WHERE p.id_akce=$ida AND skupina=$skupina AND t.role IN ('a','b') 
+          GROUP BY id_pobyt
+          ORDER BY IF(funkce IN (1,2),1,2), _nazev        
+        ");
+      while ($s && (list($par,$tel,$mail)= pdo_fetch_row($s))) {
+        $tab.= "<tr><th>$par</th><td>$tel</td><td>$mail</td></tr>";
+      }
+      $tab.= "</table>";
+      $val= "SKUPINKA $skupina $tab";
+      $val= "<div style='background-color:#eeeeee;margin-left:15px'>$val</div>";
+      break;
     }
     $text= str_replace('{'.$var.'}',$val,$text);
   }
   $text= pdo_real_escape_string($text);
   return $text;
+}
+# ----------------------------------------------------------------------------- mail2 personify_help
+# vrátí popis možných personifikací
+function mail2_personify_help() {
+  $html= "
+    <b>{akce_cena}</b> pokud má akce definovaný ceník, vloží rozpis platby účastníka<br><br>
+    <b>{skupinka_popo}</b> pro VPS vloží seznam členů skupiny s maily 
+      a návrh propojení do video skupinky
+    ";
+  return $html;
 }
 # ----------------------------------------------------------------------------------- mail2 mai_info
 # informace o členovi
@@ -15176,4 +15212,4 @@ function grp_read($par) {  trace(); //debug($par);
 end:
   return $msg ? "ERROR: $msg<hr>$html" : $html;
 }
-?>
+
