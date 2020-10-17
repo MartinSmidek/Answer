@@ -6719,6 +6719,7 @@ function akce2_skup_hist($akce,$par,$title,$vypis,$export) { trace();
 function akce2_skup_popo($akce,$par,$title,$vypis,$export) { trace();
   global $tisk_hnizdo;
   $jen_hnizdo= $tisk_hnizdo ? " AND hnizdo=$tisk_hnizdo " : '';
+  $male_dite= 9; // hranice pro upozornění na malé dítě v rodine
   $result= (object)array();
   // letošní účastníci
   $letos= $skup_vps= $tip_deti= array();
@@ -6759,7 +6760,7 @@ function akce2_skup_popo($akce,$par,$title,$vypis,$export) { trace();
     $d_nr= explode(';',$u->_deti);
     if ($d_nr[0]) {
       $d_r= explode(',',$d_nr[1]);
-      if ($d_r[0]<=9) {
+      if ($d_r[0]<=$male_dite) {
         $deti= 'děti';
       }
     }
@@ -6838,44 +6839,45 @@ function akce2_skup_popo($akce,$par,$title,$vypis,$export) { trace();
       }
     }
     $info->ucasti= $ucasti;
-//    elseif ($info->vps!='VPS') {
-//      $html.= "<tr><th>$info->vps</th><td>{$info->_nazev}</td><$th>$n&times;LK</th>
-//                   <$tl>$info->deti</th><$td>$ucasti</td></tr>" ;
-//    }
-//    else { // VPS
-//                                                        debug($tip_deti);
-//      $tips= isset($tip_deti[$muz]) ? implode(' ',$tip_deti[$muz]) : '';
-//      $tips= $tips ? " ... ( $tips )" : '';
-//      $html.= "<tr><th>$info->vps</th><$tl>{$info->_nazev}</th><$th>$n&times;LK</th>
-//                   <$tl>$info->deti</th><$td>{$info->lidi} $tips</td></tr>" ;
-//    }
   }
                                                         debug($tip_deti);
   // tisk
   $td= "td style='border-top:1px dotted grey'";
   $th= "th style='border-top:1px dotted grey;text-align:right'";
   $tl= "th style='border-top:1px dotted grey;text-align:left'";
-  $html= "<table>";
+  $cast= 'ucastnici';
+  $html= "<h3>Účastníci</h3><table>";
   foreach ($letos as $muz=>$info) {
+    $skup= $info->skupina ? "{$info->skupina}. skup. " : '';
+    if ($cast=='ucastnici' && $info->vps=='(vps)') {
+      $cast= '(vps)';
+      $html.= "</table><h3>Odpočívající VPS</h3><table>";
+    }
+    if (($cast=='(ucastnici'||$cast=='(vps)') && $info->vps=='VPS') {
+      $cast= 'VPS';
+      $html.= "</table><h3>VPS ve službě</h3><table>";
+    }
     if ($info->vps!='VPS') {
-      $html.= "<tr><td>$info->vps</td><td>{$info->_nazev}</td><$th>{$info->ms}&times;LK</th>
+      $html.= "<tr><td>$skup $info->vps</td><td>{$info->_nazev}</td><$th>{$info->ms}&times;LK</th>
                    <$tl>$info->deti</th><$td>{$info->ucasti}</td></tr>" ;
     }
     else { // VPS
       $tips= isset($tip_deti[$muz]) ? implode(' ',$tip_deti[$muz]) : '';
       $tips= $tips ? " ... ( $tips )" : '';
-      $html.= "<tr><th>$info->vps</th><$tl>{$info->_nazev}</th><$th>{$info->ms}&times;LK</th>
+      $html.= "<tr><th>$skup VPS</th><$tl>{$info->_nazev}</th><$th>{$info->ms}&times;LK</th>
                    <$tl>$info->deti</th><$td>{$info->lidi} $tips</td></tr>" ;
     }
   }
   $html.= "</table>";
   $note= "<h3>Pomůcka pro vytvoření virtuální obnovy</h3>
-    V první části jsou účastníci s údaji <ul>
-    <li> počtu účastí na LK, 
-    <li>s poznámkou <b>děti</b> pokud mají malé děti (do 8 let) 
-    <li>a se seznamem lidí, se kterými již v minulosti byli ve skupince (aktuální VPS jsou tučně)
+    Zobrazují se údaje <ul>
+    <li> skupinka a funkce
+    <li> počet účastí na LK 
+    <li> poznámka <b>děti</b> pokud mají malé děti (do $male_dite let) 
+    <li> seznam lidí, se kterými již v minulosti byli ve skupince (aktuální VPS jsou tučně)
+    <li> ve spodní části s VPS jsou zapsány členi skupinky (mají před jménem +) a tipy na ně v závorce
     </ul>
-    V druhé části jsou VPS s již jasnými skupinkami (značka +) a s tipy v závorce, zohledňující malé děti<br>";
+    ";
   $html= "<i>$note</i><br>$html";
   //$result->html= nl2br(htmlentities($html));
   $result->html= $html;
