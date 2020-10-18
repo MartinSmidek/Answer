@@ -6783,7 +6783,7 @@ function akce2_skup_popo($akce,$par,$title,$vypis,$export) { trace();
       $letos[$muz]->_nazev= $letos[$muz]->nazev.'&nbsp;'.$inic;
     }
   }
-//                                                         debug($letos);
+                                                         debug($letos);
   foreach ($letos as $muz=>$info) {
     // minulé účasti na LK
     $n= 0;
@@ -6816,7 +6816,6 @@ function akce2_skup_popo($akce,$par,$title,$vypis,$export) { trace();
           // vytvoření tipů - vynecháme VPS a ty, co už mají skupinku
           if (!$letos[$s->_muz]->vps && !$letos[$s->_muz]->skup) {
             $s_nazev= $letos[$s->_muz]->_nazev;
-            $spolu.= "$del<b>$nazev</b>";
             if (isset($znami[$muz])) {
               if (!in_array($s_nazev,$znami[$muz])) {
                 $znami[$muz][]= $s_nazev;
@@ -6829,8 +6828,13 @@ function akce2_skup_popo($akce,$par,$title,$vypis,$export) { trace();
 //              $tip_deti[$s->_muz][]= " ?{$info->_nazev}";
 //            }
           }
-          else
+
+          if ($letos[$s->_muz]->vps=='VPS') {
+            $spolu.= "$del<b>{$letos[$s->_muz]->_nazev}</b>";
+          }
+          else {
             $spolu.= "$del{$letos[$s->_muz]->_nazev}";
+          }
           $del= ',&nbsp;';
         }
       }
@@ -6857,16 +6861,16 @@ function akce2_skup_popo($akce,$par,$title,$vypis,$export) { trace();
   $th= "th style='border-top:1px dotted grey;text-align:right'";
   $tl= "th style='border-top:1px dotted grey;text-align:left'";
   $cast= 'ucastnici';
-  $html= "<h3>Účastníci a s kým byli ve skupince</h3><table>";
+  $html= "<h3>Účastníci a s kým a kdy byli ve skupince</h3><table>";
   foreach ($letos as $muz=>$info) {
     $skup= $info->skupina ? "{$info->skupina}. skup. " : '';
     if ($cast=='ucastnici' && $info->vps=='(vps)') {
       $cast= '(vps)';
-      $html.= "</table><h3>Odpočívající VPS a s kým byli ve skupince</h3><table>";
+      $html.= "</table><h3>Odpočívající VPS ... s kým a kdy byli ve skupince</h3><table>";
     }
     if (($cast=='(ucastnici'||$cast=='(vps)') && $info->vps=='VPS') {
       $cast= 'VPS';
-      $html.= "</table><h3>VPS ve službě - složení skupinky s '+'  - návrhy účastníků '?' (bez VPS)</h3><table>";
+      $html.= "</table><h3>VPS ve službě ... '+' označuje složení skupinky ... '?' s kým se znají (bez VPS)</h3><table>";
     }
     if ($info->vps!='VPS') {
       $html.= "<tr><td>$skup </td><td>{$info->_nazev}</td><$th>{$info->ms}&times;LK</th>
