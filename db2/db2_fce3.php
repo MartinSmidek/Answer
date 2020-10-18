@@ -7176,6 +7176,8 @@ function tisk2_pdf_plachta0($report_json=0) {  trace();
 # ------------------------------------------------------------------------------------ akce2 plachta
 # podklad pro tvorbu skupinek
 function akce2_plachta($akce,$par,$title,$vypis,$export=0) { trace();
+  global $tisk_hnizdo;
+  $jen_hnizdo= $tisk_hnizdo ? " AND hnizdo=$tisk_hnizdo " : '';
   $result= (object)array();
   // číselníky
   $c_vzdelani= map_cis('ms_akce_vzdelani','zkratka');  $c_vzdelani[0]= '?';
@@ -7224,7 +7226,7 @@ function akce2_plachta($akce,$par,$title,$vypis,$export=0) { trace();
           LEFT JOIN tvori AS t ON t.id_osoba=o.id_osoba AND t.id_rodina=i0_rodina
           LEFT JOIN rodina AS r USING(id_rodina)
           JOIN akce AS a ON a.id_duakce=p.id_akce
-          WHERE id_akce=$akce AND p.funkce IN (0,1,2,5)  -- včetně hospodářů, bývají hosty skupinky
+          WHERE id_akce=$akce AND p.funkce IN (0,1,2,5) $jen_hnizdo -- včetně hospodářů, bývají hosty skupinky
   -- AND id_pobyt=53282
           GROUP BY id_pobyt
           ORDER BY IF(pouze=0,r.nazev,o.prijmeni) ";
