@@ -6722,7 +6722,7 @@ function akce2_skup_popo($akce,$par,$title,$vypis,$export) { trace();
   $male_dite= 9; // hranice pro upozornění na malé dítě v rodine
   $result= (object)array();
   // letošní účastníci
-  $letos= $skup_vps= $tip_deti= array();
+  $letos= $skup_vps= $tip_deti= $znami= $stejny_nazev= array();
   $qry=  "SELECT skupina,r.nazev,r.obec,year(datum_od) as rok,p.funkce as funkce,
             IF(FIND_IN_SET(1,r_umi),1,0) AS _vps,r_ms,
             GROUP_CONCAT(DISTINCT IF(t.role='a',o.id_osoba,'') SEPARATOR '') as id_osoba_m,
@@ -6745,6 +6745,10 @@ function akce2_skup_popo($akce,$par,$title,$vypis,$export) { trace();
   $res= pdo_qry($qry);
   while ( $res && ($u= pdo_fetch_object($res)) ) {
     $u->nazev= str_replace(' ','-',$u->nazev);
+    if (isset($stejny_nazev[$u->nazev]))
+      $stejny_nazev[$u->nazev]++;
+    else
+      $stejny_nazev[$u->nazev]= 1;
     $muz= $u->id_osoba_m;
     $letos[$muz]= $u;
     $letos[$muz]->_nazev= $u->nazev;
@@ -6773,17 +6777,13 @@ function akce2_skup_popo($akce,$par,$title,$vypis,$export) { trace();
 //                                                         debug($letos);
   $letosni= implode(',',array_keys($letos));
   // doplnění nejednoznačných příjmení o iniciály křestních jmen
-  $old= 0; $old_nazev= '';
   foreach ($letos as $muz=>$info) {
-    if ( $old_nazev==$info->_nazev ) {
-      $inic_old= $letos[$old]->jmeno_m.'+'.$letos[$old]->jmeno_z;
-      $inic_muz= $letos[$muz]->jmeno_m.'+'.$letos[$muz]->jmeno_z;
-      $letos[$old]->_nazev= $letos[$old]->nazev.'&nbsp;'.$inic_old;
-      $letos[$muz]->_nazev= $letos[$muz]->nazev.'&nbsp;'.$inic_muz;
+    if ( $stejny_nazev[$info->_nazev]>1 ) {
+      $inic= $letos[$muz]->jmeno_m.'+'.$letos[$muz]->jmeno_z;
+      $letos[$muz]->_nazev= $letos[$muz]->nazev.'&nbsp;'.$inic;
     }
-    $old= $muz;
-    $old_nazev= $info->_nazev;
   }
+//                                                         debug($letos);
   foreach ($letos as $muz=>$info) {
     // minulé účasti na LK
     $n= 0;
@@ -6813,11 +6813,21 @@ function akce2_skup_popo($akce,$par,$title,$vypis,$export) { trace();
       $spolu= ''; $del= '';
       while ( $res_s && ($s= pdo_fetch_object($res_s)) ) {
         if ( $s->_muz!=$muz ) {
-          if ( $letos[$s->_muz]->vps ) {
-            $spolu.= "$del<b>{$letos[$s->_muz]->_nazev}</b>";
-            if ($info->deti && $letos[$s->_muz]->deti) {
-              $tip_deti[$s->_muz][]= " ?{$info->_nazev}";
+          // vytvoření tipů - vynecháme VPS a ty, co už mají skupinku
+          if (!$letos[$s->_muz]->vps && !$letos[$s->_muz]->skup) {
+            $s_nazev= $letos[$s->_muz]->_nazev;
+            $spolu.= "$del<b>$nazev</b>";
+            if (isset($znami[$muz])) {
+              if (!in_array($s_nazev,$znami[$muz])) {
+                $znami[$muz][]= $s_nazev;
+              }
             }
+            else {
+              $znami[$muz]= array($s_nazev);
+            }
+//            if ($info->deti && $letos[$s->_muz]->deti) {
+//              $tip_deti[$s->_muz][]= " ?{$info->_nazev}";
+//            }
           }
           else
             $spolu.= "$del{$letos[$s->_muz]->_nazev}";
@@ -6840,31 +6850,33 @@ function akce2_skup_popo($akce,$par,$title,$vypis,$export) { trace();
     }
     $info->ucasti= $ucasti;
   }
-                                                        debug($tip_deti);
+//                                                        debug($tip_deti);
+                                                        debug($znami);
   // tisk
   $td= "td style='border-top:1px dotted grey'";
   $th= "th style='border-top:1px dotted grey;text-align:right'";
   $tl= "th style='border-top:1px dotted grey;text-align:left'";
   $cast= 'ucastnici';
-  $html= "<h3>Účastníci</h3><table>";
+  $html= "<h3>Účastníci a s kým byli ve skupince</h3><table>";
   foreach ($letos as $muz=>$info) {
     $skup= $info->skupina ? "{$info->skupina}. skup. " : '';
     if ($cast=='ucastnici' && $info->vps=='(vps)') {
       $cast= '(vps)';
-      $html.= "</table><h3>Odpočívající VPS</h3><table>";
+      $html.= "</table><h3>Odpočívající VPS a s kým byli ve skupince</h3><table>";
     }
     if (($cast=='(ucastnici'||$cast=='(vps)') && $info->vps=='VPS') {
       $cast= 'VPS';
-      $html.= "</table><h3>VPS ve službě</h3><table>";
+      $html.= "</table><h3>VPS ve službě - složení skupinky s '+'  - návrhy účastníků '?' (bez VPS)</h3><table>";
     }
     if ($info->vps!='VPS') {
-      $html.= "<tr><td>$skup $info->vps</td><td>{$info->_nazev}</td><$th>{$info->ms}&times;LK</th>
+      $html.= "<tr><td>$skup </td><td>{$info->_nazev}</td><$th>{$info->ms}&times;LK</th>
                    <$tl>$info->deti</th><$td>{$info->ucasti}</td></tr>" ;
     }
     else { // VPS
-      $tips= isset($tip_deti[$muz]) ? implode(' ',$tip_deti[$muz]) : '';
-      $tips= $tips ? " ... ( $tips )" : '';
-      $html.= "<tr><th>$skup VPS</th><$tl>{$info->_nazev}</th><$th>{$info->ms}&times;LK</th>
+//      $tips= isset($tip_deti[$muz]) ? implode(' ',$tip_deti[$muz]) : '';
+      $tips= $znami[$muz] ? implode(' ?',$znami[$muz]) : '';
+      $tips= $tips ? " ... ( ?$tips )" : '';
+      $html.= "<tr><th>$skup</th><$tl>{$info->_nazev}</th><$th>{$info->ms}&times;LK</th>
                    <$tl>$info->deti</th><$td>{$info->lidi} $tips</td></tr>" ;
     }
   }
