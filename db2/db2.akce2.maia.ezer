@@ -64,6 +64,8 @@ menu m {type:'left',
   menu g {title:'Vytvoření mailu k akci', type:'group'
     item i {title:'všem účastníkům této akce', _sys:'akc'
       par:°{k:'et',uq:'U',on:'akce',off:'gen|skup'} }
+    item {title:'... účastníkům bez funkce'
+      par:°{k:'et',uq:'U1',on:'akce',off:'gen|skup'} }
     item {title:'... VPS,SVPS,hospodářům akce'
       par:°{k:'et',uq:'U2',on:'akce',off:'gen|skup'} }
     item {title:'... dlužníkům akce'
@@ -80,6 +82,8 @@ menu m {type:'left',
   menu {title:'Rozesílání mailů ', type:'group', _sys:'snd'
     item {title:'všem účastníkům této akce',
       par:°{k:'es',uq:'U',on:'akce',off:'gen|skup'} }
+    item {title:'... účastníkům bez funkce'
+      par:°{k:'es',uq:'U1',on:'akce',off:'gen|skup'} }
     item {title:'... VPS,SVPS,hospodářům akce'
       par:°{k:'es',uq:'U2',on:'akce',off:'gen|skup'} }
     item {title:'... dlužníkům akce'
@@ -277,6 +281,7 @@ form _etext  {
       id_duakce.set(dopis_akce.get); hnizdo.set(ii.hnizdo.key); 
       switch(dopis_var.get,
       'U', { komu.set(0); },
+      'U1',{ komu.set(4); },
       'U2',{ komu.set(1); },
       'U3',{ komu.set(2); },
       'U4',{ komu.set(3); }
@@ -300,7 +305,7 @@ form _etext  {
       var blokovano: number
       var pocet: number
       var err: text
-      eq(dopis_var.get,'U','U2','U3','U4');
+      eq(dopis_var.get,'U','U1','U2','U3','U4');
       # rozesílání podle nastavené akce
         prazdny; et_prazdy.get;
         E_info.set(ask('mail2_mai_pocet',dopis_id.get,dopis_var.get));
@@ -336,8 +341,10 @@ form _etext  {
     if ( dopis_hnizdo ) 
       prefix= `${prefix} etd.hnizdo=${dopis_hnizdo} AND `;
     switch (dopis_var) {
-    // účastníci akce  (dopis.komu=0)
+    // všichni účastníci akce  (dopis.komu=0)
     case 'U': texty.browse_load(`${prefix} etd.komu=0`); break;
+    // účastníci akce bez funkce (dopis.komu=4)
+    case 'U1': texty.browse_load(`${prefix} etd.komu=4`); break;
     // organizátoři akce (dopis.komu=1)
     case 'U2': texty.browse_load(`${prefix} etd.komu=1`); break;
     // dlužníci akce (dopis.komu=2)
@@ -546,8 +553,10 @@ form _esady  {
     if ( dopis_hnizdo ) 
       prefix= `${prefix} etd.hnizdo=${dopis_hnizdo} AND `;
     switch (dopis_var) {
-    // účastníci akce  (dopis.komu=0)
+    // všichni účastníci akce  (dopis.komu=0)
     case 'U': texty.browse_load(`${prefix} etd.komu=0`); break;
+    // účastníci akce bez funkce (dopis.komu=4)
+    case 'U1': texty.browse_load(`${prefix} etd.komu=4`); break;
     // organizátoři akce (dopis.komu=1)
     case 'U2': texty.browse_load(`${prefix} etd.komu=1`); break;
     // dlužníci akce (dopis.komu=2)

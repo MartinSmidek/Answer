@@ -12473,8 +12473,10 @@ function mail2_mai_doplnit($id_dopis,$id_akce,$doplnit) {  trace();
 # ---------------------------------------------------------------------------------- mail2 mai_pocet
 # zjistí počet adresátů pro rozesílání a sestaví dotaz pro confirm
 # $dopis_var určuje zdroj adres
-#   'U' - (komu=0) rozeslat účastníkům akce a hnízda dopis.id_duakce ukazující do akce
+#   'U' - (komu=0) rozeslat všem účastníkům akce a hnízda dopis.id_duakce ukazující do akce
 #         do seznamu se dostanou pouze účastnící s funkcí:0,1,2,6 (-,VPS,SVPS,hospodář)
+#   'U1'- (komu=4) rozeslat účastníkům akce a hnízda dopis.id_duakce ukazující do akce
+#         do seznamu se dostanou pouze organizující účastníci bez funkce
 #   'U2'- (komu=1) rozeslat účastníkům akce a hnízda dopis.id_duakce ukazující do akce
 #         do seznamu se dostanou pouze organizující účastnící s funkcí:1,2,6 (VPS,SVPS,hospodář)
 #   'U3'- (komu=2) rozeslat účastníkům akce a hnízda dopis.id_duakce ukazující do akce
@@ -12606,12 +12608,14 @@ function mail2_mai_pocet($id_dopis,$dopis_var,$cond='',$recall=false) {  trace()
   case 'U4':    // divný OP
   case 'U3':    // dlužníci
   case 'U2':    // sloužící
+  case 'U1':    // nesloužící
   case 'U':
     $html.= "Obeslaných účastníků ";
     // POZOR KOPIE KÓDU z mail2_mai_doplnit
     $AND= $cond ? "AND $cond" : '';
     $AND.= "AND (d.hnizdo=0 || d.hnizdo=p.hnizdo)";
     $AND.= $dopis_var=='U'  ? " AND p.funkce IN (0,1,2,5)" : (
+           $dopis_var=='U1' ? " AND p.funkce=0"   : (
            $dopis_var=='U2' ? " AND p.funkce IN (1,2,5)"   : (
            $dopis_var=='U3' ?
              " AND p.funkce IN (0,1,2,5) /*AND
@@ -12622,7 +12626,7 @@ function mail2_mai_pocet($id_dopis,$dopis_var,$cond='',$recall=false) {  trace()
                  p.platba1+p.platba2+p.platba3+p.platba4+p.poplatek_d>platba+platba_d)*/" : (
            $dopis_var=='U4' ?
              " AND IF(IFNULL(role,'a') IN ('a','b'),REPLACE(o.obcanka,' ','') NOT RLIKE '^[0-9]{9}$',0)"
-         : " --- chybné komu --- " )));
+         : " --- chybné komu --- " ))));
     $HAVING= $dopis_var=='U3' ? "HAVING
                IF(a.ma_cenu AND p.avizo=0,
                  IF(_platby>0,_platby,_na_akci*a.cena)>platba,
@@ -12862,7 +12866,7 @@ function mail2_personify_help() {
 # informace o členovi
 # $id - klíč osoby nebo chlapa
 # $zdroj určuje zdroj adres
-#   'U','U2','U3','U4' - rozeslat účastníkům akce dopis.id_duakce ukazující do akce
+#   'U','U1','U2','U3','U4' - rozeslat účastníkům akce dopis.id_duakce ukazující do akce
 #   'C' - rozeslat účastníkům akce dopis.id_duakce ukazující do ch_ucast
 #   'Q' - rozeslat na adresy vygenerované dopis.cis_skupina => hodnota
 #   'G' - maillist
@@ -12946,6 +12950,7 @@ function mail2_mai_info($id,$email,$id_dopis,$zdroj,$id_mail) {  //trace();
     }
     break;
   case 'U':                     // účastníci akce
+  case 'U1':                    // nesloužící účastníci akce
   case 'U2':                    // sloužící účastníci akce
   case 'U3':                    // dlužníci
   case 'U4':                    // divný OP
