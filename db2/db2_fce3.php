@@ -13296,7 +13296,7 @@ function mail2_mai_send($id_dopis,$kolik,$from,$fromname,$test='',$id_mail=0,$fo
       // zapiš výsledek do tabulky
       $stav= $ok ? 4 : 5;
       $msg= $ok ? '' : $mail->ErrorInfo;
-      if (preg_match("/Daily user sending quota exceeded/",$res->_error)) {
+      if (preg_match("/Daily user sending quota exceeded/",$msg)) {
         $result->_over_quota= 1;
       }
       else {
