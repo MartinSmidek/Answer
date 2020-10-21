@@ -28,6 +28,10 @@
   // nastav jako default PDO=2
   if ( !isset($_GET['pdo']))
     $_GET['pdo']= 2;
+  
+  // nastav &touch=0 pro Windows
+  if (strtoupper(substr(PHP_OS,0,3))==='WIN') 
+    $_GET['touch']= 0;
 
   // ochránění přímého přístupu do složek s .htaccess/RewriteCond "%{HTTP_COOKIE}" "!EZER"
   setcookie("EZER",$app,0,"/");
