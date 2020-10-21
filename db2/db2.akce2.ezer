@@ -676,6 +676,8 @@ panel Proces [0,0,300,50] { type:'popup' title:'průběh výpočtu'
         cconc(not(continue.get),' -- PŘERUŠENO!')));
     [ y.get('error'); Stop; problem.set(y.get('error')); 
       it.msg.set(conc('CHYBA: ',problem.get,' -- PŘERUŠENO!')) ];
+    [ y.get('max'); Stop; problem.set(y.get('max')); 
+      it.msg.set(conc('DOSAŽENO MAXIMA DNEŠNÍ dávky: ',problem.get,' -- PŘERUŠENO!')) ];
     [ y.get('last'); refresh.get; parent.get.call(refresh.get,y.get('last')) ];
     Show(y.get('done'),y.get('todo')); // posune termometr
     [ eq(y.get('done'),y.get('todo')); Stop ]; 

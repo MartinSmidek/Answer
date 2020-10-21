@@ -12751,8 +12751,8 @@ function mail2_mai_posli($id_dopis,$info) {  trace();
 //                                                                 debug($vars);
     // pokud jsou přímo známy adresy, pošli na ně
     $ids= array();
-    foreach($info->_ids as $i=>$id) $ids[$i]= $id;
-    if ( $info->_pobyty ) foreach($info->_pobyty as $i=>$pobyt) $pobyty[$i]= $pobyt;
+    foreach($info->_ids as $i=>$id) {$ids[$i]= $id;}
+    if ( $info->_pobyty ) foreach($info->_pobyty as $i=>$pobyt) {$pobyty[$i]= $pobyt;}
     foreach ($info->_adresy as $i=>$email) {
       $id= $ids[$i];
       // vlož do MAIL - pokud nezačíná *
@@ -12785,6 +12785,19 @@ function mail2_mai_posli($id_dopis,$info) {  trace();
   $qr= "UPDATE dopis SET pocet=$num WHERE id_dopis=$id_dopis";
 //                                                         fce_log("mail2_mai_posli: UPDATE");
   $rs= pdo_qry($qr);
+  // získání případného omezení použitého SMTP
+  global $ezer_root;
+  $idu= $_SESSION[$ezer_root]['user_id'];
+  $i_smtp= sys_user_get($idu,'opt','smtp');
+  $max_per_day= select1('ikona','_cis',"druh='smtp_srv' AND data=$i_smtp");
+  // případné upozornění na maximum
+  if ( $max_per_day && $info->_count>$max_per_day ) {
+    $err.= "<hr>Přes GMail lze denně lze posílat maximálně $max_per_day mailů - 
+        před dosažením maxima bude odesílání přerušeno (před reakcí GMailu). 
+        Pokračujte potom prosím v odesílání další den (nebo po určité době).
+        Informace od Google naleznete 
+        <a href='https://support.google.com/mail/answer/22839?hl=cs' target='hlp'>zde</a>.";
+  }
   return $err;
 }
 # ---------------------------------------------------------------------------------- mail2 personify
@@ -13093,6 +13106,10 @@ end:
 // y.error = text chyby, způsobí konec
 function mail2_mai_sending($y) { 
   global $ezer_root;
+  // získání případného omezení použitého SMTP
+  $idu= $_SESSION[$ezer_root]['user_id'];
+  $i_smtp= sys_user_get($idu,'opt','smtp');
+  $max_per_day= select1('ikona','_cis',"druh='smtp_srv' AND data=$i_smtp");
   // pokud je y.todo=0 provede se inicializace procesu podle y.par
   if ( $y->todo==0 ) {
     $_SESSION[$ezer_root]['mail_par']= $y->par;
@@ -13107,6 +13124,10 @@ function mail2_mai_sending($y) {
   if ( $y->error ) { goto end; }
   if ( $y->done >= $y->todo ) { $y->done= $y->todo; $y->msg= 'konec+'; goto end; }
   $par= (object)$_SESSION[$ezer_root]['mail_par'];
+  // pokud by odeslání překročilo omezení ukonči je
+   if ( $max_per_day && ($y->sent+$par->davka)>$max_per_day ) {
+     $res->max= $max_per_day;
+   } 
   // vlastní proces
   $res= mail2_mai_send($par->id_dopis,$par->davka,$par->from,$par->name,'',0,$par->foot);
   $y->done++;
@@ -13116,7 +13137,12 @@ function mail2_mai_sending($y) {
   // poslední mail pro refresh
   $y->last= $res->_last;
   if ( $res->_error ) {
-    $y->error= $res->_html;
+    if ($res->_over_quota) {
+      $y->error= "Byla překročena kvóta pro odesílání GMailů. Pokračujte zítra.";
+    }
+    else {
+      $y->error= $res->_html;
+    }
     goto end;
   }
   // před skončením počkej 1s aby šlo velikostí dávky řídit zátěž
@@ -13144,7 +13170,7 @@ function mail2_mai_send($id_dopis,$kolik,$from,$fromname,$test='',$id_mail=0,$fo
         $mail->AddAttachment($fpath);
   } } };
   //
-  $result= (object)array('_error'=>0,'_sent'=>0);
+  $result= (object)array('_error'=>0,'_sent'=>0,'_over_quota'=>0);
   $pro= '';
   // přečtení rozesílaného mailu
   $qry= "SELECT * FROM dopis WHERE id_dopis=$id_dopis ";
@@ -13270,8 +13296,13 @@ function mail2_mai_send($id_dopis,$kolik,$from,$fromname,$test='',$id_mail=0,$fo
       // zapiš výsledek do tabulky
       $stav= $ok ? 4 : 5;
       $msg= $ok ? '' : $mail->ErrorInfo;
-      $qry1= "UPDATE mail SET stav=$stav,msg=\"$msg\" WHERE id_mail={$z->id_mail}";
-      $res1= pdo_qry($qry1);
+      if (preg_match("/Daily user sending quota exceeded/",$res->_error)) {
+        $result->_over_quota= 1;
+      }
+      else {
+        $qry1= "UPDATE mail SET stav=$stav,msg=\"$msg\" WHERE id_mail={$z->id_mail}";
+        $res1= pdo_qry($qry1);
+      }
       // po chybě přeruš odesílání
       if ( !$ok ) break;
     }
