@@ -13138,7 +13138,8 @@ function mail2_mai_sending($y) {
   $y->last= $res->_last;
   if ( $res->_error ) {
     if ($res->_over_quota) {
-      $y->error= "Byla překročena kvóta pro odesílání GMailů. Pokračujte zítra.";
+      $y->error= "<b style='color:#700;background:#ff0'>Byla překročena kvóta pro odesílání GMailů. 
+        Pokračujte zítra.</b>";
     }
     else {
       $y->error= $res->_html;
