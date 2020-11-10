@@ -892,12 +892,14 @@ function akce2_hnizda_options($hnizda_seznam) {
 # funguje pro "nové tabulky google" - od dubna 2015
 function akce2_roku_update($rok) {  trace();
 //  global $json;
-  $key= "1RKnvU7EJG7YtBDjnSpQfwg3kjOCBEV_w8bMlJcdV8Nc";         // ciselnik_akci
+//  $key= "1RKnvU7EJG7YtBDjnSpQfwg3kjOCBEV_w8bMlJcdV8Nc";         // neplatné  
+  $key=   "16nu8StIpIPD9uY-cskQOAXCnVY6hL9OTaTBdpPoUrnA";         // ciselnik_akci
   $prefix= "google.visualization.Query.setResponse(";           // přefix json objektu
   $sheet= $rok>2010 ? $rok-1997 : ($rok==2010 ? 10 : -1);
   // https://docs.google.com/spreadsheets/d/1RKnvU7EJG7YtBDjnSpQfwg3kjOCBEV_w8bMlJcdV8Nc/gviz/tq?tqx=out:json&sheet=
-  $x= file_get_contents("https://docs.google.com/spreadsheets/d/$key/gviz/tq?tqx=out:json&sheet=$sheet");
-                                        display($x);
+  $ciselnik= "https://docs.google.com/spreadsheets/d/$key/gviz/tq?tqx=out:json&sheet=$sheet";
+  $x= file_get_contents($ciselnik);
+                                        display("$ciselnik=$x");
   $xi= strpos($x,$prefix);
   $xl= strlen($prefix);
 //                                         display("xi=$xi,$xl");

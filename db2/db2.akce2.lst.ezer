@@ -161,23 +161,39 @@ menu m {type:'left', format:'f+'
   }
 }
 #==> . akce definovaného roku
-proc akce_roku(rok) {
-  page.init_page;
-  [ eq(the_source.get,'google');
-    { gt(rok,2009);  // intranet YS obsahuje akce od roku 2010 včetně
-      info.google.browse_load(conc("g_kat='a' AND g_rok=",rok),
-      '','','','','',
-      conc('SET @curr:=',the_duakce.get));
-    | alert("V intranetu jsou v přesném formátu popsány jen akce od roku 2010") }
-  | info.google.browse_init];
-  [ eq(the_source.get,'sey');
-    info.sey.browse_load(conc("YEAR(da2.datum_od)='",rok,"' AND da2.spec=0 AND ",the_omezeni.get),
-      '','','','','',
-      conc('SET @curr:=',the_duakce.get));
-    info.sey.raise('onrowclick',info.sey.browse_seek(conc("da2.id_duakce=",the_duakce.get)));
-//    [ has_skill('yas'); page.DocBrowse ]
-  ]
+func akce_roku(rok) {
+  page.init_page();
+  if (the_source=='google') {
+    info.google.browse_init();
+    if (rok>2009)  // intranet YS obsahuje akce od roku 2010 včetně
+      info.google.browse_load(`g_kat='a' AND g_rok=${rok}`,
+          '','','','','',`SET @curr:=${the_duakce}`);
+    else
+      alert("V intranetu jsou v přesném formátu popsány jen akce od roku 2010")
+  }
+  elseif (the_source=='sey') {
+    info.sey.browse_load(`YEAR(da2.datum_od)='${rok}' AND da2.spec=0 AND ${the_omezeni}`,
+        '','','','','',`SET @curr:=${the_duakce}`);
+    info.sey.raise('onrowclick',info.sey.browse_seek(`da2.id_duakce=${the_duakce}`));
+  }
 }
+//proc akce_roku(rok) {
+//  page.init_page;
+//  [ eq(the_source.get,'google');
+//    { gt(rok,2009);  // intranet YS obsahuje akce od roku 2010 včetně
+//      info.google.browse_load(conc("g_kat='a' AND g_rok=",rok),
+//      '','','','','',
+//      conc('SET @curr:=',the_duakce.get));
+//    | alert("V intranetu jsou v přesném formátu popsány jen akce od roku 2010") }
+//  | info.google.browse_init];
+//  [ eq(the_source.get,'sey');
+//    info.sey.browse_load(conc("YEAR(da2.datum_od)='",rok,"' AND da2.spec=0 AND ",the_omezeni.get),
+//      '','','','','',
+//      conc('SET @curr:=',the_duakce.get));
+//    info.sey.raise('onrowclick',info.sey.browse_seek(conc("da2.id_duakce=",the_duakce.get)));
+////    [ has_skill('yas'); page.DocBrowse ]
+//  ]
+//}
 proc akce_vsechny(cond) {
   the_source.set('sey');
   [ info.sey.browse_load(cond) ];
@@ -185,6 +201,19 @@ proc akce_vsechny(cond) {
 # ------------------------------------------------------------------------------------------==> AKCE
 form _page [,,275,360] {
   var a_akce: number, zmena_web:number
+  # ---------------------------==> . ochrana editace více uživateli
+  func onchanged() { akce_lock('on') }
+  func akce_lock(on) { var lock:object 
+    lock= php.table_lock(on,'akce',key_akce); 
+    if ((on=='on') && (!lock.ok)) {
+      alert(lock.info);
+      akce_zpet();
+    }
+  }
+  func akce_zpet() { 
+    akce_lock('off'); 
+    form.load(page.a_akce); zmena_web= 0; 
+  }
   # ---------------------------==> . záložky
   proc tags(a,on,off) {
     form.set_css('ae_butt_off','ae_butt_on','p');
@@ -212,34 +241,6 @@ form _page [,,275,360] {
     | eq(the_source.get,'google'); [ id_akce; show_page(id_akce) | init_page ]
     ];
   }
-//  func show_page(id_akce) {
-//    cen_copy.enable(0); cen_copy.key(0); key_akce.set(id_akce); 
-//    form.load(id_akce); zmena_web.set(0); 
-//    if ( has_skill('y') ) { ds_order= php.ds_objednavka(id_akce) };
-//    switch (zalozka) {
-//    case 'inf': note= php.akce2_info(id_akce); break;
-//    case 'cor': 
-//      if ( hnizda ) {
-//        is_hnizda= 1; hnizda.display(1);
-//      }
-//      else {
-//        is_hnizda= 0; hnizda.display(0)
-//      };
-//      if ( has_skill('faan') ) {
-//        form.display(0,'corm|corf'); 
-//        if ( mrop ) form.display(1,'corm'); 
-//        if ( firm ) form.display(1,'corf'); 
-//      };
-//      if ( has_skill('f') ) soubezna= id_hlavni ? 1 : 0;
-//      cen_ma.onchange();
-//      info.sey.browse_focus();
-//      break;
-//    case 'cen': c.browse_load(`id_akce=${id_akce}`); break;
-//    case 'doc': archiv.ukaz(akce_get('archiv')); break;
-//    case 'syn': if ( has_skill('yas') ) DocShow(akce_get('rok'),akce_get('kod')); break
-//    };
-//    c_show();
-//  }
   proc show_page(id_akce) {
     cen_copy.enable(0); cen_copy.key(0); key_akce.set(id_akce); //fil.display(0);
     form.load(id_akce); zmena_web.set(0); 
@@ -380,11 +381,12 @@ form _page [,,275,360] {
   label  [193,417,98,30] { tag:'cor', css:'ae_parm', style:'z-index:1', skill:'yaa+;faa+;caa+' }
   button [199,423,,] { tag:'cor', title:'Zpět', skill:'yaa+|yaa+;faa+|faa+;caa+|caa+'
     help:'Neměnit změněná data'
-    proc onclick() { form.load(page.a_akce.get); zmena_web.set(0);
-  }}
+    func onclick() { akce_zpet() }
+  }
   button [245,423,,] { tag:'cor', title:'Uložit', skill:'yaa+|yaan;faa+|faan;caa+|caan'
     help:'Uložit změněná data',
     proc onclick() {
+      akce_lock('off'); 
       not(hnizda_ok.get); warning("oprav hnízda")
     | form.same
     | // oprava
@@ -1005,7 +1007,7 @@ form _info [,,*,50] {
     proc onclick() {
       lt(rok.get,2010); alert("Z intranetu lze obnovovat jen akce roku 2010 a starší");
     | confirm("Mám pro rok ",rok.get," obnovit seznam akcí (musí mít značku 'a')?",
-            "<hr>POZOR: v souboru ciselnik_akci musí být obnovovaný rok zcela vlevo");
+            "<hr>POZOR: v souboru <a target='cis' href='https://docs.google.com/spreadsheets/d/16nu8StIpIPD9uY-cskQOAXCnVY6hL9OTaTBdpPoUrnA/edit#gid=275004412'>ciselnik_akci</a> musí být obnovovaný rok zcela vlevo");
       alert('bylo obnoveno ',ask('akce2_roku_update',rok.get),' záznamů o akcích');
       google.browse_seek;
     }
