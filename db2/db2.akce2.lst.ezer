@@ -129,7 +129,7 @@ menu m {type:'left', format:'f+'
   # o:  omezeni  org|access
   # a:  rok=akce_roku | akce_vsechny
   # cond
-  menu c {title:'Výběr akce',type:'group',                                                 skill:'c#crz'
+  menu c {title:'Výběr akce',type:'group',                                                 skill:'c#crz;s'
     // jen pro CR
     item m {title:'[MS] program Manželská setkání', skill:'caam', par:°{omez:'da2.druh IN (1,2,3,4)'} }
     item r {title:'[R] programy Rodina mimo MS',    skill:'caar', par:°{omez:'da2.druh NOT IN (1,2,3,4)'} }

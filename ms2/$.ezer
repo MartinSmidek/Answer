@@ -1,4 +1,4 @@
-# Systém Ans(w)er pro CPR Ostrava
+# Systém Ans(w)er pro MS severní Čechy
 # (c) 2008-2020 Martin Šmídek <martin@smidek.eu>
 
 menu cr2 { type:'main', title:'cr2', active:*, _sys:'*'
@@ -15,30 +15,46 @@ menu cr2 { type:'main', title:'cr2', active:*, _sys:'*'
     panel nas {type:'right', title:'Data', _sys:'nas', skill:'a'
       menu {type:'left', active:*
         menu {title:'Přehled',type:'group', _sys:'*'
-          item {title:'Záznamy', par:°{db:'cr2'}
+          item {title:'Záznamy', par:°{db:'ms2',org:'8'}
             proc onclick (i) {
               clear;
               info.fill(conc(i.owner.title,' - ',i.title),'... probíhá výpočet ...');
-              info.fill('',ask('db2_info',i.par.db)) }}
+              info.fill('',ask('db2_info',i.par)) }}
         }
-//        menu {title:'Hromadné opravy dat',type:'group', _sys:'*'
-//          item {title:'rodinné pobyty (i0_rodina)'      ,par:°{opravit:0,cmd:'i0_rodina'}, skill:'m'}
-//          item {title:'... provést UPDATE'              ,par:°{opravit:1,cmd:'i0_rodina'}, skill:'m'}
-//          item {title:'definice UMI podle FUNKCE'       ,par:°{opravit:0,cmd:'umi'},       skill:'m'}
-//          item {title:'... provést UPDATE'              ,par:°{opravit:1,cmd:'umi'},       skill:'m'}
-//          item {title:'schema 2014 - osobni kontakty'   ,par:°{opravit:0,cmd:'kontakty'},  skill:'m'}
-//          item {title:'... provést UPDATE'              ,par:°{opravit:1,cmd:'kontakty+'}, skill:'m'}
-//          item {title:'schema 2014 - osobni adresy'     ,par:°{opravit:0,cmd:'adresy'},    skill:'m'}
-//          item {title:'... provést UPDATE'              ,par:°{opravit:1,cmd:'adresy+'},   skill:'m'}
-//          proc onclick (i) {
-//            clear;
-//            info.fill(conc(i.owner.title,' - ',i.title),' ... probíhá oprava dat ...');
-//            info.fill('',ask('db2_oprava_dat',i.par));
-//          }
-//        }
+        menu s  {title:'Struktura dat', type:'group', skill:'yamg;famg;camg;aa;a'
+          item {title:'[fa-object-group] Přehled struktury dat'   par:°{img:'2015'} }
+          item {title:'[fa-database] tabulka AKCE',               par:°{tab:'akce'} }
+          item {title:'[fa-database] tabulka POBYT',              par:°{tab:'pobyt'} }
+          item {title:'[fa-database] tabulka SPOLU',              par:°{tab:'spolu'} }
+          item {title:'[fa-database] tabulka OSOBA',              par:°{tab:'osoba'} }
+          item {title:'[fa-database] tabulka TVORI',              par:°{tab:'tvori'} }
+          item {title:'[fa-database] tabulka RODINA',             par:°{tab:'rodina'} }
+          item {title:'[fa-database] tabulka MAILIST',            par:°{tab:'mailist'} }
+          item {title:'[fa-database] tabulka DOPIS',              par:°{tab:'dopis'} }
+          item {title:'[fa-database] tabulka MAIL',               par:°{tab:'mail'}  }
+          item {title:'[fa-database] tabulka CENIK',              par:°{tab:'cenik'} }
+          item {title:'[fa-database] tabulka DAR',                par:°{tab:'dar'} }
+          item {title:'[fa-database] tabulka PSC_AXY'             par:°{tab:'psc_axy'}  }
+          item {title:'[fa-database fa-red] tabulka EZER_DOC2'    par:°{tab:'ezer_doc2'}  skill:'m' }
+          item {title:'[fa-database fa-red] tabulka _CIS'         par:°{tab:'_cis'}       skill:'m' }
+          item {title:'[fa-database fa-red] tabulka _HELP'        par:°{tab:'_help'}      skill:'m' }
+          item {title:'[fa-database fa-red] tabulka _SKILL'       par:°{tab:'_skill'}     skill:'m' }
+          item {title:'[fa-database fa-red] tabulka _TOUCH'       par:°{tab:'_touch'}     skill:'m' }
+          item {title:'[fa-database fa-red] tabulka _TRACK'       par:°{tab:'_track'}     skill:'m' }
+          item {title:'[fa-database fa-red] tabulka _USER'        par:°{tab:'_user'}      skill:'m' }
+          proc onclick (i) {
+            clear;
+            panel.display(2,'i');
+            info.fill(replace_fa(conc(i.owner.title,' - ',i.title)),' ');
+            { i.par.tab;  
+              info.append(ask('i_doc_table_struct',i.par.tab,0));
+            | info.append(conc("<br>Schema databáze pro <b>Answer</b>
+                s uvedením podmínek pro spojení pomocí JOIN<br><br>
+                <img src='ms2/img/schema_ms_",i.par.img,".png' />"));
+            }
+          }
+        }
         menu {title:'Kontroly konzistence dat',type:'group', _sys:'*'
-//          item {title:'kontroly databáze - test'        ,par:°{opravit:0,test:'test'}, skill:'m'}
-//          item {title:'kontroly databáze - test+oprava' ,par:°{opravit:1,test:'test'}, skill:'m'}
           item {title:'kontroly databáze'               ,par:°{opravit:0}}
           item {title:'kontroly databáze s opravou'     ,par:°{opravit:1}, skill:'m'}
           proc onclick (i) {
@@ -47,14 +63,6 @@ menu cr2 { type:'main', title:'cr2', active:*, _sys:'*'
             info.fill('',ask('db2_kontrola_dat',i.par));
           }
         }
-//        menu {title:'Testovací databáze',type:'group', _sys:'*'
-//          item {title:'obnovit testovací db z ostré', par:°{db:'cr2'}
-//            proc onclick (i) {
-//              clear;
-//              confirm("vytvořit znovu testovací databázi z aktuálního stavu ostré databáze?");
-//              info.fill(conc(i.owner.title,' - ',i.title),' ... probíhá update ...');
-//              info.fill('',ask('db2_copy_test_db',i.par.db)); }}
-//        }
       }
       use info: form right [12,4,,]
     }

@@ -27,6 +27,13 @@ menu db2 { type:'main', title:'db2', active:*, _sys:'*'
         ask('query',conc("DELETE FROM tvori WHERE id_tvori=",idt));
       }
       menu m {type:'left', format:'f+'
+        menu {title:'Přehled',type:'group', _sys:'*'
+          item {title:'Záznamy', par:°{db:'ms2',org:'3'}
+            proc onclick (i) {
+              clear;
+              info.fill(conc(i.owner.title,' - ',i.title),'... probíhá výpočet ...');
+              info.fill('',ask('db2_info',i.par)) }}
+        }
         menu s  {title:'Struktura dat', type:'group', skill:'yamg;famg;camg;aa;a'
           item {title:'[fa-object-group] Přehled struktury dat'   par:°{img:'2015'} }
           item {title:'[fa-object-group] Podrobná struktura dat'  par:°{img:'2019'} }

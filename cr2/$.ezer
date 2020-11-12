@@ -15,11 +15,11 @@ menu cr2 { type:'main', title:'cr2', active:*, _sys:'*'
     panel nas {type:'right', title:'Data', _sys:'nas', skill:'a'
       menu {type:'left', active:*
         menu {title:'Přehled',type:'group', _sys:'*'
-          item {title:'Záznamy', par:°{db:'cr2'}
+          item {title:'Záznamy', par:°{db:'cr2',org:'4'}
             proc onclick (i) {
               clear;
               info.fill(conc(i.owner.title,' - ',i.title),'... probíhá výpočet ...');
-              info.fill('',ask('db2_info',i.par.db)) }}
+              info.fill('',ask('db2_info',i.par)) }}
         }
         menu {title:'Hromadné opravy dat',type:'group', _sys:'*'
           item {title:'rodinné pobyty (i0_rodina)'      ,par:°{opravit:0,cmd:'i0_rodina'}, skill:'m'}

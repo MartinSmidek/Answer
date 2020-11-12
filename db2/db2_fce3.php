@@ -14074,23 +14074,45 @@ end: return $updated;
 /** ========================================================================================> SYSTEM **/
 # ---------------------------------------------------------------------------==> . datové statistiky
 # ----------------------------------------------------------------------------------------- db2 info
-function db2_info($db) {
+# vypíše počet záznamů v důležitých tabulkách a zkotroluje $access pokud je $org!=0
+function db2_info($par) {
   global $ezer_root,$ezer_db,$USER;
+  $org= isset($par->org) ? $par->org : 0;
   $tabs= array(
-    '_user'  => (object)array('cond'=>"deleted=''"),
-    'akce'   => (object)array('cond'=>"deleted=''"),
-    'rodina' => (object)array('cond'=>"deleted=''"),
-    'osoba'  => (object)array('cond'=>"deleted=''")
-  );
+    'akce'   => (object)array('cond'=>"deleted=''",'access'=>$org),
+    'cenik'  => (object)array('cond'=>"deleted=''",'access'=>0),
+    'rodina' => (object)array('cond'=>"deleted=''",'access'=>$org),
+    'tvori'  => (object)array('cond'=>"deleted=''",'access'=>0),
+    'osoba'  => (object)array('cond'=>"deleted=''",'access'=>$org),
+    'spolu'  => (object)array('cond'=>"deleted=''",'access'=>0),
+    'pobyt'  => (object)array('cond'=>"deleted=''",'access'=>0),
+    'dopis'  => (object)array('cond'=>"deleted=''",'access'=>$org),
+    'mailist'=> (object)array('cond'=>"deleted=''",'access'=>$org),
+    'mail'   => (object)array('cond'=>"deleted=''",'access'=>0),
+    '_user'  => (object)array('cond'=>"deleted=''",'access'=>$org)
+   );
   $html= '';
   $db= select('DATABASE()','DUAL',1);
   // přehled tabulek podle access
   $html= "<h3>Přehled tabulek $db</h3>";
+  $html.= $org ? 
+      "<p>POZOR: pokud je v druhém sloupci <b style='background:lightpink'>červený údaj</b>, 
+        jedná se chybu, kterou je třeba řešit</p>" : '';
   $html.= "<div class='stat'><table class='stat'>";
-  $html.= "<tr><th>tabulka</th><th>záznamů</th></tr>";
+  $th= $org ? '<th>skryté?</th>' : '';
+  $html.= "<tr><th>tabulka</th><th>záznamů</th>$th</tr>";
   foreach ($tabs as $tab=>$desc) {
-    $pocet= select("COUNT(*)","$db.$tab",1);
-    $html.= "<tr><th>$db.$tab</th><td style='text-align:right'>$pocet</td></tr>";
+    $tab_= strtoupper($tab);
+    if ($desc->access) {
+      list($pocet,$access)= select("COUNT(*),SUM(IF(access&$org,0,1))","$db.$tab",1);
+      $red= $access ? ";background:lightpink" : '';
+      $td= $org ? "<td style='text-align:right$red'>$access</td>" : '';
+    }
+    else {
+      $pocet= select("COUNT(*)","$db.$tab",1);
+      $td= $org ? '<td></td>' : '';
+    }
+    $html.= "<tr><th>$tab_</th><td style='text-align:right'>$pocet</td>$td</tr>";
   }
   $html.= "</table></div>";
   return $html;
