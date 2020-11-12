@@ -117,7 +117,7 @@ panel lst {type:'right', _sys:'*', title:'[fa-futbol-o] AKCE', include:'onload,d
   use the_akce: form _the_akce         // zatím nezobrazená data nastavené akce s klíčem id_duakce
   proc akce_work(id) {}                // nastaví akci jako vybranou
 }
-panel ucast {type:'plain', _sys:'*', title:"Účastníci", include:'onload,db2.akce2.ucast',skill:'yaa;faa;caa'
+panel ucast {type:'plain', format:'d', _sys:'*', title:"Účastníci", include:'onload,db2.akce2.ucast',skill:'yaa;faa;caa'
   proc reaccess() {}
   proc ucast_hnizda() {}                        // nastavení pro akci v hnízdech
   proc ucast_pobyt() {}                         // ukázání pobytu na běžné akci
