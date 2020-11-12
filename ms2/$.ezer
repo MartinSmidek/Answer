@@ -21,6 +21,25 @@ menu cr2 { type:'main', title:'cr2', active:*, _sys:'*'
               info.fill(conc(i.owner.title,' - ',i.title),'... probíhá výpočet ...');
               info.fill('',ask('db2_info',i.par)) }}
         }
+        menu { title:'Import a záloha databáze',type:'group',skill:'m'
+          item { title:"[fa-question] přehled záloh", par:°{typ:'listing',direct:'1',glob:'ezer_ms*'}}
+          item { title:"[fa-download] stáhnutí záloh",par:°{typ:'download',direct:'1',glob:'ezer_ms*'}}
+          item { title:"[fa-upload] zálohuj teď",     par:°{typ:'special',direct:'0'}}
+          proc onclick(i) {
+            info.fill(replace_fa(conc(i.owner.title,' - ',i.title)),' ');
+            { eq(i.par.typ,'listing','download') | confirm('opravdu uložit databázi do složky special?') };
+            info.append(ask('sys_backup_make',i.par)) 
+          }
+          item { title:"obnova ze zálohy (jen local)" par:°{typ:'restore',direct:'1',glob:'ezer_ms*'}
+            proc onclick(i) { var heslo:text
+              info.fill(conc(i.owner.title,' - ',i.title),' ');
+              eq(sys('ezer','server'),0,1); // test na lokální server na NTB nebo Synology DOMA
+              confirm('Opravdu mám lokální databázi přepsat?'); 
+              info.append(ask('sys_backup_make',i.par))
+            | alert('obnovu ze zálohy lze provádět pouze na lokální kopii systému');
+            }
+          }
+        }
         menu s  {title:'Struktura dat', type:'group', skill:'yamg;famg;camg;aa;a'
           item {title:'[fa-object-group] Přehled struktury dat'   par:°{img:'2015'} }
           item {title:'[fa-database] tabulka AKCE',               par:°{tab:'akce'} }

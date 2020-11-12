@@ -6,7 +6,7 @@
 # ------------------------------------------------------------------------------------------------ #
 
 global $EZER, $dbs, $ezer_server;
-
+error_reporting(E_ALL & ~E_NOTICE);
 $html= '';
 $ezer_root= isset($_POST['root']) ? $_POST['root'] : $_GET['root'];
 $_POST['root']= $_GET['root']= $ezer_root;
@@ -15,6 +15,7 @@ require_once("$ezer_root.inc.php");
 require_once("{$EZER->version}/ezer2_fce.php");
 
 $html.= "ezer_server=$ezer_server; #dbs=".count($dbs)."; ";
+$typ= isset($_GET['typ']) ? $_GET['typ'] : '';
 
 # zaloha.php?restore=path
 #   obnoví databázi ze souboru $path_backup/subpath
@@ -73,17 +74,36 @@ if ( isset($_GET['restore']) ) {
   }
 # zaloha.php?typ=
 #   listing  - přehled existujících záloh
+#   download - přehled existujících záloh s možností jejich stažení ve formátu zip
 #   restore  - přehled existujících záloh s možností obnovit data
 #   kaskada  - uložení dnešní zálohy, (je-li pondělí přesun poslední pondělní do jeho týdne)
 #              -- days:  dny v týdnu
 #              -- weeks: pondělky týdnů roku
 #   special  - uložení okamžité zálohy do složky special
 #   kontrola - kontrola existence dnešní zálohy
-  else if (in_array($_GET['typ'],array('listing','kaskada','special','kontrola'))) {
-    $html= sys_backup_make((object)array('typ'=>$_GET['typ']));
+  else if (in_array($typ,array('listing','kaskada','special','kontrola'))) {
+    $html= sys_backup_make((object)array('typ'=>$typ));
+  }
+  elseif ( isset($_GET['download']) ) {
+    $subpath= $_GET['download'];
+    $path= "$path_backup/$subpath";
+    list($dws,$n,$file)= explode('/',$subpath);
+    if ( $dws=='special' ) $file= $n;
+    $sql= file_get_contents($path);
+//    $bzip2= bzcompress($sql);
+    $gzip= gzencode($sql);
+    header("Content-type: application/zip");
+//    header('Content-Encoding: bzip2');
+    header('Content-Encoding: zip');
+    header('Content-Length: '.strlen($gzip));
+    header("Content-Transfer-Encoding: binary");
+//    header("Content-Disposition: attachment; filename=$file.bzip2");
+    header("Content-Disposition: attachment; filename=$file.zip");
+//    echo $bzip2;
+    echo $gzip;
   }
   else {
-    $html= "zaloha.php musí být voláno s parametrem typ=x, kde x=listing|kaskada|special|kontrola,"
+    $html= "zaloha.php musí být voláno s parametrem typ=x, kde x=listing|download|kaskada|special|kontrola,"
       . " nebo s parametrem restore=path pro obnovu databáze ze souboru";
   }
 end:  
