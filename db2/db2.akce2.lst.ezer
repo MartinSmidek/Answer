@@ -485,11 +485,11 @@ form _page [,,275,360] {
 #       c.pol.width(121); c.pro_2017.width(45); c.za_2017.width(27); form.display(eq(zalozka.get,'cen'),'ex1');
 #       c.za_2016.width(0); form.display(0,'ex0');
     }
-    // access: 4 pro cr    -   používá cenik.typ, nepoužívá akce.ma_cenik_verze
-  | eq(access.get,4);
+    // access: 4|8 pro cr|ms    -   používá cenik.typ, nepoužívá akce.ma_cenik_verze
+  | eq(access.get,4,8);
     c.pol.width(100); c.typ.width(50); c.za_2016.width(40);
     form.display(0,'ex');
-  | alert("chybně definovamý ceník");
+  | alert("chybně definovaný ceník");
   }
   browse c [10,25,,] { tag:'cen', rows:26, qry_rows:1, css_rows:"barva,1:grey"
     // pro y;f;c
