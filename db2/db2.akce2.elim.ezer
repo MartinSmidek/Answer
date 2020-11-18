@@ -7,52 +7,65 @@
 # --------------------------------------------------------------------------------==> globální jména
 var osoby_lst_id: number // nastavené po ukončení osoby_lst
         
-proc osoby(ido,jmeno,prijmeni) {
-  elim_init; elim_osoby(ido,conc(trim(replace(prijmeni,"^-","")),' ',trim(jmeno))); elim_start }
-proc osoby_lst(ido,idos) {
-  elim_init; 
-//  c.rod_cleni.enable(0); 
-  elim_osoby_lst(ido,idos); return(elim_start) }
-proc rodiny_lst(idr,idrs) {
-  elim_init; 
-//  c.rod_cleni.enable(0); 
-  [ elim_rodiny_lst(idr,idrs) ]; return(elim_start) }
-proc rodiny(idr,nazev) {
-  elim_init; [ elim_rodiny(idr,trim(replace(nazev,"^-",""))) ]; elim_start }
+func osoby(ido,jmeno,prijmeni) {
+  if (elim_init()) {
+    elim_osoby(ido,conc(trim(replace(prijmeni,"^-","")),' ',trim(jmeno))); elim_start() 
+  }
+}
+func osoby_lst(ido,idos) {
+  if (elim_init()) {
+    elim_osoby_lst(ido,idos); 
+    return(elim_start()) 
+  }
+  return('')
+}
+func rodiny_lst(idr,idrs) {
+  if (elim_init()) {
+    elim_rodiny_lst(idr,idrs); 
+    return(elim_start()) 
+  }
+  return('')
+}
+func rodiny(idr,nazev) {
+  if (elim_init()) { 
+    elim_rodiny(idr,trim(replace(nazev,"^-",""))); 
+    elim_start() 
+  }
+}
 // řešení říjen 2020
 func osoby_12(ido1,ido2) {
-  elim_init(); 
-  elim_osoby_12(ido1,ido2); 
-  elim_start(); 
-  echo(`sjednocení osob ${ido1}+${ido2}=${ok}`);
-  if (ok) {
-    alert(`sjednocení osoby ${ok} dokončeno`);
-    return(ok) 
+  if (elim_init()) {
+    elim_osoby_12(ido1,ido2); 
+    elim_start(); 
+    echo(`sjednocení osob ${ido1}+${ido2}=${ok}`);
+    if (ok) {
+      alert(`sjednocení osoby ${ok} dokončeno`);
+      return(ok) 
+    }
   }
-  else 
-    return(0)
+  return(0)
 }
 func rodiny_12(idr1,idr2) {
-  elim_init(); 
-  elim_rodiny_12(idr1,idr2); 
-  elim_start(); 
-  if (ok) {
-    alert(`sjednocení rodiny ${ok} dokončeno`);
-    return(ok) 
+  if (elim_init()) {
+    elim_rodiny_12(idr1,idr2); 
+    elim_start(); 
+    if (ok) {
+      alert(`sjednocení rodiny ${ok} dokončeno`);
+      return(ok) 
+    }
   }
-  else 
-    return(0)
+  return(0)
 }
 func cleni(idr) {
-  elim_init(); 
-  elim_cleni(idr); 
-  elim_start();
-  if (ok) {
-    alert(`sjednocení členů rodiny ${ok} dokončeno`);
-    return(ok) 
+  if (elim_init()) {
+    elim_cleni(idr); 
+    elim_start();
+    if (ok) {
+      alert(`sjednocení členů rodiny ${ok} dokončeno`);
+      return(ok) 
+    }
   }
-  else 
-    return(0)
+  return(0)
 }
 # -----------------------------------------------------------------------------------------==> coord
 const Wr= 480; Hr= 574
@@ -72,19 +85,26 @@ use r2: form _rodiny [Wr+10, 5,,] { format:'n' }
 use c1: form _cleni  [    0, 5,,] { format:'n' }
 use c2: form _cleni  [Wr+10, 5,,] { format:'n' }
 # ----------------------------------------------------------------------------------==> inicializace
-proc elim_init() {
-//  function('x',"x._show(0,0);",panel);
-  ido.set(0); idr.set(0); ok.set(0);
-  virgin.get; 
-//  c.rod_cleni.enable(1);
-  o1.init_all("ORIGINÁL",0); o2.init_all("KOPIE",1);
-  o2.oso.on_dblclk_copy_to(o1.oso); o1.oso.on_dblclk_copy_to(o2.oso);
-  r1.init_all("ORIGINÁL",0); r2.init_all("KOPIE",1);
-  r2.get.on_dblclk_copy_to(r1.get); r1.get.on_dblclk_copy_to(r2.get);
-  c1.init_all("ORIGINÁL",0); c2.init_all("KOPIE",1);
-  c2.oso.on_dblclk_copy_to(c1.oso); c1.oso.on_dblclk_copy_to(c2.oso);
-  o1.clear_all; o2.clear_all; r1.clear_all; r2.clear_all; c1.clear_all; c2.clear_all;
-  virgin.set(0);
+func elim_init() { var lock:object 
+  ido= 0; idr= 0; ok= 0;
+  // zamezení současné eliminace více uživateli
+  lock= php.table_lock('on','*duplicity*'); 
+  if (!lock.ok) {
+    alert(lock.info);
+    return(0);
+  }
+  if (virgin) {
+    o1.init_all("ORIGINÁL",0); o2.init_all("KOPIE",1);
+    o2.oso.on_dblclk_copy_to(o1.oso); o1.oso.on_dblclk_copy_to(o2.oso);
+    r1.init_all("ORIGINÁL",0); r2.init_all("KOPIE",1);
+    r2.on_dblclk_copy_to(r1); r1.on_dblclk_copy_to(r2);
+    c1.init_all("ORIGINÁL",0); c2.init_all("KOPIE",1);
+    c2.oso.on_dblclk_copy_to(c1.oso); c1.oso.on_dblclk_copy_to(c2.oso);
+    o1.clear_all(); o2.clear_all(); r1.clear_all(); 
+    r2.clear_all(); c1.clear_all(); c2.clear_all();
+    virgin= 0;
+  }
+  return(1);
 }
 proc elim_osoby(_ido,nazev) {
   mode.set('osoba'); ido.set(_ido);
@@ -234,7 +254,7 @@ form _cmd [,,425,30] { css:'ae_parm'
   }}
   // ZPĚT
   button [5,5,,] { type:'html', title:'[fa-undo] Zpět',  help:'Neměnit změněná data',
-    proc onclick() { panel.hide(1) }}
+    func onclick() { panel.hide(1); php.table_lock('off','*duplicity*') }}
   // LINK
   button [61,5,,] { type:'html', title:"[fa-save] [fa-link] Ulož změny a proveď sjednocení",
     proc onclick() { var ret:object

@@ -2,6 +2,7 @@
 # (c) 2008-2010 Martin Šmídek <martin@smidek.eu>
 
 menu db2 { type:'main', title:'db2', active:*, _sys:'*'
+  func onstart() { php.table_lock('none'); } // uvolni všechny zámky řádků tabulek přihlášeného 
   var global: text,
   tabs pok {title:"[fa-eur] Pokladna", _sys:'*',  include:'onclick,db2.pok', active:*, skill:'yp' }
   tabs eko {title:"[fa-stack-overflow] Ekonomika", _sys:'*',  include:'onclick,ys2.eko', active:*, skill:'ye' }
