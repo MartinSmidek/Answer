@@ -145,7 +145,7 @@ function web_prihlaska($akce,$url,$on,$garant) {  trace();
       $html.= "<hr>POZOR: chybí garant akce!";
       goto end;
     }
-    $ok= select("uid","setkani.tx_gncase_part","uid='$idp' AND !deleted AND !hidden");
+    $ok= select("uid","tx_gncase_part","uid='$idp' AND !deleted AND !hidden");
     if ( $ok ) {
       $ok= query("UPDATE setkani.tx_gncase_part SET id_akce=$ida WHERE uid=$idp");
       $html.= "na www.setkani.org bylo ".($on?"zapnuto":"vypnuto")." elektronické přihlašování";
