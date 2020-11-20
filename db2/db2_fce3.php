@@ -147,7 +147,7 @@ function web_prihlaska($akce,$url,$on,$garant) {  trace();
     }
     $ok= select("uid","tx_gncase_part","uid='$idp' AND !deleted AND !hidden");
     if ( $ok ) {
-      $ok= query("UPDATE setkani.tx_gncase_part SET id_akce=$ida WHERE uid=$idp");
+      $ok= query("UPDATE tx_gncase_part SET id_akce=$ida WHERE uid=$idp");
       $html.= "na www.setkani.org bylo ".($on?"zapnuto":"vypnuto")." elektronické přihlašování";
     }
     else {
@@ -13364,7 +13364,7 @@ function mail2_copy_ds() {  trace();
   if ( $ok ) {
     $html= "inicializace ds_osoba_copy ok";
     ezer_connect('setkani');
-    $qrs= "SELECT * FROM setkani.ds_osoba WHERE email!='' ";
+    $qrs= "SELECT * FROM ds_osoba WHERE email!='' ";
     $res= pdo_qry($qrs);
     while ( $res && ($s= pdo_fetch_object($res)) ) {
 //                                                         debug($s,'s',(object)array('win1250'=>1));

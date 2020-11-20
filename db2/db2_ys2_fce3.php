@@ -2992,7 +2992,7 @@ function ds_import_ys($order,$clear=0) {
         $jmeno= uw($o->jmeno);
         $obec=  uw($o->obec);
         $ulice= uw($o->ulice);
-        query("INSERT INTO setkani.ds_osoba 
+        query("INSERT INTO ds_osoba 
           (id_order,ys_osoba,rodina,prijmeni,jmeno,narozeni,psc,obec,
            ulice,email,telefon,fromday,untilday,strava) VALUES
           ($order,$ido,'$rod','$prijmeni','$jmeno','$o->narozeni','$o->psc','$obec',
