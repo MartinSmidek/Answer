@@ -94,11 +94,11 @@ if ( isset($_GET['restore']) ) {
     $gzip= gzencode($sql);
     header("Content-type: application/zip");
 //    header('Content-Encoding: bzip2');
-    header('Content-Encoding: zip');
+    header('Content-Encoding: gz');
     header('Content-Length: '.strlen($gzip));
     header("Content-Transfer-Encoding: binary");
 //    header("Content-Disposition: attachment; filename=$file.bzip2");
-    header("Content-Disposition: attachment; filename=$file.zip");
+    header("Content-Disposition: attachment; filename=$file.gz");
 //    echo $bzip2;
     echo $gzip;
   }
