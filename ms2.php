@@ -17,7 +17,7 @@
   // parametry aplikace Answer/db2
   $app_name=  "Answer";
   $app= $app_root=  'ms2';
-  $skin= 'ch';
+  $skin= 'default';
 
   $title_style= $ezer_server ? '' : "style='color:#ef7f13'";
   $title_flag=  $ezer_server ? '' : 'lokální ';
@@ -70,15 +70,11 @@
   $add_options= (object) [
 //    'watch_access' => 4,
     'group_db'     => "'ezer_answer'",
-    'watch_access_opt' => // ... barvení v Uživatelé + select v ezer2.syst.ezer
-       "{name:{8:'MS'},
-         abbr:{8:'M'},
-         css:{8:'ezer_ys'}}",
     'web'          => "''", // web organizace - pro odmítnutí odhlášení
     'skill'        => "'d'",
     'autoskill'    => "'!d'",
     'db_test'      => 0,
-    'dbg'          => "{path:['db2','ms']}"
+    'dbg'          => "{path:['db2','ms2']}"
   ];
 
   // (re)definice Ezer.options

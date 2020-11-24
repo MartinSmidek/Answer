@@ -74,7 +74,7 @@ div.bila div.Label3 { color:#fff !important; }
 textarea { resize:none; }    
 
 /* specifické barvy pro odlišení záznamů YS, FA, DB a změny učiněné přes web*/
-#appl { color:$zelena; }
+#appl { color:$c_appl; }
 
 tr td.ezer_ys, li.ezer_ys, input.ezer_ys, .ezer_ys input, span.ezer_ys
                 { background-color:#af8 !important; }
