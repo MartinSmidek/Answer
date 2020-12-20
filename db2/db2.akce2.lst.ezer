@@ -280,12 +280,12 @@ form _page [,,275,360] {
   field access { data:akce.access }
   field id_hlavni { data:akce.id_hlavni }
   // ------------------------------------- základní údaje o akci
-  field [17,49,218,] { tag:'cor', title:'^název akce *', data:akce.nazev }
+  field nazev [17,49,218,] { tag:'cor', title:'^název akce *', data:akce.nazev }
   field [250,49,50,] { tag:'cor', title:'^pro max.účastníků', data:akce.web_maximum, format:':e' }
-  field [17,89,218,] { tag:'cor', title:'^místo', data:akce.misto }
+  field misto [17,89,218,] { tag:'cor', title:'^místo', data:akce.misto }
   check ds_order [250,89,200,] { tag:'cor', title:'objednávka Domu setkání', format:'nd' } 
   field datum_od [18,133,83,] { tag:'cor', title:'^začátek *', type:'date', data:akce.datum_od }
-  field [118,133,83,] { tag:'cor', title:'^ukončení', type:'date', data:akce.datum_do }
+  field datum_do [118,133,83,] { tag:'cor', title:'^ukončení', type:'date', data:akce.datum_do }
   check [213,157,90,] { tag:'cor', title:'jen seznam', data:akce.spec }
   check [213,177,90,] { tag:'cor', title:'akce zrušena', data:akce.zruseno }
   check mrop [300,157,60,] { tag:'cor', title:'mrop', data:akce.mrop, title:'mrop', skill:'faan|faa:m' }
@@ -390,6 +390,7 @@ form _page [,,275,360] {
       not(hnizda_ok.get); warning("oprav hnízda")
     | form.same
     | // oprava
+      ucast.the_duakce_local.set(0); // inicializace Účastníci
       [ zmena_web.get; alert(ask('web_prihlaska',page.a_akce.get,web_url.get,web_prihl.get,garant.key)) ]; 
       form.key; form.save; form.load; info.sey.browse_seek
     | // přidání Setkání
@@ -436,9 +437,11 @@ form _page [,,275,360] {
     | eq(my_org.get,2);
       // Familia
       form.init; access.set(2); access.change; info.sey.blur(1)
-    | eq(my_org.get,4);
-      // CPR, CPRŽ - samostatné db
-      form.init; access.set(4); access.change; info.sey.blur(1)
+    | eq(my_org.get,4,8);
+      // CPR, MS - samostatné db
+      form.init; access.set(my_org.get); access.change; 
+      nazev.change; misto.change; datum_od.change; datum_do.change;
+      info.sey.blur(1)
   } }
   button [91,423,,] {tag:'cor', title:'Smazat akci', format:'c', skill:'faan|faan;caan|caan;yaan|yaan'
     proc onclick() {

@@ -30,8 +30,8 @@ proc onfirstfocus() {
   spinner(0);
 }
 proc onfocus() { 
-//  hnizda; // pokud je the_hnizda tak pro ně nastaví select a show
-  [ [ dirty.get | akce_onstart ];
+  eq(the_duakce_local.get,the_duakce.get)
+| [ [ dirty.get | akce_onstart ];
     u.legenda(the_cenik.get,the_cena.get);
     u.b.xfunkce.set_attrib('css_cell',cconc(the_ms.get,"x_ms,1:zeleny,2:oranzovy,3:oranzovy",''));
     eq(the_duakce_local.get,the_duakce.get)
@@ -426,12 +426,13 @@ form _cmd [,,623,30] {
   button [395,5,,] {tag:'x', title:'[fa-plug fa-rotate-180 fa-red] zruš',
     skill:'yaa+|yaa+;faa+|faa+;caa+|caa+',
     help:'Vyřazení účastníka nebo páru z účasti na akci'
-    proc onclick() {
-      neni_ulozeno // warning
-    | confirm("Opravdu vyřadit ",u.b._nazev.get,' (',u.b._jmena.get,") z této akce?");
-      spolu.delete_record(conc('id_pobyt=',u.b.key_pobyt.get),9999);
-      pobyt.delete_record(conc('id_pobyt=',u.b.key_pobyt.get));
-      reload(0);
+    func onclick() {
+      if (!neni_ulozeno() && confirm(
+          `Opravdu vyřadit ${u.b._nazev} ${u.b._jmena?conc('(',u.b._jmena,')'):''} z této akce?`)) { 
+        spolu.delete_record(`id_pobyt=${u.b.key_pobyt}`,9999);
+        pobyt.delete_record(`id_pobyt=${u.b.key_pobyt}`);
+        reload(0);
+      }
   } }
   #==> . + osoba
   label [452,3,44,] { title:"<b>Osobu <br>rodině:</b>" }

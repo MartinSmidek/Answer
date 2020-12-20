@@ -104,7 +104,7 @@ button.db_evidence:disabled { color:silver; }
 .db_chain {  font-size:9px; background-color:$b_parm; height:15px;
              color:white; font-weight:bold; padding:0 2px; }
 button.db_chain:disabled { color:silver; }
-.curr_akce { background-color:$nazelenala !important; color:$bila; font-weight:bold; }
+.curr_akce { background-color:$s1_brow !important; color:$bila; font-weight:bold; }
 .form_note { font-size:10px; color:$s1_brow }
 .title_ref { color:#ffffff !important; }
 .title_ref a { color:#ffffff !important; }
