@@ -1273,7 +1273,7 @@ form _cmd [,,706,32] { css:'ae_frame'
     proc onclick() { reload('curr'); evid_lock('off'); } }
   // ==> ... uložit změny
   button [64,6,66,] {tag:'s', type:'html', title:'[fa-save] Uložit',  help:'Uložit změněná data', skill:'yaa+|yaa+;faa+|faa+;caa+|caa+'
-    proc onclick() { var ok:number, idr:number, ido:number, depth:text
+    proc onclick() { var depth:text
       # ------------------------ vytvoření nového člena rodiny: osoba+tvori
       eq(mode.get,'newo');
       page.oso.insert;
