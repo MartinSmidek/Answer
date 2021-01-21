@@ -599,10 +599,11 @@ form _page {
     'evid',{ oso_load(ido.get) },
     'akce',{ oso_load(ido.get); act.ucasti(ido.get,conc(oso.prijmeni.get,' ',oso.jmeno.get)) },
     'albu',{ alb.galery('rodina',idr.get) },
-    'dary',{ oso_load(ido.get); dar.dary(ido.get,conc(oso.prijmeni.get,' ',oso.jmeno.get)) },
+    'dary',{ oso_load(ido.get); 
+             dar.form_init; dar.dary(ido.get,conc(oso.prijmeni.get,' ',oso.jmeno.get)) },
     'clen',{ oso_load(ido.get);
-             cle.dary(ido.get,conc(oso.prijmeni.get,' ',oso.jmeno.get));
-             pri.dary(ido.get,conc(oso.prijmeni.get,' ',oso.jmeno.get)) },
+             cle.form_init; [ cle.dary(ido.get,conc(oso.prijmeni.get,' ',oso.jmeno.get)) ];
+             pri.form_init; pri.dary(ido.get,conc(oso.prijmeni.get,' ',oso.jmeno.get)) },
     'mapa',{ oso_load(ido.get); act.ucasti(ido.get,conc(oso.prijmeni.get,' ',oso.jmeno.get)) }
     );
     [ cmd.part('o_smaz');
@@ -974,7 +975,7 @@ form _clenstvi [,,320,min_h+-180] {css:'ae_frame shift_down'
   label idd   [264,18,50,] { format:'r' }
   proc dary(_ido,_jmeno) {
     form.init; ido.set(_ido); jmeno.set(_jmeno);
-    b.browse_load(conc("da.deleted='' AND ukon IN ('b','c','k') AND id_osoba=",_ido))
+    b.browse_load(conc("da.deleted='' AND ukon IN ('b','c','k','H') AND id_osoba=",_ido))
   }
   proc refresh() { dary(id_o.get,jmeno.get) }
   # seznam darů
@@ -1000,9 +1001,19 @@ form _clenstvi [,,320,min_h+-180] {css:'ae_frame shift_down'
   const Lc=180
   select typ   [Lc,27,65,] {type:'map', help:'typ členství', options:ms_akce_clen.zkratka
     title:'^typ členství'
-    proc onchanged() {
-      eq(typ.key,2); alert("účastníci nejsou evidováni jako členové YMCA")
-    | ukon.set(cconc(eq(typ.key,0),'b',eq(typ.key,1),'c','k')); ukon.change(1) }
+    func onchanged() {
+      switch(typ.key()){
+        case '0': ukon= 'b'; break;
+        case '1': ukon= 'c'; break;
+        case '2': alert("účastníci nejsou evidováni jako členové YMCA"); break;
+        case '3': ukon= 'k'; break;
+        case '4': ukon= 'H'; break;
+      }
+      ukon.change(1) 
+    }
+//    proc onchanged() {
+//      eq(typ.key,2); alert("účastníci nejsou evidováni jako členové YMCA")
+//    | ukon.set(cconc(eq(typ.key,0),'b',eq(typ.key,1),'c','k')); ukon.change(1) }
   }
   field datum  [Lc,62,85,] {type:'date', data:da.dat_od, help:'datum přijetí',
     format:'RUr', title:'^člen ode dne' }
@@ -1017,7 +1028,9 @@ form _clenstvi [,,320,min_h+-180] {css:'ae_frame shift_down'
     form.enable(1,on); form.enable(0,off); }
   proc onchanged () {
     form_state('u|z','n|s') }
-  proc onload () { typ.key(cconc(eq(ukon.get,'b'),0,eq(ukon.get,'c'),1,3)); typ.plain }
+  proc onload () { 
+    typ.key(cconc(eq(ukon.get,'b'),0,eq(ukon.get,'c'),1,eq(ukon.get,'H'),4,3)); 
+    typ.plain }
   label cmd [Lc,158,132,50] { css:'ae_parm' }
   # -------------------------- Nový
   button [cmd.l+6,cmd.t+5,,] { tag:'n', title:'[fa-database] Nový',  help:'Vložit nový dar',
