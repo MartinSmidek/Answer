@@ -9237,6 +9237,7 @@ function evid2_ymca_sestava($org,$par,$title,$export=false) {
   $res= pdo_qry($qry);
   while ( $res && ($x= pdo_fetch_object($res)) ) {
     $id_osoba= $x->id_osoba;
+    $honorabilis= 0;
     // rozbor úkonů
     $_clen_od= $_cinny_od= $_prisp= $prisp_letos= $_dary= 0;
     foreach(explode('|',$x->_ukony) as $uddc) {
@@ -9244,6 +9245,7 @@ function evid2_ymca_sestava($org,$par,$title,$export=false) {
       switch ($u) {
       case 'p': if ( $d1==$rok ) $_prisp+= $c; break;
       case 'd': if ( $d1==$rok ) $_dary+= $c; break;
+      case 'H': $honorabilis++;
       case 'b': if ( $d2<=$rok && (!$_clen_od && $d1<=$rok || $d1<$_clen_od) ) $_clen_od= $d1; break;
       case 'c': if ( $d2<=$rok && (!$_cinny_od && $d1<=$rok || $d1<$_cinny_od) ) $_cinny_od= $d1; break;
       }
@@ -9265,7 +9267,7 @@ function evid2_ymca_sestava($org,$par,$title,$export=false) {
       // export
       case '1':         $clmn[$n][$f]= 1; break;
       case '_naroz_ymd':$clmn[$n][$f]= substr($x->narozeni,2,2).substr($x->narozeni,5,2).substr($x->narozeni,8,2); break;
-      case '_b_c':      $clmn[$n][$f]= $_cinny_od>0 ? 'č' : 'b'; break;
+      case '_b_c':      $clmn[$n][$f]= $honorabilis ? 'H' : ($_cinny_od>0 ? 'č' : 'b'); break;
       case '_YS':       $clmn[$n][$f]= 'YMCA Setkání'; break;
       case '_cinny_letos':$clmn[$n][$f]= $_cinny_od==$rok ? 1 : ''; break;
       case '_dobro':    $clmn[$n][$f]= $x->_vps && $_cinny_od>0  || $x->_pec ? 1 : ''; break;
