@@ -11932,47 +11932,76 @@ end:
   return $ret;
 }
 # ----------------------------------------------------------------------------- mail2 lst_posli_spec
+# PROCESS
 # vygeneruje sadu mailů podle daného maillistu s nastaveným specialni a parms
-function mail2_lst_posli_spec($id_dopis) {  trace();
-  $ret= (object)array('msg'=>'');
-  $id_mailist= select('id_mailist','dopis',"id_dopis=$id_dopis");
+# davka = {todo,done,step,msg,error,mails} pokud done=0 jde o zahájení procesu
+function mail2_lst_posli_spec($davka) {  trace();
+  global $ezer_path_docs;
+  $davka->msg= '';
+  $id_mailist= select('id_mailist','dopis',"id_dopis={$davka->dopis}");
   $ml= mail2_lst_access($id_mailist);
   $parms= json_decode($ml->parms);
   switch ($parms->specialni) {
   case 'potvrzeni':
-    // smaž starý seznam
-    pdo_qry("DELETE FROM mail WHERE id_dopis=$id_dopis");
-    $num= 0;
-    $nomail= array();
     $rok= date('Y')+$parms->rok;
-    // projdi všechny relevantní dárce podle dotazu z maillistu
-    $os= pdo_qry($ml->sexpr);
-    while ($os && ($o= pdo_fetch_object($os))) {
-      $email= $o->_email;
-      if ( $email ) {
+    if ($davka->todo==0) { // --------------------------------- zahájení
+      // smaž starý seznam a stará potvrzení
+      pdo_qry("DELETE FROM mail WHERE id_dopis={$davka->dopis}");
+      if ( is_dir("$ezer_path_docs/db2") ) {
+        $files= glob("$ezer_path_docs/db2/potvrzeni_{$rok}*.pdf");
+        foreach ($files as $file) {
+          unlink($file);
+        }
+      }
+      // a zjisti celkový počet
+      $davka->done= 0;
+      $davka->error= '';
+      $os= pdo_qry($ml->sexpr);
+      while ($os && ($o= pdo_fetch_object($os))) {
+        $davka->todo++;
+      }
+      if (!$davka->todo) { $davka->msg= "nejsou žádná potrzení"; break; }
+      // rychle skončíme, aby se nastavil termometr
+    }
+    else { // ------------------------------------------------- generování STEP potvrzení
+      $step= 0;
+      // projdi všechny relevantní dárce podle dotazu z maillistu
+      // a vytvoř davka.step ještě nevytvořených mailů
+      $os= pdo_qry($ml->sexpr);
+      while ($os && ($o= pdo_fetch_object($os))) {
+        // pokud již má mail, přeskoč ho
+        $ma= select('id_mail','mail',"id_dopis={$davka->dopis} AND id_clen={$o->_id}");
+        if ($ma) continue;
+        // pokud nema, pokračujeme 
+        $email= $o->_email ?: '*';
         // vygeneruj PDF s potvrzením do $x->path
         $x= mail2_mai_potvr("Pf",$o,$rok);
+        $pdf= $x->fname;
         // vlož mail
-        $rs= pdo_qry(
-          "INSERT mail (id_davka,znacka,stav,id_dopis,id_clen,email,priloha)
-             VALUE (1,'@',0,$id_dopis,$o->_id,'$email','{$x->fname}')");
-        $num+= pdo_affected_rows($rs);
+        query("INSERT mail (id_davka,znacka,stav,id_dopis,id_clen,email,priloha)
+               VALUE (1,'@',0,{$davka->dopis},{$o->_id},'$email','$pdf')");
+        if ( preg_match("/[*]/",$email) ) 
+          $davka->msg.= " {$o->jmeno} {$o->prijmeni} nemá mail ";
+        $step++;
+        $davka->done++;
+        // pokud jsme neprošli davka.step osob, pokračujeme 
+        if ($step >= $davka->step) {
+          break;
+        }
       }
-      else {
-        $nomail[]= "{$o->jmeno} {$o->prijmeni}";
+      if ($davka->done>=$davka->todo) {
+        // oprav počet v DOPIS
+        query("UPDATE dopis SET pocet={$davka->done} WHERE id_dopis={$davka->dopis}");
+        // informační zpráva
+        $davka->msg= "Bylo vygenerováno {$davka->done} mailů {$davka->msg}";
       }
     }
-    // oprav počet v DOPIS
-    pdo_qry("UPDATE dopis SET pocet=$num WHERE id_dopis=$id_dopis");
-    // informační zpráva
-    $ret->msg= "Bylo vygenerováno $num mailů";
-    if ( count($nomail) ) $ret->msg.= ", emailovou adresu nemají:<hr>".implode(', ',$nomail);
     break;
   default:
     fce_error("není implemntováno");
   }
 //                                                         debug($ret,"mail2_lst_posli_spec end");
-  return $ret;
+  return $davka;
 }
 # ----------------------------------------------------------------------------------- mail2 lst_read
 # převod parm do objektu
@@ -13242,6 +13271,7 @@ function mail2_mai_send($id_dopis,$kolik,$from,$fromname,$test='',$id_mail=0,$fo
     else {
       $err= $mail->ErrorInfo;
       $html.= "<br><b style='color:#700'>Při odesílání mailu došlo k chybě: $err</b>";
+      display("Send failed: $err<br>from={$mail->From} username={$mail->Username}");
       $result->_error= 1;
     }
 //                                                 display($html);
@@ -13615,12 +13645,13 @@ function ucet_potv($par,$access) { trace();
   $rok= date('Y')+$par->rok;
   $let18= date('Y')-18;
 
-//  global $json;
-  $key= "1KG943OiuVeb_S7FuCZdhPWF3fNu44hBiR2DZIsp3Pok";         // prijate_dary
+//  global $json; 
+//  $key= "1KG943OiuVeb_S7FuCZdhPWF3fNu44hBiR2DZIsp3Pok";         // prijate_dary
+  $key= "1mwdOhCV3LLAhwbUAl2fxzwjselZjs1lWqMQXJRxLpF8";         // prijate_dary_pro_potvrzeni
   $prefix= "google.visualization.Query.setResponse(";           // přefix json objektu
   $sheet= $rok;
 //   $sheet= "Test$rok";
-  $prijate_dary= "<a target='xls' href='https://drive.google.com/open?id=$key'>prijate_dary</a>";
+  $prijate_dary= "<a target='xls' href='https://drive.google.com/open?id=$key'>prijate_dary_pro_potvrzeni</a>";
   $url= "https://docs.google.com/spreadsheets/d/$key/gviz/tq?tqx=out:json&sheet=$sheet";
                                         display($url);
   $x= file_get_contents($url);

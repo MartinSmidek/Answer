@@ -1252,10 +1252,15 @@ form _rodina2p [,,188,229] { css:'ae_frame'
     form.stacks(tags,'down',0,0,10);
   }
   proc on_click() {}
-  proc od_svatby() {
-    r_rozvod.get; spolu.set("<span style='background:yellow'>jsou rozvedeni</span>")
-  | r_datsvatba.get; spolu.set(conc('od svatby ',roku(r_datsvatba.get,r_svatba.get),' let'))
-  | spolu.set('datum svatby') }
+  func od_svatby() {
+    if (r_rozvod) spolu= "<span style='background:yellow'>jsou rozvedeni</span>"
+    elseif (r_datsvatba) spolu= `od svatby ${js.roku(r_datsvatba,r_svatba)} let`
+    else spolu= 'datum svatby'
+  }
+//  proc od_svatby() {
+//    r_rozvod.get; spolu.set("<span style='background:yellow'>jsou rozvedeni</span>")
+//  | r_datsvatba.get; spolu.set(conc('od svatby ',roku(r_datsvatba.get,r_svatba.get),' let'))
+//  | spolu.set('datum svatby') }
   label frame      [0,2,188,20]   {tag:'f', title:'společné rodinné údaje', css:'frame_label_up' }
   field access     [130,0,10,] {tag:'f,N', format:'or', css:'Label', data:r.access, tabindex:0  }
   field key_rodina [130,0,50,] {tag:'f', format:'or', css:'Label', data:r.id_rodina, tabindex:0  }

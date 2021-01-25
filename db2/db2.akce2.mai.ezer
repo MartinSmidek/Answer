@@ -1155,7 +1155,9 @@ form _etext  {
         conf.specialni;
         [ { not(conf.prepsat) | confirm(conf.prepsat) };
           confirm(conf.pocet);
-          E_info.set(ask('mail2_lst_posli_spec',dopis_id.get));
+//          E_info.set(ask('mail2_lst_posli_spec',dopis_id.get));
+          Proces.Start(dopis_id.get,"Generování potvrzení");
+          E_info.set(Proces.davka.get);
           texty.browse_seek; texty.browse_focus;
           alert(E_info.get('msg'))
         ]
@@ -1444,6 +1446,70 @@ form _esady  {
   }
 }
 
+# ==========================================================================================> proces
+# Proces.Start(cmd,title) 
+# proměnná davka={todo,done,step,msg,error,mails}
+panel Proces [0,0,300,50] { type:'popup', 
+    par:°{close:'no'} 
+  use it: form _it 
+  // stavové proměnné
+  var continue:number, davka:object
+  // Start - odstartuje výpočet definovaný objektem par a zobrazí jeho průběh 
+  func Start(dopis_id,title) { 
+    clear(); 
+    panel.title= title;
+    // inicializace cyklu a předání prametrů - počáteční hodnota todo bude určena z par.todo
+    davka= {dopis:dopis_id,todo:0,step:10};
+    // zahájení cyklu 
+    it.msg= ''; 
+    it.display(2,'t'); 
+    fork.panel.Step(); // asynchronní spuštění, aby bylo provedeno panel.modal
+    panel.modal();
+  }
+  // Step - jedny kroky procesu
+  func Step() { 
+    continue= 1; 
+    while (continue) {  // po Stop (třeba stisku Přerušit) se výpočet přeruší
+//      php.mail_proces(); // funkce serveru čte a zapisuje stav z tabulky davka
+      davka= php.mail2_lst_posli_spec(davka);
+      Show(davka.done,davka.todo); // nastaví termometr a případně provede refresh
+      if (davka.error) {
+        it.msg= `PŘERUŠENO -- CHYBA: ${davka.error}`; davka.error= '';
+        break;
+      }
+      elseif (!continue)
+        break;
+      it.msg= davka.msg;
+      if (davka.done>=davka.todo) {
+        it.display(0,'s|b'); it.display(1,'e'); // zruší zobrazení termometru
+        break;
+      }
+    }
+  }
+  // Show(cast,celek) - posune termometr
+  func Show(cast,celek) { 
+    it.thermo1.property(object('width',(cast*290)/celek));
+  }
+  // Stop - zastaví a nechá zobrazené
+  func Stop() { continue= 0; }
+  form _it { 
+    label thermo1 [6,1,0,8]   { tag:'t', title:'' style:'background-color:#ef7f13' }
+    label thermo2 [5,0,290,8] { tag:'t', title:'' style:'border:1px dotted grey' }
+    label msg [0,15,300,40]   { tag:'t' format:'c' }
+    button [120,30,,]  { tag:'t,b', title:'Přerušit' func onclick () { 
+      form.display(0,'b'); form.display(1,'s');
+      msg= `PŘERUŠENO UŽIVATELEM`;
+      continue= 0; 
+    } }
+    button [96,30,,]  { tag:'s', title:'Ukončit' func onclick () { 
+      continue= 0; panel.hide(1) } }
+    button [154,30,,]  { tag:'s', title:'Pokračovat' func onclick () { 
+      form.display(0,'s'); form.display(1,'b');
+      Step(); } }
+    button [136,30,,]  { tag:'e', title:'OK' func onclick () { 
+      panel.hide(1) } }
+  }
+}
 map map_dm_komu:      table _cis  {where:"druh='am_komu'",      order:'poradi',  key_id:'data'}
 map map_db_maily_sql: table _cis  {where:"druh='db_maily_sql'", order:'zkratka', key_id:'data'}
 map map_db_maily_tab: table _cis  {where:"druh='db_maily_tab'", order:'zkratka', key_id:'data'}
