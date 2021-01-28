@@ -25,6 +25,8 @@ func evid_osoba(_ido)  {
   else lst.load_osoba(_ido) 
 }
 func evid_rodina(_idr) { 
+  echo(`--- evid_rodina virgin=${virgin}`);
+  firstfocus(0);
   panel.focus(); 
   if (menu_item!=m.r.a) {
     m.r.a.click(1,1); 
@@ -43,7 +45,7 @@ proc ulozen_gmail()    { cmd.set_state('show'); page.page_plain; warning;  }
 proc onfirstfocus() { firstfocus(1) }
 proc firstfocus(_click) {
   echo('--- onfirstfocus(',_click,') virgin=',virgin.get);
-  virgin;
+  virgin.get;
   has_skill('mrop');
   // přístup jen k seznamu iniciovaných se zvláštním tlačítkem na opravu gmail
   page.oso.call('gmail_save.visible');
@@ -52,13 +54,15 @@ proc firstfocus(_click) {
   rodina_config.start;
   page.start;
   virgin.set(0);
-  [ _click; m.o.i.click_wait ]
+  [ _click; m.o.i.click_wait ];
+  echo('--- onfirstfocus(',_click,') end');
 | // plný přístup
-  virgin;
+  virgin.get;
   osoba_config.start; rodina_config.start;
   lst.start; page.start; cmd.start;
   virgin.set(0);
-  [ _click; m.r.a.click_wait ]
+  [ _click; m.r.a.click_wait ];
+  echo('--- onfirstfocus(',_click,') end');
 }
 proc onblur() { [ track.display; track.hide ] }
 proc up(x)   { x.get.set_css('shift_up','shift_down'); x.set_css('shift_up','shift_down','.*') }
@@ -270,7 +274,7 @@ form _lst [,,370,*] {
   var idz= 0                                    // naposledy vybraná osoba pro tip na eliminaci
   var idy= 0                                    // naposledy vybraná rodina pro tip na eliminaci
   proc start() { [                              // při startu vynecháme prázdná příjmení
-    virgin.set(0);
+//    virgin.set(0);
     o_vyber.key( 1); bo_filtr.set(o_vyber.get); o_vyber.refresh;
     r_vyber.key( 1); br_filtr.set(r_vyber.get); r_vyber.refresh;
 //    echo("start: br_filtr=",br_filtr.get);
