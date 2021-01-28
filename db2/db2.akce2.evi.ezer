@@ -5,6 +5,7 @@
 # Ans(w)er/Ezer                                     (c) 2007-2015 Martin Šmídek <martin@smidek.eu> #
 # ------------------------------------------------------------------------------------------------ #
 
+  var virgin=1
   var idr= 0                                    // naposledy vybraná rodina
   var ido= 0                                    // naposledy vybraná osoba
 # --------------------------------------------------------------------------------==> globální jména
@@ -13,14 +14,36 @@
 
 proc evid_load(ido,idr) { page.evid_load(ido,idr) }
 
-proc evid_osoba(_ido)  { panel.focus; m.o.a.click(0,1); lst.seek_osoba(_ido,m.o.a.par) }
-proc evid_rodina(_idr) { panel.focus; m.r.a.click(0,1); lst.seek_rodina(_idr,m.r.a.par) }
+func evid_osoba(_ido)  { 
+  echo(`--- evid_osoba virgin=${virgin}`);
+  firstfocus(0);
+  panel.focus(); 
+  if (menu_item!=m.o.a) {
+    m.o.a.click(1,1); 
+    m.menu_click(m.o.a,_ido,0)
+  }
+  else lst.load_osoba(_ido) 
+}
+func evid_rodina(_idr) { 
+  panel.focus(); 
+  if (menu_item!=m.r.a) {
+    m.r.a.click(1,1); 
+    m.menu_click(m.r.a,0,_idr)
+  }
+  else lst.load_rodina(_idr) 
+//  if (menu_item!=m.r.a) 
+//    m.r.a.click_wait(1); 
+//  lst.seek_rodina(_idr,m.r.a.par) 
+}
 
 proc osoby_show()      { page.oso.show_osoba(2); }     // obnova údajů o osobě  (z konfigurace)
 proc rodina_show()     { page.rod.show_rodina; }       // obnova údajů o rodině (z konfigurace)
 proc ulozen_gmail()    { cmd.set_state('show'); page.page_plain; warning;  }
 # ----------------------------------------------------------------------------------==> inicializace
-proc onfirstfocus() {
+proc onfirstfocus() { firstfocus(1) }
+proc firstfocus(_click) {
+  echo('--- onfirstfocus(',_click,') virgin=',virgin.get);
+  virgin;
   has_skill('mrop');
   // přístup jen k seznamu iniciovaných se zvláštním tlačítkem na opravu gmail
   page.oso.call('gmail_save.visible');
@@ -28,11 +51,14 @@ proc onfirstfocus() {
   osoba_config.ucast.set(panel); osoba_config.cnfg.g.set(1); osoba_config.cnfg.g.change;
   rodina_config.start;
   page.start;
-  m.o.i.click;
+  virgin.set(0);
+  [ _click; m.o.i.click_wait ]
 | // plný přístup
+  virgin;
   osoba_config.start; rodina_config.start;
   lst.start; page.start; cmd.start;
-  m.r.a.click;
+  virgin.set(0);
+  [ _click; m.r.a.click_wait ]
 }
 proc onblur() { [ track.display; track.hide ] }
 proc up(x)   { x.get.set_css('shift_up','shift_down'); x.set_css('shift_up','shift_down','.*') }
@@ -119,6 +145,7 @@ menu m {type:'left', format:'f-'
   proc menu_click(i,_ido,_idr) { var ret:object, cnd:text
     menu_item.set(i); menu_par.set(i.par); menu_title.set(conc(i.owner.title,' - ',i.title));
     { // podmenu s browse
+      echo('--- menu_item virgin=',virgin.get);
       i.par.lst;
       cnd.set(i.par.cnd);
       panel.display(0,'i'); panel.display(1,'e'); page.oso.chain.display(0);
@@ -171,6 +198,14 @@ use info: form right [12,4,,]           { tag:'i'
     }
   }
 }
+# ------------------------------------------------------------------------------------------==> test
+use test: form _test [360,2,,] { skill:'m' }
+form _test [0,0,12,25] { style:'z-index:3;cursor:help;text-align:center'
+  label [0,0,12,12] {title:' r', style:'color:white;background:red'
+    func onclick() {evid_rodina(3329)}}
+  label [0,13,12,12] {title:'o', style:'color:white;background:blue'
+    func onclick() {evid_osoba(5877)}}
+}
 # =========================================================================================> SEZNAMY
 form _lst [,,370,*] {
   # ---------------------------------------------- interface
@@ -187,11 +222,11 @@ form _lst [,,370,*] {
     mode= _mode; cnd= _cnd;                     // - zapamatuje podmínky pro refresh
     form.display(2,_mode);
     switch(_mode){
-      case 'o': ido= _ido; if (_ido) bo.init_queries(); bo_reload(_cnd); break;
-      case 'm': idm= _ido; if (_ido) bm.init_queries(); bm_reload(_cnd); break;
-      case 'h': idh= _ido; if (_ido) bh.init_queries(); bh_reload(_cnd); break;
-      case 'f': idf= _idr; if (_idr) bf.init_queries(); bf_reload(_cnd); break;
-      case 'r': idr= _idr; if (_idr) br.init_queries(); br_reload(_cnd); break;
+      case 'o': ido= _ido; if (_ido) bo.init_queries(0); bo_reload(_cnd); break;
+      case 'm': idm= _ido; if (_ido) bm.init_queries(0); bm_reload(_cnd); break;
+      case 'h': idh= _ido; if (_ido) bh.init_queries(0); bh_reload(_cnd); break;
+      case 'f': idf= _idr; if (_idr) bf.init_queries(0); bf_reload(_cnd); break;
+      case 'r': idr= _idr; if (_idr) br.init_queries(0); br_reload(_cnd); break;
     }
     page.ctx_enable(_mode)                      // uprav kontextové menu 
   }
@@ -210,17 +245,20 @@ form _lst [,,370,*] {
     tit.set(par.tit); [ eq(mode.get,'o') | mode.set('o'); form.display(2,'o') ];
     bo_cnd.set(1); bo_filtr.set(1); bo_having.set(1); o_vyber.key(1);
     bo.init_queries(0); ido.set(_ido);
-    bo.browse_seek(conc("id_osoba=",_ido),"o.deleted=''",1); page.evid_load(_ido,0);
+    bo.browse_seek(conc("id_osoba=",_ido)); 
+//    bo.browse_seek(conc("id_osoba=",_ido),"o.deleted=''",1); 
+//    page.evid_load(_ido,0);
   }
   proc seek_rodina(_idr,par) {          // zviditelní seznam nesmazaných rodin a zobrazí rodinu
     [ virgin.get; start ];
     tit.set(par.tit); [ eq(mode.get,'r') | mode.set('r'); form.display(2,'r') ];
     br_cnd.set(1); br_having.set(1); r_vyber.key(1);
     br.init_queries(0); idr.set(_idr);
-    br.browse_seek(conc("id_rodina=",_idr),"r.deleted=''",1); page.evid_load(0,_idr);
+    br.browse_seek(conc("id_rodina=",_idr)); 
+//    br.browse_seek(conc("id_rodina=",_idr),"r.deleted=''",1); page.evid_load(0,_idr);
   }
   # ---------------------------------------------- stav a inicializace
-  var virgin=1
+//  var virgin=1
   var mode:text,                                // o|h|r|f|m
       cnd:text                                  // zapamatovaná podmínka
 //  var idr= 0                                    // naposledy vybraná rodina
@@ -313,14 +351,21 @@ form _lst [,,370,*] {
   }
   # ==============================================> O - OSOBY
   var bo_cnd=1, bo_filtr= 1, bo_having= 1
-  proc bo_reload(cnd) {
-//                                                echo("bo_reload ido=",ido.get);
-    [ virgin.get; start ];
-    bo_cnd.set(cnd);
-    ido.get; [ bo.browse_seek(conc("id_osoba=",ido.get)); /*bo.onrowclick*/ ]
-  | bo.browse_load(conc('o.access & ',my_access.get,' AND ',cnd," AND ",bo_filtr.get),'',bo_having.get);
-  | page.page_init
+  func bo_reload(cnd) { var cond:text
+    if (virgin) start();
+    bo_cnd= cnd;
+    cond= `o.access & ${my_access} AND ${cnd} AND ${bo_filtr}`;
+    if (ido) bo.browse_seek(`id_osoba=${ido}`,cond);
+    elseif (!bo.browse_load(cond,'',bo_having))
+      page.page_init()
   }
+//  proc bo_reload(cnd) {
+//    [ virgin.get; start ];
+//    bo_cnd.set(cnd);
+//    ido.get; [ bo.browse_seek(conc("id_osoba=",ido.get)); /*bo.onrowclick*/ ]
+//  | bo.browse_load(conc('o.access & ',my_access.get,' AND ',cnd," AND ",bo_filtr.get),'',bo_having.get);
+//  | page.page_init
+//  }
   select o_vyber [163,5,154,] {tag:'o', type:'map'
     map_pipe:map_evi_vyber_o.hodnota, options:map_evi_vyber_o.zkratka, format:'t'
     help:'výběrová podmínka, doplňující případně zadaná kritéria'
@@ -330,7 +375,7 @@ form _lst [,,370,*] {
       bo_having.set(ask('select','ikona','_cis',conc("druh='evi_vyber_o' AND data=",this.key)));
       [ bo_having.get | bo_having.set(1) ] }
   }
-  check o_filtr [320,5,50,] {tag:'o', title:"filtr", format:'t', value:'0'
+  check o_filtr [320,5,40,] {tag:'o', title:"filtr", format:'t', value:'0'
     proc onchange () {
       bo_filtr.set(o_vyber.get);
       { this.get; filtr_osob.modal(282,258); bo_filtr.set(conc(bo_filtr.get,filtr_osob.sql.get));
@@ -338,25 +383,26 @@ form _lst [,,370,*] {
       ido.set(0); bo_reload(bo_cnd.get);
   }}
   view o:  table osoba
-  view od: table dar    { join_type:"LEFT", join:"USING(id_osoba)" }
+//  view od: table dar    { join_type:"LEFT", join:"USING(id_osoba)" }
   view ot: table tvori  { join_type:"LEFT", join:"USING(id_osoba)" }
   view of: table rodina { join_type:"LEFT", join:"ON of.id_rodina=ot.id_rodina" }
-  view os: table spolu  { join_type:"LEFT", join:"USING(id_osoba)" }
-  view op: table pobyt  { join_type:"LEFT", join:"USING(id_pobyt)" }
-  view u: table psc_axy { join_type:"LEFT", join:"ON u.psc=IF(o.adresa,o.psc,of.psc)" }
-  browse bo [10,30,,] {tag:'o', group_by:'o.id_osoba'
+//  view os: table spolu  { join_type:"LEFT", join:"USING(id_osoba)" }
+//  view op: table pobyt  { join_type:"LEFT", join:"USING(id_pobyt)" }
+//  view u: table psc_axy { join_type:"LEFT", join:"ON u.psc=IF(o.adresa,o.psc,of.psc)" }
+  browse bo [10,30,,] {tag:'o', group_by:'o.id_osoba', optimize:{fetch:'all'}
       rows:27, buf_rows:60, qry_rows:1, css_rows:'barva,0:neucast'
     show id_o { data:o.id_osoba }
-    show id_d { data:od.id_dar }
+//    show id_d { data:od.id_dar }
     show id_t { data:ot.id_tvori }
     show id_r { data:of.id_rodina }
-    show id_p { data:os.id_pobyt }
-    show lat  { data:u.lat }
-    show lng  { data:u.lng }
+//    show id_p { data:os.id_pobyt }
+//    show lat  { data:u.lat }
+//    show lng  { data:u.lng }
+    show psc { expr:"IF(o.adresa,o.psc,of.psc)" }
     show tips [,,0,] { expr:'', format:'t' }
     show _rodin { expr:"COUNT(*)" }
     show barva { expr:"o.deleted=''" }
-    show _funkce { expr:"GROUP_CONCAT(DISTINCT op.funkce)" }
+//    show _funkce { expr:"GROUP_CONCAT(DISTINCT op.funkce)" }
     show access { data:o.access }
     show prijmeni [,,70,] { data:o.prijmeni, title:'příjmení', format:'q*s+'
       css_cell:'access,0:,1:ezer_ys,2:ezer_fa,3:ezer_db' }
@@ -369,10 +415,15 @@ form _lst [,,370,*] {
     show mail   [,,44,] { data:o.email, title:'emaily',help:'osobní emaily', format:'tq%s' }
     show telefon [,,0,] { data:o.telefon, title:'telefony',help:'osobní telefony', format:'tq%s' }
     show _id_o   [,,0,] { data:o.id_osoba, title:'ID osoby',help:'osobní číslo', format:'rq=s' }
+    // počítané položky
+    var lat:number, lng:number
     proc onrowclick() { bo_show }
-    proc bo_show() {
-      ido.set(id_o.get); page.evid_load(ido.get,0);
-      [ page.map.on.get; lat.get; page.map.mapa_curr(lat.get,lng.get) ];
+    func bo_show() { var ll:array
+      ido= id_o; page.evid_load(ido,0);
+      if (psc && page.map.on) {
+        ll= php.select('lat,lng','psc_axy',`psc='${psc}'`); lat= ll[0]; lng= ll[1];
+        if (lat) page.map.mapa_curr(lat,lng)
+      }
     }
     proc onclick() {
       mail.width;     mail.width(0);    telefon.width(44)
@@ -520,12 +571,14 @@ form _lst [,,370,*] {
   view r: table rodina
   view rt: table tvori { join_type:'LEFT', join:"USING(id_rodina)" }
   view rto: table osoba { join_type:'LEFT', join:"USING(id_osoba)" }
-  browse br [10,30,,] {tag:'r', rows:27, buf_rows:60, qry_rows:1, group_by:'r.id_rodina', css_rows:'barva,0:neucast'
+  browse br [10,30,,] {tag:'r', rows:27, buf_rows:60, qry_rows:1, css_rows:'barva,0:neucast'
+      group_by:'r.id_rodina', optimize:{fetch:'all'}
     show id_r { data:r.id_rodina }
     show id_t { data:rt.id_tvori }
     show barva { expr:"r.deleted=''" }
     show _clenu { expr:"COUNT(*)" }
     show access { data:r.access }
+    show psc { data:r.psc }
     show nazev [,,70,] { data:r.nazev, title:'rodina', format:'q*s+',
       css_cell:'access,0:,1:ezer_ys,2:ezer_fa,3:ezer_db' }
     show jmena [,,130,] { expr:"GROUP_CONCAT(rto.jmeno ORDER BY rt.role)", title:'jména', format:'tq%s' }
@@ -533,7 +586,14 @@ form _lst [,,370,*] {
     // volitelná položka
     show maily [,,66,] { data:r.emaily, title:'emaily', help:'rodinné emaily', format:'tq%s' }
     show _id_r [,,0,] { data:r.id_rodina, title:'ID rodiny',help:'číslo rodiny', format:'rq=s' }
-    proc onrowclick() {  idr.set(id_r.get); page.evid_load(0,idr.get); }
+    func onrowclick() {  var ll:array, lat:number, lng:number
+      idr= id_r; 
+      page.evid_load(0,idr); 
+      if (psc && page.map.on) {
+        ll= php.select('lat,lng','psc_axy',`psc='${psc}'`); lat= ll[0]; lng= ll[1];
+        if (lat) page.map.mapa_curr(lat,lng)
+      }
+    }
     proc onclick() {
       maily.width; maily.width(0);  _id_r.width(66)
     |              maily.width(66); _id_r.width(0)

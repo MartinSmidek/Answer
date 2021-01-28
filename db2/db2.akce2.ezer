@@ -1254,7 +1254,7 @@ form _rodina2p [,,188,229] { css:'ae_frame'
   proc on_click() {}
   func od_svatby() {
     if (r_rozvod) spolu= "<span style='background:yellow'>jsou rozvedeni</span>"
-    elseif (r_datsvatba) spolu= `od svatby ${js.roku(r_datsvatba,r_svatba)} let`
+    elseif (r_datsvatba) spolu= `od svatby ${roku(r_datsvatba,r_svatba)} let`
     else spolu= 'datum svatby'
   }
 //  proc od_svatby() {

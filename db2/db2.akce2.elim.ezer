@@ -88,9 +88,9 @@ use c2: form _cleni  [Wr+10, 5,,] { format:'n' }
 func elim_init() { var lock:object 
   ido= 0; idr= 0; ok= 0;
   // zamezení současné eliminace více uživateli
-  lock= php.table_lock('on','*duplicity*'); 
+  lock= php.table_lock('entire','*duplicity*'); 
   if (!lock.ok) {
-    alert(lock.info);
+    alert(lock.info?lock.info:lock.note);
     return(0);
   }
   if (virgin) {

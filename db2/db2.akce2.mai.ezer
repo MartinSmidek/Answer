@@ -1156,8 +1156,8 @@ form _etext  {
         [ { not(conf.prepsat) | confirm(conf.prepsat) };
           confirm(conf.pocet);
 //          E_info.set(ask('mail2_lst_posli_spec',dopis_id.get));
-          Proces.Start(dopis_id.get,"Generování potvrzení");
-          E_info.set(Proces.davka.get);
+          Generuj.Start(dopis_id.get,"Generování potvrzení");
+          E_info.set(Generuj.davka.get);
           texty.browse_seek; texty.browse_focus;
           alert(E_info.get('msg'))
         ]
@@ -1358,7 +1358,7 @@ form _esady  {
 //    }
 //  }
   # ------------------- přegenerování jednoho potvrzení
-  button regenerate [238,375,,] { title:'přegenerovat potvrzení', style:"z-index:2"
+  button regenerate [238,375,,] { title:'přegenerovat potvrzení', style:"z-index:2", format:'d'
     proc onclick() { var ret:object
       ret.set(ask('mail2_lst_regen_spec',maily.id_dopis.get,maily.id_mail.get,maily.id_clen.get));
       alert(ret.msg);
@@ -1446,10 +1446,10 @@ form _esady  {
   }
 }
 
-# ==========================================================================================> proces
-# Proces.Start(cmd,title) 
+# ======================================================================================> generování
+# Generuj.Start(cmd,title) 
 # proměnná davka={todo,done,step,msg,error,mails}
-panel Proces [0,0,300,50] { type:'popup', 
+panel Generuj [0,0,300,50] { type:'popup', 
     par:°{close:'no'} 
   use it: form _it 
   // stavové proměnné
