@@ -425,8 +425,12 @@ form _lst [,,370,*] {
     func bo_show() { var ll:array
       ido= id_o; page.evid_load(ido,0);
       if (psc && page.map.on) {
-        ll= php.select('lat,lng','psc_axy',`psc='${psc}'`); lat= ll[0]; lng= ll[1];
-        if (lat) page.map.mapa_curr(lat,lng)
+        ll= php.select('lat,lng','psc_axy',`psc='${psc}'`); 
+        if (ll) {
+          lat= ll[0]; lng= ll[1];
+          if (lat) page.map.mapa_curr(lat,lng)
+        }
+        else alert(`PSČ ${psc} nemá definované souřadnice`)
       }
     }
     proc onclick() {
