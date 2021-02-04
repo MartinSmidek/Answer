@@ -1314,6 +1314,10 @@ form _cmd [,,706,32] { css:'ae_frame'
   proc set_state(_mode) {
     mode.set(_mode);
     switch(mode.get,
+    'newx',{ # nová samostatná osoba
+             m.enable(0); form.enable(1,'s'); form.enable(0,'x'); lst.bo.enable(0); lst.br.enable(0);
+             page.oso.init; page.rod.t.init;
+             page.cleni.enable(0); page.rod.enable(0,'r|R'); },
     'newo',{ # nový člen rodiny
              m.enable(0); form.enable(1,'s'); form.enable(0,'x'); lst.bo.enable(0); lst.br.enable(0);
              page.oso.init; page.rod.t.init;
@@ -1354,37 +1358,46 @@ form _cmd [,,706,32] { css:'ae_frame'
     proc onclick() { reload('curr'); evid_lock('off'); } }
   // ==> ... uložit změny
   button [64,6,66,] {tag:'s', type:'html', title:'[fa-save] Uložit',  help:'Uložit změněná data', skill:'yaa+|yaa+;faa+|faa+;caa+|caa+'
-    proc onclick() { var depth:text
-      # ------------------------ vytvoření nového člena rodiny: osoba+tvori
-      eq(mode.get,'newo');
-      page.oso.insert;
-      tvori.insert_record(object('id_osoba',page.oso.key,'id_rodina',idr.get,'role',page.rod.t_role.get));
-      reload('page');
-    | # ------------------------ vytvoření rodiny a prvního člena
-      eq(mode.get,'newro');
-      page.rod.r.insert; page.oso.insert;
-      tvori.insert_record(object(
-        'id_osoba',page.oso.key,'id_rodina',page.rod.r.key,'role',page.rod.t_role.get));
-      reload('lst');
-    | # ------------------------ vytvoření rodiny a připojení nastaveného člena
-      eq(mode.get,'newr');
-      page.rod.r.insert;
-      tvori.insert_record(object(
-        'id_osoba',page.oso.key,'id_rodina',page.rod.r.key,'role',page.rod.t_role.get));
-      reload('lst');
-    | # ------------------------ oprava
-      eq(mode.get,'edit');
-      depth.set('curr');
-      [ page.oso.same
-      | [ or(page.oso.jmeno.changed, page.oso.prijmeni.changed, page.oso.narozeni.changed);
-          depth.set('page') ];
-        page.oso.save ];
-      [ page.rod.same | [page.rod.r.save];
-        page.rod.t_role.changed; ask('akce2_save_role',page.rod.t.key,page.rod.t_role.get);
-        depth.set('page') ];
-      evid_lock('off');
-      reload(depth);
-    | error("Uložit co?")
+    func onclick() { var depth:text
+      switch (mode) {
+      case 'newx':  # -------------- vytvoření nové samostatné rodiny
+        page.oso.insert();
+        reload('page');
+        break;
+      case 'newo':  # -------------- vytvoření nového člena rodiny: osoba+tvori
+        page.oso.insert();
+        tvori.insert_record({id_osoba:page.oso.key(),id_rodina:idr,role:page.rod.t_role});
+        reload('page');
+        break;
+      case 'newro': # -------------- vytvoření rodiny a prvního člena
+        page.rod.r.insert(); page.oso.insert();
+        tvori.insert_record({id_osoba:page.oso.key(),id_rodina:page.rod.r.key(),role:page.rod.t_role});
+        reload('lst');
+        break;
+      case 'newr': # --------------- vytvoření rodiny a připojení nastaveného člena
+        page.rod.r.insert();
+        tvori.insert_record({id_osoba:page.oso.key(),id_rodina:page.rod.r.key(),role:page.rod.t_role});
+        reload('lst');
+        break;
+      case 'edit': # --------------- oprava
+        depth= 'curr';
+        if (!page.oso.same()) {
+          if (page.oso.jmeno.changed() || page.oso.prijmeni.changed() || page.oso.narozeni.changed())
+            depth= 'page';
+          page.oso.save()
+        }
+        if (!page.rod.same()) {
+          page.rod.r.save();
+          if (page.rod.t_role.changed()) {
+            php.akce2_save_role(page.rod.t.key(),page.rod.t_role);
+            depth= 'page';
+          }
+        };
+        evid_lock('off');
+        reload(depth);
+        break;
+      default: error("Uložit co?")
+      }
     }
   }
   # RODINA
@@ -1429,23 +1442,39 @@ form _cmd [,,706,32] { css:'ae_frame'
       warning(ret.html); reload('lst')
   }}
   # ČLENI
-  label [371,9,80,] { title:"<b>Členi:</b>", skill:'yaa;faa;caa' }
+  label [364,9,80,] { title:"<b>Osoba:</b>", skill:'yaa;faa;caa' }
   // ==> ... člen: nový, přidat, vyjmout
   proc change_x(elem) { elem.change(1) }
   button novy_clen [404,6,,] {tag:'x', type:'html', title:'[fa-heart-o] Nový člen',
     skill:'yaa+|yaa+;faa+|faa+;caa+|caa+', help:'Vytvoření nové osoby a její zapojení do rodiny'
-    proc onclick() { var _sex:number, _prijmeni:text
-      // ochrana před vytvářením s access=3
-      not(eq(my_access.get,3));
-      _sex.set(page.oso.sex.get); _prijmeni.set(page.oso.prijmeni.get);
-      set_state('newo');
-      page.oso.sex.set(_sex); page.oso.prijmeni.set(_prijmeni); page.oso.narozeni.set(now);
-      page.oso.access.set(my_access.get);
-      page.rod.t_role.set('d');
-      foreach(page.oso.tagged('I'),change_x); page.rod.t_role.change(1);
-    | eq(my_access.get,3);
-      alert("Ve společném Answeru prosím vkládej rodiny a osoby na kartě Účastníci");
-  } }
+    func onclick() { var _sex:number, _prijmeni:text, elem:ezer
+      if (my_access==3) { // ochrana před vytvářením s access=3
+        alert("Ve společném Answeru prosím vkládej rodiny a osoby na kartě Účastníci");
+        return
+      }
+      switch (choose("Má se vytvořit nový člen zobrazené rodiny nebo samostatná osoba",
+            "nový člen:clen,samostatná osoba:osoba")) {
+      case 'osoba':
+        set_state('newx');
+        page.oso.access= my_access;
+        for (elem of page.oso.tagged('I')) {
+          elem.change(1); 
+        }
+        break;
+      case 'clen':
+        _sex= page.oso.sex; _prijmeni= page.oso.prijmeni;
+        set_state('newo');
+        page.oso.sex= _sex; page.oso.prijmeni= _prijmeni; page.oso.narozeni= now();
+        page.oso.access= my_access;
+        page.rod.t_role= 'd';
+        for (elem of page.oso.tagged('I')) {
+          elem.change(1); 
+        }
+        page.rod.t_role.change(1);
+        break;
+      }
+    } 
+  }
   // PŘIDAT
   button [490,6,,] {tag:'x', title:'[fa-plug] Přidat', skill:'yaa+|yaa+;faa+|faa+;caa+|caa+',
     help:'Výběr osoby z evidovaných a jeho připojení k rodině', format:'d'

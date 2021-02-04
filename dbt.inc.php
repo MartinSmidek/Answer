@@ -30,45 +30,9 @@
       ),
       'activity'=>(object)array());
 
-  // ošetření běhu s testovací databází
-  $answer_db= 'ezer_db2';
-  $answer_dbx= 'ezer_db2_test';
-
-//  $db_test= isset($_SESSION[$ezer_root]['db_test']) && $_SESSION[$ezer_root]['db_test']; 
-//  $answer_dbx= $db_test ? "{$answer_db}_test" : $answer_db;
-  $_SESSION[$ezer_root]['db_test']= 1;
-  $_SESSION[$ezer_root]['ezer_db']= $answer_dbx;
-
-  // přístup k databázím
-  $db= array($answer_db,$answer_db,$answer_db);
-  $dbs_plus= array(
-    array( // lokální - bean
-      'setkani' =>      array(0,'localhost','gandi','','cp1250','setkani',1)),
-    array( // ostré - lukáš
-      'setkani' =>      array(0,'192.168.1.146','gandi','','cp1250','setkani',1)),
-    array( // ostré - dsm
-      'setkani' =>      array(0,'localhost','ymca','JW4YNPTDf4Axkj9','cp1250','setkani',1))
-  );
-  $dbs= array(
-    array_merge(array( // lokální - bean
-      $answer_db =>     array(0,'localhost','gandi','','utf8',$answer_dbx),
-      'ezer_system' =>  array(0,'localhost','gandi','','utf8',$answer_dbx),
-      'ezer_group'  =>  array(0,'localhost','gandi','','utf8','ezer_answer'), 
-      'ezer_kernel' =>  array(0,'localhost','gandi','','utf8')                
-    ), $dbs_plus[0]),
-    array_merge(array( // ostré - matouš
-      $answer_db =>     array(0,'localhost','gandi','r8d0st','utf8',$answer_dbx),
-      'ezer_system' =>  array(0,'localhost','gandi','r8d0st','utf8',$answer_dbx),
-      'ezer_group'  =>  array(0,'localhost','gandi','r8d0st','utf8','ezer_answer'),
-      'ezer_kernel' =>  array(0,'localhost','gandi','r8d0st','utf8','ezer_kernel') 
-    ), $dbs_plus[1]),
-    array_merge(array( // ostré - dsm
-      $answer_db =>     array(0,'localhost','ymca','JW4YNPTDf4Axkj9','utf8',$answer_dbx),
-      'ezer_system' =>  array(0,'localhost','ymca','JW4YNPTDf4Axkj9','utf8',$answer_dbx),
-      'ezer_group'  =>  array(0,'localhost','ymca','JW4YNPTDf4Axkj9','utf8','ezer_answer'),
-      'ezer_kernel' =>  array(0,'localhost','ymca','JW4YNPTDf4Axkj9','utf8','ezer_kernel') 
-    ), $dbs_plus[2])
-  );      
+  // databáze
+  $deep_root= "../files/answer";
+  require_once("$deep_root/dbt.dbs.php");
 
   // definice zápisů do _track
   $tracking= '_track';
@@ -111,7 +75,7 @@
     array( // ostré
       'setkani' =>      array(0,'192.168.1.146','gandi','','cp1250','setkani',1)), // 1=vynechat zálohování
     array( // lokální
-      'setkani' =>      array(0,'localhost','gandi','','cp1250','setkani',1))        // 1=vynechat zálohování
+      'setkani' =>      array(0,'localhost','gandi','radost','cp1250','setkani',1))        // 1=vynechat zálohování
   );
   
   global $EZER;

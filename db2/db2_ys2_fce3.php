@@ -4265,4 +4265,3 @@ function ds_vek($narozeni,$fromday) {
   }
   return $vek;
 }
-?>
