@@ -204,10 +204,12 @@ form _page [,,275,360] {
   # ---------------------------==> . ochrana editace více uživateli
   func onchanged() { akce_lock('on') }
   func akce_lock(on) { var lock:object 
-    lock= php.table_lock(on,'akce',key_akce); 
-    if ((on=='on') && (!lock.ok)) {
-      alert(lock.info);
-      akce_zpet();
+    if (key_akce) {
+      lock= php.table_lock(on,'akce',key_akce); 
+      if ((on=='on') && (!lock.ok)) {
+        alert(conc(lock.info,lock.note));
+        akce_zpet();
+      }
     }
   }
   func akce_zpet() { 
