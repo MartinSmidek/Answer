@@ -69,6 +69,22 @@ div.bila div.Label3 { color:#fff !important; }
 #access_menu span:hover   {
   background-color:#b2b4bf; }
 
+/* hlavní menu - odlišení pro skill=a|m */
+ul.MainMenu li.Active a { text-shadow: 1px 1px 2px black; }
+ul.MainMenu li.a a { color:yellow !important; text-shadow: 1px 1px 2px black; }
+ul.MainMenu li.m a { color:orange !important; text-shadow: 1px 1px 2px black; }
+
+/* podmenu - odlišení pro skill=a|m */
+div.MainTabs li a   { text-shadow: 1px 1px 2px black; }
+div.MainTabs li.a a { color:yellow !important; }
+div.MainTabs li.m a { color:orange !important; }
+  
+/* leftmenu - odlišení pro skill=a|m */
+div.MenuGroup3.a a { color:yellow !important; text-shadow: 1px 1px 2px black; }
+div.MenuGroup3.m a { color:orange !important; text-shadow: 1px 1px 2px black; }
+div.MenuGroup3 li.a { color:yellow !important; text-shadow: 1px 1px 2px black; }
+div.MenuGroup3 li.m { color:orange !important; text-shadow: 1px 1px 2px black; }
+  
 /* úpravy standardu - k Ezer3 */
 
 textarea { resize:none; }    
