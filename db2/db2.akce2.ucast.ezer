@@ -39,6 +39,7 @@ proc onfocus() {
     the_duakce_local.set(the_duakce.get)
   ];
   evid.ctx.obn.enable(eq(the_druh.get,2)); // jen pro obnovy
+  evid.ctx.obm.enable(eq(the_druh.get,2)); // jen pro obnovy
   // souběžné akce
   switch(the_soubeh.get,
   0,{ header.soubeh.display(0) },
@@ -941,6 +942,8 @@ form _evidence [,,623,] { style:'height:fit-content'
       proc onclick () { alert(ask('akce2_skup_renum',the_duakce.get)) } }
     item obn { title:'zapsat skupinky podle LK', skill:'faa|faa+;yaa|yaa+;caa|caa+',
       proc onclick () { alert(ask('akce2_skup_copy',the_duakce.get)); reload(0) } }
+    item obm { title:'zapsat skupinky podle PO', skill:'faa|faa+;yaa|yaa+;caa|caa+',
+      func onclick () { alert(php.akce2_skup_copy(the_duakce,'PO')); reload(0) } }
     item { title:'-obarvit změněné údaje'
       proc onclick () { var ret:object
         hodin_zmeny.set(prompt("zadej stáří obarvených změn v hodinách",72));

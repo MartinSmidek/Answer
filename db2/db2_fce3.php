@@ -3952,6 +3952,7 @@ function akce2_skup_check($akce) {
 # ------------------------------------------------------------------ akce2 skup_get
 # zjištění skupinek podle příjmení VPS/PPS
 # pokud je par.mark=LK vrátí se skupinky z letního kurzu s informací, jestli jsou na této akci
+# pokud je par.mark=PO vrátí se skupinky z předchozí obnovy s informací, jestli jsou na této akci
 function akce2_skup_get($akce,$kontrola,&$err,$par=null) { trace();
 //                                                         debug($par,"akce2_skup_get");
   global $VPS, $tisk_hnizdo;
@@ -3960,11 +3961,12 @@ function akce2_skup_get($akce,$kontrola,&$err,$par=null) { trace();
   $jen_hnizdo= $tisk_hnizdo ? " AND hnizdo=$tisk_hnizdo " : '';
   $skupiny= array();
   // přechod na LK pro par->mark=LK ... a pokud jde o obnovu
-  if ( $par->mark=='LK' ) {
+  if ( $par->mark=='LK' || $par->mark=='PO' ) {
     list($access,$druh,$kdy)= select('access,druh,datum_od','akce',"id_duakce=$akce");
     if ( $druh==2 /*MS obnova*/ ) {
+      $pred_druh= $par->mark=='LK' ? 1 : 2;
       $akce= select('id_duakce','akce',
-        "access=$access AND druh=1 AND datum_od<'$kdy' ORDER BY datum_od DESC LIMIT 1");
+        "access=$access AND druh=$pred_druh AND datum_od<'$kdy' ORDER BY datum_od DESC LIMIT 1");
       $ret->lk= $akce;
     }
     else { $msg[]= "tento výpis má smysl jen pro obnovy MS"; $err= -1; $kontrola= 1; goto end; }
@@ -6400,20 +6402,28 @@ function akce2_jednou_dvakrat($akce,$par,$title,$vypis,$export=false) { trace();
 }
 # ---------------------------------------------------------------------------------- akce2 skup_copy
 # ASK
-# přenese skupinky z LK do Obnovy
-function akce2_skup_copy($obnova) { trace();
+# přenese skupinky z LK do Obnovy nebo z PO do JO
+function akce2_skup_copy($obnova,$podle='LK') { trace();
   $msg= "Kopii nelze provést";
   // najdeme LK
   list($access,$druh,$kdy)= select('access,druh,datum_od','akce',"id_duakce=$obnova");
   if ( $druh==2 /*MS obnova*/ ) {
-    $lk= select('id_duakce','akce',
-      "access=$access AND druh=1 /*MS LK*/ AND datum_od<'$kdy' ORDER BY datum_od DESC LIMIT 1");
+    if ($podle=='LK') {
+      $lk= select('id_duakce','akce',
+        "access=$access AND druh=1 /*MS LK*/ AND datum_od<'$kdy' ORDER BY datum_od DESC LIMIT 1");
+    }
+    else {
+      // má smysl jen pro jarní
+      if (substr($kdy,5,2)>7) { $msg= "tato operace nemá smysl pro PO"; goto end; }
+      $lk= select('id_duakce','akce',
+        "access=$access AND druh=2 /*MS PO */ AND datum_od<'$kdy' ORDER BY datum_od DESC LIMIT 1");
+    }
   }
   else { $msg= "Skupinky z LK lze zkopírovat jen pro obnovy MS"; goto end; }
   // nesmí být rozpracované skupinky
   $skupinky= select('COUNT(*)','pobyt',"skupina!=0 AND id_akce=$obnova");
   if ( $skupinky ) {
-    $msg= "Skupinky na této obnově jsou již částečně navrženy, kopii z LK nelze provést";
+    $msg= "Skupinky na této obnově jsou již částečně navrženy, kopii z $podle nelze provést";
     goto end;
   }
   // vše ok, provedeme přenos ... šlo by to i čistě v SQL
@@ -6422,12 +6432,19 @@ function akce2_skup_copy($obnova) { trace();
   //SET jo.skupina=lk.skupina
   //WHERE jo.id_akce=1255 AND jo.skupina=0  
   $n= 0;
-  $rr= pdo_qry("SELECT i0_rodina,skupina FROM pobyt AS p WHERE id_akce=$lk AND skupina!=0");
-  while ( $rr && (list($idr,$skupina)= pdo_fetch_array($rr)) ) {
+  $rr= pdo_qry("SELECT lk.i0_rodina,lk.skupina,r.nazev
+      FROM pobyt AS lk 
+      JOIN pobyt AS jo ON jo.id_akce=$obnova AND jo.i0_rodina=lk.i0_rodina
+      JOIN rodina AS r ON r.id_rodina=lk.i0_rodina
+      WHERE lk.id_akce=$lk AND lk.skupina!=0
+      ORDER BY skupina");
+  while ( $rr && (list($idr,$skupina,$nazev)= pdo_fetch_array($rr)) ) {
+    display("$skupina = $nazev ($idr)");
+//    $n++;
     $rs= query("UPDATE pobyt SET skupina=$skupina WHERE id_akce=$obnova AND i0_rodina=$idr AND skupina=0");
     $n+= pdo_affected_rows($rs);
   }
-  $msg= "Na obnovu bylo pro $n párů zkopírováno číslo skupinky z LK (pokud ještě číslo neměli)";
+  $msg= "Na obnovu bylo pro $n párů zkopírováno číslo skupinky z $podle (pokud ještě číslo neměli)";
 end:
   return $msg;
 }
@@ -6438,15 +6455,16 @@ function akce2_skup_tisk($akce,$par,$title,$vypis,$export) {  trace();
   $result= (object)array();
   $html= "<table>";
   $ret= akce2_skup_get($akce,0,$err,$par);
+                                                       debug($ret->msg);
   $skupiny= $ret->skupiny;
   // pro par.mark=LK zjistíme účasti rodin na obnově
   $lk= 0;
   $na_kurzu= $na_obnove= $nahrada= array();     // $nahrada = na obnově náhradnici => id_rodina->1
-  if ( $par->mark=='LK' ) {
+  if ( $par->mark=='LK' || $par->mark=='PO' ) {
     // chyba=-1 pro kombinaci par.mark=LK a akce není obnova MS
     if ( $err==-1 ) { $result->html= $ret->msg; display("err=$err");  goto end; }
     $lk= 1;
-    // seznam rodin letního kurzu - účastníci
+    // seznam rodin LK či PO - účastníci
     $rr= pdo_qry("SELECT i0_rodina FROM pobyt AS p
     WHERE p.id_akce={$ret->lk} AND funkce IN (0,1,2,5,6) ");
     while ( $rr && (list($idr,$nazev)= pdo_fetch_array($rr)) ) {
@@ -6527,7 +6545,8 @@ function akce2_skup_tisk($akce,$par,$title,$vypis,$export) {  trace();
   }
   else {
     if ( $lk ) {
-      $html.= "<h3>Skupinky z posledního letního kurzu se škrtnutými nepřihlášenými na obnovu</h3>";
+      $setkani= $par->mark=='LK' ? 'letního kurzu' : 'obnovy';
+      $html.= "<h3>Skupinky z posledního $setkani se škrtnutými nepřihlášenými na obnovu</h3>";
     }
     foreach ($skupiny as $i=>$s) {
       $tab= "<table>";
@@ -6556,7 +6575,8 @@ function akce2_skup_tisk($akce,$par,$title,$vypis,$export) {  trace();
     // pro mark=LK zobraz ty, co nebyly na kurzu
     if ( $lk ) {
       if ( $lk_nebyli ) {
-        $html.= "<h3>Na posledním letním kurzu nebyli</h3>";
+        $posledni= $par->mark=='LK' ? 'posledním letním kurzu' : 'poslední obnově';
+        $html.= "<h3>Na $posledni  nebyli</h3>";
         foreach ($na_obnove as $nazev) {
           if ( $nazev ) {
             $html.= "$nazev<br>";
@@ -6564,7 +6584,7 @@ function akce2_skup_tisk($akce,$par,$title,$vypis,$export) {  trace();
         }
       }
       else {
-        $html.= "<h3>Všichni přihlášení byli na posledním letním kurzu</h3>";
+        $html.= "<h3>Všichni přihlášení byli na posledním setkání</h3>";
       }
     }
     $result->html= $html;
@@ -6719,13 +6739,13 @@ function akce2_skup_hist($akce,$par,$title,$vypis,$export) { trace();
 # ---------------------------------------------------------------------------------- akce2 skup_popo
 # přehled pro tvorbu virtuální obnovy
 function akce2_skup_popo($akce,$par,$title,$vypis,$export) { trace();
-  global $tisk_hnizdo;
-  $jen_hnizdo= $tisk_hnizdo ? " AND hnizdo=$tisk_hnizdo " : '';
   $male_dite= 9; // hranice pro upozornění na malé dítě v rodine
+  $obnova= 1;     //1=jarní 2=podzimní
   $result= (object)array();
   // letošní účastníci
   $letos= $skup_vps= $znami= $stejny_nazev= array();
-  $qry=  "SELECT skupina,r.nazev,r.obec,year(datum_od) as rok,p.funkce as funkce,
+  $qry=  "SELECT skupina,r.nazev,r.obec,year(datum_od) as rok,month(datum_od) as mes,
+            p.funkce as funkce,
             IF(FIND_IN_SET(1,r_umi),1,0) AS _vps,r_ms,
             GROUP_CONCAT(DISTINCT IF(t.role='a',o.id_osoba,'') SEPARATOR '') as id_osoba_m,
             LEFT(GROUP_CONCAT(DISTINCT IF(t.role='a',o.jmeno,'') SEPARATOR ''),1) as jmeno_m,
@@ -6741,12 +6761,13 @@ function akce2_skup_popo($akce,$par,$title,$vypis,$export) { trace();
           JOIN osoba AS o ON s.id_osoba=o.id_osoba
           JOIN tvori AS t ON t.id_osoba=o.id_osoba AND t.id_rodina=p.i0_rodina
           JOIN rodina AS r ON r.id_rodina=p.i0_rodina
-          WHERE id_akce=$akce AND p.funkce IN (0,1,2,5) $jen_hnizdo
+          WHERE id_akce=$akce AND p.funkce IN (0,1,2,5) 
           GROUP BY id_pobyt
           ORDER BY funkce,_vps,r.nazev ";
   $res= pdo_qry($qry);
   while ( $res && ($u= pdo_fetch_object($res)) ) {
     $u->nazev= str_replace(' ','-',$u->nazev);
+    $obnova= $u->mes<7 ? 1 : 2;
     if (isset($stejny_nazev[$u->nazev]))
       $stejny_nazev[$u->nazev]++;
     else
@@ -6885,7 +6906,8 @@ function akce2_skup_popo($akce,$par,$title,$vypis,$export) { trace();
     }
   }
   $html.= "</table>";
-  $note= "<h3>Pomůcka pro vytvoření virtuální obnovy</h3>
+  $obnovy= $obnova==1 ? "Jarní virtuální obnovy" : "Podzimní virtuální obnovy";
+  $note= "<h3>Pomůcka pro vytvoření $obnovy</h3>
     Zobrazují se údaje <ul>
     <li> skupinka a funkce
     <li> počet účastí na LK 
@@ -7119,6 +7141,7 @@ function akce2_tabulka_stat($akce,$par,$title,$vypis,$export=0) { trace();
   $xls.= "\n\n|A$n Výpis byl vygenerován $kdy :: italic";
   $xls.= "\n|close";
 //                                                                display($xls);
+  require_once 'ezer3.1/server/vendor/autoload.php';
   $inf= Excel2007($xls);
   $ref= " Statistika byla vygenerován ve formátu <a href='docs/$fname.xlsx' target='xls'>Excel</a>.";
 //                                                                debug($pobyt,"2");
@@ -8110,6 +8133,7 @@ __XLS;
 __XLS;
   // výstup
                                                                 display($xls);
+  require_once 'ezer3.1/server/vendor/autoload.php';
   $inf= Excel2007($xls,1);
   if ( $inf ) {
     $html= " se nepodařilo vygenerovat - viz začátek chybové hlášky";
@@ -11312,6 +11336,7 @@ __XLS;
     \n|close
 __XLS;
   // výstup
+  require_once 'ezer3.1/server/vendor/autoload.php';
   $inf= Excel2007($xls,1);
 //   $inf= Excel5($xls,1);
   if ( $inf ) {
@@ -13534,6 +13559,7 @@ function mail2_sql_try($qry,$vsechno=0,$export=0) {  trace();
 # vygeneruje do Excelu seznam adresátů
 function mail2_gen_excel($gq,$nazev) { trace();
   global $ezer_root;
+  require_once 'ezer3.1/server/vendor/autoload.php';
   $href= "CHYBA!";
   // úprava dotazu
   $gq= str_replace('&gt;','>',$gq);
@@ -14112,16 +14138,16 @@ function db2_info($par) {
   global $ezer_root,$ezer_db,$USER;
   $org= isset($par->org) ? $par->org : 0;
   $tabs= array(
-    'akce'   => (object)array('cond'=>"deleted=''",'access'=>$org),
+    'akce'   => (object)array('cond'=>"1",'access'=>$org),
     'cenik'  => (object)array('cond'=>"deleted=''",'access'=>0),
-    'rodina' => (object)array('cond'=>"deleted=''",'access'=>$org),
-    'tvori'  => (object)array('cond'=>"deleted=''",'access'=>0),
+    'rodina' => (object)array('cond'=>"1",'access'=>$org),
+    'tvori'  => (object)array('cond'=>"1",'access'=>0),
     'osoba'  => (object)array('cond'=>"deleted=''",'access'=>$org),
-    'spolu'  => (object)array('cond'=>"deleted=''",'access'=>0),
-    'pobyt'  => (object)array('cond'=>"deleted=''",'access'=>0),
-    'dopis'  => (object)array('cond'=>"deleted=''",'access'=>$org),
-    'mailist'=> (object)array('cond'=>"deleted=''",'access'=>$org),
-    'mail'   => (object)array('cond'=>"deleted=''",'access'=>0),
+    'spolu'  => (object)array('cond'=>"1",'access'=>0),
+    'pobyt'  => (object)array('cond'=>"1",'access'=>0),
+    'dopis'  => (object)array('cond'=>"1",'access'=>$org),
+    'mailist'=> (object)array('cond'=>"1",'access'=>$org),
+    'mail'   => (object)array('cond'=>"1",'access'=>0),
     '_user'  => (object)array('cond'=>"deleted=''",'access'=>$org)
    );
   $html= '';
@@ -14137,7 +14163,7 @@ function db2_info($par) {
   foreach ($tabs as $tab=>$desc) {
     $tab_= strtoupper($tab);
     if ($desc->access) {
-      list($pocet,$access)= select("COUNT(*),SUM(IF(access&$org,0,1))","$db.$tab",1);
+      list($pocet,$access)= select("COUNT(*),SUM(IF(access&$org,0,1))","$db.$tab",$desc->cond);
       $red= $access ? ";background:lightpink" : '';
       $td= $org ? "<td style='text-align:right$red'>$access</td>" : '';
     }
