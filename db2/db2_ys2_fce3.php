@@ -2636,6 +2636,7 @@ function kasa_export($cond,$file,$db,$title) { trace();
   $xls.= "|A$n Výpis ze dne $kdy::italic";
   $xls.= "\n|close";
 //                                      display($xls);
+  require_once 'ezer3.1/server/vendor/autoload.php';
   $inf= Excel2007($xls,1);
   if ( $inf ) {
     $html.= "Export se nepovedlo vygenerovat ($inf)";
@@ -3412,6 +3413,7 @@ function ds_hoste($orders,$rok) {  #trace('','win1250');
 # definice Excelovského listu - zálohové faktury
 function ds_xls_zaloha($order) {  trace();//'','win1250');
   global $ezer_path_serv;
+  require_once 'ezer3.1/server/vendor/autoload.php';
   $html= " nastala chyba";
   $name= "zal_$order";
   // vytvoření sešitu s fakturou
@@ -3426,6 +3428,7 @@ function ds_xls_zaloha($order) {  trace();//'','win1250');
   $test= 1;
   if ( $test )
     file_put_contents("xls.txt",$xls);
+  require_once 'ezer3.1/server/vendor/autoload.php';
   $inf= Excel2007(/*w*u*/($xls),1);
   if ( $inf ) {
     $html= " nastala chyba";
@@ -3508,6 +3511,7 @@ end:
 # *ubytování
 function ds_xls_faktury($order) {  trace(); //'','win1250');
   global $ds_cena;
+  require_once 'ezer3.1/server/vendor/autoload.php';
   $html= " nastala chyba";
   $test= 1;
   $x= ds_faktury($order);
@@ -3724,6 +3728,7 @@ __XLS;
     file_put_contents("xls.txt",$final_xls);
   time_mark('ds_xls_faktury Excel5');
 //  display($final_xls);
+  require_once 'ezer3.1/server/vendor/autoload.php';
   $inf= Excel2007($final_xls,1);
   if ( $inf ) {
     $html= " nastala chyba";
