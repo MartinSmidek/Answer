@@ -1813,11 +1813,12 @@ form _aktivity [,,623,] { style:'height:fit-content'
   view a: table akce
   view p: table pobyt { join:'ON a.id_duakce=p.id_akce' }
   view s: table spolu { join:'USING(id_pobyt)' }
-  browse akc [ 0,60,,] { rows:15, qry_rows:1
+  browse akc [ 0,60,,] { rows:15, qry_rows:1, css_rows:"zru,1:neucast"
     show ida { data:a.id_duakce }
     show idp { data:p.id_pobyt }
     show ids { data:s.id_spolu }
     show org { data:a.access }
+    show zru { data:a.zruseno }
     show rok  [,, 30,] { title:'rok', expr:"YEAR(a.datum_od)", format:'q*s-'
       css_cell:'org,0:,1:ezer_ys,2:ezer_fa,3:ezer_db' }
     show akce [,,150,] { title:'název', data:a.nazev, format:'q*s' }

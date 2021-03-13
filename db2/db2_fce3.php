@@ -3033,7 +3033,7 @@ function ucast2_browse_ask($x,$tisk=false) {
       LEFT JOIN (SELECT COUNT(*) AS _n,px.i0_rodina
         FROM pobyt AS px
         JOIN akce AS ax ON ax.id_duakce=px.id_akce
-        WHERE ax.datum_od<='{$akce->datum_od}' AND ax.druh=1 AND ax.spec=0 AND ax.zruseno
+        WHERE ax.datum_od<='{$akce->datum_od}' AND ax.druh=1 AND ax.spec=0 AND ax.zruseno=0
           AND px.funkce NOT IN ($neucasti)
         GROUP BY  px.i0_rodina
       ) AS _ucasti ON _ucasti.i0_rodina=p.i0_rodina AND p.i0_rodina
@@ -3055,8 +3055,8 @@ function ucast2_browse_ask($x,$tisk=false) {
           $rodiny.= ",$i0r";
       }
     }
-//                                                         debug($pobyt,"pobyt");
-//                                                         debug($rodina_pobyt,"rodina_pobyt");
+//                                                         debug($pobyt[58365],"pobyt");
+//                                                         debug($rodina_pobyt[2473],"rodina_pobyt");
     # seznam účastníků akce - podle podmínky
     $qu= pdo_qry("
       SELECT GROUP_CONCAT(id_pobyt) AS _ids_pobyt,s.*,o.narozeni,
@@ -6809,7 +6809,7 @@ function akce2_skup_popo($akce,$par,$title,$vypis,$export) { trace();
 //                                                         debug($letos);
   foreach ($letos as $muz=>$info) {
     // minulé účasti na LK
-    $n= 0;
+    $n= $n_lk= 0;
     $qry= " SELECT p.id_akce,druh,skupina,year(datum_od) as rok,
               IF(a.nazev LIKE 'MLS%','m',IF(druh=2,'o','')) AS _druh
             FROM akce AS a
@@ -6822,6 +6822,7 @@ function akce2_skup_popo($akce,$par,$title,$vypis,$export) { trace();
     $ucasti= '';
     while ( $res && ($r= pdo_fetch_object($res)) ) {
       $n++;
+      if ($r->druh==1) $n_lk++;
       // minulé skupinky - včetně obnov
       $qry_s= "
             SELECT GROUP_CONCAT(DISTINCT IF(t.role='a',o.id_osoba,'') SEPARATOR '') as _muz
@@ -6865,8 +6866,7 @@ function akce2_skup_popo($akce,$par,$title,$vypis,$export) { trace();
       }
     }
     // přidáme účasti na jiném kurzu
-//    if ($info->ms) $n= "$n+{$info->ms}";
-    $info->ms= $info->ms ? "$n+{$info->ms}" : $n;
+    $info->ms= $info->ms ? "$n_lk+{$info->ms}" : $n_lk;
     // redakce výpisu
     if ($info->skup && $info->vps!='VPS') {
       $vps= isset($skup_vps[$info->skup]) ? $skup_vps[$info->skup] : '';
@@ -6882,7 +6882,8 @@ function akce2_skup_popo($akce,$par,$title,$vypis,$export) { trace();
   $th= "th style='border-top:1px dotted grey;text-align:right'";
   $tl= "th style='border-top:1px dotted grey;text-align:left'";
   $cast= 'ucastnici';
-  $html= "<h3>Účastníci ... s kým a kdy byli ve skupince (2019=LK, 2019o=obnova, 2020m=MLS)</h3><table>";
+  $html= "<h3>Účastníci ... s kým a kdy byli ve skupince 
+          (v roce zakončeném: 'o' na obnově, 'm' na mlsu, jinak na letním kurzu)</h3><table>";
   foreach ($letos as $muz=>$info) {
     $skup= $info->skupina ? "{$info->skupina}.&nbsp;skup. " : '';
     if ($cast=='ucastnici' && $info->vps=='(vps)') {
