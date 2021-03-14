@@ -4016,7 +4016,8 @@ function akce2_skup_get($akce,$kontrola,&$err,$par=null) { trace();
           JOIN osoba AS o ON s.id_osoba=o.id_osoba
           LEFT JOIN tvori AS t ON t.id_osoba=o.id_osoba AND id_rodina=i0_rodina
           LEFT JOIN rodina AS r USING(id_rodina)
-          WHERE p.id_pobyt IN ({$s->_skupina}) AND t.role IN ('a','b') $jen_hnizdo
+          WHERE p.id_pobyt IN ({$s->_skupina}) AND funkce IN (0,1,2,5,6) AND t.role IN ('a','b') 
+            $jen_hnizdo
           GROUP BY id_pobyt
           ORDER BY IF(funkce IN (1,2),1,2), nazev";
       }
@@ -6455,11 +6456,11 @@ function akce2_skup_tisk($akce,$par,$title,$vypis,$export) {  trace();
   $result= (object)array();
   $html= "<table>";
   $ret= akce2_skup_get($akce,0,$err,$par);
-                                                       debug($ret->msg);
+                                                       debug($ret);
   $skupiny= $ret->skupiny;
   // pro par.mark=LK zjistíme účasti rodin na obnově
   $lk= 0;
-  $na_kurzu= $na_obnove= $nahrada= $vps= array();     // $nahrada = na obnově náhradnici => id_rodina->1
+  $na_kurzu= $na_obnove= $nahrada= $vps= $umi_vps= array();     // $nahrada = na obnově náhradnici => id_rodina->1
   if ( $par->mark=='LK' || $par->mark=='PO' ) {
     // chyba=-1 pro kombinaci par.mark=LK a akce není obnova MS
     if ( $err==-1 ) { $result->html= $ret->msg; display("err=$err");  goto end; }
@@ -6473,7 +6474,8 @@ function akce2_skup_tisk($akce,$par,$title,$vypis,$export) {  trace();
     // seznam rodin obnovy
     $lk_nebyli= 0;
     $rr= pdo_qry("
-      SELECT i0_rodina,CONCAT(nazev,' ',GROUP_CONCAT(jmeno ORDER BY role SEPARATOR ' a ')),funkce
+      SELECT i0_rodina,CONCAT(nazev,' ',GROUP_CONCAT(jmeno ORDER BY role SEPARATOR ' a ')),funkce,
+        FIND_IN_SET('1',r_umi)
       FROM pobyt AS p
       JOIN rodina AS r ON r.id_rodina=i0_rodina
       JOIN tvori AS t USING (id_rodina)
@@ -6481,7 +6483,7 @@ function akce2_skup_tisk($akce,$par,$title,$vypis,$export) {  trace();
       WHERE id_akce=$akce AND role IN ('a','b') -- AND funkce NOT IN (9)
       GROUP BY i0_rodina
       ORDER BY nazev");
-    while ( $rr && (list($idr,$nazev,$funkce)= pdo_fetch_array($rr)) ) {
+    while ( $rr && (list($idr,$nazev,$funkce,$umi)= pdo_fetch_array($rr)) ) {
       $x= '';
       if ( !isset($na_kurzu[$idr]) ) {
         $lk_nebyli++;
@@ -6489,6 +6491,7 @@ function akce2_skup_tisk($akce,$par,$title,$vypis,$export) {  trace();
       }
       $na_obnove[$idr]= $x;
       if ( $funkce==1 ) $vps[$idr]= 1;
+      elseif ( $umi )   $umi_vps[$idr]= 1;
       if ( $funkce==9 ) $nahrada[$idr]= 1;
     }
   }
@@ -6549,7 +6552,8 @@ function akce2_skup_tisk($akce,$par,$title,$vypis,$export) {  trace();
     foreach ($skupiny as $i=>$s) {
       $tab= "<table>";
       foreach ($s as $c) {
-        $nazev= $c->_nazev.($lk && isset($vps[$c->i0_rodina]) ? " - VPS" : '');
+        $nazev= $c->_nazev.($lk ? (isset($vps[$c->i0_rodina]) 
+            ? " - VPS" : (isset($umi_vps[$c->i0_rodina]) ? " (vps)" : '')) : '');
         $pokoj= $lk ? '' : $c->pokoj;
         if ( $lk && !isset($na_obnove[$c->i0_rodina]) ) {
           $nazev= "<s>$nazev</s>";
@@ -6587,7 +6591,7 @@ function akce2_skup_tisk($akce,$par,$title,$vypis,$export) {  trace();
         $n= 0; $pary= '';
         foreach ($na_obnove as $idr=>$nazev) {
           if ( $nazev ) {
-            $pary.= "$nazev".(isset($vps[$idr])?' - VPS':'')."<br>";
+            $pary.= "$nazev".(isset($vps[$idr])?' - VPS':(isset($umi_vps[$idr]) ? " (vps)" : ''))."<br>";
             $n++;
           }
         }
