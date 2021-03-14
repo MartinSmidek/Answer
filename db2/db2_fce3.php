@@ -6549,7 +6549,7 @@ function akce2_skup_tisk($akce,$par,$title,$vypis,$export) {  trace();
     foreach ($skupiny as $i=>$s) {
       $tab= "<table>";
       foreach ($s as $c) {
-        $nazev= $c->_nazev;
+        $nazev= $c->_nazev.($lk && isset($vps[$c->i0_rodina]) ? " - VPS" : '');
         $pokoj= $lk ? '' : $c->pokoj;
         if ( $lk && !isset($na_obnove[$c->i0_rodina]) ) {
           $nazev= "<s>$nazev</s>";
