@@ -6459,7 +6459,7 @@ function akce2_skup_tisk($akce,$par,$title,$vypis,$export) {  trace();
   $skupiny= $ret->skupiny;
   // pro par.mark=LK zjistíme účasti rodin na obnově
   $lk= 0;
-  $na_kurzu= $na_obnove= $nahrada= array();     // $nahrada = na obnově náhradnici => id_rodina->1
+  $na_kurzu= $na_obnove= $nahrada= $vps= array();     // $nahrada = na obnově náhradnici => id_rodina->1
   if ( $par->mark=='LK' || $par->mark=='PO' ) {
     // chyba=-1 pro kombinaci par.mark=LK a akce není obnova MS
     if ( $err==-1 ) { $result->html= $ret->msg; display("err=$err");  goto end; }
@@ -6488,6 +6488,7 @@ function akce2_skup_tisk($akce,$par,$title,$vypis,$export) {  trace();
         $x= $nazev . ($funkce==9 ? " (náhradníci)" : '');
       }
       $na_obnove[$idr]= $x;
+      if ( $funkce==1 ) $vps[$idr]= 1;
       if ( $funkce==9 ) $nahrada[$idr]= 1;
     }
   }
@@ -6544,19 +6545,20 @@ function akce2_skup_tisk($akce,$par,$title,$vypis,$export) {  trace();
     $result->expr= null;
   }
   else {
-    if ( $lk ) {
-      $setkani= $par->mark=='LK' ? 'letního kurzu' : 'obnovy';
-      $html.= "<h3>Skupinky z posledního $setkani se škrtnutými nepřihlášenými na obnovu</h3>";
-    }
+    $xn= 0; $tabulka= '';
     foreach ($skupiny as $i=>$s) {
       $tab= "<table>";
       foreach ($s as $c) {
         $nazev= $c->_nazev;
         $pokoj= $lk ? '' : $c->pokoj;
-        if ( $lk && !isset($na_obnove[$c->i0_rodina]) )
+        if ( $lk && !isset($na_obnove[$c->i0_rodina]) ) {
           $nazev= "<s>$nazev</s>";
-        elseif ( $lk && isset($nahrada[$c->i0_rodina]) )
+          $xn++;
+        }
+        elseif ( $lk && isset($nahrada[$c->i0_rodina]) ) {
           $nazev= "<s>$nazev (náhradníci)</s>";
+          $xn++;
+        }
         if ( $i==$c->id_pobyt )
           $tab.= "<tr><th>{$c->skupina}</th><th>$nazev</th><th>$pokoj</th></tr>";
         else
@@ -6564,24 +6566,33 @@ function akce2_skup_tisk($akce,$par,$title,$vypis,$export) {  trace();
       }
       $tab.= "</table>";
       if ( $n%2==0 )
-        $html.= "<tr><td>&nbsp;</td></tr><tr><td valign='top'>$tab</td>";
+        $tabulka.= "<tr><td>&nbsp;</td></tr><tr><td valign='top'>$tab</td>";
       else
-        $html.= "<td valign='top'>$tab</td></tr>";
+        $tabulka.= "<td valign='top'>$tab</td></tr>";
       $n++;
     }
     if ( $n%2==1 )
-      $html.= "<td></td></tr>";
-    $html.= "</table>";
+      $tabulka.= "<td></td></tr>";
+    $tabulka.= "</table>";
+    if ( $lk ) {
+      $setkani= $par->mark=='LK' ? 'letního kurzu' : 'obnovy';
+      $html.= "<h3>Skupinky z posledního $setkani se škrtnutými (je jich $xn)
+        nepřihlášenými na obnovu</h3>$tabulka";
+    }
+    else 
+      $html.= $tabulka;
     // pro mark=LK zobraz ty, co nebyly na kurzu
     if ( $lk ) {
       if ( $lk_nebyli ) {
-        $posledni= $par->mark=='LK' ? 'posledním letním kurzu' : 'poslední obnově';
-        $html.= "<h3>Na $posledni  nebyli</h3>";
-        foreach ($na_obnove as $nazev) {
+        $n= 0; $pary= '';
+        foreach ($na_obnove as $idr=>$nazev) {
           if ( $nazev ) {
-            $html.= "$nazev<br>";
+            $pary.= "$nazev".(isset($vps[$idr])?' - VPS':'')."<br>";
+            $n++;
           }
         }
+        $posledni= $par->mark=='LK' ? 'posledním letním kurzu' : 'poslední obnově';
+        $html.= "<h3>Na $posledni  nebylo $n párů:</h3>$pary";
       }
       else {
         $html.= "<h3>Všichni přihlášení byli na posledním setkání</h3>";
