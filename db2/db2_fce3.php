@@ -12907,34 +12907,34 @@ function mail2_personify($obsah,$vars,$id_pobyt,&$err) { debug($vars,"mail2_pers
         $val= $ret->mail;
       }
       break;
-    case 'mistnost_popo':
-      $mistnosti= array(
-        "",
-        "https://bbb.ff.upol.cz/b/ffb-wtx-z5o-oc8",
-        "https://bbb.ff.upol.cz/b/ffb-crf-nlf-isl",
-        "https://bbb.ff.upol.cz/b/ffb-jmf-ssz-j1z",
-        "https://bbb.ff.upol.cz/b/ffb-luk-xur-kzq",
-        "https://bbb.ff.upol.cz/b/ffb-8ks-nu5-xln",
-        "https://bbb.ff.upol.cz/b/ffb-ssu-q5i-ch8",
-        "https://bbb.ff.upol.cz/b/ffb-a5p-7dq-b5r",
-        "https://bbb.ff.upol.cz/b/ffb-fjd-gqw-6nf",
-        "https://bbb.ff.upol.cz/b/ffb-za3-ypq-wat",
-        "https://bbb.ff.upol.cz/b/ffb-s98-fog-msn",
-        "https://bbb.ff.upol.cz/b/ffb-irc-xp3-y6d",
-        "https://bbb.ff.upol.cz/b/ffb-tyt-mdx-ex0",
-        "https://bbb.ff.upol.cz/b/ffb-ekb-8yu-tk0",
-        "https://bbb.ff.upol.cz/b/ffb-fjn-mhx-ctt",
-        "https://bbb.ff.upol.cz/b/ffb-aot-rlk-vdr",
-        "https://bbb.ff.upol.cz/b/ffb-6yc-iml-3o4",
-        "https://bbb.ff.upol.cz/b/ffb-oi5-oe0-r76",
-        "https://bbb.ff.upol.cz/b/ffb-l6e-6rj-m3a",
-        "https://bbb.ff.upol.cz/b/ffb-efq-orm-awj",
-        "https://bbb.ff.upol.cz/b/ffb-2ac-axq-ew4"
-      );
-      $skup0= str_pad($skupina,2,'0',STR_PAD_LEFT);
-      $misto= $mistnosti[$skupina];
-      $val= "<a href='$misto'>Skupinka $skup0 Kromeriz</a> ($misto)";
-      break;
+//    case 'mistnost_popo':
+//      $mistnosti= array(
+//        "",
+//        "https://bbb.ff.upol.cz/b/ffb-wtx-z5o-oc8",
+//        "https://bbb.ff.upol.cz/b/ffb-crf-nlf-isl",
+//        "https://bbb.ff.upol.cz/b/ffb-jmf-ssz-j1z",
+//        "https://bbb.ff.upol.cz/b/ffb-luk-xur-kzq",
+//        "https://bbb.ff.upol.cz/b/ffb-8ks-nu5-xln",
+//        "https://bbb.ff.upol.cz/b/ffb-ssu-q5i-ch8",
+//        "https://bbb.ff.upol.cz/b/ffb-a5p-7dq-b5r",
+//        "https://bbb.ff.upol.cz/b/ffb-fjd-gqw-6nf",
+//        "https://bbb.ff.upol.cz/b/ffb-za3-ypq-wat",
+//        "https://bbb.ff.upol.cz/b/ffb-s98-fog-msn",
+//        "https://bbb.ff.upol.cz/b/ffb-irc-xp3-y6d",
+//        "https://bbb.ff.upol.cz/b/ffb-tyt-mdx-ex0",
+//        "https://bbb.ff.upol.cz/b/ffb-ekb-8yu-tk0",
+//        "https://bbb.ff.upol.cz/b/ffb-fjn-mhx-ctt",
+//        "https://bbb.ff.upol.cz/b/ffb-aot-rlk-vdr",
+//        "https://bbb.ff.upol.cz/b/ffb-6yc-iml-3o4",
+//        "https://bbb.ff.upol.cz/b/ffb-oi5-oe0-r76",
+//        "https://bbb.ff.upol.cz/b/ffb-l6e-6rj-m3a",
+//        "https://bbb.ff.upol.cz/b/ffb-efq-orm-awj",
+//        "https://bbb.ff.upol.cz/b/ffb-2ac-axq-ew4"
+//      );
+//      $skup0= str_pad($skupina,2,'0',STR_PAD_LEFT);
+//      $misto= $mistnosti[$skupina];
+//      $val= "<a href='$misto'>Skupinka $skup0 Kromeriz</a> ($misto)";
+//      break;
     case 'skupinka_popo':
       $ida= select('id_akce','pobyt',"id_pobyt=$id_pobyt");
       $tab= "<table>";
@@ -12958,7 +12958,7 @@ function mail2_personify($obsah,$vars,$id_pobyt,&$err) { debug($vars,"mail2_pers
         $tab.= "<tr><th>$par</th><td>$tel</td><td>$mail</td></tr>";
       }
       $tab.= "</table>";
-      $val= "SKUPINKA $skupina $tab";
+      $val= "<big><b><u>SKUPINKA $skupina</u></b></big> $tab";
       $val= "<div style='background-color:#eeeeee;margin-left:15px'>$val</div>";
       break;
     }
@@ -12972,10 +12972,10 @@ function mail2_personify($obsah,$vars,$id_pobyt,&$err) { debug($vars,"mail2_pers
 function mail2_personify_help() {
   $html= "
     <b>{akce_cena}</b> pokud má akce definovaný ceník, vloží rozpis platby účastníka<br><br>
-    <b>{skupinka_popo}</b> pro VPS vloží seznam členů skupiny s maily 
-      a návrh propojení do video skupinky<br><br>
-    <b>{mistnost_popo}</b> pro VPS vloží odkaz na konrefenční místnost
+    <b>{skupinka_popo}</b> pro VPS vloží seznam členů skupiny s maily a telefony<br>
+    <br>
     ";
+//    <b>{mistnost_popo}</b> pro VPS vloží odkaz na konrefenční místnost<br>
   return $html;
 }
 # ----------------------------------------------------------------------------------- mail2 mai_info
