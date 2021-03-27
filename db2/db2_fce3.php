@@ -336,14 +336,11 @@ function akce2_info($id_akce,$text=1) { trace();
       // počty v hnízdech
       $hn= $p->hnizdo;
       if (!isset($hnizdo[$hn]))
-        $hnizdo[$hn]= array(
-            'ucasti'=>0,'vps'=>0, 'nov'=>0, 'rep'=>0, 'pec'=>0, 'det'=>0, 'dos'=>0, 'chu'=>0
-            );
-      $hnizdo[$hn]['ucasti']++;
+        $hnizdo[$hn]= array('vps'=>0, 'nov'=>0, 'rep'=>0, 'pec'=>0, 'det'=>0, 'dos'=>0, 'chu'=>0);
       if (!in_array($fce,array(14,10,9,99))) {
         $hnizdo[$hn]['vps']+= ($fce==1||$fce==2) ? 1 : 0;
-        $hnizdo[$hn]['nov']+= $p->_ucasti_ms==0 ? 1 : 0;
-        $hnizdo[$hn]['rep']+= $p->_ucasti_ms>0 && $fce!=1 && $fce!=2? 1 : 0;
+        $hnizdo[$hn]['nov']+= $fce==0 && $p->_ucasti_ms==0 ? 1 : 0;
+        $hnizdo[$hn]['rep']+= $fce==0 && $p->_ucasti_ms>0 ? 1 : 0;
         $hnizdo[$hn]['dos']+= $p->_muzu+$p->_zen;
         $hnizdo[$hn]['chu']+= $p->_chuv;
         $hnizdo[$hn]['det']+= $p->_deti;
@@ -491,26 +488,30 @@ function akce2_info($id_akce,$text=1) { trace();
         for ($h= 0; $h<count($hnizda); $h++) {
           $hn= $h+1 % count($hnizda)-1;
           // počty a odhad
-          $n_ucast= $hnizdo[$hn]['ucasti'];
           $n_det= $hnizdo[$hn]['det'];
           $n_vps= $hnizdo[$hn]['vps'];
           $n_nov= $hnizdo[$hn]['nov'];
           $n_rep= $hnizdo[$hn]['rep'];
           $n_dos= $hnizdo[$hn]['dos'];
           $n_chu= $hnizdo[$hn]['chu'];
-          $osob= 
-          // čísla česky
+          $n_pec= $hnizdo[$hn]['pec'];
+          // úvaha o pečounech
+          $deti= $n_det - 2*$n_chu;
+          $pec_odhad= $deti > 0 ? ceil($deti/2) : 0;
+          $x_pec= $pec_odhad>$n_pec ? $pec_odhad-$n_pec : 0;
+          // počty česky
           $n_nov= je_1_2_5($n_nov,"nováček,nováčci,nováčků");
           $n_rep= je_1_2_5($n_rep,"repetent,repetenti,repetentů");
           $n_pec= $n_pec ? 'a '.je_1_2_5($n_pec,"pečoun,pečouni,pečounů") : '';
+          $x_pec= $x_pec ? '(chybí cca '.je_1_2_5($x_pec,"pečoun,pečouni,pečounů").')' : '';
           $n_dos= je_1_2_5($n_dos,"dospělý,dospělí,dospělých");
           $n_det= $n_det 
               ? 'a '.je_1_2_5($n_det,"dítě,děti,dětí")
-                .($n_chu ? " z toho ".je_1_2_5($n_chu,"chůva,chůvy,chův") : '')
+                .($n_chu ? " (z toho ".je_1_2_5($n_chu,"chůva,chůvy,chův").')' : '')
               : '';
-          $hniz= $h ? "<b>$hnizda[$h]</b>" : $hnizda[$h];
           // text
-          $html.= "<li>$hniz - $n_dos $n_det $n_pec";
+          $hniz= $h ? "<b>$hnizda[$h]</b>" : $hnizda[$h];
+          $html.= "<li>$hniz - $n_dos $n_det $n_pec $x_pec";
           $html.= "<br>páry: $n_vps VPS, $n_nov, $n_rep";
         }
         $html.= "</ul>";
