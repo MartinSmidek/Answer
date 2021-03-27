@@ -14,6 +14,10 @@ $abs_root=  $_SESSION[$ezer_root]['abs_root'];
 require_once("$abs_root/skins/colors.php");
 
 echo <<<__EOD
+/* kompatibilita s Awesome Font verze 5 - klíč &awe=5 */
+i.fa { font-family: "Font Awesome 5 Free","FontAwesome" !important; }
+
+
 /* Android */
 body { position:absolute; width:100%; height:100%; }
 #paticka { bottom:0; }

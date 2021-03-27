@@ -59,7 +59,7 @@
   $app_last_access= "{$app}_last_access";
 
   $k= substr($kernel,4,1)=='3' ? '3' : '';
-  $app_js= array("/db2/ds_fce$k.js","/db2/db2_fce$k.js");
+  $app_js= array("db2/ds_fce$k.js","db2/db2_fce$k.js");
   
   $app_css= [ 
       "db2/db2.css.php=skin",

@@ -59,11 +59,11 @@
   $app_last_access= "ms_last_access";
 
   $k= '3';
-  $app_js= array("/db2/ds_fce3.js","/db2/db2_fce3.js");
+  $app_js= array("db2/ds_fce3.js","db2/db2_fce3.js");
   
   $app_css= [ 
       "db2/db2.css.php=skin",
-      "/$kernel/client/wiki.css"
+      "$kernel/client/wiki.css"
    ];
 
   //  require_once("answer.php");

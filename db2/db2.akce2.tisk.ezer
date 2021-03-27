@@ -458,6 +458,11 @@ menu m {type:'left', active:*
 #                                         ,cnd:"p.funkce NOT IN (99) AND p.i0_rodina AND role IN ('a','b')"
                                         ,tit:'ID,příjmení:15,jména:20,na MS:6,funkce,VPS:6,^'
                                         ,fld:'key_rodina,prijmeni,jmena,x_ms,_vps,funkce,^id_pobyt'}}
+    item {title:'Účastníci / příprava hnízd'                                                 skill:'y;f;c'
+                                        ,par:°{typ:'nut',exp:'Excel2'
+                                        ,cnd:"p.funkce NOT IN (99)"
+                                        ,tit:'ID,příjmení:15,jména:20,na MS:6,funkce,VPS:6,^'
+                                        ,fld:'key_rodina,prijmeni,jmena,x_ms,_vps,funkce,vek_deti,^id_pobyt'}}
     item {title:'Chůvy'                                                                      skill:'y;f;c'
                                         ,par:°{typ:'j',exp:'Excel2',cnd:"funkce!=99",hav:"s.s_role IN (5)"
                                         ,tit:'příjmení:15,jméno:12,věk:5,obec:25,psč:7,ulice:25,telefon:20,e-mail:30,pečuje o:20,poznámky:30,poznámka k pobytu rodiny:30'

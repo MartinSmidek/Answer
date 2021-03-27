@@ -111,11 +111,11 @@
     $cookie==2 ? "ch" : "db" );
 
   $k= substr($kernel,4,1)=='3' ? '3' : '';
-  $app_js= array("/db2/ds_fce$k.js","/db2/db2_fce$k.js");
+  $app_js= array("db2/ds_fce$k.js","db2/db2_fce$k.js");
   
   $app_css= [ // $choice_css,
-      $kernel=='ezer3.1' ? "$rel_root/db2/db2.css.php=skin" : "$rel_root/db2/db2.css",
-      "/$kernel/client/wiki.css"
+      $kernel=='ezer3.1' ? "db2/db2.css.php=skin" : "db2/db2.css",
+      "$kernel/client/wiki.css"
    ];
   //  require_once("answer.php");
   $add_options= (object) [
