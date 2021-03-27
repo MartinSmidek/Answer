@@ -473,14 +473,6 @@ function akce2_info($id_akce,$text=1) { trace();
        . "<br><b>celkem $_osob</b>"
       . ( $web_online ? "<hr>přihlášky z webu: $_web_onln".($web_novi ? ", z toho $_web_novi" : '') : '')
        : "Akce byla vložena do databáze ale nemá zatím žádné účastníky";
-      if ( $odhlaseni + $neprijeli + $nahradnici > 0 ) {
-        $html.= "<br><hr>";
-        $msg= array();
-        if ( $odhlaseni ) $msg[]= "odhlášeno: $_pobyt_o (bez storna)";
-        if ( $neprijeli ) $msg[]= "zrušeno: $_pobyt_x (nepřijeli, aplikovat storno)";
-        if ( $nahradnici ) $msg[]= "náhradníci: $_pobyt_n, celkem $_pobyt_no";
-        $html.= implode('<br>',$msg);
-      }
       if ( $_hnizda && $akce_ms) {
         $html.= ", takto rozřazených do hnízd: <ul>";
         array_unshift($hnizda,"<i>nezařazeno</i>"); 
@@ -515,6 +507,14 @@ function akce2_info($id_akce,$text=1) { trace();
           $html.= "<br>páry: $n_vps VPS, $n_nov, $n_rep";
         }
         $html.= "</ul>";
+      }
+      if ( $odhlaseni + $neprijeli + $nahradnici > 0 ) {
+        $html.= "<br><hr>";
+        $msg= array();
+        if ( $odhlaseni ) $msg[]= "odhlášeno: $_pobyt_o (bez storna)";
+        if ( $neprijeli ) $msg[]= "zrušeno: $_pobyt_x (nepřijeli, aplikovat storno)";
+        if ( $nahradnici ) $msg[]= "náhradníci: $_pobyt_n, celkem $_pobyt_no";
+        $html.= implode('<br>',$msg);
       }
       if ( $err + $err2 + $err3 + $err4> 0 ) {
         $html.= "<br><hr><b style='color:red'>POZOR:</b> ";
