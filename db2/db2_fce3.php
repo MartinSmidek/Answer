@@ -4437,116 +4437,124 @@ function akce2_hnizda($akce,$par,$title,$vypis,$export=false) { trace();
   $hnizda= select('hnizda','akce',"id_duakce=$akce");
   $hnizda= preg_split("~\s*,\s*~",$hnizda);
                                          debug($hnizda,"hnizdo=$tisk_hnizdo");
-  array_unshift($hnizda,'nezařazení');
-  foreach ($hnizda as $h=>$hnizdo) {
+  array_unshift($hnizda,"<i>nezařazeno</i>");
+
+  $tables= '';
+  for ($h= 0; $h<count($hnizda); $h++) {
+    $hn= $h+1 % count($hnizda)-1;
+
+//  foreach ($hnizda as $h=>$hnizdo) {
     $tisk_hnizdo= $h;
-    $res->html.= "<h3>$hnizdo</h3>";
-  
-  
-  $clmn= tisk2_sestava_pary($akce,$par,$title,$vypis,false,true);
-//                                         debug($clmn,"akce2_hnizda {$clmn[1]['prijmeni']}");
-  // seřazení podle příjmení
-  usort($clmn,function($a,$b) { return mb_strcasecmp($a['prijmeni'],$b['prijmeni']); });
-                                         debug($clmn,"akce2_tabulka");
-  // odstranění jednoznačných jmen
-  $clmn[-1]['prijmeni']= $clmn[count($clmn)]['prijmeni']= ''; // zarážky
-  for ($i= 0; $i<count($clmn); $i++) {
-    if ( $clmn[$i-1]['prijmeni'] != $clmn[$i]['prijmeni']
-      && $clmn[$i+1]['prijmeni'] != $clmn[$i]['prijmeni'] ) {
-      $clmn[$i]['jmena']= '';
+    $hnizdo= $hnizda[$hn];
+
+    $clmn= tisk2_sestava_pary($akce,$par,$title,$vypis,false,true);
+  //                                         debug($clmn,"akce2_hnizda {$clmn[1]['prijmeni']}");
+    // seřazení podle příjmení
+    usort($clmn,function($a,$b) { return mb_strcasecmp($a['prijmeni'],$b['prijmeni']); });
+                                           debug($clmn,"akce2_tabulka");
+    // odstranění jednoznačných jmen
+    $clmn[-1]['prijmeni']= $clmn[count($clmn)]['prijmeni']= ''; // zarážky
+    for ($i= 0; $i<count($clmn); $i++) {
+      if ( $clmn[$i-1]['prijmeni'] != $clmn[$i]['prijmeni']
+        && $clmn[$i+1]['prijmeni'] != $clmn[$i]['prijmeni'] ) {
+        $clmn[$i]['jmena']= '';
+      }
     }
-  }
-  unset($clmn[-1]); unset($clmn[count($clmn)-1]);
-  // zkrácení zbylých jmen
-  for ($i= 0; $i<count($clmn); $i++) {
-    if ( $clmn[$i]['jmena'] ) {
-      list($m,$z)= explode(' ',$clmn[$i]['jmena']);
-      $clmn[$i]['jmena']= mb_substr($m,0,1).'+'.mb_substr($z,0,1);
+    unset($clmn[-1]); unset($clmn[count($clmn)-1]);
+    // zkrácení zbylých jmen
+    for ($i= 0; $i<count($clmn); $i++) {
+      if ( $clmn[$i]['jmena'] ) {
+        list($m,$z)= explode(' ',$clmn[$i]['jmena']);
+        $clmn[$i]['jmena']= mb_substr($m,0,1).'+'.mb_substr($z,0,1);
+      }
     }
-  }
-  // rozčlenění podle účastí a funkcí
-  $tab= array();
-  for ($i= 0; $i<count($clmn); $i++) {
-    $x= $clmn[$i]['x_ms'];
-    $v= $clmn[$i]['_vps'];
-    $f= $clmn[$i]['funkce'];
-    $c= $f==9 ? 6 : ($f!=0 && $f!=1 && $f!=2 ? 7
-     : ($v=='VPS' ? 0 : ($v=='(vps)' ? 2
-     : ($x==1 ? 1 : ($x==2 ? 2 : ($x==3 ? 2 : 2))))));
-    $tab[$c][]= $i;
-  }
-  // export HTML a do Excelu
-  $ids= array(
-    "$VPS:22","Prvňáci:14","Druháci:14","Třeťáci:14","Víceročáci:14",
-    "$VPS mimo službu:22","Náhradníci:14","Ostatní:26");
-  $max_r= 0;
-  for ($c= 0; $c<=7; $c++) {
-    list($id)= explode(':',$ids[$c]);
-    $ths.= "<th>$id (".count($tab[$c]).")</th>";
-    $max_r= max($max_r,count($tab[$c]));
-  }
-  for ($r= 0; $r<$max_r; $r++) {
-    $trs.= "<tr>";
+    // rozčlenění podle účastí a funkcí
+    $tab= array();
+    for ($i= 0; $i<count($clmn); $i++) {
+      $x= $clmn[$i]['x_ms'];
+      $v= $clmn[$i]['_vps'];
+      $f= $clmn[$i]['funkce'];
+      $c= $f==9 ? 6 : ($f!=0 && $f!=1 && $f!=2 ? 7
+       : ($v=='VPS' ? 0 : ($v=='(vps)' ? 2
+       : ($x==1 ? 1 : ($x==2 ? 2 : ($x==3 ? 2 : 2))))));
+      $tab[$c][]= $i;
+    }
+    // export HTML a do Excelu
+    $ids= array(
+      "$VPS:22","Prvňáci:14","Repetenti","","",
+      "","Náhradníci:14","Ostatní:26");
+
+    $ths= $trs= '';  
+    $max_r= 0;
     for ($c= 0; $c<=7; $c++) {
-      if ( isset($tab[$c][$r]) ) {
-        $i= $tab[$c][$r];
-        $ci= $clmn[$i]; $x= $ci['x_ms']; $v= $ci['_vps']; $f= $ci['funkce']; $idr= $ci['key_rodina'];
-        $style= 
-            $v   ? " style='background-color:yellow'" : ''; //(
-//            $f>1 ? " style='background-color:violet'" : '');
-        $ucasti= $c==7 ? "($map_fce[$f])" : ($c==4 ? "($x)" : '');
-        // počet služeb a rok odpočinku VPS
-        $sluzby= $poprve= '';
-        if ( $c==0 || $c==5 ) {
-          $akt= akce2_skup_paru($idr);
-          $sluzby= "({$akt->sluzba},{$akt->odpocinek})";
-          $poprve= $akt->vps==0 ? '* ' : '';
-        }
-        $prijmeni_plus= "$poprve{$ci['prijmeni']} {$ci['jmena']} $ucasti $sluzby";
-        $trs.= "<td$style>$prijmeni_plus</td>";
-        $clmn[$i]['prijmeni']= $prijmeni_plus;
-      }
-      else {
-        $trs.= "<td></td>";
-      }
+      list($id)= explode(':',$ids[$c]);
+      $ths.= "<th>$id (".count($tab[$c]).")</th>";
+      $max_r= max($max_r,count($tab[$c]));
     }
-    $trs.= "</tr>";
+    for ($r= 0; $r<$max_r; $r++) {
+      $trs.= "<tr>";
+      for ($c= 0; $c<=7; $c++) {
+        if ( isset($tab[$c][$r]) ) {
+          $i= $tab[$c][$r];
+          $ci= $clmn[$i]; $x= $ci['x_ms']; $v= $ci['_vps']; $f= $ci['funkce']; $idr= $ci['key_rodina'];
+          $style= 
+              $v   ? " style='background-color:yellow'" : ''; //(
+  //            $f>1 ? " style='background-color:violet'" : '');
+          $ucasti= $c==7 ? "($map_fce[$f])" : ($c==4 ? "($x)" : '');
+          // počet služeb a rok odpočinku VPS
+          $sluzby= $poprve= '';
+          if ( $c==0 || $c==5 ) {
+            $akt= akce2_skup_paru($idr);
+            $sluzby= "({$akt->sluzba},{$akt->odpocinek})";
+            $poprve= $akt->vps==0 ? '* ' : '';
+          }
+          $prijmeni_plus= "$poprve{$ci['prijmeni']} {$ci['jmena']} $ucasti $sluzby";
+          $trs.= "<td$style>$prijmeni_plus</td>";
+          $clmn[$i]['prijmeni']= $prijmeni_plus;
+        }
+        else {
+          $trs.= "<td></td>";
+        }
+      }
+      $trs.= "</tr>";
+    }
+    $tables.= "<h3>$hnizdo</h3>
+      <div class='stat'><table class='stat'><tr>$ths</tr>$trs</table></div>";
   }
 //                                         debug($tab,"akce2_hnizda - tab");
 //                                         debug($clmn,"akce2_hnizda - clmn");
-  if ( $export ) {
-    $rc= $rc_atr= $n= $tit= array();
-    for ($c= 0; $c<=7; $c++) {
-      $n[$c]= 0;
-      for ($r= 0; $r<$max_r; $r++) {
-        $rc[$r][$c]= '';
-      }
-    }
-    foreach ($tab as $c => $radky) {
-      foreach ($radky as $r=>$ucastnik) {
-        $rc[$r][$c]= $clmn[$ucastnik]['prijmeni'];
-        if ( $clmn[$ucastnik]['_vps'] )
-          $rc_atr[$r][$c]= ' bcolor=ffffff77';
-        $n[$c]++;
-      }
-    }
-    for ($c= 0; $c<=7; $c++) {
-      list($id,$len)= explode(':',$ids[$c]);
-      $tit[$c]= "$id ($n[$c]):$len";
-    }
-    $res->tits= $tit;
-    $res->flds= explode(',',"0,1,2,3,4,5,6,7");
-    $res->clmn= $rc;
-    $res->atrs= $rc_atr;
-    $res->expr= null;
-//                                         debug($res,"akce2_hnizda - res");
-  }
-  $legenda= "VPS jsou označeny žlutě a hvězdička označuje nové; <br>v závorce je "
+//  if ( $export ) {
+//    $rc= $rc_atr= $n= $tit= array();
+//    for ($c= 0; $c<=7; $c++) {
+//      $n[$c]= 0;
+//      for ($r= 0; $r<$max_r; $r++) {
+//        $rc[$r][$c]= '';
+//      }
+//    }
+//    foreach ($tab as $c => $radky) {
+//      foreach ($radky as $r=>$ucastnik) {
+//        $rc[$r][$c]= $clmn[$ucastnik]['prijmeni'];
+//        if ( $clmn[$ucastnik]['_vps'] )
+//          $rc_atr[$r][$c]= ' bcolor=ffffff77';
+//        $n[$c]++;
+//      }
+//    }
+//    for ($c= 0; $c<=7; $c++) {
+//      list($id,$len)= explode(':',$ids[$c]);
+//      $tit[$c]= "$id ($n[$c]):$len";
+//    }
+//    $res->tits= $tit;
+//    $res->flds= explode(',',"0,1,2,3,4,5,6,7");
+//    $res->clmn= $rc;
+//    $res->atrs= $rc_atr;
+//    $res->expr= null;
+////                                         debug($res,"akce2_hnizda - res");
+//  }
+  $legenda= "<h1>beta verze</h1>VPS jsou označeny žlutě a hvězdička označuje nové; <br>v závorce je "
       . "u VPS počet služeb bez odpočinku a rok posledního odpočinku, "
-      . "u víceročáků počet účastí, "
+      . "u víceročáků počet účastí zatím není, "
       . "u ostatních funkce na kurzu";
-  $res->html= "$legenda<br><br><div class='stat'><table class='stat'><tr>$ths</tr>$trs</table></div>";
-  }
+  $res->html= "$legenda<br><br>$tables<br><br><br>";
   return $res;
 }
 # ------------------------------------------------------------------------------- akce2 tabulka
