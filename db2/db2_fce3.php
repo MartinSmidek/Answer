@@ -288,7 +288,8 @@ function akce2_info($id_akce,$text=1) { trace();
     // projdeme pobyty
     $ms_ucasti= $akce_ms
         ? "r_ms+( SELECT COUNT(*) FROM pobyt AS xp JOIN akce AS xa ON xp.id_akce=xa.id_duakce 
-             WHERE xp.i0_rodina=p.i0_rodina AND xa.druh=1 AND xp.id_pobyt!=p.id_pobyt) AS _ucasti_ms"
+             WHERE xp.i0_rodina=p.i0_rodina AND xa.druh=1 AND zruseno=0
+               AND xp.id_pobyt!=p.id_pobyt) AS _ucasti_ms"
         : 0;
     $JOIN_ms= $akce_ms
         ? "LEFT JOIN rodina AS r ON r.id_rodina=p.i0_rodina" : '';
