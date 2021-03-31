@@ -61,7 +61,7 @@ proc reaccess() { #==> . reaccess - změna
 proc ucast_hnizda() { var opts:object
   echo("HNIZDA=",the_hnizda.get);
   { the_hnizda.get; 
-    header.hnizdo.set_attrib('options','ms_akce_hnizda.nazev');
+    header.hnizdo.set_attrib('options','ms_akce_hnizda_plus.nazev');
     u.b.xhnizdo.set_attrib('map_pipe','ms_akce_hnizda.zkratka');
     pob.hnizdo.set_attrib('options','ms_akce_hnizda.zkratka');
     header.hnizdo.key(0);
@@ -569,9 +569,13 @@ form _header [,,380,50] {
   }
   label head [0,2,*,50]  { title:'' }
   select hnizdo [-49,7,80,] { format:'t' type:'map' options:ms_akce_hnizda.nazev
-    proc onchanged() {
-      this.key; u.b.xhnizdo.set_query(1,substr(this.get,0,1),1)
-    | u.b.init_queries(1)
+    func onchanged() {
+      if (this.key()==99)
+        u.b.init_queries(1)
+      elseif (this.key()==0)
+        u.b.xhnizdo.set_query(1,'-')
+      else 
+        u.b.xhnizdo.set_query(1,substr(this,0,1),1)
   }}
   button zpet [-2,6,,] { title:'Zpět', help:'Navrátí zobrazení účastníků původní akce', format:'n',
     style:"z-index:5"

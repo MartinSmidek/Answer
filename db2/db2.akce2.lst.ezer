@@ -248,7 +248,7 @@ form _page [,,275,360] {
     form.load(id_akce); zmena_web.set(0); 
     [ has_skill('y'); ds_order.set(ask('ds_objednavka',id_akce)) ];
     switch(zalozka.get,
-    'inf',{ note.set(ask('akce2_info',id_akce));  },
+    'inf',{ clear; note.set(ask('akce2_info',id_akce));  },
     'cor',{ //form.load(id_akce);
             { hnizda.get; is_hnizda.set(1); hnizda.display(1)
             | is_hnizda.set(0); hnizda.display(0)
