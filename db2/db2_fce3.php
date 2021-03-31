@@ -963,7 +963,7 @@ end:
 # spoléhá na korektní definici
 function akce2_hnizda_options($hnizda_seznam,$vsichni=0) {  
   $hnizda= preg_split("/\s*,\s*/",$hnizda_seznam);
-  $text= $vsichni ? "99::všichni,0:-:nezařazení" : '"0":-:nezařazení';
+  $text= $vsichni ? "99::všichni,0:-:nezařazení" : '0:-:nezařazení';
   foreach($hnizda as $i=>$hnizdo) {
     $h0= strtoupper($hnizdo[0]);
     $i1= $i+1;
@@ -3521,7 +3521,7 @@ function ucast2_browse_ask($x,$tisk=false) {
       $zz[$idp]->skup= $s;
     }
     # případný výběr - zjednodušeno na show=[*,vzor]
-    if ( $x->show ) foreach ( $x->show as $fld => $show) {
+    if ( isset($x->show) ) foreach ( $x->show as $fld => $show) {
       $i= 0; $typ= $show->$i;
       $i= 1; $vzor= $show->$i;
       $beg= '^';
