@@ -507,7 +507,9 @@ function akce2_info($id_akce,$text=1,$pobyty=0) { trace();
       . ( $web_online ? "<hr>přihlášky z webu: $_web_onln".($web_novi ? ", z toho $_web_novi" : '') : '')
        : "Akce byla vložena do databáze ale nemá zatím žádné účastníky";
       if ( $_hnizda && $akce_ms) {
-        $html.= ", takto rozřazených do hnízd: <ul>";
+//        $ref= "ezer://akce2.tisk.ukaz_vypis/hnizda/$id_akce";
+//        $html.= ", takto rozřazených do hnízd (viz též <a href=\"$ref\">jmenovitý seznam</a>): <ul>";
+        $html.= ", takto rozřazených do hnízd (viz též výpis MS/Příprava hnízd): <ul>";
 //                                                                debug($hnizda); debug($hnizdo); 
         for ($h= 0; $h<count($hnizda); $h++) {
           $hn= $h+1 % count($hnizda)-1;

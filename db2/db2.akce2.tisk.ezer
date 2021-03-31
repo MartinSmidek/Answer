@@ -9,7 +9,8 @@ var the_duakce_local: number,   // zobrazená akce - pokud se liší od the_duak
     the_par: object, 
     the_item: ezer,             // poslední vybraný item menu
     the_vypis: text,
-    the_hnizdo: number, the_hnizdo_name: text   // >0 znamená filtr na účastníky v i-tém hnízdě
+    the_hnizdo: number, the_hnizdo_name: text,  // >0 znamená filtr na účastníky v i-tém hnízdě
+    ukaz_default= 1             // nastavené v ukaz_vypis pro zamezení defaultního výpisu v onfocus
 # -------------------------------------------------------------------------==> . inicializace panelu
 proc onfocus() {
   [ dirty.get | akce_onstart ];
@@ -19,13 +20,22 @@ proc onfocus() {
   info.fill(conc(the_title.get,' / ',the_vypis.get),' ');
   // volba správné akce a příslušného menu
   { eq(the_soubeh.get,2);
-    the_akce.set(the_hlavni.get); m.display(2,'d'); m.d.i.click
-  | the_akce.set(the_duakce.get); m.display(2,'a'); m.n.i.click
+    the_akce.set(the_hlavni.get); m.display(2,'d'); [ ukaz_default.get; m.d.i.click ]
+  | the_akce.set(the_duakce.get); m.display(2,'a'); [ ukaz_default.get; m.n.i.click ]
   };
   // případně nastavení hnízd
   tisk_hnizda;
 }
 # ----------------------------------------------------------------------------==> globální procedury
+# otevření Výpisy akce na daném výpisu
+func ukaz_vypis(vypis,ida) {
+  ukaz_default= 0;
+  panel.focus(1);
+  switch (vypis) {
+    case 'hnizda': m.s.h.click();
+  }
+  ukaz_default= 1;
+}                          
 proc reaccess() { #==> . reaccess - změna
   onfocus
 }
@@ -125,7 +135,7 @@ use info: form right [12,4,,] {
 }
 
 # ------------------------------------------------------------------------------------------==> MENU
-menu m {type:'left', active:*
+menu m {type:'left', //active:*
   # ------------------------------------------------------------------------==> výpisy souběžné akce
   menu d {tag:'d', title:'výpisy souběžné akce',type:'group',_sys:'*'
     item i {title:'Seznam dětí'                                                              skill:'f'
@@ -446,7 +456,7 @@ menu m {type:'left', active:*
     }
   }
   # ------------------------------------------------------------------------------------------==> MS
-  menu {tag:'a', title:'MS: letní kurs, obnovy',type:'group',_sys:'*',                       skill:'#crz'
+  menu s {tag:'a', title:'MS: letní kurs, obnovy',type:'group',_sys:'*',                     skill:'#crz'
     item {title:'Účastníci + aktivita na MS'                                                 skill:'y;f;c'
                                         ,par:°{typ:'p',exp:'Excel2'
                                         ,cnd:"p.funkce IN (0,1,2,5) AND p.i0_rodina AND role IN ('a','b')"
@@ -458,11 +468,12 @@ menu m {type:'left', active:*
 #                                         ,cnd:"p.funkce NOT IN (99) AND p.i0_rodina AND role IN ('a','b')"
                                         ,tit:'ID,příjmení:15,jména:20,na MS:6,funkce,VPS:6,^'
                                         ,fld:'key_rodina,prijmeni,jmena,x_ms,_vps,funkce,^id_pobyt'}}
-    item {title:'Účastníci / příprava hnízd'                                                 skill:'y;f;c'
-                                        ,par:°{typ:'nut',exp:'Excel2'
-                                        ,cnd:"p.funkce NOT IN (99)"
-                                        ,tit:'ID,příjmení:15,jména:20,na MS:6,funkce,VPS:6,^'
-                                        ,fld:'key_rodina,prijmeni,jmena,x_ms,_vps,funkce,vek_deti,^id_pobyt'}}
+    item h {title:'Příprava hnízd'                                                           skill:'y;f;c'
+                                        ,par:°{typ:'nut' //,exp:'Excel2'
+//                                        ,cnd:"p.funkce NOT IN (99)"
+//                                        ,tit:'ID,příjmení:15,jména:20,na MS:6,funkce,VPS:6,^'
+//                                        ,fld:'key_rodina,prijmeni,jmena,x_ms,_vps,funkce,vek_deti,^id_pobyt'
+                                        }}
     item {title:'Chůvy'                                                                      skill:'y;f;c'
                                         ,par:°{typ:'j',exp:'Excel2',cnd:"funkce!=99",hav:"s.s_role IN (5)"
                                         ,tit:'příjmení:15,jméno:12,věk:5,obec:25,psč:7,ulice:25,telefon:20,e-mail:30,pečuje o:20,poznámky:30,poznámka k pobytu rodiny:30'
