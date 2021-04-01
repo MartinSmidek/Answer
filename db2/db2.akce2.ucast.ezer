@@ -573,7 +573,7 @@ form _header [,,380,50] {
       if (this.key()==99) // všichni=default
         u.b.init_queries(1)
         elseif (this.key()==0) // nezařazení
-        u.b.xhnizdo.set_query(1,'-',1)
+        u.b.xhnizdo.set_query(1,'?',1)
       else 
         u.b.xhnizdo.set_query(1,substr(this,0,1),1)
   }}

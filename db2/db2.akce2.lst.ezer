@@ -49,6 +49,10 @@ proc akce_work(id_akce) {
   info.volba_akce(id_akce);
   info.rok.set(the_rok.get);
 }
+# zobrazí přehled hnízd
+func ukaz_hnizda(ida) { 
+  HNIZDA.prehled(ida)
+}                          
 proc reaccess() { #==> . reaccess - změna
   # intranet povol jen Setkání
   [ m.g.part('goo'); m.g.goo.enable(eq(my_org.get,1)) ];
@@ -1061,6 +1065,19 @@ panel ANOTACE [0,0,645,520] { title:' Úprava textu anotace', type:'popup', css:
       proc onclick() { panel.hide(0); }
     }
     edit html [0,40,655,480] {type:'html', data:akce.web_anotace, par:°{toolbar:'EzerLetter'} },
+  }
+}
+# ==========================================================================================> hnízda
+# přehled obsazení hnízd
+panel HNIZDA [0,0,640,520] { title:' Přehled obsazenosti hnízd', type:'popup', css:'dialog',
+    style:"height:calc(100% - 130px)"
+  func prehled(ida) { var y:object
+    y= php.akce2_hnizda(ida);
+    h.txt= y.html;
+    panel.modal(210,60);
+  }
+  use h: form {
+    label txt [0,0,*,*] { style:'overflow:auto' }
   }
 }
 map akce_cenik:  table akce {where:"ma_cenik=1", order:'datum_od', key_id:'id_duakce'}

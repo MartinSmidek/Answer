@@ -507,9 +507,9 @@ function akce2_info($id_akce,$text=1,$pobyty=0) { trace();
       . ( $web_online ? "<hr>přihlášky z webu: $_web_onln".($web_novi ? ", z toho $_web_novi" : '') : '')
        : "Akce byla vložena do databáze ale nemá zatím žádné účastníky";
       if ( $_hnizda && $akce_ms) {
-//        $ref= "ezer://akce2.tisk.ukaz_vypis/hnizda/$id_akce";
-//        $html.= ", takto rozřazených do hnízd (viz též <a href=\"$ref\">jmenovitý seznam</a>): <ul>";
-        $html.= ", takto rozřazených do hnízd (viz též výpis MS/Příprava hnízd): <ul>";
+        $html.= ", takto rozřazených do hnízd - viz též
+          <button onclick=\"Ezer.fce.href('akce2.lst.ukaz_hnizda/$id_akce')\">
+          jmenovitý seznam</button><ul>";
 //                                                                debug($hnizda); debug($hnizdo); 
         for ($h= 0; $h<count($hnizda); $h++) {
           $hn= $h+1 % count($hnizda)-1;
@@ -965,7 +965,7 @@ end:
 # spoléhá na korektní definici
 function akce2_hnizda_options($hnizda_seznam,$vsichni=0) {  
   $hnizda= preg_split("/\s*,\s*/",$hnizda_seznam);
-  $text= $vsichni ? "99::všichni,0:-:nezařazení" : '0:-:nezařazení';
+  $text= $vsichni ? "99::všichni,0:-:nezařazení" : '0:?:nezařazení';
   foreach($hnizda as $i=>$hnizdo) {
     $h0= strtoupper($hnizdo[0]);
     $i1= $i+1;
@@ -4497,7 +4497,7 @@ function mb_strcasecmp($str1, $str2, $encoding = null) {
 }
 # ------------------------------------------------------------------------------- akce2 tabulka
 # generování tabulky účastníků $akce typu LK
-function akce2_hnizda($akce,$par,$title,$vypis,$export=false) { trace();
+function akce2_hnizda($akce,$par=null,$title='',$vypis='',$export=false) { trace();
   global $VPS, $tisk_hnizdo;
 //                                         debug($par,"akce2_tabulka");
   $map_fce= map_cis('ms_akce_funkce','zkratka');
