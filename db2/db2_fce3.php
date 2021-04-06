@@ -251,6 +251,7 @@ function akce2_mapa($akce,$filtr='') {  trace();
 # pobyty=1 pokud chceme jména pro přehledové tabulky - má smysl jen pro text=0 - potom
 #   info.pobyty= [ {idp:id_pobyt, prijmeni, jmena, hnizdo:n, typ:vps|nov|rep|tym|nah, 
 #                   deti:seznam věků dětí a chův - těch s §}, ...]
+#   info.pecouni= [ {ids, hnizdo, prijmeni, jmeno}, ... ]
 function akce2_info($id_akce,$text=1,$pobyty=0) { trace(); 
   $html= '';
   $info= (object)array('muzi'=>0,'zeny'=>0,'deti'=>0,'peco'=>0,'rodi'=>0,'skup'=>0);
@@ -265,7 +266,7 @@ function akce2_info($id_akce,$text=1,$pobyty=0) { trace();
   if ( $id_akce ) {
     $ucasti= $rodiny= $dosp= $muzi= $zeny= $chuvy= $deti= $pecounu= $pp= $po= $web= 0;
     $err= $err2= $err3= $err4= 0;
-    $odhlaseni= $neprijeli= $nahradnici= $nahradnici_osoby= 0;
+    $odhlaseni= $neprijati= $neprijeli= $nahradnici= $nahradnici_osoby= 0;
     $akce= $chybi_nar= $chybi_sex= '';
     // web_changes= 1/2 pro INSERT/UPDATE pobyt a spolu | 4/8 pro INSERT/UPDATE osoba
     $web_online= 0;     // web_changes>0
@@ -311,6 +312,7 @@ function akce2_info($id_akce,$text=1,$pobyty=0) { trace();
     $qry= "SELECT a.nazev, datum_od, datum_do, now() as _ted,i0_rodina,funkce,p.web_zmena,web_changes,
              COUNT(id_spolu) AS _clenu,IF(c.ikona=2,1,0) AS _pro_pary,a.hnizda,p.hnizdo,
              SUM(IF(ROUND(DATEDIFF(a.datum_od,o.narozeni)/365.2425,1)<18,1,0)) AS _deti,
+             SUM(IF(CEIL(DATEDIFF(a.datum_od,o.narozeni)/365.2425)<=3,1,0)) AS _kocar,
              SUM(IF(ROUND(DATEDIFF(a.datum_od,o.narozeni)/365.2425,1)>=18 AND sex=1,1,0)) AS _muzu,
              SUM(IF(ROUND(DATEDIFF(a.datum_od,o.narozeni)/365.2425,1)>=18 AND sex=2,1,0)) AS _zen,
              SUM(IF(s.s_role=5 AND s.pfunkce=0,1,0)) AS _chuv,
@@ -344,8 +346,9 @@ function akce2_info($id_akce,$text=1,$pobyty=0) { trace();
            GROUP BY p.id_pobyt";
     $res= pdo_qry($qry);
     while ( $res && $p= pdo_fetch_object($res) ) {
+      $pobyt= null;
       $fce= $p->funkce;
-      if ($pobyty)
+      if ($pobyty && !in_array($fce,array(10,13,14,99)))
         $pobyt= (object)array('idp'=>$p->id_pobyt,'prijmeni'=>$p->_prijmeni,'jmena'=>$p->_jmena,
             'deti'=>preg_replace("~,,~",',',preg_replace("~^,*|,*$~",'',$p->_vekdeti)),
             'hnizdo'=>$p->hnizdo, 'fce'=>$fce);
@@ -358,16 +361,17 @@ function akce2_info($id_akce,$text=1,$pobyty=0) { trace();
       $hn= $p->hnizdo;
       if (!isset($hnizdo[$hn]))
         $hnizdo[$hn]= array('vps'=>0, 'nov'=>0, 'rep'=>0, 'nah'=>0,
-            'pec'=>0, 'det'=>0, 'dos'=>0, 'chu'=>0);
-      if (!in_array($fce,array(14,10,99))) { // 14+10 neúčaste, 99 pečouni, 9 náhradník
+            'pec'=>0, 'det'=>0, 'koc'=>0, 'dos'=>0, 'chu'=>0);
+      if (!in_array($fce,array(13,14,10,99))) { // 14+10+13 neúčast, 99 pečouni, 9 náhradník
         $hnizdo[$hn]['vps']+= ($fce==1||$fce==2) ? 1 : 0;
         $hnizdo[$hn]['nov']+= $fce==0 && $p->_ucasti_ms==0 ? 1 : 0;
         $hnizdo[$hn]['rep']+= $fce==0 && $p->_ucasti_ms>0 ? 1 : 0;
         $hnizdo[$hn]['dos']+= $p->_muzu+$p->_zen;
         $hnizdo[$hn]['chu']+= $p->_chuv;
         $hnizdo[$hn]['det']+= $p->_deti;
+        $hnizdo[$hn]['koc']+= $p->_kocar;
         $hnizdo[$hn]['nah']+= $fce==9 ? 1 : 0;
-        if ($pobyty) {
+        if ($pobyty && $pobyt!==null) {
           $pobyt->typ= ($fce==1||$fce==2) ? 'vps' : ($fce==0 
               ? ($p->_ucasti_ms==0 ? 'nov' : 'rep') : ($fce==9 ? 'nah' : 'tym'));
         }
@@ -386,15 +390,17 @@ function akce2_info($id_akce,$text=1,$pobyty=0) { trace();
       if ( $p->avizo ) {
         $aviz++;
       }
-      // diskuse funkce=odhlášen/14 a funkce=nepřijel/10 a funkce=náhradník/9
-      if ( in_array($fce,array(14,10,9) ) ) {
+      // diskuse funkce=odhlášen/14 a funkce=nepřijel/10 a funkce=náhradník/9 a nepřijat/13
+      if ( in_array($fce,array(13,14,10,9) ) ) {
+        $neprijati+= $fce==13 ? 1 : 0;
         $odhlaseni+= $fce==14 ? 1 : 0;
         $neprijeli+= $fce==10 ? 1 : 0;
         $nahradnici+= $fce==9 ? 1 : 0;
         $nahradnici_osoby+= $fce==9 ? $p->_clenu : 0;
       }
-      else if ( in_array($fce,array(99) ) ) {
-        $hnizdo[$hn]['pec']+= $p->_clenu;
+      // diskuse pečouni
+      else if ( $fce==99 ) {
+//        $hnizdo[$hn]['pec']+= $p->_clenu;
         $pecounu+= $p->_clenu;
         $pfces[1]+= $p->_p1;
         $pfces[2]+= $p->_p2;
@@ -404,6 +410,19 @@ function akce2_info($id_akce,$text=1,$pobyty=0) { trace();
         $pfces[6]+= $p->_p6;
         $pfces[7]+= $p->_p7;
         $pfces[8]+= $p->_p9;
+        // pro akci v hnízdech zjisti strukturu pečounů
+        if ( $p->hnizda ) {
+          $info->pecouni= array();
+          $rp= pdo_qry("
+            SELECT id_spolu,s_hnizdo,jmeno,prijmeni FROM spolu JOIN osoba USING (id_osoba)
+            WHERE id_pobyt=$p->id_pobyt 
+          ");
+          while ( $rp && (list($ids,$s_hnizdo,$jmeno,$prijmeni)= pdo_fetch_row($rp)) ) {
+            $info->pecouni[]= (object)array('ids'=>$ids,
+                'hnizdo'=>$s_hnizdo,'prijmeni'=>$prijmeni,'jmeno'=>$jmeno);
+            $hnizdo[$s_hnizdo]['pec']++;
+          }
+        }
       }
       else if ( !in_array($fce,array(0,1,2,5) ) ) {
         $fces[$fce]++;
@@ -441,7 +460,7 @@ function akce2_info($id_akce,$text=1,$pobyty=0) { trace();
         $info->hnizda= $hnizda;
       }
       // pokud se chtějí pobyty
-      if ($pobyty) {
+      if ($pobyty && $pobyt) {
         $pob[]= $pobyt;
       }
     }
@@ -468,6 +487,7 @@ function akce2_info($id_akce,$text=1,$pobyty=0) { trace();
       $_err3=      je_1_2_5($err3,"osoba je,osoby jsou,osob je");
       $_rodiny=    je_1_2_5($rodiny,"rodina,rodiny,rodin");
       $_pobyt_o=   je_1_2_5($odhlaseni,"pobyt,pobyty,pobytů");
+      $_pobyt_r=   je_1_2_5($neprijati,"přihláška,přihlášky,přihlášek");
       $_pobyt_x=   je_1_2_5($neprijeli,"pobyt,pobyty,pobytů");
       $_pobyt_n=   je_1_2_5($nahradnici,"přihláška,přihlášky,přihlášek");
       $_pobyt_no=  je_1_2_5($nahradnici_osoby,"osoba,osoby,osob");
@@ -498,10 +518,10 @@ function akce2_info($id_akce,$text=1,$pobyty=0) { trace();
        ? $html.= "<h3 style='margin:0px 0px 3px 0px;'>$akce</h3>akce $cas1 $dne $_hnizda<br><hr>$cas2"
        . ($skupin ? " $_skupin účastníků"
            .($rodiny ? ($rodiny==$ucasti ? " (všechny jako rodiny)" : " (z toho $_rodiny)") :''):'')
-       . ($pecounu ? "<br>".($skupin?"<br>a ":'')."$_pecounu" : '')
+       . ($pecounu ? " ".($skupin?" a ":'')."$_pecounu" : '')
        . $sluzba
        . ($pp+$po+$pg ? " + do skupiny pečounů patří navíc $sluzba2" : '')
-       . ",<br><br>v počtu $_dospelych ($_muzu, $_zen)"
+       . ",<br>v počtu $_dospelych ($_muzu, $_zen)"
        . ($chuvy ? " a $_deti - z toho $_chuv," : " a $_deti")
        . "<br><b>celkem $_osob</b>"
       . ( $web_online ? "<hr>přihlášky z webu: $_web_onln".($web_novi ? ", z toho $_web_novi" : '') : '')
@@ -510,26 +530,33 @@ function akce2_info($id_akce,$text=1,$pobyty=0) { trace();
         $html.= ", takto rozřazených do hnízd - viz též
           <button onclick=\"Ezer.fce.href('akce2.lst.ukaz_hnizda/$id_akce')\">
           jmenovitý seznam</button><ul>";
-//                                                                debug($hnizda); debug($hnizdo); 
+//                                                                debug($hnizda); 
+                                                                debug($hnizdo); 
         for ($h= 0; $h<count($hnizda); $h++) {
           $hn= $h+1 % count($hnizda)-1;
           // počty a odhad
-          $n_det= $hnizdo[$hn]['det'];
           $n_vps= $hnizdo[$hn]['vps'];
           $n_nov= $hnizdo[$hn]['nov'];
           $n_rep= $hnizdo[$hn]['rep'];
           $n_dos= $hnizdo[$hn]['dos'];
+          // úvaha o pečounech: potřebujeme na 1 kočárek = 1 pečoun; na 3 nekočárky = 1 pečoun
+          $n_det= $hnizdo[$hn]['det'];
+          $n_koc= $hnizdo[$hn]['koc'];
           $n_chu= $hnizdo[$hn]['chu'];
           $n_pec= $hnizdo[$hn]['pec'];
-          // úvaha o pečounech
-          $deti_volne= $n_det - 2*$n_chu;
-          $pec_odhad= $deti_volne > 0 ? ceil($deti_volne/2) : 0;
+          // chůvy napřed spotřebujeme na kočárky
+          $koc_chu= min($n_koc,$n_pec);
+          $koc= $n_koc-$koc_chu;
+          $chu= $n_chu-$koc_chu;
+          $det= $n_det-$koc_chu; // neohlídaných dětí
+          $nekoc= $det-$koc; // dětí bez kočárku
+          $pec_odhad= $koc + ceil($nekoc/3) - $chu;
           $x_pec= $pec_odhad>$n_pec ? $pec_odhad-$n_pec : 0;
           // počty česky
           $n_nov= je_1_2_5($n_nov,"nováček,nováčci,nováčků");
           $n_rep= je_1_2_5($n_rep,"repetent,repetenti,repetentů");
           $n_pec= $n_pec ? 'a '.je_1_2_5($n_pec,"pečoun,pečouni,pečounů") : '';
-          $x_pec= $x_pec ? '(chybí cca '.je_1_2_5($x_pec,"pečoun,pečouni,pečounů").')' : '';
+          $x_pec= $x_pec ? '(asi chybí '.je_1_2_5($x_pec,"pečoun,pečouni,pečounů").')' : '';
           $n_dos= je_1_2_5($n_dos,"dospělý,dospělí,dospělých");
           $n_det= $n_det!==''
               ? 'a '.je_1_2_5($n_det,"dítě,děti,dětí")
@@ -546,9 +573,10 @@ function akce2_info($id_akce,$text=1,$pobyty=0) { trace();
         }
         $html.= "</ul>";
       }
-      if ( $odhlaseni + $neprijeli + $nahradnici > 0 ) {
+      if ( $odhlaseni + $neprijati + $neprijeli + $nahradnici > 0 ) {
         $html.= "<br><hr>";
         $msg= array();
+        if ( $neprijati ) $msg[]= "nepřijato: $_pobyt_r";
         if ( $odhlaseni ) $msg[]= "odhlášeno: $_pobyt_o (bez storna)";
         if ( $neprijeli ) $msg[]= "zrušeno: $_pobyt_x (nepřijeli, aplikovat storno)";
         if ( $nahradnici ) $msg[]= "náhradníci: $_pobyt_n, celkem $_pobyt_no";
@@ -4525,17 +4553,17 @@ function akce2_hnizda($akce,$par=null,$title='',$vypis='',$export=false) { trace
     }
   }
 //                                           debug($clmn,"akce2_pobyty");
-  $titl= array($VPS,'nováčci','repetenti','služby','náhradníci');
+  $titl= array($VPS,'nováčci','repetenti','pečouni','organizace akce','náhradníci');
   foreach ($info->title as $h=>$hnizdo) {
     $tables.= "<h3>$hnizdo</h3>";
-    $s_pary= array(0,0,0,0,0);
-    $s_deti= array(0,0,0,0,0);
-    $s_chuvy= array(0,0,0,0,0);
-    $i= array(0,0,0,0,0);
+    $s_pary= array(0,0,0,0,0,0);
+    $s_deti= array(0,0,0,0,0,0);
+    $s_chuvy= array(0,0,0,0,0,0);
+    $i= array(0,0,0,0,0,0);
     $tds= array();
     foreach ($clmn as $x) {
       if ($x->hnizdo==$h) {
-        $sl= $x->typ=='vps' ? 0 : ($x->typ=='nov'?1:($x->typ=='rep'?2:($x->typ=='tym'?3:4)));
+        $sl= $x->typ=='vps' ? 0 : ($x->typ=='nov'?1:($x->typ=='rep'?2:($x->typ=='tym'?4:5)));
         $k= $i[$sl];
         $tds[$k][$sl]= $x->prijmeni;
         $s_pary[$sl]++;
@@ -4550,9 +4578,19 @@ function akce2_hnizda($akce,$par=null,$title='',$vypis='',$export=false) { trace
         $i[$sl]++;
       }
     }
+    // doplníme pečouny
+    $i3= 0;
+    foreach ($info->pecouni as $x) {
+      if ($x->hnizdo==$h) {
+        $tds[$i3++][3]= "{$x->prijmeni} {$x->jmeno}";
+      }
+    }
+    $i[3]= $i3;
     $ths= '';
     foreach ($titl as $k=>$t) {
-      $tit= $k==3 ? 'organizace akce' : je_1_2_5($s_pary[$k],"pár,páry,párů")." $t";
+//      $tit= $k==4 ? 'organizace akce' : je_1_2_5($s_pary[$k],"pár,páry,párů")." $t";
+      $tit= $k==3 ? je_1_2_5($i3,"pečoun,pečouni,pečounů") : (
+          $k==4 ? $t : (je_1_2_5($s_pary[$k],"pár,páry,párů")." $t"));
       $ths.= "<th>$tit "
           . ($s_deti[$k] ? "+ {$s_deti[$k]}".($s_chuvy[$k] ? " (§{$s_chuvy[$k]})" : '' ).' dětí': '' )
           . '</th>';
@@ -4560,7 +4598,7 @@ function akce2_hnizda($akce,$par=null,$title='',$vypis='',$export=false) { trace
     $trs= '';
     for ($j= 0; $j<max($i); $j++) {
       $trs.= '<tr>';
-      for ($k= 0; $k<=4; $k++) {
+      for ($k= 0; $k<=5; $k++) {
         $trs.= '<td>'.($tds[$j][$k]).'</td>';
       }
       $trs.= '</tr>';

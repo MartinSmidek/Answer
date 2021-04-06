@@ -135,6 +135,7 @@ panel ucast {type:'plain', format:'d', _sys:'*', title:"Účastníci", include:'
 panel pece {type:'plain', _sys:'*', title:'Pečouni', include:'onload,db2.akce2.pece',skill:'yaa;faa;caa#crz'
   proc reaccess() {}
   proc init_pece() { alert('napřed klikni na Databáze|Pečouni') }
+  proc pece_hnizda() {}                         // nastavení pro akci v hnízdech
   proc akce_show() { alert('napřed klikni na Databáze|Pečouni') }
 }
 panel tisk [,,,] {type:'right', _sys:'*', title:'Výpisy akce', include:'onload,db2.akce2.tisk',skill:'yaa;faa;caa'
@@ -373,6 +374,7 @@ table spolu { key_id:'id_spolu'
   number id_spolu
   number id_pobyt
   number id_osoba
+  number s_hnizdo
   number s_role   // #ms_akce_s_role -- role osoby na akci
   number skupinka
   text poznamka

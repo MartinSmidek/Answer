@@ -1001,6 +1001,7 @@ form _info [,,*,50] {
       set_cookie(conc(sys('root'),'_akce'),the_duakce.get)
     };
     ucast.ucast_hnizda();
+    pece.pece_hnizda();
     [ has_skill('yam;fam;cam'); maia.mail_hnizda() ];
     tisk.tisk_hnizda()
   }

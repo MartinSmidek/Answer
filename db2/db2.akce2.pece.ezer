@@ -59,12 +59,29 @@ proc h_change_b() { var r:number, h:number
   p_oso.d.set_attrib('rows',max(4,sum(r,-18)));
   p_act.akc.set_attrib('rows',max(5,sum(r,-2)));
 }
-# --------------------------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------==> globální funkce
 proc init_pece() { //echo('init_pece ',the_title.get);
   page.page_init;
   header.fill(the_title.get);
   reload(0);
   page.evd.onclick
+}
+# nastavení pro akci v hnízdech
+proc pece_hnizda() { var opts:object
+  echo("HNIZDA=",the_hnizda.get);
+  { the_hnizda.get; 
+    header.hnizdo.set_attrib('options','ms_akce_hnizda_plus.nazev');
+    up.b.xhnizdo.set_attrib('map_pipe','ms_akce_hnizda.zkratka');
+    p_oso.hnizdo.set_attrib('options','ms_akce_hnizda.zkratka');
+    header.hnizdo.key(99);
+    header.hnizdo.display(1);
+    p_oso.hnizdo.display(1);
+    up.b._pfunkce.width(40); up.b.xhnizdo.width(20);
+  | header.hnizdo.display(0);
+    p_oso.hnizdo.display(0);
+    up.b._pfunkce.width(60); up.b.xhnizdo.width(0);
+    [ up.b.get_query; up.b.init_queries(1) ]
+  };
 }
 proc akce_show(xakce,xspolu,xnadpis,xback) {
   page.page_init;
@@ -120,6 +137,15 @@ form _header [,,380,50] {
     head.set(conc("<div class='karta'>",x,"</div>"))
   }
   label head [0,2,*,50]  { title:'' }
+  select hnizdo [-8,7,80,] { format:'t' type:'map' options:ms_akce_hnizda_plus.nazev
+    func onchanged() {
+      if (this.key()==99) // všichni=default
+        up.b.init_queries(1)
+        elseif (this.key()==0) // nezařazení
+        up.b.xhnizdo.set_query(1,'?',1)
+      else 
+        up.b.xhnizdo.set_query(1,substr(this,0,1),1)
+  }}
   button zpet [-2,6,,] { title:'Zpět', help:'Navrátí zobrazení účastníků původní akce', format:'n'
     proc onclick() { this.display(0); akce_back }
   }
@@ -296,6 +322,8 @@ form _osoba [,,580,] { tag:'a',
   edit  pozn_akce [L+229,T+192,336,84] {data:s.poznamka,title:'^/ poznámka k pobytu na této akci'}
   // děti
   field skupinka  [L+70,T+284,30,] {data:s.skupinka, format:'r:e',title:'skupinka č.'}
+  select hnizdo [L+160,T+284,37,] {type:'map', data:s.s_hnizdo, format:'un', 
+    options:ms_akce_hnizda.zkratka, title:'hnízdo' }
   check s_rodici  [L+226,T+279,210,] {data:s.s_rodici, title:'stravenky mají rodiče - účastníci akce' }
   check pulstrava [L+464,T+279,99,] {data:s.pulstrava, title:'poloviční strava' }
   # ==> seznam dětí
@@ -377,10 +405,11 @@ form _pece [,,400,] { css:'ds_form'
     show funkce    { expr:"IF(p.funkce=99,0,1)" }
     show pfunkce   { data:s.pfunkce }
     show pulstrava { data:s.pulstrava }
+    show hnizdo    { data:s.s_hnizdo }
     // zobrazení
     show _nazev    [,,110,] { title:'příjmení jméno', format:'s+q*', css_cell:"funkce,0:nic,1:zluty"
                               expr:"CONCAT(o.prijmeni,' ',o.jmeno)" }
-    show _pfunkce  [,,60,]  { title:'funkce', data:s.pfunkce, map_pipe:ms_akce_pfunkce.zkratka,
+    show _pfunkce  [,,40,]  { title:'funkce', data:s.pfunkce, map_pipe:ms_akce_pfunkce.zkratka,
                               format:'q#s', css_cell:'rod_nakurzu,0:nic,1:oranzovy' }
 #     show _pfunkce  [,,60,]  { title:'funkce', expr:"IF(s.pfunkce,s.pfunkce,s.s_role)", map_pipe:ms_akce_pfunkce.zkratka, format:'q*s' }
     show skupinka  [,,20,]  { title:'sk.', data:s.skupinka, format:'rqs:e'}
@@ -389,6 +418,8 @@ form _pece [,,400,] { css:'ds_form'
                              (IF(pecovane,CONCAT('chůva pro ',c.jmeno,' ',c.prijmeni,' / '),''),
                               IF(o.note='' AND s.poznamka='','',CONCAT(o.note,' / ',s.poznamka)))"
                             }
+    show xhnizdo [,,20,] { title:'h.', format:'rq#s:e', map_pipe:ms_akce_hnizda.zkratka, data:s.s_hnizdo,
+      help:'pořadí hnízda nebo 0' css_cell:"hnizdo,0:,1:oranzovy,2:zluty,3:zeleny,4:modry,5:azurovy,6:fialovy"}
     // skupinka
     show skup     { expr:"
       IF(s.skupinka=0,'',
