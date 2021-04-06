@@ -531,7 +531,7 @@ function akce2_info($id_akce,$text=1,$pobyty=0) { trace();
           $n_pec= $n_pec ? 'a '.je_1_2_5($n_pec,"pečoun,pečouni,pečounů") : '';
           $x_pec= $x_pec ? '(chybí cca '.je_1_2_5($x_pec,"pečoun,pečouni,pečounů").')' : '';
           $n_dos= je_1_2_5($n_dos,"dospělý,dospělí,dospělých");
-          $n_det= $n_det 
+          $n_det= $n_det!==''
               ? 'a '.je_1_2_5($n_det,"dítě,děti,dětí")
                 .($n_chu ? " (z toho ".je_1_2_5($n_chu,"chůva,chůvy,chův").')' : '')
               : '';
@@ -4516,7 +4516,7 @@ function akce2_hnizda($akce,$par=null,$title='',$vypis='',$export=false) { trace
       $clmn[$i]->jmena= '';
     }
   }
-  unset($clmn[-1]); unset($clmn[count($clmn)-1]);
+  unset($clmn[-1]); unset($clmn[count($clmn)]);
   // zkrácení zbylých jmen
   for ($i= 0; $i<count($clmn); $i++) {
     if ( $clmn[$i]->jmena ) {
@@ -4539,7 +4539,7 @@ function akce2_hnizda($akce,$par=null,$title='',$vypis='',$export=false) { trace
         $k= $i[$sl];
         $tds[$k][$sl]= $x->prijmeni;
         $s_pary[$sl]++;
-        if ($x->deti) {
+        if ($x->deti!=='') {
           $tds[$k][$sl].= " ({$x->deti})";
           $s_deti[$sl]+= substr_count($x->deti,',')+1;
           $s_chuvy[$sl]+= substr_count($x->deti,'§');
