@@ -550,13 +550,13 @@ function akce2_info($id_akce,$text=1,$pobyty=0) { trace();
           $chu= $n_chu-$koc_chu;
           $det= $n_det-$koc_chu; // neohlídaných dětí
           $nekoc= $det-$koc; // dětí bez kočárku
-          $pec_odhad= $koc + ceil($nekoc/3) - $chu;
+          $pec_odhad= $koc + round($nekoc/3) - $chu;
           $x_pec= $pec_odhad>$n_pec ? $pec_odhad-$n_pec : 0;
           // počty česky
           $n_nov= je_1_2_5($n_nov,"nováček,nováčci,nováčků");
           $n_rep= je_1_2_5($n_rep,"repetent,repetenti,repetentů");
           $n_pec= $n_pec ? 'a '.je_1_2_5($n_pec,"pečoun,pečouni,pečounů") : '';
-          $x_pec= $x_pec ? '(asi chybí '.je_1_2_5($x_pec,"pečoun,pečouni,pečounů").')' : '';
+          $x_pec= $x_pec ? '(chybí asi '.je_1_2_5($x_pec,"pečoun,pečouni,pečounů").')' : '';
           $n_dos= je_1_2_5($n_dos,"dospělý,dospělí,dospělých");
           $n_det= $n_det!==''
               ? 'a '.je_1_2_5($n_det,"dítě,děti,dětí")
@@ -4588,7 +4588,6 @@ function akce2_hnizda($akce,$par=null,$title='',$vypis='',$export=false) { trace
     $i[3]= $i3;
     $ths= '';
     foreach ($titl as $k=>$t) {
-//      $tit= $k==4 ? 'organizace akce' : je_1_2_5($s_pary[$k],"pár,páry,párů")." $t";
       $tit= $k==3 ? je_1_2_5($i3,"pečoun,pečouni,pečounů") : (
           $k==4 ? $t : (je_1_2_5($s_pary[$k],"pár,páry,párů")." $t"));
       $ths.= "<th>$tit "
@@ -4606,9 +4605,10 @@ function akce2_hnizda($akce,$par=null,$title='',$vypis='',$export=false) { trace
     $tables.= "<div class='stat'><table class='stat'><tr>$ths</tr>$trs</table></div>";                                           
   }
 end:  
-  $legenda= "U páru je v závorce uveden věk dětí a chův, které berou na akci 
-    (§ označuje chůvu). 
-    <br>Odhad počtu pečounů je zatím počítán podle vzroce: 1 pečoun = 2 děti (bude upřesněno).";
+  $legenda= "U páru je v závorce uveden věk dětí a chův, které berou na akci (§ označuje chůvu). 
+    <br>Odhad chybějících pečounů bere v úvahu chůvy a přihlášené pečouny a pro zbytek dětí 
+    je počítán podle vzorce: 
+    <br>1 pečoun na dítě do 3 let + na každé 3 děti jeden pečoun.";
   $res->html= "$legenda<br><br>$tables<br><br><br>"; 
   return $res;
 }
