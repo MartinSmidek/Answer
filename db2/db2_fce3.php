@@ -6298,7 +6298,8 @@ function tisk2_text_vyroci($akce,$par,$title,$vypis,$export=false) { trace();
 function akce2_text_prehled($akce,$title) { trace();
   $pocet= 0;
   # naplní histogram podle $cond
-  $akce_text_prehled_x= function ($akce,$cond,$uvest_jmena=false,$bez_tabulky=false) use (&$pocet) {
+  $akce_text_prehled_x= function ($akce,$cond,
+      $uvest_jmena=false,$bez_tabulky=false,$jen_pod_18=false) use (&$pocet) {
     $html= '';
     // data akce
     $veky= $kluci= $holky= array();
@@ -6316,8 +6317,9 @@ function akce2_text_prehled($akce,$title) { trace();
            GROUP BY o.id_osoba ORDER BY prijmeni ";
     $ro= pdo_qry($qo);
     while ( $ro && ($o= pdo_fetch_object($ro)) ) {
-      $pocet++;
       $vek= narozeni2roky_sql($o->narozeni,$o->datum_od);
+      if ($jen_pod_18 && $vek>=18) continue;
+      $pocet++;
       $sex= $o->sex;
       $veky[$vek]++;
       $nveky++;
@@ -6359,7 +6361,8 @@ function akce2_text_prehled($akce,$title) { trace();
   };
   $result= (object)array('html'=>'','pozor'=>'');
   $html= '';
-  $nedeti= $akce_text_prehled_x($akce,"t.role='d' AND p.funkce!=99 AND s.s_role NOT IN (2,3,4,5)",1,1,0);
+  $nedeti= $akce_text_prehled_x($akce,"t.role='d' AND p.funkce!=99 AND s.s_role NOT IN (2,3,4,5)",
+      1,1,1);
   if ( $pocet>0 ) {
     $html.= "<h3 style='color:red'>POZOR! Děti vedené chybně jako účastníci nebo hosté</h3>$nedeti";
     $result->pozor= "Děti vedené chybně jako účastníci nebo hosté: $nedeti";
@@ -6371,7 +6374,7 @@ function akce2_text_prehled($akce,$title) { trace();
   // dite_kat=7 -- skupina G
   // děti ...
   if ( $title ) {
-    $html.= "<h2>Informace z karty Účastníci2 (bez náhradníků)</h2>
+    $html.= "<h2>Informace z karty Účastníci (bez náhradníků)</h2>
       <h3>Celkový počet dětí rodin na akci podle stáří (v době začátku akce) - bez os.pečounů včetně pom.pečounů</h3>";
     $html.= $akce_text_prehled_x($akce,"t.role='d' AND p.funkce!=99 AND s.s_role IN (0,1,2,3,4)");
     $html.= "<h3>Děti ve skupinkách (mimo G a osobně opečovávaných)</h3>";
