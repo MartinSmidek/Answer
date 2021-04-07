@@ -130,6 +130,7 @@ button.db_chain:disabled { color:silver; }
 .title_ref a { color:#ffffff !important; }
 .karta_info { background-color:$b8_brow; overflow: auto; }
 .neucast  { text-decoration:line-through; color:#aaaaaa; }
+.jakodite { font-style:italic; color:#aaaaaa; }
 .elim_goal { outline:3px solid $s1_brow; z-index:1 !important; }
 #files, div.files { background-color:$b8_brow; overflow: auto; }
 li.file { color:$zelena; text-decoration: underline; cursor:pointer; }
