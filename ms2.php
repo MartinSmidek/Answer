@@ -68,9 +68,13 @@
 
   //  require_once("answer.php");
   $add_options= (object) [
-//    'watch_access' => 4,
+    'watch_access' => 8,
     'group_db'     => "'ezer_answer'",
-    'web'          => "''", // web organizace - pro odmítnutí odhlášení
+    'watch_access_opt' => // ... barvení v Uživatelé + select v ezer2.syst.ezer
+       "{name:{8:'Šance pro manželství z.s.'},
+         abbr:{8:'M'},
+         css:{8:'ezer_ms'}}",
+    'web'          => "'manzelskasetkani.cz'", // web organizace - pro odmítnutí odhlášení
     'skill'        => "'d'",
     'autoskill'    => "'!d'",
     'db_test'      => 0,
@@ -78,7 +82,7 @@
   ];
 
   // (re)definice Ezer.options
-  $title= "<span $title_style>$title_flag$demo$app_name<sub>$k</sub> Sever</span>";
+  $title= "<span $title_style>$title_flag$demo$app_name<sub>$k</sub> Šance pro manželství</span>";
   $add_pars= array(
     'favicon' => array("{$app}_local.png","{$app}.png","{$app}_dsm.png")[$ezer_server],
 //    'app_root' => "$rel_root",      // startovní soubory app.php a app.inc.php jsou v kořenu

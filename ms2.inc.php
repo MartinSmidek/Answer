@@ -24,6 +24,11 @@
           'author' => "Martin"
       ),
       'activity'=>(object)array());
+      
+  // informace pro debugger
+  $dbg_info= (object)array(
+    'src_path'  => array('ms2','db2','ezer3.1') // poloha a preference zdrojových modulů
+  );
 
   // databáze
   $deep_root= "../files/answer";
