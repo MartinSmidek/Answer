@@ -44,15 +44,15 @@
       "https://answer.setkani.org");
   $rel_root= $rel_roots[$ezer_server];
   
-  // upozornění na testovací verzi
-  $demo= '';
-  if ( $ezer_server==2 ) {
-    $click= "jQuery('#DEMO').fadeOut(500);";
-    $dstyle= "left:0; top:0; position:fixed; transform:rotate(320deg) translate(-128px,-20px); "
-        . "width:500px;height:100px;background:orange; color:white; font-weight: bolder; "
-        . "text-align: center; font-size: 40px; line-height: 96px; z-index: 16; opacity: .5;";
-    $demo= "<div id='DEMO' onmouseover=\"$click\" style='$dstyle'>demo data</div>";
-  }
+//  // upozornění na testovací verzi
+//  $demo= '';
+//  if ( $ezer_server==2 ) {
+//    $click= "jQuery('#DEMO').fadeOut(500);";
+//    $dstyle= "left:0; top:0; position:fixed; transform:rotate(320deg) translate(-128px,-20px); "
+//        . "width:500px;height:100px;background:orange; color:white; font-weight: bolder; "
+//        . "text-align: center; font-size: 40px; line-height: 96px; z-index: 16; opacity: .5;";
+//    $demo= "<div id='DEMO' onmouseover=\"$click\" style='$dstyle'>demo data</div>";
+//  }
 
   // skin a css
   $cookie= 8;

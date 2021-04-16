@@ -6,12 +6,12 @@ function ms_import($cmd) {
   global $abs_root;
   $msg= '';
   $tabs= array(
-    'AKCE'    => "id_duakce,id_hlavni,nazev,misto,druh,datum_od,datum_do",
-    'POBYT'   => "id_pobyt,id_akce,i0_rodina,typ,skupina",
-    'SPOLU'   => "id_spolu,id_pobyt,id_osoba,s_role",
-    'OSOBA'   => "id_osoba,deleted,jmeno,prijmeni,sex,telefon,email,narozeni",
-    'RODINA'  => "id_rodina,nazev,psc,obec,ulice",
-    'TVORI'   => "id_tvori,id_osoba,id_rodina,role",
+//    'AKCE'    => "id_duakce,id_hlavni,nazev,misto,druh,datum_od,datum_do",
+//    'POBYT'   => "id_pobyt,id_akce,i0_rodina,typ,skupina",
+//    'SPOLU'   => "id_spolu,id_pobyt,id_osoba,s_role",
+//    'OSOBA'   => "id_osoba,deleted,jmeno,prijmeni,sex,telefon,email,narozeni",
+//    'RODINA'  => "id_rodina,nazev,psc,obec,ulice",
+//    'TVORI'   => "id_tvori,id_osoba,id_rodina,role",
   );
   switch ($cmd) {
     case 'truncate':

@@ -83,16 +83,16 @@ menu ms2 { type:'main', title:'cr2', active:*, _sys:'*'
             info.fill('',ask('db2_kontrola_dat',i.par));
           }
         }
-        menu {title:'IMPORT',type:'group', _sys:'*'
-          item {title:'import tables'                 ,par:{cmd:'insert'}}
-          item {title:'truncate tables'               ,par:{cmd:'truncate'}}
-          proc onclick (i) {
-            clear;
-            info.fill(conc(i.owner.title,' - ',i.title),' ... probíhá import dat ...');
-            info.fill('',ask('ms_import',i.par.cmd));
-            info.append('',ask('db2_info',i.par))
-          }
-        }
+//        menu {title:'IMPORT',type:'group', _sys:'*', skill:'m'
+//          item {title:'import tables'                 ,par:{cmd:'insert'}}
+//          item {title:'truncate tables'               ,par:{cmd:'truncate'}}
+//          proc onclick (i) {
+//            clear;
+//            info.fill(conc(i.owner.title,' - ',i.title),' ... probíhá import dat ...');
+//            info.fill('',ask('ms_import',i.par.cmd));
+//            info.append('',ask('db2_info',i.par))
+//          }
+//        }
       }
       use info: form right [12,4,,]
     }
