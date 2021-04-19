@@ -887,7 +887,7 @@ form _gsql {
     var keys: text
     var values: text
     gen_cas(L);
-    cond.set(conc("a.access&",org," AND spec=0",code_cas.get));
+    cond.set(conc("a.zruseno=0 AND a.access&",org," AND spec=0",code_cas.get));
     json_akce.set(conc('"typy":"',typ_akce,'"'));
     [ typ_akce;
       keys.set(akces.selected('get'));
