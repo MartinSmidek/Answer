@@ -3297,7 +3297,7 @@ function ucast2_browse_ask($x,$tisk=false) {
           . ",iniciace,firming,uvitano,clen,obcanka,rc_xxxx,cirkev,vzdelani,titul,zamest,zajmy,jazyk,dieta"
           . ",aktivita,note,_kmen");
     $fspo=  ucast2_flds("id_spolu,_barva,s_role,dite_kat,poznamka,pecovane,pfunkce,pece_jm,pece_id"
-          . ",o_umi,prislusnost");
+          . ",o_umi,prislusnost,skupinka");
 
     # 1. průchod - kompletace údajů mezi pobyty
     $skup= array();
@@ -5010,7 +5010,7 @@ function tisk2_sestava_lidi($akce,$par,$title,$vypis,$export=false) { trace();
       IF(o.adresa,o.stat,IFNULL(r2.stat,r1.stat)) AS stat,
       IF(o.kontakt,o.telefon,IFNULL(r2.telefony,r1.telefony)) AS telefony,
       IF(o.kontakt,o.email,IFNULL(r2.emaily,r1.emaily)) AS emaily,
-      s.poznamka AS s_note,s.pfunkce,s.dite_kat,
+      s.poznamka AS s_note,s.pfunkce,s.dite_kat,s.skupinka,
       IFNULL(r2.note,r1.note) AS r_note,
       IFNULL(r2.role,r1.role) AS r_role,
       ROUND(DATEDIFF(a.datum_od,o.narozeni)/365.2425,1) AS _vek,
@@ -5149,7 +5149,7 @@ function akce2_sestava_pecouni($akce,$par,$title,$vypis,$export=false) { trace()
 #   $fld = seznam položek s prefixem
 #   $cnd = podmínka
 function akce2_sestava_pobyt($akce,$par,$title,$vypis,$export=false) { trace();
-  function otoc($s) {
+  $otoc= function ($s) {
     mb_internal_encoding("UTF-8");
     $s= mb_strtolower($s);
     $x= '';
@@ -5159,7 +5159,7 @@ function akce2_sestava_pobyt($akce,$par,$title,$vypis,$export=false) { trace();
       $x.= $xi;
     }
     return $x;
-  }
+  };
   $result= (object)array();
   $typ= $par->typ;
   $tit= $par->tit;
@@ -5233,7 +5233,7 @@ function akce2_sestava_pobyt($akce,$par,$title,$vypis,$export=false) { trace();
       case '_pocetD':   $clmn[$n][$f]= $x->_pocet - $x->_pocetA; break;
       case '=par':      $clmn[$n][$f]= "{$x->prijmeni} {$x->jmena}"; break;
       // fonty: ISOCTEUR, Tekton Pro
-      case '=pozpatku': $clmn[$n][$f]= otoc("{$x->prijmeni} {$x->jmena}"); break;
+      case '=pozpatku': $clmn[$n][$f]= $otoc("{$x->prijmeni} {$x->jmena}"); break;
       default:          $clmn[$n][$f]= $x->$f; break;
       }
     }
@@ -7157,7 +7157,7 @@ function akce2_skup_deti($akce,$par,$title,$vypis,$export) {
          JOIN pobyt AS p ON a.id_duakce=p.id_akce
          JOIN spolu AS s ON p.id_pobyt=s.id_pobyt
          JOIN osoba AS o ON s.id_osoba=o.id_osoba
-         LEFT JOIN tvori AS t ON t.id_osoba=o.id_osoba
+         LEFT JOIN tvori AS t ON t.id_osoba=o.id_osoba AND t.id_rodina=p.i0_rodina
          WHERE id_duakce='$akce' AND p.funkce NOT IN (9,10,13,14)
          GROUP BY id_duakce ";
   $res= pdo_qry($qry);
@@ -7227,9 +7227,6 @@ function akce2_skup_deti($akce,$par,$title,$vypis,$export) {
 //                                                         debug($result,"result");
   return $result;
 }
-# ====================================================================================> . statistika
-# ------------------------------------------------------------------------------- akce2_tabulka_stat
-# statistický přehled akce typu LK nebo obnova
 function akce2_tabulka_stat($akce,$par,$title,$vypis,$export=0) { trace();
   $result= (object)array();
   $html= "";

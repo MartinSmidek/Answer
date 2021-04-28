@@ -588,7 +588,7 @@ Ezer.fce.roku= function (dat,rok) {
         let nar= new Date(m[0],m[1]-1,m[2]);
         roku= (now-nar)/(1000*60*60*24*365.2425);
         // do 20 let desetiny
-        roku= roku<20 ? roku.toFixed(1) : roku.toInt();
+        roku= roku<20 ? roku.toFixed(1) : roku.toFixed(0);
         if ( !roku ) roku= 0.1;       // první rok počítej i načatý
       }
     }

@@ -726,7 +726,7 @@ form _ucast [,,400,] { css:'ds_form', style:'height:fit-content'
       }
       // označ nedávno změněné hodnoty, chce-li se to
       if (zmeny) {
-        set_css_changed(array(
+        js.set_css_changed(array(
             array(rod.get,'rodina',rod.key_rodina),
             array(pob.get,'pobyt',u.b.key_pobyt),
             array(os1.get,'osoba',os1.key_osoba),
@@ -1557,7 +1557,8 @@ form _rodina2 [,,360,229]  { css:'ae_frame', par:°{onchanged:'first_only'}
     // údaje k akci
     show key_spolu, show barva, show s_role,
     show s_dite_kat, show s_poznamka, show pece_key /*pecovane*/, show pfunkce,
-    show pece_val show pece_ido /* jméno a id pečovaného nebo chůvy */ show o_umi, show prisl
+    show pece_val show pece_ido /* jméno a id pečovaného nebo chůvy */ show o_umi, show prisl, 
+    show skupinka
     // metody
     proc show_dup(on) { on; jmeno.width(80); _dup.width(29) | jmeno.width(110); _dup.width(0) }
     proc onclick() { _dup.width; show_dup(0) | show_dup(1) }
