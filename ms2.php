@@ -82,7 +82,7 @@
   ];
 
   // (re)definice Ezer.options
-  $title= "<span $title_style>$title_flag$demo$app_name<sub>$k</sub> Šance pro manželství</span>";
+  $title= "<span $title_style>$title_flag$app_name<sub>$k</sub> Šance pro manželství</span>";
   $add_pars= array(
     'favicon' => array("{$app}_local.png","{$app}.png","{$app}_dsm.png")[$ezer_server],
 //    'app_root' => "$rel_root",      // startovní soubory app.php a app.inc.php jsou v kořenu

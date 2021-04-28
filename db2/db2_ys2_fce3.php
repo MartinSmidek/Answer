@@ -4,6 +4,7 @@
 # import
 function ms_import($cmd) {
   global $abs_root;
+  return "already imported";
   $msg= '';
   $tabs= array(
 //    'AKCE'    => "id_duakce,id_hlavni,nazev,misto,druh,datum_od,datum_do",
