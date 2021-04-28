@@ -17,6 +17,7 @@
   // parametry aplikace Answer/db2
   $app_name=  "Answer";
   $app= $app_root=  'ms2';
+  $app_version_in= 'db2';
   $skin= 'ch';
 
   $title_style= $ezer_server ? '' : "style='color:#ef7f13'";
