@@ -23,7 +23,8 @@ function db2_rod_show($nazev,$n) {
         . ",nomail,email,gmail"
         . ",iniciace,firming,uvitano,clen,obcanka,rc_xxxx,cirkev,vzdelani,titul,zamest,zajmy,jazyk,dieta"
         . ",aktivita,note,_kmen,web_souhlas,prislusnost");
-  $fspo=  ucast2_flds("id_spolu,_barva,s_role,dite_kat,poznamka,pecovane,pfunkce,pece_jm,pece_id,o_umi");
+  $fspo=  ucast2_flds("id_spolu,_barva,s_role,dite_kat,poznamka,pecovane,pfunkce,pece_jm,pece_id"
+          . ",o_umi,prislusnost");
   // načtení rodin
   $qr= pdo_qry("SELECT id_rodina AS key_rodina,ulice AS r_ulice,psc AS r_psc,obec AS r_obec,
       telefony AS r_telefony,emaily AS r_emaily,spz AS r_spz,datsvatba,access AS r_access
@@ -97,7 +98,7 @@ function db2_rod_show($nazev,$n) {
     $ret->_docs.= count_chars($_dups,3);
     $ret->keys_rodina= $_keys;
   }
-//                                                         debug($ret,'db2_rod_show');
+                                                         debug($ret,'db2_rod_show');
   return $ret;
 }
 # ------------------------------------------------------------------------------------- db2 oso_show
