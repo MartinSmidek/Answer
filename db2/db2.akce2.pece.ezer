@@ -194,14 +194,20 @@ form _aktivity [,,580,] {
   view a: table akce
   view p: table pobyt { join:'ON a.id_duakce=p.id_akce' }
   view s: table spolu { join:'USING(id_pobyt)' }
-  browse akc [10,53,,] { rows:26, qry_rows:1
+  view o: table osoba { join:'USING (id_osoba)' }
+  browse akc [10,53,,] { rows:26, qry_rows:1, css_rows:"sty,1:neucast,2:jakodite"
     show ida { data:a.id_duakce }
     show idp { data:p.id_pobyt }
     show ids { data:s.id_spolu }
+    show org { data:a.access }
+    show sty { expr:"IF(a.zruseno,1,IF(FLOOR(DATEDIFF(a.datum_od,o.narozeni)/365.2425)<18,2,0))" }
     show spozn { data:s.poznamka }
-    show rok  [,, 30,] { title:'rok', expr:"YEAR(a.datum_od)", format:'q*s-' }
-    show akce [,,250,] { title:'název', data:a.nazev, format:'q*s' }
+    show rok  [,, 30,] { title:'rok', expr:"YEAR(a.datum_od)", format:'q*s-' 
+      css_cell:'org,0:,1:ezer_ys,2:ezer_fa,3:ezer_db'  }
+    show akce [,,220,] { title:'název', data:a.nazev, format:'q*s' }
     show fce  [,, 60,] { title:'fce', data:p.funkce, map_pipe:ms_akce_funkce.zkratka, format:'q*s' }
+    show jak  [,, 30,] { title:'jak', help:"'dítě' znamená věk pod 18 let"
+      expr:"IF(FLOOR(DATEDIFF(a.datum_od,o.narozeni)/365.2425)<18,IF(s.s_role=4,'pom.p','dítě'),'')" }
     proc onrowclick() { pozn.set(spozn.get) }
     proc onsubmit() {
       akce_show(ida.get,idp.get,conc(akce.get,' ',rok.get),'AKTIVITA') }
@@ -209,7 +215,7 @@ form _aktivity [,,580,] {
   proc ucasti(id_osoba,_prijmeni,_jmeno) {
     id_osoba; ido.set(id_osoba);
     jme.set(conc(_prijmeni,' ',_jmeno));
-    akc.browse_load(conc('a.spec=0 AND a.zruseno AND s.id_osoba=',id_osoba),"datum_od DESC")
+    akc.browse_load(conc('a.spec=0 AND a.zruseno=0 AND s.id_osoba=',id_osoba),"datum_od DESC")
   | akc.browse_init
   }
 }
