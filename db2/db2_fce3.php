@@ -888,16 +888,13 @@ function akce2_zmeny($id_akce,$h) {  trace();
 }
 # --------------------------------------------------------------------------------- xx akce_dite_kat
 # vrátí ys_akce_dite_kat nebo fa_akce_dite_kat podle akce
-function xx_akce_dite_kat($id_akce) {  trace();
+function xx_akce_dite_kat($id_akce) {  //trace();
   $org= select1("access","akce","id_duakce=$id_akce");
   return 
       $org==1 ? 'ys_akce_dite_kat' : (
       $org==2 ? 'fa_akce_dite_kat' : (
-      $org==4 ? 'ms_akce_dite_kat' : ''));
+      $org>=4 ? 'ms_akce_dite_kat' : ''));
 }
-# ------------------------------------------------------------------------------- akce_test_dite_kat
-# testuje, zda je kategorie dítěte v souladu s rozmezím věku v číselníku
-# narozeni=d.m.Y
 function akce_test_dite_kat($kat,$narozeni,$id_akce) {  trace();
   $ret= (object)array('ok'=>0,'vek'=>0.0);
   $dite_kat= xx_akce_dite_kat($id_akce);
@@ -1199,18 +1196,19 @@ end:
 # ------------------------------------------------------------------------------- akce2 select_cenik
 # seznam akcí s ceníkem pro select
 function akce2_select_cenik($id_akce) {  trace();
-  $max_nazev= 20;
+  $max_nazev= 30;
   mb_internal_encoding('UTF-8');
+  $org= select('access','akce',"id_duakce=$id_akce");
   $options= 'neměnit:0';
   if ( $id_akce ) {
     $qa= "SELECT id_duakce, nazev, YEAR(datum_od) AS _rok FROM akce
-          WHERE id_duakce!=$id_akce AND ma_cenik>0 ORDER BY datum_od DESC";
+          WHERE id_duakce!=$id_akce AND access=$org AND ma_cenik>0 ORDER BY datum_od DESC";
     $ra= pdo_qry($qa);
     while ($ra && $a= pdo_fetch_object($ra) ) {
-      $nazev= strtr($a->nazev,array(','=>' ',':'=>' '));
+      $nazev= "{$a->_rok} - ";
+      $nazev.= strtr($a->nazev,array(','=>' ',':'=>' '));
       if ( mb_strlen($nazev) >= $max_nazev )
         $nazev= mb_substr($nazev,0,$max_nazev-3).'...';
-      $nazev.= "/{$a->_rok}";
       $options.= ",$nazev:{$a->id_duakce}";
     }
   }
@@ -1218,19 +1216,38 @@ function akce2_select_cenik($id_akce) {  trace();
 }
 # ------------------------------------------------------------------------------- akce2 change_cenik
 # změnit ceník akce za vybraný
-function akce2_change_cenik($id_akce,$id_akce_vzor) {  trace();
-  $err= '';
-  if ( !$id_akce || !$id_akce_vzor ) { $err= "chybné použití změny - ceník nezměněn"; goto end; }
-  // výmaz položek v ceníku
+# fáze= dotaz | proved
+# 1. kontrola parametrů 
+function akce2_change_cenik($faze,$id_akce,$id_akce_vzor) {  trace();
+  if ( !$id_akce || !$id_akce_vzor ) { $msg= "nebyl vybrán zdroj ceníku!"; goto end; }
+  $hnizda= select('hnizda','akce',"id_duakce=$id_akce_vzor");
+  if ( $hnizda ) { $msg= "kopírovat ceník z hnízd do hnízd zatím neumím!"; goto end; }
+  $hnizda= select('hnizda','akce',"id_duakce=$id_akce");
+  if ($faze=='dotaz') {
+    $msg= $hnizda 
+        ? "opravdu nastavit ceníky ve všech hnízdech akce jako stejné podle ceníku vybrané akce?" 
+        : "opravdu nastavit ceník akce za cením vybrané akce?";
+    goto end;
+  }
+  // 'proved' kopii, napřed vymaž starý ceník
   query("DELETE FROM cenik WHERE id_akce=$id_akce");
   // kopie ze vzoru
-  $qa= "INSERT INTO cenik (id_akce,poradi,polozka,za,typ,od,do,cena,dph)
+  if ($hnizda) { // do hnízd
+    $n_h= count(explode(',',$hnizda));
+    for ($h=1; $h<=$n_h; $h++) {
+      query("INSERT INTO cenik (id_akce,hnizdo,poradi,polozka,za,typ,od,do,cena,dph)
+          SELECT $id_akce,$h,poradi,polozka,za,typ,od,do,cena,dph
+          FROM cenik WHERE id_akce=$id_akce_vzor");
+    }
+  }
+  else { // bez hnízd
+    query("INSERT INTO cenik (id_akce,poradi,polozka,za,typ,od,do,cena,dph)
           SELECT $id_akce,poradi,polozka,za,typ,od,do,cena,dph
-          FROM cenik WHERE id_akce=$id_akce_vzor";
-  $ra= pdo_qry($qa);
-  if ( !$ra ) { $err= "chyba MySQL"; goto end; }
+          FROM cenik WHERE id_akce=$id_akce_vzor");
+  }
+  $msg= "hotovo, nezapomeňte jej upravit (ceny,DPH)";
 end:
-  return $err ? $err : "hotovo, nezapomeňte jej upravit (ceny,DPH)";
+  return $msg;
 }
 # --------------------------------------------------------------------------------- akce2 platby_xls
 function akce2_platby_xls($id_akce) {  trace();
@@ -1354,7 +1371,7 @@ end:
 # ------------------------------------------------------------------------- akce2 pobyt_default_vsem
 # provedení akce2_pobyt_default pro všechny
 function akce2_pobyt_default_vsem($id_akce) {  trace();
-  $warn= '';
+  $warn= $zmeny= '';
   $a= akce2_id2a($id_akce);
   $ro= pdo_qry("
     SELECT id_pobyt,prijmeni,
@@ -1395,9 +1412,18 @@ function akce2_pobyt_default_vsem($id_akce) {  trace();
           platba4='{$c->c_sleva}',poplatek_d='{$c->poplatek_d}',naklad_d='{$c->naklad_d}'
           WHERE id_pobyt=$id_pobyt");
       }
+      // informace o změnách kategorie dětí do warn
+      if ( $x->zmeny_kat) 
+        $zmeny.= "<br>$x->zmeny_kat";
     }
   }
-  return $warn ? "$warn<hr>výše uvedeným nebyly platby předepsány" : 'ok' ;
+  $info= $warn 
+      ? "$warn<hr>výše uvedeným nebyly platby předepsány" 
+      : 'byly předepsány všechny platby' ;
+  $info.= $zmeny
+      ? "<hr>následujícím dětem byla změněny kategorie $zmeny"
+      : " nebyla změněna kategorie žádnému dítěti";
+  return $info;
 }
 # ------------------------------------------------------------------------------ akce2 pobyt_default
 # definice položek v POBYT podle počtu a věku účastníků - viz akce_vzorec_soubeh
@@ -1405,11 +1431,14 @@ function akce2_pobyt_default_vsem($id_akce) {  trace();
 # 130522 údaje za chůvu budou připsány na rodinu chovaného dítěte
 # 130524 oživena položka SVP
 # 190501 pokud je $zapsat=1 budou dětem stanoveny kategorie podle věku
-function akce2_pobyt_default($id_akce,$id_pobyt,$zapsat=0) {  trace();
+# 210510 hnízda
+function akce2_pobyt_default($id_akce,$id_pobyt,$zapsat=0) {  //trace();
   $warn= '';
+  $zmeny_kat= array(); // pro zapsat==1 bude obsahovat provedené změny kategorie u dětí
   $dite_kat= xx_akce_dite_kat($id_akce);
   $akce_dite_kat_Lp=  map_cis($dite_kat,'barva'); // {L|-},{c|p} = lůžko/bez, celá/poloviční
   $akce_dite_kat_vek= map_cis($dite_kat,'ikona'); // od-do
+  $akce_dite_kat_zkr= map_cis($dite_kat,'zkratka'); // zkratka
   $akce_funkce= map_cis('ms_akce_funkce','zkratka');
   // projítí společníků v pobytu
   $dosp= $deti= $koje= $noci= $sleva= $fce= $svp= 0;
@@ -1447,12 +1476,16 @@ function akce2_pobyt_default($id_akce,$id_pobyt,$zapsat=0) {  trace();
     if ( in_array($o->s_role,array(2,3,4)) ) {
       $ktg= $o->dite_kat;
       // pokud prepsat=1 => kategorie dítěte bude stanovena podle věku
+      // a informace o změně bude zapsána do zmeny_kat[]
       if ( $zapsat ) {
         $ok= 0;
         foreach ($akce_dite_kat_vek as $kat=>$veky) {
           list($od,$do)= explode('-',$veky);
-          if ( $vek>=$od && $vek<$do ) {
-            query("UPDATE spolu SET dite_kat=$kat WHERE id_spolu={$o->id_spolu} ");
+          if ( $vek>=$od && $vek<$do) {
+            if ($kat!=$ktg) {
+              $zmeny_kat[]= array($o->id_spolu,"$o->prijmeni $o->jmeno",$ktg,$kat);
+              query("UPDATE spolu SET dite_kat=$kat WHERE id_spolu={$o->id_spolu} ");
+            }
             $ok= 1;
             break;
           }
@@ -1500,23 +1533,34 @@ function akce2_pobyt_default($id_akce,$id_pobyt,$zapsat=0) {  trace();
   $ret= (object)array('luzka'=>$luzka,'kocarek'=>$bez,'pocetdnu'=>$noci,'svp'=>$svp,
                       'strava_cel'=>$cela,'strava_pol'=>$polo,'vzorec'=>$vzorec,'vek'=>$vek,
                       'warn'=>$warn);
+  if ($zapsat) { 
+                        if (count($zmeny_kat)) debug($zmeny_kat,"změny kategorie dětí");
+    $zmeny= $del= '';
+    foreach ($zmeny_kat as $z) {
+      // z~array($o->id_spolu,"o.prijmeni o.jmeno",$ktg,$kat);
+      $zmeny.= "$del$z[1] - místo {$akce_dite_kat_zkr[$z[2]]} je {$akce_dite_kat_zkr[$z[3]]}";
+      $del= ', ';
+    }
+    $ret->zmeny_kat= $zmeny;    
+  }
 //                                                debug($ret,"osob:$koje,$deti,$dosp $msg fce=$fce");
   return $ret;
 }
 # -------------------------------------------------------------------------------- akce2 vzorec_expr
 # test výpočtu platby za pobyt na akci pro ceník verze 2017
 # $expr = {n}*{n2}..*pro.za + ...  kde N je písmeno znamenající počet nocí, O počet obědů
-function akce2_vzorec_expr($id_akce,$expr) {  trace();
+function akce2_vzorec_expr($id_akce,$hnizdo,$expr) {  trace();
   $expr= str_replace(' ','',$expr);
   $html= '';
   // akce
-  list($ma_cenik,$verze_ceniku,$noci,$strava_oddo)=
-    select("ma_cenik,ma_cenik_verze,DATEDIFF(datum_do,datum_od),strava_oddo","akce","id_duakce=$id_akce");
+  list($ma_cenik,$noci,$strava_oddo,$hnizda)=
+    select("ma_cenik,DATEDIFF(datum_do,datum_od),strava_oddo,hnizda","akce","id_duakce=$id_akce");
   $obedu= $noci + ($strava_oddo=='oo' ? 1 : 0);
   if ( !$ma_cenik ) { $html= 'akce nemá ceník'; goto end; }
   // ceník
+  $AND_hnizdo= $hnizda ? "AND hnizdo=$hnizdo" : '';
   $cenik= array();
-  $ra= pdo_qry("SELECT cena,pro,za FROM cenik WHERE id_akce=$id_akce AND za!=''");
+  $ra= pdo_qry("SELECT cena,pro,za FROM cenik WHERE id_akce=$id_akce AND za!='' $AND_hnizdo");
   while ( $ra && (list($cena,$pro,$za)= pdo_fetch_row($ra)) ) {
     foreach (str_split($pro) as $prox) {
       $cenik[$prox.$za]= $cena;
@@ -1612,11 +1656,12 @@ end:
   return $html;
 }
 # -------------------------------------------------------------------------------- akce2 vzorec_test
-# test výpočtu platby za pobyt na akci
-function akce2_vzorec_test($id_akce,$nu=2,$nd=0,$nk=0) {  trace();
+# test výpočtu platby za pobyt na akci 
+function akce2_vzorec_test($id_akce,$hnizdo=0,$nu=2,$nd=0,$nk=0) {  trace();
   $ret= (object)array('navrh'=>'','err'=>'');
   $map_typ= map_cis('ms_akce_ubytovan','zkratka');
-  $types= select("GROUP_CONCAT(DISTINCT typ ORDER BY typ)","cenik","id_akce=$id_akce GROUP BY id_akce");
+  $types= select("GROUP_CONCAT(DISTINCT typ ORDER BY typ)","cenik",
+      "id_akce=$id_akce AND hnizdo=$hnizdo GROUP BY id_akce");
   // obecné info o akci
   list($ma_cenik,$noci,$strava_oddo)=
     select("ma_cenik,DATEDIFF(datum_do,datum_od),strava_oddo","akce","id_duakce=$id_akce");
@@ -1644,7 +1689,8 @@ function akce2_vzorec_test($id_akce,$nu=2,$nd=0,$nk=0) {  trace();
     $title= $typ ? "<h3>ceny pro ".$map_typ[$typ]."</h3>" : '';
     $cena= 0;
     $html.= "$title<table>";
-    $ra= pdo_qry("SELECT * FROM cenik WHERE id_akce=$id_akce AND za!='' AND typ=$typ ORDER BY poradi");
+    $ra= pdo_qry("SELECT * FROM cenik 
+      WHERE id_akce=$id_akce AND hnizdo=$hnizdo AND za!='' AND typ=$typ ORDER BY poradi");
     while ( $ra && ($a= pdo_fetch_object($ra)) ) {
       $acena= $a->cena;
       list($za_u,$za_d,$za_k,$za_noc,$oo,$plus)= $cenik[$a->za];
@@ -1672,8 +1718,8 @@ function akce2_vzorec_soubeh($id_pobyt,$id_hlavni,$id_soubezna,$dosp=0,$deti=0,$
   // načtení ceníků
   $sleva= 0;
   $ret= (object)array('navrh'=>'','err'=>'','naklad_d'=>0,'poplatek_d'=>0);
-  akce2_nacti_cenik($id_hlavni,$cenik_dosp,$ret->navrh);   if ( $html ) goto end;
-  akce2_nacti_cenik($id_soubezna,$cenik_deti,$ret->navrh); if ( $html ) goto end;
+  akce2_nacti_cenik($id_hlavni,$hnizdo,$cenik_dosp,$ret->navrh);   if ( $html ) goto end;
+  akce2_nacti_cenik($id_soubezna,$hnizdo,$cenik_deti,$ret->navrh); if ( $html ) goto end;
   $dite_kat= xx_akce_dite_kat($id_hlavni);
   $map_kat= map_cis($dite_kat,'zkratka');
   if ( $id_pobyt ) {
@@ -1838,8 +1884,8 @@ end:
 }
 # -------------------------------------------------------------------------------- akce2 nacti_cenik
 # lokální pro akce2_vzorec_soubeh a tisk2_sestava_lidi
-function akce2_nacti_cenik($id_akce,&$cenik,&$html) {
-  $qa= "SELECT * FROM cenik WHERE id_akce=$id_akce ORDER BY poradi";
+function akce2_nacti_cenik($id_akce,$hnizdo,&$cenik,&$html) {
+  $qa= "SELECT * FROM cenik WHERE id_akce=$id_akce AND hnizdo=$hnizdo ORDER BY poradi";
   $ra= pdo_qry($qa);
   if ( !pdo_num_rows($ra) ) {
     $html.= "akce $id_akce nemá ceník";
@@ -1890,11 +1936,12 @@ function akce2_vzorec($id_pobyt) {  //trace();
     $svp= $p->svp;
     $neprijel= $p->funkce==10 || $p->funkce==14;
     $datum_od= $p->datum_od;
+    $hnizda= $p->hnizda ? 1 : 0;
   }
   // podrobné parametry, ubytovani ma hodnoty z číselníku ms_akce_ubytovan
   $deti= $koje= $chuv= $dite_chovane= $koje_chovany= 0;
   $chuvy= $del= '';
-  $qo= "SELECT o.jmeno,o.narozeni,p.funkce,t.role, p.ubytovani,
+  $qo= "SELECT o.jmeno,o.narozeni,p.funkce,t.role, p.ubytovani,p.hnizdo,
          s.pecovane,(SELECT CONCAT(osoba.prijmeni,',',osoba.jmeno,',',pobyt.id_pobyt)
           FROM pobyt
           JOIN spolu ON spolu.id_pobyt=pobyt.id_pobyt
@@ -1955,7 +2002,8 @@ function akce2_vzorec($id_pobyt) {  //trace();
   }
 //                                                         debug($vzor);
   // načtení ceníku do pole $cenik s případnou specifikací podle typu ubytování
-  $qa= "SELECT * FROM cenik WHERE id_akce=$id_akce ORDER BY poradi";
+  $AND_hnizdo= $hnizda ? "AND hnizdo=$p->hnizdo" : '';
+  $qa= "SELECT * FROM cenik WHERE id_akce=$id_akce $AND_hnizdo ORDER BY poradi";
   $ra= pdo_qry($qa);
   $n= $ra ? pdo_num_rows($ra) : 0;
   if ( !$n ) {
@@ -4980,7 +5028,7 @@ function tisk2_sestava_lidi($akce,$par,$title,$vypis,$export=false) { trace();
   // načtení ceníku pro dite_kat, pokud se chce _poplatek
   if ( strpos($fld,"_poplatek") ) {
     $soubezna= select("id_duakce","akce","id_hlavni=$akce");
-    akce2_nacti_cenik($soubezna,$cenik,$html);
+    akce2_nacti_cenik($soubezna,$tisk_hnizdo,$cenik,$html);
   }
   // získání dat - podle $kdo
   $clmn= array();

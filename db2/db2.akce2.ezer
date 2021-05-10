@@ -320,7 +320,7 @@ table pobyt { key_id:'id_pobyt'
   # number id_osoba -- 131004 zrušeno
   number typ            // 10,11,20,21
   number skupina
-  number hnizdo
+  number hnizdo // 0 nebo pořadí hnízda
   number funkce
   number prednasi      // číselník ms_akce_prednasi
   text aktivita
@@ -510,6 +510,7 @@ table platba { key_id:'id_platba'
 table cenik { key_id:'id_cenik'
   number id_cenik
   number id_akce
+  number hnizdo // 0 nebo pořadí hnízda
   number poradi
   text   polozka
   text   pro

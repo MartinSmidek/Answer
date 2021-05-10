@@ -27,17 +27,32 @@ menu db2 { type:'main', title:'db2', active:*, _sys:'*'
         confirm("smazat záznam ",idt," v tabulce tvori?");
         ask('query',conc("DELETE FROM tvori WHERE id_tvori=",idt));
       }
+      func tab_append(tab,idt,using) {
+        clear();
+        if (using) info.append(php.tab_append_using(tab,idt));
+        else info.append(php.tab_append(tab,idt));
+      }
       menu m {type:'left', format:'f+'
         menu {title:'Přehled',type:'group', _sys:'*'
           item {title:'Záznamy', par:°{db:'ms2',org:'3'}
             proc onclick (i) {
-              clear;
+              clear; info.display(0,'t');
               info.fill(conc(i.owner.title,' - ',i.title),'... probíhá výpočet ...');
               info.fill('',ask('db2_info',i.par)) }}
         }
         menu s  {title:'Struktura dat', type:'group', skill:'yamg;famg;camg;aa;a'
           item {title:'[fa-object-group] Přehled struktury dat'   par:°{img:'2015'} }
           item {title:'[fa-object-group] Podrobná struktura dat'  par:°{img:'2019'} }
+          item {title:'[fa-question] zobrazení záznamů'
+            func onclick (i:ezer) {
+              clear(); info.display(1,'t');
+              info.fill(replace_fa(i.title),'');
+              if (!info.tab) {
+                info.tab.selects(php.tab_selects());
+                info.tab.key(1);
+              }
+            }
+          }
           item {title:'[fa-database] tabulka AKCE',               par:°{tab:'akce'} }
           item {title:'[fa-database] tabulka POBYT',              par:°{tab:'pobyt'} }
           item {title:'[fa-database] tabulka SPOLU',              par:°{tab:'spolu'} }
@@ -65,7 +80,7 @@ menu db2 { type:'main', title:'db2', active:*, _sys:'*'
           item {title:'[fa-database fa-darkviolet] tabulka #okres' par:°{tab:'`#okres`'}  skill:'faa:m' }
           item {title:'[fa-database fa-darkviolet] tabulka #kraj'  par:°{tab:'`#kraj`'}   skill:'faa:m' }
           proc onclick (i) {
-            clear;
+            clear; info.display(0,'t');
             panel.display(2,'i');
             info.fill(replace_fa(conc(i.owner.title,' - ',i.title)),' ');
             { i.par.tab;  
@@ -80,11 +95,13 @@ menu db2 { type:'main', title:'db2', active:*, _sys:'*'
           item { title:"[fa-question] přehled záloh"          par:°{typ:'listing',direct:'1'}}
           item { title:"[fa-upload] zálohuj teď"              par:°{typ:'special',direct:'0'}}
           proc onclick(i) {
+            clear; info.display(0,'t');
             info.fill(replace_fa(conc(i.owner.title,' - ',i.title)),' ');
             info.append(ask('sys_backup_make',i.par)) 
           }
           item { title:"obnova ze zálohy (jen local)" par:°{typ:'restore',direct:'1'}
             proc onclick(i) { var heslo:text
+              clear; info.display(0,'t');
               info.fill(conc(i.owner.title,' - ',i.title),' ');
               eq(sys('ezer','server'),0,1); // test na lokální server na NTB nebo Synology DOMA
               confirm('Opravdu mám lokální databázi přepsat?'); 
@@ -97,7 +114,7 @@ menu db2 { type:'main', title:'db2', active:*, _sys:'*'
           item { title:"[fa-download] export adres pro geo / osoba"  par:°{tab:'osoba'}}
           item { title:"[fa-download] export adres pro geo / rodina"  par:°{tab:'rodina'}}
           func onclick(i:ezer) { var own:ezer
-            own= i.owner();
+            own= i.owner(); info.display(0,'t');
             info.fill(replace_fa(`${own.title} - ${i.title}`),' ');
             info.append(php.mapa2_geo_export(i.par)) 
           }
@@ -105,12 +122,12 @@ menu db2 { type:'main', title:'db2', active:*, _sys:'*'
         menu o {title:'Ostrá databáze',type:'group', _sys:'*'
           item {title:'Stav sjednocování kopií', par:°{db:'db2'}
             proc onclick (i) {
-              panel.display(2,'i');
+              panel.display(2,'i'); info.display(0,'t');
               info.fill(replace_fa(conc(i.owner.title,' - ',i.title)),'... probíhá výpočet ...');
               info.fill('',ask('db2_stav',i.par.db)) }}
           item {title:'obnova pobyt.web_changes' 
             proc onclick() { 
-              panel.display(2,'i');
+              panel.display(2,'i'); info.display(0,'t');
               confirm('opravit pobyt.web_changes ?'); ask('update_web_changes') 
           }}
 //          item {title:'smazat platební údaje LK2019' skill:'m'
@@ -123,7 +140,7 @@ menu db2 { type:'main', title:'db2', active:*, _sys:'*'
           item {title:'kontroly databáze'               ,par:°{opravit:0}}
           item {title:'kontroly databáze s opravou'     ,par:°{opravit:1}, skill:'m'}
           proc onclick (i) {
-            panel.display(2,'i');
+            panel.display(2,'i'); info.display(0,'t');
             info.fill(replace_fa(conc(i.owner.title,' - ',i.title)),' ... probíhá kontrola dat ...');
             info.fill('',ask('db2_kontrola_dat',i.par));
           }
@@ -131,18 +148,28 @@ menu db2 { type:'main', title:'db2', active:*, _sys:'*'
         menu t {title:'Testovací databáze',type:'group', _sys:'*'
           item {title:'stav sjednocování kopií', par:°{db:'db2_test'}
             proc onclick (i) {
-              panel.display(2,'i');
+              panel.display(2,'i'); info.display(0,'t');
               info.fill(replace_fa(conc(i.owner.title,' - ',i.title)),'... probíhá výpočet ...');
               info.fill('',ask('db2_stav',i.par.db)) }}
           item {title:'obnovit testovací db z ostré', par:°{db:'db2'}
             proc onclick (i) {
-              panel.display(2,'i');
+              panel.display(2,'i'); info.display(0,'t');
               confirm("vytvořit znovu testovací databázi z aktuálního stavu ostré databáze?");
               info.fill(replace_fa(conc(i.owner.title,' - ',i.title)),' ... probíhá update ...');
               info.fill('',ask('db2_copy_test_db',i.par.db)); }}
         }
       }
-      use info: form right [12,4,,]     { tag:'i' }
+      use info: form right [12,4,,] { tag:'i' 
+        select tab [-253,5,150,] {tag:'t', title:'tabulka', format:'t'}
+        field idt [-152,5,70,] {tag:'t', title:'klíč', format:'t'}
+        button [-82,5,,] {tag:'t', title:'zobraz'
+          func onclick() {
+            clear(); form.note= conc(form.note,php.tab_append(tab,`*='${idt}'`)); // * bude primary_key
+        }}
+        button [-22,5,,] {tag:'t', title:'vymaž'
+          func onclick() { form.note= '';
+        }}
+      }
     }
     panel str {type:'right', title:'Aplikace', _sys:'str', skill:'a;aa'
       menu m {type:'left', format:'f+'

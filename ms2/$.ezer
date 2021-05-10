@@ -14,11 +14,16 @@ menu ms2 { type:'main', title:'cr2', active:*, _sys:'*'
     proc reaccess() {}
     panel oso {type:'right', title:'Osobní nastavení', _sys:'*', include:'onclick,ezer2.pers' }
     panel nas {type:'right', title:'Data', _sys:'nas', skill:'a'
+      func tab_append(tab,idt,using) {
+        clear();
+        if (using) info.append(php.tab_append_using(tab,idt));
+        else info.append(php.tab_append(tab,idt));
+      }
       menu {type:'left', active:*
         menu {title:'Přehled',type:'group', _sys:'*'
           item {title:'Záznamy', par:°{db:'ms2',org:'8'}
             proc onclick (i) {
-              clear;
+              clear; info.display(0,'t');
               info.fill(conc(i.owner.title,' - ',i.title),'... probíhá výpočet ...');
               info.fill('',ask('db2_info',i.par)) }}
         }
@@ -27,12 +32,14 @@ menu ms2 { type:'main', title:'cr2', active:*, _sys:'*'
           item { title:"[fa-download] stáhnutí záloh",par:°{typ:'download',direct:'1',glob:'ezer_ms*'}}
           item { title:"[fa-upload] zálohuj teď",     par:°{typ:'special',direct:'0'}}
           proc onclick(i) {
+            info.display(0,'t');
             info.fill(replace_fa(conc(i.owner.title,' - ',i.title)),' ');
             { eq(i.par.typ,'listing','download') | confirm('opravdu uložit databázi do složky special?') };
             info.append(ask('sys_backup_make',i.par)) 
           }
           item { title:"obnova ze zálohy (jen local)" par:°{typ:'restore',direct:'1',glob:'ezer_ms*'}
             proc onclick(i) { var heslo:text
+              info.display(0,'t');
               info.fill(conc(i.owner.title,' - ',i.title),' ');
               eq(sys('ezer','server'),0,1); // test na lokální server na NTB nebo Synology DOMA
               confirm('Opravdu mám lokální databázi přepsat?'); 
@@ -43,6 +50,16 @@ menu ms2 { type:'main', title:'cr2', active:*, _sys:'*'
         }
         menu s  {title:'Struktura dat', type:'group', skill:'yamg;famg;camg;aa;a'
           item {title:'[fa-object-group] Přehled struktury dat'   par:°{img:'2015'} }
+          item {title:'[fa-question] zobrazení záznamů'
+            func onclick (i:ezer) {
+              clear(); info.display(1,'t');
+              info.fill(replace_fa(i.title),'');
+              if (!info.tab) {
+                info.tab.selects(php.tab_selects());
+                info.tab.key(1);
+              }
+            }
+          }
           item {title:'[fa-database] tabulka AKCE',               par:°{tab:'akce'} }
           item {title:'[fa-database] tabulka POBYT',              par:°{tab:'pobyt'} }
           item {title:'[fa-database] tabulka SPOLU',              par:°{tab:'spolu'} }
@@ -63,8 +80,8 @@ menu ms2 { type:'main', title:'cr2', active:*, _sys:'*'
           item {title:'[fa-database fa-red] tabulka _TRACK'       par:°{tab:'_track'}     skill:'m' }
           item {title:'[fa-database fa-red] tabulka _USER'        par:°{tab:'_user'}      skill:'m' }
           proc onclick (i) {
-            clear;
-            panel.display(2,'i');
+            clear; info.display(0,'t');
+            panel.display(2,'i'); 
             info.fill(replace_fa(conc(i.owner.title,' - ',i.title)),' ');
             { i.par.tab;  
               info.append(ask('i_doc_table_struct',i.par.tab,0));
@@ -78,7 +95,7 @@ menu ms2 { type:'main', title:'cr2', active:*, _sys:'*'
           item {title:'kontroly databáze'               ,par:°{opravit:0}}
           item {title:'kontroly databáze s opravou'     ,par:°{opravit:1}, skill:'m'}
           proc onclick (i) {
-            clear;
+            clear; info.display(0,'t');
             info.fill(conc(i.owner.title,' - ',i.title),' ... probíhá kontrola dat ...');
             info.fill('',ask('db2_kontrola_dat',i.par));
           }
@@ -94,7 +111,17 @@ menu ms2 { type:'main', title:'cr2', active:*, _sys:'*'
 //          }
 //        }
       }
-      use info: form right [12,4,,]
+      use info: form right [12,4,,] {
+        select tab [-253,5,150,] {tag:'t', title:'tabulka', format:'t'}
+        field idt [-152,5,70,] {tag:'t', title:'klíč', format:'t'}
+        button [-82,5,,] {tag:'t', title:'zobraz'
+          func onclick() {
+            clear(); form.note= conc(form.note,php.tab_append(tab,`*='${idt}'`)); // * bude primary_key
+        }}
+        button [-22,5,,] {tag:'t', title:'vymaž'
+          func onclick() { form.note= '';
+        }}
+      }
     }
   }
   tabs doc  {title:"[fa-question] Nápověda", _sys:'*',  include:'onload,ezer2.help' }
@@ -175,10 +202,10 @@ menu ms2 { type:'main', title:'cr2', active:*, _sys:'*'
 
 }
 // univerzální formulář pro levostranné menu
-form right [,,700,50] {
-  label info [0,0,680,600] { title:'' }
-  label head [0,0,680,50]  { title:'' }
-  label note [0,50,680,550] { title:'' }
+form right [,,*,*] {
+  label info [0,0,*,*] { title:'' }
+  label head [0,0,*,50]  { title:'' }
+  label note [0,50,*,*] { title:'' }
   proc fill(x,y) {
     [ x; head.set(conc("<div class='karta'>",x,"</div>")) ];
     [ y; note.set(y) ]

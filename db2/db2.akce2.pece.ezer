@@ -365,7 +365,8 @@ form _pece [,,400,] { css:'ds_form'
   view t: table tvori  { join_type:'LEFT', join:'ON t.id_osoba=o.id_osoba' }
   view r: table rodina { join_type:'LEFT', join:'ON r.id_rodina=t.id_rodina' }
   view c: table osoba  { join_type:'LEFT', join:'ON c.id_osoba=s.pecovane' }
-  view x: table pobyt  { join_type:'LEFT', join:'ON x.i0_rodina=r.id_rodina AND x.id_akce=a.id_duakce' }
+  view x: table pobyt  { join_type:'LEFT', 
+          join:'ON x.i0_rodina=r.id_rodina AND x.id_akce=a.id_duakce AND x.hnizdo=s.s_hnizdo' }
   // ==> seznam pečounů
   browse b [0,22,,] {type:'smart', buf_rows:120, rows:27, qry_rows:1, group_by:"s.id_osoba"
 #       ?     hlavoun  pomocny  osobni   mimořádný team   skupina G

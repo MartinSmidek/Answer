@@ -934,10 +934,13 @@ form _evidence [,,623,] { style:'height:fit-content'
   # ------------------------==> . kontextové_menu
   menu ctx { type:'context', join:frame
     item { title:'všem navrhnout cenu', skill:'yaa+',
-      proc onclick () { confirm(
-            "POZOR!<br>platby a věkové kategorie dětí <b style='color:red'>budou přepsány</b> hodnotami odvozenými pouze z věku dětí");
-        alert(ask('akce2_pobyt_default_vsem',the_duakce.get));
-        u.b.browse_refresh } }
+      func onclick () { 
+        confirm(`POZOR!<br>platby a věkové kategorie dětí <b style='color:red'>budou přepsány</b> 
+           hodnotami odvozenými pouze z věku dětí (změny budou zobrazeny pro kontrolu a případné vrácení)`
+        );
+        u.b.browse_refresh();
+        alert(php.akce2_pobyt_default_vsem(the_duakce));
+    }}
     item { title:'-zkontrolovat skupinky', skill:'yaa+;faa+;caa+',
       proc onclick () { alert(ask('akce2_skup_check',the_duakce.get)) } }
     item { title:'[fa-sort-numeric-asc] přečíslovat skupinky podle VPS', skill:'yaa+;caa+',
