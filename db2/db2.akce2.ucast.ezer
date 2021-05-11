@@ -935,11 +935,12 @@ form _evidence [,,623,] { style:'height:fit-content'
   menu ctx { type:'context', join:frame
     item { title:'všem navrhnout cenu', skill:'yaa+',
       func onclick () { 
-        confirm(`POZOR!<br>platby a věkové kategorie dětí <b style='color:red'>budou přepsány</b> 
+        if (confirm(`POZOR!<br>platby a věkové kategorie dětí <b style='color:red'>budou přepsány</b> 
            hodnotami odvozenými pouze z věku dětí (změny budou zobrazeny pro kontrolu a případné vrácení)`
-        );
-        u.b.browse_refresh();
-        alert(php.akce2_pobyt_default_vsem(the_duakce));
+        )) {
+          u.b.browse_refresh();
+          alert(php.akce2_pobyt_default_vsem(the_duakce));
+        }
     }}
     item { title:'-zkontrolovat skupinky', skill:'yaa+;faa+;caa+',
       proc onclick () { alert(ask('akce2_skup_check',the_duakce.get)) } }

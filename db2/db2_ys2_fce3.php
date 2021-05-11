@@ -8,6 +8,8 @@ $app_tables= (object)array(
   'osoba'   => "id_osoba>*,jmeno,prijmeni",
   'tvori'   => "id_tvori>-,id_osoba>osoba,id_rodina>rodina,role",
   'rodina'  => "id_rodina>*,nazev",
+  'dopis'   => "id_dopis>*,hnizdo,nazev",
+  'mail'    => "id_mail>*,id_dopis>dopis,id_clen>osoba",
   '_' => 'syst.nas,stat' // cesta k funkci tab_append, css tabulky
 );
 /** ========================================================================================> IMPORT */

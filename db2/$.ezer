@@ -27,10 +27,19 @@ menu db2 { type:'main', title:'db2', active:*, _sys:'*'
         confirm("smazat záznam ",idt," v tabulce tvori?");
         ask('query',conc("DELETE FROM tvori WHERE id_tvori=",idt));
       }
-      func tab_append(tab,idt,using) {
+//      func tab_append(tab,idt,using) {
+//        clear();
+//        if (using) info.append(php.tab_append_using(tab,idt));
+//        else info.append(php.tab_append(tab,idt));
+//      }
+      func tab_append(tab,cond,mode) {
         clear();
-        if (using) info.append(php.tab_append_using(tab,idt));
-        else info.append(php.tab_append(tab,idt));
+        if (mode==1)
+          info.append(php.tab_append_using(tab,cond));
+        elseif (mode==2)
+          info.append(php.tab_append(tab,`TRUE`));
+        else // mode==0
+          info.append(php.tab_append(tab,cond));
       }
       menu m {type:'left', format:'f+'
         menu {title:'Přehled',type:'group', _sys:'*'
@@ -47,8 +56,8 @@ menu db2 { type:'main', title:'db2', active:*, _sys:'*'
             func onclick (i:ezer) {
               clear(); info.display(1,'t');
               info.fill(replace_fa(i.title),'');
+              info.tab.selects(php.tab_selects());
               if (!info.tab) {
-                info.tab.selects(php.tab_selects());
                 info.tab.key(1);
               }
             }

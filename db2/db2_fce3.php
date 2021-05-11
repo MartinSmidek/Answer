@@ -12942,7 +12942,7 @@ function mail2_mai_pocet($id_dopis,$dopis_var,$cond='',$recall=false) {  trace()
     $html.= "Obeslaných účastníků ";
     // POZOR KOPIE KÓDU z mail2_mai_doplnit
     $AND= $cond ? "AND $cond" : '';
-    $AND.= "AND (d.hnizdo=0 || d.hnizdo=p.hnizdo)";
+    $AND.= "AND (d.hnizdo=99 || d.hnizdo=p.hnizdo)";
     $AND.= $dopis_var=='U'  ? " AND p.funkce IN (0,1,2,5)" : (
            $dopis_var=='U1' ? " AND p.funkce=0"   : (
            $dopis_var=='U2' ? " AND p.funkce IN (1,2,5)"   : (
