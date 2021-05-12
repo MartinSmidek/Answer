@@ -150,16 +150,17 @@ form _prehled {
   view ma: table mail {join_type:'LEFT' join:'USING (id_dopis)'}
   view da: table akce {join_type:'LEFT' join:'USING (id_duakce)'}
   browse ds { rows:27, qry_rows:3, group_by:'id_dopis'
-    show idd { data:d.id_dopis }
     show org [,,20,]    { title:"org", data:d.access, format:"uq*" 
       proc onsubmit() { this.save } }
-    show datum [,,75,]  { title:"odesláno", data:d.datum, format:"rq*s-" }
+    show datum [,,70,]  { title:"odesláno", data:d.datum, format:"rq*s-" }
+    show idd  [,,40,]   { title:'a', help:'ID dopisu', data:d.id_dopis, format:"rq=s"  }
     show akce [,,35,]   { title:"a", help:"ID akce", data:d.id_duakce, format:"rq=s" }
-    show druh [,,35,]   { title:"t", help:"typ akce", data:da.druh, format:"rq=s" }
-    show list [,,35,]   { title:"m", help:"ID mailistu", data:d.id_mailist, format:"rq=s" }
+    show hniz [,,15,]   { title:"h", help:"hnízdo", data:d.hnizdo, format:"rq=s" }
+    show druh [,,20,]   { title:"t", help:"typ akce", data:da.druh, format:"rq=s" }
+    show list [,,30,]   { title:"m", help:"ID mailistu", data:d.id_mailist, format:"rq=s" }
     show cis  [,,35,]   { title:"c", help:"ID SQL skupiny", data:d.cis_skupina, format:"rq=s" }
     show count[,,35,]   { title:"# mailů", help:"počet mailů", expr:"COUNT(ma.id_mail)", format:"rq=s" }
-    show nazev [,,200,] { title:"předmět", data:d.nazev, format:"q*st" }
+    show nazev [,,170,] { title:"předmět", data:d.nazev, format:"q*st" }
     proc onrowclick () { var y:object
       y.set(ask('mail2_mai_text',idd.get,1)); // zjistit i akci nebo mailist
       obsah.set(y.html);
