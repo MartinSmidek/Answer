@@ -326,11 +326,12 @@ proc jump(ido) { var idp:number
 }
 # --------------------------------------------------==> . neni_ulozeno
 # ochrana proti neuložení změny
-proc neni_ulozeno() { var no: number
-  no.set(not(evid.Same));
-  [ no; //echo('neni_ulozeno!');
-    warning('neuložené změny pro pobyt <b>',u.b._nazev.get,'</b> použij [Zpět] nebo [Uložit]');
-    u.b.browse_active(u.old_row.get) ];
+func neni_ulozeno() { var no: number
+  no= !evid.Same();
+  if (no) { //echo('neni_ulozeno!');
+    warning(`neuložené změny pro pobyt <b>${u.b._nazev}</b> použij [Zpět] nebo [Uložit]`);
+    u.b.browse_active(u.old_row);
+  }
   return(no)
 }
 proc neni_ulozen_clen() { var no: number
@@ -973,7 +974,7 @@ form _evidence [,,623,] { style:'height:fit-content'
     os1.display(on); sp1.display(on);
     [ eq(cmode.get,2); os2.display(on); sp2.display(on) ];
   }
-  proc Same() { return(and(rod.same,os1.same,pob.same,sp1.same,sp2.same,os2.same,pla.same)) }
+  proc Same() { return(and(rod.same,os1.same,pob.same,sp1.same,sp2.same,os2.same,pla.Same)) }
   proc Plain() { rod.plain; os1.plain; pob.plain; sp1.plain; sp2.plain; os2.plain }
   proc Init() {
     osoba_config.start; spolu_config.start; pobyt_config.start; rodina_config.start;
@@ -1601,49 +1602,87 @@ form _rodina2 [,,360,229]  { css:'ae_frame', par:°{onchanged:'first_only'}
 # ----------------------------------------------------------------------------------------==> PLATBA
 form _platba [,,623,] { key_id:'id_pobyt', style:'height:fit-content', par:°{onchanged:'first_only'}
   const Td= 230
-  var cena: object
+  var cena: object,
+      zmena_spec_strav: number
   label [2,27,527,Td+95] //{title:"<img src='img/ms2p.png'>" }
+  func Same() { return form.same() && zmena_spec_strav==0; }
   func onchanged() { ucast_lock_on('pobyt',the_pobyt) }
-  proc ini() {
+  func ini() {
+    zmena_spec_strav= 0;
     // výpočet součtu cen a rozpis, došlé platby
-    [ has_skill("yaa;faa;caa");
-      rozpis_ceny;
-      celkem.set(sum(c_nocleh.get,c_strava.get,c_program.get,c_sleva.get));
-      naklad.set(sum(celkem.get,minus(c_sleva.get)));
-    ];
+    if (has_skill("yaa;faa;caa")) {
+      rozpis_ceny();
+      celkem= c_nocleh + c_strava + c_program + c_sleva;
+      naklad= celkem - c_sleva;
+    };
     // obarvení tlačítek [Str.pol]
-    [ or(u.b.cstrava_cel.get,u.b.cstrava_pol.get); stravy.set_css('cervena','cerna');
-    | stravy.set_css('cerna','cervena') ];
-    [ or(u.b.cstrava_cel_bm.get,u.b.cstrava_pol_bm.get); stravy_bm.set_css('cervena','cerna');
-    | stravy_bm.set_css('cerna','cervena') ];
-    [ or(u.b.cstrava_cel_bl.get,u.b.cstrava_pol_bl.get); stravy_bl.set_css('cervena','cerna');
-    | stravy_bl.set_css('cerna','cervena') ];
+    if (u.b.cstrava_cel || u.b.cstrava_pol) stravy.set_css('cervena','cerna');
+    else stravy.set_css('cerna','cervena');
+    if (u.b.cstrava_cel_bm || u.b.cstrava_pol_bm) stravy_bm.set_css('cervena','cerna');
+    else stravy_bm.set_css('cerna','cervena');
+    if (u.b.cstrava_cel_bl || u.b.cstrava_pol_bl) stravy_bl.set_css('cervena','cerna');
+    else stravy_bl.set_css('cerna','cervena');
   }
+//  proc ini() {
+//    // výpočet součtu cen a rozpis, došlé platby
+//    [ has_skill("yaa;faa;caa");
+//      rozpis_ceny;
+//      celkem.set(sum(c_nocleh.get,c_strava.get,c_program.get,c_sleva.get));
+//      naklad.set(sum(celkem.get,minus(c_sleva.get)));
+//    ];
+//    // obarvení tlačítek [Str.pol]
+//    [ or(u.b.cstrava_cel.get,u.b.cstrava_pol.get); stravy.set_css('cervena','cerna');
+//    | stravy.set_css('cerna','cervena') ];
+//    [ or(u.b.cstrava_cel_bm.get,u.b.cstrava_pol_bm.get); stravy_bm.set_css('cervena','cerna');
+//    | stravy_bm.set_css('cerna','cervena') ];
+//    [ or(u.b.cstrava_cel_bl.get,u.b.cstrava_pol_bl.get); stravy_bl.set_css('cervena','cerna');
+//    | stravy_bl.set_css('cerna','cervena') ];
+//  }
   // rozpis a zápis ceny
   button [10,47,,] { tag:'cenik', title:"Návrh ceny", help:"zapíše počet lůžek a strav"
-    var ret: object
-    proc onclick() {
-      ret.set(ask('akce2_pobyt_default',the_duakce.get,the_pobyt.get));
+    func onclick() { var ret: object
+      ret= php.akce2_pobyt_default(the_duakce,the_pobyt);
       copy_by_name(ret,form);
-      vzorec.change; luzka.change; pocetdnu.change; svp.change;
-      strava_cel.change; strava_pol.change; kocarek.change;
-      navrh.set("pro zobrazení ceny je třeba
-        <br>1. upravit (je-li třeba) a uložit navržené hodnoty,
-        <br>2. dát <b>Zapsat cenu</b> <br>3. uložit");
+      vzorec.change(); luzka.change(); pocetdnu.change(); svp.change();
+      strava_cel.change(); strava_pol.change(); kocarek.change();
+      navrh= `pro zobrazení ceny je třeba
+          <br>1. upravit (je-li třeba) a uložit navržené hodnoty,
+          <br>2. dát <b>Zapsat cenu</b> <br>3. uložit`;
     }
+//    proc onclick() {
+//      ret.set(ask('akce2_pobyt_default',the_duakce.get,the_pobyt.get));
+//      copy_by_name(ret,form);
+//      vzorec.change; luzka.change; pocetdnu.change; svp.change;
+//      strava_cel.change; strava_pol.change; kocarek.change;
+//      navrh.set("pro zobrazení ceny je třeba
+//        <br>1. upravit (je-li třeba) a uložit navržené hodnoty,
+//        <br>2. dát <b>Zapsat cenu</b> <br>3. uložit");
+//    }
   }
   button [10,72,,] { tag:'cenik', title:"Zapsat cenu"
-    proc onclick() {
-      { not(or(u.b.cstrava_cel.get,u.b.cstrava_pol.get))
-      | or(u.b.cstrava_cel.get,u.b.cstrava_pol.get);
-        confirm("Pozor - jsou vyplněny speciální stravy. Pokračovat?")
-      };
-      { the_soubeh.get; cena.set(ask('akce2_vzorec_soubeh',the_pobyt.get,the_duakce.get,the_soubezna.get))
-      | cena.set(ask('akce2_vzorec',the_pobyt.get)) };
-      copy_by_name(cena.get,form);
-      c_nocleh.change; c_strava.change; c_program.change; c_sleva.change;
-      poplatek_d.change; naklad_d.change; ini
-  } }
+    func onclick() {
+      if (!form.same()) { alert(`napřed ulož změny`); return; }
+      if ((u.b.cstrava_cel || u.b.cstrava_pol) 
+        && !confirm("Pozor - jsou vyplněny speciální stravy. Pokračovat?")) return;
+      cena= the_soubeh
+        ? php.akce2_vzorec_soubeh(the_pobyt,the_duakce,the_soubezna)
+        : php.akce2_vzorec(the_pobyt);
+      copy_by_name(cena,form);
+      c_nocleh.change(); c_strava.change(); c_program.change(); c_sleva.change();
+      poplatek_d.change(); naklad_d.change(); ini()
+    } 
+//    proc onclick() {
+//      { not(or(u.b.cstrava_cel.get,u.b.cstrava_pol.get))
+//      | or(u.b.cstrava_cel.get,u.b.cstrava_pol.get);
+//        confirm("Pozor - jsou vyplněny speciální stravy. Pokračovat?")
+//      };
+//      { the_soubeh.get; cena.set(ask('akce2_vzorec_soubeh',the_pobyt.get,the_duakce.get,the_soubezna.get))
+//      | cena.set(ask('akce2_vzorec',the_pobyt.get)) };
+//      copy_by_name(cena.get,form);
+//      c_nocleh.change; c_strava.change; c_program.change; c_sleva.change;
+//      poplatek_d.change; naklad_d.change; ini
+//    } 
+  }
   // parametry ceny
   label [93,53,,] { tag:'cenik', title:"cena pro:" }
   select vzorec [143,51,148,] { tag:'cenik', type:'map0', data:pobyt.vzorec, help:"výběr vzorce pro organizátory",
@@ -1651,19 +1690,31 @@ form _platba [,,623,] { key_id:'id_pobyt', style:'height:fit-content', par:°{on
   label [110,77,,] { tag:'cenik', title:"sleva:" }
   field sleva [143,74,50,] { tag:'cenik', data:pobyt.sleva, help:"Slevy pro potřebné účastníky", format:'r' }
   // zdůvodnění ceny podle vzorce nebo textem
-  proc rozpis_ceny() {
-    duvod_typ.get; navrh.display(0); duvod_text.display(1)
-  | navrh.display(1); duvod_text.display(0);
-    { the_soubeh.get; cena.set(ask('akce2_vzorec_soubeh',the_pobyt.get,the_duakce.get,the_soubezna.get))
-    | cena.set(ask('akce2_vzorec',the_pobyt.get)) };
-    navrh.set(cena.get('navrh'))
+  func rozpis_ceny() {
+    if (duvod_typ) { // vlastní text
+      navrh.display(0); duvod_text.display(1)
+    }
+    else { // podle ceníku
+      navrh.display(1); duvod_text.display(0);
+      cena= the_soubeh
+        ? php.akce2_vzorec_soubeh(the_pobyt,the_duakce,the_soubezna)
+        : php.akce2_vzorec(the_pobyt);
+      navrh= cena.navrh;
+    }
   }
+//  proc rozpis_ceny() {
+//    duvod_typ.get; navrh.display(0); duvod_text.display(1)
+//  | navrh.display(1); duvod_text.display(0);
+//    { the_soubeh.get; cena.set(ask('akce2_vzorec_soubeh',the_pobyt.get,the_duakce.get,the_soubezna.get))
+//    | cena.set(ask('akce2_vzorec',the_pobyt.get)) };
+//    navrh.set(cena.get('navrh'))
+//  }
   radio duvod_typ [7,100,284,Td+-123] { data:pobyt.duvod_typ, value:'0', style:"border:1px solid gray"
     case [0,2,157,] { title:'cena podle položek ceníku', expr:'0' }
     case [158,2,122,] { title:'vlastní text s cenou', expr:'1' }
     proc onchange () { rozpis_ceny }
   }
-  button [266,124,,] { tag:'cenik' style:"z-index:3" title:'[fa-upload]' help:'vložení tabulky do schránky'
+  button [279,99,,] { tag:'cenik' style:"z-index:3" title:'[fa-upload]' help:'vložení tabulky do schránky'
     proc onclick() {
       function("clipboard_obj('div.karta_info')");
   }}
@@ -1671,27 +1722,25 @@ form _platba [,,623,] { key_id:'id_pobyt', style:'height:fit-content', par:°{on
   edit duvod_text [8,119,280,Td-147] { tag:'cenik', /*type:'html',*/ data:pobyt.duvod_text }
   label doslo [300,99,281,170] { style:"border-left:2px solid grey" }
   // nestandardní strava
+  func nestandard(zkratka,nazev) { var zmena:number
+      has_skill("yaa+;faa+;caa+");
+      Strava.dnu= u.b.dnu; // pokud jsou definovány výjimky z pravidelné stravy
+      if (Strava.dnu<15) {       // 15 je maximálně možný počet řádků vyjímek ze stravy
+        Strava.x= zkratka; 
+        zmena= Strava.modal(240,50,`Nestandardní počet strav - ${nazev}`);
+        zmena_spec_strav= zmena_spec_strav+zmena;
+        echo(`zmena_spec_strav=${zmena_spec_strav} pro ${nazev}`);
+      }
+  }  
   button stravy     [89,Td+-5,37,] {tag:'b', title:'Str Po', style:'font-size:10px;height:19px;width:40px',
-    proc onclick() {
-      has_skill("yaa+;faa+;caa+");
-      Strava.dnu.set(u.b.dnu.get); // pokud jsou definovány výjimky z pravidelné stravy
-      lt(Strava.dnu.get,15);       // 15 je maximálně možný počet řádků vyjímek ze stravy
-      Strava.x.set(''); Strava.modal(240,50,'Nestandardní počet strav - normálních')
-  } }
+    func onclick() { nestandard('','normalnich'); }
+  }
   button stravy_bm  [140,Td+-5,37,] {tag:'b', title:'Str Po', style:'font-size:10px;height:19px;width:40px',
-    proc onclick() {
-      has_skill("yaa+;faa+;caa+");
-      Strava.dnu.set(u.b.dnu.get); // pokud jsou definovány výjimky z pravidelné stravy
-      lt(Strava.dnu.get,15);       // 15 je maximálně možný počet řádků vyjímek ze stravy
-      Strava.x.set('_bm'); Strava.modal(240,50,'Nestandardní počet strav - bezmasých')
-  } }
+    func onclick() { nestandard('_bm','bezmasých'); }
+  }
   button stravy_bl  [190,Td+-5,37,] {tag:'b', title:'Str Po', style:'font-size:10px;height:19px;width:40px',
-    proc onclick() {
-      has_skill("yaa+;faa+;caa+");
-      Strava.dnu.set(u.b.dnu.get); // pokud jsou definovány výjimky z pravidelné stravy
-      lt(Strava.dnu.get,15);       // 15 je maximálně možný počet řádků vyjímek ze stravy
-      Strava.x.set('_bl'); Strava.modal(240,50,'Nestandardní počet strav - bezlepkových')
-  } }
+    func onclick() { nestandard('_bl','bezlepkových'); }
+  }
   // funkce
   proc nove() {
     navrh.set(''); doslo.set('');
@@ -1768,13 +1817,15 @@ form _cmd_p [,,623,30] { css:'ae_work'
       // uvolnění zámku a potlačení ochrany proti neuložené změně
       php.table_lock('off','pobyt',the_pobyt);
       pla.plain();
+      pla.zmena_spec_strav= 0;
       reload(the_pobyt);
   } }
   button [560,6,,] {title:'[fa-save] Uložit',  help:'Uložit změny v platbách', skill:'yaa+|yaa+;faa+|faa+;caa+|caa+'
     func onclick() { 
       php.table_lock('off','pobyt',the_pobyt);
+      pla.zmena_spec_strav= 0;
       if (the_pobyt && (!pla.same())) {
-        pla.save(); pla.plain();
+        pla.save(); pla.load();
       }
 //      reload(the_pobyt.get);
     }
@@ -1894,14 +1945,14 @@ panel Skupinky [,,400,400] {type:'popup', title:'Historie skupinek'
 # ==========================================================================================> STRAVA
 # nastaví položky cstrava_pol{x} a cstrava_cel{x} pro x=|_bm|_bl
 panel Strava [,,320,280] {type:'popup', title:'Nestandardní počet strav - xxx'
-  var x=''              // postfix položek cstrava_cel,cstrava_pol,strava_cel,strava_pol
-  var  strava_cel_x: number
-  var  strava_pol_x: number
-  var cstrava_cel_x: text
-  var cstrava_pol_x: text
-  var dnu: number
-  var arr: object
-  var prvni: text       // první strava na akci
+  var x='',             // postfix položek cstrava_cel,cstrava_pol,strava_cel,strava_pol
+      strava_cel_x: number,
+      strava_pol_x: number,
+      cstrava_cel_x: text,
+      cstrava_pol_x: text,
+      dnu: number,
+      arr: object,
+      prvni: text       // první strava na akci
   use n: form nastaveni [5,5,,]
   proc onfocus() {
     var cela: text  // řetězec strav: sov.... po dnech
@@ -1913,12 +1964,9 @@ panel Strava [,,320,280] {type:'popup', title:'Nestandardní počet strav - xxx'
     cstrava_pol_x.set(u.b.part(conc('cstrava_pol',x.get)).get);
     //
     prvni.set(substr(lst.the_akce.strava_oddo.get,0,1));    // první strava akce
-#     [ cela.set(u.b.cstrava_cel.get); cela.get | cela.set(strava_def(u.b.strava_cel.get)) ];
-#     [ polo.set(u.b.cstrava_pol.get); polo.get | polo.set(strava_def(u.b.strava_pol.get)) ];
     [ cela.set(cstrava_cel_x.get); cela.get | cela.set(strava_def(strava_cel_x.get)) ];
     [ polo.set(cstrava_pol_x.get); polo.get | polo.set(strava_def(strava_pol_x.get)) ];
     n.L.init;
-#     n.cele.set(u.b.strava_cel.get); n.polo.set(u.b.strava_pol.get);
     n.cele.set(strava_cel_x.get); n.polo.set(strava_pol_x.get);
     arr.set(ask('akce2_strava_denne',u.b.datum_od.get,dnu.get,cela.get,polo.get));
     each(arr.get,den);
@@ -1928,7 +1976,7 @@ panel Strava [,,320,280] {type:'popup', title:'Nestandardní počet strav - xxx'
       repeat(strav,multiply(3,sum(dnu.get,-2))),
       strav,strav,'0'));
   }
-  # přidání řádku pro i-tý den
+  // přidání řádku pro i-tý den
   proc den (p,i) {
     [ n.L.add ];
     n.L.part(i).part('den').set(p.den);
@@ -1939,7 +1987,7 @@ panel Strava [,,320,280] {type:'popup', title:'Nestandardní počet strav - xxx'
     strava_set(i,'vc',p.vc,n.cele.get);
     strava_set(i,'vp',p.vp,n.polo.get);
   }
-  # zobrazení stravy s pro i-tý den
+  // zobrazení stravy s pro i-tý den
   proc strava_set(i,s,val,norm) {
     var s1:text
     s1.set(substr(s,0,1));
@@ -2013,11 +2061,9 @@ panel Strava [,,320,280] {type:'popup', title:'Nestandardní počet strav - xxx'
         scele.set(''); spolo.set('');
         each(L,save_den);
         ask('akce2_strava_denne_save',u.b.key_pobyt.get,dnu.get,x.get,
-#           scele.get,u.b.strava_cel.get,u.b.cstrava_cel.get,
-#           spolo.get,u.b.strava_pol.get,u.b.cstrava_pol.get,prvni.get);
           scele.get,strava_cel_x.get,cstrava_cel_x.get,
           spolo.get,strava_pol_x.get,cstrava_pol_x.get,prvni.get);
-        panel.hide(0);
+        panel.hide(1); // asi byla změna
         reload(the_pobyt.get);
     }}
     proc save_den (p,i) {
