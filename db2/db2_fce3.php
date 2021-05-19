@@ -12018,7 +12018,7 @@ function mail2_vzor_pobyt($id_pobyt,$typ,$from,$vyrizuje,$poslat=0) {
      p.platba,p.datplatby,p.potvrzeno,
      p.platba_d,p.datplatby_d,p.potvrzeno_d,
      GROUP_CONCAT(DISTINCT IF(o.kontakt,o.email,'')),IFNULL(GROUP_CONCAT(DISTINCT r.emaily),''),
-     a.nazev,a.access
+     a.nazev,a.access,a.hnizda,p.hnizdo
     FROM pobyt AS p
     JOIN akce AS a ON p.id_akce=a.id_duakce
     LEFT JOIN akce AS x ON x.id_hlavni=a.id_duakce
@@ -12030,7 +12030,7 @@ function mail2_vzor_pobyt($id_pobyt,$typ,$from,$vyrizuje,$poslat=0) {
   ");
   if (!$rm ) { $ret->err= "CHYBA záznam nenalezen"; goto end; }
   list($soubezna,$castka,$dne,$potvrzeno,$castka_d,$dne_d,$potvrzeno_d,
-    $omaily,$rmaily,$p->platba_akce,$access)= pdo_fetch_row($rm);
+    $omaily,$rmaily,$p->platba_akce,$access,$hnizda,$hnizdo)= pdo_fetch_row($rm);
   if ( !$castka && !$castka_d ) {
     $ret->err= "CHYBA: ještě nebylo nic zaplaceno"; goto end; }
   if ( $castka && $dne=='0000-00-00' || $castka_d && $dne_d=='0000-00-00' ) {
@@ -12052,6 +12052,13 @@ function mail2_vzor_pobyt($id_pobyt,$typ,$from,$vyrizuje,$poslat=0) {
   $p->platba_castka=
     number_format($castka && !$potvrzeno ? $castka : $castka_d, 0, '.', '&nbsp;')."&nbsp;Kč";
   $p->vyrizuje= $vyrizuje;
+  // doplnění názvu hnízda, má-li smysl
+  if ($hnizda && $hnizdo) {
+    $hnizda= explode(',',$hnizda);
+    if (isset($hnizda[$hnizdo-1])) {
+      $p->platba_akce.= ", hnízdo {$hnizda[$hnizdo-1]}";
+    }
+  }
 
   // načtení vzoru dopisu
   list($nazev,$obsah,$vars)=
