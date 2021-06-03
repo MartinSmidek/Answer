@@ -3140,7 +3140,7 @@ function ucast2_browse_ask($x,$tisk=false) {
     }
     return $y;
   };
-                                                         debug($x,"akce_browse_ask");
+//                                                         debug($x,"akce_browse_ask");
 //                                                         return;
   $y= (object)array('ok'=>0);
   $neucasti= select1("GROUP_CONCAT(data)",'_cis',"druh='ms_akce_funkce' AND ikona=1");
@@ -4549,9 +4549,9 @@ function tisk2_sestava($akce,$par,$title,$vypis,$export=false,$hnizdo=0) { trace
      : ( $par->typ=='vj'   ? akce2_stravenky($akce,$par,$title,$vypis,$export)      //!
      : ( $par->typ=='vjp'  ? akce2_stravenky($akce,$par,$title,$vypis,$export)      //!
      : ( $par->typ=='d'    ? akce2_sestava_pecouni($akce,$par,$title,$vypis,$export)//!
-     : ( $par->typ=='ss'   ? tisk2_pdf_plachta($akce,$export)                       //!
+     : ( $par->typ=='ss'   ? tisk2_pdf_plachta($akce,$export,$hnizdo)                       //!
      : ( $par->typ=='s0'   ? tisk2_pdf_plachta0($export)                            // pomocné štítky
-     : ( $par->typ=='skpl' ? akce2_plachta($akce,$par,$title,$vypis,$export)        //!
+     : ( $par->typ=='skpl' ? akce2_plachta($akce,$par,$title,$vypis,$export,$hnizdo)//!
      : ( $par->typ=='skpr' ? akce2_skup_hist($akce,$par,$title,$vypis,$export)      //!
      : ( $par->typ=='skpopo'?akce2_skup_popo($akce,$par,$title,$vypis,$export)      //!
      : ( $par->typ=='skti' ? akce2_skup_tisk($akce,$par,$title,$vypis,$export)      //!
@@ -4663,10 +4663,13 @@ end:
 }
 # ------------------------------------------------------------------------------- akce2 tabulka
 # generování tabulky účastníků $akce typu LK pro přípravu hnízd
+# používá se i pro návrh skupinek
 function akce2_tabulka($akce,$par,$title,$vypis,$export=false) { trace();
   global $VPS;
   $map_fce= map_cis('ms_akce_funkce','zkratka');
-  $res= (object)array('html'=>'...');
+  $res= (object)array(html=>'...',
+      vps=>array(),nevps=>array(),novi=>array(),druh=>array(),vice=>array(),problem=>array(),
+      clmn=>array());
   $clmn= tisk2_sestava_pary($akce,$par,$title,$vypis,false,true);
 //                                         debug($clmn,"akce2_tabulka {$clmn[1]['prijmeni']}");
   // seřazení podle příjmení
@@ -4692,14 +4695,25 @@ function akce2_tabulka($akce,$par,$title,$vypis,$export=false) { trace();
   // vložení do tabulky
   $tab= array();
   for ($i= 0; $i<count($clmn); $i++) {
-    $x= $clmn[$i]['x_ms'];
-    $v= $clmn[$i]['_vps'];
-    $f= $clmn[$i]['funkce'];
+    $ci= $clmn[$i];;
+    $x= $ci['x_ms'];
+    $v= $ci['_vps'];
+    $f= $ci['funkce'];
     $c= $f==9 ? 6 : ($f!=0 && $f!=1 && $f!=2 ? 7
      : ($v=='VPS' ? 0 : ($v=='(vps)' ? 5
      : ($x==1 ? 1 : ($x==2 ? 2 : ($x==3 ? 3 : 4))))));
     $tab[$c][]= $i;
+    // definice sloupců v res
+//    $ci['key_rodina']= $ci['prijmeni'];
+    if ($v=='VPS') $res->vps[]= $ci['^id_pobyt'];
+    elseif ($v=='(vps)' || $f==5) $res->nevps[]= $ci['^id_pobyt']; 
+    elseif ($x==1) $res->novi[]= $ci['^id_pobyt'];
+    elseif ($x==2) $res->druh[]= $ci['^id_pobyt'];
+    elseif ($x>=3) $res->vice[]= $ci['^id_pobyt'];
+    elseif ($f<2) $res->problem[]= $ci['^id_pobyt'];
+    $res->clmn[$ci['^id_pobyt']]= $ci;
   }
+//                                            debug($res,'návrh skupinek');
   // export HTML a do Excelu
   $ids= array(
     "$VPS:22","Prvňáci:14","Druháci:14","Třeťáci:14","Víceročáci:14",
@@ -4739,6 +4753,7 @@ function akce2_tabulka($akce,$par,$title,$vypis,$export=false) { trace();
   }
 //                                         debug($tab,"akce2_tabulka - tab");
 //                                         debug($clmn,"akce2_tabulka - clmn");
+//                                         debug($res,"akce2_tabulka - bez html");
   if ( $export ) {
     $rc= $rc_atr= $n= $tit= array();
     for ($c= 0; $c<=7; $c++) {
@@ -4893,7 +4908,7 @@ function tisk2_sestava_pary($akce,$par,$title,$vypis,$export=false,$internal=fal
     if ( $x->r_emaily )   $emaily[]=   trim($x->r_emaily,",; ");
     # rozšířené spojení se získá slepením údajů všech účastníků
     $xs= explode('≈',$x->r_cleni);
-//                                                         debug($xs,"xs");
+//                                                         debug($x);
     $pocet= 0;
     $spolu_note= "";
     $osoba_note= "";
@@ -6870,7 +6885,7 @@ end:
 # přehled všech skupinek letního kurzu MS daného páru (rodiny) -> html
 # počet let aktivního VPSkování -> sluzba, počet odpočinkových skupinek -> odpocinek
 # počet účastí na MS -> ucasti
-function akce2_skup_paru($idr) { trace();
+function akce2_skup_paru($idr) { //trace();
   $html= '';
   $sluzba= $odpocinek= $vps= 0;
   $n_ms= 0;
@@ -7469,9 +7484,9 @@ function tisk2_pdf_plachta0($report_json=0) {  trace();
 }
 # ------------------------------------------------------------------------------------ akce2 plachta
 # podklad pro tvorbu skupinek
-function akce2_plachta($akce,$par,$title,$vypis,$export=0) { trace();
+function akce2_plachta($akce,$par,$title,$vypis,$export=0,$hnizdo=0) { trace();
   global $tisk_hnizdo;
-  $jen_hnizdo= $tisk_hnizdo ? " AND hnizdo=$tisk_hnizdo " : '';
+  $tisk_hnizdo= $hnizdo;
   $result= (object)array();
   // číselníky
   $c_vzdelani= map_cis('ms_akce_vzdelani','zkratka');  $c_vzdelani[0]= '?';
@@ -7480,13 +7495,34 @@ function akce2_plachta($akce,$par,$title,$vypis,$export=0) { trace();
   $html= "";
   $err= "";
   $excel= array();
-//   $html.= "<table class='vypis'>";
-  // letošní účastníci - mají jistě definováno i0_rodina
+  // informace
+  $par2= (object)array(typ=>'tab',cnd=>"p.funkce NOT IN (99)",
+      fld=>'key_rodina,prijmeni,jmena2,rodice,vek_deti,x_ms,_vps,funkce,^id_pobyt');  
+  $c= akce2_tabulka($akce,$par2,'','');
+                                                debug($c,'akce2_tabulka');
+  // získání všech id_pobyt - definice ORDER
+  $ids= array_merge($c->vps,$c->nevps,$c->novi,$c->druh,$c->vice);
+  $ids= implode(',',$ids);
+  $ids_1= implode(',',$c->vps);
+  $ids_2= implode(',',$c->nevps);
+  $ids_3= implode(',',$c->novi);
+  $ids_4= implode(',',$c->druh);
+  $ids_5= implode(',',$c->vice);
+  $kategorie= "CASE 
+      WHEN FIND_IN_SET(id_pobyt,'$ids_1') THEN 1
+      WHEN FIND_IN_SET(id_pobyt,'$ids_2') THEN 2
+      WHEN FIND_IN_SET(id_pobyt,'$ids_3') THEN 3
+      WHEN FIND_IN_SET(id_pobyt,'$ids_4') THEN 4
+      WHEN FIND_IN_SET(id_pobyt,'$ids_5') THEN 5
+    END  ";
+  $vek= "narozeni_m DESC";
+  $vzdelani= "_vzdelani";
+//  $ids= "2287,3323";
+//                                                debug($ids,count($ids));
   $qry=  "SELECT
-          datum_od, i0_rodina,
-          FIND_IN_SET(1,r_umi) AS _umi_vps,o.jmeno AS jmeno_o,o.prijmeni AS prijmeni_o,
-          r.nazev as jmeno,p.pouze as pouze,r.obec as mesto,svatba,datsvatba,p.funkce as funkce,
+          id_pobyt,id_rodina,r.nazev as jmeno,r.obec as mesto,svatba,datsvatba,
           SUM(IF(s.s_role IN (2,3),1,0)) AS _detisebou,
+          c.hodnota AS _skola,
           GROUP_CONCAT(DISTINCT IF(t.role='a',o.id_osoba,'') SEPARATOR '') as id_osoba_m,
           GROUP_CONCAT(DISTINCT IF(t.role='a',o.prijmeni,'') SEPARATOR '') as prijmeni_m,
           GROUP_CONCAT(DISTINCT IF(t.role='a',o.jmeno,'')    SEPARATOR '') as jmeno_m,
@@ -7505,6 +7541,7 @@ function akce2_plachta($akce,$par,$title,$vypis,$export=0) { trace();
           GROUP_CONCAT(DISTINCT IF(t.role='b',o.aktivita,'') SEPARATOR '') as aktivita_z,
           GROUP_CONCAT(DISTINCT IF(t.role='b',o.zajmy,'')    SEPARATOR '') as zajmy_z,
           GROUP_CONCAT(DISTINCT IF(t.role='b',o.zamest,'')   SEPARATOR '') as zamest_z,
+          MAX(IF(t.role IN ('a','b'),c.hodnota,0)) as _vzdelani,
           ( SELECT COUNT(*)
             FROM osoba JOIN tvori USING(id_osoba)
             WHERE id_rodina=t.id_rodina AND role='d' ) AS deti,
@@ -7515,38 +7552,24 @@ function akce2_plachta($akce,$par,$title,$vypis,$export=0) { trace();
             FROM osoba JOIN tvori USING(id_osoba)
             WHERE id_rodina=t.id_rodina AND role='d' ) AS mindeti
           FROM pobyt AS p
-          JOIN spolu AS s USING(id_pobyt)
+          JOIN spolu AS s USING (id_pobyt)
           JOIN osoba AS o ON s.id_osoba=o.id_osoba
           LEFT JOIN tvori AS t ON t.id_osoba=o.id_osoba AND t.id_rodina=i0_rodina
-          LEFT JOIN rodina AS r USING(id_rodina)
-          JOIN akce AS a ON a.id_duakce=p.id_akce
-          WHERE id_akce=$akce AND p.funkce IN (0,1,2,5) $jen_hnizdo -- včetně hospodářů, bývají hosty skupinky
-  -- AND id_pobyt=53282
+          LEFT JOIN rodina AS r USING (id_rodina)
+          LEFT JOIN _cis AS c ON c.druh='ms_akce_vzdelani' AND c.data=o.vzdelani
+          WHERE id_pobyt IN ($ids)
           GROUP BY id_pobyt
-          ORDER BY IF(pouze=0,r.nazev,o.prijmeni) ";
-//   $qry.= " LIMIT 1";
+          ORDER BY $kategorie, $vzdelani, $vek";
+//  $qry.= " LIMIT 1";
   $res= pdo_qry($qry);
   while ( $res && ($u= pdo_fetch_object($res)) ) {
-    $rod= $u->i0_rodina;
-    $muz= $u->id_osoba_m;
-    $zen= $u->id_osoba_z;
-    if ( !$muz || !$zen ) {
-      $jmena= "{$u->jmeno_o} {$u->prijmeni_o}";
-      $err.= "<b style='color:darkred'>POZOR: účastník akce pro páry $jmena není pár
-             - z tabulky je vynechán(a)</b><br><br>";
-      continue;
-    }
+    debug($u);
+    $idp= $u->id_pobyt;
+
+    
     // minulé účasti - ale ne jako děti účastnické rodiny
-    $rqry= "SELECT count(*) as _pocet
-            FROM akce AS a
-            JOIN pobyt AS p ON a.id_duakce=p.id_akce
-            JOIN spolu AS s USING(id_pobyt)
-            WHERE a.druh=1 AND a.spec=0 AND a.zruseno=0
-              AND s.id_osoba=$muz AND i0_rodina=$rod AND p.id_akce!=$akce";
-    $rres= pdo_qry($rqry);
-    while ( $rres && ($r= pdo_fetch_object($rres)) ) {
-      $u->ucasti= $r->_pocet ? "  {$r->_pocet}x" : '';
-    }
+    $xms= $c->clmn[$idp]['x_ms'];
+    $u->ucasti= $xms ? "  {$xms}x" : '';
     // věk
     $vek_m= sql2stari($u->narozeni_m,$u->datum_od);
     $vek_z= sql2stari($u->narozeni_z,$u->datum_od);
@@ -7615,11 +7638,14 @@ function akce2_plachta($akce,$par,$title,$vypis,$export=0) { trace();
       $excel[]= array($r1,$r2,$r31,$r41,$r51,$r32,$r42,$r52,$vzdelani_muze,$vek_m,$u->jmeno);
     }
   }
-//                                                 debug($excel);
+
+
   if ( $export ) {
     $result->xhref= akce2_plachta_export($excel,'plachta');
+    $result->xhref.= "<br><br>$err<hr>$html";
   }
 end:
+  $html.= $c->html;
   $result->html= "$err$html";
   return $result;
 }
@@ -7655,6 +7681,7 @@ function akce2_plachta_export($line,$file) { trace();
   require_once('./ezer2.2/server/licensed/xls/Worksheet.php');
   require_once('./ezer2.2/server/licensed/xls/Workbook.php');
   global $ezer_path_root;
+  global $tisk_hnizdo;
   chdir($ezer_path_root);
   $name= cz2ascii("vypis_").date("Ymd_Hi");
   $table= "docs/$name.xls";
@@ -8765,8 +8792,9 @@ function tisk2_pdf_prijem_ireg($nazev,$adiety,$x,$ret,$par) {  trace();
 # -------------------------------------------------------------------------------- tisk2 pdf_plachta
 # generování štítků se jmény párů
 # POZOR - je nutno 2x přidat výjimku v číslování kvůli zarovnání na vzdělání v plachtě
-function tisk2_pdf_plachta($akce,$report_json=0) {  trace();
-  global $ezer_path_docs;
+function tisk2_pdf_plachta($akce,$report_json=0,$hnizdo=0) {  trace();
+  global $ezer_path_docs,$tisk_hnizdo;
+  $tisk_hnizdo= $hnizdo;
   setlocale(LC_ALL, 'cs_CZ.utf8');
   $result= (object)array('_error'=>0,'html'=>'?');
   $html= '';
@@ -8774,7 +8802,7 @@ function tisk2_pdf_plachta($akce,$report_json=0) {  trace();
   $n= 1;
   $i= 0;
   // získání dat
-  $tab= akce2_plachta($akce,$par,$title,$vypis,0);
+  $tab= akce2_plachta($akce,$par,$title,$vypis,0,$hnizdo);
   unset($tab->xhref);
   unset($tab->html);
   ksort($tab->pdf,SORT_LOCALE_STRING);

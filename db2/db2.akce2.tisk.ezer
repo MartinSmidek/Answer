@@ -78,7 +78,7 @@ use info: form right [12,4,,] {
         form.msg.set(res.html);
       },
       'Excel-plachta',{
-        res.set(ask('akce2_plachta',the_akce.get,the_par.get,tit,the_vypis.get,1));
+        res.set(ask('akce2_plachta',the_akce.get,the_par.get,tit,the_vypis.get,1,the_hnizdo.get));
         form.note.set('');
         form.msg.set(res.xhref);
       },
@@ -106,7 +106,7 @@ use info: form right [12,4,,] {
       'PDF-plachta',{
         alert("Pozor: musí se spustit na serveru (pod Windows řadí chybně T-Š)");
         sti_P.report_init; sti_P.report_check;
-        res.set(ask('tisk2_pdf_plachta',the_akce.get,sti_P.get_json));
+        res.set(ask('tisk2_pdf_plachta',the_akce.get,sti_P.get_json,the_hnizdo.get));
         form.msg.set(res.html);
       },
       'PDF-plachta0',{
