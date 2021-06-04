@@ -1827,6 +1827,7 @@ form _cmd_p [,,623,30] { css:'ae_work'
       if (the_pobyt && (!pla.same())) {
         pla.save(); pla.load();
         u.b.browse_row();
+        pla.ini();
       }
 //      reload(the_pobyt.get);
     }
