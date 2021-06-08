@@ -989,9 +989,10 @@ end:
 # ----------------------------------------------------------------------------- akce2 hnizda_options
 # vrátí definici mapy: hnizdo=klíč,zkratka,nazev
 # spoléhá na korektní definici
-function akce2_hnizda_options($hnizda_seznam,$vsichni=0) {  
+# pokud x=1 přidá všichni+nezařazení, pokud x=0 bude 0-nezařazení, pokud x=2 bude 0-všichni
+function akce2_hnizda_options($hnizda_seznam,$x=0) {  
   $hnizda= preg_split("/\s*,\s*/",$hnizda_seznam);
-  $text= $vsichni ? "99::všichni,0:-:nezařazení" : '0:?:nezařazení';
+  $text= $x==1 ? "99::všichni,0:-:nezařazení" : ($x==0 ? '0:?:nezařazení' : '0:?:všichni');
   foreach($hnizda as $i=>$hnizdo) {
     $h0= strtoupper($hnizdo[0]);
     $i1= $i+1;
@@ -4546,8 +4547,8 @@ function tisk2_sestava($akce,$par,$title,$vypis,$export=false,$hnizdo=0) { trace
      : ( $par->typ=='vn'   ? akce2_sestava_noci($akce,$par,$title,$vypis,$export)   //!
      : ( $par->typ=='vp'   ? akce2_vyuctov_pary($akce,$par,$title,$vypis,$export)   //!
      : ( $par->typ=='vp2'  ? akce2_vyuctov_pary2($akce,$par,$title,$vypis,$export)  //!
-     : ( $par->typ=='vj'   ? akce2_stravenky($akce,$par,$title,$vypis,$export)      //!
-     : ( $par->typ=='vjp'  ? akce2_stravenky($akce,$par,$title,$vypis,$export)      //!
+     : ( $par->typ=='vj'   ? akce2_stravenky($akce,$par,$title,$vypis,$export,$hnizdo)      //!
+     : ( $par->typ=='vjp'  ? akce2_stravenky($akce,$par,$title,$vypis,$export,$hnizdo)      //!
      : ( $par->typ=='d'    ? akce2_sestava_pecouni($akce,$par,$title,$vypis,$export)//!
      : ( $par->typ=='ss'   ? tisk2_pdf_plachta($akce,$export,$hnizdo)                       //!
      : ( $par->typ=='s0'   ? tisk2_pdf_plachta0($export)                            // pomocné štítky
@@ -4561,7 +4562,7 @@ function tisk2_sestava($akce,$par,$title,$vypis,$export=false,$hnizdo=0) { trace
      : ( $par->typ=='tab'  ? akce2_tabulka($akce,$par,$title,$vypis,$export)        //! předává se i typ=tab => náhradníci
      : ( $par->typ=='mrop' ? akce2_tabulka_mrop($akce,$par,$title,$vypis,$export)   //!
      : ( $par->typ=='stat' ? akce2_tabulka_stat($akce,$par,$title,$vypis,$export)   //!
-     : ( $par->typ=='dot'  ? dot_prehled($akce,$par,$title,$vypis,$export)          //!
+     : ( $par->typ=='dot'  ? dot_prehled($akce,$par,$title,$vypis,$export,$hnizdo)          //!
      : ( $par->typ=='nut'  ? akce2_hnizda($akce,$par,$title,$vypis,$export)          //!
      : (object)array('html'=>"<i>Tato sestava zatím není převedena do nové verze systému,
           <a href='mailto:martin@smidek.eu'>upozorněte mě</a>, že ji už potřebujete</i>")
@@ -4862,6 +4863,8 @@ function tisk2_sestava_pary($akce,$par,$title,$vypis,$export=false,$internal=fal
   $c_ubytovani= map_cis('ms_akce_ubytovan','zkratka');  $c_ubytovani[0]= '?';
   $c_prednasi= map_cis('ms_akce_prednasi','hodnota');  $c_ubytovani[0]= '?';
   $c_platba= map_cis('ms_akce_platba','zkratka');  $c_ubytovani[0]= '?';
+  $hnizda= select('hnizda','akce',"id_duakce=$akce");
+  $hnizda= $hnizda ? explode(',',$hnizda) : null;
   // dekódování parametrů
   $tits= explode(',',$tit);
   $flds= explode(',',$fld);
@@ -4881,6 +4884,7 @@ function tisk2_sestava_pary($akce,$par,$title,$vypis,$export=false,$internal=fal
     'having'=>$hav,'order'=>$ord,
     'sql'=>"SET @akce:=$akce,@soubeh:=$soubeh,@app:='{$EZER->options->root}';");
   $y= ucast2_browse_ask($browse_par,true);
+//                                                         debug($y);
   # rozbor výsledku browse/ask
   array_shift($y->values);
   foreach ($y->values as $x) {
@@ -4968,6 +4972,7 @@ function tisk2_sestava_pary($akce,$par,$title,$vypis,$export=false,$internal=fal
     foreach($flds as $f) {          // _pocet,poznamka,note
       switch ($f) {
       case '^id_pobyt': $c= $x->key_pobyt; break;
+      case 'hnizdo':    $c= $hnizda ? ($x->hnizdo ? $hnizda[$x->hnizdo-1] : '?') : '-'; break;
       case 'prijmeni':  $c= $x->_nazev; break;
       case 'jmena':     $c= $x->_jmena; break;
       case 'rodice':    $c= count($rodice)==2 && strpos($x->_nazev,'-')
@@ -5024,7 +5029,7 @@ function tisk2_sestava_lidi($akce,$par,$title,$vypis,$export=false) { trace();
   $tit= $par->tit;
   $fld= $par->fld;
   $cnd= $par->cnd;
-  if ( $tisk_hnizdo ) $cnd.= " AND hnizdo=$tisk_hnizdo ";
+  if ( $tisk_hnizdo ) $cnd.= " AND IF(funkce=99,s_hnizdo=$tisk_hnizdo,hnizdo=$tisk_hnizdo)";
   $hav= $par->hav ? "HAVING {$par->hav}" : '';
   $ord= $par->ord ? $par->ord : "IF(funkce<=2,1,funkce),o.prijmeni,o.jmeno";
   $html= '';
@@ -5308,6 +5313,8 @@ function akce2_sestava_pobyt($akce,$par,$title,$vypis,$export=false) { trace();
 # --------------------------------------------------------------------------- _akce2 sestava_pecouni
 # výpočet pro generování sestavy pro účastníky $akce - pečouny a pro statistiku
 function _akce2_sestava_pecouni(&$clmn,$akce,$fld='_skoleni,_sluzba,_reflexe',$cnd=1,$ord=1) { trace();
+  global $tisk_hnizdo;
+  if ( $tisk_hnizdo ) $cnd.= " AND p.hnizdo=$tisk_hnizdo ";
   $flds= explode(',',$fld);
   // číselníky                 akce.druh = ms_akce_typ:pečovatelé=7,kurz=1
   $pfunkce= map_cis('ms_akce_pfunkce','zkratka');  $pfunkce[0]= '?';
@@ -5385,14 +5392,14 @@ function _akce2_sestava_pecouni(&$clmn,$akce,$fld='_skoleni,_sluzba,_reflexe',$c
 # výstupy
 #   note = pro pečouny seznam jmen, pro které nejsou stravenky, protože nemají funkci
 #          (tzn. asi nejsou na celý pobyt)
-function akce2_stravenky($akce,$par,$title,$vypis,$export=false) { trace();
+function akce2_stravenky($akce,$par,$title,$vypis,$export=false,$hnizdo=0) { trace();
   global $diety,$diety_,$jidlo_;
   $res_all= (object)array('res'=>array());
 //   $diety= array('','_bm','_bl');                             -- globální nastavení
   foreach ($diety as $i=>$d) {
     // generování stravenek pro konkrétní dietu (normální strava=dieta 0)
     $par->dieta= $d;
-    $res= akce2_stravenky_diety($akce,$par,"$title {$diety_[$d]}","$vypis$d",$export);
+    $res= akce2_stravenky_diety($akce,$par,"$title {$diety_[$d]}","$vypis$d",$export,$hnizdo);
     $res->dieta= $d;
     $res->nazev_diety= $diety_[$d];
     $res_all->res[]= $res;
@@ -5404,12 +5411,13 @@ function akce2_stravenky($akce,$par,$title,$vypis,$export=false) { trace();
 # ---------------------------------------------------------------------------- akce2 stravenky_diety
 # bezmasá dieta na Pavlákové od roku 2017 nevaří
 # proto se u pečounů mapuje bezmasá dieta na normální
-function akce2_stravenky_diety($akce,$par,$title,$vypis,$export=false) { trace();
+function akce2_stravenky_diety($akce,$par,$title,$vypis,$export=false,$hnizdo=0) { trace();
 //                                 debug($par,"akce_stravenky_diety($akce,,$title,$vypis,$export)");
   global $diety,$diety_,$jidlo_;  // $diety= array(''/*,'_bm'*/,'_bl')
   $ord= $par->ord ? $par->ord : "IF(funkce<=2,1,funkce),IF(pouze=0,r.nazev,o.prijmeni)";
   $result= (object)array();
   $cnd= $par->cnd;
+  if ( $hnizdo ) $cnd.= " AND IF(funkce=99,s_hnizdo=$hnizdo,hnizdo=$hnizdo)";
   $dieta= $par->dieta;
   $note= $delnote= $html= $href= '';
   $n= 0;
@@ -5490,7 +5498,7 @@ function akce2_stravenky_diety($akce,$par,$title,$vypis,$export=false) { trace()
           JOIN akce  AS a ON p.id_akce=a.id_duakce
           JOIN spolu AS s USING(id_pobyt)
           JOIN osoba AS o ON s.id_osoba=o.id_osoba
-          WHERE p.id_akce='$akce' AND p.funkce=99 AND s_rodici=0 $AND
+          WHERE p.id_akce='$akce' AND $cond AND p.funkce=99 AND s_rodici=0 $AND
           ORDER BY o.prijmeni,o.jmeno";
   }
   else { // rodiny
@@ -5501,7 +5509,8 @@ function akce2_stravenky_diety($akce,$par,$title,$vypis,$export=false) { trace()
               GROUP_CONCAT(po.jmeno ORDER BY role SEPARATOR ' a '))
              ,GROUP_CONCAT(DISTINCT CONCAT(pso.prijmeni,' ',pso.jmeno)
                ORDER BY role SEPARATOR ' a ')) as _jm,
-            a.nazev AS akce_nazev, YEAR(a.datum_od) AS akce_rok, a.misto AS akce_misto
+            a.nazev AS akce_nazev, YEAR(a.datum_od) AS akce_rok, a.misto AS akce_misto,
+            a.hnizda AS akce_hnizda
           FROM pobyt AS p
           JOIN akce AS a ON p.id_akce=a.id_duakce
           LEFT JOIN rodina AS r ON r.id_rodina=p.i0_rodina
@@ -5533,6 +5542,7 @@ function akce2_stravenky_diety($akce,$par,$title,$vypis,$export=false) { trace()
     $akce_data->nazev= $x->akce_nazev;
     $akce_data->rok=   $x->akce_rok;
     $akce_data->misto= $x->akce_misto;
+    $akce_data->hnizda= $x->akce_hnizda;
     $str_kdo= array();
     $clmn[$n]= array();
     $stravnik=
@@ -5738,7 +5748,7 @@ function akce2_strava_souhrn($akce,$par,$title,$vypis,$export=false,$id_pobyt=0)
 # generované vzorce
 #   platit = součet předepsaných plateb
 function akce2_strava_vylet($akce,$par,$title,$vypis,$export=false,$id_pobyt=0) { //trace();
-  global $diety,$diety_,$jidlo_,$EZER;
+  global $diety,$diety_,$jidlo_,$EZER, $tisk_hnizdo;
   // ofsety v atributech členů pobytu
   global $i_osoba_jmeno, $i_osoba_vek, $i_osoba_role, $i_osoba_prijmeni, $i_adresa, 
   $i_osoba_kontakt, $i_osoba_telefon, $i_osoba_email, $i_osoba_note, $i_key_spolu, $i_spolu_note;
@@ -5754,7 +5764,7 @@ function akce2_strava_vylet($akce,$par,$title,$vypis,$export=false,$id_pobyt=0) 
   // projdeme páry s dětmi ve věku nad 3 roky a děti sečteme
   $den= ' 3/7';
   $pocet_deti= $pocet_cele= $pocet_polo= 0;
-  $cnd= "p.funkce NOT IN (9,10,13,14,99)";
+  $cnd= "p.funkce NOT IN (9,10,13,14,99) AND p.hnizdo=$tisk_hnizdo ";
   $browse_par= (object)array(
     'cmd'=>'browse_load','cond'=>"$cnd AND p.id_akce=$akce",'having'=>'','order'=>'a _nazev',
     'sql'=>"SET @akce:=$akce,@soubeh:=0,@app:='{$EZER->options->root}';");
@@ -5832,7 +5842,8 @@ end:
 #   platit = součet předepsaných plateb
 function akce2_strava_pary($akce,$par,$title,$vypis,$export=false,$id_pobyt=0) { //trace();
 //                                                                 debug($par,"akce2_strava_pary");
-  global $diety,$diety_,$jidlo_;
+  global $diety, $diety_, $jidlo_, $tisk_hnizdo;
+  $jen_hnizdo= $tisk_hnizdo ? " AND hnizdo=$tisk_hnizdo " : '';
   $ord= $par->ord ? $par->ord : "IF(funkce<=2,1,funkce),IF(pouze=0,r.nazev,o.prijmeni)";
   $souhrn= $par->souhrn?:0;
   $result= (object)array();
@@ -5914,10 +5925,10 @@ function akce2_strava_pary($akce,$par,$title,$vypis,$export=false,$id_pobyt=0) {
       strava_cel_bm,strava_pol_bm,cstrava_cel_bm,cstrava_pol_bm,
       strava_cel_bl,strava_pol_bl,cstrava_cel_bl,cstrava_pol_bl,
       COUNT(*) AS _pocet, $flds_diety,funkce,pfunkce",
-    "p.id_akce='$akce' AND IF(funkce=99,s_rodici=0 AND pfunkce,1)"
+    "p.id_akce='$akce' AND IF(funkce=99,s_rodici=0 AND pfunkce,1) "
 //    . " AND p.id_pobyt IN (45406,44921)"
 //    . " AND p.id_pobyt IN (44921)"
-   . " AND $cond",
+   . " AND $cond $jen_hnizdo",
     "","_jm");
   while ( $res && ($x= pdo_fetch_object($res)) ) {
     $n++;
@@ -6157,6 +6168,7 @@ function akce2_cerstve_zmeny($akce,$par,$title,$vypis,$export=false) {
 }
 # ----------------------------------------------------------------------------------- akce2 text_eko
 function akce2_text_eko($akce,$par,$title,$vypis,$export=false) { trace();
+  global $tisk_hnizdo;
   $result= (object)array();
   $html= '';
   $prijmy= 0;
@@ -6221,7 +6233,7 @@ function akce2_text_eko($akce,$par,$title,$vypis,$export=false) { trace();
                                                         display("cena=$cena, platba=$platba");
   // náklad na stravu pečounů - kteří mají funkci a nemají zaškrtnuto "platí rodiče"
   $par= (object)array('typ'=>'vjp');
-  $ret_all= akce2_stravenky($akce,$par,'','',true);
+  $ret_all= akce2_stravenky($akce,$par,'','',true,$tisk_hnizdo);
 //                                                        debug($ret); goto end;
   $ham= array('sc'=>0,'oc'=>0,'vc'=>0);
   $pecounu= 0;
@@ -7292,6 +7304,7 @@ function akce2_skup_deti($akce,$par,$title,$vypis,$export) {
   return $result;
 }
 function akce2_tabulka_stat($akce,$par,$title,$vypis,$export=0) { trace();
+  global $tisk_hnizdo;
   $result= (object)array();
   $html= "";
   $err= "";
@@ -7307,7 +7320,7 @@ function akce2_tabulka_stat($akce,$par,$title,$vypis,$export=0) { trace();
           ) AS _cleni
           FROM pobyt AS p
           JOIN rodina AS r ON r.id_rodina=i0_rodina
-          WHERE id_akce=$akce AND p.funkce IN (0,1,2,5)  -- včetně hospodářů, bývají hosty skupinky
+          WHERE id_akce=$akce AND p.hnizdo=$tisk_hnizdo AND p.funkce IN (0,1,2,5)  -- včetně hospodářů, bývají hosty skupinky
           -- AND id_pobyt=54030
           GROUP BY id_pobyt
           ORDER BY nazev
@@ -7740,6 +7753,8 @@ function akce2_plachta_export($line,$file) { trace();
 # generované vzorce
 #   člověkolůžka, člověkopřistýlky
 function akce2_sestava_noci($akce,$par,$title,$vypis,$export=false) { trace();
+  global $tisk_hnizdo;
+  $jen_hnizdo= $tisk_hnizdo ? " AND hnizdo=$tisk_hnizdo " : '';
   // definice sloupců
   $result= (object)array();
   $tit= "Manželé:25,pokoj:8:r,dnů:5:r,nocí:5:r,lůžek:5:r:s,dětí 3-6:5:r:s,lůžko nocí:5:r:s,přis týlek:5:r:s,přis týlko nocí:5:r:s";
@@ -7782,7 +7797,7 @@ function akce2_sestava_noci($akce,$par,$title,$vypis,$export=false) { trace();
           JOIN osoba AS o ON s.id_osoba=o.id_osoba
           LEFT JOIN tvori AS t ON t.id_osoba=o.id_osoba
           LEFT JOIN rodina AS r ON r.id_rodina=IF(i0_rodina,i0_rodina,t.id_rodina)
-          WHERE p.id_akce='$akce' AND funkce NOT IN (9,10,13,14,99) AND $cond
+          WHERE p.id_akce='$akce' AND funkce NOT IN (9,10,13,14,99) AND $cond $jen_hnizdo
           GROUP BY id_pobyt
           ORDER BY $ord";
 //   $qry.=  " LIMIT 1";
@@ -7899,6 +7914,7 @@ function akce2_sestava_noci($akce,$par,$title,$vypis,$export=false) { trace();
 # generované vzorce
 #   platit = součet předepsaných plateb
 function akce2_vyuctov_pary($akce,$par,$title,$vypis,$export=false) { trace();
+  global $tisk_hnizdo;
   $ord= $par->ord ? $par->ord : "IF(funkce<=2,1,funkce),_jm";
   $result= (object)array();
   $tit= "Manželé:25"
@@ -7963,7 +7979,7 @@ function akce2_vyuctov_pary($akce,$par,$title,$vypis,$export=false) { trace();
               AND YEAR(a.datum_do)>=YEAR(dc.dat_od)
               AND (YEAR(a.datum_do) <= YEAR(dc.dat_do) OR !YEAR(dc.dat_do))
             JOIN _cis AS c ON c.druh='ms_akce_platba' AND c.data=zpusobplat
-          WHERE p.id_akce='$akce' AND p.funkce NOT IN (9,10,13,14,99) AND $cond
+          WHERE p.id_akce='$akce' AND p.hnizdo=$tisk_hnizdo AND p.funkce NOT IN (9,10,13,14,99) AND $cond
           GROUP BY id_pobyt
           ORDER BY $ord";
   $res= pdo_qry($qry);
@@ -8092,6 +8108,7 @@ function akce2_vyuctov_pary($akce,$par,$title,$vypis,$export=false) { trace();
 # generované vzorce
 #   platit = součet předepsaných plateb
 function akce2_vyuctov_pary2($akce,$par,$title,$vypis,$export=false) { trace();
+  global $tisk_hnizdo;
   $ord= $par->ord ? $par->ord : "IF(funkce<=2,1,funkce),IF(pouze=0,r.nazev,o.prijmeni)";
   $result= (object)array();
   $tit= "Manželé:25"
@@ -8149,7 +8166,7 @@ function akce2_vyuctov_pary2($akce,$par,$title,$vypis,$export=false) { trace();
           JOIN osoba AS o ON s.id_osoba=o.id_osoba
           LEFT JOIN tvori AS t ON t.id_osoba=o.id_osoba
           LEFT JOIN rodina AS r ON r.id_rodina=IF(i0_rodina,i0_rodina,t.id_rodina)
-          WHERE p.id_akce='$akce' AND p.funkce NOT IN (9,10,13,14) AND $cond
+          WHERE p.id_akce='$akce' AND p.hnizdo=$tisk_hnizdo AND p.funkce NOT IN (9,10,13,14) AND $cond
           GROUP BY id_pobyt
           ORDER BY $ord";
 //   $qry.=  " LIMIT 10";
@@ -8294,7 +8311,8 @@ function akce2_vyuctov_pary2($akce,$par,$title,$vypis,$export=false) { trace();
 # tab.expr = vzorce
 #    .DPH, .X = specifické tabulky
 function tisk2_vyp_excel($akce,$par,$title,$vypis,$tab=null,$hnizdo=0) {  trace();
-  global $xA, $xn;
+  global $xA, $xn, $tisk_hnizdo;
+  $tisk_hnizdo= hnizdo;
   $result= (object)array('_error'=>0);
   $html= '';
   // získání dat
@@ -8876,15 +8894,15 @@ end:
 # ------------------------------------------------------------------------------ akce2 pdf_stravenky
 # generování štítků se stravenkami pro rodinu účastníka a pro pečouny do PDF
 # pomocí tisk2_sestava se do objektu $x->tab vygeneruje pole s elementy pro tisk stravenky
-function akce2_pdf_stravenky($akce,$par,$report_json) {  trace();
+function akce2_pdf_stravenky($akce,$par,$report_json,$hnizdo) {  trace();
   $res_all= (object)array('_error'=>0);
   $res_all->html= "<br>Stravenky jsou v souborech: ";
   // získání dat
-  $res_vse= tisk2_sestava($akce,$par,$title,$vypis,true);
+  $res_vse= tisk2_sestava($akce,$par,$title,$vypis,true,$hnizdo);
   foreach ($res_vse->res as $x) {
 //                                                         if ( $x->dieta != '_bl' ) continue;
     $x->nazev= $x->nazev_diety=='normální' ? '' : $x->nazev_diety;
-    $res= akce2_pdf_stravenky_dieta($x,$par,$report_json);
+    $res= akce2_pdf_stravenky_dieta($x,$par,$report_json,$hnizdo);
     if ( $res->_error )
       fce_warning("{$x->nazev_diety} - {$res->_error}");
     else
@@ -8895,17 +8913,22 @@ function akce2_pdf_stravenky($akce,$par,$report_json) {  trace();
 # ------------------------------------------------------------------------ akce2 pdf_stravenky_dieta
 # generování štítků se stravenkami pro rodinu účastníka a pro pečouny do PDF
 # pomocí tisk2_sestava se do objektu $x->tab vygeneruje pole s elementy pro tisk stravenky
-function akce2_pdf_stravenky_dieta($x,$par,$report_json) {  trace();
-//                                                 debug($x,"akce2_pdf_stravenky_dieta");
+function akce2_pdf_stravenky_dieta($x,$par,$report_json,$hnizdo) {  trace();
+                                                 debug($x,"akce2_pdf_stravenky_dieta");
 // function akce2_pdf_stravenky_dieta($akce,$par,$report_json) {  trace();
   global $ezer_path_docs, $EZER, $USER;
   $result= (object)array('_error'=>0);
   $html= '';
   // získání dat
 //   $x= tisk2_sestava($akce,$par,$title,$vypis,true);
-  $org= $USER->org==1 ? "YMCA Setkání" : "YMCA Familia"; // moc dlouhé
+//  $org= $USER->org==1 ? "YMCA Setkání" : "YMCA Familia"; // moc dlouhé
   $org= "YMCA";
-  $header= "$org, {$x->akce->misto} {$x->akce->rok}";
+  if ($x->akce->hnizda && $hnizdo>0) {
+    $hnizda= explode(',',$x->akce->hnizda);
+    $header= "$org, {$hnizda[$hnizdo-1]} {$x->akce->rok}";
+  }
+  else
+    $header= "$org, {$x->akce->misto} {$x->akce->rok}";
   $sob= array('s'=>'snídaně','o'=>'oběd','v'=>'večeře');
   $cp=  array('c'=>'1','p'=>'1/2');
   // projdi vygenerované záznamy

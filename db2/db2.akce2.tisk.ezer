@@ -34,7 +34,7 @@ proc tisk_hnizda() { var opts:object
   echo("tisk HNIZDA=",the_hnizda.get);
   { the_hnizdo.set(0);
     the_hnizda.get; 
-    info.hnizdo.set_attrib('options','ms_akce_hnizda.nazev');
+    info.hnizdo.set_attrib('options','ms_akce_hnizda_tisk.nazev');
     info.hnizdo.key(0);
     info.hnizdo.display(1);
   | info.hnizdo.display(0);
@@ -100,7 +100,7 @@ use info: form right [12,4,,] {
       },
       'PDF-stravenky',{
         sti_C.report_init; sti_C.report_check;
-        res.set(ask('akce2_pdf_stravenky',the_akce.get,the_par.get,sti_C.get_json));
+        res.set(ask('akce2_pdf_stravenky',the_akce.get,the_par.get,sti_C.get_json,the_hnizdo.get));
         form.msg.set(res.html);
       },
       'PDF-plachta',{
@@ -116,7 +116,7 @@ use info: form right [12,4,,] {
       })
     }
   }
-  select hnizdo [-107,5,80,] { title:'výběr hnízda' format:'t' type:'map' css:'bila'
+  select hnizdo [-183,5,80,] { title:'výběr hnízda' format:'t' type:'map' css:'bila'
     proc onchanged() { 
       the_hnizdo.set(this.key);
       the_hnizdo_name.set(this.get);
@@ -519,8 +519,8 @@ menu m {type:'left', //active:*
   # ---------------------------------------------------------------------------==> Technické seznamy
   menu {tag:'a', title:'Technické seznamy',type:'group',_sys:'*'
     item {title:'Návrh ubytování'       ,par:°{typ:'p',exp:'Excel2',cnd:"p.funkce NOT IN (9,10,13,14,99)"
-                                        ,tit:'příjmení:15,jména:12,obec:25,věk dětí:10,lůžka:5,přistýlka:5,kočárek:5,pokoj:5,pok1:4,pok2:4,pok3:4,chůvy:20,poznámka:100,^'
-                                        ,fld:'prijmeni,jmena,obec,vek_deti,luzka,pristylky,kocarek,pokoj,pok1,pok2,pok3,_chuvy,poznamka,^id_pobyt'}}
+                                        ,tit:'příjmení:15,jména:12,obec:25,věk dětí:10,lůžka:5,přistýlka:5,kočárek:5,hnízdo:7,pokoj:5,pok1:4,pok2:4,pok3:4,chůvy:20,poznámka:100,^'
+                                        ,fld:'prijmeni,jmena,obec,vek_deti,luzka,pristylky,kocarek,hnizdo,pokoj,pok1,pok2,pok3,_chuvy,poznamka,^id_pobyt'}}
     item {title:'Návrh skupinek'                                                             skill:'y;f'
                                         ,par:°{typ:'skpl',exp:'Excel-plachta',cnd:'1'}} // fce:'plachta'
     item {title:'Štítky pro návrh skupinek' ,par:°{typ:'ss',exp:'PDF-plachta'

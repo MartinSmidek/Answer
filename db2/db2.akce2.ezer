@@ -98,6 +98,7 @@ proc akce_choose(id_akce) { var a:object
   the_cena.set(a.cena);     the_org.set(a.org);           the_ms.set(a.ms);    the_druh.set(a.druh);
   ms_akce_hnizda.selects('hnizdo,zkratka,nazev',ask('akce2_hnizda_options',the_hnizda.get));
   ms_akce_hnizda_plus.selects('hnizdo,zkratka,nazev',ask('akce2_hnizda_options',the_hnizda.get,1));
+  ms_akce_hnizda_tisk.selects('hnizdo,zkratka,nazev',ask('akce2_hnizda_options',the_hnizda.get,2));
 }
 proc accessed(org) {
   return(function('x','y','return x&y;',org,my_access.get));
@@ -625,7 +626,8 @@ table dopis { key_id:'id_dopis'
 }
 
 map ms_akce_hnizda:      text            // vytváří se dynamicky jako při použití select
-map ms_akce_hnizda_plus: text            // ... včetně 'všichni'=99
+map ms_akce_hnizda_plus: text            // ... včetně 'všichni'=99, nezařazení=0
+map ms_akce_hnizda_tisk: text            // ... včetně 'všichni'=0
 map ms_akce_typ:      table _cis {where:"druh='ms_akce_typ'",       order:'poradi', key_id:'data'}  // ikona=1 pro muže, 2 pro ženy, jinak 0
 map ms_akce_clen:     table _cis {where:"druh='ms_akce_clen'",      order:'poradi', key_id:'data'}
 map ms_akce_pouze:    table _cis {where:"druh='ms_akce_pouze'",     order:'poradi', key_id:'data'}

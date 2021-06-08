@@ -1497,7 +1497,7 @@ function dot_roky () { trace();
 # statistický přehled o akci, strukturovaný podle dotazníků Letního kurzu MS YS
 #   par.zdroj= akce|dotaz
 #   par.par1= rok|ida určuje význam prvního parametru
-function dot_prehled ($rok_or_akce,$par,$title='',$vypis='',$export=0) { trace();
+function dot_prehled ($rok_or_akce,$par,$title='',$vypis='',$export=0,$hnizdo=0) { trace();
   $y= (object)array('html'=>'');
   if ( $par->par1=='rok') {
     $rok= $rok_or_akce;
@@ -1527,7 +1527,7 @@ function dot_prehled ($rok_or_akce,$par,$title='',$vypis='',$export=0) { trace()
       LEFT JOIN rodina AS r ON r.id_rodina=p.i0_rodina
       JOIN tvori AS t USING (id_rodina,id_osoba)
       JOIN osoba AS o USING (id_osoba)
-      WHERE id_akce=$akce AND p.funkce IN (0,1,2) AND s_role=1 
+      WHERE id_akce=$akce AND p.hnizdo=$hnizdo AND p.funkce IN (0,1,2) AND s_role=1 
       --  AND i0_rodina IN (3329,6052)
       GROUP BY id_osoba
       ");
@@ -1646,7 +1646,7 @@ function dot_prehled ($rok_or_akce,$par,$title='',$vypis='',$export=0) { trace()
     for ($i= count($man_s)-2; $i>=0; $i--) {
       $s= $man_s[$i]; $n= $man_n[$i]; $o= $man_o[$i]; 
       $ps= number_format(100*$s/$no,1);
-      $pn= number_format(100*$n/$n_mn,1);
+      $pn= $n_mn ? number_format(100*$n/$n_mn,1) : '-';
       $po= number_format(100*$o/$n_mo,1);
       $x= $i==count($man_s)-1 ? "?" : "{$vek_x[$i]}-".($i==0 ? '...' : $vek_x[$i-1]-1).' let';
       $x1= $man_x[$i]; $x2= $i==0 ? '...' : $man_x[$i-1]-1;
