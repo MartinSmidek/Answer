@@ -3120,7 +3120,8 @@ function ucast2_browse_ask($x,$tisk=false) {
   global $test_clmn,$test_asc, $y;
   // ofsety v atributech členů pobytu - definice viz níže
   global $i_osoba_jmeno, $i_osoba_vek, $i_osoba_role, $i_osoba_prijmeni, $i_adresa, 
-  $i_osoba_kontakt, $i_osoba_telefon, $i_osoba_email, $i_osoba_note, $i_key_spolu, $i_spolu_note;
+      $i_osoba_kontakt, $i_osoba_telefon, $i_osoba_email, $i_osoba_note, $i_key_spolu, 
+      $i_spolu_note, $i_osoba_obcanka, $i_spolu_dite_kat, $i_osoba_dieta;
   $i_osoba_jmeno=     4;
   $i_osoba_vek=       6;
   $i_osoba_role=      9;
@@ -3129,8 +3130,11 @@ function ucast2_browse_ask($x,$tisk=false) {
   $i_osoba_kontakt=  23;
   $i_osoba_telefon=  24;
   $i_osoba_email=    26;
+  $i_osoba_obcanka=  32;
+  $i_osoba_dieta=    40;
   $i_osoba_note=     42;
   $i_key_spolu=      44;
+  $i_spolu_dite_kat= 47;
   $i_spolu_note=     48;
 
   $delim= $tisk ? '≈' : '~';
@@ -4844,29 +4848,36 @@ function akce2_tabulka_mrop($akce,$par,$title,$vypis,$export=false) { trace();
 #   $fld = seznam položek s prefixem
 #   $cnd = podmínka
 function tisk2_sestava_pary($akce,$par,$title,$vypis,$export=false,$internal=false) { trace();
-  global $EZER, $tisk_hnizdo;
+  global $EZER, $tisk_hnizdo, $VPS;
                                                                 display("tisk hnizda $tisk_hnizdo");
   // ofsety v atributech členů pobytu
   global $i_osoba_jmeno, $i_osoba_vek, $i_osoba_role, $i_osoba_prijmeni, $i_adresa, 
-  $i_osoba_kontakt, $i_osoba_telefon, $i_osoba_email, $i_osoba_note, $i_key_spolu, $i_spolu_note;
+      $i_osoba_kontakt, $i_osoba_telefon, $i_osoba_email, $i_osoba_note, $i_key_spolu, 
+      $i_spolu_note, $i_osoba_obcanka, $i_spolu_dite_kat, $i_osoba_dieta;
   $result= (object)array();
   $typ= $par->typ;
   $tit= $par->tit;
   $fld= $par->fld;
   $cnd= $par->cnd ? $par->cnd : 1;
   if ( $tisk_hnizdo ) $cnd.= " AND hnizdo=$tisk_hnizdo ";
+//  $cnd= "id_pobyt=54261"; // ************************************************** Šmídkovi
   $hav= $par->hav ? "HAVING {$par->hav}" : '';
   $ord= $par->ord ? $par->ord : "a _nazev";
   $fil= $par->filtr ?: null;
   $html= '';
   $href= '';
   $n= 0;
+  // hnízda
+  list($hnizda,$org)= select('hnizda,access','akce',"id_duakce=$akce");
+  $hnizda= $hnizda ? explode(',',$hnizda) : null;
   // číselníky
   $c_ubytovani= map_cis('ms_akce_ubytovan','zkratka');  $c_ubytovani[0]= '?';
   $c_prednasi= map_cis('ms_akce_prednasi','hodnota');  $c_ubytovani[0]= '?';
   $c_platba= map_cis('ms_akce_platba','zkratka');  $c_ubytovani[0]= '?';
-  $hnizda= select('hnizda','akce',"id_duakce=$akce");
-  $hnizda= $hnizda ? explode(',',$hnizda) : null;
+  $c_dite_kat= $org==2
+      ? map_cis('fa_akce_dite_kat','zkratka') 
+      : map_cis('ys_akce_dite_kat','zkratka');  
+  $c_akce_dieta= map_cis('ms_akce_dieta','zkratka');  
   // dekódování parametrů
   $tits= explode(',',$tit);
   $flds= explode(',',$fld);
@@ -4886,7 +4897,7 @@ function tisk2_sestava_pary($akce,$par,$title,$vypis,$export=false,$internal=fal
     'having'=>$hav,'order'=>$ord,
     'sql'=>"SET @akce:=$akce,@soubeh:=$soubeh,@app:='{$EZER->options->root}';");
   $y= ucast2_browse_ask($browse_par,true);
-//                                                         debug($y);
+//  /**/                                                   debug($y);
   # rozbor výsledku browse/ask
   array_shift($y->values);
   foreach ($y->values as $x) {
@@ -4914,15 +4925,18 @@ function tisk2_sestava_pary($akce,$par,$title,$vypis,$export=false,$internal=fal
     if ( $x->r_emaily )   $emaily[]=   trim($x->r_emaily,",; ");
     # rozšířené spojení se získá slepením údajů všech účastníků
     $xs= explode('≈',$x->r_cleni);
-//                                                         debug($x);
+//    /**/                                                 debug($x);
     $pocet= 0;
     $spolu_note= "";
     $osoba_note= "";
+    $cleni= array();
+    $deti= array();
     $rodice= array();
     $vek_deti= array();
 //                                                         if ( $x->key_pobyt==32146 ) debug($x);
     foreach ($xs as $i=>$xi) {
       $o= explode('~',$xi);
+//    /**/                                                 debug($o);
 //                                                         if ( $x->key_pobyt==32146 ) debug($o,"xi/$i");
       if ( $o[$i_key_spolu] ) {
         $pocet++;
@@ -4934,12 +4948,18 @@ function tisk2_sestava_pary($akce,$par,$title,$vypis,$export=false,$internal=fal
         if ( $o[$i_osoba_kontakt] && $o[$i_osoba_email] )
           $emaily[]= trim($o[$i_osoba_email],",; ");
         if ( $x->key_rodina ) {
+          $cleni[$o[$i_osoba_jmeno]]['dieta']= $c_akce_dieta[$o[$i_osoba_dieta]]; 
           if ( $o[$i_osoba_role]=='a' || $o[$i_osoba_role]=='b' ) {
             $rodice[$o[$i_osoba_role]]['jmeno']= trim($o[$i_osoba_jmeno]);
             $rodice[$o[$i_osoba_role]]['prijmeni']= trim($o[$i_osoba_prijmeni]);
+            $rodice[$o[$i_osoba_role]]['telefon']= trim($o[$i_osoba_telefon],",; ");
+            $rodice[$o[$i_osoba_role]]['obcanka']= trim($o[$i_osoba_obcanka]);
           }
           if ( $o[$i_osoba_role]=='d' ) {
             $vek_deti[]= $o[$i_osoba_vek];
+            $deti[$i]['jmeno']= $o[$i_osoba_jmeno];
+            $deti[$i]['vek']= $o[$i_osoba_vek];
+            $deti[$i]['kat']= $c_dite_kat[$o[$i_spolu_dite_kat]]; 
           }
         }
         else {
@@ -4948,7 +4968,9 @@ function tisk2_sestava_pary($akce,$par,$title,$vypis,$export=false,$internal=fal
         }
       }
     }
-//                                                         debug($rodice);
+//    /**/                                                 debug($rodice,"RODIČE");
+//    /**/                                                 debug($deti,"DĚTI");
+//    /**/                                                 debug($cleni,"ČLENI");
     $o= explode('~',$xs[0]);
     // show: adresa, ulice, psc, obec, stat, kontakt, telefon, nomail, email
     $io= $i_adresa;
@@ -4972,6 +4994,7 @@ function tisk2_sestava_pary($akce,$par,$title,$vypis,$export=false,$internal=fal
     $clmn[$n]= array();
     $r= 0; // 1 ukáže bez (r)
     foreach($flds as $f) {          // _pocet,poznamka,note
+      $c= '';
       switch ($f) {
       case '^id_pobyt': $c= $x->key_pobyt; break;
       case 'hnizdo':    $c= $hnizda ? ($x->hnizdo ? $hnizda[$x->hnizdo-1] : '?') : '-'; break;
@@ -4996,6 +5019,21 @@ function tisk2_sestava_pary($akce,$par,$title,$vypis,$export=false,$internal=fal
                         break;
       case 'telefon':   $c= $telefon;  break;
       case 'telefony':  $c= $telefony; break;
+      case '*telefony': foreach($rodice as $X) {
+                          if (!$X['telefon']) continue;
+                          $c.= "{$X['jmeno']}:{$X['telefon']} ";
+                        }; break;
+      case '*obcanky':  foreach($rodice as $X) {
+                          if (!$X['obcanka']) continue;
+                          $c.= "{$X['jmeno']}:{$X['obcanka']} ";
+                        }; break;
+      case '*deti':     foreach($deti as $X) {
+                          $c.= "{$X['jmeno']}:{$X['vek']}:{$X['kat']} ";
+                        }; break;
+      case '*diety':    foreach($cleni as $jmeno=>$X) { 
+                          if ($X['dieta']=='-') continue;
+                          $c.= "$jmeno:{$X['dieta']} ";
+                        }; break;
       case 'email':     $c= $email;  break;
       case 'emaily':    $c= $emaily; break;
       case '_pocet':    $c= $pocet; break;
@@ -5009,7 +5047,8 @@ function tisk2_sestava_pary($akce,$par,$title,$vypis,$export=false,$internal=fal
       case '_vyjimky':  $c= $x->cstrava_cel!=''    || $x->cstrava_pol!=''
                          || $x->cstrava_cel_bm!='' || $x->cstrava_pol_bm!=''
                          || $x->cstrava_cel_bl!='' || $x->cstrava_pol_bl!='' ? 1 : 0; break;
-      case '_vps':      $c= $x->funkce==1 ? 'VPS' : (strpos($x->r_umi,'1')!==false ? '(vps)' : ''); break;
+      case '_vps':      $VPS_= $access==1 ? 'VPS' : 'PPS'; $vps_= $access==1 ? '(vps)' : '(pps)';
+                        $c= $x->funkce==1 ? $VPS_ : (strpos($x->r_umi,'1')!==false ? $vps_ : ''); break;
       default:          $c= $x->$f; break;
       }
       $clmn[$n][$f]= $c;

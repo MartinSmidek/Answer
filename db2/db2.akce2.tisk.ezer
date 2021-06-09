@@ -199,6 +199,10 @@ menu m {type:'left', //active:*
   }
   # -------------------------------------------------------------------------------------==> seznamy
   menu {tag:'a', title:'seznamy',type:'group',_sys:'*'
+    item {title:'Sestava (C) Carlos'                                                          skill:'y;f'
+                                        ,par:°{typ:'p',exp:'Excel2',cnd:"p.funkce!=99"
+                                        ,tit:'příjmení:15,jména:20,deti,občanky,telefony,SPZ,diety,PPS,pokoj,skupina'
+                                        ,fld:'prijmeni,jmena2,*deti,*obcanky,*telefony,r_spz,*diety,_vps,pokoj,skupina,^id_pobyt'}}
     item {title:'VPS na akci'                                                                skill:'y;c#crz'
                                         ,par:°{typ:'p',exp:'Excel2',cnd:"p.funkce IN (1,2)"
                                         ,tit:'příjmení:15,jména:20,obec:25,^'
