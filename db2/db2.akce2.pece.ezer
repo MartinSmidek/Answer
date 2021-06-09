@@ -509,23 +509,23 @@ form _cmd [,,200,32] { css:'ds_form'
   // Uložit
   button [530,Tc+5,,] {title:'Uložit',  help:'Uložit změněná data',
     skill:'yaap+|yaap+;faa+|faa+;caa+|caa+'
-    proc onclick() {
-      var ok: number
-      p_oso.same
-      // oprava
-    | p_oso.o.key;
-      [ p_oso.o.save ];
-      [ p_oso.s.save ];
-      p_oso.plain;
-      up.b.browse_row; up.b.reload_pecoun
-    | // přidání
-      p_oso.o.insert;
-      [ the_pobyt.get | the_pobyt.set(pobyt.insert_record(object('id_akce',the_duakce.get))) ];
-      p_oso.s.key(spolu.insert_record(object('id_osoba',p_oso.o.key,'id_pobyt',the_pobyt.get)));
-      [ p_oso.s.save ];
-      p_oso.plain;
-      b_display(1);
-      reload(0);
+    func onclick() { var ok: number
+      if (p_oso.same()) return;
+      if (!p_oso.pfunkce.key()) { alert("položka typ pečovatele je povinná"); return }
+      if (p_oso.o.key()) { // oprava
+        p_oso.o.save(); p_oso.s.save();  p_oso.plain();
+        up.b.browse_row(); up.b.reload_pecoun();
+      }
+      else { // přidání
+        p_oso.o.insert();
+//        if (!the_pobyt) 
+//          the_pobyt= pobyt.insert_record({id_akce:the_duakce});
+        p_oso.s.key(spolu.insert_record({id_osoba:p_oso.o.key(),id_pobyt:the_pobyt}));
+        p_oso.s.save();
+        p_oso.plain();
+        b_display(1);
+        reload(0);
+      }
     }
   }
 #   // PŘIDAT z AKCE

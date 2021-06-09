@@ -612,38 +612,39 @@ form _page [,,275,360] {
     | warning(ret.msg);
   } }
   label  [lc+20,bc+52,211,] { tag:'b,cen,ex0', title:"příklady poplatků" }
-  button [lc+20,bc+68,,] { tag:'b,cen,ex0', title:'pár', proc onclick() { test_ceniku(2,0,0) }}
-  button [lc+20,bc+95,,] { tag:'b,cen,ex0', title:'pár+dítě', proc onclick() { test_ceniku(2,1,0) }}
-  button [lc+20,bc+123,,] { tag:'b,cen,ex0', title:'pár+kojenec', proc onclick() { test_ceniku(2,0,1) }}
-  button [lc+20,bc+150,,] { tag:'b,cen,ex0', title:'dítě do 10 let', proc onclick() { test_ceniku(0,1,0) }}
-  button [lc+20,bc+177,,] { tag:'b,cen,ex0', title:'kojenec', proc onclick() { test_ceniku(0,0,1) }}
-  func test_ceniku(dosp,deti,koje) { var cena:object
+  button [lc+20,bc+68,,] { tag:'b,cen,ex0', title:'pár', proc onclick() { test_ceniku(2,0,0,0) }}
+  button [lc+20,bc+95,,] { tag:'b,cen,ex0', title:'pár+dítě', proc onclick() { test_ceniku(2,1,0,0) }}
+  button [lc+20,bc+123,,] { tag:'b,cen,ex0', title:'pár+kojenec', proc onclick() { test_ceniku(2,0,1,0) }}
+  button [lc+20,bc+150,,] { tag:'b,cen,ex0', title:'dítě do 10 let', proc onclick() { test_ceniku(0,1,0,0) }}
+  button [lc+20,bc+177,,] { tag:'b,cen,ex0', title:'kojenec', proc onclick() { test_ceniku(0,0,1,0) }}
+  button [lc+20,bc+204,,] { tag:'b,cen,ex0', title:'pečovatel', skill:'y|y', proc onclick() { test_ceniku(0,0,0,1) }}
+  func test_ceniku(dosp,deti,koje,peco) { var cena:object
     if (the_duakce==a_akce) {
       if (the_soubeh==1)
-        cena= php.akce2_vzorec_soubeh(0,the_duakce,the_soubezna,hnizdo.key(),dosp,deti,koje);
+        cena= php.akce2_vzorec_soubeh(0,the_duakce,the_soubezna,hnizdo.key(),dosp,deti,koje,peco);
       elseif (the_soubeh==2)
-        cena= php.akce2_vzorec_soubeh(0,the_hlavni,the_duakce,hnizdo.key(),dosp,deti,koje);
+        cena= php.akce2_vzorec_soubeh(0,the_hlavni,the_duakce,hnizdo.key(),dosp,deti,koje,peco);
       else
-        cena= php.akce2_vzorec_test(a_akce,hnizdo.key(),dosp,deti,koje);
+        cena= php.akce2_vzorec_test(a_akce,hnizdo.key(),dosp,deti,koje,peco);
       alert(cena.navrh)
     }
     else alert("pro testování ceníku musí být akce nastavena jako pracovní")
   }
   // výpočet expr
-  label  [lc+20,bc+203,211,] { tag:'b,cen', title:"+ ceny na web" }
-  button [lc+20,bc+220,,] { tag:'b,cen', title:'manželský pár',    
+  label  [lc+20,bc+230,211,] { tag:'b,cen', title:"+ ceny na web" }
+  button [lc+20,bc+247,,] { tag:'b,cen', title:'manželský pár',    
     proc onclick() { expr_ceniku("2*N*Nl+2*N*sc+2*O*oc+2*N*vc+2*P",99,this.title) }}
-  button [lc+20,bc+240,,] { tag:'b,cen', title:'dítě od 10,celá',  
+  button [lc+20,bc+267,,] { tag:'b,cen', title:'dítě od 10,celá',  
     proc onclick() { expr_ceniku("  N*Nl  +N*sc  +O*oc  +N*vc+1*Pd",99,this.title) }}
-  button [lc+20,bc+260,,] { tag:'b,cen', title:'dítě 6-10,dětská', 
+  button [lc+20,bc+287,,] { tag:'b,cen', title:'dítě 6-10,dětská', 
     proc onclick() { expr_ceniku("  N*Nl  +N*sp  +O*op  +N*vp+1*Pd",99,this.title) }}
-  button [lc+20,bc+280,,] { tag:'b,cen', title:'dítě do 6,dětská', 
+  button [lc+20,bc+307,,] { tag:'b,cen', title:'dítě do 6,dětská', 
     proc onclick() { expr_ceniku("         N*sp  +O*op  +N*vp+1*Pm",99,this.title) }}
-  button [lc+20,bc+300,,] { tag:'b,cen', title:'dítě do 3,bez',    
+  button [lc+20,bc+327,,] { tag:'b,cen', title:'dítě do 3,bez',    
     proc onclick() { expr_ceniku("                            1*Pk",99,this.title) }}
-  button [lc+20,bc+320,,] { tag:'b,cen', title:'VPS se slevou',    
+  button [lc+20,bc+347,,] { tag:'b,cen', title:'VPS se slevou',    
     proc onclick() { expr_ceniku("2*N*Nl+2*N*sc+2*O*oc+2*N*vc+2*P-1*Sv",99,this.title) }}
-  button [lc+20,bc+340,,] { tag:'b,cen', title:'PPS se slevou',    
+  button [lc+20,bc+367,,] { tag:'b,cen', title:'PPS se slevou',    
     proc onclick() { expr_ceniku("2*N*Nl+2*N*sc+2*O*oc+2*N*vc+2*P-1*Sp",99,this.title) }}
 //#   // výpočet expr - EXPERIMENTÁLNÍ
 //#   label  [lc+20,bc+39,211,] { tag:'b,cen,ex1', title:"+ ceny na web" }

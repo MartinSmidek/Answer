@@ -1658,8 +1658,8 @@ end:
 }
 # -------------------------------------------------------------------------------- akce2 vzorec_test
 # test výpočtu platby za pobyt na akci 
-function akce2_vzorec_test($id_akce,$hnizdo=0,$nu=2,$nd=0,$nk=0) {  trace();
-  $ret= (object)array('navrh'=>'','err'=>'');
+function akce2_vzorec_test($id_akce,$hnizdo=0,$nu=2,$nd=0,$nk=0,$np=0,$table_class='') {  trace();
+  $ret= (object)array(navrh=>'',cena=>0,err=>'');
   $map_typ= map_cis('ms_akce_ubytovan','zkratka');
   $types= select("GROUP_CONCAT(DISTINCT typ ORDER BY typ)","cenik",
       "id_akce=$id_akce AND hnizdo=$hnizdo GROUP BY id_akce");
@@ -1671,31 +1671,32 @@ function akce2_vzorec_test($id_akce,$hnizdo=0,$nu=2,$nd=0,$nk=0) {  trace();
   // definované položky
   $o= $strava_oddo=='oo' ? 1 : 0;       // oběd navíc
   $cenik= array(
-    //            u d k noci oo plus
-    'Nl' => array(1,1,0,   1, 0,  1),
-    'P'  => array(1,0,0,   0, 0,  1),
-    'Pd' => array(0,1,0,   0, 0,  1),
-    'Pk' => array(0,0,1,   0, 0,  1),
-    'Su' => array(1,0,0,   0, 0, -1),
-    'Sk' => array(0,0,1,   0, 0, -1),
-    'sc' => array(1,0,0,   1, 0,  1),
-    'oc' => array(1,0,0,   1,$o,  1),
-    'vc' => array(1,0,0,   1, 0,  1),
-    'sp' => array(0,1,0,   1, 0,  1),
-    'op' => array(0,1,0,   1,$o,  1),
-    'vp' => array(0,1,0,   1, 0,  1),
+    //            u p d k noci oo plus
+    'Nl' => array(1,0,1,0,   1, 0,  1),
+    'Np' => array(1,1,1,0,   1, 0,  1),
+    'P'  => array(1,0,0,0,   0, 0,  1),
+    'Pd' => array(0,0,1,0,   0, 0,  1),
+    'Pk' => array(0,0,0,1,   0, 0,  1),
+    'Su' => array(1,0,0,0,   0, 0, -1),
+    'Sk' => array(0,0,0,1,   0, 0, -1),
+    'sc' => array(1,1,0,0,   1, 0,  1),
+    'oc' => array(1,1,0,0,   1,$o,  1),
+    'vc' => array(1,1,0,0,   1, 0,  1),
+    'sp' => array(0,0,1,0,   1, 0,  1),
+    'op' => array(0,0,1,0,   1,$o,  1),
+    'vp' => array(0,0,1,0,   1, 0,  1),
   );
   // výpočet ceny podle parametrů jednotlivých typů (jsou-li)
   foreach(explode(',',$types) as $typ) {
     $title= $typ ? "<h3>ceny pro ".$map_typ[$typ]."</h3>" : '';
     $cena= 0;
-    $html.= "$title<table>";
+    $html.= "$title<table class='$table_class'>";
     $ra= pdo_qry("SELECT * FROM cenik 
       WHERE id_akce=$id_akce AND hnizdo=$hnizdo AND za!='' AND typ=$typ ORDER BY poradi");
     while ( $ra && ($a= pdo_fetch_object($ra)) ) {
       $acena= $a->cena;
-      list($za_u,$za_d,$za_k,$za_noc,$oo,$plus)= $cenik[$a->za];
-      $nx= $nu*$za_u + $nd*$za_d + $nk*$za_k;
+      list($za_u,$za_up,$za_d,$za_k,$za_noc,$oo,$plus)= $cenik[$a->za];
+      $nx= $nu*$za_u + $np*$za_up + $nd*$za_d + $nk*$za_k;
       $cena+= $cc= $nx * ($za_noc?$noci+$oo:1) * $acena * $plus;
       if ( $cc ) {
         $pocet= $za_noc?" * ".($noci+$oo):'';
@@ -1709,7 +1710,8 @@ function akce2_vzorec_test($id_akce,$hnizdo=0,$nu=2,$nd=0,$nk=0) {  trace();
   }
   // návrat
 end:
-  $ret->navrh.= $html;
+  $ret->cena= $cena;
+  $ret->navrh= $html;
   return $ret;
 }
 # ------------------------------------------------------------------------------ akce2 vzorec_soubeh
@@ -5405,6 +5407,7 @@ function akce2_stravenky($akce,$par,$title,$vypis,$export=false,$hnizdo=0) { tra
     $res_all->res[]= $res;
     $res_all->html.= "<h3>Strava {$diety_[$d]}</h3>";
     $res_all->html.= $res->html;
+    $res_all->html.= $res->note;
   }
   return $res_all;
 }
@@ -6171,6 +6174,11 @@ function akce2_text_eko($akce,$par,$title,$vypis,$export=false) { trace();
   global $tisk_hnizdo;
   $result= (object)array();
   $html= '';
+  // zjištění, zda má akce nastavený ceník
+  if (!select('COUNT(*)','cenik',"id_akce=$akce")) { 
+    $html= "Tato akce nemá nastavený ceník, ekonomické ukazatele nelze tedy spočítat";
+    goto end;
+  }
   $prijmy= 0;
   $vydaje= 0;
   $prijem= array();
@@ -6180,21 +6188,26 @@ function akce2_text_eko($akce,$par,$title,$vypis,$export=false) { trace();
   $rm= pdo_qry($qm);
   $n_mimoradni= pdo_num_rows($rm);
 //   $mimoradni= $n_mimoradni ? "platba za stravu a ubytování $n_mimoradni mimořádných pečovatelů, kterou uhradili" : '';
-  // příjmy od účastníků na pečouny
+
+  // -------------------------------------------- příjmy od účastníků na pečouny
+//                                                        display("příjmy od účastníků");
+  $test_n= $test_kc= 0;
   $limit= '';
 //   $limit= "AND id_pobyt IN (17957,18258,18382)";
-  $qp=  "SELECT id_pobyt,funkce FROM pobyt WHERE id_akce='$akce' $limit ";
+  $qp=  "SELECT id_pobyt,funkce FROM pobyt WHERE id_akce='$akce' AND funkce IN (0,1,2,5,6) $limit ";
   $rp= pdo_qry($qp);
   while ( $rp && ($p= pdo_fetch_object($rp)) ) {
-    $ret= akce2_vzorec($p->id_pobyt);
+    $ret= akce2_vzorec($p->id_pobyt); // bere do úvahy hnízda
     if ( $ret->err ) { $html= $ret->err; goto end; }
 //                                                         if ($ret->eko->slevy) {
 //                                                         debug($ret->eko->slevy,"sleva pro fce={$p->funkce}");
 //                                                         goto end; }
     if ( $ret->eko->vzorec ) {
+//                                                         debug($ret->eko,"vzorec {$p->id_pobyt}");
       foreach ($ret->eko->vzorec as $x=>$kc) {
         if ( !isset($prijem[$x]) ) $prijem[$x]= (object)array();
         $prijem[$x]->vzorec+= $kc;
+        $prijem[$x]->pocet++;
         $corr= false;
         $slevy= $ret->eko->slevy;
         if ( $slevy ) {
@@ -6209,12 +6222,12 @@ function akce2_text_eko($akce,$par,$title,$vypis,$export=false) { trace();
       }
     }
   }
-//                                                        debug($prijem,"prijem");
-  // výdaje za pečouny (mimo osobních a pomocných)
+//  /**/                                                  debug($prijem,"prijem");
+  // zobrazení příjmů
   $rows_vydaje= '';
   $rows_prijmy= '';
-  $qc= "SELECT GROUP_CONCAT(polozka) AS polozky, za
-        FROM /*ezer_ys.*/cenik
+  $qc= "SELECT GROUP_CONCAT(DISTINCT polozka) AS polozky, za
+        FROM cenik
         WHERE id_akce='$akce' AND za!=''
         GROUP BY za ORDER BY poradi ASC";
   $rc= pdo_qry($qc);
@@ -6227,68 +6240,71 @@ function akce2_text_eko($akce,$par,$title,$vypis,$export=false) { trace();
       $cena= number_format($cena, 0, '.', ' ');
       $platba= number_format($platba, 0, '.', ' ');
 //       $rows_prijmy.= "<tr><th>{$c->polozky}</th><td align='right'>$cena</td><td align='right'>$platba</td></tr>";
-      $rows_prijmy.= "<tr><th>{$c->polozky}</th><td align='right'>$cena</td></tr>";
+      $rows_prijmy.= "<tr><td>{$c->polozky}</td><td align='right'>$cena</td></tr>";
     }
   }
-                                                        display("cena=$cena, platba=$platba");
+//  /**/                                                    display("cena=$cena, platba=$platba");
+//  /**/                                                    display("výdaj za pečouny");
   // náklad na stravu pečounů - kteří mají funkci a nemají zaškrtnuto "platí rodiče"
-  $par= (object)array('typ'=>'vjp',cnd=>'1');
-  $ret_all= akce2_stravenky($akce,$par,'','',true,0); // bez rozlišení hnízd
-//                                                        debug($ret); goto end;
-  $ham= array('sc'=>0,'oc'=>0,'vc'=>0);
-  $pecounu= 0;
-  $noci= -1;
-  foreach ($ret_all->res as $ret) {
-    if ( $ret->tab ) foreach ($ret->tab as $jmeno=>$dny) {
-  //                                                         debug($dny,"DNY");
-      $pecounu++;
-      foreach ( $dny as $den=>$jidla ) {
-        if ( $pecounu==1 ) $noci++;
-        foreach ( $jidla as $jidlo=>$porce ) {
-          foreach ( $porce as $velikost=>$pocet ) {
-            $ham["$jidlo$velikost"]+= $pocet;
-          }
-        }
-      }
+  // podle hnízd nebo celkově
+  $pecounu= select('COUNT(*)','pobyt JOIN spolu USING(id_pobyt)',
+      "id_akce='$akce' AND funkce=99 AND s_rodici=0");
+  $hnizda= select('hnizda','akce',"id_duakce=$akce");    
+  $pecouni= array();
+  $hnizdici= 0;
+  $vydaje= 0;
+  if ($hnizda) {
+    foreach (explode(',',$hnizda) AS $i=>$h) {
+      $ih= $i+1;
+      $nh= select('COUNT(*)','pobyt JOIN spolu USING(id_pobyt)',
+              "id_akce='$akce' AND funkce=99 AND s_hnizdo=$ih AND s_rodici=0");
+      $vzorec= akce2_vzorec_test($akce,$ih,0,0,0,$nh,'stat');
+      $pecouni[]= (object)array(nazev=>trim($h),pocet=>$nh,html=>$vzorec->navrh);
+      $hnizdici+= $nh;
+      $vydaje+= $vzorec->cena;
     }
   }
-  $qc= "SELECT GROUP_CONCAT(polozka) AS polozky, za, SUM(cena) AS _cena_
-        FROM /*ezer_ys.*/cenik
-        WHERE id_akce='$akce' AND za IN ('sc','oc','vc','Np')
-        GROUP BY za ORDER BY poradi ASC";
-  $rc= pdo_qry($qc);
-  while ( $rc && ($c= pdo_fetch_object($rc)) ) {
-    $cena= $c->za=='Np'
-      ? $noci * $pecounu * $c->_cena_
-      : $ham[$c->za] * $c->_cena_;
-    $vydaje+= $cena;
-    $cena= number_format($cena, 0, '.', ' ');
-    $rows_vydaje.= "<tr><th>{$c->polozky}</th><td align='right'>$cena</td></tr>";
+  else {
+    $vzorec= akce2_vzorec_test($akce,0,0,0,0,$pecounu,'stat');
+    $pecouni[]= (object)array(nazev=>'',pocet=>$pecounu,html=>$vzorec->navrh);
+    $vydaje= $vzorec->cena;
   }
+//  /**/                                                  debug($pecouni,"celkem $pecounu/$hnizdici");
   // odhad příjmů za mimořádné pečouny - přičtení k příjmům
   if ( $n_mimoradni ) {
     $cena_mimoradni= $vydaje*$n_mimoradni/$pecounu;
     $prijmy+= $cena_mimoradni;
     $cena= number_format($cena_mimoradni, 0, '.', ' ');
-    $rows_prijmy.= "<tr><th>ubytování a strava $n_mimoradni mimoř.peč.</th>
+    $rows_prijmy.= "<tr><td>ubytování a strava $n_mimoradni mimoř.peč.</td>
       <td align='right'>$cena</td></tr>";
   }
-//                                                         debug($prijem,"EKONOMIKA AKCE celkem");
   // formátování odpovědi dle ceníku akce
   $h= $tisk_hnizdo ? "(souhrně za všechna hnízda)" : '';
   $html.= "<h3>Příjmy za akci $h podle aktuální skladby účastníků</h3>";
+  $html.= "Pozn. pokud jsou někteří pečovatelé tzv. mimořádní, předpokládá se, že jejich pobyt 
+    <br>je uhrazen mimo pečovatelský rozpočet.<br>";
 //   $html.= "Pozn. pro přehled se počítá také cena s uplatněnou procentní slevou (např. VPS)<br>";
 //   $html.= "(příjmy pro pečovatele se počítají z plné tzn. vyšší ceny)<br>";
 //   $html.= "<br><table class='stat'><td>položky</td><th>cena bez slev</th><th>cena po slevě</th></tr>";
-  $html.= "<br><table class='stat'><td>položky</td><th>cena</th></tr>";
+  $html.= "<br><table class='stat'>";
+//  $html.= "<tr><td>položky</td><th>cena</th></tr>";
   $html.= "$rows_prijmy</table>";
-  $html.= "<h3>Výdaje za stravu a ubytování pro $pecounu pečovatelů ($noci nocí)</h3>";
-  $html.= "V tomto počtu nejsou zahrnuti pomocní a osobní pečovatelé, jejichž náklady hradí rodiče<br>";
-  $html.= "(to je třeba v evidenční kartě pečovatele zapsat zaškrtnutím políčka pod poznámkou)<br>";
+  $html.= "<h3>Výdaje za stravu a ubytování pro $pecounu pečovatelů</h3>";
+  $html.= "V tomto počtu nejsou zahrnuti pomocní a osobní pečovatelé, jejichž náklady hradí rodiče
+           <br>(to je třeba v evidenční kartě pečovatele zapsat zaškrtnutím políčka pod poznámkou)
+           <br>(a nezohledňují se částečné pobyty a poloviční porce)";
   // stravenky nejsou vytištěny pro $note, kteří nemají jasnou funkci -- pfunkce=0
-  $html.= $ret->note ? "{$ret->note}<br>" : '';
-  $html.= "<br><table class='stat'><td>položky</td><th>cena</td></tr>";
-  $html.= "$rows_vydaje</table>";
+//  $html.= $ret->note ? "{$ret->note}<br>" : '';
+//  $html.= "<br><table class='stat'><td>položky</td><th>cena</td></tr>";
+//  $html.= "$rows_vydaje</table>";
+  
+  foreach ($pecouni as $hnizdo) {
+    if (!$hnizdo->pocet) continue;
+    $html.= $hnizdo->nazev 
+        ? "<h3>... hnízdo {$hnizdo->nazev} - {$hnizdo->pocet} pečovatelů</h3>" : '<br><br>';
+    $html.= $hnizdo->html;
+  }
+  
   $html.= "<h3>Shrnutí pro pečovatele</h3>";
   $obrat= $prijmy - $vydaje;
   $prijmy= number_format($prijmy, 0, '.', ' ')."&nbsp;Kč";
