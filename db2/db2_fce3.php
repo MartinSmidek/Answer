@@ -6232,8 +6232,8 @@ function akce2_text_eko($akce,$par,$title,$vypis,$export=false) { trace();
   }
                                                         display("cena=$cena, platba=$platba");
   // náklad na stravu pečounů - kteří mají funkci a nemají zaškrtnuto "platí rodiče"
-  $par= (object)array('typ'=>'vjp');
-  $ret_all= akce2_stravenky($akce,$par,'','',true,$tisk_hnizdo);
+  $par= (object)array('typ'=>'vjp',cnd=>'1');
+  $ret_all= akce2_stravenky($akce,$par,'','',true,0); // bez rozlišení hnízd
 //                                                        debug($ret); goto end;
   $ham= array('sc'=>0,'oc'=>0,'vc'=>0);
   $pecounu= 0;
@@ -6275,7 +6275,8 @@ function akce2_text_eko($akce,$par,$title,$vypis,$export=false) { trace();
   }
 //                                                         debug($prijem,"EKONOMIKA AKCE celkem");
   // formátování odpovědi dle ceníku akce
-  $html.= "<h3>Příjmy za akci podle aktuální skladby účastníků</h3>";
+  $h= $tisk_hnizdo ? "(souhrně za všechna hnízda)" : '';
+  $html.= "<h3>Příjmy za akci $h podle aktuální skladby účastníků</h3>";
 //   $html.= "Pozn. pro přehled se počítá také cena s uplatněnou procentní slevou (např. VPS)<br>";
 //   $html.= "(příjmy pro pečovatele se počítají z plné tzn. vyšší ceny)<br>";
 //   $html.= "<br><table class='stat'><td>položky</td><th>cena bez slev</th><th>cena po slevě</th></tr>";
