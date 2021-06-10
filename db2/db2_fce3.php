@@ -6220,6 +6220,7 @@ function akce2_text_eko($akce,$par,$title,$vypis,$export=false) { trace();
   }
   $prijmy= 0;
   $vydaje= 0;
+  $pary= 0;
   $prijem= array();
   // zjištění mimořádných pečovatelů
   $qm="SELECT id_spolu FROM pobyt AS p  JOIN akce  AS a ON p.id_akce=a.id_duakce
@@ -6236,6 +6237,7 @@ function akce2_text_eko($akce,$par,$title,$vypis,$export=false) { trace();
   $qp=  "SELECT id_pobyt,funkce FROM pobyt WHERE id_akce='$akce' AND funkce IN (0,1,2,5,6) $limit ";
   $rp= pdo_qry($qp);
   while ( $rp && ($p= pdo_fetch_object($rp)) ) {
+    $pary++;
     $ret= akce2_vzorec($p->id_pobyt); // bere do úvahy hnízda
     if ( $ret->err ) { $html= $ret->err; goto end; }
 //                                                         if ($ret->eko->slevy) {
@@ -6275,11 +6277,18 @@ function akce2_text_eko($akce,$par,$title,$vypis,$export=false) { trace();
       $cena= $platba= '';
       if ( $prijem[$c->za]->vzorec ) $cena= $prijem[$c->za]->vzorec;
       if ( $prijem[$c->za]->platba ) $platba= $prijem[$c->za]->platba;
-      if ( $c->za != 'P' ) $prijmy+= $cena;
-      $cena= number_format($cena, 0, '.', ' ');
+      $_cena= number_format($cena, 0, '.', ' ');
       $platba= number_format($platba, 0, '.', ' ');
 //       $rows_prijmy.= "<tr><th>{$c->polozky}</th><td align='right'>$cena</td><td align='right'>$platba</td></tr>";
-      $rows_prijmy.= "<tr><td>{$c->polozky}</td><td align='right'>$cena</td></tr>";
+      $rows_prijmy.= "<tr><td>{$c->polozky}</td><td align='right'>$_cena</td></tr>";
+      if ( $c->za=='P' ) {
+        $solid= $pary*200;
+        $prijmy+= $solid;
+        $_solid= number_format($solid, 0, '.', ' ');
+        $rows_prijmy.= "<tr><td>... z toho solidárně po 100Kč na děti</td><td align='right'>$_solid</td></tr>";
+      }
+      else 
+        $prijmy+= $cena;
     }
   }
 //  /**/                                                    display("cena=$cena, platba=$platba");
@@ -6349,9 +6358,9 @@ function akce2_text_eko($akce,$par,$title,$vypis,$export=false) { trace();
   $prijmy= number_format($prijmy, 0, '.', ' ')."&nbsp;Kč";
   $vydaje= number_format($vydaje, 0, '.', ' ')."&nbsp;Kč";
   $obrat= number_format($obrat, 0, '.', ' ')."&nbsp;Kč";
-  $html.= "Účastníci přispějí na pečovatele částkou $prijmy, přímé náklady na pobyt a stravu
-    činí $vydaje, <br>celkem <b>$obrat</b> je tedy možné použít na programové výdaje
-    pečovatelů na akci a během roku.";
+  $html.= "Účastníci přispějí na děti a pečovatele částkou $prijmy, 
+    <br>přímé náklady na pobyt a stravu pečovatelů činí $vydaje, 
+    <br>celkem <b>$obrat</b> zůstává na program dětí a pečovatelů.";
 end:
   // předání výsledku
   $result->html= $html;
