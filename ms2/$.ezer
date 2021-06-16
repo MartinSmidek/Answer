@@ -13,6 +13,24 @@ menu ms2 { type:'main', title:'cr2', active:*, _sys:'*'
   tabs syst {title:"[fa-cog] Systém", _sys:'sys',  include:'onload,ezer2.syst', active:*
     proc reaccess() {}
     panel oso {type:'right', title:'Osobní nastavení', _sys:'*', include:'onclick,ezer2.pers' }
+    panel dat {type:'right', title:'[fa-database] Databáze', _sys:'*', include:'onload,ezer3.db', skill:'a'
+      par:{
+        infos: [
+          {title:'[fa-object-group] Schema databáze',
+           html: "Schema databáze<br><br><img src='db2/img/schema_db_2015.png'>"}
+        ],
+        tables: {
+          akce:  "id_duakce>*,nazev,datum_od",
+          pobyt: "id_pobyt>*,id_akce>akce,i0_rodina>rodina,hnizdo,funkce",
+          spolu: "id_spolu>-,id_pobyt>pobyt,id_osoba>osoba,s_hnizdo,s_role",
+          osoba: "id_osoba>*,jmeno,prijmeni",
+          tvori: "id_tvori>-,id_osoba>osoba,id_rodina>rodina,role",
+          rodina:"id_rodina>*,nazev",
+          dopis: "id_dopis>*,hnizdo,nazev",
+          mail:  "id_mail>*,id_dopis>dopis,id_clen>osoba"
+        },
+        css: 'stat' // styl tabulek
+    }}
     panel nas {type:'right', title:'Data', _sys:'nas', skill:'a'
       func tab_append(tab,idt,using) {
         clear();
@@ -48,49 +66,49 @@ menu ms2 { type:'main', title:'cr2', active:*, _sys:'*'
             }
           }
         }
-        menu s  {title:'Struktura dat', type:'group', skill:'yamg;famg;camg;aa;a'
-          item {title:'[fa-object-group] Přehled struktury dat'   par:°{img:'2015'} }
-          item {title:'[fa-question] zobrazení záznamů'
-            func onclick (i:ezer) {
-              clear(); info.display(1,'t');
-              info.fill(replace_fa(i.title),'');
-              if (!info.tab) {
-                info.tab.selects(php.tab_selects());
-                info.tab.key(1);
-              }
-            }
-          }
-          item {title:'[fa-database] tabulka AKCE',               par:°{tab:'akce'} }
-          item {title:'[fa-database] tabulka POBYT',              par:°{tab:'pobyt'} }
-          item {title:'[fa-database] tabulka SPOLU',              par:°{tab:'spolu'} }
-          item {title:'[fa-database] tabulka OSOBA',              par:°{tab:'osoba'} }
-          item {title:'[fa-database] tabulka TVORI',              par:°{tab:'tvori'} }
-          item {title:'[fa-database] tabulka RODINA',             par:°{tab:'rodina'} }
-          item {title:'[fa-database] tabulka MAILIST',            par:°{tab:'mailist'} }
-          item {title:'[fa-database] tabulka DOPIS',              par:°{tab:'dopis'} }
-          item {title:'[fa-database] tabulka MAIL',               par:°{tab:'mail'}  }
-          item {title:'[fa-database] tabulka CENIK',              par:°{tab:'cenik'} }
-          item {title:'[fa-database] tabulka DAR',                par:°{tab:'dar'} }
-          item {title:'[fa-database] tabulka PSC_AXY'             par:°{tab:'psc_axy'}  }
-          item {title:'[fa-database fa-red] tabulka EZER_DOC2'    par:°{tab:'ezer_doc2'}  skill:'m' }
-          item {title:'[fa-database fa-red] tabulka _CIS'         par:°{tab:'_cis'}       skill:'m' }
-          item {title:'[fa-database fa-red] tabulka _HELP'        par:°{tab:'_help'}      skill:'m' }
-          item {title:'[fa-database fa-red] tabulka _SKILL'       par:°{tab:'_skill'}     skill:'m' }
-          item {title:'[fa-database fa-red] tabulka _TOUCH'       par:°{tab:'_touch'}     skill:'m' }
-          item {title:'[fa-database fa-red] tabulka _TRACK'       par:°{tab:'_track'}     skill:'m' }
-          item {title:'[fa-database fa-red] tabulka _USER'        par:°{tab:'_user'}      skill:'m' }
-          proc onclick (i) {
-            clear; info.display(0,'t');
-            panel.display(2,'i'); 
-            info.fill(replace_fa(conc(i.owner.title,' - ',i.title)),' ');
-            { i.par.tab;  
-              info.append(ask('i_doc_table_struct',i.par.tab,0));
-            | info.append(conc("<br>Schema databáze pro <b>Answer</b>
-                s uvedením podmínek pro spojení pomocí JOIN<br><br>
-                <img src='ms2/img/schema_ms_",i.par.img,".png' />"));
-            }
-          }
-        }
+//        menu s  {title:'Struktura dat', type:'group', skill:'yamg;famg;camg;aa;a'
+//          item {title:'[fa-object-group] Přehled struktury dat'   par:°{img:'2015'} }
+//          item {title:'[fa-question] zobrazení záznamů'
+//            func onclick (i:ezer) {
+//              clear(); info.display(1,'t');
+//              info.fill(replace_fa(i.title),'');
+//              if (!info.tab) {
+//                info.tab.selects(php.tab_selects());
+//                info.tab.key(1);
+//              }
+//            }
+//          }
+//          item {title:'[fa-database] tabulka AKCE',               par:°{tab:'akce'} }
+//          item {title:'[fa-database] tabulka POBYT',              par:°{tab:'pobyt'} }
+//          item {title:'[fa-database] tabulka SPOLU',              par:°{tab:'spolu'} }
+//          item {title:'[fa-database] tabulka OSOBA',              par:°{tab:'osoba'} }
+//          item {title:'[fa-database] tabulka TVORI',              par:°{tab:'tvori'} }
+//          item {title:'[fa-database] tabulka RODINA',             par:°{tab:'rodina'} }
+//          item {title:'[fa-database] tabulka MAILIST',            par:°{tab:'mailist'} }
+//          item {title:'[fa-database] tabulka DOPIS',              par:°{tab:'dopis'} }
+//          item {title:'[fa-database] tabulka MAIL',               par:°{tab:'mail'}  }
+//          item {title:'[fa-database] tabulka CENIK',              par:°{tab:'cenik'} }
+//          item {title:'[fa-database] tabulka DAR',                par:°{tab:'dar'} }
+//          item {title:'[fa-database] tabulka PSC_AXY'             par:°{tab:'psc_axy'}  }
+//          item {title:'[fa-database fa-red] tabulka EZER_DOC2'    par:°{tab:'ezer_doc2'}  skill:'m' }
+//          item {title:'[fa-database fa-red] tabulka _CIS'         par:°{tab:'_cis'}       skill:'m' }
+//          item {title:'[fa-database fa-red] tabulka _HELP'        par:°{tab:'_help'}      skill:'m' }
+//          item {title:'[fa-database fa-red] tabulka _SKILL'       par:°{tab:'_skill'}     skill:'m' }
+//          item {title:'[fa-database fa-red] tabulka _TOUCH'       par:°{tab:'_touch'}     skill:'m' }
+//          item {title:'[fa-database fa-red] tabulka _TRACK'       par:°{tab:'_track'}     skill:'m' }
+//          item {title:'[fa-database fa-red] tabulka _USER'        par:°{tab:'_user'}      skill:'m' }
+//          proc onclick (i) {
+//            clear; info.display(0,'t');
+//            panel.display(2,'i'); 
+//            info.fill(replace_fa(conc(i.owner.title,' - ',i.title)),' ');
+//            { i.par.tab;  
+//              info.append(ask('i_doc_table_struct',i.par.tab,0));
+//            | info.append(conc("<br>Schema databáze pro <b>Answer</b>
+//                s uvedením podmínek pro spojení pomocí JOIN<br><br>
+//                <img src='ms2/img/schema_ms_",i.par.img,".png' />"));
+//            }
+//          }
+//        }
         menu {title:'Kontroly konzistence dat',type:'group', _sys:'*'
           item {title:'kontroly databáze'               ,par:°{opravit:0}}
           item {title:'kontroly databáze s opravou'     ,par:°{opravit:1}, skill:'m'}
@@ -112,15 +130,15 @@ menu ms2 { type:'main', title:'cr2', active:*, _sys:'*'
 //        }
       }
       use info: form right [12,4,,] {
-        select tab [-253,5,150,] {tag:'t', title:'tabulka', format:'t'}
-        field idt [-152,5,70,] {tag:'t', title:'klíč', format:'t'}
-        button [-82,5,,] {tag:'t', title:'zobraz'
-          func onclick() {
-            clear(); form.note= conc(form.note,php.tab_append(tab,`*='${idt}'`)); // * bude primary_key
-        }}
-        button [-22,5,,] {tag:'t', title:'vymaž'
-          func onclick() { form.note= '';
-        }}
+//        select tab [-253,5,150,] {tag:'t', title:'tabulka', format:'t'}
+//        field idt [-152,5,70,] {tag:'t', title:'klíč', format:'t'}
+//        button [-82,5,,] {tag:'t', title:'zobraz'
+//          func onclick() {
+//            clear(); form.note= conc(form.note,php.tab_append(tab,`*='${idt}'`)); // * bude primary_key
+//        }}
+//        button [-22,5,,] {tag:'t', title:'vymaž'
+//          func onclick() { form.note= '';
+//        }}
       }
     }
   }

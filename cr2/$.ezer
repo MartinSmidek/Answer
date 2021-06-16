@@ -1,5 +1,5 @@
 # Systém Ans(w)er pro CPR Ostrava
-# (c) 2008-2017 Martin Šmídek <martin@smidek.eu>
+# (c) 2008-2021 Martin Šmídek <martin@smidek.eu>
 
 menu cr2 { type:'main', title:'cr2', active:*, _sys:'*'
   func onstart() { php.table_lock('none'); } // uvolni všechny zámky řádků tabulek přihlášeného 
@@ -13,6 +13,24 @@ menu cr2 { type:'main', title:'cr2', active:*, _sys:'*'
   tabs syst {title:"[fa-cog] Systém", _sys:'sys',  include:'onload,ezer2.syst', active:*
     proc reaccess() {}
     panel oso {type:'right', title:'Osobní nastavení', _sys:'*', include:'onclick,ezer2.pers' }
+    panel dat {type:'right', title:'[fa-database] Databáze', _sys:'*', include:'onload,ezer3.db', skill:'a'
+      par:{
+        infos: [
+          {title:'[fa-object-group] Schema databáze',
+           html: "Schema databáze<br><br><img src='db2/img/schema_db_2015.png'>"}
+        ],
+        tables: {
+          akce:  "id_duakce>*,nazev,datum_od",
+          pobyt: "id_pobyt>*,id_akce>akce,i0_rodina>rodina,hnizdo,funkce",
+          spolu: "id_spolu>-,id_pobyt>pobyt,id_osoba>osoba,s_hnizdo,s_role",
+          osoba: "id_osoba>*,jmeno,prijmeni",
+          tvori: "id_tvori>-,id_osoba>osoba,id_rodina>rodina,role",
+          rodina:"id_rodina>*,nazev",
+          dopis: "id_dopis>*,hnizdo,nazev",
+          mail:  "id_mail>*,id_dopis>dopis,id_clen>osoba"
+        },
+        css: 'stat' // styl tabulek
+    }}
     panel nas {type:'right', title:'Data', _sys:'nas', skill:'a'
       menu {type:'left', active:*
         menu {title:'Přehled',type:'group', _sys:'*'

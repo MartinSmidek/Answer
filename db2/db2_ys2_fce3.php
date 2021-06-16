@@ -1,17 +1,4 @@
 <?php # (c) 2009-2015 Martin Smidek <martin@smidek.eu>
-/** =======================================================================================> TABLES */
-# zobrazované tabulky >* je označuje klíč, >tab ozančuje klíč jiné tabulky
-$app_tables= (object)array(
-  'akce'    => "id_duakce>*,nazev,datum_od",
-  'pobyt'   => "id_pobyt>*,id_akce>akce,i0_rodina>rodina,hnizdo,funkce",
-  'spolu'   => "id_spolu>-,id_pobyt>pobyt,id_osoba>osoba,s_hnizdo,s_role",
-  'osoba'   => "id_osoba>*,jmeno,prijmeni",
-  'tvori'   => "id_tvori>-,id_osoba>osoba,id_rodina>rodina,role",
-  'rodina'  => "id_rodina>*,nazev",
-  'dopis'   => "id_dopis>*,hnizdo,nazev",
-  'mail'    => "id_mail>*,id_dopis>dopis,id_clen>osoba",
-  '_' => 'syst.nas,stat' // cesta k funkci tab_append, css tabulky
-);
 /** ========================================================================================> IMPORT */
 # ---------------------------------------------------------------------------------------- ms_import
 # import
