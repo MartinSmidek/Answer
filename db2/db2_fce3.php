@@ -13257,35 +13257,34 @@ function mail2_mai_posli($id_dopis,$info) {  trace();
 # vrátí celý text
 function mail2_personify($obsah,$vars,$id_pobyt,&$err) { debug($vars,"mail2_personify(...,$vars,$id_pobyt,...) ");
   $text= $obsah;
-  list($vzorec,$rodina,$duvod_typ,$duvod_text,$id_hlavni,$id_soubezna,
+  list($duvod_typ,$duvod_text,$id_hlavni,$id_soubezna,
        $platba1,$platba2,$platba3,$platba4,$poplatek_d,$skupina)=
-    select('vzorec,rodina.nazev,duvod_typ,duvod_text,IFNULL(id_hlavni,0),id_duakce,
+    select('duvod_typ,duvod_text,IFNULL(id_hlavni,0),id_duakce,
       platba1,platba2,platba3,platba4,poplatek_d,skupina',
-    "pobyt LEFT JOIN akce ON id_hlavni=pobyt.id_akce
-      LEFT JOIN rodina ON pobyt.i0_rodina=rodina.id_rodina",
+    "pobyt LEFT JOIN akce ON id_hlavni=pobyt.id_akce",
     "id_pobyt=$id_pobyt");
   foreach($vars as $var) {
     $val= '';
     switch ($var) {
     case 'akce_cena':
+      // zjisti, zda je cena stanovena
+      if ($platba1+$platba2+$platba3+$platba4+$poplatek_d==0) {
+        // není :-(
+        $err.= "<br>POZOR: všichni účastníci nemají stanovenu cenu (pobyt=$id_pobyt)";
+        break;
+      }
       if ( $duvod_typ ) {
         $val= $duvod_text;
       }
-      elseif ( $vzorec && $id_hlavni ) {
+      elseif ( $id_hlavni ) {
         $ret= akce2_vzorec_soubeh($id_pobyt,$id_hlavni,$id_soubezna);
         $val= $ret->mail;
       }
-      elseif ( $vzorec ) {
+      else {
         $ret= akce2_vzorec($id_pobyt);
         $val= $ret->mail;
       }
-      // zjisti, zda je cena stanovena
-      elseif ($platba1+$platba2+$platba3+$platba4+$poplatek_d==0) {
-        // není :-(
-        $err.= "<br>POZOR: všichni účastníci nemají korektně stanovenu cenu 
-          (rodina=$rodina, pobyt=$id_pobyt)";
-      }
-      break;
+      break; 
 //    case 'mistnost_popo':
 //      $mistnosti= array(
 //        "",
