@@ -13258,21 +13258,21 @@ function mail2_mai_posli($id_dopis,$info) {  trace();
 function mail2_personify($obsah,$vars,$id_pobyt,&$err) { debug($vars,"mail2_personify(...,$vars,$id_pobyt,...) ");
   $text= $obsah;
   list($duvod_typ,$duvod_text,$id_hlavni,$id_soubezna,
-       $platba1,$platba2,$platba3,$platba4,$poplatek_d,$skupina)=
+       $platba1,$platba2,$platba3,$platba4,$poplatek_d,$skupina,$idr)=
     select('duvod_typ,duvod_text,IFNULL(id_hlavni,0),id_duakce,
-      platba1,platba2,platba3,platba4,poplatek_d,skupina',
+      platba1,platba2,platba3,platba4,poplatek_d,skupina,i0_rodina',
     "pobyt LEFT JOIN akce ON id_hlavni=pobyt.id_akce",
     "id_pobyt=$id_pobyt");
   foreach($vars as $var) {
     $val= '';
     switch ($var) {
     case 'akce_cena':
-      // zjisti, zda je cena stanovena
-      if ($platba1+$platba2+$platba3+$platba4+$poplatek_d==0) {
-        // není :-(
-        $err.= "<br>POZOR: všichni účastníci nemají stanovenu cenu (pobyt=$id_pobyt)";
-        break;
-      }
+//      // zjisti, zda je cena stanovena
+//      if (($platba1+$platba2+$platba3+$platba4+$poplatek_d)==0) {
+//        // není :-(
+//        $err.= "<br>POZOR: všichni účastníci nemají stanovenu cenu (pobyt=$id_pobyt)";
+//        break;
+//      }
       if ( $duvod_typ ) {
         $val= $duvod_text;
       }
@@ -13283,6 +13283,11 @@ function mail2_personify($obsah,$vars,$id_pobyt,&$err) { debug($vars,"mail2_pers
       else {
         $ret= akce2_vzorec($id_pobyt);
         $val= $ret->mail;
+      }
+      // zjisti, zda je cena stanovena
+      if (!$val) {
+        $nazev= select('nazev','rodina',"id_rodina=$idr");
+        $err.= "<br>POZOR: všichni účastníci nemají stanovenu cenu (pobyt=$id_pobyt, $nazev)";
       }
       break; 
 //    case 'mistnost_popo':
