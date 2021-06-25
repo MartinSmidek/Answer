@@ -1721,10 +1721,10 @@ function akce2_vzorec_soubeh($id_pobyt,$id_hlavni,$id_soubezna,$dosp=0,$deti=0,$
   // načtení ceníků
   $sleva= 0;
   $ret= (object)array('navrh'=>'','err'=>'','naklad_d'=>0,'poplatek_d'=>0);
-  akce2_nacti_cenik($id_hlavni,$hnizdo,$cenik_dosp,$ret->navrh);   if ( $html ) goto end;
-  akce2_nacti_cenik($id_soubezna,$hnizdo,$cenik_deti,$ret->navrh); if ( $html ) goto end;
   $dite_kat= xx_akce_dite_kat($id_hlavni);
   $map_kat= map_cis($dite_kat,'zkratka');
+    $Kc= "&nbsp;Kč";
+  $hnizdo= 0;
   if ( $id_pobyt ) {
     // zjištění parametrů pobytu podle hlavní akce
     $qp= "SELECT * FROM pobyt AS p JOIN akce AS a ON p.id_akce=a.id_duakce WHERE id_pobyt=$id_pobyt";
@@ -1742,7 +1742,7 @@ function akce2_vzorec_soubeh($id_pobyt,$id_hlavni,$id_soubezna,$dosp=0,$deti=0,$
     // cena pro dospělé se určí podle ceníku hlavní akce - děti bez kategorie se nesmí
     $deti_kat= array();
     $n= $ndeti= $chuv= 0;
-    $qo= "SELECT o.jmeno,s.dite_kat,p.funkce, t.role, p.ubytovani, narozeni, p.funkce,
+    $qo= "SELECT o.jmeno,s.dite_kat,p.funkce, t.role, p.ubytovani, narozeni, p.funkce, p.hnizdo,
            s.pecovane,(SELECT CONCAT(osoba.prijmeni,',',osoba.jmeno,',',pobyt.id_pobyt)
             FROM pobyt
             JOIN spolu ON spolu.id_pobyt=pobyt.id_pobyt
@@ -1755,6 +1755,7 @@ function akce2_vzorec_soubeh($id_pobyt,$id_hlavni,$id_soubezna,$dosp=0,$deti=0,$
           WHERE id_pobyt=$id_pobyt";
     $ro= pdo_qry($qo);
     while ( $ro && ($o= pdo_fetch_object($ro)) ) {
+      $hnizdo= $o->hnizdo;
       $vek= narozeni2roky(sql2stamp($o->narozeni),sql2stamp($datum_od));
       $kat= $o->dite_kat;
       $pps= $o->funkce==1;
@@ -1798,8 +1799,11 @@ function akce2_vzorec_soubeh($id_pobyt,$id_hlavni,$id_soubezna,$dosp=0,$deti=0,$
   }
   $dosp_chuv= $dosp+$chuv;
 //                                         debug($deti_kat,"dětí");
-  $Kc= "&nbsp;Kč";
+  // načtení ceníků
+  akce2_nacti_cenik($id_hlavni,$hnizdo,$cenik_dosp,$ret->navrh);   if ( $html ) goto end;
+  akce2_nacti_cenik($id_soubezna,$hnizdo,$cenik_deti,$ret->navrh); if ( $html ) goto end;
   // redakce textu k ceně dospělých
+  $Kc= "&nbsp;Kč";
   $html.= "<b>Rozpis platby za účast dospělých na jejich akci</b><table>";
   $cena= 0;
   $ubytovani= $strava= $program= $slevy= '';
@@ -4678,7 +4682,7 @@ function akce2_tabulka($akce,$par,$title,$vypis,$export=false) { trace();
       vps=>array(),nevps=>array(),novi=>array(),druh=>array(),vice=>array(),problem=>array(),
       clmn=>array());
   $clmn= tisk2_sestava_pary($akce,$par,$title,$vypis,false,true);
-//                                         debug($clmn,"akce2_tabulka {$clmn[1]['prijmeni']}");
+                                         debug($clmn,"akce2_tabulka {$clmn[1]['prijmeni']}");
   // seřazení podle příjmení
   usort($clmn,function($a,$b) { return mb_strcasecmp($a['prijmeni'],$b['prijmeni']); });
 //                                         debug($clmn,"akce2_tabulka");
@@ -4707,13 +4711,13 @@ function akce2_tabulka($akce,$par,$title,$vypis,$export=false) { trace();
     $v= $ci['_vps'];
     $f= $ci['funkce'];
     $c= $f==9 ? 6 : ($f!=0 && $f!=1 && $f!=2 ? 7
-     : ($v=='VPS' ? 0 : ($v=='(vps)' ? 5
+     : ($f==1 ? 0 : ($v=='(vps)'||$v=='(pps)' ? 5
      : ($x==1 ? 1 : ($x==2 ? 2 : ($x==3 ? 3 : 4))))));
     $tab[$c][]= $i;
     // definice sloupců v res
 //    $ci['key_rodina']= $ci['prijmeni'];
-    if ($v=='VPS') $res->vps[]= $ci['^id_pobyt'];
-    elseif ($v=='(vps)' || $f==5) $res->nevps[]= $ci['^id_pobyt']; 
+    if ($f==1) $res->vps[]= $ci['^id_pobyt'];
+    elseif ($v=='(vps)'||$v=='(vps)' || $f==5) $res->nevps[]= $ci['^id_pobyt']; 
     elseif ($x==1) $res->novi[]= $ci['^id_pobyt'];
     elseif ($x==2) $res->druh[]= $ci['^id_pobyt'];
     elseif ($x>=3) $res->vice[]= $ci['^id_pobyt'];
@@ -7598,7 +7602,9 @@ function akce2_plachta($akce,$par,$title,$vypis,$export=0,$hnizdo=0) { trace();
 //  $ids= "2287,3323";
 //                                                debug($ids,count($ids));
   $qry=  "SELECT
-          id_pobyt,id_rodina,r.nazev as jmeno,r.obec as mesto,svatba,datsvatba,
+          id_pobyt,id_rodina,r.nazev as jmeno,
+          $kategorie AS _kat,
+          r.obec as mesto,svatba,datsvatba,
           SUM(IF(s.s_role IN (2,3),1,0)) AS _detisebou,
           c.hodnota AS _skola,
           GROUP_CONCAT(DISTINCT IF(t.role='a',o.id_osoba,'') SEPARATOR '') as id_osoba_m,
@@ -7637,7 +7643,7 @@ function akce2_plachta($akce,$par,$title,$vypis,$export=0,$hnizdo=0) { trace();
           LEFT JOIN _cis AS c ON c.druh='ms_akce_vzdelani' AND c.data=o.vzdelani
           WHERE id_pobyt IN ($ids)
           GROUP BY id_pobyt
-          ORDER BY $kategorie, $vzdelani, $vek";
+          ORDER BY _kat, $vzdelani, $vek";
 //  $qry.= " LIMIT 1";
   $res= pdo_qry($qry);
   while ( $res && ($u= pdo_fetch_object($res)) ) {
@@ -7713,7 +7719,7 @@ function akce2_plachta($akce,$par,$title,$vypis,$export=0,$hnizdo=0) { trace();
     $html.= "<tr><td>$r51</td><td>$r52</td></tr>";
     $html.= "</table><br/>";
     if ( $export ) {
-      $excel[]= array($r1,$r2,$r31,$r41,$r51,$r32,$r42,$r52,$vzdelani_muze,$vek_m,$u->jmeno);
+      $excel[]= array($r1,$r2,$r31,$r41,$r51,$r32,$r42,$r52,$vzdelani_muze,$vek_m,$u->jmeno,$u->_kat);
     }
   }
 
@@ -7777,7 +7783,8 @@ function akce2_plachta_export($line,$file) { trace();
     // list LK
     $ws= $wb->add_worksheet("Hodnoty");
     // hlavička
-    $fields= explode(',','r1:20,r2:20,r31:20,r41:20,r51:20,r32:20,r42:20,r52:20,skola:8,vek:8,prijmeni:8');
+    $fields= explode(',',
+        'r1:20,r2:20,r31:20,r41:20,r51:20,r32:20,r42:20,r52:20,skola:8,vek:4,prijmeni:12,kat:4');
     $sy= 0;
     foreach ($fields as $sx => $fa) {
       list($title,$width)= explode(':',$fa);
@@ -7798,6 +7805,7 @@ function akce2_plachta_export($line,$file) { trace();
       $ws->write_string($sy,$sx++,utf2win_sylk($x[8],true));
       $ws->write_number($sy,$sx++,$x[9]);
       $ws->write_string($sy,$sx++,utf2win_sylk($x[10],true));
+      $ws->write_number($sy,$sx++,$x[11]);
     }
     $wb->close();
     $html= " Výpis byl vygenerován ve formátu <a href='docs/$name.xls' target='xls'>Excel</a>.";
@@ -13266,6 +13274,9 @@ function mail2_personify($obsah,$vars,$id_pobyt,&$err) { debug($vars,"mail2_pers
   foreach($vars as $var) {
     $val= '';
     switch ($var) {
+    case 'pratele':
+      $val= $idr ? select('nazev','rodina',"id_rodina=$idr") : 'přátelé';
+      break;
     case 'akce_cena':
 //      // zjisti, zda je cena stanovena
 //      if (($platba1+$platba2+$platba3+$platba4+$poplatek_d)==0) {
@@ -13319,30 +13330,35 @@ function mail2_personify($obsah,$vars,$id_pobyt,&$err) { debug($vars,"mail2_pers
 //      $val= "<a href='$misto'>Skupinka $skup0 Kromeriz</a> ($misto)";
 //      break;
     case 'skupinka_popo':
-      $ida= select('id_akce','pobyt',"id_pobyt=$id_pobyt");
-      $tab= "<table>";
-      $s= pdo_qry("
-          SELECT 
-            CONCAT(nazev,' ',GROUP_CONCAT(o.jmeno ORDER BY t.role SEPARATOR ' a ')) AS _nazev,
-            GROUP_CONCAT(IF(kontakt,IF(o.telefon!='',o.telefon,'?'),r.telefony) 
-              ORDER BY t.role SEPARATOR ' a ') AS telefon, 
-            GROUP_CONCAT(IF(kontakt,IF(o.email!='',o.email,'?'),r.emaily) 
-              ORDER BY t.role SEPARATOR ' a ') AS email
-          FROM pobyt AS p
-          JOIN spolu AS s USING(id_pobyt)
-          JOIN osoba AS o ON s.id_osoba=o.id_osoba
-          LEFT JOIN tvori AS t ON t.id_osoba=o.id_osoba AND id_rodina=i0_rodina
-          LEFT JOIN rodina AS r USING(id_rodina)
-          WHERE p.id_akce=$ida AND skupina=$skupina AND t.role IN ('a','b') 
-          GROUP BY id_pobyt
-          ORDER BY IF(funkce IN (1,2),1,2), _nazev        
-        ");
-      while ($s && (list($par,$tel,$mail)= pdo_fetch_row($s))) {
-        $tab.= "<tr><th>$par</th><td>$tel</td><td>$mail</td></tr>";
+      if ($skupina) {
+        $ida= select('id_akce','pobyt',"id_pobyt=$id_pobyt");
+        $tab= "<table>";
+        $s= pdo_qry("
+            SELECT 
+              CONCAT(nazev,' ',GROUP_CONCAT(o.jmeno ORDER BY t.role SEPARATOR ' a ')) AS _nazev,
+              GROUP_CONCAT(IF(kontakt,IF(o.telefon!='',o.telefon,'?'),r.telefony) 
+                ORDER BY t.role SEPARATOR ' a ') AS telefon, 
+              GROUP_CONCAT(IF(kontakt,IF(o.email!='',o.email,'?'),r.emaily) 
+                ORDER BY t.role SEPARATOR ' a ') AS email
+            FROM pobyt AS p
+            JOIN spolu AS s USING(id_pobyt)
+            JOIN osoba AS o ON s.id_osoba=o.id_osoba
+            LEFT JOIN tvori AS t ON t.id_osoba=o.id_osoba AND id_rodina=i0_rodina
+            LEFT JOIN rodina AS r USING(id_rodina)
+            WHERE p.id_akce=$ida AND skupina=$skupina AND t.role IN ('a','b') 
+            GROUP BY id_pobyt
+            ORDER BY IF(funkce IN (1,2),1,2), _nazev        
+          ");
+        while ($s && (list($par,$tel,$mail)= pdo_fetch_row($s))) {
+          $tab.= "<tr><th>$par</th><td>$tel</td><td>$mail</td></tr>";
+        }
+        $tab.= "</table>";
+        $val= "<big><b><u>SKUPINKA $skupina</u></b></big> $tab";
+        $val= "<div style='background-color:#eeeeee;margin-left:15px'>$val</div>";
       }
-      $tab.= "</table>";
-      $val= "<big><b><u>SKUPINKA $skupina</u></b></big> $tab";
-      $val= "<div style='background-color:#eeeeee;margin-left:15px'>$val</div>";
+      else {
+        $val= "<div style='background-color:#eeeeee;margin-left:15px'>Skupinka ještě není vybrána</div>";
+      }
       break;
     }
     $text= str_replace('{'.$var.'}',$val,$text);
@@ -13354,6 +13370,7 @@ function mail2_personify($obsah,$vars,$id_pobyt,&$err) { debug($vars,"mail2_pers
 # vrátí popis možných personifikací
 function mail2_personify_help() {
   $html= "
+    <b>{pratele}</b> vloží název rodiny, pokud na akci není rodina, vloží slovo 'přátelé'<br>
     <b>{akce_cena}</b> pokud má akce definovaný ceník, vloží rozpis platby účastníka<br><br>
     <b>{skupinka_popo}</b> pro VPS vloží seznam členů skupiny s maily a telefony<br>
     <br>
