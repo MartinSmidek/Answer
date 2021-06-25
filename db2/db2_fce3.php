@@ -4717,7 +4717,7 @@ function akce2_tabulka($akce,$par,$title,$vypis,$export=false) { trace();
     // definice sloupců v res
 //    $ci['key_rodina']= $ci['prijmeni'];
     if ($f==1) $res->vps[]= $ci['^id_pobyt'];
-    elseif ($v=='(vps)'||$v=='(vps)' || $f==5) $res->nevps[]= $ci['^id_pobyt']; 
+    elseif ($v=='(vps)'||$v=='(pps)' || $f==5) $res->nevps[]= $ci['^id_pobyt']; 
     elseif ($x==1) $res->novi[]= $ci['^id_pobyt'];
     elseif ($x==2) $res->druh[]= $ci['^id_pobyt'];
     elseif ($x>=3) $res->vice[]= $ci['^id_pobyt'];
