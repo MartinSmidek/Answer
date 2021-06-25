@@ -4678,9 +4678,9 @@ end:
 function akce2_tabulka($akce,$par,$title,$vypis,$export=false) { trace();
   global $VPS;
   $map_fce= map_cis('ms_akce_funkce','zkratka');
-  $res= (object)array(html=>'...',
-      vps=>array(),nevps=>array(),novi=>array(),druh=>array(),vice=>array(),problem=>array(),
-      clmn=>array());
+  $res= (object)array('html'=>'...',
+      'vps'=>array(),'nevps'=>array(),'novi'=>array(),'druh'=>array(),'vice'=>array(),
+      'problem'=>array(),'clmn'=>array());
   $clmn= tisk2_sestava_pary($akce,$par,$title,$vypis,false,true);
                                          debug($clmn,"akce2_tabulka {$clmn[1]['prijmeni']}");
   // seřazení podle příjmení
@@ -4860,14 +4860,14 @@ function tisk2_sestava_pary($akce,$par,$title,$vypis,$export=false,$internal=fal
       $i_spolu_note, $i_osoba_obcanka, $i_spolu_dite_kat, $i_osoba_dieta;
   $result= (object)array();
   $typ= $par->typ;
-  $tit= $par->tit;
+  $tit= isset($par->tit) ? $par->tit : '';
   $fld= $par->fld;
   $cnd= $par->cnd ? $par->cnd : 1;
   if ( $tisk_hnizdo ) $cnd.= " AND hnizdo=$tisk_hnizdo ";
 //  $cnd= "id_pobyt=54261"; // ************************************************** Šmídkovi
-  $hav= $par->hav ? "HAVING {$par->hav}" : '';
-  $ord= $par->ord ? $par->ord : "a _nazev";
-  $fil= $par->filtr ?: null;
+  $hav= isset($par->hav) ? "HAVING {$par->hav}" : '';
+  $ord= isset($par->ord) ? $par->ord : "a _nazev";
+  $fil= isset($par->filtr) ? $par->filtr : null;
   $html= '';
   $href= '';
   $n= 0;
@@ -7578,8 +7578,8 @@ function akce2_plachta($akce,$par,$title,$vypis,$export=0,$hnizdo=0) { trace();
   $err= "";
   $excel= array();
   // informace
-  $par2= (object)array(typ=>'tab',cnd=>"p.funkce NOT IN (99)",
-      fld=>'key_rodina,prijmeni,jmena2,rodice,vek_deti,x_ms,_vps,funkce,^id_pobyt');  
+  $par2= (object)array('typ'=>'tab','cnd'=>"p.funkce NOT IN (99)",
+      'fld'=>'key_rodina,prijmeni,jmena2,rodice,vek_deti,x_ms,_vps,funkce,^id_pobyt');  
   $c= akce2_tabulka($akce,$par2,'','');
                                                 debug($c,'akce2_tabulka');
   // získání všech id_pobyt - definice ORDER
@@ -7760,10 +7760,10 @@ function sql2stari($narozeni,$datum) {
 };
 # ----------------------------------------------------------------------------- akce2 plachta_export
 function akce2_plachta_export($line,$file) { trace();
-  require_once('./ezer2.2/server/licensed/xls/OLEwriter.php');
-  require_once('./ezer2.2/server/licensed/xls/BIFFwriter.php');
-  require_once('./ezer2.2/server/licensed/xls/Worksheet.php');
-  require_once('./ezer2.2/server/licensed/xls/Workbook.php');
+  require_once('./ezer3.1/server/licensed/xls/OLEwriter.php');
+  require_once('./ezer3.1/server/licensed/xls/BIFFwriter.php');
+  require_once('./ezer3.1/server/licensed/xls/Worksheet.php');
+  require_once('./ezer3.1/server/licensed/xls/Workbook.php');
   global $ezer_path_root;
   global $tisk_hnizdo;
   chdir($ezer_path_root);
