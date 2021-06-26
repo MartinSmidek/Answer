@@ -6805,11 +6805,13 @@ end:
 }
 # ---------------------------------------------------------------------------------- akce2 skup_tisk
 # tisk skupinek akce
+# pro akce v hnízdech jsou skupinky číslovány vzestupnou řadou
 function akce2_skup_tisk($akce,$par,$title,$vypis,$export) {  trace();
   global $VPS;
   $result= (object)array();
   $html= "<table>";
   $ret= akce2_skup_get($akce,0,$err,$par);
+  $hnizda= select('hnizda','akce',"id_duakce=$akce");
                                                        debug($ret);
   $skupiny= $ret->skupiny;
   // pro par.mark=LK zjistíme účasti rodin na obnově
@@ -6852,9 +6854,14 @@ function akce2_skup_tisk($akce,$par,$title,$vypis,$export) {  trace();
   $n= 0;
   if ( $export ) {
     $clmn= $atrs= array();
+    $poradi= 1; $c_skupina= 0;
     foreach ($skupiny as $i=>$s) {
       foreach ($s as $c) {
-        $clmn[$n]['skupina']= $i==$c->id_pobyt ? $c->skupina : '';
+        if ($c_skupina!=$c->skupina) {
+          $cislo_skupiny= $hnizda ? $poradi++ : $c->skupina;
+          $c_skupina= $c->skupina;
+        }
+        $clmn[$n]['skupina']= $i==$c->id_pobyt ? $cislo_skupiny : '';
         $clmn[$n]['jmeno']= $c->_nazev;
         if ( !$lk )
           $clmn[$n]['pokoj']= $i==$c->id_pobyt ? $c->pokoj : '';
@@ -6903,9 +6910,15 @@ function akce2_skup_tisk($akce,$par,$title,$vypis,$export) {  trace();
   }
   else {
     $xn= 0; $tabulka= '';
+    $poradi= 1; $c_skupina= 0;
     foreach ($skupiny as $i=>$s) {
       $tab= "<table>";
       foreach ($s as $c) {
+        if ($c_skupina!=$c->skupina) {
+          $cislo_skupiny= $hnizda ? "$poradi ($c->skupina)" : $c->skupina;
+          $c_skupina= $c->skupina;
+          $poradi++;
+        }
         $nazev= $c->_nazev.($lk ? (isset($vps[$c->i0_rodina]) 
             ? " - VPS" : (isset($umi_vps[$c->i0_rodina]) ? " (vps)" : '')) : '');
         $pokoj= $lk ? '' : $c->pokoj;
@@ -6918,7 +6931,7 @@ function akce2_skup_tisk($akce,$par,$title,$vypis,$export) {  trace();
           $xn++;
         }
         if ( $i==$c->id_pobyt )
-          $tab.= "<tr><th>{$c->skupina}</th><th>$nazev</th><th>$pokoj</th></tr>";
+          $tab.= "<tr><th>$cislo_skupiny</th><th>$nazev</th><th>$pokoj</th></tr>";
         else
           $tab.= "<tr><td></td><td>$nazev</td><td></td></tr>";
       }
@@ -6955,6 +6968,10 @@ function akce2_skup_tisk($akce,$par,$title,$vypis,$export) {  trace();
       else {
         $html.= "<h3>Všichni přihlášení byli na posledním setkání</h3>";
       }
+    }
+    if ($hnizda) {
+      $html= "<b>Poznámka</b>: V závorce je vždy uvedeno číslo skupinky v rámci celé akce 
+        - tedy údaj u pobytu na panelu Účastníci.".$html;
     }
     $result->html= $html;
   }
