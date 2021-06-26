@@ -6805,7 +6805,7 @@ end:
 }
 # ---------------------------------------------------------------------------------- akce2 skup_tisk
 # tisk skupinek akce
-# pro akce v hnízdech jsou skupinky číslovány vzestupnou řadou
+# pro akce v hnízdech jsou skupinky číslovány lokálně vzestupnou řadou - není-li par->precislovat=0
 function akce2_skup_tisk($akce,$par,$title,$vypis,$export) {  trace();
   global $VPS;
   $result= (object)array();
@@ -6857,7 +6857,8 @@ function akce2_skup_tisk($akce,$par,$title,$vypis,$export) {  trace();
     $poradi= 1; $c_skupina= 0;
     foreach ($skupiny as $i=>$s) {
       foreach ($s as $c) {
-        if ($c_skupina!=$c->skupina) {
+        $cislo_skupiny= $c->skupina;
+        if ($par->precislovat && $c_skupina!=$c->skupina) {
           $cislo_skupiny= $hnizda ? $poradi++ : $c->skupina;
           $c_skupina= $c->skupina;
         }
@@ -6914,7 +6915,8 @@ function akce2_skup_tisk($akce,$par,$title,$vypis,$export) {  trace();
     foreach ($skupiny as $i=>$s) {
       $tab= "<table>";
       foreach ($s as $c) {
-        if ($c_skupina!=$c->skupina) {
+        $cislo_skupiny= $c->skupina;
+        if ($par->precislovat && $c_skupina!=$c->skupina) {
           $cislo_skupiny= $hnizda ? "$poradi ($c->skupina)" : $c->skupina;
           $c_skupina= $c->skupina;
           $poradi++;
@@ -6969,7 +6971,7 @@ function akce2_skup_tisk($akce,$par,$title,$vypis,$export) {  trace();
         $html.= "<h3>Všichni přihlášení byli na posledním setkání</h3>";
       }
     }
-    if ($hnizda) {
+    if ($hnizda && $par->precislovat) {
       $html= "<b>Poznámka</b>: V závorce je vždy uvedeno číslo skupinky v rámci celé akce 
         - tedy údaj u pobytu na panelu Účastníci.".$html;
     }

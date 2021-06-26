@@ -502,7 +502,9 @@ menu m {type:'left', //active:*
     item {title:'Počty strav - výlet 3.den'
                                         ,par:°{typ:'vsd3',exp:'Excel2',cnd:'1',souhrn:1}}
     item {title:'Člověkolůžka'          ,par:°{typ:'vn',exp:'Excel2',cnd:'funkce NOT IN (9,10,13,14)'}}
-    item {title:'Skupinky'              ,par:°{typ:'skti',exp:'Excel2',cnd:'1',verze:'MS'}} // fce:'tisk'
+    item {title:'Skupinky'              ,par:°{typ:'skti',exp:'Excel2',cnd:'1',verze:'MS',precislovat:1}} // fce:'tisk'
+    item {title:'... bez přečíslování v hnízdech'
+                                        ,par:°{typ:'skti',exp:'Excel2',cnd:'1',verze:'MS',precislovat:0}}
     item {title:'Skupinky dětí'         ,par:°{typ:'sd',exp:'Excel2',cnd:'1',fce:'tisk'}}
     item {title:'Skupinky (* noví)'     ,par:°{typ:'skti',exp:'Excel2',cnd:'1',verze:'MS',mark:'novic'}} // fce:'tisk'
     item {title:'Skupinky z LK pro PO,JO - návrh a kontrola',par:°{typ:'skti',exp:'Excel2',cnd:'1',verze:'MS',mark:'LK'},format:'t'}   // fce:'tisk'
