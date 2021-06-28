@@ -64,8 +64,9 @@ use info: form right [12,4,,] {
       })
     }
   }
+  var mezery=''
   button export [-20,4,,] { title:'Excel', style:'display:block;zIndex:2',
-    proc onclick() { var tit:text
+    proc onclick() { var tit:text 
       var res: object
       clear;
       tit.set(cconc(the_hnizdo.get,
@@ -104,9 +105,9 @@ use info: form right [12,4,,] {
         form.msg.set(res.html);
       },
       'PDF-plachta',{
-        alert("Pozor: musí se spustit na serveru (pod Windows řadí chybně T-Š)");
+        mezery.set(prompt2("zadej případné mezery mezi štítky:index+mezera,...",mezery.get));
         sti_P.report_init; sti_P.report_check;
-        res.set(ask('tisk2_pdf_plachta',the_akce.get,sti_P.get_json,the_hnizdo.get));
+        res.set(ask('tisk2_pdf_plachta',the_akce.get,sti_P.get_json,the_hnizdo.get,mezery.get));
         form.msg.set(res.html);
       },
       'PDF-plachta0',{

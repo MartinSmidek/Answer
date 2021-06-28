@@ -532,7 +532,7 @@ function akce2_info($id_akce,$text=1,$pobyty=0) { trace();
           <button onclick=\"Ezer.fce.href('akce2.lst.ukaz_hnizda/$id_akce')\">
           jmenovitý seznam</button><ul>";
 //                                                                debug($hnizda); 
-                                                                debug($hnizdo); 
+//                                                                debug($hnizdo); 
         for ($h= 0; $h<count($hnizda); $h++) {
           $hn= $h+1 % count($hnizda)-1;
           // počty a odhad
@@ -4682,7 +4682,7 @@ function akce2_tabulka($akce,$par,$title,$vypis,$export=false) { trace();
       'vps'=>array(),'nevps'=>array(),'novi'=>array(),'druh'=>array(),'vice'=>array(),
       'problem'=>array(),'clmn'=>array());
   $clmn= tisk2_sestava_pary($akce,$par,$title,$vypis,false,true);
-                                         debug($clmn,"akce2_tabulka {$clmn[1]['prijmeni']}");
+//                                         debug($clmn,"akce2_tabulka {$clmn[1]['prijmeni']}");
   // seřazení podle příjmení
   usort($clmn,function($a,$b) { return mb_strcasecmp($a['prijmeni'],$b['prijmeni']); });
 //                                         debug($clmn,"akce2_tabulka");
@@ -7600,7 +7600,7 @@ function akce2_plachta($akce,$par,$title,$vypis,$export=0,$hnizdo=0) { trace();
   $par2= (object)array('typ'=>'tab','cnd'=>"p.funkce NOT IN (99)",
       'fld'=>'key_rodina,prijmeni,jmena2,rodice,vek_deti,x_ms,_vps,funkce,^id_pobyt');  
   $c= akce2_tabulka($akce,$par2,'','');
-                                                debug($c,'akce2_tabulka');
+//                                                debug($c,'akce2_tabulka');
   // získání všech id_pobyt - definice ORDER
   $ids= array_merge($c->vps,$c->nevps,$c->novi,$c->druh,$c->vice);
   $ids= implode(',',$ids);
@@ -8901,12 +8901,22 @@ function tisk2_pdf_prijem_ireg($nazev,$adiety,$x,$ret,$par) {  trace();
 }
 # -------------------------------------------------------------------------------- tisk2 pdf_plachta
 # generování štítků se jmény párů
-# POZOR - je nutno 2x přidat výjimku v číslování kvůli zarovnání na vzdělání v plachtě
-function tisk2_pdf_plachta($akce,$report_json=0,$hnizdo=0) {  trace();
+# mezery= [i+x, ...] znamená, že po i-tém štítku bude x prázdných (i je výsledný index)
+function tisk2_pdf_plachta($akce,$report_json=0,$hnizdo=0,$_mezery='') {  trace();
   global $ezer_path_docs,$tisk_hnizdo;
   $tisk_hnizdo= $hnizdo;
   setlocale(LC_ALL, 'cs_CZ.utf8');
   $result= (object)array('_error'=>0,'html'=>'?');
+//  $_mezery= "4+1";
+  $mezery= array();
+  if ($_mezery) {
+    $ixs= explode(',',$_mezery);
+    foreach ($ixs as $ix) {
+      list($i,$x)= explode('+',$ix);
+      $mezery[$i]= $x;
+    }
+  }
+                                          debug($mezery,'mezery');
   $html= '';
   $A= 'A';
   $n= 1;
@@ -8915,16 +8925,15 @@ function tisk2_pdf_plachta($akce,$report_json=0,$hnizdo=0) {  trace();
   $tab= akce2_plachta($akce,$par,$title,$vypis,0,$hnizdo);
   unset($tab->xhref);
   unset($tab->html);
-  ksort($tab->pdf,SORT_LOCALE_STRING);
+//  ksort($tab->pdf,SORT_LOCALE_STRING);
 //                                               debug($tab->pdf);
   // projdi vygenerované záznamy
   $n= 0;
   if ( $report_json) {
     $parss= array();
     foreach ( $tab->pdf as $par=>$xa ) {
-//       // souřadnice s opravou
-//       if ( $i==34) $i= 36;                              // <<====================== výjimka č.1
-//       if ( $i==113) $i= 117;
+      // započtení mezer, předaných přes $_mezery
+      if (isset($mezery[$i])) $i+= $mezery[$i];
       $Ai= $i%12;
       $ni= ceil(($i+1)/12);
       $A1= chr(ord('A')+$Ai).$ni;
@@ -8970,8 +8979,8 @@ function tisk2_pdf_plachta($akce,$report_json=0,$hnizdo=0) {  trace();
   }
   else {
     foreach ( $tab->pdf as $par=>$xa ) {
-//       if ( $i==34) $i= 36;                              // <<====================== výjimka č.2
-//       if ( $i==113) $i= 117;
+      // započtení mezer, předaných přes $_mezery
+      if (isset($mezery[$i])) $i+= $mezery[$i];
       $Ai= $i%12;
       $ni= ceil(($i+1)/12);
       $tab->pdf[$par]['a1']= chr(ord('A')+$Ai).$ni;
