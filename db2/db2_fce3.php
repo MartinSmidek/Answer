@@ -7662,7 +7662,7 @@ function akce2_plachta($akce,$par,$title,$vypis,$export=0,$hnizdo=0) { trace();
           LEFT JOIN _cis AS c ON c.druh='ms_akce_vzdelani' AND c.data=o.vzdelani
           WHERE id_pobyt IN ($ids)
           GROUP BY id_pobyt
-          ORDER BY _kat, $vzdelani, $vek";
+          ORDER BY _kat, /*$vzdelani,*/ $vek";
 //  $qry.= " LIMIT 1";
   $res= pdo_qry($qry);
   while ( $res && ($u= pdo_fetch_object($res)) ) {
@@ -8926,7 +8926,7 @@ function tisk2_pdf_plachta($akce,$report_json=0,$hnizdo=0,$_mezery='') {  trace(
   unset($tab->xhref);
   unset($tab->html);
 //  ksort($tab->pdf,SORT_LOCALE_STRING);
-//                                               debug($tab->pdf);
+                                               debug($tab->pdf);
   // projdi vygenerované záznamy
   $n= 0;
   if ( $report_json) {
