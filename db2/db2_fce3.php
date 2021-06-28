@@ -7660,7 +7660,7 @@ function akce2_plachta($akce,$par,$title,$vypis,$export=0,$hnizdo=0) { trace();
           LEFT JOIN tvori AS t ON t.id_osoba=o.id_osoba AND t.id_rodina=i0_rodina
           LEFT JOIN rodina AS r USING (id_rodina)
           LEFT JOIN _cis AS c ON c.druh='ms_akce_vzdelani' AND c.data=o.vzdelani
-          WHERE id_pobyt IN ($ids) AND funkce IN (0,1,2)
+          WHERE id_pobyt IN ($ids) AND funkce IN (0,1,2,5)
           GROUP BY id_pobyt
           ORDER BY _kat, /*$vzdelani,*/ $vek";
 //  $qry.= " LIMIT 1";
