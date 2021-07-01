@@ -7647,13 +7647,13 @@ function akce2_plachta($akce,$par,$title,$vypis,$export=0,$hnizdo=0) { trace();
           MAX(IF(t.role IN ('a','b'),c.hodnota,0)) as _vzdelani,
           ( SELECT COUNT(*)
             FROM osoba JOIN tvori USING(id_osoba)
-            WHERE id_rodina=t.id_rodina AND role='d' ) AS deti,
+            WHERE id_rodina=t.id_rodina AND role='d' AND umrti=0) AS deti,
           ( SELECT MIN(narozeni)
             FROM osoba JOIN tvori USING(id_osoba)
-            WHERE id_rodina=t.id_rodina AND role='d' ) AS maxdeti,
+            WHERE id_rodina=t.id_rodina AND role='d' AND umrti=0) AS maxdeti,
           ( SELECT MAX(narozeni)
             FROM osoba JOIN tvori USING(id_osoba)
-            WHERE id_rodina=t.id_rodina AND role='d' ) AS mindeti
+            WHERE id_rodina=t.id_rodina AND role='d' AND umrti=0) AS mindeti
           FROM pobyt AS p
           JOIN spolu AS s USING (id_pobyt)
           JOIN osoba AS o ON s.id_osoba=o.id_osoba
