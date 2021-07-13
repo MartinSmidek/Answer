@@ -201,7 +201,7 @@ menu m {type:'left', format:'f+', active:*
   }
   menu d {title:'Dotazníky LK YMCA Setkání',type:'group', _sys:'*' skill:'yaet'
     item {title:'[fa-calendar] volba roku dotazníku'            par:°{typ:'r'} }
-    item i {title:'[fa-ban] (re)import dotazníku'               format:'d'
+    item i {title:'[fa-ban] (re)import dotazníku'               format:'d'                 skill:'m'
       proc onclick (i) { var y:object
         mapa.close(1);
         panel.display(2,'i');
@@ -273,7 +273,7 @@ proc show_dotazy() {
   function('group',"group._fold(); return 1;",m.l);
 }
 # ------------------------------------------------------------------------------------------==> uses
-use dotaz: form _dotaz [24,300,,] { tag:'dp' format:'n' }
+use dotaz: form _dotaz [24,400,,] { tag:'dp' format:'n' }
 use obraz: form _obraz [12,4,,]   { tag:'do' format:'n' }
 use tipy:  form _tipy  [24,370,,] { tag:'dp' format:'n' skill:'mš'}
 use info: form right   [12,4,,]   { tag:'i'
@@ -296,23 +296,30 @@ use info: form right   [12,4,,]   { tag:'i'
 form _obraz [,,700,50] {
   const D=320
   label text [0,28,700,700] 
-  label text2 [0,60,320,700] { style:"overflow:auto"  }
+  label text2 [0,80,320,700] { style:"overflow:auto"  }
   label img [D,28,480,700] { title:'' }
   label head [0,0,800,30]  { title:'' }
   label note [0,508,320,200] { style:"overflow:auto" }
   // volba roku dotazníku
-  select roky [100,60,100,] { tag:'x,r' title:'LK roku' value:'2019' format:'t'
+  select roky [100,60,100,] { tag:'x,r' title:'LK roku' value:'2021' format:'t'
     proc onchanged() { 
       dotaz.rok.set(this.get); 
       dotaz.Init
   }}
   // výběrové podmínky
   label [0,40,80,] { tag:'x,v' title:'volba roků:' }
-  check r2018  [80,40,50,] { tag:'x,v' title:'2018' format:'t' proc onchange() { recond }}
-  check r2019 [140,40,50,] { tag:'x,v' title:'2019' format:'t' proc onchange() { recond }}
+  check r2017  [80,35,50,] { tag:'x,v' title:'2017' format:'t' proc onchange() { recond }}
+  check r2018  [131,35,50,] { tag:'x,v' title:'2018' format:'t' proc onchange() { recond }}
+  check r2019 [182,35,50,] { tag:'x,v' title:'2019' format:'t' proc onchange() { recond }}
+  check r2021 [233,35,50,] { tag:'x,v' title:'2021' format:'t' proc onchange() { recond }}
 //  check vsechno [0,40,200,] { tag:'x,v' title:'vzít údaje ze všech roků dohromady' format:'t' 
 //    proc onchange() { recond }
 //  }
+  label [0,65,80,] { tag:'x,v' title:'výběr hnízda:' }
+  check hnizdo_1 [80,60,70,] { tag:'x,v' title:'Albeřice' format:'t' proc onchange() { recond }}
+  check hnizdo_2 [151,60,70,] { tag:'x,v' title:'Kroměříž' format:'t' proc onchange() { recond }}
+  check hnizdo_3 [222,60,70,] { tag:'x,v' title:'Olomouc' format:'t' proc onchange() { recond }}
+
   label [D+20,35,100,] { tag:'x,v' title:'<b>Statistika</b>' }
   check x_sex [D+20,50,90,] { tag:'x,v' title:'sex' format:'t'
     proc onchange() { recond }
@@ -378,12 +385,22 @@ form _obraz [,,700,50] {
   edit cond [D+20,235,260,100] { tag:'x,v' title:'^výběr jako SQL' value:'1' format:'t'
     proc onchanged() { rechoice }}
   // funkce
-  proc recond() { var roky:text
+  proc recond() { var roky:text, hnizda:text
     echo(x_sex.get,',',r_sex.get);
+    // výběr roků
     roky.set('0');
+    [ r2017.get; roky.set(conc(roky,',2017')) ]; 
     [ r2018.get; roky.set(conc(roky,',2018')) ]; 
     [ r2019.get; roky.set(conc(roky,',2019')) ]; 
+    [ r2021.get; roky.set(conc(roky,',2021')) ]; 
+    // výběr hnízda
+    hnizda.set('');
+    [ hnizdo_1.get; hnizda.set(conc(hnizda,',1')) ];
+    [ hnizdo_2.get; hnizda.set(conc(hnizda,',2')) ];
+    [ hnizdo_3.get; hnizda.set(conc(hnizda,',3')) ];
+    // sestavení dotazu
     cond.set(conc('dotaznik IN (',roky,')',
+      cconc(hnizda,conc(' AND hnizdo IN (9',hnizda,')'),''),
       cconc(x_sex.get,conc(' AND sex=',r_sex.get),''),
       cconc(x_vek.get,conc(' AND vek BETWEEN ',r_vek.get),''),
       cconc(x_det.get,conc(' AND deti BETWEEN ',r_det.get),''),
@@ -415,7 +432,7 @@ form _obraz [,,700,50] {
   proc append(x) { note.set(x) }
 }
 form _dotaz [,,163,60] { style:'position:fixed;z-index:2' css:'parm shadow'
-  var rok=2019,   // rok dotazníku ... 2019
+  var rok=2021,   // rok dotazníku ... 2021
       kurz=0,
       back=0,     // návrat na poslední kliknuté (ne odkazem)
       dirty=1,    // po změně dotazu, čistí se po prvním Show

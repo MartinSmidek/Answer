@@ -1477,7 +1477,7 @@ function session($is,$value=null) {
 # ----------------------------------------------------------------------------------------- dot roky
 # vrátí dostupné dotazníky Letního kurzu MS YS
 function dot_roky () { trace();
-  $y= (object)array('roky'=>'2019,2018,2017'); // 2017 je rozjetý - k dispozici je jen statistika
+  $y= (object)array('roky'=>'2021,2019,2018,2017'); // 2017 je rozjetý - k dispozici je jen statistika
   return $y;
 }
 # -------------------------------------------------------------------------------------- dot prehled
@@ -1919,7 +1919,14 @@ function dot_show ($dotaznik,$clmn,$pg,$offset,$cond,$dirty,$rok) { trace();
       case 'novic': $x->novic= array('opak.','poprv')[$val]; break;
     }
   }
-  $tab.= "<p><b>PDF={$x->page}  &nbsp;  XLS={$x->id} &nbsp; rok=$rok</b></p>";
+  // doplnění hnízd
+  $hnizdo= '';
+  $hnizda= select('hnizda','akce',"YEAR(datum_od)=$rok AND druh=1 AND access=1");
+  if ($hnizda) {
+    $hnizda= explode(',',$hnizda);
+    $hnizdo= $x->hnizdo ? " &nbsp;  hnízdo={$hnizda[$x->hnizdo-1]}" : '';
+  }
+  $tab.= "<p><b>PDF={$x->page}  &nbsp;  XLS={$x->id} &nbsp; rok=$rok $hnizdo</b></p>";
   foreach ($tmpl as $row => $clmns) {
     switch ($row) {
     case 'Hodnocení':
@@ -2244,48 +2251,156 @@ function dot_import ($rok) { trace();
   );
   $values= array(); // id => (value)
   query("DELETE FROM dotaz WHERE dotaznik=$rok");
-  $fpath= "$ezer_path_docs/import/MS$rok";
-  foreach ($def as $fname=>$clmn) {
-    $fullname= "$fpath/MS$rok-$fname.csv";
-    if ( !file_exists($fullname) ) { $y->war.= "soubor $fullname neexistuje "; continue; }
-    $f= @fopen($fullname, "r");
-    if ( !$f ) { $y->err.= "soubor $fullname nelze otevřít"; goto end; }
-    $n= 0;
-    while (($line= fgets($f, 1000)) !== false) {
-      $n++;
-      $value= array();
-      $id= 0;
-      $line= win2utf($line,1);
-      $data= str_getcsv($line,';'); 
-      foreach ($clmn as $c => $name) {
-        if ( $name[0]=='=') {
-          $name= substr($name,1);
-          switch ($name) {
-            case 'id': $id= $data[$c]; break;
-            case 'sex':
-              $value[$name]= $data[$c]=='muž' ||$data[$c]=='Muž'  ? 0 : (
-                             $data[$c]=='žena'||$data[$c]=='Žena' ? 1 : -1); break;
-            case '': break;
+  // dotazníky od roku 2021 zpracujeme z živých dat na GDISKu
+  if ($rok>=2021) {
+    $def_g= array(
+      "A,x,id?",
+      "B,r,hnizdo?Albeřice*1;Kroměříž*2;Olomouc*3",
+      "C,r,sex?Muž*0;Žena*1",
+      "D,i,vek?",
+      "E,r,deti?1;2;3;žádné*0;více*4",
+      "F,i,manzel?",
+      "G,r,novic?Ano*1;Ne*0",
+      "H,c,od_jine,od_jine_text?Přátelé*od_pratele;Příbuzní*od_pribuzni;Jezdil/a jsem jako pečovatel/ka*od_pecoun;Inzerce*od_inzerce;Chlapské akce*od_chlapi;Akce YMCA Setkání*od_ymca",
+      "I,c,proc_jine,proc_jine_text?chci zlepšovat naše manželství*proc_zlepsit;byli jsme v krizi*proc_krize;jezdíme opakovaně*proc_opak",
+      "J,i,prednasky?",
+      "K,i,skupinky?",
+      "L,i,duchovno?",
+      "M,i,ubytovani?",
+      "N,i,strava?",
+      "O,r,pecedeti?1;2;3;4;5;péči o děti jsme nevyužili*0",
+      "P,i,motto?",
+      "Q,i,maturita?",
+      "R,i,hudba?",
+      "S,t,libilo?",
+      "T,t,vadilo?",
+      "U,t,vzkaz?",
+      "V,c,tema_jine,tema_jine_text?Výchova menších dětí*tema_male;Výchova dospívajících*tema_dosp;Vztahy  v rodině - matka a děti*tema_matka;Vztahy v rodině - otec a děti*tema_otec;Mezigenerační vztahy - širší rodina*tema_mezigen;Duchovní život*tema_duchovni",
+      "W,r,prinos?1 - Ano, velmi významně*1;2 - Ano, částečně*2;3 - Nevím, to se uvidí*3;4 - Ne, nevidím změnu*4;5 - Ne, spíše naopak*5",
+      "X,t,prinos_text?"
+    );
+    # přečtení seznamu skupin z tabulky
+    # https://docs.google.com/spreadsheets/d/1dP_p6A8sHKPEStiaqJaeAhGV3kjUYqmjQrvBpvRahUA/edit#gid=1894516411
+    $goo= "https://docs.google.com/spreadsheets/d";
+    $key= "1dP_p6A8sHKPEStiaqJaeAhGV3kjUYqmjQrvBpvRahUA";         // Seznam dotazníků
+    $prefix= "google.visualization.Query.setResponse(";           // přefix json objektu
+    $x= file_get_contents("$goo/$key/gviz/tq?tqx=out:json"); //&sheet=$sheet");
+    $xi= strpos($x,$prefix);
+    $xl= strlen($prefix);
+    $x= substr(substr($x,$xi+$xl),0,-2);
+    $tab= json_decode($x)->table;
+//                                                          debug($tab);
+//                                                          debug($tab->cols);
+    if ( $tab ) {
+      $n= 0;
+      // projdeme dotazníky
+      foreach ($tab->rows as $line=>$crow) {
+        $value= array();
+        $row= $crow->c; // odpovědi na otázky
+//                                                          debug($row);
+        foreach ($row as $i => $cols) {
+          $d_i= $def_g[$i]; // definice i-té otázky
+          $v= $row[$i];     // odpověď na i-tou otázku
+          list($desc,$itms)= explode('?',$d_i);
+          list(,$typ,$fld,$fld_text)= explode(',',$desc);
+          $itms= explode(';',$itms);
+//                                                          debug($itms);
+          switch ($typ) {
+            case 'x': $value['id']= $id= $line+1; break;
+            case 'i':
+              $value[$fld]= $v->v;
+              break;
+            case 'c':
+              $vv= explode(', ',$v->v);
+              foreach($vv as $iv=>$vi) {
+                $preddefinovana= 0;
+                foreach($itms as $itm_code) {
+                  list($itm,$code)= explode('*',$itm_code);
+                  if ($vi==$itm) {
+                    $value[$code]= 1;
+                    $preddefinovana= 1;
+                  }
+                }
+                if (!$preddefinovana) { 
+                  // obecná odpověď může obsahovat čárky, je ale vždy na konci
+                  $value[$fld]= 1;
+                  $value[$fld_text]= implode(', ',array_slice($vv,$iv));
+                  break;
+                }
+              }
+              break;
+            case 'r':
+              foreach($itms as $itm_code) {
+                list($itm,$code)= explode('*',$itm_code);
+                if ($v->v==$itm) {
+                  $value[$fld]= isset($code) ? $code : $itm;
+                  break 2;
+                }
+              }
+              $y->war.= "dotazník $id: neznámá odpověď '{$v->v}'<br>";
+              break;
+            case 't':
+              $value[$fld]= $v->v;
+              break;
           }
         }
-        else {
-          $value[$name]= $data[$c];
+        $n++;
+                                                  debug($value);
+        // zařazení value
+        if ( !isset($values[$id]) ) 
+          $values[$id]= (object)array('id'=>$id);
+        foreach ($value as $name => $val) {
+          $values[$id]->$name= $val;
         }
+        if ($n_max && $n>=$n_max) break;
       }
-      if ( !$id ) {
-        $y->war.= "chybí ID/$fname: $line<br>";
-        break;
-//        continue;
-      }
-      // zařazení value
-      if ( !isset($values[$id]) ) 
-        $values[$id]= (object)array('id'=>$id);
-      foreach ($value as $name => $val) {
-        $values[$id]->$name= $val;
-      }
-      if ($n_max && $n>=$n_max) break;
     }
-    fclose($f); $f= null;
+  }
+  else {
+    // starší dotazníky z lokálních tabulek
+    $fpath= "$ezer_path_docs/import/MS$rok";
+    foreach ($def as $fname=>$clmn) {
+      $fullname= "$fpath/MS$rok-$fname.csv";
+      if ( !file_exists($fullname) ) { $y->war.= "soubor $fullname neexistuje "; continue; }
+      $f= @fopen($fullname, "r");
+      if ( !$f ) { $y->err.= "soubor $fullname nelze otevřít"; goto end; }
+      $n= 0;
+      while (($line= fgets($f, 1000)) !== false) {
+        $n++;
+        $value= array();
+        $id= 0;
+        $line= win2utf($line,1);
+        $data= str_getcsv($line,';'); 
+        foreach ($clmn as $c => $name) {
+          if ( $name[0]=='=') {
+            $name= substr($name,1);
+            switch ($name) {
+              case 'id': $id= $data[$c]; break;
+              case 'sex':
+                $value[$name]= $data[$c]=='muž' ||$data[$c]=='Muž'  ? 0 : (
+                               $data[$c]=='žena'||$data[$c]=='Žena' ? 1 : -1); break;
+              case '': break;
+            }
+          }
+          else {
+            $value[$name]= $data[$c];
+          }
+        }
+        if ( !$id ) {
+          $y->war.= "chybí ID/$fname: $line<br>";
+          break;
+  //        continue;
+        }
+        // zařazení value
+        if ( !isset($values[$id]) ) 
+          $values[$id]= (object)array('id'=>$id);
+        foreach ($value as $name => $val) {
+          $values[$id]->$name= $val;
+        }
+        if ($n_max && $n>=$n_max) break;
+      }
+      fclose($f); $f= null;
+    }
   }
 //                                                         debug($values);
   // zápis do tabulky DOTAZ
@@ -2299,6 +2414,7 @@ function dot_import ($rok) { trace();
     query("INSERT INTO dotaz ($flds) VALUE ($vals)");
   }
 end:  
+  display($y->war);
   return $y;
 }
 /** ===========================================================================================> VPS **/
