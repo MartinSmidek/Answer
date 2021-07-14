@@ -275,7 +275,7 @@ proc show_dotazy() {
 # ------------------------------------------------------------------------------------------==> uses
 use dotaz: form _dotaz [24,400,,] { tag:'dp' format:'n' }
 use obraz: form _obraz [12,4,,]   { tag:'do' format:'n' }
-use tipy:  form _tipy  [24,370,,] { tag:'dp' format:'n' skill:'mš'}
+use tipy:  form _tipy  [24,467,,] { tag:'dp' format:'n' skill:'mš'}
 use info: form right   [12,4,,]   { tag:'i'
   label parm_tit [-200,9,100,] { tag:'p', style:'zIndex:2;color:white', format:'rn' }
   field parm [-150,5,40,] { tag:'p', style:'zIndex:2', format:'rtn' }
@@ -316,9 +316,9 @@ form _obraz [,,700,50] {
 //    proc onchange() { recond }
 //  }
   label [0,65,80,] { tag:'x,v' title:'výběr hnízda:' }
-  check hnizdo_1 [80,60,70,] { tag:'x,v' title:'Albeřice' format:'t' proc onchange() { recond }}
-  check hnizdo_2 [151,60,70,] { tag:'x,v' title:'Kroměříž' format:'t' proc onchange() { recond }}
-  check hnizdo_3 [222,60,70,] { tag:'x,v' title:'Olomouc' format:'t' proc onchange() { recond }}
+  check hnizdo_1 [80,60,70,] { tag:'x,v' title:'Kroměříž' format:'t' proc onchange() { recond }}
+  check hnizdo_2 [151,60,70,] { tag:'x,v' title:'Olomouc' format:'t' proc onchange() { recond }}
+  check hnizdo_3 [222,60,70,] { tag:'x,v' title:'Albeřice' format:'t' proc onchange() { recond }}
 
   label [D+20,35,100,] { tag:'x,v' title:'<b>Statistika</b>' }
   check x_sex [D+20,50,90,] { tag:'x,v' title:'sex' format:'t'

@@ -1704,11 +1704,13 @@ function dot_prehled ($rok_or_akce,$par,$title='',$vypis='',$export=0,$hnizdo=0)
 # ------------------------------------------------------------------------------------------ dot spy
 # tipy na autory
 # kurs = {akce:id_akce,data:[{sex,vek,deti,manz,novic}...] ... data se počítají při prvním průchodu
-function dot_spy ($kurz,$dotaznik,$clmn,$pg,$back) { trace();
+function dot_spy ($kurz,$dotaznik,$clmn,$pg,$back) { 
+  debug($kurz,"dot_spy(...,$dotaznik,$clmn,$pg,$back)");
   global $EZER;
   global $i_osoba_jmeno, $i_osoba_vek, $i_osoba_role, $i_osoba_prijmeni, $i_key_spolu;
 //  $y= (object)array('html'=>'','err'=>'','war'=>'');
   $kurz->html= '???';
+//  unset($kurz->data); // vždy přepočítat --------------------------------------------- LADĚNÍ
   if ( !isset($kurz->data) || $kurz->rok!=$dotaznik ) {
     $akce= select('id_duakce','akce',"access=1 AND druh=1 AND YEAR(datum_od)=$kurz->rok");
     $kurz->akce= $akce;
@@ -1722,6 +1724,7 @@ function dot_spy ($kurz,$dotaznik,$clmn,$pg,$back) { trace();
     $kurz->data= array();
     foreach($z->values as $par) { if ( $par ) {
       $idp= $par->key_pobyt;
+      $nest= $par->hnizdo;
 //      if ( $idp==54153 ) continue;
       $novic= $par->x_ms==1 ? 1 : 0;
       $manzele= '?';
@@ -1752,9 +1755,9 @@ function dot_spy ($kurz,$dotaznik,$clmn,$pg,$back) { trace();
         }
       }
       $m= (object)array('sex'=>0,'vek'=>$m_vek,'manz'=>$manzele,'deti'=>$deti,'novic'=>$novic,
-          'prijmeni'=>$m_prijmeni,'jmeno'=>$m_jmeno,'idp'=>$idp,'ido'=>$m_ido);
+          'prijmeni'=>$m_prijmeni,'jmeno'=>$m_jmeno,'idp'=>$idp,'ido'=>$m_ido,'nest'=>$nest);
       $z= (object)array('sex'=>1,'vek'=>$z_vek,'manz'=>$manzele,'deti'=>$deti,'novic'=>$novic,
-          'prijmeni'=>$z_prijmeni,'jmeno'=>$z_jmeno,'idp'=>$idp,'ido'=>$z_ido);
+          'prijmeni'=>$z_prijmeni,'jmeno'=>$z_jmeno,'idp'=>$idp,'ido'=>$z_ido,'nest'=>$nest);
 //      debug($m,"muž");
 //      debug($z,"žena");
       $kurz->data[]= $m;
@@ -1762,7 +1765,7 @@ function dot_spy ($kurz,$dotaznik,$clmn,$pg,$back) { trace();
 //      break;
     }}
   }
-  list($sex,$vek,$deti,$manz,$novic)= select('sex,vek,deti,manzel,novic','dotaz',
+  list($sex,$vek,$deti,$manz,$novic,$hnizdo)= select('sex,vek,deti,manzel,novic,hnizdo','dotaz',
       "dotaznik=$dotaznik AND $clmn=$pg");
   // hledáme shody
   $shod= 0; 
@@ -1774,7 +1777,7 @@ function dot_spy ($kurz,$dotaznik,$clmn,$pg,$back) { trace();
   $f= $kurz->filtr;
   $n= 0;
   foreach($kurz->data as $i=>$o) {
-    if ( 1
+    if ( $hnizdo==$o->nest
         && ( $f->sex ? $sex==$o->sex : 1)
         && ( $f->vek ? abs($vek-$o->vek)<=1  : 1)
         && ( $f->det ? $deti==$o->deti  : 1)
@@ -1786,11 +1789,14 @@ function dot_spy ($kurz,$dotaznik,$clmn,$pg,$back) { trace();
         $pob[$shod]= $o->idp;
         $tit[$shod]= "věk=$o->vek, děti/LK=$o->deti, manželství=$o->manz, "
             . ($o->novic ? 'poprvé' : 'opakovaně');
+        if ($hnizdo)
+          $tit[$shod].= ", hnízdo=$o->nest";
         // zkusíme najít dotazník partnera
         $dpa[$shod]= array();
         $ip= $o->sex ? $i-1 : $i+1;
         $p= is_array($kurz->data) ? $kurz->data[$ip] : $kurz->data->$ip;
         $rp= pdo_qry("SELECT $clmn FROM dotaz WHERE dotaznik={$kurz->rok}
+            AND hnizdo=$p->nest
             AND sex=$p->sex 
             AND ABS(vek-$p->vek)<=1 
             AND deti=$p->deti 
@@ -2255,7 +2261,7 @@ function dot_import ($rok) { trace();
   if ($rok>=2021) {
     $def_g= array(
       "A,x,id?",
-      "B,r,hnizdo?Albeřice*1;Kroměříž*2;Olomouc*3",
+      "B,r,hnizdo?Albeřice*3;Kroměříž*1;Olomouc*2",
       "C,r,sex?Muž*0;Žena*1",
       "D,i,vek?",
       "E,r,deti?1;2;3;žádné*0;více*4",
