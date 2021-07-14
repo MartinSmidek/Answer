@@ -140,15 +140,14 @@ function web_prihlaska($akce,$url,$on,$garant) {  trace();
   if ( $ok ) {
     $idp= $m[2];
     $ida= $on ? $akce : 0;
-    ezer_connect('setkani');
-    $ido= select('ikona','_cis',"druh='akce_garant' AND data='$garant'");
+    $ido= select('ikona','_cis',"druh='akce_garant' AND data='$garant'",'ezer_db2');
     if ( !$ido ) {
       $html.= "<hr>POZOR: chybí garant akce!";
       goto end;
     }
-    $ok= select("uid","tx_gncase_part","uid='$idp' AND !deleted AND !hidden");
+    $ok= select("uid","tx_gncase_part","uid='$idp' AND !deleted AND !hidden",'setkani');
     if ( $ok ) {
-      $ok= query("UPDATE tx_gncase_part SET id_akce=$ida WHERE uid=$idp");
+      $ok= query("UPDATE tx_gncase_part SET id_akce=$ida WHERE uid=$idp",'setkani');
       $html.= "na www.setkani.org bylo ".($on?"zapnuto":"vypnuto")." elektronické přihlašování";
     }
     else {
