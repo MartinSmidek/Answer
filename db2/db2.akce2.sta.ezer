@@ -200,7 +200,7 @@ menu m {type:'left', format:'f+', active:*
       ,fld:'jmena,ulice,psc,obec,stat,prijmeni,_cleni,akce,_mrop,_pps,_clenu,id_osoba',ord:'prijmeni',cnd:"_psc!='' AND _stat IN ('','?')"}}
   }
   menu d {title:'Dotazníky LK YMCA Setkání',type:'group', _sys:'*' skill:'yaet'
-    item {title:'[fa-calendar] volba roku dotazníku'            par:°{typ:'r'} }
+    item {title:'[fa-calendar] volba roku dotazníku'            par:{typ:'r'} }
     item i {title:'[fa-ban] (re)import dotazníku'               format:'d'                 skill:'m'
       proc onclick (i) { var y:object
         mapa.close(1);
@@ -214,9 +214,9 @@ menu m {type:'left', format:'f+', active:*
         [ y.err; alert(y.err) ]; 
         info.fill('',y.html) 
     }}
-    item {title:'[fa-line-chart] statistika dotazník & Answer'  par:°{typ:'2'} }
+    item {title:'[fa-line-chart] statistika dotazník & Answer'  par:{typ:'2'} }
     item {title:'[fa-balance-scale] různé výběry a srovnání'    par:°{typ:'v'} }
-    item d {title:'[fa-forward] procházení dotazníku'           par:°{typ:'d',id:'1'} 
+    item d {title:'[fa-forward] procházení dotazníku'           par:{typ:'d',id:'1'} 
       func onclick (i:ezer) { 
         clear(); mapa.close(1); show_dotazy(); panel.display(2,'dp|do'); obraz.header(i);
         obraz.display(0,'x'); obraz.display(1,i.par.typ);
@@ -225,7 +225,7 @@ menu m {type:'left', format:'f+', active:*
         dotaz.Show(0,0) 
       }
     }
-    item {title:'[fa-forward] procházení ... s doplněním'       par:°{typ:'d',id:'1'} 
+    item {title:'[fa-forward] procházení ... s doplněním'       par:{typ:'d',id:'1'} 
       func onclick (i:ezer) { 
         clear(); mapa.close(1); show_dotazy(); panel.display(2,'dp|do'); obraz.header(i);
         obraz.display(0,'x'); obraz.display(1,i.par.typ);
@@ -236,8 +236,8 @@ menu m {type:'left', format:'f+', active:*
     }
     func onclick (i:ezer) { var x: object, y: object
       clear(); mapa.close(1); 
-      panel.display(2,'do'); obraz.header(i);
-      obraz.display(0,'x'); obraz.display(1,i.par.typ); obraz.display(0,'r21'); 
+      panel.display(2,'do'); 
+      obraz.display(0,'x'); obraz.display(1,i.par.typ); obraz.display(0,'r21'); obraz.header(i);
       switch(i.par.typ) {
         case 'r': 
           x= php.dot_roky(); obraz.roky.selects(x.roky); obraz.roky= dotaz.rok; break;
@@ -246,7 +246,8 @@ menu m {type:'left', format:'f+', active:*
           y= php.dot_prehled(dotaz.rok,{zdroj:'dotaz',par1:'rok'}); 
           obraz.fill('',`<table><tr><td>${y.html}</td><td>${x.html}</tr></table>`,' '); break;
         case 'v': 
-          obraz.recond(); obraz.rechoice(); break;
+          obraz.recond(); obraz.rechoice(); 
+          break;
       };
     }
   }
@@ -435,6 +436,7 @@ form _obraz [,,700,50] {
     own= i.owner();
     head= replace_fa(`<div class='karta'>${own.title} - ${i.title}</div>`);
     text= '';
+    text2= '';
     img= '';
   }
   proc fill(x,y,z) {
