@@ -32,7 +32,8 @@ menu db2 { type:'main', title:'db2', active:*, _sys:'*'
           tvori: "id_tvori>-,id_osoba>osoba,id_rodina>rodina,role",
           rodina:"id_rodina>*,nazev",
           dopis: "id_dopis>*,hnizdo,nazev",
-          mail:  "id_mail>*,id_dopis>dopis,id_clen>osoba"
+          mail:  "id_mail>*,id_dopis>dopis,id_clen>osoba",
+          dotaz: "id_dotaz>*,dotaznik,id,page,hnizdo"
         },
         css: 'stat' // styl tabulek
     }}
