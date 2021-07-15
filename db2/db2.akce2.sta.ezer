@@ -217,32 +217,37 @@ menu m {type:'left', format:'f+', active:*
     item {title:'[fa-line-chart] statistika dotazník & Answer'  par:°{typ:'2'} }
     item {title:'[fa-balance-scale] různé výběry a srovnání'    par:°{typ:'v'} }
     item d {title:'[fa-forward] procházení dotazníku'           par:°{typ:'d',id:'1'} 
-      proc onclick (i) { 
-        mapa.close(1);
-        show_dotazy;
-        panel.display(2,'dp|do');
-        obraz.fill(conc(i.owner.title,' - ',i.title),' ',' ');
+      func onclick (i:ezer) { 
+        clear(); mapa.close(1); show_dotazy(); panel.display(2,'dp|do'); obraz.header(i);
         obraz.display(0,'x'); obraz.display(1,i.par.typ);
-        clear;
-        dotaz.index.set('id'); dotaz.id.set(i.par.id); 
+        obraz.display(obraz.r2021,'r21'); obraz.enable(0,'r21'); obraz.display(0,'r21u');
+        dotaz.index= 'id'; dotaz.id= i.par.id; 
         dotaz.Show(0,0) 
       }
     }
-    proc onclick (i) { var x: object, y: object
-      mapa.close(1);
-      panel.display(2,'do');
-      obraz.fill(conc(i.owner.title,' - ',i.title),' ','');
-      obraz.display(0,'x'); obraz.display(1,i.par.typ);
-      clear;
-      switch(i.par.typ,
-      'r',{ x.set(ask('dot_roky')); obraz.roky.selects(x.roky); obraz.roky.set(dotaz.rok.get) },
-      '2',{ x.set(ask('dot_prehled',dotaz.rok.get,°{zdroj:'akce',par1:'rok'})); 
-            y.set(ask('dot_prehled',dotaz.rok.get,°{zdroj:'dotaz',par1:'rok'})); 
-            obraz.fill('',conc("<table><tr><td>",y.html,"</td><td>",x.html,"</tr></table>"),' ') },
-      'v',{ obraz.recond; obraz.rechoice; }
-//            x.set(ask('dot_vyber',cconc(obraz.vsechno.get,0,dotaz.rok.get),i.par)); 
-//            obraz.fill2('',x.html,' ') },
-      );
+    item {title:'[fa-forward] procházení ... s doplněním'       par:°{typ:'d',id:'1'} 
+      func onclick (i:ezer) { 
+        clear(); mapa.close(1); show_dotazy(); panel.display(2,'dp|do'); obraz.header(i);
+        obraz.display(0,'x'); obraz.display(1,i.par.typ);
+        obraz.display(obraz.r2021,'r21'); obraz.enable(1,'r21');
+        dotaz.index= 'id'; dotaz.id= i.par.id; 
+        dotaz.Show(0,0) 
+      }
+    }
+    func onclick (i:ezer) { var x: object, y: object
+      clear(); mapa.close(1); 
+      panel.display(2,'do'); obraz.header(i);
+      obraz.display(0,'x'); obraz.display(1,i.par.typ); obraz.display(0,'r21'); 
+      switch(i.par.typ) {
+        case 'r': 
+          x= php.dot_roky(); obraz.roky.selects(x.roky); obraz.roky= dotaz.rok; break;
+        case '2': 
+          x= php.dot_prehled(dotaz.rok,{zdroj:'akce',par1:'rok'}); 
+          y= php.dot_prehled(dotaz.rok,{zdroj:'dotaz',par1:'rok'}); 
+          obraz.fill('',`<table><tr><td>${y.html}</td><td>${x.html}</tr></table>`,' '); break;
+        case 'v': 
+          obraz.recond(); obraz.rechoice(); break;
+      };
     }
   }
   proc onclick (i) { var ret: object
@@ -272,7 +277,6 @@ proc show_dotazy() {
   function('group',"group._fold(); return 1;",m.s);
   function('group',"group._fold(); return 1;",m.l);
 }
-# ------------------------------------------------------------------------------------------==> uses
 use dotaz: form _dotaz [24,400,,] { tag:'dp' format:'n' }
 use obraz: form _obraz [12,4,,]   { tag:'do' format:'n' }
 use tipy:  form _tipy  [24,467,,] { tag:'dp' format:'n' skill:'mš'}
@@ -293,28 +297,41 @@ use info: form right   [12,4,,]   { tag:'i'
     }
   }
 }
-form _obraz [,,700,50] {
+# -----------------------------------------------------------------------------------------==> obraz
+form _obraz [,,700,50] { 
   const D=320
   label text [0,28,700,700] 
-  label text2 [0,80,320,700] { style:"overflow:auto"  }
-  label img [D,28,480,700] { title:'' }
+  label text2 [0,80,320,800] { style:"overflow:auto"  }
+  label img [D+2,28,485,700] { title:'' }
   label head [0,0,800,30]  { title:'' }
   label note [0,508,320,200] { style:"overflow:auto" }
+  // extrakce informace spec. pro hnízda
+  field nazor_kurz   [350,260,20,] {tag:'r21', format:'r:e'
+      title:'-  preference velikosti kurzu: - komornější, + velký'}
+  field nazor_online [350,290,20,] {tag:'r21', format:'r:e', 
+      title:'-  online přednášky: - raději ne, + nevadily'}
+  field nazor_cas    [350,320,20,] {tag:'r21', format:'r:e', 
+      title:'-  času bylo: - málo, + dostatek'}
+  check nazor_ok     [350,350,200,] {tag:'r21', title:' nic mi nevadilo'}
+  label nazor_zapsal [416,384,200,] {tag:'r21u'}
+  button [350,380,,] {tag:'r21u', title:'[fa-save] Ulož]'
+    func onclick() {
+      php.dot_nazory(2021,dotaz.id,
+          {nazor_kurz:nazor_kurz,nazor_online:nazor_online,nazor_cas:nazor_cas,nazor_ok:nazor_ok});
+      form.plain();
+  }}
   // volba roku dotazníku
   select roky [100,60,100,] { tag:'x,r' title:'LK roku' value:'2021' format:'t'
-    proc onchanged() { 
-      dotaz.rok.set(this.get); 
-      dotaz.Init
+    func onchanged() { 
+      dotaz.rok= this; 
+      dotaz.Init();
   }}
   // výběrové podmínky
   label [0,40,80,] { tag:'x,v' title:'volba roků:' }
   check r2017  [80,35,50,] { tag:'x,v' title:'2017' format:'t' proc onchange() { recond }}
   check r2018  [131,35,50,] { tag:'x,v' title:'2018' format:'t' proc onchange() { recond }}
   check r2019 [182,35,50,] { tag:'x,v' title:'2019' format:'t' proc onchange() { recond }}
-  check r2021 [233,35,50,] { tag:'x,v' title:'2021' format:'t' proc onchange() { recond }}
-//  check vsechno [0,40,200,] { tag:'x,v' title:'vzít údaje ze všech roků dohromady' format:'t' 
-//    proc onchange() { recond }
-//  }
+  check r2021 [233,35,50,] { tag:'x,v', title:'2021', value:'1', format:'t' proc onchange() { recond }}
   label [0,65,80,] { tag:'x,v' title:'výběr hnízda:' }
   check hnizdo_1 [80,60,70,] { tag:'x,v' title:'Kroměříž' format:'t' proc onchange() { recond }}
   check hnizdo_2 [151,60,70,] { tag:'x,v' title:'Olomouc' format:'t' proc onchange() { recond }}
@@ -385,37 +402,40 @@ form _obraz [,,700,50] {
   edit cond [D+20,235,260,100] { tag:'x,v' title:'^výběr jako SQL' value:'1' format:'t'
     proc onchanged() { rechoice }}
   // funkce
-  proc recond() { var roky:text, hnizda:text
-    echo(x_sex.get,',',r_sex.get);
+  func recond() { var roky:text, hnizda:text
     // výběr roků
-    roky.set('0');
-    [ r2017.get; roky.set(conc(roky,',2017')) ]; 
-    [ r2018.get; roky.set(conc(roky,',2018')) ]; 
-    [ r2019.get; roky.set(conc(roky,',2019')) ]; 
-    [ r2021.get; roky.set(conc(roky,',2021')) ]; 
+    roky= `0${r2017?',2017':''}${r2018?',2018':''}${r2019?',2019':''}${r2021?',2021':''}`;
     // výběr hnízda
-    hnizda.set('');
-    [ hnizdo_1.get; hnizda.set(conc(hnizda,',1')) ];
-    [ hnizdo_2.get; hnizda.set(conc(hnizda,',2')) ];
-    [ hnizdo_3.get; hnizda.set(conc(hnizda,',3')) ];
+    hnizda= '';
+    if (obraz.r2021) { 
+      hnizda= `${hnizdo_1?',1':''}${hnizdo_2?',2':''}${hnizdo_3?',3':''}`;
+    }
+    else {
+      hnizdo_1= 0; hnizdo_2= 0; hnizdo_3= 0; 
+    }
     // sestavení dotazu
-    cond.set(conc('dotaznik IN (',roky,')',
-      cconc(hnizda,conc(' AND hnizdo IN (9',hnizda,')'),''),
-      cconc(x_sex.get,conc(' AND sex=',r_sex.get),''),
-      cconc(x_vek.get,conc(' AND vek BETWEEN ',r_vek.get),''),
-      cconc(x_det.get,conc(' AND deti BETWEEN ',r_det.get),''),
-      cconc(x_man.get,conc(' AND manzel BETWEEN ',r_man.get),''),
-      cconc(x_nov.get,conc(' AND novic=',r_nov.get),''),
-      cconc(x_pri.get,conc(' AND prinos=',r_pri.get),''),
-    ));
-    rechoice;
-    dotaz.dirty.set(1);
+    cond= conc(`dotaznik IN (${roky})`,
+      hnizda ? ` AND hnizdo IN (99${hnizda})` :'',
+      x_sex  ? ` AND sex=${r_sex}` : '',
+      x_vek  ? ` AND vek BETWEEN ${r_vek}` : '',
+      x_det  ? ` AND deti BETWEEN ${r_det}` : '',
+      x_man  ? ` AND manzel BETWEEN ${r_man}` : '',
+      x_nov  ? ` AND novic=${r_nov}` : '',
+      x_pri  ? ` AND prinos=${r_pri}` : ''
+    );
+    rechoice();
+    dotaz.dirty= 1;
   }
-  proc rechoice() { var x:object
-//    x.set(ask('dot_vyber',cconc(vsechno.get,0,dotaz.rok.get),object('cond',cond.get))); 
-    x.set(ask('dot_vyber',object('cond',cond.get))); 
-    dotaz.celkem.set(x.celkem);
+  func rechoice() { var x:object
+    x= php.dot_vyber({cond:cond}); 
+    dotaz.celkem= x.celkem;
     obraz.fill2('',x.html,'')
+  }
+  func header(i:ezer) { var own:ezer
+    own= i.owner();
+    head= replace_fa(`<div class='karta'>${own.title} - ${i.title}</div>`);
+    text= '';
+    img= '';
   }
   proc fill(x,y,z) {
     note.set(''); text2.set(''); img.set('');
@@ -431,39 +451,42 @@ form _obraz [,,700,50] {
   }
   proc append(x) { note.set(x) }
 }
+# -----------------------------------------------------------------------------------------==> dotaz
 form _dotaz [,,163,60] { style:'position:fixed;z-index:2' css:'parm shadow'
   var rok=2021,   // rok dotazníku ... 2021
       kurz=0,
       back=0,     // návrat na poslední kliknuté (ne odkazem)
       dirty=1,    // po změně dotazu, čistí se po prvním Show
       virgin=1
-  proc Init() { 
-    has_skill('yaet'); 
-    [ has_skill('a'); m.d.i.enable(1) ];
-    m.d.set_attrib('title',conc("Dotazník LK YS roku ",rok.get)); 
-    kurz.set(0);
-    back.set(0);
-    [ virgin.get; obraz.init; obraz.cond.set(1); back.set(0); dirty.set(1); virgin.set(0) ];
+  func Init() { 
+    if (!has_skill('yaet')) return;
+    if (has_skill('a')) m.d.i.enable(1);
+    m.d.title= `Dotazník LK YS roku ${rok}`; 
+    kurz= 0;
+    back= 0;
+    if (virgin) { 
+      obraz.init(); obraz.cond= 1; dirty= 1; obraz.recond(); obraz.rechoice(); virgin= 0; 
+    }
   }
-  proc Show(offset,go_back) { var y:object
-    clear;
-    y.set(ask('dot_show',
-        cconc(vyber.get,0,rok.get),
-        index.get,
-        cconc(eq(index.get,'page'),pg.get,id.get),offset,
-        cconc(vyber.get,obraz.cond.get,1),dotaz.dirty.get,rok.get));
-    not(y.none);
-    pg.set(y.page); id.set(y.id); rok.set(y.rok);
-    [ go_back; back.set(cconc(eq(index.get,'page'),pg.get,id.get)) ]; 
-    obraz.fill2('',y.html,y.jpg);
-    dotaz.dirty.set(0); 
+  func Show(offset,go_back) { var y:object
+    clear();
+    y= php.dot_show(vyber ? 0 : rok, index, index=='page' ? pg : id, offset,
+        vyber ? obraz.cond : 1, dotaz.dirty, rok);
+    copy_by_name(y.nazory,obraz);
+    if (!y.none) {
+      pg= y.page; id= y.id; rok= y.rok;
+      if (go_back) back= index=='page' ? pg : id; 
+      obraz.fill2('',' ',' ');
+      obraz.fill2('',y.html,y.jpg);
+      dotaz.dirty= 0;
+    }
   }
-  radio index [50,2,60,50] { format:'t'
+  radio index [50,2,60,50] { format:'t', value:'id'
     case  [0,0,10,10] { title:' ' value:'page' }
     case [30,0,10,10] { title:' ' value:'id' }
   }
   label celkem [10,4,49,] { style:'color:white' }
-  check vyber [112,1,49,] { title:'výběr' value:'0' 
+  check vyber [112,1,49,] { title:'výběr' value:'1' 
     proc onchange() { dotaz.dirty.set(1); back.set(0); Show(0,0) }
   }
   button [9,32,,] { title:"[fa-step-backward]" help:'první'     proc onclick() { Show(-2,1); }}
@@ -473,6 +496,7 @@ form _dotaz [,,163,60] { style:'position:fixed;z-index:2' css:'parm shadow'
   button [112,32,,] { title:"[fa-caret-right]" help:'další'     proc onclick() { Show(1,1); }}
   button [132,32,,] { title:"[fa-step-forward]" help:'poslední' proc onclick() { Show(2,1); }}
 }
+# ------------------------------------------------------------------------------------------==> tipy
 form _tipy [,,163,46] { style:'position:fixed;z-index:2' css:'parm shadow'
   proc Spy() { var y:object
     clear;
@@ -495,15 +519,3 @@ form _tipy [,,163,46] { style:'position:fixed;z-index:2' css:'parm shadow'
   button [133,19,22,] { title:"[fa-eye]" help:'špión' skill:'m|m' proc onclick() { Spy }}
   label shody [0,50,163,280] { style:'background:silver' css:'parm shadow' }
 }
-# ============================================================================================= _lst
-# ---------------------------------------------------------- reakce na změny rozměrů okna prohlížeče
-# const min_h=395           // minimální výška (nelze jednoduše měnit - jsou k ní vztaženy souřadnice)
-# var  curr_h: number     // výška nad základní výšku
-# proc onresize(w,h) {
-# }
-# změna výšky oproti základní min_h
-# proc h_change_all() {
-# }
-# změna počtu řádků browse oproti aktuálním řádkům
-# proc h_change_b() { var r1:number, r2:number, h:number
-# }

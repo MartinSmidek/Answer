@@ -1501,6 +1501,7 @@ function dot_prehled ($rok_or_akce,$par,$title='',$vypis='',$export=0,$hnizdo=0)
   $man_s= $man_n= $man_o= array(0,0,0,0,0,0);
   switch ($par->zdroj) {
   case 'akce':
+    $AND_hnizdo= $hnizdo ? "AND p.hnizdo=$hnizdo" : ''; 
     $nadpis= "<h3>Podle údajů v Answeru</h3>";
     $rp= pdo_qry("
       SELECT 
@@ -1514,7 +1515,7 @@ function dot_prehled ($rok_or_akce,$par,$title='',$vypis='',$export=0,$hnizdo=0)
       LEFT JOIN rodina AS r ON r.id_rodina=p.i0_rodina
       JOIN tvori AS t USING (id_rodina,id_osoba)
       JOIN osoba AS o USING (id_osoba)
-      WHERE id_akce=$akce AND p.hnizdo=$hnizdo AND p.funkce IN (0,1,2) AND s_role=1 
+      WHERE id_akce=$akce $AND_hnizdo AND p.funkce IN (0,1,2) AND s_role=1 
       --  AND i0_rodina IN (3329,6052)
       GROUP BY id_osoba
       ");
@@ -1765,8 +1766,9 @@ function dot_spy ($kurz,$dotaznik,$clmn,$pg,$back) {
 //      break;
     }}
   }
-  list($sex,$vek,$deti,$manz,$novic,$hnizdo)= select('sex,vek,deti,manzel,novic,hnizdo','dotaz',
-      "dotaznik=$dotaznik AND $clmn=$pg");
+  list($sex,$vek,$deti,$manz,$novic,$hnizdo)= 
+      select('sex,vek,deti,manzel,novic,IF(hnizdo,hnizdo,0)','dotaz',
+        "dotaznik=$dotaznik AND $clmn=$pg");
   // hledáme shody
   $shod= 0; 
   $shod_max= 7;
@@ -1867,6 +1869,12 @@ function dot_show ($dotaznik,$clmn,$pg,$offset,$cond,$dirty,$rok) { trace();
   }
   if ( !$pg ) goto end;
   $x= select_object('*','dotaz',"dotaznik=$rok AND $clmn=$pg");
+  $y->nazory= (object)array();
+  $y->nazory->nazor_kurz= $x->nazor_kurz; 
+  $y->nazory->nazor_online= $x->nazor_online; 
+  $y->nazory->nazor_cas= $x->nazor_cas; 
+  $y->nazory->nazor_ok= $x->nazor_ok;
+  $y->nazory->nazor_zapsal= $x->nazor_zapsal;
   $y->page= $x->page;
   // získání obrazu
   $jpg= str_pad($x->page,4,'0',STR_PAD_LEFT).'.jpg';
@@ -1908,9 +1916,6 @@ function dot_show ($dotaznik,$clmn,$pg,$offset,$cond,$dirty,$rok) { trace();
       'mezigenerační' => 'tema_mezigen', 'duchovní život' => 'tema_duchovni', 
       'jiné' => 'tema_jine', ':' => 'tema_jine_text'
     ),
-//    'Přínos'=>array(
-//      'přínos' => 'prinos', ':' => 'prinos_text'
-//    ),
     'Přínos'=>array(
       'významný' => 'prinos_1', 'částečně' => 'prinos_2', 'uvidí se' => 'prinos_3',
       'beze změny' => 'prinos_4', 'spíš horší' => 'prinos_5'
@@ -1935,29 +1940,6 @@ function dot_show ($dotaznik,$clmn,$pg,$offset,$cond,$dirty,$rok) { trace();
   $tab.= "<p><b>PDF={$x->page}  &nbsp;  XLS={$x->id} &nbsp; rok=$rok $hnizdo</b></p>";
   foreach ($tmpl as $row => $clmns) {
     switch ($row) {
-    case 'Hodnocení':
-      $tab.= "<br>";
-      $r1= "<table class='$tab_class'><th>$row</th>";
-      $r2= "<td></td>";
-      foreach ($clmns as $name=>$val) {
-        $r1.= "<td class='vert'><p>$name</p></td>";
-        $r2.= "<td>{$x->$val}</td>";
-      }
-      $tab.= "<tr>$r1</tr><tr>$r2</tr></table>";
-      break;
-//    case 'Přínos':
-    case 'Přínos':
-      $r1= "<table class='$tab_class'><th>$row</th><td class='vert'><p>číslem</p></td>";
-      $r2= "<td></td><td>{$x->prinos}</td>";
-      foreach ($clmns as $name=>$val) {
-        $pr= substr($val,-1,1);
-        $r1.= "<td class='vert' title='prinos=$pr'><p>$name</p></td>";
-        $r2.= $x->prinos==$pr ? "<td>1</td>" : "<td>-</td>";
-      }
-      $r3= "<td style='height:40px'>slovně:</td><td colspan='6'>{$x->prinos_text}</td>";
-      $tab.= "<tr>$r1</tr><tr>$r2</tr><tr>$r3</tr></table>";
-      break;
-//      $tab.= "<br>";
     case 'Statistika':
       $tab.= "<table class='$tab_class'><tr><th>$row</th>";
       foreach ($clmns as $name=>$val) {
@@ -1986,6 +1968,16 @@ function dot_show ($dotaznik,$clmn,$pg,$offset,$cond,$dirty,$rok) { trace();
       }
       $tab.= "</td></tr></table>";
       break;
+    case 'Hodnocení':
+      $tab.= "<br>";
+      $r1= "<th>$row</th>";
+      $r2= "<td></td>";
+      foreach ($clmns as $name=>$val) {
+        $r1.= "<td class='vert'><p>$name</p></td>";
+        $r2.= "<td>{$x->$val}</td>";
+      }
+      $tab.= "<table class='$tab_class'><tr>$r1</tr><tr>$r2</tr></table>";
+      break;
     case 'Slovně':
       $tab.= "<br><table class='$tab_class'>";
       foreach ($clmns as $name=>$val) {
@@ -2002,6 +1994,17 @@ function dot_show ($dotaznik,$clmn,$pg,$offset,$cond,$dirty,$rok) { trace();
         }
       }
       $tab.= "</tr></table><br>";
+      break;
+    case 'Přínos':
+      $r1= "<th>$row</th><td class='vert'><p>číslem</p></td>";
+      $r2= "<td></td><td>{$x->prinos}</td>";
+      foreach ($clmns as $name=>$val) {
+        $pr= substr($val,-1,1);
+        $r1.= "<td class='vert' title='prinos=$pr'><p>$name</p></td>";
+        $r2.= $x->prinos==$pr ? "<td>1</td>" : "<td>-</td>";
+      }
+      $r3= "<td style='height:40px'>slovně:</td><td colspan='6'>{$x->prinos_text}</td>";
+      $tab.= "<table class='$tab_class'><tr>$r1</tr><tr>$r2</tr><tr>$r3</tr></table>";
       break;
     }
   }
@@ -2029,7 +2032,19 @@ table.dot .vert p {
 </style>";
   $y->html= $style.$tab;
 end:
+//                    debug($y);
   return $y;
+}
+# --------------------------------------------------------------------------------------- dot nazory
+function dot_nazory($rok,$id,$nazory) {
+  global $ezer_root;
+  $zmena_kdo= $_SESSION[$ezer_root]['user_abbr'];
+  $zmena_kdy= date('Y-m-d H:i:s');
+  $set= "nazor_zapsal='$zmena_kdo $zmena_kdy'";
+  foreach($nazory as $fld=>$value) {
+    $set.= ", $fld=".($value ? $value : 0);
+  }
+  query("UPDATE dotaz SET $set WHERE dotaznik=$rok AND id=$id");
 }
 # ---------------------------------------------------------------------------------------- dot vyber
 # průměrné hodnoty dotazníků
@@ -2068,7 +2083,8 @@ function dot_vyber ($par) { trace();
     ROUND(100*AVG(IF(prinos=3,1,0))) AS prinos_3,
     ROUND(100*AVG(IF(prinos=4,1,0))) AS prinos_4,
     ROUND(100*AVG(IF(prinos=5,1,0))) AS prinos_5,
-    ROUND(AVG(prinos),1)             AS prinos
+    ROUND(AVG(prinos),1)             AS prinos,
+    nazor_kurz, nazor_online, nazor_cas, nazor_ok
     ','dotaz',"$cond ");
   $tmpl= array(
     'Statistika' => array(
@@ -2090,15 +2106,17 @@ function dot_vyber ($par) { trace();
       'beze změny' => 'prinos_4', 'spíš horší' => 'prinos_5'
     )
   );
-  if ($x) foreach ($x as $name=>$val) {
-    switch ($name) {
-      case 'sex':   $x->sex.= '% žen'; break;
-      case 'vek':   $x->vek.= ' let'; break;
-      case 'deti':  $x->deti.= ' dětí/LK'; break;
-      case 'manzel':$x->manzel.= ' let manž.'; break;
-      case 'novic': $x->novic.= '% nových'; break;
+  if ($x) {
+    foreach ($x as $name=>$val) {
+      switch ($name) {
+        case 'sex':   $x->sex.= '% žen'; break;
+        case 'vek':   $x->vek.= ' let'; break;
+        case 'deti':  $x->deti.= ' dětí/LK'; break;
+        case 'manzel':$x->manzel.= ' let manž.'; break;
+        case 'novic': $x->novic.= '% nových'; break;
+      }
+      $y->celkem= $x->celkem;
     }
-    $y->celkem= $x->celkem;
   }
   $tab.= $x && $x->celkem
       ? "<p>výběru vyhovuje ".kolik_1_2_5($x->celkem,"dotazník,dotazníky,dotazníků").'</p>'
@@ -2106,32 +2124,32 @@ function dot_vyber ($par) { trace();
   foreach ($tmpl as $row => $clmns) {
     switch ($row) {
     case 'Přínos':
-      $r1= "<br><table class='$tab_class'><th>$row</th><td class='vert'><p>celkově</p></td>";
+      $r1= "<th>$row</th><td class='vert'><p>celkově</p></td>";
       $r2= "<td></td><td>{$x->prinos}</td>";
       foreach ($clmns as $name=>$val) {
         $pr= substr($val,-1,1);
         $r1.= "<td class='vert' title='prinos=$pr'><p>$name</p></td>";
         $r2.= "<td>{$x->$val}%</td>";
       }
-      $tab.= "<tr>$r1</tr><tr>$r2</tr></table>";
+      $tab.= "<br><table class='$tab_class'><tr>$r1</tr><tr>$r2</tr></table>";
       break;
     case 'Hodnocení':
-      $r1= "<br><table class='$tab_class'><th>$row</th>";
+      $r1= "<th>$row</th>";
       $r2= "<td></td>";
       foreach ($clmns as $name=>$val) {
         $r1.= "<td title='$val' class='vert'><p>$name</p></td>";
         $r2.= "<td>{$x->$val}</td>";
       }
-      $tab.= "<tr>$r1</tr><tr>$r2</tr></table>";
+      $tab.= "<br><table class='$tab_class'><tr>$r1</tr><tr>$r2</tr></table>";
       break;
     case 'Témata':
-      $r1= "<br><table class='$tab_class'><th>$row</th>";
+      $r1= "<th>$row</th>";
       $r2= "<td></td>";
       foreach ($clmns as $name=>$val) {
         $r1.= "<td title='$val' class='vert'><p>$name</p></td>";
         $r2.= "<td>{$x->$val}%</td>";
       }
-      $tab.= "<tr>$r1</tr><tr>$r2</tr></table>";
+      $tab.= "<br><table class='$tab_class'><tr>$r1</tr><tr>$r2</tr></table>";
       break;
     case 'Statistika':
       $tab.= "<table class='$tab_class'><tr><th>$row</th>";
@@ -2146,9 +2164,6 @@ function dot_vyber ($par) { trace();
       $plus= '';
       foreach ($clmns as $name=>$val) {
         if ( $x->$val && $name!='jiné' ) {
-//          $v= $name==':' ? "jiné = {$x->$val}" : $name;
-//          $tab.= "$plus $v";
-//          $plus= ' +';
           if ( $name==':' ) {
             $td= $plus ? "</td><td>" : '';
             $tab.= "$td$plus jiné = {$x->$val}";
@@ -2186,6 +2201,7 @@ table.dot .vert p {
 }
 </style>";
   $y->html= $style.$tab;
+//                                  debug($y);
   return $y;
 }
 # --------------------------------------------------------------------------------------- dot import
@@ -2256,7 +2272,6 @@ function dot_import ($rok) { trace();
     )
   );
   $values= array(); // id => (value)
-  query("DELETE FROM dotaz WHERE dotaznik=$rok");
   // dotazníky od roku 2021 zpracujeme z živých dat na GDISKu
   if ($rok>=2021) {
     $def_g= array(
@@ -2299,11 +2314,24 @@ function dot_import ($rok) { trace();
 //                                                          debug($tab->cols);
     if ( $tab ) {
       $n= 0;
+      // zjistíme, zda se zvýšil počet dotazníků - jinak odmítneme import
+      $n_old= select('COUNT(*)','dotaz',"dotaznik=$rok");
+      $n_new= count($tab->rows);
+      if ($n_old==$n_new) {
+        $y->html= "Není žádný nový dotazník z roku $rok";
+        goto end;
+      }
+      elseif ($n_old>$n_new) {
+        $y->html= "POZOR: někdo sežral nějaké dotazníky nebo tam zapomněl filtr";
+        goto end;
+      }
+      $y->html= "Přidávám ".kolik_1_2_5($n_new-$n_old,'nový dotazník,nové dotazníky,nových dotazníků');
       // projdeme dotazníky
       foreach ($tab->rows as $line=>$crow) {
         $value= array();
         $row= $crow->c; // odpovědi na otázky
 //                                                          debug($row);
+        $id= 0;
         foreach ($row as $i => $cols) {
           $d_i= $def_g[$i]; // definice i-té otázky
           $v= $row[$i];     // odpověď na i-tou otázku
@@ -2312,7 +2340,7 @@ function dot_import ($rok) { trace();
           $itms= explode(';',$itms);
 //                                                          debug($itms);
           switch ($typ) {
-            case 'x': $value['id']= $id= $line+1; break;
+            case 'x': $id= $line+1; break;
             case 'i':
               $value[$fld]= $v->v;
               break;
@@ -2351,19 +2379,22 @@ function dot_import ($rok) { trace();
           }
         }
         $n++;
+        // doplnění nových do tabulky DOTAZ -- zachová položky nazor_* v existujících
+        $exists= select('COUNT(*)','dotaz',"dotaznik=$rok AND id=$id");
+        if (!$exists) {
                                                   debug($value);
-        // zařazení value
-        if ( !isset($values[$id]) ) 
-          $values[$id]= (object)array('id'=>$id);
-        foreach ($value as $name => $val) {
-          $values[$id]->$name= $val;
+          $set= "dotaznik=$rok, id=$id";
+          foreach ($value as $fld => $val) {
+            $set.= ", $fld='$val'";
+          }
+          query("INSERT INTO dotaz SET $set");
         }
-        if ($n_max && $n>=$n_max) break;
       }
     }
   }
   else {
     // starší dotazníky z lokálních tabulek
+    query("DELETE FROM dotaz WHERE dotaznik=$rok");
     $fpath= "$ezer_path_docs/import/MS$rok";
     foreach ($def as $fname=>$clmn) {
       $fullname= "$fpath/MS$rok-$fname.csv";
@@ -2407,18 +2438,18 @@ function dot_import ($rok) { trace();
       }
       fclose($f); $f= null;
     }
+    // zápis do tabulky DOTAZ
+    foreach ($values as $id => $value) {
+      $flds= "dotaznik";
+      $vals= "$rok";
+      foreach ($value as $name => $val) {
+        $flds.= ",$name";
+        $vals.= ",'$val'";
+      }
+      query("INSERT INTO dotaz ($flds) VALUE ($vals)");
+    }
   }
 //                                                         debug($values);
-  // zápis do tabulky DOTAZ
-  foreach ($values as $id => $value) {
-    $flds= "dotaznik";
-    $vals= "$rok";
-    foreach ($value as $name => $val) {
-      $flds.= ",$name";
-      $vals.= ",'$val'";
-    }
-    query("INSERT INTO dotaz ($flds) VALUE ($vals)");
-  }
 end:  
   display($y->war);
   return $y;
