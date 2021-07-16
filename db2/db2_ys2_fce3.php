@@ -1706,10 +1706,10 @@ function dot_prehled ($rok_or_akce,$par,$title='',$vypis='',$export=0,$hnizdo=0)
 # tipy na autory
 # kurs = {akce:id_akce,data:[{sex,vek,deti,manz,novic}...] ... data se počítají při prvním průchodu
 function dot_spy ($kurz,$dotaznik,$clmn,$pg,$back) { 
-  debug($kurz,"dot_spy(...,$dotaznik,$clmn,$pg,$back)");
   global $EZER;
   global $i_osoba_jmeno, $i_osoba_vek, $i_osoba_role, $i_osoba_prijmeni, $i_key_spolu;
-//  $y= (object)array('html'=>'','err'=>'','war'=>'');
+  if (!is_object($kurz)) { fce_error("kurz není objekt"); return(null); }
+//  debug($kurz,"dot_spy(...,$dotaznik,$clmn,$pg,$back)");
   $kurz->html= '???';
 //  unset($kurz->data); // vždy přepočítat --------------------------------------------- LADĚNÍ
   if ( !isset($kurz->data) || $kurz->rok!=$dotaznik ) {
@@ -1734,10 +1734,9 @@ function dot_spy ($kurz,$dotaznik,$clmn,$pg,$back) {
         $manzele=  roku_k($datsvatba,$zacatek_akce);
       }
       elseif ( $par->r_svatba ) {
-        $manzele= $letos-$par->r_svatba;
+        $manzele= $kurz->rok-$par->r_svatba;
       }
       $nazev= $par->_nazev;
-//      debug($m,"$nazev");
       $cle= explode('≈',$par->r_cleni);
       $m_vek= $z_vek= '?';
       $m_ido= $z_ido= 0;
@@ -1759,11 +1758,9 @@ function dot_spy ($kurz,$dotaznik,$clmn,$pg,$back) {
           'prijmeni'=>$m_prijmeni,'jmeno'=>$m_jmeno,'idp'=>$idp,'ido'=>$m_ido,'nest'=>$nest);
       $z= (object)array('sex'=>1,'vek'=>$z_vek,'manz'=>$manzele,'deti'=>$deti,'novic'=>$novic,
           'prijmeni'=>$z_prijmeni,'jmeno'=>$z_jmeno,'idp'=>$idp,'ido'=>$z_ido,'nest'=>$nest);
-//      debug($m,"muž");
-//      debug($z,"žena");
       $kurz->data[]= $m;
       $kurz->data[]= $z;
-//      break;
+//      break; 
     }}
   }
   list($sex,$vek,$deti,$manz,$novic,$hnizdo)= 
@@ -1830,6 +1827,8 @@ function dot_spy ($kurz,$dotaznik,$clmn,$pg,$back) {
       . "title='$back'>&lArr;</a>" : '';
   $kurz->html.= ($shod>$shod_max ? ' ...' : '')."<br><i>celkem je $shod</i>  $goback";
 //  unset($kurz->data);
+end:  
+//                    debug($kurz);
   return $kurz;
 }
 # ----------------------------------------------------------------------------------------- dot show

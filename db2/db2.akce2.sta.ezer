@@ -456,7 +456,7 @@ form _obraz [,,700,50] {
 # -----------------------------------------------------------------------------------------==> dotaz
 form _dotaz [,,163,60] { style:'position:fixed;z-index:2' css:'parm shadow'
   var rok=2021,   // rok dotazníku ... 2021
-      kurz=0,
+      kurz:object,
       back=0,     // návrat na poslední kliknuté (ne odkazem)
       dirty=1,    // po změně dotazu, čistí se po prvním Show
       virgin=1
@@ -464,7 +464,7 @@ form _dotaz [,,163,60] { style:'position:fixed;z-index:2' css:'parm shadow'
     if (!has_skill('yaet')) return;
     if (has_skill('a')) m.d.i.enable(1);
     m.d.title= `Dotazník LK YS roku ${rok}`; 
-    kurz= 0;
+    kurz= {rok:rok};
     back= 0;
     if (virgin) { 
       obraz.init(); obraz.cond= 1; dirty= 1; obraz.recond(); obraz.rechoice(); virgin= 0; 
@@ -500,13 +500,21 @@ form _dotaz [,,163,60] { style:'position:fixed;z-index:2' css:'parm shadow'
 }
 # ------------------------------------------------------------------------------------------==> tipy
 form _tipy [,,163,46] { style:'position:fixed;z-index:2' css:'parm shadow'
-  proc Spy() { var y:object
-    clear;
-    [ dotaz.kurz.get | dotaz.kurz.set(object('rok',dotaz.rok.get)) ];
-    dotaz.kurz.set(object('sex',sex.get,'vek',vek.get,'det',det.get,'man',man.get,'nov',nov.get),'filtr');
-    dotaz.kurz.set(ask('dot_spy',dotaz.kurz.get,dotaz.rok.get,dotaz.index.get,
-        cconc(eq(dotaz.index.get,'page'),dotaz.pg.get,dotaz.id.get),dotaz.back.get));
-    shody.set(dotaz.kurz.get('html'));
+//  proc Spy() { var y:object
+//    clear;
+//    [ dotaz.kurz.get | dotaz.kurz.set(object('rok',dotaz.rok.get)) ];
+//    dotaz.kurz.set(object('sex',sex.get,'vek',vek.get,'det',det.get,'man',man.get,'nov',nov.get),'filtr');
+//    dotaz.kurz.set(ask('dot_spy',dotaz.kurz.get,dotaz.rok.get,dotaz.index.get,
+//        cconc(eq(dotaz.index.get,'page'),dotaz.pg.get,dotaz.id.get),dotaz.back.get));
+//    shody.set(dotaz.kurz.get('html'));
+//  }
+  func Spy() { 
+    clear();
+    if (!dotaz.kurz) dotaz.kurz= {rok:dotaz.rok};
+    dotaz.kurz.filtr= {sex:sex,vek:vek,det:det,man:man,nov:nov};
+    dotaz.kurz= php.dot_spy(dotaz.kurz,dotaz.rok,dotaz.index,
+        dotaz.index=='page'?dotaz.pg:dotaz.id,dotaz.back);
+    shody= dotaz.kurz.html;
   }
   check sex  [8,19,50,] { value:'1' format:'t' skill:'m|m' } 
   label  [8,9,50,] { title:'sex' skill:'m|m' }
