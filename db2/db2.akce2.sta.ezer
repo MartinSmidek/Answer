@@ -400,7 +400,20 @@ form _obraz [,,700,50] {
     case [200,0,80,18] { title:'horší' value:'5' }
     proc onchange() { recond }
   }
-  edit cond [D+20,235,260,100] { tag:'x,v' title:'^výběr jako SQL' value:'1' format:'t'
+  label [D+20,220,100,] { tag:'x,v' title:'<b>LK 2021</b>' }
+  check x_r21 [D+20,235,61,] { tag:'x,v' title:'z textů' format:'t'
+    proc onchange() { recond }
+  }
+  radio r_r21 [D+100,237,200,20] { tag:'x,v' value:'1' format:'t'
+    case [0,0,74,18]   { title:'komorní+' value:'k+' }
+    case [75,0,80,18]  { title:'komorní-' value:'k-' }
+    case [147,0,80,18] { title:'přenosy+' value:'p+' }
+    case [215,0,80,18] { title:'přenosy-' value:'p-' }
+    case [286,0,80,18] { title:'čas+'     value:'c+' }
+    case [336,0,80,18] { title:'čas-'     value:'c-' }
+    proc onchange() { recond }
+  }
+  edit cond [D+20,280,260,100] { tag:'x,v' title:'^výběr jako SQL' value:'1' format:'t'
     proc onchanged() { rechoice }}
   // funkce
   func recond() { var roky:text, hnizda:text
@@ -424,6 +437,17 @@ form _obraz [,,700,50] {
       x_nov  ? ` AND novic=${r_nov}` : '',
       x_pri  ? ` AND prinos=${r_pri}` : ''
     );
+    // doplnění roku 2021
+      if (x_r21) {
+        cond= conc(cond,
+          r_r21=='k+' ? ' AND nazor_kurz<0' : '',
+          r_r21=='k-' ? ' AND nazor_kurz>0' : '',
+          r_r21=='p+' ? ' AND nazor_online>0' : '',
+          r_r21=='p-' ? ' AND nazor_online<0' : '',
+          r_r21=='c+' ? ' AND nazor_cas>0' : '',
+          r_r21=='c-' ? ' AND nazor_cas<0' : ''
+        )
+      }
     rechoice();
     dotaz.dirty= 1;
   }

@@ -1711,6 +1711,7 @@ function dot_spy ($kurz,$dotaznik,$clmn,$pg,$back) {
   if (!is_object($kurz)) { fce_error("kurz není objekt"); return(null); }
 //  debug($kurz,"dot_spy(...,$dotaznik,$clmn,$pg,$back)");
   $kurz->html= '???';
+  $max_n= 50; $n= 0;
 //  unset($kurz->data); // vždy přepočítat --------------------------------------------- LADĚNÍ
   if ( !isset($kurz->data) || $kurz->rok!=$dotaznik ) {
     $akce= select('id_duakce','akce',"access=1 AND druh=1 AND YEAR(datum_od)=$kurz->rok");
@@ -1726,7 +1727,8 @@ function dot_spy ($kurz,$dotaznik,$clmn,$pg,$back) {
     foreach($z->values as $par) { if ( $par ) {
       $idp= $par->key_pobyt;
       $nest= $par->hnizdo;
-//      if ( $idp==54153 ) continue;
+      $n++;
+      if ( $max_n && $n>$max_n ) break;
       $novic= $par->x_ms==1 ? 1 : 0;
       $manzele= '?';
       if ( $par->r_datsvatba ) {
@@ -2049,7 +2051,7 @@ function dot_nazory($rok,$id,$nazory) {
 # průměrné hodnoty dotazníků
 # par = {cond:sql }
 function dot_vyber ($par) { trace();
-  $y= (object)array('html'=>'','err'=>'','war'=>'','jpg'=>'',celkem=>0);
+  $y= (object)array('html'=>'','err'=>'','war'=>'','jpg'=>'','celkem'=>0);
   $cond= isset($par->cond) ? $par->cond : 1;
   $tab_class= 'stat dot';
 //  $vyber= $rok ? "dotaznik=$rok " : '1';
@@ -2083,7 +2085,13 @@ function dot_vyber ($par) { trace();
     ROUND(100*AVG(IF(prinos=4,1,0))) AS prinos_4,
     ROUND(100*AVG(IF(prinos=5,1,0))) AS prinos_5,
     ROUND(AVG(prinos),1)             AS prinos,
-    nazor_kurz, nazor_online, nazor_cas, nazor_ok
+    ROUND(AVG(100*IF(nazor_kurz>0,1,0)))  AS nazor_kurz_p,
+    ROUND(AVG(100*IF(nazor_kurz<0,1,0)))  AS nazor_kurz_m,
+    ROUND(AVG(100*IF(nazor_online>0,1,0)))  AS nazor_online_p,
+    ROUND(AVG(100*IF(nazor_online<0,1,0)))  AS nazor_online_m,
+    ROUND(AVG(100*IF(nazor_cas>0,1,0)))  AS nazor_cas_p,
+    ROUND(AVG(100*IF(nazor_cas<0,1,0)))  AS nazor_cas_m,
+    ROUND(AVG(100*nazor_ok))  AS nazor_ok
     ','dotaz',"$cond ");
   $tmpl= array(
     'Statistika' => array(
@@ -2103,6 +2111,11 @@ function dot_vyber ($par) { trace();
     'Přínos'=>array(
       'významný' => 'prinos_1', 'částečně' => 'prinos_2', 'uvidí se' => 'prinos_3',
       'beze změny' => 'prinos_4', 'spíš horší' => 'prinos_5'
+    ),
+    'LK 2021'=>array(
+      'komorní' => 'nazor_kurz_m', 'velký' => 'nazor_kurz_p', 
+      'přenosy ok' => 'nazor_online_p', 'přenosy vadí' => 'nazor_online_m', 
+      'času dost' => 'nazor_cas_p', 'času málo' => 'nazor_cas_m'
     )
   );
   if ($x) {
@@ -2122,6 +2135,17 @@ function dot_vyber ($par) { trace();
       : "<p>výběru nevyhovuje žádný dotazník</p>";
   foreach ($tmpl as $row => $clmns) {
     switch ($row) {
+    case 'LK 2021':
+      if (strpos($par->cond,'dotaznik IN (0,2021)')===false) break;
+      $r1= "<th>$row</th><td class='vert'><p>nic nevadí</p></td>";
+      $r2= "<td></td><td>{$x->nazor_ok}%</td>";
+      foreach ($clmns as $name=>$val) {
+        $pr= substr($val,-1,1);
+        $r1.= "<td class='vert' title='prinos=$pr'><p>$name</p></td>";
+        $r2.= "<td>{$x->$val}%</td>";
+      }
+      $tab.= "<br><table class='$tab_class'><tr>$r1</tr><tr>$r2</tr></table>";
+      break;
     case 'Přínos':
       $r1= "<th>$row</th><td class='vert'><p>celkově</p></td>";
       $r2= "<td></td><td>{$x->prinos}</td>";
