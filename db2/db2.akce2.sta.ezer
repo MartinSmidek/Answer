@@ -246,7 +246,7 @@ menu m {type:'left', format:'f+', active:*
           y= php.dot_prehled(dotaz.rok,{zdroj:'dotaz',par1:'rok'}); 
           obraz.fill('',`<table><tr><td>${y.html}</td><td>${x.html}</tr></table>`,' '); break;
         case 'v': 
-          obraz.recond(); obraz.rechoice(); 
+          obraz.recond(); //obraz.rechoice(); 
           break;
       };
     }
@@ -302,7 +302,7 @@ use info: form right   [12,4,,]   { tag:'i'
 form _obraz [,,700,50] { 
   const D=320
   label text [0,28,700,700] 
-  label text2 [0,80,320,800] { style:"overflow:auto"  }
+  label text2 [0,85,320,800] { style:"overflow:auto"  }
   label img [D+2,28,485,700] { title:'' }
   label head [0,0,800,30]  { title:'' }
   label note [0,508,320,200] { style:"overflow:auto" }
@@ -335,8 +335,11 @@ form _obraz [,,700,50] {
   check r2021 [233,35,50,] { tag:'x,v', title:'2021', value:'1', format:'t' proc onchange() { recond }}
   label [0,65,80,] { tag:'x,v' title:'výběr hnízda:' }
   check hnizdo_1 [80,60,70,] { tag:'x,v' title:'Kroměříž' format:'t' proc onchange() { recond }}
+  label hnizdo_1p [100,80,20,14] { tag:'x,v' }
   check hnizdo_2 [151,60,70,] { tag:'x,v' title:'Olomouc' format:'t' proc onchange() { recond }}
+  label hnizdo_2p [171,80,20,14] { tag:'x,v' }
   check hnizdo_3 [222,60,70,] { tag:'x,v' title:'Albeřice' format:'t' proc onchange() { recond }}
+  label hnizdo_3p [242,80,20,14] { tag:'x,v' }
 
   label [D+20,35,100,] { tag:'x,v' title:'<b>Statistika</b>' }
   check x_sex [D+20,50,90,] { tag:'x,v' title:'sex' format:'t'
@@ -454,6 +457,7 @@ form _obraz [,,700,50] {
   func rechoice() { var x:object
     x= php.dot_vyber({cond:cond}); 
     dotaz.celkem= x.celkem;
+    copy_by_name(x.r21,obraz);
     obraz.fill2('',x.html,'')
   }
   func header(i:ezer) { var own:ezer

@@ -2085,6 +2085,9 @@ function dot_vyber ($par) { trace();
     ROUND(100*AVG(IF(prinos=4,1,0))) AS prinos_4,
     ROUND(100*AVG(IF(prinos=5,1,0))) AS prinos_5,
     ROUND(AVG(prinos),1)             AS prinos,
+    SUM(IF(hnizdo=1,1,0)) AS hnizdo_1p,
+    SUM(IF(hnizdo=2,1,0)) AS hnizdo_2p,
+    SUM(IF(hnizdo=3,1,0)) AS hnizdo_3p,
     ROUND(AVG(100*IF(nazor_kurz>0,1,0)))  AS nazor_kurz_p,
     ROUND(AVG(100*IF(nazor_kurz<0,1,0)))  AS nazor_kurz_m,
     ROUND(AVG(100*IF(nazor_online>0,1,0)))  AS nazor_online_p,
@@ -2137,6 +2140,8 @@ function dot_vyber ($par) { trace();
     switch ($row) {
     case 'LK 2021':
       if (strpos($par->cond,'dotaznik IN (0,2021)')===false) break;
+      $nh= select('SUM(IF(hnizdo=1,1,0)),SUM(IF(hnizdo=2,1,0)),SUM(IF(hnizdo=3,1,0))',
+          'dotaz','dotaznik IN (0,2021)');
       $r1= "<th>$row</th><td class='vert'><p>nic nevadí</p></td>";
       $r2= "<td></td><td>{$x->nazor_ok}%</td>";
       foreach ($clmns as $name=>$val) {
@@ -2145,6 +2150,13 @@ function dot_vyber ($par) { trace();
         $r2.= "<td>{$x->$val}%</td>";
       }
       $tab.= "<br><table class='$tab_class'><tr>$r1</tr><tr>$r2</tr></table>";
+      $y->r21= (object)array();
+      foreach(array(1,2,3) as $h) {
+        $fld= "hnizdo_{$h}p";
+        $y->r21->$fld= round(100*$x->$fld/$nh[$h-1]).'%';
+//        $y->r21->$fld= $nh[$h-1];
+//        $y->r21->$fld= $h;
+      }
       break;
     case 'Přínos':
       $r1= "<th>$row</th><td class='vert'><p>celkově</p></td>";
