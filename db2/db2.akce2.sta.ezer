@@ -222,7 +222,7 @@ menu m {type:'left', format:'f+', active:*
         obraz.display(0,'x'); obraz.display(1,i.par.typ);
         obraz.display(obraz.r2021,'r21'); obraz.enable(0,'r21'); obraz.display(0,'r21u');
         dotaz.index= 'id'; dotaz.id= i.par.id; 
-        dotaz.Show(0,0) 
+        dotaz.Show(-2,0) 
       }
     }
     item {title:'[fa-forward] procházení ... s doplněním'       par:{typ:'d',id:'1'} 
@@ -231,7 +231,7 @@ menu m {type:'left', format:'f+', active:*
         obraz.display(0,'x'); obraz.display(1,i.par.typ);
         obraz.display(obraz.r2021,'r21'); obraz.enable(1,'r21');
         dotaz.index= 'id'; dotaz.id= i.par.id; 
-        dotaz.Show(0,0) 
+        dotaz.Show(-2,0) 
       }
     }
     func onclick (i:ezer) { var x: object, y: object
@@ -414,6 +414,7 @@ form _obraz [,,700,50] {
     case [215,0,80,18] { title:'přenosy-' value:'p-' }
     case [286,0,80,18] { title:'čas+'     value:'c+' }
     case [336,0,80,18] { title:'čas-'     value:'c-' }
+    case [386,0,80,18] { title:'nic neva' value:'ok' }
     proc onchange() { recond }
   }
   edit cond [D+20,280,260,100] { tag:'x,v' title:'^výběr jako SQL' value:'1' format:'t'
@@ -443,6 +444,7 @@ form _obraz [,,700,50] {
     // doplnění roku 2021
       if (x_r21) {
         cond= conc(cond,
+          r_r21=='ok' ? ' AND nazor_ok=1' : '',
           r_r21=='k+' ? ' AND nazor_kurz<0' : '',
           r_r21=='k-' ? ' AND nazor_kurz>0' : '',
           r_r21=='p+' ? ' AND nazor_online>0' : '',

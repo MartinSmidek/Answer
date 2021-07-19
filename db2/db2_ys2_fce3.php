@@ -2139,7 +2139,14 @@ function dot_vyber ($par) { trace();
   foreach ($tmpl as $row => $clmns) {
     switch ($row) {
     case 'LK 2021':
-      if (strpos($par->cond,'dotaznik IN (0,2021)')===false) break;
+      $y->r21= (object)array();
+      if (strpos($par->cond,'dotaznik IN (0,2021)')===false) {
+       foreach(array(1,2,3) as $h) {
+          $fld= "hnizdo_{$h}p";
+          $y->r21->$fld= '';
+        } 
+        break 2;        
+      }
       $nh= select('SUM(IF(hnizdo=1,1,0)),SUM(IF(hnizdo=2,1,0)),SUM(IF(hnizdo=3,1,0))',
           'dotaz','dotaznik IN (0,2021)');
       $r1= "<th>$row</th><td class='vert'><p>nic nevadí</p></td>";
@@ -2150,12 +2157,9 @@ function dot_vyber ($par) { trace();
         $r2.= "<td>{$x->$val}%</td>";
       }
       $tab.= "<br><table class='$tab_class'><tr>$r1</tr><tr>$r2</tr></table>";
-      $y->r21= (object)array();
       foreach(array(1,2,3) as $h) {
         $fld= "hnizdo_{$h}p";
         $y->r21->$fld= round(100*$x->$fld/$nh[$h-1]).'%';
-//        $y->r21->$fld= $nh[$h-1];
-//        $y->r21->$fld= $h;
       }
       break;
     case 'Přínos':
