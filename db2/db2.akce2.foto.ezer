@@ -23,13 +23,17 @@ form _alb [,,600,357] {
   button go_right [35,4,,] { type:'html', title:'[fa-chevron-right fa-2x]'
     proc onclick() { n.set(sum(n.get,1)); drop_galery }}
   button smazat [469,4,,] { type:'html', title:'[fa-times fa-2x fa-red]', format:'d'
-    proc onclick() { var ret:object
-      confirm("Opravdu odstranit tuto fotografii?");
-      { ret.set(ask('foto2_delete',tab.get,rec.get,n.get));
-        ret.ok;
-        n.set(ret.n);
-        drop_galery;
-      | warning("fotografii nebylo možné smazat");
+    func onclick() { var ret:object
+      ret= php.foto2_get(tab,rec,n,foto._w,foto._h);
+      if (!ret.nazev) { alert(`problém s fotografí - nelze odstranit`); return; }
+      if (confirm(`Opravdu odstranit fotografii '${ret.nazev}'?`)) {
+        ret= php.foto2_delete(tab,rec,n);
+        if (ret.ok) {
+          n= ret.n;
+          drop_galery();
+        }
+        else
+          warning("fotografii nebylo možné smazat");
       }
   }}
   button otocit [430,4,,] { type:'html', title:'[fa-rotate-left fa-2x]', help:'otoč 90° doleva'
@@ -44,13 +48,14 @@ form _alb [,,600,357] {
   label drop  [70,6,351,18] { type:'drop' format:'c' style:'padding-top:8px' 
       title:"Sem můžeš přidat fotografii přetažením myší ze složky počítače"
     proc onstart() { drop.init('','U:','',°{utf8:0,list:0,mime:'img'}) } // převod na ASCII, bez listingu
-    proc ondrop(f) { var name: text, fsize:number
+    func ondrop(f:object) { var name: text, fsize:number
       function("Ezer.options.path_files_u=Ezer.options.path_foto;return 1;"); 
-      name.set(ask('utf2ascii',f.name,'.'));
-      name.set(conc(sys('root'),'_',tab.get,'_',rec.get,'.',name));
-      n.set(ask('foto2_add',tab.get,rec.get,name));
+      name= php.utf2ascii(f.name,'.');
+      name= `${sys('root')}_${tab}_${rec}.${name}`;
+      n= php.foto2_add(tab,rec,name);
+      if (!n) { alert("duplicitní název fotky, změň jej prosím"); return 0; }
       echo('DROP ',f.name,' aka ',name); 
-      fsize.set(this.resample(f,1920,1920));
+      fsize= this.resample(f,1920,1920);
       echo('RESAMPLED ',f.size,' -> ',fsize); 
       return(name); 
     }

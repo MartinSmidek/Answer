@@ -14338,7 +14338,7 @@ end:
 # ? out   = seznam s vynecháním
 function foto2_get($table,$id,$n,$w,$h) {  trace();
   global $ezer_path_root;
-  $ret= (object)array('img'=>'','left'=>0,'right'=>0,'msg'=>'','tit'=>'');
+  $ret= (object)array('img'=>'','left'=>0,'right'=>0,'msg'=>'','tit'=>'','nazev'=>'');
   $fotky= '';
   // názvy fotek
   $osobnich= 0;
@@ -14367,6 +14367,7 @@ function foto2_get($table,$id,$n,$w,$h) {  trace();
     goto end;
   }
   $nazvy= explode(',',$fotky);
+            debug($nazvy,"rodina $rodinna");
   // název n-té fotky
   $n= $n==-1 ? count($nazvy) : $n;
 //                                         display("fotky='$fotky', n=$n");
@@ -14403,12 +14404,19 @@ end:
 }
 # ---------------------------------------------------------------------------------------- foto2_add
 # přidá fotografii do seznamu (rodina|osoba) podle ID na konec a vrátí její index
+# vrátí 0, pokud fotka s tímto jménem již existuje
 function foto2_add($table,$id,$name) { trace();
-    // přidání názvu fotky do záznamu v tabulce
-    $fotky= select('fotka',$table,"id_$table=$id");
-    $fotky.= $fotky ? ",$name" : $name;
-    $n= 1+substr_count($fotky,',');
-    query("UPDATE $table SET fotka='$fotky' WHERE id_$table=$id");
+  // přidání názvu fotky do záznamu v tabulce
+  $n= 0;
+  $f= trim(select('fotka',$table,"id_$table=$id"));
+  $fotky= explode(',',$f);
+  // vrátí 0, pokud fotka s tímto jménem již existuje
+  if (in_array($name,$fotky)) return $n;
+  // jinak fotku přidej
+  if ($f) $fotky[]= $name; else $fotky= array($name);
+  $n= count($fotky);
+  $fotky= implode(',',$fotky);
+  query("UPDATE $table SET fotka='$fotky' WHERE id_$table=$id");
   return $n;
 }
 # ------------------------------------------------------------------------------------- foto2_delete
