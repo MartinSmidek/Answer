@@ -215,7 +215,7 @@ menu m {type:'left', format:'f+', active:*
         info.fill('',y.html) 
     }}
     item {title:'[fa-line-chart] statistika dotazník & Answer'  par:{typ:'2'} }
-    item {title:'[fa-balance-scale] různé výběry a srovnání'    par:°{typ:'v'} }
+    item q {title:'[fa-balance-scale] různé výběry a srovnání'    par:°{typ:'v'} }
     item d {title:'[fa-forward] procházení dotazníku'           par:{typ:'d',id:'1'} 
       func onclick (i:ezer) { 
         clear(); mapa.close(1); show_dotazy(); panel.display(2,'dp|do'); obraz.header(i);
@@ -333,13 +333,14 @@ form _obraz [,,700,50] {
   check r2018  [131,35,50,] { tag:'x,v' title:'2018' format:'t' proc onchange() { recond }}
   check r2019 [182,35,50,] { tag:'x,v' title:'2019' format:'t' proc onchange() { recond }}
   check r2021 [233,35,50,] { tag:'x,v', title:'2021', value:'1', format:'t' proc onchange() { recond }}
-  label [0,65,80,] { tag:'x,v' title:'výběr hnízda:' }
-  check hnizdo_1 [80,60,70,] { tag:'x,v' title:'Kroměříž' format:'t' proc onchange() { recond }}
-  label hnizdo_1p [100,80,20,14] { tag:'x,v' }
-  check hnizdo_2 [151,60,70,] { tag:'x,v' title:'Olomouc' format:'t' proc onchange() { recond }}
-  label hnizdo_2p [171,80,20,14] { tag:'x,v' }
-  check hnizdo_3 [222,60,70,] { tag:'x,v' title:'Albeřice' format:'t' proc onchange() { recond }}
-  label hnizdo_3p [242,80,20,14] { tag:'x,v' }
+  // výběr hnízd
+  label [0,65,80,] { tag:'x,v,r_21' title:'výběr hnízda:' }
+  check hnizdo_1 [80,60,70,] { tag:'x,v,r_21' title:'Kroměříž' format:'t' proc onchange() { recond }}
+  label hnizdo_1p [100,80,20,14] { tag:'x,v,r_21' }
+  check hnizdo_2 [151,60,70,] { tag:'x,v,r_21' title:'Olomouc' format:'t' proc onchange() { recond }}
+  label hnizdo_2p [171,80,20,14] { tag:'x,v,r_21' }
+  check hnizdo_3 [222,60,70,] { tag:'x,v,r_21' title:'Albeřice' format:'t' proc onchange() { recond }}
+  label hnizdo_3p [242,80,20,14] { tag:'x,v,r_21' }
 
   label [D+20,35,100,] { tag:'x,v' title:'<b>Statistika</b>' }
   check x_sex [D+20,50,90,] { tag:'x,v' title:'sex' format:'t'
@@ -404,23 +405,33 @@ form _obraz [,,700,50] {
     proc onchange() { recond }
   }
   label [D+20,220,100,] { tag:'x,v' title:'<b>LK 2021</b>' }
-  check x_r21 [D+20,235,61,] { tag:'x,v' title:'z textů' format:'t'
+  check x_r21 [D+20,235,61,] { tag:'x,v,r_21' title:'z textů' format:'t'
     proc onchange() { recond }
   }
-  radio r_r21 [D+100,237,200,20] { tag:'x,v' value:'1' format:'t'
+  radio r_r21 [D+100,237,200,40] { tag:'x,v,r_21' value:'1' format:'t'
     case [0,0,74,18]   { title:'komorní+' value:'k+' }
     case [75,0,80,18]  { title:'komorní-' value:'k-' }
     case [147,0,80,18] { title:'přenosy+' value:'p+' }
     case [215,0,80,18] { title:'přenosy-' value:'p-' }
-    case [286,0,80,18] { title:'čas+'     value:'c+' }
-    case [336,0,80,18] { title:'čas-'     value:'c-' }
-    case [386,0,80,18] { title:'nic neva' value:'ok' }
+    case [0,20,80,18] { title:'čas+'     value:'c+' }
+    case [75,20,80,18] { title:'čas-'     value:'c-' }
+    case [147,20,80,18] { title:'nic nevadilo' value:'ok' }
     proc onchange() { recond }
   }
-  edit cond [D+20,280,260,100] { tag:'x,v' title:'^výběr jako SQL' value:'1' format:'t'
+  select patt [D+20,300,150,] { tag:'x,v' title:'^výběr vzorů textů' format:'t'
+    func Init() {
+      patt.selects('-:0,přednášky:1,VPS:2,čas:3,kohout;-):4,vzor ==>:9');
+      patt.key(0);
+    }
+    func onchanged() { recond() }
+  }
+  field patt2 [D+180,300,150,] { tag:'x,v' title:'^napiš vzor textu' format:'t' 
+    func onchanged() { recond() }
+  }
+  edit cond [D+20,350,260,100] { tag:'x,v' title:'^výběr jako SQL' value:'1' format:'t'
     proc onchanged() { rechoice }}
   // funkce
-  func recond() { var roky:text, hnizda:text
+  func recond() { var roky:text, hnizda:text, sub:text
     // výběr roků
     roky= `0${r2017?',2017':''}${r2018?',2018':''}${r2019?',2019':''}${r2021?',2021':''}`;
     // výběr hnízda
@@ -442,17 +453,29 @@ form _obraz [,,700,50] {
       x_pri  ? ` AND prinos=${r_pri}` : ''
     );
     // doplnění roku 2021
-      if (x_r21) {
-        cond= conc(cond,
-          r_r21=='ok' ? ' AND nazor_ok=1' : '',
-          r_r21=='k+' ? ' AND nazor_kurz<0' : '',
-          r_r21=='k-' ? ' AND nazor_kurz>0' : '',
-          r_r21=='p+' ? ' AND nazor_online>0' : '',
-          r_r21=='p-' ? ' AND nazor_online<0' : '',
-          r_r21=='c+' ? ' AND nazor_cas>0' : '',
-          r_r21=='c-' ? ' AND nazor_cas<0' : ''
-        )
+    form.display(r2021,'r_21');
+    if (x_r21) {
+      cond= conc(cond,
+        r_r21=='ok' ? ' AND nazor_ok=1' : '',
+        r_r21=='k+' ? ' AND nazor_kurz<0' : '',
+        r_r21=='k-' ? ' AND nazor_kurz>0' : '',
+        r_r21=='p+' ? ' AND nazor_online>0' : '',
+        r_r21=='p-' ? ' AND nazor_online<0' : '',
+        r_r21=='c+' ? ' AND nazor_cas>0' : '',
+        r_r21=='c-' ? ' AND nazor_cas<0' : ''
+      )
+    }
+    // doplnění textových vzorů
+    if (patt.key()) {
+      switch (patt.key()) {
+        case 1: sub= "'predn|předn'"; break;
+        case 2: sub= "'vps|pps'"; break;
+        case 3: sub= "'čas[^tn]'"; break;
+        case 4: sub= "'kohout'"; break;
+        case 9: sub= patt2 ? `'${patt2}'` : "'.'"; break;
       }
+      cond= conc(cond,` AND (libilo RLIKE ${sub} OR vadilo RLIKE ${sub} OR vzkaz RLIKE ${sub})`); 
+    }
     rechoice();
     dotaz.dirty= 1;
   }
@@ -497,7 +520,8 @@ form _dotaz [,,163,60] { style:'position:fixed;z-index:2' css:'parm shadow'
     kurz= {rok:rok};
     back= 0;
     if (virgin) { 
-      obraz.init(); obraz.cond= 1; dirty= 1; obraz.recond(); obraz.rechoice(); virgin= 0; 
+      obraz.patt.Init(); obraz.init(); obraz.cond= 1; dirty= 1; obraz.recond(); obraz.rechoice(); 
+      virgin= 0; 
     }
   }
   func Show(offset,go_back) { var y:object

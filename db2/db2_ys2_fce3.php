@@ -2053,6 +2053,8 @@ function dot_nazory($rok,$id,$nazory) {
 function dot_vyber ($par) { trace();
   $y= (object)array('html'=>'','err'=>'','war'=>'','jpg'=>'','celkem'=>0);
   $cond= isset($par->cond) ? $par->cond : 1;
+  $cond_roky= preg_match("/(dotaznik IN \([\d,]+\))/",$cond,$m);
+  $celkem_roky= select('COUNT(*)','dotaz',$m[0]);
   $tab_class= 'stat dot';
 //  $vyber= $rok ? "dotaznik=$rok " : '1';
 //  $GROUP= $rok ? "GROUP BY dotaznik" : '';
@@ -2116,7 +2118,7 @@ function dot_vyber ($par) { trace();
       'beze změny' => 'prinos_4', 'spíš horší' => 'prinos_5'
     ),
     'LK 2021'=>array(
-      'komorní' => 'nazor_kurz_m', 'velký' => 'nazor_kurz_p', 
+      'líbí komorní' => 'nazor_kurz_m', 'chci velký' => 'nazor_kurz_p', 
       'přenosy ok' => 'nazor_online_p', 'přenosy vadí' => 'nazor_online_m', 
       'času dost' => 'nazor_cas_p', 'času málo' => 'nazor_cas_m'
     )
@@ -2133,8 +2135,9 @@ function dot_vyber ($par) { trace();
       $y->celkem= $x->celkem;
     }
   }
+  $proc= $celkem_roky ? ' '.round(100*$x->celkem/$celkem_roky).'%' : '';
   $tab.= $x && $x->celkem
-      ? "<p>výběru vyhovuje ".kolik_1_2_5($x->celkem,"dotazník,dotazníky,dotazníků").'</p>'
+      ? "<p>výběru vyhovuje ".kolik_1_2_5($x->celkem,"dotazník,dotazníky,dotazníků")."$proc</p>"
       : "<p>výběru nevyhovuje žádný dotazník</p>";
   foreach ($tmpl as $row => $clmns) {
     switch ($row) {
