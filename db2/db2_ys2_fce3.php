@@ -1712,7 +1712,7 @@ function dot_spy ($kurz,$dotaznik,$clmn,$pg,$back) {
 //  debug($kurz,"dot_spy(...,$dotaznik,$clmn,$pg,$back)");
   $kurz->html= '???';
   $max_n= 50; $n= 0;
-//  unset($kurz->data); // vždy přepočítat --------------------------------------------- LADĚNÍ
+  unset($kurz->data); // vždy přepočítat --------------------------------------------- LADĚNÍ
   if ( !isset($kurz->data) || $kurz->rok!=$dotaznik ) {
     $akce= select('id_duakce','akce',"access=1 AND druh=1 AND YEAR(datum_od)=$kurz->rok");
     $kurz->akce= $akce;

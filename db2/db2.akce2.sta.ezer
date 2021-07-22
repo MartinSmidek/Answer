@@ -564,7 +564,8 @@ form _tipy [,,163,46] { style:'position:fixed;z-index:2' css:'parm shadow'
 //  }
   func Spy() { 
     clear();
-    if (!dotaz.kurz) dotaz.kurz= {rok:dotaz.rok};
+//    if (!dotaz.kurz) 
+      dotaz.kurz= {rok:dotaz.rok};
     dotaz.kurz.filtr= {sex:sex,vek:vek,det:det,man:man,nov:nov};
     dotaz.kurz= php.dot_spy(dotaz.kurz,dotaz.rok,dotaz.index,
         dotaz.index=='page'?dotaz.pg:dotaz.id,dotaz.back);
