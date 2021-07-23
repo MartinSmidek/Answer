@@ -1722,15 +1722,26 @@ function dot_spy ($kurz,$dotaznik,$clmn,$pg,$back) {
         $del= '';
         foreach ($tip->tips as $id=>$w) {
           $o= $osoby[$id];
+          // tipneme dotazník partnera
           $ip= isset($osoby[$o->ido_partner]->dotaz) ? $osoby[$o->ido_partner]->dotaz : '';
-          if ($ip) {
-            $ip= " (<a href='ezer://akce2.sta.show_obraz/$ip'>$ip</a>)";
+          // tipneme dotazníky skupinky
+          $skup= $o->skup;
+          $is= array();
+          foreach ($tips as $tip_skup) {
+            foreach ($tip_skup->tips as $s_id=>$s_w) {
+              if ($s_w<0 && $osoby[$s_id]->skup==$skup) {
+                $isx= $osoby[$s_id]->dotaz;
+                $is[]= "<a href='ezer://akce2.sta.show_obraz/$isx'>$isx</a>";
+              }
+            }
           }
+          $is= count($is) ? "<br>? skup $skup: ".implode(',',$is) : '';            
+          $ip= $ip ? " (<a href='ezer://akce2.sta.show_obraz/$ip'>$ip</a>)" : '';
           $tit= (-$w-1).": věk=$o->vek, děti/LK=$o->deti, manželství=$o->manz, "
               . ($o->novic ? 'poprvé' : 'opakovaně') 
               . ($o->nest ? ", hnízdo=$o->nest" : '');
           $kurz->html.= "$del<a href='ezer://akce2.ucast.ucast_pobyt/{$o->pob}' "
-              . "title='$tit'>{$o->jmeno}</a> $ip";
+              . "title='$tit'>{$o->jmeno}</a> $ip $is";
           $del= "<br>";
         }
       }
@@ -1739,6 +1750,7 @@ function dot_spy ($kurz,$dotaznik,$clmn,$pg,$back) {
   }
   goto end;
   // stará metoda
+  /*
   $max_n= 0; $n= 0;
 //  unset($kurz->data); // vždy přepočítat --------------------------------------------- LADĚNÍ
   if ( !isset($kurz->data) || $kurz->rok!=$dotaznik ) {
@@ -1857,6 +1869,7 @@ function dot_spy ($kurz,$dotaznik,$clmn,$pg,$back) {
       . "title='$back'>&lArr;</a>" : '';
   $kurz->html.= ($shod>$shod_max ? ' ...' : '')."<br><i>celkem je $shod</i>  $goback";
 //  unset($kurz->data);
+   */
 end:  
 //                    debug($kurz);
   return $kurz;
@@ -1877,9 +1890,10 @@ function dot_spy_data ($rok) {
     'having'=>'','order'=>'a _nazev',
     'sql'=>"SET @akce:=$akce,@soubeh:=0,@app:='{$EZER->options->root}';");
   $z= ucast2_browse_ask($browse_par,true);
-  foreach($z->values as $par) { if ( $par ) {
+  foreach($z->values as $par) { if ( $par ) { 
     $idp= $par->key_pobyt;
     $nest= $par->hnizdo;
+    $skup= $par->skupina;
     $n++;
     if ( $max_n && $n>$max_n ) break;
     $novic= $par->x_ms==1 ? 1 : 0;
@@ -1911,10 +1925,10 @@ function dot_spy_data ($rok) {
     }
     $m= (object)array('sex'=>0,'vek'=>$m_vek,'manz'=>$manzele,'deti'=>$deti,'novic'=>$novic,
         'jmeno'=>$m_jmeno,'idp'=>$idp,'ido_partner'=>$z_ido,'ido'=>$m_ido,
-        'nest'=>$nest);
+        'skup'=>$skup,'nest'=>$nest);
     $z= (object)array('sex'=>1,'vek'=>$z_vek,'manz'=>$manzele,'deti'=>$deti,'novic'=>$novic,
         'jmeno'=>$z_jmeno,'idp'=>$idp,'ido_partner'=>$m_ido,'ido'=>$z_ido,
-        'nest'=>$nest);
+        'skup'=>$skup,'nest'=>$nest);
     $osoba[$m_ido]= $m;
     $osoba[$z_ido]= $z;
 //      break; 
@@ -1975,10 +1989,12 @@ function dot_spy_data ($rok) {
   $n0= $filtr(0,-1);
   $n1= $filtr(1,-2);
   debug($dotaz,"tipy 0:$n0, 1:$n1");
-  // tipneme dotazník partnera
+  // zapíšeme dotazník k osobě
   foreach ($dotaz as $d) {
     foreach ($d->tips as $ido=>$w) {
-      if ($w<0) $osoba[$ido]->dotaz= $d->idd;
+      if ($w<0) {
+        $osoba[$ido]->dotaz= $d->idd;
+      }
     }
   }
   // uschováme do session
