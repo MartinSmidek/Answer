@@ -1706,13 +1706,41 @@ function dot_prehled ($rok_or_akce,$par,$title='',$vypis='',$export=0,$hnizdo=0)
 # tipy na autory
 # kurs = {akce:id_akce,data:[{sex,vek,deti,manz,novic}...] ... data se počítají při prvním průchodu
 function dot_spy ($kurz,$dotaznik,$clmn,$pg,$back) { 
-  global $EZER;
+  global $EZER, $ezer_root;
   global $i_osoba_jmeno, $i_osoba_vek, $i_osoba_role, $i_osoba_prijmeni, $i_key_spolu;
   if (!is_object($kurz)) { fce_error("kurz není objekt"); return(null); }
 //  debug($kurz,"dot_spy(...,$dotaznik,$clmn,$pg,$back)");
-  $kurz->html= '???';
-  $max_n= 50; $n= 0;
-  unset($kurz->data); // vždy přepočítat --------------------------------------------- LADĚNÍ
+  // nová metoda
+  if ($clmn=='id') {
+    $tips= 
+      (!isset($_SESSION[$ezer_root]['dot_tips']) || $_SESSION[$ezer_root]['dot_rok']!=$kurz->rok)
+      ? dot_spy_data($kurz->rok)
+      : $_SESSION[$ezer_root]['dot_tips'];
+    $osoby= $_SESSION[$ezer_root]['dot_osoby'];
+    foreach ($tips as $tip) {
+      if ($tip->idd==$pg) {
+        $del= '';
+        foreach ($tip->tips as $id=>$w) {
+          $o= $osoby[$id];
+          $ip= isset($osoby[$o->ido_partner]->dotaz) ? $osoby[$o->ido_partner]->dotaz : '';
+          if ($ip) {
+            $ip= " (<a href='ezer://akce2.sta.show_obraz/$ip'>$ip</a>)";
+          }
+          $tit= (-$w-1).": věk=$o->vek, děti/LK=$o->deti, manželství=$o->manz, "
+              . ($o->novic ? 'poprvé' : 'opakovaně') 
+              . ($o->nest ? ", hnízdo=$o->nest" : '');
+          $kurz->html.= "$del<a href='ezer://akce2.ucast.ucast_pobyt/{$o->pob}' "
+              . "title='$tit'>{$o->jmeno}</a> $ip";
+          $del= "<br>";
+        }
+      }
+    }
+    $kurz->html.= "<hr>";
+  }
+  goto end;
+  // stará metoda
+  $max_n= 0; $n= 0;
+//  unset($kurz->data); // vždy přepočítat --------------------------------------------- LADĚNÍ
   if ( !isset($kurz->data) || $kurz->rok!=$dotaznik ) {
     $akce= select('id_duakce','akce',"access=1 AND druh=1 AND YEAR(datum_od)=$kurz->rok");
     $kurz->akce= $akce;
@@ -1811,7 +1839,7 @@ function dot_spy ($kurz,$dotaznik,$clmn,$pg,$back) {
       $shod++;
     }
   }
-  $kurz->html= '';
+//  $kurz->html= '';
 //                                                      debug($kdo);
   $del= '';
   for($j=0; $j<count($kdo); $j++) {
@@ -1832,6 +1860,131 @@ function dot_spy ($kurz,$dotaznik,$clmn,$pg,$back) {
 end:  
 //                    debug($kurz);
   return $kurz;
+}
+# ------------------------------------------------------------------------------------- dot spy_data
+# pomocná fce - tipy na autory
+function dot_spy_data ($rok) { 
+  global $EZER, $ezer_root;
+  global $i_osoba_jmeno, $i_osoba_vek, $i_osoba_role, $i_osoba_prijmeni, $i_key_spolu;
+  // agragace dat dotazníků
+  $osoba= array();
+  $max_n= 0; $n= 0;
+  list($akce,$zacatek_akce)= select('id_duakce,datum_od','akce',
+      "access=1 AND druh=1 AND YEAR(datum_od)=$rok");
+  $cnd= "p.funkce IN (0,1,2)";
+  $browse_par= (object)array(
+    'cmd'=>'browse_load','cond'=>"$cnd AND p.id_akce=$akce",
+    'having'=>'','order'=>'a _nazev',
+    'sql'=>"SET @akce:=$akce,@soubeh:=0,@app:='{$EZER->options->root}';");
+  $z= ucast2_browse_ask($browse_par,true);
+  foreach($z->values as $par) { if ( $par ) {
+    $idp= $par->key_pobyt;
+    $nest= $par->hnizdo;
+    $n++;
+    if ( $max_n && $n>$max_n ) break;
+    $novic= $par->x_ms==1 ? 1 : 0;
+    $manzele= '?';
+    if ( $par->r_datsvatba ) {
+      $datsvatba= sql_date1($par->r_datsvatba,1);
+      $manzele=  roku_k($datsvatba,$zacatek_akce);
+    }
+    elseif ( $par->r_svatba ) {
+      $manzele= $rok - $par->r_svatba;
+    }
+    $nazev= $par->_nazev;
+    $cle= explode('≈',$par->r_cleni);
+    $m_vek= $z_vek= '?';
+    $m_ido= $z_ido= 0;
+    $deti= 0;
+    foreach($cle as $cl) {
+      $c= explode('~',$cl);
+      $role= $c[$i_osoba_role];
+      switch ($role) {
+      case 'a': $m_vek= $c[$i_osoba_vek]; 
+                $m_jmeno= $c[$i_osoba_jmeno].' '.$c[$i_osoba_prijmeni]; 
+                $m_ido= $c[0]; break;
+      case 'b': $z_vek= $c[$i_osoba_vek]; 
+                $z_jmeno= $c[$i_osoba_jmeno].' '.$c[$i_osoba_prijmeni]; 
+                $z_ido= $c[0]; break;
+      case 'd': if ( $c[$i_key_spolu] ) $deti++; break;
+      }
+    }
+    $m= (object)array('sex'=>0,'vek'=>$m_vek,'manz'=>$manzele,'deti'=>$deti,'novic'=>$novic,
+        'jmeno'=>$m_jmeno,'idp'=>$idp,'ido_partner'=>$z_ido,'ido'=>$m_ido,
+        'nest'=>$nest);
+    $z= (object)array('sex'=>1,'vek'=>$z_vek,'manz'=>$manzele,'deti'=>$deti,'novic'=>$novic,
+        'jmeno'=>$z_jmeno,'idp'=>$idp,'ido_partner'=>$m_ido,'ido'=>$z_ido,
+        'nest'=>$nest);
+    $osoba[$m_ido]= $m;
+    $osoba[$z_ido]= $z;
+//      break; 
+  }}
+//  debug($osoba,'fakta z databáze');
+  $dotaz= array(); // [{id,tips:[[ido,diff],...]}, ...]
+  $max_diff= 2; // maximální odchylka
+  $max_n= 0; $n= 0; // omezení testování
+  $rd= pdo_qry("SELECT id,sex,vek,deti,manzel,novic,IF(hnizdo,hnizdo,0) 
+      FROM dotaz WHERE dotaznik=$rok ORDER BY id");
+  while ($rd && list($id,$sex,$vek,$deti,$manz,$novic,$hnizdo)= pdo_fetch_row($rd)) {
+    $n++;
+    if ( $max_n && $n>$max_n ) break;
+    $tips= array();
+    foreach($osoba as $i=>$o) {
+      $diff= 999;
+      if ( $hnizdo==$o->nest && $sex==$o->sex && $novic==$o->novic ) {
+        $diff= abs($vek-$o->vek) + abs($deti-$o->deti) + abs($manz-$o->manz);
+      }  
+      if ($diff <= $max_diff) {
+        $tips[$o->ido]= $diff;
+      }
+    }
+    if (count($tips)) {
+      asort($tips);
+      $dotaz[]= (object)array('idd'=>$id,'tips'=>$tips);
+    }
+  }
+  // výběr nekonfliktních jako jistých
+  $filtr= function($width,$goal) use (&$dotaz) {
+    $n= 0;
+    foreach ($dotaz as $d1) {
+      foreach ($d1->tips as $ido1=>$tip1) {
+        if ($tip1==$width) {
+          $only= 1;
+          foreach ($dotaz as $d2) {
+            if ($d2->idd!=$d1->idd) {
+              foreach ($d2->tips as $ido2=>$tip2) {
+                if ($tip2>0 && $tip2<=$width && $ido2==$ido1) {
+                  $only= 0;
+                  break 2;
+                }
+              }
+            }
+          }
+          if ($only) {
+            $d1->tips= array($ido1=>$goal);
+            $n++;
+          }
+          else {
+            $d1->tips= array($ido1=>999);
+          }
+        }
+      }
+    }
+    return $n;
+  };
+  $n0= $filtr(0,-1);
+  $n1= $filtr(1,-2);
+  debug($dotaz,"tipy 0:$n0, 1:$n1");
+  // tipneme dotazník partnera
+  foreach ($dotaz as $d) {
+    foreach ($d->tips as $ido=>$w) {
+      if ($w<0) $osoba[$ido]->dotaz= $d->idd;
+    }
+  }
+  // uschováme do session
+  $_SESSION[$ezer_root]['dot_rok']= $rok;
+  $_SESSION[$ezer_root]['dot_tips']= $dotaz; 
+  $_SESSION[$ezer_root]['dot_osoby']= $osoba; 
 }
 # ----------------------------------------------------------------------------------------- dot show
 # zobrazení digitalizovaných dotazníků

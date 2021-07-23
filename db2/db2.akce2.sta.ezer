@@ -222,7 +222,7 @@ menu m {type:'left', format:'f+', active:*
         obraz.display(0,'x'); obraz.display(1,i.par.typ);
         obraz.display(obraz.r2021,'r21'); obraz.enable(0,'r21'); obraz.display(0,'r21u');
         dotaz.index= 'id'; dotaz.id= i.par.id; 
-        dotaz.Show(-2,0) 
+        dotaz.Show(-2,0,0) 
       }
     }
     item {title:'[fa-forward] procházení ... s doplněním'       par:{typ:'d',id:'1'} 
@@ -231,7 +231,7 @@ menu m {type:'left', format:'f+', active:*
         obraz.display(0,'x'); obraz.display(1,i.par.typ);
         obraz.display(obraz.r2021,'r21'); obraz.enable(1,'r21');
         dotaz.index= 'id'; dotaz.id= i.par.id; 
-        dotaz.Show(-2,0) 
+        dotaz.Show(-2,0,0) 
       }
     }
     func onclick (i:ezer) { var x: object, y: object
@@ -271,7 +271,7 @@ menu m {type:'left', format:'f+', active:*
 }
 proc show_obraz(i) { // přes odkaz z PHP vygenerovaný voláním Spy
   { eq(dotaz.index.get,'pg'); dotaz.pg.set(i) | dotaz.id.set(i) };
-  dotaz.Show(0,0); 
+  dotaz.Show(0,0,1); 
   tipy.call('Spy'); 
 }
 proc show_dotazy() {
@@ -524,17 +524,18 @@ form _dotaz [,,163,60] { style:'position:fixed;z-index:2' css:'parm shadow'
       virgin= 0; 
     }
   }
-  func Show(offset,go_back) { var y:object
+  func Show(offset,go_back,even) { var y:object
     clear();
     y= php.dot_show(vyber ? 0 : rok, index, index=='page' ? pg : id, offset,
         vyber ? obraz.cond : 1, dotaz.dirty, rok);
     copy_by_name(y.nazory,obraz);
-    if (!y.none) {
+    if (!y.none || even) {
       pg= y.page; id= y.id; rok= y.rok;
       if (go_back) back= index=='page' ? pg : id; 
       obraz.fill2('',' ',' ');
       obraz.fill2('',y.html,y.jpg);
       dotaz.dirty= 0;
+      tipy.Spy();
     }
   }
   radio index [50,2,60,50] { format:'t', value:'id'
@@ -543,14 +544,14 @@ form _dotaz [,,163,60] { style:'position:fixed;z-index:2' css:'parm shadow'
   }
   label celkem [10,4,49,] { style:'color:white' }
   check vyber [112,1,49,] { title:'výběr' value:'1' 
-    proc onchange() { dotaz.dirty.set(1); back.set(0); Show(0,0) }
+    proc onchange() { dotaz.dirty.set(1); back.set(0); Show(0,0,0) }
   }
-  button [9,32,,] { title:"[fa-step-backward]" help:'první'     proc onclick() { Show(-2,1); }}
-  button [29,32,,] { title:"[fa-caret-left]" help:'předchozí'   proc onclick() { Show(-1,1); }}
-  field pg [50,32,25,] { title:'^pdf' format:'rt'  proc onchanged() { index.set('page'); Show(0,1); }} 
-  field id [80,32,25,] { title:'^xls' format:'rt'  proc onchanged() { index.set('id');   Show(0,1); }} 
-  button [112,32,,] { title:"[fa-caret-right]" help:'další'     proc onclick() { Show(1,1); }}
-  button [132,32,,] { title:"[fa-step-forward]" help:'poslední' proc onclick() { Show(2,1); }}
+  button [9,32,,] { title:"[fa-step-backward]" help:'první'     proc onclick() { Show(-2,1,0); }}
+  button [29,32,,] { title:"[fa-caret-left]" help:'předchozí'   proc onclick() { Show(-1,1,0); }}
+  field pg [50,32,25,] { title:'^pdf' format:'rt'  proc onchanged() { index.set('page'); Show(0,1,0); }} 
+  field id [80,32,25,] { title:'^xls' format:'rt'  proc onchanged() { index.set('id');   Show(0,1,0); }} 
+  button [112,32,,] { title:"[fa-caret-right]" help:'další'     proc onclick() { Show(1,1,0); }}
+  button [132,32,,] { title:"[fa-step-forward]" help:'poslední' proc onclick() { Show(2,1,0); }}
 }
 # ------------------------------------------------------------------------------------------==> tipy
 form _tipy [,,163,46] { style:'position:fixed;z-index:2' css:'parm shadow'
