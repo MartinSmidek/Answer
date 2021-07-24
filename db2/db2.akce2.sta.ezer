@@ -237,7 +237,7 @@ menu m {type:'left', format:'f+', active:*
     func onclick (i:ezer) { var x: object, y: object
       clear(); mapa.close(1); 
       panel.display(2,'do'); 
-      obraz.display(0,'x'); obraz.display(1,i.par.typ); obraz.display(0,'r21'); obraz.header(i);
+      obraz.display(0,'x'); obraz.display(1,i.par.typ); obraz.display(0,'r21|r_21'); obraz.header(i);
       switch(i.par.typ) {
         case 'r': 
           x= php.dot_roky(); obraz.roky.selects(x.roky); obraz.roky= dotaz.rok; break;
