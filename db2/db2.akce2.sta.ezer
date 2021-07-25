@@ -219,6 +219,7 @@ menu m {type:'left', format:'f+', active:*
     item d {title:'[fa-forward] procházení dotazníku'           par:{typ:'d',id:'1'} 
       func onclick (i:ezer) { 
         clear(); mapa.close(1); show_dotazy(); panel.display(2,'dp|do'); obraz.header(i);
+        if (has_skill('mš')) panel.display(1,'dt')
         obraz.display(0,'x'); obraz.display(1,i.par.typ);
         obraz.display(obraz.r2021,'r21'); obraz.enable(0,'r21'); obraz.display(0,'r21u');
         dotaz.index= 'id'; dotaz.id= i.par.id; 
@@ -228,6 +229,7 @@ menu m {type:'left', format:'f+', active:*
     item {title:'[fa-forward] procházení ... s doplněním'       par:{typ:'d',id:'1'} 
       func onclick (i:ezer) { 
         clear(); mapa.close(1); show_dotazy(); panel.display(2,'dp|do'); obraz.header(i);
+        if (has_skill('mš')) panel.display(1,'dt')
         obraz.display(0,'x'); obraz.display(1,i.par.typ);
         obraz.display(obraz.r2021,'r21'); obraz.enable(1,'r21');
         dotaz.index= 'id'; dotaz.id= i.par.id; 
@@ -269,10 +271,10 @@ menu m {type:'left', format:'f+', active:*
     info.append(ret.html);
   }
 }
-proc show_obraz(i) { // přes odkaz z PHP vygenerovaný voláním Spy
-  { eq(dotaz.index.get,'pg'); dotaz.pg.set(i) | dotaz.id.set(i) };
+func show_obraz(i) { // přes odkaz z PHP vygenerovaný voláním Spy
+  if (dotaz.index=='pg') dotaz.pg= i; else dotaz.id= i;
   dotaz.Show(0,0,1); 
-  tipy.call('Spy'); 
+  tipy.Spy(); 
 }
 proc show_dotazy() {
   function('group',"group._fold(); return 1;",m.s);
@@ -280,7 +282,7 @@ proc show_dotazy() {
 }
 use dotaz: form _dotaz [24,400,,] { tag:'dp' format:'n' }
 use obraz: form _obraz [12,4,,]   { tag:'do' format:'n' }
-use tipy:  form _tipy  [24,467,,] { tag:'dp' format:'n' skill:'mš'}
+use tipy:  form _tipy  [24,467,,] { tag:'dt' format:'n' }
 use info: form right   [12,4,,]   { tag:'i'
   label parm_tit [-200,9,100,] { tag:'p', style:'zIndex:2;color:white', format:'rn' }
   field parm [-150,5,40,] { tag:'p', style:'zIndex:2', format:'rtn' }
@@ -554,7 +556,7 @@ form _dotaz [,,163,60] { style:'position:fixed;z-index:2' css:'parm shadow'
   button [132,32,,] { title:"[fa-step-forward]" help:'poslední' proc onclick() { Show(2,1,0); }}
 }
 # ------------------------------------------------------------------------------------------==> tipy
-form _tipy [,,163,46] { style:'position:fixed;z-index:2' css:'parm shadow'
+form _tipy [,,163,46] { style:'position:fixed;z-index:2' //css:'parm shadow'
 //  proc Spy() { var y:object
 //    clear;
 //    [ dotaz.kurz.get | dotaz.kurz.set(object('rok',dotaz.rok.get)) ];
@@ -564,24 +566,26 @@ form _tipy [,,163,46] { style:'position:fixed;z-index:2' css:'parm shadow'
 //    shody.set(dotaz.kurz.get('html'));
 //  }
   func Spy() { 
+    if (!has_skill('mš')) return;
     clear();
-//    if (!dotaz.kurz) 
-      dotaz.kurz= {rok:dotaz.rok};
-    dotaz.kurz.filtr= {sex:sex,vek:vek,det:det,man:man,nov:nov};
-    dotaz.kurz= php.dot_spy(dotaz.kurz,dotaz.rok,dotaz.index,
-        dotaz.index=='page'?dotaz.pg:dotaz.id,dotaz.back);
-    shody= dotaz.kurz.html;
+    shody= php.dot_spy(dotaz.rok,dotaz.id);
+    //    if (!dotaz.kurz) 
+//      dotaz.kurz= {rok:dotaz.rok};
+//    dotaz.kurz.filtr= {sex:sex,vek:vek,det:det,man:man,nov:nov};
+//    dotaz.kurz= php.dot_spy(dotaz.kurz,dotaz.rok,dotaz.index,
+//        dotaz.index=='page'?dotaz.pg:dotaz.id,dotaz.back);
+//    shody= dotaz.kurz.html;
   }
-  check sex  [8,19,50,] { value:'1' format:'t' skill:'m|m' } 
-  label  [8,9,50,] { title:'sex' skill:'m|m' }
-  check vek  [33,19,50,] { value:'1' format:'t' skill:'m|m' } 
-  label  [33,9,50,] { title:'věk' skill:'m|m' }
-  check det  [58,19,50,] { value:'1' format:'t' skill:'m|m' } 
-  label  [58,9,50,] { title:'děti' skill:'m|m' }
-  check man  [83,19,50,] { value:'1' format:'t' skill:'m|m' } 
-  label  [83,9,50,] { title:'man' skill:'m|m' }
-  check nov [108,19,50,] { value:'1' format:'t' skill:'m|m' } 
-  label [108,9,50,] { title:'nový' skill:'m|m' }
-  button [133,19,22,] { title:"[fa-eye]" help:'špión' skill:'m|m' proc onclick() { Spy }}
-  label shody [0,50,163,280] { style:'background:silver' css:'parm shadow' }
+//  check sex  [8,19,50,] { value:'1' format:'t' skill:'m|m' } 
+//  label  [8,9,50,] { title:'sex' skill:'m|m' }
+//  check vek  [33,19,50,] { value:'1' format:'t' skill:'m|m' } 
+//  label  [33,9,50,] { title:'věk' skill:'m|m' }
+//  check det  [58,19,50,] { value:'1' format:'t' skill:'m|m' } 
+//  label  [58,9,50,] { title:'děti' skill:'m|m' }
+//  check man  [83,19,50,] { value:'1' format:'t' skill:'m|m' } 
+//  label  [83,9,50,] { title:'man' skill:'m|m' }
+//  check nov [108,19,50,] { value:'1' format:'t' skill:'m|m' } 
+//  label [108,9,50,] { title:'nový' skill:'m|m' }
+//  button [133,19,22,] { title:"[fa-eye]" help:'špión' skill:'m|m' proc onclick() { Spy }}
+  label shody [0,0,163,280] { style:'background:silver' css:'parm shadow' }
 }

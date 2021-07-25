@@ -1705,20 +1705,22 @@ function dot_prehled ($rok_or_akce,$par,$title='',$vypis='',$export=0,$hnizdo=0)
 # ------------------------------------------------------------------------------------------ dot spy
 # tipy na autory
 # kurs = {akce:id_akce,data:[{sex,vek,deti,manz,novic}...] ... data se počítají při prvním průchodu
-function dot_spy ($kurz,$dotaznik,$clmn,$pg,$back) { 
-  global $EZER, $ezer_root;
-  global $i_osoba_jmeno, $i_osoba_vek, $i_osoba_role, $i_osoba_prijmeni, $i_key_spolu;
-  if (!is_object($kurz)) { fce_error("kurz není objekt"); return(null); }
+function dot_spy ($rok,$id) {  //($kurz,$dotaznik,$clmn,$pg,$back) { 
+  global $ezer_root;
+//  global $i_osoba_jmeno, $i_osoba_vek, $i_osoba_role, $i_osoba_prijmeni, $i_key_spolu;
+//  if (!is_object($kurz)) { fce_error("kurz není objekt"); return(null); }
 //  debug($kurz,"dot_spy(...,$dotaznik,$clmn,$pg,$back)");
   // nová metoda
-  if ($clmn=='id') {
+  $html= '';
+//  if ($clmn=='id') {
     $tips= 
-      (!isset($_SESSION[$ezer_root]['dot_tips']) || $_SESSION[$ezer_root]['dot_rok']!=$kurz->rok)
-      ? dot_spy_data($kurz->rok)
+      ( !isset($_SESSION[$ezer_root]['dot_tips']) && is_array($_SESSION[$ezer_root]['dot_tips'])
+        || $_SESSION[$ezer_root]['dot_rok']!=$rok)
+      ? dot_spy_data($rok)
       : $_SESSION[$ezer_root]['dot_tips'];
     $osoby= $_SESSION[$ezer_root]['dot_osoby'];
-    foreach ($tips as $tip) {
-      if ($tip->idd==$pg) {
+    if ($tips) foreach ($tips as $tip) {
+      if ($tip->idd==$id) {
         $del= '';
         foreach ($tip->tips as $id=>$w) {
           $o= $osoby[$id];
@@ -1740,15 +1742,15 @@ function dot_spy ($kurz,$dotaznik,$clmn,$pg,$back) {
           $tit= (-$w-1).": věk=$o->vek, děti/LK=$o->deti, manželství=$o->manz, "
               . ($o->novic ? 'poprvé' : 'opakovaně') 
               . ($o->nest ? ", hnízdo=$o->nest" : '');
-          $kurz->html.= "$del<a href='ezer://akce2.ucast.ucast_pobyt/{$o->pob}' "
+          $html.= "$del<a href='ezer://akce2.ucast.ucast_pobyt/{$o->pob}' "
               . "title='$tit'>{$o->jmeno}</a> $ip $is";
           $del= "<br>";
         }
       }
     }
-    $kurz->html.= "<hr>";
-  }
-  goto end;
+    $html.= "<hr>";
+//  }
+//  goto end;
   // stará metoda
   /*
   $max_n= 0; $n= 0;
@@ -1872,7 +1874,7 @@ function dot_spy ($kurz,$dotaznik,$clmn,$pg,$back) {
    */
 end:  
 //                    debug($kurz);
-  return $kurz;
+  return $html;
 }
 # ------------------------------------------------------------------------------------- dot spy_data
 # pomocná fce - tipy na autory
