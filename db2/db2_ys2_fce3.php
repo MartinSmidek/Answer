@@ -2069,7 +2069,7 @@ function dot_show ($dotaznik,$clmn,$pg,$offset,$cond,$dirty,$rok) { trace();
       'YMCA' => 'od_ymca', 'jiné' => 'od_jine', ':' => 'od_jine_text'
     ),
     'proč jel'=>array(
-      'zlepšit manželství' => 'proc_zlepsit', 'byla krize' => 'proc_krize', 
+      'zlepšit manželství' => 'proc_zlepsit', 'byla krize' => 'proc_krize', 'opakovaně' => 'proc_opak', 
       'jiné' => 'proc_jine', ':' => 'proc_jine_text'
     ),
     'Hodnocení' => array(
@@ -2496,7 +2496,9 @@ function dot_import ($rok) { trace();
       "F,i,manzel?",
       "G,r,novic?Ano*1;Ne*0",
       "H,c,od_jine,od_jine_text?Přátelé*od_pratele;Příbuzní*od_pribuzni;Jezdil/a jsem jako pečovatel/ka*od_pecoun;Inzerce*od_inzerce;Chlapské akce*od_chlapi;Akce YMCA Setkání*od_ymca",
-      "I,c,proc_jine,proc_jine_text?chci zlepšovat naše manželství*proc_zlepsit;byli jsme v krizi*proc_krize;jezdíme opakovaně*proc_opak",
+      "I,c,proc_jine,proc_jine_text?"
+        . "chci zlepšovat naše manželství*proc_zlepsit;byli jsme v krizi*proc_krize;"
+        . "jezdíme opakovaně*proc_opak",
       "J,i,prednasky?",
       "K,i,skupinky?",
       "L,i,duchovno?",
@@ -2606,12 +2608,10 @@ function dot_import ($rok) { trace();
     }
   }
   else {
-    // starší dotazníky z lokálních tabulek
-    query("DELETE FROM dotaz WHERE dotaznik=$rok");
     $fpath= "$ezer_path_docs/import/MS$rok";
     foreach ($def as $fname=>$clmn) {
       $fullname= "$fpath/MS$rok-$fname.csv";
-      if ( !file_exists($fullname) ) { $y->war.= "soubor $fullname neexistuje "; continue; }
+      if ( !file_exists($fullname) ) { $y->war.= "soubor $fullname neexistuje "; goto end; }
       $f= @fopen($fullname, "r");
       if ( !$f ) { $y->err.= "soubor $fullname nelze otevřít"; goto end; }
       $n= 0;
@@ -2652,6 +2652,8 @@ function dot_import ($rok) { trace();
       fclose($f); $f= null;
     }
     // zápis do tabulky DOTAZ
+    // starší dotazníky z lokálních tabulek
+    query("DELETE FROM dotaz WHERE dotaznik=$rok");
     foreach ($values as $id => $value) {
       $flds= "dotaznik";
       $vals= "$rok";
