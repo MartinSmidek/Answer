@@ -6,7 +6,7 @@
 # ------------------------------------------------------------------------------------------------ #
 # ----------------------------------------------------------------------------------- globální jména
 # ----------------------------------------------------------------------------------==> inicializace
-proc onfirstfocus() { dotaz.Init; } // has_skill('m'); has_skill('yaet'); m.d.d.click }
+proc onfirstfocus() { dot.Init; } // has_skill('m'); has_skill('yaet'); m.d.d.click }
 # ------------------------------------------------------------------------------------------==> stav
 var the_vypis: text
 # ----------------------------------------------------------------------------==> globální procedury
@@ -207,9 +207,9 @@ menu m {type:'left', format:'f+', active:*
         panel.display(2,'i');
         show_dotazy;
         info.fill(conc(i.owner.title,' - ',i.title),' ');
-        confirm(conc("Mám přepočítat dotazník roku ",dotaz.rok.get,"?"));
+        confirm(conc("Mám přepočítat dotazník roku ",dot.rok.get,"?"));
         clear;
-        y.set(ask('dot_import',dotaz.rok.get));
+        y.set(ask('dot_import',dot.rok.get));
         [ y.war; warning(y.war) ]; 
         [ y.err; alert(y.err) ]; 
         info.fill('',y.html) 
@@ -222,8 +222,8 @@ menu m {type:'left', format:'f+', active:*
         if (has_skill('mš')) panel.display(1,'dt')
         obraz.display(0,'x'); obraz.display(1,i.par.typ);
         obraz.display(obraz.r2021,'r21'); obraz.enable(0,'r21'); obraz.display(0,'r21u');
-        dotaz.index= 'id'; dotaz.id= i.par.id; 
-        dotaz.Show(-2,0,0) 
+        dot.index= 'id'; dot.id= i.par.id; 
+        dot.Show(-2,0,0) 
       }
     }
     item {title:'[fa-forward] procházení ... s doplněním'       par:{typ:'d',id:'1'} 
@@ -232,24 +232,24 @@ menu m {type:'left', format:'f+', active:*
         if (has_skill('mš')) panel.display(1,'dt')
         obraz.display(0,'x'); obraz.display(1,i.par.typ);
         obraz.display(obraz.r2021,'r21'); obraz.enable(1,'r21');
-        dotaz.index= 'id'; dotaz.id= i.par.id; 
-        dotaz.Show(-2,0,0) 
+        dot.index= 'id'; dot.id= i.par.id; 
+        dot.Show(-2,0,0) 
       }
     }
-    item {title:'[fa-edit] doplnění roku 2017'       par:{typ:'2017'}} 
+    item {title:'[fa-edit] úpravy odpovědí zvoleného roku'       par:{typ:'2017'}} 
     func onclick (i:ezer) { var x: object, y: object
       clear(); mapa.close(1); 
       panel.display(2,'do'); 
       obraz.display(0,'x'); obraz.display(1,i.par.typ); obraz.display(0,'r21|r_21'); obraz.header(i);
       switch(i.par.typ) {
         case '2017': 
-          panel.display(1,'d7'); dotaz.rok= 2017; obraz.roky= 2017; d2017.Init(); 
+          panel.display(1,'d7'); /*dot.rok= 2017; obraz.roky= 2017;*/ d2017.Init(); 
           break;
         case 'r': 
-          x= php.dot_roky(); obraz.roky.selects(x.roky); obraz.roky= dotaz.rok; break;
+          x= php.dot_roky(); obraz.roky.selects(x.roky); obraz.roky= dot.rok; break;
         case '2': 
-          x= php.dot_prehled(dotaz.rok,{zdroj:'akce',par1:'rok'}); 
-          y= php.dot_prehled(dotaz.rok,{zdroj:'dotaz',par1:'rok'}); 
+          x= php.dot_prehled(dot.rok,{zdroj:'akce',par1:'rok'}); 
+          y= php.dot_prehled(dot.rok,{zdroj:'dot',par1:'rok'}); 
           obraz.fill('',`<table><tr><td>${y.html}</td><td>${x.html}</tr></table>`,' '); break;
         case 'v': 
           obraz.recond(); //obraz.rechoice(); 
@@ -276,15 +276,15 @@ menu m {type:'left', format:'f+', active:*
   }
 }
 func show_obraz(i) { // přes odkaz z PHP vygenerovaný voláním Spy
-  if (dotaz.index=='pg') dotaz.pg= i; else dotaz.id= i;
-  dotaz.Show(0,0,1); 
+  if (dot.index=='pg') dot.pg= i; else dot.id= i;
+  dot.Show(0,0,1); 
   tipy.Spy(); 
 }
 proc show_dotazy() {
   function('group',"group._fold(); return 1;",m.s);
   function('group',"group._fold(); return 1;",m.l);
 }
-use dotaz: form _dotaz [24,400,,] { tag:'dp' format:'n' }
+use dot: form _dot [24,400,,] { tag:'dp' format:'n' }
 use obraz: form _obraz [12,4,,]   { tag:'do' format:'n' }
 use tipy:  form _tipy  [24,467,,] { tag:'dt' format:'n' }
 use d2017:  form _d2017 [12,4,,] { tag:'d7' format:'n' }
@@ -324,15 +324,15 @@ form _obraz [,,700,50] {
   label nazor_zapsal [416,384,200,] {tag:'r21u'}
   button [350,380,,] {tag:'r21u', title:'[fa-save] Ulož]'
     func onclick() {
-      php.dot_nazory(2021,dotaz.id,
+      php.dot_nazory(2021,dot.id,
           {nazor_kurz:nazor_kurz,nazor_online:nazor_online,nazor_cas:nazor_cas,nazor_ok:nazor_ok});
       form.plain();
   }}
   // volba roku dotazníku
   select roky [100,60,100,] { tag:'x,r' title:'LK roku' value:'2021' format:'t'
     func onchanged() { 
-      dotaz.rok= this; 
-      dotaz.Init();
+      dot.rok= this; 
+      dot.Init();
   }}
   // výběrové podmínky
   label [0,40,80,] { tag:'x,v' title:'volba roků:' }
@@ -484,11 +484,11 @@ form _obraz [,,700,50] {
       cond= conc(cond,` AND (libilo RLIKE ${sub} OR vadilo RLIKE ${sub} OR vzkaz RLIKE ${sub})`); 
     }
     rechoice();
-    dotaz.dirty= 1;
+    dot.dirty= 1;
   }
   func rechoice() { var x:object
     x= php.dot_vyber({cond:cond}); 
-    dotaz.celkem= x.celkem;
+    dot.celkem= x.celkem;
     copy_by_name(x.r21,obraz);
     obraz.fill2('',x.html,'')
   }
@@ -513,8 +513,8 @@ form _obraz [,,700,50] {
   }
   proc append(x) { note.set(x) }
 }
-# -----------------------------------------------------------------------------------------==> dotaz
-form _dotaz [,,163,60] { style:'position:fixed;z-index:2' css:'parm shadow'
+# -------------------------------------------------------------------------------------------==> dot
+form _dot [,,163,60] { style:'position:fixed;z-index:2' css:'parm shadow'
   var rok=2021,   // rok dotazníku ... 2021
       kurz:object,
       back=0,     // návrat na poslední kliknuté (ne odkazem)
@@ -534,7 +534,7 @@ form _dotaz [,,163,60] { style:'position:fixed;z-index:2' css:'parm shadow'
   func Show(offset,go_back,even) { var y:object
     clear();
     y= php.dot_show(vyber ? 0 : rok, index, index=='page' ? pg : id, offset,
-        vyber ? obraz.cond : 1, dotaz.dirty, rok);
+        vyber ? obraz.cond : 1, dot.dirty, rok);
     copy_by_name(y.nazory,obraz);
     if (!y.none || even) {
       pg= y.page; id= y.id; 
@@ -542,7 +542,7 @@ form _dotaz [,,163,60] { style:'position:fixed;z-index:2' css:'parm shadow'
       if (go_back) back= index=='page' ? pg : id; 
       obraz.fill2('',' ',' ');
       obraz.fill2('',y.html,y.jpg);
-      dotaz.dirty= 0;
+      dot.dirty= 0;
       tipy.Spy();
     }
   }
@@ -552,7 +552,7 @@ form _dotaz [,,163,60] { style:'position:fixed;z-index:2' css:'parm shadow'
   }
   label celkem [10,4,49,] { style:'color:white' }
   check vyber [112,1,49,] { title:'výběr' value:'1' 
-    proc onchange() { dotaz.dirty.set(1); back.set(0); Show(0,0,0) }
+    proc onchange() { dot.dirty.set(1); back.set(0); Show(0,0,0) }
   }
   button [9,32,,] { title:"[fa-step-backward]" help:'první'     proc onclick() { Show(-2,1,0); }}
   button [29,32,,] { title:"[fa-caret-left]" help:'předchozí'   proc onclick() { Show(-1,1,0); }}
@@ -565,22 +565,22 @@ form _dotaz [,,163,60] { style:'position:fixed;z-index:2' css:'parm shadow'
 form _tipy [,,163,46] { style:'position:fixed;z-index:2' //css:'parm shadow'
 //  proc Spy() { var y:object
 //    clear;
-//    [ dotaz.kurz.get | dotaz.kurz.set(object('rok',dotaz.rok.get)) ];
-//    dotaz.kurz.set(object('sex',sex.get,'vek',vek.get,'det',det.get,'man',man.get,'nov',nov.get),'filtr');
-//    dotaz.kurz.set(ask('dot_spy',dotaz.kurz.get,dotaz.rok.get,dotaz.index.get,
-//        cconc(eq(dotaz.index.get,'page'),dotaz.pg.get,dotaz.id.get),dotaz.back.get));
-//    shody.set(dotaz.kurz.get('html'));
+//    [ dot.kurz.get | dot.kurz.set(object('rok',dot.rok.get)) ];
+//    dot.kurz.set(object('sex',sex.get,'vek',vek.get,'det',det.get,'man',man.get,'nov',nov.get),'filtr');
+//    dot.kurz.set(ask('dot_spy',dot.kurz.get,dot.rok.get,dot.index.get,
+//        cconc(eq(dot.index.get,'page'),dot.pg.get,dot.id.get),dot.back.get));
+//    shody.set(dot.kurz.get('html'));
 //  }
   func Spy() { 
     if (!has_skill('mš')) return;
     clear();
-    shody= php.dot_spy(dotaz.rok,dotaz.id);
-    //    if (!dotaz.kurz) 
-//      dotaz.kurz= {rok:dotaz.rok};
-//    dotaz.kurz.filtr= {sex:sex,vek:vek,det:det,man:man,nov:nov};
-//    dotaz.kurz= php.dot_spy(dotaz.kurz,dotaz.rok,dotaz.index,
-//        dotaz.index=='page'?dotaz.pg:dotaz.id,dotaz.back);
-//    shody= dotaz.kurz.html;
+    shody= php.dot_spy(dot.rok,dot.id);
+    //    if (!dot.kurz) 
+//      dot.kurz= {rok:dot.rok};
+//    dot.kurz.filtr= {sex:sex,vek:vek,det:det,man:man,nov:nov};
+//    dot.kurz= php.dot_spy(dot.kurz,dot.rok,dot.index,
+//        dot.index=='page'?dot.pg:dot.id,dot.back);
+//    shody= dot.kurz.html;
   }
 //  check sex  [8,19,50,] { value:'1' format:'t' skill:'m|m' } 
 //  label  [8,9,50,] { title:'sex' skill:'m|m' }
@@ -597,30 +597,25 @@ form _tipy [,,163,46] { style:'position:fixed;z-index:2' //css:'parm shadow'
 }
 # -----------------------------------------------------------------------------------------==> d2017
 form _d2017 [,,163,400] { 
-  const w=750, a= 100, o= 130, j= 160, h= 230, s=270, t=450, p= 555
+  const w=750, a= 100, o= 126, j= 160, h= 230, s=270, t=446, p= 555
   var id_min:number, id_max:number
   view d: table dotaz
   func Init() { 
-    id_min= php.select('id','dotaz',`dotaznik=2017 ORDER BY id LIMIT 1`);
-    id_max= php.select('id','dotaz',`dotaznik=2017 ORDER BY id DESC LIMIT 1`);
+    id_min= php.select('id','dotaz',`dotaznik=${dot.rok} ORDER BY id LIMIT 1`);
+    id_max= php.select('id','dotaz',`dotaznik=${dot.rok} ORDER BY id DESC LIMIT 1`);
     id= id_min;
     Show(0);
   }
   func Show(ofset) { var y:object
-//    switch (ofset) { 
-//      case  2: id= id_max; break;
-//      case  1: id= id<id_max ? id+1 : id; break;
-//      case  0: break;
-//      case -1: id= id>id_min ? id-1 : id; break;
-//      case -2: id= id_min; break;
-//    }
-    y= php.dot_show(2017,'id',id,ofset,1,0,'2017');
+    editujeme= `upravujeme rok <big><b>${dot.rok}</b></big>`;
+    y= php.dot_show(dot.rok,'id',id,ofset,1,0,dot.rok);
     id= y.id;
     obraz.fill2('',y.html,y.jpg);
-    form.load(0,`dotaznik=2017 AND id=${id}`);
+    form.load(0,`dotaznik=${dot.rok} AND id=${id}`);
   }
   // pohyb
-  label [w+67,23,229,36] { css:'parm' }
+  label [w+67,10,229,48] { css:'parm' }
+  label editujeme [w+76,15,200,16] { style:'color:white'}
   button [w+76,32,,] { title:"[fa-step-backward]" help:'první'    proc onclick() { Show(-2); }}
   button [w+96,32,,] { title:"[fa-caret-left]" help:'předchozí'   proc onclick() { Show(-1); }}
   field id [w+114,32,25,] { format:'rt'                           proc onchanged() { Show(0); }} 
@@ -638,52 +633,50 @@ form _d2017 [,,163,400] {
   field [w+220,a,20,] {title:'^manžel.', format:'cf', data:d.manzel}
   field [w+281,a,20,] {title:'^poprvé', format:'cf', data:d.novic}
   // odkud
-  label [w+38,o+4,49,15] {title:'Odkud ...'}
-  check [w+90,o,20,]  {data:d.od_pratele}
-  check [w+115,o,20,] {data:d.od_partner} 
-  check [w+140,o,20,] {data:d.od_pribuzni} 
-  check [w+165,o,20,] {data:d.od_pecoun} 
-  check [w+190,o,20,] {data:d.od_inzerce} 
-  check [w+215,o,20,] {data:d.od_chlapi}
-  check [w+240,o,20,] {data:d.od_ymca}
+  label [w+38,o+8,49,15] {title:'Odkud ...'}
+  check [w+90,o,20,]  {title:'přa', data:d.od_pratele}
+  check [w+115,o,20,] {title:'par', data:d.od_partner} 
+  check [w+140,o,20,] {title:'pří', data:d.od_pribuzni} 
+  check [w+165,o,20,] {title:'peč', data:d.od_pecoun} 
+  check [w+190,o,20,] {title:'inz', data:d.od_inzerce} 
+  check [w+215,o,20,] {title:'chl', data:d.od_chlapi}
+  check [w+240,o,20,] {title:'ymc', data:d.od_ymca}
   check oj [w+265,o,20,] {data:d.od_jine, format:'n'}
-  field [w+265,o,46,] {data:d.od_jine_text
+  field [w+265,o+4,46,] {data:d.od_jine_text
     func onchange() { oj= this ? 1 : 0; oj.change(); }} 
   // protože
-  label [w+27,j+4,61,15] {title:'Přihláška ...'}
-  check [w+90,j,20,] {data:d.proc_zlepsit} 
-  check [w+115,j,20,] {data:d.proc_krize}
-  check [w+140,j,20,] {data:d.proc_opak}
-  check jj [w+165,j,20,] {data:d.proc_jine, format:'n'}
-  field [w+165,j,147,] {data:d.proc_jine_text
+  label [w+27,j+11,61,15] {title:'Přihláška ...'}
+  check [w+90,j+5,27,] {data:d.proc_zlepsit} 
+  check [w+115,j+5,27,] {data:d.proc_krize}
+  check [w+140,j+5,27,] {data:d.proc_opak}
+  check jj [w+165,j,27,] {data:d.proc_jine, format:'n'}
+  field [w+165,j+7,147,] {data:d.proc_jine_text
     func onchange() { jj= this ? 1 : 0; jj.change(); }} 
-  
-  
   // hodnocení
   label [w+32,h+4,55,15] {title:'Hodnocení'}
-  field [w+90,h,20,] {title:'^p', format:'cf', data:d.prednasky}
-  field [w+115,h,20,] {title:'^s', format:'cf', data:d.skupinky}
-  field [w+140,h,20,] {title:'^d', format:'cf', data:d.duchovno}
-  field [w+165,h,20,] {title:'^u', format:'cf', data:d.ubytovani}
-  field [w+190,h,20,] {title:'^s', format:'cf', data:d.strava}
-  field [w+215,h,20,] {title:'^p', format:'cf', data:d.pecedeti}
-  field [w+240,h,20,] {title:'^m', format:'cf', data:d.motto}
-  field [w+265,h,20,] {title:'^m', format:'cf', data:d.maturita}
-  field [w+290,h,20,] {title:'^h', format:'cf', data:d.hudba}
+  field [w+ 90,h,20,] {title:'^pře', format:'cf', data:d.prednasky}
+  field [w+115,h,20,] {title:'^sku', format:'cf', data:d.skupinky}
+  field [w+140,h,20,] {title:'^duc', format:'cf', data:d.duchovno}
+  field [w+165,h,20,] {title:'^uby', format:'cf', data:d.ubytovani}
+  field [w+190,h,20,] {title:'^str', format:'cf', data:d.strava}
+  field [w+215,h,20,] {title:'^peč', format:'cf', data:d.pecedeti}
+  field [w+240,h,20,] {title:'^mot', format:'cf', data:d.motto}
+  field [w+265,h,20,] {title:'^mat', format:'cf', data:d.maturita}
+  field [w+290,h,20,] {title:'^hud', format:'cf', data:d.hudba}
   // slovně
   edit [w+90,s,220,40] {title:'Líbilo se mi', data:d.libilo}
   edit [w+90,s+45,220,40] {title:'Vadilo mi', data:d.vadilo}
   edit [w+90,s+90,220,40] {title:'Vzkaz týmu', data:d.vzkaz}
   // témata
-  label [w+47,t+4,39,15] {title:'Témata'}
-  check [w+90,t,20,]  {data:d.tema_male}
-  check [w+115,t,20,] {data:d.tema_dosp} 
-  check [w+140,t,20,] {data:d.tema_matka} 
-  check [w+165,t,20,] {data:d.tema_otec} 
-  check [w+190,t,20,] {data:d.tema_mezigen} 
-  check [w+215,t,20,] {data:d.tema_duchovni}
-  check tj [w+215,t,20,] {data:d.tema_jine, format:'n'}
-  field [w+240,t,67,] {data:d.tema_jine_text
+  label [w+47,t+8,39,15] {title:'Témata'}
+  check [w+90,t,20,]  {title:'mal', data:d.tema_male}
+  check [w+115,t,20,] {title:'dos', data:d.tema_dosp} 
+  check [w+140,t,20,] {title:'mat', data:d.tema_matka} 
+  check [w+165,t,20,] {title:'ote', data:d.tema_otec} 
+  check [w+190,t,20,] {title:'mez', data:d.tema_mezigen} 
+  check [w+215,t,20,] {title:'duc', data:d.tema_duchovni}
+  check tj [w+240,t,20,] {data:d.tema_jine, format:'n'}
+  field [w+240,t+4,67,] {data:d.tema_jine_text
     func onchange() { tj= this ? 1 : 0; tj.change(); }} 
   // přínos
   field [w+90,p,20,] {title:'Přínos ', format:'cf', data:d.prinos}
