@@ -603,17 +603,19 @@ form _d2017 [,,163,400] {
   func Init() { 
     id_min= php.select('id','dotaz',`dotaznik=2017 ORDER BY id LIMIT 1`);
     id_max= php.select('id','dotaz',`dotaznik=2017 ORDER BY id DESC LIMIT 1`);
-    id.set(id_min);
+    id= id_min;
     Show(0);
   }
   func Show(ofset) { var y:object
-    switch (ofset) { 
-      case  2: id= id_max; break;
-      case  1: id= id<id_max ? id+1 : id; break;
-      case -1: id= id>id_min ? id-1 : id; break;
-      case -2: id= id_min; break;
-    }
-    y= php.dot_show(0,'id',id,0,'dotaznik IN (0,2017)',0,'2017');
+//    switch (ofset) { 
+//      case  2: id= id_max; break;
+//      case  1: id= id<id_max ? id+1 : id; break;
+//      case  0: break;
+//      case -1: id= id>id_min ? id-1 : id; break;
+//      case -2: id= id_min; break;
+//    }
+    y= php.dot_show(2017,'id',id,ofset,1,0,'2017');
+    id= y.id;
     obraz.fill2('',y.html,y.jpg);
     form.load(0,`dotaznik=2017 AND id=${id}`);
   }
