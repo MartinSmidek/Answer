@@ -249,7 +249,7 @@ menu m {type:'left', format:'f+', active:*
           x= php.dot_roky(); obraz.roky.selects(x.roky); obraz.roky= dot.rok; break;
         case '2': 
           x= php.dot_prehled(dot.rok,{zdroj:'akce',par1:'rok'}); 
-          y= php.dot_prehled(dot.rok,{zdroj:'dot',par1:'rok'}); 
+          y= php.dot_prehled(dot.rok,{zdroj:'dotaz',par1:'rok'}); 
           obraz.fill('',`<table><tr><td>${y.html}</td><td>${x.html}</tr></table>`,' '); break;
         case 'v': 
           obraz.recond(); //obraz.rechoice(); 
@@ -646,9 +646,9 @@ form _d2017 [,,163,400] {
     func onchange() { oj= this ? 1 : 0; oj.change(); }} 
   // protože
   label [w+27,j+11,61,15] {title:'Přihláška ...'}
-  check [w+90,j+5,27,] {data:d.proc_zlepsit} 
-  check [w+115,j+5,27,] {data:d.proc_krize}
-  check [w+140,j+5,27,] {data:d.proc_opak}
+  check [w+90,j+5,27,] {title:'lep', data:d.proc_zlepsit} 
+  check [w+115,j+5,27,] {title:'kri', data:d.proc_krize}
+  check [w+140,j+5,27,] {title:'opa', data:d.proc_opak}
   check jj [w+165,j,27,] {data:d.proc_jine, format:'n'}
   field [w+165,j+7,147,] {data:d.proc_jine_text
     func onchange() { jj= this ? 1 : 0; jj.change(); }} 
