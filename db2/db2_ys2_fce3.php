@@ -1485,6 +1485,7 @@ function dot_roky () { trace();
 #   par.zdroj= akce|dotaz
 #   par.par1= rok|ida určuje význam prvního parametru
 function dot_prehled ($rok_or_akce,$par,$title='',$vypis='',$export=0,$hnizdo=0) { trace();
+  debug($par);
   $y= (object)array('html'=>'');
   if ( $par->par1=='rok') {
     $rok= $rok_or_akce;
@@ -1501,6 +1502,7 @@ function dot_prehled ($rok_or_akce,$par,$title='',$vypis='',$export=0,$hnizdo=0)
   $man_s= $man_n= $man_o= array(0,0,0,0,0,0);
   switch ($par->zdroj) {
   case 'akce':
+    $th_color= '';
     $AND_hnizdo= $hnizdo ? "AND p.hnizdo=$hnizdo" : ''; 
     $nadpis= "<h3>Podle údajů v Answeru</h3>";
     $rp= pdo_qry("
@@ -1529,7 +1531,7 @@ function dot_prehled ($rok_or_akce,$par,$title='',$vypis='',$export=0,$hnizdo=0)
             JOIN spolu AS s USING(id_pobyt)",
           "a.druh=1 AND a.spec=0 AND zruseno=0 
             AND s.id_osoba=$ido AND i0_rodina=$idr AND p.id_akce!=$akce");
-                                                  display($ucasti);
+//                                                  display($ucasti);
       // stáří
       foreach ($vek_x as $ix=>$x) {
         if ( $vek>=$x) {
@@ -1562,22 +1564,23 @@ function dot_prehled ($rok_or_akce,$par,$title='',$vypis='',$export=0,$hnizdo=0)
     }
     break;
   case 'dotaz':
+    $th_color= " style='background:#fb6'";
     $nadpis= "<h3>Podle odevzdaných dotazníků</h3>";
     $rp= pdo_qry("
       SELECT manzel,vek,sex,IF(novic,0,1)
       FROM dotaz
-      WHERE dotaznik=$rok
+      WHERE dotaznik=$rok AND duplicita='' 
       ");
     while ( $rp && (list($man,$vek,$sex,$ucasti)= pdo_fetch_array($rp)) ) {
       $no++;
       // stáří
       foreach ($vek_x as $ix=>$x) {
         if ( $vek>=$x) {
-          if ( $sex==1 ) {
+          if ( $sex==0 ) {
             $vek_m[$ix]++;
             $n_m++;
           }
-          else {
+          elseif ( $sex==1 ) {
             $vek_z[$ix]++;
             $n_z++;
           }
@@ -1606,56 +1609,72 @@ function dot_prehled ($rok_or_akce,$par,$title='',$vypis='',$export=0,$hnizdo=0)
     break;
   }
 //                                              debug($man_s,"manželství");
-//                                              debug($man_o,"manželství O");
-//                                              debug($man_n,"manželství N");
+                                              debug($man_o,"manželství O");
+                                              debug($man_n,"manželství N");
 //                                              debug($vek_m,"věk muže $n_m");
 //                                              debug($vek_z,"věk ženy $n_z");
   // tabulka trvání manželství
   if ($no) {
     $tab= "<h3>Přehled délky manželství</h3>";
     $td= "td align='right'";
-    $th= "th align='right'";
+    $th= "th align='right'$th_color";
+    $span= 2;
+    if (isset($par->know)) {
+      $th_n= "<$th>%</th>";
+      $th_o= "<$th>%</th>";
+      $th_c= "<$th></th>";
+      $span= 3;
+    }
     $tab.= "<table class='stat'>";
     $tab.= "<tr>
-        <th></th>
-        <th colspan=2>celkový počet</th>
-        <th colspan=2>noví účastníci</th>
-        <th colspan=2>opakující se</th>
+        <$th></th>
+        <$th colspan=2>celkový počet</th>
+        <$th colspan=$span>noví účastníci</th>
+        <$th colspan=$span>opakující se</th>
       </tr></tr>
-        <th>délka manželství</th>
+        <$th>délka manželství</th>
         <$th>počet</th>
         <$th>%</th>
         <$th>počet</hd>
-        <$th>%</th>
+        <$th>%</th>$th_n
         <$th>počet</th>
-        <$th>%</th>
+        <$th>%</th>$th_o
       </tr>";
     // kategorie
     for ($i= count($man_s)-2; $i>=0; $i--) {
       $s= $man_s[$i]; $n= $man_n[$i]; $o= $man_o[$i]; 
-      $ps= number_format(100*$s/$no,1);
-      $pn= $n_mn ? number_format(100*$n/$n_mn,1) : '-';
-      $po= number_format(100*$o/$n_mo,1);
+      $ps= number_format(100*$s/$no,0);
+      $pn= $n_mn ? number_format(100*$n/$n_mn,0) : '-';
+      $po= number_format(100*$o/$n_mo,0);
       $x= $i==count($man_s)-1 ? "?" : "{$vek_x[$i]}-".($i==0 ? '...' : $vek_x[$i-1]-1).' let';
       $x1= $man_x[$i]; $x2= $i==0 ? '...' : $man_x[$i-1]-1;
+      $td_n= $td_o= '';
+      if (isset($par->know)) {
+        $x_n= $par->know->man_n->$i;
+        $x_n= $n ? number_format(100*$x_n/$n) : '-';
+        $x_o= $par->know->man_o->$i;
+        $x_o= $o ? number_format(100*$x_o/$o) : '-';
+        $td_n= "<$th>$x_n%</th>";
+        $td_o= "<$th>$x_o%</th>";
+      }
       $tab.= "<tr>
-          <th>$x1-$x2 let</th>
+          <$th>$x1-$x2 let</th>
           <$td>$s</td>
           <$td>$ps %</td>
           <$td>$n</td>
-          <$td>$pn %</td>
+          <$td>$pn %</td>$td_n
           <$td>$o</td>
-          <$td>$po %</td>
+          <$td>$po %</td>$td_o
         </tr>";
     }
     $tab.= "<tr>
-        <th>celkem</th>
+        <$th>celkem</th>
         <$th>$no</th>
         <$th></th>
         <$th>$n_mn</th>
-        <$th></th>
+        <$th></th>$th_c
         <$th>$n_mo</th>
-        <th></th>
+        <$th></th>$th_c
       </tr>";
     $tab.= "</table>";
   }
@@ -1663,43 +1682,61 @@ function dot_prehled ($rok_or_akce,$par,$title='',$vypis='',$export=0,$hnizdo=0)
   if ($no) {
     $tab.= "<h3>Přehled stáří účastníků</h3>";
     $td= "td align='right'";
-    $th= "th align='right'";
+    $th= "th align='right'$th_color";
+    $th_m= $th_z= $th_c= '';
+    $span= 2;
+    if (isset($par->know)) {
+      $th_m= "<$th>%</th>";
+      $th_z= "<$th>%</th>";
+      $th_c= "<$th></th>";
+      $span= 3;
+    }
     $tab.= "<table class='stat'>";
     $tab.= "<tr>
-        <th></th>
-        <th colspan=2>muži</th>
-        <th colspan=2>ženy</th>
+        <th$th_color></th>
+        <th colspan=$span$th_color>muži</th>
+        <th colspan=$span$th_color>ženy</th>
       </tr></tr>
-        <th>věkové kategorie</th>
+        <th$th_color>věkové kategorie</th>
         <$th>počet</th>
-        <$th>%</th>
+        <$th>%</th>$th_m
         <$th>počet</hd>
-        <$th>%</th>
+        <$th>%</th>$th_z
       </tr>";
     // kategorie
     for ($i= count($vek_x)-1; $i>=0; $i--) {
       $m= $vek_m[$i]; $z= $vek_z[$i]; 
-      $pm= number_format(100*$m/$n_m,1);
-      $pz= number_format(100*$z/$n_z,1);
+      $pm= number_format(100*$m/$n_m,0);
+      $pz= number_format(100*$z/$n_z,0);
       $x= $i==count($vek_x)-1 ? "?" : "{$vek_x[$i]}-".($i==0 ? '...' : $vek_x[$i-1]-1).' let';
+      $td_m= $td_z= '';
+      if (isset($par->know)) {
+        $x_m= $par->know->muz->$i;
+        $x_m= $m ? number_format(100*$x_m/$m) : '-';
+        $x_z= $par->know->zena->$i;
+        $x_z= $m ? number_format(100*$x_z/$z) : '-';
+        $td_m= "<$th>$x_m%</th>";
+        $td_z= "<$th>$x_z%</th>";
+      }
       $tab.= "<tr>
-          <th>$x</th>
+          <th$th_color>$x</th>
           <$td>$m</td>
-          <$td>$pm %</td>
+          <$td>$pm %</td>$td_m
           <$td>$z</td>
-          <$td>$pz %</td>
+          <$td>$pz %</td>$td_z
         </tr>";
     }
     $tab.= "<tr>
-        <th>celkem</th>
+        <th$th_color>celkem</th>
         <$th>$n_m</th>
-        <$th></th>
+        <$th></th>$th_c
         <$th>$n_z</th>
-        <$th></th>
+        <$th></th>$th_c
       </tr>";
     $tab.= "</table>";
   }
   $y->html.= "$nadpis$tab"; 
+  $y->know= (object)array('muz'=>$vek_m,'zena'=>$vek_z,'man_o'=>$man_o,'man_n'=>$man_n);
   return $y;
 }
 # ------------------------------------------------------------------------------------------ dot spy
@@ -1838,7 +1875,7 @@ function dot_spy ($rok,$id) {  //($kurz,$dotaznik,$clmn,$pg,$back) {
         $dpa[$shod]= array();
         $ip= $o->sex ? $i-1 : $i+1;
         $p= is_array($kurz->data) ? $kurz->data[$ip] : $kurz->data->$ip;
-        $rp= pdo_qry("SELECT $clmn FROM dotaz WHERE dotaznik={$kurz->rok}
+        $rp= pdo_qry("SELECT $clmn FROM dotaz WHERE dotaznik={$kurz->rok} AND duplicita='' 
             AND hnizdo=$p->nest
             AND sex=$p->sex 
             AND ABS(vek-$p->vek)<=1 
@@ -1940,7 +1977,7 @@ function dot_spy_data ($rok) {
   $max_diff= 2; // maximální odchylka
   $max_n= 0; $n= 0; // omezení testování
   $rd= pdo_qry("SELECT id,sex,vek,deti,manzel,novic,IF(hnizdo,hnizdo,0) 
-      FROM dotaz WHERE dotaznik=$rok ORDER BY id");
+      FROM dotaz WHERE dotaznik=$rok AND duplicita='' ORDER BY id");
   while ($rd && list($id,$sex,$vek,$deti,$manz,$novic,$hnizdo)= pdo_fetch_row($rd)) {
     $n++;
     if ( $max_n && $n>$max_n ) break;
@@ -2011,7 +2048,7 @@ function dot_show ($dotaznik,$clmn,$pg,$offset,$cond,$dirty,$rok) { trace();
   $y= (object)array('html'=>'není zvolen žádný dotazník ','err'=>'','war'=>'','jpg'=>'','none'=>1);
   $tab_class= 'stat dot';
   // posun v dotazech
-  $cond1= $dotaznik ? "dotaznik=$dotaznik AND " : '';
+  $cond1= $dotaznik ? "dotaznik=$dotaznik AND duplicita='' AND " : '';
   $rok_pg= "dotaznik,$clmn";
   switch ($offset) {
   case -2: // začátek
@@ -2109,7 +2146,11 @@ function dot_show ($dotaznik,$clmn,$pg,$offset,$cond,$dirty,$rok) { trace();
     $hnizda= explode(',',$hnizda);
     $hnizdo= $x->hnizdo ? " &nbsp;  hnízdo={$hnizda[$x->hnizdo-1]}" : '';
   }
-  $tab.= "<p><b>PDF={$x->page}  &nbsp;  XLS={$x->id} &nbsp; rok=$rok $hnizdo</b></p>";
+  // zobrazení duplicitních id
+  if ($x->duplicita) {
+    $duplicity= "<span style='color:red'> &nbsp; duplicita=$x->duplicita</span>";
+  }
+  $tab.= "<p><b>PDF={$x->page}  &nbsp;  XLS={$x->id} &nbsp; rok=$rok $hnizdo$duplicity</b></p>";
   foreach ($tmpl as $row => $clmns) {
     switch ($row) {
     case 'Statistika':
@@ -2225,7 +2266,7 @@ function dot_vyber ($par) { trace();
   $y= (object)array('html'=>'','err'=>'','war'=>'','jpg'=>'','celkem'=>0);
   $cond= isset($par->cond) ? $par->cond : 1;
   $cond_roky= preg_match("/(dotaznik IN \([\d,]+\))/",$cond,$m);
-  $celkem_roky= select('COUNT(*)','dotaz',$m[0]);
+  $celkem_roky= select('COUNT(*)','dotaz',"{$m[0]} AND duplicita='' ");
   $tab_class= 'stat dot';
 //  $vyber= $rok ? "dotaznik=$rok " : '1';
 //  $GROUP= $rok ? "GROUP BY dotaznik" : '';
@@ -2322,7 +2363,7 @@ function dot_vyber ($par) { trace();
         break 2;        
       }
       $nh= select('SUM(IF(hnizdo=1,1,0)),SUM(IF(hnizdo=2,1,0)),SUM(IF(hnizdo=3,1,0))',
-          'dotaz','dotaznik IN (0,2021)');
+          'dotaz',"dotaznik IN (0,2021) AND duplicita='' ");
       $r1= "<th>$row</th><td class='vert'><p>nic nevadí</p></td>";
       $r2= "<td></td><td>{$x->nazor_ok}%</td>";
       foreach ($clmns as $name=>$val) {
@@ -2530,7 +2571,7 @@ function dot_import ($rok) { trace();
     if ( $tab ) {
       $n= 0;
       // zjistíme, zda se zvýšil počet dotazníků - jinak odmítneme import
-      $n_old= select('COUNT(*)','dotaz',"dotaznik=$rok");
+      $n_old= select('COUNT(*)','dotaz',"dotaznik=$rok"); // včetně duplicit
       $n_new= count($tab->rows);
       if ($n_old==$n_new) {
         $y->html= "Není žádný nový dotazník z roku $rok";

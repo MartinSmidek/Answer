@@ -236,6 +236,21 @@ menu m {type:'left', format:'f+', active:*
         dot.Show(-2,0,0) 
       }
     }
+    item {title:'[fa-forward] procházení duplicit roku 2021'    par:{typ:'d',id:'1'} 
+      func onclick (i:ezer) { 
+        clear(); mapa.close(1); show_dotazy(); panel.display(2,'dp|do'); obraz.header(i);
+        if (has_skill('mš')) panel.display(1,'dt')
+        obraz.display(0,'x'); obraz.display(1,i.par.typ);
+        obraz.display(obraz.r2021,'r21'); obraz.enable(0,'r21'); obraz.display(0,'r21u');
+        dot.index= 'id'; dot.id= i.par.id; 
+        obraz.cond= `dotaznik IN (0,2021) AND FIND_IN_SET(id,(
+  SELECT GROUP_CONCAT(duplicita)
+  FROM dotaz
+  WHERE dotaznik=2021 AND duplicita!=''
+))`;
+        dot.Show(-2,0,0) 
+      }
+    }
     item {title:'[fa-edit] úpravy odpovědí zvoleného roku'       par:{typ:'2017'}} 
     func onclick (i:ezer) { var x: object, y: object
       clear(); mapa.close(1); 
@@ -248,8 +263,8 @@ menu m {type:'left', format:'f+', active:*
         case 'r': 
           x= php.dot_roky(); obraz.roky.selects(x.roky); obraz.roky= dot.rok; break;
         case '2': 
-          x= php.dot_prehled(dot.rok,{zdroj:'akce',par1:'rok'}); 
           y= php.dot_prehled(dot.rok,{zdroj:'dotaz',par1:'rok'}); 
+          x= php.dot_prehled(dot.rok,{zdroj:'akce',par1:'rok',know:y.know}); 
           obraz.fill('',`<table><tr><td>${y.html}</td><td>${x.html}</tr></table>`,' '); break;
         case 'v': 
           obraz.recond(); //obraz.rechoice(); 
@@ -284,7 +299,7 @@ proc show_dotazy() {
   function('group',"group._fold(); return 1;",m.s);
   function('group',"group._fold(); return 1;",m.l);
 }
-use dot: form _dot [24,400,,] { tag:'dp' format:'n' }
+use dot: form _dot [10,36,,] { tag:'dp' format:'n' }
 use obraz: form _obraz [12,4,,]   { tag:'do' format:'n' }
 use tipy:  form _tipy  [24,467,,] { tag:'dt' format:'n' }
 use d2017:  form _d2017 [12,4,,] { tag:'d7' format:'n' }
@@ -450,7 +465,7 @@ form _obraz [,,700,50] {
       hnizdo_1= 0; hnizdo_2= 0; hnizdo_3= 0; 
     }
     // sestavení dotazu
-    cond= conc(`dotaznik IN (${roky})`,
+    cond= conc(`dotaznik IN (${roky}) AND duplicita='' `,
       hnizda ? ` AND hnizdo IN (99${hnizda})` :'',
       x_sex  ? ` AND sex=${r_sex}` : '',
       x_vek  ? ` AND vek BETWEEN ${r_vek}` : '',
@@ -514,7 +529,7 @@ form _obraz [,,700,50] {
   proc append(x) { note.set(x) }
 }
 # -------------------------------------------------------------------------------------------==> dot
-form _dot [,,163,60] { style:'position:fixed;z-index:2' css:'parm shadow'
+form _dot [,,163,60] { css:'parm shadow' style:'z-index:2'  //style:'position:fixed;z-index:2' 
   var rok=2021,   // rok dotazníku ... 2021
       kurz:object,
       back=0,     // návrat na poslední kliknuté (ne odkazem)
@@ -601,8 +616,8 @@ form _d2017 [,,163,400] {
   var id_min:number, id_max:number
   view d: table dotaz
   func Init() { 
-    id_min= php.select('id','dotaz',`dotaznik=${dot.rok} ORDER BY id LIMIT 1`);
-    id_max= php.select('id','dotaz',`dotaznik=${dot.rok} ORDER BY id DESC LIMIT 1`);
+    id_min= php.select('id','dotaz',`dotaznik=${dot.rok} AND duplicita='' ORDER BY id LIMIT 1`);
+    id_max= php.select('id','dotaz',`dotaznik=${dot.rok} AND duplicita='' ORDER BY id DESC LIMIT 1`);
     id= id_min;
     Show(0);
   }
@@ -684,6 +699,7 @@ form _d2017 [,,163,400] {
   // struktura tabulky DOTAZ
   table dotaz { key_id:'id_dotaz'
     number id
+    text duplicita // seznam duplicitních klíčů které budou vynechány ze statistik
     number sex
     number vek
     number deti
