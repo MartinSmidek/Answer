@@ -255,7 +255,7 @@ form _vyber {
 # def = správa mail-listů
 # snd = rozesílání
 var sql_dirty: number  // nuluje se fcí dirty
-form _gsql {
+form _gsql { style:'z-index:1'
   const t_butt = 5; l_butt = 530
   const t_akce = 60; l_ne_akce = 380
   view g: table mailist
@@ -312,7 +312,7 @@ form _gsql {
   check ano_akce [10,t_akce+30,150,] { tag:'def', title:'jen některé typy akcí?',
     value:'0', format:'t'
     proc onchange() { ano_akces.display(this.get); ano_akces.selected('clear'); dirty; akce_show }}
-  browse ano_akces [230,t_akce+30,,] { rows:9,
+  browse ano_akces [230,t_akce+30,,] { rows:9
     view c: table _cis
     show id_cis { data:c.id_cis }
     show druh {data:c.data}
@@ -340,7 +340,7 @@ form _gsql {
       L_ano.part(last_ano.get).part('kdy').change;
       akce_show
   } }
-  list L_ano [10,t_akce+90,215,500] { tag:'def', rows:22
+  list L_ano [10,t_akce+90,215,130] { tag:'def', rows:22
     select kdy [0,4,120,] { format:'t',
       proc onchanged() { echo('kdy=',this.key);
       [ rok.display(0); rokem.display(0); vzor.display(0);
@@ -401,7 +401,7 @@ form _gsql {
       L_ne.part(last_ne.get).part('kdy').change;
       akce_show
   } }
-  list L_ne [l_ne_akce+10,t_akce+90,215,500] { tag:'def', rows:22
+  list L_ne [l_ne_akce+10,t_akce+90,215,130] { tag:'def', rows:22
     select kdy [0,4,120,] { format:'t',
       proc onchanged() {
       [ rok.display(0); rokem.display(0); vzor.display(0);
