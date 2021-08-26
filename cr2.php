@@ -62,6 +62,15 @@
   $k= substr($kernel,4,1)=='3' ? '3' : '';
   $app_js= array("db2/ds_fce$k.js","db2/db2_fce$k.js");
   
+  // fakultativní přidání Hightcharts
+  if (isset($_GET['hightcharts'])) {
+    $code= "../ezer3.1/client/licensed/highcharts/code";
+    $app_js[]= "$code/highcharts.js";
+    $app_js[]= "$code/highcharts-more.js";
+    $app_js[]= "$code/modules/exporting.js";
+    $app_js[]= "$code/modules/export-data.js";
+  }
+  
   $app_css= [ 
       "db2/db2.css.php=skin",
       "/$kernel/client/wiki.css"

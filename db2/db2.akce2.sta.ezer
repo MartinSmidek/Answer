@@ -265,7 +265,9 @@ menu m {type:'left', format:'f+', active:*
         case '2': 
           y= php.dot_prehled(dot.rok,{zdroj:'dotaz',par1:'rok'}); 
           x= php.dot_prehled(dot.rok,{zdroj:'akce',par1:'rok',know:y.know}); 
-          obraz.fill('',`<table><tr><td>${y.html}</td><td>${x.html}</tr></table>`,' '); break;
+          obraz.text= `<table style='z-index:2;position:absolute'><tr>
+                  <td>${y.html}</td><td>${x.html}</tr></table>`; 
+          break;
         case 'v': 
           obraz.recond(); //obraz.rechoice(); 
           break;
@@ -323,11 +325,11 @@ use info: form right   [12,4,,]   { tag:'i'
 # -----------------------------------------------------------------------------------------==> obraz
 form _obraz [,,700,50] { 
   const D=320
-  label text [0,28,700,700] 
   label text2 [0,85,320,800] { style:"overflow:auto"  }
   label img [D+2,28,485,700] { title:'' }
   label head [0,0,800,30]  { title:'' }
   label note [0,508,320,200] { style:"overflow:auto" }
+  label text [0,28,700,700] 
   // extrakce informace spec. pro hnízda
   field nazor_kurz   [350,260,20,] {tag:'r21', format:'r:e'
       title:'-  preference velikosti kurzu: - komornější, + velký'}
@@ -562,19 +564,21 @@ form _dot [,,163,60] { css:'parm shadow' style:'z-index:2'  //style:'position:fi
     }
   }
   radio index [50,2,60,50] { format:'t', value:'id'
-    case  [0,0,10,10] { title:' ' value:'page' }
+    case  [10,0,10,10] { title:' ' value:'page' }
     case [30,0,10,10] { title:' ' value:'id' }
   }
   label celkem [10,4,49,] { style:'color:white' }
+  button [171,6,,] { title:"[fa-repeat]" help:'přepočítat tabulku' skill:'mš|mš'  
+    func onclick() { php.dot_spy_data(rok); Show(0,1,1); }}
   check vyber [112,1,49,] { title:'výběr' value:'1' 
     proc onchange() { dot.dirty.set(1); back.set(0); Show(0,0,0) }
   }
-  button [9,32,,] { title:"[fa-step-backward]" help:'první'     proc onclick() { Show(-2,1,0); }}
-  button [29,32,,] { title:"[fa-caret-left]" help:'předchozí'   proc onclick() { Show(-1,1,0); }}
-  field pg [50,32,25,] { title:'^pdf' format:'rt'  proc onchanged() { index.set('page'); Show(0,1,0); }} 
-  field id [80,32,25,] { title:'^xls' format:'rt'  proc onchanged() { index.set('id');   Show(0,1,0); }} 
-  button [112,32,,] { title:"[fa-caret-right]" help:'další'     proc onclick() { Show(1,1,0); }}
-  button [132,32,,] { title:"[fa-step-forward]" help:'poslední' proc onclick() { Show(2,1,0); }}
+  button [9,32,,] { title:"[fa-step-backward]" help:'první'     func onclick() { Show(-2,1,0); }}
+  button [29,32,,] { title:"[fa-caret-left]" help:'předchozí'   func onclick() { Show(-1,1,0); }}
+  field pg [50,32,25,] { title:'^pdf' format:'rt'  func onchanged() { index.set('page'); Show(0,1,1); }} 
+  field id [80,32,25,] { title:'^xls' format:'rt'  func onchanged() { index.set('id');   Show(0,1,1); }} 
+  button [112,32,,] { title:"[fa-caret-right]" help:'další'     func onclick() { Show(1,1,0); }}
+  button [132,32,,] { title:"[fa-step-forward]" help:'poslední' func onclick() { Show(2,1,0); }}
 }
 # ------------------------------------------------------------------------------------------==> tipy
 form _tipy [,,163,46] { style:'position:fixed;z-index:2' //css:'parm shadow'

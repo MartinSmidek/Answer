@@ -1,0 +1,146 @@
+#pragma test
+# ------------------------------------------------------------------------------------------------ #
+# Karta pro grafické zobrazení různých statistik                                                   #
+#                                                                                                  #
+# Ans(w)er/Ezer                                          (c) 2021 Martin Šmídek <martin@smidek.eu> #
+# ------------------------------------------------------------------------------------------------ #
+# ----------------------------------------------------------------------------------- globální jména
+# ----------------------------------------------------------------------------------==> inicializace
+func onfirstfocus() { 
+  info.fill('',`<div id="container" style="width:800px; height:400px;"></div>`);
+} 
+# ------------------------------------------------------------------------------------------==> stav
+# ----------------------------------------------------------------------------==> globální procedury
+proc reaccess() { #==> reaccess - změna
+}
+# ------------------------------------------------------------------------------------------==> MENU
+menu m {type:'left', format:'f+', active:*
+//  menu  {title:'Testy modulu Hightcharts',type:'group'
+//    item  {title:"[fa-bar-chart] Hightcharts - jednoduchý test"}
+//    func onclick(i:ezer) { 
+//      info.header(i);
+//      js.hightcharts_simple();
+//    }
+//    item  {title:"[fa-bar-chart] Hightcharts - parametrizace"}
+//    func onclick(i:ezer) { 
+//      info.header(i);
+//      js.hightcharts_show({series:[{name:'up',data:'1,2,3'},{name:'down',data:'4,5,6'}]});
+//    }
+//  }
+//  menu  {title:'MS',type:'group'
+//    item  {title:"[fa-bar-chart] histogram 2019", par:{type:'histogram',od:2019,
+//        chart:{chart:'histogram'}}}
+//    item  {title:"[fa-bar-chart] histogram 2009", par:{type:'histogram',od:2001,
+//        chart:{chart:'histogram'}}}
+//    item  {title:"[fa-bar-chart] histogram 1999", par:{type:'histogram',od:1999,
+//        chart:{chart:'histogram'}}}
+//    item  {title:"[fa-bar-chart] histogram 1990", par:{type:'histogram',od:1990,
+//        chart:{chart:'histogram'}}}
+//    item  {title:"[fa-bar-chart] skladba 1990", par:{type:'skladba',od:1990,do:1990,
+//        chart:{chart:'column',plotOptions:{column:{stacking:'value'}}}}}
+//    item  {title:"[fa-bar-chart] skladba 1999", par:{type:'skladba',od:1999,do:1999,
+//        chart:{chart:'column',plotOptions:{column:{stacking:'value'}}}}}
+//    item  {title:"[fa-bar-chart] skladba 2021", par:{type:'skladba',od:2021,do:2021,
+//        chart:{chart:'column',plotOptions:{column:{stacking:'value'}}}}}
+//    item  {title:"[fa-bar-chart] skladba 1998-1999", par:{type:'skladba',od:1998,do:1999,
+//        chart:{chart:'column',plotOptions:{column:{stacking:'value'}}}}}
+//    item  {title:"[fa-bar-chart] column", par:{type:'novacci',od:2021,do:0,
+//        chart:{chart:'column'}}} 
+////    func onclick(i:ezer) {  var y:object
+////      info.header(i);
+//////      y= {chart:{title::'manzelstvi',series:[],chart:'column',plotOptions:{column:{stacking:'value'}}}};
+////      y= php.chart_ms(i.par);
+////      if (y.err) 
+////        alert(y.err)
+////      else
+////        js.hightcharts_show(y.chart);
+////    }
+//  }
+  menu  {title:'Skladba účastníků kurzu',type:'group'
+    item  {title:"[fa-bar-chart] letos", par:{type:'skladba',od:2021,do:0,
+        chart:{chart:'column',plotOptions:{column:{stacking:'value'}}}}}
+    item  {title:"[fa-bar-chart] 2019 ...", par:{type:'skladba',od:2019,do:0,
+        chart:{chart:'column',plotOptions:{column:{stacking:'value'}}}}}
+//    item  {title:"[fa-bar-chart] 1990 .. 1999", par:{type:'skladba',od:1990,do:1999,
+//        chart:{chart:'column',plotOptions:{column:{stacking:'value'}}}}}
+//    item  {title:"[fa-bar-chart] 2000 ... 2009", par:{type:'skladba',od:2000,do:2009,
+//        chart:{chart:'column',plotOptions:{column:{stacking:'value'}}}}}
+//    item  {title:"[fa-bar-chart] 2010 ... 2019", par:{type:'skladba',od:2010,do:2019,
+//        chart:{chart:'column',plotOptions:{column:{stacking:'value'}}}}}
+    item  {title:"[fa-bar-chart] 2010 ... 2021", par:{type:'skladba',od:2010,do:2021,
+        chart:{chart:'column',plotOptions:{column:{stacking:'value'}}}}}
+    item  {title:"[fa-bar-chart] 2002 ... 2021", par:{type:'skladba',od:2002,do:2021,
+        chart:{chart:'column',plotOptions:{column:{stacking:'value'}}}}}
+    item  {title:"[fa-bar-chart] 1990 ... 2021", par:{type:'skladba',od:1990,do:2021,
+        chart:{chart:'column',plotOptions:{column:{stacking:'value'}}}}}
+  }
+  menu  {title:'% skladba účastníků kurzu',type:'group'
+    item  {title:"[fa-bar-chart] letos", par:{type:'skladba',od:2021,do:0,
+        chart:{chart:'column',plotOptions:{column:{stacking:'percent'}}}}}
+    item  {title:"[fa-bar-chart] 2019 ...", par:{type:'skladba',od:2019,do:0,
+        chart:{chart:'column',plotOptions:{column:{stacking:'percent'}}}}}
+//    item  {title:"[fa-bar-chart] 1990 .. 1999", par:{type:'skladba',od:1990,do:1999,
+//        chart:{chart:'column',plotOptions:{column:{stacking:'percent'}}}}}
+//    item  {title:"[fa-bar-chart] 2000 ... 2009", par:{type:'skladba',od:2000,do:2009,
+//        chart:{chart:'column',plotOptions:{column:{stacking:'percent'}}}}}
+//    item  {title:"[fa-bar-chart] 2010 ... 2019", par:{type:'skladba',od:2010,do:2019,
+//        chart:{chart:'column',plotOptions:{column:{stacking:'percent'}}}}}
+    item  {title:"[fa-bar-chart] 2010 ... 2021", par:{type:'skladba',od:2010,do:2021,
+        chart:{chart:'column',plotOptions:{column:{stacking:'percent'}}}}}
+    item  {title:"[fa-bar-chart] 2002 ... 2021", par:{type:'skladba',od:2002,do:2021,
+        chart:{chart:'column',plotOptions:{column:{stacking:'percent'}}}}}
+    item  {title:"[fa-bar-chart] 1990 ... 2021", par:{type:'skladba',od:1990,do:2021,
+        chart:{chart:'column',plotOptions:{column:{stacking:'percent'}}}}}
+  }
+  menu  {title:'Délka manželství prvoročáků',type:'group'
+//    item  {title:"[fa-bar-chart] letos", par:{type:'novacci',od:2021,do:0,
+//        chart:{chart:'column',plotOptions:{column:{stacking:'value'}}}}}
+//    item  {title:"[fa-bar-chart] 2019 ...", par:{type:'novacci',od:2019,do:0,
+//        chart:{chart:'column',plotOptions:{column:{stacking:'value'}}}}}
+    item  {title:"[fa-bar-chart] 1990 .. 1999", par:{type:'novacci',od:1990,do:1999,
+        chart:{chart:'column',plotOptions:{column:{stacking:'value'}}}}}
+    item  {title:"[fa-bar-chart] 2000 ... 2009", par:{type:'novacci',od:2000,do:2009,
+        chart:{chart:'column',plotOptions:{column:{stacking:'value'}}}}}
+//    item  {title:"[fa-bar-chart] 2010 ... 2019", par:{type:'novacci',od:2010,do:2019,
+//        chart:{chart:'column',plotOptions:{column:{stacking:'value'}}}}}
+    item  {title:"[fa-bar-chart] 2010 ... 2021", par:{type:'novacci',od:2010,do:2021,
+        chart:{chart:'column',plotOptions:{column:{stacking:'value'}}}}}
+  }
+  menu  {title:'Různé',type:'group'
+    item  {title:"[fa-bar-chart] Velikost skupinek 2002-2021", par:{type:'skupinky',od:2002,do:2021}}
+//    item  {title:"[fa-bar-chart] Velikost skupinek", par:{type:'skupinky',od:2019,do:2021}}
+    item  {title:"[fa-bar-chart] ... % velikost skupinek", par:{type:'skupinky',od:2002,do:2021,
+        chart:{chart:'column',plotOptions:{column:{stacking:'percent'}}}}}
+    item  {title:"[fa-bar-chart] Velikost skupinek 1990-2021", par:{type:'skupinky',od:1990,do:2021}}
+    item  {title:"[fa-bar-chart] ... % velikost skupinek od 1990", par:{type:'skupinky',od:1990,do:2021,
+        chart:{chart:'column',plotOptions:{column:{stacking:'percent'}}}}}
+  }
+  func onclick(i:ezer) {  var y:object
+    info.header(i);
+    info.spinner(1);
+    y= php.chart_ms(i.par);
+    if (y.err) 
+      alert(y.err)
+    else 
+      js.hightcharts_show(y.chart);
+    info.spinner(0);
+  }
+}
+use info: form _right
+# ------------------------------------------------==> .. _right
+# univerzální formulář pro levostranné menu
+form _right [,,*,50] {
+  label head [10,0,*,50]  { title:'' }
+  label note [10,50,*,550] { title:'' }
+  func header(i:ezer) { var i_owner:ezer
+    clear(); i_owner= i.owner();
+    head= replace_fa(`<div class='karta'>${i_owner.title} - ${i.title}</div>`);
+  }
+  func fill(x,y) {
+    if (x) head= `<div class='karta'>${replace_fa(x)}</div>`;
+    if (y) note= y
+  }
+  func append(x) { note= conc(note,'<br>',x) }
+  func shift(x) { note= conc(x,'<br>',note) }  
+  func spinner(on) { js.waiting(on); }
+}

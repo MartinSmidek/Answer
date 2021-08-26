@@ -125,7 +125,173 @@ function update_web_changes () {
   return 1;
 }
 /** =======================================================================================> STA2 MS */
-# ------------------------------------------------------------------------------==> . sta2 ms stat
+# ------------------------------------------------------------------------------------==> . chart ms
+# agregace údajů o účastích a účastnících MS pro grafické znázornění
+function chart_ms($par) { debug($par,'chart_ms');
+  $y= (object)array('err'=>'');
+  $org= 1; //255;
+  $chart= $par->chart ?: (object)array();
+  if (!isset($chart->series))
+    $chart->series= array();
+  switch ($par->type) {
+    case 'skupinky': 
+      $chart->title= 'Velikost skupinek';
+      $x= $roky= $tri= $ctyri= array();
+      $ix= 0;
+      $od= $par->od;
+      $do= $par->do;
+      for ($r= $od; $r<=$do; $r++) { 
+        if ($r==2020 && $org==1) continue;
+        $roky[]= $r;
+        $x[]= $ix++;
+        $r3= $r4= 0;
+        $rs= pdo_qry("SELECT COUNT(*)
+          FROM pobyt AS p
+          JOIN akce AS a ON id_akce=id_duakce
+          WHERE YEAR(datum_od)=$r AND druh=1 AND access=$org AND zruseno=0
+            AND skupina>0
+          GROUP BY skupina ");
+        while ($rs && (list($paru)= pdo_fetch_row($rs))) {
+          if ($paru==3) $r3++;
+          if ($paru==4) $r4++;
+        }
+        $tri[$r]= $r3;
+        $ctyri[$r]= $r4;
+      }
+//      // výpočet lineární regrese
+//      $reg= linear_regression($x,$tri); debug($a);
+//      $m= $reg['m']; $b= $reg['b']; $x1= 0; $x2= count($x)-1;
+//      $reg1= array(array($x1,$x1*$m+$b),array($x2,$x2*$m+$b));
+//      $reg= linear_regression($x,$ctyri); debug($a);
+//      $m= $reg['m']; $b= $reg['b']; $x1= 0; $x2= count($x)-1;
+//      $reg2= array(array($x1,$x1*$m+$b),array($x2,$x2*$m+$b));
+//      $m= 0.1; $b= 50; 
+//      $reg= linear_regression($x,$ctyri); debug($reg);
+      $chart->series= array(
+        (object)array('type'=>'scatter','name'=>'tříparová','data'=>implode(',',$tri)),
+//        (object)array('type'=>'line','name'=>'regr','data'=>$reg1),
+        (object)array('type'=>'scatter','name'=>'čtyřpárová','data'=>implode(',',$ctyri)),
+//        (object)array('type'=>'line','name'=>'regr','data'=>$reg2)
+      );
+      $chart->xAxis= (object)array('categories'=>$roky,
+          'title'=>(object)array('text'=>'rok kurzu '));
+//        debug($chart); $y->err= '.'; goto end;
+      break;
+    case 'histogram': // ignoruje $par->do
+      $chart->title= 'Vstup do manželství účastníků kurzu';
+      $rok= $par->od;
+      $dot_par= (object)array('zdroj'=>'akce','par1'=>'rok','step_man'=>1,'org'=>$org);
+      $x= dot_prehled($rok,$dot_par);
+      $data= (array)$x->know->man_vek; 
+      $data= array_merge($data);
+//      $data= implode(',',$man_vek);
+      $chart->series_done= array(
+        (object)array('type'=>'histogram','xAxis'=>1,'yAxis'=>1,'baseSeries'=>1,'z-index'=>-1),
+        (object)array('type'=>'scatter','data'=>$data,'marker'=>(object)array('radius'=>1.5))        
+      );
+//        debug($chart); $y->err= '.'; goto end;
+      $chart->yAxis= array((object)array(),(object)array());
+      $chart->xAxis= array((object)array(),(object)array());
+      break;
+    case 'novacci':
+      $chart->title= 'Délka manželství nováčků na kurzu';
+      $od= $par->od;
+      $do= $par->do ?: date('Y');
+      $dot_par= (object)array('zdroj'=>'akce','par1'=>'rok','step_man'=>1,'org'=>$org);
+      for ($rok= $od; $rok<=$do; $rok++) {
+        if ($rok==2020 && $org==1) continue;
+        $x= dot_prehled($rok,$dot_par);
+        $man_s= $x->know->man_n; /*array_pop($man_s);*/ $man_s= array_reverse($man_s); 
+        $man_y= $x->know->man_y; array_pop($man_y); $man_y= array_reverse($man_y); 
+        $man_s= array_map(function($x){return $x/2;},$man_s);
+        $data= implode(',',$man_s);
+        $serie= (object)array('name'=>$rok,'data'=>$data);
+        $chart->series[]= $serie;
+      }
+      $chart->yAxis= (object)array('title'=>(object)array('text'=>'počet manželství na letním kurzu'));
+      $chart->xAxis= (object)array('categories'=>$man_y,
+          'title'=>(object)array('text'=>'délka manželství v přihlášce '));
+      break;
+    case 'skladba':
+      $chart->title= 'Skladba účastníků letního kurzu';
+      $od= $par->od;
+      $do= $par->do ?: date('Y');
+      $dot_par= (object)array('zdroj'=>'akce','par1'=>'rok','step_man'=>1,'skladba'=>1,'org'=>$org);
+      //           VPS       novi
+      $kurz= array(array(),array(),array(),array(),array());
+      $roky= array();
+      for ($rok= $od; $rok<=$do; $rok++) {
+        if ($rok==2020 && $org==1) continue;
+        $roky[]= $rok;
+        $x= dot_prehled($rok,$dot_par);
+//        $y->err= '.'; goto end;
+        $kurz_x= $x->know->kurz_x ?: array(); 
+        debug($kurz_x,$rok);
+        $kurz_y= $x->know->kurz_y; 
+        $kurz_x= array_map(function($x){return $x/2;},$kurz_x);
+        for ($x= 0; $x<=4; $x++) {
+          $kurz[$x][$rok]= isset($kurz_x[$x]) ? $kurz_x[$x] : 0;
+        }
+      }
+      debug($kurz,"$od-$do");
+      $color= array('navy','cyan','grey','orange','lightgreen');
+      for ($x= 0; $x<=4; $x++) {
+        $data= implode(',',$kurz[$x]);
+        $serie= (object)array('name'=>$kurz_y[$x],'data'=>$data,'color'=>$color[$x]);
+        $chart->series[$x]= $serie;
+      }
+//      $chart->series= array();
+//      $chart->series[]= (object)array('type'=>'line','data'=>array(array(2021,30),array(2022,40)));
+      $chart->yAxis= (object)array('title'=>(object)array('text'=>'účast na kurzu jako'),
+          'categories'=>$kurz_y);
+      $chart->xAxis= (object)array('categories'=>$roky,
+          'title'=>(object)array('text'=>'rok kurzu '));
+//      $chart->xAxis= (object)array('min'=>2019,'max'=>2020,'categories'=>$roky,
+//          'title'=>(object)array('text'=>'rok kurzu '));
+      if (isset($chart->plotOptions->column->stacking)){
+//          && $chart->plotOptions->column->stacking=='percent') {
+        $chart->tooltip= (object)array(
+          'pointFormat'=>"<span>{series.name}</span>: <b>{point.y}</b> ({point.percentage:.0f}%)<br/>");
+      }
+      break;
+  }
+  $y->chart= $chart;
+  debug($y);
+end:
+  return $y;
+}
+# --------------------------------------------------------------------------------==> . sta2 ms stat
+/** https://stackoverflow.com/questions/4563539/how-do-i-improve-this-linear-regression-function
+ * linear regression function
+ * @param $x array x-coords
+ * @param $y array y-coords
+ * @returns array() m=>slope, b=>intercept
+ */
+function linear_regression($x, $y) {
+  // calculate number points
+  $n = count($x);
+  // ensure both arrays of points are the same size
+  if ($n != count($y)) {
+    trigger_error("linear_regression(): Number of elements in coordinate arrays do not match.", E_USER_ERROR);
+  }
+  // calculate sums
+  $x_sum = array_sum($x);
+  $y_sum = array_sum($y);
+  $xx_sum = 0;
+  $xy_sum = 0;
+  for($i = 0; $i < $n; $i++) {
+    $xy_sum+=($x[$i]*$y[$i]);
+    $xx_sum+=($x[$i]*$x[$i]);
+  }
+  // calculate slope
+  $m = (($n * $xy_sum) - ($x_sum * $y_sum)) / (($n * $xx_sum) - ($x_sum * $x_sum));
+  // calculate intercept
+  $b = ($y_sum - ($m * $x_sum)) / $n;
+  // return result
+  return array("m"=>$m, "b"=>$b);
+}
+/** =======================================================================================> STA2 MS */
+# --------------------------------------------------------------------------------==> . sta2 ms stat
 # agregace údajů o účastích a účastnících MS
 # typ=0 - účasti    => věkové průměry, počty dětí, ročníky MS
 # typ=1 - účastníci => geo-info, příslušnost ke kurzu, iniciace muže ... výhledově cesta akcemi
@@ -1484,22 +1650,61 @@ function dot_roky () { trace();
 # statistický přehled o akci, strukturovaný podle dotazníků Letního kurzu MS YS
 #   par.zdroj= akce|dotaz
 #   par.par1= rok|ida určuje význam prvního parametru
+#   par.step_man a par.step_vek určuje podrobnost interval pro délku manželství a věk (default 10,5)
+#   par.skladba - slehují se odpočívající VPS
+#   par.org - organizátor akce
 function dot_prehled ($rok_or_akce,$par,$title='',$vypis='',$export=0,$hnizdo=0) { trace();
   debug($par);
   $y= (object)array('html'=>'');
+  $org= isset($par->org) ? $par->org : 1;
   if ( $par->par1=='rok') {
     $rok= $rok_or_akce;
-    $akce= select('id_duakce','akce',"access=1 AND druh=1 AND YEAR(datum_od)=$rok");
+    list($akce,$datum_od)= select('id_duakce,datum_od','akce',
+        "access & $org AND druh=1 AND zruseno=0 AND YEAR(datum_od)=$rok");
+    $cond1= "a.access & $org AND a.druh=1 AND a.zruseno=0 AND YEAR(a.datum_od)=$rok";
+    $cond2= "a.druh=1 AND a.zruseno=0 AND a.datum_od<'$datum_od' "; // minulé účasti i jinde
   }
   else {
-    $akce= $rok_or_akce;
+//    $akce= $rok_or_akce;
+    $cond= "p.id_akce=$rok_or_akce";
     $rok= -1; // je pouze v kombinaci s zdroj=akce
   }
   $no= $n_mn= $n_mo= $n_m= $n_z= 0;
+//  // struktura kurzu 0-VPS, 1-odpočívající VPS, 2-poprvé, 3-podruhé, 4-vícekrát
+//  $kurz_y= array('VPS','(vps)','noví','podruhé','vicekrát');
+  // struktura kurzu 0-VPS, 1-odpočívající VPS, 4-poprvé, 3-podruhé, 2-vícekrát
+  $kurz_y= array('VPS','(vps)','vicekrát','podruhé','noví');
+  $kurz_x= array(0,0,0,0,0);
+  // stanovení intervalu 
+  $step_man= 10; $step_vek= 10;
   $vek_x= array(61,51,41,31,1,0);
   $vek_m= $vek_z= array(0,0,0,0,0,0);
-  $man_x= array(31,21,11,6,0,-1);
+  // stanovení obecného intervalu délky manželství
+  $man_x= array(31,21,11,6,0,-1); // -1 je kvůli neudané, tedy nulové, délce manželství
+  $man_y= array('31..','21-30','11-20','6-10','0-5','?');
   $man_s= $man_n= $man_o= array(0,0,0,0,0,0);
+  // další
+  $kurz= $man_vek= array();
+  $step='default';
+  if (isset($par->step_man)) {
+    $step= $par->step_man; 
+    $max= 51;
+    $max= $max + ($step-($max-1)%$step) - 1;
+    $man_x= $man_y= array();
+    $man_s= $man_n= $man_o= array(0);
+    $man_x[]= $max; 
+    $man_y[]= "$max+"; 
+    for ($i= $max-$step; $i>=0; $i-= $step) {
+      $man_x[]= $i;
+      $man_y[]= $step==1 ? $i : "$i-".($i+$step-1);
+      $man_s[]= 0;
+      $man_n[]= 0;
+      $man_o[]= 0;
+    }
+    $man_x[]= -1; $man_y[]= '?'; // zarážka
+  }
+//  debug($man_x,"dělení pro step=$step");
+//  debug($man_y,"dělení pro step=$step");
   switch ($par->zdroj) {
   case 'akce':
     $th_color= '';
@@ -1510,18 +1715,20 @@ function dot_prehled ($rok_or_akce,$par,$title='',$vypis='',$export=0,$hnizdo=0)
         IF(r.datsvatba,DATEDIFF(a.datum_od,r.datsvatba)/365.2425,
           IF(r.svatba,YEAR(a.datum_od)-r.svatba,0)) AS _man,
         ROUND(DATEDIFF(a.datum_od,o.narozeni)/365.2425,1) AS _vek,
-        sex,id_osoba,i0_rodina
+        sex,id_osoba,i0_rodina,IF(funkce IN (1,2),1,0),r.r_ms,t.role
       FROM pobyt AS p
       JOIN akce AS a ON id_akce=id_duakce
       JOIN spolu AS s USING (id_pobyt)
       LEFT JOIN rodina AS r ON r.id_rodina=p.i0_rodina
       JOIN tvori AS t USING (id_rodina,id_osoba)
       JOIN osoba AS o USING (id_osoba)
-      WHERE id_akce=$akce $AND_hnizdo AND p.funkce IN (0,1,2) AND s_role=1 
+      WHERE /*id_akce=$akce*/ $cond1 $AND_hnizdo AND p.funkce IN (0,1,2) 
+        AND t.role IN ('a','b') -- AND s_role=1 
       --  AND i0_rodina IN (3329,6052)
-      GROUP BY id_osoba
+      GROUP BY id_osoba 
+      ORDER BY t.role -- důležité pro rozbor
       ");
-    while ( $rp && (list($man,$vek,$sex,$ido,$idr)= pdo_fetch_array($rp)) ) {
+    while ( $rp && (list($man,$vek,$sex,$ido,$idr,$vps,$r_ms,$role)= pdo_fetch_array($rp)) ) {
       $no++;
       // minulé účasti - ale ne jako děti účastnické rodiny
       $ucasti= select(
@@ -1530,11 +1737,12 @@ function dot_prehled ($rok_or_akce,$par,$title='',$vypis='',$export=0,$hnizdo=0)
             JOIN pobyt AS p ON a.id_duakce=p.id_akce
             JOIN spolu AS s USING(id_pobyt)",
           "a.druh=1 AND a.spec=0 AND zruseno=0 
-            AND s.id_osoba=$ido AND i0_rodina=$idr AND p.id_akce!=$akce");
+            AND s.id_osoba=$ido AND i0_rodina=$idr AND /*p.id_akce!=$akce*/ $cond2");
 //                                                  display($ucasti);
       // stáří
       foreach ($vek_x as $ix=>$x) {
         if ( $vek>=$x) {
+          if ($role=='a'&&$sex!=1 || $role=='b'&&$sex!=2) display("clash role/sex idr=$idr");
           if ( $sex==1 ) {
             $vek_m[$ix]++;
             $n_m++;
@@ -1548,6 +1756,7 @@ function dot_prehled ($rok_or_akce,$par,$title='',$vypis='',$export=0,$hnizdo=0)
       }
       // délka manželství
       foreach ($man_x as $ix=>$x) {
+        if ($man==0) continue;
         if ( $man>=$x) {
           if ( $ucasti ) {
             $man_o[$ix]++;
@@ -1560,6 +1769,28 @@ function dot_prehled ($rok_or_akce,$par,$title='',$vypis='',$export=0,$hnizdo=0)
           $man_s[$ix]++;
           break;
         }
+      }
+      // věk manželů při vstupu do manželství - jen pro nváčky
+//      if ($ucasti==0) {
+      if ($vek-$man>17)
+        $man_vek[$idr]= isset($man_vek[$idr]) ? ($man_vek[$idr] + $vek - $man)/2 : $vek - $man;
+      else
+        display("$idr: vek=$vek, man=$man");
+        //if ($idr==3329) display("$idr: $man_vek[$idr]= $vek - $man");
+//      }
+      // skladba účastníků
+      if ($par->skladba) {
+        // zjistíme jestli v minulosti dělali VPS
+        $vps_od= select("MIN(YEAR(datum_od))",
+            'pobyt JOIN akce AS a ON id_akce=id_duakce',
+            "funkce IN (1,2) AND a.druh=1 AND a.spec=0 AND a.zruseno=0 AND i0_rodina=$idr
+            GROUP BY i0_rodina");
+        $odpociva= $vps_od && $vps_od<$rok ? 1 : 0;
+//        if ( $odpociva) display("$idr: $vps_od");
+//        // struktura kurzu 1-VPS, 0-nevps, 2-poprvé, 3-podruhé, 4-vícekrát
+//        $kurz[$vps ? 0 : ($odpociva ? 1 : ($ucasti==0 ? 2 : ($ucasti==1 ? 3 : 4)))]++;
+        // struktura kurzu 1-VPS, 0-nevps, 4-poprvé, 3-podruhé, 2-vícekrát
+        $kurz[$vps ? 0 : ($odpociva ? 1 : ($ucasti==0 ? 4 : ($ucasti==1 ? 3 : 2)))]++;
       }
     }
     break;
@@ -1608,9 +1839,11 @@ function dot_prehled ($rok_or_akce,$par,$title='',$vypis='',$export=0,$hnizdo=0)
     }
     break;
   }
+//                                              debug($man_vek,"vstup do manželství");
+//                                              debug($kurz,"struktura kurzu");
 //                                              debug($man_s,"manželství");
-                                              debug($man_o,"manželství O");
-                                              debug($man_n,"manželství N");
+//                                              debug($man_o,"manželství O");
+//                                              debug($man_n,"manželství N");
 //                                              debug($vek_m,"věk muže $n_m");
 //                                              debug($vek_z,"věk ženy $n_z");
   // tabulka trvání manželství
@@ -1620,8 +1853,8 @@ function dot_prehled ($rok_or_akce,$par,$title='',$vypis='',$export=0,$hnizdo=0)
     $th= "th align='right'$th_color";
     $span= 2;
     if (isset($par->know)) {
-      $th_n= "<$th>%</th>";
-      $th_o= "<$th>%</th>";
+      $th_n= "<$th title='procento odevzdaných dotazníků'>%</th>";
+      $th_o= "<$th title='procento odevzdaných dotazníků'>%</th>";
       $th_c= "<$th></th>";
       $span= 3;
     }
@@ -1643,9 +1876,9 @@ function dot_prehled ($rok_or_akce,$par,$title='',$vypis='',$export=0,$hnizdo=0)
     // kategorie
     for ($i= count($man_s)-2; $i>=0; $i--) {
       $s= $man_s[$i]; $n= $man_n[$i]; $o= $man_o[$i]; 
-      $ps= number_format(100*$s/$no,0);
+      $ps= $no ? number_format(100*$s/$no,0) : '-';
       $pn= $n_mn ? number_format(100*$n/$n_mn,0) : '-';
-      $po= number_format(100*$o/$n_mo,0);
+      $po= $n_mo ? number_format(100*$o/$n_mo,0) : '-';
       $x= $i==count($man_s)-1 ? "?" : "{$vek_x[$i]}-".($i==0 ? '...' : $vek_x[$i-1]-1).' let';
       $x1= $man_x[$i]; $x2= $i==0 ? '...' : $man_x[$i-1]-1;
       $td_n= $td_o= '';
@@ -1686,8 +1919,8 @@ function dot_prehled ($rok_or_akce,$par,$title='',$vypis='',$export=0,$hnizdo=0)
     $th_m= $th_z= $th_c= '';
     $span= 2;
     if (isset($par->know)) {
-      $th_m= "<$th>%</th>";
-      $th_z= "<$th>%</th>";
+      $th_m= "<$th title='procento odevzdaných dotazníků'>%</th>";
+      $th_z= "<$th title='procento odevzdaných dotazníků'>%</th>";
       $th_c= "<$th></th>";
       $span= 3;
     }
@@ -1736,7 +1969,12 @@ function dot_prehled ($rok_or_akce,$par,$title='',$vypis='',$export=0,$hnizdo=0)
     $tab.= "</table>";
   }
   $y->html.= "$nadpis$tab"; 
-  $y->know= (object)array('muz'=>$vek_m,'zena'=>$vek_z,'man_o'=>$man_o,'man_n'=>$man_n);
+  $y->know= (object)array(
+      'muz'=>$vek_m,'zena'=>$vek_z,
+      'man_y'=>$man_y,'man_o'=>$man_o,'man_n'=>$man_n,'man_s'=>$man_s,
+      'kurz_y'=>$kurz_y,'kurz_x'=>$kurz,
+      'man_vek'=>$man_vek
+      );
   return $y;
 }
 # ------------------------------------------------------------------------------------------ dot spy
@@ -1779,7 +2017,7 @@ function dot_spy ($rok,$id) {  //($kurz,$dotaznik,$clmn,$pg,$back) {
           $tit= (-$w-1).": věk=$o->vek, děti/LK=$o->deti, manželství=$o->manz, "
               . ($o->novic ? 'poprvé' : 'opakovaně') 
               . ($o->nest ? ", hnízdo=$o->nest" : '');
-          $html.= "$del<a href='ezer://akce2.ucast.ucast_pobyt/{$o->pob}' "
+          $html.= "$del<a href='ezer://akce2.ucast.ucast_pobyt/{$o->idp}' "
               . "title='$tit'>{$o->jmeno}</a> $ip $is";
           $del= "<br>";
         }
@@ -1985,7 +2223,7 @@ function dot_spy_data ($rok) {
     foreach($osoba as $i=>$o) {
       $diff= 999;
       if ( $hnizdo==$o->nest && $sex==$o->sex && $novic==$o->novic ) {
-        $diff= abs($vek-$o->vek) + abs($deti-$o->deti) + abs($manz-$o->manz);
+        $diff= abs($vek-$o->vek) + abs($deti-$o->deti) + ($manz ? abs($manz-$o->manz) : 0);
       }  
       if ($diff <= $max_diff) {
         $tips[$o->ido]= $diff;

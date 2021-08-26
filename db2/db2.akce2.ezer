@@ -165,6 +165,9 @@ panel dop {type:'right', title:'Dopisy', _sys:'*', include:'onclick,db2.akce2.do
 panel sta {type:'right', title:'Výpisy evidence', _sys:'*', include:'onclick,db2.akce2.sta', skill:'yaa;faa;caa'
   proc reaccess() {}
 }
+panel grf {type:'right', title:'Grafy', _sys:'*', include:'onclick,db2.akce2.grf', skill:'yaa;faa;caa'
+  proc reaccess() {}
+}
 panel cnf {type:'right', title:'[fa-retweet] KONFERENCE', _sys:'*', include:'onclick,db2.akce2.cnf', skill:'mrop;dk'
   proc reaccess() {}
 }
