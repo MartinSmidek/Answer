@@ -13740,8 +13740,9 @@ function mail2_mai_send($id_dopis,$kolik,$from,$fromname,$test='',$id_mail=0,$fo
       $html.= "<br><b style='color:#070'>Byl odeslán mail na $test $pro - je zapotřebí zkontrolovat obsah</b>";
     else {
       $err= $mail->ErrorInfo;
-      $html.= "<br><b style='color:#700'>Při odesílání mailu došlo k chybě: $err</b>";
-      display("Send failed: $err<br>from={$mail->From} username={$mail->Username}");
+      $ze= isset($mail->Username) ? $mail->Username : '?';
+      $html.= "<br><b style='color:#700'>Při odesílání mailu přes '$ze' došlo k chybě: $err</b>";
+      display("Send failed: $err<br>from={$mail->From} username={$mail->Username} SMTPserver=$ze");
       $result->_error= 1;
     }
 //                                                 display($html);
