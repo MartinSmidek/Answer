@@ -12230,7 +12230,8 @@ function mail2_vzor_pobyt($id_pobyt,$typ,$from,$vyrizuje,$poslat=0) {
     // poslání mailu - při úspěchu zápis o potvrzení
     $mail= mail2_new_PHPMailer();
     if ( !$mail ) { 
-      $ret->err= "CHYBA při odesílání mailu došlo k chybě: odesílací adresa nelze použít (SMTP)";
+      $ze= isset($mail->Username) ? $mail->Username : '?';
+      $ret->err= "CHYBA při odesílání mailu z '$ze' došlo k chybě: odesílací adresa nelze použít (SMTP)";
       goto end;
     }
     // proměnné údaje
@@ -12250,7 +12251,8 @@ function mail2_vzor_pobyt($id_pobyt,$typ,$from,$vyrizuje,$poslat=0) {
       query("UPDATE pobyt SET $field=1 WHERE id_pobyt=$id_pobyt");
     }
     else {
-      $ret->err= "CHYBA při odesílání mailu došlo k chybě: $mail->ErrorInfo";
+      $ze= isset($mail->Username) ? $mail->Username : '?';
+      $ret->err= "CHYBA při odesílání mailu z '$ze' došlo k chybě: $mail->ErrorInfo";
       goto end;
     }
   }
