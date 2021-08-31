@@ -1,13 +1,24 @@
 // uživatelské funkce aplikace Ans(w)er - varianta s jQuery
 /* global Ezer, Form, Var, Field, FieldList, Edit, Select, View, Label, Highcharts */ // pro práci s Netbeans
 "use strict";
-// ====================================================================================> Hightcharts
-// -------------------------------------------------------------------------------- hightcharts show
+// ====================================================================================> highcharts
+// --------------------------------------------------------------------------------- highcharts load
+// zavede dynamicky potřebné moduly highcharts
+function highcharts_load() {
+  if (typeof Highcharts=="undefined") {
+    let code= "../ezer3.1/client/licensed/highcharts/code";
+    for (const modul of ['highcharts.js','highcharts-more.js',
+        'modules/exporting.js','modules/export-data.js']) {
+      jQuery('head').append(`<script type="text/javascript" src="${code}/${modul}"></script>`);
+    }
+  }
+}
+// -------------------------------------------------------------------------------- highcharts show
 // par: series:[{name:str,list:str},...]
-function hightcharts_show(par) {
+function highcharts_show(par) {
   // test zavedení modulu
   if (typeof Highcharts=="undefined") {
-    jQuery('#container').html("není zaveden modul Hightcharts - použij &hightcharts=1");
+    jQuery('#container').html("není zaveden modul highcharts - použij &highcharts=1");
     return;
   }
   // default
@@ -74,10 +85,10 @@ function hightcharts_show(par) {
   jQuery('div.highcharts-data-table').remove();
   Highcharts.chart('container', chart);
 }
-// ------------------------------------------------------------------------------ hightcharts simple
-function hightcharts_simple() {
+// ------------------------------------------------------------------------------ highcharts simple
+function highcharts_simple() {
   if (typeof Highcharts=="undefined") {
-    jQuery('#container').html("není zaveden modul Hightcharts - použij &hightcharts=1");
+    jQuery('#container').html("není zaveden modul highcharts - použij &highcharts=1");
     return;
   }
 

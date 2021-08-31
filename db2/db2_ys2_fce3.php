@@ -73,6 +73,7 @@ function git_make($par) {
         fclose($f);
     }
     if ( $folder=='ezer') chdir("../_ezer3.1");
+    if ( $folder=='skins') chdir("./skins");
     $exec= "git $cmd>$abs_root/docs/.git.log";
     exec($exec,$lines,$state);
                             display("$state::$exec");
@@ -84,7 +85,7 @@ function git_make($par) {
       exec($exec,$lines,$state);
                             display("$state::$exec");
     }
-    if ( $folder=='ezer') chdir($abs_root);
+    if ( $folder=='ezer'||$folder=='skins') chdir($abs_root);
     $msg.= "$state:$exec\n";
   case 'show':
     $msg.= file_get_contents("$abs_root/docs/.git.log");
@@ -128,54 +129,58 @@ function update_web_changes () {
 # ------------------------------------------------------------------------------------==> . chart ms
 # agregace údajů o účastích a účastnících MS pro grafické znázornění
 function chart_ms($par) { debug($par,'chart_ms');
-  $y= (object)array('err'=>'');
-  $org= 1; //255;
+  $y= (object)array('err'=>'','note'=>' ');
+  $org= $par->org; //255;
   $chart= $par->chart ?: (object)array();
   if (!isset($chart->series))
     $chart->series= array();
   switch ($par->type) {
     case 'skupinky': 
-      $chart->title= 'Velikost skupinek';
-      $x= $roky= $tri= $ctyri= array();
-      $ix= 0;
+      $chart->title= 'Počty skupinek v daném roce podle velikosti';
+      $x= $roky= $tri= $ctyri= $divna= array();
+      $ix= $je_divna= 0;
       $od= $par->od;
       $do= $par->do;
       for ($r= $od; $r<=$do; $r++) { 
-        if ($r==2020 && $org==1) continue;
+        // zjistíme, jestli v daném roce by LK
+        $lk= select('COUNT(*)','akce',"access&$org AND druh=1 AND zruseno=0 AND YEAR(datum_od)=$r");
+        if (!$lk) continue;
         $roky[]= $r;
         $x[]= $ix++;
-        $r3= $r4= 0;
-        $rs= pdo_qry("SELECT COUNT(*)
+        $r3= $r4= $rx= 0;
+        $rs= pdo_qry("SELECT COUNT(*),skupina
           FROM pobyt AS p
           JOIN akce AS a ON id_akce=id_duakce
-          WHERE YEAR(datum_od)=$r AND druh=1 AND access=$org AND zruseno=0
+          WHERE YEAR(datum_od)=$r AND druh=1 AND access&$org AND zruseno=0
             AND skupina>0
-          GROUP BY skupina ");
-        while ($rs && (list($paru)= pdo_fetch_row($rs))) {
+          GROUP BY access,skupina ");
+        while ($rs && (list($paru,$skupina)= pdo_fetch_row($rs))) {
           if ($paru==3) $r3++;
-          if ($paru==4) $r4++;
+          elseif ($paru==4) $r4++;
+          else {
+            $rx++;
+            $je_divna++;
+            display("clash: skupinka $skupina má $paru párů");
+          }
         }
         $tri[$r]= $r3;
         $ctyri[$r]= $r4;
+        $divna[$r]= $rx;
       }
-//      // výpočet lineární regrese
-//      $reg= linear_regression($x,$tri); debug($a);
-//      $m= $reg['m']; $b= $reg['b']; $x1= 0; $x2= count($x)-1;
-//      $reg1= array(array($x1,$x1*$m+$b),array($x2,$x2*$m+$b));
-//      $reg= linear_regression($x,$ctyri); debug($a);
-//      $m= $reg['m']; $b= $reg['b']; $x1= 0; $x2= count($x)-1;
-//      $reg2= array(array($x1,$x1*$m+$b),array($x2,$x2*$m+$b));
-//      $m= 0.1; $b= 50; 
-//      $reg= linear_regression($x,$ctyri); debug($reg);
       $chart->series= array(
         (object)array('type'=>'scatter','name'=>'tříparová','data'=>implode(',',$tri)),
-//        (object)array('type'=>'line','name'=>'regr','data'=>$reg1),
-        (object)array('type'=>'scatter','name'=>'čtyřpárová','data'=>implode(',',$ctyri)),
-//        (object)array('type'=>'line','name'=>'regr','data'=>$reg2)
+        (object)array('type'=>'scatter','name'=>'čtyřpárová','data'=>implode(',',$ctyri))
       );
+      if ($je_divna) {
+        $chart->series[]=
+          (object)array('type'=>'scatter','name'=>'?','data'=>implode(',',$divna),'color'=>'red');
+      }
       $chart->xAxis= (object)array('categories'=>$roky,
           'title'=>(object)array('text'=>'rok kurzu '));
-//        debug($chart); $y->err= '.'; goto end;
+      $y->note= "<i><b>Poznámka:</b> 
+        <br>zobrazení grafu předpokládá, že je v databázi zapsáno složení skupinek.
+        <br>Pokud má nějaká skupinka jiný počet párů než tři nebo čtyři, přidá se červená série.
+        </i>";
       break;
     case 'histogram': // ignoruje $par->do
       $chart->title= 'Vstup do manželství účastníků kurzu';
@@ -194,12 +199,13 @@ function chart_ms($par) { debug($par,'chart_ms');
       $chart->xAxis= array((object)array(),(object)array());
       break;
     case 'novacci':
-      $chart->title= 'Délka manželství nováčků na kurzu';
+      $chart->title= 'Délka manželství před první účastí na kurzu';
       $od= $par->od;
       $do= $par->do ?: date('Y');
       $dot_par= (object)array('zdroj'=>'akce','par1'=>'rok','step_man'=>1,'org'=>$org);
       for ($rok= $od; $rok<=$do; $rok++) {
-        if ($rok==2020 && $org==1) continue;
+        $lk= select('COUNT(*)','akce',"access&$org AND druh=1 AND zruseno=0 AND YEAR(datum_od)=$rok");
+        if (!$lk) continue;
         $x= dot_prehled($rok,$dot_par);
         $man_s= $x->know->man_n; /*array_pop($man_s);*/ $man_s= array_reverse($man_s); 
         $man_y= $x->know->man_y; array_pop($man_y); $man_y= array_reverse($man_y); 
@@ -211,6 +217,10 @@ function chart_ms($par) { debug($par,'chart_ms');
       $chart->yAxis= (object)array('title'=>(object)array('text'=>'počet manželství na letním kurzu'));
       $chart->xAxis= (object)array('categories'=>$man_y,
           'title'=>(object)array('text'=>'délka manželství v přihlášce '));
+      $y->note= "<i><b>Poznámka:</b> 
+        <br>korektnost grafu předpokládá, že je v databázi správně zapsána i počet účastí 
+        na kurzech neevidovaných touto databází (pole 'MS mimo' na evidenční kartě).
+        </i>";
       break;
     case 'skladba':
       $chart->title= 'Skladba účastníků letního kurzu';
@@ -221,7 +231,10 @@ function chart_ms($par) { debug($par,'chart_ms');
       $kurz= array(array(),array(),array(),array(),array());
       $roky= array();
       for ($rok= $od; $rok<=$do; $rok++) {
-        if ($rok==2020 && $org==1) continue;
+        // zjistíme, jestli v daném roce by LK
+        $lk= select('COUNT(*)','akce',"access&$org AND druh=1 AND zruseno=0 AND YEAR(datum_od)=$rok");
+        if (!$lk) continue;
+//        if ($rok==2020 && $org==1) continue;
         $roky[]= $rok;
         $x= dot_prehled($rok,$dot_par);
 //        $y->err= '.'; goto end;
@@ -1654,6 +1667,7 @@ function dot_roky () { trace();
 #   par.skladba - slehují se odpočívající VPS
 #   par.org - organizátor akce
 function dot_prehled ($rok_or_akce,$par,$title='',$vypis='',$export=0,$hnizdo=0) { trace();
+  global $VPS;
   debug($par);
   $y= (object)array('html'=>'');
   $org= isset($par->org) ? $par->org : 1;
@@ -1670,10 +1684,8 @@ function dot_prehled ($rok_or_akce,$par,$title='',$vypis='',$export=0,$hnizdo=0)
     $rok= -1; // je pouze v kombinaci s zdroj=akce
   }
   $no= $n_mn= $n_mo= $n_m= $n_z= 0;
-//  // struktura kurzu 0-VPS, 1-odpočívající VPS, 2-poprvé, 3-podruhé, 4-vícekrát
-//  $kurz_y= array('VPS','(vps)','noví','podruhé','vicekrát');
   // struktura kurzu 0-VPS, 1-odpočívající VPS, 4-poprvé, 3-podruhé, 2-vícekrát
-  $kurz_y= array('VPS','(vps)','vicekrát','podruhé','noví');
+  $kurz_y= array("$VPS","odpoč.$VPS",'vicekrát','podruhé','noví');
   $kurz_x= array(0,0,0,0,0);
   // stanovení intervalu 
   $step_man= 10; $step_vek= 10;
