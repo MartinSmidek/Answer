@@ -290,9 +290,17 @@ proc reload(id_pobyt) { var filtr:text, id_pobyt0:number
   lst.the_akce.load(the_duakce.get);
   page_clear;
   filtr.set(1);
-  [ u.lid.get; u.tym.get
-  | u.lid.get; filtr.set("p.funkce IN (0,1,2)")
-  | u.tym.get; filtr.set("p.funkce NOT IN (0,1,2)") ];
+  // vytvoř filtr z polí: lid (0,1,2), tym (3,4,5,6,7,8,12), non (9,10,13,14)
+  filtr.set(cconc(
+    1," ( 0",
+    u.lid.get," OR p.funkce IN (0,1,2)",
+    u.tym.get," OR p.funkce IN (3,4,5,6,7,8,12)",
+    u.non.get," OR p.funkce IN (9,10,13,14)",
+    1," ) "
+  ));
+//  [ u.lid.get; u.tym.get
+//  | u.lid.get; filtr.set("p.funkce IN (0,1,2)")
+//  | u.tym.get; filtr.set("p.funkce NOT IN (0,1,2)") ];
   // vynucení výpočtu duplicit a příznaku dokumentů
   [ u.sf.get;  filtr.set(conc('/*css*/',filtr)) ];
   [ u.dup.get; filtr.set(conc('/*duplicity*/',filtr)) ];
@@ -617,12 +625,19 @@ form _ucast [,,400,] { css:'ds_form', style:'height:fit-content'
   check dup [150,7,63,15] { title:'kopie?', help:'zobrazit tipy na kopie osob a rodin',
     format:'t', value:'0', proc onchange() { show_chain }
   }
-  check doc [202,7,75,15] { title:'dokumenty', help:'zobrazit příznaky existence dokumentů a fotek'
+  check doc [202,7,75,15] { title:'doc', help:'zobrazit příznaky existence dokumentů a fotek'
     format:'t', value:'0', proc onchange() {
     reload(0)
   }}
-  check lid [278,7,65,15] { title:'účastníci', format:'t', value:'1', proc onchange() { reload(0) }}
-  check tym [344,7,43,15] { title:'tým', format:'t', value:'1', proc onchange() { reload(0) }}
+  check lid [238,7,65,15] { title:'účastníci', format:'t', value:'1', 
+    help:'zobrazit -, VPS, SVPS'
+    proc onchange() { reload(0) }}
+  check tym [304,7,43,15] { title:'tým', format:'t', value:'1', 
+    help:'zobrazit kněz, psycholog, hospodář, zvuk, host, zdravotník, lektor'
+    proc onchange() { reload(0) }}
+  check non [344,7,63,15] { title:'není', format:'t', value:'1', 
+    help:'zobrazit přihláška, náhradník, nepřijel, odhlášen'
+    proc onchange() { reload(0) }}
   // seznam účastníků
   browse b [0,26,,] {buf_rows:200, rows:21, qry_rows:1, key_id:'key_pobyt',
     optimize:°{ask:'ucast2_browse_ask'}, css_rows:"dluh,1:yellow,2:blue"
