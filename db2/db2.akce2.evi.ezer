@@ -1594,6 +1594,7 @@ panel filtr_osob [,,250,200] { type:'popup', title:"doplňující podmínky výb
   var sql=''
   proc filtr_set() { sql.set(cconc(1,''
     ,f.mrop.get," AND o.iniciace!=0"
+    ,f.firm.get," AND o.firming!=0"
     ,f.aktiv.get,conc(" AND o.aktivita RLIKE '.*",f.aktiv.get,".*'")
     ,f.jazyk.get,conc(" AND o.jazyk RLIKE '.*", f.jazyk.get,".*'")
     ,f.zajmy.get,conc(" AND o.zajmy RLIKE '.*", f.zajmy.get,".*'")
@@ -1646,12 +1647,13 @@ panel filtr_osob [,,250,200] { type:'popup', title:"doplňující podmínky výb
                                  value:'0', format:'t', help:"zohledňuje i rodinou službu" }
     // vpravo
     check mrop    [160,1,95,17]  { title:'iniciovaní', format:'t', skill:'f|f;y|f;c|f' }
-    check slovaci [160,29,95,17] { title:'Slováci', format:'t', help:"zohledňuje i rodinnou adresu" }
-    check cizinci [160,46,95,17] { title:'jiní cizinci', format:'t', help:"zohledňuje i rodinnou adresu" }
-    check bcleni  [160,74,95,17] { title:'běžní členové', format:'t', help:"nezrušení běžní členové" }
-    check ccleni  [160,91,95,17] { title:'činní členové', format:'t', help:"nezrušení činní členové" }
-    check darci   [160,108,47,17] { title:'dárci', format:'t', help:"letošní as loňští dárci" }
-    check klub    [160,125,47,17] { title:'klub', format:'t', help:"jsou v klubu přátel" }
+    check firm    [160,16,95,17] { title:'firming', format:'t', skill:'f|f;y|f;c|f' }
+    check slovaci [160,44,95,17] { title:'Slováci', format:'t', help:"zohledňuje i rodinnou adresu" }
+    check cizinci [160,61,95,17] { title:'jiní cizinci', format:'t', help:"zohledňuje i rodinnou adresu" }
+    check bcleni  [160,89,95,17] { title:'běžní členové', format:'t', help:"nezrušení běžní členové" }
+    check ccleni  [160,106,95,17] { title:'činní členové', format:'t', help:"nezrušení činní členové" }
+    check darci   [160,123,47,17] { title:'dárci', format:'t', help:"letošní as loňští dárci" }
+    check klub    [160,140,47,17] { title:'klub', format:'t', help:"jsou v klubu přátel" }
     // ukončení
     button [57,181,,] { title:'[fa-filter] filtruj', proc onclick() { filtr_set; panel.hide(1) }}
     button [137,181,,] { title:'[fa-undo] zruš filtr', proc onclick() { filtr_clear; panel.hide(0) }}
