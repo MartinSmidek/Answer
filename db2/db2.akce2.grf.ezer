@@ -37,14 +37,38 @@ menu m {type:'left', format:'f+'
         chart:{chart:'column',plotOptions:{column:{stacking:'value'}}}}}
     item skup {title:"[fa-line-chart] Velikost a počet skupinek", par:{type:'skupinky'}}
     func onclick(i:ezer) {  var y:object, par:object
-//      if (!i && !last_menu) return; // chyba inicializace
       if (i) { last_par= i.par; last_menu= i; }
       info.header(last_menu);
       info.spinner(last_menu);
       last_par.od= info.od;
       last_par.do= info.do;
       last_par.org= info.org.key();
+      last_par.prc= info.prc;
       y= php.chart_ms(last_par);
+      if (y.err) 
+        alert(y.err)
+      else {
+        js.highcharts_show(y.chart);
+        info.fill('',y.note);
+      }
+      info.spinner(0);
+    }
+  }
+  menu {title:'Infografika MROP',type:'group'
+    item  {title:"[fa-bar-chart] na našich akcích před iniciaci", par:{type:'pred_mrop',
+        chart:{chart:'bar',plotOptions:{series:{stacking:'normal'}}}}}
+    item  {title:"[fa-bar-chart] na našich akcích po iniciaci", par:{type:'po_mrop',
+        chart:{chart:'bar',plotOptions:{series:{stacking:'normal'}}}}}
+    func onclick(i:ezer) {  var y:object, par:object
+      if (i) { last_par= i.par; last_menu= i; }
+      info.header(last_menu);
+      info.spinner(last_menu);
+      last_par.od= info.od;
+      last_par.do= info.do;
+      last_par.prc= info.prc;
+      info.org.key(3);
+      last_par.org= info.org.key();
+      y= php.chart_mrop(last_par);
       if (y.err) 
         alert(y.err)
       else {
@@ -64,8 +88,13 @@ form _right [,,*,50] {
   // parametry
   field od [-305,5,40,] { title:'graf od roku', format:'tr', css:'bila' }
   field do [-215,5,40,] { title:'do roku', format:'tr', css:'bila' }
-  select org [-35,5,150,] { title:'pro', format:'t', css:'bila' }
-  button [-7,5,20,] {title:'[fa-refresh]' func onclick() { m.s.onclick(0)} }
+  check prc [-178,4,30,] { title:'%', format:'t', css:'bila' }
+  select org [-35,5,120,] { title:'pro', format:'t', css:'bila' }
+  button [-7,5,20,] {title:'[fa-refresh]' 
+    func onclick() { 
+      last_menu.click(last_menu);
+//    m.s.onclick(0)
+  }}
   // funkce
   func Init() {
     chart= `<div id="container" style="width:800px; height:400px;"></div>`;

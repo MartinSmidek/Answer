@@ -125,7 +125,85 @@ function update_web_changes () {
   }
   return 1;
 }
-/** =======================================================================================> STA2 MS */
+/** =========================================================================================> CHART */
+# ------------------------------------------------------------------------------------==> . chart ms
+# agregace údajů o MROP pro grafické znázornění
+function chart_mrop($par) { debug($par,'chart_ms');
+  $y= (object)array('err'=>'','note'=>' ');
+  $org= $par->org; //255;
+  $chart= $par->chart ?: (object)array();
+  if (!isset($chart->series))
+    $chart->series= array();
+  switch ($par->type) {
+    case 'pred_mrop':
+    case 'po_mrop':
+      $chart->title= $par->type=='pred_mrop'
+          ? 'účastníci MROP s vyznačením absolventů MS (případně jiných akcí) před MROP'
+          : 'účastníci MROP s vyznačením pokračujících na MS (případně jiných akcí) po MROP';
+      $od= $par->od;
+      $do= $par->do ?: date('Y');
+      //           MS před  X před  MROP
+      //           MROP     MS po   X po    
+      $mrop= array(array(),array(),array());
+      $mrop_y= $par->type=='pred_mrop' 
+          ? array('MROP je první akcí','byl na MS před MROP','nebyl na MS, na jiné akci ano')
+          : array('zatím na MS ne, jinak ano','pokračuje na MS','MROP je zatím poslední akcí');
+      $roky= array();
+      for ($rok= $od; $rok<=$do; $rok++) {
+        // zjistíme, jestli v daném roce byl MROP
+        $ok= select('COUNT(*)','akce',"mrop=1 AND zruseno=0 AND YEAR(datum_od)=$rok");
+        if (!$ok) continue;
+        $mrop[0][$rok]= 0;
+        $mrop[1][$rok]= 0;
+        $mrop[2][$rok]= 0;
+        $roky[]= $rok;
+        $mr= pdo_qry("
+          SELECT 
+            IF(ms_pred+lk_pred>0,1,0),IF(ms_po+lk_po>0,1,0),
+            IF(m_pred+j_pred>0,1,0),IF(m_po+j_po>0,1,0)
+          FROM `#stat` WHERE mrop=$rok
+          ");
+        while ($mr && (list($ms_pred,$ms_po,$j_pred,$j_po)= pdo_fetch_row($mr))) {
+          if ($par->type=='pred_mrop' ) {
+            if ($ms_pred) $mrop[1][$rok]++;
+            elseif ($j_pred) $mrop[2][$rok]++;
+            else $mrop[0][$rok]++;
+          }
+          else {
+            if ($ms_po) $mrop[1][$rok]++;
+            elseif ($j_po) $mrop[0][$rok]++;
+            else $mrop[2][$rok]++;
+          }
+        }
+      }
+      debug($mrop,"$od-$do");
+      $color= $par->type=='pred_mrop' 
+          ? array('orange','blue','navy')
+          : array('navy','blue','orange');
+      for ($x= 0; $x<=2; $x++) {
+        $data= implode(',',$mrop[$x]);
+        $serie= (object)array('name'=>$mrop_y[$x],'data'=>$data,'color'=>$color[$x]);
+        $chart->series[$x]= $serie;
+      }
+      $chart->yAxis= (object)array('title'=>(object)array('text'=>'počet účastníků MROP v daném roce'),
+          'categories'=>$mrop_y);
+      $chart->xAxis= (object)array('categories'=>$roky,//'labels'=>(object)array('min'=>'5'),
+          'title'=>(object)array('text'=>'rok konání MROP '));
+      if (isset($chart->plotOptions->series->stacking)){
+        $chart->tooltip= (object)array(
+          'pointFormat'=>"<span>{series.name}</span>: <b>{point.y}</b> ({point.percentage:.0f}%)<br/>");
+        if ($chart->plotOptions->series->stacking=='normal' && $par->prc) {
+          $chart->plotOptions->series->stacking= 'percent';
+        }
+        $chart->chart= 'bar';
+      }
+      break;
+  }
+  $y->chart= $chart;
+  debug($y);
+end:
+  return $y;
+}
 # ------------------------------------------------------------------------------------==> . chart ms
 # agregace údajů o účastích a účastnících MS pro grafické znázornění
 function chart_ms($par) { debug($par,'chart_ms');
@@ -253,18 +331,16 @@ function chart_ms($par) { debug($par,'chart_ms');
         $serie= (object)array('name'=>$kurz_y[$x],'data'=>$data,'color'=>$color[$x]);
         $chart->series[$x]= $serie;
       }
-//      $chart->series= array();
-//      $chart->series[]= (object)array('type'=>'line','data'=>array(array(2021,30),array(2022,40)));
       $chart->yAxis= (object)array('title'=>(object)array('text'=>'účast na kurzu jako'),
           'categories'=>$kurz_y);
       $chart->xAxis= (object)array('categories'=>$roky,
           'title'=>(object)array('text'=>'rok kurzu '));
-//      $chart->xAxis= (object)array('min'=>2019,'max'=>2020,'categories'=>$roky,
-//          'title'=>(object)array('text'=>'rok kurzu '));
       if (isset($chart->plotOptions->column->stacking)){
-//          && $chart->plotOptions->column->stacking=='percent') {
         $chart->tooltip= (object)array(
           'pointFormat'=>"<span>{series.name}</span>: <b>{point.y}</b> ({point.percentage:.0f}%)<br/>");
+        if ($chart->plotOptions->column->stacking=='value' && $par->prc) {
+          $chart->plotOptions->column->stacking= 'percent';
+        }
       }
       break;
   }

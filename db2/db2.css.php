@@ -30,7 +30,7 @@ div.gmnoprint div.gm-style-mtc { display:none }
   background:$b /*url($path/ezer_layout.png)*/ !important; }
 
 /* obecné barvy písma */
-.bila    { color:#fff; }
+.bila    { color:#fff !important; }
 .seda    { color:#777; }
 .cervena { color:#f00; }
 .zelena  { color:#0f0; }

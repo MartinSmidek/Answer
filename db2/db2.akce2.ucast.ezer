@@ -665,6 +665,8 @@ form _ucast [,,400,] { css:'ds_form', style:'height:fit-content'
     show _dupl  // 1 pokud jsou duplicity
     show c_suma  [,,0,] { title:'cena', format:"r" }
     show platba  [,,0,] { title:'platba', format:"rsq=" }
+    show budova  [,,0,] { title:'budova', format:"rsq=" }
+    show pokoj   [,,0,] { title:'pokoj', format:"rsq=" }
     show potvrzeno
     # varianta C na úkor _jmena
     show x_ms    [,,0,] { title:'lk;', format:'rq=s:e', help:'počet účastí páru na LK MS (včetně tohoto)' }
@@ -687,7 +689,7 @@ form _ucast [,,400,] { css:'ds_form', style:'height:fit-content'
     // údaje rod.cleni
     show r_cleni // naplní browse pro rodinu daty jejích členů
     // údaje pob
-    show p_poznamka, show p_pracovni, show pokoj, show budova, show funkce, show hnizdo, 
+    show p_poznamka, show p_pracovni, show funkce, show hnizdo, 
     show prednasi, show skup,
     // platby
     show luzka, show pristylky, show kocarek, show pocetdnu,
@@ -806,8 +808,10 @@ form _ucast [,,400,] { css:'ds_form', style:'height:fit-content'
     }
     proc onclick() {
       eq(_docs.width,49); show_dup(0)
-    | platba.width; platba.width(0); c_suma.width(0); _docs.width(30);
-      x_umi.width(28); x_ms.width(19); _jmena.width(100)
+    | platba.width; platba.width(0); c_suma.width(0); 
+      budova.width(35); pokoj.width(35); _docs.width(15); _jmena.width(92)
+    | budova.width; budova.width(0); pokoj.width(0); 
+      _docs.width(30); x_umi.width(28); x_ms.width(19); _jmena.width(100)
     | x_umi.width; x_umi.width(0); x_ms.width(0); _docs.width(0); _jmena.width(180)
     | platba.width(35); c_suma.width(35); _docs.width(15); _jmena.width(92)
     }
