@@ -1450,14 +1450,30 @@ function sta2_mrop_stat_gen($par) {
     $ms= array();
     // získání data mrop
     $mr= pdo_qry("
-      SELECT YEAR(a.datum_od) AS _rok,a.datum_od FROM akce AS a WHERE a.mrop=1 ORDER BY _rok
+      SELECT YEAR(a.datum_od) AS _rok,a.datum_od FROM akce AS a 
+      WHERE a.mrop=1 
+      --  AND id_duakce=1373
+      ORDER BY _rok
     ");
     while ( $mr && list($rok,$datum)= pdo_fetch_row($mr) ) {
       $mrops[$rok]= $datum;
     }
-  //  $mrops= array(2002=>'2002-09-01');
+//    $mrops= array(2021=>'2021-09-15');
     // získání individuálních a rodinných údajů
     foreach ($mrops as $mrop=>$datum) {
+      $n_iniciovani= select('COUNT(*)','osoba',"iniciace=$mrop");
+      if ($n_iniciovani) {
+        // dokončený ročník
+        $AND= "AND o.iniciace=$mrop";
+        $JOIN= '';
+      }
+      else {
+        // iniciace v běhu
+        $ida= select('id_duakce','akce',"mrop=1 AND YEAR(datum_od)='$mrop'");
+        $AND= "AND o.iniciace=0 AND p.funkce=0";
+        $JOIN= "JOIN pobyt AS p ON id_akce=$ida JOIN spolu AS s USING (id_osoba,id_pobyt)";
+      }
+//      $AND.= " AND o.id_osoba=4881";
       $mr= pdo_qry("
         SELECT o.id_osoba,o.access,CONCAT(o.jmeno,' ',o.prijmeni),
           ROUND(DATEDIFF('$datum',o.narozeni)/365.2425) AS _vek,
@@ -1469,12 +1485,13 @@ function sta2_mrop_stat_gen($par) {
           IF(o.adresa=1,o.psc,r.psc) AS _psc,
           o.firming
         FROM osoba AS o
+        $JOIN
         LEFT JOIN tvori AS ta ON ta.id_osoba=o.id_osoba AND ta.role='a'
-        JOIN rodina AS r ON r.id_rodina=ta.id_rodina
+        LEFT JOIN rodina AS r ON r.id_rodina=ta.id_rodina
         LEFT JOIN tvori AS tb ON r.id_rodina=tb.id_rodina AND tb.role='b'
         LEFT JOIN tvori AS td ON r.id_rodina=td.id_rodina AND td.role='d'
         LEFT JOIN osoba AS od ON od.id_osoba=td.id_osoba
-        WHERE o.deleted='' AND r.deleted='' AND o.iniciace=$mrop
+        WHERE o.deleted='' $AND
         GROUP BY o.id_osoba
       ");
       while ( $mr && 
@@ -1511,7 +1528,7 @@ function sta2_mrop_stat_gen($par) {
     foreach ($ms as $ido=>$m) {
       if ( $ido_test && $ido!=$ido_test ) continue;
       $ma= pdo_qry("
-        SELECT IF(datum_od<CONCAT(iniciace,'-09-11'),'_pred','_po'),
+        SELECT IF(datum_od<CONCAT({$m->mrop},'-09-11'),'_pred','_po'),
           CASE WHEN druh IN (1) THEN 'lk' 
                WHEN druh IN ($akce_manzele) THEN 'ms' 
                WHEN druh IN ($akce_muzi) THEN 'm' 
