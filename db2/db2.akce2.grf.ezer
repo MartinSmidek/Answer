@@ -59,6 +59,8 @@ menu m {type:'left', format:'f+'
         chart:{chart:'bar',plotOptions:{series:{stacking:'normal'}}}}}
     item  {title:"[fa-bar-chart] na našich akcích po iniciaci", par:{type:'po_mrop',
         chart:{chart:'bar',plotOptions:{series:{stacking:'normal'}}}}}
+    item  {title:"[fa-bar-chart] aktivita YS/FA před iniciací", par:{type:'ys_fa',
+        chart:{chart:'bar',plotOptions:{series:{stacking:'normal'}}}}}
     func onclick(i:ezer) {  var y:object, par:object
       if (i) { last_par= i.par; last_menu= i; }
       info.header(last_menu);

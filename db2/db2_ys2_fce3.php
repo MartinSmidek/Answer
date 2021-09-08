@@ -198,6 +198,55 @@ function chart_mrop($par) { debug($par,'chart_ms');
         $chart->chart= 'bar';
       }
       break;
+    case 'ys_fa':
+      $chart->title= 'účastníci MROP s vyznačením účastí na akcích YS/FA před MROP';
+      $od= $par->od;
+      $do= $par->do ?: date('Y');
+      //           MROP     FA YS+FA YS
+      $mrop= array(array(),array(),array());
+      $mrop_y= array('MROP je první akcí',
+          'byl na akcích Familia','byl tam i tam','byl na akcích Setkání');
+      $roky= array();
+      for ($rok= $od; $rok<=$do; $rok++) {
+        // zjistíme, jestli v daném roce byl MROP
+        $ok= select('COUNT(*)','akce',"mrop=1 AND zruseno=0 AND YEAR(datum_od)=$rok");
+        if (!$ok) continue;
+        $mrop[0][$rok]= 0;
+        $mrop[1][$rok]= 0;
+        $mrop[2][$rok]= 0;
+        $mrop[3][$rok]= 0;
+        $roky[]= $rok;
+        $mr= pdo_qry("
+          SELECT ys_pred,fa_pred
+          FROM `#stat` WHERE mrop=$rok
+          ");
+        while ($mr && (list($ys,$fa)= pdo_fetch_row($mr))) {
+          if ($ys && $fa) $mrop[2][$rok]++;
+          elseif ($ys) $mrop[3][$rok]++;
+          elseif ($fa) $mrop[1][$rok]++;
+          else $mrop[0][$rok]++;
+        }
+      }
+      debug($mrop,"$od-$do");
+      $color= array('orange','blue','cyan','green');
+      for ($x= 0; $x<=3; $x++) {
+        $data= implode(',',$mrop[$x]);
+        $serie= (object)array('name'=>$mrop_y[$x],'data'=>$data,'color'=>$color[$x]);
+        $chart->series[$x]= $serie;
+      }
+      $chart->yAxis= (object)array('title'=>(object)array('text'=>'počet účastníků MROP v daném roce'),
+          'categories'=>$mrop_y);
+      $chart->xAxis= (object)array('categories'=>$roky,//'labels'=>(object)array('min'=>'5'),
+          'title'=>(object)array('text'=>'rok konání MROP '));
+      if (isset($chart->plotOptions->series->stacking)){
+        $chart->tooltip= (object)array(
+          'pointFormat'=>"<span>{series.name}</span>: <b>{point.y}</b> ({point.percentage:.0f}%)<br/>");
+        if ($chart->plotOptions->series->stacking=='normal' && $par->prc) {
+          $chart->plotOptions->series->stacking= 'percent';
+        }
+        $chart->chart= 'bar';
+      }
+      break;
   }
   $y->chart= $chart;
   debug($y);
@@ -1467,7 +1516,7 @@ function sta2_mrop_stat_gen($par) {
                WHEN druh IN ($akce_manzele) THEN 'ms' 
                WHEN druh IN ($akce_muzi) THEN 'm' 
                ELSE 'j' END,
-          statistika,mrop,firm
+          statistika,mrop,firm,a.access
         FROM pobyt AS p
         LEFT JOIN akce AS a ON id_akce=id_duakce
         LEFT JOIN spolu AS s USING (id_pobyt)
@@ -1475,9 +1524,11 @@ function sta2_mrop_stat_gen($par) {
         WHERE id_osoba=$ido AND spec=0 AND mrop=0 AND zruseno=0 
         ORDER BY datum_od
       ");
-      while ( $ma && list($kdy,$druh,$stat,$mrop,$firm)= pdo_fetch_row($ma) ) {
+      while ( $ma && list($kdy,$druh,$stat,$mrop,$firm,$org)= pdo_fetch_row($ma) ) {
         // zápis do #stat - mimo iniciaci
-        query("UPDATE `#stat` SET $druh$kdy=1+$druh$kdy WHERE id_osoba=$ido");
+        $org_pred= $kdy=='_pred'
+            ? ($org==1 ? ',ys_pred=ys_pred+1' : ($org==2 ? ',fa_pred=fa_pred+1' : '')) : '';
+        query("UPDATE `#stat` SET $druh$kdy=1+$druh$kdy$org_pred WHERE id_osoba=$ido");
       }
       // kde byl na MS
       $ma= pdo_qry("
