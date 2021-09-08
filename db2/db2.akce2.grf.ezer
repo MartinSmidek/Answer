@@ -54,7 +54,7 @@ menu m {type:'left', format:'f+'
       info.spinner(0);
     }
   }
-  menu {title:'Infografika MROP',type:'group'
+  menu {title:'Infografika MROP',type:'group', skill:'a'
     item  {title:"[fa-bar-chart] na našich akcích před iniciaci", par:{type:'pred_mrop',
         chart:{chart:'bar',plotOptions:{series:{stacking:'normal'}}}}}
     item  {title:"[fa-bar-chart] na našich akcích po iniciaci", par:{type:'po_mrop',
