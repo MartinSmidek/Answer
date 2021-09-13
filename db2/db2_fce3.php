@@ -4800,6 +4800,91 @@ function akce2_tabulka($akce,$par,$title,$vypis,$export=false) { trace();
   $res->html= "$legenda<br><br><div class='stat'><table class='stat'><tr>$ths</tr>$trs</table></div>";
   return $res;
 }
+# ---------------------------------------------------------------------------- akce2 starsi_mrop_pdf
+# generování skupinky MROP - pro starší
+function akce2_starsi_mrop_pdf($akce) { trace();
+  global $ezer_path_docs;
+  $res= (object)array('html'=>'','err'=>'');
+  $grp= $cht= array();
+  // data akce
+  list($datum_od,$mrop)= select('datum_od,mrop','akce',"id_duakce=$akce");
+  if (!$mrop) { $res->err= "tato sestava je jen pro MROP"; goto end; }
+  $rok= substr($datum_od,0,4);
+  $r_fld= "id_rodina,nazev,ulice,psc,obec,stat,note,emaily,telefony,spz";
+  $rg= pdo_qry("
+    SELECT
+      jmeno,prijmeni,skupina,pokoj,funkce,
+      ROUND(DATEDIFF('$datum_od',o.narozeni)/365.2425,0) AS vek,
+      IF(o.adresa,o.ulice,IFNULL(r2.ulice,r1.ulice)) AS ulice,
+      IF(o.adresa,o.psc,IFNULL(r2.psc,r1.psc)) AS psc,
+      IF(o.adresa,o.obec,IFNULL(r2.obec,r1.obec)) AS obec,
+      IF(o.adresa,o.stat,IFNULL(r2.stat,r1.stat)) AS stat,
+      TRIM(IF(o.kontakt,o.telefon,IFNULL(r2.telefony,r1.telefony))) AS telefony,
+      IF(o.kontakt,o.email,IFNULL(r2.emaily,r1.emaily)) AS emaily
+    FROM pobyt AS p
+      JOIN spolu AS s USING(id_pobyt)
+      JOIN osoba AS o ON o.id_osoba=s.id_osoba AND o.deleted=''
+      -- r1=rodina, kde je dítětem
+      LEFT JOIN ( SELECT id_osoba,role,$r_fld
+        FROM tvori JOIN rodina USING(id_rodina))
+        AS r1 ON r1.id_osoba=o.id_osoba AND r1.role NOT IN ('a','b')
+      -- r2=rodina, kde je rodičem
+      LEFT JOIN ( SELECT id_osoba,role,$r_fld
+        FROM tvori JOIN rodina USING(id_rodina))
+        AS r2 ON r2.id_osoba=o.id_osoba AND r2.role IN ('a','b')
+    WHERE p.id_akce=$akce AND p.funkce IN (0,1,2)
+    ORDER BY skupina,p.funkce DESC,jmeno");
+  while ( $rg && ($x= pdo_fetch_object($rg)) ) {
+    $grp[$x->skupina][]= $x;
+    $chata= $x->pokoj;
+    if (!isset($cht[$x->skupina])) $cht[$x->skupina]= array();
+    if ($chata) {
+      if (!in_array($chata,$cht[$x->skupina])) $cht[$x->skupina][]= $chata;
+    }
+  }
+//  debug($grp,"sestava pro starší");
+  // redakce
+  $neni= array();
+  $fname= "mrop_$rok-skupiny.pdf";
+  $fpath= "$ezer_path_docs/$fname";
+  $res->html= "Sestava skupin pro starší je <a href='docs/$fname' target='pdf'>zde</a><hr>";
+  tc_html_open();
+  $pata= "<i>iniciace $rok</i>";
+  foreach ($grp as $g) {
+    $g0= $g[0];
+    $skupina= $g0->skupina;
+    $page= "<h3>Skupina $skupina má chatky ".implode(', ',$cht[$skupina])." </h3>
+      <table style=\"width:21cm\">";
+    foreach ($g as $o) {
+      if (!$skupina) { $neni[]= "$o->prijmeni $o->jmeno"; }
+      $chata= $o->pokoj ?: '';
+      $fill= '&nbsp;&nbsp;';
+      $stat= $o->stat=='CZ' ? '' : ", $o->stat";
+      $jmeno= $o->funkce 
+          ? "<td width=\"200\" align=\"right\"><big><b>$o->jmeno</b></big> $o->prijmeni ($o->vek)</td>" 
+          : "<td width=\"200\"><big><b>$o->jmeno</b></big> $o->prijmeni ($o->vek)</td>";
+      $page.= "<tr>
+          <td width=\"20\">$chata</td>
+          $jmeno
+          <td width=\"100\">$fill$o->telefony</td>
+          <td width=\"200\">$o->emaily$fill</td>
+          <td>$o->ulice, $o->psc $o->obec $stat<br></td>
+        </tr>";
+    }
+    $page.= "</table>";
+    tc_html_write($page,$pata);
+    $res->html.= $page;
+  }
+  // hlášení neumístěných
+  if (count($neni)) {
+    debug($neni,"sirotci");
+    $res->err.= "POZOR - tito chlapi nejsou ve skupině: ".implode(',',$neni);
+  }
+  // tisk
+  tc_html_close($fpath);
+end:  
+  return $res;
+}
 # ------------------------------------------------------------------------------- akce2 tabulka_mrop
 # generování tabulky účastníků $akce typu MROP - rozpis chatek
 function akce2_tabulka_mrop($akce,$par,$title,$vypis,$export=false) { trace();

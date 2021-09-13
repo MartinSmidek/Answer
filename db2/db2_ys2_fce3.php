@@ -1554,7 +1554,7 @@ function sta2_mrop_stat_gen($par) {
         LEFT JOIN akce AS a ON id_akce=id_duakce
         LEFT JOIN spolu AS s USING (id_pobyt)
         JOIN osoba AS o USING (id_osoba)
-        WHERE id_osoba=$ido AND a.druh=1 AND spec=0 AND zruseno=0 
+        WHERE id_osoba=$ido AND a.druh IN (1,2) AND spec=0 AND zruseno=0 
       ");
       while ( $ma && list($n,$org)= pdo_fetch_row($ma) ) {
         // zápis do #stat

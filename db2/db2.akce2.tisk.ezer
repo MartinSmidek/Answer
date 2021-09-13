@@ -321,6 +321,16 @@ menu m {type:'left', //active:*
                                         ,ord:"skupina,funkce DESC,prijmeni,jmeno,email"
                                         ,tit:'jméno:25, skupina:8, mail:40'
                                         ,fld:'pr_jm,skupina,email'}}
+    item {title:'skupiny - pro starší'
+      func onclick(i:ezer) { var x: object
+        the_item= i; clear(); 
+        the_vypis= i.title;
+        info.fill(the_vypis,' ');
+        info.msg= '';
+        x= php.akce2_starsi_mrop_pdf(the_akce);
+        if (x.err) alert(x.err);
+        info.fill('',x.html);
+      }}
   }
   # ------------------------------------------------------------------------------------------==> DS
   menu {tag:'a', title:'seznamy DS',type:'group',_sys:'*'                                    skill:'y'
