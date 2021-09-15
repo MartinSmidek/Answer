@@ -4864,7 +4864,7 @@ function akce2_starsi_mrop_pdf($akce) { trace();
           ? "<td width=\"200\" align=\"right\"><big><b>$o->jmeno</b></big> $o->prijmeni ($o->vek)</td>" 
           : "<td width=\"200\"><big><b>$o->jmeno</b></big> $o->prijmeni ($o->vek)</td>";
       $page.= "<tr>
-          <td width=\"20\">$chata</td>
+          <td width=\"40\">$chata</td>
           $jmeno
           <td width=\"100\">$fill$o->telefony</td>
           <td width=\"200\">$o->emaily$fill</td>
