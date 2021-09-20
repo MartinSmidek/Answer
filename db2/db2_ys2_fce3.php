@@ -1,4 +1,62 @@
 <?php # (c) 2009-2015 Martin Smidek <martin@smidek.eu>
+/** ==========================================================================================> AKCE */
+# ---------------------------------------------------------------------------------------- ms_import
+# import
+function akce_ucastnici($akce,$cmd) {
+  $ret= (object)array('html'=>'');
+  switch($cmd) {
+    case 'survey':
+      $sum= (object)array('mrop'=>0,'firm'=>0,'50+'=>0,'50-'=>0);
+      $xs=pdo_qry("
+        SELECT iniciace,firming,
+          ROUND(DATEDIFF(datum_od,narozeni)/365.2425) AS _vek
+        FROM pobyt 
+        JOIN spolu USING (id_pobyt)
+        JOIN osoba USING (id_osoba)
+        JOIN akce ON id_akce=id_duakce
+        WHERE id_akce=$akce AND funkce IN (0,1)
+      "); 
+      while ($xs && (list($mrop,$firm,$vek)=pdo_fetch_row($xs))) {
+        if ($mrop) $sum->mrop++;
+        if ($firm) $sum->firm++;
+        if ($vek>50) $sum->{'50+'}++; else $sum->{'50-'}++;
+      }
+      $ret->html= debug($sum);
+      break;
+    case 'design':
+      // vymaž skupiny
+      query("UPDATE pobyt SET skupina=0 WHERE id_akce=$akce AND funkce=0");
+      // vytvoř skupiny
+      $last_skupina= 0;
+      $datum= date('Y-m-d');
+      $xs=pdo_qry("
+        SELECT id_pobyt,funkce,skupina,
+          ROUND(DATEDIFF('$datum',narozeni)/365.2425) AS _vek
+        FROM pobyt 
+        JOIN spolu USING (id_pobyt)
+        JOIN osoba USING (id_osoba)
+        WHERE id_akce=$akce AND ((funkce=0 AND skupina=0) OR funkce=1)
+        ORDER BY firming DESC,_vek DESC
+      "); 
+      while ($xs && (list($idp,$fce,$skup,$vek)=pdo_fetch_row($xs))) {
+        if (!$skup) {
+          $last_skupina= ($last_skupina % 14)+1;
+          $skup= $last_skupina;
+          query("UPDATE pobyt SET skupina=$skup WHERE id_pobyt=$idp");
+        }
+        $chata= 2*$skup-1;
+        $pocet= select('COUNT(*)','pobyt',"skupina=$skup");
+        if ($pocet>4) {
+          $chata++;
+        }
+        query("UPDATE pobyt SET pokoj=$chata WHERE id_pobyt=$idp");
+      }
+      $ret->html= 'ok';
+      break;  
+  }
+end:    
+  return $ret;
+}
 /** ========================================================================================> IMPORT */
 # ---------------------------------------------------------------------------------------- ms_import
 # import
