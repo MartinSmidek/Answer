@@ -65,7 +65,7 @@ function akce_ucastnici($akce,$cmd,$par) {
         elseif ($check[1] && $jina) $j= 1;
         else           $j= 0;
         $data[$i][$j]++;
-        $jmena[$i][$j][]= "$jmeno/$ido";
+        $jmena[$i][$j][]= $jmeno; // "$jmeno/$ido";
         // hlášení anomálií do trasování
 //        if ($ido==8370) display("$ido ms=$ms i=$i ($firm,$mrop,$muzi,$jina,$vps,$ms,$zena)");
         if ($zena && $j) display("žena $jmeno na hradě: $zena");
