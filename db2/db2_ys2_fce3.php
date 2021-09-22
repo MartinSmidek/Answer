@@ -31,7 +31,7 @@ function akce_ucastnici($akce,$cmd,$par) {
         $jmena[$i]= array();
         for ($j=0; $j<=4; $j++) {
           $data[$i][$j]= $check[$j] ? 0 : '-';
-          $jmena[$i][$j]= '';
+          $jmena[$i][$j]= array();
         }
       }
       $org= select('access','akce',"id_duakce=$akce");
@@ -45,28 +45,29 @@ function akce_ucastnici($akce,$cmd,$par) {
             SUM(IF(firm,1,0)),
             SUM(IF(mrop,1,0)),
             SUM(IF(statistika IN (1,2,3,4,5),1,0)),
+            1,
             SUM(IF(druh IN (1,2) AND funkce IN (1,2),1,0)),
             SUM(IF(druh IN (1,2) AND funkce IN (0),1,0)),
-            1,
             GROUP_CONCAT(IF(sex=2 AND (statistika>0 OR firm OR mrop),
               CONCAT(nazev,'/',YEAR(datum_od),' '),'') SEPARATOR '')
           FROM pobyt JOIN spolu USING (id_pobyt) JOIN osoba USING (id_osoba) 
           JOIN akce ON id_akce=id_duakce
           WHERE
             zruseno=0 AND spec=0 AND 
-            id_osoba=$ido AND id_akce!=$akce AND funkce IN (0,1,2)
+            id_osoba=$ido AND id_akce!=$akce AND funkce IN (0,1,2) AND s_role=1
           GROUP BY id_osoba
         "); 
         list($firm,$mrop,$muzi,$jina,$vps,$ms,$zena)=pdo_fetch_row($xs);
-        $i= $vps ? 2 : ($ms ? 1 : 0);
+        $i= $vps>0 ? 2 : ($ms>0 ? 1 : 0);
         if ($check[4] && $firm)     $j= 4;
         elseif ($check[3] && $mrop) $j= 3;
         elseif ($check[2] && $muzi) $j= 2;
         elseif ($check[1] && $jina) $j= 1;
         else           $j= 0;
         $data[$i][$j]++;
-        $jmena[$i][$j].= " $jmeno";
+        $jmena[$i][$j][]= "$jmeno/$ido";
         // hlášení anomálií do trasování
+//        if ($ido==8370) display("$ido ms=$ms i=$i ($firm,$mrop,$muzi,$jina,$vps,$ms,$zena)");
         if ($zena && $j) display("žena $jmeno na hradě: $zena");
       }
 //      debug($jmena,"jména  pro akci pořádanou $org");
@@ -75,6 +76,8 @@ function akce_ucastnici($akce,$cmd,$par) {
         for ($j=0; $j<=4; $j++) {
           $serie= array($i,$j,$data[$i][$j]);
           $series[]= $serie;
+          sort($jmena[$i][$j]);
+          $jmena[$i][$j]= implode(', ',$jmena[$i][$j]);
         }
       }
       $chart= array(

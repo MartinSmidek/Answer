@@ -6,9 +6,10 @@
 # ------------------------------------------------------------------------------------------------ #
 
 # ------------------------------------------------------------------------------------------==> stav
-var zalozka: text               // inf | cor | cen
-var the_omezeni: text           // podmínka omezující akce podle druhu - 1,2,3,4 jsou MS
-var menu_item:object            // aktivní menu
+var zalozka: text,              // inf | cor | cen
+    the_omezeni: text,          // podmínka omezující akce podle druhu - 1,2,3,4 jsou MS
+    menu_item:object,           // aktivní menu
+    a_title: text               // aktivní (ne nutně pracovní) akce
 # ----------------------------------------------------------------------------------==> inicializace
 # inicializace panelu proběhne po akce.onstart, zobrazí seznam akcí daného roku podle the_source
 proc onfirstfocus() {
@@ -915,7 +916,7 @@ form _info [,,*,50] {
     show stat  [,,0,] {title:'stat.',   data:da.statistika, map_pipe:ms_akce_stat.zkratka, format:'sq#'}
     proc onclick() { stat.width; stat.width(0); do.width(65) | stat.width(65); do.width(0) }
     proc onsubmit() { pracovni }
-    proc onrowclick() { page.show_akce(id_akce.get); }
+    func onrowclick() { a_title= nazev; page.show_akce(id_akce); }
     menu { type:'context'
       item { title:'Vybrat akci jako pracovní', proc onclick() { pracovni }}
     }
@@ -996,9 +997,10 @@ form _info [,,*,50] {
       [ has_skill('yas'); page.DocBrowse ]
     }
     proc onsubmit() { pracovni }
-    proc onrowclick() { 
-      page.show_akce(id_akce.get); 
-      [ has_skill('yas'); page.DocBrowse ] 
+    func onrowclick() { 
+      a_title= nazev; 
+      page.show_akce(id_akce); 
+      if (has_skill('yas')) page.DocBrowse();
     }
     menu { type:'context'
       item { title:'Vybrat akci jako pracovní', proc onclick() { pracovni }}
@@ -1111,7 +1113,7 @@ panel AKCE [0,0,600,400] { title:' ', type:'popup', css:'dialog'
   var ida:number
   func cesty(_ida) { var y:object
     ida= _ida;
-    clear(); panel.title= the_title;
+    clear(); panel.title= a_title;
     js.highcharts_load(); 
     h.txt= "<div id='akce_ucastnici' style='width:445px'></div>";
     y= php.akce_ucastnici(ida,'matrix',{firm:h.f,mrop:h.i,muzi:h.m,jine:h.j});
