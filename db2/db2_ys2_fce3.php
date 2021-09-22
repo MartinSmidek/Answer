@@ -2,7 +2,7 @@
 /** ==========================================================================================> AKCE */
 # ---------------------------------------------------------------------------------------- ms_import
 # import
-function akce_ucastnici($akce,$cmd) {
+function akce_ucastnici($akce,$cmd,$par) {
   $ret= (object)array('html'=>'');
   switch($cmd) {
     case 'survey':
@@ -25,11 +25,12 @@ function akce_ucastnici($akce,$cmd) {
       break;
     case 'matrix': // ------------------------------------------------------
       $data= $jmena= array();
+      $check= array(1,$par->jine,$par->muzi,$par->mrop,$par->firm);
       for ($i=0; $i<=2; $i++) {
         $data[$i]= array();
         $jmena[$i]= array();
         for ($j=0; $j<=4; $j++) {
-          $data[$i][$j]= 0;
+          $data[$i][$j]= $check[$j] ? 0 : '-';
           $jmena[$i][$j]= '';
         }
       }
@@ -58,10 +59,10 @@ function akce_ucastnici($akce,$cmd) {
         "); 
         list($firm,$mrop,$muzi,$jina,$vps,$ms,$zena)=pdo_fetch_row($xs);
         $i= $vps ? 2 : ($ms ? 1 : 0);
-        if ($firm)     $j= 4;
-        elseif ($mrop) $j= 3;
-        elseif ($muzi) $j= 2;
-        elseif ($jina) $j= 1;
+        if ($check[4] && $firm)     $j= 4;
+        elseif ($check[3] && $mrop) $j= 3;
+        elseif ($check[2] && $muzi) $j= 2;
+        elseif ($check[1] && $jina) $j= 1;
         else           $j= 0;
         $data[$i][$j]++;
         $jmena[$i][$j].= " $jmeno";
@@ -79,7 +80,7 @@ function akce_ucastnici($akce,$cmd) {
       $chart= array(
           'chart' =>'heatmap',
           'colorAxis_maxColor'=>$org==1 ? '#2C8931' : ($org==2 ? '#2C4989' : '#AAAAAA'),
-          'title_text' =>'účasti na akcích',
+          'title_text' =>'účasti na jiných akcích',
           'xAxis_categories'=>array('-','MS','PPS'),
           'yAxis_categories'=>array('-','jiná akce','muži,otcové','iniciace','firming'),
           'series_0_data'=>$series,

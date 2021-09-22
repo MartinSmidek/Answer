@@ -1082,7 +1082,7 @@ form _info [,,*,50] {
   }}
   # ==> .. graf průchodu účastníků akcemi
   button cesty [-123,5,,] { title:'Akce účastníků'                                       skill:'y|y;f|f'
-    func onclick() { HNIZDA.cesty(page.key_akce) }}
+    func onclick() { AKCE.cesty(page.key_akce) }}
   # ==> .. zobrazení mapy s pozicí míst účastníků dané akce a oprava PSČ
   button mapka [-21,5,,] { title:'Mapa účastníků',                                  skill:'#crz'
     help:"mapa s bydlišti účastníků akcí"
@@ -1103,6 +1103,27 @@ form _info [,,*,50] {
   }
   proc fill(x) {
     [ x; head.set(conc("<div class='karta' style='padding-left:60px'>",x,"</div>")) ];
+  }
+}
+# ==========================================================================================> akce
+# přehled obsazení hnízd
+panel AKCE [0,0,600,400] { title:' ', type:'popup', css:'dialog'
+  var ida:number
+  func cesty(_ida) { var y:object
+    ida= _ida;
+    clear(); panel.title= the_title;
+    js.highcharts_load(); 
+    h.txt= "<div id='akce_ucastnici' style='width:445px'></div>";
+    y= php.akce_ucastnici(ida,'matrix',{firm:h.f,mrop:h.i,muzi:h.m,jine:h.j});
+    if (y.chart) js.highcharts_show(y.chart,'akce_ucastnici');
+    panel.modal(210,60);
+  }
+  use h: form {
+    label txt [0,0,470,400] { style:'overflow:auto' }
+    check f [480,10,100,] { title:'firming', value:"1", format:'t', func onchange() {cesty(ida)}} 
+    check i [480,30,100,] { title:'iniciace', value:"1", format:'t', func onchange() {cesty(ida)}} 
+    check m [480,50,100,] { title:'muži,otcové', value:"1", format:'t', func onchange() {cesty(ida)}} 
+    check j [480,70,100,] { title:'jiné akce', value:"1", format:'t', func onchange() {cesty(ida)}} 
   }
 }
 # =========================================================================================> anotace
@@ -1132,14 +1153,6 @@ panel HNIZDA [0,0,640,520] { title:' ', type:'popup', css:'dialog',
     clear(); panel.title= "Přehled obsazenosti hnízd této akce";
     y= php.akce2_hnizda(ida);
     h.txt= y.html;
-    panel.modal(210,60);
-  }
-  func cesty(ida) { var y:object
-    clear(); panel.title= "průchod účastníků (vč. PPS) této akce přechozími akcemi";
-    js.highcharts_load(); 
-    h.txt= "<div id='akce_ucastnici' style='width:445px'></div>";
-    y= php.akce_ucastnici(ida,'matrix');
-    if (y.chart) js.highcharts_show(y.chart,'akce_ucastnici');
     panel.modal(210,60);
   }
   use h: form {
