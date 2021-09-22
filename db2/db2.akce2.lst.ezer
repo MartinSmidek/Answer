@@ -241,11 +241,10 @@ form _page [,,275,360] {
   label syn [276,0,80,20] {tag:'p', title:'<b>Dokumenty</b>', format:'c', skill:'yas'
     proc onclick() { tags(this,'syn','inf|cor|cen|doc'); zalozka.set('syn'); show_akce(a_akce.get)
   } }
-  proc show_akce(id_akce) {
-    page.a_akce.set(id_akce);
-    [ eq(the_source.get,'sey');    [ info.sey.browse_count; show_page(id_akce) | init_page ]
-    | eq(the_source.get,'google'); [ id_akce; show_page(id_akce) | init_page ]
-    ];
+  func show_akce(id_akce) {
+    page.a_akce= id_akce;
+    if (the_source=='sey') { if (info.sey.browse_count()) show_page(id_akce) else init_page() }
+    if (the_source=='google') { if (id_akce) show_page(id_akce) else init_page() }
   }
   func show_page(id_akce) {
     cen_copy.enable(0); cen_copy.key(0); key_akce= id_akce;
@@ -327,7 +326,7 @@ form _page [,,275,360] {
   check [213,177,90,] { tag:'cor', title:'akce zrušena', data:akce.zruseno }
   check mrop [300,157,60,] { tag:'cor', title:'mrop', data:akce.mrop, title:'mrop', skill:'faan|faa:m' }
   check firm [300,177,60,] { tag:'cor', title:'firm', data:akce.firm, title:'firming', skill:'faan|faa:m' }
-  select [367,167,89,] { tag:'cor', title:'^statistika', type:'map0', data:akce.statistika,
+  select [367,167,89,] { tag:'cor', title:'^statistika muži', type:'map0', data:akce.statistika,
     options:ms_akce_stat.zkratka, format:'n', skill:'f|f' }
   select [71,169,139,] { tag:'cor', title:'typ akce *', type:'map', data:akce.druh,
     options:ms_akce_typ.zkratka, format:'n' }
@@ -531,7 +530,7 @@ form _page [,,275,360] {
   | eq(access.get,4,8);
     c.pol.width(100); c.typ.width(50); c.za_2016.width(40);
     form.display(0,'ex');
-  | alert("chybně definovaný ceník");
+  | warning("chybně definovaný ceník");
   }
   browse c [10,25,,] { tag:'cen', rows:26, qry_rows:1, css_rows:"barva,1:sedy"
     // pro y;f;c
@@ -879,8 +878,8 @@ form _page [,,275,360] {
   # --------------------------- pozadí stránky a kontextové menu nakonec
   label frame [2,16,443,385] { title:'', css:'ae_work page' }
   menu detail { type:'context' join:frame
-    item { title:'ukázat změny', proc onclick () {
-      key_akce.get; track.back_show('akce',key_akce.get) } }
+    item { title:'ukázat změny', func onclick () {
+      if (key_akce) track.back_show('akce',key_akce) } }
   }
 }
 # ==> VÝBĚR AKCE
@@ -1065,7 +1064,7 @@ form _info [,,*,50] {
     eq(the_source.get,'sey'); info.sey.pracovni | info.google.pracovni
   }}
   # ==> .. načtení akcí z intranetu
-  button [-216,5,,] { title:'Obnovit rok z intranetu', skill:'y|yaa+'
+  button [-280,5,,] { title:'Obnovit rok z intranetu', skill:'y|yaa+'
     help:"obnoví akce roku z http://intranet.setkani.org"
     # získání seznamu akcí z docs.google.com pomocí API spredsheet
     proc onclick() {
@@ -1077,12 +1076,15 @@ form _info [,,*,50] {
     }
   }
   # export vlastností akcí nastaveného roku
-  button [-156,5,,] { title:'Export', proc onclick() {
-    sey.browse_count; sey.browse_export(°{file:'akce',type:'xls'});
+  button [-226,5,,] { title:'Export', func onclick() {
+    sey.browse_count(); sey.browse_export({file:'akce',type:'xls'});
     alert("vygenerovaný sešit lze stáhnout <a href='docs/akce.xls' target='xls'>zde</a>");
   }}
+  # ==> .. graf průchodu účastníků akcemi
+  button cesty [-123,5,,] { title:'Akce účastníků'                                       skill:'y|y;f|f'
+    func onclick() { HNIZDA.cesty(page.key_akce) }}
   # ==> .. zobrazení mapy s pozicí míst účastníků dané akce a oprava PSČ
-  button mapka [-21,5,,] { title:'Mapa PSČ účastníků',                                  skill:'#crz'
+  button mapka [-21,5,,] { title:'Mapa účastníků',                                  skill:'#crz'
     help:"mapa s bydlišti účastníků akcí"
     func onclick() {
       if ( the_source=='google' ) { 
@@ -1124,11 +1126,20 @@ panel ANOTACE [0,0,645,520] { title:' Úprava textu anotace', type:'popup', css:
 }
 # ==========================================================================================> hnízda
 # přehled obsazení hnízd
-panel HNIZDA [0,0,640,520] { title:' Přehled obsazenosti hnízd', type:'popup', css:'dialog',
+panel HNIZDA [0,0,640,520] { title:' ', type:'popup', css:'dialog',
     style:"height:calc(100% - 130px)"
   func prehled(ida) { var y:object
+    clear(); panel.title= "Přehled obsazenosti hnízd této akce";
     y= php.akce2_hnizda(ida);
     h.txt= y.html;
+    panel.modal(210,60);
+  }
+  func cesty(ida) { var y:object
+    clear(); panel.title= "průchod účastníků (vč. PPS) této akce přechozími akcemi";
+    js.highcharts_load(); 
+    h.txt= "<div id='akce_ucastnici' style='width:445px'></div>";
+    y= php.akce_ucastnici(ida,'matrix');
+    if (y.chart) js.highcharts_show(y.chart,'akce_ucastnici');
     panel.modal(210,60);
   }
   use h: form {

@@ -8,82 +8,104 @@ function highcharts_load() {
   if (typeof Highcharts=="undefined") {
     let code= "../ezer3.1/client/licensed/highcharts/code";
     for (const modul of ['highcharts.js','highcharts-more.js',
-        'modules/exporting.js','modules/export-data.js']) {
+        'modules/heatmap.js','modules/exporting.js','modules/export-data.js',
+        'modules/accessibility.js']) {
       jQuery('head').append(`<script type="text/javascript" src="${code}/${modul}"></script>`);
     }
   }
 }
 // -------------------------------------------------------------------------------- highcharts show
 // par: series:[{name:str,list:str},...]
-function highcharts_show(par) {
+function highcharts_show(par,container) {
   // test zavedení modulu
+  if (container==undefined) container= 'container';
   if (typeof Highcharts=="undefined") {
-    jQuery('#container').html("není zaveden modul highcharts - použij &highcharts=1");
+    jQuery('#'+container).html("není zaveden modul highcharts - použij &highcharts=1");
     return;
   }
-  // default
-  let chart= {
-    exporting: {showTable: false},    
-    title: {text: ' '},
-    subtitle: {text: ''},
-//    yAxis: {
-//      title: {text: 'Number of Employees'}
-//    },
-//    xAxis: {
-//      accessibility: {rangeDescription: 'Range: 2010 to 2017'}
-//    },
-    legend: {layout: 'vertical', align: 'right', verticalAlign: 'middle'},
-//    plotOptions: {
-//      series: {
-//        label: {connectorAllowed: false},
-//        pointStart: 2010
-//      }
-//    },
-    series: [],
-    responsive: {
-      rules: [{
-        condition: {
-          maxWidth: 500},
-          chartOptions: 
-            {legend: {layout: 'horizontal',align: 'center',verticalAlign: 'bottom'}
-          }
-      }]
-    }
-  };
-  // parametrizace
-  for (const p in par) {
-    switch (p) {
-      case 'chart':
-        chart.chart= {};
-        chart.chart.type= par[p];
-        break;
-      case 'series_done':
-        chart.series= par[p];
-        break;
-      case 'series':
-        for (const serie of par[p]) {
-          if (serie.type=='line') {
-            chart[p].push({name:serie.name, type:'line', data:serie.data});
-          }
-          else {
-            let s= {name:serie.name, data:serie.data.split(',').map(x=>Number(x))};
-            if (serie.color) s.color= serie.color;
-            chart[p].push(s);
-          }
+  // rozeznání typu grafu
+  let chart= {};
+  switch (par['chart']) {
+    case 'heatmap': // ----------------------------------------------- heatmap
+      chart= {
+        chart: {type: 'heatmap',marginTop: 40,marginBottom: 80,plotBorderWidth: 1},
+        title: {text: ''},
+        xAxis: {categories: []},
+        yAxis: {categories: [],title: null},
+        colorAxis: {min: 0,minColor: '#FFFFFF',maxColor: '#aaa'},
+        legend: {align: 'right',layout: 'vertical',margin: 0,verticalAlign: 'top',y: 25,symbolHeight: 280},
+        tooltip: {
+          formatter: function () { if (chart.tooltip.data) {
+            return chart.tooltip.data[this.point.x][this.point.y];
+          }}
+        },
+        series: [{name: '',borderWidth: 1,data: [],
+            dataLabels: {enabled: true,color: '#000000'}
+        }],
+      };
+      // doplnění předanými daty
+      chart.title.text= par['title_text'];
+      chart.colorAxis.maxColor= par['colorAxis_maxColor'];
+      chart.xAxis.categories= par['xAxis_categories'];
+      chart.yAxis.categories= par['yAxis_categories'];
+      chart.series[0].data= par['series_0_data'];
+      if (par['tooltip_data']) {
+        chart.tooltip.data= par['tooltip_data'];
+      }
+      break;
+    default:        // ----------------------------------------------- bar
+      chart= {
+        exporting: {showTable: false},    
+        title: {text: ' '},
+        subtitle: {text: ''},
+        legend: {layout: 'vertical', align: 'right', verticalAlign: 'middle'},
+        series: [],
+        responsive: {
+          rules: [{
+            condition: {
+              maxWidth: 500},
+              chartOptions: 
+                {legend: {layout: 'horizontal',align: 'center',verticalAlign: 'bottom'}
+              }
+          }]
         }
-        break;
-      case 'title':
-      case 'subtitle':
-        chart[p].text= par[p];
-        break;
-      default:
-        chart[p]= par[p];
-        break;
-    }
+      };
+      // parametrizace
+      for (const p in par) {
+        switch (p) {
+          case 'chart':
+            chart.chart= {};
+            chart.chart.type= par[p];
+            break;
+          case 'series_done':
+            chart.series= par[p];
+            break;
+          case 'series':
+            for (const serie of par[p]) {
+              if (serie.type=='line') {
+                chart[p].push({name:serie.name, type:'line', data:serie.data});
+              }
+              else {
+                let s= {name:serie.name, data:serie.data.split(',').map(x=>Number(x))};
+                if (serie.color) s.color= serie.color;
+                chart[p].push(s);
+              }
+            }
+            break;
+          case 'title':
+          case 'subtitle':
+            chart[p].text= par[p];
+            break;
+          default:
+            chart[p]= par[p];
+            break;
+        }
+      }
+    break;
   }
   // zobrazení
   jQuery('div.highcharts-data-table').remove();
-  Highcharts.chart('container', chart);
+  Highcharts.chart(container, chart);
 }
 // ------------------------------------------------------------------------------ highcharts simple
 function highcharts_simple() {

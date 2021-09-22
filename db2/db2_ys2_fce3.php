@@ -14,16 +14,81 @@ function akce_ucastnici($akce,$cmd) {
         JOIN spolu USING (id_pobyt)
         JOIN osoba USING (id_osoba)
         JOIN akce ON id_akce=id_duakce
-        WHERE id_akce=$akce AND funkce IN (0,1)
+        WHERE id_akce=$akce AND funkce IN (0,1,2)
       "); 
       while ($xs && (list($mrop,$firm,$vek)=pdo_fetch_row($xs))) {
         if ($mrop) $sum->mrop++;
         if ($firm) $sum->firm++;
         if ($vek>50) $sum->{'50+'}++; else $sum->{'50-'}++;
       }
-      $ret->html= debug($sum);
+      debug($sum);
       break;
-    case 'design':
+    case 'matrix': // ------------------------------------------------------
+      $data= $jmena= array();
+      for ($i=0; $i<=2; $i++) {
+        $data[$i]= array();
+        $jmena[$i]= array();
+        for ($j=0; $j<=4; $j++) {
+          $data[$i][$j]= 0;
+          $jmena[$i][$j]= '';
+        }
+      }
+      $org= select('access','akce',"id_duakce=$akce");
+      $os=pdo_qry("SELECT id_osoba,prijmeni
+        FROM pobyt JOIN spolu USING (id_pobyt) JOIN osoba USING (id_osoba) 
+        WHERE id_akce=$akce AND funkce IN (0,1,2) AND s_role=1
+      "); 
+      while ($os && (list($ido,$jmeno)=pdo_fetch_row($os))) {
+        $xs=pdo_qry("
+          SELECT 
+            SUM(IF(firm,1,0)),
+            SUM(IF(mrop,1,0)),
+            SUM(IF(statistika IN (1,2,3,4,5),1,0)),
+            SUM(IF(druh IN (1,2) AND funkce IN (1,2),1,0)),
+            SUM(IF(druh IN (1,2) AND funkce IN (0),1,0)),
+            1,
+            GROUP_CONCAT(IF(sex=2 AND (statistika>0 OR firm OR mrop),
+              CONCAT(nazev,'/',YEAR(datum_od),' '),'') SEPARATOR '')
+          FROM pobyt JOIN spolu USING (id_pobyt) JOIN osoba USING (id_osoba) 
+          JOIN akce ON id_akce=id_duakce
+          WHERE
+            zruseno=0 AND spec=0 AND 
+            id_osoba=$ido AND id_akce!=$akce AND funkce IN (0,1,2)
+          GROUP BY id_osoba
+        "); 
+        list($firm,$mrop,$muzi,$jina,$vps,$ms,$zena)=pdo_fetch_row($xs);
+        $i= $vps ? 2 : ($ms ? 1 : 0);
+        if ($firm)     $j= 4;
+        elseif ($mrop) $j= 3;
+        elseif ($muzi) $j= 2;
+        elseif ($jina) $j= 1;
+        else           $j= 0;
+        $data[$i][$j]++;
+        $jmena[$i][$j].= " $jmeno";
+        // hlášení anomálií do trasování
+        if ($zena && $j) display("žena $jmeno na hradě: $zena");
+      }
+//      debug($jmena,"jména  pro akci pořádanou $org");
+      $series= array();
+      for ($i=0; $i<=2; $i++) {
+        for ($j=0; $j<=4; $j++) {
+          $serie= array($i,$j,$data[$i][$j]);
+          $series[]= $serie;
+        }
+      }
+      $chart= array(
+          'chart' =>'heatmap',
+          'colorAxis_maxColor'=>$org==1 ? '#2C8931' : ($org==2 ? '#2C4989' : '#AAAAAA'),
+          'title_text' =>'účasti na akcích',
+          'xAxis_categories'=>array('-','MS','PPS'),
+          'yAxis_categories'=>array('-','jiná akce','muži,otcové','iniciace','firming'),
+          'series_0_data'=>$series,
+          'tooltip_data'=>$jmena
+        );
+//      debug($chart,"chart");
+      $ret->chart= $chart;
+      break;
+    case 'design': // ------------------------------------------------------
       // vymaž skupiny
       query("UPDATE pobyt SET skupina=0 WHERE id_akce=$akce AND funkce=0");
       // vytvoř skupiny
