@@ -5,24 +5,24 @@
 function akce_ucastnici($akce,$cmd,$par=null) {
   $ret= (object)array('html'=>'');
   switch($cmd) {
-    case 'survey':
-      $sum= (object)array('mrop'=>0,'firm'=>0,'50+'=>0,'50-'=>0);
-      $xs=pdo_qry("
-        SELECT iniciace,firming,
-          ROUND(DATEDIFF(datum_od,narozeni)/365.2425) AS _vek
-        FROM pobyt 
-        JOIN spolu USING (id_pobyt)
-        JOIN osoba USING (id_osoba)
-        JOIN akce ON id_akce=id_duakce
-        WHERE id_akce=$akce AND funkce IN (0,1,2)
-      "); 
-      while ($xs && (list($mrop,$firm,$vek)=pdo_fetch_row($xs))) {
-        if ($mrop) $sum->mrop++;
-        if ($firm) $sum->firm++;
-        if ($vek>50) $sum->{'50+'}++; else $sum->{'50-'}++;
-      }
-      debug($sum);
-      break;
+//    case 'survey':
+//      $sum= (object)array('mrop'=>0,'firm'=>0,'50+'=>0,'50-'=>0);
+//      $xs=pdo_qry("
+//        SELECT iniciace,firming,
+//          ROUND(DATEDIFF(datum_od,narozeni)/365.2425) AS _vek
+//        FROM pobyt 
+//        JOIN spolu USING (id_pobyt)
+//        JOIN osoba USING (id_osoba)
+//        JOIN akce ON id_akce=id_duakce
+//        WHERE id_akce=$akce AND funkce IN (0,1,2)
+//      "); 
+//      while ($xs && (list($mrop,$firm,$vek)=pdo_fetch_row($xs))) {
+//        if ($mrop) $sum->mrop++;
+//        if ($firm) $sum->firm++;
+//        if ($vek>50) $sum->{'50+'}++; else $sum->{'50-'}++;
+//      }
+//      debug($sum);
+//      break;
     case 'matrix': // ------------------------------------------------------
       $data= $jmena= array();
       $check= array(1,$par->jine,$par->muzi,$par->mrop,$par->firm);
@@ -94,7 +94,7 @@ function akce_ucastnici($akce,$cmd,$par=null) {
       break;
     case 'design': // ------------------------------------------------------
       // vymaž skupiny
-      query("UPDATE pobyt SET skupina=0,pokoj=0 WHERE id_akce=$akce");
+      query("UPDATE pobyt SET skupina=0,pokoj=0 WHERE id_akce=$akce AND funkce!=1");
       // vytvoř skupiny
       $last_skupina= 0;
       $datum= date('Y-m-d');
@@ -114,8 +114,8 @@ function akce_ucastnici($akce,$cmd,$par=null) {
           query("UPDATE pobyt SET skupina=$skup WHERE id_pobyt=$idp");
         }
         $chata= 2*$skup-1;
-        $pocet= select('COUNT(*)','pobyt',"skupina=$skup");
-        if ($pocet>4) {
+        $pocet= select('COUNT(*)','pobyt',"id_akce=$akce AND pokoj=$chata");
+        if ($pocet>3) {
           $chata++;
         }
         query("UPDATE pobyt SET pokoj=$chata WHERE id_pobyt=$idp");
