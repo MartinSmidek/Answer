@@ -95,6 +95,7 @@ function akce_ucastnici($akce,$cmd,$par=null) {
     case 'design': // ------------------------------------------------------
       // vymaž skupiny
       query("UPDATE pobyt SET skupina=0,pokoj=0 WHERE id_akce=$akce AND funkce!=1");
+      query("UPDATE pobyt SET pokoj=skupina*2-1 WHERE id_akce=$akce AND funkce=1");
       // vytvoř skupiny
       $last_skupina= 0;
       $datum= date('Y-m-d');
@@ -104,7 +105,7 @@ function akce_ucastnici($akce,$cmd,$par=null) {
         FROM pobyt 
         JOIN spolu USING (id_pobyt)
         JOIN osoba USING (id_osoba)
-        WHERE id_akce=$akce AND ((funkce=0 AND skupina=0) OR funkce=1)
+        WHERE id_akce=$akce AND ((funkce=0 AND skupina=0) /*OR funkce=1*/)
         ORDER BY firming DESC,_vek DESC
       "); 
       while ($xs && (list($idp,$fce,$skup,$vek)=pdo_fetch_row($xs))) {
