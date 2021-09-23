@@ -974,8 +974,11 @@ form _evidence [,,623,] { style:'height:fit-content'
       func onclick () { alert(php.akce2_skup_copy(the_duakce,'PO')); reload(0) } }
     item { title:'-navrhnout skupinky chlapů' skill:'a'
       func onclick () { var ret:object
-        ret= php.akce_ucastnici(the_duakce,'design');
-        alert(ret.html);
+        if (confirm(`Na místě zůstanou jen vedoucí skupinek - ostatní budou znovu rozděleni 
+            podle zkušenosti a věku. Pokračovat?`)) {
+          ret= php.akce_ucastnici(the_duakce,'design');
+          alert(ret.html);
+        }
     } }
     item { title:'-obarvit změněné údaje'
       proc onclick () { var ret:object
