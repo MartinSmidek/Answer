@@ -2,7 +2,7 @@
 /** ==========================================================================================> AKCE */
 # ---------------------------------------------------------------------------------------- ms_import
 # import
-function akce_ucastnici($akce,$cmd,$par) {
+function akce_ucastnici($akce,$cmd,$par=null) {
   $ret= (object)array('html'=>'');
   switch($cmd) {
     case 'survey':
@@ -94,7 +94,7 @@ function akce_ucastnici($akce,$cmd,$par) {
       break;
     case 'design': // ------------------------------------------------------
       // vymaž skupiny
-      query("UPDATE pobyt SET skupina=0 WHERE id_akce=$akce AND funkce=0");
+      query("UPDATE pobyt SET skupina=0,pokoj=0 WHERE id_akce=$akce");
       // vytvoř skupiny
       $last_skupina= 0;
       $datum= date('Y-m-d');
