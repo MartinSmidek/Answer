@@ -291,32 +291,38 @@ menu m {type:'left', //active:*
   # ----------------------------------------------------------------------------------------==> MROP
   menu {tag:'a', title:'sestavy MROP',type:'group',_sys:'*'                                  skill:'faa:m'
     item {title:'příjem'
-                                        ,par:°{typ:'mrop',exp:'Excel2'
+                                        ,par:{typ:'mrop',exp:'Excel2'
                                         ,cnd:"funkce=0"
                                         ,ord:"prijmeni,jmeno"
                                         ,tit:'jméno:25, skupina:8, chata:8, převodem:10, hotově:10, poznámka:40'
                                         ,fld:'pr_jm,skupina,pokoj,platba,filler,poznamka'}}
+    item {title:'příjem včetně PPS'
+                                        ,par:{typ:'mrop',exp:'Excel2'
+                                        ,cnd:"funkce IN (0,1)"
+                                        ,ord:"prijmeni,jmeno"
+                                        ,tit:'jméno:25, skupina:8, chata:8, převodem:10, hotově:10, poznámka:40'
+                                        ,fld:'pr_jm,skupina,pokoj,platba,filler,poznamka'}}
     item {title:'chatky'
-                                        ,par:°{typ:'mrop',exp:'Excel2',exp2:'PDF-chaty'
+                                        ,par:{typ:'mrop',exp:'Excel2',exp2:'PDF-chaty'
                                         ,cnd:"funkce=0"
                                         ,grp:"pokoj"
                                         ,ord:"0+pokoj,skupina"
                                         ,tit:'jména:80, skupina:15, chata:15'
                                         ,fld:'jmena,skupina,pokoj'}}
     item {title:'štítky na obálky'
-                                        ,par:°{typ:'mrop',exp:'Excel2',exp2:'PDF-obalky'
+                                        ,par:{typ:'mrop',exp:'Excel2',exp2:'PDF-obalky'
                                         ,cnd:"funkce=0"
                                         ,ord:"prijmeni,jmeno"
                                         ,tit:'jméno:25, skupina:15, chata:15'
                                         ,fld:'pr_jm,skupina,pokoj'}}
     item {title:'skupiny'
-                                        ,par:°{typ:'mrop',exp:'Excel2'
+                                        ,par:{typ:'mrop',exp:'Excel2'
                                         ,cnd:"funkce=0"
                                         ,ord:"0+pokoj,skupina,prijmeni,jmeno"
                                         ,tit:'jméno:25, skupina:8, chata:8, poznámka:40'
                                         ,fld:'pr_jm,skupina,pokoj,filler'}}
     item {title:'skupiny s maily'
-                                        ,par:°{typ:'mrop',exp:'Excel2'
+                                        ,par:{typ:'mrop',exp:'Excel2'
                                         ,cnd:"funkce IN (0,1)"
                                         ,ord:"skupina,funkce DESC,prijmeni,jmeno,email"
                                         ,tit:'jméno:25, skupina:8, mail:40'
