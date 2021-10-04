@@ -4847,7 +4847,14 @@ function akce2_starsi_mrop_pdf($akce) { trace();
   $neni= array();
   $fname= "mrop_$rok-skupiny.pdf";
   $fpath= "$ezer_path_docs/$fname";
-  $res->html= "Sestava skupin pro starší je <a href='docs/$fname' target='pdf'>zde</a><hr>";
+  $hname= "mrop_$rok-skupiny.html";
+  $h= fopen("$ezer_path_docs/$hname",'w');
+  fwrite($h,chr(0xEF).chr(0xBB).chr(0xBF)."<html lang='cs'><body>");
+  $starsi= "<h3>Adresář starších</h3>";
+  $res->html= 
+      "Sestava skupin pro tisk a rozdání starším je <a href='docs/$fname' target='pdf'>zde</a>,
+      <br>sestava pro ctrl-c/ctrl-v pro vložení do individuálního mailu starším je
+      <a href='docs/$hname' target='html'>zde</a><hr>";
   tc_html_open();
   $pata= "<i>iniciace $rok</i>";
   foreach ($grp as $g) {
@@ -4855,6 +4862,7 @@ function akce2_starsi_mrop_pdf($akce) { trace();
     $skupina= $g0->skupina;
     $page= "<h3>Skupina $skupina má chatky ".implode(', ',$cht[$skupina])." </h3>
       <table style=\"width:21cm\">";
+    fwrite($h,"<h3>Skupina $skupina</h3>");
     foreach ($g as $o) {
       if (!$skupina) { $neni[]= "$o->prijmeni $o->jmeno"; }
       $chata= $o->pokoj ?: '';
@@ -4870,6 +4878,9 @@ function akce2_starsi_mrop_pdf($akce) { trace();
           <td width=\"200\">$o->emaily$fill</td>
           <td>$o->ulice, $o->psc $o->obec $stat<br></td>
         </tr>";
+      $adresa= "$o->jmeno $o->prijmeni, $o->telefony, $o->emaily, ulice, $o->psc $o->obec $stat<br>";
+      fwrite($h,$adresa);
+      if ($o->funkce) $starsi.= $adresa;
     }
     $page.= "</table>";
     tc_html_write($page,$pata);
@@ -4882,6 +4893,8 @@ function akce2_starsi_mrop_pdf($akce) { trace();
   }
   // tisk
   tc_html_close($fpath);
+  fwrite($h,"$starsi</body></html>");
+  fclose($h);
 end:  
   return $res;
 }
@@ -14672,10 +14685,12 @@ end: return $updated;
 /** ========================================================================================> SYSTEM **/
 # ---------------------------------------------------------------------------==> . datové statistiky
 # ----------------------------------------------------------------------------------------- db2 info
-# vypíše počet záznamů v důležitých tabulkách a zkotroluje $access pokud je $org!=0
+# par.cmd=show - vypíše počet záznamů v důležitých tabulkách a zkotroluje $access pokud je $org!=0
+# par.cmd=save - uloží anonymizované údaje do ezer_answer.db_osoba
 function db2_info($par) {
   global $ezer_root,$ezer_db,$USER;
   $org= isset($par->org) ? $par->org : 0;
+  // přehled tabulek
   $tabs= array(
     'akce'   => (object)array('cond'=>"1",'access'=>$org),
     'cenik'  => (object)array('cond'=>"deleted=''",'access'=>0),
@@ -14691,29 +14706,112 @@ function db2_info($par) {
    );
   $html= '';
   $db= select('DATABASE()','DUAL',1);
-  // přehled tabulek podle access
-  $html= "<h3>Přehled tabulek $db</h3>";
-  $html.= $org ? 
-      "<p>POZOR: pokud je v druhém sloupci <b style='background:lightpink'>červený údaj</b>, 
-        jedná se chybu, kterou je třeba řešit</p>" : '';
-  $html.= "<div class='stat'><table class='stat'>";
-  $th= $org ? '<th>skryté?</th>' : '';
-  $html.= "<tr><th>tabulka</th><th>záznamů</th>$th</tr>";
-  foreach ($tabs as $tab=>$desc) {
-    $tab_= strtoupper($tab);
-    if ($desc->access) {
-      list($pocet,$access)= select("COUNT(*),SUM(IF(access&$org,0,1))","$db.$tab",$desc->cond);
-      $red= $access ? ";background:lightpink" : '';
-      $td= $org ? "<td style='text-align:right$red'>$access</td>" : '';
-    }
-    else {
-      $pocet= select("COUNT(*)","$db.$tab",1);
-      $td= $org ? '<td></td>' : '';
-    }
-    $html.= "<tr><th>$tab_</th><td style='text-align:right'>$pocet</td>$td</tr>";
+  $tdr= "td style='text-align:right'";
+  switch ($par->cmd) {
+    case 'show':
+      // přehled tabulek podle access
+      $html= "<h3>Přehled tabulek $db</h3>";
+      $html.= $org ? 
+          "<p>POZOR: pokud je v druhém sloupci <b style='background:lightpink'>červený údaj</b>, 
+            jedná se chybu, kterou je třeba řešit</p>" : '';
+      $html.= "<div class='stat'><table class='stat'>";
+      $th= $org ? '<th>skryté?</th>' : '';
+      $html.= "<tr><th>tabulka</th><th>záznamů</th>$th</tr>";
+      foreach ($tabs as $tab=>$desc) {
+        $tab_= strtoupper($tab);
+        if ($desc->access) {
+          list($pocet,$access)= select("COUNT(*),SUM(IF(access&$org,0,1))","$db.$tab",$desc->cond);
+          $red= $access ? ";background:lightpink" : '';
+          $td= $org ? "<td style='text-align:right$red'>$access</td>" : '';
+        }
+        else {
+          $pocet= select("COUNT(*)","$db.$tab",1);
+          $td= $org ? '<td></td>' : '';
+        }
+        $html.= "<tr><th>$tab_</th><td style='text-align:right'>$pocet</td>$td</tr>";
+      }
+      $html.= "</table></div>";
+      // úplnost osobních a rodinných údajů
+      list($pocet,$tlf,$eml,$nar)= select("
+          COUNT(*),SUM(IF(kontakt=1 AND telefon,1,0)),SUM(IF(kontakt=1 AND email!='',1,0)),
+          SUM(IF(narozeni!='0000-00-00',1,0))
+        ",'osoba',"deleted=''"); 
+      $dtlf= db2_info_dupl('osoba','telefon',"deleted='' AND kontakt=1 AND telefon");
+      $deml= db2_info_dupl('osoba','UPPER(TRIM(email))',"deleted='' AND kontakt=1 AND email!=''");
+      $xeml= db2_info_dupl('osoba','MD5(UPPER(TRIM(email)))',"deleted='' AND kontakt=1 AND email!=''");
+      $html.= "<h3>Úplnost osobních údajů</h3>";
+      $html.= "<div class='stat'><table class='stat'>";
+      $html.= "<tr><th>tabulka</th><th>záznamů</th>
+        <th>telefon</th><th>... dupl</th><th>email</th><th>... dupl</th><th>... kód</th></tr>";
+      $html.= "<tr><th>OSOBA</th><$tdr>$pocet</td>
+        <$tdr>$tlf</td><$tdr>$dtlf</td><$tdr>$eml</td><$tdr>$deml</td><$tdr>$xeml</td></tr>";
+      $html.= "</table></div>";
+      // záznamy v jiných databázích
+      $tit=   $org==8 
+          ? array('8'=>'jen ŠM','3,8'=>'také YMCA','4,8'=>'také CPR','3,4,8'=>'YMCA i CPR') : (
+              $org==4 
+          ? array('4'=>'jen CPR','3,4'=>'také YMCA','4,8'=>'také ŠM','3,4,8'=>'YMCA i ŠM') : (
+              $org==3 
+          ? array('3'=>'jen YMCA','3,4'=>'také CPR','3,8'=>'také ŠM','3,4,8'=>'CPR i ŠM') : null));
+      $itits= array_keys($tit);
+      $val= array('dupl'=>0);
+      $rdb= pdo_qry("
+        SELECT COUNT(*),_join FROM (
+          SELECT COUNT(*) AS _pocet,md5_osoba,GROUP_CONCAT(db ORDER BY db) AS _join
+          FROM ezer_answer.db_osoba
+          GROUP BY md5_osoba 
+          ORDER BY _join
+        ) AS _x
+        WHERE FIND_IN_SET($org,_join)
+        GROUP BY _join
+        ORDER BY _join");
+      while ($rdb && list($n,$jn)=pdo_fetch_row($rdb)) {
+        if (isset($tit[$jn]))
+          $val[$jn]= $n;
+        else 
+          $val['dupl']+= $n;
+      }
+      debug($itits);
+      debug($val);
+      $ths= $tds= '';
+      foreach ($tit as $itit=>$t) {
+        $n= $val[$itit]?:0;
+        $ths.= "<th>$t</th>";
+        $tds.= "<$tdr>$n</td>";
+      }
+      $ths.= "<th>duplicity</th>";
+      $tds.= "<$tdr>{$val['dupl']}</td>";
+      $html.= "<h3>Záznamy v jiných databázích</h3>
+        <div class='stat'><table class='stat'><tr>$ths</tr><tr>$tds</tr></table></div>
+        <br><b>Poznámka</b>: Týká se to jen záznamů s vyplněnou emailovou adresou, 
+        <br>jejíž MD5 je použito jako anonymizovaný identifikátor osoby";      
+      break;
+    // úschova anonymizovaných údajů do ezer_answer.db_osoba 
+    case 'save':
+      query("DELETE FROM ezer_answer.db_osoba WHERE db=$org");
+      query("INSERT INTO ezer_answer.db_osoba(md5_osoba,db,lk_first,lk_last) 
+        SELECT MD5(UPPER(TRIM(email))),$org,MIN(datum_od),MAX(datum_od)
+          FROM $db.osoba  
+          LEFT JOIN $db.spolu USING (id_osoba)
+          LEFT JOIN $db.pobyt USING (id_pobyt)
+          LEFT JOIN $db.akce ON id_akce=id_duakce
+          WHERE deleted='' AND kontakt=1 AND email!='' AND spec=0 AND druh=1
+          GROUP BY id_osoba");
+      $n= select('COUNT(*)','ezer_answer.db_osoba',"db=$org");
+      $html.= "Uloženy anonymizované údaje pro $n osob ";
+      break;
   }
-  $html.= "</table></div>";
   return $html;
+}
+// zjistí počet duplicitních hodnot v dané položce 
+function db2_info_dupl($tab,$fld,$cond) {
+  $dup= pdo_qry("SELECT COUNT(*) FROM (
+      SELECT COUNT(*) AS _pocet
+        FROM $tab WHERE deleted='' AND $cond
+      GROUP BY $fld HAVING _pocet>1
+    ) AS _dupl");
+  list($dup)= pdo_fetch_row($dup);
+  return $dup;
 }
 # ----------------------------------------------------------------------------------------- db2 stav
 function db2_stav($db) {

@@ -43,7 +43,7 @@ function akce_ucastnici($akce,$cmd,$par=null) {
         $xs=pdo_qry("
           SELECT 
             SUM(IF(firm,1,0)),
-            SUM(IF(mrop,1,0)),
+            SUM(IF(iniciace,1,0)),
             SUM(IF(statistika IN (1,2,3,4,5),1,0)),
             1,
             SUM(IF(druh IN (1,2) AND funkce IN (1,2),1,0)),
@@ -54,7 +54,7 @@ function akce_ucastnici($akce,$cmd,$par=null) {
           JOIN akce ON id_akce=id_duakce
           WHERE
             zruseno=0 AND spec=0 AND 
-            id_osoba=$ido AND id_akce!=$akce AND funkce IN (0,1,2) AND s_role=1
+            id_osoba=$ido AND id_akce!=$akce AND funkce IN (0,1,2) AND s_role IN (0,1)
           GROUP BY id_osoba
         "); 
         list($firm,$mrop,$muzi,$jina,$vps,$ms,$zena)=pdo_fetch_row($xs);
@@ -280,6 +280,7 @@ function chart_mrop($par) { debug($par,'chart_ms');
       for ($rok= $od; $rok<=$do; $rok++) {
         // zjistíme, jestli v daném roce byl MROP
         $ok= select('COUNT(*)','akce',"mrop=1 AND zruseno=0 AND YEAR(datum_od)=$rok");
+        $datum_od= select('datum_od','akce',"mrop=1 AND zruseno=0 AND YEAR(datum_od)=$rok");
         if (!$ok) continue;
         $mrop[0][$rok]= 0;
         $mrop[1][$rok]= 0;
@@ -288,19 +289,38 @@ function chart_mrop($par) { debug($par,'chart_ms');
         $mr= pdo_qry("
           SELECT 
             IF(ms_pred+lk_pred>0,1,0),IF(ms_po+lk_po>0,1,0),
-            IF(m_pred+j_pred>0,1,0),IF(m_po+j_po>0,1,0)
+            IF(m_pred+j_pred>0,1,0),IF(m_po+j_po>0,1,0),
+            md5_osoba,id_osoba
           FROM `#stat` WHERE mrop=$rok
           ");
-        while ($mr && (list($ms_pred,$ms_po,$j_pred,$j_po)= pdo_fetch_row($mr))) {
+        while ($mr && (list($ms_pred,$ms_po,$j_pred,$j_po,$md5o,$ido)= pdo_fetch_row($mr))) {
           if ($par->type=='pred_mrop' ) {
             if ($ms_pred) $mrop[1][$rok]++;
             elseif ($j_pred) $mrop[2][$rok]++;
             else $mrop[0][$rok]++;
+            // doplníme informaci z ezer_answer
+            if (!$ms_pred && $md5o) {
+              $lk_first= select('YEAR(lk_first)','ezer_answer.db_osoba',
+                  "db!=3 AND md5_osoba='$md5o' AND YEAR(lk_first)<=$rok");
+              if ($lk_first) {
+                display("$ido $rok/$lk_first");
+                $mrop[1][$rok]++;
+              }
+            }
           }
           else {
             if ($ms_po) $mrop[1][$rok]++;
             elseif ($j_po) $mrop[0][$rok]++;
             else $mrop[2][$rok]++;
+            // doplníme informaci z ezer_answer
+            if (!$ms_po && $md5o) {
+              $lk_last= select('YEAR(lk_last)','ezer_answer.db_osoba',
+                  "db!=3 AND md5_osoba='$md5o' AND lk_last>'$datum_od' ");
+              if ($lk_last) {
+                display("$ido $rok/$lk_last");
+                $mrop[1][$rok]++;
+              }
+            }
           }
         }
       }
@@ -333,7 +353,9 @@ function chart_mrop($par) { debug($par,'chart_ms');
       //           MROP     FA YS+FA YS
       $mrop= array(array(),array(),array());
       $mrop_y= array('MROP je první akcí',
-          'byl na akcích Familia','byl tam i tam','byl na akcích Setkání');
+          'byl na akcích Familia','byl tam i tam','byl na akcích Setkání'
+          ,'ani tam ani tam, jinde ano'
+          );
       $roky= array();
       for ($rok= $od; $rok<=$do; $rok++) {
         // zjistíme, jestli v daném roce byl MROP
@@ -357,6 +379,118 @@ function chart_mrop($par) { debug($par,'chart_ms');
       }
       debug($mrop,"$od-$do");
       $color= array('orange','blue','cyan','green');
+      for ($x= 0; $x<=3; $x++) {
+        $data= implode(',',$mrop[$x]);
+        $serie= (object)array('name'=>$mrop_y[$x],'data'=>$data,'color'=>$color[$x]);
+        $chart->series[$x]= $serie;
+      }
+      $chart->yAxis= (object)array('title'=>(object)array('text'=>'počet účastníků MROP v daném roce'),
+          'categories'=>$mrop_y);
+      $chart->xAxis= (object)array('categories'=>$roky,//'labels'=>(object)array('min'=>'5'),
+          'title'=>(object)array('text'=>'rok konání MROP '));
+      if (isset($chart->plotOptions->series->stacking)){
+        $chart->tooltip= (object)array(
+          'pointFormat'=>"<span>{series.name}</span>: <b>{point.y}</b> ({point.percentage:.0f}%)<br/>");
+        if ($chart->plotOptions->series->stacking=='normal' && $par->prc) {
+          $chart->plotOptions->series->stacking= 'percent';
+        }
+        $chart->chart= 'bar';
+      }
+      break;
+    case 'y_x pred':
+      $chart->title= 'účastníci MROP s vyznačením účastí na MS akcích YMCA/CPR+ŠM před MROP';
+      $od= $par->od;
+      $do= $par->do ?: date('Y');
+      //           MROP     FA YS+FA YS
+      $mrop= array(array(),array(),array());
+      $mrop_y= array('MROP je první akcí',
+          'byl na akcích CPR či ŠM','byl tam i tam','byl na akcích YMCA');
+      $roky= array();
+      for ($rok= $od; $rok<=$do; $rok++) {
+        // zjistíme, jestli v daném roce byl MROP
+        $ok= select('COUNT(*)','akce',"mrop=1 AND zruseno=0 AND YEAR(datum_od)=$rok");
+        if (!$ok) continue;
+        $mrop[0][$rok]= 0;
+        $mrop[1][$rok]= 0;
+        $mrop[2][$rok]= 0;
+        $mrop[3][$rok]= 0;
+        $roky[]= $rok;
+        $mr= pdo_qry("
+          SELECT ys_pred+fa_pred,md5_osoba
+          FROM `#stat` WHERE mrop=$rok
+          ");
+        while ($mr && (list($ymca,$md5o)= pdo_fetch_row($mr))) {
+          // aktivita v CPR a ŠM
+          $jinde= select('YEAR(lk_first)','ezer_answer.db_osoba',
+              "db!=3 AND md5_osoba='$md5o' AND YEAR(lk_first)<=$rok");
+          if ($jinde) {
+            display("$ido $rok/$jinde");
+          }
+          // redakce
+          if ($ymca && $jinde) $mrop[2][$rok]++;
+          elseif ($ymca) $mrop[3][$rok]++;
+          elseif ($jinde) $mrop[1][$rok]++;
+          else $mrop[0][$rok]++;
+        }
+      }
+      debug($mrop,"$od-$do");
+      $color= array('orange','red','violet','blue');
+      for ($x= 0; $x<=3; $x++) {
+        $data= implode(',',$mrop[$x]);
+        $serie= (object)array('name'=>$mrop_y[$x],'data'=>$data,'color'=>$color[$x]);
+        $chart->series[$x]= $serie;
+      }
+      $chart->yAxis= (object)array('title'=>(object)array('text'=>'počet účastníků MROP v daném roce'),
+          'categories'=>$mrop_y);
+      $chart->xAxis= (object)array('categories'=>$roky,//'labels'=>(object)array('min'=>'5'),
+          'title'=>(object)array('text'=>'rok konání MROP '));
+      if (isset($chart->plotOptions->series->stacking)){
+        $chart->tooltip= (object)array(
+          'pointFormat'=>"<span>{series.name}</span>: <b>{point.y}</b> ({point.percentage:.0f}%)<br/>");
+        if ($chart->plotOptions->series->stacking=='normal' && $par->prc) {
+          $chart->plotOptions->series->stacking= 'percent';
+        }
+        $chart->chart= 'bar';
+      }
+      break;
+    case 'y_x po':
+      $chart->title= 'účastníci MROP s vyznačením účastí na MS akcích YMCA/CPR+ŠM po MROP';
+      $od= $par->od;
+      $do= $par->do ?: date('Y');
+      //           MROP     FA YS+FA YS
+      $mrop= array(array(),array(),array());
+      $mrop_y= array('byl na akcích CPR či ŠM','byl tam i tam','byl na akcích YMCA',
+          'MROP je zatím poslední akcí');
+      $roky= array();
+      for ($rok= $od; $rok<=$do; $rok++) {
+        // zjistíme, jestli v daném roce byl MROP
+        $datum_od= select('datum_od','akce',"mrop=1 AND zruseno=0 AND YEAR(datum_od)=$rok");
+        if (!$datum_od) continue;
+        $mrop[0][$rok]= 0;
+        $mrop[1][$rok]= 0;
+        $mrop[2][$rok]= 0;
+        $mrop[3][$rok]= 0;
+        $roky[]= $rok;
+        $mr= pdo_qry("
+          SELECT ms_po+lk_po,md5_osoba
+          FROM `#stat` WHERE mrop=$rok
+          ");
+        while ($mr && (list($ymca,$md5o)= pdo_fetch_row($mr))) {
+          // aktivita v CPR a ŠM
+          $jinde= select('YEAR(lk_last)','ezer_answer.db_osoba',
+              "db!=3 AND md5_osoba='$md5o' AND lk_last>'$datum_od'");
+          if ($jinde) {
+            display("$ido $rok/$jinde");
+          }
+          // redakce
+          if ($ymca && $jinde) $mrop[1][$rok]++;
+          elseif ($ymca) $mrop[2][$rok]++;
+          elseif ($jinde) $mrop[0][$rok]++;
+          else $mrop[3][$rok]++;
+        }
+      }
+      debug($mrop,"$od-$do");
+      $color= array('red','violet','blue','orange');
       for ($x= 0; $x<=3; $x++) {
         $data= implode(',',$mrop[$x]);
         $serie= (object)array('name'=>$mrop_y[$x],'data'=>$data,'color'=>$color[$x]);
@@ -1603,7 +1737,9 @@ function sta2_mrop_stat_gen($par) {
       }
 //      $AND.= " AND o.id_osoba=4881";
       $mr= pdo_qry("
-        SELECT o.id_osoba,o.access,CONCAT(o.jmeno,' ',o.prijmeni),
+        SELECT o.id_osoba,
+          IF(o.kontakt AND o.email!='',MD5(UPPER(TRIM(o.email))),''),
+          o.access,CONCAT(o.jmeno,' ',o.prijmeni),
           ROUND(DATEDIFF('$datum',o.narozeni)/365.2425) AS _vek,
           IFNULL(svatba,0) AS _s1,IFNULL(YEAR(datsvatba),0) AS _s2,
           MIN(IFNULL(YEAR(od.narozeni),0)) AS _s3,
@@ -1623,7 +1759,7 @@ function sta2_mrop_stat_gen($par) {
         GROUP BY o.id_osoba
       ");
       while ( $mr && 
-          list($ido,$access,$name,$vek,$sv1,$sv2,$sv3,$deti,$ido_z,$stat,$psc,$firm)
+          list($ido,$md5o,$access,$name,$vek,$sv1,$sv2,$sv3,$deti,$ido_z,$stat,$psc,$firm)
           = pdo_fetch_row($mr) ) {
         if ( $ido_test && $ido!=$ido_test ) continue;
         $ms[$ido]= (object)array('name'=>$name,'mrop'=>$mrop);
@@ -1646,8 +1782,8 @@ function sta2_mrop_stat_gen($par) {
         if ( !$sv && $ido_z ) {
           $sv= $sv3 ? $sv3-1 : 9999;
         }
-        query("INSERT INTO `#stat` (id_osoba,access,mrop,firm,stat,psc,vek,svatba,deti,note) 
-          VALUE ($ido,$access,$mrop,$firm,'$stat','$psc','$vek',$sv,$deti,'$name')");
+        query("INSERT INTO `#stat` (id_osoba,md5_osoba,access,mrop,firm,stat,psc,vek,svatba,deti,note) 
+          VALUE ($ido,'$md5o',$access,$mrop,$firm,'$stat','$psc','$vek',$sv,$deti,'$name')");
       }
     }
     // získání informací o akcích- staré

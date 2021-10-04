@@ -16,7 +16,7 @@ menu db2 { type:'main', title:'db2', active:*, _sys:'*'
   tabs syst {title:"[fa-cog] Systém", _sys:'sys',  include:'onload,ezer2.syst', active:*
     proc reaccess() {}
     panel oso {type:'right', title:'Osobní nastavení', _sys:'*', include:'onclick,ezer2.pers' }
-    panel dat {type:'right', title:'[fa-database] Databáze', _sys:'*', include:'onload,ezer3.db', skill:'a'
+    panel dat {type:'right', title:'[fa-database] Schema DB', _sys:'*', include:'onload,ezer3.db', skill:'a'
       par:{
         infos: [
           {title:'[fa-object-group] Schema databáze',
@@ -46,11 +46,13 @@ menu db2 { type:'main', title:'db2', active:*, _sys:'*'
       }
       menu m {type:'left', format:'f+'
         menu {title:'Přehled',type:'group', _sys:'*'
-          item {title:'Záznamy', par:°{db:'ms2',org:'3'}
-            proc onclick (i) {
-              clear; info.display(0,'t');
-              info.fill(conc(i.owner.title,' - ',i.title),'... probíhá výpočet ...');
-              info.fill('',ask('db2_info',i.par)) }}
+          item {title:'Záznamy', par:{org:'3',cmd:'show'}}
+          item {title:'Ulož ezer_answer.db_osoba', par:{org:'3',cmd:'save'}, skill:'m'}
+          proc onclick (i) {
+            clear; info.display(0,'t');
+            info.fill(conc(i.owner.title,' - ',i.title),'... probíhá výpočet ...');
+            info.fill('',ask('db2_info',i.par)) 
+          }
         }
         menu { title:'Import a záloha databáze',type:'group',skill:'m'
           item { title:"[fa-question] přehled záloh"          par:°{typ:'listing',direct:'1'}}
