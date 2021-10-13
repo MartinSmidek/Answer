@@ -5291,7 +5291,7 @@ function tisk2_sestava_lidi($akce,$par,$title,$vypis,$export=false) { trace();
         break;
       case '_narozeni6':
         $nar= $x->narozeni;
-        $clmn[$n][$f]= "'".substr($nar,2,2).substr($nar,5,2).substr($nar,8,2);
+        $clmn[$n][$f]= substr($nar,2,2).substr($nar,5,2).substr($nar,8,2);
         break;
       case '_ymca':
         $clmn[$n][$f]= $x->clen ? $x->clen : '';
@@ -8567,6 +8567,7 @@ __XLS;
           // aplikace formátů
           case 'l':                      $format.= ' left'; break;
           case 'd': $val= sql2xls($val); $format.= ' right date'; break;
+          case 't':                      $format.= ' text'; break;
           }
         }
       }
@@ -8637,7 +8638,7 @@ __XLS;
     \n|close
 __XLS;
   // výstup
-                                                                display($xls);
+//                                                                display($xls);
   require_once 'ezer3.1/server/vendor/autoload.php';
   $inf= Excel2007($xls,1);
   if ( $inf ) {
@@ -11832,7 +11833,7 @@ __XLS;
           switch ($fmt[$A]) {
           // aplikace formátů
           case 'd': $val= sql2xls($val); $format.= ' right date'; break;
-          case 't': $format.= 'text'; break;
+          case 't': $format.= ' text'; break;
           }
         }
       }
