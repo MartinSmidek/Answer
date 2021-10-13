@@ -251,7 +251,7 @@ function personify(access,from) {
 // výběr správného tvaru slova podle množství a tabulky tvarů pro 1,2-4,5 a více
 // např. je_1_2_5(dosp,"dospělý,dospělí,dospělých")
 function je_1_2_5(kolik,tvary) {
-  tvar= tvary.split(',');
+  let tvar= tvary.split(',');
   return kolik>4 ? tvar[2] : (
          kolik>1 ? tvar[1] : (
          kolik>0 ? tvar[0] : tvar[2]));

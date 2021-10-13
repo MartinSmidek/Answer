@@ -1738,7 +1738,7 @@ function sta2_mrop_stat_gen($par) {
 //      $AND.= " AND o.id_osoba=4881";
       $mr= pdo_qry("
         SELECT o.id_osoba,
-          IF(o.kontakt AND o.email!='',MD5(UPPER(TRIM(o.email))),''),
+          IF(o.kontakt AND o.email!='',MD5(REGEXP_SUBSTR(UPPER(TRIM(o.email)),'^[A-Z0-9._%-]+@[A-Z0-9.-]+\.[A-Z]+')),''),
           o.access,CONCAT(o.jmeno,' ',o.prijmeni),
           ROUND(DATEDIFF('$datum',o.narozeni)/365.2425) AS _vek,
           IFNULL(svatba,0) AS _s1,IFNULL(YEAR(datsvatba),0) AS _s2,

@@ -652,8 +652,13 @@ form _gsql { style:'z-index:1'
   var from: text
   var cond: text
   label  [620,t_pro+12,132,55] { tag:'def', css:'ae_parm' }
-  button [628,t_pro+17,,] { tag:'def', title:'TEST',  help:'otestovat dotaz', proc onclick() {
-    [ spec.get | save_sql(0) ]; run_sql } }
+  func aktualizovat2dirty() { // pokud se má mailist aktualizovat poznačí dirty=1
+    sql_dirty= php.select('aktualizovat','mailist',`id_mailist=${vy.komu_G.key()}`);
+  }
+  button [628,t_pro+17,,] { tag:'def', title:'TEST',  help:'otestovat dotaz', func onclick() {
+    aktualizovat2dirty();
+    if (!spec) save_sql(0);
+    run_sql() } }
   button [678,t_pro+17,,] { tag:'def', title:'(jen SQL)',  help:'otestovat dotaz', proc onclick() {
     [ spec.get | save_sql(0) ]; save_sql(0) } }
   button [628,t_pro+42,,] { tag:'def', title:'MAPA',  help:'zobrazit mapu adresátů', //==> .. mapa
@@ -664,8 +669,9 @@ form _gsql { style:'z-index:1'
   } }
   button [678,t_pro+42,,] { tag:'def', title:'(jen JSON)',  proc onclick() {
     tsql.set(make_json) } }
-  proc make_sql(to_show) {
-    pro_pary.get; make_sql_pary(to_show) | make_sql_osoby(to_show)
+  func make_sql(to_show) { echo(`pro_páry=${pro_pary}`);
+    aktualizovat2dirty();
+    if (pro_pary) make_sql_pary(to_show) else make_sql_osoby(to_show)
   }
   proc make_sql_pary(to_show) { # --------------------------------------------- ==> .. páry make_sql
     // dotaz založený na rodina
@@ -682,7 +688,7 @@ form _gsql { style:'z-index:1'
       "SELECT -- výběr manželského páru",chr(10),
       "  r2._umrti,r2._ne,id_rodina AS _idr,r.access,COUNT(DISTINCT id_pobyt) AS _ucasti,",chr(10),
       "  r2._name,r2._ulice,r2._psc,r2._obec,r2._stat,r2._email,r2.nomaily,r2._telefon,r2._spolu,",chr(10),
-      "  MAX(iniciace) AS iniciace",chr(10),
+      "  r2.rozvod,MAX(iniciace) AS iniciace",chr(10),
       "FROM pobyt AS p",chr(10),
       "JOIN akce AS a ON a.id_duakce=p.id_akce JOIN rodina AS r ON id_rodina=i0_rodina ",chr(10),
       "JOIN tvori AS t USING (id_rodina) JOIN osoba AS o USING (id_osoba)",chr(10),
@@ -694,7 +700,7 @@ form _gsql { style:'z-index:1'
       "  r.psc AS _psc, r.ulice AS _ulice, r.obec AS _obec, r.stat AS _stat,",chr(10),
       "  GROUP_CONCAT(DISTINCT IF(o.kontakt,IF(o.email='',r.emaily,o.email),r.emaily)) AS _email,nomaily,",chr(10),
       "  GROUP_CONCAT(DISTINCT IF(o.kontakt,IF(o.telefon='',r.telefony,o.telefon),r.telefony)) AS _telefon,",chr(10),
-      "  datsvatba,TIMESTAMPDIFF(YEAR,datsvatba,NOW()) AS _spolu",chr(10),
+      "  datsvatba,rozvod,TIMESTAMPDIFF(YEAR,datsvatba,NOW()) AS _spolu",chr(10),
       "FROM rodina AS r",chr(10),
       "JOIN pobyt AS p ON r.id_rodina=p.i0_rodina JOIN akce AS a ON a.id_duakce=p.id_akce",chr(10),
       "JOIN tvori AS t USING (id_rodina) JOIN osoba AS o USING (id_osoba)",chr(10),
@@ -762,11 +768,11 @@ form _gsql { style:'z-index:1'
     | parms.set(make_json); parms.change; make_sql(0); gsql.change;
       id_mailist.get; form.key(id_mailist.get);
       //form.save;
-      ask('query',conc("UPDATE mailist SET ",
+      [ ask('query',conc("UPDATE mailist SET ",
         "parms='",parms.get,"',",       "sexpr=",'"',gsql.get,'",',     "aktualizovat=0,",
         "ucel='",ucel.get,"',",         "blokovano=",blokovano.get,',',
         "komu='",cconc(pro_pary.get,'r','o'),"'",
-        ' WHERE id_mailist=',id_mailist.get));
+        ' WHERE id_mailist=',id_mailist.get)) ];
       [ to_reload; m_reload | form.plain; sql_dirty.set(0) ];
       warning("QUERY SAVED")
     | not(id_mailist.get);

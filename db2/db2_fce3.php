@@ -4878,7 +4878,7 @@ function akce2_starsi_mrop_pdf($akce) { trace();
           <td width=\"200\">$o->emaily$fill</td>
           <td>$o->ulice, $o->psc $o->obec $stat<br></td>
         </tr>";
-      $adresa= "$o->jmeno $o->prijmeni, $o->telefony, $o->emaily, ulice, $o->psc $o->obec $stat<br>";
+      $adresa= "$o->jmeno $o->prijmeni, $o->telefony, $o->emaily, $o->ulice, $o->psc $o->obec $stat<br>";
       fwrite($h,$adresa);
       if ($o->funkce) $starsi.= $adresa;
     }
@@ -12397,6 +12397,7 @@ function mail2_mailist($access,$par=null) {
     $css= $a==1 ? 'ezer_ys' : ($a==2 ? 'ezer_fa' : ($a==3 ? 'ezer_db' : ''));
     $sel.= ",{$m->ucel}:{$m->id_mailist}:$css";
   }
+  display("SELECTS:$sel");
   return $sel ? substr($sel,1) : '';
 }
 # --------------------------------------------------------------------------------- mail2 lst_delete
@@ -12630,7 +12631,7 @@ function mail2_lst_try($gq,$mode=0) { trace();
   }
   switch ($mode) {
   case 0:
-    $n= $nw= $nm= $nx= $nu= 0;
+    $n= $nw= $nm= $nx= $nu= $nr= 0;
     $gq= str_replace('&gt;','>',$gq);
     $gq= str_replace('&lt;','<',$gq);
     // ZRUŠENO: doplnění práv uživatele
@@ -12651,9 +12652,13 @@ function mail2_lst_try($gq,$mode=0) { trace();
         $nu++;
         $name= "<span style='background:silver'>+ $name</span>";
       }
+      if ( $g->rozvod ) {
+        $nr++;
+        $name= "<span style='background:yellow'>x $name</span>";
+      }
       if ( $g->nomail ) {
         $nm++;
-        $name= "<span style='background-color:yellow'>$name</span>";
+        $name= "<span style='background-color:orange'>$name</span>";
       }
       if ( $g->_email[0]=='*' ) {
         // vyřazený mail
@@ -12663,7 +12668,7 @@ function mail2_lst_try($gq,$mode=0) { trace();
       $html.= "$del$name";
       $del= ', ';
     }
-    $warn= $nw+$nm+$nx+$nu ? " (" : '';
+    $warn= $nw+$nm+$nx+$nu+$nr ? " (" : '';
     $warn.= $nw ? "$nw <span style='color:darkred'>nemá email</span> ani rodinný" : '';
     $warn.= $nw && $nm ? ", " : '';
     $warn.= $nm ? "$nm <span style='background-color:yellow'>nechce hromadné</span> informace
@@ -12672,7 +12677,9 @@ function mail2_lst_try($gq,$mode=0) { trace();
     $warn.= $nx ? "$nx má <strike>zneplatněný email</strike>" : '';
     $warn.= ($nw||$nm||$nx) && $nu ? ", " : '';
     $warn.= $nu ? "$nu  <strike>zemřelo</strike>" : '';
-    $warn.= $nw+$nm+$nx+$nu ? ")" : '';
+    $warn.= ($nw||$nm||$nx||$nu) && $nr ? ", " : '';
+    $warn.= $nr ? "$nr  <strike>rozvedeno</strike>" : '';
+    $warn.= $nw+$nm+$nx+$nu+$nr ? ")" : '';
     $html= "<b>Nalezeno $n adresátů$warn:</b><br>$html";
     break;
   case 1:
@@ -14787,10 +14794,10 @@ function db2_info($par) {
         <br>jejíž MD5 je použito jako anonymizovaný identifikátor osoby";      
       break;
     // úschova anonymizovaných údajů do ezer_answer.db_osoba 
-    case 'save':
+    case 'save': 
       query("DELETE FROM ezer_answer.db_osoba WHERE db=$org");
       query("INSERT INTO ezer_answer.db_osoba(md5_osoba,db,lk_first,lk_last) 
-        SELECT MD5(UPPER(TRIM(email))),$org,MIN(datum_od),MAX(datum_od)
+        SELECT MD5(REGEXP_SUBSTR(UPPER(TRIM(email)),'^[A-Z0-9._%-]+@[A-Z0-9.-]+\.[A-Z]+')),$org,MIN(datum_od),MAX(datum_od)
           FROM $db.osoba  
           LEFT JOIN $db.spolu USING (id_osoba)
           LEFT JOIN $db.pobyt USING (id_pobyt)
