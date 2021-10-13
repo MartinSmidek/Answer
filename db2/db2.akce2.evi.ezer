@@ -98,23 +98,23 @@ menu m {type:'left', format:'f-'
   menu c {title:'členové YMCA (lonští)',type:'group', skill:'dec'
     item {title:'[fa-file-text] přehled před závěrkou'
           par:°{op:'loni',exp:'Excel',cnd:1,hav:1,rok:1,
-                tit:'příjmení:15,jméno:10,datum nar.:10,obec:20,člen od:5,činný od:5,letos přísp.:6,letos dary:6',
+                tit:'příjmení:15,jméno:10,datum nar.:10:t,obec:20,člen od:5,činný od:5,letos přísp.:6,letos dary:6',
                 fld:'prijmeni,jmeno,_naroz,obec,_clen_od,_cinny_od,_prisp,_dary'}}
     item {title:'[fa-retweet] recyklace pečounů (LK byl letos)', par:°{op:'zmeny',rok:0} }
     item {title:'[fa-retweet] recyklace pečounů (LK byl loni)',  par:°{op:'zmeny',rok:1} }
     item {title:'[fa-upload] statistický list YMCA v ČR'
           par:°{op:'hlaseni',exp:'Excel',cnd:1,hav:1,rok:1,del:0,
-                tit:'?:2,příjmení:15,jméno:10,ulice:20,město:20,PSČ:7,datum nar.:10,členství:5,čl. přísp.:6,KČ:12,e-mail:40,činný od letos:6,dobrovolník:6',
+                tit:'?:2,příjmení:15,jméno:10,ulice:20,město:20,PSČ:7,datum nar.:10:t,členství:5,čl. přísp.:6,KČ:12,e-mail:40,činný od letos:6,dobrovolník:6',
                 fld:'1,prijmeni,jmeno,ulice,obec,psc,_naroz_ymd,_b_c,_prisp,_YS,email,_cinny_letos,_dobro'}}
   }
   menu {title:'členové YMCA (letošní - pro info)',type:'group', skill:'dec'
     item {title:'[fa-file-text-o] letošní přehled po závěrce'
           par:°{op:'letos',exp:'Excel',cnd:1,hav:1,rok:0,del:0,
-                tit:'příjmení:15,jméno:10,datum nar.:10,obec:20,člen od:5,činný od:5,letos přísp.:6,letos dary:6',
+                tit:'příjmení:15,jméno:10,datum nar.:10:t,obec:20,člen od:5,činný od:5,letos přísp.:6,letos dary:6',
                 fld:'prijmeni,jmeno,_naroz,obec,_clen_od,_cinny_od,_prisp,_dary'}}
     item {title:'[fa-upload] statistický list YMCA v ČR'
           par:°{op:'hlaseni',exp:'Excel',cnd:1,hav:1,rok:0,del:0,
-                tit:'?:2,příjmení:15,jméno:10,ulice:20,město:20,PSČ:7,datum nar.:10,členství:5,čl. přísp.:6,KČ:12,e-mail:40,činný od letos:6,dobrovolník:6',
+                tit:'?:2,příjmení:15,jméno:10,ulice:20,město:20,PSČ:7,datum nar.:10:t,členství:5,čl. přísp.:6,KČ:12,e-mail:40,činný od letos:6,dobrovolník:6',
                 fld:'1,prijmeni,jmeno,ulice,obec,psc,_naroz_ymd,_b_c,_prisp,_YS,email,_cinny_letos,_dobro'}}
   }
   menu f {title:'poslední úpravy rodin',type:'group', skill:'yad;fad'

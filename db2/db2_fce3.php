@@ -9724,7 +9724,7 @@ function evid2_ymca_sprava($org,$par,$title,$export=false) {
   case 'letos':
   case 'loni':
     $ret= evid2_ymca_sestava($org,$par,$title,$export);
-//                                                         debug($ret,"evid2_ymca_sestava");
+                                                         debug($ret,"evid2_ymca_sestava");
     break;
   case 'zmeny':
     $ret= evid2_recyklace_pecounu($org,$par,$title,0);
@@ -9776,6 +9776,7 @@ function evid2_ymca_sestava($org,$par,$title,$export=false) {
          LEFT JOIN akce AS a ON a.id_duakce=p.id_akce
          WHERE os.deleted='' AND {$par->cnd} AND (dat_do='0000-00-00' OR YEAR(dat_do)>=$rok)
            AND os.access&$org AND od.access&$org AND a.access&$org
+--         AND os.id_osoba=11199 -- Markéta Bučková
          GROUP BY os.id_osoba HAVING {$par->hav}
          ORDER BY os.prijmeni";
   $res= pdo_qry($qry);
@@ -11831,6 +11832,7 @@ __XLS;
           switch ($fmt[$A]) {
           // aplikace formátů
           case 'd': $val= sql2xls($val); $format.= ' right date'; break;
+          case 't': $format.= 'text'; break;
           }
         }
       }
