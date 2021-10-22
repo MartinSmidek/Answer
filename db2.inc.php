@@ -54,7 +54,8 @@
   $k= substr($kernel,4,1)=='3' ? '3' : '';
   $app_php= array(
     "db2/db2_ys2_fce$k.php",
-    "db2/db2_fce$k.php"
+    "db2/db2_fce$k.php",
+    "ezer3.1/server/ezer_ruian.php"
   );
   
   $ezer= array(

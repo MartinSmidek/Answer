@@ -14742,18 +14742,19 @@ function db2_info($par) {
       }
       $html.= "</table></div>";
       // úplnost osobních a rodinných údajů
-      list($pocet,$tlf,$eml,$nar)= select("
+      list($pocet,$tlf,$eml,$nar,$geo1,$geo_)= select("
           COUNT(*),SUM(IF(kontakt=1 AND telefon,1,0)),SUM(IF(kontakt=1 AND email!='',1,0)),
-          SUM(IF(narozeni!='0000-00-00',1,0))
-        ",'osoba',"deleted=''"); 
+          SUM(IF(narozeni!='0000-00-00',1,0)), 
+          SUM(IF(IFNULL(stav,0)=1,1,0)), SUM(IF(IFNULL(stav,0)<0,1,0))
+        ",'osoba LEFT JOIN osoba_geo USING (id_osoba)',"deleted=''"); 
       $dtlf= db2_info_dupl('osoba','telefon',"deleted='' AND kontakt=1 AND telefon");
       $deml= db2_info_dupl('osoba','UPPER(TRIM(email))',"deleted='' AND kontakt=1 AND email!=''");
       $xeml= db2_info_dupl('osoba','MD5(UPPER(TRIM(email)))',"deleted='' AND kontakt=1 AND email!=''");
       $html.= "<h3>Úplnost osobních údajů</h3>";
       $html.= "<div class='stat'><table class='stat'>";
-      $html.= "<tr><th>tabulka</th><th>záznamů</th>
+      $html.= "<tr><th>tabulka</th><th>záznamů</th><th>geolokace</th>
         <th>telefon</th><th>... dupl</th><th>email</th><th>... dupl</th><th>... kód</th></tr>";
-      $html.= "<tr><th>OSOBA</th><$tdr>$pocet</td>
+      $html.= "<tr><th>OSOBA</th><$tdr>$pocet</td><$tdr>$geo1 / $geo_</td>
         <$tdr>$tlf</td><$tdr>$dtlf</td><$tdr>$eml</td><$tdr>$deml</td><$tdr>$xeml</td></tr>";
       $html.= "</table></div>";
       // záznamy v jiných databázích

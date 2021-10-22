@@ -1,4 +1,111 @@
 <?php # (c) 2009-2015 Martin Smidek <martin@smidek.eu>
+/** ======================================================================================== mapy.cz */
+# ---------------------------------------------------------------------------------------- geo fill
+// y je paměť procesu, který bude krok za krokem prováděn lokalizaci adres
+// y.todo - celkový počet kroků
+// y.done - počet provedených kroků 
+// y.error = text chyby, způsobí konec
+function geo_fill ($y) { //debug($y,'geo_fill');
+  if ( !$y->todo ) {
+    // pokud je y.todo=0 zjistíme kolik toho bude
+    $y->todo= select('COUNT(*)',
+        'osoba AS o LEFT JOIN osoba_geo USING (id_osoba) 
+          LEFT JOIN tvori USING (id_osoba) LEFT JOIN rodina AS r USING (id_rodina)',
+        "o.deleted='' AND o.umrti=0 AND IF(o.adresa,o.stat,r.stat) IN ('','CZ') 
+          AND {$y->par->par->cond} ORDER BY id_osoba");
+    $y->last_id= 0;
+//    display("TODO {$y->todo}");
+  }
+  if ( $y->error ) { goto end; }
+  if ( $y->done >= $y->todo ) { $y->done= $y->todo; $y->msg= 'konec+'; goto end; }
+  // vlastní proces
+  if ( $y->par->y!=='-' ) {
+    list($ido,$stav)= select('id_osoba,IFNULL(stav,0)',
+        'osoba AS o LEFT JOIN osoba_geo USING (id_osoba) 
+          LEFT JOIN tvori USING (id_osoba) LEFT JOIN rodina AS r USING (id_rodina)',
+        "o.deleted='' AND o.umrti=0 AND IF(o.adresa,o.stat,r.stat) IN ('','CZ') 
+          AND id_osoba>{$y->last_id} AND {$y->par->par->cond} ORDER BY id_osoba LIMIT 1");
+    $y->last_id= $ido;
+    if ($stav<=0) {
+      $geo= geo_get($ido);
+      debug($geo,'po geo_get');
+      geo_set($ido,$geo);
+      if ($geo->error) {
+        $lineadr= urlencode($geo->address);
+        $url= "http://ags.cuzk.cz/arcgis/rest/services/RUIAN/Vyhledavaci_sluzba_nad_daty_RUIAN/"
+            . "MapServer/exts/GeocodeSOE/findAddressCandidates?SingleLine={$lineadr}&magicKey="
+            . "&outSR=&maxLocations=&outFields=&searchExtent=&f=html";
+        $y->note= "{$geo->error} OSOBA $ido 
+          <a href='{$geo->url}' target='url'>VDP ČÚZK</a>
+          <a href='$url' target='url'>AGS ČÚZK</a> {$geo->address}
+        ";
+      }
+      else
+        $y->note= "+ OSOBA $ido";
+    }
+    else {
+      $y->note= "- OSOBA $ido";
+    }
+  }
+  $y->done++;
+  // zpráva
+  $y->msg= $y->done==$y->todo ? 'konec' : "ještě ".($y->todo-$y->done); 
+//  $y->error= "au";
+end:  
+  return $y;
+}
+# ------------------------------------------------------------------------------------- geo_get_smap
+# zapíš polohu dané osobě
+function geo_set($ido,$geo) {  //trace();
+  if ($geo->wgs)
+    query("REPLACE osoba_geo (id_osoba,lat,lng,stav) 
+      VALUE ($ido,'{$geo->wgs->lat}','{$geo->wgs->lng}',1)");
+  else 
+    query("REPLACE osoba_geo (id_osoba,stav) VALUE ($ido,-{$geo->error})");
+
+}
+# ------------------------------------------------------------------------------------- geo_get_smap
+# určí polohu podle RUIAN podle údajů v OSOBA nebo podle zadané adresy
+function geo_get($ido,$adr='') {  //trace();
+  $geo= (object)array(full=>"neznámá adresa v RUIAN",ok=>0);
+  $rc= pdo_qry("SELECT id_osoba,adresa,
+          IF(adresa,o.ulice,r.ulice) AS ulice,
+          IF(adresa,o.psc,r.psc) AS psc, 
+          IF(adresa,o.obec,r.obec) AS obec,
+          okres.nazev AS nazokr
+        FROM osoba AS o
+        LEFT JOIN tvori AS t USING (id_osoba)
+        LEFT JOIN rodina AS r USING (id_rodina)
+        LEFT JOIN `#psc` AS p ON p.psc=IF(adresa,o.psc,r.psc)
+        LEFT JOIN `#okres` AS okres USING (kod_okres) 
+        WHERE IF(adresa,o.stat,r.stat) IN ('','CZ') 
+          AND IF(adresa=0,t.role IN ('a','b'),1) AND id_osoba=$ido ");
+  if ( !$rc ) {
+    $geo->ok= 0;
+    $geo->error= 9;
+    goto end;
+  }
+  $c= pdo_fetch_object($rc);
+  if ( !$c->id_osoba ) {
+    $geo->ok= 0;
+    $geo->error= 8;
+    goto end;
+  }
+  $m= null;
+  preg_match('~([^\d]+)([\d/]+)~',$c->ulice,$m);
+  $ulice= $m[1];
+  $cislo= $m[2];
+  $obec= $c->obec;
+  $psc= $c->psc;
+  $adr= (object)array('ulice'=>$ulice,'cislo'=>$cislo,'obec'=>$obec,'psc'=>$psc);
+//  debug($adr);
+  $geo= ruian_adresa((object)array('ulice'=>$ulice,'cislo'=>$cislo,'obec'=>$c->obec,'psc'=>$c->psc));
+  $geo->address= "$ulice $cislo, $psc $obec";
+  $geo->full= "{$geo->adresa[0]}, {$geo->adresa[1]}, {$geo->adresa[2]}";
+end:
+//                                                        debug($geo);
+  return $geo;
+}
 /** ==========================================================================================> AKCE */
 # ---------------------------------------------------------------------------------------- ms_import
 # import

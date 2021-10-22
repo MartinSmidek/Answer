@@ -389,6 +389,13 @@ table spolu { key_id:'id_spolu'
   number dite_kat // #ys_akce_dite_kat | #fa_akce_dite_kat -- cenová kategorie
 }
 
+table osoba_geo { 
+  number id_osoba
+  number lat
+  number lng
+  number stav
+}
+
 table osoba { key_id:'id_osoba'
   number id_osoba
   number access
