@@ -10,8 +10,9 @@ function geo_fill ($y) { //debug($y,'geo_fill');
     // pokud je y.todo=0 zjistíme kolik toho bude
     $y->todo= select('COUNT(*)',
         'osoba AS o LEFT JOIN osoba_geo USING (id_osoba) 
-          LEFT JOIN tvori USING (id_osoba) LEFT JOIN rodina AS r USING (id_rodina)',
-        "o.deleted='' AND o.umrti=0 AND IF(o.adresa,o.stat,r.stat) IN ('','CZ') 
+          LEFT JOIN tvori AS t USING (id_osoba) LEFT JOIN rodina AS r USING (id_rodina)',
+        "o.deleted='' AND o.umrti=0 AND IF(o.adresa,o.psc!='',r.psc!='')
+          AND IF(o.adresa,o.stat,r.stat) IN ('','CZ') AND IF(adresa=0,t.role IN ('a','b'),1)
           AND {$y->par->par->cond} ORDER BY id_osoba");
     $y->last_id= 0;
 //    display("TODO {$y->todo}");
@@ -22,8 +23,9 @@ function geo_fill ($y) { //debug($y,'geo_fill');
   if ( $y->par->y!=='-' ) {
     list($ido,$stav)= select('id_osoba,IFNULL(stav,0)',
         'osoba AS o LEFT JOIN osoba_geo USING (id_osoba) 
-          LEFT JOIN tvori USING (id_osoba) LEFT JOIN rodina AS r USING (id_rodina)',
-        "o.deleted='' AND o.umrti=0 AND IF(o.adresa,o.stat,r.stat) IN ('','CZ') 
+          LEFT JOIN tvori AS t USING (id_osoba) LEFT JOIN rodina AS r USING (id_rodina)',
+        "o.deleted='' AND o.umrti=0 AND IF(o.adresa,o.psc!='',r.psc!='')
+          AND IF(o.adresa,o.stat,r.stat) IN ('','CZ') AND IF(adresa=0,t.role IN ('a','b'),1)
           AND id_osoba>{$y->last_id} AND {$y->par->par->cond} ORDER BY id_osoba LIMIT 1");
     $y->last_id= $ido;
     if ($stav<=0) {
