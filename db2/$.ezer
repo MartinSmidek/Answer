@@ -50,7 +50,7 @@ menu db2 { type:'main', title:'db2', active:*, _sys:'*'
           item {title:'Ulož ezer_answer.db_osoba', par:{org:'3',cmd:'save'}, skill:'m'}
           item {title:'Doplň geolokace - Šmídek', par:{cond:"prijmeni='Šmídek'"}, skill:'a'}
           item {title:'Doplň geolokace - iniciovaní', par:{cond:'ISNULL(stav) AND iniciace!=0'}, skill:'a'}
-          item {title:'... opravy', par:{cond:'IFNULL(stav,0)<0'}, skill:'a'}
+          item {title:'... opravy', par:{cond:'NOT ISNULL(stav) AND stav<0'}, skill:'a'}
           func onclick (i:ezer) {
             clear(); info.display(0,'t'); info.header(i);
             info.fill('','... probíhá výpočet ...');
