@@ -69,7 +69,7 @@ function geo_set($ido,$geo) {  //trace();
 # ------------------------------------------------------------------------------------- geo_get_smap
 # určí polohu podle RUIAN podle údajů v OSOBA nebo podle zadané adresy
 function geo_get($ido,$adr='') {  //trace();
-  $geo= (object)array(full=>"neznámá adresa v RUIAN",ok=>0);
+  $geo= (object)array('full'=>"neznámá adresa v RUIAN",'ok'=>0);
   $rc= pdo_qry("SELECT id_osoba,adresa,
           IF(adresa,o.ulice,r.ulice) AS ulice,
           IF(adresa,o.psc,r.psc) AS psc, 
@@ -103,7 +103,7 @@ function geo_get($ido,$adr='') {  //trace();
 //  debug($adr);
   $geo= ruian_adresa((object)array('ulice'=>$ulice,'cislo'=>$cislo,'obec'=>$c->obec,'psc'=>$c->psc));
   $geo->address= "$ulice $cislo, $psc $obec";
-  $geo->full= "{$geo->adresa[0]}, {$geo->adresa[1]}, {$geo->adresa[2]}";
+  $geo->full= isset($geo->adresa) ? "{$geo->adresa[0]}, {$geo->adresa[1]}, {$geo->adresa[2]}" : '';
 end:
 //                                                        debug($geo);
   return $geo;
