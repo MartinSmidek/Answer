@@ -60,6 +60,11 @@ menu db2 { type:'main', title:'db2', active:*, _sys:'*'
                Proces.Start({x:10,y:1,par:i.par},"Lokalizace adres") 
             }
           }
+          item {title:'TEST url', skill:'m'
+            func onclick (i:ezer) {
+              clear(); info.display(1,'t'); info.header(i);
+            }
+          }
         }
         menu { title:'Import a záloha databáze',type:'group',skill:'m'
           item { title:"[fa-question] přehled záloh"          par:°{typ:'listing',direct:'1'}}
@@ -129,7 +134,12 @@ menu db2 { type:'main', title:'db2', active:*, _sys:'*'
               info.fill('',ask('db2_copy_test_db',i.par.db)); }}
         }
       }
-      use info: form right [12,4,,] { tag:'i' 
+      use info: form right [12,4,,] { tag:'t' 
+        field url [40,29,100,17] {tag:'t', format:'t', style:'width:calc(100% - 60px)'}
+        button [0,29,,] {tag:'t', title:'GET', func onclick() { var html:text
+          html= php.curl_get_contents(url);
+          form.note= php.htmlentities(html);
+        }}
 //        select tab [-253,5,150,] {tag:'t', title:'tabulka', format:'t'}
 //        field idt [-152,5,70,] {tag:'t', title:'klíč', format:'t'}
 //        button [-82,5,,] {tag:'t', title:'zobraz'
@@ -271,6 +281,7 @@ form right [,,*,*] {
   proc append(x) { note.get; note.set(conc(note.get,'<br>',x)) | note.set(x) }
   func header(i:ezer) { var i_owner:ezer
     clear(); i_owner= i.owner();
+    info= ''; note= '';
     head= replace_fa(`<div class='karta'>${i_owner.title} - ${i.title}</div>`);
   }
 }
