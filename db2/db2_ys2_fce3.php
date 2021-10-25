@@ -28,6 +28,7 @@ function geo_fill ($y) { //debug($y,'geo_fill');
           AND IF(o.adresa,o.stat,r.stat) IN ('','CZ') AND IF(adresa=0,t.role IN ('a','b'),1)
           AND id_osoba>{$y->last_id} AND {$y->par->par->cond} ORDER BY id_osoba LIMIT 1");
     $y->last_id= $ido;
+    $idox= tisk2_ukaz_osobu($ido);
     if ($stav<=0) {
       $geo= geo_get($ido);
 //      debug($geo,'po geo_get');
@@ -38,7 +39,7 @@ function geo_fill ($y) { //debug($y,'geo_fill');
             . "MapServer/exts/GeocodeSOE/findAddressCandidates?SingleLine={$lineadr}&magicKey="
             . "&outSR=&maxLocations=&outFields=&searchExtent=&f=html";
         $mapycz= "http://api4.mapy.cz/geocode?query=$geo->address";
-        $y->note= "{$geo->error} OSOBA $ido 
+        $y->note= "{$geo->error} OSOBA $idox 
           <a href='{$geo->url}' target='url'>VDP ČÚZK</a>
           <a href='$url' target='url'>AGS ČÚZK</a> 
           <a href='$mapycz' target='url'>mapy.</a> 
@@ -46,10 +47,10 @@ function geo_fill ($y) { //debug($y,'geo_fill');
         ";
       }
       else
-        $y->note= "+ OSOBA $ido {$geo->address} ==> ".implode(', ',$geo->adresa);
+        $y->note= "+ OSOBA $idox {$geo->address} ==> ".implode(', ',$geo->adresa);
     }
     else {
-      $y->note= "- OSOBA $ido";
+      $y->note= "- OSOBA $idox";
     }
   }
   $y->done++;
