@@ -11,7 +11,7 @@ function geo_fill ($y) { //debug($y,'geo_fill');
     $y->todo= select('COUNT(*)',
         'osoba AS o LEFT JOIN osoba_geo USING (id_osoba) 
           LEFT JOIN tvori AS t USING (id_osoba) LEFT JOIN rodina AS r USING (id_rodina)',
-        "o.deleted='' AND o.umrti=0 AND IF(o.adresa,o.psc!='',r.psc!='')
+        "o.deleted='' AND o.umrti=0 AND IF(o.adresa,o.psc!='',r.psc!='') AND IFNULL(stav,0)!=-99
           AND IF(o.adresa,o.stat,r.stat) IN ('','CZ') AND IF(adresa=0,t.role IN ('a','b'),1)
           AND {$y->par->par->cond} ORDER BY id_osoba");
     $y->last_id= 0;
@@ -24,26 +24,29 @@ function geo_fill ($y) { //debug($y,'geo_fill');
     list($ido,$stav)= select('id_osoba,IFNULL(stav,0)',
         'osoba AS o LEFT JOIN osoba_geo USING (id_osoba) 
           LEFT JOIN tvori AS t USING (id_osoba) LEFT JOIN rodina AS r USING (id_rodina)',
-        "o.deleted='' AND o.umrti=0 AND IF(o.adresa,o.psc!='',r.psc!='')
+        "o.deleted='' AND o.umrti=0 AND IF(o.adresa,o.psc!='',r.psc!='') AND IFNULL(stav,0)!=-99
           AND IF(o.adresa,o.stat,r.stat) IN ('','CZ') AND IF(adresa=0,t.role IN ('a','b'),1)
           AND id_osoba>{$y->last_id} AND {$y->par->par->cond} ORDER BY id_osoba LIMIT 1");
     $y->last_id= $ido;
     if ($stav<=0) {
       $geo= geo_get($ido);
-      debug($geo,'po geo_get');
+//      debug($geo,'po geo_get');
       geo_set($ido,$geo);
       if ($geo->error) {
         $lineadr= urlencode($geo->address);
         $url= "http://ags.cuzk.cz/arcgis/rest/services/RUIAN/Vyhledavaci_sluzba_nad_daty_RUIAN/"
             . "MapServer/exts/GeocodeSOE/findAddressCandidates?SingleLine={$lineadr}&magicKey="
             . "&outSR=&maxLocations=&outFields=&searchExtent=&f=html";
+        $mapycz= "http://api4.mapy.cz/geocode?query=$geo->address";
         $y->note= "{$geo->error} OSOBA $ido 
           <a href='{$geo->url}' target='url'>VDP ČÚZK</a>
-          <a href='$url' target='url'>AGS ČÚZK</a> {$geo->address}
+          <a href='$url' target='url'>AGS ČÚZK</a> 
+          <a href='$mapycz' target='url'>mapy.</a> 
+          {$geo->address}
         ";
       }
       else
-        $y->note= "+ OSOBA $ido";
+        $y->note= "+ OSOBA $ido {$geo->address} ==> ".implode(', ',$geo->adresa);
     }
     else {
       $y->note= "- OSOBA $ido";
@@ -69,6 +72,7 @@ function geo_set($ido,$geo) {  //trace();
 # ------------------------------------------------------------------------------------- geo_get_smap
 # určí polohu podle RUIAN podle údajů v OSOBA nebo podle zadané adresy
 function geo_get($ido,$adr='') {  //trace();
+  display("------------------------------------------------------ $ido");
   $geo= (object)array('full'=>"neznámá adresa v RUIAN",'ok'=>0);
   $rc= pdo_qry("SELECT id_osoba,adresa,
           IF(adresa,o.ulice,r.ulice) AS ulice,
@@ -94,7 +98,7 @@ function geo_get($ido,$adr='') {  //trace();
     goto end;
   }
   $m= null;
-  preg_match('~([^\d]+)([\d/]+)~',$c->ulice,$m);
+  preg_match('~([^\d]+)([\d\/]+)~',$c->ulice,$m);
   $ulice= $m[1];
   $cislo= $m[2];
   $obec= $c->obec;
@@ -106,6 +110,7 @@ function geo_get($ido,$adr='') {  //trace();
   $geo->full= isset($geo->adresa) ? "{$geo->adresa[0]}, {$geo->adresa[1]}, {$geo->adresa[2]}" : '';
 end:
 //                                                        debug($geo);
+  display("------------------------------------------------------ $ido END");
   return $geo;
 }
 /** ==========================================================================================> AKCE */
