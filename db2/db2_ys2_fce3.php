@@ -63,11 +63,15 @@ end:
 # ------------------------------------------------------------------------------------- geo_get_smap
 # zapíš polohu dané osobě
 function geo_set($ido,$geo) {  //trace();
-  if ($geo->wgs)
-    query("REPLACE osoba_geo (id_osoba,lat,lng,stav) 
-      VALUE ($ido,'{$geo->wgs->lat}','{$geo->wgs->lng}',1)");
+  if ($geo->wgs) {
+    $kodm= isset($geo->kod_mista) ? $geo->kod_mista : 0;
+    $kodo= isset($geo->kod_obce) ? $geo->kod_obce : 0;
+    query("REPLACE osoba_geo (id_osoba,kod_misto,kod_obec,lat,lng,stav) 
+      VALUE ($ido,$kodm,$kodo,'{$geo->wgs->lat}','{$geo->wgs->lng}',1)");
+  }
   else 
-    query("REPLACE osoba_geo (id_osoba,stav) VALUE ($ido,-{$geo->error})");
+    query("REPLACE osoba_geo (id_osoba,stav) 
+      VALUE ($ido,-{$geo->error})");
 
 }
 # ------------------------------------------------------------------------------------- geo_get_smap
@@ -99,9 +103,15 @@ function geo_get($ido,$adr='') {  //trace();
     goto end;
   }
   $m= null;
-  preg_match('~^(.*)\s*([\d\/]+)$~uU',$c->ulice,$m);
-  $ulice= $m[1];
-  $cislo= $m[2];
+  $ma_cislo= preg_match('~^(.*)\s*(\d[\w\/]*)\s*$~uU',$c->ulice,$m);
+  if ($ma_cislo) {
+    $ulice= $m[1];
+    $cislo= $m[2];
+  }
+  else {
+    $ulice= $c->ulice;
+    $cislo= '';
+  }
   $obec= $c->obec;
   $psc= $c->psc;
   $adr= (object)array('ulice'=>$ulice,'cislo'=>$cislo,'obec'=>$obec,'psc'=>$psc);
