@@ -99,7 +99,7 @@ function geo_get($ido,$adr='') {  //trace();
     goto end;
   }
   $m= null;
-  preg_match('~([^\d]+)([\d\/]+)~',$c->ulice,$m);
+  preg_match('~^(.*)\s*([\d\/]+)$~uU',$c->ulice,$m);
   $ulice= $m[1];
   $cislo= $m[2];
   $obec= $c->obec;
