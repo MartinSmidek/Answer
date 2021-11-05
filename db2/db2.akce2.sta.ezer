@@ -199,6 +199,10 @@ menu m {type:'left', format:'f+', active:*
       ,dsc:'Seznam obsahuje účastníky akcí v posledních letech (parametr určuje počet let zpět, default=0 tj. jen letošní).<br>Kliknutí na číslo ve sloupci <b>ID osoby</b> zobrazí první osobu na kartě EVIDENCE.<br>'
       ,tit:'jména:30,ulice:20,psč:6,obec:20,stát:6,(příjmení):15,(aktivní členi):20,(poslední akce):80,(mrop):7,(PPS):7,(akt.členů):11,(ID osoby):10'
       ,fld:'jmena,ulice,psc,obec,stat,prijmeni,_cleni,akce,_mrop,_pps,_clenu,id_osoba',ord:'prijmeni',cnd:"_psc!='' AND _stat IN ('','?')"}}
+    item {title:'všichni evidovaní s mailem'                                          skill:'cae#crz'
+       ,par:°{typ:'maily',podtyp:'osoby',xls:'Excel',parm_tit:''
+       ,dsc:"Tabulka pro export jmen a emailových adres"
+       ,tit:'',fld:'',ord:''}}
   }
   menu d {title:'Dotazníky LK YMCA Setkání',type:'group', _sys:'*' skill:'yaet'
     item {title:'[fa-calendar] volba roku dotazníku'            par:{typ:'r'} }

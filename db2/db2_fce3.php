@@ -3790,6 +3790,48 @@ function akce2_platba_prispevek2($id_pobyt) {  trace();
   $ret->msg= "Za členy $jmena je potřeba vložit do pokladny $celkem,- Kč";
   return $ret;
 }
+# -------------------------------------------------------------------------------- akce2 uhrady_load
+# načtení úhrad za pobyt
+function akce2_uhrady_load($id_pobyt) { 
+  $ret= (object)array('pocet'=>0,'seznam'=>array());
+  $rp= pdo_qry("SELECT u_poradi,u_castka,u_datum,u_zpusob,u_stav,u_za FROM uhrada
+          WHERE id_pobyt=$id_pobyt ORDER BY u_poradi");
+  while ( $rp && $p= pdo_fetch_object($rp) ) {
+    $ret->pocet++;
+    $p->u_index= $p->u_poradi+1; unset($p->u_poradi);
+    $p->u_datum= sql_date1($p->u_datum);
+    $ret->seznam[]= $p;
+  }
+  debug($ret,"akce2_uhrady_load($id_pobyt)");
+  return $ret;
+}
+# -------------------------------------------------------------------------------- akce2 uhrady_save
+# uložení změn úhrad za pobyt
+function akce2_uhrady_save($id_pobyt,$uhrady) { 
+  debug($uhrady,"akce2_uhrady_save($id_pobyt)");
+  foreach ($uhrady as $new) {
+    $new->u_datum= sql_date1($new->u_datum,1);
+    $old= select_object('u_poradi,u_castka,u_datum,u_zpusob,u_stav,u_za','uhrada',
+        "id_pobyt=$id_pobyt AND u_poradi=$new->u_index-1");
+    if ($old) {
+      foreach ($new as $fld=>$val) {
+        if ($fld=='u_index') {
+          $fld= 'u_poradi';
+          $val--;
+        }
+        if ($old->$fld != $val) {
+          query("UPDATE uhrada SET $fld='$val' WHERE id_pobyt=$id_pobyt AND u_poradi=$new->u_index-1");
+        }
+      }
+    }
+    else {
+      query("INSERT INTO uhrada (id_pobyt,u_poradi,u_castka,u_datum,u_zpusob,
+          u_stav,u_za) 
+        VALUES ($id_pobyt,$new->u_index-1,'$new->u_castka','$new->u_datum',$new->u_zpusob,
+          $new->u_stav,$new->u_za)");
+    }
+  }
+}
 # ====================================================================================> . autoselect
 # ---------------------------------------------------------------------------------- akce2 auto_deti
 # SELECT autocomplete - výběr z dětí na akci=par->akce
@@ -10577,54 +10619,6 @@ function mapa2_mimo_ctverec($tab,$rect,$ids,$max=5000) { trace();
   }
   return $ret;
 }
-//# ----------------------------------------------------------------------------- mapa2 mimo_ctverec_r
-//# ASK
-//# vrátí jako seznam id_rodina bydlících mimo oblast danou obdélníkem 'x,y;x,y'
-//# podmnožinu předaných ids
-//# pokud by seznam byl delší než MAX, vrátí chybu
-//function mapa2_mimo_ctverec_r($rect,$ids,$max=5000) { trace();
-//  $ret= (object)array('err'=>'','rect'=>$rect,'ids'=>'','pocet'=>0);
-//  list($sell,$nwll)= explode(';',$rect);
-//  $se= explode(',',$sell);
-//  $nw= explode(',',$nwll);
-//  $qo= "SELECT id_rodina, lat, lng
-//        FROM rodina AS r
-//        LEFT JOIN psc_axy AS a ON a.psc=r.psc
-//        WHERE id_rodina IN ($ids)
-//          AND NOT (lat BETWEEN $se[0] AND $nw[0] AND lng BETWEEN $se[1] AND $nw[1]) ";
-//  $ro= pdo_qry($qo);
-//  if ( $ro ) {
-//    $ret->pocet= pdo_num_rows($ro);
-//    if ( $max && $ret->pocet > $max ) {
-//      $ret->err= "Ve výřezu mapy je příliš mnoho bodů "
-//        . "({$ret->pocet} nejvíc lze $max)";
-//    }
-//    else {
-//      $del= '';
-//      while ( $ro && $o= pdo_fetch_object($ro) ) {
-//        $ret->ids.= "$del{$o->id_rodina}"; $del= ',';
-//      }
-//    }
-//  }
-//  return $ret;
-//}
-//# ----------------------------------------------------------------------------==> .. mapa2 rect2poly
-//# ASK
-//# převede obdélník zadaný uhlopříčkou na polygon zmenšený o $perc %
-//function mapa2_rect2poly($rect,$perc) {  trace();
-//  // $rect=="$N,$W;$S,$E"
-//  list($NW,$SE)= explode(';',$rect);
-//  list($N,$W)= explode(',',$NW);
-//  list($S,$E)= explode(',',$SE);
-//  $d_lat= abs($N-$S)*$perc/100;
-//  $d_lng= abs($W-$E)*$perc/100;
-//  $N= $N-$d_lat;
-//  $S= $S+$d_lat;
-//  $W= $W+$d_lng;
-//  $E= $E-$d_lng;
-//  $poly= "$N,$W;$N,$E;$S,$E;$S,$W";
-//  return $poly;
-//}
 /** ==========================================================================================> STA2 */
 # ====================================================================================> . sta2 mrop
 # tabulka struktury účastníků MROP
@@ -11276,6 +11270,26 @@ function sta2_sestava($org,$title,$par,$export=false) { trace();
 //                                                debug($clmn,"clmn");
     break;
 
+  # Sestava pro export jmen a emailů všech evidovaných
+  case 'maily':     // -------------------------------------==> .. maily
+    $tits= array("jmeno:15","prijmeni:15","email:30","neposílat:10");
+    $flds= array('jmeno','prijmeni','_email','nomail');
+    $rx= pdo_qry("SELECT
+        o.id_osoba,jmeno,prijmeni,
+        IF(o.kontakt,o.email,IFNULL(r.emaily,'')) AS _email,nomail
+      FROM osoba AS o
+      LEFT JOIN tvori AS t USING (id_osoba)
+      LEFT JOIN rodina AS r USING (id_rodina)
+      GROUP BY o.id_osoba
+      HAVING _email!=''
+      ORDER BY o.prijmeni,o.jmeno
+      -- LIMIT 10
+      ");
+    while ( $rx && ($x= pdo_fetch_object($rx)) ) {
+      $clmn[]= $x;
+    }
+    break;
+
   # Sestava pečounů na letních kurzech, rok= před kolika lety naposledy ve funkci (0=jen letos)
   case 'pecujici':     // -----------------------------------==> .. pecujici
     $cert= array(); // certifikát rok=>poslední číslo
@@ -11511,46 +11525,6 @@ function sta2_sestava($org,$title,$par,$export=false) { trace();
   case 'ms-pecouni': // -------------------------------------==> .. ms-pecouni
     # _pec,_sko,_proc
     $clmn= sta2_pecouni($org);
-    break;
-//    list($od,$do)= select("MAX(YEAR(datum_od)),MIN(YEAR(datum_od))","akce","druh=1 AND access&$org");
-//    for ($rok=$od; $rok>=$do; $rok--) {
-//      $kurz= select1("id_duakce","akce","druh=1 AND YEAR(datum_od)=$rok AND access&$org");
-//      $akci= select1("COUNT(*)","akce","druh=7 AND YEAR(datum_od)=$rok AND access&$org");
-//      $akci= $akci ? "$akci školení" : '';
-//      $info= akce2_info($kurz,0); //muzi,zeny,deti,peco,rodi,skup
-//      // získání dat
-//      $_pec= $_sko= $_proc= $_pecN= $_skoN= $_procN= 0;
-//      $data= array();
-//      _akce2_sestava_pecouni($data,$kurz);
-//      $_pec= count($data);
-//      if ( !$_pec ) continue;
-//      foreach ($data as $d) {
-//        $skoleni= 0;
-//        $sko= array_unique(preg_split("/\s+/",$d['_skoleni'], -1, PREG_SPLIT_NO_EMPTY));
-//        $slu= array_unique(preg_split("/\s+/",$d['_sluzba'],  -1, PREG_SPLIT_NO_EMPTY));
-//        $ref= array_unique(preg_split("/\s+/",$d['_reflexe'], -1, PREG_SPLIT_NO_EMPTY));
-//        $leto= $slu[0];
-//        // výpočet školení všech
-//        $skoleni+= count($sko);
-//        foreach ($ref as $r) if ( $r<$leto ) $skoleni++;
-//        $_sko+= $skoleni>0 ? 1 : 0;
-//        // noví
-//        if ( count($slu)==1 ) {
-//          $_pecN++;
-//          $_skoN+= $skoleni>0 ? 1 : 0;
-//        }
-//      }
-//      $_proc= $_pec ? round(100*$_sko/$_pec).'%' : '';
-//      $_procN= $_pecN ? round(100*$_skoN/$_pecN).'%' : '';
-//      $note= $akci;
-//      $ratio= round($info->deti/$_pec,1);
-//      $note.= ", $ratio";
-//      // zobrazení výsledků
-//      $clmn[]= array('_rok'=>$rok,'_rodi'=>$info->rodi,'_deti'=>$info->deti,
-//        '_pec'=>$_pec,'_sko'=>$_sko,'_proc'=>$_proc,
-//        '_pecN'=>$_pecN,'_skoN'=>$_skoN,'_procN'=>$_procN,'_note'=>$note);
-////       if ( $rok==2014) break;
-//    }
     break;
 
   # Sestava ukazuje celkový počet účastníků resp. pečovatelů na akcích letošního roku,
@@ -12259,6 +12233,112 @@ function mail2_footer($op,$access,$access_name,$idu,$change='') { trace();
 # --------------------------------------------------------------------------------- mail2 vzor_pobyt
 # pošle mail daného typu účastníkovi pobytu - zatím typ=potvrzeni_platby
 #                                                                         !!! + platba souběžné akce
+function mail2_vzor_pobyt2($id_pobyt,$typ,$u_poradi,$from,$vyrizuje,$poslat=0) {
+  global $ezer_root;
+  $ret= (object)array();
+
+  // načtení a kontrola pobytu + mail + nazev akce
+  $p= (object)array();
+  $rm= pdo_qry("
+    SELECT IFNULL(x.id_duakce,0),
+     -- p.platba,p.datplatby,p.potvrzeno,
+     u.castka,u_datum,u_stav,u_za,
+     -- p.platba_d,p.datplatby_d,p.potvrzeno_d,
+     GROUP_CONCAT(DISTINCT IF(o.kontakt,o.email,'')),IFNULL(GROUP_CONCAT(DISTINCT r.emaily),''),
+     a.nazev,a.access,a.hnizda,p.hnizdo
+    FROM pobyt AS p
+    JOIN uhrada AS u USING (id_pobyt)
+    JOIN akce AS a ON p.id_akce=a.id_duakce
+    LEFT JOIN akce AS x ON x.id_hlavni=a.id_duakce
+    JOIN spolu AS s USING(id_pobyt)
+    JOIN osoba AS o ON s.id_osoba=o.id_osoba
+    LEFT JOIN tvori AS t ON t.id_osoba=o.id_osoba AND IF(p.i0_rodina,t.id_rodina=p.i0_rodina,1)
+    LEFT JOIN rodina AS r USING (id_rodina)
+    WHERE id_pobyt=$id_pobyt AND u_poradi=$u_poradi
+  ");
+  if (!$rm ) { $ret->err= "CHYBA záznam nenalezen"; goto end; }
+  list($soubezna,$castka,$dne,$potvrzeno,$za,//$castka_d,$dne_d,$potvrzeno_d,
+    $omaily,$rmaily,$p->platba_akce,$access,$hnizda,$hnizdo)= pdo_fetch_row($rm);
+  if ( !$castka && !$castka_d ) {
+    $ret->err= "CHYBA: ještě nebylo nic zaplaceno"; goto end; }
+  if ( $castka && $dne=='0000-00-00' || $castka_d && $dne_d=='0000-00-00' ) {
+    $ret->err= "CHYBA: není zapsáno datum platby"; goto end; }
+  if ( $soubezna  ) {
+    if ( $potvrzeno && $potvrzeno_d ) {
+      $ret->err= "CHYBA: obě platby již byly potvrzeny"; goto end;
+    }
+    if ( $castka && $potvrzeno && $castka_d && $potvrzeno_d ) {
+      $ret->err= "CHYBA: platba již byla potvrzena"; goto end;
+    }
+  }
+  else {
+    if ( $castka && $potvrzeno ) { $ret->err= "CHYBA: platba již byla potvrzena"; goto end; }
+  }
+
+  // naplnění proměnných mailu
+  $p->platba_den= sql_date1($castka && !$potvrzeno ? $dne : $dne_d);
+  $p->platba_castka=
+    number_format($castka && !$potvrzeno ? $castka : $castka_d, 0, '.', '&nbsp;')."&nbsp;Kč";
+  $p->vyrizuje= $vyrizuje;
+  // doplnění názvu hnízda, má-li smysl
+  if ($hnizda && $hnizdo) {
+    $hnizda= explode(',',$hnizda);
+    if (isset($hnizda[$hnizdo-1])) {
+      $p->platba_akce.= ", hnízdo {$hnizda[$hnizdo-1]}";
+    }
+  }
+
+  // načtení vzoru dopisu
+  list($nazev,$obsah,$vars)=
+    select('nazev,obsah,var_list','dopis',"typ='potvrzeni_platby' AND access=$access");
+
+  // personifikace
+  foreach ( explode(',',$vars) as $var ) {
+    $var= trim($var);
+    $obsah= str_replace('{'.$var.'}',$p->$var,$obsah);
+  }
+  // extrakce adresy
+  $maily= trim(str_replace(';',',',"$omaily,$rmaily")," ,");
+                                                              display("maily=$maily");
+  if ( !$maily ) { $ret->err= "CHYBA účastníci nemají uvedené maily"; goto end; }
+  $report= "<hr>Od:$vyrizuje &lt;$from&gt;<br>Komu:$maily<br>Předmět:$nazev<hr>$obsah";
+
+  if ( $poslat ) {
+    // poslání mailu - při úspěchu zápis o potvrzení
+    $mail= mail2_new_PHPMailer();
+    if ( !$mail ) { 
+      $ze= isset($mail->Username) ? $mail->Username : '?';
+      $ret->err= "CHYBA při odesílání mailu z '$ze' došlo k chybě: odesílací adresa nelze použít (SMTP)";
+      goto end;
+    }
+    // proměnné údaje
+    $mail->From= $from;
+    $mail->AddReplyTo($from);
+    $mail->FromName= $vyrizuje;
+    foreach(preg_split("/,\s*|;\s*|\s+/",trim($maily," ,;"),-1,PREG_SPLIT_NO_EMPTY) as $adresa) {
+      $mail->AddAddress($adresa);   // pošli na 1. adresu
+    }
+    $mail->Subject= $nazev;
+    $mail->Body= $obsah;
+    $ok= $mail->Send();
+    if ( $ok  ) {
+      // zápis o potvrzení
+      $ret->msg= "Byl odeslán mail$report";
+      $field= $castka && !$potvrzeno ? 'potvrzeno' : 'potvrzeno_d';
+      query("UPDATE pobyt SET $field=1 WHERE id_pobyt=$id_pobyt");
+    }
+    else {
+      $ze= isset($mail->Username) ? $mail->Username : '?';
+      $ret->err= "CHYBA při odesílání mailu z '$ze' došlo k chybě: $mail->ErrorInfo";
+      goto end;
+    }
+  }
+  else {
+    $ret->msg= "Je připraven mail - mám ho poslat?$report";
+  }
+end:
+  return $ret;
+}
 function mail2_vzor_pobyt($id_pobyt,$typ,$from,$vyrizuje,$poslat=0) {
   global $ezer_root;
   $ret= (object)array();
