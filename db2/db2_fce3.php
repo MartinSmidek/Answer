@@ -243,7 +243,8 @@ function akce2_mapa($akce,$filtr='') {  trace();
     $obec[$p]= $obec[$p] ?: $m;
   }
 //                                         debug($psc);
-  return mapa2_psc($psc,$obec); // vrací (object)array('mark'=>$marks,'n'=>$n,'err'=>$err);
+  $icon= "./ezer3.1/client/img/circle_gold_15x15.png,7,7";
+  return mapa2_psc($psc,$obec,0,$icon); // vrací (object)array('mark'=>$marks,'n'=>$n,'err'=>$err);
 }
 # --------------------------------------------------------------------------------------- akce2 info
 # rozšířené informace o akci
