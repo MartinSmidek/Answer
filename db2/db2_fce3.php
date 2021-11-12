@@ -3718,6 +3718,17 @@ function ucast2_flds($fstr) {
 }
 # ========================================================================================> . platby
 # záložka Platba za akci
+# ------------------------------------------------------------------------------------- akce2 uhrada
+# transformace osoba.platba* --> uhrada
+function akce2_uhrada() {  trace();
+  query("TRUNCATE TABLE uhrada");
+  query("INSERT INTO uhrada (id_pobyt,u_poradi,u_castka,u_datum,u_zpusob,u_stav,u_za) 
+      SELECT id_pobyt,0,platba,datplatby,zpusobplat,IF(potvrzeno=1,3,IF(avizo=1,1,2)),0
+      FROM pobyt WHERE platba!=0");
+  query("INSERT INTO uhrada (id_pobyt,u_poradi,u_castka,u_datum,u_zpusob,u_stav,u_za) 
+      SELECT id_pobyt,IF(platba=0,0,1),platba_d,datplatby_d,zpusobplat_d,IF(potvrzeno=1,3,2),1
+      FROM pobyt WHERE platba_d!=0");
+}
 # -------------------------------------------------------------------------- akce2 platba_prispevek1
 # členské příspěvky - zjištění zda jsou dospělí co jsou na pobytu členy a mají-li zaplaceno
 function akce2_platba_prispevek1($id_pobyt) {  trace();
@@ -10025,13 +10036,38 @@ function evid2_browse_mailist($x) {
       $lat[$psc]= $s->lat;
       $lng[$psc]= $s->lng;
     }
+    # pokus se získat podmínku - zjednodušeno na show=[*,vzor]
+    $whr= $hav= array();
+    if ( $x->show ) foreach ( $x->show as $fld => $show) {
+      $i= 0; $typ= $show->$i;
+      $i= 1; $vzor= $show->$i;
+      $beg= '^';
+      if ($typ!='*') break;
+      $end= substr($vzor,-1)=='$' ?'$' : '.*';
+      $not= substr($vzor,0,1)=='-';
+      if ( $not ) $vzor= substr($vzor,1);
+      $vzor= strtr($vzor,array('?'=>'.','*'=>'.*','$'=>''));
+      if (in_array($fld,array('psc','obec'))) {
+        $hav[]= "_$fld REGEXP '$beg$vzor$end' ";
+      }
+      elseif (in_array($fld,array('prijmeni','jmeno'))) {
+        $whr[]= "o.$fld REGEXP '$beg$vzor$end' ";
+      }
+    }
+//                                                                debug($whr,"WHERE");
+//                                                                debug($hav,"HAVING");
     # získej sexpr z mailistu id=c.cond
     list($nazev,$qo,$komu)= select('ucel,sexpr,komu','mailist',"id_mailist={$x->cond}");
-    // přidej případnou podmínku podle x.cond
-    if ( $x->cond ) {
-      $qo= str_replace("WHERE","WHERE {$x->cond} AND ",$qo);
+    // přidej případnou podmínku 
+    if ( count($whr) ) {
+      $cond= implode(' AND ',$whr);
+      $qo= str_replace("WHERE","WHERE $cond AND ",$qo);
     }
-                                                                display($qo);
+    if ( count($hav) ) {
+      $cond= implode(' AND ',$hav);
+      $qo= str_replace("ORDER BY","HAVING $cond ORDER BY",$qo);
+    }
+//                                                                display($qo);
     $ro= pdo_qry($qo);
     while ( $ro && ($o= pdo_fetch_object($ro)) ) {
       $id= $komu=='o' ? $o->_id : $o->_idr;
@@ -10045,10 +10081,16 @@ function evid2_browse_mailist($x) {
         $jmeno= substr($o->_name,$jm+1);
       }
       $psc= $o->_psc;
+      $_lat= isset($lat[$psc]) ? $lat[$psc] : 0;
+      $_lng= isset($lng[$psc]) ? $lng[$psc] : 0;
+      if ($komu=='o') {
+        list($lt,$lg)= select('lat,lng','osoba_geo',"id_osoba=$id");
+        if ($lt) { $_lat= $lt; $_lng= $lg; }
+      }
       $zz[]= (object)array(
       'id_o'=>$id,
-      'lat'=> isset($lat[$psc]) ? $lat[$psc] : 0,
-      'lng'=> isset($lng[$psc]) ? $lng[$psc] : 0,
+      'lat'=> $_lat,
+      'lng'=> $_lng,
       'access'=>$o->access,
       'prijmeni'=>$prijmeni,
       'jmeno'=>$jmeno,
@@ -10373,13 +10415,14 @@ end:
 #   msg:  text chyby
 #   rect: omezující obdélník jako SW;NE
 #   poly: omezující polygon zmenšený o $perc % oproti obdélníku
-function mapa2_ctverec($tab,$id,$dist,$perc) {  trace();
+function mapa2_ctverec($mode,$id,$dist,$perc) {  trace();
   $ret= (object)array('err'=>0,'msg'=>'');
   // zjištění polohy člena
   $lat0= $lng0= 0;
-  $qc= $tab=='osoba' 
-   ? "SELECT lat,lng
+  $qc= in_array($mode,array('o','h','m'))
+   ? "SELECT IF(ISNULL(g.lat),a.lat,g.lat) AS lat,IF(ISNULL(g.lng),a.lng,g.lng) AS lng
       FROM osoba AS o
+      LEFT JOIN osoba_geo AS g USING (id_osoba)
       LEFT JOIN tvori AS t USING (id_osoba)
       LEFT JOIN rodina AS r USING (id_rodina)
       LEFT JOIN psc_axy AS a ON a.psc=IF(o.adresa,o.psc,r.psc)
@@ -10393,7 +10436,7 @@ function mapa2_ctverec($tab,$id,$dist,$perc) {  trace();
     $lat0= $c->lat;
     $lng0= $c->lng;
   }
-  if ( !$lat0 ) { $ret->msg= "nelze najít polohu $tab/$id"; $ret->err++; goto end; }
+  if ( !$lat0 ) { $ret->msg= "nelze najít polohu $mode/$id"; $ret->err++; goto end; }
   // čtverec  SW;NE
   $delta_lat= 0.0089913097;
   $delta_lng= 0.0137464041;
@@ -10417,28 +10460,35 @@ end:
 # --------------------------------------------------------------------------------- mapa2 ve_ctverci
 # ASK
 # vrátí jako seznam id_$tab bydlících v oblasti dané obdélníkem 'x,y;x,y'
-# podmnožinu předaných ids, pokud je rect prázdný - vrátí vše, co lze lokalizovat
+# podmnožinu předaných ids a k tomu řetezec definující značky v mapě
+# pokud je rect prázdný - vrátí vše, co lze lokalizovat
 # pokud by seznam byl delší než MAX, vrátí chybu
-function mapa2_ve_ctverci($tab,$rect,$ids,$max=5000) { trace();
-  $ret= (object)array('err'=>'','rect'=>$rect,'ids'=>'','pocet'=>0);
+function mapa2_ve_ctverci($mode,$rect,$ids,$max=5000) { trace();
+  $ret= (object)array('err'=>'','rect'=>$rect,'ids'=>'','marks'=>'','pocet'=>0);
   if ( $rect ) {
     list($sell,$nwll)= explode(';',$rect);
     $se= explode(',',$sell);
     $nw= explode(',',$nwll);
-    $poloha= "lat BETWEEN $se[0] AND $nw[0] AND lng BETWEEN $se[1] AND $nw[1]";
+    $poloha= "IF(ISNULL(g.lat),a.lat,g.lat) BETWEEN $nw[0] AND $se[0]
+      AND IF(ISNULL(g.lng),a.lng,g.lng) BETWEEN $se[1] AND $nw[1]";
   }
   else {
     $poloha= "lat!=0 AND lng!=0";
   }
-  $qo= $tab=='o' 
-   ? "SELECT id_osoba, lat, lng
+  $qo= in_array($mode,array('o','h','m'))
+   ? "SELECT id_osoba,IFNULL(g.lat,0),
+        IF(ISNULL(g.lat),a.lat,g.lat) AS lat,IF(ISNULL(g.lng),a.lng,g.lng) AS lng
       FROM osoba AS o
+      LEFT JOIN osoba_geo AS g USING (id_osoba)
       LEFT JOIN tvori AS t USING (id_osoba)
       LEFT JOIN rodina AS r USING (id_rodina)
       LEFT JOIN psc_axy AS a ON a.psc=IF(o.adresa,o.psc,r.psc)
       WHERE id_osoba IN ($ids) AND $poloha "
-   : "SELECT id_rodina, lat, lng
+   : // r|f
+     "SELECT id_rodina,IFNULL(g.lat,0),
+        IF(ISNULL(g.lat),a.lat,g.lat) AS lat,IF(ISNULL(g.lng),a.lng,g.lng) AS lng
       FROM rodina AS r
+      LEFT JOIN rodina_geo AS g USING (id_rodina)
       LEFT JOIN psc_axy AS a ON a.psc=r.psc
       WHERE id_rodina IN ($ids) AND $poloha ";
   $ro= pdo_qry($qo);
@@ -10449,19 +10499,23 @@ function mapa2_ve_ctverci($tab,$rect,$ids,$max=5000) { trace();
         . "({$ret->pocet} nejvíc lze $max)";
     }
     else {
-      $del= '';
-      while ( $ro && list($id)= pdo_fetch_row($ro) ) {
-        $ret->ids.= "$del$id"; $del= ',';
+      $del= $semi= '';
+      while ( $ro && list($id,$geo,$lat,$lng)= pdo_fetch_row($ro) ) {
+        $ret->ids.= "$del$id"; 
+        $color= $geo ? 'green' : 'gold';
+        $ret->marks.= "$semi$id,$lat,$lng,$id,./ezer3.1/client/img/circle_{$color}_15x15.png,7,7"; 
+        $del= ','; $semi= ';';
       }
     }
   }
+end:  
   return $ret;
 }
-# ----------------------------------------------------------------------------- mapa2 psc_v_polynomu
+# ----------------------------------------------------------------------------- mapa2 psc_v_polygonu
 # ASK
-# vrátí jako seznam PSČ ležící v oblasti dané polynomem 'x,y;...'
+# vrátí jako seznam PSČ ležící v oblasti dané polygonem 'x,y;...'
 # pokud by seznam byl delší než MAX, vrátí chybu
-function mapa2_psc_v_polynomu($poly) { trace();
+function mapa2_psc_v_polygonu($poly) { trace();
   $ret= (object)array('err'=>'','pscs'=>'','pocet'=>0);
   // nalezneme ohraničující obdélník a převedeme polygon do interního tvaru
   $lat_min= $lng_min= 999;
@@ -10500,11 +10554,11 @@ function mapa2_psc_v_polynomu($poly) { trace();
   }
   return $ret;
 }
-# --------------------------------------------------------------------------------- mapa2 v_polynomu
+# --------------------------------------------------------------------------------- mapa2 v_polygonu
 # ASK
-# vrátí jako seznam id_$tab bydlící v oblasti dané polynomem 'x,y;...'
+# vrátí jako seznam id_$tab bydlící v oblasti dané polygonem 'x,y;...'
 # pokud by seznam byl delší než MAX, vrátí chybu
-function mapa2_v_polynomu($tab,$poly,$ids,$max=5000) { trace();
+function mapa2_v_polygonu($mode,$poly,$ids,$max=5000) { trace();
   $ret= (object)array('err'=>'','poly'=>$poly,'ids'=>'','pocet'=>0);
   // nalezneme ohraničující obdélník a přvedeme polygon do interního tvaru
   $lat_min= $lng_min= 999;
@@ -10526,16 +10580,21 @@ function mapa2_v_polynomu($tab,$poly,$ids,$max=5000) { trace();
     $y[$n]= $y[0];
   }
   // dotaz na ohraničující obdélník
-  $poloha= "lat BETWEEN $lat_min AND $lat_max AND lng BETWEEN $lng_min AND $lng_max";
-  $qo= $tab=='osoba' 
-   ? "SELECT id_osoba AS _id, lat, lng
+  $poloha= "IF(ISNULL(g.lat),a.lat,g.lat) BETWEEN $lat_min AND $lat_max 
+    AND IF(ISNULL(g.lng),a.lng,g.lng) BETWEEN $lng_min AND $lng_max";
+  $qo= in_array($mode,array('o','h','m')) 
+   ? "SELECT id_osoba,IFNULL(g.lat,0),
+        IF(ISNULL(g.lat),a.lat,g.lat) AS lat,IF(ISNULL(g.lng),a.lng,g.lng) AS lng
       FROM osoba AS o
+      LEFT JOIN osoba_geo AS g USING (id_osoba)
       LEFT JOIN tvori AS t USING (id_osoba)
       LEFT JOIN rodina AS r USING (id_rodina)
       LEFT JOIN psc_axy AS a ON a.psc=IF(o.adresa,o.psc,r.psc)
       WHERE id_osoba IN ($ids) AND $poloha "
-   : "SELECT id_rodina,lat,lng
+   : "SELECT id_rodina,IFNULL(g.lat,0),
+        IF(ISNULL(g.lat),a.lat,g.lat) AS lat,IF(ISNULL(g.lng),a.lng,g.lng) AS lng
       FROM rodina AS r
+      LEFT JOIN rodina_geo AS g USING (id_rodina)
       LEFT JOIN psc_axy AS a ON a.psc=r.psc
       WHERE id_rodina IN ($ids) AND $poloha ";
   $ro= pdo_qry($qo);
@@ -10545,11 +10604,14 @@ function mapa2_v_polynomu($tab,$poly,$ids,$max=5000) { trace();
       $ret->err= "Je požadováno příliš mnoho bodů {$ret->pocet} nejvíc lze $max";
     }
     else {
-      $del= '';
-      while ( $ro && list($id,$lat,$lng)= pdo_fetch_row($ro) ) {
+      $del= $semi= '';
+      while ( $ro && list($id,$geo,$lat,$lng)= pdo_fetch_row($ro) ) {
         // zjistíme, zda leží uvnitř polygonu
         if ( maps_poly_cross($lat,$lng,$x,$y) ) {
-          $ret->ids.= "$del$id"; $del= ',';
+          $ret->ids.= "$del$id"; 
+          $color= $geo ? 'green' : 'gold';
+          $ret->marks.= "$semi$id,$lat,$lng,$id,./ezer3.1/client/img/circle_{$color}_15x15.png,7,7"; 
+          $del= ','; $semi= ';';
         }
       }
     }
@@ -10581,44 +10643,47 @@ function maps_poly_cross($x0,$y0,$x,$y) {
 //                                                 display("cross($x0,$y0,X,Y)=$cn");
   return $cn & 1;                                         // 0 if even (out), and 1 if odd (in)
 }
-# ------------------------------------------------------------------------------- mapa2 mimo_ctverec
-# ASK
-# vrátí jako seznam id_$tab bydlících mimo oblast danou obdélníkem 'x,y;x,y'
-# podmnožinu předaných ids
-# pokud by seznam byl delší než MAX, vrátí chybu
-function mapa2_mimo_ctverec($tab,$rect,$ids,$max=5000) { trace();
-  $ret= (object)array('err'=>'','rect'=>$rect,'ids'=>'','pocet'=>0);
-  list($sell,$nwll)= explode(';',$rect);
-  $se= explode(',',$sell);
-  $nw= explode(',',$nwll);
-  // dotaz na ohraničující obdélník
-  $poloha= "lat BETWEEN $se[0] AND $nw[0] AND lng BETWEEN $se[1] AND $nw[1]";
-  $qo= $tab=='o' 
-   ? "SELECT id_osoba, lat, lng
-      FROM osoba AS o
-      LEFT JOIN tvori AS t USING (id_osoba)
-      LEFT JOIN rodina AS r USING (id_rodina)
-      LEFT JOIN psc_axy AS a ON a.psc=IF(o.adresa,o.psc,r.psc)
-      WHERE id_osoba IN ($ids) AND NOT ($poloha) "
-   : "SELECT id_rodina, lat, lng
-      FROM rodina AS r
-      LEFT JOIN psc_axy AS a ON a.psc=r.psc
-      WHERE id_rodina IN ($ids) AND NOT ($poloha) ";
-  $ro= pdo_qry($qo);
-  if ( $ro ) {
-    $ret->pocet= pdo_num_rows($ro);
-    if ( $max && $ret->pocet > $max ) {
-      $ret->err= "Ve výřezu mapy je příliš mnoho bodů ({$ret->pocet} nejvíc lze $max)";
-    }
-    else {
-      $del= '';
-      while ( $ro && list($id)= pdo_fetch_row($ro) ) {
-        $ret->ids.= "$del$id"; $del= ',';
-      }
-    }
-  }
-  return $ret;
-}
+//# ------------------------------------------------------------------------------- mapa2 mimo_ctverec
+//# ASK
+//# vrátí jako seznam id_$tab bydlících mimo oblast danou obdélníkem 'x,y;x,y'
+//# podmnožinu předaných ids
+//# pokud by seznam byl delší než MAX, vrátí chybu
+//function mapa2_mimo_ctverec($mode,$rect,$ids,$max=5000) { trace();
+//  $ret= (object)array('err'=>'','rect'=>$rect,'ids'=>'','pocet'=>0);
+//  list($sell,$nwll)= explode(';',$rect);
+//  $se= explode(',',$sell);
+//  $nw= explode(',',$nwll);
+//  // dotaz na ohraničující obdélník
+//  $poloha= "IF(ISNULL(g.lat),a.lat,g.lat) BETWEEN $se[0] AND $nw[0] 
+//    AND IF(ISNULL(g.lng),a.lng,g.lng) BETWEEN $se[1] AND $nw[1]";
+//  $qo= in_array($mode,array('o','h','m')) 
+//   ? "SELECT id_osoba, IF(ISNULL(g.lat),a.lat,g.lat) AS lat,IF(ISNULL(g.lng),a.lng,g.lng) AS lng
+//      FROM osoba AS o
+//      LEFT JOIN osoba_geo AS g USING (id_osoba)
+//      LEFT JOIN tvori AS t USING (id_osoba)
+//      LEFT JOIN rodina AS r USING (id_rodina)
+//      LEFT JOIN psc_axy AS a ON a.psc=IF(o.adresa,o.psc,r.psc)
+//      WHERE id_osoba IN ($ids) AND NOT ($poloha) "
+//   : "SELECT id_rodina,IF(ISNULL(g.lat),a.lat,g.lat) AS lat,IF(ISNULL(g.lng),a.lng,g.lng) AS lng
+//      FROM rodina AS r
+//      LEFT JOIN rodina_geo AS g USING (id_rodina)
+//      LEFT JOIN psc_axy AS a ON a.psc=r.psc
+//      WHERE id_rodina IN ($ids) AND NOT ($poloha) ";
+//  $ro= pdo_qry($qo);
+//  if ( $ro ) {
+//    $ret->pocet= pdo_num_rows($ro);
+//    if ( $max && $ret->pocet > $max ) {
+//      $ret->err= "Ve výřezu mapy je příliš mnoho bodů ({$ret->pocet} nejvíc lze $max)";
+//    }
+//    else {
+//      $del= '';
+//      while ( $ro && list($id)= pdo_fetch_row($ro) ) {
+//        $ret->ids.= "$del$id"; $del= ',';
+//      }
+//    }
+//  }
+//  return $ret;
+//}
 /** ==========================================================================================> STA2 */
 # ====================================================================================> . sta2 mrop
 # tabulka struktury účastníků MROP

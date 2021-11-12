@@ -27,8 +27,10 @@ menu db2 { type:'main', title:'db2', active:*, _sys:'*'
         tables: {
           akce:  "id_duakce>*,nazev,datum_od",
           pobyt: "id_pobyt>*,id_akce>akce,i0_rodina>rodina,hnizdo,funkce",
+          uhrada:"id_uhrada>*,id_pobyt>pobyt,u_poradi,u_castka,u_datum,u_zpusob,u_stav,u_za",
           spolu: "id_spolu>-,id_pobyt>pobyt,id_osoba>osoba,s_hnizdo,s_role",
           osoba: "id_osoba>*,jmeno,prijmeni",
+          osoba_geo: "id_osoba>osoba,kod_obec,stav",
           tvori: "id_tvori>-,id_osoba>osoba,id_rodina>rodina,role",
           rodina:"id_rodina>*,nazev",
           dopis: "id_dopis>*,hnizdo,nazev",
