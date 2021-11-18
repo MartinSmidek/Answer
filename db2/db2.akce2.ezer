@@ -259,7 +259,6 @@ table psc_axy { key_id:'psc'
   number lng
 }
 map akce_ucast: table _cis {where:"druh='akce_ucast'", order:'poradi', key_id:'data'}
-
 # ------------------------------------------------------------------ pohledy
 table $osoba { key_id:'id_osoba'
   number id_osoba
@@ -276,12 +275,10 @@ table $osoba { key_id:'id_osoba'
   text email
   text info
 }
-
 table ds_osoba_copy { key_id:'id_osoba'
   number id_osoba
   text prijmeni
 }
-
 # ============================================================================================= AKCE
 table akce { key_id:'id_duakce'
   number id_duakce
@@ -316,7 +313,6 @@ table akce { key_id:'id_duakce'
   text web_anotace
   text web_url
 }
-
 table pobyt { key_id:'id_pobyt'
   number id_pobyt
   number id_akce
@@ -328,17 +324,17 @@ table pobyt { key_id:'id_pobyt'
   number funkce
   number prednasi      // číselník ms_akce_prednasi
   text aktivita
-  date datplatby        { sql_pipe:'sql_date1'}
-  number zpusobplat
-  number platba
-  number potvrzeno
-  number avizo          { help:"přišlo prohlášení o platbě" }
+  date ___datplatby        { sql_pipe:'sql_date1'}
+  number ___zpusobplat
+  number ___platba
+  number ___potvrzeno
+  number ___avizo          { help:"přišlo prohlášení o platbě" }
   number naklad_d
   number poplatek_d
-  date datplatby_d      { sql_pipe:'sql_date1'} // platba za děti v souběžné akci
-  number potvrzeno_d
-  number zpusobplat_d
-  number platba_d
+  date ___datplatby_d      { sql_pipe:'sql_date1'} // platba za děti v souběžné akci
+  number ___potvrzeno_d
+  number ___zpusobplat_d
+  number ___platba_d
   text budova
   text pokoj
   number ubytovani      // číselník ms_akce_ubytovan
@@ -364,16 +360,21 @@ table pobyt { key_id:'id_pobyt'
   number dorazil
   number pouze
   number akce
+  // předepsaná platba
   number platba1
   number platba2
   number platba3
   number platba4
+  // předepsaná vratka
+  number vratka1
+  number vratka2
+  number vratka3
+  number vratka4
   number sleva
   number vzorec //#
   number duvod_typ	// 0: zdůvodnění podle ceníku, 1: vlastním textem
   text   duvod_text	// vlastní text zdůvodňující cenu
 }
-
 table spolu { key_id:'id_spolu'
   number id_spolu
   number id_pobyt
@@ -388,21 +389,18 @@ table spolu { key_id:'id_spolu'
   number pfunkce  // #ms_akce_pfunkce -- funkce pečovatelská, jinak 0
   number dite_kat // #ys_akce_dite_kat | #fa_akce_dite_kat -- cenová kategorie
 }
-
 table osoba_geo { 
   number id_osoba
   number lat
   number lng
   number stav
 }
-
 table rodina_geo { 
   number id_rodina
   number lat
   number lng
   number stav
 }
-
 table osoba { key_id:'id_osoba'
   number id_osoba
   number access
@@ -456,14 +454,12 @@ table osoba { key_id:'id_osoba'
   date   web_zmena   { sql_pipe:'sql_date1', help:'datum vyplnění online formuláře se změnami os.údajů' }
   date   web_souhlas { sql_pipe:'sql_date1', help:'datum udělení souhlasu se zpracováním osobních údajů' }
 }
-
 table tvori { key_id:'id_tvori'
   number id_tvori
   number id_osoba
   number id_rodina
   number role
 }
-
 table dar { key_id:'id_dar'
   number id_dar
   number access
@@ -477,7 +473,6 @@ table dar { key_id:'id_dar'
   date   dat_do { sql_pipe:'sql_date1', help:'datum zaslání potvrzení nebo datum pokrytí členství příspěvkem nebo datum zániku členství' }
   text   note
 }
-
 table rodina { key_id:'id_rodina'
   number id_rodina
   number access
@@ -504,7 +499,6 @@ table rodina { key_id:'id_rodina'
   text origin
   text historie
 }
-
 table platba { key_id:'id_platba'
   number id_platba
   text   ucet           // M=514048001, D=514048044
@@ -524,7 +518,6 @@ table platba { key_id:'id_platba'
   text   ss2            // ručně opravený SS
   text   tipy           // vytipované možnosti plátce
 }
-
 table cenik { key_id:'id_cenik'
   number id_cenik
   number id_akce
@@ -539,7 +532,6 @@ table cenik { key_id:'id_cenik'
   number cena
   number dph
 }
-
 # -------------------------------------------------------------------------- webform
 table webform { key_id:'id_webform'
   number id_webform
@@ -566,7 +558,6 @@ table webform { key_id:'id_webform'
   text historie
 }
 map db_dary_frek:  table _cis {where:"druh='db_dary_frek'",  order:'poradi', key_id:'data'}
-
 table join_akce { // spojení číselníku akcí s MS
   number id_akce   { help:"klíč akce v tabulce akce" }
   number g_rok     { help:"rok akce podle číselníku akcí" }
@@ -574,7 +565,6 @@ table join_akce { // spojení číselníku akcí s MS
   text   source    { help:"L:Lídino M:Milošovo MS.EXE" }
   number akce      { help:"staré číslo akce podle MS.EXE" }
 }
-
 table g_akce { key_id:'id_gakce' // kopie číselníku akcí z intranetu
   number id_gakce
   number g_rok     { help:"rok akce podle číselníku akcí" }
@@ -586,7 +576,6 @@ table g_akce { key_id:'id_gakce' // kopie číselníku akcí z intranetu
   text   g_typ     { help:"typ akce z číselníku akcí" }
   text   g_kap     { help:"účetní kapitola akce z číselníku akcí" }
 }
-
 table mail { key_id:'id_mail'
   number id_mail { key:'primary' },
   number id_dopis { help:'mail|index mailu' }, // nepoužívá se pro dopisy s druh!='@'
@@ -600,7 +589,6 @@ table mail { key_id:'id_mail'
   text msg
   text body
 }
-
 table mailist { key_id:'id_mailist'
   number id_mailist
   number access
@@ -613,7 +601,6 @@ table mailist { key_id:'id_mailist'
   text   parms  // json
   text   sexpr
 }
-
 table dopis { key_id:'id_dopis'
   number id_dopis { key:'primary' },
   number access
@@ -655,6 +642,7 @@ map ms_akce_cirkev:   table _cis {where:"druh='ms_akce_cirkev'",    order:'porad
 map ms_akce_vzdelani: table _cis {where:"druh='ms_akce_vzdelani'",  order:'poradi', key_id:'data'}
 map ms_akce_titul:    table _cis {where:"druh='ms_akce_titul'",     order:'poradi', key_id:'data'}
 map ms_akce_platba:   table _cis {where:"druh='ms_akce_platba'",    order:'poradi', key_id:'data'}
+map ms_platba_stav:   table _cis {where:"druh='ms_platba_stav'",    order:'poradi', key_id:'data'}
 map ms_akce_sex:      table _cis {where:"druh='ms_akce_sex'",       order:'poradi', key_id:'data'}
 map ms_akce_ucastnik: table _cis {where:"druh='ms_akce_ucastnik'",  order:'poradi', key_id:'data'}
 map ms_cena_vzorec:   table _cis {where:"druh='ms_cena_vzorec'",    order:'poradi', key_id:'data'}

@@ -175,7 +175,7 @@ proc h_change_all() {
   foreach(array(sp1,sp2,pob),change_top2);
   foreach(array(
       evid.frame,pla.frame,act0.frame,alb0.frame,docu.frame,
-      pla.duvod_text,pla.navrh,pla.duvod_typ,pla.doslo,
+      pla.duvod_text,pla.navrh,pla.duvod_typ,pla.doslo,pla.uhrady_lst,
       docu.drop),
     change_height);
   change_top3;
@@ -695,7 +695,8 @@ form _ucast [,,400,] { css:'ds_form', style:'height:fit-content'
     show luzka, show pristylky, show kocarek, show pocetdnu,
     show strava_cel, show strava_cel_bm, show strava_cel_bl,
     show strava_pol, show strava_pol_bm, show strava_pol_bl,
-    show c_nocleh, show c_strava, show c_program, show c_sleva, show datplatby,
+    show c_nocleh, show c_strava, show c_program, show c_sleva, 
+    show v_nocleh, show v_strava, show v_program, show v_sleva, show datplatby,
     show cstrava_cel, show cstrava_cel_bm, show cstrava_cel_bl,
     show cstrava_pol, show cstrava_pol_bm, show cstrava_pol_bl,
     show svp, show zpusobplat, show naklad_d, show poplatek_d,
@@ -725,6 +726,7 @@ form _ucast [,,400,] { css:'ds_form', style:'height:fit-content'
         break;
       case 'plat':
         pla.key(key_pobyt); pla.nove(); copy_by_name(b,pla); pla.ini();
+        pla.uhrady_load();
         page.plt.last= key_pobyt;
         break;
       case 'akce':
@@ -1122,19 +1124,20 @@ form _pobyt [,,360,62] { par:°{onchanged:'first_only'}
 
   // u = úhrada
   field celkem      [5,0,50,20] {tag:'u', format:'dr', title:'^poplatek'}
-  field platba      [60,0,50,20] {tag:'u', data:p.platba, format:'r', title:'^uhrazeno'}
-  select zpusobplat [120,0,86,20] {tag:'u', type:'map', data:p.zpusobplat, title:'^jak',
-                                 options:ms_akce_platba.zkratka, format:'u'}
-  field datplatby   [216,0,84,20] {tag:'u', type:'date', data:p.datplatby, title:'^kdy'}
-  check avizo       [300,0,50,20] {tag:'u', title:"avízo", data:p.avizo, format:'r'}
+  field platba
+//  field platba      [60,0,50,20] {tag:'u', data:p.platba, format:'r', title:'^uhrazeno'}
+//  select zpusobplat [120,0,86,20] {tag:'u', type:'map', data:p.zpusobplat, title:'^jak',
+//                                 options:ms_akce_platba.zkratka, format:'u'}
+//  field datplatby   [216,0,84,20] {tag:'u', type:'date', data:p.datplatby, title:'^kdy'}
+//  check avizo       [300,0,50,20] {tag:'u', title:"avízo", data:p.avizo, format:'r'}
   label [5,20,1,15] { tag:'u' } // oprava
 
   // d = úhrada za děti
   field poplatek_d [5,0,50,20] {tag:'d', data:p.poplatek_d, format:'r', title:'^poplatek/d'}
-  field platba_d   [60,0,50,20] {tag:'d', data:p.platba_d, format:'r', title:'^uhrazeno'}
-  select zpusobplat_d [120,0,86,20] {tag:'d', type:'map', data:p.zpusobplat_d, title:'^jak',
-                                 options:ms_akce_platba.zkratka, format:'u'}
-  field datplatby_d [216,0,84,20] {tag:'d', type:'date', data:p.datplatby_d, title:'^kdy'}
+//  field platba_d   [60,0,50,20] {tag:'d', data:p.platba_d, format:'r', title:'^uhrazeno'}
+//  select zpusobplat_d [120,0,86,20] {tag:'d', type:'map', data:p.zpusobplat_d, title:'^jak',
+//                                 options:ms_akce_platba.zkratka, format:'u'}
+//  field datplatby_d [216,0,84,20] {tag:'d', type:'date', data:p.datplatby_d, title:'^kdy'}
   label [5,20,1,15] { tag:'d' } // oprava
 
   // ubytování
@@ -1640,7 +1643,9 @@ form _platba [,,623,] { key_id:'id_pobyt', style:'height:fit-content', par:°{on
     if (has_skill("yaa;faa;caa")) {
       rozpis_ceny();
       celkem= c_nocleh + c_strava + c_program + c_sleva;
-      naklad= celkem - c_sleva;
+      vratka= v_nocleh + v_strava + v_program + v_sleva;
+      naklad= celkem - c_sleva - vratka + v_sleva;
+      dar_dluh= platba - (celkem - vratka);
     };
     // obarvení tlačítek [Str.pol]
     if (u.b.cstrava_cel || u.b.cstrava_pol) stravy.set_css('cervena','cerna');
@@ -1792,48 +1797,106 @@ form _platba [,,623,] { key_id:'id_pobyt', style:'height:fit-content', par:°{on
   // vlastní pečovatelé
   field svp         [240,Td+15,11,] {tag:'b', data:pobyt.svp, help:"počet dětí s vlastním pečovatelem"}
   // pouze u hlavní akce - platba za souběžnou
-  field platba_d      [283,Td+48,50,] {tag:'b,deti', data:pobyt.platba_d, format:'nr'}
-  check potvrzeno_d   [421,Td+22,73,] {tag:'b,deti', title:"potvrzeno", data:pobyt.potvrzeno_d, format:'rd'}
-  select zpusobplat_d [339,Td+48,86,] {tag:'b,deti', type:'map', data:pobyt.zpusobplat_d,
-                                     options:ms_akce_platba.zkratka, format:'nu'}
-  field datplatby_d   [430,Td+48,84,] {tag:'b,deti', type:'date', data:pobyt.datplatby_d, format:'n'}
+//  field platba_d      [283,Td+48,50,] {tag:'b,deti', data:pobyt.platba_d, format:'nr'}
+//  check potvrzeno_d   [421,Td+22,73,] {tag:'b,deti', title:"potvrzeno", data:pobyt.potvrzeno_d, format:'rd'}
+//  select zpusobplat_d [339,Td+48,86,] {tag:'b,deti', type:'map', data:pobyt.zpusobplat_d,
+//                                     options:ms_akce_platba.zkratka, format:'nu'}
+//  field datplatby_d   [430,Td+48,84,] {tag:'b,deti', type:'date', data:pobyt.datplatby_d, format:'n'}
   // rozpis plateb
   field celkem      [225,Td+91,50,] {tag:'b', format:'dr', help:'částka požadovaná po účastníkovi'}
   field poplatek_d  [225,Td+48,50,] {tag:'b,deti', format:'dr', data:pobyt.poplatek_d,
                                    help:'částka požadovaná po účastníkovi za děti'}
-  field naklad      [523,Td+91,50,] {tag:'b', format:'dr',
-                                   help:'rozpočtovaná částka na účastníka = poplatek+sleva'}
+  field naklad      [292,Td+91,50,] {tag:'b', format:'dr',
+                                   help:'rozpočtovaná částka na účastníka = poplatek+sleva-vratka'}
+  field dar_dluh    [350,Td+91,50,] {tag:'b', format:'dr',
+                                   help:'rozdíl mezi platbou a požadovanou částkou'}
   field naklad_d    [523,Td+48,50,] {tag:'b,deti', format:'dr', data:pobyt.naklad_d,
                                    help:'rozpočtovaná částka na děti = poplatek+sleva'}
   field c_nocleh    [10,Td+91,47,] {tag:'b', data:pobyt.platba1, format:'r'}
   field c_strava    [60,Td+91,47,] {tag:'b', data:pobyt.platba2, format:'r'}
   field c_program   [110,Td+91,47,] {tag:'b', data:pobyt.platba3, format:'r'}
   field c_sleva     [160,Td+91,47,] {tag:'b', data:pobyt.platba4, format:'r'}
-  field platba      [283,Td+91,50,] {tag:'b', data:pobyt.platba, format:'r'}
-  select zpusobplat [339,Td+91,86,] {tag:'b', type:'map', data:pobyt.zpusobplat,
-                                   options:ms_akce_platba.zkratka, format:'u'}
-  field datplatby   [430,Td+91,84,] {tag:'b', type:'date', format:'RUr:e', data:pobyt.datplatby}
-  check avizo       [275,Td+107,50,] {tag:'b', title:"avízo", data:pobyt.avizo, format:'r'}
-  check potvrzeno   [421,Td+107,73,] {tag:'b', title:"potvrzeno", data:pobyt.potvrzeno, format:'rd'}
+  field v_nocleh    [10,Td+130,47,] {tag:'b', data:pobyt.vratka1, format:'r'}
+  field v_strava    [60,Td+130,47,] {tag:'b', data:pobyt.vratka2, format:'r'}
+  field v_program   [110,Td+130,47,] {tag:'b', data:pobyt.vratka3, format:'r'}
+  field v_sleva     [160,Td+130,47,] {tag:'b', data:pobyt.vratka4, format:'r'}
+  field vratka      [225,Td+130,50,] {tag:'b', format:'dr', help:'částka vrácená účastníkovi'}
+  field platba
+//  field platba      [283,Td+91,50,] {tag:'b', data:pobyt.platba, format:'r'}
+//  select zpusobplat [339,Td+91,86,] {tag:'b', type:'map', data:pobyt.zpusobplat,
+//                                   options:ms_akce_platba.zkratka, format:'u'}
+//  field datplatby   [430,Td+91,84,] {tag:'b', type:'date', format:'RUr:e', data:pobyt.datplatby}
+//  check avizo       [275,Td+107,50,] {tag:'b', title:"avízo", data:pobyt.avizo, format:'r'}
+//  check potvrzeno   [421,Td+107,73,] {tag:'b', title:"potvrzeno", data:pobyt.potvrzeno, format:'rd'}
   // pevné texty
   label [13,32,,]   { tag:'cenik', title:'Rozpis ceny akce podle cenového vzorce akce a přehled příchozích plateb' }
-  label [5,Td+128,,]  {tag:'b', title:'Cena zapsaná v evidenční kartě (použitá pro export do Excelu)',
+  label [5,Td+158,,]  {tag:'b', title:'Cena zapsaná v evidenční kartě (použitá pro export do Excelu)',
                       style:"border-top:2px solid grey" }
   label [3,Td+0,100,] {tag:'b', title:'lůž. při. nocí koč.', help:'počet lůžek, přistýlek, nocí a kočárků'}
   label [238,Td+0,27,] {tag:'b', title:'SVP'}
-  label [530,Td+76,52,] {tag:'b', title:'rozpočet'}
-  label [283,Td+76,33,] {tag:'b', title:'zaplaceno'}
+  label [298,Td+115,52,] {tag:'b', title:'rozpočet'}
+//  label [283,Td+76,33,] {tag:'b', title:'zaplaceno'}
   label [180,Td+40,302,21] {tag:'b,deti', css:'karta', style:"z-index:0"}
   label [190,Td+59,20,] {tag:'b,deti', title:'^Děti', style:"color:white"}
-  label [340,Td+76,71,] {tag:'b', title:'způsob platby'}
-  label [431,Td+76,51,] {tag:'b', title:'dne'}
-  label [16,Td+110,,] {tag:'b', title:'nocleh'}
-  label [56,Td+110,,] {tag:'b', title:'+ strava'}
-  label [107,Td+110,,] {tag:'b', title:'+ program'}
-  label [163,Td+110,,] {tag:'b', title:'- sleva'}
-  label [217,Td+110,56,] {tag:'b', title:'= poplatek'}
+//  label [340,Td+76,71,] {tag:'b', title:'způsob platby'}
+//  label [431,Td+76,51,] {tag:'b', title:'dne'}
+  label [16,Td+115,,] {tag:'b', title:'nocleh'}
+  label [56,Td+115,,] {tag:'b', title:'+ strava'}
+  label [107,Td+115,,] {tag:'b', title:'+ program'}
+  label [163,Td+115,,] {tag:'b', title:'- dotace' help:'celková sleva'}
+  label [221,Td+110,70,] {tag:'b', title:'= k zaplacení'}
+  label [225,Td+119,70,] {tag:'b', title:'= k vrácení'}
+  label [350,Td+115,,] {tag:'b', title:'+dar -dluh'}
   label frame [0,16,873,min_h-152] { css:'ae_work'}
+  // ----------------==> více plateb
+  var uhrady_n=0, 
+      uhrady_for=0  // ochrana proti násobnému vstupu do uhrady_load při rychlém posuvu v browse
+  func uhrady_load() { var uhrady:object, uhrada:object, u:ezer
+    if (uhrady_for) return;
+    uhrady_for= the_pobyt;
+    uhrady_lst.init(); uhrady_n= 0; 
+    uhrady= php.akce2_uhrady_load(the_pobyt);
+    if (uhrady.pocet) {
+      copy_by_name(uhrady.seznam,uhrady_lst);
+    }
+    else {
+      uhrady_add(); 
+    }
+    for (u of uhrady_lst) {
+      u.display(the_soubeh==1,'deti'); // když jsou odděleny platby za děti
+    }
+    uhrady_for= 0;
+  }
+  func uhrady_save() { var uhrada:ezer, i:number, uhrady:object
+    if (uhrady_lst.changed()) {
+      uhrady= {};
+      copy_by_name(uhrady_lst,uhrady);
+      php.akce2_uhrady_save(the_pobyt,uhrady);
+      uhrady_lst.plain();
+    }
+  }
+  func uhrady_add() { var Ln:ezer
+    uhrady_n= uhrady_lst.add(); 
+    Ln= uhrady_lst[uhrady_n];
+    Ln.u_index= uhrady_n+1;
+    Ln.display(the_soubeh==1,'deti'); // když jsou odděleny platby za děti
+  }
+  label [313,91,53,14] {title:'zaplaceno'}
+  label [373,91,73,14] {title:'způsob platby'}
+  label [460,91,54,14] {title:'den platby'}
+  label [545,91,61,14] {title:'stav platby'}
+  label [618,91,61,14] {tag:'deti', title:'platba za'}
+  list uhrady_lst [308,100,360,190] { rows:25
+    label  u_index [0,14,2,17] // u_index == uhrada.u_poradi + 1
+    field  u_castka [12,10,40,] {format:'r'}
+    select u_zpusob [60,10,85,] {type:'map', options:ms_akce_platba.zkratka}
+    field  u_datum  [145,10,85,] {type:'date', format:'r'}
+    select u_stav   [230,10,80,] {type:'map', options:ms_platba_stav.zkratka}
+    select u_za     [310,10,45,] {tag:'deti', type:'map', options:uhrada_za.zkratka}
+  }
 }
+//map uhrada_stav= "i,zkratka;0:-,1:avizo,2:zaplaceno,3:potvrzeno,4:vráceno" 
+map uhrada_za=   "i,zkratka;0:pár,1:děti" 
 # -----------------------------------------------------------------------------------------==> CMD_P
 # uložení změn v platbách
 form _cmd_p [,,623,30] { css:'ae_work'
@@ -1852,29 +1915,54 @@ form _cmd_p [,,623,30] { css:'ae_work'
       php.table_lock('off','pobyt',the_pobyt);
       pla.zmena_spec_strav= 0;
       if (the_pobyt && (!pla.same())) {
-        pla.save(); pla.load();
+        pla.save(1); pla.uhrady_save(); pla.load();
         u.b.browse_row();
         pla.ini();
       }
-//      reload(the_pobyt.get);
+      reload(the_pobyt);
     }
   }
   # potvrzení platby zasláním mailu
-  label  [165,0,148,30] { css:'ae_parm', skill:'yaa+;faa+;caa+' }
-  button [172,6,,] { title:"[fa-send-o] Potvrdit přijetí platby",
+  label  [66,0,245,30] { css:'ae_parm', skill:'yaa+;faa+;caa+' }
+  button [74,6,,] { title:"[fa-send-o] Potvrdit přijetí platby",
     help:'poslání mailu o přijetí platby podle vzoru v Maily akce'
-    proc onclick() { var y:object, from:text, name:text
-      clear;
-      [ pla.datplatby.get | pla.datplatby.set(now); pla.datplatby.change ];
-      not(pla.same); alert("nejprve je třeba uložit změněné údaje")
-    | from.set(sys('user','options','email'));
-      name.set(sys('user','options','vyrizuje'));
-      y.set(ask('mail2_vzor_pobyt',the_pobyt.get,'potvrzeni_platby',from,name,0));
-      y.err; alert(y.err);
-    | confirm(y.msg);
-      y.set(ask('mail2_vzor_pobyt',the_pobyt.get,'potvrzeni_platby',from,name,1));
-      { y.err; alert(y.err) | pla.load(the_pobyt.get); alert(y.msg) }
-  }}
+    func onclick() { var y:object, from:text, name:text, i:number
+      clear();
+      if (pla.same()) alert("nejprve je třeba uložit změněné údaje") 
+      else {
+        if (pla.uhrady_n>0) i= prompt("napiš pořadové číslo platby",1)
+        from= sys('user','options','email'); name= sys('user','options','vyrizuje');
+        y= php.mail2_vzor_pobyt(the_pobyt,'potvrzeni_platby2',i,from,name,0);
+        if (y.err) alert(y.err);
+        else {
+          confirm(y.msg);
+          y= php.mail2_vzor_pobyt(the_pobyt,'potvrzeni_platby2',i,from,name,1);
+          if (y.err) alert(y.err) 
+          else {
+            pla.load(the_pobyt); alert(y.msg) 
+          }
+        }
+      }
+    }
+//    proc onclick() { var y:object, from:text, name:text
+//      clear;
+//      [ pla.datplatby.get | pla.datplatby.set(now); pla.datplatby.change ];
+//      not(pla.same); alert("nejprve je třeba uložit změněné údaje")
+//    | from.set(sys('user','options','email'));
+//      name.set(sys('user','options','vyrizuje'));
+//      y.set(ask('mail2_vzor_pobyt',the_pobyt.get,'potvrzeni_platby',from,name,0));
+//      y.err; alert(y.err);
+//    | confirm(y.msg);
+//      y.set(ask('mail2_vzor_pobyt',the_pobyt.get,'potvrzeni_platby',from,name,1));
+//      { y.err; alert(y.err) | pla.load(the_pobyt.get); alert(y.msg) }
+//    }
+  }
+  # přidání řádku do seznamu plateb
+  button [217,6,,]  {title:"[fa-plus-square-o] Další platba", 
+    func onclick() { 
+      pla.uhrady_add();
+    }
+  }
   # uhrazení členského příspěvku na akci do pokladny
   label  [337,0,136,30] { css:'ae_parm', skill:'yaa+' }
   button [344,6,,] {title:'[fa-coffee] členský příspěvek',  help:'pokladna: zaplatit členský příspěvek',
