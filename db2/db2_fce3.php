@@ -8192,7 +8192,7 @@ function akce2_vyuctov_pary($akce,$par,$title,$vypis,$export=false) { trace();
       . ",platba ubyt.:7:r:s,platba strava:7:r:s,platba režie:7:r:s,sleva:7:r:s,CD:6:r:s,celkem:7:r:s"
       . ",na účet:7:r:s,datum platby:10:s"
       . ",nedo platek:6:r:s,člen. nedo platek:6:r:s,pokladna:6:r:s,datum platby:10:s,"
-      . "přepl.:6:r:s,vrátit:6:r:s,důvod:7,poznámka:50,SPZ:9,.:7"
+      . "přepl.:6:r:s,vrátit:6:r:s,datum vratky:10:s,důvod:7,poznámka:50,SPZ:9,.:7"
       . ",ubyt.:8:r:s,DPH:6:r:s,strava:8:r:s,DPH:6:r:s,režie:8:r:s,zapla ceno:8:r:s"
       . ",dota ce:6:r:s,nedo platek:6:r:s,dárce:25,dar:7:r:s,rozpočet organizace:10:r:s"
       . "";
@@ -8202,7 +8202,7 @@ function akce2_vyuctov_pary($akce,$par,$title,$vypis,$export=false) { trace();
       . ",platba1,platba2,platba3,platba4,=cd,=platit"
       . ",=uctem,datucet"
       . ",=nedoplatek,=prispevky,=pokladna,datpokl,"
-      . "=preplatek,=vratka,duvod,poznamka,spz,"
+      . "=preplatek,=vratka,datvrat,duvod,poznamka,spz,"
       . ",=ubyt,=ubytDPH,=strava,=stravaDPH,=rezie,=zaplaceno,"
       . "=dotace,=nedopl,=darce,=dar,=naklad"
       . "";
@@ -8240,9 +8240,11 @@ function akce2_vyuctov_pary($akce,$par,$title,$vypis,$export=false) { trace();
             ( SELECT SUM(u_castka) FROM uhrada AS u 
               WHERE u.id_pobyt=p.id_pobyt AND u.u_stav IN (1,2,3) AND u.u_zpusob=3) AS pokladnou,
             ( SELECT GROUP_CONCAT(DISTINCT DATE_FORMAT(u_datum,'%e/%c') SEPARATOR ', ') FROM uhrada AS u 
-              WHERE u.id_pobyt=p.id_pobyt AND u.u_datum!='0000-00-00' AND u.u_zpusob!=3) AS datucet,
+              WHERE u.id_pobyt=p.id_pobyt AND u.u_datum!='0000-00-00' AND u.u_zpusob!=3 AND u.u_stav!=4) AS datucet,
             ( SELECT GROUP_CONCAT(DISTINCT DATE_FORMAT(u_datum,'%e/%c') SEPARATOR ', ') FROM uhrada AS u 
-              WHERE u.id_pobyt=p.id_pobyt AND u.u_datum!='0000-00-00' AND u.u_zpusob=3) AS datpokl,
+              WHERE u.id_pobyt=p.id_pobyt AND u.u_datum!='0000-00-00' AND u.u_zpusob=3 AND u.u_stav!=4) AS datpokl,
+            ( SELECT GROUP_CONCAT(DISTINCT DATE_FORMAT(u_datum,'%e/%c') SEPARATOR ', ') FROM uhrada AS u 
+              WHERE u.id_pobyt=p.id_pobyt AND u.u_datum!='0000-00-00' AND u.u_stav=4) AS datvrat,
             -- SUM(IF(u_stav IN (1,2,3) AND u_zpusob=3,u_castka,0)) AS platba_pokl,
             -- SUM(IF(u_stav IN (1,2,3) AND u_zpusob!=3,u_castka,0)) AS platba_ucet,
             -- GROUP_CONCAT(DISTINCT u_datum SEPARATOR ', ') AS datplatby,
