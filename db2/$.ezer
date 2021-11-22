@@ -136,7 +136,7 @@ menu db2 { type:'main', title:'db2', active:*, _sys:'*'
               info.fill('',ask('db2_copy_test_db',i.par.db)); }}
         }
       }
-      use info: form right [12,4,,] { tag:'t' 
+      use info: form right [12,4,,] { tag:'i' 
         field url [40,29,100,17] {tag:'t', format:'t', style:'width:calc(100% - 60px)'}
         button [0,29,,] {tag:'t', title:'GET', func onclick() { var html:text
           html= php.curl_get_contents(url);

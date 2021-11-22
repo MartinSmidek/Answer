@@ -8310,7 +8310,8 @@ function akce2_vyuctov_pary($akce,$par,$title,$vypis,$export=false) { trace();
 //        case '=datpokl':    $val= $x->pokladnou ? $x->datplatby : ''; break;
         case '=cd':         $val= 100.00*$x->cd; break;
         // nedoplatek členského příspěvku činného člena
-        case '=prispevky':  $val= ($x->_clenstvi && $x->prispevky!=200 ? 200-$x->prispevky : '-'); break;
+        case '=prispevky':  $val= ($x->_clenstvi && $x->prispevky!=100*$x->_clenstvi 
+                                ? 100*$x->_clenstvi-$x->prispevky : '-'); break;
         case '=ubyt':       $val= round($x->platba1 - $x->platba1*$DPH1_koef);
                             $exp= "=[platba1,0]-[=ubytDPH,0]"; break;
         case '=ubytDPH':    $val= round($x->platba1*$DPH1_koef);
