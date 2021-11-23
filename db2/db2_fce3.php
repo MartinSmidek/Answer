@@ -263,9 +263,10 @@ function akce2_info($id_akce,$text=1,$pobyty=0) { trace();
   $pfunkce= map_cis('ms_akce_pfunkce','zkratka'); // funkce pečovatele na akci
   $bad= "<b style='color:red'>!!!</b>";
   $platby= $uhrady= $uhrady_d= $pfces= $fces= $pob= array();
-  $celkem= $uhrady_celkem= 0;
+  $celkem= $uhrady_celkem= $uhradit_celkem= $dotace_celkem= $dary_celkem= 0;
   $aviz= 0;
   $_hnizda= '';  $hnizda= array(); $hnizdo= array(); 
+  $soubeh= 0; // hlavní nebo souběžná akce
   if ( $id_akce ) {
     $ucasti= $rodiny= $dosp= $muzi= $zeny= $chuvy= $deti= $pecounu= $pp= $po= $web= 0;
     $err= $err2= $err3= $err4= 0;
@@ -312,7 +313,7 @@ function akce2_info($id_akce,$text=1,$pobyty=0) { trace();
         ? "LEFT JOIN tvori AS t USING (id_osoba,id_rodina)" : '';
     $JOIN_rodina= $akce_ms || $pobyty
         ? "LEFT JOIN rodina AS r ON r.id_rodina=p.i0_rodina" : '';
-    $qry= "SELECT a.nazev, datum_od, datum_do, now() as _ted,i0_rodina,funkce,p.web_zmena,web_changes,
+    $qry= "SELECT a.nazev, a.datum_od, a.datum_do, now() as _ted,i0_rodina,funkce,p.web_zmena,web_changes,
              COUNT(id_spolu) AS _clenu,IF(c.ikona=2,1,0) AS _pro_pary,a.hnizda,p.hnizdo,
              SUM(IF(ROUND(DATEDIFF(a.datum_od,o.narozeni)/365.2425,1)<18,1,0)) AS _deti,
              SUM(IF(CEIL(DATEDIFF(a.datum_od,o.narozeni)/365.2425)<=3,1,0)) AS _kocar,
@@ -335,21 +336,27 @@ function akce2_info($id_akce,$text=1,$pobyty=0) { trace();
              SUM(IF(o.sex NOT IN (1,2),1,0)) AS _err2,
              GROUP_CONCAT(IF(o.sex NOT IN (1,2),CONCAT(', ',jmeno,' ',prijmeni),'') SEPARATOR '') AS _kdo2,
              -- avizo,platba,datplatby,zpusobplat,
-             web_kalendar,web_anotace, web_url, web_obsazeno, $ms_ucasti,
+             platba,p.platba1+p.platba2+p.platba3+p.platba4-vratka1-vratka2-vratka3-vratka4 AS _uhradit,
+             p.platba4-vratka4 AS _dotace,
+             IFNULL(sa.id_duakce,0) AS _soubezna, a.id_hlavni AS _hlavni,
+             a.web_kalendar,a.web_anotace, a.web_url, a.web_obsazeno, $ms_ucasti,
              p.id_pobyt,$fld_pobyty
            FROM akce AS a
+           LEFT JOIN akce AS sa ON sa.id_hlavni=a.id_duakce
            JOIN pobyt AS p ON a.id_duakce=p.id_akce
            JOIN spolu AS s ON p.id_pobyt=s.id_pobyt
            JOIN osoba AS o USING (id_osoba) -- ON s.id_osoba=o.id_osoba
            $JOIN_rodina
            $JOIN_tvori
            LEFT JOIN _cis AS c ON c.druh='ms_akce_typ' AND c.data=a.druh
-           WHERE id_duakce='$id_akce' AND o.deleted=''
+           WHERE a.id_duakce='$id_akce' AND o.deleted=''
              -- AND p.id_pobyt IN (59240,59318)
            GROUP BY p.id_pobyt";
     $res= pdo_qry($qry);
     while ( $res && $p= pdo_fetch_object($res) ) {
       $pobyt= null;
+      // diskuse souběhu: 0=normální akce, 1=hlavní akce, 2=souběžná akce
+      $soubeh= $p->_soubezna ? 1 : ( $p->_hlavni ? 2 : 0);
       $fce= $p->funkce;
       if ($pobyty && !in_array($fce,array(10,13,14,99)))
         $pobyt= (object)array('idp'=>$p->id_pobyt,'prijmeni'=>$p->_prijmeni,'jmena'=>$p->_jmena,
@@ -386,22 +393,28 @@ function akce2_info($id_akce,$text=1,$pobyty=0) { trace();
         if ( $p->web_changes&4 ) $web_novi++;
       }
       // sčítání úhrad 
+      $uhradit_celkem+= $p->_uhradit;
+      $dotace_celkem+= $p->_dotace;
+      $zaplaceno= 0;
       $ru= pdo_qry("SELECT u_castka,u_zpusob,u_stav,u_za FROM uhrada WHERE id_pobyt=$p->id_pobyt");
       while ( $ru && list($u_castka,$u_zpusob,$u_stav,$u_za)= pdo_fetch_row($ru) ) {
+        $zaplaceno+= $u_castka;
         if ($u_za) 
           $uhrady_d[$u_zpusob][$u_stav]+= $u_castka;
         else 
           $uhrady[$u_zpusob][$u_stav]+= $u_castka;
         $uhrady_celkem+= $u_castka;
       }
-      // záznam plateb
-      if ( $p->platba ) {
-        $celkem+= $p->platba;
-        $platby[$p->zpusobplat]+= $p->platba;
-      }
-      if ( $p->avizo ) {
-        $aviz++;
-      }
+      if ($p->_uhradit)
+        $dary_celkem+= $zaplaceno > $p->_uhradit ? $zaplaceno - $p->_uhradit : 0;
+//      // záznam plateb
+//      if ( $p->platba ) {
+//        $celkem+= $p->platba;
+//        $platby[$p->zpusobplat]+= $p->platba;
+//      }
+//      if ( $p->avizo ) {
+//        $aviz++;
+//      }
       // diskuse funkce=odhlášen/14 a funkce=nepřijel/10 a funkce=náhradník/9 a nepřijat/13
       if ( in_array($fce,array(13,14,10,9) ) ) {
         $neprijati+= $fce==13 ? 1 : 0;
@@ -630,8 +643,9 @@ function akce2_info($id_akce,$text=1,$pobyty=0) { trace();
       $info->_pg=  $pg;
 //    }
     // zobrazení přehledu plateb
-    debug($uhrady,"úhrady celkem $uhrady_celkem");
-    if ( $uhrady_celkem ) {
+//    debug($uhrady,"úhrady celkem $uhrady_celkem");
+    if ( !$soubeh && ($uhrady_celkem || $uhradit_celkem) ) {
+      $st= "style='border-top:1px solid black'";
       $html.= "<hr style='clear:both;'><h3 style='margin-bottom:3px;'>Přehled plateb za akci</h3><table>";
       foreach ($zpusoby as $i=>$zpusob) {
         foreach ($stavy as $j=>$stav) {
@@ -643,12 +657,24 @@ function akce2_info($id_akce,$text=1,$pobyty=0) { trace();
             $html.= "<tr><td>$zpusob $stav za děti</td><td align='right'>{$uhrady_d[$i][$j]}</td></tr>";
         }
       }
-      $st= "style='border-top:1px solid black'";
-      $av= $aviz ? "<td $st> a $_aviz platby</td>" : '';
-//      $html.= "<tr><td $st>-- CELKEM</td><td align='right' $st><b>$celkem</b></td>$av</tr>";
-      $html.= "<tr><td $st>CELKEM</td><td align='right' $st><b>$uhrady_celkem</b></td>$av</tr>";
-      $html.= "</table>";
+      if ($uhradit_celkem) {
+        $bilance= $uhrady_celkem - $uhradit_celkem;
+        $bilance_slev= $dary_celkem + $dotace_celkem;
+        $sgn= $bilance>0 ? '+' : '';
+        $av= $aviz ? "<td $st> a $_aviz platby</td>" : '<td></td>';
+  //      $html.= "<tr><td $st>-- CELKEM</td><td align='right' $st><b>$celkem</b></td>$av</tr>";
+        $html.= "<tr><td $st>ZAPLACENO</td><td align='right' $st><b>$uhrady_celkem</b></td>$av
+          <td>dary</td><td align='right'>$dary_celkem</td></tr>";
+        $html.= "<tr><td>požadováno</td><td align='right'><b>$uhradit_celkem</b></td><td></td>
+          <td>slevy</td><td align='right'>$dotace_celkem</td></tr>";
+        $html.= "<tr><td>bilance</td><td align='right' $st><b>$sgn$bilance</b></td><td></td>
+          <td></td><td align='right' $st>$bilance_slev</td></tr>";
+      }
+      else {
+        $html.= "<tr><td $st>ZAPLACENO</td><td align='right' $st><b>$uhrady_celkem</b></td>$av</tr>";
+      }
     }
+    $html.= "</table>";
   }
   else {
     $html= "Tato akce ještě nebyla vložena do databáze
@@ -3754,7 +3780,7 @@ function ucast2_flds($fstr) {
 function akce2_uhrada() {  trace();
   query("TRUNCATE TABLE uhrada");
   query("INSERT INTO uhrada (id_pobyt,u_poradi,u_castka,u_datum,u_zpusob,u_stav,u_za) 
-      SELECT id_pobyt,0,platba,datplatby,zpusobplat,IF(potvrzeno=1,3,IF(avizo=1,1,2)),0
+  /*ok*/ SELECT id_pobyt,0,platba,datplatby,zpusobplat,IF(potvrzeno=1,3,IF(avizo=1,1,2)),0
       FROM pobyt WHERE platba!=0");
   query("INSERT INTO uhrada (id_pobyt,u_poradi,u_castka,u_datum,u_zpusob,u_stav,u_za) 
       SELECT id_pobyt,IF(platba=0,0,1),platba_d,datplatby_d,zpusobplat_d,IF(potvrzeno=1,3,2),1
@@ -13155,16 +13181,11 @@ function mail2_mai_doplnit($id_dopis,$id_akce,$doplnit) {  trace();
   // zjistíme počet - POZOR KOPIE KÓDU SQL z mail2_mai_pocet
   $AND= $komu==0 ? " AND p.funkce IN (0,1,2,5)" : (
         $komu==1 ? " AND p.funkce IN (1,2,5)"   : (
-        $komu==2 ?
-           " AND p.funkce IN (0,1,2,5) AND
-             IF(a.ma_cenu AND p.avizo=0,
-               IF(p.platba1+p.platba2+p.platba3+p.platba4>0,
-                 p.platba1+p.platba2+p.platba3+p.platba4,
-                 IF(pouze>0,1,2)*a.cena)>platba,
-               p.platba1+p.platba2+p.platba3+p.platba4+p.poplatek_d>platba+platba_d)" : (
-         $komu==3 ?
+        $komu==2 ? " AND p.funkce IN (0,1,2,5) " : (
+        $komu==3 ?
            " AND IF(IFNULL(role,'a') IN ('a','b'),REPLACE(o.obcanka,' ','') NOT RLIKE '^[0-9]{9}$',0)"
        : " --- chybné komu --- " )));
+  $HAVING= $komu==2 ? "HAVING _uhrada<_poplatek" : "";
   // využívá se toho, že role rodičů 'a','b' jsou před dětskou 'd', takže v seznamech
   // GROUP_CONCAT jsou rodiče, byli-li na akci. Emaily se ale vezmou ode všech, mají-li osobní
   $n_neobeslani= $n_novi= $n_pridano= $n_err= 0; $err= $dele= '';
@@ -13173,24 +13194,27 @@ function mail2_mai_doplnit($id_dopis,$id_akce,$doplnit) {  trace();
   $o_jm= array(); // jména osob
   $x_po= array(); // osoby daného pobytu
   $rr= pdo_qry("
-    SELECT s.id_osoba,p.id_pobyt,
+    SELECT s.id_osoba,id_pobyt,
     --  a.nazev,pouze,
       COUNT(*) AS _na_akci,
     --  avizo,
     --  GROUP_CONCAT(DISTINCT o.id_osoba ORDER BY t.role) AS _id,
       GROUP_CONCAT(DISTINCT CONCAT(prijmeni,' ',jmeno)) AS _jm,
       GROUP_CONCAT(DISTINCT IF(o.kontakt,o.email,'')) AS email,
-      IF(o.kontakt,'-',IFNULL(GROUP_CONCAT(DISTINCT r.emaily),'')) AS emaily
+      IF(o.kontakt,'-',IFNULL(GROUP_CONCAT(DISTINCT r.emaily),'')) AS emaily,
+      SUM(u.u_castka) AS _uhrada,
+      platba,p.platba1+p.platba2+p.platba3+p.platba4-vratka1-vratka2-vratka3-vratka4 AS _poplatek
     FROM dopis AS d
       JOIN akce AS a ON d.id_duakce=a.id_duakce
       JOIN pobyt AS p ON d.id_duakce=p.id_akce
       JOIN spolu AS s USING (id_pobyt)
-      JOIN osoba AS o ON s.id_osoba=o.id_osoba
-      LEFT JOIN mail AS m ON m.id_dopis=d.id_dopis AND m.id_pobyt=p.id_pobyt
-      LEFT JOIN tvori AS t ON t.id_osoba=o.id_osoba
-      LEFT JOIN rodina AS r ON IF(p.i0_rodina,r.id_rodina=p.i0_rodina,r.id_rodina=t.id_rodina)
+      JOIN osoba AS o USING (id_osoba)
+      LEFT JOIN mail AS m USING (id_pobyt,id_dopis)
+      LEFT JOIN rodina AS r ON r.id_rodina=p.i0_rodina
+      LEFT JOIN uhrada AS u USING (id_pobyt)
+      LEFT JOIN tvori AS t USING (id_osoba,id_rodina)
     WHERE d.id_dopis=$id_dopis AND ISNULL(id_mail) $AND
-    GROUP BY s.id_osoba");
+    GROUP BY id_pobyt $HAVING");
   while ( $rr && (list($ido,$idp,$na_akci,$jm,$email,$emaily)= pdo_fetch_array($rr)) ) {
     // osoby pobytu
     if ( !isset($x_po[$idp]) ) $x_po[$idp]= array();
@@ -13419,25 +13443,17 @@ function mail2_mai_pocet($id_dopis,$dopis_var,$cond='',$recall=false) {  trace()
     $AND.= $dopis_var=='U'  ? " AND p.funkce IN (0,1,2,5)" : (
            $dopis_var=='U1' ? " AND p.funkce=0"   : (
            $dopis_var=='U2' ? " AND p.funkce IN (1,2,5)"   : (
-           $dopis_var=='U3' ?
-             " AND p.funkce IN (0,1,2,5) /*AND
-               IF(a.ma_cenu AND p.avizo=0,
-                 IF(p.platba1+p.platba2+p.platba3+p.platba4>0,
-                   p.platba1+p.platba2+p.platba3+p.platba4,
-                   IF(pouze>0,1,2)*a.cena)>platba,
-                 p.platba1+p.platba2+p.platba3+p.platba4+p.poplatek_d>platba+platba_d)*/" : (
+           $dopis_var=='U3' ? " AND p.funkce IN (0,1,2,5) " : (
            $dopis_var=='U4' ?
              " AND IF(IFNULL(role,'a') IN ('a','b'),REPLACE(o.obcanka,' ','') NOT RLIKE '^[0-9]{9}$',0)"
          : " --- chybné komu --- " ))));
-    $HAVING= $dopis_var=='U3' ? "HAVING
-               IF(a.ma_cenu AND p.avizo=0,
-                 IF(_platby>0,_platby,_na_akci*a.cena)>platba,
-                 _platby+p.poplatek_d>platba+platba_d)"
-         : "";
+    $HAVING= $dopis_var=='U3' ? "HAVING _uhrada<_poplatek" : "";
     // využívá se toho, že role rodičů 'a','b' jsou před dětskou 'd', takže v seznamech
     // GROUP_CONCAT jsou rodiče, byli-li na akci. Emaily se ale vezmou ode všech, mají-li osobní
-    $qry= "SELECT a.nazev,a.ma_cenu,id_pobyt,pouze,COUNT(DISTINCT s.id_osoba) AS _na_akci,avizo,
-             p.platba1+p.platba2+p.platba3+p.platba4 AS _platby,platba,a.cena,platba_d,p.poplatek_d,
+    $qry= "SELECT a.nazev,a.ma_cenu,p.id_pobyt,pouze,COUNT(DISTINCT s.id_osoba) AS _na_akci,avizo,
+             p.platba1+p.platba2+p.platba3+p.platba4 -vratka1-vratka2-vratka3-vratka4 AS _poplatek,
+             SUM(u.u_castka) AS _uhrada,a.cena,platba_d,
+             p.poplatek_d,
              GROUP_CONCAT(DISTINCT o.id_osoba ORDER BY t.role) AS _id,
              GROUP_CONCAT(DISTINCT CONCAT(prijmeni,' ',jmeno) ORDER BY t.role) AS _jm,
              GROUP_CONCAT(DISTINCT IF(o.kontakt,TRIM(o.email),'')) AS email,
@@ -13445,10 +13461,11 @@ function mail2_mai_pocet($id_dopis,$dopis_var,$cond='',$recall=false) {  trace()
            FROM dopis AS d
            JOIN akce AS a ON d.id_duakce=a.id_duakce
            JOIN pobyt AS p ON d.id_duakce=p.id_akce
-           JOIN spolu AS s USING(id_pobyt)
+           JOIN spolu AS s USING (id_pobyt)
            JOIN osoba AS o ON s.id_osoba=o.id_osoba
            LEFT JOIN tvori AS t ON t.id_osoba=o.id_osoba AND id_rodina=i0_rodina
            LEFT JOIN rodina AS r USING (id_rodina)
+           LEFT JOIN uhrada AS u USING (id_pobyt)
            WHERE id_dopis=$id_dopis $AND 
              AND IF(i0_rodina,IF(ISNULL(t.role),0,t.role IN ('a','b')),1)
              GROUP BY id_pobyt $HAVING";
