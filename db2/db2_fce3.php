@@ -3712,7 +3712,7 @@ function ucast2_browse_ask($x,$tisk=false) {
       $test_clmn= substr($x->order,2);
       $test_asc= substr($x->order,0,1)=='a' ? 1 : -1;
       // výběr řazení: numerické | alfanumerické
-      $numeric= in_array($test_clmn,array('skupina','x_ms'));
+      $numeric= in_array($test_clmn,array('skupina','x_ms','vratka','c_suma','platba'));
       if ( $numeric ) {
 //                                         display("usort $test_clmn $test_asc/numeric");
         usort($zz,function($a,$b) {
