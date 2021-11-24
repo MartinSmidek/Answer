@@ -557,9 +557,9 @@ function akce2_info($id_akce,$text=1,$pobyty=0) { trace();
       . ( $web_online ? "<hr>přihlášky z webu: $_web_onln".($web_novi ? ", z toho $_web_novi" : '') : '')
        : "Akce byla vložena do databáze ale nemá zatím žádné účastníky";
       if ( $_hnizda && $akce_ms) {
-        $html.= ", takto rozřazených do hnízd - viz též
+        $html.= ", takto rozřazených do hnízd - stiskem zobraz
           <button onclick=\"Ezer.fce.href('akce2.lst.ukaz_hnizda/$id_akce')\">
-          jmenovitý seznam</button><ul>";
+          jmenný seznam</button><ul>";
 //                                                                debug($hnizda); 
 //                                                                debug($hnizdo); 
         for ($h= 0; $h<count($hnizda); $h++) {
@@ -649,38 +649,45 @@ function akce2_info($id_akce,$text=1,$pobyty=0) { trace();
 //    }
     // zobrazení přehledu plateb
 //    debug($uhrady,"úhrady celkem $uhrady_celkem");
-    if ( !$soubeh && ($uhrady_celkem || $uhradit_celkem) ) {
+    $help= '';
+    if ( /*!$soubeh &&*/ ($uhrady_celkem || $uhradit_celkem) ) {
       $st= "style='border-top:1px solid black'";
-      $html.= "<hr style='clear:both;'><h3 style='margin-bottom:3px;'>Přehled plateb za akci</h3><table>";
+      if ($dary_celkem)
+        $help.= "Hodnota darů bude správně až budou vráceny storna a přeplatky.<br>";
+      $tab= '';
       foreach ($stavy as $j=>$stav) {
         foreach ($zpusoby as $i=>$zpusob) {
-  //        if ( $platby[$i] )
-  //          $html.= "<tr><td>-- $zpusob</td><td align='right'>{$platby[$i]}</td></tr>";
           if ( $uhrady[$i][$j] )
-            $html.= "<tr><td>$stav $zpusob</td><td align='right'>{$uhrady[$i][$j]}</td></tr>";
+            $tab.= "<tr><td>$stav $zpusob</td><td align='right'>{$uhrady[$i][$j]}</td></tr>";
           if ( $uhrady_d[$i][$j] )
-            $html.= "<tr><td>$stav za děti $zpusob</td><td align='right'>{$uhrady_d[$i][$j]}</td></tr>";
+            $tab.= "<tr><td>$stav za děti $zpusob</td><td align='right'>{$uhrady_d[$i][$j]}</td></tr>";
         }
       }
       display("vrátit=$vratit_celkem, vráceno=$vraceno");
+      if ($vratit_celkem || $vraceno)
+        $help.= "<br>Správnost vratek za storna je třeba kontrolovat v <b>Platba za akci</b>";
       if ($uhradit_celkem) {
         $bilance= $uhrady_celkem - $uhradit_celkem;
         $bilance_slev= $dary_celkem + $dotace_celkem;
         $sgn= $bilance>0 ? '+' : '';
         $av= $aviz ? "<td $st> a $_aviz platby</td>" : '<td></td>';
-  //      $html.= "<tr><td $st>-- CELKEM</td><td align='right' $st><b>$celkem</b></td>$av</tr>";
-        $html.= "<tr><td $st>ZAPLACENO</td><td align='right' $st><b>$uhrady_celkem</b></td>$av
+        $tab.= "<tr><td $st>ZAPLACENO</td><td align='right' $st><b>$uhrady_celkem</b></td>$av
           <td>dary</td><td align='right'>$dary_celkem</td></tr>";
-        $html.= "<tr><td>požadováno</td><td align='right'><b>$uhradit_celkem</b></td><td></td>
+        $tab.= "<tr><td>požadováno</td><td align='right'><b>$uhradit_celkem</b></td><td></td>
           <td>slevy</td><td align='right'>$dotace_celkem</td></tr>";
-        $html.= "<tr><td>bilance</td><td align='right' $st><b>$sgn$bilance</b></td><td></td>
+        $tab.= "<tr><td>bilance</td><td align='right' $st><b>$sgn$bilance</b></td><td></td>
           <td></td><td align='right' $st>$bilance_slev</td></tr>";
       }
       else {
-        $html.= "<tr><td $st>ZAPLACENO</td><td align='right' $st><b>$uhrady_celkem</b></td>$av</tr>";
+        $tab.= "<tr><td $st>ZAPLACENO</td><td align='right' $st><b>$uhrady_celkem</b></td>$av</tr>";
       }
+      if ($soubeh)
+        $help.= "<br><br>Pro akce s tzv. souběhem to bude chtít výsledek konzultovat s Carlosem :-)";
+      $html.= "<hr style='clear:both;'>
+        <div style='float:right;width:150px'><i>$help</i></div>
+        <h3 style='margin-bottom:3px;'>Přehled plateb za akci</h3>
+        <table>$tab</table>";
     }
-    $html.= "</table>";
   }
   else {
     $html= "Tato akce ještě nebyla vložena do databáze
