@@ -263,7 +263,7 @@ function akce2_info($id_akce,$text=1,$pobyty=0) { trace();
   $pfunkce= map_cis('ms_akce_pfunkce','zkratka'); // funkce pečovatele na akci
   $bad= "<b style='color:red'>!!!</b>";
   $platby= $uhrady= $uhrady_d= $pfces= $fces= $pob= array();
-  $celkem= $uhrady_celkem= $uhradit_celkem= $dotace_celkem= $dary_celkem= 0;
+  $celkem= $uhrady_celkem= $uhradit_celkem= $vratit_celkem= $vraceno= $dotace_celkem= $dary_celkem= 0;
   $aviz= 0;
   $_hnizda= '';  $hnizda= array(); $hnizdo= array(); 
   $soubeh= 0; // hlavní nebo souběžná akce
@@ -336,7 +336,8 @@ function akce2_info($id_akce,$text=1,$pobyty=0) { trace();
              SUM(IF(o.sex NOT IN (1,2),1,0)) AS _err2,
              GROUP_CONCAT(IF(o.sex NOT IN (1,2),CONCAT(', ',jmeno,' ',prijmeni),'') SEPARATOR '') AS _kdo2,
              -- avizo,platba,datplatby,zpusobplat,
-             platba,p.platba1+p.platba2+p.platba3+p.platba4-vratka1-vratka2-vratka3-vratka4 AS _uhradit,
+             platba,p.platba1+p.platba2+p.platba3+p.platba4 AS _platit,
+             vratka1+vratka2+vratka3+vratka4 AS _vratit,
              p.platba4-vratka4 AS _dotace,
              IFNULL(sa.id_duakce,0) AS _soubezna, a.id_hlavni AS _hlavni,
              a.web_kalendar,a.web_anotace, a.web_url, a.web_obsazeno, $ms_ucasti,
@@ -393,7 +394,9 @@ function akce2_info($id_akce,$text=1,$pobyty=0) { trace();
         if ( $p->web_changes&4 ) $web_novi++;
       }
       // sčítání úhrad 
-      $uhradit_celkem+= $p->_uhradit;
+      $uhradit= $p->_platit - $p->_vratit;
+      $vratit_celkem+= $p->_vratit;
+      $uhradit_celkem+= $uhradit;
       $dotace_celkem+= $p->_dotace;
       $zaplaceno= 0;
       $ru= pdo_qry("SELECT u_castka,u_zpusob,u_stav,u_za FROM uhrada WHERE id_pobyt=$p->id_pobyt");
@@ -404,9 +407,11 @@ function akce2_info($id_akce,$text=1,$pobyty=0) { trace();
         else 
           $uhrady[$u_zpusob][$u_stav]+= $u_castka;
         $uhrady_celkem+= $u_castka;
+        if ($u_stav==4) 
+          $vraceno+= $u_castka;
       }
-      if ($p->_uhradit)
-        $dary_celkem+= $zaplaceno > $p->_uhradit ? $zaplaceno - $p->_uhradit : 0;
+      if ($uhradit)
+        $dary_celkem+= $zaplaceno > $uhradit ? $zaplaceno - $uhradit : 0;
 //      // záznam plateb
 //      if ( $p->platba ) {
 //        $celkem+= $p->platba;
@@ -647,16 +652,17 @@ function akce2_info($id_akce,$text=1,$pobyty=0) { trace();
     if ( !$soubeh && ($uhrady_celkem || $uhradit_celkem) ) {
       $st= "style='border-top:1px solid black'";
       $html.= "<hr style='clear:both;'><h3 style='margin-bottom:3px;'>Přehled plateb za akci</h3><table>";
-      foreach ($zpusoby as $i=>$zpusob) {
-        foreach ($stavy as $j=>$stav) {
+      foreach ($stavy as $j=>$stav) {
+        foreach ($zpusoby as $i=>$zpusob) {
   //        if ( $platby[$i] )
   //          $html.= "<tr><td>-- $zpusob</td><td align='right'>{$platby[$i]}</td></tr>";
           if ( $uhrady[$i][$j] )
-            $html.= "<tr><td>$zpusob $stav</td><td align='right'>{$uhrady[$i][$j]}</td></tr>";
+            $html.= "<tr><td>$stav $zpusob</td><td align='right'>{$uhrady[$i][$j]}</td></tr>";
           if ( $uhrady_d[$i][$j] )
-            $html.= "<tr><td>$zpusob $stav za děti</td><td align='right'>{$uhrady_d[$i][$j]}</td></tr>";
+            $html.= "<tr><td>$stav za děti $zpusob</td><td align='right'>{$uhrady_d[$i][$j]}</td></tr>";
         }
       }
+      display("vrátit=$vratit_celkem, vráceno=$vraceno");
       if ($uhradit_celkem) {
         $bilance= $uhrady_celkem - $uhradit_celkem;
         $bilance_slev= $dary_celkem + $dotace_celkem;
@@ -3260,7 +3266,7 @@ function ucast2_browse_ask($x,$tisk=false) {
       ) AS _ucasti ON _ucasti.i0_rodina=p.i0_rodina AND p.i0_rodina
     " : '';
     $qp= pdo_qry("
-      SELECT p.*,SUM(u_castka) AS uhrada $ms1
+      SELECT p.*,IFNULL(SUM(u_castka),0) AS uhrada $ms1
       FROM pobyt AS p
       LEFT JOIN uhrada AS u USING (id_pobyt)
       LEFT JOIN rodina AS r ON r.id_rodina=p.i0_rodina
@@ -3637,6 +3643,7 @@ function ucast2_browse_ask($x,$tisk=false) {
       $z->r_cleni= $cleni;
       # pobyt II
       foreach($fpob2 as $fz=>$fp) { $z->$fz= $p->$fp; }
+      $z->vratka= $p->vratka1 + $p->vratka2 + $p->vratka3 + $p->vratka4;
       $z->key_spolu= 0;
       $z->ido1= $_ido1 ?: $_ido01;
       $z->ido2= $_ido2; // ?: $_ido02;
