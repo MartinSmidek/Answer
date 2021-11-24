@@ -3802,24 +3802,33 @@ function akce2_platba_prispevek1($id_pobyt) {  trace();
   $rp= pdo_qry($qp);
   if ( $rp && $p= pdo_fetch_object($rp) ) {
     $cleni= $p->_jsou;
-    $ret->platit= 1;
     $ret->msg= $p->_jmena." jsou členy ";
   }
   if ( $cleni ) {
-    $qp= "SELECT COUNT(*) AS _maji, MAX(dat_do) AS _do
+    $qp= "SELECT COUNT(*) AS _maji, MAX(dat_do) AS _do, GROUP_CONCAT(jmeno) AS _jmena
           FROM pobyt AS p
           JOIN spolu AS s USING(id_pobyt)
           JOIN osoba AS o ON o.id_osoba=s.id_osoba
           LEFT JOIN dar AS d ON d.id_osoba=o.id_osoba AND d.deleted=''
-          WHERE id_pobyt=$id_pobyt AND ukon='p' AND YEAR(dat_do)>=YEAR(NOW()) ";
+          WHERE id_pobyt=$id_pobyt AND ukon='p' AND YEAR(dat_do)>=YEAR(NOW()) 
+          GROUP BY id_pobyt";
     $rp= pdo_qry($qp);
     if ( $rp && $p= pdo_fetch_object($rp)) {
-      if ( $p->_maji ) {
+      $jmena= $p->_jmena;
+      if ( $p->_maji && $p->_maji==$cleni ) {
         $ret->platit= 0;
         $ret->msg.= "a mají zaplaceno do ".sql_date1($p->_do);
       }
-      else
-        $ret->msg.= "a nemají letos zaplaceno";
+      elseif ( $p->_maji ) { // < cleni
+        $kolik= 
+        $ret->platit= 1;
+        $ret->msg.= "ale jen $jmena má zaplaceno do ".sql_date1($p->_do)
+            .". Doplatí to nyní na akci do pokladny?";
+      }
+      else {
+        $ret->platit= 1;
+        $ret->msg.= "a nemají letos zaplaceno, zaplatí nyní na akci do pokladny?";
+      }
     }
   }
   return $ret;
@@ -3833,15 +3842,21 @@ function akce2_platba_prispevek2($id_pobyt) {  trace();
   $nazev= $rok= '';
   $values= $del= $jmena= '';
   $celkem= 0;
-  $qp= "SELECT o.id_osoba,a.nazev,datum_do,YEAR(datum_do) AS _rok,jmeno,a.access
-          FROM pobyt AS p
-          JOIN akce AS a ON a.id_duakce=p.id_akce
-          JOIN spolu AS s ON p.id_pobyt=s.id_pobyt
-          JOIN osoba AS o ON s.id_osoba=o.id_osoba
-          LEFT JOIN tvori AS t ON t.id_osoba=o.id_osoba
-          WHERE p.id_pobyt=$id_pobyt AND t.role IN ('a','b') ";
+  $qp= "SELECT IFNULL(dp.castka,0) AS _ma,
+          o.id_osoba,o.jmeno,a.datum_do,a.nazev,YEAR(a.datum_do) AS _rok,a.access
+        FROM pobyt AS p
+        JOIN akce AS a ON a.id_duakce=p.id_akce
+        JOIN spolu AS s USING (id_pobyt)
+        JOIN osoba AS o USING (id_osoba)
+        LEFT JOIN dar AS dc 
+          ON dc.id_osoba=o.id_osoba AND dc.deleted='' AND dc.ukon='c'
+        LEFT JOIN dar AS dp 
+          ON dp.id_osoba=o.id_osoba AND dp.deleted='' AND dp.ukon='p' 
+            AND YEAR(dp.dat_do)>=YEAR(NOW()) 
+        WHERE id_pobyt=$id_pobyt ";
   $rp= pdo_qry($qp);
   while ( $rp && $p= pdo_fetch_object($rp) ) {
+    if ($p->_ma) continue;
     $osoba= $p->id_osoba;
     $rok= $p->_rok;
     $datum= $p->datum_do;
@@ -3854,8 +3869,9 @@ function akce2_platba_prispevek2($id_pobyt) {  trace();
 //                                                         display($values);
   $qi= "INSERT dar (access,id_osoba,ukon,castka,dat_od,dat_do,note) VALUES $values";
   $ri= pdo_qry($qi);
+  display("SQL: $qi");
   // odpověď
-  $ret->msg= "Za členy $jmena je potřeba vložit do pokladny $celkem,- Kč";
+  $ret->msg= "Za člena $jmena vlož do pokladny $celkem,- Kč";
   return $ret;
 }
 # -------------------------------------------------------------------------------- akce2 uhrady_load
@@ -12385,7 +12401,7 @@ function mail2_footer($op,$access,$access_name,$idu,$change='') { trace();
 # pošle mail daného typu účastníkovi pobytu - zatím typ=potvrzeni_platby
 #                                                                         !!! + platba souběžné akce
 function mail2_vzor_pobyt2($id_pobyt,$typ,$u_poradi,$from,$vyrizuje,$poslat=0) {
-  global $ezer_root;
+//  global $ezer_root;
   $ret= (object)array();
 
   // načtení a kontrola pobytu + mail + nazev akce

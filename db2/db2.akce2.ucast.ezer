@@ -1976,16 +1976,17 @@ form _cmd_p [,,623,30] { css:'ae_work'
   }}
   # uhrazení členského příspěvku na akci do pokladny
   label  [349,0,136,30] { css:'ae_parm', skill:'yaa+' }
-  button [356,6,,] {title:'[fa-coffee] členský příspěvek',  help:'pokladna: zaplatit členský příspěvek',
-    skill:'yaa+|yaa+'
-    proc onclick() {
-      var ret: object
-      ret.set(ask('akce2_platba_prispevek1',the_pobyt.get));
-      ret.platit;
-      [ confirm(ret.msg," - zaplatí nyní na akci do pokladny?");
-        ret.set(ask('akce2_platba_prispevek2',the_pobyt.get));
-        warning(ret.msg); ]
-    | alert(ret.msg);
+  button [356,6,,] {title:'[fa-coffee] členský příspěvek',  skill:'yaa+|yaa+'
+      help:'pokladna: zaplatit členský příspěvek',
+    func onclick() { var ret: object
+      ret= php.akce2_platba_prispevek1(the_pobyt);
+      if (ret.platit) {
+        if (confirm(ret.msg)) {
+          ret= php.akce2_platba_prispevek2(the_pobyt);
+          alert(ret.msg); 
+        }
+      }
+      else alert(ret.msg);
     }
   }
 }
