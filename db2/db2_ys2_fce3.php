@@ -3139,7 +3139,7 @@ table.dot .vert p {
 </style>";
   $y->html= $style.$tab;
 end:
-                    debug($y);
+//                    debug($y);
   return $y;
 }
 # --------------------------------------------------------------------------------------- dot nazory

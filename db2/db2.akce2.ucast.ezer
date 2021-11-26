@@ -1647,6 +1647,7 @@ form _platba [,,623,] { key_id:'id_pobyt', style:'height:fit-content', par:°{on
       vratka= v_nocleh + v_strava + v_program + v_sleva;
       naklad= celkem - c_sleva - vratka + v_sleva;
       dar_dluh= platba - (celkem - vratka);
+      dar_dluh_d= platba_d - poplatek_d;
     };
     // obarvení tlačítek [Str.pol]
     if (u.b.cstrava_cel || u.b.cstrava_pol) stravy.set_css('cervena','cerna');
@@ -1811,8 +1812,10 @@ form _platba [,,623,] { key_id:'id_pobyt', style:'height:fit-content', par:°{on
                                    help:'rozpočtovaná částka na účastníka = poplatek+sleva-vratka'}
   field dar_dluh    [350,Td+91,50,] {tag:'b', format:'dr',
                                    help:'rozdíl mezi platbou a požadovanou částkou'}
-  field naklad_d    [523,Td+48,50,] {tag:'b,deti', format:'dr', data:pobyt.naklad_d,
+  field naklad_d    [293,Td+48,50,] {tag:'b,deti', format:'dr', data:pobyt.naklad_d,
                                    help:'rozpočtovaná částka na děti = poplatek+sleva'}
+  field dar_dluh_d  [350,Td+48,50,] {tag:'b', format:'dr',
+                                   help:'rozdíl mezi platbou a požadovanou částkou za děti'}
   field c_nocleh    [10,Td+91,47,] {tag:'b', data:pobyt.platba1, format:'r'}
   field c_strava    [60,Td+91,47,] {tag:'b', data:pobyt.platba2, format:'r'}
   field c_program   [110,Td+91,47,] {tag:'b', data:pobyt.platba3, format:'r'}
@@ -1823,6 +1826,7 @@ form _platba [,,623,] { key_id:'id_pobyt', style:'height:fit-content', par:°{on
   field v_sleva     [160,Td+130,47,] {tag:'b', data:pobyt.vratka4, format:'r'}
   field vratka      [225,Td+130,50,] {tag:'b', format:'dr', help:'částka vrácená účastníkovi'}
   field platba
+  field platba_d
 //  field platba      [283,Td+91,50,] {tag:'b', data:pobyt.platba, format:'r'}
 //  select zpusobplat [339,Td+91,86,] {tag:'b', type:'map', data:pobyt.zpusobplat,
 //                                   options:ms_akce_platba.zkratka, format:'u'}
@@ -1835,19 +1839,23 @@ form _platba [,,623,] { key_id:'id_pobyt', style:'height:fit-content', par:°{on
                       style:"border-top:2px solid grey" }
   label [3,Td+0,100,] {tag:'b', title:'lůž. při. nocí koč.', help:'počet lůžek, přistýlek, nocí a kočárků'}
   label [238,Td+0,27,] {tag:'b', title:'SVP'}
-  label [298,Td+115,52,] {tag:'b', title:'rozpočet'}
+  label [298,Td+75,52,] {tag:'b', title:'rozpočet'}
 //  label [283,Td+76,33,] {tag:'b', title:'zaplaceno'}
   label [180,Td+40,302,21] {tag:'b,deti', css:'karta', style:"z-index:0"}
-  label [190,Td+59,20,] {tag:'b,deti', title:'^Děti', style:"color:white"}
+  label [190,Td+53,20,] {tag:'b,deti', title:'^Děti', style:"color:white"}
 //  label [340,Td+76,71,] {tag:'b', title:'způsob platby'}
 //  label [431,Td+76,51,] {tag:'b', title:'dne'}
+  label [16,Td+75,,] {tag:'b', title:'nocleh'}
+  label [56,Td+75,,] {tag:'b', title:'+ strava'}
+  label [107,Td+75,,] {tag:'b', title:'+ program'}
+  label [163,Td+75,,] {tag:'b', title:'- dotace' help:'celková sleva'}
+  label [221,Td+75,70,] {tag:'b', title:'= k zaplacení'}
   label [16,Td+115,,] {tag:'b', title:'nocleh'}
   label [56,Td+115,,] {tag:'b', title:'+ strava'}
   label [107,Td+115,,] {tag:'b', title:'+ program'}
-  label [163,Td+115,,] {tag:'b', title:'- dotace' help:'celková sleva'}
-  label [221,Td+110,70,] {tag:'b', title:'= k zaplacení'}
-  label [225,Td+119,70,] {tag:'b', title:'= k vrácení'}
-  label [350,Td+115,,] {tag:'b', title:'+dar -dluh'}
+  label [163,Td+115,,] {tag:'b', title:'- dotace' help:'zrušená sleva'}
+  label [225,Td+115,70,] {tag:'b', title:'= k vrácení'}
+  label [350,Td+75,,] {tag:'b', title:'+dar -dluh'}
   label frame [0,16,873,min_h-152] { css:'ae_work'}
   // ----------------==> více plateb
   var uhrady_n=0, 

@@ -98,7 +98,7 @@ function db2_rod_show($nazev,$n) {
     $ret->_docs.= count_chars($_dups,3);
     $ret->keys_rodina= $_keys;
   }
-                                                         debug($ret,'db2_rod_show');
+//                                                         debug($ret,'db2_rod_show');
   return $ret;
 }
 # ------------------------------------------------------------------------------------- db2 oso_show
@@ -336,7 +336,7 @@ function akce2_info($id_akce,$text=1,$pobyty=0) { trace();
              SUM(IF(o.sex NOT IN (1,2),1,0)) AS _err2,
              GROUP_CONCAT(IF(o.sex NOT IN (1,2),CONCAT(', ',jmeno,' ',prijmeni),'') SEPARATOR '') AS _kdo2,
              -- avizo,platba,datplatby,zpusobplat,
-             platba,p.platba1+p.platba2+p.platba3+p.platba4 AS _platit,
+             p.platba1+p.platba2+p.platba3+p.platba4 AS _platit,
              vratka1+vratka2+vratka3+vratka4 AS _vratit,
              p.platba4-vratka4 AS _dotace,
              IFNULL(sa.id_duakce,0) AS _soubezna, a.id_hlavni AS _hlavni,
@@ -3291,7 +3291,7 @@ function ucast2_browse_ask($x,$tisk=false) {
           $rodiny.= ",$i0r";
       }
     }
-                                                         debug($pobyt[59518],"pobyt");
+//                                                         debug($pobyt[59518],"pobyt");
 //                                                         debug($rodina_pobyt[2473],"rodina_pobyt");
     # seznam účastníků akce - podle podmínky
     $qu= pdo_qry("
@@ -3409,7 +3409,7 @@ function ucast2_browse_ask($x,$tisk=false) {
     $fpob2= ucast2_flds("p_poznamka=poznamka,p_pracovni=pracovni,pokoj,budova,prednasi,luzka,pristylky,kocarek,pocetdnu"
           . ",strava_cel,strava_cel_bm,strava_cel_bl,strava_pol,strava_pol_bm,strava_pol_bl,"
           . "c_nocleh=platba1,c_strava=platba2,c_program=platba3,c_sleva=platba4,"
-          . "v_nocleh=vratka1,v_strava=vratka2,v_program=vratka3,v_sleva=vratka4,datplatby,"
+          . "v_nocleh=vratka1,v_strava=vratka2,v_program=vratka3,v_sleva=vratka4," /*datplatby,*/
           . "cstrava_cel,cstrava_cel_bm,cstrava_cel_bl,cstrava_pol,cstrava_pol_bm,cstrava_pol_bl,"
           . "svp,zpusobplat,naklad_d,poplatek_d,platba_d,potvrzeno_d"
           . ",zpusobplat_d,datplatby_d,ubytovani,cd,avizo,sleva,vzorec,duvod_typ,duvod_text,x_umi");
@@ -3654,8 +3654,8 @@ function ucast2_browse_ask($x,$tisk=false) {
       $z->key_spolu= 0;
       $z->ido1= $_ido1 ?: $_ido01;
       $z->ido2= $_ido2; // ?: $_ido02;
-      $z->datplatby= sql_date1($z->datplatby);                   // d.m.r
-      $z->datplatby_d= sql_date1($z->datplatby_d);               // d.m.r
+//      $z->datplatby= sql_date1($z->datplatby);                   // d.m.r
+//      $z->datplatby_d= sql_date1($z->datplatby_d);               // d.m.r
       # ok
       $zz[$idp]= $z;
       continue;
@@ -3797,7 +3797,7 @@ function akce2_uhrada() {  trace();
   /*ok*/ SELECT id_pobyt,0,platba,datplatby,zpusobplat,IF(potvrzeno=1,3,IF(avizo=1,1,2)),0
       FROM pobyt WHERE platba!=0");
   query("INSERT INTO uhrada (id_pobyt,u_poradi,u_castka,u_datum,u_zpusob,u_stav,u_za) 
-      SELECT id_pobyt,IF(platba=0,0,1),platba_d,datplatby_d,zpusobplat_d,IF(potvrzeno=1,3,2),1
+  /*ok*/ SELECT id_pobyt,IF(platba=0,0,1),platba_d,datplatby_d,zpusobplat_d,IF(potvrzeno=1,3,2),1
       FROM pobyt WHERE platba_d!=0");
 }
 # -------------------------------------------------------------------------- akce2 platba_prispevek1
@@ -3900,13 +3900,13 @@ function akce2_uhrady_load($id_pobyt) {
     $p->u_datum= sql_date1($p->u_datum);
     $ret->seznam[]= $p;
   }
-  debug($ret,"akce2_uhrady_load($id_pobyt)");
+//  debug($ret,"akce2_uhrady_load($id_pobyt)");
   return $ret;
 }
 # -------------------------------------------------------------------------------- akce2 uhrady_save
 # uložení změn úhrad za pobyt
 function akce2_uhrady_save($id_pobyt,$uhrady) { 
-  debug($uhrady,"akce2_uhrady_save($id_pobyt)");
+//  debug($uhrady,"akce2_uhrady_save($id_pobyt)");
   foreach ($uhrady as $new) {
     $new->u_datum= sql_date1($new->u_datum,1);
     $old= select_object('u_poradi,u_castka,u_datum,u_zpusob,u_stav,u_za','uhrada',
@@ -4730,7 +4730,7 @@ function akce2_hnizda($akce,$par=null,$title='',$vypis='',$export=false) { trace
   $map_fce= map_cis('ms_akce_funkce','zkratka');
   $res= (object)array('html'=>'...');
   $info= akce2_info($akce,0,1);
-                                           debug($info,"info o akci");
+//                                           debug($info,"info o akci");
   $clmn= $info->pobyty;
   // seřazení podle příjmení
   usort($clmn,function($a,$b) { return mb_strcasecmp($a->prijmeni,$b->prijmeni); });
@@ -5095,7 +5095,7 @@ function tisk2_sestava_pary($akce,$par,$title,$vypis,$export=false,$internal=fal
   $fld= $par->fld;
   $cnd= $par->cnd ? $par->cnd : 1;
   if ( $tisk_hnizdo ) $cnd.= " AND hnizdo=$tisk_hnizdo ";
-//  $cnd= "id_pobyt=54261"; // ************************************************** Šmídkovi
+//  $cnd= "id_pobyt=54261"; // 
   $hav= isset($par->hav) ? "HAVING {$par->hav}" : '';
   $ord= isset($par->ord) ? $par->ord : "a _nazev";
   $fil= isset($par->filtr) ? $par->filtr : null;
@@ -5324,7 +5324,7 @@ function tisk2_sestava_lidi($akce,$par,$title,$vypis,$export=false) { trace();
   // načtení ceníku pro dite_kat, pokud se chce _poplatek
   if ( strpos($fld,"_poplatek") ) {
     $soubezna= select("id_duakce","akce","id_hlavni=$akce");
-    akce2_nacti_cenik($soubezna,$tisk_hnizdo,$cenik,$html);
+    if ($soubezna) akce2_nacti_cenik($soubezna,$tisk_hnizdo,$cenik,$html);
   }
   // získání dat - podle $kdo
   $clmn= array();
@@ -5529,7 +5529,7 @@ function akce2_sestava_pobyt($akce,$par,$title,$vypis,$export=false) { debug($pa
   // data akce
   $qry=  "SELECT
             r.nazev as nazev,p.pouze as pouze,p.poznamka,
-            p.datplatby,p.zpusobplat,
+            -- p.datplatby,p.zpusobplat,
             COUNT(o.id_osoba) AS _pocet,
             SUM(IF(t.role IN ('a','b'),1,0)) AS _pocetA,
             GROUP_CONCAT(o.prijmeni ORDER BY t.role DESC) as _prijmeni,
@@ -7044,7 +7044,7 @@ function akce2_skup_tisk($akce,$par,$title,$vypis,$export) {  trace();
   $html= "<table>";
   $ret= akce2_skup_get($akce,0,$err,$par);
   $hnizda= select('hnizda','akce',"id_duakce=$akce");
-                                                       debug($ret);
+//                                                       debug($ret);
   $skupiny= $ret->skupiny;
   // pro par.mark=LK zjistíme účasti rodin na obnově
   $lk= 0;
@@ -7898,7 +7898,7 @@ function akce2_plachta($akce,$par,$title,$vypis,$export=0,$hnizdo=0) { trace();
 //  $qry.= " LIMIT 1";
   $res= pdo_qry($qry);
   while ( $res && ($u= pdo_fetch_object($res)) ) {
-    debug($u);
+//    debug($u);
     $idp= $u->id_pobyt;
 
     
@@ -8325,7 +8325,7 @@ function akce2_vyuctov_pary($akce,$par,$title,$vypis,$export=false) { trace();
             LEFT JOIN dar AS dc ON dc.id_osoba=s.id_osoba AND dc.ukon='c' AND dc.deleted=''
               AND YEAR(a.datum_do)>=YEAR(dc.dat_od)
               AND (YEAR(a.datum_do) <= YEAR(dc.dat_do) OR !YEAR(dc.dat_do))
-            JOIN _cis AS c ON c.druh='ms_akce_platba' AND c.data=zpusobplat
+            -- JOIN _cis AS c ON c.druh='ms_akce_platba' AND c.data=zpusobplat
           WHERE p.id_akce='$akce' AND p.hnizdo=$tisk_hnizdo AND $cond AND p.funkce!=99
             -- AND p.funkce NOT IN (9,10,13,14,99) 
             -- AND id_pobyt IN (59318,59296,59317)
@@ -8458,7 +8458,7 @@ function akce2_vyuctov_pary($akce,$par,$title,$vypis,$export=false) { trace();
   return $result;
 }
 # ------------------------------------------------------------------------------ akce2 vyuctov_pary2
-# generování sestavy vyúčtování pro účastníky $akce - bez DPH
+# generování sestavy vyúčtování pro účastníky $akce - bez DPH, zato se zvláštími platbami dětí
 #   $fld = seznam položek s prefixem
 #   $cnd = podmínka
 # počítané položky
@@ -8473,8 +8473,8 @@ function akce2_vyuctov_pary2($akce,$par,$title,$vypis,$export=false) { trace();
       . ",pokoj:7,dětí:5:r,lůžka:5:r:s,přis týlky:5:r:s,kočá rek:5:r:s,nocí:5:r:s"
       . ",str. celá:5:r:S,str. pol.:5:r:s"
       . ",poplatek dospělí:8:r:s"
-      . ",na účet:7:r:s,datum platby:10:d"
-      . ",poplatek děti:8:r:s,na účet děti:7:r:s,datum platby děti:10:d"
+      . ",na účet:7:r:s,datum platby:10:r"
+      . ",poplatek děti:8:r:s,na účet děti:7:r:s,datum platby děti:10:r"
       . ",nedo platek:7:r:s,pokladna:6:r:s,přepl.:6:r:s,poznámka:50,SPZ:9"
       . ",rozpočet dospělí:10:r:s,rozpočet děti:10:r:s"
       . "";
@@ -8506,9 +8506,19 @@ function akce2_vyuctov_pary2($akce,$par,$title,$vypis,$export=false) { trace();
     if ( isset($f) ) $fmts[$fld]= $f;
   }
   // data akce
-  $qry=  "SELECT id_pobyt,platba_d,datplatby_d,poplatek_d,naklad_d,
+  $qry=  "SELECT id_pobyt,
+          poplatek_d,naklad_d, -- platba_d,datplatby_d
           p.pouze,pokoj,luzka,pristylky,kocarek,pocetdnu,strava_cel,strava_pol,
-            platba1,platba2,platba3,platba4,platba,datplatby,cd,p.poznamka,
+          platba1,platba2,platba3,platba4,
+            IFNULL((SELECT SUM(u_castka) FROM uhrada AS u 
+              WHERE u.id_pobyt=p.id_pobyt AND u.u_stav IN (1,2,3) AND u.u_zpusob!=3 AND u_za=0),0) AS platba,
+            IFNULL((SELECT SUM(u_castka) FROM uhrada AS u 
+              WHERE u.id_pobyt=p.id_pobyt AND u.u_stav IN (1,2,3) AND u.u_zpusob!=3 AND u_za=1),0) AS platba_d,
+            ( SELECT GROUP_CONCAT(DISTINCT DATE_FORMAT(u_datum,'%e/%c') SEPARATOR ', ') FROM uhrada AS u 
+              WHERE u.id_pobyt=p.id_pobyt AND u_datum!='0000-00-00' AND u_zpusob!=3 AND u_stav!=4 AND u_za=0) AS datplatby,
+            ( SELECT GROUP_CONCAT(DISTINCT DATE_FORMAT(u_datum,'%e/%c') SEPARATOR ', ') FROM uhrada AS u 
+              WHERE u.id_pobyt=p.id_pobyt AND u_datum!='0000-00-00' AND u_zpusob!=3 AND u_stav!=4 AND u_za=1) AS datplatby_d,
+          cd,p.poznamka, -- platba,datplatby,
           r.nazev as nazev,r.ulice,r.psc,r.obec,r.telefony,r.emaily,r.spz,
           SUM(IF(t.role='d',1,0)) as _deti,
           GROUP_CONCAT(DISTINCT IF(t.role='a',o.prijmeni,'') SEPARATOR '') as prijmeni_m,
@@ -8526,7 +8536,9 @@ function akce2_vyuctov_pary2($akce,$par,$title,$vypis,$export=false) { trace();
           LEFT JOIN rodina AS r ON r.id_rodina=IF(i0_rodina,i0_rodina,t.id_rodina)
           WHERE p.id_akce='$akce' AND p.hnizdo=$tisk_hnizdo AND p.funkce NOT IN (9,10,13,14) AND $cond
           GROUP BY id_pobyt
-          ORDER BY $ord";
+          ORDER BY $ord
+          -- LIMIT 3
+      ";
 //   $qry.=  " LIMIT 10";
   $res= pdo_qry($qry);
   while ( $res && ($x= pdo_fetch_object($res)) ) {
@@ -9183,7 +9195,7 @@ function tisk2_pdf_plachta($akce,$report_json=0,$hnizdo=0,$_mezery='') {  trace(
       $mezery[$i]= $x;
     }
   }
-                                          debug($mezery,'mezery');
+//                                          debug($mezery,'mezery');
   $html= '';
   $A= 'A';
   $n= 1;
@@ -9193,7 +9205,7 @@ function tisk2_pdf_plachta($akce,$report_json=0,$hnizdo=0,$_mezery='') {  trace(
   unset($tab->xhref);
   unset($tab->html);
 //  ksort($tab->pdf,SORT_LOCALE_STRING);
-                                               debug($tab->pdf);
+//                                               debug($tab->pdf);
   // projdi vygenerované záznamy
   $n= 0;
   if ( $report_json) {
@@ -9894,7 +9906,7 @@ function evid2_ymca_sprava($org,$par,$title,$export=false) {
   case 'letos':
   case 'loni':
     $ret= evid2_ymca_sestava($org,$par,$title,$export);
-                                                         debug($ret,"evid2_ymca_sestava");
+//                                                         debug($ret,"evid2_ymca_sestava");
     break;
   case 'zmeny':
     $ret= evid2_recyklace_pecounu($org,$par,$title,0);
@@ -13465,9 +13477,10 @@ function mail2_mai_pocet($id_dopis,$dopis_var,$cond='',$recall=false) {  trace()
     $HAVING= $dopis_var=='U3' ? "HAVING _uhrada<_poplatek" : "";
     // využívá se toho, že role rodičů 'a','b' jsou před dětskou 'd', takže v seznamech
     // GROUP_CONCAT jsou rodiče, byli-li na akci. Emaily se ale vezmou ode všech, mají-li osobní
-    $qry= "SELECT a.nazev,a.ma_cenu,p.id_pobyt,pouze,COUNT(DISTINCT s.id_osoba) AS _na_akci,avizo,
+    $qry= "SELECT a.nazev,a.ma_cenu,p.id_pobyt,pouze,COUNT(DISTINCT s.id_osoba) AS _na_akci, 
              p.platba1+p.platba2+p.platba3+p.platba4 -vratka1-vratka2-vratka3-vratka4 AS _poplatek,
-             SUM(u.u_castka) AS _uhrada,a.cena,platba_d,
+             SUM(u.u_castka) AS _uhrada,a.cena,
+             -- avizo, platba_d,
              p.poplatek_d,
              GROUP_CONCAT(DISTINCT o.id_osoba ORDER BY t.role) AS _id,
              GROUP_CONCAT(DISTINCT CONCAT(prijmeni,' ',jmeno) ORDER BY t.role) AS _jm,
@@ -13565,7 +13578,7 @@ function mail2_mai_pocet($id_dopis,$dopis_var,$cond='',$recall=false) {  trace()
 function mail2_mai_posli($id_dopis,$info) {  trace();
   $num= 0;
   $err= '';
-                                                         debug($info);
+//                                                         debug($info);
   // smaž starý seznam
   $qry= "DELETE FROM mail WHERE id_dopis=$id_dopis ";
 //                                                         fce_log("mail2_mai_posli: $qry");
@@ -14581,7 +14594,8 @@ function ucet_potv($par,$access) { trace();
     }
     $clmn[]= $row;
   }
-                                        ksort($jmeno_id); debug($jmeno_id,'jmeno_id');
+                                        ksort($jmeno_id); 
+//                                        debug($jmeno_id,'jmeno_id');
 //                                        debug($darce,'dárce');
 //                                         debug($clmn,'clmn');
   // -------------------- vytvoření tabulky pro zobrazení a tisk
@@ -14715,7 +14729,7 @@ function foto2_get($table,$id,$n,$w,$h) {  trace();
     goto end;
   }
   $nazvy= explode(',',$fotky);
-            debug($nazvy,"rodina $rodinna");
+//            debug($nazvy,"rodina $rodinna");
   // název n-té fotky
   $n= $n==-1 ? count($nazvy) : $n;
 //                                         display("fotky='$fotky', n=$n");
@@ -15019,8 +15033,8 @@ function db2_info($par) {
         else 
           $val['dupl']+= $n;
       }
-      debug($itits);
-      debug($val);
+//      debug($itits);
+//      debug($val);
       $ths= $tds= '';
       foreach ($tit as $itit=>$t) {
         $n= $val[$itit]?:0;

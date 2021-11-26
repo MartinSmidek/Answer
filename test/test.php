@@ -61,10 +61,12 @@
   // vynucení přihlášení
   if ( $login ) {
     $add_pars= array_merge($add_pars,array(
-//      'no_local'  => 1,   // true = testy přihlašování
+      'no_local'  => 1,   // true = testy přihlašování
 //      'watch_pin' => 1,   // true = povolit mobilní přístup jen po vložení PINu odeslaného mailem
       'watch_key' => $ezer_server<=1 ? 0 : 1,   // true = povolit přístup jen po vložení klíče
       'watch_ip'  => $ezer_server<=1 ? 0 : 1    // true = povolit přístup jen ze známých IP adres
+//      'watch_key' => 1,                         // true = povolit přístup jen po vložení klíče i lokálně
+//      'watch_ip'  => 1                          // true = povolit přístup jen ze známých IP adres
     ));
   }
   else {
