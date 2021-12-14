@@ -25,6 +25,11 @@
       ),
       'activity'=>(object)array());
 
+  // informace pro debugger o poloze ezer modulů
+  $dbg_info= (object)array(
+    'src_path'  => array('cr2','db2','ezer3.1') // poloha a preference zdrojových modulů
+  );
+
   // databáze
   $deep_root= "../files/answer";
   require_once("$deep_root/cr2.dbs.php");

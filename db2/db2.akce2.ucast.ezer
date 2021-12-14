@@ -1814,7 +1814,7 @@ form _platba [,,623,] { key_id:'id_pobyt', style:'height:fit-content', par:°{on
                                    help:'rozdíl mezi platbou a požadovanou částkou'}
   field naklad_d    [293,Td+48,50,] {tag:'b,deti', format:'dr', data:pobyt.naklad_d,
                                    help:'rozpočtovaná částka na děti = poplatek+sleva'}
-  field dar_dluh_d  [350,Td+48,50,] {tag:'b', format:'dr',
+  field dar_dluh_d  [350,Td+48,50,] {tag:'b,deti', format:'dr',
                                    help:'rozdíl mezi platbou a požadovanou částkou za děti'}
   field c_nocleh    [10,Td+91,47,] {tag:'b', data:pobyt.platba1, format:'r'}
   field c_strava    [60,Td+91,47,] {tag:'b', data:pobyt.platba2, format:'r'}

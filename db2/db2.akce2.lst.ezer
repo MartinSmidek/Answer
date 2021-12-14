@@ -880,7 +880,11 @@ form _page [,,275,360] {
   label frame [2,16,443,385] { title:'', css:'ae_work page' }
   menu detail { type:'context' join:frame
     item { title:'ukázat změny', func onclick () {
-      if (key_akce) track.back_show('akce',key_akce) } }
+      if (key_akce) track.back_show('akce',key_akce) 
+    } }
+    func test_onclick () {
+      if (key_akce) track.back_show('akce',key_akce) 
+    }
   }
 }
 # ==> VÝBĚR AKCE

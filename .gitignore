@@ -29,4 +29,6 @@ ezernote.*
 /ms2/code
 *.bak
 /ms2/doc
-/test/code
+/test/*
+/dbt/dbt.r.ezer
+/test/$.ezer
