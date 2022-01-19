@@ -1,32 +1,21 @@
 # ------------------------------------------------------------------------------------------------ #
-# Modul pro nalezní chyb v jádru Ezer                                                              #
+# ==> Modul pro nalezení chyb v jádru Ezer                                                         #
 #                                                                                                  #
 # Pro práci je třeba mít uživatele Guest s prázdným heslem                                         #                                                        #
 #                                                                                                  #
 # Ezer                                                   (c) 2021 Martin Šmídek <martin@smidek.eu> #
 # ------------------------------------------------------------------------------------------------ #
 menu test { title:'test', type:'main'
-  tabs t  {title:"[fa-graduation-cap] Test"
-    panel p { type:'plain', title:'browse+select'
-      func onfirstfocus() { f.b.browse_load() }
-      use f: form {
-        view t: table _jmena
-        select s [100,10,50,] { type:'map', options:m.zkratka }
-        browse b [10,10,,] { rows:5, qry_rows:2
-          show bs [,,50,] { title:'s' format:'q#' data:t.sex map_pipe:m.zkratka }
-        }
-      }
+  tabs w {title:"[fa-graduation-cap] PPP" 
+    # ==> panel P
+    panel p { type:'plain', title:'P' 
+      func call_pp() { php.ff() }
     }
   }
-  map m:   table _cis   {where:"druh='ms_akce_sex'", order:'ikona', key_id:'data'}
-}
-table _cis { key_id:'id_cis'
-  number id_cis text druh, text data, text zkratka, number poradi,
-  text hodnota, text popis, text barva, text ikona
-}
-table _jmena { key_id:'id_jmena'
-  number id_jmena
-  text   jmeno
-  number cetnost
-  number sex
+  tabs t {title:"[fa-graduation-cap] QQQ", include:'online' }
+  tabs r {title:"[fa-graduation-cap] RRR", include:'online,dbt.r' }
+  tabs syst {title:"[fa-cog] Systém", _sys:'sys',  include:'onload,ezer2.syst', active:*
+    proc reaccess() {}
+    panel oso {type:'right', title:'Osobní nastavení', _sys:'*', include:'onclick,ezer2.pers' }
+  }
 }

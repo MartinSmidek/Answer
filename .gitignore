@@ -32,3 +32,5 @@ ezernote.*
 /test/*
 /dbt/dbt.r.ezer
 /test/$.ezer
+/test/$.ezer
+/test/test.inc.php
