@@ -4096,9 +4096,12 @@ function ds_ceny_group() { //debug($par);
   $letos= date('Y');
   for ($i= 0; $i<7; $i++) {
     $rok= $letos-$i;
-    $itms[]= (object)array('type'=>'item','options'=>(object)array(
-        'title'=>$rok,
-        'par'=>(object)array('rok'=>$rok)
+    $itms["rok_$rok"]= (object)array(
+        'type'=>'item',
+//        'id'=>"rok_$rok",
+        'options'=>(object)array(
+          'title'=>$rok,
+          'par'=>(object)array('rok'=>$rok)
       ));
   }
   return (object)array('type'=>'menu.group','options'=>(object)array(),'part'=>$itms);

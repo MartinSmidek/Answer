@@ -17,8 +17,11 @@ panel kl {type:'right', title:"Hosté", _sys:'kli', include:'onload' }
 # ============================================================================================> CENY
 var rok: number
 panel cen {type:'right', title:'Ceny'
-  func onfirstfocus() {
-    m.roky.attach_code(php.ds_ceny_group()); // 
+  func onfirstfocus() { var letos:ezer
+    // vytvoř itemy pro 7 posledních let a klikni na letošní
+    m.roky.attach_code(php.ds_ceny_group()); 
+    letos= m.roky.part[`part.rok_${fdate('Y')}`];
+    letos.click();
   }
   menu m {type:'left', active:*
     menu roky {title:'Ceny posledních 7 let ',type:'group'
@@ -28,7 +31,8 @@ panel cen {type:'right', title:'Ceny'
         rok= i.par.rok;
         info.header(i);
         if (!info.ceny.browse_load(`rok=${rok}`))
-          info.fill('',`ceník pro rok ${rok} není definován, ve fakturách použijeme ten nejstarší`);
+          info.fill('',`Ceník pro rok ${rok} není definován, ve fakturách použijeme ten nejstarší.<br>`);
+        info.fill('',`Úpravy lze provádět po dvojkliku na měněný řádek ceníku.`);
       }
     }
     menu {title:'Ceník dalšího roku ',type:'group', active:no
