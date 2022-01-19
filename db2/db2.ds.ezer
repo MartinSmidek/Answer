@@ -16,32 +16,25 @@ panel dum2 {type:'right', title:"Objednávky2", _sys:'dum2',include:'onload' ski
 panel kl {type:'right', title:"Hosté", _sys:'kli', include:'onload' }
 # ============================================================================================> CENY
 var rok: number
-panel cen [,,,543] {type:'right', title:'Ceny'
-  menu {type:'left', active:*
-    menu m {title:'Ceny roku ',type:'group'
-      item {title:'2020',par:°{rok:'2020'} }
-      item {title:'2019',par:°{rok:'2019'} }
-      item {title:'2018',par:°{rok:'2018'} }
-      item {title:'2017',par:°{rok:'2017'} }
-      item {title:'2016',par:°{rok:'2016'} }
-      item {title:'2015',par:°{rok:'2015'} }
-      item {title:'2014',par:°{rok:'2014'} }
-      item {title:'2013',par:°{rok:'2013'} }
-      item {title:'2012',par:°{rok:'2012'} }
-      item {title:'2011',par:°{rok:'2011'} }
-      item {title:'2010',par:°{rok:'2010'} }
-      item {title:'2009',par:°{rok:'2009'} }
-      item {title:'2008',par:°{rok:'2008'} }
-      item {title:'2007',par:°{rok:'2007'} }
-      proc onclick (i) {
-        rok.set(i.par.rok);
-        info.fill(conc(i.owner.title,i.title),'');
-        info.ceny.browse_load(conc("rok=",rok.get));
+panel cen {type:'right', title:'Ceny'
+  func onfirstfocus() {
+    m.roky.attach_code(php.ds_ceny_group()); // 
+  }
+  menu m {type:'left', active:*
+    menu roky {title:'Ceny posledních 7 let ',type:'group'
+      // itemy budou doplněny metodou attach_code jako
+      //   item {title:'2020',par:{rok:'2020'} }
+      func onclick (i:ezer) {
+        rok= i.par.rok;
+        info.header(i);
+        if (!info.ceny.browse_load(`rok=${rok}`))
+          info.fill('',`ceník pro rok ${rok} není definován, ve fakturách použijeme ten nejstarší`);
       }
     }
-    menu {title:'Ceník dalšího roku ',type:'group'
-      item {title:'kopie letos => příští rok',  par:°{op:'kopie',z:'0',na:'1'} }
-      item {title:'kopie loni => letos',        par:°{op:'kopie',z:'-1',na:'0'} }
+    menu {title:'Ceník dalšího roku ',type:'group', active:no
+      item {title:'kopie letos => příští rok',  par:{op:'kopie',z:'0',na:'1'} }
+      item {title:'kopie loni => letos',        par:{op:'kopie',z:'-1',na:'0'} }
+      item {title:'kopie předloni => letos',    par:{op:'kopie',z:'-2',na:'0'} }
       proc onclick (i) { var na:text var z:text
         na.set(sum(fdate('Y'),i.par.na));
         z.set(sum(fdate('Y'),i.par.z));
@@ -60,12 +53,20 @@ panel cen [,,,543] {type:'right', title:'Ceny'
   #       note.set(ask('lide_cleni_kurs',rok.get,1));
   #     }
   #   }
-    label info [0,0,680,600] { title:'' }
+    label info [0,0,680,*] { title:'' }
     label head [0,0,680,50]  { title:'' }
-    label note [0,50,680,550] { title:'' }
-    proc fill(x,y) {
-      [ x; head.set(conc("<div class='karta'>",x,"</div>")) ];
-      [ y; note.set(y) ]
+    label note [0,50,680,*] { title:'' }
+    func header(i:ezer) { var i_owner:ezer
+      clear(); i_owner= i.owner();
+      head= replace_fa(`<div class='karta'>${i_owner.title} - ${i.title}</div>`);
+      note= '';
+    }
+    func fill(x,y) {
+      if (x) head= `<div class='karta'>${replace_fa(x)}</div>`;
+      if (y) note= y
+    }
+    func append(y) {
+      if (y) note= conc(note,y)
     }
     browse ceny [10,76,,] { rows:30
       show id [,,0,] { data:ds_cena.id_cena }

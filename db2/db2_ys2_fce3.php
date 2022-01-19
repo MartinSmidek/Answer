@@ -4088,6 +4088,21 @@ function ds_compare($order) {  #trace('','win1250');
   return $result;
 }
 # ===========================================================================================> hosté
+# -------------------------------------------------------------------------------------- sys db_info
+# vygeneruje menu.group pro 7 let 
+function ds_ceny_group() { //debug($par);
+  // doplnění leftmenu.group: "item {title:yyyy, par:{rok:yyyy}}" pro yyyy= letos,loni,...
+  $itms= array();
+  $letos= date('Y');
+  for ($i= 0; $i<7; $i++) {
+    $rok= $letos-$i;
+    $itms[]= (object)array('type'=>'item','options'=>(object)array(
+        'title'=>$rok,
+        'par'=>(object)array('rok'=>$rok)
+      ));
+  }
+  return (object)array('type'=>'menu.group','options'=>(object)array(),'part'=>$itms);
+}
 # -------------------------------------------------------------------------------------- ds kli_menu
 # vygeneruje menu pro loňský, letošní a příští rok ve tvaru objektu pro ezer2 pro zobrazení klientů
 # určující je datum zahájení pobytu v objednávce
