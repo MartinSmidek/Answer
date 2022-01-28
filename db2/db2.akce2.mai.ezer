@@ -1154,7 +1154,8 @@ form _etext  {
       # rozesílání podle mail-listu
       { blokovano.set(ask('select','blokovano','mailist',conc("id_mailist=",vy.komu_G.key)));
         blokovano.get; alert("použití tohoto mail-listu je zablokováno - asi probíhá úprava dotazu");
-      | [ re_make.set(ask('select','aktualizovat','mailist',conc("id_mailist=",vy.komu_G.key)));
+      | [ re_make.set(ask('select','aktualizovat','mailist',
+              conc("id_mailist=",vy.komu_G.key," AND specialni=0")));
           re_make.get; alert("tento mail-list bude kvůli programovým změnám automaticky obnoven ...");
           gq.m_reload; gq.make_sql(0); gq.save_sql(1)
         ];
