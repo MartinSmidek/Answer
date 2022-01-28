@@ -10,6 +10,8 @@
     $ezer_root; 
   global // export
     $EZER, $ezer_server;
+  global // klíče
+    $api_gmail_user, $api_gmail_pass;
   
   // vyzvednutí ostatních hodnot ze SESSION
   $ezer_server=  $_SESSION[$ezer_root]['ezer_server'];
@@ -28,7 +30,15 @@
           'phone' => "603&nbsp;150&nbsp;565",
           'author' => "Martin"
       ),
-      'activity'=>(object)array());
+      'activity'=>(object)array(),
+      'CMS'=>(object)array(
+        'GMAIL'=>(object)array(
+//          'TEST'=>1,
+          'mail'=>$api_gmail_user, // adresa odesílatele mailů
+          'name'=>'YMCA Setkání', 
+          'pswd'=>$api_gmail_pass
+      ))
+    );
 
   // databáze
   $deep_root= "../files/answer";
