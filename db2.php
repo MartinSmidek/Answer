@@ -23,8 +23,6 @@
                 $ezer_server==0 ? "style='color:#ef7f13'" : '');
   $title_flag=  $ezer_server==2 ? '' : 'lokální ';
   $CKEditor= isset($_GET['editor']) ? $_GET['editor'] : '4.6';
-  // pro ezer2.2 nutno upravit ezer_main, ezer_ajax, ae_slib
-  $kernel=   "ezer".(isset($_GET['ezer'])?$_GET['ezer']:'3.1'); 
   
   // nastav jako default PDO=2
   if ( !isset($_GET['pdo']))
@@ -84,12 +82,11 @@
   $access_app= array(1=>"Setkání","Familia","(společný)");
   $access_app= $access_app[$cookie];
   $choice_js= "personify('menu_on'); return false;";
-  $v= $kernel=='ezer3.1' ? "<sub>3.1</sub>" : '';
   $title= "$demo
     <span $title_style>"
     . $title_flag
     ."<span id='access' onclick=\"$choice_js\" oncontextmenu=\"$choice_js\">
-        Answer$v $access_app
+        Answer $access_app
       </span>
       <div id='access_menu'>
         <span onclick='personify(1);'>Ans(w)er Setkání</span>
@@ -110,12 +107,11 @@
     $cookie==1 ? "ck" : (
     $cookie==2 ? "ch" : "db" );
 
-  $k= substr($kernel,4,1)=='3' ? '3' : '';
-  $app_js= array("db2/ds_fce$k.js","db2/db2_fce$k.js");
+  $app_js= array("db2/ds_fce3.js","db2/db2_fce3.js");
 
-  $app_css= [ // $choice_css,
-      $kernel=='ezer3.1' ? "db2/db2.css.php=skin" : "db2/db2.css",
-      "$kernel/client/wiki.css"
+  $app_css= [ 
+      "db2/db2.css.php=skin",
+      "ezer3.1/client/wiki.css"
    ];
   //  require_once("answer.php");
   $add_options= (object) [
@@ -136,9 +132,8 @@
   ];
 
   // (re)definice Ezer.options
-  $kk= $k ?: '2';
   $add_pars= array(
-    'favicon' => array("db{$kk}_local.png","db{$kk}.png","db{$kk}_dsm.png")[$ezer_server],
+    'favicon' => array("db3_local.png","db3.png","db3_dsm.png")[$ezer_server],
 //    'app_root' => "$rel_root",      // startovní soubory app.php a app.inc.php jsou v kořenu
 //    'dbg' => $dbg,      // true = povolit podokno debuggeru v trasování a okno se zdrojovými texty
     'watch_pin' => 1,   // true = povolit dvoufázové přihlašování pomocí _user.usermail a PINu
@@ -165,6 +160,6 @@
   );
 //  echo("db2.php end<br>");
   // je to aplikace se startem v kořenu
-  require_once("$kernel/ezer_main.php");
+  require_once("ezer3.1/ezer_main.php");
 
 ?>

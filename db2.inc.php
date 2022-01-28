@@ -13,7 +13,7 @@
   
   // vyzvednutí ostatních hodnot ze SESSION
   $ezer_server=  $_SESSION[$ezer_root]['ezer_server'];
-  $kernel= "ezer{$_SESSION[$ezer_root]['ezer']}";
+  $kernel= "ezer3.1";
   $abs_root=     $_SESSION[$ezer_root]['abs_root'];
   $rel_root=     $_SESSION[$ezer_root]['rel_root'];
   chdir($abs_root);
@@ -51,11 +51,11 @@
   $ezer_comp_root= "db2/ds_fce3";
 
   // definice modulů specifických pro Answer
-  $k= substr($kernel,4,1)=='3' ? '3' : '';
   $app_php= array(
-    "db2/db2_ys2_fce$k.php",
-    "db2/db2_fce$k.php",
-    "ezer3.1/server/ezer_ruian.php"
+    "db2/db2_ys2_fce3.php",
+    "db2/db2_fce3.php",
+    "ezer3.1/server/ezer_ruian.php",
+    "ezer3.1/server/ezer_cms3.php"
   );
   
   $ezer= array(
