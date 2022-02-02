@@ -333,7 +333,7 @@ function git_make($par) {
     // po fetch ještě nastav shodu s github
     if ( $cmd=='fetch') {
       $msg.= "$state:$exec\n";
-      $cmd= "reset --hard origin/master";
+      $cmd= "reset --hard origin/ezer3.1";
       $exec= "git $cmd>$abs_root/docs/.git.log";
       exec($exec,$lines,$state);
                             display("$state::$exec");

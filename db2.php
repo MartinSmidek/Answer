@@ -137,8 +137,8 @@
 //    'app_root' => "$rel_root",      // startovní soubory app.php a app.inc.php jsou v kořenu
 //    'dbg' => $dbg,      // true = povolit podokno debuggeru v trasování a okno se zdrojovými texty
     'watch_pin' => 1,   // true = povolit dvoufázové přihlašování pomocí _user.usermail a PINu
-    'watch_key' => 1,   // true = povolit přístup jen po vložení klíče
-    'watch_ip' => 1,    // true = povolit přístup jen ze známých IP adres
+    'watch_key' => 1,   // true = nebo povolit přístup jen po vložení klíče
+    'watch_ip' => 1,    // true = jinak povolit přístup jen ze známých IP adres
     'title_right' => $title,
 //    'contact' => $kontakt,
     'CKEditor' => "{

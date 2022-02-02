@@ -20,8 +20,12 @@
   $rel_root=     $_SESSION[$ezer_root]['rel_root'];
   chdir($abs_root);
 
-//  echo("db2.inc.php start, server=$ezer_server");
-
+  // databáze
+  $deep_root= "../files/answer";
+  require_once("$deep_root/db2.dbs.php");
+  
+  $path_backup= "$deep_root/sql";
+  
   // inicializace objektu Ezer
   $EZER= (object)array(
       'version'=>"ezer{$_SESSION[$ezer_root]['ezer']}",
@@ -40,12 +44,6 @@
       ))
     );
 
-  // databáze
-  $deep_root= "../files/answer";
-  require_once("$deep_root/db2.dbs.php");
-  
-  $path_backup= "$deep_root/sql";
-  
   // cesta k utilitám MySQL/MariaDB
   $ezer_mysql_path= array(
       "C:/Apache/bin/mysql/mysql5.7.21/bin",  // *.bean
