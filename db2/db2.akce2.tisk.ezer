@@ -285,8 +285,8 @@ menu m {type:'left', //active:*
                                         ,fld:'_jmenoY,_adresaY,_narozeniY'}}
     item {title:'Účastníci, skupinka, poznámka'                                               skill:'y;f'
                                         ,par:°{typ:'p',exp:'Excel2',cnd:"p.funkce!=99"
-                                        ,tit:'příjmení:15,jména:12,skupinka:10,poznámka k akci:50,trvalá poznámka:50,^'
-                                        ,fld:'prijmeni,jmena,skupina,poznamka,note,^id_pobyt'}}
+                                        ,tit:'příjmení:15,jména:12,skupinka:10,pokoj:10,obec:15,telefon:15,poznámka k akci:50,^'
+                                        ,fld:'prijmeni,jmena,skupina,pokoj,obec,telefony,poznamka,^id_pobyt'}}
     item {title:'Hlášení tábora pro YMCA v ČR'                                               skill:'y;f'
                                         ,par:°{typ:'j',exp:'Excel2',cnd:'1',ord:'o.prijmeni,o.jmeno'
                                         ,tit:':3,Příjmeni:15,Jméno:15,Ulice:24,Město:13,PSČ:7,Datum nar.:10:t,Člen YMCA:10,(věk):5,(funkce):12'
