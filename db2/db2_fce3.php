@@ -13903,12 +13903,8 @@ function mail2_mai_info($id,$email,$id_dopis,$zdroj,$id_mail) {  //trace();
 # ----------------------------------------------------------------------------------- mail2 mai_smaz
 # smazání mailu v DOPIS a jeho rozesílání v MAIL
 function mail2_mai_smaz($id_dopis) {  trace();
-  $qry= "DELETE FROM dopis WHERE id_dopis=$id_dopis ";
-  $res= pdo_qry($qry);
-  if ( !$res ) fce_error("mail2_mai_smaz: mazání mailu No.'$id_dopis' se nepovedlo");
-  $qry= "DELETE FROM mail WHERE id_dopis=$id_dopis ";
-  $res= pdo_qry($qry);
-  if ( !$res ) fce_error("mail2_mai_smaz: mazání rozesílání mailu No.'$id_dopis' se nepovedlo");
+  query("DELETE FROM dopis WHERE id_dopis=$id_dopis ");
+  query("DELETE FROM mail WHERE id_dopis=$id_dopis ");
   return true;
 }
 # ----------------------------------------------------------------------------------- mail2 mai_stav
