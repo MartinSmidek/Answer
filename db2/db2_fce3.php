@@ -1731,7 +1731,7 @@ function akce2_vzorec_test($id_akce,$hnizdo=0,$nu=2,$nd=0,$nk=0,$np=0,$table_cla
   $cenik= array(
     //            u p d k noci oo plus
     'Nl' => array(1,0,1,0,   1, 0,  1),
-    'Np' => array(1,1,1,0,   1, 0,  1),
+    'Np' => array(0,1,1,0,   1, 0,  1),
     'P'  => array(1,0,0,0,   0, 0,  1),
     'Pd' => array(0,0,1,0,   0, 0,  1),
     'Pk' => array(0,0,0,1,   0, 0,  1),
