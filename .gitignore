@@ -25,13 +25,10 @@
 /nbproject
 /rr
 /db2/verze2.2
-ezernote.*
+/ezernote.*
 /ms2/code
 *.bak
 /ms2/doc
-/test/*
 /dbt/dbt.r.ezer
-/test/$.ezer
-/test/$.ezer
-/test/test.inc.php
-/test/
+/ezer3.2/
+/test

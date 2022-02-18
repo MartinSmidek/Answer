@@ -765,7 +765,7 @@ form _page [,,275,360] {
     }
   }
   # ------------------------==> . dokumenty na Synology
-  use folders:  area _page._folders { tag:'syn' }
+  use folders:  area _folders { tag:'syn' }
   var dcloud='U:',    // U: je třeba nastavit Ezer.options.path_files_u na složku obsahující droot
       abase:text,     // Ezer.options.path_akce
       aroot:text,     // absolutní adresa Ezer.options.path_files_u (má / na konci)

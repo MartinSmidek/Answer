@@ -206,7 +206,8 @@ Ezer.onlogin= function() {
 // před přihlášením:    každému (po přihlášení bude případně zredukováno)
 // po přihlášení:       pokud má tato datová práva
 function personify(access,from) {
-  var v= Ezer.version=='ezer3.1' ? "<sub>3</sub>" : '';
+//  var v= Ezer.version=='ezer3.1' ? "<sub>3</sub>" : '';
+  var v= Ezer.version>'ezer3.1' ? `<sub><small>${Ezer.version.substr(4)}</small></sub>` : '';
   var menu= jQuery('#access_menu'), body= jQuery(document.body);
   var orgs= ['','YMCA Setkání','YMCA Familia','obou organizací'];
   var tits= ['',`Answer${v} Setkání`,`Answer${v} Familia`,`Answer${v} (společný)`];

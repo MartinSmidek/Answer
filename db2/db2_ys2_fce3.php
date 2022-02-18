@@ -304,7 +304,7 @@ end:
 # provede git par.cmd>.git.log a zobrazí jej
 # fetch pro lokální tj. vývojový server nepovolujeme
 function git_make($par) {
-  global $abs_root;
+  global $abs_root, $ezer_version;
   $bean= preg_match('/bean/',$_SERVER['SERVER_NAME'])?1:0;
                                                     display("bean=$bean");
   $cmd= $par->cmd;
@@ -325,7 +325,7 @@ function git_make($par) {
         ftruncate($f, 0);
         fclose($f);
     }
-    if ( $folder=='ezer') chdir("../_ezer3.1");
+    if ( $folder=='ezer') chdir("../_$ezer_version");
     if ( $folder=='skins') chdir("./skins");
     $exec= "git $cmd>$abs_root/docs/.git.log";
     exec($exec,$lines,$state);
@@ -333,7 +333,7 @@ function git_make($par) {
     // po fetch ještě nastav shodu s github
     if ( $cmd=='fetch') {
       $msg.= "$state:$exec\n";
-      $cmd= "reset --hard origin/".($folder=='ezer'?'ezer3.1':'master');
+      $cmd= "reset --hard origin/".($folder=='ezer'?$ezer_version:'master');
       $exec= "git $cmd>$abs_root/docs/.git.log";
       exec($exec,$lines,$state);
                             display("$state::$exec");
@@ -3925,6 +3925,7 @@ function kasa_menu_show($k1,$k2,$k3,$cond=1,$day='',$db='ezer_db2') {
 }
 # -------------------------------------------------------------------------------------- kasa export
 function kasa_export($cond,$file,$db,$title) { trace();
+  global $ezer_version;
   $xls= "|open $file";
   $qry_p= "SELECT * FROM $db.pokladna ";
   $res_p= pdo_qry($qry_p);
@@ -3986,7 +3987,7 @@ function kasa_export($cond,$file,$db,$title) { trace();
   $xls.= "|A$n Výpis ze dne $kdy::italic";
   $xls.= "\n|close";
 //                                      display($xls);
-  require_once 'ezer3.1/server/vendor/autoload.php';
+  require_once "$ezer_version/server/vendor/autoload.php";
   $inf= Excel2007($xls,1);
   if ( $inf ) {
     $html.= "Export se nepovedlo vygenerovat ($inf)";
@@ -4780,8 +4781,8 @@ function ds_hoste($orders,$rok) {  #trace('','win1250');
 # ------------------------------------------------------------------------------------ ds xls_zaloha
 # definice Excelovského listu - zálohové faktury
 function ds_xls_zaloha($order) {  trace();//'','win1250');
-  global $ezer_path_serv;
-  require_once 'ezer3.1/server/vendor/autoload.php';
+  global $ezer_path_serv, $ezer_version;
+  require_once "$ezer_version/server/vendor/autoload.php";
   $html= " nastala chyba";
   $name= "zal_$order";
   // vytvoření sešitu s fakturou
@@ -4796,7 +4797,7 @@ function ds_xls_zaloha($order) {  trace();//'','win1250');
   $test= 1;
   if ( $test )
     file_put_contents("xls.txt",$xls);
-  require_once 'ezer3.1/server/vendor/autoload.php';
+  require_once "$ezer_version/server/vendor/autoload.php";
   $inf= Excel2007(/*w*u*/($xls),1);
   if ( $inf ) {
     $html= " nastala chyba";
@@ -4878,8 +4879,8 @@ end:
 # položka,počet osob,počet nocí,počet nocolůžek,cena jednotková,celkem,DPH 9%,DPH 19%,základ
 # *ubytování
 function ds_xls_faktury($order) {  trace(); //'','win1250');
-  global $ds_cena;
-  require_once 'ezer3.1/server/vendor/autoload.php';
+  global $ds_cena, $ezer_version;
+  require_once "$ezer_version/server/vendor/autoload.php";
   $html= " nastala chyba";
   $test= 1;
   $x= ds_faktury($order);
@@ -5096,7 +5097,7 @@ __XLS;
     file_put_contents("xls.txt",$final_xls);
   time_mark('ds_xls_faktury Excel5');
 //  display($final_xls);
-  require_once 'ezer3.1/server/vendor/autoload.php';
+  require_once "$ezer_version/server/vendor/autoload.php";
   $inf= Excel2007($final_xls,1);
   if ( $inf ) {
     $html= " nastala chyba";

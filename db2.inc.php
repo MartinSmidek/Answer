@@ -9,13 +9,13 @@
   global // import 
     $ezer_root; 
   global // export
-    $EZER, $ezer_server;
+    $EZER, $ezer_server, $ezer_version;
   global // klíče
     $api_gmail_user, $api_gmail_pass;
   
   // vyzvednutí ostatních hodnot ze SESSION
   $ezer_server=  $_SESSION[$ezer_root]['ezer_server'];
-  $kernel= "ezer3.1";
+  $ezer_version= "ezer{$_SESSION[$ezer_root]['ezer']}";
   $abs_root=     $_SESSION[$ezer_root]['abs_root'];
   $rel_root=     $_SESSION[$ezer_root]['rel_root'];
   chdir($abs_root);
@@ -62,8 +62,8 @@
   $app_php= array(
     "db2/db2_ys2_fce3.php",
     "db2/db2_fce3.php",
-    "ezer3.1/server/ezer_ruian.php",
-    "ezer3.1/server/ezer_cms3.php"
+    "$ezer_version/server/ezer_ruian.php",
+    "$ezer_version/server/ezer_cms3.php"
   );
   
   $ezer= array(

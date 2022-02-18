@@ -762,7 +762,7 @@ form _ucast [,,400,] { css:'ds_form', style:'height:fit-content'
     proc reload_evid() {  var id2:number, row:number
       pob.skup.display(1);
 //      rod.detail.web.enable(0);
-      { rod.key; rod.display(1,'r|s'); copy_by_name(b,rod.get);
+      { rod.key; rod.display(1,'r|s'); copy_by_name(b,rod);
         rod.rodiny1.set(_nazev.get);
         rod.display(0,'[abnsy]'); rod.display(1,'[mo]'); rod.enable(1,'[m]');
         rod.rodiny.selects(conc(_nazev.get,':',key_rodina.get)); rod.rodiny.key(key_rodina.get);
@@ -801,7 +801,7 @@ form _ucast [,,400,] { css:'ds_form', style:'height:fit-content'
       rod.key(key_rodina.get);
       rod.key_pobyt.set(key_pobyt.get);
       the_pobyt.set(key_pobyt.get);
-      copy_by_name(b,pob.get);
+      copy_by_name(b,pob);
       load_zalozka
     }
     # ==> . sloupce

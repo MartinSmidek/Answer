@@ -9,7 +9,8 @@
   #   $css_lib    = pole s *.css
   #   $options    = doplnění Ezer.options
 
-  $kernel= "ezer3.1"; 
+  // verze použitého jádra Ezeru
+  $ezer_version= isset($_GET['ezer']) ? "ezer{$_GET['ezer']}" : 'ezer3.1'; 
   $ezer_server= 
     $_SERVER["SERVER_NAME"]=='answer.bean'        ? 0 : (      // 0:lokální 
     $_SERVER["SERVER_NAME"]=='answer.doma'        ? 1 : (      // 1:Synology DOMA
@@ -22,6 +23,7 @@
   $title_style= $ezer_server==1 ? "style='color:#0094FF'" : (
                 $ezer_server==0 ? "style='color:#ef7f13'" : '');
   $title_flag=  $ezer_server==2 ? '' : 'lokální ';
+  
   $CKEditor= isset($_GET['editor']) ? $_GET['editor'] : '4.6';
   
   // nastav jako default PDO=2
@@ -31,6 +33,7 @@
   // nastav &touch=0 pro Windows
   if (strtoupper(substr(PHP_OS,0,3))==='WIN') 
     $_GET['touch']= 0;
+  $touch= isset($_GET['touch']) ? $_GET['touch'] : 0;
 
   // ochránění přímého přístupu do složek s .htaccess/RewriteCond "%{HTTP_COOKIE}" "!EZER"
   setcookie("EZER",$app,0,"/");
@@ -82,11 +85,14 @@
   $access_app= array(1=>"Setkání","Familia","(společný)");
   $access_app= $access_app[$cookie];
   $choice_js= "personify('menu_on'); return false;";
+  // doplnění jména aplikace o laděnou verzi ezer
+  $new= $ezer_version>'ezer3.1' 
+      ? '<sub><small> '.substr($ezer_version,4).($touch?' touch':'').'</small></sub>' : '';
   $title= "$demo
     <span $title_style>"
     . $title_flag
     ."<span id='access' onclick=\"$choice_js\" oncontextmenu=\"$choice_js\">
-        Answer $access_app
+        Answer$new $access_app
       </span>
       <div id='access_menu'>
         <span onclick='personify(1);'>Ans(w)er Setkání</span>
@@ -111,7 +117,7 @@
 
   $app_css= [ 
       "db2/db2.css.php=skin",
-      "ezer3.1/client/wiki.css"
+      "$ezer_version/client/wiki.css"
    ];
   //  require_once("answer.php");
   $add_options= (object) [
@@ -160,6 +166,6 @@
   );
 //  echo("db2.php end<br>");
   // je to aplikace se startem v kořenu
-  require_once("ezer3.1/ezer_main.php");
+  require_once("$ezer_version/ezer_main.php");
 
 ?>
