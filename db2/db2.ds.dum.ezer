@@ -92,7 +92,7 @@ group pobyt {
   proc compare () {
     comp.set(ask('ds_compare',the_order.get));
 #     debug(comp.get,'compare');
-    form_set(obj.get,comp.get('form')); obj.info.set(comp.get('html'))
+    form_set(obj,comp.get('form')); obj.info.set(comp.get('html'))
   }
   proc ukaz_spodek {
     ucastnici.to_show.get
@@ -206,10 +206,19 @@ group pobyt {
 #     proc onstart() { foreach(°[°{fld:'q29',hlp:'MUJ POKOJ'}],set_help) }
 //    proc onstart() { foreach(ask('ds_rooms_help'),set_help) }
 //    proc set_help(x) { form.part(x.fld).set_attrib('help',x.hlp) }
-    proc onstart() { foreach(ask('ds_rooms_help'),set_help_enable) }
-    proc set_help_enable(x) { 
-      form.part(x.fld).set_attrib('help',x.hlp);
-      form.part(x.fld).enable(x.on);
+//    proc onstart() { foreach(ask('ds_rooms_help'),set_help_enable) }
+//    proc set_help_enable(x) { 
+//      form.part(x.fld).set_attrib('help',x.hlp);
+//      form.part(x.fld).enable(x.on);
+//    }
+    func onstart() { var x:object, ch:ezer
+      for (x of php.ds_rooms_help()) {
+        ch= form.part(x.fld);
+        if (ch) {
+          ch.set_attrib('help',x.hlp);
+          ch.enable(x.on);
+        }
+      }
     }
 //    button [0,FT+71,,] { title:'TEST', proc onclick() {onstart} }
   }
