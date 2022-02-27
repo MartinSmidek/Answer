@@ -44,11 +44,12 @@ div.bila div.Label3 { color:#fff !important; }
 /* obecné barvy pozadí */
 .bily           { background-color:#ffffff !important; }
 .sedy           { background-color:#aaaaaa !important; }
-.zluty          { background-color:#ffff77 !important; }
+.zluty,.yellow  { background-color:#ffff77 !important; }
 .cerveny        { background-color:#ff7777 !important; }
 .oranzovy       { background-color:#ffaa00 !important; }
 .zeleny         { background-color:#77ff77 !important; }
 .modry          { background-color:#7389ae !important; }
+       .blue    { background-color:#9fc3ff !important; }
 .azurovy        { background-color:#77ffff !important; }
 .fialovy        { background-color:#d27efc !important; }
 .jemna          { background-color:$b_item; }

@@ -1898,7 +1898,7 @@ form _platba [,,623,] { key_id:'id_pobyt', style:'height:fit-content', par:°{on
   label [618,91,61,14] {tag:'deti', title:'platba za'}
   list uhrady_lst [308,100,360,190] { rows:25
     label  u_index [0,14,2,17] // u_index == uhrada.u_poradi + 1
-    field  u_castka [12,10,40,] {format:'r'}
+    field  u_castka [12,10,40,] {format:'r', help:'vratky se znaménkem -'}
     select u_zpusob [60,10,85,] {type:'map0', options:ms_akce_platba.zkratka}
     field  u_datum  [145,10,85,] {type:'date', format:'r'}
     select u_stav   [230,10,80,] {type:'map', options:ms_platba_stav.zkratka}

@@ -3583,20 +3583,18 @@ function ucast2_browse_ask($x,$tisk=false) {
       # zjištění dluhu
       $platba1234= $p->platba1 + $p->platba2 + $p->platba3 + $p->platba4;
       $p->c_suma= $platba1234 + $p->poplatek_d;
+      // pokud není cena předepsána individuálně, podívej se na nastavení akce
+      if ($p->c_suma==0 && $akce->ma_cenu)
+        $p->c_suma= $clenu * $akce->cena;
       $p->dluh= $p->funkce==99 ? 0 : (
                 $akce->soubeh==1 && $akce->ma_cenik
         ? ( $p->c_suma == 0 ? 2 : ( $p->c_suma > $p->uhrada ? 1 : 0 ) )
+        // není to pečoun a není to souběžná akce
         : ( $akce->ma_cenik
           ? ( $platba1234 == 0 ? 2 : ( $platba1234 > $p->uhrada ? 1 : 0) )
-          : ( $akce->ma_cenu ? ( $clenu * $akce->cena > $p-uhrada ? 1 : 0) : 0 )
+          : ( $akce->ma_cenu 
+            ? ( ($platba1234 ?: $clenu*$akce->cena) > $p->uhrada ? 1 : 0) : 0 )
           ));
-//      $p->dluh= $p->funkce==99 ? 0 : (
-//                $akce->soubeh==1 && $akce->ma_cenik
-//        ? ( $p->c_suma == 0 ? 2 : ( $p->c_suma > $p->platba+$p->platba_d ? 1 : 0 ) )
-//        : ( $akce->ma_cenik
-//          ? ( $platba1234 == 0 ? 2 : ( $platba1234 > $p->platba ? 1 : 0) )
-//          : ( $akce->ma_cenu ? ( $clenu * $akce->cena > $p->platba ? 1 : 0) : 0 )
-//          ));
       // web_changes= 1/2 pro INSERT/UPDATE pobyt a spolu | 4/8 pro INSERT/UPDATE osoba
       $p->web_changes= $p->web_changes&4 ? 2 : ($p->web_changes ? 1 : 0);
 //                                                         if ($idp==15826) { debug($akce);debug($p,"platba1234=$platba1234"); }
@@ -13478,14 +13476,13 @@ function mail2_mai_pocet($id_dopis,$dopis_var,$cond='',$recall=false) {  trace()
            $dopis_var=='U4' ?
              " AND IF(IFNULL(role,'a') IN ('a','b'),REPLACE(o.obcanka,' ','') NOT RLIKE '^[0-9]{9}$',0)"
          : " --- chybné komu --- " ))));
-    $HAVING= $dopis_var=='U3' ? "HAVING _uhrada<_poplatek" : "";
+    $HAVING= $dopis_var=='U3' ? "HAVING _uhrada/_na_akci<cena" : "";
     // využívá se toho, že role rodičů 'a','b' jsou před dětskou 'd', takže v seznamech
     // GROUP_CONCAT jsou rodiče, byli-li na akci. Emaily se ale vezmou ode všech, mají-li osobní
     $qry= "SELECT a.nazev,a.ma_cenu,p.id_pobyt,pouze,COUNT(DISTINCT s.id_osoba) AS _na_akci, 
+             (SELECT IFNULL(SUM(u_castka),0) FROM uhrada WHERE id_pobyt=p.id_pobyt) AS _uhrada,
+             a.cena, p.poplatek_d, 
              p.platba1+p.platba2+p.platba3+p.platba4 -vratka1-vratka2-vratka3-vratka4 AS _poplatek,
-             SUM(u.u_castka) AS _uhrada,a.cena,
-             -- avizo, platba_d,
-             p.poplatek_d,
              GROUP_CONCAT(DISTINCT o.id_osoba ORDER BY t.role) AS _id,
              GROUP_CONCAT(DISTINCT CONCAT(prijmeni,' ',jmeno) ORDER BY t.role) AS _jm,
              GROUP_CONCAT(DISTINCT IF(o.kontakt,TRIM(o.email),'')) AS email,
