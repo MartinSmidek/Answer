@@ -92,7 +92,7 @@ group pobyt {
   proc compare () {
     comp.set(ask('ds_compare',the_order.get));
 #     debug(comp.get,'compare');
-    form_set(obj,comp.get('form')); obj.info.set(comp.get('html'))
+    form_set(obj.get,comp.get('form')); obj.info.set(comp.get('html'))
   }
   proc ukaz_spodek {
     ucastnici.to_show.get
@@ -151,25 +151,27 @@ group pobyt {
     check   p15 [PL+280, PT,14,] { title:'15', format:'c', css:'CheckT', help:"15 - apartmán; 2 místnosti a sociálka bezbariérová: 2 lůžka jednoduchá" }
     check   p16 [PL+300, PT,14,] { title:'16', format:'c', css:'CheckT', help:"16 - apartmán; 2 místnosti a sociálka bezbariérová: 1 lůžko jednoduché a 2 lůžka jako patrová postel" }
     // nové pokoje
-    label       [0,QT+-14,356,42] { title:'nové pokoje:', css:'jemna' }
+    label       [0,QT+-14,357,42] { title:'nové pokoje:', css:'jemna' }
     check   q1  [PL+  0, QT,14,] { title:'1',  format:'c', css:'CheckT' }
-    check   q2  [PL+ 20, QT,14,] { title:'2',  format:'c', css:'CheckT' }
-    check   q11 [PL+ 40, QT,14,] { title:'11', format:'c', css:'CheckT' }
-    check   q12 [PL+ 60, QT,14,] { title:'12', format:'c', css:'CheckT' }
-    check   q13 [PL+ 80, QT,14,] { title:'13', format:'c', css:'CheckT' }
-    check   q14 [PL+100, QT,14,] { title:'14', format:'c', css:'CheckT' }
-    check   q15 [PL+120, QT,14,] { title:'15', format:'c', css:'CheckT' }
-    check   q16 [PL+140, QT,14,] { title:'16', format:'c', css:'CheckT' }
-    check   q17 [PL+160, QT,14,] { title:'17', format:'c', css:'CheckT' }
-    check   q21 [PL+180, QT,14,] { title:'21', format:'c', css:'CheckT' }
-    check   q22 [PL+200, QT,14,] { title:'22', format:'c', css:'CheckT' }
-    check   q23 [PL+220, QT,14,] { title:'23', format:'c', css:'CheckT' }
-    check   q24 [PL+240, QT,14,] { title:'24', format:'c', css:'CheckT' }
-    check   q25 [PL+260, QT,14,] { title:'25', format:'c', css:'CheckT' }
-    check   q26 [PL+280, QT,14,] { title:'26', format:'c', css:'CheckT' }
-    check   q27 [PL+300, QT,14,] { title:'27', format:'c', css:'CheckT' }
-    check   q28 [PL+320, QT,14,] { title:'28', format:'c', css:'CheckT' }
-    check   q29 [PL+340, QT,14,] { title:'29', format:'c', css:'CheckT' }
+    check   q2  [PL+ 18, QT,14,] { title:'2',  format:'c', css:'CheckT' }
+    check   q9  [PL+ 36, QT,14,] { title:'9',  format:'c', css:'CheckT' }
+    check   q10 [PL+ 54, QT,14,] { title:'10', format:'c', css:'CheckT' }
+    check   q11 [PL+ 72, QT,14,] { title:'11', format:'c', css:'CheckT' }
+    check   q12 [PL+ 90, QT,14,] { title:'12', format:'c', css:'CheckT' }
+    check   q13 [PL+108, QT,14,] { title:'13', format:'c', css:'CheckT' }
+    check   q14 [PL+126, QT,14,] { title:'14', format:'c', css:'CheckT' }
+    check   q15 [PL+144, QT,14,] { title:'15', format:'c', css:'CheckT' }
+    check   q16 [PL+162, QT,14,] { title:'16', format:'c', css:'CheckT' }
+    check   q17 [PL+180, QT,14,] { title:'17', format:'c', css:'CheckT' }
+    check   q21 [PL+198, QT,14,] { title:'21', format:'c', css:'CheckT' }
+    check   q22 [PL+216, QT,14,] { title:'22', format:'c', css:'CheckT' }
+    check   q23 [PL+234, QT,14,] { title:'23', format:'c', css:'CheckT' }
+    check   q24 [PL+252, QT,14,] { title:'24', format:'c', css:'CheckT' }
+    check   q25 [PL+270, QT,14,] { title:'25', format:'c', css:'CheckT' }
+    check   q26 [PL+288, QT,14,] { title:'26', format:'c', css:'CheckT' }
+    check   q27 [PL+306, QT,14,] { title:'27', format:'c', css:'CheckT' }
+    check   q28 [PL+324, QT,14,] { title:'28', format:'c', css:'CheckT' }
+    check   q29 [PL+342, QT,14,] { title:'29', format:'c', css:'CheckT' }
 
     label       [344,101,5,] { title:'?' }
     field noroom [PL+324,PT+9,17,] { format:'or:e', help:'?|počet neubytovaných podle seznamu' }

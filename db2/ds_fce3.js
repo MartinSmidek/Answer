@@ -45,14 +45,15 @@ function check_rooms(rooms,form,prefix) {
     var elem= form.part[id];
     if ( elem.type=='check' && id.substr(0,prefix.length)==prefix ) {
       // checkbox označuje číslo pokoje
-      var room= id.substr(prefix.length);
-      var wanted= elem.get();
-      if ( wanted && !list.includes(room) ) {
+      let room= id.substr(prefix.length),
+          wanted= elem.get(),
+          includes= list.indexOf(room);
+      if ( wanted && includes==-1 ) {
         list.push(room);
         change= true;
       }
-      else if ( !wanted && list.includes(room) ) {
-        list.erase(room);
+      else if ( !wanted && includes>=0 ) {
+        list.splice(includes,1);
         change= true;
       }
       // odstraň příznak změny
