@@ -13476,7 +13476,9 @@ function mail2_mai_pocet($id_dopis,$dopis_var,$cond='',$recall=false) {  trace()
            $dopis_var=='U4' ?
              " AND IF(IFNULL(role,'a') IN ('a','b'),REPLACE(o.obcanka,' ','') NOT RLIKE '^[0-9]{9}$',0)"
          : " --- chybné komu --- " ))));
-    $HAVING= $dopis_var=='U3' ? "HAVING _uhrada/_na_akci<cena" : "";
+//    $HAVING= $dopis_var=='U3' ? "HAVING _uhrada/_na_akci<cena" : "";
+    $HAVING= $dopis_var=='U3' 
+        ? "HAVING IF(ma_cenu,_uhrada/_na_akci<cena,_uhrada<_poplatek)" : "";
     // využívá se toho, že role rodičů 'a','b' jsou před dětskou 'd', takže v seznamech
     // GROUP_CONCAT jsou rodiče, byli-li na akci. Emaily se ale vezmou ode všech, mají-li osobní
     $qry= "SELECT a.nazev,a.ma_cenu,p.id_pobyt,pouze,COUNT(DISTINCT s.id_osoba) AS _na_akci, 
