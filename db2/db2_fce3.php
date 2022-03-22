@@ -244,7 +244,7 @@ function akce2_mapa($akce,$filtr='') {  trace();
     $obec[$p]= $obec[$p] ?: $m;
   }
 //                                         debug($psc);
-  $icon= "./$ezer_version/client/img/circle_gold_15x15.png,7,7";
+  $icon= "./ezer$ezer_version/client/img/circle_gold_15x15.png,7,7";
   return mapa2_psc($psc,$obec,0,$icon); // vrací (object)array('mark'=>$marks,'n'=>$n,'err'=>$err);
 }
 # --------------------------------------------------------------------------------------- akce2 info
@@ -7759,7 +7759,7 @@ function akce2_tabulka_stat($akce,$par,$title,$vypis,$export=0) { trace();
   $xls.= "\n\n|A$n Výpis byl vygenerován $kdy :: italic";
   $xls.= "\n|close";
 //                                                                display($xls);
-  require_once "$ezer_version/server/vendor/autoload.php";
+  require_once "ezer$ezer_version/server/vendor/autoload.php";
   $inf= Excel2007($xls);
   $ref= " Statistika byla vygenerován ve formátu <a href='docs/$fname.xlsx' target='xls'>Excel</a>.";
 //                                                                debug($pobyt,"2");
@@ -8011,10 +8011,10 @@ function sql2stari($narozeni,$datum) {
 # ----------------------------------------------------------------------------- akce2 plachta_export
 function akce2_plachta_export($line,$file) { trace();
   global $ezer_version;
-  require_once("./$ezer_version/server/licensed/xls/OLEwriter.php");
-  require_once("./$ezer_version/server/licensed/xls/BIFFwriter.php");
-  require_once("./$ezer_version/server/licensed/xls/Worksheet.php");
-  require_once("./$ezer_version/server/licensed/xls/Workbook.php");
+  require_once("./ezer$ezer_version/server/licensed/xls/OLEwriter.php");
+  require_once("./ezer$ezer_version/server/licensed/xls/BIFFwriter.php");
+  require_once("./ezer$ezer_version/server/licensed/xls/Worksheet.php");
+  require_once("./ezer$ezer_version/server/licensed/xls/Workbook.php");
   global $ezer_path_root;
   global $tisk_hnizdo;
   chdir($ezer_path_root);
@@ -8820,7 +8820,7 @@ __XLS;
 __XLS;
   // výstup
 //                                                                display($xls);
-  require_once "$ezer_version/server/vendor/autoload.php";
+  require_once "ezer$ezer_version/server/vendor/autoload.php";
   $inf= Excel2007($xls,1);
   if ( $inf ) {
     $html= " se nepodařilo vygenerovat - viz začátek chybové hlášky";
@@ -10632,7 +10632,7 @@ function mapa2_ve_ctverci($mode,$rect,$ids,$max=5000) { trace();
       while ( $ro && list($id,$geo,$lat,$lng)= pdo_fetch_row($ro) ) {
         $ret->ids.= "$del$id"; 
         $color= $geo ? 'green' : 'gold';
-        $ret->marks.= "$semi$id,$lat,$lng,$id,./$ezer_version/client/img/circle_{$color}_15x15.png,7,7"; 
+        $ret->marks.= "$semi$id,$lat,$lng,$id,./ezer$ezer_version/client/img/circle_{$color}_15x15.png,7,7"; 
         $del= ','; $semi= ';';
       }
     }
@@ -10740,7 +10740,7 @@ function mapa2_v_polygonu($mode,$poly,$ids,$max=5000) { trace();
         if ( maps_poly_cross($lat,$lng,$x,$y) ) {
           $ret->ids.= "$del$id"; 
           $color= $geo ? 'green' : 'gold';
-          $ret->marks.= "$semi$id,$lat,$lng,$id,./$ezer_version/client/img/circle_{$color}_15x15.png,7,7"; 
+          $ret->marks.= "$semi$id,$lat,$lng,$id,./ezer$ezer_version/client/img/circle_{$color}_15x15.png,7,7"; 
           $del= ','; $semi= ';';
         }
       }
@@ -12028,7 +12028,7 @@ __XLS;
     \n|close
 __XLS;
   // výstup
-  require_once "$ezer_version/server/vendor/autoload.php";
+  require_once "ezer$ezer_version/server/vendor/autoload.php";
   $inf= Excel2007($xls,1);
 //   $inf= Excel5($xls,1);
   if ( $inf ) {
@@ -14362,7 +14362,7 @@ function mail2_sql_try($qry,$vsechno=0,$export=0) {  trace();
 # vygeneruje do Excelu seznam adresátů
 function mail2_gen_excel($gq,$nazev) { trace();
   global $ezer_root, $ezer_version;
-  require_once "$ezer_version/server/vendor/autoload.php";
+  require_once "ezer$ezer_version/server/vendor/autoload.php";
   $href= "CHYBA!";
   // úprava dotazu
   $gq= str_replace('&gt;','>',$gq);

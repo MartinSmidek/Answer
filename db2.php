@@ -10,7 +10,7 @@
   #   $options    = doplnění Ezer.options
 
   // verze použitého jádra Ezeru
-  $ezer_version= isset($_GET['ezer']) ? "ezer{$_GET['ezer']}" : 'ezer3.1'; 
+  $ezer_version= isset($_GET['ezer']) ? $_GET['ezer'] : '3.1'; 
   $ezer_server= 
     $_SERVER["SERVER_NAME"]=='answer.bean'        ? 0 : (      // 0:lokální 
     $_SERVER["SERVER_NAME"]=='answer.doma'        ? 1 : (      // 1:Synology DOMA
@@ -86,8 +86,8 @@
   $access_app= $access_app[$cookie];
   $choice_js= "personify('menu_on'); return false;";
   // doplnění jména aplikace o laděnou verzi ezer
-  $new= $ezer_version>'ezer3.1' 
-      ? '<sub><small> '.substr($ezer_version,4).($touch?' touch':'').'</small></sub>' : '';
+  $new= $ezer_version!='3.1' 
+      ? '<sub><small> '.$ezer_version.($touch?' touch':'').'</small></sub>' : '';
   $title= "$demo
     <span $title_style>"
     . $title_flag
@@ -117,7 +117,7 @@
 
   $app_css= [ 
       "db2/db2.css.php=skin",
-      "$ezer_version/client/wiki.css"
+      "ezer$ezer_version/client/wiki.css"
    ];
   //  require_once("answer.php");
   $add_options= (object) [
@@ -166,6 +166,6 @@
   );
 //  echo("db2.php end<br>");
   // je to aplikace se startem v kořenu
-  require_once("$ezer_version/ezer_main.php");
+  require_once("ezer$ezer_version/ezer_main.php");
 
 ?>

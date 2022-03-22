@@ -306,46 +306,60 @@ end:
 function git_make($par) {
   global $abs_root, $ezer_version;
   $bean= preg_match('/bean/',$_SERVER['SERVER_NAME'])?1:0;
-                                                    display("bean=$bean");
+  display("ezer$ezer_version, abs_root=$abs_root, bean=$bean");
+  if ($ezer_version!='3.2') { fce_error("POZOR není aktivní jádro 3.2 ale $ezer_version"); }
   $cmd= $par->cmd;
   $folder= $par->folder;
-  $lines= '';
+  $lines= array();
   $msg= "";
-  // proveď operaci
-  switch ($par->op) {
-  case 'cmd':
-    if ( $cmd=='fetch' && $bean) {
-      $msg= "na vývojových serverech (*.bean) příkaz fetch není povolen ";
-      break;
-    }
-    $state= 0;
-    // zruš starý obsah .git.log
-    $f= @fopen("$abs_root/docs/.git.log", "r+");
-    if ($f !== false) {
-        ftruncate($f, 0);
-        fclose($f);
-    }
-    if ( $folder=='ezer') chdir("../_$ezer_version");
-    if ( $folder=='skins') chdir("./skins");
-    $exec= "git $cmd>$abs_root/docs/.git.log";
-    exec($exec,$lines,$state);
-                            display("$state::$exec");
-    // po fetch ještě nastav shodu s github
-    if ( $cmd=='fetch') {
-      $msg.= "$state:$exec\n";
-      $cmd= "reset --hard origin/".($folder=='ezer'?$ezer_version:'master');
-      $exec= "git $cmd>$abs_root/docs/.git.log";
+  // nastav složku pro Git
+  if ( $folder=='ezer') 
+    chdir("./ezer$ezer_version");
+  elseif ( $folder=='skins') 
+    chdir("./skins");
+  elseif ( $folder=='.') 
+    chdir(".");
+  else
+    fce_error('chybná aktuální složka');
+  // proveď příkaz Git
+  $state= 0;
+  $branch= $folder=='ezer' ? "ezer$ezer_version" : 'master';
+  switch ($cmd) {
+    case 'log':
+    case 'status':
+      $exec= "git $cmd";
+      display($exec);
       exec($exec,$lines,$state);
-                            display("$state::$exec");
-    }
-    if ( $folder=='ezer'||$folder=='skins') chdir($abs_root);
-    $msg.= "$state:$exec\n";
-  case 'show':
-    $msg.= file_get_contents("$abs_root/docs/.git.log");
-    break;
+      $msg.= "$state:$exec\n";
+      break;
+    case 'pull':
+      $exec= "git pull origin $branch";
+      display($exec);
+      exec($exec,$lines,$state);
+      $msg.= "$state:$exec\n";
+      break;
+    case 'fetch':
+      if ( $bean) 
+        $msg= "na vývojových serverech (*.bean) příkaz fetch není povolen ";
+      else {
+        $exec= "git pull origin $branch";
+        display($exec);
+        exec($exec,$lines,$state);
+        $msg.= "$state:$exec\n";
+        $exec= "git reset --hard origin/$branch";
+        display($exec);
+        exec($exec,$lines,$state);
+        $msg.= "$state:$exec\n";
+      }
+      break;
   }
+  // případně se vrať na abs-root
+  if ( $folder=='ezer'||$folder=='skins') 
+    chdir($abs_root);
+  // zformátuj výstup
   $msg= nl2br(htmlentities($msg));
   $msg= "<i>Synology: musí být spuštěný Git Server (po aktualizaci se vypíná)</i><hr>$msg";
+  $msg.= $lines ? '<hr>'.implode('<br>',$lines) : '';
   return $msg;
 }
 /** ========================================================================================> online */
@@ -3987,7 +4001,7 @@ function kasa_export($cond,$file,$db,$title) { trace();
   $xls.= "|A$n Výpis ze dne $kdy::italic";
   $xls.= "\n|close";
 //                                      display($xls);
-  require_once "$ezer_version/server/vendor/autoload.php";
+  require_once "ezer$ezer_version/server/vendor/autoload.php";
   $inf= Excel2007($xls,1);
   if ( $inf ) {
     $html.= "Export se nepovedlo vygenerovat ($inf)";
@@ -4092,6 +4106,7 @@ function ds_compare($order) {  #trace('','win1250');
 # -------------------------------------------------------------------------------------- sys db_info
 # vygeneruje menu.group pro 7 let 
 function ds_ceny_group() { //debug($par);
+  global $ezer_version;
   // doplnění leftmenu.group: "item {title:yyyy, par:{rok:yyyy}}" pro yyyy= letos,loni,...
   $itms= array();
   $letos= date('Y');
@@ -4102,7 +4117,9 @@ function ds_ceny_group() { //debug($par);
 //        'id'=>"rok_$rok",
         'options'=>(object)array(
           'title'=>$rok,
-          'par'=>(object)array('rok'=>$rok)
+          'par'=> $ezer_version=='3.2'
+            ? (object)array('*'=>(object)array('rok'=>$rok))
+            : (object)array('rok'=>$rok)
       ));
   }
   return (object)array('type'=>'menu.group','options'=>(object)array(),'part'=>$itms);
@@ -4111,6 +4128,7 @@ function ds_ceny_group() { //debug($par);
 # vygeneruje menu pro loňský, letošní a příští rok ve tvaru objektu pro ezer2 pro zobrazení klientů
 # určující je datum zahájení pobytu v objednávce
 function ds_kli_menu() {
+  global $ezer_version;
   ezer_connect('setkani');
   $the= '';                     // první v tomto měsíci či později
   $rok= date('Y');
@@ -4153,6 +4171,8 @@ function ds_kli_menu() {
       $par= (object)array('od'=>$od,'do'=>$do,
         'celkem'=>$celkem,'klientu'=>$klientu,'objednavek'=>$objednavek,'uids'=>$uids,
         'mesic_rok'=>/*w*u*/($mesice[$m])." $rok");
+      if ($ezer_version=='3.2') 
+        $par= (object)array('*'=>$par);
       $tm= (object)array('type'=>'item','options'=>(object)array('title'=>$tit,'par'=>$par));
       $gr->part->$m= $tm;
       if ( !$the && $yyyymm>=$ted ) {
@@ -4394,33 +4414,33 @@ function ds_rooms_help($version=1) {
 //                                                         debug($hlp);
   return $hlp;
 }
-# -------------------------------------------------------------------------------------- ds cen_menu
-# vygeneruje menu pro loňský, letošní a příští rok ve tvaru objektu pro menu.group
-# ve tvaru item {title:'2016',par:°{rok:'2016'} }
-function ds_cen_menu($tit='Ceny roku') {
-
-
-  $gr= (object)array(
-    'type'=>'menu.group',
-    'options'=>(object)array('title'=>$tit,'part'=>(object)array())
-  );
-
-    $rok= 2018;
-    $par= (object)array('rok'=>$rok);
-    $tm= (object)array('type'=>'item','options'=>(object)array('title'=>$rok,'par'=>$par));
-    $gr->part->$iid= $tm;
-
-
-
-  $result= (object)array('th'=>$the,'cd'=>$mn);
-  return $result;
-}
+//# -------------------------------------------------------------------------------------- ds cen_menu
+//# vygeneruje menu pro loňský, letošní a příští rok ve tvaru objektu pro menu.group
+//# ve tvaru item {title:'2016',par:°{rok:'2016'} }
+//function ds_cen_menu($tit='Ceny roku') {
+//
+//
+//  $gr= (object)array(
+//    'type'=>'menu.group',
+//    'options'=>(object)array('title'=>$tit,'part'=>(object)array())
+//  );
+//
+//    $rok= 2018;
+//    $par= (object)array('rok'=>$rok);
+//    $tm= (object)array('type'=>'item','options'=>(object)array('title'=>$rok,'par'=>$par));
+//    $gr->part->$iid= $tm;
+//
+//
+//
+//  $result= (object)array('th'=>$the,'cd'=>$mn);
+//  return $result;
+//}
 # -------------------------------------------------------------------------------------- ds obj_menu
 # vygeneruje menu pro loňský, letošní a příští rok ve tvaru objektu pro ezer2 pro zobrazení objednávek
 # určující je datum zahájení pobytu v objednávce
 # $ym_list = yyyymm,yyyymm,... pro omezení levého menu pro ladění
 function ds_obj_menu($ym_list=null) {
-  global $pdo_db;
+  global $pdo_db, $ezer_version;
   $omezeni= false;
   if ( $ym_list ) {
     $omezeni= explode(',',$ym_list);
@@ -4455,6 +4475,8 @@ function ds_obj_menu($ym_list=null) {
         $iid= $o->uid;
         $zkratka= $stav[$o->state];
         $par= (object)array('uid'=>$iid);
+        if ($ezer_version=='3.2') 
+          $par= (object)array('*'=>$par);
         $tit= wu("$iid - ").$zkratka.wu(" - {$o->name}");
         $tm= (object)array('type'=>'item','options'=>(object)array('title'=>$tit,'par'=>$par));
         $gr->part->$iid= $tm;
@@ -4782,7 +4804,7 @@ function ds_hoste($orders,$rok) {  #trace('','win1250');
 # definice Excelovského listu - zálohové faktury
 function ds_xls_zaloha($order) {  trace();//'','win1250');
   global $ezer_path_serv, $ezer_version;
-  require_once "$ezer_version/server/vendor/autoload.php";
+  require_once "ezer$ezer_version/server/vendor/autoload.php";
   $html= " nastala chyba";
   $name= "zal_$order";
   // vytvoření sešitu s fakturou
@@ -4797,7 +4819,7 @@ function ds_xls_zaloha($order) {  trace();//'','win1250');
   $test= 1;
   if ( $test )
     file_put_contents("xls.txt",$xls);
-  require_once "$ezer_version/server/vendor/autoload.php";
+  require_once "ezer$ezer_version/server/vendor/autoload.php";
   $inf= Excel2007(/*w*u*/($xls),1);
   if ( $inf ) {
     $html= " nastala chyba";
@@ -4880,7 +4902,7 @@ end:
 # *ubytování
 function ds_xls_faktury($order) {  trace(); //'','win1250');
   global $ds_cena, $ezer_version;
-  require_once "$ezer_version/server/vendor/autoload.php";
+  require_once "ezer$ezer_version/server/vendor/autoload.php";
   $html= " nastala chyba";
   $test= 1;
   $x= ds_faktury($order);
@@ -5097,7 +5119,7 @@ __XLS;
     file_put_contents("xls.txt",$final_xls);
   time_mark('ds_xls_faktury Excel5');
 //  display($final_xls);
-  require_once "$ezer_version/server/vendor/autoload.php";
+  require_once "ezer$ezer_version/server/vendor/autoload.php";
   $inf= Excel2007($final_xls,1);
   if ( $inf ) {
     $html= " nastala chyba";
