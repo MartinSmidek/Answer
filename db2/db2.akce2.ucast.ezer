@@ -7,27 +7,29 @@
 
 # ----------------------------------------------------------------------------==> . stavové proměnné
 
-var the_duakce_local= 0    // zobrazená akce - pokud se liší od the_duakce, je třeba překreslit
-var the_pobyt: number
-var zalozka: text           // evid | plat | akce
-var back: object
-var zmeny: object               // objekt naplněný požadavkem zobrazení nedávných změn
+var the_duakce_local= 0,    // zobrazená akce - pokud se liší od the_duakce, je třeba překreslit
+    virgin= 1,              // 0 - aktivivaný panel
+    the_pobyt: number,
+    zalozka: text,          // evid | plat | akce
+    back: object,
+    zmeny: object           // objekt naplněný požadavkem zobrazení nedávných změn
 
 # -------------------------------------------------------------------------==> . inicializace panelu
 
 # události panelu
 proc onstart() {}
-proc onfirstfocus() {
+func onfirstfocus() {
   spinner(1);
-  the_duakce_local.set(0);
-  curr_h.set(0);
-  curr_w.set(cconc(lt(sys('screen','width'),1280),1024,1280));
-  init_forms;
-  page.evd.onclick;
-  akce_onstart;
+  the_duakce_local= 0;
+  curr_h= 0;
+  curr_w= sys('screen','width')<1280 ? 1024 : 1280;
+  init_forms();
+  page.evd.onclick();
+  akce_onstart();
   onresize(sys('screen','width'),sys('screen','height'));
-  onfocus;
+  onfocus();
   spinner(0);
+  virgin= 0;
 }
 proc onfocus() { 
   eq(the_duakce_local.get,the_duakce.get)
@@ -58,21 +60,41 @@ proc reaccess() { #==> . reaccess - změna
   init_ucast2
 }
 # nastavení pro akci v hnízdech
-proc ucast_hnizda() { var opts:object
-  echo("HNIZDA=",the_hnizda.get);
-  { the_hnizda.get; 
+//proc ucast_hnizda() { var opts:object
+//  echo("ucast HNIZDA=",the_hnizda.get);
+//  { the_hnizda.get; 
+//    header.hnizdo.set_attrib('options','ms_akce_hnizda_plus.nazev');
+//    u.b.xhnizdo.set_attrib('map_pipe','ms_akce_hnizda.zkratka');
+//    u.b.xhnizdo.set_query(1,'',0);
+//    pob.hnizdo.set_attrib('options','ms_akce_hnizda.zkratka');
+//    header.hnizdo.key(99);
+//    header.hnizdo.display(1);
+//    pob.hnizdo.display(1);
+//    u.b._nazev.width(89); u.b.xhnizdo.width(20);
+//  | header.hnizdo.display(0);
+//    pob.hnizdo.display(0);
+//    u.b._nazev.width(100); u.b.xhnizdo.width(0);
+//    [ u.b.get_query; u.b.init_queries(1) ]
+//  };
+//}
+func ucast_hnizda() { var opts:object
+  echo(`ucast HNIZDA=${the_hnizda}`);
+  if (the_hnizda) {
     header.hnizdo.set_attrib('options','ms_akce_hnizda_plus.nazev');
     u.b.xhnizdo.set_attrib('map_pipe','ms_akce_hnizda.zkratka');
+    u.b.xhnizdo.set_query(1,'',0);
     pob.hnizdo.set_attrib('options','ms_akce_hnizda.zkratka');
     header.hnizdo.key(99);
     header.hnizdo.display(1);
     pob.hnizdo.display(1);
     u.b._nazev.width(89); u.b.xhnizdo.width(20);
-  | header.hnizdo.display(0);
+  }
+  else {
+    header.hnizdo.display(0);
     pob.hnizdo.display(0);
     u.b._nazev.width(100); u.b.xhnizdo.width(0);
-    [ u.b.get_query; u.b.init_queries(1) ]
-  };
+    if (u.b.get_query()) u.b.init_queries(1);
+  }
 }
 # ukázání pobytu na stejné akci
 proc ucast_pobyt(_idp)  {
@@ -135,13 +157,26 @@ var   curr_w=0            // 1024 nebo 1280
 proc onfirstloaded() {    // zavolá se po prvním dokončení u.b.browse_load
   w_change_all
 }
-proc onresize(w,h) { // echo('ucast2 onresize(',w,',',h,')');
-  [ and(lt(h,min_h.get),not(eq(curr_h.get,min_h.get)));
-    curr_h.set(0); h_change_all
-  | and(gt(h,min_h.get),not(eq(h,sum(curr_h.get,min_h.get))));
-    curr_h.set(minus(h,min_h.get)); h_change_all ];
-  [ and(lt(w,1280),eq(curr_w.get,1280)); narrow
-  | and(gt(w,1279),eq(curr_w.get,1024)); wide ];
+//proc onresize(w,h) { // echo('ucast2 onresize(',w,',',h,')');
+//  [ and(lt(h,min_h.get),not(eq(curr_h.get,min_h.get)));
+//    curr_h.set(0); h_change_all
+//  | and(gt(h,min_h.get),not(eq(h,sum(curr_h.get,min_h.get))));
+//    curr_h.set(minus(h,min_h.get)); h_change_all ];
+//  [ and(lt(w,1280),eq(curr_w.get,1280)); narrow
+//  | and(gt(w,1279),eq(curr_w.get,1024)); wide ];
+//}
+func onresize(w,h) { 
+  if (virgin) return;
+  if (h<min_h && curr_h!=min_h) {
+    curr_h= 0; h_change_all()
+  }
+  elseif (h>min_h && h!=curr_h+min_h) {
+    curr_h= h-min_h; h_change_all();
+  }
+  if (w<1280 && curr_w==1280) 
+    narrow()
+  elseif (w>=1280 && curr_w==1024)
+    wide();
 }
 
 # změna šířky 1024/1280
@@ -306,7 +341,7 @@ proc reload(id_pobyt) { var filtr:text, id_pobyt0:number
   [ u.dup.get; filtr.set(conc('/*duplicity*/',filtr)) ];
   [ u.doc.get; filtr.set(conc('/*dokumenty*/',filtr)) ];
   [ echo("browse_load"); 
-    set_trace('f',1);
+//    set_trace('f',1);
     u.b.browse_load(conc(filtr," /*AND funkce!=99*/ AND p.id_akce=",the_duakce.get),
       "IF(funkce<=2,1,funkce),_nazev",
       '',0,0,1/*1=quiet*/,
@@ -314,7 +349,7 @@ proc reload(id_pobyt) { var filtr:text, id_pobyt0:number
               ",@soubeh:=",the_soubeh.get,
               ",@access:=",my_access.get,
               ",@app:='",sys('ezer','options','app'),"'"));
-    set_trace('f',0);
+//    set_trace('f',0);
     u.b.browse_focus;
     [ id_pobyt; id_pobyt0.set(id_pobyt) ];
     { id_pobyt0; { u.b.raise('onrowclick',id_pobyt0)
@@ -581,7 +616,7 @@ form _header [,,380,50] {
     func onchanged() {
       if (this.key()==99) // všichni=default
         u.b.init_queries(1)
-        elseif (this.key()==0) // nezařazení
+      elseif (this.key()==0) // nezařazení
         u.b.xhnizdo.set_query(1,'?',1)
       else 
         u.b.xhnizdo.set_query(1,substr(this,0,1),1)

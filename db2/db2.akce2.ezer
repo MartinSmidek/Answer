@@ -426,7 +426,7 @@ table osoba { key_id:'id_osoba'
   number nomail { help:"nomail|nechce přijímat hromadně rozesílané informace" }
   text telefon
   text spz
-  date narozeni { sql_pipe:'sql_date1'}
+  date narozeni { sql_pipe:'sql_date_year' }
   number uvitano { help:"uvítáno|bylo uvítáno ve společenství" }
   number iniciace { help:"mrop|rok iniciace nebo 0" }
   number firming { help:"firm|rok posledního firmingu nebo 0" }
@@ -630,7 +630,7 @@ table dopis { key_id:'id_dopis'
 }
 
 map ms_akce_hnizda:      text            // vytváří se dynamicky jako při použití select
-map ms_akce_hnizda_plus: text            // ... včetně 'všichni'=99, nezařazení=0
+map ms_akce_hnizda_plus: text            // ... včetně 'všichni'=99:, nezařazení=0:?
 map ms_akce_hnizda_tisk: text            // ... včetně 'všichni'=0
 map ms_akce_typ:      table _cis {where:"druh='ms_akce_typ'",       order:'poradi', key_id:'data'}  // ikona=1 pro muže, 2 pro ženy, jinak 0
 map ms_akce_clen:     table _cis {where:"druh='ms_akce_clen'",      order:'poradi', key_id:'data'}
