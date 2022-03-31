@@ -491,7 +491,7 @@ table rodina { key_id:'id_rodina'
   number nomaily { help:"nomaily|nechtějí přijímat hromadně rozesílané informace - viz poznámka" }
   text spz
   number svatba
-  date datsvatba { sql_pipe:'sql_date1'}
+  date datsvatba { sql_pipe:'sql_date_year'}
   number rozvod
   text r_umi      // #ms_umi
   number r_ms     // počet účastí na MS mimo YS,FA

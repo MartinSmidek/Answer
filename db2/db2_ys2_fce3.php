@@ -323,7 +323,7 @@ function git_make($par) {
     fce_error('chybná aktuální složka');
   // proveď příkaz Git
   $state= 0;
-  $branch= $folder=='ezer' ? "ezer$ezer_version" : 'master';
+  $branch= $folder=='ezer' ? ($ezer_version=='3.1' ? 'master' : 'ezer3.2') : 'master';
   switch ($cmd) {
     case 'log':
     case 'status':
