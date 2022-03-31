@@ -307,7 +307,7 @@ function git_make($par) {
   global $abs_root, $ezer_version;
   $bean= preg_match('/bean/',$_SERVER['SERVER_NAME'])?1:0;
   display("ezer$ezer_version, abs_root=$abs_root, bean=$bean");
-  if ($ezer_version!='3.2') { fce_error("POZOR není aktivní jádro 3.2 ale $ezer_version"); }
+  if ($ezer_version!='3.1') { fce_error("POZOR není aktivní jádro 3.1 ale $ezer_version"); }
   $cmd= $par->cmd;
   $folder= $par->folder;
   $lines= array();

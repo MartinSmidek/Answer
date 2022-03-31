@@ -6148,13 +6148,11 @@ end:
 #   platit = součet předepsaných plateb
 function akce2_strava_pary($akce,$par,$title,$vypis,$export=false,$id_pobyt=0) { //trace();
 //                                                                 debug($par,"akce2_strava_pary");
-  global $diety, $diety_, $jidlo_, $tisk_hnizdo;
+  global $diety, $tisk_hnizdo;
   $jen_hnizdo= $tisk_hnizdo ? " AND hnizdo=$tisk_hnizdo " : '';
-  $ord= $par->ord ? $par->ord : "IF(funkce<=2,1,funkce),IF(pouze=0,r.nazev,o.prijmeni)";
   $souhrn= $par->souhrn?:0;
   $result= (object)array();
   $cnd= 1;
-  $html= '';
   $href= '';
   $n= 0;
   // zjištění sloupců (0=ne)
@@ -6219,8 +6217,9 @@ function akce2_strava_pary($akce,$par,$title,$vypis,$export=false,$id_pobyt=0) {
     if ( isset($f) ) $fmts[$fld]= $f;
   }
 //                                                         debug($suma);
-  // pokud není id_pobyt tak vyloučíme náhradníky + nepřijel + odhlášen + přihláška
-  $cond.= $id_pobyt ? " AND p.id_pobyt=$id_pobyt" : " AND funkce NOT IN (9,10,14,13)";
+  // pokud není id_pobyt tak vyloučíme náhradníky + odhlášen + přihláška
+  // naopak 'nepřijel' zahrneme (strava již byla objednána)
+  $cond.= $id_pobyt ? " AND p.id_pobyt=$id_pobyt" : " AND funkce NOT IN (9,14,13)";
   $jsou_pecouni= false;
   // data akce
   $flds_diety= isset($diety['_bm'])
@@ -6634,27 +6633,28 @@ end:
 function tisk2_text_vyroci($akce,$par,$title,$vypis,$export=false) { trace();
   global $tisk_hnizdo;
   $jen_hnizdo= $tisk_hnizdo ? " AND hnizdo=$tisk_hnizdo " : '';
+  $cond= "id_akce=$akce $jen_hnizdo AND p.funkce NOT IN (9,10,13,14)";
   $result= (object)array('_error'=>0);
   $html= '';
   // data akce
   $vyroci= array();
   // narozeniny
   $res= tisk2_qry('ucastnik','prijmeni,jmeno,narozeni,role',
-    "id_akce=$akce $jen_hnizdo AND CONCAT(YEAR(datum_od),SUBSTR(narozeni,5,6)) BETWEEN datum_od AND datum_do",
+    "$cond AND CONCAT(YEAR(datum_od),SUBSTR(narozeni,5,6)) BETWEEN datum_od AND datum_do",
     "","SUBSTR(narozeni,5,6)");
   while ( $res && ($x= pdo_fetch_object($res)) ) {
     $vyroci[$x->role=='d'?'d':'a'][]= "{$x->prijmeni} {$x->jmeno}|".sql_date1($x->narozeni);
   }
   // výročí
   $res= tisk2_qry('pobyt_dospeli_ucastnici','datsvatba',
-    "id_akce=$akce $jen_hnizdo AND CONCAT(YEAR(datum_od),SUBSTR(datsvatba,5,6)) BETWEEN datum_od AND datum_do",
+    "$cond AND CONCAT(YEAR(datum_od),SUBSTR(datsvatba,5,6)) BETWEEN datum_od AND datum_do",
     "","SUBSTR(datsvatba,5,6)");
   while ( $res && ($x= pdo_fetch_object($res)) ) {
     $vyroci['s'][]= "$x->_jm|".sql_date1($x->datsvatba);
   }
   // nepřivítané děti mladší 2 let
   $res= tisk2_qry('ucastnik','prijmeni,jmeno,narozeni,role,ROUND(DATEDIFF(a.datum_od,o.narozeni)/365.2425,1) AS _vek',
-    "id_akce=$akce $jen_hnizdo AND role='d' AND o.uvitano=0","_vek<2","prijmeni");
+    "$cond AND role='d' AND o.uvitano=0","_vek<2","prijmeni");
   while ( $res && ($x= pdo_fetch_object($res)) ) {
     $vyroci['v'][]= "{$x->prijmeni} {$x->jmeno}|".sql_date1($x->narozeni);
   }
@@ -6850,8 +6850,7 @@ function narozeni2roky_sql($time_sql,$now_sql=0) {
 # ucastnik                => každý účastník zvlášť
 # pobyt_rodiny            => _jmena, _adresa, _telefony, _emaily
 function tisk2_qry($typ,$flds='',$where='',$having='',$order='') { //trace();
-  $where=  $where  ? " WHERE $where AND p.funkce NOT IN (9,10,13,14) " 
-                   : ' WHERE p.funkce NOT IN (9,10,13,14) ';
+  $where=  $where  ? " WHERE $where " : '';
   $having= $having ? " HAVING $having " : '';
   $order=  $order  ? " ORDER BY $order " : '';
   switch ($typ) {
