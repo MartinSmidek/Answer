@@ -6,10 +6,11 @@
   global // import 
     $ezer_root; 
   global // export
-    $EZER, $ezer_server;
+    $EZER, $ezer_server, $ezer_version;
   
   // vyzvednutí ostatních hodnot ze SESSION
   $ezer_server=  $_SESSION[$ezer_root]['ezer_server'];
+  $ezer_version= "ezer{$_SESSION[$ezer_root]['ezer']}";
   $kernel= "ezer{$_SESSION[$ezer_root]['ezer']}";
   $abs_root=     $_SESSION[$ezer_root]['abs_root'];
   $rel_root=     $_SESSION[$ezer_root]['rel_root'];

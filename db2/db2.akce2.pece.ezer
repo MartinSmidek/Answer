@@ -68,7 +68,7 @@ proc init_pece() { //echo('init_pece ',the_title.get);
 }
 # nastavení pro akci v hnízdech
 proc pece_hnizda() { var opts:object
-  echo("HNIZDA=",the_hnizda.get);
+  echo("pece HNIZDA=",the_hnizda.get);
   { the_hnizda.get; 
     header.hnizdo.set_attrib('options','ms_akce_hnizda_plus.nazev');
     up.b.xhnizdo.set_attrib('map_pipe','ms_akce_hnizda.zkratka');
