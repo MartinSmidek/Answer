@@ -263,8 +263,9 @@ function akce2_info($id_akce,$text=1,$pobyty=0) { trace();
   $funkce=  map_cis('ms_akce_funkce','zkratka');  // funkce na akci
   $pfunkce= map_cis('ms_akce_pfunkce','zkratka'); // funkce pečovatele na akci
   $bad= "<b style='color:red'>!!!</b>";
-  $platby= $uhrady= $uhrady_d= $pfces= $fces= $pob= array();
-  $celkem= $uhrady_celkem= $uhradit_celkem= $vratit_celkem= $vraceno= $dotace_celkem= $dary_celkem= 0;
+  $uhrady= $uhrady_d= $pfces= $fces= $pob= array();
+  $celkem= $uhrady_celkem= $uhrady_odhlasenych= $uhradit_celkem= $vratit_celkem= 0;
+  $vraceno= $dotace_celkem= $dary_celkem= 0;
   $aviz= 0;
   $_hnizda= '';  $hnizda= array(); $hnizdo= array(); 
   $soubeh= 0; // hlavní nebo souběžná akce
@@ -408,6 +409,8 @@ function akce2_info($id_akce,$text=1,$pobyty=0) { trace();
         else 
           $uhrady[$u_zpusob][$u_stav]+= $u_castka;
         $uhrady_celkem+= $u_castka;
+        if (in_array($fce,array(13,14,10,9) )) 
+          $uhrady_odhlasenych+= $u_castka;
         if ($u_stav==4) 
           $vraceno+= $u_castka;
       }
@@ -676,6 +679,7 @@ function akce2_info($id_akce,$text=1,$pobyty=0) { trace();
         $bilance_slev= $dary_celkem + $dotace_celkem;
         $sgn1= $bilance>0 ? '+' : '';
         $sgn2= $bilance_slev>0 ? '+' : '';
+        $sgn3= $uhrady_odhlasenych>0 ? '+' : '';
         $av= $aviz ? "<td $st> a $_aviz platby</td>" : '<td></td>';
         $tab.= "<tr><td $st>ZAPLACENO</td><td align='right' $st><b>$uhrady_celkem</b></td>$av
           <td>dary</td><td align='right'>$dary_celkem</td></tr>";
@@ -683,6 +687,9 @@ function akce2_info($id_akce,$text=1,$pobyty=0) { trace();
           <td>slevy</td><td align='right'>$dotace_celkem</td></tr>";
         $tab.= "<tr><td>rozdíl</td><td align='right' $st>$sgn1$bilance</td><td></td>
           <td>bilance</td><td align='right' $st><b>$sgn2$bilance_slev</b></td></tr>";
+        if ($uhrady_odhlasenych) 
+          $tab.= "<tr><td>(v tom odhlášení atp.</td><td align='right'>$sgn3$uhrady_odhlasenych</td>
+            <td>)</td><td></td><td></td></tr>";
       }
       else {
         $tab.= "<tr><td $st>ZAPLACENO</td><td align='right' $st><b>$uhrady_celkem</b></td>$av</tr>";
