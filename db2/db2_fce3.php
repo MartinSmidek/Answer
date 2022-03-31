@@ -665,19 +665,24 @@ function akce2_info($id_akce,$text=1,$pobyty=0) { trace();
         }
       }
       display("vrátit=$vratit_celkem, vráceno=$vraceno");
-      if ($vratit_celkem || $vraceno)
+      if ($vratit_celkem!=-$vraceno) 
+        fce_warning("má být vráceno $vratit_celkem ale bylo vráceno=$vraceno");
+      if ($vratit_celkem && $vratit_celkem!=-$vraceno)
         $help.= "<br>Správnost vratek za storna je třeba kontrolovat v <b>Platba za akci</b>";
+      else
+        $help.= "<br>... nyní se to zdá být v pořádku (předpisy storna se rovnají jejich platbám)";
       if ($uhradit_celkem) {
         $bilance= $uhrady_celkem - $uhradit_celkem;
         $bilance_slev= $dary_celkem + $dotace_celkem;
-        $sgn= $bilance>0 ? '+' : '';
+        $sgn1= $bilance>0 ? '+' : '';
+        $sgn2= $bilance_slev>0 ? '+' : '';
         $av= $aviz ? "<td $st> a $_aviz platby</td>" : '<td></td>';
         $tab.= "<tr><td $st>ZAPLACENO</td><td align='right' $st><b>$uhrady_celkem</b></td>$av
           <td>dary</td><td align='right'>$dary_celkem</td></tr>";
         $tab.= "<tr><td>požadováno</td><td align='right'><b>$uhradit_celkem</b></td><td></td>
           <td>slevy</td><td align='right'>$dotace_celkem</td></tr>";
-        $tab.= "<tr><td>bilance</td><td align='right' $st><b>$sgn$bilance</b></td><td></td>
-          <td></td><td align='right' $st>$bilance_slev</td></tr>";
+        $tab.= "<tr><td>rozdíl</td><td align='right' $st>$sgn1$bilance</td><td></td>
+          <td>bilance</td><td align='right' $st><b>$sgn2$bilance_slev</b></td></tr>";
       }
       else {
         $tab.= "<tr><td $st>ZAPLACENO</td><td align='right' $st><b>$uhrady_celkem</b></td>$av</tr>";
@@ -686,8 +691,15 @@ function akce2_info($id_akce,$text=1,$pobyty=0) { trace();
         $help.= "<br><br>Pro akce s tzv. souběhem to bude chtít výsledek konzultovat s Carlosem :-)";
       $html.= "<hr style='clear:both;'>
         <div style='float:right;width:150px'><i>$help</i></div>
-        <h3 style='margin-bottom:3px;'>Přehled plateb za akci</h3>
-        <table>$tab</table>";
+        <h3 style='margin-bottom:3px;'>Přehled plateb za akci (z karty Účastníci)</h3>
+        <table>$tab</table>
+        <i>
+          <br>'ZAPLACENO' se počítá z pravého sloupce karty Účastníci/Platby za akci
+          <br>'požadováno' je částka požadovaná po účastnících po odpočtu vratek
+          <br>'rozdíl' je hrubý rozdíl (obsahuje i nevrácené platby odhlášených atp.)
+          <br>'dary' jsou přeplatky přítomných na akci, po odečtení slev dostaneme 'bilanci'
+        </i>
+          ";
     }
   }
   else {
@@ -957,7 +969,7 @@ function xx_akce_dite_kat($id_akce) {  //trace();
 function akce_test_dite_kat($kat,$narozeni,$id_akce) {  trace();
   $ret= (object)array('ok'=>0,'vek'=>0.0);
   $dite_kat= xx_akce_dite_kat($id_akce);
-  $od_do= select1("ikona","_cis","druh='$dite_kat' AND data=$kat");
+  $od_do= select1("ikona","_cis","druh='$dite_kat' AND data=$kat"); // věk od-do
   list($od,$do)= explode('-',$od_do);
   $akce_od= select1("datum_od","akce","id_duakce=$id_akce");
   $narozeni= sql_date1($narozeni,1);
@@ -1051,7 +1063,7 @@ end:
 # pokud x=1 přidá všichni+nezařazení, pokud x=0 bude 0-nezařazení, pokud x=2 bude 0-všichni
 function akce2_hnizda_options($hnizda_seznam,$x=0) {  
   $hnizda= preg_split("/\s*,\s*/",$hnizda_seznam);
-  $text= $x==1 ? "99::všichni,0:-:nezařazení" : ($x==0 ? '0:?:nezařazení' : '0:?:všichni');
+  $text= $x==1 ? "99::všichni,0:-:nezařazení" : ($x==0 ? '0:?:nezařazení' : '0::všichni');
   foreach($hnizda as $i=>$hnizdo) {
     $h0= strtoupper($hnizdo[0]);
     $i1= $i+1;
@@ -3544,7 +3556,7 @@ function ucast2_browse_ask($x,$tisk=false) {
           $cleni.= "~$r";                                           // rody
           $id_kmen= isset($o->_kmen) && $o->_kmen ? $o->_kmen : 0;
           $o->_kmen= "$kmen/$id_kmen";
-          $cleni.= "~" . sql_date1($o->narozeni);                   // narozeniny d.m.r
+          $cleni.= "~" . sql_date_year($o->narozeni);                   // narozeniny d.m.r
           $cleni.= "~" . sql_date1($o->web_souhlas);                // souhlas d.m.r
           # doplnění textů z kmenové rodiny pro zobrazení rodinných adres (jako disabled)
 //                                                 debug($o,"browse - o");
@@ -4640,14 +4652,24 @@ function ucast2_pridej_osobu($ido,$access,$ida,$idp,$idr=0,$role=0,$hnizdo=0) { 
   $datum_od= select("datum_od","akce","id_duakce=$ida");
   $vek= roku_k($narozeni,$datum_od);
   $kat= 0; $srole= 1;                                         // default= účastník, nedítě
-  // odhad typu účasti podle stáří a role
   if     ( $role=='p' )                         { $kat= 0; $srole= 5; }   // osob.peč.
   elseif ( $vek>=18 || $narozeni=='0000-00-00') { $kat= 0; $srole= 1; }   // účastník
-  elseif ( (!$role || $role=='d') && $vek>=17 ) { $kat= 1; $srole= 2; }   // dítě - A|G
-  elseif ( (!$role || $role=='d') && $vek>=13 ) { $kat= 1; $srole= 2; }   // dítě - A
-  elseif ( (!$role || $role=='d') && $vek>=3 )  { $kat= 3; $srole= 2; }   // dítě - C
-  elseif ( (!$role || $role=='d') && $vek>=2 )  { $kat= 5; $srole= 2; }   // dítě - E
-  elseif ( (!$role || $role=='d') && $vek>=0 )  { $kat= 6; $srole= 3; }   // dítě - F
+  elseif ( !$role || $role=='d' ) {                                       // děti podle čísleníku
+    // odhad typu účasti dítěte podle stáří, role a organizace
+    $dite_kat= xx_akce_dite_kat($ida);
+    // {L|-},{c|p},{D|d|p|C} = lůžko/bez, celá/poloviční, s_role podle ms_akce_s_role
+    $akce_dite_kat= map_cis($dite_kat,'data'); 
+    $akce_dite_kat_LpD= map_cis($dite_kat,'barva'); 
+    $akce_dite_kat_vek= map_cis($dite_kat,'ikona'); // od-do
+    foreach ($akce_dite_kat as $kat) {
+      list($od,$do)= explode('-',$akce_dite_kat_vek[$kat]);
+      if ( $vek>=$od && $vek<$do) {
+        $LpD= explode(',',$akce_dite_kat_LpD[$kat]);
+        $srole= select('data','_cis',"druh='ms_akce_s_role' AND ikona='$LpD[2]' ");
+        break;
+      }
+    }      
+  }
   // přidej k pobytu
   $ret->spolu= ezer_qry("INSERT",'spolu',0,array(
     (object)array('fld'=>'id_pobyt', 'op'=>'i','val'=>$idp),
