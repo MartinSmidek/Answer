@@ -302,7 +302,7 @@ function akce2_info($id_akce,$text=1,$pobyty=0) { trace();
              o.jmeno,'') ORDER BY t.role SEPARATOR ' ')) AS _jmena,
            IF(ISNULL(r.id_rodina),'',GROUP_CONCAT(IF(t.role NOT IN ('a','b'),CONCAT(
                IF(s.s_role=5,'§',''),
-               ROUND(DATEDIFF(a.datum_od,o.narozeni)/365.2425,0))
+               ROUND(IF(MONTH(o.narozeni),DATEDIFF(a.datum_od,o.narozeni)/365.2425,YEAR(a.datum_od)-YEAR(o.narozeni)),0))
              ,'') ORDER BY o.narozeni DESC)) AS _vekdeti"
         : '1';
     // projdeme pobyty
@@ -317,10 +317,10 @@ function akce2_info($id_akce,$text=1,$pobyty=0) { trace();
         ? "LEFT JOIN rodina AS r ON r.id_rodina=p.i0_rodina" : '';
     $qry= "SELECT a.nazev, a.datum_od, a.datum_do, now() as _ted,i0_rodina,funkce,p.web_zmena,web_changes,
              COUNT(id_spolu) AS _clenu,IF(c.ikona=2,1,0) AS _pro_pary,a.hnizda,p.hnizdo,
-             SUM(IF(ROUND(DATEDIFF(a.datum_od,o.narozeni)/365.2425,1)<18,1,0)) AS _deti,
-             SUM(IF(CEIL(DATEDIFF(a.datum_od,o.narozeni)/365.2425)<=3,1,0)) AS _kocar,
-             SUM(IF(ROUND(DATEDIFF(a.datum_od,o.narozeni)/365.2425,1)>=18 AND sex=1,1,0)) AS _muzu,
-             SUM(IF(ROUND(DATEDIFF(a.datum_od,o.narozeni)/365.2425,1)>=18 AND sex=2,1,0)) AS _zen,
+             SUM(IF(ROUND(IF(MONTH(o.narozeni),DATEDIFF(a.datum_od,o.narozeni)/365.2425,YEAR(a.datum_od)-YEAR(o.narozeni)),1)<18,1,0)) AS _deti,
+             SUM(IF(CEIL(IF(MONTH(o.narozeni),DATEDIFF(a.datum_od,o.narozeni)/365.2425,YEAR(a.datum_od)-YEAR(o.narozeni)))<=3,1,0)) AS _kocar,
+             SUM(IF(ROUND(IF(MONTH(o.narozeni),DATEDIFF(a.datum_od,o.narozeni)/365.2425,YEAR(a.datum_od)-YEAR(o.narozeni)),1)>=18 AND sex=1,1,0)) AS _muzu,
+             SUM(IF(ROUND(IF(MONTH(o.narozeni),DATEDIFF(a.datum_od,o.narozeni)/365.2425,YEAR(a.datum_od)-YEAR(o.narozeni)),1)>=18 AND sex=2,1,0)) AS _zen,
              SUM(IF(s.s_role=5 AND s.pfunkce=0,1,0)) AS _chuv,
              SUM(IF(s.s_role=5 AND s.pfunkce=5,1,0)) AS _po,
              SUM(IF(s.s_role=4 AND s.pfunkce=4,1,0)) AS _pp,
@@ -3365,7 +3365,7 @@ function ucast2_browse_ask($x,$tisk=false) {
     # atributy rodin
     $qr= pdo_qry("SELECT * FROM rodina AS r WHERE deleted='' AND id_rodina IN (0$rodiny)");
     while ( $qr && ($r= pdo_fetch_object($qr)) ) {
-      $r->datsvatba= sql_date1($r->datsvatba);                  // svatba d.m.r
+      $r->datsvatba= sql_date_year($r->datsvatba);                  // svatba d.m.r
       if ( $r->r_umi && $rodina_pobyt[$r->id_rodina] ) {
         // umí-li něco rodina a je na pobytu - velkým
         $pobyt[$rodina_pobyt[$r->id_rodina]]->x_umi=
@@ -4116,14 +4116,14 @@ function ucast2_auto_rodiny($patt,$par) {  #trace();
 function akce2_auto_jmena1($patt,$par) {  #trace();
   $a= array();
   $limit= 20;
-  $dnes= date("Y-m-d");
   $n= 0;
   if ( $par->patt!='whole' ) {
     $is= strpos($patt,' ');
     $patt= $is ? substr($patt,0,$is) : $patt;
   }
   // osoby
-  $AND= $par->deti ? '' : "AND (narozeni='0000-00-00' OR DATEDIFF('$dnes',narozeni)/365.2425>15)";
+  $AND= $par->deti ? '' 
+      : "AND (narozeni='0000-00-00' OR IF(MONTH(narozeni),DATEDIFF(NOW(),narozeni)/365.2425,YEAR(NOW())-YEAR(narozeni))>15)";
   $qry= "SELECT prijmeni, jmeno, id_osoba AS _key
          FROM osoba
          LEFT JOIN tvori USING(id_osoba)
@@ -4982,7 +4982,8 @@ function akce2_starsi_mrop_pdf($akce) { trace();
   $rg= pdo_qry("
     SELECT
       jmeno,prijmeni,skupina,pokoj,funkce,
-      ROUND(DATEDIFF('$datum_od',o.narozeni)/365.2425,0) AS vek,
+      -- ROUND(DATEDIFF('$datum_od',o.narozeni)/365.2425,0) AS vek,
+      ROUND(IF(MONTH(o.narozeni),DATEDIFF('$datum_od',o.narozeni)/365.2425,YEAR('$datum_od')-YEAR(o.narozeni)),0) AS vek,
       IF(o.adresa,o.ulice,IFNULL(r2.ulice,r1.ulice)) AS ulice,
       IF(o.adresa,o.psc,IFNULL(r2.psc,r1.psc)) AS psc,
       IF(o.adresa,o.obec,IFNULL(r2.obec,r1.obec)) AS obec,
@@ -5386,7 +5387,7 @@ function tisk2_sestava_lidi($akce,$par,$title,$vypis,$export=false) { trace();
       s.poznamka AS s_note,s.pfunkce,s.dite_kat,s.skupinka,
       IFNULL(r2.note,r1.note) AS r_note,
       IFNULL(r2.role,r1.role) AS r_role,
-      ROUND(DATEDIFF(a.datum_od,o.narozeni)/365.2425,1) AS _vek,
+      ROUND(IF(MONTH(o.narozeni),DATEDIFF(a.datum_od,o.narozeni)/365.2425,YEAR(a.datum_od)-YEAR(o.narozeni)),1) AS _vek,
       (SELECT GROUP_CONCAT(prijmeni,' ',jmeno)
         FROM akce JOIN pobyt ON id_akce=akce.id_duakce
         JOIN spolu ON spolu.id_pobyt=pobyt.id_pobyt
@@ -5415,7 +5416,7 @@ function tisk2_sestava_lidi($akce,$par,$title,$vypis,$export=false) { trace();
     $n++;
     $clmn[$n]= array();
     // doplnění počítaných položek
-    $x->narozeni_dmy= sql_date1($x->narozeni);
+    $x->narozeni_dmy= sql_date_year($x->narozeni);
     foreach($flds as $f) {
       switch ($f) {
       case '1':                                                       // 1
@@ -6653,7 +6654,7 @@ function tisk2_text_vyroci($akce,$par,$title,$vypis,$export=false) { trace();
     $vyroci['s'][]= "$x->_jm|".sql_date1($x->datsvatba);
   }
   // nepřivítané děti mladší 2 let
-  $res= tisk2_qry('ucastnik','prijmeni,jmeno,narozeni,role,ROUND(DATEDIFF(a.datum_od,o.narozeni)/365.2425,1) AS _vek',
+  $res= tisk2_qry('ucastnik','prijmeni,jmeno,narozeni,role,ROUND(IF(MONTH(o.narozeni),DATEDIFF(a.datum_od,o.narozeni)/365.2425,YEAR(a.datum_od)-YEAR(o.narozeni)),1) AS _vek',
     "$cond AND role='d' AND o.uvitano=0","_vek<2","prijmeni");
   while ( $res && ($x= pdo_fetch_object($res)) ) {
     $vyroci['v'][]= "{$x->prijmeni} {$x->jmeno}|".sql_date1($x->narozeni);
@@ -6911,7 +6912,7 @@ function tisk2_qry($typ,$flds='',$where='',$having='',$order='') { //trace();
         LEFT JOIN tvori AS pt ON pt.id_rodina=p.i0_rodina AND role IN ('a','b') AND ps.id_osoba=pt.id_osoba
         LEFT JOIN osoba AS po ON po.id_osoba=pt.id_osoba
         JOIN osoba AS pso ON pso.id_osoba=ps.id_osoba
-      $where AND IF(funkce=99,1,DATEDIFF(a.datum_od,pso.narozeni)/365.2425>18) 
+      $where AND IF(funkce=99,1,IF(MONTH(pso.narozeni),DATEDIFF(a.datum_od,pso.narozeni)/365.2425,YEAR(a.datum_od)-YEAR(pso.narozeni))>18) 
       GROUP BY p.id_pobyt $having $order
     ";
     break;
@@ -7398,7 +7399,8 @@ function akce2_skup_popo($akce,$par,$title,$vypis,$export) { trace();
             LEFT(GROUP_CONCAT(DISTINCT IF(t.role='a',o.jmeno,'') SEPARATOR ''),1) as jmeno_m,
             LEFT(GROUP_CONCAT(DISTINCT IF(t.role='b',o.jmeno,'') SEPARATOR ''),1) as jmeno_z,
             ( SELECT CONCAT(COUNT(*),';',
-                IFNULL(GROUP_CONCAT(ROUND(DATEDIFF(a.datum_od,narozeni)/365.2425) ORDER BY narozeni DESC),''))
+                -- IFNULL(GROUP_CONCAT(ROUND(DATEDIFF(a.datum_od,narozeni)/365.2425) ORDER BY narozeni DESC),''))
+                IFNULL(GROUP_CONCAT(ROUND(IF(MONTH(narozeni),DATEDIFF(a.datum_od,narozeni)/365.2425,YEAR(a.datum_od)-YEAR(narozeni))) ORDER BY narozeni DESC),''))
               FROM tvori JOIN osoba USING (id_osoba)
               WHERE id_rodina=i0_rodina AND role='d'
             ) AS _deti,id_pobyt
@@ -8018,7 +8020,7 @@ function sql2roku($narozeni) {
   if ( $narozeni && $narozeni!='0000-00-00' ) {
     list($y,$m,$d)= explode('-',$narozeni);
     $now= time();
-    $nar= mktime(0,0,0,$m,$d,$y)+1;
+    $nar= mktime(0,0,0,$m,$d?:1,$y?:1)+1;
 //     $roku= ($now-$nar)/(60*60*24*365.2425);
     $roku= ceil(($now-$nar)/(60*60*24*365.2425));
   }
@@ -10863,7 +10865,7 @@ function sta2_mrop_vek($par,$export=false) {
          <tr><th>rok</th><th>účastníci</th><th>bylo na MS</th><th>%</th><th>prům. věk</th></tr>";
   $mr= pdo_qry("
     SELECT iniciace,COUNT(*) AS _kolik,SUM(IF(IFNULL(m._ms,0),1,0)) AS _ms, -- _roky,
-      ROUND(AVG(DATEDIFF(a.datum_od,o.narozeni)/365.2425),1) AS _vek
+      ROUND(AVG(IF(MONTH(o.narozeni),DATEDIFF(a.datum_od,o.narozeni)/365.2425,YEAR(a.datum_od)-YEAR(o.narozeni))),1) AS _vek
     FROM osoba AS o
     LEFT JOIN akce AS a ON mrop=1 AND YEAR(datum_od)=iniciace
     LEFT JOIN
@@ -10875,7 +10877,8 @@ function sta2_mrop_vek($par,$export=false) {
       JOIN osoba AS mo USING (id_osoba)
        WHERE ma.druh=1
         AND YEAR(datum_od)<=iniciace
-        AND ROUND(DATEDIFF(ma.datum_od,mo.narozeni)/365.2425,1)>18
+        -- AND ROUND(DATEDIFF(ma.datum_od,mo.narozeni)/365.2425,1)>18
+        AND ROUND(IF(MONTH(mo.narozeni),DATEDIFF(ma.datum_od,mo.narozeni)/365.2425,YEAR(ma.datum_od)-YEAR(mo.narozeni)),1)>18
       GROUP BY id_osoba
       ) AS m ON m.id_osoba=o.id_osoba  -- AND m.datum_od<a.datum_od
     WHERE deleted='' AND iniciace>0 $AND
@@ -11251,13 +11254,15 @@ function sta2_rodiny($org,$rok=0,$mez_k=2.0) { trace();
   $rx= pdo_qry("
     SELECT id_akce, YEAR(datum_od) AS _rok,
       COUNT(id_osoba) AS _clenu, COUNT(id_spolu) AS _spolu,
-      SUM(IF(/*t.role='d' AND*/ DATEDIFF(a.datum_od,o.narozeni)/365.2425 < 18 AND id_spolu,1,0)) AS _sebou,
-      SUM(IF(/*t.role='d' AND*/ DATEDIFF(a.datum_od,o.narozeni)/365.2425 < 18,1,0)) AS _deti,
-      SUM(IF(/*t.role='d' AND*/ DATEDIFF(a.datum_od,o.narozeni)/365.2425 < $mez_k 
+      SUM(IF(/*t.role='d' AND*/ IF(MONTH(o.narozeni),DATEDIFF(a.datum_od,o.narozeni)/365.2425,YEAR(a.datum_od)-YEAR(o.narozeni)) < 18 AND id_spolu,1,0)) AS _sebou,
+      SUM(IF(/*t.role='d' AND*/ IF(MONTH(o.narozeni),DATEDIFF(a.datum_od,o.narozeni)/365.2425,YEAR(a.datum_od)-YEAR(o.narozeni)) < 18,1,0)) AS _deti,
+      SUM(IF(/*t.role='d' AND*/ IF(MONTH(o.narozeni),DATEDIFF(a.datum_od,o.narozeni)/365.2425,YEAR(a.datum_od)-YEAR(o.narozeni)) < $mez_k 
         AND id_spolu,1,0)) AS _sebou_k, kocarek,
-      SUM(IF(t.role='a',DATEDIFF(a.datum_od,o.narozeni)/365.2425,0)) AS _vek_a,
-      SUM(IF(t.role='b',DATEDIFF(a.datum_od,o.narozeni)/365.2425,0)) AS _vek_b,
-      IF(r.datsvatba,DATEDIFF(a.datum_od,r.datsvatba)/365.2425,
+      SUM(IF(t.role='a',IF(MONTH(o.narozeni),DATEDIFF(a.datum_od,o.narozeni)/365.2425,YEAR(a.datum_od)-YEAR(o.narozeni)),0)) AS _vek_a,
+      SUM(IF(t.role='b',IF(MONTH(o.narozeni),DATEDIFF(a.datum_od,o.narozeni)/365.2425,YEAR(a.datum_od)-YEAR(o.narozeni)),0)) AS _vek_b,
+      -- IF(r.datsvatba,DATEDIFF(a.datum_od,r.datsvatba)/365.2425,
+        -- IF(r.svatba,YEAR(a.datum_od)-svatba,0)) AS _vek_m
+      IF(r.datsvatba,IF(MONTH(r.datsvatba),DATEDIFF(a.datum_od,r.datsvatba)/365.2425,YEAR(a.datum_od)-YEAR(r.datsvatba)),
         IF(r.svatba,YEAR(a.datum_od)-svatba,0)) AS _vek_m
     FROM pobyt AS p
     JOIN akce AS a ON id_akce=id_duakce
@@ -11403,18 +11408,19 @@ function sta2_sestava($org,$title,$par,$export=false) { trace();
       LEFT JOIN join_akce AS aj ON aj.id_akce=a.id_duakce
       LEFT JOIN (
         SELECT id_akce, COUNT(*) AS n_all, GROUP_CONCAT(DISTINCT xp.i0_rodina) AS _rr,
-          ROUND(SUM(IF(funkce IN (0,1) AND ROUND(DATEDIFF(xa.datum_od,xo.narozeni)/365.2425,1)>=18,
-                             DATEDIFF(xa.datum_od,xo.narozeni)/365.2425,0))
-              / SUM(funkce IN (0,1) AND IF(ROUND(DATEDIFF(xa.datum_od,xo.narozeni)/365.2425,1)>=18,1,0)))
+          ROUND(SUM(IF(funkce IN (0,1) AND ROUND(
+              IF(MONTH(xo.narozeni),DATEDIFF(xa.datum_od,xo.narozeni)/365.2425,YEAR(xa.datum_od)-YEAR(xo.narozeni)),1)>=18,
+              IF(MONTH(xo.narozeni),DATEDIFF(xa.datum_od,xo.narozeni)/365.2425,YEAR(xa.datum_od)-YEAR(xo.narozeni)),0))
+              / SUM(funkce IN (0,1) AND IF(ROUND(IF(MONTH(xo.narozeni),DATEDIFF(xa.datum_od,xo.narozeni)/365.2425,YEAR(xa.datum_od)-YEAR(xo.narozeni)),1)>=18,1,0)))
             AS a_vek,
-          SUM(IF(ROUND(DATEDIFF(xa.datum_od,xo.narozeni)/365.2425,1)<18,1,0)) AS n_dti,
-          SUM(IF(ROUND(DATEDIFF(xa.datum_od,xo.narozeni)/365.2425,1)>=18 AND xo.sex=1,1,0)) AS n_mzu,
-          SUM(IF(ROUND(DATEDIFF(xa.datum_od,xo.narozeni)/365.2425,1)>=18 AND xo.sex=2,1,0)) AS n_zen,
+          SUM(IF(ROUND(IF(MONTH(xo.narozeni),DATEDIFF(xa.datum_od,xo.narozeni)/365.2425,YEAR(xa.datum_od)-YEAR(xo.narozeni)),1)<18,1,0)) AS n_dti,
+          SUM(IF(ROUND(IF(MONTH(xo.narozeni),DATEDIFF(xa.datum_od,xo.narozeni)/365.2425,YEAR(xa.datum_od)-YEAR(xo.narozeni)),1)>=18 AND xo.sex=1,1,0)) AS n_mzu,
+          SUM(IF(ROUND(IF(MONTH(xo.narozeni),DATEDIFF(xa.datum_od,xo.narozeni)/365.2425,YEAR(xa.datum_od)-YEAR(xo.narozeni)),1)>=18 AND xo.sex=2,1,0)) AS n_zen,
           SUM(IF(xst.role='a',1,0)) AS n_ote, SUM(IF(xst.role='b',1,0)) AS n_mat,
           SUM(IF(xst.role='d',1,0)) AS n_dit, SUM(IF(xst.role NOT IN ('a','b','d'),1,0)) AS n_chu,
           SUM(IF(ISNULL(xst.role),1,0)) AS n_nul,
           SUM(IF(funkce=99,1,0)) AS n_pec,
-          ROUND(SUM(IF(funkce=99,DATEDIFF(xa.datum_od,xo.narozeni)/365.2425,0)) / SUM(IF(funkce=99,1,0)))
+          ROUND(SUM(IF(funkce=99,IF(MONTH(xo.narozeni),DATEDIFF(xa.datum_od,xo.narozeni)/365.2425,YEAR(xa.datum_od)-YEAR(xo.narozeni)),0)) / SUM(IF(funkce=99,1,0)))
             AS a_vek_pec
         FROM pobyt AS xp
         JOIN akce  AS xa ON xa.id_duakce=xp.id_akce
@@ -11440,7 +11446,8 @@ function sta2_sestava($org,$title,$par,$export=false) { trace();
         if ( $rr ) {
           $rs= pdo_qry("
             SELECT SUM(IF(role='d',1,0)),
-              SUM(IF(ROUND(DATEDIFF('$datum_od',o.narozeni)/365.2425,1)<18,1,0)) AS _deti
+              -- SUM(IF(ROUND(DATEDIFF('$datum_od',o.narozeni)/365.2425,1)<18,1,0)) AS _deti
+              SUM(IF(ROUND(IF(MONTH(o.narozeni),DATEDIFF('$datum_od',o.narozeni)/365.2425,YEAR('$datum_od')-YEAR(o.narozeni)),1)<18,1,0)) AS _deti
             FROM rodina AS r
               JOIN tvori AS t USING (id_rodina)
               JOIN osoba AS o USING (id_osoba)

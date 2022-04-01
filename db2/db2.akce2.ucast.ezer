@@ -2052,14 +2052,14 @@ form _aktivity [,,623,] { style:'height:fit-content'
     show idp { data:p.id_pobyt }
     show ids { data:s.id_spolu }
     show org { data:a.access }
-    show sty { expr:"IF(a.zruseno,1,IF(FLOOR(DATEDIFF(a.datum_od,o.narozeni)/365.2425)<18,2,0))" }
+    show sty { expr:"IF(a.zruseno,1,IF(FLOOR(IF(MONTH(o.narozeni),IF(MONTH(o.narozeni),DATEDIFF(a.datum_od,o.narozeni)/365.2425,YEAR(a.datum_od)-YEAR(o.narozeni)),YEAR(a.datum_od)-YEAR(o.narozeni)))<18,2,0))" }
     show rok  [,, 30,] { title:'rok', expr:"YEAR(a.datum_od)", format:'q*s-'
       css_cell:'org,0:,1:ezer_ys,2:ezer_fa,3:ezer_db' }
     show akce [,,150,] { title:'název', data:a.nazev, format:'q*s' }
     show fce  [,, 30,] { title:'fce', help:"u dětí jde o funkci rodičů"
       data:p.funkce, map_pipe:ms_akce_funkce.zkratka }
     show jak  [,, 30,] { title:'jak', help:"'dítě' znamená věk pod 18 let"
-      expr:"IF(FLOOR(DATEDIFF(a.datum_od,o.narozeni)/365.2425)<18,IF(s.s_role=4,'pom.p','dítě'),'')" }
+      expr:"IF(FLOOR(IF(MONTH(o.narozeni),DATEDIFF(a.datum_od,o.narozeni)/365.2425,YEAR(a.datum_od)-YEAR(o.narozeni)))<18,IF(s.s_role=4,'pom.p','dítě'),'')" }
     proc onsubmit() {
       accessed(org.get); //echo('přepnuto na akci ',akce.get);
       akce_show(ida.get,idp.get,conc(akce.get,' ',rok.get),'AKTIVITA')

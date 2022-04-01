@@ -226,7 +226,8 @@ function akce_ucastnici($akce,$cmd,$par=null) {
       $datum= date('Y-m-d');
       $xs=pdo_qry("
         SELECT id_pobyt,funkce,skupina,
-          ROUND(DATEDIFF('$datum',narozeni)/365.2425) AS _vek
+          -- ROUND(DATEDIFF('$datum',narozeni)/365.2425) AS _vek
+          ROUND(IF(MONTH(narozeni),DATEDIFF('$datum',narozeni)/365.2425,YEAR('$datum')-YEAR(narozeni))) AS _vek
         FROM pobyt 
         JOIN spolu USING (id_pobyt)
         JOIN osoba USING (id_osoba)
@@ -843,7 +844,8 @@ function sta2_ms_stat($par) {
   // získání individuálních a rodinných údajů
     $mr= pdo_qry("
       SELECT id_rodina,funkce,YEAR(datsvatba),
-        GROUP_CONCAT(CONCAT(t.role,'~',ROUND(DATEDIFF(datum_od,narozeni)/365.2425))) AS _inf,
+        -- GROUP_CONCAT(CONCAT(t.role,'~',ROUND(DATEDIFF(datum_od,narozeni)/365.2425))) AS _inf,
+        GROUP_CONCAT(CONCAT(t.role,'~',ROUND(IF(MONTH(narozeni),DATEDIFF(datum_od,narozeni)/365.2425,YEAR(datum_od)-YEAR(narozeni))))) AS _inf,
         MAX(iniciace) AS _mrop,
         r.psc,r.stat,a.access,YEAR(datum_od),
         r.nazev AS _note
@@ -1990,7 +1992,8 @@ function sta2_mrop_stat_gen($par) {
         SELECT o.id_osoba,
           IF(o.kontakt AND o.email!='',MD5(REGEXP_SUBSTR(UPPER(TRIM(o.email)),'^[A-Z0-9._%-]+@[A-Z0-9.-]+\.[A-Z]+')),''),
           o.access,CONCAT(o.jmeno,' ',o.prijmeni),
-          ROUND(DATEDIFF('$datum',o.narozeni)/365.2425) AS _vek,
+          -- ROUND(DATEDIFF('$datum',o.narozeni)/365.2425) AS _vek,
+          ROUND(IF(MONTH(o.narozeni),DATEDIFF('$datum',o.narozeni)/365.2425,YEAR('$datum')-YEAR(o.narozeni))) AS _vek,
           IFNULL(svatba,0) AS _s1,IFNULL(YEAR(datsvatba),0) AS _s2,
           MIN(IFNULL(YEAR(od.narozeni),0)) AS _s3,
           SUM(IF(td.id_osoba,1,0)) AS _d,
@@ -2382,9 +2385,11 @@ function dot_prehled ($rok_or_akce,$par,$title='',$vypis='',$export=0,$hnizdo=0)
     $nadpis= "<h3>Podle údajů v Answeru</h3>";
     $rp= pdo_qry("
       SELECT 
-        IF(r.datsvatba,DATEDIFF(a.datum_od,r.datsvatba)/365.2425,
-          IF(r.svatba,YEAR(a.datum_od)-r.svatba,0)) AS _man,
-        ROUND(DATEDIFF(a.datum_od,o.narozeni)/365.2425,1) AS _vek,
+        -- IF(r.datsvatba,DATEDIFF(a.datum_od,r.datsvatba)/365.2425,
+          -- IF(r.svatba,YEAR(a.datum_od)-svatba,0)) AS _vek_m
+        IF(r.datsvatba,IF(MONTH(r.datsvatba),DATEDIFF(a.datum_od,r.datsvatba)/365.2425,YEAR(a.datum_od)-YEAR(r.datsvatba)),
+          IF(r.svatba,YEAR(a.datum_od)-svatba,0)) AS _vek_m,
+        ROUND(IF(MONTH(o.narozeni),DATEDIFF(a.datum_od,o.narozeni)/365.2425,YEAR(a.datum_od)-YEAR(o.narozeni)),1) AS _vek,
         sex,id_osoba,i0_rodina,IF(funkce IN (1,2),1,0),r.r_ms,t.role
       FROM pobyt AS p
       JOIN akce AS a ON id_akce=id_duakce
@@ -5656,8 +5661,9 @@ function ds_vek($narozeni,$fromday) {
   if ( $narozeni=='0000-00-00' )
     $vek= -1;
   else {
-    $vek= $fromday-sql2stamp($narozeni);
-    $vek= round($vek/(60*60*24*365.2425),1);
+    $vek= sql2roku($narozeni,date('Y-m-d', $fromday));
+//    $vek= $fromday-sql2stamp($narozeni);
+//    $vek= round($vek/(60*60*24*365.2425),1);
   }
   return $vek;
 }
