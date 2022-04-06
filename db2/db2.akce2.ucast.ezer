@@ -17,7 +17,6 @@ var the_duakce_local= 0,    // zobrazená akce - pokud se liší od the_duakce, 
 # -------------------------------------------------------------------------==> . inicializace panelu
 
 # události panelu
-proc onstart() {}
 func onfirstfocus() {
   spinner(1);
   the_duakce_local= 0;
@@ -26,10 +25,10 @@ func onfirstfocus() {
   init_forms();
   page.evd.onclick();
   akce_onstart();
-  onresize(sys('screen','width'),sys('screen','height'));
   onfocus();
   spinner(0);
   virgin= 0;
+  onresize(sys('screen','width'),sys('screen','height'));
 }
 proc onfocus() { 
   eq(the_duakce_local.get,the_duakce.get)
