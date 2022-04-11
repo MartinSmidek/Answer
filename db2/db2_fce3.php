@@ -6465,7 +6465,7 @@ function akce2_pokoje($akce,$par,$title,$vypis,$export=false) {
   }
   // výsledek
   $sdileni= $max_vek_spolu 
-      ? "<li>dvě děti mezi 3 a $max_vek_spolu lety budou sdílet dospělé lůžko (ale ne vždy se snesou)" 
+      ? "<li><i>dvě děti mezi 3 a $max_vek_spolu lety budou sdílet dospělé lůžko (ale ne vždy to jde)</i>" 
       : '';
   $res->html.= "<h3>Hrubý odhad počtu pokojů pro akci</h3>
     Za předpokladu, že:<ul>
