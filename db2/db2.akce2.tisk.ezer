@@ -375,6 +375,8 @@ menu m {type:'left', //active:*
     item {title:'Seznam změn - ostatní'                                                    skill:'m'
                                         ,par:°{typ:'cz',cnd:'1',zmeny:'0'
                                         ,tab:'rodina,pobyt,osoba,spolu',fld:'*'}}
+    item {title:'Odhad počtu pokojů I'  ,par:°{typ:'pok',max_vek_spolu:6}}
+    item {title:'Odhad počtu pokojů II' ,par:°{typ:'pok',max_vek_spolu:0}}
     item {title:'Statistika akce'       ,par:°{typ:'dot',cnd:'1',zdroj:'akce',par1:'ida'} skill:'#crz'}
   }
   # ------------------------------------------------------------------------------------==> jmenovky

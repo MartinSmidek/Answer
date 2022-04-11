@@ -4739,11 +4739,12 @@ function tisk2_sestava($akce,$par,$title,$vypis,$export=false,$hnizdo=0) { debug
      : ( $par->typ=='tab'  ? akce2_tabulka($akce,$par,$title,$vypis,$export)        //! předává se i typ=tab => náhradníci
      : ( $par->typ=='mrop' ? akce2_tabulka_mrop($akce,$par,$title,$vypis,$export)   //!
      : ( $par->typ=='stat' ? akce2_tabulka_stat($akce,$par,$title,$vypis,$export)   //!
-     : ( $par->typ=='dot'  ? dot_prehled($akce,$par,$title,$vypis,$export,$hnizdo)          //!
-     : ( $par->typ=='nut'  ? akce2_hnizda($akce,$par,$title,$vypis,$export)          //!
+     : ( $par->typ=='dot'  ? dot_prehled($akce,$par,$title,$vypis,$export,$hnizdo)  
+     : ( $par->typ=='pok'  ? akce2_pokoje($akce,$par,$title,$vypis,$export,$hnizdo) 
+     : ( $par->typ=='nut'  ? akce2_hnizda($akce,$par,$title,$vypis,$export)         
      : (object)array('html'=>"<i>Tato sestava zatím není převedena do nové verze systému,
           <a href='mailto:martin@smidek.eu'>upozorněte mě</a>, že ji už potřebujete</i>")
-     )))))))))))))))))))))))))))));
+     ))))))))))))))))))))))))))))));
 }
 # =======================================================================================> . seznamy
 function mb_strcasecmp($str1, $str2, $encoding = null) {
@@ -6392,6 +6393,92 @@ function akce2_sestava_td_style($fmt) {
     ? " style='".implode(';',$style)."'" : '';
 }
 # ======================================================================================> . přehledy
+# ------------------------------------------------------------------------------------- akce2 pokoje
+# odhad počtu potřebných pokojů, založený na následujících úvahách
+#  - rodiny tj. "pobyty" spolu nesdílí pokoje
+#  - dítě do 3 let spí ve své postýlce v pokoji rodičů
+#  - dvě děti mezi 3-6 lety spolu mohou sdílet jednu dospělou postel 
+#    $par->max_vek_spolu přitom určuje maximální věk dítětě, které se snese s mladším na lůžku
+function akce2_pokoje($akce,$par,$title,$vypis,$export=false) { 
+  global $EZER;
+  // ofsety v atributech členů pobytu
+  global $i_osoba_jmeno, $i_osoba_vek, $i_osoba_role, $i_osoba_prijmeni, $i_adresa, 
+      $i_osoba_kontakt, $i_osoba_telefon, $i_osoba_email, $i_osoba_note, $i_key_spolu, 
+      $i_spolu_note, $i_osoba_obcanka, $i_spolu_dite_kat, $i_osoba_dieta;
+//                                            debug($par,"akce2_pokoje");
+  $max_vek_spolu= isset($par->max_vek_spolu) ? $par->max_vek_spolu : 0;
+  $res= (object)array('html'=>'');
+  $c_dite_lcd= $org==2
+      ? map_cis('fa_akce_dite_kat','barva') 
+      : map_cis('ys_akce_dite_kat','barva');  
+  # diskuse souběhu: 0=normální akce, 1=hlavní akce, 2=souběžná akce
+  list($hlavni,$soubezna)= select("a.id_hlavni,IFNULL(s.id_duakce,0)",
+      "akce AS a LEFT JOIN akce AS s ON s.id_hlavni=a.id_duakce",
+      "a.id_duakce=$akce");
+  $soubeh= $soubezna ? 1 : ( $hlavni ? 2 : 0);
+  $browse_par= (object)array(
+    'cmd'=>'browse_load',
+    'cond'=>"p.id_akce=$akce AND p.funkce NOT IN (9,10,13,14)",  // jen přítomní
+//    'having'=>$hav,
+    'order'=>'a__nazev',
+    'sql'=>"SET @akce:=$akce,@soubeh:=$soubeh,@app:='{$EZER->options->root}';");
+  $y= ucast2_browse_ask($browse_par,true);
+//  /**/                                                   debug($y);
+  # rozbor výsledku browse/ask
+  array_shift($y->values);
+  $pokoj= array();
+  foreach ($y->values as $x) {
+    $xs= explode('≈',$x->r_cleni);
+//    /**/                                                 debug($x);
+    $pocet= 0;
+    $deti= array();
+    $male= 0;
+//                                                         if ( $x->key_pobyt==32146 ) debug($x);
+    foreach ($xs as $i=>$xi) {
+      $o= explode('~',$xi);
+//    /**/                                                 debug($o);
+//                                                         if ( $x->key_pobyt==32146 ) debug($o,"xi/$i");
+      if ( $o[$i_key_spolu] ) {
+        $pocet++;
+        if ( $o[$i_osoba_role]=='d' ) {
+          $deti[$i]['jmeno']= $o[$i_osoba_jmeno];
+          $vek= $deti[$i]['vek']= $o[$i_osoba_vek];
+          $deti[$i]['lcd']= $c_dite_lcd[$o[$i_spolu_dite_kat]]; 
+          // dítě do 3 let nepotřebuje postel
+          if ($vek<3) 
+            $pocet--;
+          elseif ($vek<$max_vek_spolu) {
+            $male++;
+          }
+        }
+      }
+    }
+//    /**/                                                 debug($deti,"DĚTI, $male");
+    // rozbor případů
+    $posteli= $pocet;
+    if ($male>=2) $posteli--;
+    /**/                                                 display("$posteli - $x->_nazev");
+    if (!isset($pokoj[$posteli])) $pokoj[$posteli]= 0;
+    $pokoj[$posteli]++;
+  }
+  // výsledek
+  $sdileni= $max_vek_spolu 
+      ? "<li>dvě děti mezi 3 a $max_vek_spolu lety budou sdílet dospělé lůžko, ale ne vždy to jde" : '';
+  $res->html.= "<h3>Hrubý odhad počtu pokojů pro akci</h3>
+    Za předpokladu, že:<ul>
+    <li> rodiny nesdílí pokoje (někdy ale starší děti ze spřátelených rodin chtějí)
+    <li> dítě do 3 let spí v dovezené postýlce s rodiči
+    $sdileni
+    </ul>
+    tak potřebujeme<br>
+    ";
+  ksort($pokoj);
+  foreach ($pokoj as $posteli=>$pocet) {
+    $res->html.= "<br><b>$pocet</b> $posteli-lůžkových pokojů";
+  }
+    /**/                                                 debug($pokoj,"pokoje");
+  return $res;
+}
 # ------------------------------------------------------------------------------ akce2 cerstve_zmeny
 # generování seznamu změn v pobytech na akci od par-datetime
 function akce2_cerstve_zmeny($akce,$par,$title,$vypis,$export=false) { 

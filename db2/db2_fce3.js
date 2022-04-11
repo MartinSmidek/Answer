@@ -6,7 +6,7 @@
 // zavede dynamicky potřebné moduly highcharts
 function highcharts_load() {
   if (typeof Highcharts=="undefined") {
-    let code= "../ezer3.1/client/licensed/highcharts/code";
+    let code= `../ezer${Ezer.version}/client/licensed/highcharts/code`;
     for (const modul of ['highcharts.js','highcharts-more.js',
         'modules/heatmap.js','modules/exporting.js','modules/export-data.js',
         'modules/accessibility.js']) {
@@ -207,7 +207,7 @@ Ezer.onlogin= function() {
 // po přihlášení:       pokud má tato datová práva
 function personify(access,from) {
 //  var v= Ezer.version=='ezer3.1' ? "<sub>3</sub>" : '';
-  var v= Ezer.version>'ezer3.1' ? `<sub><small>${Ezer.version.substr(4)}</small></sub>` : '';
+  var v= Ezer.version=='3.2' ? `<sub><small>${Ezer.version}</small></sub>` : '';
   var menu= jQuery('#access_menu'), body= jQuery(document.body);
   var orgs= ['','YMCA Setkání','YMCA Familia','obou organizací'];
   var tits= ['',`Answer${v} Setkání`,`Answer${v} Familia`,`Answer${v} (společný)`];
@@ -267,80 +267,6 @@ function browse_concat_clmn(browse,clmn_id) {
   }
   return list;
 }
-// ----------------------------------------------------------------------------------==> . evid_mapa
-// evid_mapa (label,operace[,mark[,další argumenty,...]])
-//      provede operaci nad mapou Klubu přátel a značkou kapra nebo člena
-// mark.id = členské číslo
-// mark.ezer = {
-//   a: aktivita
-//   k: číslo kapra nebo 0
-//   s: 60-kapr bez rybníku, 61-kapr s červeným rybníkem, 62-kapr se žlutým rybníkem
-// }
-//var evid_mapa_last= null;                       // poslední aktivní bod
-//
-// vymaže značky mimo výřez
-//function evid_mapa_focus(label) {
-//  if (label.map_type=='smap') {
-//    for (let m of label.layer_mark.getMarkers()) {
-//      if (!m.getCoords(label).inMap(label.map))
-//        label.layer_mark.removeMarker(m);
-//    }
-//  }
-//  else if (label.map_type=='gmap') {
-//    let viewPort= label.map.getBounds();
-//    for (var i in label.mark) {
-//      let m= label.mark[i];
-//      if ( !viewPort.contains(m.getPosition()) ) {
-//        label.mark[m.id].setMap(null);
-//        delete label.mark[m.id];
-//      }
-//    }
-//  }
-//  return 1;
-//  var viewPort= label.map.getBounds();
-//  for (var i in label.mark) {
-//    var m= label.mark[i];
-//    if ( !viewPort.contains(m.getPosition()) ) {
-//      label.mark[m.id].setMap(null);
-//      delete label.mark[m.id];
-//    }
-//  }
-//  return 1;
-//}
-//// zobrazí v mapě všechny selected
-//function evid_mapa_browse(label,browse) {
-//  var id_o, lat, lng, psc, marks='', del= '';
-//  for (var bi= 0; bi<browse.blen; bi++) {     // bi ukazuje do buf a keys
-//    id_o= Number(browse.buf[bi].id_o);
-//    if ( browse.keys_sel.indexOf(id_o)<0 ) continue;
-//    lat=  Number(browse.buf[bi].lat);
-//    lng=  Number(browse.buf[bi].lng);
-//    if ( !lat || !lng ) continue;
-//    psc= browse.buf[bi].psc;
-//    marks+= del+id_o+','+lat+','+lng+','+psc+',./ezer3.1/client/img/circle_green_15x15.png,7,7';
-////    marks+= del+id_o+','+lat+','+lng+','+psc+',CIRCLE,green,black';
-//    del= ';';
-//  }
-//  label.set({mark:marks});
-//  return 1;
-//}
-// zobrazí bod jako kroužek
-//function evid_mapa_curr(label,lat,lng,color,scale) {
-//  if ( typeof google!="undefined" && google.maps ) {
-//    if ( evid_mapa_last ) {
-//      evid_mapa_last.setMap(null);
-//    }
-//    var ll= new google.maps.LatLng(lat,lng);
-//    var lineSymbol= {
-//      path: google.maps.SymbolPath.CIRCLE, scale: scale||12,
-//      fillOpacity: 0.0, strokeColor:color||'blue', strokeWeight: 2
-//    };
-//    evid_mapa_last= new google.maps.Polyline({
-//      path: [ll,ll], icons: [{icon: lineSymbol}], map: label.map});
-//  }
-//  return 1;
-//}
-
 // ======================================================================================> Ezer.Form
 // ------------------------------------------------------------------------------- on_dblclk_copy_to
 //fm: Form.on_dblclk_copy_to (goal)
