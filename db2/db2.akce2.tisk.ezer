@@ -131,12 +131,12 @@ menu m {type:'left', //active:*
   menu d {tag:'d', title:'výpisy souběžné akce',type:'group',_sys:'*'
     item i {title:'Seznam dětí'                                                              skill:'f'
                                         ,par:{typ:'j',exp:'Excel2',ord:"prijmeni,jmeno"
-                                        ,cnd:"funkce!=99 AND pfunkce!=95",hav:"_vek<18"
+                                        ,cnd:"funkce!=99 AND pfunkce!=95",hav:"_vek<18 OR dite_kat=99"
                                         ,tit:'příjmení:15,jméno:12,ktg:5,věk:5,narození:12,obec:25,psč:7,ulice:25'
                                         ,fld:'prijmeni,jmeno,dite_kat,_vek,narozeni,obec,psc,ulice'}}
     item  {title:'Platby za děti'                                                            skill:'f'
                                         ,par:{typ:'j',exp:'Excel2',ord:"prijmeni,jmeno"
-                                        ,cnd:"funkce!=99 AND pfunkce!=95",hav:"_vek<18"
+                                        ,cnd:"funkce!=99 AND pfunkce!=95",hav:"_vek<18 OR dite_kat=99"
                                         ,tit:'příjmení:15,jméno:12,ktg:5,věk:5,poplatek:10'
                                         ,fld:'prijmeni,jmeno,dite_kat,_vek,_poplatek'}}
     item {title:'Pečouni'                                                                    skill:'f'
@@ -170,11 +170,13 @@ menu m {type:'left', //active:*
 #                                         ,tit:'příjmení:15,jména:20,obec:25,psč:7,ulice:25,telefon-m:12,email-m:28,telefon-z:12,e-mail_z:28'
 #                                         ,fld:'prijmeni,jmena,obec,psc,ulice,telefon_m,email_m,telefon_z,email_z'}}
     item {title:'Jednotlivci bez dětí'                                                       skill:'c;y;f'
-                                        ,par:{typ:'j',exp:'Excel2',cnd:"funkce!=99",hav:"_vek>=18 OR r_role IN ('a','b')"
+                                        ,par:{typ:'j',exp:'Excel2',cnd:"funkce!=99"
+                                        ,hav:"(_vek>=18 AND dite_kat!=99) OR r_role IN ('a','b')"
                                         ,tit:'příjmení:15,jméno:12,věk:5,narození:12,obec:25,psč:7,ulice:25'
                                         ,fld:'prijmeni,jmeno,_vek,narozeni,obec,psc,ulice'}}
     item {title:'Jednotlivci bez dětí'                                                       skill:'c'
-                                        ,par:{typ:'j',exp:'Excel2',cnd:"funkce!=99",hav:"_vek>=18 OR r_role IN ('a','b')"
+                                        ,par:{typ:'j',exp:'Excel2',cnd:"funkce!=99"
+                                        ,hav:"(_vek>=18 AND dite_kat!=99) OR r_role IN ('a','b')"
                                         ,tit:'příjmení:15,jméno:12,věk:5,narození:12,obec:25,psč:7,ulice:25'
                                         ,fld:'prijmeni,jmeno,_vek,narozeni,obec,psc,ulice'}}
     item {title:'Jednotlivci vč. dětí'                                                       skill:'y;f'
@@ -214,7 +216,7 @@ menu m {type:'left', //active:*
                                         ,fld:'prijmeni,jmena,obec,^id_pobyt'}}
     item {title:'Děti na akci'                                                               skill:'y;f'
                                         ,par:{typ:'j',exp:'Excel2',cnd:"funkce!=99 AND pfunkce!=95"
-                                        ,hav:"_vek<18",ord:"narozeni"
+                                        ,hav:"_vek<18 OR dite_kat=99",ord:"narozeni"
                                         ,tit:'příjmení:15,jméno:12,ktg:5,věk:5,narození:12,obec:25,psč:7,ulice:25'
                                         ,fld:'prijmeni,jmeno,dite_kat,_vek,narozeni,obec,psc,ulice'}}
     item {title:'Účastníci akce s poznámkami'
@@ -239,7 +241,7 @@ menu m {type:'left', //active:*
                                         ,fld:'prijmeni,jmeno,telefony'}}
     item {title:'Dospělí úč. akce pro ubytování'
                                         ,par:{typ:'j',exp:'Excel2',cnd:"funkce NOT IN (9,10,13,14,99) AND luzka>0"
-                                        ,hav:"_vek>=18 OR r_role IN ('a','b')"
+                                        ,hav:"(_vek>=18 AND dite_kat!=99) OR r_role IN ('a','b')"
                                         ,tit:'příjmení:15,jméno:12,st.přísl.:10,OP:12,narození:12,obec:25,psč:7,ulice:25,stát:10'
                                         ,fld:'prijmeni,jmeno,prislusnost,obcanka,narozeni_dmy,obec,psc,ulice,stat'}}
     item {title:'Pečouni pro ubytování'                                                     skill:'#crz'
@@ -252,11 +254,13 @@ menu m {type:'left', //active:*
                                         ,tit:'příjmení:15,jména:20,pokoj:10,telefony:30,počet'
                                         ,fld:'prijmeni,jmena,pokoj,telefony,_pocet'}}
     item {title:'Děti na akci s poznámkami'                                                  skill:'y;f'
-                                        ,par:{typ:'j',exp:'Excel2',cnd:"funkce!=99 AND pfunkce!=95",hav:"_vek<18",ord:"narozeni"
+                                        ,par:{typ:'j',exp:'Excel2',cnd:"funkce!=99 AND pfunkce!=95"
+                                        ,hav:"_vek<18 OR dite_kat=99",ord:"narozeni"
                                         ,tit:'příjmení:15,jméno:12,narození:12,věk:4,kategorie:10,obec:25,psč:7,ulice:25,na kurzu jako:20,poznámka k akci:50,trvalá poznámka:50'
                                         ,fld:'prijmeni,jmeno,narozeni,_vek,dite_kat,obec,psc,ulice,pfunkce,_a_note,_t_note'}}
     item {title:'Děti na akci s poznámkami'                                                  skill:'c'
-                                        ,par:{typ:'j',exp:'Excel2',cnd:"funkce!=99 AND pfunkce!=95",hav:"_vek<18",ord:"narozeni"
+                                        ,par:{typ:'j',exp:'Excel2',cnd:"funkce!=99 AND pfunkce!=95"
+                                        ,hav:"_vek<18 OR dite_kat=99",ord:"narozeni"
                                         ,tit:'příjmení:15,jméno:12,narození:12,věk:4,obec:25,psč:7,ulice:25,skup.:5,poznámka:100'
                                         ,fld:'prijmeni,jmeno,narozeni,_vek,obec,psc,ulice,skupinka,note'}}
     item {title:'Účastníci, skupinky a pokoje'                                               skill:'y;f'
@@ -383,25 +387,27 @@ menu m {type:'left', //active:*
   menu {tag:'a', title:'jmenovky na akci',type:'group',_sys:'*'
     item {title:'Účastníci bez funkce'                                                       skill:'f'
                                         ,par:{typ:'j',exp:'Excel2',exp2:'PDF-jmenovky'
-                                        ,cnd:"funkce=0",hav:"_vek>=18 OR r_role IN ('a','b')"
+                                        ,cnd:"funkce=0",hav:"(_vek>=18 AND dite_kat!=99) OR r_role IN ('a','b')"
                                         ,ord:"IFNULL(r2.nazev,CONCAT('ZZ',prijmeni))"
                                         ,tit:'jméno:20, příjmení:15',fld:'jmeno,prijmeni'}}
     item {title:'Účastníci'                                                                  skill:'y;c'
                                         ,par:{typ:'j',exp:'Excel2',exp2:'PDF-jmenovky'
-                                        ,cnd:"funkce IN (0,1,2)",hav:"_vek>=18 OR r_role IN ('a','b')"
+                                        ,cnd:"funkce IN (0,1,2)",hav:"(_vek>=18 AND dite_kat!=99) OR r_role IN ('a','b')"
                                         ,ord:"IFNULL(r2.nazev,CONCAT('ZZ',prijmeni))"
                                         ,tit:'jméno:20, příjmení:15',fld:'jmeno,prijmeni'}}
     item {title:'Účastníci (výběr)'                                                          skill:'y;f;c'
                                         ,par:{typ:'j',exp:'Excel2',exp2:'PDF-jmenovky',sel:'yes'
-                                        ,cnd:"funkce IN (0,1,2)",hav:"_vek>=18 OR r_role IN ('a','b')"
+                                        ,cnd:"funkce IN (0,1,2)",hav:"(_vek>=18 AND dite_kat!=99) OR r_role IN ('a','b')"
                                         ,ord:"IFNULL(r2.nazev,CONCAT('ZZ',prijmeni))"
                                         ,tit:'jméno:20, příjmení:15',fld:'jmeno,prijmeni'}}
     item {title:'Děti'                  ,par:{typ:'j',exp:'Excel2',exp2:'PDF-jmenovky'
-                                        ,cnd:"pfunkce NOT IN (4,5,6,8) AND funkce!=99",hav:"_vek<18"
+                                        ,cnd:"pfunkce NOT IN (4,5,6,8) AND funkce!=99"
+                                        ,hav:"_vek<18 OR dite_kat=99"
                                         ,ord:"IFNULL(r2.nazev,CONCAT('ZZ',prijmeni))"
                                         ,tit:'jméno:20, příjmení:15',fld:'jmeno,prijmeni'}}
     item {title:'Děti (výběr)'          ,par:{typ:'j',exp:'Excel2',exp2:'PDF-jmenovky',sel:'yes'
-                                        ,cnd:"pfunkce NOT IN (4,5,6,8) AND funkce!=99",hav:"_vek<18"
+                                        ,cnd:"pfunkce NOT IN (4,5,6,8) AND funkce!=99"
+                                        ,hav:"_vek<18 OR dite_kat=99"
                                         ,ord:"IFNULL(r2.nazev,CONCAT('ZZ',prijmeni))"
                                         ,tit:'jméno:20, příjmení:15',fld:'jmeno,prijmeni'}}
     item {title:'Chůvy'                 ,par:{typ:'j',exp:'Excel2',exp2:'PDF-jmenovky'
@@ -420,26 +426,26 @@ menu m {type:'left', //active:*
                                         ,tit:'jméno:20, příjmení:15',fld:'jmeno,prijmeni'},  skill:'#crz'}
     item {title:'VPS'                                                                        skill:'-'
                                         ,par:{typ:'j',exp:'Excel2',exp2:'PDF-jmenovky'
-                                        ,cnd:"funkce IN (1,2)",hav:"_vek>=18 OR r_role IN ('a','b')"
+                                        ,cnd:"funkce IN (1,2)",hav:"(_vek>=18 AND dite_kat!=99) OR r_role IN ('a','b')"
                                         ,ord:"IFNULL(r2.nazev,CONCAT('ZZ',prijmeni))"
                                         ,tit:'jméno:20, příjmení:15',fld:'jmeno,prijmeni'}}
     item {title:'PPS'                                                                        skill:'f'
                                         ,par:{typ:'j',exp:'Excel2',exp2:'PDF-jmenovky'
-                                        ,cnd:"funkce IN (1,2)",hav:"_vek>=18 OR r_role IN ('a','b')"
+                                        ,cnd:"funkce IN (1,2)",hav:"(_vek>=18 AND dite_kat!=99) OR r_role IN ('a','b')"
                                         ,ord:"IFNULL(r2.nazev,CONCAT('ZZ',prijmeni))"
                                         ,tit:'jméno:20, příjmení:15',fld:'jmeno,prijmeni'}}
     item {title:'Kněží a psychologové'  ,par:{typ:'j',exp:'Excel2',exp2:'PDF-jmenovky'
                                         ,cnd:"funkce IN (3,4)",ord:"prijmeni"
                                         ,tit:'jméno:20, příjmení:15',fld:'jmeno,prijmeni'}}
 #     item {title:'Psychologové'          ,par:{typ:'j',exp:'Excel2',exp2:'PDF-jmenovky'
-#                                         ,cnd:"funkce=4",ord:"prijmeni",hav:"_vek>=18 OR r_role IN ('a','b')"
+#                                         ,cnd:"funkce=4",ord:"prijmeni",hav:"(_vek>=18 AND dite_kat!=99) OR r_role IN ('a','b')"
 #                                         ,tit:'jméno:20, příjmení:15',fld:'jmeno,prijmeni'}}
     item {title:'Hospodáři'             ,par:{typ:'j',exp:'Excel2',exp2:'PDF-jmenovky'
-                                        ,cnd:"funkce=5",hav:"_vek>=18 OR r_role IN ('a','b')"
+                                        ,cnd:"funkce=5",hav:"(_vek>=18 AND dite_kat!=99) OR r_role IN ('a','b')"
                                         ,ord:"IFNULL(r2.nazev,CONCAT('ZZ',prijmeni))"
                                         ,tit:'jméno:20, příjmení:15',fld:'jmeno,prijmeni'}}
     item {title:'... ostatní'           ,par:{typ:'j',exp:'Excel2',exp2:'PDF-jmenovky'
-                                        ,cnd:"funkce NOT IN (0,1,2,3,4,5)",hav:"_vek>=18"
+                                        ,cnd:"funkce NOT IN (0,1,2,3,4,5)",hav:"(_vek>=18 AND dite_kat!=99)"
                                         ,ord:"IFNULL(r2.nazev,CONCAT('ZZ',prijmeni))"
                                         ,tit:'jméno:20, příjmení:15',fld:'jmeno,prijmeni'}}
   }
