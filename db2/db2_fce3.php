@@ -6427,12 +6427,14 @@ function akce2_pokoje($akce,$par,$title,$vypis,$export=false) {
   # rozbor výsledku browse/ask
   array_shift($y->values);
   $pokoj= array();
+  $celkem= 0;
   foreach ($y->values as $x) {
     $xs= explode('≈',$x->r_cleni);
 //    /**/                                                 debug($x);
     $pocet= 0;
     $deti= array();
     $male= 0;
+    $celkem++;
 //                                                         if ( $x->key_pobyt==32146 ) debug($x);
     foreach ($xs as $i=>$xi) {
       $o= explode('~',$xi);
@@ -6463,19 +6465,22 @@ function akce2_pokoje($akce,$par,$title,$vypis,$export=false) {
   }
   // výsledek
   $sdileni= $max_vek_spolu 
-      ? "<li>dvě děti mezi 3 a $max_vek_spolu lety budou sdílet dospělé lůžko, ale ne vždy to jde" : '';
+      ? "<li>dvě děti mezi 3 a $max_vek_spolu lety budou sdílet dospělé lůžko (ale ne vždy se snesou)" 
+      : '';
   $res->html.= "<h3>Hrubý odhad počtu pokojů pro akci</h3>
     Za předpokladu, že:<ul>
     <li> rodiny nesdílí pokoje (někdy ale starší děti ze spřátelených rodin chtějí)
     <li> dítě do 3 let spí v dovezené postýlce s rodiči
     $sdileni
     </ul>
-    tak potřebujeme<br>
+    tak potřebujeme celkem <b>$celkem</b> pokojů v těchto velikostech:<br><br><table>
     ";
   ksort($pokoj);
   foreach ($pokoj as $posteli=>$pocet) {
-    $res->html.= "<br><b>$pocet</b> $posteli-lůžkových pokojů";
+    $res->html.= "<tr><td align='right' style='width:30px'><b>$pocet</b></td>
+      <td>&nbsp;&nbsp;&nbsp;$posteli-lůžkových pokojů</td></tr>";
   }
+  $res->html.= "</table><br>Pochopitelně např. 5-lůžkový pokoj lze nahradit dvěma menšími ";
     /**/                                                 debug($pokoj,"pokoje");
   return $res;
 }
