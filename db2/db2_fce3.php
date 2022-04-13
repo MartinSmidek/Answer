@@ -6455,6 +6455,13 @@ function akce2_prihlasky($akce,$par,$title,$vypis,$export=false) {
       $hist_x[$h]= $yx;
     }
   }
+  // integrál
+  $hist_z= array();
+  $hist[count($hist_a)]= 0;
+  for ($h= count($hist_a)-1; $h>=0; $h--) {
+    $hist_z[$h]+= $hist_z[$h+1]+$hist_a[$h]+$hist_b[$h]+$hist_x[$h];
+  }
+    /**/                                                 debug($hist_z,'integrál');
 //    /**/                                                 debug($hist_a,'funkce');
 //    /**/                                                 debug($hist_b,'bez funkce');
 //    /**/                                                 debug($dny_a,'funkce');
@@ -6465,7 +6472,8 @@ function akce2_prihlasky($akce,$par,$title,$vypis,$export=false) {
       <i>přehled se zobrazuje podle <u>dne zapsání</u> přihlášky v součtu po týdnech, vlevo je týden konání akce
       <br>zeleně jsou účastníci bez funkce ($nb), oranžově jsou VPS $na, černě jsou ti, co na akci nakonec nebyli ($nx)
       </i><br><br>";
-  $x= $y= '';
+  $x= $y= $z= '';
+  $zz= 0;
   $ratio= 5;
   for ($h= 1; $h<count($hist_a); $h++) {
     $xx= $h<10 ? "0$h" : $h;
@@ -6481,17 +6489,12 @@ function akce2_prihlasky($akce,$par,$title,$vypis,$export=false) {
     $img.= "<div class='parm' style='height:{$ya}px;width:12px;margin-top:5px'></div>";
     $x.= "<td>$xx</td>";
     $y.= "<td style='vertical-align:bottom'>$pocty $img </td>";
+    $z.= "<td>{$hist_z[$h]}</td>";
   }
-//  for ($d= 0; $d<=$max; $d++) {
-//    $xx= $d<10 ? "0$d" : $d;
-//    $yy= isset($dny[$d]) ? $dny[$d] : 0;
-//    $yyy= $yy*10;
-//    $img= "<div class='curr_akce' style='height:{$yyy}px;width:12px;float:left;margin-top:5px'></div>";
-//    $x.= "<td>$xx</td>";
-//    $y.= "<td style='vertical-align:bottom'>$yy $img</td>";
-//  }
-  $res->html.= "<table><tr>$y</tr><tr>$x</tr></table>";
-//  $res->html= htmlentities($res->html);
+  $res->html.= "<table>
+    <tr><td align='right' style='vertical-align:bottom'>v týdnu zapsáno:<br></td>$y</tr>
+    <tr><td align='right'>n-tý týden před akcí:</td>$x</tr>
+    <tr><td align='right'>celkem přihlášek:</td>$z</tr></table>";
   return $res;
 }
 # ------------------------------------------------------------------------------------- akce2 pokoje
