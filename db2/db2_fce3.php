@@ -6461,9 +6461,9 @@ function akce2_prihlasky($akce,$par,$title,$vypis,$export=false) {
 //    /**/                                                 debug($dny_b,'bez funkce');
   
   // výsledek
-  $res->html= "<h3>Přehled evidence $pob přihlášek na akci</h3>
+  $res->html= "<h3>Přehled data zápisu $pob přihlášek na akci</h3>
       <i>přehled se zobrazuje podle <u>dne zapsání</u> přihlášky v součtu po týdnech, vlevo je týden konání akce
-      <br>zeleně jsou $nb účastníci, oranžově jsou $na VPS, černě jsou ti $nx, co na akci nakonec nebyli
+      <br>zeleně jsou účastníci bez funkce ($nb), oranžově jsou VPS $na, černě jsou ti, co na akci nakonec nebyli ($nx)
       </i><br><br>";
   $x= $y= '';
   $ratio= 5;
