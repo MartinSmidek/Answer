@@ -8804,7 +8804,7 @@ function akce2_vyuctov_pary2($akce,$par,$title,$vypis,$export=false) { trace();
 #    .DPH, .X = specifické tabulky
 function tisk2_vyp_excel($akce,$par,$title,$vypis,$tab=null,$hnizdo=0) {  trace();
   global $xA, $xn, $tisk_hnizdo, $ezer_version;
-  $tisk_hnizdo= hnizdo;
+  $tisk_hnizdo= $hnizdo;
   $result= (object)array('_error'=>0);
   $html= '';
   // získání dat
