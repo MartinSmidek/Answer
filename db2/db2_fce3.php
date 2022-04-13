@@ -6401,7 +6401,7 @@ function akce2_prihlasky($akce,$par,$title,$vypis,$export=false) {
   $res= (object)array('html'=>'');
   
   $limit= ''; // "LIMIT 1";
-  $po= isset($par->po) ? $par->po : 1;
+  $po= isset($par->po) ? $par->po : 7;
   $dny_a= $dny_b= $dny_x= array(); 
   $max= 0;
   $pob= 0;
@@ -6432,7 +6432,6 @@ function akce2_prihlasky($akce,$par,$title,$vypis,$export=false) {
   ksort($dny_x);
   // zhuštění výsledku
   $na= $nb= $nx;
-  $po= 7;
   $hist_a= $hist_b= $hist_x= array();
   $last_h= -1;
   for ($d= 0; $d<=$max; $d++) {
@@ -6473,6 +6472,7 @@ function akce2_prihlasky($akce,$par,$title,$vypis,$export=false) {
     $ya= isset($hist_a[$h]) ? $hist_a[$h] : 0;
     $yb= isset($hist_b[$h]) ? $hist_b[$h] : 0;
     $yx= isset($hist_x[$h]) ? $hist_x[$h] : 0;
+    $pocty= "$yb<br>$yx<br>$ya";
     $ya*= $ratio;
     $yb*= $ratio;
     $yx*= $ratio;
@@ -6480,7 +6480,7 @@ function akce2_prihlasky($akce,$par,$title,$vypis,$export=false) {
     $img.= "<div style='background:black;height:{$yx}px;width:12px;margin-top:5px'></div>";
     $img.= "<div class='parm' style='height:{$ya}px;width:12px;margin-top:5px'></div>";
     $x.= "<td>$xx</td>";
-    $y.= "<td style='vertical-align:bottom'>$yb<br>$yx<br>$ya $img </td>";
+    $y.= "<td style='vertical-align:bottom'>$pocty $img </td>";
   }
 //  for ($d= 0; $d<=$max; $d++) {
 //    $xx= $d<10 ? "0$d" : $d;
