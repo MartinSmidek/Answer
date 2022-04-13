@@ -4741,10 +4741,11 @@ function tisk2_sestava($akce,$par,$title,$vypis,$export=false,$hnizdo=0) { debug
      : ( $par->typ=='stat' ? akce2_tabulka_stat($akce,$par,$title,$vypis,$export)   //!
      : ( $par->typ=='dot'  ? dot_prehled($akce,$par,$title,$vypis,$export,$hnizdo)  
      : ( $par->typ=='pok'  ? akce2_pokoje($akce,$par,$title,$vypis,$export,$hnizdo) 
+     : ( $par->typ=='pri'  ? akce2_prihlasky($akce,$par,$title,$vypis,$export,$hnizdo) 
      : ( $par->typ=='nut'  ? akce2_hnizda($akce,$par,$title,$vypis,$export)         
      : (object)array('html'=>"<i>Tato sestava zatím není převedena do nové verze systému,
           <a href='mailto:martin@smidek.eu'>upozorněte mě</a>, že ji už potřebujete</i>")
-     ))))))))))))))))))))))))))))));
+     )))))))))))))))))))))))))))))));
 }
 # =======================================================================================> . seznamy
 function mb_strcasecmp($str1, $str2, $encoding = null) {
@@ -6393,6 +6394,106 @@ function akce2_sestava_td_style($fmt) {
     ? " style='".implode(';',$style)."'" : '';
 }
 # ======================================================================================> . přehledy
+# ---------------------------------------------------------------------------------- akce2 prihlasky
+# přehled přihlášek na akci
+function akce2_prihlasky($akce,$par,$title,$vypis,$export=false) { 
+  global $EZER;
+  $res= (object)array('html'=>'');
+  
+  $limit= ''; // "LIMIT 1";
+  $po= isset($par->po) ? $par->po : 1;
+  $dny_a= $dny_b= $dny_x= array(); 
+  $max= 0;
+  $pob= 0;
+  $qp=  "SELECT id_pobyt,funkce,
+       (SELECT DATEDIFF(datum_od,kdy) FROM _track 
+        WHERE kde='pobyt' AND klic=id_pobyt ORDER BY id_track LIMIT 1) AS kde
+    FROM pobyt JOIN akce ON id_akce=id_duakce
+    WHERE id_akce='$akce' AND funkce!=99 $limit ";
+  $rp= pdo_qry($qp);
+  while ( $rp && (list($idp,$fce,$dif)= pdo_fetch_row($rp)) ) {
+    $pob++;
+    $max= max($dif,$max);
+    if ($fce==1) {
+      if (!isset($dny_a[$dif])) $dny_a[$dif]= 0;
+      $dny_a[$dif]++;
+    }
+    elseif (in_array($fce,array(9,10,13,14))) {
+      if (!isset($dny_x[$dif])) $dny_x[$dif]= 0;
+      $dny_x[$dif]++;
+    }
+    else {
+      if (!isset($dny_b[$dif])) $dny_b[$dif]= 0;
+      $dny_b[$dif]++;
+    }
+  }
+  ksort($dny_a);
+  ksort($dny_b);
+  ksort($dny_x);
+  // zhuštění výsledku
+  $na= $nb= $nx;
+  $po= 7;
+  $hist_a= $hist_b= $hist_x= array();
+  $last_h= -1;
+  for ($d= 0; $d<=$max; $d++) {
+    $ya= isset($dny_a[$d]) ? $dny_a[$d] : 0;
+    $yb= isset($dny_b[$d]) ? $dny_b[$d] : 0;
+    $yx= isset($dny_x[$d]) ? $dny_x[$d] : 0;
+    $na+= $ya;
+    $nb+= $yb;
+    $nx+= $yx;
+    $h= floor($d/$po);
+//    display("$d / $po = $h");
+    if ($h==$last_h) {
+      $hist_a[$h]+= $ya;
+      $hist_b[$h]+= $yb;
+      $hist_x[$h]+= $yx;
+    }
+    else {
+      $last_h= $h;
+      $hist_a[$h]= $ya;
+      $hist_b[$h]= $yb;
+      $hist_x[$h]= $yx;
+    }
+  }
+//    /**/                                                 debug($hist_a,'funkce');
+//    /**/                                                 debug($hist_b,'bez funkce');
+//    /**/                                                 debug($dny_a,'funkce');
+//    /**/                                                 debug($dny_b,'bez funkce');
+  
+  // výsledek
+  $res->html= "<h3>Přehled evidence $pob přihlášek na akci</h3>
+      <i>přehled se zobrazuje podle <u>dne zapsání</u> přihlášky v součtu po týdnech, vlevo je týden konání akce
+      <br>zeleně jsou $nb účastníci, oranžově jsou $na VPS, černě jsou ti $nx, co na akci nakonec nebyli
+      </i><br><br>";
+  $x= $y= '';
+  $ratio= 5;
+  for ($h= 1; $h<count($hist_a); $h++) {
+    $xx= $h<10 ? "0$h" : $h;
+    $ya= isset($hist_a[$h]) ? $hist_a[$h] : 0;
+    $yb= isset($hist_b[$h]) ? $hist_b[$h] : 0;
+    $yx= isset($hist_x[$h]) ? $hist_x[$h] : 0;
+    $ya*= $ratio;
+    $yb*= $ratio;
+    $yx*= $ratio;
+    $img= "<div class='curr_akce' style='height:{$yb}px;width:12px;margin-top:5px'></div>";
+    $img.= "<div style='background:black;height:{$yx}px;width:12px;margin-top:5px'></div>";
+    $img.= "<div class='parm' style='height:{$ya}px;width:12px;margin-top:5px'></div>";
+    $x.= "<td>$xx</td>";
+    $y.= "<td style='vertical-align:bottom'>$yb<br>$yx<br>$ya $img </td>";
+  }
+//  for ($d= 0; $d<=$max; $d++) {
+//    $xx= $d<10 ? "0$d" : $d;
+//    $yy= isset($dny[$d]) ? $dny[$d] : 0;
+//    $yyy= $yy*10;
+//    $img= "<div class='curr_akce' style='height:{$yyy}px;width:12px;float:left;margin-top:5px'></div>";
+//    $x.= "<td>$xx</td>";
+//    $y.= "<td style='vertical-align:bottom'>$yy $img</td>";
+//  }
+  $res->html.= "<table><tr>$y</tr><tr>$x</tr></table>";
+//  $res->html= htmlentities($res->html);
+  return $res;
+}
 # ------------------------------------------------------------------------------------- akce2 pokoje
 # odhad počtu potřebných pokojů, založený na následujících úvahách
 #  - rodiny tj. "pobyty" spolu nesdílí pokoje
