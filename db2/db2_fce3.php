@@ -6402,6 +6402,14 @@ function akce2_prihlasky($akce,$par,$title,$vypis,$export=false) {
   
   $limit= ''; // "LIMIT 1";
   $po= isset($par->po) ? $par->po : 7;
+  $tydnech= "týdnech";
+  $tydnu= "týdnu";
+  $tyden= "týden";
+  if ($po==30) {
+    $tydnech= "měsících";
+    $tydnu= "měsíci";
+    $tyden= "měsíc";
+  }
   $dny_a= $dny_b= $dny_x= array(); 
   $max= 0;
   $pob= 0;
@@ -6469,11 +6477,10 @@ function akce2_prihlasky($akce,$par,$title,$vypis,$export=false) {
   
   // výsledek
   $res->html= "<h3>Přehled data zápisu $pob přihlášek na akci</h3>
-      <i>přehled se zobrazuje podle <u>dne zapsání</u> přihlášky v součtu po týdnech, vlevo je týden konání akce
+      <i>přehled se zobrazuje podle <u>dne zapsání</u> přihlášky v součtu po $tydnech, vlevo je $tyden konání akce
       <br>zeleně jsou účastníci bez funkce ($nb), oranžově jsou VPS $na, černě jsou ti, co na akci nakonec nebyli ($nx)
       </i><br><br>";
   $x= $y= $z= '';
-  $zz= 0;
   $ratio= 5;
   for ($h= 1; $h<count($hist_a); $h++) {
     $xx= $h<10 ? "0$h" : $h;
@@ -6492,8 +6499,8 @@ function akce2_prihlasky($akce,$par,$title,$vypis,$export=false) {
     $z.= "<td>{$hist_z[$h]}</td>";
   }
   $res->html.= "<table>
-    <tr><td align='right' style='vertical-align:bottom'>v týdnu zapsáno:<br></td>$y</tr>
-    <tr><td align='right'>n-tý týden před akcí:</td>$x</tr>
+    <tr><td align='right' style='vertical-align:bottom'>v $tydnu zapsáno:<br></td>$y</tr>
+    <tr><td align='right'>n-tý $tyden před akcí:</td>$x</tr>
     <tr><td align='right'>celkem přihlášek:</td>$z</tr></table>";
   return $res;
 }

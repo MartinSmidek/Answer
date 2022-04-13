@@ -381,7 +381,8 @@ menu m {type:'left', //active:*
                                         ,tab:'rodina,pobyt,osoba,spolu',fld:'*'}}
     item {title:'Odhad počtu pokojů'    ,par:{typ:'pok',max_vek_spolu:0}}
     item {title:' ... úspornější'       ,par:{typ:'pok',max_vek_spolu:6}}
-    item {title:'Tempo přihlašování'    ,par:{typ:'pri'}}
+    item {title:'Tempo přihlašování po týdnech'    ,par:{typ:'pri',po:7}}
+    item {title:'... po měsících'    ,par:{typ:'pri',po:30}}
 //    item {title:'Statistika akce'       ,par:{typ:'dot',cnd:'1',zdroj:'akce',par1:'ida'} skill:'#crz'}
   }
   # ------------------------------------------------------------------------------------==> jmenovky
