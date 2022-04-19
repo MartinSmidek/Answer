@@ -207,9 +207,9 @@ use info: form right [12,4,,]           { tag:'i'
 use test: form _test [360,2,,] { skill:'m' }
 form _test [0,0,12,25] { style:'z-index:3;cursor:help;text-align:center'
   label [0,0,12,12] {title:' r', style:'color:white;background:red'
-    func onclick() {evid_rodina(3329)}}
+    func onclick() { clear(); GEO.locate(0,idr); lst.brow.browse_row(); lst.load_rodina(idr); }}
   label [0,13,12,12] {title:'o', style:'color:white;background:blue'
-    func onclick() {clear(); GEO.locate(ido)}}
+    func onclick() { clear(); GEO.locate(ido,0); page.oso_load(ido); }}
 }
 # =========================================================================================> SEZNAMY
 form _lst [,,370,*] {
@@ -604,7 +604,7 @@ form _page {
   proc page_load() { var x:object
     page_init;
     x.set(ask('evid2_cleni',ido.get,idr.get,conc(cconc(ido.get,lst.bo_filtr.get,lst.br_filtr.get))));
-    x.msg; [ x.rodina; rod_load(x.rodina) ]; alert(x.msg)
+    x.msg; [ x.rodina; rod_load(x.rodina) ]; warning(x.msg)
   | idr.set(x.rodina); x.rodina; rod.enable(1,'.*');
     cleni.browse_fill(x.cleni);
     //cleni.cleni_click(ido.get);
@@ -651,7 +651,7 @@ form _page {
     elseif (ido) {
       oso.load(ido);
       oso.geo_ok= php.select('stav=1','osoba_geo',`id_osoba=${ido}`) ? 'ok' : '';
-//      geo= php.geo_get(ido);
+//      geo= php.geo_get_osoba(ido);
 //      oso.geo_ok= geo.ok ? 'OK' : '';
       oso.show_osoba(2);
     }
@@ -670,17 +670,43 @@ form _page {
 //    oso.show_osoba(2);
 //  }
   # načíst rodinu (případně s doplněním informací z _track) ==> . rod_load
-  proc rod_load(idr) { var ret: object
-    [ evi_barvit_zmeny.get;
-      ret.set(ask('elim2_data_rodina',idr,cconc(eq(lst.mode.get,'f','h'),lst.track_past.get,'')));
-      rod.r.load(idr); [ rod.call('od_svatby') ];
+  func rod_load(idr) { var ret: object, mazat:number
+    if (evi_barvit_zmeny) 
+      ret= php.elim2_data_rodina(idr,eq(lst.mode,'f','h') ? lst.track_past : '');
+    rod.r.load(idr); rod.od_svatby();
+    if (evi_barvit_zmeny) 
       rod.set_helps(ret.chng,'zluty','oranzovy');
-    | rod.r.load(idr); [ rod.call('od_svatby') ]
-    ];
-    [ cmd.part('r_smaz');
-      cmd.r_smaz.display(not(page.rod.r_deleted.get));
-      cmd.r_obnov.display(page.rod.r_deleted.get) ];
+    // zobrazení značky ověřené adresy
+    rod.r_geo_ok= lst.mode=='r' && lst.brow.lat ? 'ok' : '';
+    // přepínání mezi mazat/obnovit
+    mazat= page.rod.r_deleted ? 0 : 1; 
+    cmd.r_smaz.display(mazat);
+    cmd.r_obnov.display(!mazat);
   }
+//  func rod_load(idr) { var ret: object, mazat:number
+//    if (evi_barvit_zmeny) {
+//      ret= php.elim2_data_rodina(idr,eq(lst.mode,'f','h') ? lst.track_past : '');
+//      rod.r.load(idr); rod.od_svatby();
+//      rod.set_helps(ret.chng,'zluty','oranzovy');
+//    }
+//    else {
+//      rod.r.load(idr); rod.od_svatby();
+//    }
+//    mazat= page.rod.r_deleted ? 0 : 1; 
+//    cmd.r_smaz.display(mazat);
+//    cmd.r_obnov.display(!mazat);
+//  }
+//  proc rod_load(idr) { var ret: object
+//    [ evi_barvit_zmeny.get;
+//      ret.set(ask('elim2_data_rodina',idr,cconc(eq(lst.mode.get,'f','h'),lst.track_past.get,'')));
+//      rod.r.load(idr); [ rod.call('od_svatby') ];
+//      rod.set_helps(ret.chng,'zluty','oranzovy');
+//    | rod.r.load(idr); [ rod.call('od_svatby') ]
+//    ];
+//    [ cmd.part('r_smaz');
+//      cmd.r_smaz.display(not(page.rod.r_deleted.get));
+//      cmd.r_obnov.display(page.rod.r_deleted.get) ];
+//  }
   # ----------------------------------------------==> záložky
   var curr:object // aktuální záložka
   proc cvak(i) {
@@ -1347,16 +1373,18 @@ form _mapa [,,650,500] {css:'ae_frame shift_down'
 # =============================================================================================> GEO
 panel GEO [0,0,400,110] {type:'popup', title:'hledání adresy v mapy.cz' 
   var ido: number,
+      idr:number,
       geo:object
   // poznamená navrženou polohu jako správnou se stav=2
-  func locate(_ido) { 
+  func locate(_ido,_idr) { 
     ido= _ido;
+    idr= _idr;
     fork.panel.mapy_cz();
     panel.modal();
   }
   func mapy_cz() {
     f.pat= ''; f.adr= ''; f.err= '';
-    geo= php.geo_get(ido);
+    geo= ido ? php.geo_get_osoba(ido) : (idr ? php.geo_get_rodina(idr) : {error:'?'});
     f.pat= geo.address; f.adr= geo.full; f.err= geo.error;
   }
   use f: form {
@@ -1368,7 +1396,9 @@ panel GEO [0,0,400,110] {type:'popup', title:'hledání adresy v mapy.cz'
     label err [74,70,312,25] {style:"color:red" }
     button [72,92,,] {title:'Ok - zapamatovat', 
       func onclick() {
-        php.geo_set(ido,geo); panel.hide(1);
+        if (ido) php.geo_set_osoba(ido,geo); 
+        if (idr) php.geo_set_rodina(idr,geo); 
+        panel.hide(1);
     }}
   }
 }

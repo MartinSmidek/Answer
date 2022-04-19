@@ -52,9 +52,9 @@ function geo_fill ($y) { debug($y,'geo_fill');
     $y->last_id= $ido;
     $idox= tisk2_ukaz_osobu($ido);
     if ($stav<=0) {
-      $geo= geo_get($ido);
-//      debug($geo,'po geo_get');
-      geo_set($ido,$geo);
+      $geo= geo_get_osoba($ido);
+//      debug($geo,'po geo_get_osoba');
+      geo_set_osoba($ido,$geo);
       if ($geo->error) {
         $lineadr= urlencode($geo->address);
         $url= "http://ags.cuzk.cz/arcgis/rest/services/RUIAN/Vyhledavaci_sluzba_nad_daty_RUIAN/"
@@ -89,9 +89,9 @@ function geo_fill ($y) { debug($y,'geo_fill');
 end:  
   return $y;
 }
-# ------------------------------------------------------------------------------------- geo_get_smap
+# ------------------------------------------------------------------------------------ geo set_osoba
 # zapiš polohu dané osobě
-function geo_set($ido,$geo) {  trace();
+function geo_set_osoba($ido,$geo) {  trace();
   if ($geo->wgs) {
     $kodm= isset($geo->kod_mista) ? $geo->kod_mista : 0;
     $kodo= isset($geo->kod_obce) ? $geo->kod_obce : 0;
@@ -103,9 +103,23 @@ function geo_set($ido,$geo) {  trace();
       VALUE ($ido,-{$geo->error})");
 
 }
-# ------------------------------------------------------------------------------------- geo_get_smap
+# ----------------------------------------------------------------------------------- geo set_rodina
+# zapiš polohu dané rodině
+function geo_set_rodina($idr,$geo) {  trace();
+  if ($geo->wgs) {
+    $kodm= isset($geo->kod_mista) ? $geo->kod_mista : 0;
+    $kodo= isset($geo->kod_obce) ? $geo->kod_obce : 0;
+    query("REPLACE rodina_geo (id_rodina,kod_misto,kod_obec,lat,lng,stav) 
+      VALUE ($idr,$kodm,$kodo,'{$geo->wgs->lat}','{$geo->wgs->lng}',1)");
+  }
+  else 
+    query("REPLACE rodina_geo (id_rodina,stav) 
+      VALUE ($idr,-{$geo->error})");
+
+}
+# ------------------------------------------------------------------------------------ geo get_osoba
 # určí polohu podle RUIAN podle údajů v OSOBA nebo podle zadané adresy
-function geo_get($ido,$adr='') {  trace();
+function geo_get_osoba($ido,$adr='') {  trace();
   display("------------------------------------------------------ $ido");
   $geo= (object)array('full'=>"neznámá adresa v RUIAN",'ok'=>0);
   $rc= pdo_qry("SELECT id_osoba,adresa,
@@ -127,6 +141,50 @@ function geo_get($ido,$adr='') {  trace();
   }
   $c= pdo_fetch_object($rc);
   if ( !$c->id_osoba ) {
+    $geo->ok= 0;
+    $geo->error= 8;
+    goto end;
+  }
+  $m= null;
+  $ma_cislo= preg_match('~^(.*)\s*(\d[\w\/]*)\s*$~uU',$c->ulice,$m);
+  if ($ma_cislo) {
+    $ulice= $m[1];
+    $cislo= $m[2];
+  }
+  else {
+    $ulice= $c->ulice;
+    $cislo= '';
+  }
+  $obec= $c->obec;
+  $psc= $c->psc;
+  $adr= (object)array('ulice'=>$ulice,'cislo'=>$cislo,'obec'=>$obec,'psc'=>$psc);
+//  debug($adr);
+  $geo= ruian_adresa((object)array('ulice'=>$ulice,'cislo'=>$cislo,'obec'=>$c->obec,'psc'=>$c->psc));
+  $geo->address= "$ulice $cislo, $psc $obec";
+  $geo->full= isset($geo->adresa) ? "{$geo->adresa[0]}, {$geo->adresa[1]}, {$geo->adresa[2]}" : '';
+end:
+//                                                        debug($geo);
+  display("------------------------------------------------------ $ido END");
+  return $geo;
+}
+# ----------------------------------------------------------------------------------- geo get_rodina
+# určí polohu podle RUIAN podle údajů v RODINA nebo podle zadané adresy
+function geo_get_rodina($idr,$adr='') {  trace();
+  display("------------------------------------------------------ $ido");
+  $geo= (object)array('full'=>"neznámá adresa v RUIAN",'ok'=>0);
+  $rc= pdo_qry("SELECT id_rodina,r.ulice,r.psc,r.obec,
+          okres.nazev AS nazokr
+        FROM rodina AS r
+        LEFT JOIN `#psc` AS p ON p.psc=r.psc
+        LEFT JOIN `#okres` AS okres USING (kod_okres) 
+        WHERE r.stat IN ('','CZ') AND id_rodina=$idr ");
+  if ( !$rc ) {
+    $geo->ok= 0;
+    $geo->error= 9;
+    goto end;
+  }
+  $c= pdo_fetch_object($rc);
+  if ( !$c->id_rodina ) {
     $geo->ok= 0;
     $geo->error= 8;
     goto end;

@@ -22,7 +22,7 @@ function db2_rod_show($nazev,$n) {
   $fos=   ucast2_flds("umrti,prijmeni,rodne,sex,adresa,ulice,psc,obec,stat,kontakt,telefon"
         . ",nomail,email,gmail"
         . ",iniciace,firming,uvitano,clen,obcanka,rc_xxxx,cirkev,vzdelani,titul,zamest,zajmy,jazyk,dieta"
-        . ",aktivita,note,_kmen,web_souhlas,prislusnost");
+        . ",aktivita,note,_kmen,_geo,web_souhlas,prislusnost");
   $fspo=  ucast2_flds("id_spolu,_barva,s_role,dite_kat,poznamka,pecovane,pfunkce,pece_jm,pece_id"
           . ",o_umi,prislusnost");
   // načtení rodin
@@ -15240,13 +15240,19 @@ function db2_info($par) {
           SUM(IF(narozeni!='0000-00-00',1,0)), 
           SUM(IF(IFNULL(stav,0)=1,1,0)), SUM(IF(IFNULL(stav,0)<0,1,0))
         ",'osoba LEFT JOIN osoba_geo USING (id_osoba)',"deleted=''"); 
+      list($r_pocet,$r_geo1,$r_geo_)= select("
+          COUNT(*),
+          SUM(IF(IFNULL(stav,0)=1,1,0)), SUM(IF(IFNULL(stav,0)<0,1,0))
+        ",'rodina LEFT JOIN rodina_geo USING (id_rodina)',"deleted=''"); 
       $dtlf= db2_info_dupl('osoba','telefon',"deleted='' AND kontakt=1 AND telefon");
       $deml= db2_info_dupl('osoba','UPPER(TRIM(email))',"deleted='' AND kontakt=1 AND email!=''");
       $xeml= db2_info_dupl('osoba','MD5(UPPER(TRIM(email)))',"deleted='' AND kontakt=1 AND email!=''");
-      $html.= "<h3>Úplnost osobních údajů</h3>";
+      $html.= "<h3>Úplnost rodinných a osobních údajů</h3>";
       $html.= "<div class='stat'><table class='stat'>";
       $html.= "<tr><th>tabulka</th><th>záznamů</th><th>geolokace</th>
         <th>telefon</th><th>... dupl</th><th>email</th><th>... dupl</th><th>... kód</th></tr>";
+      $html.= "<tr><th>RODINA</th><$tdr>$r_pocet</td><$tdr>$r_geo1 / $r_geo_</td>
+        <$tdr>-</td><$tdr>-</td><$tdr>-</td><$tdr>-</td><$tdr>-</td></tr>";
       $html.= "<tr><th>OSOBA</th><$tdr>$pocet</td><$tdr>$geo1 / $geo_</td>
         <$tdr>$tlf</td><$tdr>$dtlf</td><$tdr>$eml</td><$tdr>$deml</td><$tdr>$xeml</td></tr>";
       $html.= "</table></div>";
@@ -15285,7 +15291,7 @@ function db2_info($par) {
       }
       $ths.= "<th>duplicity</th>";
       $tds.= "<$tdr>{$val['dupl']}</td>";
-      $html.= "<h3>Záznamy v jiných databázích</h3>
+      $html.= "<h3>Záznamy osob v jiných databázích</h3>
         <div class='stat'><table class='stat'><tr>$ths</tr><tr>$tds</tr></table></div>
         <br><b>Poznámka</b>: Týká se to jen záznamů s vyplněnou emailovou adresou, 
         <br>jejíž MD5 je použito jako anonymizovaný identifikátor osoby";      

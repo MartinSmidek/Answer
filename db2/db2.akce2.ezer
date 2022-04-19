@@ -1330,6 +1330,7 @@ form _rodina2p [,,188,229] { css:'ae_frame'
   field r_psc      [Lp+0,Tp+90, 40,] {tag:'r', data:r.psc, title:'^psč'
     proc onchanged() { this.let(replace(this.get,' ','')) }
   }
+  field r_geo_ok   [Lp+29,Tp+76,12,12] {tag:'r', css:'Label3', format:'no' }
   field r_obec     [Lp+47,Tp+90,128,] {tag:'r', data:r.obec, title:'^obec'}
 
   // kontakty
