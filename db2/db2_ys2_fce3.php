@@ -1,11 +1,32 @@
 <?php # (c) 2009-2015 Martin Smidek <martin@smidek.eu>
 /** ======================================================================================== mapy.cz */
-# ---------------------------------------------------------------------------------------- geo fill
+# --------------------------------------------------------------------------------------- geo remove
+// zkusí zrušit geo-informaci dané osoby, vrací 2 pokud bylo co rušit
+function geo_remove($ido) { 
+  $ok= query("DELETE FROM osoba_geo WHERE id_osoba=$ido");
+  return $ok+1;
+}
+# -------------------------------------------------------------------------------------- geo refresh
+// pokusí se zjistit dané osobě polohu a zapsat ji
+// vrátí {ok:0/1
+function geo_refresh($ido) { 
+  $geo= (object)array('ok'=>0,'note'=>'');
+  $x= (object)array('todo'=>1,'done'=>0,'last_id'=>0,'par'=>(object)array(
+      'y'=>'+',
+      'par'=>(object)array('cond'=>"id_osoba=$ido")));
+  $y= geo_fill($x); // error, msg, note
+  debug($y,"výsledek geo_fill pro $ido");
+  $geo->ok= isset($y->error) ? 0 : 1;
+  $geo->note= $y->note;
+  $geo->warning= $y->warning;
+  return $geo;
+}
+# ----------------------------------------------------------------------------------------- geo fill
 // y je paměť procesu, který bude krok za krokem prováděn lokalizaci adres
 // y.todo - celkový počet kroků
 // y.done - počet provedených kroků 
 // y.error = text chyby, způsobí konec
-function geo_fill ($y) { //debug($y,'geo_fill');
+function geo_fill ($y) { debug($y,'geo_fill');
   if ( !$y->todo ) {
     // pokud je y.todo=0 zjistíme kolik toho bude
     $y->todo= select('COUNT(*)',
@@ -27,6 +48,7 @@ function geo_fill ($y) { //debug($y,'geo_fill');
         "o.deleted='' AND o.umrti=0 AND IF(o.adresa,o.psc!='',r.psc!='') AND IFNULL(stav,0)!=-99
           AND IF(o.adresa,o.stat,r.stat) IN ('','CZ') AND IF(adresa=0,t.role IN ('a','b'),1)
           AND id_osoba>{$y->last_id} AND {$y->par->par->cond} ORDER BY id_osoba LIMIT 1");
+    if (!$ido) goto end; 
     $y->last_id= $ido;
     $idox= tisk2_ukaz_osobu($ido);
     if ($stav<=0) {
@@ -46,8 +68,15 @@ function geo_fill ($y) { //debug($y,'geo_fill');
           {$geo->address}
         ";
       }
-      else
+      elseif ($y->par->y=='+') {
+        debug($geo->adresa);
+        $y->note= "byla zadána adresa <br> {$geo->address} <br> mám opravit na <br> "
+            .implode(', ',$geo->adresa).' ?';
+        $y->warning= "rozeznaná adresa je: ".implode(', ',$geo->adresa);
+      }
+      else {
         $y->note= "+ OSOBA $idox {$geo->address} ==> ".implode(', ',$geo->adresa);
+      }
     }
     else {
       $y->note= "- OSOBA $idox";
@@ -61,8 +90,8 @@ end:
   return $y;
 }
 # ------------------------------------------------------------------------------------- geo_get_smap
-# zapíš polohu dané osobě
-function geo_set($ido,$geo) {  //trace();
+# zapiš polohu dané osobě
+function geo_set($ido,$geo) {  trace();
   if ($geo->wgs) {
     $kodm= isset($geo->kod_mista) ? $geo->kod_mista : 0;
     $kodo= isset($geo->kod_obce) ? $geo->kod_obce : 0;
@@ -76,7 +105,7 @@ function geo_set($ido,$geo) {  //trace();
 }
 # ------------------------------------------------------------------------------------- geo_get_smap
 # určí polohu podle RUIAN podle údajů v OSOBA nebo podle zadané adresy
-function geo_get($ido,$adr='') {  //trace();
+function geo_get($ido,$adr='') {  trace();
   display("------------------------------------------------------ $ido");
   $geo= (object)array('full'=>"neznámá adresa v RUIAN",'ok'=>0);
   $rc= pdo_qry("SELECT id_osoba,adresa,

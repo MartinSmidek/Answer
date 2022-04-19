@@ -895,6 +895,21 @@ form _osoba2x [,,244,322] {css:'ae_frame'
     mode.set(_mode); host.set(_host); form.enable(1,'a|b|j|k');
     [ form.part('detail.r'); x.set(form.part('detail.r')); x.get.enable(eq(_host,'U')) ];
   }
+  func save_osoba() { var removed:number, geo:object, ido:number
+    ido= form.key();
+    if (adresa.changed()||ulice.changed()||stat.changed()||psc.changed()||obec.changed()) {
+      removed= php.geo_remove(ido);
+      form.save();
+      geo= php.geo_refresh(ido);
+      if (geo.ok) {
+        warning(geo.warning);
+//        alert(`${geo.note}`)
+      }
+    }
+    else {
+      form.save()
+    }
+  }
   # ==> . přepisované procedury
   proc onchanged() { }
   proc elim_kopie() { }
@@ -1129,7 +1144,7 @@ form _osoba2x [,,244,322] {css:'ae_frame'
   label [0,58,,5] {tag:'k,S', format:'n', css:'db_sep' } // zarovnání
 
   #==> . adresa: a,b (rodinná=0, osobní=1)
-  label [5,3,49,12] {tag:'a', title:'adresa je' }
+  label [5,3,49,12] {tag:'a', title:'adresa' }
   radio adresa [50,0,189,18] {tag:'a', format:'n', value:'0', data:o.adresa
     case [0,0,70,] { title:'osobní', expr:'1' }
     case [56,0,70,] { title:'rodinná:', expr:'0' }
@@ -1150,6 +1165,7 @@ form _osoba2x [,,244,322] {css:'ae_frame'
       [ eq(form_mode.get,'new'); form.enable(this.get,'b') | show_osoba(0) ]
     }
   }
+  field geo_ok   [39,2,12,12] {tag:'a', css:'Label3', format:'no' }
   label adresa_r [169,3,75,12] {tag:'a', format:'n', style:"z-index:3;background-color:inherit" }
   label [0,0,,3] {tag:'A,S', format:'n', css:'db_sep' } // zarovnání
   field ulice    [31,2,157,] {tag:'b', data:o.ulice, format:'n', title:'ulice'}

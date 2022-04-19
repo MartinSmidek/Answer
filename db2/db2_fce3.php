@@ -3203,7 +3203,7 @@ function ucast2_browse_ask($x,$tisk=false) {
   // ofsety v atributech členů pobytu - definice viz níže
   global $i_osoba_jmeno, $i_osoba_vek, $i_osoba_role, $i_osoba_prijmeni, $i_adresa, 
       $i_osoba_kontakt, $i_osoba_telefon, $i_osoba_email, $i_osoba_note, $i_key_spolu, 
-      $i_spolu_note, $i_osoba_obcanka, $i_spolu_dite_kat, $i_osoba_dieta;
+      $i_spolu_note, $i_osoba_obcanka, $i_spolu_dite_kat, $i_osoba_dieta, $i_osoba_geo;
   $i_osoba_jmeno=     4;
   $i_osoba_vek=       6;
   $i_osoba_role=      9;
@@ -3215,9 +3215,10 @@ function ucast2_browse_ask($x,$tisk=false) {
   $i_osoba_obcanka=  32;
   $i_osoba_dieta=    40;
   $i_osoba_note=     42;
-  $i_key_spolu=      44;
-  $i_spolu_dite_kat= 47;
-  $i_spolu_note=     48;
+  $i_osoba_geo=      44;
+  $i_key_spolu=      45;
+  $i_spolu_dite_kat= 48;
+  $i_spolu_note=     49;
 
   $delim= $tisk ? '≈' : '~';
   $map_umi= map_cis('answer_umi','zkratka','poradi','ezer_answer');
@@ -3260,7 +3261,7 @@ function ucast2_browse_ask($x,$tisk=false) {
 //     $AND= "AND p.id_pobyt IN (43387,32218,32024) -- test";
 //     $AND= "AND p.id_pobyt IN (43113,43385,43423) -- test Šmídkovi+Nečasovi+Novotní/LK2015";
 //     $AND= "AND p.id_pobyt IN (43423) -- test Novotní/LK2015";
-//     $AND= "AND p.id_pobyt IN (45429) -- Barabášovi";
+//     $AND= "AND p.id_pobyt IN (60350) -- Kordík";
 //     $AND= "AND p.id_pobyt IN (20488,20344) -- Bajerovi a Kubínovi";
 //     $AND= "AND p.id_pobyt IN (20568,20793) -- Šmídkovi + Nečasovi";
     # pro browse_row přidáme klíč
@@ -3374,7 +3375,11 @@ function ucast2_browse_ask($x,$tisk=false) {
       $rodina[$r->id_rodina]= $r;
     }
     # atributy osob
-    $qo= pdo_qry("SELECT * FROM osoba AS o WHERE deleted='' AND id_osoba IN (0$osoby)");
+    $qo= pdo_qry("
+      SELECT o.*,IF(g.stav=1,'ok','') AS _geo 
+      FROM osoba AS o 
+      LEFT JOIN osoba_geo AS g USING(id_osoba)
+      WHERE deleted='' AND id_osoba IN (0$osoby)");
     while ( $qo && ($o= pdo_fetch_object($qo)) ) {
       $o->access_web= $o->access | ($o->web_zmena=='0000-00-00' ? 0 : 16);
       $osoba[$o->id_osoba]= $o;
@@ -3437,7 +3442,7 @@ function ucast2_browse_ask($x,$tisk=false) {
     $fos=   ucast2_flds("umrti,prijmeni,rodne,sex,adresa,ulice,psc,obec,stat,kontakt,telefon,nomail"
           . ",email,gmail"
           . ",iniciace,firming,uvitano,clen,obcanka,rc_xxxx,cirkev,vzdelani,titul,zamest,zajmy,jazyk,dieta"
-          . ",aktivita,note,_kmen");
+          . ",aktivita,note,_kmen,_geo");
     $fspo=  ucast2_flds("id_spolu,_barva,s_role,dite_kat,poznamka,pecovane,pfunkce,pece_jm,pece_id"
           . ",o_umi,prislusnost,skupinka");
 
@@ -3790,9 +3795,9 @@ function ucast2_browse_ask($x,$tisk=false) {
     $y->ok= 1;
     array_unshift($y->values,null);
   }
-//                                                 debug($pobyt[21976],'pobyt');
+//                                                 debug($pobyt[60350],'pobyt');
 //                                                 debug($rodina,'rodina');
-//                                                 debug($osoba[3506],'osoba');
+//                                                 debug($osoba[7039],'osoba');
 //                                                 debug($y->values);
   return $y;
 }

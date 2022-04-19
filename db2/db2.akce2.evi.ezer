@@ -640,19 +640,35 @@ form _page {
       cmd.o_smaz.display(not(page.oso.deleted.get)); cmd.o_obnov.display(page.oso.deleted.get) ];
   }
   # načíst osobu do záložky evid (případně s doplněním informací z _track) ==> . oso_load
-  proc oso_load(ido) { var ret: object
-    ido;
-    evi_barvit_zmeny.get;
-    oso.set_helps(0,'zluty','oranzovy');
-    ret.set(ask('elim2_data_osoba',ido,cconc(eq(lst.mode.get,'f','h'),lst.track_past.get,'')));
-    oso.load(ido);
-//    oso.rc.set(make_rc(oso.narozeni.get,oso.sex.get));
-    oso.show_osoba(2);
-    oso.set_helps(ret.chng,'zluty','oranzovy');
-  | ido; oso.load(ido);
-//    oso.rc.set(make_rc(oso.narozeni.get,oso.sex.get));
-    oso.show_osoba(2);
+  func oso_load(ido) { var ret: object, geo:object
+    if (ido && evi_barvit_zmeny) {
+      oso.set_helps(0,'zluty','oranzovy');
+      ret= php.elim2_data_osoba(ido,eq(lst.mode,'f','h') ? lst.track_past : '');
+      oso.load(ido);
+      oso.show_osoba(2);
+      oso.set_helps(ret.chng,'zluty','oranzovy');
+    }
+    elseif (ido) {
+      oso.load(ido);
+      oso.geo_ok= php.select('stav=1','osoba_geo',`id_osoba=${ido}`) ? 'ok' : '';
+//      geo= php.geo_get(ido);
+//      oso.geo_ok= geo.ok ? 'OK' : '';
+      oso.show_osoba(2);
+    }
   }
+//  proc oso_load(ido) { var ret: object
+//    ido;
+//    evi_barvit_zmeny.get;
+//    oso.set_helps(0,'zluty','oranzovy');
+//    ret.set(ask('elim2_data_osoba',ido,cconc(eq(lst.mode.get,'f','h'),lst.track_past.get,'')));
+//    oso.load(ido);
+////    oso.rc.set(make_rc(oso.narozeni.get,oso.sex.get));
+//    oso.show_osoba(2);
+//    oso.set_helps(ret.chng,'zluty','oranzovy');
+//  | ido; oso.load(ido);
+////    oso.rc.set(make_rc(oso.narozeni.get,oso.sex.get));
+//    oso.show_osoba(2);
+//  }
   # načíst rodinu (případně s doplněním informací z _track) ==> . rod_load
   proc rod_load(idr) { var ret: object
     [ evi_barvit_zmeny.get;
