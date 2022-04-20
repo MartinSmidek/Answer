@@ -546,62 +546,118 @@ form _cmd [,,623,30] {
     u.b.enable(on);
   }
   # --------------------------------------------==> uložit/vytvořit
-  proc ulozit() { var ok:number, idr:number, ido:number, war:text, ret:object
-    war.set('');
+  func ulozit() { var ok:number, idr:number, ido:number, ret:object
     // uložení změn
-    eq(mode.get,'novy_singl');
-    # ---------------------==> . new singl
-    // osoba a spolu
-    os1.kontakt.change; os1.adresa.change; // singl má jen osobní údaje
-    ido.set(os1.insert);
-    sp1.key_spolu.set(the_pobyt.get); sp1.key_spolu.change;
-    sp1.key_osoba.set(ido); sp1.key_osoba.change;
-    ret.set(ask('ucast2_pridej_osobu',
-      os1.key,os1.access.get,the_duakce.get,pob.key,rod.key,os1.role.get));
-    the_pobyt.set(ret.pobyt);
-    _reload(1,ido)
-  | eq(mode.get,'novy_clen');
-    # ---------------------==> . new člen
-    [ os1.same
-    | ido.set(os1.insert);
-      tvori.insert_record(object('id_osoba',ido,'id_rodina',rod.key_rodina.get,
-        'role',os1.role.get));
-      // možná přidáme do pobytu
-      confirm("Rovnou přidat na akci?");
-      sp1.pridat.na_akci(ido,rod.key_rodina.get,os1.role.get);
-    ];
-    _reload(1,ido)
-  | eq(mode.get,'novy_pobyt');
-    rod.rodiny0.rod_end;
-    # ---------------------==> . new pobyt,rodina
-    // 1.osoba a rodina - kontrola dostatečnosti údajů
-    [ rod.rodiny0.get  | war.set(conc(war,' název rodiny, ')) ];
-    [ war; alert("Pozor: název rodiny je povinný"); return ];
-    // rodina
-    [ rod.same; idr.set(0) | idr.set(rod.insert); rod.plain ];
-    // pobyt
-    pob.key_akce.set(the_duakce.get); pob.key_akce.change;
-    [ idr; pob.i0_rodina.set(idr); pob.i0_rodina.change ];
-    the_pobyt.set(pob.insert);
-    _reload(1,ido)
-  | the_pobyt.get;
-    # ---------------------==> ... oprava
-    [ rod.same
-    | rod.r.key(rod.key_rodina.get); [ rod.r.save ]; ask('table_lock','off','rodina',rod.r.key);
-      rod.t_role.changed;
-      ask('akce2_save_role',rod.cleni.key_tvori.get,rod.t_role.get) ];
-    [ pob.same | pob.save; ask('table_lock','off','pobyt',pob.key) ];
-    [ os1.same | os1.key; os1.save_osoba; ask('table_lock','off','osoba',os1.key) ];
-    [ os2.same | os2.key; os2.save_osoba; ask('table_lock','off','osoba',os2.key) ];
-    [ sp1.same
-    | sp1.key;
-      // pokud byl chůvou nebo chovaným dítětem, je třeba ošetřit vazbu
-      [ eq(sp1.s_role.key,3,5);          ];
-      sp1.save; ];
-    [ sp2.same | sp2.key; sp2.save; ];
-    [ rod.cleni.browse_count; _reload(1,rod.cleni.key_osoba.get) | _reload(1,0) ]
-  | error("Uložit co?")
+    if (mode=='novy_singl') {
+      # ---------------------==> . new singl
+      // osoba a spolu
+      os1.kontakt.change(); os1.adresa.change(); // singl má jen osobní údaje
+      ido= os1.insert();
+      sp1.key_spolu= the_pobyt; sp1.key_spolu.change();
+      sp1.key_osoba= ido; sp1.key_osoba.change();
+      ret= php.ucast2_pridej_osobu(os1.key(),os1.access,the_duakce,pob.key(),rod.key(),os1.role);
+      the_pobyt= ret.pobyt;
+      _reload(1,ido)
+    }
+    elseif (mode=='novy_clen') {
+      # ---------------------==> . new člen
+      if (!os1.same()) {
+        ido= os1.insert();
+        tvori.insert_record({id_osoba:ido,id_rodina:rod.key_rodina,role:os1.role});
+        // možná přidáme do pobytu
+        if (confirm("Rovnou přidat na akci?"))
+          sp1.pridat.na_akci(ido,rod.key_rodina,os1.role);
+      }
+      _reload(1,ido)
+    }
+    elseif (mode=='novy_pobyt') {
+      rod.rodiny0.rod_end();
+      # ---------------------==> . new pobyt,rodina
+      // kontrola dostatečnosti údajů
+      if (!rod.rodiny0) { alert("Pozor: název rodiny je povinný"); return }
+      // rodina
+      if (rod.same()) idr= 0; else { idr= rod.insert(); rod.plain() };
+      // pobyt
+      pob.key_akce= the_duakce; pob.key_akce.change();
+      if (idr) { pob.i0_rodina= idr; pob.i0_rodina.change(); }
+      the_pobyt= pob.insert();
+      _reload(1,ido)
+    }
+    elseif (the_pobyt) {
+      # ---------------------==> ... oprava
+      if (!rod.same()) {
+        rod.r.key(rod.key_rodina); rod.r.save(); php.table_lock('off','rodina',rod.r.key());
+        if (rod.cleni.browse_count()) {
+          rod.t_role.changed();
+          php.akce2_save_role(rod.cleni.key_tvori,rod.t_role)
+        }
+      }
+      if (!pob.same()) { pob.save(); php.table_lock('off','pobyt',pob.key()); }
+      if (!os1.same()) { os1.key(); os1.save_osoba(); php.table_lock('off','osoba',os1.key()) };
+      if (!os2.same()) { os2.key(); os2.save_osoba(); php.table_lock('off','osoba',os2.key()) };
+      if (!sp1.same() && sp1.key()) sp1.save();
+      if (!sp2.same() && sp2.key()) sp2.save();
+      _reload(1,rod.cleni.browse_count() ? rod.cleni.key_osoba : 0);
+    }
+    else error("Uložit co?")
   }
+  
+//  proc ulozit() { var ok:number, idr:number, ido:number, war:text, ret:object
+//    war.set('');
+//    // uložení změn
+//    eq(mode.get,'novy_singl');
+//    # ---------------------==> . new singl
+//    // osoba a spolu
+//    os1.kontakt.change; os1.adresa.change; // singl má jen osobní údaje
+//    ido.set(os1.insert);
+//    sp1.key_spolu.set(the_pobyt.get); sp1.key_spolu.change;
+//    sp1.key_osoba.set(ido); sp1.key_osoba.change;
+//    ret.set(ask('ucast2_pridej_osobu',
+//      os1.key,os1.access.get,the_duakce.get,pob.key,rod.key,os1.role.get));
+//    the_pobyt.set(ret.pobyt);
+//    _reload(1,ido)
+//  | eq(mode.get,'novy_clen');
+//    # ---------------------==> . new člen
+//    [ os1.same
+//    | ido.set(os1.insert);
+//      tvori.insert_record(object('id_osoba',ido,'id_rodina',rod.key_rodina.get,
+//        'role',os1.role.get));
+//      // možná přidáme do pobytu
+//      confirm("Rovnou přidat na akci?");
+//      sp1.pridat.na_akci(ido,rod.key_rodina.get,os1.role.get);
+//    ];
+//    _reload(1,ido)
+//  | eq(mode.get,'novy_pobyt');
+//    rod.rodiny0.rod_end;
+//    # ---------------------==> . new pobyt,rodina
+//    // 1.osoba a rodina - kontrola dostatečnosti údajů
+//    [ rod.rodiny0.get  | war.set(conc(war,' název rodiny, ')) ];
+//    [ war; alert("Pozor: název rodiny je povinný"); return ];
+//    // rodina
+//    [ rod.same; idr.set(0) | idr.set(rod.insert); rod.plain ];
+//    // pobyt
+//    pob.key_akce.set(the_duakce.get); pob.key_akce.change;
+//    [ idr; pob.i0_rodina.set(idr); pob.i0_rodina.change ];
+//    the_pobyt.set(pob.insert);
+//    _reload(1,ido)
+//  | the_pobyt.get;
+//    # ---------------------==> ... oprava
+//    [ rod.same
+//    | rod.r.key(rod.key_rodina.get); [ rod.r.save ]; ask('table_lock','off','rodina',rod.r.key);
+//      rod.t_role.changed;
+//      ask('akce2_save_role',rod.cleni.key_tvori.get,rod.t_role.get) ];
+//    [ pob.same | pob.save; ask('table_lock','off','pobyt',pob.key) ];
+//    [ os1.same | os1.key; os1.save_osoba; ask('table_lock','off','osoba',os1.key) ];
+//    [ os2.same | os2.key; os2.save_osoba; ask('table_lock','off','osoba',os2.key) ];
+//    [ sp1.same
+//    | sp1.key;
+//      // pokud byl chůvou nebo chovaným dítětem, je třeba ošetřit vazbu
+//      [ eq(sp1.s_role.key,3,5);          ];
+//      sp1.save; ];
+//    [ sp2.same | sp2.key; sp2.save; ];
+//    [ rod.cleni.browse_count; _reload(1,rod.cleni.key_osoba.get) | _reload(1,0) ]
+//  | error("Uložit co?")
+//  }
 }
 # ==========================================================================================> SEZNAM
 # --------------------------------------------------------------------------------------- _header
@@ -718,7 +774,7 @@ form _ucast [,,400,] { css:'ds_form', style:'height:fit-content'
     show r_access_web // access + 16 pokud došlo ke změně přes web (rodina)
     // údaje rod
     show r_spz, show r_svatba, show r_datsvatba, show r_rozvod,
-    show r_ulice, show r_psc, show r_obec, show r_stat,
+    show r_ulice, show r_psc, show r_obec, show r_stat, show r_geo_ok,
     show r_telefony, show r_emaily, show r_ms, show r_umi, show fotka, show r_note
     // údaje rod.cleni
     show r_cleni // naplní browse pro rodinu daty jejích členů
@@ -1590,6 +1646,7 @@ form _rodina2 [,,360,229]  { css:'ae_frame', par:°{onchanged:'first_only'}
   field r_psc      [Lr+ 5,90, 40,] {tag:'r', data:r.psc, title:'^psč'
     proc onchanged() { this.let(replace(this.get,' ','')) }
   }
+  field r_geo_ok   [Lr+29,76,12,12] {tag:'r', css:'Label3', format:'no' }
   field r_obec     [Lr+52,90,113,] {tag:'r', data:r.obec, title:'^obec'}
   field r_telefony [Lr+5,125,160,] {tag:'r', type:'list', data:r.telefony,title:'^telefony'}
   check nomaily    [Lr+42,141,121,] {tag:'r', title:"neposílat hromadné", data:r.nomaily, tabindex:0
