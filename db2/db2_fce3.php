@@ -1515,13 +1515,13 @@ function akce2_pobyt_default($id_akce,$id_pobyt,$zapsat=0) {  //trace();
   $warn= '';
   $zmeny_kat= array(); // pro zapsat==1 bude obsahovat provedené změny kategorie u dětí
   $dite_kat= xx_akce_dite_kat($id_akce);
-  $akce_dite_kat_Lp=  map_cis($dite_kat,'barva'); // {L|-},{c|p} = lůžko/bez, celá/poloviční
+  $akce_dite_kat_Lp=  map_cis($dite_kat,'barva'); // {L|P|-},{c|p} = lůžko/pristylka/bez, celá/poloviční
   $akce_dite_kat_vek= map_cis($dite_kat,'ikona'); // od-do
   $akce_dite_kat_zkr= map_cis($dite_kat,'zkratka'); // zkratka
   $akce_funkce= map_cis('ms_akce_funkce','zkratka');
   // projítí společníků v pobytu
   $dosp= $deti= $koje= $noci= $sleva= $fce= $svp= 0;
-  $luzka= $bez= $cela= $polo= 0;
+  $luzka= $pristylky= $bez= $cela= $polo= 0;
   $msg= '';
   $qo= "SELECT o.prijmeni,o.jmeno,o.narozeni,a.datum_od,DATEDIFF(datum_do,datum_od) AS _noci,p.funkce,
          s.pecovane,s.s_role,s.dite_kat,id_spolu,
@@ -1578,6 +1578,7 @@ function akce2_pobyt_default($id_akce,$id_pobyt,$zapsat=0) {  //trace();
         list($spani,$strava)= explode(',',$akce_dite_kat_Lp[$ktg]);
         // lůžka
         if ( $spani=='L' )      $luzka++;
+        elseif ( $spani=='P' )  $pristylky++;
         elseif ( $spani=='-' )  $bez++;
         else $err+= "chybná kategorie dítěte";
         // strava
@@ -1609,7 +1610,7 @@ function akce2_pobyt_default($id_akce,$id_pobyt,$zapsat=0) {  //trace();
       in_array($fce,array(5)) ?     2 : (
       in_array($fce,array(3,4,6)) ? 3 : 0));      
   // vrácení hodnot
-  $ret= (object)array('luzka'=>$luzka,'kocarek'=>$bez,'pocetdnu'=>$noci,'svp'=>$svp,
+  $ret= (object)array('luzka'=>$luzka,'pristylky'=>$pristylky,'kocarek'=>$bez,'pocetdnu'=>$noci,'svp'=>$svp,
                       'strava_cel'=>$cela,'strava_pol'=>$polo,'vzorec'=>$vzorec,'vek'=>$vek,
                       'warn'=>$warn);
   if ($zapsat) { 
@@ -2153,14 +2154,14 @@ function akce2_vzorec($id_pobyt) {  //trace();
       switch ($a->za) {
         case 'Nl':
           $cc= $nl * $a->c;
-          if ( !$cc ) break;
+//          if ( !$cc ) break;
           $cena+= $cc;
           $ret->c_nocleh+= $cc;
           $html.= "<tr><td>{$a->txt} ($nl*{$a->c})</td><td align='right'>$cc</td></tr>";
           break;
         case 'Np':
           $cc= $np * $a->c;
-          if ( !$cc ) break;
+//          if ( !$cc ) break;
           $cena+= $cc;
           $ret->c_nocleh+= $cc;
           $html.= "<tr><td>{$a->txt} ($np*{$a->c})</td><td align='right'>$cc</td></tr>";

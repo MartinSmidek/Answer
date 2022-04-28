@@ -1762,12 +1762,12 @@ form _platba [,,623,] { key_id:'id_pobyt', style:'height:fit-content', par:°{on
 //    [ or(u.b.cstrava_cel_bl.get,u.b.cstrava_pol_bl.get); stravy_bl.set_css('cervena','cerna');
 //    | stravy_bl.set_css('cerna','cervena') ];
 //  }
-  // rozpis a zápis ceny
+  // ==> . rozpis a zápis ceny
   button [10,47,,] { tag:'cenik', title:"Návrh ceny", help:"zapíše počet lůžek a strav"
     func onclick() { var ret: object
       ret= php.akce2_pobyt_default(the_duakce,the_pobyt);
       copy_by_name(ret,form);
-      vzorec.change(); luzka.change(); pocetdnu.change(); svp.change();
+      vzorec.change(); luzka.change(); pristylky.change(); pocetdnu.change(); svp.change();
       strava_cel.change(); strava_pol.change(); kocarek.change();
       navrh= `pro zobrazení ceny je třeba
           <br>1. upravit (je-li třeba) a uložit navržené hodnoty,
