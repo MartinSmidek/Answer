@@ -2036,8 +2036,7 @@ form _cmd_p [,,623,30] { css:'ae_work'
         from= sys('user','options','email'); name= sys('user','options','vyrizuje');
         y= php.mail2_vzor_pobyt2(the_pobyt,'potvrzeni_platby2',i,from,name,0);
         if (y.err) alert(y.err);
-        else {
-          confirm(y.msg);
+        elseif (confirm(y.msg)) {
           y= php.mail2_vzor_pobyt2(the_pobyt,'potvrzeni_platby2',i,from,name,1);
           if (y.err) alert(y.err) 
           else { pla.load(the_pobyt); alert(y.msg) }
