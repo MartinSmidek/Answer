@@ -13672,7 +13672,7 @@ function mail2_mai_pocet($id_dopis,$dopis_var,$cond='',$recall=false) {  trace()
             }
           }
           $emaily[]= implode(',',$r_emaily);
-          $ids[]= $d->_idr;
+          $ids[]= isset($d->_idr) ? $d->_idr : 0;
           $jmena[]= $d->_name;
         }
       }
