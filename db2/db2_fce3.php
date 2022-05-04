@@ -13733,9 +13733,12 @@ function mail2_mai_pocet($id_dopis,$dopis_var,$cond='',$recall=false) {  trace()
   case 'U1':    // nesloužící
   case 'U':
     $html.= "Obeslaných účastníků ";
+    // zjisti údaje o akci
+    list($a_nazev,$ma_cenu,$cena,$hnizda)= select('akce.nazev,ma_cenu,cena,hnizda',
+        'dopis JOIN akce USING (id_duakce)',"id_dopis=$id_dopis");
     // POZOR KOPIE KÓDU z mail2_mai_doplnit
     $AND= $cond ? "AND $cond" : '';
-    $AND.= "AND (d.hnizdo=99 || d.hnizdo=p.hnizdo)";
+    $AND.= $hnizda ? "AND (d.hnizdo=99 || d.hnizdo=p.hnizdo)" : '';
     $AND.= $dopis_var=='U'  ? " AND p.funkce IN (0,1,2,5)" : (
            $dopis_var=='U1' ? " AND p.funkce=0"   : (
            $dopis_var=='U2' ? " AND p.funkce IN (1,2,5)"   : (
@@ -13744,20 +13747,21 @@ function mail2_mai_pocet($id_dopis,$dopis_var,$cond='',$recall=false) {  trace()
              " AND IF(IFNULL(role,'a') IN ('a','b'),REPLACE(o.obcanka,' ','') NOT RLIKE '^[0-9]{9}$',0)"
          : " --- chybné komu --- " ))));
 //    $HAVING= $dopis_var=='U3' ? "HAVING _uhrada/_na_akci<cena" : "";
-    $HAVING= $dopis_var=='U3' 
-        ? "HAVING IF(ma_cenu,_uhrada/_na_akci<cena,_uhrada<_poplatek)" : "";
+    $HAVING= $dopis_var=='U3' ? ( $ma_cenu 
+          ? "HAVING _uhrada/_na_akci<$cena" 
+          : "HAVING _uhrada<_poplatek")
+        : "";
     // využívá se toho, že role rodičů 'a','b' jsou před dětskou 'd', takže v seznamech
     // GROUP_CONCAT jsou rodiče, byli-li na akci. Emaily se ale vezmou ode všech, mají-li osobní
-    $qry= "SELECT a.nazev,a.ma_cenu,p.id_pobyt,pouze,COUNT(DISTINCT s.id_osoba) AS _na_akci, 
+    $qry= "SELECT p.id_pobyt,pouze,COUNT(DISTINCT s.id_osoba) AS _na_akci, 
              (SELECT IFNULL(SUM(u_castka),0) FROM uhrada WHERE id_pobyt=p.id_pobyt) AS _uhrada,
-             a.cena, p.poplatek_d, 
+             p.poplatek_d, 
              p.platba1+p.platba2+p.platba3+p.platba4 -vratka1-vratka2-vratka3-vratka4 AS _poplatek,
              GROUP_CONCAT(DISTINCT o.id_osoba ORDER BY t.role) AS _id,
              GROUP_CONCAT(DISTINCT CONCAT(prijmeni,' ',jmeno) ORDER BY t.role) AS _jm,
              GROUP_CONCAT(DISTINCT IF(o.kontakt,TRIM(o.email),'')) AS email,
              GROUP_CONCAT(DISTINCT TRIM(r.emaily)) AS emaily
            FROM dopis AS d
-           JOIN akce AS a ON d.id_duakce=a.id_duakce
            JOIN pobyt AS p ON d.id_duakce=p.id_akce
            JOIN spolu AS s USING (id_pobyt)
            JOIN osoba AS o ON s.id_osoba=o.id_osoba
@@ -13770,7 +13774,7 @@ function mail2_mai_pocet($id_dopis,$dopis_var,$cond='',$recall=false) {  trace()
     $res= pdo_qry($qry);
     while ( $res && ($d= pdo_fetch_object($res)) ) {
       $n++;
-      $nazev= "Účastníků {$d->nazev}";
+      $nazev= "Účastníků {$a_nazev}";
       list($jm)= explode(',',$d->_jm);
       // kontrola vyřazených mailů
       $eo= $d->email;

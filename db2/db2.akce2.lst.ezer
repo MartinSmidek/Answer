@@ -376,13 +376,21 @@ form _page [,,275,360] {
   var hnizda_ok=1
   check is_hnizda [292,230,161,] { tag:'cor' title:'akce je v hnízdech' format:'t'
       skill:'yaa|yaan;caa|caan;faa|faan' 
-    proc onchange() { this.get; hnizda.display(1) | hnizda.set(''); hnizda.change }}
+    func onchange() { 
+      hnizda.display(is_hnizda); 
+      if (!is_hnizda) { 
+        hnizda= ''; hnizda.change() 
+      }
+  }}
   edit hnizda [292,262,161,40] { tag:'cor' title:'^jména hnízd oddělená čárkami' 
       data:akce.hnizda format:'n' 
-    proc onchanged() { var msg:text
-      msg.set(ask('akce2_hnizda_test',hnizda.get));
-      msg; hnizda_ok.set(0); alert(msg);
-    | hnizda_ok.set(1)
+    func onchanged() { var msg:text
+      if (is_hnizda) {
+        msg= php.akce2_hnizda_test(hnizda);
+      }
+      else msg= hnizda;
+      if (msg) { hnizda_ok= 0; alert(msg); }
+      else hnizda_ok= 1;
   }}
   // ------------------------------------- web setkani.org a chlapi.online
   label [10,309,384,92] { tag:'cor', css:'bily_ram', skill:'yaaw;faaw' 
