@@ -13605,6 +13605,7 @@ function mail2_mai_doplnit($id_dopis,$id_akce,$doplnit) {  trace();
 #         do seznamu se dostanou pouze dlužníci (bez avíza)
 #   'U4'- (komu=3) rozeslat účastníkům akce a hnízda dopis.id_duakce ukazující do akce
 #         do seznamu se dostanou pouze dospělí s chybějícím nebo zjevně starým OP
+#   'U5'- (komu=5) rozeslat všem na akci přítomným vyjma pečounů
 #   'Q' - rozeslat na adresy vygenerované dopis.cis_skupina => hodnota
 #   'G' - rozeslat podle mailistu - varianta osoba/rodina
 # pokud _cis.data=9999 jde o speciální seznam definovaný funkcí mail2_mai_skupina - ZRUŠENO
@@ -13727,6 +13728,7 @@ function mail2_mai_pocet($id_dopis,$dopis_var,$cond='',$recall=false) {  trace()
     }
     break;
   // --------------------------------------------------- účastníci akce
+  case 'U5':    // všichni přítomní (mimo pečounů)
   case 'U4':    // divný OP
   case 'U3':    // dlužníci
   case 'U2':    // sloužící
@@ -13744,8 +13746,9 @@ function mail2_mai_pocet($id_dopis,$dopis_var,$cond='',$recall=false) {  trace()
            $dopis_var=='U2' ? " AND p.funkce IN (1,2,5)"   : (
            $dopis_var=='U3' ? " AND p.funkce IN (0,1,2,5) " : (
            $dopis_var=='U4' ?
-             " AND IF(IFNULL(role,'a') IN ('a','b'),REPLACE(o.obcanka,' ','') NOT RLIKE '^[0-9]{9}$',0)"
-         : " --- chybné komu --- " ))));
+             " AND IF(IFNULL(role,'a') IN ('a','b'),REPLACE(o.obcanka,' ','') NOT RLIKE '^[0-9]{9}$',0)" : (
+           $dopis_var=='U5' ? " AND p.funkce NOT IN (9,10,13,14,99) " 
+         : " --- chybné komu --- " )))));
 //    $HAVING= $dopis_var=='U3' ? "HAVING _uhrada/_na_akci<cena" : "";
     $HAVING= $dopis_var=='U3' ? ( $ma_cenu 
           ? "HAVING _uhrada/_na_akci<$cena" 
@@ -14043,7 +14046,7 @@ function mail2_personify_help() {
 # informace o členovi
 # $id - klíč osoby nebo chlapa
 # $zdroj určuje zdroj adres
-#   'U','U1','U2','U3','U4' - rozeslat účastníkům akce dopis.id_duakce ukazující do akce
+#   'U','U1','U2','U3','U4','U5' - rozeslat účastníkům akce dopis.id_duakce ukazující do akce
 #   'C' - rozeslat účastníkům akce dopis.id_duakce ukazující do ch_ucast
 #   'Q' - rozeslat na adresy vygenerované dopis.cis_skupina => hodnota
 #   'G' - maillist
@@ -14127,6 +14130,7 @@ function mail2_mai_info($id,$email,$id_dopis,$zdroj,$id_mail) {  //trace();
     }
     break;
   case 'U':                     // účastníci akce
+  case 'U5':                    // všichni přítomní vyjma pečounů
   case 'U1':                    // nesloužící účastníci akce
   case 'U2':                    // sloužící účastníci akce
   case 'U3':                    // dlužníci

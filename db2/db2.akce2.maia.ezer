@@ -67,9 +67,11 @@ use vz: form _vzory [10,0,,]    // vzory mailů
 # ------------------------------------------------------------------------------------------==> MENU
 menu m {type:'left',
   menu g {title:'Vytvoření mailu k akci', type:'group'
-    item i {title:'všem účastníkům této akce', _sys:'akc'
+    item i {title:'všem účastníkům této akce', _sys:'akc', help:'bez funkce, VPS, SVPS, hospodář'
       par:°{k:'et',uq:'U',on:'akce',off:'gen|skup'} }
-    item {title:'... účastníkům bez funkce'
+    item {title:'... všem přítomným na akci', help:'mimo pečounů, odhlášených, náhradníků, nepřijedších, ...'
+      par:°{k:'et',uq:'U5',on:'akce',off:'gen|skup'} }
+    item {title:'... účastníkům bez funkce', help:'s funkcí -'
       par:°{k:'et',uq:'U1',on:'akce',off:'gen|skup'} }
     item {title:'... VPS,SVPS,hospodářům akce'
       par:°{k:'et',uq:'U2',on:'akce',off:'gen|skup'} }
@@ -87,6 +89,8 @@ menu m {type:'left',
   menu {title:'Rozesílání mailů ', type:'group', _sys:'snd'
     item {title:'všem účastníkům této akce',
       par:°{k:'es',uq:'U',on:'akce',off:'gen|skup'} }
+    item {title:'... všem přítomným na akci',
+      par:°{k:'es',uq:'U5',on:'akce',off:'gen|skup'} }
     item {title:'... účastníkům bez funkce'
       par:°{k:'es',uq:'U1',on:'akce',off:'gen|skup'} }
     item {title:'... VPS,SVPS,hospodářům akce'
@@ -309,7 +313,8 @@ form _etext  {
       'U1',{ komu.set(4); },
       'U2',{ komu.set(1); },
       'U3',{ komu.set(2); },
-      'U4',{ komu.set(3); }
+      'U4',{ komu.set(3); },
+      'U5',{ komu.set(5); }
       );
       id_duakce.change; hnizdo.change; komu.change; cis_skupina.change; id_mailist.change;
     }
@@ -330,7 +335,7 @@ form _etext  {
       var blokovano: number
       var pocet: number
       var err: text
-      eq(dopis_var.get,'U','U1','U2','U3','U4');
+      eq(dopis_var.get,'U','U1','U2','U3','U4','U5');
       # rozesílání podle nastavené akce
         prazdny; et_prazdy.get;
         E_info.set(ask('mail2_mai_pocet',dopis_id.get,dopis_var.get));
@@ -376,6 +381,8 @@ form _etext  {
     case 'U3': texty.browse_load(`${prefix} etd.komu=2`); break;
     // špatné OP (dopis.komu=3)
     case 'U4': texty.browse_load(`${prefix} etd.komu=3`); break;
+    // všem přítomným (dopis.komu=5)
+    case 'U5': texty.browse_load(`${prefix} etd.komu=5`); break;
     }
     reload2()
   }
@@ -602,6 +609,8 @@ form _esady  {
     case 'U3': texty.browse_load(`${prefix} etd.komu=2`); break;
     // špatné OP (dopis.komu=3)
     case 'U4': texty.browse_load(`${prefix} etd.komu=3`); break;
+    // všem přítomným (dopis.komu=5)
+    case 'U5': texty.browse_load(`${prefix} etd.komu=5`); break;
     }
     reload2();
   }
