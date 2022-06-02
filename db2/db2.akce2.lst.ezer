@@ -46,9 +46,11 @@ use page: form _page [512,40,,]
 
 # ----------------------------------------------------------------------------==> globální procedury
 # nastaví akci jako pracovní
-proc akce_work(id_akce) {
+func akce_work(id_akce) {
+  if (!id_akce) 
+    id_akce= php.select('id_duakce','akce',`YEAR(datum_od)='${the_rok}' AND access=${my_org}`);
   info.volba_akce(id_akce);
-  info.rok.set(the_rok.get);
+  info.rok= the_rok;
 }
 # zobrazí přehled hnízd
 func ukaz_hnizda(ida) { 
