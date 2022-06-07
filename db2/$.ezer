@@ -222,7 +222,7 @@ menu db2 { type:'main', title:'db2', active:*, _sys:'*'
           // ezer
           item { title:'[fa-question] Ezer: git status'  par:{folder:'ezer',op:'cmd',cmd:'status'}}
           item { title:'[fa-gears] Ezer: git log'        par:{folder:'ezer',op:'cmd',cmd:'log'}}
-          item { title:'[fa-gears] Ezer: git pull'       par:{folder:'ezer',op:'cmd',cmd:'pull origin/ezer3.1'}}
+          item { title:'[fa-gears] Ezer: git pull'       par:{folder:'ezer',op:'cmd',cmd:'pull'}}
           item { title:'[fa-gears] Ezer: git fetch ...'  help:"po fetch>git reset --hard origin/ezer3.1"
                                                          par:{folder:'ezer',op:'cmd',cmd:'fetch'}}
           // skins
