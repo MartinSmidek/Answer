@@ -408,7 +408,6 @@ form _lst [,,370,*] {
 //    show id_p { data:os.id_pobyt }
     show lat  { expr:"IFNULL(og.lat,0)" }
     show lng  { expr:"IFNULL(og.lng,0)" }
-    show psc { expr:"IF(o.adresa,o.psc,of.psc)" }
     show tips [,,0,] { expr:'', format:'t' }
     show _rodin { expr:"COUNT(*)" }
     show barva { expr:"o.deleted=''" }
@@ -417,13 +416,15 @@ form _lst [,,370,*] {
     show prijmeni [,,70,] { data:o.prijmeni, title:'příjmení', format:'q*s+'
       css_cell:'access,0:,1:ezer_ys,2:ezer_fa,3:ezer_db' }
     show jmeno [,,70,] { data:o.jmeno, title:'jméno', format:'q*s' }
-    show [,,60,] { title:'obec', expr:"IF(o.adresa,o.obec,of.obec)", format:'q*s' }
+    show ulice {expr:"IF(o.ulice,o.ulice,of.ulice)"}
+    show psc { expr:"IF(o.adresa,o.psc,of.psc)" }
+    show obec [,,60,] { title:'obec', expr:"IF(o.adresa,o.obec,of.obec)", format:'q*s' }
     show nar [,,50,] { title:'rrmmdd', data:o.narozeni, sql_pipe:'sql_yymmdd', format:'q@s'
       help:'datum narození ve tvaru rrmmdd'}
     show _vek [,,20,] { title:"věk", expr:"TIMESTAMPDIFF(YEAR,narozeni,NOW())", format:'rsq*' }
     // volitelná položka
-    show mail   [,,44,] { data:o.email, title:'emaily',help:'osobní emaily', format:'tq%s' }
     show telefon [,,0,] { data:o.telefon, title:'telefony',help:'osobní telefony', format:'tq%s' }
+    show mail   [,,44,] { data:o.email, title:'emaily',help:'osobní emaily', format:'tq%s' }
     show _id_o   [,,0,] { data:o.id_osoba, title:'ID osoby',help:'osobní číslo', format:'rq=s' }
     // počítané položky
 //    var lat:number, lng:number
@@ -439,7 +440,14 @@ form _lst [,,370,*] {
     |                 mail.width(44);   _id_o.width(0)
     }
     menu { type:'context'
-      item { title:'zrušit výběr a zobrazení'     func onclick() { brow_mapa_clear() }}
+      item { title:'export seznamu do Excelu',
+        func onclick () { var name:text
+          name= "seznam_osob";
+          bo.browse_export({file:name,type:'xlsx',title:'Výběr evidovaných osob',
+              show:'prijmeni,jmeno,ulice,psc,obec,_vek,telefon,mail'});
+          alert(`soubor pro Excel lze stáhnout <a href='docs/${name}.xlsx'>zde</a>`);
+      }}
+      item { title:'-zrušit výběr a zobrazení'    func onclick() { brow_mapa_clear() }}
       item { title:'vybrat vše co lze zobrazit'   func onclick() { page.map.select_in_map() }}
       item { title:'-v seznamu jen vybraní'       func onclick() { brow_selected('use') }}
       item { title:'v seznamu i nevybraní'        func onclick() { brow_selected('ignore') }}
@@ -498,7 +506,7 @@ form _lst [,,370,*] {
           ret.set(bm.browse_export(°{type:'xlsx',selected:1}));
           alert(ret.html);
       }}
-      item { title:'zrušit výběr a zobrazení'     func onclick() { brow_mapa_clear() }}
+      item { title:'-zrušit výběr a zobrazení'    func onclick() { brow_mapa_clear() }}
       item { title:'vybrat vše co lze zobrazit'   func onclick() { page.map.select_in_map() }}
       item { title:'-v seznamu jen vybraní'       func onclick() { brow_selected('use') }}
       item { title:'v seznamu i nevybraní'        func onclick() { brow_selected('ignore') }}
@@ -543,11 +551,12 @@ form _lst [,,370,*] {
     show access { data:r.access }
     show lat  { expr:"IFNULL(rg.lat,0)" }
     show lng  { expr:"IFNULL(rg.lng,0)" }
-    show psc { data:r.psc }
     show nazev [,,70,] { data:r.nazev, title:'rodina', format:'q*s+',
       css_cell:'access,0:,1:ezer_ys,2:ezer_fa,3:ezer_db' }
     show jmena [,,130,] { expr:"GROUP_CONCAT(rto.jmeno ORDER BY rt.role)", title:'jména', format:'tq%s' }
-    show [,,50,] { title:'obec', data:r.obec, format:'q*s' }
+    show ulice { data:r.ulice }
+    show psc { data:r.psc }
+    show obec [,,50,] { title:'obec', data:r.obec, format:'q*s' }
     // volitelná položka
     show maily [,,66,] { data:r.emaily, title:'emaily', help:'rodinné emaily', format:'tq%s' }
     show _id_r [,,0,] { data:r.id_rodina, title:'ID rodiny',help:'číslo rodiny', format:'rq=s' }
@@ -565,7 +574,14 @@ form _lst [,,370,*] {
     |              maily.width(66); _id_r.width(0)
     }
     menu { type:'context'
-      item { title:'zrušit výběr a zobrazení'     func onclick() { brow_mapa_clear() }}
+      item { title:'export seznamu do Excelu',
+        func onclick () { var name:text
+          name= "seznam_rodin";
+          br.browse_export({file:name,type:'xlsx',title:'Výběr evidovaných rodin',
+              show:'nazev,jmena,ulice,psc,obec,_vek,telefon,maily'});
+          alert(`soubor pro Excel lze stáhnout <a href='docs/${name}.xlsx'>zde</a>`);
+      }}
+      item { title:'-zrušit výběr a zobrazení'    func onclick() { brow_mapa_clear() }}
       item { title:'vybrat vše co lze zobrazit'   func onclick() { page.map.select_in_map() }}
       item { title:'-v seznamu jen vybraní'       func onclick() { brow_selected('use') }}
       item { title:'v seznamu i nevybraní'        func onclick() { brow_selected('ignore') }}
@@ -1714,47 +1730,67 @@ panel PridaniJmenem1 [,,320,280] {type:'popup', title:'Přidání osoby do rodin
 # ======================================================================================> filtr_osob
 panel filtr_osob [,,250,200] { type:'popup', title:"doplňující podmínky výběru osob"
   var sql=''
-  proc filtr_set() { sql.set(cconc(1,''
-    ,f.mrop.get," AND o.iniciace!=0"
-    ,f.firm.get," AND o.firming!=0"
-    ,f.aktiv.get,conc(" AND o.aktivita RLIKE '.*",f.aktiv.get,".*'")
-    ,f.jazyk.get,conc(" AND o.jazyk RLIKE '.*", f.jazyk.get,".*'")
-    ,f.zajmy.get,conc(" AND o.zajmy RLIKE '.*", f.zajmy.get,".*'")
-    ,f.pozn.get, conc(" AND o.note RLIKE '.*",  f.pozn.get,".*'")
-    ,f.zamest.get, conc(" AND o.zamest RLIKE '.*",  f.zamest.get,".*'")
-    ,f.slovaci.get,conc(" AND (o.stat='SK' OR IF(ISNULL(of.id_rodina),0,of.stat='SK'))")
-    ,f.cizinci.get,conc(" AND (o.stat!='' AND o.stat!='SK' AND o.stat!='CZ'",
-      " OR IF(ISNULL(of.id_rodina),0,of.stat!='' AND of.stat!='SK' AND of.stat!='CZ'))")
-    // zahrne i rodinné schopnosti, ale jen pro manžele
-    ,f.umi.key,conc(" AND (FIND_IN_SET('",f.umi.key,"',o.o_umi)",
-      " OR ot.role IN ('a','b') AND IF(ISNULL(of.id_rodina),0,FIND_IN_SET('",f.umi.key,"',of.r_umi)))")
-    // služba na pobytu ale jen pro manžele nebo single
-    ,f.slouzi.key,conc(" AND funkce=",f.slouzi.key,
-      " AND (ot.role IN ('a','b') OR ISNULL(of.id_rodina))")
-    // členství a dárcovství
-    ,f.bcleni.get,conc(" AND od.ukon IN ('b') AND dat_do='0000-00-00' ")
-    ,f.ccleni.get,conc(" AND od.ukon IN ('c') AND dat_do='0000-00-00' ")
-    ,f.darci.get,conc(" AND od.ukon IN ('d') AND YEAR(dat_od)>=YEAR(NOW())-1 ")
-    ,f.klub.get,conc(" AND od.ukon IN ('k') AND dat_do='0000-00-00' ")
-    ));
+  func filtr_set() { var vycet:text, IN:text
+    sql= cconc(1,''
+      ,f.mrop,    ` AND o.iniciace!=0`
+      ,f.firm,    ` AND o.firming!=0`
+      ,f.aktiv,   ` AND o.aktivita RLIKE '.*${f.aktiv}.*' `
+      ,f.jazyk,   ` AND o.jazyk RLIKE '.*${f.jazyk}.*' `
+      ,f.zajmy,   ` AND o.zajmy RLIKE '.*${f.zajmy}.*' `
+      ,f.pozn,    ` AND o.note RLIKE '.*${f.pozn}.*' `
+      ,f.zamest,  ` AND o.zamest RLIKE '.*${f.zamest}.*' `
+      ,f.slovaci, ` AND (o.stat='SK' OR IF(ISNULL(of.id_rodina),0,of.stat='SK')) `
+      ,f.cizinci, ` AND (o.stat!='' AND o.stat!='SK' AND o.stat!='CZ' 
+           OR IF(ISNULL(of.id_rodina),0,of.stat!='' AND of.stat!='SK' AND of.stat!='CZ')) `
+      // zahrne i rodinné schopnosti, ale jen pro manžele
+      ,f.umi.key(),   ` AND (FIND_IN_SET('${f.umi.key()}',o.o_umi)
+           OR ot.role IN ('a','b') AND IF(ISNULL(of.id_rodina),0,FIND_IN_SET('${f.umi.key()}',of.r_umi)))`
+  //    // služba na pobytu ale jen pro manžele nebo single
+  //    ,f.slouzi.key(),` AND funkce=${f.slouzi.key()} AND (ot.role IN ('a','b') OR ISNULL(of.id_rodina))`
+      // členství a dárcovství
+      ,f.bcleni,  ` AND od.ukon IN ('b') AND dat_do='0000-00-00' `
+      ,f.ccleni,  ` AND od.ukon IN ('c') AND dat_do='0000-00-00' `
+      ,f.darci,   ` AND od.ukon IN ('d') AND YEAR(dat_od)>=YEAR(NOW())-1 `
+      ,f.klub,    ` AND od.ukon IN ('k') AND dat_do='0000-00-00' `
+      );
     lst.o_filtr.set_attrib('help',cconc(1,"... "
-    ,f.mrop.get,        " a iniciovaní"
-    ,f.zajmy.get,       " a jsou aktivní"
-    ,f.jazyk.get,       " a znají jazyk"
-    ,f.zajmy.get,       " a mají zájmy"
-    ,f.zamest.get,      " a zaměstnání"
-    ,f.pozn.get,        " s poznámkou"
-    ,f.slovaci.get,     " a Slováci"
-    ,f.cizinci.get,     " a cizinci"
-    ,f.umi.get,         " a umí"
-    ,f.slouzi.get,      " a slouží"
-    ,f.bcleni.get,      " a jsou běžnými členy"
-    ,f.ccleni.get,      " a jsou činnými členy"
-    ,f.darci.get,       " a dali vloni či letos dar"
-    ,f.klub.get,        " a jsou v klubu přátel"
+    ,f.mrop,        " a iniciovaní"
+    ,f.firm,        " a firming"
+    ,f.elder,       " a starší"
+    ,f.neelder,     " a nebyl starší"
+    ,f.team,        " a v týmu"
+    ,f.neteam,      " a nebyl v týmu"
+    ,f.zajmy,       " a jsou aktivní"
+    ,f.jazyk,       " a znají jazyk"
+    ,f.zajmy,       " a mají zájmy"
+    ,f.zamest,      " a zaměstnání"
+    ,f.pozn,        " s poznámkou"
+    ,f.slovaci,     " a Slováci"
+    ,f.cizinci,     " a cizinci"
+    ,f.umi,         " a umí"
+//    ,f.slouzi,      " a slouží"
+    ,f.bcleni,      " a jsou běžnými členy"
+    ,f.ccleni,      " a jsou činnými členy"
+    ,f.darci,       " a dali vloni či letos dar"
+    ,f.klub,        " a jsou v klubu přátel"
     ));
+    // přidámespeciální filtry, řešené výčtem
+    if (f.elder || f.neelder) {
+      IN= f.elder ? 'IN' : 'NOT IN';
+      vycet= php.select('GROUP_CONCAT(DISTINCT id_osoba)',
+            `akce JOIN pobyt ON id_akce=id_duakce JOIN spolu AS s USING (id_pobyt)`,
+            `mrop=1 AND funkce IN (1,2)`);
+      sql= `${sql} AND o.id_osoba ${IN} (${vycet}) `;
+    }
+    if (f.team || f.neteam) {
+      IN= f.team ? 'IN' : 'NOT IN';
+      vycet= php.select('GROUP_CONCAT(DISTINCT id_osoba)',
+            `akce JOIN pobyt ON id_akce=id_duakce JOIN spolu AS s USING (id_pobyt)`,
+            `(mrop=1 AND funkce IN (3,4,5,12) OR nazev='MROP tým') `);
+      sql= `${sql} AND o.id_osoba ${IN} (${vycet}) `;
+    }
   }
-  proc filtr_clear() { sql.set(''); lst.o_filtr.set_attrib('help',"bez filtru") }
+  func filtr_clear() { sql= ''; lst.o_filtr.set_attrib('help',"bez filtru") }
   use f: form _f
   form _f {
     // vlevo
@@ -1765,17 +1801,21 @@ panel filtr_osob [,,250,200] { type:'popup', title:"doplňující podmínky výb
     field pozn    [53,100,79,] { title:'poznámka',    format:'t' }
     select umi    [53,125,99,] { type:'map0', options:ms_umi.hodnota, title:'schopnosti',
                                  value:'0', format:'t', help:"zohledňuje i rodiný um" }
-    select slouzi [53,150,99,] { type:'map0', options:ms_umi.hodnota, title:'služby',
-                                 value:'0', format:'t', help:"zohledňuje i rodinou službu" }
+//    select slouzi [53,150,99,] { type:'map0', options:ms_umi.hodnota, title:'služby',
+//                                 value:'0', format:'t', help:"zohledňuje i rodinou službu" }
     // vpravo
     check mrop    [160,1,95,17]  { title:'iniciovaní', format:'t', skill:'f|f;y|f;c|f' }
     check firm    [160,16,95,17] { title:'firming', format:'t', skill:'f|f;y|f;c|f' }
-    check slovaci [160,44,95,17] { title:'Slováci', format:'t', help:"zohledňuje i rodinnou adresu" }
-    check cizinci [160,61,95,17] { title:'jiní cizinci', format:'t', help:"zohledňuje i rodinnou adresu" }
-    check bcleni  [160,89,95,17] { title:'běžní členové', format:'t', help:"nezrušení běžní členové" }
-    check ccleni  [160,106,95,17] { title:'činní členové', format:'t', help:"nezrušení činní členové" }
-    check darci   [160,123,47,17] { title:'dárci', format:'t', help:"letošní as loňští dárci" }
-    check klub    [160,140,47,17] { title:'klub', format:'t', help:"jsou v klubu přátel" }
+    check team    [160,31,95,17] { title:'v týmu', format:'t', skill:'f|f;y|f;c|f' }
+    check neteam  [206,31,95,17] { title:'nebyl', format:'t', skill:'f|f;y|f;c|f' }
+    check elder   [160,46,95,17] { title:'elder', format:'t', skill:'f|f;y|f;c|f' }
+    check neelder [206,46,95,17] { title:'nebyl', format:'t', skill:'f|f;y|f;c|f' }
+    check slovaci [160,70,95,17] { title:'Slováci', format:'t', help:"zohledňuje i rodinnou adresu" }
+    check cizinci [160,87,95,17] { title:'jiní cizinci', format:'t', help:"zohledňuje i rodinnou adresu" }
+    check bcleni  [160,115,95,17] { title:'běžní členové', format:'t', help:"nezrušení běžní členové" }
+    check ccleni  [160,132,95,17] { title:'činní členové', format:'t', help:"nezrušení činní členové" }
+    check darci   [160,149,47,17] { title:'dárci', format:'t', help:"letošní as loňští dárci" }
+    check klub    [206,149,47,17] { title:'klub', format:'t', help:"jsou v klubu přátel" }
     // ukončení
     button [57,181,,] { title:'[fa-filter] filtruj', proc onclick() { filtr_set; panel.hide(1) }}
     button [137,181,,] { title:'[fa-undo] zruš filtr', proc onclick() { filtr_clear; panel.hide(0) }}
