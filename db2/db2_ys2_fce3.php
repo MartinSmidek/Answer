@@ -483,13 +483,68 @@ function update_web_changes () {
 /** =========================================================================================> CHART */
 # ------------------------------------------------------------------------------------==> . chart ms
 # agregace údajů o MROP pro grafické znázornění
-function chart_mrop($par) { debug($par,'chart_ms');
+function chart_mrop($par) { //debug($par,'chart_ms');
   $y= (object)array('err'=>'','note'=>' ');
   $org= $par->org; //255;
+  $letos= date('Y');
   $chart= $par->chart ?: (object)array();
   if (!isset($chart->series))
     $chart->series= array();
+  $par2= (object)array('typ'=>'pri','po'=>30,'zmeny'=>0);
   switch ($par->type) {
+    case 'prihlasky':
+      $chart= (object)array('chart'=>'line');
+      $chart->title= "tempo (zápisu) přihlašování na MROP";
+      $od= $par->od;
+      $do= $par->do ?: $letos;
+//      $od= 2014;
+//      $do= $letos;
+      for ($rok= $od; $rok<=$do; $rok++) {
+        $ida= select('id_duakce','akce',"mrop=1 AND zruseno=0 AND YEAR(datum_od)=$rok");
+        if (!$ida) continue;
+        
+        $data= array(0,0,0,0,0,0,0,0,0,0);
+        $qp=  "SELECT id_pobyt,
+             (SELECT DATE(kdy) FROM _track 
+              WHERE kde='pobyt' AND klic=id_pobyt ORDER BY id_track LIMIT 1) AS mesic
+          FROM pobyt JOIN akce ON id_akce=id_duakce
+          WHERE id_akce='$ida' AND funkce=0 ";
+        $rp= pdo_qry($qp);
+        while ( $rp && (list($idp,$datum)= pdo_fetch_row($rp)) ) {
+          if (substr($datum,0,4)==$rok)
+            $data[0+substr($datum,5,2)]++;
+          else
+            $data[0]++;
+        }
+        // pokud chceme integrál
+        if ($par->ukaz=='celkem') {
+          for ($m=1; $m<=12; $m++) {
+            if (isset($data[$m]))
+            $data[$m]+= $data[$m-1];
+          }
+        }
+        debug($data,"$rok");
+        if ($rok==$letos) {
+          for ($m= date('m'); $m<=12; $m++) {
+            unset($data[$m]);
+          }
+        }
+        $serie= (object)array('name'=>$rok,'data'=>implode(',',$data));
+        $chart->series[]= $serie;
+      }
+//      $mesic= array_keys($data);
+      $chart->yAxis= (object)array('title'=>(object)array(
+          'text'=>'počet zapsaných přihlášek'));
+      $chart->xAxis= (object)array(
+          'categories'=>array('dříve','leden','únor','březen','duben','květen','červen',
+            'červenec','srpen','září','říjen','listopad','prosinec'),
+          'title'=>(object)array('text'=>'měsíc'));
+      $y->note= '<i><b>Poznámky:</b><ol>
+        <li>měsíc podání přihlášky se bere podle data zápisu do Answeru
+        <li>zobrazují se jen přihlášky účastníků - bez týmu, starších, odhlášených
+        <li>graf lze zobrazit nejdříve pro rok 2014
+        </ol>';
+      break;
     case 'pred_mrop':
     case 'po_mrop':
       $chart->title= $par->type=='pred_mrop'
