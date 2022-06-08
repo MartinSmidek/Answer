@@ -493,14 +493,15 @@ function chart_mrop($par) { //debug($par,'chart_ms');
   $par2= (object)array('typ'=>'pri','po'=>30,'zmeny'=>0);
   switch ($par->type) {
     case 'prihlasky':
-      $chart= (object)array('chart'=>'line');
-      $chart->title= "tempo (zápisu) přihlašování na MROP";
+      $pro= $par->pro;
       $od= $par->od;
       $do= $par->do ?: $letos;
 //      $od= 2014;
 //      $do= $letos;
+      $chart= (object)array('chart'=>'line');
+      $chart->title= "tempo (zápisu) přihlašování na ".($pro=='mrop'?'MROP':'FIRMING');
       for ($rok= $od; $rok<=$do; $rok++) {
-        $ida= select('id_duakce','akce',"mrop=1 AND zruseno=0 AND YEAR(datum_od)=$rok");
+        $ida= select('id_duakce','akce',"$pro=1 AND zruseno=0 AND YEAR(datum_od)=$rok");
         if (!$ida) continue;
         
         $data= array(0,0,0,0,0,0,0,0,0,0);

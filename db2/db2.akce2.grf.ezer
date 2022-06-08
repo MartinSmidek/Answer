@@ -65,26 +65,30 @@ menu m {type:'left', format:'f+'
         chart:{chart:'bar',plotOptions:{series:{stacking:'normal'}}}}}
     item  {title:"[fa-bar-chart] ... YMCA/CPR+ŠM po iniciací", par:{type:'y_x po',
         chart:{chart:'bar',plotOptions:{series:{stacking:'normal'}}}}}
-    item  {title:"[fa-line-chart] postupný součet přihlášek", par:{type:'prihlasky',ukaz:'celkem'}}
-    item  {title:"[fa-line-chart] ... přírůstky přihlášek",   par:{type:'prihlasky',ukaz:'prubeh'}}
-    func onclick(i:ezer) {  var y:object, par:object
-      if (i) { last_par= i.par; last_menu= i; }
-      info.header(last_menu);
-      info.spinner(last_menu);
-      last_par.od= info.od;
-      last_par.do= info.do;
-      last_par.prc= info.prc;
-      info.org.key(3);
-      last_par.org= info.org.key();
-      y= php.chart_mrop(last_par);
-      if (y.err) 
-        alert(y.err)
-      else {
-        js.highcharts_show(y.chart);
-        info.fill('',y.note);
-      }
-      info.spinner(0);
+    item  {title:"[fa-line-chart] postupný součet přihlášek", par:{type:'prihlasky',ukaz:'celkem',pro:'mrop'}}
+    item  {title:"[fa-line-chart] ... přírůstky přihlášek",   par:{type:'prihlasky',ukaz:'prubeh',pro:'mrop'}}
+  }
+  menu {title:'Infografika FIRMING',type:'group'                                            skill:'y;f'
+    item  {title:"[fa-line-chart] postupný součet přihlášek", par:{type:'prihlasky',ukaz:'celkem',pro:'firm'}}
+    item  {title:"[fa-line-chart] ... přírůstky přihlášek",   par:{type:'prihlasky',ukaz:'prubeh',pro:'firm'}}
+  }
+  func onclick(i:ezer) {  var y:object, par:object
+    if (i) { last_par= i.par; last_menu= i; }
+    info.header(last_menu);
+    info.spinner(last_menu);
+    last_par.od= info.od;
+    last_par.do= info.do;
+    last_par.prc= info.prc;
+    info.org.key(3);
+    last_par.org= info.org.key();
+    y= php.chart_mrop(last_par);
+    if (y.err) 
+      alert(y.err)
+    else {
+      js.highcharts_show(y.chart);
+      info.fill('',y.note);
     }
+    info.spinner(0);
   }
 }
 # ------------------------------------------------==> .. _right
