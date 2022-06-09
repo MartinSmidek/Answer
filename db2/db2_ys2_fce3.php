@@ -502,7 +502,7 @@ function chart_akce($par) { //debug($par,'chart_akce');
       $chart->title= "tempo (zápisu) přihlašování na "
           .($pro=='mrop'?'MROP':($pro=='firm'?'FIRMING':'LK MS'));
       $akce= $pro=='ms' ? "druh=1 && access&$org" : "$pro=1";
-      $funkce= $pro=='ms' ? "funkce IN (0,1,2)" : "funkce=0";
+      $funkce= $pro=='ms' ? "funkce IN (0,1,2,5,9,13)" : "funkce=0";
       for ($rok= $od; $rok<=$do; $rok++) {
         $ida= select('id_duakce','akce',"$akce AND zruseno=0 AND YEAR(datum_od)=$rok");
         if (!$ida) continue;
@@ -546,7 +546,7 @@ function chart_akce($par) { //debug($par,'chart_akce');
             'červenec','srpen','září'),//,'říjen','listopad','prosinec'),
           'title'=>(object)array('text'=>'měsíc'));
       $prihlasky= $pro=='ms'
-          ? "přihlášky účastníků vč. VPS - ale bez týmu a odhlášených"
+          ? "přihlášky účastníků, VPS, hospodářů včetně náhradníků - ale  bez odhlášených a bez kněží, psychologů, ..."
           : "přihlášky účastníků - bez týmu, starších, odhlášených";
       $nejdriv= $pro=='ms' ? "od roku 2011" : "od roku 2014";
       $y->note= "<i><b>Poznámky:</b><ol>
