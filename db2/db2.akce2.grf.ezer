@@ -17,9 +17,9 @@ func onfirstfocus() {
     case 8: info.org.selects("Šance pro manželství:8"); break;
   }
   info.org.key(my_org);
-  info.od= 2016;
   info.do= fdate('Y');
-  m.s.skup.click(m.s.skup);
+  info.od=  info.do - 5;
+  m.s.prih.click(m.s.prih);
 } 
 # ------------------------------------------------------------------------------------------==> stav
 # ----------------------------------------------------------------------------==> globální procedury
@@ -29,30 +29,15 @@ proc reaccess() { #==> reaccess - změna
 var last_par:object, last_menu:ezer
 menu m {type:'left', format:'f+' 
   menu s {title:'Infografika LK MS',type:'group'
-    item  {title:"[fa-bar-chart] Skladba účastníků kurzu", par:{type:'skladba',
+    item  {title:"[fa-bar-chart] Skladba účastníků kurzu", par:{type:'skladba',pro:'ms',
         chart:{chart:'column',plotOptions:{column:{stacking:'value'}}}}}
-    item  {title:"[fa-bar-chart] Skladba účastníků kurzu v %", par:{type:'skladba',
+    item  {title:"[fa-bar-chart] Skladba účastníků kurzu v %", par:{type:'skladba',pro:'ms',
         chart:{chart:'column',plotOptions:{column:{stacking:'percent'}}}}}
-    item  {title:"[fa-bar-chart] Délka manželství nováčků", par:{type:'novacci',
+    item  {title:"[fa-bar-chart] Délka manželství nováčků", par:{type:'novacci',pro:'ms',
         chart:{chart:'column',plotOptions:{column:{stacking:'value'}}}}}
-    item skup {title:"[fa-line-chart] Velikost a počet skupinek", par:{type:'skupinky'}}
-    func onclick(i:ezer) {  var y:object, par:object
-      if (i) { last_par= i.par; last_menu= i; }
-      info.header(last_menu);
-      info.spinner(last_menu);
-      last_par.od= info.od;
-      last_par.do= info.do;
-      last_par.org= info.org.key();
-      last_par.prc= info.prc;
-      y= php.chart_ms(last_par);
-      if (y.err) 
-        alert(y.err)
-      else {
-        js.highcharts_show(y.chart);
-        info.fill('',y.note);
-      }
-      info.spinner(0);
-    }
+    item skup {title:"[fa-line-chart] Velikost a počet skupinek", par:{type:'skupinky',pro:'ms'}}
+    item prih {title:"[fa-line-chart] postupný součet přihlášek", par:{type:'prihlasky',ukaz:'celkem',pro:'ms'}}
+    item  {title:"[fa-line-chart] ... přírůstky přihlášek",   par:{type:'prihlasky',ukaz:'prubeh',pro:'ms'}}
   }
   menu {title:'Infografika MROP',type:'group'                                            skill:'y;f'
     item  {title:"[fa-bar-chart] na našich akcích před iniciaci", par:{type:'pred_mrop',
@@ -79,9 +64,10 @@ menu m {type:'left', format:'f+'
     last_par.od= info.od;
     last_par.do= info.do;
     last_par.prc= info.prc;
-    info.org.key(3);
+    if (last_par.pro!='ms') 
+      info.org.key(3);
     last_par.org= info.org.key();
-    y= php.chart_mrop(last_par);
+    y= php.chart_akce(last_par);
     if (y.err) 
       alert(y.err)
     else {

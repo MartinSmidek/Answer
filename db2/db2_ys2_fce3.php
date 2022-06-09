@@ -481,17 +481,17 @@ function update_web_changes () {
   return 1;
 }
 /** =========================================================================================> CHART */
-# ------------------------------------------------------------------------------------==> . chart ms
-# agregace údajů o MROP pro grafické znázornění
-function chart_mrop($par) { //debug($par,'chart_ms');
+# ----------------------------------------------------------------------------------==> . chart akce
+# agregace údajů o MROP, FIRMING a MS pro grafické znázornění
+function chart_akce($par) { //debug($par,'chart_akce');
   $y= (object)array('err'=>'','note'=>' ');
   $org= $par->org; //255;
   $letos= date('Y');
   $chart= $par->chart ?: (object)array();
   if (!isset($chart->series))
     $chart->series= array();
-  $par2= (object)array('typ'=>'pri','po'=>30,'zmeny'=>0);
   switch ($par->type) {
+    // obecné
     case 'prihlasky':
       $pro= $par->pro;
       $od= $par->od;
@@ -499,17 +499,20 @@ function chart_mrop($par) { //debug($par,'chart_ms');
 //      $od= 2014;
 //      $do= $letos;
       $chart= (object)array('chart'=>'line');
-      $chart->title= "tempo (zápisu) přihlašování na ".($pro=='mrop'?'MROP':'FIRMING');
+      $chart->title= "tempo (zápisu) přihlašování na "
+          .($pro=='mrop'?'MROP':($pro=='firm'?'FIRMING':'LK MS'));
+      $akce= $pro=='ms' ? "druh=1 && access&$org" : "$pro=1";
+      $funkce= $pro=='ms' ? "funkce IN (0,1,2)" : "funkce=0";
       for ($rok= $od; $rok<=$do; $rok++) {
-        $ida= select('id_duakce','akce',"$pro=1 AND zruseno=0 AND YEAR(datum_od)=$rok");
+        $ida= select('id_duakce','akce',"$akce AND zruseno=0 AND YEAR(datum_od)=$rok");
         if (!$ida) continue;
-        
-        $data= array(0,0,0,0,0,0,0,0,0,0);
+        $mesic_akce= select('MONTH(datum_do)','akce',"$akce AND zruseno=0 AND YEAR(datum_od)=$rok");
+        $data= array(0,0,0,0,0,0,0,0,0,0,0,0,0);
         $qp=  "SELECT id_pobyt,
              (SELECT DATE(kdy) FROM _track 
               WHERE kde='pobyt' AND klic=id_pobyt ORDER BY id_track LIMIT 1) AS mesic
           FROM pobyt JOIN akce ON id_akce=id_duakce
-          WHERE id_akce='$ida' AND funkce=0 ";
+          WHERE id_akce='$ida' AND $funkce ";
         $rp= pdo_qry($qp);
         while ( $rp && (list($idp,$datum)= pdo_fetch_row($rp)) ) {
           if (substr($datum,0,4)==$rok)
@@ -517,11 +520,14 @@ function chart_mrop($par) { //debug($par,'chart_ms');
           else
             $data[0]++;
         }
+        for ($m=12; $m>$mesic_akce; $m--) {
+          unset($data[$m]);
+        }
         // pokud chceme integrál
         if ($par->ukaz=='celkem') {
-          for ($m=1; $m<=12; $m++) {
+          for ($m=1; $m<=$mesic_akce; $m++) {
             if (isset($data[$m]))
-            $data[$m]+= $data[$m-1];
+              $data[$m]+= $data[$m-1];
           }
         }
         debug($data,"$rok");
@@ -533,19 +539,154 @@ function chart_mrop($par) { //debug($par,'chart_ms');
         $serie= (object)array('name'=>$rok,'data'=>implode(',',$data));
         $chart->series[]= $serie;
       }
-//      $mesic= array_keys($data);
       $chart->yAxis= (object)array('title'=>(object)array(
           'text'=>'počet zapsaných přihlášek'));
       $chart->xAxis= (object)array(
           'categories'=>array('dříve','leden','únor','březen','duben','květen','červen',
-            'červenec','srpen','září','říjen','listopad','prosinec'),
+            'červenec','srpen','září'),//,'říjen','listopad','prosinec'),
           'title'=>(object)array('text'=>'měsíc'));
-      $y->note= '<i><b>Poznámky:</b><ol>
+      $prihlasky= $pro=='ms'
+          ? "přihlášky účastníků vč. VPS - ale bez týmu a odhlášených"
+          : "přihlášky účastníků - bez týmu, starších, odhlášených";
+      $nejdriv= $pro=='ms' ? "od roku 2011" : "od roku 2014";
+      $y->note= "<i><b>Poznámky:</b><ol>
         <li>měsíc podání přihlášky se bere podle data zápisu do Answeru
-        <li>zobrazují se jen přihlášky účastníků - bez týmu, starších, odhlášených
-        <li>graf lze zobrazit nejdříve pro rok 2014
-        </ol>';
+        <li>zobrazují se jen $prihlasky
+        <li>graf lze zobrazit $nejdriv
+        </ol>";
       break;
+    // specifické pro MS
+    case 'skupinky': 
+      $chart->title= 'Počty skupinek v daném roce podle velikosti';
+      $x= $roky= $tri= $ctyri= $divna= array();
+      $ix= $je_divna= 0;
+      $od= $par->od;
+      $do= $par->do;
+      for ($r= $od; $r<=$do; $r++) { 
+        // zjistíme, jestli v daném roce by LK
+        $lk= select('COUNT(*)','akce',"access&$org AND druh=1 AND zruseno=0 AND YEAR(datum_od)=$r");
+        if (!$lk) continue;
+        $roky[]= $r;
+        $x[]= $ix++;
+        $r3= $r4= $rx= 0;
+        $rs= pdo_qry("SELECT COUNT(*),skupina
+          FROM pobyt AS p
+          JOIN akce AS a ON id_akce=id_duakce
+          WHERE YEAR(datum_od)=$r AND druh=1 AND access&$org AND zruseno=0
+            AND skupina>0
+          GROUP BY access,skupina ");
+        while ($rs && (list($paru,$skupina)= pdo_fetch_row($rs))) {
+          if ($paru==3) $r3++;
+          elseif ($paru==4) $r4++;
+          else {
+            $rx++;
+            $je_divna++;
+            display("clash: skupinka $skupina má $paru párů");
+          }
+        }
+        $tri[$r]= $r3;
+        $ctyri[$r]= $r4;
+        $divna[$r]= $rx;
+      }
+      $chart->series= array(
+        (object)array('type'=>'scatter','name'=>'tříparová','data'=>implode(',',$tri)),
+        (object)array('type'=>'scatter','name'=>'čtyřpárová','data'=>implode(',',$ctyri))
+      );
+      if ($je_divna) {
+        $chart->series[]=
+          (object)array('type'=>'scatter','name'=>'?','data'=>implode(',',$divna),'color'=>'red');
+      }
+      $chart->xAxis= (object)array('categories'=>$roky,
+          'title'=>(object)array('text'=>'rok kurzu '));
+      $y->note= "<i><b>Poznámka:</b> 
+        <br>zobrazení grafu předpokládá, že je v databázi zapsáno složení skupinek.
+        <br>Pokud má nějaká skupinka jiný počet párů než tři nebo čtyři, přidá se červená série.
+        </i>";
+      break;
+    case 'histogram': // ignoruje $par->do
+      $chart->title= 'Vstup do manželství účastníků kurzu';
+      $rok= $par->od;
+      $dot_par= (object)array('zdroj'=>'akce','par1'=>'rok','step_man'=>1,'org'=>$org);
+      $x= dot_prehled($rok,$dot_par);
+      $data= (array)$x->know->man_vek; 
+      $data= array_merge($data);
+//      $data= implode(',',$man_vek);
+      $chart->series_done= array(
+        (object)array('type'=>'histogram','xAxis'=>1,'yAxis'=>1,'baseSeries'=>1,'z-index'=>-1),
+        (object)array('type'=>'scatter','data'=>$data,'marker'=>(object)array('radius'=>1.5))        
+      );
+//        debug($chart); $y->err= '.'; goto end;
+      $chart->yAxis= array((object)array(),(object)array());
+      $chart->xAxis= array((object)array(),(object)array());
+      break;
+    case 'novacci':
+      $chart->title= 'Délka manželství před první účastí na kurzu';
+      $od= $par->od;
+      $do= $par->do ?: date('Y');
+      $dot_par= (object)array('zdroj'=>'akce','par1'=>'rok','step_man'=>1,'org'=>$org);
+      for ($rok= $od; $rok<=$do; $rok++) {
+        $lk= select('COUNT(*)','akce',"access&$org AND druh=1 AND zruseno=0 AND YEAR(datum_od)=$rok");
+        if (!$lk) continue;
+        $x= dot_prehled($rok,$dot_par);
+        $man_s= $x->know->man_n; /*array_pop($man_s);*/ $man_s= array_reverse($man_s); 
+        $man_y= $x->know->man_y; array_pop($man_y); $man_y= array_reverse($man_y); 
+        $man_s= array_map(function($x){return $x/2;},$man_s);
+        $data= implode(',',$man_s);
+        $serie= (object)array('name'=>$rok,'data'=>$data);
+        $chart->series[]= $serie;
+      }
+      $chart->yAxis= (object)array('title'=>(object)array('text'=>'počet manželství na letním kurzu'));
+      $chart->xAxis= (object)array('categories'=>$man_y,
+          'title'=>(object)array('text'=>'délka manželství v přihlášce '));
+      $y->note= "<i><b>Poznámka:</b> 
+        <br>korektnost grafu předpokládá, že je v databázi správně zapsána i počet účastí 
+        na kurzech neevidovaných touto databází (pole 'MS mimo' na evidenční kartě).
+        </i>";
+      break;
+    case 'skladba':
+      $chart->title= 'Skladba účastníků letního kurzu';
+      $od= $par->od;
+      $do= $par->do ?: date('Y');
+      $dot_par= (object)array('zdroj'=>'akce','par1'=>'rok','step_man'=>1,'skladba'=>1,'org'=>$org);
+      //           VPS       novi
+      $kurz= array(array(),array(),array(),array(),array());
+      $roky= array();
+      for ($rok= $od; $rok<=$do; $rok++) {
+        // zjistíme, jestli v daném roce by LK
+        $lk= select('COUNT(*)','akce',"access&$org AND druh=1 AND zruseno=0 AND YEAR(datum_od)=$rok");
+        if (!$lk) continue;
+//        if ($rok==2020 && $org==1) continue;
+        $roky[]= $rok;
+        $x= dot_prehled($rok,$dot_par);
+//        $y->err= '.'; goto end;
+        $kurz_x= $x->know->kurz_x ?: array(); 
+        debug($kurz_x,$rok);
+        $kurz_y= $x->know->kurz_y; 
+        $kurz_x= array_map(function($x){return $x/2;},$kurz_x);
+        for ($x= 0; $x<=4; $x++) {
+          $kurz[$x][$rok]= isset($kurz_x[$x]) ? $kurz_x[$x] : 0;
+        }
+      }
+      debug($kurz,"$od-$do");
+      $color= array('navy','cyan','grey','orange','lightgreen');
+      for ($x= 0; $x<=4; $x++) {
+        $data= implode(',',$kurz[$x]);
+        $serie= (object)array('name'=>$kurz_y[$x],'data'=>$data,'color'=>$color[$x]);
+        $chart->series[$x]= $serie;
+      }
+      $chart->yAxis= (object)array('title'=>(object)array('text'=>'účast na kurzu jako'),
+          'categories'=>$kurz_y);
+      $chart->xAxis= (object)array('categories'=>$roky,
+          'title'=>(object)array('text'=>'rok kurzu '));
+      if (isset($chart->plotOptions->column->stacking)){
+        $chart->tooltip= (object)array(
+          'pointFormat'=>"<span>{series.name}</span>: <b>{point.y}</b> ({point.percentage:.0f}%)<br/>");
+        if ($chart->plotOptions->column->stacking=='value' && $par->prc) {
+          $chart->plotOptions->column->stacking= 'percent';
+        }
+      }
+      break;
+    // specifické pro MROP
     case 'pred_mrop':
     case 'po_mrop':
       $chart->title= $par->type=='pred_mrop'
@@ -790,151 +931,6 @@ function chart_mrop($par) { //debug($par,'chart_ms');
           $chart->plotOptions->series->stacking= 'percent';
         }
         $chart->chart= 'bar';
-      }
-      break;
-  }
-  $y->chart= $chart;
-  debug($y);
-end:
-  return $y;
-}
-# ------------------------------------------------------------------------------------==> . chart ms
-# agregace údajů o účastích a účastnících MS pro grafické znázornění
-function chart_ms($par) { debug($par,'chart_ms');
-  $y= (object)array('err'=>'','note'=>' ');
-  $org= $par->org; //255;
-  $chart= $par->chart ?: (object)array();
-  if (!isset($chart->series))
-    $chart->series= array();
-  switch ($par->type) {
-    case 'skupinky': 
-      $chart->title= 'Počty skupinek v daném roce podle velikosti';
-      $x= $roky= $tri= $ctyri= $divna= array();
-      $ix= $je_divna= 0;
-      $od= $par->od;
-      $do= $par->do;
-      for ($r= $od; $r<=$do; $r++) { 
-        // zjistíme, jestli v daném roce by LK
-        $lk= select('COUNT(*)','akce',"access&$org AND druh=1 AND zruseno=0 AND YEAR(datum_od)=$r");
-        if (!$lk) continue;
-        $roky[]= $r;
-        $x[]= $ix++;
-        $r3= $r4= $rx= 0;
-        $rs= pdo_qry("SELECT COUNT(*),skupina
-          FROM pobyt AS p
-          JOIN akce AS a ON id_akce=id_duakce
-          WHERE YEAR(datum_od)=$r AND druh=1 AND access&$org AND zruseno=0
-            AND skupina>0
-          GROUP BY access,skupina ");
-        while ($rs && (list($paru,$skupina)= pdo_fetch_row($rs))) {
-          if ($paru==3) $r3++;
-          elseif ($paru==4) $r4++;
-          else {
-            $rx++;
-            $je_divna++;
-            display("clash: skupinka $skupina má $paru párů");
-          }
-        }
-        $tri[$r]= $r3;
-        $ctyri[$r]= $r4;
-        $divna[$r]= $rx;
-      }
-      $chart->series= array(
-        (object)array('type'=>'scatter','name'=>'tříparová','data'=>implode(',',$tri)),
-        (object)array('type'=>'scatter','name'=>'čtyřpárová','data'=>implode(',',$ctyri))
-      );
-      if ($je_divna) {
-        $chart->series[]=
-          (object)array('type'=>'scatter','name'=>'?','data'=>implode(',',$divna),'color'=>'red');
-      }
-      $chart->xAxis= (object)array('categories'=>$roky,
-          'title'=>(object)array('text'=>'rok kurzu '));
-      $y->note= "<i><b>Poznámka:</b> 
-        <br>zobrazení grafu předpokládá, že je v databázi zapsáno složení skupinek.
-        <br>Pokud má nějaká skupinka jiný počet párů než tři nebo čtyři, přidá se červená série.
-        </i>";
-      break;
-    case 'histogram': // ignoruje $par->do
-      $chart->title= 'Vstup do manželství účastníků kurzu';
-      $rok= $par->od;
-      $dot_par= (object)array('zdroj'=>'akce','par1'=>'rok','step_man'=>1,'org'=>$org);
-      $x= dot_prehled($rok,$dot_par);
-      $data= (array)$x->know->man_vek; 
-      $data= array_merge($data);
-//      $data= implode(',',$man_vek);
-      $chart->series_done= array(
-        (object)array('type'=>'histogram','xAxis'=>1,'yAxis'=>1,'baseSeries'=>1,'z-index'=>-1),
-        (object)array('type'=>'scatter','data'=>$data,'marker'=>(object)array('radius'=>1.5))        
-      );
-//        debug($chart); $y->err= '.'; goto end;
-      $chart->yAxis= array((object)array(),(object)array());
-      $chart->xAxis= array((object)array(),(object)array());
-      break;
-    case 'novacci':
-      $chart->title= 'Délka manželství před první účastí na kurzu';
-      $od= $par->od;
-      $do= $par->do ?: date('Y');
-      $dot_par= (object)array('zdroj'=>'akce','par1'=>'rok','step_man'=>1,'org'=>$org);
-      for ($rok= $od; $rok<=$do; $rok++) {
-        $lk= select('COUNT(*)','akce',"access&$org AND druh=1 AND zruseno=0 AND YEAR(datum_od)=$rok");
-        if (!$lk) continue;
-        $x= dot_prehled($rok,$dot_par);
-        $man_s= $x->know->man_n; /*array_pop($man_s);*/ $man_s= array_reverse($man_s); 
-        $man_y= $x->know->man_y; array_pop($man_y); $man_y= array_reverse($man_y); 
-        $man_s= array_map(function($x){return $x/2;},$man_s);
-        $data= implode(',',$man_s);
-        $serie= (object)array('name'=>$rok,'data'=>$data);
-        $chart->series[]= $serie;
-      }
-      $chart->yAxis= (object)array('title'=>(object)array('text'=>'počet manželství na letním kurzu'));
-      $chart->xAxis= (object)array('categories'=>$man_y,
-          'title'=>(object)array('text'=>'délka manželství v přihlášce '));
-      $y->note= "<i><b>Poznámka:</b> 
-        <br>korektnost grafu předpokládá, že je v databázi správně zapsána i počet účastí 
-        na kurzech neevidovaných touto databází (pole 'MS mimo' na evidenční kartě).
-        </i>";
-      break;
-    case 'skladba':
-      $chart->title= 'Skladba účastníků letního kurzu';
-      $od= $par->od;
-      $do= $par->do ?: date('Y');
-      $dot_par= (object)array('zdroj'=>'akce','par1'=>'rok','step_man'=>1,'skladba'=>1,'org'=>$org);
-      //           VPS       novi
-      $kurz= array(array(),array(),array(),array(),array());
-      $roky= array();
-      for ($rok= $od; $rok<=$do; $rok++) {
-        // zjistíme, jestli v daném roce by LK
-        $lk= select('COUNT(*)','akce',"access&$org AND druh=1 AND zruseno=0 AND YEAR(datum_od)=$rok");
-        if (!$lk) continue;
-//        if ($rok==2020 && $org==1) continue;
-        $roky[]= $rok;
-        $x= dot_prehled($rok,$dot_par);
-//        $y->err= '.'; goto end;
-        $kurz_x= $x->know->kurz_x ?: array(); 
-        debug($kurz_x,$rok);
-        $kurz_y= $x->know->kurz_y; 
-        $kurz_x= array_map(function($x){return $x/2;},$kurz_x);
-        for ($x= 0; $x<=4; $x++) {
-          $kurz[$x][$rok]= isset($kurz_x[$x]) ? $kurz_x[$x] : 0;
-        }
-      }
-      debug($kurz,"$od-$do");
-      $color= array('navy','cyan','grey','orange','lightgreen');
-      for ($x= 0; $x<=4; $x++) {
-        $data= implode(',',$kurz[$x]);
-        $serie= (object)array('name'=>$kurz_y[$x],'data'=>$data,'color'=>$color[$x]);
-        $chart->series[$x]= $serie;
-      }
-      $chart->yAxis= (object)array('title'=>(object)array('text'=>'účast na kurzu jako'),
-          'categories'=>$kurz_y);
-      $chart->xAxis= (object)array('categories'=>$roky,
-          'title'=>(object)array('text'=>'rok kurzu '));
-      if (isset($chart->plotOptions->column->stacking)){
-        $chart->tooltip= (object)array(
-          'pointFormat'=>"<span>{series.name}</span>: <b>{point.y}</b> ({point.percentage:.0f}%)<br/>");
-        if ($chart->plotOptions->column->stacking=='value' && $par->prc) {
-          $chart->plotOptions->column->stacking= 'percent';
-        }
       }
       break;
   }
