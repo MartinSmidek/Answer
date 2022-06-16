@@ -3867,16 +3867,16 @@ function ucast2_flds($fstr) {
 # ========================================================================================> . platby
 # záložka Platba za akci
 # ------------------------------------------------------------------------------------- akce2 uhrada
-# transformace osoba.platba* --> uhrada
-function akce2_uhrada() {  trace();
-  query("TRUNCATE TABLE uhrada");
-  query("INSERT INTO uhrada (id_pobyt,u_poradi,u_castka,u_datum,u_zpusob,u_stav,u_za) 
-  /*ok*/ SELECT id_pobyt,0,platba,datplatby,zpusobplat,IF(potvrzeno=1,3,IF(avizo=1,1,2)),0
-      FROM pobyt WHERE platba!=0");
-  query("INSERT INTO uhrada (id_pobyt,u_poradi,u_castka,u_datum,u_zpusob,u_stav,u_za) 
-  /*ok*/ SELECT id_pobyt,IF(platba=0,0,1),platba_d,datplatby_d,zpusobplat_d,IF(potvrzeno=1,3,2),1
-      FROM pobyt WHERE platba_d!=0");
-}
+//# transformace osoba.platba* --> uhrada
+//function akce2_uhrada() {  trace();
+//  query("TRUNCATE TABLE uhrada");
+//  query("INSERT INTO uhrada (id_pobyt,u_poradi,u_castka,u_datum,u_zpusob,u_stav,u_za) 
+//  /*ok*/ SELECT id_pobyt,0,platba,datplatby,zpusobplat,IF(potvrzeno=1,3,IF(avizo=1,1,2)),0
+//      FROM pobyt WHERE platba!=0");
+//  query("INSERT INTO uhrada (id_pobyt,u_poradi,u_castka,u_datum,u_zpusob,u_stav,u_za) 
+//  /*ok*/ SELECT id_pobyt,IF(platba=0,0,1),platba_d,datplatby_d,zpusobplat_d,IF(potvrzeno=1,3,2),1
+//      FROM pobyt WHERE platba_d!=0");
+//}
 # -------------------------------------------------------------------------- akce2 platba_prispevek1
 # členské příspěvky - zjištění zda jsou dospělí co jsou na pobytu členy a mají-li zaplaceno
 function akce2_platba_prispevek1($id_pobyt) {  trace();
@@ -3973,12 +3973,18 @@ function akce2_uhrady_load($id_pobyt) {
           WHERE id_pobyt=$id_pobyt ORDER BY u_poradi");
   while ( $rp && $p= pdo_fetch_object($rp) ) {
     $ret->pocet++;
-    $p->u_index= $p->u_poradi+1; unset($p->u_poradi);
+//    $p->u_poradi= $p->u_poradi+1; unset($p->u_poradi);
     $p->u_datum= sql_date1($p->u_datum);
     $ret->seznam[]= $p;
   }
 //  debug($ret,"akce2_uhrady_load($id_pobyt)");
   return $ret;
+}
+# --------------------------------------------------------------------------------- akce2 uhrady_new
+# vrátí u_poradi pro novou úhradu
+function akce2_uhrady_new($id_pobyt) { 
+  $u_poradi= select('MAX(u_poradi)','uhrada',"id_pobyt=$id_pobyt");
+  return ($u_poradi ?: 0) + 1;
 }
 # -------------------------------------------------------------------------------- akce2 uhrady_save
 # uložení změn úhrad za pobyt
@@ -3987,22 +3993,22 @@ function akce2_uhrady_save($id_pobyt,$uhrady) {
   foreach ($uhrady as $new) {
     $new->u_datum= sql_date1($new->u_datum,1);
     $old= select_object('u_poradi,u_castka,u_datum,u_zpusob,u_stav,u_za','uhrada',
-        "id_pobyt=$id_pobyt AND u_poradi=$new->u_index-1");
+        "id_pobyt=$id_pobyt AND u_poradi=$new->u_poradi");
     if ($old) {
       foreach ($new as $fld=>$val) {
-        if ($fld=='u_index') {
-          $fld= 'u_poradi';
-          $val--;
-        }
+//        if ($fld=='u_index') {
+//          $fld= 'u_poradi';
+//          $val--;
+//        }
         if ($old->$fld != $val) {
-          query("UPDATE uhrada SET $fld='$val' WHERE id_pobyt=$id_pobyt AND u_poradi=$new->u_index-1");
+          query("UPDATE uhrada SET $fld='$val' WHERE id_pobyt=$id_pobyt AND u_poradi=$new->u_poradi");
         }
       }
     }
     else {
       query("INSERT INTO uhrada (id_pobyt,u_poradi,u_castka,u_datum,u_zpusob,
           u_stav,u_za) 
-        VALUES ($id_pobyt,$new->u_index-1,'$new->u_castka','$new->u_datum',$new->u_zpusob,
+        VALUES ($id_pobyt,$new->u_poradi,'$new->u_castka','$new->u_datum',$new->u_zpusob,
           $new->u_stav,$new->u_za)");
     }
   }
@@ -12750,11 +12756,11 @@ function mail2_vzor_pobyt2($id_pobyt,$typ,$u_poradi,$from,$vyrizuje,$poslat=0) {
     JOIN osoba AS o ON s.id_osoba=o.id_osoba
     LEFT JOIN tvori AS t ON t.id_osoba=o.id_osoba AND IF(p.i0_rodina,t.id_rodina=p.i0_rodina,1)
     LEFT JOIN rodina AS r USING (id_rodina)
-    WHERE id_pobyt=$id_pobyt AND u_poradi=$u_poradi-1
+    WHERE id_pobyt=$id_pobyt AND u_poradi=$u_poradi
   ");
-  if (!$rm ) { $ret->err= "CHYBA záznam nenalezen"; goto end; }
   list($id_uhrada,$castka,$dne,$potvrzeno,
     $omaily,$rmaily,$p->platba_akce,$access,$hnizda,$hnizdo)= pdo_fetch_row($rm);
+  if ( !$id_uhrada ) { $ret->err= "CHYBA platba č.$u_poradi neexistuje"; goto end; }
   if ( !$castka ) { $ret->err= "CHYBA: není zapsána částka"; goto end; }
   if ( $dne=='0000-00-00' ) { $ret->err= "CHYBA: není zapsáno datum platby"; goto end; }
   if ( $castka && $potvrzeno==3 ) { $ret->err= "CHYBA: platba již byla potvrzena"; goto end; }

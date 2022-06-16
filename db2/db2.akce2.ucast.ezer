@@ -1978,7 +1978,7 @@ form _platba [,,623,] { key_id:'id_pobyt', style:'height:fit-content', par:°{on
   func uhrady_add() { var Ln:ezer
     uhrady_n= uhrady_lst.add(); 
     Ln= uhrady_lst[uhrady_n];
-    Ln.u_index= uhrady_n+1;
+    Ln.u_poradi= php.akce2_uhrady_new(the_pobyt);
     Ln.display(the_soubeh==1,'deti'); // když jsou odděleny platby za děti
   }
   label [313,91,53,14] {title:'zaplaceno'}
@@ -1987,7 +1987,8 @@ form _platba [,,623,] { key_id:'id_pobyt', style:'height:fit-content', par:°{on
   label [545,91,61,14] {title:'stav platby'}
   label [618,91,61,14] {tag:'deti', title:'platba za'}
   list uhrady_lst [308,100,360,190] { rows:25
-    label  u_index [0,14,2,17] // u_index == uhrada.u_poradi + 1
+//    label  u_index [0,14,2,17] // u_index == uhrada.u_poradi + 1
+    label  u_poradi [0,14,2,17] 
     field  u_castka [12,10,40,] {format:'r', help:'vratky se znaménkem -'}
     select u_zpusob [60,10,85,] {type:'map0', options:ms_akce_platba.zkratka}
     field  u_datum  [145,10,85,] {type:'date', format:'r'}
@@ -2026,13 +2027,17 @@ form _cmd_p [,,623,30] { css:'ae_work'
   label  [3,0,334,30] { css:'ae_parm', skill:'yaa+;faa+;caa+' }
   button [11,6,,] { title:"[fa-send-o] Potvrdit přijetí platby",
     help:'poslání mailu o přijetí platby podle vzoru v Maily akce'
-    func onclick() { var y:object, from:text, name:text, i:number
+    func onclick() { var y:object, from:text, name:text, i:number, Ln:ezer
       clear();
       echo(`uhrady_n=${pla.uhrady_n}`);
       if (!pla.same()) alert("nejprve je třeba uložit změněné údaje") 
       else {
-        i= 1;
-        if (pla.uhrady_n>1) i= prompt2("napiš pořadové číslo platby",1)
+        if (pla.uhrady_n>1) 
+          i= prompt2("napiš pořadové číslo platby",1)
+        else {
+          Ln= pla.uhrady_lst[0];
+          i= Ln.u_poradi;
+        }
         from= sys('user','options','email'); name= sys('user','options','vyrizuje');
         y= php.mail2_vzor_pobyt2(the_pobyt,'potvrzeni_platby2',i,from,name,0);
         if (y.err) alert(y.err);
@@ -2066,7 +2071,7 @@ form _cmd_p [,,623,30] { css:'ae_work'
     func onclick() { var i:number, u:array
       i= 1;
       if (pla.uhrady_n>1) i= prompt2("napiš pořadové číslo rušené platby",1);
-      u= php.select('id_uhrada,u_castka','uhrada',`id_pobyt=${the_pobyt} AND u_poradi=${i-1}`);
+      u= php.select('id_uhrada,u_castka','uhrada',`id_pobyt=${the_pobyt} AND u_poradi=${i}`);
       if (u[0] && confirm(`opravdu zrušit zaplacení ${u[1]} Kč?`)) {
         php.query(`DELETE FROM uhrada WHERE id_uhrada=${u[0]}`);
         reload(the_pobyt);
