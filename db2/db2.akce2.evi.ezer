@@ -385,12 +385,27 @@ form _lst [,,370,*] {
       [ bo_having.get | bo_having.set(1) ] }
   }
   check o_filtr [320,5,40,] {tag:'o', title:"filtr", format:'t', value:'0'
-    proc onchange () {
-      bo_filtr.set(o_vyber.get);
-      { this.get; filtr_osob.modal(282,258); bo_filtr.set(conc(bo_filtr.get,filtr_osob.sql.get));
-      | this.set(0); filtr_osob.filtr_clear };
-      ido.set(0); bo_reload(bo_cnd.get);
+    func onchange () {
+      bo_filtr= o_vyber;
+      if (o_filtr) {
+        filtr_osob.modal(282,258); 
+        bo.filtr.expr= filtr_osob.filtr;
+        bo_filtr= conc(bo_filtr,filtr_osob.sql);
+        bo_having= conc(bo_having,filtr_osob.having);
+      }
+      else {
+//        bo_filtr= 0; 
+//        filtr_osob.filtr_clear();
+        o_vyber.refresh(); // obnov having
+      }
+      ido= 0; bo_reload(bo_cnd);
   }}
+//    proc onchange () {
+//      bo_filtr.set(o_vyber.get);
+//      { this.get; filtr_osob.modal(282,258); bo_filtr.set(conc(bo_filtr.get,filtr_osob.sql.get));
+//      | this.set(0); filtr_osob.filtr_clear };
+//      ido.set(0); bo_reload(bo_cnd.get);
+//  }}
   view o:  table osoba
 //  view od: table dar    { join_type:"LEFT", join:"USING(id_osoba)" }
   view ot: table tvori  { join_type:"LEFT", join:"USING (id_osoba)" }
@@ -409,6 +424,7 @@ form _lst [,,370,*] {
     show lat  { expr:"IFNULL(og.lat,0)" }
     show lng  { expr:"IFNULL(og.lng,0)" }
     show tips [,,0,] { expr:'', format:'t' }
+    show filtr { expr:"1" } // dynamicky definováno ve filtr_osob funkcí o_filtr.onchange
     show _rodin { expr:"COUNT(*)" }
     show barva { expr:"o.deleted=''" }
 //    show _funkce { expr:"GROUP_CONCAT(DISTINCT op.funkce)" }
@@ -1729,8 +1745,10 @@ panel PridaniJmenem1 [,,320,280] {type:'popup', title:'Přidání osoby do rodin
 }
 # ======================================================================================> filtr_osob
 panel filtr_osob [,,250,200] { type:'popup', title:"doplňující podmínky výběru osob"
-  var sql=''
+  var sql='', having='', filtr='' // filtr je hodnota pro bo.filtr.expr
   func filtr_set() { var vycet:text, IN:text
+    filtr= '';
+    having= '';
     sql= cconc(1,''
       ,f.mrop,    ` AND o.iniciace!=0`
       ,f.firm,    ` AND o.firming!=0`
@@ -1742,16 +1760,13 @@ panel filtr_osob [,,250,200] { type:'popup', title:"doplňující podmínky výb
       ,f.slovaci, ` AND (o.stat='SK' OR IF(ISNULL(of.id_rodina),0,of.stat='SK')) `
       ,f.cizinci, ` AND (o.stat!='' AND o.stat!='SK' AND o.stat!='CZ' 
            OR IF(ISNULL(of.id_rodina),0,of.stat!='' AND of.stat!='SK' AND of.stat!='CZ')) `
-      // zahrne i rodinné schopnosti, ale jen pro manžele
-      ,f.umi.key(),   ` AND (FIND_IN_SET('${f.umi.key()}',o.o_umi)
-           OR ot.role IN ('a','b') AND IF(ISNULL(of.id_rodina),0,FIND_IN_SET('${f.umi.key()}',of.r_umi)))`
-  //    // služba na pobytu ale jen pro manžele nebo single
-  //    ,f.slouzi.key(),` AND funkce=${f.slouzi.key()} AND (ot.role IN ('a','b') OR ISNULL(of.id_rodina))`
       // členství a dárcovství
       ,f.bcleni,  ` AND od.ukon IN ('b') AND dat_do='0000-00-00' `
       ,f.ccleni,  ` AND od.ukon IN ('c') AND dat_do='0000-00-00' `
       ,f.darci,   ` AND od.ukon IN ('d') AND YEAR(dat_od)>=YEAR(NOW())-1 `
       ,f.klub,    ` AND od.ukon IN ('k') AND dat_do='0000-00-00' `
+      // podle věku
+      ,f.vek_od+f.vek_do, ` AND TIMESTAMPDIFF(YEAR,o.narozeni,NOW()) BETWEEN ${f.vek_od} AND ${f.vek_do}`
       );
     lst.o_filtr.set_attrib('help',cconc(1,"... "
     ,f.mrop,        " a iniciovaní"
@@ -1767,14 +1782,22 @@ panel filtr_osob [,,250,200] { type:'popup', title:"doplňující podmínky výb
     ,f.pozn,        " s poznámkou"
     ,f.slovaci,     " a Slováci"
     ,f.cizinci,     " a cizinci"
-    ,f.umi,         " a umí"
+    ,f.umi,         f.ne_umi ? " a neumí" : " a umí"
 //    ,f.slouzi,      " a slouží"
     ,f.bcleni,      " a jsou běžnými členy"
     ,f.ccleni,      " a jsou činnými členy"
     ,f.darci,       " a dali vloni či letos dar"
     ,f.klub,        " a jsou v klubu přátel"
+    ,f.vek_od+f.vek_do, " a jsou určitého věku"
     ));
-    // přidámespeciální filtry, řešené výčtem
+    // přidáme podmínky vkládané do HAVING
+    if (f.umi.key()) {
+      // osobní případně pro manžele i rodinné schopnosti
+      filtr= ` MAX((FIND_IN_SET('${f.umi.key()}',o.o_umi)
+           OR ot.role IN ('a','b') AND IF(ISNULL(of.id_rodina),0,FIND_IN_SET('${f.umi.key()}',of.r_umi))))`;
+      having= f.ne_umi ? " AND filtr=0" : " AND filtr>0";
+    }
+    // přidáme speciální filtry, řešené výčtem
     if (f.elder || f.neelder) {
       IN= f.elder ? 'IN' : 'NOT IN';
       vycet= php.select('GROUP_CONCAT(DISTINCT id_osoba)',
@@ -1799,8 +1822,11 @@ panel filtr_osob [,,250,200] { type:'popup', title:"doplňující podmínky výb
     field zajmy   [53,50,79,]  { title:'zájmy',       format:'t' }
     field zamest  [53,75,79,]  { title:'zaměst.',     format:'t' }
     field pozn    [53,100,79,] { title:'poznámka',    format:'t' }
-    select umi    [53,125,99,] { type:'map0', options:ms_umi.hodnota, title:'schopnosti',
+    check ne_umi  [50,123,20,17]  { title:' ', format:'t', help:'negace schopnosti', style:'z-index:3'}
+    select umi    [68,125,74,] { type:'map0', options:ms_umi.hodnota, title:'schopnosti     ',
                                  value:'0', format:'t', help:"zohledňuje i rodiný um" }
+    field vek_od  [53,150,25,]  { title:'věk od',      format:'tr' }
+    field vek_do  [108,150,25,] { title:'do',          format:'tr' }
 //    select slouzi [53,150,99,] { type:'map0', options:ms_umi.hodnota, title:'služby',
 //                                 value:'0', format:'t', help:"zohledňuje i rodinou službu" }
     // vpravo
