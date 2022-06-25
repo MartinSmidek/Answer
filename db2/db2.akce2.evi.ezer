@@ -464,10 +464,11 @@ form _lst [,,370,*] {
           alert(`soubor pro Excel lze stáhnout <a href='docs/${name}.xlsx'>zde</a>`);
       }}
       item { title:'-zrušit výběr a zobrazení'    func onclick() { brow_mapa_clear() }}
-      item { title:'vybrat vše co lze zobrazit'   func onclick() { page.map.select_in_map() }}
+      item { title:'vybrat vše, co lze zobrazit'  func onclick() { page.map.select_in_map() }}
       item { title:'-v seznamu jen vybraní'       func onclick() { brow_selected('use') }}
       item { title:'v seznamu i nevybraní'        func onclick() { brow_selected('ignore') }}
-      item { title:'-vybraná ID dát do schránky'  func onclick() { clipboard(bm.selected('get')) }}
+      item { title:'-vybraná ID dát do schránky'  func onclick() { clipboard(brow_selected('get')) }}
+      item { title:'všechna ID dát do schránky'   func onclick() { clipboard(brow.browse_keys()) }}
     }
   }
   # ==============================================> M - MAILIST
