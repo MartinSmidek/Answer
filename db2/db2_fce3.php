@@ -14620,7 +14620,7 @@ function mail2_sql_try($qry,$vsechno=0,$export=0) {  trace();
     if ( $export ) {
       $fname= "skupina_".date("Ymd_Hi").".csv";
       $fpath= "docs/$fname";
-      $flds= "příjmení jméno;email;telefon;ulice, psč obec;x;y;z";
+      $flds= "příjmení jméno;email;telefon;ulice, psč obec;v;w;x;y;z";
       $f= @fopen($fpath,'w');
       if ( !$f ) fce_error("soubor '$fpath' nelze vytvořit");
       fputs($f,chr(0xEF).chr(0xBB).chr(0xBF));
@@ -14643,15 +14643,16 @@ function mail2_sql_try($qry,$vsechno=0,$export=0) {  trace();
       $head.= $num>$nmax ? "následuje prvních $nmax adresátů" : "následují všichni adresáti";
       $tail.= "<br><br><table class='stat'>";
       $tail.= "<tr><th>prijmeni jmeno</th><th>email</th><th>telefon</th>
-        <th>ulice psc obec</th><th>x</th><th>y</th><th>z</th></tr>";
+        <th>ulice psc obec</th><th>v</th><th>w</th><th>x</th><th>y</th><th>z</th></tr>";
       $n= $nmax;
       while ( $res && ($c= pdo_fetch_object($res)) ) {
         if ( $n ) {
           $tail.= "<tr><td>{$c->prijmeni} {$c->jmeno}</td><td>{$c->_email}</td><td>{$c->telefon}</td>
-            <td>{$c->ulice}, {$c->psc} {$c->obec}</td><td>{$c->_x}</td><td>{$c->_y}</td><td>{$c->_z}</td></tr>";
+            <td>{$c->ulice}, {$c->psc} {$c->obec}</td>
+            <td>{$c->_v}</td><td>{$c->_w}</td><td>{$c->_x}</td><td>{$c->_y}</td><td>{$c->_z}</td></tr>";
           if ( $export ) {
             fputcsv($f,array("$c->prijmeni $c->jmeno",$c->_email,$c->telefon,
-                "{$c->ulice}, {$c->psc} {$c->obec}",$c->_x,$c->_y,$c->_z),';','"');
+                "{$c->ulice}, {$c->psc} {$c->obec}",$c->_v,$c->_w,$c->_x,$c->_y,$c->_z),';','"');
           }
           $n--;
         }
