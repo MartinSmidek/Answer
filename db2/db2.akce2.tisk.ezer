@@ -202,10 +202,14 @@ menu m {type:'left', //active:*
   }
   # -------------------------------------------------------------------------------------==> seznamy
   menu {tag:'a', title:'seznamy',type:'group',_sys:'*'
-    item {title:'Sestava (C) Carlos'                                                          skill:'y;f;c'
+    item {title:'Sestava (C) Carlos'                                                          skill:'y;f'
                                         ,par:{typ:'p',exp:'Excel2',cnd:"p.funkce!=99"
-                                        ,tit:'příjmení:15,jména:20,deti,občanky,telefony,SPZ,diety,PPS,pokoj,skupina'
+                                        ,tit:'příjmení:15,jména:20,deti:20,občanky:40,telefony:35,SPZ,diety,PPS,pokoj,skupina'
                                         ,fld:'prijmeni,jmena2,*deti,*obcanky,*telefony,r_spz,*diety,_vps,pokoj,skupina,^id_pobyt'}}
+    item {title:'Sestava (C) Carlos'                                                          skill:'c'
+                                        ,par:{typ:'p',exp:'Excel2',cnd:"p.funkce!=99"
+                                        ,tit:'příjmení:15,jména:20,deti:20,občanky,telefony:35,SPZ,diety,PPS,budova,pokoj,skupina'
+                                        ,fld:'prijmeni,jmena2,*deti,*obcanky,*telefony,r_spz,*diety,_vps,budova,pokoj,skupina,^id_pobyt'}}
     item {title:'VPS na akci'                                                                skill:'y;c#crz'
                                         ,par:{typ:'p',exp:'Excel2',cnd:"p.funkce IN (1,2)"
                                         ,tit:'příjmení:15,jména:20,obec:25,^'
@@ -227,32 +231,49 @@ menu m {type:'left', //active:*
 //                                        ,par:{typ:'j',exp:'Excel2',cnd:"funkce!=99"
 //                                        ,tit:'příjmení:15,jména:12,poznámka k akci:50,platba:12'
 //                                        ,fld:'prijmeni,jmeno,_ar_note,platba'}}
-    item {title:'Účastníci akce pro ubytování'
+    item {title:'Účastníci akce pro ubytování'                                              skill:'y;f'
                                         ,par:{typ:'j',exp:'Excel2',cnd:"funkce NOT IN (9,10,13,14,99) AND luzka>0",hav:"1"
                                         ,tit:'příjmení:15,jméno:12,st.přísl.:10,OP:12,narození:12,věk:4,obec:25,psč:7,ulice:25,stát:10'
                                         ,fld:'prijmeni,jmeno,prislusnost,obcanka,narozeni_dmy,_vek,obec,psc,ulice,stat'}}
-    item {title:'Všichni účastníci (jako pro ubytování)'
+    item {title:'Účastníci akce pro ubytování'                                              skill:'c'
+                                        ,par:{typ:'j',exp:'Excel2',cnd:"funkce NOT IN (9,10,13,14,99)",hav:"1"
+                                        ,tit:'příjmení:15,jméno:12,st.přísl.:10,OP:12,narození:12,věk:4,obec:25,psč:7,ulice:25,stát:10,budova:10,pokoj:5'
+                                        ,fld:'prijmeni,jmeno,prislusnost,obcanka,narozeni_dmy,_vek,obec,psc,ulice,stat,budova,pokoj'}}
+    item {title:'Všichni účastníci (jako pro ubytování)'                                    skill:'y;f'
                                         ,par:{typ:'j',exp:'Excel2',cnd:"funkce NOT IN (9,10,13,14,99)",hav:"1"
                                         ,tit:'příjmení:15,jméno:12,st.přísl.:10,OP:12,narození:12,věk:4,obec:25,psč:7,ulice:25,stát:10,pokoj:10'
                                         ,fld:'prijmeni,jmeno,prislusnost,obcanka,narozeni_dmy,_vek,obec,psc,ulice,stat,pokoj'}}
+    item {title:'Všichni účastníci (jako pro ubytování)'                                    skill:'c'
+                                        ,par:{typ:'j',exp:'Excel2',cnd:"funkce NOT IN (9,10,13,14,99)",hav:"1"
+                                        ,tit:'příjmení:15,jméno:12,st.přísl.:10,OP:12,narození:12,věk:4,obec:25,psč:7,ulice:25,stát:10,budova:10,pokoj:10'
+                                        ,fld:'prijmeni,jmeno,prislusnost,obcanka,narozeni_dmy,_vek,obec,psc,ulice,stat,budova,pokoj'}}
     item {title:'Účastníci s telefony'
                                         ,par:{typ:'j',exp:'Excel2',cnd:"funkce!=99",hav:"telefony!=''"
                                         ,tit:'příjmení:15,jméno:12,telefon:25'
                                         ,fld:'prijmeni,jmeno,telefony'}}
-    item {title:'Dospělí úč. akce pro ubytování'
+    item {title:'Dospělí úč. akce pro ubytování'                                            skill:'y;f'
                                         ,par:{typ:'j',exp:'Excel2',cnd:"funkce NOT IN (9,10,13,14,99) AND luzka>0"
                                         ,hav:"(_vek>=18 AND dite_kat!=99) OR r_role IN ('a','b')"
                                         ,tit:'příjmení:15,jméno:12,st.přísl.:10,OP:12,narození:12,obec:25,psč:7,ulice:25,stát:10'
                                         ,fld:'prijmeni,jmeno,prislusnost,obcanka,narozeni_dmy,obec,psc,ulice,stat'}}
+    item {title:'Dospělí úč. akce pro ubytování'                                            skill:'c'
+                                        ,par:{typ:'j',exp:'Excel2',cnd:"funkce NOT IN (9,10,13,14,99)"
+                                        ,hav:"(_vek>=18 AND dite_kat!=99) OR r_role IN ('a','b')"
+                                        ,tit:'příjmení:15,jméno:12,st.přísl.:10,OP:12,narození:12,obec:25,psč:7,ulice:25,stát:10,budova:10,pokoj:5'
+                                        ,fld:'prijmeni,jmeno,prislusnost,obcanka,narozeni_dmy,obec,psc,ulice,stat,budova,pokoj'}}
     item {title:'Pečouni pro ubytování'                                                     skill:'#crz'
                                         ,par:{typ:'j',exp:'Excel2',cnd:"funkce=99",hav:"1"
                                         ,ord:"prijmeni,jmeno"
                                         ,tit:'příjmení:15,jméno:12,st.přísl.:10,OP:12,narození:12,věk:4,obec:25,psč:7,ulice:25'
                                         ,fld:'prijmeni,jmeno,prislusnost,obcanka,narozeni_dmy,_vek,obec,psc,ulice'}}
-    item {title:'Rodiče, pokoje, telefon'                                                    skill:'y;f;c'
+    item {title:'Rodiče, pokoje, telefon'                                                    skill:'y;f'
                                         ,par:{typ:'p',exp:'Excel2',cnd:"p.funkce<9",rodiny:'1'
                                         ,tit:'příjmení:15,jména:20,pokoj:10,telefony:30,počet'
                                         ,fld:'prijmeni,jmena,pokoj,telefony,_pocet'}}
+    item {title:'Rodiče, pokoje, telefon'                                                    skill:'c'
+                                        ,par:{typ:'p',exp:'Excel2',cnd:"p.funkce<9",rodiny:'1'
+                                        ,tit:'příjmení:15,jména:20,budova:10,pokoj:10,telefony:30,počet'
+                                        ,fld:'prijmeni,jmena,budova,pokoj,telefony,_pocet'}}
     item {title:'Děti na akci s poznámkami'                                                  skill:'y;f'
                                         ,par:{typ:'j',exp:'Excel2',cnd:"funkce!=99 AND pfunkce!=95"
                                         ,hav:"_vek<18 OR dite_kat=99",ord:"narozeni"
