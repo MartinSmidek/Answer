@@ -8139,11 +8139,11 @@ function akce2_plachta($akce,$par,$title,$vypis,$export=0,$hnizdo=0) { trace();
   // získání všech id_pobyt - definice ORDER
   $ids= array_merge($c->vps,$c->nevps,$c->novi,$c->druh,$c->vice);
   $ids= implode(',',$ids);
-  $ids_1= implode(',',$c->vps);
-  $ids_2= implode(',',$c->nevps);
-  $ids_3= implode(',',$c->novi);
-  $ids_4= implode(',',$c->druh);
-  $ids_5= implode(',',$c->vice);
+  $ids_1= implode(',',$c->novi);
+  $ids_2= implode(',',$c->druh);
+  $ids_3= implode(',',$c->vice);
+  $ids_4= implode(',',$c->vps);
+  $ids_5= implode(',',$c->nevps);
   $kategorie= "CASE 
       WHEN FIND_IN_SET(id_pobyt,'$ids_1') THEN 1
       WHEN FIND_IN_SET(id_pobyt,'$ids_2') THEN 2
@@ -9484,7 +9484,7 @@ function tisk2_pdf_prijem_ireg($nazev,$adiety,$x,$ret,$par) {  trace();
 }
 # -------------------------------------------------------------------------------- tisk2 pdf_plachta
 # generování štítků se jmény párů
-# mezery= [i+x, ...] znamená, že po i-tém štítku bude x prázdných (i je výsledný index)
+# mezery= řádků;i1+x1,i2+x2,... znamená, že po i-tém štítku bude x prázdných (i je výsledný index)
 function tisk2_pdf_plachta($akce,$report_json=0,$hnizdo=0,$_mezery='') {  trace();
   global $ezer_path_docs,$tisk_hnizdo;
   $tisk_hnizdo= $hnizdo;
@@ -9492,14 +9492,16 @@ function tisk2_pdf_plachta($akce,$report_json=0,$hnizdo=0,$_mezery='') {  trace(
   $result= (object)array('_error'=>0,'html'=>'?');
 //  $_mezery= "4+1";
   $mezery= array();
+  $radku= 14;
   if ($_mezery) {
-    $ixs= explode(',',$_mezery);
+    list($radku,$ixs)= explode(';',$_mezery);
+    $ixs= explode(',',$ixs);
     foreach ($ixs as $ix) {
       list($i,$x)= explode('+',$ix);
       $mezery[$i]= $x;
     }
   }
-//                                          debug($mezery,'mezery');
+                                          debug($mezery,'mezery');
   $html= '';
   $A= 'A';
   $n= 1;
@@ -9510,15 +9512,28 @@ function tisk2_pdf_plachta($akce,$report_json=0,$hnizdo=0,$_mezery='') {  trace(
   unset($tab->html);
 //  ksort($tab->pdf,SORT_LOCALE_STRING);
 //                                               debug($tab->pdf);
+
+    foreach ( $tab->pdf as $par=>$xa ) {
+      // započtení mezer, předaných přes $_mezery
+      if (isset($mezery[$i])) $i+= $mezery[$i];
+      $Ai= $i%$radku;
+      $ni= ceil(($i+1)/$radku);
+      $tab->pdf[$par]['a1']= chr(ord('A')+$Ai).$ni;
+      $i++;
+    }
+    $result= tisk2_table(array('příjmení','jména','a1','účasti'),array('prijmeni','jmena','a1','ucasti'),$tab->pdf);
+
+
   // projdi vygenerované záznamy
   $n= 0;
+  $i= 0;
   if ( $report_json) {
     $parss= array();
     foreach ( $tab->pdf as $par=>$xa ) {
       // započtení mezer, předaných přes $_mezery
       if (isset($mezery[$i])) $i+= $mezery[$i];
-      $Ai= $i%12;
-      $ni= ceil(($i+1)/12);
+      $Ai= $i%$radku;
+      $ni= ceil(($i+1)/$radku);
       $A1= chr(ord('A')+$Ai).$ni;
       $tab->pdf[$par]['a1']= $A1;
       $i++;
@@ -9551,26 +9566,25 @@ function tisk2_pdf_plachta($akce,$report_json=0,$hnizdo=0,$_mezery='') {  trace(
                        . "<span style=\"$s2;$bg2\"><br>{$x->jmena}</span>";
       $n++;
     }
-//                                         debug($parss,"tisk2_pdf_plachta..."); //return $result;
     // předání k tisku
     $fname= 'stitky_'.date("Ymd_Hi");
     $fpath= "$ezer_path_docs/$fname.pdf";
     $err= dop_rep_ids($report_json,$parss,$fpath);
-    $result->html= $err ? $err
+    $html= $err ? $err
       : " Výpis byl vygenerován ve formátu <a href='docs/$fname.pdf' target='pdf'>PDF</a>.";
-//                                                     debug($tab->pdf);
+    $result->html= $html.$result->html;
   }
   else {
-    foreach ( $tab->pdf as $par=>$xa ) {
-      // započtení mezer, předaných přes $_mezery
-      if (isset($mezery[$i])) $i+= $mezery[$i];
-      $Ai= $i%12;
-      $ni= ceil(($i+1)/12);
-      $tab->pdf[$par]['a1']= chr(ord('A')+$Ai).$ni;
-      $i++;
-    }
+//    foreach ( $tab->pdf as $par=>$xa ) {
+//      // započtení mezer, předaných přes $_mezery
+//      if (isset($mezery[$i])) $i+= $mezery[$i];
+//      $Ai= $i%$radku;
+//      $ni= ceil(($i+1)/$radku);
+//      $tab->pdf[$par]['a1']= chr(ord('A')+$Ai).$ni;
+//      $i++;
+//    }
 //                                                     debug($tab->pdf);
-    $result= tisk2_table(array('příjmení','jména','a1','účasti'),array('prijmeni','jmena','a1','ucasti'),$tab->pdf);
+//    $result= tisk2_table(array('příjmení','jména','a1','účasti'),array('prijmeni','jmena','a1','ucasti'),$tab->pdf);
   }
 end:
   return $result;
