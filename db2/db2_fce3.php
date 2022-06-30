@@ -8081,27 +8081,42 @@ function tisk2_pdf_plachta0($report_json=0) {  trace();
   if ( $report_json) {
     $parss= array();
     // čísla skupinek
-    for ($i= 1; $i<=39; $i++ ) {
+    for ($i= 1; $i<=30; $i++ ) {
       $parss[$n]= (object)array();  // {cislo]
       $fs= 20;
       $s1= "font-size:{$fs}mm;font-weight:bold";
-      $bg1= ";color:#00aa00";
+      $bg1= ";color:#00aa00;line-height:40mm";
       $ii= $i<10 ? "&nbsp;&nbsp;&nbsp;$i" : "&nbsp;$i";
-      $parss[$n]->prijmeni= "<span style=\"$s1$bg1\">$ii</span>";
+      $parss[$n]->prijmeni= "<div style=\"$s1$bg1\">$ii</div>";
       $parss[$n]->jmena= '';
       $n++;
     }
     // souřadnicový systém 2x
-    for ($k= 1; $k<=2; $k++) {
-      for ($i= 1; $i<=12; $i++ ) {
+    for ($k= 1; $k<=1; $k++) {
+      for ($i= 1; $i<=14; $i+=2 ) {
         // definice pole substitucí
         $parss[$n]= (object)array();  // {cislo]
-        $fs= 20;
+        $fs= 22;
         $s1= "font-size:{$fs}mm;font-weight:bold";
-        $bg1= ";color:#aa0000";
+        $bg1= ";color:#aa0000;line-height:40mm";
         $ii= $i<10 ? "&nbsp;$i&nbsp;" : "$i";
         $ia= chr(ord('A')+$i-1);
-        $parss[$n]->prijmeni= "<span style=\"$s1$bg1\">$ii &nbsp;  $ia</span>";
+        $ib= chr(ord('A')+$i);
+        $fill= $i==9 ? "&nbsp;" : '';
+        $parss[$n]->prijmeni= "<span style=\"$s1$bg1\">&nbsp;$fill$ia &nbsp;  $fill$ib</span>";
+        $parss[$n]->jmena= '';
+        $n++;
+      }
+      for ($i= 1; $i<=8; $i+=2 ) {
+        // definice pole substitucí
+        $parss[$n]= (object)array();  // {cislo]
+        $fs= 22;
+        $s1= "font-size:{$fs}mm;font-weight:bold";
+        $bg1= ";color:#aa0000;line-height:40mm";
+        $ia= $i<10 ? "&nbsp;$i" : "$i";
+        $ib= $i+1;
+        $ib= $i+1<10 ? "&nbsp;$ib" : "$ib";
+        $parss[$n]->prijmeni= "<span style=\"$s1$bg1\">$ia &nbsp;$ib</span>";
         $parss[$n]->jmena= '';
         $n++;
       }
@@ -9690,7 +9705,7 @@ function akce2_pdf_stravenky_dieta($x,$par,$report_json,$hnizdo) {  trace();
             if ( $velikost=='c' 
               || $jid=='snídaně' && isset($par->snidane) && $par->snidane=='c' ) {
               // celá porce
-              $parss[$n]->ram= '<img src="db2/img/stravenky-rastr-1.png"'
+              $parss[$n]->ram= '<img src="db2/img/stravenky-rastr-2.png"'
                              . ' style="width:48mm" border="0" />';
               $parss[$n]->rect=  " ";
             }
@@ -9754,7 +9769,7 @@ function akce2_pdf_stravenky0($akce,$par,$report_json) {  trace();
     $parss[$n]->line3= "";
     $parss[$n]->rect=  "";
     $parss[$n]->end= '';
-    $parss[$n]->ram= '<img src="db2/img/stravenky-rastr-1.png" style="width:48mm;height:23mm" border="0" />';
+    $parss[$n]->ram= '<img src="db2/img/stravenky-rastr-2.png" style="width:48mm;height:23mm" border="0" />';
     $n++;
   }
   for ($i= 1; $i<=$pocet; $i++) {

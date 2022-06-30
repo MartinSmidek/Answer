@@ -628,16 +628,24 @@ report sti_B [0,0,200,287] { format:'A4:5,6,70,41',
 report sti_D [0,0,200,287] { format:'A4:5,6,210,80',
   box lines     [ 10, 10, 170, 70] { style:'12,L',      title:'{tab}' }
 }
+//# ----------------------==>   stitek_C - stravenky     pro LJ DN2200 je format:'A4:5,5,50,24',
+//report sti_C [0,0,210,297] { format:'A4:5,3,50,24',
+//#   box ram       [  1,  1, 48, 22] { style:'8,L,LT',             title:'{ram}' }
+//#   box end       [  1,  1, 48, 22] { style:'8,L,RB',             title:'{end}' }
+//  box ram       [  1,  1, 48, 22] { style:'8,L',                title:'{ram}' }
+//  box end       [  1,  1, 48, 22] { style:'8,L',                title:'{end}' }
+//  box header    [  2,  4, 48,  4] { style:'8,L',                title:'{header}' }
+//  box lines     [  2,  8, 48, 16] { style:'14,L',               title:'{line1}<br>{line2}<br>{line3}' }
+//  box rect      [ 25, 10, 20, 14] { style:'20,R',               title:'{rect}' }
+//}
 # ----------------------==>   stitek_C - stravenky     pro LJ DN2200 je format:'A4:5,5,50,24',
 report sti_C [0,0,210,297] { format:'A4:5,3,50,24',
-#   box ram       [  1,  1, 48, 22] { style:'8,L,LT',             title:'{ram}' }
-#   box end       [  1,  1, 48, 22] { style:'8,L,RB',             title:'{end}' }
   box obvod     [  0,  0, 50, 24] { style:'1,L,LTRB:0.5 dotted 255', title:' ' }  // pro M2070
   box ram       [  1,  1, 48, 22] { style:'8,L',                title:'{ram}' }
   box end       [  1,  1, 48, 22] { style:'8,L',                title:'{end}' }
-  box header    [  2,  4, 48,  4] { style:'8,L',                title:'{header}' }
-  box lines     [  2,  8, 48, 16] { style:'14,L',               title:'{line1}<br>{line2}<br>{line3}' }
-  box rect      [ 25, 10, 20, 14] { style:'20,R',               title:'{rect}' }
+  box header    [  2,  1, 48,  4] { style:'8,L',                title:'{header}' }
+  box lines     [  2,  5, 48, 16] { style:'14,L',               title:'{line1}<br>{line2}<br>{line3}' }
+  box rect      [ 25,  7, 20, 14] { style:'20,R',               title:'{rect}' }
 }
 # ----------------------==>   stitek_V - vizitky
 report sti_V [0,0,210,297] { format:'A4:15,10,90,55',
