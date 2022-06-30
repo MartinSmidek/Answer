@@ -9232,7 +9232,7 @@ function tisk2_pdf_jmenovky($akce,$par,$title,$vypis,$report_json,$hnizdo) {  tr
       "boxes":[
         {"type":"text",
          "left":0,"top":0,"width":90,"height":55,
-         "id":"ram","style":"1,L,LTRB:0.05 dotted","txt":" "
+         "id":"ram","style":"1,L,LTRB:0.4 dotted","txt":" "
         },
         {"type":"text",
          "left":10,"top":10,"width":80,"height":40,

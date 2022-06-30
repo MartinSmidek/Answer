@@ -648,9 +648,8 @@ report sti_C [0,0,210,297] { format:'A4:5,3,50,24',
   box rect      [ 25,  7, 20, 14] { style:'20,R',               title:'{rect}' }
 }
 # ----------------------==>   stitek_V - vizitky
-report sti_V [0,0,210,297] { format:'A4:15,10,90,55',
-//  box ram       [  0,  0, 90, 55] { style:'1,L,LTRB:0.05 dotted 250', title:' ' } 
-  box ram       [  0,  0, 90, 55] { style:'1,L,LTRB:0.5 dotted 255', title:' ' } 
+report sti_V [0,0,210,297] { format:'A4:15,10,90,55', // ignoruje se - definice je v PHP funkci
+  box ram       [  0,  0, 90, 55] { style:'1,L,LTRB:0.05 dotted 250', title:' ' } 
   box jmeno     [ 10, 10, 80, 40] { style:'30,L',                     title:'{jmeno}<br>{prijmeni}' }
 }
 # ----------------------==>   MROP - chatky - 2 x A5
