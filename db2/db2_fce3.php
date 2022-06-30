@@ -4480,15 +4480,20 @@ function akce2_skup_get($akce,$kontrola,&$err,$par=null) { trace();
       $err+= 4;
     }
   }
+//  debug($all,'ALL');
   // řazení - v PHP nelze udělat
   if ( count($all) ) {
     $qryo= "SELECT GROUP_CONCAT(DISTINCT CONCAT(id_pobyt,'|',nazev) ORDER BY nazev) as _o
             FROM pobyt AS p
-            JOIN spolu AS s USING(id_pobyt)
-            JOIN osoba AS o ON s.id_osoba=o.id_osoba
-            LEFT JOIN tvori AS t ON t.id_osoba=o.id_osoba
-            LEFT JOIN rodina AS r USING(id_rodina)
+            JOIN rodina AS r ON id_rodina=i0_rodina
             WHERE id_pobyt IN (".implode(',',$all).") $jen_hnizdo ";
+//    $qryo= "SELECT GROUP_CONCAT(DISTINCT CONCAT(id_pobyt,'|',nazev) ORDER BY nazev) as _o
+//            FROM pobyt AS p
+//            JOIN spolu AS s USING(id_pobyt)
+//            JOIN osoba AS o ON s.id_osoba=o.id_osoba
+//            LEFT JOIN tvori AS t ON t.id_osoba=o.id_osoba
+//            LEFT JOIN rodina AS r USING(id_rodina)
+//            WHERE id_pobyt IN (".implode(',',$all).") $jen_hnizdo ";
     $reso= pdo_qry($qryo);
     while ( $reso && ($o= pdo_fetch_object($reso)) ) {
       foreach (explode(',',$o->_o) as $pair) {
@@ -4528,7 +4533,8 @@ end:
 function akce2_skup_renum($akce) {
   $err= 0;
   $msg= '';
-  $ret= akce2_skup_get($akce,0,$err);
+  $par= (object)array('verze'=>'MS');
+  $ret= akce2_skup_get($akce,0,$err,$par);
   $skupiny= $ret->skupiny;
   if ( $err>1 ) {
     $msg= "skupinky nejsou dobře navrženy - ještě je nelze přečíslovat";
