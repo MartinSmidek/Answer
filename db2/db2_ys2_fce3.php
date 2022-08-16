@@ -2456,7 +2456,7 @@ function session($is,$value=null) {
 # ----------------------------------------------------------------------------------------- dot roky
 # vrátí dostupné dotazníky Letního kurzu MS YS
 function dot_roky () { trace();
-  $y= (object)array('roky'=>'2021,2019,2018,2017'); // 2017 je rozjetý - k dispozici je jen statistika
+  $y= (object)array('roky'=>'2022,2021,2019,2018,2017'); // 2017 je rozjetý - k dispozici je jen statistika
   return $y;
 }
 # -------------------------------------------------------------------------------------- dot prehled
@@ -3202,7 +3202,8 @@ function dot_show ($dotaznik,$clmn,$pg,$offset,$cond,$dirty,$rok) { trace();
   if ($x->duplicita) {
     $duplicity= "<span style='color:red'> &nbsp; duplicita=$x->duplicita</span>";
   }
-  $tab.= "<p><b>PDF={$x->page}  &nbsp;  XLS={$x->id} &nbsp; rok=$rok $hnizdo$duplicity</b></p>";
+  $warning= $x->warning ? "<span style='color:red'>$x->warning</span>" : ''; 
+  $tab.= "<p><b>PDF={$x->page}  &nbsp;  XLS={$x->id} &nbsp; rok=$rok $hnizdo$duplicity$warning</b></p>";
   foreach ($tmpl as $row => $clmns) {
     switch ($row) {
     case 'Statistika':
@@ -3579,7 +3580,7 @@ function dot_import ($rok) { trace();
   );
   $values= array(); // id => (value)
   // dotazníky od roku 2021 zpracujeme z živých dat na GDISKu
-  if ($rok>=2021) {
+  if ($rok==2021) {
     $def_g= array(
       "A,x,id?",
       "B,r,hnizdo?Albeřice*3;Kroměříž*1;Olomouc*2",
@@ -3700,6 +3701,145 @@ function dot_import ($rok) { trace();
       }
     }
   }
+  elseif ($rok==2022) {
+    // export do json v roce 2022 již nepřenáší textové hodnoty, pokud se očekávají čísla
+    // například již nelze "O,r,pecedeti?1;2;3;4;5;péči o děti jsme nevyužili*0"
+    // proto je download před CSV
+    $LIMIT= 0;
+    $def_g= array(
+      "A,x,id?",
+      "B,r,sex?Muž*0;Žena*1",
+      "C,i,vek?",
+      "D,r,deti?1;2;3;žádné*0;více*4",
+      "E,i,manzel?",
+      "F,r,novic?Ano*1;Ne*0",
+      "G,c,od_jine,od_jine_text?Přátelé*od_pratele;Příbuzní*od_pribuzni;Jezdil/a jsem jako pečovatel/ka*od_pecoun;Inzerce*od_inzerce;Chlapské akce*od_chlapi;Akce YMCA Setkání*od_ymca",
+      "H,c,proc_jine,proc_jine_text?"
+        . "chci zlepšovat naše manželství*proc_zlepsit;byli jsme v krizi*proc_krize;"
+        . "jezdíme opakovaně*proc_opak",
+      "I,i,prednasky?",
+      "J,i,skupinky?",
+      "K,i,duchovno?",
+      "L,i,ubytovani?",
+      "M,i,strava?1;2;3;4;5;Bez stravy*0",
+      "N,r,pecedeti?1;2;3;4;5;péči o děti jsme nevyužili*0",
+      "O,i,motto?",
+      "P,i,maturita?",
+      "Q,i,hudba?",
+      "R,t,libilo?",
+      "S,t,vadilo?",
+      "T,t,vzkaz?",
+      "U,c,tema_jine,tema_jine_text?Výchova menších dětí*tema_male;Výchova dospívajících*tema_dosp;Vztahy  v rodině - matka a děti*tema_matka;Vztahy v rodině - otec a děti*tema_otec;Mezigenerační vztahy - širší rodina*tema_mezigen;Duchovní život*tema_duchovni",
+      "V,r,prinos?1 - Ano, velmi významně*1;2 - Ano, částečně*2;3 - Nevím, to se uvidí*3;4 - Ne, nevidím změnu*4;5 - Ne, spíše naopak*5",
+      "W,t,prinos_text?"
+    );
+    # přečtení seznamu skupin z tabulky
+    # https://docs.google.com/spreadsheets/d/1dP_p6A8sHKPEStiaqJaeAhGV3kjUYqmjQrvBpvRahUA/edit#gid=1894516411
+    $goo= "https://docs.google.com/spreadsheets/d";
+    $key= $rok==2022 ? "13GuKhM6vwo-zfN97UWazdoDdzKpqGXNmQls7sYTzo6c" : '';
+    $url= "$goo/$key/export?format=csv";
+    $f= @fopen($url, "r");
+    if ( !$f ) { $y->err= "odkaz $url nelze otevřít"; goto end; }
+    $line= fgets($f, 1000); // hlavička
+    $cols= fgetcsv($f); 
+    $rows= array();
+//                                                          debug($cols,'cols');
+    $n= 0;
+    while (($row= fgetcsv($f)) !== false) {
+      $rows[]= $row; 
+      $n++;
+      if ($LIMIT && $n>=$LIMIT) break;
+    }
+//                                                          debug($rows,'rows');
+//    goto end;
+    $n= 0;
+    // zjistíme, zda se zvýšil počet dotazníků - jinak odmítneme import
+    $n_old= select('COUNT(*)','dotaz',"dotaznik=$rok"); // včetně duplicit
+    $n_new= count($rows);
+    if ($n_old==$n_new) {
+      $y->html= "Není žádný nový dotazník z roku $rok";
+      goto end;
+    }
+    elseif ($n_old>$n_new) {
+      $y->html= "POZOR: někdo sežral nějaké dotazníky nebo tam zapomněl filtr";
+      goto end;
+    }
+    $y->html= "Přidávám ".kolik_1_2_5($n_new-$n_old,'nový dotazník,nové dotazníky,nových dotazníků');
+    // projdeme dotazníky
+    foreach ($rows as $line=>$row) {
+      $value= array('warning'=>'');
+//      $row= $crow->c; // odpovědi na otázky
+//                                                          debug($row,"row $line");
+      $id= 0;
+//      break;
+      foreach ($row as $i => $cols) {
+        $d_i= $def_g[$i]; // definice i-té otázky
+        $v= $row[$i];     // odpověď na i-tou otázku
+        list($desc,$itms)= explode('?',$d_i);
+        list(,$typ,$fld,$fld_text)= explode(',',$desc);
+        $itms= explode(';',$itms);
+//                                                          debug($itms,"itms $typ,$fld");
+        switch ($typ) {
+          case 'x': $id= $line+1; break;
+          case 'i':
+            $value[$fld]= $v;
+            if (!is_numeric($v)) $value['warning'].= " $fld=`$v`";
+            break;
+          case 'c':
+            $vv= explode(', ',$v);
+            foreach($vv as $iv=>$vi) {
+              $preddefinovana= 0;
+              foreach($itms as $itm_code) {
+                list($itm,$code)= explode('*',$itm_code);
+                if ($vi==$itm) {
+                  $value[$code]= 1;
+                  $preddefinovana= 1;
+                }
+              }
+              if (!$preddefinovana) { 
+                // obecná odpověď může obsahovat čárky, je ale vždy na konci
+                $value[$fld]= 1;
+                $value[$fld_text]= implode(', ',array_slice($vv,$iv));
+                break;
+              }
+            }
+            break;
+          case 'r':
+            foreach($itms as $itm_code) {
+              list($itm,$code)= explode('*',$itm_code);
+              if ($v==$itm) {
+                $value[$fld]= isset($code) ? $code : $itm;
+                break 2;
+              }
+            }
+            $y->war.= "dotazník $id: neznámá odpověď '{$v}' pro '$fld'<br>";
+            $value['warning'].= " $fld='$v'";
+            break;
+          case 't':
+            $value[$fld]= $v;
+            break;
+        }
+      }
+      $n++;
+      // doplnění nových do tabulky DOTAZ -- zachová položky nazor_* v existujících
+      $exists= select('COUNT(*)','dotaz',"dotaznik=$rok AND id=$id");
+      if (!$exists) {
+//                                                debug($value,'value');
+        $set= "dotaznik=$rok, id=$id";
+        foreach ($value as $fld => $val) {
+          $set.= ", $fld='$val'";
+        }
+        $set= strtr($set,array(
+            "\xf0\x9f\x99\x82"=>"&#x1F642;",
+            "\xf0\x9f\x98\x8d"=>"&#x1F60D;",
+            "\xf0\x9f\x91\x8d"=>"&#x1F44D;",
+            '*'=>'*'));
+        if ($value['vek']==48 && $value['sex']==1 && $value['deti']==3 ) debug($value,"$set");
+        query("INSERT INTO dotaz SET $set");
+      }
+    }
+  }
+  // předchozí roky - bez elektronického vyplňování
   else {
     $fpath= "$ezer_path_docs/import/MS$rok";
     foreach ($def as $fname=>$clmn) {

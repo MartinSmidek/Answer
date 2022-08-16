@@ -204,19 +204,22 @@ menu m {type:'left', format:'f+', active:*
        ,dsc:"Tabulka pro export jmen a emailových adres"
        ,tit:'',fld:'',ord:''}}
   }
-  menu d {title:'Dotazníky LK YMCA Setkání',type:'group', _sys:'*' skill:'yaet'
+  menu d {title:'Dotazníky LK YMCA Setkání',type:'group', _sys:'*' skill:'yaet', active:no
     item {title:'[fa-calendar] volba roku dotazníku'            par:{typ:'r'} }
     item i {title:'[fa-ban] (re)import dotazníku'               format:'d'                 skill:'m'
-      proc onclick (i) { var y:object
+      func onclick (i:ezer) { var y:object
         mapa.close(1);
         panel.display(2,'i');
-        show_dotazy;
-        info.fill(conc(i.owner.title,' - ',i.title),' ');
-        confirm(conc("Mám přepočítat dotazník roku ",dot.rok.get,"?"));
-        clear;
-        y.set(ask('dot_import',dot.rok.get));
-        [ y.war; warning(y.war) ]; 
-        [ y.err; alert(y.err) ]; 
+        show_dotazy();
+        info.header(i);
+        if (!confirm(`Mám přepočítat dotazník roku ${dot.rok}?`)) return;
+        clear();
+        if (dot.rok==2022 && confirm(`Mám před importem vymazat všechny hodnoty roku ${dot.rok}?`)) {
+          php.query(`DELETE FROM dotaz WHERE dotaznik=${dot.rok}`);
+        }
+        y= php.dot_import(dot.rok);
+        if (y.war) warning(y.war); 
+        if (y.err) alert(y.err); 
         info.fill('',y.html) 
     }}
     item {title:'[fa-line-chart] statistika dotazník & Answer'  par:{typ:'2'} }
@@ -362,6 +365,7 @@ form _obraz [,,700,50] {
   check r2018  [131,35,50,] { tag:'x,v' title:'2018' format:'t' proc onchange() { recond }}
   check r2019 [182,35,50,] { tag:'x,v' title:'2019' format:'t' proc onchange() { recond }}
   check r2021 [233,35,50,] { tag:'x,v', title:'2021', value:'1', format:'t' proc onchange() { recond }}
+  check r2022 [284,35,50,] { tag:'x,v', title:'2022', value:'1', format:'t' proc onchange() { recond }}
   // výběr hnízd
   label [0,65,80,] { tag:'x,v,r_21' title:'výběr hnízda:' }
   check hnizdo_1 [80,60,70,] { tag:'x,v,r_21' title:'Kroměříž' format:'t' proc onchange() { recond }}
@@ -433,7 +437,7 @@ form _obraz [,,700,50] {
     case [200,0,80,18] { title:'horší' value:'5' }
     proc onchange() { recond }
   }
-  label [D+20,220,100,] { tag:'x,v' title:'<b>LK 2021</b>' }
+  label [D+20,220,100,] { tag:'x,v,r_21' title:'<b>LK 2021</b>' }
   check x_r21 [D+20,235,61,] { tag:'x,v,r_21' title:'z textů' format:'t'
     proc onchange() { recond }
   }
@@ -462,7 +466,7 @@ form _obraz [,,700,50] {
   // funkce
   func recond() { var roky:text, hnizda:text, sub:text
     // výběr roků
-    roky= `0${r2017?',2017':''}${r2018?',2018':''}${r2019?',2019':''}${r2021?',2021':''}`;
+    roky= `0${r2017?',2017':''}${r2018?',2018':''}${r2019?',2019':''}${r2021?',2021':''}${r2022?',2022':''}`;
     // výběr hnízda
     hnizda= '';
     if (obraz.r2021) { 

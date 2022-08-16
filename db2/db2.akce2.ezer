@@ -228,6 +228,11 @@ form right [,,*,*] { style:"height:calc(100% - 61px)"
     [ y; note.set(y) ]
   }
   proc append(x) { note.get; note.set(conc(note.get,'<br>',x)) | note.set(x) }
+  func header(i:ezer) { var i_owner:ezer
+    clear(); i_owner= i.owner();
+    msg= ''; note= '';
+    head= replace_fa(`<div class='karta'>${i_owner.title} - ${i.title}</div>`);
+  }
 }
 # =========================================================================================> TABULKY
 table _file_ {
