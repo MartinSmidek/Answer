@@ -247,35 +247,40 @@ function akce_ucastnici($akce,$cmd,$par=null) {
         }
       }
       $org= select('access','akce',"id_duakce=$akce");
-      $os=pdo_qry("SELECT id_osoba,prijmeni
+      $os=pdo_qry("SELECT id_osoba,funkce IN (1,2),prijmeni
         FROM pobyt JOIN spolu USING (id_pobyt) JOIN osoba USING (id_osoba) 
         WHERE id_akce=$akce AND funkce IN (0,1,2) AND s_role=1
+        -- AND id_osoba IN (5877,18653,21586,5861,2225)
       "); 
-      while ($os && (list($ido,$jmeno)=pdo_fetch_row($os))) {
+      while ($os && (list($ido,$vps,$jmeno)=pdo_fetch_row($os))) {
         $xs=pdo_qry("
           SELECT 
-            SUM(IF(firm,1,0)),
-            SUM(IF(iniciace,1,0)),
-            SUM(IF(statistika IN (1,2,3,4,5),1,0)),
-            1,
-            SUM(IF(druh IN (1,2) AND funkce IN (1,2),1,0)),
-            SUM(IF(druh IN (1,2) AND funkce IN (0),1,0)),
+            SUM(IF(o.firming,1,0)) AS _firm,
+            SUM(IF(o.iniciace,1,0)) AS _mrop,
+            SUM(IF(statistika IN (1,2,3,4,5),1,0)) AS _muzi,
+               SUM(IF(druh IN (1,2,3,17,18),0,1)) AS _jina, -- 1,
+            -- SUM(IF(druh IN (1,2) AND funkce IN (1,2),1,0)) AS _vps,
+            SUM(IF(druh IN (1,2) AND funkce IN (0),1,0)) AS _ms,
             GROUP_CONCAT(IF(sex=2 AND (statistika>0 OR firm OR mrop),
-              CONCAT(nazev,'/',YEAR(datum_od),' '),'') SEPARATOR '')
-          FROM pobyt JOIN spolu USING (id_pobyt) JOIN osoba USING (id_osoba) 
-          JOIN akce ON id_akce=id_duakce
+              CONCAT(nazev,'/',YEAR(datum_od),' '),'') SEPARATOR '') AS _zena
+          FROM pobyt 
+          JOIN spolu AS s USING (id_pobyt) 
+          JOIN osoba AS o USING (id_osoba) 
+          JOIN akce AS a ON id_akce=id_duakce 
+              AND IF(FLOOR(IF(MONTH(o.narozeni),DATEDIFF(a.datum_od,o.narozeni)/365.2425,
+                YEAR(a.datum_od)-YEAR(o.narozeni)))<18,0,1)
           WHERE
             zruseno=0 AND spec=0 AND 
             id_osoba=$ido AND id_akce!=$akce AND funkce IN (0,1,2) AND s_role IN (0,1)
           GROUP BY id_osoba
         "); 
-        list($firm,$mrop,$muzi,$jina,$vps,$ms,$zena)=pdo_fetch_row($xs);
+        list($firm,$mrop,$muzi,$jina/*,$vps*/,$ms,$zena)=pdo_fetch_row($xs);
         $i= $vps>0 ? 2 : ($ms>0 ? 1 : 0);
-        if ($check[4] && $firm)     $j= 4;
+        if     ($check[4] && $firm) $j= 4;
         elseif ($check[3] && $mrop) $j= 3;
         elseif ($check[2] && $muzi) $j= 2;
         elseif ($check[1] && $jina) $j= 1;
-        else           $j= 0;
+        else                        $j= 0;
         $data[$i][$j]++;
         $jmena[$i][$j][]= $jmeno; // "$jmeno/$ido";
         // hlášení anomálií do trasování
@@ -292,11 +297,12 @@ function akce_ucastnici($akce,$cmd,$par=null) {
           $jmena[$i][$j]= implode(', ',$jmena[$i][$j]);
         }
       }
+      global $VPS;
       $chart= array(
           'chart' =>'heatmap',
           'colorAxis_maxColor'=>$org==1 ? '#2C8931' : ($org==2 ? '#2C4989' : '#AAAAAA'),
           'title_text' =>'účasti na jiných akcích',
-          'xAxis_categories'=>array('-','MS','PPS'),
+          'xAxis_categories'=>array('nováčci','účastníci',"{$VPS}ky"),
           'yAxis_categories'=>array('-','jiná akce','muži,otcové','iniciace','firming'),
           'series_0_data'=>$series,
           'tooltip_data'=>$jmena

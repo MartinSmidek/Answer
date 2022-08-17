@@ -214,7 +214,9 @@ menu m {type:'left', format:'f+', active:*
         info.header(i);
         if (!confirm(`Mám přepočítat dotazník roku ${dot.rok}?`)) return;
         clear();
-        if (dot.rok==2022 && confirm(`Mám před importem vymazat všechny hodnoty roku ${dot.rok}?`)) {
+        // na NTB umožni smazat dotazník
+        if (!sys('ezer','server') && dot.rok==2022 
+            && confirm(`Mám před importem vymazat všechny hodnoty roku ${dot.rok}?`)) {
           php.query(`DELETE FROM dotaz WHERE dotaznik=${dot.rok}`);
         }
         y= php.dot_import(dot.rok);
@@ -240,16 +242,16 @@ menu m {type:'left', format:'f+', active:*
         }
       }
     }
-//    item {title:'[fa-forward] procházení ... s doplněním'       par:{typ:'d',id:'1'} 
-//      func onclick (i:ezer) { 
-//        clear(); mapa.close(1); show_dotazy(); panel.display(2,'dp|do'); obraz.header(i);
-//        if (has_skill('mš')) panel.display(1,'dt')
-//        obraz.display(0,'x'); obraz.display(1,i.par.typ);
-//        obraz.display(obraz.r2021,'r21'); obraz.enable(1,'r21');
-//        dot.index= 'id'; dot.id= i.par.id; 
-//        dot.Show(-2,0,0) 
-//      }
-//    }
+    item {title:'[fa-forward] procházení ... s doplněním'       par:{typ:'d',id:'1'}       skill:'a'
+      func onclick (i:ezer) { 
+        clear(); mapa.close(1); show_dotazy(); panel.display(2,'dp|do'); obraz.header(i);
+        if (has_skill('mš')) panel.display(1,'dt')
+        obraz.display(0,'x'); obraz.display(1,i.par.typ);
+        obraz.display(obraz.r2021,'r21'); obraz.enable(1,'r21');
+        dot.index= 'id'; dot.id= i.par.id; 
+        dot.Show(-2,0,0) 
+      }
+    }
 //    item {title:'[fa-forward] procházení duplicit roku 2021'    par:{typ:'d',id:'1'} 
 //      func onclick (i:ezer) { 
 //        clear(); mapa.close(1); show_dotazy(); panel.display(2,'dp|do'); obraz.header(i);
@@ -313,7 +315,6 @@ menu m {type:'left', format:'f+', active:*
 func show_obraz(i) { // přes odkaz z PHP vygenerovaný voláním Spy
   if (dot.index=='pg') dot.pg= i; else dot.id= i;
   dot.Show(0,0,1); 
-  tipy.Spy(); 
 }
 proc show_dotazy() {
   function('group',"group._fold(); return 1;",m.s);
@@ -583,7 +584,7 @@ form _dot [,,163,60] { css:'parm shadow' style:'z-index:2'  //style:'position:fi
   }
   // ==> . Show
   func Show(offset,go_back,even) { var y:object
-    clear();
+    clear(); tipy.Display(0);
     y= php.dot_show(vyber ? 0 : rok, index, index=='page' ? pg : id, offset,
         vyber ? obraz.cond : 1, dot.dirty, rok);
     copy_by_name(y.nazory,obraz);
@@ -594,7 +595,6 @@ form _dot [,,163,60] { css:'parm shadow' style:'z-index:2'  //style:'position:fi
       obraz.fill2('',' ',' ');
       obraz.fill2('',y.html,y.jpg);
       dot.dirty= 0;
-      tipy.Spy();
     }
   }
   radio index [50,2,60,50] { format:'t', value:'id'
@@ -602,8 +602,10 @@ form _dot [,,163,60] { css:'parm shadow' style:'z-index:2'  //style:'position:fi
     case [30,0,10,10] { title:' ' value:'id' }
   }
   label celkem [10,4,49,] { style:'color:white' }
-  button [171,6,,] { title:"[fa-repeat]" help:'přepočítat tabulku' skill:'mš|mš'  
-    func onclick() { php.dot_spy_data(rok); Show(0,1,1); }}
+  button [171,6,,] { title:"[fa-question]" help:'ukázat tipy' skill:'mš|mš'  
+    func onclick() { Show(0,1,1); tipy.Spy(); }}
+  button [191,6,,] { title:"[fa-repeat]" help:'přepočítat tabulku' skill:'mš|mš'  
+    func onclick() { php.dot_spy_data(rok); Show(0,1,1); tipy.Spy(); }}
   check vyber [112,1,49,] { title:'výběr' value:'1' 
     proc onchange() { dot.dirty.set(1); back.set(0); Show(0,0,0) }
   }
@@ -625,10 +627,15 @@ form _tipy [,,163,46] { style:'position:fixed;z-index:2' //css:'parm shadow'
 //        cconc(eq(dot.index.get,'page'),dot.pg.get,dot.id.get),dot.back.get));
 //    shody.set(dot.kurz.get('html'));
 //  }
+  func Display(on) { 
+    if (!has_skill('mš')) return;
+    shody.display(on);
+  }
   func Spy() { 
     if (!has_skill('mš')) return;
     clear();
     shody= php.dot_spy(dot.rok,dot.id);
+    Display(1);
     //    if (!dot.kurz) 
 //      dot.kurz= {rok:dot.rok};
 //    dot.kurz.filtr= {sex:sex,vek:vek,det:det,man:man,nov:nov};
@@ -647,7 +654,7 @@ form _tipy [,,163,46] { style:'position:fixed;z-index:2' //css:'parm shadow'
 //  check nov [108,19,50,] { value:'1' format:'t' skill:'m|m' } 
 //  label [108,9,50,] { title:'nový' skill:'m|m' }
 //  button [133,19,22,] { title:"[fa-eye]" help:'špión' skill:'m|m' proc onclick() { Spy }}
-  label shody [0,0,163,280] { style:'background:silver' css:'parm shadow' }
+  label shody [0,0,163,280] { style:'background:silver', css:'parm shadow', format:'n' }
 }
 # ------------------------------------------------------------------------------------------==> corr
 # opravy hodnot v dotazníku - např. obrácená hodnocení
