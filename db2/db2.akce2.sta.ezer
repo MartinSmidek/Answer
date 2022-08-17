@@ -6,7 +6,7 @@
 # ------------------------------------------------------------------------------------------------ #
 # ----------------------------------------------------------------------------------- globální jména
 # ----------------------------------------------------------------------------------==> inicializace
-proc onfirstfocus() { dot.Init; } // has_skill('m'); has_skill('yaet'); m.d.d.click }
+func onfirstfocus() { dot.Init(); } // has_skill('m'); has_skill('yaet'); m.d.d.click }
 # ------------------------------------------------------------------------------------------==> stav
 var the_vypis: text
 # ----------------------------------------------------------------------------==> globální procedury
@@ -223,15 +223,21 @@ menu m {type:'left', format:'f+', active:*
         info.fill('',y.html) 
     }}
     item {title:'[fa-line-chart] statistika dotazník & Answer'  par:{typ:'2'} }
-    item q {title:'[fa-balance-scale] různé výběry a srovnání'    par:°{typ:'v'} }
+    item q {title:'[fa-balance-scale] různé výběry a srovnání'  par:{typ:'v'} }
     item d {title:'[fa-forward] procházení dotazníku'           par:{typ:'d',id:'1'} 
       func onclick (i:ezer) { 
         clear(); mapa.close(1); show_dotazy(); panel.display(2,'dp|do'); obraz.header(i);
         if (has_skill('mš')) panel.display(1,'dt')
         obraz.display(0,'x'); obraz.display(1,i.par.typ);
         obraz.display(obraz.r2021,'r21'); obraz.enable(0,'r21'); obraz.display(0,'r21u');
-        dot.index= 'id'; dot.id= i.par.id; 
-        dot.Show(-2,0,0) 
+        dot.index= 'id'; 
+        if (dot.id) {
+          dot.Show(0,1,1) 
+        }
+        else {
+          dot.id= i.par.id; 
+          dot.Show(-2,0,0) 
+        }
       }
     }
     item {title:'[fa-forward] procházení ... s doplněním'       par:{typ:'d',id:'1'} 
@@ -259,25 +265,29 @@ menu m {type:'left', format:'f+', active:*
         dot.Show(-2,0,0) 
       }
     }
-    item {title:'[fa-edit] úpravy odpovědí zvoleného roku'       par:{typ:'2017'}} 
+    item {title:'[fa-edit] úpravy odpovědí zvoleného roku'       par:{typ:'c'}} 
     func onclick (i:ezer) { var x: object, y: object
       clear(); mapa.close(1); 
       panel.display(2,'do'); 
       obraz.display(0,'x'); obraz.display(1,i.par.typ); obraz.display(0,'r21|r_21'); obraz.header(i);
       switch(i.par.typ) {
-        case '2017': 
-          panel.display(1,'d7'); /*dot.rok= 2017; obraz.roky= 2017;*/ d2017.Init(); 
+        case 'c': // korekce odpovědí 
+          if (!obraz.rok) { alert('musí být vybrán jediný rok'); return; }
+          panel.display(1,'dc'); corr.Init(); 
           break;
-        case 'r': 
+        case 'r': // volba roku
           x= php.dot_roky(); obraz.roky.selects(x.roky); obraz.roky= dot.rok; break;
-        case '2': 
+        case '2': // srovnání s answerem
           y= php.dot_prehled(dot.rok,{zdroj:'dotaz',par1:'rok'}); 
           x= php.dot_prehled(dot.rok,{zdroj:'akce',par1:'rok',know:y.know}); 
           obraz.text= `<table style='z-index:2;position:absolute'><tr>
                   <td>${y.html}</td><td>${x.html}</tr></table>`; 
           break;
-        case 'v': 
+        case 'v': // výběry
           obraz.recond(); //obraz.rechoice(); 
+          break;
+        case 'd': // procházení
+//          if (obraz.rok && corr.id) dot.id= corr.id;
           break;
       };
     }
@@ -312,7 +322,7 @@ proc show_dotazy() {
 use dot: form _dot [10,36,,] { tag:'dp' format:'n' }
 use obraz: form _obraz [12,4,,]   { tag:'do' format:'n' }
 use tipy:  form _tipy  [24,467,,] { tag:'dt' format:'n' }
-use d2017:  form _d2017 [12,4,,] { tag:'d7' format:'n' }
+use corr:  form _corr  [12,4,,] { tag:'dc' format:'n' }
 use info: form right   [12,4,,]   { tag:'i'
   label parm_tit [-200,9,100,] { tag:'p', style:'zIndex:2;color:white', format:'rn' }
   field parm [-150,5,40,] { tag:'p', style:'zIndex:2', format:'rtn' }
@@ -331,7 +341,9 @@ use info: form right   [12,4,,]   { tag:'i'
   }
 }
 # -----------------------------------------------------------------------------------------==> obraz
+# zobrazení dotazníku zvoleného ve form dot
 form _obraz [,,700,50] { 
+  var rok=0   // pokud je zvolen právě jeden rok tak ten, jinak 0
   const D=320
   label text2 [0,85,320,800] { style:"overflow:auto"  }
   label img [D+2,28,485,700] { title:'' }
@@ -364,7 +376,7 @@ form _obraz [,,700,50] {
   check r2017  [80,35,50,] { tag:'x,v' title:'2017' format:'t' proc onchange() { recond }}
   check r2018  [131,35,50,] { tag:'x,v' title:'2018' format:'t' proc onchange() { recond }}
   check r2019 [182,35,50,] { tag:'x,v' title:'2019' format:'t' proc onchange() { recond }}
-  check r2021 [233,35,50,] { tag:'x,v', title:'2021', value:'1', format:'t' proc onchange() { recond }}
+  check r2021 [233,35,50,] { tag:'x,v', title:'2021', format:'t' proc onchange() { recond }}
   check r2022 [284,35,50,] { tag:'x,v', title:'2022', value:'1', format:'t' proc onchange() { recond }}
   // výběr hnízd
   label [0,65,80,] { tag:'x,v,r_21' title:'výběr hnízda:' }
@@ -453,7 +465,7 @@ form _obraz [,,700,50] {
   }
   select patt [D+20,300,150,] { tag:'x,v' title:'^výběr vzorů textů' format:'t'
     func Init() {
-      patt.selects('-:0,přednášky:1,VPS:2,čas:3,kohout;-):4,vzor ==>:9');
+      patt.selects('-:0,přednášky:1,VPS:2,čas:3,kohout;-):4,opravené dotazníky:5,vzor =>:9');
       patt.key(0);
     }
     func onchanged() { recond() }
@@ -464,9 +476,13 @@ form _obraz [,,700,50] {
   edit cond [D+20,350,260,100] { tag:'x,v' title:'^výběr jako SQL' value:'1' format:'t'
     proc onchanged() { rechoice }}
   // funkce
-  func recond() { var roky:text, hnizda:text, sub:text
+  func recond() { var roky:text, hnizda:text, sub:text, carek:number
     // výběr roků
     roky= `0${r2017?',2017':''}${r2018?',2018':''}${r2019?',2019':''}${r2021?',2021':''}${r2022?',2022':''}`;
+    // je vybrán jen jeden rok?
+    carek= function('str','return (str.match(/,/g) || []).length;',roky);
+    rok= carek==1 ? substr(roky,2) : 0;
+//    echo(`carek=${carek}, rok=${rok}`);
     // výběr hnízda
     hnizda= '';
     if (obraz.r2021) { 
@@ -500,14 +516,21 @@ form _obraz [,,700,50] {
     }
     // doplnění textových vzorů
     if (patt.key()) {
-      switch (patt.key()) {
-        case 1: sub= "'predn|předn'"; break;
-        case 2: sub= "'vps|pps'"; break;
-        case 3: sub= "'čas[^tn]'"; break;
-        case 4: sub= "'kohout'"; break;
-        case 9: sub= patt2 ? `'${patt2}'` : "'.'"; break;
+      if (patt.key()==5) {
+        cond= conc(cond,` AND warning!=''`); 
       }
-      cond= conc(cond,` AND (libilo RLIKE ${sub} OR vadilo RLIKE ${sub} OR vzkaz RLIKE ${sub})`); 
+      else {
+        switch (patt.key()) {
+          case 1: sub= "'predn|předn'"; break;
+          case 2: sub= "'vps|pps'"; break;
+          case 3: sub= "'čas[^tn]'"; break;
+          case 4: sub= "'kohout'"; break;
+          case 9: sub= patt2 ? `'${patt2}'` : "'.'"; break;
+        }
+        cond= conc(cond,` AND (
+            libilo RLIKE ${sub} OR vadilo RLIKE ${sub} OR vzkaz RLIKE ${sub} OR
+            od_jine_text RLIKE ${sub} OR proc_jine_text RLIKE ${sub} OR tema_jine_text RLIKE ${sub})`); 
+      }
     }
     rechoice();
     dot.dirty= 1;
@@ -540,8 +563,9 @@ form _obraz [,,700,50] {
   proc append(x) { note.set(x) }
 }
 # -------------------------------------------------------------------------------------------==> dot
+# posuny v dotaznících
 form _dot [,,163,60] { css:'parm shadow' style:'z-index:2'  //style:'position:fixed;z-index:2' 
-  var rok=2021,   // rok dotazníku ... 2021
+  var rok=2022,   // rok dotazníku ... 2022
       kurz:object,
       back=0,     // návrat na poslední kliknuté (ne odkazem)
       dirty=1,    // po změně dotazu, čistí se po prvním Show
@@ -557,6 +581,7 @@ form _dot [,,163,60] { css:'parm shadow' style:'z-index:2'  //style:'position:fi
       virgin= 0; 
     }
   }
+  // ==> . Show
   func Show(offset,go_back,even) { var y:object
     clear();
     y= php.dot_show(vyber ? 0 : rok, index, index=='page' ? pg : id, offset,
@@ -584,12 +609,13 @@ form _dot [,,163,60] { css:'parm shadow' style:'z-index:2'  //style:'position:fi
   }
   button [9,32,,] { title:"[fa-step-backward]" help:'první'     func onclick() { Show(-2,1,0); }}
   button [29,32,,] { title:"[fa-caret-left]" help:'předchozí'   func onclick() { Show(-1,1,0); }}
-  field pg [50,32,25,] { title:'^pdf' format:'rt'  func onchanged() { index.set('page'); Show(0,1,1); }} 
-  field id [80,32,25,] { title:'^xls' format:'rt'  func onchanged() { index.set('id');   Show(0,1,1); }} 
+  field pg [50,32,25,] { title:'^pdf' format:'rt', value:'0', func onchanged() { index.set('page'); Show(0,1,1); }} 
+  field id [80,32,25,] { title:'^xls' format:'rt', value:'0', func onchanged() { index.set('id');   Show(0,1,1); }} 
   button [112,32,,] { title:"[fa-caret-right]" help:'další'     func onclick() { Show(1,1,0); }}
   button [132,32,,] { title:"[fa-step-forward]" help:'poslední' func onclick() { Show(2,1,0); }}
 }
 # ------------------------------------------------------------------------------------------==> tipy
+# tipy identifikace respondenta
 form _tipy [,,163,46] { style:'position:fixed;z-index:2' //css:'parm shadow'
 //  proc Spy() { var y:object
 //    clear;
@@ -623,15 +649,16 @@ form _tipy [,,163,46] { style:'position:fixed;z-index:2' //css:'parm shadow'
 //  button [133,19,22,] { title:"[fa-eye]" help:'špión' skill:'m|m' proc onclick() { Spy }}
   label shody [0,0,163,280] { style:'background:silver' css:'parm shadow' }
 }
-# -----------------------------------------------------------------------------------------==> d2017
-form _d2017 [,,163,400] { 
+# ------------------------------------------------------------------------------------------==> corr
+# opravy hodnot v dotazníku - např. obrácená hodnocení
+form _corr [,,163,400] { 
   const w=750, a= 100, o= 126, j= 160, h= 230, s=270, t=446, p= 555
   var id_min:number, id_max:number
   view d: table dotaz
   func Init() { 
     id_min= php.select('id','dotaz',`dotaznik=${dot.rok} AND duplicita='' ORDER BY id LIMIT 1`);
     id_max= php.select('id','dotaz',`dotaznik=${dot.rok} AND duplicita='' ORDER BY id DESC LIMIT 1`);
-    id= id_min;
+    id= dot.id ? dot.id : id_min;
     Show(0);
   }
   func Show(ofset) { var y:object
@@ -642,17 +669,19 @@ form _d2017 [,,163,400] {
     form.load(0,`dotaznik=${dot.rok} AND id=${id}`);
   }
   // pohyb
-  label [w+67,10,229,48] { css:'parm' }
-  label editujeme [w+76,15,200,16] { style:'color:white'}
-  button [w+76,32,,] { title:"[fa-step-backward]" help:'první'    proc onclick() { Show(-2); }}
-  button [w+96,32,,] { title:"[fa-caret-left]" help:'předchozí'   proc onclick() { Show(-1); }}
-  field id [w+114,32,25,] { format:'rt'                           proc onchanged() { Show(0); }} 
-  button [w+146,32,,] { title:"[fa-caret-right]" help:'další'     proc onclick() { Show(1); }}
-  button [w+166,32,,] { title:"[fa-step-forward]" help:'poslední' proc onclick() { Show(2); }}
+  label [w+67,1,229,48] { css:'parm' }
+  label editujeme [w+76,6,200,16] { style:'color:white'}
+  button [w+76,23,,] { title:"[fa-step-backward]" help:'první'    proc onclick() { Show(-2); }}
+  button [w+96,23,,] { title:"[fa-caret-left]" help:'předchozí'   proc onclick() { Show(-1); }}
+  field id [w+114,23,25,] { format:'rt', value:'0'                proc onchanged() { Show(0); }} 
+  button [w+146,23,,] { title:"[fa-caret-right]" help:'další'     proc onclick() { Show(1); }}
+  button [w+166,23,,] { title:"[fa-step-forward]" help:'poslední' proc onclick() { Show(2); }}
   // zápis
-  button [w+200,32,,] { title:"[fa-save] Ulož změnu" 
+  button [w+200,23,,] { title:"[fa-save] Ulož změnu" 
     proc onclick() { form.save(); Show(0); }
   }
+  // poznámka - warning
+  field [w+90,63,220,15] {title:"<span style='color:red'>Důvod úpravy </span>", data:d.warning}
   // statistika
   label [w+40,a+4,47,15] {title:'Statistika'}
   field [w+90,a,20,] {title:'^žena', format:'cf', data:d.sex}
@@ -754,5 +783,6 @@ form _d2017 [,,163,400] {
     text tema_jine_text
     number prinos
     text prinos_text
+    text warning
   }
 }
