@@ -240,32 +240,32 @@ menu m {type:'left', format:'f+', active:*
         }
       }
     }
-    item {title:'[fa-forward] procházení ... s doplněním'       par:{typ:'d',id:'1'} 
-      func onclick (i:ezer) { 
-        clear(); mapa.close(1); show_dotazy(); panel.display(2,'dp|do'); obraz.header(i);
-        if (has_skill('mš')) panel.display(1,'dt')
-        obraz.display(0,'x'); obraz.display(1,i.par.typ);
-        obraz.display(obraz.r2021,'r21'); obraz.enable(1,'r21');
-        dot.index= 'id'; dot.id= i.par.id; 
-        dot.Show(-2,0,0) 
-      }
-    }
-    item {title:'[fa-forward] procházení duplicit roku 2021'    par:{typ:'d',id:'1'} 
-      func onclick (i:ezer) { 
-        clear(); mapa.close(1); show_dotazy(); panel.display(2,'dp|do'); obraz.header(i);
-        if (has_skill('mš')) panel.display(1,'dt')
-        obraz.display(0,'x'); obraz.display(1,i.par.typ);
-        obraz.display(obraz.r2021,'r21'); obraz.enable(0,'r21'); obraz.display(0,'r21u');
-        dot.index= 'id'; dot.id= i.par.id; 
-        obraz.cond= `dotaznik IN (0,2021) AND FIND_IN_SET(id,(
-  SELECT GROUP_CONCAT(duplicita)
-  FROM dotaz
-  WHERE dotaznik=2021 AND duplicita!=''
-))`;
-        dot.Show(-2,0,0) 
-      }
-    }
-    item {title:'[fa-edit] úpravy odpovědí zvoleného roku'       par:{typ:'c'}} 
+//    item {title:'[fa-forward] procházení ... s doplněním'       par:{typ:'d',id:'1'} 
+//      func onclick (i:ezer) { 
+//        clear(); mapa.close(1); show_dotazy(); panel.display(2,'dp|do'); obraz.header(i);
+//        if (has_skill('mš')) panel.display(1,'dt')
+//        obraz.display(0,'x'); obraz.display(1,i.par.typ);
+//        obraz.display(obraz.r2021,'r21'); obraz.enable(1,'r21');
+//        dot.index= 'id'; dot.id= i.par.id; 
+//        dot.Show(-2,0,0) 
+//      }
+//    }
+//    item {title:'[fa-forward] procházení duplicit roku 2021'    par:{typ:'d',id:'1'} 
+//      func onclick (i:ezer) { 
+//        clear(); mapa.close(1); show_dotazy(); panel.display(2,'dp|do'); obraz.header(i);
+//        if (has_skill('mš')) panel.display(1,'dt')
+//        obraz.display(0,'x'); obraz.display(1,i.par.typ);
+//        obraz.display(obraz.r2021,'r21'); obraz.enable(0,'r21'); obraz.display(0,'r21u');
+//        dot.index= 'id'; dot.id= i.par.id; 
+//        obraz.cond= `dotaznik IN (0,2021) AND FIND_IN_SET(id,(
+//  SELECT GROUP_CONCAT(duplicita)
+//  FROM dotaz
+//  WHERE dotaznik=2021 AND duplicita!=''
+//))`;
+//        dot.Show(-2,0,0) 
+//      }
+//    }
+    item {title:'[fa-edit] úpravy odpovědí zvoleného roku'       par:{typ:'c'}             skill:'a'} 
     func onclick (i:ezer) { var x: object, y: object
       clear(); mapa.close(1); 
       panel.display(2,'do'); 
