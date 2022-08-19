@@ -224,8 +224,8 @@ menu m {type:'left', format:'f+', active:*
         if (y.err) alert(y.err); 
         info.fill('',y.html) 
     }}
-    item {title:'[fa-line-chart] statistika dotazník & Answer'  par:{typ:'2'} }
-    item q {title:'[fa-balance-scale] různé výběry a srovnání'  par:{typ:'v'} }
+    item {title:'[fa-balance-scale] skutečnost & dotazníky' par:{typ:'2'} }
+    item q {title:'[fa-cogs] různé výběry a srovnání'       par:{typ:'v'} }
     item d {title:'[fa-forward] procházení dotazníku'           par:{typ:'d',id:'1'} 
       func onclick (i:ezer) { 
         clear(); mapa.close(1); show_dotazy(); panel.display(2,'dp|do'); obraz.header(i);
@@ -280,10 +280,10 @@ menu m {type:'left', format:'f+', active:*
         case 'r': // volba roku
           x= php.dot_roky(); obraz.roky.selects(x.roky); obraz.roky= dot.rok; break;
         case '2': // srovnání s answerem
-          y= php.dot_prehled(dot.rok,{zdroj:'dotaz',par1:'rok'}); 
-          x= php.dot_prehled(dot.rok,{zdroj:'akce',par1:'rok',know:y.know}); 
+          x= php.dot_prehled(dot.rok,{zdroj:'akce',par1:'rok'}); 
+          y= php.dot_prehled(dot.rok,{zdroj:'dotaz',par1:'rok',know:x.know}); 
           obraz.text= `<table style='z-index:2;position:absolute'><tr>
-                  <td>${y.html}</td><td>${x.html}</tr></table>`; 
+                  <td>${x.html}</td><td>${y.html}</tr></table>`; 
           break;
         case 'v': // výběry
           obraz.recond(); //obraz.rechoice(); 

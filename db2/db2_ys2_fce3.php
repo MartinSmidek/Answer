@@ -2668,13 +2668,15 @@ function dot_prehled ($rok_or_akce,$par,$title='',$vypis='',$export=0,$hnizdo=0)
 //                                              debug($vek_z,"věk ženy $n_z");
   // tabulka trvání manželství
   if ($no) {
-    $tab= "<h3>Přehled délky manželství</h3>";
+    $subtab= isset($par->know) ? "(zeleně je % odevzdaných v kategorii)" : ' ';
+    $tab= "<h3>Přehled délky manželství $subtab</h3>";
     $td= "td align='right'";
     $th= "th align='right'$th_color";
+    $th2= "th align='right'";
     $span= 2;
     if (isset($par->know)) {
-      $th_n= "<$th title='procento odevzdaných dotazníků'>%</th>";
-      $th_o= "<$th title='procento odevzdaných dotazníků'>%</th>";
+      $th_n= "<$th2 title='procento odevzdaných dotazníků'>%</th>";
+      $th_o= "<$th2 title='procento odevzdaných dotazníků'>%</th>";
       $th_c= "<$th></th>";
       $span= 3;
     }
@@ -2683,7 +2685,7 @@ function dot_prehled ($rok_or_akce,$par,$title='',$vypis='',$export=0,$hnizdo=0)
         <$th></th>
         <$th colspan=2>celkový počet</th>
         <$th colspan=$span>noví účastníci</th>
-        <$th colspan=$span>opakující se</th>
+        <$th colspan=$span>opakující ...</th>
       </tr></tr>
         <$th>délka manželství</th>
         <$th>počet</th>
@@ -2704,11 +2706,11 @@ function dot_prehled ($rok_or_akce,$par,$title='',$vypis='',$export=0,$hnizdo=0)
       $td_n= $td_o= '';
       if (isset($par->know)) {
         $x_n= $par->know->man_n->$i;
-        $x_n= $n ? number_format(100*$x_n/$n) : '-';
+        $x_n= $n ? number_format(100*$n/$x_n) : '-';
         $x_o= $par->know->man_o->$i;
-        $x_o= $o ? number_format(100*$x_o/$o) : '-';
-        $td_n= "<$th>$x_n%</th>";
-        $td_o= "<$th>$x_o%</th>";
+        $x_o= $o ? number_format(100*$o/$x_o) : '-';
+        $td_n= "<$th2>$x_n%</th>";
+        $td_o= "<$th2>$x_o%</th>";
       }
       $tab.= "<tr>
           <$th>$x1-$x2 let</th>
@@ -2720,14 +2722,23 @@ function dot_prehled ($rok_or_akce,$par,$title='',$vypis='',$export=0,$hnizdo=0)
           <$td>$po %</td>$td_o
         </tr>";
     }
+    $td_n= $td_o= '';
+    if (isset($par->know)) {
+      $x_n= $par->know->man_n_c;
+      $x_n= $n ? number_format(100*$n_mn/$x_n) : '-';
+      $x_o= $par->know->man_s_c;
+      $x_o= $o ? number_format(100*$n_mo/$x_o) : '-';
+      $td_n= "<$th2>$x_n%</th>";
+      $td_o= "<$th2>$x_o%</th>";
+    }
     $tab.= "<tr>
         <$th>celkem</th>
         <$th>$no</th>
         <$th></th>
         <$th>$n_mn</th>
-        <$th></th>$th_c
+        <$th></th>$td_n
         <$th>$n_mo</th>
-        <$th></th>$th_c
+        <$th></th>$td_o
       </tr>";
     $tab.= "</table>";
   }
@@ -2736,11 +2747,12 @@ function dot_prehled ($rok_or_akce,$par,$title='',$vypis='',$export=0,$hnizdo=0)
     $tab.= "<h3>Přehled stáří účastníků</h3>";
     $td= "td align='right'";
     $th= "th align='right'$th_color";
+    $th2= "th align='right'";
     $th_m= $th_z= $th_c= '';
     $span= 2;
     if (isset($par->know)) {
-      $th_m= "<$th title='procento odevzdaných dotazníků'>%</th>";
-      $th_z= "<$th title='procento odevzdaných dotazníků'>%</th>";
+      $th_m= "<$th2 title='procento odevzdaných dotazníků'>%</th>";
+      $th_z= "<$th2 title='procento odevzdaných dotazníků'>%</th>";
       $th_c= "<$th></th>";
       $span= 3;
     }
@@ -2765,11 +2777,11 @@ function dot_prehled ($rok_or_akce,$par,$title='',$vypis='',$export=0,$hnizdo=0)
       $td_m= $td_z= '';
       if (isset($par->know)) {
         $x_m= $par->know->muz->$i;
-        $x_m= $m ? number_format(100*$x_m/$m) : '-';
+        $x_m= $m ? number_format(100*$m/$x_m) : '-';
         $x_z= $par->know->zena->$i;
-        $x_z= $m ? number_format(100*$x_z/$z) : '-';
-        $td_m= "<$th>$x_m%</th>";
-        $td_z= "<$th>$x_z%</th>";
+        $x_z= $m ? number_format(100*$z/$x_z) : '-';
+        $td_m= "<$th2>$x_m%</th>";
+        $td_z= "<$th2>$x_z%</th>";
       }
       $tab.= "<tr>
           <th$th_color>$x</th>
@@ -2779,19 +2791,31 @@ function dot_prehled ($rok_or_akce,$par,$title='',$vypis='',$export=0,$hnizdo=0)
           <$td>$pz %</td>$td_z
         </tr>";
     }
+    $td_m= $td_z= '';
+    if (isset($par->know)) {
+      $x_m= $par->know->muz_c;
+      $x_m= $m ? number_format(100*$n_m/$x_m) : '-';
+      $x_z= $par->know->zena_c;
+      $x_z= $m ? number_format(100*$n_z/$x_z) : '-';
+      $td_m= "<$th2>$x_m%</th>";
+      $td_z= "<$th2>$x_z%</th>";
+    }
     $tab.= "<tr>
         <th$th_color>celkem</th>
         <$th>$n_m</th>
-        <$th></th>$th_c
+        <$th></th>$td_m
         <$th>$n_z</th>
-        <$th></th>$th_c
+        <$th></th>$td_z
       </tr>";
     $tab.= "</table>";
   }
   $y->html.= "$nadpis$tab"; 
   $y->know= (object)array(
       'muz'=>$vek_m,'zena'=>$vek_z,
-      'man_y'=>$man_y,'man_o'=>$man_o,'man_n'=>$man_n,'man_s'=>$man_s,
+      'muz_c'=>$n_m,'zena_c'=>$n_z,
+      'man_y'=>$man_y,'man_o'=>$man_o,
+      'man_n'=>$man_n,'man_s'=>$man_s,
+      'man_n_c'=>$n_mn,'man_s_c'=>$n_mo,
       'kurz_y'=>$kurz_y,'kurz_x'=>$kurz,
       'man_vek'=>$man_vek
       );
