@@ -700,7 +700,7 @@ function akce2_info($id_akce,$text=1,$pobyty=1) { trace();
       }
       display("vrátit=$vratit_celkem, vráceno=$vraceno");
       if ($vratit_celkem!=-$vraceno) 
-        fce_warning("má být vráceno $vratit_celkem ale bylo vráceno=$vraceno");
+        fce_warning("má být vráceno $vratit_celkem ale bankou bylo vráceno=$vraceno");
       if ($vratit_celkem && $vratit_celkem!=-$vraceno)
         $help.= "<br>Správnost vratek za storna je třeba kontrolovat v <b>Platba za akci</b>";
       else
@@ -764,7 +764,7 @@ function je_1_2_5($kolik,$tvary) {
 # --------------------------------------------------------------------------- akce2 info_par
 # charakteristika účastníků z hlediska páru,
 # počítáme pouze v případě, když je definované i0_pobyt
-function akce2_info_par($ida,$idp=0,$tab_only=0) {
+function akce2_info_par($ida,$idp=0,$tab_only=0) { trace();
   $html= '';
   $typy= array('s'=>0,'as'=>0,'bs'=>0,'abs'=>0,'bas'=>0,);
   $neucasti= select1("GROUP_CONCAT(data)",'_cis',"druh='ms_akce_funkce' AND ikona=1");
@@ -775,7 +775,7 @@ function akce2_info_par($ida,$idp=0,$tab_only=0) {
     FROM pobyt AS p
     JOIN spolu AS s USING (id_pobyt)
     LEFT JOIN tvori AS t ON t.id_rodina=i0_rodina AND t.id_osoba=s.id_osoba
-    WHERE funkce!=99 AND id_akce=$ida AND $cond AND t.role IN ('a','b')
+    WHERE funkce IN (0,1,2) AND id_akce=$ida AND $cond AND t.role IN ('a','b')
     GROUP BY id_pobyt
   ");
   while ( $rp && $p= pdo_fetch_object($rp) ) {
@@ -789,8 +789,8 @@ function akce2_info_par($ida,$idp=0,$tab_only=0) {
     }
 //                                                 debug($par,count($par)==2);
     $typ= '';
-    // probereme účasti na akcích (nepočítáme účasti < 18 let)
-    ezer_connect('ezer_db2',true);
+    // probereme účasti na akcích (nepočítáme účasti < 18 let) postupně od nejstarších
+//    ezer_connect('ezer_db2',true);
     $rx= pdo_qry("
       SELECT a.id_duakce as ida,p.id_pobyt as idp,
         a.datum_od,a.nazev as akce,p.funkce as fce,a.typ,a.druh,
@@ -799,7 +799,8 @@ function akce2_info_par($ida,$idp=0,$tab_only=0) {
       JOIN pobyt AS p ON a.id_duakce=p.id_akce
       JOIN spolu AS s USING (id_pobyt)
       JOIN osoba AS o USING (id_osoba)
-      WHERE a.spec=0 AND s.id_osoba IN ($ids) AND YEAR(a.datum_od)-YEAR(o.narozeni)>18
+      WHERE a.spec=0 AND zruseno=0 AND s.id_osoba IN ($ids) 
+        AND YEAR(a.datum_od)-YEAR(o.narozeni)>18
         AND p.funkce NOT IN ($neucasti)
       GROUP BY id_pobyt
       ORDER BY datum_od
@@ -11320,6 +11321,7 @@ function sta2_cesty($org,$par,$title,$export=false) {
     $clmn[$rr]= array('rr'=>$rrrr,'u'=>0);
     $ida= select1("id_duakce","akce","druh=1 AND spec=0 AND zruseno=0 
       AND YEAR(datum_od)=$rrrr AND access&$org");
+    if (!$ida) continue;
     $tab= akce2_info_par($ida,0,1);
     foreach (explode(',',"s,as,bs,abs,bas") as $i) {
       $clmn[$rr]['u']+= $tab[$i];

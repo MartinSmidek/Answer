@@ -14,7 +14,13 @@ function highcharts_load() {
     }
   }
 }
-// -------------------------------------------------------------------------------- highcharts show
+// -------------------------------------------------------------------------------- highcharts clear
+// vymaže chart
+function highcharts_clear(container) {
+  if (container==undefined) container= 'container';
+  jQuery('#'+container).html('<br><br>nelze zobrazit ...');
+}
+// --------------------------------------------------------------------------------- highcharts show
 // par: series:[{name:str,list:str},...]
 function highcharts_show(par,container) {
   // test zavedení modulu
@@ -26,7 +32,62 @@ function highcharts_show(par,container) {
   // rozeznání typu grafu
   let chart= {};
   switch (par['chart']) {
-    case 'heatmap': // ----------------------------------------------- heatmap
+    case 'pie': { // --------------------------------------------------- pie
+      chart= {
+        chart: {type: 'pie'},
+        title: {text: ''},
+        plotOptions: {pie:{showInLegend:true, 
+//            dataLabels:{enabled: false}, 
+            dataLabels: {
+              enabled: true,
+              distance: -50,
+              format: '{point.percentage:.1f} %',
+            },
+            startAngle: 90}},
+        series: [{name:'Values', data:[]}],
+        legend: {
+            layout: 'vertical',
+            align: 'right',
+            verticalAlign: 'top',
+            y: 50,
+            padding: 3,
+            itemMarginTop: 5,
+            itemMarginBottom: 5,
+            itemStyle: { lineHeight: '14px' }
+        }
+      };
+      // doplnění předanými daty
+      for (const p in par) {
+        switch (p) {
+          case 'chart':
+            chart.chart= {};
+            chart.chart.type= par[p];
+            break;
+          case 'series': // series= [{name, data:[{name,y},...]}]
+            for (let name_value of par[p][0].data) {
+              name_value.y= Number(name_value.y);
+              chart.series[0].data.push(name_value);
+            }
+            break;
+          case 'data': // string čárkami oddělené name:hodnota
+            let name, value;
+            for (let name_value of par[p].split(',')) {
+              [name, value]= name_value.split(':');
+              chart.series[0].data.push({name:name,y:Number(value)});
+            }
+            break;
+          case 'title':
+          case 'subtitle':
+            chart[p].text= par[p];
+            break;
+          default:
+            chart[p]= par[p];
+            break;
+        }
+      }
+      break;
+    }
+    case 'heatmap': { // ----------------------------------------------- heatmap
       chart= {
         chart: {type: 'heatmap',marginTop: 40,marginBottom: 80,plotBorderWidth: 1},
         title: {text: ''},
@@ -53,7 +114,8 @@ function highcharts_show(par,container) {
         chart.tooltip.data= par['tooltip_data'];
       }
       break;
-    default:        // ----------------------------------------------- bar
+    }
+    default:  {      // ----------------------------------------------- bar
       chart= {
         exporting: {showTable: false},    
         title: {text: ' '},
@@ -86,8 +148,13 @@ function highcharts_show(par,container) {
                 chart[p].push({name:serie.name, type:'line', data:serie.data});
               }
               else {
-                let s= {name:serie.name, data:serie.data.split(',').map(x=>Number(x))};
+                let data= typeof(serie.data)=='string' ? serie.data.split(',').map(x=>Number(x)) : (
+                  Array.isArray(serie.data) ? serie.data : []);
+                let s= {name:serie.name, data:data};
+//                let s= {name:serie.name, data:data.map(x=>Number(x))};
                 if (serie.color) s.color= serie.color;
+                if (serie.dashStyle) s.dashStyle= serie.dashStyle;
+                if (serie.marker) s.marker= serie.marker;
                 chart[p].push(s);
               }
             }
@@ -101,7 +168,8 @@ function highcharts_show(par,container) {
             break;
         }
       }
-    break;
+      break;
+    }
   }
   // zobrazení
   jQuery('div.highcharts-data-table').remove();

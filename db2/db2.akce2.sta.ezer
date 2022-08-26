@@ -17,7 +17,7 @@ proc reaccess() { #==> reaccess - změna
 # ------------------------------------------------------------------------------------------==> MENU
 var menu_item=0,
     menu_par=0
-menu m {type:'left', format:'f+', active:*
+menu m {type:'left', format:'f-', active:*
   menu s {title:'STATISTIKA',type:'group'
     item {title:'Struktura letních kurzů MS',                                        skill:'yae;fae'
       ,par:°{typ:'ms_struktura',xls:'Excel',pdf:0,graf:1
@@ -278,7 +278,7 @@ menu m {type:'left', format:'f+', active:*
           panel.display(1,'dc'); corr.Init(); 
           break;
         case 'r': // volba roku
-          x= php.dot_roky(); obraz.roky.selects(x.roky); obraz.roky= dot.rok; break;
+          x= php.dot_roky(); obraz.zvoleny_rok.selects(x.roky); obraz.zvoleny_rok= dot.rok; break;
         case '2': // srovnání s answerem
           x= php.dot_prehled(dot.rok,{zdroj:'akce',par1:'rok'}); 
           y= php.dot_prehled(dot.rok,{zdroj:'dotaz',par1:'rok',know:x.know}); 
@@ -286,6 +286,7 @@ menu m {type:'left', format:'f+', active:*
                   <td>${x.html}</td><td>${y.html}</tr></table>`; 
           break;
         case 'v': // výběry
+//          chart.Init(); // jen pro ladění
           obraz.recond(); //obraz.rechoice(); 
           break;
         case 'd': // procházení
@@ -322,6 +323,7 @@ proc show_dotazy() {
 }
 use dot: form _dot [10,36,,] { tag:'dp' format:'n' }
 use obraz: form _obraz [12,4,,]   { tag:'do' format:'n' }
+use chart: form _chart [702,33,,] { tag:'do' format:'n' }
 use tipy:  form _tipy  [24,467,,] { tag:'dt' format:'n' }
 use corr:  form _corr  [12,4,,] { tag:'dc' format:'n' }
 use info: form right   [12,4,,]   { tag:'i'
@@ -341,6 +343,45 @@ use info: form right   [12,4,,]   { tag:'i'
     }
   }
 }
+# -----------------------------------------------------------------------------------------==> chart
+# grafické zobrazení hodnot dotazníku 
+form _chart { //   název:y:graf:z
+  var grafy= "-:-;
+          Přispěl kurz ... tvému manželství?:prinos:pie:prinos;
+          Jaká témata bys chtěl slyšet:temata:pie:temata;
+          přednášky:prednasky:pie:0-5;
+          skupinky:skupinky:pie:0-5;
+          byly skupinky lepší než přednášky?:
+            CASE WHEN skupinky<prednasky THEN 1 WHEN skupinky=prednasky THEN 2 ELSE 3 END:pie:1-3;
+          duchovno:duchovno:pie:0-5;
+          ubytování:ubytovani:pie:0-5;
+          strava:strava:pie:0-5;
+          péče o děti:pecedeti:pie:0-5;
+          motto:motto:pie:0-5;
+          maturita:maturita:pie:0-5;
+          hudba:hudba:pie:0-5;
+          ",
+      graf: array, graf_tit: array, graf_y: array, graf_z: array
+  func Init() { var g:object
+    container= `<div id="chart-dotazniky" style="width:400px; height:300px;"></div>`;
+    g= php.chart_typs(grafy);
+    vyber.selects(g.sel);
+    graf= g.graf; graf_tit= g.tit; graf_y= g.y; graf_z= g.z; 
+  }
+  func Show() { var y:object, par:object //typ,ceho
+    if (!vyber.key()) return;
+    if (!dot.celkem) { js.highcharts_clear('chart-dotazniky'); return; }
+    par= {graf:graf[vyber.key()], y:graf_y[vyber.key()], z:graf_z[vyber.key()], 
+        dotaznik:obraz.cond, title:graf_tit[vyber.key()]};
+    y= php.chart_akce2(par);
+    if (y.err) alert(y.err)
+    else { js.highcharts_show(y.chart,'chart-dotazniky'); warning(y.note); }
+  }
+  select vyber [50,6,300,] { title:'graf: ', format:'t' 
+    func onchanged() { Show(); }}
+  label container [0,25,400,400]
+  
+}
 # -----------------------------------------------------------------------------------------==> obraz
 # zobrazení dotazníku zvoleného ve form dot
 form _obraz [,,700,50] { 
@@ -348,7 +389,7 @@ form _obraz [,,700,50] {
   const D=320
   label text2 [0,85,320,800] { style:"overflow:auto"  }
   label img [D+2,28,485,700] { title:'' }
-  label head [0,0,800,30]  { title:'' }
+  label head [0,0,1089,30]  { title:'' }
   label note [0,508,320,200] { style:"overflow:auto" }
   label text [0,28,700,700] 
   // extrakce informace spec. pro hnízda
@@ -367,7 +408,7 @@ form _obraz [,,700,50] {
       form.plain();
   }}
   // volba roku dotazníku
-  select roky [100,60,100,] { tag:'x,r' title:'LK roku' value:'2021' format:'t'
+  select zvoleny_rok [100,60,100,] { tag:'x,r' title:'LK roku' value:'2021' format:'t'
     func onchanged() { 
       dot.rok= this; 
       dot.Init();
@@ -475,8 +516,8 @@ form _obraz [,,700,50] {
     func onchanged() { recond() }
   }
   edit cond [D+20,350,260,100] { tag:'x,v' title:'^výběr jako SQL' value:'1' format:'t'
-    proc onchanged() { rechoice }}
-  // funkce
+    func onchanged() { rechoice(); chart.Show() }}
+  // =====================> funkce
   func recond() { var roky:text, hnizda:text, sub:text, carek:number
     // výběr roků
     roky= `0${r2017?',2017':''}${r2018?',2018':''}${r2019?',2019':''}${r2021?',2021':''}${r2022?',2022':''}`;
@@ -494,7 +535,7 @@ form _obraz [,,700,50] {
     }
     // sestavení dotazu
     cond= conc(`dotaznik IN (${roky}) AND duplicita='' `,
-      hnizda ? ` AND hnizdo IN (99${hnizda})` :'',
+      hnizda ? ` AND IF(dotaznik=2021,hnizdo IN (99${hnizda}),1)` :'',
       x_sex  ? ` AND sex=${r_sex}` : '',
       x_vek  ? ` AND vek BETWEEN ${r_vek}` : '',
       x_det  ? ` AND deti BETWEEN ${r_det}` : '',
@@ -529,11 +570,12 @@ form _obraz [,,700,50] {
           case 9: sub= patt2 ? `'${patt2}'` : "'.'"; break;
         }
         cond= conc(cond,` AND (
-            libilo RLIKE ${sub} OR vadilo RLIKE ${sub} OR vzkaz RLIKE ${sub} OR
-            od_jine_text RLIKE ${sub} OR proc_jine_text RLIKE ${sub} OR tema_jine_text RLIKE ${sub})`); 
+            libilo RLIKE ${sub} OR vadilo RLIKE ${sub} OR vzkaz RLIKE ${sub} OR prinos_text RLIKE ${sub}
+            OR od_jine_text RLIKE ${sub} OR proc_jine_text RLIKE ${sub} OR tema_jine_text RLIKE ${sub})`); 
       }
     }
     rechoice();
+    chart.Show();
     dot.dirty= 1;
   }
   func rechoice() { var x:object
@@ -573,6 +615,8 @@ form _dot [,,163,60] { css:'parm shadow' style:'z-index:2'  //style:'position:fi
       virgin=1
   func Init() { 
     if (!has_skill('yaet')) return;
+    js.highcharts_load();
+    chart.Init();
     if (has_skill('a')) m.d.i.enable(1);
     m.d.title= `Dotazník LK YS roku ${rok}`; 
     kurz= {rok:rok};
@@ -618,7 +662,9 @@ form _dot [,,163,60] { css:'parm shadow' style:'z-index:2'  //style:'position:fi
 }
 # ------------------------------------------------------------------------------------------==> tipy
 # tipy identifikace respondenta
-form _tipy [,,163,46] { style:'position:fixed;z-index:2' //css:'parm shadow'
+form _tipy [,,163,46] { 
+  style:'z-index:2' //css:'parm shadow'
+//  style:'position:fixed;z-index:2' //css:'parm shadow'
 //  proc Spy() { var y:object
 //    clear;
 //    [ dot.kurz.get | dot.kurz.set(object('rok',dot.rok.get)) ];
@@ -654,7 +700,7 @@ form _tipy [,,163,46] { style:'position:fixed;z-index:2' //css:'parm shadow'
 //  check nov [108,19,50,] { value:'1' format:'t' skill:'m|m' } 
 //  label [108,9,50,] { title:'nový' skill:'m|m' }
 //  button [133,19,22,] { title:"[fa-eye]" help:'špión' skill:'m|m' proc onclick() { Spy }}
-  label shody [0,0,163,280] { style:'background:silver', css:'parm shadow', format:'n' }
+  label shody [352,-348,163,280] { /*style:'background:silver', css:'parm shadow',*/ format:'n' }
 }
 # ------------------------------------------------------------------------------------------==> corr
 # opravy hodnot v dotazníku - např. obrácená hodnocení

@@ -251,6 +251,7 @@ function akce_ucastnici($akce,$cmd,$par=null) {
         FROM pobyt JOIN spolu USING (id_pobyt) JOIN osoba USING (id_osoba) 
         WHERE id_akce=$akce AND funkce IN (0,1,2) AND s_role=1
         -- AND id_osoba IN (5877,18653,21586,5861,2225)
+        -- AND id_osoba IN (23149,11849)
       "); 
       while ($os && (list($ido,$vps,$jmeno)=pdo_fetch_row($os))) {
         $xs=pdo_qry("
@@ -487,6 +488,205 @@ function update_web_changes () {
   return 1;
 }
 /** =========================================================================================> CHART */
+# ---------------------------------------------------------------------------------==> . chart akce2
+# převod řetězce popis:field na {sel:'popis:index,...',typ:[field,...]}
+// název:field:graf:z
+function chart_typs($x) { 
+  $x= preg_replace('/\s*;\s*/', ';', trim($x,"; \n\r\t\v\x00"));
+  $x= preg_replace('/\s*:\s*/', ':', $x);
+  $graf= $graf_tit= $graf_y= $graf_z= array();
+  $sel= $del= '';
+  foreach ( explode(';',$x) as $i=>$pf) {
+    list($p,$y,$g,$z)= explode(':',$pf);
+    $sel.= "$del$p:$i"; $del= ',';
+    $graf[]= $g; $graf_tit[]= $p; $graf_y[]= $y; $graf_z[]= $z;
+  }
+  $ret= (object)array('sel'=>$sel,'graf'=>$graf,'y'=>$graf_y,'z'=>$graf_z,'tit'=>$graf_tit);
+  debug($ret,$x);
+  return $ret;
+}
+# ---------------------------------------------------------------------------------==> . chart akce2
+# infografika údajů o LK podle db resp. pro YS podle dotazníku
+# graf=line|bar|bar%|pie, x=od-do, y=vek|pocet [,z=typ-ucasti]
+function chart_akce2($par) { debug($par,'chart_akce2');
+  $y= (object)array('err'=>'','note'=>' ');
+  $chart= (object)array('chart'=>(object)array());
+  $regression= 0;
+  switch ($par->graf) {
+    case 'spline/regression':
+      $chart->chart= 'spline';
+      $regression= 1;
+      break;
+    default:
+      $chart->chart= $par->graf;
+      break;
+  }
+  $org= $par->org; //255;
+  // názvy kategorií
+  $VPS= $org==1 ? 'VPS' : 'PPS';
+  $names= array(
+      'deti'        => array('detiLK'=>'nezletilé děti na kurzu','detiD'=>'nezletilé děti doma'),
+      'typ-ucasti'  => array('vps'=>"věk $VPS",'ucast'=>"věk účastníků bez $VPS"),
+      '0-5'         => array('nevyužil jsem','1=velmi líbilo','2=spíše líbilo','3=přijatelné','4=spíše nelíbilo','5=velmi nelíbilo'),
+      'prinos'      => array('no comment','1=Ano, velmi významně','2=Ano, částečně','3=Nevím, to se uvidí','4=Ne, nevidím změnu','5=Ne, spíše naopak'),
+      '1-3'         => array(0,'ANO','stejné','NE'),
+      'temata'      => array('malé děti','dospívající','matka-dítě','otec-dítě','mezigen.','duchovní','jiné'),
+  );
+  $temata= explode(',',"tema_male,tema_dosp,tema_matka,tema_otec,tema_mezigen,tema_duchovni,tema_jine");
+  $colors= array(
+      'deti'        => array('detiLK'=>'green','detiD'=>'red'),
+      'typ-ucasti'  => array('vps'=>'','ucast'=>''),
+      'prinos'      => array('silver','#00cc00','#0000ee','darkorange','red','black'),
+      '0-5'         => array('silver','#00cc00','#0000ee','darkorange','red','black'),
+      '1-3'         => array(0,'#00cc00','silver','#0000ee'),
+  );
+  $notes= array(
+      'deti'        => "Poznámka: jsou zahrnuty jen rodiny s nezletilými dětmi",
+      'typ-ucasti'  => "",
+  );
+  $y->note= $notes[$par->z];
+  // zobrazený interval
+  $chart->series= array();
+  if ($par->rok=='od-do') { $od= $par->od; $do= $par->do; }
+  else $od= $do= date('Y');
+  // popis os
+  list($yTitle,$yMin,$yMax,$yTicks)= explode(',',$par->yaxis);
+  $data= array();
+  $roky= array();
+  if ($par->dotaznik) {
+    // projdeme dotazník
+    $hodnoceni= $par->y;
+    if ($hodnoceni=='temata') {
+      $data_temata= array_fill(0,6,0);
+      $rp= pdo_qry(" SELECT * FROM dotaz WHERE $par->dotaznik ");
+      while ( $rp && ($x= pdo_fetch_object($rp)) ) {
+        foreach ($temata as $i=>$tema) {
+          if ($x->$tema) $data_temata[$i]++;
+        }
+      }
+      debug($data_temata);
+      foreach ($data_temata as $i=>$pocet) {
+        $name= isset($names['temata'][$i]) ? $names['temata'][$i] : $i;
+        $desc= (object)array('name'=>$name,'y'=>$pocet);
+        if ($color) $desc->color= $color;
+        $data[$hodnoceni][]= $desc;
+      }
+    }
+    else {
+      $rp= pdo_qry("
+        SELECT $hodnoceni,COUNT(*)
+        FROM dotaz
+        WHERE $par->dotaznik
+        GROUP BY $hodnoceni
+      ");
+      while ( $rp && (list($znamka,$pocet)= pdo_fetch_array($rp)) ) {
+        $color= $colors[$par->z][$znamka] ? $colors[$par->z][$znamka] : null;
+        $name= isset($names[$par->z][$znamka]) ? $names[$par->z][$znamka] : $znamka;
+        $desc= (object)array('name'=>$name,'y'=>$pocet);
+        if ($color) $desc->color= $color;
+        $data[$hodnoceni][]= $desc;
+      }
+    }
+    debug($data);
+  }
+  else {
+    for ($rok= $od; $rok<=$do; $rok++) {
+      $ida= select('id_duakce','akce',"access&$org AND druh=1 AND zruseno=0 AND YEAR(datum_od)=$rok");
+      if (!$ida) continue;
+      $roky[]= $rok;
+      // projdeme účastníky
+      $n= 0;
+      $n_vps= $n_ucast= $vek_vps= $vek_ucast= 0;
+      $n_rodicu= $pocet_deti= $pocet_detiLK= 0;
+      $rp= pdo_qry("
+        SELECT 
+          ROUND(IF(r.datsvatba,IF(MONTH(r.datsvatba),DATEDIFF(a.datum_od,r.datsvatba)/365.2425,YEAR(a.datum_od)-YEAR(r.datsvatba)),
+            IF(r.svatba,YEAR(a.datum_od)-svatba,0)),1) AS _manz,
+          ROUND(IF(MONTH(o.narozeni),DATEDIFF(a.datum_od,o.narozeni)/365.2425,YEAR(a.datum_od)-YEAR(o.narozeni)),1) AS _vek,
+          IF(o.narozeni,1,0) AS _vek_ok,
+          sex,IF(funkce IN (1,2),1,0) AS _vps,
+          (SELECT IFNULL(SUM(IF(dt.role='d',1,0)),0) FROM tvori AS dt JOIN osoba AS do USING (id_osoba)
+          WHERE dt.id_rodina=r.id_rodina AND IF(MONTH(do.narozeni),DATEDIFF(a.datum_od,do.narozeni)/365.2425,
+          YEAR(a.datum_od)-YEAR(do.narozeni))<18) AS _deti,
+          (SELECT SUM(IF(dt.role='d',1,0)) FROM tvori AS dt JOIN spolu AS ds USING (id_osoba)
+          WHERE dt.id_rodina=r.id_rodina AND ds.id_pobyt=p.id_pobyt) AS _detiLK
+        FROM pobyt AS p
+        JOIN akce AS a ON id_akce=id_duakce
+        JOIN spolu AS s USING (id_pobyt)
+        LEFT JOIN rodina AS r ON r.id_rodina=p.i0_rodina
+        JOIN tvori AS t USING (id_rodina,id_osoba)
+        JOIN osoba AS o USING (id_osoba)
+        WHERE id_akce=$ida AND p.funkce IN (0,1,2) 
+          AND t.role IN ('a','b') -- AND s_role=1 
+  -- AND id_rodina IN (3329,1875)        
+        GROUP BY id_osoba HAVING _vek>18
+        ");
+      while ( $rp && (list($manz,$vek,$vek_ok,$sex,$vps,$deti,$detiLK)= pdo_fetch_array($rp)) ) {
+        $n+= 0.5;
+        switch ("$par->y/$par->z") {
+          case 'vek/typ-ucasti':
+            if ($vps && $vek_ok) { $n_vps++; $vek_vps= ($vek_vps*($n_vps-1)+$vek)/$n_vps; }
+            elseif ($vek_ok) { $n_ucast++; $vek_ucast= ($vek_ucast*($n_ucast-1)+$vek)/$n_ucast; }
+            break;
+          case 'pocet/deti':
+            if ($deti) {
+              $n_rodicu+= 0.5;
+              $pocet_deti+= $deti/2;
+              $pocet_detiLK+= $detiLK/2;
+            }
+            break;
+        }
+      }
+      $vek_vps= round($vek_vps,1);
+      $vek_ucast= round($vek_ucast,1);
+      switch ("$par->y/$par->z") {
+        case 'vek/typ-ucasti':
+          $data['vps'][]= $vek_vps; 
+          $data['ucast'][]= $vek_ucast; 
+          break;
+        case 'pocet/deti':
+          $data['detiD'][]= round(($pocet_deti-$pocet_detiLK)/$n_rodicu,2); 
+          $data['detiLK'][]= round($pocet_detiLK/$n_rodicu,2); 
+          break;
+      }
+      display("rok $rok: účastníků=$n rodičů=$n_rodicu dětí na LK=$pocet_detiLK");
+    }
+  }  
+  foreach ($data as $id=>$serie) {
+    $name= $names[$par->z][$id];
+    $color= $colors[$par->z][$id] ? $colors[$par->z][$id] : null;
+    $desc= (object)array('name'=>$name,'data'=>$serie);
+    if ($color) $desc->color= $color;
+    $chart->series[]= $desc;
+    if ($regression && count($roky)>1) {
+      $last_x= count($serie)-1;
+      $lr= linear_regression(range(0,$last_x),$serie); $m= $lr['m']; $b= $lr['b']; 
+      $desc= (object)array('name'=>"$name - trend", 
+          'dashStyle'=>'Dash',
+          'marker'=>(object)array('enabled'=>0),
+          'data'=>array(array(0,round($b,1)),array($last_x,round($b+$m*$last_x,1))), 'color'=>'grey');
+      if ($color) $desc->color= $color;
+      $chart->series[]= $desc; 
+    }
+  }
+  switch ($chart->chart) {
+    case 'line':
+    case 'spline':
+      $chart->xAxis= (object)array('categories'=>$roky,
+          'title'=>(object)array('text'=>'rok kurzu '));  
+      $chart->yAxis= (object)array(
+          'title'=>(object)array('text'=>$yTitle),
+          'min'=>$yMin,'max'=>$yMax,'tickAmount'=>$yTicks);
+      break;
+    case 'pie':
+      $chart->title= $par->title;
+      break;
+  }
+  $y->chart= $chart;
+  debug($y);
+end:
+  return $y;
+}
 # ----------------------------------------------------------------------------------==> . chart akce
 # agregace údajů o MROP, FIRMING a MS pro grafické znázornění
 function chart_akce($par) { //debug($par,'chart_akce');
@@ -536,7 +736,7 @@ function chart_akce($par) { //debug($par,'chart_akce');
               $data[$m]+= $data[$m-1];
           }
         }
-        debug($data,"$rok");
+//        debug($data,"$rok");
         if ($rok==$letos) {
           for ($m= date('m'); $m<=12; $m++) {
             unset($data[$m]);
@@ -2527,7 +2727,7 @@ function dot_prehled ($rok_or_akce,$par,$title='',$vypis='',$export=0,$hnizdo=0)
   case 'akce':
     $th_color= '';
     $AND_hnizdo= $hnizdo ? "AND p.hnizdo=$hnizdo" : ''; 
-    $nadpis= "<h3>Podle údajů v Answeru</h3>";
+    $nadpis= "<h3>Skutečnost (podle údajů v Answeru)</h3>";
     $rp= pdo_qry("
       SELECT 
         -- IF(r.datsvatba,DATEDIFF(a.datum_od,r.datsvatba)/365.2425,
@@ -2706,9 +2906,9 @@ function dot_prehled ($rok_or_akce,$par,$title='',$vypis='',$export=0,$hnizdo=0)
       $td_n= $td_o= '';
       if (isset($par->know)) {
         $x_n= $par->know->man_n->$i;
-        $x_n= $n ? number_format(100*$n/$x_n) : '-';
+        $x_n= $x_n ? number_format(100*$n/$x_n) : '-';
         $x_o= $par->know->man_o->$i;
-        $x_o= $o ? number_format(100*$o/$x_o) : '-';
+        $x_o= $x_o ? number_format(100*$o/$x_o) : '-';
         $td_n= "<$th2>$x_n%</th>";
         $td_o= "<$th2>$x_o%</th>";
       }
@@ -2725,9 +2925,9 @@ function dot_prehled ($rok_or_akce,$par,$title='',$vypis='',$export=0,$hnizdo=0)
     $td_n= $td_o= '';
     if (isset($par->know)) {
       $x_n= $par->know->man_n_c;
-      $x_n= $n ? number_format(100*$n_mn/$x_n) : '-';
+      $x_n= $x_n ? number_format(100*$n_mn/$x_n) : '-';
       $x_o= $par->know->man_s_c;
-      $x_o= $o ? number_format(100*$n_mo/$x_o) : '-';
+      $x_o= $x_o ? number_format(100*$n_mo/$x_o) : '-';
       $td_n= "<$th2>$x_n%</th>";
       $td_o= "<$th2>$x_o%</th>";
     }
@@ -2777,9 +2977,9 @@ function dot_prehled ($rok_or_akce,$par,$title='',$vypis='',$export=0,$hnizdo=0)
       $td_m= $td_z= '';
       if (isset($par->know)) {
         $x_m= $par->know->muz->$i;
-        $x_m= $m ? number_format(100*$m/$x_m) : '-';
+        $x_m= $x_m ? number_format(100*$m/$x_m) : '-';
         $x_z= $par->know->zena->$i;
-        $x_z= $m ? number_format(100*$z/$x_z) : '-';
+        $x_z= $x_z ? number_format(100*$z/$x_z) : '-';
         $td_m= "<$th2>$x_m%</th>";
         $td_z= "<$th2>$x_z%</th>";
       }
@@ -2794,9 +2994,9 @@ function dot_prehled ($rok_or_akce,$par,$title='',$vypis='',$export=0,$hnizdo=0)
     $td_m= $td_z= '';
     if (isset($par->know)) {
       $x_m= $par->know->muz_c;
-      $x_m= $m ? number_format(100*$n_m/$x_m) : '-';
+      $x_m= $x_m ? number_format(100*$n_m/$x_m) : '-';
       $x_z= $par->know->zena_c;
-      $x_z= $m ? number_format(100*$n_z/$x_z) : '-';
+      $x_z= $x_z ? number_format(100*$n_z/$x_z) : '-';
       $td_m= "<$th2>$x_m%</th>";
       $td_z= "<$th2>$x_z%</th>";
     }
@@ -3538,7 +3738,7 @@ table.dot .vert p {
 }
 </style>";
   $y->html= $style.$tab;
-//                                  debug($y);
+                                  debug($y);
   return $y;
 }
 # --------------------------------------------------------------------------------------- dot import
@@ -3626,8 +3826,8 @@ function dot_import ($rok) { trace();
       "J,i,prednasky?",
       "K,i,skupinky?",
       "L,i,duchovno?",
-      "M,i,ubytovani?",
-      "N,i,strava?",
+      "M,r,ubytovani?Bez ubytování*0",
+      "N,r,strava?1;2;3;4;5;Bez stravy*0",
       "O,r,pecedeti?1;2;3;4;5;péči o děti jsme nevyužili*0",
       "P,i,motto?",
       "Q,i,maturita?",
