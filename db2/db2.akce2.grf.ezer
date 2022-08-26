@@ -46,8 +46,8 @@ menu m {type:'left', format:'f+'
         graf:'spline/regression', yaxis:'věk účastníků,36,54,10', rok:'od-do',y:'vek',z:'typ-ucasti'}}
     item  {title:"[fa-bar-chart] Nezletilé děti na kurzu/doma", par:{
         graf:'spline/regression', yaxis:'průměrný počet dětí,0,2.5,10', rok:'od-do',y:'pocet', z:'deti'}}
-    item  {title:"[fa-pie-chart] Stáří účastníků kurzu", par:{
-        graf:'column-value', rok:'od-do',y:'vek', z:'typ_ucasti'}}
+//    item  {title:"[fa-pie-chart] Stáří účastníků kurzu", par:{
+//        graf:'column-value', rok:'od-do',y:'vek', z:'typ_ucasti'}}
     func onclick(i:ezer) {  var y:object
       if (i) { last_par= i.par; last_menu= i; }
       info.header(last_menu); info.spinner(1);

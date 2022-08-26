@@ -17,7 +17,7 @@ proc reaccess() { #==> reaccess - změna
 # ------------------------------------------------------------------------------------------==> MENU
 var menu_item=0,
     menu_par=0
-menu m {type:'left', format:'f-', active:*
+menu m {type:'left', format:'f+', active:*
   menu s {title:'STATISTIKA',type:'group'
     item {title:'Struktura letních kurzů MS',                                        skill:'yae;fae'
       ,par:°{typ:'ms_struktura',xls:'Excel',pdf:0,graf:1
@@ -349,17 +349,17 @@ form _chart { //   název:y:graf:z
   var grafy= "-:-;
           Přispěl kurz ... tvému manželství?:prinos:pie:prinos;
           Jaká témata bys chtěl slyšet:temata:pie:temata;
-          přednášky:prednasky:pie:0-5;
-          skupinky:skupinky:pie:0-5;
+          Hodnocení přednášek:prednasky:pie:0-5;
+          Hodnocení skupinek:skupinky:pie:0-5;
           byly skupinky lepší než přednášky?:
             CASE WHEN skupinky<prednasky THEN 1 WHEN skupinky=prednasky THEN 2 ELSE 3 END:pie:1-3;
-          duchovno:duchovno:pie:0-5;
-          ubytování:ubytovani:pie:0-5;
-          strava:strava:pie:0-5;
-          péče o děti:pecedeti:pie:0-5;
-          motto:motto:pie:0-5;
-          maturita:maturita:pie:0-5;
-          hudba:hudba:pie:0-5;
+          Hodnocení duchovna:duchovno:pie:0-5;
+          Hodnocení ubytování:ubytovani:pie:0-5;
+          Hodnocení stravy:strava:pie:0-5;
+          Hodnocení péče o děti:pecedeti:pie:0-5;
+          Hodnocení motta:motto:pie:0-5;
+          Hodnocení maturity:maturita:pie:0-5;
+          Hodnocení hudby:hudba:pie:0-5;
           ",
       graf: array, graf_tit: array, graf_y: array, graf_z: array
   func Init() { var g:object
