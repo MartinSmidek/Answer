@@ -44,14 +44,15 @@ menu m {type:'left', format:'f+'
   menu s2 {title:'2. Infografika LK MS',type:'group'
     item  {title:"[fa-line-chart] Stáří účastníků kurzu", par:{
         graf:'spline/regression', yaxis:'věk účastníků,36,54,10', rok:'od-do',y:'vek',z:'typ-ucasti'}}
-    item  {title:"[fa-bar-chart] Nezletilé děti na kurzu/doma", par:{
+    item  {title:"[fa-line-chart] Nezletilé děti na kurzu/doma", par:{
         graf:'spline/regression', yaxis:'průměrný počet dětí,0,2.5,10', rok:'od-do',y:'pocet', z:'deti'}}
-//    item  {title:"[fa-pie-chart] Stáří účastníků kurzu", par:{
-//        graf:'column-value', rok:'od-do',y:'vek', z:'typ_ucasti'}}
+    item  {title:"[fa-bar-chart] Příslušnost k církvím", par:{
+        graf:'column', rok:'od-do',y:'pocet', z:'cirkev'}}
     func onclick(i:ezer) {  var y:object
       if (i) { last_par= i.par; last_menu= i; }
       info.header(last_menu); info.spinner(1);
-      last_par.od= info.od; last_par.do= info.do; last_par.prc= info.prc;
+      last_par.od= info.od; last_par.do= info.do; last_par.prc= info.prc; 
+      last_par.title= replace_fa(i.title,1);
       last_par.org= info.org.key();
       y= php.chart_akce2(last_par);
       if (y.err) alert(y.err)

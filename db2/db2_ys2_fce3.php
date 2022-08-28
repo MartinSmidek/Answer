@@ -509,13 +509,21 @@ function chart_typs($x) {
 # infografika údajů o LK podle db resp. pro YS podle dotazníku
 # graf=line|bar|bar%|pie, x=od-do, y=vek|pocet [,z=typ-ucasti]
 function chart_akce2($par) { debug($par,'chart_akce2');
-  $y= (object)array('err'=>'','note'=>' ');
+  $y= (object)array('err'=>'','note'=>'');
   $chart= (object)array('chart'=>(object)array());
   $regression= 0;
   switch ($par->graf) {
     case 'spline/regression':
       $chart->chart= 'spline';
       $regression= 1;
+      break;
+    case 'column':
+      $chart->chart= 'column';
+      $chart->plotOptions= (object)array();
+      $chart->plotOptions->column= (object)array('stacking'=>$par->prc ? 'percent' : 'value');
+      break;
+    case 'pie':
+      $chart->chart= 'pie';
       break;
     default:
       $chart->chart= $par->graf;
@@ -527,6 +535,7 @@ function chart_akce2($par) { debug($par,'chart_akce2');
   $names= array(
       'deti'        => array('detiLK'=>'nezletilé děti na kurzu','detiD'=>'nezletilé děti doma'),
       'typ-ucasti'  => array('vps'=>"věk $VPS",'ucast'=>"věk účastníků bez $VPS"),
+      'cirkev'      => array(''=>'neuvedeno','bez'=>'bez vyznání','kat'=>"katolíci",'eva'=>"nekatolíci"),
       '0-5'         => array('nevyužil jsem','1=velmi líbilo','2=spíše líbilo','3=přijatelné','4=spíše nelíbilo','5=velmi nelíbilo'),
       'prinos'      => array('no comment','1=Ano, velmi významně','2=Ano, částečně','3=Nevím, to se uvidí','4=Ne, nevidím změnu','5=Ne, spíše naopak'),
       '1-3'         => array(0,'ANO','stejné','NE'),
@@ -536,6 +545,7 @@ function chart_akce2($par) { debug($par,'chart_akce2');
   $colors= array(
       'deti'        => array('detiLK'=>'green','detiD'=>'red'),
       'typ-ucasti'  => array('vps'=>'','ucast'=>''),
+      'cirkev'      => array(''=>'silver','eva'=>'#00cc00','bez'=>'orange','kat'=>'#0000ee'),
       'prinos'      => array('silver','#00cc00','#0000ee','darkorange','red','black'),
       '0-5'         => array('silver','#00cc00','#0000ee','darkorange','red','black'),
       '1-3'         => array(0,'#00cc00','silver','#0000ee'),
@@ -544,15 +554,26 @@ function chart_akce2($par) { debug($par,'chart_akce2');
       'deti'        => "Poznámka: jsou zahrnuty jen rodiny s nezletilými dětmi",
       'typ-ucasti'  => "",
   );
-  $y->note= $notes[$par->z];
+  $y->note= $notes[$par->z] ?: ' ';
   // zobrazený interval
   $chart->series= array();
   if ($par->rok=='od-do') { $od= $par->od; $do= $par->do; }
   else $od= $do= date('Y');
+  // pořadí řad
+  $nuly= array_fill(0,1+$do-$od,0);
+  switch ("$par->y/$par->z") {
+    case 'pocet/cirkev':
+      $data= array('kat'=>$nuly,'eva'=>$nuly,'bez'=>$nuly,''=>$nuly);
+      break;
+    default:
+      $data= array();
+      break;
+  }
+//  debug($data,"data-nuly $do-$od");
   // popis os
   list($yTitle,$yMin,$yMax,$yTicks)= explode(',',$par->yaxis);
-  $data= array();
   $roky= array();
+  $r= -1;
   if ($par->dotaznik) {
     // projdeme dotazník
     $hodnoceni= $par->y;
@@ -587,13 +608,21 @@ function chart_akce2($par) { debug($par,'chart_akce2');
         $data[$hodnoceni][]= $desc;
       }
     }
-    debug($data);
+//    debug($data);
   }
   else {
     for ($rok= $od; $rok<=$do; $rok++) {
       $ida= select('id_duakce','akce',"access&$org AND druh=1 AND zruseno=0 AND YEAR(datum_od)=$rok");
-      if (!$ida) continue;
-      $roky[]= $rok;
+      if (!$ida) { 
+        $r1= $r+1;
+        display("$r1.rok ($rok) - nejsou data");
+        foreach ($data as $id=>$serie) {
+          array_splice($data[$id],$r1,1);
+        }
+        continue; 
+      }
+      $r++;
+      $roky[$r]= $rok;
       // projdeme účastníky
       $n= 0;
       $n_vps= $n_ucast= $vek_vps= $vek_ucast= 0;
@@ -604,7 +633,7 @@ function chart_akce2($par) { debug($par,'chart_akce2');
             IF(r.svatba,YEAR(a.datum_od)-svatba,0)),1) AS _manz,
           ROUND(IF(MONTH(o.narozeni),DATEDIFF(a.datum_od,o.narozeni)/365.2425,YEAR(a.datum_od)-YEAR(o.narozeni)),1) AS _vek,
           IF(o.narozeni,1,0) AS _vek_ok,
-          sex,IF(funkce IN (1,2),1,0) AS _vps,
+          sex,cirkev,IF(funkce IN (1,2),1,0) AS _vps,
           (SELECT IFNULL(SUM(IF(dt.role='d',1,0)),0) FROM tvori AS dt JOIN osoba AS do USING (id_osoba)
           WHERE dt.id_rodina=r.id_rodina AND IF(MONTH(do.narozeni),DATEDIFF(a.datum_od,do.narozeni)/365.2425,
           YEAR(a.datum_od)-YEAR(do.narozeni))<18) AS _deti,
@@ -621,7 +650,7 @@ function chart_akce2($par) { debug($par,'chart_akce2');
   -- AND id_rodina IN (3329,1875)        
         GROUP BY id_osoba HAVING _vek>18
         ");
-      while ( $rp && (list($manz,$vek,$vek_ok,$sex,$vps,$deti,$detiLK)= pdo_fetch_array($rp)) ) {
+      while ( $rp && (list($manz,$vek,$vek_ok,$sex,$cirkev,$vps,$deti,$detiLK)= pdo_fetch_array($rp)) ) {
         $n+= 0.5;
         switch ("$par->y/$par->z") {
           case 'vek/typ-ucasti':
@@ -634,6 +663,16 @@ function chart_akce2($par) { debug($par,'chart_akce2');
               $pocet_deti+= $deti/2;
               $pocet_detiLK+= $detiLK/2;
             }
+            break;
+          case 'pocet/cirkev':
+            if (in_array($cirkev,array(0)))
+              $data[''][$r]++; 
+            elseif (in_array($cirkev,array(3,16)))
+              $data['bez'][$r]++; 
+            elseif (in_array($cirkev,array(1,13)))
+              $data['kat'][$r]++;
+            else
+              $data['eva'][$r]++;
             break;
         }
       }
@@ -669,7 +708,11 @@ function chart_akce2($par) { debug($par,'chart_akce2');
       $chart->series[]= $desc; 
     }
   }
+  $chart->title= $par->title;
   switch ($chart->chart) {
+    case 'column':
+      $chart->tooltip= (object)array(
+        'pointFormat'=>"<span>{series.name}</span>: <b>{point.y}</b> ({point.percentage:.0f}%)<br/>");
     case 'line':
     case 'spline':
       $chart->xAxis= (object)array('categories'=>$roky,
@@ -679,7 +722,8 @@ function chart_akce2($par) { debug($par,'chart_akce2');
           'min'=>$yMin,'max'=>$yMax,'tickAmount'=>$yTicks);
       break;
     case 'pie':
-      $chart->title= $par->title;
+      $chart->tooltip= (object)array(
+        'pointFormat'=>"<span>{series.name}</span>: <b>{point.y}</b> ({point.percentage:.0f}%)<br/>");
       break;
   }
   $y->chart= $chart;
