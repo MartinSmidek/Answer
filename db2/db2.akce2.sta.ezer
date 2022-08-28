@@ -324,7 +324,7 @@ proc show_dotazy() {
 use dot: form _dot [10,36,,] { tag:'dp' format:'n' }
 use obraz: form _obraz [12,4,,]   { tag:'do' format:'n' }
 use chart: form _chart [702,33,,] { tag:'do' format:'n' }
-use tipy:  form _tipy  [24,467,,] { tag:'dt' format:'n' }
+use tipy:  form _tipy  [340,120,,] { tag:'dt' format:'n' }
 use corr:  form _corr  [12,4,,] { tag:'dc' format:'n' }
 use info: form right   [12,4,,]   { tag:'i'
   label parm_tit [-200,9,100,] { tag:'p', style:'zIndex:2;color:white', format:'rn' }
@@ -387,7 +387,7 @@ form _chart { //   název:y:graf:z
 form _obraz [,,700,50] { 
   var rok=0   // pokud je zvolen právě jeden rok tak ten, jinak 0
   const D=320
-  label text2 [0,85,320,800] { style:"overflow:auto"  }
+  label text2 [0,85,320,800] { style:"overflow:auto;z-index:4"  }
   label img [D+2,28,485,700] { title:'' }
   label head [0,0,1089,30]  { title:'' }
   label note [0,508,320,200] { style:"overflow:auto" }
@@ -415,86 +415,72 @@ form _obraz [,,700,50] {
   }}
   // výběrové podmínky
   label [0,40,80,] { tag:'x,v' title:'volba roků:' }
-  check r2017  [80,35,50,] { tag:'x,v' title:'2017' format:'t' proc onchange() { recond }}
-  check r2018  [131,35,50,] { tag:'x,v' title:'2018' format:'t' proc onchange() { recond }}
-  check r2019 [182,35,50,] { tag:'x,v' title:'2019' format:'t' proc onchange() { recond }}
-  check r2021 [233,35,50,] { tag:'x,v', title:'2021', format:'t' proc onchange() { recond }}
-  check r2022 [284,35,50,] { tag:'x,v', title:'2022', value:'1', format:'t' proc onchange() { recond }}
+  check r2017  [80,35,50,] { tag:'x,v' title:'2017' format:'t' func onchange() { recond() }}
+  check r2018  [131,35,50,] { tag:'x,v' title:'2018' format:'t' func onchange() { recond() }}
+  check r2019 [182,35,50,] { tag:'x,v' title:'2019' format:'t' func onchange() { recond() }}
+  check r2021 [233,35,50,] { tag:'x,v', title:'2021', format:'t' func onchange() { recond() }}
+  check r2022 [284,35,50,] { tag:'x,v', title:'2022', value:'1', format:'t' func onchange() { recond() }}
   // výběr hnízd
   label [0,65,80,] { tag:'x,v,r_21' title:'výběr hnízda:' }
-  check hnizdo_1 [80,60,70,] { tag:'x,v,r_21' title:'Kroměříž' format:'t' proc onchange() { recond }}
+  check hnizdo_1 [80,60,70,] { tag:'x,v,r_21' title:'Kroměříž' format:'t' func onchange() { recond() }}
   label hnizdo_1p [100,80,20,14] { tag:'x,v,r_21' }
-  check hnizdo_2 [151,60,70,] { tag:'x,v,r_21' title:'Olomouc' format:'t' proc onchange() { recond }}
+  check hnizdo_2 [151,60,70,] { tag:'x,v,r_21' title:'Olomouc' format:'t' func onchange() { recond() }}
   label hnizdo_2p [171,80,20,14] { tag:'x,v,r_21' }
-  check hnizdo_3 [222,60,70,] { tag:'x,v,r_21' title:'Albeřice' format:'t' proc onchange() { recond }}
+  check hnizdo_3 [222,60,70,] { tag:'x,v,r_21' title:'Albeřice' format:'t' func onchange() { recond() }}
   label hnizdo_3p [242,80,20,14] { tag:'x,v,r_21' }
 
   label [D+20,35,100,] { tag:'x,v' title:'<b>Statistika</b>' }
-  check x_sex [D+20,50,90,] { tag:'x,v' title:'sex' format:'t'
-    proc onchange() { recond }
-  }
+  check x_sex [D+20,50,90,] { tag:'x,v' title:'sex' format:'t' func onchange() { recond() }}
   radio r_sex [D+100,52,200,20] { tag:'x,v' value:'0' format:'t'
     case [0,0,50,18] { title:'muž' value:'0' }
     case [50,0,50,18] { title:'žena' value:'1' }
-    proc onchange() { recond }
+    func onchange() { recond() }
   }
-  check x_vek [D+20,70,90,] { tag:'x,v' title:'věk' format:'t'
-    proc onchange() { recond }
-  }
+  check x_vek [D+20,70,90,] { tag:'x,v' title:'věk' format:'t' func onchange() { recond() }}
   radio r_vek [D+100,72,200,20] { tag:'x,v' value:' 1 AND 30' format:'t'
     case [  0,0,50,18] { title:'...30' value:' 1 AND 30' }
     case [ 50,0,50,18] { title:'31-40' value:'31 AND 40' }
     case [100,0,50,18] { title:'41-50' value:'41 AND 50' }
     case [150,0,50,18] { title:'51-60' value:'51 AND 60' }
     case [200,0,50,18] { title:'61...' value:'61 AND 99' }
-    proc onchange() { recond }
+    func onchange() { recond() }
   }
-  check x_det [D+20,90,90,] { tag:'x,v' title:'dětí/LK' format:'t'
-    proc onchange() { recond }
-  }
+  check x_det [D+20,90,90,] { tag:'x,v' title:'dětí/LK' format:'t' func onchange() { recond() }}
   radio r_det [D+100,92,200,20] { tag:'x,v' value:'0 AND 0' format:'t'
     case [  0,0,50,18] { title:'0' value:'0 AND 0' }
     case [ 50,0,50,18] { title:'1' value:'1 AND 1' }
     case [100,0,50,18] { title:'2' value:'2 AND 2' }
     case [150,0,50,18] { title:'3...' value:'3 AND 99' }
     case [200,0,50,18] { title:'1...' value:'1 AND 99' }
-    proc onchange() { recond }
+    func onchange() { recond() }
   }
-  check x_man [D+20,110,90,] { tag:'x,v' title:'manželství' format:'t'
-    proc onchange() { recond }
-  }
+  check x_man [D+20,110,90,] { tag:'x,v' title:'manželství' format:'t' func onchange() { recond() }}
   radio r_man [D+100,112,200,20] { tag:'x,v' value:'0 AND 5' format:'t'
     case [  0,0,50,18] { title:' ...5' value:'0 AND 5' }
     case [ 50,0,50,18] { title:' 6-10' value:'6 AND 10' }
     case [100,0,50,18] { title:'11-20' value:'11 AND 20' }
     case [150,0,50,18] { title:'21-30' value:'21 AND 30' }
     case [200,0,50,18] { title:'31...' value:'31 AND 99' }
-    proc onchange() { recond }
+    func onchange() { recond() }
   }
-  check x_nov [D+20,130,90,] { tag:'x,v' title:'účast' format:'t'
-    proc onchange() { recond }
-  }
+  check x_nov [D+20,130,90,] { tag:'x,v' title:'účast' format:'t' func onchange() { recond() }}
   radio r_nov [D+100,132,200,20] { tag:'x,v' value:'1' format:'t'
     case [0,0,50,18] { title:'noví' value:'1' }
     case [50,0,80,18] { title:'víckrát' value:'0' }
-    proc onchange() { recond }
+    func onchange() { recond() }
   }
   label [D+20,165,100,] { tag:'x,v' title:'<b>Přínos</b>' }
-  check x_pri [D+20,180,90,] { tag:'x,v' title:'přínos' format:'t'
-    proc onchange() { recond }
-  }
+  check x_pri [D+20,180,90,] { tag:'x,v' title:'přínos' format:'t' func onchange() { recond() }}
   radio r_pri [D+100,182,200,20] { tag:'x,v' value:'1' format:'t'
     case [0,0,50,18] { title:'význ.' value:'1' }
     case [50,0,80,18] { title:'část.' value:'2' }
     case [100,0,80,18] { title:'nevím' value:'3' }
     case [150,0,80,18] { title:'není' value:'4' }
     case [200,0,80,18] { title:'horší' value:'5' }
-    proc onchange() { recond }
+    func onchange() { recond() }
   }
   label [D+20,220,100,] { tag:'x,v,r_21' title:'<b>LK 2021</b>' }
-  check x_r21 [D+20,235,61,] { tag:'x,v,r_21' title:'z textů' format:'t'
-    proc onchange() { recond }
-  }
+  check x_r21 [D+20,235,61,] { tag:'x,v,r_21' title:'z textů' format:'t' func onchange() { recond() }}
   radio r_r21 [D+100,237,200,40] { tag:'x,v,r_21' value:'1' format:'t'
     case [0,0,74,18]   { title:'komorní+' value:'k+' }
     case [75,0,80,18]  { title:'komorní-' value:'k-' }
@@ -503,19 +489,27 @@ form _obraz [,,700,50] {
     case [0,20,80,18] { title:'čas+'     value:'c+' }
     case [75,20,80,18] { title:'čas-'     value:'c-' }
     case [147,20,80,18] { title:'nic nevadilo' value:'ok' }
-    proc onchange() { recond }
+    func onchange() { recond() }
   }
-  select patt [D+20,300,150,] { tag:'x,v' title:'^výběr vzorů textů' format:'t'
+  check x_patt [D+20,300,50,] { tag:'x,v' title:'' format:'t' func onchange() { recond() }}
+  select patt [D+50,300,120,] { tag:'x,v' title:'^výběr vzorů textů' format:'t'
     func Init() {
       patt.selects('-:0,přednášky:1,VPS:2,čas:3,kohout;-):4,opravené dotazníky:5,vzor =>:9');
       patt.key(0);
     }
     func onchanged() { recond() }
   }
-  field patt2 [D+180,300,150,] { tag:'x,v' title:'^napiš vzor textu' format:'t' 
+  field patt2 [D+180,300,157,] { tag:'x,v' title:'^napiš vzor textu' format:'t' 
     func onchanged() { recond() }
   }
-  edit cond [D+20,350,260,100] { tag:'x,v' title:'^výběr jako SQL' value:'1' format:'t'
+  check x_odkud [D+20,350,50,] { tag:'x,v' title:'znám' format:'t' func onchange() { recond() }}
+  check x_proc  [D+20,370,50,] { tag:'x,v' title:'proč' format:'t' func onchange() { recond() }}
+  check x_libi  [D+20,390,50,] { tag:'x,v' title:'líbí' format:'t' func onchange() { recond() }}
+  check x_vadi  [D+20,410,50,] { tag:'x,v' title:'vadí' format:'t' func onchange() { recond() }}
+  check x_vzkaz [D+20,430,50,] { tag:'x,v' title:'vzkaz' format:'t' func onchange() { recond() }}
+  check x_tema  [D+20,450,50,] { tag:'x,v' title:'téma' format:'t' func onchange() { recond() }}
+  check x_prinos [D+20,470,57,] { tag:'x,v' title:'přínos' format:'t' func onchange() { recond() }}
+  edit cond [D+80,350,260,136] { tag:'x,v' title:'^výběr jako SQL' value:'1' format:'t'
     func onchanged() { rechoice(); chart.Show() }}
   // =====================> funkce
   func recond() { var roky:text, hnizda:text, sub:text, carek:number
@@ -557,7 +551,7 @@ form _obraz [,,700,50] {
       )
     }
     // doplnění textových vzorů
-    if (patt.key()) {
+    if (x_patt && patt.key()) {
       if (patt.key()==5) {
         cond= conc(cond,` AND warning!=''`); 
       }
@@ -569,9 +563,15 @@ form _obraz [,,700,50] {
           case 4: sub= "'kohout'"; break;
           case 9: sub= patt2 ? `'${patt2}'` : "'.'"; break;
         }
-        cond= conc(cond,` AND (
-            libilo RLIKE ${sub} OR vadilo RLIKE ${sub} OR vzkaz RLIKE ${sub} OR prinos_text RLIKE ${sub}
-            OR od_jine_text RLIKE ${sub} OR proc_jine_text RLIKE ${sub} OR tema_jine_text RLIKE ${sub})`); 
+        cond= conc(cond,' AND (0',
+          x_odkud ? ` OR od_jine_text RLIKE ${sub}` : '',
+          x_proc  ? ` OR proc_jine_text RLIKE ${sub}` : '',
+          x_libi  ? ` OR libilo RLIKE ${sub}` : '',
+          x_vadi  ? ` OR vadilo RLIKE ${sub}` : '',
+          x_vzkaz ? ` OR vzkaz RLIKE ${sub}` : '',
+          x_tema  ? ` OR tema_jine_text RLIKE ${sub}` : '',
+          x_prinos? ` OR prinos_text RLIKE ${sub}` : '',
+        ')');
       }
     }
     rechoice();
@@ -663,7 +663,7 @@ form _dot [,,163,60] { css:'parm shadow' style:'z-index:2'  //style:'position:fi
 # ------------------------------------------------------------------------------------------==> tipy
 # tipy identifikace respondenta
 form _tipy [,,163,46] { 
-  style:'z-index:2' //css:'parm shadow'
+  style:'z-index:7' //css:'parm shadow'
 //  style:'position:fixed;z-index:2' //css:'parm shadow'
 //  proc Spy() { var y:object
 //    clear;
@@ -700,7 +700,7 @@ form _tipy [,,163,46] {
 //  check nov [108,19,50,] { value:'1' format:'t' skill:'m|m' } 
 //  label [108,9,50,] { title:'nový' skill:'m|m' }
 //  button [133,19,22,] { title:"[fa-eye]" help:'špión' skill:'m|m' proc onclick() { Spy }}
-  label shody [352,-348,163,280] { /*style:'background:silver', css:'parm shadow',*/ format:'n' }
+  label shody [0,0,163,280] { /*style:'background:silver', css:'parm shadow',*/ format:'n' }
 }
 # ------------------------------------------------------------------------------------------==> corr
 # opravy hodnot v dotazníku - např. obrácená hodnocení
