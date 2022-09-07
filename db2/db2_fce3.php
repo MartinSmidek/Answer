@@ -15636,6 +15636,7 @@ function db2_copy_test_db($db) {  trace();
 # -----------------------------------------------------------------------------------==> . track ops
 # --------------------------------------------------------------------------------------- track_like
 # vrátí změny podobné předané (stejný uživatel, tabulka, čas +-10s)
+if(!function_exists("track_like")) {
 function track_like($id) {  trace();
   $ret= (object)array('ok'=>1);
   $ids= $id;
@@ -15661,8 +15662,10 @@ function track_like($id) {  trace();
 end:
   return $ret;
 }
+}
 # ------------------------------------------------------------------------------------- track_revert
 # pokusí se vrátit učiněné změny - $ids je seznam id_track
+if(!function_exists("track_revert")) {
 function track_revert($ids) {  trace();
   global $USER;
   user_test();
@@ -15733,6 +15736,7 @@ function track_revert($ids) {  trace();
     }
   }
   return $ret;
+}
 }
 # =======================================================================> db2 kontrola a oprava dat
 # ----------------------------------------------------------------------------------- db2 oprava_dat
