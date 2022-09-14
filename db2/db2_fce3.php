@@ -5165,12 +5165,12 @@ function akce2_tabulka_mrop($akce,$par,$title,$vypis,$export=false) { debug($par
   // data akce
   $qry=  "
     SELECT $GROUP_CONCAT       
-      CONCAT(prijmeni,' ',jmeno) AS pr_jm,skupina,pokoj,SUM(u_castka) AS platba,p.poznamka,o.email,
-      '' AS filler
+      CONCAT(prijmeni,' ',jmeno) AS pr_jm,skupina,pokoj,IFNULL(SUM(u_castka),0) AS platba,
+      p.poznamka,o.email,'' AS filler
     FROM pobyt AS p
       JOIN spolu AS s USING (id_pobyt)
       JOIN osoba AS o USING (id_osoba)
-      JOIN uhrada AS u USING (id_pobyt)
+      LEFT JOIN uhrada AS u USING (id_pobyt)
     WHERE p.id_akce=$akce AND $cnd AND p.funkce NOT IN (9,10,13,14)
     $GROUP
     ORDER BY $ord";
@@ -12782,11 +12782,11 @@ function mail2_vzor_pobyt2($id_pobyt,$typ,$u_poradi,$from,$vyrizuje,$poslat=0) {
   $p= (object)array();
   $rm= pdo_qry("
     SELECT id_uhrada,
-     u_castka,u_datum,u_stav,
+     IFNULL(u_castka,0),u_datum,u_stav,
      GROUP_CONCAT(DISTINCT IF(o.kontakt,o.email,'')),IFNULL(GROUP_CONCAT(DISTINCT r.emaily),''),
      a.nazev,a.access,a.hnizda,p.hnizdo
     FROM pobyt AS p
-    JOIN uhrada AS u USING (id_pobyt)
+    LEFT JOIN uhrada AS u USING (id_pobyt)
     JOIN akce AS a ON p.id_akce=a.id_duakce
     LEFT JOIN akce AS x ON x.id_hlavni=a.id_duakce
     JOIN spolu AS s USING(id_pobyt)

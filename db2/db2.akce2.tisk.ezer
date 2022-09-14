@@ -219,6 +219,10 @@ menu m {type:'left', //active:*
                                         ,par:{typ:'p',exp:'Excel2',cnd:"p.funkce IN (1,2)"
                                         ,tit:'příjmení:15,jména:20,obec:25,^'
                                         ,fld:'prijmeni,jmena,obec,^id_pobyt'}}
+    item {title:'VPS,SVPS na akci'                                                          skill:'m'
+                                        ,par:{typ:'p',exp:'Excel2',cnd:"p.funkce IN (1,2)"
+                                        ,tit:'příjmení:15,jména:20,obec:25,funkce:5^'
+                                        ,fld:'prijmeni,jmena,obec,funkce,^id_pobyt'}}
     item {title:'Děti na akci'                                                               skill:'y;f'
                                         ,par:{typ:'j',exp:'Excel2',cnd:"funkce!=99 AND pfunkce!=95"
                                         ,hav:"_vek<18 OR dite_kat=99",ord:"narozeni"
