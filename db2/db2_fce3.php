@@ -5124,9 +5124,9 @@ function akce2_starsi_mrop_pdf($akce) { trace();
           $jmeno
           <td width=\"100\">$fill$o->telefony</td>
           <td width=\"200\">$o->emaily$fill</td>
-          <td>$o->ulice, $o->psc $o->obec $stat<br></td>
+          <td>$o->psc $o->obec $stat<br></td>
         </tr>";
-      $adresa= "$o->jmeno $o->prijmeni, $o->telefony, $o->emaily, $o->ulice, $o->psc $o->obec $stat<br>";
+      $adresa= "$o->jmeno $o->prijmeni, $o->telefony, $o->emaily, $o->psc $o->obec $stat<br>";
       fwrite($h,$adresa);
       if ($o->funkce) $starsi.= $adresa;
     }
