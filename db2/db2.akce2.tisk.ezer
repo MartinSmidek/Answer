@@ -47,6 +47,11 @@ use info: form right [12,4,,] {
       var res: object
       clear;
       switch(export2.get,
+      'PDF-stitky',{
+        sti_jmeno.report_init; sti_jmeno.report_check;
+        res.set(ask('tisk2_pdf_mrop',the_akce.get,the_par.get,the_title.get,the_vypis.get,sti_jmeno.get_json));
+        form.msg.set(res.html);
+      },
       'PDF-jmenovky',{
         sti_V.report_init; sti_V.report_check;
         res.set(ask('tisk2_pdf_jmenovky',the_akce.get,the_par.get,the_title.get,the_vypis.get,sti_V.get_json,the_hnizdo.get));
@@ -349,6 +354,12 @@ menu m {type:'left', //active:*
                                         ,ord:"prijmeni,jmeno"
                                         ,tit:'jméno:25, skupina:15, chata:15'
                                         ,fld:'pr_jm,skupina,pokoj'}}
+    item {title:'štítky se jménem'
+                                        ,par:{typ:'mrop',exp:'Excel2',exp2:'PDF-stitky'
+                                        ,cnd:"funkce=0"
+                                        ,ord:"prijmeni,jmeno"
+                                        ,tit:'jméno:25, příjmení:40'
+                                        ,fld:'pr_jm,jmeno,prijmeni'}}
     item {title:'skupiny'
                                         ,par:{typ:'mrop',exp:'Excel2'
                                         ,cnd:"funkce=0"
@@ -675,4 +686,9 @@ report sti_mrop [0,0,200,287] { format:'A4:5,6,70,41',
   box skupina  [ 10.0, 25, 15, 20] { style:'14,C',            title:'{skupina}' }
   box          [ 40.0, 20, 10, 10] { style:'8,C',             title:'chata' }
   box chata    [ 40.0, 25, 10, 20] { style:'14,C',            title:'{chata}' }
+}
+# ----------------------==>   MROP - štítek 3x7 se jménem
+report sti_jmeno [0,0,200,287] { format:'A4:5,6,70,41',
+  box jmeno    [  2.6, 11.0, 60.0, 27.3] { style:'32,L',      title:'{jmeno}' }
+  box prijmeni [  2.6, 25.0, 60.0, 27.3] { style:'24,L',      title:'{prijmeni}' }
 }

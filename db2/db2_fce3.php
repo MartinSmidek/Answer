@@ -5165,7 +5165,8 @@ function akce2_tabulka_mrop($akce,$par,$title,$vypis,$export=false) { debug($par
   // data akce
   $qry=  "
     SELECT $GROUP_CONCAT       
-      CONCAT(prijmeni,' ',jmeno) AS pr_jm,skupina,pokoj,IFNULL(SUM(u_castka),0) AS platba,
+      CONCAT(prijmeni,' ',jmeno) AS pr_jm,jmeno,prijmeni,
+      skupina,pokoj,IFNULL(SUM(u_castka),0) AS platba,
       p.poznamka,o.email,
        IFNULL(SUBSTR((SELECT MIN(CONCAT(role,spz))
         FROM tvori AS ot JOIN rodina AS r USING (id_rodina) WHERE ot.id_osoba=o.id_osoba
@@ -9188,7 +9189,7 @@ function sql2xls($datum) {
 # ----------------------------------------------------------------------------------- tisk2 pdf_mrop
 # vygenerování PDF s vizitkami s rozměrem 55x90 na rozstříhání
 #   $the_json obsahuje  title:'{jmeno}<br>{prijmeni}'
-function tisk2_pdf_mrop($akce,$par,$title,$vypis,$report_json) {  trace();
+function tisk2_pdf_mrop($akce,$par,$title,$vypis,$report_json) {  trace(); debug($par,'tisk2_pdf_mrop');
   global $ezer_path_docs;
   $result= (object)array('_error'=>0);
   $html= '';
@@ -9196,7 +9197,7 @@ function tisk2_pdf_mrop($akce,$par,$title,$vypis,$report_json) {  trace();
   mb_internal_encoding('UTF-8');
   $tab= tisk2_sestava($akce,$par,$title,$vypis,true);
 //                                         display($report_json);
-//                                        debug($tab,"tisk2_sestava($akce,...)"); //return;
+                                        debug($tab,"tisk2_sestava($akce,...)"); //return;
 //   $report_json= "
 //   {'format':'A4:5,6,70,41','boxes':[
 //   {'type':'text','left':2.6,'top':11,'width':60,'height':27.3,'id':'jmeno','txt':'{pr_jm}','style':'16,C'},
@@ -9215,6 +9216,8 @@ function tisk2_pdf_mrop($akce,$par,$title,$vypis,$report_json) {  trace();
     $parss[$n]->pr_jm=   $x->pr_jm;
     $parss[$n]->chata=   $x->pokoj;
     $parss[$n]->skupina= $x->skupina;
+    $parss[$n]->jmeno=   $x->jmeno;
+    $parss[$n]->prijmeni=$x->prijmeni;
     $n++;
   }
   // předání k tisku
