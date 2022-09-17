@@ -328,8 +328,8 @@ menu m {type:'left', //active:*
                                         ,par:{typ:'mrop',exp:'Excel2'
                                         ,cnd:"funkce=0"
                                         ,ord:"prijmeni,jmeno"
-                                        ,tit:'jméno:25, skupina:8, chata:8, převodem:10, hotově:10, poznámka:40'
-                                        ,fld:'pr_jm,skupina,pokoj,platba,filler,poznamka'}}
+                                        ,tit:'jméno:25, skupina:8, chata:8, převodem:10, hotově:10, poznámka:40,spz:8'
+                                        ,fld:'pr_jm,skupina,pokoj,platba,filler,poznamka,spz'}}
     item {title:'příjem včetně PPS'
                                         ,par:{typ:'mrop',exp:'Excel2'
                                         ,cnd:"funkce IN (0,1)"

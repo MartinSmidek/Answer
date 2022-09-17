@@ -5166,7 +5166,10 @@ function akce2_tabulka_mrop($akce,$par,$title,$vypis,$export=false) { debug($par
   $qry=  "
     SELECT $GROUP_CONCAT       
       CONCAT(prijmeni,' ',jmeno) AS pr_jm,skupina,pokoj,IFNULL(SUM(u_castka),0) AS platba,
-      p.poznamka,o.email,'' AS filler
+      p.poznamka,o.email,
+       IFNULL(SUBSTR((SELECT MIN(CONCAT(role,spz))
+        FROM tvori AS ot JOIN rodina AS r USING (id_rodina) WHERE ot.id_osoba=o.id_osoba
+      ),2),'') AS spz,'' AS filler
     FROM pobyt AS p
       JOIN spolu AS s USING (id_pobyt)
       JOIN osoba AS o USING (id_osoba)
