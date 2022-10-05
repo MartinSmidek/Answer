@@ -2240,37 +2240,43 @@ panel Strava [,,320,280] {type:'popup', title:'Nestandardní počet strav - xxx'
   # ---------------------------------------------------------==> . počty strav
   form nastaveni [0,0,320,200] {
     // sada návratu na default
-    button [0,19,,] { title:'V'
-      proc onclick() {
-        reset('sc',n.cele.get); reset('oc',n.cele.get); reset('vc',n.cele.get);
-        reset('sp',n.polo.get); reset('op',n.polo.get); reset('vp',n.polo.get);
-    }}
-    label  [ 43, 0,,] { title:'Celé'}
-    field cele [39,20,13,] { proc onchange { reset_cele.onclick }}
-    button reset_cele [ 55,19,,] { title:'V', style:'width:17px;padding:0'
-      proc onclick() {
-        reset('sc',n.cele.get); reset('oc',n.cele.get); reset('vc',n.cele.get);
-    }}
-    label  [ 83, 0,,] { title:'Dětské'}
-    field polo [83,20,13,] { proc onchange { reset_polo.onclick }}
-    button reset_polo [ 99,19,,] { title:'V', style:'width:17px;padding:0'
-      proc onclick() {
-        reset('sp',n.polo.get); reset('op',n.polo.get); reset('vp',n.polo.get);
-    }}
-    label  [153, 0,,] { title:'Snídaně'}
-    button [155,19,,] { title:'V', style:'width:17px;padding:0'
+//    button [0,19,30,16] { title:'[fa-arrow-down][fa-arrow-down][fa-arrow-down]'
+//      proc onclick() {
+//        reset('sc',n.cele.get); reset('oc',n.cele.get); reset('vc',n.cele.get);
+//        reset('sp',n.polo.get); reset('op',n.polo.get); reset('vp',n.polo.get);
+//    }}
+    label  [17,0,,] { title:'počty strav'}
+    label  [7,13,,] { title:'celých'}
+    field cele [15,27,13,] { format:'tf' } //, proc onchange { reset_cele.onclick }}
+//    button reset_cele [ 55,20,15,16] { title:'[fa-arrow-down]', style:'width:17px;padding:0'
+//      proc onclick() {
+//        reset('sc',n.cele.get); reset('oc',n.cele.get); reset('vc',n.cele.get);
+//    }}
+    label  [41,13,,] { title:'dětských'}
+    field polo [51,27,13,] { format:'tf' } //, proc onchange { reset_polo.onclick }}
+//    button reset_polo [ 99,19,15,16] { title:'[fa-arrow-down]', style:'width:17px;padding:0'
+//      proc onclick() {
+//        reset('sp',n.polo.get); reset('op',n.polo.get); reset('vp',n.polo.get);
+//    }}
+    label  [96,7,,] { title:'kdykoliv'}
+    button [98,26,15,16] { title:'[fa-arrow-down]', style:'padding:0'
+      proc onclick() { reset('sc',n.cele.get); reset('oc',n.cele.get); reset('vc',n.cele.get);}}
+    button [118,26,15,16] { title:'[fa-arrow-down]', style:'padding:0'
+      proc onclick() { reset('sp',n.polo.get); reset('op',n.polo.get); reset('vp',n.polo.get); }}
+    label  [154,7,,] { title:'snídaně'}
+    button [156,26,15,16] { title:'[fa-arrow-down]', style:'padding:0'
       proc onclick() { reset('sc',n.cele.get); }}
-    button [175,19,,] { title:'V', style:'width:17px;padding:0'
+    button [176,26,15,16] { title:'[fa-arrow-down]', style:'padding:0'
       proc onclick() { reset('sp',n.polo.get); }}
-    label  [215, 0,,] { title:'Oběd' }
-    button [213,19,,] { title:'V', style:'width:17px;padding:0'
+    label  [216,7,,] { title:'oběd' }
+    button [214,26,15,16] { title:'[fa-arrow-down]', style:'padding:0'
       proc onclick() { reset('oc',n.cele.get); }}
-    button [233,19,,] { title:'V', style:'width:17px;padding:0'
+    button [234,26,15,16] { title:'[fa-arrow-down]', style:'padding:0'
       proc onclick() { reset('op',n.polo.get); }}
-    label  [267, 0,,] { title:'Večeře'}
-    button [269,19,,] { title:'V', style:'width:17px;padding:0'
+    label  [268,7,,] { title:'večeře'}
+    button [270,26,15,16] { title:'[fa-arrow-down]', style:'padding:0'
       proc onclick() { reset('vc',n.cele.get); }}
-    button [289,19,,] { title:'V', style:'width:17px;padding:0'
+    button [290,26,15,16] { title:'[fa-arrow-down]', style:'padding:0'
       proc onclick() { reset('vp',n.polo.get); }}
     // dny
     list L [0,50,320,200] {rows:22
