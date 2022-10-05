@@ -2247,60 +2247,63 @@ panel Strava [,,320,280] {type:'popup', title:'Nestandardní počet strav - xxx'
 //    }}
     label  [17,0,,] { title:'počty strav'}
     label  [7,13,,] { title:'celých'}
-    field cele [15,27,13,] { format:'tf' } //, proc onchange { reset_cele.onclick }}
+    field cele [15,27,13,] { format:'tf', help:'počty celých strav, zápis se provede šipkami' }
 //    button reset_cele [ 55,20,15,16] { title:'[fa-arrow-down]', style:'width:17px;padding:0'
 //      proc onclick() {
 //        reset('sc',n.cele.get); reset('oc',n.cele.get); reset('vc',n.cele.get);
 //    }}
     label  [41,13,,] { title:'dětských'}
-    field polo [51,27,13,] { format:'tf' } //, proc onchange { reset_polo.onclick }}
+    field polo [51,27,13,] { format:'tf', help:'počty dětských strav, zápis se provede šipkami' }
+    //, proc onchange { reset_polo.onclick }}
 //    button reset_polo [ 99,19,15,16] { title:'[fa-arrow-down]', style:'width:17px;padding:0'
 //      proc onclick() {
 //        reset('sp',n.polo.get); reset('op',n.polo.get); reset('vp',n.polo.get);
 //    }}
-    label  [96,7,,] { title:'kdykoliv'}
+    label  [96,13,,] { title:'kdykoliv'}
     button [98,26,15,16] { title:'[fa-arrow-down]', style:'padding:0'
-      proc onclick() { reset('sc',n.cele.get); reset('oc',n.cele.get); reset('vc',n.cele.get);}}
+      func onclick() { reset('sc',n.cele); reset('oc',n.cele); reset('vc',n.cele);}}
     button [118,26,15,16] { title:'[fa-arrow-down]', style:'padding:0'
-      proc onclick() { reset('sp',n.polo.get); reset('op',n.polo.get); reset('vp',n.polo.get); }}
-    label  [154,7,,] { title:'snídaně'}
+      func onclick() { reset('sp',n.polo); reset('op',n.polo); reset('vp',n.polo); }}
+    label  [154,13,,] { title:'snídaně'}
     button [156,26,15,16] { title:'[fa-arrow-down]', style:'padding:0'
-      proc onclick() { reset('sc',n.cele.get); }}
+      func onclick() { reset('sc',n.cele); }}
     button [176,26,15,16] { title:'[fa-arrow-down]', style:'padding:0'
-      proc onclick() { reset('sp',n.polo.get); }}
-    label  [216,7,,] { title:'oběd' }
+      func onclick() { reset('sp',n.polo); }}
+    label  [216,13,,] { title:'oběd' }
     button [214,26,15,16] { title:'[fa-arrow-down]', style:'padding:0'
-      proc onclick() { reset('oc',n.cele.get); }}
+      func onclick() { reset('oc',n.cele); }}
     button [234,26,15,16] { title:'[fa-arrow-down]', style:'padding:0'
-      proc onclick() { reset('op',n.polo.get); }}
-    label  [268,7,,] { title:'večeře'}
+      func onclick() { reset('op',n.polo); }}
+    label  [268,13,,] { title:'večeře'}
     button [270,26,15,16] { title:'[fa-arrow-down]', style:'padding:0'
-      proc onclick() { reset('vc',n.cele.get); }}
+      func onclick() { reset('vc',n.cele); }}
     button [290,26,15,16] { title:'[fa-arrow-down]', style:'padding:0'
-      proc onclick() { reset('vp',n.polo.get); }}
+      func onclick() { reset('vp',n.polo); }}
     // dny
     list L [0,50,320,200] {rows:22
       field den [4,0,140,16] {format:'o' }
-      field sc  [155,0,15,] {format:':e' }
-      field sp  [175,0,15,] {format:':e' }
-      field oc  [213,0,15,] {format:':e' }
-      field op  [233,0,15,] {format:':e' }
-      field vc  [269,0,15,] {format:':e' }
-      field vp  [289,0,15,] {format:':e' }
+      field sc  [155,0,15,] {format:'f:e' }
+      field sp  [175,0,15,] {format:'f:e' }
+      field oc  [213,0,15,] {format:'f:e' }
+      field op  [233,0,15,] {format:'f:e' }
+      field vc  [269,0,15,] {format:'f:e' }
+      field vp  [289,0,15,] {format:'f:e' }
     }
     // ukončení
-    button [205,255,,] { title:'Zpět', skill:'yaa+|yaa+;faa+|faa+;caa+|caa+',
-      proc onclick() { panel.hide(0)
+    label  [198,249,125,30] { css:'ae_parm', skill:'yaa+|yaa+;faa+|faa+;caa+|caa+' }
+    button [205,255,,] { title:'[fa-undo] Zpět', skill:'yaa+|yaa+;faa+|faa+;caa+|caa+',
+      func onclick() { pla.zmena_spec_strav= 0; panel.hide(0)
     }}
     var scele: text
     var spolo: text
-    button [264,255,,] { type:'submit', title:'OK', skill:'yaa+|yaa+;faa+|faa+;caa+|caa+',
+    button [262,255,,] { title:'[fa-save] Uložit', skill:'yaa+|yaa+;faa+|faa+;caa+|caa+',
       proc onclick() {
         scele.set(''); spolo.set('');
         each(L,save_den);
         ask('akce2_strava_denne_save',u.b.key_pobyt.get,dnu.get,x.get,
           scele.get,strava_cel_x.get,cstrava_cel_x.get,
           spolo.get,strava_pol_x.get,cstrava_pol_x.get,prvni.get);
+        pla.zmena_spec_strav.set(0);
         panel.hide(1); // asi byla změna
         reload(the_pobyt.get);
     }}
