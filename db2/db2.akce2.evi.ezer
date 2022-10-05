@@ -432,7 +432,7 @@ form _lst [,,370,*] {
     show prijmeni [,,70,] { data:o.prijmeni, title:'příjmení', format:'q*s+'
       css_cell:'access,0:,1:ezer_ys,2:ezer_fa,3:ezer_db' }
     show jmeno [,,70,] { data:o.jmeno, title:'jméno', format:'q*s' }
-    show ulice {expr:"IF(o.ulice,o.ulice,of.ulice)"}
+    show ulice {expr:"IF(o.adresa,o.ulice,of.ulice)"}
     show psc { expr:"IF(o.adresa,o.psc,of.psc)" }
     show obec [,,60,] { title:'obec', expr:"IF(o.adresa,o.obec,of.obec)", format:'q*s' }
     show nar [,,50,] { title:'rrmmdd', data:o.narozeni, sql_pipe:'sql_yymmdd', format:'q@s'
