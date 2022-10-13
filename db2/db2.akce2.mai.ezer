@@ -48,7 +48,7 @@ use sq: form _esql [10,34,,]    // správa SQL
 use es: form _esady [10,74,,]   // rozesílání
 use pr: form _prehled [10,40,,] // přehled mailů
 # ----------------------------------------------------------------------------------==> inicializace
-proc test_dbg() {
+func test_dbg() {
 //  echo(dopis_id.get)
 }
 proc onfirstfocus() {
