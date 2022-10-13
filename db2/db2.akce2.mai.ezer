@@ -297,7 +297,7 @@ form _gsql { style:'z-index:1'
     }
   }
   # -------==> . časové ano-podmínky
-  const cas_options = "(bez omezení):1,plánovaná akce:2,letos:3,vloni:4,dříve než před:5,později než před:6,místo (lze užít ?*):11,název (lze užít ?*):12"
+  const cas_options = "(bez omezení):1,plánovaná akce:2,letos:3,vloni:4,dříve než před:5,později než před:6,místo (lze užít -?*):11,název (lze užít -?*):12"
   var last_ano: number
   button ano_cas [10,t_akce+60,,] { tag:'def', title:'omezení akcí časem, místem,...',
     proc onclick() {
@@ -824,37 +824,44 @@ form _gsql { style:'z-index:1'
     each(L,gen_cas_fce);
     json_cas.set(conc(json_cas.get,']'));
   }
-  var val:text
-  proc gen_cas_fce(x,i) { var sval:text, has_val:number
-    has_val.set(0);
-    json_cas.set(conc(json_cas.get,gen_cas_del.get,'{"akey":',x.part('kdy').key));
-    gen_cas_del.set(',');
-    switch(x.part('kdy').key,
-    // neomezovat
-    1, { stop },
-    // plánovaná akce
-    2, { code_cas.set(conc(code_cas.get," AND datum_od>CURDATE()")) },
-    // letos
-    3, { code_cas.set(conc(code_cas.get," AND YEAR(datum_od)=YEAR(CURDATE())")) },
-    // loni
-    4, { code_cas.set(conc(code_cas.get," AND YEAR(datum_od)=YEAR(CURDATE())-1")) },
-    // dříve než
-    5, { val.set(x.part('rok').get); has_val.set(1);
-         code_cas.set(conc(code_cas.get," AND YEAR(datum_od)<=YEAR(CURDATE())-",val.get)) },
-    // později než
-    6, { val.set(x.part('rok').get); has_val.set(1);
-         code_cas.set(conc(code_cas.get," AND YEAR(datum_od)>=YEAR(CURDATE())-",val.get)) },
-    // místo
-    11,{ val.set(x.part('vzor').get); has_val.set(1);
-         sval.set(replace(val.get,'\*','%','\?','_'));
-         code_cas.set(conc(code_cas.get," AND misto LIKE '",sval.get,"%'")) },
-    // název
-    12,{ val.set(x.part('vzor').get); has_val.set(1);
-         sval.set(replace(val.get,'\*','%','\?','_'));
-         code_cas.set(conc(code_cas.get," AND nazev LIKE '",sval.get,"%'")) }
-    );
-    [ has_val; json_cas.set(conc(json_cas.get,',"val":"',val.get,'"')) ];
-    json_cas.set(conc(json_cas.get,'}'))
+  func gen_cas_fce(x:ezer,i) { var val: text, has_val:number
+    has_val= 0;
+    json_cas= `${json_cas}${gen_cas_del}{"akey":"${x.kdy.key()}"`;
+    gen_cas_del= ',';
+    switch(x.kdy.key()) {
+      case 1: // neomezovat
+        break;
+      case 2: // plánovaná akce
+        code_cas= `${code_cas} AND datum_od>CURDATE()`; break;
+      case 3: // letos
+        code_cas= `${code_cas} AND YEAR(datum_od)=YEAR(CURDATE())`; break;
+      case 4: // loni
+        code_cas= `${code_cas} AND YEAR(datum_od)=YEAR(CURDATE())-1`; break;
+      case 5: // dříve než
+        val= x.rok; has_val= 1;
+        code_cas= `${code_cas} AND YEAR(datum_od)<=YEAR(CURDATE())-${val}`; break;
+      case 6: // později než
+        val= x.rok; has_val= 1;
+        code_cas= `${code_cas} AND YEAR(datum_od)>=YEAR(CURDATE())-${val}`; break;
+      case 11: // místo
+        val= gen_cas_fce_patt(x.vzor,'misto'); has_val= 1;
+        break;
+      case 12: // název
+        val= gen_cas_fce_patt(x.vzor,'nazev'); has_val= 1;
+        break;
+    }
+    if (has_val) json_cas= `${json_cas},"val":"${val}"`;
+    json_cas= `${json_cas}}`;
+  }
+  func gen_cas_fce_patt(val,fld) { var matched:object, sval:text, NOT:text
+    NOT= '';
+    matched= match('^-(.*)$',val);
+    if (matched) {
+      val= matched.s1; NOT= 'NOT';
+    }
+    sval= replace(val,'\*','%','\?','_');
+    code_cas= `${code_cas} AND ${fld} ${NOT} LIKE '${sval}%'`; 
+    return val;
   }
   # vrátí code=SQL kód a nastaví json_akce pro úschovu v make_json
   var json_akce: text

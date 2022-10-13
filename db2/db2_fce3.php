@@ -12799,7 +12799,7 @@ function mail2_vzor_pobyt2($id_pobyt,$typ,$u_poradi,$from,$vyrizuje,$poslat=0) {
     JOIN osoba AS o ON s.id_osoba=o.id_osoba
     LEFT JOIN tvori AS t ON t.id_osoba=o.id_osoba AND IF(p.i0_rodina,t.id_rodina=p.i0_rodina,1)
     LEFT JOIN rodina AS r USING (id_rodina)
-    WHERE id_pobyt=$id_pobyt AND u_poradi=$u_poradi
+    WHERE id_pobyt=$id_pobyt AND u_poradi=$u_poradi AND IFNULL(t.role IN ('a','b'),true)
   ");
   list($id_uhrada,$castka,$dne,$potvrzeno,
     $omaily,$rmaily,$p->platba_akce,$access,$hnizda,$hnizdo)= pdo_fetch_row($rm);
