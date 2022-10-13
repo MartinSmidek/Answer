@@ -844,24 +844,25 @@ form _gsql { style:'z-index:1'
         val= x.rok; has_val= 1;
         code_cas= `${code_cas} AND YEAR(datum_od)>=YEAR(CURDATE())-${val}`; break;
       case 11: // místo
-        val= gen_cas_fce_patt(x.vzor,'misto'); has_val= 1;
+        val= x.vzor; has_val= 1;
+        gen_cas_fce_patt(x.vzor,'misto');
         break;
       case 12: // název
-        val= gen_cas_fce_patt(x.vzor,'nazev'); has_val= 1;
+        val= x.vzor; has_val= 1;
+        gen_cas_fce_patt(x.vzor,'nazev'); 
         break;
     }
     if (has_val) json_cas= `${json_cas},"val":"${val}"`;
     json_cas= `${json_cas}}`;
   }
-  func gen_cas_fce_patt(val,fld) { var matched:object, sval:text, NOT:text
+  func gen_cas_fce_patt(patt,fld) { var matched:object, sval:text, NOT:text
     NOT= '';
-    matched= match('^-(.*)$',val);
+    matched= match('^-(.*)$',patt);
     if (matched) {
-      val= matched.s1; NOT= 'NOT';
+      patt= matched.s1; NOT= 'NOT';
     }
-    sval= replace(val,'\*','%','\?','_');
+    sval= replace(patt,'\*','%','\?','_');
     code_cas= `${code_cas} AND ${fld} ${NOT} LIKE '${sval}%'`; 
-    return val;
   }
   # vrátí code=SQL kód a nastaví json_akce pro úschovu v make_json
   var json_akce: text
