@@ -1774,6 +1774,7 @@ function akce2_vzorec_test($id_akce,$hnizdo=0,$nu=2,$nD,$nd=0,$nk=0,$np=0,$table
   $map_typ= map_cis('ms_akce_ubytovan','zkratka');
   $types= select("GROUP_CONCAT(DISTINCT typ ORDER BY typ)","cenik",
       "id_akce=$id_akce AND hnizdo=$hnizdo GROUP BY id_akce");
+  if (!$types) $types= '0';
   // obecné info o akci
   list($ma_cenik,$noci,$strava_oddo)=
     select("ma_cenik,DATEDIFF(datum_do,datum_od),strava_oddo","akce","id_duakce=$id_akce");
@@ -1800,11 +1801,12 @@ function akce2_vzorec_test($id_akce,$hnizdo=0,$nu=2,$nD,$nd=0,$nk=0,$np=0,$table
   );
   // výpočet ceny podle parametrů jednotlivých typů (jsou-li)
   foreach(explode(',',$types) as $typ) {
+                                                display("typ:$typ, hnízdo:$hnizdo ");
     $title= $typ ? "<h3>ceny pro ".$map_typ[$typ]."</h3>" : '';
     $cena= 0;
     $html.= "$title<table class='$table_class'>";
     $ra= pdo_qry("SELECT * FROM cenik 
-      WHERE id_akce=$id_akce AND hnizdo=$hnizdo AND za!='' AND typ=$typ ORDER BY poradi");
+      WHERE id_akce=$id_akce AND hnizdo=$hnizdo AND za!='' AND typ='$typ' ORDER BY poradi");
     while ( $ra && ($a= pdo_fetch_object($ra)) ) {
       $acena= $a->cena;
       list($za_u,$za_up,$za_D,$za_d,$za_k,$za_noc,$oo,$plus)= $cenik[$a->za];
