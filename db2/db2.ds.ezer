@@ -19,10 +19,13 @@ var rok: number
 panel cen {type:'right', title:'Ceny'
   func onfirstfocus() { var letos:ezer
     // vytvoř itemy pro 7 posledních let a klikni na letošní
-    m.roky.attach_code(php.ds_ceny_group()); 
+    create_menu();
     letos= m.roky.part[`part.rok_${fdate('Y')}`];
     letos.click();
   }
+func create_menu() { 
+    m.roky.attach_code(php.ds_ceny_group()); 
+}
   menu m {type:'left', active:*
     menu roky {title:'Ceny posledních 7 let ',type:'group'
       // itemy budou doplněny metodou attach_code jako
@@ -45,6 +48,7 @@ panel cen {type:'right', title:'Ceny'
         confirm("Ceník roku ",na," bude nahrazen kopií ceníku roku ",z,". Pokračovat?");
         info.fill(conc(i.owner.title,i.title),ask('ds_ceny_uprava',i.par));
         info.ceny.browse_load(conc("rok=",na));
+        alert("nový ceník se v levém menu objeví po restartu Answeru")
       }
     }
   }

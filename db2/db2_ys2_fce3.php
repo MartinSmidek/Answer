@@ -488,7 +488,7 @@ function update_web_changes () {
   return 1;
 }
 /** =========================================================================================> CHART */
-# ---------------------------------------------------------------------------------==> . chart akce2
+# ----------------------------------------------------------------------------------==> . chart typs
 # převod řetězce popis:field na {sel:'popis:index,...',typ:[field,...]}
 // název:field:graf:z
 function chart_typs($x) { 
@@ -589,7 +589,7 @@ function chart_akce2($par) { debug($par,'chart_akce2');
       foreach ($data_temata as $i=>$pocet) {
         $name= isset($names['temata'][$i]) ? $names['temata'][$i] : $i;
         $desc= (object)array('name'=>$name,'y'=>$pocet);
-        if ($color) $desc->color= $color;
+//        if ($color) $desc->color= $color;
         $data[$hodnoceni][]= $desc;
       }
     }
@@ -4665,11 +4665,13 @@ function ds_compare($order) {  #trace('','win1250');
 # vygeneruje menu.group pro 7 let 
 function ds_ceny_group() { //debug($par);
   global $ezer_version;
+  // zjištění nejnovějšího ceníku
+  ezer_connect('setkani');
+  $nejnovejsi= select('MAX(rok)','setkani4.ds_cena');
   // doplnění leftmenu.group: "item {title:yyyy, par:{rok:yyyy}}" pro yyyy= letos,loni,...
   $itms= array();
-  $letos= date('Y');
   for ($i= 0; $i<7; $i++) {
-    $rok= $letos-$i;
+    $rok= $nejnovejsi-$i;
     $itms["rok_$rok"]= (object)array(
         'type'=>'item',
 //        'id'=>"rok_$rok",
@@ -5235,9 +5237,9 @@ function ds_ceny_uprava($par) { trace('','win1250');
     // kontrola prázdnosti nového ceníku
     $qry= "SELECT count(*) as pocet FROM ds_cena  WHERE rok=$na ";
     $res= pdo_qry($qry);
-    if ( $res && $c= pdo_fetch_object($res) ) {
+    if ( $res && $c= pdo_fetch_object($res) ) { debug($c);
       if ( $c->pocet>0 )
-        $html= "Cenik pro rok $na byl jiz zrejme vygenerovan. Operace prerusena.";
+        $html= "<span style='color:red'>Cenik pro rok $na byl jiz zrejme vygenerovan. Operace prerusena.</span>";
     }
     if ( !$html ) {
       // kopie ceníku
