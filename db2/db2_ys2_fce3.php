@@ -938,13 +938,15 @@ function chart_akce($par) { debug($par,'chart_akce');
       }
       break;
     // specifické pro MROP
-    case 'vek': // ignoruje $par->do
+    case 'vek': // $par->po udává shlukování věků
       $date= '2023-09-27';
-      $date= date('Y-m-d');
-      $chart->title= "Skladba a věk všech iniciovaných k ".sql_date1($date);
+//      $date= date('Y-m-d');
       $po= $par->po ?: 10;
       $data= array(array(),array()); // stáří non-firming, firming
-      $od= 9999; $do= 0;
+      $od= $par->od ?: 2004;
+      $do= $par->do ?: $letos;
+//      $od= 9999; $do= 0;
+      $chart->title= "Iniciovaní v letech $od-$do ... "."skladba a věk k ".sql_date1($date);
       $qv= pdo_qry("
         SELECT 
           FLOOR(IF(MONTH(narozeni),DATEDIFF('$date',narozeni)/365.2425,
@@ -960,7 +962,7 @@ function chart_akce($par) { debug($par,'chart_akce');
             ) AS _firm,
           COUNT(*) AS _pocet
         FROM osoba
-        WHERE iniciace>0
+        WHERE iniciace BETWEEN $od AND $do
         GROUP BY _vek,_firm
         HAVING _vek BETWEEN 1 AND 100/$po
         ORDER BY _vek
