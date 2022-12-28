@@ -733,7 +733,7 @@ end:
 }
 # ----------------------------------------------------------------------------------==> . chart akce
 # agregace údajů o MROP, FIRMING a MS pro grafické znázornění
-function chart_akce($par) { //debug($par,'chart_akce');
+function chart_akce($par) { debug($par,'chart_akce');
   $y= (object)array('err'=>'','note'=>' ');
   $org= $par->org; //255;
   $letos= date('Y');
@@ -858,6 +858,7 @@ function chart_akce($par) { //debug($par,'chart_akce');
       $rok= $par->od;
       $dot_par= (object)array('zdroj'=>'akce','par1'=>'rok','step_man'=>1,'org'=>$org);
       $x= dot_prehled($rok,$dot_par);
+      debug($x,'x');
       $data= (array)$x->know->man_vek; 
       $data= array_merge($data);
 //      $data= implode(',',$man_vek);
@@ -910,14 +911,14 @@ function chart_akce($par) { //debug($par,'chart_akce');
         $x= dot_prehled($rok,$dot_par);
 //        $y->err= '.'; goto end;
         $kurz_x= $x->know->kurz_x ?: array(); 
-        debug($kurz_x,$rok);
+//        debug($kurz_x,$rok);
         $kurz_y= $x->know->kurz_y; 
         $kurz_x= array_map(function($x){return $x/2;},$kurz_x);
         for ($x= 0; $x<=4; $x++) {
           $kurz[$x][$rok]= isset($kurz_x[$x]) ? $kurz_x[$x] : 0;
         }
       }
-      debug($kurz,"$od-$do");
+//      debug($kurz,"$od-$do");
       $color= array('navy','cyan','grey','orange','lightgreen');
       for ($x= 0; $x<=4; $x++) {
         $data= implode(',',$kurz[$x]);
@@ -937,6 +938,63 @@ function chart_akce($par) { //debug($par,'chart_akce');
       }
       break;
     // specifické pro MROP
+    case 'vek': // ignoruje $par->do
+      $date= '2023-09-27';
+      $date= date('Y-m-d');
+      $chart->title= "Skladba a věk všech iniciovaných k ".sql_date1($date);
+      $po= $par->po ?: 10;
+      $data= array(array(),array()); // stáří non-firming, firming
+      $od= 9999; $do= 0;
+      $qv= pdo_qry("
+        SELECT 
+          FLOOR(IF(MONTH(narozeni),DATEDIFF('$date',narozeni)/365.2425,
+            YEAR('$date')-YEAR(narozeni))/$po) AS _vek,
+          IF(firming>0,1,IF(
+            (SELECT COUNT(*) FROM pobyt
+            LEFT JOIN spolu USING (id_pobyt)
+            LEFT JOIN osoba AS x USING (id_osoba) 
+            LEFT JOIN akce AS a ON id_akce=a.id_duakce 
+            WHERE a.firm=0 AND a.mrop=0 AND a.zruseno=0 AND a.spec=0
+              AND YEAR(a.datum_od)>=x.iniciace 
+              AND x.id_osoba=osoba.id_osoba)>0,2,0)
+            ) AS _firm,
+          COUNT(*) AS _pocet
+        FROM osoba
+        WHERE iniciace>0
+        GROUP BY _vek,_firm
+        HAVING _vek BETWEEN 1 AND 100/$po
+        ORDER BY _vek
+      ");
+      while ($qv && (list($vek,$firm,$pocet)=pdo_fetch_row($qv))) {
+        $data[$firm][$vek*$po]= $pocet;
+        $od= min($od,$vek);
+        $do= max($do,$vek);
+      }
+      debug($data,'data');
+      $roky= array(); // názvy intervalů 20..
+      for ($interval= $od; $interval<=$do; $interval++) {
+        $roky[]= $interval*$po . ($po>1 ? '...' : '');
+      }
+//      debug($kurz,"$od-$do");
+      $color= array('grey','darkgreen','blue');
+      $ucastnik= array('jen mrop','pak firming','pak jiné akce');
+      for ($x= 0; $x<=count($color)-1; $x++) {
+        $datax= implode(',',$data[$x]);
+        $serie= (object)array('name'=>$ucastnik[$x],'data'=>$datax,'color'=>$color[$x]);
+        $chart->series[$x]= $serie;
+      }
+      $chart->yAxis= (object)array('title'=>(object)array('text'=>'účastník'),
+          'categories'=>$ucastnik);
+      $chart->xAxis= (object)array('categories'=>$roky,
+          'title'=>(object)array('text'=>'stáří '));
+      if (isset($chart->plotOptions->column->stacking)){
+        $chart->tooltip= (object)array(
+          'pointFormat'=>"<span>{series.name}</span>: <b>{point.y}</b> ({point.percentage:.0f}%)<br/>");
+        if ($chart->plotOptions->column->stacking=='value' && $par->prc) {
+          $chart->plotOptions->column->stacking= 'percent';
+        }
+      }
+      break;
     case 'pred_mrop':
     case 'po_mrop':
       $chart->title= $par->type=='pred_mrop'
@@ -2718,7 +2776,7 @@ function dot_roky () { trace();
 #   par.org - organizátor akce
 function dot_prehled ($rok_or_akce,$par,$title='',$vypis='',$export=0,$hnizdo=0) { trace();
   global $VPS;
-  debug($par);
+//  debug($par);
   $y= (object)array('html'=>'');
   $org= isset($par->org) ? $par->org : 1;
   if ( $par->par1=='rok') {

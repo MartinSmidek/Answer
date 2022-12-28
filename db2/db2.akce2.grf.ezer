@@ -73,6 +73,8 @@ menu m {type:'left', format:'f+'
         chart:{chart:'bar',plotOptions:{series:{stacking:'normal'}}}}}
     item  {title:"[fa-line-chart] postupný součet přihlášek", par:{type:'prihlasky',ukaz:'celkem',pro:'mrop'}}
     item  {title:"[fa-line-chart] ... přírůstky přihlášek",   par:{type:'prihlasky',ukaz:'prubeh',pro:'mrop'}}
+    item  {title:"[fa-bar-chart] Aktuální věk všech iniciovaných",  par:{type:'vek',tag:'i',
+        chart:{chart:'column',plotOptions:{column:{stacking:'value'}}}}}
   }
   menu {title:'Infografika FIRMING',type:'group'                                            skill:'y;f'
     item  {title:"[fa-line-chart] postupný součet přihlášek", par:{type:'prihlasky',ukaz:'celkem',pro:'firm'}}
@@ -80,8 +82,11 @@ menu m {type:'left', format:'f+'
   }
   func onclick(i:ezer) {  var y:object, par:object
     if (i) { last_par= i.par; last_menu= i; }
+    info.display(0,'i|d');
+    if (i.par.tag) info.display(1,i.par.tag) else info.display(1,'d');
     info.header(last_menu);
     info.spinner(last_menu);
+    last_par.po= info.po;
     last_par.od= info.od;
     last_par.do= info.do;
     last_par.prc= info.prc;
@@ -104,11 +109,14 @@ form _right [,,*,50] {
   label head  [10,0,*,50]  { title:'' }
   label chart [10,50,800,400] { title:'' }
   label note  [50,450,700,500] { title:'' }
-  // parametry
-  field od [-305,5,40,] { title:'graf od roku', format:'tr', css:'bila' }
-  field do [-215,5,40,] { title:'do roku', format:'tr', css:'bila' }
+  // podrobnost
+  field po [-305,5,20,] { tag:'i', title:'interval věku: ', format:'tr', css:'bila', value:'10' }
+  // období a organizace
+  field od [-305,5,40,] { tag:'d', title:'graf od roku', format:'tr', css:'bila' }
+  field do [-215,5,40,] { tag:'d', title:'do roku', format:'tr', css:'bila' }
+  select org [-35,5,120,] { tag:'d', title:'pro', format:'t', css:'bila' }
+  // procenta ?
   check prc [-178,4,30,] { title:'%', format:'t', css:'bila' }
-  select org [-35,5,120,] { title:'pro', format:'t', css:'bila' }
   button [-7,5,20,] {title:'[fa-refresh]' 
     func onclick() { 
       last_menu.click(last_menu);
