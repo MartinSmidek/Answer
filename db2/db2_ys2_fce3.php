@@ -737,6 +737,7 @@ function chart_akce($par) { debug($par,'chart_akce');
   $y= (object)array('err'=>'','note'=>' ');
   $org= $par->org; //255;
   $letos= date('Y');
+  $mrop_vek= $mrop_joins= ''; // pro odlišení cases vek_rel a vek_abs
   $chart= $par->chart ?: (object)array();
   if (!isset($chart->series))
     $chart->series= array();
@@ -938,30 +939,40 @@ function chart_akce($par) { debug($par,'chart_akce');
       }
       break;
     // specifické pro MROP
-    case 'vek': // $par->po udává shlukování věků
-      $date= '2023-09-27';
-//      $date= date('Y-m-d');
+    case 'vek_rel': // věk v době iniciace
+      $mrop_vek= "CONCAT(iniciace,'-09-25')";
+      $mrop_joins= "
+        JOIN spolu USING (id_osoba) 
+        JOIN pobyt USING (id_pobyt)
+        JOIN akce ON id_akce=id_duakce AND YEAR(datum_od)=iniciace AND mrop=1";
+      $mrop_k= "datu iniciace";
+    case 'vek_abs': // věk nyní
+      if (!$mrop_joins) {
+        $now= date('Y-m-d');
+        $mrop_vek= "'$now'";
+        $mrop_k= sql_date1($now);
+      }
       $po= $par->po ?: 10;
       $data= array(array(),array()); // stáří non-firming, firming
       $od= $par->od ?: 2004;
       $do= $par->do ?: $letos;
-//      $od= 9999; $do= 0;
-      $chart->title= "Iniciovaní v letech $od-$do ... "."skladba a věk k ".sql_date1($date);
+      $od_vek= 9999; $do_vek= 0;
+      $celkem= 0;
       $qv= pdo_qry("
         SELECT 
-          FLOOR(IF(MONTH(narozeni),DATEDIFF('$date',narozeni)/365.2425,
-            YEAR('$date')-YEAR(narozeni))/$po) AS _vek,
+          FLOOR(IF(MONTH(narozeni),DATEDIFF($mrop_vek,narozeni)/365.2425,
+            YEAR($mrop_vek)-YEAR(narozeni))/$po) AS _vek,
           IF(firming>0,1,IF(
-            (SELECT COUNT(*) FROM pobyt
-            LEFT JOIN spolu USING (id_pobyt)
-            LEFT JOIN osoba AS x USING (id_osoba) 
-            LEFT JOIN akce AS a ON id_akce=a.id_duakce 
-            WHERE a.firm=0 AND a.mrop=0 AND a.zruseno=0 AND a.spec=0
-              AND YEAR(a.datum_od)>=x.iniciace 
-              AND x.id_osoba=osoba.id_osoba)>0,2,0)
+            ( SELECT COUNT(*) FROM pobyt
+              LEFT JOIN spolu USING (id_pobyt)
+              LEFT JOIN osoba AS x USING (id_osoba) 
+              LEFT JOIN akce AS a ON id_akce=a.id_duakce 
+              WHERE a.firm=0 AND a.mrop=0 AND a.zruseno=0 AND a.spec=0
+                AND YEAR(a.datum_od)>=x.iniciace 
+                AND x.id_osoba=osoba.id_osoba)>0,2,0)
             ) AS _firm,
           COUNT(*) AS _pocet
-        FROM osoba
+        FROM osoba $mrop_joins
         WHERE iniciace BETWEEN $od AND $do
         GROUP BY _vek,_firm
         HAVING _vek BETWEEN 1 AND 100/$po
@@ -969,22 +980,24 @@ function chart_akce($par) { debug($par,'chart_akce');
       ");
       while ($qv && (list($vek,$firm,$pocet)=pdo_fetch_row($qv))) {
         $data[$firm][$vek*$po]= $pocet;
-        $od= min($od,$vek);
-        $do= max($do,$vek);
+        $od_vek= min($od_vek,$vek);
+        $do_vek= max($do_vek,$vek);
+        $celkem+= $pocet;
       }
       debug($data,'data');
       $roky= array(); // názvy intervalů 20..
-      for ($interval= $od; $interval<=$do; $interval++) {
+      for ($interval= $od_vek; $interval<=$do_vek; $interval++) {
         $roky[]= $interval*$po . ($po>1 ? '...' : '');
       }
 //      debug($kurz,"$od-$do");
       $color= array('grey','darkgreen','blue');
-      $ucastnik= array('jen mrop','pak firming','pak jiné akce');
+      $ucastnik= array('jen mrop','pak firming','pak jiné naše akce');
       for ($x= 0; $x<=count($color)-1; $x++) {
         $datax= implode(',',$data[$x]);
         $serie= (object)array('name'=>$ucastnik[$x],'data'=>$datax,'color'=>$color[$x]);
         $chart->series[$x]= $serie;
       }
+      $chart->title= "Iniciovaní ($celkem) v letech $od-$do ... "."skladba a věk k $mrop_k";
       $chart->yAxis= (object)array('title'=>(object)array('text'=>'účastník'),
           'categories'=>$ucastnik);
       $chart->xAxis= (object)array('categories'=>$roky,

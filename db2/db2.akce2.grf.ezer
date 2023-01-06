@@ -73,7 +73,9 @@ menu m {type:'left', format:'f+'
         chart:{chart:'bar',plotOptions:{series:{stacking:'normal'}}}}}
     item  {title:"[fa-line-chart] postupný součet přihlášek", par:{type:'prihlasky',ukaz:'celkem',pro:'mrop'}, tag:'d'}
     item  {title:"[fa-line-chart] ... přírůstky přihlášek",   par:{type:'prihlasky',ukaz:'prubeh',pro:'mrop'}, tag:'d'}
-    item  {title:"[fa-bar-chart] Aktuální věk všech iniciovaných",  par:{type:'vek',tag:'i|d',
+    item  {title:"[fa-bar-chart] Aktuální věk iniciovaných",  par:{type:'vek_abs',tag:'i|d',
+        chart:{chart:'column',plotOptions:{column:{stacking:'value'}}}}}
+    item  {title:"[fa-bar-chart] Věk na jejich iniciaci",     par:{type:'vek_rel',tag:'i|d',
         chart:{chart:'column',plotOptions:{column:{stacking:'value'}}}}}
   }
   menu {title:'Infografika FIRMING',type:'group'                                            skill:'y;f'
