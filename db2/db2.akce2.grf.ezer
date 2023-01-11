@@ -77,6 +77,8 @@ menu m {type:'left', format:'f+'
         chart:{chart:'column',plotOptions:{column:{stacking:'value'}}}}}
     item  {title:"[fa-bar-chart] Věk na jejich iniciaci",     par:{type:'vek_rel',tag:'i|d',
         chart:{chart:'column',plotOptions:{column:{stacking:'value'}}}}}
+    item  {title:"[fa-bar-chart] ... model",                  par:{type:'vek_rnd',tag:'i|d',
+        chart:{chart:'column',plotOptions:{column:{stacking:'value'}}}}}
   }
   menu {title:'Infografika FIRMING',type:'group'                                            skill:'y;f'
     item  {title:"[fa-line-chart] postupný součet přihlášek", par:{type:'prihlasky',ukaz:'celkem',pro:'firm'}}

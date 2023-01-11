@@ -47,24 +47,24 @@ menu m {type:'left', format:'f+', active:*
       ,dsc:'Sestava ukazuje údaje o účastnících na vybraných akcích za uplynulé 4 roky.<br>'
       ,tit:'věk:4,účastníků:10,pečovatelů:10',fld:'_vek,_uca,_pec',ord:'_vek'}}
   }
-//  menu ms /* ms */ {title:'STATISTIKA MS',type:'group'                             skill:'faa:m'
-//    item {title:'Vytvoř #stat_ms'                                 par:°{op:'gen'}  skill:'r|m'}
-//    item {title:'[fa-birthday-cake] ... jak jsou staří'           par:°{op:'see',typ:'v',org:'3'} }
-//    item {title:'... ... YS/FA'                                   par:°{op:'see-o',typ:'v'} }
-//    item {title:'[fa-map-o] ... v kterém místě ČR žijí'           par:°{op:'see',typ:'g',org:'3'} }
-//    item {title:'... ... YS/FA'                                   par:°{op:'see-o',typ:'g'} }
-//    item {title:'[fa-home] ... v jak velké obci žijí'             par:°{op:'see',typ:'o',org:'3'} }
-//    item {title:'... ... YS/FA'                                   par:°{op:'see-o',typ:'o'} }
-//    item {title:'[fa-bar-chart] ... info z akcí YS+FA'            par:°{op:'see',typ:'s',org:'3'} }
-//    proc onclick (i) {
-//      mapa.close(1);
-//      panel.display(2,'i');
-//      menu_item.set(i); menu_par.set(i.par); clear;
-//      the_vypis.set(replace_fa(conc(i.owner.title,' - ',i.title)));
-//      info.fill(the_vypis.get,' '); info.msg.set('');
-//      info.append(ask('sta2_ms_stat',i.par));
-//    }
-//  }
+  menu ms /* ms */ {title:'STATISTIKA MS',type:'group'                             skill:'faa:m'
+    item {title:'Vytvoř #stat_ms'                                 par:°{op:'gen'}  skill:'r|m'}
+    item {title:'[fa-birthday-cake] ... jak jsou staří'           par:°{op:'see',typ:'v',org:'3'} }
+    item {title:'... ... YS/FA'                                   par:°{op:'see-o',typ:'v'} }
+    item {title:'[fa-map-o] ... v kterém místě ČR žijí'           par:°{op:'see',typ:'g',org:'3'} }
+    item {title:'... ... YS/FA'                                   par:°{op:'see-o',typ:'g'} }
+    item {title:'[fa-home] ... v jak velké obci žijí'             par:°{op:'see',typ:'o',org:'3'} }
+    item {title:'... ... YS/FA'                                   par:°{op:'see-o',typ:'o'} }
+    item {title:'[fa-bar-chart] ... info z akcí YS+FA'            par:°{op:'see',typ:'s',org:'3'} }
+    proc onclick (i) {
+      mapa.close(1);
+      panel.display(2,'i');
+      menu_item.set(i); menu_par.set(i.par); clear;
+      the_vypis.set(replace_fa(conc(i.owner.title,' - ',i.title)));
+      info.fill(the_vypis.get,' '); info.msg.set('');
+      info.append(ask('sta2_ms_stat',i.par));
+    }
+  }
 //  menu mg {title:'MAPY MS' type:'group'                                          skill:'faa:m'
 //    item {title:'[fa-globe] mapa - všichni v ČR'        par:°{mapa:'malé obce',od:0,do:9999999} }
 //    item {title:'[fa-globe] mapa - obce ..580'          par:°{mapa:'malé obce',od:0,do:580} }
@@ -88,40 +88,40 @@ menu m {type:'left', format:'f+', active:*
 //      [ mapa.modal(490,110,i.par.mapa,0,1) ];
 //    }
 //  }
-//  menu mr /* mrop */ {title:'STATISTIKA MROP' type:'group'                                    skill:'faa:m'
-//    item {title:'Vytvoř #psc,#obec,#okres,#kraj'                  par:°{op:'psc'}  skill:'r|m'}   
-//    item {title:'Vytvoř #stat (dlouhý výpočet)'                   par:°{op:'gen'}  skill:'r|m'}
-//    item {title:'Přepočítej v #stat položku akce'                 par:°{op:'gen',x:'a'}  skill:'r|m'}
-//    item {title:'[fa-birthday-cake] ... jak jsou staří'           par:°{op:'see',  typ:'v'} }
-//    item {title:' ... ... vývoj v čase'                           par:°{op:'see-t',typ:'v'} }
-//    item {title:'[fa-map-o] ... v kterém místě ČR žijí'           par:°{op:'see',  typ:'g'} }
-//    item {title:' ... ... vývoj v čase'                           par:°{op:'see-t',typ:'g'} }
-//    item {title:'[fa-home] ... v jak velké obci žijí'             par:°{op:'see',  typ:'o'} }
-//    item {title:' ... ... verze 2.0'                              par:°{op:'see2', typ:'o'} }
-//    item {title:' ... ... vývoj v čase'                           par:°{op:'see-t',typ:'o'} }
-//    item {title:'[fa-bar-chart] ... info z akcí YS+FA+(CPR/MS)'   par:°{op:'see',  typ:'s'} }
-//    item {title:' ... ... vývoj v čase'                           par:°{op:'see-t',typ:'s'} }
-//    item {title:'[fa-recycle] souvislosti mezi akcemi'            par:°{op:'see',  typ:'x'} }
-//    item {title:' ... ... vývoj v čase (nejasný smysl)'           par:°{op:'see-t',typ:'x'} }
-////    item {title:'... ročníky, cesty (bez #stat)', par:°{mrop:2002}
-////      proc onclick (i) {
-////        mapa.close(1);
-////        panel.display(2,'i');
-////        menu_item.set(i); menu_par.set(i.par); clear;
-////        the_vypis.set(conc(i.owner.title,' - ',i.title));
-////        info.fill(the_vypis.get,' '); info.msg.set('');
-////        info.append(ask('sta2_mrop',i.par));
-////      }
-////    }
-//    proc onclick (i) {
-//      mapa.close(1);
-//      panel.display(2,'i');
-//      menu_item.set(i); menu_par.set(i.par); clear;
-//      the_vypis.set(replace_fa(conc(i.owner.title,' - ',i.title)));
-//      info.fill(the_vypis.get,' '); info.msg.set('');
-//      info.append(ask('sta2_mrop_stat',i.par));
+  menu mr /* mrop */ {title:'STATISTIKA MROP' type:'group'                                    skill:'faa:m'
+    item {title:'Vytvoř #psc,#obec,#okres,#kraj'                  par:°{op:'psc'}  skill:'r|m'}   
+    item {title:'Vytvoř #stat (dlouhý výpočet)'                   par:°{op:'gen'}  skill:'r|m'}
+    item {title:'Přepočítej v #stat položku akce'                 par:°{op:'gen',x:'a'}  skill:'r|m'}
+    item {title:'[fa-birthday-cake] ... jak jsou staří'           par:°{op:'see',  typ:'v'} }
+    item {title:' ... ... vývoj v čase'                           par:°{op:'see-t',typ:'v'} }
+    item {title:'[fa-map-o] ... v kterém místě ČR žijí'           par:°{op:'see',  typ:'g'} }
+    item {title:' ... ... vývoj v čase'                           par:°{op:'see-t',typ:'g'} }
+    item {title:'[fa-home] ... v jak velké obci žijí'             par:°{op:'see',  typ:'o'} }
+    item {title:' ... ... verze 2.0'                              par:°{op:'see2', typ:'o'} }
+    item {title:' ... ... vývoj v čase'                           par:°{op:'see-t',typ:'o'} }
+    item {title:'[fa-bar-chart] ... info z akcí YS+FA+(CPR/MS)'   par:°{op:'see',  typ:'s'} }
+    item {title:' ... ... vývoj v čase'                           par:°{op:'see-t',typ:'s'} }
+    item {title:'[fa-recycle] souvislosti mezi akcemi'            par:°{op:'see',  typ:'x'} }
+    item {title:' ... ... vývoj v čase (nejasný smysl)'           par:°{op:'see-t',typ:'x'} }
+//    item {title:'... ročníky, cesty (bez #stat)', par:°{mrop:2002}
+//      proc onclick (i) {
+//        mapa.close(1);
+//        panel.display(2,'i');
+//        menu_item.set(i); menu_par.set(i.par); clear;
+//        the_vypis.set(conc(i.owner.title,' - ',i.title));
+//        info.fill(the_vypis.get,' '); info.msg.set('');
+//        info.append(ask('sta2_mrop',i.par));
+//      }
 //    }
-//  }
+    proc onclick (i) {
+      mapa.close(1);
+      panel.display(2,'i');
+      menu_item.set(i); menu_par.set(i.par); clear;
+      the_vypis.set(replace_fa(conc(i.owner.title,' - ',i.title)));
+      info.fill(the_vypis.get,' '); info.msg.set('');
+      info.append(ask('sta2_mrop_stat',i.par));
+    }
+  }
 //  menu g {title:'MAPY MROP' type:'group'                                          skill:'faa:m'
 //    var men: number
 //    item {title:'[fa-globe] mapa - skupiny v ČR'        par:°{mapa:'skupiny'} }

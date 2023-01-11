@@ -927,7 +927,7 @@ function chart_akce($par) { debug($par,'chart_akce');
         $chart->series[$x]= $serie;
       }
       $chart->yAxis= (object)array('title'=>(object)array('text'=>'účast na kurzu jako'),
-          'categories'=>$kurz_y);
+          'tickInterval'=>10,'min'=>0); // 'categories'=>$kurz_y);
       $chart->xAxis= (object)array('categories'=>$roky,
           'title'=>(object)array('text'=>'rok kurzu '));
       if (isset($chart->plotOptions->column->stacking)){
@@ -939,6 +939,68 @@ function chart_akce($par) { debug($par,'chart_akce');
       }
       break;
     // specifické pro MROP
+    case 'vek_rnd': // modelování věkové struktury - po 5 letech
+      $po= $par->po ?: 10;
+      $od= $par->od ?: 2004;
+      $do= $par->do ?: $letos;
+      $od_vek= 9999; $do_vek= 0; // pozice v intervalu
+      $celkem= 0;
+      $starych= array();
+      // modelace počtu účastníků podle stáří: vek -> pocet
+      //            25   30   35   40  45  50  55 60  65  70   75   80 85  
+      $dist= array(4.7,12.6,20.4,17.3, 15,9.8,4.1, 3,1.2,0.5, 0.5, 0.1, 0);
+      $dist_od= 25; $dist_do= 89; $dist_po= 5;
+      $last= 0;
+      for ($i= 0; $i<count($dist); $i++) {
+        $pocet= $dist[$i];
+        $vek= $dist_od+$dist_po*$i;
+        $delta= ($pocet-$last)/$dist_po;
+        for ($r= $vek; $r<$vek+$dist_po; $r++) {
+          $starych[$r]= ($pocet+$delta)/$dist_po;
+        }
+        $last= $pocet;
+      }
+//      debug($starych,'starych');
+      // přepočet na intervaly dat po $po
+      $data= array(array()); // stáří 
+      for ($i= 0; $i<100/$po; $i++) {
+        $pocet= 0;
+        for ($r= $i*$po; $r<($i+1)*$po; $r++) {
+          $pocet+= $starych[$r];
+        }
+        if ($pocet) {
+          $celkem+= $data[0][$i*$po]= round($pocet,0);
+          $od_vek= min($od_vek,$i);
+          $do_vek= max($do_vek,$i);
+        }
+      }
+      $roky= array(); // názvy intervalů 20..
+      for ($interval= $od_vek; $interval<$do_vek; $interval++) {
+        $roky[]= $interval*$po . ($po>1 ? '...' : '');
+      }
+//      debug($data,'data');
+      $color= array('grey');
+      $osay= array();
+      $ucastnik= array('odhad mrop');
+      for ($x= 0; $x<=count($color)-1; $x++) {
+        $datax= implode(',',$data[$x]);
+        $serie= (object)array('name'=>$ucastnik[$x],'data'=>$datax,'color'=>$color[$x]);
+        $chart->series[$x]= $serie;
+      }
+      $chart->title= "Předpoklad iniciovaných ($celkem)"; // v letech $od-$do ... "."skladba a věk k $mrop_k";
+      $chart->yAxis= (object)array('title'=>(object)array('text'=>'účastníků'),'tickInterval'=>10);
+//      $chart->yAxis= (object)array('title'=>(object)array('text'=>'účastníků'),
+//          'categories'=>$osay);
+      $chart->xAxis= (object)array('categories'=>$roky,
+          'title'=>(object)array('text'=>'stáří '));
+      if (isset($chart->plotOptions->column->stacking)){
+        $chart->tooltip= (object)array(
+          'pointFormat'=>"<span>{series.name}</span>: <b>{point.y}</b> ({point.percentage:.0f}%)<br/>");
+        if ($chart->plotOptions->column->stacking=='value' && $par->prc) {
+          $chart->plotOptions->column->stacking= 'percent';
+        }
+      }
+      break;
     case 'vek_rel': // věk v době iniciace
       $mrop_vek= "CONCAT(iniciace,'-09-25')";
       $mrop_joins= "
@@ -953,9 +1015,10 @@ function chart_akce($par) { debug($par,'chart_akce');
         $mrop_k= sql_date1($now);
       }
       $po= $par->po ?: 10;
-      $data= array(array(),array()); // stáří non-firming, firming
+      $data= array(array(),array(),array()); // stáří non-firming, firming
       $od= $par->od ?: 2004;
       $do= $par->do ?: $letos;
+      $roku= $do - $od + 1;
       $od_vek= 9999; $do_vek= 0;
       $celkem= 0;
       $qv= pdo_qry("
@@ -975,15 +1038,19 @@ function chart_akce($par) { debug($par,'chart_akce');
         FROM osoba $mrop_joins
         WHERE iniciace BETWEEN $od AND $do
         GROUP BY _vek,_firm
-        HAVING _vek BETWEEN 1 AND 100/$po
+        HAVING _vek BETWEEN 0 AND 100/$po
         ORDER BY _vek
       ");
-      while ($qv && (list($vek,$firm,$pocet)=pdo_fetch_row($qv))) {
-        $data[$firm][$vek*$po]= $pocet;
-        $od_vek= min($od_vek,$vek);
-        $do_vek= max($do_vek,$vek);
+      while ($qv && (list($vek_po,$firm,$pocet)=pdo_fetch_row($qv))) {
+//        $pocet= $pocet/$roku; 
+//        $firm= 0;
+        if (!isset($data[$firm][$vek_po*$po])) $data[$firm][$vek_po*$po]= 0;
+        $data[$firm][$vek_po*$po]+= $pocet;
+        $od_vek= min($od_vek,$vek_po);
+        $do_vek= max($do_vek,$vek_po);
         $celkem+= $pocet;
       }
+      $celkem= round($celkem);
       debug($data,'data');
       $roky= array(); // názvy intervalů 20..
       for ($interval= $od_vek; $interval<=$do_vek; $interval++) {
@@ -998,8 +1065,9 @@ function chart_akce($par) { debug($par,'chart_akce');
         $chart->series[$x]= $serie;
       }
       $chart->title= "Iniciovaní ($celkem) v letech $od-$do ... "."skladba a věk k $mrop_k";
-      $chart->yAxis= (object)array('title'=>(object)array('text'=>'účastník'),
-          'categories'=>$ucastnik);
+      $chart->yAxis= (object)array('title'=>(object)array('text'=>'účastníků'),'tickInterval'=>10);
+//      $chart->yAxis= (object)array('title'=>(object)array('text'=>'účastník'),
+//          'categories'=>$ucastnik);
       $chart->xAxis= (object)array('categories'=>$roky,
           'title'=>(object)array('text'=>'stáří '));
       if (isset($chart->plotOptions->column->stacking)){
@@ -1081,7 +1149,7 @@ function chart_akce($par) { debug($par,'chart_akce');
         $chart->series[$x]= $serie;
       }
       $chart->yAxis= (object)array('title'=>(object)array('text'=>'počet účastníků MROP v daném roce'),
-          'categories'=>$mrop_y);
+          'tickInterval'=>10,'min'=>0); // 'categories'=>$mrop_y,
       $chart->xAxis= (object)array('categories'=>$roky,//'labels'=>(object)array('min'=>'5'),
           'title'=>(object)array('text'=>'rok konání MROP '));
       if (isset($chart->plotOptions->series->stacking)){
@@ -1132,7 +1200,7 @@ function chart_akce($par) { debug($par,'chart_akce');
         $chart->series[$x]= $serie;
       }
       $chart->yAxis= (object)array('title'=>(object)array('text'=>'počet účastníků MROP v daném roce'),
-          'categories'=>$mrop_y);
+          'tickInterval'=>10,'min'=>0); //'categories'=>$mrop_y);
       $chart->xAxis= (object)array('categories'=>$roky,//'labels'=>(object)array('min'=>'5'),
           'title'=>(object)array('text'=>'rok konání MROP '));
       if (isset($chart->plotOptions->series->stacking)){
@@ -1188,7 +1256,7 @@ function chart_akce($par) { debug($par,'chart_akce');
         $chart->series[$x]= $serie;
       }
       $chart->yAxis= (object)array('title'=>(object)array('text'=>'počet účastníků MROP v daném roce'),
-          'categories'=>$mrop_y);
+          'tickInterval'=>10,'min'=>0); // 'categories'=>$mrop_y);
       $chart->xAxis= (object)array('categories'=>$roky,//'labels'=>(object)array('min'=>'5'),
           'title'=>(object)array('text'=>'rok konání MROP '));
       if (isset($chart->plotOptions->series->stacking)){
@@ -1244,7 +1312,7 @@ function chart_akce($par) { debug($par,'chart_akce');
         $chart->series[$x]= $serie;
       }
       $chart->yAxis= (object)array('title'=>(object)array('text'=>'počet účastníků MROP v daném roce'),
-          'categories'=>$mrop_y);
+          'tickInterval'=>10,'min'=>0); // 'categories'=>$mrop_y);
       $chart->xAxis= (object)array('categories'=>$roky,//'labels'=>(object)array('min'=>'5'),
           'title'=>(object)array('text'=>'rok konání MROP '));
       if (isset($chart->plotOptions->series->stacking)){
