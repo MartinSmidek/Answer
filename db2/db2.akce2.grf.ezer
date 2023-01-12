@@ -34,9 +34,9 @@ menu m {type:'left', format:'f+'
         chart:{chart:'column',plotOptions:{column:{stacking:'percent'}}}}}
     item  {title:"[fa-bar-chart] Délka manželství nováčků", par:{type:'novacci',pro:'ms', tag:'o|d',
         chart:{chart:'column',plotOptions:{column:{stacking:'value'}}}}}
-    item skup {title:"[fa-line-chart] Velikost a počet skupinek", par:{type:'skupinky',pro:'ms'}, tag:'o|d'}
-    item prih {title:"[fa-line-chart] postupný součet přihlášek", par:{type:'prihlasky',ukaz:'celkem',pro:'ms'}, tag:'o|d'}
-    item  {title:"[fa-line-chart] ... přírůstky přihlášek",   par:{type:'prihlasky',ukaz:'prubeh',pro:'ms'}, tag:'o|d'}
+    item skup {title:"[fa-line-chart] Velikost a počet skupinek", par:{type:'skupinky',pro:'ms', tag:'o|d'}}
+    item prih {title:"[fa-line-chart] postupný součet přihlášek", par:{type:'prihlasky',ukaz:'celkem',pro:'ms', tag:'o|d'}}
+    item  {title:"[fa-line-chart] ... přírůstky přihlášek", par:{type:'prihlasky',ukaz:'prubeh',pro:'ms', tag:'o|d'}}
   }
   // fa-?-chart: area|bar|line|pie
   // graf=line|bar|bar%|pie, x=od-do, y=vek|pocet [,z=typ-ucasti]
