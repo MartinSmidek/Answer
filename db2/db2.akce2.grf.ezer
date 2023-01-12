@@ -9,7 +9,6 @@
 use info: form _right
 func onfirstfocus() { 
   info.Init();
-  js.highcharts_load();
   // ys:1 fa:2 cr:4 ms:8
   switch (my_org) {
     case 1: case 2: info.org.selects("YMCA Setkání:1,YMCA Familia:2,Setkání + Familia:3"); break;
@@ -56,7 +55,10 @@ menu m {type:'left', format:'f+'
       last_par.org= info.org.key();
       y= php.chart_akce2(last_par);
       if (y.err) alert(y.err)
-      else { js.highcharts_show(y.chart); info.fill('',y.note); }
+      else { 
+        js.highcharts_load();
+        js.highcharts_show(y.chart); info.fill('',y.note); 
+      }
       info.spinner(0);
     }
   }
@@ -101,6 +103,7 @@ menu m {type:'left', format:'f+'
     if (y.err) 
       alert(y.err)
     else {
+      js.highcharts_load();
       js.highcharts_show(y.chart);
       info.fill('',y.note);
     }
@@ -129,6 +132,7 @@ form _right [,,*,50] {
   // funkce
   func Init() {
     chart= `<div id="container" style="width:800px; height:400px;"></div>`;
+    js.highcharts_load();
   }
   func header(i:ezer) { var i_owner:ezer
     clear(); i_owner= i.owner();
