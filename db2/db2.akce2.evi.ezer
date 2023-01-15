@@ -89,7 +89,7 @@ menu m {type:'left', format:'f-'
     item   {title:'[fa-child]děti'              par:°{lst:'o',tit:'všechny děti, co ',
                                                 cnd:"TIMESTAMPDIFF(YEAR,narozeni,NOW())<18"}, skill:'yae;fae;cae'}
     item   {title:'[fa-male fa-red]iniciovaní'  par:°{lst:'o',tit:'iniciovaní muži, co ',
-                                                cnd:"o.iniciace>0"}, skill:'yaa:c;faa:c'}
+                                                cnd:"o.iniciace>0"}, skill:'mrop;yaa:c;faa:c'}
     item w {title:'[fa-beer fa-red]s webovými právy'   par:°{lst:'o',tit:'práva pro úpravu webů',
                                                 cnd:"o.web_level!=''"},skill:'a'}
     item t {title:'[fa-wrench fa-red](test)'    par:°{lst:'o',tit:'testovací osoby, co ',
@@ -233,7 +233,7 @@ form _lst [,,370,*] {
       case 'f': idf= _idr; brow= bf; if (_idr) bf.init_queries(0); bf_reload(_cnd); break;
       case 'r': idr= _idr; brow= br; if (_idr) br.init_queries(0); br_reload(_cnd); break;
     }
-    page.ctx_enable(_mode)                      // uprav kontextové menu 
+    if (has_skill('fad|yad|cad')) page.ctx_enable(_mode) // uprav kontextové menu 
   }
   proc refresh() {                              // zobrazí rodiny či osoby podle starých podmínek
     _reload(mode.get,cnd.get,ido.get,idr.get)   //   s případnou inicializací
@@ -713,8 +713,10 @@ form _page {
     rod.r_geo_ok= lst.mode=='r' && lst.brow.lat ? 'ok' : '';
     // přepínání mezi mazat/obnovit
     mazat= page.rod.r_deleted ? 0 : 1; 
-    cmd.r_smaz.display(mazat);
-    cmd.r_obnov.display(!mazat);
+    if (has_skill('yaa+|faa+|caa+')) {
+      cmd.r_smaz.display(mazat);
+      cmd.r_obnov.display(!mazat);
+    }
   }
 //  func rod_load(idr) { var ret: object, mazat:number
 //    if (evi_barvit_zmeny) {

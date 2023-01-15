@@ -92,6 +92,10 @@ menu m {type:'left', format:'f+'
     item  {title:"[fa-line-chart] postupný součet přihlášek", par:{type:'prihlasky',ukaz:'celkem',pro:'firm'}}
     item  {title:"[fa-line-chart] ... přírůstky přihlášek",   par:{type:'prihlasky',ukaz:'prubeh',pro:'firm'}}
   }
+  menu {title:'Infografika EROP',type:'group'                                            skill:'y;f'
+    item  {title:"[fa-bar-chart] Aktuální věk neiniciovaných",par:{type:'vek_abs_nemrop',tag:'i|d',
+        chart:{chart:'column',plotOptions:{column:{stacking:'value'}}}}}
+  }
   func onclick(i:ezer) {  var y:object, par:object
     if (i) { last_par= i.par; last_menu= i; }
     info.display(0,'.*');
