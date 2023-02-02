@@ -1253,6 +1253,7 @@ form _esady  {
       dopis_id.set(0);
     | dopis_id.set(id_dopis.get);
       regenerate.display(specialni.get);
+      degenerate.display(specialni.get);
       maily.browse_load(conc("etmm.id_dopis=",dopis_id.get));
       [ eq(dopis_id.get,old_dopis)
       | zkus.set(sys('user','options','email'));
@@ -1343,12 +1344,21 @@ form _esady  {
 //    }
 //  }
   # ------------------- přegenerování jednoho potvrzení
-  button regenerate [238,375,,] { title:'přegenerovat potvrzení', style:"z-index:2", format:'d'
+  button regenerate [238,375,,] { title:'přegenerovat potvrzení', style:"z-index:2", format:'n'
     proc onclick() { var ret:object
       ret.set(ask('mail2_lst_regen_spec',maily.id_dopis.get,maily.id_mail.get,maily.id_clen.get));
       alert(ret.msg);
       maily.browse_row;
       maily.onrowclick;
+  }}
+  button degenerate [120,375,,] { title:'upravit potvrzení', style:"z-index:2", format:'n'
+    func onclick() { var ret:object
+      if (CORR.Init(maily.id_clen)) {
+        ret= php.mail2_lst_regen_spec(maily.id_dopis,maily.id_mail,maily.id_clen,CORR.x);
+        alert(ret.msg);
+        maily.browse_row();
+        maily.onrowclick();
+      }
   }}
   # ------------------- informace
   label msg [0,344,377,60]
@@ -1428,6 +1438,37 @@ form _esady  {
   proc reload2() {
     texty.browse_count;
     { dopis_id.get; texty.raise('onrowclick',dopis_id.get) | texty.raise('onrowclick') }
+  }
+}
+# ======================================================================> opravené položky potvrzení
+panel CORR [0,0,200,200] { title:' Úprava položek potvrzení', type:'popup', css:'dialog'
+  var x= {darce:'?'}
+  func Init(ido) { var os:object
+    os= php.db2_get_osoba(ido);
+    copy_by_name(os,o);
+    return panel.modal(352,161); 
+  }
+  use o: form _o
+  form _o { 
+    radio sex [40,5,100,20] {
+      case [0,2,47,] { title:'muž', expr:'1' }
+      case [50,2,47,] { title:'žena', expr:'2' }
+//      proc onchange() { }
+    }
+    field jmeno    [40,30,100,] { title:'jméno' }
+    field prijmeni [40,55,100,] { title:'příjmeni' }
+    field _ulice   [40,80,147,] { title:'ulice' }
+    field _psc    [40,105,40,] { title:'psč' }
+    field _obec   [40,131,147,] { title:'obec' }
+    button [22,170,,] { title:'[fa-save] přegeneruj'
+      func onclick() {
+        x= {jmeno:jmeno};
+        panel.hide(1); 
+    }}
+    button [122,170,,] { title:'[fa-undo] Zpět' 
+      func onclick() {
+        panel.hide(0); 
+    }}
   }
 }
 

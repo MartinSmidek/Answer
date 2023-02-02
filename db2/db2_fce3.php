@@ -130,6 +130,26 @@ function db2_oso_show($prijmeni,$jmeno,$n) {
 //                                                         debug($ret,'db2_oso_show');
   return $ret;
 }
+# ------------------------------------------------------------------------------------ db2 get_osoba
+# vrátí objekt s osobními údaji dané osoby - s uvážení rodinných údajů
+function db2_get_osoba($ido) {
+  $oso= null;
+  $qr= pdo_qry("
+    SELECT prijmeni,jmeno,sex,
+      CONCAT(TRIM(prijmeni),' ',TRIM(jmeno)) AS _name,
+      IF(o.adresa,o.ulice,r.ulice) AS _ulice, IF(o.adresa,o.stat,r.stat) AS _stat,
+      IF(o.adresa,o.psc,r.psc) AS _psc, IF(o.adresa,o.obec,r.obec) AS _obec,
+      IF(o.kontakt AND o.email!='',o.email,r.emaily) AS _email,nomail,
+      IF(o.kontakt,o.telefon,IFNULL(r.telefony,'')) AS _telefon,
+      narozeni,TIMESTAMPDIFF(YEAR,narozeni,NOW()) AS _vek
+    FROM osoba AS o
+    LEFT JOIN tvori AS t USING(id_osoba)
+    LEFT JOIN rodina AS r USING(id_rodina)
+    WHERE id_osoba=$ido");
+  if ( $qr ) $oso= pdo_fetch_object($qr);
+                                                         debug($oso,'db2_get_osoba');
+  return $oso;
+}
 /** =========================================================================================> AKCE2 */
 # ------------------------------------------------------------------------------------ web prihlaska
 # propojení s www.setkani.org - musí existovat popis akce s daným url
@@ -13075,7 +13095,9 @@ end:
 }
 # ----------------------------------------------------------------------------- mail2 lst_regen_spec
 # přegeneruje 1 daný mail s nastaveným specialni a parms
-function mail2_lst_regen_spec($id_dopis,$id_mail,$id_osoba) {  trace();
+# pokud je definováno corr přepíše proměnné v dopise
+# corr= {darce}
+function mail2_lst_regen_spec($id_dopis,$id_mail,$id_osoba,$corr=null) {  trace();
   $ret= (object)array('msg'=>'','err'=>'');
   $id_mailist= select('id_mailist','dopis',"id_dopis=$id_dopis");
   $ml= mail2_lst_access($id_mailist);
@@ -13089,6 +13111,10 @@ function mail2_lst_regen_spec($id_dopis,$id_mail,$id_osoba) {  trace();
     if ( !$os ) {  $ret->msg= "přegenerování se nepovedlo"; goto end; }
     $o= pdo_fetch_object($os);
     // přegeneruj PDF s potvrzením do $x->path
+    if ($corr) {
+      // uplatni korekci, pokud je definována 
+      $o->jmeno= $corr->jmeno;
+    }
     $x= mail2_mai_potvr("Pf",$o,$rok);
     // oprav mail
     $rs= pdo_qry("UPDATE mail SET stav=3,email='{$o->_email}' WHERE id_mail=$id_mail");
