@@ -13097,7 +13097,7 @@ end:
 # přegeneruje 1 daný mail s nastaveným specialni a parms
 # pokud je definováno corr přepíše proměnné v dopise
 # corr= {darce}
-function mail2_lst_regen_spec($id_dopis,$id_mail,$id_osoba,$corr=null) {  trace();
+function mail2_lst_regen_spec($id_dopis,$id_mail,$id_osoba,$corr=null) {  debug($corr,"mail2_lst_regen_spec");
   $ret= (object)array('msg'=>'','err'=>'');
   $id_mailist= select('id_mailist','dopis',"id_dopis=$id_dopis");
   $ml= mail2_lst_access($id_mailist);
@@ -13113,7 +13113,12 @@ function mail2_lst_regen_spec($id_dopis,$id_mail,$id_osoba,$corr=null) {  trace(
     // přegeneruj PDF s potvrzením do $x->path
     if ($corr) {
       // uplatni korekci, pokud je definována 
+      $o->sex= $corr->sex;
       $o->jmeno= $corr->jmeno;
+      $o->prijmeni= $corr->prijmeni;
+      $o->_ulice= $corr->_ulice;
+      $o->_psc= $corr->_psc;
+      $o->_obec= $corr->_obec;
     }
     $x= mail2_mai_potvr("Pf",$o,$rok);
     // oprav mail

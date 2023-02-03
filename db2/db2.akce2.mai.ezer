@@ -1387,9 +1387,9 @@ form _esady  {
     show email   [,,180,] { title:'email', data:etmm.email, format:'ts+q' },
     show msg     [,,50,]  { title:'chyba', data:etmm.msg, format:'tsq' }
     show body             { data:etmm.body }
-    proc onsubmit() {
-      ask('mail2_mai_stav',id_mail.get,cconc(eq(stav.get,5),3,5));
-      this.browse_row;
+    func onsubmit() {
+      php.mail2_mai_stav(id_mail,stav==5 ? 3 : (stav==3 ? 4 : 5));
+      this.browse_row();
     }
     proc onrowclick () {
       info.set(ask('mail2_mai_info',id_clen.get,email.get,dopis_id.get,dopis_var.get,id_mail.get));
@@ -1462,7 +1462,7 @@ panel CORR [0,0,200,200] { title:' Úprava položek potvrzení', type:'popup', c
     field _obec   [40,131,147,] { title:'obec' }
     button [22,170,,] { title:'[fa-save] přegeneruj'
       func onclick() {
-        x= {jmeno:jmeno};
+        copy_by_name(form,x);
         panel.hide(1); 
     }}
     button [122,170,,] { title:'[fa-undo] Zpět' 
