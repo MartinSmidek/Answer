@@ -14354,7 +14354,13 @@ function mail2_new_PHPMailer() {
   $mail->IsHTML(true);
   $mail->Mailer= "smtp";
   foreach ($smtp as $part=>$value) {
-    $mail->$part= $value;
+  	if ($part=="SMTPOptions" && $value=="-")
+      $mail->SMTPOptions= array('ssl' => array(
+        'verify_peer' => false,
+        'verify_peer_name' => false,
+        'allow_self_signed' => true));
+  	else
+      $mail->$part= $value;
   }
 end:  
   return $mail;
@@ -14486,12 +14492,19 @@ function mail2_mai_send($id_dopis,$kolik,$from,$fromname,$test='',$id_mail=0,$fo
     }
     $mail->Body= $obsah . $foot;
     $mail->AddAddress($test);   // pošli sám sobě
+    // pseudo dump 
+    $mail->SMTPDebug= 3;
+    $mail->Debugoutput = function($str, $level) { display("debug level $level; message: $str");};
+    $pars= (object)array();
+    foreach (explode(',',"Mailer,Host,Port,SMTPAuth,SMTPSecure,Username,From,AddReplyTo,FromName") as $p) {
+      $pars->$p= $mail->$p;
+    }
+    debug($pars,"nastavení PHPMAILER");
     // pošli
-     if ( $TEST ) {
-       $ok= 1;
-                                        display("jako odeslaný testovací mail pro $adresa");
-     }
-     else {
+    if ( $TEST ) {
+      $ok= 1;
+    }
+    else {
       // zkus poslat mail
       try { $ok= $mail->Send(); } 
       catch(Exception $e) { 
