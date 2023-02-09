@@ -1287,14 +1287,14 @@ form _esady  {
   field zkus [105,280,200,17] { title:'poslat test na adresu:' 
     skill:'yam|yams;fam|fams;cam|cams', help:'email z osobního nastavení', format:'t' }
   button test [315,280,,] { title:'[fa-send-o] test', skill:'yam|yams;fam|fams;cam|cams',
-    help:'pro kontrolu - posílá se 1 mail na testovací adresu'
-    proc onclick () { var foot:text
-      msg.set(''); foot.set('');
-      confirm('Poslat zkušební mail na ',zkus.get,' ?');
-      [ foo.get; foot.set(sys('user','options','email_foot')) ]; 
-      E_info.set(ask('mail2_mai_send',
-          dopis_id.get,0,from.get,name.get,zkus.get,maily.id_mail.get,foot.get));
-      msg.set(E_info.get('_html'));
+      help:'pro kontrolu - posílá se 1 mail na testovací adresu'
+    func onclick () { var foot:text
+      msg= ''; foot= '';
+      if (confirm(`Poslat zkušební mail na ${zkus}?`)) {
+        if (foo) { foot= sys('user','options','email_foot'); }
+        E_info= php.mail2_mai_send(dopis_id,0,from,name,zkus,maily.id_mail,foot);
+        msg= E_info._html';
+      }
     }
   }
   // postupné odesílání - nové

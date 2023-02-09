@@ -12866,8 +12866,8 @@ function mail2_vzor_pobyt2($id_pobyt,$typ,$u_poradi,$from,$vyrizuje,$poslat=0) {
       $ret->err= "CHYBA při odesílání mailu z '$ze' došlo k chybě: odesílací adresa nelze použít (SMTP)";
       goto end;
     }
-    // proměnné údaje
-    $mail->From= $from;
+    // test odesílací adresy -- pro maily pod seznam.cz musí být stejná jako přihlašovací
+    $mail->From= preg_match("/@chlapi.cz|@seznam.cz/",$mail->Username) ? $mail->Username : $from;
     $mail->AddReplyTo($from);
     $mail->FromName= $vyrizuje;
     foreach(preg_split("/,\s*|;\s*|\s+/",trim($maily," ,;"),-1,PREG_SPLIT_NO_EMPTY) as $adresa) {
@@ -14451,7 +14451,8 @@ function mail2_mai_send($id_dopis,$kolik,$from,$fromname,$test='',$id_mail=0,$fo
     $result->_error= 1;
     goto end;
   }
-  $mail->From= $from;
+  // test odesílací adresy -- pro maily pod seznam.cz musí být stejná jako přihlašovací
+  $mail->From= preg_match("/@chlapi.cz|@seznam.cz/",$mail->Username) ? $mail->Username : $from;
   $mail->AddReplyTo($from);
 //   $mail->ConfirmReadingTo= $jarda;
   $mail->FromName= "$fromname";
@@ -14492,7 +14493,10 @@ function mail2_mai_send($id_dopis,$kolik,$from,$fromname,$test='',$id_mail=0,$fo
      }
      else {
       // zkus poslat mail
-      try { $ok= $mail->Send(); } catch(Exception $e) { $ok= false; }
+      try { $ok= $mail->Send(); } 
+      catch(Exception $e) { 
+        $ok= false; 
+      }
     }
     if ( $ok  )
       $html.= "<br><b style='color:#070'>Byl odeslán mail na $test $pro - je zapotřebí zkontrolovat obsah</b>";
