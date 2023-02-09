@@ -14496,7 +14496,7 @@ function mail2_mai_send($id_dopis,$kolik,$from,$fromname,$test='',$id_mail=0,$fo
     $mail->SMTPDebug= 3;
     $mail->Debugoutput = function($str, $level) { display("debug level $level; message: $str");};
     $pars= (object)array();
-    foreach (explode(',',"Mailer,Host,Port,SMTPAuth,SMTPSecure,Username,From,AddReplyTo,FromName") as $p) {
+    foreach (explode(',',"Mailer,Host,Port,SMTPAuth,SMTPSecure,Username,From,AddReplyTo,FromName,SMTPOptions") as $p) {
       $pars->$p= $mail->$p;
     }
     debug($pars,"nastavení PHPMAILER");
