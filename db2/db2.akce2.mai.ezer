@@ -1288,12 +1288,12 @@ form _esady  {
     skill:'yam|yams;fam|fams;cam|cams', help:'email z osobního nastavení', format:'t' }
   button test [315,280,,] { title:'[fa-send-o] test', skill:'yam|yams;fam|fams;cam|cams',
       help:'pro kontrolu - posílá se 1 mail na testovací adresu'
-    func onclick () { var foot:text
+    func onclick () { var foot:text, ret:object
       msg= ''; foot= '';
       if (confirm(`Poslat zkušební mail na ${zkus}?`)) {
         if (foo) { foot= sys('user','options','email_foot'); }
-        E_info= php.mail2_mai_send(dopis_id,0,from,name,zkus,maily.id_mail,foot);
-        msg= E_info._html';
+        ret= php.mail2_mai_send(dopis_id,0,from,name,zkus,maily.id_mail,foot);
+        msg= ret._html;
       }
     }
   }
