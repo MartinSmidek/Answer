@@ -1390,6 +1390,7 @@ form _esady  {
     func onsubmit() {
       php.mail2_mai_stav(id_mail,stav==5 ? 3 : (stav==3 ? 4 : 5));
       this.browse_row();
+      texty.browse_row();
     }
     proc onrowclick () {
       info.set(ask('mail2_mai_info',id_clen.get,email.get,dopis_id.get,dopis_var.get,id_mail.get));

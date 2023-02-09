@@ -14212,11 +14212,19 @@ function mail2_mai_info($id,$email,$id_dopis,$zdroj,$id_mail) {  //trace();
       }
       elseif ( $q->barva==2 ) {
         // databáze osob
-        $qry= "SELECT * FROM osoba WHERE id_osoba=$id ";
+        $qry= "SELECT role, prijmeni,jmeno,
+            IF(kontakt,telefon,IFNULL(r.telefony,'?')) AS telefon,
+            IF(adresa,o.ulice,IFNULL(r.ulice,'?')) AS ulice,
+            IF(adresa,o.psc,IFNULL(r.psc,'?')) AS psc,
+            IF(adresa,o.obec,IFNULL(r.obec,'?')) AS obec,
+            IF(adresa,o.stat,IFNULL(r.stat,'?')) AS stat
+          FROM osoba AS o LEFT JOIN tvori AS t USING (id_osoba)
+          LEFT JOIN rodina AS r USING (id_rodina) WHERE id_osoba=$id
+          ORDER BY t.role  LIMIT 1 ";
         $res= pdo_qry($qry);
         if ( $res && $c= pdo_fetch_object($res) ) {
           $html.= "{$c->prijmeni} {$c->jmeno}<br>";
-          $html.= "{$c->ulice}, {$c->psc} {$c->obec}<br><br>";
+          $html.= "{$c->ulice}, {$c->psc} {$c->obec}, {$c->stat}<br><br>";
           if ( $c->telefon )
             $html.= "Telefon: {$c->telefon}<br>";
         }
