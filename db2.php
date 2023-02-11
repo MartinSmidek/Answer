@@ -12,9 +12,10 @@
   // verze použitého jádra Ezeru
   $ezer_version= isset($_GET['ezer']) ? $_GET['ezer'] : '3.1'; 
   $ezer_server= 
-    $_SERVER["SERVER_NAME"]=='answer.bean'        ? 0 : (      // 0:lokální 
-    $_SERVER["SERVER_NAME"]=='answer.doma'        ? 1 : (      // 1:Synology DOMA
-    $_SERVER["SERVER_NAME"]=='answer.setkani.org' ? 2 : -1));  // 2:Synology YMCA
+  $_SERVER["SERVER_NAME"]=='answer.bean'        ? 0 : (      // 0:lokální 
+  $_SERVER["SERVER_NAME"]=='answer.doma'        ? 1 : (      // 1:Synology DOMA
+  $_SERVER["SERVER_NAME"]=='answer.setkani.org' ? 2 : (      // 2:Synology YMCA
+  $_SERVER["SERVER_NAME"]=='192.168.7.111'      ? 2 : -1))); // 2:Synology YMCA (pro cron!!!) 
 
   // parametry aplikace Answer/db2
   $app_name=  "Answer";
