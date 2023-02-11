@@ -35,7 +35,9 @@ menu db2 { type:'main', title:'db2', active:*, _sys:'*'
           rodina:"id_rodina>*,nazev",
           dopis: "id_dopis>*,hnizdo,nazev",
           mail:  "id_mail>*,id_dopis>dopis,id_clen>osoba",
-          dotaz: "id_dotaz>*,dotaznik,id,page,hnizdo"
+          dotaz: "id_dotaz>*,dotaznik,id,page,hnizdo",
+          stamp: "id_stamp>*,typ,kdy,pozn",
+          cron:  "id_cron>*,batch,info,adr,replyto,par,subj,txt"
         },
         css: 'stat' // styl tabulek
     }}

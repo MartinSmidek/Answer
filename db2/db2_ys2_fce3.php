@@ -4900,6 +4900,93 @@ function kasa_menu_comp($cond,$db) {
   $html.= "</table>";
   return $html;
 }
+# ---------------------------------------------------------------------------------------- kasa send
+# pošle dopis pro $who - pokud je to * tak všem
+function kasa_send($whos,$to_send=0) {
+  $html= '';
+  list($adr,$replyto,$par,$subj,$txt)= select('adr,replyto,par,subj,txt','cron',"batch='rr-note'");
+  $adresy= (array)json_decode($adr);
+  debug($adresy,'adr');
+  $subst= (array)json_decode($par);
+  debug($subst,'par');
+  $n= 0;
+  $whos= $whos=='*' ? array_keys($adresy) : explode(',',$whos);
+  foreach ($whos as $who) {
+    $par= $subst[$who];
+    $txt_par= str_replace('{poznamka}',$par,$txt);
+    if ($to_send) {
+      $ok= kasa_send_mail("Měsíční připomenutí zápisu zůstatků pokladen",$txt_par,
+          $replyto,$adresy[$who],'','mail',$replyto);
+      if (!$ok) break;
+      $n++;
+    }
+    else {
+      $html.= "<table class='stat'>
+        <tr><td>ADRESA <b>$who</b>: $adresy[$who]</td></tr>
+        <tr><td>REPLY_TO: $replyto</td></tr>
+        <tr><td>PŘEDMĚT: $subj</td></tr>";
+      $html.= "<tr><td>$txt_par</td></tr></table><br>";
+    }
+  }
+  if ($to_send) $html.= "<br><br>odesláno $n mailů z ".count($whos);
+  return $html;
+}
+# ------------------------------------------------------------------------------------ kasa send_log
+# zobrazí časová razítka
+function kasa_send_log($typ,$subj='') {
+  $html= '<dl>';
+  $rs= pdo_qry("SELECT DATE(kdy),GROUP_CONCAT(TIME(kdy)),pozn  
+    FROM stamp WHERE typ='$typ' GROUP BY CONCAT(DATE(kdy),pozn) ORDER BY kdy DESC LIMIT 24");
+  while ( $rs && (list($den,$cas,$pozn)= pdo_fetch_row($rs)) ) {
+    $html.= "<dt>$den $cas</dt><dd>$pozn</dd>";
+  }
+  $html.= "</dl>";
+  return $html;
+}
+# ----------------------------------------------------------------------------------- kasa send_mail
+# pošle systémový mail, pokud není určen adresát či odesílatel jde o mail správci aplikace
+# $to může být seznam adres oddělený čárkou
+function kasa_send_mail($subject,$html,$from='',$to='',$fromname='',$typ='',$replyto='',$lognote='') { //trace();
+  global $ezer_path_serv, $EZER, $api_gmail_user, $api_gmail_pass;
+  $to= $to ? $to : $EZER->options->mail;
+  // poslání mailu
+  $phpmailer_path= "$ezer_path_serv/licensed/phpmailer";
+  require_once("$phpmailer_path/class.smtp.php");
+  require_once("$phpmailer_path/class.phpmailer.php");
+  // napojení na mailer
+  $mail= new PHPMailer;
+  $mail->SetLanguage('cs',"$phpmailer_path/language/");
+  
+  $mail->IsSMTP();
+  $mail->Mailer= 'smtp';
+  $mail->Host= "smtp.gmail.com";
+  $mail->Port= 465;
+  $mail->SMTPAuth= 1;
+  $mail->SMTPSecure= "ssl";
+  $mail->Username= $api_gmail_user;
+  $mail->Password= $api_gmail_pass;
+  $mail->CharSet = "utf-8";
+  $mail->From= $from;
+  $mail->AddReplyTo($replyto?:$from);
+  $mail->FromName= $fromname;
+  foreach (explode(',',$to) as $to1) {
+    $mail->AddAddress($to1);
+  }
+  $mail->Subject= $subject;
+  $mail->Body= $html;
+  $mail->IsHTML(true);
+  // pošli
+  $ok= $mail->Send();
+  if ( !$ok )
+    fce_warning("Selhalo odeslání mailu: $mail->ErrorInfo");
+  else {
+    // zápis do stamp
+    $dt= date('Y-m-d H:i:s');
+    if ($lognote) $subject.= " ... $lognote";
+    query("INSERT INTO stamp (typ,kdy,pozn) VALUES ('$typ','$dt','$subject')");
+  }
+  return $ok;
+}
 /** ===========================================================================================> DŮM **/
 # ---------------------------------------------------------------------------------- ds compare_list
 function ds_compare_list($orders) {  #trace('','win1250');
