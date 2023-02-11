@@ -399,7 +399,7 @@ panel nas {type:'plain', title:"Nastavení", _sys:'nas',   skill:'yp+|yp+'
   }
 }
 # =================================================================================> Upomínací maily
-panel maily { type:'right', title:'Upomínací maily', skill:'yp+'
+panel maily { type:'right', title:'Upomínací maily', skill:'ypm'
   use msg:  form _right [12,4,,] { tag:'R' }
   use info: form _info [12,4,,] { tag:'E' }
   form _info [,,*,50] { style:'width:calc(100% - 24px)'
