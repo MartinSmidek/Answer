@@ -1844,7 +1844,7 @@ form _platba [,,623,] { key_id:'id_pobyt', style:'height:fit-content', par:°{on
   }}
   label navrh [10,123,280,Td-146] { tag:'cenik', css:'karta_info' }
   edit duvod_text [8,119,280,Td-147] { tag:'cenik', /*type:'html',*/ data:pobyt.duvod_text }
-  label doslo [300,99,281,170] { style:"border-left:2px solid grey" }
+  label doslo [300,99,4,187] { style:"border-left:2px solid grey" }
   // nestandardní strava
   func nestandard(zkratka,nazev) { var zmena:number
       has_skill("yaa+;faa+;caa+");
@@ -1995,6 +1995,9 @@ form _platba [,,623,] { key_id:'id_pobyt', style:'height:fit-content', par:°{on
     select u_stav   [230,10,80,] {type:'map', options:ms_platba_stav.zkratka}
     select u_za     [310,10,45,] {tag:'deti', type:'map', options:uhrada_za.zkratka}
   }
+  // t = pracovní poznámka
+  edit  p_pracovni [308,Td-7,303,60] {tag:'b', data:pobyt.pracovni, skill:'yaa|yaa:t;faa|faa:t;caa|caa:t'
+      title:'^(pracovní poznámka)' }
 }
 //map uhrada_stav= "i,zkratka;0:-,1:avizo,2:zaplaceno,3:potvrzeno,4:vráceno" 
 map uhrada_za=   "i,zkratka;0:pár,1:děti" 
