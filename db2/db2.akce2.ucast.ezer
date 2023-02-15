@@ -183,7 +183,7 @@ proc narrow() { curr_w.set(1024); w_change_all }
 proc wide()   { curr_w.set(1280); w_change_all }
 proc w_change_all() { var dite_kat_pipe:object, dite_kat_options:object
   // pro CR|MS necháme ms_akce_dita_kat
-  eq(my_org.get,4,8)
+  eq(my_org.get,4,8,16)
   // podle YS/FA zvol kategorii dětí: ys_akce_dite_kat / fa_akce_dite_kat v options, map_pipe
 | dite_kat_options.set(cconc(
       eq(the_org.get,1),'#.ys_akce_dite_kat.hodnota',eq(the_org.get,2),'#.fa_akce_dite_kat.hodnota',''));

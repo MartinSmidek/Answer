@@ -486,7 +486,7 @@ form _page [,,275,360] {
     | eq(my_org.get,2);
       // Familia
       form.init; access.set(2); access.change; info.sey.blur(1)
-    | eq(my_org.get,4,8);
+    | eq(my_org.get,4,8,16);
       // CPR, MS - samostatné db
       form.init; access.set(my_org.get); access.change; 
       nazev.change; misto.change; datum_od.change; datum_do.change;
@@ -538,7 +538,7 @@ form _page [,,275,360] {
 //#       c.za_2016.width(0); form.display(0,'ex0');
 //    }
     // access: 4|8 pro cr|ms    -   používá cenik.typ, nepoužívá akce.ma_cenik_verze
-  | eq(access.get,4,8);
+  | eq(access.get,4,8,16);
     c.pol.width(100); c.typ.width(50); c.za_2016.width(40);
     form.display(0,'ex');
   | warning("chybně definovaný ceník");

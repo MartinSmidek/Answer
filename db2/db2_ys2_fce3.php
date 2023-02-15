@@ -684,8 +684,8 @@ function chart_akce2($par) { debug($par,'chart_akce2');
           $data['ucast'][]= $vek_ucast; 
           break;
         case 'pocet/deti':
-          $data['detiD'][]= round(($pocet_deti-$pocet_detiLK)/$n_rodicu,2); 
-          $data['detiLK'][]= round($pocet_detiLK/$n_rodicu,2); 
+          $data['detiD'][]= $n_rodicu ? round(($pocet_deti-$pocet_detiLK)/$n_rodicu,2) : 0; 
+          $data['detiLK'][]= $n_rodicu ? round($pocet_detiLK/$n_rodicu,2) : 0; 
           break;
       }
       display("rok $rok: účastníků=$n rodičů=$n_rodicu dětí na LK=$pocet_detiLK");
@@ -3324,8 +3324,8 @@ function dot_prehled ($rok_or_akce,$par,$title='',$vypis='',$export=0,$hnizdo=0)
     // kategorie
     for ($i= count($vek_x)-1; $i>=0; $i--) {
       $m= $vek_m[$i]; $z= $vek_z[$i]; 
-      $pm= number_format(100*$m/$n_m,0);
-      $pz= number_format(100*$z/$n_z,0);
+      $pm= number_format($n_m ? 100*$m/$n_m : 0,0);
+      $pz= number_format($n_z ? 100*$z/$n_z : 0,0);
       $x= $i==count($vek_x)-1 ? "?" : "{$vek_x[$i]}-".($i==0 ? '...' : $vek_x[$i-1]-1).' let';
       $td_m= $td_z= '';
       if (isset($par->know)) {
