@@ -49,8 +49,13 @@ use page: form _page [512,40,,]
 func akce_work(id_akce) {
   if (!id_akce) 
     id_akce= php.select('id_duakce','akce',`YEAR(datum_od)='${the_rok}' AND access=${my_org}`);
-  info.volba_akce(id_akce);
-  info.rok= the_rok;
+  if (id_akce) {
+    info.volba_akce(id_akce);
+    info.rok= the_rok;
+  }
+  else {
+    info.rok= fdate('Y');
+  }
 }
 # zobrazí přehled hnízd
 func ukaz_hnizda(ida) { 
