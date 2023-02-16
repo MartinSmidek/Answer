@@ -1996,7 +1996,7 @@ form _platba [,,623,] { key_id:'id_pobyt', style:'height:fit-content', par:°{on
     select u_za     [310,10,45,] {tag:'deti', type:'map', options:uhrada_za.zkratka}
   }
   // t = pracovní poznámka
-  edit  p_pracovni [308,Td-7,303,60] {tag:'b', data:pobyt.pracovni, skill:'yaa|yaa:t;faa|faa:t;caa|caa:t'
+  edit  p_pracovni [308,Td-7,303,60] {tag:'b', data:pobyt.pracovni, skill:'yaa:t|yaa:t;faa:t|faa:t;caa:t|caa:t'
       title:'^(pracovní poznámka)' }
 }
 //map uhrada_stav= "i,zkratka;0:-,1:avizo,2:zaplaceno,3:potvrzeno,4:vráceno" 
