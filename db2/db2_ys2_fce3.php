@@ -3011,6 +3011,35 @@ function session($is,$value=null) {
   return $value;
 }
 */
+/** ==============================================================================> ONLINE PŘIHLÁŠKY **/
+# --------------------------------------------------------------------------------------- oform show
+# ukáže obsah online přihlášky
+function oform_show ($idf,$idp) { trace();
+  $html= '';
+  $muz= osoba_jmeno($idp,'a');
+  $zena= osoba_jmeno($idp,'b');
+  // nalezení formuláře
+  $eid= select('entry_id','wordpress.wp_3_wpforms_entry_fields',"value='$muz' OR value='$zena' ");
+  if ($eid) {
+    $html.= "<p><b><u>Údaje z online formuláře</u></b></p>";
+    $json= select('fields','wordpress.wp_3_wpforms_entries',"entry_id=$eid ");
+    $flds= json_decode($json);
+    foreach ((array)$flds as $i=>$x) {
+      debug($x);
+      if (!$x->value) continue;
+      if ($x->value=='Již jsem se kurzu zúčastnil. Mé kontaktní ani ostatní údaje v evidenci se nezměnily.') continue;
+      if ($x->value=='Již jsem se kurzu zúčastnila. Mé kontaktní ani ostatní údaje v evidenci se nezměnily.') continue;
+      $html.= "<p>$x->name: <b>$x->value</b></p>";
+    }
+  }
+  return $html;
+}
+function osoba_jmeno ($idp,$role) {
+  $jmeno= select1("CONCAT(jmeno,' ',prijmeni)",
+      'pobyt JOIN rodina ON id_rodina=i0_rodina JOIN tvori USING (id_rodina) JOIN osoba USING (id_osoba)',
+      "id_pobyt=$idp AND role='$role'");
+  return $jmeno;
+}
 /** =====================================================================================> DOTAZNÍKY **/
 # ----------------------------------------------------------------------------------------- dot roky
 # vrátí dostupné dotazníky Letního kurzu MS YS

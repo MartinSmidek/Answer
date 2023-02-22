@@ -877,6 +877,7 @@ form _ucast [,,400,] { css:'ds_form', style:'height:fit-content'
       pob.show_pobyt;
       cmd.enable(0,'s');
       cmd.b_display(1);
+      [ page.oform.display; page.oform_show]; 
     }
     proc onrowclick() { // ==> . onrowclick
       b.browse_count;
@@ -1035,6 +1036,19 @@ form _page  [,,623,20] {
     proc onclick() { eq(evid.cmode.get,2); ucast.narrow | ucast.wide } }
 //  label pframe [0,16,873,min_h-185] { css:'ae_work'} 
   label frame [0,16,873,7] { css:'ae_work'} 
+  # ------------------------==> . zobrazení online formuláře
+  button [631,9,,] {type:'html', title:'F', style:'z-index:5;margin-top:-16px'
+    func onclick() { 
+      clear();
+      oform.display(1);
+      oform_show(); 
+  }}
+  func oform_show() {
+      ucast.narrow();
+      oform= php.oform_show(1348,the_pobyt);
+  }
+  label oform [621,20,244,500] {css:'ae_frame', format:'n', 
+      style:"overflow-y:scroll;padding:5px;z-index:1"}
 }
 # --------------------------------------------------------------------------------------==> EVIDENCE
 form _evidence [,,623,] { style:'height:fit-content'
