@@ -7363,7 +7363,8 @@ function akce2_skup_copy($obnova,$podle='LK') { trace();
   while ( $rr && (list($idr,$skupina,$nazev)= pdo_fetch_array($rr)) ) {
     display("$skupina = $nazev ($idr)");
 //    $n++;
-    $rs= query("UPDATE pobyt SET skupina=$skupina WHERE id_akce=$obnova AND i0_rodina=$idr AND skupina=0");
+    $rs= query("UPDATE pobyt SET skupina=$skupina 
+      WHERE id_akce=$obnova AND i0_rodina=$idr AND skupina=0 AND funkce IN (0,1,2,5) ");
     $n+= pdo_affected_rows($rs);
   }
   $msg= "Na obnovu bylo pro $n párů zkopírováno číslo skupinky z $podle (pokud ještě číslo neměli)";
@@ -7403,7 +7404,7 @@ function akce2_skup_tisk($akce,$par,$title,$vypis,$export) {  trace();
       JOIN rodina AS r ON r.id_rodina=i0_rodina
       JOIN tvori AS t USING (id_rodina)
       JOIN osoba AS o USING (id_osoba)
-      WHERE id_akce=$akce AND role IN ('a','b') -- AND funkce NOT IN (9)
+      WHERE id_akce=$akce AND role IN ('a','b') AND funkce IN (0,1,2,5)
       GROUP BY i0_rodina
       ORDER BY nazev");
     while ( $rr && (list($idr,$nazev,$funkce,$umi)= pdo_fetch_array($rr)) ) {
