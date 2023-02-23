@@ -3036,7 +3036,7 @@ function oform_todo ($idfs,$ida) { trace();
     $a= preg_replace('/(^\s*\w+\s*)/u','',$xa);
     $b= preg_replace('/(^\s*\w+\s*)/u','',$xb);
 //    display("$xa ... $a");
-    return $a>$b;
+    return mb_strcasecmp($a,$b);
   });
   $html= implode('<br>',$row);
   return $html;
