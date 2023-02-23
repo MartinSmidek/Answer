@@ -29,6 +29,7 @@ var the_druh: number            // pracovní akce: druh podle #ms_akce_typ
 var the_title: text             // pracovní akce: název do titulků
 var the_rok: number             // pracovní akce: rok konání
 var the_hnizda: text            // pracovní akce: seznam hnízd nebo nic
+var the_wordpress: text         // pracovní akce: vazba na přihlášky přes Wordpress
 var the_soubeh: number          // 0=normální akce, 1=hlavní akce, 2=souběžná akce
 var the_hlavni: number          // 0=normální akce, id=akce k the_duakce hlavní
 var the_soubezna: number        // 0=normální akce, id=akce s the_duakce souběžná
@@ -117,7 +118,7 @@ proc akce_choose(id_akce) { var a:object
   the_duakce.set(id_akce);
   a.set(ask('akce2_id2a',id_akce)); // nastaví i nulové hodnoty pro id_akce=0
   the_rok.set(a.rok);       the_title.set(a.title);       the_soubeh.set(a.soubeh);
-  the_hnizda.set(a.hnizda); 
+  the_hnizda.set(a.hnizda); the_wordpress.set(a.web_wordpress);
   the_hlavni.set(a.hlavni); the_soubezna.set(a.soubezna);
   the_cenik.set(a.cenik);   the_cenik_verze.set(a.cenik_verze);
   the_cena.set(a.cena);     the_org.set(a.org);           the_ms.set(a.ms);    the_druh.set(a.druh);
@@ -342,6 +343,7 @@ table akce { key_id:'id_duakce'
   number web_kalendar  // chlapi.online
   text web_anotace
   text web_url
+  text web_wordpress
 }
 table pobyt { key_id:'id_pobyt'
   number id_pobyt
@@ -369,6 +371,7 @@ table pobyt { key_id:'id_pobyt'
   text pokoj
   number ubytovani      // číselník ms_akce_ubytovan
   number luzka
+  number entry_id 
 
   // stravy a diety
   number strava_cel, number strava_pol

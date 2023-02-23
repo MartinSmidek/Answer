@@ -873,9 +873,9 @@ function akce2_info_par($ida,$idp=0,$tab_only=0) { trace();
 function akce2_id2a($id_akce) {  //trace();
   $a= (object)array('title'=>'?','cenik'=>0,'cena'=>0,'soubeh'=>0,'hlavni'=>0,'soubezna'=>0);
   list($a->title,$a->rok,$a->cenik,$a->cenik_verze,$a->cena,$a->hlavni,$a->soubezna,$a->org,
-      $a->ms,$a->druh,$a->hnizda)=
+      $a->ms,$a->druh,$a->hnizda,$a->web_wordpress)=
     select("a.nazev,YEAR(a.datum_od),a.ma_cenik,a.ma_cenik_verze,a.cena,a.id_hlavni,"
-      . "IFNULL(s.id_duakce,0),a.access,IF(a.druh IN (1,2),1,0),a.druh,a.hnizda",
+      . "IFNULL(s.id_duakce,0),a.access,IF(a.druh IN (1,2),1,0),a.druh,a.hnizda,a.web_wordpress",
       "akce AS a
        LEFT JOIN akce AS s ON s.id_hlavni=a.id_duakce",
       "a.id_duakce=$id_akce");

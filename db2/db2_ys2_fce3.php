@@ -3012,14 +3012,45 @@ function session($is,$value=null) {
 }
 */
 /** ==============================================================================> ONLINE PŘIHLÁŠKY **/
-# --------------------------------------------------------------------------------------- oform show
-# ukáže obsah online přihlášky
-function oform_show ($idf,$idp) { trace();
+# --------------------------------------------------------------------------------------- oform todo
+# ukáže seznam dosud nevložených přihlášek
+function oform_todo ($idfs,$ida) { trace();
   $html= '';
+  $fr= pdo_qry("SELECT f.entry_id
+      FROM wordpress.wp_3_wpforms_entry_fields AS f
+      LEFT JOIN ezer_db2.pobyt AS p ON p.entry_id=f.entry_id AND p.id_akce=$ida
+      WHERE form_id IN ($idfs) AND ISNULL(p.entry_id)
+      GROUP BY f.entry_id
+      -- LIMIT 3
+    ");
+  $row= array();
+  while ( $fr && (list($eid)= pdo_fetch_array($fr)) ) {
+    $muz= select('value','wordpress.wp_3_wpforms_entry_fields',
+      "form_id IN ($idfs) AND entry_id=$eid AND field_id=0 ");
+    $zena= select('value','wordpress.wp_3_wpforms_entry_fields',
+      "form_id IN ($idfs) AND entry_id=$eid AND field_id=10 ");
+    $row[]= "$muz, $zena";
+  }
+  // seřadit
+  uasort($row,function($xa,$xb){
+    $a= preg_replace('/(^\s*\w+\s*)/u','',$xa);
+    $b= preg_replace('/(^\s*\w+\s*)/u','',$xb);
+//    display("$xa ... $a");
+    return $a>$b;
+  });
+  $html= implode('<br>',$row);
+  return $html;
+}
+# --------------------------------------------------------------------------------------- oform show
+# ukáže obsah online přihlášky a vrátí kontext
+function oform_show ($idfs,$idp) { trace();
+  $html= '';
+  $zapsano= 0;
   $muz= osoba_jmeno($idp,'a');
   $zena= osoba_jmeno($idp,'b');
   // nalezení formuláře
-  $eid= select('entry_id','wordpress.wp_3_wpforms_entry_fields',"value='$muz' OR value='$zena' ");
+  $eid= select('entry_id','wordpress.wp_3_wpforms_entry_fields',
+      "form_id IN ($idfs) AND (value='$muz' OR value='$zena') ");
   if ($eid) {
     $html.= "<p><b><u>Údaje z online formuláře</u></b></p>";
     $json= select('fields','wordpress.wp_3_wpforms_entries',"entry_id=$eid ");
@@ -3031,8 +3062,10 @@ function oform_show ($idf,$idp) { trace();
       if ($x->value=='Již jsem se kurzu zúčastnila. Mé kontaktní ani ostatní údaje v evidenci se nezměnily.') continue;
       $html.= "<p>$x->name: <b>$x->value</b></p>";
     }
+    // bylo zapsáno do pobyt?
+    $zapsano= select('entry_id','pobyt',"id_pobyt=$idp");
   }
-  return $html;
+  return (object)array('html'=>$html,'entry_id'=>$eid?:0,'zapsano'=>$zapsano);
 }
 function osoba_jmeno ($idp,$role) {
   $jmeno= select1("CONCAT(jmeno,' ',prijmeni)",
