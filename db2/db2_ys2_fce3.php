@@ -3031,12 +3031,13 @@ function oform_todo ($idfs,$ida) { trace();
       "form_id IN ($idfs) AND entry_id=$eid AND field_id=10 ");
     $row[]= "$muz, $zena";
   }
-  // seřadit
-  uasort($row,function($xa,$xb){
+  // seřadit pro Linux
+  setlocale(LC_ALL, "cs_CZ.utf8","Czech");
+  usort($row,function($xa,$xb){
     $a= preg_replace('/(^\s*\w+\s*)/u','',$xa);
     $b= preg_replace('/(^\s*\w+\s*)/u','',$xb);
-//    display("$xa ... $a");
-    return mb_strcasecmp($a,$b);
+    $c= strcoll($a,$b);
+    return $c;
   });
   $html= implode('<br>',$row);
   return $html;
