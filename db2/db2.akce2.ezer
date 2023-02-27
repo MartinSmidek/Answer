@@ -8,7 +8,7 @@
 
 # globální proměnné pro modul Databáze
 
-var staty='CZ,SK,A,D,PL,UA,H,FIN,BG,I,NL,GB,CDN,USA,?' // seznam států, (později) naplněný při startu z mapy map_stat
+var staty='CZ,SK,A,BG,CA,D,EE,FI,GB,H,I,IE,LT,LV,NL,PL,UA,US,?' // seznam států, (později) naplněný při startu z mapy map_stat
 
 # ------------------------------------------------------------------------------------------==> stav
 # dotaz na datovou oprávněnost
@@ -30,6 +30,7 @@ var the_title: text             // pracovní akce: název do titulků
 var the_rok: number             // pracovní akce: rok konání
 var the_hnizda: text            // pracovní akce: seznam hnízd nebo nic
 var the_wordpress: text         // pracovní akce: vazba na přihlášky přes Wordpress
+var the_mezinarodni: text       // pracovní akce: akce má účastníky ze světa
 var the_soubeh: number          // 0=normální akce, 1=hlavní akce, 2=souběžná akce
 var the_hlavni: number          // 0=normální akce, id=akce k the_duakce hlavní
 var the_soubezna: number        // 0=normální akce, id=akce s the_duakce souběžná
@@ -118,7 +119,7 @@ proc akce_choose(id_akce) { var a:object
   the_duakce.set(id_akce);
   a.set(ask('akce2_id2a',id_akce)); // nastaví i nulové hodnoty pro id_akce=0
   the_rok.set(a.rok);       the_title.set(a.title);       the_soubeh.set(a.soubeh);
-  the_hnizda.set(a.hnizda); the_wordpress.set(a.web_wordpress);
+  the_hnizda.set(a.hnizda); the_wordpress.set(a.web_wordpress); the_mezinarodni.set(a.mezinarodni);
   the_hlavni.set(a.hlavni); the_soubezna.set(a.soubezna);
   the_cenik.set(a.cenik);   the_cenik_verze.set(a.cenik_verze);
   the_cena.set(a.cena);     the_org.set(a.org);           the_ms.set(a.ms);    the_druh.set(a.druh);
@@ -328,6 +329,7 @@ table akce { key_id:'id_duakce'
   text misto
   number druh
   text hnizda
+  number mezinarodni
   number statistika
   number poradatel
   date datum_od    { sql_pipe:'sql_date1'}    // SQL tvar se používá v ys.akce

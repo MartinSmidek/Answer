@@ -873,9 +873,10 @@ function akce2_info_par($ida,$idp=0,$tab_only=0) { trace();
 function akce2_id2a($id_akce) {  //trace();
   $a= (object)array('title'=>'?','cenik'=>0,'cena'=>0,'soubeh'=>0,'hlavni'=>0,'soubezna'=>0);
   list($a->title,$a->rok,$a->cenik,$a->cenik_verze,$a->cena,$a->hlavni,$a->soubezna,$a->org,
-      $a->ms,$a->druh,$a->hnizda,$a->web_wordpress)=
+      $a->ms,$a->druh,$a->hnizda,$a->web_wordpress,$a->mezinarodni)=
     select("a.nazev,YEAR(a.datum_od),a.ma_cenik,a.ma_cenik_verze,a.cena,a.id_hlavni,"
-      . "IFNULL(s.id_duakce,0),a.access,IF(a.druh IN (1,2),1,0),a.druh,a.hnizda,a.web_wordpress",
+      . "IFNULL(s.id_duakce,0),a.access,IF(a.druh IN (1,2),1,0),a.druh,a.hnizda,a.web_wordpress,"
+      . "a.mezinarodni",
       "akce AS a
        LEFT JOIN akce AS s ON s.id_hlavni=a.id_duakce",
       "a.id_duakce=$id_akce");
@@ -3501,7 +3502,7 @@ function ucast2_browse_ask($x,$tisk=false) {
 //                                                         debug($osoba,'osoby po _rody');
     # seznamy položek
     $fpob1= ucast2_flds("key_pobyt=id_pobyt,_empty=0,key_akce=id_akce,key_osoba,key_spolu,key_rodina=i0_rodina,"
-           . "keys_rodina='',c_suma,platba=uhrada,potvrzeno,x_ms,xfunkce=funkce,funkce,xhnizdo=hnizdo,hnizdo,skupina,dluh,web_changes");
+           . "keys_rodina='',c_suma,platba=uhrada,potvrzeno,x_ms,xfunkce=funkce,funkce,xhnizdo=hnizdo,hnizdo,skupina,xstat,dluh,web_changes");
 //           . "keys_rodina='',c_suma,platba,potvrzeno,x_ms,xfunkce=funkce,funkce,xhnizdo=hnizdo,hnizdo,skupina,dluh,web_changes");
     $fakce= ucast2_flds("dnu,datum_od");
     $frod=  ucast2_flds("fotka,r_access=access,r_access_web=access_web,r_spz=spz,"
@@ -3611,6 +3612,7 @@ function ucast2_browse_ask($x,$tisk=false) {
             # barva nerodinného pobytu
             $p_access|= $o->access;
             $p_access_web|= $o->access_web;
+            if (!$p->xstat && $o->stat!='CZ') $p->xstat= $o->stat;
           }
           else {
             # neúčastník

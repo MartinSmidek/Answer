@@ -47,6 +47,8 @@ proc onfocus() {
   1,{ header.soubeh.display(1); panel.display(2,'akce1'); header.soubeh.set('^Děti') },
   2,{ header.soubeh.display(1); panel.display(2,'akce2');  header.soubeh.set('^Kurs') }
   );
+  // úprava sloupců podle charakteru akce
+  u.b.columns;
   w_change_all;
   h_change_all;
 }
@@ -767,6 +769,7 @@ form _ucast [,,400,] { css:'ds_form', style:'height:fit-content'
     show skupina [,,20,] { title:'sk.', format:'rq=s:e', help:'číslo skupinky'}
     show xhnizdo [,,20,] { title:'h.', format:'rq#s:e', map_pipe:ms_akce_hnizda.zkratka, 
       help:'pořadí hnízda nebo 0' css_cell:"hnizdo,0:,1:oranzovy,2:zluty,3:zeleny,4:modry,5:azurovy,6:fialovy"}
+    show xstat [,,0,] { title:'stát' format:'qs' }
     // barvení
     show dluh, show web_changes, show _ms
     show r_access 
@@ -909,6 +912,9 @@ form _ucast [,,400,] { css:'ds_form', style:'height:fit-content'
     | platba.width(35); c_suma.width(35); vratka.width(35); _docs.width(0); _jmena.width(82)
     }
     proc onrefreshed() { h_change_b }
+    func columns() {
+      if (the_mezinarodni) { xstat.width(15); _nazev.width(85) }
+    }
     # ------------------------==> . kontextové_menu
     menu { type:'context' //, join:frame
       item { title:'přijetí webových změn', 
