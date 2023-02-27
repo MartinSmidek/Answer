@@ -96,8 +96,8 @@ func ucast_hnizda() { var opts:object
   }
 }
 # ukázání pobytu na stejné akci
-proc ucast_pobyt(_idp)  {
-  panel.focus; u.b.raise('onrowclick',_idp);
+func ucast_pobyt(_idp)  {
+  panel.focus(); u.b.raise('onrowclick',_idp);
 }
 # ukázání pobytu s případným přepnutím akce
 proc ucast_pobyt_akce(_idp,_ida)  {

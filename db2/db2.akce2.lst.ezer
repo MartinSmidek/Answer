@@ -1039,9 +1039,10 @@ form _info [,,*,50] {
       curr.set_attrib('expr',conc("IF(da2.id_duakce=",id_akce.get,",1,0)"));
       this.browse_seek;
     }
-    proc onstart() {
-      gt(sys('options','watch_access'),3);
-      SF.width(0); kod.width(0); nazev.width(140); misto.width(70);
+    func onstart() {
+      if (sys('ezer','options','app')!='db2') {
+        SF.width(0); kod.width(0); nazev.width(140); misto.width(70);
+      }
     }
   }
   # --------------------------------------------------------------------------------------==> . akce

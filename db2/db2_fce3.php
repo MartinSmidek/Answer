@@ -7132,9 +7132,9 @@ function tisk2_ukaz_rodinu($idr,$barva='') {
 }
 # --------------------------------------------------------------------------------- tisk2 ukaz_pobyt
 # zobrazí odkaz na řádek s pobytem
-function tisk2_ukaz_pobyt($idp,$barva='') {
-  $style= $barva ? "style='color:$barva'" : '';
-  return "<b><a $style href='ezer://akce2.ucast.ucast_pobyt/$idp'>$idp</a></b>";
+function tisk2_ukaz_pobyt($idp,$title='') {
+  $title= $title ? "title='$title'" : '';
+  return "<b><a $title href='ezer://akce2.ucast.ucast_pobyt/$idp'>$idp</a></b>";
 }
 # --------------------------------------------------------------------------------- tisk2 ukaz_pobyt
 # zobrazí odkaz na řádek s pobytem s případným přepnutím akce
