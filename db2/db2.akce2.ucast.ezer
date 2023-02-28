@@ -47,8 +47,9 @@ proc onfocus() {
   1,{ header.soubeh.display(1); panel.display(2,'akce1'); header.soubeh.set('^Děti') },
   2,{ header.soubeh.display(1); panel.display(2,'akce2');  header.soubeh.set('^Kurs') }
   );
-  // úprava sloupců podle charakteru akce
+  // úprava podle charakteru akce
   u.b.columns;
+  page.oform_show(cconc(the_wordpress.get,'on','off'));
   w_change_all;
   h_change_all;
 }
@@ -880,7 +881,7 @@ form _ucast [,,400,] { css:'ds_form', style:'height:fit-content'
       pob.show_pobyt;
       cmd.enable(0,'s');
       cmd.b_display(1);
-      page.oform_show(0); 
+      page.oform_show('show'); 
     }
     proc onrowclick() { // ==> . onrowclick
       b.browse_count;
@@ -1040,42 +1041,55 @@ form _page  [,,623,20] {
   # ------------------------==> . manuální úprava šíře
   button wider [589,9,,] {type:'html', title:'[fa-toggle-right]', style:'z-index:5;margin-top:-16px'
     func onclick() { 
-      if (evid.cmode==2) ucast.narrow() else ucast.wide();
-      if (has_skill('yawp')) { oform.display(0); oformc.display(0);}
+      if (curr_w==1280) ucast.narrow() else ucast.wide();
+      oform_show('end');
+      osoby_show();
   }}
   label frame [0,16,873,7] { css:'ae_work'} 
   # ------------------------==> . zobrazení online formuláře
   var oform_state:object
-  button [631,9,,] {type:'html', title:'Online přihlášky', skill:'yawp|yawp'
+  button [631,9,,] {tag:'oform1', type:'html', title:'Online přihlášky', skill:'yawp|yawp'
       style:'z-index:5;margin-top:-16px'
     func onclick() { 
       clear();
-      oform_show(1); 
+      oform_show('start'); 
   }}
-  button [732,9,,] {type:'html', title:'... dosud nepřenesené', skill:'yawp|yawp'
+  button [732,9,,] {tag:'oform1', type:'html', title:'... dosud nepřenesené', skill:'yawp|yawp'
       style:'z-index:5;margin-top:-16px'
     func onclick() { 
-      clear();
+      clear(); ucast.narrow(); 
       oform.display(1); oformc.display(0);
       oform= php.oform_todo(the_wordpress,the_duakce); 
   }}
-  func oform_show(allready) { 
-    if (allready) {
-      ucast.narrow();
-      oform.display(1); oformc.display(1);
-      oform_state= php.oform_show(the_wordpress,the_pobyt);
-      oform= oform_state.html; 
-      oformc= oform_state.zapsano;
-      oformc.enable(oform_state.entry_id);
+  // pro -1 potlačí zobrazení, pro 1 zahájí zobrazování,  pro 0 ukazuje data
+  func oform_show(cmd) { 
+    if (has_skill('yawp')) {
+      if (cmd=='off') 
+          form.display(0,'oform'); 
+      elseif (the_wordpress) {
+        switch (cmd) {
+          case 'on':
+            form.display(1,'oform1'); break;
+          case 'start':
+            ucast.narrow(); form.display(1,'oform2'); 
+          case 'show':
+            oform_state= php.oform_show(the_wordpress,the_pobyt);
+            oform= oform_state.html; 
+            oformc= oform_state.zapsano;
+            oformc.enable(oform_state.entry_id); break;
+          case 'end':
+            form.display(0,'oform2'); break;
+        }
+      }
     }
   }
-  check oformc [623,20,244,23] {title:'údaje byly přeneseny do Answeru', skill:'yawp|yawp' 
+  check oformc [623,20,244,23] {tag:'oform2', title:'údaje byly přeneseny do Answeru', skill:'yawp|yawp' 
       css:'ae_frame shift_up', style:"z-index:1", format:'nt'
     func onchange() { var eid:number
       eid= oformc?oform_state.entry_id:0;
       php.query(`UPDATE pobyt SET entry_id='${eid}' WHERE id_pobyt=${the_pobyt}`);
   }}
-  label oform [623,50,235,] {css:'ae_frame shift_up', format:'n', skill:'yawp'
+  label oform [623,50,235,] {tag:'oform2', css:'ae_frame shift_up', format:'n', skill:'yawp'
       style:"max-height:500px;overflow-y:scroll;padding:5px;z-index:1"}
 }
 # --------------------------------------------------------------------------------------==> EVIDENCE
@@ -1159,7 +1173,7 @@ form _evidence [,,623,] { style:'height:fit-content'
     frame.set_css('page_2clmn','page_3clmn')
   | // 2 sloupce
     eq(n,2); not(os2.display); cmode.set(2); page.wider.set('[fa-toggle-left]');
-    os2.display(1); sp2.display(1);
+    os2.display(1); sp2.display(1); 
     frame.set_css('page_3clmn','page_2clmn');
   }
   proc onproperty() { form.display(0,'2') }

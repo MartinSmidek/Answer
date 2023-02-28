@@ -389,7 +389,7 @@ form _page [,,275,360] {
         hnizda= ''; hnizda.change() 
       }
   }}
-  check [292,254,161,] { tag:'cor' title:'akce je mezinárodní', format:'t'
+  check [292,254,161,] { tag:'cor' title:'akce je mezinárodní', 
       skill:'yaa|yaan;caa|caan;faa|faan', data:akce.mezinarodni}
   edit hnizda [292,262,161,40] { tag:'cor' title:'^jména hnízd oddělená čárkami' 
       data:akce.hnizda format:'n' 

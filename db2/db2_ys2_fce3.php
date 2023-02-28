@@ -3047,6 +3047,7 @@ function oform_todo ($idfs,$ida) { trace();
 function oform_show ($idfs,$idp) { trace();
   $html= '';
   $zapsano= 0;
+  if (!$idfs) goto end;
   $muz= osoba_jmeno($idp,'a');
   $zena= osoba_jmeno($idp,'b');
   // nalezení formuláře
@@ -3066,6 +3067,7 @@ function oform_show ($idfs,$idp) { trace();
     // bylo zapsáno do pobyt?
     $zapsano= select('entry_id','pobyt',"id_pobyt=$idp");
   }
+end:  
   return (object)array('html'=>$html,'entry_id'=>$eid?:0,'zapsano'=>$zapsano);
 }
 function osoba_jmeno ($idp,$role) {

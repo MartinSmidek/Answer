@@ -3756,6 +3756,7 @@ function ucast2_browse_ask($x,$tisk=false) {
       $z->key_spolu= 0;
       $z->ido1= $_ido1 ?: $_ido01;
       $z->ido2= $_ido2; // ?: $_ido02;
+//                                                 display("$idr {$z->ido1} + {$z->ido2}");
 //      $z->datplatby= sql_date1($z->datplatby);                   // d.m.r
 //      $z->datplatby_d= sql_date1($z->datplatby_d);               // d.m.r
       # ok
