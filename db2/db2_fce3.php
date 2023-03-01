@@ -871,12 +871,13 @@ function akce2_info_par($ida,$idp=0,$tab_only=0) { trace();
 # --------------------------------------------------------------------------------------- akce2 id2a
 # vrácení hodnot akce
 function akce2_id2a($id_akce) {  //trace();
+  global $USER;
   $a= (object)array('title'=>'?','cenik'=>0,'cena'=>0,'soubeh'=>0,'hlavni'=>0,'soubezna'=>0);
   list($a->title,$a->rok,$a->cenik,$a->cenik_verze,$a->cena,$a->hlavni,$a->soubezna,$a->org,
-      $a->ms,$a->druh,$a->hnizda,$a->web_wordpress,$a->mezinarodni)=
+      $a->ms,$a->druh,$a->hnizda,$a->web_wordpress,$a->mezinarodni,$poradatel)=
     select("a.nazev,YEAR(a.datum_od),a.ma_cenik,a.ma_cenik_verze,a.cena,a.id_hlavni,"
       . "IFNULL(s.id_duakce,0),a.access,IF(a.druh IN (1,2),1,0),a.druh,a.hnizda,a.web_wordpress,"
-      . "a.mezinarodni",
+      . "a.mezinarodni,a.poradatel",
       "akce AS a
        LEFT JOIN akce AS s ON s.id_hlavni=a.id_duakce",
       "a.id_duakce=$id_akce");
@@ -884,7 +885,17 @@ function akce2_id2a($id_akce) {  //trace();
   $a->soubeh= $a->soubezna ? 1 : ( $a->hlavni ? 2 : 0);
   $a->rok= $a->rok ?: date('Y');
   $a->title.= ", {$a->rok}";
-//                                                                 debug($a,$id_akce);
+  // zjištění, zda uživatel je 1) garantem 2) garantem této akce
+  $a->garant= 0;
+  $skills= explode(' ',$USER->skills);
+  if (in_array('g',$skills)) { // g-uživatel musí mít v číselníku akce_garant svoje id_user
+    $idu= $USER->id_user;
+    $data= select('data','_cis',"druh='akce_garant' AND ikona='$idu'");
+    if ($data) {
+      $a->garant= $poradatel==$data ? 2 : 1;
+    }
+  }
+                                                                 debug($a,"akce $id_akce user {$USER->id_user}");
   return $a;
 }
 # ------------------------------------------------------------------------------ akce2 soubeh_nastav

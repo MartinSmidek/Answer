@@ -1,0 +1,39 @@
+= Obecně/1 =
+Obecné informace pro práci s aplikací Answer (je prosím česky sklonné podle vzoru ''hrad'')
+
+
+== Obecně k práci se seznamy ==
+V obrázku popsané prvky jsou platné pro všechna zobrazení seznamů
+
+[[Image:wiki/img/ys_browse.png||]]
+
+Po zvolení ''základního výběru'' je možné tento výběr dále zúžit zapsáním
+upřesňujících podmínek (viz obrázek), které provedou výběr stejně začínajících údajů.
+
+V podmínkách je možné použít "žolíky" tj. znaky * a ?
+s obvyklým významem (? nahrazuje jeden libovolný znak a * nahrazuje libovolný počet znaků).
+Znak $ (dolar) má význam ''konec řetězce''.
+Pokud je prvním znakem - (pomlčka) pak se bere negace podmínky
+
+Příklady na podmínky zapsané do sloupce '''obec''' v seznamu adres:
+; '''obec'''=Černá : nalezne ''Černá'' ale také ''Černá hora''
+; '''obec'''=*Hora : nalezne ''Kutná Hora'' ale také ''Zlatá Hora'' avšak nikoliv ''Pohora'',
+protože vyhledávání ctí velikost písmen
+; '''obec'''=O*va*- : nalezne části Ostravy jako např. ''Ostrava-Polanka''
+; '''obec'''=$ : najde kontakty s nevyplněnou obcí
+; '''obec'''=-Brno : najde kontakty, které nejsou z Brna
+
+Zpět k původnímu základnímu výběru se dostaneme dvojitým klikem myši do výběrového řádku.
+
+Složitějším dotazem zapsaným do více sloupců např:
+;'''příjmení'''=Nov '''obec'''=Olo : najdeme pana Novotného z Olomouce.
+
+Ve výběru se lze obvyklým způsobem - pomocí myši a posuvníku na pravém okraji výběru
+resp. kolečkem myši, nebo pomocí klávesnice - šipkami a dalšími polohovacími klávesami.
+
+Klávesové zkratky:
+; šipky, PageUp, PageDown : obvyklý význam
+; Home, End : přesun na první resp. poslední viditelný řádek
+; Ctrl+Home, Ctrl+End : přesun na první resp. poslední řádek vybraných záznamů
+; Ctrl+šipka nahoru : přesun na zadání první podmínky (musí být viditelná)
+

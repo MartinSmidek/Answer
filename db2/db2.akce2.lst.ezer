@@ -1062,30 +1062,57 @@ form _info [,,*,50] {
     };
     return (nazev);
   }
-  proc volba_akce(id_akce) { #==> . volba_akce
+  func volba_akce(id_akce) { #==> . volba_akce
     akce_choose(id_akce);
-    lst.info.fill(conc(the_title.get,' '));
-    [ ucast.call('clear_ucast2') ];
-    [ has_skill('yam;fam;cam'); maia.call('init_ucast') ];
-    [ has_skill('crz') | this.call('pece.init_pece') ]; // CRŽ
+    lst.info.fill(`${the_title} `);
+    ucast.call('clear_ucast2');
+    if (has_skill('yam;fam;cam')) maia.call('init_ucast');
+    if (!has_skill('crz')) this.call('pece.init_pece'); // CRŽ
     // ošetření souběžných akcí - 0=normální akce, 1=hlavní akce, 2=souběžná akce
-    [ has_skill('f'); page.soubezna.set(eq(the_soubeh.get,2)) ];
+    if (has_skill('f')) page.soubezna= the_soubeh==2;
     // nastavení cookies podle organizace
-    id_akce;
-    { eq(the_org.get,1);
-      the_akce_ys.set(the_duakce.get);
-      set_cookie(conc(sys('root'),'_akce_ys'),the_akce_ys.get)
-    | eq(the_org.get,2);
-      the_akce_fa.set(the_duakce.get);
-      set_cookie(conc(sys('root'),'_akce_fa'),the_akce_fa.get)
-    | // mimo YS+FA
-      set_cookie(conc(sys('root'),'_akce'),the_duakce.get)
-    };
-    ucast.ucast_hnizda();
-    pece.pece_hnizda();
-    [ has_skill('yam;fam;cam'); maia.mail_hnizda() ];
-    tisk.tisk_hnizda()
+    if (id_akce) {
+      if (the_org==1) {
+        the_akce_ys= the_duakce;
+        set_cookie(`{sys('root')}_akce_ys`,the_akce_ys);
+      }
+      elseif (the_org==2) {
+        the_akce_fa= the_duakce;
+        set_cookie(`${sys('root')}_akce_fa`,the_akce_fa);
+      }
+      else { // mimo YS+FA
+        set_cookie(`${sys('root')}_akce`,the_duakce);
+      }
+      ucast.ucast_hnizda();
+      if (!has_skill('g')) pece.pece_hnizda();
+      if (has_skill('yam;fam;cam')) maia.mail_hnizda();
+      tisk.tisk_hnizda()
+    }
   }
+//  proc volba_akce(id_akce) { # = => . volba_akce
+//    akce_choose(id_akce);
+//    lst.info.fill(conc(the_title.get,' '));
+//    [ ucast.call('clear_ucast2') ];
+//    [ has_skill('yam;fam;cam'); maia.call('init_ucast') ];
+//    [ has_skill('crz') | this.call('pece.init_pece') ]; // CRŽ
+//    // ošetření souběžných akcí - 0=normální akce, 1=hlavní akce, 2=souběžná akce
+//    [ has_skill('f'); page.soubezna.set(eq(the_soubeh.get,2)) ];
+//    // nastavení cookies podle organizace
+//    id_akce;
+//    { eq(the_org.get,1);
+//      the_akce_ys.set(the_duakce.get);
+//      set_cookie(conc(sys('root'),'_akce_ys'),the_akce_ys.get)
+//    | eq(the_org.get,2);
+//      the_akce_fa.set(the_duakce.get);
+//      set_cookie(conc(sys('root'),'_akce_fa'),the_akce_fa.get)
+//    | // mimo YS+FA
+//      set_cookie(conc(sys('root'),'_akce'),the_duakce.get)
+//    };
+//    ucast.ucast_hnizda();
+//    pece.pece_hnizda();
+//    [ has_skill('yam;fam;cam'); maia.mail_hnizda() ];
+//    tisk.tisk_hnizda()
+//  }
   label head [0,0,*,30] { title:'', style:'z-index:0' }
   # volba pracovní akce
   button [376,5,,] { title:'Pracovní', 
