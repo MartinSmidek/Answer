@@ -49,13 +49,7 @@ use page: form _page [512,40,,]
 func akce_work(id_akce) {
   if (!id_akce) 
     id_akce= php.select('id_duakce','akce',`YEAR(datum_od)='${the_rok}' AND access=${my_org}`);
-  if (id_akce) {
-    info.volba_akce(id_akce);
-    info.rok= the_rok;
-  }
-  else {
-    info.rok= fdate('Y');
-  }
+  info.rok= id_akce && info.volba_akce(id_akce) ? the_rok : fdate('Y');
 }
 # zobrazí přehled hnízd
 func ukaz_hnizda(ida) { 
@@ -389,7 +383,7 @@ form _page [,,275,360] {
         hnizda= ''; hnizda.change() 
       }
   }}
-  check [292,254,161,] { tag:'cor' title:'akce je mezinárodní', 
+  check [292,252,161,] { tag:'cor' title:'akce je mezinárodní', 
       skill:'yaa|yaan;caa|caan;faa|faan', data:akce.mezinarodni}
   edit hnizda [292,262,161,40] { tag:'cor' title:'^jména hnízd oddělená čárkami' 
       data:akce.hnizda format:'n' 
@@ -401,6 +395,9 @@ form _page [,,275,360] {
       if (msg) { hnizda_ok= 0; alert(msg); }
       else hnizda_ok= 1;
   }}
+  // ------------------------------------- omezený přístup pro členy týmu akce
+  select tym [296,278,157,] {tag:'cor', type:'map+', title:'kdo z týmu má přístup:', data:akce.tym,
+      help:'členové týmu akce s právem editace', options:akce_tym.surname }
   // ------------------------------------- web setkani.org a chlapi.online
   label [10,309,384,114] { tag:'cor', css:'bily_ram', skill:'yaaw;faaw' 
                         title:" součinnost s www.setkani.org a chlapi.online" }
@@ -946,20 +943,36 @@ form _info [,,*,50] {
       item { title:'Vybrat akci jako pracovní', proc onclick() { pracovni }}
     }
     // označení akce jako pracovní
-    proc pracovni() { #==> .. pracovní YS
+    func pracovni() { #==> .. pracovní YS
       var org_ys:number
-      org_ys.set(1);
-      not(accessed(org_ys)); // jen YS používá intranet
-      alert("nemáte oprávnění označit jako pracovní akci jiné organizace");
-    | id_akce.get; volba_akce(id_akce.get)
-    | not(eq(fdate('Y',od.get),rok.get));
-      alert('Akce má na intranetu uvedeno chybné datum zahájení (např. chybějící nebo z jiného roku)');
-    | confirm('akce ',nazev.get,' zatím není v databázi, mám ji založit?');
-      the_duakce.set(akce.insert_record(
-        object('access',org_ys,'nazev',nazev.get,'datum_od',date2sql(od.get),'datum_do',date2sql(do.get))));
-      join_akce.insert_record(object('id_akce',the_duakce.get,'g_rok',rok.get,'g_kod',kod.get));
-      google.browse_row; volba_akce(id_akce.get) //,nazev.get,ma_cenik.get,ma_cenu.get,cena.get)
+      org_ys= 1;
+      // jen YS používá intranet
+      if (!accessed(org_ys)) 
+        alert("nemáte oprávnění označit jako pracovní akci jiné organizace");
+      elseif (id_akce) 
+        volba_akce(id_akce)
+      elseif (fdate('Y',od.get)!=rok)
+        alert('Akce má na intranetu uvedeno chybné datum zahájení (např. chybějící nebo z jiného roku)');
+      elseif (confirm('akce ',nazev.get,' zatím není v databázi, mám ji založit?')) {
+        the_duakce= akce.insert_record({access:org_ys, nazev:nazev, datum_od:date2sql(od), datum_do:date2sql(do)});
+        join_akce.insert_record({id_akce:the_duakce, g_rok:rok, g_kod:kod});
+        google.browse_row(); volba_akce(id_akce); 
+      }
     }
+//    proc pracovni() { #== > .. pracovní YS
+//      var org_ys:number
+//      org_ys.set(1);
+//      not(accessed(org_ys)); // jen YS používá intranet
+//      alert("nemáte oprávnění označit jako pracovní akci jiné organizace");
+//    | id_akce.get; volba_akce(id_akce.get)
+//    | not(eq(fdate('Y',od.get),rok.get));
+//      alert('Akce má na intranetu uvedeno chybné datum zahájení (např. chybějící nebo z jiného roku)');
+//    | confirm('akce ',nazev.get,' zatím není v databázi, mám ji založit?');
+//      the_duakce.set(akce.insert_record(
+//        object('access',org_ys,'nazev',nazev.get,'datum_od',date2sql(od.get),'datum_do',date2sql(do.get))));
+//      join_akce.insert_record(object('id_akce',the_duakce.get,'g_rok',rok.get,'g_kod',kod.get));
+//      google.browse_row; volba_akce(id_akce.get) //,nazev.get,ma_cenik.get,ma_cenu.get,cena.get)
+//    }
   }
   # --------------------------------------------------------------------------------==> . seznam SEY
   # přechod na účastníky je omezen datovými právy
@@ -1036,10 +1049,11 @@ form _info [,,*,50] {
       alert("nemáte oprávnění označit jako pracovní akci jiné organizace");
     | pracovni_curr
     }
-    proc pracovni_curr() {
-      volba_akce(id_akce.get);
-      curr.set_attrib('expr',conc("IF(da2.id_duakce=",id_akce.get,",1,0)"));
-      this.browse_seek;
+    func pracovni_curr() {
+      if (volba_akce(id_akce)) {
+        curr.set_attrib('expr',conc("IF(da2.id_duakce=",id_akce,",1,0)"));
+        this.browse_seek();
+      }
     }
     func onstart() {
       if (sys('ezer','options','app')!='db2') {
@@ -1063,7 +1077,10 @@ form _info [,,*,50] {
     return (nazev);
   }
   func volba_akce(id_akce) { #==> . volba_akce
-    akce_choose(id_akce);
+    if (!akce_choose(id_akce)) {
+      warning("nepatříš do týmu této akce, takže s ní nemůžeš pracovat");
+      return 0;
+    }
     lst.info.fill(`${the_title} `);
     ucast.call('clear_ucast2');
     if (has_skill('yam;fam;cam')) maia.call('init_ucast');
@@ -1074,7 +1091,7 @@ form _info [,,*,50] {
     if (id_akce) {
       if (the_org==1) {
         the_akce_ys= the_duakce;
-        set_cookie(`{sys('root')}_akce_ys`,the_akce_ys);
+        set_cookie(`${sys('root')}_akce_ys`,the_akce_ys);
       }
       elseif (the_org==2) {
         the_akce_fa= the_duakce;
@@ -1088,6 +1105,7 @@ form _info [,,*,50] {
       if (has_skill('yam;fam;cam')) maia.mail_hnizda();
       tisk.tisk_hnizda()
     }
+    return 1;
   }
 //  proc volba_akce(id_akce) { # = => . volba_akce
 //    akce_choose(id_akce);
@@ -1220,3 +1238,4 @@ map akce_slozka: table _cis {where:"druh='akce_slozka'", order:'poradi', key_id:
 map ms_cenik_verze: table _cis {where:"druh='ms_cenik_verze'", order:'poradi', key_id:'data'}
 map ms_akce_stat:   table _cis {where:"druh='ms_akce_stat'", order:'poradi', key_id:'data'}
 map akce_garant:    table _cis {where:"druh='akce_garant'", order:'poradi', key_id:'data'}
+map akce_tym:      table _user {where:"skills REGEXP '(\\s|^)(t|T)(\\s|$)'", order:'surname', key_id:'id_user'}

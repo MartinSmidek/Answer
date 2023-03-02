@@ -49,7 +49,7 @@ func onfocus() {
       case 2: header.soubeh.display(1); panel.display(2,'akce2'); header.soubeh= '^Kurs'; break;
     }
     // speciální povolení editace pro garanta akce
-    if (the_garant) cmd.garants_skill(the_garant);
+    if (team_access) cmd.tym_skill(team_access);
     // úprava podle charakteru akce
     u.b.columns();
     page.oform_show(the_wordpress ? 'on' : 'off');
@@ -369,7 +369,7 @@ proc reload(id_pobyt) { var filtr:text, id_pobyt0:number
 //  | u.tym.get; filtr.set("p.funkce NOT IN (0,1,2)") ];
   // vynucení výpočtu duplicit a příznaku dokumentů
   [ u.sf.get;  filtr.set(conc('/*css*/',filtr)) ];
-  [ not(has_skill('g')); u.dup.get; filtr.set(conc('/*duplicity*/',filtr)) ];
+  [ not(has_skill('T')); u.dup.get; filtr.set(conc('/*duplicity*/',filtr)) ];
   [ u.doc.get; filtr.set(conc('/*dokumenty*/',filtr)) ];
   [ echo("browse_load"); 
 //    set_trace('f',1);
@@ -440,8 +440,8 @@ form _cmd [,,623,30] {
     'none',{form.enable(0,'s|r|x'); form.enable(1,'n')},
     'show',{form.enable(0,'s'); form.enable(1,'x'); form_mode.set('show')}
   )}
-  func garants_skill(skil) { var butt:ezer
-    for (butt of form.tagged('g')) {
+  func tym_skill(skil) { var butt:ezer
+    for (butt of form.tagged('T')) {
       butt.set_skill(skil==2 ? 1 : 0); 
     }
   }
@@ -476,14 +476,14 @@ form _cmd [,,623,30] {
       else { _reload(1,0) }
   } }
   //==> .. [uložit]
-  button [60,6,,] { tag:'s,r,g', title:'[fa-save] Uložit',help:'Uložit změněná data',css:'search'
-                skill:'yaa|yaa+;faa|faa+;caa|caa+;g'
+  button [60,6,,] { tag:'s,r,T', title:'[fa-save] Uložit',help:'Uložit změněná data',css:'search'
+                skill:'yaa|yaa+;faa|faa+;caa|caa+;T'
     proc onclick() { ulozit } }
   # ----------------------------------------------- přidat pobyt
   label [145,3,44,] { title:"<b>Přidat <br>pobyt:</b>" }
   #==> . + rodina
-  button [188,5,,] {tag:'x,n,g', title:'[fa-heart] rodina',
-    skill:'yaa+|yaa+;faa+|faa+;caa+|caa+;g', help:'Přidání celé rodiny'
+  button [188,5,,] {tag:'x,n,T', title:'[fa-heart] rodina',
+    skill:'yaa+|yaa+;faa+|faa+;caa+|caa+;T', help:'Přidání celé rodiny'
     proc onclick() {
       set_state('new'); mode.set('rodiny'); pob.new_pobyt;
       os1.clear_osoba; os2.clear_osoba;
@@ -492,8 +492,8 @@ form _cmd [,,623,30] {
       rod.new_rodina('');
   }}
   #==> . + skupina
-  button [256,5,,] {tag:'x,n,g', title:'[fa-heart] jednotlivci',
-    skill:'yaa+|yaa+;faa+|faa+;caa+|caa+;g', help:'Přidání skupiny osob'
+  button [256,5,,] {tag:'x,n,T', title:'[fa-heart] jednotlivci',
+    skill:'yaa+|yaa+;faa+|faa+;caa+|caa+;T', help:'Přidání skupiny osob'
     proc onclick() {
       rod.nerodina.Init; pob.new_pobyt;
       rod.cleni.show_dup(1);
@@ -503,8 +503,8 @@ form _cmd [,,623,30] {
   # ----------------------------------------------- změnit
   label [347,3,44,] { title:"<b>Změny <br>pobytu:</b>" }
   #==> . - pobyt
-  button [395,5,,] {tag:'x,g', title:'[fa-plug fa-rotate-180 fa-red] zruš',
-    skill:'yaa+|yaa+;faa+|faa+;caa+|caa+;g',
+  button [395,5,,] {tag:'x,T', title:'[fa-plug fa-rotate-180 fa-red] zruš',
+    skill:'yaa+|yaa+;faa+|faa+;caa+|caa+;T',
     help:'Vyřazení účastníka nebo páru z účasti na akci'
     func onclick() {
       if (!neni_ulozeno() && confirm(
@@ -516,8 +516,8 @@ form _cmd [,,623,30] {
   } }
   #==> . + osoba
   label [452,3,44,] { title:"<b>Osobu <br>rodině:</b>" }
-  button pridat_osobu [497,5,,] {tag:'x,g', title:'[fa-heart-o] přidej',
-    skill:'yaa+|yaa+;faa+|faa+;caa+|caa+;g',
+  button pridat_osobu [497,5,,] {tag:'x,T', title:'[fa-heart-o] přidej',
+    skill:'yaa+|yaa+;faa+|faa+;caa+|caa+;T',
     help:'Přidání nové nebo již existující osoby k pobytu (případně do rodiny)'
     proc onclick() { Init }
     proc Init() { var _prijmeni:text
@@ -744,7 +744,7 @@ form _ucast [,,400,] { css:'ds_form', style:'height:fit-content'
   // omezení browse
   proc show_dup(on) { rod.cleni.show_dup(on); b.show_dup(on); }
   func show_chain() {
-    if (!has_skill('g')) {
+    if (!has_skill('T')) {
       rod.chain.display(dup); os1.chain.display(dup); os2.chain.display(dup);
     }
   }
@@ -1573,7 +1573,7 @@ form _rodina2 [,,360,229]  { css:'ae_frame', par:°{onchanged:'first_only'}
   # show_rodina - zobrazuje formulář podle: key_rodina
   func show_rodina() { var tags:text
     form.display(0,'[^f]'); r_access.display(1); cleni.display(1); form.enable(1,'.*');
-    if (!has_skill('g')) {
+    if (!has_skill('T')) {
       evidence.display(key_rodina);
       chain.display(u.dup && (key_rodina || pob.funkce.key()==99));
       if (keys_rodina) chain.set_css('db_chain','db_evidence')
@@ -1662,7 +1662,7 @@ form _rodina2 [,,360,229]  { css:'ae_frame', par:°{onchanged:'first_only'}
 
   label frame [0,2,360,20] {tag:'f', title:'rodinné údaje', css:'frame_label_up' }
   #==> . elim
-  button chain [174,0,,] {tag:'f', title:'[fa-chain]', css:'db_evidence', skill:'#g'
+  button chain [174,0,,] {tag:'f', title:'[fa-chain]', css:'db_evidence', skill:'#T'
     proc onclick() { var zmena:number, ido:number, idr:number, idrs:text
       { ido.set(os1.key_osoba.get); idr.set(key_rodina.get); idrs.set(u.b.keys_rodina.get);
         idrs;
@@ -1672,7 +1672,7 @@ form _rodina2 [,,360,229]  { css:'ae_frame', par:°{onchanged:'first_only'}
         jump(ido)
       | warning("nebyla nalezena podezřelá kopie") }
   }}
-  button evidence [193,0,,] {tag:'f', title:'^evidence', css:'db_evidence', skill:'#g'
+  button evidence [193,0,,] {tag:'f', title:'^evidence', css:'db_evidence', skill:'#T'
     func onclick() { evi.evid_rodina(key_rodina) } }
   field r_access   [304,0,10,] {tag:'f', format:'or', css:'Label', data:r.access, tabindex:0  }
   field key_rodina [304,0,50,] {tag:'f', format:'or', css:'Label', help:' ', tabindex:0  }
@@ -2254,7 +2254,7 @@ form _aktivity0 [,,623,] { style:'height:fit-content'
 form _aktivity [,,623,] { style:'height:fit-content'
   var ido: number
   field jme [10,34,200,] { format:'o' }
-  button [160,20,,] { title:'^evidence', css:'db_evidence', skill:'#g'
+  button [160,20,,] { title:'^evidence', css:'db_evidence', skill:'#T'
     proc onclick() { evi.evid_osoba(ido.get) } }
   view a: table akce
   view p: table pobyt { join:'ON a.id_duakce=p.id_akce' }
