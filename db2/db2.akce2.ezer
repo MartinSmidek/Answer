@@ -186,8 +186,8 @@ panel evi [,,,] {type:'right', _sys:'*', title:'[fa-briefcase] EVIDENCE', includ
   proc evid_rodina(_idr) { }                    // zobrazení rodiny v evidenci
   proc ulozen_gmail() { }
 }
-panel mai {type:'right', title:'Maily evidence', _sys:'*', include:'onclick,db2.akce2.mai#g',
-  skill:'yam;fam;cam'
+panel mai {type:'right', title:'Maily evidence', _sys:'*', include:'onclick,db2.akce2.mai',
+  skill:'yam;fam;cam#g'
   proc reaccess() {}
 }
 panel dop {type:'right', title:'Dopisy', _sys:'*', include:'onclick,db2.akce2.dop', skill:'yaed#g'  }
