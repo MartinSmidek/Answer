@@ -1550,7 +1550,7 @@ form _spolu [,,0,270] {
   }}
 }
 # ----------------------------------------------------------------------------------------==> RODINA
-form _rodina2 [,,360,229]  { css:'ae_frame', par:°{onchanged:'first_only'}
+form _rodina2 [,,360,229]  { css:'ae_frame', par:{onchanged:'first_only'}, style:'min-height:230px'
   var key_pobyt: number
   proc onstart() { r_stat.selects(staty.get,',',1) }
   proc onclick() { evid.z_change('o') }
@@ -2273,10 +2273,13 @@ form _aktivity [,,623,] { style:'height:fit-content'
       data:p.funkce, map_pipe:ms_akce_funkce.zkratka }
     show jak  [,, 30,] { title:'jak', help:"'dítě' znamená věk pod 18 let"
       expr:"IF(FLOOR(IF(MONTH(o.narozeni),DATEDIFF(a.datum_od,o.narozeni)/365.2425,YEAR(a.datum_od)-YEAR(o.narozeni)))<18,IF(s.s_role=4,'pom.p','dítě'),'')" }
-    proc onsubmit() {
-      accessed(org.get); //echo('přepnuto na akci ',akce.get);
-      akce_show(ida.get,idp.get,conc(akce.get,' ',rok.get),'AKTIVITA')
-    | warning("nemáte oprávnění přepnout na akci této organizace")  }
+    func onsubmit() {
+      if (team_access) return;
+      if (accessed(org)) 
+        akce_show(ida.get,idp.get,conc(akce.get,' ',rok.get),'AKTIVITA')
+      else
+        warning("nemáte oprávnění přepnout na akci této organizace")  
+    }
   }
   proc ucasti(id_osoba) {
     form.display(id_osoba);
