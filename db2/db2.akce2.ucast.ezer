@@ -1137,6 +1137,7 @@ form _page  [,,623,20] {
   }}
   // pro -1 potlačí zobrazení, pro 1 zahájí zobrazování,  pro 0 ukazuje data
   func oform_show(cmd) { 
+    if (!back) return;
     if (has_skill('yawp')) {
       if (cmd=='off') 
           form.display(0,'oform'); 
@@ -1157,6 +1158,14 @@ form _page  [,,623,20] {
       }
     }
   }
+  # ------------------------==> . uložení online formuláře
+  button [867,9,,] {tag:'oform1', title:'[fa-save]', skill:'yawp|yawp'
+      style:'z-index:5;margin-top:-16px'
+    func onclick() { 
+      clear(); ucast.narrow(); 
+      oform.display(1); oformc.display(0);
+      oform= php.oform_save(the_pobyt); 
+  }}
   check oformc [623,20,244,23] {tag:'oform2', title:'údaje byly přeneseny do Answeru', skill:'yawp|yawp' 
       css:'ae_frame shift_up', style:"z-index:1", format:'nt'
     func onchange() { var eid:number
@@ -1171,7 +1180,7 @@ form _evidence [,,623,] { style:'height:fit-content'
   var cmode=0          // sloupce osob: 1=jeden, 2=dva
   var rmode=0          // bloky osob: iae-iep-
   var zmode: text      // o | p
-  var back: text       // pozadí pro 2/3 sloupce
+//  var back: text       // pozadí pro 2/3 sloupce
   label frame [0,16,873,min_h-152] { css:'ae_work'}
   # ------------------------==> . kontextové_menu
   menu ctx { type:'context', join:frame
@@ -2276,7 +2285,7 @@ form _aktivity [,,623,] { style:'height:fit-content'
     func onsubmit() {
       if (team_access) return;
       if (accessed(org)) 
-        akce_show(ida.get,idp.get,conc(akce.get,' ',rok.get),'AKTIVITA')
+        akce_show(ida,idp,conc(akce,' ',rok),'AKTIVITA')
       else
         warning("nemáte oprávnění přepnout na akci této organizace")  
     }

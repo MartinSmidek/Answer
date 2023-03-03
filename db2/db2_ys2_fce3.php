@@ -3070,6 +3070,136 @@ function oform_show ($idfs,$idp) { trace();
 end:  
   return (object)array('html'=>$html,'entry_id'=>$eid?:0,'zapsano'=>$zapsano);
 }
+# --------------------------------------------------------------------------------------- oform save
+# vytvoří obraz přihlášky včetně odsouhlasených údajů z minula podle db
+function oform_save ($idp,$fid=1503) { trace();
+  $html= '';
+  // nalezení formuláře
+  list($eid,$idr)= select('entry_id,i0_rodina','pobyt',"id_pobyt=$idp");
+  if ($eid) {
+    $x= $m= $z= $dn= $pn= array();
+    $html.= "<p><b><u>Kompletní přihláška</u></b></p>";
+    $qf= pdo_qry("SELECT field_id,value 
+      FROM wordpress.wp_3_wpforms_entry_fields
+      WHERE entry_id=$eid AND form_id=$fid
+        AND field_id>73
+    ");
+    while ($qf && ($f= pdo_fetch_object($qf))) {
+      $x[$f->field_id]= $f->value;
+    }
+//    debug($x,'X');
+    // zjištění rodinných údajů
+    list($r_adresa,$r_spz,$r_datsvatba)= select("CONCAT(ulice,', ',psc,' ',obec),spz,datsvatba",
+        'rodina',"id_rodina=$idr"); 
+    $r_datsvatba= sql_date1($r_datsvatba);
+    // zjištění osobních údajů
+    $cirkev=  map_cis('ms_akce_cirkev','zkratka');  
+    $vzdelani=  map_cis('ms_akce_vzdelani','zkratka');  
+    $qo= pdo_qry("SELECT role,kontakt,adresa,IF(ISNULL(id_spolu),0,1) AS nakurzu,
+          CONCAT(jmeno,' ',prijmeni,IF(rodne!='',CONCAT(' roz. ',rodne),'')) AS jmeno,
+          narozeni,telefon,email,obcanka,zajmy,jazyk,
+          zamest,cirkev,aktivita,vzdelani,osoba.note
+        FROM rodina
+        JOIN tvori USING (id_rodina) JOIN osoba USING (id_osoba)
+        LEFT JOIN spolu ON spolu.id_osoba=tvori.id_osoba AND id_pobyt=$idp 
+        WHERE id_rodina=$idr
+        ORDER BY narozeni
+      ");
+    while ($qo && ($o= pdo_fetch_object($qo))) {
+      $o->narozeni= sql_date1($o->narozeni);
+      if ($o->cirkev) $o->cirkev= $cirkev[$o->cirkev];
+      if ($o->vzdelani) $o->vzdelani= $vzdelani[$o->vzdelani];
+      $o->zajmy_jazyk= $o->zajmy . ($o->jazyk ? ', ' : '') . $o->jazyk;
+      switch ($o->role) {
+        case 'a': $m= $o; break;
+        case 'b': $z= $o; break;
+        case 'd': $dn[]= $o; break;
+        case 'p': $pn[]= $o; break;
+      }
+    }
+    // doplnění db údajů
+    $x_udaje= array(
+      'x_povaha'      => array(80,84),  
+      'x_manzelstvi'  => array(89,101),
+      'x_ocekavam'    => array(88,102),
+      'x_rozvody'     => array(110,112),
+    );
+    foreach ($x_udaje as $fld=>list($im,$iz)) {
+      if (isset($x[$im])) $m->$fld= $x[$im];
+      if (isset($x[$iz])) $z->$fld= $x[$iz];
+    }
+    debug($m,'M'); debug($z,'Z'); debug($dn,'D'); debug($pn,'P'); 
+    // redakce osobních údajů
+    $udaje= array(
+      'Jméno a příjmení'=>'jmeno', 
+      'Datum narozeni'=>'narozeni',
+      'Telefon'=>'telefon',
+      'E-mail'=>'email',
+      'Č. OP nebo cest. dokladu'=>'obcanka'
+    );
+    $html.= "<p>vygenerováno z Answeru</p>";
+    $html.= "<table class='stat'><tr><th></th><th>Muž</th><th>Žena</th></tr>";
+    foreach ($udaje as $th=>$fld) {
+      $html.= "<tr><th>$th</th><td>{$m->$fld}</td><td>{$z->$fld}</td></tr>";
+    }
+    $html.= "<tr><th>Adresa, PSČ</th><td colspan='2'>$r_adresa</td></tr>";
+    $html.= "</table>";
+    // děti
+    $deti= ''; $nakurzu= 0;
+    if (count($dn)) {
+      $del= '';
+      foreach ($dn as $d) {
+        $deti.= "$del$d->jmeno, $d->narozeni"; $del= '; ';
+        $nakurzu+= $d->nakurzu ? 1 : 0;
+      }
+      if ($nakurzu) {
+        $html.= "<p>Na Manželská setkání přihlašujeme i tyto děti:</p>";
+        $html.= "<table class='stat'><tr><th>Jméno a příjmení</th><th>Datum narození</th><th>Poznámky (nemoci, alergie apod.)</th></tr>";
+        foreach ($dn as $d) {
+          if (!$d->nakurzu) continue;
+          $html.= "<tr><td>$d->jmeno</td><td>$d->narozeni</td><td>$d->note</td></tr>";
+        }
+        $html.= "</table>";
+      }
+    }
+    $html.= "<p></p>";
+    // redakce citlivých údajů
+    $udaje= array(
+      'Vzdělání'=>'vzdelani', 
+      'Povolání, zaměstnání'=>'zamest',
+      'Zájmy, znalost jazyků'=>'zajmy_jazyk',
+      'Popiš svoji povahu'=>'x_povaha',
+      'Vyjádři se o vašem manželství'=>'x_manzelstvi',
+      'Příslušnost k církvi'=>'cirkev',
+      'Aktivita v církvi'=>'aktivita',
+    );
+    $th= "th colspan='2'";
+    $html.= "<table class='stat'><tr><th></th><$th>Muž</th><$th>Žena</th></tr>";
+    $td= "td colspan='2'";
+    foreach ($udaje as $popis=>$fld) {
+      $html.= "<tr><th>$popis</th><$td>{$m->$fld}</td><$td>{$z->$fld}</td></tr>";
+      if ($fld=='aktivita')
+        $html.= "<tr><th>Děti (jméno + datum narození)</th><td colspan='4'>$deti</td></tr>";
+    }
+    $html.= "<tr><th>SPZ auta na kurzu</th><td>$r_spz</td><td>Datum svatby: $r_datsvatba</td>
+      <td colspan='2'>Předchozí manželství? muž:$m->x_rozvody žena:$z->x_rozvody</td></tr>";
+    $html.= "</table>";
+    $html.= "<p>Souhlas obou manželů s přihlášením na kurz byl potvrzen.</p>";
+//    // generování PDF
+//    global $ezer_path_docs;
+//    $fname= "prihlaska.pdf";
+//    $foot= '';
+//    $f_abs= "$ezer_path_docs/$fname";
+//    $f_rel= "docs/$fname";
+//    tc_html($fname,$html,$foot);
+//    $href= "<a target='dopis' href='$f_rel'>$fname</a>";
+//    $html= "$href<br>$html";
+  }
+  else {
+    $html= "<span style='background:yellow'>uložit lze jen přihlášku přenesenou do Answeru</span>";
+  }
+  return $html;
+}
 function osoba_jmeno ($idp,$role) {
   $jmeno= select1("CONCAT(jmeno,' ',prijmeni)",
       'pobyt JOIN rodina ON id_rodina=i0_rodina JOIN tvori USING (id_rodina) JOIN osoba USING (id_osoba)',
