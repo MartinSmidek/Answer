@@ -32,6 +32,7 @@ func onfirstfocus() {
   onresize(sys('screen','width'),sys('screen','height'));
 }
 func onfocus() { 
+  page.oform_show(the_wordpress ? 'on' : 'off');
   if (the_duakce_local!=the_duakce) {
     if (dirty) akce_onstart();
     u.legenda(the_cenik,the_cena);
@@ -52,7 +53,6 @@ func onfocus() {
     if (team_access) cmd.tym_skill(team_access);
     // úprava podle charakteru akce
     u.b.columns();
-    page.oform_show(the_wordpress ? 'on' : 'off');
     w_change_all();
     h_change_all();
   }
@@ -848,6 +848,7 @@ form _ucast [,,400,] { css:'ds_form', style:'height:fit-content'
             pob.skup.raise('onrowclick',key_pobyt,0,0,1);
           os1.key_osoba= ido1;
           os2.key_osoba= ido2;
+          evid.c_change(rod.cleni.browse_count()==1 ? 1 : 2)
         }
         else {         
           os1.key(0); os2.key(0);
@@ -1137,7 +1138,7 @@ form _page  [,,623,20] {
   }}
   // pro -1 potlačí zobrazení, pro 1 zahájí zobrazování,  pro 0 ukazuje data
   func oform_show(cmd) { 
-    if (!back) return;
+    if (back) return;
     if (has_skill('yawp')) {
       if (cmd=='off') 
           form.display(0,'oform'); 
@@ -1249,16 +1250,33 @@ form _evidence [,,623,] { style:'height:fit-content'
     rod.show_rodina; pob.show_pobyt;
   }
   # změny sloupců
-  proc c_change(n) {
+  func c_change(n) {
     // 1 sloupec
-    eq(n,1); os2.display; cmode.set(1); page.wider.set('[fa-toggle-right]');
-    os2.display(0); sp2.display(0);
-    frame.set_css('page_2clmn','page_3clmn')
-  | // 2 sloupce
-    eq(n,2); not(os2.display); cmode.set(2); page.wider.set('[fa-toggle-left]');
-    os2.display(1); sp2.display(1); 
-    frame.set_css('page_3clmn','page_2clmn');
+    if (n==1) {
+      if (os2.display()) {
+        cmode= 1; page.wider= '[fa-toggle-right]';
+        os2.display(0); sp2.display(0);
+        frame.set_css('page_2clmn','page_3clmn')
+      }
+    }
+    elseif (n==2 && curr_w==1280) { // 2 sloupce
+      if (!os2.display()) {
+        cmode= 2; page.wider= '[fa-toggle-left]';
+        os2.display(1); sp2.display(1); 
+        frame.set_css('page_3clmn','page_2clmn');
+      }
+    }
   }
+//  proc c_change(n) {
+//    // 1 sloupec
+//    eq(n,1); os2.display; cmode.set(1); page.wider.set('[fa-toggle-right]');
+//    os2.display(0); sp2.display(0);
+//    frame.set_css('page_2clmn','page_3clmn')
+//  | // 2 sloupce
+//    eq(n,2); not(os2.display); cmode.set(2); page.wider.set('[fa-toggle-left]');
+//    os2.display(1); sp2.display(1); 
+//    frame.set_css('page_3clmn','page_2clmn');
+//  }
   proc onproperty() { form.display(0,'2') }
   # změna v některém z formulářů
   proc d_change() { cmd.set_state('edit'); }
