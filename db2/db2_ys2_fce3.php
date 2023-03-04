@@ -3074,11 +3074,14 @@ end:
 # vytvoří obraz přihlášky včetně odsouhlasených údajů z minula podle db
 function oform_save ($idp,$fid=1503) { trace();
   $html= '';
+  // nalezení akce
+  list($nazev,$rok)= select('nazev,YEAR(datum_od)','pobyt JOIN akce ON id_akce=id_duakce',"id_pobyt=$idp");
   // nalezení formuláře
   list($eid,$idr)= select('entry_id,i0_rodina','pobyt',"id_pobyt=$idp");
   if ($eid) {
     $x= $m= $z= $dn= $pn= array();
-    $html.= "<p><b><u>Kompletní přihláška</u></b></p>";
+    $html.= "<h3 style=\"text-align:center;\">Údaje z online přihlášky na akci \"$nazev $rok\"</h3>";
+    $html.= "<p style=\"text-align:center;\"><i>doplněné dříve svěřenými osobními údaji</i></p>";
     $qf= pdo_qry("SELECT field_id,value 
       FROM wordpress.wp_3_wpforms_entry_fields
       WHERE entry_id=$eid AND form_id=$fid
@@ -3137,12 +3140,21 @@ function oform_save ($idp,$fid=1503) { trace();
       'E-mail'=>'email',
       'Č. OP nebo cest. dokladu'=>'obcanka'
     );
-    $html.= "<p>vygenerováno z Answeru</p>";
-    $html.= "<table class='stat'><tr><th></th><th>Muž</th><th>Žena</th></tr>";
-    foreach ($udaje as $th=>$fld) {
-      $html.= "<tr><th>$th</th><td>{$m->$fld}</td><td>{$z->$fld}</td></tr>";
+    $html.= "
+      <style>
+        table.prihlaska { width:100%; border-collapse: collapse; }
+        table.prihlaska td { border: 1px solid grey; }
+        table.prihlaska th { text-align:center; }
+      </style>
+      ";
+    $table_attr= "class=\"prihlaska\" cellpadding=\"7\"";
+    $th= "th colspan=\"2\"";
+    $td= "td colspan=\"2\"";
+    $html.= "<table $table_attr><tr><th></th><$th>Muž</th><$th>Žena</th></tr>";
+    foreach ($udaje as $popis=>$fld) {
+      $html.= "<tr><th>$popis</th><$td>{$m->$fld}</td><$td>{$z->$fld}</td></tr>";
     }
-    $html.= "<tr><th>Adresa, PSČ</th><td colspan='2'>$r_adresa</td></tr>";
+    $html.= "<tr><th>Adresa, PSČ</th><td colspan=\"4\">$r_adresa</td></tr>";
     $html.= "</table>";
     // děti
     $deti= ''; $nakurzu= 0;
@@ -3153,8 +3165,8 @@ function oform_save ($idp,$fid=1503) { trace();
         $nakurzu+= $d->nakurzu ? 1 : 0;
       }
       if ($nakurzu) {
-        $html.= "<p>Na Manželská setkání přihlašujeme i tyto děti:</p>";
-        $html.= "<table class='stat'><tr><th>Jméno a příjmení</th><th>Datum narození</th><th>Poznámky (nemoci, alergie apod.)</th></tr>";
+        $html.= "<p><i>Na Manželská setkání přihlašujeme i tyto děti:</i></p>";
+        $html.= "<table $table_attr><tr><th>Jméno a příjmení</th><th>Datum narození</th><th>Poznámky (nemoci, alergie apod.)</th></tr>";
         foreach ($dn as $d) {
           if (!$d->nakurzu) continue;
           $html.= "<tr><td>$d->jmeno</td><td>$d->narozeni</td><td>$d->note</td></tr>";
@@ -3173,27 +3185,27 @@ function oform_save ($idp,$fid=1503) { trace();
       'Příslušnost k církvi'=>'cirkev',
       'Aktivita v církvi'=>'aktivita',
     );
-    $th= "th colspan='2'";
-    $html.= "<table class='stat'><tr><th></th><$th>Muž</th><$th>Žena</th></tr>";
-    $td= "td colspan='2'";
+    $th= "th colspan=\"2\"";
+    $html.= "<table $table_attr><tr><th></th><$th>Muž</th><$th>Žena</th></tr>";
+    $td= "td colspan=\"2\"";
     foreach ($udaje as $popis=>$fld) {
       $html.= "<tr><th>$popis</th><$td>{$m->$fld}</td><$td>{$z->$fld}</td></tr>";
       if ($fld=='aktivita')
-        $html.= "<tr><th>Děti (jméno + datum narození)</th><td colspan='4'>$deti</td></tr>";
+        $html.= "<tr><th>Děti (jméno + datum narození)</th><td colspan=\"4\">$deti</td></tr>";
     }
     $html.= "<tr><th>SPZ auta na kurzu</th><td>$r_spz</td><td>Datum svatby: $r_datsvatba</td>
-      <td colspan='2'>Předchozí manželství? muž:$m->x_rozvody žena:$z->x_rozvody</td></tr>";
+      <td colspan=\"2\">Předchozí manželství? muž:$m->x_rozvody žena:$z->x_rozvody</td></tr>";
     $html.= "</table>";
-    $html.= "<p>Souhlas obou manželů s přihlášením na kurz byl potvrzen.</p>";
+    $html.= "<p><i>Souhlas obou manželů s přihlášením na kurz byl potvrzen.</i></p>";
 //    // generování PDF
-//    global $ezer_path_docs;
-//    $fname= "prihlaska.pdf";
-//    $foot= '';
-//    $f_abs= "$ezer_path_docs/$fname";
-//    $f_rel= "docs/$fname";
-//    tc_html($fname,$html,$foot);
-//    $href= "<a target='dopis' href='$f_rel'>$fname</a>";
-//    $html= "$href<br>$html";
+    global $ezer_path_docs;
+    $fname= "prihlaska.pdf";
+    $foot= '';
+    $f_abs= "$ezer_path_docs/$fname";
+    $f_rel= "docs/$fname";
+    tc_html($f_abs,$html,$foot);
+    $href= "Lze stáhnout jako <a target='dopis' href='$f_rel'>$fname</a>.";
+    $html= "$href<br>$html";
   }
   else {
     $html= "<span style='background:yellow'>uložit lze jen přihlášku přenesenou do Answeru</span>";
