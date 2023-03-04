@@ -3623,7 +3623,7 @@ function ucast2_browse_ask($x,$tisk=false) {
             # barva nerodinného pobytu
             $p_access|= $o->access;
             $p_access_web|= $o->access_web;
-            if (!$p->xstat && $o->stat!='CZ') $p->xstat= $o->stat;
+            if (!$p->xstat && $o->stat!='CZ') $p->xstat= $o->prislusnost;
           }
           else {
             # neúčastník
