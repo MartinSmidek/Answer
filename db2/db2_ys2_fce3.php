@@ -3062,6 +3062,8 @@ function oform_show ($idfs,$idp) { trace();
       if (!$x->value) continue;
       if ($x->value=='Již jsem se kurzu zúčastnil. Mé kontaktní ani ostatní údaje v evidenci se nezměnily.') continue;
       if ($x->value=='Již jsem se kurzu zúčastnila. Mé kontaktní ani ostatní údaje v evidenci se nezměnily.') continue;
+      if (in_array($x->name,array('zena-jmeno','Adresa bydliště','Datum svatby'))) 
+          $html.= '<hr>';
       $html.= "<p>$x->name: <b>$x->value</b></p>";
     }
     // bylo zapsáno do pobyt?
