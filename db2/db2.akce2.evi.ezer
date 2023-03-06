@@ -857,7 +857,10 @@ form _page {
         sel= split(sel,',');
         if ( array_length(sel)==2 ) {
           idr= elim.rodiny_12(sel[0],sel[1]); 
-          if ( idr ) lst.br.browse_refresh(idr);
+          if ( idr ) {
+            lst.br.selected('clear');
+            lst.br.browse_refresh(idr);
+          }
         }
         else vyber(array_length(sel),'rodiny',lst.br)
 //          warning(`Vyber právě 2 rodiny ne ${array_length(sel)}`)
@@ -868,7 +871,10 @@ form _page {
         sel= split(sel,',');
         if ( array_length(sel)==2 ) {
           ido= elim.osoby_12(sel[0],sel[1]); 
-          if ( ido ) lst.bo.browse_refresh(ido);
+          if ( ido ) {
+            lst.bo.selected('clear');
+            lst.bo.browse_refresh(ido);
+          }
         }
         else vyber(array_length(sel),'osoby',lst.bo)
 //          confirm(`nejsou vybrány právě 2 osoby (ale ${array_length(sel)})`)
