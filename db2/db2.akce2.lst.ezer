@@ -951,9 +951,9 @@ form _info [,,*,50] {
         alert("nemáte oprávnění označit jako pracovní akci jiné organizace");
       elseif (id_akce) 
         volba_akce(id_akce)
-      elseif (fdate('Y',od.get)!=rok)
+      elseif (fdate('Y',od)!=rok)
         alert('Akce má na intranetu uvedeno chybné datum zahájení (např. chybějící nebo z jiného roku)');
-      elseif (confirm('akce ',nazev.get,' zatím není v databázi, mám ji založit?')) {
+      elseif (confirm('akce ',nazev,' zatím není v databázi, mám ji založit?')) {
         the_duakce= akce.insert_record({access:org_ys, nazev:nazev, datum_od:date2sql(od), datum_do:date2sql(do)});
         join_akce.insert_record({id_akce:the_duakce, g_rok:rok, g_kod:kod});
         google.browse_row(); volba_akce(id_akce); 
