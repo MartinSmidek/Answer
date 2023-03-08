@@ -8,7 +8,8 @@
   #   $options    = doplnění Ezer.options
   #   $add_pars   = doplnění $EZER->options
 
-  $kernel= "ezer3.1"; 
+  // verze použitého jádra Ezeru
+  $ezer_version= isset($_GET['ezer']) ? $_GET['ezer'] : '3.1'; 
   $ezer_server= 
     $_SERVER["SERVER_NAME"]=='answer.bean'        ? 0 : (      // 0:lokální 
     $_SERVER["SERVER_NAME"]=='answer.doma'        ? 1 : (      // 1:Synology DOMA

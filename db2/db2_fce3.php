@@ -7022,6 +7022,8 @@ function tisk2_text_vyroci($akce,$par,$title,$vypis,$export=false) { trace();
 # ------------------------------------------------------------------------------- akce2 text_prehled
 # pokud $title='' negeneruje se html
 function akce2_text_prehled($akce,$title) { trace();
+  global $USER;
+  $org= $USER->org;
   $pocet= 0;
   # naplní histogram podle $cond
   $akce_text_prehled_x= function ($akce,$cond,
@@ -7087,8 +7089,9 @@ function akce2_text_prehled($akce,$title) { trace();
   };
   $result= (object)array('html'=>'','pozor'=>'');
   $html= '';
-  $nedeti= $akce_text_prehled_x($akce,"t.role='d' AND p.funkce!=99 AND s.s_role NOT IN (2,3,4,5)",
-      1,1,1);
+  $nedeti= $org!=4
+    ? $akce_text_prehled_x($akce,"t.role='d' AND p.funkce!=99 AND s.s_role NOT IN (2,3,4,5)",1,1,1)
+    : '';
   if ( $pocet>0 ) {
     $html.= "<h3 style='color:red'>POZOR! Děti vedené chybně jako účastníci nebo hosté</h3>$nedeti";
     $result->pozor= "Děti vedené chybně jako účastníci nebo hosté: $nedeti";
