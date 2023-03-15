@@ -14049,7 +14049,11 @@ function mail2_mai_posli($id_dopis,$info) {  trace();
   global $ezer_root;
   $idu= $_SESSION[$ezer_root]['user_id'];
   $i_smtp= sys_user_get($idu,'opt','smtp');
-  $max_per_day= select1('ikona','_cis',"druh='smtp_srv' AND data=$i_smtp");
+  if (!$i_smtp) {
+    $err.= "<hr>Není přístupný žádný odesílací SMTP server"; 
+    goto end;
+  }
+  $max_per_day= select1('ikona','_cis',"druh='smtp_srv' AND data='$i_smtp'");
   // případné upozornění na maximum
   if ( $max_per_day && $info->_count>$max_per_day ) {
     $err.= "<hr>Přes GMail lze denně lze posílat maximálně $max_per_day mailů - 
@@ -14058,6 +14062,7 @@ function mail2_mai_posli($id_dopis,$info) {  trace();
         Informace od Google naleznete 
         <a href='https://support.google.com/mail/answer/22839?hl=cs' target='hlp'>zde</a>.";
   }
+end:  
   return $err;
 }
 # ---------------------------------------------------------------------------------- mail2 personify

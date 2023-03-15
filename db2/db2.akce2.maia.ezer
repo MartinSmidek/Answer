@@ -233,7 +233,8 @@ form _etext  {
   const L=390
   field id_davka { data:dopis.id_davka }
   label [L+0,20,365,142] { css:'ae_work' }
-  field datum [L+10,36,80,17] { data:dopis.datum, title:'^datum odeslání', help:'datum|datum emailu', skill:'yam|yams;fam|fams;cam|cams' }
+  field datum [L+10,36,80,17] { data:dopis.datum, title:'^datum odeslání', help:'datum|datum emailu', 
+      skill:'yam|yams;fam|fams;cam|cams;T|T' }
 //  field hnizdo_txt [L+100,36,80,17] { title:'^jen pro hnízdo' format:'ro' }
   select hnizdo [L+100,36,100,] { title:'^jen pro hnízdo', type:'map', data:dopis.hnizdo }
 //    proc onchanged() { 
@@ -242,7 +243,8 @@ form _etext  {
 //      menu_item.click();
 //  }}
   field id_dopis [L+307,38,43,17] { data:dopis.id_dopis, title:'^ID dopisu', format:'rd' }
-  field predmet [L+10,72,340,17] { data:dopis.nazev, title:'^předmět mailu', help:'předmět|předmět emailu', skill:'yam|yams;fam|fams;cam|cams' }
+  field predmet [L+10,72,340,17] { data:dopis.nazev, title:'^předmět mailu', help:'předmět|předmět emailu', 
+      skill:'yam|yams;fam|fams;cam|cams;T|T' }
   // ==> připojení příloh
   field attach {data:dopis.prilohy}                     // datové pole se seznamem příloh
   label [L+13,96,362,] {title:'sem lze přetáhnout přílohy, zrušit a stáhnout pak kontextovým menu'}
@@ -272,7 +274,7 @@ form _etext  {
   }}
   label [L+208,232,184,] { title:"doplněním jsou jen přidání noví adresáti, staré maily zůstávají" }
   button uloz [L+8,174,,] { tag:'u', type:'submit', title:'Uložit',
-    help:'uložit opravené hodnoty', skill:'yam|yams;fam|fams;cam|cams'
+    help:'uložit opravené hodnoty', skill:'yam|yams;fam|fams;cam|cams;T|T'
     proc onclick () {
       form.same
     | // oprava
@@ -284,14 +286,15 @@ form _etext  {
       form_state('n|s','u|z');
     }
   }
-  button [L+64,174,,] { tag:'z', title:'Zpět', help:'neukládat hodnoty', skill:'yam|yams;fam|fams;cam|cams'
+  button [L+64,174,,] { tag:'z', title:'Zpět', help:'neukládat hodnoty', 
+      skill:'yam|yams;fam|fams;cam|cams;T|T'
     proc onclick () {
       adopis.get; form.load(adopis.get); form_state('n|s','u|z'); texty.browse_focus
     | form.init; drop.set(''); form_state('n','u|z|s')
     }
   }
   button oprav [L+113,174,,] { tag:'s', title:'Opravit text', help:'opravit text mailu',
-    skill:'yam|yams;fam|fams;cam|cams'
+    skill:'yam|yams;fam|fams;cam|cams;T|T'
     proc onclick () {
       gt(texty.stav2.get,2); not(confirm("Tento dopis již byl rozesílán, opravdu chceš opravit jeho text?"))
     | E_dopis.modal(10,10); texty.raise('onrowclick',dopis_id.get)
@@ -300,7 +303,7 @@ form _etext  {
   # příkazy 2
   label  [L+0,168,364,31] { css:'ae_parm' }
   button novy [L+256,174,,] { tag:'n', title:'Nový', help:'vytvořit nový e-mail',
-    skill:'yam|yams;fam|fams;cam|cams'
+    skill:'yam|yams;fam|fams;cam|cams;T|T'
     proc onclick () {
       form.init; drop.set(''); form_state('u|z','n|s'); drop_init;
       texty.blur(1); adopis.set(0);
@@ -320,7 +323,7 @@ form _etext  {
     }
   }
   button smaz [L+305,174,,] { tag:'s', title:'Smazat', help:'smazat mail a jeho rozesílání',
-    skill:'yam|yams;fam|fams;cam|cams'
+    skill:'yam|yams;fam|fams;cam|cams;T|T'
     proc onclick () {
       confirm(conc("Opravdu smazat mail '",texty.predmet.get,"' a jeho rozesílací seznam?"));
       ask('mail2_mai_smaz',texty.id_dopis.get);
@@ -329,7 +332,7 @@ form _etext  {
   }
   var et_prazdy: number
   button generovat [L+8,211,,] { tag:'s', title:'Vygenerovat rozesílací seznam',
-    help:'připravit rozesílání', skill:'yam|yams;fam|fams;cam|cams'
+    help:'připravit rozesílání', skill:'yam|yams;fam|fams;cam|cams;T|T'
     proc onclick () {
       var conf: object
       var blokovano: number
@@ -347,7 +350,7 @@ form _etext  {
     }
   }
   button dogenerovat [L+202,211,,] { tag:'s', title:'... jen doplnit o neobeslané',
-    help:'doplnit rozesílání', skill:'yam|yams;fam|fams;cam|cams'
+    help:'doplnit rozesílání', skill:'yam|yams;fam|fams;cam|cams;T|T'
     proc onclick () { var ret:object
       clear;
       ret.set(ask('mail2_mai_doplnit',dopis_id.get,dopis_akce.get,0));
@@ -394,7 +397,8 @@ form _etext  {
   label obsah [0,263,645,200] { title:'zobrazení předmětu a textu mailu' }
 }
 # ========================================================================================== E_dopis
-panel E_dopis [0,0,645,520] { title:' Úprava textu mailu', type:'popup', css:'dialog', skill:'yams;fams;cams'
+panel E_dopis [0,0,645,520] { title:' Úprava textu mailu', type:'popup', css:'dialog', 
+    skill:'yams;fams;cams;T'
   use mail: form _edopis [0,0,,],
   proc onfocus () {
     dopis_id.get; mail.load(dopis_id.get);
@@ -481,9 +485,9 @@ form _esady  {
   }
   // odpovědi na adresu, použít patičku
   field from [105,231,200,17] { title:'adresa pro odpovědi:'
-    skill:'yam|yams;fam|fams;cam|cams', help:'email z osobního nastavení', format:'t'  }
+    skill:'yam|yams;fam|fams;cam|cams;T|T', help:'email z osobního nastavení', format:'t'  }
   field name [105,250,200,17] { title:'... jméno:'
-    skill:'yam|yams;fam|fams;cam|cams', help:"'vyřizuje' z osobního nastavení", format:'t'  }
+    skill:'yam|yams;fam|fams;cam|cams;T|T', help:"'vyřizuje' z osobního nastavení", format:'t'  }
   check foo [312,230,59,] { title:'patička', value:'0', format:'t', 
     proc onchange() {
       pata.display(this.get); this.get; pata.set(sys('user','options','email_foot'));
@@ -492,8 +496,8 @@ form _esady  {
   // test
   label [0,274,380,2] { style:'border-top:1px solid green' }
   field zkus [105,280,200,17] { title:'poslat test na adresu:' 
-    skill:'yam|yams;fam|fams;cam|cams', help:'email z osobního nastavení', format:'t' }
-  button test [315,280,,] { title:'[fa-send-o] test', skill:'yam|yams;fam|fams;cam|cams',
+    skill:'yam|yams;fam|fams;cam|cams;T|T', help:'email z osobního nastavení', format:'t' }
+  button test [315,280,,] { title:'[fa-send-o] test', skill:'yam|yams;fam|fams;cam|cams;T|T',
     help:'pro kontrolu - posílá se 1 mail na testovací adresu'
     proc onclick () { var foot:text
       msg.set(''); foot.set('');
@@ -506,13 +510,14 @@ form _esady  {
   }
   // postupné odesílání - nové
   label  [0,306,364,31] { css:'ae_parm' }
-  field davka [108,313,30,17] { title:'odesílat po:' value:'1' format:'r' skill:'yam|yams;fam|fams;cam|cams' 
+  field davka [108,313,30,17] { title:'odesílat po:' value:'1' format:'r' 
+      skill:'yam|yams;fam|fams;cam|cams;T|T' 
     proc onchange () {
       gt(davka.get,20); alert("dávky by měly být malé (do 20) aby nezahltily odesílací server");
     | send.set(replace_fa(conc('[fa-send-o] pošli všechny maily (po ',davka.get,')')));
     }
   }
-  button send [150,313,,] { skill:'yam|yams;fam|fams;cam|cams',
+  button send [150,313,,] { skill:'yam|yams;fam|fams;cam|cams;T|T',
     help:'budu posílat mail za mailem tak, aby se server nezahltil'
     proc onclick () { var foot:text, par:object
       msg.set(''); foot.set('');

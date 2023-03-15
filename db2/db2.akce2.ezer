@@ -188,7 +188,8 @@ panel ucast {type:'plain', format:'d', _sys:'*', title:"Účastníci", include:'
   proc ucast_selected() {}                      // seznam vybraných účastníků
   proc z_change() {}
 }
-panel pece {type:'plain', _sys:'*', title:'Pečouni', include:'onload,db2.akce2.pece',skill:'yaa;faa;caa#crz;T'
+panel pece {type:'plain', _sys:'*', title:'Pečouni', include:'onload,db2.akce2.pece',
+    skill:'yaa;faa;caa#T'
   proc reaccess() {}
   proc init_pece() { alert('napřed klikni na Databáze|Pečouni') }
   proc pece_hnizda() {}                         // nastavení pro akci v hnízdech
@@ -199,7 +200,7 @@ panel tisk [,,,] {type:'right', _sys:'*', title:'Výpisy akce', include:'onload,
   proc tisk_hnizda() {}                          // nastavení pro akci v hnízdech
   proc ukaz_vypis() {}                          // otevření Výpisy akce na daném výpisu
 }
-panel maia {type:'right', title:'Maily akce', _sys:'*', include:'onclick,db2.akce2.maia', skill:'yam;fam;cam#T'
+panel maia {type:'right', title:'Maily akce', _sys:'*', include:'onclick,db2.akce2.maia', skill:'yam;fam;cam;T'
   proc reaccess() {}
   proc mail_hnizda() {}                          // nastavení pro akci v hnízdech
 }
