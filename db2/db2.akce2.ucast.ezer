@@ -2292,7 +2292,7 @@ form _aktivity [,,623,] { style:'height:fit-content'
     show idp { data:p.id_pobyt }
     show ids { data:s.id_spolu }
     show org { data:a.access }
-    show sty { expr:"IF(a.zruseno,1,IF(FLOOR(YEAR(a.datum_od)-YEAR(o.narozeni)-(DATE_FORMAT(a.datum_od,'%m%d')<DATE_FORMAT(o.narozeni,'%m%d'))<18,2,0))" }
+    show sty { expr:"IF(a.zruseno,1,IF(YEAR(a.datum_od)-YEAR(o.narozeni)-(DATE_FORMAT(a.datum_od,'%m%d')<DATE_FORMAT(o.narozeni,'%m%d'))<18,2,0))" }
     show rok  [,, 30,] { title:'rok', expr:"YEAR(a.datum_od)", format:'q*s-'
       css_cell:'org,0:,1:ezer_ys,2:ezer_fa,3:ezer_db' }
     show akce [,,150,] { title:'název', data:a.nazev, format:'q*s' }
