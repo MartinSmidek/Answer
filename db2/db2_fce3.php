@@ -334,7 +334,7 @@ function akce2_info($id_akce,$text=1,$pobyty=1) { trace();
            IF(ISNULL(r.id_rodina),'',GROUP_CONCAT(IF(t.role NOT IN ('a','b'),CONCAT(
                IF(s.s_role=5 AND t.role='d','*',''),
                IF(s.s_role=5 AND t.role='p','§',''),
-               ROUND(IF(MONTH(o.narozeni),DATEDIFF(a.datum_od,o.narozeni)/365.2425,YEAR(a.datum_od)-YEAR(o.narozeni)),0))
+               YEAR(a.datum_od)-YEAR(o.narozeni)-(DATE_FORMAT(a.datum_od,'%m%d')<DATE_FORMAT(o.narozeni,'%m%d')))
              ,'') ORDER BY o.narozeni DESC)) AS _vekdeti"
         : '1';
     // projdeme pobyty
