@@ -753,12 +753,12 @@ form _page {
     proc onclick() { cvak(this); osoba_load }}
   label albu [247,0,90,20] {par:°{on:'C|F',off:'O|B|D|Y|M'}, tag:'_', title:'<b>Fotografie</b>',
     proc onclick() { cvak(this); osoba_load }}
-  label dary [365,0,90,20] {par:°{on:'C|O|D',off:'F|Y|M'},   tag:'_', title:'<b>Dary</b>', skill:'yae;fae;cae'
-    proc onclick() { cvak(this); osoba_load; dar.onclick }}
-  label clen [483,0,90,20] {par:°{on:'C|O|Y',off:'F|D|M'},  tag:'_', title:'<b>Členství YMCA</b>', skill:'yae;fae;cae'
-    proc onclick() { cvak(this); osoba_load; cle.onclick }}
-  label mapa [601,0,90,20] {par:°{on:'C|O|M',off:'F|D|Y'},  tag:'_', title:'<b>Mapa</b>',
+  label mapa [365,0,90,20] {par:°{on:'C|O|M',off:'F|D|Y'},  tag:'_', title:'<b>Mapa</b>',
     proc onclick() { cvak(this); osoba_load; map.mapa_show('smap') }}
+  label dary [483,0,90,20] {par:°{on:'C|O|D',off:'F|Y|M'},   tag:'_', title:'<b>Dary</b>', skill:'yae;fae;cae'
+    proc onclick() { cvak(this); osoba_load; dar.onclick }}
+  label clen [601,0,90,20] {par:°{on:'C|O|Y',off:'F|D|M'},  tag:'_', title:'<b>Členství YMCA</b>', skill:'yae;fae;cae'
+    proc onclick() { cvak(this); osoba_load; cle.onclick }}
   label frame [0,16,706,min_h-150] { css:'ae_work'
     proc onclick() { cmd.get.set_css('shift_down','shift_up') }}
   # ==============================================> C: EVIDENCE RODINY
@@ -1284,7 +1284,7 @@ form _mapa [,,650,500] {css:'ae_frame shift_down'
         proc onclick() { cr.fit_bounds }}
       item { title:'zoom na celou republiku'
         func onclick() { cr.set({zoom:"49.0,14.6;50.5,16.4"}) }}
-      item { title:'vytvoř ohraničující obdélník'
+      item { title:'vytvoř ohraničující obdélník (klik dovnitř zjemní ohraničení)'
         func onclick() { ohraniceni() }}
       item { title:'- aktuální chlapské skupiny'
         proc onclick() { var ret:object

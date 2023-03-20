@@ -1818,6 +1818,7 @@ function akce2_vzorec_test($id_akce,$hnizdo=0,$nu=2,$nD,$nd=0,$nk=0,$np=0,$table
     //            u p D d k noci oo plus
     'Nl' => array(1,0,1,0,0,   1, 0,  1),
     'Np' => array(0,1,1,1,0,   1, 0,  1),
+    'K'  => array(1,0,0,0,0,   1, 0,  1),
     'P'  => array(1,0,0,0,0,   0, 0,  1),
     'PD' => array(0,0,1,0,0,   0, 0,  1),
     'Pd' => array(0,0,0,1,0,   0, 0,  1),
@@ -2093,7 +2094,7 @@ function akce2_vzorec($id_pobyt) {  //trace();
   }
   // podrobné parametry, ubytovani ma hodnoty z číselníku ms_akce_ubytovan
   // děti: koje=do 3 let | male=od 3 do 6 | velke=nad 6
-  $deti_male= $deti_velke= $koje= $chuv= $dite_male_chovane= $dite_velke_chovane= $koje_chovany= 0;
+  $dosp= $deti_male= $deti_velke= $koje= $chuv= $dite_male_chovane= $dite_velke_chovane= $koje_chovany= 0;
   $chuvy= $del= '';
   $qo= "SELECT o.jmeno,o.narozeni,p.funkce,t.role, p.ubytovani,p.hnizdo,
          s.pecovane,(SELECT CONCAT(osoba.prijmeni,',',osoba.jmeno,',',pobyt.id_pobyt)
@@ -2109,8 +2110,8 @@ function akce2_vzorec($id_pobyt) {  //trace();
         GROUP BY o.id_osoba";
   $ro= pdo_qry($qo);
   while ( $ro && ($o= pdo_fetch_object($ro)) ) {
+    $vek= narozeni2roky(sql2stamp($o->narozeni),sql2stamp($datum_od));
     if ( $o->role=='d' ) {
-      $vek= narozeni2roky(sql2stamp($o->narozeni),sql2stamp($datum_od));
       if ( $o->pecovane ) {
         $chuv++;
       }
@@ -2137,6 +2138,9 @@ function akce2_vzorec($id_pobyt) {  //trace();
           // chůva bydlí s námi a platíme ji
         }
       }
+    }
+    elseif ($vek>18) {
+      $dosp++;
     }
   }
 //                                                         debug($x,"pobyt");
@@ -2220,17 +2224,22 @@ function akce2_vzorec($id_pobyt) {  //trace();
       switch ($a->za) {
         case 'Nl':
           $cc= $nl * $a->c;
-//          if ( !$cc ) break;
           $cena+= $cc;
           $ret->c_nocleh+= $cc;
           $html.= "<tr><td>{$a->txt} ($nl*{$a->c})</td><td align='right'>$cc</td></tr>";
           break;
         case 'Np':
           $cc= $np * $a->c;
-//          if ( !$cc ) break;
           $cena+= $cc;
           $ret->c_nocleh+= $cc;
           $html.= "<tr><td>{$a->txt} ($np*{$a->c})</td><td align='right'>$cc</td></tr>";
+          break;
+        case 'K':
+          $poplatku= $dosp * $p->pocetdnu;
+          $cc= $poplatku * $a->c;
+          $cena+= $cc;
+          $ret->c_nocleh+= $cc;
+          $html.= "<tr><td>{$a->txt} ($poplatku*{$a->c})</td><td align='right'>$cc</td></tr>";
           break;
         }
       }

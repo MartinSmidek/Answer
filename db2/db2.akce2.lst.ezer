@@ -673,19 +673,19 @@ form _page [,,275,360] {
     else alert("pro testování ceníku musí být akce nastavena jako pracovní")
   }
   // výpočet expr
-  label  [lc+20,bc+230,211,] { tag:'b,cen', title:"+ ceny na web" }
-  button [lc+20,bc+247,,] { tag:'b,cen', title:'manželský pár',    
-    proc onclick() { expr_ceniku("2*N*Nl+2*N*sc+2*O*oc+2*N*vc+2*P",99,this.title) }}
-  button [lc+20,bc+267,,] { tag:'b,cen', title:'dítě nad 6,celá',  
-    proc onclick() { expr_ceniku("  N*Nl  +N*sc  +O*oc  +N*vc+1*PD",99,this.title) }}
-  button [lc+20,bc+287,,] { tag:'b,cen', title:'dítě nad 6,dětská', 
-    proc onclick() { expr_ceniku("  N*Nl  +N*sp  +O*op  +N*vp+1*PD",99,this.title) }}
-  button [lc+20,bc+307,,] { tag:'b,cen', title:'dítě od 3 do 6,dětská', 
-    proc onclick() { expr_ceniku("         N*sp  +O*op  +N*vp+1*Pd",99,this.title) }}
-  button [lc+20,bc+327,,] { tag:'b,cen', title:'dítě do 3,bez',    
-    proc onclick() { expr_ceniku("                            1*Pk",99,this.title) }}
-  button [lc+20,bc+347,,] { tag:'b,cen', title:'VPS se slevou',    
-    proc onclick() { expr_ceniku("2*N*Nl+2*N*sc+2*O*oc+2*N*vc+2*P-1*Sv",99,this.title) }}
+//  label  [lc+20,bc+230,211,] { tag:'b,cen', title:"+ ceny na web" }
+//  button [lc+20,bc+247,,] { tag:'b,cen', title:'manželský pár',    
+//    proc onclick() { expr_ceniku("2*N*Nl+2*N*sc+2*O*oc+2*N*vc+2*P",99,this.title) }}
+//  button [lc+20,bc+267,,] { tag:'b,cen', title:'dítě nad 6,celá',  
+//    proc onclick() { expr_ceniku("  N*Nl  +N*sc  +O*oc  +N*vc+1*PD",99,this.title) }}
+//  button [lc+20,bc+287,,] { tag:'b,cen', title:'dítě nad 6,dětská', 
+//    proc onclick() { expr_ceniku("  N*Nl  +N*sp  +O*op  +N*vp+1*PD",99,this.title) }}
+//  button [lc+20,bc+307,,] { tag:'b,cen', title:'dítě od 3 do 6,dětská', 
+//    proc onclick() { expr_ceniku("         N*sp  +O*op  +N*vp+1*Pd",99,this.title) }}
+//  button [lc+20,bc+327,,] { tag:'b,cen', title:'dítě do 3,bez',    
+//    proc onclick() { expr_ceniku("                            1*Pk",99,this.title) }}
+//  button [lc+20,bc+347,,] { tag:'b,cen', title:'VPS se slevou',    
+//    proc onclick() { expr_ceniku("2*N*Nl+2*N*sc+2*O*oc+2*N*vc+2*P-1*Sv",99,this.title) }}
 //  button [lc+20,bc+367,,] { tag:'b,cen', title:'PPS se slevou',    
 //    proc onclick() { expr_ceniku("2*N*Nl+2*N*sc+2*O*oc+2*N*vc+2*P-1*Sp",99,this.title) }}
 //#   // výpočet expr - EXPERIMENTÁLNÍ
