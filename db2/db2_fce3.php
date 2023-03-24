@@ -10294,7 +10294,7 @@ end:
 # ==========================================================================================> . YMCA
 # --------------------------------------------------------------------------==> .. evid2_ymca_sprava
 # správa členů pro YS
-function evid2_ymca_sprava($org,$par,$title,$export=false) {
+function evid2_ymca_sprava($org,$par,$title,$export=false,$akce=0) {
   $ret= (object)array('error'=>0,'html'=>'');
   switch ($par->op) {
   case 'hlaseni':
@@ -10302,6 +10302,12 @@ function evid2_ymca_sprava($org,$par,$title,$export=false) {
   case 'loni':
     $ret= evid2_ymca_sestava($org,$par,$title,$export);
 //                                                         debug($ret,"evid2_ymca_sestava");
+    break;
+  case 'Valna-schuze':
+    $ret= evid2_ymca_sestava($org,$par,$title,0,$akce);
+    $ret1= evid2_ymca_sestava($org,$par,$title,1,$akce);
+    $ret2= sta2_excel_export($title,$ret1);
+    $ret->html= "{$ret2->html}<br>{$ret->html}";
     break;
   case 'zmeny':
     $ret= evid2_recyklace_pecounu($org,$par,$title,0);
@@ -10316,12 +10322,14 @@ function evid2_ymca_sprava($org,$par,$title,$export=false) {
 #   $fld = seznam položek s prefixem
 #   $cnd = podmínka
 # _clen_od,_cinny_od,_prisp,_dary
-function evid2_ymca_sestava($org,$par,$title,$export=false) {
+function evid2_ymca_sestava($org,$par,$title,$export=false,$akce=0) {
   $ret= (object)array('html'=>'','err'=>'');
   $rok= date('Y') - $par->rok;
   // dekódování parametrů
   $tits= explode(',',$par->tit);
   $flds= explode(',',$par->fld);
+  $jen_cinni= $par->jen_cinni ? 1 : 0;
+  $jen_akce= $akce ? "id_akce=$akce" : '1';
   // test korektnosti organizace
   $organizace= $org==1 ? 'YMCA Setkání' : ( $org==2 ? "YMCA Familia" : '');
   if ( !$organizace ) {
@@ -10333,7 +10341,7 @@ function evid2_ymca_sestava($org,$par,$title,$export=false) {
   $clmn= array();
   $expr= array();       // pro výrazy
   $clenu= $cinnych= $prispevku= $daru= $dobrovolniku= $novych= 0;
-  $msg= "<br><br>Ve výběru jsou účastníci akcí roku $rok";
+  $msg= $akce ? '' : "<br><br>Ve výběru jsou účastníci akcí roku $rok";
   $qry= "SELECT
            MAX(IF(YEAR(datum_od)=$rok AND p.funkce=1,1,0)) AS _vps,
            MAX(IF(YEAR(datum_od)=$rok AND p.funkce=99,1,0)) AS _pec,
@@ -10352,7 +10360,7 @@ function evid2_ymca_sestava($org,$par,$title,$export=false) {
          LEFT JOIN pobyt AS p USING (id_pobyt)
          LEFT JOIN akce AS a ON a.id_duakce=p.id_akce
          WHERE os.deleted='' AND {$par->cnd} AND (dat_do='0000-00-00' OR YEAR(dat_do)>=$rok)
-           AND os.access&$org AND od.access&$org AND a.access&$org
+           AND os.access&$org AND od.access&$org AND a.access&$org AND $jen_akce
 --         AND os.id_osoba=11199 -- Markéta Bučková
          GROUP BY os.id_osoba HAVING {$par->hav}
          ORDER BY os.prijmeni";
@@ -10376,6 +10384,7 @@ function evid2_ymca_sestava($org,$par,$title,$export=false) {
     $prispevku+= $_prisp;
     $daru+= $_dary;
     if ( !$_clen_od && !$_cinny_od ) continue;
+    if ($jen_cinni && !$_cinny_od ) continue;
     $clenu+= $_clen_od ? 1 : 0;
     $cinnych+= $_cinny_od ? 1 : 0;
     $dobrovolniku+= $x->_vps && $_cinny_od>0 || $x->_pec ? 1 : 0;
@@ -10420,14 +10429,16 @@ function evid2_ymca_sestava($org,$par,$title,$export=false) {
     }
   }
   // přidání sumarizace
-  $n++;
-  $clmn[$n]['obec']= '.SUMA:.';
-  $clmn[$n]['_clen_od']= $clenu;
-  $clmn[$n]['_cinny_od']= $cinnych;
-  $clmn[$n]['_prisp']= $prispevku;
-  $clmn[$n]['_dary']= $daru;
-  $clmn[$n]['_dobro']= $dobrovolniku;
-  $clmn[$n]['_cinny_letos']= $novych;
+  if (!$akce) {
+    $n++;
+    $clmn[$n]['obec']= '.SUMA:.';
+    $clmn[$n]['_clen_od']= $clenu;
+    $clmn[$n]['_cinny_od']= $cinnych;
+    $clmn[$n]['_prisp']= $prispevku;
+    $clmn[$n]['_dary']= $daru;
+    $clmn[$n]['_dobro']= $dobrovolniku;
+    $clmn[$n]['_cinny_letos']= $novych;
+  }
 //   $ret= sta2_table_graph($par,$tits,$flds,$clmn,$export);
   $ret= sta2_table($tits,$flds,$clmn,$export);
 end:

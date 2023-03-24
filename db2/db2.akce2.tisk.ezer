@@ -326,6 +326,15 @@ menu m {type:'left', //active:*
                                         ,par:{typ:'j',exp:'Excel2',cnd:'1',ord:'o.prijmeni,o.jmeno'
                                         ,tit:':3,Příjmeni:15,Jméno:15,Ulice:24,Město:13,PSČ:7,Datum nar.:10:t,Člen YMCA:10,(věk):5,(funkce):12'
                                         ,fld:'1,prijmeni,jmeno,ulice,obec,psc,_narozeni6,_ymca,_vek,_funkce'}}
+    item {title:'Účastníci Valné schůze'                                                     skill:'y'
+                                        ,par:{op:'Valna-schuze',jen_cinni:1,cnd:'1',hav:'1',del:'0'
+                                        ,tit:'Příjmeni:15,Jméno:15,Datum nar.:12:t,Obec:20'
+                                        ,fld:'prijmeni,jmeno,_naroz,obec'}
+      func onclick(i:ezer) { var ret:object
+        info.header(i);
+        ret= php.evid2_ymca_sprava(my_org,i.par,i.title,0,the_akce);
+        info.fill('',ret.html);
+    }}
   }
   # ----------------------------------------------------------------------------------------==> MROP
   menu {tag:'a', title:'sestavy MROP',type:'group',_sys:'*'                                  skill:'faa:m'
