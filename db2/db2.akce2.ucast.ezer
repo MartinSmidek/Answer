@@ -32,7 +32,7 @@ func onfirstfocus() {
   onresize(sys('screen','width'),sys('screen','height'));
 }
 func onfocus() { 
-  page.oform_show(the_wordpress ? 'on' : 'off');
+  page.oform_show(the_wordpress ? 'begin' : 'off');
   if (the_duakce_local!=the_duakce) {
     if (dirty) akce_onstart();
     u.legenda(the_cenik,the_cena);
@@ -57,31 +57,6 @@ func onfocus() {
     h_change_all();
   }
 }
-//proc onfocus() { 
-//  eq(the_duakce_local.get,the_duakce.get)
-//| [ [ dirty.get | akce_onstart ];
-//    u.legenda(the_cenik.get,the_cena.get);
-//    u.b.xfunkce.set_attrib('css_cell',cconc(the_ms.get,"x_ms,1:zeleny,2:oranzovy,3:oranzovy",''));
-//    eq(the_duakce_local.get,the_duakce.get)
-//  | init_ucast2;
-//    the_duakce_local.set(the_duakce.get)
-//  ];
-//  evid.ctx.obn.enable(eq(the_druh.get,2)); // jen pro obnovy
-//  evid.ctx.obm.enable(eq(the_druh.get,2)); // jen pro obnovy
-//  // souběžné akce
-//  switch(the_soubeh.get,
-//  0,{ header.soubeh.display(0) },
-//  1,{ header.soubeh.display(1); panel.display(2,'akce1'); header.soubeh.set('^Děti') },
-//  2,{ header.soubeh.display(1); panel.display(2,'akce2');  header.soubeh.set('^Kurs') }
-//  );
-//  // speciální povolení editace pro garanta akce
-//  [ the_garant; cmd.garants_skill(the_garant) ];
-//  // úprava podle charakteru akce
-//  u.b.columns;
-//  page.oform_show(cconc(the_wordpress.get,'on','off'));
-//  w_change_all;
-//  h_change_all;
-//}
 proc onblur() {
   [ track.display; track.hide ];
 }
@@ -91,23 +66,6 @@ proc reaccess() { #==> . reaccess - změna
   init_ucast2
 }
 # nastavení pro akci v hnízdech
-//proc ucast_hnizda() { var opts:object
-//  echo("ucast HNIZDA=",the_hnizda.get);
-//  { the_hnizda.get; 
-//    header.hnizdo.set_attrib('options','ms_akce_hnizda_plus.nazev');
-//    u.b.xhnizdo.set_attrib('map_pipe','ms_akce_hnizda.zkratka');
-//    u.b.xhnizdo.set_query(1,'',0);
-//    pob.hnizdo.set_attrib('options','ms_akce_hnizda.zkratka');
-//    header.hnizdo.key(99);
-//    header.hnizdo.display(1);
-//    pob.hnizdo.display(1);
-//    u.b._nazev.width(89); u.b.xhnizdo.width(20);
-//  | header.hnizdo.display(0);
-//    pob.hnizdo.display(0);
-//    u.b._nazev.width(100); u.b.xhnizdo.width(0);
-//    [ u.b.get_query; u.b.init_queries(1) ]
-//  };
-//}
 func ucast_hnizda() { var opts:object
   echo(`ucast HNIZDA=${the_hnizda}`);
   if (the_hnizda) {
@@ -208,11 +166,15 @@ func onresize(w,h) {
     narrow()
   elseif (w>=1280 && curr_w==1024)
     wide();
+  // pro online přihlášky
+  if (eq(page.oform_state,'label','browse')) {
+    page.oform_show(page.oform_state)
+  }
 }
 
 # změna šířky 1024/1280
-proc narrow() { curr_w.set(1024); w_change_all }
-proc wide()   { curr_w.set(1280); w_change_all }
+func narrow() { curr_w= 1024; w_change_all() }
+func wide()   { curr_w= 1280; w_change_all() }
 proc w_change_all() { var dite_kat_pipe:object, dite_kat_options:object
   // pro CR|MS necháme ms_akce_dita_kat
   eq(my_org.get,4,8,16)
@@ -248,14 +210,17 @@ proc h_change_all() {
   h_change_b;
 }
 # změna počtu řádků browse u.b oproti aktuálním řádkům
-proc h_change_b() { var r:number, h:number
-  h.set(sys('screen','height'));
-  r.set(divide(sum(h.get,-190),17));
-  not(eq(r,u.b.rows));
-  u.b.set_attrib('rows',r);
-  u2.b.set_attrib('rows',r);
-  act1.akc.set_attrib('rows',sum(r,-6));
-  act2.akc.set_attrib('rows',sum(r,-6));
+func h_change_b() { var r:number, h:number
+  h= sys('screen','height');
+  r= (h-190)/17;
+  if (r!=u.b.rows) {
+    u.b.rows= r;
+    u2.b.rows= r;
+    act1.akc.rows= r-6;
+    act2.akc.rows= r-6;
+    page.oforms.rows= r;
+//    page.oform.property({max_height:h-100})
+  }
 }
 
 proc change_top1(x) { x.property(object('down',curr_h.get))}
@@ -889,37 +854,6 @@ form _ucast [,,400,] { css:'ds_form', style:'height:fit-content'
           zmeny.chngs);
       }
     }
-//    proc reload_evid() {  var id2:number, row:number
-//      pob.skup.display(1);
-////      rod.detail.web.enable(0);
-//      { rod.key; rod.display(1,'r|s'); copy_by_name(b,rod);
-//        rod.rodiny1.set(_nazev.get);
-//        rod.display(0,'[abnsy]'); rod.display(1,'[mo]'); rod.enable(1,'[m]');
-//        rod.rodiny.selects(conc(_nazev.get,':',key_rodina.get)); rod.rodiny.key(key_rodina.get);
-////        [ gt(r_access_web.get,15); rod.detail.web.enable(1) ]
-//      | rod.display(0,'[^f]'); rod.display(1,'y'); rod.enable(0,'y');
-//      };
-//      id2.set(os2.key_osoba.get);
-//      { r_cleni.get;
-//        os1.enable(1,'.*'); sp1.enable(1,'.*');
-//        rod.cleni.raise('onrowclick',os1.key_osoba.get);
-//        row.set(rod.cleni.browse_active);
-//        [ eq(ucast.evid.cmode.get,2);
-//          { id2; os2.enable(1,'.*'); sp2.enable(1,'.*');
-//            rod.cleni.raise('onrowclick',id2.get);
-//            rod.cleni.browse_active(row)
-//          | os2.enable(0,'.*'); sp2.enable(0,'.*');
-//          }
-//        ]
-//      | rod.cleni.browse_init;
-//        os1.enable(0,'.*'); sp1.enable(0,'.*');
-//        os2.enable(0,'.*'); sp2.enable(0,'.*');
-//      };
-//      pob.show_pobyt;
-//      cmd.enable(0,'s');
-//      cmd.b_display(1);
-//      page.oform_show('show'); 
-//    }
     func reload_evid() { var id2:number, row:number
       pob.skup.display(1);
       if (rod.key()) {
@@ -956,7 +890,7 @@ form _ucast [,,400,] { css:'ds_form', style:'height:fit-content'
       pob.show_pobyt();
       cmd.enable(0,'s');
       cmd.b_display(1);
-      page.oform_show('show'); 
+      page.oform_show('show'); // pokud je text
     }
     proc onrowclick() { // ==> . onrowclick
       b.browse_count;
@@ -1121,60 +1055,142 @@ form _page  [,,623,20] {
       osoby_show();
   }}
   label frame [0,16,873,7] { css:'ae_work'} 
-  # ------------------------==> . zobrazení online formuláře
-  var oform_state:object
-  button [631,9,,] {tag:'oform1', type:'html', title:'Online přihlášky', skill:'yawp|yawp'
+  # ----------------------------------------------------------------==> . zobrazení online formuláře
+  # oform_state: label zobrazí text, browse seznam, ostatní nic
+  var oform_state= 'label', //  state=label|browse
+      oform_entry_id= 0
+  button [631,9,,] {tag:'oform0', type:'html', title:'Ukazovat přihlášky', skill:'yawp|yawp'
       style:'z-index:5;margin-top:-16px'
-    func onclick() { 
-      clear();
-      oform_show('start'); 
+    func onclick() { oform_start(); oform_show('label'); oform_show('show'); 
   }}
-  button [732,9,,] {tag:'oform1', type:'html', title:'... dosud nepřenesené', skill:'yawp|yawp'
+  button [750,9,,] {tag:'oform0', type:'html', title:'Seznam přihlášek', skill:'yawp|yawp'
       style:'z-index:5;margin-top:-16px'
-    func onclick() { 
-      clear(); ucast.narrow(); 
-      oform.display(1); oformc.display(0);
-      oform= php.oform_todo(the_wordpress,the_duakce); 
+    func onclick() { oform_start(); oform_show('browse'); oform_show('show'); 
   }}
-  // pro -1 potlačí zobrazení, pro 1 zahájí zobrazování,  pro 0 ukazuje data
-  func oform_show(cmd) { 
+  func oform_start() { var nove:text
+    clear(); 
+    ucast.narrow(); 
+    nove= php.oform_load(the_duakce,the_wordpress);
+    if (nove) warning(nove);
+  }
+  func oform_show(cmd) { var gen: object
     if (back) return;
     if (has_skill('yawp')) {
-      if (cmd=='off') 
-          form.display(0,'oform'); 
-      elseif (the_wordpress) {
+      if (cmd=='off') {
+        oform_state= cmd;
+        oform_entry_id= 0;
+        form.display(0,'oform'); 
+      }
+      else if (the_wordpress) {
         switch (cmd) {
-          case 'on':
-            form.display(1,'oform1'); break;
-          case 'start':
-            ucast.narrow(); form.display(1,'oform2'); 
+          case 'begin':
+            oform_state= cmd;
+            oform_entry_id= 0;
+            form.display(1,'oform0'); 
+            break;
+          case 'label':
+            oform_state= cmd;
+            ucast.narrow(); 
+            form.display(0,'oform1'); form.display(1,'oform2');
+            break;
+          case 'browse':
+            oform_state= cmd;
+            ucast.narrow(); 
+            form.display(1,'oform1'); form.display(0,'oform2'); 
+            oforms.browse_load(`form_id=${the_wordpress} AND stav=-1`);
+            break;
           case 'show':
-            oform_state= php.oform_show(the_wordpress,the_pobyt);
-            oform= oform_state.html; 
-            oformc= oform_state.zapsano;
-            oformc.enable(oform_state.entry_id); break;
+            gen= php.oform_show(the_wordpress,the_pobyt);
+            oform_entry_id= gen.entry_id;
+            if (oform_state=='label') {
+              oform= gen.html;
+            }
+            else if (oform_state=='browse' && gen.entry_id) {
+              oforms.browse_seek(`entry_id=${gen.entry_id}`);
+            }
+            break;
           case 'end':
-            form.display(0,'oform2'); break;
+            oform_state= cmd;
+            oform_entry_id= 0;
+            form.display(0,'oform'); 
+            break;
         }
       }
     }
   }
-  # ------------------------==> . uložení online formuláře
-  button [867,9,,] {tag:'oform1', title:'[fa-save]', skill:'yawp|yawp'
-      style:'z-index:5;margin-top:-16px'
-    func onclick() { 
-      clear(); ucast.narrow(); 
-      oform.display(1); oformc.display(0);
-      oform= php.oform_save(the_pobyt); 
-  }}
-  check oformc [623,20,244,23] {tag:'oform2', title:'údaje byly přeneseny do Answeru', skill:'yawp|yawp' 
-      css:'ae_frame shift_up', style:"z-index:1", format:'nt'
-    func onchange() { var eid:number
-      eid= oformc?oform_state.entry_id:0;
-      php.query(`UPDATE pobyt SET entry_id='${eid}' WHERE id_pobyt=${the_pobyt}`);
-  }}
-  label oform [623,50,235,] {tag:'oform2', css:'ae_frame shift_up', format:'n', skill:'yawp'
-      style:"max-height:500px;overflow-y:scroll;padding:5px;z-index:1"}
+  func oform_change_curr(s) { oform_change(oform_entry_id,s) }
+  func oform_change(eid,s) { var err:text
+    err= php.oform_change(eid,s); 
+    if (err) alert(err);
+    oform_show('show'); 
+  }
+  // text online přihlášky
+  label oform [623,22,265,] {tag:'oform2', css:'ae_frame shift_up', format:'n', skill:'yawp'
+      style:"max-height:500px;overflow-y:scroll;padding:5px;z-index:1"
+    menu { type:'context' 
+      item { title:'[fa-save] zpracováno, ULOŽIT!' 
+        func onclick() { oform_change_curr(1); alert(php.oform_save(the_wordpress,the_pobyt)) }}
+      item { title:'[fa-undo] zrušit zpracování přihlášky' 
+        func onclick() { oform_change_curr(0); }}
+      item { title:'-[fa-edit] doplnit údaje do přihlášky' 
+        func onclick() { oform_doplneni.Init() }}
+      item { title:'[fa-times] vyřadit tuto  přihlášku' 
+        func onclick() { oform_change_curr(2); }}
+    }
+  }
+  // seznam online přihlášek
+  view pwp: table pobyt_wp 
+  view wp: table wp_3_wpforms_entry_fields {join_type:'LEFT', join:'USING (entry_id)'}
+  browse oforms [626,22,265,395] {tag:'oform1', key_id:'entry_id', rows:20, qry_rows:1, format:'n', 
+      group_by:'pwp.entry_id', optimize:{fetch:'all'}
+    show { data:pwp.entry_id }
+    show { data:wp.entry_id }
+    show jmena [,,180,] { title:'jména', format:'q*s'
+      expr:"(SELECT GROUP_CONCAT(value) FROM wordpress.wp_3_wpforms_entry_fields WHERE entry_id=pwp.entry_id AND field_id IN (0,10))" }
+    show eid [,,35,] { title:'č.', format:'q=s+', data:pwp.entry_id, format:'r' }
+    show stav [,,23,] { title:'?', format:'q=s', data:pwp.stav, format:'c' }
+    menu { type:'context' 
+      item { title:'[fa-question] zobrazit jen nové přihlášky' 
+        func onclick() { oforms.browse_load(`form_id=${the_wordpress} AND stav=-1`) }}
+      item { title:'[fa-minus-square] zobrazit nezpracované přihlášky' 
+        func onclick() { oforms.browse_load(`form_id=${the_wordpress} AND stav=0`) }}
+      item { title:'[fa-plus-square] zobrazit zpracované přihlášky' 
+        func onclick() { oforms.browse_load(`form_id=${the_wordpress} AND stav=1`) }}
+      item { title:'[fa-times-rectangle] zobrazit vyřazené přihlášky' 
+        func onclick() { oforms.browse_load(`form_id=${the_wordpress} AND stav=2`) }}
+      item { title:'[fa-list] zobrazit všechny přihlášky' 
+        func onclick() { oforms.browse_load(`form_id=${the_wordpress}`) }}
+      item { title:'-[fa-times] vyřadit přihlášku na tomto řádku' 
+        func onclick() { oform_change(eid,2); oforms.browse_refresh() }}
+      item { title:'[fa-minus] obnovit vyřazenou přihlášku' 
+        func onclick() { oform_change(eid,0); oforms.browse_refresh() }}
+    }
+  }
+}
+panel oform_doplneni [,,585,350] { type:'popup', title:'Doplnění údajů'
+  func Init() { var flds:object
+    flds= php.oform_save(the_wordpress,the_pobyt,'fld');
+    echo(debug(flds));
+    copy_by_name(flds,cti);
+    panel.modal(400,100);
+  }
+  use cti: form _cti [0,0,,]
+  form _cti [,,585,350] {
+    label [226,10,44,] {title:'Muž'}
+    label [452,10,44,] {title:'Žena'}
+    label [31,56,102,34] {title:'Popiš svoji povahu'}
+    edit m_povaha [144,30,200,80]
+    edit z_povaha [364,30,200,80]
+    label [36,150,94,40] {title:'Vyjádři se o svém manželství'}
+    edit m_manzelstvi [144,130,200,80]
+    edit z_manzelstvi [364,130,200,80]
+    label [36,250,94,40] {title:'Co od účasti očekávám'}
+    edit m_ocekavam [144,230,200,80]
+    edit z_ocekavam [364,230,200,80]
+    
+    button [146,330,,] { title:'[fa-save] Doplň' func onclick() { panel.hide(0) }}
+    button [226,330,,] { title:'[fa-undo] Zpět'  func onclick() { panel.hide(0) }}
+  }
 }
 # --------------------------------------------------------------------------------------==> EVIDENCE
 form _evidence [,,623,] { style:'height:fit-content'

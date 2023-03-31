@@ -1547,7 +1547,8 @@ form _cmd [,,706,32] { css:'ae_frame'
         if (!page.oso.same()) {
           if (page.oso.jmeno.changed() || page.oso.prijmeni.changed() || page.oso.narozeni.changed())
             depth= 'page';
-          page.oso.save()
+//          page.oso.save()
+          page.oso.save_osoba();
         }
         if (!page.rod.same()) {
           page.rod.r.save();
