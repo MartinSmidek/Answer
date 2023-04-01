@@ -3022,7 +3022,7 @@ function oform_start () {
       WHERE entry_id>0
     ");
   while ( $fr && (list($eid,$idp,$ida)= pdo_fetch_array($fr)) ) {
-    query("INSERT INTO pobyt_wp (entry_id,id_akce,id_pobyt,stav,zmeny) VALUE ($eid,$ida,$idp,0,'{}')");
+    query("INSERT INTO pobyt_wp (entry_id,id_akce,id_pobyt,stav,zmeny) VALUE ($eid,$ida,$idp,1,'{}')");
   }
 }
 # ------------------------------------------------------------------------------------- oform change
@@ -3067,7 +3067,20 @@ end:
 function oform_show ($idfs,$idp) { trace();
   $html= '';
   $zapsano= 0;
+  $zmena= 0;
   if (!$idfs) goto end;
+  // doplňované údaje - kopie $x_udaje z oform_save
+  $x_udaje= array(
+    'x_povaha'      => array(84,97),  
+    'x_manzelstvi'  => array(89,101),
+    'x_ocekavam'    => array(88,102),
+  );
+  $udaje_x= array();
+  foreach ($x_udaje as $fld=>list($im,$iz)) {
+    $udaje_x[$im]= 'm'.substr($fld,1);
+    $udaje_x[$iz]= 'z'.substr($fld,1);
+  }
+  debug($udaje_x);
   // zjistíme, jestli již je svázaný záznam přes pobyt_wp
   $eid= $stav= '';
   // stav: 0,1,2 ... -1 zde být nemůže
@@ -3077,18 +3090,27 @@ function oform_show ($idfs,$idp) { trace();
     // pokud ne nalezení formuláře podle jmen
     $muz= osoba_jmeno($idp,'a');
     $zena= osoba_jmeno($idp,'b');
+    display("a:$muz b:$zena");
     $eid= select('entry_id','wordpress.wp_3_wpforms_entry_fields JOIN pobyt_wp USING (entry_id)',
-        "form_id IN ($idfs) AND (value='$muz' OR value='$zena') AND stav!=2");
+        "form_id IN ($idfs) AND (value='$muz' OR value='$zena') AND stav!=2
+          -- AND field_id>73 /* předchozí záznamy byly testovací při vývoji formuláře */");
     if ($eid) {
-      $ida= select('id_akce','pobyt',"id_pobyt=$idp");
       query("UPDATE pobyt_wp SET id_pobyt=$idp,stav=0 WHERE entry_id=$eid");
     }
   }
   if ($eid) {  
     $json= select('fields','wordpress.wp_3_wpforms_entries',"entry_id=$eid ");
     $flds= json_decode($json);
+    $zmeny= select('zmeny','pobyt_wp',"id_pobyt=$idp AND entry_id=$eid");
+    $zmeny= (array)json_decode($zmeny,true);
+    debug($zmeny);
     foreach ((array)$flds as $i=>$x) {
-      debug($x);
+//      debug($x);
+      if (isset($zmeny[$udaje_x[$i]]) && $zmeny[$udaje_x[$i]]!=$x->value) {
+        $zpusob= $x->value ? 'změna' : 'doplnění';
+        $html.= "<p style='background:orange'>$zpusob $x->name: <b>{$zmeny[$udaje_x[$i]]}</b></p>";
+        $zmena++;
+      }
       if (!$x->value) continue;
       if ($x->value=='Již jsem se kurzu zúčastnil. Mé kontaktní ani ostatní údaje v evidenci se nezměnily.') continue;
       if ($x->value=='Již jsem se kurzu zúčastnila. Mé kontaktní ani ostatní údaje v evidenci se nezměnily.') continue;
@@ -3097,14 +3119,27 @@ function oform_show ($idfs,$idp) { trace();
       $html.= "<p>$x->name: <b>$x->value</b></p>";
     }
     // bylo zapsáno do pobyt?
-    $stav_slovne= $stav==2 ? 'Zrušené' : ($stav==1 ? 'Uložené' : 'Neuložené');
-    $html= "<p><b><u>$stav_slovne údaje z online formuláře č.$eid</u></b></p>$html";
+    $stav_slovne= $stav==2 ? 'Zrušená' : ($stav==1 ? 'Uložená' : 'Neuložená');
+    $warn= $zmena ? " <span style='background:orange'>změněná</span> " : '';
+    $html= "<p><b><u>$stav_slovne $warn online přihláška č.$eid</u></b></p>$html";
   }
   else {
     $html= "<p><b><u>Online přihláška nenalezena</u></b></p>$html";
   }
 end:  
   return (object)array('html'=>$html,'entry_id'=>$eid?:0,'zapsano'=>$zapsano);
+}
+# --------------------------------------------------------------------------------- oform save_zmeny
+# vytvoří obraz přihlášky včetně odsouhlasených údajů z minula podle db
+# cmd= pdf|fld pokud fld, tak vrátí objekt {fld:value,...}
+#                                            kde fld=x_povaha,x_manzelstvi,x_ocekavam a x je m|z
+function oform_save_zmeny ($flds) { trace();
+  $id_pobyt_wp= $flds->id_pobyt_wp; 
+  unset($flds->id_pobyt_wp);
+  debug($flds);
+  $json= json_encode($flds,JSON_UNESCAPED_UNICODE);
+  display($json);  
+  query("UPDATE pobyt_wp SET zmeny='$json' WHERE id_pobyt_wp=$id_pobyt_wp ");
 }
 # --------------------------------------------------------------------------------------- oform save
 # vytvoří obraz přihlášky včetně odsouhlasených údajů z minula podle db
@@ -3117,14 +3152,16 @@ function oform_save ($idfs,$idp,$cmd='pdf') { trace();
   list($nazev,$rok)= select('nazev,YEAR(datum_od)','pobyt JOIN akce ON id_akce=id_duakce',"id_pobyt=$idp");
   // nalezení formuláře
   list($eid,$idr)= select('entry_id,i0_rodina','pobyt',"id_pobyt=$idp");
+  list($id_pobyt_wp,$zmeny)= select('id_pobyt_wp,zmeny','pobyt_wp',"id_pobyt=$idp AND entry_id=$eid");
   if ($eid) {
-    $x= $m= $z= $dn= $pn= array();
+    $x= $dn= $pn= array();
+    $m= $z= (object)array();
     $html.= "<h3 style=\"text-align:center;\">Údaje z online přihlášky na akci \"$nazev $rok\"</h3>";
     $html.= "<p style=\"text-align:center;\"><i>doplněné dříve svěřenými osobními údaji</i></p>";
     $qf= pdo_qry("SELECT field_id,value 
       FROM wordpress.wp_3_wpforms_entry_fields
       WHERE entry_id=$eid AND form_id IN ($idfs)
-      --  AND field_id>73
+        AND field_id>73 /* předchozí záznamy byly testovací při vývoji formuláře */
     ");
     while ($qf && ($f= pdo_fetch_object($qf))) {
       $x[$f->field_id]= $f->value;
@@ -3159,22 +3196,37 @@ function oform_save ($idfs,$idp,$cmd='pdf') { trace();
         case 'p': $pn[]= $o; break;
       }
     }
+    if (!$m->role || !$z->role) fce_error("neúplný pár");
     // doplnění db údajů
     $x_udaje= array(
       'x_povaha'      => array(84,97),  
       'x_manzelstvi'  => array(89,101),
       'x_ocekavam'    => array(88,102),
-      'x_rozvody'     => array(110,112),
+      'x_rozvody'     => array(110,112), // nepředává se do možnosti úprav
     );
-    foreach ($x_udaje as $fld=>list($im,$iz)) {
-      if (isset($x[$im])) $m->$fld= $x[$im];
-      if (isset($x[$iz])) $z->$fld= $x[$iz];
-      if ($cmd=='fld') {
-        $flds['m'.substr($fld,1)]= isset($x[$im]) ? $x[$im] : '?';
-        $flds['z'.substr($fld,1)]= isset($x[$iz]) ? $x[$iz] : '?';
+    $flds= json_decode($zmeny, true);
+    $flds['id_pobyt_wp']= $id_pobyt_wp;
+    if ($zmeny!='{}') {
+      foreach ($flds as $fld=>$value) {
+        $mz= substr($fld,0,1);
+        $xfld= 'x'.substr($fld,1);
+        if ($xfld=='x_rozvody') continue; // nebudeme opravovat - 
+        if ($mz=='m') $m->$xfld= $value;
+        if ($mz=='z') $z->$xfld= $value;
       }
     }
-    debug($m,'M'); debug($z,'Z'); debug($dn,'D'); debug($pn,'P'); 
+    else {
+      foreach ($x_udaje as $fld=>list($im,$iz)) {
+        display("$fld");
+        if (isset($x[$im])) $m->$fld= $x[$im];
+        if (isset($x[$iz])) $z->$fld= $x[$iz];
+        if ($cmd=='fld') {
+          $flds['m'.substr($fld,1)]= isset($x[$im]) ? $x[$im] : '';
+          $flds['z'.substr($fld,1)]= isset($x[$iz]) ? $x[$iz] : '';
+        }
+      }
+    }
+//    debug($m,'M'); debug($z,'Z'); debug($dn,'D'); debug($pn,'P'); 
     // redakce osobních údajů
     $udaje= array(
       'Jméno a příjmení'=>'jmeno', 
@@ -3243,19 +3295,20 @@ function oform_save ($idfs,$idp,$cmd='pdf') { trace();
     $html.= "<p><i>Souhlas obou manželů s přihlášením na kurz byl potvrzen.</i></p>";
     // generování PDF
     if ($cmd=='pdf') {
-      global $ezer_path_docs;
-      $fname= "prihlaska.pdf";
+      global $ezer_root;
+      $path_files= trim($_SESSION[$ezer_root]['path_files_h']," '");
+      $path_files= rtrim($path_files,"/");
+      $fname= "online-prihlaska.pdf";
       $foot= '';
-      $f_abs= "$ezer_path_docs/$fname";
-      $f_rel= "docs/$fname";
+      $f_abs= "$path_files/pobyt/{$fname}_$idp";
       tc_html($f_abs,$html,$foot);
-      $href= "Lze stáhnout jako <a target='dopis' href='$f_rel'>$fname</a>.";
-      $html= "$href<br>$html";
+      $html= "Přihláška byla vložena do záložky Dokumenty jako soubor $fname ";
     }
   }
   else {
     $html= "<span style='background:yellow'>uložit lze jen přihlášku přenesenou do Answeru</span>";
   }
+  if ($cmd=='pdf') display($html); else debug($flds);
   return $cmd=='pdf' ? $html : (object)$flds;
 }
 function osoba_jmeno ($idp,$role) {

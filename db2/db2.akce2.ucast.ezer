@@ -260,14 +260,16 @@ use u:     form _ucast    [  6, 20,,]  { tag:'akce1' }               // seznam �
 # záložka evidence
 use evid:  form _evidence [400, 10,,]      { tag:'akce1', format:'n' }
 use pob:   form _pobyt    [404,590,,] { tag:'akce1', format:'n' } // pro min_h=550, min_h+40=590
-use os1:   form _osoba2x [772,30,,] { tag:'akce1', format:'n', par:°{onchanged:'first_only'}
+use os1:   form _osoba2x [772,30,,] { tag:'akce1', format:'n', 
+    par:{onchanged:'first_only'}
   proc on_click() { evid.z_change('o') }
   proc onchanged() { evid.d_change }
   proc elim_kopie() { elim_kopie_osob(form) }
   proc see_new_osoba() { cmd.see_new_osoba }
   proc see_old_osoba() { cmd.see_old_osoba() }
 }
-use os2:   form _osoba2x [1023,30,,] {tag:'2,akce1', format:'n', par:°{onchanged:'first_only'}
+use os2:   form _osoba2x [1023,30,,] {tag:'2,akce1', format:'n', 
+    par:{onchanged:'first_only'}
   proc on_click() { evid.z_change('o') }
   proc onchanged() { evid.d_change }
   proc elim_kopie() { elim_kopie_osob(form) }
@@ -1077,24 +1079,24 @@ form _page  [,,623,20] {
     if (back) return;
     if (has_skill('yawp')) {
       if (cmd=='off') {
-        oform_state= cmd;
+        oform_state= 'off';
         oform_entry_id= 0;
         form.display(0,'oform'); 
       }
       else if (the_wordpress) {
         switch (cmd) {
           case 'begin':
-            oform_state= cmd;
+            oform_state= 'label';
             oform_entry_id= 0;
             form.display(1,'oform0'); 
             break;
           case 'label':
-            oform_state= cmd;
+            oform_state= 'label';
             ucast.narrow(); 
             form.display(0,'oform1'); form.display(1,'oform2');
             break;
           case 'browse':
-            oform_state= cmd;
+            oform_state= 'browse';
             ucast.narrow(); 
             form.display(1,'oform1'); form.display(0,'oform2'); 
             oforms.browse_load(`form_id=${the_wordpress} AND stav=-1`);
@@ -1110,7 +1112,7 @@ form _page  [,,623,20] {
             }
             break;
           case 'end':
-            oform_state= cmd;
+            oform_state= 'end';
             oform_entry_id= 0;
             form.display(0,'oform'); 
             break;
@@ -1129,13 +1131,13 @@ form _page  [,,623,20] {
       style:"max-height:500px;overflow-y:scroll;padding:5px;z-index:1"
     menu { type:'context' 
       item { title:'[fa-save] zpracováno, ULOŽIT!' 
-        func onclick() { oform_change_curr(1); alert(php.oform_save(the_wordpress,the_pobyt)) }}
+        func onclick() { if (oform_entry_id) { oform_change_curr(1); alert(php.oform_save(the_wordpress,the_pobyt))} }}
       item { title:'[fa-undo] zrušit zpracování přihlášky' 
-        func onclick() { oform_change_curr(0); }}
+        func onclick() { if (oform_entry_id) { oform_change_curr(0)} }}
       item { title:'-[fa-edit] doplnit údaje do přihlášky' 
-        func onclick() { oform_doplneni.Init() }}
+        func onclick() { if (oform_entry_id) { oform_doplneni.Init(); oform_show('show')} }}
       item { title:'[fa-times] vyřadit tuto  přihlášku' 
-        func onclick() { oform_change_curr(2); }}
+        func onclick() { if (oform_entry_id) { oform_change_curr(2)} }}
     }
   }
   // seznam online přihlášek
@@ -1167,15 +1169,16 @@ form _page  [,,623,20] {
     }
   }
 }
-panel oform_doplneni [,,585,350] { type:'popup', title:'Doplnění údajů'
-  func Init() { var flds:object
+panel oform_doplneni [,,585,350] { type:'popup', title:'Doplnění údajů online přihlášky, nezapisovaných do Answeru'
+  var flds:object
+  func Init() { 
     flds= php.oform_save(the_wordpress,the_pobyt,'fld');
-    echo(debug(flds));
     copy_by_name(flds,cti);
     panel.modal(400,100);
   }
   use cti: form _cti [0,0,,]
   form _cti [,,585,350] {
+    field id_pobyt_wp 
     label [226,10,44,] {title:'Muž'}
     label [452,10,44,] {title:'Žena'}
     label [31,56,102,34] {title:'Popiš svoji povahu'}
@@ -1187,8 +1190,16 @@ panel oform_doplneni [,,585,350] { type:'popup', title:'Doplnění údajů'
     label [36,250,94,40] {title:'Co od účasti očekávám'}
     edit m_ocekavam [144,230,200,80]
     edit z_ocekavam [364,230,200,80]
+    field m_rozvody
+    field z_rozvody
     
-    button [146,330,,] { title:'[fa-save] Doplň' func onclick() { panel.hide(0) }}
+    button [146,330,,] { title:'[fa-save] Doplň' 
+      func onclick() { 
+        copy_by_name(form,flds);
+        php.oform_save_zmeny(flds);
+        form.init();
+        panel.hide(0) 
+    }}
     button [226,330,,] { title:'[fa-undo] Zpět'  func onclick() { panel.hide(0) }}
   }
 }
@@ -1334,7 +1345,8 @@ panel pobyt_config [,,200,150] {type:'popup', title:"Podrobnosti údajů"
   }
   var _old= 'Z'
 }
-form _pobyt [,,360,62] { par:°{onchanged:'first_only'}
+form _pobyt [,,360,62] { 
+    par:{onchanged:'first_only'}
   func onchanged() {
     if (form.key()) 
       ucast_lock_on('pobyt',form.key()); 
@@ -1593,7 +1605,8 @@ form _spolu [,,0,270] {
   }}
 }
 # ----------------------------------------------------------------------------------------==> RODINA
-form _rodina2 [,,360,229]  { css:'ae_frame', par:{onchanged:'first_only'}, style:'min-height:230px'
+form _rodina2 [,,360,229]  { css:'ae_frame', 
+    par:{onchanged:'first_only'}, style:'min-height:230px'
   var key_pobyt: number
   proc onstart() { r_stat.selects(staty.get,',',1) }
   proc onclick() { evid.z_change('o') }
@@ -1915,7 +1928,8 @@ form _rodina2 [,,360,229]  { css:'ae_frame', par:{onchanged:'first_only'}, style
   }
 }
 # ----------------------------------------------------------------------------------------==> PLATBA
-form _platba [,,623,] { key_id:'id_pobyt', style:'height:fit-content', par:°{onchanged:'first_only'}
+form _platba [,,623,] { key_id:'id_pobyt', style:'height:fit-content', 
+    par:°{onchanged:'first_only'}
   const Td= 230
   var cena: object,
       zmena_spec_strav: number
