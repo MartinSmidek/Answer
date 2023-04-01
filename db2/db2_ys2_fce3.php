@@ -3151,8 +3151,8 @@ function oform_save ($idfs,$idp,$cmd='pdf') { trace();
   // nalezení akce
   list($nazev,$rok)= select('nazev,YEAR(datum_od)','pobyt JOIN akce ON id_akce=id_duakce',"id_pobyt=$idp");
   // nalezení formuláře
-  list($eid,$idr)= select('entry_id,i0_rodina','pobyt',"id_pobyt=$idp");
-  list($id_pobyt_wp,$zmeny)= select('id_pobyt_wp,zmeny','pobyt_wp',"id_pobyt=$idp AND entry_id=$eid");
+  $idr= select('i0_rodina','pobyt',"id_pobyt=$idp");
+  list($eid,$id_pobyt_wp,$zmeny)= select('entry_id,id_pobyt_wp,zmeny','pobyt_wp',"id_pobyt=$idp AND stav IN (0,1)");
   if ($eid) {
     $x= $dn= $pn= array();
     $m= $z= (object)array();
