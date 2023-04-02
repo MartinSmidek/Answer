@@ -229,6 +229,18 @@ function highcharts_simple() {
   });
 }
 // =========================================================================================> funkce
+// --------------------------------------------------------------------------------------- set style
+// nastaví styl předaného elementu
+function set_style(elem,prop) {
+  if (elem.DOM_Block) {
+    let prop2= {};
+    for (let p in prop) {
+      prop2[p]= Number(prop[p]) ? Number(prop[p]) : prop[p];
+    }
+    jQuery(elem.DOM_Block).css(prop2);
+  }
+  return 1;
+}
 // -----------------------------------------------------------------------------==> . mrop map count
 // funkce je svázaná s PHP fcí sta2_mrop_stat_map
 // k celkem (celkem iniciovaných z ČR) se jak promile vyjádří zobrazení muži

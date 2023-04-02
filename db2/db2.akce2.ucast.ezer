@@ -219,7 +219,7 @@ func h_change_b() { var r:number, h:number
     act1.akc.rows= r-6;
     act2.akc.rows= r-6;
     page.oforms.rows= r;
-//    page.oform.property({max_height:h-100})
+    js.set_style(&page.oform,{maxHeight:h-150});
   }
 }
 
@@ -1128,7 +1128,7 @@ form _page  [,,623,20] {
   }
   // text online přihlášky
   label oform [623,22,265,] {tag:'oform2', css:'ae_frame shift_up', format:'n', skill:'yawp'
-      style:"max-height:500px;overflow-y:scroll;padding:5px;z-index:1"
+      style:"overflow-y:scroll;padding:5px;z-index:1"
     menu { type:'context' 
       item { title:'[fa-save] zpracováno, ULOŽIT!' 
         func onclick() { if (oform_entry_id) { oform_change_curr(1); alert(php.oform_save(the_wordpress,the_pobyt))} }}
