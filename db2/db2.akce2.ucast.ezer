@@ -95,9 +95,9 @@ proc ucast_pobyt_akce(_idp,_ida)  {
   ucast_pobyt(_idp)
 }
 # zobrazení osob - nastavených účastníků
-proc osoby_show() {                             // obnova údajů o osobách
-  [ os1.key; os1.show_osoba(u.dup.get) | os1.init_osoba ];
-  [ os2.key; os2.show_osoba(u.dup.get) | os2.init_osoba ];
+func osoby_show() {                             // obnova údajů o osobách
+  if (os1.key()) os1.show_osoba(u.dup); else os1.init_osoba();
+  if (os2.key() && curr_w==1280) os2.show_osoba(u.dup); else os2.init_osoba();
 }
 proc rodina_show() {                            // obnova údajů o rodině
   rod.key_rodina.get; rod.show_rodina | rod.init_rodina }
@@ -173,8 +173,8 @@ func onresize(w,h) {
 }
 
 # změna šířky 1024/1280
-func narrow() { curr_w= 1024; w_change_all() }
-func wide()   { curr_w= 1280; w_change_all() }
+func narrow() { curr_w= 1024; evid.c_change(1); w_change_all() }
+func wide()   { curr_w= 1280; evid.c_change(2); w_change_all() }
 proc w_change_all() { var dite_kat_pipe:object, dite_kat_options:object
   // pro CR|MS necháme ms_akce_dita_kat
   eq(my_org.get,4,8,16)
@@ -186,9 +186,9 @@ proc w_change_all() { var dite_kat_pipe:object, dite_kat_options:object
   dite_kat_options;
   [ eq(the_soubeh.get,0,1);       // jen pro Kurs
     evid.c_change(cconc(eq(curr_w.get,1024),1,2));
-    foreach(array(
-        page.frame,evid.frame,pla.frame,act0.frame,alb0.frame,docu.frame),
-      change_width);
+//    foreach(array(
+//        page.frame,evid.frame,pla.frame,act0.frame,alb0.frame,docu.frame),
+//      change_width);
     sp1.s_dite_kat.set_attrib('options',dite_kat_options);
     sp2.s_dite_kat.set_attrib('options',dite_kat_options);
     u2.b.kat.set_attrib('map_pipe',dite_kat_pipe);
@@ -218,8 +218,7 @@ func h_change_b() { var r:number, h:number
     u2.b.rows= r;
     act1.akc.rows= r-6;
     act2.akc.rows= r-6;
-    page.oforms.rows= r;
-    js.set_style(&page.oform,{maxHeight:h-150});
+    page.oform_h_change(h);
   }
 }
 
@@ -1075,48 +1074,63 @@ form _page  [,,623,20] {
     nove= php.oform_load(the_duakce,the_wordpress);
     if (nove) warning(nove);
   }
+  func oform_display(on) { 
+    if (!has_skill('yawp')) return;
+    if (on && zalozka=='evid') {
+      oform.display(oform_state=='label'); 
+      oforms.display(oform_state=='browse'); 
+      form.display(1,'oform0');
+    }
+    else {
+      form.display(0,'oform');
+    }
+  }
+  func oform_h_change(h) { var r:number
+    if (!has_skill('yawp')) return;
+    r= (h-190)/17;
+    oforms.rows= r;
+    js.set_style(&oform,{maxHeight:h-150});
+  }
   func oform_show(cmd) { var gen: object
-    if (back) return;
-    if (has_skill('yawp')) {
-      if (cmd=='off') {
-        oform_state= 'off';
-        oform_entry_id= 0;
-        form.display(0,'oform'); 
-      }
-      else if (the_wordpress) {
-        switch (cmd) {
-          case 'begin':
-            oform_state= 'label';
-            oform_entry_id= 0;
-            form.display(1,'oform0'); 
-            break;
-          case 'label':
-            oform_state= 'label';
-            ucast.narrow(); 
-            form.display(0,'oform1'); form.display(1,'oform2');
-            break;
-          case 'browse':
-            oform_state= 'browse';
-            ucast.narrow(); 
-            form.display(1,'oform1'); form.display(0,'oform2'); 
-            oforms.browse_load(`form_id=${the_wordpress} AND stav=-1`);
-            break;
-          case 'show':
-            gen= php.oform_show(the_wordpress,the_pobyt);
-            oform_entry_id= gen.entry_id;
-            if (oform_state=='label') {
-              oform= gen.html;
-            }
-            else if (oform_state=='browse' && gen.entry_id) {
-              oforms.browse_seek(`entry_id=${gen.entry_id}`);
-            }
-            break;
-          case 'end':
-            oform_state= 'end';
-            oform_entry_id= 0;
-            form.display(0,'oform'); 
-            break;
-        }
+    if (back || !has_skill('yawp')) return;
+    if (cmd=='off') {
+      oform_state= 'off';
+      oform_entry_id= 0;
+      form.display(0,'oform'); 
+    }
+    else if (the_wordpress) {
+      switch (cmd) {
+        case 'begin':
+          oform_state= 'label';
+          oform_entry_id= 0;
+          form.display(1,'oform0'); 
+          break;
+        case 'label':
+          oform_state= 'label';
+          ucast.narrow(); 
+          form.display(0,'oform1'); form.display(1,'oform2');
+          break;
+        case 'browse':
+          oform_state= 'browse';
+          ucast.narrow(); 
+          form.display(1,'oform1'); form.display(0,'oform2'); 
+          oforms.browse_load(`form_id=${the_wordpress} AND stav=-1`);
+          break;
+        case 'show':
+          gen= php.oform_show(the_wordpress,the_pobyt);
+          oform_entry_id= gen.entry_id;
+          if (oform_state=='label') {
+            oform= gen.html;
+          }
+          else if (oform_state=='browse' && gen.entry_id) {
+            oforms.browse_seek(`entry_id=${gen.entry_id}`);
+          }
+          break;
+        case 'end':
+          oform_state= 'end';
+          oform_entry_id= 0;
+          form.display(0,'oform1|oform2'); 
+          break;
       }
     }
   }
@@ -1254,12 +1268,25 @@ form _evidence [,,623,] { style:'height:fit-content'
 //        alert(ask('data2_transform_2014',
 //          object('cmd','i0_rodina,pouze','akce',the_duakce.get))) } }
   }
-  proc Display(on) {  // 2 = jako 1 ale prázdná akce
-    eq(on,2); rod.no_rodina; rod.display(1); pob.display(0);
-  | form.display(on); rod.display(on); pob.display(on);
-    os1.display(on); sp1.display(on);
-    [ eq(cmode.get,2); os2.display(on); sp2.display(on) ];
+  func Display(on) {  // 2 = jako 1 ale prázdná akce
+    if (on==2) {
+      rod.no_rodina(); rod.display(1); pob.display(0);
+    }
+    else {
+      form.display(on); rod.display(on); pob.display(on);
+      os1.display(on); sp1.display(on);
+      page.oform_display(on);
+      if (cmode==2) { 
+        os2.display(on); sp2.display(on);
+      }
+    }
   }
+//  proc Display(on) {  // 2 = jako 1 ale prázdná akce
+//    eq(on,2); rod.no_rodina; rod.display(1); pob.display(0);
+//  | form.display(on); rod.display(on); pob.display(on);
+//    os1.display(on); sp1.display(on);
+//    [ eq(cmode.get,2); os2.display(on); sp2.display(on) ];
+//  }
   proc Same() { return(and(rod.same,os1.same,pob.same,sp1.same,sp2.same,os2.same,pla.Same)) }
   proc Plain() { rod.plain; os1.plain; pob.plain; sp1.plain; sp2.plain; os2.plain }
   proc Init() {
@@ -1277,7 +1304,13 @@ form _evidence [,,623,] { style:'height:fit-content'
     rod.show_rodina; pob.show_pobyt;
   }
   # změny sloupců
-  func c_change(n) {
+  func c_change(n) { var elem:ezer
+//    foreach(array(
+//        page.frame,evid.frame,pla.frame,act0.frame,alb0.frame,docu.frame),
+//      change_width);
+    for (elem of array(&page.frame, &evid.frame, &pla.frame, &act0.frame, &alb0.frame, &docu.frame)) {
+      change_width(elem);
+    }
     // 1 sloupec
     if (n==1) {
       if (os2.display()) {

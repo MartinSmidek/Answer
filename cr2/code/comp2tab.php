@@ -207,6 +207,7 @@ $names= array(
  'set_mark' => (object)array('op'=>'fm'),
  'set_notes' => (object)array('op'=>'fm'),
  'set_query' => (object)array('op'=>'fx'),
+ 'set_skill' => (object)array('op'=>'fm'),
  'set_styles' => (object)array('op'=>'fm'),
  'set_trace' => (object)array('op'=>'ff'),
  'skill' => (object)array('op'=>'os'),
