@@ -3137,7 +3137,7 @@ function oform_save_zmeny ($flds) { trace();
   $id_pobyt_wp= $flds->id_pobyt_wp; 
   unset($flds->id_pobyt_wp);
   debug($flds);
-  $json= json_encode($flds,JSON_UNESCAPED_UNICODE);
+  $json= json_encode($flds,JSON_UNESCAPED_UNICODE|JSON_HEX_QUOT);
   display($json);  
   query("UPDATE pobyt_wp SET zmeny='$json' WHERE id_pobyt_wp=$id_pobyt_wp ");
 }
