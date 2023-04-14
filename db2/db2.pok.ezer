@@ -450,6 +450,7 @@ panel maily { type:'right', title:'Upomínací maily', _sys:'*', skill:'ypm'
       func onclick(i:ezer) { 
         panel.display(2,'R');
         msg.header(i); clear();
+        if (i.par.poslat && !confirm('Opravdu mají být maily odeslány bez čekní na CRON?')) return;
         msg.fill('',php.kasa_send(i.par.adresy,i.par.poslat));
       }
     }
