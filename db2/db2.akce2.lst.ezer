@@ -422,9 +422,9 @@ form _page [,,275,360] {
   // ------------------------------------- omezený přístup pro členy týmu akce
   select tym [296,278,157,] {tag:'cor', type:'map+', title:'kdo z týmu má přístup:', data:akce.tym,
       help:'členové týmu akce s právem editace', options:akce_tym.surname }
-  // ------------------------------------- web setkani.org a chlapi.online
-  label [10,309,384,114] { tag:'cor', css:'bily_ram', skill:'yaaw;faaw' 
-                        title:" součinnost s www.setkani.org a chlapi.online" }
+  // ------------------------------------- web setkani.org 
+  label [10,309,384,92] { tag:'cor', css:'bily_ram', skill:'yaaw;faaw' 
+      title:" součinnost s www.setkani.org" }
   button [381,316,,] { tag:'cor', title:'[fa-question]', skill:'yaa+|yaaw'
     help:'pokyny pro přihlašování na www.setkani.org'
     proc onclick() { alert("V popisu akce na www.setkani.org je zapotřebí vyplnit ID akce=",a_akce.get)
@@ -447,24 +447,30 @@ form _page [,,275,360] {
   }}
   check [16,362,214,21] { tag:'cor', title:"<span class='cerveny'>OBSAZENO</span> - další jako náhradníci", data:akce.web_obsazeno,
                         skill:'yaa|yaaw;faa|faaw', help:"a to i tehdy, když akce není ještě naplněná" }
-  check [16,381,135,] { tag:'cor', title:"kalendář <span class='azurovy'>chlapi.online</span>", data:akce.web_kalendar,
-                        skill:'yaa|yaaw;faa|faaw' }
-  button [184,380,,] { tag:'cor', title:'Upravit anotaci pro chlapi.online', skill:'yaa+|yaaw;faa+|faaw'
-    help:'úprava textu v kalendáři chlapi.online'
+  // online přihlašování přes plugin ve Wordpressu
+  check [16,380,243,] { tag:'cor', data:akce.web_wordpress,
+                        title:"ONLINE/WordPress na www.setkani.org", skill:'yaa+|m' }
+  field web_wordpress [241,383,119,] { tag:'cor', data:akce.web_wordpress }
+  // ------------------------------------- web chlapi.online
+  label [10,413,383,70] { tag:'cor', css:'bily_ram', skill:'yaaw;faaw' 
+      title:" součinnost s chlapi.online" }
+  radio [16,429,266,54] { tag:'cor', data:akce.web_kalendar, //skill:'yaa|yaaw;faa|faaw'
+    case [0,0,257,14] { title:"akce není v kalendáři chlapi.cz (default)", value:'0' }
+    case [0,17,257,14] { title:"upoutávka v kalendáři <span class='azurovy'>chlapi.cz</span>", value:'1' }
+    case [0,34,257,14] { title:"upozornění pro plánování akcí na chlapi.cz", value:'2' }
+  }
+  button [290,436,109,40] { tag:'cor', title:'Upravit upoutávku na webu chlapi.cz', skill:'yaa+|yaaw;faa+|faaw'
+      help:'úprava textu v kalendáři chlapi.online', style:"white-space:normal"
     proc onclick() { 
       page.a_akce.get; ANOTACE.oprava(page.a_akce.get);
   }}
-  // online přihlašování přes plugin ve Wordpressu
-  check [16,400,243,] { tag:'cor', data:akce.web_wordpress,
-                        title:"ONLINE/WordPress na www.setkani.org", skill:'yaa+|m' }
-  field web_wordpress [241,403,119,] { tag:'cor', data:akce.web_wordpress }
   // ------------------------------------- Zpět a Uložit
-  label  [193,437,98,30] { tag:'cor', css:'ae_parm', style:'z-index:1', skill:'yaa+;faa+;caa+' }
-  button [199,443,,] { tag:'cor', title:'Zpět', skill:'yaa+|yaa+;faa+|faa+;caa+|caa+'
+  label  [193,493,98,30] { tag:'cor', css:'ae_parm', style:'z-index:1', skill:'yaa+;faa+;caa+' }
+  button [199,499,,] { tag:'cor', title:'Zpět', skill:'yaa+|yaa+;faa+|faa+;caa+|caa+'
     help:'Neměnit změněná data'
     func onclick() { akce_zpet() }
   }
-  button [245,443,,] { tag:'cor', title:'Uložit', skill:'yaa+|yaan;faa+|faan;caa+|caan'
+  button [245,499,,] { tag:'cor', title:'Uložit', skill:'yaa+|yaan;faa+|faan;caa+|caan'
     help:'Uložit změněná data',
     proc onclick() {
       akce_lock('off'); 
@@ -503,8 +509,8 @@ form _page [,,275,360] {
       }
   } }
   // jen pro YF,CR - přidání a zrušení akce
-  label  [10,437,164,30] { tag:'cor', css:'ae_parm', style:'z-index:1', skill:'faan;caan;yaan' }
-  button [16,443,,] {tag:'cor', title:'Nová akce', format:'c', skill:'faan|faan;caan|caan;yaan|yaan'
+  label  [10,493,164,30] { tag:'cor', css:'ae_parm', style:'z-index:1', skill:'faan;caan;yaan' }
+  button [16,499,,] {tag:'cor', title:'Nová akce', format:'c', skill:'faan|faan;caan|caan;yaan|yaan'
     proc onclick() {
       eq(my_org.get,1);
       // Setkání
@@ -524,7 +530,7 @@ form _page [,,275,360] {
       nazev.change; misto.change; datum_od.change; datum_do.change;
       info.sey.blur(1)
   } }
-  button [91,443,,] {tag:'cor', title:'Smazat akci', format:'c', skill:'faan|faan;caan|caan;yaan|yaan'
+  button [91,499,,] {tag:'cor', title:'Smazat akci', format:'c', skill:'faan|faan;caan|caan;yaan|yaan'
     proc onclick() {
       var ret:object
       var msg:text
@@ -1044,7 +1050,7 @@ form _info [,,*,50] {
       expr:"SUM((SELECT COUNT(*) FROM spolu WHERE id_pobyt=pa2.id_pobyt AND funkce=99))"}
     show misto [,,50,] {title:'místo',  data:da2.misto, format:'tsq*'}
     show od    [,,65,] {title:'od',     data:da2.datum_od, format:'rs+q*'
-      css_cell:'web_k,0:,1:azurovy' }
+      css_cell:'web_k,0:,1:azurovy,2:azurovy' }
     show do    [,,65,] {title:'do',     data:da2.datum_do, format:'rsq*'
       css_cell:'web_k,0:,1:azurovy' }
     show stat  [,,0,] {title:'stat.',    data:da2.statistika, map_pipe:ms_akce_stat.zkratka, format:'sq#'

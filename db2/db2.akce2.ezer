@@ -372,7 +372,7 @@ table akce { key_id:'id_duakce'
   number web_prihlasky // setkani.org
   number web_maximum
   number web_obsazeno
-  number web_kalendar  // chlapi.online
+  number web_kalendar  // chlapi.online 1=ukázat v kalendáři 2=ukázat jen jako rezervovaný termín
   text web_anotace
   text web_url
   text web_wordpress
