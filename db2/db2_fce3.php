@@ -11989,6 +11989,13 @@ function sta2_sestava($org,$title,$par,$export=false) { trace();
                  $org==1?"VPS I:10":"1.školení:10");
       $flds= array('jm','od','n','do','vps_i');
     }
+    else if ( $par->podtyp=='kulatiny' ) {
+      $tits= array("jméno:20","poprvé:10","kolikrát:10","naposledy:10",
+                 $org==1?"VPS I:10":"1.školení:10","narození:10:d","roků:7","(ID)");
+      $flds= array('jm','od','n','do','vps_i','nar','roku','^id_osoba');
+      $letos= date('Y');
+      $kulate= substr($letos,3,1);
+    }
     else { // osoby
       $tits= array("jméno:20","certifikát:20","poprvé:10","kolikrát:10","naposledy:10",
                  $org==1?"VPS I:10":"1.školení:10","č.člen od:10","bydliště:25","narození:10","(ID)");
@@ -12066,6 +12073,24 @@ function sta2_sestava($org,$title,$par,$export=false) { trace();
           'od'=>$x->OD,'n'=>$x->Nx,'do'=>$x->DO,
           'vps_i'=>$skola ?: '-'
         );
+      }
+      elseif ( $par->podtyp=='kulatiny' ) {
+        if (substr($x->narozeni_m,3,1)==$kulate) {
+          $roku= $letos - substr($x->narozeni_m,0,4);
+          $clmn[]= array(
+            'jm'=>"{$x->prijmeni_m} {$x->jmeno_m}",'od'=>$x->OD,'n'=>$x->Nx,'do'=>$x->DO,
+            'nar'=>sql_date1($x->narozeni_m), 'roku'=>$roku,
+            '^id_osoba'=>$x->id_m
+          );
+        }
+        if (substr($x->narozeni_z,3,1)==$kulate) {
+          $roku= $letos - substr($x->narozeni_z,0,4);
+          $clmn[]= array(
+            'jm'=>"{$x->prijmeni_z} {$x->jmeno_z}",'od'=>$x->OD,'n'=>$x->Nx,'do'=>$x->DO,
+            'nar'=>sql_date1($x->narozeni_z), 'roku'=>$roku,
+            '^id_osoba'=>$x->id_z
+          );
+        }
       }
       else { // osoby
         $clmn[]= array(

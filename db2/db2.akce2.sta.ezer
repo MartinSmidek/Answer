@@ -16,7 +16,8 @@ proc reaccess() { #==> reaccess - změna
 }
 # ------------------------------------------------------------------------------------------==> MENU
 var menu_item=0,
-    menu_par=0
+    menu_par: object,
+    last_menu: ezer
 menu m {type:'left', format:'f+', active:*
   menu s {title:'STATISTIKA',type:'group'
     item {title:'Struktura letních kurzů MS',                                        skill:'yae;fae'
@@ -165,26 +166,30 @@ menu m {type:'left', format:'f+', active:*
   menu l {title:'SEZNAMY',type:'group',                                              skill:'yae;fae;cae'
     // přednášející
     item {title:'přednášející LK MS',                                                skill:'yae;fae;cae#crz'
-         ,par:°{typ:'prednasejici',rok:5,xls:'Excel',parm_tit:'roky zpět:'
+      ,par:{typ:'prednasejici',rok:5,xls:'Excel',parm_tit:'roky zpět:'
       ,dsc:"Tabulka obsahuje historii přednášejících párů na letních kurzech MS. <br>Hloubku historie je třeba nastavit parametrem 'roky zpět'.<br>"
       ,tit:'',fld:'',ord:''}}
     // VPS-PPS
     item {title:'sloužící VPS na LK MS (páry)'                                       skill:'yae;fae;cae#crz'
-         ,par:°{typ:'slouzici',podtyp:'pary',xls:'Excel',parm_tit:'roky zpět:'
-          ,dsc:"Tabulka obsahuje historii sloužících párů na letních kurzech MS. <br>Poslední rok služby VPS je třeba nastavit parametrem 'roky zpět'.<br>"
+      ,par:{typ:'slouzici',podtyp:'pary',xls:'Excel',parm_tit:'roky zpět:'
+      ,dsc:"Tabulka obsahuje historii sloužících párů na letních kurzech MS. <br>Poslední rok služby VPS je třeba nastavit parametrem 'roky zpět'.<br>"
       ,tit:'',fld:'',ord:''}}
-    item {title:'... přehled historie skupinek'                                      skill:'yaet'
-         ,par:°{typ:'slouzici2',xls:'Excel',parm_tit:'roky zpět:'
-          ,dsc:"Tabulka ukazuje pro jednotlivé VPS účast jejich skupinek na obnovách. <br><br>Parametr 'roky zpět' je třeba nastavit jako dvojici čísel X,Y <br>kde X určuje, které VPS nás zajímají (0=jen letošní, 1=i loňské) a Y určuje na kolik let jejich služby se díváme.<br>Zkus třeba 0,2 a pak opět klikni na ... přehled historie skupinek<br>"
+    item {title:' ... letošní kulatiny VPS/PPS (jednotlivci)'                        skill:'yae;fae;cae#crz'
+      ,par:{typ:'slouzici',podtyp:'kulatiny',xls:'Excel',parm_tit:'roky zpět:'
+      ,dsc:"Tabulka obsahuje letošní kulatiny sloužících párů, <br>Poslední rok služby VPS je třeba nastavit parametrem 'roky zpět'.<br>"
       ,tit:'',fld:'',ord:''}}
     item {title:' ... sloužící VPS/PPS (jednotlivci)'                                skill:'yae;fae;cae#crz'
-         ,par:°{typ:'slouzici',podtyp:'osoby',xls:'Excel',parm_tit:'roky zpět:'
-          ,dsc:"Tabulka obsahuje historii sloužících párů na letních kurzech MS. <br>Poslední rok služby VPS je třeba nastavit parametrem 'roky zpět'.<br>"
+      ,par:{typ:'slouzici',podtyp:'osoby',xls:'Excel',parm_tit:'roky zpět:'
+      ,dsc:"Tabulka obsahuje historii sloužících párů na letních kurzech MS. <br>Poslední rok služby VPS je třeba nastavit parametrem 'roky zpět'.<br>"
+      ,tit:'',fld:'',ord:''}}
+    item {title:'... přehled historie skupinek'                                      skill:'yaet'
+         ,par:{typ:'slouzici2',xls:'Excel',parm_tit:'roky zpět:'
+          ,dsc:"Tabulka ukazuje pro jednotlivé VPS účast jejich skupinek na obnovách. <br><br>Parametr 'roky zpět' je třeba nastavit jako dvojici čísel X,Y <br>kde X určuje, které VPS nás zajímají (0=jen letošní, 1=i loňské) a Y určuje na kolik let jejich služby se díváme.<br>Zkus třeba 0,2 a pak opět klikni na ... přehled historie skupinek<br>"
       ,tit:'',fld:'',ord:''}}
     // pečouni
     item {title:'pečovatelé na LK MS'                                                skill:'yae;fae;cae#crz'
-         ,par:°{typ:'pecujici',rok:5,xls:'Excel',parm_tit:'roky zpět:'
-          ,dsc:"Tabulka obsahuje historii pečovatelů na letních kurzech MS. <br>Poslední rok pečovatele je třeba nastavit parametrem 'roky zpět'.<br>1.školení je rok první účasti na akci typu 'pečovatelé'.<br>"
+      ,par:{typ:'pecujici',rok:5,xls:'Excel',parm_tit:'roky zpět:'
+      ,dsc:"Tabulka obsahuje historii pečovatelů na letních kurzech MS. <br>Poslední rok pečovatele je třeba nastavit parametrem 'roky zpět'.<br>1.školení je rok první účasti na akci typu 'pečovatelé'.<br>"
       ,tit:'',fld:'',ord:''}}
     // účastníci akcí
     item {title:'adresy účastníků'  ,par:°{typ:'adresy',rok:0,xls:'Excel',/*pdf:'Štítky',*/parm_tit:'roky zpět:'
@@ -295,23 +300,43 @@ menu m {type:'left', format:'f+', active:*
       };
     }
   }
-  proc onclick (i) { var ret: object
-    mapa.close(1);
-    panel.display(2,'i');
-    menu_item.set(i); menu_par.set(i.par); clear;
-    the_vypis.set(conc(i.owner.title,' - ',i.title));
-    [ i.par.xls; info.ex_xls.display(1); info.ex_xls.set(i.par.xls) | info.ex_xls.display(0) ];
-    [ i.par.pdf; info.ex_pdf.display(1); info.ex_pdf.set(i.par.pdf) | info.ex_pdf.display(0) ];
-    [ //echo(i.par.parm_tit,info.parm.get); 
-      i.par.parm_tit; info.display(1,'p');
-      info.parm_tit.set(i.par.parm_tit); menu_par.set(info.parm.get,'parm') | info.display(0,'p') ];
-    info.fill(the_vypis.get,i.par.dsc); info.msg.set('');
-    { eq(i.par.typ,'ms_struktura'); ret.set(ask('sta2_struktura',my_org.get,i.par,the_title.get));
-    | eq(i.par.typ,'ms_cesty'); ret.set(ask('sta2_cesty',my_org.get,i.par,the_title.get));
-    | ret.set(ask('sta2_sestava',my_org.get,the_vypis.get,menu_par.get));
-    };
+  func onclick (i:ezer) { var ret: object, letos:text
+    mapa.close(1); panel.display(2,'i');
+    last_menu= i; menu_item= i; menu_par= i.par; clear(); 
+    info.header(i);
+    the_vypis= info.head;
+    if (i.par.xls) { info.ex_xls.display(1); info.ex_xls= i.par.xls; } else info.ex_xls.display(0);
+    if (i.par.pdf) { info.ex_pdf.display(1); info.ex_pdf= i.par.pdf; } else info.ex_pdf.display(0);
+    if (i.par.parm_tit) {
+      info.display(1,'p');
+      info.parm_tit= i.par.parm_tit; menu_par.parm= info.parm; 
+    }
+    else info.display(0,'p');
+    info.fill('',i.par.dsc); info.msg= '';
+    switch (i.par.typ) {
+      case 'ms_struktura': ret= php.sta2_struktura(my_org,i.par,the_title); break;
+      case 'ms_cesty': ret= php.sta2_cesty(my_org,i.par,the_title); break;
+      default: ret= php.sta2_sestava(my_org,the_vypis,menu_par); break;
+    }
     info.append(ret.html);
   }
+//  proc onclick (i) { var ret: object
+//    mapa.close(1);
+//    panel.display(2,'i');
+//    menu_item.set(i); menu_par.set(i.par); clear;
+//    the_vypis.set(conc(i.owner.title,' - ',i.title));
+//    [ i.par.xls; info.ex_xls.display(1); info.ex_xls.set(i.par.xls) | info.ex_xls.display(0) ];
+//    [ i.par.pdf; info.ex_pdf.display(1); info.ex_pdf.set(i.par.pdf) | info.ex_pdf.display(0) ];
+//    [ //echo(i.par.parm_tit,info.parm.get); 
+//      i.par.parm_tit; info.display(1,'p');
+//      info.parm_tit.set(i.par.parm_tit); menu_par.set(info.parm.get,'parm') | info.display(0,'p') ];
+//    info.fill(the_vypis.get,i.par.dsc); info.msg.set('');
+//    { eq(i.par.typ,'ms_struktura'); ret.set(ask('sta2_struktura',my_org.get,i.par,the_title.get));
+//    | eq(i.par.typ,'ms_cesty'); ret.set(ask('sta2_cesty',my_org.get,i.par,the_title.get));
+//    | ret.set(ask('sta2_sestava',my_org.get,the_vypis.get,menu_par.get));
+//    };
+//    info.append(ret.html);
+//  }
 }
 func show_obraz(i) { // přes odkaz z PHP vygenerovaný voláním Spy
   if (dot.index=='pg') dot.pg= i; else dot.id= i;
@@ -327,8 +352,12 @@ use chart: form _chart [702,33,,] { tag:'do' format:'n' }
 use tipy:  form _tipy  [340,120,,] { tag:'dt' format:'n' }
 use corr:  form _corr  [12,4,,] { tag:'dc' format:'n' }
 use info: form right   [12,4,,]   { tag:'i'
-  label parm_tit [-200,9,100,] { tag:'p', style:'zIndex:2;color:white', format:'rn' }
+  label parm_tit [-200,9,200,] { tag:'p', style:'zIndex:2;color:white', format:'rn' }
   field parm [-150,5,40,] { tag:'p', style:'zIndex:2', format:'rtn' }
+  button [-123,5,23,] { tag:'p', title:'[fa-refresh]' 
+    func onclick() { 
+      m.onclick(last_menu);
+  }}
   button ex_pdf [-80,5,,] { title:'PDF...', style:'zIndex:2', format:'n',
     proc onclick() {
     }
