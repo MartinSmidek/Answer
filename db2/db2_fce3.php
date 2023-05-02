@@ -11996,7 +11996,7 @@ function sta2_sestava($org,$title,$par,$export=false) { trace();
       $flds= array('jm','od','n','do','vps_i','nar','roku','^id_osoba');
       $letos= date('Y');
       $kulate= substr($letos,3,1);
-      $order= 'MONTH(o.narozeni)';
+      $order= 'MONTH(o.narozeni),DAY(o.narozeni)';
     }
     else { // osoby
       $tits= array("jméno:20","certifikát:20","poprvé:10","kolikrát:10","naposledy:10",
