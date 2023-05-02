@@ -11978,6 +11978,7 @@ function sta2_sestava($org,$title,$par,$export=false) { trace();
     $rok= date('Y');
     $hranice= date('Y') - $par->parm;
     $vps1= $org==1 ? '3,17' : '3';
+    $order= 'r.nazev';
     if ( $par->podtyp=='pary' ) {
       $tits= array("pár:26","poprvé:10","kolikrát:10","naposledy:10",
                  $org==1?"VPS I:10":"1.školení:10","č.člen od:10","(ID)");
@@ -11995,6 +11996,7 @@ function sta2_sestava($org,$title,$par,$export=false) { trace();
       $flds= array('jm','od','n','do','vps_i','nar','roku','^id_osoba');
       $letos= date('Y');
       $kulate= substr($letos,3,1);
+      $order= 'MONTH(o.narozeni)';
     }
     else { // osoby
       $tits= array("jméno:20","certifikát:20","poprvé:10","kolikrát:10","naposledy:10",
@@ -12034,7 +12036,7 @@ function sta2_sestava($org,$title,$par,$export=false) { trace();
       -- HAVING -- bereme vše kvůli číslům certifikátů - vyřazuje se až při průchodu
         -- VPS_I<9999 AND
         -- DO>=$hranice
-      ORDER BY r.nazev");
+      ORDER BY $order");
     while ( $rx && ($x= pdo_fetch_object($rx)) ) {
       // číslování certifikátů
       $skola= $x->VPS_I==9999 ? 0 : $x->VPS_I;
