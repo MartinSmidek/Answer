@@ -598,8 +598,12 @@ form _cmd [,,623,30] {
       if (!pob.same()) { pob.save(); php.table_lock('off','pobyt',pob.key()); }
       if (!os1.same()) { os1.key(); os1.save_osoba(); php.table_lock('off','osoba',os1.key()) };
       if (!os2.same()) { os2.key(); os2.save_osoba(); php.table_lock('off','osoba',os2.key()) };
-      if (!sp1.same() && sp1.key()) sp1.save();
-      if (!sp2.same() && sp2.key()) sp2.save();
+      if (!sp1.same() && sp1.key()) {
+        if (sp1.s_role.key()!=3 && rod.cleni.barva==3) warning("nejprve zruš vazbu u chůvy"); else sp1.save();
+      }
+      if (!sp2.same() && sp2.key()) {
+        if (sp2.s_role.key()!=3 && rod.cleni.barva==3) warning("nejprve zruš vazbu u chůvy"); else sp2.save();
+      }
       _reload(1,rod.cleni.browse_count() ? rod.cleni.key_osoba : 0);
     }
     else error("Uložit co?")

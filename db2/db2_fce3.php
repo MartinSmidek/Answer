@@ -4078,6 +4078,7 @@ function akce2_auto_deti($patt,$par) {  #trace();
          JOIN pobyt AS p USING(id_pobyt)
          LEFT JOIN tvori AS t ON s.id_osoba=t.id_osoba AND t.id_rodina=p.i0_rodina
          WHERE o.deleted='' AND prijmeni LIKE '$patt%' AND role='d' AND id_akce='{$par->akce}'
+           AND s_role=3
          ORDER BY prijmeni,jmeno LIMIT $limit";
   $res= pdo_qry($qry);
   while ( $res && $t= pdo_fetch_object($res) ) {
