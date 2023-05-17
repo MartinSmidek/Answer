@@ -5456,10 +5456,12 @@ function tisk2_sestava_pary($akce,$par,$title,$vypis,$export=false,$internal=fal
 #   $fld = seznam položek s prefixem
 #   $cnd = podmínka
 #   $par->sel = seznam id_pobyt
+#   $par->subtyp = pro EROP se dopčítávají sloupce účast na MS a účast na mužské akci
 function tisk2_sestava_lidi($akce,$par,$title,$vypis,$export=false) { trace();
   global $tisk_hnizdo;
   $result= (object)array();
   $typ= $par->typ;
+  $subtyp= isset($par->subtyp) ? $par->subtyp : '';
   $tit= $par->tit;
   $fld= $par->fld;
   $cnd= $par->cnd;
@@ -5503,7 +5505,7 @@ function tisk2_sestava_lidi($akce,$par,$title,$vypis,$export=false) { trace();
   $qry=  "
     SELECT
       p.pouze,p.poznamka,/*p.platba - není atribut osoby!,*/p.funkce,p.skupina,p.pokoj,p.budova,s.s_role,
-      o.prijmeni,o.jmeno,o.narozeni,o.rc_xxxx,o.note,o.prislusnost,o.obcanka,o.clen,o.dieta,
+      o.id_osoba,o.prijmeni,o.jmeno,o.narozeni,o.rc_xxxx,o.note,o.prislusnost,o.obcanka,o.clen,o.dieta,
       IFNULL(r2.id_rodina,r1.id_rodina) AS id_rodina,
       IFNULL(r2.nazev,r1.nazev) AS r_nazev,
       IFNULL(r2.spz,r1.spz) AS r_spz,
@@ -5544,10 +5546,22 @@ function tisk2_sestava_lidi($akce,$par,$title,$vypis,$export=false) { trace();
   while ( $res && ($x= pdo_fetch_object($res)) ) {
     $n++;
     $clmn[$n]= array();
+    // doplnění položek pro subtyp=EROP
+    $historie= '';
+    if ($subtyp=='EROP') {
+      list($akce_ms,$akce_ch,$iniciace,$firming,$cizi)= select(
+          "SUM(IF(druh=1,1,0)),SUM(IF(statistika>1,1,0)),iniciace,firming,prislusnost",
+          'osoba JOIN spolu USING (id_osoba) JOIN pobyt USING (id_pobyt) JOIN akce ON id_akce=id_duakce',
+          "id_osoba={$x->id_osoba} AND zruseno=0 AND datum_od<'2023-09-01' ");
+      $historie= $cizi ? '' : "na akcích pro muže: $akce_ch, na MS $akce_ms, iniciace:$iniciace, firming:$firming";
+    }
     // doplnění počítaných položek
     $x->narozeni_dmy= sql_date_year($x->narozeni);
     foreach($flds as $f) {
       switch ($f) {
+      case '_historie':                                               // historie na akcích
+        $clmn[$n][$f]= $historie;
+        break;
       case '1':                                                       // 1
         $clmn[$n][$f]= 1;
         break;

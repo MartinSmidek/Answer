@@ -326,7 +326,7 @@ function akce_ucastnici($akce,$cmd,$par=null) {
         JOIN spolu USING (id_pobyt)
         JOIN osoba USING (id_osoba)
         WHERE id_akce=$akce AND ((funkce=0 AND skupina=0) /*OR funkce=1*/)
-        ORDER BY firming DESC,_vek DESC
+        ORDER BY prislusnost,firming DESC,_vek DESC
       "); 
       while ($xs && (list($idp,$fce,$skup,$vek)=pdo_fetch_row($xs))) {
         if (!$skup) {
