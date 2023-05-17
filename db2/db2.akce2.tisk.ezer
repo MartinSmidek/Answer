@@ -393,7 +393,7 @@ menu m {type:'left', //active:*
     }}
     item {title:'EROP - účastníci se vším'                                                     
                                         ,par:{typ:'j',subtyp:'EROP',exp:'Excel2',cnd:'1',ord:'funkce,o.prislusnost,o.prijmeni,o.jmeno'
-                                        ,tit:'příjmení:15,jméno:12,funkce:5,věk:5,stát:4,obec:25,psč:7,telefon:25,email:25,poznámka k akci:50,trvalá poznámka:50,,historie:20'
+                                        ,tit:'příjmení:15,jméno:12,funkce:5,věk:5,stát:4,obec:25,psč:7,telefon:25,email:25,poznámka k akci:50,trvalá poznámka:50,historie:20'
                                         ,fld:'prijmeni,jmeno,funkce,_vek,prislusnost,obec,psc,telefony,emaily,poznamka,note,_historie'}}
   }
   # ------------------------------------------------------------------------------------------==> DS

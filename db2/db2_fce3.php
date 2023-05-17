@@ -5549,11 +5549,18 @@ function tisk2_sestava_lidi($akce,$par,$title,$vypis,$export=false) { trace();
     // doplnění položek pro subtyp=EROP
     $historie= '';
     if ($subtyp=='EROP') {
-      list($akce_ms,$akce_ch,$iniciace,$firming,$cizi)= select(
-          "SUM(IF(druh=1,1,0)),SUM(IF(statistika>1,1,0)),iniciace,firming,prislusnost",
+      list($akce_ms,$akce_vps,$akce_ch,$iniciace,$firming,$cizi)= select(
+          "SUM(IF(druh=1,1,0)),SUM(IF(funkce=1,1,0)),SUM(IF(statistika>1,1,0)),iniciace,firming,prislusnost",
           'osoba JOIN spolu USING (id_osoba) JOIN pobyt USING (id_pobyt) JOIN akce ON id_akce=id_duakce',
           "id_osoba={$x->id_osoba} AND zruseno=0 AND datum_od<'2023-09-01' ");
-      $historie= $cizi ? '' : "na akcích pro muže: $akce_ch, na MS $akce_ms, iniciace:$iniciace, firming:$firming";
+      $historie= '';
+      if (!$cizi) {
+        if ($akce_ch) $historie.= " chlapi $akce_ch x";
+        if ($akce_ms) $historie.= " MS $akce_ms x";
+        if ($akce_vps) $historie.= ' (vps)';
+        if ($firming) $historie.= " firming $firming";
+        $historie.= " iniciace $iniciace";
+      }
       $x->funkce= $x->funkce==1 ? 'stoker' : ($x->funkce==12 ? 'lektor' : ($x->funkce==5 ? 'hospodář' : $x->funkce==1));
     }
     // doplnění počítaných položek
