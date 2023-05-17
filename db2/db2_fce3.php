@@ -5554,6 +5554,7 @@ function tisk2_sestava_lidi($akce,$par,$title,$vypis,$export=false) { trace();
           'osoba JOIN spolu USING (id_osoba) JOIN pobyt USING (id_pobyt) JOIN akce ON id_akce=id_duakce',
           "id_osoba={$x->id_osoba} AND zruseno=0 AND datum_od<'2023-09-01' ");
       $historie= $cizi ? '' : "na akcích pro muže: $akce_ch, na MS $akce_ms, iniciace:$iniciace, firming:$firming";
+      $x->funkce= $x->funkce==1 ? 'stoker' : ($x->funkce==12 ? 'lektor' : ($x->funkce==5 ? 'hospodář' : $x->funkce==1));
     }
     // doplnění počítaných položek
     $x->narozeni_dmy= sql_date_year($x->narozeni);

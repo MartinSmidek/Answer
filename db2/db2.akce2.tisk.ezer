@@ -337,7 +337,7 @@ menu m {type:'left', //active:*
     }}
   }
   # ----------------------------------------------------------------------------------------==> MROP
-  menu {tag:'a', title:'sestavy MROP',type:'group',_sys:'*'                                  skill:'faa:m'
+  menu {tag:'a', title:'sestavy MROP',type:'group',_sys:'*'                                  skill:'f'
     item {title:'příjem'
                                         ,par:{typ:'mrop',exp:'Excel2'
                                         ,cnd:"funkce=0"
@@ -391,7 +391,7 @@ menu m {type:'left', //active:*
         if (x.err) alert(x.err);
         info.fill('',x.html);
     }}
-    item {title:'EROP - účastníci se vším'                                                     skill:'faa:m'
+    item {title:'EROP - účastníci se vším'                                                     
                                         ,par:{typ:'j',subtyp:'EROP',exp:'Excel2',cnd:'1',ord:'funkce,o.prislusnost,o.prijmeni,o.jmeno'
                                         ,tit:'příjmení:15,jméno:12,funkce:5,věk:5,stát:4,obec:25,psč:7,telefon:25,email:25,poznámka k akci:50,trvalá poznámka:50,,historie:20'
                                         ,fld:'prijmeni,jmeno,funkce,_vek,prislusnost,obec,psc,telefony,emaily,poznamka,note,_historie'}}
