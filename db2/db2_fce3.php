@@ -12015,8 +12015,8 @@ function sta2_sestava($org,$title,$par,$export=false) { trace();
     }
     else if ( $par->podtyp=='kulatiny' ) {
       $tits= array("jméno:20","poprvé:10","kolikrát:10","naposledy:10",
-                 $org==1?"VPS I:10":"1.školení:10","narození:10:d","roků:7","(ID)");
-      $flds= array('jm','od','n','do','vps_i','nar','roku','^id_osoba');
+                 $org==1?"VPS I:10":"1.školení:10","narození:10:d","svatba:10:d","roků:7","(ID)");
+      $flds= array('jm','od','n','do','vps_i','nar','svatba','roku','^id_osoba','order');
       $letos= date('Y');
       $kulate= substr($letos,3,1);
       $order= 'MONTH(o.narozeni),DAY(o.narozeni)';
@@ -12027,7 +12027,7 @@ function sta2_sestava($org,$title,$par,$export=false) { trace();
       $flds= array('jm','cert','od','n','do','vps_i','clen','byd','nar','^id_osoba');
     }
     $rx= pdo_qry("SELECT
-        r.id_rodina,r.nazev,
+        r.id_rodina,r.nazev,r.svatba,r.datsvatba,
         GROUP_CONCAT(DISTINCT IF(t.role='a',o.id_osoba,'') SEPARATOR '') as id_m,
         GROUP_CONCAT(DISTINCT IF(t.role='a',o.jmeno,'') SEPARATOR '') as jmeno_m,
         GROUP_CONCAT(DISTINCT IF(t.role='a',o.prijmeni,'') SEPARATOR '') as prijmeni_m,
@@ -12102,20 +12102,35 @@ function sta2_sestava($org,$title,$par,$export=false) { trace();
       elseif ( $par->podtyp=='kulatiny' ) {
         if (substr($x->narozeni_m,3,1)==$kulate) {
           $roku= $letos - substr($x->narozeni_m,0,4);
-          $clmn[]= array(
+          $kdy= sql_date1($x->narozeni_m);
+          $order= substr($x->narozeni_m,5,2).substr($x->narozeni_m,8,2);
+          $clmn[]= array('order'=>$order,
             'jm'=>"{$x->prijmeni_m} {$x->jmeno_m}",'od'=>$x->OD,'n'=>$x->Nx,'do'=>$x->DO,
-            'nar'=>sql_date1($x->narozeni_m), 'roku'=>$roku,
+            'nar'=>$kdy, 'roku'=>$roku,
             '^id_osoba'=>$x->id_m
           );
         }
         if (substr($x->narozeni_z,3,1)==$kulate) {
           $roku= $letos - substr($x->narozeni_z,0,4);
-          $clmn[]= array(
+          $kdy= sql_date1($x->narozeni_z);
+          $order= substr($x->narozeni_z,5,2).substr($x->narozeni_z,8,2);
+          $clmn[]= array('order'=>$order,
             'jm'=>"{$x->prijmeni_z} {$x->jmeno_z}",'od'=>$x->OD,'n'=>$x->Nx,'do'=>$x->DO,
-            'nar'=>sql_date1($x->narozeni_z), 'roku'=>$roku,
+            'nar'=>$kdy, 'roku'=>$roku,
             '^id_osoba'=>$x->id_z
           );
         }
+        if (substr($x->datsvatba,3,1)==$kulate) {
+          $roku= $letos - substr($x->datsvatba,0,4);
+          $kdy= sql_date1($x->datsvatba);
+          $order= substr($x->datsvatba,5,2).substr($x->datsvatba,8,2);
+          $clmn[]= array('order'=>$order,
+            'jm'=>"{$x->jmeno_m} a {$x->jmeno_z} {$x->nazev}",'od'=>$x->OD,'n'=>$x->Nx,'do'=>$x->DO,
+            'svatba'=>$kdy, 'roku'=>$roku,
+            '^id_osoba'=>$x->id_z
+          );
+        }
+        usort($clmn,function($a,$b){return $a['order']>$b['order'];});
       }
       else { // osoby
         $clmn[]= array(
@@ -14105,8 +14120,15 @@ function mail2_mai_posli($id_dopis,$info) {  trace();
     $qry= mail2_mai_qry($info->_cond);
     $res= pdo_qry($qry);
     while ( $res && $c= pdo_fetch_object($res) ) {
+      // zjisti adresy (oddělené ,;) a vyřaď ty uvozené *
+      $poslat= array();
+      $maily= preg_grep('/,;/', $c->email);
+      foreach ($maily as $mail) {
+        if (trim($mail)[0]!='*') $poslat[]= $mail;
+      }
       // vlož do MAIL
-      if ( $c->email[0]!='*' ) {
+      $poslat= implode(',',$poslat);
+      if ( $poslat ) {
         $qr= "INSERT mail (id_davka,znacka,stav,id_dopis,id_clen,email)
               VALUE (1,'@',0,$id_dopis,{$c->id_clen},'{$c->email}')";
         $rs= pdo_qry($qr);
