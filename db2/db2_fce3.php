@@ -12016,7 +12016,7 @@ function sta2_sestava($org,$title,$par,$export=false) { trace();
     else if ( $par->podtyp=='kulatiny' ) {
       $tits= array("jméno:20","poprvé:10","kolikrát:10","naposledy:10",
                  $org==1?"VPS I:10":"1.školení:10","narození:10:d","svatba:10:d","roků:7","(ID)");
-      $flds= array('jm','od','n','do','vps_i','nar','svatba','roku','^id_osoba','order');
+      $flds= array('jm','od','n','do','vps_i','nar','svatba','roku','^id_osoba');
       $letos= date('Y');
       $kulate= substr($letos,3,1);
       $order= 'MONTH(o.narozeni),DAY(o.narozeni)';
