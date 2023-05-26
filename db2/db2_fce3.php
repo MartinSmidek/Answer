@@ -12027,12 +12027,14 @@ function sta2_sestava($org,$title,$par,$export=false) { trace();
       $flds= array('jm','cert','od','n','do','vps_i','clen','byd','nar','^id_osoba');
     }
     $rx= pdo_qry("SELECT
-        r.id_rodina,r.nazev,r.svatba,r.datsvatba,
+        r.id_rodina,r.nazev,r.svatba,r.datsvatba,r.rozvod,
+        GROUP_CONCAT(DISTINCT IF(t.role='a',o.umrti,'') SEPARATOR '') as umrti_m,
         GROUP_CONCAT(DISTINCT IF(t.role='a',o.id_osoba,'') SEPARATOR '') as id_m,
         GROUP_CONCAT(DISTINCT IF(t.role='a',o.jmeno,'') SEPARATOR '') as jmeno_m,
         GROUP_CONCAT(DISTINCT IF(t.role='a',o.prijmeni,'') SEPARATOR '') as prijmeni_m,
         GROUP_CONCAT(DISTINCT IF(t.role='a',o.narozeni,'') SEPARATOR '') as narozeni_m,
         GROUP_CONCAT(DISTINCT IF(t.role='a',IF(o.adresa,o.obec,r.obec),'') SEPARATOR '') as obec_m,
+        GROUP_CONCAT(DISTINCT IF(t.role='b',o.umrti,'') SEPARATOR '') as umrti_z,
         GROUP_CONCAT(DISTINCT IF(t.role='b',o.id_osoba,'') SEPARATOR '') as id_z,
         GROUP_CONCAT(DISTINCT IF(t.role='b',o.jmeno,'') SEPARATOR '') as jmeno_z,
         GROUP_CONCAT(DISTINCT IF(t.role='b',o.prijmeni,'') SEPARATOR '') as prijmeni_z,
@@ -12052,9 +12054,10 @@ function sta2_sestava($org,$title,$par,$export=false) { trace();
       JOIN tvori AS t USING (id_rodina)
       JOIN osoba AS o USING (id_osoba)
       LEFT JOIN dar AS od ON o.id_osoba=od.id_osoba AND od.deleted=''
-      WHERE spec=0 AND zruseno=0 AND r.id_rodina=i0_rodina AND a.access&$org
+      WHERE spec=0 AND zruseno=0 AND o.deleted=''
+        AND r.id_rodina=i0_rodina AND a.access&$org
         -- AND r.nazev LIKE 'Šmí%'
-        AND druh IN (1,$vps1)
+        AND druh IN (1,$vps1) 
       GROUP BY r.id_rodina
       -- HAVING -- bereme vše kvůli číslům certifikátů - vyřazuje se až při průchodu
         -- VPS_I<9999 AND
@@ -12100,7 +12103,7 @@ function sta2_sestava($org,$title,$par,$export=false) { trace();
         );
       }
       elseif ( $par->podtyp=='kulatiny' ) {
-        if (substr($x->narozeni_m,3,1)==$kulate) {
+        if (substr($x->narozeni_m,3,1)==$kulate && !$x->umrti_m) {
           $roku= $letos - substr($x->narozeni_m,0,4);
           $kdy= sql_date1($x->narozeni_m);
           $order= substr($x->narozeni_m,5,2).substr($x->narozeni_m,8,2);
@@ -12110,7 +12113,7 @@ function sta2_sestava($org,$title,$par,$export=false) { trace();
             '^id_osoba'=>$x->id_m
           );
         }
-        if (substr($x->narozeni_z,3,1)==$kulate) {
+        if (substr($x->narozeni_z,3,1)==$kulate && !$x->umrti_z) {
           $roku= $letos - substr($x->narozeni_z,0,4);
           $kdy= sql_date1($x->narozeni_z);
           $order= substr($x->narozeni_z,5,2).substr($x->narozeni_z,8,2);
@@ -12120,7 +12123,7 @@ function sta2_sestava($org,$title,$par,$export=false) { trace();
             '^id_osoba'=>$x->id_z
           );
         }
-        if (substr($x->datsvatba,3,1)==$kulate) {
+        if (substr($x->datsvatba,3,1)==$kulate && !$x->rozvod && !$x->umrti_m && !$x->umrti_z ) {
           $roku= $letos - substr($x->datsvatba,0,4);
           $kdy= sql_date1($x->datsvatba);
           $order= substr($x->datsvatba,5,2).substr($x->datsvatba,8,2);
