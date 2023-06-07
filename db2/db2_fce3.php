@@ -12908,7 +12908,7 @@ function mail2_footer($op,$access,$access_name,$idu,$change='') { trace();
 # --------------------------------------------------------------------------------- mail2 vzor_pobyt
 # pošle mail daného typu účastníkovi pobytu - zatím typ=potvrzeni_platby
 #                                                                         !!! + platba souběžné akce
-function mail2_vzor_pobyt2($id_pobyt,$typ,$u_poradi,$from,$vyrizuje,$poslat=0) {
+function mail2_vzor_pobyt2($id_pobyt,$typ,$u_poradi,$from,$vyrizuje,$varianta,$poslat=0) {
 //  global $ezer_root;
   $ret= (object)array();
 
@@ -12948,11 +12948,20 @@ function mail2_vzor_pobyt2($id_pobyt,$typ,$u_poradi,$from,$vyrizuje,$poslat=0) {
       $p->platba_akce.= ", hnízdo {$hnizda[$hnizdo-1]}";
     }
   }
+//  list($nazev,$obsah,$vars)=
+//     select('nazev,obsah,var_list','dopis',"typ='potvrzeni_platby' AND access=$access");
 
-  // načtení vzoru dopisu
-  list($nazev,$obsah,$vars)=
-    select('nazev,obsah,var_list','dopis',"typ='potvrzeni_platby' AND access=$access");
-
+  // načtení vzoru dopisu - verze podle $varianta
+  $vzor= array();
+  $rv= pdo_qry("SELECT nazev,obsah,var_list FROM dopis WHERE typ='potvrzeni_platby' AND access=$access");
+  while ($rv && ($v= pdo_fetch_row($rv))) {
+    $vzor[]= $v;  
+  } 
+  debug($vzor);
+  if (!count($vzor)) { $ret->err= "CHYBA: nebyl nalezen vzor dopisu 'potvrzeni_platby' "; goto end; }
+  else if ($varianta>count($vzor)) $varianta= 1; // cyklické opakování
+  $ret->next= $varianta+1;
+  list($nazev,$obsah,$vars)= $vzor[$varianta-1];
   // personifikace
   foreach ( explode(',',$vars) as $var ) {
     $var= trim($var);
@@ -12995,6 +13004,7 @@ function mail2_vzor_pobyt2($id_pobyt,$typ,$u_poradi,$from,$vyrizuje,$poslat=0) {
   }
   else {
     $ret->msg= "Je připraven mail - mám ho poslat?$report";
+    $ret->butt= "poslat:send,neposílat:quit,jiný dopis:next";
   }
 end:
   return $ret;

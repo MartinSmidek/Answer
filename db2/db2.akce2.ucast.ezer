@@ -2275,24 +2275,40 @@ form _cmd_p [,,623,30] { css:'ae_work'
   label  [3,0,334,30] { css:'ae_parm', skill:'yaa+;faa+;caa+' }
   button [11,6,,] { title:"[fa-send-o] Potvrdit přijetí platby",
     help:'poslání mailu o přijetí platby podle vzoru v Maily akce'
-    func onclick() { var y:object, from:text, name:text, i:number, Ln:ezer
+    func onclick() { var y:object, from:text, name:text, i:number, Ln:ezer, end:number
       clear();
       echo(`uhrady_n=${pla.uhrady_n}`);
-      if (!pla.same()) alert("nejprve je třeba uložit změněné údaje") 
+      if (!pla.same()) { alert("nejprve je třeba uložit změněné údaje"); return }
+      if (pla.uhrady_n>1) 
+        i= prompt2("napiš pořadové číslo platby",1)
       else {
-        if (pla.uhrady_n>1) 
-          i= prompt2("napiš pořadové číslo platby",1)
-        else {
-          Ln= pla.uhrady_lst[0];
-          i= Ln.u_poradi;
-        }
-        from= sys('user','options','email'); name= sys('user','options','vyrizuje');
-        y= php.mail2_vzor_pobyt2(the_pobyt,'potvrzeni_platby2',i,from,name,0);
-        if (y.err) alert(y.err);
-        elseif (confirm(y.msg)) {
-          y= php.mail2_vzor_pobyt2(the_pobyt,'potvrzeni_platby2',i,from,name,1);
-          if (y.err) alert(y.err) 
-          else { pla.load(the_pobyt); alert(y.msg) }
+        Ln= pla.uhrady_lst[0];
+        i= Ln.u_poradi;
+      }
+      from= sys('user','options','email'); name= sys('user','options','vyrizuje');
+      y= php.mail2_vzor_pobyt2(the_pobyt,'potvrzeni_platby2',i,from,name,1,0);
+      if (y.err) { alert(y.err); return }
+//        elseif (confirm(y.msg)) {
+//          y= php.mail2_vzor_pobyt2(the_pobyt,'potvrzeni_platby2',i,from,name,1);
+//          if (y.err) alert(y.err) 
+//          else { pla.load(the_pobyt); alert(y.msg) }
+//        }
+      end= 0;
+      while (!end) { 
+        switch (choose(y.msg,y.butt)) {
+          case 'quit':
+            end= 1;
+            break;
+          case 'next':
+            y= php.mail2_vzor_pobyt2(the_pobyt,'potvrzeni_platby2',i,from,name,y.next,0);
+            if (y.err) { alert(y.err); return }
+            break;
+          case 'send':
+            y= php.mail2_vzor_pobyt2(the_pobyt,'potvrzeni_platby2',i,from,name,y.next-1,1);
+            if (y.err) alert(y.err) else { pla.load(the_pobyt); alert(y.msg); reload(the_pobyt); }
+            end= 1;
+            break;
+
         }
       }
     }
