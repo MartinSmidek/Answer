@@ -493,7 +493,7 @@ form _pece [,,400,] { css:'ds_form'
     // zobrazení
     show _nazev    [,,110,] { title:'příjmení jméno', format:'s+q*', css_cell:"funkce,0:nic,1:zluty"
                               expr:"CONCAT(o.prijmeni,' ',o.jmeno)" 
-                              css_cell:'jen_oddo,0:nic,1:fialovy' }
+                              css_cell:'neuplne,0:nic,1:fialovy' }
     show _pfunkce  [,,40,]  { title:'funkce', data:s.pfunkce, map_pipe:ms_akce_pfunkce.zkratka,
                               format:'q#s', css_cell:'rod_nakurzu,0:nic,1:oranzovy' }
     show skupinka  [,,20,]  { title:'sk.', data:s.skupinka, format:'rqs:e'}
