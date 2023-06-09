@@ -323,7 +323,7 @@ form _osoba [,,580,] { tag:'a',
   func od_show() {
     od_init(); 
     if (up.b.od_strava) { od_x= 1; od_strava.key(up.b.od_strava); }
-    if (up.b.od_pobyt)  { od_x= 1; od_pobyt= js.add_days(sql2date(the_datum_od),up.b.od_pobyt); }
+    if (up.b.od_pobyt)  { od_x= 1; od_pobyt= js.add_days(sql2date(the_datum_od,'.'),up.b.od_pobyt); }
     form.enable(od_x,'od');
   }
   func od_save() {
@@ -370,7 +370,7 @@ form _osoba [,,580,] { tag:'a',
   func do_show() {
     do_init(); 
     if (up.b.do_strava) { do_x= 1; do_strava.key(up.b.do_strava); }
-    if (up.b.do_pobyt)  { do_x= 1; do_pobyt= js.add_days(sql2date(the_datum_do),-up.b.do_pobyt); }
+    if (up.b.do_pobyt)  { do_x= 1; do_pobyt= js.add_days(sql2date(the_datum_do,'.'),-up.b.do_pobyt); }
     form.enable(do_x,'do')
   }
   func do_save() {
