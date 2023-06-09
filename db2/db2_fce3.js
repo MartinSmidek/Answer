@@ -229,6 +229,34 @@ function highcharts_simple() {
   });
 }
 // =========================================================================================> funkce
+// ---------------------------------------------------------------------------------------- add days
+// funkce pro přičtení/odečtení 'ofset' dnů k danému datu.
+function add_days(datum,ofset) {
+//  let d= datum.split(/\.\s*/); 
+//  let nd= new Date(d[2], d[1] - 1, d[0]); 
+  let nd= new Date(Ezer.fce.date2sql(datum)); 
+  nd.setDate(nd.getDate() + parseInt(ofset)); // Přidání/odebrání ofsetu dnů
+  return nd.getDate() + "." + (nd.getMonth() + 1) + "." + nd.getFullYear();
+}
+// --------------------------------------------------------------------------------------- diff days
+// funkce pro zjištění počtu dnů mezi dvěma daty
+function diff_days(dflt,datum) {
+//  let d1= dflt.split(/\.\s*/); 
+//  let d2= datum.split(/\.\s*/); 
+//  let dd1= new Date(d1[2], d1[1] - 1, d1[0]); 
+//  let dd2= new Date(d2[2], d2[1] - 1, d2[0]); 
+  let dd1= new Date(Ezer.fce.date2sql(dflt)); 
+  let dd2= new Date(Ezer.fce.date2sql(datum)); 
+  return Math.abs(Math.round((dd1 - dd2) / (1000 * 60 * 60 * 24)));
+}
+// ------------------------------------------------------------------------------------ between days
+// je dotazovaný den mezi dvěma daty?
+function between_days(day,start,end) {
+  let d= new Date(Ezer.fce.date2sql(day));
+  let s= new Date(Ezer.fce.date2sql(start));
+  let e= new Date(Ezer.fce.date2sql(end));
+  return d >= s && d <= e ? 1 : 0;
+}
 // --------------------------------------------------------------------------------------- set style
 // nastaví styl předaného elementu
 function set_style(elem,prop) {

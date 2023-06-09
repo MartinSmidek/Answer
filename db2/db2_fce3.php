@@ -874,10 +874,11 @@ function akce2_id2a($id_akce) {  //trace();
   global $USER;
   $a= (object)array('title'=>'?','cenik'=>0,'cena'=>0,'soubeh'=>0,'hlavni'=>0,'soubezna'=>0);
   list($a->title,$a->rok,$a->cenik,$a->cenik_verze,$a->cena,$a->hlavni,$a->soubezna,$a->org,
-      $a->ms,$a->druh,$a->hnizda,$a->web_wordpress,$a->mezinarodni,$poradatel,$a->tym)=
+      $a->ms,$a->druh,$a->hnizda,$a->web_wordpress,$a->mezinarodni,$poradatel,$a->tym,
+      $a->datum_od, $a->datum_do, $a->strava_oddo)=
     select("a.nazev,YEAR(a.datum_od),a.ma_cenik,a.ma_cenik_verze,a.cena,a.id_hlavni,"
       . "IFNULL(s.id_duakce,0),a.access,IF(a.druh IN (1,2),1,0),a.druh,a.hnizda,a.web_wordpress,"
-      . "a.mezinarodni,a.poradatel,a.tym",
+      . "a.mezinarodni,a.poradatel,a.tym,a.datum_od,a.datum_do,a.strava_oddo",
       "akce AS a
        LEFT JOIN akce AS s ON s.id_hlavni=a.id_duakce",
       "a.id_duakce=$id_akce");
@@ -1947,8 +1948,9 @@ function akce2_vzorec_soubeh($id_pobyt,$id_hlavni,$id_soubezna,$dosp=0,$deti=0,$
   $dosp_chuv= $dosp+$chuv;
 //                                         debug($deti_kat,"dětí");
   // načtení ceníků
-  akce2_nacti_cenik($id_hlavni,$hnizdo,$cenik_dosp,$ret->navrh);   if ( $html ) goto end;
-  akce2_nacti_cenik($id_soubezna,$hnizdo,$cenik_deti,$ret->navrh); if ( $html ) goto end;
+  $cenik_dosp= $cenik_deti= array();
+  akce2_nacti_cenik($id_hlavni,$hnizdo,$cenik_dosp,$ret->navrh);   if ( $ret->navrh ) goto end;
+  akce2_nacti_cenik($id_soubezna,$hnizdo,$cenik_deti,$ret->navrh); if ( $ret->navrh ) goto end;
   // redakce textu k ceně dospělých
   $Kc= "&nbsp;Kč";
   $html.= "<b>Rozpis platby za účast dospělých na jejich akci</b><table>";
@@ -2053,7 +2055,7 @@ function akce2_nacti_cenik($id_akce,$hnizdo,&$cenik,&$html) {
       if ( isset($cenik[$za]) ) $html.= "v ceníku se opakují kódy za=$za";
       $cenik[$za]= (object)array('c'=>$a->cena,'txt'=>$a->polozka);
     }
-//                                                        debug($cenik,"ceník pro $id_akce");
+                                                        debug($cenik,"ceník pro $id_akce");
   }
 }
 # ------------------------------------------------------------------------------------- akce2 vzorec

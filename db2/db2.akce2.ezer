@@ -41,6 +41,8 @@ var the_soubezna: number        // 0=normální akce, id=akce s the_duakce soub�
 var the_cenik: text             // pracovní akce: má ceník
 var the_cenik_verze: text       // ... verze ceníku: 0=2016, 1=2017
 var the_cena:  number           // pracovní akce: má pevnou cenu pro dospělého
+var the_datum_od: text, the_datum_do: text, 
+    the_strava_oddo: text       // pracovní akce: doba akce (pro pečouny)
 var form_mode: text             // informace pro zobrazení formulářů: new|show
         
 # komunikační proměnné mezi moduly
@@ -134,6 +136,7 @@ func akce_choose(id_akce) { var a:object, ok:number
     the_cenik= a.cenik;   the_cenik_verze= a.cenik_verze;
     the_cena= a.cena;     the_org= a.org;           the_ms= a.ms;    the_druh= a.druh;
     the_garant= a.garant; the_tym= a.tym;
+    the_datum_od= a.datum_od; the_datum_do= a.datum_do; the_strava_oddo= a.strava_oddo;
     ms_akce_hnizda.selects('hnizdo,zkratka,nazev',php.akce2_hnizda_options(the_hnizda));
     ms_akce_hnizda_plus.selects('hnizdo,zkratka,nazev',php.akce2_hnizda_options(the_hnizda,1));
     ms_akce_hnizda_tisk.selects('hnizdo,zkratka,nazev',php.akce2_hnizda_options(the_hnizda,2));
@@ -467,6 +470,11 @@ table spolu { key_id:'id_spolu'
   number pecovane // id_osoba pečovaného dítěte
   number pfunkce  // #ms_akce_pfunkce -- funkce pečovatelská, jinak 0
   number dite_kat // #ys_akce_dite_kat | #fa_akce_dite_kat -- cenová kategorie
+  // pečouni: částečný pobyt
+  number p_od_pobyt   // pro pečouny: počet dnů pozdějšího příjezdu
+  number p_od_strava  // pro pečouny: první jídlo, 0=default, 1=snídaně, 2=oběd, 3=večeře
+  number p_do_pobyt   // pro pečouny: počet dnů dřívějšího odjezdu
+  number p_do_strava  // pro pečouny: poslední jídlo, 0=default, 1=snídaně, 2=oběd, 3=večeře
 }
 table osoba_geo { 
   number id_osoba
