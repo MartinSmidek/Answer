@@ -5102,8 +5102,8 @@ function akce2_starsi_mrop_pdf($akce) { trace();
   $res= (object)array('html'=>'','err'=>'');
   $grp= $cht= array();
   // data akce
-  list($datum_od,$mrop)= select('datum_od,mrop','akce',"id_duakce=$akce");
-  if (!$mrop) { $res->err= "tato sestava je jen pro MROP"; goto end; }
+  list($datum_od,$statistika)= select('datum_od,statistika','akce',"id_duakce=$akce");
+  if ($statistika!=1) { $res->err= "tato sestava je jen pro akce typu 'Křižanov' "; goto end; }
   $rok= substr($datum_od,0,4);
   $r_fld= "id_rodina,nazev,ulice,psc,obec,stat,note,emaily,telefony,spz";
   $rg= pdo_qry("
@@ -5953,12 +5953,14 @@ function akce2_stravenky_diety($akce,$par,$title,$vypis,$export=false,$hnizdo=0)
       fce_error("nepodporovaná dieta");
     }
     $qry="SELECT o.prijmeni,o.jmeno,s.pfunkce,YEAR(datum_od) AS _rok,
-            a.nazev AS akce_nazev, YEAR(a.datum_od) AS akce_rok, a.misto AS akce_misto
+            a.nazev AS akce_nazev, YEAR(a.datum_od) AS akce_rok, a.misto AS akce_misto,
+            p_od_pobyt, p_od_strava, p_do_pobyt, p_do_strava
           FROM pobyt AS p
           JOIN akce  AS a ON p.id_akce=a.id_duakce
           JOIN spolu AS s USING(id_pobyt)
           JOIN osoba AS o ON s.id_osoba=o.id_osoba
           WHERE p.id_akce='$akce' AND $cond AND p.funkce=99 AND s_rodici=0 $AND
+            -- AND id_spolu IN (137569,137010)
           ORDER BY o.prijmeni,o.jmeno";
   }
   else { // rodiny
@@ -6005,18 +6007,28 @@ function akce2_stravenky_diety($akce,$par,$title,$vypis,$export=false,$hnizdo=0)
     $akce_data->hnizda= $x->akce_hnizda;
     $str_kdo= array();
     $clmn[$n]= array();
-    $stravnik=
-         $par->typ=='vjp' ? "{$x->prijmeni} {$x->jmeno}"
-       : ($x->pouze==1 ? "{$x->prijmeni_m} {$x->jmeno_m}"
-       : ($x->pouze==2 ? "{$x->prijmeni_z} {$x->jmeno_z}"
-       : "{$x->nazev} {$x->jmeno_m} a {$x->jmeno_z}"));
     $stravnik= $par->typ=='vjp' ? "{$x->prijmeni} {$x->jmeno}" : $x->_jm;
     $clmn[$n]['manzele']= $stravnik;
     // stravy
-    $sc= $par->typ=='vjp' ? 1 : $x->strava_cel;
-    $sp= $x->strava_pol;
-    $csc= $x->cstrava_cel;
-    $csp= $x->cstrava_pol;
+    if ( $par->typ=='vjp' ) { // pečoun => podle p_od* a p_do* nastav csc a csp
+      $sc= $sp= 0; $csp= ''; // nemůže být použito
+      // vytvoření řetězce cstrava_cel pro danou dietu
+      $csc= str_repeat('0',3*($nd+1));
+      $od_pobyt= $x->p_od_pobyt;
+      $od_strava= $x->p_od_strava ? $x->p_od_strava - 1 : $jidlo_1;
+      $do_pobyt= $nd - $x->p_do_pobyt;
+      $do_strava= $x->p_do_strava ? $x->p_do_strava - 1 : $jidlo_n;
+      for ($i= 3*$od_pobyt+$od_strava; $i<=3*$do_pobyt+$do_strava; $i++) {
+        $csc[$i]= '1';
+      }
+//      display("$stravnik '$csc'  $od_pobyt..$do_pobyt ($nd)"); debug($x);
+    }
+    else {
+      $sc= $x->strava_cel;
+      $sp= $x->strava_pol;
+      $csc= $x->cstrava_cel;
+      $csp= $x->cstrava_pol;
+    }
     $k= 0;
     for ($i= 0; $i<=$nd; $i++) {
       // projdeme dny akce
@@ -6056,10 +6068,6 @@ function akce2_stravenky_diety($akce,$par,$title,$vypis,$export=false,$hnizdo=0)
         $str_kdo[$den]= $str_den;
       }
     }
-    $kdo= $par->typ=='vjp' ? "{$x->prijmeni}|{$x->jmeno}"
-        : ($x->pouze==1 ? "{$x->prijmeni_m}|{$x->jmeno_m}"
-        : ($x->pouze==2 ? "{$x->prijmeni_z}|{$x->jmeno_z}"
-        : "{$x->nazev}|{$x->jmeno_m} a {$x->jmeno_z}"));
     $kdo= $stravnik;
     $str[$kdo]= $str_kdo;
   }
@@ -6370,7 +6378,7 @@ function akce2_strava_pary($akce,$par,$title,$vypis,$export=false,$id_pobyt=0) {
     if ( $sum=='s' ) $suma[$fld]= 0;
     if ( isset($f) ) $fmts[$fld]= $f;
   }
-//                                                         debug($suma);
+                                                         debug($suma);
   // pokud není id_pobyt tak vyloučíme náhradníky + odhlášen + přihláška
   // naopak 'nepřijel' zahrneme (strava již byla objednána)
   $cond.= $id_pobyt ? " AND p.id_pobyt=$id_pobyt" : " AND funkce NOT IN (9,14,13)";
@@ -6380,15 +6388,18 @@ function akce2_strava_pary($akce,$par,$title,$vypis,$export=false,$id_pobyt=0) {
     ? "SUM(IF(pso.dieta=0,1,0)) AS _dieta,SUM(IF(pso.dieta=1,1,0)) AS _dieta_bl,SUM(IF(pso.dieta=4,1,0)) AS _dieta_bm"
     : "SUM(IF(pso.dieta!=1,1,0)) AS _dieta,SUM(IF(pso.dieta=1,1,0)) AS _dieta_bl,0 AS _dieta_bm";
   $res= tisk2_qry('pobyt_dospeli_ucastnici',
-     "strava_cel,strava_pol,cstrava_cel,cstrava_pol,
-      strava_cel_bm,strava_pol_bm,cstrava_cel_bm,cstrava_pol_bm,
-      strava_cel_bl,strava_pol_bl,cstrava_cel_bl,cstrava_pol_bl,
-      COUNT(*) AS _pocet, $flds_diety,funkce,pfunkce",
-    "p.id_akce='$akce' AND IF(funkce=99,s_rodici=0 AND pfunkce,1) "
+  /*flds*/  "strava_cel,strava_pol,cstrava_cel,cstrava_pol,
+              strava_cel_bm,strava_pol_bm,cstrava_cel_bm,cstrava_pol_bm,
+              strava_cel_bl,strava_pol_bl,cstrava_cel_bl,cstrava_pol_bl,
+              p_od_pobyt, p_od_strava, p_do_pobyt, p_do_strava,
+              COUNT(*) AS _pocet, $flds_diety,funkce,pfunkce",
+  /*WHERE*/ "p.id_akce='$akce' AND IF(funkce=99,s_rodici=0 AND pfunkce,1) "
+    . " AND funkce=99 AND id_spolu IN (137569)"
 //    . " AND p.id_pobyt IN (45406,44921)"
 //    . " AND p.id_pobyt IN (44921)"
    . " AND $cond $jen_hnizdo",
-    "","_jm");
+  /*HAVING*/  "",
+  /*ORDER*/  "IF(funkce=99,'',pr.nazev)");
   while ( $res && ($x= pdo_fetch_object($res)) ) {
     $n++;
     $clmn[$n]= array();

@@ -302,7 +302,7 @@ form _osoba [,,580,] { tag:'a',
     options:ms_akce_hnizda.zkratka, title:'hnízdo' }
   // strava 
   check s_rodici  [L+226,T+279,210,] {data:s.s_rodici, title:'stravenky mají rodiče - účastníci akce' }
-  check pulstrava [L+464,T+279,99,] {data:s.pulstrava, title:'poloviční strava' }
+  check pulstrava [L+464,T+279,99,] {data:s.pulstrava, title:'poloviční strava', format:'d' }
   
   # ==> částečný pobyt
   
