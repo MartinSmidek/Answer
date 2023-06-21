@@ -26,6 +26,7 @@ var dopis_akce: number          // id_akce|0
 //var dopis_hnizdo: number, dopis_hnizdo_name: text   // >0 znamená filtr na účastníky v i-tém hnízdě
 var karta: text                 // et|es
 var menu_item:ezer
+var menu_par:object
 # ----------------------------------------------------------------------------==> globální procedury
 proc reaccess() { #==> reaccess - změna
   menu_item.get;
@@ -77,6 +78,8 @@ menu m {type:'left',
       par:°{k:'et',uq:'U1',on:'akce',off:'gen|skup'} }
     item {title:'... VPS,SVPS,hospodářům akce'
       par:°{k:'et',uq:'U2',on:'akce',off:'gen|skup'} }
+    item {title:'... ... jen VPS'
+      par:°{k:'et',uq:'U2',on:'akce',off:'gen|skup',cond:'p.funkce=1'} }
     item {title:'... dlužníkům akce'
       par:°{k:'et',uq:'U3',on:'akce',off:'gen|skup'} }
     item {title:'... s divnou/žádnou občankou'
@@ -99,13 +102,15 @@ menu m {type:'left',
       par:°{k:'es',uq:'U1',on:'akce',off:'gen|skup'} }
     item {title:'... VPS,SVPS,hospodářům akce'
       par:°{k:'es',uq:'U2',on:'akce',off:'gen|skup'} }
+    item {title:'... ... jen VPS'
+      par:°{k:'es',uq:'U2',on:'akce',off:'gen|skup'} }
     item {title:'... dlužníkům akce'
       par:°{k:'es',uq:'U3',on:'akce',off:'gen|skup'} }
     item {title:'... staré nebo žádné OP'
       par:°{k:'es',uq:'U4',on:'akce',off:'gen|skup'} }
   }
   proc onclick (i) {
-    menu_item.set(i);
+    menu_item.set(i); menu_par.set(i.par);
     vz.display(0); vy.display(1);
     ii.fill(conc(i.owner.title,' - ',i.title),' ');
     vy.display(1,i.par.on); vy.display(0,i.par.off);
@@ -338,21 +343,37 @@ form _etext  {
   var et_prazdy: number
   button generovat [L+8,211,,] { tag:'s', title:'Vygenerovat rozesílací seznam',
     help:'připravit rozesílání', skill:'yam|yams;fam|fams;cam|cams;T|T'
-    proc onclick () {
-      var conf: object
-      var blokovano: number
-      var pocet: number
-      var err: text
-      eq(dopis_var.get,'U','U1','U2','U3','U4','U5','U6');
+    func onclick () {
+      var conf: object, info:object
+      var blokovano: number, pocet: number
+      var err: text, cond: text
+      echo(debug(menu_par));
+      if (!eq(dopis_var,'U','U1','U2','U3','U4','U5','U6')) return;
       # rozesílání podle nastavené akce
-        prazdny; et_prazdy.get;
-        E_info.set(ask('mail2_mai_pocet',dopis_id.get,dopis_var.get));
-        confirm(E_info.get('_html'));
-        E_info.get('_count');
-        err.set(ask('mail2_mai_posli',dopis_id.get,E_info.get));
-        [ err; alert(err) ];
-        texty.browse_seek; texty.browse_focus;
+      prazdny(); if (!et_prazdy) return;
+      cond= menu_par.cond ? menu_par.cond : '';
+      info= php.mail2_mai_pocet(dopis_id,dopis_var,cond);
+      if (info._count && confirm(info._html)) {
+        err= php.mail2_mai_posli(dopis_id,info);
+        if (err) alert(err);
+        texty.browse_seek(); texty.browse_focus();
+      }
     }
+//    proc onclick () {
+//      var conf: object
+//      var blokovano: number
+//      var pocet: number
+//      var err: text
+//      eq(dopis_var.get,'U','U1','U2','U3','U4','U5','U6');
+//      # rozesílání podle nastavené akce
+//        prazdny; et_prazdy.get;
+//        E_info.set(ask('mail2_mai_pocet',dopis_id.get,dopis_var.get));
+//        confirm(E_info.get('_html'));
+//        E_info.get('_count');
+//        err.set(ask('mail2_mai_posli',dopis_id.get,E_info.get));
+//        [ err; alert(err) ];
+//        texty.browse_seek; texty.browse_focus;
+//    }
   }
   button dogenerovat [L+202,211,,] { tag:'s', title:'... jen doplnit o neobeslané',
     help:'doplnit rozesílání', skill:'yam|yams;fam|fams;cam|cams;T|T'

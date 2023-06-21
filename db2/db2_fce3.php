@@ -5100,9 +5100,15 @@ function akce2_tabulka($akce,$par,$title,$vypis,$export=false) { trace();
 }
 # ---------------------------------------------------------------------------- akce2 starsi_mrop_pdf
 # generování skupinky MROP - pro starší
-function akce2_starsi_mrop_pdf($akce) { trace();
+# pokud je zadáno id_pobyt jedná se o VPS a navrátí se je grp jeho skupinky (personifikace mailu)
+function akce2_starsi_mrop_pdf($akce,$id_pobyt_vps=0) { trace();
   global $ezer_path_docs;
   $res= (object)array('html'=>'','err'=>'');
+  if ($id_pobyt_vps) {
+    $skupina= select('skupina','pobyt',"id_pobyt=$id_pobyt_vps");
+    $clenove= "";
+  }
+  $cond= $id_pobyt_vps ? "skupina=$skupina" : 1;
   $grp= $cht= array();
   // data akce
   list($datum_od,$statistika)= select('datum_od,statistika','akce',"id_duakce=$akce");
@@ -5111,7 +5117,7 @@ function akce2_starsi_mrop_pdf($akce) { trace();
   $r_fld= "id_rodina,nazev,ulice,psc,obec,stat,note,emaily,telefony,spz";
   $rg= pdo_qry("
     SELECT
-      jmeno,prijmeni,skupina,pokoj,funkce,
+      jmeno,prijmeni,skupina,pokoj,funkce,p.id_pobyt,
       -- ROUND(DATEDIFF('$datum_od',o.narozeni)/365.2425,0) AS vek,
       ROUND(IF(MONTH(o.narozeni),DATEDIFF('$datum_od',o.narozeni)/365.2425,YEAR('$datum_od')-YEAR(o.narozeni)),0) AS vek,
       IF(o.adresa,o.ulice,IFNULL(r2.ulice,r1.ulice)) AS ulice,
@@ -5131,17 +5137,34 @@ function akce2_starsi_mrop_pdf($akce) { trace();
       LEFT JOIN ( SELECT id_osoba,role,$r_fld
         FROM tvori JOIN rodina USING(id_rodina))
         AS r2 ON r2.id_osoba=o.id_osoba AND r2.role IN ('a','b')
-    WHERE p.id_akce=$akce AND p.funkce IN (0,1,2)
+    WHERE p.id_akce=$akce AND $cond AND p.funkce IN (0,1,2)
     ORDER BY skupina,p.funkce DESC,jmeno");
   while ( $rg && ($x= pdo_fetch_object($rg)) ) {
-    $grp[$x->skupina][]= $x;
-    $chata= $x->pokoj;
-    if (!isset($cht[$x->skupina])) $cht[$x->skupina]= array();
-    if ($chata) {
-      if (!in_array($chata,$cht[$x->skupina])) $cht[$x->skupina][]= $chata;
+    if ($id_pobyt_vps) {
+      if ($id_pobyt_vps==$x->id_pobyt) {
+        $clenove= "Skupina $skupina, stoker $x->jmeno $x->prijmeni <table>".$clenove;
+      }
+      else {
+        $clenove.= "<tr><td>$x->jmeno $x->prijmeni ($x->vek)</td>
+          <td>$x->telefony</td><td>$x->emaily</td>
+          <td>$x->psc $x->obec, $x->stat</td></tr>";
+      }
+    }
+    else {
+      $grp[$x->skupina][]= $x;
+      $chata= $x->pokoj;
+      if (!isset($cht[$x->skupina])) $cht[$x->skupina]= array();
+      if ($chata) {
+        if (!in_array($chata,$cht[$x->skupina])) $cht[$x->skupina][]= $chata;
+      }
     }
   }
 //  debug($grp,"sestava pro starší");
+  if ($id_pobyt_vps) {
+    $res->skupina= "$clenove</table>";
+//    display($res->skupina);
+    goto end;
+  }
   // redakce
   $neni= array();
   $fname= "mrop_$rok-skupiny.pdf";
@@ -5185,7 +5208,7 @@ function akce2_starsi_mrop_pdf($akce) { trace();
     tc_html_write($page,$pata);
     $res->html.= $page;
   }
-  // hlášení neumístěných
+  // hlášení neumístěných sojka>11, 
   if (count($neni)) {
     debug($neni,"sirotci");
     $res->err.= "POZOR - tito chlapi nejsou ve skupině: ".implode(',',$neni);
@@ -14351,34 +14374,16 @@ function mail2_personify($obsah,$vars,$id_pobyt,&$err) { debug($vars,"mail2_pers
         $err.= "<br>POZOR: všichni účastníci nemají stanovenu cenu (pobyt=$id_pobyt, $nazev)";
       }
       break; 
-//    case 'mistnost_popo':
-//      $mistnosti= array(
-//        "",
-//        "https://bbb.ff.upol.cz/b/ffb-wtx-z5o-oc8",
-//        "https://bbb.ff.upol.cz/b/ffb-crf-nlf-isl",
-//        "https://bbb.ff.upol.cz/b/ffb-jmf-ssz-j1z",
-//        "https://bbb.ff.upol.cz/b/ffb-luk-xur-kzq",
-//        "https://bbb.ff.upol.cz/b/ffb-8ks-nu5-xln",
-//        "https://bbb.ff.upol.cz/b/ffb-ssu-q5i-ch8",
-//        "https://bbb.ff.upol.cz/b/ffb-a5p-7dq-b5r",
-//        "https://bbb.ff.upol.cz/b/ffb-fjd-gqw-6nf",
-//        "https://bbb.ff.upol.cz/b/ffb-za3-ypq-wat",
-//        "https://bbb.ff.upol.cz/b/ffb-s98-fog-msn",
-//        "https://bbb.ff.upol.cz/b/ffb-irc-xp3-y6d",
-//        "https://bbb.ff.upol.cz/b/ffb-tyt-mdx-ex0",
-//        "https://bbb.ff.upol.cz/b/ffb-ekb-8yu-tk0",
-//        "https://bbb.ff.upol.cz/b/ffb-fjn-mhx-ctt",
-//        "https://bbb.ff.upol.cz/b/ffb-aot-rlk-vdr",
-//        "https://bbb.ff.upol.cz/b/ffb-6yc-iml-3o4",
-//        "https://bbb.ff.upol.cz/b/ffb-oi5-oe0-r76",
-//        "https://bbb.ff.upol.cz/b/ffb-l6e-6rj-m3a",
-//        "https://bbb.ff.upol.cz/b/ffb-efq-orm-awj",
-//        "https://bbb.ff.upol.cz/b/ffb-2ac-axq-ew4"
-//      );
-//      $skup0= str_pad($skupina,2,'0',STR_PAD_LEFT);
-//      $misto= $mistnosti[$skupina];
-//      $val= "<a href='$misto'>Skupinka $skup0 Kromeriz</a> ($misto)";
-//      break;
+    case 'skupinka_chlapi':
+      if ($skupina) {
+        $ida= select('id_akce','pobyt',"id_pobyt=$id_pobyt");
+        $res= akce2_starsi_mrop_pdf($ida,$id_pobyt);
+        $val= "<div style='background-color:#eeeeee;margin-left:15px'>$res->skupina</div>";
+      }
+      else {
+        $val= "<div style='background-color:#eeeeee;margin-left:15px'>Skupinka ještě není vybrána</div>";
+      }
+      break;
     case 'skupinka_popo':
       if ($skupina) {
         $ida= select('id_akce','pobyt',"id_pobyt=$id_pobyt");
@@ -14395,7 +14400,7 @@ function mail2_personify($obsah,$vars,$id_pobyt,&$err) { debug($vars,"mail2_pers
             JOIN osoba AS o ON s.id_osoba=o.id_osoba
             LEFT JOIN tvori AS t ON t.id_osoba=o.id_osoba AND id_rodina=i0_rodina
             LEFT JOIN rodina AS r USING(id_rodina)
-            WHERE p.id_akce=$ida AND skupina=$skupina AND t.role IN ('a','b') 
+            WHERE p.id_akce=$ida AND skupina=$skupina AND IF(ISNULL(r.id_rodina),1,t.role IN ('a','b'))
             GROUP BY id_pobyt
             ORDER BY IF(funkce IN (1,2),1,2), _nazev        
           ");
