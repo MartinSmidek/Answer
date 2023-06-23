@@ -70,10 +70,10 @@ use info: form right [12,4,,] {
     }
   }
   var mezery=''
-  button [-150,4,,] { title:'TEST' func onclick() { var x:object 
-      clear();
-      x= php.akce2_strava(the_akce,{typ:'vjp',cnd:1},the_title,the_vypis,0,the_hnizdo); 
-      info.fill('',x.html); }}
+//  button [-150,4,,] { title:'TEST' func onclick() { var x:object 
+//      clear();
+//      x= php.akce2_strava(the_akce,{typ:'vjp',cnd:1},the_title,the_vypis,0,the_hnizdo); 
+//      info.fill('',x.html); }}
   button export [-20,4,,] { title:'Excel', style:'display:block;zIndex:2',
     proc onclick() { var tit:text 
       var res: object
@@ -584,9 +584,9 @@ menu m {type:'left', //active:*
                                         ,par:{typ:'vp',exp:'Excel2',cnd:'1'}}
     item {title:'Platby bez DPH'                                                             skill:'f'
                                         ,par:{typ:'vp2',exp:'Excel2',cnd:'1'}}
-    item {title:'Počty strav'           ,par:{typ:'vs',exp:'Excel2',cnd:'1'}}
-    item {title:'Počty strav - souhrn s dietami'
-                                        ,par:{typ:'vsd',exp:'Excel2',cnd:'1',souhrn:1}}
+//    item {title:'Počty strav'           ,par:{typ:'vs',exp:'Excel2',cnd:'1'}}
+//    item {title:'Počty strav - souhrn s dietami'
+//                                        ,par:{typ:'vsd',exp:'Excel2',cnd:'1',souhrn:1}}
     item {title:'Počty strav - souhrn'
                                         ,par:{typ:'vsd2',exp:'Excel2',cnd:'1',souhrn:1}}
     item {title:'Počty strav - výlet 3.den'

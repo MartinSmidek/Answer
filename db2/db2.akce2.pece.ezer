@@ -301,6 +301,7 @@ form _osoba [,,580,] { tag:'a',
   select hnizdo [L+160,T+284,37,] {type:'map', data:s.s_hnizdo, format:'un', 
     options:ms_akce_hnizda.zkratka, title:'hnízdo' }
   // strava 
+  check p_kc_strava  [L+5,T+279,210,] {data:s.p_kc_strava, title:'místo stravenek hotovost' }
   check s_rodici  [L+226,T+279,210,] {data:s.s_rodici, title:'stravenky mají rodiče - účastníci akce' }
   check pulstrava [L+464,T+279,99,] {data:s.pulstrava, title:'poloviční strava', format:'d' }
   
@@ -482,6 +483,7 @@ form _pece [,,400,] { css:'ds_form'
     show pozn      { data:o.note }
     show pozn_akce { data:s.poznamka }
     show s_rodici  { data:s.s_rodici }
+    show p_kc_strava  { data:s.p_kc_strava }
     show funkce    { expr:"IF(p.funkce=99,0,1)" }
     show pfunkce   { data:s.pfunkce }
     show pulstrava { data:s.pulstrava }

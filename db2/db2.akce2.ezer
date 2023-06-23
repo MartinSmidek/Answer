@@ -466,6 +466,7 @@ table spolu { key_id:'id_spolu'
   number skupinka
   text poznamka
   number s_rodici
+  number p_kc_strava
   number pulstrava
   number pecovane // id_osoba pečovaného dítěte
   number pfunkce  // #ms_akce_pfunkce -- funkce pečovatelská, jinak 0

@@ -2062,11 +2062,11 @@ function akce2_nacti_cenik($id_akce,$hnizdo,&$cenik,&$html) {
 # výpočet platby za pobyt na akci
 # od 130416 přidána položka CENIK.typ - pokud je 0 tak nemá vliv,
 #                                       pokud je nenulová pak se bere hodnota podle POBYT.ubytovani
-function akce2_vzorec($id_pobyt) {  //trace();
+function akce2_vzorec($id_pobyt) {  trace();
   // případné přepnutí na ceník verze 2017
   list($id_akce,$cenik_verze)= select(
     "id_akce,ma_cenik_verze","pobyt JOIN akce ON id_akce=id_duakce","id_pobyt=$id_pobyt");
-  if ( $cenik_verze==1 ) return akce2_vzorec_2017($id_pobyt,$id_akce,2017);
+//  if ( $cenik_verze==1 ) return akce2_vzorec_2017($id_pobyt,$id_akce,2017);
   $ok= true;
   $ret= (object)array(
       'navrh'=>'cenu nelze spočítat',
@@ -2149,13 +2149,14 @@ function akce2_vzorec($id_pobyt) {  //trace();
   // zpracování strav
 //  $strava= akce2_strava_pary($id_akce,'','','',true,$id_pobyt);
   $strava= akce2_strava($id_akce,(object)array(),'','',true,0,$id_pobyt);
-//                                                         debug($strava,"strava"); goto end;
+//                                                         debug($strava,"strava"); 
   $jidel= (object)array();
   foreach ($strava->suma as $den_jidlo=>$pocet) {
     list($den,$jidlo)= explode(' ',$den_jidlo);
+    $jidlo= substr($jidlo,0,2);
     $jidel->$jidlo+= $pocet;
   }
-//                                                         debug($jidel,"strava");
+//                                                         debug($jidel,"strava"); goto end;
   // načtení cenového vzorce a ceníku
   $vzor= array();
   $qry= "SELECT * FROM _cis WHERE druh='ms_cena_vzorec' AND data=$vzorec";
@@ -2392,7 +2393,7 @@ end:
 # výpočet platby za pobyt na akci
 # od 130416 přidána položka CENIK.typ - pokud je 0 tak nemá vliv,
 #                                       pokud je nenulová pak se bere hodnota podle POBYT.ubytovani
-function akce2_vzorec_2017($id_pobyt,$id_akce,$verze=2017) {  //trace();
+function __akce2_vzorec_2017($id_pobyt,$id_akce,$verze=2017) {  //trace();
   // případné přepnutí na ceník verze 2017
   list($id_akce,$cenik_verze)= select(
     "id_akce,ma_cenik_verze","pobyt JOIN akce ON id_akce=id_duakce","id_pobyt=$id_pobyt");
@@ -4837,8 +4838,8 @@ function tisk2_sestava($akce,$par,$title,$vypis,$export=false,$hnizdo=0) { debug
      : ( $par->typ=='p'    ? tisk2_sestava_pary($akce,$par,$title,$vypis,$export)   //!
      : ( $par->typ=='P'    ? akce2_sestava_pobyt($akce,$par,$title,$vypis,$export)  //!
      : ( $par->typ=='j'    ? tisk2_sestava_lidi($akce,$par,$title,$vypis,$export)   //!
-     : ( $par->typ=='vs'   ? akce2_strava_pary($akce,$par,$title,$vypis,$export)    //!
-     : ( $par->typ=='vsd'  ? akce2_strava_souhrn($akce,$par,$title,$vypis,$export)  //!
+//     : ( $par->typ=='vs'   ? akce2_strava_pary($akce,$par,$title,$vypis,$export)    //!
+//     : ( $par->typ=='vsd'  ? akce2_strava_souhrn($akce,$par,$title,$vypis,$export)  //!
      : ( $par->typ=='vsd2' ? akce2_strava($akce,$par,$title,$vypis,$export)  //!
      : ( $par->typ=='vsd3' ? akce2_strava_vylet($akce,$par,$title,$vypis,$export)   //! 3.den děti oběd
      : ( $par->typ=='vv'   ? tisk2_text_vyroci($akce,$par,$title,$vypis,$export)    //!
@@ -4868,7 +4869,7 @@ function tisk2_sestava($akce,$par,$title,$vypis,$export=false,$hnizdo=0) { debug
      : ( $par->typ=='nut'  ? akce2_hnizda($akce,$par,$title,$vypis,$export)         
      : (object)array('html'=>"<i>Tato sestava zatím není převedena do nové verze systému,
           <a href='mailto:martin@smidek.eu'>upozorněte mě</a>, že ji už potřebujete</i>")
-     ))))))))))))))))))))))))))))))));
+     ))))))))))))))))))))))))))))));
 }
 # =======================================================================================> . seznamy
 function mb_strcasecmp($str1, $str2, $encoding = null) {
@@ -5871,9 +5872,11 @@ function _akce2_sestava_pecouni(&$clmn,$akce,$fld='_skoleni,_sluzba,_reflexe',$c
 # ---------------------------------------------------------------------------------- akce2 stravenky
 function akce2_strava($akce,$par,$title,$vypis,$export=false,$hnizdo=0,$id_pobyt=0) { trace();
   global $diety,$diety_,$jidlo_;
+  $dny= array('ne','po','út','st','čt','pá','so');
   $jidlo= array();
   $datum_od= select('datum_od','akce',"id_duakce=$akce");
   $den1= sql2stamp($datum_od);             // začátek akce ve formátu mktime
+  $vylet= select1('DATE_FORMAT(ADDDATE(datum_od,2),"%e/%c")','akce',"id_duakce=$akce");
 //   $diety= array('','_bm','_bl');                             -- globální nastavení
   foreach ($diety as $d) {
     foreach (array('vj','vjp') as $par_typ) {
@@ -5904,7 +5907,7 @@ function akce2_strava($akce,$par,$title,$vypis,$export=false,$hnizdo=0,$id_pobyt
   $fmts= array();       // pro formáty sloupců id::f:
   $flds= array();
 
-  $tits[0]= "den:5";
+  $tits[0]= "den:15";
   $flds[0]= "day";
   foreach (explode(',','s,o,v') as $jidlo1) {
     foreach ($diety as $dieta) {
@@ -5924,9 +5927,10 @@ function akce2_strava($akce,$par,$title,$vypis,$export=false,$hnizdo=0,$id_pobyt
   foreach ($days as $day) {
     $d++;
     $mkden= mktime(0, 0, 0, date("n", $den1), date("j", $den1)+$day, date("Y", $den1));
-//    $den= "{$dny[date('w',$mkden)]} ".date("j/n",$mkden);
+    $po_ne= "{$dny[date('w',$mkden)]} ";
     $den= date("j/n",$mkden);
-    $clmn[$den]['day']= $den;
+    display("$mkden==$vylet");
+    $clmn[$den]['day']= $po_ne . $den . ($den==$vylet ? " odečíst výlet" : '');
     foreach (explode(',','s,o,v') as $jidlo1) {
       foreach ($diety as $dieta) {
         foreach (explode(',','c,p') as $porce) {
@@ -6268,7 +6272,7 @@ function akce2_stravenky_diety($akce,$par,$title,$vypis,$export=false,$hnizdo=0,
 #   manzele = rodina.nazev muz a zena
 # generované vzorce
 #   platit = součet předepsaných plateb
-function akce2_strava_souhrn($akce,$par,$title,$vypis,$export=false,$id_pobyt=0) { trace();
+function __akce2_strava_souhrn($akce,$par,$title,$vypis,$export=false,$id_pobyt=0) { trace();
   global $diety,$diety_,$jidlo_;
 //                                                                 debug($par,"akce2_strava_souhrn");
   $result= (object)array();
@@ -6375,8 +6379,9 @@ function akce2_strava_vylet($akce,$par,$title,$vypis,$export=false,$id_pobyt=0) 
   $fmts= array();       // pro formáty sloupců id::f:
   $flds= array();
 
+  // zjistíme datum dne výletu tj. třetího dne LK
+  $vylet= select1('DATE_FORMAT(ADDDATE(datum_od,2),"%e/%c")','akce',"id_duakce=$akce");
   // projdeme páry s dětmi ve věku nad 3 roky a děti sečteme
-  $den= ' 3/7';
   $pocet_deti= $pocet_cele= $pocet_polo= 0;
   $cnd= "p.funkce NOT IN (9,10,13,14,99) AND p.hnizdo=$tisk_hnizdo ";
   $browse_par= (object)array(
@@ -6415,9 +6420,9 @@ function akce2_strava_vylet($akce,$par,$title,$vypis,$export=false,$id_pobyt=0) 
 //      $ret= akce2_strava_pary($akce,$par,$title,$vypis,$export,$x->key_pobyt);
       $ret= akce2_strava($akce,(object)array(),'',$vypis,true,0,$x->key_pobyt);
       foreach ($diety as $dieta) {
-        $cel+= $ret->suma["$den oc$dieta "];
-        $pol+= $ret->suma["$den op$dieta "];
-                                                         debug($ret->suma,"$den op$dieta ");
+        $cel+= $ret->suma["$vylet oc$dieta"];
+        $pol+= $ret->suma["$vylet op$dieta"];
+                                                         debug($ret->suma,"$vylet op$dieta = $pol");
       }
 //       $tab.= "... cele=$cel polo=$pol";
       // odečteme stravu rodičů - asi cc cp pp
@@ -6442,7 +6447,7 @@ function akce2_strava_vylet($akce,$par,$title,$vypis,$export=false,$id_pobyt=0) 
   $sum.= "<p> Dětí nad 3 roky je $pocet_deti ... mají  objednaných asi
     $pocet_cele celých obědů a $pocet_polo polovičních</p>";
 end:
-  $result->html.= "<h3>Odhad obědů objednaných pro děti nad 3 roky na den $den</h3>";
+  $result->html.= "<h3>Odhad obědů objednaných pro děti nad 3 roky na den $vylet</h3>";
   $result->html.= "$sum<br><hr>protože si myslím, že <br>$tab";
   return $result;
 }
@@ -6455,7 +6460,7 @@ end:
 #   manzele = rodina.nazev muz a zena
 # generované vzorce
 #   platit = součet předepsaných plateb
-function akce2_strava_pary($akce,$par,$title,$vypis,$export=false,$id_pobyt=0) { //trace();
+function __akce2_strava_pary($akce,$par,$title,$vypis,$export=false,$id_pobyt=0) { //trace();
 //                                                                 debug($par,"akce2_strava_pary");
   global $diety, $tisk_hnizdo;
   $jen_hnizdo= $tisk_hnizdo ? " AND hnizdo=$tisk_hnizdo " : '';
@@ -9627,8 +9632,10 @@ function tisk2_pdf_prijem($akce,$par,$stitky_json,$popis_json,$hnizdo) {  trace(
     // výpočet strav včetně přetokového souboru na iregularity a diety
     if ( $x->_vyjimky || $x->_diety ) {
       $par->souhrn= 1;
-      $ret= akce2_strava_pary($akce,$par,'','',0,$idp);
+//      $ret= akce2_strava_pary($akce,$par,'','',0,$idp);
 //                                                 debug($ret,"akce2_strava_pary");
+      $ret= akce2_strava($akce,(object)array(),'','',true,0,$idp);
+                                                 debug($ret,"akce2_strava");
       if ( !$x->_vyjimky ) {
         // pravidelná strava s dietami
         $strava= "strava: ";
