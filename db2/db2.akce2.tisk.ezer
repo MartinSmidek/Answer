@@ -379,12 +379,6 @@ menu m {type:'left', //active:*
                                         ,ord:"0+pokoj,skupina,prijmeni,jmeno"
                                         ,tit:'jméno:25, skupina:8, chata:8, poznámka:40'
                                         ,fld:'pr_jm,skupina,pokoj,poznamka'}}
-    item {title:'skupiny EROP'
-                                        ,par:{typ:'mrop',exp:'Excel2'
-                                        ,cnd:"funkce IN (0,1)"
-                                        ,ord:"0+pokoj,skupina,prijmeni,jmeno"
-                                        ,tit:'jméno:25, skupina:8, chata:8, pracovní:40, poznámka:40'
-                                        ,fld:'pr_jm,skupina,pokoj,pracovni,poznamka'}}
     item {title:'skupiny s maily'
                                         ,par:{typ:'mrop',exp:'Excel2'
                                         ,cnd:"funkce IN (0,1)"
@@ -403,8 +397,14 @@ menu m {type:'left', //active:*
     }}
     item {title:'EROP - účastníci se vším'                                                     
                                         ,par:{typ:'j',subtyp:'EROP',exp:'Excel2',cnd:'1',ord:'funkce,o.prislusnost,o.prijmeni,o.jmeno'
-                                        ,tit:'příjmení:15,jméno:12,funkce:5,skupina:4,věk:5,stát:4,obec:25,psč:7,telefon:25,email:25,poznámka k akci:50,trvalá poznámka:50,historie:20'
-                                        ,fld:'prijmeni,jmeno,funkce,skupina,_vek,prislusnost,obec,psc,telefony,emaily,poznamka,note,_historie'}}
+                                        ,tit:'příjmení:15,jméno:12,funkce:5,skupina:4,věk:5,stát:4,obec:25,psč:7,telefon:25,email:25,poznámka k akci:50,trvalá poznámka:50,pracovní poznámka:50,historie:20'
+                                        ,fld:'prijmeni,jmeno,funkce,skupina,_vek,prislusnost,obec,psc,telefony,emaily,poznamka,note,pracovni,_historie'}}
+    item {title:'skupiny EROP'
+                                        ,par:{typ:'mrop',exp:'Excel2'
+                                        ,cnd:"funkce IN (0,1)"
+                                        ,ord:"0+pokoj,skupina,prijmeni,jmeno"
+                                        ,tit:'jméno:25, skupina:8, chata:8, pracovní:40, poznámka:40'
+                                        ,fld:'pr_jm,skupina,pokoj,pracovni,poznamka'}}
   }
   # ------------------------------------------------------------------------------------------==> DS
   menu {tag:'a', title:'seznamy DS',type:'group',_sys:'*'                                    skill:'y'

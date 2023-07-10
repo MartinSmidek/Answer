@@ -5535,7 +5535,7 @@ function tisk2_sestava_lidi($akce,$par,$title,$vypis,$export=false) { trace();
   $r_fld= "id_rodina,nazev,ulice,psc,obec,stat,note,emaily,telefony,spz";
   $qry=  "
     SELECT
-      p.pouze,p.poznamka,/*p.platba - není atribut osoby!,*/p.funkce,p.skupina,p.pokoj,p.budova,s.s_role,
+      p.pouze,p.poznamka,p.pracovni,/*p.platba - není atribut osoby!,*/p.funkce,p.skupina,p.pokoj,p.budova,s.s_role,
       o.id_osoba,o.prijmeni,o.jmeno,o.narozeni,o.rc_xxxx,o.note,o.prislusnost,o.obcanka,o.clen,o.dieta,
       IFNULL(r2.id_rodina,r1.id_rodina) AS id_rodina,
       IFNULL(r2.nazev,r1.nazev) AS r_nazev,
