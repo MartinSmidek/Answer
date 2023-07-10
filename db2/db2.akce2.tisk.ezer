@@ -373,15 +373,15 @@ menu m {type:'left', //active:*
                                         ,ord:"prijmeni,jmeno"
                                         ,tit:'jméno:25, příjmení:40'
                                         ,fld:'pr_jm,jmeno,prijmeni'}}
-    item {title:'skupiny'
+    item {title:'skupiny MROP'
                                         ,par:{typ:'mrop',exp:'Excel2'
                                         ,cnd:"funkce=0"
                                         ,ord:"0+pokoj,skupina,prijmeni,jmeno"
                                         ,tit:'jméno:25, skupina:8, chata:8, poznámka:40'
                                         ,fld:'pr_jm,skupina,pokoj,poznamka'}}
-    item {title:'skupiny pracovní'
+    item {title:'skupiny EROP'
                                         ,par:{typ:'mrop',exp:'Excel2'
-                                        ,cnd:"funkce=0"
+                                        ,cnd:"funkce IN (0,1)"
                                         ,ord:"0+pokoj,skupina,prijmeni,jmeno"
                                         ,tit:'jméno:25, skupina:8, chata:8, pracovní:40, poznámka:40'
                                         ,fld:'pr_jm,skupina,pokoj,pracovni,poznamka'}}
