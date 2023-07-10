@@ -3295,6 +3295,7 @@ function oform_save ($idfs,$idp,$cmd='pdf') { trace();
       <td colspan=\"2\">Předchozí manželství? muž:$m->x_rozvody žena:$z->x_rozvody</td></tr>";
     $html.= "</table>";
     $html.= "<p><i>Souhlas obou manželů s přihlášením na kurz byl potvrzen.</i></p>";
+    // přehled o počtu účastí
     // generování PDF
     if ($cmd=='pdf') {
       global $ezer_root;

@@ -5242,7 +5242,7 @@ function akce2_tabulka_mrop($akce,$par,$title,$vypis,$export=false) { debug($par
     SELECT $GROUP_CONCAT       
       CONCAT(prijmeni,' ',jmeno) AS pr_jm,jmeno,prijmeni,
       skupina,pokoj,IFNULL(SUM(u_castka),0) AS platba,
-      p.poznamka,o.email,
+      p.poznamka,p.pracovni,o.email,
        IFNULL(SUBSTR((SELECT MIN(CONCAT(role,spz))
         FROM tvori AS ot JOIN rodina AS r USING (id_rodina) WHERE ot.id_osoba=o.id_osoba
       ),2),'') AS spz,'' AS filler
@@ -7905,7 +7905,7 @@ function akce2_skup_hist($akce,$par,$title,$vypis,$export) { trace();
   $html.= "</table>";
   $note= "Abecední seznam účastníků letního kurzu roku $rok doplněný seznamem členů jeho starších
           skupinek na letních kurzech. <br>Ve skupinkách jsou uvedení jen účastníci
-          kurzu roku $rok. (Pro tisk je nejjednodušší označit jako blok a vložit do Wordu.)";
+          kurzu roku $rok. (Pro tisk je nejjednodušší označit jako blok a vložit do Excelu.)";
   $html= "<i>$note</i><br>$html";
   //$result->html= nl2br(htmlentities($html));
   $result->html= $html;
