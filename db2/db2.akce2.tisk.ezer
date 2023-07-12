@@ -447,71 +447,74 @@ menu m {type:'left', //active:*
   }
   # ------------------------------------------------------------------------------------==> jmenovky
   menu {tag:'a', title:'jmenovky na akci',type:'group',_sys:'*'
-    item {title:'Účastníci bez funkce'                                                       skill:'f'
+    item {title:'Účastníci bez funkce'  // p_role je rodinná role na kurzu                   skill:'f'
                                         ,par:{typ:'j',exp:'Excel2',exp2:'PDF-jmenovky'
                                         ,cnd:"funkce=0",hav:"(_vek>=18 AND dite_kat!=99) OR r_role IN ('a','b')"
-                                        ,ord:"IFNULL(r2.nazev,CONCAT('ZZ',prijmeni))"
+                                        ,ord:"IF(p_role IN ('a','b'),1,2),prijmeni"
                                         ,tit:'jméno:20, příjmení:15',fld:'jmeno,prijmeni'}}
     item {title:'Účastníci'                                                                  skill:'y;c'
                                         ,par:{typ:'j',exp:'Excel2',exp2:'PDF-jmenovky'
                                         ,cnd:"funkce IN (0,1,2)",hav:"(_vek>=18 AND dite_kat!=99) OR r_role IN ('a','b')"
-                                        ,ord:"IFNULL(r2.nazev,CONCAT('ZZ',prijmeni))"
+                                        ,ord:"IF(p_role IN ('a','b'),1,2),prijmeni"
                                         ,tit:'jméno:20, příjmení:15',fld:'jmeno,prijmeni'}}
     item {title:'Účastníci (výběr)'                                                          skill:'y;f;c'
                                         ,par:{typ:'j',exp:'Excel2',exp2:'PDF-jmenovky',sel:'yes'
                                         ,cnd:"funkce IN (0,1,2)",hav:"(_vek>=18 AND dite_kat!=99) OR r_role IN ('a','b')"
-                                        ,ord:"IFNULL(r2.nazev,CONCAT('ZZ',prijmeni))"
+                                        ,ord:"IF(p_role IN ('a','b'),1,2),prijmeni"
                                         ,tit:'jméno:20, příjmení:15',fld:'jmeno,prijmeni'}}
     item {title:'Děti'                  ,par:{typ:'j',exp:'Excel2',exp2:'PDF-jmenovky'
                                         ,cnd:"pfunkce NOT IN (4,5,6,8) AND funkce!=99"
                                         ,hav:"_vek<18 OR dite_kat=99"
-                                        ,ord:"IFNULL(r2.nazev,CONCAT('ZZ',prijmeni))"
+                                        ,ord:"IF(p_role IN ('a','b'),1,2),prijmeni"
                                         ,tit:'jméno:20, příjmení:15',fld:'jmeno,prijmeni'}}
     item {title:'Děti (výběr)'          ,par:{typ:'j',exp:'Excel2',exp2:'PDF-jmenovky',sel:'yes'
                                         ,cnd:"pfunkce NOT IN (4,5,6,8) AND funkce!=99"
                                         ,hav:"_vek<18 OR dite_kat=99"
-                                        ,ord:"IFNULL(r2.nazev,CONCAT('ZZ',prijmeni))"
+                                        ,ord:"IF(p_role IN ('a','b'),1,2),prijmeni"
                                         ,tit:'jméno:20, příjmení:15',fld:'jmeno,prijmeni'}}
     item {title:'Chůvy'                 ,par:{typ:'j',exp:'Excel2',exp2:'PDF-jmenovky'
                                         ,cnd:"funkce!=99",hav:"s.s_role IN (5)"
-                                        ,ord:"IFNULL(r2.nazev,CONCAT('ZZ',prijmeni))"
+                                        ,ord:"IF(p_role IN ('a','b'),1,2),prijmeni"
                                         ,tit:'jméno:20, příjmení:15',fld:'jmeno,prijmeni'}}
     item {title:'Chůvy (výběr)'         ,par:{typ:'j',exp:'Excel2',exp2:'PDF-jmenovky',sel:'yes'
                                         ,cnd:"funkce!=99",hav:"s.s_role IN (5)"
-                                        ,ord:"IFNULL(r2.nazev,CONCAT('ZZ',prijmeni))"
+                                        ,ord:"IF(p_role IN ('a','b'),1,2),prijmeni"
                                         ,tit:'jméno:20, příjmení:15',fld:'jmeno,prijmeni'}}
     item {title:'Pečouni'               ,par:{typ:'j',exp:'Excel2',exp2:'PDF-jmenovky'
-                                        ,cnd:"(p.funkce=99 OR s.pfunkce IN (4,5,8))",ord:"prijmeni"
+                                        ,cnd:"(p.funkce=99 OR s.pfunkce IN (4,5,8))"
+                                        ,ord:"IF(p_role IN ('a','b'),1,2),prijmeni"
                                         ,tit:'jméno:20, příjmení:15',fld:'jmeno,prijmeni'},  skill:'#crz'}
     item {title:'Pečouni (výběr)'       ,par:{typ:'j',exp:'Excel2',exp2:'PDF-jmenovky',sel:'yes'
-                                        ,cnd:"(p.funkce=99 OR s.pfunkce IN (4,5,8))",ord:"prijmeni"
+                                        ,cnd:"(p.funkce=99 OR s.pfunkce IN (4,5,8))"
+                                        ,ord:"IF(p_role IN ('a','b'),1,2),prijmeni"
                                         ,tit:'jméno:20, příjmení:15',fld:'jmeno,prijmeni'},  skill:'#crz'}
     item {title:'VPS'                                                                        skill:'-'
                                         ,par:{typ:'j',exp:'Excel2',exp2:'PDF-jmenovky'
                                         ,cnd:"funkce IN (1,2)",hav:"(_vek>=18 AND dite_kat!=99) OR r_role IN ('a','b')"
-                                        ,ord:"IFNULL(r2.nazev,CONCAT('ZZ',prijmeni))"
+                                        ,ord:"IF(p_role IN ('a','b'),1,2),prijmeni"
                                         ,tit:'jméno:20, příjmení:15',fld:'jmeno,prijmeni'}}
     item {title:'PPS'                                                                        skill:'f'
                                         ,par:{typ:'j',exp:'Excel2',exp2:'PDF-jmenovky'
                                         ,cnd:"funkce IN (1,2)",hav:"(_vek>=18 AND dite_kat!=99) OR r_role IN ('a','b')"
-                                        ,ord:"IFNULL(r2.nazev,CONCAT('ZZ',prijmeni))"
+                                        ,ord:"IF(p_role IN ('a','b'),1,2),prijmeni"
                                         ,tit:'jméno:20, příjmení:15',fld:'jmeno,prijmeni'}}
     item {title:'Kněží a psychologové'  ,par:{typ:'j',exp:'Excel2',exp2:'PDF-jmenovky'
-                                        ,cnd:"funkce IN (3,4)",ord:"prijmeni"
+                                        ,cnd:"funkce IN (3,4)",ord:"IF(p_role IN ('a','b'),1,2),prijmeni"
                                         ,tit:'jméno:20, příjmení:15',fld:'jmeno,prijmeni'}}
-#     item {title:'Psychologové'          ,par:{typ:'j',exp:'Excel2',exp2:'PDF-jmenovky'
-#                                         ,cnd:"funkce=4",ord:"prijmeni",hav:"(_vek>=18 AND dite_kat!=99) OR r_role IN ('a','b')"
-#                                         ,tit:'jméno:20, příjmení:15',fld:'jmeno,prijmeni'}}
+#     item {title:'Psychologové'        ,par:{typ:'j',exp:'Excel2',exp2:'PDF-jmenovky'
+#                                       ,cnd:"funkce=4",ord:"IF(p_role IN ('a','b'),1,2),prijmeni",hav:"(_vek>=18 AND dite_kat!=99) OR r_role IN ('a','b')"
+#                                       ,tit:'jméno:20, příjmení:15',fld:'jmeno,prijmeni'}}
     item {title:'Hosté'                 ,par:{typ:'j',exp:'Excel2',exp2:'PDF-jmenovky'
-                                        ,cnd:"funkce IN (7)",ord:"prijmeni"
+                                        ,cnd:"funkce IN (7)"
+                                        ,ord:"IF(p_role IN ('a','b'),1,2),prijmeni"
                                         ,tit:'jméno:20, příjmení:15',fld:'jmeno,prijmeni'}}
     item {title:'Hospodáři'             ,par:{typ:'j',exp:'Excel2',exp2:'PDF-jmenovky'
                                         ,cnd:"funkce=5",hav:"(_vek>=18 AND dite_kat!=99) OR r_role IN ('a','b')"
-                                        ,ord:"IFNULL(r2.nazev,CONCAT('ZZ',prijmeni))"
+                                        ,ord:"IF(p_role IN ('a','b'),1,2),prijmeni"
                                         ,tit:'jméno:20, příjmení:15',fld:'jmeno,prijmeni'}}
     item {title:'... ostatní'           ,par:{typ:'j',exp:'Excel2',exp2:'PDF-jmenovky'
                                         ,cnd:"funkce NOT IN (0,1,2,3,4,5)",hav:"(_vek>=18 AND dite_kat!=99)"
-                                        ,ord:"IFNULL(r2.nazev,CONCAT('ZZ',prijmeni))"
+                                        ,ord:"IF(p_role IN ('a','b'),1,2),prijmeni"
                                         ,tit:'jméno:20, příjmení:15',fld:'jmeno,prijmeni'}}
   }
   # -----------------------------------------------------------------------------------------==> PDF

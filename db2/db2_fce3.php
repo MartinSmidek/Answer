@@ -5537,7 +5537,7 @@ function tisk2_sestava_lidi($akce,$par,$title,$vypis,$export=false) { trace();
     SELECT
       p.pouze,p.poznamka,p.pracovni,/*p.platba - není atribut osoby!,*/p.funkce,p.skupina,p.pokoj,p.budova,s.s_role,
       o.id_osoba,o.prijmeni,o.jmeno,o.narozeni,o.rc_xxxx,o.note,o.prislusnost,o.obcanka,o.clen,o.dieta,
-      IFNULL(r2.id_rodina,r1.id_rodina) AS id_rodina,
+      IFNULL(r2.id_rodina,r1.id_rodina) AS id_rodina, r3.role AS p_role,
       IFNULL(r2.nazev,r1.nazev) AS r_nazev,
       IFNULL(r2.spz,r1.spz) AS r_spz,
       IF(o.adresa,o.ulice,IFNULL(r2.ulice,r1.ulice)) AS ulice,
@@ -5568,6 +5568,10 @@ function tisk2_sestava_lidi($akce,$par,$title,$vypis,$export=false) { trace();
       LEFT JOIN ( SELECT id_osoba,role,$r_fld
         FROM tvori JOIN rodina USING(id_rodina))
         AS r2 ON r2.id_osoba=o.id_osoba AND r2.role IN ('a','b')
+      -- r3=rodina, která je na akci
+      LEFT JOIN ( SELECT id_osoba,id_rodina,role
+        FROM tvori JOIN rodina USING (id_rodina))
+        AS r3 ON r3.id_osoba=o.id_osoba AND r3.id_rodina=p.i0_rodina
       -- akce
       JOIN akce AS a ON a.id_duakce=p.id_akce
     WHERE p.id_akce=$akce AND $cnd AND p.funkce NOT IN (9,10,13,14)
