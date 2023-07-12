@@ -446,8 +446,8 @@ menu m {type:'left', //active:*
 //    item {title:'Statistika akce'       ,par:{typ:'dot',cnd:'1',zdroj:'akce',par1:'ida'} skill:'#crz'}
   }
   # ------------------------------------------------------------------------------------==> jmenovky
-  menu {tag:'a', title:'jmenovky na akci',type:'group',_sys:'*'
-    item {title:'Účastníci bez funkce'  // p_role je rodinná role na kurzu                   skill:'f'
+  menu {tag:'a', title:'jmenovky na akci',type:'group',_sys:'*'  // p_role je rodinná role na kurzu 
+    item {title:'Účastníci bez funkce'                                                       skill:'f'
                                         ,par:{typ:'j',exp:'Excel2',exp2:'PDF-jmenovky'
                                         ,cnd:"funkce=0",hav:"(_vek>=18 AND dite_kat!=99) OR r_role IN ('a','b')"
                                         ,ord:"IF(p_role IN ('a','b'),1,2),prijmeni"
