@@ -13969,10 +13969,11 @@ function mail2_mai_doplnit($id_dopis,$id_akce,$doplnit) {  trace();
     // projdi všechny pobyty s alespoň jedním mailem
     foreach ($x_po as $idp=>$idos) { if ( $x_pm[$idp] ) {
       // pokud dopis obsahuje proměnné, personifikuj obsah
-      $body= $is_vars ? mail2_personify($obsah,$vars,$idp,$err) : '';
+      $priloha= null;
+      $body= $is_vars ? mail2_personify($obsah,$vars,$idp,$priloha,$err) : '';
       // a vytvoř mail
-      $qr= "INSERT mail (id_davka,znacka,stav,id_dopis,id_clen,id_pobyt,email,body)
-            VALUE (1,'@',0,$id_dopis,{$x_po[$idp][0]},$idp,'{$x_pm[$idp]}','$body')";
+      $qr= "INSERT mail (id_davka,znacka,stav,id_dopis,id_clen,id_pobyt,email,body,priloha)
+            VALUE (1,'@',0,$id_dopis,{$x_po[$idp][0]},$idp,'{$x_pm[$idp]}','$body','$priloha')";
       $rs= pdo_qry($qr);
       $n_pridano+= pdo_affected_rows($rs);
 //                                                         display($qr);
@@ -14293,9 +14294,10 @@ function mail2_mai_posli($id_dopis,$info) {  trace();
       if ( $email[0]!='*' ) {
         $id_pobyt= isset($pobyty[$i]) ? $pobyty[$i] : 0;
         // pokud dopis obsahuje proměnné, personifikuj obsah
-        $body= $is_vars ? mail2_personify($obsah,$vars,$id_pobyt,$err) : '';
-        $qr= "INSERT mail (id_davka,znacka,stav,id_dopis,id_clen,id_pobyt,email,body)
-              VALUE (1,'@',0,$id_dopis,$id,$id_pobyt,'$email','$body')";
+        $priloha= null;
+        $body= $is_vars ? mail2_personify($obsah,$vars,$id_pobyt,$priloha,$err) : '';
+        $qr= "INSERT mail (id_davka,znacka,stav,id_dopis,id_clen,id_pobyt,email,body,priloha)
+              VALUE (1,'@',0,$id_dopis,$id,$id_pobyt,'$email','$body','$priloha')";
 //                                         display("$i:$qr");
         $num+= pdo_query($qr);
       }
@@ -14349,8 +14351,11 @@ end:
 # ---------------------------------------------------------------------------------- mail2 personify
 # spočítá proměnné podle id_pobyt a dosadí do textu dopisu
 # vrátí celý text
-function mail2_personify($obsah,$vars,$id_pobyt,&$err) { debug($vars,"mail2_personify(...,$vars,$id_pobyt,...) ");
+function mail2_personify($obsah,$vars,$id_pobyt,&$priloha,&$err) { 
+    debug($vars,"mail2_personify(...,$vars,$id_pobyt,...) ");
+  global $ezer_path_root;
   $text= $obsah;
+  $priloha= '';
   list($duvod_typ,$duvod_text,$id_hlavni,$id_soubezna,
        $platba1,$platba2,$platba3,$platba4,$poplatek_d,$skupina,$idr)=
     select('duvod_typ,duvod_text,IFNULL(id_hlavni,0),id_duakce,
@@ -14360,6 +14365,25 @@ function mail2_personify($obsah,$vars,$id_pobyt,&$err) { debug($vars,"mail2_pers
   foreach($vars as $var) {
     $val= '';
     switch ($var) {
+    case 'foto_z_akce':
+      $fotky= select('fotka','rodina',"id_rodina=$idr");
+      if ($fotky) {
+        $del= '';
+        $nazvy= explode(',',$fotky);
+        foreach ($nazvy as $nazev) {
+          $foto= "$ezer_path_root/fotky/$nazev";
+          if (file_exists($foto) ) {
+            $date= @filemtime($foto);
+            $ymd= date('Y-m-d',$date);
+            $na_akci= select('COUNT(*)','akce JOIN pobyt ON id_akce=id_duakce',
+                "'$ymd' BETWEEN datum_od AND datum_do");
+            if ($na_akci) {
+              $priloha.= "{$del}fotky/$nazev"; $del=',';
+            }
+          }
+        }
+      }
+      break;
     case 'pratele':
       $val= $idr ? select('nazev','rodina',"id_rodina=$idr") : 'přátelé';
       break;
@@ -14441,6 +14465,7 @@ function mail2_personify_help() {
     <b>{pratele}</b> vloží název rodiny, pokud na akci není rodina, vloží slovo 'přátelé'<br>
     <b>{akce_cena}</b> pokud má akce definovaný ceník, vloží rozpis platby účastníka<br><br>
     <b>{skupinka_popo}</b> pro VPS vloží seznam členů skupiny s maily a telefony<br>
+    <b>{foto_z_akce}</b> pokud byla na akci vložena fotografie rodiny, přidá ji jako přílohu<br>
     <br>
     ";
 //    <b>{mistnost_popo}</b> pro VPS vloží odkaz na konrefenční místnost<br>
@@ -14456,6 +14481,18 @@ function mail2_personify_help() {
 #   'G' - maillist
 function mail2_mai_info($id,$email,$id_dopis,$zdroj,$id_mail) {  //trace();
   $html= '';
+  $make_href= function ($fnames) {
+    global $ezer_root;
+    $href= array();
+    foreach(explode(',',$fnames) as $fnamesize) {
+      list($fname)= explode(':',$fnamesize);
+      $has_dir= strrpos($fname,'/');
+      $path= $has_dir ? $fname : "docs/$ezer_root/";
+      if ($has_dir) $fname= substr($fname,$has_dir+1);
+      $href[]= "<a href='$path' target='pdf'>$fname</a>";
+    }
+    return implode(', ',$href);
+  };
   switch ($zdroj) {
   case 'C':                     // chlapi
     $qry= "SELECT * FROM ezer_ys.chlapi WHERE id_chlapi=$id ";
@@ -14556,17 +14593,15 @@ function mail2_mai_info($id,$email,$id_dopis,$zdroj,$id_mail) {  //trace();
       if ( $c->telefony )
         $html.= "Telefon: {$c->telefony}<br>";
     }
+    $prilohy= select('prilohy','dopis',"id_dopis=$id_dopis");
+    $priloha= select('priloha','mail',"id_mail=$id_mail");
+    // přílohy ke kontrole
+    if ( $prilohy )
+      $html.= "<br>Společné přílohy: ".$make_href($prilohy);
+    if ( $priloha )
+      $html.= "<br>Vlastní přílohy: ".$make_href($priloha);
     break;
   case 'G':                     // mail-list
-    $make_href= function ($fnames) {
-      global $ezer_root;
-      $href= array();
-      foreach(explode(',',$fnames) as $fnamesize) {
-        list($fname)= explode(':',$fnamesize);
-        $href[]= "<a href='docs/$ezer_root/$fname' target='pdf'>$fname</a>";
-      }
-      return implode(', ',$href);
-    };
     list($obsah,$prilohy,$komu)= select('obsah,prilohy,mailist.komu',
       'dopis JOIN mailist USING (id_mailist)',"id_dopis=$id_dopis");
     $priloha= select('priloha','mail',"id_mail=$id_mail");
@@ -14721,7 +14756,11 @@ function mail2_mai_send($id_dopis,$kolik,$from,$fromname,$test='',$id_mail=0,$fo
     if ( $fname ) {
       foreach ( explode(',',$fname) as $fnamesb ) {
         list($fname,$bytes)= explode(':',$fnamesb);
-        $fpath= "docs/$ezer_root/".trim($fname);
+        $fname= trim($fname);
+        $has_dir= strrpos($fname,'/');
+        $fpath= $has_dir ? $fname : "docs/$ezer_root/$fname";
+//        if ($has_dir) $fname= substr($fname,$has_dir+1);
+//        $fpath= "docs/$ezer_root/".trim($fname);
         $mail->AddAttachment($fpath);
   } } };
   //
