@@ -14376,7 +14376,7 @@ function mail2_personify($obsah,$vars,$id_pobyt,&$priloha,&$err) {
             $date= @filemtime($foto);
             $ymd= date('Y-m-d',$date);
             $na_akci= select('COUNT(*)','akce JOIN pobyt ON id_akce=id_duakce',
-                "'$ymd' BETWEEN datum_od AND datum_do");
+                "id_pobyt=$id_pobyt AND '$ymd' BETWEEN datum_od AND datum_do");
             if ($na_akci) {
               $priloha.= "{$del}fotky/$nazev"; $del=',';
             }
