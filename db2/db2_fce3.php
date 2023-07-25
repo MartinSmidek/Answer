@@ -2,11 +2,11 @@
 /** ===========================================================================================> DB2 */
 # ---------------------------------------------------------------------------------- ==> . konstanty
 global $diety,$diety_,$jidlo_;
-// $diety= array('','_bm','_bl');  // postfix položek strava_cel,cstrava_cel,strava_pol,cstrava_pol
-// $diety_= array(''=>'normal','_bm'=>'veget','_bl'=>'bezlep');
-// bezmasá dieta na Pavlákové od roku 2017 není
-$diety= array('','_bl');  // postfix položek strava_cel,cstrava_cel,strava_pol,cstrava_pol
-$diety_= array(''=>'normal','_bl'=>'bezlep');
+ $diety= array('','_bm','_bl');  // postfix položek strava_cel,cstrava_cel,strava_pol,cstrava_pol
+ $diety_= array(''=>'normal','_bm'=>'veget','_bl'=>'bezlep');
+// bezmasá dieta na Pavlákové od roku 2017 není (ale pro Pražáky je)
+//$diety= array('','_bl');  // postfix položek strava_cel,cstrava_cel,strava_pol,cstrava_pol
+//$diety_= array(''=>'normal','_bl'=>'bezlep');
 $jidlo_= array('sc'=>'snídaně celá','sp'=>'snídaně dětská','oc'=>'oběd celý',
                'op'=>'oběd dětský','vc'=>'večeře celá','vp'=>'večeře dětská');
 # ------------------------------------------------------------------------------------- db2 rod_show
@@ -5316,7 +5316,7 @@ function tisk2_sestava_pary($akce,$par,$title,$vypis,$export=false,$internal=fal
     'cmd'=>'browse_load',
     'cond'=>"$cnd AND p.id_akce=$akce AND p.funkce NOT IN "
       . ($par->typ=='tab' ? "(10,13,14)" : "(9,10,13,14)")
-//      . " AND p.id_pobyt=62607"
+//      . " AND p.id_pobyt=62834"
       ,
     'having'=>$hav,'order'=>$ord,
     'sql'=>"SET @akce:=$akce,@soubeh:=$soubeh,@app:='{$EZER->options->root}';");
@@ -5353,7 +5353,7 @@ function tisk2_sestava_pary($akce,$par,$title,$vypis,$export=false,$internal=fal
     $pocet= 0;
     $spolu_note= "";
     $osoba_note= "";
-    $cleni= array();
+    $cleni= array(); // změna indexu z jmeno na id_spolu
     $deti= array();
     $rodice= array();
     $vek_deti= array();
@@ -5372,7 +5372,9 @@ function tisk2_sestava_pary($akce,$par,$title,$vypis,$export=false,$internal=fal
         if ( $o[$i_osoba_kontakt] && $o[$i_osoba_email] )
           $emaily[]= trim($o[$i_osoba_email],",; ");
         if ( $x->key_rodina ) {
-          $cleni[$o[$i_osoba_jmeno]]['dieta']= $c_akce_dieta[$o[$i_osoba_dieta]]; 
+//          $cleni[$o[$i_osoba_jmeno]]['dieta']= $c_akce_dieta[$o[$i_osoba_dieta]]; 
+          $cleni[$o[$i_key_spolu]]['dieta']= $c_akce_dieta[$o[$i_osoba_dieta]]; 
+          $cleni[$o[$i_key_spolu]]['jmeno']= $o[$i_osoba_jmeno]; 
           if ( $o[$i_osoba_role]=='a' || $o[$i_osoba_role]=='b' ) {
             $rodice[$o[$i_osoba_role]]['jmeno']= trim($o[$i_osoba_jmeno]);
             $rodice[$o[$i_osoba_role]]['prijmeni']= trim($o[$i_osoba_prijmeni]);
@@ -5454,9 +5456,9 @@ function tisk2_sestava_pary($akce,$par,$title,$vypis,$export=false,$internal=fal
       case '*deti':     foreach($deti as $X) {
                           $c.= "{$X['jmeno']}:{$X['vek']}:{$X['kat']} ";
                         }; break;
-      case '*diety':    foreach($cleni as $jmeno=>$X) { 
+      case '*diety':    foreach($cleni as $X) { 
                           if ($X['dieta']=='-') continue;
-                          $c.= "$jmeno:{$X['dieta']} ";
+                          $c.= "{$X['jmeno']}:{$X['dieta']} ";
                         }; break;
       case 'email':     $c= $email;  break;
       case 'emaily':    $c= $emaily; break;
