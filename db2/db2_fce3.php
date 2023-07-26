@@ -8822,7 +8822,7 @@ function akce2_vyuctov_pary($akce,$par,$title,$vypis,$export=false) { trace();
   $tit= "Manželé:25"
       // . ",id_pobyt"
       . ",pokoj:7,dětí:5:r,lůžka:5:r:s,přis týlky:5:r:s,kočá rek:5:r:s,nocí:5:r:s"
-      . ",str. celá:5:r:S,str. pol.:5:r:s"
+      . ",str. celá:5:r:s,str. pol.:5:r:s"
       . ",platba ubyt.:7:r:s,platba strava:7:r:s,platba režie:7:r:s,sleva:7:r:s,CD:6:r:s,celkem:7:r:s"
       . ",na účet:7:r:s,datum platby:10:s"
       . ",nedo platek:6:r:s,člen. nedo platek:6:r:s,pokladna:6:r:s,datum platby:10:s,"
@@ -8860,7 +8860,9 @@ function akce2_vyuctov_pary($akce,$par,$title,$vypis,$export=false) { trace();
   }
   // data akce
   $qry=  "SELECT
-            id_pobyt,pokoj,luzka,pristylky,kocarek,pocetdnu,strava_cel,strava_pol,
+            id_pobyt,pokoj,luzka,pristylky,kocarek,pocetdnu,
+            strava_cel+strava_cel_bl+strava_cel_bm AS strava_cel,
+            strava_pol+strava_pol_bl+strava_pol_bm AS strava_pol,
             platba1-vratka1 AS platba1,
             platba2-vratka2 AS platba2,
             platba3-vratka3 AS platba3,
@@ -9049,7 +9051,7 @@ function akce2_vyuctov_pary2($akce,$par,$title,$vypis,$export=false) { trace();
   $result= (object)array();
   $tit= "Manželé:25"
       . ",pokoj:7,dětí:5:r,lůžka:5:r:s,přis týlky:5:r:s,kočá rek:5:r:s,nocí:5:r:s"
-      . ",str. celá:5:r:S,str. pol.:5:r:s"
+      . ",str. celá:5:r:s,str. pol.:5:r:s"
       . ",poplatek dospělí:8:r:s"
       . ",na účet:7:r:s,datum platby:10:r"
       . ",poplatek děti:8:r:s,na účet děti:7:r:s,datum platby děti:10:r"
@@ -9086,7 +9088,9 @@ function akce2_vyuctov_pary2($akce,$par,$title,$vypis,$export=false) { trace();
   // data akce
   $qry=  "SELECT id_pobyt,
           poplatek_d,naklad_d, -- platba_d,datplatby_d
-          p.pouze,pokoj,luzka,pristylky,kocarek,pocetdnu,strava_cel,strava_pol,
+          p.pouze,pokoj,luzka,pristylky,kocarek,pocetdnu,
+          strava_cel+strava_cel_bl+strava_cel_bm AS strava_cel,
+          strava_pol+strava_pol_bl+strava_pol_bm AS strava_pol,
           platba1,platba2,platba3,platba4,
             IFNULL((SELECT SUM(u_castka) FROM uhrada AS u 
               WHERE u.id_pobyt=p.id_pobyt AND u.u_stav IN (1,2,3) AND u.u_zpusob!=3 AND u_za=0),0) AS platba,
