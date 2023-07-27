@@ -9113,11 +9113,10 @@ function akce2_vyuctov_pary2($akce,$par,$title,$vypis,$export=false) { trace();
           GROUP_CONCAT(DISTINCT IF(t.role='b',o.rc_xxxx,'')  SEPARATOR '') as rc_xxxx_z
           FROM pobyt AS p
           JOIN spolu AS s USING(id_pobyt)
-          JOIN osoba AS o USING (id_osoba) -- ON s.id_osoba=o.id_osoba
+          JOIN osoba AS o USING (id_osoba) 
           LEFT JOIN rodina AS r ON r.id_rodina=IF(i0_rodina,i0_rodina,id_rodina)
-          LEFT JOIN tvori AS t USING (id_osoba,id_rodina) --  ON t.id_osoba=o.id_osoba
+          LEFT JOIN tvori AS t USING (id_osoba,id_rodina) 
           WHERE p.id_akce='$akce' AND p.hnizdo=$tisk_hnizdo AND p.funkce NOT IN (9,10,13,14,99) AND $cond
- --           AND id_pobyt=62731
           GROUP BY id_pobyt
           ORDER BY $ord
           -- LIMIT 3
