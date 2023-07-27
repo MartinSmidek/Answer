@@ -9049,7 +9049,7 @@ function akce2_vyuctov_pary2($akce,$par,$title,$vypis,$export=false) { trace();
   global $tisk_hnizdo;
   $ord= $par->ord ? $par->ord : "IF(funkce<=2,1,funkce),IF(pouze=0,r.nazev,o.prijmeni)";
   $result= (object)array();
-  $tit= "Manželé:25"
+  $tit= "Jméno:25"
       . ",pokoj:7,dětí:5:r,lůžka:5:r:s,přis týlky:5:r:s,kočá rek:5:r:s,nocí:5:r:s"
       . ",str. celá:5:r:s,str. pol.:5:r:s"
       . ",poplatek dospělí:8:r:s"
@@ -9058,7 +9058,7 @@ function akce2_vyuctov_pary2($akce,$par,$title,$vypis,$export=false) { trace();
       . ",nedo platek:7:r:s,pokladna:6:r:s,přepl.:6:r:s,poznámka:50,SPZ:9"
       . ",rozpočet dospělí:10:r:s,rozpočet děti:10:r:s"
       . "";
-  $fld= "manzele"
+  $fld= "=jmena"
       . ",pokoj,_deti,luzka,pristylky,kocarek,=pocetnoci,strava_cel,strava_pol"
       . ",=platit,platba,datplatby"
       . ",poplatek_d,platba_d,datplatby_d"
@@ -9102,6 +9102,9 @@ function akce2_vyuctov_pary2($akce,$par,$title,$vypis,$export=false) { trace();
               WHERE u.id_pobyt=p.id_pobyt AND u_datum!='0000-00-00' AND u_zpusob!=3 AND u_stav!=4 AND u_za=1) AS datplatby_d,
           cd,p.poznamka, -- platba,datplatby,
           r.nazev as nazev,r.ulice,r.psc,r.obec,r.telefony,r.emaily,r.spz,
+          IF(p.i0_rodina
+            ,CONCAT(r.nazev,' ',GROUP_CONCAT(IF(role IN ('a','b'),o.jmeno,'') ORDER BY role SEPARATOR ' '))
+            ,GROUP_CONCAT(DISTINCT CONCAT(o.prijmeni,' ',o.jmeno) SEPARATOR ' ')) as _jm,
           SUM(IF(t.role='d',1,0)) as _deti,
           GROUP_CONCAT(DISTINCT IF(t.role='a',o.prijmeni,'') SEPARATOR '') as prijmeni_m,
           GROUP_CONCAT(DISTINCT IF(t.role='a',o.jmeno,'')    SEPARATOR '') as jmeno_m,
@@ -9172,31 +9175,14 @@ function akce2_vyuctov_pary2($akce,$par,$title,$vypis,$export=false) { trace();
         case '=dar':        $val= $preplatek;
                             $exp= "=IF([=zaplaceno,0]>[=platit,0],[=zaplaceno,0]-[=platit,0],0)"; break;
         case '=naklad':     $val= $naklad; break;
+        case '=jmena':      $val= $x->_jm; break;
         default:            $val= '???'; break;
         }
         $clmn[$n][$f]= $val;
         if ( $exp ) $expr[$n][$f]= $exp;
       }
       else {
-        switch ($f) {
-        case 'manzele':
-          $val= $x->pouze==1 ? "{$x->prijmeni_m} {$x->jmeno_m}"
-             : ($x->pouze==2 ? "{$x->prijmeni_z} {$x->jmeno_z}"
-             : ($x->nazev ? "{$x->nazev} {$x->jmeno_m} a {$x->jmeno_z}"
-             : "{$x->prijmeni_m} {$x->jmeno_m} {$x->prijmeni_z} {$x->jmeno_z}"
-           ));
-          break;
-        case 'jmena':
-          $val= $x->pouze==1
-              ? $x->jmeno_m : ($x->pouze==2 ? $x->jmeno_z : "{$x->jmeno_m} a {$x->jmeno_z}");
-          break;
-        case 'prijmeni':
-          $val= $x->pouze==1 ? $x->prijmeni_m : ($x->pouze==2 ? $x->prijmeni_z : $x->nazev);
-          break;
-        default:
-          $val= $f ? $x->$f : '';
-          break;
-        }
+        $val= $f ? $x->$f : '';
         if ( $f ) $clmn[$n][$f]= $val; else $clmn[$n][]= $val;
       }
       // případný výpočet sumy
