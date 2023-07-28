@@ -5118,7 +5118,7 @@ function akce2_starsi_mrop_pdf($akce,$id_pobyt_vps=0) { trace();
   $r_fld= "id_rodina,nazev,ulice,psc,obec,stat,note,emaily,telefony,spz";
   $rg= pdo_qry("
     SELECT
-      jmeno,prijmeni,skupina,pokoj,funkce,p.id_pobyt,
+      jmeno,prijmeni,skupina,pokoj,funkce,p.id_pobyt,pracovni,
       -- ROUND(DATEDIFF('$datum_od',o.narozeni)/365.2425,0) AS vek,
       ROUND(IF(MONTH(o.narozeni),DATEDIFF('$datum_od',o.narozeni)/365.2425,YEAR('$datum_od')-YEAR(o.narozeni)),0) AS vek,
       IF(o.adresa,o.ulice,IFNULL(r2.ulice,r1.ulice)) AS ulice,
@@ -5142,13 +5142,22 @@ function akce2_starsi_mrop_pdf($akce,$id_pobyt_vps=0) { trace();
     ORDER BY skupina,p.funkce DESC,jmeno");
   while ( $rg && ($x= pdo_fetch_object($rg)) ) {
     if ($id_pobyt_vps) {
+      $nik_missing= $x->pracovni ? '' : " ... <b>KONTAKT?</b>";
+      $nik= '';
+      if (!$nik_missing) {
+        $m= null;
+        if (preg_match('~Jméno:\s*(.+)\n~u',$x->pracovni,$m)) {
+          $nik= "<i>$m[1]</i> ";
+        }
+      }
+      $obec= $x->obec ?: 'CZ';
       if ($id_pobyt_vps==$x->id_pobyt) {
-        $clenove= "Skupina $skupina, stoker $x->jmeno $x->prijmeni <table>".$clenove;
+        $clenove= "Skupina $skupina, stoker $x->jmeno $nik $x->prijmeni <table>".$clenove;
       }
       else {
-        $clenove.= "<tr><td>$x->jmeno $x->prijmeni ($x->vek)</td>
+        $clenove.= "<tr><td>$nik_missing $x->jmeno $nik $x->prijmeni ($x->vek)</td>
           <td>$x->telefony</td><td>$x->emaily</td>
-          <td>$x->psc $x->obec, $x->stat</td></tr>";
+          <td>$x->psc $obec, $x->stat</td></tr>";
       }
     }
     else {
@@ -5183,7 +5192,7 @@ function akce2_starsi_mrop_pdf($akce,$id_pobyt_vps=0) { trace();
   foreach ($grp as $g) {
     $g0= $g[0];
     $skupina= $g0->skupina;
-    $page= "<h3>Skupina $skupina má chatky ".implode(', ',$cht[$skupina])." </h3>
+    $page= "<h3>Skupina $skupina".($cht[$skupina] ? " má chatky ".implode(', ',$cht[$skupina]):'')." </h3>
       <table style=\"width:21cm\">";
     fwrite($h,"<h3>Skupina $skupina</h3>");
     foreach ($g as $o) {
@@ -5191,9 +5200,20 @@ function akce2_starsi_mrop_pdf($akce,$id_pobyt_vps=0) { trace();
       $chata= $o->pokoj ?: '';
       $fill= '&nbsp;&nbsp;';
       $stat= $o->stat=='CZ' ? '' : ", $o->stat";
+      $nik_missing= $o->pracovni ? '' : " ... <b>KONTAKT?</b>";
+      $nik= '';
+      if (!$nik_missing) {
+        $m= null;
+        if (preg_match('~Jméno:\s*(.+)\n~u',$o->pracovni,$m)) {
+          $nik= "<i>$m[1]</i> ";
+        }
+        else {
+          $res->err.= "POZOR - $o->jmeno $o->prijmeni má chybně zapsané jméno a symbol<br>";
+        }
+      }
       $jmeno= $o->funkce 
-          ? "<td width=\"200\" align=\"right\"><big><b>$o->jmeno</b></big> $o->prijmeni ($o->vek)</td>" 
-          : "<td width=\"200\"><big><b>$o->jmeno</b></big> $o->prijmeni ($o->vek)</td>";
+          ? "<td width=\"200\" align=\"right\"><big><b>$o->jmeno</b></big> $nik$o->prijmeni ($o->vek)</td>" 
+          : "<td width=\"200\"><big><b>$o->jmeno</b></big> $nik$o->prijmeni ($o->vek) $nik_missing</td>";
       $page.= "<tr>
           <td width=\"40\">$chata</td>
           $jmeno
