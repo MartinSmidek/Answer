@@ -5146,7 +5146,7 @@ function akce2_starsi_mrop_pdf($akce,$id_pobyt_vps=0) { trace();
       $nik= '';
       if (!$nik_missing) {
         $m= null;
-        if (preg_match('~Jméno:\s*(.+)\n~u',$x->pracovni,$m)) {
+        if (preg_match('~Jméno:\s*(.+)(?:\nSymbol:\s*(.+)|)(?:\nJazyk:\s*(.+)|)~u',$x->pracovni,$m)) {
           $nik= "<i>$m[1]</i> ";
         }
       }
@@ -5202,10 +5202,17 @@ function akce2_starsi_mrop_pdf($akce,$id_pobyt_vps=0) { trace();
       $stat= $o->stat=='CZ' ? '' : ", $o->stat";
       $nik_missing= $o->pracovni ? '' : " ... <b>KONTAKT?</b>";
       $nik= '';
+      $jazyk= '';
       if (!$nik_missing) {
         $m= null;
-        if (preg_match('~Jméno:\s*(.+)\n~u',$o->pracovni,$m)) {
+        if (preg_match('~Jméno:\s*(.+)(?:\nSymbol:\s*(.+)|)(?:\nJazyk:\s*(.+)|)~u',$o->pracovni,$m)) {
           $nik= "<i>$m[1]</i> ";
+          if ($m[3]) {
+            $jazyk.= preg_match('~ang~iu',$m[3]) ? 'A' : '';
+            $jazyk.= preg_match('~něm~iu',$m[3]) ? 'N' : '';
+            if (!$jazyk) $res->err.= "POZOR - $o->jmeno $o->prijmeni zná divný jazyk<br>";
+            else $jazyk= ", $jazyk";
+          }
         }
         else {
           $res->err.= "POZOR - $o->jmeno $o->prijmeni má chybně zapsané jméno a symbol<br>";
@@ -5213,7 +5220,7 @@ function akce2_starsi_mrop_pdf($akce,$id_pobyt_vps=0) { trace();
       }
       $jmeno= $o->funkce 
           ? "<td width=\"200\" align=\"right\"><big><b>$o->jmeno</b></big> $nik$o->prijmeni ($o->vek)</td>" 
-          : "<td width=\"200\"><big><b>$o->jmeno</b></big> $nik$o->prijmeni ($o->vek) $nik_missing</td>";
+          : "<td width=\"200\"><big><b>$o->jmeno</b></big> $nik$o->prijmeni ($o->vek$jazyk) $nik_missing</td>";
       $page.= "<tr>
           <td width=\"40\">$chata</td>
           $jmeno
