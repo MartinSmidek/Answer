@@ -4225,9 +4225,9 @@ function dot_vyber ($par) { trace();
     ROUND(AVG(prednasky),1)   AS prednasky,
     ROUND(AVG(skupinky),1)    AS skupinky,
     ROUND(AVG(duchovno),1)    AS duchovno,
-    ROUND(AVG(ubytovani),1)   AS ubytovani,
-    ROUND(AVG(strava),1)      AS strava,
-    ROUND(AVG(pecedeti),1)    AS pecedeti,
+    ROUND(AVG(IF(ubytovani=0,NULL,ubytovani)),1)   AS ubytovani,
+    ROUND(AVG(IF(strava=0,NULL,strava)),1)      AS strava,
+    ROUND(AVG(IF(pecedeti=0,NULL,pecedeti)),1)    AS pecedeti,
     ROUND(AVG(motto),1)       AS motto,
     ROUND(AVG(maturita),1)    AS maturita,
     ROUND(AVG(hudba),1)       AS hudba,
@@ -4593,7 +4593,7 @@ function dot_import ($rok) { trace();
       }
     }
   }
-  elseif ($rok==2022) {
+  elseif ($rok==2022 || $rok==2023) {
     // export do json v roce 2022 již nepřenáší textové hodnoty, pokud se očekávají čísla
     // například již nelze "O,r,pecedeti?1;2;3;4;5;péči o děti jsme nevyužili*0"
     // proto je download před CSV
@@ -4628,7 +4628,8 @@ function dot_import ($rok) { trace();
     # přečtení seznamu skupin z tabulky
     # https://docs.google.com/spreadsheets/d/1dP_p6A8sHKPEStiaqJaeAhGV3kjUYqmjQrvBpvRahUA/edit#gid=1894516411
     $goo= "https://docs.google.com/spreadsheets/d";
-    $key= $rok==2022 ? "13GuKhM6vwo-zfN97UWazdoDdzKpqGXNmQls7sYTzo6c" : '';
+    $key= $rok==2022 ? "13GuKhM6vwo-zfN97UWazdoDdzKpqGXNmQls7sYTzo6c" : (
+          $rok==2023 ? "17E5dotr5EOhlLgOM7dyjTVV8h22OcGwHAYpCuhEUtWs" : '');
     $url= "$goo/$key/export?format=csv";
     $f= @fopen($url, "r");
     if ( !$f ) { $y->err= "odkaz $url nelze otevřít"; goto end; }

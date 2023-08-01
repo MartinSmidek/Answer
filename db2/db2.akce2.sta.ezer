@@ -220,7 +220,7 @@ menu m {type:'left', format:'f+', active:*
         if (!confirm(`Mám přepočítat dotazník roku ${dot.rok}?`)) return;
         clear();
         // na NTB umožni smazat dotazník
-        if (!sys('ezer','server') && dot.rok==2022 
+        if (!sys('ezer','server') && dot.rok==2023 
             && confirm(`Mám před importem vymazat všechny hodnoty roku ${dot.rok}?`)) {
           php.query(`DELETE FROM dotaz WHERE dotaznik=${dot.rok}`);
         }
@@ -231,9 +231,9 @@ menu m {type:'left', format:'f+', active:*
     }}
     item {title:'[fa-balance-scale] skutečnost & dotazníky' par:{typ:'2'} }
     item q {title:'[fa-cogs] různé výběry a srovnání'       par:{typ:'v'} }
-    item d {title:'[fa-forward] procházení dotazníku'           par:{typ:'d',id:'1'} 
+    item d {title:'[fa-forward] procházení dotazníku'       par:{typ:'d',id:'1'} 
       func onclick (i:ezer) { 
-        clear(); mapa.close(1); show_dotazy(); panel.display(2,'dp|do'); obraz.header(i);
+        clear(); mapa.close(1); show_dotazy(); panel.display(2,'dp|do|dg'); obraz.header(i);
         if (has_skill('mš')) panel.display(1,'dt')
         obraz.display(0,'x'); obraz.display(1,i.par.typ);
         obraz.display(obraz.r2021,'r21'); obraz.enable(0,'r21'); obraz.display(0,'r21u');
@@ -348,7 +348,7 @@ proc show_dotazy() {
 }
 use dot: form _dot [10,36,,] { tag:'dp' format:'n' }
 use obraz: form _obraz [12,4,,]   { tag:'do' format:'n' }
-use chart: form _chart [702,33,,] { tag:'do' format:'n' }
+use chart: form _chart [702,33,,] { tag:'dg' format:'n' }
 use tipy:  form _tipy  [340,120,,] { tag:'dt' format:'n' }
 use corr:  form _corr  [12,4,,] { tag:'dc' format:'n' }
 use info: form right   [12,4,,]   { tag:'i'
@@ -420,7 +420,7 @@ form _obraz [,,700,50] {
   label img [D+2,28,485,700] { title:'' }
   label head [0,0,1089,30]  { title:'' }
   label note [0,508,320,200] { style:"overflow:auto" }
-  label text [0,28,700,700] 
+  label text [-41,28,700,700] 
   // extrakce informace spec. pro hnízda
   field nazor_kurz   [350,260,20,] {tag:'r21', format:'r:e'
       title:'-  preference velikosti kurzu: - komornější, + velký'}
@@ -443,12 +443,13 @@ form _obraz [,,700,50] {
       dot.Init();
   }}
   // výběrové podmínky
-  label [0,40,80,] { tag:'x,v' title:'volba roků:' }
-  check r2017  [80,35,50,] { tag:'x,v' title:'2017' format:'t' func onchange() { recond() }}
-  check r2018  [131,35,50,] { tag:'x,v' title:'2018' format:'t' func onchange() { recond() }}
-  check r2019 [182,35,50,] { tag:'x,v' title:'2019' format:'t' func onchange() { recond() }}
-  check r2021 [233,35,50,] { tag:'x,v', title:'2021', format:'t' func onchange() { recond() }}
-  check r2022 [284,35,50,] { tag:'x,v', title:'2022', value:'1', format:'t' func onchange() { recond() }}
+  label [0,40,57,] { tag:'x,v' title:'volba roků:' }
+  check r2017  [60,35,45,] { tag:'x,v' title:'2017' format:'t' func onchange() { recond() }}
+  check r2018  [104,35,45,] { tag:'x,v' title:'2018' format:'t' func onchange() { recond() }}
+  check r2019 [149,35,45,] { tag:'x,v' title:'2019' format:'t' func onchange() { recond() }}
+  check r2021 [193,35,45,] { tag:'x,v', title:'2021', format:'t' func onchange() { recond() }}
+  check r2022 [236,35,45,] { tag:'x,v', title:'2022', format:'t' func onchange() { recond() }}
+  check r2023 [280,35,50,] { tag:'x,v', title:'2023', value:'1', format:'t' func onchange() { recond() }}
   // výběr hnízd
   label [0,65,80,] { tag:'x,v,r_21' title:'výběr hnízda:' }
   check hnizdo_1 [80,60,70,] { tag:'x,v,r_21' title:'Kroměříž' format:'t' func onchange() { recond() }}
@@ -543,7 +544,7 @@ form _obraz [,,700,50] {
   // =====================> funkce
   func recond() { var roky:text, hnizda:text, sub:text, carek:number
     // výběr roků
-    roky= `0${r2017?',2017':''}${r2018?',2018':''}${r2019?',2019':''}${r2021?',2021':''}${r2022?',2022':''}`;
+    roky= `0${r2017?',2017':''}${r2018?',2018':''}${r2019?',2019':''}${r2021?',2021':''}${r2022?',2022':''}${r2023?',2023':''}`;
     // je vybrán jen jeden rok?
     carek= function('str','return (str.match(/,/g) || []).length;',roky);
     rok= carek==1 ? substr(roky,2) : 0;
@@ -637,7 +638,7 @@ form _obraz [,,700,50] {
 # -------------------------------------------------------------------------------------------==> dot
 # posuny v dotaznících
 form _dot [,,163,60] { css:'parm shadow' style:'z-index:2'  //style:'position:fixed;z-index:2' 
-  var rok=2022,   // rok dotazníku ... 2022
+  var rok=2023,   // rok dotazníku ... 2023
       kurz:object,
       back=0,     // návrat na poslední kliknuté (ne odkazem)
       dirty=1,    // po změně dotazu, čistí se po prvním Show
