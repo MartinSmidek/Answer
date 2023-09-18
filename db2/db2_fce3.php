@@ -5118,7 +5118,7 @@ function akce2_starsi_mrop_pdf($akce,$id_pobyt_vps=0) { trace();
   $r_fld= "id_rodina,nazev,ulice,psc,obec,stat,note,emaily,telefony,spz";
   $rg= pdo_qry("
     SELECT
-      jmeno,prijmeni,skupina,pokoj,funkce,p.id_pobyt,pracovni,
+      jmeno,prijmeni,skupina,pokoj,budova,funkce,p.id_pobyt,pracovni,
       -- ROUND(DATEDIFF('$datum_od',o.narozeni)/365.2425,0) AS vek,
       ROUND(IF(MONTH(o.narozeni),DATEDIFF('$datum_od',o.narozeni)/365.2425,YEAR('$datum_od')-YEAR(o.narozeni)),0) AS vek,
       IF(o.adresa,o.ulice,IFNULL(r2.ulice,r1.ulice)) AS ulice,
@@ -5162,11 +5162,11 @@ function akce2_starsi_mrop_pdf($akce,$id_pobyt_vps=0) { trace();
     }
     else {
       $grp[$x->skupina][]= $x;
-      $chata= $x->pokoj;
-      if (!isset($cht[$x->skupina])) $cht[$x->skupina]= array();
-      if ($chata) {
-        if (!in_array($chata,$cht[$x->skupina])) $cht[$x->skupina][]= $chata;
-      }
+    }
+    $chata= $x->pokoj;
+    if (!isset($cht[$x->skupina])) $cht[$x->skupina]= array();
+    if ($chata) {
+      if (!in_array($chata,$cht[$x->skupina])) $cht[$x->skupina][]= $chata;
     }
   }
 //  debug($grp,"sestava pro starší");
@@ -5187,17 +5187,18 @@ function akce2_starsi_mrop_pdf($akce,$id_pobyt_vps=0) { trace();
       "Sestava skupin pro tisk a rozdání starším je <a href='docs/$fname' target='pdf'>zde</a>,
       <br>sestava pro ctrl-c/ctrl-v pro vložení do individuálního mailu starším je
       <a href='docs/$hname' target='html'>zde</a><hr>";
-  tc_html_open();
+  tc_html_open('L');
   $pata= "<i>iniciace $rok</i>";
   foreach ($grp as $g) {
     $g0= $g[0];
     $skupina= $g0->skupina;
     $page= "<h3>Skupina $skupina".($cht[$skupina] ? " má chatky ".implode(', ',$cht[$skupina]):'')." </h3>
-      <table style=\"width:21cm\">";
+      <table style=\"width:29cm\">";
     fwrite($h,"<h3>Skupina $skupina</h3>");
     foreach ($g as $o) {
       if (!$skupina) { $neni[]= "$o->prijmeni $o->jmeno"; }
-      $chata= $o->pokoj ?: '';
+//      $chata= $o->pokoj ?: '';
+      $chata= $o->budova ? "$o->budova $o->pokoj" : ($o->pokoj ?: '');
       $fill= '&nbsp;&nbsp;';
       $stat= $o->stat=='CZ' ? '' : ", $o->stat";
       $nik_missing= $o->pracovni ? '' : " ... <b>KONTAKT?</b>";
@@ -5219,13 +5220,13 @@ function akce2_starsi_mrop_pdf($akce,$id_pobyt_vps=0) { trace();
         }
       }
       $jmeno= $o->funkce 
-          ? "<td width=\"200\" align=\"right\"><big><b>$o->jmeno</b></big> $nik$o->prijmeni ($o->vek)</td>" 
-          : "<td width=\"200\"><big><b>$o->jmeno</b></big> $nik$o->prijmeni ($o->vek$jazyk) $nik_missing</td>";
+          ? "<td align=\"right\"><big><b>$o->jmeno</b></big> $nik$o->prijmeni ($o->vek)</td>" 
+          : "<td><big><b>$o->jmeno</b></big> $nik$o->prijmeni ($o->vek$jazyk) $nik_missing</td>";
       $page.= "<tr>
-          <td width=\"40\">$chata</td>
+          <td width=\"60\">$chata</td>
           $jmeno
-          <td width=\"100\">$fill$o->telefony</td>
-          <td width=\"200\">$o->emaily$fill</td>
+          <td>$fill$o->telefony</td>
+          <td>$o->emaily$fill</td>
           <td>$o->psc $o->obec $stat<br></td>
         </tr>";
       $adresa= "$o->jmeno $o->prijmeni, $o->telefony, $o->emaily, $o->psc $o->obec $stat<br>";
