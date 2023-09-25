@@ -441,6 +441,7 @@ form _lst [,,370,*] {
     // volitelná položka
     show telefon [,,0,] { data:o.telefon, title:'telefony',help:'osobní telefony', format:'tq%s' }
     show mail   [,,44,] { data:o.email, title:'emaily',help:'osobní emaily', format:'tq%s' }
+    show iniciace [,,0,] { data:o.iniciace, title:'MROP',help:'rok iniciace', format:'tq%s' }
     show _id_o   [,,0,] { data:o.id_osoba, title:'ID osoby',help:'osobní číslo', format:'rq=s' }
     // počítané položky
 //    var lat:number, lng:number
@@ -453,14 +454,15 @@ form _lst [,,370,*] {
     proc onclick() {
       mail.width;     mail.width(0);    telefon.width(44)
     | telefon.width;  telefon.width(0); _id_o.width(44)
-    |                 mail.width(44);   _id_o.width(0)
+    | _id_o.width;   _id_o.width(0);    iniciace.width(44);   
+    | iniciace.width; iniciace.width(0); mail.width(44);
     }
     menu { type:'context'
       item { title:'export seznamu do Excelu',
         func onclick () { var name:text
           name= "seznam_osob";
           bo.browse_export({file:name,type:'xlsx',title:'Výběr evidovaných osob',
-              show:'prijmeni,jmeno,ulice,psc,obec,_vek,telefon,mail'});
+              show:'prijmeni,jmeno,ulice,psc,obec,_vek,telefon,mail,iniciace'});
           alert(`soubor pro Excel lze stáhnout <a href='docs/${name}.xlsx'>zde</a>`);
       }}
       item { title:'-zrušit výběr a zobrazení'    func onclick() { brow_mapa_clear() }}
