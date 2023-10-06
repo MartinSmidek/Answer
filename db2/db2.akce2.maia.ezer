@@ -74,6 +74,8 @@ menu m {type:'left',
       par:°{k:'et',uq:'U5',on:'akce',off:'gen|skup'} }
     item {title:'... ... tuzemským CZ+SK', help:'jen CZ a SK - mimo odhlášených, náhradníků, nepřijedších, ...'
       par:{k:'et',uq:'U6',on:'akce',off:'gen|skup'} }
+    item {title:'... ... zahraničním mimo SK', help:'mimo CZ a SK (a mimo odhlášených, náhradníků, nepřijedších, ...)'
+      par:{k:'et',uq:'U7',on:'akce',off:'gen|skup'} }
     item {title:'... účastníkům bez funkce', help:'s funkcí -'
       par:°{k:'et',uq:'U1',on:'akce',off:'gen|skup'} }
     item {title:'... VPS,SVPS,hospodářům akce'
@@ -98,6 +100,8 @@ menu m {type:'left',
       par:°{k:'es',uq:'U5',on:'akce',off:'gen|skup'} }
     item {title:'... ... tuzemským CZ+SK',
       par:°{k:'es',uq:'U6',on:'akce',off:'gen|skup'} }
+    item {title:'... ... zahraničním mimo SK',
+      par:°{k:'es',uq:'U7',on:'akce',off:'gen|skup'} }
     item {title:'... účastníkům bez funkce'
       par:°{k:'es',uq:'U1',on:'akce',off:'gen|skup'} }
     item {title:'... VPS,SVPS,hospodářům akce'
@@ -327,7 +331,8 @@ form _etext  {
       'U3',{ komu.set(2); },
       'U4',{ komu.set(3); },
       'U5',{ komu.set(5); },
-      'U6',{ komu.set(6); }
+      'U6',{ komu.set(6); },
+      'U7',{ komu.set(7); }
       );
       id_duakce.change; hnizdo.change; komu.change; cis_skupina.change; id_mailist.change;
     }
@@ -348,7 +353,7 @@ form _etext  {
       var blokovano: number, pocet: number
       var err: text, cond: text
       echo(debug(menu_par));
-      if (!eq(dopis_var,'U','U1','U2','U3','U4','U5','U6')) return;
+      if (!eq(dopis_var,'U','U1','U2','U3','U4','U5','U6','U7')) return;
       # rozesílání podle nastavené akce
       prazdny(); if (!et_prazdy) return;
       cond= menu_par.cond ? menu_par.cond : '';
@@ -414,6 +419,8 @@ form _etext  {
     case 'U5': texty.browse_load(`${prefix} etd.komu=5`); break;
     // všem tuzemským přítomným (dopis.komu=6)
     case 'U6': texty.browse_load(`${prefix} etd.komu=6`); break;
+    // všem zahraničním přítomným (dopis.komu=7)
+    case 'U7': texty.browse_load(`${prefix} etd.komu=7`); break;
     }
     reload2()
   }
@@ -646,6 +653,8 @@ form _esady  {
     case 'U5': texty.browse_load(`${prefix} etd.komu=5`); break;
     // všem tuzemským přítomným (dopis.komu=6)
     case 'U6': texty.browse_load(`${prefix} etd.komu=6`); break;
+    // všem zahraničním přítomným (dopis.komu=7)
+    case 'U7': texty.browse_load(`${prefix} etd.komu=7`); break;
     }
     reload2();
   }
