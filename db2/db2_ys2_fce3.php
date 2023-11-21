@@ -497,7 +497,7 @@ function chart_typs($x) {
   $graf= $graf_tit= $graf_y= $graf_z= array();
   $sel= $del= '';
   foreach ( explode(';',$x) as $i=>$pf) {
-    list($p,$y,$g,$z)= explode(':',$pf);
+    list($p,$y,$g,$z)= array_merge(explode(':',$pf),array_fill(0,3,''));
     $sel.= "$del$p:$i"; $del= ',';
     $graf[]= $g; $graf_tit[]= $p; $graf_y[]= $y; $graf_z[]= $z;
   }
@@ -733,7 +733,7 @@ end:
 }
 # ----------------------------------------------------------------------------------==> . chart akce
 # agregace údajů o MROP, FIRMING a MS pro grafické znázornění
-function chart_akce($par) { debug($par,'chart_akce');
+function chart_akce($par) { // debug($par,'chart_akce');
   $y= (object)array('err'=>'','note'=>' ');
   $org= $par->org; //255;
   $letos= date('Y');
@@ -742,7 +742,7 @@ function chart_akce($par) { debug($par,'chart_akce');
   if (!isset($chart->series))
     $chart->series= array();
   switch ($par->type) {
-    // obecné
+    // --------------------------------------------------------------- obecné
     case 'prihlasky':
       $pro= $par->pro;
       $od= $par->od;
@@ -806,7 +806,7 @@ function chart_akce($par) { debug($par,'chart_akce');
         <li>graf lze zobrazit $nejdriv
         </ol>";
       break;
-    // specifické pro MS
+    // --------------------------------------------------------------- specifické pro MS
     case 'skupinky': 
       $chart->title= 'Počty skupinek v daném roce podle velikosti';
       $x= $roky= $tri= $ctyri= $divna= array();
@@ -938,7 +938,224 @@ function chart_akce($par) { debug($par,'chart_akce');
         }
       }
       break;
-    // specifické pro MROP
+    // --------------------------------------------------------------- specifické pro EROP
+    case 'erop':
+      $chart->title= 'odhad počtu iniciovaných pozvatelných na EROP';
+      // převzetí parametrů a inicializace
+      $od= $par->od;
+      $do= $par->do ?: date('Y');
+      $kat_od= 0;
+      $kat_do= array(49,59,87); 
+      // tabulka úmrtnosti vzata z ČSÚ 6 Úmrtnost sloupec muži/2019
+      $umrtnost_2019= array(
+          '20-29' => 0.0007,  '30-34' => 0.0009,  '35-39' => 0.0012,  '40-44' => 0.0018, 
+          '45-49' => 0.0030,  '50-54' => 0.0053,  '55-59' => 0.0083,  '60-64' => 0.0149,  
+          '65-69' => 0.0232,  '70-74' => 0.0355,  '75-79' => 0.0536,  '80-84' => 0.0881, 
+          '85-89' => 0.1544,  '90-94' => 0.2800,  '95-99' => 0.4000
+      );
+      $iniciovani= $kmeni= $umrti= $prestarli= 0;
+      $umrtnost= array();
+      foreach ($umrtnost_2019 as $uodudo=>$promile) {
+        list($uod,$udo)= explode('-',$uodudo);
+        for ($u= $uod; $u<=$udo; $u++) {
+          $umrtnost[$u]= $promile;
+        }
+      }
+//      debug($umrtnost_2019);
+//      debug($umrtnost);
+      $max_vek= $kat_do[count($kat_do)-1]+1;
+      $color= array('green','grey','blue');
+      $popis= array();
+      for ($x= 0; $x<count($kat_do); $x++) {
+        $popis[]= $kat_od ? "$kat_od ... $kat_do[$x]" : "... $kat_do[$x]";
+        $kat_od= $kat_do[$x] + 1;
+      }
+      $roky= array();
+      $mrop= array();
+      // vložení skutečného počtu iniciovaných mužů [rok,kategorie]
+      $mr= pdo_qry("
+        SELECT iniciace,iniciace-YEAR(narozeni) AS _vek,COUNT(*)
+        FROM osoba WHERE iniciace>0 AND YEAR(narozeni) BETWEEN 1920 AND 2020
+          -- AND iniciace=2004
+          -- AND iniciace=2002
+          -- AND iniciace BETWEEN 2004 AND 2005
+        GROUP BY iniciace,YEAR(narozeni)
+        ORDER BY _vek
+      ");
+      while ($mr && (list($iniciace,$vek,$pocet)= pdo_fetch_row($mr))) {
+        $mrop[$iniciace][$vek]= $pocet;
+        $iniciovani+= $pocet;
+      }
+      debug($erop,"EROP"); 
+      // zestárnutí o rok: $mrop[$rok][$vek] => $mrop[$rok+1][$vek-1]
+      for ($rok= $od; $rok<=$do; $rok++) {
+        // připočti iniciované předešlého roku do dalšího roku jako o rok starší
+        if (isset($mrop[$rok-1])) {
+          foreach ($mrop[$rok-1] as $vek=>$pocet) {
+            $mrop[$rok][$vek+1]+= $pocet;
+          }
+        }
+        // aplikuj pravděpodobnost úmrtí s ořezáním věku
+        if (isset($mrop[$rok])) {
+          foreach ($mrop[$rok] as $vek=>$pocet) {
+            $pocet= $mrop[$rok][$vek];
+            if ($vek>$max_vek) {
+              $pocet= 0;
+              $prestarli++;
+            }
+            else {
+              $pocet-= round($umrtnost[$vek] * $pocet);
+              $mrop[$rok][$vek]= $pocet;
+            }
+          }
+        }
+      }
+      // zjištění absolventů EROP a jejich odečtení od disponibilních iniciovaných chlapů
+      $erop= array();
+      $mr= pdo_qry("
+        SELECT YEAR(datum_od),YEAR(datum_od)-YEAR(narozeni) AS _vek,COUNT(*)
+        FROM pobyt
+        JOIN akce ON id_akce=id_duakce
+        JOIN spolu USING (id_pobyt)
+        JOIN osoba USING (id_osoba)
+        WHERE nazev LIKE 'EROP%'
+          AND deleted='' AND funkce IN (0,1) AND iniciace>0
+          AND YEAR(narozeni) BETWEEN 1920 AND 2020 AND prislusnost IN ('','CZ','SK')
+        GROUP BY YEAR(datum_od),YEAR(narozeni)
+        ORDER BY _vek
+      ");
+      while ($mr && (list($rok_erop,$vek,$pocet)= pdo_fetch_row($mr))) {
+        $erop[$rok_erop][$vek]= $pocet;
+        $mrop[$rok_erop][$vek]-= $pocet;
+        $kmeti+= $pocet;
+      }
+//      debug($mrop,"... MROP"); 
+      // zobrazení podle věkových kategorií: $mrop[$rok][$vek] => $stav[kategorie][rok]
+      $stav= array();
+      for ($rok= $od; $rok<=$do; $rok++) {
+        $roky[]= $rok;
+        for ($x= 0; $x<count($kat_do); $x++) {
+          if (!isset($stav[$x][$rok])) $stav[$x][$rok]= 0;
+        }
+      }
+      for ($rok= $od; $rok<=$do; $rok++) {
+        if (!isset($mrop[$rok])) continue;
+        foreach ($mrop[$rok] as $vek=>$pocet) {
+          for ($x= 0; $x<count($kat_do); $x++) {
+            if ($vek <= $kat_do[$x]) {
+              $stav[$x][$rok]+= round($pocet);
+              $ok_vek++;
+              break;
+            }
+          }
+        }
+      }
+      $_iniciovani= 0;
+      foreach ($mrop[$do] as $vek=>$pocet) {
+//        display("$vek = $pocet");
+        $_iniciovani+= round($pocet);
+      }
+      $umrti= round($iniciovani - $_iniciovani);
+      display("celkem iniciovaní= $iniciovani, kmeti= $kmeti, starší $max_vek let= $prestarli, pravděpodobně zemřelo= $umrti");
+//      debug($stav,"stav"); 
+//      break; // ------------------------------------------------------------------ BREAK -----
+      for ($x= 0; $x<count($kat_do); $x++) {
+        $data= implode(',',$stav[$x]);
+        $serie= (object)array('name'=>$popis[$x],'data'=>$data,'color'=>$color[$x]);
+        $chart->series[$x]= $serie;
+      }
+      $chart->yAxis= (object)array('title'=>(object)array('text'=>'počet možných účastníků EROP v daném roce'),
+          'tickInterval'=>10,'min'=>0); // 'categories'=>$mrop_y,
+      $chart->xAxis= (object)array('categories'=>$roky,//'labels'=>(object)array('min'=>'5'),
+          'title'=>(object)array('text'=>'rok konání MROP '));
+      if (isset($chart->plotOptions->series->stacking)){
+        $chart->tooltip= (object)array(
+          'pointFormat'=>"<span>{series.name}</span>: <b>{point.y}</b> ({point.percentage:.0f}%)<br/>");
+        if ($chart->plotOptions->series->stacking=='normal' && $par->prc) {
+          $chart->plotOptions->series->stacking= 'percent';
+        }
+        $chart->chart= 'bar';
+      }
+      break;
+    case 'vek_abs_nemrop': // věk nyní - neiniciovaní účastníci jiných akcí
+      $now= date('Y-m-d');
+      $k_datu= "'$now'";
+      $mrop_k= sql_date1($now);
+      $po= $par->po ?: 10;
+      $data= array(array(),array(),array()); // stáří non-firming, firming
+      $od= $par->od ?: 2004;
+      $do= $par->do ?: $letos;
+      $roku= $do - $od + 1;
+      $od_vek= 9999; $do_vek= 0;
+      $celkem= 0;
+      $qv= pdo_qry("
+        SELECT 
+          FLOOR(IF(MONTH(narozeni),DATEDIFF($k_datu,narozeni)/365.2425,
+            YEAR($k_datu)-YEAR(narozeni))) AS _vek,
+          ( SELECT BIT_OR(IF(druh IN (1),1,IF(statistika IN (1,2,3,4),2,0))) 
+            FROM pobyt
+            LEFT JOIN spolu USING (id_pobyt)
+            LEFT JOIN osoba AS x USING (id_osoba) 
+            LEFT JOIN akce AS a ON id_akce=a.id_duakce 
+            WHERE a.firm=0 AND a.mrop=0 AND a.zruseno=0 AND a.spec=0
+              AND YEAR(a.datum_od) BETWEEN $od AND $do
+              AND x.id_osoba=osoba.id_osoba
+              AND x.deleted='' AND funkce IN (0,1,2) AND s_role IN (0,1)
+          ) AS _akce,
+          COUNT(*) AS _pocet
+        FROM osoba 
+        WHERE deleted='' AND narozeni AND umrti=0 AND sex=1
+          AND iniciace=0 
+        GROUP BY FLOOR(_vek/$po),_akce
+        HAVING _akce>0 AND _vek BETWEEN 20 AND 99
+        ORDER BY _vek
+      ");
+      while ($qv && (list($vek,$akce,$pocet)=pdo_fetch_row($qv))) {
+        $vek_po= floor($vek/$po);
+        $akce--; // 0 - jen MS, 1 - jen chlapi, 2 - oboje
+        if (!isset($data[$akce][$vek_po*$po])) $data[$akce][$vek_po*$po]= 0;
+        $data[$akce][$vek_po*$po]+= $pocet;
+        $od_vek= min($od_vek,$vek_po);
+        $do_vek= max($do_vek,$vek_po);
+        $celkem+= $pocet;
+      }
+      display("meze $od_vek..$do_vek");
+      // nedefinované hodnoty nahradíme nulou
+      for ($i= 0; $i<=2; $i++) {
+        for ($v= $od_vek; $v<=$do_vek; $v+=$po) {
+          if (!isset($data[$i][$v*$po])) $data[$i][$v*$po]= 0;
+        }
+        ksort($data[$i]);
+      }
+      $celkem= round($celkem);
+      debug($data,'data');
+      $roky= array(); // názvy intervalů 20..
+      for ($interval= $od_vek; $interval<=$do_vek; $interval++) {
+        $roky[]= $interval*$po . ($po>1 ? '...' : '');
+      }
+//      debug($kurz,"$od-$do");
+      $color= array('grey','darkgreen','blue');
+      $ucastnik= array('účast pouze na MS','... pouze na akcích pro muže','oboje');
+      for ($x= 0; $x<=count($color)-1; $x++) {
+        $datax= implode(',',$data[$x]);
+        $serie= (object)array('name'=>$ucastnik[$x],'data'=>$datax,'color'=>$color[$x]);
+        $chart->series[$x]= $serie;
+      }
+      $chart->title= "Neiniciovaní muži ($celkem) z akcí v letech $od-$do ... "."skladba a věk k $mrop_k";
+      $chart->yAxis= (object)array('title'=>(object)array('text'=>'účastníků'),'tickInterval'=>10);
+//      $chart->yAxis= (object)array('title'=>(object)array('text'=>'účastník'),
+//          'categories'=>$ucastnik);
+      $chart->xAxis= (object)array('categories'=>$roky,
+          'title'=>(object)array('text'=>'stáří '));
+      if (isset($chart->plotOptions->column->stacking)){
+        $chart->tooltip= (object)array(
+          'pointFormat'=>"<span>{series.name}</span>: <b>{point.y}</b> ({point.percentage:.0f}%)<br/>");
+        if ($chart->plotOptions->column->stacking=='value' && $par->prc) {
+          $chart->plotOptions->column->stacking= 'percent';
+        }
+      }
+      break;
+    // --------------------------------------------------------------- specifické pro MROP
     case 'vek_rnd': // modelování věkové struktury - po 5 letech
       $po= $par->po ?: 10;
       $od= $par->od ?: 2004;
@@ -1075,84 +1292,6 @@ function chart_akce($par) { debug($par,'chart_akce');
         $chart->series[$x]= $serie;
       }
       $chart->title= "Iniciovaní ($celkem) v letech $od-$do ... "."skladba a věk k $mrop_k";
-      $chart->yAxis= (object)array('title'=>(object)array('text'=>'účastníků'),'tickInterval'=>10);
-//      $chart->yAxis= (object)array('title'=>(object)array('text'=>'účastník'),
-//          'categories'=>$ucastnik);
-      $chart->xAxis= (object)array('categories'=>$roky,
-          'title'=>(object)array('text'=>'stáří '));
-      if (isset($chart->plotOptions->column->stacking)){
-        $chart->tooltip= (object)array(
-          'pointFormat'=>"<span>{series.name}</span>: <b>{point.y}</b> ({point.percentage:.0f}%)<br/>");
-        if ($chart->plotOptions->column->stacking=='value' && $par->prc) {
-          $chart->plotOptions->column->stacking= 'percent';
-        }
-      }
-      break;
-    case 'vek_abs_nemrop': // věk nyní - neiniciovaní účastníci jiných akcí
-      $now= date('Y-m-d');
-      $k_datu= "'$now'";
-      $mrop_k= sql_date1($now);
-      $po= $par->po ?: 10;
-      $data= array(array(),array(),array()); // stáří non-firming, firming
-      $od= $par->od ?: 2004;
-      $do= $par->do ?: $letos;
-      $roku= $do - $od + 1;
-      $od_vek= 9999; $do_vek= 0;
-      $celkem= 0;
-      $qv= pdo_qry("
-        SELECT 
-          FLOOR(IF(MONTH(narozeni),DATEDIFF($k_datu,narozeni)/365.2425,
-            YEAR($k_datu)-YEAR(narozeni))) AS _vek,
-          ( SELECT BIT_OR(IF(druh IN (1),1,IF(statistika IN (1,2,3,4),2,0))) 
-            FROM pobyt
-            LEFT JOIN spolu USING (id_pobyt)
-            LEFT JOIN osoba AS x USING (id_osoba) 
-            LEFT JOIN akce AS a ON id_akce=a.id_duakce 
-            WHERE a.firm=0 AND a.mrop=0 AND a.zruseno=0 AND a.spec=0
-              AND YEAR(a.datum_od) BETWEEN $od AND $do
-              AND x.id_osoba=osoba.id_osoba
-              AND x.deleted='' AND funkce IN (0,1,2) AND s_role IN (0,1)
-          ) AS _akce,
-          COUNT(*) AS _pocet
-        FROM osoba 
-        WHERE deleted='' AND narozeni AND umrti=0 AND sex=1
-          AND iniciace=0 
-        GROUP BY FLOOR(_vek/$po),_akce
-        HAVING _akce>0 AND _vek BETWEEN 20 AND 99
-        ORDER BY _vek
-      ");
-      while ($qv && (list($vek,$akce,$pocet)=pdo_fetch_row($qv))) {
-        $vek_po= floor($vek/$po);
-        $akce--; // 0 - jen MS, 1 - jen chlapi, 2 - oboje
-        if (!isset($data[$akce][$vek_po*$po])) $data[$akce][$vek_po*$po]= 0;
-        $data[$akce][$vek_po*$po]+= $pocet;
-        $od_vek= min($od_vek,$vek_po);
-        $do_vek= max($do_vek,$vek_po);
-        $celkem+= $pocet;
-      }
-      display("meze $od_vek..$do_vek");
-      // nedefinované hodnoty nahradíme nulou
-      for ($i= 0; $i<=2; $i++) {
-        for ($v= $od_vek; $v<=$do_vek; $v+=$po) {
-          if (!isset($data[$i][$v*$po])) $data[$i][$v*$po]= 0;
-        }
-        ksort($data[$i]);
-      }
-      $celkem= round($celkem);
-      debug($data,'data');
-      $roky= array(); // názvy intervalů 20..
-      for ($interval= $od_vek; $interval<=$do_vek; $interval++) {
-        $roky[]= $interval*$po . ($po>1 ? '...' : '');
-      }
-//      debug($kurz,"$od-$do");
-      $color= array('grey','darkgreen','blue');
-      $ucastnik= array('účast pouze na MS','... pouze na akcích pro muže','oboje');
-      for ($x= 0; $x<=count($color)-1; $x++) {
-        $datax= implode(',',$data[$x]);
-        $serie= (object)array('name'=>$ucastnik[$x],'data'=>$datax,'color'=>$color[$x]);
-        $chart->series[$x]= $serie;
-      }
-      $chart->title= "Neiniciovaní muži ($celkem) z akcí v letech $od-$do ... "."skladba a věk k $mrop_k";
       $chart->yAxis= (object)array('title'=>(object)array('text'=>'účastníků'),'tickInterval'=>10);
 //      $chart->yAxis= (object)array('title'=>(object)array('text'=>'účastník'),
 //          'categories'=>$ucastnik);
@@ -1494,7 +1633,7 @@ function chart_akce($par) { debug($par,'chart_akce');
       break;
   }
   $y->chart= $chart;
-  debug($y);
+//  debug($y);
 end:
   return $y;
 }
@@ -2887,6 +3026,7 @@ function tut_dir_find ($root,$rok,$kod) {
   $y= (object)array('ok'=>1);
   $patt= "{$root}Akce/$rok/$kod*";
   $fs= simple_glob($patt);
+  if (!$fs) return $y;
   $file= $fs[0];
 //                                                debug($fs,$patt);
   if ( count($fs)==1 ) {
