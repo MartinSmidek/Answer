@@ -455,6 +455,7 @@ form _cmd [,,623,30] {
       os1.clear_osoba; os2.clear_osoba;
       rod.rodiny0.Init;
       rod.cleni.show_dup(1);
+      rod.rodiny.display(0);
       rod.new_rodina('');
   }}
   #==> . + skupina
@@ -870,6 +871,7 @@ form _ucast [,,400,] { css:'ds_form', style:'height:fit-content'
       else {
         rod.display(0,'[^f]'); rod.display(1,'y'); rod.enable(0,'y');
       }
+      rod.rodiny.display(1);
       id2= os2.key_osoba;
       echo(`id2=${id2}, cmode=${ucast.evid.cmode}`);
       if (r_cleni) {
@@ -1052,6 +1054,11 @@ form _page  [,,623,20] {
       [ eq(last.get,the_pobyt.get) | u.b.load_zalozka; last.set(the_pobyt.get) ];
     }
   }
+  # ------------------------==> . TEST
+  button TEST [560,9,,] {type:'html', title:'[fa-gear]', style:'z-index:5;margin-top:-16px', skill:'m'
+    func onclick() { 
+      rod.rodiny.display(1);
+  }}
   # ------------------------==> . manuální úprava šíře
   button wider [589,9,,] {type:'html', title:'[fa-toggle-right]', style:'z-index:5;margin-top:-16px'
     func onclick() { 
@@ -1079,7 +1086,7 @@ form _page  [,,623,20] {
     if (nove) warning(nove);
   }
   func oform_display(on) { 
-    if (!has_skill('yawp')) return;
+    if (!has_skill('yawp') || !the_wordpress) return;
     if (on && zalozka=='evid') {
       oform.display(oform_state=='label'); 
       oforms.display(oform_state=='browse'); 
@@ -1104,6 +1111,9 @@ form _page  [,,623,20] {
     }
     else if (the_wordpress) {
       switch (cmd) {
+        case 'off':
+          form.display(0,'oform|oform0'); 
+          break;
         case 'begin':
           oform_state= 'label';
           oform_entry_id= 0;
@@ -1861,17 +1871,28 @@ form _rodina2 [,,360,229]  { css:'ae_frame',
   } }
   // ==> . oprava názvu rodiny
   field  rodiny1   [Lr+5,32,100,] {tag:'m', title:"^oprava názvu rodiny", data:r.nazev, format:'n' }
-  select rodiny    [Lr+5,32,104,] {tag:'a', format:'tT', title:"^rodina&nbsp;('-'&nbsp;jednotlivec)",
-    skill:'yaa|yaa+;faa|faa+;caa|caa+'
-    help:'výběr rodiny podle nastaveného účastníka a její přiřazení k pobytu',
+  select rodiny    [Lr+5,32,104,] {tag:'f', format:'tT', title:"^rodina&nbsp;('-'&nbsp;jednotlivec)",
+      skill:'yaa|yaa+;faa|faa+;caa|caa+'
+      help:'výběr rodiny podle nastaveného účastníka a její přiřazení k pobytu',
     proc onchanged() {
       ask('akce2_pobyt_rodinny',key_pobyt.get,this.key); zmena_rodiny; }}
   button [Lr+108,34,16,16] {tag:'o', type:'html', title:"[fa-pencil]",help:"opravit název rodiny"
-    style:"padding-left:0px", skill:'yaa|yaa+;faa|faa+;caa|caa+' css:'fa'
+      style:"padding-left:0px", skill:'yaa|yaa+;faa|faa+;caa|caa+' css:'fa'
     proc onclick() {
-      form.display(0,'a'); form.display(1,'m'); rodiny1.set(rodiny.get); rodiny1.change; }}
+      form.display(0,'a'); rodiny.display(0); form.display(1,'m'); 
+      rodiny1.set(rodiny.get); rodiny1.change; }}
   select t_role [Lr+131,Tr+22,35,] {tag:'n,a', type:'map', options:ms_akce_t_role.hodnota, format:'wn'
     data:tr.role, title:'^role'}
+  // ==> vytvoření rodiny z účastníků nerodinného pobytu
+  button [Lr+5,58,,] {tag:'u', type:'html', title:"[fa-heart-o] vytvoř novou rodinu",
+      help:"vytvořit novou rodinu ze členů pobytu", skill:'yaa|yaa+;faa|faa+;caa|caa+' 
+    func onclick() { var idr:number
+      idr= php.ucast2_rodina_z_pobytu(key_pobyt); 
+      rodiny.key(idr);
+      rodiny.onchanged();
+      alert(`Zkontroluj a uprav prosím rodinné údaje (např. odhadnutý název rodiny), 
+        roli členů v rodině, pohlaví dětí, ...`)
+  }}
 
   field r_spz      [Lr+5,20,58,]  {tag:'r', data:r.spz, title:'^SPZ auta'}
   label spolu      [Lr+82,7,85,] {tag:'r' }
@@ -1932,20 +1953,36 @@ form _rodina2 [,,360,229]  { css:'ae_frame',
     // metody
     proc show_dup(on) { on; jmeno.width(80); _dup.width(29) | jmeno.width(110); _dup.width(0) }
     proc onclick() { _dup.width; show_dup(0) | show_dup(1) }
-    proc onrowclick() {
-      [ track.display; track.back_osoba_rodina(key_osoba.get,kmen.get) ];
-      eq(cmd.mode.get,'rodiny');
-      show_osoby(key_osoba.get,key_spolu.get,cleni);
-    | neni_ulozen_clen
-    | key_rodina.set(idr.get); form.key(idr.get);
-      [ ucast.part('cmd.novy_clen'); ucast.part('cmd.novy_clen').enable(key_rodina.get) ];
-      od_svatby;
-      show_rodina;
-      show_osoby(key_osoba.get,key_spolu.get,cleni);
-      rody.get;
-      rodiny.selects(rody.get); rodiny.key(idr.get);
-      t_role.set(role.get);
+    func onrowclick() {
+      if (track.display()) { track.back_osoba_rodina(key_osoba,kmen) };
+      if (cmd.mode=='rodiny') { show_osoby(key_osoba,key_spolu,&cleni) }
+      else if (!neni_ulozen_clen()) {
+        key_rodina= idr; form.key(idr);
+        // [ ucast.part('cmd.novy_clen'); ucast.part('cmd.novy_clen').enable(key_rodina.get) ];
+        od_svatby();
+        show_rodina();
+        show_osoby(key_osoba,key_spolu,&cleni);
+        //rody.get;
+        rodiny.selects(rody); rodiny.key(idr);
+        t_role= role;
+        // návrh vytvořit novou rodinu s účastníků pobytu
+        if (rody=='-:0:nerodina' && cleni.browse_count()>1) { form.display(1,'u')}
+      }
     }
+//    proc onrowclick() {
+//      [ track.display; track.back_osoba_rodina(key_osoba.get,kmen.get) ];
+//      eq(cmd.mode.get,'rodiny');
+//      show_osoby(key_osoba.get,key_spolu.get,cleni);
+//    | neni_ulozen_clen
+//    | key_rodina.set(idr.get); form.key(idr.get);
+//      [ ucast.part('cmd.novy_clen'); ucast.part('cmd.novy_clen').enable(key_rodina.get) ];
+//      od_svatby;
+//      show_rodina;
+//      show_osoby(key_osoba.get,key_spolu.get,cleni);
+//      rody.get;
+//      rodiny.selects(rody.get); rodiny.key(idr.get);
+//      t_role.set(role.get);
+//    }
   }
 
   label [7,0,1,170] {tag:'x', title:" " } // výplň pro případ ne-rodiny
