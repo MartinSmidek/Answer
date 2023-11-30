@@ -3427,7 +3427,7 @@ function ucast2_browse_ask($x,$tisk=false) {
     # seznam účastníků akce - podle podmínky
     $qu= pdo_qry("
       SELECT GROUP_CONCAT(id_pobyt) AS _ids_pobyt,s.*,o.narozeni,
-        MIN(CONCAT(IF(role='','?',role),id_rodina)) AS _role,o_umi,prislusnost
+        MIN(CONCAT(IF(IFNULL(role,'')='','?',role),id_rodina)) AS _role,o_umi,prislusnost
       FROM osoba AS o
       JOIN spolu AS s USING (id_osoba)
       JOIN pobyt AS p USING (id_pobyt)
