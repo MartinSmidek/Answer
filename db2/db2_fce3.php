@@ -276,7 +276,7 @@ function akce2_mapa($akce,$filtr='') {  trace();
 #   info.pecouni= [ {ids, hnizdo, prijmeni, jmeno}, ... ]
 function akce2_info($id_akce,$text=1,$pobyty=1) { trace(); 
   $html= '';
-  $info= (object)array('muzi'=>0,'zeny'=>0,'deti'=>0,'peco'=>0,'rodi'=>0,'skup'=>0);
+  $info= (object)array('muzi'=>0,'zeny'=>0,'deti'=>0,'peco'=>0,'rodi'=>0,'skup'=>0,'title'=>array());
   $zpusoby= map_cis('ms_akce_platba','zkratka');  // způsob => částka
   $stavy=   map_cis('ms_platba_stav','zkratka');     // stav úhrady
 //  debug($stavy,'map uhrada_stav');
@@ -5083,8 +5083,8 @@ function akce2_tabulka($akce,$par,$title,$vypis,$export=false) { trace();
   $max_r= 0;
   for ($c= 0; $c<=7; $c++) {
     list($id)= explode(':',$ids[$c]);
-    $ths.= "<th>$id (".count($tab[$c]).")</th>";
-    $max_r= max($max_r,count($tab[$c]));
+    $ths.= "<th>$id (".(isset($tab[$c]) ? count($tab[$c]) : '').")</th>";
+    $max_r= max($max_r,isset($tab[$c]) ? count($tab[$c]) : 0);
   }
   for ($r= 0; $r<$max_r; $r++) {
     $trs.= "<tr>";
@@ -6326,6 +6326,7 @@ function akce2_stravenky_diety($akce,$par,$title,$vypis,$export=false,$hnizdo=0,
   foreach ($clmn as $i=>$c) {
     $pocet= 0;
     foreach ($c as $val) {
+      if (!is_numeric($val)) continue;
       $pocet+= $val;
     }
     if ( $pocet ) {
@@ -8574,8 +8575,8 @@ function akce2_plachta($akce,$par,$title,$vypis,$export=0,$hnizdo=0) { trace();
     $xms= $c->clmn[$idp]['x_ms'];
     $u->ucasti= $xms ? "  {$xms}x" : '';
     // věk
-    $vek_m= sql2stari($u->narozeni_m,$u->datum_od);
-    $vek_z= sql2stari($u->narozeni_z,$u->datum_od);
+    $vek_m= sql2stari($u->narozeni_m,$u->datum_od)?:0;
+    $vek_z= sql2stari($u->narozeni_z,$u->datum_od)?:0;
     $vek= abs($vek_m-$vek_z)<5 ? $vek_m : "$vek_m/$vek_z";
     // spolu
     $spolu= '?';
@@ -9015,9 +9016,9 @@ function akce2_vyuctov_pary($akce,$par,$title,$vypis,$export=false) { trace();
         //            ubyt.         strava        režie         sleva
         $predpis= $x->platba1 + $x->platba2 + $x->platba3 + $x->platba4;
         $platba= $x->uctem + $x->pokladnou;
-        $vratka= $x->vratka;
-        $preplatek= $platba > $predpis ? $platba - $predpis : '';
-        $nedoplatek= $platba < $predpis ? $predpis - $platba : '';
+        $vratka= 0 + $x->vratka;
+        $preplatek= $platba > $predpis ? $platba - $predpis : 0;
+        $nedoplatek= $platba < $predpis ? $predpis - $platba : 0;
 //        $preplatek= $x->platba > $predpis ? $x->platba - $predpis : '';
 //        $nedoplatek= $x->platba < $predpis ? $predpis - $x->platba : '';
         $naklad= $predpis - $x->platba4;
@@ -9026,9 +9027,9 @@ function akce2_vyuctov_pary($akce,$par,$title,$vypis,$export=false) { trace();
                             break;
         case '=platit':     $val= $predpis;
                             $exp= "=[platba1,0]+[platba2,0]+[platba3,0]+[platba4,0]"; break;
-        case '=preplatek':  $val= $preplatek;
+        case '=preplatek':  $val= $preplatek ?: '';
                             $exp= "=IF([=pokladna,0]+[=uctem,0]>[=platit,0],[=pokladna,0]+[=uctem,0]-[=platit,0],0)"; break;
-        case '=nedoplatek': $val= $nedoplatek;
+        case '=nedoplatek': $val= $nedoplatek ?: '';
                             $exp= "=IF([=zaplaceno,0]<[=platit,0],[=platit,0]-[=zaplaceno,0],0)"; break;
         case '=uctem':      $val= 0+$x->uctem; break;
 //        case '=uctem':      $val= $x->pokladnou ? '' : 0+$x->platba; break;
@@ -9049,7 +9050,7 @@ function akce2_vyuctov_pary($akce,$par,$title,$vypis,$export=false) { trace();
                             $exp= "=ROUND([platba2,0]*$DPH2_koef,0)"; break;
         case '=rezie':      $val= 0+$x->platba3;
                             $exp= "=[platba3,0]"; break;
-        case '=vratka':     $val= 0+$vratka; break;
+        case '=vratka':     $val= $vratka; break;
         case '=zaplaceno':  $val= 0+$platba-$vratka;
                             $exp= "=[=uctem,0]+[=pokladna,0]-[=vratka,0]"; break;
 //        case '=zaplaceno':  $val= 0+$x->platba;
@@ -9074,7 +9075,7 @@ function akce2_vyuctov_pary($akce,$par,$title,$vypis,$export=false) { trace();
         if ( $f ) $clmn[$n][$f]= $val; else $clmn[$n][]= $val;
       }
       // případný výpočet sumy
-      if ( isset($suma[$f]) ) {
+      if ( isset($suma[$f]) && is_numeric($val) ) {
          $suma[$f]+= $val;
       }
     }
@@ -9277,7 +9278,7 @@ function akce2_vyuctov_pary2($akce,$par,$title,$vypis,$export=false) { trace();
         if ( $f ) $clmn[$n][$f]= $val; else $clmn[$n][]= $val;
       }
       // případný výpočet sumy
-      if ( isset($suma[$f]) ) {
+      if ( isset($suma[$f]) && is_numeric($val)) {
          $suma[$f]+= $val;
       }
     }

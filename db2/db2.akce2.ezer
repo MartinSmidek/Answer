@@ -256,7 +256,7 @@ form _the_akce {
 form right [,,*,*] { style:"height:calc(100% - 61px)"
   label head [0,0,*,50]  { title:'' style:'padding-right:10px'}
   label msg  [0,35,*,20] { title:'' style:'padding-right:10px'}
-  label note [0,57,,*]   { title:'' style:'padding-right:10px;width:calc(100% - 30px);overflow:auto'}
+  label note [0,57,,]    { title:'' style:'padding-right:10px;width:calc(100% - 30px);overflow:auto'}
   proc fill(x,y) {
     [ x; head.set(conc("<div class='karta'>",x,"</div>")) ];
     [ y; note.set(y) ]
@@ -1373,7 +1373,7 @@ form _rodina2p [,,188,229] { css:'ae_frame'
   proc on_click() {}
   func od_svatby() {
     if (r_rozvod) spolu= "<span style='background:yellow'>jsou rozvedeni</span>"
-    elseif (r_datsvatba) spolu= `od svatby ${roku(r_datsvatba,r_svatba)} let`
+    elseif (r_datsvatba) spolu= `od svatby ${js.roku(r_datsvatba,r_svatba)} let`
     else spolu= 'datum svatby'
   }
 //  proc od_svatby() {

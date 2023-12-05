@@ -782,6 +782,7 @@ Ezer.fce.rc2roky= function (rc) {
 //      vrací zaokrouhlený počet roku uplynulých od daného data, první rok počítá i načatý
 //      uvedený na 1 desetinné místo pro věk>20
 //s: ys
+var roku= 
 Ezer.fce.roku= function (dat,rok) {
   var roku= '', now= new Date();
   if ( dat ) {
