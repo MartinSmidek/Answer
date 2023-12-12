@@ -15,7 +15,7 @@ $parm= [
   'akce:typ'      => 'VPS', 
   'akce:na'       => 'Duchovní obnovu VPS', 
   'akce:popis'    => "kterou se přihlašujete na tradiční duchovní obnovu, kterou pro nás"
-                  . " připravuje Komunita blahoslavenství v Dolanech. Zahájení je v pátek 19. ledna "
+                  . " připravuje Komunita Blahoslavenství. Zahájení je v pátek 19. ledna "
                   . " v 18:00 a ukončení v neděli 21. ledna po obědě. ",
   'form:pata'     => 'Je možné, že se vám během vyplňování objeví nějaká chyba, '
                   . ' případně nedojde slíbené potvrzení. Omlouváme se za nepříjemnost s beta-verzí přihlášek.'
