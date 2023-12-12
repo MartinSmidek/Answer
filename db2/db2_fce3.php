@@ -14757,17 +14757,20 @@ function mail2_mai_stav($id_mail,$stav) {  trace();
 }
 # ------------------------------------------------------------------------------ mail2 new_PHPMailer
 # nastavení parametrů pro SMTP server podle user.options.smtp
-function mail2_new_PHPMailer() {  
+# nebo přímo zadáním parametrů
+function mail2_new_PHPMailer($smtp=null) {  
   global $ezer_path_serv, $ezer_root;
-  // získání parametrizace SMTP
-  $idu= $_SESSION[$ezer_root]['user_id'];
-  $i_smtp= sys_user_get($idu,'opt','smtp');
-  $smtp_json= select1('hodnota','_cis',"druh='smtp_srv' AND data=$i_smtp");
-  $smtp= json_decode($smtp_json);
-  if ( json_last_error() != JSON_ERROR_NONE ) {
-    $mail= null;
-    fce_warning("chyba ve volbe SMTP serveru" . json_last_error_msg());
-    goto end;
+  $mail= null;
+  if (!$smtp) {
+    // získání parametrizace SMTP
+    $idu= $_SESSION[$ezer_root]['user_id'];
+    $i_smtp= sys_user_get($idu,'opt','smtp');
+    $smtp_json= select1('hodnota','_cis',"druh='smtp_srv' AND data=$i_smtp");
+    $smtp= json_decode($smtp_json);
+    if ( json_last_error() != JSON_ERROR_NONE ) {
+      fce_warning("chyba ve volbe SMTP serveru" . json_last_error_msg());
+      goto end;
+    }
   }
   // inicializace phpMailer
   $phpmailer_path= "$ezer_path_serv/licensed/phpmailer";
@@ -14922,13 +14925,13 @@ function mail2_mai_send($id_dopis,$kolik,$from,$fromname,$test='',$id_mail=0,$fo
     }
     $mail->Body= $obsah . $foot;
     $mail->AddAddress($test);   // pošli sám sobě
-    // pseudo dump 
-    $mail->SMTPDebug= 3;
-    $mail->Debugoutput = function($str, $level) { display("debug level $level; message: $str");};
-    $pars= (object)array();
-    foreach (explode(',',"Mailer,Host,Port,SMTPAuth,SMTPSecure,Username,From,AddReplyTo,FromName,SMTPOptions") as $p) {
-      $pars->$p= $mail->$p;
-    }
+//    // pseudo dump 
+//    $mail->SMTPDebug= 3;
+//    $mail->Debugoutput = function($str, $level) { display("debug level $level; message: $str");};
+//    $pars= (object)array();
+//    foreach (explode(',',"Mailer,Host,Port,SMTPAuth,SMTPSecure,Username,From,AddReplyTo,FromName,SMTPOptions") as $p) {
+//      $pars->$p= $mail->$p;
+//    }
 //    debug($pars,"nastavení PHPMAILER");
     // pošli
     if ( $TEST ) {

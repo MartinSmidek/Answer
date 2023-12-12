@@ -1,11 +1,16 @@
 <?php
 # pilotní verze online přihlašování pro YMCA Setkání (jen typ pro VPS)
 # debuger je lokálne nastaven pro verze PHP: 7.2.33
-$TEST= 1;
-if ($_GET['pokus']??''!='dolany') die('n.y.i.');   
+$TEST= 0;
+//$OPTIONS= ['beta'=>'dolany','err'=>3];
+
+if (isset($OPTIONS['beta']) && (!isset($_GET['beta']) || $_GET['beta']!='dolany')) 
+  die("Online přihlašování na akce YMCA Setkání není k dospozici.");   
+    
+init();
 # ------------------------------------------ parametry přihlášky
 $parm= [
-  'akce:id_akce'  => 1538, 
+  'akce:id_akce'  => $ezer_server ? 1538 : 1539, 
   'akce:typ'      => 'VPS', 
   'akce:nazev'    => 'Přihláška na Duchovní obnovu VPS',
   'akce:popis'    => "kterou se přihlašujete na tradiční duchovní obnovu, kterou pro nás"
@@ -13,38 +18,52 @@ $parm= [
                   . " v 18:00 a ukončení v neděli 21. ledna po obědě. ",
   'form:pata'     => 'Je možné, že se vám během vyplňování objeví nějaká chyba, '
                   . ' případně nedojde slíbené potvrzení. Omlouváme se za nepříjemnost s beta-verzí přihlášek.'
-                  . '<br><br>Napište nám prosím v takovém případě na kancelar@setkani.org, že se chcete na akci přihlásit.',
+                  . '<br><br>Přihlaste se prosím v takovém případě mailem zaslaným na kancelar@setkani.org.'
+                  . '<br>Připojte prosím popis závady.',
   'end'           => '.'
 ];
-init();
 todo();
 page();
 exit;
 # ----------------------------------------------------------------------------- inicializace procesu
 function init() {
-  global $post, $faze, $msg;
-  global $TEST, $s, $errors;
+  global $post, $faze, $msg, $OPTIONS;
+  global $trace, $totrace, $TEST, $y, $errors, $mysql_db_track, $mysql_tracked;  // $y je obecná stavová proměnná Ezer
   # ------------------------------------------ start
   date_default_timezone_set('Europe/Prague');
   if ( isset($_GET['err']) && $_GET['err'] ) error_reporting(-1); else error_reporting(0);
   ini_set('display_errors', 'On');
   # ------------------------------------------ trasování 
-  global $trace, $totrace, $s, $TEST;
   $trace= '';
   if ($TEST) $totrace= 'Mu';
-  $s= (object)[];
+  $y= (object)[];
   $errors= [];
   # ------------------------------------------ init
   // skryté definice
-  global $ezer_server, $dbs, $ezer_db, $USER, $kernel;
+  global $ezer_server, $dbs, $ezer_db, $USER, $kernel, $ezer_path_serv;
   $USER= (object)['abbr'=>'WEB'];
   $kernel= "ezer3.2";
-  $deep_root= "../files/akce";
-  require_once("$deep_root/akce.dbs.php");
-  require_once("akce/mini.php");
+  $ezer_path_serv= "$kernel/server";
+  $deep_root= "../files/answer";
+  require_once("$deep_root/db2.dbs.php");
+  
+//  require_once("akce/mini.php");
+  
+  require_once("$kernel/server/ae_slib.php");
+  require_once("$kernel/pdo.inc.php");
+  require_once("$kernel/server/ezer_pdo.php");
+  require_once("db2/db2_fce3.php");
+  
+  global $ezer_db, $db, $dbs, $ezer_server;
+  // redefine OBSOLETE
+  if (isset($dbs[$ezer_server])) $dbs= $dbs[$ezer_server];
+  if (isset($db[$ezer_server])) $db= $db[$ezer_server];
   $ezer_db= $dbs;
   ezer_connect('ezer_db2');
-
+  
+  // definice zápisů do _track
+  $mysql_db_track= true;
+  $mysql_tracked= ',akce,pobyt,spolu,osoba,tvori,rodina,_user,';
   // nastavení nového=prázdného formuláře
   session_start();
 //  $trace.= debugx($_SESSION,'$_SESSION - vstup');
@@ -58,7 +77,8 @@ function init() {
 //    $_SESSION['akce']['faze']= 'b';
     $_SESSION['akce']['history']= '';
     $_SESSION['akce']['POST']= $_POST;
-    $_SESSION['akce']['index']= $index= 'prihlaska.php';
+    $index= "prihlaska.php".(isset($OPTIONS) ? '?'.implode('&',$OPTIONS) : '');
+    $_SESSION['akce']['index']= $index;
     $_SESSION['akce']['server']= $ezer_server;
   }
   $trace.= debugx($_SESSION,'$_SESSION - start');
@@ -86,9 +106,8 @@ function init() {
 # --------------------------------------------------------------------------------- definice procesu
 function todo() {
   global $post, $faze, $msg, $form, $parm;
-  global $TEST, $s, $errors;
+  global $TEST, $y, $errors;
   global $email, $pin, $note;
-  global $api_gmail_name, $api_gmail_user;
   $_SESSION['akce']['history'].= $faze;
   $email= $post['email'] ?? '';                   
   display("todo-begin fáze:$faze, email=$email");
@@ -98,12 +117,18 @@ function todo() {
 
   switch ($faze) {
   // --------------------------------------------- otestování emailu, pokud je ok poslání PIN
+  // $post obsahuje: email, zaslany_pin
+  //           nově: idr, ido_a, jmeno_a, ido_b, jmeno_b
   case 'a': 
     $chyby= null;
-    if (mail_ok($email,$chyby)) {
+    $ok= emailIsValid($email,$chyby);
+    if (!$ok) 
+      $chyby= "Tuto emailová adresu není možné použít:<br>$chyby";
+    else {
       clear_post_but("/email|^.$/");
       // zjistíme, zda jej máme v databázi
-      list($pocet,$ido,$role,$jmena)= select("COUNT(id_osoba),id_osoba,role,GROUP_CONCAT(CONCAT(jmeno,' ',prijmeni))",
+      list($pocet,$ido,$role,$idr,$jmena)= select(
+          "COUNT(id_osoba),id_osoba,role,id_rodina,GROUP_CONCAT(CONCAT(jmeno,' ',prijmeni))",
           'osoba AS o JOIN tvori USING (id_osoba) JOIN rodina USING (id_rodina)',
           "o.deleted='' AND role IN ('a','b') "
           . "AND (kontakt=1 AND email $regexp OR kontakt=0 AND emaily $regexp)");
@@ -127,34 +152,50 @@ function todo() {
           $kdy= $kdy ? "od ".sql_time1($kdy) : '';
           $kdo= $kdo ? "pod značkou $kdo" : '';
           $chyby= "Na této akci jste již $kdy přihlášeni $kdo."
-              . "<br>Přejeme vám příjemný pobyt :-)";
+              . "<br><br>Přejeme vám příjemný pobyt :-)";
         }
       }
     }
     if (!$chyby) {
-      // zašleme PIN a doplníme jména přihlášujících se
+      // zašleme PIN 
       $pin= rand(1000,9999);
-      query("UPDATE osoba SET pin=$pin,pin_vydan=NOW() WHERE id_osoba=$ido");
-      global $api_gmail_user;
-      $msg= send_mail('martin@smidek.eu', $email, "PIN ($pin) pro prihlášení na akci",
-          "V přihlášce na akci napiš vedle svojí mailové adresy $pin a pokračuj tlačítkem [Ověřit PIN]", 
-          $api_gmail_name, $api_gmail_user);
-      if ( $msg ) {
+//      query("UPDATE osoba SET pin=$pin,pin_vydan=NOW() WHERE id_osoba=$ido");
+      $msg= simple_mail('martin@smidek.eu', $email, "PIN ($pin) pro prihlášení na akci",
+          "V přihlášce na akci napiš vedle svojí mailové adresy $pin a pokračuj tlačítkem [Ověřit PIN]");
+      if ( $msg!='ok' ) {
         $chyby.= "Litujeme, mail s PINem se nepovedlo odeslat, přihlas se prosím na akci jiným způsobem."
             . "<br>($msg)";
       }
-      display("a3: poslán mail");
-      
+      else {
+        $msg= "Byl vám poslán mail";
+        // doplníme hodnoty do $post 
+        $post['zaslany_pin']= $pin;
+        $post['idr']= $idr;
+        if ($role=='a') {
+          $post['ido_a']= $ido;
+          $post['jmeno_a']= $jmena;
+          list($post['ido_b'],$post['jmeno_b'])= select(
+              "id_osoba,CONCAT(jmeno,' ',prijmeni)",'osoba JOIN tvori USING (id_osoba)',
+              "id_rodina=$idr AND role='b' ");
+        }
+        else {
+          $post['ido_b']= $ido;
+          $post['jmeno_b']= $jmena;
+          list($post['ido_a'],$post['jmeno_a'])= select(
+              "id_osoba,CONCAT(jmeno,' ',prijmeni)",'osoba JOIN tvori USING (id_osoba)',
+              "id_rodina=$idr AND role='a' ");
+        }
+      }
       $chyby.= "STOP";
-//      // jdeme dál
-//      $faze= 'b';
-//      todo();
-//      break;
+      // jdeme dál
+      $faze= 'b';
+      todo();
+      break;
     }
     if ($chyby) {
       $msg= "<p>$chyby</p>";
       $form= <<<__EOF
-          <p>Abychom ověřili, že se přihlašujete právě vy, napište svůj mail, pošleme na něj přihlašovací PIN.</p>
+        <p>Abychom ověřili, že se přihlašujete právě vy, napište svůj mail, pošleme na něj přihlašovací PIN.</p>
         <input type="text" size="24" name='email' value='$email'>
         <input type="submit" value="Zaslat PIN">
         $msg
@@ -162,17 +203,20 @@ __EOF;
     }
     break;
   // --------------------------------------------------------------- porovnání zaslaného PINU
+  // $post obsahuje: email, zaslany_pin, idr, ido_a, jmeno_a, ido_b, jmeno_b
+  //           nově: pin
   case 'b': 
+    clear_post_but("/email|zaslany_pin|idr|ido_a|jmeno_a|ido_b|jmeno_b/");
     // zjistíme PIN zapsaný u nositele mailové adresy
-    if ($pin && $pin=="1234") {
-      clear_post_but("/email|pin|^.$/");
+    if ($pin && $pin==$post['zaslany_pin']) {
       $post['a']= $post['b']= 'x'; // default = oba manžel=
       $faze= 'c';
       todo();
     }
     else {
-      $msg= $pin ? "<p>chybný PIN</p>" : "<p>opiš PIN z mailu</p>";
+      $msg= $pin ? "<p>Do mailu jsme poslali odlišný PIN</p>" : "<p></p>";
       $form= <<<__EOF
+        <p>Na uvedený mail vám byl zaslán PIN, opište jej vedle své mailové adresy.</p>
         <input type="text" size="24" name='email' value='$email' disabled>
         <input type="text" size="4" name='pin' value="$pin">
         <input type="submit" value="ověřit PIN">
@@ -182,10 +226,13 @@ __EOF;
     break;
   // ----------------------------------------------------------------- vyžádání údajů přihlášky
   case 'c':
+  // $post obsahuje: email, pin, idr, ido_a, jmeno_a, ido_b, jmeno_b, pin
+  //           nově: a, b, note, ano, ne
     if (isset($post['ne'])) {
       clear_post_but("/---/");
       $faze= 'd';
-      $msg= "Tak nic.";
+      $msg= "Vyplňování přihlášky bylo ukončeno bez jejího odeslání. "
+          . "<br>Na akci jste se tedy nepřihlásili.";
       todo();
       break;
     }
@@ -193,7 +240,7 @@ __EOF;
       if ($TEST) { $msg= debugx($post,'opis hodnot'); }
       // validace hodnot
       $zapsat= true;
-      if (!$post['a'] && !$post['b']) {
+      if (!isset($post['a']) && !isset($post['b'])) {
         $msg= "Zaškrtněte prosím kdo se akce zúčastní";
         $zapsat= false;
       }      
@@ -209,23 +256,25 @@ __EOF;
         if ($post['note'])
           $chng[]= (object)array('fld'=>'poznamka', 'op'=>'i','val'=>$post['note']);
         $idp= ezer_qry("INSERT",'pobyt',0,$chng);
-        if ($s->error) $errors[]= $s->error;
+        if (!$idp) $errors[]= "Nastala chyba při zápisu do databáze (p)"; 
         if ($idp) {
           // přidej k pobytu osoby
-          if ($post['a']) 
-            ezer_qry("INSERT",'spolu',0,array(
+          if ($post['a']) {
+            $ids= ezer_qry("INSERT",'spolu',0,array(
               (object)array('fld'=>'id_pobyt', 'op'=>'i','val'=>$idp),
               (object)array('fld'=>'id_osoba', 'op'=>'i','val'=>$post['ido_a']),
               (object)array('fld'=>'s_role',   'op'=>'i','val'=>1) // jako účastník
             ));
-          if ($s->error) $errors[]= $s->error;
-          if ($post['b']) 
-            ezer_qry("INSERT",'spolu',0,array(
+            if (!$ids) $errors[]= "Nastala chyba při zápisu do databáze (a)"; 
+          }
+          if ($post['b']) {
+            $ids= ezer_qry("INSERT",'spolu',0,array(
               (object)array('fld'=>'id_pobyt', 'op'=>'i','val'=>$idp),
               (object)array('fld'=>'id_osoba', 'op'=>'i','val'=>$post['ido_b']),
               (object)array('fld'=>'s_role',   'op'=>'i','val'=>1) // jako účastník
             ));
-          if ($s->error) $errors[]= $s->error;
+            if (!$ids) $errors[]= "Nastala chyba při zápisu do databáze (b)"; 
+          }
         }
         // připrav závěrečnou zprávu
         if (count($errors)) {
@@ -233,8 +282,13 @@ __EOF;
               . "<br>Přihlaste se prosím posláním mailu Markétě Zelinkové";
         }
         else {
-          $msg= "Na adresu $email bude posláno potvrzení o přihlášce."
-              . "<br>Těšíme se na setkání. ";
+          $rekapitulace= "pro účastníky: ";
+          if ($post['a']) $rekapitulace.= $post['jmeno_a'];
+          if ($post['b']) $rekapitulace.= ($post['a'] ? ' a ' : '').$post['jmeno_b'];
+          if ($post['note']) $rekapitulace.= "<br>s poznámkou {$post['note']}.";
+          $msg= "<p>Na adresu $email bude posláno potvrzení o přihlášce</p>"
+              . "$rekapitulace"
+              . "<p>Těšíme se na setkání.</p>";
         }
         // uzavři formulář
         clear_post_but("/---/");
@@ -244,28 +298,20 @@ __EOF;
       }
     }
     // zobraz hodnoty z databáze pokud není ani ANO ani NE
-    $regexp= "REGEXP '(^|[;,\\\\s]+)$email($|[;,\\\\s]+)'";
-    $post['idr']= $idr= select('id_rodina',
-        'osoba JOIN tvori USING (id_osoba) JOIN rodina USING (id_rodina)',
-        "kontakt=1 AND email $regexp OR kontakt=0 AND emaily $regexp ORDER BY role LIMIT 1");
-    list($post['ido_a'],$a)= select("IFNULL(id_osoba,0),CONCAT(jmeno,' ',prijmeni)",
-        'osoba JOIN tvori USING (id_osoba)',
-        "id_rodina=$idr AND role='a'");
-    list($post['ido_b'],$b)= select("IFNULL(id_osoba,0),CONCAT(jmeno,' ',prijmeni)",
-        'osoba JOIN tvori USING (id_osoba)',
-        "id_rodina=$idr AND role='b'");
-    // zobrazení
     $a_role=  isset($post['a']) ? 'checked' : '';
     $b_role=  isset($post['b']) ? 'checked' : '';
+
     $form= <<<__EOF
+      <p>Na tento mail vám bude posláno potvrzení o přijetí přihlášky:</p>
       <input type="text" size="24" name='email' value='$email' disabled>
       <input type="text" size="4" name='pin' value="$pin" disabled>
-      <br><input type="checkbox" name='a' value="x" $a_role /><label for="a">$a</label>
-      <br><input type="checkbox" name='b' value="x" $b_role /><label for="b">$b</label>
-      <br><textarea rows="3" cols="24" name='note'>$note</textarea> 
+      <p>K pobytu na akci se přihlašuje:</p>
+      <input type="checkbox" name='a' value="x" $a_role /><label for="a">{$post['jmeno_a']}</label>
+      <br><input type="checkbox" name='b' value="x" $b_role /><label for="b">{$post['jmeno_b']}</label>
+      <br><textarea rows="3" cols="32" name='note'>$note</textarea> 
       <br><input type="submit" name="ano" value="odeslat přihlášku" />
       <input type="submit" name="ne" value="neposílat" />
-      $msg
+      <p>$msg</p>
 __EOF;
     break;
   // ------------------------- konec
@@ -277,7 +323,7 @@ __EOF;
     }
     else {
       $form= <<<__EOF
-        $msg
+        <p>$msg</p>
 __EOF;
     }
   }
@@ -287,14 +333,14 @@ __EOF;
 }
 // ------------------------------------------------------------------------------- zobrazení stránky
 function page() {
-  global $post, $form, $parm;
-  global $TEST, $trace, $s, $errors;
+  global $post, $form, $parm, $index;
+  global $TEST, $trace, $y, $errors;
   $icon= "akce.png";
   if ($TEST) {
     if (count($errors)) $trace.= '<hr><span style="color:red">'.implode('<hr>',$errors).'</span>';
 //    $trace.= '<hr>'.debugx($post,'$post');
     $trace.= '<hr>'.debugx($_SESSION,'$_SESSION - výstup');
-    $trace.= '<hr>'.nl2br($s->qry??'');
+    $trace.= '<hr>'.nl2br($y->qry??'');
   }
   else $trace= '';
   echo <<<__EOD
@@ -317,7 +363,7 @@ function page() {
       <h1>{$parm['akce:nazev']}</h1>
       <div id='popis'>{$parm['akce:popis']}</div>
       <div class='formular'>
-        <form action="prihlaska.php" method="post">
+        <form action="$index" method="post">
           $form
         </form>
       </div>
@@ -339,19 +385,52 @@ function clear_post_but($flds_match) {
   }
   $_SESSION['akce']['POST']= $post;
 }
-function mail_ok($email,&$reason) {
-   $isValid= true;
-   $reasons= array();
-   $atIndex= strrpos($email, "@");
-   if (!$email) {
-      $isValid= false;
-      $reasons[]= "zadej svoji mailovou adresu";
-   }
-   elseif (is_bool($atIndex) && !$atIndex) {
-      $isValid= false;
-      $reasons[]= "chybí @";
-   }
-   $reason= count($reasons) ? implode(', ',$reasons) : '';
-   return $isValid;
+function simple_mail($replyto,$address,$subject,$body) {
+  global $api_gmail_user, $api_gmail_pass, $api_gmail_name, $TEST;
+  $msg= '';
+  $smtp= (object)[
+      "Host" => "smtp.gmail.com",
+      "Port" => 465,
+      "SMTPAuth" => 1,
+      "SMTPSecure" => "ssl",
+      "Username" => $api_gmail_user,
+      "Password" => $api_gmail_pass
+  ];
+  $mail= mail2_new_PHPMailer($smtp);
+  if ( !$mail ) { 
+    $msg= "CHYBA odesílací adresu nelze použít ($api_gmail_user)";
+    goto end;
+  }
+  $mail->From= $mail->Username;
+  $mail->addReplyTo($replyto);
+  $mail->FromName= $api_gmail_name;
+  $mail->AddAddress($address);   
+  $mail->Subject= $subject;
+  $mail->Body= $body;
+  if ($TEST) {
+    $msg= 'ok'; // TEST bez odeslání
+  }
+  else {
+    if ($TEST) {
+      // pseudo dump 
+      $mail->SMTPDebug= 3;
+      $mail->Debugoutput= function($str, $level) { display("debug level $level; message: $str</div>");};
+      $pars= (object)array();
+      foreach (explode(',',"Mailer,Host,Port,SMTPAuth,SMTPSecure,Username,From,FromName,SMTPOptions") as $p) {
+        $pars->$p= $mail->$p;
+      }
+      debug($pars,"nastavení PHPMAILER");
+    }
+    $ok= $mail->Send();
+    if ( $ok  ) {
+      $msg= "ok";
+    }
+    else {
+      $msg= "CHYBA při odesílání mailu došlo k chybě: $mail->ErrorInfo";
+      goto end;
+    }
+  }
+  end:
+    return $msg;
 }
 
