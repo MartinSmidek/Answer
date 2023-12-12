@@ -2,7 +2,7 @@
 # pilotní verze online přihlašování pro YMCA Setkání (jen typ pro VPS)
 # debuger je lokálne nastaven pro verze PHP: 7.2.33
 $TEST= 0;
-//$OPTIONS= ['beta'=>'dolany','err'=>3];
+$OPTIONS= ['beta'=>'dolany','err'=>3];
 
 if (isset($OPTIONS['beta']) && (!isset($_GET['beta']) || $_GET['beta']!='dolany')) 
   die("Online přihlašování na akce YMCA Setkání není k dospozici.");   
