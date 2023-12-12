@@ -2,17 +2,18 @@
 # pilotní verze online přihlašování pro YMCA Setkání (jen typ pro VPS)
 # debuger je lokálne nastaven pro verze PHP: 7.2.33
 $TEST= 0;
-$OPTIONS= ['beta'=>'dolany','err'=>3];
+$OPTIONS= ['akce'=>'dolany','err'=>3];
 
-if (isset($OPTIONS['beta']) && (!isset($_GET['beta']) || $_GET['beta']!='dolany')) 
-  die("Online přihlašování na akce YMCA Setkání není k dospozici.");   
+if (isset($OPTIONS['akce']) && (!isset($_GET['akce']) || $_GET['akce']!='dolany')) 
+  die("Online přihlašování na akce YMCA Setkání není k dospozici."); 
+if (isset($_GET['trace']) || isset($_SESSION['akce']['trace'])) $TEST= 1;
     
 init();
 # ------------------------------------------ parametry přihlášky
 $parm= [
-  'akce:id_akce'  => $ezer_server ? 1538 : 1539, 
+  'akce:id_akce'  => 1539, 
   'akce:typ'      => 'VPS', 
-  'akce:nazev'    => 'Přihláška na Duchovní obnovu VPS',
+  'akce:na'       => 'Duchovní obnovu VPS', 
   'akce:popis'    => "kterou se přihlašujete na tradiční duchovní obnovu, kterou pro nás"
                   . " připravuje Komunita blahoslavenství v Dolanech. Zahájení je v pátek 19. ledna "
                   . " v 18:00 a ukončení v neděli 21. ledna po obědě. ",
@@ -33,11 +34,6 @@ function init() {
   date_default_timezone_set('Europe/Prague');
   if ( isset($_GET['err']) && $_GET['err'] ) error_reporting(-1); else error_reporting(0);
   ini_set('display_errors', 'On');
-  # ------------------------------------------ trasování 
-  $trace= '';
-  if ($TEST) $totrace= 'Mu';
-  $y= (object)[];
-  $errors= [];
   # ------------------------------------------ init
   // skryté definice
   global $ezer_server, $dbs, $ezer_db, $USER, $kernel, $ezer_path_serv;
@@ -46,26 +42,30 @@ function init() {
   $ezer_path_serv= "$kernel/server";
   $deep_root= "../files/answer";
   require_once("$deep_root/db2.dbs.php");
-  
-//  require_once("akce/mini.php");
-  
   require_once("$kernel/server/ae_slib.php");
   require_once("$kernel/pdo.inc.php");
   require_once("$kernel/server/ezer_pdo.php");
   require_once("db2/db2_fce3.php");
   
   global $ezer_db, $db, $dbs, $ezer_server;
-  // redefine OBSOLETE
-  if (isset($dbs[$ezer_server])) $dbs= $dbs[$ezer_server];
-  if (isset($db[$ezer_server])) $db= $db[$ezer_server];
-  $ezer_db= $dbs;
-  ezer_connect('ezer_db2');
-  
   // definice zápisů do _track
   $mysql_db_track= true;
   $mysql_tracked= ',akce,pobyt,spolu,osoba,tvori,rodina,_user,';
   // nastavení nového=prázdného formuláře
   session_start();
+  # ------------------------------------------ trasování 
+  $trace= '';
+  if ($TEST) {
+    $totrace= 'Mu';
+    $_SESSION['akce']['trace']= $TEST;
+  }
+  $y= (object)[];
+  $errors= [];
+  // otevření databáze a redefine OBSOLETE
+  if (isset($dbs[$ezer_server])) $dbs= $dbs[$ezer_server];
+  if (isset($db[$ezer_server])) $db= $db[$ezer_server];
+  $ezer_db= $dbs;
+  ezer_connect('ezer_db2');
 //  $trace.= debugx($_SESSION,'$_SESSION - vstup');
   if (!isset($_SESSION['akce']['faze'])) {
     $_POST= [];
@@ -77,11 +77,15 @@ function init() {
 //    $_SESSION['akce']['faze']= 'b';
     $_SESSION['akce']['history']= '';
     $_SESSION['akce']['POST']= $_POST;
-    $index= "prihlaska.php".(isset($OPTIONS) ? '?'.implode('&',$OPTIONS) : '');
+    $index= "prihlaska.php"; $del_index= '?';
+    foreach ($OPTIONS as $get=>$val) {
+      $index.= "$del_index$get=$val";
+      $del_index= '&';
+    }
     $_SESSION['akce']['index']= $index;
     $_SESSION['akce']['server']= $ezer_server;
   }
-  $trace.= debugx($_SESSION,'$_SESSION - start');
+  $trace.= debugx($_SESSION['akce'],'$_SESSION[akce] - start');
   $trace.= debugx($_POST,'$_POST - start');
   $faze= $_SESSION['akce']['faze'];
 
@@ -106,7 +110,7 @@ function init() {
 # --------------------------------------------------------------------------------- definice procesu
 function todo() {
   global $post, $faze, $msg, $form, $parm;
-  global $TEST, $y, $errors;
+  global $TEST, $errors, $ezer_server;
   global $email, $pin, $note;
   $_SESSION['akce']['history'].= $faze;
   $email= $post['email'] ?? '';                   
@@ -123,7 +127,7 @@ function todo() {
     $chyby= null;
     $ok= emailIsValid($email,$chyby);
     if (!$ok) 
-      $chyby= "Tuto emailová adresu není možné použít:<br>$chyby";
+      $chyby= $email ? "Tuto emailová adresu není možné použít:<br>$chyby" : ' ';
     else {
       clear_post_but("/email|^.$/");
       // zjistíme, zda jej máme v databázi
@@ -289,6 +293,10 @@ __EOF;
           $msg= "<p>Na adresu $email bude posláno potvrzení o přihlášce</p>"
               . "$rekapitulace"
               . "<p>Těšíme se na setkání.</p>";
+          $cc= $from= $ezer_server ? "kancelar@setkani.org" : "martin.smidek@gmail.com";
+          simple_mail($from, $post['email'], "Potvrzení přijetí přihlášky", 
+              "Potvrzujeme, že jsme přijali vaši přihlášku na {$parm['akce:na']}"
+              . "<br>$rekapitulace",$cc);
         }
         // uzavři formulář
         clear_post_but("/---/");
@@ -333,13 +341,13 @@ __EOF;
 }
 // ------------------------------------------------------------------------------- zobrazení stránky
 function page() {
-  global $post, $form, $parm, $index;
+  global $form, $parm, $index;
   global $TEST, $trace, $y, $errors;
   $icon= "akce.png";
   if ($TEST) {
     if (count($errors)) $trace.= '<hr><span style="color:red">'.implode('<hr>',$errors).'</span>';
 //    $trace.= '<hr>'.debugx($post,'$post');
-    $trace.= '<hr>'.debugx($_SESSION,'$_SESSION - výstup');
+    $trace.= '<hr>'.debugx($_SESSION['akce'],'$_SESSION[akce] - výstup');
     $trace.= '<hr>'.nl2br($y->qry??'');
   }
   else $trace= '';
@@ -360,7 +368,7 @@ function page() {
   <body onload="">
     <div id='obal'>
       <div id='head'><a href="https://www.setkani.org"><i class="fa fa-home"></i> YMCA Setkání</a></div>
-      <h1>{$parm['akce:nazev']}</h1>
+      <h1>Přihláška na {$parm['akce:na']}</h1>
       <div id='popis'>{$parm['akce:popis']}</div>
       <div class='formular'>
         <form action="$index" method="post">
@@ -385,7 +393,7 @@ function clear_post_but($flds_match) {
   }
   $_SESSION['akce']['POST']= $post;
 }
-function simple_mail($replyto,$address,$subject,$body) {
+function simple_mail($replyto,$address,$subject,$body,$cc='') {
   global $api_gmail_user, $api_gmail_pass, $api_gmail_name, $TEST;
   $msg= '';
   $smtp= (object)[
@@ -403,6 +411,9 @@ function simple_mail($replyto,$address,$subject,$body) {
   }
   $mail->From= $mail->Username;
   $mail->addReplyTo($replyto);
+  if ($cc) {
+    $mail->AddCC($cc);
+  }
   $mail->FromName= $api_gmail_name;
   $mail->AddAddress($address);   
   $mail->Subject= $subject;
