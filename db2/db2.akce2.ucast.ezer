@@ -1966,7 +1966,7 @@ form _rodina2 [,,360,229]  { css:'ae_frame',
         rodiny.selects(rody); rodiny.key(idr);
         t_role= role;
         // návrh vytvořit novou rodinu s účastníků pobytu
-        if (rody=='-:0:nerodina' && cleni.browse_count()==1) { form.display(1,'u')}
+        if (rody=='-:0:nerodina' && cleni.browse_count()>1) { form.display(1,'u')}
       }
     }
 //    proc onrowclick() {
