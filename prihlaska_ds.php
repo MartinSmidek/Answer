@@ -324,7 +324,7 @@ __EOF;
         if ($novy->syn && $novy->dcera)
           $neuplne[]= "zvolte jen syn NEBO dcera (nebo nechte nevyplněné, pokud dítě není z vaší rodiny) ";
         if (!$novy->syn && !$novy->dcera)
-          $poznamka[]= "<br>(volbu ANI dcera ANI syn chápu tak, že se nejedná o člena vaší rodiny)";
+          $poznamka[]= "<br>(volbu ANI dcera ANI syn chápeme tak, že se nejedná o člena vaší rodiny)";
         if ($novy->narozeni) {
           $datum= str_replace(' ','',$novy->narozeni);
           $dmy= explode('.',$datum);
@@ -446,12 +446,16 @@ __EOF;
       <p>Poznačte prosím, koho na akci přihlašujete:</p>
       $old_cleni
       $new_cleni
-      <br><input type="submit" name="nove" value="chci přihlásit další dítě" />
+      <br><button type="submit" name="nove"><i class="fa fa-plus"></i>
+        chci přihlásit další dítě</button>
       <p> ... případná poznámka pro organizátory akce</p>
       <textarea rows="3" cols="46" name='note'>$note</textarea> 
-      <br><input type="submit" name="check" value="zkontrolovat před odesláním" />
-      <input type="submit" name="ano" value="odeslat přihlášku" />
-      <input type="submit" name="ne" value="neposílat" />
+      <br><button type="submit" name="check"><i class="fa fa-question"></i>
+        zkontrolovat před odesláním</button>
+      <button type="submit" name="ano"><i class="fa fa-green fa-send-o"></i> 
+        odeslat přihlášku</button>
+      <button type="submit" name="ne"><i class="fa fa-times fa-red"></i> 
+        neposílat</button>
       <p>$msg</p>
 __EOF;
     break;
@@ -496,7 +500,7 @@ function page() {
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>Přihláška na akci YMCA Setkání</title>
     <link rel="shortcut icon" href="/akce/img/$icon" />
-    <link rel="stylesheet" href="/akce/css/akce.css" type="text/css" media="screen" charset="utf-8" />
+    <link rel="stylesheet" href="/less/akce.css" type="text/css" media="screen" charset="utf-8" />
     <link rel="stylesheet" href="/ezer3.2/client/licensed/font-awesome/css/font-awesome.min.css?" type="text/css" media="screen" charset="utf-8">
     <link rel="stylesheet" id="customify-google-font-css" href="//fonts.googleapis.com/css?family=Open+Sans%3A300%2C300i%2C400%2C400i%2C600%2C600i%2C700%2C700i%2C800%2C800i&amp;ver=0.3.5" type="text/css" media="all">
   </head>
