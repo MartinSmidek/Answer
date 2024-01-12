@@ -3565,7 +3565,7 @@ function ucast2_browse_ask($x,$tisk=false) {
     # 1. průchod - kompletace údajů mezi pobyty
     $skup= array();
     foreach ($pobyt as $idp=>$p) {
-      if ( !count($p->cleni) ) continue;
+      if ( !$p->cleni || !count($p->cleni) ) continue;
       # seřazení členů podle přítomnosti, role, věku
       uasort($p->cleni,function($a,$b) {
         $arole= isset($a->role) ? $a->role : '';
@@ -3616,7 +3616,7 @@ function ucast2_browse_ask($x,$tisk=false) {
       $fotek= 0;
       $o_fotek= $r_fotek= 0;
       $cleni= ""; $del= ""; $pecouni= 0;
-      if ( count($p->cleni) ) {
+      if ( $p->cleni && count($p->cleni) ) {
         foreach ($p->cleni as $ido=>$s) {
           $o= $osoba[$ido];
           if ( $p->funkce==99 ) $pecouni++;
