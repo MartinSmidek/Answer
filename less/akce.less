@@ -39,18 +39,22 @@ div#obal {
   }
   div.formular {
     background-color: @form_b;
-      display:block; 
-      /*border:1px solid grey;*/
-      margin: 5px;
-      input, textarea {
-        margin: 5px;
-        font-family: "Open Sans"; font-size: 16px; 
-        resize: none;
-      }    
+    display:block; 
+    /*border:1px solid grey;*/
+    margin: 5px;
+    input, textarea {
+      margin-bottom: 5px; max-width: 100%;
+      font-family: "Open Sans"; font-size: 16px; 
+      resize: none;
+    }    
+    label.souhlas {
+      font-size: smaller;
+    }
   }
   div#tail {
+    font-size: smaller; font-style: italic;
     border-top:1px solid grey; margin-bottom: 10px; 
-    color: @head_c;
+    color: @head_c; 
   }
 }
 div.trace {
@@ -60,7 +64,7 @@ div.trace {
   td { border:1px solid #aaa; ;padding:1px 3px; line-height:11px; }
   td.title { color:#000; background-color:#aaa; }
   td.label { color:#a33;}
-  table.dbg_array { background-color:#ddeeff; }
-  table.dbg_object { background-color:#ffffaa; }
+  table.dbg_array { background-color:#ddeeff; font:12px Arial; }
+  table.dbg_object { background-color:#ffffaa; font:12px Arial; }
   
 }
