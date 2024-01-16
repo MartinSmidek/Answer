@@ -150,6 +150,31 @@ function db2_get_osoba($ido) {
 //                                                         debug($oso,'db2_get_osoba');
   return $oso;
 }
+# --------------------------------------------------------------------------------------- datum oddo
+function datum_oddo($x1,$x2) {
+  $letos= date('Y');
+  $d1= 0+substr($x1,8,2);
+  $d2= 0+substr($x2,8,2);
+  $m1= 0+substr($x1,5,2);
+  $m2= 0+substr($x2,5,2);
+  $r1= 0+substr($x1,0,4); 
+  $r2= 0+substr($x2,0,4);
+  if ( $x1==$x2 ) {  //zacatek a konec je stejny den
+    $datum= "$d1. $m1" . ($r1!=$letos ? ". $r1" : '');
+  }
+  elseif ( $r1==$r2 ) {
+    if ( $m1==$m2 ) { //zacatek a konec je stejny mesic
+      $datum= "$d1 - $d2. $m1"  . ($r1!=$letos ? ". $r1" : '');
+    }
+    else { //ostatni pripady
+      $datum= "$d1. $m1 - $d2. $m2"  . ($r1!=$letos ? ". $r1" : '');
+    }
+  }
+  else { //ostatni pripady
+    $datum= "$d1. $m1. $r1 - $d2. $m2. $r2";
+  }
+  return $datum;
+}
 /** =========================================================================================> AKCE2 */
 # ------------------------------------------------------------------------------------ web prihlaska
 # propojení s www.setkani.org - musí existovat popis akce s daným url
@@ -9350,12 +9375,24 @@ function tisk2_vyp_excel($akce,$par,$title,$vypis,$tab=null,$hnizdo=0) {  trace(
   if ( !$tab )
     $tab= tisk2_sestava($akce,$par,$title,$vypis,true,$hnizdo);
 //                                                    debug($tab,"tisk2_vyp_excel/tab");
+  // nová hlavička
+  $Z= Excel5_n2col(count($tab->flds)-1);
+  list($a_org,$a_misto,$a_druh,$a_od,$a_do,$a_kod)= 
+      select("access,misto,IFNULL(zkratka,''),datum_od,datum_do,IFNULL(g_kod,'')",
+        "akce LEFT JOIN join_akce ON id_akce=id_duakce LEFT JOIN _cis ON _cis.druh='ms_akce_typ' AND data=akce.druh",
+        "id_duakce=$akce");
+  $a_co= ($a_org==1?'YMCA Setkání, ':($a_org==2?'YMCA Familia, ':'')).$a_druh;
+  $a_oddo= datum_oddo($a_od,$a_do);
+  $a_celkem= count($tab->clmn);
   // vlastní export do Excelu
   $name= cz2ascii("vypis_").date("Ymd_Hi");
   $xls= <<<__XLS
     |open $name
     |sheet vypis;;L;page
-    |A1 $title ::bold size=14 |A2 $vypis ::bold size=12
+    |A1 $title          $a_kod::bold size=14 |A2 $vypis ::bold size=12
+    |{$Z}1 $a_co ::bold left size=14
+    |{$Z}2 $a_misto, $a_oddo ::bold size=14 left
+    |A3 Celkem: $a_celkem ::bold
 __XLS;
   // titulky a sběr formátů
   $fmt= $sum= array();

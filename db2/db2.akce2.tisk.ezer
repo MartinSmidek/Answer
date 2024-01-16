@@ -322,6 +322,10 @@ menu m {type:'left', //active:*
                                         ,par:{typ:'j',exp:'Excel2',cnd:'1',ord:'o.prijmeni,o.jmeno'
                                         ,tit:'jméno a příjmení:30,bydliště:50,narození:10'
                                         ,fld:'_jmenoY,_adresaY,_narozeniY'}}
+    item {title:'Účastníci akce pro VG YMCA v ČR'                                               skill:'y;f'
+                                        ,par:{typ:'j',exp:'Excel2',cnd:'1',ord:'o.prijmeni,o.jmeno'
+                                        ,tit:'příjmení:15,jméno:12,narození:12,obec:25,psč:7,ulice:25'
+                                        ,fld:'prijmeni,jmeno,_narozeniY,obec,psc,ulice'}}
     item {title:'Účastníci, skupinka, poznámka'                                               skill:'y;f'
                                         ,par:{typ:'p',exp:'Excel2',cnd:"p.funkce!=99"
                                         ,tit:'příjmení:15,jména:12,skupinka:10,pokoj:10,obec:15,telefon:15,poznámka k akci:50,^'
