@@ -3,21 +3,22 @@ header('Content-Type:text/html;charset=utf-8');
 header('Cache-Control:no-cache,no-store,must-revalidate');
 # pilotní verze online přihlašování pro YMCA Setkání (jen typ pro DS)
 # debuger je lokálne nastaven pro verze PHP: 7.2.33 - musí být ručně spuštěn Chrome
-$TEST= 0;
-$OPTIONS= ['akce'=>'test','err'=>3];
 
-if (isset($OPTIONS['akce']) && (!isset($_GET['akce']) || !is_numeric($_GET['akce']))) 
-  die("Online přihlašování na akce Domu setkání není k dospozici."); 
+if (!isset($_GET['akce']) || !is_numeric($_GET['akce'])) die("Online přihlašování není k dospozici."); 
 
-# $TEST=n   ... 1 pro ostrý běh s informacemi, maily se neodesílají, jen vypisují
-#           ... 2 pro ladící běh se simulací úspěšného příhlášení, nezapisuje se do databáze
-
+$MAIL= 0; // mail se jen ukáže
+$TEST= 0; // bez testování - lze nastavit url&test=n
+$AKCE= "A_{$_GET['akce']}"; // ID akce pro SESSION
+    
 if (isset($_GET['test'])) 
   $TEST= $_GET['test'];
-elseif (isset($_SESSION['akce']['test'])) 
-  $TEST= $_SESSION['akce']['test'];
+elseif (isset($_SESSION[$AKCE]['test'])) 
+  $TEST= $_SESSION[$AKCE]['test'];
 
-//$TEST= 1;
+//$TEST= 0; // 0 = žádné trasování - ostrý běh až na $MAIL
+//$TEST= 1; // 1 = trasování - ostrý běh až na $MAIL
+//$TEST= 2; // 2 = trasování + přednastavený mail 
+//$TEST= 3; // 3 = trasování + přednastavený mail a přeskok loginu
 
 if ($TEST==2) $testovaci_mail= 'martin@smidek.eu';
 if ($TEST==3) $testovaci_mail= 'martin.smidek@outlook.com';
@@ -39,7 +40,7 @@ exit;
 #   submit:   cmd_name ... zruší cmd_x, která nejsou v aktuálním POST
 #             uplatní se v $post
 function init() {
-  global $vars, $novi, $cleni, $post, $msg, $OPTIONS;
+  global $AKCE, $vars, $mailbox, $novi, $cleni, $post, $msg;
   global $TEST, $errors;  
   # ------------------------------------------ napojení na Ezer
   global $ezer_server, $dbs, $db, $ezer_db, $USER, $kernel, $ezer_path_serv, $mysql_db_track, 
@@ -63,7 +64,7 @@ function init() {
   # trasování 
   if ($TEST) {
     $totrace= 'Mu';
-    $_SESSION['akce']['test']= $TEST;
+    $_SESSION[$AKCE]['test']= $TEST;
     $trace.= debugx($_POST,'$_POST - start');
   }
   $y= (object)[];
@@ -74,19 +75,17 @@ function init() {
   ezer_connect('ezer_db2');
   # ------------------------------------------ ochrana proti refresh
   $trace= '';
+  $mailbox= '';
   $refresh= '';
   $trace.= debugx($_POST,'$_POST - start');
   session_start();
-  $stamp_sess= $_SESSION['akce']['stamp']??date("i:s");
+  $stamp_sess= $_SESSION[$AKCE]['stamp']??date("i:s");
   $stamp_post= $_POST['stamp']??'?';
   display("SESSION: $stamp_sess POST: $stamp_post");
   if ($stamp_sess != $stamp_post) {
   //  $trace.= debugx($_POST,'$_POST - start');
   //  $trace.= debugx($_SESSION,'$_SESSION - start');
-    session_unset();
-    session_destroy();
-    session_write_close();
-    session_start();
+    do_session_restart();
     $_POST= [];
     $refresh= '<p><i>... refresh prohlížeče způsobil jeho inicializaci ...</i></p>';
   }
@@ -94,27 +93,23 @@ function init() {
   // nastavení nového=prázdného formuláře
   $errors= [];
 //  $trace.= debugx($_SESSION,'$_SESSION - vstup');
-  if (!isset($_SESSION['akce']['faze'])) {
+  if (!isset($_SESSION[$AKCE]['faze'])) {
     $_POST= [];
-    $_SESSION['akce']['start']= 1;
-    $_SESSION['akce']['faze']= 'a';
-    $_SESSION['akce']['history']= '';
-    $_SESSION['akce']['klient']= 0;
-    $_SESSION['akce']['chk_souhlas']= 0;
-    $_SESSION['akce']['rodina']= 0;
-    $_SESSION['akce']['novi']= array();
-    $_SESSION['akce']['cleni']= array();
-    $_SESSION['akce']['post']= $_POST;
-    $index= "prihlaska.php"; $del_index= '?';
-    foreach ($OPTIONS as $get=>$val) {
-      $index.= "$del_index$get=$val";
-      $del_index= '&';
-    }
-    $_SESSION['akce']['index']= $index;
-    $_SESSION['akce']['server']= $ezer_server;
+    $_SESSION[$AKCE]['start']= 1;
+    $_SESSION[$AKCE]['faze']= 'a';
+    $_SESSION[$AKCE]['history']= '';
+    $_SESSION[$AKCE]['klient']= 0;
+    $_SESSION[$AKCE]['chk_souhlas']= 0;
+    $_SESSION[$AKCE]['rodina']= 0;
+    $_SESSION[$AKCE]['novi']= array();
+    $_SESSION[$AKCE]['cleni']= array();
+    $_SESSION[$AKCE]['post']= $_POST;
+    $index= "prihlaska_2.php"; 
+    $_SESSION[$AKCE]['index']= $index;
+    $_SESSION[$AKCE]['server']= $ezer_server;
   }
-//  $trace.= debugx($_SESSION['akce'],'$_SESSION[akce] - start');
-  $vars= $_SESSION['akce'];
+//  $trace.= debugx($_SESSION[$AKCE],'$_SESSION[akce] - start');
+  $vars= $_SESSION[$AKCE];
   $cleni= $vars['cleni'];
   $novi= $vars['novi'];
   foreach ($_POST as $tag=>$val) {
@@ -160,7 +155,7 @@ function init() {
     $post= ['email'=>$testovaci_mail];
   }
   $vars['post']= $post;
-  $_SESSION['akce']= $vars;
+  $_SESSION[$AKCE]= $vars;
   $msg= '';
 }
 # ------------------------------------------------------------------------------- parametrizace akce
@@ -208,7 +203,7 @@ end:
 }
 # --------------------------------------------------------------------------------- definice procesu
 function todo() {
-  global $TEST, $vars;
+  global $AKCE, $TEST, $vars;
   // logika formulářů
   if ($vars['faze']=='a') { // => a* | b
     clear_post_but("/email|^.$/");
@@ -227,14 +222,15 @@ function todo() {
     do_rozlouceni();  
     // vyčisti vše
     unset($vars['post']);
-    if ($TEST) {
-      unset($_SESSION['akce']);
-    }
-    else {
-      session_unset();
-      session_destroy();
-    }
-    session_write_close();
+    do_session_restart();
+//    if ($TEST) {
+//      unset($_SESSION[$AKCE]);
+//    }
+//    else {
+//      session_unset();
+//      session_destroy();
+//    }
+//    session_write_close();
   }
   // pokud se cyklus vrátil
   if ($vars['faze']=='a') { // => a* | b
@@ -316,7 +312,7 @@ __EOF;
 # CMD jiný mail
 #   a - ...
 function do_kontrola_pinu() { // fáze B
-  global $parm, $msg, $cleni, $vars, $post, $form;
+  global $parm, $msg, $cleni, $vars, $post, $user, $form;
   do_begin();
   // -------------------------------------------- jiný mail (a)
   if (isset($post['cmd_jiny_mail'])) {
@@ -362,6 +358,8 @@ function do_kontrola_pinu() { // fáze B
     else { // pocet==1 ... mail je jednoznačný
       $vars['klient']= $ido;
       $vars['rodina']= $idr;
+        // položky do hlavičky
+      $user= "$jmena<br>{$post['email']}";
 
       // zjistíme zda již není přihlášen
       list($idp,$kdy,$kdo)= select("id_pobyt,IFNULL(kdy,''),IFNULL(kdo,'')",
@@ -500,7 +498,7 @@ function do_vyplneni_dat() {
       }
     }
     if (!$vars['chk_souhlas']) {
-      $neuplne[]= "projevte prosím svůj souhlas";
+      $neuplne[]= "potvrďte prosím svůj souhlas";
       $mis_souhlas= "class=missing";
     }
     if (count($neuplne)) 
@@ -586,11 +584,11 @@ function do_vyplneni_dat() {
 __EOF;
   }
 
+//    <p>Na zde uvedený mail vám pošleme potvrzení o přijetí přihlášky:</p>
+//    <input type="text" size="24" name='email' value="{$post['email']}" disabled>
+//    <input type="text" size="4" name='pin' value="{$post['zaslany_pin']}" disabled>
   $souhlas=  $vars['chk_souhlas'] ? 'checked' : '';
   $form= <<<__EOF
-    <p>Na zde uvedený mail vám pošleme potvrzení o přijetí přihlášky:</p>
-    <input type="text" size="24" name='email' value="{$post['email']}" disabled>
-    <input type="text" size="4" name='pin' value="{$post['zaslany_pin']}" disabled>
     <p>Poznačte prosím, koho na akci přihlašujete:</p>
     $old_cleni
     $new_cleni
@@ -915,6 +913,91 @@ __EOF;
 }
 // ------------------------------------------------------------------------------- zobrazení stránky
 function page($problem='') {
+  global $user, $parm, $form, $info, $index;
+  global $TEST, $trace, $mailbox, $y, $errors;
+  $icon= "akce.png";
+  $stamp= form_stamp();
+  if ($TEST) {
+    if (count($errors)) $trace.= '<hr><span style="color:red">'.implode('<hr>',$errors).'</span>';
+//    $trace.= '<hr>'.debugx($post,'$post');
+//    $trace.= '<hr>'.debugx($_SESSION['klub'],'$_SESSION[akce] - výstup');
+    $trace.= '<hr>'.nl2br($y->qry??'');
+    $trace= "<section class='trace'>$trace</section>";
+    $if_trace= "style='overflow:auto'";
+  }
+  else {
+    $trace= '';
+    $if_trace= '';
+  }
+  $formular= $problem ?: <<<__EOD
+      $problem
+      <div class='box'>
+        <form action="$index" method="post">
+          $form
+          <input type="hidden" name='stamp' value="$stamp">
+        </form>
+      </div>
+__EOD;
+  $user= $user ?: '... přihlaste se prosím svým mailem a zaslaným PINem';
+  $info= $info=='' ? '' : <<<__EOD
+      <div class='box'>
+        <form action="$index" method="post">
+          $info
+          <input type="hidden" name='stamp' value="$stamp">
+        </form>
+      </div>
+__EOD;
+  $mailbox= $mailbox ? "<div class='box' style='border-left: 20px solid grey'>$mailbox</div>" : '';
+//      <div id='head'><a href="https://www.tvnoe.cz"><i class="fa fa-home"></i>NOE - televize dobrých zpráv</a></div>
+  echo <<<__EOD
+  <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+  <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8" />
+    <meta Content-Type="text/html" />
+    <meta http-equiv="X-UA-Compatible" content="IE=11" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Přihláška na akci YMCA Setkání</title>
+    <link rel="shortcut icon" href="/akce/img/$icon" />
+    <link rel="stylesheet" href="/less/akce.css" type="text/css" media="screen" charset='utf-8'>
+    <link rel="stylesheet" href="/ezer3.2/client/licensed/font-awesome/css/font-awesome.min.css?" type="text/css" media="screen" charset="utf-8">
+    <link rel="stylesheet" id="customify-google-font-css" href="//fonts.googleapis.com/css?family=Open+Sans%3A300%2C300i%2C400%2C400i%2C600%2C600i%2C700%2C700i%2C800%2C800i&amp;ver=0.3.5" type="text/css" media="all">
+    <script>
+        // Použijeme JavaScript pro přesměrování, abychom se vyhnuli problémům s cachováním
+        if (window.history.replaceState) {
+            window.history.replaceState(null, null, window.location.href);
+        }
+    </script>  </head>
+  <body $if_trace>
+    <div class="wrapper">
+      <header>
+        <div class="header">
+          <a class="logo" href="https://www.setkani.org" target="web" title="" >
+            <img src="/img/husy_ymca.png" alt=""></a>
+          <div class="user">
+            <i class="fa fa-user"></i> $user
+          </div>
+        </div>
+        <div class="intro">Přihláška na akci <b>{$parm['akce:nazev']}</b></div>
+      </header>
+      <main>
+        $mailbox
+        $formular
+        $info
+      </main>
+      <footer>
+        <div class="footer">
+          © YMCA Setkání
+        </div>
+      </footer>
+    </div>
+        $trace
+  </body>
+  </html>
+__EOD;
+}
+// ------------------------------------------------------------------------------- zobrazení stránky
+function page_old($problem='') {
   global $form, $parm, $index;
   global $TEST, $trace, $y, $errors;
   $icon= "akce.png";
@@ -922,7 +1005,7 @@ function page($problem='') {
   if ($TEST) {
     if (count($errors)) $trace.= '<hr><span style="color:red">'.implode('<hr>',$errors).'</span>';
 //    $trace.= '<hr>'.debugx($post,'$post');
-//    $trace.= '<hr>'.debugx($_SESSION['akce'],'$_SESSION[akce] - výstup');
+//    $trace.= '<hr>'.debugx($_SESSION[$AKCE],'$_SESSION[akce] - výstup');
     $trace.= '<hr>'.nl2br($y->qry??'');
     $trace= "<div class='trace'>$trace</div>";
   }
@@ -970,9 +1053,9 @@ __EOD;
 }
 # --------------------------------------------------------------------------------- správa proměných
 function do_begin() {
-  global $TEST, $vars, $novi, $cleni, $post;
-  $_SESSION['akce']['history'].= $_SESSION['akce']['faze'];
-  $vars= $_SESSION['akce'];
+  global $AKCE, $TEST, $vars, $novi, $cleni, $post;
+  $_SESSION[$AKCE]['history'].= $_SESSION[$AKCE]['faze'];
+  $vars= $_SESSION[$AKCE];
   $novi= $vars['novi'];
   $cleni= $vars['cleni'];
   $post= $vars['post'];
@@ -983,12 +1066,12 @@ function do_begin() {
   }
 }
 function do_end() {
-  global $TEST, $vars, $novi, $cleni, $post;
+  global $AKCE, $TEST, $vars, $novi, $cleni, $post;
   // uloží vars 
   $vars['novi']= $novi;
   $vars['cleni']= $cleni;
   $vars['post']= $post;
-  $_SESSION['akce']= $vars;
+  $_SESSION[$AKCE]= $vars;
   // trace
   if ($TEST) {
     $bt= debug_backtrace();
@@ -1015,12 +1098,20 @@ function clear_post_but($flds_match) {
   $vars['post']= $post;
 }
 # ----------------------------------------------------------------------------------- pomocné funkce
-function form_stamp() {
-  global $vars;
-  $stamp= date("i:s");
-  $_SESSION['akce']['stamp']= $stamp;
+function do_session_restart() {
+  global $AKCE;
+//  session_unset();
+//  session_destroy();
+  unset($_SESSION[$AKCE]);
   session_write_close();
-  display("STAMP {$vars['faze']}: $stamp ... {$_SESSION['akce']['stamp']}");
+  session_start();
+}
+function form_stamp() {
+  global $AKCE, $vars;
+  $stamp= date("i:s");
+  $_SESSION[$AKCE]['stamp']= $stamp;
+  session_write_close();
+  display("STAMP {$vars['faze']}: $stamp ... {$_SESSION[$AKCE]['stamp']}");
   return $stamp;
 }
 function zvyraznit($msg,$ok=0) {
@@ -1030,10 +1121,14 @@ function zvyraznit($msg,$ok=0) {
 # odeslání mailu
 # $TEST>0 zabrání odeslání, zobrazí mail v trasování
 function simple_mail($replyto,$address,$subject,$body,$cc='') {
-  global $api_gmail_user, $api_gmail_pass, $api_gmail_name, $TEST, $trace;
+  global $api_gmail_user, $api_gmail_pass, $api_gmail_name, $MAIL, $TEST, $trace, $mailbox;
   $msg= '';
-  if ($TEST) {
-    $trace.= "<hr>MAIL: addr=$address, cc=$cc<br>subj=$subject<br>$body<hr>";
+  if ($TEST || !$MAIL) {
+    $mailbox= "<h3>Simulace odeslání mailu z adresy $api_gmail_name &lt;$api_gmail_user&gt;</h3>"
+        . "<b>pro:</b> $address "
+        . "<br><b>předmět:</b> $subject"
+        . "<p><b>text:</b> $body</p>";
+    if ($TEST) $trace.= "<hr>$mailbox<hr>";
     $msg= 'ok'; // TEST bez odeslání
   }
   else {

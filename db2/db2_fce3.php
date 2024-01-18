@@ -1837,7 +1837,7 @@ end:
 # -------------------------------------------------------------------------------- akce2 vzorec_test
 # test výpočtu platby za pobyt na akci 
 function akce2_vzorec_test($id_akce,$hnizdo=0,$nu=2,$nD=0,$nd=0,$nk=0,$np=0,$table_class='') {  trace();
-  $ret= (object)array(navrh=>'',cena=>0,err=>'');
+  $ret= (object)array('navrh'=>'','cena'=>0,'err'=>'');
   $map_typ= map_cis('ms_akce_ubytovan','zkratka');
   $types= select("GROUP_CONCAT(DISTINCT typ ORDER BY typ)","cenik",
       "id_akce=$id_akce AND hnizdo=$hnizdo GROUP BY id_akce");
@@ -2096,7 +2096,7 @@ function akce2_nacti_cenik($id_akce,$hnizdo,&$cenik,&$html) {
 # výpočet platby za pobyt na akci
 # od 130416 přidána položka CENIK.typ - pokud je 0 tak nemá vliv,
 #                                       pokud je nenulová pak se bere hodnota podle POBYT.ubytovani
-function akce2_vzorec($id_pobyt) {  trace();
+function akce2_vzorec($id_pobyt) {  //trace();
   // případné přepnutí na ceník verze 2017
   list($id_akce,$cenik_verze)= select(
     "id_akce,ma_cenik_verze","pobyt JOIN akce ON id_akce=id_duakce","id_pobyt=$id_pobyt");
@@ -5985,7 +5985,7 @@ function _akce2_sestava_pecouni(&$clmn,$akce,$fld='_skoleni,_sluzba,_reflexe',$c
 # ========================================================================================> . strava
 # výpočet počtu strav podle aktuálních stravenek
 # ---------------------------------------------------------------------------------- akce2 stravenky
-function akce2_strava($akce,$par,$title,$vypis,$export=false,$hnizdo=0,$id_pobyt=0) { trace();
+function akce2_strava($akce,$par,$title,$vypis,$export=false,$hnizdo=0,$id_pobyt=0) { //trace();
   global $diety,$diety_,$jidlo_;
   $dny= array('ne','po','út','st','čt','pá','so');
   $jidlo= array();
@@ -6047,7 +6047,7 @@ function akce2_strava($akce,$par,$title,$vypis,$export=false,$hnizdo=0,$id_pobyt
     $po_ne= "{$dny[date('w',$mkden)]} ";
     $den= date("j/n",$mkden);
     $days_fmt[$day]= $den;
-    display("$mkden==$vylet");
+//    display("$mkden==$vylet");
     $clmn[$den]['day']= $po_ne . $den . ($den==$vylet ? " odečíst výlet" : '');
     foreach (explode(',','s,o,v') as $jidlo1) {
       foreach ($diety as $dieta) {
@@ -6115,8 +6115,9 @@ end:
 #   note = pro pečouny seznam jmen, pro které nejsou stravenky, protože nemají funkci
 #          (tzn. asi nejsou na celý pobyt)
 function akce2_stravenky($akce,$par,$title,$vypis,$export=false,$hnizdo=0,$id_pobyt=0) { trace();
+                                      debug($par,"akce2_stravenky($akce,...,$title,$vypis,$export,$hnizdo,$id_pobyt)");
   global $diety,$diety_,$jidlo_;
-  $res_all= (object)array('res'=>array(),'html'=>'');
+  $res_all= (object)array('res'=>array(),'html'=>'','jidel'=>array(),'max_jidel'=>0);
 //   $diety= array('','_bm','_bl');                             -- globální nastavení
   foreach ($diety as $i=>$d) {
     // generování stravenek pro konkrétní dietu (normální strava=dieta 0)
@@ -6128,17 +6129,27 @@ function akce2_stravenky($akce,$par,$title,$vypis,$export=false,$hnizdo=0,$id_po
     $res_all->html.= "<h3>Strava {$diety_[$d]}</h3>";
     $res_all->html.= $res->html;
     $res_all->html.= $res->note;
+    // celkový počet jídel bez ohledu na dietu
+    $res_all->max_jidel= max($res_all->max_jidel,$res->max_jidel);
+    if (count($res_all->jidel)) {
+      foreach (array_keys($res_all->jidel) as $jidlo) {
+        $res_all->jidel[$jidlo]+= $res->jidel[$jidlo];
+      }
+    }
+    else $res_all->jidel= $res->jidel;
   }
+                                                debug($res_all->jidel,"celkem jídel - maximum=$res_all->max_jidel");
   return $res_all;
 }
 # ---------------------------------------------------------------------------- akce2 stravenky_diety
 # bezmasá dieta na Pavlákové od roku 2017 nevaří
 # proto se u pečounů mapuje bezmasá dieta na normální
-function akce2_stravenky_diety($akce,$par,$title,$vypis,$export=false,$hnizdo=0,$id_pobyt=0) { trace();
+function akce2_stravenky_diety($akce,$par,$title,$vypis,$export=false,$hnizdo=0,$id_pobyt=0) { //trace();
 //                                 debug($par,"akce_stravenky_diety($akce,,$title,$vypis,$export)");
   global $diety,$diety_,$jidlo_;  // $diety= array(''/*,'_bm'*/,'_bl')
   $ord= isset($par->ord) ? $par->ord : "IF(funkce<=2,1,funkce),IF(pouze=0,r.nazev,o.prijmeni)";
   $result= (object)array();
+  $jidel= array('sc'=>0,'sp'=>0,'oc'=>0,'op'=>0,'vc'=>0,'vp'=>0,);
   $cnd= $par->cnd;
   if ( $hnizdo ) $cnd.= " AND IF(funkce=99,s_hnizdo=$hnizdo,hnizdo=$hnizdo)";
   $dieta= $par->dieta;
@@ -6373,16 +6384,26 @@ function akce2_stravenky_diety($akce,$par,$title,$vypis,$export=false,$hnizdo=0,
       $sum.= "<th style='text-align:right'>$val</th>";
     }
     $sum.= "</tr>";
+    // celkový počet jídel
+    $max_jidel= 0;
+    foreach ($suma as $den_jidlo=>$pocet) {
+      $jidlo= mb_substr($den_jidlo,4,2);
+      $jidel[$jidlo]+= $pocet;
+      $max_jidel= max($max_jidel,$pocet);
+    }
   }
   $result->html= "Seznam má $radku řádků<br><br>";
   $result->html.= "<div class='stat'><table class='stat'><tr>$ths</tr>$sum$tab</table></div>";
   $result->html.= "</br>";
   $result->href= $href;
+  $result->jidel= $jidel; // celkový počet jídel
+  $result->max_jidel= $max_jidel; // celkový počet jídel
   $result->tab= $str;
   $result->tab_i= $str_i;
   $result->akce= $akce_data;
   $result->note= $note ? "(bez $note, kteří nemají vyjasněnou funkci)" : '';
 //  $result->suma= $suma;
+//                                                      debug($jidel,"celkem jídel - max = $max_jidel - $dieta");
   return $result;
 }
 # ------------------------------------------------------------------------------ akce2 strava_souhrn
@@ -7198,7 +7219,43 @@ function akce2_text_eko($akce,$par,$title,$vypis,$export=false) { trace();
   }
 //  /**/                                                    display("cena=$cena, platba=$platba");
 //  /**/                                                    display("výdaj za pečouny");
-  // náklad na stravu pečounů - kteří mají funkci a nemají zaškrtnuto "platí rodiče"
+  // --------------------------------------- náklad na stravu pečounů
+  // nově podle počtu vydaných stravenek BEZ HNIZD!!
+  $hnizda= select('hnizda','akce',"id_duakce=$akce");    
+  if ($hnizda) fce_error("pro hnízda odhad nefunguje");
+  $hnizdici= 0;
+  $vydaje= $radni_vydaje= $mimoradni_vydaje= 0;
+  $rows_vydaje= '';
+  $radni= akce2_stravenky($akce,(object)array('typ'=>'vjp','cnd'=>'pfunkce!=6','zmeny'=>0),'','');
+  $max_radni= $radni->max_jidel;
+  $ra= pdo_qry("SELECT za,cena FROM cenik "
+      . "WHERE id_akce=$akce AND za IN ('sc','sp','oc','op','vc','vp')");
+  $mimoradni= akce2_stravenky($akce,(object)array('typ'=>'vjp','cnd'=>'pfunkce=6','zmeny'=>0),'','');
+  $max_mimoradni= $mimoradni->max_jidel;
+  $ra= pdo_qry("SELECT za,cena FROM cenik "
+      . "WHERE id_akce=$akce AND za IN ('sc','sp','oc','op','vc','vp')");
+  while ( $ra && (list($za,$cena)= pdo_fetch_array($ra)) ) {
+    $pocet= $radni->jidel[$za];
+    $radni_vydaje+= $pocet*$cena;
+    $pocet= $mimoradni->jidel[$za];
+    $mimoradni_vydaje+= $pocet*$cena;
+  }
+  $vydaje+= $radni_vydaje+$mimoradni_vydaje;
+  $vydaje_f= number_format($vydaje, 0, '.', ' ');
+  $radni_vydaje_f= number_format($radni_vydaje, 0, '.', ' ');
+  $mimoradni_vydaje_f= number_format($mimoradni_vydaje, 0, '.', ' ');
+  $prijmy+= $mimoradni_vydaje;
+  $rows_vydaje.= "<tr><td>stravenky řádní pečovatelé (max. současně $max_radni)</td>"
+      . "<td align='right'>$radni_vydaje_f</td></tr>";
+  $rows_vydaje.= "<tr><td>stravenky mimořádní pečovatelé (max. současně $max_mimoradni)</td>"
+      . "<td align='right'>$mimoradni_vydaje_f</td></tr>";
+  $rows_vydaje.= "<tr><td>celkem</td><td align='right'>$vydaje_f</td></tr>";
+  $rows_prijmy.= "<tr><td>stravenky $n_mimoradni mimořádní peč.</td><td align='right'>$mimoradni_vydaje_f</td></tr>";
+  $pecounu= select('COUNT(*)','pobyt JOIN spolu USING(id_pobyt)',
+      "id_akce='$akce' AND funkce=99 AND s_rodici=0");
+  
+/*  
+  // postaru - kteří mají funkci a nemají zaškrtnuto "platí rodiče"
   // podle hnízd nebo celkově
   $pecounu= select('COUNT(*)','pobyt JOIN spolu USING(id_pobyt)',
       "id_akce='$akce' AND funkce=99 AND s_rodici=0");
@@ -7212,25 +7269,26 @@ function akce2_text_eko($akce,$par,$title,$vypis,$export=false) { trace();
       $nh= select('COUNT(*)','pobyt JOIN spolu USING(id_pobyt)',
               "id_akce='$akce' AND funkce=99 AND s_hnizdo=$ih AND s_rodici=0");
       $vzorec= akce2_vzorec_test($akce,$ih,0,0,0,0,$nh,'stat');
-      $pecouni[]= (object)array(nazev=>trim($h),pocet=>$nh,html=>$vzorec->navrh);
+      $pecouni[]= (object)array('nazev'=>trim($h),'pocet'=>$nh,html=>$vzorec->navrh);
       $hnizdici+= $nh;
       $vydaje+= $vzorec->cena;
     }
   }
   else {
     $vzorec= akce2_vzorec_test($akce,0,0,0,0,0,$pecounu,'stat');
-    $pecouni[]= (object)array(nazev=>'',pocet=>$pecounu,html=>$vzorec->navrh);
+    $pecouni[]= (object)array('nazev'=>'','pocet'=>$pecounu,'html'=>$vzorec->navrh);
     $vydaje= $vzorec->cena;
   }
+*/
 //  /**/                                                  debug($pecouni,"celkem $pecounu/$hnizdici");
   // odhad příjmů za mimořádné pečouny - přičtení k příjmům
-  if ( $n_mimoradni ) {
-    $cena_mimoradni= $vydaje*$n_mimoradni/$pecounu;
-    $prijmy+= $cena_mimoradni;
-    $cena= number_format($cena_mimoradni, 0, '.', ' ');
-    $rows_prijmy.= "<tr><td>ubytování a strava $n_mimoradni mimoř.peč.</td>
-      <td align='right'>$cena</td></tr>";
-  }
+//  if ( $n_mimoradni ) {
+//    $cena_mimoradni= $vydaje*$n_mimoradni/$pecounu;
+//    $prijmy+= $cena_mimoradni;
+//    $cena= number_format($cena_mimoradni, 0, '.', ' ');
+//    $rows_prijmy.= "<tr><td>ubytování a strava $n_mimoradni mimoř.peč.</td>
+//      <td align='right'>$cena</td></tr>";
+//  }
   // formátování odpovědi dle ceníku akce
   $h= $tisk_hnizdo ? "(souhrně za všechna hnízda)" : '';
   $html.= "<h3>Příjmy za akci $h podle aktuální skladby účastníků</h3>";
@@ -7242,21 +7300,23 @@ function akce2_text_eko($akce,$par,$title,$vypis,$export=false) { trace();
   $html.= "<br><table class='stat'>";
 //  $html.= "<tr><td>položky</td><th>cena</th></tr>";
   $html.= "$rows_prijmy</table>";
-  $html.= "<h3>Výdaje za stravu a ubytování pro $pecounu pečovatelů</h3>";
+  $html.= "<h3>Výdaje za stravu pro $pecounu pečovatelů </h3>";
   $html.= "V tomto počtu nejsou zahrnuti pomocní a osobní pečovatelé, jejichž náklady hradí rodiče
            <br>(to je třeba v evidenční kartě pečovatele zapsat zaškrtnutím políčka pod poznámkou)
-           <br>(a nezohledňují se částečné pobyty a poloviční porce)";
+           <br>(od roku 2024 se zohledňují částečné pobyty a poloviční porce)";
   // stravenky nejsou vytištěny pro $note, kteří nemají jasnou funkci -- pfunkce=0
 //  $html.= $ret->note ? "{$ret->note}<br>" : '';
 //  $html.= "<br><table class='stat'><td>položky</td><th>cena</td></tr>";
 //  $html.= "$rows_vydaje</table>";
   
-  foreach ($pecouni as $hnizdo) {
-    if (!$hnizdo->pocet) continue;
-    $html.= $hnizdo->nazev 
-        ? "<h3>... hnízdo {$hnizdo->nazev} - {$hnizdo->pocet} pečovatelů</h3>" : '<br><br>';
-    $html.= $hnizdo->html;
-  }
+  $html.= "<br><br><table class='stat'>$rows_vydaje</table>";
+
+//  foreach ($pecouni as $hnizdo) {
+//    if (!$hnizdo->pocet) continue;
+//    $html.= $hnizdo->nazev 
+//        ? "<h3>... hnízdo {$hnizdo->nazev} - {$hnizdo->pocet} pečovatelů</h3>" : '<br><br>';
+//    $html.= $hnizdo->html;
+//  }
   
   $html.= "<h3>Shrnutí pro pečovatele</h3>";
   $obrat= $prijmy - $vydaje;
@@ -7264,8 +7324,16 @@ function akce2_text_eko($akce,$par,$title,$vypis,$export=false) { trace();
   $vydaje= number_format($vydaje, 0, '.', ' ')."&nbsp;Kč";
   $obrat= number_format($obrat, 0, '.', ' ')."&nbsp;Kč";
   $html.= "Účastníci přispějí na děti a pečovatele částkou $prijmy, 
-    <br>přímé náklady na pobyt a stravu pečovatelů činí $vydaje, 
+    <br>přímé náklady na stravu pečovatelů činí $vydaje, 
     <br>celkem <b>$obrat</b> zůstává na program dětí a pečovatelů.";
+  $html.= "<br><br><span style='color:red'><b>DISCLAIMER</b>: "
+      . "výpočet vychází pouze z údajů evidovaných v Answeru"
+      . "<br><br>Neumí proto zahrnout"
+      . "<br>příjmy: částka ušetřená za odřeknuté stravy, ..."
+      . "<br>výdaje: ubytování pečovatelů, vicenáklady pečounů (pokoje se sprchami, ...), ..."
+      . "<br><br>"
+      . "mohl by umět ale neumí: přímé vyplacení stravy některým pečounům t.b.d."
+      . "</span>";
 end:
   // předání výsledku
   $result->html= $html;
