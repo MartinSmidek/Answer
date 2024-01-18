@@ -7326,7 +7326,7 @@ function akce2_text_eko($akce,$par,$title,$vypis,$export=false) { trace();
   $html.= "Účastníci přispějí na děti a pečovatele částkou $prijmy, 
     <br>přímé náklady na stravu pečovatelů činí $vydaje, 
     <br>celkem <b>$obrat</b> zůstává na program dětí a pečovatelů.";
-  $html.= "<br><br><span style='color:red'><b>DISCLAIMER</b>: "
+  $html.= "<br><br><br><span style='color:red'><b>DISCLAIMER</b>: "
       . "výpočet vychází pouze z údajů evidovaných v Answeru"
       . "<br><br>Neumí proto zahrnout"
       . "<br>příjmy: částka ušetřená za odřeknuté stravy, ..."
