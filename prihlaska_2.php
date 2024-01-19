@@ -6,7 +6,7 @@ header('Cache-Control:no-cache,no-store,must-revalidate');
 
 if (!isset($_GET['akce']) || !is_numeric($_GET['akce'])) die("Online přihlašování není k dospozici."); 
 
-$MAIL= 0; // mail se jen ukáže
+$MAIL= 0; // 0 - mail se jen ukáže
 $TEST= 0; // bez testování - lze nastavit url&test=n
 $AKCE= "A_{$_GET['akce']}"; // ID akce pro SESSION
     
@@ -20,8 +20,8 @@ elseif (isset($_SESSION[$AKCE]['test']))
 //$TEST= 2; // 2 = trasování + přednastavený mail 
 //$TEST= 3; // 3 = trasování + přednastavený mail a přeskok loginu
 
-if ($TEST==2) $testovaci_mail= 'martin@smidek.eu';
-if ($TEST==3) $testovaci_mail= 'martin.smidek@outlook.com';
+if ($TEST==3) $testovaci_mail= 'martin@smidek.eu';
+//if ($TEST==3) $testovaci_mail= 'martin.smidek@outlook.com';
 # ------------------------------------------ zpracování jednoho formuláře
 
 init();
@@ -160,40 +160,46 @@ function init() {
 }
 # ------------------------------------------------------------------------------- parametrizace akce
 # doplnění údajů pro přihlášku
-function parm($akce) {
-  global $TEST, $parm;
+function parm($id_akce) {
+  global $TEST, $akce;
   $msg= '';
-  // parametry přihlášky - podle ověřeného parametru akce
-  $parm= [
-    'akce:id_akce'  => $akce, 
-    'akce:popis'    => "",
-    'akce:souhlas'  => " Vyplněním této přihlášky dávám výslovný souhlas s použitím uvedených "
-                      . "osobních údajů pro potřeby organizace akcí YMCA Setkání v souladu s Nařízením "
-                      . "Evropského parlamentu a Rady (EU) 2016/679 ze dne 27. dubna 2016 o ochraně "
-                      . "fyzických osob a zákonem č. 101/2000 Sb. ČR. v platném znění. Současně souhlasím "
-                      . "s tím, že pořadatel je oprávněn dokumentovat její průběh – pořizovat foto, audio, "
-                      . "video záznamy a tyto materiály může použít pro účely další propagace své činnosti. "
-                      . "Přečetl jsem si a souhlasím s podrobnou Informací o zpracování osobních údajů "
-                      . "v YMCA Setkání, dostupnou na "
-                      . "<a href='https://www.setkani.org/ymca-setkani/5860' target='show'>www.setkani.org</a>."
-  ];
-  // doplněné parametry z Answeru: nazev, garant:*, form:pata
-  list($ok,$parm['akce:org'],$parm['akce:nazev'],$garant,$od)= // doplnění garanta
-      select("COUNT(*),access,nazev,poradatel,datum_od",'akce',"id_duakce={$parm['akce:id_akce']}");
-  if (!$ok) { 
+  // parametry přihlášky a ověření možnosti přihlášení
+  list($ok,$web_online)= select("COUNT(*),web_online",'akce',"id_duakce=$id_akce");
+  if (!$ok || !$web_online) { 
     $msg= "Na tuto akci se nelze přihlásit online"; goto end; }
+  // dekódování web_online
+  $akce= json_decode($web_online);
+  if (!$akce || !$akce->p_enable) { 
+    $msg= "Na tuto akci se bohužel nelze přihlásit online"; goto end; }
+  // doplnění dalších údajů o akci
+  list($akce->org,$akce->nazev,$garant,$od)= // doplnění garanta
+      select("access,nazev,poradatel,datum_od",'akce',"id_duakce=$id_akce");
   if ($od<=date('Y-m-d')) { 
-    $msg= "Akce '{$parm['akce:nazev']}' již proběhla, nelze se na ni přihlásit"; goto end; }
-  list($ok,$parm['garant:jmeno'],$parm['garant:telefon'],$parm['garant:mail'])= // doplnění garanta
+    $msg= "Akce '$akce->nazev' již proběhla, nelze se na ni přihlásit"; goto end; }
+  list($ok,$akce->garant_jmeno,$akce->garant_telefon,$akce->garant_mail)= // doplnění garanta
       select("COUNT(*),CONCAT(jmeno,' ',prijmeni),telefon,email",
           "osoba LEFT JOIN _cis ON druh='akce_garant' AND data='$garant'",
           "id_osoba=ikona");
   // Přihlášku bohužel nelze použít - akce nemá definovaného garanta!
-  $parm['form:pata']= "Je možné, že se vám během vyplňování objeví nějaká chyba, "
+  $akce->help_kontakt= $ok 
+      ? "<a href='mailto:$akce->garant_mail'>$akce->garant_jmeno $akce->garant_mail</a>" 
+      : "<a href='mailto:kancelar@setkani.org'>kancelar@setkani.org</a>";
+  $akce->form_pata= "Je možné, že se vám během vyplňování objeví nějaká chyba, "
     . " případně nedojde slíbené potvrzení. "
-    . "<br><br>Přihlaste se prosím v takovém případě mailem zaslaným na "
-    . ($ok ? "vedoucího akce: <br>{$parm['garant:jmeno']} {$parm['garant:mail']}" : 'kancelar@setkani.org')
-    . ".<br><br>Připojte prosím popis závady. Omlouváme se za nepříjemnost s beta-verzí přihlášek.";
+    . "<br><br>Přihlaste se prosím v takovém případě mailem zaslaným na $akce->help_kontakt."
+    . "<br><br>Připojte prosím popis závady. Omlouváme se za nepříjemnost s beta-verzí přihlášek.";
+  // doplnění konstant
+  $akce->id_akce= $id_akce;
+  $akce->form_souhlas= " Vyplněním této přihlášky dávám výslovný souhlas s použitím uvedených "
+      . "osobních údajů pro potřeby organizace akcí YMCA Setkání v souladu s Nařízením "
+      . "Evropského parlamentu a Rady (EU) 2016/679 ze dne 27. dubna 2016 o ochraně "
+      . "fyzických osob a zákonem č. 101/2000 Sb. ČR. v platném znění. Současně souhlasím "
+      . "s tím, že pořadatel je oprávněn dokumentovat její průběh – pořizovat foto, audio, "
+      . "video záznamy a tyto materiály může použít pro účely další propagace své činnosti. "
+      . "Přečetl jsem si a souhlasím s podrobnou Informací o zpracování osobních údajů "
+      . "v YMCA Setkání, dostupnou na "
+      . "<a href='https://www.setkani.org/ymca-setkani/5860' target='show'>www.setkani.org</a>.";
+  // doplněné parametry z Answeru: nazev, garant:*, form:pata
 end:    
   if ($msg) {
     $TEST= 0;
@@ -203,7 +209,7 @@ end:
 }
 # --------------------------------------------------------------------------------- definice procesu
 function todo() {
-  global $AKCE, $TEST, $vars;
+  global $vars;
   // logika formulářů
   if ($vars['faze']=='a') { // => a* | b
     clear_post_but("/email|^.$/");
@@ -312,14 +318,14 @@ __EOF;
 # CMD jiný mail
 #   a - ...
 function do_kontrola_pinu() { // fáze B
-  global $parm, $msg, $cleni, $vars, $post, $user, $form;
+  global $akce, $msg, $cleni, $vars, $post, $form;
   do_begin();
   // -------------------------------------------- jiný mail (a)
   if (isset($post['cmd_jiny_mail'])) {
     clear_post_but("/---/");
     $vars['klient']= 0;
-    do_end();
     $vars['faze']= 'a';
+    do_end();
     return;
   }
   // -------------------------------------------- registrace (n)
@@ -345,8 +351,8 @@ function do_kontrola_pinu() { // fáze B
     if ($pocet==0) {
       $msg= "Tento mail bohužel v evidenci YMCA Setkání nemáme,"
           . " pokud jste se již nějaké naší akce zúčastnili, "
-          . "přihlaste se prosím pomocí mailu, který jste tehdy použili"
-          . " - pokud s námi budete poprvé, pokračujte.";
+          . "přihlaste se prosím pomocí mailu, který jste tehdy použil/a"
+          . ($akce->p_registrace ? " - pokud s námi budete poprvé, pokračujte." : '.');
       $vars['klient']= -1;
     }
     elseif ($pocet>1) {
@@ -359,20 +365,21 @@ function do_kontrola_pinu() { // fáze B
       $vars['klient']= $ido;
       $vars['rodina']= $idr;
         // položky do hlavičky
-      $user= "$jmena<br>{$post['email']}";
+      $vars['user']= "$jmena<br>{$post['email']}";
 
       // zjistíme zda již není přihlášen
       list($idp,$kdy,$kdo)= select("id_pobyt,IFNULL(kdy,''),IFNULL(kdo,'')",
           "pobyt JOIN spolu USING (id_pobyt) "
           . "LEFT JOIN _track ON klic=id_pobyt AND kde='pobyt' AND fld='id_akce' ",
-          "(id_osoba={$vars['klient']} OR i0_rodina={$vars['rodina']}) AND id_akce={$parm['akce:id_akce']} "
+          "(id_osoba={$vars['klient']} OR i0_rodina={$vars['rodina']}) AND id_akce=$akce->id_akce "
           . "ORDER BY id_pobyt DESC LIMIT 1");
       display("a2: $idp,$kdy,$kdo");
       if ($idp) {
-        $kdy= $kdy ? "od ".sql_time1($kdy) : '';
-        $kdo= $kdo ? "pod značkou $kdo" : '';
-        $msg= "Na této akci jste již $kdy přihlášeni $kdo."
-            . "<br><br>Přejeme vám příjemný pobyt :-)";
+        $kdy= $kdy ? sql_time1($kdy) : '';
+        $msg= $kdo=='WEB' ? "Na tuto akci jste se již $kdy přihlásili online přihláškou." : (
+            $kdo ? "Na této akci jste již $kdy přihlášeni (zápis provedl uživatel se značkou $kdo" 
+            : "Na této akci jste již $kdy přihlášeni.");
+        $msg.= "<br><br>Přejeme vám příjemný pobyt :-)";
         $vars['faze']= 'd';
         goto end;
       }
@@ -403,8 +410,10 @@ function do_kontrola_pinu() { // fáze B
         <p>$msg</p>
         <input type="text" size="24" name='email' value="{$post['email']}" disabled placeholder='@'>
         <input type='submit' name='cmd_jiny_mail' value='zkusím jiný mail'>
-        <input type='submit' name='cmd_registrace' value='pokračovat s tímto mailem'>
 __EOF;
+      $form.= $akce->p_registrace
+          ? "<input type='submit' name='cmd_registrace' value='pokračovat s tímto mailem'>"
+          : "<p>Případně požádejte o radu organizátory akce $akce->help_kontakt.</p>";
     }
     else {
       $msg= $pin ? zvyraznit("<p>Do mailu jsme poslali odlišný PIN</p>") : "<p></p>";
@@ -436,7 +445,7 @@ end:
 # CMD odchod bez zápisu
 #   d - end
 function do_vyplneni_dat() {
-  global $parm, $msg, $vars, $novi, $cleni, $post, $form;
+  global $akce, $msg, $vars, $novi, $cleni, $post, $form;
   global $errors;
   
   do_begin();
@@ -515,7 +524,7 @@ function do_vyplneni_dat() {
     // vytvoření pobytu
     // web_changes= 1/2 pro INSERT/UPDATE pobyt a spolu | 4/8 pro INSERT/UPDATE osoba
     $chng= array(
-      (object)array('fld'=>'id_akce',    'op'=>'i','val'=>$parm['akce:id_akce']),
+      (object)array('fld'=>'id_akce',    'op'=>'i','val'=>$akce->id_akce),
       (object)array('fld'=>'i0_rodina',  'op'=>'i','val'=>$vars['rodina']),
       (object)array('fld'=>'web_changes','op'=>'i','val'=>1),
       (object)array('fld'=>'web_zmena',  'op'=>'i','val'=>date('Y-m-d'))
@@ -548,7 +557,7 @@ function do_vyplneni_dat() {
 
     }
     // uzavři formulář závěrečnou zprávou
-    clear_post_but("/---/");
+    clear_post_but("/email/");
     $msg= count($errors) ? 'ko' : 'ok';
     $vars['faze']= 'd';
     goto end;
@@ -598,7 +607,7 @@ __EOF;
     <textarea rows="3" cols="46" name='note'>{$post['note']}</textarea> 
     <br>
     <input type='checkbox' name='chk_souhlas' value=''  $souhlas $mis_souhlas>
-    <label for='chk_souhlas' class='souhlas'>{$parm['akce:souhlas']}</label>
+    <label for='chk_souhlas' class='souhlas'>$akce->form_souhlas</label>
     <br><br>
     <br><button type="submit" name="cmd_check"><i class="fa fa-question"></i>
       zkontrolovat před odesláním</button>
@@ -627,7 +636,7 @@ end:
 # CMD odchod bez zápisu
 #   d - end
 function do_novy_klient() {
-  global $parm, $msg, $vars, $novi, $post, $form;
+  global $akce, $msg, $vars, $novi, $post, $form;
   
   do_begin();
   $post['note']= $post['note'] ?? '';
@@ -726,7 +735,7 @@ function do_novy_klient() {
     $ma_rodinu= isset($novi[-2]) ? 1 : 0;
     $narozeni= sql_date($novy->narozeni,1);
     $chng= array(
-      (object)array('fld'=>'access',   'op'=>'i','val'=>$parm['akce:org']),
+      (object)array('fld'=>'access',   'op'=>'i','val'=>$akce->org),
       (object)array('fld'=>'jmeno',    'op'=>'i','val'=>$novy->jmeno),
       (object)array('fld'=>'prijmeni', 'op'=>'i','val'=>$novy->prijmeni),
       (object)array('fld'=>'sex',      'op'=>'i','val'=>$sex),
@@ -750,7 +759,7 @@ function do_novy_klient() {
     if (!count($errors) && $ma_rodinu) {
       $nazev= preg_replace('~ová$~','',$novy->prijmeni).'ovi';
       $chng= array(
-        (object)array('fld'=>'access',  'op'=>'i','val'=>$parm['akce:org']),
+        (object)array('fld'=>'access',  'op'=>'i','val'=>$akce->org),
         (object)array('fld'=>'nazev',   'op'=>'i','val'=>$nazev),
         (object)array('fld'=>'ulice',   'op'=>'i','val'=>$novy->ulice),
         (object)array('fld'=>'psc',     'op'=>'i','val'=>$novy->psc),
@@ -774,7 +783,7 @@ function do_novy_klient() {
       // ------------------------- vytvoř pobyt a zařaď klienta
       // web_changes= 1/2 pro INSERT/UPDATE pobyt a spolu | 4/8 pro INSERT/UPDATE osoba
       $chng= array(
-        (object)array('fld'=>'id_akce',    'op'=>'i','val'=>$parm['akce:id_akce']),
+        (object)array('fld'=>'id_akce',    'op'=>'i','val'=>$akce->id_akce),
         (object)array('fld'=>'i0_rodina',  'op'=>'i','val'=>$rodina),
         (object)array('fld'=>'web_changes','op'=>'i','val'=>1),
         (object)array('fld'=>'web_zmena',  'op'=>'i','val'=>date('Y-m-d'))
@@ -865,7 +874,7 @@ __EOF;
     <textarea rows="3" cols="46" name='note' placeholder='poznámka k pobytu na akci'>{$post['note']}</textarea> 
     <br>
     <input type='checkbox' name='chk_souhlas' value=''  $souhlas $mis_souhlas>
-    <label for='chk_souhlas' class='souhlas'>{$parm['akce:souhlas']}</label>
+    <label for='chk_souhlas' class='souhlas'>$akce->form_souhlas</label>
     <br><br>
     <button type="submit" name="cmd_check"><i class="fa fa-question"></i>
       zkontrolovat před odesláním</button>
@@ -884,7 +893,7 @@ end:
 # CMD: konec
 #   a - s vymazanými daty 
 function do_rozlouceni() {
-  global $msg, $parm, $vars, $post, $form;
+  global $msg, $akce, $vars, $post, $form;
   $ok= $msg;
   do_begin();
   if (substr($vars['history'],-2,1)=='d') {
@@ -893,19 +902,19 @@ function do_rozlouceni() {
   }
   elseif ($ok=='ok') {
     $msg= "Vaše přihláška byla zaevidována a poslali jsme Vám potvrzující mail na {$post['email']}.";
-    $mail_subj= "Potvrzení přihlášky na {$parm['akce:nazev']}.";
-    $mail_body= "Dobrý den,<p>potvrzuji příjem Vaší přihlášky na akci <b>{$parm['akce:nazev']}</b>."
+    $mail_subj= "Potvrzení přihlášky na $akce->nazev.";
+    $mail_body= "Dobrý den,<p>potvrzuji příjem Vaší přihlášky na akci <b>$akce->nazev</b>."
     . "<br>V týdnu před akcí dostanete <i>Dopis na cestu</i> s doplňujícími informacemi.</p>"
-    . "<p>S přáním hezkého dne<br>{$parm['garant:jmeno']}"
-    . "<br><a href=mailto:'{$parm['garant:mail']}'>{$parm['garant:mail']}</a>"
-    . "<br>{$parm['garant:telefon']}</p>";
-    $ok_mail= simple_mail('martin@smidek.eu', $post['email'], $mail_subj,$mail_body,$parm['garant:mail']); 
+    . "<p>S přáním hezkého dne<br>$akce->garant_jmeno"
+    . "<br><a href=mailto:'$akce->garant_mail'>$akce->garant_mail</a>"
+    . "<br>$akce->garant_telefon</p>";
+    $ok_mail= simple_mail('martin@smidek.eu', $post['email'], $mail_subj,$mail_body,$akce->garant_mail); 
     $ok= $ok_mail ? 'ok' : 'ko';
   }
   if ($ok=='ko') {
     $msg= "Při zpracování přihlášky došlo bohužel k chybě. "
         . "<br>Přihlaste se prosím posláním mailu vedoucímu akce"
-        . "<br><a href=mailto:'{$parm['garant:mail']}'>{$parm['garant:mail']}</a>";
+        . "<br><a href=mailto:'$akce->garant_mail'>$akce->garant_mail</a>";
   }
   $form= <<<__EOF
     <p>$msg</p>
@@ -913,7 +922,7 @@ __EOF;
 }
 // ------------------------------------------------------------------------------- zobrazení stránky
 function page($problem='') {
-  global $user, $parm, $form, $info, $index;
+  global $vars, $akce, $form, $info, $index;
   global $TEST, $trace, $mailbox, $y, $errors;
   $icon= "akce.png";
   $stamp= form_stamp();
@@ -938,7 +947,7 @@ function page($problem='') {
         </form>
       </div>
 __EOD;
-  $user= $user ?: '... přihlaste se prosím svým mailem a zaslaným PINem';
+  $user= $vars['user'] ?: '... přihlaste se prosím svým mailem a zaslaným PINem';
   $info= $info=='' ? '' : <<<__EOD
       <div class='box'>
         <form action="$index" method="post">
@@ -978,7 +987,7 @@ __EOD;
             <i class="fa fa-user"></i> $user
           </div>
         </div>
-        <div class="intro">Přihláška na akci <b>{$parm['akce:nazev']}</b></div>
+        <div class="intro">Přihláška na akci <b>$akce->nazev</b></div>
       </header>
       <main>
         $mailbox
@@ -998,7 +1007,7 @@ __EOD;
 }
 // ------------------------------------------------------------------------------- zobrazení stránky
 function page_old($problem='') {
-  global $form, $parm, $index;
+  global $form, $akce, $index;
   global $TEST, $trace, $y, $errors;
   $icon= "akce.png";
   $stamp= form_stamp();
@@ -1011,8 +1020,8 @@ function page_old($problem='') {
   }
   else $trace= '';
   $formular= $problem ?: <<<__EOD
-      <h1>Přihláška na <b>{$parm['akce:nazev']}</b></h1>
-      <div id='popis'>{$parm['akce:popis']}</div>
+      <h1>Přihláška na <b>$akce->nazev</b></h1>
+      <div id='popis'>$akce->popis</div>
       $problem
       <div class='formular'>
         <form action="$index" method="post">
@@ -1020,7 +1029,7 @@ function page_old($problem='') {
           <input type="hidden" name='stamp' value="$stamp">
         </form>
       </div>
-      <div id='tail'>{$parm['form:pata']}</div>
+      <div id='tail'>$akce->form_pata</div>
 __EOD;
   echo <<<__EOD
   <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
@@ -1082,7 +1091,7 @@ function trace_vars($title) {
   global $TEST, $trace, $vars;
   if ($TEST) {
     $vars_dump= [];
-    foreach (explode(',',"stamp,faze,history,klient,chk_souhlas,rodina,novi,cleni,post") as $v) {
+    foreach (explode(',',"stamp,faze,history,klient,user,chk_souhlas,rodina,novi,cleni,post") as $v) {
       $vars_dump[$v]= $vars[$v] ?? '?';
     }
     $trace.= '<hr>'.debugx($vars_dump,$title,0,3);
@@ -1193,7 +1202,7 @@ function _ezer_qry($op,$table,$cond_key,$chng) {
 }
 # přidání dítěte do rodiny a na akci
 function nove_dite($pobyt,$rodina,$jmeno,$prijmeni,$narozeni,$syn,$dcera) {
-  global $parm, $errors;
+  global $akce, $errors;
   $sex= $dcera ? 2 : 1;
   $role= $dcera || $syn ? 'd' : 'p';
   $narozeni= sql_date($narozeni,1);
@@ -1202,7 +1211,7 @@ function nove_dite($pobyt,$rodina,$jmeno,$prijmeni,$narozeni,$syn,$dcera) {
     (object)array('fld'=>'prijmeni', 'op'=>'i','val'=>$prijmeni),
     (object)array('fld'=>'sex',      'op'=>'i','val'=>$sex),
     (object)array('fld'=>'narozeni', 'op'=>'i','val'=>$narozeni),
-    (object)array('fld'=>'access',   'op'=>'i','val'=>$parm['akce:org'])
+    (object)array('fld'=>'access',   'op'=>'i','val'=>$akce->org)
   );
   $ido= _ezer_qry("INSERT",'osoba',0,$chng);
   if (!$ido) $errors[]= "Nastala chyba při zápisu do databáze (o)"; 

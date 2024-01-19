@@ -212,7 +212,18 @@ end:
   return $geo;
 }
 /** ==========================================================================================> AKCE */
-# ---------------------------------------------------------------------------------------- ms_import
+# ----------------------------------------------------------------------------------- akce_ucastnici
+# pro přihlášky
+function akce_prihlaska($id_akce,$cmd,$par='') {
+  $prihlaska= 'prihlaska_2.php';
+  $goal= "$prihlaska?akce=$id_akce$par";
+  $url= "{$_SERVER['REQUEST_SCHEME']}://{$_SERVER['HTTP_HOST']}/$goal";
+  switch ($cmd) {
+    case 'a': $res= "<a href='$url' target='pri'>$goal</a>"; break;
+  }
+  return $res;
+}
+# ----------------------------------------------------------------------------------- akce_ucastnici
 # import
 function akce_ucastnici($akce,$cmd,$par=null) {
   $ret= (object)array('html'=>'');
