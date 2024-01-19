@@ -10566,7 +10566,8 @@ function evid2_cleni($id_osoba,$id_rodina,$filtr) { //trace();
         JOIN osoba AS rto ON rto.id_osoba=rt.id_osoba
         JOIN tvori AS ot ON ot.id_osoba=rto.id_osoba
         JOIN rodina AS otr ON otr.id_rodina=ot.id_rodina -- AND otr.access & $access
-      WHERE r.id_rodina=$id_rodina AND $filtr AND rto.access & $access
+      WHERE r.id_rodina=$id_rodina AND $filtr 
+        AND (rto.access & $access OR rto.access=0)
       GROUP BY id_osoba
       ORDER BY rt.role,rto.narozeni
     ");
