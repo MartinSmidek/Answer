@@ -229,6 +229,11 @@ function highcharts_simple() {
   });
 }
 // =========================================================================================> funkce
+// ---------------------------------------------------------------------------------------- get type
+// vrátí atribut type
+function get_type(elem) {
+  return elem.type;
+}
 // ---------------------------------------------------------------------------------------- add days
 // funkce pro přičtení/odečtení 'ofset' dnů k danému datu.
 function add_days(datum,ofset) {

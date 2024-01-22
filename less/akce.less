@@ -53,11 +53,12 @@ html {
             padding: 0 20px; width: max-content;
             background-color: @dary_b;
           }
-          input, textarea {
+          input, textarea, select {
             margin-bottom: 5px; max-width: 100%;
             font-family: "Open Sans"; font-size: @box_fs; 
             resize: none;
-          }    
+          }
+          select { padding: 1px; }
           label.souhlas {
             font-size: smaller;
           }
@@ -75,6 +76,7 @@ html {
         }
       }
     }
+    // ----------------------------------------------------------------------------- trasování
     section.trace {
       margin-top: 10px; border-top:3px dashed red;
       background-color: @form_b;
@@ -90,77 +92,3 @@ html {
     }
   }
 }
-
-/*
-// ----------------------------------------------------------------------------------- parametrizace
-//        background           color
-@head_b:  #ffffff;    @head_c:  #000000;
-@form_b:  rgb(249, 245, 237);
-// ------------------------------------------------------------------------------------------ layout
-html {
-  width: 100%; height: 100%; 
-  body { 
-    max-width: 800px;
-    margin:0 auto; 
-    font-family: "Open Sans"; font-size: 16px; 
-  }
-}
-div {
-  padding: 5px;
-}
-div#obal {
-  div#head {
-    position: relative;
-    height:60px; border-bottom:1px solid grey;
-    a { 
-      text-decoration: none; color: @head_c;
-      margin-left: 5px; position: absolute; top: 50%; transform: translateY(-50%); // vertical div
-    }
-  }
-  h1 {
-    font-weight: 300;
-    margin-bottom: 5px;
-  }
-  button {
-    font-family: "Open Sans"; font-size: 16px; margin-bottom: 5px;
-    .fa-red { color:red }
-    .fa-green { color:green; font-weight: bold; }
-  }
-  div#popis {
-    border-bottom:1px solid grey;
-    margin-bottom: 5px;
-  }
-  div.formular {
-    background-color: @form_b;
-    display:block; 
-    margin: 5px;
-    input, textarea {
-      margin-bottom: 5px; max-width: 100%;
-      font-family: "Open Sans"; font-size: 16px; 
-      resize: none;
-    }    
-    label.souhlas {
-      font-size: smaller;
-    }
-    .missing {
-      outline: 2px solid red;
-    }
-  }
-  div#tail {
-    font-size: smaller; font-style: italic;
-    border-top:1px solid grey; margin-bottom: 10px; 
-    color: @head_c; 
-  }
-}
-div.trace {
-  border-top:3px dashed red;
-  font:12px Arial; color:black;
-  table { border-collapse:collapse; margin:1px 0;}
-  td { border:1px solid #aaa; ;padding:1px 3px; line-height:11px; }
-  td.title { color:#000; background-color:#aaa; }
-  td.label { color:#a33;}
-  table.dbg_array { background-color:#ddeeff; font:12px Arial; }
-  table.dbg_object { background-color:#ffffaa; font:12px Arial; }
-  
-}
-*/

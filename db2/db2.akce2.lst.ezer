@@ -571,8 +571,11 @@ form _page [,,275,360] {
   } }
   # ------------------------==> . online přihlášky
   var p_json: object // dekódovaný obsah akce.web_online
-  func p_show() {
+  func p_show() { var ch:ezer
     p_json= {};
+    for (ch of form.tagged('pri')) {
+      if (js.get_type(ch)=='check') ch.init();
+    }
     if (!web_online) { // vytvoř prázdný popis přihlášky
       p_json= {p_enable:0}; 
       web_online= json_encode(p_json); web_online.change();
@@ -582,19 +585,36 @@ form _page [,,275,360] {
 //    p_enable= p_json.enable;
     p_href= p_enable ? php.akce_prihlaska(page.a_akce,'a',p_test?'&test=3':'') : '';
   }
-  check p_enable [13,30,200,] { tag:'pri', title:'povolit online přihlášení', value:'0' 
+  check p_enable [13,30,200,] { tag:'pri', title:'povolit online přihlášení', value:'0', 
+      css:'ae_parm', style:'padding-bottom:2px;z-index:1'  
     func onchange() { p_json.p_enable= this; web_online.change(); }
   }
   label p_href [221,35,179,20] { style:'text-align:right' }
   check p_test [416,30,50,] { tag:'pri', title:'test', value:'0' 
     func onchange() { p_json.p_test= this; web_online.change(); }}
   # -----------==> .. parametrizace přihlášky
-  check p_jen_par [13,55,400,] { tag:'pri', title:'přihlášení manželského páru', value:'0' 
+  check p_rodina [13,80,209,] { tag:'pri', title:'rodinné přihlášení', value:'0' 
+    func onchange() { p_json.p_rodina= this; web_online.change(); }}
+  check p_jen_par [30,105,198,] { tag:'pri', title:'jen manželský pár', value:'0' 
     func onchange() { p_json.p_jen_par= this; web_online.change(); }}
-  check p_registrace [13,80,400,] { tag:'pri', title:'povolit registraci s novým mailem', value:'0' 
+  check p_rod_adresa [30,130,198,] { tag:'pri', title:'rodinná adresa', value:'0' 
+    func onchange() { p_json.p_rod_adresa= this; web_online.change(); }}
+  check p_obcanky [30,155,198,] { tag:'pri', title:'číslo OP', value:'0' 
+    func onchange() { p_json.p_obcanky= this; web_online.change(); }}
+  check p_jednotlivec [13,255,400,] { tag:'pri', title:'přihlášení jednotlivce', value:'0' 
+    func onchange() { p_json.p_jednotlivec= this; web_online.change(); }}
+  check p_oso_adresa [30,280,198,] { tag:'pri', title:'osobní adresa', value:'0' 
+    func onchange() { p_json.oso_adresa= this; web_online.change(); }}
+  check p_registrace [13,305,210,] { tag:'pri', title:'povolit registraci s novým mailem', value:'0' 
     func onchange() { p_json.p_registrace= this; web_online.change(); }}
+  check p_souhlas [13,325,204,] { tag:'pri', title:'vyžadovat souhlas (GDPR))', value:'0' 
+    func onchange() { p_json.p_souhlas= this; web_online.change(); }}
+  // specifické varianty podle typu akce
+  label [13,350,400,20] { tag:'pri' title:'<b>Varianty podle typu akce</b>' }
+  check p_obnova [13,370,400,] { tag:'pri', title:'OBNOVA MS: neúčastníky aktuálního LK brát jako náhradníky', value:'0' 
+    func onchange() { p_json.p_obnova= this; web_online.change(); }}
   // ruční změna JSON
-  edit web_online [13,368,438,152] { tag:'pri', title:'^JSON popis přihlášky', data:akce.web_online,
+  edit web_online [13,468,438,50] { tag:'pri', title:'^JSON popis přihlášky', data:akce.web_online,
       format:'t'
   func onchanged() { 
     if (confirm('uložit ruční změnu JSON popisu přihlášky?')) {
@@ -602,11 +622,11 @@ form _page [,,275,360] {
     else form.plain();
   }}
   // Zpět a Uložit
-  label  [13,311,98,30] { tag:'pri', css:'ae_parm', style:'z-index:1', skill:'yo' }
-  button [19,317,,] { tag:'pri', title:'Zpět', help:'Neměnit změněná data', skill:'yo|yo'
+  label  [13,411,98,30] { tag:'pri', css:'ae_parm', style:'z-index:1', skill:'yo' }
+  button [19,417,,] { tag:'pri', title:'Zpět', help:'Neměnit změněná data', skill:'yo|yo'
     func onclick() { akce_zpet() }
   }
-  button [65,317,,] { tag:'pri', title:'Uložit', help:'Uložit změněná data', skill:'yo|yo'
+  button [65,417,,] { tag:'pri', title:'Uložit', help:'Uložit změněná data', skill:'yo|yo'
     func onclick() {
       akce_lock('off'); 
       if (form.key() && web_online.changed()) {
