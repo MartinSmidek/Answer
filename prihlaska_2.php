@@ -109,10 +109,11 @@ function init() {
     $_SESSION[$AKCE]->faze= 'a';
     $_SESSION[$AKCE]->history= '';
     $_SESSION[$AKCE]->klient= 0;
+    $_SESSION[$AKCE]->user= '';
     $_SESSION[$AKCE]->chk_souhlas= 0;
-    $_SESSION[$AKCE]->rodina= 0;
-    $_SESSION[$AKCE]->novi= array();
-    $_SESSION[$AKCE]->cleni= array();
+    $_SESSION[$AKCE]->rodina= (object)['id_rodina'=>0];
+    $_SESSION[$AKCE]->novi= [];
+    $_SESSION[$AKCE]->cleni= [];
     $_SESSION[$AKCE]->post= $_POST;
     $index= "prihlaska_2.php"; 
     $_SESSION[$AKCE]->index= $index;
@@ -126,6 +127,10 @@ function init() {
     if (substr($tag,0,1)=='-') { // položka z $novi
       list($id,$name)= explode('_',$tag);
       $novi[$id]->$name= $val;
+    }
+    elseif (substr($tag,0,2)=='r_') { // položka z $novi
+      $name= substr($tag,2);
+      $vars->rodina->$name= $val;
     }
   }
   // zpracování hodnot
@@ -374,7 +379,7 @@ function do_kontrola_pinu() { // fáze B
     }
     else { // pocet==1 ... mail je jednoznačný
       $vars->klient= $ido;
-      $vars->rodina= $idr;
+      $vars->rodina->id_rodina= $idr;
         // položky do hlavičky
       $vars->user= "$jmena<br>$post->email";
 
@@ -382,7 +387,7 @@ function do_kontrola_pinu() { // fáze B
       list($idp,$kdy,$kdo)= select("id_pobyt,IFNULL(kdy,''),IFNULL(kdo,'')",
           "pobyt JOIN spolu USING (id_pobyt) "
           . "LEFT JOIN _track ON klic=id_pobyt AND kde='pobyt' AND fld='id_akce' ",
-          "(id_osoba={$vars->klient} OR i0_rodina={$vars->rodina}) AND id_akce=$akce->id_akce "
+          "(id_osoba={$vars->klient} OR i0_rodina=$idr) AND id_akce=$akce->id_akce "
           . "ORDER BY id_pobyt DESC LIMIT 1");
       display("a2: $idp,$kdy,$kdo");
       if ($idp) {
@@ -395,7 +400,12 @@ function do_kontrola_pinu() { // fáze B
         goto end;
       }
       else { // klientova rodin ani klient sám an akci není
-
+        // pokud je povolená jejich úprava načti rodinnou adresu
+        if ($akce->p_rod_adresa) {
+          $ra= $vars->rodina;
+          list($ra->ulice,$ra->psc,$ra->obec)= 
+              select('ulice,psc,obec','rodina',"id_rodina=$idr");
+        }
         // načti členy rodiny
         $ro= pdo_query(
           "SELECT id_osoba,role,jmeno,prijmeni,sex,narozeni
@@ -407,8 +417,6 @@ function do_kontrola_pinu() { // fáze B
               'jmeno'=>$jmeno,'prijmeni'=>$prijmeni,'role'=>$role,
               'sex'=>$sex,'narozeni'=>$narozeni);
         }
-
-
         $msg= '';
         $vars->faze= 'c';
         goto end;
@@ -535,15 +543,20 @@ function do_vyplneni_dat() {
     // web_changes= 1/2 pro INSERT/UPDATE pobyt a spolu | 4/8 pro INSERT/UPDATE osoba
     // účast jako ¨účastník' pokud není p_obnova => neúčast na LK znamená "náhradník"
     $ucast= 0; // = účastník
-    if ($akce->p_obnova && !byli_na_aktualnim_LK($vars->rodina)) {
+    if ($akce->p_obnova && !byli_na_aktualnim_LK($vars->rodina->id_rodina)) {
       $ucast= 9; // = náhradník
     }
-    $idp= db_novy_pobyt($akce->id_akce,$vars->rodina,$ucast,$post->note);
+    $idp= db_novy_pobyt($akce->id_akce,$vars->rodina->id_rodina,$ucast,$post->note);
     if (count($errors)) goto db_end;
+    // ------------------------------ oprav rodinné údaje
+    if ($akce->p_rod_adresa) {
+      do_oprav_rodinu();
+      if (count($errors)) goto db_end;
+    }
     // ------------------------------ vytvoř a přidej nové členy rodiny
     foreach ($novi as $novy) {
       // přidání člena rodiny
-      db_novy_clen_na_akci($idp,$vars->rodina,$novy->jmeno,$novy->prijmeni,$novy->narozeni,$novy->spolu);
+      db_novy_clen_na_akci($idp,$vars->rodina->id_rodina,$novy->jmeno,$novy->prijmeni,$novy->narozeni,$novy->spolu);
       if (count($errors)) goto db_end;
     }
     // ------------------------------ přidej staré členy rodiny
@@ -595,19 +608,34 @@ __EOF;
 //    <input type="text" size="24" name='email' value="$post->email" disabled>
 //    <input type="text" size="4" name='pin' value="$post->zaslany_pin" disabled>
 //    
-  // pokud je vyžadován souhlas
+  // -------------------------------------------- pokud je vyžadován souhlas
   $souhlas= $akce->p_souhlas
     ? "<input type='checkbox' name='chk_souhlas' value=''  "
       . ($vars->chk_souhlas ? 'checked' : '')
       . " $mis_souhlas><label for='chk_souhlas' class='souhlas'>$akce->form_souhlas</label>"
       . "<br><br>"
-    : "";
+    : '';
+  // -------------------------------------------- pokud je povolena úprava rodinné adresy
+  $rod_adresa= '';
+  if ($akce->p_rod_adresa) {
+    $ra= $vars->rodina;
+    $ulice= $ra->ulice ? "value='$ra->ulice'" : "placeholder='ulice nebo č.p.'";
+    $psc= $ra->psc ? "value='$ra->psc'" : "placeholder='PSČ'";
+    $obec= $ra->obec ? "value='$ra->obec'" : "placeholder='obec/město'";
+    $rod_adresa= <<<__EOF
+    <p>Zkontrolujte a případně upravte vaši rodinnou adresu:</p>
+        <input type='text' name='r_ulice' size='15' $ulice />
+        <input type='text' name='r_psc' size='5' $psc' />
+        <input type='text' name='r_obec' size='20' $obec />
+__EOF;
+  }
   $form= <<<__EOF
     <p>Poznačte prosím, koho na akci přihlašujete:</p>
     $old_cleni
     $new_cleni
     <br><button type="submit" name="cmd_nove"><i class="fa fa-green fa-plus"></i>
       chci přihlásit dalšího člena pobytu</button>
+    $rod_adresa
     <p>Doplňte případnou poznámku pro organizátory akce:</p>
     <textarea rows="3" cols="46" name='note'>$post->note</textarea> 
     <br>
@@ -894,7 +922,7 @@ function do_rozlouceni() {
     $vars->faze= 'a';
   }
   elseif ($ok=='ok') {
-    $text= $akce->p_obnova && !byli_na_aktualnim_LK($vars->rodina)
+    $text= $akce->p_obnova && !byli_na_aktualnim_LK($vars->rodina->id_rodina)
       ? "</p><p>Účast na obnově mají zajištěnu především účastníci letního kurzu. "
         . "Protože jste mezi nimi nebyli, zařadili jsme vás zatím mezi náhradníky. "
         . "Pokud bude místo, ozveme se a účast vám potvrdíme.</p>"
@@ -1120,6 +1148,17 @@ function db_novy_pobyt($ida,$idr,$ucast,$note) {
   $idp= _ezer_qry("INSERT",'pobyt',0,$chng);
   if (!$idp) $errors[]= "Nastala chyba při zápisu do databáze (p)"; 
   return $idp;
+}
+# oprav rodinné údaje 
+function do_oprav_rodinu() {
+  global $vars, $errors;
+  $chng= array(
+    (object)array('fld'=>'ulice', 'op'=>'u','val'=>$vars->rodina->ulice),
+    (object)array('fld'=>'psc',   'op'=>'u','val'=>$vars->rodina->psc),
+    (object)array('fld'=>'obec',  'op'=>'u','val'=>$vars->rodina->obec)
+  );
+  $ids= _ezer_qry("UPDATE",'rodina',$vars->rodina->id_rodina,$chng);
+  if (!$ids) $errors[]= "Nastala chyba při zápisu do databáze (r)"; 
 }
 # pro pobyt na obnově zjistí, zda rodina byla na jejím LK 
 function byli_na_aktualnim_LK($rodina) {
