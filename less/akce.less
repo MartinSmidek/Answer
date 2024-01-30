@@ -8,9 +8,10 @@
 //
 @width:   800px;
 @foot_h:   50px;
-@head_h:  100px;
+@head_h:  120px;
 //
-@box_fs:  14px;
+@box_fs:  12pt;
+@box_fs2: 14pt;
 // ------------------------------------------------------------------------------------------ layout
 html {
   height: 100%;
@@ -24,7 +25,7 @@ html {
         width: 100%; height: @head_h;
         background-color: @head_b; color: @head_c;
         div.header {
-          max-width: @width; height: calc(@head_h - 30px); margin:0 auto; 
+          max-width: @width; height: calc(@head_h - 40px); margin:0 auto; 
           a.logo {
             top: 15px; position: absolute; 
             img { max-height: 50px; }
@@ -36,7 +37,7 @@ html {
         }
         div.intro {
           clear: both; border-top: 3px solid white; 
-          color: @head_c; padding: 3px; font-size: @box_fs; text-align: center; text-wrap: nowrap;
+          color: @head_c; padding: 3px; font-size: @box_fs2; text-align: center; text-wrap: nowrap;
         }
       }
       main {

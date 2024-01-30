@@ -28,7 +28,7 @@ elseif (isset($_SESSION[$AKCE]->test))
 //$TEST= 0; // 0 = žádné trasování - ostrý běh až na $MAIL
 //$TEST= 1; // 1 = trasování - ostrý běh až na $MAIL
 //$TEST= 2; // 2 = trasování + přednastavený mail 
-$TEST= 3; // 3 = trasování + přednastavený mail a přeskok loginu
+//$TEST= 3; // 3 = trasování + přednastavený mail a přeskok loginu
 
 //if ($TEST==3) $testovaci_mail= 'martin@smidek.eu';
 //if ($TEST==3) $testovaci_mail= 'martin.smidek@outlook.com';
@@ -109,6 +109,7 @@ function init() {
   $trace.= debugx($_POST,'$_POST - start');
   $stamp_sess= $_SESSION[$AKCE]->stamp??date("i:s");
   $stamp_post= $_POST['stamp']??'?';
+  $trace.= debugx($_POST,'$_POST - start');
   display("SESSION: $stamp_sess POST: $stamp_post");
   if ($stamp_sess != $stamp_post) {
   //  $trace.= debugx($_POST,'$_POST - start');
@@ -127,6 +128,7 @@ function init() {
     $_SESSION[$AKCE]->faze= 'a';
     $_SESSION[$AKCE]->history= '';
     $_SESSION[$AKCE]->klient= 0;
+    $_SESSION[$AKCE]->kontrola= 0;
     $_SESSION[$AKCE]->user= '';
     $_SESSION[$AKCE]->chk_souhlas= 0;
     $_SESSION[$AKCE]->rodina= [];
@@ -144,8 +146,10 @@ function init() {
     if (preg_match("/([\-\d]+)_(.*)/",$tag,$m)) { // položka z $cleni
       $id= $m[1]; $name= $m[2];
       if (is_array($cleni[$id]->$name)) {
-        if ($val!=$cleni[$id]->$name[0])
+        if ($val!=$cleni[$id]->$name[0]) {
           $cleni[$id]->$name[1]= $val;
+          $vars->kontrola= 0;
+        }
       }
       else {
         $cleni[$id]->$name= $val;
@@ -154,8 +158,10 @@ function init() {
     elseif (substr($tag,0,2)=='r_') { // položka z rodina
       $name= substr($tag,2);
       $rodina= $vars->rodina[key($vars->rodina)];
-      if ($val!=$rodina->$name[0])
+      if ($val!=$rodina->$name[0]) {
         $rodina->$name[1]= $val;
+        $vars->kontrola= 0;
+      }
     }
   }
   // zpracování hodnot
@@ -492,6 +498,7 @@ function do_vyplneni_dat() {
     $id--;
     $vars->cleni[$id]= $cleni[$id]= (object)array
         ('spolu'=>1,'jmeno'=>'','prijmeni'=>'','narozeni'=>'','role'=>'d');
+    $vars->kontrola= 0;
   }
   // -------------------------------------------- nové pečovatel
   if (isset($post->cmd_novy)) {
@@ -503,6 +510,7 @@ function do_vyplneni_dat() {
     $id--;
     $vars->cleni[$id]= $cleni[$id]= (object)array
         ('spolu'=>1,'jmeno'=>'','prijmeni'=>'','narozeni'=>'','role'=>'p', 'obcanka'=>'','telefon'=>'');
+    $vars->kontrola= 0;
   }
   // -------------------------------------------- nepřihlašovat
   if (isset($post->cmd_ne)) {
@@ -560,6 +568,7 @@ function do_vyplneni_dat() {
       if (count($poznamka))
         $msg.= zvyraznit(implode('<br>',$poznamka),1);
     }
+    $vars->kontrola= count($neuplne) ? 0 : 1;
   }
   // -------------------------------------------- zápis do databáze pokud není $TEST>1
   $errors= [];
@@ -636,6 +645,8 @@ function do_vyplneni_dat() {
     $idr= key($vars->rodina);
     $rod_adresa.= elem_input('r',$idr,['ulice','psc','obec','spz']);
   }
+  $enable_send= $vars->kontrola ? '' : 'disabled';
+  $enable_green= $vars->kontrola ? 'fa-green' : '';
   $form= <<<__EOF
     <p>Poznačte prosím, koho na akci přihlašujete:</p>
     $old_cleni
@@ -647,12 +658,12 @@ function do_vyplneni_dat() {
       chci přihlásit dalšího pečovatele</button>
     $rod_adresa
     <label class='upper'>Doplňte případnou poznámku pro organizátory akce:
-      <textarea rows="3" cols="46" name='note'>$post->note</textarea></label>
+      <textarea rows="3" cols="62" name='note'>$post->note</textarea></label>
     <br>
     $souhlas
     <br><button type="submit" name="cmd_check"><i class="fa fa-question"></i>
       zkontrolovat před odesláním</button>
-    <button type="submit" name="cmd_ano"><i class="fa fa-green fa-send-o"></i> 
+    <button type="submit" id="submit_form" name="cmd_ano" $enable_send><i class="fa $enable_green fa-send-o"></i> 
       odeslat přihlášku</button>
     <button type="submit" name="cmd_ne"><i class="fa fa-times fa-red"></i> 
       neposílat</button>
@@ -737,6 +748,14 @@ __EOD;
         </form>
       </div>
 __EOD;
+  // pokud dojde ke změně, zablokuj odeslání tj. vynuť novou kontrolu
+  $function_check= <<<__EOF
+    function check() {
+      jQuery("input,select").change(function(){
+        jQuery('#submit_form').prop("disabled",true);
+      });
+    }
+__EOF;
   $mailbox= $mailbox ? "<div class='box' style='border-left: 20px solid grey'>$mailbox</div>" : '';
 //      <div id='head'><a href="https://www.tvnoe.cz"><i class="fa fa-home"></i>NOE - televize dobrých zpráv</a></div>
   echo <<<__EOD
@@ -752,13 +771,15 @@ __EOD;
     <link rel="stylesheet" href="/less/akce.css" type="text/css" media="screen" charset='utf-8'>
     <link rel="stylesheet" href="/ezer3.2/client/licensed/font-awesome/css/font-awesome.min.css?" type="text/css" media="screen" charset="utf-8">
     <link rel="stylesheet" id="customify-google-font-css" href="//fonts.googleapis.com/css?family=Open+Sans%3A300%2C300i%2C400%2C400i%2C600%2C600i%2C700%2C700i%2C800%2C800i&amp;ver=0.3.5" type="text/css" media="all">
+    <script src="/ezer3.2/client/licensed/jquery-3.3.1.min.js" type="text/javascript" charset="utf-8"></script>
     <script>
         // Použijeme JavaScript pro přesměrování, abychom se vyhnuli problémům s cachováním
         if (window.history.replaceState) {
             window.history.replaceState(null, null, window.location.href);
         }
+        $function_check
     </script>  </head>
-  <body $if_trace>
+  <body $if_trace onload='check();'>
     <div class="wrapper">
       <header>
         <div class="header">
@@ -1037,7 +1058,7 @@ function trace_vars($title) {
   global $TEST, $trace, $vars;
   if ($TEST) {
     $vars_dump= [];
-    foreach (explode(',',"stamp,faze,history,klient,user,chk_souhlas,rodina,cleni,post") as $v) {
+    foreach (explode(',',"stamp,faze,history,kontrola,klient,user,chk_souhlas,rodina,cleni,post") as $v) {
       $vars_dump[$v]= $vars->$v ?? '?';
     }
     $trace.= '<hr>'.debugx($vars_dump,$title,0,4);
