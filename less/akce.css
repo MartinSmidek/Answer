@@ -75,6 +75,17 @@ html body div.wrapper main div.box {
   padding: 20px;
   background-color: #f8f5ed;
 }
+html body div.wrapper main div.box div.clen,
+html body div.wrapper main div.box div.rodina {
+  display: inline-block;
+  padding: 5px;
+  margin: 5px;
+  background: #eae1c8;
+}
+html body div.wrapper main div.box div.clen {
+  margin-left: 50px;
+  clear: both;
+}
 html body div.wrapper main div.box div.dary {
   padding: 0 20px;
   width: max-content;
@@ -91,7 +102,7 @@ html body div.wrapper main div.box select {
 }
 html body div.wrapper main div.box label.upper {
   float: left;
-  margin-left: 5px;
+  margin-left: 10px;
   font-size: 12px;
 }
 html body div.wrapper main div.box label.upper input,
@@ -102,12 +113,12 @@ html body div.wrapper main div.box label.upper textarea {
 }
 html body div.wrapper main div.box label.check {
   float: left;
-  margin-left: 5px;
+  margin-left: -55px;
   font-size: 12px;
 }
 html body div.wrapper main div.box label.check input {
   display: block;
-  margin: 5px;
+  margin: 5px 15px;
 }
 html body div.wrapper main div.box select {
   padding: 1px;
