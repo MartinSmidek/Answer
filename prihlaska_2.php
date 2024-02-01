@@ -15,11 +15,11 @@ header('Content-Type:text/html;charset=utf-8');
 header('Cache-Control:no-cache,no-store,must-revalidate');
 if (!isset($_GET['akce']) || !is_numeric($_GET['akce'])) die("Online přihlašování není k dospozici."); 
 session_start();
-if (!isset($_SESSION[$AKCE])) $_SESSION[$AKCE]= (object)[];
 
 $MAIL= 1; // 1 - maily se posílají | 0 - mail se jen ukáže - lze nastavit url&mail=0
 $TEST= 0; // bez testování - lze nastavit url&test=n
 $AKCE= "A_{$_GET['akce']}"; // ID akce pro SESSION
+if (!isset($_SESSION[$AKCE])) $_SESSION[$AKCE]= (object)[];
 
 // nastavení &test &mail se projeví jen z chráněných IP adres
 if (ip_ok()) {
