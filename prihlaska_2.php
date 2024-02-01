@@ -13,7 +13,7 @@ header('Cache-Control:no-cache,no-store,must-revalidate');
 
 if (!isset($_GET['akce']) || !is_numeric($_GET['akce'])) die("Online přihlašování není k dospozici."); 
 
-$MAIL= 1; // 0 - mail se jen ukáže | 1 - maily se posílají 
+$MAIL= 1; // 0 - mail se jen ukáže | 1 - maily se posílají pokud je $TEST=0
 $TEST= 0; // bez testování - lze nastavit url&test=n
 $AKCE= "A_{$_GET['akce']}"; // ID akce pro SESSION
     
@@ -39,7 +39,7 @@ $options= [
     'role'  => [''=>'role v rodině?','a'=>'manžel','b'=>'manželka','d'=>'dítě','p'=>'jiný vztah']
   ];
 $p_fld= [ // položky tabulky POBYT
-    'poznamka'  =>['62/4','Doplňte případnou poznámku pro organizátory akce (např. využití nabízené diety, ...)','area']
+    'pracovni'  =>['62/4','sem prosím napište případnou dietu, nebo jinou úpravu stravy - poloviční porci, odhlášení jídla apod.','area']
   ];
 $r_fld= [ // položky tabulky RODINA
     'ulice' =>[15,'* ulice nebo č.p.',''],
@@ -453,7 +453,7 @@ function do_kontrola_pinu() { // fáze B
         }
         $msg= '';
         $vars->faze= 'c';
-        $vars->pobyt->poznamka= '';
+        $vars->pobyt->pracovni= '';
         goto end;
       }
     }
@@ -503,14 +503,14 @@ function do_vyplneni_dat() {
   global $errors;
   do_begin();
   $mis_souhlas= '';
-  $post->poznamka= $post->poznamka ?? '';
+  $post->pracovni= $post->pracovni ?? '';
   // -------------------------------------------- zobraz děti a pečouny
   if (isset($post->cmd_zobraz_deti)) {
     $vars->pro_par= 2;
   }
   // -------------------------------------------- nové dítě
   if (isset($post->cmd_dalsi_dite)) {
-    clear_post_but("/email|zaslany_pin|pin|poznamka/");
+    clear_post_but("/email|zaslany_pin|pin|pracovni/");
     $id= 0;
     foreach (array_keys($cleni) as $is) {
       $id= min($id,$is);
@@ -522,7 +522,7 @@ function do_vyplneni_dat() {
   }
   // -------------------------------------------- nové pečovatel
   if (isset($post->cmd_dalsi_pecoun)) {
-    clear_post_but("/email|zaslany_pin|pin|poznamka/");
+    clear_post_but("/email|zaslany_pin|pin|pracovni/");
     $id= 0;
     foreach (array_keys($cleni) as $is) {
       $id= min($id,$is);
@@ -600,7 +600,7 @@ function do_vyplneni_dat() {
     if ($akce->p_obnova && !byli_na_aktualnim_LK(key($vars->rodina))) {
       $ucast= 9; // = náhradník
     }
-    $idp= db_novy_pobyt($akce->id_akce,key($vars->rodina),$ucast,$vars->pobyt->poznamka);
+    $idp= db_novy_pobyt($akce->id_akce,key($vars->rodina),$ucast,$vars->pobyt->pracovni);
     if (count($errors)) goto db_end;
     // ------------------------------ oprav rodinné údaje
     if ($akce->p_rod_adresa) {
@@ -671,7 +671,7 @@ function do_vyplneni_dat() {
     $idr= key($vars->rodina);
     $rod_adresa.= elem_input('r',$idr,['ulice','psc','obec','spz']);
   }
-  $pobyt= elem_input('p',0,['poznamka']);
+  $pobyt= elem_input('p',0,['pracovni']);
   $cmd_zobraz_deti= "<button type='submit' name='cmd_zobraz_deti'><i class='fa fa-green fa-plus'></i>
       po dohodě s organizátory přihlašuji i dítě s pečovatelem</button>";
   $cmd_dalsi_dite= "<button type='submit' name='cmd_dalsi_dite'><i class='fa fa-green fa-plus'></i>
@@ -725,6 +725,12 @@ function do_rozlouceni() {
     $vars->faze= 'a';
   }
   elseif ($ok=='ok') {
+    $ucastnici= ''; $del= '';
+    foreach ($vars->cleni as $clen) {
+      if (!$clen->spolu) continue;
+      $ucastnici.= "$del$clen->jmeno $clen->prijmeni"; 
+      $del= ', ';
+    }
     $text= $akce->p_obnova && !byli_na_aktualnim_LK(key($vars->rodina))
       ? ".</p>"
         . "<p>Účast na obnově mají zajištěnu přednostně účastníci letního kurzu. "
@@ -735,6 +741,7 @@ function do_rozlouceni() {
     $msg= "Vaše přihláška byla zaevidována a poslali jsme Vám potvrzující mail na $post->email.";
     $mail_subj= "Potvrzení přijetí přihlášky na akci $akce->nazev.";
     $mail_body= "Dobrý den,<p>potvrzuji přijetí vaší přihlášky na akci <b>$akce->nazev</b>"
+    . " pro účastníky $ucastnici."
     . $text
     . "<p>S přáním hezkého dne<br>$akce->garant_jmeno"
     . "<br><a href=mailto:'$akce->garant_mail'>$akce->garant_mail</a>"
@@ -1031,7 +1038,7 @@ function db_clen_na_akci($idp,$ido,$s_role) {
   $ids= _ezer_qry("INSERT",'spolu',0,$chng);
   if (!$ids) $errors[]= "Nastala chyba při zápisu do databáze (cs)"; 
 }
-function db_novy_pobyt($ida,$idr,$ucast,$poznamka) {
+function db_novy_pobyt($ida,$idr,$ucast,$pracovni) {
   global $errors;
   $chng= array(
     (object)array('fld'=>'id_akce',    'op'=>'i','val'=>$ida),
@@ -1040,8 +1047,8 @@ function db_novy_pobyt($ida,$idr,$ucast,$poznamka) {
     (object)array('fld'=>'web_changes','op'=>'i','val'=>1),
     (object)array('fld'=>'web_zmena',  'op'=>'i','val'=>date('Y-m-d'))
   );
-  if ($poznamka)
-    $chng[]= (object)array('fld'=>'poznamka', 'op'=>'i','val'=>$poznamka);
+  if ($pracovni)
+    $chng[]= (object)array('fld'=>'pracovni', 'op'=>'i','val'=>$pracovni);
   $idp= _ezer_qry("INSERT",'pobyt',0,$chng);
   if (!$idp) $errors[]= "Nastala chyba při zápisu do databáze (p)"; 
   return $idp;

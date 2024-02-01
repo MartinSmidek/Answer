@@ -583,7 +583,7 @@ form _page [,,275,360] {
     p_json= json_decode(web_online);
     copy_by_name(p_json,form);
 //    p_enable= p_json.enable;
-    p_href= p_enable ? php.akce_prihlaska(page.a_akce,'a',p_test?`&test=${p_test}`:'') : '';
+    p_href= p_enable ? php.akce_prihlaska(page.a_akce,'a',p_test?`&test=${p_json.p_test}`:'') : '';
   }
   check p_enable [13,30,200,] { tag:'pri', title:'povolit online přihlášení', value:'0', 
       css:'ae_parm', style:'padding-bottom:2px;z-index:1'  
