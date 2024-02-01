@@ -41,11 +41,10 @@ html body div.wrapper header div.header div.user {
 }
 html body div.wrapper header div.header div.info {
   position: absolute;
-  top: calc(120px - 37px);
   background: yellow;
   border: 3px solid red;
   color: red;
-  padding: 5px;
+  padding: 0 5px;
 }
 html body div.wrapper header div.intro {
   clear: both;

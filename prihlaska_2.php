@@ -28,7 +28,7 @@ if (ip_ok()) {
 
 //$TEST= 0; // 0 = ostrý běh
 //$TEST= 1; // 1 = ostrý běh + trasování 
-//$TEST= 2; // 2 = simulace db + trasování 
+$TEST= 2; // 2 = simulace db + trasování 
 //$TEST= 3; // 3 = simulace db + trasování + přeskok loginu
 
 //if ($TEST==3) $testovaci_mail= 'martin@smidek.eu';
@@ -53,7 +53,7 @@ exit;
 #             uplatní se v $post */
 function init() {
   global $AKCE, $vars, $mailbox, $cleni, $post, $msg;
-  global $TEST, $errors;  
+  global $TEST, $MAIL, $errors;  
   # ------------------------------------------ napojení na Ezer
   global $ezer_server, $dbs, $db, $ezer_db, $USER, $kernel, $ezer_path_serv, $mysql_db_track, 
       $mysql_tracked, $trace, $totrace, $y; // $y je obecná stavová proměnná Ezer
@@ -76,7 +76,6 @@ function init() {
   # trasování 
   if ($TEST) {
     $totrace= 'Mu';
-    $_SESSION[$AKCE]->test= $TEST;
     $trace.= debugx($_POST,'$_POST - start');
   }
   $y= (object)[];
@@ -121,6 +120,8 @@ function init() {
     $index= "prihlaska_2.php"; 
     $_SESSION[$AKCE]->index= $index;
     $_SESSION[$AKCE]->server= $ezer_server;
+    $_SESSION[$AKCE]->test= $TEST;
+    $_SESSION[$AKCE]->mail= $MAIL;
   }
 //  $trace.= debugx($_SESSION[$AKCE],'$_SESSION[akce] - start');
   $vars= (object)$_SESSION[$AKCE];
@@ -169,11 +170,11 @@ function init() {
 //    $clen[$id]->$name= $val;
   }
   $vars->cleni= $cleni;
-  if ($TEST==2 && $vars->faze=='a') {
-    global $testovaci_mail;
-    $trace.= "<br>ladící běh se simulovaným přihlášením na $testovaci_mail";
-    $post= (object)['email'=>$testovaci_mail];
-  }
+//  if ($TEST==2 && $vars->faze=='a') {
+//    global $testovaci_mail;
+//    $trace.= "<br>ladící běh se simulovaným přihlášením na $testovaci_mail";
+//    $post= (object)['email'=>$testovaci_mail];
+//  }
   if ($TEST==3 && $vars->faze=='a') {
     global $testovaci_mail;
     $trace.= "<br>ladící běh se simulovaným přihlášením na $testovaci_mail";
@@ -182,6 +183,7 @@ function init() {
   $vars->post= $post;
   $_SESSION[$AKCE]= $vars;
   $msg= '';
+  display("TEST=$TEST MAIL=$MAIL");
 }
 # =============================================================================== parametrizace akce
 # doplnění údajů pro přihlášku - případné doplnění $vars - definice položek
@@ -312,7 +314,7 @@ function do_mail_klienta() { // faze A
   if (!$ok) 
     $chyby= $post->email ? "Tuto emailovou adresu není možné použít:<br>$chyby" : ' ';
   if (!$chyby) {
-    if ($TEST>1) {
+    if ($TEST==3) {
       // zkratka se simulací přihlášení (nesmí být už přihlášen)
       $pin= '----';
       $post->pin= $pin;
