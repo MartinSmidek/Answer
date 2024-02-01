@@ -4449,7 +4449,7 @@ function akce2_skup_get($akce,$kontrola,&$err,$par=null) { trace();
   $jen_hnizdo= $tisk_hnizdo ? " AND hnizdo=$tisk_hnizdo " : '';
   $skupiny= array();
   // přechod na LK pro par->mark=LK ... a pokud jde o obnovu
-  if ( isset($par->mar) && ($par->mark=='LK' || $par->mark=='PO') ) {
+  if ( isset($par->mark) && ($par->mark=='LK' || $par->mark=='PO') ) {
     list($access,$druh,$kdy)= select('access,druh,datum_od','akce',"id_duakce=$akce");
     if ( $druh==2 /*MS obnova*/ ) {
       $pred_druh= $par->mark=='LK' ? 1 : 2;
@@ -7787,7 +7787,7 @@ function akce2_skup_tisk($akce,$par,$title,$vypis,$export) {  trace();
   $html= "<table>";
   $ret= akce2_skup_get($akce,0,$err,$par);
   $hnizda= select('hnizda','akce',"id_duakce=$akce");
-//                                                       debug($ret);
+                                                       debug($ret);
   $skupiny= $ret->skupiny;
   // pro par.mark=LK zjistíme účasti rodin na obnově
   $lk= 0;
@@ -7923,8 +7923,8 @@ function akce2_skup_tisk($akce,$par,$title,$vypis,$export) {  trace();
       $tabulka.= "<td></td></tr>";
     $tabulka.= "</table>";
     if ( $lk ) {
-      $setkani= $par->mark=='LK' ? 'letního kurzu' : 'obnovy';
-      $html.= "<h3>Skupinky z posledního $setkani se škrtnutými (je jich $xn)
+      $setkani= $par->mark=='LK' ? 'posledního letního kurzu' : 'poslední obnovy';
+      $html.= "<h3>Skupinky z $setkani se škrtnutými (je jich $xn)
         nepřihlášenými na obnovu</h3>$tabulka";
     }
     else 
