@@ -808,8 +808,8 @@ __EOD;
       });
     }
 __EOF;
-  $warn= $TEST<2 ? '' : " a db operací";
-  $warn= $MAIL ? '' : "<div class='info'>simulace posílání mailů$warn</div>";
+  $warn= $TEST<2 ? '' : " a ukládání";
+  $warn= $MAIL ? '' : "<div class='info'>simulace mailů$warn</div>";
   $mailbox= $mailbox ? "<div class='box' style='border-left: 20px solid grey'>$mailbox</div>" : '';
 //      <div id='head'><a href="https://www.tvnoe.cz"><i class="fa fa-home"></i>NOE - televize dobrých zpráv</a></div>
   echo <<<__EOD
@@ -822,7 +822,7 @@ __EOF;
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>Přihláška na akci YMCA Setkání</title>
     <link rel="shortcut icon" href="/akce/img/$icon" />
-    <link rel="stylesheet" href="/less/akce.css?verze=1" type="text/css" media="screen" charset='utf-8'>
+    <link rel="stylesheet" href="/less/akce.css?verze=2" type="text/css" media="screen" charset='utf-8'>
     <link rel="stylesheet" href="/ezer3.2/client/licensed/font-awesome/css/font-awesome.min.css?" type="text/css" media="screen" charset="utf-8">
     <link rel="stylesheet" id="customify-google-font-css" href="//fonts.googleapis.com/css?family=Open+Sans%3A300%2C300i%2C400%2C400i%2C600%2C600i%2C700%2C700i%2C800%2C800i&amp;ver=0.3.5" type="text/css" media="all">
     <script src="/ezer3.2/client/licensed/jquery-3.3.1.min.js" type="text/javascript" charset="utf-8"></script>
