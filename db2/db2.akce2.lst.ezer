@@ -593,7 +593,7 @@ form _page [,,275,360] {
       css:'ae_parm', style:'padding-bottom:2px;z-index:1'  
     func onchange() { p_json.p_enable= this; web_online.change(); }
   }
-  label p_href [181,35,223,20] { style:'text-align:right' }
+  label p_href [181,35,223,20] { tag:'pri', style:'text-align:right' }
   check p_TEST [411,30,50,] { tag:'pri', title:'TEST', value:'0', format:'d',
       help:'TEST=0 (dflt) provede db operace bez zobrazení, TEST=1 zobrazi i provede, TEST>1 db operace jen zobrazí (nutný zápis do JSON)' 
     func onchange() { p_json.p_TEST= this; web_online.change(); }}

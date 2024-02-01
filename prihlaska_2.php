@@ -300,7 +300,7 @@ function do_mail_klienta() { // faze A
 # CMD poslat_pin: 
 #   a - chyby adresy 
 #   b - poslán mail
-  global $msg, $vars, $post, $form;
+  global $msg, $akce, $vars, $post, $form;
   global $TEST, $refresh;
   
   clear_post_but("/email|zaslany_pin|pin/");
@@ -321,7 +321,7 @@ function do_mail_klienta() { // faze A
     else {
       // zašleme PIN 
       $pin= rand(1000,9999);
-      $msg= simple_mail('martin@smidek.eu', $post->email, "PIN ($pin) pro prihlášení na akci",
+      $msg= simple_mail($akce->garant_mail, $post->email, "PIN ($pin) pro prihlášení na akci",
           "V přihlášce na akci napiš vedle svojí mailové adresy $pin a pokračuj tlačítkem [Ověřit PIN]");
       if ( $msg!='ok' ) {
         $chyby.= "Litujeme, mail s PINem se nepovedlo odeslat, přihlas se prosím na akci jiným způsobem."
@@ -750,7 +750,7 @@ function do_rozlouceni() {
     . "<p>S přáním hezkého dne<br>$akce->garant_jmeno"
     . "<br><a href=mailto:'$akce->garant_mail'>$akce->garant_mail</a>"
     . "<br>$akce->garant_telefon</p>";
-    $ok_mail= simple_mail('martin@smidek.eu', $post->email, $mail_subj,$mail_body,$akce->garant_mail); 
+    $ok_mail= simple_mail($akce->garant_mail, $post->email, $mail_subj,$mail_body,$akce->garant_mail); 
     $ok= $ok_mail ? 'ok' : 'ko';
   }
   if ($ok=='ko') {
