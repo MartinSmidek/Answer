@@ -573,7 +573,7 @@ form _page [,,275,360] {
   var p_json: object // dekódovaný obsah akce.web_online
   func p_show() { var ch:ezer
     if (has_skill('m')) {
-      p_TEST.enable(1); p_MAIL.enable(1);
+      p_TEST.enable(1); p_MAIL.enable(1); web_online.enable(1);
     }
     p_json= {};
     for (ch of form.tagged('pri')) {
@@ -625,7 +625,7 @@ form _page [,,275,360] {
     func onchange() { p_json.p_vps= this; web_online.change(); }}
   // ruční změna JSON
   edit web_online [13,488,438,50] { tag:'pri', title:'^JSON popis přihlášky', data:akce.web_online,
-      format:'t'
+      format:'dt'
   func onchanged() { 
     if (confirm('uložit ruční změnu JSON popisu přihlášky?')) {
       form.save(); p_show(); }
