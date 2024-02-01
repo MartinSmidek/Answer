@@ -27,17 +27,21 @@ html {
         div.header {
           max-width: @width; height: calc(@head_h - 40px); margin:0 auto; 
           a.logo {
-            top: 15px; position: absolute; 
+            margin-top: 15px; float: left; 
             img { max-height: 50px; }
           }
           div.user {
             position: relative; float: right; padding: 15px; z-index: 2;
             text-indent: -7px; background-color: @head_b;
           }
+          div.info {
+            position: absolute; top: calc(@head_h - 37px); 
+            background: yellow; border: 3px solid red; color: red; padding: 5px; 
+          }
         }
         div.intro {
           clear: both; border-top: 3px solid white; 
-          color: @head_c; padding: 3px; font-size: @box_fs2; text-align: center; text-wrap: nowrap;
+          color: @head_c; padding-top: 6px; font-size: @box_fs2; text-align: center; text-wrap: nowrap;
         }
       }
       main {
@@ -76,7 +80,7 @@ html {
               display:block; margin: 0 5px 5px -5px;
             }
           }
-          label.check {
+          label.check_spolu {
             float:left; margin-left: -55px; font-size: 12px;
             input {
               display:block; margin: 5px 15px;
