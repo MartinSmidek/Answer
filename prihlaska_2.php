@@ -28,7 +28,7 @@ if (ip_ok()) {
 
 //$TEST= 0; // 0 = ostrý běh
 //$TEST= 1; // 1 = ostrý běh + trasování 
-$TEST= 2; // 2 = simulace db + trasování 
+//$TEST= 2; // 2 = simulace db + trasování 
 //$TEST= 3; // 3 = simulace db + trasování + přeskok loginu
 
 //if ($TEST==3) $testovaci_mail= 'martin@smidek.eu';
