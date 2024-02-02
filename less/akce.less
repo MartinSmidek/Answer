@@ -28,15 +28,15 @@ html {
         div.header {
           max-width: @width; height: calc(@head_h - 40px); margin:0 auto; 
           a.logo {
-            margin-top: 15px; float: left; 
+            position: absolute; margin-top: 15px; 
             img { max-height: 50px; }
           }
           div.user {
-            position: relative; float: right; padding: 15px; z-index: 2;
+            position: relative; float: right; padding: 15px; z-index: 1;
             text-indent: -7px; background-color: @head_b;
           }
           div.info {
-            position: absolute; 
+            position: absolute; z-index: 2;
             background: yellow; border: 3px solid red; color: red; padding: 0 5px; 
           }
         }
@@ -70,9 +70,12 @@ html {
             padding: 0 20px; width: max-content;
             background-color: @dary_b;
           }
-          input, textarea, select {
-            /*margin: 5px;*/ 
-            max-width: 100%;
+          input, select {
+            font-family: "Open Sans"; font-size: @box_fs; 
+            resize: none;
+          }
+          textarea {
+            width:100%; max-width: 100%;
             font-family: "Open Sans"; font-size: @box_fs; 
             resize: none;
           }

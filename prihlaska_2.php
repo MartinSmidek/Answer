@@ -791,7 +791,7 @@ function page($problem='') {
         </form>
       </div>
 __EOD;
-  $user= $vars->user ?: '... přihlaste se prosím svým mailem a zaslaným PINem';
+  $user= $vars->user ?: '... přihlaste se prosím svým <br> mailem a zaslaným PINem';
   $info= $info=='' ? '' : <<<__EOD
       <div class='box'>
         <form action="$index" method="post">

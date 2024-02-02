@@ -25,8 +25,8 @@ html body div.wrapper header div.header {
   margin: 0 auto;
 }
 html body div.wrapper header div.header a.logo {
+  position: absolute;
   margin-top: 15px;
-  float: left;
 }
 html body div.wrapper header div.header a.logo img {
   max-height: 50px;
@@ -35,12 +35,13 @@ html body div.wrapper header div.header div.user {
   position: relative;
   float: right;
   padding: 15px;
-  z-index: 2;
+  z-index: 1;
   text-indent: -7px;
   background-color: #dfd5bb;
 }
 html body div.wrapper header div.header div.info {
   position: absolute;
+  z-index: 2;
   background: yellow;
   border: 3px solid red;
   color: red;
@@ -98,9 +99,13 @@ html body div.wrapper main div.box div.dary {
   background-color: #ffffff;
 }
 html body div.wrapper main div.box input,
-html body div.wrapper main div.box textarea,
 html body div.wrapper main div.box select {
-  /*margin: 5px;*/
+  font-family: "Open Sans";
+  font-size: 12pt;
+  resize: none;
+}
+html body div.wrapper main div.box textarea {
+  width: 100%;
   max-width: 100%;
   font-family: "Open Sans";
   font-size: 12pt;
