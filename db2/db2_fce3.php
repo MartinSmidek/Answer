@@ -10684,11 +10684,12 @@ end:
 # ==========================================================================================> . YMCA
 # --------------------------------------------------------------------------==> .. evid2_ymca_sprava
 # správa členů pro YS
-function evid2_ymca_darci($org,$kdy='loni',$export=0) {
+function evid2_ymca_darci($org,$kdy='loni') {
   $html= '';
   $min= 4999;
   $rok= $kdy=='loni' ? date('Y')-1 : date('Y');
-  $tits= explode(',','jméno:20,dar:10,činný č.:8,telefon:12,mail:40','ID');
+  $tits= explode(',','jméno:20,dar:10,činný č.:8,telefon:12,mail:40,ID');
+              debug($tits,'1');
   $flds= explode(',','jmeno,dar,cc,telefon,mail,id_osoba');
   $clmn= array();
   $rd= pdo_qry("SELECT id_osoba,CONCAT(jmeno,' ',prijmeni),kontakt,email,telefon,
@@ -10704,11 +10705,9 @@ function evid2_ymca_darci($org,$kdy='loni',$export=0) {
         'telefon'=>$k==1?$telefon:'','mail'=>$k==1?$email:'','id_osoba'=>$ido);
   }
   // tisk přes sta2_excel_export
-  $ret= sta2_table($tits,$flds,$clmn,$export);
-              debug($ret,'dary');
+  $ret= sta2_table($tits,$flds,$clmn);
   $tab= (object)array('tits'=>$tits,'flds'=>$flds,'clmn'=>$clmn);
   $rete= sta2_excel_export("Štědří dárci roku $rok",$tab);
-              debug($ret,'dary export');
   return "$rete->html<br><br>$ret->html";
 }
 # --------------------------------------------------------------------------==> .. evid2_ymca_sprava
