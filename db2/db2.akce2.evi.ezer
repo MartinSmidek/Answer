@@ -97,15 +97,21 @@ menu m {type:'left', format:'f-'
   }
   menu c {title:'členové YMCA (lonští)',type:'group', skill:'dec'
     item {title:'[fa-file-text] přehled před závěrkou'
-          par:°{op:'loni',exp:'Excel',cnd:1,hav:1,rok:1,
+          par:{op:'loni',exp:'Excel',cnd:1,hav:1,rok:1,
                 tit:'příjmení:15,jméno:10,datum nar.:10:t,obec:20,člen od:5,činný od:5,letos přísp.:6,letos dary:6',
                 fld:'prijmeni,jmeno,_naroz,obec,_clen_od,_cinny_od,_prisp,_dary'}}
     item {title:'[fa-retweet] recyklace pečounů (LK byl letos)', par:°{op:'zmeny',rok:0} }
     item {title:'[fa-retweet] recyklace pečounů (LK byl loni)',  par:°{op:'zmeny',rok:1} }
     item {title:'[fa-upload] statistický list YMCA v ČR'
-          par:°{op:'hlaseni',exp:'Excel',cnd:1,hav:1,rok:1,del:0,
+          par:{op:'hlaseni',exp:'Excel',cnd:1,hav:1,rok:1,del:0,
                 tit:'?:2,příjmení:15,jméno:10,ulice:20,město:20,PSČ:7,datum nar.:10:t,členství:5,čl. přísp.:6,KČ:12,e-mail:40,činný od letos:6,dobrovolník:6',
                 fld:'1,prijmeni,jmeno,ulice,obec,psc,_naroz_ymd,_b_c,_prisp,_YS,email,_cinny_letos,_dobro'}}
+    item {title:'[fa-database] přehled loňských dárců YS'
+      func onclick(i:ezer) {
+        info.header(i); clear();
+        panel.display(1,'i'); panel.display(0,'e'); info.export= '';
+        info.fill('',php.evid2_ymca_darci(1,'loni'));
+    }}
   }
   menu {title:'členové YMCA (letošní - pro info)',type:'group', skill:'dec'
     item {title:'[fa-file-text-o] letošní přehled po závěrce'
@@ -195,11 +201,11 @@ use page: form _page [370,10,,]         { tag:'e' }
 use cmd:  form _cmd  [370,min_h-120,,]  { tag:'e' }
 use info: form right [12,4,,]           { tag:'i'
   button export [-20,4,,] { title:'Excel', style:'display:block;zIndex:2',
-    proc onclick() { var ret: object
-      //ret.set(ask('evid_vyp_excel',menu_par.get,menu_title.get));
-      //ret.set(ask('sta2_excel',my_org.get,menu_title.get,menu_par.get));
-      ret.set(ask('evid2_ymca_sprava',my_org.get,menu_par.get,menu_title.get,1));
-      form.msg.set(ret.html);
+    func onclick() { var ret: object
+      if (export) { // export.title vrací ten původní "Excel"
+        ret= php.evid2_ymca_sprava(my_org,menu_par,menu_title,1);
+        form.msg= ret.html;
+      }
     }
   }
 }

@@ -10684,6 +10684,35 @@ end:
 # ==========================================================================================> . YMCA
 # --------------------------------------------------------------------------==> .. evid2_ymca_sprava
 # správa členů pro YS
+function evid2_ymca_darci($org,$kdy='loni',$export=0) {
+  $html= '';
+  $min= 4999;
+  $rok= $kdy=='loni' ? date('Y')-1 : date('Y');
+  $tits= explode(',','jméno:20,dar:10,činný č.:8,telefon:12,mail:40','ID');
+  $flds= explode(',','jmeno,dar,cc,telefon,mail,id_osoba');
+  $clmn= array();
+  $rd= pdo_qry("SELECT id_osoba,CONCAT(jmeno,' ',prijmeni),kontakt,email,telefon,
+      SUM(IF(ukon='d',castka,0)) AS _dar,SUM(IF(ukon='p',1,0))
+    FROM dar JOIN osoba USING (id_osoba) 
+    WHERE ukon IN ('d','p') AND YEAR(dat_od)=$rok AND dar.access=$org
+    GROUP BY id_osoba HAVING _dar>$min
+    ORDER BY _dar DESC
+  ");
+  $html.= "<table>";
+  while ($rd && list($ido,$jmeno,$k,$email,$telefon,$dar,$cc)= pdo_fetch_array($rd)) {
+    $clmn[]= array('jmeno'=>$jmeno,'dar'=>$dar,'cc'=>$cc==1?'ano':'ne',
+        'telefon'=>$k==1?$telefon:'','mail'=>$k==1?$email:'','id_osoba'=>$ido);
+  }
+  // tisk přes sta2_excel_export
+  $ret= sta2_table($tits,$flds,$clmn,$export);
+              debug($ret,'dary');
+  $tab= (object)array('tits'=>$tits,'flds'=>$flds,'clmn'=>$clmn);
+  $rete= sta2_excel_export("Štědří dárci roku $rok",$tab);
+              debug($ret,'dary export');
+  return "$rete->html<br><br>$ret->html";
+}
+# --------------------------------------------------------------------------==> .. evid2_ymca_sprava
+# správa členů pro YS
 function evid2_ymca_sprava($org,$par,$title,$export=false,$akce=0) {
   $ret= (object)array('error'=>0,'html'=>'');
   switch ($par->op) {
