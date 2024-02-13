@@ -307,24 +307,24 @@ function clipboard_obj(sel) {
 };
 // -----------------------------------------------------------------------------------==> . ON login
 Ezer.onlogin= function() {
-  if ( Ezer.root=='db2' ) {
+  if ( Ezer.root=='db2' || Ezer.root=='dbt'  ) {
     var a1= Ezer.sys.user.access;
     var a2= Ezer.fce.get_cookie(Ezer.root+'_last_access',a1);
     var a= a1 & a2 ? a1 & a2 : a1;
-    personify(a,1);
+    personify(a,Ezer.root=='dbt' ? '-TEST' : '');
   }
 };
 // ----------------------------------------------------------------------------------==> . personify
 // upraví datová práva a vzhled aplikace
 // před přihlášením:    každému (po přihlášení bude případně zredukováno)
 // po přihlášení:       pokud má tato datová práva
-function personify(access,from) {
+function personify(access,test) {
 //  var v= Ezer.version=='ezer3.1' ? "<sub>3</sub>" : '';
   var v= Ezer.version=='3.2' ? `<sub><small>${Ezer.version}</small></sub>` : '';
   var menu= jQuery('#access_menu'), body= jQuery(document.body);
   var orgs= ['','YMCA Setkání','YMCA Familia','obou organizací'];
-  var tits= ['',`Answer${v} Setkání`,`Answer${v} Familia`,`Answer${v} (společný)`];
-  var sk=   ['','ck','ch','db'];
+  var tits= ['',`Answer${test}${v} Setkání`,`Answer${test}${v} Familia`,`Answer${test}${v} (společný)`];
+  var sk=   test ? ['','tt','default','default'] : ['','ck','ch','db'];
   var off= function(e) {
     menu.css('display','none');
     body.off({click:off,contextmenu:off});

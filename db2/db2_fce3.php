@@ -180,12 +180,13 @@ function datum_oddo($x1,$x2) {
 # propojení s www.setkani.org - musí existovat popis akce s daným url
 #     on=1 dovolí přihlašování přes web, on=0 je zruší
 function web_prihlaska($akce,$url,$on,$garant) {  trace();
+  global $answer_db;
   $html= '';
   $ok= preg_match("~(nove|akce)/(\d+)$~",$url,$m);
   if ( $ok ) {
     $idp= $m[2];
     $ida= $on ? $akce : 0;
-    $ido= select('ikona','_cis',"druh='akce_garant' AND data='$garant'",'ezer_db2');
+    $ido= select('ikona','_cis',"druh='akce_garant' AND data='$garant'",$answer_db);
     if ( !$ido ) {
       $html.= "<hr>POZOR: chybí garant akce!";
       goto end;

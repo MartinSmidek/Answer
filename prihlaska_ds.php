@@ -43,7 +43,7 @@ function init() {
   global $TEST, $errors;  
   # ------------------------------------------ napojení na Ezer
   global $ezer_server, $dbs, $db, $ezer_db, $USER, $kernel, $ezer_path_serv, $mysql_db_track, 
-      $mysql_tracked, $trace, $totrace, $y; // $y je obecná stavová proměnná Ezer
+      $answer_db, $mysql_tracked, $trace, $totrace, $y; // $y je obecná stavová proměnná Ezer
   date_default_timezone_set('Europe/Prague');
   if ($TEST || isset($_GET['err']) && $_GET['err'] ) error_reporting(-1); else error_reporting(0);
   ini_set('display_errors', 'On');
@@ -71,7 +71,7 @@ function init() {
   if (isset($dbs[$ezer_server])) $dbs= $dbs[$ezer_server];
   if (isset($db[$ezer_server])) $db= $db[$ezer_server];
   $ezer_db= $dbs;
-  ezer_connect('ezer_db2');
+  ezer_connect($answer_db);
   # ------------------------------------------ ochrana proti refresh
   $trace= '';
   $refresh= '';

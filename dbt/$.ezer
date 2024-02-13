@@ -1,24 +1,48 @@
 # Systém Ans(w)er pro YMCA Familia a YMCA Setkání - testovací aplikace s databází ezer_db2_test
-# (c) 2008-2010 Martin Šmídek <martin@smidek.eu>
+# (c) 2008-2024 Martin Šmídek <martin@smidek.eu>
 
 menu db2 { type:'main', title:'db2', active:*, _sys:'*'
+  func onstart() { php.table_lock('none'); } // uvolni všechny zámky řádků tabulek přihlášeného 
   var global: text,
-//  tabs pok {title:"[fa-eur] Pokladna", _sys:'*',  include:'onclick,db2.pok', active:*, skill:'yp' }
+  tabs pok {title:"[fa-eur] Pokladna", _sys:'*',  include:'onclick,db2.pok', active:*, skill:'yp' }
 //  tabs eko {title:"[fa-stack-overflow] Ekonomika", _sys:'*',  include:'onclick,ys2.eko', active:*, skill:'ye' }
-//  tabs ds {title:"[fa-home] Dům", _sys:'*',  include:'onclick', active:*, skill:'yd' }
+  tabs ds {title:"[fa-home] Dům", _sys:'*',  include:'onclick', active:*, skill:'yd' }
   tabs akce2 {title:"[fa-database] Databáze", _sys:'*', include:'onload,db2.akce2', active:*, skill:'fa;ya;mrop'
     proc reaccess() {}
     panel track { type:'popup'
       proc back_show(kde,klic) {}
     }
   }
-//  tabs syst {title:"[fa-cog] Systém", _sys:'sys'
-//    proc reaccess() {}
-//    panel oso {type:'right', title:'Osobní nastavení', _sys:'*', include:'onload' }
-//  }
-  tabs syst {title:"[fa-cog] Systém", _sys:'sys',  include:'onload,ezer2.syst', active:*
+  tabs syst {title:"[fa-cog] Systém", _sys:'sys', include:'onload,ezer2.syst', active:*
     proc reaccess() {}
     panel oso {type:'right', title:'Osobní nastavení', _sys:'*', include:'onclick,ezer2.pers' }
+    panel dat {type:'right', title:'[fa-database] Schema DB', _sys:'*', include:'onload,ezer3.db', skill:'a;ben'
+      par:{
+        infos: [
+          {title:'[fa-object-group] Schema databáze',
+           html: "Schema databáze<br><br><img src='db2/img/schema_db_2019.png'>"},
+          {title:'[fa-object-group] ... zjednodušené', 
+           html: "Schema databáze<br><br><img src='db2/img/schema_db_2015.png'>"}
+        ],
+        tables: {
+          akce:  "id_duakce>*,nazev,datum_od",
+          pobyt: "id_pobyt>*,id_akce>akce,i0_rodina>rodina,hnizdo,funkce",
+          uhrada:"id_uhrada>*,id_pobyt>pobyt,u_poradi,u_castka,u_datum,u_zpusob,u_stav,u_za",
+          spolu: "id_spolu>-,id_pobyt>pobyt,id_osoba>osoba,s_hnizdo,s_role",
+          osoba: "id_osoba>*,jmeno,prijmeni",
+          osoba_geo: "id_osoba>osoba,kod_obec,stav",
+          tvori: "id_tvori>-,id_osoba>osoba,id_rodina>rodina,role",
+          rodina:"id_rodina>*,nazev",
+          dopis: "id_dopis>*,hnizdo,nazev",
+          mail:  "id_mail>*,id_dopis>dopis,id_clen>osoba",
+          dar:   "id_dar>-,id_osoba>osoba,ukon,dat_od,dat_do,castka,note",
+          dotaz: "id_dotaz>*,dotaznik,id,page,hnizdo",
+          stamp: "id_stamp>*,typ,kdy,pozn",
+          cron:  "id_cron>*,batch,info,adr,replyto,par,subj,txt"
+        },
+        css: 'stat' // styl tabulek
+    }}
+    /*
     panel nas {type:'right', title:'Data', _sys:'nas', skill:'a'
       proc track_osoba(ido)  { akce2.track.back_show('osoba',ido) }
       proc track_rodina(idr) { akce2.track.back_show('rodina',idr) }
@@ -26,42 +50,205 @@ menu db2 { type:'main', title:'db2', active:*, _sys:'*'
         confirm("smazat záznam ",idt," v tabulce tvori?");
         ask('query',conc("DELETE FROM tvori WHERE id_tvori=",idt));
       }
-      menu {type:'left', active:*
-//        menu {title:'Ostrá databáze',type:'group', _sys:'*'
-//          item {title:'Stav sjednocování kopií', par:°{db:'db2'}
-//            proc onclick (i) {
-//              info.fill(conc(i.owner.title,' - ',i.title),'... probíhá výpočet ...');
-//              info.fill('',ask('db2_stav',i.par.db)) }}
-//        }
-//        menu {title:'Kontroly konzistence dat',type:'group', _sys:'*'
-//          item {title:'kontroly databáze - test'        ,par:°{opravit:0,test:'test'}, skill:'m'}
-//          item {title:'kontroly databáze - test+oprava' ,par:°{opravit:1,test:'test'}, skill:'m'}
-//          item {title:'kontroly databáze'               ,par:°{opravit:0}}
-//          item {title:'kontroly databáze s opravou'     ,par:°{opravit:1}, skill:'m'}
-//          proc onclick (i) {
-//            info.fill(conc(i.owner.title,' - ',i.title),' ... probíhá kontrola dat ...');
-//            info.fill('',ask('db2_kontrola_dat',i.par));
+      menu m {type:'left', format:'f+'
+        menu {title:'Přehled',type:'group', _sys:'*'
+          item {title:'Záznamy', par:{org:'3',cmd:'show'}}
+          item {title:'Ulož ezer_answer.db_osoba', par:{org:'3',cmd:'save'}, skill:'m'}
+          item {title:'Doplň geolokace - Šmídek', par:{cond:"prijmeni='Šmídek'"}, skill:'a'}
+          item {title:'Doplň geolokace - iniciovaní', par:{cond:'ISNULL(stav) AND iniciace!=0'}, skill:'a'}
+          item {title:'... opravy', par:{errata:1,cond:'NOT ISNULL(stav) AND stav<0'}, skill:'a'}
+          func onclick (i:ezer) {
+            clear(); info.display(0,'t'); info.header(i);
+            info.fill('','... probíhá výpočet ...');
+            if (eq(i.par.cmd,'show','save'))
+              info.fill('',php.db2_info(i.par)) 
+            else {
+               Proces.Start({x:10,y:1,par:i.par},"Lokalizace adres") 
+            }
+          }
+          item {title:'TEST url', skill:'m'
+            func onclick (i:ezer) {
+              clear(); info.display(1,'t'); info.header(i);
+            }
+          }
+        }
+        menu { title:'Import a záloha databáze',type:'group',skill:'m'
+          item { title:"[fa-question] přehled záloh"          par:°{typ:'listing',direct:'1'}}
+          item { title:"[fa-upload] zálohuj teď"              par:°{typ:'special',direct:'0'}}
+          proc onclick(i) {
+            clear; info.display(0,'t');
+            info.fill(replace_fa(conc(i.owner.title,' - ',i.title)),' ');
+            info.append(ask('sys_backup_make',i.par)) 
+          }
+          item { title:"obnova ze zálohy (jen local)" par:°{typ:'restore',direct:'1'}
+            proc onclick(i) { var heslo:text
+              clear; info.display(0,'t');
+              info.fill(conc(i.owner.title,' - ',i.title),' ');
+              eq(sys('ezer','server'),0,1); // test na lokální server na NTB nebo Synology DOMA
+              confirm('Opravdu mám lokální databázi přepsat?'); 
+              info.append(ask('sys_backup_make',i.par))
+            | alert('obnovu ze zálohy lze provádět pouze na lokální kopii systému');
+            }
+          }
+        }
+        menu { title:'Export a import polí',type:'group',skill:'m'
+          item { title:"[fa-download] export adres pro geo / osoba"  par:°{tab:'osoba'}}
+          item { title:"[fa-download] export adres pro geo / rodina"  par:°{tab:'rodina'}}
+          func onclick(i:ezer) { var own:ezer
+            own= i.owner(); info.display(0,'t');
+            info.fill(replace_fa(`${own.title} - ${i.title}`),' ');
+            info.append(php.mapa2_geo_export(i.par)) 
+          }
+        }
+        menu o {title:'Ostrá databáze',type:'group', _sys:'*'
+          item {title:'Stav sjednocování kopií', par:°{db:'db2'}
+            proc onclick (i) {
+              panel.display(2,'i'); info.display(0,'t');
+              info.fill(replace_fa(conc(i.owner.title,' - ',i.title)),'... probíhá výpočet ...');
+              info.fill('',ask('db2_stav',i.par.db)) }}
+          item {title:'obnova pobyt.web_changes' 
+            proc onclick() { 
+              panel.display(2,'i'); info.display(0,'t');
+              confirm('opravit pobyt.web_changes ?'); ask('update_web_changes') 
+          }}
+//          item {title:'smazat platební údaje LK2019' skill:'m'
+//            proc onclick() { confirm('smazat platební údaje LK2019 ?'); ask('clear_platby_lk2019') }
 //          }
-//        }
-        menu {title:'Testovací databáze',type:'group', _sys:'*'
+        }
+        menu k {title:'Kontroly konzistence dat',type:'group', _sys:'*'
+          item {title:'kontroly databáze - test'        ,par:°{opravit:0,test:'test'}, skill:'m'}
+          item {title:'kontroly databáze - test+oprava' ,par:°{opravit:1,test:'test'}, skill:'m'}
+          item {title:'kontroly databáze'               ,par:°{opravit:0}}
+          item {title:'kontroly databáze s opravou'     ,par:°{opravit:1}, skill:'m'}
+          proc onclick (i) {
+            panel.display(2,'i'); info.display(0,'t');
+            info.fill(replace_fa(conc(i.owner.title,' - ',i.title)),' ... probíhá kontrola dat ...');
+            info.fill('',ask('db2_kontrola_dat',i.par));
+          }
+        }
+        menu t {title:'Testovací databáze',type:'group', _sys:'*'
           item {title:'stav sjednocování kopií', par:°{db:'db2_test'}
             proc onclick (i) {
-              info.fill(conc(i.owner.title,' - ',i.title),'... probíhá výpočet ...');
+              panel.display(2,'i'); info.display(0,'t');
+              info.fill(replace_fa(conc(i.owner.title,' - ',i.title)),'... probíhá výpočet ...');
               info.fill('',ask('db2_stav',i.par.db)) }}
           item {title:'obnovit testovací db z ostré', par:°{db:'db2'}
             proc onclick (i) {
+              panel.display(2,'i'); info.display(0,'t');
               confirm("vytvořit znovu testovací databázi z aktuálního stavu ostré databáze?");
-              info.fill(conc(i.owner.title,' - ',i.title),' ... probíhá update ...');
+              info.fill(replace_fa(conc(i.owner.title,' - ',i.title)),' ... probíhá update ...');
               info.fill('',ask('db2_copy_test_db',i.par.db)); }}
         }
       }
-      use info: form right [12,4,,]
+      use info: form right [12,4,,] { tag:'i' 
+        field url [40,29,100,17] {tag:'t', format:'t', style:'width:calc(100% - 60px)'}
+        button [0,29,,] {tag:'t', title:'GET', func onclick() { var html:text
+          html= php.curl_get_contents(url);
+          form.note= php.htmlentities(html);
+        }}
+//        select tab [-253,5,150,] {tag:'t', title:'tabulka', format:'t'}
+//        field idt [-152,5,70,] {tag:'t', title:'klíč', format:'t'}
+//        button [-82,5,,] {tag:'t', title:'zobraz'
+//          func onclick() {
+//            clear(); form.note= conc(form.note,php.tab_append(tab,`*='${idt}'`)); // * bude primary_key
+//        }}
+//        button [-22,5,,] {tag:'t', title:'vymaž'
+//          func onclick() { form.note= '';
+//        }}
+      }
+      // ==> proces lokalizace adres
+      panel Proces [0,0,300,50] { type:'popup', 
+          //par:°{close:'no'} 
+        use it: form _it 
+        // stavové proměnné
+        var y:object, // střadač zajištující komunikaci mezi klientem a serverem
+            continue=1
+        // Start - odstartuje výpočet definovaný objektem par a zobrazí jeho průběh 
+        func Start(par,title) { 
+          clear(); continue= 1; it.msg= ''; Show(0,1); it.display(1,'t'); it.display(0,'e'); 
+          panel.title= title;
+          // inicializace cyklu a předání prametrů - počáteční hodnota todo bude určena z par
+          y= {todo:0,done:0,par:par}; 
+          // zahájení cyklu 
+          fork.panel.Step(); // asynchronní spuštění, aby bylo provedeno panel.modal
+          panel.modal() 
+        }
+        // Step - jeden krok procesu
+        func Step() { 
+          while (continue) {  // po Stop (třeba stisku Cancel) se výpočet přeruší
+            y= php.geo_fill(y); // funkce serveru odpovídá  za done<=todo 
+            info.append(y.note);
+            it.msg= !continue ? `PŘERUŠENO UŽIVATELEM -- ${y.msg}` : y.msg;
+            if (y.error) {
+              Stop(); it.msg= `PŘERUŠENO -- CHYBA: ${y.error}`
+            };
+            Show(y.done,y.todo); // posune termometr
+            if (y.done==y.todo)  
+              Stop(); 
+          }
+          End()
+        }
+        // Show(cast,celek) - posune termometr
+        func Show(cast,celek) { 
+          it.thermo1.property(object('width',(cast*290)/celek)) }
+        // Stop - zastaví a nechá zobrazené
+        func Stop() { continue= 0; it.display(0,'b'); }
+        // End - zruší zobrazení
+        func End() { it.display(0,'b'); it.display(1,'e') }
+        form _it { 
+          label thermo1 [6,1,0,8]   { tag:'t', title:'' style:'background-color:#ef7f13' }
+          label thermo2 [5,0,290,8] { tag:'t', title:'' style:'border:1px dotted grey' }
+          label msg [0,15,300,40]   { tag:'t' format:'c' }
+          button cancel [120,30,,]  { tag:'t,b', title:'Přerušit' func onclick () { Stop() } }
+          button ok     [136,30,,]  { tag:'e', title:'Ok' func onclick () { panel.hide(1) } }
+        }
+      }
     }
-//    panel js [0,0,,] {type:'plain', title:'[fa-battery-4] 2.2 => [fa-battery-1] 3'
-//      use u: form f [0,0,,]
-//      proc onfocus() { clear; u.info.set(ask('port','js')) }
-//      form f [,,550,]{ label info }
-//    }
+    panel str {type:'right', title:'Aplikace', _sys:'str', skill:'a;aa'
+      menu m {type:'left', format:'f+'
+        menu { title:'GitHub',type:'group',skill:'m'
+//          item { title:'[fa-question] Answer: git status'  par:°{folder:'.',op:'cmd',cmd:'status'}}
+//          item { title:'[fa-gear] Answer: git log'         par:°{folder:'.',op:'cmd',cmd:'log'}}
+//          item { title:'[fa-gear] Answer: git pull'        par:°{folder:'.',op:'cmd',cmd:'pull'}}
+//          item { title:'[fa-gear] Answer: git fetch ...'   help:"po fetch>git reset --hard origin/master"
+//                                                           par:°{folder:'.',op:'cmd',cmd:'fetch'}}
+//          item { title:'[fa-question] Ezer: git status' par:°{folder:'ezer',op:'cmd',cmd:'status'}}
+//          item { title:'[fa-gears] Ezer: git log'       par:°{folder:'ezer',op:'cmd',cmd:'log'}}
+//          item { title:'[fa-gears] Ezer: git pull'      par:°{folder:'ezer',op:'cmd',cmd:'pull'}}
+//          item { title:'[fa-gears] Ezer: git fetch ...' help:"po fetch>git reset --hard origin/master"
+//                                                        par:°{folder:'ezer',op:'cmd',cmd:'fetch'}}
+          item { title:'[fa-question] show last log'         par:{folder:'.',op:'show'}}
+          item { title:'[fa-gear] Aplikace: git status'      par:{folder:'.',op:'cmd',cmd:'status'}}
+          item { title:'[fa-gear] Aplikace: git log'         par:{folder:'.',op:'cmd',cmd:'log'}}
+          item { title:'[fa-gear] Aplikace: git pull'        par:{folder:'.',op:'cmd',cmd:'pull'}}
+          item { title:'[fa-gear] Aplikace: git fetch ...'    help:"po fetch>git reset --hard origin/master"
+                                                             par:{folder:'.',op:'cmd',cmd:'fetch'}}
+          // ezer
+          item { title:'[fa-gears] Ezer: git status'     par:{folder:'ezer',op:'cmd',cmd:'status'}}
+          item { title:'[fa-gears] Ezer: git log'        par:{folder:'ezer',op:'cmd',cmd:'log'}}
+          item { title:'[fa-gears] Ezer: git pull'       par:{folder:'ezer',op:'cmd',cmd:'pull'}}
+          item { title:'[fa-gears] Ezer: git fetch ...'  help:"po fetch>git reset --hard origin/ezer3.1"
+                                                         par:{folder:'ezer',op:'cmd',cmd:'fetch'}}
+          // skins
+          item { title:'[fa-question] Skins: git status' par:{folder:'skins',op:'cmd',cmd:'status'}}
+          item { title:'[fa-gear] Skins: git log'        par:{folder:'skins',op:'cmd',cmd:'log'}}
+          item { title:'[fa-gears] Skins: git pull'      par:{folder:'skins',op:'cmd',cmd:'pull'}}
+          item { title:'[fa-gears] Skins: git fetch ...' help:"po fetch>git reset --hard origin/master"
+                                                         par:{folder:'skins',op:'cmd',cmd:'fetch'}}
+          proc onclick (i) {  
+            panel.display(2,'i'); clear;
+            info.fill(replace_fa(conc(i.owner.title,' - ',i.title)),ask('git_make',i.par));
+          }
+        }
+        menu m {title:'Struktura modulů a funkcí',type:'group'
+          item {title:'Ezer moduly'         proc onclick () { clear; info.Set(ask('doc_ezer')) } }
+          item {title:'PHP moduly'          proc onclick () { clear; info.Set(ask('doc_php')) } }
+          item {title:'Seznam PHP funkcí'   proc onclick () { clear; info.Set(ask('doc_called')) } }
+        }
+      }
+      use info: form right [12,4,,]     { tag:'i' }
+    }
+    */
   }
   tabs doc  {title:"[fa-question] Nápověda", _sys:'*',  include:'onload,ezer2.help' }
   tabs off  {title:"[fa-power-off] Odhlásit", type:'logoff' }
@@ -70,7 +257,7 @@ menu db2 { type:'main', title:'db2', active:*, _sys:'*'
     [ function('on',"waiting(on);",on) ];
   }
   proc reaccess(msg) {
-    echo(msg); //set_trace('E',1,'spinner,reaccess');
+    echo("jsou přístupná data ",msg); //set_trace('E',1,'spinner,reaccess');
     spinner(1);
     akce2.reaccess;
     syst.reaccess;
@@ -84,73 +271,32 @@ menu db2 { type:'main', title:'db2', active:*, _sys:'*'
     b.raise('onrowclick',b.browse_seek(conc(f.key_id,'=',f.key)))
   }
 
-# ===========================================================================================> TRACK
-# přehled provedených změn
-# panel track [,,540,276] { title:'Historie oprav', type:'popup', css:'dialog'
-#   var reverted_table= '', reverted_key= 0
-#   use back: form _back [0,16,,] { tabindex:20 },
-#   proc back_show(kde,klic) {
-#     panel.popup(0,1);
-#     panel.set_attrib('title',conc('Historie oprav pro ',kde,' id=',klic));
-#     reverted_table.set(''); reverted_key.set(0);
-#     back.lst.browse_load(conc("(kde='",kde,"' AND klic=",klic,")"),"kdy DESC");
-#     back.lst.raise('onrowclick')
-#   }
-#   # ------------------------------------------------------------- _back
-#   # id_track,kdy,kdo,kde,klic,zmena:fld,op,val,old
-#   form _back [,,255,250] {
-#     browse lst [0,0,150,100] { rows:12,
-#       show kdy [,,90,] { title:'kdy', data:_track.kdy, sql_pipe:'sql_time1' }
-#       show kdn [,,30,] { title:'kdn', data:_track.kdo }
-#       show op [,,12,] { title:'?', data:_track.op }
-#       show kde [,,40,] { title:'tabulka', data:_track.kde }
-#       show fld [,,60,] { title:'položka', data:_track.fld }
-#       show old [,,160,] { title:'původní hodnota', data:_track.old, format:'t' }
-#       show val [,,120,] { title:'změněná hodnota', data:_track.val, format:'t' }
-#       show id_track [,,0,] { data:_track.id_track }
-#       menu { type:'context'
-#         item { title:'vrátit nastavenou opravu'
-#           proc onclick() {
-#             lst.selected('clear'); lst.selected('toggle',1); revert }}
-#         item { title:'vrátit i související opravy'
-#           proc onclick() { var ret:object
-#             lst.selected('clear');
-#             ret.set(ask('track_like',lst.browse_key));
-#             { ret.ok; lst.selected('set',ret.ids); [ revert ]
-#             | alert(ret.msg) }
-#           }}
-#       }
-#       proc revert() { var ret:object
-#         confirm('mám zkusit vrátit opravy označených řádků?');
-#         ret.set(ask('track_revert',lst.selected('get',0)));
-#         { ret.ok; warning("změny byly vráceny");
-#           reverted_table.set(ret.tab); reverted_key.set(ret.klic);
-#           lst.browse_refresh;
-#         | alert(ret.msg) }
-#       }
-#     },
-#     label [0,250,545,] { title:"ÚDAJE: i=vložení (insert), u=úprava, U= hromadná úprava<div style='float:right'>V=vrácení spojených záznamů</div><br>ZÁZNAM: x=smazano, o=obnoveno, d=vzniklo spojením duplicitních záznamů, r=různé od uvedeného záznamu" }
-#   }
-# }
-
-
-
 }
 // univerzální formulář pro levostranné menu
-form right [,,700,50] {
-  label info [0,0,680,600] { title:'' }
-  label head [0,0,680,50]  { title:'' }
-  label note [0,50,680,550] { title:'' }
+form right [,,*,*] {
+  label info [0,0,*,600] { title:'' style:'padding-right:10px'}
+  label head [0,0,*,50]  { title:'' style:'padding-right:10px'}
+  label note [0,50,,*] { title:'' style:'padding-right:10px;width:calc(100% - 15px)'}
+  proc Set(x) {
+    head.set(''); note.set(''); info.set(x)
+  }
   proc fill(x,y) {
+    info.set('');
     [ x; head.set(conc("<div class='karta'>",x,"</div>")) ];
     [ y; note.set(y) ]
   }
   proc append(x) { note.get; note.set(conc(note.get,'<br>',x)) | note.set(x) }
+  func header(i:ezer) { var i_owner:ezer
+    clear(); i_owner= i.owner();
+    info= ''; note= '';
+    head= replace_fa(`<div class='karta'>${i_owner.title} - ${i.title}</div>`);
+  }
 }
 
 table akce { key_id:'id_duakce'
   number id_duakce
   number typ
+  number statistika
 }
 
 table join_akce { // spojení číselníku akcí s MS

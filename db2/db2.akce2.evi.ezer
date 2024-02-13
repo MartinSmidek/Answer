@@ -18,11 +18,14 @@ func evid_osoba(_ido)  {
   echo(`--- evid_osoba virgin=${virgin}`);
   firstfocus(0);
   panel.focus(); 
+  panel.display(1,'e');
   if (menu_item!=m.o.a) {
     m.o.a.click(1,1); 
     m.menu_click(m.o.a,_ido,0)
   }
-  else lst.load_osoba(_ido) 
+  else {
+    lst.load_osoba(_ido) 
+  }
 }
 func evid_rodina(_idr) { 
   echo(`--- evid_rodina virgin=${virgin}`);

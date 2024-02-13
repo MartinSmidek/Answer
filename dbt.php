@@ -1,30 +1,35 @@
 <?php # Systém An(w)er/YMCA Setkání/YMCA Familia, (c) 2008-2015 Martin Šmídek <martin@smidek.eu>
 
+  // časová značka při spuštění
+  file_put_contents("last_access.txt",date('Y-m-d H:i:s'));
+
   # inicializace systémů Ans(w)er
-  #   $app        = kořenová podsložka aplikace ... dbt
+  #   $app        = kořenová podsložka aplikace ... db2
   #   $app_name   = jméno aplikace
   #   $db_name    = hlavní databáze ... bylo-li v URL &test=1 použije se databáze s postfixem _test
-  #   $skin       = ck|ch
+  #   $skin       = tt|default|default
   #   $js_lib     = pole s *.js
   #   $css_lib    = pole s *.css
   #   $options    = doplnění Ezer.options
 
-  $kernel= "ezer3.1"; 
+  // verze použitého jádra Ezeru
+  $ezer_version= isset($_GET['ezer']) ? $_GET['ezer'] : '3.1'; 
   $ezer_server= 
-    $_SERVER["SERVER_NAME"]=='answer.bean'        ? 0 : (      // 0:lokální 
-    $_SERVER["SERVER_NAME"]=='answer.doma'        ? 1 : (      // 1:Synology DOMA
-    $_SERVER["SERVER_NAME"]=='answer.setkani.org' ? 2 : -1));  // 2:Synology YMCA
+  $_SERVER["SERVER_NAME"]=='answer.bean'        ? 0 : (      // 0:lokální 
+  $_SERVER["SERVER_NAME"]=='answer.doma'        ? 1 : (      // 1:Synology DOMA
+  $_SERVER["SERVER_NAME"]=='answer.setkani.org' ? 2 : (      // 2:Synology YMCA
+  $_SERVER["SERVER_NAME"]=='192.168.7.111'      ? 2 : -1))); // 2:Synology YMCA (pro cron!!!) 
 
-  // parametry aplikace Answer/dbt
-  $app_name=  "Answer-test";
+  // parametry aplikace Answer/db2
+  $test= '-TEST';
+  $app_name=  "Answer$test";
   $app= $app_root=  'dbt';
 
   $title_style= $ezer_server==1 ? "style='color:#0094FF'" : (
                 $ezer_server==0 ? "style='color:#ef7f13'" : '');
   $title_flag=  $ezer_server==2 ? '' : 'lokální ';
+  
   $CKEditor= isset($_GET['editor']) ? $_GET['editor'] : '4.6';
-  // pro ezer2.2 nutno upravit ezer_main, ezer_ajax, ae_slib
-  $kernel=   "ezer".(isset($_GET['ezer'])?$_GET['ezer']:'3.1'); 
   
   // nastav jako default PDO=2
   if ( !isset($_GET['pdo']))
@@ -33,6 +38,7 @@
   // nastav &touch=0 pro Windows
   if (strtoupper(substr(PHP_OS,0,3))==='WIN') 
     $_GET['touch']= 0;
+  $touch= isset($_GET['touch']) ? $_GET['touch'] : 0;
 
   // ochránění přímého přístupu do složek s .htaccess/RewriteCond "%{HTTP_COOKIE}" "!EZER"
   setcookie("EZER",$app,0,"/");
@@ -63,16 +69,17 @@
   
   // upozornění na testovací verzi
   $demo= '';
-  if ( $ezer_server==2 ) {
-    // zmizí a zase se objeví
-    $click= "jQuery('#DEMO').fadeOut(500).delay(300000).fadeIn(2000);";
-    // jen zmizí
-//    $click= "jQuery('#DEMO').fadeOut(500);";
-    $dstyle= "left:0; top:0; position:fixed; transform:rotate(320deg) translate(-128px,-20px); "
-        . "width:500px;height:100px;background:orange; color:white; font-weight: bolder; "
-        . "text-align: center; font-size: 40px; line-height: 96px; z-index: 16; opacity: .5;";
-    $demo= "<div id='DEMO' onmouseover=\"$click\" style='$dstyle'>test MariaDB.10</div>";
-  }
+  // zmizí a zase se objeví
+  $click= "jQuery('#DEMO').fadeOut(200).delay(5000).fadeIn(1000);";
+  // jen zmizí
+  //$click= "jQuery('#DEMO').fadeOut(500);";
+  // nezmizí
+//  $click= '';
+  
+  $dstyle= "left:0; top:0; position:fixed; transform:rotate(320deg) translate(-128px,-20px); "
+      . "width:500px;height:100px;background:orange; color:white; font-weight: bolder; "
+      . "text-align: center; font-size: 40px; line-height: 96px; z-index: 16; opacity: .5;";
+  $demo= "<div id='DEMO' onmouseover=\"$click\" style='$dstyle'>testovací data</div>";
 
   // skin a css
   $cookie= 3;
@@ -83,18 +90,20 @@
   }
   $access_app= array(1=>"Setkání","Familia","(společný)");
   $access_app= $access_app[$cookie];
-  $choice_js= "personify('menu_on'); return false;";
-  $v= $kernel=='ezer3.1' ? "<sub>3.1</sub>" : '';
+  $choice_js= "personify('menu_on','$test'); return false;";
+  // doplnění jména aplikace o laděnou verzi ezer
+  $new= $ezer_version!='3.1' 
+      ? '<sub><small> '.$ezer_version.($touch?' touch':'').'</small></sub>' : '';
   $title= "$demo
     <span $title_style>"
     . $title_flag
     ."<span id='access' onclick=\"$choice_js\" oncontextmenu=\"$choice_js\">
-        Answer$v $access_app
+        $app_name$new $access_app
       </span>
       <div id='access_menu'>
-        <span onclick='personify(1);'>Ans(w)er Setkání</span>
-        <span onclick='personify(2);'>Ans(w)er Familia</span>
-        <span onclick='personify(3);' class='separator'>Ans(w)er (společný)</span>
+        <span onclick=\"personify(1,'$test');\">Answer Setkání</span>
+        <span onclick=\"personify(2,'$test');\">Answer Familia</span>
+        <span onclick=\"personify(3,'$test');\" class='separator'>Answer (společný)</span>
       </div>
     </span>";
   
@@ -107,15 +116,14 @@
 //    $cookie==2 ? "skins/ch/ch.ezer.css=skin" 
 //               : "skins/db/db.ezer.css=skin" );
   $skin=
-    $cookie==1 ? "ck" : (
-    $cookie==2 ? "ch" : "db" );
+    $cookie==1 ? "tt" : (
+    $cookie==2 ? "default" : "default" );
 
-  $k= substr($kernel,4,1)=='3' ? '3' : '';
-  $app_js= array("db2/ds_fce$k.js","db2/db2_fce$k.js");
-  
-  $app_css= [ // $choice_css,
-      $kernel=='ezer3.1' ? "db2/db2.css.php=skin" : "db2/db2.css",
-      "$kernel/client/wiki.css"
+  $app_js= array("db2/ds_fce3.js","db2/db2_fce3.js");
+
+  $app_css= [ 
+      "db2/db2.css.php=skin",
+      "ezer$ezer_version/client/wiki.css"
    ];
   //  require_once("answer.php");
   $add_options= (object) [
@@ -136,13 +144,13 @@
   ];
 
   // (re)definice Ezer.options
-  $kk= $k ?: '2';
   $add_pars= array(
-    'favicon' => array("db{$kk}_local.png","db{$kk}.png","db{$kk}_dsm.png")[$ezer_server],
+    'favicon' => array("db3_local.png","db3.png","db3_dsm.png")[$ezer_server],
 //    'app_root' => "$rel_root",      // startovní soubory app.php a app.inc.php jsou v kořenu
 //    'dbg' => $dbg,      // true = povolit podokno debuggeru v trasování a okno se zdrojovými texty
-    'watch_key' => 1,   // true = povolit přístup jen po vložení klíče
-    'watch_ip' => 1,    // true = povolit přístup jen ze známých IP adres
+    'watch_pin' => 1,   // true = povolit dvoufázové přihlašování pomocí _user.usermail a PINu
+    'watch_key' => 1,   // true = nebo povolit přístup jen po vložení klíče
+    'watch_ip' => 1,    // true = jinak povolit přístup jen ze známých IP adres
     'title_right' => $title,
 //    'contact' => $kontakt,
     'CKEditor' => "{
@@ -162,8 +170,32 @@
       }
     }"
   );
-//  echo("dbt.php end<br>");
-  // je to aplikace se startem v kořenu
-  require_once("$kernel/ezer_main.php");
+  if ( isset($_GET['batch']) && $_GET['batch'] ) {
+    // batch - verze
+    error_reporting(E_ALL & ~E_NOTICE);
+    session_start();
+    echo($_SERVER["SERVER_NAME"].'<br>');
+    $ezer_root= 'dbt';
+    // nastavení cest
+    $abs_root= isset($ezer_server) ? $abs_roots[$ezer_server] : $abs_roots[$ezer_local];
+    $_SESSION[$ezer_root]['ezer_server']= $ezer_server;
+    $_SESSION[$ezer_root]['ezer']= "3.1";
+    $_SESSION[$ezer_root]['abs_root']= $abs_root; 
+    $_SESSION[$ezer_root]['rel_root']= $rel_root; 
+    $_SESSION[$ezer_root]['pdo']= 2;
+    $_POST['root']= $ezer_root;
+    // inicializace Answeru
+    require_once("$ezer_root.inc.php");
+    switch ($_GET['batch']) {
+    case 'kasa-mail':
+      $stamp= kasa_send('*',1);
+      echo "<hr><h2>Odeslání připomenutí</h2><br>$html";
+      break;
+    }
+  }
+  else {
+    // je to standardní aplikace se startem v kořenu
+    require_once("ezer$ezer_version/ezer_main.php");
+  }
 
 ?>
