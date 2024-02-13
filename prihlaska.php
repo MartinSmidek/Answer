@@ -18,7 +18,7 @@ session_start();
 
 $MAIL= 1; // 1 - maily se posílají | 0 - mail se jen ukáže - lze nastavit url&mail=0
 $TEST= 0; // bez testování - lze nastavit url&test=n
-$AKCE= "A_{$_GET['akce']}"; // ID akce pro SESSION
+$AKCE= "B_{$_GET['akce']}"; // ID akce pro SESSION
 if (!isset($_SESSION[$AKCE])) $_SESSION[$AKCE]= (object)[];
 
 // nastavení &test &mail se projeví jen z chráněných IP adres

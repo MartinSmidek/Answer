@@ -23,7 +23,7 @@
   // parametry aplikace Answer/db2
   $test= '-TEST';
   $app_name=  "Answer$test";
-  $app= $app_root=  'dbt';
+  $app= $app_root=  'dbt'; // <== POZOR nesmí zde být db2 
 
   $title_style= $ezer_server==1 ? "style='color:#0094FF'" : (
                 $ezer_server==0 ? "style='color:#ef7f13'" : '');

@@ -213,9 +213,12 @@ end:
 }
 /** ==========================================================================================> AKCE */
 # ----------------------------------------------------------------------------------- akce_ucastnici
-# pro přihlášky
+# vrátí URL přihlášky pro ostrou nebo testovací databázi
 function akce_prihlaska($id_akce,$cmd,$par='') {
-  $prihlaska= 'prihlaska_2.php';
+  global $answer_db;
+  $prihlaska= 
+      $answer_db=='ezer_db2'      ? 'prihlaska_2.php' : (
+      $answer_db=='ezer_db2_test' ? 'prihlaska.php'   : '???');
   $goal= "$prihlaska?akce=$id_akce$par";
   $url= "{$_SERVER['REQUEST_SCHEME']}://{$_SERVER['HTTP_HOST']}/$goal";
   switch ($cmd) {
