@@ -5,9 +5,12 @@
 
 # lze parametrizovat takto:
 #
-# p_pro_par     -- akce je určena manželským párům, výjimečně s dítětem a jeho pečovatelem
+# p_pro_par     -- obecně manželský pár, výjimečně s dítětem, případně pečovatelem
+#+p_pro_LK      -- Letní kurz MS pro manželský pár i s dětmi, případně pečovatelem, s citlivými údaji
+# p_rod_adresa  -- ... umožňuje se úprava rodinných údajů (adresa, SPZ, datum svatby)
+# p_obcanky     -- ... umožňuje se úprava osobních údajů (občanka, telefon)
 # p_obnova      -- pro obnovu: neúčastník aktuálního LK bude přihlášen jako náhradník
-# p_registrace  -- je povoleno regsitrovat se s novým emailem
+# p_registrace  -- je povoleno registrovat se s novým emailem
 # p_souhlas     -- vyžaduje se souhlas se zpracováním uvedených osobních údajů
 */
 
@@ -29,9 +32,9 @@ if (ip_ok()) {
 //$TEST= 0; // 0 = ostrý běh
 //$TEST= 1; // 1 = ostrý běh + trasování 
 //$TEST= 2; // 2 = simulace db + trasování 
-$TEST= 3; // 3 = simulace db + trasování + přeskok loginu
+//$TEST= 3; // 3 = simulace db + trasování + přeskok loginu
 
-if ($TEST==3) $testovaci_mail= 'martin@smidek.eu';
+//if ($TEST==3) $testovaci_mail= 'martin@smidek.eu';
 //if ($TEST==3) $testovaci_mail= 'martin.smidek@outlook.com';
 //if ($TEST==3) $testovaci_mail= 'tholik@volny.cz';
 //if ($TEST==3) $testovaci_mail= 'petr.glogar@seznam.cz';
@@ -192,41 +195,6 @@ function init() {
 function parm($id_akce) {
   global $TEST, $trace, $akce, $vars, $options, $p_fld, $r_fld, $o_fld;
   $msg= '';
-  // ------------------------------------------ definice položek
-  $options= [
-      'role'      => [''=>'role v rodině?','a'=>'manžel','b'=>'manželka','d'=>'dítě','p'=>'jiný vztah'],
-      'cirkev'    => map_cis('ms_akce_cirkev','zkratka'),
-      'vzdelani'  => map_cis('ms_akce_vzdelani','zkratka'),
-    ];
-  $p_fld= [ // položky tabulky POBYT
-      'pracovni'  =>['64/4','sem prosím napište případnou dietu, nebo jinou úpravu stravy - poloviční porci, odhlášení jídla apod.','area']
-    ];
-  $r_fld= [ // položky tabulky RODINA
-      'ulice'     =>[15,'* ulice nebo č.p.',''],
-      'psc'       =>[ 5,'* PSČ',''],
-      'obec'      =>[20,'* obec/město',''],
-      'spz'       =>[12,'SPZ auta na akci',''],
-      'datsvatba' =>[ 9,'* datum svatby','date'],
-    ];
-  $o_fld= [ // položky tabulky OSOBA
-      'spolu'     =>[ 0,'na akci?','check_spolu'],
-      'jmeno'     =>[ 7,'* jméno',''],
-      'prijmeni'  =>[10,'* příjmení',''],
-      'narozeni'  =>[ 9,'* narození','date'],
-      'role'      =>[ 9,'* role v rodině?','select'],
-      'obcanka'   =>[11,'číslo občanky',''],
-      'telefon'   =>[10,'telefon',''],
-      'vzdelani'  =>[20,'vzdělání','select'],
-      'zamest'    =>[35,'povolání, zaměstnání',''],
-      'zajmy'     =>[35,'zájmy',''],
-      'jazyk'     =>[20,'znalost jazyků (A, N, ...)',''],
-      'aktivita'  =>[35,'aktivita v církvi',''],
-      'cirkev'    =>[20,'příslušnost k církvi','select'],
-      'povaha'    =>[70,'popiš svoji povahu',''],
-      'manzelstvi'=>['70/2','vyjádři se o vašem manželství','area'],
-      'ocekavani' =>['70/2','co očekáváš od účasti na MS','area'],
-      'rozveden'  =>[20,'bylo předchozí manželství?',''],
-    ];
   // parametry přihlášky a ověření možnosti přihlášení
   list($ok,$web_online)= select("COUNT(*),web_online",'akce',"id_duakce=$id_akce");
   if (!$ok || !$web_online) { 
@@ -263,6 +231,45 @@ function parm($id_akce) {
       . "podrobnou informací o zpracování osobních údajů v YMCA Setkání</a>.";
   // doplnění $vars - jen poprvé
   if (!isset($vars->pro_par)) $vars->pro_par= $akce->p_pro_par;
+  // ------------------------------------------ definice položek
+  $options= [
+      'role'      => [''=>'role v rodině?','a'=>'manžel','b'=>'manželka','d'=>'dítě','p'=>'jiný vztah'],
+      'cirkev'    => map_cis('ms_akce_cirkev','zkratka'),
+      'vzdelani'  => map_cis('ms_akce_vzdelani','zkratka'),
+    ];
+  $p_fld= [ // položky tabulky POBYT
+      'pracovni'  =>['64/4','sem prosím napište případnou dietu, nebo jinou úpravu stravy - poloviční porci, odhlášení jídla apod.','area']
+    ];
+  $r_fld= [ // položky tabulky RODINA
+      'ulice'     =>[15,'* ulice nebo č.p.',''],
+      'psc'       =>[ 5,'* PSČ',''],
+      'obec'      =>[20,'* obec/město',''],
+      'spz'       =>[12,'SPZ auta na akci',''],
+      'datsvatba' =>[ 9,'* datum svatby','date'],
+    ];
+  $o_fld= array_merge(
+    [ // položky tabulky OSOBA
+      'spolu'     =>[ 0,'na akci?','check_spolu'],
+      'jmeno'     =>[ 7,'* jméno',''],
+      'prijmeni'  =>[10,'* příjmení',''],
+      'narozeni'  =>[ 9,'* narození','date'],
+      'role'      =>[ 9,'* role v rodině?','select']],
+    $akce->p_obcanky ? [
+      'obcanka'   =>[11,'číslo občanky',''],
+      'telefon'   =>[10,'telefon','']] : [],
+    $akce->p_pro_LK ? [
+      'vzdelani'  =>[20,'vzdělání','select'],
+      'zamest'    =>[35,'povolání, zaměstnání',''],
+      'zajmy'     =>[35,'zájmy',''],
+      'jazyk'     =>[20,'znalost jazyků (A, N, ...)',''],
+      'aktivita'  =>[35,'aktivita v církvi',''],
+      'cirkev'    =>[20,'příslušnost k církvi','select'],
+      'povaha'    =>[70,'popiš svoji povahu',''],
+      'manzelstvi'=>['70/2','vyjádři se o vašem manželství','area'],
+      'ocekavani' =>['70/2','co očekáváš od účasti na MS','area'],
+      'rozveden'  =>[20,'bylo předchozí manželství?',''],
+    ] : []
+  );
 end:    
   $trace.= debugx($akce,'hodnoty web_online');
   if ($msg) {
@@ -660,7 +667,9 @@ function do_vyplneni_dat() {
           . elem_text('o',$id,['jmeno','prijmeni',',','narozeni',',','role']);
       if (in_array($clen->role,['a','b'])) {
         $par_cleni.= "<div class='clen'>$row" 
-            . elem_input('o',$id,['obcanka','telefon','zamest','vzdelani','zajmy','jazyk',
+            . elem_input('o',$id,['obcanka','telefon'])
+            . '<br>'
+            . elem_input('o',$id,['zamest','vzdelani','zajmy','jazyk',
                 'aktivita','cirkev','povaha','manzelstvi','ocekavani','rozveden']) 
             . "</div>";
       }
@@ -671,10 +680,10 @@ function do_vyplneni_dat() {
   }
   // -------------------------------------------- pokud je vyžadován souhlas
   $souhlas= $akce->p_souhlas
-    ? "<input type='checkbox' name='chk_souhlas' value=''  "
+    ? "<br><input type='checkbox' name='chk_souhlas' value=''  "
       . ($vars->chk_souhlas ? 'checked' : '')
       . " $mis_souhlas><label for='chk_souhlas' class='souhlas'>$akce->form_souhlas</label>"
-      . "<br><br>"
+      . "<br>"
     : '';
   // -------------------------------------------- pokud je povolena úprava rodinné adresy
   $rod_adresa= '';
@@ -906,7 +915,7 @@ function elem_input($table,$id,$flds) { //trace();
   $prfx= $table=='r' ? 'r_'               : ($table=='o' ? "{$id}_"           : 'p_');
   foreach ($flds as $fld) {
     if (!isset($desc[$fld])) {
-      $html.= $fld;
+//      $html.= $fld;
       continue;
     }
     $name= "$prfx$fld";
@@ -961,7 +970,7 @@ function db_nacti_cleny_rodiny($idr,$prvni_ido) {
     ORDER BY IF(id_osoba=$prvni_ido,'0',narozeni)  ");
   while ($ro && ($c= pdo_fetch_object($ro))) {
     $c->spolu= $prvni_ido==$c->id_osoba ? 1 : 0;
-    if ($akce->p_pro_par && in_array($c->role,['a','b'])) {
+  if (($akce->p_pro_par || $akce->p_pro_LK) && in_array($c->role,['a','b'])) {
       $c->spolu= 1;
     }
     $cleni[$c->id_osoba]= $c;

@@ -605,13 +605,15 @@ form _page [,,275,360] {
     func onchange() { p_json.p_rodina= this; web_online.change(); }}
   check p_pro_par [30,105,400,] { tag:'pri', title:'pro manželský pár, výjimečně s dítětem a jeho pečovatelem', value:'0' 
     func onchange() { p_json.p_pro_par= this; web_online.change(); }}
-  check p_rod_adresa [30,130,400,] { tag:'pri', title:'umožnit kontrolu a úpravu rodinné adresy', value:'0' 
+  check p_pro_LK [30,130,400,] { tag:'pri', title:'pro manželský pár na LK MS', value:'0' 
+    func onchange() { p_json.p_pro_LK= this; web_online.change(); }}
+  check p_rod_adresa [30,155,400,] { tag:'pri', title:'umožnit kontrolu a úpravu rodinné adresy', value:'0' 
     func onchange() { p_json.p_rod_adresa= this; web_online.change(); }}
-  check p_obcanky [30,155,400,] { tag:'pri', title:'umožnit kontrolu a úpravu číslo obč. průkazu', value:'0' 
+  check p_obcanky [30,180,400,] { tag:'pri', title:'umožnit kontrolu a úpravu číslo obč. průkazu', value:'0' 
     func onchange() { p_json.p_obcanky= this; web_online.change(); }}
-  check p_jednotlivec [13,225,400,] { tag:'pri', title:'<b>přihlášení jednotlivce</b>', value:'0' 
+  check p_jednotlivec [13,225,400,] { tag:'pri', title:'<b>přihlášení jednotlivce</b>', value:'0', format:'d' 
     func onchange() { p_json.p_jednotlivec= this; web_online.change(); }}
-  check p_oso_adresa [30,250,400,] { tag:'pri', title:'osobní adresa', value:'0' 
+  check p_oso_adresa [30,250,400,] { tag:'pri', title:'osobní adresa', value:'0', format:'d' 
     func onchange() { p_json.oso_adresa= this; web_online.change(); }}
   check p_registrace [13,293,400,] { tag:'pri', title:'povolit registraci s novým mailem', value:'0' 
     func onchange() { p_json.p_registrace= this; web_online.change(); }}
