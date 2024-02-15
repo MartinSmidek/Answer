@@ -189,7 +189,7 @@ function init() {
 # doplnění údajů pro přihlášku - případné doplnění $vars - definice položek
 #   přidání údajů z Answeru: nazev, garant:*, form:pata
 function parm($id_akce) {
-  global $TEST, $trace, $akce, $vars, $options, $p_fld, $r_fld, $o_fld;
+  global $TEST, $MAIL, $trace, $akce, $vars, $options, $p_fld, $r_fld, $o_fld;
   $msg= '';
   // ------------------------------------------ definice položek
   $options= [
@@ -214,7 +214,21 @@ function parm($id_akce) {
       'telefon'   =>[10,'telefon','']
     ];
   // parametry přihlášky a ověření možnosti přihlášení
-  list($ok,$web_online)= select("COUNT(*),web_online",'akce',"id_duakce=$id_akce");
+  // pro akce ve fázi přihlašování se obsah web_online bere jako konstanta 
+  switch ($id_akce) {
+    case 1553: // Jarní obnova 2024
+      $web_online= <<<__JSON
+          { "p_enable":1,"p_rodina":1,"p_rod_adresa":1,"p_obcanky":1,"p_obnova":1,"p_jednotlivec":0,
+            "p_souhlas":0,"p_pro_par":1,"p_MAIL":1,"p_TEST":0,"p_vps":1 }
+__JSON;
+      $ok= 1;
+      $MAIL= 1;
+      $TEST= 0;
+      break;
+    default:
+      list($ok,$web_online)= select("COUNT(*),web_online",'akce',"id_duakce=$id_akce");
+      break;
+  }
   if (!$ok || !$web_online) { 
     $msg= "Na tuto akci se nelze přihlásit online"; goto end; }
   // dekódování web_online
