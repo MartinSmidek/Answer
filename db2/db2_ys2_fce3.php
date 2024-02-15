@@ -5837,7 +5837,7 @@ function ds_rooms_help($version=1) {
   while ( $res && $o= pdo_fetch_object($res) ) {
     $hlp[]= (object)array('fld'=>"q$o->number",'hlp'=>wu($o->note),'on'=>$o->enable);
   }
-//                                                         debug($hlp);
+                                                         debug($hlp);
   return $hlp;
 }
 //# -------------------------------------------------------------------------------------- ds cen_menu
@@ -5871,7 +5871,6 @@ function ds_obj_menu($ym_list=null) {
   if ( $ym_list ) {
     $omezeni= explode(',',$ym_list);
   }
-  $stav= map_cis('ds_stav');
   $the= $the_last= '';                     // první objednávka v tomto měsíci či později
 //                                      debug($stav,'ds_obj_menu',(object)array('win1250'=>1));
   $mesice= array(1=>'leden','únor','březen','duben','květen','červen',
@@ -5881,6 +5880,7 @@ function ds_obj_menu($ym_list=null) {
   $start= date('m') <= 6 ? date('Y')-1 : date('Y');
   $ted= date('Ym');
   ezer_connect('setkani');
+  $stav= map_cis('ds_stav');
   for ($y= 0; $y<=2; $y++) {
     for ($m= 1; $m<=12; $m++) {
       $mm= sprintf('%02d',$m);
@@ -5915,6 +5915,7 @@ function ds_obj_menu($ym_list=null) {
   }
   $the= $the ?: $the_last;
   $result= (object)array('th'=>$the,'cd'=>$mn);
+                                                debug($result,"ds_obj_menu");
   return $result;
 }
 # ----------------------------------------------------------------------------------------- pin_make

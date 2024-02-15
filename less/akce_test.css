@@ -1,0 +1,194 @@
+html {
+  height: 100%;
+}
+html body {
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+  font-family: "Open Sans";
+  font-weight: 400;
+  font-size: 12pt;
+  background-color: #ffffff;
+}
+html body div.wrapper {
+  height: 100%;
+}
+html body div.wrapper header {
+  width: 100%;
+  /*height: @head_h;*/
+  background-color: #E2C0C2;
+  color: #000000;
+}
+html body div.wrapper header div.header {
+  max-width: 800px;
+  height: calc(120px - 40px);
+  margin: 0 auto;
+}
+html body div.wrapper header div.header a.logo {
+  position: absolute;
+  margin-top: 15px;
+}
+html body div.wrapper header div.header a.logo img {
+  max-height: 50px;
+}
+html body div.wrapper header div.header div.user {
+  position: relative;
+  float: right;
+  padding: 15px;
+  z-index: 1;
+  text-indent: -7px;
+  background-color: #E2C0C2;
+}
+html body div.wrapper header div.header div.info {
+  position: absolute;
+  z-index: 2;
+  background: yellow;
+  border: 3px solid red;
+  color: red;
+  padding: 0 5px;
+}
+html body div.wrapper header div.intro {
+  clear: both;
+  border-top: 3px solid white;
+  color: #000000;
+  padding-top: 6px;
+  font-size: 14pt;
+  text-align: center;
+  /*text-wrap: nowrap;*/
+}
+html body div.wrapper main {
+  max-width: 800px;
+  margin: 0 auto;
+  height: calc(100% - 120px - 50px);
+  overflow: auto;
+}
+html body div.wrapper main br {
+  clear: both;
+}
+html body div.wrapper main button {
+  font-family: "Open Sans";
+  font-size: 12pt;
+  margin-bottom: 5px;
+}
+html body div.wrapper main button .fa-red {
+  color: red;
+}
+html body div.wrapper main button .fa-green {
+  color: green;
+  font-weight: bold;
+}
+html body div.wrapper main div.box {
+  display: block;
+  margin: 20px;
+  padding: 20px;
+  background-color: #FDEFF1;
+}
+html body div.wrapper main div.box div.clen,
+html body div.wrapper main div.box div.rodina {
+  display: inline-block;
+  padding: 5px;
+  margin: 5px;
+  background: #f7c2c9;
+}
+html body div.wrapper main div.box div.clen {
+  margin-left: 50px;
+}
+html body div.wrapper main div.box div.dary {
+  padding: 0 20px;
+  width: max-content;
+  background-color: #ffffff;
+}
+html body div.wrapper main div.box input,
+html body div.wrapper main div.box select {
+  font-family: "Open Sans";
+  font-size: 12pt;
+  resize: none;
+}
+html body div.wrapper main div.box textarea {
+  width: 100%;
+  max-width: 100%;
+  font-family: "Open Sans";
+  font-size: 12pt;
+  resize: none;
+}
+html body div.wrapper main div.box label.upper {
+  float: left;
+  margin-left: 10px;
+  font-size: 12px;
+}
+html body div.wrapper main div.box label.upper input,
+html body div.wrapper main div.box label.upper select,
+html body div.wrapper main div.box label.upper textarea {
+  display: block;
+  margin: 0 5px 5px -5px;
+}
+html body div.wrapper main div.box label.check_spolu {
+  float: left;
+  margin-left: -55px;
+  font-size: 12px;
+}
+html body div.wrapper main div.box label.check_spolu input {
+  display: block;
+  margin: 5px 15px;
+}
+html body div.wrapper main div.box select {
+  padding: 1px;
+}
+html body div.wrapper main div.box label.souhlas {
+  font-size: 12px;
+}
+html body div.wrapper main div.box span {
+  display: block;
+  margin: 20px 5px 0 5px;
+  float: left;
+}
+html body div.wrapper main div.box .missing {
+  outline: 2px solid red;
+}
+html body div.wrapper footer {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  height: 50px;
+  margin: 0;
+  background: #312f38;
+  color: #f4f5f7;
+}
+html body div.wrapper footer div.footer {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 15px;
+  color: #f4f5f7;
+}
+html body section.trace {
+  margin-top: 10px;
+  border-top: 3px dashed red;
+  background-color: #FDEFF1;
+}
+html body section.trace table {
+  font: 12px Arial;
+  color: black;
+  border-collapse: collapse;
+  margin: 1px 0;
+}
+html body section.trace td {
+  border: 1px solid #aaa;
+  padding: 1px 3px;
+  line-height: 11px;
+}
+html body section.trace td.title {
+  color: #000;
+  background-color: #aaa;
+}
+html body section.trace td.label {
+  color: #a33;
+}
+html body section.trace table.dbg_array {
+  background-color: #ddeeff;
+  font: 12px Arial;
+}
+html body section.trace table.dbg_object {
+  background-color: #ffffaa;
+  font: 12px Arial;
+}
+/*# sourceMappingURL=akce_test.css.map */

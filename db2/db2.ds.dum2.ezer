@@ -19,7 +19,7 @@ menu mo {type:'left'
 
 func onfirstfocus() {
   var mn: object, it: ezer
-  mn= php.ds_obj_menu('202001,202006');
+  mn= php.ds_obj_menu('202401,202406');
   mo.attach_code(mn.cd);
   obj.Init();
   Upravy.Init();
@@ -163,6 +163,8 @@ form _objed { css:'ds_form'
   check   q27 [PL+300, QT,14,] { title:'27', format:'c', css:'CheckT' }
   check   q28 [PL+320, QT,14,] { title:'28', format:'c', css:'CheckT' }
   check   q29 [PL+340, QT,14,] { title:'29', format:'c', css:'CheckT' }
+  check   q9  [PL+360, QT,14,] { title:'9',  format:'c', css:'CheckT' }
+  check   q10 [PL+380, QT,14,] { title:'10', format:'c', css:'CheckT' }
 
   label       [344,101,5,] { title:'?' }
   field noroom [PL+324,PT+9,17,] { format:'or:e', help:'?|počet neubytovaných podle seznamu' }
@@ -187,6 +189,12 @@ form _objed { css:'ds_form'
   button save_pobyt [249,FT+71,,] { title:'zapsat změny', type:'submit' 
     func onclick() {
       form.save(); order_load(the_order)
+  }}
+  button [654,428,,] { title:'TEST' func onclick() {
+    var mn: object
+    clear();
+    mn= php.ds_obj_menu('202401,202406');
+    mo.attach_code(mn.cd);
   }}
 //  button [249,FT+91,,] { title:'Init' func onclick() {Init() }}
   label info  [1,FT+39,238,53] { title:'' }
@@ -250,7 +258,7 @@ func obnova {
 form zahlavi2 [,,600,30] { css:'ds_form'
   label [ 10,20,300,] { title:"<h3 style='margin:0'>Seznam účastníků pobytu</h3>"  }
   label [400,20,300,] { title:"<h3 style='margin:0'>Údaje vybraného účastníka</h3>" }
-  button [196,14,,] { title:'Načtení akce YMCA Setkání'
+  button [196,14,,] { title:'Načtení akce YMCA Setkání', format:'d'
     func onclick() { var ret:object
       ret= php.ds_import_ys(the_order);
       if ( ret.conf ) {
