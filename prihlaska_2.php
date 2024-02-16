@@ -637,7 +637,7 @@ function do_vyplneni_dat() {
     // ------------------------------ přidej staré členy rodiny
     if (count($errors)) goto db_end;
     foreach ($cleni as $ido=>$clen) {
-      if ($clen->spolu) {
+      if ($clen->spolu && $ido>0) {
         db_clen_na_akci($idp,$ido,$clen->role=='d' ? 2 : 1);
         if (count($errors)) goto db_end;
       }
@@ -1008,7 +1008,7 @@ function elem_input($table,$id,$flds) { //trace();
   return $html;
 }
 # -------------------------------------------------------------------------------- databázové funkce
-function db_novy_clen_na_akci($pobyt,$rodina,$novy) { 
+function db_novy_clen_na_akci($pobyt,$rodina,$novy) { // ---------------------- db_novy_clen_na_akci
 # přidání dítěte do rodiny a na akci
   global $akce, $errors;
   $sex= select('sex','_jmena',"jmeno='$novy->jmeno' LIMIT 1");
@@ -1052,7 +1052,7 @@ function db_novy_clen_na_akci($pobyt,$rodina,$novy) {
   }
   return count($errors);
 }
-function db_clen_na_akci($idp,$ido,$s_role) {
+function db_clen_na_akci($idp,$ido,$s_role) { // ----------------------------------- db_clen_na_akci
   global $errors, $cleni;
   $chng= array(
     (object)['fld'=>'id_pobyt',  'op'=>'i','val'=>$idp],
@@ -1080,7 +1080,7 @@ function db_clen_na_akci($idp,$ido,$s_role) {
       $errors[]= "Nastala chyba při zápisu do databáze (o)"; 
   }
 }
-function db_novy_pobyt($ida,$idr,$ucast,$pracovni) {
+function db_novy_pobyt($ida,$idr,$ucast,$pracovni) { // ------------------------------ db_novy_pobyt
   global $errors;
   $chng= array(
     (object)array('fld'=>'id_akce',    'op'=>'i','val'=>$ida),

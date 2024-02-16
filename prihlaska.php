@@ -638,7 +638,7 @@ function do_vyplneni_dat() {
     // ------------------------------ přidej staré členy rodiny a uprav údaje
     if (count($errors)) goto db_end;
     foreach ($cleni as $ido=>$clen) {
-      if ($clen->spolu) {
+      if ($clen->spolu && $ido>0) {
         db_clen_na_akci($idp,$ido,$clen->role=='d' ? 2 : 1);
         if (count($errors)) goto db_end;
       }
