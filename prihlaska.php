@@ -887,14 +887,14 @@ __EOD;
 # ------------------------------------------------------------------------------- formulářové funkce
 function get($table,$fld,$id=0) {
 # vrátí hodnotu - pro rodinnou není nutné udávat id
-  global $r_fld, $o_fld, $options, $vars;
-  $desc= $table=='r' ? $r_fld : $o_fld;
+  global $p_fld, $r_fld, $o_fld, $options, $vars;
+  $desc= $table=='r' ? $r_fld : ($table=='p' ? $p_fld : $o_fld);
   if (!isset($desc[$fld])) {
     $v= $fld;
   }
   else {
     if ($table=='r' && !$id) $id= key($vars->rodina);
-    $pair= $table=='r' ? $vars->rodina[$id] : $vars->cleni[$id];
+    $pair= $table=='r' ? $vars->rodina[$id] : ($table=='p' ? $vars->pobyt : $vars->cleni[$id]);
     list(,,$typ)= $desc[$fld];
     $v= is_array($pair->$fld) ? ($pair->$fld[1] ?? $pair->$fld[0]) : $pair->$fld;
     switch ($typ) {

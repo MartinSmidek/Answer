@@ -222,8 +222,8 @@ function parm($id_akce) {
             "p_souhlas":0,"p_pro_par":1,"p_MAIL":1,"p_TEST":0,"p_vps":1 }
 __JSON;
       $ok= 1;
-//      $MAIL= 1;
-//      $TEST= 0;
+      $MAIL= 1;
+      $TEST= 0;
       break;
     default:
       list($ok,$web_online)= select("COUNT(*),web_online",'akce',"id_duakce=$id_akce");
