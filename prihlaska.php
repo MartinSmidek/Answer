@@ -39,6 +39,9 @@ if (ip_ok()) {
 //if ($TEST==3) $testovaci_mail= 'tholik@volny.cz';
 //if ($TEST==3) $testovaci_mail= 'petr.glogar@seznam.cz';
 }
+else {
+  die("Online přihlašování není ještě k dospozici."); 
+}
 # ------------------------------------------ zpracování jednoho formuláře
 init();
 parm($_GET['akce']);
@@ -1424,7 +1427,7 @@ function ip_ok() {
 # pozná localhost, IP Talichova, IP chata, LAN Noe
   $ip= $_SERVER['HTTP_X_REAL_IP'] ?? $_SERVER['REMOTE_ADDR'];
   return in_array($ip,[
-      '127.0.0.1',
+      '127.0.0.1', // localhost
       '86.49.254.42','80.95.103.170','217.64.3.170', // GAN
       '95.82.145.32'] // JZE
       );
