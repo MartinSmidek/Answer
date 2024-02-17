@@ -222,8 +222,8 @@ function parm($id_akce) {
             "p_souhlas":0,"p_pro_par":1,"p_MAIL":1,"p_TEST":0,"p_vps":1 }
 __JSON;
       $ok= 1;
-      $MAIL= 1;
-      $TEST= 0;
+//      $MAIL= 1;
+//      $TEST= 0;
       break;
     default:
       list($ok,$web_online)= select("COUNT(*),web_online",'akce',"id_duakce=$id_akce");
@@ -1008,19 +1008,44 @@ function elem_input($table,$id,$flds) { //trace();
   return $html;
 }
 # -------------------------------------------------------------------------------- databázové funkce
-function db_novy_clen_na_akci($pobyt,$rodina,$novy) { // ---------------------- db_novy_clen_na_akci
+function db_novy_clen_na_akci($pobyt,$rodina,$novy) { // ---------------------- db novy_clen_na_akci
 # přidání dítěte do rodiny a na akci
-  global $akce, $errors;
-  $sex= select('sex','_jmena',"jmeno='$novy->jmeno' LIMIT 1");
-  $sex= $sex==1 || $sex==2 ? $sex : 0;
+  global $akce, $vars, $errors;
+  $chng= [];
+  $ido= 0;
   $narozeni= sql_date($novy->narozeni,1);
-  $chng= array(
-    (object)array('fld'=>'jmeno',    'op'=>'i','val'=>$novy->jmeno),
-    (object)array('fld'=>'prijmeni', 'op'=>'i','val'=>$novy->prijmeni),
-    (object)array('fld'=>'sex',      'op'=>'i','val'=>$sex),
-    (object)array('fld'=>'narozeni', 'op'=>'i','val'=>$narozeni),
-    (object)array('fld'=>'access',   'op'=>'i','val'=>$akce->org)
-  );
+  // nejprve podle jména a data narození, jestli už není v evidenci --- jen pro roli p
+  if ($novy->role=='p') {
+    list($pocet,$ido,$access)= select('COUNT(*),id_osoba,access','osoba',
+        "deleted='' AND jmeno='$novy->jmeno' AND prijmeni='$novy->prijmeni' AND narozeni='$narozeni' ");
+    if ($pocet==1) {
+      // asi známe - přidáme jako poznámku do pracovní poznámky pobytu
+      if ($access!=$akce->org) {
+        // rozšíříme povolení
+        $chng[]= (object)array('fld'=>'access', 'op'=>'u','old'=>$access,'val'=>$access|$akce->org);
+      }
+    }
+    // zpráva do pracovní poznámky
+    $pracovni= $vars->pobyt->pracovni;
+    $p_old= is_array($pracovni) ? ($pracovni[1] ?? $pracovni[0]) : $pracovni;
+    $p_new= ($p_old ? "$p_old\n" : '') . "[OVĚŘ: pečoun '$novy->jmeno $novy->prijmeni, $narozeni' nalezen jako ID=$ido]";
+    _ezer_qry("UPDATE",'pobyt',$pobyt,
+        [(object)['fld'=>'pracovni', 'op'=>'u','old'=>$p_old,'val'=>$p_new]]);
+  }
+  if (!$ido) {
+    $sex= select('sex','_jmena',"jmeno='$novy->jmeno' LIMIT 1");
+    $sex= $sex==1 || $sex==2 ? $sex : 0;
+    $chng= array(
+      (object)array('fld'=>'jmeno',    'op'=>'i','val'=>$novy->jmeno),
+      (object)array('fld'=>'prijmeni', 'op'=>'i','val'=>$novy->prijmeni),
+      (object)array('fld'=>'sex',      'op'=>'i','val'=>$sex),
+      (object)array('fld'=>'narozeni', 'op'=>'i','val'=>$narozeni),
+      (object)array('fld'=>'access',   'op'=>'i','val'=>$akce->org)
+    );
+    $ido= _ezer_qry("INSERT",'osoba',0,$chng);
+    if (!$ido) $errors[]= "Nastala chyba při zápisu do databáze (o)"; 
+    $chng= []; // další položky přidáme přes UPDATE
+  }
   if ($novy->telefon??0) {
     $chng[]= (object)array('fld'=>'kontakt', 'op'=>'i','val'=>1);
     $chng[]= (object)array('fld'=>'telefon', 'op'=>'i','val'=>$novy->telefon);
@@ -1028,8 +1053,10 @@ function db_novy_clen_na_akci($pobyt,$rodina,$novy) { // ---------------------- 
   if ($novy->obcanka??0) {
     $chng[]= (object)array('fld'=>'obcanka', 'op'=>'i','val'=>$novy->obcanka);
   }
-  $ido= _ezer_qry("INSERT",'osoba',0,$chng);
-  if (!$ido) $errors[]= "Nastala chyba při zápisu do databáze (o)"; 
+  if (count($chng) && !count($errors)) {
+    if (!_ezer_qry("UPDATE",'osoba',$ido,$chng)) 
+      $errors[]= "Nastala chyba při zápisu do databáze (o)"; 
+  }
   // patří do rodiny
   if (!count($errors)) {
     $chng= array(

@@ -470,7 +470,7 @@ form _cmd [,,623,30] {
   # ----------------------------------------------- změnit
   label [347,3,44,] { title:"<b>Změny <br>pobytu:</b>" }
   #==> . - pobyt
-  button [395,5,,] {tag:'x,T', title:'[fa-plug fa-rotate-180 fa-red] zruš',
+  button [390,5,,] {tag:'x,T', title:'[fa-plug fa-rotate-180 fa-red] vyřaď',
     skill:'yaa+|yaa+;faa+|faa+;caa+|caa+;T',
     help:'Vyřazení účastníka nebo páru z účasti na akci'
     func onclick() {

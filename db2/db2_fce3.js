@@ -320,6 +320,7 @@ Ezer.onlogin= function() {
 // po přihlášení:       pokud má tato datová práva
 function personify(access,test) {
 //  var v= Ezer.version=='ezer3.1' ? "<sub>3</sub>" : '';
+  test= test || '';
   var v= Ezer.version=='3.2' ? `<sub><small>${Ezer.version}</small></sub>` : '';
   var menu= jQuery('#access_menu'), body= jQuery(document.body);
   var orgs= ['','YMCA Setkání','YMCA Familia','obou organizací'];
