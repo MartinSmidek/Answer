@@ -222,8 +222,10 @@ function parm($id_akce) {
             "p_souhlas":0,"p_pro_par":1,"p_MAIL":1,"p_TEST":0,"p_vps":1 }
 __JSON;
       $ok= 1;
-      $MAIL= 1;
-      $TEST= 0;
+      if (!ip_ok()) { // jen GAN a JZE smí testovat
+        $MAIL= 1;
+        $TEST= 0;
+      }
       break;
     default:
       list($ok,$web_online)= select("COUNT(*),web_online",'akce',"id_duakce=$id_akce");
@@ -612,7 +614,7 @@ function do_vyplneni_dat() {
   $errors= [];
   if (isset($post->cmd_ano) && $zapsat) {
     // vytvoření pobytu
-    // web_changes= 1/2 pro INSERT/UPDATE pobyt a spolu | 4/8 pro INSERT/UPDATE osoba
+    // pobyt.web_changes= 1/2 pro INSERT/UPDATE pobyt a spolu | 4/8 pro INSERT/UPDATE osoba
     // účast jako ¨účastník' pokud není p_obnova => neúčast na LK znamená "náhradník"
     $ucast= 0; // = účastník
     if ($akce->p_obnova) {
@@ -757,7 +759,7 @@ function do_rozlouceni() {
         . "Protože jste mezi nimi nebyli, zařadili jsme vás zatím mezi náhradníky. "
         . "Pokud bude místo, ozveme se nejpozději 2 týdny před akcí a účast vám potvrdíme.</p>"
       : " a zapisuji vás mezi účastníky."
-        . "<br>V týdnu před akcí dostanete <i>Dopis na cestu</i> s doplňujícími informacemi.</p>";
+        . " Vaši přihlášku zpracuji do tří dnů.<br>V týdnu před akcí dostanete <i>Dopis na cestu</i> s doplňujícími informacemi.</p>";
     $msg= "Vaše přihláška byla zaevidována a poslali jsme Vám potvrzující mail na $post->email.";
     $mail_subj= "Potvrzení přijetí přihlášky na akci $akce->nazev.";
     $mail_body= "Dobrý den,<p>potvrzuji přijetí vaší přihlášky na akci <b>$akce->nazev</b>"
@@ -765,7 +767,8 @@ function do_rozlouceni() {
     . $text
     . "<p>S přáním hezkého dne<br>$akce->garant_jmeno"
     . "<br><a href=mailto:'$akce->garant_mail'>$akce->garant_mail</a>"
-    . "<br>$akce->garant_telefon</p>";
+    . "<br>$akce->garant_telefon</p>"
+    . "<p><i>Tato odpověď je vygenerována automaticky</i></p>";
     $ok_mail= simple_mail($akce->garant_mail, $post->email, $mail_subj,$mail_body,$akce->garant_mail); 
     $ok= $ok_mail ? 'ok' : 'ko';
   }
@@ -1014,6 +1017,7 @@ function db_novy_clen_na_akci($pobyt,$rodina,$novy) { // ---------------------- 
   $chng= [];
   $ido= 0;
   $narozeni= sql_date($novy->narozeni,1);
+  $pocet= 0; // použije se pro rozeznání mezi insert/update osoba
   // nejprve podle jména a data narození, jestli už není v evidenci --- jen pro roli p
   if ($novy->role=='p') {
     list($pocet,$ido,$access)= select('COUNT(*),id_osoba,access','osoba',
@@ -1040,7 +1044,9 @@ function db_novy_clen_na_akci($pobyt,$rodina,$novy) { // ---------------------- 
       (object)array('fld'=>'prijmeni', 'op'=>'i','val'=>$novy->prijmeni),
       (object)array('fld'=>'sex',      'op'=>'i','val'=>$sex),
       (object)array('fld'=>'narozeni', 'op'=>'i','val'=>$narozeni),
-      (object)array('fld'=>'access',   'op'=>'i','val'=>$akce->org)
+      (object)array('fld'=>'access',   'op'=>'i','val'=>$akce->org),
+      (object)array('fld'=>'web_changes','op'=>'i','val'=>1), // insert
+      (object)array('fld'=>'web_zmena',  'op'=>'i','val'=>date('Y-m-d'))
     );
     $ido= _ezer_qry("INSERT",'osoba',0,$chng);
     if (!$ido) $errors[]= "Nastala chyba při zápisu do databáze (o)"; 
@@ -1054,6 +1060,9 @@ function db_novy_clen_na_akci($pobyt,$rodina,$novy) { // ---------------------- 
     $chng[]= (object)array('fld'=>'obcanka', 'op'=>'i','val'=>$novy->obcanka);
   }
   if (count($chng) && !count($errors)) {
+    if ($pocet==1) {
+      $chng[]= (object)array('fld'=>'web_zmena',  'op'=>'i','val'=>date('Y-m-d'));
+    }
     if (!_ezer_qry("UPDATE",'osoba',$ido,$chng)) 
       $errors[]= "Nastala chyba při zápisu do databáze (o)"; 
   }
@@ -1103,6 +1112,7 @@ function db_clen_na_akci($idp,$ido,$s_role) { // -------------------------------
     }
   }
   if (count($chng)) {
+    $chng[]= (object)array('fld'=>'web_zmena',  'op'=>'i','val'=>date('Y-m-d'));
     if (!_ezer_qry("UPDATE",'osoba',$ido,$chng)) 
       $errors[]= "Nastala chyba při zápisu do databáze (o)"; 
   }
@@ -1113,7 +1123,7 @@ function db_novy_pobyt($ida,$idr,$ucast,$pracovni) { // ------------------------
     (object)array('fld'=>'id_akce',    'op'=>'i','val'=>$ida),
     (object)array('fld'=>'i0_rodina',  'op'=>'i','val'=>$idr),
     (object)array('fld'=>'funkce',     'op'=>'i','val'=>$ucast),
-    (object)array('fld'=>'web_changes','op'=>'i','val'=>1),
+    (object)array('fld'=>'web_changes','op'=>'i','val'=>1), // insert
     (object)array('fld'=>'web_zmena',  'op'=>'i','val'=>date('Y-m-d'))
   );
   if ($pracovni)
@@ -1134,6 +1144,7 @@ function do_oprav_rodinu($idr) {
     }
   }
   if (count($chng)) {
+    $chng[]= (object)array('fld'=>'web_zmena',  'op'=>'i','val'=>date('Y-m-d'));
     if (!_ezer_qry("UPDATE",'rodina',$idr,$chng)) 
       $errors[]= "Nastala chyba při zápisu do databáze (r)"; 
   }
