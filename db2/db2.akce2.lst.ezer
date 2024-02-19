@@ -605,7 +605,7 @@ form _page [,,275,360] {
     func onchange() { p_json.p_rodina= this; web_online.change(); }}
   check p_pro_par [30,105,400,] { tag:'pri', title:'pro manželský pár, výjimečně s dítětem a jeho pečovatelem', value:'0' 
     func onchange() { p_json.p_pro_par= this; web_online.change(); }}
-  check p_pro_LK [30,130,400,] { tag:'pri', title:'pro manželský pár na LK MS', value:'0' 
+  check p_pro_LK [30,130,400,] { tag:'pri', title:'pro manželský pár s dětmi a osobními pečovateli na LK MS', value:'0' 
     func onchange() { p_json.p_pro_LK= this; web_online.change(); }}
   check p_rod_adresa [30,155,400,] { tag:'pri', title:'umožnit kontrolu a úpravu rodinné adresy', value:'0' 
     func onchange() { p_json.p_rod_adresa= this; web_online.change(); }}
