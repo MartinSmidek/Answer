@@ -229,7 +229,7 @@ function web_zmena_ok($id_pobyt,$doit=0) {  trace();
       $n_ucastniku= kolik_1_2_5($zs,"účastníka,účastníky,účastníků");
       $k_ucastnika= kolik_1_2_5($zo,"účastníka,účastníků,účastníků");
       $msg.= ( !$dp ? '' : "Dne $day byla na webu vyplněna online přihláška")
-          .  ( !$zr ? '' : " se změnou rodinného údaje")
+          .  ( !$zr ? ' bez změny rodinného údaje' : " se změnou rodinného údaje")
           .  ( !$zs ? '' : " přihlašující $n_ucastniku")
           .  ( !$zo ? '' : " z toho u $k_ucastnika se změnou osobních údajů")
           . ".<br>";

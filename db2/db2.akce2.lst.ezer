@@ -611,22 +611,26 @@ form _page [,,275,360] {
     func onchange() { p_json.p_rod_adresa= this; web_online.change(); }}
   check p_obcanky [30,180,400,] { tag:'pri', title:'umožnit kontrolu a úpravu číslo obč. průkazu', value:'0' 
     func onchange() { p_json.p_obcanky= this; web_online.change(); }}
-  check p_jednotlivec [13,225,400,] { tag:'pri', title:'<b>přihlášení jednotlivce</b>', value:'0', format:'d' 
+  check p_jednotlivec [13,205,400,] { tag:'pri', title:'<b>přihlášení jednotlivce</b>', value:'0', format:'d' 
     func onchange() { p_json.p_jednotlivec= this; web_online.change(); }}
-  check p_oso_adresa [30,250,400,] { tag:'pri', title:'osobní adresa', value:'0', format:'d' 
+  check p_oso_adresa [30,230,400,] { tag:'pri', title:'osobní adresa', value:'0', format:'d' 
     func onchange() { p_json.oso_adresa= this; web_online.change(); }}
-  check p_registrace [13,293,400,] { tag:'pri', title:'povolit registraci s novým mailem', value:'0' 
+  check p_registrace [13,268,400,] { tag:'pri', title:'povolit registraci s novým mailem', value:'0' 
     func onchange() { p_json.p_registrace= this; web_online.change(); }}
-  check p_souhlas [13,313,400,] { tag:'pri', title:'vyžadovat souhlas (GDPR))', value:'0' 
+  check p_souhlas [13,288,400,] { tag:'pri', title:'vyžadovat souhlas (GDPR)', value:'0' 
     func onchange() { p_json.p_souhlas= this; web_online.change(); }}
   // specifické varianty podle typu akce
-  label [13,350,400,20] { tag:'pri' title:'<b>Nastavení pro akce MS</b>' }
-  check p_obnova [13,370,400,] { tag:'pri', title:'OBNOVA MS: neúčastníky aktuálního LK brát jako náhradníky', value:'0' 
+  label [13,325,400,20] { tag:'pri' title:'<b>Nastavení pro akce MS</b>' }
+  check p_obnova [13,345,400,] { tag:'pri', title:'OBNOVA MS: neúčastníky aktuálního LK brát jako náhradníky', value:'0' 
     func onchange() { p_json.p_obnova= this; web_online.change(); }}
-  check p_vps [13,395,400,] { tag:'pri', title:'OBNOVA MS: nastavit funkci VPS podle letního kurzu', value:'0' 
+  check p_vps [13,370,400,] { tag:'pri', title:'OBNOVA MS: nastavit funkci VPS podle letního kurzu', value:'0' 
     func onchange() { p_json.p_vps= this; web_online.change(); }}
+  check p_upozorneni [13,395,400,] { tag:'pri', title:'LETNÍ KURZ MS: vyžadovat akceptaci upozornění', value:'0' 
+    func onchange() { p_json.p_upozorneni= this; web_online.change(); }}
+  check p_dokument [13,420,400,] { tag:'pri', title:'LETNÍ KURZ MS: vytvořit PDF a uložit jako dokument k pobytu', value:'0' 
+    func onchange() { p_json.p_dokument= this; web_online.change(); }}
   // ruční změna JSON
-  edit web_online [13,488,438,50] { tag:'pri', title:'^JSON popis přihlášky', data:akce.web_online,
+  edit web_online [13,508,438,50] { tag:'pri', title:'^JSON popis přihlášky', data:akce.web_online,
       format:'dt'
   func onchanged() { 
     if (confirm('uložit ruční změnu JSON popisu přihlášky?')) {
@@ -634,11 +638,11 @@ form _page [,,275,360] {
     else form.plain();
   }}
   // Zpět a Uložit
-  label  [13,431,98,30] { tag:'pri', css:'ae_parm', style:'z-index:1', skill:'yo' }
-  button [19,437,,] { tag:'pri', title:'Zpět', help:'Neměnit změněná data', skill:'yo|yo'
+  label  [13,451,98,30] { tag:'pri', css:'ae_parm', style:'z-index:1', skill:'yo' }
+  button [19,457,,] { tag:'pri', title:'Zpět', help:'Neměnit změněná data', skill:'yo|yo'
     func onclick() { akce_zpet(); p_show(); }
   }
-  button [65,437,,] { tag:'pri', title:'Uložit', help:'Uložit změněná data', skill:'yo|yo'
+  button [65,457,,] { tag:'pri', title:'Uložit', help:'Uložit změněná data', skill:'yo|yo'
     func onclick() {
       akce_lock('off'); 
       if (form.key() && web_online.changed()) {

@@ -4,7 +4,7 @@
   file_put_contents("last_access.txt",date('Y-m-d H:i:s'));
 
   # inicializace systémů Ans(w)er
-  #   $app        = kořenová podsložka aplikace ... db2
+  #   $app        = kořenová podsložka aplikace ... dbt
   #   $app_name   = jméno aplikace
   #   $db_name    = hlavní databáze ... bylo-li v URL &test=1 použije se databáze s postfixem _test
   #   $skin       = tt|default|default
@@ -14,16 +14,15 @@
 
   // verze použitého jádra Ezeru
   $ezer_version= isset($_GET['ezer']) ? $_GET['ezer'] : '3.1'; 
-  $ezer_server= 
-  $_SERVER["SERVER_NAME"]=='answer.bean'        ? 0 : (      // 0:lokální 
-  $_SERVER["SERVER_NAME"]=='answer.doma'        ? 1 : (      // 1:Synology DOMA
-  $_SERVER["SERVER_NAME"]=='answer.setkani.org' ? 2 : (      // 2:Synology YMCA
-  $_SERVER["SERVER_NAME"]=='192.168.7.111'      ? 2 : -1))); // 2:Synology YMCA (pro cron!!!) 
 
-  // parametry aplikace Answer/db2
+  // server, databáze, cesty, klíče
+  $deep_root= "../files/answer";
+  require_once("$deep_root/dbt.dbs.php");
+
+  // parametry aplikace Answer/dbt
   $test= '-TEST';
   $app_name=  "Answer$test";
-  $app= $app_root=  'dbt'; // <== POZOR nesmí zde být db2 
+  $ezer_root= $app= $app_root=  'dbt';
 
   $title_style= $ezer_server==1 ? "style='color:#0094FF'" : (
                 $ezer_server==0 ? "style='color:#ef7f13'" : '');
@@ -48,25 +47,6 @@
     die("parametr <b>db_test</b> byl dne 4.1.2019 nahrazen aplikaci dbt ...");
   }
 
-  // cesty
-  $abs_roots= array(
-      "C:/Ezer/beans/answer",
-      "/volume1/web/www/answer",
-      "/volume1/web/www/answer"
-    );
-  $rel_roots= array(
-      "http://answer.bean:8080",
-      "http://answer.doma",
-      "https://answer.setkani.org"
-    );
-  $rel_root= $rel_roots[$ezer_server];
-  $path_foto= "{$abs_roots[$ezer_server]}/fotky";
-  $path_akce= array(
-      "D:/MS/",
-      "/volume1/YS/",
-      "/volume1/YS/"
-    )[$ezer_server];
-  
   // upozornění na testovací verzi
   $demo= '';
   // zmizí a zase se objeví
@@ -111,10 +91,6 @@
   if ( $coo && $coo>0 && $coo<4 ) {
     $cookie= $coo;
   }
-//  $choice_css=
-//    $cookie==1 ? "skins/ck/ck.ezer.css=skin" : (
-//    $cookie==2 ? "skins/ch/ch.ezer.css=skin" 
-//               : "skins/db/db.ezer.css=skin" );
   $skin=
     $cookie==1 ? "tt" : (
     $cookie==2 ? "default" : "default" );
@@ -145,9 +121,7 @@
 
   // (re)definice Ezer.options
   $add_pars= array(
-    'favicon' => array("db3_local.png","db3.png","db3_dsm.png")[$ezer_server],
-//    'app_root' => "$rel_root",      // startovní soubory app.php a app.inc.php jsou v kořenu
-//    'dbg' => $dbg,      // true = povolit podokno debuggeru v trasování a okno se zdrojovými texty
+    'favicon' => $favicon,
     'watch_pin' => 1,   // true = povolit dvoufázové přihlašování pomocí _user.usermail a PINu
     'watch_key' => 1,   // true = nebo povolit přístup jen po vložení klíče
     'watch_ip' => 1,    // true = jinak povolit přístup jen ze známých IP adres
@@ -170,32 +144,6 @@
       }
     }"
   );
-  if ( isset($_GET['batch']) && $_GET['batch'] ) {
-    // batch - verze
-    error_reporting(E_ALL & ~E_NOTICE);
-    session_start();
-    echo($_SERVER["SERVER_NAME"].'<br>');
-    $ezer_root= 'dbt';
-    // nastavení cest
-    $abs_root= isset($ezer_server) ? $abs_roots[$ezer_server] : $abs_roots[$ezer_local];
-    $_SESSION[$ezer_root]['ezer_server']= $ezer_server;
-    $_SESSION[$ezer_root]['ezer']= "3.1";
-    $_SESSION[$ezer_root]['abs_root']= $abs_root; 
-    $_SESSION[$ezer_root]['rel_root']= $rel_root; 
-    $_SESSION[$ezer_root]['pdo']= 2;
-    $_POST['root']= $ezer_root;
-    // inicializace Answeru
-    require_once("$ezer_root.inc.php");
-    switch ($_GET['batch']) {
-    case 'kasa-mail':
-      $stamp= kasa_send('*',1);
-      echo "<hr><h2>Odeslání připomenutí</h2><br>$html";
-      break;
-    }
-  }
-  else {
-    // je to standardní aplikace se startem v kořenu
-    require_once("ezer$ezer_version/ezer_main.php");
-  }
 
-?>
+  // je to standardní aplikace se startem v kořenu
+  require_once("ezer$ezer_version/ezer_main.php");

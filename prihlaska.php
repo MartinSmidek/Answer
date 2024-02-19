@@ -7,11 +7,13 @@
 #
 # p_pro_par     -- obecně manželský pár, výjimečně s dítětem, případně pečovatelem
 #+p_pro_LK      -- Letní kurz MS pro manželský pár i s dětmi, případně pečovatelem, s citlivými údaji
+# p_upozorneni  -- vyžaduje se osobní souhlas s uvedenými podmínkami účasti na LK
 # p_rod_adresa  -- ... umožňuje se úprava rodinných údajů (adresa, SPZ, datum svatby)
 # p_obcanky     -- ... umožňuje se úprava osobních údajů (občanka, telefon)
 # p_obnova      -- pro obnovu: neúčastník aktuálního LK bude přihlášen jako náhradník
 # p_registrace  -- je povoleno registrovat se s novým emailem
-# p_souhlas     -- vyžaduje se souhlas se zpracováním uvedených osobních údajů
+# p_souhlas     -- vyžaduje se společný souhlas se zpracováním uvedených osobních údajů
+# p_dokument    -- vytvořit PDF a uložit jako dokument k pobytu
 */
 
 header('Content-Type:text/html;charset=utf-8');
@@ -37,33 +39,88 @@ if (ip_ok()) {
 //if ($TEST==3) $testovaci_mail= 'martin@smidek.eu';
 //if ($TEST==3) $testovaci_mail= 'martin.smidek@outlook.com';
 //if ($TEST==3) $testovaci_mail= 'tholik@volny.cz';
+//if ($TEST==3) $testovaci_mail= 'l_kolar@email.cz';
 //if ($TEST==3) $testovaci_mail= 'petr.glogar@seznam.cz';
 }
 else {
   die("Online přihlašování není ještě k dospozici."); 
 }
 # ------------------------------------------ zpracování jednoho formuláře
-init();
-parm($_GET['akce']);
+start();                // nastavení $vars podle SESSION
+connect_db();           // napojení na databázi a na Ezer 
+read_akce();            // načtení údajů o akci z Answeru včetně popisu získávaných položek
+debug($akce);
+read_form();            // načtení údajů formuáře
+trace_vars('START');
 //$MAIL= 0; // 1 - maily se posílají | 0 - mail se jen ukáže - lze nastavit url&mail=0
 todo();
+trace_vars('END');
 page();
 exit;
 /** ------------------------------------------ stavové proměnné uložené v SESSION
 # klient = ID přihlášeného 
 # cleni = ID -> {spolu=0/1, jmeno, sex, role, narozeni}  ... ID může být  -<i> pro přidané členy
+# všechny hodnoty v cleni, rodina, pobyt jsou v databázovém tvaru
 # ----------------------------------------------------------------------------- inicializace procesu
 # inicializuje celý proces a provede potřebnou úpravu dat předaných přes POST
 #   checkbox: chk_name ... pokud je v POST, tak nastaví chk_name na 1 
 #             uplatní se v $post a $vars
 #   submit:   cmd_name ... zruší cmd_x, která nejsou v aktuálním POST
 #             uplatní se v $post */
-function init() {
-  global $AKCE, $vars, $mailbox, $cleni, $post, $msg;
-  global $TEST, $MAIL, $errors;  
-  # ------------------------------------------ napojení na Ezer
-  global $ezer_server, $dbs, $db, $ezer_db, $USER, $kernel, $ezer_path_serv, $mysql_db_track, 
-      $answer_db, $mysql_tracked, $trace, $totrace, $y; // $y je obecná stavová proměnná Ezer
+# --------------------------------------------------------------------------------- napojení na Ezer
+# doplnění údajů pro přihlášku - případné doplnění $vars - definice položek
+#   přidání údajů z Answeru: nazev, garant:*, form:pata
+function start() {
+  global $errors, $refresh, $mailbox, $vars, $TEST, $MAIL, $AKCE;
+  global $ezer_server, $trace;
+    # ------------------------------------------ start
+  // nastavení nového=prázdného formuláře
+  $errors= [];
+  $trace= '';
+  $mailbox= '';
+    # ------------------------------------------ ochrana proti znovunačtení formuláře
+  $refresh= '';
+//  $trace.= debugx($_POST,'$_POST - start');
+  $stamp_sess= $_SESSION[$AKCE]->stamp??date("i:s");
+  $stamp_post= $_POST['stamp']??'?';
+//  $trace.= debugx($_POST,'$_POST - start');
+//  display("SESSION: $stamp_sess POST: $stamp_post");
+  if ($stamp_sess != $stamp_post) {
+  //  $trace.= debugx($_POST,'$_POST - start');
+  //  $trace.= debugx($_SESSION,'$_SESSION - start');
+    do_session_restart();
+    $_POST= [];
+    $refresh= '<p><i>... refresh prohlížeče způsobil jeho inicializaci ...</i></p>';
+  }
+//  $trace.= debugx($_SESSION,'$_SESSION - vstup');
+  if (!isset($_SESSION[$AKCE]->faze)) {
+    $_POST= [];
+    $_SESSION[$AKCE]->start= 1;
+    $_SESSION[$AKCE]->faze= 'a';
+    $_SESSION[$AKCE]->history= '';
+    $_SESSION[$AKCE]->klient= 0;
+    $_SESSION[$AKCE]->kontrola= 0;
+    $_SESSION[$AKCE]->user= '';
+    $_SESSION[$AKCE]->chk_souhlas= 0;
+    $_SESSION[$AKCE]->form= 0;
+    $_SESSION[$AKCE]->pobyt= (object)[];
+    $_SESSION[$AKCE]->rodina= [];
+    $_SESSION[$AKCE]->cleni= [];
+    $_SESSION[$AKCE]->post= $_POST;
+    $index= "prihlaska_2.php"; 
+    $_SESSION[$AKCE]->index= $index;
+    $_SESSION[$AKCE]->server= $ezer_server;
+    $_SESSION[$AKCE]->test= $TEST;
+    $_SESSION[$AKCE]->mail= $MAIL;
+  }
+//  $trace.= debugx($_SESSION[$AKCE],'$_SESSION[akce] - start');
+  $vars= (object)$_SESSION[$AKCE];
+}
+function connect_db() { // -------------------------------------------------------------- connect db
+ global $ezer_server, $dbs, $db, $ezer_db, $USER, $kernel, $ezer_path_serv, $mysql_db_track, 
+     $ezer_path_root, $abs_root, $answer_db, $mysql_tracked, $trace, $totrace, 
+     $y; // $y je obecná stavová proměnná Ezer
+  global $TEST;
   date_default_timezone_set('Europe/Prague');
   if ($TEST || isset($_GET['err']) && $_GET['err'] ) error_reporting(-1); else error_reporting(0);
   ini_set('display_errors', 'On');
@@ -72,11 +129,15 @@ function init() {
   $kernel= "ezer3.2";
   $ezer_path_serv= "$kernel/server";
   $deep_root= "../files/answer";
-  require_once("$deep_root/dbt.dbs.php"); // <== testovací databáze
+  require_once("$deep_root/dbt.dbs.php"); // <== testovací databáze a cesty např. $path_files_h
+  $ezer_path_root= $abs_root;
   require_once("$kernel/server/ae_slib.php");
   require_once("$kernel/pdo.inc.php");
   require_once("$kernel/server/ezer_pdo.php");
   require_once("db2/db2_fce3.php");
+  // PDF knihovny
+  require_once('tcpdf/tcpdf.php');
+  require_once('tcpdf/db2_tcpdf.php');
   // definice zápisů do _track
   $mysql_db_track= true;
   $mysql_tracked= ',akce,pobyt,spolu,osoba,tvori,rodina,_user,';
@@ -91,120 +152,18 @@ function init() {
   if (isset($db[$ezer_server])) $db= $db[$ezer_server];
   $ezer_db= $dbs;
   ezer_connect($answer_db);
-  # ------------------------------------------ ochrana proti refresh
-  $trace= '';
-  $mailbox= '';
-  $refresh= '';
-  $trace.= debugx($_POST,'$_POST - start');
-  $stamp_sess= $_SESSION[$AKCE]->stamp??date("i:s");
-  $stamp_post= $_POST['stamp']??'?';
-  $trace.= debugx($_POST,'$_POST - start');
-  display("SESSION: $stamp_sess POST: $stamp_post");
-  if ($stamp_sess != $stamp_post) {
-  //  $trace.= debugx($_POST,'$_POST - start');
-  //  $trace.= debugx($_SESSION,'$_SESSION - start');
-    do_session_restart();
-    $_POST= [];
-    $refresh= '<p><i>... refresh prohlížeče způsobil jeho inicializaci ...</i></p>';
-  }
-  # ------------------------------------------ start
-  // nastavení nového=prázdného formuláře
-  $errors= [];
-//  $trace.= debugx($_SESSION,'$_SESSION - vstup');
-  if (!isset($_SESSION[$AKCE]->faze)) {
-    $_POST= [];
-    $_SESSION[$AKCE]->start= 1;
-    $_SESSION[$AKCE]->faze= 'a';
-    $_SESSION[$AKCE]->history= '';
-    $_SESSION[$AKCE]->klient= 0;
-    $_SESSION[$AKCE]->kontrola= 0;
-    $_SESSION[$AKCE]->user= '';
-    $_SESSION[$AKCE]->chk_souhlas= 0;
-    $_SESSION[$AKCE]->pobyt= (object)[];
-    $_SESSION[$AKCE]->rodina= [];
-    $_SESSION[$AKCE]->cleni= [];
-    $_SESSION[$AKCE]->post= $_POST;
-    $index= "prihlaska_2.php"; 
-    $_SESSION[$AKCE]->index= $index;
-    $_SESSION[$AKCE]->server= $ezer_server;
-    $_SESSION[$AKCE]->test= $TEST;
-    $_SESSION[$AKCE]->mail= $MAIL;
-  }
-//  $trace.= debugx($_SESSION[$AKCE],'$_SESSION[akce] - start');
-  $vars= (object)$_SESSION[$AKCE];
-  $cleni= $vars->cleni;
-  foreach ($_POST as $tag=>$val) {
-    $m= null;
-    if (preg_match("/([\-\d]+)_(.*)/",$tag,$m)) { // položka z $cleni
-      $id= $m[1]; $name= $m[2];
-      if (is_array($cleni[$id]->$name)) {
-        if ($val!=$cleni[$id]->$name[0]) {
-          $cleni[$id]->$name[1]= $val;
-          $vars->kontrola= 0;
-        }
-      }
-      elseif ($cleni[$id]->$name!=$val) {
-        $cleni[$id]->$name= [$cleni[$id]->$name,$val];
-      }
-    }
-    elseif (substr($tag,0,2)=='r_') { // položka z rodina
-      $name= substr($tag,2);
-      $rodina= $vars->rodina[key($vars->rodina)];
-      if ($val!=$rodina->$name[0]) {
-        $rodina->$name[1]= $val;
-        $vars->kontrola= 0;
-      }
-    }
-    elseif (substr($tag,0,2)=='p_') { // položka do pobyt
-      $name= substr($tag,2);
-      $vars->pobyt->$name= $val;
-    }
-  }
-  // zpracování hodnot
-  $old_post= array_merge([],(array)$vars->post);
-  foreach (array_keys($old_post) as $fld) {
-    if (preg_match("/^cmd_.*$/",$fld)) {
-      unset($old_post[$fld]);
-    }
-  }
-  $post= array_merge([],$_POST);
-  $post= (object)array_replace($old_post,$post);
-  // zpamatování vstupních hodnot typu checkbox
-  $vars->chk_souhlas= isset($_POST['chk_souhlas']) ? 1 : 0;
-  foreach ($cleni as $id=>$clen) {
-    $name= "{$id}_spolu";
-    $clen->spolu= isset($_POST[$name]) ? 1 : 0;    
-//    $clen[$id]->$name= $val;
-  }
-  $vars->cleni= $cleni;
-//  if ($TEST==2 && $vars->faze=='a') {
-//    global $testovaci_mail;
-//    $trace.= "<br>ladící běh se simulovaným přihlášením na $testovaci_mail";
-//    $post= (object)['email'=>$testovaci_mail];
-//  }
-  if ($TEST==3 && $vars->faze=='a') {
-    global $testovaci_mail;
-    $trace.= "<br>ladící běh se simulovaným přihlášením na $testovaci_mail";
-    $post= (object)['email'=>$testovaci_mail];
-  }
-  $vars->post= $post;
-  $_SESSION[$AKCE]= $vars;
-  $msg= '';
-  display("TEST=$TEST MAIL=$MAIL");
 }
-# =============================================================================== parametrizace akce
-# doplnění údajů pro přihlášku - případné doplnění $vars - definice položek
-#   přidání údajů z Answeru: nazev, garant:*, form:pata
-function parm($id_akce) {
-  global $TEST, $trace, $akce, $vars, $options, $p_fld, $r_fld, $o_fld;
+function read_akce() { // ---------------------------------------------------------------- read akce
+  global $TEST, $akce, $options, $p_fld, $r_fld, $o_fld;
   $msg= '';
+  $id_akce= $_GET['akce'];
   // parametry přihlášky a ověření možnosti přihlášení
   list($ok,$web_online)= select("COUNT(*),web_online",'akce',"id_duakce=$id_akce");
   if (!$ok || !$web_online) { 
     $msg= "Na tuto akci se nelze přihlásit online"; goto end; }
   // dekódování web_online
   $akce= json_decode($web_online);
-            debug($akce,"web_online");
+//            debug($akce,"web_online");
   if (!$akce || !$akce->p_enable) { 
     $msg= "Na tuto akci se bohužel nelze přihlásit online"; goto end; }
   // doplnění dalších údajů o akci
@@ -226,21 +185,27 @@ function parm($id_akce) {
     . "<br><br>Připojte prosím popis závady. Omlouváme se za nepříjemnost s beta-verzí přihlášek.";
   // doplnění konstant
   $akce->id_akce= $id_akce;
-  $akce->form_souhlas= " Vyplněním této přihlášky dávám výslovný souhlas s použitím uvedených "
+  $akce->form_souhlas= " Vyplněním této přihlášky dáváme výslovný souhlas s použitím uvedených "
       . "osobních údajů pro potřeby organizace akcí YMCA Setkání v souladu s Nařízením "
       . "Evropského parlamentu a Rady (EU) 2016/679 ze dne 27. dubna 2016 o ochraně "
       . "fyzických osob a zákonem č. 101/2000 Sb. ČR. Na našem webu naleznete "
       . "<a href='https://www.setkani.org/ymca-setkani/5860#anchor5860' target='show'>"
       . "podrobnou informací o zpracování osobních údajů v YMCA Setkání</a>.";
-  // doplnění $vars - jen poprvé
-  if (!isset($vars->pro_par)) $vars->pro_par= $akce->p_pro_par;
+  $akce->upozorneni= "Potvrzuji, že jsem byl@ upozorněn@, že není možné se účastnit pouze části kurzu, 
+      že kurz není určen osobám závislým na alkoholu, drogách nebo jiných omamných látkách, ani
+      osobám zatíženým neukončenou nevěrou, těžkou duševní nemocí či jiným omezením, která neumožňují 
+      zapojit se plně do programu. Osoby duševně nemocné se mohou zúčastnit kurzu pouze se souhlasem 
+      svého ošetřujícího lékaře nebo psychoterapeuta, v případě nejasností po konzultaci s vedením kurzu. 
+      Zatržením prohlašuji, že jsem si plně vědom@, že pořadatel neodpovídá za škody a újmy, které by 
+      mně/nám mohly vzniknout v souvislosti s nedodržením těchto zásad účasti na kurzu a veškerá rizika
+      v takovém případě přebíráme na sebe.";
   // ------------------------------------------ definice položek
   $options= [
       'role'      => [''=>'role v rodině?','a'=>'manžel','b'=>'manželka','d'=>'dítě','p'=>'jiný vztah'],
       'cirkev'    => map_cis('ms_akce_cirkev','zkratka'),
       'vzdelani'  => map_cis('ms_akce_vzdelani','zkratka'),
     ];
-  $p_fld= [ // položky tabulky POBYT
+  $p_fld= [ // zobrazené položky tabulky POBYT, nezobrazené: id_pobyt, web_changes
       'pracovni'  =>['64/4','sem prosím napište případnou dietu, nebo jinou úpravu stravy - poloviční porci, odhlášení jídla apod.','area']
     ];
   $r_fld= [ // položky tabulky RODINA
@@ -256,31 +221,99 @@ function parm($id_akce) {
       'jmeno'     =>[ 7,'* jméno',''],
       'prijmeni'  =>[10,'* příjmení',''],
       'narozeni'  =>[ 9,'* narození','date'],
-      'role'      =>[ 9,'* role v rodině?','select']],
+      'role'      =>[ 9,'* role v rodině?','select'],
+      'note'      =>[40,'poznámka (léky, alergie, apod.)','']],
     $akce->p_obcanky ? [
       'obcanka'   =>[11,'číslo občanky',''],
-      'telefon'   =>[10,'telefon','']] : [],
+      'telefon'   =>[10,'telefon',''],
+      'email'     =>[35,'e-mailová adresa','']] : [],
     $akce->p_pro_LK ? [
       'vzdelani'  =>[20,'vzdělání','select'],
       'zamest'    =>[35,'povolání, zaměstnání',''],
       'zajmy'     =>[35,'zájmy',''],
-      'jazyk'     =>[20,'znalost jazyků (A, N, ...)',''],
+      'jazyk'     =>[20,'znalost jazyků (Aj, Nj, ...)',''],
       'aktivita'  =>[35,'aktivita v církvi',''],
       'cirkev'    =>[20,'příslušnost k církvi','select'],
       'povaha'    =>[70,'popiš svoji povahu',''],
       'manzelstvi'=>['70/2','vyjádři se o vašem manželství','area'],
       'ocekavani' =>['70/2','co očekáváš od účasti na MS','area'],
       'rozveden'  =>[20,'bylo předchozí manželství?',''],
+      'upozorneni'=>[ 0,$akce->upozorneni,'check'],
     ] : []
   );
 end:    
-  $trace.= debugx($akce,'hodnoty web_online');
+//  global $trace;
+//  $trace.= debugx($akce,'hodnoty web_online');
   if ($msg) {
     $TEST= 0;
     page("<b style='color:red'><br>$msg</b>");
     exit;
   }
 }
+function read_form() { // ---------------------------------------------------------------- read form
+  global $AKCE, $r_fld, $vars, $cleni, $post, $msg;
+  global $TEST, $MAIL, $trace;  
+  $cleni= $vars->cleni;
+  foreach ($_POST as $tag=>$val) {
+    $m= null;
+    if (preg_match("/([\-\d]+)_(.*)/",$tag,$m)) { // položka z $cleni
+      $id= $m[1]; $fld= $m[2];
+      if (is_array($cleni[$id]->$fld)) {
+        if ($val!=$cleni[$id]->$fld[0]) {
+          $cleni[$id]->$fld[1]= $val;
+          $vars->kontrola= 0;
+        }
+      }
+      elseif ($cleni[$id]->$fld!=$val) {
+        $cleni[$id]->$fld= [$cleni[$id]->$fld,$val];
+      }
+    }
+    elseif (substr($tag,0,2)=='r_') { // položka z rodina
+      $fld= substr($tag,2);
+      $val= to_sql($r_fld,$fld,$val);
+      $rodina= $vars->rodina[key($vars->rodina)];
+      if ($val!=$rodina->$fld[0]) {
+        $rodina->$fld[1]= $val;
+        $vars->kontrola= 0;
+      }
+    }
+    elseif (substr($tag,0,2)=='p_') { // položka do pobyt
+      $fld= substr($tag,2);
+      $vars->pobyt->$fld= $val;
+    }
+  }
+  // zpracování hodnot
+  $old_post= array_merge([],(array)$vars->post);
+  foreach (array_keys($old_post) as $fld) {
+    if (preg_match("/^cmd_.*$/",$fld)) {
+      unset($old_post[$fld]);
+    }
+  }
+  $post= array_merge([],$_POST);
+  $post= (object)array_replace($old_post,$post);
+  // zpamatování vstupních hodnot typu checkbox
+  $vars->chk_souhlas= isset($_POST['chk_souhlas']) ? 1 : 0;
+  foreach ($cleni as $id=>$clen) {
+    $name= "{$id}_spolu";
+    $clen->spolu= isset($_POST[$name]) ? 1 : 0;    
+    $name= "{$id}_upozorneni";
+    $clen->upozorneni= isset($_POST[$name]) ? 1 : 0;    
+//    $clen[$id]->$name= $val;
+  }
+  $vars->cleni= $cleni;
+  if ($TEST==3 && $vars->faze=='a') {
+    global $testovaci_mail;
+    $trace.= "<br>ladící běh se simulovaným přihlášením na $testovaci_mail";
+    $post= (object)['email'=>$testovaci_mail];
+  }
+//   doplnění $vars - jen poprvé
+//  if (!isset($vars->pro_par)) $vars->pro_par= $akce->p_pro_par;
+  $vars->post= $post;
+  $_SESSION[$AKCE]= $vars;
+  $msg= '';
+  display("TEST=$TEST MAIL=$MAIL");
+}
+# =========================================================================================== PROCES
 # --------------------------------------------------------------------------------- definice procesu
 function todo() {
   global $vars;
@@ -303,14 +336,6 @@ function todo() {
     // vyčisti vše
     unset($vars->post);
     do_session_restart();
-//    if ($TEST) {
-//      unset($_SESSION[$AKCE]);
-//    }
-//    else {
-//      session_unset();
-//      session_destroy();
-//    }
-//    session_write_close();
   }
   // pokud se cyklus vrátil
   if ($vars->faze=='a') { // => a* | b
@@ -463,6 +488,7 @@ function do_kontrola_pinu() { // fáze B
           $flds= implode(',',array_diff(array_keys($r_fld),[]));
           $r= select_object($flds,'rodina',"id_rodina=$idr");
           foreach ($r as $fld=>$val) {
+//            if ($fld=='datsvatba') $val= sql2date($val);
             $vars->rodina[$idr]->$fld= [$val];
           }
         }
@@ -470,6 +496,7 @@ function do_kontrola_pinu() { // fáze B
         db_nacti_cleny_rodiny($idr,$ido);
         $msg= '';
         $vars->faze= 'c';
+        $vars->pobyt->web_changes= 0;
         $vars->pobyt->pracovni= '';
         goto end;
       }
@@ -517,16 +544,22 @@ function do_vyplneni_dat() {
 # CMD odchod bez zápisu
 #   d - end
   global $akce, $msg, $vars, $cleni, $post, $form, $pdf_html;
-  global $errors;
+  global $errors, $TEST;
   do_begin();
   $mis_souhlas= '';
+  $mis_upozorneni= ['a'=>'','b'=>''];
   $pdf_html= '';
   $post->pracovni= $post->pracovni ?? '';
-  // -------------------------------------------- zobraz děti a pečouny
-  if (isset($post->cmd_zobraz_deti)) {
-    $vars->pro_par= 2;
+  // -------------------------------------------- počáteční nastavení formuláře
+  if (!$vars->form) {
+    $vars->form= (object)['par'=>1,'deti'=>2,'pecouni'=>1, // 1=tlačítko, 2=seznam
+        'rodina'=>$akce->p_rod_adresa,'pozn'=>1,'souhlas'=>$akce->p_souhlas];
   }
-  // -------------------------------------------- nové dítě
+  // -------------------------------------------- ! zobraz děti a pečouny
+  if (isset($post->cmd_zobraz_deti)) {
+    $vars->form->deti= 2;
+  }
+  // -------------------------------------------- ! další dítě
   if (isset($post->cmd_dalsi_dite)) {
     clear_post_but("/email|zaslany_pin|pin|pracovni/");
     $id= 0;
@@ -535,11 +568,12 @@ function do_vyplneni_dat() {
     }
     $id--;
     $vars->cleni[$id]= $cleni[$id]= (object)array
-        ('spolu'=>1,'jmeno'=>'','prijmeni'=>'','narozeni'=>'','role'=>'d');
+        ('spolu'=>1,'jmeno'=>'','prijmeni'=>'','narozeni'=>'','role'=>'d','note'=>'');
     $vars->kontrola= 0;
   }
-  // -------------------------------------------- nové pečovatel
+  // -------------------------------------------- ! pečovatel
   if (isset($post->cmd_dalsi_pecoun)) {
+    $vars->form->pecouni= 2;
     clear_post_but("/email|zaslany_pin|pin|pracovni/");
     $id= 0;
     foreach (array_keys($cleni) as $is) {
@@ -550,7 +584,7 @@ function do_vyplneni_dat() {
         ('spolu'=>1,'jmeno'=>'','prijmeni'=>'','narozeni'=>'','role'=>'p', 'obcanka'=>'','telefon'=>'');
     $vars->kontrola= 0;
   }
-  // -------------------------------------------- nepřihlašovat
+  // -------------------------------------------- ! nepřihlašovat
   if (isset($post->cmd_ne)) {
     clear_post_but("/---/");
     $msg= "Vyplňování přihlášky bylo ukončeno bez jejího odeslání. "
@@ -558,7 +592,7 @@ function do_vyplneni_dat() {
     $vars->faze= 'd';
     goto end;
   }
-  // -------------------------------------------- kontrola hodnot
+  // -------------------------------------------- ! kontrola hodnot
   if (isset($post->cmd_ano) || isset($post->cmd_check)) {
     $zapsat= true;
     $neuplne= array();
@@ -572,6 +606,15 @@ function do_vyplneni_dat() {
       $neuplne[]= "Zaškrtněte prosím kdo se akce zúčastní";
       $zapsat= false;
     }      
+    // ------------------------------ mají manželé vyplněné všechny údaje?
+    foreach ($cleni as $i=>$clen) {
+      $role= get('o','role',$i);
+      if ($i<0 || !in_array($role,['a','b'])) continue;
+      if ($clen->spolu && $akce->p_upozorneni && !$clen->upozorneni) {
+        $neuplne[]= "potvrďte prosím váš souhlas s upozorněním - ".($role=='a'?'muž':'žena');
+        $mis_upozorneni[$role]= "class=missing";
+      }
+    }
     // ------------------------------ mají nově vyplnění všechny údaje?
     foreach ($cleni as $i=>$novy) {
       if ($i>0) continue;
@@ -596,7 +639,7 @@ function do_vyplneni_dat() {
       }
     }
     if ($akce->p_souhlas && !$vars->chk_souhlas) {
-      $neuplne[]= "potvrďte prosím svůj souhlas";
+      $neuplne[]= "potvrďte prosím váš souhlas s použitím osobních údajů";
       $mis_souhlas= "class=missing";
     }
     if (count($neuplne)) 
@@ -608,15 +651,14 @@ function do_vyplneni_dat() {
     }
     $vars->kontrola= count($neuplne) ? 0 : 1;
     // vygenerování PDF pro Letní kurz MS
-    if ($akce->p_pro_LK && $vars->kontrola) {
+    if ($akce->p_dokument && $vars->kontrola && $TEST) {
       $pdf_html= '<hr>'.gen_html();
     }
   }
-  // -------------------------------------------- zápis do databáze pokud není $TEST>1
+  // -------------------------------------------- ! zápis do databáze (pokud není $TEST>1)
   $errors= [];
   if (isset($post->cmd_ano) && $zapsat) {
     // vytvoření pobytu
-    // web_changes= 1/2 pro INSERT/UPDATE pobyt a spolu | 4/8 pro INSERT/UPDATE osoba
     // účast jako ¨účastník' pokud není p_obnova => neúčast na LK znamená "náhradník"
     $ucast= 0; // = účastník
     if ($akce->p_obnova) {
@@ -624,7 +666,8 @@ function do_vyplneni_dat() {
       if (!$jako) $ucast= 9; // = náhradník
       elseif ($jako==2 && $akce->p_vps) $ucast= 1; // VPS
     }
-    $idp= db_novy_pobyt($akce->id_akce,key($vars->rodina),$ucast,$vars->pobyt->pracovni);
+    $vars->pobyt->funkce= $ucast;
+    $idp= db_open_pobyt();
     if (count($errors)) goto db_end;
     // ------------------------------ oprav rodinné údaje
     if ($akce->p_rod_adresa) {
@@ -653,76 +696,97 @@ function do_vyplneni_dat() {
     $vars->faze= 'd';
     goto end;
   }
-
-  // zobraz hodnoty z databáze pokud není ani ANO ani NE
-  $par_cleni= ''; 
-  $old_cleni= ''; 
-  $new_cleni= ''; 
-  $pec_cleni= ''; 
-  foreach ($cleni as $id=>$clen) {
-    if ($id<0) {
-      if (isset($clen->obcanka))
-        $pec_cleni.= "<div class='clen'>" 
-          . elem_input('o',$id,['spolu','jmeno','prijmeni','narozeni','role','obcanka','telefon'])
-          . "</div>";
-      else
-        $new_cleni.= "<div class='clen'>" 
-          . elem_input('o',$id,['spolu','jmeno','prijmeni','narozeni','role'])
-          . "</div>";
-    }
-    else {
-      $row= elem_input('o',$id,['spolu'])
-          . elem_text('o',$id,['jmeno','prijmeni',',','narozeni',',','role']);
-      if (in_array($clen->role,['a','b'])) {
-        $par_cleni.= "<div class='clen'>$row" 
-            . elem_input('o',$id,['obcanka','telefon'])
+  // ============================================ poskládej prvky formuláře
+  // -------------------------------------------- členové rodiny
+  $clenove= '';
+  if ($vars->form->par) {
+    foreach ($cleni as $id=>$clen) {
+      $role= get('o','role',$id);
+      if (in_array($role,['a','b'])) {
+        $upozorneni= "<br><input type='checkbox' name='{$id}_upozorneni' value=''  "
+      . (get('o','upozorneni',$id) ? 'checked' : '')
+      . " {$mis_upozorneni[$role]}><label for='{$id}_upozorneni' class='souhlas'>"
+      . str_replace('@',$clen->role=='b'?'a':'',$akce->upozorneni)
+      . "</label><br>";
+        $clenove.= "<div class='clen'>" 
+            . elem_input('o',$id,['spolu'])
+            . elem_text('o',$id,['jmeno','prijmeni',',','narozeni',',','role'])
+            . '<br>'
+            . elem_input('o',$id,['email','obcanka','telefon'])
             . '<br>'
             . elem_input('o',$id,['zamest','vzdelani','zajmy','jazyk',
                 'aktivita','cirkev','povaha','manzelstvi','ocekavani','rozveden']) 
+            . $upozorneni
             . "</div>";
-      }
-      else {
-        $old_cleni.= "<div class='clen'>$row</div>";
       }
     }
   }
-  // -------------------------------------------- pokud je vyžadován souhlas
-  $souhlas= $akce->p_souhlas
-    ? "<br><input type='checkbox' name='chk_souhlas' value=''  "
-      . ($vars->chk_souhlas ? 'checked' : '')
-      . " $mis_souhlas><label for='chk_souhlas' class='souhlas'>$akce->form_souhlas</label>"
-      . "<br>"
-    : '';
-  // -------------------------------------------- pokud je povolena úprava rodinné adresy
+  if ($vars->form->deti) {
+    foreach ($cleni as $id=>$clen) {
+      if ($id<0 || $clen->role!='d') continue;
+      $clenove.= "<div class='clen'>" 
+          . elem_input('o',$id,['spolu'])
+          . elem_text('o',$id,['jmeno','prijmeni',',','narozeni',',','role'])
+          . elem_input('o',$id,['note'])
+          . "</div>";
+    }
+    foreach ($cleni as $id=>$clen) {
+      if ($id>0 || $clen->role!='d') continue;
+      $clenove.= "<div class='clen'>" 
+          . elem_input('o',$id,['spolu','jmeno','prijmeni','narozeni','role','note'])
+          . "</div>";
+    }
+    $clenove.= "<button type='submit' name='cmd_dalsi_dite'><i class='fa fa-green fa-plus'></i>
+      chci přihlásit další dítě</button>";
+  }
+  if ($vars->form->pecouni==1) {
+    $clenove.= "<br><button type='submit' name='cmd_dalsi_pecoun'><i class='fa fa-green fa-plus'></i>
+      chci přihlásit osobního pečovatele</button>";
+  }
+  if ($vars->form->pecouni==2) {
+    $clenove.= '<br>';
+    foreach ($cleni as $id=>$clen) {
+      if ($id<0 || $clen->role!='p') continue;
+      $clenove.= "<div class='clen'>" 
+          . elem_input('o',$id,['spolu'])
+          . elem_text('o',$id,['jmeno','prijmeni',',','narozeni',',','obcanka','telefon'])
+          . "</div>";
+    }
+    foreach ($cleni as $id=>$clen) {
+      if ($id>0 || $clen->role!='p') continue;
+      $clenove.= "<div class='clen'>" 
+          . elem_input('o',$id,['spolu','jmeno','prijmeni','narozeni','obcanka','telefon'])
+          . "</div>";
+    }
+    $clenove.= "<br><button type='submit' name='cmd_dalsi_pecoun'><i class='fa fa-green fa-plus'></i>
+      chci přihlásit dalšího osobního pečovatele</button>";
+  }
+  // -------------------------------------------- úprava rodinné adresy
   $rod_adresa= '';
-  if ($akce->p_rod_adresa) {
+  if ($vars->form->rodina) {
     $rod_adresa= "<p>Zkontrolujte a případně upravte vaši rodinnou adresu a další údaje:</p>";
     $idr= key($vars->rodina);
     $rod_adresa.= elem_input('r',$idr,['ulice','psc','obec','spz','datsvatba']);
   }
-  $pobyt= elem_input('p',0,['pracovni']);
-  $cmd_zobraz_deti= "<button type='submit' name='cmd_zobraz_deti'><i class='fa fa-green fa-plus'></i>
-      po dohodě s organizátory přihlašuji i dítě s pečovatelem</button>";
-  $cmd_dalsi_dite= "<button type='submit' name='cmd_dalsi_dite'><i class='fa fa-green fa-plus'></i>
-      chci přihlásit další dítě</button>";
-  $cmd_dalsi_pecoun= "<button type='submit' name='cmd_dalsi_pecoun'><i class='fa fa-green fa-plus'></i>
-      chci přihlásit osobního pečovatele</button>";
-  
-  // -------------------------------------------- pro pár: volba varianty par1, par2 jinak celá rodina
-  $form_cleni= '';
-  switch ($vars->pro_par) {
-    case 0: 
-    case 2: 
-      $form_cleni= "$par_cleni $old_cleni $new_cleni<br>$cmd_dalsi_dite $pec_cleni<br>$cmd_dalsi_pecoun"; break;
-    case 1: 
-      $form_cleni= "$par_cleni<br>$cmd_zobraz_deti"; break;
+  // -------------------------------------------- poznánka k pobytu
+  $pobyt= '';
+  if ($vars->form->pozn) {
+    $pobyt= elem_input('p',0,['pracovni']);
+  }
+  // -------------------------------------------- souhlas
+  $souhlas= '';
+  if ($vars->form->souhlas) {
+      $souhlas= "<br><input type='checkbox' name='chk_souhlas' value=''  "
+      . ($vars->chk_souhlas ? 'checked' : '')
+      . " $mis_souhlas><label for='chk_souhlas' class='souhlas'>$akce->form_souhlas</label>"
+      . "<br>";
   }
   // -------------------------------------------- redakce formuláře
   $enable_send= $vars->kontrola ? '' : 'disabled';
   $enable_green= $vars->kontrola ? 'fa-green' : '';
   $form= <<<__EOF
     <p>Poznačte, koho na akci přihlašujete. Zkontrolujte a případně upravte zobrazené údaje.</p>
-    $form_cleni
+    $clenove
     <div class='rodina'>
       $rod_adresa
       $pobyt
@@ -746,7 +810,7 @@ function do_rozlouceni() {
 #  IN: email, zaslany_pin, klient, rodina, cleni
 # CMD: konec
 #   a - s vymazanými daty 
-  global $msg, $akce, $vars, $post, $form;
+  global $msg, $akce, $vars, $post, $form, $TEST;
   $ok= $msg;
   do_begin();
   if (substr($vars->history,-2,1)=='d') {
@@ -754,6 +818,10 @@ function do_rozlouceni() {
     $vars->faze= 'a';
   }
   elseif ($ok=='ok') {
+    if ($akce->p_dokument && $vars->kontrola && $TEST<2) {
+      $msg= gen_html(1);
+      if ($TEST) display($msg);
+    }
     $ucastnici= ''; $del= '';
     foreach ($vars->cleni as $clen) {
       if (!$clen->spolu) continue;
@@ -887,110 +955,111 @@ __EOF;
 __EOD;
 }
 # ------------------------------------------------------------------------------- formulářové funkce
-# ------------------------------------------------------------------------------- formulářové funkce
-function get($table,$fld,$id=0) {
-# vrátí hodnotu - pro rodinnou není nutné udávat id
+function sql2date($v,$user2sql=0) { // -------------------------------------------------- sql 2 date
+# transformace pomoci sql_date1 doplněná o možnost uvést jen rok
+  if ($user2sql) { // datum=>sql
+    $v= str_replace(' ','',$v);
+    $v= $v=='' ? '0000-00-00' : (
+        strlen($v)==4 ? "$v-00-00" : sql_date1($v,1)
+    );
+  }
+  else { // sql=>datum (default)
+    $v= substr($v,5,5)=='00-00' ? (substr($v,0,4)=='0000' ? '' : substr($v,0,4)) : sql_date1($v,0);
+  }
+  return $v;
+}
+function get($table,$fld,$id=0) { // ----------------------------------------------------------- get
+# vrátí hodnotu v datovém tvaru - pro rodinnou není nutné udávat id
+//  global $p_fld, $r_fld, $o_fld, $options;
+  global $vars;
+//  $desc= $table=='r' ? $r_fld : ($table=='p' ? $p_fld : $o_fld);
+  if ($table=='r' && !$id) $id= key($vars->rodina);
+  $pair= $table=='r' ? $vars->rodina[$id] : ($table=='p' ? $vars->pobyt : $vars->cleni[$id]);
+  if (isset($pair->$fld)) {
+    $v= is_array($pair->$fld) ? ($pair->$fld[1] ?? $pair->$fld[0]) : $pair->$fld;
+//    if (isset($desc[$fld])) {
+//      list(,,$typ)= $desc[$fld];
+//      switch ($typ) {
+//      case 'date':
+//  //      $v= sql2date($v,0);
+//        break;
+//      case 'select':
+////        $v= $options[$fld][$v] ?? '?';
+//        break;
+//      }
+//    }
+  }
+  else $v= $fld;
+  return $v;
+}
+function get_fmt($table,$fld,$id=0) { // ----------------------------------------------------------- get
+# vrátí hodnotu v uživatelském tvaru - pro rodinnou není nutné udávat id
+  global $p_fld, $r_fld, $o_fld, $options;
+  global $vars;
+  $desc= $table=='r' ? $r_fld : ($table=='p' ? $p_fld : $o_fld);
+  if ($table=='r' && !$id) $id= key($vars->rodina);
+  $pair= $table=='r' ? $vars->rodina[$id] : ($table=='p' ? $vars->pobyt : $vars->cleni[$id]);
+  if (isset($pair->$fld)) {
+    $v= is_array($pair->$fld) ? ($pair->$fld[1] ?? $pair->$fld[0]) : $pair->$fld;
+    if (isset($desc[$fld])) {
+      list(,,$typ)= $desc[$fld];
+      switch ($typ) {
+      case 'date':
+        $v= sql2date($v,0);
+        break;
+      case 'select':
+        $v= $options[$fld][$v] ?? '?';
+        break;
+      }
+    }
+  }
+  else $v= $fld;
+  return $v;
+}
+function to_sql($desc,$fld,$val) { // ------------------------------------------------------- to_sql
+# transformuje hodnotu do databázového tvaru podle údajů v popisu
+  if (isset($desc[$fld])) {
+    list(,,$typ)= $desc[$fld];
+    switch ($typ) {
+    case 'date':
+      $val= sql2date($val,1);
+      break;
+    }
+  }
+  return $val;
+}
+function set($table,$fld,$val,$id=0) { // ------------------------------------------------------ set
   global $p_fld, $r_fld, $o_fld, $options, $vars;
   $desc= $table=='r' ? $r_fld : ($table=='p' ? $p_fld : $o_fld);
+  if ($table=='r' && !$id) $id= key($vars->rodina);
+  $pair= $table=='r' ? $vars->rodina[$id] : ($table=='p' ? $vars->pobyt : $vars->cleni[$id]);
   if (!isset($desc[$fld])) {
-    $v= $fld;
+    $v= $val;
   }
   else {
-    if ($table=='r' && !$id) $id= key($vars->rodina);
-    $pair= $table=='r' ? $vars->rodina[$id] : ($table=='p' ? $vars->pobyt : $vars->cleni[$id]);
     list(,,$typ)= $desc[$fld];
-    $v= is_array($pair->$fld) ? ($pair->$fld[1] ?? $pair->$fld[0]) : $pair->$fld;
     switch ($typ) {
     case 'date':
-      $v= substr($v,5,5)=='00-00' ? substr($v,0,4) : sql_date1($v,0);
+      $v= sql2date($v,1);
       break;
     case 'select':
-      $v= $options[$fld][$v] ?? '?';
+      $v= array_search($val,$options[$fld]);
       break;
     }
   }
-  return $v;
-}
-function get_o($fld,$id) { // ---------------------------------------------------------------- get o
-# vrátí hodnotu - pro rodinnou není nutné udávat id
-  global $o_fld, $options, $vars;
-  if (!isset($o_fld[$fld])) {
-    $v= $fld;
-  }
-  else {
-    $pair= $vars->cleni[$id];
-    list(,,$typ)= $o_fld[$fld];
-    $v= is_array($pair->$fld) ? ($pair->$fld[1] ?? $pair->$fld[0]) : $pair->$fld;
-    switch ($typ) {
-    case 'date':
-      $v= substr($v,5,5)=='00-00' ? substr($v,0,4) : sql_date1($v,0);
-      break;
-    case 'select':
-      $v= $options[$fld][$v] ?? '?';
-      break;
-    }
-  }
-  return $v;
-}
-function get_r($fld) { // -------------------------------------------------------------------- get r
-# vrátí hodnotu - pro rodinnou není nutné udávat id
-  global $r_fld, $options, $vars;
-  if (!isset($r_fld[$fld])) {
-    $v= $fld;
-  }
-  else {
-    $id= key($vars->rodina);
-    $pair= $vars->rodina[$id];
-    list(,,$typ)= $r_fld[$fld];
-    $v= is_array($pair->$fld) ? ($pair->$fld[1] ?? $pair->$fld[0]) : $pair->$fld;
-    switch ($typ) {
-    case 'date':
-      $v= substr($v,5,5)=='00-00' ? substr($v,0,4) : sql_date1($v,0);
-      break;
-    case 'select':
-      $v= $options[$fld][$v] ?? '?';
-      break;
-    }
-  }
-  return $v;
-}
-function get_p($fld) { // -------------------------------------------------------------------- get p
-# vrátí hodnotu - pro rodinnou není nutné udávat id
-  global $p_fld, $options, $vars;
-  if (!isset($p_fld[$fld])) {
-    $v= $fld;
-  }
-  else {
-    $id= key($vars->rodina);
-    $pair= $vars->rodina[$id];
-    list(,,$typ)= $p_fld[$fld];
-    $v= is_array($pair->$fld) ? ($pair->$fld[1] ?? $pair->$fld[0]) : $pair->$fld;
-    switch ($typ) {
-    case 'date':
-      $v= substr($v,5,5)=='00-00' ? substr($v,0,4) : sql_date1($v,0);
-      break;
-    case 'select':
-      $v= $options[$fld][$v] ?? '?';
-      break;
-    }
-  }
-  return $v;
-}
-function set_p($fld,$val) { // --------------------------------------------------------------- set p
-  global $akce;
-  if (is_array($akce->$fld)) 
-    $akce->$fld[1]= $val;
+  if (is_array($pair->$fld)) 
+    $pair->$fld[1]= $v;
   else
-    $akce->$fld= $val;
+    $pair->$fld= $v;
 }
 function elem_text($table,$id,$flds) {
   $html= '';
   foreach ($flds as $fld) {
-    $html.= ' '.get($table,$fld,$id);
+    $html.= ' '.get_fmt($table,$fld,$id);
   }
   return "<span>$html</span>";
 }
-function elem_input($table,$id,$flds) { //trace();
+function elem_input($table,$id,$flds) { // ---------------------------------------------- elem input
 # vytvoř část formuláře - pro vstup
   global $p_fld, $r_fld, $o_fld, $vars, $options;
   $html= '';
@@ -1015,7 +1084,7 @@ function elem_input($table,$id,$flds) { //trace();
       $html.= "<label class='$typ'>$title<input type='checkbox' name='$name' value='x' $x></label>";
       break;
     case 'date':
-      $x= substr($v,5,5)=='00-00' ? substr($v,0,4) : sql_date1($v,0);
+      $x= sql2date($v,0);
       $html.= "<label class='upper'>$title<input type='text' name='$name' size='$len' value='$x'></label>";
       break;
     case 'select':
@@ -1042,21 +1111,32 @@ function elem_input($table,$id,$flds) { //trace();
   }
   return $html;
 }
-# -------------------------------------------------------------------------------- databázové funkce
+# --------------------------------------------------------------------------------- čtení z databáze
+function byli_na_aktualnim_LK($rodina) {
+# pro pobyt na obnově zjistí, zda rodina byla na jejím LK 
+# ... 0 nebyla vůbec | 1 jako účastníci | 2 jako sloužící VPS
+  global $akce;
+  $obnova_mesic= select('MONTH(datum_od)','akce',"id_duakce=$akce->id_akce");
+  $rok_LK= $obnova_mesic>7 ? date('Y') : date('Y')-1;
+  $byli= select1('IFNULL(IF(funkce=1,2,1),0)','pobyt JOIN akce ON id_akce=id_duakce',
+      "akce.druh=1 AND YEAR(akce.datum_od)=$rok_LK AND pobyt.i0_rodina='$rodina'");
+  return $byli;
+}
 function db_nacti_cleny_rodiny($idr,$prvni_ido) {
   global $akce, $cleni,$o_fld;
-  $nodb= ['povaha','manzelstvi','ocekavani','rozveden'];
+  $nodb= ['povaha','manzelstvi','ocekavani','rozveden','upozorneni'];
   $flds= implode(',',array_diff(array_keys($o_fld),$nodb,['spolu','telefon']));
   $ro= pdo_query(
     "SELECT id_osoba,$flds,IF(kontakt=1,telefon,'') AS telefon
     FROM osoba AS o JOIN tvori USING (id_osoba)
-    WHERE id_rodina=$idr AND o.deleted='' AND role IN ('a','b','d') 
+    WHERE id_rodina=$idr AND o.deleted='' AND role IN ('a','b','d','p') 
     ORDER BY IF(id_osoba=$prvni_ido,'0',narozeni)  ");
   while ($ro && ($c= pdo_fetch_object($ro))) {
     $c->spolu= $prvni_ido==$c->id_osoba ? 1 : 0;
   if (($akce->p_pro_par || $akce->p_pro_LK) && in_array($c->role,['a','b'])) {
       $c->spolu= 1;
     }
+//    if (isset($c->narozeni)) $c->narozeni= sql2date($c->narozeni);
     $cleni[$c->id_osoba]= $c;
     // doplň prázdné hodnoty 
     foreach ($nodb as $f) {
@@ -1064,9 +1144,34 @@ function db_nacti_cleny_rodiny($idr,$prvni_ido) {
     }
   }
 }
+# -------------------------------------------------------------------------------- zápis do databáze
+function db_open_pobyt() { // -------------------------------------------------------- db open_pobyt
+# vytvoř pobyt - potřebujeme dále jeho ID 
+  global $errors, $akce, $vars, $web_changes;
+  // web_changes= 1/2 pro INSERT/UPDATE pobyt+spolu | 4/8 pro INSERT/UPDATE osoba | 16/32 pro INSERT/UPDATE rodina
+  $web_changes= 1; 
+  $ida= $akce->id_akce;
+  $idr= key($vars->rodina);
+  $chng= array(
+    (object)array('fld'=>'id_akce',    'op'=>'i','val'=>$ida),
+    (object)array('fld'=>'i0_rodina',  'op'=>'i','val'=>$idr),
+    (object)array('fld'=>'web_changes','op'=>'i','val'=>1),
+    (object)array('fld'=>'web_zmena',  'op'=>'i','val'=>date('Y-m-d'))
+  );
+  foreach ($vars->pobyt as $f=>$vals) {
+    if (is_array($vals) && isset($vals[1]) && $vals[1]!=$vals[0]) {
+      $chng[]= (object)['fld'=>$f, 'op'=>'i','val'=>$vals[1]];
+    }
+  }
+  $idp= _ezer_qry("INSERT",'pobyt',0,$chng);
+  if (!$idp) $errors[]= "Nastala chyba při zápisu do databáze (p)"; 
+  $vars->pobyt->id_pobyt= $idp;
+  return $idp;
+}
 function db_novy_clen_na_akci($pobyt,$rodina,$novy) { // ---------------------- db novy_clen_na_akci
 # přidání dítěte do rodiny a na akci
-  global $akce, $errors;
+  global $akce, $errors, $web_changes;
+  // web_changes= 1/2 pro INSERT/UPDATE pobyt+spolu | 4/8 pro INSERT/UPDATE osoba | 16/32 pro INSERT/UPDATE rodina
   $chng= [];
   $ido= 0;
   $narozeni= sql_date($novy->narozeni,1);
@@ -1088,17 +1193,20 @@ function db_novy_clen_na_akci($pobyt,$rodina,$novy) { // ---------------------- 
         [(object)['fld'=>'pracovni', 'op'=>'u','old'=>$p_old,'val'=>$p_new]]);
   }
   if (!$ido) {
+    set('p','web_changes',get('p','web_changes')|4);
     $sex= select('sex','_jmena',"jmeno='$novy->jmeno' LIMIT 1");
     $sex= $sex==1 || $sex==2 ? $sex : 0;
     $chng= array(
-      (object)array('fld'=>'jmeno',    'op'=>'i','val'=>$novy->jmeno),
-      (object)array('fld'=>'prijmeni', 'op'=>'i','val'=>$novy->prijmeni),
-      (object)array('fld'=>'sex',      'op'=>'i','val'=>$sex),
-      (object)array('fld'=>'narozeni', 'op'=>'i','val'=>$narozeni),
-      (object)array('fld'=>'access',   'op'=>'i','val'=>$akce->org)
+      (object)['fld'=>'jmeno',    'op'=>'i','val'=>$novy->jmeno],
+      (object)['fld'=>'prijmeni', 'op'=>'i','val'=>$novy->prijmeni],
+      (object)['fld'=>'sex',      'op'=>'i','val'=>$sex],
+      (object)['fld'=>'narozeni', 'op'=>'i','val'=>$narozeni],
+      (object)['fld'=>'access',   'op'=>'i','val'=>$akce->org],
+      (object)['fld'=>'web_zmena',  'op'=>'i','val'=>date('Y-m-d')]
     );
     $ido= _ezer_qry("INSERT",'osoba',0,$chng);
     if (!$ido) $errors[]= "Nastala chyba při zápisu do databáze (o)"; 
+    $web_changes|= 4; 
     $chng= []; // další položky přidáme přes UPDATE
   }
   if ($novy->telefon??0) {
@@ -1111,6 +1219,7 @@ function db_novy_clen_na_akci($pobyt,$rodina,$novy) { // ---------------------- 
   if (count($chng) && !count($errors)) {
     if (!_ezer_qry("UPDATE",'osoba',$ido,$chng)) 
       $errors[]= "Nastala chyba při zápisu do databáze (o)"; 
+    if ($pocet==1) $web_changes|= 8; 
   }
   // patří do rodiny
   if (!count($errors)) {
@@ -1124,18 +1233,23 @@ function db_novy_clen_na_akci($pobyt,$rodina,$novy) { // ---------------------- 
   }
   // je na akci
   if (!count($errors)) {
+    set('p','web_changes',get('p','web_changes')|2);
     $chng= array(
-      (object)array('fld'=>'id_pobyt',  'op'=>'i','val'=>$pobyt),
-      (object)array('fld'=>'id_osoba',  'op'=>'i','val'=>$ido),
-      (object)array('fld'=>'s_role',    'op'=>'i','val'=>2) // dítě
+      (object)['fld'=>'id_pobyt',  'op'=>'i','val'=>$pobyt],
+      (object)['fld'=>'id_osoba',  'op'=>'i','val'=>$ido],
+      (object)['fld'=>'s_role',    'op'=>'i','val'=>2], // dítě
+      (object)['fld'=>'web_zmena', 'op'=>'i','val'=>date('Y-m-d')]
     );
     $ids= _ezer_qry("INSERT",'spolu',0,$chng);
     if (!$ids) $errors[]= "Nastala chyba při zápisu do databáze (s)"; 
   }
   return count($errors);
 }
-function db_clen_na_akci($idp,$ido,$s_role) {
-  global $errors, $cleni;
+function db_clen_na_akci($idp,$ido,$s_role) { // ----------------------------------- db clen_na_akci
+  global $errors, $cleni, $web_changes;
+  // web_changes= 1/2 pro INSERT/UPDATE pobyt+spolu | 4/8 pro INSERT/UPDATE osoba | 16/32 pro INSERT/UPDATE rodina
+  $web_changes= 1; 
+  set('p','web_changes',get('p','web_changes')|2);
   $chng= array(
     (object)['fld'=>'id_pobyt',  'op'=>'i','val'=>$idp],
     (object)['fld'=>'id_osoba',  'op'=>'i','val'=>$ido],
@@ -1160,26 +1274,13 @@ function db_clen_na_akci($idp,$ido,$s_role) {
   if (count($chng)) {
     if (!_ezer_qry("UPDATE",'osoba',$ido,$chng)) 
       $errors[]= "Nastala chyba při zápisu do databáze (o)"; 
+    $web_changes|= 8; 
   }
 }
-function db_novy_pobyt($ida,$idr,$ucast,$pracovni) {
-  global $errors;
-  $chng= array(
-    (object)array('fld'=>'id_akce',    'op'=>'i','val'=>$ida),
-    (object)array('fld'=>'i0_rodina',  'op'=>'i','val'=>$idr),
-    (object)array('fld'=>'funkce',     'op'=>'i','val'=>$ucast),
-    (object)array('fld'=>'web_changes','op'=>'i','val'=>1),
-    (object)array('fld'=>'web_zmena',  'op'=>'i','val'=>date('Y-m-d'))
-  );
-  if ($pracovni)
-    $chng[]= (object)array('fld'=>'pracovni', 'op'=>'i','val'=>$pracovni);
-  $idp= _ezer_qry("INSERT",'pobyt',0,$chng);
-  if (!$idp) $errors[]= "Nastala chyba při zápisu do databáze (p)"; 
-  return $idp;
-}
-function do_oprav_rodinu($idr) {
+function do_oprav_rodinu($idr) { // ------------------------------------------------ do oprav_rodinu
 # oprav rodinné údaje 
-  global $vars, $errors;
+  global $vars, $errors, $web_changes;
+  // web_changes= 1/2 pro INSERT/UPDATE pobyt+spolu | 4/8 pro INSERT/UPDATE osoba | 16/32 pro INSERT/UPDATE rodina
   $chng= [];
   $idr= key($vars->rodina);
   $rodina= $vars->rodina[$idr];
@@ -1191,47 +1292,52 @@ function do_oprav_rodinu($idr) {
   if (count($chng)) {
     if (!_ezer_qry("UPDATE",'rodina',$idr,$chng)) 
       $errors[]= "Nastala chyba při zápisu do databáze (r)"; 
+    $web_changes|= 32; 
   }
 }
-function byli_na_aktualnim_LK($rodina) {
-# pro pobyt na obnově zjistí, zda rodina byla na jejím LK 
-# ... 0 nebyla vůbec | 1 jako účastníci | 2 jako sloužící VPS
-  global $akce;
-  $obnova_mesic= select('MONTH(datum_od)','akce',"id_duakce=$akce->id_akce");
-  $rok_LK= $obnova_mesic>7 ? date('Y') : date('Y')-1;
-  $byli= select1('IFNULL(IF(funkce=1,2,1),0)','pobyt JOIN akce ON id_akce=id_duakce',
-      "akce.druh=1 AND YEAR(akce.datum_od)=$rok_LK AND pobyt.i0_rodina='$rodina'");
-  return $byli;
+function db_close_pobyt() { // ------------------------------------------------------ db close_pobyt
+  global $errors, $vars, $web_changes;
+  $chng= array(
+    (object)array('fld'=>'web_changes','op'=>'i','val'=>$web_changes),
+    (object)array('fld'=>'web_zmena',  'op'=>'i','val'=>date('Y-m-d'))
+  );
+  foreach ($vars->pobyt as $f=>$vals) {
+    if (is_array($vals) && isset($vals[1]) && $vals[1]!=$vals[0]) {
+      $chng[]= (object)['fld'=>$f, 'op'=>'u','old'=>$vals[0],'val'=>$vals[1]];
+    }
+  }
+  if (!_ezer_qry("UPDATE",'pobyt',$vars->pobyt->id_pobyt,$chng)) 
+    $errors[]= "Nastala chyba při zápisu do databáze (p)"; 
 }
 # --------------------------------------------------------------------------------- správa proměných
 function do_begin() {
-  global $AKCE, $TEST, $vars, $cleni, $post;
+  global $AKCE, $vars, $cleni, $post;
   $_SESSION[$AKCE]->history.= $_SESSION[$AKCE]->faze;
   $vars= $_SESSION[$AKCE];
   $cleni= $vars->cleni;
   $post= $vars->post;
   // trace
-  if ($TEST) {
-    $bt= debug_backtrace();
-    trace_vars("beg >>> {$bt[1]['function']}");
-  }
+//  global $TEST;
+//  if ($TEST) {
+//    $bt= debug_backtrace();
+//    trace_vars("beg >>> {$bt[1]['function']}");
+//  }
 }
 function do_end() {
-  global $AKCE, $TEST, $vars, $cleni, $post;
+  global $AKCE, $vars, $cleni, $post;
   // uloží vars 
   $vars->cleni= $cleni;
   $vars->post= $post;
   $_SESSION[$AKCE]= $vars;
   // trace
-  if ($TEST) {
-    $bt= debug_backtrace();
-    trace_vars("end <<< {$bt[1]['function']}");
-  }
+//  global $TEST;
+//  if ($TEST) {
+//    $bt= debug_backtrace();
+//    trace_vars("end <<< {$bt[1]['function']}");
+//  }
 }
 function do_session_restart() {
   global $AKCE;
-//  session_unset();
-//  session_destroy();
   unset($_SESSION[$AKCE]);
   session_write_close();
   session_start();
@@ -1241,7 +1347,7 @@ function trace_vars($title) {
   global $TEST, $trace, $vars;
   if ($TEST) {
     $vars_dump= [];
-    foreach (explode(',',"stamp,faze,history,kontrola,klient,user,chk_souhlas,pro_par,pobyt,rodina,cleni,post") as $v) {
+    foreach (explode(',',"stamp,faze,history,kontrola,klient,user,chk_souhlas,form,pobyt,rodina,cleni,post") as $v) {
       $vars_dump[$v]= $vars->$v ?? '?';
     }
     $trace.= '<hr>'.debugx($vars_dump,$title,0,4);
@@ -1257,171 +1363,108 @@ function clear_post_but($flds_match) {
   $vars->post= $post;
 }
 # ----------------------------------------------------------------------------------- pomocné funkce
-function gen_html() {
+function gen_html($to_save=0) {
 # vygeneruje textový tvar přihlášky
-  global $akce, $cleni;
+  global $akce, $vars, $cleni;
+  $ted= date("j.n.Y h:i:s");
   $html= '';
-//    $x= $dn= $pn= array();
-//    $m= $z= (object)array();
-    $html.= "<h3 style=\"text-align:center;\">Údaje z online přihlášky na akci \"$akce->nazev\"</h3>";
-    $html.= "<p style=\"text-align:center;\"><i>doplněné dříve svěřenými osobními údaji</i></p>";
-//    $qf= pdo_qry("SELECT field_id,value 
-//      FROM wordpress.wp_3_wpforms_entry_fields
-//      WHERE entry_id=$eid AND form_id IN ($idfs)
-//        AND field_id>73 /* předchozí záznamy byly testovací při vývoji formuláře */
-//    ");
-//    while ($qf && ($f= pdo_fetch_object($qf))) {
-//      $x[$f->field_id]= $f->value;
-//    }
-////    debug($x,'X');
-//    // zjištění rodinných údajů
-//    list($r_adresa,$r_spz,$r_datsvatba)= select("CONCAT(ulice,', ',psc,' ',obec),spz,datsvatba",
-//        'rodina',"id_rodina=$idr"); 
-//    $r_datsvatba= sql_date1($r_datsvatba);
-//    // zjištění osobních údajů
-//    $cirkev=  map_cis('ms_akce_cirkev','zkratka');  
-//    $vzdelani=  map_cis('ms_akce_vzdelani','zkratka');  
-//    $qo= pdo_qry("SELECT role,kontakt,adresa,IF(ISNULL(id_spolu),0,1) AS nakurzu,
-//          CONCAT(jmeno,' ',prijmeni,IF(rodne!='',CONCAT(' roz. ',rodne),'')) AS jmeno,
-//          narozeni,telefon,email,obcanka,zajmy,jazyk,
-//          zamest,cirkev,aktivita,vzdelani,osoba.note
-//        FROM rodina
-//        JOIN tvori USING (id_rodina) JOIN osoba USING (id_osoba)
-//        LEFT JOIN spolu ON spolu.id_osoba=tvori.id_osoba AND id_pobyt=$idp 
-//        WHERE id_rodina=$idr
-//        ORDER BY narozeni
-//      ");
-//    while ($qo && ($o= pdo_fetch_object($qo))) {
-//      $o->narozeni= sql_date1($o->narozeni);
-//      if ($o->cirkev) $o->cirkev= $cirkev[$o->cirkev];
-//      if ($o->vzdelani) $o->vzdelani= $vzdelani[$o->vzdelani];
-//      $o->zajmy_jazyk= $o->zajmy . ($o->jazyk ? ', ' : '') . $o->jazyk;
-//      switch ($o->role) {
-//        case 'a': $m= $o; break;
-//        case 'b': $z= $o; break;
-//        case 'd': $dn[]= $o; break;
-//        case 'p': $pn[]= $o; break;
-//      }
-//    }
-//    if (!$m->role || !$z->role) fce_error("neúplný pár");
-//    // doplnění db údajů
-//    $x_udaje= array(
-//      'x_povaha'      => array(84,97),  
-//      'x_manzelstvi'  => array(89,101),
-//      'x_ocekavam'    => array(88,102),
-//      'x_rozvody'     => array(110,112), // nepředává se do možnosti úprav
-//    );
-//    $flds= json_decode($zmeny, true);
-//    $flds['id_pobyt_wp']= $id_pobyt_wp;
-//    if ($zmeny!='{}') {
-//      foreach ($flds as $fld=>$value) {
-//        $mz= substr($fld,0,1);
-//        $xfld= 'x'.substr($fld,1);
-//        if ($xfld=='x_rozvody') continue; // nebudeme opravovat - 
-//        if ($mz=='m') $m->$xfld= $value;
-//        if ($mz=='z') $z->$xfld= $value;
-//      }
-//    }
-//    else {
-//      foreach ($x_udaje as $fld=>list($im,$iz)) {
-//        display("$fld");
-//        if (isset($x[$im])) $m->$fld= $x[$im];
-//        if (isset($x[$iz])) $z->$fld= $x[$iz];
-//        if ($cmd=='fld') {
-//          $flds['m'.substr($fld,1)]= isset($x[$im]) ? $x[$im] : '';
-//          $flds['z'.substr($fld,1)]= isset($x[$iz]) ? $x[$iz] : '';
-//        }
-//      }
-//    }
-////    debug($m,'M'); debug($z,'Z'); debug($dn,'D'); debug($pn,'P'); 
-    // redakce osobních údajů
-    $idm= 5877;
-    $idz= 5879;
-    $m= $cleni[$idm];
-    $z= $cleni[$idz];
-    $udaje= [
-      ['Jméno a příjmení',$m->jmeno.' '.$m->prijmeni,$z->jmeno.' '.$z->prijmeni], 
-      ['Datum narozeni',  get('o','narozeni',$idm), get('o','narozeni',$idz) ],
-      ['Telefon',         get('o','telefon',$idm), get('o','telefon',$idz) ],
-//      'E-mail'=>'email',
-      ['Č. OP nebo cest. dokladu', get('o','obcanka',$idm), get('o','obcanka',$idz) ],
-    ];
-    $html.= "
-      <style>
-        table.prihlaska { width:100%; border-collapse: collapse; }
-        table.prihlaska td { border: 1px solid grey; }
-        table.prihlaska th { text-align:center; }
-      </style>
-      ";
-    $table_attr= "class=\"prihlaska\" cellpadding=\"7\"";
-    $th= "th colspan=\"2\"";
-    $td= "td colspan=\"2\"";
-    $html.= "<table $table_attr><tr><th></th><$th>Muž</th><$th>Žena</th></tr>";
-    foreach ($udaje as $u) {
-      $html.= "<tr><th>$u[0]</th><$td>$u[1]</td><$td>$u[2]</td></tr>";
+  $html.= "<h3 style=\"text-align:center;\">Údaje z online přihlášky na akci \"$akce->nazev\"</h3>";
+  $html.= "<p style=\"text-align:center;\"><i>vyplněné $ted a doplněné dříve svěřenými osobními údaji</i></p>";
+  // odlišení muže, ženy a dětí
+  $sebou= []; $deti= ''; $del= '';
+  foreach (array_keys($cleni) as $id) {
+    switch (get('o','role',$id)) {
+      case 'a': $idm= $id; break;
+      case 'b': $idz= $id; break;
+      case 'd': 
+        $jmeno= get('o','jmeno',$id).' '.get('o','prijmeni',$id);
+        $narozeni= get_fmt('o','narozeni',$id);
+        $deti.= "$del$jmeno, $narozeni";
+        $del= ', ';
+        if (get('o','spolu',$id))
+          $sebou[]= (object)['jmeno' => $jmeno, 'narozeni' => $narozeni, 'note' => get('o','note',$id)]; 
+        break;
     }
-    $adresa= get('r','ulice').', '.get('r','psc').' '.get('r','obec');
-    $html.= "<tr><th>Adresa, PSČ</th><td colspan=\"4\">$adresa</td></tr>";
+  }
+  $m= $cleni[$idm];
+  $z= $cleni[$idz];
+  // redakce osobních údajů
+  $udaje= [
+    ['Jméno a příjmení',$m->jmeno.' '.$m->prijmeni,$z->jmeno.' '.$z->prijmeni], 
+    ['Datum narozeni',  get('o','narozeni',$idm), get('o','narozeni',$idz) ],
+    ['Telefon',         get('o','telefon',$idm), get('o','telefon',$idz) ],
+    ['E-mail',          get('o','email',$idm), get('o','email',$idz)], 
+    ['Č. OP nebo cest. dokladu', get('o','obcanka',$idm), get('o','obcanka',$idz) ],
+  ];
+  $html.= "
+    <style>
+      table.prihlaska { width:100%; border-collapse: collapse; }
+      table.prihlaska td { border: 1px solid grey; }
+      table.prihlaska th { text-align:center; }
+    </style>
+    ";
+  $table_attr= "class=\"prihlaska\" cellpadding=\"7\"";
+  $th= "th colspan=\"2\"";
+  $td= "td colspan=\"2\"";
+  $html.= "<table $table_attr><tr><th></th><$th>Muž</th><$th>Žena</th></tr>";
+  foreach ($udaje as $u) {
+    $html.= "<tr><th>$u[0]</th><$td>$u[1]</td><$td>$u[2]</td></tr>";
+  }
+  $adresa= get('r','ulice').', '.get('r','psc').' '.get('r','obec');
+  $html.= "<tr><th>Adresa, PSČ</th><td colspan=\"4\">$adresa</td></tr>";
+  $html.= "</table>";
+  // děti
+  if (count($sebou)) {
+    $html.= "<p><i>Na Manželská setkání přihlašujeme i tyto děti:</i></p>";
+    $html.= "<table $table_attr><tr><th>Jméno a příjmení</th><th>Datum narození</th><th>Poznámky (nemoci, alergie apod.)</th></tr>";
+    foreach ($sebou as $d) {
+      $html.= "<tr><td>$d->jmeno</td><td>$d->narozeni</td><td>$d->note</td></tr>";
+    }
     $html.= "</table>";
-//    // děti
-//    $deti= ''; $nakurzu= 0;
-//    if (count($dn)) {
-//      $del= '';
-//      foreach ($dn as $d) {
-//        $deti.= "$del$d->jmeno, $d->narozeni"; $del= '; ';
-//        $nakurzu+= $d->nakurzu ? 1 : 0;
-//      }
-//      if ($nakurzu) {
-//        $html.= "<p><i>Na Manželská setkání přihlašujeme i tyto děti:</i></p>";
-//        $html.= "<table $table_attr><tr><th>Jméno a příjmení</th><th>Datum narození</th><th>Poznámky (nemoci, alergie apod.)</th></tr>";
-//        foreach ($dn as $d) {
-//          if (!$d->nakurzu) continue;
-//          $html.= "<tr><td>$d->jmeno</td><td>$d->narozeni</td><td>$d->note</td></tr>";
-//        }
-//        $html.= "</table>";
-//      }
-//    }
-//    $html.= "<p></p>";
-//    // redakce citlivých údajů
-//    $udaje= array(
-//      'Vzdělání'=>'vzdelani', 
-//      'Povolání, zaměstnání'=>'zamest',
-//      'Zájmy, znalost jazyků'=>'zajmy_jazyk',
-//      'Popiš svoji povahu'=>'x_povaha',
-//      'Vyjádři se o vašem manželství'=>'x_manzelstvi',
-//      'Co od účasti očekávám'=>'x_ocekavam',
-//      'Příslušnost k církvi'=>'cirkev',
-//      'Aktivita v církvi'=>'aktivita',
-//    );
-//    $th= "th colspan=\"2\"";
-//    $html.= "<table $table_attr><tr><th></th><$th>Muž</th><$th>Žena</th></tr>";
-//    $td= "td colspan=\"2\"";
-//    foreach ($udaje as $popis=>$fld) {
-//      $html.= "<tr><th>$popis</th><$td>{$m->$fld}</td><$td>{$z->$fld}</td></tr>";
-//      if ($fld=='aktivita')
-//        $html.= "<tr><th>Děti (jméno + datum narození)</th><td colspan=\"4\">$deti</td></tr>";
-//    }
-//    $html.= "<tr><th>SPZ auta na kurzu</th><td>$r_spz</td><td>Datum svatby: $r_datsvatba</td>
-//      <td colspan=\"2\">Předchozí manželství? muž:$m->x_rozvody žena:$z->x_rozvody</td></tr>";
-//    $html.= "</table>";
-//    $html.= "<p><i>Souhlas obou manželů s přihlášením na kurz byl potvrzen.</i></p>";
-//    // přehled o počtu účastí
-//    // generování PDF
-//    if ($cmd=='pdf') {
-//      global $ezer_root;
-//      $path_files= trim($_SESSION[$ezer_root]['path_files_h']," '");
-//      $path_files= rtrim($path_files,"/");
-//      $fname= "online-prihlaska.pdf";
-//      $foot= '';
-//      $f_abs= "$path_files/pobyt/{$fname}_$idp";
-//      tc_html($f_abs,$html,$foot);
-//      $html= "Přihláška byla vložena do záložky Dokumenty jako soubor $fname ";
-//    }
+  }
+  $html.= "<p></p>";
+  // redakce citlivých údajů
+  $jm= get('o','jazyk',$idm); $jm= $jm ? ", $jm" : '';
+  $jz= get('o','jazyk',$idz); $jz= $jz ? ", $jz" : '';
+  $udaje= [
+    ['Vzdělání',              get_fmt('o','vzdelani',$idm), get_fmt('o','vzdelani',$idz)],
+    ['Povolání, zaměstnání',  get('o','zamest',$idm), get('o','zamest',$idz)],
+    ['Zájmy, znalost jazyků', get('o','zajmy',$idm).$jm, get('o','zajmy',$idz).$jz],
+    ['Popiš svoji povahu',    get('o','povaha',$idm), get('o','povaha',$idz)],
+    ['Vyjádři se o vašem manželství',  get('o','manzelstvi',$idm), get('o','manzelstvi',$idz)],
+    ['Co od účasti očekávám', get('o','ocekavani',$idm), get('o','ocekavani',$idz)],
+    ['Příslušnost k církvi',  get_fmt('o','cirkev',$idm), get_fmt('o','cirkev',$idz)],
+    ['Aktivita v církvi',     get('o','aktivita',$idm), get('o','aktivita',$idz)],
+  ];
+  $th= "th colspan=\"2\"";
+  $html.= "<table $table_attr><tr><th></th><$th>Muž</th><$th>Žena</th></tr>";
+  $td= "td colspan=\"2\"";
+  foreach ($udaje as $u) {
+    $html.= "<tr><th>$u[0]</th><$td>$u[1]</td><$td>$u[2]</td></tr>";
+  }
+  $html.= "<tr><th>Děti (jméno + datum narození)</th><td colspan=\"4\">$deti</td></tr>";
+  $html.= "<tr><th>SPZ auta na kurzu</th><td>"
+      . get('r','spz')
+      . "</td><td>Datum svatby: "
+      . get_fmt('r','datsvatba')
+      . "</td><td colspan=\"2\">Předchozí manželství? muž: "
+      . (get('o','rozveden',$idm)?:'-')
+      ." žena: "
+      . (get('o','rozveden',$idz)?:'-')
+      . "</td></tr>";
+  $html.= "</table>";
+  $html.= "<p><i>Souhlas obou manželů s podmínkami účasti na kurzu byl potvrzen $ted.</i></p>";
+  // vložit přihlášku jako PDF do záložky Dokumenty daného pobytu
+  if ($to_save) {
+    global $path_files_h;
+    $fname= "online-prihlaska.pdf";
+    $foot= '';
+    $idp= $vars->pobyt->id_pobyt;
+    $f_abs= "$path_files_h/pobyt/{$fname}_$idp";
+    tc_html($f_abs,$html,$foot);
+    $html= "Přihláška byla vložena do záložky Dokumenty jako soubor $fname ";
+  }
   return $html;
-}
-function insert_pdf() {
-# vloží přihlášku jako PDF do záložky Dokumenty daného pobytu
-  
 }
 function ip_ok() {
 # pozná localhost, IP Talichova, IP chata, LAN Noe
@@ -1447,14 +1490,15 @@ function zvyraznit($msg,$ok=0) {
 function simple_mail($replyto,$address,$subject,$body,$cc='') {
 # odeslání mailu
 # $MAIL=0 zabrání odeslání, jen zobrazí mail v trasování
-  global $api_gmail_user, $api_gmail_pass, $api_gmail_name, $MAIL, $TEST, $trace, $mailbox;
+  global $api_gmail_user, $api_gmail_pass, $api_gmail_name, $MAIL, $TEST, $mailbox;
+//  global $trace;
   $msg= '';
   if ($TEST || !$MAIL) {
     $mailbox= "<h3>Simulace odeslání mailu z adresy $api_gmail_name &lt;$api_gmail_user&gt;</h3>"
         . "<b>pro:</b> $address "
         . "<br><b>předmět:</b> $subject"
         . "<p><b>text:</b> $body</p>";
-    if ($TEST) $trace.= "<hr>$mailbox<hr>";
+//    if ($TEST) $trace.= "<hr>$mailbox<hr>";
     $msg= 'ok'; // TEST bez odeslání
   }
   else {
