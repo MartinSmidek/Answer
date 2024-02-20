@@ -177,18 +177,21 @@ function read_akce() { // ------------------------------------------------------
   // Přihlášku bohužel nelze použít - akce nemá definovaného garanta!
   list($akce->garant_mail)= preg_split("/[,;]/",str_replace(' ','',$akce->garant_mail));
   $akce->help_kontakt= "$akce->garant_jmeno <a href='mailto:$akce->garant_mail'>$akce->garant_mail</a>"; 
-  $akce->form_pata= "Je možné, že se vám během vyplňování objeví nějaká chyba, "
-    . " případně nedojde slíbené potvrzení. "
-    . "<br><br>Přihlaste se prosím v takovém případě mailem zaslaným na $akce->help_kontakt."
-    . "<br><br>Připojte prosím popis závady. Omlouváme se za nepříjemnost s beta-verzí přihlášek.";
+  $akce->form_pata= "Je možné, že se vám během vyplňování objeví nějaká chyba, 
+      případně nedojde slíbené potvrzení. 
+      <br><br>Přihlaste se prosím v takovém případě mailem zaslaným na $akce->help_kontakt.
+      <br><br>Připojte prosím popis závady. Omlouváme se za nepříjemnost s beta-verzí přihlášek.";
   // doplnění konstant
   $akce->id_akce= $id_akce;
-  $akce->form_souhlas= " Vyplněním této přihlášky dáváme výslovný souhlas s použitím uvedených "
-      . "osobních údajů pro potřeby organizace akcí YMCA Setkání v souladu s Nařízením "
-      . "Evropského parlamentu a Rady (EU) 2016/679 ze dne 27. dubna 2016 o ochraně "
-      . "fyzických osob a zákonem č. 101/2000 Sb. ČR. Na našem webu naleznete "
-      . "<a href='https://www.setkani.org/ymca-setkani/5860#anchor5860' target='show'>"
-      . "podrobnou informací o zpracování osobních údajů v YMCA Setkání</a>.";
+  $akce->preambule= "Tyto údaje slouží pouze pro vnitřní potřebu organizátorů kurzu MS, 
+      nejsou poskytovány cizím osobám ani institucím. Pro vaši spokojenost během kurzu je 
+      nezbytné abyste dotazník pečlivě a pravdivě vyplnili.";
+  $akce->form_souhlas= " Vyplněním této přihlášky dáváme výslovný souhlas s použitím uvedených 
+      osobních údajů pro potřeby organizace akcí YMCA Setkání v souladu s Nařízením 
+      Evropského parlamentu a Rady (EU) 2016/679 ze dne 27. dubna 2016 o ochraně 
+      fyzických osob a zákonem č. 101/2000 Sb. ČR. Na našem webu naleznete 
+      <a href='https://www.setkani.org/ymca-setkani/5860#anchor5860' target='show'>
+      podrobnou informací o zpracování osobních údajů v YMCA Setkání</a>.";
   $akce->upozorneni= "Potvrzuji, že jsem byl@ upozorněn@, že není možné se účastnit pouze části kurzu, 
       že kurz není určen osobám závislým na alkoholu, drogách nebo jiných omamných látkách, ani
       osobám zatíženým neukončenou nevěrou, těžkou duševní nemocí či jiným omezením, která neumožňují 
@@ -238,7 +241,7 @@ function read_akce() { // ------------------------------------------------------
       'aktivita'  =>[35,'aktivita v církvi',''],
       'cirkev'    =>[20,'příslušnost k církvi','select'],
       'Xpecuje_o' =>[12,'* bude pečovat o ...',''],
-      'Xpovaha'    =>[70,'popiš svoji povahu',''],
+      'Xpovaha'    =>['70/1','popiš svoji povahu','area'],
       'Xmanzelstvi'=>['70/2','vyjádři se o vašem manželství','area'],
       'Xocekavani' =>['70/2','co očekáváš od účasti na MS','area'],
       'Xrozveden'  =>[20,'bylo předchozí manželství?',''],
@@ -718,11 +721,11 @@ function do_vyplneni_dat() { // ------------------------------------------------
       $role= get('o','role',$id);
       if (in_array($role,['a','b'])) {
         $upozorneni= $akce->p_upozorneni
-          ? "<br><input type='checkbox' name='{$id}_Xupozorneni' value=''  "
+          ? "<p class='souhlas'><input type='checkbox' name='{$id}_Xupozorneni' value=''  "
           . (get('o','Xupozorneni',$id) ? 'checked' : '')
           . " {$mis_upozorneni[$role]}><label for='{$id}_Xupozorneni' class='souhlas'>"
           . str_replace('@',$clen->role=='b'?'a':'',$akce->upozorneni)
-          . "</label><br>"
+          . "</label></p>"
           : '';
         $clenove.= "<div class='clen'>" 
             . elem_input('o',$id,['spolu'])
@@ -731,7 +734,7 @@ function do_vyplneni_dat() { // ------------------------------------------------
             . elem_input('o',$id,['email','obcanka','telefon'])
             . '<br>'
             . elem_input('o',$id,['zamest','vzdelani','zajmy','jazyk',
-                'aktivita','cirkev','povaha','manzelstvi','ocekavani','rozveden']) 
+                'aktivita','cirkev','Xpovaha','Xmanzelstvi','Xocekavani','Xrozveden']) 
             . $upozorneni
             . "</div>";
       }
@@ -798,10 +801,10 @@ function do_vyplneni_dat() { // ------------------------------------------------
   // -------------------------------------------- souhlas
   $souhlas= '';
   if ($vars->form->souhlas) {
-      $souhlas= "<br><input type='checkbox' name='chk_souhlas' value=''  "
+      $souhlas= "<p class='souhlas'><input type='checkbox' name='chk_souhlas' value=''  "
       . ($vars->chk_souhlas ? 'checked' : '')
       . " $mis_souhlas><label for='chk_souhlas' class='souhlas'>$akce->form_souhlas</label>"
-      . "<br>";
+      . "</p>";
   }
   // -------------------------------------------- redakce formuláře
   $enable_send= $vars->kontrola ? '' : 'disabled';
@@ -814,7 +817,6 @@ function do_vyplneni_dat() { // ------------------------------------------------
       $pobyt
     </div>
     $souhlas
-    <br><br>
     <button type="submit" name="cmd_check"><i class="fa fa-question"></i>
       zkontrolovat před odesláním</button>
     <button type="submit" id="submit_form" name="cmd_ano" $enable_send><i class="fa $enable_green fa-send-o"></i> 
@@ -897,6 +899,7 @@ function page($problem='') {
   $formular= $problem ?: <<<__EOD
       $problem
       <div class='box'>
+        <p class='souhlas'>$akce->preambule</p>
         <form action="$index" method="post">
           $form
           <input type="hidden" name='stamp' value="$stamp">
@@ -1125,7 +1128,7 @@ function elem_input($table,$id,$flds) { // -------------------------------------
       break;
     case 'area':
       list($cols,$rows)= explode('/',$len);
-      $html.= "<label class='upper'>$title<textarea rows='$rows' cols='$cols' name='$name'>$v</textarea></label>";
+      $html.= "<label class='upper-area'>$title<textarea rows='$rows' cols='$cols' name='$name'>$v</textarea></label>";
       break;
     default:
       $x= $v ? "value='$v'" : ''; // "placeholder='$holder'";

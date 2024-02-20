@@ -122,6 +122,18 @@ html body div.wrapper main div.box label.upper textarea {
   display: block;
   margin: 0 5px 5px -5px;
 }
+html body div.wrapper main div.box label.upper-area {
+  width: calc(100% - 20px);
+  float: left;
+  margin-left: 10px;
+  font-size: 12px;
+}
+html body div.wrapper main div.box label.upper-area input,
+html body div.wrapper main div.box label.upper-area select,
+html body div.wrapper main div.box label.upper-area textarea {
+  display: block;
+  margin: 0 5px 5px -5px;
+}
 html body div.wrapper main div.box label.check_spolu {
   float: left;
   margin-left: -55px;
@@ -134,8 +146,10 @@ html body div.wrapper main div.box label.check_spolu input {
 html body div.wrapper main div.box select {
   padding: 1px;
 }
-html body div.wrapper main div.box label.souhlas {
+html body div.wrapper main div.box p.souhlas {
   font-size: 12px;
+  clear: both;
+  font-style: italic;
 }
 html body div.wrapper main div.box span {
   display: block;
