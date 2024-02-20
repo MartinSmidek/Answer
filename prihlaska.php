@@ -37,7 +37,7 @@ if (ip_ok()) {
 //if ($TEST==3) $testovaci_mail= 'martin@smidek.eu';
 //if ($TEST==3) $testovaci_mail= 'lukcas@seznam.cz';
 //if ($TEST==3) $testovaci_mail= 'tholik@volny.cz';
-//if ($TEST==3) $testovaci_mail= 'l_kolar@email.cz';
+//if ($TEST==3) $testovaci_mail= 'kancelar@setkani.org';
 //if ($TEST==3) $testovaci_mail= 'petr.glogar@seznam.cz';
 }
 else {
@@ -896,10 +896,11 @@ function page($problem='') {
     $trace= '';
     $if_trace= '';
   }
+  $preambule= $vars->faze=='c' ? "<p class='souhlas'>$akce->preambule</p>" : '';
   $formular= $problem ?: <<<__EOD
       $problem
       <div class='box'>
-        <p class='souhlas'>$akce->preambule</p>
+        $preambule
         <form action="$index" method="post">
           $form
           <input type="hidden" name='stamp' value="$stamp">
@@ -1350,7 +1351,7 @@ function db_close_pobyt() { // -------------------------------------------------
 function gen_html($to_save=0) {
 # vygeneruje textový tvar přihlášky
   global $akce, $vars, $cleni;
-  $ted= date("j.n.Y h:i:s");
+  $ted= date("j.n.Y H:i:s");
   $html= '';
   $html.= "<h3 style=\"text-align:center;\">Údaje z online přihlášky na akci \"$akce->nazev\"</h3>";
   $html.= "<p style=\"text-align:center;\"><i>vyplněné $ted a doplněné dříve svěřenými osobními údaji</i></p>";
@@ -1427,9 +1428,9 @@ function gen_html($to_save=0) {
     ['Vzdělání',              get_fmt('o','vzdelani',$idm), get_fmt('o','vzdelani',$idz)],
     ['Povolání, zaměstnání',  get('o','zamest',$idm), get('o','zamest',$idz)],
     ['Zájmy, znalost jazyků', get('o','zajmy',$idm).$jm, get('o','zajmy',$idz).$jz],
-    ['Popiš svoji povahu',    get('o','povaha',$idm), get('o','povaha',$idz)],
-    ['Vyjádři se o vašem manželství',  get('o','manzelstvi',$idm), get('o','manzelstvi',$idz)],
-    ['Co od účasti očekávám', get('o','ocekavani',$idm), get('o','ocekavani',$idz)],
+    ['Popiš svoji povahu',    get('o','Xpovaha',$idm), get('o','Xpovaha',$idz)],
+    ['Vyjádři se o vašem manželství',  get('o','Xmanzelstvi',$idm), get('o','Xmanzelstvi',$idz)],
+    ['Co od účasti očekávám', get('o','Xocekavani',$idm), get('o','Xocekavani',$idz)],
     ['Příslušnost k církvi',  get_fmt('o','cirkev',$idm), get_fmt('o','cirkev',$idz)],
     ['Aktivita v církvi',     get('o','aktivita',$idm), get('o','aktivita',$idz)],
   ];
@@ -1445,9 +1446,9 @@ function gen_html($to_save=0) {
       . "</td><td>Datum svatby: "
       . get_fmt('r','datsvatba')
       . "</td><td colspan=\"2\">Předchozí manželství? muž: "
-      . (get('o','rozveden',$idm)?:'-')
+      . (get('o','Xrozveden',$idm)?:'-')
       ." žena: "
-      . (get('o','rozveden',$idz)?:'-')
+      . (get('o','Xrozveden',$idz)?:'-')
       . "</td></tr>";
   $html.= "</table>";
   $html.= "<p><i>Souhlas obou manželů s podmínkami účasti na kurzu byl potvrzen $ted.</i></p>";
@@ -1612,182 +1613,3 @@ function simple_mail($replyto,$address,$subject,$body,$cc='') {
 end:
   return $msg;
 }
-/*
-# --------------------------------------------------------------------------------------- oform save
-# vytvoří obraz přihlášky včetně odsouhlasených údajů z minula podle db
-# cmd= pdf|fld pokud fld, tak vrátí objekt {fld:value,...}
-#                                            kde fld=x_povaha,x_manzelstvi,x_ocekavam a x je m|z
-function oform_save ($idfs,$idp,$cmd='pdf') { trace();
-  $html= '';
-  $flds= array();
-  // nalezení akce
-  list($nazev,$rok)= select('nazev,YEAR(datum_od)','pobyt JOIN akce ON id_akce=id_duakce',"id_pobyt=$idp");
-  // nalezení formuláře
-  $idr= select('i0_rodina','pobyt',"id_pobyt=$idp");
-  list($eid,$id_pobyt_wp,$zmeny)= select('entry_id,id_pobyt_wp,zmeny','pobyt_wp',"id_pobyt=$idp AND stav IN (0,1)");
-  if ($eid) {
-    $x= $dn= $pn= array();
-    $m= $z= (object)array();
-    $html.= "<h3 style=\"text-align:center;\">Údaje z online přihlášky na akci \"$nazev $rok\"</h3>";
-    $html.= "<p style=\"text-align:center;\"><i>doplněné dříve svěřenými osobními údaji</i></p>";
-    $qf= pdo_qry("SELECT field_id,value 
-      FROM wordpress.wp_3_wpforms_entry_fields
-      WHERE entry_id=$eid AND form_id IN ($idfs)
-        AND field_id>73 
-    ");
-    while ($qf && ($f= pdo_fetch_object($qf))) {
-      $x[$f->field_id]= $f->value;
-    }
-//    debug($x,'X');
-    // zjištění rodinných údajů
-    list($r_adresa,$r_spz,$r_datsvatba)= select("CONCAT(ulice,', ',psc,' ',obec),spz,datsvatba",
-        'rodina',"id_rodina=$idr"); 
-    $r_datsvatba= sql_date1($r_datsvatba);
-    // zjištění osobních údajů
-    $cirkev=  map_cis('ms_akce_cirkev','zkratka');  
-    $vzdelani=  map_cis('ms_akce_vzdelani','zkratka');  
-    $qo= pdo_qry("SELECT role,kontakt,adresa,IF(ISNULL(id_spolu),0,1) AS nakurzu,
-          CONCAT(jmeno,' ',prijmeni,IF(rodne!='',CONCAT(' roz. ',rodne),'')) AS jmeno,
-          narozeni,telefon,email,obcanka,zajmy,jazyk,
-          zamest,cirkev,aktivita,vzdelani,osoba.note
-        FROM rodina
-        JOIN tvori USING (id_rodina) JOIN osoba USING (id_osoba)
-        LEFT JOIN spolu ON spolu.id_osoba=tvori.id_osoba AND id_pobyt=$idp 
-        WHERE id_rodina=$idr
-        ORDER BY narozeni
-      ");
-    while ($qo && ($o= pdo_fetch_object($qo))) {
-      $o->narozeni= sql_date1($o->narozeni);
-      if ($o->cirkev) $o->cirkev= $cirkev[$o->cirkev];
-      if ($o->vzdelani) $o->vzdelani= $vzdelani[$o->vzdelani];
-      $o->zajmy_jazyk= $o->zajmy . ($o->jazyk ? ', ' : '') . $o->jazyk;
-      switch ($o->role) {
-        case 'a': $m= $o; break;
-        case 'b': $z= $o; break;
-        case 'd': $dn[]= $o; break;
-        case 'p': $pn[]= $o; break;
-      }
-    }
-    if (!$m->role || !$z->role) fce_error("neúplný pár");
-    // doplnění db údajů
-    $x_udaje= array(
-      'x_povaha'      => array(84,97),  
-      'x_manzelstvi'  => array(89,101),
-      'x_ocekavam'    => array(88,102),
-      'x_rozvody'     => array(110,112), // nepředává se do možnosti úprav
-    );
-    $flds= json_decode($zmeny, true);
-    $flds['id_pobyt_wp']= $id_pobyt_wp;
-    if ($zmeny!='{}') {
-      foreach ($flds as $fld=>$value) {
-        $mz= substr($fld,0,1);
-        $xfld= 'x'.substr($fld,1);
-        if ($xfld=='x_rozvody') continue; // nebudeme opravovat - 
-        if ($mz=='m') $m->$xfld= $value;
-        if ($mz=='z') $z->$xfld= $value;
-      }
-    }
-    else {
-      foreach ($x_udaje as $fld=>list($im,$iz)) {
-        display("$fld");
-        if (isset($x[$im])) $m->$fld= $x[$im];
-        if (isset($x[$iz])) $z->$fld= $x[$iz];
-        if ($cmd=='fld') {
-          $flds['m'.substr($fld,1)]= isset($x[$im]) ? $x[$im] : '';
-          $flds['z'.substr($fld,1)]= isset($x[$iz]) ? $x[$iz] : '';
-        }
-      }
-    }
-//    debug($m,'M'); debug($z,'Z'); debug($dn,'D'); debug($pn,'P'); 
-    // redakce osobních údajů
-    $udaje= array(
-      'Jméno a příjmení'=>'jmeno', 
-      'Datum narozeni'=>'narozeni',
-      'Telefon'=>'telefon',
-      'E-mail'=>'email',
-      'Č. OP nebo cest. dokladu'=>'obcanka'
-    );
-    $html.= "
-      <style>
-        table.prihlaska { width:100%; border-collapse: collapse; }
-        table.prihlaska td { border: 1px solid grey; }
-        table.prihlaska th { text-align:center; }
-      </style>
-      ";
-    $table_attr= "class=\"prihlaska\" cellpadding=\"7\"";
-    $th= "th colspan=\"2\"";
-    $td= "td colspan=\"2\"";
-    $html.= "<table $table_attr><tr><th></th><$th>Muž</th><$th>Žena</th></tr>";
-    foreach ($udaje as $popis=>$fld) {
-      $html.= "<tr><th>$popis</th><$td>{$m->$fld}</td><$td>{$z->$fld}</td></tr>";
-    }
-    $html.= "<tr><th>Adresa, PSČ</th><td colspan=\"4\">$r_adresa</td></tr>";
-    $html.= "</table>";
-    // děti
-    $deti= ''; $nakurzu= 0;
-    if (count($dn)) {
-      $del= '';
-      foreach ($dn as $d) {
-        $deti.= "$del$d->jmeno, $d->narozeni"; $del= '; ';
-        $nakurzu+= $d->nakurzu ? 1 : 0;
-      }
-      if ($nakurzu) {
-        $html.= "<p><i>Na Manželská setkání přihlašujeme i tyto děti:</i></p>";
-        $html.= "<table $table_attr><tr><th>Jméno a příjmení</th><th>Datum narození</th><th>Poznámky (nemoci, alergie apod.)</th></tr>";
-        foreach ($dn as $d) {
-          if (!$d->nakurzu) continue;
-          $html.= "<tr><td>$d->jmeno</td><td>$d->narozeni</td><td>$d->note</td></tr>";
-        }
-        $html.= "</table>";
-      }
-    }
-    $html.= "<p></p>";
-    // redakce citlivých údajů
-    $udaje= array(
-      'Vzdělání'=>'vzdelani', 
-      'Povolání, zaměstnání'=>'zamest',
-      'Zájmy, znalost jazyků'=>'zajmy_jazyk',
-      'Popiš svoji povahu'=>'x_povaha',
-      'Vyjádři se o vašem manželství'=>'x_manzelstvi',
-      'Co od účasti očekávám'=>'x_ocekavam',
-      'Příslušnost k církvi'=>'cirkev',
-      'Aktivita v církvi'=>'aktivita',
-    );
-    $th= "th colspan=\"2\"";
-    $html.= "<table $table_attr><tr><th></th><$th>Muž</th><$th>Žena</th></tr>";
-    $td= "td colspan=\"2\"";
-    foreach ($udaje as $popis=>$fld) {
-      $html.= "<tr><th>$popis</th><$td>{$m->$fld}</td><$td>{$z->$fld}</td></tr>";
-      if ($fld=='aktivita')
-        $html.= "<tr><th>Děti (jméno + datum narození)</th><td colspan=\"4\">$deti</td></tr>";
-    }
-    $html.= "<tr><th>SPZ auta na kurzu</th><td>$r_spz</td><td>Datum svatby: $r_datsvatba</td>
-      <td colspan=\"2\">Předchozí manželství? muž:$m->x_rozvody žena:$z->x_rozvody</td></tr>";
-    $html.= "</table>";
-    $html.= "<p><i>Souhlas obou manželů s přihlášením na kurz byl potvrzen.</i></p>";
-    // přehled o počtu účastí
-    // generování PDF
-    if ($cmd=='pdf') {
-      global $ezer_root;
-      $path_files= trim($_SESSION[$ezer_root]['path_files_h']," '");
-      $path_files= rtrim($path_files,"/");
-      $fname= "online-prihlaska.pdf";
-      $foot= '';
-      $f_abs= "$path_files/pobyt/{$fname}_$idp";
-      tc_html($f_abs,$html,$foot);
-      $html= "Přihláška byla vložena do záložky Dokumenty jako soubor $fname ";
-    }
-  }
-  else {
-    $html= "<span style='background:yellow'>uložit lze jen přihlášku přenesenou do Answeru</span>";
-  }
-  if ($cmd=='pdf') display($html); else debug($flds);
-  return $cmd=='pdf' ? $html : (object)$flds;
-}
-function osoba_jmeno ($idp,$role) {
-  $jmeno= select1("CONCAT(jmeno,' ',prijmeni)",
-      'pobyt JOIN rodina ON id_rodina=i0_rodina JOIN tvori USING (id_rodina) JOIN osoba USING (id_osoba)',
-      "id_pobyt=$idp AND role='$role'");
-  return $jmeno;
-}
-*/
