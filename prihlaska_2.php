@@ -199,6 +199,7 @@ function parm($id_akce) {
       'pracovni'  =>['64/4','sem prosím napište případnou dietu, nebo jinou úpravu stravy - poloviční porci, odhlášení jídla apod.','area']
     ];
   $r_fld= [ // položky tabulky RODINA
+      'nazev' =>[0,'jméno rodiny',''],
       'ulice' =>[15,'* ulice nebo č.p.',''],
       'psc'   =>[ 5,'* PSČ',''],
       'obec'  =>[20,'* obec/město',''],
@@ -450,7 +451,7 @@ function do_kontrola_pinu() { // fáze B
       else { // klientova rodina ani klient sám na akci není
         // pokud je povolená jejich úprava načti rodinnou adresu
         if ($akce->p_rod_adresa) {
-          $r= select_object('ulice,psc,obec,spz','rodina',"id_rodina=$idr");
+          $r= select_object('nazev,ulice,psc,obec,spz','rodina',"id_rodina=$idr");
           foreach ($r as $fld=>$val) {
             $vars->rodina[$idr]->$fld= [$val];
           }
@@ -753,6 +754,9 @@ function do_rozlouceni() {
       $ucastnici.= "$del$clen->jmeno $clen->prijmeni"; 
       $del= ', ';
     }
+    $idr= key($vars->rodina);
+    $rodina= $vars->rodina[$idr];
+    $nazev= is_array($rodina->nazev) ? $rodina->nazev[0] : $rodina->nazev;
     $text= $akce->p_obnova && !byli_na_aktualnim_LK(key($vars->rodina))
       ? ".</p>"
         . "<p>Účast na obnově mají zajištěnu přednostně účastníci letního kurzu. "
@@ -761,7 +765,7 @@ function do_rozlouceni() {
       : " a zapisuji vás mezi účastníky."
         . " Vaši přihlášku zpracuji do tří dnů.<br>V týdnu před akcí dostanete <i>Dopis na cestu</i> s doplňujícími informacemi.</p>";
     $msg= "Vaše přihláška byla zaevidována a poslali jsme Vám potvrzující mail na $post->email.";
-    $mail_subj= "Potvrzení přijetí přihlášky na akci $akce->nazev.";
+    $mail_subj= "Potvrzení přijetí přihlášky ($nazev) na akci $akce->nazev.";
     $mail_body= "Dobrý den,<p>potvrzuji přijetí vaší přihlášky na akci <b>$akce->nazev</b>"
     . " pro účastníky $ucastnici"
     . $text
