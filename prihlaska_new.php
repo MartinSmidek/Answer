@@ -206,6 +206,7 @@ function read_akce() { // ------------------------------------------------------
       'role'      => [''=>'vztah k rodině?','a'=>'manžel','b'=>'manželka','d'=>'dítě','p'=>'jiný vztah'],
       'cirkev'    => map_cis('ms_akce_cirkev','zkratka'),
       'vzdelani'  => map_cis('ms_akce_vzdelani','zkratka'),
+      'funkce'    => map_cis('ms_akce_funkce','zkratka'),
     ];
   // definice obsahuje:  položka => [ délka , popis , formát ]
   //   X => pokud jméno položky začíná X, nebude se ukládat, jen zapisovat do PDF
@@ -213,7 +214,8 @@ function read_akce() { // ------------------------------------------------------
   //        je to ale nutné pro každou položku naprogramovat 
   $p_fld= [ // zobrazené položky tabulky POBYT, nezobrazené: id_pobyt, web_changes
       'pracovni'  =>['64/4','sem prosím napište případnou dietu, nebo jinou úpravu stravy '
-          . '- poloviční porci, odhlášení jídla apod.','area']
+          . '- poloviční porci, odhlášení jídla apod.','area'],
+      'funkce'    =>[0,'funkce na akci','select']
     ];
   $r_fld= [ // položky tabulky RODINA
       'nazev'     =>[15,'jméno Vaší rodiny',''],
