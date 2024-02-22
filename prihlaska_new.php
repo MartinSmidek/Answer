@@ -36,7 +36,7 @@ if (!ip_ok()) {
 //$testovaci_mail= 'anabasis@seznam.cz';        $TEST= 3; // známá rodina ale bez ženy
 //$testovaci_mail= 'frantisekbezdek@atlas.cz';  $TEST= 3; // známá osoba ale bez rodiny
 //$testovaci_mail= 'kancelar@setkani.org';      $TEST= 3; 
-$testovaci_mail= 'new.bee@smidek.eu';         $TEST= 3; // neznámý mail
+//$testovaci_mail= 'new.bee@smidek.eu';         $TEST= 3; // neznámý mail
 //$TEST= 2;
 if (!$testovaci_mail) {
   $TEST= $_GET['test'] ?? ($_SESSION[$AKCE]->test ?? $TEST);
