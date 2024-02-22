@@ -644,6 +644,9 @@ function do_vyplneni_dat() { // ------------------------------------------------
       if (!$jako) $ucast= 9; // = náhradník
       elseif ($jako==2 && $akce->p_vps) $ucast= 1; // VPS
     }
+    elseif ($akce->p_pro_LK) {
+      $ucast= 13;
+    }
     set('p','funkce',$ucast);
     db_open_pobyt();
     if (count($errors)) goto db_end;
@@ -1029,28 +1032,28 @@ function get_fmt($table,$fld,$id=0) { // ---------------------------------------
   return $v;
 }
 function set($table,$fld,$val,$id=0) { // ------------------------------------------------------ set
-  global $p_fld, $r_fld, $o_fld, $options, $vars;
-  $desc= $table=='r' ? $r_fld : ($table=='p' ? $p_fld : $o_fld);
+  global $vars; //$p_fld, $r_fld, $o_fld, $options, 
+//  $desc= $table=='r' ? $r_fld : ($table=='p' ? $p_fld : $o_fld);
   if ($table=='r' && !$id) $id= key($vars->rodina);
   $pair= $table=='r' ? $vars->rodina[$id] : ($table=='p' ? $vars->pobyt : $vars->cleni[$id]);
-  if (!isset($desc[$fld])) {
-    $v= $val;
-  }
-  else {
-    list(,,$typ)= $desc[$fld];
-    switch ($typ) {
-    case 'date':
-      $v= sql2date($v,1);
-      break;
-    case 'select':
-      $v= array_search($val,$options[$fld]);
-      break;
-    }
-  }
+//  if (!isset($desc[$fld])) {
+//    $v= $val;
+//  }
+//  else {
+//    list(,,$typ)= $desc[$fld];
+//    switch ($typ) {
+//    case 'date':
+//      $v= sql2date($v,1);
+//      break;
+//    case 'select':
+//      $v= array_search($val,$options[$fld]);
+//      break;
+//    }
+//  }
   if (is_array($pair->$fld)) 
-    $pair->$fld[1]= $v;
+    $pair->$fld[1]= $val;
   else
-    $pair->$fld= $v;
+    $pair->$fld= $val;
 }
 function elem_text($table,$id,$flds) { // ------------------------------------------------ elem text
   $html= '';
@@ -1075,8 +1078,8 @@ function elems_missed($table,$id=0) { // ---------------------------------------
     }
   }
   if ($table=='r') {
-    $id= key($vars->rodina);
-    $rodina= $vars->rodina[$id];
+    $idr= key($vars->rodina);
+    $rodina= $vars->rodina[$idr];
     foreach ($r_fld as $f=>list(,$title,$typ)) {
       if (substr($title,0,1)=='*') {
         if (is_array($rodina->$f)) {
@@ -1167,7 +1170,7 @@ function elem_input($table,$id,$flds) { // -------------------------------------
 function vytvor_pobyt() { // ---------------------------------------------------------- vytvor pobyt
   global $vars, $p_fld;
   $vars->pobyt= (object)[];
-  foreach ($p_fld as $f=>list(,$title,$typ)) {
+  foreach ($p_fld as $f=>list(,,$typ)) {
     $vars->pobyt->$f= [init_value($typ)];
 //    $vars->pobyt->$f= substr($title,0,1)=='*' ? [init_value($typ)] : init_value($typ);
   }
@@ -1348,7 +1351,7 @@ function db_vytvor_nebo_oprav_clena($id) { // --------------------------- db vyt
         $chng[]= (object)array('fld'=>'access', 'op'=>'u','old'=>$access,'val'=>$access|$akce->org);
       }
       // zpráva do pracovní poznámky
-      $p_old= get_p('pracovni');
+      $p_old= get('p','pracovni');
       $p_new= $p_old ? "$p_old ... $jmeno $prijmeni bylo nalezeno jako ID=$ido" : $p_old;
       _ezer_qry("UPDATE",'pobyt',$idp,
           [(object)['fld'=>'pracovni', 'op'=>'u','old'=>$p_old,'val'=>$p_new]]);
@@ -1409,8 +1412,13 @@ function db_vytvor_nebo_oprav_clena($id) { // --------------------------- db vyt
           $chng[]= (object)['fld'=>$f, 'op'=>'u','val'=>$vals[1]];
         }
         else {
-          $v= $o_fld[$f][2]=='date' ? date2sql($v) : $vals[1];
-          $chng[]= (object)['fld'=>$f, 'op'=>'u','old'=>$vals[0],'val'=>$v];
+          $v0= $vals[0];
+          $v= $vals[1];
+          if ($o_fld[$f][2]=='date') {
+            $v0= date2sql($v0);
+            $v= date2sql($v);
+          }
+          $chng[]= (object)['fld'=>$f, 'op'=>'u','old'=>$v0,'val'=>$v];
         }
       }
     }
@@ -1433,9 +1441,9 @@ function db_vytvor_nebo_oprav_rodinu() { // ---------------------------- do vytv
 # oprav rodinné údaje resp. vytvoř novou rodinu
   global $akce, $r_fld, $vars, $cleni, $errors, $web_changes;
   // web_changes= 1/2 pro INSERT/UPDATE pobyt+spolu | 4/8 pro INSERT/UPDATE osoba | 16/32 pro INSERT/UPDATE rodina
-  $id= key($vars->rodina);
-  $rodina= $vars->rodina[$id];
-  if ($id<0) {
+  $idr= key($vars->rodina);
+  $rodina= $vars->rodina[$idr];
+  if ($idr<0) {
     // musíme vytvořit rodinu - vymyslíme název
     $nazev= "nová-rodina";
     foreach (array_keys($cleni) as $ido) {
@@ -1475,7 +1483,13 @@ function db_vytvor_nebo_oprav_rodinu() { // ---------------------------- do vytv
     foreach ($rodina as $f=>$vals) {
       if (substr($f,0,1)=='X') continue; // položka začínající X nepatří do tabulky
       if (is_array($vals) && isset($vals[1]) && $vals[1]!=$vals[0]) {
-        $chng[]= (object)['fld'=>$f, 'op'=>'u','old'=>$vals[0],'val'=>$vals[1]];
+        $v0= $vals[0];
+        $v= $vals[1];
+        if ($r_fld[$f][2]=='date') {
+          $v0= date2sql($v0);
+          $v= date2sql($v);
+        }
+        $chng[]= (object)['fld'=>$f, 'op'=>'u','old'=>$v0,'val'=>$v];
       }
     }
     if (count($chng)) {
