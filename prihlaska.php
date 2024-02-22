@@ -38,7 +38,7 @@ if (!ip_ok()) {
 //$testovaci_mail= 'kancelar@setkani.org';      $TEST= 3; 
 //$testovaci_mail= 'new.bee@smidek.eu';         $TEST= 3; // neznámý mail
 //$TEST= 2;
-if (!$testovaci_mail) {
+if (!isset($testovaci_mail)) {
   $TEST= $_GET['test'] ?? ($_SESSION[$AKCE]->test ?? $TEST);
   $MAIL= $_GET['mail'] ?? ($_SESSION[$AKCE]->mail ?? $MAIL);
 }
