@@ -1441,9 +1441,9 @@ function db_vytvor_nebo_oprav_rodinu() { // ---------------------------- do vytv
 # oprav rodinné údaje resp. vytvoř novou rodinu
   global $akce, $r_fld, $vars, $cleni, $errors, $web_changes;
   // web_changes= 1/2 pro INSERT/UPDATE pobyt+spolu | 4/8 pro INSERT/UPDATE osoba | 16/32 pro INSERT/UPDATE rodina
-  $idr= key($vars->rodina);
-  $rodina= $vars->rodina[$idr];
-  if ($idr<0) {
+  $id= key($vars->rodina);
+  $rodina= $vars->rodina[$id];
+  if ($id<0) {
     // musíme vytvořit rodinu - vymyslíme název
     $nazev= "nová-rodina";
     foreach (array_keys($cleni) as $ido) {
@@ -1493,7 +1493,7 @@ function db_vytvor_nebo_oprav_rodinu() { // ---------------------------- do vytv
       }
     }
     if (count($chng)) {
-      if (!_ezer_qry("UPDATE",'rodina',$idr,$chng)) 
+      if (!_ezer_qry("UPDATE",'rodina',$id,$chng)) 
         $errors[]= "Nastala chyba při zápisu do databáze (r)"; 
       $web_changes|= 32; 
     }
