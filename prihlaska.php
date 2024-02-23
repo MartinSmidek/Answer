@@ -37,7 +37,7 @@ if (!ip_ok()) {
 //$testovaci_mail= 'anabasis@seznam.cz';        $TEST= 3; // známá rodina ale bez ženy
 //$testovaci_mail= 'frantisekbezdek@atlas.cz';  $TEST= 3; // známá osoba ale bez rodiny
 //$testovaci_mail= 'kancelar@setkani.org';      $TEST= 3; 
-//$testovaci_mail= 'new.bee@smidek.eu';         $TEST= 3; // neznámý mail
+$testovaci_mail= 'nemo2@smidek.eu';         $TEST= 3; // neznámý mail
 //$TEST= 2;
 if (!isset($testovaci_mail)) {
   $TEST= $_GET['test'] ?? ($_SESSION[$AKCE]->test ?? $TEST);
@@ -206,10 +206,11 @@ function read_akce() { // ------------------------------------------------------
   $options= [
       'role'      => [''=>'vztah k rodině?','a'=>'manžel','b'=>'manželka','d'=>'dítě','p'=>'jiný vztah'],
 //      'cirkev'    => map_cis('ms_akce_cirkev','zkratka'),
-      'cirkev'    => [''=>'něco prosím vyber',1=>'katolická',2=>'evangelická',16=>'nevěřící',21=>'hledající',23=>'křesťan'],
+      'cirkev'    => [''=>'něco prosím vyberte',1=>'katolická',2=>'evangelická',16=>'nevěřící',21=>'hledající',23=>'křesťan'],
       'vzdelani'  => map_cis('ms_akce_vzdelani','zkratka'),
       'funkce'    => map_cis('ms_akce_funkce','zkratka'),
     ];
+  $options['vzdelani']['']= 'něco prosím vyberte';
   // definice obsahuje:  položka => [ délka , popis , formát ]
   //   X => pokud jméno položky začíná X, nebude se ukládat, jen zapisovat do PDF
   //   * => pokud popis začíná hvězdičkou bude se údaj vyžadovat (hvězdička za zobrazí červeně)
@@ -232,7 +233,8 @@ function read_akce() { // ------------------------------------------------------
       'spolu'     =>[ 0,'na akci?','check_spolu','abdp'],
       'jmeno'     =>[ 7,'* jméno','','abdp'],
       'prijmeni'  =>[10,'* příjmení','','abdp'],
-      'narozeni'  =>[ 9,'* narození','date','abdp'],
+      'rodne'     =>[10,'rozená','','b'],
+      'narozeni'  =>[10,'* datum narození','date','abdp'],
       'role'      =>[ 9,'vztah k rodině?','select','abdp'],
       'note'      =>[40,'poznámka (léky, alergie, apod.)','','d']],
     $akce->p_obcanky ? [
@@ -244,8 +246,9 @@ function read_akce() { // ------------------------------------------------------
       'zamest'    =>[35,'* povolání, zaměstnání','','ab'],
       'zajmy'     =>[35,'* zájmy','','ab'],
       'jazyk'     =>[20,'znalost jazyků (Aj, Nj, ...)','','ab'],
-      'aktivita'  =>[35,'* aktivita v církvi','','ab'],
-      'cirkev'    =>[20,'* příslušnost k církvi','select','ab'],
+      'aktivita'  =>[35,'aktivita v církvi','','ab'],
+      'cirkev'    =>[25,'* vztah ke křesťanství','select','ab'],
+//      'cirkev'    =>[20,'* příslušnost k církvi','select','ab'],
       'Xpecuje_o' =>[12,'* bude pečovat o ...','','p'],
       'Xpovaha'    =>['70/1','* popiš svoji povahu','area','ab'],
       'Xmanzelstvi'=>['70/2','* vyjádři se o vašem manželství','area','ab'],
@@ -702,8 +705,12 @@ function do_vyplneni_dat() { // ------------------------------------------------
         $clenove.= "<div class='clen'>" 
             . elem_input('o',$id,['spolu'])
             . ( $id>0
-                ? elem_text('o',$id,['jmeno','prijmeni',',','narozeni',',','role'])
-                : elem_input('o',$id,['jmeno','prijmeni',',','narozeni',',','role']))
+                ? elem_text('o',$id,['jmeno','prijmeni']) 
+                  . ($role=='b' ? elem_text('o',$id,['roz. ','rodne']) : '')
+                  . elem_text('o',$id,[', ','narozeni',',','role'])
+                : elem_input('o',$id,['jmeno','prijmeni'])
+                  . ($role=='b' ? elem_input('o',$id,['rodne']) : '')
+                  . elem_input('o',$id,[',','narozeni',',','role']))
             . '<br>'
             . elem_input('o',$id,['email','obcanka','telefon'])
             . '<br>'
@@ -715,9 +722,10 @@ function do_vyplneni_dat() { // ------------------------------------------------
     }
   }
   if ($vars->form->deti) {
+    $deti= '';
     foreach ($cleni as $id=>$clen) {
       if ($id<0 || get_role($id)!='d') continue;
-      $clenove.= "<div class='clen'>" 
+      $deti.= "<div class='clen'>" 
           . elem_input('o',$id,['spolu'])
           . elem_text('o',$id,['jmeno','prijmeni',',','narozeni',',','role'])
           . elem_input('o',$id,['note'])
@@ -725,10 +733,12 @@ function do_vyplneni_dat() { // ------------------------------------------------
     }
     foreach ($cleni as $id=>$clen) {
       if ($id>0 || get_role($id)!='d') continue;
-      $clenove.= "<div class='clen'>" 
+      $deti.= "<div class='clen'>" 
           . elem_input('o',$id,['spolu','jmeno','prijmeni','narozeni','role','note'])
           . "</div>";
     }
+    if ($deti) $clenove.= '<p><i>Naše děti (zapište prosím i ty, které necháváte doma)</i></p>';
+    $clenove.= $deti;
     $clenove.= "<br><button type='submit' name='cmd_dalsi_dite'><i class='fa fa-green fa-plus'></i>
       chci přihlásit další dítě</button>";
   }
@@ -740,7 +750,7 @@ function do_vyplneni_dat() { // ------------------------------------------------
         chci přihlásit osobního pečovatele</button>";
     }
     if ($vars->form->pecouni==2) {
-      $clenove.= '<br>';
+      $clenove.= '<p><i>Volba osobního pečovatele</i></p>';
       foreach ($cleni as $id=>$clen) {
         if ($id<0 || get_role($id)!='p') continue;
         $clenove.= "<div class='clen'>" 
@@ -862,7 +872,7 @@ function do_rozlouceni() { // --------------------------------------------------
   }
   if ($ok=='ko') {
     $msg= "Při zpracování přihlášky došlo bohužel k chybě. "
-        . "<br>Přihlaste se prosím posláním mailu vedoucímu akce"
+        . "<br>Přihlaste se prosím posláním mailu organizátorům akce"
         . "<br><a href=mailto:'$akce->garant_mail'>$akce->garant_mail</a>";
   }
   $form= <<<__EOF
@@ -1772,19 +1782,27 @@ function sql2date($d) { // -----------------------------------------------------
   return $v;
 }
 function check_datum($d_val,$d_nazev,&$neuplne) { // ----------------------------------- check datum
+  $ok= 1;
   if (isset($d_val)) {
     $d= is_array($d_val) ? ($d_val[1] ?? $d_val[0]) : $d_val;
     $datum= str_replace(' ','',$d);
     $dmy= explode('.',$datum);
-    if (count($dmy)!=3) 
+    if (count($dmy)!=3) {
       $neuplne[]= "napište $d_nazev ve tvaru den.měsíc.rok ";
+      $ok= 0;
+    }
     else {
-      if (!checkdate($dmy[1],$dmy[0],$dmy[2]))
+      if (!checkdate($dmy[1],$dmy[0],$dmy[2])) {
         $neuplne[]= "opravte prosím $d_nazev (den.měsíc.rok) - je nějaké divné";
-      elseif (date('Y')-$dmy[2] > 99 || date('Y')-$dmy[2] < 0) 
+      $ok= 0;
+      }
+      elseif (date('Y')-$dmy[2] > 99 || date('Y')-$dmy[2] < 0) {
         $neuplne[]= "opravte prosím $d_nazev - nevypadá pravděpodobně";
+      $ok= 0;
+      }
     }
   }
+  return $ok;
 }
 function ip_ok() { // ------------------------------------------------------------------------ ip ok
 # pozná localhost, IP Talichova, IP chata, LAN Noe
