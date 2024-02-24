@@ -33,7 +33,7 @@ if (!ip_ok()) {
   die("Online přihlašování není ještě k dospozici."); 
 }
 // -------------------------------------------------------------------------- varianty pro testování
-$testovaci_mail= 'martin@smidek.eu';          $TEST= 3; // známý pár
+//$testovaci_mail= 'martin@smidek.eu';          $TEST= 3; // známý pár
 //$testovaci_mail= 'anabasis@seznam.cz';        $TEST= 3; // známá rodina ale bez ženy
 //$testovaci_mail= 'frantisekbezdek@atlas.cz';  $TEST= 3; // známá osoba ale bez rodiny
 //$testovaci_mail= 'kancelar@setkani.org';      $TEST= 3; 
@@ -699,10 +699,9 @@ function do_vyplneni_dat() { // ------------------------------------------------
     $vars->faze= 'd';
     goto end;
   }
-  // ============================================ poskládej prvky formuláře
-  // -------------------------------------------- členové rodiny
+  // ===================================================================== poskládej prvky formuláře
   $clenove= '';
-  if ($vars->form->par) {
+  if ($vars->form->par) { // -------------------------------------------------------- zobrazení páru
     foreach ($cleni as $id=>$clen) {
       $role= get_role($id);
       if (in_array($role,['a','b'])) {
@@ -732,7 +731,7 @@ function do_vyplneni_dat() { // ------------------------------------------------
       }
     }
   }
-  if ($vars->form->deti) {
+  if ($vars->form->deti) { // ------------------------------------------------------- zobrazení dětí
     $clenove.= "<div id='deti' class='cleni'>";
     $deti= '';
     foreach ($cleni as $id=>$clen) {
@@ -755,7 +754,7 @@ function do_vyplneni_dat() { // ------------------------------------------------
       chci přihlásit další dítě</button>";
     $clenove.= "</div>";
   }
-  if ($vars->form->pecouni) {
+  if ($vars->form->pecouni) { // ------------------------------------------------- zobrazení pečounů
     // pokud jsou nějací členové s role=p tak zobraz napřed je, teprve na další stisk přidej prázdné
     // form->pecouni: 1=jen tlačítko 2=jen existující 3=prázdná pole
     if ($vars->form->pecouni==1 ) {
@@ -770,17 +769,14 @@ function do_vyplneni_dat() { // ------------------------------------------------
         $clenove.= "<div class='clen'>" 
             . elem_input('o',$id,['spolu'])
             . elem_text('o',$id,['jmeno','prijmeni',', ','narozeni'])
-            . '<br>'
-            . ($clen->spolu 
-                ? elem_input('o',$id,['obcanka','telefon']) 
-                : elem_text('o',$id,[', OP:','obcanka']) )
-            . elem_input('o',$id,['Xpecuje_o'])
+            . ($clen->spolu ? '<br>'.elem_input('o',$id,['obcanka','telefon','Xpecuje_o']) : '' )            
             . "</div>";
       }
       foreach ($cleni as $id=>$clen) {
         if ($id>0 || get_role($id)!='p') continue;
         $clenove.= "<div class='clen'>" 
-            . elem_input('o',$id,['spolu','jmeno','prijmeni','narozeni','obcanka','telefon','Xpecuje_o'])
+            . elem_input('o',$id,['spolu','jmeno','prijmeni','narozeni'])
+            . ($clen->spolu ? '<br>'.elem_input('o',$id,['obcanka','telefon','Xpecuje_o']) : '' )            
             . "</div>";
       }
       $clenove.= "<br><button onclick=\"navigateTo('pecouni')\" type='submit' name='cmd_dalsi_pecoun'><i class='fa fa-green fa-plus'></i>
