@@ -93,10 +93,18 @@ html body div.wrapper main div.box div.rodina {
 html body div.wrapper main div.box div.clen {
   margin-left: 50px;
 }
+html body div.wrapper main div.box div.paru {
+  margin: 10px 5px !important;
+}
 html body div.wrapper main div.box div.dary {
-  padding: 0 20px;
-  width: max-content;
+  padding: 5px 10px;
+  margin: 10px 5px;
   background-color: #ffffff;
+}
+html body div.wrapper main div.box div.cleni {
+  padding-left: 5px;
+  margin: 0 5px;
+  background-color: #fbdfe3;
 }
 html body div.wrapper main div.box input,
 html body div.wrapper main div.box select {
