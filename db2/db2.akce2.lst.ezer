@@ -603,29 +603,31 @@ form _page [,,275,360] {
   # -----------==> .. parametrizace přihlášky
   check p_rodina [13,80,400,] { tag:'pri', title:'<b>rodinné přihlášení</b>', value:'0' 
     func onchange() { p_json.p_rodina= this; web_online.change(); }}
-  check p_pro_par [30,105,400,] { tag:'pri', title:'pro manželský pár, výjimečně s dítětem a jeho pečovatelem', value:'0' 
+  check p_pro_par [30,101,400,] { tag:'pri', title:'pro manželský pár, výjimečně s dítětem a jeho pečovatelem', value:'0' 
     func onchange() { p_json.p_pro_par= this; web_online.change(); }}
-  check p_pro_LK [30,130,400,] { tag:'pri', title:'pro manželský pár s dětmi a osobními pečovateli na LK MS', value:'0' 
+  check p_pro_LK [30,123,400,] { tag:'pri', title:'pro manželský pár s dětmi a osobními pečovateli na LK MS', value:'0' 
     func onchange() { p_json.p_pro_LK= this; web_online.change(); }}
-  check p_rod_adresa [30,155,400,] { tag:'pri', title:'umožnit kontrolu a úpravu rodinné adresy', value:'0' 
+  check p_rod_adresa [30,145,400,] { tag:'pri', title:'umožnit kontrolu a úpravu rodinné adresy', value:'0' 
     func onchange() { p_json.p_rod_adresa= this; web_online.change(); }}
-  check p_obcanky [30,180,400,] { tag:'pri', title:'umožnit kontrolu a úpravu číslo obč. průkazu', value:'0' 
+  check p_obcanky [30,167,400,] { tag:'pri', title:'umožnit kontrolu a úpravu číslo obč. průkazu', value:'0' 
     func onchange() { p_json.p_obcanky= this; web_online.change(); }}
-  check p_jednotlivec [13,205,400,] { tag:'pri', title:'<b>přihlášení jednotlivce</b>', value:'0', format:'d' 
+  check p_jednotlivec [13,199,400,] { tag:'pri', title:'<b>přihlášení jednotlivce</b>', value:'0', format:'d' 
     func onchange() { p_json.p_jednotlivec= this; web_online.change(); }}
-  check p_oso_adresa [30,230,400,] { tag:'pri', title:'osobní adresa', value:'0', format:'d' 
+  check p_oso_adresa [30,221,400,] { tag:'pri', title:'osobní adresa', value:'0', format:'d' 
     func onchange() { p_json.oso_adresa= this; web_online.change(); }}
-  check p_registrace [13,268,400,] { tag:'pri', title:'povolit registraci s novým mailem', value:'0' 
+  check p_registrace [13,257,400,] { tag:'pri', title:'povolit registraci s novým mailem', value:'0' 
     func onchange() { p_json.p_registrace= this; web_online.change(); }}
-  check p_souhlas [13,288,400,] { tag:'pri', title:'vyžadovat souhlas (GDPR)', value:'0' 
+  check p_souhlas [13,277,400,] { tag:'pri', title:'vyžadovat souhlas (GDPR)', value:'0' 
     func onchange() { p_json.p_souhlas= this; web_online.change(); }}
+  check p_oprava [13,298,400,] { tag:'pri', title:'povolit načtení a opravu uložené přihlášky', value:'0' 
+    func onchange() { p_json.p_oprava= this; web_online.change(); }}
   // specifické varianty podle typu akce
-  label [13,325,400,20] { tag:'pri' title:'<b>Nastavení pro akce MS</b>' }
-  check p_obnova [13,345,400,] { tag:'pri', title:'OBNOVA MS: neúčastníky aktuálního LK brát jako náhradníky', value:'0' 
+  label [13,332,400,20] { tag:'pri' title:'<b>Nastavení pro akce MS</b>' }
+  check p_obnova [13,352,400,] { tag:'pri', title:'OBNOVA MS: neúčastníky aktuálního LK brát jako náhradníky', value:'0' 
     func onchange() { p_json.p_obnova= this; web_online.change(); }}
-  check p_vps [13,370,400,] { tag:'pri', title:'OBNOVA MS: nastavit funkci VPS podle letního kurzu', value:'0' 
+  check p_vps [13,374,400,] { tag:'pri', title:'OBNOVA MS: nastavit funkci VPS podle letního kurzu', value:'0' 
     func onchange() { p_json.p_vps= this; web_online.change(); }}
-  check p_upozorneni [13,395,400,] { tag:'pri', title:'LETNÍ KURZ MS: vyžadovat akceptaci upozornění', value:'0' 
+  check p_upozorneni [13,397,400,] { tag:'pri', title:'LETNÍ KURZ MS: vyžadovat akceptaci upozornění', value:'0' 
     func onchange() { p_json.p_upozorneni= this; web_online.change(); }}
   check p_dokument [13,420,400,] { tag:'pri', title:'LETNÍ KURZ MS: vytvořit PDF a uložit jako dokument k pobytu', value:'0' 
     func onchange() { p_json.p_dokument= this; web_online.change(); }}

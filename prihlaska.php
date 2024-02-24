@@ -6,11 +6,12 @@
   debuger je lokálne nastaven pro verze PHP: 7.2.33 - musí být ručně spuštěn Chrome
 
   lze parametrizovat takto:
-     p_registrace  -- je povoleno registrovat se s novým emailem
+    p_registrace  -- je povoleno registrovat se s novým emailem
     p_pro_par     -- obecně manželský pár, výjimečně s dítětem, případně pečovatelem
     p_rod_adresa  -- ... umožňuje se úprava rodinných údajů (adresa, SPZ, datum svatby)
     p_obcanky     -- ... umožňuje se úprava osobních údajů (občanka, telefon)
     p_souhlas     -- vyžaduje se společný souhlas se zpracováním uvedených osobních údajů
+    p_oprava      -- povolí načíst již uloženou přihlášku a opravit údaje
  jen pro obnovy MS
     p_obnova      -- pro obnovu: neúčastník aktuálního LK bude přihlášen jako náhradník
     p_vps         -- nastavit funkci VPS podle letního kurzu
@@ -18,6 +19,7 @@
     p_pro_LK      -- pro manželský pár i s dětmi, případně pečovatelem, s citlivými údaji
     p_dokument    -- vytvořit PDF a uložit jako dokument k pobytu
     p_upozorneni  -- vyžaduje se osobní souhlas s uvedenými podmínkami účasti na LK
+ 
 */
 header('Content-Type:text/html;charset=utf-8');
 header('Cache-Control:no-cache,no-store,must-revalidate');
@@ -25,7 +27,6 @@ if (!isset($_GET['akce']) || !is_numeric($_GET['akce'])) die("Online přihlašov
 session_start();
 $MAIL= 1; // 1 - maily se posílají | 0 - mail se jen ukáže - lze nastavit url&mail=0
 $TEST= 0; // 0 - bez testování | 1 - výpis stavu a sql | 2 - neukládat | 3 - login s testovacím mailem
-$CORR= 1; // 1 - načte již uloženou přihlášku a umožní opravu
 $AKCE= "T_{$_GET['akce']}"; // ID akce pro SESSION
 if (!isset($_SESSION[$AKCE])) $_SESSION[$AKCE]= (object)[];
 // -------------------------------------- nastavení &test &mail se projeví jen z chráněných IP adres
@@ -154,7 +155,7 @@ function connect_db() { // -----------------------------------------------------
   ezer_connect($answer_db);
 }
 function read_akce() { // ---------------------------------------------------------------- read akce
-  global $TEST, $akce, $options, $p_fld, $r_fld, $o_fld;
+  global $TEST, $akce, $options, $p_fld, $r_fld, $o_fld, $vars;
   $msg= '';
   $id_akce= $_GET['akce'];
   // parametry přihlášky a ověření možnosti přihlášení
@@ -217,8 +218,7 @@ function read_akce() { // ------------------------------------------------------
   //   * => pokud popis začíná hvězdičkou bude se údaj vyžadovat (hvězdička za zobrazí červeně)
   //        je to ale nutné pro každou položku naprogramovat 
   $p_fld= [ // zobrazené položky tabulky POBYT, nezobrazené: id_pobyt, web_changes
-      'pracovni'  =>['64/4','sem prosím napište případnou dietu, nebo jinou úpravu stravy '
-          . '- poloviční porci, odhlášení jídla apod.','area'],
+      'pracovni'  =>['64/4','sem prosím napište vzkaz organizátorům, např. informace, které nebylo možné nikam napsat','area'],
       'funkce'    =>[0,'funkce na akci','select'],
     ];
   $r_fld= [ // položky tabulky RODINA
@@ -258,6 +258,15 @@ function read_akce() { // ------------------------------------------------------
       'Xupozorneni'=>[ 0,'*'.$akce->upozorneni,'check','ab'],
     ] : []
   );
+  // -------------------------------------------- počáteční nastavení formuláře
+  if (!$vars->form) {
+    $vars->form= (object)[
+        'pass'=>0, // inicializovat pozici pro 0
+        'par'=>1,'deti'=>2,'pecouni'=>1, // 1=tlačítko, 2=seznam
+        'rodina'=>$akce->p_rod_adresa,'pozn'=>1,'souhlas'=>$akce->p_souhlas,
+        'oprava'=>0,  // 1 => byla načtena již uložená přihláška a je možné ji opravit
+        'todo'=>0]; // označit červeně chybějící povinné údaje po kontrole formuláře
+  }
 end:    
 //  global $trace;
 //  $trace.= debugx($akce,'hodnoty web_online');
@@ -427,7 +436,7 @@ __EOF;
 } // a
 function do_nacteni_rodiny() { // ------------------------------------------------ do nacteni_rodiny
 # (b) ověří zapsaný PIN proti poslanému, načte a vytvoří data rodiny
-  global $akce, $msg, $vars, $cleni, $post, $form, $CORR;
+  global $akce, $msg, $vars, $cleni, $post, $form;
   do_begin();
   // -------------------------------------------- jiný mail (a)
   if (isset($post->cmd_jiny_mail)) {
@@ -484,7 +493,7 @@ function do_nacteni_rodiny() { // ----------------------------------------------
           "(id_osoba={$vars->klient} OR i0_rodina=$idr) AND id_akce=$akce->id_akce "
           . "ORDER BY id_pobyt DESC LIMIT 1");
 //      display("a2: $idp,$kdy,$kdo");
-      if ($idp && !$CORR) {
+      if ($idp && !$akce->p_oprava) {
         $kdy= $kdy ? sql_time1($kdy) : '';
         $msg= $kdo=='WEB' ? "Na tuto akci jste se již $kdy přihlásili online přihláškou." : (
             $kdo ? "Na této akci jste již $kdy přihlášeni (zápis provedl uživatel se značkou $kdo" 
@@ -493,7 +502,8 @@ function do_nacteni_rodiny() { // ----------------------------------------------
         $vars->faze= 'd';
         goto end;
       }
-      elseif ($idp && $CORR) { // přihláška je uložena ale jdeme do opravy
+      elseif ($idp && $akce->p_oprava) { // přihláška je uložena ale jdeme do opravy
+        $vars->form->oprava= 1;
         kompletuj_pobyt($idp,$idr,$ido);
         if ($web_json) {
           $X= json_decode($web_json);
@@ -551,12 +561,6 @@ function do_vyplneni_dat() { // ------------------------------------------------
   $mis_upozorneni= ['a'=>'','b'=>''];
   $pdf_html= '';
 //  $post->pracovni= $post->pracovni ?? '';
-  // -------------------------------------------- počáteční nastavení formuláře
-  if (!$vars->form) {
-    $vars->form= (object)['par'=>1,'deti'=>2,'pecouni'=>1, // 1=tlačítko, 2=seznam
-        'rodina'=>$akce->p_rod_adresa,'pozn'=>1,'souhlas'=>$akce->p_souhlas,
-        'todo'=>0]; // označit červeně chybějící povinné údaje po kontrole formuláře
-  }
   // -------------------------------------------- ! zobraz děti a pečouny
   if (isset($post->cmd_zobraz_deti)) {
     $vars->form->deti= 2;
@@ -750,16 +754,16 @@ function do_vyplneni_dat() { // ------------------------------------------------
     }
     if ($deti) $clenove.= '<p><i>Naše děti (zapište prosím i ty, které necháváte doma)</i></p>';
     $clenove.= $deti;
-    $clenove.= "<br><button onclick=\"navigateTo('deti')\" type='submit' name='cmd_dalsi_dite'><i class='fa fa-green fa-plus'></i>
-      chci přihlásit další dítě</button>";
+    $clenove.= "<br><button onclick='save_position()' type='submit' name='cmd_dalsi_dite'>
+      <i class='fa fa-green fa-plus'></i>chci přihlásit další dítě</button>";
     $clenove.= "</div>";
   }
   if ($vars->form->pecouni) { // ------------------------------------------------- zobrazení pečounů
     // pokud jsou nějací členové s role=p tak zobraz napřed je, teprve na další stisk přidej prázdné
     // form->pecouni: 1=jen tlačítko 2=jen existující 3=prázdná pole
     if ($vars->form->pecouni==1 ) {
-      $clenove.= "<br><button onclick=\"navigateTo('pecouni')\" type='submit' name='cmd_dalsi_pecoun'><i class='fa fa-green fa-plus'></i>
-        chci přihlásit osobního pečovatele</button>";
+      $clenove.= "<br><button onclick='save_position()' type='submit' name='cmd_dalsi_pecoun'>
+        <i class='fa fa-green fa-plus'></i>chci přihlásit osobního pečovatele</button>";
     }
     if ($vars->form->pecouni==2) {
       $clenove.= "<div id='pecouni' class='cleni'>";
@@ -779,8 +783,8 @@ function do_vyplneni_dat() { // ------------------------------------------------
             . ($clen->spolu ? '<br>'.elem_input('o',$id,['obcanka','telefon','Xpecuje_o']) : '' )            
             . "</div>";
       }
-      $clenove.= "<br><button onclick=\"navigateTo('pecouni')\" type='submit' name='cmd_dalsi_pecoun'><i class='fa fa-green fa-plus'></i>
-        chci přihlásit dalšího osobního pečovatele</button>";
+      $clenove.= "<br><button onclick='save_position()' type='submit' name='cmd_dalsi_pecoun'>
+        <i class='fa fa-green fa-plus'></i>chci přihlásit dalšího osobního pečovatele</button>";
       $clenove.= "</div>";
     }
   }
@@ -815,11 +819,11 @@ function do_vyplneni_dat() { // ------------------------------------------------
       $pobyt
     </div>
     $souhlas
-    <button type="submit" name="cmd_check"><i class="fa fa-question"></i>
+    <button onclick='save_position();'; type="submit" name="cmd_check"><i class="fa fa-question"></i>
       zkontrolovat před odesláním</button>
-    <button type="submit" id="submit_form" name="cmd_ano" $enable_send><i class="fa $enable_green fa-send-o"></i> 
-      odeslat přihlášku</button>
-    <button type="submit" name="cmd_ne"><i class="fa fa-times fa-red"></i> 
+    <button onclick='save_position()' type="submit" id="submit_form" name="cmd_ano" $enable_send>
+      <i class="fa $enable_green fa-send-o"></i>odeslat přihlášku</button>
+    <button onclick='save_position()' type="submit" name="cmd_ne"><i class="fa fa-times fa-red"></i> 
       neposílat</button>
     <p>$msg</p>
 __EOF;
@@ -935,18 +939,36 @@ __EOD;
       </div>
 __EOD;
   // pokud dojde ke změně, zablokuj odeslání tj. vynuť novou kontrolu
-  $function_check= <<<__EOF
+  $functions= <<<__EOF
+    // Použijeme JavaScript pro přesměrování, abychom se vyhnuli problémům s cachováním
+    if (window.history.replaceState) {
+        window.history.replaceState(null, null, window.location.href);
+    }
     function check() {
       jQuery("input,select").change(function(){
         jQuery('#submit_form').prop("disabled",true);
       });
     }
-    function navigateTo(anchor) {
-      // window.location.hash = anchor; -- okamžitý skok
-      // Přidáno kvůli historii prohlížeče (pokud chceš zachovat historii navigace)
-      history.pushState(null, null, window.location.href.split('#')[0] + '#' + anchor);
+    function save_position() {
+      // Získej aktuální pozici stránky
+      var currentScrollPos = jQuery('main').scrollTop();
+      // Ulož pozici do localStorage
+      localStorage.setItem('scrollPosition', currentScrollPos);
+    }
+    function restore_position() {
+      // Získej uloženou pozici z localStorage
+      var savedScrollPos = localStorage.getItem('scrollPosition');
+      // Pokud je uložená pozice platná, přesuň stránku na tuto pozici
+      if (savedScrollPos !== null) {
+          jQuery('main').scrollTop(savedScrollPos);
+      }
+      function init_position() {
+        localStorage.setItem('scrollPosition', 0);
+        jQuery('main').scrollTop(0);
+      }
     }
 __EOF;
+  $init_position= 0 ? 'init_position();' : 'restore_position();';
   $warn= $TEST>1 ? ", bez zápisu" : '';
   $warn= $MAIL ? '' : "<div class='info'>simulace mailů$warn</div>";
   $mailbox= $mailbox ? "<div class='box' style='border-left: 20px solid grey'>$mailbox</div>" : '';
@@ -966,13 +988,10 @@ __EOF;
     <link rel="stylesheet" id="customify-google-font-css" href="//fonts.googleapis.com/css?family=Open+Sans%3A300%2C300i%2C400%2C400i%2C600%2C600i%2C700%2C700i%2C800%2C800i&amp;ver=0.3.5" type="text/css" media="all">
     <script src="/ezer3.2/client/licensed/jquery-3.3.1.min.js" type="text/javascript" charset="utf-8"></script>
     <script>
-        // Použijeme JavaScript pro přesměrování, abychom se vyhnuli problémům s cachováním
-        if (window.history.replaceState) {
-            window.history.replaceState(null, null, window.location.href);
-        }
-        $function_check
-    </script>  </head>
-  <body $if_trace onload='check();'>
+        $functions
+    </script>
+  </head>
+  <body $if_trace onload='check();$init_position'>
     <div class="wrapper">
       <header>
         <div class="header">
@@ -1614,6 +1633,16 @@ function db_close_pobyt() { // -------------------------------------------------
   }
   if (!_ezer_qry("UPDATE",'pobyt',$vars->pobyt->id_pobyt,$chng)) 
     $errors[]= "Nastala chyba při zápisu do databáze (p)"; 
+  // poznamenání souhlasu se zpracováním osobních údajů
+  if ($vars->chk_souhlas??0) {
+    $ted= date("Y-m-d H:i:s");
+    foreach ($cleni as $id=>$clen) {
+      if ($clen->spolu && in_array(get_role($id),['a','b'])) {
+        if (!_ezer_qry("UPDATE",'osoba',$id,[(object)['fld'=>'web_souhlas','op'=>'i','val'=>$ted]])) 
+          $errors[]= "Nastala chyba při zápisu do databáze (o)"; 
+      }
+    }
+  }
 }
 function _ezer_qry($op,$table,$cond_key,$chng) { // --------------------------------------- ezer qry
 # _ezer_qry = ezer_qry ALE
@@ -1626,7 +1655,7 @@ function _ezer_qry($op,$table,$cond_key,$chng) { // ----------------------------
     $ok= ezer_qry($op,$table,$cond_key,$chng);
   }
   if ($TEST) {
-    $trace.= debugx($chng,"$op $table = $ok (test=$TEST)");
+    $trace.= debugx($chng,"$op $table.$cond_key = $ok (test=$TEST)");
   }
   return $ok;
 }
