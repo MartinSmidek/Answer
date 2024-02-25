@@ -46,6 +46,9 @@ if (!isset($testovaci_mail)) {
   $TEST= $_GET['test'] ?? ($_SESSION[$AKCE]->test ?? $TEST);
   $MAIL= $_GET['mail'] ?? ($_SESSION[$AKCE]->mail ?? $MAIL);
 }
+else {
+  $MAIL= 0;
+}
 # --------------------------------------------------------------- zpracování jednoho stavu formuláře
 start();                // nastavení $vars podle SESSION
 connect_db();           // napojení na databázi a na Ezer 
@@ -228,12 +231,15 @@ function polozky() { // --------------------------------------------------------
   global $akce, $options, $p_fld, $r_fld, $o_fld;
   $options= [
       'role'      => [''=>'vztah k rodině?','a'=>'manžel','b'=>'manželka','d'=>'dítě','p'=>'jiný vztah'],
-      'cirkev'    => [''=>'něco prosím vyberte',23=>'křesťan',1=>'katolická',2=>'evangelická',7=>'bratrská',
-                      4=>'apoštolská',19=>'husitská',22=>'metodistická',18=>'baptistická',5=>'adventistická',
-                      24=>'jiná',21=>'hledající',3=>'bez příslušnosti',16=>'nevěřící'],
-      'vzdelani'  => [''=>'něco prosím vyberte',1=>'ZŠ',4=>'vyučen/a',2=>'SŠ',33=>'VOŠ',3=>'VŠ',16=>'VŠ student'],
+      'cirkev'    => map_cis('ms_akce_cirkev','zkratka'),
+      'vzdelani'  => map_cis('ms_akce_vzdelani','zkratka'),
+//      'cirkev'    => [''=>'něco prosím vyberte',23=>'křesťan',1=>'katolická',2=>'evangelická',7=>'bratrská',
+//                      4=>'apoštolská',19=>'husitská',22=>'metodistická',18=>'baptistická',5=>'adventistická',
+//                      24=>'jiná',21=>'hledající',3=>'bez příslušnosti',16=>'nevěřící'],
+//      'vzdelani'  => [''=>'něco prosím vyberte',1=>'ZŠ',4=>'vyučen/a',2=>'SŠ',33=>'VOŠ',3=>'VŠ',16=>'VŠ student'],
       'funkce'    => map_cis('ms_akce_funkce','zkratka'),
     ];
+  $options['cirkev']['']= 'něco prosím vyberte';
   $options['vzdelani']['']= 'něco prosím vyberte';
   // definice obsahuje:  položka => [ délka , popis , formát ]
   //   X => pokud jméno položky začíná X, nebude se ukládat, jen zapisovat do PDF
@@ -244,7 +250,7 @@ function polozky() { // --------------------------------------------------------
       'funkce'    =>[0,'funkce na akci','select'],
     ];
   $r_fld= [ // položky tabulky RODINA
-      'nazev'     =>[15,'jméno Vaší rodiny',''],
+      'nazev'     =>[15,'* název rodiny',''],
       'ulice'     =>[15,'* ulice a č.or. NEBO č.p.',''],
       'psc'       =>[ 5,'* PSČ',''],
       'obec'      =>[20,'* obec/město',''],
@@ -641,7 +647,13 @@ function do_vyplneni_dat() { // ------------------------------------------------
     $chybi= 0;
     foreach ($cleni as $id=>$clen) {
       $role= get_role($id);
-      if (!$clen->spolu && $role!='p') continue; // projdeme ty co jedou ale i děto co nejedou
+//      if (!$clen->spolu && $role!='p') continue; // projdeme ty co jedou ale i děti co nejedou
+      if (!isset($clen->_show_)) continue;
+      // zcela nevyplněné děti apečouny ignorujeme
+      if (in_array($role,['d','p']) && $id<0) { 
+        if (get('o','jmeno',$id)=='' && get('o','prijmeni',$id)=='') 
+          continue;
+      }
       if (elems_missed('o',$id)) {
         $chybi++;
       }
@@ -818,6 +830,9 @@ function do_vyplneni_dat() { // ------------------------------------------------
   if ($vars->form->rodina) {
     $rod_adresa= "<p>Zapište, nebo zkontrolujte a případně upravte vaši rodinnou adresu a další údaje:</p>";
     $idr= key($vars->rodina);
+    if ($idr<0) { // požadujeme název rodiny
+      $rod_adresa.= elem_input('r',$idr,['nazev']).'<br>';
+    }
     $rod_adresa.= elem_input('r',$idr,['ulice','psc','obec','spz','datsvatba','<br>','r_ms']);
   }
   // -------------------------------------------- poznánka k pobytu
@@ -836,6 +851,7 @@ function do_vyplneni_dat() { // ------------------------------------------------
   // -------------------------------------------- redakce formuláře
   $enable_send= $vars->kontrola ? '' : 'disabled';
   $enable_green= $vars->kontrola ? 'fa-green' : '';
+  // bylo zkontrolovat před odesláním
   $form= <<<__EOF
     <p>Poznačte, koho na akci přihlašujete. Zkontrolujte a případně upravte zobrazené údaje.</p>
     $clenove
@@ -845,7 +861,7 @@ function do_vyplneni_dat() { // ------------------------------------------------
     </div>
     $souhlas
     <button onclick='save_position();'; type="submit" name="cmd_check"><i class="fa fa-question"></i>
-      zkontrolovat před odesláním</button>
+      zkontrolovat údaje (lze opakovat)</button>
     <button onclick='save_position()' type="submit" id="submit_form" name="cmd_ano" $enable_send>
       <i class="fa $enable_green fa-send-o"></i>odeslat přihlášku</button>
     <button onclick='save_position()' type="submit" name="cmd_ne"><i class="fa fa-times fa-red"></i> 
@@ -1209,6 +1225,7 @@ function elem_input($table,$id,$flds) { // -------------------------------------
   $desc= $table=='r' ? $r_fld             : ($table=='o' ? $o_fld             : $p_fld);
   $pair= $table=='r' ? $vars->rodina[$id] : ($table=='o' ? $cleni[$id]  : $vars->pobyt);
   $prfx= $table=='r' ? 'r_'               : ($table=='o' ? "{$id}_"           : 'p_');
+  if (!isset($pair->_show_)) $pair->_show_= 1;
   foreach ($flds as $fld) {
     if (!isset($desc[$fld])) {
 //      $html.= $fld;
@@ -1270,6 +1287,7 @@ function elem_check(&$errs,$case,$title,$table,$fld,$id=0) {
       case 'mail':
         $err= null;
         foreach (preg_split("/[,;]/",$val) as $val1) {
+          if (!trim($val1)) continue;
           $ok1= check_mail($val1,$err);
 //          $ok1= emailIsValid($val1,$err); 
           if (!$ok1) $errs[]= $err;
@@ -1463,6 +1481,8 @@ function db_vytvor_nebo_oprav_clena($id) { // --------------------------- db vyt
   $prijmeni= get('o','prijmeni',$id);
   $narozeni= date2sql(get('o','narozeni',$id));
   if ($id<0) {
+    // pokud je prázdné jméno i příjmení nic nezapisujeme
+    if (trim($jmeno)=='' && trim($prijmeni=='')) goto end;
     // člen ještě není v databázi
     $ido= 0;
     // abychom zamezili duplicitám podle jména a data narození zjistíme, jestli už není v evidenci 
@@ -1567,6 +1587,8 @@ function db_vytvor_nebo_oprav_clena($id) { // --------------------------- db vyt
     $ids= _ezer_qry("INSERT",'spolu',0,$chng);
     if (!$ids) $errors[]= "Nastala chyba při zápisu do databáze (cs)"; 
   }
+end:
+  // konec
 }
 function db_vytvor_nebo_oprav_rodinu() { // ---------------------------- do vytvor_nebo_oprav_rodinu
 # oprav rodinné údaje resp. vytvoř novou rodinu
