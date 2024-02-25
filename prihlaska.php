@@ -187,8 +187,8 @@ function read_akce() { // ------------------------------------------------------
   // doplnění konstant
   $akce->id_akce= $id_akce;
   $akce->preambule= "Tyto údaje slouží pouze pro vnitřní potřebu organizátorů kurzu MS, 
-      nejsou poskytovány cizím osobám ani institucím. Pro vaši spokojenost během kurzu je 
-      nezbytné, abyste dotazník pečlivě a pravdivě vyplnili.";
+      nejsou poskytovány cizím osobám ani institucím.<br /> <b>Pro vaši spokojenost během kurzu je 
+      nezbytné, abyste dotazník pečlivě a pravdivě vyplnili.</b>";
   $akce->form_souhlas= " Vyplněním této přihlášky dáváme výslovný souhlas s použitím uvedených 
       osobních údajů pro potřeby organizace akcí YMCA Setkání v souladu s Nařízením 
       Evropského parlamentu a Rady (EU) 2016/679 ze dne 27. dubna 2016 o ochraně 
@@ -201,14 +201,14 @@ function read_akce() { // ------------------------------------------------------
       zapojit se plně do programu. V případě, že jsem v odborné péči psychologa nebo psychiatra, 
       prohlašuji, že se akce účastním s jeho souhlasem a konzultoval jsem náročnost akce s organizátory. 
       Zatržením prohlašuji, že jsem si plně vědom@, že pořadatel neodpovídá za škody a újmy, které by 
-      mně/nám mohly vzniknout v souvislosti s nedodržením těchto zásad účasti na kurzu a veškerá rizika
+      mně/nám mohly vzniknout v souvislosti s nedodržením těchto zásad účasti na kurzu, a veškerá rizika
       v takovém případě přebíráme na sebe.";
   // ------------------------------------------ definice položek
   $options= [
       'role'      => [''=>'vztah k rodině?','a'=>'manžel','b'=>'manželka','d'=>'dítě','p'=>'jiný vztah'],
       'cirkev'    => [''=>'něco prosím vyberte',23=>'křesťan',1=>'katolická',2=>'evangelická',7=>'bratrská',
                       4=>'apoštolská',19=>'husitská',22=>'metodistická',18=>'baptistická',5=>'adventistická',
-                      24=>'jiná',21=>'hledající',3=>'bez příslušnosti'],
+                      24=>'jiná',21=>'hledající',3=>'bez příslušnosti',16=>'nevěřící'],
       'vzdelani'  => [''=>'něco prosím vyberte',1=>'ZŠ',4=>'vyučen/a',2=>'SŠ',33=>'VOŠ',3=>'VŠ',16=>'VŠ student'],
       'funkce'    => map_cis('ms_akce_funkce','zkratka'),
     ];
@@ -223,7 +223,7 @@ function read_akce() { // ------------------------------------------------------
     ];
   $r_fld= [ // položky tabulky RODINA
       'nazev'     =>[15,'jméno Vaší rodiny',''],
-      'ulice'     =>[15,'* ulice č.or. NEBO č.p.',''],
+      'ulice'     =>[15,'* ulice a č.or. NEBO č.p.',''],
       'psc'       =>[ 5,'* PSČ',''],
       'obec'      =>[20,'* obec/město',''],
       'spz'       =>[12,'SPZ auta na akci',''],
@@ -755,7 +755,7 @@ function do_vyplneni_dat() { // ------------------------------------------------
     if ($deti) $clenove.= '<p><i>Naše děti (zapište prosím i ty, které necháváte doma)</i></p>';
     $clenove.= $deti;
     $clenove.= "<br><button onclick='save_position()' type='submit' name='cmd_dalsi_dite'>
-      <i class='fa fa-green fa-plus'></i>chci přihlásit další dítě</button>";
+      <i class='fa fa-green fa-plus'></i>chci přidat další dítě</button>";
     $clenove.= "</div>";
   }
   if ($vars->form->pecouni) { // ------------------------------------------------- zobrazení pečounů
@@ -791,7 +791,7 @@ function do_vyplneni_dat() { // ------------------------------------------------
   // -------------------------------------------- úprava rodinné adresy
   $rod_adresa= '';
   if ($vars->form->rodina) {
-    $rod_adresa= "<p>Zkontrolujte a případně upravte vaši rodinnou adresu a další údaje:</p>";
+    $rod_adresa= "<p>Zapište, nebo zkontrolujte a případně upravte vaši rodinnou adresu a další údaje:</p>";
     $idr= key($vars->rodina);
     $rod_adresa.= elem_input('r',$idr,['ulice','psc','obec','spz','datsvatba','<br>','r_ms']);
   }
