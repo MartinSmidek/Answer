@@ -1322,9 +1322,12 @@ function nacti_clena($ido,$role) { // ------------------------------------------
   $clen= $cleni[$ido]= (object)[];
   $o= select_object('*','osoba',"id_osoba=$ido");
   foreach ($o_fld as $f=>list(,$title,$typ)) {
+    // nedatabázové položky inicializuj
     if (substr($f,0,1)=='X') 
       $clen->$f= substr($title,0,1)=='*' ? [init_value($typ)] : init_value($typ);
+    // resp. ignoruj
     elseif (!isset($o->$f)) continue;
+    // databázové načti s případnou konverzí
     else {
       $v= $o->$f;
       if ($typ=='date') $v= sql2date($v);
@@ -1335,6 +1338,16 @@ function nacti_clena($ido,$role) { // ------------------------------------------
   $cleni[$ido]->spolu= 1;
 }
 function db_nacti_cleny_rodiny($idr,$prvni_ido) { // ------------------------- db nacti_cleny_rodiny
+  $ro= pdo_query(
+    "SELECT id_osoba$flds,role,IF(kontakt=1,telefon,'') AS telefon
+    FROM osoba AS o JOIN tvori USING (id_osoba)
+    WHERE id_rodina=$idr AND o.deleted='' AND role IN ('a','b','d','p') 
+    ORDER BY IF(id_osoba=$prvni_ido,'0',narozeni)  ");
+  while ($ro && ($c= pdo_fetch_object($ro))) {
+    
+  }
+}
+function xdb_nacti_cleny_rodiny($idr,$prvni_ido) { // ------------------------- db nacti_cleny_rodiny
   global $akce, $cleni,$o_fld;
   $nodb= [];
   $roles= []; // role členů rodiny
@@ -1391,7 +1404,7 @@ function kompletuj_pobyt($idp,$idr,$ido) { // ----------------------------------
   elseif ($ido) { // vytvoříme rodinu a načteme klienta a doplníme druhého z manželů
     $role= select('sex','osoba',"id_osoba=$ido");
     vytvor_rodinu();        
-    nacti_clena($ido,['a']);
+    nacti_clena($ido,$role);
     vytvor_clena(-1,$role=='b' ? 'a' : 'b');
   }
   else { // vytvoříme rodinu 
