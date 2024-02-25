@@ -1436,7 +1436,7 @@ form _pobyt [,,360,62] {
   }
 
   // t = pracovní poznámka
-  edit  p_pracovni [5,0,349,74] {tag:'t', data:p.pracovni, skill:'yaa|yaa:t;faa|faa:t;caa|caa:t'
+  edit  p_pracovni [5,0,349,74] {tag:'t', data:p.pracovni, skill:'yaa:t|yaa:t;faa:t|faa:t;caa:t|caa:t'
       title:'^(pracovní poznámka)' }
   label [5,74,1,18] { tag:'t' } // oprava
   // u = úhrada
