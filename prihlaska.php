@@ -41,7 +41,7 @@ if (!ip_ok()) {
 //$testovaci_mail= 'frantisekbezdek@atlas.cz';  $TEST= 3; // známá osoba ale bez rodiny
 //$testovaci_mail= 'kancelar@setkani.org';      $TEST= 3; 
 //$testovaci_mail= 'nemo3@smidek.eu';         $TEST= 3; // neznámý mail
-//$TEST= 2;
+//$TEST= 1;
 if (!isset($testovaci_mail)) {
   $TEST= $_GET['test'] ?? ($_SESSION[$AKCE]->test ?? $TEST);
   $MAIL= $_GET['mail'] ?? ($_SESSION[$AKCE]->mail ?? $MAIL);
@@ -228,19 +228,22 @@ end:
   }
 } // doplnění infromací o akci
 function polozky() { // -------------------------------------------------------------------- polozky
-  global $akce, $options, $p_fld, $r_fld, $o_fld;
+  global $akce, $options, $sub_options, $p_fld, $r_fld, $o_fld;
   $options= [
       'role'      => [''=>'vztah k rodině?','a'=>'manžel','b'=>'manželka','d'=>'dítě','p'=>'jiný vztah'],
-      'cirkev'    => map_cis('ms_akce_cirkev','zkratka'),
-      'vzdelani'  => map_cis('ms_akce_vzdelani','zkratka'),
-//      'cirkev'    => [''=>'něco prosím vyberte',23=>'křesťan',1=>'katolická',2=>'evangelická',7=>'bratrská',
-//                      4=>'apoštolská',19=>'husitská',22=>'metodistická',18=>'baptistická',5=>'adventistická',
-//                      24=>'jiná',21=>'hledající',3=>'bez příslušnosti',16=>'nevěřící'],
-//      'vzdelani'  => [''=>'něco prosím vyberte',1=>'ZŠ',4=>'vyučen/a',2=>'SŠ',33=>'VOŠ',3=>'VŠ',16=>'VŠ student'],
+      'cirkev'    => [''=>'něco prosím vyberte',23=>'křesťan',1=>'katolická',2=>'evangelická',7=>'bratrská',
+                      4=>'apoštolská',19=>'husitská',22=>'metodistická',18=>'baptistická',5=>'adventistická',
+                      24=>'jiná',21=>'hledající',3=>'bez příslušnosti',16=>'nevěřící'],
+      'vzdelani'  => [''=>'něco prosím vyberte',1=>'ZŠ',4=>'vyučen/a',2=>'SŠ',33=>'VOŠ',3=>'VŠ',16=>'VŠ student'],
       'funkce'    => map_cis('ms_akce_funkce','zkratka'),
     ];
   $options['cirkev']['']= 'něco prosím vyberte';
   $options['vzdelani']['']= 'něco prosím vyberte';
+  // v $sub_options je převodní tabulka plné->zúžené podle _cis.ikona
+  $sub_options= [
+      'cirkev'    => map_cis('ms_akce_cirkev','ikona'),
+      'vzdelani'  => map_cis('ms_akce_vzdelani','ikona'),
+    ];
   // definice obsahuje:  položka => [ délka , popis , formát ]
   //   X => pokud jméno položky začíná X, nebude se ukládat, jen zapisovat do PDF
   //   * => pokud popis začíná hvězdičkou bude se údaj vyžadovat (hvězdička za zobrazí červeně)
@@ -274,7 +277,7 @@ function polozky() { // --------------------------------------------------------
       'telefon'   =>[15,'* telefon','','abp'],
       'email'     =>[35,'* e-mailová adresa','','ab']] : [],
     $akce->p_pro_LK ? [
-      'vzdelani'  =>[20,'* vzdělání','select','ab'],
+      'vzdelani'  =>[20,'* vzdělání','sub_select','ab'],
       'zamest'    =>[35,'* povolání, obor ve kterém pracujete/budete pracovat','','ab'],
       'zajmy'     =>[35,'* zájmy','','ab'],
       'jazyk'     =>[20,'znalost jazyků (Aj, Nj, ...)','','ab'],
@@ -513,7 +516,7 @@ function do_nacteni_rodiny() { // ----------------------------------------------
           "(id_osoba={$vars->klient} OR i0_rodina=$idr) AND id_akce=$akce->id_akce "
           . "ORDER BY id_pobyt DESC LIMIT 1");
 //      display("a2: $idp,$kdy,$kdo");
-      if ($idp && !$akce->p_oprava) {
+      if ($idp && !($akce->p_oprava??0)) {
         $kdy= $kdy ? sql_time1($kdy) : '';
         $msg= $kdo=='WEB' ? "Na tuto akci jste se již $kdy přihlásili online přihláškou." : (
             $kdo ? "Na této akci jste již $kdy přihlášeni (zápis provedl uživatel se značkou $kdo" 
@@ -529,6 +532,7 @@ function do_nacteni_rodiny() { // ----------------------------------------------
           $X= json_decode($web_json);
           foreach ($X->cleni as $id=>$corr) {
             foreach ((array)$corr as $f=>$v) {
+              if (!isset($cleni[$id])) continue;
               $cleni[$id]->$f= [$v];
             }
           }
@@ -643,31 +647,49 @@ function do_vyplneni_dat() { // ------------------------------------------------
       $neuplne[]= "Zaškrtněte prosím kdo se akce zúčastní";
       $zapsat= false;
     }      
-    // ------------------------------ mají manželé vyplněné všechny údaje?
+    // ------------------------------ mají členové vyplněné všechny údaje?
     $chybi= 0;
     foreach ($cleni as $id=>$clen) {
       $role= get_role($id);
-//      if (!$clen->spolu && $role!='p') continue; // projdeme ty co jedou ale i děti co nejedou
       if (!isset($clen->_show_)) continue;
-      // zcela nevyplněné děti apečouny ignorujeme
+      // ---------------------------------------------- deti pečouni
+      // zcela nevyplněné děti a pečouny zrušíme
       if (in_array($role,['d','p']) && $id<0) { 
-        if (get('o','jmeno',$id)=='' && get('o','prijmeni',$id)=='') 
+        $spolu= get('o','spolu',$id);
+        $jmeno= get('o','jmeno',$id);
+        // pokud není vyplněné jméno a není na akci, zrušíme záznam
+        if (!$jmeno && !$spolu) {
+          unset($cleni[$id]);
+          unset($vars->cleni[$id]); // jinak by to i po do_end() zůstalo
           continue;
+        }
+        if (!$jmeno && !get('o','prijmeni',$id) && !get('o','narozeni',$id)) {
+          $neuplne[]= "chybí údaje o dítěti/pečovateli ... kontroluje se pouze, pokud jede na akci";
+        }
+        if (elems_missed('o',$id)) {
+          $chybi++;
+        }
+        elem_check($neuplne,'date','datum narození','o','narozeni',$id);
+        elem_check($neuplne,'mail','mailovou adresu','o','email',$id);
       }
-      if (elems_missed('o',$id)) {
-        $chybi++;
+      // ---------------------------------------------- manželé
+      else {
+        if (in_array($role,['a','b']) && !$clen->Xupozorneni??1) {
+          $mis_upozorneni[$role]= "class=missing"; 
+          $neuplne[]= "potvrďte prosím Váš souhlas s upozorněním - ".($role=='a'?'muž':'žena');
+        }
+        if (elems_missed('o',$id)) {
+          $chybi++;
+        }
+        elem_check($neuplne,'date','datum narození','o','narozeni',$id);
+        elem_check($neuplne,'mail','mailovou adresu','o','email',$id);
       }
-      if (in_array($role,['a','b']) && !$clen->Xupozorneni??1) {
-        $mis_upozorneni[$role]= "class=missing"; 
-        $neuplne[]= "potvrďte prosím Váš souhlas s upozorněním - ".($role=='a'?'muž':'žena');
-      }
-      elem_check($neuplne,'date','datum narození','o','narozeni',$id);
-      elem_check($neuplne,'mail','mailovou adresu','o','email',$id);
     }
     if ($chybi) {
       $neuplne[]= "doplňte označené osobní údaje";
       $zapsat= false;
     }
+    // ------------------------------------------------ rodina
     if (elems_missed('r')) {
       $neuplne[]= "doplňte označené rodinné údaje";
       $zapsat= false;
@@ -675,11 +697,12 @@ function do_vyplneni_dat() { // ------------------------------------------------
     if (isset($r_fld['datsvatba'])) {
       elem_check($neuplne,'date','datum svatby','r','datsvatba');
     }
+    // ------------------------------------------------ pobyt
     if (elems_missed('p')) {
       $neuplne[]= "doplňte označené poznámky k pobytu";
       $zapsat= false;
     }
-//    // ------------------------------ mají nově vyplnění všechny údaje?
+//    // ---------------------------------------------- souhlas GDPR
     if ($akce->p_souhlas && !$vars->chk_souhlas) {
       $neuplne[]= "potvrďte prosím váš souhlas s použitím osobních údajů";
       $mis_souhlas= "class=missing";
@@ -752,6 +775,7 @@ function do_vyplneni_dat() { // ------------------------------------------------
                 ? elem_text('o',$id,['jmeno','prijmeni']) 
                   . ($role=='b' ? elem_text('o',$id,['roz. ','rodne']) : '')
                   . elem_text('o',$id,[', ','narozeni',',','role'])
+                  . elem_text('o',$id,[' ... TEST: ','vzdelani','|','cirkev'])
                 : elem_input('o',$id,['jmeno','prijmeni'])
                   . ($role=='b' ? elem_input('o',$id,['rodne']) : '')
                   . elem_input('o',$id,[',','narozeni'])
@@ -1078,7 +1102,7 @@ function get($table,$fld,$id=0) { // -------------------------------------------
   if ($table=='r' && !$id) $id= key($vars->rodina);
   $pair= $table=='r' ? $vars->rodina[$id] : ($table=='p' ? $vars->pobyt : $cleni[$id]);
   if (isset($pair->$fld)) {
-    $v= is_array($pair->$fld) ? ($pair->$fld[1] ?? $pair->$fld[0]) : $pair->$fld;
+    $v= trim(is_array($pair->$fld) ? ($pair->$fld[1] ?? $pair->$fld[0]) : $pair->$fld);
   }
   else $v= false;
   return $v;
@@ -1094,7 +1118,7 @@ function gets($table,$id=0) { // -----------------------------------------------
   foreach ($desc as $f=>list(,,$typ)) {
     if (!isset($pair->$f)) continue;
     $v= is_array($pair->$f) ? ($pair->$f[1] ?? $pair->$f[0]) : $pair->$f;
-    if ($typ=='select') 
+    if (in_array($typ,['select','sub_select'])) 
       $v= $options[$f][$v] ?? '?';
     $ret->$f= $v;
   }
@@ -1107,7 +1131,7 @@ function inits($table) { // --     ---------------------------------------------
   $desc= $table=='r' ? $r_fld : ($table=='p' ? $p_fld : $o_fld);
   foreach ($desc as $f=>list(,,$typ)) {
     $v= init_value($typ);
-    if ($typ=='select') 
+    if (in_array($typ,['select','sub_select'])) 
       $v= $options[$f][0] ?? '?';
     $ret->$f= $v;
   }
@@ -1129,6 +1153,7 @@ function get_fmt($table,$fld,$id=0) { // ---------------------------------------
         $v= sql2date($v,0);
         break;
       case 'select':
+      case 'sub_select':
         $v= $options[$fld][$v] ?? '?';
         break;
       }
@@ -1142,20 +1167,6 @@ function set($table,$fld,$val,$id=0) { // --------------------------------------
 //  $desc= $table=='r' ? $r_fld : ($table=='p' ? $p_fld : $o_fld);
   if ($table=='r' && !$id) $id= key($vars->rodina);
   $pair= $table=='r' ? $vars->rodina[$id] : ($table=='p' ? $vars->pobyt : $cleni[$id]);
-//  if (!isset($desc[$fld])) {
-//    $v= $val;
-//  }
-//  else {
-//    list(,,$typ)= $desc[$fld];
-//    switch ($typ) {
-//    case 'date':
-//      $v= sql2date($v,1);
-//      break;
-//    case 'select':
-//      $v= array_search($val,$options[$fld]);
-//      break;
-//    }
-//  }
   if (is_array($pair->$fld)) 
     $pair->$fld[1]= $val;
   else
@@ -1176,7 +1187,7 @@ function elems_missed($table,$id=0) { // ---------------------------------------
       $v= $vars->pobyt->$f;
       if (is_array($v) && substr($title,0,1)=='*') {
         $v= $v[1] ?? $v[0];
-        if ($v=='' || $typ=='select' && $v==0) {
+        if ($v=='' || in_array($typ,['select','sub_select']) && $v==0) {
           $missed= 1;
           display("chybí $table $id $f");
           goto end;
@@ -1191,7 +1202,7 @@ function elems_missed($table,$id=0) { // ---------------------------------------
       if (substr($title,0,1)=='*') {
         if (is_array($rodina->$f)) {
           $v= $rodina->$f[1] ?? $rodina->$f[0];
-          if ($v=='' || $typ=='select' && $v==0) {
+          if ($v=='' || in_array($typ,['select','sub_select']) && $v==0) {
             $missed= 1;
             display("chybí $table $id $f");
             goto end;
@@ -1206,7 +1217,7 @@ function elems_missed($table,$id=0) { // ---------------------------------------
       if (substr($title,0,1)=='*' && strpos($omez,get_role($id))!==false) {
         if (is_array($clen->$f)) {
           $v= $clen->$f[1] ?? $clen->$f[0];
-          if ($v=='' || ($typ=='select' && $v==0)) {
+          if ($v=='' || (in_array($typ,['select','sub_select']) && $v==0)) {
             $missed= 1;
             display("chybí $table $id $f");
             goto end;
@@ -1239,7 +1250,8 @@ function elem_input($table,$id,$flds) { // -------------------------------------
     $todo= '';
     if (substr($title,0,1)=='*') { //  && ($table!='o' || $pair->spolu)) {
       $title=  "<b style='color:red'>*</b>".substr($title,1);
-      if ($vars->form->todo && ($v=='' || $typ=='select' && $v==0 || isset($pair->_corr_->$fld))) {
+      if ($vars->form->todo 
+        && ($v=='' || in_array($typ,['select','sub_select']) && $v==0 || isset($pair->_corr_->$fld))) {
         $todo= " class='missing'";
       }
     }
@@ -1254,12 +1266,14 @@ function elem_input($table,$id,$flds) { // -------------------------------------
 //      $html.= "<label class='upper'>$title<input type='text' name='$name' size='$len' value='$x'$todo></label>";
 //      break;
     case 'select':
+    case 'sub_select':
       $html.= "<label class='upper'>$title<select$todo name='$name'>";
+      if (isset($options[$fld][''])) {
+        $selected= !$v ? 'selected' : '';
+        $html.= "<option disabled='disabled' $selected>{$options[$fld]['']}</option>";
+      }
       foreach ($options[$fld] as $vo=>$option) {
-        if ($vo=='') {
-          $html.= "<option disabled='disabled' selected='selected'>$option</option>";
-          continue;
-        }
+        if ($vo=='') continue;
         $selected= $v==$vo ? 'selected' : '';
         $html.= "\n  <option value='$vo' $selected>$option</option>";
       }
@@ -1335,7 +1349,7 @@ function vytvor_clena($ido,$role,$spolu) { // ----------------------------------
   $cleni[$ido]->spolu= $spolu;
 }
 function init_value($typ) { // ---------------------------------------------------------- init value
-  $val= $typ=='select' ? 0 : '';
+  $val= in_array($typ,['select','sub_select']) ? 0 : '';
   return $val;
 }
 # --------------------------------------------------------------------------------- čtení z databáze
@@ -1379,7 +1393,7 @@ function nacti_rodinu($idr) { // -----------------------------------------------
 }
 function nacti_clena($ido,$role) { // -------------------------------------------------- nacti clena
   // přečteme položky dané osoby, přidáme roli a že je na akci
-  global $cleni, $o_fld;
+  global $cleni, $o_fld, $sub_options;
   $clen= $cleni[$ido]= (object)[];
   $o= select_object('*','osoba',"id_osoba=$ido");
   foreach ($o_fld as $f=>list(,$title,$typ,$omez)) {
@@ -1396,8 +1410,17 @@ function nacti_clena($ido,$role) { // ------------------------------------------
     // databázové načti s případnou konverzí
     else {
       $v= $o->$f;
-      if ($typ=='date') $v= sql2date($v);
-      $clen->$f= substr($title,0,1)=='*' ? [$v] : $v;
+      if ($typ=='date') {
+        $v= sql2date($v);
+        $clen->$f= substr($title,0,1)=='*' ? [$v] : $v;
+      }
+      elseif ($typ=='sub_select') {
+        $sub_v= $sub_options[$f][$v] ?? 0;
+        $clen->$f= substr($title,0,1)=='*' ? [-1=>$v,0=>$sub_v] : [-1=>$v,0=>$sub_v];
+      }
+      else {
+        $clen->$f= substr($title,0,1)=='*' ? [$v] : $v;
+      }
     }
   }
   $cleni[$ido]->role= $role;
@@ -1508,7 +1531,8 @@ function db_vytvor_nebo_oprav_clena($id) { // --------------------------- db vyt
   if ($ido==0) {
     // zapíšeme novou osobu a připojíme ji do rodiny
     set('p','web_changes',get('p','web_changes')|4);
-    $sex= select('sex','_jmena',"jmeno='$jmeno' LIMIT 1");
+    $jmeno_= preg_split("/[ \-]/",$jmeno);
+    $sex= select('sex','_jmena',"jmeno='$jmeno_[0]' LIMIT 1");
     $sex= $sex==1 || $sex==2 ? $sex : 0;
     $kontakt= 0;
     $chng= array(
@@ -1566,6 +1590,9 @@ function db_vytvor_nebo_oprav_clena($id) { // --------------------------- db vyt
             $v0= date2sql($v0);
             $v= date2sql($v);
           }
+          elseif ($o_fld[$f][2]=='sub_select') {
+            $v0= $vals[-1];
+          }
           $chng[]= (object)['fld'=>$f, 'op'=>'u','old'=>$v0,'val'=>$v];
         }
       }
@@ -1592,28 +1619,15 @@ end:
 }
 function db_vytvor_nebo_oprav_rodinu() { // ---------------------------- do vytvor_nebo_oprav_rodinu
 # oprav rodinné údaje resp. vytvoř novou rodinu
-  global $akce, $r_fld, $vars, $cleni, $errors, $web_changes;
+  global $akce, $r_fld, $vars, $errors, $web_changes;
   // web_changes= 1/2 pro INSERT/UPDATE pobyt+spolu | 4/8 pro INSERT/UPDATE osoba | 16/32 pro INSERT/UPDATE rodina
   $id= key($vars->rodina);
   $rodina= $vars->rodina[$id];
   if ($id<0) {
-    // musíme vytvořit rodinu - vymyslíme název
-    $nazev= "nová-rodina";
-    foreach (array_keys($cleni) as $ido) {
-      $role= get_role($ido);
-      $prijmeni= get('o','prijmeni',$ido);
-      if ($role=='b' && $prijmeni) {
-        $nazev= preg_replace('~ová$~','',$prijmeni).'ovi';
-        break;
-      }
-      elseif ($role=='a') {
-        $nazev= $prijmeni;
-      }
-    }
-    // a vytvoříme ji
+    // musíme vytvořit rodinu 
     set('p','web_changes',get('p','web_changes')|16);
     $chng= array(
-      (object)['fld'=>'nazev',    'op'=>'i','val'=>$nazev],
+//      (object)['fld'=>'nazev',    'op'=>'i','val'=>$nazev],
       (object)['fld'=>'access',   'op'=>'i','val'=>$akce->org],
       (object)['fld'=>'web_zmena',  'op'=>'i','val'=>date('Y-m-d')]
     );
@@ -1659,7 +1673,7 @@ function db_close_pobyt() { // -------------------------------------------------
   $web_json= (object)['cleni'=>[]]; 
   foreach ($cleni as $id=>$clen) {
     foreach ((array)$clen as $f=>$v) {
-      if (!in_array($f,['spolu','Xpovaha','Xmanzelstvi','Xocekavani','Xrozveden']) ) continue;
+      if (!in_array($f,['spolu','Xpovaha','Xmanzelstvi','Xocekavani','Xrozveden','Xupozorneni']) ) continue;
       $v= $v[1]??($v[0]??$v);
       if ($v!=='' || $f=='spolu') {
         if (!isset($web_json->cleni[$id])) $web_json->cleni[$id]= (object)[];
