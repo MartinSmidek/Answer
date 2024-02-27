@@ -546,8 +546,8 @@ function do_nacteni_rodiny() { // ----------------------------------------------
         $vars->form->oprava= 1;
         kompletuj_pobyt($idp,$idr,$ido);
         global $TEST;
-        if ($TEST && !$web_json && $idr==3895)
-          $web_json= '{"cleni":{"6847":{"spolu":1,"Xupozorneni":"x","Xpovaha":"flegmatik","Xmanzelstvi":"dobr\u00e9","Xocekavani":"dobr\u00e9 kafe","Xrozveden":"Nikoliv\u011bk"}, "6849":{"spolu":1,"Xupozorneni":"x","Xpovaha":"v\u011bt\u0161inou klidn\u00e1, n\u011bkdy m\u00e9n\u011b","Xmanzelstvi":"u\u017e 25 let moc fajn","Xocekavani":"pravidelnou \u00fadr\u017ebu vztahu","Xrozveden":"ne"},"13783":{"spolu":0}}}';
+//        if ($TEST && !$web_json && $idr==3895)
+//          $web_json= '{"cleni":{"6847":{"spolu":1,"Xupozorneni":"x","Xpovaha":"flegmatik","Xmanzelstvi":"dobr\u00e9","Xocekavani":"dobr\u00e9 kafe","Xrozveden":"Nikoliv\u011bk"}, "6849":{"spolu":1,"Xupozorneni":"x","Xpovaha":"v\u011bt\u0161inou klidn\u00e1, n\u011bkdy m\u00e9n\u011b","Xmanzelstvi":"u\u017e 25 let moc fajn","Xocekavani":"pravidelnou \u00fadr\u017ebu vztahu","Xrozveden":"ne"},"13783":{"spolu":0}}}';
         if ($web_json) {
           $X= json_decode($web_json);
           foreach ($X->cleni as $id=>$corr) {
@@ -566,16 +566,16 @@ function do_nacteni_rodiny() { // ----------------------------------------------
         kompletuj_pobyt(0,$idr,$ido);
         $msg= '';
         $vars->faze= 'c';
-        if ($TEST && !$web_json && $idr==3895) {
-          $web_json= '{"cleni":{"6847":{"spolu":1,"Xupozorneni":"x","Xpovaha":"flegmatik","Xmanzelstvi":"dobr\u00e9","Xocekavani":"dobr\u00e9 kafe","Xrozveden":"Nikoliv\u011bk"}, "6849":{"spolu":1,"Xupozorneni":"x","Xpovaha":"v\u011bt\u0161inou klidn\u00e1, n\u011bkdy m\u00e9n\u011b","Xmanzelstvi":"u\u017e 25 let moc fajn","Xocekavani":"pravidelnou \u00fadr\u017ebu vztahu","Xrozveden":"ne"},"13783":{"spolu":0}}}';
-          $X= json_decode($web_json);
-          foreach ($X->cleni as $id=>$corr) {
-            foreach ((array)$corr as $f=>$v) {
-              if (!isset($cleni[$id])) continue;
-              $cleni[$id]->$f= [$v];
-            }
-          }
-        }
+//        if ($TEST && !$web_json && $idr==3895) {
+//          $web_json= '{"cleni":{"6847":{"spolu":1,"Xupozorneni":"x","Xpovaha":"flegmatik","Xmanzelstvi":"dobr\u00e9","Xocekavani":"dobr\u00e9 kafe","Xrozveden":"Nikoliv\u011bk"}, "6849":{"spolu":1,"Xupozorneni":"x","Xpovaha":"v\u011bt\u0161inou klidn\u00e1, n\u011bkdy m\u00e9n\u011b","Xmanzelstvi":"u\u017e 25 let moc fajn","Xocekavani":"pravidelnou \u00fadr\u017ebu vztahu","Xrozveden":"ne"},"13783":{"spolu":0}}}';
+//          $X= json_decode($web_json);
+//          foreach ($X->cleni as $id=>$corr) {
+//            foreach ((array)$corr as $f=>$v) {
+//              if (!isset($cleni[$id])) continue;
+//              $cleni[$id]->$f= [$v];
+//            }
+//          }
+//        }
         goto end;
       }
     }
