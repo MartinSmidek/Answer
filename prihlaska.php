@@ -34,7 +34,7 @@ if (!ip_ok()) {
   die("Online přihlašování není ještě k dospozici."); 
 }
 // -------------------------------------------------------------------------- varianty pro testování
-$testovaci_mail= 'martin@smidek.eu';          $TEST= 3; // známý pár
+//$testovaci_mail= 'martin@smidek.eu';          $TEST= 3; // známý pár
 //$testovaci_mail= 'pavel.bajer@volny.cz';      $TEST= 3; // známá osoba bezdětní
 //$testovaci_mail= 'lina.ondra@gmail.com';      $TEST= 3; // známá osoba s úmrtím dítěte
 //$testovaci_mail= 'anabasis@seznam.cz';        $TEST= 3; // známá rodina ale bez ženy
@@ -891,7 +891,7 @@ function do_vyplneni_dat() { // ------------------------------------------------
   $enable_green= $vars->kontrola ? 'fa-green' : '';
   $exit= $vars->form->exit 
       ? "<$button name='cmd_exit'><i class='$red_x'></i> zrušit rozepsanou přihlášku</button>
-         <$button name='cmd_exit_no'> pokračovat v úpravách</button>"
+         <$button name='cmd_exit_no'> ... pokračovat v úpravách</button>"
       : "<$button name='cmd_check'><i class='fa fa-question'></i>zkontrolovat údaje (lze opakovat)</button>
          <$button id='submit_form' name='cmd_ano' $enable_send><i class='fa $enable_green fa-send-o'></i>
            odeslat přihlášku</button>
