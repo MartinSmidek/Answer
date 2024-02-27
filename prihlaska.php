@@ -34,7 +34,7 @@ if (!ip_ok()) {
   die("Online přihlašování není ještě k dospozici."); 
 }
 // -------------------------------------------------------------------------- varianty pro testování
-//$testovaci_mail= 'martin@smidek.eu';          $TEST= 3; // známý pár
+$testovaci_mail= 'martin@smidek.eu';          $TEST= 3; // známý pár
 //$testovaci_mail= 'pavel.bajer@volny.cz';      $TEST= 3; // známá osoba bezdětní
 //$testovaci_mail= 'lina.ondra@gmail.com';      $TEST= 3; // známá osoba s úmrtím dítěte
 //$testovaci_mail= 'anabasis@seznam.cz';        $TEST= 3; // známá rodina ale bez ženy
@@ -57,7 +57,7 @@ read_akce();            // načtení údajů o akci z Answeru
 polozky();              // popis získávaných položek
 //debug($akce);
 read_form();            // načtení údajů formuáře
-trace_vars('START');
+//trace_vars('START');
 //$MAIL= 0; // 1 - maily se posílají | 0 - mail se jen ukáže - lze nastavit url&mail=0
 todo();
 trace_vars('END');
@@ -215,8 +215,10 @@ function read_akce() { // ------------------------------------------------------
         'pass'=>0, // inicializovat pozici pro 0
         'par'=>1,'deti'=>2,'pecouni'=>1, // 1=tlačítko, 2=seznam
         'rodina'=>$akce->p_rod_adresa,'pozn'=>1,'souhlas'=>$akce->p_souhlas,
-        'oprava'=>0,  // 1 => byla načtena již uložená přihláška a je možné ji opravit
-        'todo'=>0]; // označit červeně chybějící povinné údaje po kontrole formuláře
+        'oprava'=>0,    // 1 => byla načtena již uložená přihláška a je možné ji opravit
+        'todo'=>0,      // označit červeně chybějící povinné údaje po kontrole formuláře
+        'exit'=>0,      // 1 => první stisk 
+    ];
   }
 end:    
 //  global $trace;
@@ -623,8 +625,18 @@ function do_vyplneni_dat() { // ------------------------------------------------
     $vars->form->pecouni= 2;
     $vars->kontrola= 0;
   }
-  // -------------------------------------------- ! nepřihlašovat
-  if (isset($post->cmd_ne)) {
+  // -------------------------------------------- ! nepřihlašovat poprvé
+  if (isset($post->cmd_exit_test)) {
+    $msg= "POZOR: Vyplněné položky nebudou uloženy, rozepsaná přihláška bude smazána.";
+    $vars->form->exit= 1;
+  }
+  // -------------------------------------------- ! nepřihlašovat poprvé
+  if (isset($post->cmd_exit_no)) {
+    $msg= "Můžete pokračovat v úpravách.";
+    $vars->form->exit= 0;
+  }
+  // -------------------------------------------- ! nepřihlašovat podruhé
+  if (isset($post->cmd_exit)) {
     clear_post_but("/---/");
     $msg= "Vyplňování přihlášky bylo ukončeno bez jejího odeslání. "
         . "<br>Na akci jste se tedy nepřihlásili.";
@@ -757,6 +769,8 @@ function do_vyplneni_dat() { // ------------------------------------------------
     goto end;
   }
   // ===================================================================== poskládej prvky formuláře
+  $button= "button onclick='save_position()' type='submit'";
+  $red_x= 'fa fa-times fa-red';
   $clenove= '';
   if ($vars->form->par) { // -------------------------------------------------------- zobrazení páru
     foreach ($cleni as $id=>$clen) {
@@ -815,7 +829,7 @@ function do_vyplneni_dat() { // ------------------------------------------------
     }
     if ($deti) $clenove.= '<p><i>Naše děti (zapište prosím i ty, které necháváte doma)</i></p>';
     $clenove.= $deti;
-    $clenove.= "<br><button onclick='save_position()' type='submit' name='cmd_dalsi_dite'>
+    $clenove.= "<br><$button name='cmd_dalsi_dite'>
       <i class='fa fa-green fa-plus'></i>chci přidat další dítě</button>";
     $clenove.= "</div>";
   }
@@ -823,7 +837,7 @@ function do_vyplneni_dat() { // ------------------------------------------------
     // pokud jsou nějací členové s role=p tak zobraz napřed je, teprve na další stisk přidej prázdné
     // form->pecouni: 1=jen tlačítko 2=jen existující 3=prázdná pole
     if ($vars->form->pecouni==1 ) {
-      $clenove.= "<br><button onclick='save_position()' type='submit' name='cmd_dalsi_pecoun'>
+      $clenove.= "<br><$button name='cmd_dalsi_pecoun'>
         <i class='fa fa-green fa-plus'></i>chci přihlásit osobního pečovatele</button>";
     }
     if ($vars->form->pecouni==2) {
@@ -844,7 +858,7 @@ function do_vyplneni_dat() { // ------------------------------------------------
             . ($clen->spolu ? '<br>'.elem_input('o',$id,['obcanka','telefon','Xpecuje_o']) : '' )            
             . "</div>";
       }
-      $clenove.= "<br><button onclick='save_position()' type='submit' name='cmd_dalsi_pecoun'>
+      $clenove.= "<br><$button name='cmd_dalsi_pecoun'>
         <i class='fa fa-green fa-plus'></i>chci přihlásit dalšího osobního pečovatele</button>";
       $clenove.= "</div>";
     }
@@ -875,6 +889,13 @@ function do_vyplneni_dat() { // ------------------------------------------------
   // -------------------------------------------- redakce formuláře
   $enable_send= $vars->kontrola ? '' : 'disabled';
   $enable_green= $vars->kontrola ? 'fa-green' : '';
+  $exit= $vars->form->exit 
+      ? "<$button name='cmd_exit'><i class='$red_x'></i> zrušit rozepsanou přihlášku</button>
+         <$button name='cmd_exit_no'> pokračovat v úpravách</button>"
+      : "<$button name='cmd_check'><i class='fa fa-question'></i>zkontrolovat údaje (lze opakovat)</button>
+         <$button id='submit_form' name='cmd_ano' $enable_send><i class='fa $enable_green fa-send-o'></i>
+           odeslat přihlášku</button>
+         <$button name='cmd_exit_test'><i class='$red_x'></i> neposílat</button>";
   // bylo zkontrolovat před odesláním
   $form= <<<__EOF
     <p>Poznačte, koho na akci přihlašujete. Zkontrolujte a případně upravte zobrazené údaje.</p>
@@ -884,12 +905,7 @@ function do_vyplneni_dat() { // ------------------------------------------------
       $pobyt
     </div>
     $souhlas
-    <button onclick='save_position();'; type="submit" name="cmd_check"><i class="fa fa-question"></i>
-      zkontrolovat údaje (lze opakovat)</button>
-    <button onclick='save_position()' type="submit" id="submit_form" name="cmd_ano" $enable_send>
-      <i class="fa $enable_green fa-send-o"></i>odeslat přihlášku</button>
-    <button onclick='save_position()' type="submit" name="cmd_ne"><i class="fa fa-times fa-red"></i> 
-      neposílat</button>
+    $exit
     <p>$msg</p>
 __EOF;
 end:
