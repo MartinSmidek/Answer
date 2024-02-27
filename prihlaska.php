@@ -54,11 +54,14 @@ start();                // nastavení $vars podle SESSION
 connect_db();           // napojení na databázi a na Ezer 
 //debug($_POST,"\$_POST na startu");
 read_akce();            // načtení údajů o akci z Answeru 
+log_open();
+log_write('faze',$vars->history);
 polozky();              // popis získávaných položek
 //debug($akce);
 read_form();            // načtení údajů formuáře
 //trace_vars('START');
 //$MAIL= 0; // 1 - maily se posílají | 0 - mail se jen ukáže - lze nastavit url&mail=0
+log_write('web_json',vytvor_web_json());
 todo();
 trace_vars('END');
 page();
@@ -159,7 +162,7 @@ function connect_db() { // -----------------------------------------------------
   if (isset($db[$ezer_server])) $db= $db[$ezer_server];
   $ezer_db= $dbs;
   ezer_connect($answer_db);
-} // napojení na Ezer
+} // napojení na Ezer a log
 function read_akce() { // ---------------------------------------------------------------- read akce
   global $TEST, $akce, $vars;
   $msg= '';
@@ -174,10 +177,11 @@ function read_akce() { // ------------------------------------------------------
   if (!$akce || !$akce->p_enable) { 
     $msg= "Na tuto akci se bohužel nelze přihlásit online"; goto end; }
   // doplnění dalších údajů o akci
-  list($akce->org,$akce->nazev,$garant,$od)= // doplnění garanta
-      select("access,nazev,poradatel,datum_od",'akce',"id_duakce=$id_akce");
+  list($akce->org,$akce->nazev,$garant,$od,$do)= // doplnění garanta
+      select("access,nazev,poradatel,datum_od,datum_do",'akce',"id_duakce=$id_akce");
   if ($od<=date('Y-m-d')) { 
     $msg= "Akce '$akce->nazev' již proběhla, nelze se na ni přihlásit"; goto end; }
+  $akce->oddo= sql2oddo($od,$do);
   $MarketaZelinkova= 6849;
   list($ok,$akce->garant_jmeno,$akce->garant_telefon,$akce->garant_mail)= // doplnění garanta
       select("COUNT(*),CONCAT(jmeno,' ',prijmeni),telefon,email",
@@ -399,6 +403,8 @@ function todo() { // -----------------------------------------------------------
   }
   if ($vars->faze=='d') { // => .
     do_rozlouceni();  
+    log_write('stav','ok');
+    log_close();
     // vyčisti vše
     unset($vars->post);
     do_session_restart();
@@ -474,6 +480,7 @@ function do_nacteni_rodiny() { // ----------------------------------------------
   }
   // -------------------------------------------- registrace (n)
   if (isset($post->cmd_registrace_a) || isset($post->cmd_registrace_b)) {
+    log_write('stav','novacci');
     kompletuj_pobyt(0,0,0);
     $cleni[isset($post->cmd_registrace_a)?-1:-2]->email= [$post->email];
     $vars->user= '-';
@@ -487,6 +494,7 @@ function do_nacteni_rodiny() { // ----------------------------------------------
   $pin= $post->pin ?? '';
   // ověříme PIN zapsaný u nositele mailové adresy a načteme údaje z db
   if ($pin && $pin==$post->zaslany_pin) {
+    log_write('email',$post->email);
     // zjistíme, zda jej máme v databázi
     $regexp= "REGEXP '(^|[;,\\\\s]+)$post->email($|[;,\\\\s]+)'";
     list($pocet,$ido,$idr,$jmena)= select(
@@ -510,6 +518,8 @@ function do_nacteni_rodiny() { // ----------------------------------------------
     }
     else { // pocet==1 ... mail je jednoznačný
       $vars->klient= $ido;
+      log_write('id_osoba',$ido);
+      log_write('id_rodina',$idr);
       // položky do hlavičky
       $vars->user= "$jmena<br>$post->email";
       // zjistíme zda již není přihlášen
@@ -520,6 +530,8 @@ function do_nacteni_rodiny() { // ----------------------------------------------
           . "ORDER BY id_pobyt DESC LIMIT 1");
 //      display("a2: $idp,$kdy,$kdo");
       if ($idp && !($akce->p_oprava??0)) {
+        log_write('id_pobyt',$idp);
+        log_write('stav','na akci');
         $kdy= $kdy ? sql_time1($kdy) : '';
         $msg= $kdo=='WEB' ? "Na tuto akci jste se již $kdy přihlásili online přihláškou." : (
             $kdo ? "Na této akci jste již $kdy přihlášeni (zápis provedl uživatel se značkou $kdo" 
@@ -529,6 +541,8 @@ function do_nacteni_rodiny() { // ----------------------------------------------
         goto end;
       }
       elseif ($idp && $akce->p_oprava) { // přihláška je uložena ale jdeme do opravy
+        log_write('id_pobyt',$idp);
+        log_write('stav','uprava');
         $vars->form->oprava= 1;
         kompletuj_pobyt($idp,$idr,$ido);
         global $TEST;
@@ -548,6 +562,7 @@ function do_nacteni_rodiny() { // ----------------------------------------------
         goto end;
       }
       else { // klientova rodina ani klient sám na akci není
+        log_write('stav','znami');
         kompletuj_pobyt(0,$idr,$ido);
         $msg= '';
         $vars->faze= 'c';
@@ -639,7 +654,7 @@ function do_vyplneni_dat() { // ------------------------------------------------
   }
   // -------------------------------------------- ! nepřihlašovat poprvé
   if (isset($post->cmd_exit_test)) {
-    $msg= "POZOR: Vyplněné položky nebudou uloženy, rozepsaná přihláška bude smazána.";
+    $msg= '';
     $vars->form->exit= 1;
   }
   // -------------------------------------------- ! nepřihlašovat poprvé
@@ -902,9 +917,9 @@ function do_vyplneni_dat() { // ------------------------------------------------
   $enable_send= $vars->kontrola ? '' : 'disabled';
   $enable_green= $vars->kontrola ? 'fa-green' : '';
   $exit= $vars->form->exit 
-      ? "<$button name='cmd_exit'><i class='$red_x'></i> zrušit rozepsanou přihlášku</button>
+      ? "<$button name='cmd_exit'><i class='$red_x'></i> smazat rozepsanou přihlášku bez uložení</button>
          <$button name='cmd_exit_no'> ... pokračovat v úpravách</button>"
-      : "<$button name='cmd_check'><i class='fa fa-question'></i>zkontrolovat údaje (lze opakovat)</button>
+      : "<$button name='cmd_check'><i class='fa fa-question'></i> zkontrolovat údaje (lze opakovat)</button>
          <$button id='submit_form' name='cmd_ano' $enable_send><i class='fa $enable_green fa-send-o'></i>
            odeslat přihlášku</button>
          <$button name='cmd_exit_test'><i class='$red_x'></i> neposílat</button>";
@@ -949,13 +964,12 @@ function do_rozlouceni() { // --------------------------------------------------
     if ($akce->p_pro_LK) { // závěrečná zpráva a mail pro ---------------------------- Letní kurz MS
       $msg= "Vaše přihláška byla zaevidována a poslali jsme Vám potvrzující mail na $post->email.";
       $mail_subj= "Potvrzení přijetí přihlášky ($nazev) na akci $akce->nazev.";
-      $mail_body= "Dobrý den,<p>potvrzuji přijetí vaší přihlášky na akci <b>$akce->nazev</b>"
+      $mail_body= "Dobrý den,<p>dostali jsme vaši přihlášku na akci <b>$akce->nazev</b> $akce->oddo"
       . " pro účastníky $ucastnici."
-      . " Vaši přihlášku zpracuji do tří dnů."
-      . "<br>V týdnu před akcí dostanete <i>Dopis na cestu</i> s doplňujícími informacemi.</p>" 
+      . " Zaslané údaje zpracujeme a do 5 dnů vám pošleme odpověď. "
       . "<p>S přáním hezkého dne<br>$akce->garant_jmeno"
       . "<br><a href=mailto:'$akce->garant_mail'>$akce->garant_mail</a>"
-      . "<br>$akce->garant_telefon</p>"
+      . "<br>$akce->garant_telefon (v podvečerních hodinách)</p>"
       . "<p><i>Tato odpověď je vygenerována automaticky</i></p>";
       $ok_mail= simple_mail($akce->garant_mail, $post->email, $mail_subj,$mail_body,$akce->garant_mail); 
       $ok= $ok_mail ? 'ok' : 'ko';
@@ -1000,6 +1014,7 @@ function page($problem='') {
     if (count($errors)) $trace.= '<hr><span style="color:red">'.implode('<hr>',$errors).'</span>';
 //    $trace.= '<hr>'.debugx($post,'$post');
 //    $trace.= '<hr>'.debugx($_SESSION['klub'],'$_SESSION[akce] - výstup');
+    if (isset($y->error)) $trace.= '<hr>'.nl2br($y->error);
     $trace.= '<hr>'.nl2br($y->qry??'');
     $trace= "<section class='trace'>$trace</section>";
     $if_trace= "style='overflow:auto'";
@@ -1373,6 +1388,27 @@ function vytvor_clena($ido,$role,$spolu) { // ----------------------------------
   $cleni[$ido]->role= $role;
   $cleni[$ido]->spolu= $spolu;
 }
+function vytvor_web_json() { // ---------------------------------------------------- vytvor web_json
+  global $errors, $cleni;
+  // příprava položky web_json
+  // struktura stejná jako $cleni ale zaznamenávají se jen konečné hodnoty položek začínajících X
+  $web_json= (object)['cleni'=>[]]; 
+  foreach ($cleni as $id=>$clen) {
+    foreach ((array)$clen as $f=>$v) {
+      if (!in_array($f,
+        ['spolu','Xpovaha','Xmanzelstvi','Xocekavani','Xrozveden','Xupozorneni']) ) continue;
+      $v= $v[1]??($v[0]??$v);
+      if ($v!=='' || $f=='spolu') {
+        if (!isset($web_json->cleni[$id])) $web_json->cleni[$id]= (object)[];
+        $web_json->cleni[$id]->$f= $v;
+      }
+    }
+  }
+  debug($web_json,"web_json");
+  $web_json= json_encode($web_json);
+  if (!$web_json) $errors[]= "chyba při ukládání: ".json_last_error();
+  return $web_json;
+}
 function init_value($typ) { // ---------------------------------------------------------- init value
   $val= in_array($typ,['select','sub_select','number']) ? 0 : '';
   return $val;
@@ -1695,24 +1731,9 @@ function db_vytvor_nebo_oprav_rodinu() { // ---------------------------- do vytv
 }
 function db_close_pobyt() { // ------------------------------------------------------ db close_pobyt
   global $errors, $p_fld, $vars, $cleni;
-  // příprava položky web_json
-  // struktura stejná jako $cleni ale zaznamenávají se jen konečné hodnoty položek začínajících X
-  $web_json= (object)['cleni'=>[]]; 
-  foreach ($cleni as $id=>$clen) {
-    foreach ((array)$clen as $f=>$v) {
-      if (!in_array($f,['spolu','Xpovaha','Xmanzelstvi','Xocekavani','Xrozveden','Xupozorneni']) ) continue;
-      $v= $v[1]??($v[0]??$v);
-      if ($v!=='' || $f=='spolu') {
-        if (!isset($web_json->cleni[$id])) $web_json->cleni[$id]= (object)[];
-        $web_json->cleni[$id]->$f= $v;
-      }
-    }
-  }
-  debug($web_json,"web_json");
-  $web_json= json_encode($web_json);
-  if (!$web_json) $errors[]= "chyba při ukládání: ".json_last_error();
   // úschova pobyt
   $idr= key($vars->rodina);
+  $web_json= vytvor_web_json();
   $chng= array(
     (object)['fld'=>'i0_rodina',  'op'=>'i','val'=>$idr],
     (object)['fld'=>'web_changes','op'=>'i','val'=>get('p','web_changes')],
@@ -1752,6 +1773,32 @@ function _ezer_qry($op,$table,$cond_key,$chng) { // ----------------------------
     $trace.= debugx($chng,"$op $table.$cond_key = $ok (test=$TEST)");
   }
   return $ok;
+}
+# ------------------------------------------------------------------------------------ log prihlaska
+function log_open() { // ------------------------------------------------------------------ log open
+  global $AKCE, $akce;
+  if (!isset($_SESSION[$AKCE]->id_prihlaska)) {
+    $ip= $_SERVER['HTTP_X_REAL_IP'] ?? $_SERVER['REMOTE_ADDR'];
+    $ida= $akce->id_akce;
+    $res= pdo_query_2("INSERT INTO prihlaska SET open=NOW(),IP='$ip',id_akce=$ida ",1);
+    if ($res!==false) {
+      $_SESSION[$AKCE]->id_prihlaska= pdo_insert_id();
+      session_write_close();
+      session_start();
+    }
+  }
+}
+function log_write($clmn,$value) { // ---------------------------------------------------- log write
+  global $AKCE, $TRACE;
+  if (($id= $_SESSION[$AKCE]->id_prihlaska)) {
+    $val= $value=='NOW()' ?: "'".pdo_real_escape_string($value)."'";
+    $res= pdo_query_2("UPDATE prihlaska SET $clmn=$val WHERE id_prihlaska=$id",1);
+    if ($res===false && $TRACE)
+      display("LOG_WRITE fail for:$clmn=$val");
+  }
+}
+function log_close() { // ---------------------------------------------------------------- log close
+  log_write('close','NOW()');
 }
 # ============================================================================= vytváření PDF obrazu
 function gen_html($to_save=0) {
@@ -1904,7 +1951,8 @@ function trace_vars($title) { // -----------------------------------------------
   global $TEST, $trace, $vars;
   if ($TEST) {
     $vars_dump= [];
-    foreach (explode(',',"stamp,faze,history,kontrola,klient,user,chk_souhlas,form,pobyt,rodina,cleni,post") as $v) {
+    foreach (explode(',',"id_prihlaska,stamp,faze,history,kontrola,klient,user,chk_souhlas,"
+        . "form,pobyt,rodina,cleni,post") as $v) {
       $vars_dump[$v]= $vars->$v ?? '?';
     }
     $trace.= '<hr>'.debugx($vars_dump,$title,0,4);
@@ -1934,6 +1982,30 @@ function sql2date($d) { // -----------------------------------------------------
 # pokud $d nemá korektní tvar vrací původní hodnotu
   $v= substr($d,5,5)=='00-00' ? (substr($d,0,4)=='0000' ? '' : substr($d,0,4)) : sql_date1($d,0);
   return $v;
+}
+function sql2oddo($x1,$x2) { // --------------------------------------------------------- sql 2 oddo
+  $letos= date('Y');
+  $d1= 0+substr($x1,8,2);
+  $d2= 0+substr($x2,8,2);
+  $m1= 0+substr($x1,5,2);
+  $m2= 0+substr($x2,5,2);
+  $r1= 0+substr($x1,0,4); 
+  $r2= 0+substr($x2,0,4);
+  if ( $x1==$x2 ) {  //zacatek a konec je stejny den
+    $datum= "$d1. $m1" . ($r1!=$letos ? ". $r1" : '');
+  }
+  elseif ( $r1==$r2 ) {
+    if ( $m1==$m2 ) { //zacatek a konec je stejny mesic
+      $datum= "$d1 - $d2. $m1"  . ($r1!=$letos ? ". $r1" : '');
+    }
+    else { //ostatni pripady
+      $datum= "$d1. $m1 - $d2. $m2"  . ($r1!=$letos ? ". $r1" : '');
+    }
+  }
+  else { //ostatni pripady
+    $datum= "$d1. $m1. $r1 - $d2. $m2. $r2";
+  }
+  return $datum;
 }
 function check_mail($mail,&$err) { // ----------------------------------------------- check mail
   $ok= filter_var(trim($mail), FILTER_VALIDATE_EMAIL);
@@ -2044,6 +2116,7 @@ end:
   return $msg;
 }
 # --------------------------------------------------------------------------------------- ezer qry_2
+function ezer_qry_2 ($op,$table,$cond_key,$zmeny,$par=null) {
 # záznam změn do tabulky _track
 # 1. ezer_qry("INSERT",$table,$x->key,$zmeny[,$key_id]);       -- vložení 1 záznamu
 # 2. ezer_qry("UPDATE",$table,$x->key,$zmeny[,$key_id]);       -- oprava 1 záznamu
@@ -2054,17 +2127,13 @@ end:
 # 3. ezer_qry("UPDATE_keys",$table,$keys,$zmeny[,$key_id]);    -- hromadná oprava pro key IN ($keys)
 #     zmeny= { fld:field, op:m|p|a, val:value}                    -- SET fld=value
 # verze 2:
-# par =  { id_key, err_level, soft_u }
-function ezer_qry_2 ($op,$table,$cond_key,$zmeny,$par=null,&$err_list=null) {
-  global $ezer_db, $mysql_db, $mysql_db_track, $mysql_tracked, $USER;
+# par =  { id_key, soft_u }
+  global $ezer_db, $mysql_db, $mysql_db_track, $mysql_tracked, $USER, $y;
 //                                                         debug($zmeny,"qry_update($op,$table,$cond_key)");
   $key_id=    $par->key_id??'';
-  // 0 nic | 1 přidá chybu do err_lst | 2 vyvolá výjimku
-  
-  $err_level= $par->err_level??0;   
-  if (!$err_list && $err_level==2) $err_level= 0;
   // 0 testuje se table.old při rozdílu se vyvolá chyba | 1 do track se vlozi zmeny.old bez testu
   $soft_u=    $par->soft_u??0;      
+  $quiet=     $par->quiet??0;      
   $result= 0;
   $tracked= array();
   $keys= '???';                 // seznam klíčů
@@ -2095,7 +2164,7 @@ function ezer_qry_2 ($op,$table,$cond_key,$zmeny,$par=null,&$err_list=null) {
     // provedení INSERT
     $key_val= 0;
     $qry= "INSERT INTO $table ($flds) VALUES ($vals)";
-    $res= mysql_qry($qry);
+    $res= pdo_qry($qry);
     $result= $tab=="_cis" ?  $id_cis : pdo_insert_id();
     $keys= $result;
     break;
@@ -2108,32 +2177,32 @@ function ezer_qry_2 ($op,$table,$cond_key,$zmeny,$par=null,&$err_list=null) {
       if ( $fld!='zmena_kdo' && $fld!='zmena_kdy' ) $tracked[0][]= $zmena;
       $val= pdo_real_escape_string($zmena->val);
       switch ( $zmena->op ) {
-      case 'a':
-        $set.= "$del$fld=concat($fld,'$val')";
-        break;
-      case 'p':
-        $set.= "$del$fld=concat('$val',$fld)";
-        break;
-      case 'd': // delete záznam row v chat
-        $va= explode('|',$zmena->old);
-        $old= pdo_real_escape_string($zmena->old);
-        $zmena->old_val= "{$va[2*$zmena->row-2]}|{$va[2*$zmena->row-1]}";
-        unset($va[2*$zmena->row-2],$va[2*$zmena->row-1]);
-        $vn= pdo_real_escape_string(implode('|',$va));
-        $set.= "$del$fld='$vn'";
-        $and.= " AND $fld='$old'";
-        break;
-      case 'c': // change záznam row v chat
-        $old= pdo_real_escape_string($zmena->old);
-        $va= explode('|',$old);
-        $zmena->old_val= "{$va[2*$zmena->row-2]}|{$va[2*$zmena->row-1]}";
-        $va[2*$zmena->row-1]= $val;
-        $vn= implode('|',$va);
-        $set.= "$del$fld='$vn'";
-        $and.= " AND $fld='$old'";
-        break;
+//      case 'a':
+//        $set.= "$del$fld=concat($fld,'$val')";
+//        break;
+//      case 'p':
+//        $set.= "$del$fld=concat('$val',$fld)";
+//        break;
+//      case 'd': // delete záznam row v chat
+//        $va= explode('|',$zmena->old);
+//        $old= pdo_real_escape_string($zmena->old);
+//        $zmena->old_val= "{$va[2*$zmena->row-2]}|{$va[2*$zmena->row-1]}";
+//        unset($va[2*$zmena->row-2],$va[2*$zmena->row-1]);
+//        $vn= pdo_real_escape_string(implode('|',$va));
+//        $set.= "$del$fld='$vn'";
+//        $and.= " AND $fld='$old'";
+//        break;
+//      case 'c': // change záznam row v chat
+//        $old= pdo_real_escape_string($zmena->old);
+//        $va= explode('|',$old);
+//        $zmena->old_val= "{$va[2*$zmena->row-2]}|{$va[2*$zmena->row-1]}";
+//        $va[2*$zmena->row-1]= $val;
+//        $vn= implode('|',$va);
+//        $set.= "$del$fld='$vn'";
+//        $and.= " AND $fld='$old'";
+//        break;
       case 'u':
-      case 'U': // určeno pro hromadné změny
+//      case 'U': // určeno pro hromadné změny
         $set.= "$del$fld='$val'";
         if ( isset($zmena->old) && !$soft_u ) {
           $old= pdo_real_escape_string($zmena->old);
@@ -2146,56 +2215,65 @@ function ezer_qry_2 ($op,$table,$cond_key,$zmeny,$par=null,&$err_list=null) {
       }
       $del= ',';
     }
-    // provedení UPDATE pro jeden záznam s kontrolou starých hodnot položek
-    $key_val= $cond_key;
-    $qry= "SELECT $key_id FROM $table WHERE $key_id=$key_val $and ";
-    if ( mysql_qry($qry,1) )  {
-      $qry= "UPDATE $table SET $set WHERE $key_id=$key_val $and ";
-      mysql_qry($qry);
+    if ($soft_u) {
+     // provedení UPDATE pro jeden záznam BEZX kontroly starých hodnot položek
+      $key_val= $cond_key;
+      $qry= "UPDATE $table SET $set WHERE $key_id=$key_val";
+      pdo_qry($qry);
       $result= 1;
+    }
+    else {
+      // provedení UPDATE pro jeden záznam s kontrolou starých hodnot položek
+      $key_val= $cond_key;
+      $qry= "SELECT $key_id FROM $table WHERE $key_id=$key_val $and ";
+      if ( pdo_qry($qry,1) )  {
+        $qry= "UPDATE $table SET $set WHERE $key_id=$key_val $and ";
+        pdo_qry($qry);
+        $result= 1;
+      }
     }
     $keys= $key_val;
     break;
-  case 'UPDATE_keys':
-//                                                         debug($zmeny,"qry_update($op,$table,$cond_key)");
-    $akeys= explode(',',$cond_key);
-    sort($akeys);
-    foreach ($akeys as $i => $key) {
-      $tracked[$i][0]= $zmeny;
-      $tracked[$i][0]->key= $key;
-    }
-    $keys= implode(',',$akeys);
-    $fld= $zmeny->fld;
-    $val= pdo_real_escape_string($zmeny->val);
-    switch ( $zmeny->op ) {
-    case 'm':
-      // zjištění starých hodnot podle seznamu klíčů
-      $qry= "SELECT GROUP_CONCAT($fld SEPARATOR '|') as $fld FROM $table WHERE $key_id IN ($keys)";
-      $res= mysql_qry($qry);
-      if ( $res ) {
-        $row= pdo_fetch_assoc($res);
-        foreach (explode('|',$row[$fld]) as $i => $old) {
-          $tracked[$i][0]->old= $old;
-        }
-      }
-      $qry= "UPDATE $table SET $fld='$val' WHERE $key_id IN ($keys)";
-      break;
-    case 'a':
-    case 'p':
-      $concat= $zmeny->op=='a' ? "concat($fld,'$val')" : "concat('$val',$fld)";
-      $qry= "UPDATE $table SET $fld=$concat WHERE $key_id IN ($keys)";
-      break;
-    case 'd':
-    case 'c':
-      fce_error("ezer_qry: hromadná operace {$zmeny->op} neimplementována");
-      break;
-    }
-    // provedení UPDATE pro záznamy podle seznamu klíčů
-//                                                         display($qry);
-    mysql_qry($qry);
-    break;
-  default:
-    fce_error("ezer_qry: operace $op neimplementována");
+//  case 'UPDATE_keys':
+////                                                         debug($zmeny,"qry_update($op,$table,$cond_key)");
+//    $akeys= explode(',',$cond_key);
+//    sort($akeys);
+//    foreach ($akeys as $i => $key) {
+//      $tracked[$i][0]= $zmeny;
+//      $tracked[$i][0]->key= $key;
+//    }
+//    $keys= implode(',',$akeys);
+//    $fld= $zmeny->fld;
+//    $val= pdo_real_escape_string($zmeny->val);
+//    switch ( $zmeny->op ) {
+//    case 'm':
+//      // zjištění starých hodnot podle seznamu klíčů
+//      $qry= "SELECT GROUP_CONCAT($fld SEPARATOR '|') as $fld FROM $table WHERE $key_id IN ($keys)";
+//      $res= pdo_qry($qry);
+//      if ( $res ) {
+//        $row= pdo_fetch_assoc($res);
+//        foreach (explode('|',$row[$fld]) as $i => $old) {
+//          $tracked[$i][0]->old= $old;
+//        }
+//      }
+//      $qry= "UPDATE $table SET $fld='$val' WHERE $key_id IN ($keys)";
+//      break;
+//    case 'a':
+//    case 'p':
+//      $concat= $zmeny->op=='a' ? "concat($fld,'$val')" : "concat('$val',$fld)";
+//      $qry= "UPDATE $table SET $fld=$concat WHERE $key_id IN ($keys)";
+//      break;
+//    case 'd':
+//    case 'c':
+//      fce_error("ezer_qry: hromadná operace {$zmeny->op} neimplementována");
+//      break;
+//    }
+//    // provedení UPDATE pro záznamy podle seznamu klíčů
+////                                                         display($qry);
+//    pdo_qry($qry);
+//    break;
+//  default:
+//    fce_error("ezer_qry: operace $op neimplementována");
   }
   // zápis změn do _track
   if (strpos($table,".")!==false) {
@@ -2228,13 +2306,40 @@ function ezer_qry_2 ($op,$table,$cond_key,$zmeny,$par=null,&$err_list=null) {
           break;
         }
         $qry= "$qry_prefix,'$fld','$op','$old','$val'); ";
-        $res= mysql_qry($qry);
-        if ( !$res ) fce_error("ezer_qry/zápis selhal: $qry");
+        $res= pdo_qry($qry);
+        if ( $res===false ) { 
+          if ($quiet) $y->error= "ezer_qry_2/zápis selhal: $qry";
+          else fce_error($err);
+        }
+//        if ( !$res ) {
+//          fce_error("ezer_qry/zápis selhal: $qry");
+//        }
 //                                                 display("TRACK: $qry");
       }
     }
   }
-  elseif ( $table=='clen') fce_error("ezer_qry/no track for clen");
+//  elseif ( $table=='clen') fce_error("ezer_qry/no track for clen");
 end:
   return $result;
+}
+function pdo_query_2($query,$quiet=false) {
+  global $ezer_db, $curr_db, $y;
+  $err= '';
+  $pdo= $ezer_db[$curr_db][0];
+  if ( preg_match('/^\s*(SET|INSERT|UPDATE|REPLACE|DELETE|TRUNCATE|DROP|CREATE|ALTER)/',$query) ) {
+    $res= $pdo->exec($query);
+    if ($res===false) $err= $pdo->errorInfo()[2];
+  }
+  else if ( preg_match('/^\s*(SELECT|SHOW)/',$query) ) {
+    $res= $pdo->query($query);
+    if ($res===false) $err= $pdo->errorInfo()[2];
+  }
+  else {
+    $err= "pdo_query nelze použít pro ".substr($query,0,6).' ...';
+  }
+  if ( $err ) { 
+    if ($quiet) $y->error= $err;
+    else fce_error($err);
+  }
+  return $res;
 }
