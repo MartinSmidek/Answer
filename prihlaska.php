@@ -182,8 +182,8 @@ function read_akce() { // ------------------------------------------------------
   if (!$akce || !$akce->p_enable) { 
     $msg= "Na tuto akci se bohužel nelze přihlásit online"; goto end; }
   // doplnění dalších údajů o akci
-  list($akce->org,$akce->nazev,$garant,$od,$do)= // doplnění garanta
-      select_2("access,nazev,poradatel,datum_od,datum_do",'akce',"id_duakce=$id_akce");
+  list($akce->org,$akce->nazev,$akce->misto,$garant,$od,$do)= // doplnění garanta
+      select_2("access,nazev,misto,poradatel,datum_od,datum_do",'akce',"id_duakce=$id_akce");
   if ($od<=date('Y-m-d')) { 
     $msg= "Akce '$akce->nazev' již proběhla, nelze se na ni přihlásit"; goto end; }
   $akce->oddo= sql2oddo($od,$do,1);
@@ -976,7 +976,8 @@ function do_rozlouceni() { // --------------------------------------------------
     if ($akce->p_pro_LK) { // závěrečná zpráva a mail pro ---------------------------- Letní kurz MS
       $msg= "Vaše přihláška byla zaevidována a poslali jsme Vám potvrzující mail na $post->email.";
       $mail_subj= "Potvrzení přijetí přihlášky ($nazev) na akci $akce->nazev.";
-      $mail_body= "Dobrý den,<p>dostali jsme vaši přihlášku na akci <b>$akce->nazev</b> $akce->oddo"
+      $mail_body= "Dobrý den,<p>dostali jsme vaši přihlášku na akci "
+      . "<b>$akce->nazev, $akce->misto</b> $akce->oddo "
       . " pro účastníky $ucastnici."
       . " Zaslané údaje zpracujeme a do 5 dnů vám pošleme odpověď. "
       . "<p>S přáním hezkého dne<br>$akce->garant_jmeno"
