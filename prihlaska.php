@@ -974,7 +974,6 @@ function do_rozlouceni() { // --------------------------------------------------
     }
     $nazev= get('r','nazev');
     if ($akce->p_pro_LK) { // závěrečná zpráva a mail pro ---------------------------- Letní kurz MS
-      $msg= "Vaše přihláška byla zaevidována a poslali jsme Vám potvrzující mail na $post->email.";
       $mail_subj= "Potvrzení přijetí přihlášky ($nazev) na akci $akce->nazev.";
       $mail_body= "Dobrý den,<p>dostali jsme vaši přihlášku na akci "
       . "<b>$akce->nazev, $akce->misto</b> $akce->oddo "
@@ -984,8 +983,19 @@ function do_rozlouceni() { // --------------------------------------------------
       . "<br><a href=mailto:'$akce->garant_mail'>$akce->garant_mail</a>"
       . "<br>$akce->garant_telefon (v podvečerních hodinách)</p>"
       . "<p><i>Tato odpověď je vygenerována automaticky</i></p>";
-      $ok_mail= simple_mail($akce->garant_mail, $post->email, $mail_subj,$mail_body,$akce->garant_mail); 
+      // získání adres obou manželů
+      $emails= [];
+      foreach ($cleni as $id=>$clen) {
+        if (!in_array(get_role($id),['a','b'])) continue;
+        $ems= preg_split('/[,;]/',get('o','email',$id));
+        foreach ($ems as $email) {
+          $emails[]= trim($email);
+        }
+      }
+      $emaily= implode(',',$emails);
+      $ok_mail= simple_mail($akce->garant_mail, $emails, $mail_subj,$mail_body,$akce->garant_mail); 
       $ok= $ok_mail ? 'ok' : 'ko';
+      $msg= "Vaše přihláška byla zaevidována a poslali jsme Vám potvrzující mail na $emaily.";
     }
     elseif ($akce->p_obnova) { // závěrečná zpráva a mail pro ---------------------------- Obnovy MS
       $text= !byli_na_aktualnim_LK(key($vars->rodina))
@@ -2038,7 +2048,7 @@ function sql2oddo($x1,$x2,$vnutit_rok=0) { // ----------------------------------
       $datum= "$d1 - $d2. $m1"  . ($r1!=$letos || $vnutit_rok ? ". $r1" : '');
     }
     else { //ostatni pripady
-      $datum= "$d1. $m1 - $d2. $m2"  . ($r1!=$letos ? ". $r1" : '');
+      $datum= "$d1. $m1 - $d2. $m2"  . ($r1!=$letos || $vnutit_rok ? ". $r1" : '');
     }
   }
   else { //ostatni pripady
@@ -2129,7 +2139,12 @@ function simple_mail($replyto,$address,$subject,$body,$cc='') { // -------------
       $mail->AddCC($cc);
     }
     $mail->FromName= $api_gmail_name;
-    $mail->AddAddress($address);   
+    if (is_array($address)) {
+      foreach ($address as $adr) {
+        $mail->AddAddress($adr);   
+      }
+    }
+    else $mail->AddAddress($address);   
     $mail->Subject= $subject;
     $mail->Body= $body;
 //    if ($TEST) {
