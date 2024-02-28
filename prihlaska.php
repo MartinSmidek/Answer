@@ -182,11 +182,12 @@ function read_akce() { // ------------------------------------------------------
   if (!$akce || !$akce->p_enable) { 
     $msg= "Na tuto akci se bohužel nelze přihlásit online"; goto end; }
   // doplnění dalších údajů o akci
-  list($akce->org,$akce->nazev,$akce->misto,$garant,$od,$do)= // doplnění garanta
-      select_2("access,nazev,misto,poradatel,datum_od,datum_do",'akce',"id_duakce=$id_akce");
+  list($akce->org,$akce->nazev,$akce->misto,$garant,$od,$do,$rok)= // doplnění garanta
+      select_2("access,nazev,misto,poradatel,datum_od,datum_do,YEAR(datum_od)",'akce',"id_duakce=$id_akce");
   if ($od<=date('Y-m-d')) { 
     $msg= "Akce '$akce->nazev' již proběhla, nelze se na ni přihlásit"; goto end; }
   $akce->oddo= sql2oddo($od,$do,1);
+  $akce->rok= $rok;
   $MarketaZelinkova= 6849;
   list($ok,$akce->garant_jmeno,$akce->garant_telefon,$akce->garant_mail)= // doplnění garanta
       select_2("COUNT(*),CONCAT(jmeno,' ',prijmeni),telefon,email",
@@ -1047,6 +1048,7 @@ function page($problem='') {
     $trace= '';
     $if_trace= '';
   }
+  $rok= $akce->p_pro_LK ? " $akce->rok" : ''; // pro LK přidej rok
   $preambule= $vars->faze=='c' ? "<p class='souhlas'>$akce->preambule</p>" : '';
   $formular= $problem ?: <<<__EOD
       $problem
@@ -1132,7 +1134,7 @@ __EOF;
             <img src="/img/husy_ymca.png" alt=""></a>
           <div class="user">$user</div>
         </div>
-        <div class="intro">Přihláška na akci <b>$akce->nazev</b></div>
+        <div class="intro">Přihláška na akci <b>$akce->nazev$rok</b></div>
       </header>
       <main>
         $mailbox
