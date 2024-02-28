@@ -31,10 +31,6 @@ $TEST= 0; // 0 - bez testování | 1 - výpis stavu a sql | 2 - neukládat | 3 -
 //echo("\$DBT=$DBT");
 $AKCE= "T_{$_GET['akce']}"; // ID akce pro SESSION
 if (!isset($_SESSION[$AKCE])) $_SESSION[$AKCE]= (object)[];
-// -------------------------------------- nastavení &test &mail se projeví jen z chráněných IP adres
-if (!ip_ok()) {
-  die("Online přihlašování není ještě k dospozici."); 
-}
 // -------------------------------------------------------------------------- varianty pro testování
 //$testovaci_mail= 'martin@smidek.eu';          $TEST= 3; // známý pár
 //$testovaci_mail= 'kancelar@setkani.org';      $TEST= 3; 
@@ -48,10 +44,10 @@ if (!isset($testovaci_mail)) {
   $TEST= $_GET['test'] ?? ($_SESSION[$AKCE]->test ?? $TEST);
   $MAIL= $DBT ? $_GET['mail'] ?? ($_SESSION[$AKCE]->mail ?? $MAIL) : 1; // ostrý běh vždy s mailama
 }
-//echo($MAIL);
-//else {
-//  $MAIL= 0;
-//}
+// -------------------------------------- nastavení &test se projeví jen z chráněných IP adres
+if (!ip_ok()) {
+  $TEST= 0;
+}
 # --------------------------------------------------------------- zpracování jednoho stavu formuláře
 try {
 start();                // nastavení $vars podle SESSION
