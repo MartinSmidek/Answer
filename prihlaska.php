@@ -30,6 +30,7 @@ session_start();
 $DBT= $_SESSION['dbt']['user_id']?? 0; // při přihlášení se do dbt.php bude testovací červená varianta
 $MAIL= 1; // 1 - maily se posílají | 0 - mail se jen ukáže - lze nastavit url&mail=0
 $TEST= 0; // 0 - bez testování | 1 - výpis stavu a sql | 2 - neukládat | 3 - login s testovacím mailem
+$LOAD= 0; // 1 je povoleno natažení dat ze starší přihlášky
 //echo("\$DBT=$DBT");
 $AKCE= "T_{$_GET['akce']}"; // ID akce pro SESSION
 if (!isset($_SESSION[$AKCE])) $_SESSION[$AKCE]= (object)[];
@@ -41,12 +42,12 @@ if (!isset($_SESSION[$AKCE])) $_SESSION[$AKCE]= (object)[];
 //$testovaci_mail= 'anabasis@seznam.cz';        $TEST= 3; // známá rodina ale bez ženy
 //$testovaci_mail= 'frantisekbezdek@atlas.cz';  $TEST= 3; // známá osoba ale bez rodiny
 //$testovaci_mail= 'nemo3@smidek.eu';         $TEST= 3; // neznámý mail
-//$TEST= 1;
 if (!isset($testovaci_mail)) {
   $TEST= $_GET['test'] ?? ($_SESSION[$AKCE]->test ?? $TEST);
   $MAIL= $DBT ? $_GET['mail'] ?? ($_SESSION[$AKCE]->mail ?? $MAIL) : 1; // ostrý běh vždy s mailama
 //  $MAIL= 0;
 }
+//$TEST= 1;
 // -------------------------------------- nastavení &test se projeví jen z chráněných IP adres
 if (!ip_ok()) {
   $TEST= 0;
@@ -481,7 +482,7 @@ __EOF;
 } // a
 function do_nacteni_rodiny() { // ------------------------------------------------ do nacteni_rodiny
 # (b) ověří zapsaný PIN proti poslanému, načte a vytvoří data rodiny
-  global $akce, $msg, $vars, $cleni, $post, $form;
+  global $LOAD, $akce, $msg, $vars, $cleni, $post, $form;
   do_begin();
   $button= "button onclick='save_position()' type='submit'";
   // -------------------------------------------- jiný mail (a)
@@ -534,7 +535,7 @@ function do_nacteni_rodiny() { // ----------------------------------------------
     else { // pocet==1 ... mail je jednoznačný
       $vars->klient= $ido;
       log_write('id_osoba',$ido);
-      log_write('id_rodina',$idr);-
+      log_write('id_rodina',$idr);
       // položky do hlavičky
       $vars->user= "$jmena<br>$post->email";
       // zjistíme zda již není přihlášen
@@ -581,16 +582,16 @@ function do_nacteni_rodiny() { // ----------------------------------------------
         kompletuj_pobyt(0,$idr,$ido);
         $msg= '';
         $vars->faze= 'c';
-//        if ($TEST && !$web_json && $idr==3895) {
-//          $web_json= '{"cleni":{"6847":{"spolu":1,"Xupozorneni":"x","Xpovaha":"flegmatik","Xmanzelstvi":"dobr\u00e9","Xocekavani":"dobr\u00e9 kafe","Xrozveden":"Nikoliv\u011bk"}, "6849":{"spolu":1,"Xupozorneni":"x","Xpovaha":"v\u011bt\u0161inou klidn\u00e1, n\u011bkdy m\u00e9n\u011b","Xmanzelstvi":"u\u017e 25 let moc fajn","Xocekavani":"pravidelnou \u00fadr\u017ebu vztahu","Xrozveden":"ne"},"13783":{"spolu":0}}}';
-//          $X= json_decode($web_json);
-//          foreach ($X->cleni as $id=>$corr) {
-//            foreach ((array)$corr as $f=>$v) {
-//              if (!isset($cleni[$id])) continue;
-//              $cleni[$id]->$f= [$v];
-//            }
-//          }
-//        }
+        if ($LOAD) {
+          // zkusíme najít poslední verzi přihlášky
+          $json= select_2('vars_json','prihlaska',
+              "id_osoba='$ido' AND vars_json!='' ORDER BY id_prihlaska DESC LIMIT 1");
+          if ($json) {
+            log_read_vars($json); // inteligentní načtení uschovaných hodnot s výměnou id_prihlaska
+            log_write_vars();
+            log_append_stav('load');
+          }
+        }
         goto end;
       }
     }
@@ -691,7 +692,7 @@ function do_vyplneni_dat() { // ------------------------------------------------
   // -------------------------------------------- ! kontrola hodnot
   if (isset($post->cmd_ano) || isset($post->cmd_check)) {
     log_write_vars();
-    log_write_PDF();
+//    log_write_PDF();
     $zapsat= true;
     $neuplne= array();
     $doplnit= array();
@@ -1005,7 +1006,7 @@ function do_rozlouceni() { // --------------------------------------------------
           $emails[]= trim($email);
         }
       }
-      $emaily= implode(',',$emails);
+      $emaily= implode(', ',$emails);
       $ok_mail= simple_mail($akce->garant_mail, $emails, $mail_subj,$mail_body,$akce->garant_mail); 
       $ok= $ok_mail ? 'ok' : 'ko';
       $msg= "Vaše přihláška byla zaevidována a poslali jsme Vám potvrzující mail na $emaily.";
@@ -1455,7 +1456,7 @@ function vytvor_web_json() { // ------------------------------------------------
     }
   }
   debug($web_json,"web_json");
-  $web_json= json_encode($web_json);
+  $web_json= json_encode($web_json,JSON_UNESCAPED_UNICODE);
   if (!$web_json) $errors[]= "chyba při ukládání: ".json_last_error();
   return $web_json;
 }
@@ -1844,14 +1845,23 @@ function log_append_stav($novy) { // -------------------------------------------
 function log_write_vars() { // ------------------------------------------------------ log write_vars
   global $AKCE, $vars, $TRACE;
   if (($id= $_SESSION[$AKCE]->id_prihlaska??0)) {
-    $val= json_encode($vars);
+    $val= json_encode($vars,JSON_UNESCAPED_UNICODE);
     $res= pdo_query_2("UPDATE prihlaska SET vars_json='$val' WHERE id_prihlaska=$id",1);
     if ($res===false && $TRACE)
       display("LOG_WRITE_VARS fail");
   }
 }
-function log_write_PDF() { // -------------------------------------------------------- log write_PDF
-  gen_html(2); // uložit do ..files/db?/prihlaska
+function log_read_vars($old) { // ---------------------------------------------------- log read_vars
+  global $AKCE, $vars;
+  $old_vars= json_decode($old);
+  $new_id= $vars->id_prihlaska;
+  $vars= $old_vars;
+  $vars->id_prihlaska= $new_id; // dále už s novou verzí
+  $vars->faze= 'c';
+  $vars->cleni= (array)$vars->cleni;
+  $vars->rodina= (array)$vars->rodina;
+  $_SESSION[$AKCE]= $vars;
+  do_begin();
 }
 function log_error($msg) { // ---------------------------------------------------- log error
   global $AKCE, $TRACE;
@@ -2148,7 +2158,8 @@ function simple_mail($replyto,$address,$subject,$body,$cc='') { // -------------
   $msg= '';
   if ($TEST>1 || !$MAIL) {
     $mailbox= "<h3>Simulace odeslání mailu z adresy $api_gmail_name &lt;$api_gmail_user&gt;</h3>"
-        . "<b>pro:</b> $address "
+        . "<b>pro:</b>  "
+        . (is_array($address) ? implode(', ',$address) : $address)
         . "<br><b>předmět:</b> $subject"
         . "<p><b>text:</b> $body</p>";
 //    if ($TEST) $trace.= "<hr>$mailbox<hr>";
