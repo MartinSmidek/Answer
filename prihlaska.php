@@ -529,7 +529,7 @@ function do_nacteni_rodiny() { // ----------------------------------------------
     elseif ($pocet>1) {
       $msg= "Tento mail používá více osob ($jmena), "
           . " <br>přihlaste se prosím pomocí jiného svého mailu (nebo mailem manžela/ky).";
-      $vars->faze= 'e'; // jiný mail - po zjištění nejednoznačnosti
+      $vars->faze= 'd'; // jiný mail - po zjištění nejednoznačnosti
       goto end;
     }
     else { // pocet==1 ... mail je jednoznačný
