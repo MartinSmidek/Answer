@@ -24,6 +24,8 @@
 header('Content-Type:text/html;charset=utf-8');
 header('Cache-Control:no-cache,no-store,must-revalidate');
 if (!isset($_GET['akce']) || !is_numeric($_GET['akce'])) die("Online přihlašování není k dospozici."); 
+ini_set('session.cookie_lifetime', 60 * 60 * 24 * 7);
+ini_set('session.gc_maxlifetime', 60 * 60 * 24 * 7);
 session_start();
 $DBT= $_SESSION['dbt']['user_id']?? 0; // při přihlášení se do dbt.php bude testovací červená varianta
 $MAIL= 1; // 1 - maily se posílají | 0 - mail se jen ukáže - lze nastavit url&mail=0
@@ -1788,7 +1790,7 @@ function db_close_pobyt() { // -------------------------------------------------
 # ------------------------------------------------------------------------------------ log prihlaska
 function log_open() { // ------------------------------------------------------------------ log open
   global $AKCE, $akce;
-  if (!isset($_SESSION[$AKCE]->id_prihlaska)) {
+  if ($_SESSION[$AKCE]->id_prihlaska??0) {
     $ip= $_SERVER['HTTP_X_REAL_IP'] ?? $_SERVER['REMOTE_ADDR'];
     $ida= $akce->id_akce;
     $res= pdo_query_2("INSERT INTO prihlaska SET open=NOW(),IP='$ip',id_akce=$ida ",1);
@@ -1801,7 +1803,7 @@ function log_open() { // -------------------------------------------------------
 }
 function log_write($clmn,$value) { // ---------------------------------------------------- log write
   global $AKCE, $TRACE;
-  if (($id= $_SESSION[$AKCE]->id_prihlaska)) {
+  if (($id= $_SESSION[$AKCE]->id_prihlaska??0)) {
     $val= $value=='NOW()' ? 'NOW()' : "'".pdo_real_escape_string($value)."'";
     $res= pdo_query_2("UPDATE prihlaska SET $clmn=$val WHERE id_prihlaska=$id",1);
     if ($res===false && $TRACE)
@@ -1810,7 +1812,7 @@ function log_write($clmn,$value) { // ------------------------------------------
 }
 function log_write_vars() { // ------------------------------------------------------ log write_vars
   global $AKCE, $vars, $TRACE;
-  if (($id= $_SESSION[$AKCE]->id_prihlaska)) {
+  if (($id= $_SESSION[$AKCE]->id_prihlaska??0)) {
     $val= json_encode($vars);
     $res= pdo_query_2("UPDATE prihlaska SET vars_json='$val' WHERE id_prihlaska=$id",1);
     if ($res===false && $TRACE)
@@ -1822,7 +1824,7 @@ function log_write_PDF() { // --------------------------------------------------
 }
 function log_error($msg) { // ---------------------------------------------------- log error
   global $AKCE, $TRACE;
-  if (($id= $_SESSION[$AKCE]->id_prihlaska)) {
+  if (($id= $_SESSION[$AKCE]->id_prihlaska??0)) {
     $val= "'".pdo_real_escape_string($msg)."'";
     $res= pdo_query_2("UPDATE prihlaska SET errors=CONCAT(errors,'|',$val) WHERE id_prihlaska=$id",0);
     if ($res===false && $TRACE)
