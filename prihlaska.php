@@ -45,6 +45,7 @@ if (!isset($_SESSION[$AKCE])) $_SESSION[$AKCE]= (object)[];
 if (!isset($testovaci_mail)) {
   $TEST= $_GET['test'] ?? ($_SESSION[$AKCE]->test ?? $TEST);
   $MAIL= $DBT ? $_GET['mail'] ?? ($_SESSION[$AKCE]->mail ?? $MAIL) : 1; // ostrý běh vždy s mailama
+//  $MAIL= 0;
 }
 // -------------------------------------- nastavení &test se projeví jen z chráněných IP adres
 if (!ip_ok()) {
@@ -60,9 +61,6 @@ read_akce();            // načtení údajů o akci z Answeru
 polozky();              // popis získávaných položek
 //debug($akce);
 read_form();            // načtení údajů formuáře
-//trace_vars('START');
-//$MAIL= 0; // 1 - maily se posílají | 0 - mail se jen ukáže - lze nastavit url&mail=0
-//log_write('web_json',vytvor_web_json());
 todo();
 trace_vars('END');
 page();
@@ -110,6 +108,7 @@ function start() { // ----------------------------------------------------------
 //  $trace.= debugx($_SESSION,'$_SESSION - vstup');
   if (!isset($_SESSION[$AKCE]->faze)) {
     $_POST= [];
+    $_SESSION[$AKCE]= (object)[];
     $_SESSION[$AKCE]->start= 1;
     $_SESSION[$AKCE]->faze= 'a';
     $_SESSION[$AKCE]->history= '';
@@ -401,8 +400,8 @@ function todo() { // -----------------------------------------------------------
   // logika formulářů
   if ($vars->faze=='a') { // => a* | b
     clear_post_but("/email|^.$/");
+    if ($vars->post->email??0) log_open($vars->post->email);
     do_mail_klienta();  
-    log_open();
   }  
   if ($vars->faze=='b') { // => b* | c | n | a
     do_nacteni_rodiny(); 
@@ -412,18 +411,20 @@ function todo() { // -----------------------------------------------------------
   }
   if ($vars->faze=='d') { // => .
     do_rozlouceni();  
-    log_write('stav','ok');
     log_write_vars();
     log_close();
     // vyčisti vše
     unset($vars->post);
     do_session_restart();
   }
-  // pokud se cyklus vrátil
-  if ($vars->faze=='a') { // => a* | b
-    clear_post_but("/email|^.$/");
-    do_mail_klienta();  
-  }  
+  if ($vars->faze=='e') { // => .
+    do_znovu(); // obsahuje refresh stránky
+  }
+//  // pokud se cyklus vrátil
+//  if ($vars->faze=='a!') { // => a* | b
+//    clear_post_but("/email|^.$/");
+//    do_mail_klienta();  
+//  }  
 }
 function do_mail_klienta() { // ----------------------------------------------------- do mail_klenta
 # (a) získá mail klienta, ověří jeho korektnost a evidenci v DB a pošle mu mail s PINem
@@ -437,7 +438,6 @@ function do_mail_klienta() { // ------------------------------------------------
   $post->email= $post->email ?? '';                   
   $chyby= '';
   $ok= check_mail($post->email,$chyby);
-  if ($post->email) log_write('email',$post->email);
   if (!$ok) 
     $chyby= $post->email ? "Tuto emailovou adresu není možné použít:<br>$chyby" : ' ';
   if (!$chyby) {
@@ -467,12 +467,13 @@ function do_mail_klienta() { // ------------------------------------------------
   }
   if ($chyby) {
     $msg= zvyraznit("<p>$chyby</p>");
+    $oba= "<p><i>Přihláška obsahuje otázky určené oběma manželům - je potřeba, abyste ji vyplňovali společně.</i></p>";
     $form= <<<__EOF
       $refresh
       <p>Abychom ověřili, že se přihlašujete právě vy, napište svůj mail, pošleme na něj přihlašovací PIN.</p>
       <input type="text" size="24" name='email' value='$post->email' placeholder='@'>
       <input type="hidden" name='pin' value=''>
-      <$button name="cmd_zaslat">Zaslat PIN</button>
+      <$button name="cmd_zaslat">Zaslat PIN</button>$oba
       $msg
 __EOF;
   }
@@ -487,13 +488,14 @@ function do_nacteni_rodiny() { // ----------------------------------------------
   if (isset($post->cmd_jiny_mail)) {
     clear_post_but("/---/");
     $vars->klient= 0;
-    $vars->faze= 'a';
+    $msg= '';
+    $vars->faze= 'e'; // jiný mail po volbě [jiný mail]
     do_end();
     return;
   }
   // -------------------------------------------- registrace (n)
   if (isset($post->cmd_registrace_a) || isset($post->cmd_registrace_b)) {
-    log_write('stav','novacci');
+    log_append_stav('novacci');
     kompletuj_pobyt(0,0,0);
     $cleni[isset($post->cmd_registrace_a)?-1:-2]->email= [$post->email];
     $vars->user= '-';
@@ -526,13 +528,13 @@ function do_nacteni_rodiny() { // ----------------------------------------------
     elseif ($pocet>1) {
       $msg= "Tento mail používá více osob ($jmena), "
           . " <br>přihlaste se prosím pomocí jiného svého mailu (nebo mailem manžela/ky).";
-      $vars->faze= 'a';
+      $vars->faze= 'e'; // jiný mail - po zjištění nejednoznačnosti
       goto end;
     }
     else { // pocet==1 ... mail je jednoznačný
       $vars->klient= $ido;
       log_write('id_osoba',$ido);
-      log_write('id_rodina',$idr);
+      log_write('id_rodina',$idr);-
       // položky do hlavičky
       $vars->user= "$jmena<br>$post->email";
       // zjistíme zda již není přihlášen
@@ -544,7 +546,7 @@ function do_nacteni_rodiny() { // ----------------------------------------------
 //      display("a2: $idp,$kdy,$kdo");
       if ($idp && !($akce->p_oprava??0)) {
         log_write('id_pobyt',$idp);
-        log_write('stav','na akci');
+        log_append_stav('prihlaseni');
         $kdy= $kdy ? sql_time1($kdy) : '';
         $msg= $kdo=='WEB' ? "Na tuto akci jste se již $kdy přihlásili online přihláškou." : (
             $kdo ? "Na této akci jste již $kdy přihlášeni (zápis provedl uživatel se značkou $kdo" 
@@ -555,7 +557,7 @@ function do_nacteni_rodiny() { // ----------------------------------------------
       }
       elseif ($idp && $akce->p_oprava) { // přihláška je uložena ale jdeme do opravy
         log_write('id_pobyt',$idp);
-        log_write('stav','uprava');
+        log_append_stav('oprava');
         $vars->form->oprava= 1;
         kompletuj_pobyt($idp,$idr,$ido);
 //        global $TEST;
@@ -575,7 +577,7 @@ function do_nacteni_rodiny() { // ----------------------------------------------
         goto end;
       }
       else { // klientova rodina ani klient sám na akci není
-        log_write('stav','znami');
+        log_append_stav('znami');
         kompletuj_pobyt(0,$idr,$ido);
         $msg= '';
         $vars->faze= 'c';
@@ -594,6 +596,7 @@ function do_nacteni_rodiny() { // ----------------------------------------------
     }
   }
   if ($msg) {
+    $oba= "<p><i>Přihláška obsahuje otázky určené oběma manželům - je potřeba, abyste ji vyplňovali společně.</i></p>";
     if (($vars->klient??0)==-1) {
       $form= <<<__EOF
         <p>$msg</p>
@@ -608,10 +611,12 @@ __EOF;
     else {
       $msg= $pin ? zvyraznit("<p>Do mailu jsme poslali odlišný PIN</p>") : "<p></p>";
       $form= <<<__EOF
-        <p>Na uvedený mail vám byl zaslán PIN, opište jej vedle své mailové adresy.</p>
+        <p>Na uvedený mail vám byl zaslán PIN, opište jej vedle své mailové adresy.
+          <br><i>(pokud PIN nedošel, podívejte se i složek Promoakce, Aktualizace, Spam, ...)</i></p>
         <input type="text" size="24" name='email' value="$post->email" disabled placeholder='@'>
         <input type='text' size="4" name='pin' value='$pin'>
         <$button name='cmd_overit'>ověřit PIN</button>
+        $oba
         $msg
 __EOF;
     }
@@ -778,6 +783,7 @@ function do_vyplneni_dat() { // ------------------------------------------------
   $errors= [];
   if (isset($post->cmd_ano) && $zapsat) {
     // vytvoření pobytu
+    log_append_stav('zapis');
     // účast jako ¨účastník' pokud není p_obnova => neúčast na LK znamená "náhradník"
     $ucast= 0; // = účastník
     if ($akce->p_obnova) {
@@ -934,7 +940,7 @@ function do_vyplneni_dat() { // ------------------------------------------------
   $exit= $vars->form->exit 
       ? "<$button name='cmd_exit'><i class='$red_x'></i> smazat rozepsanou přihlášku bez uložení</button>
          <$button name='cmd_exit_no'> ... pokračovat v úpravách</button>"
-      : "<$button name='cmd_check'><i class='fa fa-question'></i> zkontrolovat údaje (lze opakovat)</button>
+      : "<$button name='cmd_check'><i class='fa fa-question'></i> zkontrolovat před odesláním (lze opakovat)</button>
          <$button id='submit_form' name='cmd_ano' $enable_send><i class='fa $enable_green fa-send-o'></i>
            odeslat přihlášku</button>
          <$button name='cmd_exit_test'><i class='$red_x'></i> neposílat</button>";
@@ -955,14 +961,18 @@ end:
 } // faze = c
 function do_rozlouceni() { // -------------------------------------------------------- do rozlouceni
 # (d) rozloučí se s klientem
+# msg=ok|ko 
+# jiné msg se zobrazí
   global $msg, $akce, $vars, $cleni, $post, $form, $TEST;
   $ok= $msg;
   do_begin();
-  if (substr($vars->history,-2,1)=='d') {
-    clear_post_but("/---/");
-    $vars->faze= 'a';
-  }
-  elseif ($ok=='ok') {
+//  if (substr($vars->history,-2,1)=='d') {
+//    clear_post_but("/---/");
+//    $vars->faze= 'a'; // ? předposlední d
+//  }
+//  else
+  if ($ok=='ok') {
+    log_append_stav('ok');
     if ($akce->p_dokument && $vars->kontrola && $TEST<2) {
       $msg= gen_html(1);
       if ($TEST) display($msg);
@@ -1021,15 +1031,27 @@ function do_rozlouceni() { // --------------------------------------------------
       $ok= $ok_mail ? 'ok' : 'ko';
     }
   }
-  if ($ok=='ko') {
+  elseif ($ok=='ko') {
+    log_append_stav('ko');
     $msg= "Při zpracování přihlášky došlo bohužel k chybě. "
         . "<br>Přihlaste se prosím posláním mailu organizátorům akce"
         . "<br><a href=mailto:'$akce->garant_mail'>$akce->garant_mail</a>";
   }
+  else {
+    log_append_stav('nic');
+  }
+  // pro msg ani ok ani ko jen zobraz zprávu
   $form= <<<__EOF
     <p>$msg</p>
 __EOF;
 } // faze = d
+function do_znovu() { // ------------------------------------------------------------------ do znovu
+  log_append_stav('znovu');
+  log_write_vars();
+  log_close();
+  do_session_restart();
+  header('Location: '.$_SERVER['REQUEST_URI']);
+}
 // ====================================================================;=========== zobrazení stránky
 function page($problem='') {
   global $vars, $akce, $form, $info, $index;
@@ -1788,12 +1810,13 @@ function db_close_pobyt() { // -------------------------------------------------
   }
 }
 # ------------------------------------------------------------------------------------ log prihlaska
-function log_open() { // ------------------------------------------------------------------ log open
+function log_open($email) { // ------------------------------------------------------------ log open
   global $AKCE, $akce;
-  if ($_SESSION[$AKCE]->id_prihlaska??0) {
+  if (!isset($_SESSION[$AKCE]->id_prihlaska)) {
     $ip= $_SERVER['HTTP_X_REAL_IP'] ?? $_SERVER['REMOTE_ADDR'];
+    $email= pdo_real_escape_string($email);
     $ida= $akce->id_akce;
-    $res= pdo_query_2("INSERT INTO prihlaska SET open=NOW(),IP='$ip',id_akce=$ida ",1);
+    $res= pdo_query_2("INSERT INTO prihlaska SET open=NOW(),IP='$ip',id_akce=$ida,email='$email' ",1);
     if ($res!==false) {
       $_SESSION[$AKCE]->id_prihlaska= pdo_insert_id();
       session_write_close();
@@ -1808,6 +1831,14 @@ function log_write($clmn,$value) { // ------------------------------------------
     $res= pdo_query_2("UPDATE prihlaska SET $clmn=$val WHERE id_prihlaska=$id",1);
     if ($res===false && $TRACE)
       display("LOG_WRITE fail for:$clmn=$val");
+  }
+}
+function log_append_stav($novy) { // ---------------------------------------------------- log write
+  global $AKCE, $TRACE;
+  if (($id= $_SESSION[$AKCE]->id_prihlaska??0)) {
+    $res= pdo_query_2("UPDATE prihlaska SET stav=CONCAT(stav,'-','$novy') WHERE id_prihlaska=$id",1);
+    if ($res===false && $TRACE)
+      display("LOG_APPEND_STAV fail for:$novy");
   }
 }
 function log_write_vars() { // ------------------------------------------------------ log write_vars
