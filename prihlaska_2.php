@@ -236,6 +236,9 @@ __JSON;
     $msg= "Na tuto akci se nelze přihlásit online"; goto end; }
   // dekódování web_online
   $akce= json_decode($web_online);
+  
+  $akce->p_pozde= 1; // pak se dá do Answeru jako volba nebo jako termín
+  
   if (!$akce || !$akce->p_enable) { 
     $msg= "Na tuto akci se bohužel nelze přihlásit online"; goto end; }
   // doplnění dalších údajů o akci
@@ -619,9 +622,16 @@ function do_vyplneni_dat() {
     // účast jako ¨účastník' pokud není p_obnova => neúčast na LK znamená "náhradník"
     $ucast= 0; // = účastník
     if ($akce->p_obnova) {
-      $jako= byli_na_aktualnim_LK(key($vars->rodina));
-      if (!$jako) $ucast= 9; // = náhradník
-      elseif ($jako==2 && $akce->p_vps) $ucast= 1; // VPS
+      if ($akce->p_pozde) {
+        $ucast= 9; // náhradník
+      }
+      else {
+        $jako= byli_na_aktualnim_LK(key($vars->rodina));
+        if (!$jako) 
+          $ucast= 9; // = náhradník
+        elseif ($jako==2 && $akce->p_vps) 
+          $ucast= 1; // VPS
+      }
     }
     $idp= db_novy_pobyt($akce->id_akce,key($vars->rodina),$ucast,$vars->pobyt->pracovni);
     if (count($errors)) goto db_end;
@@ -757,13 +767,23 @@ function do_rozlouceni() {
     $idr= key($vars->rodina);
     $rodina= $vars->rodina[$idr];
     $nazev= is_array($rodina->nazev) ? $rodina->nazev[0] : $rodina->nazev;
+    // standardní text
     $text= $akce->p_obnova && !byli_na_aktualnim_LK(key($vars->rodina))
       ? ".</p>"
         . "<p>Účast na obnově mají zajištěnu přednostně účastníci letního kurzu. "
         . "Protože jste mezi nimi nebyli, zařadili jsme vás zatím mezi náhradníky. "
         . "Pokud bude místo, ozveme se nejpozději 2 týdny před akcí a účast vám potvrdíme.</p>"
-      : " a zapisuji vás mezi účastníky."
-        . " Vaši přihlášku zpracuji do tří dnů.<br>V týdnu před akcí dostanete <i>Dopis na cestu</i> s doplňujícími informacemi.</p>";
+      : ($akce->p_pozde 
+        ? ".</p>"
+          . "<p>V tuto chvílí vás pro velký zájem o obnovu zařazujeme mezi náhradníky. "
+          . "Pokud bude místo, ozveme se nejpozději týden před akcí a účast vám potvrdíme.</p>"
+        : " a zapisuji vás mezi účastníky."
+          . " Vaši přihlášku zpracuji do tří dnů.<br>V týdnu před akcí dostanete <i>Dopis na cestu</i> "
+          . "s doplňujícími informacemi.</p>");
+    // text po termínu 
+    $text= ".</p>"
+        . "<p>V tuto chvílí vás pro velký zájem o obnovu zařazujeme mezi náhradníky. 
+          Pokud bude místo, ozveme se nejpozději týden před akcí a účast vám potvrdíme.</p>";
     $msg= "Vaše přihláška byla zaevidována a poslali jsme Vám potvrzující mail na $post->email.";
     $mail_subj= "Potvrzení přijetí přihlášky ($nazev) na akci $akce->nazev.";
     $mail_body= "Dobrý den,<p>potvrzuji přijetí vaší přihlášky na akci <b>$akce->nazev</b>"
