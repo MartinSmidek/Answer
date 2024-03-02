@@ -47,18 +47,16 @@ if (!isset($_SESSION[$AKCE])) $_SESSION[$AKCE]= (object)[];
 if (!isset($testovaci_mail)) {
   $TEST= $_GET['test'] ?? ($_SESSION[$AKCE]->test ?? $TEST);
   $MAIL= $DBT ? $_GET['mail'] ?? ($_SESSION[$AKCE]->mail ?? $MAIL) : 1; // ostrý běh vždy s mailama
-  $MAIL= 1;
 }
 // -------------------------------------- nastavení &test se projeví jen z chráněných IP adres
-if (!ip_ok()) {
-  $TEST= 0;
-}
-else { // v chráněných lze nastavit cokoliv
+if (ip_ok()) { // testu na answer.bean nebo IP
+  $TEST= 1;
+  $MAIL= 0;
+} // v chráněných lze nastavit cokoliv
+elseif (!$DBT) { // ostrý běh natvrdo
   $TEST= 0;
   $MAIL= 1;
-//  $TEST= 1;
-//  $MAIL= 0;
-}
+} // ostrý běh má TEST=0 MAIL=1
 # --------------------------------------------------------------- zpracování jednoho stavu formuláře
 try {
 start();                // nastavení $vars podle SESSION
@@ -311,7 +309,7 @@ function polozky() { // --------------------------------------------------------
       'Xpovaha'    =>['70/1','* popiš svoji povahu','area','ab'],
       'Xmanzelstvi'=>['70/2','* vyjádři se o vašem manželství','area','ab'],
       'Xocekavani' =>['70/2','* co očekáváš od účasti na MS','area','ab'],
-      'Xrozveden'  =>[20,'* bylo předchozí manželství?','','ab'],
+      'Xrozveden'  =>[20,'* předchozí manželství? (ne, počet)','','ab'],
       'Xupozorneni'=>[ 0,'*'.$akce->upozorneni,'check','ab'],
     ] : []
   );
@@ -2165,11 +2163,12 @@ function check_datum($d_val,$d_nazev,&$neuplne) { // ---------------------------
 function ip_ok() { // ------------------------------------------------------------------------ ip ok
 # pozná localhost, IP Talichova, IP chata, LAN Noe
   $ip= $_SERVER['HTTP_X_REAL_IP'] ?? $_SERVER['REMOTE_ADDR'];
-  return in_array($ip,[
-      '127.0.0.1', // localhost
-      '86.49.254.42','80.95.103.170','217.64.3.170', // GAN
-      '95.82.145.32'] // JZE
-      );
+    $ok= $_SERVER["SERVER_NAME"]=='answer.bean' // GAN
+      || in_array($ip,[
+      '127.0.0.1',    // localhost
+      '95.82.145.32'  // JZE
+    ]);
+    return $ok;
 }
 function form_stamp() { // -------------------------------------------------------------- form stamp
   global $AKCE, $vars;
