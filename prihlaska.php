@@ -54,6 +54,8 @@ if (!ip_ok()) {
   $TEST= 0;
 }
 else { // v chráněných lze nastavit cokoliv
+  $TEST= 0;
+  $MAIL= 1;
 //  $TEST= 1;
 //  $MAIL= 0;
 }
