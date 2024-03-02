@@ -54,8 +54,8 @@ if (!ip_ok()) {
   $TEST= 0;
 }
 else { // v chráněných lze nastavit cokoliv
-  $TEST= 1;
-  $MAIL= 0;
+//  $TEST= 1;
+//  $MAIL= 0;
 }
 # --------------------------------------------------------------- zpracování jednoho stavu formuláře
 try {
