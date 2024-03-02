@@ -536,9 +536,9 @@ __EOF;
     }
   }
   // --------------------------------- --------- ... PIN je v pořádku, načteme rodinu
-  log_open($post->email);  // email je ověřený
+  log_open($post->email);  // email je ověřený 
   // zjistíme, zda to může být rozpracovaná přihláška
-  $open= $LOAD ? log_find_saved($post->email) : '';
+  $open= $LOAD ? log_find_saved($post->email) : ''; // uložená přihláška a nejsou přihlášení
   // zjistíme, zda jej máme v databázi
   $regexp= "REGEXP '(^|[;,\\\\s]+)$post->email($|[;,\\\\s]+)'";
   list($pocet,$ido,$idr,$jmena)= select_2(
@@ -1618,7 +1618,7 @@ function db_vytvor_nebo_oprav_clena($id) { // --------------------------- db vyt
   $jmeno= get('o','jmeno',$id);
   $prijmeni= get('o','prijmeni',$id);
   $narozeni= date2sql(get('o','narozeni',$id));
-  if ($id<0) {
+  if ($id<0) { // asi nový člen ale zkusíme ho najít v databázi jako $ido
     // pokud je prázdné jméno i příjmení nic nezapisujeme
     if (trim($jmeno)=='' && trim($prijmeni=='')) goto end;
     // člen ještě není v databázi
@@ -1640,12 +1640,11 @@ function db_vytvor_nebo_oprav_clena($id) { // --------------------------- db vyt
           [(object)['fld'=>'pracovni', 'op'=>'u','old'=>$p_old,'val'=>$p_new]]);
       set('p','web_changes',get('p','web_changes')|2);
     }
-  }
-  else {
+  } // asi nový člen ale zkusíme ho najít v databázi 
+  else { // nenašli
     $ido= $id;
-  }
-  if ($ido==0) {
-    // zapíšeme novou osobu a připojíme ji do rodiny
+  } // nenašli
+  if ($ido==0) { // nenašli => zapíšeme novou osobu a připojíme ji do rodiny
     $jmeno_= preg_split("/[ \-]/",$jmeno);
     $sex= select_2('sex','_jmena',"jmeno='$jmeno_[0]' LIMIT 1");
     $sex= $sex==1 || $sex==2 ? $sex : 0;
@@ -1676,6 +1675,7 @@ function db_vytvor_nebo_oprav_clena($id) { // --------------------------- db vyt
     set('p','web_changes',get('p','web_changes')|4);
     $cleni[$ido]= $cleni[$id];
     unset($cleni[$id]);
+    log_write('id_osoba',$ido);
     // zapiš, že patří do rodiny
     $chng= []; 
     if (!count($errors)) {
@@ -1688,9 +1688,8 @@ function db_vytvor_nebo_oprav_clena($id) { // --------------------------- db vyt
       if (!$idt) $errors[]= "Nastala chyba při zápisu do databáze (t)"; 
       set('p','web_changes',get('p','web_changes')|16);
     }
-  }
-  else {
-    // opravíme změněné hodnoty položek existující osoby
+  } // nenašli => zapíšeme novou osobu a připojíme ji do rodiny
+  else { // našli => opravíme změněné hodnoty položek existující osoby
     $chng= [];
     $kontakt= 0;
     foreach ((array)$clen as $f=>$vals) {
@@ -1720,9 +1719,8 @@ function db_vytvor_nebo_oprav_clena($id) { // --------------------------- db vyt
         $errors[]= "Nastala chyba při zápisu do databáze (o)"; 
       set('p','web_changes',get('p','web_changes')|8);
     }
-  }
-  // zapojíme do pobytu
-  if ($spolu) {
+  } // našli => opravíme změněné hodnoty položek existující osoby
+  if ($spolu) { // zapojíme do pobytu
     $chng= array(
       (object)['fld'=>'id_pobyt',  'op'=>'i','val'=>$idp],
       (object)['fld'=>'id_osoba',  'op'=>'i','val'=>$ido],
@@ -1731,7 +1729,7 @@ function db_vytvor_nebo_oprav_clena($id) { // --------------------------- db vyt
     $ids= _ezer_qry("INSERT",'spolu',0,$chng);
     if (!$ids) $errors[]= "Nastala chyba při zápisu do databáze (cs)"; 
     set('p','web_changes',get('p','web_changes')|8);
-  }
+  } // zapojíme do pobytu
 end:
   // konec
 }
@@ -1763,6 +1761,7 @@ function db_vytvor_nebo_oprav_rodinu() { // ---------------------------- do vytv
     set('p','web_changes',get('p','web_changes')|16);
     $vars->rodina[$idr]= $rodina;
     unset($vars->rodina[$id]);
+    log_write('id_rodina',$idr);
   }
   else {
     $chng= [];
@@ -1864,8 +1863,11 @@ function log_find_saved($email) { // -------------------------------------------
   global $akce, $vars;
   // zkusíme najít poslední verzi přihlášky - je ve fázi (c)
   $found= '';
+  $idp= select_2('id_pobyt','prihlaska',
+      "id_pobyt!=0 AND id_akce=$akce->id_akce AND email='$email' ");
+  if ($idp) goto end; // už se povedlo přihlásit
   list($idpr,$open)= select_2('id_prihlaska,open','prihlaska',
-      "id_akce=$akce->id_akce AND email='$email' AND vars_json!='' "
+      "id_pobyt=0 AND id_akce=$akce->id_akce AND email='$email' AND vars_json!='' "
     . "ORDER BY id_prihlaska DESC LIMIT 1");
   if (!$idpr) goto end;
   $vars->continue= $idpr;
@@ -1878,7 +1880,7 @@ function log_load_vars($email) { // --------------------------------------------
   global $akce, $o_fld, $vars, $cleni, $post;
   // najdeme poslední verzi přihlášky - je ve fázi (c)
   list($idx,$vars_json)= select_2('id_prihlaska,vars_json','prihlaska',
-      "id_akce=$akce->id_akce AND email='$email' AND vars_json!='' "
+      "id_pobyt=0 AND id_akce=$akce->id_akce AND email='$email' AND vars_json!='' "
     . "ORDER BY id_prihlaska DESC LIMIT 1");
   if (!$idx) goto end;
   $id_new= $vars->id_prihlaska;
@@ -1895,7 +1897,7 @@ function log_load_vars($email) { // --------------------------------------------
       }
     }
   }
-  clear_post_but("/email/");
+  clear_post_but("/^email$/");
   log_append_stav("reload_$idx");
 //  die('end');
 end:
