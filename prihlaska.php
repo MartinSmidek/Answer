@@ -32,7 +32,7 @@ session_start();
 $DBT= $_SESSION['dbt']['user_id']?? 0; // při přihlášení se do dbt.php bude testovací červená varianta
 $MAIL= 1; // 1 - maily se posílají | 0 - mail se jen ukáže - lze nastavit url&mail=0
 $TEST= 0; // 0 - bez testování | 1 - výpis stavu a sql | 2 - neukládat | 3 - login s testovacím mailem
-$LOAD= 0; // 1 je povoleno natažení dat ze starší přihlášky
+$LOAD= 1; // 1 je povoleno natažení dat ze starší přihlášky
 //echo("\$DBT=$DBT");
 $AKCE= "T_{$_GET['akce']}"; // ID akce pro SESSION
 if (!isset($_SESSION[$AKCE])) $_SESSION[$AKCE]= (object)[];
