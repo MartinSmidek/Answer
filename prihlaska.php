@@ -209,6 +209,11 @@ function read_akce() { // ------------------------------------------------------
       <br><br>Připojte prosím popis závady. Omlouváme se za nepříjemnost s beta-verzí přihlášek.";
   // doplnění konstant
   $akce->id_akce= $id_akce;
+  $akce->ohlasit_chybu= "Pokud se Vám během vyplňování přihlášky objeví nějaká chyba, přijměte prosím naši omluvu."
+      . " Abychom jí mohli opravit, napište prosím "
+      . "<a target='mail' href='mailto:martin@smidek.eu?subject=Přihláška LK 2024'>autorovi</a> "
+      . " a popište problém. Můžete mu také ještě od počítače zavolat na 603 150 565 (za deního světla, prosím). "
+      . "<br>Pomůžete tím těm, kteří se budou přihlašovat po Vás. Děkujeme. ";
   $akce->preambule= "Tyto údaje slouží pouze pro vnitřní potřebu organizátorů kurzu MS, 
       nejsou poskytovány cizím osobám ani institucím.<br /> <b>Pro vaši spokojenost během kurzu je 
       nezbytné, abyste dotazník pečlivě a pravdivě vyplnili.</b>";
@@ -1072,6 +1077,7 @@ function page($problem='') {
   }
   $rok= $akce->p_pro_LK ? " $akce->rok" : ''; // pro LK přidej rok
   $preambule= $vars->faze=='c' ? "<p class='souhlas'>$akce->preambule</p>" : '';
+  $ohlasit_chybu= $akce->ohlasit_chybu ? "<p class='souhlas'>$akce->ohlasit_chybu</p>" : '';
   $formular= $problem ?: <<<__EOD
       $problem
       <div class='box'>
@@ -1079,6 +1085,7 @@ function page($problem='') {
         <form action="$index" method="post">
           $form
           <input type="hidden" name='stamp' value="$stamp">
+          $ohlasit_chybu
         </form>
       </div>
 __EOD;
@@ -1091,6 +1098,7 @@ __EOD;
         <form action="$index" method="post">
           $info
           <input type="hidden" name='stamp' value="$stamp">
+          $ohlasit_chybu
         </form>
       </div>
 __EOD;
