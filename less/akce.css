@@ -167,6 +167,11 @@ html body div.wrapper main div.box span {
 html body div.wrapper main div.box .missing {
   outline: 2px solid red;
 }
+html body div.wrapper main div.prosba {
+  padding: 0 40px;
+  font-size: 12px;
+  font-style: italic;
+}
 html body div.wrapper footer {
   position: absolute;
   bottom: 0;

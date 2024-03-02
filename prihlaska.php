@@ -1076,7 +1076,7 @@ function page($problem='') {
   }
   $rok= $akce->p_pro_LK ? " $akce->rok" : ''; // pro LK přidej rok
   $preambule= $vars->faze=='c' ? "<p class='souhlas'>$akce->preambule</p>" : '';
-  $ohlasit_chybu= $akce->ohlasit_chybu ? "<p class='souhlas'>$akce->ohlasit_chybu</p>" : '';
+  $ohlasit_chybu= $akce->ohlasit_chybu ? "<div class='prosba'>$akce->ohlasit_chybu</div>" : '';
   $formular= $problem ?: <<<__EOD
       $problem
       <div class='box'>
@@ -1084,9 +1084,9 @@ function page($problem='') {
         <form action="$index" method="post">
           $form
           <input type="hidden" name='stamp' value="$stamp">
-          $ohlasit_chybu
         </form>
       </div>
+      $ohlasit_chybu
 __EOD;
   $user= '';
   if ($vars->user!='-')
@@ -1097,9 +1097,9 @@ __EOD;
         <form action="$index" method="post">
           $info
           <input type="hidden" name='stamp' value="$stamp">
-          $ohlasit_chybu
         </form>
       </div>
+      $ohlasit_chybu
 __EOD;
   // pokud dojde ke změně, zablokuj odeslání tj. vynuť novou kontrolu
   $functions= <<<__EOF
@@ -2000,7 +2000,7 @@ function gen_html($to_save=0) {
     ['Vyjádři se o vašem manželství', $m->Xmanzelstvi, $z->Xmanzelstvi],
     ['Co od účasti očekávám', $m->Xocekavani, $z->Xocekavani],
     ['Příslušnost k církvi',  $m->cirkev, $z->cirkev],
-    ['Aktivita v církvi',     $m->aktivita, $z->aktivita],
+    ['Aktivita v církvi, společnosti', $m->aktivita, $z->aktivita],
   ];
   $th= "th colspan=\"2\"";
   $html.= "<table $table_attr><tr><th></th><$th>Muž</th><$th>Žena</th></tr>";
@@ -2010,10 +2010,11 @@ function gen_html($to_save=0) {
   }
   $html.= "<tr><th>Děti (jméno + datum narození)</th><td colspan=\"4\">$deti</td></tr>";
   $html.= "<tr>
-    <th>SPZ auta na kurzu</th><td>$r->spz</td>
+    <th>Rodinné údaje</th><td>SPZ auta na kurzu: <br>$r->spz</td>
     <td>Datum svatby: $r->datsvatba</td>
-    <td colspan=\"2\">Předchozí manželství? muž: "
-      .($m->Xrozveden?:'-').", žena: ".($z->Xrozveden?:'-')."</td></tr>";
+    <td>Předchozí manželství? <br>muž: "
+      .($m->Xrozveden?:'-').", žena: ".($z->Xrozveden?:'-')."</td>
+    <td>Účast na LK MS mimo YS, YF: $r->r_ms</td></tr>";
   $html.= "</table>";
   if ($akce->p_upozorneni)
     $html.= "<p><i>Souhlas obou manželů s podmínkami účasti na kurzu byl potvrzen $ted.</i></p>";
@@ -2175,7 +2176,7 @@ function ip_ok() { // ----------------------------------------------------------
   $ip= $_SERVER['HTTP_X_REAL_IP'] ?? $_SERVER['REMOTE_ADDR'];
   return in_array($ip,[
       '127.0.0.1', // localhost
-      '86.49.254.42','80.95.103.170','217.64.3.170', // GAN
+      '86.49.254.42','86.49.254.138','80.95.103.170','217.64.3.170', // GAN
       '95.82.145.32'] // JZE
       );
 }
