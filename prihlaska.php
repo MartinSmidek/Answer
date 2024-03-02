@@ -26,9 +26,7 @@
 header('Content-Type:text/html;charset=utf-8');
 header('Cache-Control:no-cache,no-store,must-revalidate');
 if (!isset($_GET['akce']) || !is_numeric($_GET['akce'])) die("Online přihlašování není k dospozici."); 
-ini_set('session.cookie_lifetime', 60 * 60 * 24 * 7);
-ini_set('session.gc_maxlifetime', 60 * 60 * 24 * 7);
-session_start();
+session_start(['cookie_lifetime'=>60*60*24*2]); // dva dny
 $DBT= $_SESSION['dbt']['user_id']?? 0; // při přihlášení se do dbt.php bude testovací červená varianta
 $MAIL= 1; // 1 - maily se posílají | 0 - mail se jen ukáže - lze nastavit url&mail=0
 $TEST= 0; // 0 - bez testování | 1 - výpis stavu a sql | 2 - neukládat | 3 - login s testovacím mailem
@@ -1832,7 +1830,7 @@ function log_open($email) { // -------------------------------------------------
     if ($res!==false) {
       $_SESSION[$AKCE]->id_prihlaska= pdo_insert_id();
       session_write_close();
-      session_start();
+      session_start(['cookie_lifetime'=>60*60*24*2]); // dva dny
     }
   }
 }
@@ -2077,7 +2075,7 @@ function do_session_restart() { // ---------------------------------------------
   global $AKCE;
   unset($_SESSION[$AKCE]);
   session_write_close();
-  session_start();
+  session_start(['cookie_lifetime'=>60*60*24*2]); // dva dny
   $_SESSION[$AKCE]= (object)[];
 }
 function trace_vars($title) { // -------------------------------------------------------- trace vars
