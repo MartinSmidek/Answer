@@ -28,6 +28,7 @@ header('Cache-Control:no-cache,no-store,must-revalidate');
 if (!isset($_GET['akce']) || !is_numeric($_GET['akce'])) die("Online přihlašování není k dospozici."); 
 session_start(['cookie_lifetime'=>60*60*24*2]); // dva dny
 $DBT= $_SESSION['dbt']['user_id']?? 0; // při přihlášení se do dbt.php bude testovací červená varianta
+$DB2= $_SESSION['db2']['user_id']?? 0; // při přihlášení se do dbt.php bude testovací červená varianta
 $MAIL= 1; // 1 - maily se posílají | 0 - mail se jen ukáže - lze nastavit url&mail=0
 $TEST= 0; // 0 - bez testování | 1 - výpis stavu a sql | 2 - neukládat | 3 - login s testovacím mailem
 $LOAD= 1; // 1 je povoleno natažení dat ze starší přihlášky
@@ -47,11 +48,11 @@ if (!isset($testovaci_mail)) {
   $MAIL= $DBT ? $_GET['mail'] ?? ($_SESSION[$AKCE]->mail ?? $MAIL) : 1; // ostrý běh vždy s mailama
 }
 // -------------------------------------- nastavení &test se projeví jen z chráněných IP adres
-if (ip_ok()) { // testu na answer.bean nebo IP
+if (ip_ok() && ($DBT || $DB2)) { // test na IP a přihlášení do Answeru
   $TEST= 1;
   $MAIL= 0;
 } // v chráněných lze nastavit cokoliv
-elseif (!$DBT) { // ostrý běh natvrdo
+else { // ostrý běh natvrdo
   $TEST= 0;
   $MAIL= 1;
 } // ostrý běh má TEST=0 MAIL=1
@@ -1868,7 +1869,8 @@ function log_find_saved($email) { // -------------------------------------------
   if ($idp) goto end; // už se povedlo přihlásit
   list($idpr,$open)= select_2('id_prihlaska,open','prihlaska',
       "id_pobyt=0 AND id_akce=$akce->id_akce AND email='$email' AND vars_json!='' "
-    . "ORDER BY id_prihlaska DESC LIMIT 1");
+    . " AND id_prihlaska>110 " // předtím není zohledněno UTF-8
+    . " ORDER BY id_prihlaska DESC LIMIT 1");
   if (!$idpr) goto end;
   $vars->continue= $idpr;
   $found= sql_time1($open);
@@ -2171,12 +2173,11 @@ function check_datum($d_val,$d_nazev,&$neuplne) { // ---------------------------
 function ip_ok() { // ------------------------------------------------------------------------ ip ok
 # pozná localhost, IP Talichova, IP chata, LAN Noe
   $ip= $_SERVER['HTTP_X_REAL_IP'] ?? $_SERVER['REMOTE_ADDR'];
-    $ok= $_SERVER["SERVER_NAME"]=='answer.bean' // GAN
-      || in_array($ip,[
-      '127.0.0.1',    // localhost
-      '95.82.145.32'  // JZE
-    ]);
-    return $ok;
+  return in_array($ip,[
+      '127.0.0.1', // localhost
+      '86.49.254.42','80.95.103.170','217.64.3.170', // GAN
+      '95.82.145.32'] // JZE
+      );
 }
 function form_stamp() { // -------------------------------------------------------------- form stamp
   global $AKCE, $vars;
