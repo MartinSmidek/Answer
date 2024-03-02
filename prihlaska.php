@@ -212,7 +212,7 @@ function read_akce() { // ------------------------------------------------------
   $akce->ohlasit_chybu= "Pokud se Vám během vyplňování přihlášky objeví nějaká chyba, přijměte prosím naši omluvu."
       . " Abychom jí mohli opravit, napište prosím "
       . "<a target='mail' href='mailto:martin@smidek.eu?subject=Přihláška LK 2024'>autorovi</a> "
-      . " a popište problém. Můžete mu také ještě od počítače zavolat na 603 150 565 (za deního světla, prosím). "
+      . " a popište problém. Můžete mu také ještě od počítače zavolat na 603 150 565 (za denního světla, prosím). "
       . "<br>Pomůžete tím těm, kteří se budou přihlašovat po Vás. Děkujeme. ";
   $akce->preambule= "Tyto údaje slouží pouze pro vnitřní potřebu organizátorů kurzu MS, 
       nejsou poskytovány cizím osobám ani institucím.<br /> <b>Pro vaši spokojenost během kurzu je 
