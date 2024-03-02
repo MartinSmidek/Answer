@@ -16496,6 +16496,7 @@ function db2_oprava_dat($par) { trace(); debug($par);
 }
 */
 # --------------------------------------------------------------------------------- db2 kontrola_dat
+/*
 # kontrola dat
 function db2_kontrola_dat($par) { trace();
   global $USER;
@@ -16754,7 +16755,7 @@ tvori:
   $msg= '';
   $rx= pdo_qry("
     SELECT o.id_osoba,id_dar,id_platba,s.id_spolu,p.id_pobyt,a.id_duakce,
-      a.nazev,id_tvori,r.id_rodina,r.nazev,t.role /*,o.* */
+      a.nazev,id_tvori,r.id_rodina,r.nazev,t.role 
     FROM osoba AS o
     LEFT JOIN dar    AS d ON d.id_osoba=o.id_osoba
     LEFT JOIN platba AS x ON x.id_osoba=o.id_osoba
@@ -16919,6 +16920,7 @@ function db2_smaz_tvori($idt,$barva='red') {
   $style= $barva ? "style='color:$barva'" : '';
   return "<b><a $style href='ezer://syst.nas.smaz_tvori/$idt'>$idt</a></b>";
 }
+*/
 /** ========================================================================================> GROUPS **/
 # ----------------------------------------------------------------------------------------- grp_read
 # par.file = stáhnutý soubor

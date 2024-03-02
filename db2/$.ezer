@@ -25,14 +25,14 @@ menu db2 { type:'main', title:'db2', active:*, _sys:'*'
            html: "Schema databáze<br><br><img src='db2/img/schema_db_2015.png'>"}
         ],
         tables: {
-          akce:  "id_duakce>*,nazev,datum_od",
+          akce:  "id_duakce>*,deleted,zruseno,spec,nazev,datum_od",
           pobyt: "id_pobyt>*,id_akce>akce,i0_rodina>rodina,hnizdo,funkce,web_changes,web_zmena",
           uhrada:"id_uhrada>*,id_pobyt>pobyt,u_poradi,u_castka,u_datum,u_zpusob,u_stav,u_za",
-          spolu: "id_spolu>-,id_pobyt>pobyt,id_osoba>osoba,s_hnizdo,s_role,web_zmena",
-          osoba: "id_osoba>*,jmeno,prijmeni,web_zmena",
+          spolu: "id_spolu>-,id_pobyt>pobyt,id_osoba>osoba,access,s_hnizdo,s_role,web_zmena",
+          osoba: "id_osoba>*,access,deleted,jmeno,prijmeni,web_zmena",
           osoba_geo: "id_osoba>osoba,kod_obec,stav",
           tvori: "id_tvori>-,id_osoba>osoba,id_rodina>rodina,role",
-          rodina:"id_rodina>*,nazev,web_zmena",
+          rodina:"id_rodina>*,access,deleted,nazev,web_zmena",
           dopis: "id_dopis>*,hnizdo,nazev",
           mail:  "id_mail>*,id_dopis>dopis,id_clen>osoba",
           dar:   "id_dar>-,id_osoba>osoba,ukon,dat_od,dat_do,castka,note",
@@ -113,6 +113,15 @@ menu db2 { type:'main', title:'db2', active:*, _sys:'*'
 //          item {title:'smazat platební údaje LK2019' skill:'m'
 //            proc onclick() { confirm('smazat platební údaje LK2019 ?'); ask('clear_platby_lk2019') }
 //          }
+        }
+        menu x {title:'Kontroly konzistence dat 2',type:'group', _sys:'*'
+          item {title:'rodina-tvori-osoba - test'       ,par:{opravit:0}}
+          item {title:'rodina-tvori-osoba - oprava'     ,par:{opravit:1}}
+          proc onclick (i) {
+            panel.display(2,'i'); info.display(0,'t');
+            info.fill(replace_fa(conc(i.owner.title,' - ',i.title)),' ... probíhá kontrola dat ...');
+            info.fill('',ask('db2_kontrola_tvori',i.par));
+          }
         }
         menu k {title:'Kontroly konzistence dat',type:'group', _sys:'*'
           item {title:'kontroly databáze - test'        ,par:°{opravit:0,test:'test'}, skill:'m'}

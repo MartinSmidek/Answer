@@ -62,6 +62,7 @@
   $app_php= array(
     "db2/db2_ys2_fce3.php",
     "db2/db2_fce3.php",
+    "db2/db2.system.php",
     "ezer$ezer_version/server/ezer_ruian.php",
     "ezer$ezer_version/server/ezer_cms3.php"
   );
