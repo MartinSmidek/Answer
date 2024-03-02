@@ -1869,7 +1869,7 @@ end:
   return $found;
 } // načtení data uloženého stavu 
 function log_load_vars($email) { // -------------------------------------------------- log read_vars
-  global $akce, $vars, $cleni, $post;
+  global $akce, $o_fld, $vars, $cleni, $post;
   // najdeme poslední verzi přihlášky - je ve fázi (c)
   list($idx,$vars_json)= select_2('id_prihlaska,vars_json','prihlaska',
       "id_akce=$akce->id_akce AND email='$email' AND vars_json!='' "
@@ -1882,6 +1882,13 @@ function log_load_vars($email) { // --------------------------------------------
   $vars->history= 'x';
   $vars->id_prihlaska=$id_new;
   $post= $vars->post;
+  foreach ($cleni as $clen) {
+    foreach ($o_fld as $f=>list(,,$typ,)) {
+      if (isset($clen->$f) && $typ=='sub_select' && is_object($clen->$f)) {
+        $clen->$f= (array)$clen->$f;
+      }
+    }
+  }
   clear_post_but("/email/");
   log_append_stav("reload_$idx");
 //  die('end');
