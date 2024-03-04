@@ -293,7 +293,7 @@ form _page [,,275,360] {
         info.sey.browse_focus();
         break;
       case 'pri':
-        p_show();
+        if (id_akce==1552) p_show();
         break;
       case 'cen': 
         hnizdo.display(hnizda);
@@ -636,7 +636,7 @@ form _page [,,275,360] {
   check p_dokument [13,420,400,] { tag:'pri', title:'LETNÍ KURZ MS: vytvořit PDF a uložit jako dokument k pobytu', value:'0' 
     func onchange() { p_json.p_dokument= this; web_online.change(); }}
   // ruční změna JSON
-  edit web_online [13,508,438,50] { tag:'pri', title:'^JSON popis přihlášky', data:akce.web_online,
+  edit web_online [13,508,438,60] { tag:'pri', title:'^JSON popis přihlášky', data:akce.web_online,
       format:'dt'
   func onchanged() { 
     if (confirm('uložit ruční změnu JSON popisu přihlášky?')) {
@@ -656,6 +656,9 @@ form _page [,,275,360] {
         form.save(); form.load(); p_show();
       }
   }}
+  button [150,457,,] { tag:'pri', title:'Přehled nedokončených přihlášek', skill:'yo|yo'
+    func onclick() { PRIHLASKY.prehled() }
+  }
   # ------------------------==> . ceník
   proc c_show() { // výběr a šířky sloupců podle akce.access a akce.ma_cenik_verze
     // access: 1,2 pro db2 - nepoužívá cenik.typ,   používá akce.ma_cenik_verze s hodnotou 0|1
@@ -1356,7 +1359,20 @@ panel HNIZDA [0,0,640,520] { title:' ', type:'popup', css:'dialog',
     panel.modal(210,60);
   }
   use h: form {
-    label txt [0,0,*,*] { style:'overflow:auto' }
+    label txt [0,0,*,*] { style:'overflow:auto;background:white' }
+  }
+}
+# =======================================================================================> přihlášky
+# přehled přihlášek
+panel PRIHLASKY [0,0,640,520] { title:' ', type:'popup', css:'dialog',
+    style:"height:calc(100% - 130px)"
+  func prehled() { var y:object
+    clear(); panel.title= "Přehled nedokončených přihlášek";
+    h.txt= php.prihl_open(the_duakce);
+    panel.popup(210,60);
+  }
+  use h: form {
+    label txt [0,0,*,*] { style:'overflow:auto;background:white' }
   }
 }
 map akce_cenik:  table akce {where:"ma_cenik=1", order:'datum_od', key_id:'id_duakce'}

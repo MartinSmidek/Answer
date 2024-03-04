@@ -3167,6 +3167,42 @@ function session($is,$value=null) {
 }
 */
 /** ==============================================================================> ONLINE PŘIHLÁŠKY **/
+# --------------------------------------------------------------------------------------- prihl open
+# vrátí seznam otevřených přihlášek dané akce
+function prihl_open($ida) { trace();
+  $html= $znami= $novi= '';
+  $rp= pdo_qry("SELECT LOWER(p.email) AS _email
+        ,IFNULL(MAX(id_rodina),0) AS _rodina,IFNULL(GROUP_CONCAT(DISTINCT nazev),'?') AS _nazev
+        ,IFNULL(MAX(o.id_osoba),0) AS _osoba,IFNULL(CONCAT(o.prijmeni,' ',o.jmeno),'?')
+        ,DATE_FORMAT(MIN(open),'%d.%m %H:%i') AS _open
+        ,GROUP_CONCAT(DISTINCT stav ORDER BY id_prihlaska) AS _stavy
+        ,MAX(id_prihlaska) AS _id_prihlaska
+        ,COUNT(*) AS x
+        ,MIN(open) AS _open_
+        ,MAX(id_pobyt) AS _pobyt
+      FROM prihlaska AS p
+      LEFT JOIN rodina USING (id_rodina)
+      LEFT JOIN osoba AS o ON o.email LIKE CONCAT('%',p.email,'%')
+      WHERE id_akce=$ida AND p.email!='' -- AND p.email NOT REGEXP '(smidek)'
+      -- AND id_prihlaska>110
+      GROUP BY _email
+      HAVING _stavy NOT REGEXP '^ok|,ok|-ok'
+      ORDER BY _open_ DESC");
+  while ($rp && (list($email,$idr,$rodina,$ido,$osoba,$kdy,$stavy)= pdo_fetch_array($rp))) {
+    $_ido= $ido ? tisk2_ukaz_osobu($ido) : '';
+    $_idr= $idr ? tisk2_ukaz_rodinu($idr) : '';
+    $pokusy= substr($stavy,0,50).(substr($stavy,50) ? ' ...' : '');
+    $row= "<tr><td>$kdy</td><td>$email</td><td>$osoba $_ido</td><td>$rodina $_idr</td>"
+        . "<td title='$stavy'>$pokusy</td></tr>";
+    if ($ido) $znami.= "\n$row"; else $novi.= "\n$row";
+  }
+  $html.= "<h3>Nedokončené přihlášky nováčků</h3><table>$novi</table>";
+  $html.= "<h3>Nedokončené přihlášky známých</h3><table>$znami</table>";
+  return $html;
+}
+
+/* 
+
 //# INVARIANT - k pobytu existuje nejvýše jeden s ním svázaný záznam 
 //# -------------------------------------------------------------------------------------- oform start
 //# transformace pobyt.entry_id na pobyt_wp
@@ -3249,7 +3285,7 @@ function session($is,$value=null) {
 //    display("a:$muz b:$zena");
 //    $eid= select('entry_id','wordpress.wp_3_wpforms_entry_fields JOIN pobyt_wp USING (entry_id)',
 //        "form_id IN ($idfs) AND (value='$muz' OR value='$zena') AND stav!=2
-//          -- AND field_id>73 /* předchozí záznamy byly testovací při vývoji formuláře */");
+//          -- AND field_id>73 /+ předchozí záznamy byly testovací při vývoji formuláře +/");
 //    if ($eid) {
 //      query("UPDATE pobyt_wp SET id_pobyt=$idp,stav=0 WHERE entry_id=$eid");
 //    }
@@ -3319,7 +3355,7 @@ function session($is,$value=null) {
 //    $qf= pdo_qry("SELECT field_id,value 
 //      FROM wordpress.wp_3_wpforms_entry_fields
 //      WHERE entry_id=$eid AND form_id IN ($idfs)
-//        AND field_id>73 /* předchozí záznamy byly testovací při vývoji formuláře */
+//        AND field_id>73 /+ předchozí záznamy byly testovací při vývoji formuláře +/
 //    ");
 //    while ($qf && ($f= pdo_fetch_object($qf))) {
 //      $x[$f->field_id]= $f->value;
@@ -3476,6 +3512,7 @@ function session($is,$value=null) {
 //      "id_pobyt=$idp AND role='$role'");
 //  return $jmeno;
 //}
+*/
 /** =====================================================================================> DOTAZNÍKY **/
 # ----------------------------------------------------------------------------------------- dot roky
 # vrátí dostupné dotazníky Letního kurzu MS YS

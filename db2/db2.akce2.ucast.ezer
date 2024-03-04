@@ -36,7 +36,7 @@ func onfocus() {
   if (the_duakce_local!=the_duakce) {
     if (dirty) akce_onstart();
     u.legenda(the_cenik,the_cena);
-    u.b.xfunkce.set_attrib('css_cell',the_ms ? "x_ms,1:zeleny,2:oranzovy,3:oranzovy" : '');
+    u.b.xfunkce.set_attrib('css_cell',the_ms ? "x_ms,0:zluty,1:zeleny,2:oranzovy,3:oranzovy" : '');
     if (the_duakce_local!=the_duakce) {
       init_ucast2();
       the_duakce_local= the_duakce;

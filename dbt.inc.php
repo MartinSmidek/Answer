@@ -44,6 +44,11 @@
       ))
     );
 
+  // informace pro debugger o poloze ezer modulů
+  $dbg_info= (object)array(
+    'src_path'  => array('dbt','db2','ezer3.2') // poloha a preference zdrojových modulů
+  );
+
   // cesta k utilitám MySQL/MariaDB
   $ezer_mysql_path= array(
       "C:/Apache/bin/mysql/mysql5.7.21/bin",  // *.bean
