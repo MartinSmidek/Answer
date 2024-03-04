@@ -1,22 +1,120 @@
 <?php # (c) 2009-2024 Martin Smidek <martin@smidek.eu>
 # =======================================================================> db2 kontrola a oprava dat
-# --------------------------------------------------------------------------------- db2 kontrola_dat
+# --------------------------------------------------------------------------- db2 kontrola_dat_spolu
+# kontrola vazby rodina-tvori-osoba
+function db2_kontrola_spolu($par) { trace();
+//  global $USER;
+  user_test();
+//  $now= date("Y-m-d H:i:s");
+//  $user= $USER->abbr;
+  $html= '';
+  $auto= " <b>LZE OPRAVIT AUTOMATICKY</b>";
+//  $uziv= " <b>NUTNO OPRAVIT RUČNĚ</b>";
+  $n= 0;
+  $opravit= $par->opravit ? true : false;
+  $msg= '';
+  $ok= '';
+
+  // ----------------------------------------------==> .. nulové klíče ve SPOLU
+  $cond= "id_pobyt=0 OR spolu.id_osoba=0 ";
+  $qry=  "SELECT id_spolu,spolu.id_osoba,spolu.id_pobyt,
+            CONCAT(a.nazev,' ',YEAR(datum_od)) AS nazev,prijmeni,jmeno
+          FROM spolu
+          LEFT JOIN pobyt AS p USING(id_pobyt)
+          LEFT JOIN akce  AS a ON a.id_duakce=p.id_akce
+          LEFT JOIN osoba AS o ON o.id_osoba=spolu.id_osoba
+          WHERE $cond";
+  $res= pdo_qry($qry);
+  while ( $res && ($x= pdo_fetch_object($res)) ) {
+    $n++;
+    if ( $opravit ) {
+      $deleted= pdo_qry("DELETE FROM spolu WHERE id_spolu={$x->id_spolu} AND ($cond)",1);
+      $ok= $deleted ? " = SMAZÁNO" : ' !!!!!CHYBA při mazání' ;
+    }
+    if ( !$x->id_pobyt && !$x->id_osoba )
+      $msg.= "<dd>záznam spolu={$x->id_spolu} je nulový$ok</dd>";
+    if ( !$x->id_osoba )
+      $msg.= "<dd>osoba=0 v záznamu spolu={$x->id_spolu} pobytu={$x->id_pobyt} akce {$x->nazev}$ok</dd>";
+    if ( !$x->id_pobyt )
+      $msg.= "<dd>pobyt=0 v záznamu spolu={$x->id_spolu} osoby {$x->prijmeni} {$x->jmeno}$ok</dd>";
+  }
+  $html.= "<dt style='margin-top:5px'> tabulka <b>spolu</b>: nulové klíče osoby nebo pobytu"
+    .($msg?"$auto$msg":"<dd>ok</dd>")."</dt>";
+  # -----------------------------------------==> .. spolu vede na smazanou osobu
+  $msg= '';
+  $rr= pdo_qry("
+    SELECT id_spolu,id_osoba,id_pobyt,CONCAT(jmeno,' ',prijmeni),o.deleted,
+      CONCAT(a.nazev,' ',YEAR(datum_od)) AS nazev
+    FROM spolu JOIN osoba AS o USING (id_osoba) JOIN pobyt AS p USING (id_pobyt)
+      LEFT JOIN akce  AS a ON a.id_duakce=p.id_akce
+    WHERE o.deleted!=''
+    ORDER BY id_pobyt
+  ");
+  while ( $rr && (list($ids,$ido,$idp,$jm,$od,$nazev)= pdo_fetch_row($rr) ) ) {
+    $ok= '';
+    $sod= $od ? "smazaný" : '';
+    if ( $opravit ) {
+      $deleted= pdo_qry("DELETE FROM spolu WHERE id_spolu=$ids",1);
+      $ok.= $deleted ? " = SMAZÁNO" : ' !!!!!CHYBA při mazání' ;
+    }
+    $msg.= "<dd>v pobytu $nazev/$idp je $sod člen $jm/$ido$ok</dd>";
+  }
+  $html.= "<dt style='margin-top:5px'>tabulka <b>spolu</b>: vazba na smazané osoby"
+    .($msg?"$auto$msg":"<dd>ok</dd>")."</dt>";
+  // ----------------------------------------------==> .. násobné SPOLU
+  $msg= '';
+  $qry=  "SELECT GROUP_CONCAT(id_spolu) AS _ss,id_pobyt,s.id_osoba,count(*) AS _pocet_,
+            CONCAT(a.nazev,' ',YEAR(datum_od)) AS nazev,prijmeni,jmeno
+          FROM spolu AS s
+          LEFT JOIN pobyt AS p USING(id_pobyt)
+          LEFT JOIN akce  AS a ON a.id_duakce=p.id_akce
+          LEFT JOIN osoba AS o ON o.id_osoba=s.id_osoba
+          GROUP BY s.id_osoba,id_pobyt HAVING _pocet_>1
+          ORDER BY id_akce";
+  $res= pdo_qry($qry);
+  while ( $res && ($x= pdo_fetch_object($res)) ) {
+    $n++;
+    $ok= '';
+    if ( $opravit ) {
+      $ss= explode(',',$x->_ss);
+      unset($ss[0]);
+      if ( count($ss) ) {
+        $ss= implode(',',$ss);
+        $deleted= pdo_qry("DELETE FROM spolu WHERE id_spolu IN ($ss)");
+        $ok= $deleted ? " = spolu SMAZÁNO $deleted x" : ' CHYBA při mazání spolu' ;
+      }
+    }
+    $ido= tisk2_ukaz_osobu($x->id_osoba);
+    $msg.= "<dd>násobný pobyt záznamy spolu={$x->_ss} na akci <b>{$x->nazev}</b>
+      osoby $ido:{$x->prijmeni} {$x->jmeno} $ok</dd>";
+  }
+  $html.= "<dt style='margin-top:5px'>tabulka <b>spolu</b>: zdvojení osoby ve stejném pobytu"
+    .($msg?"$auto$msg":"<dd>ok</dd>")."</dt>";
+  
+end:
+  // konec
+  $html= $n
+    ? "<h3>Nalezeno $n inkonzistencí v datech</h3><dl>$html</dl>"
+    : "<h3>Následující tabulky jsou konzistentní</h3>$html";
+  return $html;
+}
+# --------------------------------------------------------------------------- db2 kontrola_dat_tvori
 # kontrola vazby rodina-tvori-osoba
 function db2_kontrola_tvori($par) { trace();
-  global $USER;
+//  global $USER;
   user_test();
-  $now= date("Y-m-d H:i:s");
-  $user= $USER->abbr;
+//  $now= date("Y-m-d H:i:s");
+//  $user= $USER->abbr;
   $html= '';
   $auto= " <b>LZE OPRAVIT AUTOMATICKY</b>";
   $uziv= " <b>NUTNO OPRAVIT RUČNĚ</b>";
   $n= 0;
   $opravit= $par->opravit ? true : false;
-  $msg= '';
+//  $msg= '';
   $ok= '';
   // ---------------------------------------==> .. nulové hodnoty v tabulce TVORI
 tvori:
-  $msg= '';
+//  $msg= '';
   $cond= "tvori.id_rodina=0 OR tvori.id_osoba=0 OR ISNULL(o.id_osoba) OR ISNULL(r.id_rodina)";
   $qry=  "SELECT id_tvori,role,tvori.id_osoba,tvori.id_rodina,r.nazev,prijmeni,jmeno,
              IFNULL(o.id_osoba,0) AS _o_ido, IFNULL(r.id_rodina,0) AS _r_idr
@@ -68,8 +166,8 @@ tvori:
     $sod= $od ? "smazaný" : '';
     $srd= $rd ? "smazané" : '';
     if ( $opravit ) {
-      $ok.= pdo_qry("DELETE FROM tvori WHERE id_tvori=$idt",1)
-         ? " = SMAZÁNO" : ' !!!!!CHYBA při mazání' ;
+      $deleted= pdo_qry("DELETE FROM tvori WHERE id_tvori=$idt",1);
+      $ok.= $deleted ? " = SMAZÁNO" : ' !!!!!CHYBA při mazání' ;
     }
     $msg.= "<dd>v $srd rodině $nazev/$idr je $sod člen $jm/$ido$ok</dd>";
   }
@@ -90,8 +188,8 @@ tvori:
     $ok= '';
     $ts= explode(',',$x->_ts);
     if ( $opravit && strlen($x->_role_)==1 ) {
-      $ok.= pdo_qry("DELETE FROM tvori WHERE id_tvori={$ts[0]}",1)
-         ? " = SMAZÁNO" : ' !!!!!CHYBA při mazání' ;
+      $deleted= pdo_qry("DELETE FROM tvori WHERE id_tvori={$ts[0]}",1);
+      $ok.= $deleted ? " = SMAZÁNO" : ' !!!!!CHYBA při mazání' ;
     }
     $ido= tisk2_ukaz_osobu($x->id_osoba);
     $idr= tisk2_ukaz_rodinu($x->id_rodina);
@@ -132,28 +230,7 @@ end:
     : "<h3>Následující tabulky jsou konzistentní</h3>$html";
   return $html;
 }
-# --------------------------------------------------------------------------------- db2 kontrola_dat
-# kontrola vazby pobyt-spolu-osoba
-function db2_kontrola_spolu($par) { trace();
-  global $USER;
-  user_test();
-  $now= date("Y-m-d H:i:s");
-  $user= $USER->abbr;
-  $html= '';
-  $auto= " <b>LZE OPRAVIT AUTOMATICKY</b>";
-  $uziv= " <b>NUTNO OPRAVIT RUČNĚ</b>";
-  $n= 0;
-  $opravit= $par->opravit ? true : false;
-  $msg= '';
-  $ok= '';
-
-end:
-  // konec
-  $html= $n
-    ? "<h3>Nalezeno $n inkonzistencí v datech</h3><dl>$html</dl>"
-    : "<h3>Následující tabulky jsou konzistentní</h3>$html";
-  return $html;
-}
+/*
 # --------------------------------------------------------------------------------- db2 kontrola_dat
 # kontrola dat
 function db2_kontrola_dat($par) { trace();
@@ -265,7 +342,7 @@ function db2_kontrola_dat($par) { trace();
       $ss= implode(',',$ss);
       if ( count($ss) ) {
         $ok= pdo_qry("DELETE FROM spolu WHERE id_spolu IN ($ss)")
-          ? (" = spolu SMAZÁNO ".pdo_affected_rows($ok).'x') : ' CHYBA při mazání spolu' ;
+          ? " = spolu SMAZÁNO $ok x" : ' CHYBA při mazání spolu' ;
       }
     }
     $ido= tisk2_ukaz_osobu($x->id_osoba);
@@ -305,7 +382,7 @@ function db2_kontrola_dat($par) { trace();
   $msg= '';
   $rx= pdo_qry("
     SELECT o.id_osoba,id_dar,id_platba,s.id_spolu,p.id_pobyt,a.id_duakce,
-      a.nazev,id_tvori,r.id_rodina,r.nazev,t.role /*,o.* */
+      a.nazev,id_tvori,r.id_rodina,r.nazev,t.role /+,o.* +/
     FROM osoba AS o
     LEFT JOIN dar    AS d ON d.id_osoba=o.id_osoba
     LEFT JOIN platba AS x ON x.id_osoba=o.id_osoba
@@ -452,6 +529,7 @@ end:
     : "<h3>Následující tabulky jsou konzistentní</h3>$html";
   return $html;
 }
+*/
 # -----------------------------------------------------------------------------==> . db2 track_osoba
 # zobrazí odkaz na rodinu v evidenci
 function db2_track_osoba($ido,$barva='') {

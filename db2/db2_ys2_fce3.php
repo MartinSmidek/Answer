@@ -3171,7 +3171,7 @@ function session($is,$value=null) {
 # vrátí seznam otevřených přihlášek dané akce
 function prihl_open($ida) { trace();
   $html= $znami= $novi= '';
-  $rp= pdo_qry("SELECT LOWER(p.email) AS _email
+  $rp= pdo_qry("SELECT LOWER(p.email) AS _email,IFNULL(GROUP_CONCAT(DISTINCT s.id_pobyt),0) AS _naakci
         ,IFNULL(MAX(id_rodina),0) AS _rodina,IFNULL(GROUP_CONCAT(DISTINCT nazev),'?') AS _nazev
         ,IFNULL(MAX(o.id_osoba),0) AS _osoba,IFNULL(CONCAT(o.prijmeni,' ',o.jmeno),'?')
         ,DATE_FORMAT(MIN(open),'%d.%m %H:%i') AS _open
@@ -3179,16 +3179,18 @@ function prihl_open($ida) { trace();
         ,MAX(id_prihlaska) AS _id_prihlaska
         ,COUNT(*) AS x
         ,MIN(open) AS _open_
-        ,MAX(id_pobyt) AS _pobyt
+        ,MAX(p.id_pobyt) AS _pobyt
       FROM prihlaska AS p
       LEFT JOIN rodina USING (id_rodina)
       LEFT JOIN osoba AS o ON o.email LIKE CONCAT('%',p.email,'%')
-      WHERE id_akce=$ida AND p.email!='' -- AND p.email NOT REGEXP '(smidek)'
+      LEFT JOIN pobyt AS pa ON pa.id_akce=$ida 
+      LEFT JOIN spolu AS s ON s.id_osoba=o.id_osoba AND pa.id_pobyt=s.id_pobyt
+      WHERE p.id_akce=$ida AND p.email!='' -- AND p.email NOT REGEXP '(smidek)'
       -- AND id_prihlaska>110
       GROUP BY _email
-      HAVING _stavy NOT REGEXP '^ok|,ok|-ok'
+      HAVING _stavy NOT REGEXP '^ok|,ok|-ok' AND _naakci=0
       ORDER BY _open_ DESC");
-  while ($rp && (list($email,$idr,$rodina,$ido,$osoba,$kdy,$stavy)= pdo_fetch_array($rp))) {
+  while ($rp && (list($email,$naakci,$idr,$rodina,$ido,$osoba,$kdy,$stavy)= pdo_fetch_array($rp))) {
     $_ido= $ido ? tisk2_ukaz_osobu($ido) : '';
     $_idr= $idr ? tisk2_ukaz_rodinu($idr) : '';
     $pokusy= substr($stavy,0,50).(substr($stavy,50) ? ' ...' : '');

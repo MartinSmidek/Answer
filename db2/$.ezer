@@ -115,12 +115,23 @@ menu db2 { type:'main', title:'db2', active:*, _sys:'*'
 //          }
         }
         menu x {title:'Kontroly konzistence dat 2',type:'group', _sys:'*'
-          item {title:'rodina-tvori-osoba - test'       ,par:{opravit:0}}
-          item {title:'rodina-tvori-osoba - oprava'     ,par:{opravit:1}}
-          proc onclick (i) {
-            panel.display(2,'i'); info.display(0,'t');
-            info.fill(replace_fa(conc(i.owner.title,' - ',i.title)),' ... probíhá kontrola dat ...');
-            info.fill('',ask('db2_kontrola_tvori',i.par));
+          item {title:'rodina-tvori-osoba - test'         ,par:{opravit:0,vazba:'tvori'}}
+          item {title:'rodina-tvori-osoba - oprava'       ,par:{opravit:1,vazba:'tvori'}}
+          item {title:'pobyt-spolu-osoba/rodina - test'   ,par:{opravit:0,vazba:'spolu'}}
+          item {title:'pobyt-spolu-osoba/rodina - oprava' ,par:{opravit:1,vazba:'spolu'}}
+          item {title:'akce-pobyt-osoba - test'           ,par:{opravit:0,vazba:'spolu'}, format:'d'}
+          item {title:'akce-pobyt-osoba - oprava'         ,par:{opravit:1,vazba:'spolu'}, format:'d'}
+          func onclick (i:ezer) { var x: text
+            panel.display(2,'i'); info.display(0,'t'); info.header(i);
+            if (!i.par.opravit 
+              || i.par.opravit && confirm('opravdu si troufneš pustit automatickou opravu?')) {
+              info.fill('',' ... probíhá kontrola dat ...');
+              switch (i.par.vazba) {
+                case 'spolu': x= php.db2_kontrola_spolu(i.par); break; 
+                case 'tvori': x= php.db2_kontrola_tvori(i.par); break; 
+              }
+              info.fill('',x);
+            }
           }
         }
         menu k {title:'Kontroly konzistence dat',type:'group', _sys:'*'
