@@ -3167,6 +3167,37 @@ function session($is,$value=null) {
 }
 */
 /** ==============================================================================> ONLINE PŘIHLÁŠKY **/
+# --------------------------------------------------------------------------------------- prihl show
+# vrátí tabulku osobních otázek páru
+function prihl_show($idp) { trace();
+  $html= 'pobyt nezvnikl online přihláškou';
+  list($json,$idr)= select('web_json,i0_rodina','pobyt',"id_pobyt=$idp");
+  if (!$json || !$idr) goto end;
+  $x= json_decode($json);
+  $m= $z= (object)array();
+  foreach ($x->cleni as $ido=>$clen) {
+    $role= select('role','tvori',"id_rodina=$idr AND id_osoba=$ido");
+    if ($role=='a') $m= $clen;
+    if ($role=='b') $z= $clen;
+  }
+  debug($m);
+  debug($z);
+  $udaje= [
+    ['Povaha',    $m->Xpovaha, $z->Xpovaha],
+    ['Manželství',$m->Xmanzelstvi, $z->Xmanzelstvi],
+    ['Očekávám',  $m->Xocekavani, $z->Xocekavani],
+    ['Rozveden',  $m->Xrozveden, $z->Xrozveden],
+  ];
+  $html= "<table class='stat' style='font-size:12px;height:100%'>
+    <tr><th></th><th width='50%'>Muž</th><th width='50%'>Žena</th></tr>";
+  foreach ($udaje as $u) {
+    $html.= "<tr><th>$u[0]</th><td>$u[1]</td><td>$u[2]</td></tr>";
+  }
+  $html.= "</table>";
+  
+end:
+  return $html;  
+}
 # --------------------------------------------------------------------------------------- prihl open
 # vrátí seznam otevřených přihlášek dané akce
 function prihl_open($ida) { trace();
@@ -3174,7 +3205,7 @@ function prihl_open($ida) { trace();
   $rp= pdo_qry("SELECT LOWER(p.email) AS _email,IFNULL(GROUP_CONCAT(DISTINCT s.id_pobyt),0) AS _naakci
         ,IFNULL(MAX(id_rodina),0) AS _rodina,IFNULL(GROUP_CONCAT(DISTINCT nazev),'?') AS _nazev
         ,IFNULL(MAX(o.id_osoba),0) AS _osoba,IFNULL(CONCAT(o.prijmeni,' ',o.jmeno),'?')
-        ,DATE_FORMAT(MIN(open),'%d.%m %H:%i') AS _open
+        ,DATE_FORMAT(MIN(open),'<b>%d.%m</b> %H:%i') AS _open
         ,GROUP_CONCAT(DISTINCT stav ORDER BY id_prihlaska) AS _stavy
         ,MAX(id_prihlaska) AS _id_prihlaska
         ,COUNT(*) AS x

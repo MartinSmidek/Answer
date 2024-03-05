@@ -819,7 +819,8 @@ form _ucast [,,400,] { css:'ds_form', style:'height:fit-content'
             pob.skup.raise('onrowclick',key_pobyt,0,0,1);
           os1.key_osoba= ido1;
           os2.key_osoba= ido2;
-          evid.c_change(rod.cleni.browse_count()==1 ? 1 : 2)
+          evid.c_change(rod.cleni.browse_count()==1 ? 1 : 2);
+          if (PRIHLASKA.display()) PRIHLASKA.osobni();
         }
         else {         
           os1.key(0); os2.key(0);
@@ -1425,6 +1426,8 @@ form _pobyt [,,360,62] {
   view p: table pobyt
   const Lp=0
   label frame [0,0,360,50] {tag:'f', css:'ae_form2', title:'společné údaje o pobytu' }
+  button [200,-10,,] {tag:'F', title:'^přihláška', css:'db_evidence', skill:'yo|yo'
+    func onclick() { PRIHLASKA.osobni(); }}
   field id [304,-12,50,] {tag:'F', data:p.id_pobyt, format:'ro', style:'color:white', css:'Label',
                           help:' ', tabindex:0 }
   field key_akce { data:p.id_akce }
@@ -1488,6 +1491,17 @@ form _pobyt [,,360,62] {
   select hnizdo [165,35,37,] {tag:'a', type:'map', data:p.hnizdo, format:'un', 
     options:ms_akce_hnizda.zkratka, title:'^hnízdo' }
   label [5,65,1,1] { tag:'a' } // oprava
+}
+# --------------------------------------------==> údaje k akci z přihlášky
+panel PRIHLASKA [0,80,360,360] { title:'osobní údaje k akci z přihlášky', type:'popup', css:'dialog'
+  func osobni() { var y:object
+    clear(); 
+    h.txt= php.prihl_show(the_pobyt);
+    panel.popup(0,0,0,1);
+  }
+  use h: form {
+    label txt [0,0,*,*] { style:'overflow:auto;background:white' }
+  }
 }
 # -----------------------------------------------------------------------------------------==> SPOLU
 panel spolu_config [,,200,60] {type:'popup', title:"Podrobnosti údajů"
