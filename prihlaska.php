@@ -262,6 +262,8 @@ function polozky() { // --------------------------------------------------------
                       24=>'jiná',21=>'hledající',3=>'bez příslušnosti',16=>'nevěřící'],
       'vzdelani'  => [''=>'něco prosím vyberte',1=>'ZŠ',4=>'vyučen/a',2=>'SŠ',33=>'VOŠ',3=>'VŠ',16=>'VŠ student'],
       'funkce'    => map_cis_2('ms_akce_funkce','zkratka'),
+      'Xvps'      => [''=>'něco prosím vyberte',1=>'počítáme se službou VPS',
+                      2=>'raději bychom byli v "odpočinkové" skupince'],
     ];
   $options['cirkev']['']= 'něco prosím vyberte';
   $options['vzdelani']['']= 'něco prosím vyberte';
@@ -278,16 +280,21 @@ function polozky() { // --------------------------------------------------------
       'pracovni'    =>['64/4','sem prosím napište vzkaz organizátorům, např. informace, které nebylo možné nikam napsat','area'],
       'funkce'      =>[0,'funkce na akci','select'],
       'web_changes' =>[0,'indikátor změn','x'],
+      'Xvps'        =>[15,'* služba na kurzu','select'],
     ];
-  $r_fld= [ // položky tabulky RODINA
+  $r_fld= array_merge(
+    [ // položky tabulky RODINA
       'nazev'     =>[15,'* název rodiny',''],
       'ulice'     =>[15,'* ulice a č.or. NEBO č.p.',''],
       'psc'       =>[ 5,'* PSČ',''],
       'obec'      =>[20,'* obec/město',''],
-      'spz'       =>[12,'SPZ auta na akci',''],
+      'spz'       =>[12,'SPZ auta na akci','']],
+    $akce->p_pro_LK ? [
       'datsvatba' =>[ 9,'* datum svatby','date'],
       'r_ms'       =>[12,'počet účastí na jiném kurzu MS než YMCA Setkání či YMCA Familia','number'],
-    ];
+      'r_umi'      =>[ 0,'seznam odborností','x'], // podle answer_umi např. 1=VPS
+    ] : []
+  );
   $o_fld= array_merge(
     [ // položky tabulky OSOBA
       'spolu'     =>[ 0,'&nbsp;&nbsp;jede<br />na akci','check_spolu','abdp'],
@@ -787,7 +794,13 @@ function do_vyplneni_dat() { // ------------------------------------------------
       elem_check($neuplne,'date','datum svatby','r','datsvatba');
     }
     // ------------------------------------------------ pobyt
-    if (elems_missed('p')) {
+    $but= [];
+    if ($akce->p_pro_LK) {
+      // pro VPS je volba služby na kurzu povinná
+      $umi= get('r','r_umi');
+      $but= $umi && in_array(1,explode(',',$umi)) ? [] : ['Xvps'];
+    }
+    if (elems_missed('p',0,$but)) {
       $neuplne[]= "doplňte označené poznámky k pobytu";
       $zapsat= false;
     }
@@ -823,7 +836,8 @@ function do_vyplneni_dat() { // ------------------------------------------------
       elseif ($jako==2 && $akce->p_vps) $ucast= 1; // VPS
     }
     elseif ($akce->p_pro_LK) {
-      $ucast= 13;
+      $sluzba= get('p','Xvps');
+      $ucast= $sluzba==1 ? 1 : 13;
     }
     set('p','funkce',$ucast);
     // vytvoříme nový záznam pro pobyt, pokud nejde o opravu
@@ -952,10 +966,16 @@ function do_vyplneni_dat() { // ------------------------------------------------
     }
     $rod_adresa.= elem_input('r',$idr,['ulice','psc','obec','spz','datsvatba','<br>','r_ms']);
   }
-  // -------------------------------------------- poznánka k pobytu
+  // -------------------------------------------- poznánky k pobytu
   $pobyt= '';
   if ($vars->form->pozn) {
     $pobyt= elem_input('p',0,['pracovni']);
+  }
+  if ($akce->p_pro_LK) {
+    $umi= get('r','r_umi');
+    if ($umi && in_array(1,explode(',',$umi))) {
+      $pobyt.= elem_input('p',0,['Xvps']);
+    }
   }
   // -------------------------------------------- souhlas
   $souhlas= '';
@@ -1312,7 +1332,7 @@ function elem_text($table,$id,$flds) { // --------------------------------------
   }
   return "<span>$html</span>";
 }
-function elems_missed($table,$id=0) { // ----------------------------------------------- elem missed
+function elems_missed($table,$id=0,$but=[]) { // --------------------------------------- elem missed
   global $p_fld, $r_fld, $o_fld, $vars, $cleni;
   $missed= 0;
   if ($table=='p') {
@@ -1321,9 +1341,11 @@ function elems_missed($table,$id=0) { // ---------------------------------------
       if (is_array($v) && substr($title,0,1)=='*') {
         $v= $v[1] ?? $v[0];
         if ($v=='' || in_array($typ,['select','sub_select']) && $v==0) {
-          $missed= 1;
-          display("chybí $table $id $f");
-          goto end;
+          if (!in_array($id,$but)) {
+            $missed= 1;
+            display("chybí $table $id $f");
+            goto end;
+          }
         }
       }
     }
@@ -1336,9 +1358,11 @@ function elems_missed($table,$id=0) { // ---------------------------------------
         if (is_array($rodina->$f)) {
           $v= $rodina->$f[1] ?? $rodina->$f[0];
           if ($v=='' || in_array($typ,['select','sub_select']) && $v==0) {
-            $missed= 1;
-            display("chybí $table $id $f");
-            goto end;
+            if (!in_array($id,$but)) {
+              $missed= 1;
+              display("chybí $table $id $f");
+              goto end;
+            }
           }
         }
       }
@@ -1351,9 +1375,11 @@ function elems_missed($table,$id=0) { // ---------------------------------------
         if (is_array($clen->$f)) {
           $v= $clen->$f[1] ?? $clen->$f[0];
           if ($v=='' || (in_array($typ,['select','sub_select']) && $v==0)) {
-            $missed= 1;
-            display("chybí $table $id $f");
-            goto end;
+            if (!in_array($id,$but)) {
+              $missed= 1;
+              display("chybí $table $id $f");
+              goto end;
+            }
           }
         }
       }
@@ -1517,12 +1543,20 @@ function nacti_pobyt($idp) { // ------------------------------------------------
   global $vars, $p_fld;
   $vars->pobyt= (object)['id_pobyt'=>$idp];
   $p= select_object_2('*','pobyt',"id_pobyt=$idp");
-  foreach ($p as $f=>$v) {
-    if (!isset($p_fld[$f])) continue;
-    list(,$title,$typ)= $p_fld[$f];
-    if ($typ=='date') 
-      $v= sql2date($v);
-    $vars->pobyt->$f= substr($title,0,1)=='*' ? [$v] : $v;
+  foreach ($p_fld as $f=>list(,$title,$typ)) {
+    // nedatabázové položky inicializuj
+    if (substr($f,0,1)=='X') 
+      $vars->pobyt->$f= substr($title,0,1)=='*' ? [init_value($typ)] : init_value($typ);
+    // resp. ignoruj
+    elseif (!isset($p->$f)) 
+      continue;
+    // databázové načti s případnou konverzí
+    else {
+      $v= $p->$f;
+      if ($typ=='date') 
+        $v= sql2date($v);
+      $vars->pobyt->$f= substr($title,0,1)=='*' ? [$v] : $v;
+    }
   }
 }
 function nacti_rodinu($idr) { // ------------------------------------------------------ nacti rodinu
@@ -1531,12 +1565,20 @@ function nacti_rodinu($idr) { // -----------------------------------------------
   $rodina= $vars->rodina[$idr];
   if ($akce->p_rod_adresa) {
     $r= select_object_2('*','rodina',"id_rodina=$idr");
-    foreach ($r as $f=>$v) {
-      if (!isset($r_fld[$f]) || substr($f,0,1)=='X') continue;
-      list(,$title,$typ)= $r_fld[$f];
-      if ($typ=='date') 
-        $v= sql2date($v);
-      $rodina->$f= substr($title,0,1)=='*' ? [$v] : $v;
+    foreach ($r_fld as $f=>list(,$title,$typ)) {
+      // nedatabázové položky inicializuj
+      if (substr($f,0,1)=='X') 
+        $rodina->$f= substr($title,0,1)=='*' ? [init_value($typ)] : init_value($typ);
+      // resp. ignoruj
+      elseif (!isset($r->$f)) 
+        continue;
+      // databázové načti s případnou konverzí
+      else {
+        $v= $r->$f;
+        if ($typ=='date') 
+          $v= sql2date($v);
+        $rodina->$f= substr($title,0,1)=='*' ? [$v] : $v;
+      }
     }
   }
 }
@@ -1828,10 +1870,12 @@ function db_close_pobyt() { // -------------------------------------------------
   $chng= array(
     (object)['fld'=>'i0_rodina',  'op'=>'i','val'=>$idr],
     (object)['fld'=>'web_changes','op'=>'i','val'=>get('p','web_changes')],
+    (object)['fld'=>'funkce',     'op'=>'i','val'=>get('p','funkce')],
     (object)['fld'=>'web_json',   'op'=>'i','val'=>$web_json],
   );
   foreach ($vars->pobyt as $f=>$vals) {
     if (!isset($p_fld[$f]) || substr($f,0,1)=='X') continue; // položka začínající X nepatří do tabulky
+    if (in_array($f,['web_changes','funkce'])) continue; // dávají se vždy
     if (is_array($vals) && isset($vals[1]) && $vals[1]!=$vals[0]) {
       $chng[]= (object)['fld'=>$f, 'op'=>'i','val'=>$vals[1]];
     }
