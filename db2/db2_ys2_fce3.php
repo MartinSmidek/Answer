@@ -3174,14 +3174,13 @@ function prihl_show($idp) { trace();
   list($json,$idr)= select('web_json,i0_rodina','pobyt',"id_pobyt=$idp");
   if (!$json || !$idr) goto end;
   $x= json_decode($json);
+  debug($x);
   $m= $z= (object)array();
   foreach ($x->cleni as $ido=>$clen) {
     $role= select('role','tvori',"id_rodina=$idr AND id_osoba=$ido");
     if ($role=='a') $m= $clen;
     if ($role=='b') $z= $clen;
   }
-  debug($m);
-  debug($z);
   $udaje= [
     ['Povaha',    $m->Xpovaha, $z->Xpovaha],
     ['Manželství',$m->Xmanzelstvi, $z->Xmanzelstvi],
