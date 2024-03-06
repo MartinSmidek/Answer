@@ -1044,16 +1044,13 @@ function akce2_zmeny_web($idp) {  trace();
   $rt= pdo_qry("SELECT kde,klic,fld,kdo,kdy FROM _track
       WHERE kdy>='$start' AND kdo='WEB' AND (
           (kde='pobyt' AND klic=$idp 
-            AND fld NOT IN ('id_akce','i0_rodina','web_zmena','web_changes','web_json') )
-       OR (kde='rodina' AND klic=$idr 
-            AND fld NOT IN ('access','web_zmena') )
-       OR (kde='osoba' AND klic IN ($idos) 
-            AND fld NOT IN ('access','web_zmena') )
-       OR (kde='tvori' AND klic IN ($idts) 
-            AND fld NOT IN ('id_rodina','id_osoba') )
-       OR (kde='spolu' AND klic IN ($idss) 
-            AND fld NOT IN ('id_pobyt','id_osoba') )
-      )");
+            AND fld NOT IN ('id_akce','i0_rodina','web_zmena','web_changes','web_json') )"
+       . ($idr  ? "OR (kde='rodina' AND klic=$idr AND fld NOT IN ('access','web_zmena') )" : '')
+       . ($idos ? "OR (kde='osoba' AND klic IN ($idos) AND fld NOT IN ('access','web_zmena') )" : '')
+       . ($idts ? "OR (kde='tvori' AND klic IN ($idts) AND fld NOT IN ('id_rodina','id_osoba') )" : '')
+       . ($idss ? "OR (kde='spolu' AND klic IN ($idss) AND fld NOT IN ('id_pobyt','id_osoba') )" : '')
+      .")"
+      );
   while ( $rt && (list($kde,$klic,$fld)= pdo_fetch_array($rt)) ) {
     switch ( $kde ) {
     case 'pobyt':  $flds->pobyt[$klic][]= $fld; $n++; break;
