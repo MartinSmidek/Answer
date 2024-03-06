@@ -437,6 +437,7 @@ Form.prototype.set_styles= function(styles,tag) {
   }
   return 1;
 };
+/*
 // --------------------------------------------------------------------------------------- set_notes
 //fm: Form.set_notes ([pairs,css])
 // pairs :: { name:val, ...]
@@ -462,6 +463,7 @@ Form.prototype.set_styles= function(styles,tag) {
 //   }
 //   return 1;
 // };
+*/
 // --------------------------------------------------------------------------------------- set_notes
 //fm: Form.set_helps (pairs,css1,css2)
 // pairs :: { name:val, ...]
@@ -622,6 +624,7 @@ View.prototype.save_json= function(json_str,style) {
   var ret= JSON.encode(obj);
   return ret;
 };
+/*
 // --------------------------------------------------------------------------------------- set_notes
 //fm: View.set_notes ([pairs,css])
 // pairs :: { name:val, ...]
@@ -647,7 +650,7 @@ View.prototype.save_json= function(json_str,style) {
 //   }
 //   return 1;
 // };
-
+*/
 // =====================================================================================> Ezer.Label
 // ------------------------------------------------------------------------------------ image_filter
 //fm: Label.image_filter (filter)
@@ -823,6 +826,7 @@ Ezer.fce.roku= function (dat,rok) {
   }
   return roku;
 };
+/*
 // ------------------------------------------------------------------------------------------ roku_k
 //ff: ys.roku_k (dat[,kdatu=now])
 //      vrací počet roku uplynulých od daného data do daného data (neni-li uvedeno tak od běžného)
@@ -852,6 +856,46 @@ Ezer.fce.roku= function (dat,rok) {
 //  }
 //  return roku;
 //};
+ */
+// --------------------------------------------------------------------------------- set css_changed
+function web_changes(cases,css,flds) {
+//   cases= [[form,table_id,key],...]    form se může opakovat pro různé table_id+key
+//   chngs= [[table_id,key,field],...]
+//   flds= {table -> { key -> [fld, ...]}}
+
+  // nejprve zrušíme předchozí obarvení
+  for (let elem of jQuery('.'+css)) {
+    jQuery(elem).removeClass(css);
+  }
+  // pokud byla změna, označ ji
+  if ( flds ) {
+    for (let ci= 0; ci<cases.length; ci++) {
+      let form= cases[ci][0].type=='var' ? cases[ci][0].value : cases[ci][0],
+          f_table= cases[ci][1],
+          f_key= cases[ci][2];
+      for (let table in flds) { // projdeme tabulky
+        if (table!=f_table) continue;
+        for (let key in flds[table]) {
+          if (key!=f_key) continue;
+          for (let fld of flds[table][key]) {
+            // projdeme elementy formuláře
+            for (let pi in form.part) {
+              let p= form.part[pi];
+              // a pro elementy
+              if ( p instanceof Elem && p.DOM_Block && p.data ) {
+                // pokud data=table.field a klíč
+                if ( p.data.id==fld && p.table && p.table.id==table ) {
+                  // přidáme css
+                  p.DOM_Block.addClass(css);
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
 // --------------------------------------------------------------------------------- set css_changed
 //ff: ys.set_css_changed (cases,css[,chngs])
 // pokud je definováno chngs
@@ -862,6 +906,7 @@ Ezer.fce.roku= function (dat,rok) {
 //   cases= [form,...]  seznam formulářů, ve kterých má být odstraněné css
 //s: ys
 Ezer.obj.set_css_changed= null;
+var set_css_changed= 
 Ezer.fce.set_css_changed= function (cases,css,chngs) {
   // vymazání starých poznámek
   if ( Ezer.obj.set_css_changed ) {

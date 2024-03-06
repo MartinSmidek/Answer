@@ -1008,6 +1008,64 @@ function akce2_delete($id_akce,$ret) {  trace();
 end:
   return $msg;
 }
+# ---------------------------------------------------------------------------------- akce2 zmeny_web
+# vrácení položek daného pobytu u kterých došlo ke změně uživatelem WEB
+function akce2_zmeny_web($idp) {  trace();
+  // získání sledovaných klíčů tabulek spolu, osoba, tvori, rodina
+  $n= 0;
+  $keys= (object)array(); // table -> [id_table]
+  $flds= (object)array();
+  $idr= 0;
+  $rp= pdo_qry("
+    SELECT id_rodina,id_tvori,o.id_osoba,id_spolu
+    FROM pobyt AS p
+    JOIN akce ON id_akce=id_duakce
+    JOIN spolu AS s USING(id_pobyt)
+    JOIN osoba AS o ON s.id_osoba=o.id_osoba
+    LEFT JOIN tvori AS t ON t.id_osoba=o.id_osoba
+    LEFT JOIN rodina AS r USING(id_rodina)
+    WHERE id_pobyt=$idp
+  ");
+  while ( $rp && (list($_idr,$idt,$ido,$ids)= pdo_fetch_array($rp)) ) {
+    if (!in_array($ido,$keys->osoba)) $keys->osoba[]= $ido;
+    if (!in_array($idt,$keys->tvori)) $keys->tvori[]= $idt;
+    if (!in_array($ids,$keys->spolu)) $keys->spolu[]= $ids;
+//    $keys->rodina= $idr;
+    $idr= $_idr;
+  }
+  $idos= implode(',',$keys->osoba);
+  $idts= implode(',',$keys->tvori);
+  $idss= implode(',',$keys->spolu);
+//                                                         debug($keys,'klíče');
+  // projití _track - zjištění vzniku pobytu
+  $start= select('kdy','_track',"kde='pobyt' AND klic='$idp' ORDER BY kdy LIMIT 1");
+  // posbírání pozdějších změn
+  $n= 0;
+  $rt= pdo_qry("SELECT kde,klic,fld,kdo,kdy FROM _track
+      WHERE kdy>='$start' AND kdo='WEB' AND (
+          (kde='pobyt' AND klic=$idp 
+            AND fld NOT IN ('id_akce','i0_rodina','web_zmena','web_changes','web_json') )
+       OR (kde='rodina' AND klic=$idr 
+            AND fld NOT IN ('access','web_zmena') )
+       OR (kde='osoba' AND klic IN ($idos) 
+            AND fld NOT IN ('access','web_zmena') )
+       OR (kde='tvori' AND klic IN ($idts) 
+            AND fld NOT IN ('id_rodina','id_osoba') )
+       OR (kde='spolu' AND klic IN ($idss) 
+            AND fld NOT IN ('id_pobyt','id_osoba') )
+      )");
+  while ( $rt && (list($kde,$klic,$fld)= pdo_fetch_array($rt)) ) {
+    switch ( $kde ) {
+    case 'pobyt':  $flds->pobyt[$klic][]= $fld; $n++; break;
+    case 'rodina': $flds->rodina[$klic][]= $fld; $n++; break;
+    case 'osoba':  $flds->osoba[$klic][]= $fld; $n++; break;
+    case 'tvori':  $flds->tvori[$klic][]= $fld; $n++; break;
+    case 'spolu':  $flds->spolu[$klic][]= $fld; $n++; break;
+    }
+  }
+                                        debug($flds,"'položky - $n změn");
+  return $flds;
+}
 # -------------------------------------------------------------------------------------- akce2 zmeny
 # vrácení klíčů pobyt u kterých došlo ke změně po daném datu a čase
 function akce2_zmeny($id_akce,$h) {  trace();
