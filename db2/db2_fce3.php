@@ -1017,17 +1017,17 @@ function akce2_zmeny_web($idp) {  trace();
   $flds= (object)array();
   $idr= 0;
   $rp= pdo_qry("
-    SELECT id_rodina,id_tvori,o.id_osoba,id_spolu
+    SELECT id_rodina,id_tvori,o.id_osoba,t.id_osoba,id_spolu
     FROM pobyt AS p
     JOIN akce ON id_akce=id_duakce
-    JOIN spolu AS s USING(id_pobyt)
+    JOIN spolu AS s USING (id_pobyt)
     JOIN osoba AS o ON s.id_osoba=o.id_osoba
-    LEFT JOIN tvori AS t ON t.id_osoba=o.id_osoba
-    LEFT JOIN rodina AS r USING(id_rodina)
+    LEFT JOIN tvori AS t ON t.id_rodina=i0_rodina
     WHERE id_pobyt=$idp
   ");
-  while ( $rp && (list($_idr,$idt,$ido,$ids)= pdo_fetch_array($rp)) ) {
-    if (!in_array($ido,$keys->osoba)) $keys->osoba[]= $ido;
+  while ( $rp && (list($_idr,$idt,$ido1,$ido2,$ids)= pdo_fetch_array($rp)) ) {
+    if (!in_array($ido1,$keys->osoba)) $keys->osoba[]= $ido1;
+    if ($ido2 && !in_array($ido2,$keys->osoba)) $keys->osoba[]= $ido2;
     if (!in_array($idt,$keys->tvori)) $keys->tvori[]= $idt;
     if (!in_array($ids,$keys->spolu)) $keys->spolu[]= $ids;
 //    $keys->rodina= $idr;
