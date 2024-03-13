@@ -1523,7 +1523,7 @@ function vytvor_web_json() { // ------------------------------------------------
     }
   }
   debug($web_json,"web_json");
-  $web_json= json_encode($web_json,JSON_UNESCAPED_UNICODE | JSON_HEX_QUOT);
+  $web_json= json_encode_2($web_json);
   if (!$web_json) $errors[]= "chyba při ukládání: ".json_last_error();
   return $web_json;
 }
@@ -1933,7 +1933,7 @@ function log_append_stav($novy) { // -------------------------------------------
 function log_write_vars() { // ------------------------------------------------------ log write_vars
   global $AKCE, $vars, $TRACE;
   if (($id= ($_SESSION[$AKCE]->id_prihlaska??0))) {
-    $val= json_encode($vars,JSON_UNESCAPED_UNICODE | JSON_HEX_QUOT);
+    $val= json_encode_2($vars);
     $res= pdo_query_2("UPDATE prihlaska SET vars_json='$val' WHERE id_prihlaska=$id",1);
     if ($res===false && $TRACE)
       display("LOG_WRITE_VARS fail");
@@ -2188,6 +2188,12 @@ function clear_post_but($flds_match) { // --------------------------------------
   $vars->post= $post;
 }
 # ----------------------------------------------------------------------------------- pomocné funkce
+function json_encode_2($s) { // ------------------------------------------------------ json encode_2
+# korektní json encode
+  $s= json_encode($s,JSON_UNESCAPED_UNICODE | JSON_HEX_QUOT);
+  $sbr= str_replace('\r\n','<br>',$s);
+  return $sbr;
+}
 function date2sql($d) { // -------------------------------------------------------------- date 2 sql
 # transformace d.m.y na d-m-y resp. y na y-00-00
 # pokud $d nemá korektní tvar vrací původní hodnotu
