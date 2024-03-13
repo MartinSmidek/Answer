@@ -16304,7 +16304,7 @@ function db2_copy_test_db($db) {  trace();
 //     "_user,_skill,"
     "_help,_cis,"
   . "*_touch,_track,*_todo,ezer_doc2,"
-  . "akce,cenik,pobyt,spolu,osoba,tvori,rodina,g_akce,join_akce,"
+  . "akce,cenik,pobyt,spolu,osoba,tvori,rodina,g_akce,join_akce,prihlaska,"
   . "dar,uhrada,"
   . "dopis,mail,mailist"
   );
