@@ -749,6 +749,7 @@ form _ucast [,,400,] { css:'ds_form', style:'height:fit-content'
     show key_osoba
     show key_rodina
     show keys_rodina // [,,50,] {format:'t'}  // seznam duplicitních rodin
+    show id_prihlaska
     // akce
     show dnu
     show datum_od
@@ -821,7 +822,7 @@ form _ucast [,,400,] { css:'ds_form', style:'height:fit-content'
           os1.key_osoba= ido1;
           os2.key_osoba= ido2;
           evid.c_change(rod.cleni.browse_count()==1 ? 1 : 2);
-          if (PRIHLASKA.display()) PRIHLASKA.osobni();
+          if (PRIHLASKA.display()) PRIHLASKA.osobni(id_prihlaska);
         }
         else {         
           os1.key(0); os2.key(0);
@@ -1431,9 +1432,11 @@ form _pobyt [,,360,62] {
   const Lp=0
   label frame [0,0,360,50] {tag:'f', css:'ae_form2', title:'společné údaje o pobytu' }
   button [200,-10,,] {tag:'F', title:'^přihláška', css:'db_evidence', skill:'yo|yo'
-    func onclick() { PRIHLASKA.osobni(); }}
+    func onclick() { PRIHLASKA.osobni(id_prihlaska); }}
+  field id_prihlaska [257,-12,36,] {tag:'F', data:p.id_prihlaska, format:'ro', style:'color:white', 
+        css:'Label', help:' ', tabindex:0 }
   field id [304,-12,50,] {tag:'F', data:p.id_pobyt, format:'ro', style:'color:white', css:'Label',
-                          help:' ', tabindex:0 }
+        help:' ', tabindex:0 }
   field key_akce { data:p.id_akce }
   field i0_rodina { data:p.i0_rodina }
   # ------------------------==> . kontextové_menu
@@ -1496,11 +1499,12 @@ form _pobyt [,,360,62] {
     options:ms_akce_hnizda.zkratka, title:'^hnízdo' }
   label [5,65,1,1] { tag:'a' } // oprava
 }
-# --------------------------------------------==> údaje k akci z přihlášky
+# -------------------------------------------------------------------------------------==> PRIHLASKA
 panel PRIHLASKA [0,80,360,360] { title:'osobní údaje k akci z přihlášky', type:'popup', css:'dialog'
-  func osobni() { var y:object
+  func osobni(idpr) { var y:object
     clear(); 
-    h.txt= php.prihl_show(the_pobyt);
+    panel.title= `osobní údaje k akci z přihlášky No.${idpr}`;
+    h.txt= php.prihl_show(the_pobyt,idpr);
     panel.popup(0,0,0,1);
   }
   use h: form {

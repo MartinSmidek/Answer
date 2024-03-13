@@ -3167,21 +3167,66 @@ function session($is,$value=null) {
 }
 */
 /** ==============================================================================> ONLINE PŘIHLÁŠKY **/
+# ---------------------------------------------------------------------------------------- prihl add
+# doplní id_prihlaska
+function prihl_add() { trace();
+  $n= 0;
+  $rp= pdo_query("SELECT id_prihlaska,id_pobyt,vars_json,email
+      FROM prihlaska 
+      WHERE stav REGEXP 'ok$'
+      ORDER BY id_prihlaska DESC");
+  while ($rp && (list($idpr,$json,$email)= pdo_fetch_array($rp))) {
+    $vars= json_decode($json);
+    $idp= $vars->pobyt->id_pobyt??0;
+    display("$email $idpr $idp");
+    if ($idp) {
+      $old_idpr= select('id_prihlaska','pobyt',"id_pobyt=$idp");
+      if (!$old_idpr)
+        $n+= query("UPDATE pobyt SET id_prihlaska=$idpr WHERE id_pobyt=$idp");
+    }
+  }
+  return "doplněno $n ID přihlášek";
+}
 # --------------------------------------------------------------------------------------- prihl show
 # vrátí tabulku osobních otázek páru
-function prihl_show($idp) { trace();
-  $html= 'pobyt nezvnikl online přihláškou';
-  list($json,$idr)= select('web_json,i0_rodina','pobyt',"id_pobyt=$idp");
+function prihl_show($idp,$idpr) { trace();
+  $html= 'pobyt nevznikl online přihláškou';
+  list($idr,$json)= select('i0_rodina,web_json','pobyt',"id_pobyt=$idp");
   if (!$json || !$idr) goto end;
   $x= json_decode($json);
   debug($x);
   $m= $z= (object)array();
   foreach ($x->cleni as $ido=>$clen) {
     $role= select('role','tvori',"id_rodina=$idr AND id_osoba=$ido");
-    if ($role=='a') $m= $clen;
-    if ($role=='b') $z= $clen;
+    if ($role=='a') { $m= $clen; $idm= $ido; }
+    if ($role=='b') { $z= $clen; $idz= $ido; }
+  }
+  if ($idpr) {
+    $vars_json= select('vars_json','prihlaska',"id_prihlaska=$idpr");
+    $vars= json_decode($vars_json);
+    if ($vars===null) {
+      $json_error= json_last_error_msg();
+      $m_telefon= $z_telefon= $m_email= $z_email= "";
+    }
+    else {
+      $json_error= '';
+      $get= function ($fld,$ido) use ($vars) {
+        $pair= $vars->cleni->$ido;
+        if (isset($pair->$fld)) {
+//          $v= trim(is_array($pair->$fld) ? ($pair->$fld[1] ?? $pair->$fld[0]) : $pair->$fld);
+          $v= is_array($pair->$fld) ? ($pair->$fld[1] ?? '') : '';
+        }
+        else $v= false;
+        return $v;
+      };
+      $m_telefon= $get('telefon',$idm); $z_telefon= $get('telefon',$idz);
+      $m_email= $get('email',$idm); $z_email= $get('email',$idz);
+    }
   }
   $udaje= [
+//    ['- kontakt', $m_kontakt, $z_kontakt],
+    ['* email',   $m_email, $z_email],
+    ['* telefon', $m_telefon, $z_telefon],
     ['Povaha',    $m->Xpovaha, $z->Xpovaha],
     ['Manželství',$m->Xmanzelstvi, $z->Xmanzelstvi],
     ['Očekávám',  $m->Xocekavani, $z->Xocekavani],
@@ -3189,8 +3234,11 @@ function prihl_show($idp) { trace();
   ];
   $html= "<table class='stat' style='font-size:12px;height:100%'>
     <tr><th></th><th width='50%'>Muž</th><th width='50%'>Žena</th></tr>";
+  if ($json_error)
+    $html.= "<tr><th style='color:red'>JSON</th><td colspan=2 align='center'>$json_error</td></tr>";
   foreach ($udaje as $u) {
-    $html.= "<tr><th>$u[0]</th><td>$u[1]</td><td>$u[2]</td></tr>";
+    if ($u[1]||$u[2])
+      $html.= "<tr><th>$u[0]</th><td>$u[1]</td><td>$u[2]</td></tr>";
   }
   $html.= "</table>";
   
@@ -3205,8 +3253,8 @@ function prihl_open($ida) { trace();
         ,IFNULL(MAX(id_rodina),0) AS _rodina,IFNULL(GROUP_CONCAT(DISTINCT nazev),'?') AS _nazev
         ,IFNULL(MAX(o.id_osoba),0) AS _osoba,IFNULL(CONCAT(o.prijmeni,' ',o.jmeno),'?')
         ,DATE_FORMAT(MIN(open),'<b>%d.%m</b> %H:%i') AS _open
-        ,GROUP_CONCAT(DISTINCT stav ORDER BY id_prihlaska) AS _stavy
-        ,MAX(id_prihlaska) AS _id_prihlaska
+        ,GROUP_CONCAT(DISTINCT stav ORDER BY p.id_prihlaska) AS _stavy
+        ,MAX(p.id_prihlaska) AS _id_prihlaska
         ,COUNT(*) AS x
         ,MIN(open) AS _open_
         ,MAX(p.id_pobyt) AS _pobyt
@@ -3216,7 +3264,7 @@ function prihl_open($ida) { trace();
       LEFT JOIN pobyt AS pa ON pa.id_akce=$ida 
       LEFT JOIN spolu AS s ON s.id_osoba=o.id_osoba AND pa.id_pobyt=s.id_pobyt
       WHERE p.id_akce=$ida AND p.email!='' -- AND p.email NOT REGEXP '(smidek)'
-      -- AND id_prihlaska>110
+      -- AND p.id_prihlaska>110
       GROUP BY _email
       HAVING _stavy NOT REGEXP '^ok|,ok|-ok' AND _naakci=0
       ORDER BY _open_ DESC");

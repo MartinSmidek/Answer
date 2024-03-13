@@ -46,7 +46,7 @@ if (!isset($_SESSION[$AKCE])) $_SESSION[$AKCE]= (object)[];
 //$testovaci_mail= 'nemo3@smidek.eu';         $TEST= 3; // neznámý mail
 if (!isset($testovaci_mail)) {
   $TEST= $_GET['test'] ?? ($_SESSION[$AKCE]->test ?? $TEST);
-  $MAIL= $DBT ? $_GET['mail'] ?? ($_SESSION[$AKCE]->mail ?? $MAIL) : 1; // ostrý běh vždy s mailama
+  $MAIL= $DBT ? ($_GET['mail'] ?? ($_SESSION[$AKCE]->mail ?? $MAIL)) : 1; // ostrý běh vždy s mailama
 }
 // -------------------------------------- nastavení &test se projeví jen z chráněných IP adres
 if (ip_ok() && ($DBT || $DB2)) { // test na IP a přihlášení do Answeru
@@ -556,8 +556,9 @@ __EOF;
   $open= $akce->p_ukladat ? log_find_saved($post->email) : ''; // uložená přihláška a nejsou přihlášení
   // zjistíme, zda jej máme v databázi
   $regexp= "REGEXP '(^|[;,\\\\s]+)$post->email($|[;,\\\\s]+)'";
-  list($pocet,$ido,$idr,$jmena)= select_2(
-      "COUNT(id_osoba),id_osoba,IFNULL(id_rodina,0),GROUP_CONCAT(CONCAT(jmeno,' ',prijmeni))",
+  list($pocet,$ido,$idr,$jmena,$rodiny,$kontakty)= select_2(
+      "COUNT(id_osoba),id_osoba,IFNULL(id_rodina,0),GROUP_CONCAT(CONCAT(jmeno,' ',prijmeni))"
+      . ",COUNT(DISTINCT IFNULL(id_rodina,0)),GROUP_CONCAT(DISTINCT kontakt)",
       'osoba AS o LEFT JOIN tvori USING (id_osoba) LEFT JOIN rodina USING (id_rodina)',
       "o.deleted='' AND (role IN ('a','b') OR ISNULL(role))"
       . "AND (kontakt=1 AND email $regexp OR kontakt=0 AND emaily $regexp)");
@@ -587,7 +588,7 @@ __EOF;
         : "<p>Případně požádejte o radu organizátory akce $akce->help_kontakt.</p>";
     goto end;
   } // neznámý mail
-  elseif ($pocet>1) { // ----------------------------- nejednoznačný mail
+  elseif ($pocet>1 && $rodiny!=1 && $kontakty!=1) { // --- nejednoznačný mail 
     log_append_stav('doubled');
     $form= <<<__EOF
       <p>Tento mail používá více osob ($jmena), 
@@ -597,7 +598,8 @@ __EOF;
 __EOF;
     goto end;
   } // nejednoznačný mail
-  // ---------------------------------------------- $pocet==1 => jednoznačný a známý mail
+  // ----------------------------------------------------------------------------------------------- 
+  // $pocet==1 => jednoznačný a známý mail | $pocet>1 ALE je to jedna rodina ($rodiny=1,$kontakty=1)
   if (!isset($post->cmd_opravit)) { 
     log_append_stav('mailok');
     $vars->klient= $ido;
@@ -770,7 +772,7 @@ function do_vyplneni_dat() { // ------------------------------------------------
       }
       // ---------------------------------------------- manželé
       else {
-        if (in_array($role,['a','b']) && !$clen->Xupozorneni??1) {
+        if (in_array($role,['a','b']) && (!$clen->Xupozorneni??1)) {
           $mis_upozorneni[$role]= "class=missing"; 
           $neuplne[]= "potvrďte prosím Váš souhlas s upozorněním - ".($role=='a'?'muž':'žena');
         }
@@ -854,6 +856,7 @@ function do_vyplneni_dat() { // ------------------------------------------------
       if (count($errors)) goto db_end;
     }
     db_close_pobyt();
+    log_write_vars(); // po zápisu do pobytu
     // uzavři formulář závěrečnou zprávou
   db_end:
     clear_post_but("/email/");
@@ -1520,7 +1523,7 @@ function vytvor_web_json() { // ------------------------------------------------
     }
   }
   debug($web_json,"web_json");
-  $web_json= json_encode($web_json,JSON_UNESCAPED_UNICODE);
+  $web_json= json_encode($web_json,JSON_UNESCAPED_UNICODE | JSON_HEX_QUOT);
   if (!$web_json) $errors[]= "chyba při ukládání: ".json_last_error();
   return $web_json;
 }
@@ -1673,8 +1676,8 @@ function db_open_pobyt() { // --------------------------------------------------
   // web_changes= 1/2 pro INS/UPD pobyt+spolu | 4/8 pro INS/UPD osoba | 16/32 pro INS/UPD rodina,tvori
   $ida= $akce->id_akce;
   $chng= array(
-    (object)array('fld'=>'id_akce',    'op'=>'i','val'=>$ida),
-    (object)array('fld'=>'web_zmena',  'op'=>'i','val'=>date('Y-m-d'))
+    (object)['fld'=>'id_akce',     'op'=>'i','val'=>$ida],
+    (object)['fld'=>'web_zmena',   'op'=>'i','val'=>date('Y-m-d')]
   );
   $idp= _ezer_qry("INSERT",'pobyt',0,$chng);
   if (!$idp) $errors[]= "Nastala chyba při zápisu do databáze (p)"; 
@@ -1736,14 +1739,11 @@ function db_vytvor_nebo_oprav_clena($id) { // --------------------------- db vyt
       if (is_array($vals) && (!isset($vals[1]) || (isset($vals[1]) && $vals[1]!=$vals[0]))) {
         $v= $vals[1]??$vals[0];
         if (in_array($f,['telefon','email','nomail'])) {
-          $chng[]= (object)['fld'=>$f, 'op'=>'i','val'=>$v];
           $kontakt= 1;
         }
-        else {
-          if ($o_fld[$f][2]=='date') 
-            $v= date2sql($v);
-          $chng[]= (object)['fld'=>$f, 'op'=>'i','val'=>$v];
-        }
+        if ($o_fld[$f][2]=='date') 
+          $v= date2sql($v);
+        $chng[]= (object)['fld'=>$f, 'op'=>'i','val'=>$v];
       }
     }
     if ($kontakt) $chng[]= (object)['fld'=>'kontakt', 'op'=>'i','val'=>1];
@@ -1772,22 +1772,19 @@ function db_vytvor_nebo_oprav_clena($id) { // --------------------------- db vyt
     foreach ((array)$clen as $f=>$vals) {
       if (!isset($o_fld[$f]) || substr($f,0,1)=='X') continue; // položka začínající X nepatří do tabulky
       if (is_array($vals) && isset($vals[1]) && $vals[1]!=$vals[0]) {
-        if (in_array($f,['telefon','email','nomail']) && $clen->kontakt[0]??0==0) {
-          $chng[]= (object)['fld'=>'kontakt', 'op'=>'u','old'=>0,'val'=>1];
-          $kontakt= 1;
+        if (in_array($f,['telefon','email','nomail']) && ($clen->kontakt[0]??0)==0) {
+          $kontakt= 1; // přepnout z rodinného na osobní kontakt 
         }
-        else {
-          $v0= $vals[0];
-          $v= $vals[1];
-          if ($o_fld[$f][2]=='date') {
-            $v0= date2sql($v0);
-            $v= date2sql($v);
-          }
-          elseif ($o_fld[$f][2]=='sub_select') {
-            $v0= $vals[-1];
-          }
-          $chng[]= (object)['fld'=>$f, 'op'=>'u','old'=>$v0,'val'=>$v];
+        $v0= $vals[0];
+        $v= $vals[1];
+        if ($o_fld[$f][2]=='date') {
+          $v0= date2sql($v0);
+          $v= date2sql($v);
         }
+        elseif ($o_fld[$f][2]=='sub_select') {
+          $v0= $vals[-1];
+        }
+        $chng[]= (object)['fld'=>$f, 'op'=>'u','old'=>$v0,'val'=>$v];
       }
     }
     if ($kontakt) $chng[]= (object)['fld'=>'kontakt', 'op'=>'i','val'=>1];
@@ -1868,10 +1865,10 @@ function db_close_pobyt() { // -------------------------------------------------
   $idr= key($vars->rodina);
   $web_json= vytvor_web_json();
   $chng= array(
-    (object)['fld'=>'i0_rodina',  'op'=>'i','val'=>$idr],
-    (object)['fld'=>'web_changes','op'=>'i','val'=>get('p','web_changes')],
-    (object)['fld'=>'funkce',     'op'=>'i','val'=>get('p','funkce')],
-    (object)['fld'=>'web_json',   'op'=>'i','val'=>$web_json],
+    (object)['fld'=>'i0_rodina',   'op'=>'i','val'=>$idr],
+    (object)['fld'=>'web_changes', 'op'=>'i','val'=>get('p','web_changes')],
+    (object)['fld'=>'funkce',      'op'=>'i','val'=>get('p','funkce')],
+    (object)['fld'=>'web_json',    'op'=>'i','val'=>$web_json],
   );
   foreach ($vars->pobyt as $f=>$vals) {
     if (!isset($p_fld[$f]) || substr($f,0,1)=='X') continue; // položka začínající X nepatří do tabulky
@@ -1914,29 +1911,35 @@ function log_open($email) { // -------------------------------------------------
 }
 function log_write($clmn,$value) { // ---------------------------------------------------- log write
   global $AKCE, $TRACE;
-  if (($id= $_SESSION[$AKCE]->id_prihlaska??0)) {
+  if (($id= ($_SESSION[$AKCE]->id_prihlaska??0))) {
     $val= $value=='NOW()' ? 'NOW()' : "'".pdo_real_escape_string($value)."'";
     $res= pdo_query_2("UPDATE prihlaska SET $clmn=$val WHERE id_prihlaska=$id",1);
     if ($res===false && $TRACE)
       display("LOG_WRITE fail for:$clmn=$val");
   }
+  elseif ($TRACE)
+      display("LOG_WRITE fail for:$clmn=$val - no sesssion");
 }
 function log_append_stav($novy) { // ---------------------------------------------------- log write
   global $AKCE, $TRACE;
-  if (($id= $_SESSION[$AKCE]->id_prihlaska??0)) {
+  if (($id= ($_SESSION[$AKCE]->id_prihlaska??0))) {
     $res= pdo_query_2("UPDATE prihlaska SET stav=IF(stav='','$novy',CONCAT(stav,'-','$novy')) WHERE id_prihlaska=$id",1);
     if ($res===false && $TRACE)
       display("LOG_APPEND_STAV fail for:$novy");
   }
+  elseif ($TRACE)
+      display("LOG_APPEND_STAV fail for:$novy - no sesssion");
 }
 function log_write_vars() { // ------------------------------------------------------ log write_vars
   global $AKCE, $vars, $TRACE;
-  if (($id= $_SESSION[$AKCE]->id_prihlaska??0)) {
-    $val= json_encode($vars,JSON_UNESCAPED_UNICODE);
+  if (($id= ($_SESSION[$AKCE]->id_prihlaska??0))) {
+    $val= json_encode($vars,JSON_UNESCAPED_UNICODE | JSON_HEX_QUOT);
     $res= pdo_query_2("UPDATE prihlaska SET vars_json='$val' WHERE id_prihlaska=$id",1);
     if ($res===false && $TRACE)
       display("LOG_WRITE_VARS fail");
   }
+  elseif ($TRACE)
+      display("LOG_WRITE_VARS fail - no sesssion");
 } // zapíše $vars před zobrazením formuláře 
 function log_find_saved($email) { // ------------------------------------------------ log find_saved
   global $akce, $vars;
@@ -1984,12 +1987,14 @@ end:
 } // načtení uloženého stavu $vars
 function log_error($msg) { // ---------------------------------------------------- log error
   global $AKCE, $TRACE;
-  if (($id= $_SESSION[$AKCE]->id_prihlaska??0)) {
+  if (($id= ($_SESSION[$AKCE]->id_prihlaska??0))) {
     $val= "'".pdo_real_escape_string($msg)."'";
     $res= pdo_query_2("UPDATE prihlaska SET errors=CONCAT(errors,'|',$val) WHERE id_prihlaska=$id",0);
     if ($res===false && $TRACE)
       display("LOG_ERROR fail");
   }
+  elseif ($TRACE)
+      display("LOG_ERROR fail - no sesssion");
 }
 function log_close() { // ---------------------------------------------------------------- log close
   log_write('close','NOW()');
@@ -2352,7 +2357,7 @@ function _ezer_qry($op,$table,$cond_key,$chng) { // ----------------------------
   }
   return $ok;
 }
-function ezer_qry_2 ($op,$table,$cond_key,$zmeny,$par=null) {
+function ezer_qry_2 ($op,$table,$cond_key,$zmeny,$par=null) { // oproti Ezer verzi netestuje old
 # záznam změn do tabulky _track
 # 1. ezer_qry("INSERT",$table,$x->key,$zmeny[,$key_id]);       -- vložení 1 záznamu
 # 2. ezer_qry("UPDATE",$table,$x->key,$zmeny[,$key_id]);       -- oprava 1 záznamu
