@@ -21,12 +21,13 @@ menu dbt { type:'main', title:'db2', active:*, _sys:'*'
         infos: [
           {title:'[fa-object-group] Schema databáze',
            html: "Schema databáze<br><br><img src='db2/img/schema_db_2019.png'>"},
-          {title:'[fa-object-group] ... zjednodušené', 
+          {title:'[fa-object-group] ... a zjednodušené', 
            html: "Schema databáze<br><br><img src='db2/img/schema_db_2015.png'>"}
         ],
         tables: {
           akce:  "id_duakce>*,nazev,datum_od",
           pobyt: "id_pobyt>*,id_akce>akce,i0_rodina>rodina,hnizdo,funkce,web_changes,web_zmena",
+          prihlaska: "id_prihlaska>-,id_pobyt>pobyt,id_rodina>rodina,id_osoba>osoba,email,stav",
           uhrada:"id_uhrada>*,id_pobyt>pobyt,u_poradi,u_castka,u_datum,u_zpusob,u_stav,u_za",
           spolu: "id_spolu>-,id_pobyt>pobyt,id_osoba>osoba,s_hnizdo,s_role,web_zmena",
           osoba: "id_osoba>*,jmeno,prijmeni,web_zmena",
