@@ -768,7 +768,7 @@ function chart_akce($par) { // debug($par,'chart_akce');
       $chart->title= "tempo (zápisu) přihlašování na "
           .($pro=='mrop'?'MROP':($pro=='firm'?'FIRMING':($pro=='erop'?'EROP':'LK MS')));
       $akce= $pro=='ms' ? "druh=1 && access&$org" : ($pro=='erop' ? "nazev LIKE 'EROP%'" : "$pro=1");
-      $funkce= $pro=='ms' ? "funkce IN (0,1,2,5,9,13)" : "funkce IN (0,1)";
+      $funkce= $pro=='ms' ? "funkce IN (0,1,2,5,9,13,15)" : "funkce IN (0,1)";
       for ($rok= $od; $rok<=$do; $rok++) {
         $ida= select('id_duakce','akce',"$akce AND zruseno=0 AND YEAR(datum_od)=$rok");
         if (!$ida) continue;

@@ -439,7 +439,7 @@ function akce2_info($id_akce,$text=1,$pobyty=1) { trace();
       if (!isset($hnizdo[$hn]))
         $hnizdo[$hn]= array('vps'=>0, 'nov'=>0, 'rep'=>0, 'nah'=>0,
             'pec'=>0, 'det'=>0, 'koc'=>0, 'dos'=>0, 'chu_d'=>0, 'chu_p'=>0);
-      if (!in_array($fce,array(13,14,10,99))) { // 14+10+13 neúčast, 99 pečouni, 9 náhradník
+      if (!in_array($fce,array(10,13,14,15,99))) { // 15+14+10+13 neúčast, 99 pečouni, 9 náhradník
         $hnizdo[$hn]['vps']+= ($fce==1||$fce==2) ? 1 : 0;
         $hnizdo[$hn]['nov']+= $fce==0 && $p->_ucasti_ms==0 ? 1 : 0;
         $hnizdo[$hn]['rep']+= $fce==0 && $p->_ucasti_ms>0 ? 1 : 0;
@@ -478,7 +478,7 @@ function akce2_info($id_akce,$text=1,$pobyty=1) { trace();
           $uhrady[$u_zpusob][$u_stav]+= $u_castka;
         }
         $uhrady_celkem+= $u_castka;
-        if (in_array($fce,array(13,14,10,9) )) 
+        if (in_array($fce,array(9,10,13,14,15) )) 
           $uhrady_odhlasenych+= $u_castka;
         if ($u_stav==4) 
           $vraceno+= $u_castka;
@@ -494,7 +494,7 @@ function akce2_info($id_akce,$text=1,$pobyty=1) { trace();
 //        $aviz++;
 //      }
       // diskuse funkce=odhlášen/14 a funkce=nepřijel/10 a funkce=náhradník/9 a nepřijat/13
-      if ( in_array($fce,array(13,14,10,9) ) ) {
+      if ( in_array($fce,array(9,10,13,14,15) ) ) {
         $neprijati+= $fce==13 ? 1 : 0;
         $odhlaseni+= $fce==14 ? 1 : 0;
         $neprijeli+= $fce==10 ? 1 : 0;
@@ -4964,7 +4964,7 @@ end:
 }
 /** ==========================================================================================> TISK */
 # ------------------------------------------------------------------------------------ tisk2 sestava
-# generování sestav - všechny sestavy s //! vynechávají nepřítomné na akci p.funkce IN (9,10,13,14)
+# generování sestav - všechny sestavy s //! vynechávají nepřítomné na akci p.funkce IN (9,10,13,14,15)
 function tisk2_sestava($akce,$par,$title,$vypis,$export=false,$hnizdo=0) { debug($par,"tisk2_sestava");
   global $tisk_hnizdo;
   $tisk_hnizdo= $hnizdo;
@@ -5414,7 +5414,7 @@ function akce2_tabulka_mrop($akce,$par,$title,$vypis,$export=false) { debug($par
       JOIN spolu AS s USING (id_pobyt)
       JOIN osoba AS o USING (id_osoba)
       LEFT JOIN uhrada AS u USING (id_pobyt)
-    WHERE p.id_akce=$akce AND $cnd AND p.funkce NOT IN (9,10,13,14)
+    WHERE p.id_akce=$akce AND $cnd AND p.funkce NOT IN (9,10,13,14,15)
     $GROUP
     ORDER BY $ord";
   $res= pdo_qry($qry);
@@ -5479,7 +5479,7 @@ function tisk2_sestava_pary($akce,$par,$title,$vypis,$export=false,$internal=fal
   $browse_par= (object)array(
     'cmd'=>'browse_load',
     'cond'=>"$cnd AND p.id_akce=$akce AND p.funkce NOT IN "
-      . ($par->typ=='tab' ? "(10,13,14)" : "(9,10,13,14)")
+      . ($par->typ=='tab' ? "(10,13,14)" : "(9,10,13,14,15)")
 //      . " AND p.id_pobyt=62834"
       ,
     'having'=>$hav,'order'=>$ord,
@@ -5740,7 +5740,7 @@ function tisk2_sestava_lidi($akce,$par,$title,$vypis,$export=false) { trace();
         AS r3 ON r3.id_osoba=o.id_osoba AND r3.id_rodina=p.i0_rodina
       -- akce
       JOIN akce AS a ON a.id_duakce=p.id_akce
-    WHERE p.id_akce=$akce AND $cnd AND p.funkce NOT IN (9,10,13,14)
+    WHERE p.id_akce=$akce AND $cnd AND p.funkce NOT IN (9,10,13,14,15)
       GROUP BY o.id_osoba $hav
       ORDER BY $ord";
   $res= pdo_qry($qry);
@@ -5940,7 +5940,7 @@ function akce2_sestava_pobyt($akce,$par,$title,$vypis,$export=false) { debug($pa
           LEFT JOIN tvori AS t ON t.id_osoba=o.id_osoba
           -- LEFT JOIN rodina AS r USING(id_rodina)
           LEFT JOIN rodina AS r ON r.id_rodina=IF(p.i0_rodina,p.i0_rodina,t.id_rodina)
-          WHERE p.id_akce='$akce' AND $cnd AND p.funkce NOT IN (9,10,13,14)
+          WHERE p.id_akce='$akce' AND $cnd AND p.funkce NOT IN (9,10,13,14,15)
           GROUP BY id_pobyt $hav
           ORDER BY $ord";
   $res= pdo_qry($qry);
@@ -6013,7 +6013,7 @@ function _akce2_sestava_pecouni(&$clmn,$akce,$fld='_skoleni,_sluzba,_reflexe',$c
           LEFT JOIN ( SELECT id_osoba,role,$r_fld
             FROM tvori JOIN rodina USING(id_rodina))
             AS r2 ON r2.id_osoba=o.id_osoba AND r2.role IN ('a','b')
-          WHERE (p.funkce=99 OR (p.funkce NOT IN (9,10,13,14,99) AND s.pfunkce IN (4,5,8))) 
+          WHERE (p.funkce=99 OR (p.funkce NOT IN (9,10,13,14,15,99) AND s.pfunkce IN (4,5,8))) 
             AND p.id_akce='$akce' AND $cnd
           GROUP BY id_osoba
           ORDER BY $ord";
@@ -6313,7 +6313,7 @@ function akce2_stravenky_diety($akce,$par,$title,$vypis,$export=false,$hnizdo=0,
             AND role IN ('a','b') AND ps.id_osoba=pt.id_osoba
           LEFT JOIN osoba AS po ON po.id_osoba=pt.id_osoba
           JOIN osoba AS pso ON pso.id_osoba=ps.id_osoba
-          WHERE p.id_akce='$akce' AND $cond AND p.funkce NOT IN (9,10,13,14)
+          WHERE p.id_akce='$akce' AND $cond AND p.funkce NOT IN (9,10,13,14,15)
           GROUP BY p.id_pobyt
           ORDER BY _jm";
   }
@@ -6583,7 +6583,7 @@ function akce2_strava_vylet($akce,$par,$title,$vypis,$export=false,$id_pobyt=0) 
   $vylet= select1('DATE_FORMAT(ADDDATE(datum_od,2),"%e/%c")','akce',"id_duakce=$akce");
   // projdeme páry s dětmi ve věku nad 3 roky a děti sečteme
   $pocet_deti= $pocet_cele= $pocet_polo= 0;
-  $cnd= "p.funkce NOT IN (9,10,13,14,99) AND p.hnizdo=$tisk_hnizdo ";
+  $cnd= "p.funkce NOT IN (9,10,13,14,15,99) AND p.hnizdo=$tisk_hnizdo ";
   $browse_par= (object)array(
     'cmd'=>'browse_load','cond'=>"$cnd AND p.id_akce=$akce",'having'=>'','order'=>'a _nazev',
     'sql'=>"SET @akce:=$akce,@soubeh:=0,@app:='{$EZER->options->root}';");
@@ -6735,7 +6735,7 @@ function __akce2_strava_pary($akce,$par,$title,$vypis,$export=false,$id_pobyt=0)
 //                                                         debug($suma);
   // pokud není id_pobyt tak vyloučíme náhradníky + odhlášen + přihláška
   // naopak 'nepřijel' zahrneme (strava již byla objednána)
-  $cond.= $id_pobyt ? " AND p.id_pobyt=$id_pobyt" : " AND funkce NOT IN (9,14,13)";
+  $cond.= $id_pobyt ? " AND p.id_pobyt=$id_pobyt" : " AND funkce NOT IN (9,10,13,14,15)";
   $jsou_pecouni= false;
   // data akce
   $flds_diety= isset($diety['_bm'])
@@ -6942,7 +6942,7 @@ function akce2_prihlasky($akce,$par,$title,$vypis,$export=false) {
       if (!isset($dny_a[$dif])) $dny_a[$dif]= 0;
       $dny_a[$dif]++;
     }
-    elseif (in_array($fce,array(9,10,13,14))) {
+    elseif (in_array($fce,array(9,10,13,14,15))) {
       if (!isset($dny_x[$dif])) $dny_x[$dif]= 0;
       $dny_x[$dif]++;
     }
@@ -7046,7 +7046,7 @@ function akce2_pokoje($akce,$par,$title,$vypis,$export=false) {
   $soubeh= $soubezna ? 1 : ( $hlavni ? 2 : 0);
   $browse_par= (object)array(
     'cmd'=>'browse_load',
-    'cond'=>"p.id_akce=$akce AND p.funkce NOT IN (9,10,13,14)",  // jen přítomní
+    'cond'=>"p.id_akce=$akce AND p.funkce NOT IN (9,10,13,14,15)",  // jen přítomní
 //    'having'=>$hav,
     'order'=>'a__nazev',
     'sql'=>"SET @akce:=$akce,@soubeh:=$soubeh,@app:='{$EZER->options->root}';");
@@ -7401,7 +7401,7 @@ end:
 function tisk2_text_vyroci($akce,$par,$title,$vypis,$export=false) { trace();
   global $tisk_hnizdo;
   $jen_hnizdo= $tisk_hnizdo ? " AND hnizdo=$tisk_hnizdo " : '';
-  $cond= "id_akce=$akce $jen_hnizdo AND p.funkce NOT IN (9,10,13,14)";
+  $cond= "id_akce=$akce $jen_hnizdo AND p.funkce NOT IN (9,10,13,14,15)";
   $result= (object)array('_error'=>0);
   $html= '';
   // data akce
@@ -7488,7 +7488,7 @@ function akce2_text_prehled($akce,$title) { trace();
            JOIN spolu AS s USING(id_pobyt)
            JOIN osoba AS o ON s.id_osoba=o.id_osoba
            LEFT JOIN tvori AS t ON t.id_osoba=o.id_osoba AND IF(p.i0_rodina,t.id_rodina=p.i0_rodina,0)
-           WHERE a.id_duakce='$akce' AND $cond AND funkce NOT IN (9,10,13,14) 
+           WHERE a.id_duakce='$akce' AND $cond AND funkce NOT IN (9,10,13,14,15) 
            GROUP BY o.id_osoba ORDER BY prijmeni ";
     $ro= pdo_qry($qo);
     while ( $ro && ($o= pdo_fetch_object($ro)) ) {
@@ -7545,7 +7545,7 @@ function akce2_text_prehled($akce,$title) { trace();
   }
   // pfunkce: 0 4 5 8 92 95
   // pfunkce: 1=hlavoun, 2=instruktor, 3=pečovatel, 4=pomocný, 5=osobní, 6=mimořádný, 7=team, 8=člen G
-  // funkce=99  -- pečoun, funkce=9,10,13,14 -- není na akci
+  // funkce=99  -- pečoun, funkce=9,10,13,14,15 -- není na akci
   // s_role=2   -- dítě, s_role=3  -- dítě s os.peč, s_role=4  -- pom.peč, s_role=5  -- os.peč
   // dite_kat=7 -- skupina G
   // děti ...
@@ -8357,7 +8357,7 @@ function akce2_skup_deti($akce,$par,$title,$vypis,$export) {
          JOIN spolu AS s ON p.id_pobyt=s.id_pobyt
          JOIN osoba AS o ON s.id_osoba=o.id_osoba
          LEFT JOIN tvori AS t ON t.id_osoba=o.id_osoba AND t.id_rodina=p.i0_rodina
-         WHERE id_duakce='$akce' AND p.funkce NOT IN (9,10,13,14)
+         WHERE id_duakce='$akce' AND p.funkce NOT IN (9,10,13,14,15)
          GROUP BY id_duakce ";
   $res= pdo_qry($qry);
   $pocet= pdo_fetch_object($res);
@@ -8370,7 +8370,7 @@ function akce2_skup_deti($akce,$par,$title,$vypis,$export) {
         JOIN spolu AS s USING(id_osoba)
         JOIN pobyt AS p USING(id_pobyt)
         JOIN akce  AS a ON id_duakce='$akce'
-        WHERE  id_akce='$akce' AND skupinka!=0 AND p.funkce NOT IN (9,10,13,14)
+        WHERE  id_akce='$akce' AND skupinka!=0 AND p.funkce NOT IN (9,10,13,14,15)
         ORDER BY skupinka,IF(funkce=99,0,1),prijmeni,jmeno ";
   $res= pdo_qry($qry);
   while ( $res && ($o= pdo_fetch_object($res)) ) {
@@ -8942,7 +8942,7 @@ function akce2_sestava_noci($akce,$par,$title,$vypis,$export=false) { trace();
           JOIN osoba AS o ON s.id_osoba=o.id_osoba
           LEFT JOIN tvori AS t ON t.id_osoba=o.id_osoba
           LEFT JOIN rodina AS r ON r.id_rodina=IF(i0_rodina,i0_rodina,t.id_rodina)
-          WHERE p.id_akce='$akce' AND funkce NOT IN (9,10,13,14,99) AND $cond $jen_hnizdo
+          WHERE p.id_akce='$akce' AND funkce NOT IN (9,10,13,14,15,99) AND $cond $jen_hnizdo
           GROUP BY id_pobyt
           ORDER BY $ord";
 //   $qry.=  " LIMIT 1";
@@ -9150,7 +9150,7 @@ function akce2_vyuctov_pary($akce,$par,$title,$vypis,$export=false) { trace();
               AND (YEAR(a.datum_do) <= YEAR(dc.dat_do) OR !YEAR(dc.dat_do))
             -- JOIN _cis AS c ON c.druh='ms_akce_platba' AND c.data=zpusobplat
           WHERE p.id_akce='$akce' AND p.hnizdo=$tisk_hnizdo AND $cond AND p.funkce!=99
-            -- AND p.funkce NOT IN (9,10,13,14,99) 
+            -- AND p.funkce NOT IN (9,10,13,14,15,99) 
             -- AND id_pobyt IN (59318,59296,59317)
           GROUP BY id_pobyt
           ORDER BY $ord";
@@ -9362,7 +9362,7 @@ function akce2_vyuctov_pary2($akce,$par,$title,$vypis,$export=false) { trace();
           JOIN osoba AS o USING (id_osoba) 
           LEFT JOIN rodina AS r ON r.id_rodina=IF(i0_rodina,i0_rodina,id_rodina)
           LEFT JOIN tvori AS t USING (id_osoba,id_rodina) 
-          WHERE p.id_akce='$akce' AND p.hnizdo=$tisk_hnizdo AND p.funkce NOT IN (9,10,13,14,99) AND $cond
+          WHERE p.id_akce='$akce' AND p.hnizdo=$tisk_hnizdo AND p.funkce NOT IN (9,10,13,14,15,99) AND $cond
           GROUP BY id_pobyt
           ORDER BY $ord
           -- LIMIT 3
@@ -11981,7 +11981,7 @@ function sta2_pecouni_simple($org) { trace();
           FROM pobyt AS p
           JOIN spolu AS s USING (id_pobyt)
           JOIN akce  AS a ON a.id_duakce=p.id_akce
-          WHERE (p.funkce=99 OR (p.funkce NOT IN (9,10,13,14,99) AND s.pfunkce IN (4,5,8))) 
+          WHERE (p.funkce=99 OR (p.funkce NOT IN (9,10,13,14,15,99) AND s.pfunkce IN (4,5,8))) 
             AND a.druh=1 AND a.access & $org";
   $res= pdo_qry($qry);
   while ( $res && (list($f,$pf,$rok)= pdo_fetch_row($res)) ) {
@@ -14450,9 +14450,9 @@ function mail2_mai_pocet($id_dopis,$dopis_var,$cond='',$recall=false) {  trace()
            $dopis_var=='U3' ? " AND p.funkce IN (0,1,2,5) " : (
            $dopis_var=='U4' ?
              " AND IF(IFNULL(role,'a') IN ('a','b'),REPLACE(o.obcanka,' ','') NOT RLIKE '^[0-9]{9}$',0)" : (
-           $dopis_var=='U5' ? " AND p.funkce NOT IN (9,10,13,14,99) " : (
-           $dopis_var=='U6' ? " AND p.funkce NOT IN (9,10,13,14) AND o.prislusnost IN ('','CZ','SK') " : (
-           $dopis_var=='U7' ? " AND p.funkce NOT IN (9,10,13,14) AND o.prislusnost NOT IN ('','CZ','SK') " 
+           $dopis_var=='U5' ? " AND p.funkce NOT IN (9,10,13,14,15,99) " : (
+           $dopis_var=='U6' ? " AND p.funkce NOT IN (9,10,13,14,15) AND o.prislusnost IN ('','CZ','SK') " : (
+           $dopis_var=='U7' ? " AND p.funkce NOT IN (9,10,13,14,15) AND o.prislusnost NOT IN ('','CZ','SK') " 
          : " --- chybné komu --- " )))))));
 //    $HAVING= $dopis_var=='U3' ? "HAVING _uhrada/_na_akci<cena" : "";
     $HAVING= $dopis_var=='U3' ? ( $ma_cenu 

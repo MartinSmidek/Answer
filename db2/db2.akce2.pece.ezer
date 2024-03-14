@@ -458,7 +458,7 @@ form _pece [,,400,] { css:'ds_form'
     show            {data:c.id_osoba}
     show rod_pobyt  {expr:"IFNULL(x.id_pobyt,0)"}
     // barvy: zjištění rodiny na kurzu - vyjma:nepřijel,náhradník,odhlášen
-    show rod_nakurzu {expr:"IF(ISNULL(x.id_pobyt),0,x.funkce NOT IN (10,9,14))"}
+    show rod_nakurzu {expr:"IF(ISNULL(x.id_pobyt),0,x.funkce NOT IN (9,10,13,14,15))"}
     show jen_oddo  { expr:"IF(s.p_od_pobyt OR s.p_od_strava OR s.p_do_pobyt OR s.p_do_strava,1,0)"}
     show neuplne   { expr:"IF(o.narozeni='0000-00-00' OR o.kontakt=0 AND ISNULL(r.id_rodina),1,0)"}
     // data

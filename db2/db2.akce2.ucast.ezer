@@ -323,12 +323,12 @@ proc reload(id_pobyt) { var filtr:text, id_pobyt0:number
   lst.the_akce.load(the_duakce.get);
   page_clear;
   filtr.set(1);
-  // vytvoř filtr z polí: lid (0,1,2), tym (3,4,5,6,7,8,12), non (9,10,13,14)
+  // vytvoř filtr z polí: lid (0,1,2), tym (3,4,5,6,7,8,12), non (9,10,13,14,15)
   filtr.set(cconc(
     1," ( 0",
     u.lid.get," OR p.funkce IN (0,1,2)",
     u.tym.get," OR p.funkce IN (3,4,5,6,7,8,12)",
-    u.non.get," OR p.funkce IN (9,10,13,14)",
+    u.non.get," OR p.funkce IN (9,10,13,14,15)",
     1," ) "
   ));
 //  [ u.lid.get; u.tym.get
@@ -1433,7 +1433,7 @@ form _pobyt [,,360,62] {
   label frame [0,0,360,50] {tag:'f', css:'ae_form2', title:'společné údaje o pobytu' }
   button [200,-10,,] {tag:'F', title:'^přihláška', css:'db_evidence', skill:'yo|yo'
     func onclick() { PRIHLASKA.osobni(id_prihlaska); }}
-  field id_prihlaska [257,-12,36,] {tag:'F', data:p.id_prihlaska, format:'ro', style:'color:white', 
+  field id_prihlaska [257,-12,36,] {tag:'F', format:'ro', style:'color:white', 
         css:'Label', help:' ', tabindex:0 }
   field id [304,-12,50,] {tag:'F', data:p.id_pobyt, format:'ro', style:'color:white', css:'Label',
         help:' ', tabindex:0 }

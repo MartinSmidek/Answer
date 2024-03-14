@@ -381,11 +381,25 @@ table akce { key_id:'id_duakce'
   text web_url
   text web_wordpress
 }
+table prihlaska { key_id:'id_prihlaska'
+  number id_prihlaska
+  number id_akce
+  number id_pobyt
+  number id_rodina
+  number id_osoba
+  text email
+  date open
+  date close
+  text stav
+  text vars_json
+  text errors
+  text IP
+  text browser
+}
 table pobyt { key_id:'id_pobyt'
   number id_pobyt
   number id_akce
   number i0_rodina // jen pro rodinný pobyt
-  number id_prihlaska // jen pro online přihlášky
   # number id_osoba -- 131004 zrušeno
   number typ            // 10,11,20,21
   number skupina
