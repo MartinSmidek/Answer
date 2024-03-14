@@ -656,8 +656,11 @@ form _page [,,275,360] {
         form.save(); form.load(); p_show();
       }
   }}
-  button [150,457,,] { tag:'pri', title:'Přehled nedokončených přihlášek', skill:'yo|yo'
-    func onclick() { PRIHLASKY.prehled() }
+  button [135,457,,] { tag:'pri', title:'Přehled nedokončených přihlášek', skill:'yo|yo'
+    func onclick() { PRIHLASKY.prehled(0) }
+  }
+  button [339,457,,] { tag:'pri', title:'... dokončených', skill:'yo|yo'
+    func onclick() { PRIHLASKY.prehled(1) }
   }
   # ------------------------==> . ceník
   proc c_show() { // výběr a šířky sloupců podle akce.access a akce.ma_cenik_verze
@@ -1366,9 +1369,9 @@ panel HNIZDA [0,0,640,520] { title:' ', type:'popup', css:'dialog',
 # přehled přihlášek
 panel PRIHLASKY [0,0,640,520] { title:' ', type:'popup', css:'dialog',
     style:"height:calc(100% - 130px)"
-  func prehled() { var y:object
+  func prehled(hotove) { var y:object
     clear(); panel.title= "Přehled nedokončených přihlášek";
-    h.txt= php.prihl_open(the_duakce);
+    h.txt= php.prihl_open(the_duakce,hotove);
     panel.popup(210,60);
   }
   use h: form {

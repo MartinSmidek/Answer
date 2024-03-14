@@ -3247,17 +3247,19 @@ end:
 }
 # --------------------------------------------------------------------------------------- prihl open
 # vrátí seznam otevřených přihlášek dané akce
-function prihl_open($ida) { trace();
+function prihl_open($ida,$hotove=1) { trace();
+  $HAVING= $hotove
+      ? "HAVING _naakci!=0"
+      : "HAVING _stavy NOT REGEXP '^ok|,ok|-ok' AND _naakci=0";
   $html= $znami= $novi= '';
   $rp= pdo_qry("SELECT LOWER(p.email) AS _email,IFNULL(GROUP_CONCAT(DISTINCT s.id_pobyt),0) AS _naakci
         ,IFNULL(MAX(id_rodina),0) AS _rodina,IFNULL(GROUP_CONCAT(DISTINCT nazev),'?') AS _nazev
         ,IFNULL(MAX(o.id_osoba),0) AS _osoba,IFNULL(CONCAT(o.prijmeni,' ',o.jmeno),'?')
         ,DATE_FORMAT(MIN(open),'<b>%d.%m</b> %H:%i') AS _open
         ,GROUP_CONCAT(DISTINCT stav ORDER BY p.id_prihlaska) AS _stavy
+        ,TRIM(GROUP_CONCAT(DISTINCT LEFT(browser,4) SEPARATOR ' '))
         ,MAX(p.id_prihlaska) AS _id_prihlaska
-        ,COUNT(*) AS x
-        ,MIN(open) AS _open_
-        ,MAX(p.id_pobyt) AS _pobyt
+        ,COUNT(*) AS x, MIN(open) AS _open_, MAX(p.id_pobyt) AS _pobyt
       FROM prihlaska AS p
       LEFT JOIN rodina USING (id_rodina)
       LEFT JOIN osoba AS o ON o.email LIKE CONCAT('%',p.email,'%')
@@ -3266,18 +3268,21 @@ function prihl_open($ida) { trace();
       WHERE p.id_akce=$ida AND p.email!='' -- AND p.email NOT REGEXP '(smidek)'
       -- AND p.id_prihlaska>110
       GROUP BY _email
-      HAVING _stavy NOT REGEXP '^ok|,ok|-ok' AND _naakci=0
+      $HAVING
       ORDER BY _open_ DESC");
-  while ($rp && (list($email,$naakci,$idr,$rodina,$ido,$osoba,$kdy,$stavy)= pdo_fetch_array($rp))) {
+  while ($rp && (list($email,$naakci,$idr,$rodina,$ido,$osoba,$kdy,$stavy,$jak)= pdo_fetch_array($rp))) {
     $_ido= $ido ? tisk2_ukaz_osobu($ido) : '';
     $_idr= $idr ? tisk2_ukaz_rodinu($idr) : '';
     $pokusy= substr($stavy,0,50).(substr($stavy,50) ? ' ...' : '');
-    $row= "<tr><td>$kdy</td><td>$email</td><td>$osoba $_ido</td><td>$rodina $_idr</td>"
-        . "<td title='$stavy'>$pokusy</td></tr>";
-    if ($ido) $znami.= "\n$row"; else $novi.= "\n$row";
+    $row= "<tr><td title='$stavy'>$kdy</td><td title='$jak'>$email</td><td>$osoba $_ido</td><td>$rodina $_idr</td>"
+        . ( $ido ? '' : "<td title='$stavy'>$pokusy</td>")
+        . "<td>$jak</td></tr>";
+    if (!$ido || preg_match("/novi|novacci/",$stavy)) $novi.= "\n$row"; else $znami.= "\n$row";
+//    if ($ido) $znami.= "\n$row"; else $novi.= "\n$row";
   }
-  $html.= "<h3>Nedokončené přihlášky nováčků</h3><table>$novi</table>";
-  $html.= "<h3>Nedokončené přihlášky známých</h3><table>$znami</table>";
+  $Jake= $hotove ? "Dokončené" : "Nedokončené";
+  $html.= "<h3>$Jake přihlášky nováčků</h3><table>$novi</table>";
+  $html.= "<h3>$Jake přihlášky známých</h3><table>$znami</table>";
   return $html;
 }
 
