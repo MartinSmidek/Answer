@@ -1013,7 +1013,7 @@ end:
 function akce2_zmeny_web($idp) {  trace();
   // získání sledovaných klíčů tabulek spolu, osoba, tvori, rodina
   $n= 0;
-  $keys= (object)array(); // table -> [id_table]
+  $keys= (object)array('osoba'=>array(),'tvori'=>array(),'spolu'=>array()); // table -> [id_table]
   $flds= (object)array();
   $idr= 0;
   $rp= pdo_qry("
@@ -1039,19 +1039,20 @@ function akce2_zmeny_web($idp) {  trace();
 //                                                         debug($keys,'klíče');
   // projití _track - zjištění vzniku pobytu
   $start= select('kdy','_track',"kde='pobyt' AND klic='$idp' ORDER BY kdy LIMIT 1");
-  // posbírání pozdějších změn
+  // posbírání pozdějších změn 
   $n= 0;
-  $rt= pdo_qry("SELECT kde,klic,fld,kdo,kdy FROM _track
-      WHERE kdy>='$start' AND kdo='WEB' AND (
-          (kde='pobyt' AND klic=$idp 
-            AND fld NOT IN ('id_akce','i0_rodina','web_zmena','web_changes','web_json') )"
-       . ($idr  ? "OR (kde='rodina' AND klic=$idr AND fld NOT IN ('access','web_zmena') )" : '')
-       . ($idos ? "OR (kde='osoba' AND klic IN ($idos) AND fld NOT IN ('access','web_zmena') )" : '')
-       . ($idts ? "OR (kde='tvori' AND klic IN ($idts) AND fld NOT IN ('id_rodina','id_osoba') )" : '')
-       . ($idss ? "OR (kde='spolu' AND klic IN ($idss) AND fld NOT IN ('id_pobyt','id_osoba') )" : '')
-      .")"
+  $rt= pdo_qry("SELECT kde,klic,fld,GROUP_CONCAT(kdo ORDER BY kdy DESC) FROM _track
+      WHERE kdy>='$start' AND (
+        (kde='pobyt' AND klic=$idp AND fld NOT IN ('id_akce','i0_rodina','web_zmena','web_changes','web_json') )"
+       . ($idr  ? " OR (kde='rodina' AND klic=$idr AND fld NOT IN ('access','web_zmena') )" : '')
+       . ($idos ? " OR (kde='osoba' AND klic IN ($idos) AND fld NOT IN ('access','web_zmena') )" : '')
+       . ($idts ? " OR (kde='tvori' AND klic IN ($idts) AND fld NOT IN ('id_rodina','id_osoba') )" : '')
+       . ($idss ? " OR (kde='spolu' AND klic IN ($idss) AND fld NOT IN ('id_pobyt','id_osoba') )" : '')
+      .")
+      GROUP BY kde,klic,fld  "
       );
-  while ( $rt && (list($kde,$klic,$fld)= pdo_fetch_array($rt)) ) {
+  while ( $rt && (list($kde,$klic,$fld,$kdo)= pdo_fetch_array($rt)) ) {
+    if (substr($kdo,0,3)!='WEB') continue; // barvíme jen změny z webu
     switch ( $kde ) {
     case 'pobyt':  $flds->pobyt[$klic][]= $fld; $n++; break;
     case 'rodina': $flds->rodina[$klic][]= $fld; $n++; break;
@@ -3819,7 +3820,8 @@ function ucast2_browse_ask($x,$tisk=false) {
           : ( $akce->ma_cenu 
             ? ( ($platba1234 ?: $clenu*$akce->cena) > $p->uhrada ? 1 : 0) : 0 )
           ));
-      // web_changes= 1/2 pro INSERT/UPDATE pobyt a spolu | 4/8 pro INSERT/UPDATE osoba
+      // ezer_cms3: web_changes= 1/2 pro INSERT/UPDATE pobyt a spolu | 4/8 pro INSERT/UPDATE osoba
+      // prihlaska: web_changes= 1/2 pro INS/UPD pobyt+spolu | 4/8 pro INS/UPD osoba | 16/32 pro INS/UPD rodina,tvori
       $p->web_changes= $p->web_changes&4 ? 2 : ($p->web_changes ? 1 : 0);
 //                                                         if ($idp==15826) { debug($akce);debug($p,"platba1234=$platba1234"); }
       # pobyt I
