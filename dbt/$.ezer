@@ -43,7 +43,6 @@ menu dbt { type:'main', title:'db2', active:*, _sys:'*'
         },
         css: 'stat' // styl tabulek
     }}
-    /*
     panel nas {type:'right', title:'Data', _sys:'nas', skill:'a'
       proc track_osoba(ido)  { akce2.track.back_show('osoba',ido) }
       proc track_rodina(idr) { akce2.track.back_show('rodina',idr) }
@@ -73,73 +72,93 @@ menu dbt { type:'main', title:'db2', active:*, _sys:'*'
             }
           }
         }
-        menu { title:'Import a záloha databáze',type:'group',skill:'m'
-          item { title:"[fa-question] přehled záloh"          par:°{typ:'listing',direct:'1'}}
-          item { title:"[fa-upload] zálohuj teď"              par:°{typ:'special',direct:'0'}}
-          proc onclick(i) {
-            clear; info.display(0,'t');
-            info.fill(replace_fa(conc(i.owner.title,' - ',i.title)),' ');
-            info.append(ask('sys_backup_make',i.par)) 
-          }
-          item { title:"obnova ze zálohy (jen local)" par:°{typ:'restore',direct:'1'}
-            proc onclick(i) { var heslo:text
-              clear; info.display(0,'t');
-              info.fill(conc(i.owner.title,' - ',i.title),' ');
-              eq(sys('ezer','server'),0,1); // test na lokální server na NTB nebo Synology DOMA
-              confirm('Opravdu mám lokální databázi přepsat?'); 
-              info.append(ask('sys_backup_make',i.par))
-            | alert('obnovu ze zálohy lze provádět pouze na lokální kopii systému');
+//        menu { title:'Import a záloha databáze',type:'group',skill:'m'
+//          item { title:"[fa-question] přehled záloh"          par:°{typ:'listing',direct:'1'}}
+//          item { title:"[fa-upload] zálohuj teď"              par:°{typ:'special',direct:'0'}}
+//          proc onclick(i) {
+//            clear; info.display(0,'t');
+//            info.fill(replace_fa(conc(i.owner.title,' - ',i.title)),' ');
+//            info.append(ask('sys_backup_make',i.par)) 
+//          }
+//          item { title:"obnova ze zálohy (jen local)" par:°{typ:'restore',direct:'1'}
+//            proc onclick(i) { var heslo:text
+//              clear; info.display(0,'t');
+//              info.fill(conc(i.owner.title,' - ',i.title),' ');
+//              eq(sys('ezer','server'),0,1); // test na lokální server na NTB nebo Synology DOMA
+//              confirm('Opravdu mám lokální databázi přepsat?'); 
+//              info.append(ask('sys_backup_make',i.par))
+//            | alert('obnovu ze zálohy lze provádět pouze na lokální kopii systému');
+//            }
+//          }
+//        }
+//        menu { title:'Export a import polí',type:'group',skill:'m'
+//          item { title:"[fa-download] export adres pro geo / osoba"  par:°{tab:'osoba'}}
+//          item { title:"[fa-download] export adres pro geo / rodina"  par:°{tab:'rodina'}}
+//          func onclick(i:ezer) { var own:ezer
+//            own= i.owner(); info.display(0,'t');
+//            info.fill(replace_fa(`${own.title} - ${i.title}`),' ');
+//            info.append(php.mapa2_geo_export(i.par)) 
+//          }
+//        }
+//        menu o {title:'Ostrá databáze',type:'group', _sys:'*'
+//          item {title:'Stav sjednocování kopií', par:°{db:'db2'}
+//            proc onclick (i) {
+//              panel.display(2,'i'); info.display(0,'t');
+//              info.fill(replace_fa(conc(i.owner.title,' - ',i.title)),'... probíhá výpočet ...');
+//              info.fill('',ask('db2_stav',i.par.db)) }}
+//          item {title:'obnova pobyt.web_changes' 
+//            proc onclick() { 
+//              panel.display(2,'i'); info.display(0,'t');
+//              confirm('opravit pobyt.web_changes ?'); ask('update_web_changes') 
+//          }}
+////          item {title:'smazat platební údaje LK2019' skill:'m'
+////            proc onclick() { confirm('smazat platební údaje LK2019 ?'); ask('clear_platby_lk2019') }
+////          }
+//        }
+        menu x {title:'Kontroly konzistence dat 2',type:'group', _sys:'*'
+          item {title:'rodina-tvori-osoba - test'         ,par:{opravit:0,vazba:'tvori'}}
+          item {title:'rodina-tvori-osoba - oprava'       ,par:{opravit:1,vazba:'tvori'}}
+          item {title:'pobyt-spolu-osoba/rodina - test'   ,par:{opravit:0,vazba:'spolu'}}
+          item {title:'pobyt-spolu-osoba/rodina - oprava' ,par:{opravit:1,vazba:'spolu'}}
+          item {title:'akce-pobyt-osoba - test'           ,par:{opravit:0,vazba:'spolu'}, format:'d'}
+          item {title:'akce-pobyt-osoba - oprava'         ,par:{opravit:1,vazba:'spolu'}, format:'d'}
+          func onclick (i:ezer) { var x: text
+            panel.display(2,'i'); info.display(0,'t'); info.header(i);
+            if (!i.par.opravit 
+              || i.par.opravit && confirm('opravdu si troufneš pustit automatickou opravu?')) {
+              info.fill('',' ... probíhá kontrola dat ...');
+              switch (i.par.vazba) {
+                case 'spolu': x= php.db2_kontrola_spolu(i.par); break; 
+                case 'tvori': x= php.db2_kontrola_tvori(i.par); break; 
+              }
+              info.fill('',x);
             }
           }
         }
-        menu { title:'Export a import polí',type:'group',skill:'m'
-          item { title:"[fa-download] export adres pro geo / osoba"  par:°{tab:'osoba'}}
-          item { title:"[fa-download] export adres pro geo / rodina"  par:°{tab:'rodina'}}
-          func onclick(i:ezer) { var own:ezer
-            own= i.owner(); info.display(0,'t');
-            info.fill(replace_fa(`${own.title} - ${i.title}`),' ');
-            info.append(php.mapa2_geo_export(i.par)) 
-          }
-        }
-        menu o {title:'Ostrá databáze',type:'group', _sys:'*'
-          item {title:'Stav sjednocování kopií', par:°{db:'db2'}
-            proc onclick (i) {
-              panel.display(2,'i'); info.display(0,'t');
-              info.fill(replace_fa(conc(i.owner.title,' - ',i.title)),'... probíhá výpočet ...');
-              info.fill('',ask('db2_stav',i.par.db)) }}
-          item {title:'obnova pobyt.web_changes' 
-            proc onclick() { 
-              panel.display(2,'i'); info.display(0,'t');
-              confirm('opravit pobyt.web_changes ?'); ask('update_web_changes') 
-          }}
-//          item {title:'smazat platební údaje LK2019' skill:'m'
-//            proc onclick() { confirm('smazat platební údaje LK2019 ?'); ask('clear_platby_lk2019') }
+//        menu k {title:'Kontroly konzistence dat',type:'group', _sys:'*'
+//          item {title:'kontroly databáze - test'        ,par:°{opravit:0,test:'test'}, skill:'m'}
+//          item {title:'kontroly databáze - test+oprava' ,par:°{opravit:1,test:'test'}, skill:'m'}
+//          item {title:'kontroly databáze'               ,par:°{opravit:0}}
+//          item {title:'kontroly databáze s opravou'     ,par:°{opravit:1}, skill:'m'}
+//          proc onclick (i) {
+//            panel.display(2,'i'); info.display(0,'t');
+//            info.fill(replace_fa(conc(i.owner.title,' - ',i.title)),' ... probíhá kontrola dat ...');
+//            info.fill('',ask('db2_kontrola_dat',i.par));
 //          }
-        }
-        menu k {title:'Kontroly konzistence dat',type:'group', _sys:'*'
-          item {title:'kontroly databáze - test'        ,par:°{opravit:0,test:'test'}, skill:'m'}
-          item {title:'kontroly databáze - test+oprava' ,par:°{opravit:1,test:'test'}, skill:'m'}
-          item {title:'kontroly databáze'               ,par:°{opravit:0}}
-          item {title:'kontroly databáze s opravou'     ,par:°{opravit:1}, skill:'m'}
-          proc onclick (i) {
-            panel.display(2,'i'); info.display(0,'t');
-            info.fill(replace_fa(conc(i.owner.title,' - ',i.title)),' ... probíhá kontrola dat ...');
-            info.fill('',ask('db2_kontrola_dat',i.par));
-          }
-        }
-        menu t {title:'Testovací databáze',type:'group', _sys:'*'
-          item {title:'stav sjednocování kopií', par:°{db:'db2_test'}
-            proc onclick (i) {
-              panel.display(2,'i'); info.display(0,'t');
-              info.fill(replace_fa(conc(i.owner.title,' - ',i.title)),'... probíhá výpočet ...');
-              info.fill('',ask('db2_stav',i.par.db)) }}
-          item {title:'obnovit testovací db z ostré', par:°{db:'db2'}
-            proc onclick (i) {
-              panel.display(2,'i'); info.display(0,'t');
-              confirm("vytvořit znovu testovací databázi z aktuálního stavu ostré databáze?");
-              info.fill(replace_fa(conc(i.owner.title,' - ',i.title)),' ... probíhá update ...');
-              info.fill('',ask('db2_copy_test_db',i.par.db)); }}
-        }
+//        }
+//        menu t {title:'Testovací databáze',type:'group', _sys:'*'
+//          item {title:'stav sjednocování kopií', par:°{db:'db2_test'}
+//            proc onclick (i) {
+//              panel.display(2,'i'); info.display(0,'t');
+//              info.fill(replace_fa(conc(i.owner.title,' - ',i.title)),'... probíhá výpočet ...');
+//              info.fill('',ask('db2_stav',i.par.db)) }}
+//          item {title:'obnovit testovací db z ostré', par:°{db:'db2'}
+//            proc onclick (i) {
+//              panel.display(2,'i'); info.display(0,'t');
+//              confirm("vytvořit znovu testovací databázi z aktuálního stavu ostré databáze?");
+//              info.fill(replace_fa(conc(i.owner.title,' - ',i.title)),' ... probíhá update ...');
+//              info.fill('',ask('db2_copy_test_db',i.par.db)); }}
+//        }
       }
       use info: form right [12,4,,] { tag:'i' 
         field url [40,29,100,17] {tag:'t', format:'t', style:'width:calc(100% - 60px)'}
@@ -147,15 +166,15 @@ menu dbt { type:'main', title:'db2', active:*, _sys:'*'
           html= php.curl_get_contents(url);
           form.note= php.htmlentities(html);
         }}
-//        select tab [-253,5,150,] {tag:'t', title:'tabulka', format:'t'}
-//        field idt [-152,5,70,] {tag:'t', title:'klíč', format:'t'}
-//        button [-82,5,,] {tag:'t', title:'zobraz'
-//          func onclick() {
-//            clear(); form.note= conc(form.note,php.tab_append(tab,`*='${idt}'`)); // * bude primary_key
-//        }}
-//        button [-22,5,,] {tag:'t', title:'vymaž'
-//          func onclick() { form.note= '';
-//        }}
+        select tab [-253,5,150,] {tag:'t', title:'tabulka', format:'t'}
+        field idt [-152,5,70,] {tag:'t', title:'klíč', format:'t'}
+        button [-82,5,,] {tag:'t', title:'zobraz'
+          func onclick() {
+            clear(); form.note= conc(form.note,php.tab_append(tab,`*='${idt}'`)); // * bude primary_key
+        }}
+        button [-22,5,,] {tag:'t', title:'vymaž'
+          func onclick() { form.note= '';
+        }}
       }
       // ==> proces lokalizace adres
       panel Proces [0,0,300,50] { type:'popup', 
@@ -249,7 +268,6 @@ menu dbt { type:'main', title:'db2', active:*, _sys:'*'
       }
       use info: form right [12,4,,]     { tag:'i' }
     }
-    */
   }
   tabs doc  {title:"[fa-question] Nápověda", _sys:'*',  include:'onload,ezer2.help' }
   tabs off  {title:"[fa-power-off] Odhlásit", type:'logoff' }
