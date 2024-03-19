@@ -989,7 +989,7 @@ function do_vyplneni_dat() { // ------------------------------------------------
       . "</p>";
   }
   // -------------------------------------------- redakce formuláře
-  $enable_send= $vars->kontrola ? '' : 'disabled';
+  $enable_send= $vars->kontrola ? '' : 'disabled title="před odesláním je nutné zkontrolovat korektnost vyplněných údajů tlačítkem vlevo" ';
   $enable_green= $vars->kontrola ? 'fa-green' : '';
   $odeslat= $vars->form->oprava??0 ? "uložit opravu" : "odeslat přihlášku";
   $exit= $vars->form->exit 
@@ -1015,7 +1015,7 @@ function do_vyplneni_dat() { // ------------------------------------------------
     $souhlas
     $ulozit
     $exit
-    <p>$msg</p>
+    <p id="vyplneni_msg">$msg</p>
 __EOF;
 end:
   do_end();
@@ -1166,8 +1166,15 @@ __EOD;
         window.history.replaceState(null, null, window.location.href);
     }
     function check() {
-      jQuery("input,select").change(function(){
-        jQuery('#submit_form').prop("disabled",true);
+      jQuery("input,select,textarea").on('input',function(){
+        jQuery('#submit_form')
+          .prop("disabled",true)
+          .prop("title","před odesláním je nutné zkontrolovat korektnost vyplněných údajů tlačítkem vlevo");
+        jQuery("p#vyplneni_msg")
+          .css({'color':'red','font-weight':'bold'})
+          .html("byla provedena změna, proveďte znovu kontrolu před odesláním");
+        jQuery("#submit_form i")
+          .removeClass('fa-green');
       });
     }
     function save_position() {
