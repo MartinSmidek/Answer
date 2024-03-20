@@ -16298,31 +16298,61 @@ function db2_stav_kdo($db,$desc,$tit) {
 # --------------------------------------------------------------------------------==> . testovací db
 # --------------------------------------------------------------------------------- db2 copy_test_db
 # zkopíruje důležité tabulky z ezer_$db do ezer_$db_test
+# pro $db=db2 zkopíruje také setkani4 do setkani4_test
 function db2_copy_test_db($db) {  trace();
-  $ok= 1;
+  $msg= '';
   query("SET sql_mode = 'NO_AUTO_VALUE_ON_ZERO'");
   // tabulka¨, která se má jen vytvořit, má před jménem hvězdičku
   $tabs= explode(',',
 //     "_user,_skill,"
-    "_help,_cis,"
-  . "*_touch,_track,*_todo,ezer_doc2,"
+    "*_touch,*_todo,"
+  . "_help,_cis,"
+  . "_track,ezer_doc2,"
   . "akce,cenik,pobyt,spolu,osoba,tvori,rodina,g_akce,join_akce,prihlaska,"
   . "dar,uhrada,"
-  . "dopis,mail,mailist"
+  . "dopis,mail,mailist,"
+  . "pdenik,person,pokladna"
   );
+  $msg.= "<h3>Kopie databáze ezer_{$db} do ezer_{$db}_test</h3>";
   foreach ($tabs as $xtab ) {
     $tab= $xtab;
     if ( $tab[0]=='*' ) $tab= substr($tab,1);
-//    if ( $ok ) $ok= 
     query("DROP TABLE IF EXISTS ezer_{$db}_test.$tab");
-//    if ( $ok ) $ok= 
     query("CREATE TABLE ezer_{$db}_test.$tab LIKE ezer_{$db}.$tab");
-    if ( $xtab[0]!='*' )
-//      if ( $ok ) $ok= 
-      query("INSERT INTO ezer_{$db}_test.$tab SELECT * FROM ezer_{$db}.$tab");
+    if ( $xtab[0]!='*' ) {
+      $n= query("INSERT INTO ezer_{$db}_test.$tab SELECT * FROM ezer_{$db}.$tab");
+      $msg.= "<br>COPY ezer_{$db}_test.$tab ... $n záznamů";
+    }
+    else {
+      $msg.= "<br>INIT ezer_{$db}_test.$tab";
+    }
   }
+  // kopie pro Dům setkání
+  if ($db=='db2') {
+    $msg.= "<h3>Kopie databáze setkani4 do setkani4_test</h3>";
+    // tabulka¨, která se má jen vytvořit, má před jménem hvězdičku
+    $tabs= explode(',',
+      "*_touch,*_todo,_track,"
+    . "_help,_cis,"
+    . "ds_cena,ds_osoba,tx_gnalberice_order,tx_gnalberice_room"
+    );
+    foreach ($tabs as $xtab ) {
+      $tab= $xtab;
+      if ( $tab[0]=='*' ) $tab= substr($tab,1);
+      query("DROP TABLE IF EXISTS setkani4_test.$tab");
+      query("CREATE TABLE setkani4_test.$tab LIKE setkani4.$tab");
+      if ( $xtab[0]!='*' ) {
+        $n= query("INSERT INTO setkani4_test.$tab SELECT * FROM setkani4.$tab");
+        $msg.= "<br>COPY setkani4_test.$tab ... $n záznamů";
+      }
+      else {
+        $msg.= "<br>INIT setkani4_test.$tab";
+      }
+    }
+  }
+  // end
   ezer_connect("ezer_{$db}");   // jinak zůstane přepnuté na test
-  return $ok ? 'ok' : 'ko';
+  return $msg;
 }
 # -----------------------------------------------------------------------------------==> . track ops
 # --------------------------------------------------------------------------------------- track_like
