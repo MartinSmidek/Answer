@@ -53,7 +53,7 @@ function geo_fill ($y) { debug($y,'geo_fill');
     $idox= tisk2_ukaz_osobu($ido);
     if ($stav<=0) {
       $geo= geo_get_osoba($ido);
-//      debug($geo,'po geo_get_osoba');
+      debug($geo,'po geo_get_osoba');
       geo_set_osoba($ido,$geo);
       if ($geo->error) {
         $lineadr= urlencode($geo->address);
@@ -3270,11 +3270,12 @@ function prihl_open($ida,$hotove=1) { trace();
       GROUP BY _email
       $HAVING
       ORDER BY _open_ DESC");
-  while ($rp && (list($email,$naakci,$idr,$rodina,$ido,$osoba,$kdy,$stavy,$jak)= pdo_fetch_array($rp))) {
+  while ($rp && (list($email,$naakci,$idr,$rodina,$ido,$osoba,$kdy,$stavy,$jak,$idpr)= pdo_fetch_array($rp))) {
     $_ido= $ido ? tisk2_ukaz_osobu($ido) : '';
     $_idr= $idr ? tisk2_ukaz_rodinu($idr) : '';
     $pokusy= substr($stavy,0,50).(substr($stavy,50) ? ' ...' : '');
-    $row= "<tr><td title='$stavy'>$kdy</td><td title='$jak'>$email</td><td>$osoba $_ido</td><td>$rodina $_idr</td>"
+    $row= "<tr><td title='$stavy' align='right'>$idpr => </td><td>$kdy</td><td title='$jak'>$email</td>"
+        . "<td>$osoba $_ido</td><td>$rodina $_idr</td>"
         . ( $ido ? '' : "<td title='$stavy'>$pokusy</td>")
         . "<td>$jak</td></tr>";
     if (!$ido || preg_match("/novi|novacci/",$stavy)) $novi.= "\n$row"; else $znami.= "\n$row";
