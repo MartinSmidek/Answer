@@ -6,7 +6,7 @@ menu dbt { type:'main', title:'db2', active:*, _sys:'*'
   var global: text,
   tabs pok {title:"[fa-eur] Pokladna", _sys:'*',  include:'onclick,db2.pok', active:*, skill:'yp' }
 //  tabs eko {title:"[fa-stack-overflow] Ekonomika", _sys:'*',  include:'onclick,ys2.eko', active:*, skill:'ye' }
-  tabs ds {title:"[fa-home] Dům", _sys:'*',  include:'onclick', active:*, skill:'yd' }
+  tabs ds {title:"[fa-home] Dům", _sys:'*',  include:'onload,db2.ds', active:*, skill:'yd' }
   tabs akce2 {title:"[fa-database] Databáze", _sys:'*', include:'onload,db2.akce2', active:*, skill:'fa;ya;mrop'
     proc reaccess() {}
     panel track { type:'popup'

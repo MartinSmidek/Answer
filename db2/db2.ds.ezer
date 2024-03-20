@@ -1,4 +1,4 @@
-// # p r agma library
+#pragma library
 # Systém Ans(w)er - modul Dům
 # (c) 2008-2010 Martin Šmídek <martin@smidek.eu>
 
@@ -10,10 +10,10 @@
   }
 
 # ======================================================================================> OBJEDNÁVKY
-panel dum {type:'right', title:"Objednávky", _sys:'obj',include:'onload' } // musí být onload aby se natáhla knihovna
-panel dum2 {type:'right', title:"Objednávky2", _sys:'dum2',include:'onload' skill:'m'} 
+panel dum {type:'right', title:"Objednávky", _sys:'obj',include:'onload,db2.ds.dum' } // musí být onload aby se natáhla knihovna
+panel dum2 {type:'right', title:"Objednávky2", _sys:'dum2',include:'onload,db2.ds.dum2' skill:'m'} 
 # ===========================================================================================> HOSTÉ
-panel kl {type:'right', title:"Hosté", _sys:'kli', include:'onload' }
+panel kl {type:'right', title:"Hosté", _sys:'kli', include:'onload,db2.ds.kl' }
 # ============================================================================================> CENY
 var rok: number
 panel cen {type:'right', title:'Ceny'

@@ -107,9 +107,9 @@ menu db2 { type:'main', title:'db2', active:*, _sys:'*'
               info.fill(replace_fa(conc(i.owner.title,' - ',i.title)),'... probíhá výpočet ...');
               info.fill('',ask('db2_stav',i.par.db)) }}
           item {title:'obnova pobyt.web_changes' 
-            proc onclick() { 
-              panel.display(2,'i'); info.display(0,'t');
-              confirm('opravit pobyt.web_changes ?'); ask('update_web_changes') 
+            func onclick() { 
+              panel.display(2,'i'); info.display(0,'t'); clear();
+              if (confirm('opravit pobyt.web_changes ?')) php.update_web_changes();
           }}
 //          item {title:'smazat platební údaje LK2019' skill:'m'
 //            proc onclick() { confirm('smazat platební údaje LK2019 ?'); ask('clear_platby_lk2019') }
@@ -154,7 +154,7 @@ menu db2 { type:'main', title:'db2', active:*, _sys:'*'
               info.fill('',ask('db2_stav',i.par.db)) }}
           item {title:'obnovit testovací db z ostré', par:°{db:'db2'}
             proc onclick (i) {
-              panel.display(2,'i'); info.display(0,'t');
+              panel.display(2,'i'); info.display(0,'t'); clear;
               confirm("vytvořit znovu testovací databázi z aktuálního stavu ostré databáze?");
               info.fill(replace_fa(conc(i.owner.title,' - ',i.title)),' ... probíhá update ...');
               info.fill('',ask('db2_copy_test_db',i.par.db)); }}

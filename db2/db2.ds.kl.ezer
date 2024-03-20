@@ -29,7 +29,7 @@ proc tit (x) { return(conc("<div class='karta'>",x,"</div>")) }
 use u: form f [0,0,,]
 form f [,,720,500] {
   label tit [10,0,680,] { title:'Přehled hostů' }
-  button [620,10,60,20] {title:'Export'
+  button [620,6,60,20] {title:'Export'
     proc onclick() {
       xhref.set(ask('ds_xls_hoste',klienti_uids.get,klienti_mesic_rok.get));
       msg.set(conc(info.get('msg'),xhref.get));
