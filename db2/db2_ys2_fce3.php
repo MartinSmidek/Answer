@@ -6026,7 +6026,8 @@ function ds_obj_menu($ym_list=null) {
         $par= (object)array('uid'=>$iid);
         if ($ezer_version=='3.2') 
           $par= (object)array('*'=>$par);
-        $tit= wu("$iid - ").$zkratka.wu(" - {$o->name}");
+//        $tit= wu("$iid - ").$zkratka.wu(" - {$o->name}");
+        $tit= wu("$iid - $zkratka - $o->name");
         $tm= (object)array('type'=>'item','options'=>(object)array('title'=>$tit,'par'=>$par));
         $gr->part->$iid= $tm;
         $the_last= "$group.$iid";

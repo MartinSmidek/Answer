@@ -17,7 +17,8 @@ menu mo {type:'left'
   func onclick(x:ezer) { show_order(x.par.uid) }
 }
 
-func onfirstfocus() {
+//func onfirstfocus() {
+func onfocus() {
   var mn: object, it: ezer
   mn= php.ds_obj_menu('202401,202406');
   mo.attach_code(mn.cd);

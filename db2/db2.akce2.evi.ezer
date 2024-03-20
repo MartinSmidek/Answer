@@ -480,7 +480,28 @@ form _lst [,,370,*] {
       item { title:'v seznamu i nevybraní'        func onclick() { brow_selected('ignore') }}
       item { title:'-vybraná ID dát do schránky'  func onclick() { clipboard(brow_selected('get')) }}
       item { title:'všechna ID dát do schránky'   func onclick() { clipboard(brow.browse_keys()) }}
+      item { title:'-pozice na mapě'              func onclick() { geo_latltd(); }}
     }
+//    proc re_geocode() {   // podle maps.google.com
+//      C_clen.goo_ok.enable(0);
+//      C_clen.goo_pat.set(clen_adresa);
+//      geo.set(object('id',C_clen.id_clen.get,'address',C_clen.goo_pat.get));
+//      geo.set(m.geocode(geo.get));            // přepočítáme polohu
+//      [ geo.get('mark');                      // pokud je známa poloha zobrazíme výrazně
+//        klub_google(m,'curr',geo.get('lat'),geo.get('lng'),'red',12);
+//        C_clen.goo_ok.enable(1) ];
+//      C_clen.goo_adr.set(geo.get('found.addr')); // včetně adresy vrácené geocode
+//    }
+    func geo_latltd() { var adresa:text, geo:object // {mark:'lat,lng',ezer:{c,k,a,s}}
+      adresa= geo_adresa();
+      geo= {id:id_o,address:adresa};
+      geo= page.map.cr.geocode(geo);
+      echo(debug(geo,adresa));
+    }
+    func geo_adresa() {
+      return `${ulice}, ${psc} ${obec}, CZ`;
+    }
+
   }
   # ==============================================> M - MAILIST
   var bm_having= 1, bm_komu= -1
