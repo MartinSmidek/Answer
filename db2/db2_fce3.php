@@ -318,7 +318,7 @@ function akce2_info($id_akce,$text=1,$pobyty=1) { trace();
   $soubeh= 0; // hlavní nebo souběžná akce
   $pro_pary= 0;
   if ( $id_akce ) {
-    $ucasti= $rodiny= $dosp= $muzi= $zeny= $chuvy_d= $chuvy_p= $deti= $pecounu= $pp= $po= $pg= $web= 0;
+    $ucasti= $rodiny= $dosp= $muzi= $mrop= $zeny= $chuvy_d= $chuvy_p= $deti= $pecounu= $pp= $po= $pg= $web= 0;
     $vic_ucasti= '';
     $err= $err2= $err3= $err4= $err_h= 0;
     $odhlaseni= $neprijati= $neprijeli= $nahradnici= $nahradnici_osoby= 0;
@@ -382,6 +382,7 @@ function akce2_info($id_akce,$text=1,$pobyty=1) { trace();
              SUM(IF(t.role='d',1,0)) AS _deti,
              SUM(IF(CEIL(IF(MONTH(o.narozeni),DATEDIFF(a.datum_od,o.narozeni)/365.2425,YEAR(a.datum_od)-YEAR(o.narozeni)))<=3,1,0)) AS _kocar,
              SUM(IF(ROUND(IF(MONTH(o.narozeni),DATEDIFF(a.datum_od,o.narozeni)/365.2425,YEAR(a.datum_od)-YEAR(o.narozeni)),1)>=18 AND sex=1,1,0)) AS _muzu,
+             SUM(IF(iniciace>0,1,0)) AS _mrop,
              SUM(IF(ROUND(IF(MONTH(o.narozeni),DATEDIFF(a.datum_od,o.narozeni)/365.2425,YEAR(a.datum_od)-YEAR(o.narozeni)),1)>=18 AND sex=2,1,0)) AS _zen,
          --  SUM(IF(s.s_role=5 AND s.pfunkce=0,1,0)) AS _chuv,
              SUM(IF(s.s_role=5 AND s.pfunkce=0 AND t.role='d',1,0)) AS _chuv_d,
@@ -532,12 +533,14 @@ function akce2_info($id_akce,$text=1,$pobyty=1) { trace();
         if (!isset($fces[$fce])) $fces[$fce]= 0;
         $fces[$fce]++;
         $muzi+= $p->_muzu;
+        $mrop+= $p->_mrop;
         $zeny+= $p->_zen;
       }
       else {
         // údaje účastníků jednoho pobytu
         $ucasti++;
         $muzi+= $p->_muzu;
+        $mrop+= $p->_mrop;
         $zeny+= $p->_zen;
         $chuvy_d+= $p->_chuv_d;
         $chuvy_p+= $p->_chuv_p;
@@ -590,6 +593,7 @@ function akce2_info($id_akce,$text=1,$pobyty=1) { trace();
       $_pg=        je_1_2_5($pg,"člen G,členi G,členů G");
       $_dospelych= je_1_2_5($dosp,"dospělý,dospělí,dospělých");
       $_muzu=      je_1_2_5($muzi,"muž,muži,mužů");
+      $_iniciovani=je_1_2_5($mrop,"iniciovaný muž,iniciovaní muži,iniciovaných mužů");
       $_zen=       je_1_2_5($zeny,"žena,ženy,žen");
       $_chuv_d=    je_1_2_5($chuvy_d,"chůva,chůvy,chův");
       $_chuv_p=    je_1_2_5($chuvy_p,"chůva,chůvy,chův");
@@ -710,6 +714,7 @@ function akce2_info($id_akce,$text=1,$pobyty=1) { trace();
         $html.= "<br><br>(kvůli nesprávným údajům budou počty, výpisy a statistiky také nesprávné)";
       }
       $html.= $deti ? "<hr>Poznámka: jako děti se počítají osoby, které v době zahájení akce nemají 18 let" : '';
+      $html.= ", na akci je $_iniciovani.";
       if ( $pro_pary ) {
         $html.= akce2_info_par($id_akce);
       }
