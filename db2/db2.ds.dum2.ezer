@@ -1,7 +1,7 @@
 # ------------------------------------------------------------------------------------------------ #
 # Systém Ans(w)er - modul Dům setkání - verze 2                                                    #
 #                                                                                                  #
-#                                                   (c) 2008-2020 Martin Šmídek <martin@smidek.eu> #
+#                                                   (c) 2008-2024 Martin Šmídek <martin@smidek.eu> #
 # ------------------------------------------------------------------------------------------------ #
 
 var the_order: number
@@ -20,18 +20,19 @@ menu mo {type:'left'
 //func onfirstfocus() {
 func onfocus() {
   var mn: object, it: ezer
-  mn= php.ds_obj_menu('202401,202406');
+  mn= php.ds2_obj_menu('202403,202404,202405,202406');
   mo.attach_code(mn.cd);
   obj.Init();
   Upravy.Init();
   it= mo.part(mn.th);
   it.click(1);
   page.ucast.onclick();
-}
+} // vytvoření menu pobytů
 
 // zobrazení objednávky
 func precti  {
   obj.load(the_order);
+  akc.Load(); osoba.Load(); // zobrazení hodnot z objednávky
   popis.tit= `<h3>Objednávka číslo ${the_order} ${obj.deleted?' -- je smazaná!':''}</h3>`; 
   if ( obj.deleted ) {
     fak.init(); obj.init();
@@ -49,28 +50,22 @@ func objednavatel_save() {
 }
 // vystavení zálohy na objednávku
 func make_zaloha () {
-  fak.faktura= php.ds_xls_zaloha(the_order); 
-  fak.faktura.display(1)
+//  fak.faktura= php.ds2_xls_zaloha(the_order); 
+//  fak.faktura.display(1)
 }
 // vystavení faktur pro rodiny na objednávce
 func make_faktury () {
-  fak.faktura= php.ds_xls_faktury(the_order); 
-  fak.faktura.display(1)
+//  fak.faktura= php.ds_xls_faktury(the_order); 
+//  fak.faktura.display(1)
 }
 // porovnání objednávky se seznamem účastníků
 //var comp: text
 var fields: text
 func compare() { var comp: object
-//  proc_compare() 
-  comp= php.ds_compare(the_order);
+  comp= php.ds2_compare(the_order);
   copy_by_name(comp.form,obj);
-//  js.form_set(obj,comp.form); 
   obj.info= comp.html
 }
-//proc proc_compare () { // PROC
-//  comp.set(ask('ds_compare',the_order.get));
-//  form_set(obj.get,comp.get('form')); obj.info.set(comp.get('html'))
-//}
 # =========================================================================================> záložky
 const PQ=50             // posun pro nové pokoje
 //group pobyt {
@@ -82,8 +77,8 @@ use fak:    form _fakt    [410, 50,,] { tag:'objed' format:'n' }
 
 use popis2: form zahlavi2 [ 10, 20,,] { tag:'ucast' format:'n' }
 use akc:    form _akce    [ 20, 60,,] { tag:'ucast' format:'n' }
-use osoba:  form _osoba   [410, 60,,] { tag:'ucast' format:'n' }
-use kniha:  form _kniha   [ 20,380,,] { tag:'ucast' format:'n' }
+use osoba:  form _osoba   [410,  0,,] { tag:'ucast' format:'n' }
+use kniha:  form _kniha   [ 20,400,,] { tag:'ucast' format:'n' }
 
 use ucet:   form _kniha   [ 20, 50,,] { tag:'ucet' format:'n' }
 
@@ -99,14 +94,14 @@ form _page {
     panel.display(1,i.par.on)
   }
   # ------------------------- záložky - v par jsou tagy pro zapnutí vypnutí elementů
-  label objed [ 12,0,100,20] { tag:'_' title:'<b>Objednávka</b>', par:°{on:'objed',off:'ucast|ucet'}
+  label objed [ 12,0,100,20] { tag:'_' title:'<b>Objednávka</b>', par:{on:'objed',off:'ucast|ucet'}
     func onclick() { cvak(&this) } }
-  label ucast [132,0,100,20] { tag:'_' title:'<b>Účastníci</b>', par:°{on:'ucast',off:'objed|ucet'}
+  label ucast [132,0,100,20] { tag:'_' title:'<b>Účastníci</b>', par:{on:'ucast',off:'objed|ucet'}
     func onclick() { cvak(&this) } }
-  label ucet  [252,0,100,20] { tag:'_' title:'<b>Vyúčtování</b>', par:°{on:'ucet',off:'objed|ucast'}
+  label ucet  [252,0,100,20] { tag:'_' title:'<b>Vyúčtování</b>', par:{on:'ucet',off:'objed|ucast'}
     func onclick() { cvak(&this) } }
   # ------------------------- pozadí pro elementy musí být před obsahem záložek
-  label frame [0,16,717,480] { css:'ae_work'}
+  label frame [0,16,717,510] { css:'ae_work'}
 }
 
 # ======================================================================================> OBJEDNÁVKA
@@ -116,34 +111,17 @@ form _objed1 [,,600,30] { css:'ds_form'
 }
 // ------------------------------------------------------------------==> data objednávky
 form _objed { css:'ds_form'
+  view objednavka: table tx_gnalberice_order
   const PL=0; PT=92; QT=PT+PQ-4; FT=120+PQ
-  field deleted { data:tx_gnalberice_order.deleted }
-  select      [  0, 15,120,] { title:'^stav objednávky' type:'map', data:tx_gnalberice_order.state, options:ds_stav.hodnota }
-  field       [130, 15, 40,] { title:'^akce YS' data:tx_gnalberice_order.akce, format:'r' }
-  edit        [180,15,164,57] { title:'^poznámka k objednávce' data:tx_gnalberice_order.note  }
-  field       [  0, 55, 85,] { title:'^příjezd' type:'date', data:tx_gnalberice_order.fromday }
-  field       [ 90, 55, 85,] { title:'^odjezd' type:'date', data:tx_gnalberice_order.untilday }
-  check skoleni [218,72,65,9] { title:'školení', data:tx_gnalberice_order.skoleni, value:'0', help:"účastníci školení neplatí rekreační poplatek" }
-  field sleva [321,79,20,] { title:'sleva' data:tx_gnalberice_order.sleva, format:'r' }
+  field deleted { data:objednavka.deleted }
+  select      [  0, 15,120,] { title:'^stav objednávky' type:'map', data:objednavka.state, options:ds_stav.hodnota }
+  field       [130, 15, 40,] { title:'^akce YS' data:objednavka.akce, format:'r' }
+  edit        [180,15,164,57] { title:'^poznámka k objednávce' data:objednavka.note  }
+  field o_beg [  0, 55, 85,] { title:'^příjezd' type:'date', data:objednavka.fromday }
+  field o_end [ 90, 55, 85,] { title:'^odjezd' type:'date', data:objednavka.untilday }
+  check skoleni [218,72,65,9] { title:'školení', data:objednavka.skoleni, value:'0', help:"účastníci školení neplatí rekreační poplatek" }
+  field sleva [321,79,20,] { title:'sleva' data:objednavka.sleva, format:'r' }
   label       [346,79,5,] { title:'%' }
-//  // staré pokoje
-//  label       [  0,PT-14,150,] { title:'staré pokoje:' }
-//  check   p1  [PL+  0, PT,14,] { title:'1',  format:'c', css:'CheckT', help:"1 - 2 lůžka jednoduchá (V podkrovní pokojíček se střešním oknem)" }
-//  check   p2  [PL+ 20, PT,14,] { title:'2',  format:'c', css:'CheckT', help:"2 - 2 lůžka jako patrová postel (V pokojíček vedle sprchy, má svoje umyvadlo)" }
-//  check   p3  [PL+ 40, PT,14,] { title:'3',  format:'c', css:'CheckT', help:"3 - 2 lůžka jednoduchá (JZ pokojíček v rohu)" }
-//  check   p4  [PL+ 60, PT,14,] { title:'4',  format:'c', css:'CheckT', help:"4 - 2 lůžka jednoduchá a 2 lůžka jako patrová postel (Z pokoj se dvěma okny)" }
-//  check   p5  [PL+ 80, PT,14,] { title:'5',  format:'c', css:'CheckT', help:"5 - 1 lůžko jednoduché a 2 lůžka jako patrová postel (Z pokoj s jedním oknem)" }
-//  check   p6  [PL+100, PT,14,] { title:'6',  format:'c', css:'CheckT', help:"6 - 2 lůžka jednoduchá a 4 lůžka jako patrová postel (S pokoj velký)" }
-//  check   p7  [PL+120, PT,14,] { title:'7',  format:'c', css:'CheckT', help:"7 - palanda a lůžko, nový pokoj vedle koupelny" }
-//  check   p8  [PL+140, PT,14,] { title:'8',  format:'c', css:'CheckT', help:"8 - komfortní pokoj se sprchou a WC, dvoulůžko" }
-//  check   p9  [PL+160, PT,14,] { title:'9',  format:'c', css:'CheckT', help:"9 - komfortní pokoj se sprchou a WC, dvoulůžko" }
-//  check   p10 [PL+180, PT,14,] { title:'10', format:'c', css:'CheckT', help:"10 - 2 postele jednoduché (Z pokoj mezi kaplí a sprchami)" }
-//  check   p11 [PL+200, PT,14,] { title:'11', format:'c', css:'CheckT', help:"11 - 2 jednoduché postele a 2 patrové postele a 1 rozkládací gauč (S pokoj velký)" }
-//  check   p12 [PL+220, PT,14,] { title:'12', format:'c', css:'CheckT', help:"12 - 4 lůžka jednoduchá (SZ pokoj s vlastním umyvadlem a el.průtokovým ohřívačem)" }
-//  check   p13 [PL+240, PT,14,] { title:'13', format:'c', css:'CheckT', help:"13 - komfortní pokoj se sprchou a WC, 2 samostatné postele" }
-//  check   p14 [PL+260, PT,14,] { title:'14', format:'c', css:'CheckT', help:"14 - komfortní pokoj se sprchou a WC, 2 samostatné postele" }
-//  check   p15 [PL+280, PT,14,] { title:'15', format:'c', css:'CheckT', help:"15 - apartmán; 2 místnosti a sociálka bezbariérová: 2 lůžka jednoduchá" }
-//  check   p16 [PL+300, PT,14,] { title:'16', format:'c', css:'CheckT', help:"16 - apartmán; 2 místnosti a sociálka bezbariérová: 1 lůžko jednoduché a 2 lůžka jako patrová postel" }
   // nové pokoje
   label       [0,QT+-14,356,42] { title:'nové pokoje:', css:'jemna' }
   check   q1  [PL+  0, QT,14,] { title:'1',  format:'c', css:'CheckT' }
@@ -169,75 +147,66 @@ form _objed { css:'ds_form'
 
   label       [344,101,5,] { title:'?' }
   field noroom [PL+324,PT+9,17,] { format:'or:e', help:'?|počet neubytovaných podle seznamu' }
-  field rooms0  { data:tx_gnalberice_order.rooms }
-  field rooms1 { data:tx_gnalberice_order.rooms1 }
+  field rooms0  { data:objednavka.rooms }
+  field rooms1 { data:objednavka.rooms1 }
 
   label       [0,FT+0,50,] { title:'dospělí' }
-  field       [0,FT+15,17,] { data:tx_gnalberice_order.adults, format:'r:e'}
+  field       [0,FT+15,17,] { data:objednavka.adults, format:'r:e'}
   field adults [24,FT+16,17,] { format:'or:e', help:'?|počet dospělých podle seznamu' }
   label       [50,FT+0,55,] { title:'děti 10-15' }
-  field       [54,FT+15,17,] { data:tx_gnalberice_order.kids_10_15, format:'r:e' }
+  field       [54,FT+15,17,] { data:objednavka.kids_10_15, format:'r:e' }
   field kids_10_15 [78,FT+16,17,] { format:'or:e', help:'?|počet dětí podle seznamu' }
   label       [110,FT+0,45,] { title:'děti 3-9' }
-  field       [111,FT+15,17,] { data:tx_gnalberice_order.kids_3_9, format:'r:e' }
+  field       [111,FT+15,17,] { data:objednavka.kids_3_9, format:'r:e' }
   field kids_3_9 [135,FT+16,17,] { format:'or:e', help:'?|počet dětí ve věku 3-9 let podle seznamu' }
   label       [165,FT+0,50,] { title:'děti do 3' }
-  field       [165,FT+15,17,] { data:tx_gnalberice_order.kids_3, format:'r:e' }
+  field       [165,FT+15,17,] { data:objednavka.kids_3, format:'r:e' }
   field kids_3 [190,FT+16,17,] { format:'or:e', help:'?|počet dětí do 3 let podle seznamu'  }
   label       [220,FT+0,17,] { title:'??' }
   field nevek [220,FT+15,17,] { format:'or:e', help:'?|počet osob v seznamu bez udaného věku' }
-  select      [250,FT+15,100,] { title:'^typ stravy' type:'map', data:tx_gnalberice_order.board, options:ds_strava.hodnota }
+  select o_str[250,FT+15,100,] { title:'^typ stravy' type:'map', data:objednavka.board, options:ds_strava.hodnota }
   button save_pobyt [249,FT+71,,] { title:'zapsat změny', type:'submit' 
     func onclick() {
       form.save(); order_load(the_order)
   }}
-  button [654,428,,] { title:'TEST' func onclick() {
-    var mn: object
-    clear();
-    mn= php.ds_obj_menu('202401,202406');
-    mo.attach_code(mn.cd);
-  }}
-//  button [249,FT+91,,] { title:'Init' func onclick() {Init() }}
+  
+  button [654,428,,] { title:'* TEST' func onclick() {  }} // nic
+  button [249,FT+91,,] { title:'* INIT' func onclick() {Init() }} // obnoví pokoje
+  
   label info  [1,FT+39,238,53] { title:'' }
   label       [239,FT+36,128,] { title:'program: dospělý / dítě' }
-  field prog_cely [251,FT+49,30,] { data:tx_gnalberice_order.prog_cely, format:'r', help:'cena programu na akci pro dospělého' }
+  field prog_cely [251,FT+49,30,] { data:objednavka.prog_cely, format:'r', help:'cena programu na akci pro dospělého' }
   label       [290,FT+50,5,] { title:'/' }
-  field prog_dite [302,FT+49,30,] { data:tx_gnalberice_order.prog_polo, format:'r', help:'cena programu na akci pro dítě' }
+  field prog_dite [302,FT+49,30,] { data:objednavka.prog_polo, format:'r', help:'cena programu na akci pro dítě' }
   label       [338,FT+49,5,] { title:'Kč' }
   func onload () { js.rooms_check(&rooms0,form,'p'); js.rooms_check(&rooms1,form,'q') }
   func onsave () { js.check_rooms(&rooms0,form,'p'); js.check_rooms(&rooms1,form,'q') }
-//  proc Init() { foreach(ask('ds_rooms_help'),set_help_enable) } // PROC
-//  proc set_help_enable(x) { // PROC
-//    form.part(x.fld).set_attrib('help',x.hlp);
-//    form.part(x.fld).enable(x.on);
-//  }
   func Init() { var x:object, fld: ezer
-    set_trace('m',1,'set_attrib,enable');
-    for (x of php.ds_rooms_help()) {
-//      fld= form['q1'];
-//      fld= form[x.fld];
+//    set_trace('m',1,'set_attrib,enable');
+    for (x of php.ds2_rooms_help()) {
       fld= form.part(x.fld);
       fld.help= x.hlp;                 // -- atribut nemůže být vlevo
       fld.enable(x.on);
     };
-    set_trace('m',0);
+//    set_trace('m',0);
   }
 }
 // ------------------------------------------------------------------==> objednatel
 form _fakt { css:'ds_form'
-  field       [  0, 15,210,] { title:'^název organizace (plátce faktury)' data:tx_gnalberice_order.org }
-  field       [220, 15, 80,] { title:'^IČ' data:tx_gnalberice_order.ic }
-  field       [  0, 55,120,] { title:'^příjmení' data:tx_gnalberice_order.name }
-  field       [130, 55, 80,] { title:'^jméno' data:tx_gnalberice_order.firstname }
-  field       [220, 55, 80,] { title:'^DIČ' data:tx_gnalberice_order.dic }
-  field       [  0, 95,210,] { title:'^e-mail' data:tx_gnalberice_order.email  }
-  field       [220, 95, 80,] { title:'^telefon' data:tx_gnalberice_order.telephone}
-  field       [0,135,210,] { title:'^ulice' data:tx_gnalberice_order.address }
-  field       [  0,175, 50,] { title:'^psč' data:tx_gnalberice_order.zip}
-  field       [ 60,175,150,] { title:'^obec' data:tx_gnalberice_order.city}
+  view objednavka: table tx_gnalberice_order
+  field       [  0, 15,210,] { title:'^název organizace (plátce faktury)' data:objednavka.org }
+  field       [220, 15, 80,] { title:'^IČ' data:objednavka.ic }
+  field       [  0, 55,120,] { title:'^příjmení' data:objednavka.name }
+  field       [130, 55, 80,] { title:'^jméno' data:objednavka.firstname }
+  field       [220, 55, 80,] { title:'^DIČ' data:objednavka.dic }
+  field       [  0, 95,210,] { title:'^e-mail' data:objednavka.email  }
+  field       [220, 95, 80,] { title:'^telefon' data:objednavka.telephone}
+  field       [0,135,210,] { title:'^ulice' data:objednavka.address }
+  field       [  0,175, 50,] { title:'^psč' data:objednavka.zip}
+  field       [ 60,175,150,] { title:'^obec' data:objednavka.city}
   label faktura [223,117,120,] { title:'...' }
-  button      [220,132,,] { title:'vystavit zálohu'  func onclick() { make_zaloha() } }
-  button      [220,159,,] { title:'vystavit faktury' func onclick() { make_faktury() } }
+  button      [220,132,,] { title:'vystavit zálohu'  format:'d' func onclick() { make_zaloha() } }
+  button      [220,159,,] { title:'vystavit faktury' format:'d' func onclick() { make_faktury() } }
   button      [220,185,,] { title:'zapsat změny'     func onclick() { objednavatel_save() } }
 }
 
@@ -258,13 +227,12 @@ func obnova {
 # ------------------------------------------------------------------==> záhlaví
 form zahlavi2 [,,600,30] { css:'ds_form'
   label [ 10,20,300,] { title:"<h3 style='margin:0'>Seznam účastníků pobytu</h3>"  }
-  label [400,20,300,] { title:"<h3 style='margin:0'>Údaje vybraného účastníka</h3>" }
   button [196,14,,] { title:'Načtení akce YMCA Setkání', format:'d'
     func onclick() { var ret:object
-      ret= php.ds_import_ys(the_order);
+      ret= php.ds2_import_ys(the_order);
       if ( ret.conf ) {
         confirm(ret.conf); 
-        ret= php.ds_import_ys(the_order,1) 
+        ret= php.ds2_import_ys(the_order,1) 
       }
       alert(ret.html);
       akc.seznam.browse_refresh();
@@ -272,6 +240,14 @@ form zahlavi2 [,,600,30] { css:'ds_form'
 }
 # ------------------------------------------------------------------==> AKCE
 form _akce { css:'ds_form'
+  func Load() { var zkratka: array
+    zkratka= ['','C','P',''];
+    o_beg= substr(obj.o_beg,0,-5);
+    o_end= substr(obj.o_end,0,-5);
+    o_uby1= 'L';
+    o_str1= zkratka[obj.o_str.key()];
+  }
+
   button [  0,0,,] { title:'+ rodina', help:'výběr rodiny z databází MS'
     func onclick () { Rodina.PridejRodinu() } }
   button [ 72,0,,] { title:'+ hosté', help:'výběr hostů z objednávek DS'
@@ -282,7 +258,14 @@ form _akce { css:'ds_form'
     func onclick () { osoba_new_child() } }
   button [287,0,,] { title:'- účastník', help:'odebrání hosta označeného oranžovou šipkou'
     func onclick () { osoba_del(seznam.id_osoba) } }
-  browse seznam [0,30,,] { type:'smart', rows:14, //css_rows:'ys_osoba,0:nic,:zelenkavy'
+
+  // nad sloupci se zobrazuje hodnota z objednávky
+  label o_uby1 [206,32,20,15]
+  label o_str1 [243,32,20,15]
+  label o_beg [271,32,26,21] 
+  label o_end [306,32,24,15]
+
+  browse seznam [0,50,,] { type:'smart', rows:14, //css_rows:'ys_osoba,0:nic,:zelenkavy'
     show rodina [,,24,] { title:'rod', data:ds_osoba.rodina, format:'s+' }
     show prijmeni [,,69,] { title:'příjmení', data:ds_osoba.prijmeni, format:'s' }
     show jmeno    [,,49,]  { title:'jméno', data:ds_osoba.jmeno, format:'s' }
@@ -338,15 +321,9 @@ panel Rodina [,,320,300] { type:'popup'
     button [220,250,,] { title:'konec', func onclick() {
       rodiny.init(); klienti.init(); vse.init(); znacka.init(); L.init(); panel.hide(0) } }
     // výběr z databáze MS
-    select rodiny [100,0,200,17] { type:'auto', par:°{fce:'lide_ms'}, format:'t'
-//      proc onchanged() { // PROC
-//        rod.set(ask('rodina',this.key));
-//        znacka.init;
-//        each(rod.get,rodina); // nesmí volat asynchronní oosobaace
-//        znacka.set(ask('cz2ascii',znacka.get))
-//      }
+    select rodiny [100,0,200,17] { type:'auto', par:{fce:'ds2_lide_ms'}, format:'t'
       func onchanged() { var p:object, Lx: object
-        rod= php.rodina(this.key());
+        rod= php.ds2_rodina(this.key());
         znacka.init();
         for (p of rod) {
           last= L.add();
@@ -360,27 +337,15 @@ panel Rodina [,,320,300] { type:'popup'
       }
     }
     // výběr z databáze DS
-    select klienti [100,0,200,17] { type:'auto', par:°{fce:'lide_ds'}, format:'t'
+    select klienti [100,0,200,17] { type:'auto', par:{fce:'ds2_lide_ds'}, format:'t'
       func onchanged() { var p:object, Lx: object
-        rod= php.klienti(this.key());
+        rod= php.ds2_klienti(this.key());
         znacka.init();
         for (p of rod) {
           rodina(p);
-//          last= L.add();
-//          if ( znacka=='' ) znacka= substr(p.prijmeni,0,3);
-//          popis= `${p.prijmeni} ${p.jmeno}, ${p.mesto}, ${p.stari}`;
-//          Lx= L[last];
-//          Lx.info= popis;
-//          Lx.all= p;
         }
         znacka= php.cz2ascii(znacka)
       }
-//      proc onchanged() { // PROC
-//        rod.set(ask('klienti',this.key));
-//        znacka.init;
-//        each(rod.get,rodina); // nesmí volat asynchronní oosobaace
-//        znacka.set(ask('cz2ascii',znacka.get))
-//      }
     }
     // procedury
     func rodina(p:object) { var Lx:ezer
@@ -391,25 +356,13 @@ panel Rodina [,,320,300] { type:'popup'
       Lx.info= popis;
       Lx.all= p;
     }
-//    proc rodina(p,i) { // PROC
-//      last.set(L.add);
-//      [ eq(znacka.get,''); znacka.set(substr(p.prijmeni,0,3)) ];
-//      popis.set(conc(p.prijmeni,' ',p.jmeno,', ',p.mesto,', ',p.stari));
-//      L.part(last.get).part('info').set(popis.get);
-//      L.part(last.get).part('all').set(p);
-//    }
     // nastavení výběru
     check vse [4,0,80,16] { title:'všichni', format:'t' 
-      proc onchange() { // PROC
-        each(L,nastav) 
-      }
-//      func nastav (x,i) { 
-//        x.chck= form.vse 
-//      }
-      func nastav (x:ezer,i) { 
-        x.chck= form.vse 
-      }
-    }
+      func onchange() { var x:ezer
+        for (x of L) {
+          x.chck= form.vse 
+        }
+    }}
     list L [0,23,300,200] {rows:22      // anonymní group
       check chck [4,0,50,16] { title:' ', format:'t' }
       label info [23,4,300,16] {style:'white-space:nowrap'}
@@ -423,9 +376,6 @@ panel Rodina [,,320,300] { type:'popup'
       rodina_add1(clen);
     }
   }
-//  proc rodina_add(seznam) { // PROC
-//    each(seznam,rodina_add1);
-//  }
   var pall: object
   func rodina_add1(p:ezer) {
     if ( p.chck ) {
@@ -446,24 +396,6 @@ panel Rodina [,,320,300] { type:'popup'
       akc.seznam.browse_focus(); compare()
     }
   }
-//  proc rodina_add1(p,i) {
-//    p.chck.get; //echo("rodina=",p.info.get);
-//    pall.set(p.all.get); //echo('-----------------',pall.get('jmeno'));
-//    osoba.init;
-//    osoba.id_order.set(the_order.get);            osoba.id_order.change;
-//    osoba.rodina.set(znacka_rodiny.get);          osoba.rodina.change;
-//    osoba.jmeno.set(pall.get('jmeno'));           osoba.jmeno.change;
-//    osoba.prijmeni.set(pall.get('prijmeni'));     osoba.prijmeni.change;
-//    osoba.ulice.set(pall.get('ulice'));           osoba.ulice.change;
-//    osoba.psc.set(pall.get('psc'));               osoba.psc.change;
-//    osoba.obec.set(pall.get('mesto'));            osoba.obec.change;
-//    osoba.telefon.set(pall.get('telefon'));       osoba.telefon.change;
-//    osoba.email.set(pall.get('email'));           osoba.email.change;
-//    osoba.narozeni.set(pall.get('narozeni'));     osoba.narozeni.change;
-//    osoba.insert;
-//    akc.seznam.browse_seek(conc('id_osoba=',osoba.key));
-//    akc.seznam.browse_focus; compare
-//  }
 }
 # ------------------------------------------------------------------==> OSOBA
 # zobrazení účastníka
@@ -507,40 +439,50 @@ func osoba_del (id_osoba) {
   }
 }
 form _osoba /*[,,300,100]*/ { css:'ds_form'
-  field id_osoba { data:ds_osoba.id_osoba }
+  func Load() {
+    o_beg= obj.o_beg;
+    o_end= obj.o_end;
+    o_str= obj.o_str;
+  }
+  label [0,38,258,] { title:"<h3 style='margin:0'>Údaje vybraného účastníka</h3>" }
+  field id_osoba [256,38,50,] { data:ds_osoba.id_osoba, format:'or', css:'Label', style:'color:white'}
   field id_order { data:ds_osoba.id_order }
   field oprava { data:ds_osoba.oprava }
   // zobrazení
-  field rodina   [  0, 15, 40,] { title:'^rodina' data:ds_osoba.rodina }
-  field prijmeni [ 50, 15, 70,] { title:'^příjmení' data:ds_osoba.prijmeni }
-  field jmeno [130, 15, 80,] { title:'^jméno' data:ds_osoba.jmeno }
-  field narozeni [220,15,86,] { title:'^narozen/a' type:'date', data:ds_osoba.narozeni }
-  field email [  0, 55,210,] { title:'^e-mail' data:ds_osoba.email  }
-  field telefon [220, 55, 80,] { title:'^telefon' data:ds_osoba.telefon}
-  field ulice [  0, 95,210,] { title:'^ulice' data:ds_osoba.ulice}
-  field psc   [  0,135, 50,] { title:'^psč' data:ds_osoba.psc
+  field rodina   [  0, 75, 40,] { title:'^rodina' data:ds_osoba.rodina }
+  field prijmeni [ 50, 75, 70,] { title:'^příjmení' data:ds_osoba.prijmeni }
+  field jmeno [130, 75, 80,] { title:'^jméno' data:ds_osoba.jmeno }
+  field narozeni [220,75,86,] { title:'^narozen/a' type:'date', data:ds_osoba.narozeni }
+  field email [  0,115,210,] { title:'^e-mail' data:ds_osoba.email  }
+  field telefon [220,115, 80,] { title:'^telefon' data:ds_osoba.telefon}
+  field ulice [  0,155,210,] { title:'^ulice' data:ds_osoba.ulice}
+  field psc   [  0,195, 50,] { title:'^psč' data:ds_osoba.psc
     func onchanged() { this.let(replace(this.get(),' ','')) }
   }
-  field obec [ 60,135,150,] { title:'^obec' data:ds_osoba.obec}
-  label       [  0,160,300,] { title:'--- <i>upřesnění údajů o pobytu</i>' }
-  select spokoj [  0,190, 50,] { title:'^pokoj' data:ds_osoba.pokoj, format:':e' }
-  select luzka [ 60,190,150,] { title:'^typ lůžka' type:'map', data:ds_osoba.luzko, options:ds_luzko.hodnota }
-  check postylka [220,180,150,] { title:'postýlka', css:'CheckT', data:ds_osoba.postylka }
-  field       [  0,230,210,] { title:'^poznámka' data:ds_osoba.pozn }
-  button      [220,229,,] { title:'zapsat změny' func onclick() { 
+  field obec [ 60,195,150,] { title:'^obec' data:ds_osoba.obec}
+  label       [  0,220,300,] { title:'--- <i>upřesnění údajů o pobytu</i>' }
+  select spokoj [  0,250, 50,] { title:'^pokoj' data:ds_osoba.pokoj, format:':e' }
+  select luzka [ 60,250,150,] { title:'^typ lůžka' type:'map', data:ds_osoba.luzko, options:ds_luzko.hodnota }
+  check postylka [220,240,150,] { title:'postýlka', css:'CheckT', data:ds_osoba.postylka }
+  field       [  0,290,210,] { title:'^poznámka' data:ds_osoba.pozn }
+  button      [220,289,,] { title:'zapsat změny' func onclick() { 
     osoba_save()
   }}
   // specifické údaje
-  button [220,95,,] { title:'Init'  func onclick() {
+  button [220,155,,] { title:'Init'  func onclick() {
     Upravy.Init()
   }}
-  button [220,120,,] { title:'Load'  func onclick() {
+  button [220,180,,] { title:'Load'  func onclick() {
     Upravy.Load(id_order,id_osoba)
   }}
-  label       [0,255,330,] { title:'--- <i>údaje o pobytu (pokud se liší od údajů v objednávce)</i> ---' }
-  field   od  [0,287,83,] { title:'^příjezd' type:'date', data:ds_osoba.fromday }
-  field   do  [90,287,83,] { title:'^odjezd' type:'date', data:ds_osoba.untilday }
-  select      [181,287,133,] { title:'^typ stravy' type:'map', data:ds_osoba.strava, options:ds_strava.hodnota }
+  label       [0,315,330,] { title:'--- <i>údaje o pobytu (pokud se liší od údajů v objednávce)</i> ---' }
+  field   od  [0,347,83,] { title:'^příjezd' type:'date', data:ds_osoba.fromday }
+  field   do  [90,347,83,] { title:'^odjezd' type:'date', data:ds_osoba.untilday }
+  select      [181,347,133,] { title:'^typ stravy' type:'map0', data:ds_osoba.strava, options:ds_strava.hodnota }
+  // pod tím se zobrazuje hodnota z objednávky
+  label o_beg [4,370,60,16] 
+  label o_end [94,370,60,16] 
+  label o_str [185,370,60,16] 
 }
 // ==================================================================================> ÚPRAVY CENÍKU
 panel Upravy [,,350,400] { type:'popup' title:"Účtované položky z ceníku"
@@ -548,46 +490,27 @@ panel Upravy [,,350,400] { type:'popup' title:"Účtované položky z ceníku"
   var n: number, 
       polozky: object,
       oprava: text
-//  func Init() { var ceny:object, a:object, x:ezer, n: number
-//    n= 0;
-//    ceny= php.ds_cenik_list();
-//    kniha.cenik_roku= ceny.cenik_roku;
-//    for (a of ceny.list) {
-//      n= c.L.add();
-//      x= c.L[n];
-//      x.typ= a.typ;
-//      x.nazev= a.txt;
-//    }
-//  }
- proc Init() { var ceny:array, a:object
-    n.set(0);
-    ceny.set(ask('ds_cenik_list'));
-    kniha.cenik_roku.set(ceny.cenik_roku);
-    foreach(ceny.list,Init_do);
-  }
-  proc Init_do(a) { // PROC
-    n.set(c.L.add);
-    c.L.part(n.get).part('typ').set(a.typ);
-    c.L.part(n.get).part('nazev').set(a.txt);
+ func Init() { var ceny:object, cena:object, row: ezer
+    n= 0;
+   c.polozky.init();
+    ceny= php.ds2_cenik_list();
+    kniha.cenik_roku= ceny.cenik_roku;
+    for (cena of ceny.list) {
+      n= c.polozky.add();
+      row= c.polozky.part(n);
+      row.typ= cena.typ;
+      row.nazev= cena.txt;
+    }
   }
 
-//  proc Load(order,host) { // PROC 
-//    polozky.set(ask('ds_cenik_list',kniha.cenik_roku.get,order,host));
-//    polozky.get('err'); alert(polozky.get('err'))
-//  | c.celkem.set(polozky.get('cen.celk'));
-//    c.za.set(conc('Kč za pobyt hosta ',osoba.prijmeni.get,' ',osoba.jmeno.get));
-//    foreach(c.L,Load_do);
-//    Suma; c.celkem.plain;
-//    panel.modal;
-//  }
   func Load(ord,host) { var row:ezer, typ:text, pol:number, opr:number, one:number
-    polozky= php.ds_cenik_list(kniha.cenik_roku,ord,host);
+    polozky= php.ds2_cenik_list(kniha.cenik_roku,ord,host);
     if ( polozky.err ) 
       alert(polozky.err)
     else {
       c.celkem= polozky.cen.celk;
       c.za= `Kč za pobyt hosta ${osoba.prijmeni} ${osoba.jmeno}`;
-      for (row of c.L) {
+      for (row of c.polozky) {
 //        Load_do(row);
         typ= row.typ;
         // převzetí hodnot k této položce
@@ -606,42 +529,28 @@ panel Upravy [,,350,400] { type:'popup' title:"Účtované položky z ceníku"
       panel.modal();
     }
   }
-//  proc Load_do(row) { var typ:text, pol:number, opr:number, one:number // PROC
-//    // uložená položka číselníku
-//    typ.set(row.part('typ').get);
-//    // převzetí hodnot k této položce
-//    pol.set(polozky.get(conc('pol.',typ)));
-//    opr.set(polozky.get(conc('opr.',typ)));
-//    one.set(polozky.get(conc('one.',typ)));
-//    // uložení hodnot
-//    row.part('pocet').set(pol);
-//    row.part('oprava').set(opr); row.part('oprava').plain;
-//    row.part('one').set(one);
-//    // výpočet ceny a sumy
-//    row.part('cena').set(multiply(one,cconc(eq(opr,'-'),pol,opr)));
-//  }
-  proc Suma() { // PROC
-    c.celkem.set(0);
-    foreach(c.L,Suma_do);
+  func Suma() { var polozka:ezer
+    c.celkem= 0;
+    for (polozka of c.polozky) {
+      c.celkem= c.celkem + polozka.cena;
+      c.celkem.change();
+    }
   }
-  proc Suma_do(row) { // PROC
-    c.celkem.set(sum(c.celkem.get,row.part('cena').get));
-    c.celkem.change;
+  func Uloz() { var polozka:ezer
+    oprava= '';
+    for (polozka of c.polozky) {
+      if (polozka.oprava!='-') {
+        oprava= `${oprava},${polozka.typ}:${polozka.oprava}`;
+      }
+    }
+    c.plain();
+    if (oprava) {
+      osoba.oprava= `${kniha.cenik_roku}${oprava}`;
+      osoba.oprava.change();
+      osoba.save(); osoba.load();
+    }
   }
-  proc Uloz() { // PROC
-    oprava.set('');
-    foreach(c.L,Uloz_do);
-    c.plain;
-    [ oprava.get;
-      osoba.oprava.set(conc(kniha.cenik_roku.get,oprava.get)); 
-      osoba.oprava.change;
-      osoba.save; osoba.load;
-    ]
-  }
-  proc Uloz_do(row) { // PROC
-    eq(row.part('oprava').get,'-');
-  | oprava.set(conc(oprava.get,',',row.part('typ').get,':',row.part('oprava').get));
-  }
+  
   form _c [,,350,400] { style:"overflow:auto"
     field celkem [90,2,40,] { title:'PLATBA' format:'rd' }
     label za [140,7,200,20] 
@@ -652,21 +561,16 @@ panel Upravy [,,350,400] { type:'popup' title:"Účtované položky z ceníku"
       osoba.save(); osoba.load();
       Load(osoba.id_order,osoba.id_osoba)
     }}
-    list L [0,40,350,360] { rows:22 
+    list polozky [0,40,350,360] { rows:22 
       field typ
       field one // ceníková položka 
       field pocet [0,2,30,] { format:'rd' }
       field oprava [40,2,40,] { format:'rf' 
-        proc onchange() { // PROC
-          cena.set(multiply(one.get,cconc(eq(oprava.get,'-'),pocet.get,oprava.get)));
-          cena.change;
-          Suma;
+        func onchange() {
+          cena= one * (oprava=='-' ? pocet : oprava);
+          cena.change();
+          Suma();
         }
-//        func onchange() {
-//          cena= one * (oprava=='-' ? pocet : oprava);
-//          cena.change();
-//          Suma();
-//        }
       }
       field cena  [90,2,40,] { format:'rd' }
       label nazev [140,6,200,20] { style:"white-space:nowrap" }
@@ -679,7 +583,7 @@ form _kniha /*[,,300,100]*/ { css:'ds_form'
   var cenik_roku= 0  // defaultní ceník se bere z roku konání akce
   // nadpis
   label [ 10,0,694,] { title:'<hr>' }
-  label [ 10,20,400,] { title:"<h3 style='margin:0'>Cena pro vybraného účastníka, rodinu, objednávku</h3>"  }
+  label nadpis [ 10,20,500,] 
   // host
   field jmeno   [ 10, 50, 80,] { title:'^jméno' data:ds_osoba.jmeno }
   field prijmeni[100, 50, 80,] { title:'^příjmení' data:ds_osoba.prijmeni }
@@ -705,7 +609,9 @@ form _kniha /*[,,300,100]*/ { css:'ds_form'
   // ==> výpočet pro Knihu hostí
   var cena:object
   func kniha_load(idos) { 
-    cena= php.ds_cena_pobytu(idos,cenik_roku);
+    nadpis= `<h3 style='margin:0'>Cena pro vybraného účastníka, rodinu, objednávku 
+        podle ceníku roku ${cenik_roku}</h3>`;
+    cena= php.ds2_cena_pobytu(idos,cenik_roku);
     copy_by_name(cena.fields,form);
   }
 }

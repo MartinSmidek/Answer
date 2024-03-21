@@ -5731,6 +5731,7 @@ function ds_kli_menu() {
   return $result;
 }
 # ======================================================================================> objednávky
+/*
 # ------------------------------------------------------------------------------------ ds cenik_list
 # vrátí seznam položek ceníku Domu setkání zadaného roku (default je letošní platný)
 # pokud je zadaný host vrátí také počet objednaných instancí položek ceníku
@@ -5832,6 +5833,7 @@ function ds_cena_pobytu($idos,$cenik_roku) {
 end:  
   return $y;
 }
+*/
 # -------------------------------------------------------------------------------==> ds platba_hosta
 # výpočet ceny za položky hosta jako ubyt,strav,popl,prog,celk
 function ds_platba_hosta ($cenik_roku,$polozky,$platba,$i='',$podrobne=false) {
