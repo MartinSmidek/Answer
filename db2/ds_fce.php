@@ -1,4 +1,172 @@
 <?php # (c) 2009-2015 Martin Smidek <martin@smidek.eu>
+/** =======================================================================================> FAKTURY **/
+# -------------------------------------------------------------------------------------- ds2 faktura
+# typ:T|I, zarovnání:L|C|R, písmo, l, t, w, h, border:LRTB
+$ds_faktura_dfl= 'T,L,3.5,10,10,0,0,';
+$ds_faktura_fld= [
+  'logo' => ['I,,,13,10,20,17',"
+      img/YMCA.png"],
+  'kontakt' => [',,,40,10,200,50',"
+      <b>Dům setkání</b><i>
+      <br>Dolní Albeřice 1, 542 26 Horní Maršov
+      <br>telefon: 736 537 122
+      <br>dum@setkani.org
+      <br>www.alberice.setkani.org</i>"],
+  'cislo' => [',R,5,140,25,55,10',"
+      <b>Faktura {faktura}</b>"],
+  'dodavatel' => [',,,13,42,70,30',"
+      <b>Dodavatel</b>
+      <br><br>YMCA Setkání, spolek
+      <br>Talichova 53, 623 00 Brno
+      <br>zaregistrovaný Krajským soudem v Brně
+      <br>spisová značka: L 8556
+      <br>IČ: 26531135 DIČ: CZ26531135"],
+  'odberatel' => [',,,112,42,20,10',"
+      <b>Odběratel</b>"],
+  'ramecek' => [',,,112,47,83,35,LRTB',""],
+  'platce' => [',,,120,57,75,24',"{platce}"],
+  'platbaL' => [',,,13,92,30,30',"
+      Peněžní ústav
+      <br><b>Číslo účtu</b>
+      <br>Konstatntní symbol
+      <br>Variabilní symbol
+      <br>Specifický symbol"],
+  'platbaR' => [',,,45,92,70,30',"
+      Fio banka, a.s.
+      <br><b>2000465448/2010</b>
+      <br>558
+      <br>{VS}
+      <br>{SS}"],
+  'objednavkaL' => [',,,120,92,80,30',"
+      <b>Objednávka číslo</b>"],
+  'objednavkaR' => [',R,4.5,178,92,20,30',"
+    <b>{obj}</b>"],
+  'datumyL' => [',,,120,96,80,30',"
+      <br>Dodací a platební podmínky: s daní
+      <br>Datum vystavení
+      <br>Datum zdanitelného plnění
+      <br><b>Datum splatnosti</b>
+      <br><br>Způsob platby"],
+  'datumyR' => [',R,,178,96,20,30',"
+      <br><br>{datum1}
+      <br>{datum1}
+      <br>{datum2}
+      <br><br>převod"],
+  'pobyt' => [',,,13,124,100,10',"
+      Za pobyt v Domě setkání ve dnech {interval} Vám fakturujeme:"],
+  'tabulka' => [',,,13,132,184,150',"
+      {tabulka}"],
+    
+  'vyrizuje' => [',,,13,270,100,10',"
+      <b>Vyřizuje</b>
+      <br>{vyrizuje}"],
+  'pata' => [',C,,13,285,184,6,T',"
+      Těšíme se na Váš další pobyt v Domě setkání"],
+];
+function ds2_faktura($par) {  
+  global $ds_faktura_dfl, $ds_faktura_fld;
+  $html= '';
+  $html.= "<div class='PDF' style='scale:85%;position:absolute'>";
+  $html.= "<style>.PDF div{padding-top:1mm}</style>";
+  $html.= "<div style='position:absolute;width:210mm;height:297mm;border:1px solid grey'>";
+  $x_dfl= explode(',',$ds_faktura_dfl);
+  $j= 'mm';
+  // získání parametrů
+  $vals= [];
+  $vals['{obj}']= $par->obj;
+  // zobrazení
+  foreach ($ds_faktura_fld as $cast) {
+    $x= $x_dfl; 
+  // doplnění podle defaultu
+    foreach (explode(',',$cast[0]) as $i=>$c) {
+      if ($c) $x[$i]= $c;
+    }
+//    debug($x,'$typ,$align,$fsize,$l,$t,$w,$h,$border');
+    list($typ,$align,$fsize,$l,$t,$w,$h,$border)= $x;
+    $patt= trim($cast[1]);
+    $bord= '';
+//    if ($border=='lrtb') $bord=";border:1px dotted black";
+    if ($border) {
+      if (strpos($border,'L')!==false) $bord.=";border-left:1px dotted black";
+      if (strpos($border,'R')!==false) $bord.=";border-right:1px dotted black";
+      if (strpos($border,'T')!==false) $bord.=";border-top:1px dotted black";
+      if (strpos($border,'B')!==false) $bord.=";border-bottom:1px dotted black";
+    }
+    if ($align) $align= ";text-align:".['L'=>'left','R'=>'right','C'=>'center'][$align];
+    if ($typ=='T') {
+      // parametrizace textu
+      $text= strtr($patt,$vals);
+      $elem= "<div style='position:absolute;"
+          . "left:{$l}$j;top:{$t}$j;width:{$w}$j;height:{$h}$j;"
+          . "font-size:{$fsize}$j$bord$align'>$text</div>";
+//      display(htmlentities($elem));
+      $html.= $elem;
+    }
+    elseif ($typ=='I') {
+      $elem= "<img src='$patt' style='position:absolute;"
+          . "left:{$l}$j;top:{$t}$j;width:{$w}$j;height:{$h}$j'>";
+      display(htmlentities($elem));
+      $html.= $elem;
+    }
+  }
+  $html.= "</div></div>";
+//  if ($par->pdf) {
+//    global $abs_root;
+//    $foot= '';
+//    $fname= "fakt.pdf";
+//    $f_abs= "$abs_root/docs/$fname";
+//    tc_html($f_abs,$html,$foot);
+//  }
+  return (object)array('html'=>$html,'err'=>'');
+}
+# ------------------------------------------------------------------------------------------ ds2 pdf
+function ds2_pdf() {  
+  global $abs_root, $pdf, $ds_faktura_dfl, $ds_faktura_fld;
+//  tc_default();
+//  tc_html_open();
+  $pdf= new TC_PDF_PAGES('P','mm',PDF_PAGE_FORMAT,true,'UTF-8',false);
+//  $pdf->SetHeaderMargin(15);
+//  $pdf->SetFooterMargin(PDF_MARGIN_FOOTER);
+  $pdf->SetAutoPageBreak(false);
+  $pdf->setImageScale(PDF_IMAGE_SCALE_RATIO);
+  $pdf->SetFont('dejavusans', '', 10);
+//  $pdf->setTopMargin(40);
+//  $pdf->setLineWidth(0.5);
+//  $pdf->SetMargins(13, 10, 10);
+  $pdf->AddPage('','',true);
+  // obsah
+  $x_dfl= explode(',',$ds_faktura_dfl);
+//  $cast= $ds_faktura_fld['datumyL'];
+  foreach ($ds_faktura_fld as $cast) {
+    $x= $x_dfl; 
+    // doplnění podle defaultu
+    foreach (explode(',',$cast[0]) as $i=>$c) {
+      if ($c) $x[$i]= $c;
+    }
+    list($typ,$align,$fsize,$l,$t,$w,$h,$border)= $x;
+    $patt= trim($cast[1]);
+    if ($typ=='T') {
+      $bord= $border;
+      $fattr= $align;
+      $fsize= $fsize * 2.4;
+      $pdf->SetFont('dejavusans','',$fsize);
+      $pdf->SetXY($l,$t);
+      $pdf->writeHTMLCell($w,$h,'','', $patt,$bord,0,0,true,$fattr,true);
+    }
+    elseif ($typ=='I') {
+      display("$typ,$align,$fsize,$l,$t,$w,$h,$border");
+      $pdf->Image($patt,$l,$t,$w);
+    }
+  }
+  // zápis
+  $fname= "fakt.pdf";
+  $f_abs= "$abs_root/docs/$fname";
+  $f_rel= "docs/$fname";
+//  tc_html($f_abs,$html,$foot);
+//  $pdf->lastPage();
+  $pdf->Output($f_abs, 'F');
+  return (object)['html'=>"Fakturu $fname lze stáhnout <a target='pdf' href='$f_rel'>zde</a>"];
+}
 /** ===========================================================================================> DŮM **/
 # --------------------------------------------------------------------------------- ds2 compare_list
 function ds2_compare_list($orders) {  #trace('','win1250');

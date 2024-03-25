@@ -24,9 +24,9 @@ panel cen {type:'right', title:'Ceny'
     letos= m.roky.part[`part.rok_${fdate('Y')}`];
     letos.click();
   }
-func create_menu() { 
-    m.roky.attach_code(php.ds_ceny_group()); 
-}
+  func create_menu() { 
+      m.roky.attach_code(php.ds_ceny_group()); 
+  }
   menu m {type:'left', active:*
     menu roky {title:'Ceny posledních 7 let ',type:'group'
       // itemy budou doplněny metodou attach_code jako
@@ -34,6 +34,7 @@ func create_menu() {
       func onclick (i:ezer) {
         rok= i.par.rok;
         info.header(i);
+        info.ceny.display(1);
         if (!info.ceny.browse_load(`rok=${rok}`))
           info.fill('',`Ceník pro rok ${rok} není definován, ve fakturách použijeme ten nejstarší.<br>`);
         info.fill('',`Úpravy lze provádět po dvojkliku na měněný řádek ceníku.`);
@@ -44,6 +45,7 @@ func create_menu() {
       item {title:'kopie loni => letos',        par:{op:'kopie',z:'-1',na:'0'} }
       item {title:'kopie předloni => letos',    par:{op:'kopie',z:'-2',na:'0'} }
       proc onclick (i) { var na:text var z:text
+        info.ceny.display(1);
         na.set(sum(fdate('Y'),i.par.na));
         z.set(sum(fdate('Y'),i.par.z));
         confirm("Ceník roku ",na," bude nahrazen kopií ceníku roku ",z,". Pokračovat?");
@@ -52,10 +54,28 @@ func create_menu() {
         alert("nový ceník se v levém menu objeví po restartu Answeru")
       }
     }
+    menu {title:'Fakturace',type:'group', skill:'a;yd2'
+      item {title:'ukázka',       par:{obj:'2477',pdf:0} }
+//      item {title:'ukázka - PDF', par:{obj:'2477',pdf:1} }
+      func onclick(i:ezer) { var f:object
+        info.ceny.display(0);
+        info.header(i);
+        f= php.ds2_faktura(i.par);
+        info.fill('',f.html);
+      }
+      item {title:'test PDF'
+        func onclick(i:ezer) { var f:object
+          info.ceny.display(0);
+          info.header(i);
+          f= php.ds2_pdf();
+          info.fill('',f.html);
+        }
+      }
+    }
   }
   use info: form right [12,4,,],
   # ---------------------------------------------------------------------------------------==> right
-  # formulář pro levostranné menu s permanentním nadpisem
+  # formulář pro levostranné menu s permanentním nadpisem s ceníkem
   form right [,,640,50] {
   #   button export [620,18,100,16] { title:'Export', style:'display:none;zIndex:2'
   #     proc onclick() {
