@@ -222,7 +222,7 @@ function read_akce() { // ------------------------------------------------------
   $akce->form_souhlas= " Vyplněním této přihlášky dáváme výslovný souhlas s použitím uvedených 
       osobních údajů pro potřeby organizace akcí YMCA Setkání v souladu s Nařízením 
       Evropského parlamentu a Rady (EU) 2016/679 ze dne 27. dubna 2016 o ochraně 
-      fyzických osob a zákonem č. 101/2000 Sb. ČR. Na našem webu naleznete 
+      fyzických osob (GDPR) a zákonem č. 110/2019 Sb. ČR. Na našem webu naleznete 
       <a href='https://www.setkani.org/ymca-setkani/5860#anchor5860' target='show'>
       podrobnou informací o zpracování osobních údajů v YMCA Setkání</a>.";
   $akce->upozorneni= "Potvrzuji, že jsem byl@ upozorněn@, že není možné se účastnit pouze části kurzu, 
