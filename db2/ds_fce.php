@@ -11,7 +11,7 @@ $ds_faktura_fld= [
       <br>Dolní Albeřice 1, 542 26 Horní Maršov
       <br>telefon: 736 537 122
       <br>dum@setkani.org
-      <br>www.alberice.setkani.org</i>"],
+      <br><a href=\"https://dum.setkani.org\">dum.setkani.org</a></i>"],
   'cislo' => [',R,5,140,25,55,10',"
       <b>Faktura {faktura}</b>"],
   'dodavatel' => [',,,13,42,70,30',"
@@ -24,8 +24,8 @@ $ds_faktura_fld= [
   'odberatel' => [',,,112,42,20,10',"
       <b>Odběratel</b>"],
   'ramecek' => [',,,112,47,83,35,LRTB',""],
-  'platce' => [',,,120,57,75,24',"{platce}"],
-  'platbaL' => [',,,13,92,30,30',"
+  'platce' => [',,4.5,120,56,75,24',"{platce}"],
+  'platbaL' => [',,,13,92,40,30',"
       Peněžní ústav
       <br><b>Číslo účtu</b>
       <br>Konstatntní symbol
@@ -37,9 +37,9 @@ $ds_faktura_fld= [
       <br>558
       <br>{VS}
       <br>{SS}"],
-  'objednavkaL' => [',,,120,92,80,30',"
+  'objednavkaL' => [',,,120,90,80,30',"
       <b>Objednávka číslo</b>"],
-  'objednavkaR' => [',R,4.5,178,92,20,30',"
+  'objednavkaR' => [',R,4.5,178,90,20,30',"
     <b>{obj}</b>"],
   'datumyL' => [',,,120,96,80,30',"
       <br>Dodací a platební podmínky: s daní
@@ -52,8 +52,8 @@ $ds_faktura_fld= [
       <br>{datum1}
       <br>{datum2}
       <br><br>převod"],
-  'pobyt' => [',,,13,124,100,10',"
-      Za pobyt v Domě setkání ve dnech {interval} Vám fakturujeme:"],
+  'pobyt' => [',,,13,124,120,10',"
+      Za pobyt v Domě setkání ve dnech {obdobi} Vám fakturujeme:"],
   'tabulka' => [',,,13,132,184,150',"
       {tabulka}"],
     
@@ -63,18 +63,98 @@ $ds_faktura_fld= [
   'pata' => [',C,,13,285,184,6,T',"
       Těšíme se na Váš další pobyt v Domě setkání"],
 ];
+function ds2_fakturace($idos,$part,$cenik_roku) {
+  $pobyt= ds2_cena_pobytu($idos,$cenik_roku);
+  $vals= [];
+  $vals['{obj}']= $pobyt->order;
+  $host= $pobyt->host->host;
+  $vals['{platce}']= "$host[1] $host[2]<br>$host[3]<br>$host[4]";
+  $vals['{obdobi}']= $pobyt->obdobi;
+  $vals['{datum1}']= date('j. n. Y');
+  $vals['{datum2}']= date('j. n. Y',strtotime("+14 days"));
+  // DPH
+  ezer_connect('setkani');
+  $dph= (object)[];
+  $rd= pdo_qry("SELECT LEFT(druh,4),dph FROM ds_cena WHERE rok=2024 GROUP BY druh");
+  while ($rd && (list($druh,$_dph)= pdo_fetch_array($rd))) {
+    $dph->$druh= $_dph;
+  }
+//  debug($dph,'DPH');
+  // položky
+  $flds= (array)$pobyt->fields;
+  $ubyt=  $flds["ubyt$part"];
+  $prog=  $flds["prog$part"];
+  $strav= $flds["strav$part"];
+  $popl=  $flds["popl$part"];
+  $celkem= $ubyt + $prog + $strav + $popl;
+  $celkem= number_format($celkem,2,',',' ').' Kč';
+  $sazba_ubyt=  $dph->ubyt.'%';
+  $sazba_prog=  $dph->prog.'%';
+  $sazba_strav= $dph->stra.'%';
+  $sazba_popl=  $dph->popl.'%';
+  $dph_ubyt=  round($ubyt - $ubyt / (1 + $dph->ubyt/100),2);
+  $dph_prog=  round($prog - $prog / (1 + $dph->prog/100),2);
+  $dph_strav= round($strav - $strav / (1 + $dph->stra/100),2);
+  $dph_popl=  round($popl - $popl / (1 + $dph->popl/100),2);
+  $ubyt_bez=   number_format($ubyt-$dph_ubyt,2,',',' ').' Kč';
+  $prog_bez=   number_format($prog-$dph_prog,2,',',' ').' Kč';
+  $strav_bez=  number_format($strav-$dph_strav,2,',',' ').' Kč';
+  $popl_bez=   number_format($popl-$dph_popl,2,',',' ').' Kč';
+  $ubyt=  number_format($ubyt,2,',',' ').' Kč';
+  $prog=  number_format($prog,2,',',' ').' Kč';
+  $strav= number_format($strav,2,',',' ').' Kč';
+  $popl=  number_format($popl,2,',',' ').' Kč';
+  $dph_ubyt=  number_format($dph_ubyt,2,',',' ').' Kč';
+  $dph_prog=  number_format($dph_prog,2,',',' ').' Kč';
+  $dph_strav= number_format($dph_strav,2,',',' ').' Kč';
+  $dph_popl=  number_format($dph_popl,2,',',' ').' Kč';
+  // redakce tabulky
+  $lrtb= "border:0.1mm dotted black";
+  $num= "$lrtb;text-align:right";
+  $th= 'td style="text-align:right;font-weight:bold" ';
+  $vals['{tabulka}']= <<<__TAB
+      <table style="border-collapse:collapse" cellpadding="1mm" >
+        <tr>
+          <th style="width:78mm;$lrtb">Položka</th><th style="width:34mm;$num">Cena s DPH</th>
+          <th style="width:13mm;$num"> Sazba DPH</th><th style="width:28mm;$num">DPH</th>
+          <th style="width:28mm;$num">Cena bez DPH</th>
+        </tr><tr>
+          <td style="$lrtb">ubytování<br>program<br>strava<br>poplatek obci</td>
+          <td style="$num">$ubyt<br>$prog<br>$strav<br>$popl</td>
+          <td style="$num">$sazba_ubyt<br>$sazba_prog<br>$sazba_strav<br>$sazba_popl</td>
+          <td style="$num">$dph_ubyt<br>$dph_prog<br>$dph_strav<br>$dph_popl</td>
+          <td style="$num">$ubyt_bez<br>$prog_bez<br>$strav_bez<br>$popl_bez</td>
+        </tr><tr>
+          <td><br><br></td>
+        </tr><tr>
+          <$th colspan="3">Celková cena s DPH</td><td colspan="2" style="$num">$celkem</td>
+        </tr><tr>
+          <$th colspan="3">Zaplaceno zálohou</td><td colspan="2" style="$num">0,00 Kč</td>
+        </tr><tr>
+          <$th colspan="3">Zbývá k zaplacení</td><td colspan="2" style="$num">$celkem</td>
+        </tr>
+      </table>
+__TAB;
+  return $vals;
+}
 function ds2_faktura($par) {  
   global $ds_faktura_dfl, $ds_faktura_fld;
-  $html= '';
-  $html.= "<div class='PDF' style='scale:85%;position:absolute'>";
-  $html.= "<style>.PDF div{padding-top:1mm}</style>";
-  $html.= "<div style='position:absolute;width:210mm;height:297mm;border:1px solid grey'>";
-  $x_dfl= explode(',',$ds_faktura_dfl);
-  $j= 'mm';
   // získání parametrů
-  $vals= [];
-  $vals['{obj}']= $par->obj;
+  $show= $par->show??0;
+  $save= $par->save??0;
+  $vals= ds2_fakturace($par->idos,2,$par->cenik);
+  $html= '';
+  if ($show) {
+    $html.= "<div class='PDF' style='scale:85%;position:absolute'>";
+    $html.= "<style>.PDF div{padding-top:1mm}</style>";
+    $html.= "<div style='position:absolute;width:210mm;height:297mm;border:1px solid grey'>";
+    $j= 'mm';
+  }
   // zobrazení
+  if ($save) {
+    tc_page_open();
+  }
+  $x_dfl= explode(',',$ds_faktura_dfl);
   foreach ($ds_faktura_fld as $cast) {
     $x= $x_dfl; 
   // doplnění podle defaultu
@@ -83,60 +163,59 @@ function ds2_faktura($par) {
     }
 //    debug($x,'$typ,$align,$fsize,$l,$t,$w,$h,$border');
     list($typ,$align,$fsize,$l,$t,$w,$h,$border)= $x;
-    $patt= trim($cast[1]);
-    $bord= '';
-//    if ($border=='lrtb') $bord=";border:1px dotted black";
-    if ($border) {
-      if (strpos($border,'L')!==false) $bord.=";border-left:1px dotted black";
-      if (strpos($border,'R')!==false) $bord.=";border-right:1px dotted black";
-      if (strpos($border,'T')!==false) $bord.=";border-top:1px dotted black";
-      if (strpos($border,'B')!==false) $bord.=";border-bottom:1px dotted black";
+    // parametrizace textu
+    $text= strtr(trim($cast[1]),$vals);
+    if ($show) {
+      $bord= $algn= '';
+  //    if ($border=='lrtb') $bord=";border:1px dotted black";
+      if ($border) {
+        if (strpos($border,'L')!==false) $bord.=";border-left:1px dotted black";
+        if (strpos($border,'R')!==false) $bord.=";border-right:1px dotted black";
+        if (strpos($border,'T')!==false) $bord.=";border-top:1px dotted black";
+        if (strpos($border,'B')!==false) $bord.=";border-bottom:1px dotted black";
+      }
+      if ($align) $algn= ";text-align:".['L'=>'left','R'=>'right','C'=>'center'][$align];
+      if ($typ=='T') {
+        $elem= "<div style='position:absolute;"
+            . "left:{$l}$j;top:{$t}$j;width:{$w}$j;height:{$h}$j;"
+            . "font-size:{$fsize}$j$bord$algn'>$text</div>";
+  //      display(htmlentities($elem));
+        $html.= $elem;
+      }
+      elseif ($typ=='I') {
+        $elem= "<img src='$text' style='position:absolute;"
+            . "left:{$l}$j;top:{$t}$j;width:{$w}$j;height:{$h}$j'>";
+        display(htmlentities($elem));
+        $html.= $elem;
+      }
     }
-    if ($align) $align= ";text-align:".['L'=>'left','R'=>'right','C'=>'center'][$align];
-    if ($typ=='T') {
-      // parametrizace textu
-      $text= strtr($patt,$vals);
-      $elem= "<div style='position:absolute;"
-          . "left:{$l}$j;top:{$t}$j;width:{$w}$j;height:{$h}$j;"
-          . "font-size:{$fsize}$j$bord$align'>$text</div>";
-//      display(htmlentities($elem));
-      $html.= $elem;
-    }
-    elseif ($typ=='I') {
-      $elem= "<img src='$patt' style='position:absolute;"
-          . "left:{$l}$j;top:{$t}$j;width:{$w}$j;height:{$h}$j'>";
-      display(htmlentities($elem));
-      $html.= $elem;
+    if ($save) {
+      tc_page_cell($text,$typ,$align,$fsize*2.4,$l,$t,$w,$h,$border);
     }
   }
-  $html.= "</div></div>";
-//  if ($par->pdf) {
-//    global $abs_root;
-//    $foot= '';
-//    $fname= "fakt.pdf";
-//    $f_abs= "$abs_root/docs/$fname";
-//    tc_html($f_abs,$html,$foot);
-//  }
+  if ($show) {
+    $html.= "</div></div>";
+  }
+  if ($save) {
+    global $abs_root;
+    $fname= "fakt.pdf";
+    $f_abs= "$abs_root/docs/$fname";
+    $f_rel= "docs/$fname";
+    tc_page_close($f_abs,$html);
+    $html= "Fakturu lze stáhnout <a target='pdf' href='$f_rel'>zde</a><br>$html";
+}
   return (object)array('html'=>$html,'err'=>'');
 }
 # ------------------------------------------------------------------------------------------ ds2 pdf
 function ds2_pdf() {  
   global $abs_root, $pdf, $ds_faktura_dfl, $ds_faktura_fld;
-//  tc_default();
-//  tc_html_open();
   $pdf= new TC_PDF_PAGES('P','mm',PDF_PAGE_FORMAT,true,'UTF-8',false);
-//  $pdf->SetHeaderMargin(15);
-//  $pdf->SetFooterMargin(PDF_MARGIN_FOOTER);
   $pdf->SetAutoPageBreak(false);
   $pdf->setImageScale(PDF_IMAGE_SCALE_RATIO);
   $pdf->SetFont('dejavusans', '', 10);
-//  $pdf->setTopMargin(40);
-//  $pdf->setLineWidth(0.5);
-//  $pdf->SetMargins(13, 10, 10);
   $pdf->AddPage('','',true);
   // obsah
   $x_dfl= explode(',',$ds_faktura_dfl);
-//  $cast= $ds_faktura_fld['datumyL'];
   foreach ($ds_faktura_fld as $cast) {
     $x= $x_dfl; 
     // doplnění podle defaultu
@@ -162,8 +241,6 @@ function ds2_pdf() {
   $fname= "fakt.pdf";
   $f_abs= "$abs_root/docs/$fname";
   $f_rel= "docs/$fname";
-//  tc_html($f_abs,$html,$foot);
-//  $pdf->lastPage();
   $pdf->Output($f_abs, 'F');
   return (object)['html'=>"Fakturu $fname lze stáhnout <a target='pdf' href='$f_rel'>zde</a>"];
 }
@@ -237,6 +314,22 @@ function ds2_compare($order) {  #trace('','win1250');
   return $result;
 }
 # ======================================================================================> objednávky
+# ---------------------------------------------------------------------------------------- ds2 cenik
+# načtení ceníku pro daný rok
+function ds2_cenik($rok) {  #trace('','win1250');
+  global $ds_cena;
+  $ds_cena= array();
+  ezer_connect('setkani');
+  $qry2= "SELECT * FROM ds_cena WHERE rok=$rok";
+  $res2= pdo_qry($qry2);
+  while ( $res2 && $c= pdo_fetch_object($res2) ) {
+    $wc= $c;
+    $wc->polozka= wu($c->polozka);
+    $wc->druh= wu($c->druh);
+    $ds_cena[$c->typ]= $wc;
+  }
+//                                                 debug($cena,'cena',(object)array('win1250'=>1));
+}
 # ----------------------------------------------------------------------------------- ds2 cenik_list
 # vrátí seznam položek ceníku Domu setkání zadaného roku (default je letošní platný)
 # pokud je zadaný host vrátí také počet objednaných instancí položek ceníku
@@ -313,12 +406,14 @@ function ds2_cena_pobytu($idos,$cenik_roku) {
   // společná data
   list($order,$jmeno,$prijmeni,$rodina)= 
       select('id_order,jmeno,prijmeni,rodina','ds_osoba',"id_osoba=$idos",'setkani');
+  $y->order= $order;
   $y->fields->jmeno= wu($jmeno);
   $y->fields->prijmeni= wu($prijmeni);
   $y->fields->rodina= wu($rodina);
   $ob= select_object('*','tx_gnalberice_order',"uid=$order",'setkani');
   $cenik_roku= $cenik_roku?: date('Y',$ob->untilday);
-  ds_cenik($cenik_roku);
+  $y->obdobi= date('j.n',$ob->fromday).' - '.date('j.n.Y',$ob->untilday);
+  ds2_cenik($cenik_roku);
   
   // sběr a kontrola dat pro hosta, rodinu, celou objednávku
   foreach (array(1=>"id_osoba=$idos",2=>"rodina='$rodina'",3=>"1") as $i=>$cond) {
@@ -326,7 +421,7 @@ function ds2_cena_pobytu($idos,$cenik_roku) {
     $ros= pdo_qry("SELECT * FROM ds_osoba WHERE id_order=$order AND $cond");
     while ( $ros && $os= pdo_fetch_object($ros) ) {
       if ( !$os->pokoj ) { $y->err= "není zapsán pokoj pro $y->prijmeni $y->jmeno "; goto end; }
-      $host_pol= ds_polozky_hosta($ob,$os,$luzko_pokoje,$ds_luzko,$ds_strava);
+      $host_pol= ds2_polozky_hosta($ob,$os,$luzko_pokoje,$ds_luzko,$ds_strava);
       if ( $i==1 ) {
         $y->host= $host_pol;
       }
@@ -337,8 +432,70 @@ function ds2_cena_pobytu($idos,$cenik_roku) {
     }
   }
 end:  
+                                                    debug($y,"ds2_cena_pobytu($idos,$cenik_roku)");
   return $y;
 }
+# -----------------------------------------------------------------------------==> ds2 polozky_hosta
+# výpočet položek hosta
+function ds2_polozky_hosta ($o,$h,$luzko_pokoje,$ds_luzko,$ds_strava) {
+  global $ds_cena;
+  // výpočet
+  $hf= sql2stamp($h->fromday); $hu= sql2stamp($h->untilday);
+  $od_ts= $hf ? $hf : $o->fromday;  $od= date('j.n',$od_ts);
+  $do_ts= $hu ? $hu : $o->untilday; $do= date('j.n',$do_ts);
+  $vek= ds_vek($h->narozeni,$o->fromday);
+  $narozeni= $h->narozeni ? sql_date1($h->narozeni): '';
+  $strava= $h->strava ? $h->strava : $o->board;
+  // připsání řádku
+  $host= array();
+  $host[]= wu($h->rodina);
+  $host[]= wu($h->jmeno);
+  $host[]= wu($h->prijmeni);
+  $host[]= wu($h->ulice);
+  $host[]= wu("{$h->psc} {$h->obec}");
+  $host[]= $narozeni;
+  $host[]= $vek;
+  $host[]= $h->telefon;
+  $host[]= $h->email;
+  $host[]= $od;
+  $host[]= $do;
+  // položky hosta
+  $pol= (object)array();
+  $pol->test= "{$h->strava} : {$o->board} - $strava = {$ds_strava[$strava]}";
+  $noci= round(($do_ts-$od_ts)/(60*60*24));
+  $pol->vek= $vek;
+  $pol->noci= $noci;
+  $pol->pokoj= (int)$h->pokoj;
+  // ubytování
+  $luzko= trim($ds_luzko[$h->luzko]);     // L|P|B
+  if ( $luzko=='L' )
+    $luzko= $luzko_pokoje[$h->pokoj];
+  if ( $luzko )
+    $pol->{"noc_$luzko"}= $noci;
+  // strava
+  $pol->strava_CC= $ds_strava[$strava]=='C' && $vek>=$ds_cena['strava_CC']->od ? $noci : '';
+  $pol->strava_CD= $ds_strava[$strava]=='C' && $vek>=$ds_cena['strava_CD']->od
+                                            && $vek< $ds_cena['strava_CD']->do ? $noci : '';
+  $pol->strava_PC= $ds_strava[$strava]=='P' && $vek>=$ds_cena['strava_PC']->od ? $noci : '';
+  $pol->strava_PD= $ds_strava[$strava]=='P' && $vek>=$ds_cena['strava_PD']->od
+                                            && $vek< $ds_cena['strava_PD']->do ? $noci : '';
+  // pobyt
+  if ( $h->postylka ) {
+    $pol->pobyt_P= 1;
+  }
+  // poplatky
+  if ( $vek>=18 ) {
+    $pol->ubyt_S= $noci;
+    if ( !$o->skoleni ) $pol->ubyt_C= $noci;   // rekreační poplatek se neplatí za školení
+  }
+  else {
+    $pol->ubyt_P= $noci;
+  }
+  // program
+  $pol->prog_C= $vek>=$ds_cena['prog_C']->od  ? 1 : 0;
+  $pol->prog_P= $vek>=$ds_cena['prog_P']->od && $vek<$ds_cena['prog_P']->do ? 1 : 0;
+  return (object)array('host'=>$host,'cena'=>$pol);
+}        
 # ------------------------------------------------------------------------------==> ds2 platba_hosta
 # výpočet ceny za položky hosta jako ubyt,strav,popl,prog,celk
 function ds2_platba_hosta ($cenik_roku,$polozky,$platba,$i='',$podrobne=false) {
@@ -364,6 +521,7 @@ function ds2_platba_hosta ($cenik_roku,$polozky,$platba,$i='',$podrobne=false) {
     }
     $platba->$celki+= $platba->$druh;
   }
+//                          debug($one,"ds2_platba_hosta ($cenik_roku,polozky,platba,$i,$podrobne)");
   return $one;
 }        
 # ------------------------------------------------------------------------------------ ds2 import_ys
@@ -740,7 +898,7 @@ __XLS;
 function ds2_hoste($orders,$rok) {  #trace('','win1250');
   global $ds_cena, $ezer_path_serv;
   require_once "$ezer_path_serv/licensed/xls2/Classes/PHPExcel/Calculation/Functions.php";
-  ds_cenik($rok);
+  ds2_cenik($rok);
 //                                      debug($ds_cena,'ds_cena',(object)array('win1250'=>1));
   $x= (object)array();
   $x->table= "klienti_$obdobi";
@@ -790,67 +948,6 @@ function ds2_hoste($orders,$rok) {  #trace('','win1250');
 //                                              debug($x,'hoste',(object)array('win1250'=>1));
   return $x;
 }
-# -----------------------------------------------------------------------------==> ds2 polozky_hosta
-# výpočet položek hosta
-function ds2_polozky_hosta ($o,$h,$luzko_pokoje,$ds_luzko,$ds_strava) {
-  global $ds_cena;
-  // výpočet
-  $hf= sql2stamp($h->fromday); $hu= sql2stamp($h->untilday);
-  $od_ts= $hf ? $hf : $o->fromday;  $od= date('j.n',$od_ts);
-  $do_ts= $hu ? $hu : $o->untilday; $do= date('j.n',$do_ts);
-  $vek= ds_vek($h->narozeni,$o->fromday);
-  $narozeni= $h->narozeni ? sql_date1($h->narozeni): '';
-  $strava= $h->strava ? $h->strava : $o->board;
-  // připsání řádku
-  $host= array();
-  $host[]= wu($h->rodina);
-  $host[]= wu($h->jmeno);
-  $host[]= wu($h->prijmeni);
-  $host[]= wu($h->ulice);
-  $host[]= wu("{$h->psc} {$h->obec}");
-  $host[]= $narozeni;
-  $host[]= $vek;
-  $host[]= $h->telefon;
-  $host[]= $h->email;
-  $host[]= $od;
-  $host[]= $do;
-  // položky hosta
-  $pol= (object)array();
-  $pol->test= "{$h->strava} : {$o->board} - $strava = {$ds_strava[$strava]}";
-  $noci= round(($do_ts-$od_ts)/(60*60*24));
-  $pol->vek= $vek;
-  $pol->noci= $noci;
-  $pol->pokoj= (int)$h->pokoj;
-  // ubytování
-  $luzko= trim($ds_luzko[$h->luzko]);     // L|P|B
-  if ( $luzko=='L' )
-    $luzko= $luzko_pokoje[$h->pokoj];
-  if ( $luzko )
-    $pol->{"noc_$luzko"}= $noci;
-  // strava
-  $pol->strava_CC= $ds_strava[$strava]=='C' && $vek>=$ds_cena['strava_CC']->od ? $noci : '';
-  $pol->strava_CD= $ds_strava[$strava]=='C' && $vek>=$ds_cena['strava_CD']->od
-                                            && $vek< $ds_cena['strava_CD']->do ? $noci : '';
-  $pol->strava_PC= $ds_strava[$strava]=='P' && $vek>=$ds_cena['strava_PC']->od ? $noci : '';
-  $pol->strava_PD= $ds_strava[$strava]=='P' && $vek>=$ds_cena['strava_PD']->od
-                                            && $vek< $ds_cena['strava_PD']->do ? $noci : '';
-  // pobyt
-  if ( $h->postylka ) {
-    $pol->pobyt_P= 1;
-  }
-  // poplatky
-  if ( $vek>=18 ) {
-    $pol->ubyt_S= $noci;
-    if ( !$o->skoleni ) $pol->ubyt_C= $noci;   // rekreační poplatek se neplatí za školení
-  }
-  else {
-    $pol->ubyt_P= $noci;
-  }
-  // program
-  $pol->prog_C= $vek>=$ds_cena['prog_C']->od  ? 1 : 0;
-  $pol->prog_P= $vek>=$ds_cena['prog_P']->od && $vek<$ds_cena['prog_P']->do ? 1 : 0;
-  return (object)array('host'=>$host,'cena'=>$pol);
-}        
 # -------------------------------------------------------------------------------------- ds2 cat_typ
 # přepočet kategorie pokoje na typ ubytování v ceníku    
 function ds2_cat_typ() {

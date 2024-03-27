@@ -580,7 +580,8 @@ panel Upravy [,,350,400] { type:'popup' title:"Účtované položky z ceníku"
 // =====================================================================================> VYÚČTOVÁNÍ
 form _kniha /*[,,300,100]*/ { css:'ds_form'
   // parametry
-  var cenik_roku= 0  // defaultní ceník se bere z roku konání akce
+  var cenik_roku= 0,  // defaultní ceník se bere z roku konání akce
+      idos= 0         // nastavená osoba
   // nadpis
   label [ 10,0,694,] { title:'<hr>' }
   label nadpis [ 10,20,500,] 
@@ -606,14 +607,26 @@ form _kniha /*[,,300,100]*/ { css:'ds_form'
   field popl3   [310,100, 50,] { format:'r' }
   field prog3   [370,100, 50,] { format:'r' }
   field celk3   [430,100, 50,] { format:'r' }
+  // text faktury
+  label faktura [0,140,640,]
   // faktury
-  button [500,250,,] { title:'Faktura za rodinu' 
-    func onclick() {
+  button [500,75,,] { title:'Faktura za objednávku' 
+    func onclick() { var f:object
+      clear();
+      f= php.ds2_faktura({idos:idos,cenik:cenik_roku,show:1,save:0});
+      faktura= f.html;
+  }}
+  button [630,75,,] { title:'PDF' 
+    func onclick() { var f:object
+      clear();
+      f= php.ds2_faktura({idos:idos,cenik:cenik_roku,show:1,save:1});
+      faktura= f.html;
   }}
 
   // ==> výpočet pro Knihu hostí
   var cena:object
-  func kniha_load(idos) { 
+  func kniha_load(_idos) { 
+    idos= _idos;
     nadpis= `<h3 style='margin:0'>Cena pro vybraného účastníka, rodinu, objednávku 
         podle ceníku roku ${cenik_roku}</h3>`;
     cena= php.ds2_cena_pobytu(idos,cenik_roku);

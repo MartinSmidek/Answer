@@ -55,22 +55,23 @@ panel cen {type:'right', title:'Ceny'
       }
     }
     menu {title:'Fakturace',type:'group', skill:'a;yd2'
-      item {title:'ukázka',       par:{obj:'2477',pdf:0} }
-//      item {title:'ukázka - PDF', par:{obj:'2477',pdf:1} }
+      item {title:'ukázka',       par:{idos:'18280',show:1,save:0} }
+      item {title:'PDF',          par:{idos:'18280',show:0,save:1} }
+      item {title:'ukázka + PDF', par:{idos:'18280',show:1,save:1} }
       func onclick(i:ezer) { var f:object
         info.ceny.display(0);
         info.header(i);
         f= php.ds2_faktura(i.par);
         info.fill('',f.html);
       }
-      item {title:'test PDF'
-        func onclick(i:ezer) { var f:object
-          info.ceny.display(0);
-          info.header(i);
-          f= php.ds2_pdf();
-          info.fill('',f.html);
-        }
-      }
+//      item {title:'test PDF'
+//        func onclick(i:ezer) { var f:object
+//          info.ceny.display(0);
+//          info.header(i);
+//          f= php.ds2_pdf();
+//          info.fill('',f.html);
+//        }
+//      }
     }
   }
   use info: form right [12,4,,],
