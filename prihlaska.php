@@ -158,7 +158,7 @@ function connect_db() { // -----------------------------------------------------
   require_once("db2/db2_fce3.php");
   // PDF knihovny
   require_once('tcpdf/tcpdf.php');
-  require_once('tcpdf/db2_tcpdf.php');
+  require_once('db2/db2_tcpdf.php');
   // definice zápisů do _track
   $mysql_db_track= true;
   $mysql_tracked= ',akce,pobyt,spolu,osoba,tvori,rodina,_user,';

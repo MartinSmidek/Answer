@@ -68,6 +68,7 @@
     "db2/db2_ys2_fce3.php",
     "db2/db2_fce3.php",
     "db2/ds_fce.php",
+    "db2/db2_tcpdf.php",
     "db2/db2.system.php",
     "ezer$ezer_version/server/ezer_ruian.php",
     "ezer$ezer_version/server/ezer_cms3.php"
@@ -78,7 +79,7 @@
   
   // PDF knihovny
   require_once('tcpdf/tcpdf.php');
-  require_once('tcpdf/db2_tcpdf.php');
+//  require_once('tcpdf/db2_tcpdf.php');
  
   // je to aplikace se startem v rootu
   chdir($abs_root);

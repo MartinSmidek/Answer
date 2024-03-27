@@ -51,6 +51,7 @@
   // definice modulů specifických pro Answer
   $app_php= array(
     "db2/db2_ys2_fce3.php",
+    "db2/db2_tcpdf.php",
     "db2/db2_fce3.php"
   );
   
@@ -59,7 +60,7 @@
   
   // PDF knihovny
   require_once('tcpdf/tcpdf.php');
-  require_once('tcpdf/db2_tcpdf.php');
+//  require_once('tcpdf/db2_tcpdf.php');
  
   // je to aplikace se startem v rootu
   chdir($abs_root);
