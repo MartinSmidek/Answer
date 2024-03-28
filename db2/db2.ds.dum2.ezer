@@ -39,7 +39,7 @@ func precti  {
   }
   else {
     fak.load(the_order); 
-    fak.faktura.display(0); 
+//    fak.faktura.display(0); 
     cti(obj.rooms1)
   }
 }
@@ -102,6 +102,8 @@ form _page {
     func onclick() { cvak(&this) } }
   # ------------------------- pozadí pro elementy musí být před obsahem záložek
   label frame [0,16,717,510] { css:'ae_work'}
+  // text faktury
+  label faktura [17,540,640,]
 }
 
 # ======================================================================================> OBJEDNÁVKA
@@ -204,10 +206,20 @@ form _fakt { css:'ds_form'
   field       [0,135,210,] { title:'^ulice' data:objednavka.address }
   field       [  0,175, 50,] { title:'^psč' data:objednavka.zip}
   field       [ 60,175,150,] { title:'^obec' data:objednavka.city}
-  label faktura [223,117,120,] { title:'...' }
-  button      [220,132,,] { title:'vystavit zálohu'  format:'d' func onclick() { make_zaloha() } }
-  button      [220,159,,] { title:'vystavit faktury' format:'d' func onclick() { make_faktury() } }
   button      [220,185,,] { title:'zapsat změny'     func onclick() { objednavatel_save() } }
+  // faktury
+  button [131,285,,] { title:'Zálohová faktura' 
+    func onclick() { var f:object
+      clear();
+      f= php.ds2_faktura({typ:'záloha',obj:the_order,cenik:kniha.cenik_roku,show:1,save:0});
+      page.faktura= f.html;
+  }}
+  button [272,285,,] { title:'PDF' 
+    func onclick() { var f:object
+      clear();
+      f= php.ds2_faktura({typ:'záloha',obj:the_order,cenik:kniha.cenik_roku,show:1,save:1});
+      page.faktura= f.html;
+  }}
 }
 
 # =======================================================================================> ÚČASTNÍCI
@@ -607,20 +619,21 @@ form _kniha /*[,,300,100]*/ { css:'ds_form'
   field popl3   [310,100, 50,] { format:'r' }
   field prog3   [370,100, 50,] { format:'r' }
   field celk3   [430,100, 50,] { format:'r' }
-  // text faktury
-  label faktura [0,140,640,]
+//  // text faktury
+//  label faktura [0,140,640,]
   // faktury
-  button [500,75,,] { title:'Faktura za objednávku' 
+  button [500,100,,] { title:'Faktura za objednávku' 
     func onclick() { var f:object
       clear();
-      f= php.ds2_faktura({idos:idos,cenik:cenik_roku,show:1,save:0});
-      faktura= f.html;
+//      f= php.ds2_faktura({typ:'konečná',idos:idos,cenik:cenik_roku,show:1,save:0});
+      f= php.ds2_faktura({typ:'konečná',obj:the_order,idos:idos,cenik:cenik_roku,show:1,save:0});
+      page.faktura= f.html;
   }}
-  button [630,75,,] { title:'PDF' 
+  button [641,100,,] { title:'PDF' 
     func onclick() { var f:object
       clear();
-      f= php.ds2_faktura({idos:idos,cenik:cenik_roku,show:1,save:1});
-      faktura= f.html;
+      f= php.ds2_faktura({typ:'konečná',obj:the_order,idos:idos,cenik:cenik_roku,show:1,save:1});
+      page.faktura= f.html;
   }}
 
   // ==> výpočet pro Knihu hostí
@@ -629,7 +642,7 @@ form _kniha /*[,,300,100]*/ { css:'ds_form'
     idos= _idos;
     nadpis= `<h3 style='margin:0'>Cena pro vybraného účastníka, rodinu, objednávku 
         podle ceníku roku ${cenik_roku}</h3>`;
-    cena= php.ds2_cena_pobytu(idos,cenik_roku);
+    cena= php.ds2_cena_pobytu(the_order,idos,cenik_roku);
     copy_by_name(cena.fields,form);
   }
 }
