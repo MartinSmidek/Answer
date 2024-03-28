@@ -78,7 +78,7 @@ function tc_page_open() {
 # ------------------------------------------------------------------------------------- tc page_cell
 # zapíše text nebo vloží obrázek definovaný nýsledujícími parametry
 #  src = text | adresa obrázku
-#  typ = T pro text s html tagy | I pro obrázek
+#  typ = T pro text s html tagy | I pro obrázek | QR pro kód
 #  align = L | R | C | 
 #  fsize = velikost textu
 #  l, t = levý rok v mm
@@ -95,6 +95,23 @@ function tc_page_cell($src,$typ,$align,$fsize,$l,$t,$w,$h,$border='') {
   elseif ($typ=='I') {
     $src= trim($src);
     $pdf->Image($src,$l,$t,$w);
+  }
+  elseif ($typ=='QR') { 
+    $src= trim($src);
+    // set style for barcode
+    $style= [
+      'border' => 2,
+      'vpadding' => 'auto',
+      'hpadding' => 'auto',
+      'fgcolor' => array(0,0,0),
+      'bgcolor' => false, //array(255,255,255)
+      'module_width' => 1, // width of a single module in points
+      'module_height' => 1 // height of a single module in points
+    ];
+    $pdf->write2DBarcode($src,'QRCODE,H',$l,$t,$w,$w,$style,'Q');
+    $pdf->SetXY($l+2,$t+$w-2);
+    $pdf->SetFillColor(255, 255, 255);
+    $pdf->Cell(16,2.8,'QR platba',0,0,'C',true,'',4);
   }
 }
 # ------------------------------------------------------------------------------------ tc page_close
