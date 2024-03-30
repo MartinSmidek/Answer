@@ -72,7 +72,7 @@ function tc_page_open() {
   $pdf->SetAutoPageBreak(false);
   $pdf->setImageScale(PDF_IMAGE_SCALE_RATIO);
   $pdf->SetFont('dejavusans', '', 10);
-  $pdf->setCellHeightRatio(1.5);
+//  $pdf->setCellHeightRatio(1.5);
   $pdf->AddPage('','',true);
 }
 # ------------------------------------------------------------------------------------- tc page_cell
@@ -84,11 +84,12 @@ function tc_page_open() {
 #  l, t = levý rok v mm
 #  w, h = šířka a výška v mm
 #  border = kombinace písmen L R T B
-function tc_page_cell($src,$typ,$align,$fsize,$l,$t,$w,$h,$border='') { 
+function tc_page_cell($src,$typ,$align,$fsize,$l,$t,$w,$h,$border='',$lheight=1.5) { 
   global $pdf;
   if ($typ=='T') {
     $pdf->SetFont('dejavusans','',$fsize);
     $pdf->SetXY($l,$t);
+    $pdf->setCellHeightRatio($lheight);
     $pdf->writeHTMLCell($w,$h,$l,$t,$src,$border,0,0,true,$align,true);
     display("writeHTMLCell($w,$h,$l,$t,...,$border,0,0,true,$align,true)");
   }
@@ -109,8 +110,9 @@ function tc_page_cell($src,$typ,$align,$fsize,$l,$t,$w,$h,$border='') {
       'module_height' => 1 // height of a single module in points
     ];
     $pdf->write2DBarcode($src,'QRCODE,H',$l,$t,$w,$w,$style,'Q');
-    $pdf->SetXY($l+2,$t+$w-2);
+    $pdf->SetXY($l+2.5,$t+$w-1.5);
     $pdf->SetFillColor(255, 255, 255);
+    $pdf->setCellHeightRatio(1);
     $pdf->Cell(16,2.8,'QR platba',0,0,'C',true,'',4);
   }
 }
