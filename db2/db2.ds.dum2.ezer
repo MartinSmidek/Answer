@@ -20,7 +20,7 @@ menu mo {type:'left'
 //func onfirstfocus() {
 func onfocus() {
   var mn: object, it: ezer
-  mn= php.ds2_obj_menu('202403,202404,202405,202406');
+  mn= php.ds2_obj_menu('202308,202403,202404,202405,202406');
   mo.attach_code(mn.cd);
   obj.Init();
   Upravy.Init();
@@ -172,7 +172,7 @@ form _objed { css:'ds_form'
       form.save(); order_load(the_order)
   }}
   
-  button [654,428,,] { title:'* TEST' func onclick() {  }} // nic
+//  button [654,428,,] { title:'* TEST' func onclick() {  }} // nic
   button [249,FT+91,,] { title:'* INIT' func onclick() {Init() }} // obnoví pokoje
   
   label info  [1,FT+39,238,53] { title:'' }
@@ -207,18 +207,28 @@ form _fakt { css:'ds_form'
   field       [  0,175, 50,] { title:'^psč' data:objednavka.zip}
   field       [ 60,175,150,] { title:'^obec' data:objednavka.city}
   button      [220,185,,] { title:'zapsat změny'     func onclick() { objednavatel_save() } }
-  // faktury
-  button [131,285,,] { title:'Zálohová faktura' 
+  // parametry faktury
+  field fakt_num [91,424,40,] { title:'^fakt.číslo' }
+  field fakt_zal [141,424,50,] { title:'^zálohou' }
+  field fakt_vs  [200,424,50,] { title:'^VS' }
+  field fakt_ss  [260,424,33,] { title:'^SS' }
+  button [93,454,145,] { title:'Zálohová faktura' 
     func onclick() { var f:object
       clear();
-      f= php.ds2_faktura({typ:'záloha',obj:the_order,cenik:kniha.cenik_roku,show:1,save:0});
+      f= php.ds2_faktura({typ:'záloha',obj:the_order,cenik:kniha.cenik_roku,show:1,save:0,
+          num:fakt_num,zaloha:fakt_zal,vs:fakt_vs,ss:fakt_ss});
       page.faktura= f.html;
+      form.plain();
+      if (f.err) alert(f.err);
   }}
-  button [272,285,,] { title:'PDF' 
+  button [261,454,,] { title:'PDF' 
     func onclick() { var f:object
       clear();
-      f= php.ds2_faktura({typ:'záloha',obj:the_order,cenik:kniha.cenik_roku,show:1,save:1});
+      f= php.ds2_faktura({typ:'záloha',obj:the_order,cenik:kniha.cenik_roku,show:1,save:1,
+          num:fakt_num,zaloha:fakt_zal,vs:fakt_vs,ss:fakt_ss});
       page.faktura= f.html;
+      form.plain();
+      if (f.err) alert(f.err);
   }}
 }
 
@@ -475,7 +485,8 @@ form _osoba /*[,,300,100]*/ { css:'ds_form'
   label       [  0,220,300,] { title:'--- <i>upřesnění údajů o pobytu</i>' }
   select spokoj [  0,250, 50,] { title:'^pokoj' data:ds_osoba.pokoj, format:':e' }
   select luzka [ 60,250,150,] { title:'^typ lůžka' type:'map', data:ds_osoba.luzko, options:ds_luzko.hodnota }
-  check postylka [220,240,150,] { title:'postýlka', css:'CheckT', data:ds_osoba.postylka }
+  check postylka [220,240,90,] { title:'postýlka', css:'CheckT', data:ds_osoba.postylka }
+  field zvire [280,250,15,] { title:'^zvíře', data:ds_osoba.zvire }
   field       [  0,290,210,] { title:'^poznámka' data:ds_osoba.pozn }
   button      [220,289,,] { title:'zapsat změny' func onclick() { 
     osoba_save()
@@ -621,19 +632,29 @@ form _kniha /*[,,300,100]*/ { css:'ds_form'
   field celk3   [430,100, 50,] { format:'r' }
 //  // text faktury
 //  label faktura [0,140,640,]
-  // faktury
-  button [500,100,,] { title:'Faktura za objednávku' 
+  // parametry faktury
+  field fakt_num [494,70,40,] { title:'^fakt.číslo' }
+  field fakt_zal [544,70,50,] { title:'^zálohou' }
+  field fakt_vs  [603,70,50,] { title:'^VS' }
+  field fakt_ss  [663,70,33,] { title:'^SS' }
+  button [494,100,,] { title:'Faktura za objednávku' 
     func onclick() { var f:object
       clear();
 //      f= php.ds2_faktura({typ:'konečná',idos:idos,cenik:cenik_roku,show:1,save:0});
-      f= php.ds2_faktura({typ:'konečná',obj:the_order,idos:idos,cenik:cenik_roku,show:1,save:0});
+      f= php.ds2_faktura({typ:'konečná',obj:the_order,idos:idos,cenik:cenik_roku,show:1,save:0,
+          num:fakt_num,zaloha:fakt_zal,vs:fakt_vs,ss:fakt_ss});
       page.faktura= f.html;
+      form.plain();
+      if (f.err) alert(f.err);
   }}
-  button [641,100,,] { title:'PDF' 
+  button [637,100,,] { title:'PDF' 
     func onclick() { var f:object
       clear();
-      f= php.ds2_faktura({typ:'konečná',obj:the_order,idos:idos,cenik:cenik_roku,show:1,save:1});
+      f= php.ds2_faktura({typ:'konečná',obj:the_order,idos:idos,cenik:cenik_roku,show:1,save:1,
+          num:fakt_num,zaloha:fakt_zal,vs:fakt_vs,ss:fakt_ss});
       page.faktura= f.html;
+      form.plain();
+      if (f.err) alert(f.err);
   }}
 
   // ==> výpočet pro Knihu hostí
@@ -646,24 +667,3 @@ form _kniha /*[,,300,100]*/ { css:'ds_form'
     copy_by_name(cena.fields,form);
   }
 }
-
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
