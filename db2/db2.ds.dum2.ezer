@@ -17,10 +17,10 @@ menu mo {type:'left'
   func onclick(x:ezer) { show_order(x.par.uid) }
 }
 
-//func onfirstfocus() {
-func onfocus() {
+func onfirstfocus() {
+//func onfocus() {
   var mn: object, it: ezer
-  mn= php.ds2_obj_menu('202308,202403,202404,202405,202406');
+  mn= php.ds2_obj_menu('202403,202404,202405,202406');
   mo.attach_code(mn.cd);
   obj.Init();
   Upravy.Init();
@@ -486,7 +486,7 @@ form _osoba /*[,,300,100]*/ { css:'ds_form'
   select spokoj [  0,250, 50,] { title:'^pokoj' data:ds_osoba.pokoj, format:':e' }
   select luzka [ 60,250,150,] { title:'^typ lůžka' type:'map', data:ds_osoba.luzko, options:ds_luzko.hodnota }
   check postylka [220,240,90,] { title:'postýlka', css:'CheckT', data:ds_osoba.postylka }
-  field zvire [280,250,15,] { title:'^zvíře', data:ds_osoba.zvire }
+  check zvire [280,240,15,] { title:'zvíře', css:'CheckT', data:ds_osoba.zvire }
   field       [  0,290,210,] { title:'^poznámka' data:ds_osoba.pozn }
   button      [220,289,,] { title:'zapsat změny' func onclick() { 
     osoba_save()
@@ -633,11 +633,11 @@ form _kniha /*[,,300,100]*/ { css:'ds_form'
 //  // text faktury
 //  label faktura [0,140,640,]
   // parametry faktury
-  field fakt_num [494,70,40,] { title:'^fakt.číslo' }
-  field fakt_zal [544,70,50,] { title:'^zálohou' }
-  field fakt_vs  [603,70,50,] { title:'^VS' }
-  field fakt_ss  [663,70,33,] { title:'^SS' }
-  button [494,100,,] { title:'Faktura za objednávku' 
+  field fakt_num [494,50,40,] { title:'^fakt.číslo' }
+  field fakt_zal [544,50,50,] { title:'^zálohou' }
+  field fakt_vs  [603,50,50,] { title:'^VS' }
+  field fakt_ss  [663,50,33,] { title:'^SS' }
+  button [494,76,,] { title:'Faktura za rodinu' 
     func onclick() { var f:object
       clear();
 //      f= php.ds2_faktura({typ:'konečná',idos:idos,cenik:cenik_roku,show:1,save:0});
@@ -647,7 +647,7 @@ form _kniha /*[,,300,100]*/ { css:'ds_form'
       form.plain();
       if (f.err) alert(f.err);
   }}
-  button [637,100,,] { title:'PDF' 
+  button [637,76,,] { title:'PDF' 
     func onclick() { var f:object
       clear();
       f= php.ds2_faktura({typ:'konečná',obj:the_order,idos:idos,cenik:cenik_roku,show:1,save:1,

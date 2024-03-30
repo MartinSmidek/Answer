@@ -93,7 +93,7 @@ function ds2_faktura($par) {  //debug($par,'ds2_faktura');
   $vals['{datum1}']= date('j. n. Y');
   $vals['{datum2}']= date('j. n. Y',strtotime("+14 days"));
   // redakce faktury
-  $lheight_tabulka= $vals['{polozek}']>=7 ? 1.5 : 2;
+  $lheight_tabulka= $vals['{polozek}']>7 ? 1.5 : 2;
   $html= '';
   if ($show) {
     $html.= "<div class='PDF' style='scale:85%;position:absolute'>";
@@ -166,7 +166,7 @@ function ds2_faktura($par) {  //debug($par,'ds2_faktura');
 }
   return (object)array('html'=>$html,'err'=>'');
 }
-# ---------------------------------------------------------------------------------- ds2 zaloha_data
+# --------------------------------------------------------------------------------- ds2 faktura_data
 # vrátí data podle typu faktury
 # zálohová: objednavka => odberatel, adresa, obdobi, QR-castka, tabulka
 # konečná:  objednávka,osoba => adresa, obdobi, QR-castka, tabulka
@@ -550,7 +550,7 @@ function ds2_cena_pobytu($order,$idos,$cenik_roku,$pro=0) { trace();
     while ( $ros && $os= pdo_fetch_object($ros) ) {
       if ( !$os->pokoj ) { $y->err= "není zapsán pokoj pro $y->prijmeni $y->jmeno "; goto end; }
       $host_pol= ds2_polozky_hosta($ob,$os,$luzko_pokoje,$ds_luzko,$ds_strava);
-//      debug($host_pol,"ds2 polozky_hosta");
+      debug($host_pol,"ds2 polozky_hosta");
       foreach ($host_pol->cena as $field=>$pocet) {
         if (isset($y->fakt[$i][$field]) && $pocet) {
           $y->fakt[$i][$field][1]+= $pocet;
@@ -560,7 +560,7 @@ function ds2_cena_pobytu($order,$idos,$cenik_roku,$pro=0) { trace();
         $y->host= $host_pol;
       }
       ds2_platba_hosta($cenik_roku,$host_pol->cena,$fields,$i,true);
-//      debug($fields,"ds2 platba_hosta ");
+      debug($fields,"ds2 platba_hosta ");
       foreach ($fields as $field=>$value) {
         $y->fields->$field+= $value;
         if (isset($y->fakt[$i][$field])) {
