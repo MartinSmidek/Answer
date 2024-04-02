@@ -9,8 +9,75 @@
 var d_cond=0
 var d_day=''
 
+# ===========================================================================================> BANKA
+panel fio {type:'right', title:"BANKA", _sys:'fio'
+  use info: form _right [12,4,,]
+  use ucty: form _ucty [12,4,,]
+  menu {type:'left'
+    menu {title:'Pohyby na účtech', type:'group'
+      item {title:'Účet YMCA Setkání',       par:{rok:'2024',ucet:1} }
+      item {title:'Účet Dům setkání',        par:{rok:'2024',ucet:2} }
+      func onclick(i:ezer) { var f:object
+        info.header(i); clear();
+        ucty.display(1); info.display(0);
+        ucty.trans.browse_load(`ucet=${i.par.ucet}`);
+      }
+    }
+    menu {title:'Testy', type:'group', active:no
+      item {title:'LOAD DS - 6.-16.3.2024',  par:{fce:'load-ds', od:'2024-03-06', do:'2024-03-16'} }
+      item {title:'LOAD YS - 6.-16.3.2024',  par:{fce:'load-ys', od:'2024-03-06', do:'2024-03-16'} }
+    }
+    func onclick(i:ezer) { var f:object
+      ucty.display(0); info.display(1);
+      info.header(i); clear();
+      f= php.ds2_fio(i.par);
+      info.fill('',f.html);
+    }
+  }
+  form _ucty [,,640,*] {
+    browse trans { rows:10, qry_rows:2
+      show id_platba { data:platba.id_platba }
+      show datum [,,70,] { title:'datum', data:platba.datum, format:'s-q/r' }
+      show castka [,,70,] { title:'částka', data:platba.castka, format:'sq/r' }
+      show nazev [,,120,] { title:'název', data:platba.nazev, format:'sq*' }
+      show protiucet [,,120,] { title:'protiúčet', data:platba.protiucet, format:'sq*r' }
+      show vs [,,40,] { title:'vs', data:platba.vs, format:'sq*r' }
+      show ss [,,40,] { title:'ss', data:platba.ss, format:'sq*r' }
+      show zprava [,,200,] { title:'zpráva', data:platba.zprava, format:'sq*t' }
+      func onrowclick() {
+        form.load(id_platba)
+      }
+    }
+    field datum [10,280,70,] { title:'^datum', data:platba.datum, format:'r' }
+    field castka [90,280,70,] { title:'^částka', data:platba.castka, format:'r' }
+    field nazev [170,280,150,] { title:'^název účtu', data:platba.nazev, format:'' }
+    field zprava [330,280,400,] { title:'^zpráva pro příjemce', data:platba.zprava, format:'' }
+  }
+}
+table platba {
+  number id_platba
+  number id_osoba
+  number id_rodina
+  number id_akce
+  number ucet
+  number ucel
+  date   datum { sql_pipe:'sql_date1' }
+  number castka
+  number mena
+  text   protiucet
+  text   nazev
+  text   ks
+  text   vs
+  text   ss
+  text   ss2
+  text   ident
+  text   zprava
+  text   provedl
+  text   upresneni
+  text   komentar
+}
 # ===========================================================================================> DENÍK
-panel den {type:'plain', title:"Deník", _sys:'den'
+panel den {type:'plain', title:"POKLADNA", _sys:'den'
 
   use dd: form _d_denik [11,0,,]
   use dv: form _d_vyber [670,10,,]

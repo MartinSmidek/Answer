@@ -643,9 +643,11 @@ function ds2_polozky_hosta ($o,$h,$luzko_pokoje,$ds_luzko,$ds_strava) { trace();
   else {
     $pol->ubyt_P= $noci;
   }
-  // program
-  $pol->prog_C= $vek>=$ds2_cena['prog_C']->od  ? 1 : 0;
-  $pol->prog_P= $vek>=$ds2_cena['prog_P']->od && $vek<$ds2_cena['prog_P']->do ? 1 : 0;
+  // program pouze pro akce YMCA
+  if ($o->ds_stav==3) {
+    $pol->prog_C= $vek>=$ds2_cena['prog_C']->od  ? 1 : 0;
+    $pol->prog_P= $vek>=$ds2_cena['prog_P']->od && $vek<$ds2_cena['prog_P']->do ? 1 : 0;
+  }
   return (object)array('host'=>$host,'cena'=>$pol);
 }        
 # ------------------------------------------------------------------------------==> ds2 platba_hosta
@@ -1111,4 +1113,75 @@ function ds2_vek($narozeni,$fromday) {
 //    $vek= round($vek/(60*60*24*365.2425),1);
   }
   return $vek;
+}
+/** =======================================================================================> BANKY **/
+#
+# ------------------------------------------------------------------------------------------ ds2 fio
+# zjištění věku v době zahájení akce
+function ds2_fio($cmd) {
+  global $api_fio_ds, $api_fio_ys, $abs_root;
+  $y= (object)['html'=>''];
+  $y->html= "$cmd->fce<hr>";
+  $token= $api_fio_ds;
+  $ucet= 2;
+  switch ($cmd->fce) {
+    case 'load-ys': // CSV
+      $token= $api_fio_ys;
+      $ucet= 1;
+    case 'load-ds': // CSV
+      $od= $cmd->od;
+      $do= $cmd->do;
+      $format= 'csv';
+      $url= "https://www.fio.cz/ib_api/rest/periods/$token/$od/$do/transactions.$format";
+      $fp= fopen($url,'r');
+//      $data= fgetcsv($f, 1000, ",");
+      $decode= 0;
+      while ($fp && !feof($fp) && ($line= fgets($fp,4096))) {
+        display($line);
+        if (!strncmp($line,'ID pohybu',9)) {
+          $decode= 1;
+          continue;
+        }
+        if ($decode) {
+          $d= str_getcsv($line,';');
+          debug($d);
+          $mame= select('id_platba','platba',"id_platba='$d[0]'");
+          if (!$mame) {
+            $datum= sql_date1($d[1],1);
+            $castka= str_replace(',','.',$d[2]);
+            $mena= $d[3]=='CZK' ? 0 : 1;
+            $proti= "$d[4]/$d[6]";
+            $nazev= $d[5];
+            $ident= $d[11];
+            $zprava= $d[12]==$ident ? '' : $d[12];
+            $komentar= $d[16]==$ident ? '' : $d[16];
+            query("INSERT INTO platba (id_platba,ucet,datum,castka,mena,protiucet,nazev,"
+                . "ks,vs,ss,"
+                . "ident,zprava,provedl,upresneni,komentar) VALUES ("
+                . "$d[0],$ucet,'$datum',$castka,$mena,'$proti','$nazev', "
+                . "'$d[8]','$d[9]','$d[10]',"
+                . "'$ident','$zprava','$d[14]','$d[15]','$komentar' )");
+          }
+        }
+      }
+      fclose($fp);
+//      
+//      $fname= "fio_$od.$format";
+//      $f_abs= "$abs_root/docs/$fname";
+//      file_put_contents($f_abs, $csv);
+//      $y->html.= "$url<hr>$xml";
+      break;
+    case 'test':
+      $od= $do= $cmd->den;
+      $format= $cmd->format;
+      $url= "https://www.fio.cz/ib_api/rest/periods/$api_fio_ds/$od/$do/transactions.$format";
+      $xml= file_get_contents($url);
+      debug($xml);
+      $fname= "fio_$od.$format";
+      $f_abs= "$abs_root/docs/$fname";
+      file_put_contents($f_abs, $xml);
+      $y->html.= "$url<hr>$xml";
+      break;
+  }
+  return $y;
 }

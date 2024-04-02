@@ -4,7 +4,7 @@
 menu db2 { type:'main', title:'db2', active:*, _sys:'*'
   func onstart() { php.table_lock('none'); } // uvolni všechny zámky řádků tabulek přihlášeného 
   var global: text,
-  tabs pok {title:"[fa-eur] Pokladna", _sys:'*',  include:'onclick,db2.pok', active:*, skill:'yp' }
+  tabs pok {title:"[fa-eur] Finance", _sys:'*',  include:'onclick,db2.pok', active:*, skill:'yp' }
 //  tabs eko {title:"[fa-stack-overflow] Ekonomika", _sys:'*',  include:'onclick,ys2.eko', active:*, skill:'ye' }
   tabs ds {title:"[fa-home] Dům", _sys:'*',  include:'onclick', active:*, skill:'yd' }
   tabs akce2 {title:"[fa-database] Databáze", _sys:'*', include:'onload,db2.akce2', active:*, skill:'fa;ya;mrop'
@@ -29,6 +29,7 @@ menu db2 { type:'main', title:'db2', active:*, _sys:'*'
           pobyt: "id_pobyt>*,id_akce>akce,i0_rodina>rodina,hnizdo,funkce,web_changes,web_zmena",
           prihlaska: "id_prihlaska>-,id_akce>akce,id_pobyt>pobyt,id_rodina>rodina,id_osoba>osoba,email,stav",
           uhrada:"id_uhrada>*,id_pobyt>pobyt,u_poradi,u_castka,u_datum,u_zpusob,u_stav,u_za",
+          platba:"id_platba>*,id_akce>akce,id_osoba>osoba,id_rodina>rodina,castka,datum,nazev",
           spolu: "id_spolu>-,id_pobyt>pobyt,id_osoba>osoba,access,s_hnizdo,s_role,web_zmena",
           osoba: "id_osoba>*,access,deleted,jmeno,prijmeni,web_zmena",
           osoba_geo: "id_osoba>osoba,kod_obec,stav",
