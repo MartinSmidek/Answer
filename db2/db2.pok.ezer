@@ -10,7 +10,7 @@ var d_cond=0
 var d_day=''
 
 # ===========================================================================================> BANKA
-panel fio {type:'right', title:"BANKA", _sys:'fio'
+panel fio {type:'right', title:"BANKA", _sys:'fio', skill:'a'
   use info: form _right [12,4,,]
   use ucty: form _ucty [12,4,,]
   menu {type:'left'
