@@ -88,7 +88,7 @@ function ds2_faktura($par) {  //debug($par,'ds2_faktura');
   $vals['{QR-ds}']= urlencode('YMCA Setkání');
   $vals['{QR-vs}']= $vals['{VS}']= $par->vs;
   $vals['{QR-ss}']= $vals['{SS}']= $par->ss;
-  $vals['{QR-pozn}']= urlencode("objednávka $pobyt->order v Domě setkání");
+  $vals['{QR-pozn}']= urlencode("platba za pobyt v Domě setkání");
   // doplnění obecných fakturačních údajů
   $vals['{datum1}']= date('j. n. Y');
   $vals['{datum2}']= date('j. n. Y',strtotime("+14 days"));
@@ -191,7 +191,7 @@ function ds2_faktura_data($par) {
     // přečtení ceníku daného roku
     $rok= date('Y',$o->untilday);
     ds2_cenik($rok);
-    if ( !count($ds2_cena) ) { $x->err= "není ceník pro $rok"; goto end; }
+    if ( !count($ds2_cena) ) { fce_err("není ceník pro $rok"); goto end; }
     // ubytování může mít slevu
     $sleva= $o->sleva ? $o->sleva/100 : '';
     $polozky[]= ds2_c('noc_L',$dnu*($o->adults + $o->kids_10_15 + $o->kids_3_9),$sleva);
@@ -224,10 +224,10 @@ function ds2_faktura_data($par) {
     $pobyt= ds2_cena_pobytu($order,$par->idos,0,2); // pro rodinu hosta
 //    debug($pobyt,"ds2_cena_pobytu($order,$par->idos,0,2)");
     $fakt= $pobyt->fakt[2];
-    $host= $pobyt->host->host;
+//    $host= $pobyt->host->host;
     $vals['{adresa}']= $pobyt->fields->adresa;
     $obdobi= $pobyt->obdobi;
-    foreach ((array)$fakt as $pol=>list($cena,$pocet,$dph)) {
+    foreach ((array)$fakt as $pol=>list(,$pocet,)) {
       $polozky[]= ds2_c($pol,$pocet,$sleva);
     }
 //    debug($polozky,'konečná - položky');
@@ -462,7 +462,7 @@ function ds2_cenik_list($cenik_roku=0,$order=0,$host=0) { trace();
   }
   if ( $host ) {
     $pol= (object)array();
-    $cen= (object)array();
+//    $cen= (object)array();
     $opr= (object)array();
     $fields= (object)array();
     // číselníky 
@@ -590,10 +590,12 @@ function ds2_polozky_hosta ($o,$h,$luzko_pokoje,$ds_luzko,$ds_strava) { trace();
   global $ds2_cena;
   // výpočet
   $hf= sql2stamp($h->fromday); $hu= sql2stamp($h->untilday);
-  $od_ts= $hf ? $hf : $o->fromday;  $od= date('j.n',$od_ts);
-  $do_ts= $hu ? $hu : $o->untilday; $do= date('j.n',$do_ts);
+  $od_ts= $hf ? $hf : $o->fromday;  
+//  $od= date('j.n',$od_ts);
+  $do_ts= $hu ? $hu : $o->untilday; 
+//  $do= date('j.n',$do_ts);
   $vek= ds2_vek($h->narozeni,$o->fromday);
-  $narozeni= $h->narozeni ? sql_date1($h->narozeni): '';
+//  $narozeni= $h->narozeni ? sql_date1($h->narozeni): '';
   $strava= $h->strava ? $h->strava : $o->board;
   // připsání řádku
   $host= array();
@@ -644,9 +646,10 @@ function ds2_polozky_hosta ($o,$h,$luzko_pokoje,$ds_luzko,$ds_strava) { trace();
     $pol->ubyt_P= $noci;
   }
   // program pouze pro akce YMCA
-  if ($o->ds_stav==3) {
-    $pol->prog_C= $vek>=$ds2_cena['prog_C']->od  ? 1 : 0;
-    $pol->prog_P= $vek>=$ds2_cena['prog_P']->od && $vek<$ds2_cena['prog_P']->do ? 1 : 0;
+//  debug($o);
+  if ($o->state==3) {
+    $pol->prog_C= $vek>=$ds2_cena['prog_C']->od  ? $noci : 0;
+    $pol->prog_P= $vek>=$ds2_cena['prog_P']->od && $vek<$ds2_cena['prog_P']->do ? $noci : 0;
   }
   return (object)array('host'=>$host,'cena'=>$pol);
 }        
@@ -665,7 +668,7 @@ function ds2_platba_hosta ($cenik_roku,$polozky,$platba,$i='',$podrobne=false) {
       $one->$typ+= $cena;
       list($typ_)= explode('_',$typ);
       if ( $polozky->$typ ) {
-        $za_noc= in_array($typ_,array('noc','strava','ubyt'));
+        $za_noc= in_array($typ_,array('noc','strava','ubyt','prog'));
         $cena= $za_noc ? $cena*$polozky->noci : $cena;
         $platba->$druh+= $cena;
         if ( $podrobne ) {
@@ -775,7 +778,7 @@ function ds2_rooms_help($version=1) {
 # určující je datum zahájení pobytu v objednávce
 # $ym_list = yyyymm,yyyymm,... pro omezení levého menu pro ladění
 function ds2_obj_menu($ym_list=null) {
-  global $pdo_db, $ezer_version;
+  global $ezer_version;
   $omezeni= false;
   if ( $ym_list ) {
     $omezeni= explode(',',$ym_list);
@@ -1021,7 +1024,7 @@ function ds2_xls_hoste($orders,$mesic_rok) {  #trace('','win1250');
 __XLS;
   $n= 4;
   foreach ($x->hoste as $host) {
-    list($jmeno,$prijmeni,$adresa,$narozeni,$telefon,$email,$termin,$poplatek,$akce,$vek)= (array)$host;
+    list($jmeno,$prijmeni,$adresa,$narozeni,$telefon,$email,$termin,$poplatek,$akce,)= (array)$host;
     $xls.= <<<__XLS
       |A$n $akce    |B$n $jmeno |C$n $prijmeni       |D$n $adresa   |E$n $narozeni ::right date
       |F$n $telefon |G$n $email |H$n $termin ::right |I$n $poplatek
@@ -1055,7 +1058,7 @@ function ds2_hoste($orders,$rok) {  #trace('','win1250');
   ds2_cenik($rok);
 //                                      debug($ds2_cena,'ds_cena',(object)array('win1250'=>1));
   $x= (object)array();
-  $x->table= "klienti_$obdobi";
+//  $x->table= "klienti_$obdobi";
   $x->hoste= array();
   ezer_connect('setkani');
   // zjištění klientů zahajujících pobyt v daném období
@@ -1119,23 +1122,32 @@ function ds2_vek($narozeni,$fromday) {
 # ------------------------------------------------------------------------------------------ ds2 fio
 # zjištění věku v době zahájení akce
 function ds2_fio($cmd) {
-  global $api_fio_ds, $api_fio_ys, $abs_root;
-  $y= (object)['html'=>''];
+  global $api_fio_ds, $api_fio_ys;
+  $y= (object)['html'=>'','err'=>''];
   $y->html= "$cmd->fce<hr>";
+  $n= 0;
   $token= $api_fio_ds;
   $ucet= 2;
   switch ($cmd->fce) {
     case 'load-ys': // CSV
       $token= $api_fio_ys;
-      $ucet= 1;
+      $ucet= 1; // načítání plateb YS
     case 'load-ds': // CSV
       $od= $cmd->od;
-      $do= $cmd->do;
+      if ($od=='*') {
+        $od= select('MAX(datum)','platba',"ucet=$ucet");
+        if (!$od) {
+          $y->err= "tabulka platba neobsahuje žádné položky pro účet $ucet";
+          goto end;
+        }
+      }
+      $do= $cmd->do=='*' ? date('Y-m-d') : $cmd->do;
       $format= 'csv';
       $url= "https://www.fio.cz/ib_api/rest/periods/$token/$od/$do/transactions.$format";
       $fp= fopen($url,'r');
 //      $data= fgetcsv($f, 1000, ",");
       $decode= 0;
+      $dat_max= '';
       while ($fp && !feof($fp) && ($line= fgets($fp,4096))) {
         display($line);
         if (!strncmp($line,'ID pohybu',9)) {
@@ -1148,6 +1160,7 @@ function ds2_fio($cmd) {
           $mame= select('id_platba','platba',"id_platba='$d[0]'");
           if (!$mame) {
             $datum= sql_date1($d[1],1);
+            $dat_max= max($dat_max,$datum);
             $castka= str_replace(',','.',$d[2]);
             $mena= $d[3]=='CZK' ? 0 : 1;
             $proti= "$d[4]/$d[6]";
@@ -1155,12 +1168,16 @@ function ds2_fio($cmd) {
             $ident= $d[11];
             $zprava= $d[12]==$ident ? '' : $d[12];
             $komentar= $d[16]==$ident ? '' : $d[16];
-            query("INSERT INTO platba (id_platba,ucet,datum,castka,mena,protiucet,nazev,"
+            $stav= $castka>0 ? 5 : 1;
+            $vs= ltrim($d[9]," 0");
+            $ss= ltrim($d[10]," 0");
+            query("INSERT INTO platba (id_platba,stav,ucet,datum,castka,mena,protiucet,nazev,"
                 . "ks,vs,ss,"
                 . "ident,zprava,provedl,upresneni,komentar) VALUES ("
-                . "$d[0],$ucet,'$datum',$castka,$mena,'$proti','$nazev', "
-                . "'$d[8]','$d[9]','$d[10]',"
+                . "$d[0],$stav,$ucet,'$datum',$castka,$mena,'$proti','$nazev', "
+                . "'$d[8]','$vs','$ss',"
                 . "'$ident','$zprava','$d[14]','$d[15]','$komentar' )");
+            $n++;
           }
         }
       }
@@ -1170,18 +1187,91 @@ function ds2_fio($cmd) {
 //      $f_abs= "$abs_root/docs/$fname";
 //      file_put_contents($f_abs, $csv);
 //      $y->html.= "$url<hr>$xml";
-      break;
-    case 'test':
-      $od= $do= $cmd->den;
-      $format= $cmd->format;
-      $url= "https://www.fio.cz/ib_api/rest/periods/$api_fio_ds/$od/$do/transactions.$format";
-      $xml= file_get_contents($url);
-      debug($xml);
-      $fname= "fio_$od.$format";
-      $f_abs= "$abs_root/docs/$fname";
-      file_put_contents($f_abs, $xml);
-      $y->html.= "$url<hr>$xml";
-      break;
+      $y->html= "Nahráno $n plateb - do $dat_max";
+      break; // načítání plateb DS
+    case 'clear-ys':   // ------------------------------- vymazání přiřazení letošních plateb
+      $ucet= 1; // načítání plateb YS
+    case 'clear-ds':
+      $od= $cmd->od;
+      $do= $cmd->do;
+      $n= query("UPDATE platba SET id_oso=0,id_pob=0,id_ord=0,stav=0, ss2='' 
+        WHERE ucet=$ucet AND datum BETWEEN '$od' AND '$do'");
+      $y->html= "Vymazáno $n přiřazení letošních plateb";
+      break; // vymazání přiřazení letošních plateb
+//    case 'delete':   // ------------------------------------------- vymazání letošních plateb
+//      $n= query("DELETE FROM platba WHERE YEAR(datum)=YEAR(NOW())");
+//      $y->html= "Vymazáno $n letošních plateb";
+//      break; // vymazání přiřazení letošních plateb
+    case 'join-ys': // ----------------------------------------------------- přiřazení plateb
+      $na= $nd= $nu= 0;
+      $od= $cmd->od;
+      $do= $cmd->do;
+      // rozpoznání osoby podle protiúčtu
+      $rp= pdo_qry("
+        SELECT id_platba,protiucet FROM platba AS p 
+        WHERE id_oso=0 AND datum BETWEEN '$od' AND '$do'");
+      while ($rp && (list($id_platba,$ucet)= pdo_fetch_array($rp))) {
+        $ido= select('id_oso','platba',"protiucet='$ucet' AND id_oso!=0 ");
+        if ($ido!=false) {
+          query("UPDATE platba SET id_oso=$ido WHERE id_platba=$id_platba");
+          $nu++;
+        }
+      }
+      // platby za akce
+      $rp= pdo_qry("
+        SELECT id_platba,id_osoba,id_pobyt,id_oso
+        FROM platba AS p
+        JOIN join_akce AS ja ON ja.g_kod=p.ss AND YEAR(p.datum)=g_rok
+        JOIN akce AS a ON ja.id_akce=id_duakce
+        JOIN pobyt AS po ON po.id_akce=id_duakce
+        JOIN spolu AS s USING (id_pobyt) -- ON s.id_pobyt=po.id_pobyt
+        JOIN osoba AS o USING (id_osoba) -- ON o.id_osoba=s.id_osoba
+        WHERE id_pob=0 AND LENGTH(ss)=3 AND datum BETWEEN '$od' AND '$do' AND
+          ( id_oso!=0
+          OR vs=CONCAT(SUBSTR(narozeni,3,2),SUBSTR(narozeni,6,2),SUBSTR(narozeni,9,2))
+          OR vs=CONCAT(SUBSTR(narozeni,9,2),SUBSTR(narozeni,6,2),SUBSTR(narozeni,3,2)) )
+      ");
+      while ($rp && (list($id_platba,$ido,$idp,$idoso)= pdo_fetch_array($rp))) {
+        $o= $idoso==0;
+        query("UPDATE platba SET ".($o ? "id_oso=$ido," : '')." id_pob=$idp, stav=6 WHERE id_platba=$id_platba");
+        $na++;
+      }
+      // dary
+      $rp= pdo_qry("
+        SELECT id_platba,vs,ss,protiucet,nazev,zprava FROM platba AS p WHERE id_oso=0 
+          AND (ss IN (22,222) OR zprava RLIKE 'dar') AND datum BETWEEN '$od' AND '$do'
+          -- AND id_platba=26446381639 ");
+      while ($rp && (list($id_platba,$vs,$ss,$ucet,$nazev,$zprava)= pdo_fetch_array($rp))) {
+        // podle dřívější platby
+        $ido= select('id_oso','platba',"protiucet='$ucet' AND id_oso!=0 ");
+//        display("$nazev,$ss,'$ido'");
+        if ($ido==false) {
+//          display("pdo: false");
+          // podle VS
+//          $vs3= 0+substr($vs,2,1);
+          if ($vs[2]>1) {
+            $vs2= (0+$vs[2]) - 5;
+            $vs[2]= $vs2;
+          }
+          $vs= substr($vs,0,6);
+          $ro= pdo_qry("SELECT id_osoba,prijmeni FROM osoba 
+            WHERE deleted='' AND prijmeni!='' AND 
+              CONCAT('$nazev',' ','$zprava') LIKE CONCAT('%',prijmeni,'%') COLLATE utf8_general_ci 
+              AND ( '$vs'=CONCAT(SUBSTR(narozeni,3,2),SUBSTR(narozeni,6,2),SUBSTR(narozeni,9,2))
+                OR '$vs'=CONCAT(SUBSTR(narozeni,9,2),SUBSTR(narozeni,6,2),SUBSTR(narozeni,3,2)) )
+          ");
+          while ($ro && (list($ido,$prijmeni)= pdo_fetch_array($ro))) {
+            break;
+          }
+        }
+        if ($ido) {
+          query("UPDATE platba SET id_oso=$ido, stav=10 WHERE id_platba=$id_platba");
+          $nd++;
+        }
+      }
+      $y->html= "Rozpoznáno $na plateb za akce, $nd darů, $nu osob podle účtu";
+      break; // přiřazení plateb
   }
+end:  
   return $y;
 }
