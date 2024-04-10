@@ -139,6 +139,9 @@ panel fio {type:'right', title:"BANKA", _sys:'fio', skill:'a'
     field protiucet [170,315,150,] { title:'^číslo účtu', data:platba.protiucet, format:'r' }
     label [332,302,400,] { title:'osoba, účast na akci' }
     label platba_za [330,318,561,] { style:'font-size:10pt;color:black' }
+    // zobrazení aktuálních nastavení
+    label [10,340,100,18] { title:'AKCE' }
+    label [110,340,100,18] { style:'font-size:10pt;color:black' }
   }
 }
 table platba {
