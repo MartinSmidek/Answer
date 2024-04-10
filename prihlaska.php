@@ -745,15 +745,15 @@ function do_vyplneni_dat() { // ------------------------------------------------
       $neuplne[]= "Zaškrtněte prosím kdo se akce zúčastní";
       $zapsat= false;
     }      
-    // ------------------------------ mají členové vyplněné všechny údaje?
+    // ------------------------------ mají členové (co jsou na akci) vyplněné všechny údaje?
     $chybi= 0;
     foreach ($cleni as $id=>$clen) {
       $role= get_role($id);
+      $spolu= get('o','spolu',$id);
       if (!isset($clen->_show_)) continue;
       // ---------------------------------------------- deti pečouni
       // zcela nevyplněné děti a pečouny zrušíme
       if (in_array($role,['d','p']) && $id<0) { 
-        $spolu= get('o','spolu',$id);
         $jmeno= get('o','jmeno',$id);
         // pokud není vyplněné jméno a není na akci, zrušíme záznam
         if (!$jmeno && !$spolu) {
@@ -776,7 +776,7 @@ function do_vyplneni_dat() { // ------------------------------------------------
           $mis_upozorneni[$role]= "class=missing"; 
           $neuplne[]= "potvrďte prosím Váš souhlas s upozorněním - ".($role=='a'?'muž':'žena');
         }
-        if (elems_missed('o',$id)) {
+        if (elems_missed('o',$id) && $spolu) {
           $chybi++;
         }
         elem_check($neuplne,'date','datum narození','o','narozeni',$id);
