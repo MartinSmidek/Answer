@@ -9,6 +9,9 @@ menu dbt { type:'main', title:'db2', active:*, _sys:'*'
   tabs ds {title:"[fa-home] Dům", _sys:'*',  include:'onclick', active:*, skill:'yd' }
   tabs akce2 {title:"[fa-database] Databáze", _sys:'*', include:'onload,db2.akce2', active:*, skill:'fa;ya;mrop'
     proc reaccess() {}
+    // objekt obsahující aktuálně vybrané záznamy
+    // {lst:id_akce, ucast:{id_pobyt,id_rodina,id_osoba}, evi:{id_rodina,id_osoba}}
+    func curr() {} 
     panel track { type:'popup'
       proc back_show(kde,klic) {}
     }
