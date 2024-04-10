@@ -123,6 +123,11 @@ proc reaccess() { #==> . reaccess (jen pro YS+FA)
   elim.reaccess;
 }
 # ----------------------------------------------------------------------------==> globální procedury
+# vrací objekt obsahující aktuálně vybrané záznamy
+# {lst:id_akce, ucast:{id_pobyt,id_rodina,id_osoba}, evi:{id_rodina,id_osoba}}
+func curr() {
+  return {lst:{akce:the_duakce},ucast:ucast.curr(),evi:evi.curr()};
+} 
 # nastavení akce jako the_duakce, dopočítání stavových hodnot
 func akce_choose(id_akce) { var a:object, ok:number
   ok= 0;
@@ -179,6 +184,7 @@ panel lst {type:'right', _sys:'*', title:'[fa-futbol-o] AKCE', include:'onload,d
 }
 panel ucast {type:'plain', format:'d', _sys:'*', title:"Účastníci", include:'onload,db2.akce2.ucast',skill:'yaa;faa;caa'
   var the_duakce_local:number    // vynulovani při změně v akci vynutí při fokus překreslení
+  func curr() {return {pobyt:0,rodina:0,osoba:0}}
   proc reaccess() {}
   proc ucast_hnizda() {}                        // nastavení pro akci v hnízdech
   proc ucast_pobyt() {}                         // ukázání pobytu na běžné akci
@@ -209,6 +215,7 @@ panel maia {type:'right', title:'Maily akce', _sys:'*', include:'onclick,db2.akc
 }
 # ======================================================================================> . EVIDENCE
 panel evi [,,,] {type:'right', _sys:'*', title:'[fa-briefcase] EVIDENCE', include:'onload,db2.akce2.evi', skill:'yae;fae;caa;mrop#T',
+  func curr() {return {rodina:0,osoba:0}}
   proc reaccess() {}
   proc rodina_show() {}
   proc osoby_show() {}

@@ -1,4 +1,4 @@
-#pragma library
+//#pragma library
 # ------------------------------------------------------------------------------------------------ #
 # Karty pro pokladní                                                                               #
 #                                                                                                  #
@@ -25,37 +25,30 @@ panel fio {type:'right', title:"BANKA", _sys:'fio', skill:'a'
         ucty.fio.browse_load(ucty.filter());
       }
     }
-    menu {title:'Testy', type:'group', active:no
-      item {title:'[fa-question][fa-futbol-o] YS: JOIN akce - 2024',   
+    menu {title:'Správa účtu: YMCA Setkání', type:'group', active:no
+      item {title:'[fa-question] YS+DS: JOIN akce - 2024',   
         par:{fce:'join-ys', od:'2024-01-01', do:'2024-12-31'} }
-      item {title:'[fa-question][fa-home] DS: JOIN objednávky - 2024', 
-        par:{fce:'join-ds', od:'2024-01-01', do:'2024-12-31'} }
-      item {title:'[fa-question][fa-futbol-o] YS: JOIN akce - 2023',   
+      item {title:'[fa-question] YS+DS: JOIN akce - 2023',   
         par:{fce:'join-ys', od:'2023-01-01', do:'2023-12-31'} }
-      item {title:'[fa-question][fa-home] DS: JOIN objednávky - 2023', 
-        par:{fce:'join-ds', od:'2023-01-01', do:'2023-12-31'} }
-      item {title:'[fa-download][fa-futbol-o] YS:LOAD platby',      
+      item {title:'[fa-download] YS: LOAD platby',      
         par:{fce:'load-ys', od:'*', do:'*'} }
-      item {title:'[fa-download][fa-home] DS: LOAD platby',         
+      item {title:'[fa-times] vymaž letošní přiřazení',
+        par:{fce:'clear-ys', od:'2024-01-01', do:'2024-12-31', confirm:'vymazat přiřazení YS mimo potvrzench'} }
+    }
+    menu {title:'Správa účtu: Dům setkání', type:'group', active:no
+      item {title:'[fa-question] DS: JOIN objednávky - 2024', 
+        par:{fce:'join-ds', od:'2024-01-01', do:'2024-12-31'} }
+      item {title:'[fa-question] DS: JOIN objednávky - 2023', 
+        par:{fce:'join-ds', od:'2023-01-01', do:'2023-12-31'} }
+      item {title:'[fa-download] DS: LOAD platby',         
         par:{fce:'load-ds', od:'*', do:'*'} }
-//      item {title:'[fa-download] LOAD DS - 1.3 - 1.4.2024',  par:{fce:'load-ds', od:'2024-03-01', do:'2024-04-01'} }
-//      item {title:'[fa-download] LOAD YS - 1.3 - 1.4.2024',  par:{fce:'load-ys', od:'2024-03-01', do:'2024-04-01'} }
-      item {title:'[fa-times][fa-futbol-o] vymaž letošní přiřazení',
-        par:{fce:'clear-ys', od:'2024-01-01', do:'2024-12-31', confirm:1} }
-      item {title:'[fa-times][fa-home] vymaž letošní přiřazení',    
-        par:{fce:'clear-ds', od:'2024-01-01', do:'2024-12-31', confirm:1} }
-//      item {title:'[fa-times fa-red] vymaž letošní',    par:{fce:'delete', confirm:1} }
-//      item {title:'[fa-download] YS:LOAD 2023-2024',    par:{fce:'load-ys', od:'2023-01-01', do:'2024-12-31'} }
-//      item {title:'[fa-download] DS:LOAD 2023-2024',    par:{fce:'load-ds', od:'2023-01-01', do:'2024-12-31'} }
-//      item {title:'[fa-question] YS:LOAD březen',       par:{fce:'load-ys', od:'2024-03-01', do:'2024-03-31'} }
-//      item {title:'[fa-question] DS:LOAD březen',       par:{fce:'load-ds', od:'2024-03-01', do:'2024-03-31'} }
-//      item {title:'[fa-download] YS:LOAD 2024',         par:{fce:'load-ys', od:'2024-01-01', do:'2024-12-31'} }
-//      item {title:'[fa-download] DS:LOAD 2024',         par:{fce:'load-ds', od:'2024-01-01', do:'2024-12-31'} }
+      item {title:'[fa-times] vymaž letošní přiřazení',    
+        par:{fce:'clear-ds', od:'2024-01-01', do:'2024-12-31', confirm:'vymazat přiřazení DS mimo potvrzench'} }
     }
     func onclick(i:ezer) { var f:object
       ucty.display(0); 
       info.header(i); clear();
-      if (!i.par.confirm || i.par.confirm && confirm("Opravdu provést?")) {
+      if (!i.par.confirm || i.par.confirm && confirm(`Opravdu ${i.par.confirm}?`)) {
         f= php.ds2_fio(i.par);
         info.fill('',f.html);
         if (f.err) alert(f.err);
@@ -95,10 +88,11 @@ panel fio {type:'right', title:"BANKA", _sys:'fio', skill:'a'
       func onchange() { refresh() }
     }
     browse fio [,20,,] { rows:10, qry_rows:2
-      css_rows:'stav,6:azurovy,7:zeleny,8:azurovy,9:zeleny,10:zluty,11:oranzovy'
+      css_rows:'stav,3:cerveny,6:azurovy,7:zeleny,8:azurovy,9:zeleny,10:zluty,11:oranzovy'
       show id_platba { data:platba.id_platba }
+      show datum_sql { data:platba.datum }
       show stav [,,20,] { title:'stav', data:platba.stav, format:'sqr:e' }
-      show datum [,,70,] { title:'datum', data:platba.datum, format:'s-q/r' }
+      show datum [,,70,] { title:'datum', data:platba.datum, sql_pipe:'sql_date1', format:'s-q/r' }
       show castka [,,70,] { title:'částka', data:platba.castka, format:'sq/r' }
       show id_osoba [,,40,] { title:'osoba', data:platba.id_oso, format:'sq*r:e' }
       show id_pobyt [,,40,] { title:'pobyt', data:platba.id_pob, format:'sq*r:e' }
@@ -109,13 +103,14 @@ panel fio {type:'right', title:"BANKA", _sys:'fio', skill:'a'
       show ss [,,40,] { title:'ss', data:platba.ss, format:'sq*r:e' }
       show zprava [,,200,] { title:'zpráva identifikace', format:'sq*t' 
         expr:"CONCAT(platba.zprava,' ',IF(platba.ident!=platba.nazev,platba.ident,''))"}
-      func onrowclick() { var _akce:array, _osoba:text, _ido:text, _pobyt:text
+      func onrowclick() { var _akce:array, _osoba:array, _ido:text, _pobyt:text, nar:text
         form.load(id_platba);
         platba_za= '';
         if (id_osoba) {
-          _osoba= php.select("CONCAT(jmeno,' ',prijmeni)",'osoba',`id_osoba=${id_osoba}`);
+          _osoba= php.select("CONCAT(jmeno,' ',prijmeni),narozeni",'osoba',`id_osoba=${id_osoba}`);
           _ido= php.tisk2_ukaz_osobu(id_osoba);
-          platba_za= `${_ido} ${_osoba}`;
+          nar= sql2date(_osoba[1]);
+          platba_za= `${_ido} ${_osoba[0]} (${nar})`;
         }
         if (id_pobyt) {
           _akce= php.select('nazev,id_akce','pobyt JOIN akce ON id_akce=id_duakce',`id_pobyt=${id_pobyt}`);
@@ -125,9 +120,14 @@ panel fio {type:'right', title:"BANKA", _sys:'fio', skill:'a'
       }
       func onsubmit() { var f:object
         clear();
-        f= php.ds2_fio({fce:ucet==1 ? 'join-ys' : 'join-ds', od:datum, do:datum});
-        warning(f.html);
-        if (f.err) alert(f.err);
+//        f= php.ds2_fio({fce:'join-ys', od:datum_sql, do:datum_sql});
+        f= php.ds2_fio({fce:'join-ys', platba:id_platba});
+        warning(f.html); if (f.err) alert(f.err);
+        if (ucet==2) {
+          f= php.ds2_fio({fce:'join-ds', od:datum_sql, do:datum_sql});
+          warning(f.html); if (f.err) alert(f.err);
+        }
+        refresh();
       }
     }
     field datum [10,280,70,] { title:'^datum', data:platba.datum, format:'r' }
@@ -137,16 +137,54 @@ panel fio {type:'right', title:"BANKA", _sys:'fio', skill:'a'
       expr:"CONCAT(platba.zprava,' ',IF(platba.ident!=platba.nazev,platba.ident,''))"}
     field id_platba [10,315,120,] { title:'^transakce Fio banky', data:platba.id_platba, format:'r' }
     field protiucet [170,315,150,] { title:'^číslo účtu', data:platba.protiucet, format:'r' }
-    label [332,302,400,] { title:'osoba, účast na akci' }
-    label platba_za [330,318,561,] { style:'font-size:10pt;color:black' }
+    button [348,315,,] {title:'potvrď platbu', func onclick() { var c:object
+      php.ds2_corr_platba(id_platba,'auto');
+      refresh();
+    }}
+    button [431,315,,] {title:'... dar', func onclick() { 
+      php.ds2_corr_platba(id_platba,'dar');
+      refresh();
+    }}
+    label [484,302,400,] { title:'automaticky rozpoznaná osoba (narozena), účast na akci' }
+    label platba_za [482,318,561,] { style:'font-size:10pt;color:black' }
     // zobrazení aktuálních nastavení
-    label [10,340,100,18] { title:'AKCE' }
-    label [110,340,100,18] { style:'font-size:10pt;color:black' }
+    button [10,345,20,42] { title:'?', func onclick() { var c:object, t:object
+      clear();
+      c= akce2.curr();
+      echo(debug(c));
+      t= php.ds2_show_curr(c);
+      x_akce= `zobrazená je <b>AKCE</b> ${t.ucast}`;
+      xx_akce= t.ucast_text;
+      x_evid= `případně v <b>EVIDENCE</b>: ${t.evi}`;
+      xx_evid= t.evi_text;
+    } }
+    label x_akce [40,345,600,18] { style:'font-size:10pt;color:black' }
+    button [348,342,,] {title:'potvrď platbu', func onclick() { var c:object
+      c= akce2.curr();
+      php.ds2_corr_platba(id_platba,'ucast',c);
+      refresh();
+    }}
+    button [431,342,,] {title:'... dar', func onclick() { 
+      php.ds2_corr_platba(id_platba,'dar');
+      refresh();
+    }}
+    label xx_akce [482,345,600,18] { style:'font-size:10pt;color:black' }
+    label x_evid [40,370,600,18] { style:'font-size:10pt;color:black' }
+    button [348,367,,] {title:'potvrď platbu', func onclick() { var c:object
+      c= akce2.curr();
+      php.ds2_corr_platba(id_platba,'evi',c);
+      refresh();
+    }}
+    button [431,367,,] {title:'... dar', func onclick() { 
+      php.ds2_corr_platba(id_platba,'dar');
+      refresh();
+    }}
+    label xx_evid [482,369,600,18] { style:'font-size:10pt;color:black' }
   }
 }
 table platba {
   number id_platba
-  // 0 - ?, 1 - výdaj, 5 - příjem, 
+  // 0 - ?, 1 - výdaj,3 - vratka, 5 - příjem, 
   // 6 - asi platba za id_akce, 7 - je to platba za id_akce, 
   // 8 - asi platba za id_pobyt, 9 - je to platba za id_pobyt, 
   // 10 - asi dar, 11 - je to dar
@@ -156,7 +194,7 @@ table platba {
   number id_ord
   number ucet
   number ucel
-  date   datum { sql_pipe:'sql_date1' }
+  date   datum 
   number castka
   number mena
   text   protiucet

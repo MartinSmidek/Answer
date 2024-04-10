@@ -7591,15 +7591,17 @@ function akce2_text_prehled($akce,$title) { trace();
 # obsluha různých forem výpisů karet AKCE
 # --------------------------------------------------------------------------------- tisk2 ukaz_osobu
 # zobrazí odkaz na osobu v evidenci
-function tisk2_ukaz_osobu($ido,$barva='') {
+function tisk2_ukaz_osobu($ido,$barva='',$title='') {
   $style= $barva ? "style='color:$barva'" : '';
-  return "<b><a $style href='ezer://akce2.evi.evid_osoba/$ido'>$ido</a></b>";
+  $title= $title ? "title='$title'" : '';
+  return "<b><a $style $title href='ezer://akce2.evi.evid_osoba/$ido'>$ido</a></b>";
 }
 # -------------------------------------------------------------------------------- tisk2 ukaz_rodinu
 # zobrazí odkaz na rodinu v evidenci
-function tisk2_ukaz_rodinu($idr,$barva='') {
+function tisk2_ukaz_rodinu($idr,$barva='',$title='') {
   $style= $barva ? "style='color:$barva'" : '';
-  return "<b><a $style href='ezer://akce2.evi.evid_rodina/$idr'>$idr</a></b>";
+  $title= $title ? "title='$title'" : '';
+  return "<b><a $style $title href='ezer://akce2.evi.evid_rodina/$idr'>$idr</a></b>";
 }
 # --------------------------------------------------------------------------------- tisk2 ukaz_pobyt
 # zobrazí odkaz na řádek s pobytem
@@ -7609,9 +7611,10 @@ function tisk2_ukaz_pobyt($idp,$title='') {
 }
 # --------------------------------------------------------------------------------- tisk2 ukaz_pobyt
 # zobrazí odkaz na řádek s pobytem s případným přepnutím akce
-function tisk2_ukaz_pobyt_akce($idp,$ida,$barva='') {
+function tisk2_ukaz_pobyt_akce($idp,$ida,$barva='',$title='') {
   $style= $barva ? "style='color:$barva'" : '';
-  return "<b><a $style href='ezer://akce2.ucast.ucast_pobyt_akce/$idp/$ida'>$idp</a></b>";
+  $title= $title ? "title='$title'" : '';
+  return "<b><a $style $title href='ezer://akce2.ucast.ucast_pobyt_akce/$idp/$ida'>$idp</a></b>";
 }
 # -------------------------------------------------------------------------------- narozeni2roky_sql
 # zjistí aktuální věk v rocích z data narození 

@@ -62,6 +62,12 @@ proc onblur() {
   [ track.display; track.hide ];
 }
 # --------------------------------------------------------------------------==> . globální procedury
+# informace o aktuálních záznamech
+func curr() {
+  return virgin 
+    ? {pobyt:0, rodina:0, osoba:0} 
+    : {pobyt:the_pobyt, rodina:rod.key_rodina, osoba:rod.cleni.key_osoba};
+}
 # přepnutí organizace
 proc reaccess() { #==> . reaccess - změna
   init_ucast2

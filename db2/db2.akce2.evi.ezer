@@ -12,6 +12,12 @@
 # načtení rodiny a osoby
 # stačí udat jedno z nich - osoba musí být udané členem rodiny
 
+func curr() {
+  return virgin
+    ? {rodina:0, osoba:0}
+    : {rodina:page.rod.key_rodina, osoba:page.oso.key_osoba}
+}
+          
 proc evid_load(ido,idr) { page.evid_load(ido,idr) }
 
 func evid_osoba(_ido)  { 
