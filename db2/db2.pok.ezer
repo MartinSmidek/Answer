@@ -34,6 +34,8 @@ panel fio {type:'right', title:"BANKA", _sys:'fio', skill:'a'
         par:{fce:'load-ys', od:'*', do:'*'} }
       item {title:'[fa-times] vymaž letošní přiřazení',
         par:{fce:'clear-ys', od:'2024-01-01', do:'2024-12-31', confirm:'vymazat přiřazení YS mimo potvrzench'} }
+      item {title:'[fa-times fa-red] ... i loňská včetně potvrzených',
+        par:{fce:'clear-ys', od:'2023-01-01', do:'2024-12-31', all:1, confirm:'vymazat všechna přiřazení YS '} }
     }
     menu {title:'Správa účtu: Dům setkání', type:'group', active:no
       item {title:'[fa-question] DS: JOIN objednávky - 2024', 
@@ -44,6 +46,8 @@ panel fio {type:'right', title:"BANKA", _sys:'fio', skill:'a'
         par:{fce:'load-ds', od:'*', do:'*'} }
       item {title:'[fa-times] vymaž letošní přiřazení',    
         par:{fce:'clear-ds', od:'2024-01-01', do:'2024-12-31', confirm:'vymazat přiřazení DS mimo potvrzench'} }
+      item {title:'[fa-times fa-red] ... i loňská včetně potvrzených',
+        par:{fce:'clear-ds', od:'2023-01-01', do:'2024-12-31', all:1, confirm:'vymazat všechna přiřazení DS '} }
     }
     func onclick(i:ezer) { var f:object
       ucty.display(0); 

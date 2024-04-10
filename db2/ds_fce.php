@@ -1227,6 +1227,7 @@ function ds2_fio($cmd) {
             $zprava= $d[12]==$ident ? '' : $d[12];
             $komentar= $d[16]==$ident ? '' : $d[16];
             $stav= $castka>0 ? 5 : 1;
+            $vs= $d[9];
 //            $vs= ltrim($d[9]," 0");
             $ss= ltrim($d[10]," 0");
             query("INSERT INTO platba (id_platba,stav,ucet,datum,castka,mena,protiucet,nazev,"
@@ -1250,8 +1251,9 @@ function ds2_fio($cmd) {
     case 'clear-ds':
       $od= $cmd->od;
       $do= $cmd->do;
-      $n= query("UPDATE platba SET id_oso=0,id_pob=0,id_ord=0,stav=5, ss2='' 
-        WHERE ucet=$ucet AND datum BETWEEN '$od' AND '$do' AND stav NOT IN (1,7,9,11) ");
+      $AND= $cmd->all ? '' : "AND stav NOT IN (1,7,9,11)";
+      $n= query("UPDATE platba SET id_oso=0,id_pob=0,id_ord=0,stav=IF(castka>0,5,1), ss2='' 
+        WHERE ucet=$ucet AND datum BETWEEN '$od' AND '$do' $AND  ");
       $y->html= "Vymazáno $n přiřazení letošních plateb";
       break; // vymazání přiřazení letošních plateb
 //    case 'delete':   // ------------------------------------------- vymazání letošních plateb
@@ -1259,7 +1261,7 @@ function ds2_fio($cmd) {
 //      $y->html= "Vymazáno $n letošních plateb";
 //      break; // vymazání přiřazení letošních plateb
     case 'join-ys': // ----------------------------------------------------- přiřazení plateb
-      $na= $nd= $nu= 0;
+      $na= $nd= $nu= $nv= 0;
       $omezeni= $cmd->platba
           ? "id_platba=$cmd->platba" 
           : "datum BETWEEN '$cmd->od' AND '$cmd->do'";
@@ -1284,7 +1286,7 @@ function ds2_fio($cmd) {
         JOIN spolu AS s USING (id_pobyt) -- ON s.id_pobyt=po.id_pobyt
         JOIN osoba AS o USING (id_osoba) -- ON o.id_osoba=s.id_osoba
         WHERE id_pob=0 AND LENGTH(ss)=3 AND $omezeni AND
-          ( id_oso!=0
+          (id_oso=id_osoba
           OR IF(LENGTH(vs)=6,
               vs=CONCAT(SUBSTR(narozeni,3,2),SUBSTR(narozeni,6,2),SUBSTR(narozeni,9,2))
               OR vs=CONCAT(SUBSTR(narozeni,9,2),SUBSTR(narozeni,6,2),SUBSTR(narozeni,3,2)),
@@ -1300,14 +1302,14 @@ function ds2_fio($cmd) {
       }
       // dary
       $rp= pdo_qry("
-        SELECT id_platba,vs,ss,protiucet,nazev,zprava,ss IN (22,222) OR zprava RLIKE 'dar' AS _dar
-        FROM platba AS p WHERE id_oso=0 AND $omezeni
+        SELECT id_oso,id_platba,vs,ss,protiucet,nazev,zprava,ss IN (22,222) OR zprava RLIKE 'dar' AS _dar
+        FROM platba AS p WHERE $omezeni AND stav IN (5)
           -- AND id_platba=26446381639 ");
-      while ($rp && (list($id_platba,$vs,$ss,$ucet,$nazev,$zprava,$dar)= pdo_fetch_array($rp))) {
-        // podle dřívější platby
-        $ido= select('id_oso','platba',"protiucet='$ucet' AND id_oso!=0 ");
+      while ($rp && (list($idoso,$id_platba,$vs,$ss,$ucet,$nazev,$zprava,$dar)= pdo_fetch_array($rp))) {
+//        // podle dřívější platby
+//        $ido= select('id_oso','platba',"protiucet='$ucet' AND id_oso!=0 ");
 //        display("$nazev,$ss,'$ido'");
-        if ($ido==false) {
+//        if ($ido==false) {
           if ((strlen($vs)==6||strlen($vs)==10) && $vs[2]>1) {
             $vs2= (0+$vs[2]) - 5;
             $vs[2]= $vs2;
@@ -1329,14 +1331,17 @@ function ds2_fio($cmd) {
           while ($ro && (list($ido,$prijmeni)= pdo_fetch_array($ro))) {
             break;
           }
+//        }
+        if ($ido && !$idoso) {
+          query("UPDATE platba SET id_oso=$ido WHERE id_platba=$id_platba");
+          $nv++;
         }
-        if ($ido) {
-          $stav= $dar ? ", stav=10" : '';
-          query("UPDATE platba SET id_oso=$ido $stav WHERE id_platba=$id_platba");
+        if ($ido && $dar) {
+          query("UPDATE platba SET stav=10 WHERE id_platba=$id_platba");
           $nd++;
         }
       }
-      $y->html= "Rozpoznáno $na plateb za akce, $nd darů, $nu osob podle účtu";
+      $y->html= "Rozpoznáno $na plateb za akce, $nd darů, $nu osob podle účtu, $nv podle VS a jména";
       break; // přiřazení plateb
   }
 end:  
