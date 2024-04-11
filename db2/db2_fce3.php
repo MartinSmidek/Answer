@@ -16319,7 +16319,7 @@ function db2_copy_test_db($db) {  trace();
   . "akce,cenik,pobyt,spolu,osoba,tvori,rodina,g_akce,join_akce,prihlaska,"
   . "dar,uhrada,"
   . "dopis,mail,mailist,"
-  . "pdenik,person,pokladna"
+  . "pdenik,person,pokladna,platba"
   );
   $msg.= "<h3>Kopie databáze ezer_{$db} do ezer_{$db}_test</h3>";
   foreach ($tabs as $xtab ) {
