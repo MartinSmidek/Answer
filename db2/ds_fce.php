@@ -1162,10 +1162,14 @@ function ds2_corr_platba($id_platba,$typ,$c=null) {
         WHERE id_platba=$id_platba AND stav IN (5,10)");
       break;
     case 'auto':
-      query("UPDATE platba SET stav=stav+2
+      query("UPDATE platba SET stav=stav+1
         WHERE id_platba=$id_platba AND stav IN (1,6,8,10)");
       break;
-    case 'ucast':
+    case 'akce':
+      query("UPDATE platba SET id_oso={$c->ucast->osoba},id_pob={$c->ucast->pobyt}, stav=7
+        WHERE id_platba=$id_platba");
+      break;
+    case 'pobyt':
       query("UPDATE platba SET id_oso={$c->ucast->osoba},id_pob={$c->ucast->pobyt}, stav=9
         WHERE id_platba=$id_platba");
       break;
