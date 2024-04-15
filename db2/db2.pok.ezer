@@ -172,39 +172,39 @@ panel fio {type:'right', title:"BANKA", _sys:'fio', skill:'a'
     }}
     // účastníci akce
     label x_akce [40,345,600,18] { style:'font-size:10pt;color:black' }
-    button [348,342,,] {title:'potvrď platbu'
+    button [348,340,,] {title:'potvrď platbu'
       func onclick() { js.call_root_func('akce2_curr',&this,'onclick_')}
       func onclick_(c:object) { 
         php.ds2_corr_platba(id_platba,'akce',c);
         refresh();
     }}
-    button [431,342,,] {title:'... dar', func onclick() { 
+    button [431,340,,] {title:'... dar', func onclick() { 
       php.ds2_corr_platba(id_platba,'dar');
       refresh();
     }}
     label xx_akce [482,345,600,18] { style:'font-size:10pt;color:black' }
     // evidence
     label x_evid [40,370,600,18] { style:'font-size:10pt;color:black' }
-    button [348,367,,] {title:'potvrď platbu'
+    button [348,365,,] {title:'potvrď platbu'
       func onclick() { js.call_root_func('akce2_curr',&this,'onclick_')}
       func onclick_(c:object) { 
         php.ds2_corr_platba(id_platba,'evi',c);
         refresh();
     }}
-    button [431,367,,] {title:'... dar', func onclick() { 
+    button [431,365,,] {title:'... dar', func onclick() { 
       php.ds2_corr_platba(id_platba,'dar');
       refresh();
     }}
     label xx_evid [482,369,600,18] { style:'font-size:10pt;color:black' }
     // objednávky DS
     label x_dum [40,395,600,18] { style:'font-size:10pt;color:black' }
-    button [348,392,,] {title:'potvrď platbu'
+    button [348,390,,] {title:'potvrď platbu'
       func onclick() { js.call_root_func('akce2_curr',&this,'onclick_')}
       func onclick_(c:object) {
         php.ds2_corr_platba(id_platba,'order',c);
         refresh();
     }}
-    button [431,392,,] {title:'... dar', func onclick() {
+    button [431,390,,] {title:'... dar', func onclick() {
       php.ds2_corr_platba(id_platba,'dar');
       refresh();
     }}
