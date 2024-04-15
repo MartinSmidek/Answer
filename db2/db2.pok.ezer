@@ -107,7 +107,7 @@ panel fio {type:'right', title:"BANKA", _sys:'fio', skill:'a'
       show ss [,,40,] { title:'ss', data:platba.ss, format:'sq*r:e' }
       show zprava [,,200,] { title:'zpráva identifikace', format:'sq*t' 
         expr:"CONCAT(platba.zprava,' ',IF(platba.ident!=platba.nazev,platba.ident,''))"}
-      func onrowclick() { var _akce:array, _osoba:array, _ido:text, _pobyt:text, nar:text
+      func onrowclick() { var _akce:array, _osoba:array, _ido:text, _idx:text, _pobyt:text, nar:text
         form.load(id_platba);
         platba_za= '';
         if (id_osoba) {
@@ -120,6 +120,10 @@ panel fio {type:'right', title:"BANKA", _sys:'fio', skill:'a'
           _akce= php.select('nazev,id_akce','pobyt JOIN akce ON id_akce=id_duakce',`id_pobyt=${id_pobyt}`);
           _pobyt= php.tisk2_ukaz_pobyt_akce(id_pobyt,_akce[1]);
           platba_za= `${platba_za}, ${_pobyt} ${_akce[0]}`;
+        }
+        if (id_order) {
+          _idx= php.ds2_ukaz_objednavku(id_order);
+          platba_za= `${platba_za}, ${_idx}`;
         }
       }
       func onsubmit() { var f:object
@@ -152,17 +156,21 @@ panel fio {type:'right', title:"BANKA", _sys:'fio', skill:'a'
     label [484,302,400,] { title:'automaticky rozpoznaná osoba (narozena), účast na akci' }
     label platba_za [482,318,561,] { style:'font-size:10pt;color:black' }
     // zobrazení aktuálních nastavení
-    button [10,345,20,42] { title:'?'
+    button [10,345,20,66] { title:'?'
       func onclick() { js.call_root_func('akce2_curr',&this,'onclick_')}
       func onclick_(c:object) { var t:object
         clear();
         echo(debug(c));
         t= php.ds2_show_curr(c);
+        echo(debug(t));
         x_akce= `zobrazená je <b>AKCE</b> ${t.ucast}`;
         xx_akce= t.ucast_text;
         x_evid= `případně v <b>EVIDENCE</b>: ${t.evi}`;
         xx_evid= t.evi_text;
+        x_dum= `případně v <b>UBYTOVÁNÍ DS</b>: ${t.dum}`;
+        xx_dum= t.dum_text;
     }}
+    // účastníci akce
     label x_akce [40,345,600,18] { style:'font-size:10pt;color:black' }
     button [348,342,,] {title:'potvrď platbu'
       func onclick() { js.call_root_func('akce2_curr',&this,'onclick_')}
@@ -175,6 +183,7 @@ panel fio {type:'right', title:"BANKA", _sys:'fio', skill:'a'
       refresh();
     }}
     label xx_akce [482,345,600,18] { style:'font-size:10pt;color:black' }
+    // evidence
     label x_evid [40,370,600,18] { style:'font-size:10pt;color:black' }
     button [348,367,,] {title:'potvrď platbu'
       func onclick() { js.call_root_func('akce2_curr',&this,'onclick_')}
@@ -187,6 +196,19 @@ panel fio {type:'right', title:"BANKA", _sys:'fio', skill:'a'
       refresh();
     }}
     label xx_evid [482,369,600,18] { style:'font-size:10pt;color:black' }
+    // objednávky DS
+    label x_dum [40,395,600,18] { style:'font-size:10pt;color:black' }
+    button [348,392,,] {title:'potvrď platbu'
+      func onclick() { js.call_root_func('akce2_curr',&this,'onclick_')}
+      func onclick_(c:object) {
+        php.ds2_corr_platba(id_platba,'order',c);
+        refresh();
+    }}
+    button [431,392,,] {title:'... dar', func onclick() {
+      php.ds2_corr_platba(id_platba,'dar');
+      refresh();
+    }}
+    label xx_dum [482,394,600,18] { style:'font-size:10pt;color:black' }
   }
 }
 table platba {

@@ -773,6 +773,13 @@ function ds2_rooms_help($version=1) {
   return $hlp;
 }
 # =======================================================================================> LEFT MENU
+# ------------------------------------------------------------------------------ ds2 ukaz_objednavku
+# zobrazí odkaz na osobu v evidenci
+function ds2_ukaz_objednavku($idx,$barva='',$title='') {
+  $style= $barva ? "style='color:$barva'" : '';
+  $title= $title ? "title='$title'" : '';
+  return "<b><a $style $title href='ezer://ds.dum2.seek_order/$idx'>$idx</a></b>";
+}
 # ------------------------------------------------------------------------------------- ds2 obj_menu
 # vygeneruje menu pro loňský, letošní a příští rok ve tvaru objektu pro ezer2 pro zobrazení objednávek
 # určující je datum zahájení pobytu v objednávce
@@ -1122,8 +1129,8 @@ function ds2_vek($narozeni,$fromday) {
 # ------------------------------------------------------------------------------------ ds2 show_curr
 # čitelné zobrazení objektu získaného funkcí akce2.curr
 function ds2_show_curr($c) {
-  $evi= $ucast= '';
-  $a_jmeno= $e_jmeno= $a_akce= '';
+  $evi= $ucast= $dum= '';
+  $a_jmeno= $e_jmeno= $a_akce= $d_jmeno= '';
   // akce
   if (($ida= $c->lst->akce)) {
     list($a_akce,$kod)= select("CONCAT(nazev,' ',YEAR(datum_od)),IFNULL(g_kod,'')",
@@ -1150,8 +1157,22 @@ function ds2_show_curr($c) {
     $evi.= ' rodina '.tisk2_ukaz_rodinu($idr,'',$nazev);
     $e_jmeno.= ", $nazev";
   }
+  // Dům setkání - objednávvky
+  debug($c,'ds2_show_curr');
+  if (($idx= $c->dum->order)) {
+    list($jmeno,$prijmeni,$od,$do)= select('firstname,name,fromday,untilday',
+        ' tx_gnalberice_order',"uid=$idx",'setkani');
+    $dum.= " obj. $idx";
+    $mmyyyy= date('mY',$od);
+    $od= date('j.n.',$od);
+    $do= date('j.n.Y',$do);
+    $celkem= $c->dum->celkem ? number_format($c->dum->celkem,2,'.',' ') : '?';
+    $d_jmeno.= wu("$jmeno $prijmeni, $od-$do, $celkem").' Kč';
+    display("$dum|$d_jmeno");
+  }
   return (object)['evi'=>$evi,'evi_text'=>$e_jmeno,
-      'ucast'=>$ucast,'ucast_text'=>"$a_akce, $a_jmeno"];
+      'ucast'=>$ucast,'ucast_text'=>"$a_akce, $a_jmeno",
+      'dum'=>$dum,'dum_text'=>"$d_jmeno",'dum_mmyyyy'=>$mmyyyy];
 }
 # ------------------------------------------------------------------------------------------ ds2 fio
 # zapsání informace do platby
@@ -1169,12 +1190,12 @@ function ds2_corr_platba($id_platba,$typ,$c=null) {
       query("UPDATE platba SET id_oso={$c->ucast->osoba},id_pob={$c->ucast->pobyt}, stav=7
         WHERE id_platba=$id_platba");
       break;
-    case 'pobyt':
-      query("UPDATE platba SET id_oso={$c->ucast->osoba},id_pob={$c->ucast->pobyt}, stav=9
+    case 'evi':
+      query("UPDATE platba SET id_oso={$c->evi->osoba}, stav=7
         WHERE id_platba=$id_platba");
       break;
-    case 'evi':
-      query("UPDATE platba SET id_oso={$c->evi->osoba}, stav=9 
+    case 'order':
+      query("UPDATE platba SET id_ord={$c->dum->order}, stav=9
         WHERE id_platba=$id_platba");
       break;
   }

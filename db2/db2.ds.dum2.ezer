@@ -4,19 +4,9 @@
 #                                                   (c) 2008-2024 Martin Šmídek <martin@smidek.eu> #
 # ------------------------------------------------------------------------------------------------ #
 
-var the_order: number
+var the_order=0
 
-func order_load (ord) {
-  the_order= ord; precti(); compare()
-}
-func show_order (ord) {
-  the_order= ord; order_load(ord)
-}
-
-menu mo {type:'left'
-  func onclick(x:ezer) { show_order(x.par.uid) }
-}
-
+# -------------------------------------------------------------------------==> . inicializace panelu
 func onfirstfocus() {
 //func onfocus() {
   var mn: object, it: ezer
@@ -28,6 +18,33 @@ func onfirstfocus() {
   it.click(1);
   page.ucast.onclick();
 } // vytvoření menu pobytů
+
+# --------------------------------------------------------------------------==> . globální procedury
+# informace o aktuálních záznamech
+func curr() {
+  return {dum:{order:the_order,celkem:kniha.celk3}}; 
+}
+
+# zobraz danou objednavku
+func seek_order(ord) { var myo: text, it: ezer, stamp:number
+  stamp= php.select('fromday',' tx_gnalberice_order',`uid=${ord}`,'setkani');
+  myo= php.date('mY',stamp);
+  echo('click to:',myo);
+  it= mo.part(conc(myo,ord));
+  it.click(1);
+}
+
+func order_load (ord) {
+  the_order= ord; precti(); compare()
+}
+func show_order (ord) {
+  the_order= ord; order_load(ord)
+}
+
+# --------------------------------------------------------------------------==> . menu
+menu mo {type:'left'
+  func onclick(x:ezer) { show_order(x.par.uid) }
+}
 
 // zobrazení objednávky
 func precti  {
