@@ -1347,7 +1347,7 @@ function elems_missed($table,$id=0,$but=[]) { // -------------------------------
   $missed= 0;
   if ($table=='p') {
     foreach ($p_fld as $f=>list(,$title,$typ)) {
-      $v= $vars->pobyt->$f;
+      $v= $vars->pobyt->$f ?? '';
       if (is_array($v) && substr($title,0,1)=='*') {
         $v= $v[1] ?? $v[0];
         if ($v=='' || in_array($typ,['select','sub_select']) && $v==0) {
