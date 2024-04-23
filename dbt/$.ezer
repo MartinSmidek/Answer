@@ -39,8 +39,8 @@ menu dbt { type:'main', title:'db2', active:*, _sys:'*'
     }
   }
 #endif
-#if test_version<1
   tabs syst {title:"[fa-cog] Systém", _sys:'sys', include:'onload,ezer2.syst', active:*
+#if test_version<1
     proc reaccess() {}
     panel oso {type:'right', title:'Osobní nastavení', _sys:'*', include:'onclick,ezer2.pers' }
     panel dat {type:'right', title:'[fa-database] Schema DB', _sys:'*', include:'onload,ezer3.db', skill:'a;ben'
@@ -296,7 +296,9 @@ menu dbt { type:'main', title:'db2', active:*, _sys:'*'
       }
       use info: form right [12,4,,]     { tag:'i' }
     }
+#endif
   }
+#if test_version<1
   tabs doc  {title:"[fa-question] Nápověda", _sys:'*',  include:'onload,ezer2.help' }
   tabs off  {title:"[fa-power-off] Odhlásit", type:'logoff' }
   // přepnutí access - refresh formulářů

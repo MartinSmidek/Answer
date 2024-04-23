@@ -258,6 +258,16 @@ panel cnf {type:'right', title:'[fa-retweet] KONFERENCE', _sys:'*', include:'onc
   proc reaccess() {}
 }
 #else
+group evi {
+  func curr() {return {rodina:0,osoba:0}}
+  proc reaccess() {}
+  proc rodina_show() {}
+  proc osoby_show() {}
+  proc evid_osoba(_ido) { }                     // zobrazení osoby v evidenci
+  proc evid_rodina(_idr) { }                    // zobrazení rodiny v evidenci
+  proc ulozen_gmail() { }
+}
+#endif
 # ==========================================================================================> . ELIM
 panel elim [0,0,965,607] { type:'popup', title:'Duplicity', format:'c', par:°{close:'no'},
     include:'onload,db2.akce2.elim'
@@ -270,16 +280,6 @@ panel elim [0,0,965,607] { type:'popup', title:'Duplicity', format:'c', par:°{c
   proc rodiny_lst (idr,idrs) {}                 // sjednocení navržených kandidátů na duplicitu
   proc cleni  (idr) {}                          // sjednocení členů dané rodiny
 }
-group evi {
-  func curr() {return {rodina:0,osoba:0}}
-  proc reaccess() {}
-  proc rodina_show() {}
-  proc osoby_show() {}
-  proc evid_osoba(_ido) { }                     // zobrazení osoby v evidenci
-  proc evid_rodina(_idr) { }                    // zobrazení rodiny v evidenci
-  proc ulozen_gmail() { }
-}
-#endif
 # ==========================================================================================> COMMON
 # ------------------------------------------------------------------ _the_akce
 # zatím nezobrazená data nastavené akce s klíčem id_duakce
