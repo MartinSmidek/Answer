@@ -9,16 +9,16 @@
     b.raise('onrowclick',b.browse_seek(conc(f.key_id,'=',f.key)))
   }
   
-  func curr() {
-    return dum2 ? dum2.curr() : {};
-  }
+//  func curr() {
+//    return dum2 ? dum2.curr() : {};
+//  }
 
 # ======================================================================================> OBJEDNÁVKY
 panel dum {type:'right', title:"Objednávky", _sys:'obj',include:'onload,db2.ds.dum' } // musí být onload aby se natáhla knihovna
-panel dum2 {type:'right', title:"Objednávky2", _sys:'dum2',include:'onload,db2.ds.dum2' skill:'a;yd2'
-  func curr() { return {dum:{order:0}}; }
-} 
-panel obs2 {type:'right', title:"Obsazenost2", _sys:'obs2',include:'onload,db2.ds.obs2' skill:'a;yd2'} 
+//panel dum2 {type:'right', title:"Objednávky2", _sys:'dum2',include:'onload,db2.ds.dum2' skill:'a;yd2'
+//  func curr() { return {dum:{order:0}}; }
+//} 
+//panel obs2 {type:'right', title:"Obsazenost2", _sys:'obs2',include:'onload,db2.ds.obs2' skill:'a;yd2'} 
 # ===========================================================================================> HOSTÉ
 panel kl {type:'right', title:"Hosté", _sys:'kli', include:'onload,db2.ds.kl' }
 # ============================================================================================> CENY

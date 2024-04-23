@@ -1,19 +1,29 @@
 #pragma library
 # ------------------------------------------------------------------------------------------------ #
-# Karty pro pokladní                                                                               #
+# Karty pro pokladnu a banku                                                                       #
 #                                                                                                  #
-# Ans(w)er/Ezer                                     (c) 2007-2015 Martin Šmídek <martin@smidek.eu> #
+# Ans(w)er/Ezer                                     (c) 2007-2024 Martin Šmídek <martin@smidek.eu> #
 # ------------------------------------------------------------------------------------------------ #
-
 
 var d_cond=0
 var d_day=''
 
 # ===========================================================================================> BANKA
 panel fio {type:'right', title:"BANKA", _sys:'fio', skill:'a'
+
   var ucet: number
   use info: form _right [12,4,,]
-  use ucty: form _ucty [12,40,,]
+  use ucty: form banka._ucty [12,40,,]
+
+  group banka { include:'onload,dbt/db2.fio'
+//  group banka { include:'onload,db2.fio'
+    form _ucty {
+      func Init(mode) {}
+      func Load(ucty) {}
+    }
+  }
+  func onfocus() { ucty.Init('F'); }
+  
   menu m {type:'left', format:'f+', active:m.p.y
     menu p {title:'Pohyby na účtech', type:'group'
       item y {title:'[fa-futbol-o] Účet YMCA Setkání', par:{rok:'2024',ucet:1} }
@@ -21,8 +31,7 @@ panel fio {type:'right', title:"BANKA", _sys:'fio', skill:'a'
       func onclick(i:ezer) { var f:object
         info.header(i); info.fill('',' '); clear();
         ucty.display(1); 
-        ucet= i.par.ucet;
-        ucty.fio.browse_load(ucty.filter());
+        ucty.Load(i.par.ucet);
       }
     }
     menu {title:'Správa účtu: YMCA Setkání', type:'group', active:no
@@ -59,186 +68,27 @@ panel fio {type:'right', title:"BANKA", _sys:'fio', skill:'a'
       }
     }
   }
-  form _ucty [,,640,*] {
-    func refresh() {
-      if (!fio.browse_seek(`id_platba=${fio.id_platba}`,filter())) {
-        fio.browse_load(filter());
-      }
-    }
-    func filter() { var _and: text
-      _and= cconc(
-        ucty.jen_letosni,' AND YEAR(datum)=YEAR(NOW())',
-        ucty.jen_prijmy, ' AND castka>0',
-        skryt_navrzene,  ' AND stav NOT IN (6,8,10)',
-        skryt_potvrzene, ' AND stav NOT IN (7,9,11)');
-      return `ucet=${ucet} ${_and}`;
-    }
-    label popis [,,393,19] { title:"
-      <span class='azurovy'>&nbsp; asi platba za akci/pobyt &nbsp;</span>&nbsp;&nbsp;
-      <span class='zeleny'>&nbsp; je to platba za akci/pobyt &nbsp;</span>&nbsp;&nbsp;
-      <span class='zluty'>&nbsp; asi dar &nbsp;</span>&nbsp;&nbsp;
-      <span class='oranzovy'>&nbsp; je to dar &nbsp;</span>"
-    }
-    check jen_letosni [507,0,83,] { title:' jen letošní', value:'1', style:'margin-top:-5px' format:'t'
-      func onchange() { refresh() }
-    }
-    check jen_prijmy [591,0,83,] { title:' jen příjmy', value:'1', style:'margin-top:-5px' format:'t'
-      func onchange() { refresh() }
-    }
-    check skryt_navrzene [678,0,100,] { title:' skrýt navržené', value:'0', style:'margin-top:-5px' format:'t'
-      func onchange() { refresh() }
-    }
-    check skryt_potvrzene [778,0,100,] { title:' skrýt potvrzené', value:'0', style:'margin-top:-5px' format:'t'
-      func onchange() { refresh() }
-    }
-    browse fio [,20,,] { rows:10, qry_rows:2
-      css_rows:'stav,3:cerveny,6:azurovy,7:zeleny,8:azurovy,9:zeleny,10:zluty,11:oranzovy'
-      show id_platba { data:platba.id_platba }
-      show datum_sql { data:platba.datum }
-      show stav [,,20,] { title:'stav', data:platba.stav, format:'sqr:e' }
-      show datum [,,70,] { title:'datum', data:platba.datum, sql_pipe:'sql_date1', format:'s-q/r' }
-      show castka [,,70,] { title:'částka', data:platba.castka, format:'sq/r' }
-      show id_osoba [,,40,] { title:'osoba', data:platba.id_oso, format:'sq*r:e' }
-      show id_pobyt [,,40,] { title:'pobyt', data:platba.id_pob, format:'sq*r:e' }
-      show id_order [,,40,] { title:'objednávka', data:platba.id_ord, format:'sq*r:e' }
-      show nazev [,,120,] { title:'název', data:platba.nazev, format:'sq*' }
-      show protiucet [,,145,] { title:'protiúčet', data:platba.protiucet, format:'sq*r' }
-      show vs [,,70,] { title:'vs', data:platba.vs, format:'sq*r:e' }
-      show ss [,,40,] { title:'ss', data:platba.ss, format:'sq*r:e' }
-      show zprava [,,200,] { title:'zpráva identifikace', format:'sq*t' 
-        expr:"CONCAT(platba.zprava,' ',IF(platba.ident!=platba.nazev,platba.ident,''))"}
-      func onrowclick() { var _akce:array, _osoba:array, _ido:text, _idx:text, _pobyt:text, nar:text
-        form.load(id_platba);
-        platba_za= '';
-        if (id_osoba) {
-          _osoba= php.select("CONCAT(jmeno,' ',prijmeni),narozeni",'osoba',`id_osoba=${id_osoba}`);
-          _ido= php.tisk2_ukaz_osobu(id_osoba);
-          nar= sql2date(_osoba[1]);
-          platba_za= `${_ido} ${_osoba[0]} (${nar})`;
-        }
-        if (id_pobyt) {
-          _akce= php.select('nazev,id_akce','pobyt JOIN akce ON id_akce=id_duakce',`id_pobyt=${id_pobyt}`);
-          _pobyt= php.tisk2_ukaz_pobyt_akce(id_pobyt,_akce[1]);
-          platba_za= `${platba_za}, ${_pobyt} ${_akce[0]}`;
-        }
-        if (id_order) {
-          _idx= php.ds2_ukaz_objednavku(id_order);
-          platba_za= `${platba_za}, ${_idx}`;
-        }
-      }
-      func onsubmit() { var f:object
-        clear();
-//        f= php.ds2_fio({fce:'join-ys', od:datum_sql, do:datum_sql});
-        f= php.ds2_fio({fce:'join-ys', platba:id_platba});
-        warning(f.html); if (f.err) alert(f.err);
-        if (ucet==2) {
-          f= php.ds2_fio({fce:'join-ds', od:datum_sql, do:datum_sql});
-          warning(f.html); if (f.err) alert(f.err);
-        }
-        refresh();
-      }
-    }
-    field datum [10,280,70,] { title:'^datum', data:platba.datum, format:'r' }
-    field castka [90,280,70,] { title:'^částka', data:platba.castka, format:'r' }
-    field nazev [170,280,150,] { title:'^název účtu', data:platba.nazev, format:'' }
-    field zprava [330,280,400,] { title:'^zpráva identifikace', 
-      expr:"CONCAT(platba.zprava,' ',IF(platba.ident!=platba.nazev,platba.ident,''))"}
-    field id_platba [10,315,120,] { title:'^transakce Fio banky', data:platba.id_platba, format:'r' }
-    field protiucet [170,315,150,] { title:'^číslo účtu', data:platba.protiucet, format:'r' }
-    button [348,315,,] {title:'potvrď platbu', func onclick() { var c:object
-      php.ds2_corr_platba(id_platba,'auto');
-      refresh();
-    }}
-    button [431,315,,] {title:'... dar', func onclick() { 
-      php.ds2_corr_platba(id_platba,'dar');
-      refresh();
-    }}
-    label [484,302,400,] { title:'automaticky rozpoznaná osoba (narozena), účast na akci' }
-    label platba_za [482,318,561,] { style:'font-size:10pt;color:black' }
-    // zobrazení aktuálních nastavení
-    button [10,345,20,66] { title:'?'
-      func onclick() { js.call_root_func('akce2_curr',&this,'onclick_')}
-      func onclick_(c:object) { var t:object
-        clear();
-        echo(debug(c));
-        t= php.ds2_show_curr(c);
-        echo(debug(t));
-        x_akce= `zobrazená je <b>AKCE</b> ${t.ucast}`;
-        xx_akce= t.ucast_text;
-        x_evid= `případně v <b>EVIDENCE</b>: ${t.evi}`;
-        xx_evid= t.evi_text;
-        x_dum= `případně v <b>UBYTOVÁNÍ DS</b>: ${t.dum}`;
-        xx_dum= t.dum_text;
-    }}
-    // účastníci akce
-    label x_akce [40,345,600,18] { style:'font-size:10pt;color:black' }
-    button [348,340,,] {title:'potvrď platbu'
-      func onclick() { js.call_root_func('akce2_curr',&this,'onclick_')}
-      func onclick_(c:object) { 
-        php.ds2_corr_platba(id_platba,'akce',c);
-        refresh();
-    }}
-    button [431,340,,] {title:'... dar', func onclick() { 
-      php.ds2_corr_platba(id_platba,'dar');
-      refresh();
-    }}
-    label xx_akce [482,345,600,18] { style:'font-size:10pt;color:black' }
-    // evidence
-    label x_evid [40,370,600,18] { style:'font-size:10pt;color:black' }
-    button [348,365,,] {title:'potvrď platbu'
-      func onclick() { js.call_root_func('akce2_curr',&this,'onclick_')}
-      func onclick_(c:object) { 
-        php.ds2_corr_platba(id_platba,'evi',c);
-        refresh();
-    }}
-    button [431,365,,] {title:'... dar', func onclick() { 
-      php.ds2_corr_platba(id_platba,'dar');
-      refresh();
-    }}
-    label xx_evid [482,369,600,18] { style:'font-size:10pt;color:black' }
-    // objednávky DS
-    label x_dum [40,395,600,18] { style:'font-size:10pt;color:black' }
-    button [348,390,,] {title:'potvrď platbu'
-      func onclick() { js.call_root_func('akce2_curr',&this,'onclick_')}
-      func onclick_(c:object) {
-        php.ds2_corr_platba(id_platba,'order',c);
-        refresh();
-    }}
-    button [431,390,,] {title:'... dar', func onclick() {
-      php.ds2_corr_platba(id_platba,'dar');
-      refresh();
-    }}
-    label xx_dum [482,394,600,18] { style:'font-size:10pt;color:black' }
+
+}
+form _right [,,*,50] { style:'width:calc(100% - 24px)'
+  label head [0,0,*,50]  { title:'' }
+  label msg  [0,35,*,20] { title:'' }
+  label note [0,55,*,] { title:'' }
+  func header(i:ezer) { var i_owner:ezer
+    clear(); i_owner= i.owner();
+    msg= ''; note= '';
+    head= replace_fa(`<div class='karta'>${i_owner.title} - ${i.title}</div>`);
+  }
+  func fill(x,y) {
+    if (x) head= `<div class='karta'>${replace_fa(x)}</div>`;
+    if (y) note= y
+  }
+  func append(y) {
+    if (y) note= conc(note,y)
   }
 }
-table platba {
-  number id_platba
-  // 0 - ?, 1 - výdaj,3 - vratka, 5 - příjem, 
-  // 6 - asi platba za id_akce, 7 - je to platba za id_akce, 
-  // 8 - asi platba za id_pobyt, 9 - je to platba za id_pobyt, 
-  // 10 - asi dar, 11 - je to dar
-  number stav // #platba_stav: 
-  number id_oso
-  number id_pob
-  number id_ord
-  number ucet
-  number ucel
-  date   datum 
-  number castka
-  number mena
-  text   protiucet
-  text   nazev
-  text   ks
-  text   vs
-  text   ss
-  text   ss2
-  text   ident
-  text   zprava
-  text   provedl
-  text   upresneni
-  text   komentar
-}
 
+#if test_version<1
 # ===========================================================================================> DENÍK
 panel den {type:'plain', title:"POKLADNA", _sys:'den'
 
@@ -702,24 +552,6 @@ proc the_formsave (f,b) {
   b.raise('onrowclick',b.browse_seek(conc(f.id_key,'=',f.key)))
 }
 
-form _right [,,*,50] { style:'width:calc(100% - 24px)'
-  label head [0,0,*,50]  { title:'' }
-  label msg  [0,35,*,20] { title:'' }
-  label note [0,55,*,] { title:'' }
-  func header(i:ezer) { var i_owner:ezer
-    clear(); i_owner= i.owner();
-    msg= ''; note= '';
-    head= replace_fa(`<div class='karta'>${i_owner.title} - ${i.title}</div>`);
-  }
-  func fill(x,y) {
-    if (x) head= `<div class='karta'>${replace_fa(x)}</div>`;
-    if (y) note= y
-  }
-  func append(y) {
-    if (y) note= conc(note,y)
-  }
-}
-
 table _cis { key_id:'id_cis'
   number id_cis { key:'primary' },
   text druh,
@@ -781,8 +613,9 @@ table cron { key_id:'id_cron'
   text txt
 }
 
-map p_ucel: table _cis {where:"druh='p_ucel'", order:'poradi'/*, key:'data'*/}
+map p_ucel: table _cis {where:"druh='p_ucel'", order:'poradi' }
 map p_typ:  table _cis {where:"druh='p_typ'", order:'poradi', key_id:'data'}
 
 map pokl:   table pokladna {where:"1", key_id:'id_pokladna' }
 
+#endif

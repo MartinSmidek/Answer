@@ -187,9 +187,9 @@ proc w_change_all() { var dite_kat_pipe:object, dite_kat_options:object
   eq(my_org.get,4,8,16)
   // podle YS/FA zvol kategorii dětí: ys_akce_dite_kat / fa_akce_dite_kat v options, map_pipe
 | dite_kat_options.set(cconc(
-      eq(the_org.get,1),'#.ys_akce_dite_kat.hodnota',eq(the_org.get,2),'#.fa_akce_dite_kat.hodnota',''));
+      eq(the_org.get,1),'ys_akce_dite_kat.hodnota',eq(the_org.get,2),'fa_akce_dite_kat.hodnota',''));
   dite_kat_pipe.set(cconc(
-      eq(the_org.get,1),'#.ys_akce_dite_kat.zkratka',eq(the_org.get,2),'#.fa_akce_dite_kat.zkratka',''));
+      eq(the_org.get,1),'ys_akce_dite_kat.zkratka',eq(the_org.get,2),'fa_akce_dite_kat.zkratka',''));
   dite_kat_options;
   [ eq(the_soubeh.get,0,1);       // jen pro Kurs
     evid.c_change(cconc(eq(curr_w.get,1024),1,2));
@@ -209,7 +209,7 @@ proc h_change_all() {
   foreach(array(cmd,cmdp),change_top1);
   foreach(array(sp1,sp2,pob),change_top2);
   foreach(array(
-      evid.frame,pla.frame,act0.frame,alb0.frame,docu.frame,
+      evid.frame,pla.frame,pla_ds.frame,act0.frame,alb0.frame,docu.frame,
       pla.duvod_text,pla.navrh,pla.duvod_typ,pla.doslo,pla.uhrady_lst,
       docu.drop),
     change_height);
@@ -290,6 +290,8 @@ use alb0:  form _aktivity0 [400, 10,,]  { tag:'akce0', format:'n' }
 # záložka plateb
 use pla:   form _platba   [400, 10,,]  { tag:'akce0', format:'n' }
 use cmdp:  form _cmd_p    [400,min_h-120,,]  { tag:'akce0', format:'n' }
+use pla_fio:form fio._ucty[413, 61,873,]  { tag:'akce0', format:'n' }
+use pla_ds:form _platba_ds[400, 10,,]  { tag:'akce0', format:'n' }
 # záložka aktivity
 use act1:  form _aktivity [420, 10,,]  { tag:'akce0', format:'n' }
 use act2:  form _aktivity [700, 10,,]  { tag:'akce0', format:'n' }
@@ -718,6 +720,11 @@ form _ucast [,,400,] { css:'ds_form', style:'height:fit-content'
   | cena; leg.set(conc("CENA &nbsp; ",DLUZNIK.get))
   | leg.set('')
   }
+  func legenda(cenik,cena) {
+    leg= cenik==1 ? `CENÍK: &nbsp; ${DLUZNIK} &nbsp;&nbsp; ${NESTANOVENA}` : (
+         cenik==2 ? `CENA DS: &nbsp; ${DLUZNIK} &nbsp;&nbsp; ${NESTANOVENA}` : (
+         cena>0   ? `CENA: &nbsp; ${DLUZNIK}` : '' ))
+  }
   label leg [2,12,232,11]
   // omezení browse
   proc show_dup(on) { rod.cleni.show_dup(on); b.show_dup(on); }
@@ -836,9 +843,13 @@ form _ucast [,,400,] { css:'ds_form', style:'height:fit-content'
         reload_evid();
         break;
       case 'plat':
-        pla.key(key_pobyt); pla.nove(); copy_by_name(b,pla); pla.ini();
-        pla.uhrady_load();
-        page.plt.last= key_pobyt;
+        if (the_cenik==2 && page.plt.last!=key_pobyt) {
+          page.plt.onclick();
+        }
+        else {
+          pla.key(key_pobyt); pla.nove(); copy_by_name(b,pla); pla.ini();
+          pla.uhrady_load();
+        }
         break;
       case 'akce':
         act1.ucasti(ido1); act2.ucasti(ido2);
@@ -975,12 +986,12 @@ form _ucast2 [,,400,] { css:'ds_form'
 }
 # ------------------------------------------------------------------------------------------==> PAGE
 form _page  [,,623,20] {
-  proc Show(R,P,O,S) { //==> . Show
-    [ R.n; rod.display(0) | rod.display(1) ];
-    [ P.n; pob.display(0) | pob.display(1) ];
-    [ O.n; os1.display(0) | os1.display(1) ];
-    [ S.n; sp1.display(0) | sp1.display(1) ];
-  }
+//  proc Show(R,P,O,S) { //==> . Show
+//    [ R.n; rod.display(0) | rod.display(1) ];
+//    [ P.n; pob.display(0) | pob.display(1) ];
+//    [ O.n; os1.display(0) | os1.display(1) ];
+//    [ S.n; sp1.display(0) | sp1.display(1) ];
+//  }
   # ------------------------==> . záložky
   proc tags(a,on,off) {
     form.set_css('ae_butt_off','ae_butt_on','p');
@@ -998,7 +1009,7 @@ form _page  [,,623,20] {
       zalozka.set('evid');
       [ u.b.browse_count; evid.Display(1); cmd.display(1); cmd.set_state('show')
       | evid.Display(2); cmd.display(1); cmd.set_state('none') ];
-      pla.display(0); cmdp.display(0);
+      pla.display(0); cmdp.display(0); pla_ds.display(0); pla_fio.display(0);
       alb0.display(0); alb.display(0); docu.display(0);
       act0.display(0); act1.display(0); act2.display(0);
       [ eq(last.get,the_pobyt.get)
@@ -1008,17 +1019,28 @@ form _page  [,,623,20] {
   }
   label plt [137,0,105,20] {tag:'p', _sys:'*', title:'<b>Platba za akci</b>', format:'c',
     var last=0
-    proc onclick() {
-      neni_ulozeno // warning
-    | tags(this,'h','z|o|f|d');
-      zalozka.set('plat');
+    func onclick() {
+      if (neni_ulozeno()||(!the_cenik&&!the_cena)) return; // warning
+      tags(&this,'h','z|o|f|d');
+      zalozka= 'plat';
       evid.Display(0); cmd.display(0);
-      pla.display(1); cmdp.display(1);
+      pla.display(0); cmdp.display(0); pla_ds.display(0); pla_fio.display(0);
+      if (the_cenik==1) {
+        pla.display(1); cmdp.display(1);
+        pla.display(gt(the_cenik,0),'cenik'); // omezení výpisu pokud není definován ceník
+        pla.display(eq(the_soubeh,1),'deti'); // platby za děti
+      }
+      elseif (the_cenik==2) {
+        pla_fio.Init('A'); pla_fio.LoadPobyt(the_pobyt);
+        pla_ds.display(1);  pla_fio.display(1);
+        last= the_pobyt;
+      }
       alb0.display(0); alb.display(0); docu.display(0);
-      pla.get.display(gt(the_cenik.get,0),'cenik'); // omezení výpisu pokud není definován ceník
-      pla.display(eq(the_soubeh.get,1),'deti'); // platby za děti
       act0.display(0); act1.display(0); act2.display(0);
-      [ eq(last.get,the_pobyt.get) | u.b.load_zalozka; last.set(the_pobyt.get) ];
+      if (last!=the_pobyt) {
+        u.b.load_zalozka(); 
+        last= the_pobyt;
+      }
     }
   }
   label jin [263,0,106,20] {tag:'p', _sys:'*', title:'<b>Přehled aktivit</b>', format:'c',
@@ -1028,7 +1050,7 @@ form _page  [,,623,20] {
     | tags(this,'o','z|h|f|d');
       zalozka.set('akce');
       evid.Display(0); cmd.display(0);
-      pla.display(0); cmdp.display(0);
+      pla.display(0); cmdp.display(0); pla_ds.display(0);  pla_fio.display(0);
       alb0.display(0); alb.display(0); docu.display(0);
       act0.display(1); act1.display(1); act2.display(1);
       [ eq(rod.cleni.key_osoba.get,act1.ido,act2.ido)
@@ -1043,7 +1065,7 @@ form _page  [,,623,20] {
     | tags(this,'f','o|z|h|d');
       zalozka.set('foto');
       evid.Display(0); cmd.display(0);
-      pla.display(0); cmdp.display(0);
+      pla.display(0); cmdp.display(0); pla_ds.display(0);  pla_fio.display(0);
       alb0.display(1); alb.display(1); docu.display(0);
       act0.display(0); act1.display(0); act2.display(0);
       [ eq(last.get,the_pobyt.get) | u.b.load_zalozka; last.set(the_pobyt.get) ];
@@ -1057,7 +1079,7 @@ form _page  [,,623,20] {
       tags(this,'d','o|z|h|f');
       zalozka.set('docu');
       evid.Display(0); cmd.display(0);
-      pla.display(0); cmdp.display(0);
+      pla.display(0); cmdp.display(0); pla_ds.display(0);  pla_fio.display(0);
       alb0.display(0); alb.display(0); docu.display(1);
       act0.display(0); act1.display(0); act2.display(0);
       [ eq(last.get,the_pobyt.get) | u.b.load_zalozka; last.set(the_pobyt.get) ];
@@ -1334,7 +1356,7 @@ form _evidence [,,623,] { style:'height:fit-content'
 //    foreach(array(
 //        page.frame,evid.frame,pla.frame,act0.frame,alb0.frame,docu.frame),
 //      change_width);
-    for (elem of array(&page.frame, &evid.frame, &pla.frame, &act0.frame, &alb0.frame, &docu.frame)) {
+    for (elem of array(&page.frame, &evid.frame, &pla.frame, &pla_ds.frame, &act0.frame, &alb0.frame, &docu.frame)) {
       change_width(elem);
     }
     // 1 sloupec
@@ -2043,7 +2065,7 @@ form _rodina2 [,,360,229]  { css:'ae_frame',
 }
 # ----------------------------------------------------------------------------------------==> PLATBA
 form _platba [,,623,] { key_id:'id_pobyt', style:'height:fit-content', 
-    par:°{onchanged:'first_only'}
+    par:{onchanged:'first_only'}
   const Td= 230
   var cena: object,
       zmena_spec_strav: number
@@ -2271,7 +2293,7 @@ form _platba [,,623,] { key_id:'id_pobyt', style:'height:fit-content',
   label frame [0,16,873,min_h-152] { css:'ae_work'}
   // ----------------==> více plateb
   var uhrady_n=0, 
-      uhrady_for=0  // ochrana proti násobnému vstupu do uhrady_load při rychlém posuvu v browse
+      uhrady_for=0  // ochrana proti násobnému vstupu do uhrady-load při rychlém posuvu v browse
   func uhrady_load() { var uhrady:object, uhrada:object, u:ezer
     if (uhrady_for) return;
     uhrady_for= the_pobyt;
@@ -2323,6 +2345,13 @@ form _platba [,,623,] { key_id:'id_pobyt', style:'height:fit-content',
 }
 //map uhrada_stav= "i,zkratka;0:-,1:avizo,2:zaplaceno,3:potvrzeno,4:vráceno" 
 map uhrada_za=   "i,zkratka;0:pár,1:děti" 
+# -------------------------------------------------------------------------------------==> PLATBA DS
+form _platba_ds [,,623,] { key_id:'id_pobyt', style:'height:fit-content', 
+    par:{onchanged:'first_only'}
+  label [13,32,,]   { title:'Rozpis ceny akce podle ceníku Domu setkání a přehled příchozích plateb' }
+  label frame [0,16,873,min_h-152] { css:'ae_work'}
+
+}
 # -----------------------------------------------------------------------------------------==> CMD_P
 # uložení změn v platbách
 form _cmd_p [,,623,30] { css:'ae_work'

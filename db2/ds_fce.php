@@ -1126,6 +1126,20 @@ function ds2_vek($narozeni,$fromday) {
 }
 /** =======================================================================================> BANKY **/
 #
+# ------------------------------------------------------------------------------- ds2 fio_filtr_akce
+# vytvoření filtru pro výběr plateb podle SS, SS2
+# a vrácení nalezené platby k id_platba
+function ds2_fio_filtr_akce($id_pobyt) {
+  $days= 30;
+  list($kod,$ida,$od,$do)= select('g_kod,id_akce,datum_od,datum_do',
+      "pobyt JOIN join_akce USING (id_akce) JOIN akce ON id_akce=id_duakce",
+      "id_pobyt=$id_pobyt");
+  $idos= select('GROUP_CONCAT(id_osoba)','spolu JOIN pobyt USING (id_pobyt)',"id_akce=$ida");
+  $id_platba= select('id_platba','platba',"id_pob=$id_pobyt");
+  return (object)[ 'kod'=>$kod,'id_platba'=>"'$id_platba'",
+      'filtr'=>"(ss=$kod OR ss2=$kod OR id_oso IN ($idos)) AND datum "
+        . "BETWEEN DATE_ADD('$od',INTERVAL - $days DAY) AND DATE_ADD('$do',INTERVAL $days DAY)"];
+}
 # ------------------------------------------------------------------------------------ ds2 show_curr
 # čitelné zobrazení objektu získaného funkcí akce2.curr
 function ds2_show_curr($c) {
@@ -1305,12 +1319,12 @@ function ds2_fio($cmd) {
       $rp= pdo_qry("
         SELECT id_platba,id_osoba,id_pobyt,id_oso
         FROM platba AS p
-        JOIN join_akce AS ja ON ja.g_kod=p.ss AND YEAR(p.datum)=g_rok
+        JOIN join_akce AS ja ON ja.g_kod=IF(p.ss2,p.ss2,p.ss) AND YEAR(p.datum)=g_rok
         JOIN akce AS a ON ja.id_akce=id_duakce
         JOIN pobyt AS po ON po.id_akce=id_duakce
         JOIN spolu AS s USING (id_pobyt) -- ON s.id_pobyt=po.id_pobyt
         JOIN osoba AS o USING (id_osoba) -- ON o.id_osoba=s.id_osoba
-        WHERE id_pob=0 AND LENGTH(ss)=3 AND $omezeni AND
+        WHERE id_pob=0 AND LENGTH(IF(p.ss2,p.ss2,p.ss))=3 AND $omezeni AND
           (id_oso=id_osoba
           OR IF(LENGTH(vs)=6,
               vs=CONCAT(SUBSTR(narozeni,3,2),SUBSTR(narozeni,6,2),SUBSTR(narozeni,9,2))
@@ -1327,7 +1341,8 @@ function ds2_fio($cmd) {
       }
       // dary
       $rp= pdo_qry("
-        SELECT id_oso,id_platba,vs,ss,protiucet,nazev,zprava,ss IN (22,222) OR zprava RLIKE 'dar' AS _dar
+        SELECT id_oso,id_platba,vs,IF(p.ss2,p.ss2,p.ss),protiucet,nazev,zprava,
+          IF(p.ss2,p.ss2,p.ss) IN (22,222) OR zprava RLIKE 'dar' AS _dar
         FROM platba AS p WHERE $omezeni AND stav IN (5)
           -- AND id_platba=26446381639 ");
       while ($rp && (list($idoso,$id_platba,$vs,$ss,$ucet,$nazev,$zprava,$dar)= pdo_fetch_array($rp))) {

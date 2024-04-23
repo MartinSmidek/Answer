@@ -379,10 +379,14 @@ form _page [,,275,360] {
       info.sey.browse_seek; show_akce(form.key);
   }}
   // Změna ceníku
-  check cen_ma [13,254,93,] { tag:'cor', title:'používat ceník', data:akce.ma_cenik,
-                        format:'', skill:'yaa|yaan;caa|caan;faa|faan'
-//    proc onchange() { cen_ver.display(this.get) }
+  radio cen_ma [13,254,210,19] { tag:'cor', data:akce.ma_cenik, // skill:'yaa|yaan;caa|caan;faa|faan'
+    case [0,0,94,] { title:'používat ceník', expr:'1' }
+    case [93,0,115,] { title:'používat ceny DS', expr:'2' }
   }
+//  check cen_ma [13,254,93,] { tag:'cor', title:'používat ceník', data:akce.ma_cenik,
+//                        format:'', skill:'yaa|yaan;caa|caan;faa|faan'
+//    proc onchange() { cen_ver.display(this.get) }
+//  }
 //  select cen_ver [109,254,100,] {tag:'cor', type:'map', data:akce.ma_cenik_verze,
 //    help:'verze ceníků', options:ms_cenik_verze.zkratka, format:'n' }
   button [14,230,,] { tag:'cor', title:'Změnit ceník podle', skill:'yaa|yaan;caa|caan;faa|faan'
@@ -403,7 +407,7 @@ form _page [,,275,360] {
                         format:'', skill:'yaa|yaan;caa|caan;faa|faan' }
   field [109,278,43,] { tag:'cor', data:akce.cena, format:'r', skill:'yaa|yaan;caa|caan;faa|faan',
                         help:'pro 1 dospělého' }
-  label [158,281,20,] { tag:'cor', title:'Kč' }
+  label [159,283,20,] { tag:'cor', title:'Kč' }
   // ------------------------------------- hnízda
   var hnizda_ok=1
   check is_hnizda [292,230,161,] { tag:'cor' title:'akce je v hnízdech' format:'t'
@@ -427,7 +431,7 @@ form _page [,,275,360] {
       else hnizda_ok= 1;
   }}
   // ------------------------------------- omezený přístup pro členy týmu akce
-  select tym [296,278,157,] {tag:'cor', type:'map+', title:'kdo z týmu má přístup:', data:akce.tym,
+  select tym [297,280,157,] {tag:'cor', type:'map+', title:'kdo z týmu má přístup:', data:akce.tym,
       help:'členové týmu akce s právem editace', options:akce_tym.surname }
   // ------------------------------------- web setkani.org 
   label [10,309,384,92] { tag:'cor', css:'bily_ram', skill:'yaaw;faaw' 
@@ -550,8 +554,8 @@ form _page [,,275,360] {
         lst_refresh;
   } } }
   // jen pro YF - zápis roku iniciace účastníkům akce - musí být akce.mrop=1 
-  label  [310,417,118,31] { tag:'corm,corf', css:'ae_parm', format:'n', style:'z-index:1',         skill:'faan' }
-  button [316,423,,] {tag:'corm', title:'Potvrzení iniciace', format:'nc', style:'z-index:1', skill:'faan|faa:m'
+  label  [310,493,118,31] { tag:'corm,corf', css:'ae_parm', format:'n', style:'z-index:1',         skill:'faan' }
+  button [316,499,,] {tag:'corm', title:'Potvrzení iniciace', format:'nc', style:'z-index:1', skill:'faan|faa:m'
     proc onclick() { var ret:object
       has_skill('faa:m');
       ret.set(ask('akce2_confirm_mrop',form.key,0));
@@ -1215,8 +1219,10 @@ form _info [,,*,50] {
     }
     lst.info.fill(`${the_title} `);
     ucast.call('clear_ucast2');
+#if test_version<2
     if (has_skill('yam;fam;cam')) maia.call('init_ucast');
     if (!has_skill('crz')) this.call('pece.init_pece'); // CRŽ
+#endif
     // ošetření souběžných akcí - 0=normální akce, 1=hlavní akce, 2=souběžná akce
     if (has_skill('f')) page.soubezna= the_soubeh==2;
     // nastavení cookies podle organizace
@@ -1233,9 +1239,11 @@ form _info [,,*,50] {
         set_cookie(`${sys('root')}_akce`,the_duakce);
       }
       ucast.ucast_hnizda();
+#if test_version<2
       if (!has_skill('T')) pece.pece_hnizda();
       if (has_skill('yam;fam;cam')) maia.mail_hnizda();
       tisk.tisk_hnizda()
+#endif
     }
     return 1;
   }
