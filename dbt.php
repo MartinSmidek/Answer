@@ -15,9 +15,6 @@
   // verze použitého jádra Ezeru
   $ezer_version= '3.2'; 
 
-  // živá větev v github
-  $git_app_branch= 'test';   // místo defaultu 'master'
-
   // server, databáze, cesty, klíče
   $deep_root= "../files/answer";
   require_once("$deep_root/dbt.dbs.php");

@@ -20,6 +20,9 @@
   $rel_root=     $_SESSION[$ezer_root]['rel_root'];
   chdir($abs_root);
 
+  // živá větev v github
+  $git_app_branch= 'test';   // místo defaultu 'master'
+
   // databáze
   $deep_root= "../files/answer";
   require_once("$deep_root/dbt.dbs.php");
