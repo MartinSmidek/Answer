@@ -57,10 +57,14 @@
   // nezmizí
 //  $click= '';
   
-  $dstyle= "left:0; top:0; position:fixed; transform:rotate(320deg) translate(-128px,-20px); "
-      . "width:500px;height:100px;background:orange; color:white; font-weight: bolder; "
-      . "text-align: center; font-size: 40px; line-height: 96px; z-index: 16; opacity: .5;";
+//  $dstyle= "left:0; top:0; position:fixed; transform:rotate(320deg) translate(-128px,-20px); "
+//      . "width:500px;height:100px;background:orange; color:white; font-weight: bolder; "
+//      . "text-align: center; font-size: 40px; line-height: 96px; z-index: 16; opacity: .5;";
+  $dstyle= "left:-50px; bottom:0; position:fixed; transform:rotate(40deg) translate(-107px,-14px); "
+      . "width:500px;height:80px;background:orange; color:white; font-weight: bolder; "
+      . "text-align: center; font-size: 40px; line-height: 75px; z-index: 16; opacity: .5;";
   $demo= "<div id='DEMO' onmouseover=\"$click\" style='$dstyle'>testovací data</div>";
+  $demo= "<div id='DEMO' style='$dstyle'>testovací data</div>";
 
   // skin a css
   $cookie= 3;
