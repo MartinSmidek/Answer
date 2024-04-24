@@ -13,7 +13,10 @@
   #   $options    = doplnění Ezer.options
 
   // verze použitého jádra Ezeru
-  $ezer_version= isset($_GET['ezer']) ? $_GET['ezer'] : '3.2'; 
+  $ezer_version= '3.2'; 
+
+  // živá větev v github
+  $git_app_branch= 'test';   // místo defaultu 'master'
 
   // server, databáze, cesty, klíče
   $deep_root= "../files/answer";
@@ -32,8 +35,7 @@
   $CKEditor= isset($_GET['editor']) ? $_GET['editor'] : '4.6';
   
   // nastav jako default PDO=2
-  if ( !isset($_GET['pdo']))
-    $_GET['pdo']= 2;
+  $_GET['pdo']= 2;
   
   // nastav &touch=0 pro Windows
   if (strtoupper(substr(PHP_OS,0,3))==='WIN') 
@@ -51,7 +53,7 @@
   // upozornění na testovací verzi
   $demo= '';
   // zmizí a zase se objeví
-  $click= "jQuery('#DEMO').fadeOut(200).delay(5000).fadeIn(1000);";
+  $click= "jQuery('#DEMO').fadeOut(200).delay(20000).fadeIn(1000);";
   // jen zmizí
   //$click= "jQuery('#DEMO').fadeOut(500);";
   // nezmizí
@@ -64,7 +66,7 @@
       . "width:500px;height:80px;background:orange; color:white; font-weight: bolder; "
       . "text-align: center; font-size: 40px; line-height: 75px; z-index: 16; opacity: .5;";
   $demo= "<div id='DEMO' onmouseover=\"$click\" style='$dstyle'>testovací data</div>";
-  $demo= "<div id='DEMO' style='$dstyle'>testovací data</div>";
+//  $demo= "<div id='DEMO' style='$dstyle'>testovací data</div>";
 
   // skin a css
   $cookie= 3;
