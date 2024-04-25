@@ -10486,8 +10486,8 @@ function evid2_delete($id_osoba,$id_rodina,$cmd='confirm') { trace();
   case 'conf_oso':
     $x= select1('SUM(castka)','dar',"id_osoba=$id_osoba");
     if ( $x) $duvod[]= "je dárcem $x Kč";
-    $x= select1('SUM(castka)','platba',"id_osoba=$id_osoba");
-    if ( $x) $duvod[]= "zaplatil$a $x Kč";
+//    $x= select1('SUM(castka)','platba',"id_osoba=$id_osoba");
+//    if ( $x) $duvod[]= "zaplatil$a $x Kč";
     $xr= pdo_qry("SELECT COUNT(*) AS _x_ FROM spolu JOIN pobyt USING (id_pobyt)
                     JOIN akce ON id_akce=id_duakce WHERE id_osoba=$id_osoba AND spec=0 AND zruseno=0");
     list($x)= pdo_fetch_array($xr);
