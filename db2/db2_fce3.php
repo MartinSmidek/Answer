@@ -914,10 +914,10 @@ function akce2_id2a($id_akce) {  //trace();
   $a= (object)array('title'=>'?','cenik'=>0,'cena'=>0,'soubeh'=>0,'hlavni'=>0,'soubezna'=>0);
   list($a->title,$a->rok,$a->cenik,$a->cenik_verze,$a->cena,$a->hlavni,$a->soubezna,$a->org,
       $a->ms,$a->druh,$a->hnizda,$a->web_wordpress,$a->mezinarodni,$poradatel,$a->tym,
-      $a->datum_od, $a->datum_do, $a->strava_oddo)=
+      $a->id_order,$a->datum_od, $a->datum_do, $a->strava_oddo)=
     select("a.nazev,YEAR(a.datum_od),a.ma_cenik,a.ma_cenik_verze,a.cena,a.id_hlavni,"
       . "IFNULL(s.id_duakce,0),a.access,IF(a.druh IN (1,2),1,0),a.druh,a.hnizda,a.web_wordpress,"
-      . "a.mezinarodni,a.poradatel,a.tym,a.datum_od,a.datum_do,a.strava_oddo",
+      . "a.mezinarodni,a.poradatel,a.tym,a.id_order,a.datum_od,a.datum_do,a.strava_oddo",
       "akce AS a
        LEFT JOIN akce AS s ON s.id_hlavni=a.id_duakce",
       "a.id_duakce=$id_akce");
@@ -10486,8 +10486,8 @@ function evid2_delete($id_osoba,$id_rodina,$cmd='confirm') { trace();
   case 'conf_oso':
     $x= select1('SUM(castka)','dar',"id_osoba=$id_osoba");
     if ( $x) $duvod[]= "je dárcem $x Kč";
-    $x= select1('SUM(castka)','platba',"id_osoba=$id_osoba");
-    if ( $x) $duvod[]= "zaplatil$a $x Kč";
+//    $x= select1('SUM(castka)','platba',"id_osoba=$id_osoba");
+//    if ( $x) $duvod[]= "zaplatil$a $x Kč";
     $xr= pdo_qry("SELECT COUNT(*) AS _x_ FROM spolu JOIN pobyt USING (id_pobyt)
                     JOIN akce ON id_akce=id_duakce WHERE id_osoba=$id_osoba AND spec=0 AND zruseno=0");
     list($x)= pdo_fetch_array($xr);

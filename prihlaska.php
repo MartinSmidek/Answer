@@ -305,7 +305,7 @@ function polozky() { // --------------------------------------------------------
       'umrti'     =>[10,'rok úmrtí','','abdp'],
       'role'      =>[ 9,'vztah k rodině?','select','abdp'],
       'vztah'     =>[ 9,'manžel/maželka','select','ab'],
-      'note'      =>[40,'poznámka (léky, alergie, apod.)','','d']],
+      'note'      =>['70/2','poznámka (léky, alergie, apod.)','area','d']],
     $akce->p_obcanky ? [
       'obcanka'   =>[11,'* číslo OP nebo pasu','','abp'],
       'telefon'   =>[15,'* telefon','','abp'],
@@ -1446,6 +1446,7 @@ function elem_input($table,$id,$flds) { // -------------------------------------
       break;
     case 'area':
       list($cols,$rows)= explode('/',$len);
+      $v= br2nl($v);
       $html.= "<label class='upper-area'>$title<textarea rows='$rows' cols='$cols' name='$name'$todo>$v</textarea></label>";
       break;
     case 'number':
@@ -1584,7 +1585,7 @@ function nacti_rodinu($idr) { // -----------------------------------------------
         continue;
       // databázové načti s případnou konverzí
       else {
-        $v= $r->$f;
+        $v= nl2br_2($r->$f);
         if ($typ=='date') 
           $v= sql2date($v);
         $rodina->$f= substr($title,0,1)=='*' ? [$v] : $v;
@@ -1610,7 +1611,7 @@ function nacti_clena($ido,$role,$spolu) { // -----------------------------------
     elseif (!isset($o->$f)) continue;
     // databázové načti s případnou konverzí
     else {
-      $v= $o->$f;
+      $v= nl2br_2($o->$f);
       if ($typ=='date') {
         $v= sql2date($v);
         $clen->$f= substr($title,0,1)=='*' ? [$v] : $v;
@@ -2200,6 +2201,13 @@ function json_encode_2($s) { // ------------------------------------------------
   $s= json_encode($s,JSON_UNESCAPED_UNICODE | JSON_HEX_QUOT);
   $sbr= str_replace('\r\n','<br>',$s);
   return $sbr;
+}
+function nl2br_2($s) { // ---------------------------------------------------------------- nl 2 br_2
+  $sbr= str_replace(["\r\n","\r","\n"], "<br>",$s);
+  return $sbr;
+}
+function br2nl($s) { // ------------------------------------------------------------------ br 2 nl_2
+  return preg_replace('/\<br(\s*)?\/?\>/i', PHP_EOL, $s);
 }
 function date2sql($d) { // -------------------------------------------------------------- date 2 sql
 # transformace d.m.y na d-m-y resp. y na y-00-00

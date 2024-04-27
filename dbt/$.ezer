@@ -357,6 +357,7 @@ table join_akce { // spojení číselníku akcí s MS
 table uakce { key_id:'id_uakce'
   number id_uakce
   number id_akce
+  number id_order
   text ms_source
   number ms_akce
   number rok

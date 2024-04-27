@@ -15,8 +15,8 @@ panel fio {type:'right', title:"BANKA", _sys:'fio', skill:'a'
   use info: form _right [12,4,,]
   use ucty: form banka._ucty [12,40,,]
 
-  group banka { include:'onload,dbt/db2.fio'
-//  group banka { include:'onload,db2.fio'
+//  group banka { include:'onload,dbt/db2.fio' // verze ve složce dbt
+  group banka { include:'onload,db2.fio'
     form _ucty {
       func Init(mode) {}
       func Load(ucty) {}

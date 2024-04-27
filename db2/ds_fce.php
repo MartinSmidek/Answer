@@ -1,4 +1,366 @@
 <?php # (c) 2009-2015 Martin Smidek <martin@smidek.eu>
+/** ==================================================================================> TRANSFORMACE **/
+# transformace DS do Answer
+define('org_ds',64);
+# ------------------------------------------------------------------------------------------- ds2 kc
+function ds2_trnsf_osoba($par) {
+  global $setkani_db;
+  $org_ds= org_ds;
+  $html= '';
+  switch ($par->mode) {
+    // ========================================================================== automatické úpravy
+    case 'final':             // --------------------------------------------- trvalý zápis změn (x)
+      $n= 0;
+      // zapiš údaje ze spojky do ds_osoba
+      $ro= pdo_qry("SELECT id_osoba,ds_osoba FROM ds_db");
+      while ($ro && (list($ido,$idh)= pdo_fetch_array($ro))) {  
+        $n++;
+        query("UPDATE $setkani_db.ds_osoba SET ys_osoba=$ido WHERE id_osoba=$idh");
+      }
+      // zruš spojky
+      query("TRUNCATE TABLE ds_db");
+      // oprav autoincrement tabulek pokud došlo k mazání přidaných
+      foreach (['pobyt','spolu','osoba'] as $tab) {
+        $max_id= select("MAX(id_$tab)",$tab,'1') + 1;
+        query("ALTER TABLE $tab AUTO_INCREMENT=$max_id");
+      }
+      $html.= "Byla dokončena transformace dat Domu setkání"
+          . "<br> V ds_osoba bylo přímo zapsána vazba na $n osob."
+          . "<br>byly vráceny hodnoty autoincrement za poslední";
+      break;
+    case 'backtrack':         // -------------------------------------------------- vrácení změn (x)
+      $nd= $nu= $na= $np= $ns= 0;
+      // oprav nebo vymaž vše přidané v osobách
+      $ro= pdo_qry("SELECT id_osoba,access FROM osoba WHERE access&$org_ds");
+      while ($ro && (list($ido,$acs)= pdo_fetch_array($ro))) {  
+        if ($acs==$org_ds) {
+          query("DELETE FROM osoba WHERE id_osoba=$ido");
+          $nd++;
+        }
+        else {
+          query("UPDATE osoba SET access=access-$org_ds WHERE id_osoba=$ido");
+          $nu++;
+        }
+      }
+      // také přidané akce a jejich pobyty vč. spolu
+      $ra= pdo_qry("SELECT id_duakce FROM akce WHERE access=$org_ds");
+      while ($ra && (list($ida)= pdo_fetch_array($ra))) {  
+        $na++;
+        $rp= pdo_qry("SELECT id_pobyt FROM pobyt WHERE id_akce=$ida");
+        while ($rp && (list($idp)= pdo_fetch_array($rp))) {  
+          $np++;
+          $ns+= query("DELETE FROM spolu WHERE id_pobyt=$idp");
+          query("DELETE FROM pobyt WHERE id_pobyt=$idp");
+        }
+        query("DELETE FROM akce WHERE id_duakce=$ida");
+      }
+      // zruš spojky
+      query("TRUNCATE TABLE ds_db");
+      // oprav autoincrement tabulek pokud došlo k mazání přidaných
+      foreach (['pobyt','spolu','osoba','akce','pobyt','spolu'] as $tab) {
+        $id= $tab=='akce' ? 'id_duakce' : "id_$tab";
+        $max_id= select("MAX($id)",$tab,'1') + 1;
+        query("ALTER TABLE $tab AUTO_INCREMENT=$max_id");
+      }
+      $html.= "Byly vráceny tyto změny:<br>"
+          . "<br> - osoba: bylo zrušeno $nu doplněných access a $nd osoba s access=$org_ds bylo vymazáno"
+          . "<br> - akce: bylo vymazáno $na doplněných akcí, $np pobytů a $ns spolu´častí"
+          . "<br><br>byly vráceny hodnoty autoincrement za poslední";
+      break;
+    case 'osoba_clr':         // ------------------------------------------- pročištění ds_osoba (1)
+      $n= 0;
+      $idos= '';
+      // zrušíme ys_osoba podkud vede na smazanou osobu
+      $ro= pdo_qry("
+        SELECT o.id_osoba,d.id_osoba 
+        FROM $setkani_db.ds_osoba AS d 
+        LEFT JOIN osoba AS o ON o.id_osoba=ys_osoba
+        WHERE ys_osoba>0 AND (ISNULL(o.deleted) OR o.deleted!='')
+        ORDER BY ys_osoba
+      ");
+      while ($ro && (list($ido,$idh)= pdo_fetch_array($ro))) {  
+        $idos.= "$ido ";
+        $n++;
+        query("UPDATE $setkani_db.ds_osoba SET ys_osoba=0 WHERE id_osoba=$idh");
+      }
+      $html.= "<br>V ds_osoba bylo zrušeno $n vazeb na smazané osoby v DB: <br><br>$idos";
+      break;
+    case 'ds_db':         // ------------------------------------- vytvoření spojovacích záznamů (2)
+      $n= 0;
+      $rd= pdo_qry("
+        SELECT MIN(o.id_osoba) AS _id_osoba,d.id_osoba,
+          MAX(TRIM(prijmeni)),MAX(TRIM(jmeno)),MAX(narozeni)
+        FROM $setkani_db.ds_osoba AS d
+        JOIN osoba AS o USING (prijmeni,jmeno,narozeni)
+        WHERE deleted='' AND d.narozeni!='0000-00-00' AND d.id_osoba>0
+        GROUP BY prijmeni,jmeno,narozeni,d.id_osoba
+        HAVING d.jmeno!='' AND d.prijmeni!=''
+        ORDER BY prijmeni
+--        LIMIT 20  
+      ");
+      while ($rd && (list($ido,$ydo,$prijmeni,$jmeno,$narozeni)= pdo_fetch_array($rd))) {
+        $n++; 
+        query("INSERT INTO ds_db (ds_osoba,id_osoba,prijmeni,jmeno,narozeni) 
+          VALUE ($ydo,$ido,'$prijmeni','$jmeno','$narozeni')");
+      }
+      $html.= "tabulka ds_db obsahuje $n záznamů propojující osoby YS+FA s DS mající shodu prijmeni+jmeno+narozeni";
+      break;
+    case 'osoba_upd':         // ---------------------------------------- propojení existujících (3)
+      $n= $nd= 0;
+      // upravíme existující, pokud není definováno ys_osoba
+      $ro= pdo_qry("SELECT id_osoba,ds_osoba FROM ds_db");
+      while ($ro && (list($ido,$idh)= pdo_fetch_array($ro))) {  
+        $n++;
+        query("UPDATE osoba SET access=access | $org_ds WHERE id_osoba=$ido");
+      }
+      $html.= "V ezer_db2 bylo změněno $n osob (access|=$org_ds) a propojeno s ds_osoba přes ds_db.";
+      break;
+    case 'osoba_new':         // ---------------------- přidání neexistujících a doplnění spojky (4)
+      $od_roku= $par->from ?: 2023;
+      // obrana proti opakovanému vytvoření
+      $n= select('COUNT(*)','osoba',"access=$org_ds");
+      if ($n>0) {
+        $html.= "POZOR patrně již byl tento krok proveden a nevrácen !!!";
+        break;
+      }
+      $n= 0;
+      // vytvoříme nové, pokud není definováno ys_osoba
+      $ro= pdo_qry("
+          SELECT GROUP_CONCAT(d.id_osoba) AS idhs,TRIM(d.prijmeni),TRIM(d.jmeno),d.narozeni,
+            d.ulice,d.psc,d.obec,d.telefon,d.email,
+          MAX(id_order) AS _obj,MAX(YEAR(FROM_UNIXTIME(obj.fromday))) AS _last
+          FROM $setkani_db.ds_osoba AS d
+          LEFT JOIN ds_db AS x ON x.ds_osoba=d.id_osoba
+          JOIN $setkani_db.tx_gnalberice_order AS obj ON obj.uid=d.id_order
+          WHERE ISNULL(x.id_osoba) AND d.id_osoba>0
+          GROUP BY TRIM(d.prijmeni),TRIM(d.jmeno),narozeni HAVING _last>=$od_roku
+          ORDER BY _obj DESC
+      ");
+      while ($ro && (list($idhs,$prijmeni,$jmeno,$narozeni,$ulice,$psc,$obec,$telefon,$email)
+          = pdo_fetch_array($ro))) {  
+        $n++;
+        $sex= select('sex','_jmena',"jmeno='$jmeno' LIMIT 1");
+        display("$jmeno:$sex");
+        $sex= $sex==1 || $sex==2 ? $sex : 0;
+        query("INSERT INTO osoba (access,prijmeni,jmeno,narozeni,sex,
+            adresa,ulice,psc,obec,kontakt,telefon,email)
+          VALUE ($org_ds,'$prijmeni','$jmeno','$narozeni',$sex,
+            1,'$ulice','$psc','$obec',1,'$telefon','$email')");
+        $ido= pdo_insert_id();
+        foreach (explode(',',$idhs) as $idh) {
+          query("INSERT INTO ds_db (ds_osoba,id_osoba,prijmeni,jmeno,narozeni) 
+            VALUE ($idh,$ido,'$prijmeni','$jmeno','$narozeni')");
+          $nd++;
+        }
+      }
+      $html.= "Do ezer_db2 bylo přidáno $n osob (access=$org_ds) a propojeno přes ds_db s ds_osoba "
+          . "s posledním pobytem od roku $od_roku";
+      break;
+    case 'pobyty':         // ---------------------------- vytvoření struktury pobyt-spolu-osoba (5)
+      $od_roku= $par->from ?: 2024;
+      $no= $na= $np= $ns= 0;
+      $err= '';
+      $ro= pdo_qry("
+        SELECT uid,akce,FROM_UNIXTIME(fromday),FROM_UNIXTIME(untilday),note
+        FROM $setkani_db.tx_gnalberice_order
+        WHERE deleted=0 AND YEAR(FROM_UNIXTIME(fromday))>=$od_roku
+        ORDER BY uid DESC
+      ");
+      while ($ro && (list($idf,$kod,$od,$do,$note)= pdo_fetch_array($ro))) {  
+        $rok= substr($od,0,4);
+        $no++;
+        if ($kod) {
+          // objednávka je fakticky typu "akce YMCA"
+          $ida= select('id_akce',"join_akce","g_kod=$kod AND g_rok=$rok");
+          if (!$ida) {
+            $err.= "<br>objednávka $idf '$note' směřuje na divný kód akce $kod roku $rok";
+            $kod= 0;
+          }
+          else {
+            $na++;
+            query("UPDATE akce SET id_order=$idf WHERE id_duakce=$ida");
+          }
+        }
+        if (!$kod) {
+          // objednávka je fakticky pobytová ale vytvoříme záznam v tabulce akce
+          query("INSERT INTO akce (access,id_order,druh,nazev,misto,datum_od,datum_do,ma_cenik) 
+              VALUE ($org_ds,$idf,64,'Objednávka $idf','Albeřice','$od','$do',2)");
+          $ida= pdo_insert_id();
+          $rp= pdo_qry("
+            SELECT rodina FROM $setkani_db.ds_osoba 
+            WHERE id_order=$idf
+            GROUP BY rodina ORDER BY rodina");
+          while ($rp && (list($rod)= pdo_fetch_array($rp))) {  
+            // pro každou "rodinu" přidáme pobyt, pokud má aspoň jednodho hosta
+            $n= select('COUNT(*)',"$setkani_db.ds_osoba","id_order=$idf AND rodina='$rod'");
+            if (!$n) continue;
+            query("INSERT INTO pobyt (id_akce,pracovni) 
+                VALUE ($ida,'rodina=$rod')");
+            $idp= pdo_insert_id();
+            $np++;
+            $rs= pdo_qry("
+              SELECT ds_db.id_osoba 
+              FROM $setkani_db.ds_osoba AS d
+              JOIN ds_db ON ds_db.ds_osoba=d.id_osoba
+              WHERE id_order=$idf AND rodina='$rod'
+            ");
+            while ($rs && (list($ido)= pdo_fetch_array($rs))) {  
+              // přidáme hosty
+              query("INSERT INTO spolu (id_pobyt,id_osoba) VALUE ($idp,$ido)");
+              $ns++;
+            }
+          }
+        }
+      }
+      $html.= "Do ezer_db2 bylo přidáno $no objednávek jako akce s $np pobyty $ns osob ($na akcí už v databázi je)
+        - převedeny objednávky v Domě setkání od roku $od_roku";
+      if ($err) 
+        $html.= "<hr>$err";
+      break;
+    // =============================================================================== ruční úparvy
+    case 'ds_osoba':      // ------------------------------------------------ převod ds_osoba->osoba
+    case 'ds_osoba_plus': // převod ds_osoba->osoba včetně uvážení telefonu a mailu
+      $n= $nys= $nx= $nx0= $nh= $nh_t= $nh_t1= 0;
+      $pairs= $telfs= $idos= '';
+      $rd= pdo_qry("
+        SELECT d.id_osoba,MIN(IFNULL(o.id_osoba,0)) AS _id_osoba,d.ys_osoba,
+          TRIM(d.prijmeni),TRIM(d.jmeno),TRIM(d.ulice),TRIM(d.psc),TRIM(d.obec),d.narozeni,
+          GROUP_CONCAT(DISTINCT REPLACE(d.telefon,' ','')) AS _telefon,
+          GROUP_CONCAT(DISTINCT TRIM(d.email)) AS _email,
+          COUNT(d.id_osoba) AS _num_ds,COUNT(DISTINCT o.id_osoba) _num_ys
+        FROM $setkani_db.ds_osoba AS d
+        LEFT JOIN osoba AS o USING (prijmeni,jmeno,narozeni)
+        LEFT JOIN ds_db ON ds_db.ds_osoba=d.id_osoba
+        WHERE ISNULL(ds_db.ds_osoba) AND IFNULL(o.deleted,'')='' AND d.narozeni!='0000-00-00'
+        GROUP BY d.prijmeni,d.jmeno,d.narozeni
+-- HAVING _telefon!='' AND _id_osoba=0
+-- HAVING _email!='' AND _id_osoba=0
+        ORDER BY d.prijmeni
+--        LIMIT 20  
+      ");
+      while ($rd && (list($dido,$ido,$ydo,$prijmeni,$jmeno,$ulice,$psc,$obec,,$telefon,$email)
+          = pdo_fetch_array($rd))) {
+        $n++; 
+        if ($ido) $nys++;
+        if ($ydo && $ido!=$ydo) { 
+          $o= db2_osobni_udaje($ido);
+          if (!$o->id_osoba) {
+            $idos.= "<br>{$dido}D: $prijmeni $jmeno, $ulice, $psc $obec "
+                . "| {$ido}Y: $o->prijmeni $o->jmeno, $o->ulice, $o->psc $o->obec";
+            $nx0++;
+          }
+          else {
+            $nx++;
+            $pairs.= "<br>{$ydo}D: $prijmeni $jmeno, $ulice, $psc $obec "
+                . "| {$ido}Y: $o->prijmeni $o->jmeno, $o->ulice, $o->psc $o->obec";
+          }
+        }
+        if ($par->mode!='ds_osoba_plus') continue;
+        $br= '';
+        if (!$ydo && !$ido) {
+          $nh++;
+          if ($telefon) {
+            $nh_t++;
+            $ds_telefony= preg_split("/[,;]/",$telefon);
+            foreach ($ds_telefony as $ds_t) {
+              $ds_t= trim($ds_t);
+              if ($ds_t=='') continue;
+              $o= db2_jen_osobni_udaje(0,"telefon LIKE '%{$ds_t}%'");
+              if ($o->id_osoba) {
+                $nh_t1++;
+                $vic= $o->n>1 ? "<b style='color:red'>$o->n</b>" : '';
+                $telfs.= "<br>$vic{$dido}D: $prijmeni $jmeno, $ulice, $psc $obec -- $telefon"
+                    . "| {$o->id_osoba}Y: $o->prijmeni $o->jmeno, $o->ulice, $o->psc $o->obec -- $o->telefon";
+                $br= '<br>';
+              }
+            }
+          }
+          if ($email) {
+            $nh_t++;
+            $ds_emaily= preg_split("/[,;]/",$email);
+            foreach ($ds_emaily as $ds_e) {
+              $ds_e= trim($ds_e);
+              if ($ds_e=='') continue;
+              $o= db2_jen_osobni_udaje(0,"email LIKE '%{$ds_e}%'");
+              if ($o->id_osoba) {
+                $nh_t1++;
+                debug($o,$prijmeni);
+                $vic= $o->n > 1 ? "<b style='color:red'> $o->n </b>" : '';
+                $telfs.= "<br>$vic{$dido}D: $prijmeni $jmeno, $ulice, $psc $obec -- $email"
+                    . "| {$o->id_osoba}Y: $o->prijmeni $o->jmeno, $o->ulice, $o->psc $o->obec -- $o->email";
+                $br= '<br>';
+              }
+            }
+          }
+          $telfs.= $br;
+        }
+      }
+      $html.= "projdeno $n záznamů se stejným prijmeni+jmeno+narozeni z ds_osoba"
+          . "<br><br>z nich je $nys v ezer_db2.osoba"
+          . "<br><br>a z nich je $nx0 divných:<br>$idos "
+          . "<br><br>a $nx podezřelých, jsou to:<br>$pairs";
+      if ($par->mode!='ds_osoba_plus') {
+        $html.= "<br><br>ze zbytku $nh hostí jich "
+        . "$nh_t má v DS telefon z nichž $nh_t1 známe jako:<br>$telfs";
+      }
+      break;
+  }
+  return $html;
+}
+# --------------------------------------------------------------------------------- db2 osobni_udaje
+function db2_osobni_udaje($ido,$or_cond='') {
+  $os= (object)[];
+  $n= 0;
+  $cond= $or_cond ? '' : "AND id_osoba=$ido";
+  $HAVING= $or_cond ? "HAVING $or_cond" : '';
+  $rp= pdo_qry("
+    SELECT id_osoba,TRIM(prijmeni) AS prijmeni,TRIM(jmeno) AS jmeno,narozeni,
+      TRIM(IF(adresa,o.ulice,r.ulice)) AS ulice,
+      TRIM(IF(adresa,o.psc,r.psc)) AS psc, 
+      TRIM(IF(adresa,o.obec,r.obec)) AS obec,
+      TRIM(IF(kontakt,o.email,r.emaily)) AS email,
+      REPLACE(IF(kontakt,o.telefon,r.telefony),' ','') AS telefon,
+      TRIM(IFNULL(nazev,prijmeni)) AS rod,role
+    FROM osoba AS o 
+    LEFT JOIN tvori AS t USING (id_osoba)
+    LEFT JOIN rodina AS r USING (id_rodina)
+    WHERE o.deleted='' $cond
+    $HAVING
+    ORDER BY role 
+    LIMIT 10
+  ");
+  while ($rp && $o= pdo_fetch_object($rp)) {  
+    $n++;
+    if ($n==1) $os= $o;
+  }
+  $os->n= $n;
+  return $os;
+}
+function db2_jen_osobni_udaje($ido,$or_cond='') {
+  $os= (object)[];
+  $n= 0;
+  $cond= $or_cond ? '' : "AND id_osoba=$ido";
+  $HAVING= $or_cond ? "HAVING $or_cond" : '';
+  $rp= pdo_qry("
+    SELECT id_osoba,TRIM(prijmeni) AS prijmeni,TRIM(jmeno) AS jmeno,narozeni,
+      TRIM(ulice) AS ulice,
+      TRIM(psc) AS psc, 
+      TRIM(obec) AS obec,
+      TRIM(email) AS email,
+      REPLACE(telefon,' ','') AS telefon
+    FROM osoba 
+    WHERE deleted='' $cond
+    $HAVING
+    ORDER BY id_osoba
+    LIMIT 10
+  ");
+  while ($rp && $o= pdo_fetch_object($rp)) {  
+    $n++;
+    if ($n==1) $os= $o;
+  }
+  $os->n= $n;
+  return $os;
+}
 /** =======================================================================================> FAKTURY **/
 # typ:T|I, zarovnání:L|C|R, písmo, l, t, w, h, border:LRTB
 $ds2_faktura_dfl= 'T,L,3.5,10,10,0,0,,1.5';

@@ -12,6 +12,14 @@
 var staty='CZ,SK,A,BG,CA,D,EE,FI,GB,H,I,IRL,IE,LT,LV,NL,PL,UA,US,?' 
 
 # ------------------------------------------------------------------------------------------==> stav
+# kódy pro access a org
+const org_ys=1,
+      org_fa=2,
+      org_cr=4,
+      org_ms=8,
+      org_ms50=16,
+      org_ds=64        
+        
 # dotaz na datovou oprávněnost
 var has_access=0                // maximální datová práva přihlášeného uživatele
 var my_access=0                 // zvolená datová práva přihlášeného uživatele
@@ -38,6 +46,7 @@ var the_mezinarodni: text       // pracovní akce: akce má účastníky ze svě
 var the_soubeh: number          // 0=normální akce, 1=hlavní akce, 2=souběžná akce
 var the_hlavni: number          // 0=normální akce, id=akce k the_duakce hlavní
 var the_soubezna: number        // 0=normální akce, id=akce s the_duakce souběžná
+var the_order: number           // 0=normální akce, jinak ID objednávky
 var the_cenik: text             // pracovní akce: 1=má ceník, 2=ceník Domu setkání
 var the_cenik_verze: text       // ... verze ceníku: 0=2016, 1=2017
 var the_cena:  number           // pracovní akce: má pevnou cenu pro dospělého
@@ -84,6 +93,8 @@ func akce_onstart() { var m:object
   dirty= 1;
   has_access= sys('user','has_access');
   my_access= sys('user','access');
+  // pro správce Domu setkání přidej org_ds
+  if (has_skill('yd') && my_access<org_ds) my_access= my_access+org_ds;
   m= match('(?:^|\s)(t|T)(?:\s|$)',sys('user','skills'));
   team_access= !m ? 0 : (m.s1=='T' ? 2 : 1);
   echo(`team_access=${team_access}`);
@@ -144,7 +155,7 @@ func akce_choose(id_akce) { var a:object, ok:number
     the_duakce= id_akce;
     the_rok= a.rok;       the_title= a.title;       the_soubeh= a.soubeh;
     the_hnizda= a.hnizda; the_wordpress= a.web_wordpress; the_mezinarodni= a.mezinarodni;
-    the_hlavni= a.hlavni; the_soubezna= a.soubezna;
+    the_hlavni= a.hlavni; the_soubezna= a.soubezna; the_order= a.id_order;
     the_cenik= a.cenik;   the_cenik_verze= a.cenik_verze;
     the_cena= a.cena;     the_org= a.org;           the_ms= a.ms;    the_druh= a.druh;
     the_garant= a.garant; the_tym= a.tym;
@@ -385,6 +396,7 @@ table ds_osoba_copy { key_id:'id_osoba'
 table akce { key_id:'id_duakce'
   number id_duakce
   number id_hlavni // 0 nebo id_duakce hlavní akce souběžné akce
+  number id_order
   number access
   number typ
   number ma_cenik  // 1 znamená, že bereme v úvahu tabulku cenik

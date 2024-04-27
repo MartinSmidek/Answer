@@ -177,6 +177,16 @@ menu m {type:'left', format:'f+'
     item {title:'[fa-search] ze seznamu všech akcí'                                      skill:'#crz;s'
       par:°{it:'s|r',s:'sey',o:'access',a:'rok'}}
   }
+  menu {title:'Objednávky Domu setkání',type:'group',                                    skill:'yd'
+    item {title:'[fa-home] přehled roku'
+      func onclick (i:ezer) {
+        menu_item= i;
+        info.display(2,'s|r'); the_source= 'sey';
+        the_omezeni= `da2.access & ${org_ds}`;
+        akce_roku(info.rok);
+      }
+    }
+  }
   menu {title:'Výběr ze všech roků',type:'group',                                        skill:'y;f;c;s'
     item sey {title:'[fa-search] ze seznamu všech akcí',    par:°{it:'s',cond:'1'} }
     item  {title:'[fa-search-plus]... opravdové akce',      par:°{it:'s',cond:'da2.spec=0'} }
@@ -683,6 +693,7 @@ form _page [,,275,360] {
   | eq(access.get,4,8,16);
     c.pol.width(100); c.typ.width(50); c.za_2016.width(40);
     form.display(0,'ex');
+  | ge(access.get,org_ds.get);
   | warning("chybně definovaný ceník");
   }
   browse c [10,25,,] { tag:'cen', rows:26, qry_rows:1, css_rows:"barva,1:sedy"
@@ -1121,6 +1132,7 @@ form _info [,,*,50] {
       css_rows:"barva,1:cerveny,2:zluty,3:skrtnuty" // akce je: 1=hlavní | 2=souběžná | 3=zrušená
       optimize:°{fetch:'all'}
     show id_akce  {data:da2.id_duakce}
+    show objednavka {data:da2.id_order}
     show          {data:ja2.id_akce}
     show          {data:pa2.id_pobyt}
     show ma_archiv // [,,10,] 

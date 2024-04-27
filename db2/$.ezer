@@ -343,6 +343,7 @@ form right [,,*,*] {
 
 table akce { key_id:'id_duakce'
   number id_duakce
+  number id_order
   number typ
   number statistika
 }

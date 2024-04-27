@@ -68,7 +68,7 @@ form _ucty [,,640,*] {
       skryt_potvrzene, ' AND stav NOT IN (7,9,11)');
     return `${filter_mode} ${_and}`;
   }
-  label popis [,,393,19] {title:" OSTRÉ 
+  label popis [,,420,19] {title:" db2 
     <span class='azurovy'>&nbsp; asi platba za akci/pobyt &nbsp;</span>&nbsp;&nbsp;
     <span class='zeleny'>&nbsp; je to platba za akci/pobyt &nbsp;</span>&nbsp;&nbsp;
     <span class='zluty'>&nbsp; asi dar &nbsp;</span>&nbsp;&nbsp;
