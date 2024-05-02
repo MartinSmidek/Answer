@@ -51,7 +51,7 @@
   // upozornění na testovací verzi
   $demo= '';
   // zmizí a zase se objeví
-  $click= "jQuery('#DEMO').fadeOut(200).delay(5000).fadeIn(1000);";
+  $click= "jQuery('#DEMO').fadeOut(200).delay(200000).fadeIn(1000);";
   // jen zmizí
   //$click= "jQuery('#DEMO').fadeOut(500);";
   // nezmizí
