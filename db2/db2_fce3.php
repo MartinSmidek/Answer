@@ -13064,8 +13064,8 @@ function elim2_osoba($id_orig,$id_copy) { //trace();
   $dar=   select("GROUP_CONCAT(id_dar)",  "dar",  "id_osoba=$id_copy");
   query("UPDATE dar    SET id_osoba=$id_orig WHERE id_osoba=$id_copy");
   // platba
-  $platba= select("GROUP_CONCAT(id_platba)","platba","id_osoba=$id_copy");
-  query("UPDATE platba SET id_osoba=$id_orig WHERE id_osoba=$id_copy");
+  $platba= select("GROUP_CONCAT(id_platba)","platba","id_oso=$id_copy");
+  query("UPDATE platba SET id_oso=$id_orig WHERE id_oso=$id_copy");
   // mail
   $mail= select("GROUP_CONCAT(id_mail)","mail","id_clen=$id_copy");
   query("UPDATE mail SET id_clen=$id_orig WHERE id_clen=$id_copy");
