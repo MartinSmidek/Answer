@@ -22,13 +22,14 @@ panel trns {type:'right', title:"Transformace"                    skill:'a'
       item {title:'Průzkum ds_osoba',            par:{mode:'ds_osoba',doit:0} }
     }
     menu {title:'Propojení osoba & ds_osoba', type:'group', active:no
-      item {title:'1. zruš vazbu na smazané osoby',   par:{mode:'osoba_clr'} }
+      item {title:'1. zahaj transformaci',            par:{mode:'osoba_clr'} 
+             help:'   zruš vazbu na smazané osoby'}
       item {title:'2. vytvoř spojku ds_db',           par:{mode:'ds_db',delete:1} }
-      item {title:'3. přidej 64 k access propojeným', par:{mode:'osoba_upd'} }
-      //item {title:'4. vytvoř nové, access=4 od 2023', par:{mode:'osoba_new',from:2023} }
+      item {title:'3. uprav access propojeným osobám',par:{mode:'osoba_upd'} }
       item {title:'4. vytvoř nové osoby s access 64', par:{mode:'osoba_new',from:1} }
-      item {title:'5. vytvoř pobyt+spolu od 2024',    par:{mode:'pobyty',from:2024} }
+      item {title:'4. ... ... jen od 2024',           par:{mode:'osoba_new',from:2024} }
       item {title:'5. vytvoř pobyt+spolu',            par:{mode:'pobyty',from:1} }
+      item {title:'5. ... ... jen od 2024',           par:{mode:'pobyty',from:2024} }
       
       item {title:'?? vrať změny',                    par:{mode:'backtrack'} }
       item {title:'!! zapiš změny trvale',            par:{mode:'final'} }

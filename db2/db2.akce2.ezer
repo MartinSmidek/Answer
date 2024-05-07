@@ -203,7 +203,20 @@ group fio {
     func Init(ucty) {}
     func LoadPobyt(ucty) {}
     func Load(ucty) {}
+    func zaPobyt(id_pobyt,on) {}
+    func SetOsoba(id_pobyt,on,id_osoba) {}
+    func CurrIds() {}
   }
+}
+group dum { include:'onload,db2/db2.dum'
+  panel Rozpis { type:'popup'
+    func Load(id_pobyt) {}
+  }
+  panel Objednavka { type:'popup' 
+    func Show(id_akce) {} // umožní zvolit správnou objednávku
+  }
+  form _rozpis {}
+  form _objednávka {}
 }
 # ==========================================================================================> . AKCE
 panel lst {type:'right', _sys:'*', title:'[fa-futbol-o] AKCE', include:'onload,db2.akce2.lst',

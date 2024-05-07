@@ -903,8 +903,10 @@ function do_vyplneni_dat() { // ------------------------------------------------
   if ($vars->form->deti) { // ------------------------------------------------------- zobrazení dětí
     $clenove.= "<div id='deti' class='cleni'>";
     $deti= '';
+    $jsou_deti= 0;
     foreach ($cleni as $id=>$clen) {
       if ($id<0 || get_role($id)!='d') continue;
+      $jsou_deti++;
       if (get('o','umrti',$id)) 
         $deti.= "<div class='clen'>" 
           . elem_input('o',$id,['spolu'])
@@ -919,11 +921,16 @@ function do_vyplneni_dat() { // ------------------------------------------------
     }
     foreach ($cleni as $id=>$clen) {
       if ($id>0 || get_role($id)!='d') continue;
-        $deti.= "<div class='clen'>" 
-          . elem_input('o',$id,['spolu','jmeno','prijmeni','narozeni','note'])
-          . "</div>";
+      if (get('o','prijmeni',$id) || get('o','jmeno',$id)) $jsou_deti++;
+      $deti.= "<div class='clen'>" 
+        . elem_input('o',$id,['spolu','jmeno','prijmeni','narozeni','note'])
+        . "</div>";
     }
-    if ($deti) $clenove.= '<p><i>Naše děti (zapište prosím i ty, které necháváte doma)</i></p>';
+    if ($deti) {
+      $pozn= $jsou_deti ? '' 
+          : "<br>Pokud děti nemáte, nechte všechna pole prázdná a zrušte 'jede na akci'.";
+      $clenove.= "<p><i>Naše děti (zapište prosím i ty, které necháváte doma). $pozn</i></p>";
+    }
     $clenove.= $deti;
     $clenove.= "<br><$button name='cmd_dalsi_dite'>
       <i class='fa fa-green fa-plus'></i>chci přidat další dítě</button>";

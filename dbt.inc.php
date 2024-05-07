@@ -82,6 +82,7 @@
   
   // PDF knihovny
   require_once('tcpdf/tcpdf.php');
+//  require_once('tcpdf/examples/barcodes/tcpdf_barcodes_2d_include.php');
 //  require_once('tcpdf/db2_tcpdf.php');
  
   // je to aplikace se startem v rootu

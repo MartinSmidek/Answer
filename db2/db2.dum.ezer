@@ -1,0 +1,358 @@
+#pragma library
+# ------------------------------------------------------------------------------------------------ #
+# Modul pro Dům setkání                                                                            #
+#                                                                                                  #
+# Ans(w)er/Ezer                                          (c) 2024 Martin Šmídek <martin@smidek.eu> #
+# ------------------------------------------------------------------------------------------------ #
+
+// ==================================================================================> ÚPRAVY CENÍKU
+panel Rozpis [,,350,400] { type:'popup' title:"Účtované položky z ceníku"
+  use c: form _c
+  var n: number, 
+      polozky: object,
+      oprava: text
+  func Init() { var ceny:object, cena:object, row: ezer
+//    n= 0;
+//    c.polozky.init();
+//    ceny= php.ds2_cenik_list();
+//    rozpis.cenik_roku= ceny.cenik_roku;
+//    for (cena of ceny.list) {
+//      n= c.polozky.add();
+//      row= c.polozky.part(n);
+//      row.typ= cena.typ;
+//      row.nazev= cena.txt;
+//    }
+  }
+
+  func Load(id_pobyt) { var row:ezer, typ:text, pol:number, opr:number, one:number
+    polozky= php.dum_objednavka_pobyt(id_pobyt);
+//    if ( polozky.err ) 
+//      alert(polozky.err)
+//    else {
+//      c.celkem= polozky.cen.celk;
+//      c.za= `Kč za pobyt hosta ${osoba.prijmeni} ${osoba.jmeno}`;
+//      for (row of c.polozky) {
+//        typ= row.typ;
+//        // převzetí hodnot k této položce
+//        pol= polozky[conc('pol.',typ)];
+//        opr= polozky[conc('opr.',typ)];
+//        one= polozky[conc('one.',typ)];
+//        // uložení hodnot
+//        row.pocet= pol;
+//        row.oprava= opr; row.oprava.plain();
+//        row.one= one;
+//        // výpočet ceny a sumy
+//        row.cena= one*((opr=='-') ? pol : opr);
+//      };
+//      Suma(); 
+//      c.celkem.plain();
+//      panel.modal();
+//    }
+  }
+  func Suma() { var polozka:ezer
+//    c.celkem= 0;
+//    for (polozka of c.polozky) {
+//      c.celkem= c.celkem + polozka.cena;
+//      c.celkem.change();
+//    }
+  }
+  func Uloz() { var polozka:ezer
+//    oprava= '';
+//    for (polozka of c.polozky) {
+//      if (polozka.oprava!='-') {
+//        oprava= `${oprava},${polozka.typ}:${polozka.oprava}`;
+//      }
+//    }
+//    c.plain();
+//    if (oprava) {
+//      osoba.oprava= `${rozpis.cenik_roku}${oprava}`;
+//      osoba.oprava.change();
+//      osoba.save(); osoba.load();
+//    }
+  }
+  
+  form _c [,,350,400] { style:"overflow:auto"
+    field celkem [90,2,40,] { title:'PLATBA' format:'rd' }
+    label za [140,7,200,20] 
+    label [49,28,40,14] { title:'oprava' }
+    button [140,21,,] { title:'Ulož opravu' 
+      func onclick() { 
+//        Uloz() 
+    }}
+    button [223,21,,] { title:'Zruš opravu' func onclick() { 
+//      osoba.oprava= ''; osoba.oprava.change();
+//      osoba.save(); osoba.load();
+//      Load(osoba.id_order,osoba.id_osoba)
+    }}
+    list polozky [0,40,350,360] { rows:22 
+      field typ
+      field one // ceníková položka 
+      field pocet [0,2,30,] { format:'rd' }
+      field oprava [40,2,40,] { format:'rf' 
+        func onchange() {
+//          cena= one * (oprava=='-' ? pocet : oprava);
+//          cena.change();
+//          Suma();
+        }
+      }
+      field cena  [90,2,40,] { format:'rd' }
+      label nazev [140,6,200,20] { style:"white-space:nowrap" }
+    }
+  }
+}
+
+// =====================================================================================> VYÚČTOVÁNÍ
+form _rozpis /*[,,300,100]*/ { css:'ds_form'
+  // parametry
+  var cenik_roku= 0,  // defaultní ceník se bere z roku konání akce
+      idos= 0         // nastavená osoba
+  // nadpis
+  label [ 10,0,694,] { title:'<hr>' }
+  label nadpis [ 10,20,500,] 
+  // host
+  field jmeno   [ 10, 50, 80,] { title:'^jméno' /*data:ds_osoba.jmeno*/ }
+  field prijmeni[100, 50, 80,] { title:'^příjmení' /*data:ds_osoba.prijmeni*/ }
+  field ubyt1   [190, 50, 50,] { title:'^ubytování' format:'r' }
+  field strav1  [250, 50, 50,] { title:'^stravování' format:'r' }
+  field popl1   [310, 50, 50,] { title:'^poplatek' format:'r' }
+  field prog1   [370, 50, 50,] { title:'^program' format:'r' }
+  field celk1   [430, 50, 50,] { title:'^CELKEM' format:'r' }
+  // rodina
+  field rodina  [140, 75, 40,] { title:'rodina' }
+  field ubyt2   [190, 75, 50,] { format:'r' }
+  field strav2  [250, 75, 50,] { format:'r' }
+  field popl2   [310, 75, 50,] { format:'r' }
+  field prog2   [370, 75, 50,] { format:'r' }
+  field celk2   [430, 75, 50,] { format:'r' }
+  // pobyt
+  label         [100,104, 84,] { title:'celá objednávka' format:'r' }
+  field ubyt3   [190,100, 50,] { format:'r' }
+  field strav3  [250,100, 50,] { format:'r' }
+  field popl3   [310,100, 50,] { format:'r' }
+  field prog3   [370,100, 50,] { format:'r' }
+  field celk3   [430,100, 50,] { format:'r' }
+//  // text faktury
+//  label faktura [0,140,640,]
+  // parametry faktury
+  field fakt_num [494,50,40,] { title:'^fakt.číslo' }
+  field fakt_zal [544,50,50,] { title:'^zálohou' }
+  field fakt_vs  [603,50,50,] { title:'^VS' }
+  field fakt_ss  [663,50,33,] { title:'^SS' }
+  button [494,76,,] { title:'Faktura za rodinu' 
+    func onclick() { var f:object
+//      clear();
+//      if (!celk3) { alert("faktura nelze vygenerovat"); return }
+//      f= php.ds2_faktura({typ:'konečná',obj:the_order,idos:idos,cenik:cenik_roku,show:1,save:0,
+//          num:fakt_num,zaloha:fakt_zal,vs:fakt_vs,ss:fakt_ss});
+//      page.faktura= f.html;
+//      form.plain();
+//      if (f.err) alert(f.err);
+  }}
+  button [637,76,,] { title:'PDF' 
+    func onclick() { var f:object
+//      clear();
+//      if (!celk3) { alert("faktura nelze vygenerovat"); return }
+//      f= php.ds2_faktura({typ:'konečná',obj:the_order,idos:idos,cenik:cenik_roku,show:1,save:1,
+//          num:fakt_num,zaloha:fakt_zal,vs:fakt_vs,ss:fakt_ss});
+//      page.faktura= f.html;
+//      form.plain();
+//      if (f.err) alert(f.err);
+  }}
+
+  // ==> výpočet pro Knihu hostí
+  var cena:object
+  func rozpis_load(_idos) { 
+//    idos= _idos;
+//    nadpis= `<h3 style='margin:0'>Cena pro vybraného účastníka, rodinu, objednávku 
+//        podle ceníku roku ${cenik_roku}</h3>`;
+//    cena= php.ds2_cena_pobytu(the_order,idos,cenik_roku);
+//    copy_by_name(cena.fields,form);
+  }
+}
+
+# ======================================================================================> FUNKCE
+// ------------------------------------------------------------------==> globální
+// ------------------------------------------------------------------==> lokální
+
+# ======================================================================================> OBJEDNÁVKA
+panel A4 [,,675,] { type:'popup', title:"Náhled PDF", 
+    style:"height:calc(100% - 100px);max-height:960px"
+  func preview() {
+    paper.full= Objednavka.faktura_parm.html;
+    paper.ref= Objednavka.faktura_parm.ref;
+    panel.modal(40,10);    
+  }
+  use paper: form { style:'overflow-y: auto;overflow-x:clip'
+    label full [0,0,,]
+    button [325,10,,] { title:'[fa-save] Uložit mezi faktury a posunout číslování' 
+      func onclick() { 
+        clear();
+        php.dum_faktura_save(Objednavka.faktura_parm);
+    }}
+    button [571,10,,] { title:'[fa-undo] Neukládat' 
+      func onclick() { panel.hide(0); }
+    }
+    label ref [325,35,150,18] { style:"background:silver;color:black;font-size:12px;padding:3px 5px 0px 20px" }
+  }
+}
+panel Objednavka [,,400,450] { type:'popup' title:"Objednávka pobytu v Domě setkání"
+  var udaje: object,        // počítaná v obj.load_objednavka
+      faktura_parm: object  // paarmetry pro fakturu
+  func Show(ida) { var x: object
+    x= php.dum_objednavky_akce(ida);
+    panel.title= `Objednávky pobytů v Domě setkání v termínu ${x.oddo}`;
+    obj.objs.selects(x.sel);
+    obj.objs.key(x.key);
+    obj.load_objednavka(x.key);
+    obj.plain();
+    obj.fakt_ss= x.kod;
+    obj.fakt_kdo= x.kdo;
+    panel.modal();
+  }
+  use obj: form {
+    // funkce
+    func load_objednavka(id_order) { 
+      udaje= php.dum_objednavka(id_order);
+      copy_by_name(udaje.fld,form); 
+      fakt_num= udaje.fld.fakt_num;
+      fakt_vs= id_order;
+      fakt_ss= udaje.fld.fakt_num;
+      fakt_cena= udaje.cena.celkem;
+      fakt_50= fakt_cena / 2;
+      fakt_zal= fakt_50;
+      js.rooms_check(udaje.fld.rooms1,form,'q');
+      helps();
+    }
+    func helps() { var x:object, fld: ezer
+      for (x of php.ds2_rooms_help()) {
+        fld= form.part(x.fld);
+        fld.help= x.hlp;                 // -- atribut nemůže být vlevo
+        fld.enable(x.on);
+      };
+    }
+    select objs [0,10,342,] { title:'^objednávka', format:'t' 
+      func onchanged() {
+        load_objednavka(this.key());
+      }
+    }
+    // položky
+    select state [0,50,155,] { title:'^stav objednávky' type:'map', options:ds_stav.hodnota }
+    field od [174,50,85,] { title:'^příjezd', type:'date', format:'r' }
+    field do [264,50,85,] { title:'^odjezd', type:'date', format:'r' }
+    field noci [356,50,30,] { title:'^nocí', format:'r' }
+    edit note [0,90,388,55] { title:'^poznámka k pobytu' }
+    field adults [0,170,25,] { title:'^dospělí', format:'c' }
+    field kids_10_15 [52,170,25,] { title:'^děti od 10', format:'c' }
+    field kids_3_9 [109,170,25,] { title:'^děti od 3', format:'c' }
+    field kids_3 [167,170,25,] { title:'^děti do 3', format:'c' }
+    select board [274,170,117,] { title:'^typ stravy' type:'map', options:ds_strava.hodnota }
+    // pokoje
+    const PL=0, QT=210
+    label       [0,QT-14,356,42] { title:'objednané pokoje:', css:'jemna' }
+    check   q1  [PL+  0, QT,14,] { title:'1',  format:'c', css:'CheckT' }
+    check   q2  [PL+ 20, QT,14,] { title:'2',  format:'c', css:'CheckT' }
+    check   q11 [PL+ 40, QT,14,] { title:'11', format:'c', css:'CheckT' }
+    check   q12 [PL+ 60, QT,14,] { title:'12', format:'c', css:'CheckT' }
+    check   q13 [PL+ 80, QT,14,] { title:'13', format:'c', css:'CheckT' }
+    check   q14 [PL+100, QT,14,] { title:'14', format:'c', css:'CheckT' }
+    check   q15 [PL+120, QT,14,] { title:'15', format:'c', css:'CheckT' }
+    check   q16 [PL+140, QT,14,] { title:'16', format:'c', css:'CheckT' }
+    check   q17 [PL+160, QT,14,] { title:'17', format:'c', css:'CheckT' }
+    check   q21 [PL+180, QT,14,] { title:'21', format:'c', css:'CheckT' }
+    check   q22 [PL+200, QT,14,] { title:'22', format:'c', css:'CheckT' }
+    check   q23 [PL+220, QT,14,] { title:'23', format:'c', css:'CheckT' }
+    check   q24 [PL+240, QT,14,] { title:'24', format:'c', css:'CheckT' }
+    check   q25 [PL+260, QT,14,] { title:'25', format:'c', css:'CheckT' }
+    check   q26 [PL+280, QT,14,] { title:'26', format:'c', css:'CheckT' }
+    check   q27 [PL+300, QT,14,] { title:'27', format:'c', css:'CheckT' }
+    check   q28 [PL+320, QT,14,] { title:'28', format:'c', css:'CheckT' }
+    check   q29 [PL+340, QT,14,] { title:'29', format:'c', css:'CheckT' }
+    check   q9  [PL+360, QT,14,] { title:'9',  format:'c', css:'CheckT' }
+    check   q10 [PL+380, QT,14,] { title:'10', format:'c', css:'CheckT' }
+    // parametry faktury
+    field fakt_num [91,324,60,] { title:'^číslo faktury' }
+    field fakt_vs  [166,324,50,] { title:'^VS' }
+    field fakt_ss  [231,324,33,] { title:'^SS' }
+    field fakt_kdo [280,324,100,] { title:'^kdo vyřizuje' }
+    field fakt_cena [91,364,50,] { title:'^odhad ceny', format:'r' }
+    field fakt_50 [160,364,50,] { title:'^50% ceny', format:'ro'  }
+    field fakt_zal [233,364,50,] { title:'^záloha', format:'r'  }
+    // ovládání
+    button [93,394,,] { title:'Náhled zálohové faktury' 
+      func onclick() { var x:object
+        clear();
+        faktura_parm= php.dum_faktura({typ:'záloha',udaje:udaje,show:1,save:1,
+            num:fakt_num,zaloha:fakt_zal,vs:fakt_vs,ss:fakt_ss,vyrizuje:fakt_kdo});
+        A4.preview();
+    }}
+  }
+}
+# ===================================================================================> tabulky, mapy
+
+table ds_cena {  db:'setkani', key_id:'id_cena'
+  number id_cena
+  number rok
+  text polozka         { sql_pipe:'wu' }
+  text druh            { sql_pipe:'wu' }
+  text typ             { sql_pipe:'wu' }
+  number od
+  number do
+  number cena
+  number dph
+}
+table tx_gnalberice_room { db:'setkani', key_id:'uid'
+  number uid
+  number deleted
+  number hidden
+  number number
+  text   category
+  number bads
+  number addbeds
+  number etage
+  text   note         { sql_pipe:'wu' }
+}
+table tx_gnalberice_order { db:'setkani', key_id:'uid'
+  number uid
+  number crdate       { sql_pipe:'stamp_date' }
+  number deleted
+  number hidden
+  text   name         { sql_pipe:'wu' }
+  number room
+  number fromday      { sql_pipe:'stamp_date' }
+  number untilday     { sql_pipe:'stamp_date' }
+  number confirmed
+  number state
+  number akce         { help:"akce|číslo akce z číselníku akcí" }
+  text   note         { sql_pipe:'wu' }
+  text   rooms        { sql_pipe:'wu' }
+  text   rooms1       { sql_pipe:'wu' }
+  number adults       { help:'?|počet dospělých podle objednávky' }
+  number kids_10_15   { help:'?|počet dětí ve věku 10-15 let podle objednávky' }
+  number kids_3_9     { help:'?|počet dětí ve věku 3-9 let podle objednávky' }
+  number kids_3       { help:'?|počet dětí do 3 let podle objednávky' }
+  number board
+  number prog_cely
+  number prog_polo
+  text   address      { sql_pipe:'wu' }
+  text   zip
+  text   city         { sql_pipe:'wu' }
+  text   telephone
+  text   email
+  number fe_user_id
+  // přidané polozky
+  text   firstname    { sql_pipe:'wu' }
+  text   org          { sql_pipe:'wu' }
+  number ic
+  text   dic
+  number ucast        // 1 => účastní se pobytu
+  number sleva        { help:'%|případná sleva v procentech' }
+  number skoleni      // 1 => školení, neplatí se rekreační poplatek
+}
+table _cis { key_id:'id_cis'
+# --------------------------------------------------------------------------------==> číselníky,mapy
+  number id_cis, text druh, text data, text hodnota, text zkratka, number poradi, text barva, text ikona
+}
+# --------------------------------------------------------------------------------==> mapy
+map ds_stav:   table _cis {where:"druh='ds_stav'", order:'poradi', key_id:'data'}
+map ds_strava: table _cis {where:"druh='ds_strava'", order:'poradi', key_id:'data'}
+map ds_luzko:  table _cis {where:"druh='ds_luzko'", order:'poradi', key_id:'data'}

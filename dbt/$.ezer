@@ -3,7 +3,7 @@
 
 menu dbt { type:'main', title:'db2', active:*, _sys:'*'
   
-#if test_version<1
+#if test_version<3
   // vrací aktuální stavy modulů, bude volána pomocí js.call_root_func z library modulů
   func akce2_curr() { var the_curr:object, x: object
     the_curr= akce2.curr();

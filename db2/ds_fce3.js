@@ -42,7 +42,8 @@ function rooms_check(rooms,form,prefix) {
     }
   }
   // nastav aktuální
-  for (let room of rooms.get().split(',')) {
+  let rms= typeof(rooms)=='string' ? rooms : rooms.get();
+  for (let room of rms.split(',')) {
     var id= prefix+room;
     if ( form.part[id] && form.part[id].type=='check' )
       form.part[id].set(1);

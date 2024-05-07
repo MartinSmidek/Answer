@@ -3490,10 +3490,16 @@ function ucast2_browse_ask($x,$tisk=false) {
         GROUP BY  px.i0_rodina
       ) AS _ucasti ON _ucasti.i0_rodina=p.i0_rodina AND p.i0_rodina
     " : '';
+    $uhrada1= $akce->ma_cenik==2 // cením Domu setkání
+        ? "IFNULL(SUM(castka),0)"
+        : "IFNULL(SUM(u_castka),0)";
+    $uhrada2= $akce->ma_cenik==2 // cením Domu setkání
+        ? "LEFT JOIN platba AS u ON id_pob=id_pobyt"
+        : "LEFT JOIN uhrada AS u USING (id_pobyt)";
     $qp= pdo_qry("
-      SELECT p.*,IFNULL(SUM(u_castka),0) AS uhrada,IFNULL(id_prihlaska,0) AS id_prihlaska $ms1
+      SELECT p.*,$uhrada1 AS uhrada,IFNULL(id_prihlaska,0) AS id_prihlaska $ms1
       FROM pobyt AS p
-      LEFT JOIN uhrada AS u USING (id_pobyt)
+      $uhrada2
       LEFT JOIN rodina AS r ON r.id_rodina=p.i0_rodina
       -- LEFT JOIN prihlaska AS pr USING (id_pobyt)
       LEFT JOIN (SELECT MAX(id_prihlaska) AS id_prihlaska,id_pobyt FROM prihlaska GROUP BY id_pobyt) AS pr USING (id_pobyt)
@@ -4711,41 +4717,41 @@ end:
   return $msg;
 }
 # =======================================================================================> . pomocné
-# ---------------------------------------------------------------------------- akce2 rodina_z_pobytu
-# vrátí rodiny dané osoby ve formátu pro select (název:id_rodina;...)
-function ucast2_rodina_z_pobytu($idp) {
-  $idr= 0; // název rodiny podle nejstaršího člena pobytu
-  $res= pdo_qry("SELECT id_osoba, TRIM(prijmeni), sex, ulice, psc, obec,
-          ROUND(IF(MONTH(narozeni),
-            DATEDIFF(datum_od,narozeni)/365.2425,YEAR(datum_od)-YEAR(narozeni)),1) AS _vek,
-          a.access
-         FROM osoba 
-           JOIN spolu USING (id_osoba) JOIN pobyt USING (id_pobyt) 
-           JOIN akce AS a ON id_akce=id_duakce 
-         WHERE id_pobyt=$idp 
-         ORDER BY narozeni");
-  while ( $res && (list($ido,$prijmeni,$sex,$ulice,$psc,$obec,$vek,$access)= pdo_fetch_array($res)) ) {
-    if (!$idr) { 
-      // vytvoř rodinu podle nejstaršího
-      $nazev= preg_replace('~ová$~','',$prijmeni).'ovi';
-      $idr= ezer_qry("INSERT",'rodina',0,array(
-        (object)array('fld'=>'nazev', 'op'=>'i','val'=>$nazev),
-        (object)array('fld'=>'access','op'=>'i','val'=>$access),
-        (object)array('fld'=>'ulice', 'op'=>'i','val'=>$ulice),
-        (object)array('fld'=>'psc',   'op'=>'i','val'=>$psc),
-        (object)array('fld'=>'obec',  'op'=>'i','val'=>$obec)
-      ));
-    }
-    // a přidávej členy rodiny
-    $role= $vek<18 ? 'd' : ($sex==1 ? 'a' : 'b');
-    ezer_qry("INSERT",'tvori',0,array(
-      (object)array('fld'=>'id_osoba', 'op'=>'i','val'=>$ido),
-      (object)array('fld'=>'id_rodina','op'=>'i','val'=>$idr),
-      (object)array('fld'=>'role',     'op'=>'i','val'=>$role)
-    ));
-  }
-  return $idr;
-}
+//# ---------------------------------------------------------------------------- akce2 rodina_z_pobytu
+//# vrátí rodiny dané osoby ve formátu pro select (název:id_rodina;...)
+//function ucast2_rodina_z_pobytu($idp) {
+//  $idr= 0; // název rodiny podle nejstaršího člena pobytu
+//  $res= pdo_qry("SELECT id_osoba, TRIM(prijmeni), sex, ulice, psc, obec,
+//          ROUND(IF(MONTH(narozeni),
+//            DATEDIFF(datum_od,narozeni)/365.2425,YEAR(datum_od)-YEAR(narozeni)),1) AS _vek,
+//          a.access
+//         FROM osoba 
+//           JOIN spolu USING (id_osoba) JOIN pobyt USING (id_pobyt) 
+//           JOIN akce AS a ON id_akce=id_duakce 
+//         WHERE id_pobyt=$idp 
+//         ORDER BY narozeni");
+//  while ( $res && (list($ido,$prijmeni,$sex,$ulice,$psc,$obec,$vek,$access)= pdo_fetch_array($res)) ) {
+//    if (!$idr) { 
+//      // vytvoř rodinu podle nejstaršího
+//      $nazev= preg_replace('~ová$~','',$prijmeni).'ovi';
+//      $idr= ezer_qry("INSERT",'rodina',0,array(
+//        (object)array('fld'=>'nazev', 'op'=>'i','val'=>$nazev),
+//        (object)array('fld'=>'access','op'=>'i','val'=>$access),
+//        (object)array('fld'=>'ulice', 'op'=>'i','val'=>$ulice),
+//        (object)array('fld'=>'psc',   'op'=>'i','val'=>$psc),
+//        (object)array('fld'=>'obec',  'op'=>'i','val'=>$obec)
+//      ));
+//    }
+//    // a přidávej členy rodiny
+//    $role= $vek<18 ? 'd' : ($sex==1 ? 'a' : 'b');
+//    ezer_qry("INSERT",'tvori',0,array(
+//      (object)array('fld'=>'id_osoba', 'op'=>'i','val'=>$ido),
+//      (object)array('fld'=>'id_rodina','op'=>'i','val'=>$idr),
+//      (object)array('fld'=>'role',     'op'=>'i','val'=>$role)
+//    ));
+//  }
+//  return $idr;
+//}
 # ------------------------------------------------------------------------------- akce2 osoba_rodiny
 # vrátí rodiny dané osoby ve formátu pro select (název:id_rodina;...)
 function akce2_osoba_rodiny($id_osoba) {
@@ -13064,8 +13070,8 @@ function elim2_osoba($id_orig,$id_copy) { //trace();
   $dar=   select("GROUP_CONCAT(id_dar)",  "dar",  "id_osoba=$id_copy");
   query("UPDATE dar    SET id_osoba=$id_orig WHERE id_osoba=$id_copy");
   // platba
-  $platba= select("GROUP_CONCAT(id_platba)","platba","id_osoba=$id_copy");
-  query("UPDATE platba SET id_osoba=$id_orig WHERE id_osoba=$id_copy");
+  $platba= select("GROUP_CONCAT(id_platba)","platba","id_oso=$id_copy");
+  query("UPDATE platba SET id_oso=$id_orig WHERE id_oso=$id_copy");
   // mail
   $mail= select("GROUP_CONCAT(id_mail)","mail","id_clen=$id_copy");
   query("UPDATE mail SET id_clen=$id_orig WHERE id_clen=$id_copy");
