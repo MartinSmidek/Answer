@@ -11,6 +11,7 @@ menu dbt { type:'main', title:'db2', active:*, _sys:'*'
     }
     return the_curr;
   } 
+  func syst_tab_rec_show(tab,idt) { syst.dat.tab_id_show(tab,idt); }
   func onstart() { php.table_lock('none'); } // uvolni všechny zámky řádků tabulek přihlášeného 
   var global: text,
   tabs pok {title:"[fa-eur] Finance", _sys:'*',  include:'onclick,db2.pok', active:*, skill:'yp' }
@@ -57,7 +58,9 @@ menu dbt { type:'main', title:'db2', active:*, _sys:'*'
           cron:  "id_cron>*,batch,info,adr,replyto,par,subj,txt"
         },
         css: 'stat' // styl tabulek
-    }}
+      }
+      func tab_id_show(tab,idt) {}
+    }
     panel nas {type:'right', title:'Data', _sys:'nas', skill:'a'
       proc track_osoba(ido)  { akce2.track.back_show('osoba',ido) }
       proc track_rodina(idr) { akce2.track.back_show('rodina',idr) }

@@ -2055,7 +2055,7 @@ function akce2_vzorec_soubeh($id_pobyt,$id_hlavni,$id_soubezna,$dosp=0,$deti=0,$
   foreach($cenik_dosp as $za=>$a) {
     $c= $a->c; $txt= $a->txt;
     switch ($za) {
-    case 'Nl':
+    case 'Nl': // souběh
       $cena+= $cc= $dosp_chuv * $pocetdnu * $c;
       if ( !$cc ) break;
       $ret->c_nocleh+= $cc;
@@ -2322,7 +2322,7 @@ function akce2_vzorec($id_pobyt) {  //trace();
     else {
       foreach ($cenik as $a) {
       switch ($a->za) {
-        case 'Nl':
+        case 'Nl': // vzorec
           $cc= $nl * $a->c;
           $cena+= $cc;
           $ret->c_nocleh+= $cc;
@@ -2646,7 +2646,7 @@ function __akce2_vzorec_2017($id_pobyt,$id_akce,$verze=2017) {  //trace();
     else {
       foreach ($cenik as $a) {
       switch ($a->za) {
-        case 'Nl':
+        case 'Nl': // obsolete
           $cc= $nl * $a->c;
           if ( !$cc ) break;
           $cena+= $cc;
@@ -13123,7 +13123,7 @@ function elim2_clen($id_rodina,$id_orig,$id_copy) { trace();
   $dar=   select("GROUP_CONCAT(id_dar)",  "dar",  "id_osoba=$id_copy");
   query("UPDATE dar    SET id_osoba=$id_orig WHERE id_osoba=$id_copy");
   // platba
-  $platba= select("GROUP_CONCAT(id_platba)","platba","id_osoba=$id_copy");
+  $platba= select("GROUP_CONCAT(id_platba)","platba","id_oso=$id_copy");
   query("UPDATE platba SET id_osoba=$id_orig WHERE id_osoba=$id_copy");
   // mail
   $mail= select("GROUP_CONCAT(id_mail)","mail","id_clen=$id_copy");
@@ -13164,9 +13164,9 @@ function elim2_rodina($id_orig,$id_copy) {
     // dar
     $dar=   select("GROUP_CONCAT(id_dar)",  "dar",  "id_rodina=$id_copy");
     query("UPDATE dar    SET id_rodina=$id_orig WHERE id_rodina=$id_copy");
-    // platba
-    $platba= select("GROUP_CONCAT(id_platba)","platba","id_rodina=$id_copy");
-    query("UPDATE platba SET id_rodina=$id_orig WHERE id_rodina=$id_copy");
+//    // platba ... stará verze tabulky
+//    $platba= select("GROUP_CONCAT(id_platba)","platba","id_rodina=$id_copy");
+//    query("UPDATE platba SET id_rodina=$id_orig WHERE id_rodina=$id_copy");
     // smazání kopie
     query("UPDATE rodina SET deleted='D rodina=$id_orig' WHERE id_rodina=$id_copy");
     // opravy v originálu

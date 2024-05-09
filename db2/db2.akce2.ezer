@@ -354,6 +354,7 @@ table ds_osoba_copy { key_id:'id_osoba'
 table akce { key_id:'id_duakce'
   number id_duakce
   number id_hlavni // 0 nebo id_duakce hlavní akce souběžné akce
+  number id_order
   number access
   number typ
   number ma_cenik  // 1 znamená, že bereme v úvahu tabulku cenik
