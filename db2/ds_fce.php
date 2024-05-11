@@ -274,9 +274,9 @@ function ds2_trnsf_osoba($par) {
           ds2_cenik($rok_ceniku);
         }
         $vek= roku_k($narozeni,$od);
-        $_od= str_replace(".$rok",'',sql_date1($od));
-        $_do= str_replace(".$rok",'',sql_date1($do));
-        $vzorec= ["od:$_od","do:$_do"];
+//        $_od= str_replace(".$rok",'',sql_date1($od));
+//        $_do= str_replace(".$rok",'',sql_date1($do));
+        $vzorec= ["od:$od","do:$do"];
         // strava
         $strava= 'strava_'.$ds_strava[$board];
         if ($vek>=$ds2_cena[$strava.'D']->od && $vek<$ds2_cena[$strava.'D']->do) {
@@ -1178,6 +1178,11 @@ function dum_objednavka($id_order) {
   // výpočet ceny pro zálohovou fakturu
   $rozpis= dum_objednavka_zaloha($x->fld);
   $x->cena= dum_objednavka_cena($rozpis);
+  
+  // zjištění skutečně spotřebovaných osobonocí, pokojů, stravy, poplatků, ...
+  
+  
+  
   debug($x,"dum_objednavka($id_order)");
   return $x;
 }
@@ -1314,7 +1319,7 @@ function ds2_compare($order) {  #trace('','win1250');
 }
 # ==================================================================================> objednávky NEW
 // -------------------------------------------------------------------------------- dum browse_order
-# BROWSE ASK - obsluha browse s optimize:ask
+# BROWSE ASK - obsluha browse s optimize:ask + sumarizace realizace objednávky
 # x->order= {a|d} polozka
 # x->show=  {polozka:[formát,vzor/1,...],...} pro položky s neprázdným vzorem
 #                                             kde formát=/ = # $ % @ * .
@@ -1330,9 +1335,14 @@ function dum_browse_order($x) {
   switch ($x->cmd) {
   case 'browse_load':  # -----------------------------------==> . browse_load
     $z= [];
+    // spotřeba 
+    // pokoje: pokoj -> hostů
+    // polozka: cena.
+    $suma= (object)['pokoj'=>[],'polozka'=>[]]; 
     $rok_ceniku= 0;
+    // c.ikona=1 pokud nebyl na akci
     $rp= pdo_qry("
-      SELECT id_pobyt,prijmeni,datum_od,YEAR(datum_od),p.ds_vzorec,
+      SELECT id_pobyt,c.ikona,prijmeni,datum_od,YEAR(datum_od),p.ds_vzorec,
         GROUP_CONCAT(CONCAT(id_spolu,'~',prijmeni,'~',jmeno,'~',narozeni,
             '~',0,'~',IF(s.pokoj,s.pokoj,p.pokoj),'~',s.ds_vzorec,
             '~',0,'~',0,'~',0,'~',0,'~',0) 
@@ -1342,11 +1352,13 @@ function dum_browse_order($x) {
         JOIN spolu AS s USING (id_osoba) 
         JOIN pobyt AS p USING (id_pobyt) 
         JOIN akce AS a ON id_akce=id_duakce 
+        JOIN _cis AS c ON c.druh='ms_akce_funkce' AND c.data=p.funkce
       WHERE $x->cond
       GROUP BY id_pobyt
       ORDER BY prijmeni
     ");
-    while ($rp && (list($idp,$prijmeni,$od,$rok,$vzorec,$cleni)= pdo_fetch_array($rp))) {
+    $i_pokoj= 5; $i_vzorec= 6;
+    while ($rp && (list($idp,$nebyl,$prijmeni,$od,$rok,$vzorec,$cleni)= pdo_fetch_array($rp))) {
       if ($rok!=$rok_ceniku) {
         $rok_ceniku= $rok;
         ds2_cenik($rok_ceniku);
@@ -1356,12 +1368,27 @@ function dum_browse_order($x) {
       $c= explode('~',$cleni);
       for ($i= 0; $i<count($c); $i+=12){
         $cena= dum_cena($c[$i+6]);
-        $c[$i+3]= roku_k($c[$i+3],$od);
+        $c[$i+3]= roku_k($c[$i+3],$od); // věk
         $celkem+= $c[$i+7]= $cena['celkem'];
         $c[$i+8]= $cena['druh']['ubytování']??0;
         $c[$i+9]= $cena['druh']['strava']??0;
         $c[$i+10]= $cena['druh']['poplatek obci']??0;
         $c[$i+11]= $cena['druh']['program']??0;
+        // doplníme počty do SUMA - jen pokud nebyla zrušena účast
+        if ($nebyl==0) {
+          $pokoje= $c[$i+$i_pokoj];
+          $ps= explode(',',$pokoje);
+          foreach ($ps as $p) {
+            $suma->pokoj[$p]+= 1/count($ps); 
+          }
+          foreach (explode(',',$c[$i+$i_vzorec]) as $ip) {
+            list($zaco,$pocet)= explode(':',$ip);
+            if ($zaco=='od') $od= $pocet;
+            elseif ($zaco=='do') $do= $pocet;
+            else $suma->polozka[$zaco]+= $pocet;
+          }      
+          $suma->clovekonoci+= date_diff(date_create($od),date_create($do))->format('%a');
+        }
       }
       $cleni= implode('~',$c);
       // doplníme pobyt
@@ -1379,9 +1406,10 @@ function dum_browse_order($x) {
     $y->count= count($z);
     $y->quiet= 0;
     $y->ok= 1;
+    $y->suma= $suma;
     array_unshift($y->values,null);
   }
-//  debug($y,"dum_browse_order = ");
+  debug($y->suma,"dum_browse_order/suma = ");
   return $y;  
 }
 function dum_cena($vzorec,$dotovana=0) {
