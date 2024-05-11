@@ -266,9 +266,9 @@ proc akce_back() {
 use header:form _header   [  4,  0,,]
 use u:     form _ucast    [  6, 20,,]  { tag:'akce1' }               // seznam účastníků
 # záložka evidence
-use evid:  form _evidence [400, 10,,]      { tag:'akce1', format:'n' }
+use evid:  form _evidence [400, 10,,]      { tag:'akce1,evid', format:'n' }
 use pob:   form _pobyt    [404,590,,] { tag:'akce1', format:'n' } // pro min_h=550, min_h+40=590
-use os1:   form _osoba2x [772,30,,] { tag:'akce1', format:'n', 
+use os1:   form _osoba2x [772,30,,] { tag:'akce1,evid', format:'n', 
     par:{onchanged:'first_only'}
   proc on_click() { evid.z_change('o') }
   proc onchanged() { evid.d_change }
@@ -276,31 +276,34 @@ use os1:   form _osoba2x [772,30,,] { tag:'akce1', format:'n',
   proc see_new_osoba() { cmd.see_new_osoba }
   proc see_old_osoba() { cmd.see_old_osoba() }
 }
-use os2:   form _osoba2x [1023,30,,] {tag:'2,akce1', format:'n', 
+use os2:   form _osoba2x [1023,30,,] {tag:'2,akce1,evid', format:'n', 
     par:{onchanged:'first_only'}
   proc on_click() { evid.z_change('o') }
   proc onchanged() { evid.d_change }
   proc elim_kopie() { elim_kopie_osob(form) }
 }
-use rod:   form _rodina2  [404,30,,]       { tag:'akce1', format:'n',  }
-use sp1:   form _spolu  [772,min_h-185,,]  { tag:'akce1',   format:'n' }
-use sp2:   form _spolu  [1023,min_h-185,,] { tag:'2,akce1', format:'n' }
+use rod:   form _rodina2  [404,30,,]       { tag:'akce1,evid', format:'n',  }
+use sp1:   form _spolu  [772,min_h-185,,]  { tag:'akce1,evid',   format:'n' }
+use sp2:   form _spolu  [1023,min_h-185,,] { tag:'2,akce1,evid', format:'n' }
 
-use cmd:   form _cmd      [400,min_h-120,,]  { tag:'akce1', format:'n' }
-use alb:   form foto._alb [410, 32,,]  { tag:'akce0', format:'n' }
-use alb0:  form _aktivity0 [400, 10,,]  { tag:'akce0', format:'n' }
+use cmd:   form _cmd      [400,min_h-120,,]  { tag:'akce1,cmd', format:'n' }
+use alb:   form foto._alb [410, 32,,]  { tag:'akce0,alb', format:'n' }
+use alb0:  form _aktivity0 [400, 10,,]  { tag:'akce0,alb', format:'n' }
 # záložka plateb
-use pla:   form _platba   [400, 10,,]  { tag:'akce0', format:'n' }
-use cmdp:  form _cmd_p    [400,min_h-120,,]  { tag:'akce0', format:'n' }
-use pla_fio:form fio._ucty[413, 61,873,]  { tag:'akce0,ds', format:'n' }
-use pla_ds:form _platba_ds[400, 10,,]  { tag:'akce0,ds', format:'n' }
-use pla_roz:form dum._rozpis   [400, 454,,]  { tag:'akce0,ds', format:'n' }
+use pla:   form _platba   [400, 10,,]  { tag:'akce0,pla', format:'n' }
+use cmdp:  form _cmd_p    [400,min_h-120,,]  { tag:'akce0,cmdp', format:'n' }
+//use pla_fio:form fio._ucty[413, 61,873,]  { tag:'akce0,ds', format:'n' }
+//use pla_ds:form _platba_ds[400, 10,,]  { tag:'akce0,ds', format:'n' }
+//use pla_roz:form dum._rozpis   [400, 454,,]  { tag:'akce0,ds', format:'n' }
+use pla_ds: form dum._vyuctovani [400,29,,] { tag:'akce0,ds', format:'n' 
+    label frame [0,0,873,min_h-152] { css:'ae_work'} 
+}
 # záložka aktivity
-use act1:  form _aktivity [420, 10,,]  { tag:'akce0', format:'n' }
-use act2:  form _aktivity [700, 10,,]  { tag:'akce0', format:'n' }
-use act0:  form _aktivity0 [400, 10,,]  { tag:'akce0', format:'n' }
+use act1:  form _aktivity [420, 10,,]  { tag:'akce0,act', format:'n' }
+use act2:  form _aktivity [700, 10,,]  { tag:'akce0,act', format:'n' }
+use act0:  form _aktivity0 [400, 10,,]  { tag:'akce0,act', format:'n' }
 # záložka dokumenty
-use docu:  form _documents [400, 10,,]  { tag:'akce0', format:'n' }
+use docu:  form _documents [400, 10,,]  { tag:'akce0,docu', format:'n' }
 # 2. zobrazení dětí
 use u2:    form _ucast2  [   6, 20,,]  { tag:'akce2', format:'n' }   // seznam dětí
 use page:  form _page     [400, 10,,]  { tag:'akce1' }
@@ -766,14 +769,11 @@ form _ucast [,,400,] { css:'ds_form', style:'height:fit-content'
     show key_rodina
     show keys_rodina // [,,50,] {format:'t'}  // seznam duplicitních rodin
     show id_prihlaska
-    // akce
-    show dnu
-    show datum_od
     // zobrazení - předpokládá že org_ds=64
     show _nazev [,,100,] { title:'příjmení', format:'s+q*'
       css_cell:'p_access_web,0:,1:ezer_ys,2:ezer_fa,3:ezer_db,64:ezer_ds,65:ezer_ys_ds,66:ezer_fa_ds,67:ezer_db_ds,77:ezer_ys ezer_web,78:ezer_fa ezer_web,79:ezer_db ezer_web,80:ezer_ds ezer_web,81:ezer_ys ezer_ds ezer_web,82:ezer_fa ezer_ds ezer_web,83:ezer_db ezer_ds ezer_web' 
     }
-    # varianta A plná jména
+    # --- varianta A plná jména
     show _jmena [,,190,] { title:'jméno/a', format:'tsq%' 
       css_cell:'web_changes,0:,1:ezer_web1,2:ezer_web2' }
     # varianta B na úkor _jmena
@@ -787,10 +787,13 @@ form _ucast [,,400,] { css:'ds_form', style:'height:fit-content'
     show budova  [,,0,] { title:'budova', format:"rsq=" }
     show pokoj   [,,0,] { title:'pokoj', format:"rsq=" }
     show potvrzeno
-    # varianta C na úkor _jmena
+    # --- varianta C na úkor _jmena
     show x_ms    [,,0,] { title:'lk;', format:'rq=s:e', help:'počet účastí páru na LK MS (včetně tohoto)' }
     show x_umi   [,,0,] { title:'umí', format:'sq*', help:'seznam schopností rodiny a jejích členů' }
-    # je vždy vidět
+    # --- varianta D pro Dům setkání
+    show datum_od[,,0,] { title:'od' } 
+    show dnu     [,,0,] { title:'dnu' } // datum_do + 1
+    # --- je vždy vidět
     show xfunkce [,,40,] { title:'fce', format:'rq#s', map_pipe:ms_akce_funkce.zkratka,
       help:'funkce na akci', css_cell:""} // nastavuje se v panel.onfocus pro LK a obnovy
     show skupina [,,20,] { title:'sk.', format:'rq=s:e', help:'číslo skupinky'}
@@ -943,14 +946,17 @@ form _ucast [,,400,] { css:'ds_form', style:'height:fit-content'
       _jmena.width(140); _docs.width(49); c_suma.width(0); platba.width(0); x_umi.width(0)
     | _jmena.width(190); _docs.width(0); c_suma.width(0); platba.width(0); x_umi.width(0)
     }
-    proc onclick() {
-      eq(_docs.width,49); show_dup(0)
-    | platba.width; platba.width(0); c_suma.width(0); vratka.width(0); 
-      budova.width(35); pokoj.width(35); _docs.width(15); _jmena.width(102)
-    | budova.width; budova.width(0); pokoj.width(0); 
-      _docs.width(30); x_umi.width(28); x_ms.width(19); _jmena.width(110)
-    | x_umi.width; x_umi.width(0); x_ms.width(0); _docs.width(0); _jmena.width(190)
-    | platba.width(35); c_suma.width(35); vratka.width(35); _docs.width(0); _jmena.width(82)
+    func onclick() {
+      if (_docs.width()==49) show_dup(0)
+      elseif (platba.width()) { 
+        platba.width(0); c_suma.width(0); vratka.width(0); 
+        budova.width(35); pokoj.width(35); _docs.width(15); _jmena.width(102) }
+      elseif (budova.width()) { 
+        budova.width(0); pokoj.width(0); 
+        _docs.width(30); x_umi.width(28); x_ms.width(19); _jmena.width(110) }
+      elseif (x_umi.width()) { 
+        x_umi.width(0); x_ms.width(0); _docs.width(0); _jmena.width(190) }
+      else { platba.width(35); c_suma.width(35); vratka.width(35); _docs.width(0); _jmena.width(82) }
     }
     proc onrefreshed() { h_change_b }
     func columns() {
@@ -1029,22 +1035,18 @@ form _page  [,,623,20] {
       if (neni_ulozeno()||(!the_cenik&&!the_cena)) return; // warning
       tags(&this,'h','z|o|f|d');
       zalozka= 'plat';
-      evid.Display(0); cmd.display(0);
-      pla.display(0); cmdp.display(0); 
-      panel.display(1,'ds');
-//      pla_ds.display(0); pla_fio.display(0);
+      panel.display(0,'evid|cmd|pla|cmdp|alb|docu|act');
+      evid.Display(0); 
       if (the_cenik==1) {
-        pla.display(1); cmdp.display(1);
+        panel.display(1,'pla|cmdp');
         pla.display(gt(the_cenik,0),'cenik'); // omezení výpisu pokud není definován ceník
         pla.display(eq(the_soubeh,1),'deti'); // platby za děti
       }
       elseif (the_cenik==2) {
-        pla_ds.Show();
-        pla_ds.display(1);  pla_fio.display(1);
+        panel.display(1,'ds');
+        pla_ds.load_pob(the_pobyt);
         last= the_pobyt;
       }
-      alb0.display(0); alb.display(0); docu.display(0);
-      act0.display(0); act1.display(0); act2.display(0);
       if (last!=the_pobyt) {
         u.b.load_zalozka(); 
         last= the_pobyt;
@@ -1058,7 +1060,9 @@ form _page  [,,623,20] {
     | tags(this,'o','z|h|f|d');
       zalozka.set('akce');
       evid.Display(0); cmd.display(0);
-      pla.display(0); cmdp.display(0); pla_ds.display(0);  pla_fio.display(0);
+      pla.display(0); cmdp.display(0); 
+      panel.display(0,'ds');
+//      pla_ds.display(0);  pla_fio.display(0);
       alb0.display(0); alb.display(0); docu.display(0);
       act0.display(1); act1.display(1); act2.display(1);
       [ eq(rod.cleni.key_osoba.get,act1.ido,act2.ido)
@@ -1073,7 +1077,9 @@ form _page  [,,623,20] {
     | tags(this,'f','o|z|h|d');
       zalozka.set('foto');
       evid.Display(0); cmd.display(0);
-      pla.display(0); cmdp.display(0); pla_ds.display(0);  pla_fio.display(0);
+      pla.display(0); cmdp.display(0); 
+//      pla_ds.display(0);  pla_fio.display(0);
+      panel.display(0,'ds');
       alb0.display(1); alb.display(1); docu.display(0);
       act0.display(0); act1.display(0); act2.display(0);
       [ eq(last.get,the_pobyt.get) | u.b.load_zalozka; last.set(the_pobyt.get) ];
@@ -1087,7 +1093,9 @@ form _page  [,,623,20] {
       tags(this,'d','o|z|h|f');
       zalozka.set('docu');
       evid.Display(0); cmd.display(0);
-      pla.display(0); cmdp.display(0); pla_ds.display(0);  pla_fio.display(0);
+      pla.display(0); cmdp.display(0); 
+//      pla_ds.display(0);  pla_fio.display(0);
+      panel.display(0,'ds');
       alb0.display(0); alb.display(0); docu.display(1);
       act0.display(0); act1.display(0); act2.display(0);
       [ eq(last.get,the_pobyt.get) | u.b.load_zalozka; last.set(the_pobyt.get) ];
@@ -1479,7 +1487,11 @@ form _pobyt [,,360,62] {
   menu { type:'context', join:frame
     item { title:'konfigurace formuláře', proc onclick () { pobyt_config.tune } }
     item { title:'ukázat změny', proc onclick () { track.back_show('pobyt',the_pobyt.get) } }
-  }
+    item { title:'ukázat data', skill:'m', 
+      func onclick() { js.call_root_func_par('syst_tab_rec_show',array('pobyt',the_pobyt),&this,'onclick_')}
+      func onclick_() {}
+    }
+  } 
 
   // t = pracovní poznámka
   edit  p_pracovni [5,0,349,74] {tag:'t', data:p.pracovni, skill:'yaa:t|yaa:t;faa:t|faa:t;caa:t|caa:t'
@@ -1617,6 +1629,10 @@ form _spolu [,,0,270] {
     item { title:'konfigurace formuláře', proc onclick () { spolu_config.tune } }
     item { title:'ukázat změny', proc onclick () {
       key_spolu.get; track.back_show('spolu',key_spolu.get) } }
+    item { title:'ukázat data', skill:'m', 
+      func onclick() { js.call_root_func_par('syst_tab_rec_show',array('spolu',key_spolu),&this,'onclick_')}
+      func onclick_() {}
+    }
   }
 
   // p = poznámka
@@ -2354,6 +2370,7 @@ form _platba [,,623,] { key_id:'id_pobyt', style:'height:fit-content',
 }
 //map uhrada_stav= "i,zkratka;0:-,1:avizo,2:zaplaceno,3:potvrzeno,4:vráceno" 
 map uhrada_za=   "i,zkratka;0:pár,1:děti" 
+/*
 # -------------------------------------------------------------------------------------==> PLATBA DS
 form _platba_ds [,,623,] { key_id:'id_pobyt', style:'height:fit-content', 
     par:{onchanged:'first_only'}
@@ -2364,7 +2381,6 @@ form _platba_ds [,,623,] { key_id:'id_pobyt', style:'height:fit-content',
     pobyt_info= pla_fio.LoadPobyt(the_pobyt);
     info= `Rozpis ceny akce podle ceníku Domu setkání a přehled příchozích plateb za pobyd od ${the_datum_od} do ${the_datum_do}`;
   }
-
   label info [13,32,,] 
   
   label zaco [40,412,300,18] { style:'font-size:10pt;color:black' }
@@ -2387,7 +2403,6 @@ form _platba_ds [,,623,] { key_id:'id_pobyt', style:'height:fit-content',
       polo= php.ds2_cena_polozky(the_pobyt);
     }}
   label polo [40,457,300,18] { style:'font-size:10pt;color:black' }
-  
   label frame [0,16,873,min_h-152] { css:'ae_work'}
 
 }
@@ -2407,6 +2422,7 @@ panel Majitel [0,80,220,50] { title:'určení majitele účtu', type:'popup', cs
     }
   }
 }
+*/
 # -----------------------------------------------------------------------------------------==> CMD_P
 # uložení změn v platbách
 form _cmd_p [,,623,30] { css:'ae_work'

@@ -13,6 +13,7 @@ menu dbt { type:'main', title:'db2', active:*, _sys:'*'
     }
     return the_curr;
   } 
+  func syst_tab_rec_show(tab,idt) { syst.dat.tab_id_show(tab,idt); }
 #endif
 #if test_version<4
   func onstart() { php.table_lock('none'); } // uvolni všechny zámky řádků tabulek přihlášeného 
@@ -43,6 +44,8 @@ menu dbt { type:'main', title:'db2', active:*, _sys:'*'
 #if test_version<1
     proc reaccess() {}
     panel oso {type:'right', title:'Osobní nastavení', _sys:'*', include:'onclick,ezer2.pers' }
+#endif
+#if test_version<3
     panel dat {type:'right', title:'[fa-database] Schema DB', _sys:'*', include:'onload,ezer3.db', skill:'a;ben'
       par:{
         infos: [
@@ -53,10 +56,12 @@ menu dbt { type:'main', title:'db2', active:*, _sys:'*'
         ],
         tables: {
           akce:  "id_duakce>*,deleted,zruseno,spec,nazev,datum_od",
-          pobyt: "id_pobyt>*,id_akce>akce,i0_rodina>rodina,hnizdo,funkce,web_changes,web_zmena",
+          pobyt: "id_pobyt>*,id_akce>akce,i0_rodina>rodina,id_order>objednavka,hnizdo,funkce,web_changes,web_zmena",
           prihlaska: "id_prihlaska>-,id_akce>akce,id_pobyt>pobyt,id_rodina>rodina,id_osoba>osoba,email,stav",
           uhrada:"id_uhrada>*,id_pobyt>pobyt,u_poradi,u_castka,u_datum,u_zpusob,u_stav,u_za",
-          platba:"id_platba>*,id_akce>akce,id_osoba>osoba,id_rodina>rodina,castka,datum,nazev",
+          platba:"id_platba>*,id_oso>osoba,id_pob>pobyt,id_ord>objednavka,castka,datum,nazev",
+          faktura:"id_faktura>*,id_pobyt>pobyt,rok,num,castka",
+          objednavka:"id_order>*,id_akce>akce,od,do,jmeno,prijmeni,note",
           spolu: "id_spolu>-,id_pobyt>pobyt,id_osoba>osoba,access,s_hnizdo,s_role,web_zmena",
           osoba: "id_osoba>*,access,deleted,jmeno,prijmeni,web_zmena",
           osoba_geo: "id_osoba>osoba,kod_obec,stav",
@@ -70,7 +75,11 @@ menu dbt { type:'main', title:'db2', active:*, _sys:'*'
           cron:  "id_cron>*,batch,info,adr,replyto,par,subj,txt"
         },
         css: 'stat' // styl tabulek
-    }}
+      }
+      func tab_id_show(tab,idt) {}
+    }
+#endif
+#if test_version<1
     panel nas {type:'right', title:'Data', _sys:'nas', skill:'a'
       proc track_osoba(ido)  { akce2.track.back_show('osoba',ido) }
       proc track_rodina(idr) { akce2.track.back_show('rodina',idr) }

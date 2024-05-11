@@ -1053,9 +1053,13 @@ form _page [,,275,360] {
     item { title:'ukázat změny', func onclick () {
       if (key_akce) track.back_show('akce',key_akce) 
     } }
-    func test_onclick () {
-      if (key_akce) track.back_show('akce',key_akce) 
+    item { title:'-ukázat data', skill:'m', 
+      func onclick() { js.call_root_func_par('syst_tab_rec_show',array('akce',key_akce),&this,'onclick_')}
+      func onclick_() {}
     }
+//    func test_onclick () {
+//      if (key_akce) track.back_show('akce',key_akce) 
+//    }
   }
 }
 # ==> VÝBĚR AKCE

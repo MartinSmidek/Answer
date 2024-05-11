@@ -129,15 +129,15 @@ panel cen {type:'right', title:'Ceny'
     use z: form formular [1,9,,],
   }
   # ------------------------------------------------------------------------------------==> formular
-  form formular [,,300,125] {
+  form formular [,,350,140] {
     label [  0,10, 80,17] { title:'položka', format:'r' },
     field [ 90,10,200,17] { data:ds_cena.polozka },
     label [  0,35, 80,17] { title:'věkové pásmo', format:'r' },
     field [ 90,35, 40,17] { data:ds_cena.od, format:'r'  },
     field [140,35, 40,17] { data:ds_cena.do, format:'r'  },
-    label [  0,60, 80,17] { title:'druh', format:'r' },
+    label [  0,60, 80,17] { title:'druh', format:'rd' },
     field [ 90,60, 90,17] { data:ds_cena.druh },
-    label [190,60, 20,17] { title:'typ', format:'r' },
+    label [190,60, 20,17] { title:'typ', format:'rd' },
     field [220,60, 70,17] { data:ds_cena.typ },
     label [  0,85, 80,17] { title:'cena', format:'r' },
     field [ 90,85, 40,17] { data:ds_cena.cena, format:'r'  },

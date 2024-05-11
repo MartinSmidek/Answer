@@ -17,6 +17,23 @@ function call_root_func(root_fce,_this,this_fce) {
     }
   );
 }
+// ---------------------------------------------------------------------------------- call_root_func
+// zavolá funkci umístěnou v main.menu a její hodnotu předá funkci this_fce
+// _this je blok obsahující funkci this_fce
+// pars je pole argumentů 
+function call_root_func_par(root_fce,par,_this,this_fce) {
+  let elem= _this;
+  while (elem.type!=='menu.main') {
+    elem= elem.owner;
+  }
+  new Eval([{o:'c',i:root_fce,a:par.length,s:''}],elem,par,root_fce,{
+    args:[_this,this_fce],fce:
+      function(_this,then){
+        new Eval([{o:'c',i:then,a:1,s:''}],_this,[this.stack[0]],then);
+      }
+    }
+  );
+}
 // ------------------------------------------------------------------------------------------------- form_set
 //ff: ds.form_set (form,fields)
 //      nastaví hodnoty polí ve formuláři

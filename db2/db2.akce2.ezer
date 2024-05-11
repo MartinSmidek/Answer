@@ -187,37 +187,6 @@ proc accessed(org) {
 proc spinner(on) {
   [ function('on',"waiting(on);",on) ];
 }
-# ==========================================================================================> MODULY
-group foto { include:'onload,db2.akce2.foto'
-  form _alb {
-    proc galery(fotka,id) {}
-  }
-}
-group fio { 
-#if test_version>2
-    include:'onload,dbt/db2.fio'
-#else
-    include:'onload,db2/db2.fio'
-#endif
-  form _ucty {
-    func Init(ucty) {}
-    func LoadPobyt(ucty) {}
-    func Load(ucty) {}
-    func zaPobyt(id_pobyt,on) {}
-    func SetOsoba(id_pobyt,on,id_osoba) {}
-    func CurrIds() {}
-  }
-}
-group dum { include:'onload,db2/db2.dum'
-  panel Rozpis { type:'popup'
-    func Load(id_pobyt) {}
-  }
-  panel Objednavka { type:'popup' 
-    func Show(id_akce) {} // umožní zvolit správnou objednávku
-  }
-  form _rozpis {}
-  form _objednávka {}
-}
 # ==========================================================================================> . AKCE
 panel lst {type:'right', _sys:'*', title:'[fa-futbol-o] AKCE', include:'onload,db2.akce2.lst',
   skill:'yaa;faa;caa'
@@ -1525,3 +1494,39 @@ form _rodina2p [,,188,229] { css:'ae_frame'
       ask('evid2_deti_access',key_rodina.get,3); panel.call('page.page_load');  } }
   }
 }
+# ==========================================================================================> MODULY
+group foto { include:'onload,db2.akce2.foto'
+  form _alb {
+    proc galery(fotka,id) {}
+  }
+}
+group fio { 
+#if test_version>2
+    include:'onload,dbt/db2.fio'
+#else
+    include:'onload,db2/db2.fio'
+#endif
+  form _ucty {
+    func Init(ucty) {}
+    func LoadPobyt(ucty) {}
+    func Load(ucty) {}
+    func zaPobyt(id_pobyt,on) {}
+    func SetOsoba(id_pobyt,on,id_osoba) {}
+    func CurrIds() {}
+  }
+}
+group dum { include:'onload,db2/db2.dum'
+  panel Rozpis { type:'popup'
+    func Load(id_pobyt) {}
+  }
+  panel Objednavka { type:'popup' 
+    func Show(id_akce) {} // umožní zvolit správnou objednávku
+  }
+  form _rozpis {}
+  form _objednávka {}
+  form _vyuctovani {
+    func load_obj(ido){}
+    func load_pob(idp){}
+  }
+}
+
