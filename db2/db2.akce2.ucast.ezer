@@ -576,6 +576,7 @@ form _cmd [,,623,30] {
       sp1.key_osoba= ido; sp1.key_osoba.change();
       ret= php.ucast2_pridej_osobu(os1.key(),os1.access,the_duakce,pob.key(),rod.key(),os1.role);
       the_pobyt= ret.pobyt;
+      php.check_access('osoba',ido,the_org);
       _reload(1,ido)
     }
     elseif (mode=='novy_clen') {
@@ -900,7 +901,7 @@ form _ucast [,,400,] { css:'ds_form', style:'height:fit-content'
       }
       rod.rodiny.display(1);
       id2= os2.key_osoba;
-      echo(`id2=${id2}, cmode=${ucast.evid.cmode}`);
+      //echo(`id2=${id2}, cmode=${ucast.evid.cmode}`);
       if (r_cleni) {
         os1.enable(1,'.*'); sp1.enable(1,'.*');
         rod.cleni.raise('onrowclick',os1.key_osoba);
@@ -1487,7 +1488,7 @@ form _pobyt [,,360,62] {
   menu { type:'context', join:frame
     item { title:'konfigurace formuláře', proc onclick () { pobyt_config.tune } }
     item { title:'ukázat změny', proc onclick () { track.back_show('pobyt',the_pobyt.get) } }
-    item { title:'ukázat data', skill:'m', 
+    item { title:'-ukázat data', skill:'m', 
       func onclick() { js.call_root_func_par('syst_tab_rec_show',array('pobyt',the_pobyt),&this,'onclick_')}
       func onclick_() {}
     }
@@ -1580,7 +1581,7 @@ panel spolu_config [,,200,60] {type:'popup', title:"Podrobnosti údajů"
   var _old= 'Z'
 }
 form _spolu [,,0,270] {
-  var os: object
+  var os: ezer
   proc onchanged() { evid.d_change }
   proc onclick() { Onclick }
   proc Onclick() { evid.z_change('p') } // nutné aby přímým voláním onclick nedošlo k zacyklení
@@ -1629,7 +1630,7 @@ form _spolu [,,0,270] {
     item { title:'konfigurace formuláře', proc onclick () { spolu_config.tune } }
     item { title:'ukázat změny', proc onclick () {
       key_spolu.get; track.back_show('spolu',key_spolu.get) } }
-    item { title:'ukázat data', skill:'m', 
+    item { title:'-ukázat data', skill:'m', 
       func onclick() { js.call_root_func_par('syst_tab_rec_show',array('spolu',key_spolu),&this,'onclick_')}
       func onclick_() {}
     }
@@ -1708,22 +1709,41 @@ form _spolu [,,0,270] {
       { rod.key_rodina.get; _reload_spolu(rod.cleni.key_osoba.get) | cmd._reload(1,0) }
   }}
   button pridat [150,7,,20] { tag:'a', title:"Přidat na akci", format:'n',  skill:'yaa|yaa+;faa|faa+;caa|caa+'
-    proc onclick() { na_akci(os.key_osoba.get,rod.key_rodina.get,os.role.get) }
-    proc na_akci(ido,idr,role) { var ret:object
-      Onclick;
+    func onclick() { na_akci(os.key_osoba,rod.key_rodina,os.role) }
+    func na_akci(ido,idr,role) { var ret:object
+      Onclick();
       // kontrola oprávněnosti - dotazem
-      { function('x','y','return x&y;',the_org.get,os.access.get)       // stejná org jako má akce?
-      | confirm("máme od této osoby souhlas?");                         // čestné prohlášení
-        os.access.set(3); os.access.change
-      | alert('tak ji nemohu přidat'); return                           // nic
-      };
-
+      if (!the_org&os.access) { // stejná org jako má akce?
+        if (confirm("máme od této osoby souhlas?")) { // čestné prohlášení
+          os.access= 3; 
+          os.access.change();
+        }
+        else {
+          alert('tak ji nemohu přidat'); return; // nic
+        }
+      }
       // přidání se zamezením duplicit a s definicí kategorie pro děti
-      ret.set(ask('ucast2_pridej_osobu',ido,os.access.get,the_duakce.get,pob.key,idr,role));
-      { ret.spolu; _reload_spolu(ido)
-      | ret.tvori; cmd._reload(1,ido) }
-    | alert(ret.msg)
-  }}
+      ret= php.ucast2_pridej_osobu(ido,os.access,the_duakce,pob.key(),idr,role);
+      if (ret.spolu) _reload_spolu(ido);
+      elseif (ret.tvori) cmd._reload(1,ido);
+      else alert(ret.msg);
+    }
+//    proc na_akci(ido,idr,role) { var ret:object
+//      Onclick;
+//      // kontrola oprávněnosti - dotazem
+//      { function('x','y','return x&y;',the_org.get,os.access.get)       // stejná org jako má akce?
+//      | confirm("máme od této osoby souhlas?");                         // čestné prohlášení
+//        os.access.set(3); os.access.change
+//      | alert('tak ji nemohu přidat'); return                           // nic
+//      };
+//
+//      // přidání se zamezením duplicit a s definicí kategorie pro děti
+//      ret.set(ask('ucast2_pridej_osobu',ido,os.access.get,the_duakce.get,pob.key,idr,role));
+//      { ret.spolu; _reload_spolu(ido)
+//      | ret.tvori; cmd._reload(1,ido) }
+//    | alert(ret.msg)
+//    }
+  }
 }
 # ----------------------------------------------------------------------------------------==> RODINA
 form _rodina2 [,,360,229]  { css:'ae_frame', 
@@ -1870,6 +1890,10 @@ form _rodina2 [,,360,229]  { css:'ae_frame',
       idp.set(the_pobyt.get); ask('ucast2_pobyt_access',key_pobyt.get,3); refresh_ucast(idp) } }
     item { title:'zazurovění dětí a rodiny', skill:'daea', proc onclick () { var idp:number
       idp.set(the_pobyt.get); ask('evid2_deti_access',key_rodina.get,3); refresh_ucast(idp) } }
+    item { title:'-ukázat data', skill:'m', 
+      func onclick() { js.call_root_func_par('syst_tab_rec_show',array('rodina',key_rodina),&this,'onclick_')}
+      func onclick_() {}
+    }
   }
   // ==> . nerodina
   field  nerodina  [Lr+5,32,90,] {tag:'y', title:"^skupina osob", format:'dnTt', css:'nerodina'

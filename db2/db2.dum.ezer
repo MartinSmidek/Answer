@@ -133,30 +133,35 @@ panel Objednavka [,,760,450] { type:'popup' title:"Objednávka pobytu v Domě se
     obj.plain();
     obj.fakt_ss= x.kod;
     obj.fakt_kdo= x.kdo;
+    obj.objs_count= x.count;
     panel.modal();
   }
   use obj: form _obj
 }
 form _obj {
   var udaje: object,        // počítaná v obj.load_objednavka
-  faktura_parm: object  // paarmetry pro fakturu
+      faktura_parm: object, // paarmetry pro fakturu
+      objs_count: number
   // funkce
   func load_objednavka(id_order) { var x:object
+    form.init(); plan.init(); stav.init();
     udaje= php.dum_objednavka(id_order);
     copy_by_name(udaje.fld,form); 
     copy_by_name(udaje.fld,plan); 
+    copy_by_name(udaje.cena.rozpis,plan); 
     // označení objednaných pokojů
     js.rooms_check(udaje.fld.rooms1,plan,'q');
     helps();
     // zálohová faktura
-    form.enable(0,'zal');
+//    form.enable(0,'zal');
     zal_num= udaje.fld.fakt_num;
     zal_vs= id_order;
     zal_ss= udaje.fld.fakt_num;
     zal_cena= udaje.cena.celkem;
     // vyúčtování celé objednávky
-//    x= php.
-    
+    js.rooms_check(udaje.ucet.pokoje,stav,'q');
+    copy_by_name(udaje.ucet.hoste,stav); 
+    copy_by_name(udaje.ucet.rozpis,stav); 
   }
 //    // obnova select pokud není
 //    echo('key=',objs.key(),', id_akce=',id_akce);
@@ -178,14 +183,33 @@ form _obj {
       load_objednavka(this.key());
     }
   }
-  button [370,15,,] { title:'oddělit' }
-  select state [0,55,155,] { title:'^stav objednávky' type:'map', options:ds_stav.hodnota }
-  field id_akce [162,55,38,] { title:'^akce YMCA', format:'r' }
-  field od [214,55,85,] { title:'^příjezd', type:'date', format:'r' }
-  field do [304,55,85,] { title:'^odjezd', type:'date', format:'r' }
-  field noci [396,55,30,] { title:'^nocí', format:'rd' }
-  edit note [0,95,424,55] { title:'^poznámka k pobytu' }
-  select board [4,175,117,] { title:'^typ stravy' type:'map', options:ds_strava.hodnota }
+  button [370,15,,] { title:'oddělit' 
+    func onclick() { var obj: number
+    clear();
+    obj= objs.key();
+    if (!confirm(`Mám k objednávce ${obj} udělat kopii v nové akci? Bude mít prázdný seznam pobytů.`)) return;
+    alert(php.dum_clone_objednavka(obj));
+  }}
+  select state [0,55,155,] {tag:'obj', title:'^stav objednávky' type:'map', options:ds_stav.hodnota }
+  field id_akce [162,55,38,] {tag:'obj', title:'^akce YMCA', format:'r' }
+  field od [214,55,85,] {tag:'obj', title:'^příjezd', type:'date', format:'rd' }
+  field do [304,55,85,] {tag:'obj', title:'^odjezd', type:'date', format:'rd' }
+  field noci [396,55,30,] {tag:'obj', title:'^nocí', format:'rd' }
+  edit note [0,95,424,55] {tag:'obj', title:'^poznámka k pobytu' }
+
+  select board [4,175,117,] {tag:'obj', title:'^typ stravy' type:'map', options:ds_strava.hodnota }
+  button [320,175,,] { tag:'zal', title:'[fa-save] Uložit změny' 
+    func onclick() { var saved:object
+      if (objs_count>1 && (od.changed()||do.changed())) {
+        alert('pokud nastala změna v datu příjezdu či odjezdu je zapotřebí pobyt "osamostatnit"');
+        return;
+      }
+      saved= {};
+      copy_by_name(form,saved,'obj|adr',1); // vyber změněné s tag='obj!
+      echo(debug(saved));
+      if (array_length(saved)>0) php.dum_objednavka_save(objs.key(),saved);
+      else warning("nebyla provedena žádná změna")
+  }}
   
   // objednáno a využito
   label [10,206,100,10] { title:'Objednáno ...' }  
@@ -196,16 +220,16 @@ form _obj {
   
   // kontakt na objednatele
   const left_oso= 450
-  field nazev [left_oso+  0, 15,210,] { title:'^název organizace (plátce faktury)' }
-  field ic    [left_oso+220, 15, 80,] { title:'^IČ' }
-  field prijmeni [left_oso+  0, 55,120,] { title:'^příjmení' }
-  field jmeno [left_oso+130, 55, 80,] { title:'^jméno' }
-  field dic   [left_oso+220, 55, 80,] { title:'^DIČ' }
-  field email [left_oso+  0, 95,210,] { title:'^e-mail' }
-  field telefon [left_oso+220, 95, 80,] { title:'^telefon' }
-  field ulice [left_oso+0,135,210,] { title:'^ulice' }
-  field psc   [left_oso+  0,175, 50,] { title:'^psč' }
-  field obec  [left_oso+ 60,175,150,] { title:'^obec' }
+  field nazev [left_oso+  0, 15,210,] { tag:'adr', title:'^název organizace (plátce faktury)' }
+  field ic    [left_oso+220, 15, 80,] { tag:'adr', title:'^IČ' }
+  field prijmeni [left_oso+  0, 55,120,] { tag:'adr', title:'^příjmení' }
+  field jmeno [left_oso+130, 55, 80,] { tag:'adr', title:'^jméno' }
+  field dic   [left_oso+220, 55, 80,] { tag:'adr', title:'^DIČ' }
+  field email [left_oso+  0, 95,210,] { tag:'adr', title:'^e-mail' }
+  field telefon [left_oso+220, 95, 80,] { tag:'adr', title:'^telefon' }
+  field ulice [left_oso+0,135,210,] { tag:'adr', title:'^ulice' }
+  field psc   [left_oso+  0,175, 50,] { tag:'adr', title:'^psč' }
+  field obec  [left_oso+ 60,175,150,] { tag:'adr', title:'^obec' }
 
   // parametry zálohy 
   const top_zal= 370, top_fakt= 410
@@ -251,15 +275,18 @@ form _obj {
   
   form _pokoje [,,750,40] { style:'border:1px solid grey'
     // osoby
-    field adults [10,15,25,] { title:'^dospělí, děti:', format:'c' }
-    field kids_10_15 [69,15,25,] { title:'^ 10+ ', format:'c' }
-    field kids_3_9 [106,15,25,] { title:'^ 9 - 3 ', format:'c' }
-    field kids_3 [142,15,25,] { title:'^ 3- ', format:'c' }
+    field adults      [10,15,25,] { title:'^dospělí, děti:', format:'c' }
+    field kids_10_15  [69,15,23,] { title:'^ 10+ ', format:'c' }
+    field kids_3_9    [97,15,23,] { title:'^ 9 - 3 ', format:'c' }
+    field kids_3      [124,15,23,] { title:'^ 3- ', format:'c' }
     // strava
-    field cc [188,15,25,] { title:'^penze', format:'c' }
-    field cd [224,15,25,] { title:'^.../2', format:'c' }
-    field pc [260,15,25,] { title:'^polo.', format:'c' }
-    field pd [296,15,25,] { title:'^.../2', format:'c' }
+    field strava_CC [160,15,24,] { title:'^penze', format:'c', help:'plná penze' }
+    field strava_CD [190,15,24,] { title:'^.../2', format:'c', help:'plná penze - dětská porce'  }
+    field strava_PC [220,15,24,] { title:'^polo.', format:'c', help:'polopenze'  }
+    field strava_PD [250,15,24,] { title:'^.../2', format:'c', help:'polopenze - dětská porce'  }
+    // zvíře, postýlka, ...
+    field zvire    [285,15,13,] { title:'^zvíře', format:'c', help:'příplatek za noc se zvířetem' }
+    field postylka [312,15,13,] { title:'^pos.', format:'c', help:'zapůjčení postýlky' }
     // pokoje
     const PL=340, QT=6
     check   q1  [PL+  0, QT,14,] { title:'1',  format:'c', css:'CheckT' }

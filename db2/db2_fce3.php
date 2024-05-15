@@ -164,7 +164,7 @@ function datum_oddo($x1,$x2) {
   }
   elseif ( $r1==$r2 ) {
     if ( $m1==$m2 ) { //zacatek a konec je stejny mesic
-      $datum= "$d1 - $d2. $m1"  . ($r1!=$letos ? ". $r1" : '');
+      $datum= "$d1. - $d2. $m1"  . ($r1!=$letos ? ". $r1" : '');
     }
     else { //ostatni pripady
       $datum= "$d1. $m1 - $d2. $m2"  . ($r1!=$letos ? ". $r1" : '');
@@ -4012,7 +4012,7 @@ function ucast2_browse_ask($x,$tisk=false) {
 //                                                 debug($pobyt[60350],'pobyt');
 //                                                 debug($rodina,'rodina');
 //                                                 debug($osoba[7039],'osoba');
-                                                 debug($y->values);
+//                                                 debug($y->values);
   return $y;
 }
 # dekódování seznamu položek na pole ...x,y=z... na [...x=>x,y=>z...]
@@ -4887,6 +4887,8 @@ function ucast2_pridej_rodinu($id_akce,$id_rodina,$hnizdo=0) { trace();
     );
     if ( $hnizdo )
       $chng[]= (object)array('fld'=>'hnizdo', 'op'=>'i','val'=>$hnizdo);
+    if ( 64==select('access','akce',"id_duakce=$id_akce") )
+      $chng[]= (object)array('fld'=>'id_order', 'op'=>'i','val'=>$id_order);
     $ret->idp= ezer_qry("INSERT",'pobyt',0,$chng);
   }
 end:
@@ -4926,7 +4928,7 @@ function ucast2_pridej_osobu($ido,$access,$ida,$idp,$idr=0,$role=0,$hnizdo=0) { 
     goto end;
   }
   // pokud na akci ještě není, zjisti pro děti (<18 let) s_role a dite_kat
-  $datum_od= select("datum_od","akce","id_duakce=$ida");
+  list($datum_od,$ma_cenik)= select("datum_od,ma_cenik","akce","id_duakce=$ida");
   $vek= roku_k($narozeni,$datum_od);
   $kat= 0; $srole= 1;                                         // default= účastník, nedítě
   if     ( $role=='p' )                         { $kat= 0; $srole= 5; }   // osob.peč.
@@ -4948,12 +4950,13 @@ function ucast2_pridej_osobu($ido,$access,$ida,$idp,$idr=0,$role=0,$hnizdo=0) { 
     }      
   }
   // přidej k pobytu
-  $ret->spolu= ezer_qry("INSERT",'spolu',0,array(
+  $chng= array(
     (object)array('fld'=>'id_pobyt', 'op'=>'i','val'=>$idp),
     (object)array('fld'=>'id_osoba', 'op'=>'i','val'=>$ido),
     (object)array('fld'=>'s_role',   'op'=>'i','val'=>$srole),
     (object)array('fld'=>'dite_kat', 'op'=>'i','val'=>$kat)
-  ));
+  );
+  $ret->spolu= ezer_qry("INSERT",'spolu',0,$chng);
   # přidání do rodiny
   if ( $idr && $role ) {
     $je= select("COUNT(*)","tvori","id_rodina=$idr AND id_osoba=$ido");
@@ -4970,6 +4973,10 @@ function ucast2_pridej_osobu($ido,$access,$ida,$idp,$idr=0,$role=0,$hnizdo=0) { 
     ezer_qry("UPDATE",'osoba',$ido,array(
       (object)array('fld'=>'access', 'op'=>'u','val'=>$access,'old'=>$old_access)
     ));
+  }
+  // POKUD je to akce s pobytem hrazeným podle ceníku Domu setkání - vytvoříme vzorec 
+  if ($ma_cenik==2) {
+//    dum_update_host($ret->spolu);
   }
 end:
 //                                                 debug($ret,'ucast2_pridej_osobu / $vek $kat $srole');

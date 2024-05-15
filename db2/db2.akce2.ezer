@@ -1120,6 +1120,10 @@ form _osoba2x [,,244,322] {css:'ae_frame'
       track.back_osoba_rodina(key_osoba.get,cconc(eq(host.get,'E'),id_kmen.get,kmen.get)) }}
     item r { title:'-zobrazovat ®rodinné údaje',  proc onclick () { set_mode(2,host.get); refresh }}
     item o { title:'nezobrazovat ®rodinné údaje', proc onclick () { set_mode(0,host.get); refresh }}
+    item { title:'-ukázat data', skill:'m', 
+      func onclick() { js.call_root_func_par('syst_tab_rec_show',array('osoba',key_osoba),&this,'onclick_')}
+      func onclick_() {}
+    }
   }
 
   // společné
