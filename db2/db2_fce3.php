@@ -367,10 +367,12 @@ function akce2_info($id_akce,$text=1,$pobyty=1) { trace();
              ,'') ORDER BY o.narozeni DESC)) AS _vekdeti"
         : '1';
     // projdeme pobyty
+    $fce_neucast= select('GROUP_CONCAT(data)','_cis',"druh='ms_akce_funkce' AND ikona=1");
+    display("fce_neucast=$fce_neucast");
     $ms_ucasti= $akce_ms
         ? "r_ms+( SELECT COUNT(*) FROM pobyt AS xp JOIN akce AS xa ON xp.id_akce=xa.id_duakce 
              WHERE xp.i0_rodina=p.i0_rodina AND xa.druh=1 AND zruseno=0
-               AND xp.id_pobyt!=p.id_pobyt) AS _ucasti_ms"
+               AND xp.id_pobyt!=p.id_pobyt AND xp.funkce NOT IN ($fce_neucast)) AS _ucasti_ms"
         : '0 AS _ucasti_ms';
     $JOIN_tvori= $pobyty 
         ? "LEFT JOIN tvori AS t USING (id_osoba,id_rodina)" : '';
