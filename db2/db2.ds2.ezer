@@ -22,6 +22,21 @@ panel trns {type:'right', title:"Transformace"                    skill:'a'
       item {title:'Průzkum ds_osoba',            par:{mode:'ds_osoba',doit:0} }
     }
     menu {title:'Propojení osoba & ds_osoba', type:'group', active:no
+      item {title:'1-5. celou transformaci'
+        func onclick(i:ezer) {
+          info.header(i); clear();
+          info.append(php.ds2_trnsf_osoba({mode:'osoba_clr'}));
+          info.append('<hr>');
+          info.append(php.ds2_trnsf_osoba({mode:'ds_db',delete:1}));
+          info.append('<hr>');
+          info.append(php.ds2_trnsf_osoba({mode:'osoba_upd'}));
+          info.append('<hr>');
+          info.append(php.ds2_trnsf_osoba({mode:'osoba_new',from:1}));
+          info.append('<hr>');
+          info.append(php.ds2_trnsf_osoba({mode:'pobyty',from:1}));
+          info.append('<hr>');
+        }
+      }
       item {title:'1. zahaj transformaci',            par:{mode:'osoba_clr'} 
              help:'   zruš vazbu na smazané osoby'}
       item {title:'2. vytvoř spojku ds_db',           par:{mode:'ds_db',delete:1} }
@@ -34,9 +49,9 @@ panel trns {type:'right', title:"Transformace"                    skill:'a'
       item {title:'?? vrať změny',                    par:{mode:'backtrack'} }
       item {title:'!! zapiš změny trvale',            par:{mode:'final'} }
     }
-    menu {title:'Výpočet ceny', type:'group', active:no
-      item {title:'6. naplň obj.ds_vzorec od 2024',   par:{mode:'ds_vzorec',from:2024} }
-    }
+//    menu {title:'Výpočet ceny', type:'group', active:no
+//      item {title:'6. naplň obj.ds_vzorec od 2024',   par:{mode:'ds_vzorec',from:2024} }
+//    }
     func onclick(i:ezer) {
       info.header(i); clear();
       info.fill('',php.ds2_trnsf_osoba(i.par));

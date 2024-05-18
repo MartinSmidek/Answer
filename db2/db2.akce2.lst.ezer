@@ -139,13 +139,15 @@ proc h_change_all() {
   h_change_b;
 }
 # změna počtu řádků browse oproti aktuálním řádkům
-proc h_change_b() { var r:number, h:number
-  h.set(sys('screen','height'));
-  r.set(divide(sum(h.get,-173),17));
-  not(eq(r,info.sey.rows));
-  info.google.set_attrib('rows',r);
-  info.sey.set_attrib('rows',r);
-  page.c.set_attrib('rows',sum(r,-2));
+func h_change_b() { var r:number, h:number
+  h= sys('screen','height');
+  r= (h-173)/17;
+  if (r!=info.sey.rows) {
+    info.google.set_attrib('rows',r);
+    info.sey.set_attrib('rows',r);
+    info.dum.set_attrib('rows',r+1);
+    page.c.set_attrib('rows',r-2);
+  }
 }
 
 # ------------------------------------------------------------------------------------------==> MENU
@@ -181,8 +183,10 @@ menu m {type:'left', format:'f+'
     item {title:'[fa-home] přehled roku'
       func onclick (i:ezer) {
         menu_item= i;
-        info.display(2,'s|r'); the_source= 'sey';
-        the_omezeni= `da2.access & ${org_ds}`;
+        info.display(2,'d|r');
+        the_source= 'dum';
+//        info.display(2,'s|r'); the_source= 'sey';
+//        the_omezeni= `da2.access & ${org_ds}`;
         akce_roku(info.rok);
       }
     }
@@ -216,6 +220,10 @@ func akce_roku(rok) {
     info.sey.browse_load(`YEAR(da2.datum_od)='${rok}' AND da2.spec=0 AND ${the_omezeni}`,
         '','','','','',`SET @curr:=${the_duakce}`);
     info.sey.raise('onrowclick',info.sey.browse_seek(`da2.id_duakce=${the_duakce}`));
+  }
+  elseif (the_source=='dum') {
+    info.dum.browse_load(`YEAR(FROM_UNIXTIME(fromday))='${rok}' AND d.deleted=0`,
+        '','','','','',the_duakce);
   }
 }
 //proc akce_roku(rok) {
@@ -285,6 +293,7 @@ form _page [,,275,360] {
     page.a_akce= id_akce;
     if (the_source=='sey') { if (info.sey.browse_count()) show_page(id_akce) else init_page() }
     if (the_source=='google') { if (id_akce) show_page(id_akce) else init_page() }
+    if (the_source=='dum') { if (id_akce) show_page(id_akce) else init_page() }
   }
   func show_page(id_akce) {
     cen_copy.enable(0); cen_copy.key(0); key_akce= id_akce;
@@ -397,7 +406,8 @@ form _page [,,275,360] {
   button [198,255,,] { tag:'cor', title:'Objednávka', skill:'yd|yd'
     func onclick() {
       clear();
-      dum.Objednavka.Show(key_akce);
+      if (key_akce==the_duakce) dum.Objednavka.Show(the_duakce);
+      else alert('pro zobrazení objednávky musí být pobyt nastaven jako pracovní')
   }}
 //  check cen_ma [13,254,93,] { tag:'cor', title:'používat ceník', data:akce.ma_cenik,
 //                        format:'', skill:'yaa|yaan;caa|caan;faa|faan'
@@ -1064,6 +1074,43 @@ form _page [,,275,360] {
 }
 # ==> VÝBĚR AKCE
 form _info [,,*,50] {
+  # ------------------------------------------------------------------------==> . seznam Dum setkání
+  browse dum [0,36,200,500] { tag:'d', rows:28, qry_rows:0, buf_rows:120, key_id:'id_order', 
+      optimize:{ask:'dum_browse_orders'}
+    show id_order [,,40,] { title:'objednávka', format:'rq=' }
+    show id_akce  [,,40,] { title:'akce', format:'rq=' 
+        css_cell:'access,0:,1:zeleny,65:zeleny'}
+    show access
+    show curr 
+    show nazev [,,100,] { title:'objednatel', format:'tq*' 
+        css_cell:"curr,1:curr_akce"}
+    show note [,,100,] { title:'poznámka', format:'tq*' }
+    show osob [,,50,] { title:'osob', format:'r' }
+    show od [,,65,] { title:'od', sql_pipe:'sql_date1', format:'rq*' }
+    show do [,,65,] { title:'od', sql_pipe:'sql_date1', format:'rq*' }
+    func onrowclick() { 
+      a_title= nazev; 
+      if (id_akce) {
+        page.show_akce(id_akce); 
+      }
+      else page.init_page()
+    }
+    func pracovni() { var old:number
+      if (!id_akce) {
+        if (confirm(`mám již umožnit fakturaci a přidávání hostů?`)) {
+          
+        }
+      }      
+      else {
+        old= this.browse_active();
+        volba_akce(id_akce);
+        akce_roku(info.rok);
+        this.browse_seek(`id_akce=${the_duakce}`);
+        this.browse_active(old);
+        page.show_akce(id_akce); 
+      }
+    }
+  }
   # -----------------------------------------------------------------------------==> . seznam GOOGLE
   # kopie číselníku z intranetu -  pro ys
   view ga: table g_akce
@@ -1297,7 +1344,9 @@ form _info [,,*,50] {
   # volba pracovní akce
   button [376,5,,] { title:'Pracovní', 
     func onclick() {
-      if (the_source=='sey') info.sey.pracovni() else info.google.pracovni()
+      if (the_source=='sey') info.sey.pracovni() 
+      elseif (the_source=='dum') info.dum.pracovni() 
+      else info.google.pracovni()
   }}
   # ==> .. načtení akcí z intranetu
   button [-280,5,,] { title:'Obnovit rok z intranetu', skill:'y|yaa+'

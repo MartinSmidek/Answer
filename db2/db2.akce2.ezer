@@ -111,6 +111,7 @@ func akce_onstart() { var m:object
   }
   else {
     the_duakce= get_cookie(`${sys('root')}_akce`,0);
+    echo('akce_onstart: the_duakce=',the_duakce);
     the_source= 'sey';
     lst.akce_work(the_duakce)
   }
@@ -153,6 +154,7 @@ func akce_choose(id_akce) { var a:object, ok:number
   // ověříme právo přístupu pro tým
   if (!team_access || (team_access && match(`\b${sys('user','id_user')}\b`,a.tym))) {
     the_duakce= id_akce;
+    echo('akce_choose: the_duakce=',the_duakce);
     the_rok= a.rok;       the_title= a.title;       the_soubeh= a.soubeh;
     the_hnizda= a.hnizda; the_wordpress= a.web_wordpress; the_mezinarodni= a.mezinarodni;
     the_hlavni= a.hlavni; the_soubezna= a.soubezna; the_order= a.id_order;
@@ -1530,7 +1532,7 @@ group dum { include:'onload,db2/db2.dum'
   form _objednávka {}
   form _vyuctovani {
     func load_obj(ido){}
-    func load_pob(idp){}
+//    func load_pob(idp){}
   }
 }
 

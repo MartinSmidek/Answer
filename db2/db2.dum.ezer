@@ -82,26 +82,34 @@ form _rozpis /*[,,300,100]*/ { css:'ds_form'
 form _vyuctovani [,,623,400] {
   func load_obj(ido) {
 //    clear();
-    pob.browse_load(`p.id_order=${ido}`);
+    hos.browse_init();
+    pob.browse_load(`uid=${ido}`);
   }
-  func load_pob(idp) {
-//    clear();
-    pob.browse_load(`p.id_pobyt=${idp}`);
-  }
-  field vzorec_p [20,40,150,] { title:'^parametry pobytu' }
+//  field vzorec_p [20,40,150,] { title:'^parametry pobytu' }
   browse pob [20,80,,] { rows:10, key_id:'idp', optimize:{ask:'dum_browse_order'}
     show idp
     show nazev [,,70,] { title:'pobyt' }
     show cena [,,50,] { title:'cena', format:'r'  }
     show cleni
-    show vzorec
+//    show vzorec
     func onrowclick() {
       hos.browse_fill(cleni,'~');
       hos.onrowclick();
-      vzorec_p= vzorec;
+//      vzorec_p= vzorec;
     }
   }
-  field vzorec_s [190,40,500,] { title:'^položky pro účtování ceny pobytu hosta' }
+  var zamek:number
+  label zamek_ikona [202,43,15,] { title:'' 
+    func onclick() {  
+      zamek= !zamek;
+      vzorec.enable(!zamek);
+      zamek_ikona= replace_fa(zamek ? '[fa-lock fa-red]' : '[fa-unlock]');
+      js.set_elem_backround(&vzorec,{background: zamek ? '#ff7777' : '#ffffff'});
+      php.query(`UPDATE spolu SET ds_vzorec="${zamek?vzorec:''}" WHERE id_spolu=${hos.ids}`);
+      pob.browse_refresh();
+    }
+  }
+  field vzorec [222,40,469,] { title:'^položky pro účtování ceny pobytu hosta' }
   browse hos [190,80,,] { rows:10 //, key_id:'ids', optimize:{ask:'dum_browse_pobyt'}
     show ids
     show prijmeni [,,90,] { title:'příjmení' }
@@ -109,14 +117,19 @@ form _vyuctovani [,,623,400] {
     show vek [,,40,] { title:'věk', format:'c' }
     show noci [,,40,] { title:'noci', format:'c' }
     show pokoj [,,30,] { title:'pok.', format:'c' }
-    show vzorec
+    show vzorec_spolu
     show cena [,,50,] { title:'cena = ', format:'r' }
     show [,,40,] { title:'ubyt.', format:'r' }
     show [,,40,] { title:'str.', format:'r' }
     show [,,40,] { title:'popl.', format:'r' }
     show [,,40,] { title:'prog.', format:'r' }
+    show zamek_spolu // fixovaný vzorec použitý místo spočítaného
     func onrowclick() {
-      vzorec_s= vzorec;
+      vzorec= vzorec_spolu;
+      zamek= zamek_spolu;
+      vzorec.enable(!zamek);
+      zamek_ikona= replace_fa(zamek ? '[fa-lock fa-red]' : '[fa-unlock]');
+      js.set_elem_backround(&vzorec,{background: zamek ? '#ff7777' : '#ffffff'});
     }
   }
 //  const min_h=550
@@ -124,28 +137,36 @@ form _vyuctovani [,,623,400] {
 }
 # ======================================================================================> OBJEDNÁVKA
 panel Objednavka [,,760,450] { type:'popup' title:"Objednávka pobytu v Domě setkání"
-  func Show(ida) { var x: object
-    x= php.dum_objednavky_akce(ida);
-    panel.title= `Objednávky pobytů v Domě setkání v termínu ${x.oddo}`;
-    obj.objs.selects(x.sel);
-    obj.objs.key(x.key);
-    obj.load_objednavka(x.key);
+  func Show(ida) { 
+//  var x: object
+//    x= php.dum_objednavky_akce(ida);
+//    obj.objs.selects(x.sel);
+//    obj.objs.key(x.key);
+    panel.title= `Objednávka a vyúčtování pobytu v Domě setkání`;
+    obj.the_akce= ida;
+    obj.the_order= php.dum_objednavka_akce(ida); //php.select('id_order','akce',`id_duakce=${ida}`);
+    if (!obj.the_order) { alert(`Akce YMCA ještě není propojena s objednávkou`); return; }
+    obj.load_objednavka(obj.the_order);
     obj.plain();
-    obj.fakt_ss= x.kod;
-    obj.fakt_kdo= x.kdo;
-    obj.objs_count= x.count;
+//    obj.fakt_ss= x.kod;
+//    obj.fakt_kdo= x.kdo;
+//    obj.objs_count= x.count;
     panel.modal();
   }
   use obj: form _obj
 }
 form _obj {
-  var udaje: object,        // počítaná v obj.load_objednavka
+  const left_oso= 450, top_zal= 370, top_fakt= 410
+  var the_akce: number,
+      the_order: number,
+      udaje: object,        // počítaná v obj.load_objednavka
       faktura_parm: object, // paarmetry pro fakturu
       objs_count: number
   // funkce
   func load_objednavka(id_order) { var x:object
     form.init(); plan.init(); stav.init();
     udaje= php.dum_objednavka(id_order);
+    the_akce= udaje.fld.id_akce;
     copy_by_name(udaje.fld,form); 
     copy_by_name(udaje.fld,plan); 
     copy_by_name(udaje.cena.rozpis,plan); 
@@ -178,22 +199,23 @@ form _obj {
     };
   }
   // položky
-  select objs [0,15,342,] { title:'^objednávka', format:'t' 
-    func onchanged() {
-      load_objednavka(this.key());
-    }
-  }
-  button [370,15,,] { title:'oddělit' 
+  field nazev [0,15,328,] { tag:'obj', title:'^objednávka' }
+//  select objs [0,15,342,] { title:'^objednávka', format:'t' 
+//    func onchanged() {
+//      load_objednavka(this.key());
+//    }
+//  }
+  button [342,15,,] { title:'[fa-copy] Udělej kopii' 
     func onclick() { var obj: number
     clear();
-    obj= objs.key();
+    obj= the_order;
     if (!confirm(`Mám k objednávce ${obj} udělat kopii v nové akci? Bude mít prázdný seznam pobytů.`)) return;
     alert(php.dum_clone_objednavka(obj));
   }}
   select state [0,55,155,] {tag:'obj', title:'^stav objednávky' type:'map', options:ds_stav.hodnota }
   field id_akce [162,55,38,] {tag:'obj', title:'^akce YMCA', format:'r' }
-  field od [214,55,85,] {tag:'obj', title:'^příjezd', type:'date', format:'rd' }
-  field do [304,55,85,] {tag:'obj', title:'^odjezd', type:'date', format:'rd' }
+  field od [214,55,85,] {tag:'obj', title:'^příjezd', type:'date', format:'r' }
+  field do [304,55,85,] {tag:'obj', title:'^odjezd', type:'date', format:'r' }
   field noci [396,55,30,] {tag:'obj', title:'^nocí', format:'rd' }
   edit note [0,95,424,55] {tag:'obj', title:'^poznámka k pobytu' }
 
@@ -207,10 +229,10 @@ form _obj {
       saved= {};
       copy_by_name(form,saved,'obj|adr',1); // vyber změněné s tag='obj!
       echo(debug(saved));
-      if (array_length(saved)>0) php.dum_objednavka_save(objs.key(),saved);
+      if (array_length(saved)>0) php.dum_objednavka_save(the_order,saved);
       else warning("nebyla provedena žádná změna")
   }}
-  
+
   // objednáno a využito
   label [10,206,100,10] { title:'Objednáno ...' }  
   use plan: form _pokoje [0,220,,]
@@ -219,33 +241,31 @@ form _obj {
   use stav: form _pokoje [0,280,,]
   
   // kontakt na objednatele
-  const left_oso= 450
-  field nazev [left_oso+  0, 15,210,] { tag:'adr', title:'^název organizace (plátce faktury)' }
+  field org   [left_oso+  0, 15,210,] { tag:'adr', title:'^název organizace (plátce faktury)' }
   field ic    [left_oso+220, 15, 80,] { tag:'adr', title:'^IČ' }
-  field prijmeni [left_oso+  0, 55,120,] { tag:'adr', title:'^příjmení' }
-  field jmeno [left_oso+130, 55, 80,] { tag:'adr', title:'^jméno' }
+  field name [left_oso+  0, 55,120,] { tag:'adr', title:'^příjmení' }
+  field firstname [left_oso+130, 55, 80,] { tag:'adr', title:'^jméno' }
   field dic   [left_oso+220, 55, 80,] { tag:'adr', title:'^DIČ' }
   field email [left_oso+  0, 95,210,] { tag:'adr', title:'^e-mail' }
-  field telefon [left_oso+220, 95, 80,] { tag:'adr', title:'^telefon' }
-  field ulice [left_oso+0,135,210,] { tag:'adr', title:'^ulice' }
-  field psc   [left_oso+  0,175, 50,] { tag:'adr', title:'^psč' }
-  field obec  [left_oso+ 60,175,150,] { tag:'adr', title:'^obec' }
+  field telephone [left_oso+220, 95, 80,] { tag:'adr', title:'^telefon' }
+  field address [left_oso+0,135,210,] { tag:'adr', title:'^ulice' }
+  field zip   [left_oso+  0,175, 50,] { tag:'adr', title:'^psč' }
+  field city  [left_oso+ 60,175,150,] { tag:'adr', title:'^obec' }
 
   // parametry zálohy 
-  const top_zal= 370, top_fakt= 410
   check zal [10,top_zal-3,80,] { tag:'zal', title:'záloha' }
   field zal_num [91,top_zal,60,] { tag:'zal', title:'^číslo faktury' }
   field zal_vs  [166,top_zal,50,] { tag:'zal', title:'^VS' }
   field zal_ss  [231,top_zal,33,] { tag:'zal', title:'^SS' }
-  field zal_kdo [422,top_zal,100,] { tag:'zal', title:'^kdo vyřizuje' }
+  field zal_kdo [422,top_zal,98,] { tag:'zal', title:'^kdo vyřizuje' }
   field zal_cena [284,top_zal,50,] { tag:'zal', title:'^odhad ceny', format:'r' }
   field zal_zal [354,top_zal,50,] { tag:'zal', title:'^záloha', format:'r'  }
   field zal_platba [660,top_zal,90,] { type:'date', tag:'zal', title:'^datum úhrady', format:'r'  }
-  button [540,top_zal,,] { tag:'zal', title:'úprava' 
-    func onclick() { 
-      Rozpis.LoadOrder(objs.key());
-  }}
-  button [600,top_zal,,] { tag:'zal', title:'faktura' 
+//  button [540,top_zal,,] { tag:'zal', title:'úprava' 
+//    func onclick() { 
+//      Rozpis.LoadOrder(the_order);
+//  }}
+  button [534,top_zal,,] { tag:'zal', title:'[fa-shopping-basket] Zálohová faktura' 
     func onclick() { var x:object
       clear();
       faktura_parm= php.dum_faktura({typ:'záloha',udaje:udaje,show:1,save:1,
@@ -257,15 +277,15 @@ form _obj {
   field fakt_num [91,top_fakt,60,] { tag:'fakt', title:'^číslo faktury' }
   field fakt_vs  [166,top_fakt,50,] { tag:'fakt', title:'^VS' }
   field fakt_ss  [231,top_fakt,33,] { tag:'fakt', title:'^SS' }
-  field fakt_kdo [422,top_fakt,100,] { tag:'fakt', title:'^kdo vyřizuje' }
+  field fakt_kdo [422,top_fakt,98,] { tag:'fakt', title:'^kdo vyřizuje' }
   field fakt_cena [284,top_fakt,50,] { tag:'fakt', title:'^cena', format:'r' }
   field fakt_zal [354,top_fakt,50,] { tag:'fakt', title:'^záloha', format:'r'  }
   field fakt_platba [660,top_fakt,90,] { tag:'fakt', type:'date', title:'^datum úhrady', format:'r'  }
-  button [540,top_fakt,,] { tag:'fakt', title:'úprava' 
-    func onclick() { 
-      Rozpis.LoadOrder(objs.key());
-  }}
-  button [600,top_fakt,,] { tag:'fakt', title:'faktura' 
+//  button [540,top_fakt,,] { tag:'fakt', title:'úprava' 
+//    func onclick() { 
+//      Rozpis.LoadOrder(the_order);
+//  }}
+  button [536,top_fakt,,] { tag:'fakt', title:'[fa-credit-card] Konečná faktura' 
     func onclick() { var x:object
       clear();
       faktura_parm= php.dum_faktura({typ:'konečná',udaje:udaje,show:1,save:1,
@@ -492,7 +512,7 @@ table tx_gnalberice_order { db:'setkani', key_id:'uid'
   number ucast        // 1 => účastní se pobytu
   number sleva        { help:'%|případná sleva v procentech' }
   number skoleni      // 1 => školení, neplatí se rekreační poplatek
-  text   ds_vzorec
+//  text   ds_vzorec
 }
 table _cis { key_id:'id_cis'
 # --------------------------------------------------------------------------------==> číselníky,mapy

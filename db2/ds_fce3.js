@@ -1,6 +1,12 @@
 /* global Ezer */
 
 // uživatelské funkce aplikace DS
+// ----------------------------------------------------------------------------- set_elem_backround
+// zavolá funkci umístěnou v main.menu a její hodnotu předá funkci this_fce
+// _this je blok obsahující funkci this_fce
+function set_elem_backround(elem,style) {
+  jQuery(elem.DOM_Input).css(style);
+}
 // ---------------------------------------------------------------------------------- call_root_func
 // zavolá funkci umístěnou v main.menu a její hodnotu předá funkci this_fce
 // _this je blok obsahující funkci this_fce

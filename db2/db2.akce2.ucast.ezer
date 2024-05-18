@@ -521,26 +521,43 @@ form _cmd [,,623,30] {
       mode.set('novy_singl');
       foreach(array(os1.prijmeni,os1.jmeno,os1.sex,os1.narozeni,os1.access),obligatory); ];
   }
-  proc see_old_osoba() { var ret:object, h:number // po rozhodnutí uživatele přidat nalezenou osobu k pobytu
+//  proc see_old_osoba() { var ret:object, h:number // po rozhodnutí uživatele přidat nalezenou osobu k pobytu
+//    // kontrola oprávněnosti - dotazem
+//    { function('x','y','return x&y;',the_org.get,os1.access.get)        // stejná org jako má akce?
+//    | confirm("máme od této osoby souhlas?");                           // čestné prohlášení
+//      os1.access.set(3); os1.access.change
+//    | zpet.Click; return                                                // nic
+//    };
+//    // vlastní vložení se zamezením duplicit a s definicí kategorie pro děti
+//    [ or(not(rod.key),os1.role.get) 
+//    | // doplnění chybějící role v rodině
+//      os1.role.set(choose("Doplň jakou roli má nová osoba v rodině","dítě:d,manžel:a,manželka:b,pomoc:p"))
+//    ];
+//    h.set(0);
+//    [ the_hnizda.get; h.set(header.hnizdo.key) ]; 
+//    ret.set(ask('ucast2_pridej_osobu',
+//      os1.key,os1.access.get,the_duakce.get,pob.key,rod.key,os1.role.get,h));
+//    { ret.msg; alert(ret.msg)
+//    | the_pobyt.set(ret.pobyt);
+//      _reload(1,os1.key);
+//    }
+//  }
+  func see_old_osoba() { var ret:object, h:number // po rozhodnutí uživatele přidat nalezenou osobu k pobytu
     // kontrola oprávněnosti - dotazem
-    { function('x','y','return x&y;',the_org.get,os1.access.get)        // stejná org jako má akce?
-    | confirm("máme od této osoby souhlas?");                           // čestné prohlášení
-      os1.access.set(3); os1.access.change
-    | zpet.Click; return                                                // nic
-    };
-    // vlastní vložení se zamezením duplicit a s definicí kategorie pro děti
-    [ or(not(rod.key),os1.role.get) 
-    | // doplnění chybějící role v rodině
-      os1.role.set(choose("Doplň jakou roli má nová osoba v rodině","dítě:d,manžel:a,manželka:b,pomoc:p"))
-    ];
-    h.set(0);
-    [ the_hnizda.get; h.set(header.hnizdo.key) ]; 
-    ret.set(ask('ucast2_pridej_osobu',
-      os1.key,os1.access.get,the_duakce.get,pob.key,rod.key,os1.role.get,h));
-    { ret.msg; alert(ret.msg)
-    | the_pobyt.set(ret.pobyt);
-      _reload(1,os1.key);
+    if (!(the_org & os1.access)) { // stejná org jako má akce?
+      if (the_org==org_ds || confirm("máme od této osoby souhlas?")) { // čestné prohlášení
+        os1.access= the_org | os1.access; os1.access.change();
+      }
+      else { zpet.Click(); return; } // nic
     }
+    // vlastní vložení se zamezením duplicit a s definicí kategorie pro děti
+    if ( rod.key() && !os1.role ) // doplnění chybějící role v rodině
+      os1.role= choose("Doplň jakou roli má nová osoba v rodině","dítě:d,manžel:a,manželka:b,pomoc:p");
+    h= 0;
+    if (the_hnizda) h= header.hnizdo.key(); 
+    ret= php.ucast2_pridej_osobu(os1.key(),os1.access,the_duakce,pob.key(),rod.key(),os1.role,h);
+    if (ret.msg) alert(ret.msg)
+    else { the_pobyt= ret.pobyt; _reload(1,os1.key); }
   }
   button zrušit_osobu [561,5,,] {tag:'x', title:'[fa-times fa-red] zruš',
     skill:'yaa+|yaa+;faa+|faa+;caa+|caa+', help:'Vymazání osoby z databáze'
@@ -1045,8 +1062,8 @@ form _page  [,,623,20] {
       }
       elseif (the_cenik==2) {
         panel.display(1,'ds');
-        pla_ds.load_pob(the_pobyt);
-        last= the_pobyt;
+//        pla_ds.load_pob(the_pobyt);
+//        last= the_pobyt;
       }
       if (last!=the_pobyt) {
         u.b.load_zalozka(); 
@@ -1713,9 +1730,9 @@ form _spolu [,,0,270] {
     func na_akci(ido,idr,role) { var ret:object
       Onclick();
       // kontrola oprávněnosti - dotazem
-      if (!the_org&os.access) { // stejná org jako má akce?
-        if (confirm("máme od této osoby souhlas?")) { // čestné prohlášení
-          os.access= 3; 
+      if (!(the_org & os.access)) { // stejná org jako má akce?
+        if (the_org==org_ds || confirm("máme od této osoby souhlas?")) { // čestné prohlášení
+          os.access= the_org | os.access; 
           os.access.change();
         }
         else {
@@ -1940,20 +1957,35 @@ form _rodina2 [,,360,229]  { css:'ae_frame',
     proc onclick() { rodiny0.rod_show(sum(rodiny0.rod_n.get,1)) }}
   button rod_use [Lr+137,32,16,16] {tag:'n,b', type:'html', title:"[fa-plug]",
     css:"search fa", help:"potvrzení nalezené rodiny a vložení do akce jako rodinný pobyt"
-    proc onclick() { var ret:object, h:number
+    func onclick() { var ret:object, h:number
       // kontrola oprávněnosti - dotazem
-      { function('x','y','return x&y;',the_org.get,r_access.get)       // stejná org jako akce
-      | confirm("máme od této rodiny souhlas?");                       // čestné prohlášení
-        ask('ucast2_rodina_access',key_rodina.get,3);
-      | return                                                         // nic
-      };
-      rodiny0.rod_end;
-      h.set(0);
-      [ the_hnizda.get; h.set(header.hnizdo.key) ]; 
-      ret.set(ask('ucast2_pridej_rodinu',the_duakce.get,key_rodina.get,h));
-      ret.msg; alert(ret.msg); cmd._reload(the_pobyt.get,0)
-    | the_pobyt.set(ret.idp); cmd._reload(1,0);
-  }}
+      if (!(the_org & r_access)) { // stejná org jako má akce?
+        if (the_org==org_ds || confirm("máme od této rodiny souhlas?")) // čestné prohlášení či DS
+          php.ucast2_rodina_access(key_rodina,the_org | r_access);
+        else { alert('tak ji nemohu přidat'); return; } // nic
+      }
+      rodiny0.rod_end();
+      h= 0;
+      if (the_hnizda) h= header.hnizdo.key(); 
+      ret= php.ucast2_pridej_rodinu(the_duakce,key_rodina,h);
+      if (ret.msg) { alert(ret.msg); cmd._reload(the_pobyt,0); }
+      else { the_pobyt= ret.idp; cmd._reload(1,0); }
+    }
+//    proc onclick() { var ret:object, h:number
+//      // kontrola oprávněnosti - dotazem
+//      { function('x','y','return x&y;',the_org.get,r_access.get)       // stejná org jako akce
+//      | confirm("máme od této rodiny souhlas?");                       // čestné prohlášení
+//        ask('ucast2_rodina_access',key_rodina.get,3);
+//      | return                                                         // nic
+//      };
+//      rodiny0.rod_end;
+//      h.set(0);
+//      [ the_hnizda.get; h.set(header.hnizdo.key) ]; 
+//      ret.set(ask('ucast2_pridej_rodinu',the_duakce.get,key_rodina.get,h));
+//      ret.msg; alert(ret.msg); cmd._reload(the_pobyt.get,0)
+//    | the_pobyt.set(ret.idp); cmd._reload(1,0);
+//    }
+  }
   // ==> . nová rodina
   button rod_new [Lr+154,32,16,16] {tag:'n,b', type:'html', title:"[fa-heart]", 
     css:"search fa", help:'Vytvoření nového pobytu s novou rodinou (bez členů)'
