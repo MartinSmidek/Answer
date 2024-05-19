@@ -137,6 +137,9 @@ form _vyuctovani [,,623,400] {
 }
 # ======================================================================================> OBJEDNÁVKA
 panel Objednavka [,,760,450] { type:'popup' title:"Objednávka pobytu v Domě setkání"
+  func Delete(id_order) { 
+    php.dum_objednavka_delete(id_order);
+  }
   func Show(ida) { 
 //  var x: object
 //    x= php.dum_objednavky_akce(ida);

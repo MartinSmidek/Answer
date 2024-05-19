@@ -164,87 +164,115 @@ function ds2_trnsf_osoba($par) {
       $od_roku= $par->from ?: 2024;
       $no= $na= $np= $ns= 0;
       $err= '';
+      $neucasti= select1("GROUP_CONCAT(data)",'_cis',"druh='ms_akce_funkce' AND ikona=1");
+
 //      $stav= map_cis('ds_stav');
       $ro= pdo_qry("
         SELECT akce,uid,state,note,name,
           DATE(FROM_UNIXTIME(fromday)) AS _from, DATE(FROM_UNIXTIME(untilday)) AS _to
         FROM $setkani_db.tx_gnalberice_order
         WHERE deleted=0 AND fromday>0 AND YEAR(FROM_UNIXTIME(fromday))>=$od_roku
-        --  AND MONTH(FROM_UNIXTIME(fromday))=2
-        --  AND fromday=1706227200 AND untilday=1706400000
+        -- AND YEAR(FROM_UNIXTIME(fromday)) IN (2023,2024)
+        -- AND fromday=1706227200 AND untilday=1706400000
+        -- AND uid=2477
         -- GROUP BY _from,_to,akce
         ORDER BY _from,uid
       ");
       while ($ro && (list($kod,$idd,$state,$note,$name,$od,$do)= pdo_fetch_array($ro))) {  
-        $rok= substr($od,0,4);
+        $rok= substr($od,0,7);
+        $spojeno= 0;
         $osob= select('COUNT(*)',"$setkani_db.ds_osoba","id_order=$idd");
         if ($osob==0 && strcmp($od,'2024-04-00')==-1) continue;
         $no++;
-        if ($kod) {
-          // objednávka je fakticky typu "akce YMCA" a je jen jedna 
-          list($ida,$access)= select('id_akce,access',
-              "join_akce JOIN akce ON id_duakce=id_akce","g_kod=$kod AND g_rok=$rok");
+        if ($state==3) {  // akce YMCA==3
+          // objednávka je typu "akce YMCA" - dohledáme podle data 
+          $ida= select('id_duakce',
+              "akce","datum_od='$od' AND datum_do='$do' AND misto='Albeřice' AND access=1");
           if (!$ida) {
-            $err.= "<br>objednávka $idd '$note' směřuje na divný kód akce $kod roku $rok";
-            $kod= 0;
+            $err.= "<br>$rok: objednávka $idd '$note' je typu 'akce YMCA' ale nebylo možné najít odpovídající akci";
           }
           else {
             $na++;
-            $access|= $org_ds;
-//            query_track("UPDATE akce SET id_order=$idd,access=$access,ma_cenik=2 WHERE id_duakce=$ida");
-            query("UPDATE $setkani_db.tx_gnalberice_order SET id_akce=$ida WHERE uid=$idd");
-            // NEE query("UPDATE pobyt SET id_order=$idfs WHERE id_akce=$ida");
+            $spojeno= 1;
+            // doplnění pokojů
+            // 1. byly pokoje definovány v ds_osoba?
+            /*DS*/list($osob1,$pokoju1)= select("COUNT(*),IF(SUM(pokoj)>0,COUNT(DISTINCT pokoj),0)",
+                "$setkani_db.ds_osoba","id_order=$idd");
+            /*YS*/list($osob2,$pokoju2)= select("COUNT(*),IF(SUM(p.pokoj)>0,COUNT(DISTINCT p.pokoj),0)",
+                "pobyt AS p JOIN spolu USING (id_pobyt)",
+                "id_akce=$ida AND funkce NOT IN ($neucasti)");
+            // zjkistíme, kde se spolehlivě nachází rozpis pokojů?
+            $ds_info= ($pokoju2==0 && $pokoju1>0) ? 'ds' : (
+                   ($osob1==$osob2 && $osob1==0) ? '-' : (
+                   ($pokoju1==1 && $pokoju2>1) ? 'ys' : '?')); 
+            $html.= "<br>$rok: objednávka $idd typu 'akce YMCA' má OBSAZENOST $idd:$ida "
+                . "= $ds_info = DS:$osob1/$pokoju1 YS:$osob2/$pokoju2 -- '$note' ";
+            query("UPDATE $setkani_db.tx_gnalberice_order "
+                . "SET id_akce=$ida,DS2024=\"{'typ':'YMCA','pokoje':'$ds_info'}\" WHERE uid=$idd");
+            if ($ds_info=='DS') { // zapíšeme pokoje do pobyt.spolu
+              $pokoje= []; // pobyt->[pokoje]
+              $rs= pdo_qry("
+                  SELECT s.id_spolu,id_pobyt,x.pokoj
+                  FROM $setkani_db.ds_osoba AS x 
+                  JOIN ds_db AS d ON d.ds_osoba=x.id_osoba
+                  JOIN spolu AS s ON s.id_osoba=d.id_osoba
+                  JOIN pobyt AS p USING (id_pobyt)
+                  WHERE p.id_akce=$ida AND x.id_order=$idd
+                  ORDER BY x.pokoj
+                ");
+              while ($rs && (list($ids,$idp,$pokoj)= pdo_fetch_array($rs))) {
+                query("UPDATE spolu SET pokoj='$pokoj' WHERE id_spolu=$ids");
+                $pokoje[$idp]= isset($pokoje[$idp]) ? "{$pokoje[$idp]},$pokoj" : $pokoj; 
+              }
+              foreach ($pokoje as $idp=>$str) {
+                query("UPDATE pobyt SET pokoj='$str' WHERE id_pobyt=$idp");
+              }
+            }
           }
         }
-        if (!$kod) {
+        if (!$spojeno) {
+//          continue;
           // každé objednávce která je v roce 2023 a dřív a má nějaké ds_osoba vytvoříme akci
           $tit= "$idd - $name";
           $ida= query_track("INSERT INTO akce (access,druh,nazev,misto,datum_od,datum_do,ma_cenik) "
               . "VALUE ($org_ds,64,'$tit','Dům setkání','$od','$do',2)");
-//          $ida= query_track("INSERT INTO akce (access,id_order,druh,nazev,misto,datum_od,datum_do,ma_cenik) "
-//              . "VALUE ($org_ds,$idd,64,'$tit','Dům setkání','$od','$do',2)");
-          // obsahující všechny pobyty
-//          $_idfs= explode(',',$idfs);
-//          $_states= explode(',',$states);
-//          $_notes= explode_csv($notes);
-//          for ($i= 0; $i<$nos; $i++) {
-//            $idf= $_idfs[$i];
-            // svážeme objednávku s akcí
-            query("UPDATE $setkani_db.tx_gnalberice_order SET id_akce=$ida WHERE uid=$idd");
-//            $state= $_states[$i];
-//            $note= $_notes[$i];
-            // objednávka je fakticky pobytová ale vytvoříme záznam v tabulce akce
-            $rp= pdo_qry("
-              SELECT rodina,GROUP_CONCAT(DISTINCT pokoj ORDER BY pokoj)
-              FROM $setkani_db.ds_osoba 
-              WHERE id_order=$idd 
-              GROUP BY rodina ORDER BY rodina");
-            while ($rp && (list($rod,$pokoje)= pdo_fetch_array($rp))) {  
-              // pro každou "rodinu" přidáme pobyt, pokud má aspoň jednodho hosta
-              $n= select('COUNT(*)',"$setkani_db.ds_osoba","id_order=$idd AND rodina='$rod'");
-              if (!$n) continue;
-              $idp= query_track("INSERT INTO pobyt (id_akce,funkce,pracovni,pokoj)"
-                . " VALUE ($ida,7,'objednávka:$idd, rodina=$rod, stav=$state: $note','$pokoje')");
+          // objednávka je fakticky pobytová ale vytvoříme záznam v tabulce akce
+          $npo= 0;
+          $rp= pdo_qry("
+            SELECT rodina,GROUP_CONCAT(DISTINCT pokoj ORDER BY pokoj)
+            FROM $setkani_db.ds_osoba 
+            WHERE id_order=$idd 
+            GROUP BY rodina ORDER BY rodina");
+          while ($rp && (list($rod,$pokoje)= pdo_fetch_array($rp))) {  
+            // pro každou "rodinu" přidáme pobyt, pokud má aspoň jednodho hosta
+            $n= select('COUNT(*)',"$setkani_db.ds_osoba","id_order=$idd AND rodina='$rod'");
+            if (!$n) continue;
+            $idp= query_track("INSERT INTO pobyt (id_akce,funkce,pracovni,pokoj)"
+              . " VALUE ($ida,7,'objednávka:$idd, rodina=$rod, stav=$state: $note','$pokoje')");
 //              display("!! POBYT=$idp/$ida: -$rod- $note");
-              $np++;
-              $rs= pdo_qry("
-                SELECT ds_db.id_osoba,ds_osoba,pokoj 
-                FROM $setkani_db.ds_osoba AS d
-                  JOIN ds_db ON ds_db.ds_osoba=d.id_osoba
-                WHERE id_order=$idd AND rodina='$rod'
-              ");
-              while ($rs && (list($ido,$idds,$pokoj)= pdo_fetch_array($rs))) {  
-                // přidáme hosty
-                $ids= query_track("INSERT INTO spolu (id_pobyt,id_osoba,pokoj) 
-                  VALUE ($idp,$ido,'$pokoj')");
-                query("UPDATE ds_db SET id_spolu=$ids WHERE id_osoba=$ido AND ds_osoba=$idds");
-                $ns++;
-              }
+            $np++;
+            $npo++;
+            $rs= pdo_qry("
+              SELECT ds_db.id_osoba,ds_osoba,pokoj 
+              FROM $setkani_db.ds_osoba AS d
+                JOIN ds_db ON ds_db.ds_osoba=d.id_osoba
+              WHERE id_order=$idd AND rodina='$rod'
+            ");
+            while ($rs && (list($ido,$idds,$pokoj)= pdo_fetch_array($rs))) {  
+              // přidáme hosty
+              $ids= query_track("INSERT INTO spolu (id_pobyt,id_osoba,pokoj) 
+                VALUE ($idp,$ido,'$pokoj')");
+              query("UPDATE ds_db SET id_spolu=$ids WHERE id_osoba=$ido AND ds_osoba=$idds");
+              $ns++;
             }
-//          }
+          }
+          // svážeme objednávku s akcí
+          $ds_info= $npo ? 'ds' : '-';
+          query("UPDATE $setkani_db.tx_gnalberice_order "
+              . "SET id_akce=$ida,DS2024=\"{'typ':'hoste','pokoje':'$ds_info'}\" WHERE uid=$idd");
         }
       }
-      $html.= "Do ezer_db2 bylo přidáno $no objednávek jako akce s $np pobyty $ns osob ($na akcí už v databázi je)
+      $html.= "<br><br>Do ezer_db2 bylo přidáno $no objednávek jako akce s $np pobyty $ns osob ($na akcí už v databázi je)
         - převedeny objednávky v Domě setkání od roku $od_roku";
       if ($err) 
         $html.= "<hr>$err";
@@ -414,7 +442,7 @@ function query_track($qry) {
   $m= null;
   $ok= preg_match('/(INSERT)\s+INTO\s+([\w\.]+)\s+\(([,\s\w]+)\)\s+VALUE(?:S|)\s+\(((?:.|\s)+)\)$/',$qry,$m)
     || preg_match('/(UPDATE)\s+([\w\.]+)\s+SET\s+(.*)\s+WHERE\s+([\w]+)\s*=\s*(.*)\s*/m',$qry,$m);
-  debug($m);
+//  debug($m);
   if ($ok && $m[1]=='INSERT') {
     $tab= $m[2];
     $fld= explode_csv($m[3]); 
@@ -1171,6 +1199,12 @@ function dum_objednavka_akce($id_akce) {
   global $setkani_db;
   return select1('IFNULL(uid,0)',"$setkani_db.tx_gnalberice_order","id_akce=$id_akce");
 }
+# ---------------------------------------------------------------------------- dum objednavka_delete
+# vrátí ID objednávky spojené s akcí nebo 0
+function dum_objednavka_delete($id_order) { 
+  global $setkani_db;
+  query("DELETE FROM $setkani_db.tx_gnalberice_order WHERE uid=$id_order");
+}
 # ------------------------------------------------------------------------------ dum objednavka_save
 # objednávka pobytu
 function dum_objednavka_save($id_order,$changed) { 
@@ -1367,7 +1401,7 @@ function dum_browse_orders($x) {
     $z= [];
     ezer_connect($answer_db,true);
     $rp= pdo_qry("
-      SELECT uid,d.id_akce,a.access,name,d.note,COUNT(*),
+      SELECT uid,d.id_akce,a.access,name,d.note,SUM(IF(IFNULL(id_osoba,0),1,0)),
         DATE(FROM_UNIXTIME(fromday)),DATE(FROM_UNIXTIME(untilday))
       FROM $setkani_db.tx_gnalberice_order AS d
         LEFT JOIN $answer_db.akce AS a ON id_duakce=id_akce 

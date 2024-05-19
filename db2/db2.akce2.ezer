@@ -62,30 +62,6 @@ var hodin_zmeny= 0              // zobrazení změn za poslední hodiny a výpis
 var dirty=0,                     // 1 => byla ukončena inicializace modulu
     virgin_track=1    
 proc onstart() { dirty.get | akce_onstart }
-//proc akce_onstart() {
-//  dirty.get
-//| spinner(1);
-//  dirty.set(1);
-//  has_access.set(sys('user','has_access'));
-//  my_access.set(sys('user','access'));
-//  my_org.set(cconc(eq(my_access.get,3),sys('user','org'),my_access.get));
-//  # hodnoty zapamatované pro navázání na předchozí session
-//  the_source.set(get_cookie(conc(sys('root'),'_akce_source'),'sey'));
-//  # příprava zobrazení v AKCE - volá akce_choose
-//  { lt(my_org.get,4);
-//    the_akce_ys.set(get_cookie(conc(sys('root'),'_akce_ys'),0));
-//    the_akce_fa.set(get_cookie(conc(sys('root'),'_akce_fa'),0));
-//    [ not(has_skill('mrop'));    // uživatel s 'mrop' nepotřebuje seznam akcí
-//      { eq(my_org.get,1);
-//        lst.akce_work(the_akce_ys.get)
-//      | lst.akce_work(the_akce_fa.get)
-//    }]
-//  | the_duakce.set(get_cookie(conc(sys('root'),'_akce'),0));
-//    the_source.set('sey');
-//    lst.akce_work(the_duakce.get)
-//  };
-//  spinner(0);
-//}
 func akce_onstart() { var m:object
   if (dirty) return;
   // pokračuj jen při inicializaci nebo pokud došlo k významné změně
@@ -1527,6 +1503,7 @@ group dum { include:'onload,db2/db2.dum'
   }
   panel Objednavka { type:'popup' 
     func Show(id_akce) {} // umožní zvolit správnou objednávku
+    func Delete(id_order) {} // nastaví deleted=1 u objednávky
   }
   form _rozpis {}
   form _objednávka {}
