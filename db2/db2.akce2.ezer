@@ -1509,7 +1509,7 @@ group dum { include:'onload,db2/db2.dum'
   form _objednávka {}
   form _vyuctovani {
     func load_obj(ido){}
-//    func load_pob(idp){}
+    func load_pob(idp){}
   }
 }
 

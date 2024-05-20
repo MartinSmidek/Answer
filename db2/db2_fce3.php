@@ -818,6 +818,7 @@ function akce2_info($id_akce,$text=1,$pobyty=1,$id_order=0) { trace();
   display("$uid -  $id_order - $id_akce");
   // pokud je to pobyt na Domě setkání
   if ($uid || $id_order) {
+    $id_order= $id_order ?: $uid;
     $DS2024= select('DS2024',"$setkani_db.tx_gnalberice_order","uid=$id_order");
     $conv= str_replace("'",'"',$DS2024);
     $conv= $conv ? json_decode($conv) : (object)['typ'=>'neuskutečněná'];

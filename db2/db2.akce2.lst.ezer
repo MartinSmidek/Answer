@@ -247,8 +247,7 @@ func akce_roku(rok) {
       info.sey.raise('onrowclick',info.sey.browse_seek(`da2.id_duakce=${the_duakce}`));
   }
   elseif (the_source=='dum') {
-    info.dum.browse_load(`YEAR(FROM_UNIXTIME(fromday))='${rok}' AND d.deleted=0`,
-        '','','','','',the_duakce);
+    info.dum.Load();
   }
 }
 //proc akce_roku(rok) {
@@ -1120,24 +1119,28 @@ form _info [,,*,50] {
     show osob [,,50,] { title:'osob', format:'r' }
     show od [,,65,] { title:'od', sql_pipe:'sql_date1', format:'rq*' }
     show do [,,65,] { title:'od', sql_pipe:'sql_date1', format:'rq*' }
+    func Load() {
+      this.browse_load(`YEAR(FROM_UNIXTIME(fromday))='${the_rok}' AND d.deleted=0`,
+          '','','','','',the_duakce);
+    }
     func onrowclick() { 
       a_title= nazev; 
       the_order= id_order;
       page.show_akce(id_akce); 
     }
-    func pracovni() { var old:number
+    func pracovni() { var line:number
       if (!id_akce) {
         if (confirm(`mám již umožnit fakturaci a přidávání hostů?`)) {
           
         }
       }      
       else {
-        old= this.browse_active();
+        line= this.browse_active(); echo(line);
         volba_akce(id_akce);
-        akce_roku(info.rok);
-        this.browse_seek(`id_akce='${the_duakce}'`);
-        this.browse_active(old);
+        this.Load();
         page.show_akce(id_akce); 
+//        this.raise('onrowclick',id_akce);
+        this.browse_active(line);
       }
     }
   }

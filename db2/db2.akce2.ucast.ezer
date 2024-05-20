@@ -868,8 +868,8 @@ form _ucast [,,400,] { css:'ds_form', style:'height:fit-content'
         reload_evid();
         break;
       case 'plat':
-        if (the_cenik==2 && page.plt.last!=key_pobyt) {
-          page.plt.onclick();
+        if (the_cenik==2) { // && page.plt.last!=key_pobyt) { page.plt.onclick();
+          pla_ds.load_pob(key_pobyt);
         }
         else {
           pla.key(key_pobyt); pla.nove(); copy_by_name(b,pla); pla.ini();
