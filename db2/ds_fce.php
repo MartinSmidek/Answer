@@ -1476,20 +1476,21 @@ function dum_browse_order($x) {
             '~',0,'~',IF(s.pokoj,s.pokoj,p.pokoj),'~',s.ds_vzorec,
             '~',0,'~',0,'~',0,'~',0,'~',0,'~',0) 
           ORDER BY IF(narozeni='0000-00-00','9999-99-99',narozeni) 
-          SEPARATOR '~' ) AS cleni,d.state,d.board
+          SEPARATOR '~' ) AS cleni,d.state,d.board,IFNULL(x.datum,''),IFNULL(x.castka,0)
       FROM osoba AS o 
         JOIN spolu AS s USING (id_osoba) 
         JOIN pobyt AS p USING (id_pobyt) 
         JOIN akce AS a ON id_akce=id_duakce 
         JOIN _cis AS c ON c.druh='ms_akce_funkce' AND c.data=p.funkce
         JOIN $setkani_db.tx_gnalberice_order AS d ON d.id_akce=id_duakce
+        LEFT JOIN platba AS x ON id_pob=id_pobyt
       WHERE $x->cond
       GROUP BY id_pobyt
       ORDER BY prijmeni
     ");
     $i_vek= 3; $i_noci= 4; $i_pokoj= 5; $i_vzorec= 6; $i_fix= 12;
     while ($rp && (list(
-        $idp,$nebyl,$prijmeni,$od,$do,$noci,$rok,$cleni,$state,$board)= pdo_fetch_array($rp))) {
+        $idp,$nebyl,$prijmeni,$od,$do,$noci,$rok,$cleni,$state,$board,$datum,$platba)= pdo_fetch_array($rp))) {
       if ($rok!=$rok_ceniku) {
         $rok_ceniku= $rok;
         ds2_cenik($rok_ceniku);
@@ -1575,6 +1576,9 @@ function dum_browse_order($x) {
       $z[$idp]->idp= $idp;
       $z[$idp]->nazev= $prijmeni;
       $z[$idp]->cena= $celkem;
+      // doplníme platbu
+      $z[$idp]->platba= $platba;
+      $z[$idp]->datum= $datum;
     }
     # předání pro browse
     $y->values= $z;
@@ -1598,8 +1602,8 @@ function dum_browse_order($x) {
     $y->suma= $suma;
     array_unshift($y->values,null);
   }
-  debug($y->suma,"dum_browse_order/suma = ");
-//  debug($y->values,"dum_browse_order/values = ");
+//  debug($y->suma,"dum_browse_order/suma = ");
+  debug($y->values,"dum_browse_order/values = ");
   return $y;  
 }
 // -------------------------------------------------------------------------------- dum browse_pobyt
@@ -1614,7 +1618,7 @@ function dum_browse_order($x) {
 # pokud je tisk=true jsou oddělovače řádků '≈' (oddělovač sloupců zůstává '~')
 function dum_browse_pobyt($x) {
   global $answer_db, $setkani_db, $ds2_cena, $y; // y je zde globální kvůli možnosti trasovat SQL dotazy
-//  debug($x,"dum_browse_pobyt>");
+  debug($x,"dum_browse_pobyt>");
   $y= (object)array('ok'=>0);
   switch ($x->cmd) {
   case 'suma':
@@ -1646,13 +1650,14 @@ function dum_browse_pobyt($x) {
         JOIN akce AS a ON id_akce=id_duakce 
         JOIN _cis AS c ON c.druh='ms_akce_funkce' AND c.data=p.funkce
         JOIN $setkani_db.tx_gnalberice_order AS d ON d.id_akce=id_duakce
-      WHERE $x->cond
+     WHERE $x->cond
       -- GROUP BY id_pobyt
       ORDER BY narozeni
     ");
     while ($rp && (list(
         $ids,$nebyl,$od,$do,$noci,$rok,$state,$board,$prijmeni,$jmeno,$narozeni,$pokoj,$vzorec)
-          = pdo_fetch_array($rp))) {
+          = $dump= pdo_fetch_array($rp))) {
+      debug($dump);
       if ($rok!=$rok_ceniku) {
         $rok_ceniku= $rok;
         ds2_cenik($rok_ceniku);
@@ -1765,6 +1770,10 @@ function dum_browse_pobyt($x) {
   }
 end:
   if ($x->cmd=='suma') {
+    // doplníme platbu
+    list($platba,$datum)= select("IFNULL(castka,0),IFNULL(datum,'')",
+        "pobyt LEFT JOIN platba ON id_pob=id_pobyt",$x->cond);
+    $suma->platba=(object)['castka'=>$platba,'datum'=>$datum];
     debug($suma,"dum_browse_pobyt/suma = ");
     $y= null;
     return $suma;      
