@@ -1460,6 +1460,7 @@ function dum_browse_order($x) {
     $suma= (object)[
         'celkem'=>0,
         'druh'  =>[],
+        'abbr'  =>[],
         'dph'   =>[],
         'pokoj' =>[],'pokoje'=>'',
         'rozpis'=>[],
@@ -1589,6 +1590,7 @@ function dum_browse_order($x) {
 //    debug($cena);
     $suma->celkem= $cena['celkem'];
     $suma->druh= $cena['druh'];
+    $suma->abbr= $cena['abbr'];
     $suma->dph= $cena['dph'];
 //    debug($suma);
     ksort($suma->pokoj);
@@ -1596,7 +1598,7 @@ function dum_browse_order($x) {
     $y->suma= $suma;
     array_unshift($y->values,null);
   }
-//  debug($y->suma,"dum_browse_order/suma = ");
+  debug($y->suma,"dum_browse_order/suma = ");
 //  debug($y->values,"dum_browse_order/values = ");
   return $y;  
 }
@@ -1615,6 +1617,7 @@ function dum_browse_pobyt($x) {
 //  debug($x,"dum_browse_pobyt>");
   $y= (object)array('ok'=>0);
   switch ($x->cmd) {
+  case 'suma':
   case 'browse_load':  # -----------------------------------==> . browse_load
     $z= [];
     // spotřeba 
@@ -1623,6 +1626,7 @@ function dum_browse_pobyt($x) {
     $suma= (object)[
         'celkem'=>0,
         'druh'  =>[],
+        'abbr'  =>[],
         'dph'   =>[],
         'pokoj' =>[],'pokoje'=>'',
         'rozpis'=>[],
@@ -1689,11 +1693,11 @@ function dum_browse_pobyt($x) {
           if ($state==3) { // akce YMCA má poplatek za program
             array_push($poplatky,'prog_C','prog_P');
           }
-          foreach ($poplatky as $x) {
-  //          debug($ds2_cena[$x],"pokoj $pokoj,$x");
-            if ($vek>=$ds2_cena[$x]->od && $vek<$ds2_cena[$x]->do && $ds2_cena[$x]->cena) {
-              $rozpis[$x]+= $noci;
-              $suma->rozpis[$x]+= $noci;
+          foreach ($poplatky as $p) {
+  //          debug($ds2_cena[$p],"pokoj $pokoj,$p");
+            if ($vek>=$ds2_cena[$p]->od && $vek<$ds2_cena[$p]->do && $ds2_cena[$p]->cena) {
+              $rozpis[$p]+= $noci;
+              $suma->rozpis[$p]+= $noci;
             }
           }
           // strava osob podle věku
@@ -1715,47 +1719,62 @@ function dum_browse_pobyt($x) {
           $vzorec= $vzorec_new; //."od:$od,do:$do,noci:$noci";
         }
         // doplníme ceny
-        $cena= dum_cena($vzorec);
-        $celkem+= $z[$ids]['cena']= $cena['celkem'];
-        $z[$ids]['ubyt']= $cena['druh']['ubytování']??0;
-        $z[$ids]['str']=  $cena['druh']['strava']??0;
-        $z[$ids]['popl']= $cena['druh']['poplatek obci']??0;
-        $z[$ids]['prog']= $cena['druh']['program']??0;
+        if ($x->cmd!='suma') {
+          $cena= dum_cena($vzorec);
+          $celkem+= $z[$ids]['cena']= $cena['celkem'];
+          $z[$ids]['ubyt']= $cena['druh']['ubytování']??0;
+          $z[$ids]['str']=  $cena['druh']['strava']??0;
+          $z[$ids]['popl']= $cena['druh']['poplatek obci']??0;
+          $z[$ids]['prog']= $cena['druh']['program']??0;
+        }
       }
       // doplníme pobyt
-      $z[$ids]['ids']= $ids;
-      $z[$ids]['prijmeni']= $prijmeni;
-      $z[$ids]['jmeno']= $jmeno;
-      $z[$ids]['vek']= $vek;
-      $z[$ids]['pokoj']= $pokoj;
-      $z[$ids]['noci']= $noci;
-      $z[$ids]['vzorec_spolu']= $vzorec;
-      $z[$ids]['zamek_spolu']= $fix;
+      if ($x->cmd!='suma') {
+        $z[$ids]['ids']= $ids;
+        $z[$ids]['prijmeni']= $prijmeni;
+        $z[$ids]['jmeno']= $jmeno;
+        $z[$ids]['vek']= $vek;
+        $z[$ids]['pokoj']= $pokoj;
+        $z[$ids]['noci']= $noci;
+        $z[$ids]['vzorec_spolu']= $vzorec;
+        $z[$ids]['zamek_spolu']= $fix;
+      }
     }
     # předání pro browse
-    $y->values= $z;
-    $y->from= 0;
-    $y->cursor= 0;
-    $y->rows= count($z);
-    $y->count= count($z);
-    $y->quiet= 0;
-    $y->ok= 1;
+    if ($x->cmd!='suma') {
+      $y->values= $z;
+      $y->from= 0;
+      $y->cursor= 0;
+      $y->rows= count($z);
+      $y->count= count($z);
+      $y->quiet= 0;
+      $y->ok= 1;
+      array_unshift($y->values,null);
+    }
     // dopočet sumy přehled a účtování
 //    debug($suma->rozpis,"dum_browse_order/rozpis = ");
     $cena= dum_cena($suma->rozpis);
 //    debug($cena);
     $suma->celkem= $cena['celkem'];
     $suma->druh= $cena['druh'];
+    $suma->abbr= $cena['abbr'];
     $suma->dph= $cena['dph'];
 //    debug($suma);
     ksort($suma->pokoj);
     $suma->pokoje= implode(',',array_keys($suma->pokoj));
-    $y->suma= $suma;
-    array_unshift($y->values,null);
   }
-  debug($y->suma,"dum_browse_pobyt/suma = ");
-//  debug($y->values,">dum_browse_pobyt");
-  return $y;  
+end:
+  if ($x->cmd=='suma') {
+    debug($suma,"dum_browse_pobyt/suma = ");
+    $y= null;
+    return $suma;      
+  }
+  else { // browse
+//    debug($y->values,">dum_browse_pobyt");
+//    debug($y,">dum_browse_pobyt");
+    $y->suma= $suma;
+    return $y;  
+  }
 }
 function dum_cena($vzorec,$dotovana=0) {
   global $ds2_cena; // předpokládá, že je již vypočteno pro správný rok
@@ -1769,7 +1788,7 @@ function dum_cena($vzorec,$dotovana=0) {
     $kc= $dotovana ? $d->dotovana : $d->cena;
     $cena['celkem']+= $kc * $pocet;
     $cena['druh'][$d->druh]+= $kc * $pocet;
-    $cena['abbr'][$d->druh_abbr]+= $kc * $pocet;
+    $cena['abbr'][substr($d->druh,0,4)]+= $kc * $pocet;
     $cena['dph'][$d->dph]+= ($kc * $pocet) / ((100 + $d->dph) / 100);
   }
   return $cena;

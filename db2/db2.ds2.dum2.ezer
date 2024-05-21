@@ -777,9 +777,9 @@ group dum { include:'onload,db2/db2.dum'
     func Load(id_pobyt) {}
     func LoadOrder(id_order) {}
   }
-  panel A4 { type:'popup' 
-    func preview() {}
-  }
+//  panel A4 { type:'popup' 
+//    func preview() {}
+//  }
   panel Objednavka { type:'popup' 
     func Show(id_akce) {} // umožní zvolit správnou objednávku
   }
