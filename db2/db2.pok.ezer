@@ -9,7 +9,7 @@ var d_cond=0
 var d_day=''
 
 # ===========================================================================================> BANKA
-panel fio {type:'right', title:"BANKA", _sys:'fio', skill:'a'
+panel fio {type:'right', title:"BANKA", _sys:'fio', skill:'yf'
 
   var ucet: number
   use info: form _right [12,4,,]
@@ -90,7 +90,7 @@ form _right [,,*,50] { style:'width:calc(100% - 24px)'
 
 #if test_version<1
 # ===========================================================================================> DENÍK
-panel den {type:'plain', title:"POKLADNA", _sys:'den'
+panel den {type:'plain', title:"POKLADNA", _sys:'den', skill:'yp'
 
   use dd: form _d_denik [11,0,,]
   use dv: form _d_vyber [670,10,,]
@@ -353,7 +353,7 @@ panel den {type:'plain', title:"POKLADNA", _sys:'den'
   }
 }
 # =======================================================================================> INFORMACE
-panel inf {type:'right', title:"Informace", _sys:'inf'
+panel inf {type:'right', title:"Informace", _sys:'inf', skill:'yp'
   proc onfirstfocus () {
     d_cond.get | den.dv.vyber_init;
   }

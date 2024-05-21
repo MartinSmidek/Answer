@@ -1784,7 +1784,7 @@ end:
     $y->suma= $suma;
     return $y;  
   }
-}
+} // dum_browse_pobyt
 function dum_cena($vzorec,$dotovana=0) {
   global $ds2_cena; // předpokládá, že je již vypočteno pro správný rok
   $cena= ['celkem'=>0,'druh'=>[],'abbr'=>[],'dph'=>[]/*,'rozpis'=>$rozpis*/]; // rozpis ceny podle druhu a dph

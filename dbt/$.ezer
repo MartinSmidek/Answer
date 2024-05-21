@@ -18,7 +18,7 @@ menu dbt { type:'main', title:'db2', active:*, _sys:'*'
 #if test_version<4
   func onstart() { php.table_lock('none'); } // uvolni všechny zámky řádků tabulek přihlášeného 
   var global: text,
-  tabs pok {title:"[fa-eur] Finance", _sys:'*',  include:'onclick,db2.pok', active:*, skill:'yp' }
+  tabs pok {title:"[fa-eur] Finance", _sys:'*',  include:'onclick,db2.pok', active:*, skill:'yp;yf' }
 #endif
 #if test_version<1
 //  tabs eko {title:"[fa-stack-overflow] Ekonomika", _sys:'*',  include:'onclick,ys2.eko', active:*, skill:'ye' }
@@ -27,7 +27,7 @@ menu dbt { type:'main', title:'db2', active:*, _sys:'*'
   }
 #endif
 #if test_version<3
-  tabs ds2 {title:"[fa-home] Dům setkání", _sys:'*',  include:'onload,db2.ds2', active:*, skill:'yd' 
+  tabs ds2 {title:"[fa-home] Dům setkání", _sys:'*',  include:'onload,db2.ds2', active:*, skill:'yd2' 
     func curr() {} // vrací aktuální {order: tx_gnalberice_order.uid}}
   }
   tabs akce2 {title:"[fa-database] Databáze", _sys:'*', include:'onload,db2.akce2', active:*, skill:'fa;ya;mrop'

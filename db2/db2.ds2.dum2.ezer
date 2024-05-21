@@ -32,7 +32,7 @@ func onfirstfocus() {
 //  Upravy.Init();
   page.start();
 //  it= mo.part(mn.th);
-  it= mo.part('202404.2406'); // 4 dohody
+  it= mo.part('202405.2394'); // 4 dohody
   it.click(1);
 //  page.ucast.onclick();
 } // vytvoření menu pobytů
