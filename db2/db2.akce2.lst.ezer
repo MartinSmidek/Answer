@@ -200,7 +200,7 @@ menu m {type:'left', format:'f+'
     item {title:'[fa-search] ze seznamu všech akcí'                                      skill:'#crz;s'
       par:{it:'s|r',s:'sey',o:'access',a:'rok'}}
   }
-  menu {title:'Objednávky Domu setkání',type:'group',                                    skill:'yd'
+  menu {title:'Objednávky Domu setkání',type:'group',                                    skill:'yd2'
     item {title:'[fa-home] přehled roku'
       func onclick (i:ezer) {
         menu_item= i;
@@ -434,7 +434,7 @@ form _page [,,275,360] {
     case [0,0,94,] { title:'používat ceník', expr:'1' }
     case [93,0,115,] { title:'ceny DS ==> ', expr:'2' }
   }
-  button [198,255,,] { tag:'cor', title:'Objednávka', skill:'yd|yd'
+  button [198,255,,] { tag:'cor', title:'Objednávka', skill:'yd2|yd2'
     func onclick() {
       clear();
       if (key_akce==the_duakce) dum.Objednavka.Show(the_duakce);

@@ -97,12 +97,11 @@ form _vyuctovani [,,623,400] {
     pob.browse_init();
     pob.display(0);
     hos.browse_load(`id_pobyt=${idp}`);
-    udaje_pobyt= php.dum_browse_pobyt({cmd:'suma',cond:`id_pobyt=${idp}`});
-    copy_by_name(udaje_pobyt.abbr,form);
-    celkem= udaje_pobyt.celkem;
+    pob.Load(idp);
   }
 //  field vzorec_p [20,40,150,] { title:'^parametry pobytu' }
-  browse pob [0,80,,] { rows:10, key_id:'idp', optimize:{ask:'dum_browse_order'}
+  browse pob [0,80,,] { rows:10, key_id:'idp', 
+      optimize:{ask:'dum_browse_order'}
     show idp
     show nazev [,,70,] { title:'pobyt' }
     show cena [,,50,] { title:'cena', format:'r'  }
@@ -110,16 +109,21 @@ form _vyuctovani [,,623,400] {
     show platba [,,50,] { title:'platba', format:'r' }
     show datum
 //    show vzorec
-    func onrowclick() { var x:object
+    func onrowclick() { 
       hos.browse_fill(cleni,'~');
       hos.onrowclick();
-      x= php.dum_browse_pobyt({cmd:'suma',cond:`id_pobyt=${idp}`});
-      copy_by_name(x.abbr,form);
-      celkem= x.celkem;
+      Load(idp);
+    }
+    func Load(idp) { 
+      udaje_pobyt= php.dum_browse_pobyt({cmd:'suma',cond:`id_pobyt=${idp}`});
+      echo(debug(udaje_pobyt,'udaje_pobyt'));
+      vzorec_pob= udaje_pobyt.vzorec;
+      copy_by_name(udaje_pobyt.abbr,form);
+      celkem= udaje_pobyt.celkem;
     }
   }
   var zamek:number
-  label zamek_ikona [202,43,15,] {tag:'h', title:'' 
+  label zamek_ikona [left_hos+10,58,20,20] {tag:'h', title:'' 
     func onclick() {  
       zamek= !zamek;
       vzorec.enable(!zamek);
@@ -132,8 +136,10 @@ form _vyuctovani [,,623,400] {
       }
     }
   }
-  field vzorec [222,40,469,] {tag:'h', title:'^položky pro účtování ceny pobytu hosta' }
-  browse hos [left_hos+10,80,,] {tag:'h', rows:10, key_id:'ids', optimize:{ask:'dum_browse_pobyt'}
+  field vzorec_pob [left_hos+30,20,469,] {tag:'h', title:'^položky pro účtování ceny pobytu rodiny', format:'d' }
+  field vzorec [left_hos+30,55,469,] {tag:'h', title:'^položky pro účtování ceny pobytu hosta' }
+  browse hos [left_hos+10,80,,] {tag:'h', rows:10, key_id:'ids', 
+      optimize:{ask:'dum_browse_pobyt'}
     show ids
     show prijmeni [,,90,] { title:'příjmení' }
     show jmeno [,,60,] { title:'jméno' }
@@ -165,11 +171,34 @@ form _vyuctovani [,,623,400] {
   button [260,310,,] {tag:'h', title:'[fa-credit-card] Faktura za rodinu' 
     func onclick() { 
       clear();
-      alert(`Bude vystavena faktura pro ${hos.jmeno} ${hos.prijmeni} na ${celkem},- Kč `);
-//      faktura_parm= php.dum_faktura({typ:'konečná',udaje:udaje_pobyt,show:1,save:1,
-//          num:fakt_num,zaloha:fakt_zal,vs:fakt_vs,ss:fakt_ss,vyrizuje:fakt_kdo});
-//      A4.preview(faktura_parm.html,faktura_parm.ref);
+//      alert(`Bude vystavena faktura pro ${hos.jmeno} ${hos.prijmeni} na ${celkem},- Kč `);
+      faktura_parm= php.dum_faktura({typ:'konečná',show:1,save:1,
+          adresa:udaje_pobyt.adresa,vzorec:vzorec_pob,
+          oddo:udaje_pobyt.oddo,rok:udaje_pobyt.rok,order:udaje_pobyt.order,num:0});
+//      echo(debug(faktura_parm));
+      A4.preview(faktura_parm.html,faktura_parm.ref);
   }}
+  // preview 
+  panel A4 [,,660,955] { type:'popup', title:"Náhled PDF", style:'position:fixed'
+      style:"height:calc(100% - 100px);max-height:955px"
+    func preview(html,ref) {
+      paper.full= html; //Objednavka.obj.faktura_parm.html;
+      paper.ref= ref; //Objednavka.obj.faktura_parm.ref;
+      panel.modal(40,10);    
+    }
+    use paper: form [0,0,100,100] { //style:'overflow-y: auto;overflow-x:clip'
+      label full [0,0,662,936]
+      button [325,10,,] { title:'[fa-save] Uložit mezi faktury a posunout číslování', style:'z-index:2' 
+        func onclick() { 
+          clear();
+          php.dum_faktura_save(Objednavka.obj.faktura_parm);
+      }}
+      button [571,10,,] { title:'[fa-undo] Neukládat', style:'z-index:2'  
+        func onclick() { panel.hide(0); }
+      }
+      label ref [325,35,150,] { style:"background:silver;color:black;font-size:12px;padding:3px 5px 0px 20px" }
+    }
+  }
 }
 # ======================================================================================> OBJEDNÁVKA
 panel Objednavka [,,760,450] { type:'popup' title:"Objednávka pobytu v Domě setkání"
@@ -307,7 +336,9 @@ form _obj {
   button [534,top_zal,,] { tag:'zal', title:'[fa-shopping-basket] Zálohová faktura' 
     func onclick() { var x:object
       clear();
-      faktura_parm= php.dum_faktura({typ:'záloha',udaje:udaje,show:1,save:1,
+      faktura_parm= php.dum_faktura({typ:'záloha',show:1,save:1,
+          adresa:udaje.adresa,vzorec:udaje.vzorec_zal,
+          ic:udaje.fld.ic,dic:udaje.fld.dic,oddo:udaje.fld.oddo,rok:udaje.fld.rok,order:udaje.fld.order,
           num:zal_num,zaloha:zal_zal,vs:zal_vs,ss:zal_ss,vyrizuje:zal_kdo});
       A4.preview(faktura_parm.html,faktura_parm.ref);
   }}
@@ -327,7 +358,9 @@ form _obj {
   button [536,top_fakt,,] { tag:'fakt', title:'[fa-credit-card] Konečná faktura' 
     func onclick() { var x:object
       clear();
-      faktura_parm= php.dum_faktura({typ:'konečná',udaje:udaje,show:1,save:1,
+      faktura_parm= php.dum_faktura({typ:'konečná',show:1,save:1,
+          adresa:udaje.adresa,vzorec:udaje.vzorec_fak,
+          ic:udaje.fld.ic,dic:udaje.fld.dic,oddo:udaje.fld.oddo,rok:udaje.fld.rok,order:udaje.fld.order,
           num:fakt_num,zaloha:fakt_zal,vs:fakt_vs,ss:fakt_ss,vyrizuje:fakt_kdo});
       A4.preview(faktura_parm.html,faktura_parm.ref);
   }}
