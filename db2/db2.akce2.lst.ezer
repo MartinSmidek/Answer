@@ -9,12 +9,13 @@
 var zalozka: text,              // inf | cor | cen
     the_omezeni: text,          // podmínka omezující akce podle druhu - 1,2,3,4 jsou MS
     menu_item:object,           // aktivní menu
-    a_title: text,              // aktivní (ne nutně pracovní) akce
-    the_order: number           // aktivní objednávka DS
+    a_title: text               // aktivní (ne nutně pracovní) akce
+//    ,the_order: number           // aktivní objednávka DS --- var je v db2akce2
 # ----------------------------------------------------------------------------------==> inicializace
 # inicializace panelu proběhne po akce.onstart, zobrazí seznam akcí daného roku podle the_source
 func onfirstfocus() {
-  if (dirty) akce_onstart(); // zavolá akce_work
+  echo('------------- lst onfirstfocus begin');
+  akce_onstart(); // zavolá akce_work
   // detekce rozměrů
   curr_w= sys('screen','width')<1280 ? 1024 : 1280;
   // zobrazovat mapu?
@@ -27,15 +28,23 @@ func onfirstfocus() {
   info.rok= the_rok;
   page.cen_copy.selects("neměnit:0");
   zalozka= 'inf';
-  // zobrazení seznamu akcí
-  if (has_skill('y;f;s;crz')) m.g.sey.click();
-  elseif (has_skill('caam')) m.c.m.click();
-  elseif (has_skill('caar')) m.c.r.click();
-  elseif (has_skill('a'))    m.c.a.click();
   // zobrazení vazby na objednávky DS
   if (!has_skill('y')) page.ds_order.set_css('hidden','');
   page.DocInit();
+  echo('onfirstfocus the_source=',the_source);
+  // zobrazení seznamu akcí
+  switch (the_source) {
+    case 'sey': 
+      if (has_skill('y;f;s;crz')) m.g.sey.click();
+      elseif (has_skill('caam')) m.c.m.click();
+      elseif (has_skill('caar')) m.c.r.click();
+      elseif (has_skill('a'))    m.c.a.click();
+      break;
+    case 'google': m.g.goo.click(); break;
+    case 'dum': m.d.o.click(); break;
+  }
   page.inf.onclick();
+  echo('------------- lst onfirstfocus end');
 }
 //proc onfirstfocus() {
 //#   spinner(1);
@@ -173,8 +182,9 @@ func h_change_b() { var r:number, h:number
 
 # ------------------------------------------------------------------------------------------==> MENU
 # Výběr akce má dvě možnosti, uchované v proměnné the_source:
-#   'google' používá jako primárná data spreadsheet v intranetu YS a z něj upravuje tabulku AKCE
+#   'google' používá jako primární data spreadsheet v intranetu YS a z něj upravuje tabulku AKCE
 #   'sey' používá pouze tabulku AKCE
+#   'dum' používá jako primární data tabulku tx_gnalberice_order
 
 menu m {type:'left', format:'f+'
   # it: info.tag
@@ -200,16 +210,19 @@ menu m {type:'left', format:'f+'
     item {title:'[fa-search] ze seznamu všech akcí'                                      skill:'#crz;s'
       par:{it:'s|r',s:'sey',o:'access',a:'rok'}}
   }
-  menu {title:'Objednávky Domu setkání',type:'group',                                    skill:'yd2'
-    item {title:'[fa-home] přehled roku'
+  menu d {title:'Objednávky Domu setkání',type:'group',                                    skill:'yd2'
+    item o {title:'[fa-home] přehled roku'
       func onclick (i:ezer) {
         menu_item= i;
         info.display(2,'d|r'); 
         page.ord.onclick(); page.display(0,'x'); page.ord.display(1); 
         the_source= 'dum';
+        set_cookie(`${sys('root')}_akce_source`,the_source);
+        echo(`----------- set_cookie ...source=${the_source}, the_order=${the_order}`);
 //        info.display(2,'s|r'); the_source= 'sey';
 //        the_omezeni= `da2.access & ${org_ds}`;
         akce_roku(info.rok);
+        info.dum.Show(the_order);
       }
     }
   }
@@ -219,15 +232,27 @@ menu m {type:'left', format:'f+'
     item  {title:'[fa-search-minus] ... jen různé seznamy', par:{it:'s',cond:'da2.spec=1 AND da2.druh!=64 '} }
     item  {title:'[fa-search-minus] ... jen pobyty Domu setkání', par:{it:'s',cond:'da2.druh=64 '} }
   }
-  proc onclick (i) {
-    menu_item.set(i);
+  func onclick (i:ezer) {
+    menu_item= i;
     info.display(2,i.par.it); 
     page.inf.onclick(); page.display(1,'x'); page.ord.display(0); 
-    the_source.set(i.par.s);
-    [ i.par.o; the_omezeni.set(conc('da2.druh!=64 AND ',
-        "da2.access & ",cconc(eq(i.par.o,'org'),my_org.get,my_access.get))) ];
-    { i.par.a; akce_roku(info.rok.get) | akce_vsechny(i.par.cond) }
+    the_source= i.par.s;
+    set_cookie(`${sys('root')}_akce_source`,the_source);
+    backtrace();
+    echo(`----------- set_cookie ...source=${the_source}`);
+    if (i.par.o) 
+      the_omezeni= `da2.druh!=64 AND da2.access & ${i.par.o=='org' ? my_org : my_access}`;
+    if (i.par.a) akce_roku(info.rok); else akce_vsechny(i.par.cond);
   }
+//  proc onclick (i) {
+//    menu_item.set(i);
+//    info.display(2,i.par.it); 
+//    page.inf.onclick(); page.display(1,'x'); page.ord.display(0); 
+//    the_source.set(i.par.s);
+//    [ i.par.o; the_omezeni.set(conc('da2.druh!=64 AND ',
+//        "da2.access & ",cconc(eq(i.par.o,'org'),my_org.get,my_access.get))) ];
+//    { i.par.a; akce_roku(info.rok.get) | akce_vsechny(i.par.cond) }
+//  }
 }
 #==> . akce definovaného roku
 func akce_roku(rok) {
@@ -1121,26 +1146,31 @@ form _info [,,*,50] {
     show do [,,65,] { title:'od', sql_pipe:'sql_date1', format:'rq*' }
     func Load() {
       this.browse_load(`YEAR(FROM_UNIXTIME(fromday))='${the_rok}' AND d.deleted=0`,
-          '','','','','',the_duakce);
+          '','','','','1',the_duakce);
     }
-    func onrowclick() { 
+    func Show(idd) {
+      if (!this.browse_count()) return;
+      echo(`---------------- Show ${idd} ${this.browse_count()}`);
+      the_order= idd;
+      set_cookie(`${sys('root')}_order`,the_order);
+      this.browse_focus(idd);
       a_title= nazev; 
-      the_order= id_order;
       page.show_akce(id_akce); 
     }
-    func pracovni() { var line:number
+    func onrowclick() { 
+      this.Show(id_order);
+    }
+    func pracovni() { 
       if (!id_akce) {
         if (confirm(`mám již umožnit fakturaci a přidávání hostů?`)) {
           
         }
       }      
       else {
-        line= this.browse_active(); echo(line);
         volba_akce(id_akce);
         this.Load();
         page.show_akce(id_akce); 
-//        this.raise('onrowclick',id_akce);
-        this.browse_active(line);
+        this.Show(the_order);
       }
     }
   }

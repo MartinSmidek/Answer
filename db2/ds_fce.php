@@ -1458,9 +1458,10 @@ function dum_browse_orders($x) {
     $y->cursor= 0;
     $y->rows= count($z);
     $y->count= count($z);
-    $y->quiet= 0;
+    $y->quiet= $x->quiet;
+    $y->key_id= 'id_order';
     $y->ok= 1;
-    $y->seek= 2278;
+//    $y->seek= 2278;
     debug($y,"dum_browse_orders>  ");
     $y->values= $z;
     array_unshift($y->values,null);
@@ -1616,7 +1617,7 @@ function dum_browse_order($x) {
     $y->cursor= 0;
     $y->rows= count($z);
     $y->count= count($z);
-    $y->quiet= 0;
+    $y->quiet= $x->quiet;
     $y->ok= 1;
     // dopočet sumy přehled a účtování
 //    debug($suma->rozpis,"dum_browse_order/rozpis = ");
@@ -1794,7 +1795,7 @@ function dum_browse_pobyt($x) {
       $y->cursor= 0;
       $y->rows= count($z);
       $y->count= count($z);
-      $y->quiet= 0;
+      $y->quiet= $x->quiet;
       $y->ok= 1;
       array_unshift($y->values,null);
     }
