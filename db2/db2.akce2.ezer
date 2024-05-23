@@ -12,6 +12,14 @@
 var staty='CZ,SK,A,BG,CA,D,EE,FI,GB,H,I,IRL,IE,LT,LV,NL,PL,UA,US,?' 
 
 # ------------------------------------------------------------------------------------------==> stav
+# kódy pro access a org
+const org_ys=1,
+      org_fa=2,
+      org_cr=4,
+      org_ms=8,
+      org_ms50=16,
+      org_ds=64        
+        
 # dotaz na datovou oprávněnost
 var has_access=0                // maximální datová práva přihlášeného uživatele
 var my_access=0                 // zvolená datová práva přihlášeného uživatele
@@ -38,7 +46,8 @@ var the_mezinarodni: text       // pracovní akce: akce má účastníky ze svě
 var the_soubeh: number          // 0=normální akce, 1=hlavní akce, 2=souběžná akce
 var the_hlavni: number          // 0=normální akce, id=akce k the_duakce hlavní
 var the_soubezna: number        // 0=normální akce, id=akce s the_duakce souběžná
-var the_cenik: text             // pracovní akce: má ceník
+var the_order: number           // 0=normální akce, jinak ID objednávky
+var the_cenik: text             // pracovní akce: 1=má ceník, 2=ceník Domu setkání
 var the_cenik_verze: text       // ... verze ceníku: 0=2016, 1=2017
 var the_cena:  number           // pracovní akce: má pevnou cenu pro dospělého
 var the_datum_od: text, the_datum_do: text, 
@@ -53,57 +62,40 @@ var hodin_zmeny= 0              // zobrazení změn za poslední hodiny a výpis
 var dirty=0,                     // 1 => byla ukončena inicializace modulu
     virgin_track=1    
 proc onstart() { dirty.get | akce_onstart }
-//proc akce_onstart() {
-//  dirty.get
-//| spinner(1);
-//  dirty.set(1);
-//  has_access.set(sys('user','has_access'));
-//  my_access.set(sys('user','access'));
-//  my_org.set(cconc(eq(my_access.get,3),sys('user','org'),my_access.get));
-//  # hodnoty zapamatované pro navázání na předchozí session
-//  the_source.set(get_cookie(conc(sys('root'),'_akce_source'),'sey'));
-//  # příprava zobrazení v AKCE - volá akce_choose
-//  { lt(my_org.get,4);
-//    the_akce_ys.set(get_cookie(conc(sys('root'),'_akce_ys'),0));
-//    the_akce_fa.set(get_cookie(conc(sys('root'),'_akce_fa'),0));
-//    [ not(has_skill('mrop'));    // uživatel s 'mrop' nepotřebuje seznam akcí
-//      { eq(my_org.get,1);
-//        lst.akce_work(the_akce_ys.get)
-//      | lst.akce_work(the_akce_fa.get)
-//    }]
-//  | the_duakce.set(get_cookie(conc(sys('root'),'_akce'),0));
-//    the_source.set('sey');
-//    lst.akce_work(the_duakce.get)
-//  };
-//  spinner(0);
-//}
 func akce_onstart() { var m:object
   if (dirty) return;
+  echo('------------------- ONSTART begin');
   // pokračuj jen při inicializaci nebo pokud došlo k významné změně
   spinner(1);
   dirty= 1;
   has_access= sys('user','has_access');
   my_access= sys('user','access');
+  my_org= sys('user','org');
+  // pro správce Domu setkání přidej org_ds
+  if (has_skill('yd2') && my_access<org_ds) my_access= my_access+org_ds;
   m= match('(?:^|\s)(t|T)(?:\s|$)',sys('user','skills'));
   team_access= !m ? 0 : (m.s1=='T' ? 2 : 1);
-  echo(`team_access=${team_access}`);
-  my_org= my_access==3 ? sys('user','org') : my_access;
+  echo(`team_access=${team_access}, my_org=${my_org}`);
+//  my_org= my_access==3 ? sys('user','org') : my_access;  ????????? 22/5/2024
   // hodnoty zapamatované pro navázání na předchozí session
   the_source= get_cookie(`${sys('root')}_akce_source`,'sey');
   // příprava zobrazení v AKCE - volá akce_choose
-  if ( my_org<4 ) {
+  if ( (my_org&org_ds) < 4 ) {
     the_akce_ys= get_cookie(`${sys('root')}_akce_ys`,0);
     the_akce_fa= get_cookie(`${sys('root')}_akce_fa`,0);
     if ( !has_skill('mrop')) {    // uživatel s 'mrop' nepotřebuje seznam akcí
       lst.akce_work(my_org==1 ? the_akce_ys : the_akce_fa);
     }
+    echo('---------------- akce_onstart: the_akce_xx=',the_akce_ys,',',the_akce_fa,', the_source=',the_source);
   }
   else {
     the_duakce= get_cookie(`${sys('root')}_akce`,0);
+    echo('akce_onstart: the_duakce=',the_duakce);
     the_source= 'sey';
     lst.akce_work(the_duakce)
   }
   spinner(0);
+  echo('------------------- ONSTART end');
 }
 # změna datového přístupu
 proc reaccess() { #==> . reaccess (jen pro YS+FA)
@@ -125,8 +117,11 @@ proc reaccess() { #==> . reaccess (jen pro YS+FA)
 # ----------------------------------------------------------------------------==> globální procedury
 # vrací objekt obsahující aktuálně vybrané záznamy
 # {lst:id_akce, ucast:{id_pobyt,id_rodina,id_osoba}, evi:{id_rodina,id_osoba}}
-func curr() {
-  return {lst:{akce:the_duakce},ucast:ucast.curr(),evi:evi.curr()};
+func curr() { var _curr:object
+  _curr= {lst:{akce:the_duakce},ucast:ucast.curr()};
+  _curr.evi= evi.curr();
+  return _curr;
+//  return {lst:{akce:the_duakce},ucast:ucast.curr(),evi:evi.curr()};
 } 
 # nastavení akce jako the_duakce, dopočítání stavových hodnot
 func akce_choose(id_akce) { var a:object, ok:number
@@ -135,9 +130,10 @@ func akce_choose(id_akce) { var a:object, ok:number
   // ověříme právo přístupu pro tým
   if (!team_access || (team_access && match(`\b${sys('user','id_user')}\b`,a.tym))) {
     the_duakce= id_akce;
+    echo('akce_choose: the_duakce=',the_duakce);
     the_rok= a.rok;       the_title= a.title;       the_soubeh= a.soubeh;
     the_hnizda= a.hnizda; the_wordpress= a.web_wordpress; the_mezinarodni= a.mezinarodni;
-    the_hlavni= a.hlavni; the_soubezna= a.soubezna;
+    the_hlavni= a.hlavni; the_soubezna= a.soubezna; the_order= a.id_order;
     the_cenik= a.cenik;   the_cenik_verze= a.cenik_verze;
     the_cena= a.cena;     the_org= a.org;           the_ms= a.ms;    the_druh= a.druh;
     the_garant= a.garant; the_tym= a.tym;
@@ -147,6 +143,7 @@ func akce_choose(id_akce) { var a:object, ok:number
     ms_akce_hnizda_tisk.selects('hnizdo,zkratka,nazev',php.akce2_hnizda_options(the_hnizda,2));
     ok= 1;
   }
+  echo(`-------------------------------- akce_choose(${id_akce}) ... the_rok=${the_rok}`);
   return ok;
 }
 //proc akce_choose(id_akce) { var a:object
@@ -168,12 +165,6 @@ proc accessed(org) {
 }
 proc spinner(on) {
   [ function('on',"waiting(on);",on) ];
-}
-# ==========================================================================================> MODULY
-group foto { include:'onload,db2.akce2.foto'
-  form _alb {
-    proc galery(fotka,id) {}
-  }
 }
 # ==========================================================================================> . AKCE
 panel lst {type:'right', _sys:'*', title:'[fa-futbol-o] AKCE', include:'onload,db2.akce2.lst',
@@ -354,7 +345,6 @@ table ds_osoba_copy { key_id:'id_osoba'
 table akce { key_id:'id_duakce'
   number id_duakce
   number id_hlavni // 0 nebo id_duakce hlavní akce souběžné akce
-  number id_order
   number access
   number typ
   number ma_cenik  // 1 znamená, že bereme v úvahu tabulku cenik
@@ -1096,6 +1086,10 @@ form _osoba2x [,,244,322] {css:'ae_frame'
       track.back_osoba_rodina(key_osoba.get,cconc(eq(host.get,'E'),id_kmen.get,kmen.get)) }}
     item r { title:'-zobrazovat ®rodinné údaje',  proc onclick () { set_mode(2,host.get); refresh }}
     item o { title:'nezobrazovat ®rodinné údaje', proc onclick () { set_mode(0,host.get); refresh }}
+    item { title:'-ukázat data', skill:'m', 
+      func onclick() { js.call_root_func_par('syst_tab_rec_show',array('osoba',key_osoba),&this,'onclick_')}
+      func onclick_() {}
+    }
   }
 
   // společné
@@ -1470,3 +1464,37 @@ form _rodina2p [,,188,229] { css:'ae_frame'
       ask('evid2_deti_access',key_rodina.get,3); panel.call('page.page_load');  } }
   }
 }
+# ==========================================================================================> MODULY
+group foto { include:'onload,db2.akce2.foto'
+  form _alb {
+    proc galery(fotka,id) {}
+  }
+}
+group fio { include:'onload,db2/db2.fio'
+  form _ucty {
+    func Init(ucty) {}
+    func LoadPobyt(ucty) {}
+    func Load(ucty) {}
+    func zaPobyt(id_pobyt,on) {}
+    func SetOsoba(id_pobyt,on,id_osoba) {}
+    func CurrIds() {}
+  }
+}
+group dum { include:'onload,db2/db2.dum'
+  panel Rozpis { type:'popup'
+    func Load(id_pobyt) {}
+  }
+  panel Objednavka { type:'popup' 
+    func Show(id_akce) {} // umožní zvolit správnou objednávku
+    func Delete(id_order) {} // nastaví deleted=1 u objednávky
+  }
+  form _objednávka {}
+  form _vyuctovani {
+    func load_obj(ido){}
+    func load_pob(idp){}
+  }
+//  panel A4 { type:'popup'
+//    func preview(html,ref) {}
+//  }
+}
+

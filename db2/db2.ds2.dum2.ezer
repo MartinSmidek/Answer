@@ -1,0 +1,82 @@
+# ------------------------------------------------------------------------------------------------ #
+# Systém Ans(w)er - modul Dům setkání - verze 2                                                    #
+#                                                                                                  #
+#                                                   (c) 2008-2024 Martin Šmídek <martin@smidek.eu> #
+# ------------------------------------------------------------------------------------------------ #
+
+//var the_order=0
+
+# ==========================================================================================> MODULY
+
+# -------------------------------------------------------------------------==> . inicializace panelu
+func onfirstfocus() {
+//func onfocus() {
+  var mn: object, it: ezer
+  mn= php.ds2_obj_menu('202401,202402,202403,202404,202405,202406');
+  mo.attach_code(mn.cd);
+//  obj.load_objednavka();
+//  Upravy.Init();
+  page.start();
+//  it= mo.part(mn.th);
+  it= mo.part('202405.2394'); // 4 dohody
+  it.click(1);
+//  page.ucast.onclick();
+} // vytvoření menu pobytů
+
+# --------------------------------------------------------------------------==> . menu
+menu mo {type:'left'
+  func onclick(x:ezer) { 
+//    show_order(x.par.uid) 
+    clear();
+    obj.load_objednavka(x.par.uid);
+    uca.load_obj(x.par.uid);
+  }
+}
+
+use obj: form dum._obj [30,50,,] { tag:'obj', style:'z-index:1'  }
+use uca: form dum._vyuctovani [30,50,,] { tag:'uca', style:'z-index:1' }
+# -----------------------------------------------------------------------------------------==> _page
+# formulář se záložkami
+use page:   form [ 10, 10,,] {
+  func start() { cvak(&ucast) } // inicializace - zobrazení první záložky
+  # ------------------------- obsluha záložek
+  func cvak(i:ezer) {
+    form.set_css('ae_butt_off','ae_butt_on','_'); 
+    i.set_css('ae_butt_on','ae_butt_off');
+    panel.display(0,i.par.off); 
+    panel.display(1,i.par.on)
+  }
+  # ------------------------- záložky - v par jsou tagy pro zapnutí vypnutí elementů
+  label objed [ 12,0,100,20] { tag:'_' title:'<b>Objednávka</b>', par:{on:'obj',off:'uca'}
+    func onclick() { cvak(&this) } }
+  label ucast [132,0,100,20] { tag:'_' title:'<b>Hosté</b>', par:{on:'uca',off:'obj'}
+    func onclick() { cvak(&this) } }
+//  label ucet  [252,0,100,20] { tag:'_' title:'<b>Kontrola platby</b>', par:{on:'ucet',off:'objed|ucast'}
+//    func onclick() { cvak(&this) } }
+  # ------------------------- pozadí pro elementy musí být před obsahem záložek
+  label frame [0,16,1000,620] { css:'ae_work'}
+  // text faktury
+  label faktura [17,650,640,100]
+}
+group dum { include:'onload,db2/db2.dum'
+  panel Rozpis { type:'popup'
+    func Load(id_pobyt) {}
+    func LoadOrder(id_order) {}
+  }
+//  panel A4 { type:'popup' 
+//    func preview() {}
+//  }
+  panel Objednavka { type:'popup' 
+    func Show(id_akce) {} // umožní zvolit správnou objednávku
+  }
+  form _obj {
+    func load_objednavka(id_order) {}
+    panel A4 { type:'popup', style:'position:fixed' 
+      func preview() {}
+    }
+  }
+  form _objednávka {}
+  form _vyuctovani {
+    func load_obj(ido){}
+  }
+}

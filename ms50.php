@@ -8,7 +8,7 @@
   #   $options    = doplnění Ezer.options
   #   $add_pars   = doplnění $EZER->options
 
-  $kernel= "ezer3.1"; 
+  $kernel= "ezer3.2"; 
   $ezer_server= 
     $_SERVER["SERVER_NAME"]=='answer.bean'        ? 0 : (      // 0:lokální 
     $_SERVER["SERVER_NAME"]=='answer.doma'        ? 1 : (      // 1:Synology DOMA
@@ -24,9 +24,8 @@
   $title_flag=  $ezer_server==2 ? '' : 'lokální ';
   $CKEditor= isset($_GET['editor']) ? $_GET['editor'] : '4.6';
 
-  // nastav jako default PDO=2
-  if ( !isset($_GET['pdo']))
-    $_GET['pdo']= 2;
+  // nastav PDO=2
+  $_GET['pdo']= 2;
 
   // ochránění přímého přístupu do složek s .htaccess/RewriteCond "%{HTTP_COOKIE}" "!EZER"
   setcookie("EZER",$app,0,"/");
@@ -57,7 +56,6 @@
   $cookie= 16;
   $app_last_access= "ms_last_access";
 
-  $k= '3';
   $app_js= array("db2/ds_fce3.js","db2/db2_fce3.js");
   
   $app_css= [ 
@@ -77,11 +75,11 @@
     'skill'        => "'d'",
     'autoskill'    => "'!d'",
     'db_test'      => 0,
-    'dbg'          => "{path:['db2','ms2']}"
+    'dbg'          => "{path:['db2','ms50']}"
   ];
 
   // (re)definice Ezer.options
-  $title= "$demo<span $title_style>$title_flag$app_name<sub>$k</sub> MS50+</span>";
+  $title= "$demo<span $title_style>$title_flag$app_name<sub>3.2</sub> MS50+</span>";
   $add_pars= array(
     'favicon' => array("{$app}_local.png","{$app}.png","{$app}_dsm.png")[$ezer_server],
 //    'app_root' => "$rel_root",      // startovní soubory app.php a app.inc.php jsou v kořenu
@@ -109,5 +107,6 @@
   );
 
   // je to aplikace se startem v kořenu
+  echo("1 $kernel");
   require_once("$kernel/ezer_main.php");
 

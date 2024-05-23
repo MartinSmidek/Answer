@@ -9,7 +9,7 @@
   #   $add_pars   = doplnění $EZER->options
 
   // verze použitého jádra Ezeru
-  $ezer_version= isset($_GET['ezer']) ? $_GET['ezer'] : '3.1'; 
+  $ezer_version= '3.2'; 
   $ezer_server= 
     $_SERVER["SERVER_NAME"]=='answer.bean'        ? 0 : (      // 0:lokální 
     $_SERVER["SERVER_NAME"]=='answer.doma'        ? 1 : (      // 1:Synology DOMA
@@ -25,11 +25,10 @@
   $title_flag=  $ezer_server==2 ? '' : 'lokální ';
   $CKEditor= isset($_GET['editor']) ? $_GET['editor'] : '4.6';
   // pro ezer2.2 nutno upravit ezer_main, ezer_ajax, ae_slib
-  $kernel=   "ezer".(isset($_GET['ezer'])?$_GET['ezer']:'3.1'); 
+  $kernel=   "ezer3.2"; 
 
-  // nastav jako default PDO=2
-  if ( !isset($_GET['pdo']))
-    $_GET['pdo']= 2;
+  // nastav PDO=2
+  $_GET['pdo']= 2;
 
   // ochránění přímého přístupu do složek s .htaccess/RewriteCond "%{HTTP_COOKIE}" "!EZER"
   setcookie("EZER",$app,0,"/");
@@ -60,8 +59,7 @@
   $cookie= 4;
   $app_last_access= "{$app}_last_access";
 
-  $k= substr($kernel,4,1)=='3' ? '3' : '';
-  $app_js= array("db2/ds_fce$k.js","db2/db2_fce$k.js");
+  $app_js= array("db2/ds_fce3.js","db2/db2_fce3.js");
   
   $app_css= [ 
       "db2/db2.css.php=skin",
@@ -84,7 +82,7 @@
   ];
 
   // (re)definice Ezer.options
-  $title= "$demo$app_name<sub>$k</sub>";
+  $title= "$demo$app_name<sub>3.2</sub>";
   $add_pars= array(
     'favicon' => array("{$app}_local.png","{$app}.png","{$app}_dsm.png")[$ezer_server],
 //    'app_root' => "$rel_root",      // startovní soubory app.php a app.inc.php jsou v kořenu
@@ -113,4 +111,4 @@
 
   // je to aplikace se startem v kořenu
   require_once("$kernel/ezer_main.php");
-?>
+

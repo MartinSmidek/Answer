@@ -1,3 +1,3 @@
 <?php
-$version=4
+$version=5 /* nová verze Domu setkání */
 ?>

@@ -28,7 +28,7 @@
 
   // informace pro debugger o poloze ezer modulů
   $dbg_info= (object)array(
-    'src_path'  => array('cr2','db2','ezer3.1') // poloha a preference zdrojových modulů
+    'src_path'  => array('cr2','db2','ezer3.2') // poloha a preference zdrojových modulů
   );
 
   // databáze
@@ -42,11 +42,10 @@
   $tracked= ',akce,pobyt,spolu,osoba,tvori,rodina,_user,';
   
   // definice modulů specifických pro Answer
-  $k= substr($kernel,4,1)=='3' ? '3' : '';
   $app_php= array(
-    "db2/db2_ys2_fce$k.php",
+    "db2/db2_ys2_fce3.php",
     "db2/db2_tcpdf.php",
-    "db2/db2_fce$k.php"
+    "db2/db2_fce3.php"
   );
   
   $ezer= array(

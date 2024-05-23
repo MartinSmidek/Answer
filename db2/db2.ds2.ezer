@@ -1,0 +1,492 @@
+#pragma library
+# ------------------------------------------------------------------------------------------------ #
+# Systém Ans(w)er - modul Dům setkání - verze 2                                                    #
+#                                                                                                  #
+#                                                   (c) 2008-2024 Martin Šmídek <martin@smidek.eu> #
+# ------------------------------------------------------------------------------------------------ #
+
+func curr() {
+    return dum2 ? dum2.curr() : {};
+}
+
+# ======================================================================================> OBJEDNÁVKY
+panel dum2 {type:'right', title:"Objednávky2", _sys:'dum2',include:'onload,db2.ds2.dum2' skill:'a;yd2'
+  func curr() { return {dum:{order:0}}; }
+} 
+panel trns {type:'right', title:"Transformace"                    skill:'a'
+  use info: form _right [12,4,,]
+  menu {type:'left', format:'f+'  
+    menu {title:'Příprava propojení osoba & ds_osoba', type:'group', active:no
+//      item {title:'Znovuvytvoření spojky ds_db', par:{mode:'ds_db',delete:1} }
+      // item {title:'... znovu od nuly',      par:{mode:'ds_db',delete:1} }
+      item {title:'Průzkum ds_osoba',            par:{mode:'ds_osoba',doit:0} }
+    }
+    menu {title:'Propojení osoba & ds_osoba', type:'group', active:no
+      item {title:'1-5. celou transformaci'
+        func onclick(i:ezer) {
+          info.header(i); clear();
+          info.append(php.ds2_trnsf_osoba({mode:'osoba_clr'}));
+          info.append('<hr>');
+          info.append(php.ds2_trnsf_osoba({mode:'ds_db',delete:1}));
+          info.append('<hr>');
+          info.append(php.ds2_trnsf_osoba({mode:'osoba_upd'}));
+          info.append('<hr>');
+          info.append(php.ds2_trnsf_osoba({mode:'osoba_new',from:1}));
+          info.append('<hr>');
+          info.append(php.ds2_trnsf_osoba({mode:'pobyty',from:1}));
+          info.append('<hr>');
+        }
+      }
+      item {title:'1. zahaj transformaci',            par:{mode:'osoba_clr'} 
+             help:'   zruš vazbu na smazané osoby'}
+      item {title:'2. vytvoř spojku ds_db',           par:{mode:'ds_db',delete:1} }
+      item {title:'3. uprav access propojeným osobám',par:{mode:'osoba_upd'} }
+      item {title:'4. vytvoř nové osoby s access 64', par:{mode:'osoba_new',from:1} }
+      item {title:'4. ... ... jen od 2024',           par:{mode:'osoba_new',from:2024} }
+      item {title:'5. vytvoř pobyt+spolu',            par:{mode:'pobyty',from:1} }
+      item {title:'5. ... ... jen od 2024',           par:{mode:'pobyty',from:2024} }
+      
+      item {title:'?? vrať změny',                    par:{mode:'backtrack'} }
+      item {title:'!! zapiš změny trvale',            par:{mode:'final'} }
+    }
+//    menu {title:'Výpočet ceny', type:'group', active:no
+//      item {title:'6. naplň obj.ds_vzorec od 2024',   par:{mode:'ds_vzorec',from:2024} }
+//    }
+    func onclick(i:ezer) {
+      info.header(i); clear();
+      info.fill('',php.ds2_trnsf_osoba(i.par));
+    }
+  }
+} 
+# -------------------------------------------------------------------------------------==> formuláře
+form _right [,,*,50] { style:'width:calc(100% - 24px)'
+  label head [0,0,*,50]  { title:'' }
+  label msg  [0,35,*,20] { title:'' }
+  label note [0,55,*,] { title:'' }
+  func header(i:ezer) { var i_owner:ezer
+    clear(); i_owner= i.owner();
+    msg= ''; note= '';
+    head= replace_fa(`<div class='karta'>${i_owner.title} - ${i.title}</div>`);
+  }
+  func fill(x,y) {
+    if (x) head= `<div class='karta'>${replace_fa(x)}</div>`;
+    if (y) note= y
+  }
+  func append(y) {
+    if (y) note= conc(note,y)
+  }
+}
+# ---------------------------------------------------------------------------------------==> tabulky
+table platba {
+  number id_platba
+  // 0 - ?, 1 - výdaj,3 - vratka, 5 - příjem, 
+  // 6 - asi platba za id_akce, 7 - je to platba za id_akce, 
+  // 8 - asi platba za id_pobyt, 9 - je to platba za id_pobyt, 
+  // 10 - asi dar, 11 - je to dar
+  number stav // #platba_stav: 
+  number id_oso
+  number id_pob
+  number id_ord
+  number ucet
+  number ucel
+  date   datum 
+  number castka
+  number mena
+  text   protiucet
+  text   nazev
+  text   ks
+  text   vs
+  text   ss
+  text   ss2
+  text   ident
+  text   zprava
+  text   provedl
+  text   upresneni
+  text   komentar
+}
+table ds_cena {  db:'setkani', key_id:'id_cena'
+  number id_cena
+  number rok
+  text polozka         { sql_pipe:'wu' }
+  text druh            { sql_pipe:'wu' }
+  text typ             { sql_pipe:'wu' }
+  number od
+  number do
+  number cena
+  number dph
+}
+table ds_osoba { db:'setkani', key_id:'id_osoba'
+  number id_osoba
+  number id_order       // tx_gnalberice_order.uid
+  number ys_osoba       // ezer_ys.id_osoba
+  text   rodina         { sql_pipe:'wu' }
+  text   prijmeni       { sql_pipe:'wu' }
+  text   jmeno          { sql_pipe:'wu' }
+  date   narozeni       { sql_pipe:'sql_date1' }
+  text   psc
+  text   obec           { sql_pipe:'wu' }
+  text   ulice          { sql_pipe:'wu' }
+  text   email          { sql_pipe:'wu' }
+  text   telefon
+  // ubytování
+  number pokoj
+  number luzko          // L|P|B|DP
+  number postylka       // 0|1
+  number zvire          // 0|1
+  number strava         // L|P|B|DP
+  number dar
+  text   oprava
+  date   fromday        { sql_pipe:'sql_date1' }
+  date   untilday       { sql_pipe:'sql_date1' }
+  text   pozn           { sql_pipe:'wu' }
+}
+table tx_gnalberice_room { db:'setkani', key_id:'uid'
+  number uid
+  number deleted
+  number hidden
+  number number
+  text   category
+  number bads
+  number addbeds
+  number etage
+  text   note         { sql_pipe:'wu' }
+}
+table tx_gnalberice_order { db:'setkani', key_id:'uid'
+  number uid
+  number crdate       { sql_pipe:'stamp_date' }
+  number deleted
+  number hidden
+  text   name         { sql_pipe:'wu' }
+  number room
+  number fromday      { sql_pipe:'stamp_date' }
+  number untilday     { sql_pipe:'stamp_date' }
+  number confirmed
+  number state
+  number akce         { help:"akce|číslo akce z číselníku akcí" }
+  text   note         { sql_pipe:'wu' }
+  text   rooms        { sql_pipe:'wu' }
+  text   rooms1       { sql_pipe:'wu' }
+  number adults       { help:'?|počet dospělých podle objednávky' }
+  number kids_10_15   { help:'?|počet dětí ve věku 10-15 let podle objednávky' }
+  number kids_3_9     { help:'?|počet dětí ve věku 3-9 let podle objednávky' }
+  number kids_3       { help:'?|počet dětí do 3 let podle objednávky' }
+  number board
+  number prog_cely
+  number prog_polo
+  text   address      { sql_pipe:'wu' }
+  text   zip
+  text   city         { sql_pipe:'wu' }
+  text   telephone
+  text   email
+  number fe_user_id
+  // přidané polozky
+  text   firstname    { sql_pipe:'wu' }
+  text   org          { sql_pipe:'wu' }
+  number ic
+  text   dic
+  number ucast        // 1 => účastní se pobytu
+  number sleva        { help:'%|případná sleva v procentech' }
+  number skoleni      // 1 => školení, neplatí se rekreační poplatek
+}
+table _cis { key_id:'id_cis'
+# --------------------------------------------------------------------------------==> číselníky,mapy
+  number id_cis, text druh, text data, text hodnota, text zkratka, number poradi, text barva, text ikona
+}
+// answer
+table akce { key_id:'id_duakce'
+  number id_duakce
+  number id_hlavni // 0 nebo id_duakce hlavní akce souběžné akce
+  number id_order
+  number access
+  number typ
+  number ma_cenik  // 1 znamená, že bereme v úvahu tabulku cenik
+  number ma_cenik_verze  // podle číselníku ms_cenik_verze (0=do roku 2016)
+  number ma_cenu   // 1 znamená, že bereme v úvahu položku cena (pro 1 dospělého)
+  number cena      // cena akce pro dospělého (je-li ma_cenu=1)
+  number spec      // 1 znamená ne-akci, starý způsob příležitostných seznamů
+  number zruseno   // 1 znamená zrušenou akci se zachovanými účastniky - pro korespondenci 
+  number mrop      // 1 že akce je mužskou iniciací
+  number firm      // 1 že akce je mužským firmingem
+  text nazev
+  text misto
+  number druh
+  text hnizda
+  number mezinarodni
+  number statistika
+  number poradatel
+  text tym        // seznam id_user majících skill 'T' s prácem editace této akce
+  date datum_od    { sql_pipe:'sql_date1'}    // SQL tvar se používá v ys.akce
+  date datum_do    { sql_pipe:'sql_date1'}
+  text strava_oddo { help:'2 písmena označující první a poslední stravu (sov)' }
+  number ciselnik_akce
+  number ciselnik_rok
+  text note
+  text archiv
+  number web_prihlasky // setkani.org
+  number web_maximum
+  number web_obsazeno
+  number web_kalendar  // chlapi.online 1=ukázat v kalendáři 2=ukázat jen jako rezervovaný termín
+  text web_online
+  text web_anotace
+  text web_url
+  text web_wordpress
+}
+table prihlaska { key_id:'id_prihlaska'
+  number id_prihlaska
+  number id_akce
+  number id_pobyt
+  number id_rodina
+  number id_osoba
+  text email
+  date open
+  date close
+  text stav
+  text vars_json
+  text errors
+  text IP
+  text browser
+}
+table pobyt { key_id:'id_pobyt'
+  number id_pobyt
+  number id_akce
+  number i0_rodina // jen pro rodinný pobyt
+  # number id_osoba -- 131004 zrušeno
+  number typ            // 10,11,20,21
+  number skupina
+  number hnizdo // 0 nebo pořadí hnízda
+  number funkce
+  number prednasi      // číselník ms_akce_prednasi
+  text aktivita
+  date ___datplatby        { sql_pipe:'sql_date1'}
+  number ___zpusobplat
+  number ___platba
+  number ___potvrzeno
+  number ___avizo          { help:"přišlo prohlášení o platbě" }
+  number naklad_d
+  number poplatek_d
+  date ___datplatby_d      { sql_pipe:'sql_date1'} // platba za děti v souběžné akci
+  number ___potvrzeno_d
+  number ___zpusobplat_d
+  number ___platba_d
+  text budova
+  text pokoj
+  number ubytovani      // číselník ms_akce_ubytovan
+  number luzka
+  number entry_id 
+
+  // stravy a diety
+  number strava_cel, number strava_pol
+  number strava_cel_bm, number strava_pol_bm
+  number strava_cel_bl, number strava_pol_bl
+  // výjimky ze strav: číslice jsou seřazeny jako počty snídaní,obědů,večeří po dnech
+  text cstrava_cel,  text cstrava_pol
+  text cstrava_cel_bm,  text cstrava_pol_bm
+  text cstrava_cel_bl,  text cstrava_pol_bl
+
+  number kocarek
+  text pecovatel
+  text poznamka
+  text pracovni
+  number pristylky
+  number pocetdnu       // počet nocí!
+  number svp            // počet dětí s vlastním pečovatelem
+  number cd
+  number dorazil
+  number pouze
+  number akce
+  // předepsaná platba
+  number platba1
+  number platba2
+  number platba3
+  number platba4
+  // předepsaná vratka
+  number vratka1
+  number vratka2
+  number vratka3
+  number vratka4
+  number sleva
+  number vzorec //#
+  number duvod_typ	// 0: zdůvodnění podle ceníku, 1: vlastním textem
+  text   duvod_text	// vlastní text zdůvodňující cenu
+}
+//table pobyt_wp { db:'ezer_db2', key_id:'id_pobyt_wp'
+//  number id_pobyt_wp
+//  number entry_id
+//  number id_akce
+//  number id_pobyt
+//  number stav
+//  text   zmeny
+//}
+//table wp_3_wpforms_entry_fields { db:'wordpress', key_id:'id'
+//  number id
+//  number entry_id
+//  number field_id
+//  text   value
+//}
+table spolu { key_id:'id_spolu'
+  number id_spolu
+  number id_pobyt
+  number id_osoba
+  number s_hnizdo
+  number s_role   // #ms_akce_s_role -- role osoby na akci
+  number skupinka
+  text poznamka
+  number s_rodici
+  number p_kc_strava
+  number pulstrava
+  number pecovane // id_osoba pečovaného dítěte
+  number pfunkce  // #ms_akce_pfunkce -- funkce pečovatelská, jinak 0
+  number dite_kat // #ys_akce_dite_kat | #fa_akce_dite_kat -- cenová kategorie
+  // pečouni: částečný pobyt
+  number p_od_pobyt   // pro pečouny: počet dnů pozdějšího příjezdu
+  number p_od_strava  // pro pečouny: první jídlo, 0=default, 1=snídaně, 2=oběd, 3=večeře
+  number p_do_pobyt   // pro pečouny: počet dnů dřívějšího odjezdu
+  number p_do_strava  // pro pečouny: poslední jídlo, 0=default, 1=snídaně, 2=oběd, 3=večeře
+}
+table osoba_geo { 
+  number id_osoba
+  number lat
+  number lng
+  number stav
+}
+table rodina_geo { 
+  number id_rodina
+  number lat
+  number lng
+  number stav
+}
+table osoba { key_id:'id_osoba'
+  number id_osoba
+  number access
+  number id_dupary
+  number id_dudeti
+  text   deleted     { help:'ok|prázdné nebo D=značka smazání osoby' },
+  text jmeno
+  text prijmeni
+  text rodne
+  number sex
+  number dieta  // #ms_akce_dieta
+  text fotka
+  number adresa // 0=viz rodinná, 1=osobní zde
+  number noadresa { help:"adresa je nespolehlivá - viz poznámka" }
+  text ulice
+  text psc
+  text obec
+  text stat
+  text prislusnost // státní příslušnost
+  number kontakt // 0=viz rodinný, 1=osobní zde
+  text gmail
+  text email
+  number nomail { help:"nomail|nechce přijímat hromadně rozesílané informace" }
+  text telefon
+  text spz
+  date narozeni { sql_pipe:'sql_date_year' }
+  number uvitano { help:"uvítáno|bylo uvítáno ve společenství" }
+  number iniciace { help:"mrop|rok iniciace nebo 0" }
+  number firming { help:"firm|rok posledního firmingu nebo 0" }
+//  text rc_xxxx
+  number umrti // rok úmrtí
+  text poznamka
+  text obcanka
+  number vzdelani
+  text titul
+  text zamest
+  text zajmy
+  text jazyk
+  number cirkev
+  text aktivita
+  text o_umi      // #answer_umi
+  number clen
+  text note
+  text origin
+  text historie
+  number pin
+  date pin_vydan
+  number pin_ch
+  date pin_vydan_ch
+  text web_level    // #answer_web: WEB level=suma: 1=admin, 2=super, 4=redakce, 16=tester
+  date   web_zmena   { sql_pipe:'sql_date1', help:'datum vyplnění online formuláře se změnami os.údajů' }
+  date   web_souhlas { sql_pipe:'sql_date1', help:'datum udělení souhlasu se zpracováním osobních údajů' }
+}
+table tvori { key_id:'id_tvori'
+  number id_tvori
+  number id_osoba
+  number id_rodina
+  number role
+}
+table dar { key_id:'id_dar'
+  number id_dar
+  number access
+  number id_osoba
+  number id_rodina
+  text   deleted{ help:'ok|prázdné nebo D=značka smazání daru' },
+  text   ukon   { help:'b-člen běžný,c-člen činný,d-dar,p-členský příspěvek' }
+  text   zpusob { help:'b-banka,s-složenka,p-pokladna' }
+  number castka
+  date   dat_od { sql_pipe:'sql_date1', help:'datum darování nebo vzniku členství' }
+  date   dat_do { sql_pipe:'sql_date1', help:'datum zaslání potvrzení nebo datum pokrytí členství příspěvkem nebo datum zániku členství' }
+  text   note
+}
+table rodina { key_id:'id_rodina'
+  number id_rodina
+  number access
+  number id_dupary
+  text   deleted
+  number typ            // 10,11,20,21
+  text nazev
+  text fotka
+  text ulice
+  text psc
+  text obec
+  text stat
+  number noadresa { help:"adresa je nespolehlivá - viz poznámka" }
+  text telefony
+  text emaily
+  number nomaily { help:"nomaily|nechtějí přijímat hromadně rozesílané informace - viz poznámka" }
+  text spz
+  number svatba
+  date datsvatba { sql_pipe:'sql_date_year'}
+  number rozvod
+  text r_umi      // #ms_umi
+  number r_ms     // počet účastí na MS mimo YS,FA
+  text note
+  text origin
+  text historie
+}
+table platba { key_id:'id_platba'
+  number id_platba
+  text   ucet           // M=514048001, D=514048044
+  number id_osoba
+  number id_rodina
+  number id_duakce
+  number id_pokl
+  number ucel
+  number castka
+  date   datum          { sql_pipe:'sql_date1'}
+  text   poznamka
+  number zpusob
+  text   ucet_nazev
+  text   vs
+  text   ks
+  text   ss
+  text   ss2            // ručně opravený SS
+  text   tipy           // vytipované možnosti plátce
+}
+table cenik { key_id:'id_cenik'
+  number id_cenik
+  number id_akce
+  number hnizdo // 0 nebo pořadí hnízda
+  number poradi
+  text   polozka
+  text   pro
+  text   za             // N: noc, S:snídaně, O:oběd, V:večeře, P:pobyt
+  number typ            // index typu ubytování
+  number od
+  number do
+  number cena
+  number dph
+}
+# --------------------------------------------------------------------------------==> mapy
+map ds_stav:   table _cis {where:"druh='ds_stav'", order:'poradi', key_id:'data'}
+map ds_strava: table _cis {where:"druh='ds_strava'", order:'poradi', key_id:'data'}
+map ds_luzko:  table _cis {where:"druh='ds_luzko'", order:'poradi', key_id:'data'}

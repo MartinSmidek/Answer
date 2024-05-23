@@ -1,6 +1,12 @@
 /* global Ezer */
 
 // uživatelské funkce aplikace DS
+// ----------------------------------------------------------------------------- set_elem_backround
+// zavolá funkci umístěnou v main.menu a její hodnotu předá funkci this_fce
+// _this je blok obsahující funkci this_fce
+function set_elem_backround(elem,style) {
+  jQuery(elem.DOM_Input).css(style);
+}
 // ---------------------------------------------------------------------------------- call_root_func
 // zavolá funkci umístěnou v main.menu a její hodnotu předá funkci this_fce
 // _this je blok obsahující funkci this_fce
@@ -10,6 +16,23 @@ function call_root_func(root_fce,_this,this_fce) {
     elem= elem.owner;
   }
   new Eval([{o:'c',i:root_fce,a:0,s:''}],elem,[],root_fce,{
+    args:[_this,this_fce],fce:
+      function(_this,then){
+        new Eval([{o:'c',i:then,a:1,s:''}],_this,[this.stack[0]],then);
+      }
+    }
+  );
+}
+// ---------------------------------------------------------------------------------- call_root_func
+// zavolá funkci umístěnou v main.menu a její hodnotu předá funkci this_fce
+// _this je blok obsahující funkci this_fce
+// pars je pole argumentů 
+function call_root_func_par(root_fce,par,_this,this_fce) {
+  let elem= _this;
+  while (elem.type!=='menu.main') {
+    elem= elem.owner;
+  }
+  new Eval([{o:'c',i:root_fce,a:par.length,s:''}],elem,par,root_fce,{
     args:[_this,this_fce],fce:
       function(_this,then){
         new Eval([{o:'c',i:then,a:1,s:''}],_this,[this.stack[0]],then);
@@ -42,7 +65,8 @@ function rooms_check(rooms,form,prefix) {
     }
   }
   // nastav aktuální
-  for (let room of rooms.get().split(',')) {
+  let rms= typeof(rooms)=='string' ? rooms : rooms.get();
+  for (let room of rms.split(',')) {
     var id= prefix+room;
     if ( form.part[id] && form.part[id].type=='check' )
       form.part[id].set(1);

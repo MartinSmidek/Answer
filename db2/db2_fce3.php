@@ -164,7 +164,7 @@ function datum_oddo($x1,$x2) {
   }
   elseif ( $r1==$r2 ) {
     if ( $m1==$m2 ) { //zacatek a konec je stejny mesic
-      $datum= "$d1 - $d2. $m1"  . ($r1!=$letos ? ". $r1" : '');
+      $datum= "$d1. - $d2. $m1"  . ($r1!=$letos ? ". $r1" : '');
     }
     else { //ostatni pripady
       $datum= "$d1. $m1 - $d2. $m2"  . ($r1!=$letos ? ". $r1" : '');
@@ -300,8 +300,10 @@ function akce2_mapa($akce,$filtr='') {  trace();
 #   info.pobyty= [ {idp:id_pobyt, prijmeni, jmena, hnizdo:n, typ:vps|nov|rep|tym|nah, 
 #                   deti:seznam věků dětí a chův - těch s §}, ...]
 #   info.pecouni= [ {ids, hnizdo, prijmeni, jmeno}, ... ]
-function akce2_info($id_akce,$text=1,$pobyty=1) { trace(); 
+function akce2_info($id_akce,$text=1,$pobyty=1,$id_order=0) { trace(); 
+  global $setkani_db;
   $html= '';
+  $access= $uid= 0; // org_ds (64) znamená čístě jen pobyt na Domu setkání
   $info= (object)array('muzi'=>0,'zeny'=>0,'deti'=>0,'peco'=>0,'rodi'=>0,'skup'=>0,'title'=>array());
   $zpusoby= map_cis('ms_akce_platba','zkratka');  // způsob => částka
   $stavy=   map_cis('ms_platba_stav','zkratka');     // stav úhrady
@@ -368,7 +370,6 @@ function akce2_info($id_akce,$text=1,$pobyty=1) { trace();
         : '1';
     // projdeme pobyty
     $fce_neucast= select('GROUP_CONCAT(data)','_cis',"druh='ms_akce_funkce' AND ikona=1");
-    display("fce_neucast=$fce_neucast");
     $ms_ucasti= $akce_ms
         ? "r_ms+( SELECT COUNT(*) FROM pobyt AS xp JOIN akce AS xa ON xp.id_akce=xa.id_duakce 
              WHERE xp.i0_rodina=p.i0_rodina AND xa.druh=1 AND zruseno=0
@@ -378,7 +379,9 @@ function akce2_info($id_akce,$text=1,$pobyty=1) { trace();
         ? "LEFT JOIN tvori AS t USING (id_osoba,id_rodina)" : '';
     $JOIN_rodina= $akce_ms || $pobyty
         ? "LEFT JOIN rodina AS r ON r.id_rodina=p.i0_rodina" : '';
-    $qry= "SELECT a.nazev, a.datum_od, a.datum_do, now() as _ted,i0_rodina,funkce,p.web_zmena,web_changes,
+    $fld_dum= $setkani_db ? 'uid,' : '';
+    $JOIN_dum= $setkani_db ? "LEFT JOIN $setkani_db.tx_gnalberice_order AS d ON d.id_akce=a.id_duakce" : '';
+    $qry= "SELECT $fld_dum a.access, a.nazev, a.datum_od, a.datum_do, now() as _ted,i0_rodina,funkce,p.web_zmena,web_changes,
              COUNT(id_spolu) AS _clenu,IF(c.ikona=2,1,0) AS _pro_pary,a.hnizda,p.hnizdo,
          --  SUM(IF(ROUND(IF(MONTH(o.narozeni),DATEDIFF(a.datum_od,o.narozeni)/365.2425,YEAR(a.datum_od)-YEAR(o.narozeni)),1)<18,1,0)) AS _deti,
              SUM(IF(t.role='d',1,0)) AS _deti,
@@ -419,11 +422,14 @@ function akce2_info($id_akce,$text=1,$pobyty=1) { trace();
            $JOIN_rodina
            $JOIN_tvori
            LEFT JOIN _cis AS c ON c.druh='ms_akce_typ' AND c.data=a.druh
+           $JOIN_dum
            WHERE a.id_duakce='$id_akce' AND o.deleted=''
              -- AND p.id_pobyt IN (59240,59318)
            GROUP BY p.id_pobyt";
     $res= pdo_qry($qry);
     while ( $res && $p= pdo_fetch_object($res) ) {
+      $access= $p->access;
+      $uid= $p->uid;
       $pobyt= null;
       // diskuse souběhu: 0=normální akce, 1=hlavní akce, 2=souběžná akce
       $soubeh= $p->_soubezna ? 1 : ( $p->_hlavni ? 2 : 0);
@@ -811,6 +817,27 @@ function akce2_info($id_akce,$text=1,$pobyty=1) { trace();
     $info->pobyty= $pob;
 //                                                                  debug($info,"info s pobyty");
   }
+  display("$uid -  $id_order - $id_akce");
+  // pokud je to pobyt na Domě setkání
+  if ($uid || $id_order) {
+    $id_order= $id_order ?: $uid;
+    $DS2024= select('DS2024',"$setkani_db.tx_gnalberice_order","uid=$id_order");
+    $conv= str_replace("'",'"',$DS2024);
+    $conv= $conv ? json_decode($conv) : (object)['typ'=>'neuskutečněná'];
+    debug($conv,$DS2024);
+    $conv= debugx($conv);
+//    $conv= $DS2024;
+    $html= $id_akce
+      ? "<h3 style='margin:0px 0px 3px 0px;'>Pobyt v Domě setkání</h3>
+            <button onclick=\"Ezer.fce.href('akce2.lst.dum_objednavka/show/$id_akce')\">
+            Objednávka a vyúčtování pobytu</button> $conv
+            <br><br>$html"
+      : ($id_order
+      ?  "<h3 style='margin:0px 0px 3px 0px;'>Objednávka pobytu v Domě setkání</h3>
+            <button onclick=\"Ezer.fce.href('akce2.lst.dum_objednavka/del/$id_order')\">
+            Smazat objednávku</button> $conv"
+      :  '');
+  }
   return $text ? $html : $info;
 }
 # --------------------------------------------------------------------------- je_1_2_5
@@ -936,6 +963,11 @@ function akce2_id2a($id_akce) {  //trace();
     if ($data) {
       $a->garant= $poradatel==$data ? 2 : 1;
     }
+  }
+  // doplnění případného pobytu v Domě setkání
+  global $setkani_db;
+  if ($setkani_db && ($a->org & org_ds)) {
+    $a->id_order= select('uid',"$setkani_db.tx_gnalberice_order","id_akce=$id_akce");
   }
 //                                                                 debug($a,"akce $id_akce user {$USER->id_user}");
   return $a;
@@ -2057,7 +2089,7 @@ function akce2_vzorec_soubeh($id_pobyt,$id_hlavni,$id_soubezna,$dosp=0,$deti=0,$
   foreach($cenik_dosp as $za=>$a) {
     $c= $a->c; $txt= $a->txt;
     switch ($za) {
-    case 'Nl': // souběh
+    case 'Nl':
       $cena+= $cc= $dosp_chuv * $pocetdnu * $c;
       if ( !$cc ) break;
       $ret->c_nocleh+= $cc;
@@ -2324,7 +2356,7 @@ function akce2_vzorec($id_pobyt) {  //trace();
     else {
       foreach ($cenik as $a) {
       switch ($a->za) {
-        case 'Nl': // vzorec
+        case 'Nl':
           $cc= $nl * $a->c;
           $cena+= $cc;
           $ret->c_nocleh+= $cc;
@@ -2648,7 +2680,7 @@ function __akce2_vzorec_2017($id_pobyt,$id_akce,$verze=2017) {  //trace();
     else {
       foreach ($cenik as $a) {
       switch ($a->za) {
-        case 'Nl': // obsolete
+        case 'Nl':
           $cc= $nl * $a->c;
           if ( !$cc ) break;
           $cena+= $cc;
@@ -3492,10 +3524,16 @@ function ucast2_browse_ask($x,$tisk=false) {
         GROUP BY  px.i0_rodina
       ) AS _ucasti ON _ucasti.i0_rodina=p.i0_rodina AND p.i0_rodina
     " : '';
+    $uhrada1= $akce->ma_cenik==2 // cením Domu setkání
+        ? "IFNULL(SUM(castka),0)"
+        : "IFNULL(SUM(u_castka),0)";
+    $uhrada2= $akce->ma_cenik==2 // cením Domu setkání
+        ? "LEFT JOIN platba AS u ON id_pob=id_pobyt"
+        : "LEFT JOIN uhrada AS u USING (id_pobyt)";
     $qp= pdo_qry("
-      SELECT p.*,IFNULL(SUM(u_castka),0) AS uhrada,IFNULL(id_prihlaska,0) AS id_prihlaska $ms1
+      SELECT p.*,$uhrada1 AS uhrada,IFNULL(id_prihlaska,0) AS id_prihlaska $ms1
       FROM pobyt AS p
-      LEFT JOIN uhrada AS u USING (id_pobyt)
+      $uhrada2
       LEFT JOIN rodina AS r ON r.id_rodina=p.i0_rodina
       -- LEFT JOIN prihlaska AS pr USING (id_pobyt)
       LEFT JOIN (SELECT MAX(id_prihlaska) AS id_prihlaska,id_pobyt FROM prihlaska GROUP BY id_pobyt) AS pr USING (id_pobyt)
@@ -4713,41 +4751,41 @@ end:
   return $msg;
 }
 # =======================================================================================> . pomocné
-# ---------------------------------------------------------------------------- akce2 rodina_z_pobytu
-# vrátí rodiny dané osoby ve formátu pro select (název:id_rodina;...)
-function ucast2_rodina_z_pobytu($idp) {
-  $idr= 0; // název rodiny podle nejstaršího člena pobytu
-  $res= pdo_qry("SELECT id_osoba, TRIM(prijmeni), sex, ulice, psc, obec,
-          ROUND(IF(MONTH(narozeni),
-            DATEDIFF(datum_od,narozeni)/365.2425,YEAR(datum_od)-YEAR(narozeni)),1) AS _vek,
-          a.access
-         FROM osoba 
-           JOIN spolu USING (id_osoba) JOIN pobyt USING (id_pobyt) 
-           JOIN akce AS a ON id_akce=id_duakce 
-         WHERE id_pobyt=$idp 
-         ORDER BY narozeni");
-  while ( $res && (list($ido,$prijmeni,$sex,$ulice,$psc,$obec,$vek,$access)= pdo_fetch_array($res)) ) {
-    if (!$idr) { 
-      // vytvoř rodinu podle nejstaršího
-      $nazev= preg_replace('~ová$~','',$prijmeni).'ovi';
-      $idr= ezer_qry("INSERT",'rodina',0,array(
-        (object)array('fld'=>'nazev', 'op'=>'i','val'=>$nazev),
-        (object)array('fld'=>'access','op'=>'i','val'=>$access),
-        (object)array('fld'=>'ulice', 'op'=>'i','val'=>$ulice),
-        (object)array('fld'=>'psc',   'op'=>'i','val'=>$psc),
-        (object)array('fld'=>'obec',  'op'=>'i','val'=>$obec)
-      ));
-    }
-    // a přidávej členy rodiny
-    $role= $vek<18 ? 'd' : ($sex==1 ? 'a' : 'b');
-    ezer_qry("INSERT",'tvori',0,array(
-      (object)array('fld'=>'id_osoba', 'op'=>'i','val'=>$ido),
-      (object)array('fld'=>'id_rodina','op'=>'i','val'=>$idr),
-      (object)array('fld'=>'role',     'op'=>'i','val'=>$role)
-    ));
-  }
-  return $idr;
-}
+//# ---------------------------------------------------------------------------- akce2 rodina_z_pobytu
+//# vrátí rodiny dané osoby ve formátu pro select (název:id_rodina;...)
+//function ucast2_rodina_z_pobytu($idp) {
+//  $idr= 0; // název rodiny podle nejstaršího člena pobytu
+//  $res= pdo_qry("SELECT id_osoba, TRIM(prijmeni), sex, ulice, psc, obec,
+//          ROUND(IF(MONTH(narozeni),
+//            DATEDIFF(datum_od,narozeni)/365.2425,YEAR(datum_od)-YEAR(narozeni)),1) AS _vek,
+//          a.access
+//         FROM osoba 
+//           JOIN spolu USING (id_osoba) JOIN pobyt USING (id_pobyt) 
+//           JOIN akce AS a ON id_akce=id_duakce 
+//         WHERE id_pobyt=$idp 
+//         ORDER BY narozeni");
+//  while ( $res && (list($ido,$prijmeni,$sex,$ulice,$psc,$obec,$vek,$access)= pdo_fetch_array($res)) ) {
+//    if (!$idr) { 
+//      // vytvoř rodinu podle nejstaršího
+//      $nazev= preg_replace('~ová$~','',$prijmeni).'ovi';
+//      $idr= ezer_qry("INSERT",'rodina',0,array(
+//        (object)array('fld'=>'nazev', 'op'=>'i','val'=>$nazev),
+//        (object)array('fld'=>'access','op'=>'i','val'=>$access),
+//        (object)array('fld'=>'ulice', 'op'=>'i','val'=>$ulice),
+//        (object)array('fld'=>'psc',   'op'=>'i','val'=>$psc),
+//        (object)array('fld'=>'obec',  'op'=>'i','val'=>$obec)
+//      ));
+//    }
+//    // a přidávej členy rodiny
+//    $role= $vek<18 ? 'd' : ($sex==1 ? 'a' : 'b');
+//    ezer_qry("INSERT",'tvori',0,array(
+//      (object)array('fld'=>'id_osoba', 'op'=>'i','val'=>$ido),
+//      (object)array('fld'=>'id_rodina','op'=>'i','val'=>$idr),
+//      (object)array('fld'=>'role',     'op'=>'i','val'=>$role)
+//    ));
+//  }
+//  return $idr;
+//}
 # ------------------------------------------------------------------------------- akce2 osoba_rodiny
 # vrátí rodiny dané osoby ve formátu pro select (název:id_rodina;...)
 function akce2_osoba_rodiny($id_osoba) {
@@ -4922,7 +4960,7 @@ function ucast2_pridej_osobu($ido,$access,$ida,$idp,$idr=0,$role=0,$hnizdo=0) { 
     goto end;
   }
   // pokud na akci ještě není, zjisti pro děti (<18 let) s_role a dite_kat
-  $datum_od= select("datum_od","akce","id_duakce=$ida");
+  list($datum_od,$ma_cenik)= select("datum_od,ma_cenik","akce","id_duakce=$ida");
   $vek= roku_k($narozeni,$datum_od);
   $kat= 0; $srole= 1;                                         // default= účastník, nedítě
   if     ( $role=='p' )                         { $kat= 0; $srole= 5; }   // osob.peč.
@@ -4944,12 +4982,13 @@ function ucast2_pridej_osobu($ido,$access,$ida,$idp,$idr=0,$role=0,$hnizdo=0) { 
     }      
   }
   // přidej k pobytu
-  $ret->spolu= ezer_qry("INSERT",'spolu',0,array(
+  $chng= array(
     (object)array('fld'=>'id_pobyt', 'op'=>'i','val'=>$idp),
     (object)array('fld'=>'id_osoba', 'op'=>'i','val'=>$ido),
     (object)array('fld'=>'s_role',   'op'=>'i','val'=>$srole),
     (object)array('fld'=>'dite_kat', 'op'=>'i','val'=>$kat)
-  ));
+  );
+  $ret->spolu= ezer_qry("INSERT",'spolu',0,$chng);
   # přidání do rodiny
   if ( $idr && $role ) {
     $je= select("COUNT(*)","tvori","id_rodina=$idr AND id_osoba=$ido");
@@ -4966,6 +5005,10 @@ function ucast2_pridej_osobu($ido,$access,$ida,$idp,$idr=0,$role=0,$hnizdo=0) { 
     ezer_qry("UPDATE",'osoba',$ido,array(
       (object)array('fld'=>'access', 'op'=>'u','val'=>$access,'old'=>$old_access)
     ));
+  }
+  // POKUD je to akce s pobytem hrazeným podle ceníku Domu setkání - vytvoříme vzorec 
+  if ($ma_cenik==2) {
+//    dum_update_host($ret->spolu);
   }
 end:
 //                                                 debug($ret,'ucast2_pridej_osobu / $vek $kat $srole');

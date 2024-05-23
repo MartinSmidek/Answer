@@ -91,7 +91,7 @@ function tc_page_cell($src,$typ,$align,$fsize,$l,$t,$w,$h,$border='',$lheight=1.
     $pdf->SetXY($l,$t);
     $pdf->setCellHeightRatio($lheight);
     $pdf->writeHTMLCell($w,$h,$l,$t,$src,$border,0,0,true,$align,true);
-    display("writeHTMLCell($w,$h,$l,$t,...,$border,0,0,true,$align,true)");
+//    display("writeHTMLCell($w,$h,$l,$t,...,$border,0,0,true,$align,true)");
   }
   elseif ($typ=='I') {
     $src= trim($src);

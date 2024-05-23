@@ -1,0 +1,290 @@
+#pragma library
+# ------------------------------------------------------------------------------------------------ #
+# Modul pro identifikaci a přehled plateb z Fio banky                                              #
+#                                                                                                  #
+# Ans(w)er/Ezer                                          (c) 2024 Martin Šmídek <martin@smidek.eu> #
+# ------------------------------------------------------------------------------------------------ #
+
+form _ucty [,,640,*] {
+# -------------------------------------------------------------------------==> . stavové proměnné
+  var mode= 'F',          // F = Finance | A = AKCE.platba za akci | D = Dům setkání
+      ucet= 1,            // 1 pro YS | 2 pro DS | 3 pro oba
+      filter_mode= 1,     // poslední filtr pro daný mode
+      the_pobyt= 0,       // id_pobyt (pro mode=A)
+      the_kod= ''         // správný specifický symbol (pro mode=A)
+# -------------------------------------------------------------------------==> . globální funkce
+  // varianta podle záložky, do které se má přehled plateb vejít
+  // AKCE - menší šířka a ovládací prvky s tag=A
+  func Init(_mode) {
+    mode= _mode;
+    the_kod= '';
+    switch (mode) {
+      case 'A':       // platba za akci v AKCE, platby chodí na oba účty
+        ucet= 3; 
+        fio.zprava.width(90);
+        platba_za.property({width:360});
+        break;
+      case 'F':       // obecné zpracování plateb
+        ucet= 1; 
+        fio.zprava.width(300);
+        platba_za.property({width:560});
+        break;
+      case 'D':       // objednávky Domu setkání
+        ucet= 2; 
+        fio.zprava.width(105);
+        break;
+    }
+    form.display(2,mode);
+  }
+  // pro A: načte všechny nadějné platby podle ss, ss2 a vrátí sezxnam účastníků pobytu
+  func LoadPobyt(id_pobyt) { var x: object
+    the_pobyt= id_pobyt;
+    x= php.ds2_fio_filtr_akce(the_pobyt);
+//    echo(debug(x));
+    filter_mode= x.filtr;
+    the_kod= x.kod;
+    id_platba= x.id_platba;
+    if (x.id_platba) {
+      if (!fio.browse_seek(`id_platba=${x.id_platba}`,filter()))
+        fio.browse_load(filter());
+    }
+    else {
+      if (!fio.browse_seek(x.seek,filter()))
+        fio.browse_load(filter());
+    }
+    return x;
+  }
+  // pro S a D: načte vše podle check
+  func Load(_ucet) {
+    ucet= _ucet;
+    filter_mode= `ucet & ${ucet} `;
+    load_by_filter();
+  }
+  // operace nad nastavenou platbou - propojí s pobytem, případně s objednávkou
+  func zaPobyt(id_pobyt,on) {
+    php.ds2_corr_platba(id_platba,'pobyt',on,id_pobyt);
+    refresh();
+  }
+  func SetOsoba(id_pobyt,on,id_osoba) {
+    php.ds2_corr_platba(id_platba,'osoba',on,id_osoba);
+    refresh();
+  }
+  func CurrIds() {
+    return {id_osoba:id_osoba, id_pobyt:id_pobyt, id_order:id_order}
+  }
+# -------------------------------------------------------------------------==> . interní funkce
+  func load_by_filter() {
+    fio.browse_load(filter());
+  }
+  func refresh() {
+    if (!fio.browse_seek(`id_platba=${id_platba}`,filter())) {
+      load_by_filter();
+    }
+  }
+  func filter() { var _and: text
+    _and= cconc(
+      jen_letosni,' AND YEAR(datum)=YEAR(NOW())',
+      jen_prijmy, ' AND castka>0',
+      skryt_navrzene,  ' AND stav NOT IN (6,8,10)',
+      skryt_potvrzene, ' AND stav NOT IN (7,9,11)');
+    return `${filter_mode} ${_and}`;
+  }
+  label popis [,,420,19] {title:" db2 
+    <span class='azurovy'>&nbsp; asi platba za akci/pobyt &nbsp;</span>&nbsp;&nbsp;
+    <span class='zeleny'>&nbsp; je to platba za akci/pobyt &nbsp;</span>&nbsp;&nbsp;
+    <span class='zluty'>&nbsp; asi dar &nbsp;</span>&nbsp;&nbsp;
+    <span class='oranzovy'>&nbsp; je to dar &nbsp;</span>"
+  }
+  check jen_letosni [660,0,83,] { tag:'FD', title:' jen letošní', value:'1', style:'margin-top:-5px' format:'t'
+    func onchange() { refresh() }
+  }
+  check jen_prijmy [752,0,83,] { tag:'FD', title:' jen příjmy', value:'1', style:'margin-top:-5px' format:'t'
+    func onchange() { refresh() }
+  }
+  check skryt_navrzene [449,0,100,] {title:' skrýt navržené', value:'0', style:'margin-top:-5px' format:'t'
+    func onchange() { refresh() }
+  }
+  check skryt_potvrzene [555,0,100,] {title:' skrýt potvrzené', value:'0', style:'margin-top:-5px' format:'t'
+    func onchange() { refresh() }
+  }
+  browse fio [,20,,] { rows:10, qry_rows:2
+    css_rows:'stav,3:cerveny,6:azurovy,7:zeleny,8:azurovy,9:zeleny,10:zluty,11:oranzovy'
+    show id_platba { data:platba.id_platba }
+    show datum_sql { data:platba.datum }
+    show ucet [,,15,] { title:'účet', expr:"IF(platba.ucet=1,'S','D')", format:'sqr:e' }
+    show stav [,,20,] { title:'stav', data:platba.stav, format:'sqr:e' }
+    show datum [,,70,] { title:'datum', data:platba.datum, sql_pipe:'sql_date1', format:'s-q/r' }
+    show castka [,,70,] { title:'částka', data:platba.castka, format:'sq/r' }
+    show id_osoba [,,40,] { title:'osoba', data:platba.id_oso, format:'sq*r:e' }
+    show id_pobyt [,,40,] { title:'pobyt', data:platba.id_pob, format:'sq*r:e' }
+    show id_order [,,40,] { title:'objednávka', data:platba.id_ord, format:'sq*r:e' }
+    show nazev [,,120,] { title:'název', data:platba.nazev, format:'sq*' }
+    show protiucet [,,145,] { title:'protiúčet', data:platba.protiucet, format:'sq*r' }
+    show vs [,,70,] { title:'vs', data:platba.vs, format:'sq*r:e' }
+    show ss [,,40,] { title:'ss', data:platba.ss, format:'sq*r:e' }
+    show ss2 [,,40,] { title:'ss2', data:platba.ss2, format:'sq*r:e' }
+    show zprava [,,300,] { title:'zpráva identifikace', format:'sq*t' 
+      expr:"CONCAT(platba.zprava,' ',IF(platba.ident!=platba.nazev,platba.ident,''))"}
+    // funkce
+    func onrowclick() { var _akce:array, _osoba:array, _ido:text, _idx:text, _pobyt:text, nar:text
+      form.load(id_platba);
+      platba_za= '';
+      corr_kod.enable(0);
+      corr_kod= `opravit SS`;
+      if (id_osoba) {
+        _osoba= php.select("CONCAT(jmeno,' ',prijmeni),narozeni",'osoba',`id_osoba=${id_osoba}`);
+        _ido= php.tisk2_ukaz_osobu(id_osoba);
+        nar= sql2date(_osoba[1]);
+        platba_za= `${_ido} ${_osoba[0]} (${nar})`;
+      }
+      if (id_pobyt) {
+        _akce= php.select('nazev,id_akce','pobyt JOIN akce ON id_akce=id_duakce',`id_pobyt=${id_pobyt}`);
+        _pobyt= php.tisk2_ukaz_pobyt_akce(id_pobyt,_akce[1]);
+        platba_za= `${platba_za}, ${_pobyt} ${_akce[0]}`;
+      }
+      if (id_order) {
+        _idx= php.ds2_ukaz_objednavku(id_order);
+        platba_za= `${platba_za}, ${_idx}`;
+      }
+      if (the_kod) {
+        corr_kod= `opravit SS=${the_kod}`;
+        corr_kod.enable(1);
+      }
+    }
+    func onsubmit() { var f:object
+      clear();
+//        f= php.ds2_fio({fce:'join-ys', od:datum_sql, do:datum_sql});
+      f= php.ds2_fio({fce:'join-ys', platba:id_platba});
+      warning(f.html); if (f.err) alert(f.err);
+      if (ucet==2) {
+        f= php.ds2_fio({fce:'join-ds', od:datum_sql, do:datum_sql});
+        warning(f.html); if (f.err) alert(f.err);
+      }
+      refresh();
+    }
+  }
+  
+  field datum [10,280,70,] { title:'^datum', data:platba.datum, format:'r' }
+  field castka [90,280,70,] { title:'^částka', data:platba.castka, format:'r' }
+  field nazev [170,280,150,] { title:'^název účtu', data:platba.nazev, format:'' }
+  field zprava [330,280,400,] { title:'^zpráva identifikace', 
+    expr:"CONCAT(platba.zprava,' ',IF(platba.ident!=platba.nazev,platba.ident,''))"}
+  button corr_kod [740,280,,] {title:'opravit SS', func onclick() { 
+    php.query(`UPDATE platba SET stav=6,ss2='${the_kod}',id_pob=${the_pobyt} WHERE id_platba=${fio.id_platba}`);
+    refresh();
+  }}
+  field id_platba [10,315,120,] { title:'^transakce Fio banky', data:platba.id_platba, format:'r' }
+  field id_osoba { data:platba.id_oso }
+  field id_pobyt { data:platba.id_pob }
+  field id_order { data:platba.id_ord }
+  field protiucet [170,315,150,] { title:'^číslo účtu', data:platba.protiucet, format:'r' }
+  button [348,315,,] {title:'potvrď platbu', func onclick() { var c:object
+    php.ds2_corr_platba(id_platba,'auto',1);
+    refresh();
+  }}
+  button [431,315,,] {title:'... dar', func onclick() { 
+    php.ds2_corr_platba(id_platba,'dar',1);
+    refresh();
+  }}
+  label [484,302,350,] { title:'automaticky rozpoznaná osoba (narozena), účast na akci' }
+  label platba_za [482,318,360,] { style:'font-size:10pt;color:black' }
+  // ------------------------------------------------------------- zobrazení aktuálních nastavení
+  button [10,345,20,66] { tag:'F', title:'?'
+    func onclick() { js.call_root_func('akce2_curr',&this,'onclick_')}
+    func onclick_(c:object) { var t:object
+      clear();
+      echo(debug(c));
+      t= php.ds2_show_curr(c);
+      echo(debug(t));
+      x_akce= `zobrazená je <b>AKCE</b> ${t.ucast}`;
+      xx_akce= t.ucast_text;
+      x_evid= `případně v <b>EVIDENCE</b>: ${t.evi}`;
+      xx_evid= t.evi_text;
+      x_dum= `případně v <b>UBYTOVÁNÍ DS</b>: ${t.dum}`;
+      xx_dum= t.dum_text;
+  }}
+  // účastníci akce
+  label x_akce [40,345,600,18] { tag:'F', style:'font-size:10pt;color:black' }
+  button [348,340,,] {tag:'F', title:'potvrď platbu'
+    func onclick() { js.call_root_func('akce2_curr',&this,'onclick_')}
+    func onclick_(c:object) { 
+      php.ds2_corr_platba(id_platba,'akce',1,c);
+      refresh();
+  }}
+  button [431,340,,] {tag:'F', title:'... dar', func onclick() { 
+    php.ds2_corr_platba(id_platba,'dar',1);
+    refresh();
+  }}
+  label xx_akce [482,345,600,18] {tag:'F', style:'font-size:10pt;color:black' }
+  // evidence
+  label x_evid [40,370,600,18] {tag:'F', style:'font-size:10pt;color:black' }
+  button [348,365,,] {tag:'F', title:'potvrď platbu'
+    func onclick() { js.call_root_func('akce2_curr',&this,'onclick_')}
+    func onclick_(c:object) { 
+      php.ds2_corr_platba(id_platba,'evi',1,c);
+      refresh();
+  }}
+  button [431,365,,] {tag:'F', title:'... dar', func onclick() { 
+    php.ds2_corr_platba(id_platba,'dar',1);
+    refresh();
+  }}
+  label xx_evid [482,369,600,18] {tag:'F', style:'font-size:10pt;color:black' }
+  // objednávky DS
+  label x_dum [40,395,600,18] {tag:'F', style:'font-size:10pt;color:black' }
+  button [348,390,,] {tag:'F', title:'potvrď platbu'
+    func onclick() { js.call_root_func('akce2_curr',&this,'onclick_')}
+    func onclick_(c:object) {
+      php.ds2_corr_platba(id_platba,'order',1,c);
+      refresh();
+  }}
+  button [431,390,,] {tag:'F', title:'... dar', func onclick() {
+    php.ds2_corr_platba(id_platba,'dar',1);
+    refresh();
+  }}
+  label xx_dum [482,394,600,18] {tag:'F', style:'font-size:10pt;color:black' }
+}
+
+table platba {
+  number id_platba
+  // 0 - ?, 1 - výdaj,3 - vratka, 5 - příjem, 
+  // 6 - asi platba za id_akce, 7 - je to platba za id_akce, 
+  // 8 - asi platba za id_pobyt, 9 - je to platba za id_pobyt, 
+  // 10 - asi dar, 11 - je to dar
+  number stav // #platba_stav: 
+  number id_oso
+  number id_pob
+  number id_ord
+  number ucet
+  number ucel
+  date   datum 
+  number castka
+  number mena
+  text   protiucet
+  text   nazev
+  text   ks
+  text   vs
+  text   ss
+  text   ss2
+  text   ident
+  text   zprava
+  text   provedl
+  text   upresneni
+  text   komentar
+}
+// ----------------------------------------------------------------- škoda mazat
+panel Majitel [0,80,220,50] { title:'určení majitele účtu', type:'popup', css:'dialog'
+  var id_osoba: number
+  func vyber(pobyt_info:object) { 
+    h.sel.selects(pobyt_info.sel_idos);
+    h.sel.key(pobyt_info.sel_first);
+    panel.modal();
+  }
+  use h: form {
+    select sel [0,0,200,] { 
+      func onchanged() {
+        id_osoba= this.key();
+        panel.hide(1)
+      }
+    }
+  }
+}

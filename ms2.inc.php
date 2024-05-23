@@ -28,7 +28,7 @@
       
   // informace pro debugger
   $dbg_info= (object)array(
-    'src_path'  => array('ms2','db2','ezer3.1') // poloha a preference zdrojových modulů
+    'src_path'  => array('ms2','db2','ezer3.2') // poloha a preference zdrojových modulů
   );
 
   // databáze

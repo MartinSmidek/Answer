@@ -99,12 +99,20 @@ textarea { resize:none; }
 
 tr td.ezer_ys, li.ezer_ys, input.ezer_ys, .ezer_ys input, span.ezer_ys
                 { background-color:#af8 !important; }
+tr td.ezer_ys_ds, li.ezer_ys_ds, input.ezer_ys_ds, .ezer_ys_ds input, span.ezer_ys_ds
+                { background-image: linear-gradient(to right, #af8 67%, #f88); !important; }
 tr td.ezer_ys_  { background-color:#af8 !important; color:#fff !important; }
 tr td.ezer_fa, li.ezer_fa, input.ezer_fa, .ezer_fa input, span.ezer_fa
                 { background-color:#acf !important; }
+tr td.ezer_fa_ds, li.ezer_fa_ds, input.ezer_fa_ds, .ezer_fa_ds input, span.ezer_fa_ds
+                { background-image: linear-gradient(to right, #acf 67%, #f88); !important; }
 tr td.ezer_fa_  { background-color:#acf !important; color:#fff !important; }
 tr td.ezer_db, li.ezer_db, input.ezer_db, .ezer_db input, span.ezer_db
                 { background-color:#aff !important; }
+tr td.ezer_db_ds, li.ezer_db_ds, input.ezer_db_ds, .ezer_db_ds input, span.ezer_db_ds
+                { background-image: linear-gradient(to right, #aff 67%, #f88); !important; }
+tr td.ezer_ds, li.ezer_ds
+                { background-image: linear-gradient(to right, #fff 67%, #f88); !important; }
 .nerodina,.nerodina input
                 { background-color:#e8e !important; }
 tr td.ezer_web  { outline: 3px solid #ef7f13; }
