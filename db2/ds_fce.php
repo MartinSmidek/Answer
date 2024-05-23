@@ -734,7 +734,7 @@ function dum_objednavka($id_order) {
   $num= select('num','faktura',"id_order=$id_order AND typ=1")
      ?: select1('IFNULL(MAX(num)+1,1)','faktura',"rok=$f->rok");
   $f->fakt_num= $num;
-  $f->id_akce= select('id_duakce','akce',"id_order=$id_order");
+  //$f->id_akce= select('id_duakce','akce',"id_order=$id_order");
   $f->nazev= "$id_order - {$f->name}";
   $x->fld= $f;
   $x->adresa= ($f->org ? "$f->org<br>" : '')
