@@ -5,79 +5,6 @@
 # Ans(w)er/Ezer                                          (c) 2024 Martin Šmídek <martin@smidek.eu> #
 # ------------------------------------------------------------------------------------------------ #
 
-// =====================================================================================> VYÚČTOVÁNÍ
-form _rozpis /*[,,300,100]*/ { css:'ds_form'
-  // parametry
-  var cenik_roku= 0,  // defaultní ceník se bere z roku konání akce
-      idos= 0         // nastavená osoba
-  // nadpis
-  label [ 10,0,694,] { title:'<hr>' }
-  label nadpis [ 10,20,500,] 
-  // host
-  field jmeno   [ 10, 50, 80,] { title:'^jméno' /*data:ds_osoba.jmeno*/ }
-  field prijmeni[100, 50, 80,] { title:'^příjmení' /*data:ds_osoba.prijmeni*/ }
-  field ubyt1   [190, 50, 50,] { title:'^ubytování' format:'r' }
-  field strav1  [250, 50, 50,] { title:'^stravování' format:'r' }
-  field popl1   [310, 50, 50,] { title:'^poplatek' format:'r' }
-  field prog1   [370, 50, 50,] { title:'^program' format:'r' }
-  field celk1   [430, 50, 50,] { title:'^CELKEM' format:'r' }
-  // rodina
-  field rodina  [140, 75, 40,] { title:'rodina' }
-  field ubyt2   [190, 75, 50,] { format:'r' }
-  field strav2  [250, 75, 50,] { format:'r' }
-  field popl2   [310, 75, 50,] { format:'r' }
-  field prog2   [370, 75, 50,] { format:'r' }
-  field celk2   [430, 75, 50,] { format:'r' }
-  // pobyt
-  label         [100,104, 84,] { title:'celá objednávka' format:'r' }
-  field ubyt3   [190,100, 50,] { format:'r' }
-  field strav3  [250,100, 50,] { format:'r' }
-  field popl3   [310,100, 50,] { format:'r' }
-  field prog3   [370,100, 50,] { format:'r' }
-  field celk3   [430,100, 50,] { format:'r' }
-//  // text faktury
-//  label faktura [0,140,640,]
-  // parametry faktury
-  field fakt_num [494,50,40,] { title:'^fakt.číslo' }
-  field fakt_zal [544,50,50,] { title:'^zálohou' }
-  field fakt_vs  [603,50,50,] { title:'^VS' }
-  field fakt_ss  [663,50,33,] { title:'^SS' }
-  button [494,76,,] { title:'Faktura za rodinu' 
-    func onclick() { var f:object
-//      clear();
-//      if (!celk3) { alert("faktura nelze vygenerovat"); return }
-//      f= php.ds2_faktura({typ:'konečná',obj:the_order,idos:idos,cenik:cenik_roku,show:1,save:0,
-//          num:fakt_num,zaloha:fakt_zal,vs:fakt_vs,ss:fakt_ss});
-//      page.faktura= f.html;
-//      form.plain();
-//      if (f.err) alert(f.err);
-  }}
-  button [637,76,,] { title:'PDF' 
-    func onclick() { var f:object
-//      clear();
-//      if (!celk3) { alert("faktura nelze vygenerovat"); return }
-//      f= php.ds2_faktura({typ:'konečná',obj:the_order,idos:idos,cenik:cenik_roku,show:1,save:1,
-//          num:fakt_num,zaloha:fakt_zal,vs:fakt_vs,ss:fakt_ss});
-//      page.faktura= f.html;
-//      form.plain();
-//      if (f.err) alert(f.err);
-  }}
-
-  // ==> výpočet pro Knihu hostí
-  var cena:object
-  func rozpis_load(_idos) { 
-//    idos= _idos;
-//    nadpis= `<h3 style='margin:0'>Cena pro vybraného účastníka, rodinu, objednávku 
-//        podle ceníku roku ${cenik_roku}</h3>`;
-//    cena= php.ds2_cena_pobytu(the_order,idos,cenik_roku);
-//    copy_by_name(cena.fields,form);
-  }
-}
-
-# ======================================================================================> FUNKCE
-// ------------------------------------------------------------------==> globální
-// ------------------------------------------------------------------==> lokální
-
 # ======================================================================================> VYÚČTOVÁNÍ
 form _vyuctovani [,,623,400] {
   const left_hos=200
@@ -90,6 +17,7 @@ form _vyuctovani [,,623,400] {
     hos.browse_init();
     pob.display(1);
     pob.browse_load(`uid=${ido}`);
+    pob.raise('onrowclick');
   }
   func load_pob(idp) { var x:object
     mode= 'pob';
@@ -110,6 +38,7 @@ form _vyuctovani [,,623,400] {
     show datum
 //    show vzorec
     func onrowclick() { 
+      clear();
       hos.browse_fill(cleni,'~');
       hos.onrowclick();
       Load(idp);
@@ -123,25 +52,36 @@ form _vyuctovani [,,623,400] {
     }
   }
   var zamek:number
-  label zamek_ikona [left_hos+10,58,20,20] {tag:'h', title:'' 
-    func onclick() {  
+  button zamek_ikona [left_hos+10,55,20,20] {tag:'h', title:'' 
+    func onclick() { var curr_pobyt:number, curr_spolu:number
+      if (mode=='obj') curr_pobyt= pob.idp;
+      curr_spolu= hos.ids;
       zamek= !zamek;
       vzorec.enable(!zamek);
       zamek_ikona= replace_fa(zamek ? '[fa-lock fa-red]' : '[fa-unlock]');
       js.set_elem_backround(&vzorec,{background: zamek ? '#ff7777' : '#ffffff'});
       php.query(`UPDATE spolu SET ds_vzorec="${zamek?vzorec:''}" WHERE id_spolu=${hos.ids}`);
       switch (mode) {
-        case 'obj': pob.browse_refresh(); break;
-        case 'pob': hos.browse_refresh(); break;
+        case 'obj': pob.browse_refresh(); 
+          pob.browse_focus(curr_pobyt); 
+          pob.onrowclick();
+          hos.browse_focus(curr_spolu); 
+          hos.onrowclick();
+          break;
+        case 'pob': 
+          hos.browse_refresh(); 
+          hos.browse_focus(curr_spolu); 
+          hos.onrowclick();
+          break;
       }
     }
   }
-  field vzorec_pob [left_hos+30,20,469,] {tag:'h', title:'^položky pro účtování ceny pobytu rodiny', format:'d' }
-  field vzorec [left_hos+30,55,469,] {tag:'h', title:'^položky pro účtování ceny pobytu hosta' }
+  field vzorec_pob [left_hos+35,20,469,] {tag:'h', title:'^položky pro účtování ceny pobytu rodiny', format:'d' }
+  field vzorec [left_hos+35,55,469,] {tag:'h', title:'^položky pro účtování ceny pobytu hosta' }
   browse hos [left_hos+10,80,,] {tag:'h', rows:10, key_id:'ids', 
       optimize:{ask:'dum_browse_pobyt'}
     show ids
-    show prijmeni [,,90,] { title:'příjmení' }
+    show prijmeni [,,90,] { title:'příjmení', css_cell:'zamek_spolu,0:,1:cerveny' }
     show jmeno [,,60,] { title:'jméno' }
     show vek [,,40,] { title:'věk', format:'c' }
     show noci [,,40,] { title:'noci', format:'c' }
@@ -154,6 +94,7 @@ form _vyuctovani [,,623,400] {
     show prog [,,40,] { title:'prog.', format:'r' }
     show zamek_spolu // fixovaný vzorec použitý místo spočítaného
     func onrowclick() {
+      clear();
       vzorec= vzorec_spolu;
       zamek= zamek_spolu;
       vzorec.enable(!zamek);
@@ -260,7 +201,7 @@ form _obj {
 //      objs.key(id_order);
 //    }
   func helps() { var x:object, fld: ezer
-    for (x of php.ds2_rooms_help()) {
+    for (x of php.dum_rooms_help()) {
       fld= plan.part(x.fld);
       fld.help= x.hlp;                 // -- atribut nemůže být vlevo
       fld.enable(x.on);

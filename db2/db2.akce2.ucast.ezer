@@ -292,9 +292,6 @@ use alb0:  form _aktivity0 [400, 10,,]  { tag:'akce0,alb', format:'n' }
 # záložka plateb
 use pla:   form _platba   [400, 10,,]  { tag:'akce0,pla', format:'n' }
 use cmdp:  form _cmd_p    [400,min_h-120,,]  { tag:'akce0,cmdp', format:'n' }
-//use pla_fio:form fio._ucty[413, 61,873,]  { tag:'akce0,ds', format:'n' }
-//use pla_ds:form _platba_ds[400, 10,,]  { tag:'akce0,ds', format:'n' }
-//use pla_roz:form dum._rozpis   [400, 454,,]  { tag:'akce0,ds', format:'n' }
 use pla_ds: form dum._vyuctovani [400,29,,] { tag:'akce0,ds', format:'n' 
     label frame [0,0,873,min_h-152] { css:'ae_work'} 
 }
@@ -2426,59 +2423,6 @@ form _platba [,,623,] { key_id:'id_pobyt', style:'height:fit-content',
 }
 //map uhrada_stav= "i,zkratka;0:-,1:avizo,2:zaplaceno,3:potvrzeno,4:vráceno" 
 map uhrada_za=   "i,zkratka;0:pár,1:děti" 
-/*
-# -------------------------------------------------------------------------------------==> PLATBA DS
-form _platba_ds [,,623,] { key_id:'id_pobyt', style:'height:fit-content', 
-    par:{onchanged:'first_only'}
-  var pobyt_info: object // seznam ID osob pobytu
-  func Show() {
-    zaco= `${u.b._nazev} ${u.b._jmena}`;
-    pla_fio.Init('A'); 
-    pobyt_info= pla_fio.LoadPobyt(the_pobyt);
-    info= `Rozpis ceny akce podle ceníku Domu setkání a přehled příchozích plateb za pobyd od ${the_datum_od} do ${the_datum_do}`;
-  }
-  label info [13,32,,] 
-  
-  label zaco [40,412,300,18] { style:'font-size:10pt;color:black' }
-  button [362,407,,] {title:'[fa-plug] spoj platbu s pobytem' 
-    func onclick() { var m: number, curr:object
-      pla_fio.zaPobyt(the_pobyt,1);
-      curr= pla_fio.CurrIds();
-      if (!curr.id_osoba) {
-        Majitel.vyber(pobyt_info); 
-        pla_fio.SetOsoba(the_pobyt,1,Majitel.id_osoba)
-      }
-  }}
-  button [510,407,,] {title:'[fa-plug fa-rotate-180 fa-red] rozpoj' 
-    func onclick() { pla_fio.zaPobyt(the_pobyt,0);}}
-  
-  button [510,457,,] {title:'návrh ceny' 
-    func onclick() { 
-      clear(); 
-      dum.Rozpis.Load(the_pobyt);
-      polo= php.ds2_cena_polozky(the_pobyt);
-    }}
-  label polo [40,457,300,18] { style:'font-size:10pt;color:black' }
-  label frame [0,16,873,min_h-152] { css:'ae_work'}
-
-}
-panel Majitel [0,80,220,50] { title:'určení majitele účtu', type:'popup', css:'dialog'
-  var id_osoba: number
-  func vyber(pobyt_info:object) { 
-    h.sel.selects(pobyt_info.sel_idos);
-    h.sel.key(pobyt_info.sel_first);
-    panel.modal();
-  }
-  use h: form {
-    select sel [0,0,200,] { 
-      func onchanged() {
-        id_osoba= this.key();
-        panel.hide(1)
-      }
-    }
-  }
-}
-*/
 # -----------------------------------------------------------------------------------------==> CMD_P
 # uložení změn v platbách
 form _cmd_p [,,623,30] { css:'ae_work'

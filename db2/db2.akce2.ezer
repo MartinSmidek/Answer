@@ -106,14 +106,12 @@ proc reaccess() { #==> . reaccess (jen pro YS+FA)
   echo('has_access=',has_access.get,', my_access=',my_access.get,', my_org=',my_org.get);
   [ has_skill('yaa;faa;caa'); lst.reaccess ];
   [ has_skill('yaa;faa;caa'); ucast.reaccess ];
-#if test_version<2
   [ has_skill('yaa;faa;caa#crz'); pece.reaccess ];
   [ has_skill('yaa;faa;caa'); tisk.reaccess ];
   [ has_skill('yam;fam;cam'); maia.reaccess ];
   [ has_skill('yae;fae;caa;mrop'); evi.reaccess ];
   [ has_skill('yam;fam;cam'); mai.reaccess ];
   [ has_skill('yaa;faa;caa'); sta.reaccess ];
-#endif
   elim.reaccess;
 }
 # ----------------------------------------------------------------------------==> globální procedury
@@ -121,9 +119,7 @@ proc reaccess() { #==> . reaccess (jen pro YS+FA)
 # {lst:id_akce, ucast:{id_pobyt,id_rodina,id_osoba}, evi:{id_rodina,id_osoba}}
 func curr() { var _curr:object
   _curr= {lst:{akce:the_duakce},ucast:ucast.curr()};
-#if test_version<2
   _curr.evi= evi.curr();
-#endif
   return _curr;
 //  return {lst:{akce:the_duakce},ucast:ucast.curr(),evi:evi.curr()};
 } 
@@ -192,7 +188,6 @@ panel ucast {type:'plain', format:'d', _sys:'*', title:"Účastníci", include:'
   proc ucast_selected() {}                      // seznam vybraných účastníků
   proc z_change() {}
 }
-#if test_version<2
 panel pece {type:'plain', _sys:'*', title:'Pečouni', include:'onload,db2.akce2.pece',
     skill:'yaa;faa;caa#T'
   proc reaccess() {}
@@ -233,17 +228,6 @@ panel grf {type:'right', title:'Grafy', _sys:'*', include:'onclick,db2.akce2.grf
 panel cnf {type:'right', title:'[fa-retweet] KONFERENCE', _sys:'*', include:'onclick,db2.akce2.cnf', skill:'mrop;dk#T'
   proc reaccess() {}
 }
-#else
-group evi {
-  func curr() {return {rodina:0,osoba:0}}
-  proc reaccess() {}
-  proc rodina_show() {}
-  proc osoby_show() {}
-  proc evid_osoba(_ido) { }                     // zobrazení osoby v evidenci
-  proc evid_rodina(_idr) { }                    // zobrazení rodiny v evidenci
-  proc ulozen_gmail() { }
-}
-#endif
 # ==========================================================================================> . ELIM
 panel elim [0,0,965,607] { type:'popup', title:'Duplicity', format:'c', par:°{close:'no'},
     include:'onload,db2.akce2.elim'
@@ -361,7 +345,6 @@ table ds_osoba_copy { key_id:'id_osoba'
 table akce { key_id:'id_duakce'
   number id_duakce
   number id_hlavni // 0 nebo id_duakce hlavní akce souběžné akce
-  number id_order
   number access
   number typ
   number ma_cenik  // 1 znamená, že bereme v úvahu tabulku cenik
@@ -1487,12 +1470,7 @@ group foto { include:'onload,db2.akce2.foto'
     proc galery(fotka,id) {}
   }
 }
-group fio { 
-#if test_version>2
-    include:'onload,dbt/db2.fio'
-#else
-    include:'onload,db2/db2.fio'
-#endif
+group fio { include:'onload,db2/db2.fio'
   form _ucty {
     func Init(ucty) {}
     func LoadPobyt(ucty) {}
@@ -1510,7 +1488,6 @@ group dum { include:'onload,db2/db2.dum'
     func Show(id_akce) {} // umožní zvolit správnou objednávku
     func Delete(id_order) {} // nastaví deleted=1 u objednávky
   }
-  form _rozpis {}
   form _objednávka {}
   form _vyuctovani {
     func load_obj(ido){}

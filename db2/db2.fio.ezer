@@ -271,3 +271,20 @@ table platba {
   text   upresneni
   text   komentar
 }
+// ----------------------------------------------------------------- škoda mazat
+panel Majitel [0,80,220,50] { title:'určení majitele účtu', type:'popup', css:'dialog'
+  var id_osoba: number
+  func vyber(pobyt_info:object) { 
+    h.sel.selects(pobyt_info.sel_idos);
+    h.sel.key(pobyt_info.sel_first);
+    panel.modal();
+  }
+  use h: form {
+    select sel [0,0,200,] { 
+      func onchanged() {
+        id_osoba= this.key();
+        panel.hide(1)
+      }
+    }
+  }
+}

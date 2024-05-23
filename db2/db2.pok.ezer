@@ -88,7 +88,6 @@ form _right [,,*,50] { style:'width:calc(100% - 24px)'
   }
 }
 
-#if test_version<1
 # ===========================================================================================> DENÍK
 panel den {type:'plain', title:"POKLADNA", _sys:'den', skill:'yp'
 
@@ -617,5 +616,3 @@ map p_ucel: table _cis {where:"druh='p_ucel'", order:'poradi' }
 map p_typ:  table _cis {where:"druh='p_typ'", order:'poradi', key_id:'data'}
 
 map pokl:   table pokladna {where:"1", key_id:'id_pokladna' }
-
-#endif

@@ -1252,7 +1252,6 @@ form _info [,,*,50] {
       css_rows:"barva,1:cerveny,2:zluty,3:skrtnuty" // akce je: 1=hlavní | 2=souběžná | 3=zrušená
       optimize:°{fetch:'all'}
     show id_akce  {data:da2.id_duakce}
-    show objednavka {data:da2.id_order}
     show          {data:ja2.id_akce}
     show          {data:pa2.id_pobyt}
     show ma_archiv // [,,10,] 
@@ -1330,7 +1329,7 @@ form _info [,,*,50] {
     }
   }
   # --------------------------------------------------------------------------------------==> . akce
-  select rok [4,5,52,] { tag:'r', format:'t', proc onchanged() { akce_roku(this.get) }}
+  select rok [4,5,52,] { tag:'r', format:'t', func onchanged() { the_rok= this; akce_roku(the_rok) }}
   # je voláno s kontextem správného the_source
   proc nazev_akce(id_akce) {
     var nazev: text
@@ -1351,10 +1350,8 @@ form _info [,,*,50] {
     }
     lst.info.fill(`${the_title} `);
     ucast.call('clear_ucast2');
-#if test_version<2
     if (has_skill('yam;fam;cam')) maia.call('init_ucast');
     if (!has_skill('crz')) this.call('pece.init_pece'); // CRŽ
-#endif
     // ošetření souběžných akcí - 0=normální akce, 1=hlavní akce, 2=souběžná akce
     if (has_skill('f')) page.soubezna= the_soubeh==2;
     // nastavení cookies podle organizace
@@ -1371,11 +1368,9 @@ form _info [,,*,50] {
         set_cookie(`${sys('root')}_akce`,the_duakce);
       }
       ucast.ucast_hnizda();
-#if test_version<2
       if (!has_skill('T')) pece.pece_hnizda();
       if (has_skill('yam;fam;cam')) maia.mail_hnizda();
       tisk.tisk_hnizda()
-#endif
     }
     return 1;
   }

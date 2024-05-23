@@ -379,7 +379,9 @@ function akce2_info($id_akce,$text=1,$pobyty=1,$id_order=0) { trace();
         ? "LEFT JOIN tvori AS t USING (id_osoba,id_rodina)" : '';
     $JOIN_rodina= $akce_ms || $pobyty
         ? "LEFT JOIN rodina AS r ON r.id_rodina=p.i0_rodina" : '';
-    $qry= "SELECT uid, a.access, a.nazev, a.datum_od, a.datum_do, now() as _ted,i0_rodina,funkce,p.web_zmena,web_changes,
+    $fld_dum= $setkani_db ? 'uid,' : '';
+    $JOIN_dum= $setkani_db ? "LEFT JOIN $setkani_db.tx_gnalberice_order AS d ON d.id_akce=a.id_duakce" : '';
+    $qry= "SELECT $fld_dum a.access, a.nazev, a.datum_od, a.datum_do, now() as _ted,i0_rodina,funkce,p.web_zmena,web_changes,
              COUNT(id_spolu) AS _clenu,IF(c.ikona=2,1,0) AS _pro_pary,a.hnizda,p.hnizdo,
          --  SUM(IF(ROUND(IF(MONTH(o.narozeni),DATEDIFF(a.datum_od,o.narozeni)/365.2425,YEAR(a.datum_od)-YEAR(o.narozeni)),1)<18,1,0)) AS _deti,
              SUM(IF(t.role='d',1,0)) AS _deti,
@@ -420,7 +422,7 @@ function akce2_info($id_akce,$text=1,$pobyty=1,$id_order=0) { trace();
            $JOIN_rodina
            $JOIN_tvori
            LEFT JOIN _cis AS c ON c.druh='ms_akce_typ' AND c.data=a.druh
-           LEFT JOIN $setkani_db.tx_gnalberice_order AS d ON d.id_akce=a.id_duakce
+           $JOIN_dum
            WHERE a.id_duakce='$id_akce' AND o.deleted=''
              -- AND p.id_pobyt IN (59240,59318)
            GROUP BY p.id_pobyt";
@@ -963,8 +965,8 @@ function akce2_id2a($id_akce) {  //trace();
     }
   }
   // doplnění případného pobytu v Domě setkání
-  if ($a->org|org_ds) {
-    global $setkani_db;
+  global $setkani_db;
+  if ($setkani_db && ($a->org & org_ds)) {
     $a->id_order= select('uid',"$setkani_db.tx_gnalberice_order","id_akce=$id_akce");
   }
 //                                                                 debug($a,"akce $id_akce user {$USER->id_user}");
@@ -13166,7 +13168,7 @@ function elim2_clen($id_rodina,$id_orig,$id_copy) { trace();
   $dar=   select("GROUP_CONCAT(id_dar)",  "dar",  "id_osoba=$id_copy");
   query("UPDATE dar    SET id_osoba=$id_orig WHERE id_osoba=$id_copy");
   // platba
-  $platba= select("GROUP_CONCAT(id_platba)","platba","id_osoba=$id_copy");
+  $platba= select("GROUP_CONCAT(id_platba)","platba","id_oso=$id_copy");
   query("UPDATE platba SET id_osoba=$id_orig WHERE id_osoba=$id_copy");
   // mail
   $mail= select("GROUP_CONCAT(id_mail)","mail","id_clen=$id_copy");
@@ -13207,9 +13209,9 @@ function elim2_rodina($id_orig,$id_copy) {
     // dar
     $dar=   select("GROUP_CONCAT(id_dar)",  "dar",  "id_rodina=$id_copy");
     query("UPDATE dar    SET id_rodina=$id_orig WHERE id_rodina=$id_copy");
-    // platba
-    $platba= select("GROUP_CONCAT(id_platba)","platba","id_rodina=$id_copy");
-    query("UPDATE platba SET id_rodina=$id_orig WHERE id_rodina=$id_copy");
+//    // platba ... stará verze tabulky
+//    $platba= select("GROUP_CONCAT(id_platba)","platba","id_rodina=$id_copy");
+//    query("UPDATE platba SET id_rodina=$id_orig WHERE id_rodina=$id_copy");
     // smazání kopie
     query("UPDATE rodina SET deleted='D rodina=$id_orig' WHERE id_rodina=$id_copy");
     // opravy v originálu
