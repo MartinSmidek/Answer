@@ -421,18 +421,21 @@ function dum_kc($c) {
 # par.typ = konečná | záloha
 function dum_faktura_save($parm) {
   $x= array_merge((array)$parm); $x['html']= "...";
-  debug($x,"dum_faktura_save(...)");
+  debug($x,"dum_faktura_save(...)"); //goto end;
   // uložení do tabulky
   $p= $parm->parm;
-  $rok=    $p->udaje->fld->rok; display($rok);
-  $num=    $p->num;  display($num);
-  $typ=    $p->typ;  display($typ);
-  $ord=    $p->udaje->fld->order;  display($ord);
-  $cel=    $p->udaje->cena->celkem;  display($cel);
-  $jso= pdo_real_escape_string($parm->parm_json); display($jso);
-  $htm= pdo_real_escape_string($parm->html); display($htm);
+  $rok=    $p->rok; 
+  $num=    $p->num;  
+  $typ=    $p->typ;  
+  $ord=    $p->order ?? '';  
+  $pob=    $p->pobyt ?? '';  
+  $cel=    $p->celkem;  
+  $jso= $html= '';
+//  $jso= pdo_real_escape_string($parm->parm_json); //display($jso);
+//  $htm= pdo_real_escape_string($parm->html); //display($htm);
   query("INSERT INTO faktura (rok,num,typ,id_order,id_pobyt,castka,parm_json,html) VALUES "
-      . "($rok,$num,'$typ',$ord,0,$cel,'$jso','$htm')");
+      . "($rok,$num,'$typ','$ord','$pob',$cel,'$jso','$htm')");
+end:
 }
 # -------------------------------------------------------------------------------------- dum faktura
 # par.typ = konečná | záloha
@@ -471,7 +474,7 @@ function dum_faktura($par) {  debug($par,'dum_faktura');
   $vals['{QR-ss}']= $vals['{SS}']= $ss;
   $vals['{QR-pozn}']= urlencode("platba za pobyt v Domě setkání");
   // podle typu faktury
-  $roknum= ($rok-2000).str_pad($num,4,'0',STR_PAD_LEFT);
+  $roknum= ($rok-2000).'74A'.str_pad($num,4,'0',STR_PAD_LEFT);
   if ($typ=='konečná') {
     $dum_faktura_fld['faktura'][1]= "<b>Faktura $roknum</b>";
     $dum_faktura_fld['za_co'][1]= "Za pobyt v Domě setkání ve dnech {obdobi} Vám fakturujeme:";
@@ -664,6 +667,9 @@ function dum_faktura($par) {  debug($par,'dum_faktura');
       tc_page_cell($text,$typ,$align,$fsize*2.4,$l,$t,$w,$h,$border,$lheight);
     }
   }
+  // doplnění par o výpočet
+  $par->celkem= $celkem;
+  $par->typ= $typ=='zalohová' ? 1 : ($typ=='konečná' ? 2 : 0);
   if ($show) {
     $html.= "</div></div>";
   }
@@ -687,8 +693,9 @@ $html
 __HTML;
 //  display($html);
   file_put_contents("fakt.html",$html_exp);
-  
-  return (object)array('html'=>$html_exp,'ref'=>$ref,'parm_json'=>json_encode($par),'parm'=>$par,'err'=>'');
+  debug($par,'par');
+  return (object)array('html'=>$html_exp,'ref'=>$ref,'parm_json'=>json_encode($par),
+      'parm'=>$par,'err'=>'');
 }
 # ------------------------------------------------------------------------------ dum objednavka_akce
 # vrátí ID objednávky spojené s akcí nebo 0

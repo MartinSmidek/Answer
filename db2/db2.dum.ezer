@@ -117,29 +117,31 @@ form _vyuctovani [,,623,400] {
           adresa:udaje_pobyt.adresa,vzorec:vzorec_pob,
           oddo:udaje_pobyt.oddo,rok:udaje_pobyt.rok,order:udaje_pobyt.order,num:0});
 //      echo(debug(faktura_parm));
-      A4.preview(faktura_parm.html,faktura_parm.ref);
+//      A4.preview(faktura_parm);
   }}
   // preview 
-  panel A4 [,,660,955] { type:'popup', title:"Náhled PDF", style:'position:fixed'
-      style:"height:calc(100% - 100px);max-height:955px"
-    func preview(html,ref) {
-      paper.full= html; //Objednavka.obj.faktura_parm.html;
-      paper.ref= ref; //Objednavka.obj.faktura_parm.ref;
-      panel.modal(40,10);    
-    }
-    use paper: form [0,0,100,100] { //style:'overflow-y: auto;overflow-x:clip'
-      label full [0,0,662,936]
-      button [325,10,,] { title:'[fa-save] Uložit mezi faktury a posunout číslování', style:'z-index:2' 
-        func onclick() { 
-          clear();
-          php.dum_faktura_save(Objednavka.obj.faktura_parm);
-      }}
-      button [571,10,,] { title:'[fa-undo] Neukládat', style:'z-index:2'  
-        func onclick() { panel.hide(0); }
-      }
-      label ref [325,35,150,] { style:"background:silver;color:black;font-size:12px;padding:3px 5px 0px 20px" }
-    }
-  }
+//  panel A4 [,,660,955] { type:'popup', title:"Náhled PDF", style:'position:fixed'
+//      style:"height:calc(100% - 100px);max-height:955px"
+//    var parm:object
+//    func preview(_par) {
+//      parm= _par;
+//      paper.full= parm.html; //Objednavka.obj.faktura_parm.html;
+//      paper.ref= parm.ref; //Objednavka.obj.faktura_parm.ref;
+//      panel.modal(40,10);    
+//    }
+//    use paper: form [0,0,100,100] { //style:'overflow-y: auto;overflow-x:clip'
+//      label full [0,0,662,936]
+//      button [325,10,,] { title:'[fa-save] Uložit mezi faktury a posunout číslování', style:'z-index:2' 
+//        func onclick() { 
+//          clear();
+//          php.dum_faktura_save(parm);
+//      }}
+//      button [571,10,,] { title:'[fa-undo] Neukládat', style:'z-index:2'  
+//        func onclick() { panel.hide(0); }
+//      }
+//      label ref [325,35,150,] { style:"background:silver;color:black;font-size:12px;padding:3px 5px 0px 20px" }
+//    }
+//  }
 }
 # ======================================================================================> OBJEDNÁVKA
 panel Objednavka [,,760,450] { type:'popup' title:"Objednávka pobytu v Domě setkání"
@@ -281,7 +283,7 @@ form _obj {
           adresa:udaje.adresa,vzorec:udaje.vzorec_zal,
           ic:udaje.fld.ic,dic:udaje.fld.dic,oddo:udaje.fld.oddo,rok:udaje.fld.rok,order:udaje.fld.order,
           num:zal_num,zaloha:zal_zal,vs:zal_vs,ss:zal_ss,vyrizuje:zal_kdo});
-      A4.preview(faktura_parm.html,faktura_parm.ref);
+      A4.preview(faktura_parm);
   }}
   // parametry vyúčování
   check fakt [10,top_fakt-3,80,] { tag:'fakt', title:'vyúčtování' }
@@ -303,7 +305,7 @@ form _obj {
           adresa:udaje.adresa,vzorec:udaje.vzorec_fak,
           ic:udaje.fld.ic,dic:udaje.fld.dic,oddo:udaje.fld.oddo,rok:udaje.fld.rok,order:udaje.fld.order,
           num:fakt_num,zaloha:fakt_zal,vs:fakt_vs,ss:fakt_ss,vyrizuje:fakt_kdo});
-      A4.preview(faktura_parm.html,faktura_parm.ref);
+      A4.preview(faktura_parm);
   }}
   
   form _pokoje [,,750,40] { style:'border:1px solid grey'
@@ -346,22 +348,24 @@ form _obj {
   // preview 
   panel A4 [,,660,955] { type:'popup', title:"Náhled PDF", style:'position:fixed'
       style:"height:calc(100% - 100px);max-height:955px"
-    func preview(html,ref) {
-      paper.full= html; //Objednavka.obj.faktura_parm.html;
-      paper.ref= ref; //Objednavka.obj.faktura_parm.ref;
+    func preview(_parm:object) {
+      paper.parm= _parm;
+      paper.full= _parm.html; //Objednavka.obj.faktura_parm.html;
+      paper.ref= _parm.ref; //Objednavka.obj.faktura_parm.ref;
       panel.modal(40,10);    
     }
     use paper: form [0,0,100,100] { //style:'overflow-y: auto;overflow-x:clip'
+      var parm:object
       label full [0,0,662,936]
       button [325,10,,] { title:'[fa-save] Uložit mezi faktury a posunout číslování', style:'z-index:2' 
         func onclick() { 
           clear();
-          php.dum_faktura_save(Objednavka.obj.faktura_parm);
+          php.dum_faktura_save(parm);
       }}
       button [571,10,,] { title:'[fa-undo] Neukládat', style:'z-index:2'  
         func onclick() { panel.hide(0); }
       }
-      label ref [325,35,150,18] { style:"background:silver;color:black;font-size:12px;padding:3px 5px 0px 20px" }
+      label ref [325,35,150,] { style:"background:silver;color:black;font-size:12px;padding:3px 5px 0px 20px" }
     }
   }
   
