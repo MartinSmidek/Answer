@@ -16362,7 +16362,7 @@ function db2_copy_test_db($db) {  trace();
   . "_help,_cis,"
   . "_track,ezer_doc2,"
   . "akce,cenik,pobyt,spolu,osoba,tvori,rodina,g_akce,join_akce,prihlaska,"
-  . "dar,uhrada,"
+  . "dar,uhrada,faktura,"
   . "dopis,mail,mailist,"
   . "pdenik,person,pokladna,"
   . "platba,join_platba"

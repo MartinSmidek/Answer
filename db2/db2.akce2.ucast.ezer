@@ -2620,7 +2620,7 @@ panel Skupinky [,,400,400] {type:'popup', title:'Historie skupinek'
 }
 # ==========================================================================================> STRAVA
 # nastaví položky cstrava_pol{x} a cstrava_cel{x} pro x=|_bm|_bl
-panel Strava [,,320,280] {type:'popup', title:'Nestandardní počet strav - xxx'
+panel Strava [,,330,290] {type:'popup', title:'Nestandardní počet strav - xxx'
   var x='',             // postfix položek cstrava_cel,cstrava_pol,strava_cel,strava_pol
       strava_cel_x: number,
       strava_pol_x: number,

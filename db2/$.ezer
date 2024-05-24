@@ -1,5 +1,5 @@
 # Systém Ans(w)er pro YMCA Familia a YMCA Setkání
-# (c) 2008-2021 Martin Šmídek <martin@smidek.eu>
+# (c) 2008-2024 Martin Šmídek <martin@smidek.eu>
 
 menu db2 { type:'main', title:'db2', active:*, _sys:'*'
   // vrací aktuální stavy modulů, bude volána pomocí js.call_root_func z library modulů
@@ -46,7 +46,9 @@ menu db2 { type:'main', title:'db2', active:*, _sys:'*'
           pobyt: "id_pobyt>*,id_akce>akce,i0_rodina>rodina,hnizdo,funkce,web_changes,web_zmena",
           prihlaska: "id_prihlaska>-,id_akce>akce,id_pobyt>pobyt,id_rodina>rodina,id_osoba>osoba,email,stav",
           uhrada:"id_uhrada>*,id_pobyt>pobyt,u_poradi,u_castka,u_datum,u_zpusob,u_stav,u_za",
-          platba:"id_platba>*,id_akce>akce,id_osoba>osoba,id_rodina>rodina,castka,datum,nazev",
+          platba:"id_platba>*,id_oso>osoba,id_pob>pobyt,id_ord>objednavka,castka,datum,nazev",
+          faktura:"id_faktura>*,id_pobyt>pobyt,rok,num,castka",
+          objednavka:"id_order>*,id_akce>akce,kod_akce,od,do,jmeno,prijmeni,note",
           spolu: "id_spolu>-,id_pobyt>pobyt,id_osoba>osoba,access,s_hnizdo,s_role,web_zmena",
           osoba: "id_osoba>*,access,deleted,jmeno,prijmeni,web_zmena",
           osoba_geo: "id_osoba>osoba,kod_obec,stav",
@@ -334,14 +336,12 @@ table akce { key_id:'id_duakce'
   number typ
   number statistika
 }
-
 table join_akce { // spojení číselníku akcí s MS
   number g_rok     { help:"rok akce podle číselníku akcí" }
   number g_kod     { help:"kód akce podle číselníku akcí" }
   text   source    { help:"L:Lídino M:Milošovo MS.EXE" }
   number akce      { help:"staré číslo akce podle MS.EXE" }
 }
-
 # kopie číselníků akcí z intranetu YS
 table uakce { key_id:'id_uakce'
   number id_uakce
@@ -357,7 +357,6 @@ table uakce { key_id:'id_uakce'
   number typ
   text kapitola
 }
-
 table ms_akce { key_id:'id_akce'  // Sey
   number id_akce
   text source
@@ -369,7 +368,6 @@ table ms_akce { key_id:'id_akce'  // Sey
   date datum_do
   text misto
 }
-
 table g_akce { key_id:'id_gakce' // kopie číselníku akcí z intranetu
   number id_gakce
   number g_rok     { help:"rok akce podle číselníku akcí" }
@@ -381,7 +379,6 @@ table g_akce { key_id:'id_gakce' // kopie číselníku akcí z intranetu
   text   g_typ     { help:"typ akce z číselníku akcí" }
   text   g_kap     { help:"účetní kapitola akce z číselníku akcí" }
 }
-
 table mail { key_id:'id_mail'
   number id_mail { key:'primary' },
   number id_dopis { help:'mail|index mailu' }, // nepoužívá se pro dopisy s druh!='@'
@@ -394,7 +391,6 @@ table mail { key_id:'id_mail'
   text msg
   text body
 }
-
 table dopis { key_id:'id_dopis'
   number id_dopis { key:'primary' },
   number id_davka { help:'dávka|číslo rozesílání dávky dopisů' },
@@ -417,7 +413,6 @@ table dopis { key_id:'id_dopis'
   text nest_list { help:'seznam složek (druh=N)'}
   text add_list
 }
-
 table _user { key_id:'id_user', db:'ezer_system'
   number id_user
   text deleted,
@@ -437,7 +432,6 @@ table _user { key_id:'id_user', db:'ezer_system'
   number zmena_kdo,
   date zmena_kdy {  },
 }
-
 table _file_ {
   text fid
   date fdate
@@ -445,7 +439,6 @@ table _file_ {
   text ftype
   text finfo
 }
-
 table _cis { key_id:'id_cis'
   number id_cis text druh, text data, text zkratka, number poradi,
   text hodnota, text popis, text barva, text ikona

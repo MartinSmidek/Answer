@@ -424,17 +424,15 @@ function dum_faktura_save($parm) {
   debug($x,"dum_faktura_save(...)"); //goto end;
   // uložení do tabulky
   $p= $parm->parm;
-  $rok=    $p->rok; 
-  $num=    $p->num;  
-  $typ=    $p->typ;  
-  $ord=    $p->order ?? '';  
-  $pob=    $p->pobyt ?? '';  
-  $cel=    $p->celkem;  
+  $order= $p->order ?? '';
+  $pobyt= $p->pobyt ?? '';
   $jso= $html= '';
-//  $jso= pdo_real_escape_string($parm->parm_json); //display($jso);
-//  $htm= pdo_real_escape_string($parm->html); //display($htm);
-  query("INSERT INTO faktura (rok,num,typ,id_order,id_pobyt,castka,parm_json,html) VALUES "
-      . "($rok,$num,'$typ','$ord','$pob',$cel,'$jso','$htm')");
+//  $jso= pdo_real_escape_string($parm->parm_json); 
+//  $htm= pdo_real_escape_string($parm->html); 
+  query("INSERT INTO faktura (rok,num,typ,vs,ss,id_order,id_pobyt,zaloha,castka,"
+      . "vzorec,vyrizuje,vystavena,parm_json,html) VALUES "
+      . "($p->rok,$p->num,'$p->typ','$p->vs','$p->ss','$order','$pobyt','$p->zaloha','$p->celkem',"
+      . "'$p->vzorec','$p->vyrizuje','$p->vystavena','$jso',\"$htm\")");
 end:
 }
 # -------------------------------------------------------------------------------------- dum faktura
@@ -454,7 +452,7 @@ function dum_faktura($par) {  debug($par,'dum_faktura');
   $num= $par->num;
   $vs= $par->vs;
   $ss= $par->ss;
-  $order= $par->order;
+  $order= $par->id_order;
   $vyrizuje= $par->vyrizuje;
   dum_cenik($rok);
   $rozpis= dum_vzorec2rozpis($par->vzorec);
@@ -463,7 +461,7 @@ function dum_faktura($par) {  debug($par,'dum_faktura');
   $vals['{obdobi}']= $oddo;
   $vals['{ic_dic}']= ($ic ? "IČ: $ic" : '').($dic ? "    DIČ: $dic" : '');
   $vals['{adresa}']= $adresa;
-  $vals['{datum1}']= date('j. n. Y');
+  $vals['{datum1}']= date('j. n. Y'); 
   $vals['{datum2}']= date('j. n. Y',strtotime("+14 days"));
   $vals['{obj}']= $order;
   $vals['{vyrizuje}']= $vyrizuje;
@@ -669,6 +667,7 @@ function dum_faktura($par) {  debug($par,'dum_faktura');
   }
   // doplnění par o výpočet
   $par->celkem= $celkem;
+  $par->vystavena= date('Y-m-d');
   $par->typ= $typ=='zalohová' ? 1 : ($typ=='konečná' ? 2 : 0);
   if ($show) {
     $html.= "</div></div>";

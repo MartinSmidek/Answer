@@ -12,13 +12,13 @@
 func onfirstfocus() {
 //func onfocus() {
   var mn: object, it: ezer
-  mn= php.ds2_obj_menu('202401,202402,202403,202404,202405,202406');
+  mn= php.ds2_obj_menu('202401,202402,202403,202404,202405,202406,202407,202408,202409,202410,202411,202412');
   mo.attach_code(mn.cd);
 //  obj.load_objednavka();
 //  Upravy.Init();
   page.start();
 //  it= mo.part(mn.th);
-  it= mo.part('202405.2394'); // 4 dohody
+  it= mo.part('202405.2501'); // 4 dohody
   it.click(1);
 //  page.ucast.onclick();
 } // vytvoření menu pobytů

@@ -281,7 +281,7 @@ form _obj {
       clear();
       faktura_parm= php.dum_faktura({typ:'záloha',show:1,save:1,
           adresa:udaje.adresa,vzorec:udaje.vzorec_zal,
-          ic:udaje.fld.ic,dic:udaje.fld.dic,oddo:udaje.fld.oddo,rok:udaje.fld.rok,order:udaje.fld.order,
+          ic:udaje.fld.ic,dic:udaje.fld.dic,oddo:udaje.fld.oddo,rok:udaje.fld.rok,order:udaje.fld.id_order,
           num:zal_num,zaloha:zal_zal,vs:zal_vs,ss:zal_ss,vyrizuje:zal_kdo});
       A4.preview(faktura_parm);
   }}
@@ -303,7 +303,7 @@ form _obj {
       clear();
       faktura_parm= php.dum_faktura({typ:'konečná',show:1,save:1,
           adresa:udaje.adresa,vzorec:udaje.vzorec_fak,
-          ic:udaje.fld.ic,dic:udaje.fld.dic,oddo:udaje.fld.oddo,rok:udaje.fld.rok,order:udaje.fld.order,
+          ic:udaje.fld.ic,dic:udaje.fld.dic,oddo:udaje.fld.oddo,rok:udaje.fld.rok,order:udaje.fld.id_order,
           num:fakt_num,zaloha:fakt_zal,vs:fakt_vs,ss:fakt_ss,vyrizuje:fakt_kdo});
       A4.preview(faktura_parm);
   }}
