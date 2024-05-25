@@ -421,18 +421,20 @@ function dum_kc($c) {
 # par.typ = konečná | záloha
 function dum_faktura_save($parm) {
   $x= array_merge((array)$parm); $x['html']= "...";
-  debug($x,"dum_faktura_save(...)");
+  debug($x,"dum_faktura_save(...)"); //goto end;
   // uložení do tabulky
   $p= $parm->parm;
-  $rok=    $p->udaje->fld->rok; display($rok);
-  $num=    $p->num;  display($num);
-  $typ=    $p->typ;  display($typ);
-  $ord=    $p->udaje->fld->order;  display($ord);
-  $cel=    $p->udaje->cena->celkem;  display($cel);
-  $jso= pdo_real_escape_string($parm->parm_json); display($jso);
-  $htm= pdo_real_escape_string($parm->html); display($htm);
-  query("INSERT INTO faktura (rok,num,typ,id_order,id_pobyt,castka,parm_json,html) VALUES "
-      . "($rok,$num,'$typ',$ord,0,$cel,'$jso','$htm')");
+  $order= $p->order ?? '';
+  $pobyt= $p->pobyt ?? '';
+  $jso= $html= '';
+  $jso= pdo_real_escape_string($parm->parm_json); 
+  $htm= pdo_real_escape_string($parm->html); 
+  $ok= query("INSERT INTO faktura (rok,num,typ,vs,ss,id_order,id_pobyt,zaloha,castka,"
+      . "vzorec,vyrizuje,vystavena,parm_json,html) VALUES "
+      . "($p->rok,$p->num,'$p->typ','$p->vs','$p->ss','$order','$pobyt','$p->zaloha','$p->celkem',"
+      . "'$p->vzorec','$p->vyrizuje','$p->vystavena','$jso',\"$htm\")");
+end:
+  return $ok;
 }
 # -------------------------------------------------------------------------------------- dum faktura
 # par.typ = konečná | záloha
@@ -451,7 +453,7 @@ function dum_faktura($par) {  debug($par,'dum_faktura');
   $num= $par->num;
   $vs= $par->vs;
   $ss= $par->ss;
-  $order= $par->order;
+  $order= $par->id_order;
   $vyrizuje= $par->vyrizuje;
   dum_cenik($rok);
   $rozpis= dum_vzorec2rozpis($par->vzorec);
@@ -460,7 +462,7 @@ function dum_faktura($par) {  debug($par,'dum_faktura');
   $vals['{obdobi}']= $oddo;
   $vals['{ic_dic}']= ($ic ? "IČ: $ic" : '').($dic ? "    DIČ: $dic" : '');
   $vals['{adresa}']= $adresa;
-  $vals['{datum1}']= date('j. n. Y');
+  $vals['{datum1}']= date('j. n. Y'); 
   $vals['{datum2}']= date('j. n. Y',strtotime("+14 days"));
   $vals['{obj}']= $order;
   $vals['{vyrizuje}']= $vyrizuje;
@@ -471,8 +473,8 @@ function dum_faktura($par) {  debug($par,'dum_faktura');
   $vals['{QR-ss}']= $vals['{SS}']= $ss;
   $vals['{QR-pozn}']= urlencode("platba za pobyt v Domě setkání");
   // podle typu faktury
-  $roknum= ($rok-2000).str_pad($num,4,'0',STR_PAD_LEFT);
-  if ($typ=='konečná') {
+  $roknum= ($rok-2000).'74A'.str_pad($num,4,'0',STR_PAD_LEFT);
+  if ($typ==2) { // konečná
     $dum_faktura_fld['faktura'][1]= "<b>Faktura $roknum</b>";
     $dum_faktura_fld['za_co'][1]= "Za pobyt v Domě setkání ve dnech {obdobi} Vám fakturujeme:";
   }
@@ -544,7 +546,7 @@ function dum_faktura($par) {  debug($par,'dum_faktura');
   // součty
   $colspan= $sleva ? 'colspan="7"' : 'colspan="6"';
   $tab.= "<tr><td $colspan><br><br></td></tr>";
-  if ($typ=='záloha') {
+  if ($typ==1) { // záloha
     $soucty= ['Celková cena s DPH'=>$celkem, 'Zaplaťte zálohu'=>$zaloha];
     $bold= 0;
     $koef= $zaloha/$celkem;
@@ -620,8 +622,8 @@ function dum_faktura($par) {  debug($par,'dum_faktura');
     foreach (explode(',',$cast[0]) as $i=>$c) {
       if ($c) $x[$i]= $c;
     }
-//    debug($x,'$typ,$align,$fsize,$l,$t,$w,$h,$border');
-    list($typ,$align,$fsize,$l,$t,$w,$h,$border,$lheight)= $x;
+//    debug($x,'$type,$align,$fsize,$l,$t,$w,$h,$border');
+    list($type,$align,$fsize,$l,$t,$w,$h,$border,$lheight)= $x;
     if ($jmeno=='tabulka') $lheight= $lheight_tabulka;
     // parametrizace textu
     $text= strtr(trim($cast[1]),$vals);
@@ -635,20 +637,20 @@ function dum_faktura($par) {  debug($par,'dum_faktura');
         if (strpos($border,'B')!==false) $bord.=";border-bottom:1px dotted black";
       }
       if ($align) $algn= ";text-align:".['L'=>'left','R'=>'right','C'=>'center'][$align];
-      if ($typ=='T') {
+      if ($type=='T') {
         $elem= "<div style='position:absolute;"
             . "left:{$l}$j;top:{$t}$j;width:{$w}$j;height:{$h}$j;line-height:$lheight;"
             . "font-size:{$fsize}$j$bord$algn'>$text</div>";
   //      display(htmlentities($elem));
         $html.= $elem;
       }
-      elseif ($typ=='I') {
+      elseif ($type=='I') {
         $elem= "<img src='$text' style='position:absolute;"
             . "left:{$l}$j;top:{$t}$j;width:{$w}$j;height:{$h}$j'>";
 //        display(htmlentities($elem));
         $html.= $elem;
       }
-      elseif ($typ=='QR') {
+      elseif ($type=='QR') {
         $castka= dum_kc($vals['{QR-castka}']);
         $qr= "<br>QR platba<br><br><b>$castka</b><br><br>bude zobrazena<br>v PDF";
 //        require_once('tcpdf/examples/barcodes/tcpdf_barcodes_2d_include.php');
@@ -661,9 +663,13 @@ function dum_faktura($par) {  debug($par,'dum_faktura');
       }
     }
     if ($save) {
-      tc_page_cell($text,$typ,$align,$fsize*2.4,$l,$t,$w,$h,$border,$lheight);
+      tc_page_cell($text,$type,$align,$fsize*2.4,$l,$t,$w,$h,$border,$lheight);
     }
   }
+  // doplnění par o výpočet
+  $par->celkem= $celkem;
+  $par->vystavena= date('Y-m-d');
+  $par->typ= $typ;
   if ($show) {
     $html.= "</div></div>";
   }
@@ -687,8 +693,9 @@ $html
 __HTML;
 //  display($html);
   file_put_contents("fakt.html",$html_exp);
-  
-  return (object)array('html'=>$html_exp,'ref'=>$ref,'parm_json'=>json_encode($par),'parm'=>$par,'err'=>'');
+  debug($par,'par');
+  return (object)array('html'=>$html_exp,'ref'=>$ref,'parm_json'=>json_encode($par),
+      'parm'=>$par,'err'=>'');
 }
 # ------------------------------------------------------------------------------ dum objednavka_akce
 # vrátí ID objednávky spojené s akcí nebo 0
@@ -717,22 +724,23 @@ function dum_objednavka_save($id_order,$changed) {
 # ----------------------------------------------------------------------------------- dum objednavka
 # objednávka pobytu
 function dum_objednavka($id_order) { 
-  global $setkani_db;
+  global $answer_db, $setkani_db;
   $x= (object)['err'=>'','rozpis'=>[],'cena'=>[],'fld'=>[]];
   // shromáždění údajů z objednávky
   $f= select_object('state,fromday AS od,untilday AS do,note,rooms1,'
       . 'adults,kids_10_15,kids_3_9,kids_3,board,'
       . 'org,ic,name,firstname,dic,email,telephone,address,zip,city,'
-      . 'DATEDIFF(FROM_UNIXTIME(untilday),FROM_UNIXTIME(fromday)) AS noci,akce AS id_akce'
-      ,"$setkani_db.tx_gnalberice_order","uid=$id_order");
+      . 'DATEDIFF(FROM_UNIXTIME(untilday),FROM_UNIXTIME(fromday)) AS noci,akce AS id_akce,'
+      . 'f.num,f.typ,f.vs,f.ss,f.zaloha,f.castka,f.vystavena,f.zaplacena,f.vyrizuje'
+      ,"$setkani_db.tx_gnalberice_order LEFT JOIN faktura AS f ON id_order=uid",
+      "uid=$id_order");
   $f->id_order= $id_order;
   $f->rok= date('Y',$f->od);
   $f->oddo= datum_oddo(date('Y-m-d',$f->od),date('Y-m-d',$f->do));
   $f->od= date('j.n.Y',$f->od);
   $f->do= date('j.n.Y',$f->do);
   // již vystavená zálohová faktura na objednávku nebo návrh čísla faktury
-  $num= select('num','faktura',"id_order=$id_order AND typ=1")
-     ?: select1('IFNULL(MAX(num)+1,1)','faktura',"rok=$f->rok");
+  $num= select1('IFNULL(MAX(num)+1,1)','faktura',"rok=$f->rok");
   $f->fakt_num= $num;
   //$f->id_akce= select('id_duakce','akce',"id_order=$id_order");
   $f->nazev= "$id_order - {$f->name}";
@@ -749,6 +757,19 @@ function dum_objednavka($id_order) {
   $y= dum_browse_order((object)['cmd'=>'browse_load','cond'=>"uid=$id_order"]);
   $x->ucet= $y->suma;  
   $x->vzorec_fak= dum_rozpis2vzorec($y->suma->rozpis);
+  // a fakturu z tabulky
+  $x->faktura= (object)['fact_idf'=>0,'zal_idf'=>0];
+  $rf= pdo_qry("
+    SELECT IFNULL(id_faktura,0) AS idf,typ,
+      rok,num,vs,ss,spec_text,vzorec,zaloha,castka,vystavena,zaplacena, vyrizuje 
+    FROM $answer_db.faktura WHERE id_order=$id_order AND typ IN (1,2)");
+  while ($rf && ($f= pdo_fetch_object($rf))) {
+    foreach ($f as $fld=>$val) {
+      if ($fld=='vystavena' || $fld=='zaplacena') $val= sql_date1($val);
+      $fld= $f->typ==1 ? "zal_$fld" : "fakt_$fld";
+      $x->faktura->$fld= $val;
+    }
+  }
   debug($x,"dum_objednavka($id_order)");
   return $x;
 }
@@ -1283,7 +1304,13 @@ end:
     list($platba,$datum)= select("IFNULL(castka,0),IFNULL(datum,'')",
         "pobyt LEFT JOIN platba ON id_pob=id_pobyt",$x->cond);
     $suma->platba=(object)['castka'=>$platba,'datum'=>$datum];
+    // a vzorec ze sumy rozpisu
     $suma->vzorec= dum_rozpis2vzorec($suma->rozpis);
+    // a fakturu z tabulky
+    $fakt= select_object("IFNULL(id_faktura,0) AS id_faktura,rok,num,typ,vs,ss,spec_text,vzorec,"
+          . "zaloha,castka,vystavena,zaplacena,vyrizuje",
+        'faktura',"'$suma->order'");
+    $suma->faktura= $fakt;
     debug($suma,"dum_browse_pobyt/suma = ");
     $y= null;
     return $suma;      

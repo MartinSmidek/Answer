@@ -8,58 +8,168 @@
 func curr() {
     return dum2 ? dum2.curr() : {};
 }
+  proc the_formsave (f,b) {
+    f.same
+  | f.key; f.save; f.load; b.browse_seek
+  | f.insert; f.load;
+    b.raise('onrowclick',b.browse_seek(conc(f.key_id,'=',f.key)))
+  }
 
 # ======================================================================================> OBJEDNÁVKY
-panel dum2 {type:'right', title:"Objednávky2", _sys:'dum2',include:'onload,db2.ds2.dum2' skill:'a;yd2'
+panel dum2 {type:'right', title:"Objednávky", include:'onload,db2.ds2.dum2' skill:'yd2'
   func curr() { return {dum:{order:0}}; }
 } 
-panel trns {type:'right', title:"Transformace"                    skill:'a'
-  use info: form _right [12,4,,]
-  menu {type:'left', format:'f+'  
-    menu {title:'Příprava propojení osoba & ds_osoba', type:'group', active:no
-//      item {title:'Znovuvytvoření spojky ds_db', par:{mode:'ds_db',delete:1} }
-      // item {title:'... znovu od nuly',      par:{mode:'ds_db',delete:1} }
-      item {title:'Průzkum ds_osoba',            par:{mode:'ds_osoba',doit:0} }
+panel hoste {type:'right', title:"Kniha hostů"} 
+# ======================================================================================> OBJEDNÁVKY
+panel fakt {type:'right', title:"Faktury"
+  menu m {type:'left', active:*
+    menu roky {title:'Kniha faktur',type:'group'
+      item {title:'Letos vystavené faktury',  par:{rok:2024} }
     }
-    menu {title:'Propojení osoba & ds_osoba', type:'group', active:no
-      item {title:'1-5. celou transformaci'
-        func onclick(i:ezer) {
-          info.header(i); clear();
-          info.append(php.ds2_trnsf_osoba({mode:'osoba_clr'}));
-          info.append('<hr>');
-          info.append(php.ds2_trnsf_osoba({mode:'ds_db',delete:1}));
-          info.append('<hr>');
-          info.append(php.ds2_trnsf_osoba({mode:'osoba_upd'}));
-          info.append('<hr>');
-          info.append(php.ds2_trnsf_osoba({mode:'osoba_new',from:1}));
-          info.append('<hr>');
-          info.append(php.ds2_trnsf_osoba({mode:'pobyty',from:1}));
-          info.append('<hr>');
-        }
-      }
-      item {title:'1. zahaj transformaci',            par:{mode:'osoba_clr'} 
-             help:'   zruš vazbu na smazané osoby'}
-      item {title:'2. vytvoř spojku ds_db',           par:{mode:'ds_db',delete:1} }
-      item {title:'3. uprav access propojeným osobám',par:{mode:'osoba_upd'} }
-      item {title:'4. vytvoř nové osoby s access 64', par:{mode:'osoba_new',from:1} }
-      item {title:'4. ... ... jen od 2024',           par:{mode:'osoba_new',from:2024} }
-      item {title:'5. vytvoř pobyt+spolu',            par:{mode:'pobyty',from:1} }
-      item {title:'5. ... ... jen od 2024',           par:{mode:'pobyty',from:2024} }
-      
-      item {title:'?? vrať změny',                    par:{mode:'backtrack'} }
-      item {title:'!! zapiš změny trvale',            par:{mode:'final'} }
-    }
-//    menu {title:'Výpočet ceny', type:'group', active:no
-//      item {title:'6. naplň obj.ds_vzorec od 2024',   par:{mode:'ds_vzorec',from:2024} }
-//    }
-    func onclick(i:ezer) {
-      info.header(i); clear();
-      info.fill('',php.ds2_trnsf_osoba(i.par));
+    func onclick (i:ezer) {
+      rok= i.par.rok;
+      info.header(i);
+      info.fak.browse_load();
     }
   }
-} 
+  use info: form _right [12,4,,] { 
+    view f:table faktura 
+    browse fak [10,50,,] { rows:10
+      show id_faktura { data:f.id_faktura }
+      show id_order { data:f.id_order }
+      show id_pobyt { data:f.id_pobyt }
+      show spec { data:f.spec_text }
+      show rok [,,35,] { title:'rok', data:f.rok, format:'r' }
+      show num [,,25,] { title:'č.', data:f.num, format:'r' }
+      show typ [,,25,] { title:'typ', expr:"IF(f.typ=1,'Z','K')", format:'c' }
+      show vs [,,50,] { title:'VS', data:f.vs, format:'r' }
+      show ss [,,50,] { title:'SS', data:f.ss, format:'r' }
+      show zaloha [,,60,] { title:'záloha', data:f.zaloha, format:'r' }
+      show castka [,,60,] { title:'částka', data:f.castka, format:'r' }
+      show vystavena [,,70,] { title:'vystavená', data:f.vystavena, format:'r' }
+      show zaplacena [,,70,] { title:'zaplacená', data:f.zaplacena, format:'r' }
+      // funkce
+      func onrowclick() {
+        if (id_order) {
+          popis= 'Objednávka: ' + php.select("CONCAT(id_order,' - ',IF(note,note,prijmeni))",
+              'objednavka',`id_order=${id_order}`)
+        }
+      }
+    }
+    label popis [500,50,200,20]
+    button [500,80,,] { title:'Zobrazit fakturu' 
+      func onclick() { var html:text
+        html= php.select('html','faktura',`id_faktura=${fak.id_faktura}`);
+        call_func('$.dbt.A4.preview',{html:html},0);
+      }
+    }
+  }
+}
+# ============================================================================================> CENY
+var rok: number
+panel cen {type:'right', title:'Ceny'
+  func onfirstfocus() { var letos:ezer
+    // vytvoř itemy pro 7 posledních let a klikni na letošní
+    create_menu();
+    letos= m.roky.part[`part.rok_${fdate('Y')}`];
+    letos.click();
+  }
+  func create_menu() { 
+      m.roky.attach_code(php.ds_ceny_group()); 
+  }
+  menu m {type:'left', active:*
+    menu roky {title:'Ceny posledních 7 let ',type:'group'
+      // itemy budou doplněny metodou attach_code jako
+      //   item {title:'2020',par:{rok:'2020'} }
+      func onclick (i:ezer) {
+        rok= i.par.rok;
+        info.header(i);
+        info.ceny.display(1);
+        if (!info.ceny.browse_load(`rok=${rok}`))
+          info.fill('',`Ceník pro rok ${rok} není definován, ve fakturách použijeme ten nejstarší.<br>`);
+        info.fill('',`Úpravy lze provádět po dvojkliku na měněný řádek ceníku.`);
+      }
+    }
+    menu {title:'Ceník dalšího roku ',type:'group', active:no
+      item {title:'kopie letos => příští rok',  par:{op:'kopie',z:'0',na:'1'} }
+      item {title:'kopie loni => letos',        par:{op:'kopie',z:'-1',na:'0'} }
+      item {title:'kopie předloni => letos',    par:{op:'kopie',z:'-2',na:'0'} }
+      proc onclick (i) { var na:text var z:text
+        info.ceny.display(1);
+        na.set(sum(fdate('Y'),i.par.na));
+        z.set(sum(fdate('Y'),i.par.z));
+        confirm("Ceník roku ",na," bude nahrazen kopií ceníku roku ",z,". Pokračovat?");
+        info.fill(conc(i.owner.title,i.title),ask('ds_ceny_uprava',i.par));
+        info.ceny.browse_load(conc("rok=",na));
+        alert("nový ceník se v levém menu objeví po restartu Answeru")
+      }
+    }
+  }
+  use info: form right [12,4,,],
+  # ---------------------------------------------------------------------------------------==> right
+  # formulář pro levostranné menu s permanentním nadpisem s ceníkem
+  form right [,,640,50] {
+  #   button export [620,18,100,16] { title:'Export', style:'display:none;zIndex:2'
+  #     proc onclick() {
+  #       note.set(ask('lide_cleni_kurs',rok.get,1));
+  #     }
+  #   }
+    label info [0,0,680,*] { title:'' }
+    label head [0,0,680,50]  { title:'' }
+    label note [0,50,680,*] { title:'' }
+    func header(i:ezer) { var i_owner:ezer
+      clear(); i_owner= i.owner();
+      head= replace_fa(`<div class='karta'>${i_owner.title} - ${i.title}</div>`);
+      note= '';
+    }
+    func fill(x,y) {
+      if (x) head= `<div class='karta'>${replace_fa(x)}</div>`;
+      if (y) note= y
+    }
+    func append(y) {
+      if (y) note= conc(note,y)
+    }
+    browse ceny [10,76,,] { rows:30
+      show id [,,0,] { data:ds_cena.id_cena }
+      show rok [,,0,] { data:ds_cena.rok }
+      show [,,240,] {title:'položka ceníku',  data:ds_cena.polozka }
+      show [,,100,] {title:'druh',  data:ds_cena.druh format:'s+'}
+      show [,,60,] {title:'typ',  data:ds_cena.typ format:'s+'}
+      show [,,50,] {title:'od vč.',  data:ds_cena.od, format:'r' }
+      show [,,50,] {title:'do nevč.',  data:ds_cena.do, format:'r' }
+      show [,,80,] {title:'cena s DPH',  data:ds_cena.cena, format:'r' }
+      show [,,80,] {title:'dotovaná',  data:ds_cena.dotovana, format:'r' }
+      show [,,40,] {title:'DPH',  data:ds_cena.dph, format:'r' }
+      proc onsubmit (id) {
+        oprava.modal(300,100)
+      }
+    }
+  }
+  # ======================================================================================> z_oprava
+  panel oprava [0,0,350,180] { title:'oprava položky ceníku', type:'popup', css:'dialog'
+    use f: form formular [1,9,,],
+    proc onfocus() { f.load(info.ceny.id.get); }
+  }
+  # ------------------------------------------------------------------------------------==> formular
+  form formular [,,345,160] {
+    field [ 90,10,200,17] { title:'položka', data:ds_cena.polozka },
+    field [ 90,35, 40,17] { title:'věkové pásmo', data:ds_cena.od, format:'r'  },
+    field [140,35, 40,17] { data:ds_cena.do, format:'r'  },
+    field [ 90,60, 90,17] { title:'druh', data:ds_cena.druh },
+    field [220,60, 70,17] { title:'typ', data:ds_cena.typ },
+    field [ 90,85, 40,17] { title:'cena', data:ds_cena.cena, format:'r'  },
+    field [175,85,40,17] { title:'dotace', data:ds_cena.dotovana, format:'r'  },
+    field [250,85,40,17] { title:'DPH', data:ds_cena.dph, format:'r'  },
+    button save [90,124,64,20] { title:'[fa-save] Uložit', help:'uložit změny',
+      proc onclick () { the_formsave(form,info.ceny); panel.hide(form.key) }
+    }
+    button cancel [171,124,61,20] { title:'[fa-undo] Zpět', help:'zadané údaje neukládat, vrátit se zpět'
+      proc onclick () { panel.hide(0) }
+    }
+  }
+}
 # -------------------------------------------------------------------------------------==> formuláře
-form _right [,,*,50] { style:'width:calc(100% - 24px)'
+form _right [,,*,50] { //style:'width:calc(100% - 24px)'
   label head [0,0,*,50]  { title:'' }
   label msg  [0,35,*,20] { title:'' }
   label note [0,55,*,] { title:'' }
@@ -104,6 +214,25 @@ table platba {
   text   upresneni
   text   komentar
 }
+table faktura { key_id:'id_faktura'
+  number id_faktura
+  number rok
+  number num
+  number typ
+  number vs
+  number ss
+  number id_order
+  number id_pobyt
+  text spec_text
+  text vzorec
+  number zaloha
+  number castka
+  date vystavena { sql_pipe:'sql_date1'}
+  date zaplacena { sql_pipe:'sql_date1'}
+  text vyrizuje
+  text parm_json
+  text html
+}
 table ds_cena {  db:'setkani', key_id:'id_cena'
   number id_cena
   number rok
@@ -113,6 +242,7 @@ table ds_cena {  db:'setkani', key_id:'id_cena'
   number od
   number do
   number cena
+  number dotovana
   number dph
 }
 table ds_osoba { db:'setkani', key_id:'id_osoba'
@@ -490,3 +620,51 @@ table cenik { key_id:'id_cenik'
 map ds_stav:   table _cis {where:"druh='ds_stav'", order:'poradi', key_id:'data'}
 map ds_strava: table _cis {where:"druh='ds_strava'", order:'poradi', key_id:'data'}
 map ds_luzko:  table _cis {where:"druh='ds_luzko'", order:'poradi', key_id:'data'}
+/*
+# ====================================================================================> TRANSFORMACE
+panel trns {type:'right', title:"Transformace"                                            skill:'m'
+  use info: form _right [12,4,,]
+  menu {type:'left', format:'f+'  
+    menu {title:'Příprava propojení osoba & ds_osoba', type:'group', active:no
+//      item {title:'Znovuvytvoření spojky ds_db', par:{mode:'ds_db',delete:1} }
+      // item {title:'... znovu od nuly',      par:{mode:'ds_db',delete:1} }
+      item {title:'Průzkum ds_osoba',            par:{mode:'ds_osoba',doit:0} }
+    }
+    menu {title:'Propojení osoba & ds_osoba', type:'group', active:no
+      item {title:'1-5. celou transformaci'
+        func onclick(i:ezer) {
+          info.header(i); clear();
+          info.append(php.ds2_trnsf_osoba({mode:'osoba_clr'}));
+          info.append('<hr>');
+          info.append(php.ds2_trnsf_osoba({mode:'ds_db',delete:1}));
+          info.append('<hr>');
+          info.append(php.ds2_trnsf_osoba({mode:'osoba_upd'}));
+          info.append('<hr>');
+          info.append(php.ds2_trnsf_osoba({mode:'osoba_new',from:1}));
+          info.append('<hr>');
+          info.append(php.ds2_trnsf_osoba({mode:'pobyty',from:1}));
+          info.append('<hr>');
+        }
+      }
+      item {title:'1. zahaj transformaci',            par:{mode:'osoba_clr'} 
+             help:'   zruš vazbu na smazané osoby'}
+      item {title:'2. vytvoř spojku ds_db',           par:{mode:'ds_db',delete:1} }
+      item {title:'3. uprav access propojeným osobám',par:{mode:'osoba_upd'} }
+      item {title:'4. vytvoř nové osoby s access 64', par:{mode:'osoba_new',from:1} }
+      item {title:'4. ... ... jen od 2024',           par:{mode:'osoba_new',from:2024} }
+      item {title:'5. vytvoř pobyt+spolu',            par:{mode:'pobyty',from:1} }
+      item {title:'5. ... ... jen od 2024',           par:{mode:'pobyty',from:2024} }
+      
+      item {title:'?? vrať změny',                    par:{mode:'backtrack'} }
+      item {title:'!! zapiš změny trvale',            par:{mode:'final'} }
+    }
+//    menu {title:'Výpočet ceny', type:'group', active:no
+//      item {title:'6. naplň obj.ds_vzorec od 2024',   par:{mode:'ds_vzorec',from:2024} }
+//    }
+    func onclick(i:ezer) {
+      info.header(i); clear();
+      info.fill('',php.ds2_trnsf_osoba(i.par));
+    }
+  }
+} 
+*/

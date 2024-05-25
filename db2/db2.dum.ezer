@@ -38,14 +38,14 @@ form _vyuctovani [,,623,400] {
     show datum
 //    show vzorec
     func onrowclick() { 
-      clear();
+//      clear();
       hos.browse_fill(cleni,'~');
       hos.onrowclick();
       Load(idp);
     }
     func Load(idp) { 
       udaje_pobyt= php.dum_browse_pobyt({cmd:'suma',cond:`id_pobyt=${idp}`});
-      echo(debug(udaje_pobyt,'udaje_pobyt'));
+//      echo(debug(udaje_pobyt,'udaje_pobyt'));
       vzorec_pob= udaje_pobyt.vzorec;
       copy_by_name(udaje_pobyt.abbr,form);
       celkem= udaje_pobyt.celkem;
@@ -94,7 +94,7 @@ form _vyuctovani [,,623,400] {
     show prog [,,40,] { title:'prog.', format:'r' }
     show zamek_spolu // fixovaný vzorec použitý místo spočítaného
     func onrowclick() {
-      clear();
+//      clear();
       vzorec= vzorec_spolu;
       zamek= zamek_spolu;
       vzorec.enable(!zamek);
@@ -116,28 +116,12 @@ form _vyuctovani [,,623,400] {
       faktura_parm= php.dum_faktura({typ:'konečná',show:1,save:1,
           adresa:udaje_pobyt.adresa,vzorec:vzorec_pob,
           oddo:udaje_pobyt.oddo,rok:udaje_pobyt.rok,order:udaje_pobyt.order,num:0});
-//      echo(debug(faktura_parm));
-      A4.preview(faktura_parm.html,faktura_parm.ref);
-  }}
-  // preview 
-  panel A4 [,,660,955] { type:'popup', title:"Náhled PDF", style:'position:fixed'
-      style:"height:calc(100% - 100px);max-height:955px"
-    func preview(html,ref) {
-      paper.full= html; //Objednavka.obj.faktura_parm.html;
-      paper.ref= ref; //Objednavka.obj.faktura_parm.ref;
-      panel.modal(40,10);    
+      call_func('$.dbt.A4.preview',{html:faktura_parm.html,ref:faktura_parm.ref},
+          {block:&this,func:'ulozeno',title:'[fa-save] Uložit mezi faktury a posunout číslování'});
     }
-    use paper: form [0,0,100,100] { //style:'overflow-y: auto;overflow-x:clip'
-      label full [0,0,662,936]
-      button [325,10,,] { title:'[fa-save] Uložit mezi faktury a posunout číslování', style:'z-index:2' 
-        func onclick() { 
-          clear();
-          php.dum_faktura_save(Objednavka.obj.faktura_parm);
-      }}
-      button [571,10,,] { title:'[fa-undo] Neukládat', style:'z-index:2'  
-        func onclick() { panel.hide(0); }
-      }
-      label ref [325,35,150,] { style:"background:silver;color:black;font-size:12px;padding:3px 5px 0px 20px" }
+    func ulozeno() { var ok:number
+      ok= php.dum_faktura_save(faktura_parm);
+      alert(ok ? `Faktura byla uložena do seznamu faktur` : '... problém');
     }
   }
 }
@@ -173,6 +157,7 @@ form _obj {
       objs_count: number
   // funkce
   func load_objednavka(id_order) { var x:object
+    the_order= id_order;
     form.init(); plan.init(); stav.init();
     udaje= php.dum_objednavka(id_order);
     the_akce= udaje.fld.id_akce;
@@ -182,24 +167,32 @@ form _obj {
     // označení objednaných pokojů
     js.rooms_check(udaje.fld.rooms1,plan,'q');
     helps();
-    // zálohová faktura
-//    form.enable(0,'zal');
-    zal_num= udaje.fld.fakt_num;
-    zal_vs= id_order;
-    zal_ss= udaje.fld.fakt_num;
-    zal_cena= udaje.cena.celkem;
     // vyúčtování celé objednávky
     js.rooms_check(udaje.ucet.pokoje,stav,'q');
     copy_by_name(udaje.ucet.hoste,stav); 
     copy_by_name(udaje.ucet.rozpis,stav); 
+    // a faktur
+    echo(debug(udaje.faktura,'udaje.faktura'));
+    copy_by_name(udaje.faktura,form); 
+    form.enable(0,'zal|fakt'); 
+    if (udaje.faktura.fakt_idf==0) {
+      // konečná faktura
+      fakt_num= udaje.fld.fakt_num;
+      fakt_vs= udaje.fld.fakt_num;
+      fakt_ss= id_order;
+      fakt_zaloha= zal_zaloha;
+      fakt_castka= udaje.ucet.celkem;
+      form.enable(1,'fakt'); 
+    }
+    if (udaje.faktura.zal_idf==0) {
+      // zálohová faktura
+      zal_num= udaje.fld.fakt_num;
+      zal_vs= udaje.fld.fakt_num;
+      zal_ss= id_order;
+      zal_castka= udaje.cena.celkem;
+      form.enable(0,'zal'); 
+    }
   }
-//    // obnova select pokud není
-//    echo('key=',objs.key(),', id_akce=',id_akce);
-//    if (!objs.key()) {
-//      x= php.dum_objednavky_akce(id_akce);
-//      objs.selects(x.sel);
-//      objs.key(id_order);
-//    }
   func helps() { var x:object, fld: ezer
     for (x of php.dum_rooms_help()) {
       fld= plan.part(x.fld);
@@ -209,11 +202,6 @@ form _obj {
   }
   // položky
   field nazev [0,15,328,] { tag:'obj', title:'^objednávka' }
-//  select objs [0,15,342,] { title:'^objednávka', format:'t' 
-//    func onchanged() {
-//      load_objednavka(this.key());
-//    }
-//  }
   button [342,15,,] { title:'[fa-copy] Udělej kopii' 
     func onclick() { var obj: number
     clear();
@@ -262,14 +250,17 @@ form _obj {
   field city  [left_oso+ 60,175,150,] { tag:'adr', title:'^obec' }
 
   // parametry zálohy 
-  check zal [10,top_zal-3,80,] { tag:'zal', title:'záloha' }
+//  check zal [10,top_zal-3,80,] { tag:'zal', title:'záloha' }
+  field zal_vystavena [10,top_zal,90,] { tag:'zal', type:'date', sql_pipe:'sql_date1', 
+      title:'^datum vystavení', format:'r'  }
   field zal_num [91,top_zal,60,] { tag:'zal', title:'^číslo faktury' }
   field zal_vs  [166,top_zal,50,] { tag:'zal', title:'^VS' }
   field zal_ss  [231,top_zal,33,] { tag:'zal', title:'^SS' }
-  field zal_kdo [422,top_zal,98,] { tag:'zal', title:'^kdo vyřizuje' }
-  field zal_cena [284,top_zal,50,] { tag:'zal', title:'^odhad ceny', format:'r' }
-  field zal_zal [354,top_zal,50,] { tag:'zal', title:'^záloha', format:'r'  }
-  field zal_platba [660,top_zal,90,] { type:'date', tag:'zal', title:'^datum úhrady', format:'r'  }
+  field zal_vyrizuje [422,top_zal,98,] { tag:'zal', title:'^kdo vyřizuje' }
+  field zal_castka [284,top_zal,50,] { tag:'zal', title:'^odhad ceny', format:'r' }
+  field zal_zaloha [354,top_zal,50,] { tag:'zal', title:'^záloha', format:'r'  }
+  field zal_zaplacena [660,top_zal,90,] { tag:'zal', type:'date', sql_pipe:'sql_date1', 
+      title:'^datum úhrady', format:'r'  }
 //  button [540,top_zal,,] { tag:'zal', title:'úprava' 
 //    func onclick() { 
 //      Rozpis.LoadOrder(the_order);
@@ -277,34 +268,53 @@ form _obj {
   button [534,top_zal,,] { tag:'zal', title:'[fa-shopping-basket] Zálohová faktura' 
     func onclick() { var x:object
       clear();
-      faktura_parm= php.dum_faktura({typ:'záloha',show:1,save:1,
+      faktura_parm= php.dum_faktura({typ:1,show:1,save:1,
           adresa:udaje.adresa,vzorec:udaje.vzorec_zal,
-          ic:udaje.fld.ic,dic:udaje.fld.dic,oddo:udaje.fld.oddo,rok:udaje.fld.rok,order:udaje.fld.order,
-          num:zal_num,zaloha:zal_zal,vs:zal_vs,ss:zal_ss,vyrizuje:zal_kdo});
-      A4.preview(faktura_parm.html,faktura_parm.ref);
-  }}
+          ic:udaje.fld.ic,dic:udaje.fld.dic,oddo:udaje.fld.oddo,rok:udaje.fld.rok,order:udaje.fld.id_order,
+          num:zal_num,zaloha:zal_zaloha,vs:zal_vs,ss:zal_ss,vyrizuje:zal_vyrizuje});
+      call_func('$.dbt.A4.preview',{html:faktura_parm.html,ref:faktura_parm.ref},
+          {block:&this,func:'ulozeno',title:'[fa-save] Uložit mezi faktury a posunout číslování'});
+    }
+    func ulozeno() { var ok:number
+      ok= php.dum_faktura_save(faktura_parm);
+      if (ok) {
+        load_objednavka(the_order);
+        alert(`Faktura byla uložena do seznamu faktur`);
+      }
+      else alert('... problém');
+    }
+  }
   // parametry vyúčování
-  check fakt [10,top_fakt-3,80,] { tag:'fakt', title:'vyúčtování' }
+//  check fakt_idf [10,top_fakt-3,80,] { tag:'fakt', title:'vyúčtování' }
+  field fakt_vystavena [10,top_fakt,90,] { tag:'fakt', type:'date', 
+      title:'^datum vystavení', format:'r'  }
   field fakt_num [91,top_fakt,60,] { tag:'fakt', title:'^číslo faktury' }
   field fakt_vs  [166,top_fakt,50,] { tag:'fakt', title:'^VS' }
   field fakt_ss  [231,top_fakt,33,] { tag:'fakt', title:'^SS' }
-  field fakt_kdo [422,top_fakt,98,] { tag:'fakt', title:'^kdo vyřizuje' }
-  field fakt_cena [284,top_fakt,50,] { tag:'fakt', title:'^cena', format:'r' }
-  field fakt_zal [354,top_fakt,50,] { tag:'fakt', title:'^záloha', format:'r'  }
-  field fakt_platba [660,top_fakt,90,] { tag:'fakt', type:'date', title:'^datum úhrady', format:'r'  }
-//  button [540,top_fakt,,] { tag:'fakt', title:'úprava' 
-//    func onclick() { 
-//      Rozpis.LoadOrder(the_order);
-//  }}
+  field fakt_castka [284,top_fakt,50,] { tag:'fakt', title:'^částka', format:'r' }
+  field fakt_zaloha [354,top_fakt,50,] { tag:'fakt', title:'^záloha', format:'r'  }
+  field fakt_vyrizuje [422,top_fakt,98,] { tag:'fakt', title:'^kdo vyřizuje' }
+  field fakt_zaplacena [660,top_fakt,90,] { tag:'fakt', type:'date', title:'^datum úhrady', format:'r'}
+//  field fakt_platba [660,top_fakt,90,] { tag:'fakt', type:'date', title:'^datum úhrady', format:'r'  }
   button [536,top_fakt,,] { tag:'fakt', title:'[fa-credit-card] Konečná faktura' 
     func onclick() { var x:object
       clear();
-      faktura_parm= php.dum_faktura({typ:'konečná',show:1,save:1,
+      faktura_parm= php.dum_faktura({typ:2,show:1,save:1,
           adresa:udaje.adresa,vzorec:udaje.vzorec_fak,
-          ic:udaje.fld.ic,dic:udaje.fld.dic,oddo:udaje.fld.oddo,rok:udaje.fld.rok,order:udaje.fld.order,
-          num:fakt_num,zaloha:fakt_zal,vs:fakt_vs,ss:fakt_ss,vyrizuje:fakt_kdo});
-      A4.preview(faktura_parm.html,faktura_parm.ref);
-  }}
+          ic:udaje.fld.ic,dic:udaje.fld.dic,oddo:udaje.fld.oddo,rok:udaje.fld.rok,order:udaje.fld.id_order,
+          num:fakt_num,zaloha:fakt_zaloha,vs:fakt_vs,ss:fakt_ss,vyrizuje:fakt_vyrizuje});
+      call_func('$.dbt.A4.preview',{html:faktura_parm.html,ref:faktura_parm.ref},
+          {block:&this,func:'ulozeno',title:'[fa-save] Uložit mezi faktury a posunout číslování'});
+    }
+    func ulozeno() { var ok:number
+      ok= php.dum_faktura_save(faktura_parm);
+      if (ok) {
+        load_objednavka(the_order);
+        alert(`Faktura byla uložena do seznamu faktur`);
+      }
+      else alert('... problém');
+    }
+  }
   
   form _pokoje [,,750,40] { style:'border:1px solid grey'
     // osoby
@@ -342,27 +352,6 @@ form _obj {
     check   q29 [PL+340, QT,14,] { title:'29', format:'c', css:'CheckT' }
     check   q9  [PL+360, QT,14,] { title:'9',  format:'c', css:'CheckT' }
     check   q10 [PL+380, QT,14,] { title:'10', format:'c', css:'CheckT' }
-  }
-  // preview 
-  panel A4 [,,660,955] { type:'popup', title:"Náhled PDF", style:'position:fixed'
-      style:"height:calc(100% - 100px);max-height:955px"
-    func preview(html,ref) {
-      paper.full= html; //Objednavka.obj.faktura_parm.html;
-      paper.ref= ref; //Objednavka.obj.faktura_parm.ref;
-      panel.modal(40,10);    
-    }
-    use paper: form [0,0,100,100] { //style:'overflow-y: auto;overflow-x:clip'
-      label full [0,0,662,936]
-      button [325,10,,] { title:'[fa-save] Uložit mezi faktury a posunout číslování', style:'z-index:2' 
-        func onclick() { 
-          clear();
-          php.dum_faktura_save(Objednavka.obj.faktura_parm);
-      }}
-      button [571,10,,] { title:'[fa-undo] Neukládat', style:'z-index:2'  
-        func onclick() { panel.hide(0); }
-      }
-      label ref [325,35,150,18] { style:"background:silver;color:black;font-size:12px;padding:3px 5px 0px 20px" }
-    }
   }
   
 // ==================================================================================> ÚPRAVY CENÍKU

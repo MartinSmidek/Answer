@@ -12,13 +12,13 @@
 func onfirstfocus() {
 //func onfocus() {
   var mn: object, it: ezer
-  mn= php.ds2_obj_menu('202401,202402,202403,202404,202405,202406');
+  mn= php.ds2_obj_menu('202401,202402,202403,202404,202405,202406,202407,202408,202409,202410,202411,202412');
   mo.attach_code(mn.cd);
 //  obj.load_objednavka();
 //  Upravy.Init();
   page.start();
 //  it= mo.part(mn.th);
-  it= mo.part('202405.2394'); // 4 dohody
+  it= mo.part('202405.2501'); // 4 dohody
   it.click(1);
 //  page.ucast.onclick();
 } // vytvoření menu pobytů
@@ -38,7 +38,7 @@ use uca: form dum._vyuctovani [30,50,,] { tag:'uca', style:'z-index:1' }
 # -----------------------------------------------------------------------------------------==> _page
 # formulář se záložkami
 use page:   form [ 10, 10,,] {
-  func start() { cvak(&ucast) } // inicializace - zobrazení první záložky
+  func start() { cvak(&objed) } // inicializace - zobrazení první záložky
   # ------------------------- obsluha záložek
   func cvak(i:ezer) {
     form.set_css('ae_butt_off','ae_butt_on','_'); 
@@ -63,17 +63,11 @@ group dum { include:'onload,db2/db2.dum'
     func Load(id_pobyt) {}
     func LoadOrder(id_order) {}
   }
-//  panel A4 { type:'popup' 
-//    func preview() {}
-//  }
   panel Objednavka { type:'popup' 
     func Show(id_akce) {} // umožní zvolit správnou objednávku
   }
   form _obj {
     func load_objednavka(id_order) {}
-    panel A4 { type:'popup', style:'position:fixed' 
-      func preview() {}
-    }
   }
   form _objednávka {}
   form _vyuctovani {

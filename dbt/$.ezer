@@ -329,6 +329,42 @@ menu dbt { type:'main', title:'db2', active:*, _sys:'*'
     b.raise('onrowclick',b.browse_seek(conc(f.key_id,'=',f.key)))
   }
 #endif
+# -------------------------------------------------------------------------------==> globální panely
+  // preview volané call_func('$.db2.A4.preview',parm,callback) 
+  // ... callbeck=0 pokud není zapotřebí
+  // ... callback={block,func,title} pokud se má zaobrazit tlačítko s title a zavolat block.func
+  panel A4 [,,660,955] { type:'popup', title:"Náhled PDF", style:'position:fixed'
+      style:"height:calc(100% - 100px);max-height:955px"
+    func preview(_parm:object,_callback:object) {  // callback= {block,func_name}
+      clear();
+      paper.parm= _parm;
+      if (_callback) {
+        paper.callback= _callback;
+        paper.display(1,'back');
+        paper.akce= _callback.title;
+        paper.ref= _parm.ref; 
+      }
+      else {
+        paper.display(0,'back');
+      }
+      paper.full= _parm.html;
+      panel.modal(40,10);    
+    }
+    use paper: form [0,0,100,100] { 
+      var parm:object, callback:object
+      label full [0,0,662,936]
+      button akce [20,10,,] {tag:'back', style:'z-index:2' 
+        func onclick() { var block:ezer
+          block= callback.block;
+          block.call(callback.func,parm);
+      }}
+      button [571,10,,] { title:'[fa-undo] Zpět', style:'z-index:2'  
+        func onclick() { panel.hide(0); }
+      }
+      label ref [20,35,150,] {tag:'back', 
+        style:"background:silver;color:black;font-size:12px;padding:3px 5px 0px 20px" }
+    }
+  }
 }
 // univerzální formulář pro levostranné menu
 form right [,,*,*] {
