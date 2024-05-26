@@ -416,7 +416,6 @@ $dum_faktura_fld= [
 function dum_kc($c) {
   return number_format($c,2,'.',' ').' Kč';
 }
-/** ===========================================================================================> DŮM **/
 # --------------------------------------------------------------------------------- dum faktura_save
 # par.typ = konečná | záloha
 function dum_faktura_save($parm) {
@@ -697,6 +696,7 @@ __HTML;
   return (object)array('html'=>$html_exp,'ref'=>$ref,'parm_json'=>json_encode($par),
       'parm'=>$par,'err'=>'');
 }
+/** ====================================================================================> OBJEDNÁVKY **/
 # ------------------------------------------------------------------------------ dum objednavka_akce
 # vrátí ID objednávky spojené s akcí nebo 0
 function dum_objednavka_akce($id_akce) { 
@@ -727,13 +727,17 @@ function dum_objednavka($id_order) {
   global $answer_db, $setkani_db;
   $x= (object)['err'=>'','rozpis'=>[],'cena'=>[],'fld'=>[]];
   // shromáždění údajů z objednávky
-  $f= select_object('state,fromday AS od,untilday AS do,note,rooms1,'
-      . 'adults,kids_10_15,kids_3_9,kids_3,board,'
-      . 'org,ic,name,firstname,dic,email,telephone,address,zip,city,'
-      . 'DATEDIFF(FROM_UNIXTIME(untilday),FROM_UNIXTIME(fromday)) AS noci,akce AS id_akce,'
-      . 'f.num,f.typ,f.vs,f.ss,f.zaloha,f.castka,f.vystavena,f.zaplacena,f.vyrizuje'
-      ,"$setkani_db.tx_gnalberice_order LEFT JOIN faktura AS f ON id_order=uid",
-      "uid=$id_order");
+  $rf= pdo_qry("
+      SELECT state,fromday AS od,untilday AS do,note,rooms1,adults,kids_10_15,kids_3_9,kids_3,board,
+        org,ic,name,firstname,dic,email,telephone,address,zip,city,
+        DATEDIFF(FROM_UNIXTIME(untilday),FROM_UNIXTIME(fromday)) AS noci,akce AS id_akce
+        -- ,f.num,f.typ,f.vs,f.ss,f.zaloha,f.castka,f.vystavena,p.datum AS zaplacena,f.vyrizuje
+      FROM $setkani_db.tx_gnalberice_order 
+      --  LEFT JOIN faktura AS f ON id_order=uid
+      --  LEFT JOIN join_platba AS pf USING (id_faktura) 
+      --  LEFT JOIN platba AS p USING (id_platba) 
+      WHERE uid=$id_order");
+  $f= pdo_fetch_object($rf);
   $f->id_order= $id_order;
   $f->rok= date('Y',$f->od);
   $f->oddo= datum_oddo(date('Y-m-d',$f->od),date('Y-m-d',$f->do));
@@ -761,8 +765,11 @@ function dum_objednavka($id_order) {
   $x->faktura= (object)['fact_idf'=>0,'zal_idf'=>0];
   $rf= pdo_qry("
     SELECT IFNULL(id_faktura,0) AS idf,typ,
-      rok,num,vs,ss,spec_text,vzorec,zaloha,castka,vystavena,zaplacena, vyrizuje 
-    FROM $answer_db.faktura WHERE id_order=$id_order AND typ IN (1,2)");
+      rok,num,f.vs,f.ss,spec_text,vzorec,zaloha,f.castka,vystavena,p.datum AS zaplacena, vyrizuje 
+    FROM faktura AS f
+      LEFT JOIN join_platba AS pf USING (id_faktura) 
+      LEFT JOIN platba AS p USING (id_platba) 
+    WHERE id_order=$id_order AND typ IN (1,2)",0,0,0,$answer_db);
   while ($rf && ($f= pdo_fetch_object($rf))) {
     foreach ($f as $fld=>$val) {
       if ($fld=='vystavena' || $fld=='zaplacena') $val= sql_date1($val);
@@ -1307,12 +1314,24 @@ end:
     // a vzorec ze sumy rozpisu
     $suma->vzorec= dum_rozpis2vzorec($suma->rozpis);
     // a fakturu z tabulky
-    $fakt= select_object("IFNULL(id_faktura,0) AS id_faktura,rok,num,typ,vs,ss,spec_text,vzorec,"
-          . "zaloha,castka,vystavena,zaplacena,vyrizuje",
-        'faktura',"'$suma->order'");
+    $fakt= null;
+//    $fakt= select_object("IFNULL(id_faktura,0) AS id_faktura,rok,num,typ,vs,ss,spec_text,vzorec,"
+//          . "zaloha,castka,vystavena,zaplacena,vyrizuje",
+//        'faktura',"'$suma->order'");
+
+    $rf= pdo_qry("
+      SELECT IFNULL(id_faktura,0) AS id_faktura,typ,
+        rok,num,f.vs,f.ss,spec_text,vzorec,zaloha,f.castka,zaloha,
+        vystavena,p.datum AS zaplacena, vyrizuje 
+      FROM faktura AS f
+        LEFT JOIN join_platba AS pf USING (id_faktura) 
+        LEFT JOIN platba AS p USING (id_platba) 
+      WHERE $x->cond"); //,0,0,0,$answer_db);
+    if ($rf) $fakt= pdo_fetch_object($rf);
+
     $suma->faktura= $fakt;
     debug($suma,"dum_browse_pobyt/suma = ");
-    $y= null;
+//    $y= null;
     return $suma;      
   }
   else { // browse
@@ -1857,8 +1876,9 @@ function ds2_fio($cmd) {
 //      $n= query("DELETE FROM platba WHERE YEAR(datum)=YEAR(NOW())");
 //      $y->html= "Vymazáno $n letošních plateb";
 //      break; // vymazání přiřazení letošních plateb
-    case 'join-ys': // ----------------------------------------------------- přiřazení plateb
-      $na= $nd= $nu= $nv= 0;
+    case 'join-ds': // ----------------------------------------------------- přiřazení plateb DS
+    case 'join-ys': // ----------------------------------------------------- přiřazení plateb YS
+      $na= $nd= $nu= $nv= $nf= 0;
       $omezeni= $cmd->platba
           ? "id_platba=$cmd->platba" 
           : "datum BETWEEN '$cmd->od' AND '$cmd->do'";
@@ -1873,7 +1893,7 @@ function ds2_fio($cmd) {
           $nu++;
         }
       }
-      // platby za akce
+      // platby za akce YS + DS
       $rp= pdo_qry("
         SELECT id_platba,id_osoba,id_pobyt,id_oso
         FROM platba AS p
@@ -1896,6 +1916,22 @@ function ds2_fio($cmd) {
         $o= $idoso==0;
         query("UPDATE platba SET ".($o ? "id_oso=$ido," : '')." id_pob=$idp, stav=6 WHERE id_platba=$id_platba");
         $na++;
+      }
+      // platby za faktury vydané DS
+      if ($cmd->fce=='join-ds') {
+        $rf= pdo_qry("
+          SELECT /* ------------------------------------------------ */
+            id_platba,id_faktura,id_order
+          FROM platba AS p 
+          JOIN faktura AS f USING (ss,vs,castka) 
+          LEFT JOIN join_platba AS j USING (id_platba,id_faktura)
+          WHERE ucet=2 AND ISNULL(j.id_faktura) 
+            AND $omezeni AND vystavena BETWEEN '$cmd->od' AND '$cmd->do'");
+        while ($rf && (list($idp,$idf,$ido,$yet)= pdo_fetch_array($rf))) {
+          query("INSERT INTO join_platba (id_platba,id_faktura) VALUE ($idp,$idf)");
+          query("UPDATE platba SET id_ord=$ido WHERE id_platba=$idp");
+          $nf++;
+        }
       }
       // dary
       $rp= pdo_qry("
@@ -1939,7 +1975,8 @@ function ds2_fio($cmd) {
           $nd++;
         }
       }
-      $y->html= "Rozpoznáno $na plateb za akce, $nd darů, $nu osob podle účtu, $nv podle VS a jména";
+      $y->html= "Rozpoznáno $na plateb za akce, $nd darů, $nu osob podle účtu, 
+          $nv podle VS a jména, $nf podle faktury";
       break; // přiřazení plateb
   }
 end:  

@@ -33,9 +33,13 @@ panel fakt {type:'right', title:"Faktury"
     }
   }
   use info: form _right [12,4,,] { 
-    view f:table faktura 
+    view f: table faktura 
+    view pf: table join_platba { join_type:'LEFT', join:'USING (id_faktura)' }
+    view p: table platba { join_type:'LEFT', join:'USING (id_platba)' }
     browse fak [10,50,,] { rows:10
       show id_faktura { data:f.id_faktura }
+      show idpf { data:pf.id_join_platba }
+      show idp { data:p.id_platba }
       show id_order { data:f.id_order }
       show id_pobyt { data:f.id_pobyt }
       show spec { data:f.spec_text }
@@ -47,13 +51,17 @@ panel fakt {type:'right', title:"Faktury"
       show zaloha [,,60,] { title:'záloha', data:f.zaloha, format:'r' }
       show castka [,,60,] { title:'částka', data:f.castka, format:'r' }
       show vystavena [,,70,] { title:'vystavená', data:f.vystavena, format:'r' }
-      show zaplacena [,,70,] { title:'zaplacená', data:f.zaplacena, format:'r' }
+      show zaplacena [,,70,] { title:'zaplacená', data:p.datum, format:'r' }
       // funkce
       func onrowclick() {
-        if (id_order) {
-          popis= 'Objednávka: ' + php.select("CONCAT(id_order,' - ',IF(note,note,prijmeni))",
-              'objednavka',`id_order=${id_order}`)
-        }
+//        if (id_order) {
+//          popis_o= 'Objednávka: ' + php.select("CONCAT(id_order,' - ',IF(note,note,prijmeni))",
+//              'objednavka',`id_order=${id_order}`)
+//        }
+//        if (id_pobyt) {
+//          popis_o= 'Pobyt: ' + php.select("CONCAT(id_pobyt,' - ',prijmeni))",
+//              'pobyt',`id_pobyt=${id_pobyt}`)
+//        }
       }
     }
     label popis [500,50,200,20]
@@ -214,6 +222,12 @@ table platba {
   text   upresneni
   text   komentar
 }
+table join_platba { key_id:'id_join_platba' 
+  number id_join_platba
+  number id_platba
+  number id_faktura
+  text spec
+}
 table faktura { key_id:'id_faktura'
   number id_faktura
   number rok
@@ -228,7 +242,7 @@ table faktura { key_id:'id_faktura'
   number zaloha
   number castka
   date vystavena { sql_pipe:'sql_date1'}
-  date zaplacena { sql_pipe:'sql_date1'}
+//  date zaplacena { sql_pipe:'sql_date1'}
   text vyrizuje
   text parm_json
   text html
