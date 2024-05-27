@@ -110,15 +110,26 @@ form _vyuctovani [,,623,400] {
   
   var faktura_parm: object, fakt_num=0, fakt_zal= 0, fakt_vs='', fakt_ss='', fakt_kdo=''
   button [260,310,,] {tag:'h', title:'[fa-credit-card] Faktura za rodinu' 
-    func onclick() { 
+    func onclick() { var udaje:object, uf:object, vyrizuje:text
       clear();
+      vyrizuje= sys('user','options','vyrizuje');
+      udaje= php.dum_objednavka(udaje_pobyt.order); uf= udaje.fld;
 //      alert(`Bude vystavena faktura pro ${hos.jmeno} ${hos.prijmeni} na ${celkem},- Kč `);
-      faktura_parm= php.dum_faktura({typ:'konečná',show:1,save:1,
-          adresa:udaje_pobyt.adresa,vzorec:vzorec_pob,
-          oddo:udaje_pobyt.oddo,rok:udaje_pobyt.rok,order:udaje_pobyt.order,num:0});
+      faktura_parm= php.dum_faktura({typ:2,show:1,save:1,
+          adresa:udaje_pobyt.adresa,vzorec:vzorec_pob,id_pobyt:udaje_pobyt.pobyt,
+          oddo:udaje_pobyt.oddo,rok:udaje_pobyt.rok,id_order:udaje_pobyt.order,
+          num:uf.fakt_num,zaloha:0,vs:uf.fakt_num,ss:udaje_pobyt.order,vyrizuje:vyrizuje});
       call_func('$.dbt.A4.preview',{html:faktura_parm.html,ref:faktura_parm.ref},
           {block:&this,func:'ulozeno',title:'[fa-save] Uložit mezi faktury a posunout číslování'});
     }
+  
+  
+//        faktura_parm= php.dum_faktura({typ:'záloha',show:1,save:1,
+//          adresa:udaje.adresa,vzorec:udaje.vzorec_zal,
+//          ic:udaje.fld.ic,dic:udaje.fld.dic,oddo:udaje.fld.oddo,rok:udaje.fld.rok,order:udaje.fld.id_order,
+//          num:zal_num,zaloha:zal_zal,vs:zal_vs,ss:zal_ss,vyrizuje:zal_kdo});
+
+  
     func ulozeno() { var ok:number
       ok= php.dum_faktura_save(faktura_parm);
       alert(ok ? `Faktura byla uložena do seznamu faktur` : '... problém');
@@ -190,7 +201,7 @@ form _obj {
       zal_vs= udaje.fld.fakt_num;
       zal_ss= id_order;
       zal_castka= udaje.cena.celkem;
-      form.enable(0,'zal'); 
+      form.enable(1,'zal'); 
     }
   }
   func helps() { var x:object, fld: ezer
@@ -266,11 +277,12 @@ form _obj {
 //      Rozpis.LoadOrder(the_order);
 //  }}
   button [534,top_zal,,] { tag:'zal', title:'[fa-shopping-basket] Zálohová faktura' 
-    func onclick() { var x:object
-      clear();
+    func onclick() { var uf:object
+      clear(); uf= udaje.fld;
       faktura_parm= php.dum_faktura({typ:1,show:1,save:1,
           adresa:udaje.adresa,vzorec:udaje.vzorec_zal,
-          ic:udaje.fld.ic,dic:udaje.fld.dic,oddo:udaje.fld.oddo,rok:udaje.fld.rok,order:udaje.fld.id_order,
+          ic:uf.ic,dic:uf.dic,oddo:uf.oddo,rok:uf.rok,
+          id_order:uf.id_order,
           num:zal_num,zaloha:zal_zaloha,vs:zal_vs,ss:zal_ss,vyrizuje:zal_vyrizuje});
       call_func('$.dbt.A4.preview',{html:faktura_parm.html,ref:faktura_parm.ref},
           {block:&this,func:'ulozeno',title:'[fa-save] Uložit mezi faktury a posunout číslování'});
@@ -297,11 +309,11 @@ form _obj {
   field fakt_zaplacena [660,top_fakt,90,] { tag:'fakt', type:'date', title:'^datum úhrady', format:'r'}
 //  field fakt_platba [660,top_fakt,90,] { tag:'fakt', type:'date', title:'^datum úhrady', format:'r'  }
   button [536,top_fakt,,] { tag:'fakt', title:'[fa-credit-card] Konečná faktura' 
-    func onclick() { var x:object
-      clear();
+    func onclick() { var uf:object
+      clear(); uf= udaje.fld;
       faktura_parm= php.dum_faktura({typ:2,show:1,save:1,
           adresa:udaje.adresa,vzorec:udaje.vzorec_fak,
-          ic:udaje.fld.ic,dic:udaje.fld.dic,oddo:udaje.fld.oddo,rok:udaje.fld.rok,order:udaje.fld.id_order,
+          ic:uf.ic,dic:uf.dic,oddo:uf.oddo,rok:uf.rok,id_order:uf.id_order,
           num:fakt_num,zaloha:fakt_zaloha,vs:fakt_vs,ss:fakt_ss,vyrizuje:fakt_vyrizuje});
       call_func('$.dbt.A4.preview',{html:faktura_parm.html,ref:faktura_parm.ref},
           {block:&this,func:'ulozeno',title:'[fa-save] Uložit mezi faktury a posunout číslování'});
