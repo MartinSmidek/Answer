@@ -9,7 +9,9 @@
 form _vyuctovani [,,623,400] {
   const left_hos=200
   var mode: text, // obj|pob
-  udaje_pobyt: object
+    udaje_pobyt: object,
+    id_pobyt: number
+  
   
   func load_obj(ido) {
     mode= 'obj';
@@ -20,12 +22,28 @@ form _vyuctovani [,,623,400] {
     pob.raise('onrowclick');
   }
   func load_pob(idp) { var x:object
-    mode= 'pob';
+    mode= 'pob'; id_pobyt= idp;
     form.property({aside:-left_hos},'h');
     pob.browse_init();
     pob.display(0);
     hos.browse_load(`id_pobyt=${idp}`);
     pob.Load(idp);
+  }
+  func refresh(idp,ids) {
+    switch (mode) {
+      case 'obj': pob.browse_refresh(); 
+        pob.browse_focus(idp); 
+        pob.onrowclick();
+        hos.browse_focus(ids); 
+        hos.onrowclick();
+        break;
+      case 'pob': 
+        hos.browse_refresh(); 
+        hos.browse_focus(ids); 
+        hos.onrowclick();
+        pob.Load(id_pobyt);
+        break;
+    }
   }
 //  field vzorec_p [20,40,150,] { title:'^parametry pobytu' }
   browse pob [0,80,,] { rows:10, key_id:'idp', 
@@ -41,6 +59,7 @@ form _vyuctovani [,,623,400] {
 //      clear();
       hos.browse_fill(cleni,'~');
       hos.onrowclick();
+      id_pobyt= idp;
       Load(idp);
     }
     func Load(idp) { 
@@ -61,32 +80,28 @@ form _vyuctovani [,,623,400] {
       zamek_ikona= replace_fa(zamek ? '[fa-lock fa-red]' : '[fa-unlock]');
       js.set_elem_backround(&vzorec,{background: zamek ? '#ff7777' : '#ffffff'});
       php.query(`UPDATE spolu SET ds_vzorec="${zamek?vzorec:''}" WHERE id_spolu=${hos.ids}`);
-      switch (mode) {
-        case 'obj': pob.browse_refresh(); 
-          pob.browse_focus(curr_pobyt); 
-          pob.onrowclick();
-          hos.browse_focus(curr_spolu); 
-          hos.onrowclick();
-          break;
-        case 'pob': 
-          hos.browse_refresh(); 
-          hos.browse_focus(curr_spolu); 
-          hos.onrowclick();
-          break;
-      }
+      refresh(curr_pobyt,curr_spolu);
     }
   }
   field vzorec_pob [left_hos+35,20,469,] {tag:'h', title:'^položky pro účtování ceny pobytu rodiny', format:'d' }
-  field vzorec [left_hos+35,55,469,] {tag:'h', title:'^položky pro účtování ceny pobytu hosta' }
+  field vzorec [left_hos+35,55,400,] {tag:'h', title:'^položky pro účtování ceny pobytu hosta' }
+  check dotace [left_hos+450, 55, 100,] {tag:'h', title:'dotace'
+    func onchange() { var curr_pobyt:number, curr_spolu:number
+      php.query(`UPDATE spolu SET ds_dotace="${dotace}" WHERE id_spolu=${hos.ids}`);
+      if (mode=='obj') curr_pobyt= pob.idp;
+      curr_spolu= hos.ids;
+      refresh(curr_pobyt,curr_spolu);
+  }}
   browse hos [left_hos+10,80,,] {tag:'h', rows:10, key_id:'ids', 
       optimize:{ask:'dum_browse_pobyt'}
     show ids
     show prijmeni [,,90,] { title:'příjmení', css_cell:'zamek_spolu,0:,1:cerveny' }
-    show jmeno [,,60,] { title:'jméno' }
+    show jmeno [,,60,] { title:'jméno', css_cell:'dotace_spolu,0:,1:zeleny' }
     show vek [,,40,] { title:'věk', format:'c' }
     show noci [,,40,] { title:'noci', format:'c' }
     show pokoj [,,30,] { title:'pok.', format:'c' }
     show vzorec_spolu
+    show dotace_spolu [,,30,] { title:'dotace', format:'c' }
     show cena [,,50,] { title:'cena = ', format:'r' }
     show ubyt [,,40,] { title:'ubyt.', format:'r' }
     show str  [,,40,] { title:'str.', format:'r' }
@@ -96,17 +111,18 @@ form _vyuctovani [,,623,400] {
     func onrowclick() {
 //      clear();
       vzorec= vzorec_spolu;
+      dotace= dotace_spolu;
       zamek= zamek_spolu;
       vzorec.enable(!zamek);
       zamek_ikona= replace_fa(zamek ? '[fa-lock fa-red]' : '[fa-unlock]');
       js.set_elem_backround(&vzorec,{background: zamek ? '#ff7777' : '#ffffff'});
     }
   }
-  field ubyt   [390, 310, 50,] {tag:'h', title:'^ubytování' format:'r' }
-  field stra   [450, 310, 50,] {tag:'h', title:'^stravování' format:'r' }
-  field popl   [510, 310, 50,] {tag:'h', title:'^poplatek' format:'r' }
-  field prog   [570, 310, 50,] {tag:'h', title:'^program' format:'r' }
-  field celkem [630, 310, 50,] {tag:'h', title:'^CELKEM' format:'r' }
+  field celkem [390, 310, 50,] {tag:'h', title:'^CELKEM' format:'r' }
+  field ubyt   [450, 310, 50,] {tag:'h', title:'^ubytování' format:'r' }
+  field stra   [510, 310, 50,] {tag:'h', title:'^stravování' format:'r' }
+  field popl   [570, 310, 50,] {tag:'h', title:'^poplatek' format:'r' }
+  field prog   [630, 310, 50,] {tag:'h', title:'^program' format:'r' }
   
   var faktura_parm: object, fakt_num=0, fakt_zal= 0, fakt_vs='', fakt_ss='', fakt_kdo=''
   button [260,310,,] {tag:'h', title:'[fa-credit-card] Faktura za rodinu' 
@@ -114,7 +130,10 @@ form _vyuctovani [,,623,400] {
       clear();
       vyrizuje= sys('user','options','vyrizuje');
       udaje= php.dum_objednavka(udaje_pobyt.order); uf= udaje.fld;
-//      alert(`Bude vystavena faktura pro ${hos.jmeno} ${hos.prijmeni} na ${celkem},- Kč `);
+      if (udaje_pobyt.neubytovani) {
+        alert(`Fakturu není možné vystavit, protože hosté ${udaje_pobyt.neubytovani} nejsou ubytováni`); 
+        return;
+      }
       faktura_parm= php.dum_faktura({typ:2,show:1,save:1,
           adresa:udaje_pobyt.adresa,vzorec:vzorec_pob,id_pobyt:udaje_pobyt.pobyt,
           oddo:udaje_pobyt.oddo,rok:udaje_pobyt.rok,id_order:udaje_pobyt.order,
@@ -179,6 +198,9 @@ form _obj {
     js.rooms_check(udaje.fld.rooms1,plan,'q');
     helps();
     // vyúčtování celé objednávky
+    vyuzito= 'Využito ... ' + (udaje.ucet.neubytovani 
+      ? `<span style='background:yellow'>&nbsp; ${udaje.ucet.neubytovani} </span>&nbsp; nejsou ubytováni` 
+      : '');
     js.rooms_check(udaje.ucet.pokoje,stav,'q');
     copy_by_name(udaje.ucet.hoste,stav); 
     copy_by_name(udaje.ucet.rozpis,stav); 
@@ -194,14 +216,14 @@ form _obj {
       fakt_zaloha= zal_zaloha;
       fakt_castka= udaje.ucet.celkem;
       form.enable(1,'fakt'); 
-    }
-    if (udaje.faktura.zal_idf==0) {
-      // zálohová faktura
-      zal_num= udaje.fld.fakt_num;
-      zal_vs= udaje.fld.fakt_num;
-      zal_ss= id_order;
-      zal_castka= udaje.cena.celkem;
-      form.enable(1,'zal'); 
+      if (udaje.faktura.zal_idf==0) {
+        // zálohová faktura
+        zal_num= udaje.fld.fakt_num;
+        zal_vs= udaje.fld.fakt_num;
+        zal_ss= id_order;
+        zal_castka= udaje.cena.celkem;
+        form.enable(1,'zal'); 
+      }
     }
   }
   func helps() { var x:object, fld: ezer
@@ -245,7 +267,7 @@ form _obj {
   label [10,206,100,10] { title:'Objednáno ...' }  
   use plan: form _pokoje [0,220,,]
           
-  label [10,266,100,10] { title:'Využito ...' }  
+  label vyuzito [10,266,*,10] { title:'Využito ...' }  
   use stav: form _pokoje [0,280,,]
   
   // kontakt na objednatele
@@ -264,9 +286,9 @@ form _obj {
 //  check zal [10,top_zal-3,80,] { tag:'zal', title:'záloha' }
   field zal_vystavena [10,top_zal,90,] { tag:'zal', type:'date', sql_pipe:'sql_date1', 
       title:'^datum vystavení', format:'r'  }
-  field zal_num [91,top_zal,60,] { tag:'zal', title:'^číslo faktury' }
-  field zal_vs  [166,top_zal,50,] { tag:'zal', title:'^VS' }
-  field zal_ss  [231,top_zal,33,] { tag:'zal', title:'^SS' }
+  field zal_num [111,top_zal,40,] { tag:'zal', title:'^číslo faktury', format:'r'  }
+  field zal_vs  [166,top_zal,50,] { tag:'zal', title:'^VS', format:'r'  }
+  field zal_ss  [231,top_zal,33,] { tag:'zal', title:'^SS', format:'r'  }
   field zal_vyrizuje [422,top_zal,98,] { tag:'zal', title:'^kdo vyřizuje' }
   field zal_castka [284,top_zal,50,] { tag:'zal', title:'^odhad ceny', format:'r' }
   field zal_zaloha [354,top_zal,50,] { tag:'zal', title:'^záloha', format:'r'  }
@@ -279,6 +301,9 @@ form _obj {
   button [534,top_zal,,] { tag:'zal', title:'[fa-shopping-basket] Zálohová faktura' 
     func onclick() { var uf:object
       clear(); uf= udaje.fld;
+      if (!zal_zaloha) {
+        alert('Je zapotřebí stanovit výši zálohy'); return;
+      }
       faktura_parm= php.dum_faktura({typ:1,show:1,save:1,
           adresa:udaje.adresa,vzorec:udaje.vzorec_zal,
           ic:uf.ic,dic:uf.dic,oddo:uf.oddo,rok:uf.rok,
@@ -300,9 +325,9 @@ form _obj {
 //  check fakt_idf [10,top_fakt-3,80,] { tag:'fakt', title:'vyúčtování' }
   field fakt_vystavena [10,top_fakt,90,] { tag:'fakt', type:'date', 
       title:'^datum vystavení', format:'r'  }
-  field fakt_num [91,top_fakt,60,] { tag:'fakt', title:'^číslo faktury' }
-  field fakt_vs  [166,top_fakt,50,] { tag:'fakt', title:'^VS' }
-  field fakt_ss  [231,top_fakt,33,] { tag:'fakt', title:'^SS' }
+  field fakt_num [111,top_fakt,40,] { tag:'fakt', title:'^číslo faktury', format:'r' }
+  field fakt_vs  [166,top_fakt,50,] { tag:'fakt', title:'^VS', format:'r'  }
+  field fakt_ss  [231,top_fakt,33,] { tag:'fakt', title:'^SS', format:'r'  }
   field fakt_castka [284,top_fakt,50,] { tag:'fakt', title:'^částka', format:'r' }
   field fakt_zaloha [354,top_fakt,50,] { tag:'fakt', title:'^záloha', format:'r'  }
   field fakt_vyrizuje [422,top_fakt,98,] { tag:'fakt', title:'^kdo vyřizuje' }
@@ -311,6 +336,10 @@ form _obj {
   button [536,top_fakt,,] { tag:'fakt', title:'[fa-credit-card] Konečná faktura' 
     func onclick() { var uf:object
       clear(); uf= udaje.fld;
+      if (udaje.ucet.neubytovani) {
+        alert(`Fakturu není možné vystavit, protože hosté ${udaje.ucet.neubytovani} nejsou ubytováni`); 
+        return;
+      }
       faktura_parm= php.dum_faktura({typ:2,show:1,save:1,
           adresa:udaje.adresa,vzorec:udaje.vzorec_fak,
           ic:uf.ic,dic:uf.dic,oddo:uf.oddo,rok:uf.rok,id_order:uf.id_order,
