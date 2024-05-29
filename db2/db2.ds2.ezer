@@ -37,7 +37,7 @@ panel fakt {type:'right', title:"Faktury"
     view f: table faktura 
     view pf: table join_platba { join_type:'LEFT', join:'USING (id_faktura)' }
     view p: table platba { join_type:'LEFT', join:'USING (id_platba)' }
-    browse fak [10,50,,] { rows:10
+    browse fak [0,50,,] { rows:10
       show idf { data:f.id_faktura }
       show idpf { data:pf.id_join_platba }
       show idp { data:p.id_platba }
@@ -46,7 +46,8 @@ panel fakt {type:'right', title:"Faktury"
       show spec { data:f.spec_text }
       show rok [,,35,] { title:'rok', data:f.rok, format:'r' }
       show num [,,25,] { title:'č.', data:f.num, format:'rs-' }
-      show typ [,,25,] { title:'typ', expr:"IF(f.typ=1,'Z','K')", format:'c' }
+      show typ [,,25,] { title:'typ', expr:"IF(f.typ=1,'Z','V')", format:'c' }
+      show strucna [,,25,] { title:'stručná', expr:"IF(f.strucna=1,'S','')", format:'c' }
       show vs [,,50,] { title:'VS', data:f.vs, format:'r' }
       show ss [,,50,] { title:'SS', data:f.ss, format:'r' }
       show zaloha [,,60,] { title:'záloha', data:f.zaloha, format:'r' }
@@ -67,8 +68,8 @@ panel fakt {type:'right', title:"Faktury"
 //        }
       }
     }
-    label popis [500,50,*,40]
-    button [500,80,,] { title:'Zobrazit fakturu' 
+    label popis [520,50,*,40]
+    button [520,80,,] { title:'Zobrazit fakturu' 
       func onclick() { var html:text
         html= php.select('html','faktura',`id_faktura=${fak.idf}`);
         call_func('$.dbt.A4.preview',{html:html},0);
