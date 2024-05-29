@@ -603,7 +603,7 @@ function dum_vzorec_cena($vzorec,$rok_ceniku) {
       $cena['polozka'][$zaco]= (object)['polozka'=>$d->polozka,'cena'=>$kc,'dph'=>$d->dph];
       $cena['druh2'][$d->druh]['cena']+= $kc * $pocet;
       $cena['druh2'][$d->druh]['dph']+= $dph;
-      $cena['druh2'][$d->druh]['sazba']+= $d->dph;
+      $cena['druh2'][$d->druh]['sazba']= $d->dph;
     }
     if ($s) {
       $pocet= $s;
@@ -620,7 +620,7 @@ function dum_vzorec_cena($vzorec,$rok_ceniku) {
       $cena['polozka']["$zaco"]= (object)['polozka'=>"$d->polozka ... dotovaná cena",'cena'=>$kc,'dph'=>$d->dph];
       $cena['druh2'][$d->druh]['cena']+= $kc * $pocet;
       $cena['druh2'][$d->druh]['dph']+= $dph;
-      $cena['druh2'][$d->druh]['sazba']+= $d->dph;
+      $cena['druh2'][$d->druh]['sazba']= $d->dph;
     }
   }
   return $cena;
