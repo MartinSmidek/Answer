@@ -1493,8 +1493,5 @@ group dum { include:'onload,db2/db2.dum'
     func load_obj(ido){}
     func load_pob(idp){}
   }
-//  panel A4 { type:'popup'
-//    func preview(html,ref) {}
-//  }
 }
 

@@ -1,4 +1,5 @@
 #pragma library
+const root='db2'
 # ------------------------------------------------------------------------------------------------ #
 # Systém Ans(w)er - modul Dům setkání - verze 2                                                    #
 #                                                                                                  #
@@ -22,9 +23,10 @@ panel dum2 {type:'right', title:"Objednávky", include:'onload,db2.ds2.dum2' ski
 panel hoste {type:'right', title:"Kniha hostů"} 
 # ======================================================================================> OBJEDNÁVKY
 panel fakt {type:'right', title:"Faktury"
+  func onfocus() { m.roky.i.click(); }
   menu m {type:'left', active:*
     menu roky {title:'Kniha faktur',type:'group'
-      item {title:'Letos vystavené faktury',  par:{rok:2024} }
+      item i {title:'Letos vystavené faktury',  par:{rok:2024} }
     }
     func onclick (i:ezer) {
       rok= i.par.rok;
@@ -33,35 +35,47 @@ panel fakt {type:'right', title:"Faktury"
     }
   }
   use info: form _right [12,4,,] { 
-    view f:table faktura 
-    browse fak [10,50,,] { rows:10
-      show id_faktura { data:f.id_faktura }
+    view f: table faktura 
+    view pf: table join_platba { join_type:'LEFT', join:'USING (id_faktura)' }
+    view p: table platba { join_type:'LEFT', join:'USING (id_platba)' }
+    browse fak [0,50,,] { rows:10
+      show idf { data:f.id_faktura }
+      show idpf { data:pf.id_join_platba }
+      show idp { data:p.id_platba }
       show id_order { data:f.id_order }
       show id_pobyt { data:f.id_pobyt }
       show spec { data:f.spec_text }
       show rok [,,35,] { title:'rok', data:f.rok, format:'r' }
-      show num [,,25,] { title:'č.', data:f.num, format:'r' }
-      show typ [,,25,] { title:'typ', expr:"IF(f.typ=1,'Z','K')", format:'c' }
+      show num [,,25,] { title:'č.', data:f.num, format:'rs-' }
+      show typ [,,25,] { title:'typ', expr:"IF(f.typ=1,'Z','V')", format:'c' }
+      show strucna [,,25,] { title:'stručná', expr:"IF(f.strucna=1,'S','')", format:'c' }
       show vs [,,50,] { title:'VS', data:f.vs, format:'r' }
       show ss [,,50,] { title:'SS', data:f.ss, format:'r' }
       show zaloha [,,60,] { title:'záloha', data:f.zaloha, format:'r' }
       show castka [,,60,] { title:'částka', data:f.castka, format:'r' }
       show vystavena [,,70,] { title:'vystavená', data:f.vystavena, format:'r' }
-      show zaplacena [,,70,] { title:'zaplacená', data:f.zaplacena, format:'r' }
+      show zaplacena [,,70,] { title:'zaplacená', data:p.datum, format:'r' }
       // funkce
-      func onrowclick() {
-        if (id_order) {
-          popis= 'Objednávka: ' + php.select("CONCAT(id_order,' - ',IF(note,note,prijmeni))",
-              'objednavka',`id_order=${id_order}`)
-        }
+      func onrowclick() { var x:object
+        x= php.dum_faktura_info(idf);
+        popis= x.popis;
+//        if (id_order) {
+//          popis_o= 'Objednávka: ' + php.select("CONCAT(id_order,' - ',IF(note,note,prijmeni))",
+//              'objednavka',`id_order=${id_order}`)
+//        }
+//        if (id_pobyt) {
+//          popis_o= 'Pobyt: ' + php.select("CONCAT(id_pobyt,' - ',prijmeni))",
+//              'pobyt',`id_pobyt=${id_pobyt}`)
+//        }
       }
     }
-    label popis [500,50,200,20]
-    button [500,80,,] { title:'Zobrazit fakturu' 
-      func onclick(){
-//        A4.preview({full:'AHOJ',ref:'...'});
-    }}
-  
+    label popis [520,50,*,40]
+    button [520,80,,] { title:'Zobrazit fakturu' 
+      func onclick() { var html:text
+        html= php.select('html','faktura',`id_faktura=${fak.idf}`);
+        call_func(`$.${root}.A4.preview`,{html:html},0);
+      }
+    }
   }
 }
 # ============================================================================================> CENY
@@ -213,6 +227,12 @@ table platba {
   text   upresneni
   text   komentar
 }
+table join_platba { key_id:'id_join_platba' 
+  number id_join_platba
+  number id_platba
+  number id_faktura
+  text spec
+}
 table faktura { key_id:'id_faktura'
   number id_faktura
   number rok
@@ -227,7 +247,7 @@ table faktura { key_id:'id_faktura'
   number zaloha
   number castka
   date vystavena { sql_pipe:'sql_date1'}
-  date zaplacena { sql_pipe:'sql_date1'}
+//  date zaplacena { sql_pipe:'sql_date1'}
   text vyrizuje
   text parm_json
   text html

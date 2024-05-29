@@ -1047,12 +1047,12 @@ form _page  [,,623,20] {
   label plt [137,0,105,20] {tag:'p', _sys:'*', title:'<b>Platba za akci</b>', format:'c',
     var last=0
     func onclick() {
-      if (neni_ulozeno()||(!the_cenik&&!the_cena)) return; // warning
+      if (neni_ulozeno()||(!the_cenik&&!the_cena&&the_org==1)) return; // warning
       tags(&this,'h','z|o|f|d');
       zalozka= 'plat';
       panel.display(0,'evid|cmd|pla|cmdp|alb|docu|act');
       evid.Display(0); 
-      if (the_cenik==1) {
+      if (the_org==2 || the_cenik==1) {
         panel.display(1,'pla|cmdp');
         pla.display(gt(the_cenik,0),'cenik'); // omezení výpisu pokud není definován ceník
         pla.display(eq(the_soubeh,1),'deti'); // platby za děti
