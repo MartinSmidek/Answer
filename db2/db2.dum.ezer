@@ -189,26 +189,27 @@ form _obj {
       objs_count: number
   // funkce
   func load_objednavka(id_order) { var x:object
-    the_order= id_order;
-    form.init(); plan.init(); stav.init();
+    the_order= id_order; 
+    form.key(the_order); // kvůli copy_by_name - viz jeho popis
+    form.init(); plan.Init('plan'); stav.Init('stav');
     udaje= php.dum_objednavka(id_order);
     the_akce= udaje.fld.id_akce;
-    copy_by_name(udaje.fld,form); 
-    copy_by_name(udaje.fld,plan); 
-    copy_by_name(udaje.cena.rozpis,plan); 
+    copy_by_name(udaje.fld,form,'',1); 
+    copy_by_name(udaje.fld,plan,'',1); 
+    copy_by_name(udaje.cena.rozpis,plan,'',1); 
     // označení objednaných pokojů
-    js.rooms_check(udaje.fld.rooms1,plan,'q');
+    js.rooms_check(plan.rooms1,plan,'q');
     helps();
     // vyúčtování celé objednávky
     vyuzito= 'Využito ... ' + (udaje.ucet.neubytovani 
       ? `<span style='background:yellow'>&nbsp; ${udaje.ucet.neubytovani} </span>&nbsp; nejsou ubytováni` 
       : '');
     js.rooms_check(udaje.ucet.pokoje,stav,'q');
-    copy_by_name(udaje.ucet.hoste,stav); 
-    copy_by_name(udaje.ucet.rozpis,stav); 
+    copy_by_name(udaje.ucet.hoste,stav,'',1); 
+    copy_by_name(udaje.vyuziti,stav,'',1); 
     // a faktur
     echo(debug(udaje.faktura,'udaje.faktura'));
-    copy_by_name(udaje.faktura,form); 
+    copy_by_name(udaje.faktura,form,'',1); 
     form.enable(0,'zal|fakt'); 
     if (udaje.faktura.fakt_idf==0) {
       // konečná faktura
@@ -253,15 +254,21 @@ form _obj {
 
   select board [4,175,117,] {tag:'obj', title:'^typ stravy' type:'map', options:ds_strava.hodnota }
   button [320,175,,] { tag:'zal', title:'[fa-save] Uložit změny' 
-    func onclick() { var saved:object
+    func onclick() { var saved:object, elem:ezer, rooms:text
       if (objs_count>1 && (od.changed()||do.changed())) {
         alert('pokud nastala změna v datu příjezdu či odjezdu je zapotřebí pobyt "osamostatnit"');
         return;
       }
       saved= {};
-      copy_by_name(form,saved,'obj|adr',1); // vyber změněné s tag='obj!
+      rooms= js.dum_rooms_get(plan,'q');
+      if (plan.rooms1!=rooms) saved.rooms1= rooms;
+      copy_by_name(form,saved,'obj|adr',1); // vyber změněné 
+      copy_by_name(plan,saved,'obj',1); // vyber změněné 
       echo(debug(saved));
-      if (array_length(saved)>0) php.dum_objednavka_save(the_order,saved);
+      if (array_length(saved)>0) {
+        php.dum_objednavka_save(the_order,saved);
+        load_objednavka(the_order);
+      }
       else warning("nebyla provedena žádná změna")
   }}
 
@@ -363,41 +370,50 @@ form _obj {
   }
   
   form _pokoje [,,750,40] { style:'border:1px solid grey'
+//    func onchanged(x:ezer) { echo(`změna ${x._id}=${x.get()}`); }
+    func Init(ps) {
+      form.init();
+      switch (ps) {
+        case 'plan': form.display(0,'no'); form.enable(1,'obj|r'); break;
+        case 'stav': form.display(1,'no'); form.set_css('notouch','','r|obj|comp|no'); break;
+      }
+    }
     // osoby
-    field adults      [10,15,25,] { title:'^dospělí, děti:', format:'c' }
-    field kids_10_15  [69,15,23,] { title:'^ 10+ ', format:'c' }
-    field kids_3_9    [97,15,23,] { title:'^ 9 - 3 ', format:'c' }
-    field kids_3      [124,15,23,] { title:'^ 3- ', format:'c' }
-    // strava
-    field strava_CC [160,15,24,] { title:'^penze', format:'c', help:'plná penze' }
-    field strava_CD [190,15,24,] { title:'^.../2', format:'c', help:'plná penze - dětská porce'  }
-    field strava_PC [220,15,24,] { title:'^polo.', format:'c', help:'polopenze'  }
-    field strava_PD [250,15,24,] { title:'^.../2', format:'c', help:'polopenze - dětská porce'  }
-    // zvíře, postýlka, ...
-    field zvire    [285,15,13,] { title:'^zvíře', format:'c', help:'příplatek za noc se zvířetem' }
-    field postylka [312,15,13,] { title:'^pos.', format:'c', help:'zapůjčení postýlky' }
+    field adults      [10,15,25,] {tag:'obj', title:'^dospělí, děti:', format:'c' }
+    field kids_10_15  [69,15,23,] {tag:'obj', title:'^ 10+ ', format:'c' }
+    field kids_3_9    [97,15,23,] {tag:'obj', title:'^ 9 - 3 ', format:'c' }
+    field kids_3      [124,15,23,] {tag:'obj', title:'^ 3- ', format:'c' }
+    // strava - vypočítá se... v plan disabled
+    field strava_CC [160,15,24,] {tag:'comp', title:'^penze', format:'c', help:'plná penze' }
+    field strava_CD [190,15,24,] {tag:'comp', title:'^.../2', format:'c', help:'plná penze - dětská porce'  }
+    field strava_PC [220,15,24,] {tag:'comp', title:'^polo.', format:'c', help:'polopenze'  }
+    field strava_PD [250,15,24,] {tag:'comp', title:'^.../2', format:'c', help:'polopenze - dětská porce'  }
+    // zvíře, postýlka, ... v plan hidden
+    field zvire    [285,15,13,] {tag:'no', title:'^zvíře', format:'c', help:'příplatek za noc se zvířetem' }
+    field postylka [312,15,13,] {tag:'no',  title:'^pos.', format:'c', help:'zapůjčení postýlky' }
     // pokoje
     const PL=340, QT=6
-    check   q1  [PL+  0, QT,14,] { title:'1',  format:'c', css:'CheckT' }
-    check   q2  [PL+ 20, QT,14,] { title:'2',  format:'c', css:'CheckT' }
-    check   q11 [PL+ 40, QT,14,] { title:'11', format:'c', css:'CheckT' }
-    check   q12 [PL+ 60, QT,14,] { title:'12', format:'c', css:'CheckT' }
-    check   q13 [PL+ 80, QT,14,] { title:'13', format:'c', css:'CheckT' }
-    check   q14 [PL+100, QT,14,] { title:'14', format:'c', css:'CheckT' }
-    check   q15 [PL+120, QT,14,] { title:'15', format:'c', css:'CheckT' }
-    check   q16 [PL+140, QT,14,] { title:'16', format:'c', css:'CheckT' }
-    check   q17 [PL+160, QT,14,] { title:'17', format:'c', css:'CheckT' }
-    check   q21 [PL+180, QT,14,] { title:'21', format:'c', css:'CheckT' }
-    check   q22 [PL+200, QT,14,] { title:'22', format:'c', css:'CheckT' }
-    check   q23 [PL+220, QT,14,] { title:'23', format:'c', css:'CheckT' }
-    check   q24 [PL+240, QT,14,] { title:'24', format:'c', css:'CheckT' }
-    check   q25 [PL+260, QT,14,] { title:'25', format:'c', css:'CheckT' }
-    check   q26 [PL+280, QT,14,] { title:'26', format:'c', css:'CheckT' }
-    check   q27 [PL+300, QT,14,] { title:'27', format:'c', css:'CheckT' }
-    check   q28 [PL+320, QT,14,] { title:'28', format:'c', css:'CheckT' }
-    check   q29 [PL+340, QT,14,] { title:'29', format:'c', css:'CheckT' }
-    check   q9  [PL+360, QT,14,] { title:'9',  format:'c', css:'CheckT' }
-    check   q10 [PL+380, QT,14,] { title:'10', format:'c', css:'CheckT' }
+    field rooms1
+    check   q1  [PL+  0, QT,14,] {tag:'r', title:'1',  format:'c', css:'CheckT' }
+    check   q2  [PL+ 20, QT,14,] {tag:'r', title:'2',  format:'c', css:'CheckT' }
+    check   q11 [PL+ 40, QT,14,] {tag:'r', title:'11', format:'c', css:'CheckT' }
+    check   q12 [PL+ 60, QT,14,] {tag:'r', title:'12', format:'c', css:'CheckT' }
+    check   q13 [PL+ 80, QT,14,] {tag:'r', title:'13', format:'c', css:'CheckT' }
+    check   q14 [PL+100, QT,14,] {tag:'r', title:'14', format:'c', css:'CheckT' }
+    check   q15 [PL+120, QT,14,] {tag:'r', title:'15', format:'c', css:'CheckT' }
+    check   q16 [PL+140, QT,14,] {tag:'r', title:'16', format:'c', css:'CheckT' }
+    check   q17 [PL+160, QT,14,] {tag:'r', title:'17', format:'c', css:'CheckT' }
+    check   q21 [PL+180, QT,14,] {tag:'r', title:'21', format:'c', css:'CheckT' }
+    check   q22 [PL+200, QT,14,] {tag:'r', title:'22', format:'c', css:'CheckT' }
+    check   q23 [PL+220, QT,14,] {tag:'r', title:'23', format:'c', css:'CheckT' }
+    check   q24 [PL+240, QT,14,] {tag:'r', title:'24', format:'c', css:'CheckT' }
+    check   q25 [PL+260, QT,14,] {tag:'r', title:'25', format:'c', css:'CheckT' }
+    check   q26 [PL+280, QT,14,] {tag:'r', title:'26', format:'c', css:'CheckT' }
+    check   q27 [PL+300, QT,14,] {tag:'r', title:'27', format:'c', css:'CheckT' }
+    check   q28 [PL+320, QT,14,] {tag:'r', title:'28', format:'c', css:'CheckT' }
+    check   q29 [PL+340, QT,14,] {tag:'r', title:'29', format:'c', css:'CheckT' }
+    check   q9  [PL+360, QT,14,] {tag:'r', title:'9',  format:'c', css:'CheckT' }
+    check   q10 [PL+380, QT,14,] {tag:'r', title:'10', format:'c', css:'CheckT' }
   }
   
 // ==================================================================================> ÚPRAVY CENÍKU

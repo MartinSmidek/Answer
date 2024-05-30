@@ -161,9 +161,9 @@ function dum_faktura_save($parm) {
   $jso= $html= '';
   $jso= pdo_real_escape_string($parm->parm_json); 
   $htm= pdo_real_escape_string($parm->html); 
-  $ok= query("INSERT INTO faktura (rok,num,typ,vs,ss,id_order,id_pobyt,zaloha,castka,"
+  $ok= query("INSERT INTO faktura (rok,num,typ,strucna,vs,ss,id_order,id_pobyt,zaloha,castka,"
       . "vzorec,vyrizuje,vystavena,parm_json,html) VALUES "
-      . "($p->rok,$p->num,'$p->typ','$p->vs','$p->ss','$order','$pobyt','$p->zaloha','$p->celkem',"
+      . "($p->rok,$p->num,'$p->typ','$p->strucna','$p->vs','$p->ss','$order','$pobyt','$p->zaloha','$p->celkem',"
       . "'$p->vzorec','$p->vyrizuje','$p->vystavena','$jso',\"$htm\")");
 end:
   return $ok;
@@ -461,20 +461,36 @@ function dum_objednavka_delete($id_order) {
 # ------------------------------------------------------------------------------ dum objednavka_save
 # objednávka pobytu
 function dum_objednavka_save($id_order,$changed) { 
-  global $setkani_db;
-  $set= "SET "; $del= '';
+  global $answer_db, $setkani_db;
+  $set= ""; $del= '';
+  $set_akce= ""; $del_akce= '';
+  $zmena_data= 0;
   foreach($changed as $fld=>$val) {
+    if (in_array($fld,['od','do'])) {
+      $ymd= sql_date1($val,1);
+      $set_akce.= $del_akce.($fld=='od' ? 'datum_od' : 'datum_do')."='$ymd'";
+      $del_akce= ',';
+      $val= strtotime($ymd);
+      $fld= $fld=='od' ? 'fromday' : 'untilday';
+    }
     $val= pdo_real_escape_string($val);
     $set.= "$del$fld='$val'";
     $del= ',';
   }
-  query("UPDATE $setkani_db.tx_gnalberice_order $set WHERE uid=$id_order");
+  query("UPDATE $setkani_db.tx_gnalberice_order SET $set WHERE uid=$id_order");
+  if ($set_akce) {
+    $ida= select('id_akce',"$setkani_db.tx_gnalberice_order","uid=$id_order");
+    if ($ida)
+      query("UPDATE $answer_db.akce SET $set_akce WHERE id_duakce=$ida");
+    else
+      fce_error("dum_objednavka_save: objednávka $id_order nemá nastavenou akce (id_akce)");
+  }
 }
 # ----------------------------------------------------------------------------------- dum objednavka
 # objednávka pobytu
 function dum_objednavka($id_order) { 
   global $answer_db, $setkani_db;
-  $x= (object)['err'=>'','rozpis'=>[],'cena'=>[],'fld'=>[]];
+  $x= (object)['err'=>'','vyuziti'=>[],'cena'=>[],'fld'=>[]];
   // shromáždění údajů z objednávky
   $rf= pdo_qry("
       SELECT state,fromday AS od,untilday AS do,note,rooms1,adults,kids_10_15,kids_3_9,kids_3,board,
@@ -510,11 +526,15 @@ function dum_objednavka($id_order) {
   $y= dum_browse_order((object)['cmd'=>'browse_load','cond'=>"uid=$id_order"]);
   $x->ucet= $y->suma;  
   $x->vzorec_fak= $y->suma->vzorec;
+  foreach (explode(',',$x->vzorec_fak) as $ins) {
+    list($i,$n,$s)= explode(':',$ins);
+    $x->vyuziti[$i]= $s ? "$n/$s" : $n;
+  }
 //  $x->vzorec_fak= dum_rozpis2vzorec($y->suma->rozpis);
   // a fakturu z tabulky
   $x->faktura= (object)['fact_idf'=>0,'zal_idf'=>0];
   $rf= pdo_qry("
-    SELECT IFNULL(id_faktura,0) AS idf,typ,
+    SELECT IFNULL(id_faktura,0) AS idf,typ,strucna,
       rok,num,f.vs,f.ss,spec_text,vzorec,zaloha,f.castka,vystavena,p.datum AS zaplacena, vyrizuje 
     FROM faktura AS f
       LEFT JOIN join_platba AS pf USING (id_faktura) 
@@ -534,7 +554,7 @@ function dum_objednavka($id_order) {
 # ----------------------------------------------------------------------------------- dum ... vzorec
 # $spolu je buďto klíč id_spolu
 # nebo objekt {vek,pokoj,state,board,noci,dotace}
-function dum_osoba_vzorec($s,$rok) {
+function dum_osoba_vzorec($s,$rok) { //debug($s,"dum_osoba_vzorec(,$rok)");
   $ds2_cena= dum_cenik($rok);
 //  debug($ds2_cena);
   $luzko_pokoje= dum_cat_typ();
