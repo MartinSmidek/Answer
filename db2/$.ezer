@@ -2,7 +2,6 @@
 # (c) 2008-2024 Martin Šmídek <martin@smidek.eu>
 
 menu db2 { type:'main', title:'db2', active:*, _sys:'*'
-  const root='db2'
   // vrací aktuální stavy modulů, bude volána pomocí js.call_root_func z library modulů
   func akce2_curr() { var the_curr:object, x: object
     the_curr= akce2.curr();

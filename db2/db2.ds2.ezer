@@ -1,5 +1,4 @@
 #pragma library
-const root='dbt'
 # ------------------------------------------------------------------------------------------------ #
 # Systém Ans(w)er - modul Dům setkání - verze 2                                                    #
 #                                                                                                  #
@@ -73,7 +72,7 @@ panel fakt {type:'right', title:"Faktury"
     button [520,80,,] { title:'Zobrazit fakturu' 
       func onclick() { var html:text
         html= php.select('html','faktura',`id_faktura=${fak.idf}`);
-        call_func(`$.${root}.A4.preview`,{html:html},0);
+        call_func(`$.${sys('root')}.A4.preview`,{html:html},0);
       }
     }
   }
