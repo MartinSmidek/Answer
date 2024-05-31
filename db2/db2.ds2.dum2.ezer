@@ -4,7 +4,7 @@
 #                                                   (c) 2008-2024 Martin Šmídek <martin@smidek.eu> #
 # ------------------------------------------------------------------------------------------------ #
 
-//var the_order=0
+var the_order=0
 
 # ==========================================================================================> MODULY
 
@@ -23,13 +23,14 @@ func onfirstfocus() {
 //  page.ucast.onclick();
 } // vytvoření menu pobytů
 
-# --------------------------------------------------------------------------==> . menu
+# ----------------------------------------------------------------------------------------==> . menu
 menu mo {type:'left'
   func onclick(x:ezer) { 
 //    show_order(x.par.uid) 
     clear();
-    obj.load_objednavka(x.par.uid);
-    uca.load_obj(x.par.uid);
+    the_order= x.par.uid;
+    obj.load_objednavka(the_order);
+    uca.load_obj(the_order);
   }
 }
 
@@ -44,7 +45,11 @@ use page:   form [ 10, 10,,] {
     form.set_css('ae_butt_off','ae_butt_on','_'); 
     i.set_css('ae_butt_on','ae_butt_off');
     panel.display(0,i.par.off); 
-    panel.display(1,i.par.on)
+    panel.display(1,i.par.on);
+    if (the_order) {
+      obj.load_objednavka(the_order);
+      uca.load_obj(the_order);
+    }
   }
   # ------------------------- záložky - v par jsou tagy pro zapnutí vypnutí elementů
   label objed [ 12,0,100,20] { tag:'_' title:'<b>Objednávka</b>', par:{on:'obj',off:'uca'}

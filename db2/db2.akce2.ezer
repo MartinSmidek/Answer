@@ -229,7 +229,7 @@ panel cnf {type:'right', title:'[fa-retweet] KONFERENCE', _sys:'*', include:'onc
   proc reaccess() {}
 }
 # ==========================================================================================> . ELIM
-panel elim [0,0,965,607] { type:'popup', title:'Duplicity', format:'c', par:°{close:'no'},
+panel elim [0,0,975,617] { type:'popup', title:'Duplicity', format:'c', par:°{close:'no'},
     include:'onload,db2.akce2.elim'
   proc reaccess() {}
   proc osoby  (ido,jmeno,prijmeni) {}           // sjednocení dvou osob

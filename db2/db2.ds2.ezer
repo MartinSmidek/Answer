@@ -1,5 +1,5 @@
 #pragma library
-const root='db2'
+const root='dbt'
 # ------------------------------------------------------------------------------------------------ #
 # Systém Ans(w)er - modul Dům setkání - verze 2                                                    #
 #                                                                                                  #

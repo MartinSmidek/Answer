@@ -52,7 +52,26 @@ function form_set(form,fields) {
   return true;
 };
 Ezer.fce.form_set= form_set; 
-// ------------------------------------------------------------------------------------------------- rooms_check
+// ----------------------------------------------------------------------------------- dum rooms_get
+//ff: ds.rooms_check (rooms,form,prefix)
+//      nastaví hodnoty checkboxů prefix_<n> daného formuláře na 1 pokud se <n> vyskytuje v romms
+//s: ds
+function dum_rooms_get(form,prefix) {
+  // přečti pokoje s hodnotou 1
+  let rooms= '', del= '';
+  for (let id in form.part) {
+    var elem= form.part[id];
+    if ( elem.type=='check' && id.substr(0,prefix.length)==prefix ) {
+      if (elem.get()) {
+        let room= elem._id.substr(prefix.length);
+        rooms+= del+room;
+        del= ',';
+      }
+    }
+  }
+  return rooms;
+};
+// ------------------------------------------------------------------------------------- rooms_check
 //ff: ds.rooms_check (rooms,form,prefix)
 //      nastaví hodnoty checkboxů prefix_<n> daného formuláře na 1 pokud se <n> vyskytuje v romms
 //s: ds
