@@ -19,6 +19,7 @@ form _vyuctovani [,,623,400] {
   func load_obj(ido) {
     mode= 'obj';
     clear();
+    form.init();
     hos.browse_init();
     pob.display(1);
     pob.browse_load(`uid=${ido}`);
@@ -91,24 +92,27 @@ form _vyuctovani [,,623,400] {
   field ds_vzorec [left_hos+35,55,469,] {tag:'h', title:'^položky pro účtování ceny pobytu hosta' }
   // úpravy řádku hostů
   func Update(fld,val,kazdy_clen) { var curr_pobyt:number, curr_spolu:number, cond:text
-  cond= kazdy_clen ? `id_pobyt=${id_pobyt}` : `id_spolu=${hos.ids}`;
+    if (!hos.browse_count()) return;
+    cond= kazdy_clen ? `id_pobyt=${id_pobyt}` : `id_spolu=${hos.ids}`;
     php.query(`UPDATE spolu SET ${fld}="${val}" WHERE ${cond}`);
     if (mode=='obj') curr_pobyt= pob.idp;
     curr_spolu= hos.ids;
     refresh(curr_pobyt,curr_spolu);
   } 
   label [left_hos+545,77,100,] {tag:'h', title:'UPRAVIT'}
-  select ds_pokoj [left_hos+545,100,40,] {tag:'h'
+  select ds_pokoj [left_hos+545,100,40,] {tag:'h', help:'pokoj pro nastavenou osobu'
     func onchanged() { Update(this._id,this,0) }}
   label [left_hos+587,105,50,] {tag:'h', title:'pokoj' }
-  check kazdy [left_hos+545,120,100,] {tag:'h', title:'-"- každému', format:'t'
+  check kazdy [left_hos+545,120,100,] {tag:'h', title:'-"- každému', format:'t', help:'pokoj pro každou osobu'
     func onchange() { if (this) Update('ds_pokoj',ds_pokoj,1) }}
-  check ds_dotace [left_hos+545,150,100,] {tag:'h', title:'dotace'
+  check ds_dotace [left_hos+545,150,100,] {tag:'h', title:'dotace', help:'bude započtena snížená cena'
     func onchange() { Update(this._id,this,0) }}
-  check ds_postylka [left_hos+545,180,100,] {tag:'h', title:'postýlka'
+  check ds_postylka [left_hos+545,180,100,] {tag:'h', title:'postýlka', help:'poplatek za půjčení'
     func onchange() { Update(this._id,this,0) }}
-  check ds_zvire [left_hos+545,210,100,] {tag:'h', title:'zvíře'
+  check ds_zvire [left_hos+545,210,100,] {tag:'h', title:'zvíře', help:'poplatek za noc zvířete'
     func onchange() { Update(this._id,this,0) }}
+  check ds_lektor [left_hos+545,240,100,] {tag:'h', title:'lektor', help:'lektor za akci nic neplatí'
+    func onchange() { alert("zatím ručně") }}
   // seznam členů pobytu
   browse hos [left_hos+10,80,,] {tag:'h', rows:10, key_id:'ids', 
       optimize:{ask:'dum_browse_pobyt'}
