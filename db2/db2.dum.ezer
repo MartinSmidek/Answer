@@ -153,7 +153,7 @@ form _vyuctovani [,,623,400] {
         alert(`Fakturu není možné vystavit, protože hosté ${udaje_pobyt.neubytovani} nejsou ubytováni`); 
         return;
       }
-      faktura_parm= php.dum_faktura({typ:2,show:1,save:1,strucna:strucna,
+      faktura_parm= php.dum_faktura({typ:2,show:1,save:1,strucna:strucna,vystavena:fdate('Y-m-d'),
           adresa:udaje_pobyt.adresa,ds_vzorec:vzorec_pob,id_pobyt:udaje_pobyt.pobyt,
           oddo:udaje_pobyt.oddo,rok:udaje_pobyt.rok,id_order:udaje_pobyt.order,
           num:uf.fakt_num,zaloha:0,vs:uf.fakt_num,ss:udaje_pobyt.order,vyrizuje:vyrizuje});
@@ -170,7 +170,7 @@ form _vyuctovani [,,623,400] {
   
     func ulozeno() { var ok:number
       ok= php.dum_faktura_save(faktura_parm);
-      alert(ok ? `Faktura byla uložena do seznamu faktur` : '... problém');
+      alert(ok ? `Faktura byla uložena do seznamu faktur. Je třeba ji poslat i ekonomovi. ` : '... problém');
     }
   }
 }
@@ -227,7 +227,8 @@ form _obj {
     // a faktur
     echo(debug(udaje.faktura,'udaje.faktura'));
     copy_by_name(udaje.faktura,form,'',1); 
-    form.enable(0,'zal|fakt'); 
+    form.enable(0,'zal|fakt|closed'); 
+    plan.enable(0,'.*'); 
     if (udaje.faktura.fakt_idf==0) {
       // konečná faktura
       fakt_num= udaje.fld.fakt_num;
@@ -235,7 +236,8 @@ form _obj {
       fakt_ss= id_order;
       fakt_zaloha= zal_zaloha;
       fakt_castka= udaje.ucet.celkem;
-      form.enable(1,'fakt'); 
+      form.enable(1,'fakt|closed'); 
+      plan.enable(1,'.*'); 
       if (udaje.faktura.zal_idf==0) {
         // zálohová faktura
         zal_num= udaje.fld.fakt_num;
@@ -262,14 +264,14 @@ form _obj {
     if (!confirm(`Mám k objednávce ${obj} udělat kopii v nové akci? Bude mít prázdný seznam pobytů.`)) return;
     alert(php.dum_clone_objednavka(obj));
   }}
-  select state [0,55,155,] {tag:'obj', title:'^stav objednávky' type:'map', options:ds_stav.hodnota }
-  field id_akce [162,55,38,] {tag:'obj', title:'^akce YMCA', format:'r' }
-  field od [214,55,85,] {tag:'obj', title:'^příjezd', type:'date', format:'r' }
-  field do [304,55,85,] {tag:'obj', title:'^odjezd', type:'date', format:'r' }
+  select state [0,55,155,] {tag:'obj,closed', title:'^stav objednávky' type:'map', options:ds_stav.hodnota }
+  field id_akce [162,55,38,] {tag:'obj,closed', title:'^akce YMCA', format:'r' }
+  field od [214,55,85,] {tag:'obj,closed', title:'^příjezd', type:'date', format:'r' }
+  field do [304,55,85,] {tag:'obj,closed', title:'^odjezd', type:'date', format:'r' }
   field noci [396,55,30,] {tag:'obj', title:'^nocí', format:'rd' }
   edit note [0,95,424,55] {tag:'obj', title:'^poznámka k pobytu' }
 
-  select board [4,175,117,] {tag:'obj', title:'^typ stravy' type:'map', options:ds_strava.hodnota }
+  select board [4,175,117,] {tag:'obj,closed', title:'^typ stravy' type:'map', options:ds_strava.hodnota }
   button [320,175,,] { tag:'zal', title:'[fa-save] Uložit změny' 
     func onclick() { var saved:object, elem:ezer, rooms:text
       if (objs_count>1 && (od.changed()||do.changed())) {
@@ -332,8 +334,8 @@ form _obj {
       if (!zal_zaloha) {
         alert('Je zapotřebí stanovit výši zálohy'); return;
       }
-      faktura_parm= php.dum_faktura({typ:1,strucna:1,show:1,save:1,
-          adresa:udaje.adresa,vzorec:udaje.vzorec_zal,
+      faktura_parm= php.dum_faktura({typ:1,strucna:1,show:1,save:1,vystavena:zal_vystavena,
+          adresa:udaje.adresa,ds_vzorec:udaje.vzorec_zal,
           ic:uf.ic,dic:uf.dic,oddo:uf.oddo,rok:uf.rok,
           id_order:uf.id_order,
           num:zal_num,zaloha:zal_zaloha,vs:zal_vs,ss:zal_ss,vyrizuje:zal_vyrizuje});
@@ -344,7 +346,7 @@ form _obj {
       ok= php.dum_faktura_save(faktura_parm);
       if (ok) {
         load_objednavka(the_order);
-        alert(`Faktura byla uložena do seznamu faktur`);
+        alert(`Faktura byla uložena do seznamu faktur. Je třeba ji poslat i ekonomovi.`);
       }
       else alert('... problém');
     }
@@ -369,8 +371,8 @@ form _obj {
         alert(`Fakturu není možné vystavit, protože hosté ${udaje.ucet.neubytovani} nejsou ubytováni`); 
         return;
       }
-      faktura_parm= php.dum_faktura({typ:2,strucna:fakt_strucna,show:1,save:1,
-          adresa:udaje.adresa,vzorec:udaje.vzorec_fak,
+      faktura_parm= php.dum_faktura({typ:2,strucna:fakt_strucna,show:1,save:1,vystavena:fakt_vystavena,
+          adresa:udaje.adresa,ds_vzorec:udaje.vzorec_fak,
           ic:uf.ic,dic:uf.dic,oddo:uf.oddo,rok:uf.rok,id_order:uf.id_order,
           num:fakt_num,zaloha:fakt_zaloha,vs:fakt_vs,ss:fakt_ss,vyrizuje:fakt_vyrizuje});
       call_func(`$.${sys('root')}.A4.preview`,{html:faktura_parm.html,ref:faktura_parm.ref},
@@ -380,7 +382,7 @@ form _obj {
       ok= php.dum_faktura_save(faktura_parm);
       if (ok) {
         load_objednavka(the_order);
-        alert(`Faktura byla uložena do seznamu faktur`);
+        alert(`Faktura byla uložena do seznamu faktur. Je třeba ji poslat i ekonomovi.`);
       }
       else alert('... problém');
     }

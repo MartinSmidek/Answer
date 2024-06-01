@@ -37,13 +37,13 @@ panel fakt {type:'right', title:"Faktury"
     view f: table faktura 
     view pf: table join_platba { join_type:'LEFT', join:'USING (id_faktura)' }
     view p: table platba { join_type:'LEFT', join:'USING (id_platba)' }
-    browse fak [0,50,,] { rows:10
+    browse fak [0,50,,] { rows:20
       show idf { data:f.id_faktura }
       show idpf { data:pf.id_join_platba }
       show idp { data:p.id_platba }
       show id_order { data:f.id_order }
       show id_pobyt { data:f.id_pobyt }
-      show spec { data:f.spec_text }
+      show parm_json { data:f.parm_json }
       show rok [,,35,] { title:'rok', data:f.rok, format:'r' }
       show num [,,25,] { title:'č.', data:f.num, format:'rs-' }
       show typ [,,25,] { title:'typ', expr:"IF(f.typ=1,'Z','V')", format:'c' }
@@ -58,21 +58,37 @@ panel fakt {type:'right', title:"Faktury"
       func onrowclick() { var x:object
         x= php.dum_faktura_info(idf);
         popis= x.popis;
-//        if (id_order) {
-//          popis_o= 'Objednávka: ' + php.select("CONCAT(id_order,' - ',IF(note,note,prijmeni))",
-//              'objednavka',`id_order=${id_order}`)
-//        }
-//        if (id_pobyt) {
-//          popis_o= 'Pobyt: ' + php.select("CONCAT(id_pobyt,' - ',prijmeni))",
-//              'pobyt',`id_pobyt=${id_pobyt}`)
-//        }
+        faktura_parm= json_decode(parm_json);
+        adresa= replace(faktura_parm.adresa,'<br>',chr(10));
+        echo(debug(faktura_parm,'parametry faktury'));
       }
     }
-    label popis [520,50,*,40]
-    button [520,80,,] { title:'Zobrazit fakturu' 
+    var faktura_parm:object
+    label popis [520,50,300,40]
+    edit adresa [520,80,300,60] { title:'^adresa odběratele' }
+    edit nadpis [520,170,300,40] { title:'^řádek nad tabulkou s položkami' }
+    button [520,230,,] { title:'Zobrazit fakturu' 
       func onclick() { var html:text
         html= php.select('html','faktura',`id_faktura=${fak.idf}`);
         call_func(`$.${sys('root')}.A4.preview`,{html:html},0);
+      }
+    }
+    button [520,260,,] { title:'Přegeneruj fakturu' 
+      func onclick() { var f:object
+        faktura_parm.adresa= replace(adresa,chr(10),'<br>');
+        f= php.dum_faktura(faktura_parm);
+        call_func(`$.${sys('root')}.A4.preview`,{html:f.html,ref:f.ref},
+            {block:&this,func:'obnoveno',title:'[fa-save] Vložit opravu do faktury'});
+      }
+      func obnoveno() { var ok:number
+        if (confirm(`Mám uložit pozměněnou fakturu?`)) {
+          alert('... zítra');
+//          ok= php.dum_faktura_save(faktura_parm);
+//          if (ok) {
+//            alert(`Faktury byla změněna`);
+//          }
+//          else alert('... problém');
+        }
       }
     }
   }
