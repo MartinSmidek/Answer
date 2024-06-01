@@ -58,12 +58,12 @@ panel fakt {type:'right', title:"Faktury"
       func onrowclick() { var x:object
         x= php.dum_faktura_info(idf);
         popis= x.popis;
-        faktura_parm= json_decode(parm_json);
-        adresa= replace(faktura_parm.adresa,'<br>',chr(10));
-        echo(debug(faktura_parm,'parametry faktury'));
+        faktura= {parm:json_decode(parm_json)}; // struktura pro dum_faktura_save - parm_json,html,ref
+        adresa= replace(faktura.parm.adresa,'<br>',chr(10));
+        echo(debug(faktura.parm,'parametry faktury'));
       }
     }
-    var faktura_parm:object
+    var faktura:object
     label popis [522,50,300,40]
     edit adresa [520,111,300,60] { title:'^adresa odběratele' }
     edit nadpis [520,201,300,40] { title:'^řádek nad tabulkou s položkami' }
@@ -74,20 +74,20 @@ panel fakt {type:'right', title:"Faktury"
       }
     }
     button [520,291,,] { title:'Přegeneruj fakturu' 
-      func onclick() { var f:object
-        faktura_parm.adresa= replace(adresa,chr(10),'<br>');
-        f= php.dum_faktura(faktura_parm);
-        call_func(`$.${sys('root')}.A4.preview`,{html:f.html,ref:f.ref},
+      func onclick() { 
+        faktura.parm.adresa= replace(adresa,chr(10),'<br>');
+        faktura= php.dum_faktura(faktura.parm);
+        call_func(`$.${sys('root')}.A4.preview`,{html:faktura.html,ref:faktura.ref},
             {block:&this,func:'obnoveno',title:'[fa-save] Vložit opravu do faktury'});
       }
       func obnoveno() { var ok:number
         if (confirm(`Mám uložit pozměněnou fakturu?`)) {
-          alert('... zítra');
-//          ok= php.dum_faktura_save(faktura_parm);
-//          if (ok) {
-//            alert(`Faktury byla změněna`);
-//          }
-//          else alert('... problém');
+//          alert('... zítra');
+          ok= php.dum_faktura_save(faktura);
+          if (ok) {
+            alert(`Faktury byla změněna`);
+          }
+          else alert('... problém');
         }
       }
     }
