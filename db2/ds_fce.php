@@ -790,12 +790,13 @@ function dum_browse_order($x) {
         'abbr'  =>[],
         'dph'   =>[],
         'pokoj' =>[],'pokoje'=>'',
-        'neubytovani'=>'',  // případný text varování o neubytovaných
+        'neubytovani'=>'zatím nikdo není ubytován',  // případný text varování o neubytovaných
         'rozpis'=>[],
         'hoste' =>(object)['adults'=>0,'kids_10_15'=>0,'kids_3_9'=>0,'kids_3'=>0]]; 
 //    $luzko_pokoje= dum_cat_typ();
 //    $ds_strava= map_cis('ds_strava','zkratka');
     $neubytovani= [];
+    $hostu= 0;
     $vzorec_order= '';
     // c.ikona=1 pokud nebyl na akci
     ezer_connect($answer_db,true);
@@ -823,6 +824,7 @@ function dum_browse_order($x) {
     while ($rp && (list($idp,$nebyl,$prijmeni,$od,$do,$noci,$rok,$cleni,$state,$board,$datum,$platba)
         = pdo_fetch_array($rp))) {
       // projdeme členy a spočteme cenu
+      $hostu++;
       $rok_ceniku= $rok;
       $celkem= 0;
       $pokoje= [];
@@ -892,20 +894,22 @@ function dum_browse_order($x) {
     $y->count= count($z);
     $y->quiet= $x->quiet;
     $y->ok= 1;
-    // dopočet sumy přehled a účtování
-    $suma->vzorec= dum_rozpis2vzorec(dum_vzorec2rozpis($vzorec_order));
-    $cena= dum_vzorec_cena($suma->vzorec,$rok_ceniku);
-//    debug($cena);
-    $suma->celkem= $cena['celkem'];
-    $suma->druh= $cena['druh'];
-    $suma->abbr= $cena['abbr'];
-    $suma->dph= $cena['dph'];
-    ksort($suma->pokoj);
-    $suma->pokoje= implode(',',array_keys($suma->pokoj));
-    // zpráva o neubytovaných
-    $suma->neubytovani= '';
-    if (count($neubytovani)) {
-      $suma->neubytovani= $neubytovani[0].(count($neubytovani)>1 ? ' ... a další' : '');
+    // dopočet sumy přehled a účtování - pokud jsou hosté
+    if ($hostu>0) {
+      $suma->vzorec= dum_rozpis2vzorec(dum_vzorec2rozpis($vzorec_order));
+      $cena= dum_vzorec_cena($suma->vzorec,$rok_ceniku);
+  //    debug($cena);
+      $suma->celkem= $cena['celkem'];
+      $suma->druh= $cena['druh'];
+      $suma->abbr= $cena['abbr'];
+      $suma->dph= $cena['dph'];
+      ksort($suma->pokoj);
+      $suma->pokoje= implode(',',array_keys($suma->pokoj));
+      // zpráva o neubytovaných
+      $suma->neubytovani= '';
+      if (count($neubytovani)) {
+        $suma->neubytovani= $neubytovani[0].(count($neubytovani)>1 ? ' ... a další' : '');
+      }
     }
     $y->suma= $suma;
     array_unshift($y->values,null);

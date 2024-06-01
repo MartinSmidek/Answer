@@ -64,16 +64,16 @@ panel fakt {type:'right', title:"Faktury"
       }
     }
     var faktura_parm:object
-    label popis [520,50,300,40]
-    edit adresa [520,80,300,60] { title:'^adresa odběratele' }
-    edit nadpis [520,170,300,40] { title:'^řádek nad tabulkou s položkami' }
-    button [520,230,,] { title:'Zobrazit fakturu' 
+    label popis [522,50,300,40]
+    edit adresa [520,111,300,60] { title:'^adresa odběratele' }
+    edit nadpis [520,201,300,40] { title:'^řádek nad tabulkou s položkami' }
+    button [521,261,,] { title:'Zobrazit fakturu' 
       func onclick() { var html:text
         html= php.select('html','faktura',`id_faktura=${fak.idf}`);
         call_func(`$.${sys('root')}.A4.preview`,{html:html},0);
       }
     }
-    button [520,260,,] { title:'Přegeneruj fakturu' 
+    button [520,291,,] { title:'Přegeneruj fakturu' 
       func onclick() { var f:object
         faktura_parm.adresa= replace(adresa,chr(10),'<br>');
         f= php.dum_faktura(faktura_parm);
