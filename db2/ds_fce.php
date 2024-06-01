@@ -189,12 +189,14 @@ function dum_faktura($par) {  debug($par,'dum_faktura');
   $order= $par->id_order;
   $pobyt= $par->id_pobyt; 
   $vyrizuje= $par->vyrizuje;
+  $vystavena= $par->vystavena ?: date('Y-m-d');
+  $splatnost= new DateTime($vystavena); $splatnost->modify('+14 days');
   // společné údaje
   $vals['{obdobi}']= $oddo;
   $vals['{ic_dic}']= ($ic ? "IČ: $ic" : '').($dic ? "    DIČ: $dic" : '');
   $vals['{adresa}']= $adresa;
-  $vals['{datum1}']= date('j. n. Y'); 
-  $vals['{datum2}']= date('j. n. Y',strtotime("+14 days"));
+  $vals['{datum1}']= sql_date1($vystavena); 
+  $vals['{datum2}']= $splatnost->format('j. n. Y');
   $vals['{obj}']= $order.($pobyt ? ".$pobyt" : '');
   $vals['{vyrizuje}']= $vyrizuje;
   // QR platba
@@ -215,12 +217,13 @@ function dum_faktura($par) {  debug($par,'dum_faktura');
   }
   // ------------------------------------------------------------------------------- redakce tabulky
   // redakce položek ceny pro zobrazení ve sloupcích
-  $cena= dum_vzorec_cena($par->vzorec,$rok);
-  debug($cena,"dum_vzorec_cena($par->vzorec,$rok)");
+  $cena= dum_vzorec_cena($par->ds_vzorec,$rok);
+  debug($cena,"dum_vzorec_cena($par->ds_vzorec,$rok)");
   $celkem= $cena['celkem'];
   $polozky= [];
   $rozpis_dph= []; 
   if ($strucna==0) { // podrobně - položky ceníku
+    ksort($cena['rozpis']);
     foreach ($cena['rozpis'] as $zaco=>$pocet) {
       display("$zaco:$pocet");
       $kc_1= $cena['polozka'][$zaco]->cena;
@@ -416,8 +419,6 @@ function dum_faktura($par) {  debug($par,'dum_faktura');
   }
   // doplnění par o výpočet
   $par->celkem= $celkem;
-  $par->vystavena= date('Y-m-d');
-  $par->typ= $typ;
   if ($show) {
     $html.= "</div></div>";
   }
@@ -639,7 +640,7 @@ function dum_vzorec_cena($vzorec,$rok_ceniku) { //trace();
       $cena['druh2'][$d->druh]['sazba']= $d->dph;
     }
   }
-  debug($cena,"dum_vzorec_cena($vzorec,$rok_ceniku)");
+//  debug($cena,"dum_vzorec_cena($vzorec,$rok_ceniku)");
   return $cena;
 }
 function dum_rozpis2vzorec($rozpis) {
@@ -695,6 +696,12 @@ function dum_objednavka_zaloha($x) {
         if ($x->board==2 && $x->kids_3_9) $cena[$zaco]= $x->noci * $x->kids_3_9; break;
       case 'ubyt_C':  
         $cena[$zaco]= $x->noci * $x->adults; break;
+      case 'prog_C':  
+      case 'prog_P':  
+        if ($x->state==3) { // akce YS
+          $cena[$zaco]= $x->noci * ($zaco=='prog_P' ? $x->kids_3_9 : $x->adults); 
+        }
+        break;
     } 
   }
   return $cena;
