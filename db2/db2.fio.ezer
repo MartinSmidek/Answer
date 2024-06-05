@@ -129,7 +129,7 @@ form _ucty [,,640,*] {
     func onrowclick() { var _akce:array, _osoba:array, _ido:text, _idx:text, _pobyt:text, nar:text
       form.load(id_platba);
       platba_za= '';
-      corr_kod.enable(0);
+//      corr_kod.enable(0);
       corr_kod= `opravit SS`;
       if (id_osoba) {
         _osoba= php.select("CONCAT(jmeno,' ',prijmeni),narozeni",'osoba',`id_osoba=${id_osoba}`);
@@ -169,8 +169,11 @@ form _ucty [,,640,*] {
   field nazev [170,280,150,] { title:'^název účtu', data:platba.nazev, format:'' }
   field zprava [330,280,400,] { title:'^zpráva identifikace', 
     expr:"CONCAT(platba.zprava,' ',IF(platba.ident!=platba.nazev,platba.ident,''))"}
-  button corr_kod [740,280,,] {title:'opravit SS', func onclick() { 
-    php.query(`UPDATE platba SET stav=6,ss2='${the_kod}',id_pob=${the_pobyt} WHERE id_platba=${fio.id_platba}`);
+  button corr_kod [740,280,,] {title:'opravit SS', func onclick() { var ss2:text
+    php.query(`UPDATE platba SET stav=6,ss2='${the_kod}',
+        id_pob=${the_pobyt} WHERE id_platba=${fio.id_platba}`);
+    ss2= prompt2('zadej hodnotu pro opravu SS','');
+    if (ss2) php.query(`UPDATE platba SET ss2='${ss2}' WHERE id_platba=${fio.id_platba}`);
     refresh();
   }}
   field id_platba [10,315,120,] { title:'^transakce Fio banky', data:platba.id_platba, format:'r' }

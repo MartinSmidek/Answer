@@ -325,7 +325,7 @@ menu db2 { type:'main', title:'db2', active:*, _sys:'*'
         paper.callback= _callback;
         paper.display(1,'back');
         paper.akce= _callback.title;
-        paper.ref= _parm.ref; 
+//        paper.ref= _parm.ref; 
       }
       else {
         paper.display(0,'back');
@@ -344,8 +344,8 @@ menu db2 { type:'main', title:'db2', active:*, _sys:'*'
       button [571,10,,] { title:'[fa-undo] Zpět', style:'z-index:2'  
         func onclick() { panel.hide(0); }
       }
-      label ref [20,35,150,] {tag:'back', 
-        style:"background:silver;color:black;font-size:12px;padding:3px 5px 0px 20px" }
+//      label ref [20,35,150,] {tag:'back', 
+//        style:"background:silver;color:black;font-size:12px;padding:3px 5px 0px 20px" }
     }
   }
 }
