@@ -1164,9 +1164,8 @@ form _info [,,*,50] {
       a_title= nazev; 
       page.show_akce(id_akce); 
     }
-    func onrowclick() { 
-      this.Show(id_order);
-    }
+    func onsubmit() { this.focus(id_order); pracovni() }
+    func onrowclick() { this.Show(id_order); }
     func pracovni() { 
       if (!id_akce) { alert(`Vlož objednávku jako akci`); return }      
       volba_akce(id_akce);
