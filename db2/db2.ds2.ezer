@@ -19,7 +19,44 @@ func curr() {
 panel dum2 {type:'right', title:"Objednávky", include:'onload,db2.ds2.dum2' skill:'yd2'
   func curr() { return {dum:{order:0}}; }
 } 
-panel hoste {type:'right', title:"Kniha hostů"} 
+panel hoste {type:'right', title:"Kniha hostů"
+  func onfocus() { m.roky.i.click(); }
+  menu m {type:'left', active:*
+    menu roky {title:'Knihy hostů',type:'group'
+      item i {title:'Jména - květen',  par:{cond:'2024-05.*'} }
+//      item i {title:'Pobyty',  par:{rok:2024} }
+    }
+    func onclick (i:ezer) {
+      clear();
+      info.header(i);
+      info.fill('',php.dum_kniha_hostu(i.par.cond));
+//      info.Load('2024-05.*');
+    }
+  }
+  use info: form _right [12,4,,] { 
+//    // funkce
+//    func Load(obdobi) {
+//      hoste.browse_load(`a.datum_od RLIKE '${obdobi}'`,'datum_od,prijmeni,narozeni') }
+//    // seznam
+//    view a: table akce 
+//    view p: table pobyt { join:'ON id_duakce=p.id_akce' }
+//    view s: table spolu { join:'USING (id_pobyt)' }
+//    view o: table osoba { join:'USING (id_osoba)' }
+//    view d: table tx_gnalberice_order { join:'ON id_duakce=d.id_akce' }
+//    browse hoste [0,50,,] { rows:20
+//      show ida { data:a.id_duakce }
+//      show idp { data:p.id_pobyt }
+//      show ids { data:s.id_spolu }
+//      show ido { data:o.id_osoba }
+//      show [,,40,] { title:'objednávka', data:d.uid }
+//      show [,,40,] { title:'akce', data:a.id_duakce }
+//      show [,,70,] { title:'datum', data:a.datum_od,  }
+//      show [,,70,] { title:'příjmení', data:o.prijmeni }
+//      show [,,70,] { title:'jméno', data:o.jmeno }
+//    }
+    
+  }
+} 
 # ======================================================================================> OBJEDNÁVKY
 panel fakt {type:'right', title:"Faktury"
   func onfocus() { m.roky.i.click(); }
@@ -30,23 +67,31 @@ panel fakt {type:'right', title:"Faktury"
     func onclick (i:ezer) {
       rok= i.par.rok;
       info.header(i);
-      info.fak.browse_load();
+      info.Reload();
     }
   }
   use info: form _right [12,4,,] { 
+    // funkce
+    func Reload() {
+      fak.browse_load(smazane?'1':"deleted=''") }
+    // parametry zobrazení
+    check smazane [-150,4,150,] { title:'zobrazit i smazané', format:'t', css:'bila', value:'0' 
+      func onchange() { Reload() }}
+    // faktura
     view f: table faktura 
     view pf: table join_platba { join_type:'LEFT', join:'USING (id_faktura)' }
     view p: table platba { join_type:'LEFT', join:'USING (id_platba)' }
-    browse fak [0,50,,] { rows:20
+    browse fak [0,50,,] { rows:20, css_rows:'deleted,1:neucast'
       show idf { data:f.id_faktura }
       show idpf { data:pf.id_join_platba }
       show idp { data:p.id_platba }
       show id_order { data:f.id_order }
       show id_pobyt { data:f.id_pobyt }
       show parm_json { data:f.parm_json }
+      show deleted { expr:'IF(f.deleted,1,0)' }
       show rok [,,35,] { title:'rok', data:f.rok, format:'r' }
       show num [,,25,] { title:'č.', data:f.num, format:'rs-' }
-      show typ [,,25,] { title:'typ', expr:"IF(f.typ=1,'Z','V')", format:'c' }
+      show typ [,,25,] { title:'typ', expr:"IF(f.typ=1,'Z',IF(f.typ=2,'D','F'))", format:'c' }
       show strucna [,,25,] { title:'stručná', expr:"IF(f.strucna=1,'S','')", format:'c' }
       show vs [,,50,] { title:'VS', data:f.vs, format:'r' }
       show ss [,,50,] { title:'SS', data:f.ss, format:'r' }
@@ -60,7 +105,7 @@ panel fakt {type:'right', title:"Faktury"
         popis= x.popis;
         faktura= {parm:json_decode(parm_json)}; // struktura pro dum_faktura_save - parm_json,html,ref
         adresa= replace(faktura.parm.adresa,'<br>',chr(10));
-        echo(debug(faktura.parm,'parametry faktury'));
+//        echo(debug(faktura.parm,'parametry faktury'));
       }
     }
     var faktura:object
@@ -73,21 +118,26 @@ panel fakt {type:'right', title:"Faktury"
         call_func(`$.${sys('root')}.A4.preview`,{html:html},0);
       }
     }
-    button [520,291,,] { title:'Přegeneruj fakturu' 
+    button [641,261,,] { title:'Stáhnout PDF' 
+      func onclick() { var html:text
+        faktura= php.dum_faktura(faktura.parm);
+        alert(`Faktura k vytištění nebo poslání emailem je ${faktura.ref}`);
+      }
+    }
+    button [520,291,,] { title:'Vlož opravu a přegeneruj fakturu' 
       func onclick() { 
         faktura.parm.adresa= replace(adresa,chr(10),'<br>');
         faktura= php.dum_faktura(faktura.parm);
         call_func(`$.${sys('root')}.A4.preview`,{html:faktura.html,ref:faktura.ref},
             {block:&this,func:'obnoveno',title:'[fa-save] Vložit opravu do faktury'});
       }
-      func obnoveno() { var ok:number
+      func obnoveno() { var msg:text
         if (confirm(`Mám uložit pozměněnou fakturu?`)) {
 //          alert('... zítra');
-          ok= php.dum_faktura_save(faktura);
-          if (ok) {
-            alert(`Faktury byla změněna`);
-          }
-          else alert('... problém');
+          msg= php.dum_faktura_save(faktura,fak.idf); // update existující faktury
+          alert(`${msg}<br>K vytištění nebo poslání emailem je ${faktura.ref}
+                <br>Je třeba ji poslat i našemu ekonomovi.`);
+          info.Reload();
         }
       }
     }
@@ -250,6 +300,7 @@ table join_platba { key_id:'id_join_platba'
 }
 table faktura { key_id:'id_faktura'
   number id_faktura
+  text deleted // nic nebo datum
   number rok
   number num
   number typ
@@ -257,7 +308,7 @@ table faktura { key_id:'id_faktura'
   number ss
   number id_order
   number id_pobyt
-  text spec_text
+  text duvod_zmeny
   text vzorec
   number zaloha
   number castka
@@ -266,6 +317,7 @@ table faktura { key_id:'id_faktura'
   text vyrizuje
   text parm_json
   text html
+  text soubor // bude ve složce docs/dum_setkani/faktury
 }
 table ds_cena {  db:'setkani', key_id:'id_cena'
   number id_cena

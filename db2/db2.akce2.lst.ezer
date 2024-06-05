@@ -33,6 +33,7 @@ func onfirstfocus() {
   page.DocInit();
   echo('onfirstfocus the_source=',the_source);
   // zobrazení seznamu akcí
+  page.inf.onclick();
   switch (the_source) {
     case 'sey': 
       if (has_skill('y;f;s;crz')) m.g.sey.click();
@@ -43,7 +44,6 @@ func onfirstfocus() {
     case 'google': m.g.goo.click(); break;
     case 'dum': m.d.o.click(); break;
   }
-  page.inf.onclick();
   echo('------------- lst onfirstfocus end');
 }
 //proc onfirstfocus() {
@@ -83,11 +83,11 @@ use page: form _page [512,40,,]
 func dum_objednavka(cmd,id) { var row:number
   clear();
   switch (cmd) { 
-    case 'show':
+    case 'show': // id_akce
       if (id==the_duakce) dum.Objednavka.Show(the_duakce);
       else alert('pro zobrazení objednávky musí být pobyt nastaven jako pracovní');
       break;
-    case 'del': 
+    case 'del': // id_order
       if (confirm(`Mám smazat objednávku č. ${id}?`)) {
         row= info.dum.browse_active();
         dum.Objednavka.Delete(id);
@@ -95,7 +95,13 @@ func dum_objednavka(cmd,id) { var row:number
         info.dum.browse_active(row);
       }
       break;
-    case 'add': alert(`Mám přidat objednávku č. ${id} ke zpracování?`);
+    case 'add': // id_order
+      if (confirm(`mám umožnit fakturaci a přidávání hostů?`)) {
+        php.dum_objednavka_akce_make(id);
+        the_order= id;
+        info.dum.Load();
+        info.dum.pracovni();
+      }
       break;
   }
 }                          
@@ -215,9 +221,9 @@ menu m {type:'left', format:'f+'
       func onclick (i:ezer) {
         menu_item= i;
         info.display(2,'d|r'); 
-        page.ord.onclick(); page.display(0,'x'); page.ord.display(1); 
         the_source= 'dum';
         set_cookie(`${sys('root')}_akce_source`,the_source);
+        page.ord.onclick(); page.display(0,'x'); page.ord.display(1); 
         echo(`----------- set_cookie ...source=${the_source}, the_order=${the_order}`);
 //        info.display(2,'s|r'); the_source= 'sey';
 //        the_omezeni= `da2.access & ${org_ds}`;
@@ -1147,6 +1153,7 @@ form _info [,,*,50] {
     func Load() {
       this.browse_load(`YEAR(FROM_UNIXTIME(fromday))='${the_rok}' AND d.deleted=0`,
           '','','','','1',the_duakce);
+      this.Show(the_order);
     }
     func Show(idd) {
       if (!this.browse_count()) return;
@@ -1161,17 +1168,14 @@ form _info [,,*,50] {
       this.Show(id_order);
     }
     func pracovni() { 
-      if (!id_akce) {
-        if (confirm(`mám již umožnit fakturaci a přidávání hostů?`)) {
-          
-        }
-      }      
-      else {
-        volba_akce(id_akce);
-        this.Load();
-        page.show_akce(id_akce); 
-        this.Show(the_order);
-      }
+      if (!id_akce) { alert(`Vlož objednávku jako akci`); return }      
+      volba_akce(id_akce);
+      this.Load();
+      page.show_akce(id_akce); 
+      this.Show(id_order);
+    }
+    menu { type:'context'
+      item { title:'Vybrat akci jako pracovní', proc onclick() { pracovni }}
     }
   }
   # -----------------------------------------------------------------------------==> . seznam GOOGLE

@@ -722,7 +722,7 @@ function akce2_info($id_akce,$text=1,$pobyty=1,$id_order=0) { trace();
         $html.= "<br><br>(kvůli nesprávným údajům budou počty, výpisy a statistiky také nesprávné)";
       }
       $html.= $deti ? "<hr>Poznámka: jako děti se počítají osoby, které v době zahájení akce nemají 18 let" : '';
-      $html.= ", na akci je $_iniciovani.";
+      $html.= $mrop ? ", na akci je $_iniciovani." : '';
       if ( $pro_pary ) {
         $html.= akce2_info_par($id_akce);
       }
@@ -807,7 +807,7 @@ function akce2_info($id_akce,$text=1,$pobyty=1,$id_order=0) { trace();
           ";
     }
   }
-  else {
+  elseif (!$uid && !$id_order) {
     $html= "Tato akce ještě nebyla vložena do databáze
             <br><br>Vložení se provádí dvojklikem
             na řádek s akcí";
@@ -817,26 +817,9 @@ function akce2_info($id_akce,$text=1,$pobyty=1,$id_order=0) { trace();
     $info->pobyty= $pob;
 //                                                                  debug($info,"info s pobyty");
   }
-  display("$uid -  $id_order - $id_akce");
   // pokud je to pobyt na Domě setkání
   if ($uid || $id_order) {
-    $id_order= $id_order ?: $uid;
-    $DS2024= select('DS2024',"$setkani_db.tx_gnalberice_order","uid=$id_order");
-    $conv= str_replace("'",'"',$DS2024);
-    $conv= $conv ? json_decode($conv) : (object)['typ'=>'neuskutečněná'];
-    debug($conv,$DS2024);
-    $conv= debugx($conv);
-//    $conv= $DS2024;
-    $html= $id_akce
-      ? "<h3 style='margin:0px 0px 3px 0px;'>Pobyt v Domě setkání</h3>
-            <button onclick=\"Ezer.fce.href('akce2.lst.dum_objednavka/show/$id_akce')\">
-            Objednávka a vyúčtování pobytu</button> $conv
-            <br><br>$html"
-      : ($id_order
-      ?  "<h3 style='margin:0px 0px 3px 0px;'>Objednávka pobytu v Domě setkání</h3>
-            <button onclick=\"Ezer.fce.href('akce2.lst.dum_objednavka/del/$id_order')\">
-            Smazat objednávku</button> $conv"
-      :  '');
+    $html= dum_objednavka_info($id_order ?: $uid,$id_akce,$html);
   }
   return $text ? $html : $info;
 }

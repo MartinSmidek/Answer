@@ -1,6 +1,11 @@
 /* global Ezer */
 
 // uživatelské funkce aplikace DS
+// --------------------------------------------------------------------------------------------- cmp
+// porovná texty a vrací 1,0,-1 pro > = <
+function cmp(a,b) {
+  return a>b ? 1 : (a<b ? -1 : 0);
+}
 // ----------------------------------------------------------------------------- set_elem_backround
 // zavolá funkci umístěnou v main.menu a její hodnotu předá funkci this_fce
 // _this je blok obsahující funkci this_fce
@@ -40,7 +45,7 @@ function call_root_func_par(root_fce,par,_this,this_fce) {
     }
   );
 }
-// ------------------------------------------------------------------------------------------------- form_set
+// ---------------------------------------------------------------------------------------- form_set
 //ff: ds.form_set (form,fields)
 //      nastaví hodnoty polí ve formuláři
 //s: ds
@@ -93,7 +98,7 @@ function rooms_check(rooms,form,prefix) {
   return true;
 };
 Ezer.fce.rooms_check= rooms_check;
-// ------------------------------------------------------------------------------------------------- check_rooms
+// ------------------------------------------------------------------------------------- check_rooms
 //ff: ds.check_rooms (rooms,form,prefix)
 //      nastaví hodnoty checkboxů prefix_<n> daného formuláře na 1 pokud se <n> vyskytuje v romms
 //s: ds

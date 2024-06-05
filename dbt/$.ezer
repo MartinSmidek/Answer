@@ -21,7 +21,7 @@ menu dbt { type:'main', title:'db2', active:*, _sys:'*'
 #endif
 #if test_version<1
 //  tabs eko {title:"[fa-stack-overflow] Ekonomika", _sys:'*',  include:'onclick,ys2.eko', active:*, skill:'ye' }
-  tabs ds {title:"[fa-home] Dům", _sys:'*',  include:'onload,db2.ds', active:*, skill:'yd' 
+  tabs ds {title:"[fa-home] Dům", _sys:'*',  include:'onload,db2.ds', active:*, skill:'m' 
     func curr() {} // vrací aktuální {order: tx_gnalberice_order.uid}}
   }
 #endif
@@ -342,7 +342,7 @@ menu dbt { type:'main', title:'db2', active:*, _sys:'*'
         paper.callback= _callback;
         paper.display(1,'back');
         paper.akce= _callback.title;
-        paper.ref= _parm.ref; 
+//        paper.ref= _parm.ref; 
       }
       else {
         paper.display(0,'back');
@@ -361,8 +361,8 @@ menu dbt { type:'main', title:'db2', active:*, _sys:'*'
       button [571,10,,] { title:'[fa-undo] Zpět', style:'z-index:2'  
         func onclick() { panel.hide(0); }
       }
-      label ref [20,35,150,] {tag:'back', 
-        style:"background:silver;color:black;font-size:12px;padding:3px 5px 0px 20px" }
+//      label ref [20,35,150,] {tag:'back', 
+//        style:"background:silver;color:black;font-size:12px;padding:3px 5px 0px 20px" }
     }
   }
 }
