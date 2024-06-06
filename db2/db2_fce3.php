@@ -3750,7 +3750,7 @@ function ucast2_browse_ask($x,$tisk=false) {
             elseif ( !$_ido2 )
               $_ido2= $ido;
             # výpočet jmen pobytu
-            $_jmena.= str_replace(' ','-',trim($o->jmeno))." ";
+            $_jmena.= str_replace(' ','-',trim($o->jmeno?:'?'))." ";
             if ( !$idr ) {
               # výpočet názvu pobyt
               $prijmeni= $o->prijmeni;
