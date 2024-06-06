@@ -19,18 +19,17 @@ func curr() {
 panel dum2 {type:'right', title:"Objednávky", include:'onload,db2.ds2.dum2' skill:'yd2'
   func curr() { return {dum:{order:0}}; }
 } 
+# ===========================================================================================> KNIHY
 panel hoste {type:'right', title:"Kniha hostů"
   func onfocus() { m.roky.i.click(); }
   menu m {type:'left', active:*
     menu roky {title:'Knihy hostů',type:'group'
-      item i {title:'Jména - květen',  par:{cond:'2024-05.*'} }
-//      item i {title:'Pobyty',  par:{rok:2024} }
+      item i {title:'Rok 2024',  par:{rok:'2024'} }
     }
     func onclick (i:ezer) {
       clear();
       info.header(i);
-      info.fill('',php.dum_kniha_hostu(i.par.cond));
-//      info.Load('2024-05.*');
+      info.fill('',php.dum_kniha_hostu(i.par));
     }
   }
   use info: form _right [12,4,,] { 
@@ -57,7 +56,7 @@ panel hoste {type:'right', title:"Kniha hostů"
     
   }
 } 
-# ======================================================================================> OBJEDNÁVKY
+# =========================================================================================> FAKTURY
 panel fakt {type:'right', title:"Faktury"
   func onfocus() { m.roky.i.click(); }
   menu m {type:'left', active:*
@@ -246,6 +245,7 @@ panel cen {type:'right', title:'Ceny'
     }
   }
 }
+// <editor-fold defaultstate="collapsed" desc="# ==================================================================== form _right +++ tables, maps ">
 # -------------------------------------------------------------------------------------==> formuláře
 form _right [,,*,50] { //style:'width:calc(100% - 24px)'
   label head [0,0,*,50]  { title:'' }
@@ -754,3 +754,4 @@ panel trns {type:'right', title:"Transformace"                                  
   }
 } 
 */
+// </editor-fold>

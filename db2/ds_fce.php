@@ -1224,23 +1224,39 @@ end:
   }
 } // dum_browse_pobyt
 # =====================================================================================> KNIHA HOSTU
-# --------------------------------------------------------------------------------- dum kniha_pobyty
+# ---------------------------------------------------------------------------------- dum kniha_hostu
 # zobrazí odkaz na osobu v evidenci
-function dum_kniha_hostu($id_order) {
+function dum_kniha_hostu($par) {
   $html= '';
-  $n= 0;
-  $id_order= 2501;
-  $obj= dum_objednavka($id_order);
-  debug($obj,"dum_kniha_hostu - obj");
-  $x= dum_browse_order((object)['cmd'=>'browse_load','cond'=>"uid=$id_order"]);
-  debug($x);
-  $html.= "<table>";
-  foreach ($x->values as $pob) {
-    if (!$pob) continue;
-    $html.= "<tr><td>$pob->nazev</td><td>$pob->cena</td><td>$pob->platba</td></tr>";
+  $n= $nf= 0;
+  $rok= $par->rok;
+  $ro= pdo_qry("
+    SELECT id_order,IFNULL(id_faktura,0) 
+    FROM objednavka 
+    LEFT JOIN faktura USING (id_order)
+    WHERE YEAR(od)=$rok AND MONTH(od)<=MONTH(NOW())
+    ORDER BY od
+  ");
+  while ($ro && (list($idd,$idf)= pdo_fetch_array($ro))) {
     $n++;
+    if (!$idf) continue;
+//    $obj= dum_objednavka($idd);
+    $html.= "<br>objednávka $idd, faktura $idf";
+    $nf++;
+//    break;
   }
-  $html.= "</table>";
+//  $id_order= 2501;
+//  $obj= dum_objednavka($id_order);
+//  debug($obj,"dum_kniha_hostu - obj");
+//  $x= dum_browse_order((object)['cmd'=>'browse_load','cond'=>"uid=$id_order"]);
+//  debug($x);
+//  $html.= "<table>";
+//  foreach ($x->values as $pob) {
+//    if (!$pob) continue;
+//    $html.= "<tr><td>$pob->nazev</td><td>$pob->cena</td><td>$pob->platba</td></tr>";
+//    $n++;
+//  }
+//  $html.= "</table>";
 //  $rk= pdo_qry("
 //    SELECT d.uid,a.id_duakce,p.id_pobyt,s.id_spolu,o.id_osoba,a.datum_od,
 //      GROUP_CONCAT(o.prijmeni,' ',o.jmeno)
@@ -1257,7 +1273,7 @@ function dum_kniha_hostu($id_order) {
 //    $n++;
 //    $html.= "<br>$idd $od $jmena";
 //  }
-  return "<h3>celkem $n</h3>$html";
+  return "<h3>celkem $n objednávek, $nf s fakturou</h3>$html";
 }
 # ===========================================================================================> RUZNE
 # ------------------------------------------------------------------------------ ds2 ukaz_objednavku
@@ -1403,7 +1419,7 @@ function ds2_vek($narozeni,$fromday) {
 function ucast_presun($idp,$idp_goal,$make=0) { 
   $ret= (object)['msg'=>'','err'=>''];
   $ida= select('id_akce','pobyt',"id_pobyt=$idp");
-  $ida_goal= $idp_goal ? select('id_akce','pobyt',"id_pobyt=$idp_goal") : 0;
+  $ida_goal= $idp_goal ? select('id_akce','pobyt',"id_pobyt='$idp_goal'") : 0;
   // id_pobyt může být v tabulkách: faktura, mail, pobyt_wp, prihlaska, uhrada
   $konflikt=[];
   foreach (['faktura', 'mail', 'pobyt_wp', 'prihlaska', 'uhrada'] as $tab) {
@@ -1415,7 +1431,7 @@ function ucast_presun($idp,$idp_goal,$make=0) {
     $ret->err= "Označ pomocí klávesy Insert cílový pobyt";
   }
   elseif (strpos($idp_goal,',')) {
-    $ret->err= "Proveď v kontextovém menu 'zrušit výběr' a označ pomocí klávesy Insert cílový pobyt";
+    $ret->err= "Proveď v kontextovém menu 'zrušit výběr' a označ pomocí klávesy Insert jediný cílový pobyt";
   }
   elseif ($idp==$idp_goal) {
     $ret->err= "Pomocí klávesy Insert je označen cílový pobyt, ten přesouvaný musí být na jiném řádku";
