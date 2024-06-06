@@ -613,6 +613,21 @@ function dum_objednavka_clone($id_order) {
   }
   return $msg;
 }
+# ----------------------------------------------------------------------------------- ds2 rooms_help
+# vrátí popis pokojů
+function dum_rooms_help($version=1) {
+  $hlp= array();
+  ezer_connect('setkani');
+  $qry= "SELECT number,1-hidden AS enable,note
+         FROM tx_gnalberice_room
+         WHERE NOT deleted AND version=$version";
+  $res= pdo_qry($qry);
+  while ( $res && $o= pdo_fetch_object($res) ) {
+    $hlp[]= (object)array('fld'=>"q$o->number",'hlp'=>wu($o->note),'on'=>$o->enable);
+  }
+//                                                         debug($hlp);
+  return $hlp;
+}
 # ==================================================================================> VZOREC + CENÍK
 # ----------------------------------------------------------------------------------- dum ... vzorec
 # $spolu je buďto klíč id_spolu
@@ -763,7 +778,40 @@ function dum_objednavka_zaloha($x) {
   }
   return $cena;
 }
-# ==================================================================================> objednávky NEW
+# ---------------------------------------------------------------------------------------- ds2 cenik
+# načtení ceníku pro daný rok
+function dum_cenik($rok) {  
+  global $ds2_cena;
+  if (!isset($ds2_cena['rok']) || $ds2_cena['rok']!=$rok) {
+    $ds2_cena= array('rok'=>$rok);
+    ezer_connect('setkani');
+    $qry2= "SELECT * FROM ds_cena WHERE rok=$rok ORDER BY druh,typ";
+    $res2= pdo_qry($qry2);
+    while ( $res2 && $c= pdo_fetch_object($res2) ) {
+      $wc= $c;
+      $wc->polozka= wu($c->polozka);
+      $wc->druh= wu($c->druh);
+      $ds2_cena[$c->typ]= $wc;
+    }
+  }
+//                                                 debug($ds2_cena,"dum_cenik($rok)");
+  return $ds2_cena;
+}
+# -------------------------------------------------------------------------------------- ds2 cat_typ
+# přepočet kategorie pokoje na typ ubytování v ceníku    
+function dum_cat_typ() {
+  global $setkani_db, $dum_luzko_pokoje;
+    if (!isset($dum_luzko_pokoje)) {
+    $cat_typ= array('C'=>'A','B'=>'L','A'=>'S');
+    $dum_luzko_pokoje[0]= 0;
+    $rr= pdo_qry("SELECT number,category FROM $setkani_db.tx_gnalberice_room WHERE version=1");
+    while ( $rr && list($pokoj,$typ)= pdo_fetch_row($rr) ) {
+      $dum_luzko_pokoje[$pokoj]= $cat_typ[$typ];
+    }
+  }
+  return $dum_luzko_pokoje;  
+}
+# ==================================================================================> obsluha BROWSE
 // ------------------------------------------------------------------------------- dum browse_orders
 # BROWSE ASK - obsluha browse s optimize:ask
 # x->order= {a|d} polozka
@@ -1175,54 +1223,6 @@ end:
     return $y;  
   }
 } // dum_browse_pobyt
-# ---------------------------------------------------------------------------------------- ds2 cenik
-# načtení ceníku pro daný rok
-function dum_cenik($rok) {  
-  global $ds2_cena;
-  if (!isset($ds2_cena['rok']) || $ds2_cena['rok']!=$rok) {
-    $ds2_cena= array('rok'=>$rok);
-    ezer_connect('setkani');
-    $qry2= "SELECT * FROM ds_cena WHERE rok=$rok ORDER BY druh,typ";
-    $res2= pdo_qry($qry2);
-    while ( $res2 && $c= pdo_fetch_object($res2) ) {
-      $wc= $c;
-      $wc->polozka= wu($c->polozka);
-      $wc->druh= wu($c->druh);
-      $ds2_cena[$c->typ]= $wc;
-    }
-  }
-//                                                 debug($ds2_cena,"dum_cenik($rok)");
-  return $ds2_cena;
-}
-# -------------------------------------------------------------------------------------- ds2 cat_typ
-# přepočet kategorie pokoje na typ ubytování v ceníku    
-function dum_cat_typ() {
-  global $setkani_db, $dum_luzko_pokoje;
-    if (!isset($dum_luzko_pokoje)) {
-    $cat_typ= array('C'=>'A','B'=>'L','A'=>'S');
-    $dum_luzko_pokoje[0]= 0;
-    $rr= pdo_qry("SELECT number,category FROM $setkani_db.tx_gnalberice_room WHERE version=1");
-    while ( $rr && list($pokoj,$typ)= pdo_fetch_row($rr) ) {
-      $dum_luzko_pokoje[$pokoj]= $cat_typ[$typ];
-    }
-  }
-  return $dum_luzko_pokoje;  
-}
-# ----------------------------------------------------------------------------------- ds2 rooms_help
-# vrátí popis pokojů
-function dum_rooms_help($version=1) {
-  $hlp= array();
-  ezer_connect('setkani');
-  $qry= "SELECT number,1-hidden AS enable,note
-         FROM tx_gnalberice_room
-         WHERE NOT deleted AND version=$version";
-  $res= pdo_qry($qry);
-  while ( $res && $o= pdo_fetch_object($res) ) {
-    $hlp[]= (object)array('fld'=>"q$o->number",'hlp'=>wu($o->note),'on'=>$o->enable);
-  }
-//                                                         debug($hlp);
-  return $hlp;
-}
 # =====================================================================================> KNIHA HOSTU
 # --------------------------------------------------------------------------------- dum kniha_pobyty
 # zobrazí odkaz na osobu v evidenci
@@ -1259,7 +1259,7 @@ function dum_kniha_hostu($id_order) {
 //  }
   return "<h3>celkem $n</h3>$html";
 }
-# =======================================================================================> LEFT MENU
+# ===========================================================================================> RUZNE
 # ------------------------------------------------------------------------------ ds2 ukaz_objednavku
 # zobrazí odkaz na osobu v evidenci
 function ds2_ukaz_objednavku($idx,$barva='',$title='') {
@@ -1395,6 +1395,104 @@ function ds2_vek($narozeni,$fromday) {
 //    $vek= round($vek/(60*60*24*365.2425),1);
   }
   return $vek;
+}
+# ------------------------------------------------------------------------------------------ ds2 vek
+# přesune účastníky jednoho pobytu do vybraného ... 
+#  make=0 žádost o souhlas do msg, chybovou hlášku do err
+#  make=1 provede přesun
+function ucast_presun($idp,$idp_goal,$make=0) { 
+  $ret= (object)['msg'=>'','err'=>''];
+  $ida= select('id_akce','pobyt',"id_pobyt=$idp");
+  $ida_goal= $idp_goal ? select('id_akce','pobyt',"id_pobyt=$idp_goal") : 0;
+  // id_pobyt může být v tabulkách: faktura, mail, pobyt_wp, prihlaska, uhrada
+  $konflikt=[];
+  foreach (['faktura', 'mail', 'pobyt_wp', 'prihlaska', 'uhrada'] as $tab) {
+    if (select('id_pobyt',$tab,"id_pobyt=$idp")) $konflikt[]= $tab;
+  }
+  display("ucast_presun: $idp z $ida, $idp_goal z $ida_goal, konflikt=".implode(',',$konflikt));
+  // kontrola označení
+  if (!$idp_goal) {
+    $ret->err= "Označ pomocí klávesy Insert cílový pobyt";
+  }
+  elseif (strpos($idp_goal,',')) {
+    $ret->err= "Proveď v kontextovém menu 'zrušit výběr' a označ pomocí klávesy Insert cílový pobyt";
+  }
+  elseif ($idp==$idp_goal) {
+    $ret->err= "Pomocí klávesy Insert je označen cílový pobyt, ten přesouvaný musí být na jiném řádku";
+  }
+  elseif ($ida!=$ida_goal) {
+    $ret->err= "POZOR chyba programu: Cílový pobyt je v jiné akci, proveď v kontextovém menu 'zrušit výběr' ";
+  }
+  // příprava dotazu na souhlas s provedením 
+  elseif (!$make) { 
+    $pobyt= ucast_popis($idp);
+    $goal= ucast_popis($idp_goal);
+    $konflikt= implode(',',$konflikt);
+    $ret->msg= "Mám přesunout '$pobyt' do cílového pobytu s účastníky '$goal' ? "
+        . "<hr>POZOR údaje ve 'společné údaje o pobytu' u přesouvaného pobytu budou zapomenuty."
+        . ($konflikt ? "<hr>Vazba přes '$konflikt' bude přidána k cílovému pobytu." : '');
+  }
+  // proveď přesun
+  elseif ($make) { 
+    foreach ($konflikt as $tab) {
+      query("UPDATE $tab SET id_pobyt=$idp_goal WHERE id_pobyt=$idp");
+    }
+    $ok= query("UPDATE spolu SET id_pobyt=$idp_goal WHERE id_pobyt=$idp");
+    if ($ok) query("DELETE FROM pobyt WHERE id_pobyt=$idp");
+  }
+  return $ret;
+}
+# vrátí popis účastníků pobytu 
+function ucast_popis($idp) {
+  $txt= select1("GROUP_CONCAT(CONCAT(prijmeni,' ',jmeno) SEPARATOR ' + ')",
+      'osoba JOIN spolu USING (id_osoba)',"id_pobyt=$idp");
+  return $txt;
+}
+# ---------------------------------------------------------------------------- akce2 rodina_z_pobytu
+# vrátí rodiny dané osoby ve formátu pro select (název:id_rodina;...)
+function ucast2_rodina_z_pobytu($idp) {
+  $idr= 0; // název rodiny podle nejstaršího člena pobytu
+  $a= 'a'; $b= 'b'; // po přidělení bude změněno na 'd'
+  $res= pdo_qry("SELECT id_osoba, a.access, TRIM(prijmeni), sex, ulice, psc, obec,
+          ROUND(IF(MONTH(narozeni),
+            DATEDIFF(datum_od,narozeni)/365.2425,YEAR(datum_od)-YEAR(narozeni)),1) AS _vek
+         FROM osoba 
+           JOIN spolu USING (id_osoba) JOIN pobyt USING (id_pobyt) 
+           JOIN akce AS a ON id_akce=id_duakce 
+         WHERE id_pobyt=$idp 
+         ORDER BY narozeni");
+  while ( $res && (list($ido,$access,$prijmeni,$sex,$ulice,$psc,$obec,$vek)= pdo_fetch_array($res)) ) {
+    if (!$idr) { 
+      // vytvoř rodinu podle nejstaršího
+      $nazev= preg_replace('~ová$~','',$prijmeni).'ovi';
+      $idr= query_track("INSERT INTO rodina (nazev,access,ulice,psc,obec) "
+          . "VALUE ('$nazev',$access,'$ulice','$psc','$obec')");
+    }
+    // a přidávej členy rodiny
+    $role= $vek<18 ? 'd' : ($sex==1 ? $a : $b);
+    if ($role=='a')  $a= 'd';
+    if ($role=='b')  $b= 'd';
+    query_track("INSERT INTO tvori (id_osoba,id_rodina,role) VALUE ($ido,$idr,'$role')");
+  }
+  return $idr;
+}
+# ------------------------------------------------------------------------ akce2 pridat_clena_rodine
+# přidá osobu jako nového člena rodiny, vrátí navržený text role
+function ucast2_pridat_clena_rodine($ido,$idr) {
+  list($vek,$sex)= select1("TIMESTAMPDIFF(YEAR,narozeni,NOW()),sex",'osoba',"id_osoba=$ido");
+  $roles= select1("GROUP_CONCAT(role)",'tvori',"id_rodina=$idr");
+  // a přidávej členy rodiny
+  if ($vek<20)
+    $r= 'd';
+  else {
+    $r= $sex==1 ? 'a' : 'b';
+    if (strchr($roles,$r)!==false) $r= 'p';
+  }
+  display("vek=$vek, sex=$sex, r=$r");
+  query_track("INSERT INTO tvori (id_osoba,id_rodina,role) VALUE ($ido,$idr,'$r')");
+  $role_text= str_replace('-','jako',select('hodnota','_cis',
+      "druh='ms_akce_t_role' AND zkratka='$r' "));
+  return $role_text;
 }
 /** =======================================================================================> BANKY **/
 #
@@ -1702,35 +1800,6 @@ function ds2_fio($cmd) {
   }
 end:  
   return $y;
-}
-# ---------------------------------------------------------------------------- akce2 rodina_z_pobytu
-# vrátí rodiny dané osoby ve formátu pro select (název:id_rodina;...)
-function ucast2_rodina_z_pobytu($idp) {
-  $idr= 0; // název rodiny podle nejstaršího člena pobytu
-  $a= 'a'; $b= 'b'; // po přidělení bude změněno na 'd'
-  $res= pdo_qry("SELECT id_osoba, a.access, TRIM(prijmeni), sex, ulice, psc, obec,
-          ROUND(IF(MONTH(narozeni),
-            DATEDIFF(datum_od,narozeni)/365.2425,YEAR(datum_od)-YEAR(narozeni)),1) AS _vek
-         FROM osoba 
-           JOIN spolu USING (id_osoba) JOIN pobyt USING (id_pobyt) 
-           JOIN akce AS a ON id_akce=id_duakce 
-         WHERE id_pobyt=$idp 
-         ORDER BY narozeni");
-  while ( $res && (list($ido,$access,$prijmeni,$sex,$ulice,$psc,$obec,$vek)= pdo_fetch_array($res)) ) {
-    if (!$idr) { 
-      // vytvoř rodinu podle nejstaršího
-      $done= false; $nazev= preg_replace('~ová$~','ovi',1,$done,$prijmeni);
-      if (!$done)   $nazev= preg_replace('~ová$~','ovi',1,$done,$prijmeni);
-      $idr= query_track("INSERT INTO rodina (nazev,access,ulice,psc,obec) "
-          . "VALUE ('$nazev',$access,'$ulice','$psc','$obec')");
-    }
-    // a přidávej členy rodiny
-    $role= $vek<18 ? 'd' : ($sex==1 ? $a : $b);
-    if ($role=='a')  $a= 'd';
-    if ($role=='b')  $b= 'd';
-    query_track("INSERT INTO tvori (id_osoba,id_rodina,role) VALUE ($ido,$idr,'$role')");
-  }
-  return $idr;
 }
 // ========================================================================= doplnění osoba + rodina
 // 
