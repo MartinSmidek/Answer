@@ -88,9 +88,10 @@ panel fakt {type:'right', title:"Faktury"
       show id_pobyt { data:f.id_pobyt }
       show parm_json { data:f.parm_json }
       show deleted { expr:'IF(f.deleted,1,0)' }
+      show nadpis { data:f.nadpis }
       show rok [,,35,] { title:'rok', data:f.rok, format:'r' }
       show num [,,25,] { title:'č.', data:f.num, format:'rs-' }
-      show typ [,,25,] { title:'typ', expr:"IF(f.typ=1,'Z',IF(f.typ=2,'D','F'))", format:'c' }
+      show typ [,,25,] { title:'typ', expr:"IF(f.typ=1,'Z',IF(f.typ=2,'D',IF(f.typ=3,'F','V')))", format:'c' }
       show strucna [,,25,] { title:'stručná', expr:"IF(f.strucna=1,'S','')", format:'c' }
       show vs [,,50,] { title:'VS', data:f.vs, format:'r' }
       show ss [,,50,] { title:'SS', data:f.ss, format:'r' }
@@ -102,6 +103,7 @@ panel fakt {type:'right', title:"Faktury"
       func onrowclick() { var x:object
         x= php.dum_faktura_info(idf);
         popis= x.popis;
+        form.nadpis= nadpis;
         faktura= {parm:json_decode(parm_json)}; // struktura pro dum_faktura_save - parm_json,html,ref
         adresa= replace(faktura.parm.adresa,'<br>',chr(10));
 //        echo(debug(faktura.parm,'parametry faktury'));
@@ -126,6 +128,7 @@ panel fakt {type:'right', title:"Faktury"
     button [520,291,,] { title:'Vlož opravu a přegeneruj fakturu' 
       func onclick() { 
         faktura.parm.adresa= replace(adresa,chr(10),'<br>');
+        faktura.parm.nadpis= nadpis;
         faktura= php.dum_faktura(faktura.parm);
         call_func(`$.${sys('root')}.A4.preview`,{html:faktura.html,ref:faktura.ref},
             {block:&this,func:'obnoveno',title:'[fa-save] Vložit opravu do faktury'});
@@ -315,6 +318,7 @@ table faktura { key_id:'id_faktura'
   date vystavena { sql_pipe:'sql_date1'}
 //  date zaplacena { sql_pipe:'sql_date1'}
   text vyrizuje
+  text nadpis
   text parm_json
   text html
   text soubor // bude ve složce docs/dum_setkani/faktury

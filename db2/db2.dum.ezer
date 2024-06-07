@@ -271,18 +271,23 @@ form _obj {
     // a faktur
 //    echo(debug(udaje.faktura,'udaje.faktura'));
     copy_by_name(udaje.faktura,form,'',1); 
-    form.enable(0,'zal|dan|fakt|closed'); 
+    fakt_vyjimka.change();
+    form.enable(0,'zal|dan|fakt|vyj|closed'); 
     plan.enable(0,'.*'); 
     dan_send= 'Daňový doklad';
-    if (udaje.faktura.fakt_idf==0) {
+    if (udaje.faktura.fakt_idf==0 && udaje.faktura.vyj_idf==0) {
       // konečná faktura
       fakt_num= udaje.fld.fakt_num;
       fakt_vs= udaje.fld.fakt_num;
       fakt_ss= id_order;
       fakt_zaloha= zal_zaloha;
       fakt_castka= udaje.ucet.celkem;
+      fakt_nadpis= `Za pobyt v Domě setkání ve dnech ${udaje.fld.oddo} Vám fakturujeme:`;
       form.enable(1,'fakt|closed'); 
       plan.enable(1,'.*'); 
+//      if (udaje.faktura.vyj_idf==0) {
+//        fakt_vyjimka= 0; fakt_vyjimka.change();
+//      }
       if (udaje.faktura.zal_idf==0) {
         // zálohová faktura
         zal_num= udaje.fld.zal_num;
@@ -364,6 +369,7 @@ form _obj {
   field city  [left_oso+ 60,175,150,] { tag:'adr', title:'^obec' }
 
   // parametry zálohy 
+  field zal_idf
   field zal_vystavena [10,top_zal,90,] { tag:'zal', type:'date', 
       title:'^datum vystavení', format:'r'  }
   field zal_num [111,top_zal,40,] { tag:'zal', title:'^číslo faktury', format:'r'  }
@@ -405,6 +411,7 @@ form _obj {
   }
 
   // parametry daňového dokladu
+  field dan_idf
   field dan_num [111,top_dan,40,] { tag:'dan', title:'^číslo dokladu', format:'r'  }
   field dan_vystavena [670,top_dan,90,] { tag:'dan', type:'date', title:'^datum odeslání', format:'r'}
   button dan_send [544,top_dan,,] { tag:'zal', title:'[fa-exclamation fa-red] Daňový doklad' 
@@ -417,28 +424,38 @@ form _obj {
   }
 
   // parametry vyúčování
+  field fakt_idf
   field fakt_vystavena [10,top_fakt,90,] { tag:'fakt', type:'date', 
       title:'^datum vystavení', format:'r'  }
   field fakt_num [111,top_fakt,40,] { tag:'fakt', title:'^číslo faktury', format:'r' }
   field fakt_vs  [166,top_fakt,50,] { tag:'fakt', title:'^VS', format:'r'  }
   field fakt_ss  [231,top_fakt,33,] { tag:'fakt', title:'^SS', format:'r'  }
-  field fakt_castka [284,top_fakt,50,] { tag:'fakt', title:'^částka', format:'r' }
+  field fakt_castka [284,top_fakt,50,] { tag:'fakt,-vyj', title:'^částka', format:'r' }
+  field vyj_celkem [284,top_fakt,50,] { tag:'vyj', title:'^částka', format:'ron' }
   field fakt_zaloha [354,top_fakt,50,] { tag:'fakt', title:'^záloha', format:'ro'  }
   field fakt_vyrizuje [422,top_fakt,55,] { tag:'fakt', title:'^kdo vyřizuje' }
-  check fakt_strucna [485,top_fakt,110,] { tag:'zal', title:'stručná' }
+  check fakt_strucna [485,top_fakt+-2,121,] { tag:'zal', title:'stručná' }
   field fakt_zaplacena [670,top_fakt,90,] { tag:'fakt', type:'date', title:'^datum úhrady', format:'r'}
-//  field fakt_platba [660,top_fakt,90,] { tag:'fakt', type:'date', title:'^datum úhrady', format:'r'  }
+  field fakt_nadpis  [10,top_fakt+40,450,] { tag:'fakt', title:'^řádek popisující účtovanou částku' }
   button [546,top_fakt,,] { tag:'fakt', title:'[fa-credit-card] Konečná faktura' 
     func onclick() { var uf:object
       clear(); uf= udaje.fld;
-      if (udaje.ucet.neubytovani) {
-        alert(`Fakturu není možné vystavit, protože hosté ${udaje.ucet.neubytovani} nejsou ubytováni`); 
-        return;
+      if (fakt_vyjimka) { // ds_vzorec má výjimečný formát: ubyt|strav|popl
+        faktura= php.dum_faktura({typ:4,strucna:1,show:1,save:1,vystavena:fakt_vystavena,
+            adresa:udaje.adresa,ds_vzorec:`${vyj_ubyt}|${vyj_strav}|${vyj_popl}`,nadpis:fakt_nadpis,
+            ic:uf.ic,dic:uf.dic,oddo:uf.oddo,rok:uf.rok,id_order:uf.id_order,
+            num:fakt_num,zaloha:fakt_zaloha,vs:fakt_vs,ss:fakt_ss,vyrizuje:fakt_vyrizuje});
       }
-      faktura= php.dum_faktura({typ:3,strucna:fakt_strucna,show:1,save:1,vystavena:fakt_vystavena,
-          adresa:udaje.adresa,ds_vzorec:udaje.vzorec_fak,
-          ic:uf.ic,dic:uf.dic,oddo:uf.oddo,rok:uf.rok,id_order:uf.id_order,
-          num:fakt_num,zaloha:fakt_zaloha,vs:fakt_vs,ss:fakt_ss,vyrizuje:fakt_vyrizuje});
+      else {
+        if (udaje.ucet.neubytovani) {
+          alert(`Fakturu není možné vystavit, protože hosté ${udaje.ucet.neubytovani} nejsou ubytováni`); 
+          return;
+        }
+        faktura= php.dum_faktura({typ:3,strucna:fakt_strucna,show:1,save:1,vystavena:fakt_vystavena,
+            adresa:udaje.adresa,ds_vzorec:udaje.vzorec_fak,nadpis:fakt_nadpis,
+            ic:uf.ic,dic:uf.dic,oddo:uf.oddo,rok:uf.rok,id_order:uf.id_order,
+            num:fakt_num,zaloha:fakt_zaloha,vs:fakt_vs,ss:fakt_ss,vyrizuje:fakt_vyrizuje});
+      }
       call_func(`$.${sys('root')}.A4.preview`,{html:faktura.html,ref:faktura.ref},
           {block:&this,func:'ulozeno',title:'[fa-save] Uložit mezi faktury a posunout číslování'});
     }
@@ -448,6 +465,27 @@ form _obj {
             <br>Je třeba ji poslat i našemu ekonomovi.`);
     }
   }
+  // parametry výjimečného vyúčtování
+  field vyj_idf
+  func vyj_soucet() { vyj_celkem= vyj_ubyt + vyj_strav + vyj_popl; }
+  check fakt_vyjimka [485,top_fakt+39,127,] { tag:'fakt', title:'výjimečně:', format:'t' 
+    func onchange() { 
+      if (this) {
+        form.display(1,'vyj'); form.display(0,'-vyj'); fakt_strucna= 1; form.enable(vyj_idf==0,'vyj'); 
+      }
+      else {
+        form.display(0,'vyj'); form.display(1,'-vyj'); fakt_strucna= 0;
+      }
+  }}
+  field vyj_ubyt   [562,top_fakt+40,50,] { tag:'vyj', title:'^ubytováni', format:'rn' 
+    func onchange() {vyj_soucet() }}
+  field vyj_strav  [632,top_fakt+40,50,] { tag:'vyj', title:'^stravu', format:'rn' 
+    func onchange() {vyj_soucet() }}
+  field vyj_popl   [702,top_fakt+40,50,] { tag:'vyj', title:'^popl. obci', format:'rn' 
+    func onchange() {vyj_soucet() }}
+//  button vyj [546,top_fakt+30,,] { tag:'vyj', title:'[fa-credit-card fa-red] Výjimečná faktura' 
+//    func onclick() { var uf:object
+//  }}
   
   form _pokoje [,,750,40] { style:'border:1px solid grey'
 //    func onchanged(x:ezer) { echo(`změna ${x._id}=${x.get()}`); }
