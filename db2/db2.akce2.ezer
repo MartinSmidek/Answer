@@ -839,7 +839,7 @@ panel track [,,550,276] { title:'Historie oprav', type:'popup', css:'dialog'
     back.lst.raise('onrowclick')
   }
   proc back_osoba_rodina(ido,kmen) { var idr:number
-    idr.set(split(kmen,'/',1));
+    idr.set(split(kmen,'/',-1)); // poslední
     idr; back_double('osoba',ido,'rodina',idr) | back_show('osoba',ido)
   }
   # ------------------------------------------------------------- _back
