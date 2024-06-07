@@ -802,15 +802,16 @@ form _page {
   # ==============================================> C: EVIDENCE RODINY
   view r: table rodina
   use rod: form _rodina2p [5,20,,] { tag:'Cf'   // view r:rodina
-    proc on_click() {
+    func on_click() {
       up(page.oso); up(page.rod); down(page.dar); down(page.cle); down(page.pri); down(page.map) }
-    proc onchanged() { page.d_change('r') }     // reakce na změnu ve formuláři => změna tlačítek
-    proc rodina_changed() {                     // reakce na změnu select:rodiny => výměna členů
-      eq(idr.get,rod.rodiny.key)
-    | idr.set(rod.rodiny.key);             // - změna lokálního idr
-      page.page_load
+    func onchanged() { page.d_change('r') }     // reakce na změnu ve formuláři => změna tlačítek
+    func rodina_changed() {                // reakce na změnu select:rodiny => výměna členů
+      if (idr!=rod.rodiny.key()) {
+        idr= rod.rodiny.key();             // - změna lokálního idr
+        page.page_load()
+      }
     }
-    proc rodina_edit() { page.d_change('r') }
+    func rodina_edit() { page.d_change('r') }
   }
   # ----------------------------------------------==> ... členové rodiny
   label [10,40,200,] {tag:'C', title:"členi zobrazené rodiny" }
