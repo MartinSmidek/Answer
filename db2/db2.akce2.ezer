@@ -79,17 +79,17 @@ func akce_onstart() { var m:object
 //  my_org= my_access==3 ? sys('user','org') : my_access;  ????????? 22/5/2024
   // hodnoty zapamatované pro navázání na předchozí session
   the_source= get_cookie(`${sys('root')}_akce_source`,'sey');
+  the_duakce= get_cookie(`${sys('root')}_akce`,0);
   // příprava zobrazení v AKCE - volá akce_choose
   if ( (my_org&org_ds) < 4 ) {
     the_akce_ys= get_cookie(`${sys('root')}_akce_ys`,0);
     the_akce_fa= get_cookie(`${sys('root')}_akce_fa`,0);
     if ( !has_skill('mrop')) {    // uživatel s 'mrop' nepotřebuje seznam akcí
-      lst.akce_work(my_org==1 ? the_akce_ys : the_akce_fa);
+      lst.akce_work(the_source=='dum' ? the_duakce : (my_org==1 ? the_akce_ys : the_akce_fa));
     }
     echo('---------------- akce_onstart: the_akce_xx=',the_akce_ys,',',the_akce_fa,', the_source=',the_source);
   }
   else {
-    the_duakce= get_cookie(`${sys('root')}_akce`,0);
     echo('akce_onstart: the_duakce=',the_duakce);
     the_source= 'sey';
     lst.akce_work(the_duakce)
