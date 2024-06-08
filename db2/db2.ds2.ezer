@@ -100,7 +100,7 @@ panel fakt {type:'right', title:"Faktury"
       show vystavena [,,70,] { title:'vystavená', data:f.vystavena, format:'r' }
       show zaplacena [,,70,] { title:'zaplacená', data:p.datum, format:'r' }
       // funkce
-      func onrowclick() { var x:object
+      func onrowclick() { var x:object, a:array
         x= php.dum_faktura_info(idf);
         popis= x.popis;
         form.nadpis= nadpis;
@@ -108,6 +108,13 @@ panel fakt {type:'right', title:"Faktury"
         adresa= replace(faktura.parm.adresa,'<br>',chr(10));
         ic= faktura.parm.ic;
         dic= faktura.parm.dic;
+        if (faktura.parm.typ==4) {
+          form.display(1,'vyj');
+          a= split(faktura.parm.ds_vzorec,'|');
+          vyj_ubyt= a[0]; vyj_strav= a[1]; vyj_popl= a[2];
+          vyj_popl.onchange(); // kvůli součtu
+        }
+        else form.display(0,'vyj');
 //        echo(debug(faktura.parm,'parametry faktury'));
       }
     }
@@ -117,24 +124,34 @@ panel fakt {type:'right', title:"Faktury"
     field dic [620,111,70,] { title:'^DIČ', format:':e' }
     edit adresa [520,157,300,60] { title:'^adresa odběratele' }
     edit nadpis [520,247,300,40] { title:'^řádek nad tabulkou s položkami' }
-    button [521,307,,] { title:'[fa-camera-retro] Zobrazit fakturu' 
+    // výjimečná fakturace
+    field vyj_celkem  [520,320,50,] { tag:'vyj', title:'^celkem =', format:'rdn' }
+    field vyj_ubyt   [582,320,50,] { tag:'vyj', title:'^ubytováni', format:'rn' 
+      func onchange() { vyj_celkem= vyj_ubyt + vyj_strav + vyj_popl; }}
+    field vyj_strav  [652,320,50,] { tag:'vyj', title:'^stravu', format:'rn' 
+      func onchange() { vyj_celkem= vyj_ubyt + vyj_strav + vyj_popl; }}
+    field vyj_popl   [722,320,50,] { tag:'vyj', title:'^popl. obci', format:'rn' 
+      func onchange() { vyj_celkem= vyj_ubyt + vyj_strav + vyj_popl; }}
+    
+    button [521,357,,] { title:'[fa-camera-retro] Zobrazit fakturu' 
       func onclick() { var html:text
         html= php.select('html','faktura',`id_faktura=${fak.idf}`);
         call_func(`$.${sys('root')}.A4.preview`,{html:html},0);
       }
     }
-    button [650,307,,] { title:'[fa-file-pdf-o] Stáhnout PDF' 
+    button [650,357,,] { title:'[fa-file-pdf-o] Stáhnout PDF' 
       func onclick() { var html:text
         faktura= php.dum_faktura(faktura.parm);
         alert(`Faktura k vytištění nebo poslání emailem je ${faktura.ref}`);
       }
     }
-    button [520,337,,] { title:'[fa-recycle] Vložit opravu se zdůvodněním a přegenerovat' 
+    button [520,387,,] { title:'[fa-recycle] Vložit opravu se zdůvodněním a přegenerovat' 
       func onclick() { 
         faktura.parm.adresa= replace(adresa,chr(10),'<br>');
         faktura.parm.nadpis= nadpis;
         faktura.parm.ic= ic;
         faktura.parm.dic= dic;
+        if (faktura.parm.typ==4) faktura.parm.ds_vzorec= `${vyj_ubyt}|${vyj_strav}|${vyj_popl}`;
         faktura= php.dum_faktura(faktura.parm);
         call_func(`$.${sys('root')}.A4.preview`,{html:faktura.html,ref:faktura.ref},
             {block:&this,func:'obnoveno',title:'[fa-save] Vložit opravu do faktury'});
