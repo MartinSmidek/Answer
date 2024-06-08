@@ -106,36 +106,43 @@ panel fakt {type:'right', title:"Faktury"
         form.nadpis= nadpis;
         faktura= {parm:json_decode(parm_json)}; // struktura pro dum_faktura_save - parm_json,html,ref
         adresa= replace(faktura.parm.adresa,'<br>',chr(10));
+        ic= faktura.parm.ic;
+        dic= faktura.parm.dic;
 //        echo(debug(faktura.parm,'parametry faktury'));
       }
     }
     var faktura:object
     label popis [522,50,300,40]
-    edit adresa [520,111,300,60] { title:'^adresa odběratele' }
-    edit nadpis [520,201,300,40] { title:'^řádek nad tabulkou s položkami' }
-    button [521,261,,] { title:'Zobrazit fakturu' 
+    field ic  [520,111,70,] { title:'^IČ', format:':e' }
+    field dic [620,111,70,] { title:'^DIČ', format:':e' }
+    edit adresa [520,157,300,60] { title:'^adresa odběratele' }
+    edit nadpis [520,247,300,40] { title:'^řádek nad tabulkou s položkami' }
+    button [521,307,,] { title:'[fa-camera-retro] Zobrazit fakturu' 
       func onclick() { var html:text
         html= php.select('html','faktura',`id_faktura=${fak.idf}`);
         call_func(`$.${sys('root')}.A4.preview`,{html:html},0);
       }
     }
-    button [641,261,,] { title:'Stáhnout PDF' 
+    button [650,307,,] { title:'[fa-file-pdf-o] Stáhnout PDF' 
       func onclick() { var html:text
         faktura= php.dum_faktura(faktura.parm);
         alert(`Faktura k vytištění nebo poslání emailem je ${faktura.ref}`);
       }
     }
-    button [520,291,,] { title:'Vlož opravu a přegeneruj fakturu' 
+    button [520,337,,] { title:'[fa-recycle] Vložit opravu se zdůvodněním a přegenerovat' 
       func onclick() { 
         faktura.parm.adresa= replace(adresa,chr(10),'<br>');
         faktura.parm.nadpis= nadpis;
+        faktura.parm.ic= ic;
+        faktura.parm.dic= dic;
         faktura= php.dum_faktura(faktura.parm);
         call_func(`$.${sys('root')}.A4.preview`,{html:faktura.html,ref:faktura.ref},
             {block:&this,func:'obnoveno',title:'[fa-save] Vložit opravu do faktury'});
       }
       func obnoveno() { var msg:text
         if (confirm(`Mám uložit pozměněnou fakturu?`)) {
-//          alert('... zítra');
+          faktura.duvod_zmeny= prompt2('Napiš stručný důvod úpravy, bude zapsán ke smazané verzi:','');
+          if (!faktura.duvod_zmeny) { alert('Bez toho nebude oprava provedena'); return; }
           msg= php.dum_faktura_save(faktura,fak.idf); // update existující faktury
           alert(`${msg}<br>K vytištění nebo poslání emailem je ${faktura.ref}
                 <br>Je třeba ji poslat i našemu ekonomovi.`);
