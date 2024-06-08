@@ -93,11 +93,12 @@ function dum_pobyt_nazev($idp) {
 # --------------------------------------------------------------------------------- dum faktura_info
 # par.typ = konečná | záloha
 function dum_faktura_info($idf) {
-  list($ido,$idp,$typ)= select('id_order,id_pobyt,typ','faktura',"id_faktura=$idf");
+  list($ido,$idp,$typ,$duvod)= select('id_order,id_pobyt,typ,duvod_zmeny','faktura',"id_faktura=$idf");
   $typs= $typ==3 ? 'konečná faktura' 
       : ($typ==1 ? 'zálohová faktura' 
       : ($typ==2 ? 'daňový doklad' : '???'));
   $popis= 'Objednávka '.dum_objednavka_nazev($ido).($idp?'<br>pobyt '.dum_pobyt_nazev($idp):'')." - $typs";
+  if ($duvod) $popis.= "<hr>důvod smazání: <b>$duvod</b>";
   return (object)['popis'=>$popis];
 }
 # --------------------------------------------------------------------------------- dum faktura_save
@@ -112,6 +113,7 @@ function dum_faktura_save($parm,$idf=0) {
   $order= $p->id_order ?? '';
   $pobyt= $p->id_pobyt ?? '';
   $nadpis= pdo_real_escape_string($p->nadpis); 
+  $duvod= pdo_real_escape_string($parm->duvod_zmeny).date(' (j.n.Y)'); 
 //  $jso= $html= '';
   $p->parm_json= json_encode($p);
   $jso= pdo_real_escape_string($parm->parm_json); 
@@ -127,7 +129,7 @@ function dum_faktura_save($parm,$idf=0) {
   elseif ($idf) {
     $idf2= pdo_insert_id();
     $dnes= date('Y-m-d');
-    query("UPDATE faktura SET deleted='$dnes' WHERE id_faktura=$idf");
+    query("UPDATE faktura SET deleted='$dnes',duvod_zmeny='$duvod' WHERE id_faktura=$idf");
     $n= query("UPDATE join_platba SET id_faktura=$idf2 WHERE id_faktura=$idf");
     $msg= "Byla vytvořena nová faktura pod stejným číslem, původní byla označena jako smazaná.";
     if ($n) $msg.= POZOR." opravovaná faktura již byla zaplacena. Rozvaž dobře další kroky ...";
@@ -455,6 +457,7 @@ function dum_faktura($par) {  debug($par,'dum_faktura');
     $dnes= date('Ymd');
     $zkratka= substr(strtr(utf2ascii($adresa),['<br>'=>'',' '=>'','_'=>'']),0,10); 
     $fname= "Dum-setkani_{$order}_{$dnes}_$zkratka.pdf";
+    $par->soubor= $fname;
     $dir= "$abs_root/docs/dum_setkani/faktury";
     if (!is_dir($dir)) recursive_mkdir($dir,'/');
     $f_abs= "$dir/$fname";
@@ -543,7 +546,7 @@ function dum_objednavka($id_order) {
     FROM faktura AS f
       LEFT JOIN join_platba AS pf USING (id_faktura) 
       LEFT JOIN platba AS p USING (id_platba) 
-    WHERE id_order=$id_order AND typ IN (1,2,3,4)",0,0,0,$answer_db);
+    WHERE deleted='' AND id_order=$id_order AND typ IN (1,2,3,4)",0,0,0,$answer_db);
   while ($rf && ($f= pdo_fetch_object($rf))) {
     if ($f->typ==4) { 
       $x->faktura->vyj_idf= $f->idf;
