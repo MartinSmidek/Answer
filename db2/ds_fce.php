@@ -546,7 +546,7 @@ function dum_objednavka($id_order) {
     FROM faktura AS f
       LEFT JOIN join_platba AS pf USING (id_faktura) 
       LEFT JOIN platba AS p USING (id_platba) 
-    WHERE id_order=$id_order AND typ IN (1,2,3,4)",0,0,0,$answer_db);
+    WHERE deleted='' AND id_order=$id_order AND typ IN (1,2,3,4)",0,0,0,$answer_db);
   while ($rf && ($f= pdo_fetch_object($rf))) {
     if ($f->typ==4) { 
       $x->faktura->vyj_idf= $f->idf;
