@@ -101,6 +101,13 @@ function dum_faktura_info($idf) {
   if ($duvod) $popis.= "<hr>důvod smazání: <b>$duvod</b>";
   return (object)['popis'=>$popis];
 }
+# ------------------------------------------------------------------------------- dum faktura_delete
+# poznačí fakturu jako smazanou
+function dum_faktura_delete($duvod,$idf) {
+  $duvod= pdo_real_escape_string($duvod); 
+  $dnes= date('Y-m-d');
+  query("UPDATE faktura SET deleted='$dnes',duvod_zmeny='$duvod' WHERE id_faktura=$idf");
+}
 # --------------------------------------------------------------------------------- dum faktura_save
 # pokud je uvedeno idf je třeba zneplatněnou fakturu pozančit jako smazanou, zpsat důvod opravy,
 # vytvořit novou fakturu a její id zaměnit za idf v join_platba
@@ -119,10 +126,12 @@ function dum_faktura_save($parm,$idf=0) {
   $jso= pdo_real_escape_string($parm->parm_json); 
   $htm= pdo_real_escape_string($parm->html); 
   // 
-  $ok= query("INSERT INTO faktura (rok,num,typ,strucna,vs,ss,id_order,id_pobyt,zaloha,"
-      . "castka,vzorec,nadpis,vyrizuje,vystavena,parm_json,html,soubor) VALUES "
-      . "($p->rok,$p->num,'$p->typ','$p->strucna','$p->vs','$p->ss','$order','$pobyt','$p->zaloha',"
-      . "'$p->celkem','$p->ds_vzorec','$nadpis','$p->vyrizuje','$p->vystavena','$jso',\"$htm\",'$p->soubor')");
+  $ok= query("INSERT INTO faktura (rok,num,typ,strucna,vs,ss,id_order,id_pobyt,"
+      . "zaloha,castka,ubyt,stra,popl,prog,jine,"
+      . "vzorec,nadpis,vyrizuje,vystavena,parm_json,html,soubor) VALUES "
+      . "($p->rok,$p->num,'$p->typ','$p->strucna','$p->vs','$p->ss','$order','$pobyt',"
+      . "'$p->zaloha','$p->celkem','$p->ubyt','$p->stra','$p->popl','$p->prog','$p->jine',"
+      . "'$p->ds_vzorec','$nadpis','$p->vyrizuje','$p->vystavena','$jso',\"$htm\",'$p->soubor')");
   if (!$ok) { 
     $msg= POZOR." nepovedlo se vytvoření faktury - kontaktuj Martina<hr>NEPLATÍ, že: "; 
   }
@@ -223,9 +232,14 @@ function dum_faktura($par) {  debug($par,'dum_faktura');
   $rozpis_dph= []; 
   if ($vyjimecna) { // podrobně - položky ceníku
     $strucna= 1;
-    // ds_vzorec má výjimečný formát: ubyt|strav|popl|řádek popisu
-    list($ubyt,$strav,$popl)= explode('|',$par->ds_vzorec);
-    $celkem= $ubyt + $strav + $popl;
+    // ds_vzorec má výjimečný formát: ubyt|stra|popl|řádek popisu
+//    list($ubyt,$stra,$popl)= explode('|',$par->ds_vzorec);
+    $ubyt= $par->ubyt;
+    $stra= $par->stra;
+    $popl= $par->popl;
+    $prog= $par->prog;
+    $jine= $par->jine;
+    $celkem= $ubyt + $stra + $popl + $prog + $jine;
     $ds2_cena= dum_cenik($rok);
     // ubytování
     $sazba_ubyt= $ds2_cena['noc_L']->dph;
@@ -233,23 +247,39 @@ function dum_faktura($par) {  debug($par,'dum_faktura');
     $rozpis_dph[$sazba_ubyt]+= $dph_ubyt;
     // strava
     $sazba_strav= $ds2_cena['strava_CC']->dph;
-    $dph_strav= $strav / ((100 + $sazba_strav) / 100);
+    $dph_strav= $stra / ((100 + $sazba_strav) / 100);
     $rozpis_dph[$sazba_strav]+= $dph_strav;
     // poplatky
     $sazba_popl= $ds2_cena['ubyt_C']->dph;
     $dph_popl= $popl / ((100 + $sazba_popl) / 100);
     $rozpis_dph[$sazba_popl]+= $dph_popl;
+    // program
+    $sazba_prog= $ds2_cena['prog_C']->dph;
+    $dph_prog= $popl / ((100 + $sazba_prog) / 100);
+    $rozpis_dph[$sazba_prog]+= $dph_prog;
+    // jiné služby
+    $sazba_jine= $ds2_cena['noc_Z']->dph;
+    $dph_jine= $jine / ((100 + $sazba_jine) / 100);
+    $rozpis_dph[$sazba_jine]+= $dph_jine;
     $polozky= [
       ['ubytování',$sazba_ubyt.'%',dum_kc($dph_ubyt),dum_kc($ubyt),$ubyt],
-      ['strava',$sazba_strav.'%',dum_kc($dph_strav),dum_kc($strav),$strav],
+      ['strava',$sazba_strav.'%',dum_kc($dph_strav),dum_kc($stra),$stra],
       ['poplatky obci',$sazba_popl.'%',dum_kc($dph_popl),dum_kc($popl),$popl]
     ];
+    if ($prog) $polozky[]= ['poplatky obci',$sazba_prog.'%',dum_kc($dph_prog),dum_kc($prog),$prog];
+    if ($jine) $polozky[]= ['jiné služby',$sazba_jine.'%',dum_kc($dph_jine),dum_kc($jine),$prog];
   }
   else {
     // redakce položek ceny pro zobrazení ve sloupcích
     $cena= dum_vzorec_cena($par->ds_vzorec,$rok);
-//  debug($cena,"dum_vzorec_cena($par->ds_vzorec,$rok)");
+    debug($cena,"dum_vzorec_cena($par->ds_vzorec,$rok)");                                 /*DEBUG*/
     $celkem= $cena['celkem'];
+    $koef= $zaloha ? $zaloha/$celkem : 1;
+    $par->ubyt= $cena['abbr']['ubyt'] * $koef;
+    $par->stra= $cena['abbr']['stra'] * $koef;
+    $par->popl= $cena['abbr']['popl'] * $koef;
+    $par->prog= $cena['abbr']['prog'] * $koef;
+    $par->jine= $cena['abbr']['jine'] * $koef;
     if ($strucna==0) { // podrobně - položky ceníku
       ksort($cena['rozpis']);
       foreach ($cena['rozpis'] as $zaco=>$pocet) {
@@ -270,11 +300,11 @@ function dum_faktura($par) {  debug($par,'dum_faktura');
       }
     }
     elseif ($strucna==1) { // jen přehled ubytování - strava - poplatky
-      foreach ($cena['druh2'] as $nazev=>$cc) {
+      foreach ($cena['druh2'] as $cc) {
         $kc= $cc['cena'];
         $sazba= $cc['sazba'];
         $polozky[]= [
-          $nazev,
+          $cc['druh'],
           $sazba.'%',
           dum_kc($cc['dph']),
           dum_kc($kc),
@@ -284,8 +314,10 @@ function dum_faktura($par) {  debug($par,'dum_faktura');
       }
     }
   }
-  debug($polozky,'polozky NEW');
-
+  debug($polozky,'polozky NEW');                                                          /*DEBUG*/
+  // zápis rozpisu DPH
+  debug($rozpis_dph,'rozpis DPH');                                                        /*DEBUG*/
+  
   // nadpisy položek a šířka polí
   $popisy= explode(',', $strucna==0
     ? "Položka:79,Počet:12,Cena položky vč. DPH:26,Sazba DPH:14,DPH:25,Cena vč. DPH:28"
@@ -731,35 +763,39 @@ function dum_vzorec_cena($vzorec,$rok_ceniku) { //trace();
     if ($c) {
       $pocet= $c;
       $d= $ds2_cena[$zaco];
+      $druh= utf2ascii($d->druh);
       $kc= $d->cena;
       $cena['celkem']+= $kc * $pocet;
-      $cena['druh'][$d->druh]+= $kc * $pocet;
-      $cena['abbr'][substr($d->druh,0,4)]+= $kc * $pocet;
+      $cena['druh'][$druh]+= $kc * $pocet;
+      $cena['abbr'][substr($druh,0,4)]+= $kc * $pocet;
       $cena['cena'][$zaco]= $kc * $pocet;
       $cena['cena_dph'][$zaco]= $dph= $kc * $pocet - ($kc * $pocet) / ((100 + $d->dph) / 100);
       $cena['dph'][$d->dph]+= $dph;
       $cena['rozpis'][$zaco]= $pocet;
       $cena['polozka'][$zaco]= (object)['polozka'=>$d->polozka,'cena'=>$kc,'dph'=>$d->dph];
-      $cena['druh2'][$d->druh]['cena']+= $kc * $pocet;
-      $cena['druh2'][$d->druh]['dph']+= $dph;
-      $cena['druh2'][$d->druh]['sazba']= $d->dph;
+      $cena['druh2'][$druh]['druh']= $d->druh;
+      $cena['druh2'][$druh]['cena']+= $kc * $pocet;
+      $cena['druh2'][$druh]['dph']+= $dph;
+      $cena['druh2'][$druh]['sazba']= $d->dph;
     }
     if ($s) {
       $pocet= $s;
       $d= $ds2_cena[$zaco];
+      $druh= utf2ascii($d->druh);
       $zaco.= '/d';
       $kc= $d->dotovana;
       $cena['celkem']+= $kc * $pocet;
-      $cena['druh'][$d->druh]+= $kc * $pocet;
-      $cena['abbr'][substr($d->druh,0,4)]+= $kc * $pocet;
+      $cena['druh'][$druh]+= $kc * $pocet;
+      $cena['abbr'][substr($druh,0,4)]+= $kc * $pocet;
       $cena['cena'][$zaco]= $kc * $pocet;
       $cena['cena_dph'][$zaco]= $dph= $kc * $pocet - ($kc * $pocet) / ((100 + $d->dph) / 100);
       $cena['dph'][$d->dph]+= $dph;
       $cena['rozpis'][$zaco]= $pocet;
       $cena['polozka']["$zaco"]= (object)['polozka'=>"$d->polozka ... dotovaná cena",'cena'=>$kc,'dph'=>$d->dph];
-      $cena['druh2'][$d->druh]['cena']+= $kc * $pocet;
-      $cena['druh2'][$d->druh]['dph']+= $dph;
-      $cena['druh2'][$d->druh]['sazba']= $d->dph;
+      $cena['druh2'][$druh]['druh']= $d->druh;
+      $cena['druh2'][$druh]['cena']+= $kc * $pocet;
+      $cena['druh2'][$druh]['dph']+= $dph;
+      $cena['druh2'][$druh]['sazba']= $d->dph;
     }
   }
 //  debug($cena,"dum_vzorec_cena($vzorec,$rok_ceniku)");
@@ -791,8 +827,9 @@ function dum_objednavka_cena($rozpis,$rok_ceniku) {
 //  debug($ds2_cena);  
   foreach ($rozpis as $zaco=>$pocet) {
     $d= $ds2_cena[$zaco];
+    $druh= utf2ascii($d->druh);
     $cena['celkem']+= $d->cena * $pocet;
-    $cena['druh'][$d->druh]+= $d->cena * $pocet;
+    $cena['druh'][$druh]+= $d->cena * $pocet;
     $cena['dph'][$d->dph]+= ($d->cena * $pocet) / ((100 + $d->dph) / 100);
   }
   return $cena;

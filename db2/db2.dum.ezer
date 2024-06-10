@@ -442,6 +442,7 @@ form _obj {
       clear(); uf= udaje.fld;
       if (fakt_vyjimka) { // ds_vzorec má výjimečný formát: ubyt|strav|popl
         faktura= php.dum_faktura({typ:4,strucna:1,show:1,save:1,vystavena:fakt_vystavena,
+            ubyt:vyj_ubyt,stra:vyj_strav,popl:vyj_popl,prog:0,
             adresa:udaje.adresa,ds_vzorec:`${vyj_ubyt}|${vyj_strav}|${vyj_popl}`,nadpis:fakt_nadpis,
             ic:uf.ic,dic:uf.dic,oddo:uf.oddo,rok:uf.rok,id_order:uf.id_order,
             num:fakt_num,zaloha:fakt_zaloha,vs:fakt_vs,ss:fakt_ss,vyrizuje:fakt_vyrizuje});
@@ -467,7 +468,7 @@ form _obj {
   }
   // parametry výjimečného vyúčtování
   field vyj_idf
-  func vyj_soucet() { vyj_celkem= vyj_ubyt + vyj_strav + vyj_popl; }
+  func vyj_soucet() { vyj_celkem= vyj_ubyt + vyj_strav + vyj_popl + vyj_prog; }
   check fakt_vyjimka [485,top_fakt+39,127,] { tag:'fakt', title:'výjimečně:', format:'t' 
     func onchange() { 
       if (this) {
@@ -483,9 +484,8 @@ form _obj {
     func onchange() {vyj_soucet() }}
   field vyj_popl   [702,top_fakt+40,50,] { tag:'vyj', title:'^popl. obci', format:'rn' 
     func onchange() {vyj_soucet() }}
-//  button vyj [546,top_fakt+30,,] { tag:'vyj', title:'[fa-credit-card fa-red] Výjimečná faktura' 
-//    func onclick() { var uf:object
-//  }}
+  field vyj_prog   [772,top_fakt+40,50,] { tag:'vyj', title:'^program', format:'rn' 
+    func onchange() {vyj_soucet() }}
   
   form _pokoje [,,750,40] { style:'border:1px solid grey'
 //    func onchanged(x:ezer) { echo(`změna ${x._id}=${x.get()}`); }
