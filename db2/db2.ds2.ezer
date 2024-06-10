@@ -59,7 +59,7 @@ panel hoste {type:'right', title:"Kniha hostů"
 # =========================================================================================> FAKTURY
 panel fakt {type:'right', title:"Faktury"
   func onfocus() { m.roky.i.click(); }
-  menu m {type:'left', active:*
+  menu m {type:'left', active:*, format:'f-'
     menu roky {title:'Kniha faktur',type:'group'
       item i {title:'Letos vystavené faktury',  par:{rok:2024} }
     }
@@ -73,9 +73,6 @@ panel fakt {type:'right', title:"Faktury"
     // funkce
     func Reload() {
       fak.browse_load(smazane?'1':"deleted=''") }
-    // parametry zobrazení
-    check smazane [-150,4,150,] { title:'zobrazit i smazané', format:'t', css:'bila', value:'0' 
-      func onchange() { Reload() }}
     // faktura
     view f: table faktura 
     view pf: table join_platba { join_type:'LEFT', join:'USING (id_faktura)' }
@@ -97,61 +94,73 @@ panel fakt {type:'right', title:"Faktury"
       show ss [,,50,] { title:'SS', data:f.ss, format:'r' }
       show zaloha [,,60,] { title:'záloha', data:f.zaloha, format:'r' }
       show castka [,,60,] { title:'částka', data:f.castka, format:'r' }
+      show ubyt { data:f.ubyt } 
+      show stra { data:f.stra } 
+      show popl { data:f.popl }
+      show prog { data:f.prog }
+      show jine { data:f.jine }
       show vystavena [,,70,] { title:'vystavená', data:f.vystavena, format:'r' }
       show zaplacena [,,70,] { title:'zaplacená', data:p.datum, format:'r' }
       // funkce
       func onrowclick() { var x:object, a:array
+        copy_by_name(fak,form);
+        soucet();
         x= php.dum_faktura_info(idf);
         popis= x.popis;
-        form.nadpis= nadpis;
+//        form.nadpis= nadpis;
         faktura= {parm:json_decode(parm_json)}; // struktura pro dum_faktura_save - parm_json,html,ref
         adresa= replace(faktura.parm.adresa,'<br>',chr(10));
         ic= faktura.parm.ic;
         dic= faktura.parm.dic;
-        if (faktura.parm.typ==4) {
-          form.display(1,'vyj');
-          a= split(faktura.parm.ds_vzorec,'|');
-          vyj_ubyt= a[0]; vyj_strav= a[1]; vyj_popl= a[2];
-          vyj_popl.onchange(); // kvůli součtu
-        }
-        else form.display(0,'vyj');
-//        echo(debug(faktura.parm,'parametry faktury'));
+        form.enable(faktura.parm.typ==4,'vyj');
       }
     }
     var faktura:object
-    label popis [522,50,300,40]
-    field ic  [520,111,70,] { title:'^IČ', format:':e' }
-    field dic [620,111,70,] { title:'^DIČ', format:':e' }
-    edit adresa [520,157,300,60] { title:'^adresa odběratele' }
-    edit nadpis [520,247,300,40] { title:'^řádek nad tabulkou s položkami' }
+    label popis [522,52,339,47]
+    field ic  [523,118,70,] { title:'^IČ', format:':e' }
+    field dic [623,118,70,] { title:'^DIČ', format:':e' }
+    edit adresa [523,164,428,60] { title:'^adresa odběratele' }
+    edit nadpis [523,254,428,40] { title:'^řádek nad tabulkou s položkami' }
     // výjimečná fakturace
-    field vyj_celkem  [520,320,50,] { tag:'vyj', title:'^celkem =', format:'rdn' }
-    field vyj_ubyt   [582,320,50,] { tag:'vyj', title:'^ubytováni', format:'rn' 
-      func onchange() { vyj_celkem= vyj_ubyt + vyj_strav + vyj_popl; }}
-    field vyj_strav  [652,320,50,] { tag:'vyj', title:'^stravu', format:'rn' 
-      func onchange() { vyj_celkem= vyj_ubyt + vyj_strav + vyj_popl; }}
-    field vyj_popl   [722,320,50,] { tag:'vyj', title:'^popl. obci', format:'rn' 
-      func onchange() { vyj_celkem= vyj_ubyt + vyj_strav + vyj_popl; }}
+    func soucet() { platit= ubyt + stra + popl + prog + jine; }
+    field platit [523,324,60,] { title:'^platit =', format:'rd' }
+    field ubyt   [598,324,60,] { tag:'vyj', title:'^ubytováni', format:'r' 
+      func onchange() { soucet(); }}
+    field stra   [671,324,60,] { tag:'vyj', title:'^strava', format:'r' 
+      func onchange() { soucet(); }}
+    field popl   [743,324,60,] { tag:'vyj', title:'^popl. obci', format:'r' 
+      func onchange() { soucet(); }}
+    field prog   [817,324,60,] { tag:'vyj', title:'^program', format:'r' 
+      func onchange() { soucet(); }}
+    field jine   [891,324,60,] { tag:'vyj', title:'^jiné služby', format:'r' 
+      func onchange() { soucet(); }}
     
-    button [521,357,,] { title:'[fa-camera-retro] Zobrazit fakturu' 
+    button [524,361,,] { title:'[fa-camera-retro] Zobrazit fakturu' 
       func onclick() { var html:text
         html= php.select('html','faktura',`id_faktura=${fak.idf}`);
         call_func(`$.${sys('root')}.A4.preview`,{html:html},0);
       }
     }
-    button [650,357,,] { title:'[fa-file-pdf-o] Stáhnout PDF' 
+    check smazane [643,361,114,] { title:'zobrazit i smazané', format:'t', value:'0' 
+      func onchange() { Reload() }}
+    button [792,361,,] { title:'[fa-file-pdf-o] Stáhnout fakturu jako PDF' 
       func onclick() { var html:text
         faktura= php.dum_faktura(faktura.parm);
         alert(`Faktura k vytištění nebo poslání emailem je ${faktura.ref}`);
       }
     }
-    button [520,387,,] { title:'[fa-recycle] Vložit opravu se zdůvodněním a přegenerovat' 
+    button [523,391,,] { title:'[fa-recycle] Vložit opravu se zdůvodněním a přegenerovat fakturu' 
       func onclick() { 
         faktura.parm.adresa= replace(adresa,chr(10),'<br>');
         faktura.parm.nadpis= nadpis;
         faktura.parm.ic= ic;
         faktura.parm.dic= dic;
-        if (faktura.parm.typ==4) faktura.parm.ds_vzorec= `${vyj_ubyt}|${vyj_strav}|${vyj_popl}`;
+        if (faktura.parm.typ==4) {
+          faktura.parm.ubyt= ubyt;
+          faktura.parm.stra= stra;
+          faktura.parm.popl= popl;
+          faktura.parm.prog= prog;
+        }
         faktura= php.dum_faktura(faktura.parm);
         call_func(`$.${sys('root')}.A4.preview`,{html:faktura.html,ref:faktura.ref},
             {block:&this,func:'obnoveno',title:'[fa-save] Vložit opravu do faktury'});
@@ -163,6 +172,17 @@ panel fakt {type:'right', title:"Faktury"
           msg= php.dum_faktura_save(faktura,fak.idf); // update existující faktury
           alert(`${msg}<br>K vytištění nebo poslání emailem je ${faktura.ref}
                 <br>Je třeba ji poslat i našemu ekonomovi.`);
+          info.Reload();
+        }
+      }
+    }
+    button [842,391,,] { title:'[fa-times fa-red] Zneplatnit fakturu' 
+      func onclick() { var duvod:text
+        if (confirm(`Mám zneplatnit fakturu ${fak.rok}/${fak.num}? Bude zařazena mezi smazané.`)) {
+          duvod= prompt2('Napiš stručný důvod zneplatnění, bude zapsáno','');
+          if (!duvod) { alert('Bez toho nebude zneplatnění provedeno'); return; }
+          php.dum_faktura_delete(duvod,fak.idf); // delete  existující faktury
+          alert(`O zneplatnění faktury je třeba informovat ekonoma.`);
           info.Reload();
         }
       }
@@ -339,6 +359,11 @@ table faktura { key_id:'id_faktura'
   text vzorec
   number zaloha
   number castka
+  number ubyt
+  number stra
+  number popl
+  number prog
+  number jine
   date vystavena { sql_pipe:'sql_date1'}
 //  date zaplacena { sql_pipe:'sql_date1'}
   text vyrizuje
@@ -522,7 +547,7 @@ table pobyt { key_id:'id_pobyt'
   number strava_cel, number strava_pol
   number strava_cel_bm, number strava_pol_bm
   number strava_cel_bl, number strava_pol_bl
-  // výjimky ze strav: číslice jsou seřazeny jako počty snídaní,obědů,večeří po dnech
+  // výjimky ze stra: číslice jsou seřazeny jako počty snídaní,obědů,večeří po dnech
   text cstrava_cel,  text cstrava_pol
   text cstrava_cel_bm,  text cstrava_pol_bm
   text cstrava_cel_bl,  text cstrava_pol_bl

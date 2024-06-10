@@ -350,9 +350,9 @@ menu dbt { type:'main', title:'db2', active:*, _sys:'*'
       paper.full= _parm.html;
       panel.modal(40,10);    
     }
-    use paper: form [0,0,100,100] { 
+    use paper: form { 
       var parm:object, callback:object
-      label full [0,0,662,936]
+      label full [0,0,*,*] { style:"overflow-x:hidden;overflow-y:auto" } // 0,0,662,936
       button akce [20,10,,] {tag:'back', style:'z-index:2' 
         func onclick() { var block:ezer
           block= callback.block;
