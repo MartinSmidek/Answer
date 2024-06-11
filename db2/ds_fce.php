@@ -877,8 +877,10 @@ function dum_objednavka_zaloha($x) {
 }
 # ---------------------------------------------------------------------------------------- ds2 cenik
 # načtení ceníku pro daný rok
-function dum_cenik($rok) {  
+function dum_cenik($rok) {  trace();
   global $ds2_cena;
+  if (!$rok) 
+    $rok= 0;
   if (!isset($ds2_cena['rok']) || $ds2_cena['rok']!=$rok) {
     $ds2_cena= array('rok'=>$rok);
     ezer_connect('setkani');
@@ -1174,7 +1176,7 @@ function dum_browse_pobyt($x) {
     // c.ikona=1 pokud nebyl na akci
     ezer_connect($answer_db,true);
     $rp= pdo_qry("
-      SELECT id_pobyt,id_spolu,d.uid,c.ikona,IF(ds_od='0000-00-00',datum_od,ds_od),
+      SELECT id_pobyt,IFNULL(id_spolu,0),d.uid,c.ikona,IF(ds_od='0000-00-00',datum_od,ds_od),
         IF(ds_do='0000-00-00',datum_do,ds_do),
         YEAR(datum_od) AS rok,d.state,d.board,prijmeni,jmeno,narozeni,
         TRIM(IF(s.ds_pokoj,s.ds_pokoj,p.pokoj)) AS pokoj,s.ds_vzorec,ds_dotace,ds_postylka,ds_zvire,
@@ -1193,6 +1195,10 @@ function dum_browse_pobyt($x) {
         $idp,$ids,$idd,$nebyl,$od,$do,$rok,$state,$board,$prijmeni,$jmeno,$narozeni,$pokoj,
         $vzorec,$dotace,$postylka,$zvire,$ulice,$psc,$obec)= $dump= pdo_fetch_array($rp))) {
 //      debug($dump);
+      if (!$ids) {
+        fce_warning("pobyt $idp má (pobyt bez členů) VYŘADIT !");
+        continue;        
+      }
       $rok_ceniku= $rok;
       // od nejstaršího vezmeme adresu a další údaje
       if (!$suma->adresa) {
@@ -1428,7 +1434,7 @@ function dum_kniha_hostu($par) {
           // doplň členy k předešlému pobytu
           if (count($rows_spolu)) { $tab[]= $rows_spolu[0]; $rows_spolu= []; }
           $up= dum_browse_pobyt((object)['cmd'=>'suma','cond'=>"id_pobyt=$idp"]);
-          debug($up,'dum_browse_pobyt/suma');                                               /*DEBUG*/
+          debug($up,"dum_browse_pobyt/suma ... ida=$ida, idp=$idp");                                               /*DEBUG*/
           if ($up->celkem==0) {
             display("-------------------------- pobyt $idp NEMÁ žádné spolu členy");
             fce_warning("objednávka $idd: pobyt $idp má (pobyt bez členů) VYŘADIT !");
