@@ -61,7 +61,7 @@ $dum_faktura_fld= [
       {DUZP-datum}
       {splatnost-datum}
       <br>bankovní převod"],
-  'za_co' => [',,,13,132,120,10',"
+  'za_co' => [',,,13,132,184,10',"
       Za pobyt v Domě setkání ve dnech {obdobi} Vám fakturujeme:"],
   'tabulka' => [',,,13,140,184,150,,2',"
       {tabulka}"],
@@ -879,8 +879,10 @@ function dum_objednavka_zaloha($x) {
 # načtení ceníku pro daný rok
 function dum_cenik($rok) {  trace();
   global $ds2_cena;
-  if (!$rok) 
+  if (!$rok) {
+    fce_warning("pokus zjistit ceny roku 0");
     $rok= 0;
+  }
   if (!isset($ds2_cena['rok']) || $ds2_cena['rok']!=$rok) {
     $ds2_cena= array('rok'=>$rok);
     ezer_connect('setkani');
@@ -1381,6 +1383,7 @@ function dum_kniha_hostu($par) {
   $n= $nf= 0;
   $rok= $par->rok;
   $mesic= $par->mes;
+  $AND_TEST= $par->obj ? " AND id_order=$par->obj" : '';
   // projdeme všechny objednávky
   $ro= pdo_qry("
     SELECT id_order,id_akce,IFNULL(id_faktura,0),typ,IFNULL(g_kod,''),note,state,od,do
@@ -1388,6 +1391,7 @@ function dum_kniha_hostu($par) {
     LEFT JOIN faktura USING (id_order)
     LEFT JOIN join_akce USING (id_akce)
     WHERE IFNULL(deleted='',1) AND YEAR(od)=$rok AND MONTH(od)=$mesic -- AND MONTH(od)<=MONTH(NOW())
+      $AND_TEST
       -- AND id_order IN (2394,2501,2463,2477,2434) -- YMCA, faktura, záloha, Bednář, Šlachtová
       -- AND id_order=2477 -- Bednář
     ORDER BY od
