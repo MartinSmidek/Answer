@@ -34,7 +34,7 @@ form _ucty [,,640,*] {
         fio.zprava.width(105);
         break;
     }
-    form.display(2,mode);
+    form.display(2,mode); form.display(1,'cond');
   }
   // pro A: načte všechny nadějné platby podle ss, ss2 a vrátí sezxnam účastníků pobytu
   func LoadPobyt(id_pobyt) { var x: object
@@ -56,6 +56,7 @@ form _ucty [,,640,*] {
   }
   // pro S a D: načte vše podle check
   func Load(_ucet) {
+//    form.enable(1,'cond');
     ucet= _ucet;
     filter_mode= `ucet & ${ucet} `;
     load_by_filter();
@@ -95,16 +96,16 @@ form _ucty [,,640,*] {
     <span class='zluty'>&nbsp; asi dar &nbsp;</span>&nbsp;&nbsp;
     <span class='oranzovy'>&nbsp; je to dar &nbsp;</span>"
   }
-  check jen_letosni [660,0,83,] { tag:'FD', title:' jen letošní', value:'1', style:'margin-top:-5px' format:'t'
+  check jen_letosni [660,0,83,] { tag:'FD,cond', title:' jen letošní', value:'1', style:'margin-top:-5px' format:'t'
     func onchange() { refresh() }
   }
-  check jen_prijmy [752,0,83,] { tag:'FD', title:' jen příjmy', value:'1', style:'margin-top:-5px' format:'t'
+  check jen_prijmy [752,0,83,] { tag:'FD,cond', title:' jen příjmy', value:'1', style:'margin-top:-5px' format:'t'
     func onchange() { refresh() }
   }
-  check skryt_navrzene [449,0,100,] {title:' skrýt navržené', value:'0', style:'margin-top:-5px' format:'t'
+  check skryt_navrzene [449,0,100,] {tag:'cond', title:' skrýt navržené', value:'0', style:'margin-top:-5px' format:'t'
     func onchange() { refresh() }
   }
-  check skryt_potvrzene [555,0,100,] {title:' skrýt potvrzené', value:'0', style:'margin-top:-5px' format:'t'
+  check skryt_potvrzene [555,0,100,] {tag:'cond', title:' skrýt potvrzené', value:'0', style:'margin-top:-5px' format:'t'
     func onchange() { refresh() }
   }
   browse fio [,20,,] { rows:10, qry_rows:2
@@ -175,6 +176,17 @@ form _ucty [,,640,*] {
     ss2= prompt2('zadej hodnotu pro opravu SS','');
     if (ss2) php.query(`UPDATE platba SET ss2='${ss2}' WHERE id_platba=${fio.id_platba}`);
     refresh();
+  }}
+  button find_kod [814,280,,] {title:'hledat SS', func onclick() { var ss2:text
+    ss2= prompt2('zadej hodnotu pro hledání v SS, SS2','');
+    if (ss2) {
+      fio.browse_load(`(ss=${ss2} OR ss2=${ss2}) AND YEAR(datum)=YEAR(NOW())`);
+      form.enable(0,'cond');
+    }
+    else {
+      form.enable(1,'cond');
+      refresh();
+    }
   }}
   field id_platba [10,315,120,] { title:'^transakce Fio banky', data:platba.id_platba, format:'r' }
   field id_osoba { data:platba.id_oso }
