@@ -118,7 +118,10 @@ tr td.ezer_ds, li.ezer_ds
 tr td.ezer_web  { outline: 3px solid #ef7f13; }
 tr td.ezer_web1 { border-left: 5px solid darkgrey; }
 tr td.ezer_web2 { border-left: 5px solid red; }
-/* */
+
+/* specifické barvy pro Knihu hostů */
+tr td.warn      { background-color:#ffa !important; }
+tr td.err       { background-color:#fa8 !important; }
 
 button.search   { padding-left:0px; }
 .search         { z-index:3 !important; }

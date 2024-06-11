@@ -21,10 +21,33 @@ panel dum2 {type:'right', title:"Objednávky", include:'onload,db2.ds2.dum2' ski
 } 
 # ===========================================================================================> KNIHY
 panel hoste {type:'right', title:"Kniha hostů"
-  func onfocus() { m.roky.i.click(); }
+//  func onfocus() { m.roky.i.click(); }
   menu m {type:'left', active:*
-    menu roky {title:'Knihy hostů',type:'group'
-      item i {title:'Rok 2024',  par:{rok:'2024'} }
+    menu roky {title:'Kniha hostů 2024',type:'group'
+      item {title:'leden',        par:{rok:'2024',mes:1} }
+      item {title:'... podrobně', par:{rok:'2024',mes:1,spolu:1} }
+      item {title:'únor',         par:{rok:'2024',mes:2} }
+      item {title:'... podrobně', par:{rok:'2024',mes:2,spolu:1} }
+      item {title:'březen',       par:{rok:'2024',mes:3} }
+      item {title:'... podrobně', par:{rok:'2024',mes:3,spolu:1} }
+      item {title:'duben',        par:{rok:'2024',mes:4} }
+      item {title:'... podrobně', par:{rok:'2024',mes:4,spolu:1} }
+      item {title:'květen',       par:{rok:'2024',mes:5} }
+      item {title:'... podrobně', par:{rok:'2024',mes:5,spolu:1} }
+      item {title:'červen',       par:{rok:'2024',mes:6} }
+      item {title:'... podrobně', par:{rok:'2024',mes:6,spolu:1} }
+      item {title:'červenec',     par:{rok:'2024',mes:7} }
+      item {title:'... podrobně', par:{rok:'2024',mes:7,spolu:1} }
+      item {title:'srpen',        par:{rok:'2024',mes:8} }
+      item {title:'... podrobně', par:{rok:'2024',mes:8,spolu:1} }
+      item {title:'září',         par:{rok:'2024',mes:9} }
+      item {title:'... podrobně', par:{rok:'2024',mes:9,spolu:1} }
+      item {title:'říjen',        par:{rok:'2024',mes:10} }
+      item {title:'... podrobně', par:{rok:'2024',mes:10,spolu:1} }
+      item {title:'listopad',     par:{rok:'2024',mes:11} }
+      item {title:'... podrobně', par:{rok:'2024',mes:11,spolu:1} }
+      item {title:'prosinec',     par:{rok:'2024',mes:12} }
+      item {title:'... podrobně', par:{rok:'2024',mes:12,spolu:1} }
     }
     func onclick (i:ezer) {
       clear();
@@ -61,7 +84,7 @@ panel fakt {type:'right', title:"Faktury"
   func onfocus() { m.roky.i.click(); }
   menu m {type:'left', active:*, format:'f-'
     menu roky {title:'Kniha faktur',type:'group'
-      item i {title:'Letos vystavené faktury',  par:{rok:2024} }
+      item i {title:'[fa-eur] Letos vystavené faktury',  par:{rok:2024} }
     }
     func onclick (i:ezer) {
       rok= i.par.rok;
@@ -86,8 +109,9 @@ panel fakt {type:'right', title:"Faktury"
       show parm_json { data:f.parm_json }
       show deleted { expr:'IF(f.deleted,1,0)' }
       show nadpis { data:f.nadpis }
-      show rok [,,35,] { title:'rok', data:f.rok, format:'r' }
-      show num [,,25,] { title:'č.', data:f.num, format:'rs-' }
+      show nazev [,,65,] { title:'faktura', data:f.nazev }
+//      show rok [,,35,] { title:'rok', data:f.rok, format:'r' }
+//      show num [,,25,] { title:'č.', data:f.num, format:'rs-' }
       show typ [,,25,] { title:'typ', expr:"IF(f.typ=1,'Z',IF(f.typ=2,'D',IF(f.typ=3,'F','V')))", format:'c' }
       show strucna [,,25,] { title:'stručná', expr:"IF(f.strucna=1,'S','')", format:'c' }
       show vs [,,50,] { title:'VS', data:f.vs, format:'r' }
@@ -178,7 +202,7 @@ panel fakt {type:'right', title:"Faktury"
     }
     button [842,391,,] { title:'[fa-times fa-red] Zneplatnit fakturu' 
       func onclick() { var duvod:text
-        if (confirm(`Mám zneplatnit fakturu ${fak.rok}/${fak.num}? Bude zařazena mezi smazané.`)) {
+        if (confirm(`Mám zneplatnit fakturu ${fak.nazev}? <br>Bude zařazena mezi smazané.`)) {
           duvod= prompt2('Napiš stručný důvod zneplatnění, bude zapsáno','');
           if (!duvod) { alert('Bez toho nebude zneplatnění provedeno'); return; }
           php.dum_faktura_delete(duvod,fak.idf); // delete  existující faktury
@@ -348,6 +372,7 @@ table join_platba { key_id:'id_join_platba'
 table faktura { key_id:'id_faktura'
   number id_faktura
   text deleted // nic nebo datum
+  text nazev
   number rok
   number num
   number typ
@@ -365,7 +390,6 @@ table faktura { key_id:'id_faktura'
   number prog
   number jine
   date vystavena { sql_pipe:'sql_date1'}
-//  date zaplacena { sql_pipe:'sql_date1'}
   text vyrizuje
   text nadpis
   text parm_json
