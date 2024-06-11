@@ -1427,14 +1427,19 @@ function dum_kniha_hostu($par) {
         if ($idp!=$idp_old) {
           // doplň členy k předešlému pobytu
           if (count($rows_spolu)) { $tab[]= $rows_spolu[0]; $rows_spolu= []; }
+          $up= dum_browse_pobyt((object)['cmd'=>'suma','cond'=>"id_pobyt=$idp"]);
+          debug($up,'dum_browse_pobyt/suma');                                               /*DEBUG*/
+          if ($up->celkem==0) {
+            display("-------------------------- pobyt $idp NEMÁ žádné spolu členy");
+            fce_warning("objednávka $idd: pobyt $idp má (pobyt bez členů) VYŘADIT !");
+            continue;
+          }
           $row= [];
           $row[$clmn_i['druh']]= $funkce[$fce];
           $row[$clmn_i['pobyt']]= $idp;
           list($ids,$jp)= explode(':',dum_pobyt_nazev($idp,'kniha'));
           $row[$clmn_i['spolu']]= $ids;        
           $row[$clmn_i['nazev']]= $jp;        
-          $up= dum_browse_pobyt((object)['cmd'=>'suma','cond'=>"id_pobyt=$idp"]);
-          debug($up,'dum_browse_pobyt/suma');                                               /*DEBUG*/
           $row[$clmn_i['cena']]= $up->celkem;
           foreach(explode(',','ubyt,stra,prog,popl,jine') as $fld) {
             $val= $up->abbr[$fld];
