@@ -1146,12 +1146,13 @@ function dum_browse_order($x) {
 # -- x->atr=  pole jmen počítaných atributů:  [_ucast]
 # pokud je tisk=true jsou oddělovače řádků '≈' (oddělovač sloupců zůstává '~')
 function dum_browse_pobyt($x) {
-  global $answer_db, $setkani_db, $y; // y je zde globální kvůli možnosti trasovat SQL dotazy
+  global $answer_db, $setkani_db; 
 //  debug($x,"dum_browse_pobyt>");
   $y= (object)array('ok'=>0);
   switch ($x->cmd) {
-  case 'suma':
   case 'browse_load':  # -----------------------------------==> . browse_load
+    global $y;          // y je zde globální kvůli možnosti trasovat SQL dotazy
+  case 'suma':
     $z= [];
     // spotřeba 
     // pokoje: pokoj -> hostů
@@ -1428,15 +1429,19 @@ function dum_kniha_hostu($par) {
     if ($pobyty || $par->spolu) {
       $idp_old= 0;
       $rp= pdo_qry("
-        SELECT id_pobyt,funkce,IFNULL(castka,''),IFNULL(datum,'')
-        FROM pobyt 
-        LEFT JOIN platba ON id_pob=id_pobyt
-        WHERE id_akce=$ida
+        SELECT id_pobyt,p.funkce,IFNULL(k.castka,''),IFNULL(k.datum,''),IFNULL(f.nazev,'')
+        FROM pobyt AS p
+        LEFT JOIN platba AS k ON id_pob=id_pobyt
+        LEFT JOIN faktura AS f USING (id_pobyt)
+        WHERE id_akce=$ida 
       ");
-      while ($rp && (list($idp,$fce,$castka,$datum)= pdo_fetch_array($rp))) {
+      while ($rp && (list($idp,$fce,$castka,$datum,$faktura)= pdo_fetch_array($rp))) {
         if ($idp!=$idp_old) {
           // doplň členy k předešlému pobytu
-          if (count($rows_spolu)) { $tab[]= $rows_spolu[0]; $rows_spolu= []; }
+          if (count($rows_spolu)) { 
+            $tab= array_merge($tab,$rows_spolu); 
+            $rows_spolu= [];             
+          }
           $up= dum_browse_pobyt((object)['cmd'=>'suma','cond'=>"id_pobyt=$idp"]);
           debug($up,"dum_browse_pobyt/suma ... ida=$ida, idp=$idp");                                               /*DEBUG*/
           if ($up->celkem==0) {
@@ -1447,6 +1452,7 @@ function dum_kniha_hostu($par) {
           $row= [];
           $row[$clmn_i['druh']]= $funkce[$fce];
           $row[$clmn_i['pobyt']]= $idp;
+          $row[$clmn_i['fakt']]= $faktura;
           list($ids,$jp)= explode(':',dum_pobyt_nazev($idp,'kniha'));
           $row[$clmn_i['spolu']]= $ids;        
           $row[$clmn_i['nazev']]= $jp;        
@@ -1479,7 +1485,10 @@ function dum_kniha_hostu($par) {
         $idp_old= $idp;
       }
       // doplň členy k poslednímu pobytu
-      if (count($rows_spolu)) { $tab[]= $rows_spolu[0]; $rows_spolu= []; }
+      if (count($rows_spolu)) { 
+        $tab= array_merge($tab,$rows_spolu); 
+        $rows_spolu= [];             
+      }
     }
     $nf++;
 //    break;
@@ -1498,7 +1507,7 @@ function dum_kniha_hostu_fakturace($idf,&$row) {
     FROM faktura AS f  
 	LEFT JOIN join_platba AS pf USING (id_faktura) 
 	LEFT JOIN platba AS p USING (id_platba) 
-	WHERE deleted='' AND id_faktura=$idf
+	WHERE deleted='' AND id_faktura=$idf AND f.id_pobyt=0
 	ORDER BY f.num DESC,f.id_faktura
   ");
   if ($rk) {
