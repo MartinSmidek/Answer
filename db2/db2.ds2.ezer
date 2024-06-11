@@ -52,6 +52,10 @@ panel hoste {type:'right', title:"Kniha hostů"
     menu {title:'... testy ...',type:'group',skill:'m'
       item {title:'únor - obj.2442',  par:{rok:'2024',mes:2,obj:2442} }
       item {title:'... podrobně',     par:{rok:'2024',mes:2,obj:2442,spolu:1} }
+      item {title:'únor - obj.2404',  par:{rok:'2024',mes:2,obj:2404} }
+      item {title:'... podrobně',     par:{rok:'2024',mes:2,obj:2404,spolu:1} }
+      item {title:'květen - obj.2394',par:{rok:'2024',mes:5,obj:2394} }
+      item {title:'... podrobně',     par:{rok:'2024',mes:5,obj:2394,spolu:1} }
     }
     func onclick (i:ezer) {
       clear();
@@ -318,6 +322,23 @@ panel cen {type:'right', title:'Ceny'
     button cancel [171,124,61,20] { title:'[fa-undo] Zpět', help:'zadané údaje neukládat, vrátit se zpět'
       proc onclick () { panel.hide(0) }
     }
+  }
+}
+# =======================================================================================> (novinky)
+panel nov {type:'right', title:'([fa-question] ... aktualizace)'
+  menu m {type:'left', active:*
+    menu chngs {title:'Změny vč. Dům setkání, Finance',type:'group'
+      item month {title:'Přehled změn za měsíc',      par:{days:30} }
+      item year {title:'Přehled změn za rok',         par:{days:365} }
+      item all {title:'Přehled uskutečněných změn',   par:{days:9999} }
+    }
+    func onclick (i:ezer) {
+      rok= i.par.rok;
+      news.txt= php.doc_todo2('chngs','','',i.par);
+    }
+  }
+  use news: form [12,4,,] {
+    label txt [0,0,*,] 
   }
 }
 // <editor-fold defaultstate="collapsed" desc="# ==================================================================== form _right +++ tables, maps ">
