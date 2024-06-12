@@ -22,6 +22,21 @@ panel dum2 {type:'right', title:"Objednávky", include:'onload,db2.ds2.dum2' ski
 # ===========================================================================================> KNIHY
 panel hoste {type:'right', title:"Kniha hostů"
 //  func onfocus() { m.roky.i.click(); }
+  var last_item:ezer
+  func kniha_show (i:ezer,export) { var x:object, y:object
+    clear();
+    info.header(i);
+    x= i.par;
+    if (export) x.export= 1;
+    // x={err, html, ref: odkaz XLSX, t1: ms generování, t2: ms exportu
+    y= php.dum_kniha_hostu(x); 
+    if (y.err) 
+      alert(y.err);
+    echo(`Výpočet trval ${y.t1} ms a generování exportu ${y.t2} ms`);
+    if (y.ref) 
+      info.append(`Knihu hostů ve formátu XLSX lze stáhnout ${y.ref}<br><br>`);
+    info.append(y.html);
+  }
   menu m {type:'left', active:*
     menu roky {title:'Kniha hostů 2024',type:'group'
       item {title:'leden',        par:{rok:'2024',mes:1} }
@@ -48,45 +63,29 @@ panel hoste {type:'right', title:"Kniha hostů"
       item {title:'... podrobně', par:{rok:'2024',mes:11,spolu:1} }
       item {title:'prosinec',     par:{rok:'2024',mes:12} }
       item {title:'... podrobně', par:{rok:'2024',mes:12,spolu:1} }
+      item {title:'Celý rok -------------', par:{rok:'2024',mes:0} }
+      item {title:'... podrobně',           par:{rok:'2024',mes:0,spolu:1} }
     }
     menu {title:'... testy ...',type:'group',skill:'m'
       item {title:'únor - obj.2442',  par:{rok:'2024',mes:2,obj:2442} }
       item {title:'... podrobně',     par:{rok:'2024',mes:2,obj:2442,spolu:1} }
+      item {title:'... a do Excelu',  par:{rok:'2024',mes:2,obj:2442,spolu:1,export:1} }
       item {title:'únor - obj.2404',  par:{rok:'2024',mes:2,obj:2404} }
       item {title:'... podrobně',     par:{rok:'2024',mes:2,obj:2404,spolu:1} }
       item {title:'květen - obj.2394',par:{rok:'2024',mes:5,obj:2394} }
       item {title:'... podrobně',     par:{rok:'2024',mes:5,obj:2394,spolu:1} }
     }
-    func onclick (i:ezer) {
-      clear();
-      info.header(i);
-      info.fill('',php.dum_kniha_hostu(i.par));
+    func onclick (i:ezer) { 
+      last_item= i;
+      kniha_show(i,0);
     }
   }
   use info: form _right [12,4,,] { 
-//    // funkce
-//    func Load(obdobi) {
-//      hoste.browse_load(`a.datum_od RLIKE '${obdobi}'`,'datum_od,prijmeni,narozeni') }
-//    // seznam
-//    view a: table akce 
-//    view p: table pobyt { join:'ON id_duakce=p.id_akce' }
-//    view s: table spolu { join:'USING (id_pobyt)' }
-//    view o: table osoba { join:'USING (id_osoba)' }
-//    view d: table tx_gnalberice_order { join:'ON id_duakce=d.id_akce' }
-//    browse hoste [0,50,,] { rows:20
-//      show ida { data:a.id_duakce }
-//      show idp { data:p.id_pobyt }
-//      show ids { data:s.id_spolu }
-//      show ido { data:o.id_osoba }
-//      show [,,40,] { title:'objednávka', data:d.uid }
-//      show [,,40,] { title:'akce', data:a.id_duakce }
-//      show [,,70,] { title:'datum', data:a.datum_od,  }
-//      show [,,70,] { title:'příjmení', data:o.prijmeni }
-//      show [,,70,] { title:'jméno', data:o.jmeno }
-//    }
-    
+    button [-20,4,,] { title:'Export do Excelu', func onclick() {
+      kniha_show(last_item,1);
+    }}
   }
-} 
+}
 # =========================================================================================> FAKTURY
 panel fakt {type:'right', title:"Faktury"
   func onfocus() { m.roky.i.click(); }

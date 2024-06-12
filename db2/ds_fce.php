@@ -1333,47 +1333,53 @@ end:
 # ---------------------------------------------------------------------------------- dum kniha_hostu
 # zobrazí odkaz na osobu v evidenci
 function dum_kniha_hostu($par) {
-  global $clmn_i, $clmn_if, $clmn_in, $row_class;
+  global $clmn_i, $clmn_if, $clmn_in, $clmn_iw, $row_class;
+  $time_start= getmicrotime();
+  $export= $par->export ?? 0;
+  // {err, html, ref: odkaz XLSX, t1: ms generování, t2: ms exportu
+  $res= (object)['err'=>'','html'=>'','ref'=>'','t1'=>0,'t2'=>0]; 
+
   // tab: n -> sloupec -> value, kde sloupec=typ určuje formát řádku
   $tab= []; 
   // sloupec -> 'n:format:název' kde nn je pořadí sloupce, 00 znamená vynechání
   $clmn= [ 
     'typ'   => '00', // určuje formát řádku 
     // popis
-    'obj'   => '01:n:objednávka',
-    'od'    => '02:d:příjezd',
-    'do'    => '03:d:odjezd',
-    'kod'   => '04:n:kód YMCA',
-    'pobyt' => '05:n:id_pobyt',
-    'spolu' => '06:n:id_spolu',
-    'nazev' => '07:t:název',
-    'druh'  => '08:t:typ objednávky',
+    'obj'   => '01:n:08:objednávka',
+    'od'    => '02:d:10:příjezd',
+    'do'    => '03:d:10:odjezd',
+    'kod'   => '04:n:08:kód YMCA',
+    'pobyt' => '05:n:08:id_pobyt',
+    'spolu' => '06:n:08:id_spolu',
+    'nazev' => '07:t:20:název',
+    'druh'  => '08:t:12:typ objednávky',
     // předpis
-    'cena'  => '15:n:cena/záloha',
-    'ubyt'  => '16:n:ubytování',
-    'stra'  => '17:n:stravu',
-    'popl'  => '18:n:poplatky',
-    'jine'  => '19:n:jiné služby',
+    'cena'  => '15:k:12:cena/záloha',
+    'ubyt'  => '16:k:12:ubytování',
+    'stra'  => '17:k:12:stravu',
+    'popl'  => '18:k:12:poplatky',
+    'jine'  => '19:k:12:jiné služby',
     // platba
 //    'fio'   => '20',
-    'platba'=> '21:n:zaplaceno',
-    'kdy'   => '22:d:dne',
-    'fakt'  => '23:t:faktura',
+    'platba'=> '21:k:12:zaplaceno',
+    'kdy'   => '22:d:10:dne',
+    'fakt'  => '23:t:12:faktura',
   ];
   $row_class= [
-    1 => " class='ezer_ys'",  
-    2 => " class='ezer_fa'",  
-    3 => " class='ezer_db'",  
-    4 => " class='warn'",    // žlutá
-    5 => " class='err'",     // červená
+    1 => [" class='ezer_ys'",' bcolor=aaff88'],  
+    2 => [" class='ezer_fa'",' bcolor=aaccff'],  
+    3 => [" class='ezer_db'",' bcolor=aaffff'],  
+    4 => [" class='warn'",   ' bcolor=ffffaa'],    // žlutá
+    5 => [" class='err'",    ' bcolor=ffaa88'],     // červená
   ];
   $clmn_i=  []; // fld -> i
   $clmn_if= []; // i -> format
   $clmn_in= []; // i -> nazev
   foreach ($clmn as $fld=>$desc) {
-    list($i,$f,$n)= explode(':',$desc);
+    list($i,$f,$w,$n)= explode(':',$desc);
     $clmn_i[$fld]= 0 + $i;
     $clmn_if[0+$i]= $f;
+    $clmn_iw[0+$i]= $w;
     $clmn_in[0+$i]= $n;
   }
 //  debug($clmn_i,'clmn_i');
@@ -1383,7 +1389,7 @@ function dum_kniha_hostu($par) {
 //  $html= '';
   $n= $nf= 0;
   $rok= $par->rok;
-  $mesic= $par->mes;
+  $AND_MESIC= $par->mes ? " AND MONTH(od)=$par->mes" : '';
   $AND_TEST= $par->obj ? " AND id_order=$par->obj" : '';
   // projdeme všechny objednávky
   $ro= pdo_qry("
@@ -1391,7 +1397,7 @@ function dum_kniha_hostu($par) {
     FROM objednavka 
     LEFT JOIN faktura USING (id_order)
     LEFT JOIN join_akce USING (id_akce)
-    WHERE IFNULL(deleted='',1) AND YEAR(od)=$rok AND MONTH(od)=$mesic -- AND MONTH(od)<=MONTH(NOW())
+    WHERE IFNULL(deleted='',1) AND YEAR(od)=$rok $AND_MESIC -- AND MONTH(od)<=MONTH(NOW())
       $AND_TEST
       -- AND id_order IN (2394,2501,2463,2477,2434) -- YMCA, faktura, záloha, Bednář, Šlachtová
       -- AND id_order=2477 -- Bednář
@@ -1443,7 +1449,7 @@ function dum_kniha_hostu($par) {
             $rows_spolu= [];             
           }
           $up= dum_browse_pobyt((object)['cmd'=>'suma','cond'=>"id_pobyt=$idp"]);
-          debug($up,"dum_browse_pobyt/suma ... ida=$ida, idp=$idp");                                               /*DEBUG*/
+//          debug($up,"dum_browse_pobyt/suma ... ida=$ida, idp=$idp");                     /*DEBUG*/
           if ($up->celkem==0) {
             display("-------------------------- pobyt $idp NEMÁ žádné spolu členy");
             fce_warning("objednávka $idd: pobyt $idp má (pobyt bez členů) VYŘADIT !");
@@ -1494,10 +1500,14 @@ function dum_kniha_hostu($par) {
 //    break;
   }
 //  debug($tab,'tab');                                                                     /*DEBUG*/
-  $x= dum_kniha_hostu_tab2html($tab);
-//  $x= htmlentities($x);
-  return $x;
-//  return "<h3>celkem $n objednávek, $nf s fakturou</h3>$html<br>$x";
+  $res->t1= round(getmicrotime() - $time_start,4);
+  $time_start= getmicrotime();
+  $kniha= dum_kniha_hostu_tab2html($tab,$export);
+  $res->html= $kniha->html;
+  $res->ref= $kniha->ref;
+  $res->err.= $kniha->err;
+  $res->t2= round(getmicrotime() - $time_start,4);
+  return $res;
 }
 function dum_kniha_hostu_fakturace($idf,&$row) {
   global $clmn_i;
@@ -1527,41 +1537,90 @@ function dum_kniha_castka($castka,$platba) {
   return $platba;
 }
 // konverze tabulky na html
-function dum_kniha_hostu_tab2html($tab) {
-  global $clmn_in, $clmn_if, $row_class;
-  $html= "<table class='stat'>";
+// pokud je zadáno excel udělá XLS
+function dum_kniha_hostu_tab2html($tab,$excel) {
+  global $clmn_in, $clmn_if, $clmn_iw, $row_class;
+  $res= (object)['html'=>'','ref'=>'','err'=>''];
+  if ($excel) { // zahájení
+    $xls= "|open kniha\nsheet kniha;;L;page";
+    $r1= 5; $r= 5; $c= 0; 
+  }
+  $html= "<table class='stat' style='color:black'>";
   $html.= "<tr>";
   foreach (array_keys($clmn_in) as $i) {
     if ($i==0) continue;
     $html.= "<th>{$clmn_in[$i]}</th>";
+    if ($excel) { // záhlaví sloupců
+      $A= Excel5_n2col($c++);
+      $xls.= "|$A$r {$clmn_in[$i]}|columns $A={$clmn_iw[$i]}";
+    }
   } 
+  if ($excel) { // obarvení záhlaví sloupců
+    $xls.= "\n\n|A$r1:$A$r1 bold bcolor=aaaaff";
+  }
   $html.= "</tr>";
   foreach ($tab as $row) {
     $html.= "<tr>";
+    if ($excel) { // obarvení záhlaví sloupců
+      $r++; $c= 0;
+      $xls.= "\n\n";
+    }
     foreach (array_keys($clmn_in) as $i) {
       if ($i==0) {
-        $class= $row_class[$row[0]] ?? ''; // default class
+        $class= $row_class[$row[0]][0] ?? ''; // default class
+        $xls_color= $row_class[$row[0]][1];
         continue;
       }
       $val= $row[$i] ?? '';
       $cls= $class;
+      $xls_clr= $xls_color;
       if (is_array($val)) {  // [hodnota,class]
-        $cls= $row_class[$val[1]]; // special class
+        $cls= $row_class[$val[1]][0]; // special class
+        $xls_clr= $row_class[$val[1]][1];
         $val= $val[0];
       }
       $align= $style= '';
+      $xls_fmt= '';
       switch ($clmn_if[$i]) {
-        case 'd': $val= sql_date1($val);
-        case 'n': $align= " align='right'";
+        case 'd': 
+          $val= sql_date1($val);
+          $xls_fmt= '::date right';
+          break;
+        case 'n': 
+          $align= " align='right'";
+          $xls_fmt= '::right';
+          break;
+        case 'k': 
+          $align= " align='right'";
           $style= $val<0 ? " style='color:red'" : '';
-
+          $xls_fmt= '::kc right';
+          break;
+        case 't': 
+          $xls_fmt= '::left';
+          break;
       }
       $html.= "<td$align$cls$style>$val</td>";
+      if ($excel) { // obarvení záhlaví sloupců
+        $A= Excel5_n2col($c++);
+        $xls.= "\n|$A$r $val$xls_fmt$xls_clr";
+      }
     } 
     $html.= "</tr>";
   }  
   $html.= "</table>";
-  return $html;
+  $res->html= $html; 
+  // export Excelu
+  if ($excel) {
+    $r2= $r1+1;
+    $xls.= "\n\n|A$r1:$A$r border=+h\n|A$r1:$A$r1 border=t|A$r2:$A$r border=t\n|close";
+    file_put_contents("docs/kniha.txt",$xls);
+    require_once "ezer3.2/server/vendor/autoload.php";
+    $res->err= Excel2007($xls,1);
+    if ( !$res->err ) 
+      $res->ref= "<a href='docs/kniha.xlsx' target='xls'>zde</a>.";
+  }
+  debug([$res->err,$res->ref]);
+  return $res;
 }
 # ===========================================================================================> RUZNE
 # ------------------------------------------------------------------------------ ds2 ukaz_objednavku
