@@ -103,6 +103,8 @@ form _vyuctovani [,,623,400] {
       refresh(curr_pobyt,curr_spolu);
     }
   }
+//  field key_spolu [left_hos+545,0,50,] {data:s.id_pobyt, format:'ro',
+//    style:'color:white', css:'Label', help:' ', tabindex:0 }
   field vzorec_pob [left_hos+35,20,469,] {tag:'h', title:'^položky pro účtování ceny pobytu rodiny', format:'d' }
   field ds_vzorec [left_hos+35,55,469,] {tag:'h', title:'^položky pro účtování ceny pobytu hosta' }
   // úpravy řádku hostů
@@ -219,7 +221,7 @@ form _vyuctovani [,,623,400] {
   field platby [340,340,525,] { tag:'h', title:'Platby: ', format:'o' }
 }
 # ======================================================================================> OBJEDNÁVKA
-panel Objednavka [,,760,490] { type:'popup' title:"Objednávka pobytu v Domě setkání"
+panel Objednavka [,,760,510] { type:'popup' title:"Objednávka pobytu v Domě setkání"
   func Delete(id_order) { 
     php.dum_objednavka_delete(id_order);
   }
@@ -241,19 +243,21 @@ panel Objednavka [,,760,490] { type:'popup' title:"Objednávka pobytu v Domě se
   }
   use obj: form _obj
 }
+
+# ---------------------------------------------------------------==> objednavka
 form _obj {
   const left_oso= 450, top_zal= 370, top_dan= 410, top_fakt= 450
   var the_akce: number,
-      the_order: number,
+      //the_order: number, = field
       udaje: object,        // počítaná v obj.load_objednavka
       faktura: object,      // parametry pro fakturu
       doklad: object,       // parametry daňového dokladu
       objs_count: number
   // funkce
   func load_objednavka(id_order) { var x:object
-    the_order= id_order; 
-    form.key(the_order); // kvůli copy_by_name - viz jeho popis
+    form.key(id_order); // kvůli copy_by_name - viz jeho popis
     form.init(); plan.Init('plan'); stav.Init('stav');
+    the_order= id_order; 
     udaje= php.dum_objednavka(id_order);
     the_akce= udaje.fld.id_akce;
     copy_by_name(udaje.fld,form,'',1); 
@@ -314,8 +318,9 @@ form _obj {
       fld.enable(x.on);
     };
   }
-  // položky
-  field nazev [0,15,328,] { tag:'obj', title:'^objednávka' }
+  // položky 
+  field the_order [0,15,50,] { tag:'obj', title:'^objednávka', format:'rd' }
+  field nazev [60,15,268,] { tag:'obj', title:'^editovatelné upřesnění názvu ' }
   button [342,15,,] { title:'[fa-copy] Udělej kopii' 
     func onclick() { var obj: number
     clear();
@@ -331,7 +336,7 @@ form _obj {
   edit note [0,95,424,55] {tag:'obj', title:'^poznámka k pobytu' }
 
   select board [4,175,117,] {tag:'obj,closed', title:'^typ stravy' type:'map', options:ds_strava.hodnota }
-  button [320,175,,] { tag:'zal', title:'[fa-save] Uložit změny' 
+  button [320,175,,] { tag:'obj', title:'[fa-save] Uložit změny' 
     func onclick() { var saved:object, elem:ezer, rooms:text
       if (objs_count>1 && (od.changed()||do.changed())) {
         alert('pokud nastala změna v datu příjezdu či odjezdu je zapotřebí pobyt "osamostatnit"');
@@ -354,8 +359,15 @@ form _obj {
   label [10,206,100,10] { title:'Objednáno ...' }  
   use plan: form _pokoje [0,220,,]
           
-  label vyuzito [10,266,*,10] { title:'Využito ...' }  
-  use stav: form _pokoje [0,280,,]
+  label vyuzito [10,276,330,10] { title:'Využito ...' }  
+  button [340,267,,] { title:'Oprava ubytování' 
+    func onclick() { 
+      if (confirm(`Mám "ubytovat" neubytované z objednávky ${the_order} na pokoj 25?`)) {
+        alert(php.dum_pokoj_25(the_order));
+        load_objednavka(the_order);
+      }
+  }}
+  use stav: form _pokoje [0,290,,]
   
   // kontakt na objednatele
   field org   [left_oso+  0, 15,210,] { tag:'adr', title:'^název organizace (plátce faktury)' }
@@ -487,7 +499,7 @@ form _obj {
     func onchange() {vyj_soucet() }}
   field vyj_prog   [772,top_fakt+40,50,] { tag:'vyj', title:'^program', format:'rn' 
     func onchange() {vyj_soucet() }}
-  
+# ---------------------------------------------------------------==> pokoje
   form _pokoje [,,750,40] { style:'border:1px solid grey'
 //    func onchanged(x:ezer) { echo(`změna ${x._id}=${x.get()}`); }
     func Init(ps) {

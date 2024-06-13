@@ -949,7 +949,8 @@ function akce2_id2a($id_akce) {  //trace();
   }
   // doplnění případného pobytu v Domě setkání
   global $setkani_db;
-  if ($setkani_db && ($a->org & org_ds)) {
+  if ($setkani_db && ($a->org==1 || $a->org & org_ds)) {
+//  if ($setkani_db && $a->org==1) {
     $a->id_order= select('uid',"$setkani_db.tx_gnalberice_order","id_akce=$id_akce");
   }
 //                                                                 debug($a,"akce $id_akce user {$USER->id_user}");
