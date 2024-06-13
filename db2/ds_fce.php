@@ -645,14 +645,14 @@ function dum_objednavka_save($id_order,$changed) {
 # vrátí tisknutelný název objednávky
 function dum_objednavka_nazev($ido,$format='') {
   $rd= pdo_qry("
-    SELECT state,IFNULL(g_kod,''),IFNULL(nazev,''),TRIM(CONCAT(jmeno,' ',prijmeni)) AS jm,jmeno,org
+    SELECT state,IFNULL(g_kod,''),IFNULL(a.nazev,''),d.nazev,TRIM(CONCAT(jmeno,' ',prijmeni)) AS jm,jmeno,org
     FROM objednavka AS d
     LEFT JOIN join_akce USING (id_akce)
-    LEFT JOIN akce ON id_akce=id_duakce
+    LEFT JOIN akce AS a ON id_akce=id_duakce
     WHERE d.id_order=$ido
   ");
-  if ($rd) list($state,$kod,$akce,$jm,$org)= pdo_fetch_array($rd);
-  $naz= $state==3 ? "$akce ($kod)" : ($org ? $org : $jm);
+  if ($rd) list($state,$kod,$akce,$d_nazev,$jm,$org)= pdo_fetch_array($rd);
+  $naz= $state==3 ? "$akce ($kod)" : ( $d_nazev ?: ($org ? $org : $jm));
   return $format=='' ? "$ido - $naz" : ($format=='kniha' ? $naz : $ido);
 }
 # ----------------------------------------------------------------------------- dum objednavka_nazev
