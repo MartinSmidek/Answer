@@ -551,7 +551,7 @@ function dum_objednavka($id_order) {
   $f->do= date('j.n.Y',$f->do);
   // již vystavená zálohová faktura na objednávku nebo návrh čísla faktury
   $f->zal_num= $f->dan_num= select1('IFNULL(MAX(num)+1,1)','faktura',"rok=$f->rok AND typ IN (1,2)");
-  $f->fakt_num= select1('IFNULL(MAX(num)+1,1)','faktura',"rok=$f->rok AND typ=3");
+  $f->fakt_num= select1('IFNULL(MAX(num)+1,1)','faktura',"rok=$f->rok AND typ IN (3,4)");
   //$f->id_akce= select('id_duakce','akce',"id_order=$id_order");
   $f->nazev= "$id_order - {$f->name}";
   $x->fld= $f;
