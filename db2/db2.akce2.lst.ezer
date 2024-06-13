@@ -99,7 +99,7 @@ func dum_objednavka(cmd,id) { var row:number
       if (confirm(`mám umožnit fakturaci a přidávání hostů?`)) {
         php.dum_objednavka_akce_make(id);
         the_order= id;
-        info.dum.Load();
+        info.dum.Load(the_order);
         info.dum.pracovni();
       }
       break;
@@ -278,7 +278,7 @@ func akce_roku(rok) {
       info.sey.raise('onrowclick',info.sey.browse_seek(`da2.id_duakce=${the_duakce}`));
   }
   elseif (the_source=='dum') {
-    info.dum.Load();
+    info.dum.Load(0);
   }
 }
 //proc akce_roku(rok) {
@@ -1144,16 +1144,16 @@ form _info [,,*,50] {
         css_cell:'access,0:,1:zeleny,65:zeleny'}
     show access
     show curr 
-    show nazev [,,100,] { title:'objednatel', format:'tq*' 
+    show objednal [,,100,] { title:'objednatel', format:'tq*' 
         css_cell:"curr,1:curr_akce"}
-    show note [,,100,] { title:'poznámka', format:'tq*' }
+    show nazev [,,100,] { title:'název', format:'tq*' }
     show osob [,,50,] { title:'osob', format:'r' }
     show od [,,65,] { title:'od', sql_pipe:'sql_date1', format:'rq*' }
     show do [,,65,] { title:'od', sql_pipe:'sql_date1', format:'rq*' }
-    func Load() {
+    func Load(idd) {
       this.browse_load(`YEAR(FROM_UNIXTIME(fromday))='${the_rok}' AND d.deleted=0`,
           '','','','','1',the_duakce);
-      this.Show(the_order);
+      this.Show(idd);
     }
     func Show(idd) {
       if (!this.browse_count()) return;
@@ -1168,10 +1168,11 @@ form _info [,,*,50] {
     func onrowclick() { this.Show(id_order); }
     func pracovni() { 
       if (!id_akce) { alert(`Vlož objednávku jako akci`); return }      
+      the_order= id_order;
       volba_akce(id_akce);
-      this.Load();
+      this.Load(the_order);
       page.show_akce(id_akce); 
-      this.Show(id_order);
+//      this.Show(the_order);
     }
     menu { type:'context'
       item { title:'Vybrat akci jako pracovní', proc onclick() { pracovni }}
@@ -1362,6 +1363,7 @@ form _info [,,*,50] {
       if (the_org==1) {
         the_akce_ys= the_duakce;
         set_cookie(`${sys('root')}_akce_ys`,the_akce_ys);
+        set_cookie(`${sys('root')}_akce`,the_duakce);
       }
       elseif (the_org==2) {
         the_akce_fa= the_duakce;
