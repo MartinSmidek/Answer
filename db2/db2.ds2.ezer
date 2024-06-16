@@ -27,9 +27,8 @@ panel hoste {type:'right', title:"Kniha hostů", style:"overflow:unset"
     clear();
     info.header(i);
     x= i.par;
-    if (export) x.export= 1;
     // x={err, html, ref: odkaz XLSX, t1: ms generování, t2: ms exportu
-    y= php.dum_kniha_hostu(x); 
+    y= php.dum_kniha_hostu(x,export); 
     if (y.err) 
       alert(y.err);
     echo(`Výpočet trval ${y.t1} ms a generování exportu ${y.t2} ms`);

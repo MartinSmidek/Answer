@@ -1384,13 +1384,12 @@ end:
 # =====================================================================================> KNIHA HOSTU
 # ---------------------------------------------------------------------------------- dum kniha_hostu
 # zobrazí odkaz na osobu v evidenci
-function dum_kniha_hostu($par) {
+function dum_kniha_hostu($par,$export=0) {
   global $clmn_i, $clmn_if, $clmn_in, $clmn_iw, $row_class, $legenda;
 
 //          $row_set('cena',$up->celkem);
 //          $row[$clmn_i['cena']]= $up->celkem;
   $time_start= getmicrotime();
-  $export= $par->export ?? 0;
   // {err, html, ref: odkaz XLSX, t1: ms generování, t2: ms exportu
   $res= (object)['err'=>'','html'=>'','ref'=>'','t1'=>0,'t2'=>0]; 
 
@@ -1413,7 +1412,10 @@ function dum_kniha_hostu($par) {
     'ubyt'  => '13:4:4:',
     'uby_'  => '14:4:0:chybí pokoj ...:2',
   ];
-  // sloupec -> ' cc : format : název' kde cc je pořadí sloupce, 00 znamená vynechání
+  // sloupec -> ' cc : format : suma : název' 
+  // kde cc je pořadí sloupce, 00 znamená vynechání
+  //     suma=+ pro sečtení sloupce
+  //     suma=* pro sečtení sloupce, pokud objednávka není placena celou fakturou
   $clmn= [ 
     'typ'   => '00', // určuje formát řádku 
     // popis
@@ -1430,16 +1432,16 @@ function dum_kniha_hostu($par) {
     'dot'   => '10:m:08:+:dotace',    // dotované pobyty (i částečně)
     'nakl'  => '11:k:12: :náklad',    // náklad organizace (tj. bez slev)
     // předpis
-    'cena'  => '12:k:12:+:předpis',
+    'cena'  => '12:k:12:*:předpis',
     'ubyt'  => '13:k:12:+:ubytování',
     'stra'  => '14:k:12:+:strava',
     'popl'  => '15:k:12:+:poplatky',
     'prog'  => '16:k:12:+:program',
     'jine'  => '17:k:12:+:jiné služby',
     // platba
-    'fio'   => '20',
-    'platba'=> '21:k:12:+:zaplaceno',
-    'rozdil'=> '22:k:12:+:rozdíl',
+    #'fio'   => '20',
+    'platba'=> '21:k:12:*:zaplaceno',
+    'rozdil'=> '22:k:12:*:rozdíl',
     'nx'    => '30:n:05: :x',
     'kdy'   => '31:d:10: :dne',
     'fakt'  => '32:t:12: :faktura',
@@ -1462,17 +1464,18 @@ function dum_kniha_hostu($par) {
     $clmn_if[0+$i]= $f;
     $clmn_iw[0+$i]= $w;
     $clmn_in[0+$i]= $n;
-    $clmn_s[$fld]= $s=='+' ? 1 : 0;
+    $clmn_s[$fld]= $s=='*' ? 2 : ($s=='+' ? 1 : 0);
   }
   $row= [];
   $sum= [];
+  $fakturace_akce= 0;
 //  debug($clmn_i,'clmn_i');
 //  debug($clmn_if,'clmn_if');
 //  debug($clmn_in,'clmn_in');
   $funkce= map_cis('ms_akce_funkce','zkratka');
-  $row_set= function($fld,$val) use ($clmn_i,&$row,$clmn_s,&$sum) {
+  $row_set= function($fld,$val) use ($clmn_i,&$row,$fakturace_akce,$clmn_s,&$sum) {
     $row[$clmn_i[$fld]]= $val;
-    if ($clmn_s[$fld]) {
+    if ($clmn_s[$fld]==1 || $clmn_s[$fld]==2 && !$fakturace_akce) {
       $v= is_array($val) ? $val[0] : $val;
       $sum[$fld]+= $v;
     }
@@ -1501,6 +1504,7 @@ function dum_kniha_hostu($par) {
     $n++;
     $pobyty= 0;
     $row= [];
+    $fakturace_akce= 0;
 //    $html.= "<br>objednávka $idd, faktura $idf";
 //    $udaje= dum_objednavka($idd);
     $row_set('obj',$idd);
@@ -1516,6 +1520,7 @@ function dum_kniha_hostu($par) {
     }
     elseif ($idf) {
       $row[0]= 2;
+      $fakturace_akce= 1;
       $row_set('druh',"fakturace");
     }
     else {
@@ -1576,15 +1581,15 @@ function dum_kniha_hostu($par) {
           $row_set('dot',$up->dotace);        
           $row_set('nazev',$jp);        
           $predpis= $up->celkem;
-          $row_set('cena',$predpis);
+          $row_set('cena',$fakturace_akce ? 0 : $predpis);
           foreach(explode(',','ubyt,stra,prog,popl,prog,jine') as $fld) {
             $val= $up->abbr[$fld];
             if ($fld=='ubyt') $ne_ubyt= !$val;
             $row_set($fld,$fld=='ubyt' && $ne_ubyt && $up->celkem ? [$val,4] : $val);
           }
           $platba= dum_kniha_castka($up->celkem,$castka,$ne_ubyt);
-          $row_set('platba',$platba);
-          $row_set('rozdil',(is_array($platba) ? $platba[0] : $platba) - $predpis);
+          $row_set('platba',$fakturace_akce ? 0 : $platba);
+          $row_set('rozdil',$fakturace_akce ? 0 : (is_array($platba) ? $platba[0] : $platba) - $predpis);
           $row_set('nx',$nx>1 ? "{$nx}x" : ''); 
           $row_set('kdy',$datum);
           $tab[]= $row;
@@ -1617,7 +1622,8 @@ function dum_kniha_hostu($par) {
     // doplň spočítané sumy
 //    debug($sum,"SUM end - $isum");                                                       /*DEBUG*/
     foreach ($sum as $fld=>$val) {
-      $tab[$isum][$clmn_i[$fld]]= $val;
+      if ($clmn_s[$fld]==1 || $clmn_s[$fld]==2 && !$fakturace_akce)
+        $tab[$isum][$clmn_i[$fld]]= $val;
     }
     $nf++;
 //    break;
@@ -1636,7 +1642,8 @@ function dum_kniha_hostu_fakturace($idf,&$row) {
   global $clmn_i;
   $rk= pdo_qry("
     SELECT IF(typ in (1,2),zaloha,f.castka) AS cena,ubyt,stra,popl,jine,
-      p.castka AS platba,datum AS kdy,f.nazev AS fakt
+      p.castka AS platba,p.castka-IF(typ in (1,2),zaloha,f.castka) AS rozdil,
+      datum AS kdy,f.nazev AS fakt
     FROM faktura AS f  
 	LEFT JOIN join_platba AS pf USING (id_faktura) 
 	LEFT JOIN platba AS p USING (id_platba) 
