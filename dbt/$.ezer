@@ -55,7 +55,7 @@ menu dbt { type:'main', title:'db2', active:*, _sys:'*'
         ],
         tables: {
           akce:  "id_duakce>*,deleted,zruseno,spec,nazev,datum_od",
-          pobyt: "id_pobyt>*,id_akce>akce,i0_rodina>rodina,id_order>objednavka,hnizdo,funkce,web_changes,web_zmena",
+          pobyt: "id_pobyt>*,id_akce>akce,i0_rodina>rodina,hnizdo,funkce,web_changes,web_zmena",
           prihlaska: "id_prihlaska>-,id_akce>akce,id_pobyt>pobyt,id_rodina>rodina,id_osoba>osoba,email,stav",
           uhrada:"id_uhrada>*,id_pobyt>pobyt,u_poradi,u_castka,u_datum,u_zpusob,u_stav,u_za",
           platba:"id_platba>*,id_oso>osoba,id_pob>pobyt,id_ord>objednavka,castka,datum,nazev",

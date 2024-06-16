@@ -20,7 +20,7 @@ panel dum2 {type:'right', title:"Objednávky", include:'onload,db2.ds2.dum2' ski
   func curr() { return {dum:{order:0}}; }
 } 
 # ===========================================================================================> KNIHY
-panel hoste {type:'right', title:"Kniha hostů"
+panel hoste {type:'right', title:"Kniha hostů", style:"overflow:unset"
 //  func onfocus() { m.roky.i.click(); }
   var last_item:ezer
   func kniha_show (i:ezer,export) { var x:object, y:object
@@ -37,7 +37,7 @@ panel hoste {type:'right', title:"Kniha hostů"
       info.append(`Knihu hostů ve formátu XLSX lze stáhnout ${y.ref}<br><br>`);
     info.append(y.html);
   }
-  menu m {type:'left', active:*
+  menu m {type:'left', format:'f', active:*
     menu roky {title:'Kniha hostů 2024',type:'group'
       item {title:'leden',        par:{rok:'2024',mes:1} }
       item {title:'... podrobně', par:{rok:'2024',mes:1,spolu:1} }
@@ -74,6 +74,8 @@ panel hoste {type:'right', title:"Kniha hostů"
       item {title:'... podrobně',     par:{rok:'2024',mes:2,obj:2404,spolu:1} }
       item {title:'květen - obj.2394',par:{rok:'2024',mes:5,obj:2394} }
       item {title:'... podrobně',     par:{rok:'2024',mes:5,obj:2394,spolu:1} }
+      item {title:'květen - obj.2502',par:{rok:'2024',mes:5,obj:2502} }
+      item {title:'... podrobně',     par:{rok:'2024',mes:5,obj:2502,spolu:1} }
     }
     func onclick (i:ezer) { 
       last_item= i;
@@ -342,7 +344,7 @@ panel nov {type:'right', title:'([fa-question] ... aktualizace)'
 }
 // <editor-fold defaultstate="collapsed" desc="# ==================================================================== form _right +++ tables, maps ">
 # -------------------------------------------------------------------------------------==> formuláře
-form _right [,,*,50] { //style:'width:calc(100% - 24px)'
+form _right [,,*,] { style:'width:calc(100% - 24px);overflow:auto' 
   label head [0,0,*,50]  { title:'' }
   label msg  [0,35,*,20] { title:'' }
   label note [0,55,*,] { title:'' }

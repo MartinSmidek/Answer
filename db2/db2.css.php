@@ -121,6 +121,7 @@ tr td.ezer_web2 { border-left: 5px solid red; }
 
 /* specifické barvy pro Knihu hostů */
 tr td.warn      { background-color:#ffa !important; }
+tr td.nic       { background-color:#fcf !important; }
 tr td.err       { background-color:#fa8 !important; }
 
 button.search   { padding-left:0px; }
