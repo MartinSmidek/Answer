@@ -1318,6 +1318,7 @@ function dum_browse_pobyt($x) {
         $z[$ids]['ds_do']= sql_date1($do);
         $z[$ids]['ds_vzorec']= $vzorec;
         $z[$ids]['zamek_spolu']= $fix;
+        $z[$ids]['ds_zdarma']= $zdarma;
         $z[$ids]['ds_dotace']= $dotace;
         $z[$ids]['ds_postylka']= $postylka;
         $z[$ids]['ds_zvire']= $zvire;
