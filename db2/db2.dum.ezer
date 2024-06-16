@@ -65,7 +65,7 @@ form _vyuctovani [,,623,400] {
       optimize:{ask:'dum_browse_order'}
     show idp
     show nazev [,,60,] { title:'pobyt' }
-    show cena [,,50,] { title:'cena', format:'r', css_cell:'pokoje,0:cerveny'  }
+    show cena [,,50,] { title:'cena', format:'r', css_cell:'pokoje,0:zluty'  }
     show cleni
     show nx [,,10,] { title:'*', format:'c' }
     show zaplaceno [,,50,] { title:'platba', format:'r' }
@@ -142,8 +142,8 @@ form _vyuctovani [,,623,400] {
     func onchange() { if (Ok(this._id,this)) Update(this._id,this,0) }}
   check ds_zvire [left_hos+545,190,100,] {tag:'h', title:'zvíře', help:'poplatek za noc zvířete'
     func onchange() { if (Ok(this._id,this)) Update(this._id,this,0) }}
-  check ds_lektor [left_hos+545,210,100,] {tag:'h', title:'lektor', help:'lektor za akci nic neplatí'
-    func onchange() { alert("zatím ručně") }}
+  check ds_zdarma [left_hos+545,210,100,] {tag:'h', title:'lektor', help:'lektor za akci nic neplatí'
+    func onchange() { if (Ok(this._id,this)) Update(this._id,this,0) }}
   field ds_od [left_hos+545,240,85,] {tag:'h', type:'date', format:'r', title:'- příjezd', 
       help:'odlišné datum příjezdu'
     func onchanged() { var v:text v= date2sql(this); if (Ok(this._id,v)) Update(this._id,v,0) }}
@@ -154,14 +154,15 @@ form _vyuctovani [,,623,400] {
   browse hos [left_hos+10,80,,] {tag:'h', rows:10, key_id:'ids', 
       optimize:{ask:'dum_browse_pobyt'}
     show ids
-    show prijmeni [,,80,] { title:'příjmení', css_cell:'zamek_spolu,0:,1:cerveny' }
-    show jmeno [,,50,] { title:'jméno', css_cell:'ds_dotace,0:,1:zeleny' }
+    show prijmeni [,,70,] { title:'příjmení', css_cell:'zamek_spolu,0:,1:cerveny' }
+    show jmeno [,,40,] { title:'jméno', css_cell:'ds_dotace,0:,1:zeleny' }
     show vek [,,30,] { title:'věk', format:'c' }
     show noci [,,30,] { title:'noci', format:'c' }
     show ds_od
     show ds_do
-    show ds_pokoj [,,30,] { title:'pok.', format:'c', css_cell:'ds_pokoj,0:cerveny' }
+    show ds_pokoj [,,30,] { title:'pok.', format:'c', css_cell:'ds_pokoj,0:zluty' }
     show ds_vzorec
+    show ds_zdarma [,,20,] { title:'lektor', format:'c' }
     show ds_dotace [,,20,] { title:'dotace', format:'c' }
     show ds_postylka [,,20,] { title:'postýlka', format:'c' }
     show ds_zvire [,,20,] { title:'zvíře', format:'c' }

@@ -5,7 +5,11 @@ define('org_ds',64);
 define ('POZOR',"<span style:'color:red;background:yellow'>POZOR</span>");
 # ------------------------------------------------------------------------------------------- ds2 kc
 function TEST() {
-  return strcmp('2024-03-14','2024-04-00');
+  $table= 'osoba';
+  $dnu= 70;
+  $od= date('Y-m-d',time()-60*60*24*$dnu);
+  $zmen= select('COUNT(*)','_track',"kde='$table' AND DATEDIFF(kdy,'$od')>0");
+  return "v $table bylo za $dnu dnu $zmen zmen";
 }
 /** =======================================================================================> FAKTURY **/
 # typ:T|I, zarovnání:L|C|R, písmo, l, t, w, h, border:LRTB
@@ -80,6 +84,7 @@ function dum_kc($c) {
 }
 # ---------------------------------------------------------------------------------- dum pobyt_nazev
 # vrátí tisknutelný název pobytu
+# pro format=kniha ve tvaru ids:jméno nejstaršího člena pobytu
 function dum_pobyt_nazev($idp,$format='') {
   list($idp,$ids,$jmeno,$prijmeni)= pdo_fetch_array(pdo_qry("
     SELECT id_pobyt,id_spolu,jmeno,prijmeni
@@ -115,7 +120,7 @@ function dum_faktura_delete($duvod,$idf) {
 function dum_faktura_save($parm,$idf=0) {
   $msg= '';
   $x= array_merge((array)$parm); $x['html']= "...";
-  debug($x,"dum_faktura_save(...)"); //goto end;
+//  debug($x,"dum_faktura_save(...)");                                                    /*DEBUG*/
   // uložení do tabulky
   $p= $parm->parm;
   $order= $p->id_order ?? '';
@@ -152,7 +157,7 @@ end:
 }
 # -------------------------------------------------------------------------------------- dum faktura
 # par.typ: 1=záloha | 2=daňový doklad k záloze | 3=vyúčtování | 4=výjimečná faktura 
-function dum_faktura($par) {  debug($par,'dum_faktura');
+function dum_faktura($par) { // debug($par,'dum_faktura');
   global $dum_faktura_dfl, $dum_faktura_fld; 
   // získání parametrů
   $strucna= $par->strucna ?? 0;
@@ -274,7 +279,7 @@ function dum_faktura($par) {  debug($par,'dum_faktura');
   else {
     // redakce položek ceny pro zobrazení ve sloupcích
     $cena= dum_vzorec_cena($par->ds_vzorec,$rok);
-    debug($cena,"dum_vzorec_cena($par->ds_vzorec,$rok)");                                 /*DEBUG*/
+//    debug($cena,"dum_vzorec_cena($par->ds_vzorec,$rok)");                                 /*DEBUG*/
     $celkem= $cena['celkem'];
     $koef= $zaloha ? $zaloha/$celkem : 1;
     $par->ubyt= $cena['abbr']['ubyt'] * $koef;
@@ -316,9 +321,9 @@ function dum_faktura($par) {  debug($par,'dum_faktura');
       }
     }
   }
-  debug($polozky,'polozky NEW');                                                          /*DEBUG*/
+//  debug($polozky,'polozky NEW');                                                          /*DEBUG*/
   // zápis rozpisu DPH
-  debug($rozpis_dph,'rozpis DPH');                                                        /*DEBUG*/
+//  debug($rozpis_dph,'rozpis DPH');                                                        /*DEBUG*/
   
   // nadpisy položek a šířka polí
   $popisy= explode(',', $strucna==0
@@ -510,7 +515,7 @@ $html
 __HTML;
 //  display($html);
   file_put_contents("fakt.html",$html_exp);
-  debug($par,'dum_faktura ... par');
+//  debug($par,'dum_faktura ... par');                                                      /*DEBUG*/
   return (object)array('html'=>$html_exp,'ref'=>$ref,'parm_json'=>json_encode($par),
       'parm'=>$par,'err'=>'');
 }
@@ -599,7 +604,7 @@ function dum_objednavka($id_order) {
       $x->faktura->$fld= $val;
     }
   }
-  debug($x,"dum_objednavka($id_order)");
+//  debug($x,"dum_objednavka($id_order)");                                                  /*DEBUG*/
   return $x;
 }
 # ------------------------------------------------------------------------------ dum objednavka_akce
@@ -664,7 +669,7 @@ function dum_objednavka_info($ido,$ida,$html_akce) { trace();
   $conv= '';
   $conv= str_replace("'",'"',$o->DS2024);
   $conv= $conv ? json_decode($conv) : (object)['typ'=>'neuskutečněná'];
-  debug($conv,$o->DS2024);
+//  debug($conv,$o->DS2024);                                                            /*DEBUG*/
   $conv= debugx($conv);
   $conv= '';
   // 
@@ -760,7 +765,7 @@ function dum_rooms_help($version=1) {
 # ----------------------------------------------------------------------------------- dum ... vzorec
 # $spolu je buďto klíč id_spolu
 # nebo objekt {vek,pokoj,state,board,noci,dotace}
-function dum_osoba_vzorec($s,$rok) { //debug($s,"dum_osoba_vzorec(,$rok)");
+function dum_osoba_vzorec($s,$rok) { // debug($s,"> dum_osoba_vzorec(,$rok)");
   $ds2_cena= dum_cenik($rok);
 //  debug($ds2_cena);
   $luzko_pokoje= dum_cat_typ();
@@ -775,28 +780,33 @@ function dum_osoba_vzorec($s,$rok) { //debug($s,"dum_osoba_vzorec(,$rok)");
   }
   foreach ($poplatky as $p) {
     if ($s->vek >= $ds2_cena[$p]->od && $s->vek < $ds2_cena[$p]->do && $ds2_cena[$p]->cena) {
-      $rozpis[$p]= $s->ds_dotace && $ds2_cena[$p]->dotovana ? [0,$s->noci] : [$s->noci,0];
+      $rozpis[$p]= $s->ds_zdarma ? [0,0,$s->noci] : (
+          $s->ds_dotace && $ds2_cena[$p]->dotovana ? [0,$s->noci] : [$s->noci,0]);
     }
   }
   // strava osob podle věku
   $strava= 'strava_'.$ds_strava[$s->board];
   if ($s->vek>=$ds2_cena[$strava.'D']->od && $s->vek<$ds2_cena[$strava.'D']->do) {
     $p= "{$strava}D";
-    $rozpis[$p]= $s->ds_dotace && $ds2_cena[$p]->dotovana ? [0,$s->noci] : [$s->noci,0];
+    $rozpis[$p]= $s->ds_zdarma ? [0,0,$s->noci] : (
+        $s->ds_dotace && $ds2_cena[$p]->dotovana ? [0,$s->noci] : [$s->noci,0]);
   }
   if ($s->vek>=$ds2_cena[$strava.'C']->od && $s->vek<$ds2_cena[$strava.'C']->do) {
     $p= "{$strava}C";
-    $rozpis[$p]= $s->ds_dotace && $ds2_cena[$p]->dotovana ? [0,$s->noci] : [$s->noci,0];
+    $rozpis[$p]= $s->ds_zdarma ? [0,0,$s->noci] : (
+        $s->ds_dotace && $ds2_cena[$p]->dotovana ? [0,$s->noci] : [$s->noci,0]);
   }
   // postýlka a zvíře
   if ($s->ds_zvire) $rozpis['noc_Z']= [$s->noci,0];
   if ($s->ds_postylka) $rozpis['pobyt_P']= [1,0];
-  return dum_rozpis2vzorec($rozpis);
+//  debug($rozpis,"dum_osoba_vzorec(,$rok) >");                                             /*DEBUG*/
+  $vzorec= dum_rozpis2vzorec($rozpis);
+  return $vzorec;
 }
 # ----------------------------------------------------------------------------------------- dum cena
 # dum_vzorec_cena: vzorec -> cena  
 # kde vzorec = část (',' část)* 
-#     část = položka ':' počet v plné sazbě [ ':' počet v dotované sazbě ]
+#     část = položka ':' počet v plné sazbě [ ':' počet v dotované sazbě [ ':' počet zdarma ]]
 function dum_vzorec_cena($vzorec,$rok_ceniku) { //trace();
   $ds2_cena= dum_cenik($rok_ceniku);
   // podrobný rozpis ceny podle druhu a dph, včetně typ->polozka
@@ -804,64 +814,69 @@ function dum_vzorec_cena($vzorec,$rok_ceniku) { //trace();
       'polozka'=>[]]; 
 //  $rozpis= is_string($vzorec) ? explode(',',$vzorec) : $vzorec;
   $rozpis= dum_vzorec2rozpis($vzorec);
-  foreach ($rozpis as $zaco=>$cs) {
-    list($c,$s)= (array)$cs; // cena, sleva
-    if ($c) {
+  foreach ($rozpis as $zaco=>$csz) {
+    list($c,$s,$z)= (array)$csz; // cena, sleva, zdarma
+    $d= $ds2_cena[$zaco];
+    $druh= utf2ascii($d->druh);
+    if ($c) { // plná nákladová cena
       $pocet= $c;
-      $d= $ds2_cena[$zaco];
-      $druh= utf2ascii($d->druh);
       $kc= $d->cena;
+      $cena['naklad']+= $kc * $pocet;
       $cena['celkem']+= $kc * $pocet;
       $cena['druh'][$druh]+= $kc * $pocet;
       $cena['abbr'][substr($druh,0,4)]+= $kc * $pocet;
       $cena['cena'][$zaco]= $kc * $pocet;
       $cena['cena_dph'][$zaco]= $dph= $kc * $pocet - ($kc * $pocet) / ((100 + $d->dph) / 100);
-      $cena['dph'][$d->dph]+= $dph;
       $cena['rozpis'][$zaco]= $pocet;
       $cena['polozka'][$zaco]= (object)['polozka'=>$d->polozka,'cena'=>$kc,'dph'=>$d->dph];
-      $cena['druh2'][$druh]['druh']= $d->druh;
       $cena['druh2'][$druh]['cena']+= $kc * $pocet;
-      $cena['druh2'][$druh]['dph']+= $dph;
-      $cena['druh2'][$druh]['sazba']= $d->dph;
     }
-    if ($s) {
+    if ($s) { // dotované
       $pocet= $s;
-      $d= $ds2_cena[$zaco];
-      $druh= utf2ascii($d->druh);
-      $zaco.= '/d';
+      $zaco_d= "$zaco/d";
       $kc= $d->dotovana;
+      $cena['naklad']+= $d->cena * $pocet;
       $cena['celkem']+= $kc * $pocet;
       $cena['druh'][$druh]+= $kc * $pocet;
       $cena['abbr'][substr($druh,0,4)]+= $kc * $pocet;
-      $cena['cena'][$zaco]= $kc * $pocet;
-      $cena['cena_dph'][$zaco]= $dph= $kc * $pocet - ($kc * $pocet) / ((100 + $d->dph) / 100);
-      $cena['dph'][$d->dph]+= $dph;
-      $cena['rozpis'][$zaco]= $pocet;
-      $cena['polozka']["$zaco"]= (object)['polozka'=>"$d->polozka ... dotovaná cena",'cena'=>$kc,'dph'=>$d->dph];
-      $cena['druh2'][$druh]['druh']= $d->druh;
+      $cena['cena'][$zaco_d]= $kc * $pocet;
+      $cena['cena_dph'][$zaco_d]= $dph= $kc * $pocet - ($kc * $pocet) / ((100 + $d->dph) / 100);
+      $cena['rozpis'][$zaco_d]= $pocet;
+      $cena['polozka'][$zaco_d]= (object)['polozka'=>"$d->polozka ... dotovaná cena",'cena'=>$kc,'dph'=>$d->dph];
       $cena['druh2'][$druh]['cena']+= $kc * $pocet;
-      $cena['druh2'][$druh]['dph']+= $dph;
-      $cena['druh2'][$druh]['sazba']= $d->dph;
     }
+    if ($z) { // zadarmo
+      $dph= 0;
+      $pocet= $z;
+      $zaco_z= "$zaco/z";
+      $cena['naklad']+= $d->cena * $pocet;
+      $cena['rozpis'][$zaco_z]= $pocet;
+      $cena['polozka'][$zaco_z]= (object)['polozka'=>"$d->polozka ... zdarma",'cena'=>0,'dph'=>0];
+    }
+    $cena['druh2'][$druh]['druh']= $d->druh;
+    $cena['dph'][$d->dph]+= $dph;
+    $cena['druh2'][$druh]['dph']+= $dph;
+    $cena['druh2'][$druh]['sazba']= $d->dph;
   }
 //  debug($cena,"dum_vzorec_cena($vzorec,$rok_ceniku)");                                    /*DEBUG*/
   return $cena;
 }
 function dum_rozpis2vzorec($rozpis) {
   $vzorec= ''; $del= '';
-  foreach ($rozpis as $i=>$vd) {
-    list($v,$d)= (array)$vd;
-    $vzorec.= "$del$i:$v:$d"; $del= ',';
+  foreach ($rozpis as $i=>$vdz) {
+    list($v,$d,$z)= (array)$vdz;
+    $vzorec.= "$del$i:$v:$d:$z"; $del= ',';
   }
   return $vzorec;
 }
 function dum_vzorec2rozpis($vzorec) {
   $rozpis= []; 
   foreach (explode(',',$vzorec) as $iv) {
-    list($i,$v,$d)= explode(':',$iv);
+    list($i,$v,$d,$z)= explode(':',$iv);
     if (!$i) continue;
     $rozpis[$i][0]+= 0+$v;
     $rozpis[$i][1]+= 0+$d??0;
+    $rozpis[$i][2]+= 0+$z??0;
   }
   return $rozpis;
 }
@@ -1049,7 +1064,7 @@ function dum_browse_order($x) {
         GROUP_CONCAT(CONCAT(id_spolu,'~',prijmeni,'~',jmeno,'~',narozeni,
             '~',0,'~',IF(ds_od='0000-00-00',datum_od,ds_od),'~',IF(ds_do='0000-00-00',datum_do,ds_do),
             '~',TRIM(IF(s.ds_pokoj,s.ds_pokoj,p.pokoj)),
-            '~',s.ds_vzorec,'~',s.ds_dotace,'~',s.ds_postylka,'~',s.ds_zvire,
+            '~',s.ds_vzorec,'~',s.ds_zdarma,'~',s.ds_dotace,'~',s.ds_postylka,'~',s.ds_zvire,
             '~',0,'~',0,'~',0,'~',0,'~',0,'~',0) 
           ORDER BY IF(narozeni='0000-00-00','9999-99-99',narozeni) 
           SEPARATOR '~' ) AS cleni,d.state,d.board,IFNULL(x.zaplaceno,''),IFNULL(x.nx,''),IFNULL(x.platby,'')
@@ -1069,7 +1084,8 @@ function dum_browse_order($x) {
       ORDER BY prijmeni
     ");
     $i_prijmeni= 1; $i_vek= 3; $i_noci= 4; $i_od= 5; $i_do= 6; $i_pokoj= 7; $i_vzorec= 8; 
-    $i_dotace= 9; $i_postylka= 10; $i_zvire= 11; $i_celkem= 12; $i_fix= 17; $i_delta= 18;
+    $i_zdarma= 9; $i_dotace= 10; $i_postylka= 11; $i_zvire= 12; $i_celkem= 13; $i_fix= 18; 
+    $i_delta= 19;
     while ($rp && (list(
         $idp,$nebyl,$prijmeni,/*$od,$do,$noci,*/$rok,$cleni,$state,$board,$zaplaceno,$nx,$platby)
         = pdo_fetch_array($rp))) {
@@ -1101,8 +1117,8 @@ function dum_browse_order($x) {
             $suma->pokoj[$p]+= 1/count($ps); 
             $pokoj= $p;
           }
-          // člověkonoci
-          $suma->clovekonoci+= $noci;
+          // osobonoci
+          $suma->osobonoci+= $noci;
           // počty osob podle věku
           if ($vek<3) $suma->hoste->kids_3++;
           elseif ($vek<10) $suma->hoste->kids_3_9++;
@@ -1111,19 +1127,20 @@ function dum_browse_order($x) {
           // pokud je naplněna položka ds_vzorec tak se použije místo výpočtu
           $vzorec= $c[$i+$i_vzorec];
           $c[$i+$i_fix]= $vzorec ? 1 : 0;
-          
-          
+          $zdarma= $c[$i+$i_zdarma];
           $dotace= $c[$i+$i_dotace];
+          $suma->dotace+= $dotace ? 1 : 0;
           $vzorec= $c[$i+$i_vzorec]= $vzorec ?: dum_osoba_vzorec((object)
             ['vek'=>$vek,'pokoj'=>$pokoj,'state'=>$state,'board'=>$board,'noci'=>$noci,
-              'ds_dotace'=>$dotace,'ds_postylka'=>$c[$i+$i_postylka],'ds_zvire'=>$c[$i+$i_zvire]],
+              'ds_zdarma'=>$zdarma,'ds_dotace'=>$dotace,'ds_postylka'=>$c[$i+$i_postylka],
+              'ds_zvire'=>$c[$i+$i_zvire]],
             $rok);
           $cena= dum_vzorec_cena($vzorec,$rok_ceniku);
           $celkem+= $c[$i+$i_celkem]= $cena['celkem'];
-          $c[$i+13]= $cena['druh']['ubytovani']??0;
-          $c[$i+14]= $cena['druh']['strava']??0;
-          $c[$i+15]= $cena['druh']['poplatek_obci']??0;
-          $c[$i+16]= $cena['druh']['program']??0;
+          $c[$i+$i_celkem+1]= $cena['druh']['ubytovani']??0;
+          $c[$i+$i_celkem+2]= $cena['druh']['strava']??0;
+          $c[$i+$i_celkem+3]= $cena['druh']['poplatek_obci']??0;
+          $c[$i+$i_celkem+4]= $cena['druh']['program']??0;
           $vzorec_order.= ",$vzorec";
 //          display("$prijmeni: $vzorec");
         }
@@ -1220,8 +1237,8 @@ function dum_browse_pobyt($x) {
       SELECT id_pobyt,IFNULL(id_spolu,0),d.uid,c.ikona,IF(ds_od='0000-00-00',datum_od,ds_od),
         IF(ds_do='0000-00-00',datum_do,ds_do),
         YEAR(datum_od) AS rok,d.state,d.board,prijmeni,jmeno,narozeni,
-        TRIM(IF(s.ds_pokoj,s.ds_pokoj,p.pokoj)) AS pokoj,s.ds_vzorec,ds_dotace,ds_postylka,ds_zvire,
-        ulice,psc,obec
+        TRIM(IF(s.ds_pokoj,s.ds_pokoj,p.pokoj)) AS pokoj,s.ds_vzorec,ds_zdarma,ds_dotace,
+        ds_postylka,ds_zvire,ulice,psc,obec
       FROM osoba AS o 
         JOIN spolu AS s USING (id_osoba) 
         JOIN pobyt AS p USING (id_pobyt) 
@@ -1234,12 +1251,7 @@ function dum_browse_pobyt($x) {
     ");
     while ($rp && (list(
         $idp,$ids,$idd,$nebyl,$od,$do,$rok,$state,$board,$prijmeni,$jmeno,$narozeni,$pokoj,
-        $vzorec,$dotace,$postylka,$zvire,$ulice,$psc,$obec)= $dump= pdo_fetch_array($rp))) {
-//      debug($dump);
-      if (!$ids) {
-        fce_warning("pobyt $idp má (pobyt bez členů) VYŘADIT !");
-        continue;        
-      }
+        $vzorec,$zdarma,$dotace,$postylka,$zvire,$ulice,$psc,$obec)= pdo_fetch_array($rp))) {
       $rok_ceniku= $rok;
       // od nejstaršího vezmeme adresu a další údaje
       if (!$suma->adresa) {
@@ -1262,8 +1274,9 @@ function dum_browse_pobyt($x) {
           $suma->pokoj[$p]+= 1/count($ps); 
           $pokoj= $p;
         }
-        // člověkonoci
-        $suma->clovekonoci+= $noci;
+        // osobonoci
+        $suma->osobonoci+= $noci;
+        $suma->dotace+= $dotace ? 1 : 0;
         // počty osob podle věku
         if ($vek<3) $suma->hoste->kids_3++;
         elseif ($vek<10) $suma->hoste->kids_3_9++;
@@ -1274,7 +1287,7 @@ function dum_browse_pobyt($x) {
         
         $vzorec= $vzorec ?: dum_osoba_vzorec((object)
           ['vek'=>$vek,'pokoj'=>$pokoj,'state'=>$state,'board'=>$board,'noci'=>$noci,
-              'ds_dotace'=>$dotace,'ds_postylka'=>$postylka,'ds_zvire'=>$zvire],
+           'ds_zdarma'=>$zdarma,'ds_dotace'=>$dotace,'ds_postylka'=>$postylka,'ds_zvire'=>$zvire],
           $rok);
         $vzorec_pobyt.= ",$vzorec";
 //        display("$jmeno: $vzorec");
@@ -1305,6 +1318,7 @@ function dum_browse_pobyt($x) {
         $z[$ids]['ds_do']= sql_date1($do);
         $z[$ids]['ds_vzorec']= $vzorec;
         $z[$ids]['zamek_spolu']= $fix;
+        $z[$ids]['ds_zdarma']= $zdarma;
         $z[$ids]['ds_dotace']= $dotace;
         $z[$ids]['ds_postylka']= $postylka;
         $z[$ids]['ds_zvire']= $zvire;
@@ -1372,6 +1386,9 @@ end:
 # zobrazí odkaz na osobu v evidenci
 function dum_kniha_hostu($par) {
   global $clmn_i, $clmn_if, $clmn_in, $clmn_iw, $row_class, $legenda;
+
+//          $row_set('cena',$up->celkem);
+//          $row[$clmn_i['cena']]= $up->celkem;
   $time_start= getmicrotime();
   $export= $par->export ?? 0;
   // {err, html, ref: odkaz XLSX, t1: ms generování, t2: ms exportu
@@ -1390,7 +1407,7 @@ function dum_kniha_hostu($par) {
     'pok_'  => '22:4:0:... zaplaceno více:2',
     'míň'   => '21:5:5:',
     'míň_'  => '22:5:0:zaplaceno méně:2',
-    'nic'   => '21:6:4:',
+    'nic'   => '21:6:6:',
     'nic_'  => '22:6:0:platba nenalezena:2',
     // k ubytování
     'ubyt'  => '13:4:4:',
@@ -1400,64 +1417,84 @@ function dum_kniha_hostu($par) {
   $clmn= [ 
     'typ'   => '00', // určuje formát řádku 
     // popis
-    'obj'   => '01:n:08:objednávka',
-    'od'    => '02:d:10:příjezd',
-    'do'    => '03:d:10:odjezd',
-    'kod'   => '04:n:08:kód YMCA',
-//    'pobyt' => '05:n:08:id_pobyt',
-//    'spolu' => '06:n:08:id_spolu',
-    'nazev' => '07:t:20:název',
-    'druh'  => '08:t:12:typ objednávky',
+    'obj'   => '01:n:08: :objed-návka',
+    'od'    => '02:d:10: :příjezd',
+    'do'    => '03:d:10: :odjezd',
+    'kod'   => '04:n:08: :kód YMCA',
+    'pobyt' => '05:n:08: :id_pobyt',
+    'spolu' => '06:n:08: :id_spolu',
+    'nazev' => '07:t:20: :název',
+    'druh'  => '08:t:12: :typ objed-návky',
+    // ukazatele
+    'onoci' => '09:n:08:+:osobo noci',     // osobo-noci
+    'dot'   => '10:m:08:+:dotace',    // dotované pobyty (i částečně)
+    'nakl'  => '11:k:12: :náklad',    // náklad organizace (tj. bez slev)
     // předpis
-    'cena'  => '12:k:12:předpis',
-    'ubyt'  => '13:k:12:ubytování',
-    'stra'  => '14:k:12:strava',
-    'popl'  => '15:k:12:poplatky',
-    'prog'  => '16:k:12:program',
-    'jine'  => '17:k:12:jiné služby',
+    'cena'  => '12:k:12:+:předpis',
+    'ubyt'  => '13:k:12:+:ubytování',
+    'stra'  => '14:k:12:+:strava',
+    'popl'  => '15:k:12:+:poplatky',
+    'prog'  => '16:k:12:+:program',
+    'jine'  => '17:k:12:+:jiné služby',
     // platba
-//    'fio'   => '20',
-    'platba'=> '21:k:12:zaplaceno',
-    'nx'    => '22:n:5:x',
-    'kdy'   => '23:d:10:dne',
-    'fakt'  => '24:t:12:faktura',
+    'fio'   => '20',
+    'platba'=> '21:k:12:+:zaplaceno',
+    'rozdil'=> '22:k:12:+:rozdíl',
+    'nx'    => '30:n:05: :x',
+    'kdy'   => '31:d:10: :dne',
+    'fakt'  => '32:t:12: :faktura',
   ];
   $row_class= [
     1 => [" class='ezer_ys'",' bcolor=aaff88'],  
     2 => [" class='ezer_fa'",' bcolor=aaccff'],  
     3 => [" class='ezer_db'",' bcolor=aaffff'],  
     4 => [" class='warn'",   ' bcolor=ffffaa'],    // žlutá
-    5 => [" class='err'",    ' bcolor=ffaa88'],     // červená
+    5 => [" class='err'",    ' bcolor=ffaa88'],    // červená
+    6 => [" class='nic'",    ' bcolor=ffaaff'],    // nachová
   ];
   $clmn_i=  []; // fld -> i
+  $clmn_s=  []; // fld -> suma
   $clmn_if= []; // i -> format
   $clmn_in= []; // i -> nazev
   foreach ($clmn as $fld=>$desc) {
-    list($i,$f,$w,$n)= explode(':',$desc);
+    list($i,$f,$w,$s,$n)= explode(':',$desc);
     $clmn_i[$fld]= 0 + $i;
     $clmn_if[0+$i]= $f;
     $clmn_iw[0+$i]= $w;
     $clmn_in[0+$i]= $n;
+    $clmn_s[$fld]= $s=='+' ? 1 : 0;
   }
+  $row= [];
+  $sum= [];
 //  debug($clmn_i,'clmn_i');
 //  debug($clmn_if,'clmn_if');
 //  debug($clmn_in,'clmn_in');
   $funkce= map_cis('ms_akce_funkce','zkratka');
+  $row_set= function($fld,$val) use ($clmn_i,&$row,$clmn_s,&$sum) {
+    $row[$clmn_i[$fld]]= $val;
+    if ($clmn_s[$fld]) {
+      $v= is_array($val) ? $val[0] : $val;
+      $sum[$fld]+= $v;
+    }
+//    debug($row,"ROW");                                                                    /*DEBUG*/
+//    debug($sum,"SUM");                                                                    /*DEBUG*/
+  };
 //  $html= '';
   $n= $nf= 0;
   $rok= $par->rok;
   $AND_MESIC= $par->mes ? " AND MONTH(od)=$par->mes" : '';
-  $AND_TEST= $par->obj ? " AND id_order=$par->obj" : '';
+  $AND_TEST= $par->obj ? " AND d.id_order=$par->obj" : '';
   // projdeme všechny objednávky
   $ro= pdo_qry("
-    SELECT id_order,id_akce,IFNULL(id_faktura,0),typ,IFNULL(g_kod,''),note,state,od,do
-    FROM objednavka 
-    LEFT JOIN faktura USING (id_order)
-    LEFT JOIN join_akce USING (id_akce)
-    WHERE IFNULL(deleted='',1) AND YEAR(od)=$rok $AND_MESIC -- AND MONTH(od)<=MONTH(NOW())
-      $AND_TEST
+    SELECT d.id_order,id_akce,IF(NOT ISNULL(id_faktura) AND f.deleted='',id_faktura,0) AS _idf,
+      typ,IFNULL(g_kod,''),note,state,od,do
+    FROM objednavka AS d
+    LEFT JOIN faktura AS f ON f.id_order=d.id_order AND f.deleted=''
+    LEFT JOIN join_akce USING (id_akce) 
+    WHERE d.deleted=0 AND YEAR(od)=$rok $AND_MESIC $AND_TEST -- AND MONTH(od)<=MONTH(NOW()) 
       -- AND id_order IN (2394,2501,2463,2477,2434) -- YMCA, faktura, záloha, Bednář, Šlachtová
       -- AND id_order=2477 -- Bednář
+    -- GROUP BY d.id_order    
     ORDER BY od
   ");
   while ($ro && (list($idd,$ida,$idf,$typ,$kod,$note,$state,$od,$do)= pdo_fetch_array($ro))) {
@@ -1466,43 +1503,56 @@ function dum_kniha_hostu($par) {
     $row= [];
 //    $html.= "<br>objednávka $idd, faktura $idf";
 //    $udaje= dum_objednavka($idd);
-    $row[$clmn_i['obj']]= $idd;
-    $row[$clmn_i['od']]= $od;
-    $row[$clmn_i['do']]= $do;
-//    $row[$clmn_i['nazev']]= $udaje->fld->nazev; // dum_objednavka_nazev($idd);
-    $row[$clmn_i['nazev']]= dum_objednavka_nazev($idd,'kniha');
+    $row_set('obj',$idd);
+    $row_set('od',$od);
+    $row_set('do',$do);
+//    $row_set('nazev',$udaje->fld->nazev); // dum_objednavka_nazev($idd);
+    $row_set('nazev',dum_objednavka_nazev($idd,'kniha'));
     if ($state==3) {
       $pobyty= 1;
       $row[0]= 1;
-      $row[$clmn_i['kod']]= $kod;
-      $row[$clmn_i['druh']]= "akce YMCA";
+      $row_set('kod',$kod);
+      $row_set('druh',"akce YMCA");
     }
     elseif ($idf) {
       $row[0]= 2;
-      $row[$clmn_i['druh']]= "fakturace";
+      $row_set('druh',"fakturace");
     }
     else {
       $row[0]= 3;
       $pobyty= 1;
-      $row[$clmn_i['druh']]= "pobyt";
+      $row_set('druh',"pobyt");
     }
     dum_kniha_hostu_fakturace($idf,$row);
+    $isum= count($tab); 
+    $sum= [];
     $tab[]= $row;
     $rows_spolu= [];
-    if ($pobyty || $par->spolu) {
+    if (1) { // ($pobyty || $par->spolu) {
       $idp_old= 0;
-      $idp_suma= 0;
-      $rp= pdo_qry("
-        SELECT id_pobyt,p.funkce,IFNULL(f.nazev,''),IFNULL(SUM(k.castka),''),COUNT(k.id_platba),
-          IF(COUNT(id_platba)>1,IF(COUNT(id_platba)>1,GROUP_CONCAT(
-            CONCAT(DAY(k.datum),'.',MONTH(k.datum))),IFNULL(k.datum,'')),IFNULL(k.datum,''))
+      $rp= pdo_qry(" 
+        SELECT p.id_pobyt,p.funkce,IFNULL(f.nazev,'')
         FROM pobyt AS p
-        LEFT JOIN platba AS k ON id_pob=id_pobyt
-        LEFT JOIN faktura AS f USING (id_pobyt)
+        LEFT JOIN platba AS k ON id_pob=p.id_pobyt
+        LEFT JOIN faktura AS f ON f.id_pobyt=p.id_pobyt AND f.deleted=''
+        LEFT JOIN spolu AS s ON s.id_pobyt=p.id_pobyt
+        LEFT JOIN osoba AS o USING (id_osoba)
         WHERE id_akce=$ida 
+        --  AND p.id_pobyt=64680
         GROUP BY id_pobyt
+        ORDER BY prijmeni
       ");
-      while ($rp && (list($idp,$fce,$faktura,$castka,$nx,$datum)= pdo_fetch_array($rp))) {
+      while ($rp && (list($idp,$fce,$faktura)= pdo_fetch_array($rp))) {
+        $rk= pdo_qry(" 
+          SELECT IFNULL(SUM( k.castka),''),COUNT(k.id_platba),
+            IF(COUNT(id_platba)>1,IF(COUNT(id_platba)>1,GROUP_CONCAT(DISTINCT CONCAT(DAY(k.datum),'.',
+              MONTH(k.datum)) SEPARATOR ', '),IFNULL(k.datum,'')),IFNULL(k.datum,'') )
+          FROM pobyt AS p
+          LEFT JOIN platba AS k ON id_pob=p.id_pobyt
+          WHERE p.id_pobyt=$idp
+          GROUP BY id_pobyt
+        ");
+        list($castka,$nx,$datum)= pdo_fetch_array($rk);
         if ($idp!=$idp_old) {
           // doplň členy k předešlému pobytu
           if (count($rows_spolu)) { 
@@ -1511,44 +1561,49 @@ function dum_kniha_hostu($par) {
           }
           $up= dum_browse_pobyt((object)['cmd'=>'suma','cond'=>"id_pobyt=$idp"]);
 //          debug($up,"dum_browse_pobyt/suma ... ida=$ida, idp=$idp");                     /*DEBUG*/
-          if ($up->celkem==0) {
+          if ($up->osobonoci==0) {
             display("-------------------------- pobyt $idp NEMÁ žádné spolu členy");
             fce_warning("objednávka $idd: pobyt $idp má (pobyt bez členů) VYŘADIT !");
             continue;
           }
           $row= [];
-          $row[$clmn_i['druh']]= $funkce[$fce];
-          $row[$clmn_i['pobyt']]= $idp;
-          $row[$clmn_i['fakt']]= $faktura;
+          $row_set('druh',$funkce[$fce]);
+          $row_set('pobyt',$idp);
+          $row_set('fakt',$faktura);
           list($ids,$jp)= explode(':',dum_pobyt_nazev($idp,'kniha'));
-          $row[$clmn_i['spolu']]= $ids;        
-          $row[$clmn_i['nazev']]= $jp;        
-          $row[$clmn_i['cena']]= $up->celkem;
+          $row_set('spolu',$ids);        
+          $row_set('onoci',$up->osobonoci);        
+          $row_set('dot',$up->dotace);        
+          $row_set('nazev',$jp);        
+          $predpis= $up->celkem;
+          $row_set('cena',$predpis);
           foreach(explode(',','ubyt,stra,prog,popl,prog,jine') as $fld) {
             $val= $up->abbr[$fld];
             if ($fld=='ubyt') $ne_ubyt= !$val;
-            $row[$clmn_i[$fld]]= $fld=='ubyt' && $ne_ubyt && $up->celkem ? [$val,4] : $val;
+            $row_set($fld,$fld=='ubyt' && $ne_ubyt && $up->celkem ? [$val,4] : $val);
           }
-          $row[$clmn_i['platba']]= dum_kniha_castka($up->celkem,$castka,$ne_ubyt);
-          $row[$clmn_i['nx']]= $nx>1 ? "{$nx}x" : ''; 
-          $row[$clmn_i['kdy']]= $datum;
+          $platba= dum_kniha_castka($up->celkem,$castka,$ne_ubyt);
+          $row_set('platba',$platba);
+          $row_set('rozdil',(is_array($platba) ? $platba[0] : $platba) - $predpis);
+          $row_set('nx',$nx>1 ? "{$nx}x" : ''); 
+          $row_set('kdy',$datum);
           $tab[]= $row;
           // zapamatuj si další členy pobytu
           if ($par->spolu) {
             $rs= pdo_qry("SELECT id_spolu,jmeno,prijmeni FROM osoba JOIN spolu USING (id_osoba)
-              WHERE id_pobyt=$idp AND id_spolu!=$ids");
+              WHERE id_pobyt=$idp AND id_spolu!=$ids ORDER BY prijmeni,jmeno");
             while ($rs && (list($ids2,$jmeno,$prijmeni)= pdo_fetch_array($rs))) {
               $row= [];
-              $row[$clmn_i['spolu']]= $ids2;        
-              $row[$clmn_i['nazev']]= "$prijmeni $jmeno";        
+              $row_set('spolu',$ids2);        
+              $row_set('nazev',"$prijmeni $jmeno");
               $rows_spolu[]= $row;
             }
           }
         }
         else { // tyto řádky obsahují jen platby
           $row= [];
-          $row[$clmn_i['platba']]= $castka;
-          $row[$clmn_i['kdy']]= $datum;
+          $row_set('platba',$castka);
+          $row_set('kdy',$datum);
           $tab[]= $row;
         }
         $idp_old= $idp;
@@ -1558,6 +1613,11 @@ function dum_kniha_hostu($par) {
         $tab= array_merge($tab,$rows_spolu); 
         $rows_spolu= [];             
       }
+    }
+    // doplň spočítané sumy
+//    debug($sum,"SUM end - $isum");                                                       /*DEBUG*/
+    foreach ($sum as $fld=>$val) {
+      $tab[$isum][$clmn_i[$fld]]= $val;
     }
     $nf++;
 //    break;
@@ -1594,7 +1654,7 @@ function dum_kniha_hostu_fakturace($idf,&$row) {
 }
 // obarvení částky
 function dum_kniha_castka($castka,$platba,$ne_ubyt=0) {
-  $platba= !$platba ? ($castka ? [$platba,4] : $platba) : (         
+  $platba= !$platba ? ($castka ? [$platba,6] : $platba) : (         
       $castka==$platba ? [$platba,1] : (              // akorát
       $castka<$platba && $castka ? ( 
        $ne_ubyt ? [$platba,4] : [$platba,2] 
@@ -1622,7 +1682,7 @@ function dum_kniha_hostu_tab2html($tab,$excel) {
   // matice popisů
   $leg= []; // [r][c]= class:text 
   $wleg= []; // [r][c]= colspan 
-  debug($legenda,"legenda");                                                              /*DEBUG*/
+//  debug($legenda,"legenda");                                                              /*DEBUG*/
 //  debug($iclmn,"iclmn");                                                                /*DEBUG*/
   foreach ($legenda as $desc) {
     list($i,$r,$iclass,$popis,$span)= explode(':',$desc);
@@ -1638,7 +1698,7 @@ function dum_kniha_hostu_tab2html($tab,$excel) {
       $xls.= "\n|$A$r $popis$attr";
     }
   }
-  debug($leg,"legenda");                                                                  /*DEBUG*/
+//  debug($leg,"legenda");                                                                  /*DEBUG*/
   if ($excel) { // oddělení legendy
     $xls.= "\n\n";
     $r1+= 2;
@@ -1700,6 +1760,8 @@ function dum_kniha_hostu_tab2html($tab,$excel) {
             $xls_fmt= '::date right';
           }
           break;
+        case 'm': 
+          $val= $val ?: '';
         case 'n': 
           $align= " align='right'";
           $xls_fmt= '::right';

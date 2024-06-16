@@ -28,7 +28,7 @@ func onfocus() { var mn: object, it: ezer
 
 # ----------------------------------------------------------------------------------------==> . menu
 var last_item:text
-menu mo {type:'left'
+menu mo {type:'left', format:'f+' // atribut f nefunguje
   func onclick(x:ezer) { 
 //    show_order(x.par.uid) 
     clear();
