@@ -1157,9 +1157,9 @@ form _info [,,*,50] {
     }
     func Show(idd) {
       if (!this.browse_count()) return;
-      echo(`---------------- Show ${idd} ${this.browse_count()}`);
-      the_order= idd;
-      set_cookie(`${sys('root')}_order`,the_order);
+      echo(`---------------- Show ${idd} ${this.browse_count()} the_order=${the_order}`);
+//      the_order= idd;
+//      set_cookie(`${sys('root')}_order`,the_order);
       this.browse_focus(idd);
       a_title= nazev; 
       page.show_akce(id_akce); 
@@ -1169,6 +1169,7 @@ form _info [,,*,50] {
     func pracovni() { 
       if (!id_akce) { alert(`Vlož objednávku jako akci`); return }      
       the_order= id_order;
+      set_cookie(`${sys('root')}_order`,the_order);
       volba_akce(id_akce);
       this.Load(the_order);
       page.show_akce(id_akce); 

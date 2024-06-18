@@ -2081,7 +2081,7 @@ function ds2_show_curr($c) {
   if (($ida= $c->lst->akce)) {
     list($a_akce,$kod)= select("CONCAT(nazev,' ',YEAR(datum_od)),IFNULL(g_kod,'')",
         'akce LEFT JOIN join_akce ON id_akce=id_duakce',"id_duakce=$ida");
-    $ucast.= " <span title='ID akce=$ida'>$kod</span>";
+    $ucast.= "akce <span title='ID akce=$ida'>$ida/$kod</span>";
   }
   if (($ido= $c->ucast->osoba)) {
     $nazev= ($idr=$c->ucast->rodina) ? select1("nazev",'rodina',"id_rodina=$idr") : '';
@@ -2248,6 +2248,11 @@ function ds2_fio($cmd) {
       $omezeni= $cmd->platba
           ? "id_platba=$cmd->platba" 
           : "datum BETWEEN '$cmd->od' AND '$cmd->do'";
+      $back= $cmd->back ?: 0; // návrat k odhadu =  ignoruje id_oso, id_pob, id_ord
+      if ($back && $cmd->platba) {
+        query("UPDATE platba SET id_oso=0,id_pob=0,id_ord=0,stav=IF(castka>0,5,1) 
+          WHERE id_platba=$cmd->platba");
+      }
       // rozpoznání osoby podle protiúčtu
       $rp= pdo_qry("
         SELECT id_platba,protiucet FROM platba AS p 

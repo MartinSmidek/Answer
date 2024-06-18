@@ -6,10 +6,10 @@ menu dbt { type:'main', title:'db2', active:*, _sys:'*'
   // vrací aktuální stavy modulů, bude volána pomocí js.call_root_func z library modulů
   func akce2_curr() { var the_curr:object, x: object
     the_curr= akce2.curr();
-    if (ds2) {
-      x= ds2.curr();
-      the_curr.dum= x.dum;
-    }
+//    if (ds2) {
+//      x= ds2.curr();
+//      the_curr.dum= x.dum;
+//    }
     return the_curr;
   } 
   func syst_tab_rec_show(tab,idt) { syst.dat.tab_id_show(tab,idt); }
@@ -19,12 +19,12 @@ menu dbt { type:'main', title:'db2', active:*, _sys:'*'
   var global: text,
   tabs pok {title:"[fa-eur] Finance", _sys:'*',  include:'onclick,db2.pok', active:*, skill:'yp;yf' }
 #endif
-#if test_version<1
-//  tabs eko {title:"[fa-stack-overflow] Ekonomika", _sys:'*',  include:'onclick,ys2.eko', active:*, skill:'ye' }
-  tabs ds {title:"[fa-home] Dům", _sys:'*',  include:'onload,db2.ds', active:*, skill:'m' 
-    func curr() {} // vrací aktuální {order: tx_gnalberice_order.uid}}
-  }
-#endif
+//#if test_version<1
+////  tabs eko {title:"[fa-stack-overflow] Ekonomika", _sys:'*',  include:'onclick,ys2.eko', active:*, skill:'ye' }
+//  tabs ds {title:"[fa-home] Dům", _sys:'*',  include:'onload,db2.ds', active:*, skill:'m' 
+//    func curr() {} // vrací aktuální {order: tx_gnalberice_order.uid}}
+//  }
+//#endif
 #if test_version<3
   tabs ds2 {title:"[fa-home] Dům setkání", _sys:'*',  include:'onload,db2.ds2', active:*, skill:'yd2' 
     func curr() {} // vrací aktuální {order: tx_gnalberice_order.uid}}
