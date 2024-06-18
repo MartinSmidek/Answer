@@ -124,7 +124,11 @@ tr td.warn      { background-color:#ffa !important; }
 tr td.nic       { background-color:#fcf !important; }
 tr td.err       { background-color:#fa8 !important; }
 
-button.search   { padding-left:0px; }
+/* specifické barvy pro Finance */
+tr td.tr-odd.transparent  { background-color:#e6e6e6 !important; }
+tr td.tr-even.transparent  { background-color:#ffffff !important; }
+ 
+ button.search   { padding-left:0px; }
 .search         { z-index:3 !important; }
 
 /* */

@@ -25,6 +25,7 @@ func onfocus() { var mn: object, it: ezer
   it= mo.part(last_item);
   it.click(1);
 }
+func curr() { return {dum:{order:the_order}}; }
 
 # ----------------------------------------------------------------------------------------==> . menu
 var last_item:text

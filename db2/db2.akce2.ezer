@@ -27,7 +27,7 @@ var my_org=0                    // datová příslušnost přihlášeného uživ
 var team_access= 0              // 1 pokud má uživatel skills=T tj. omezený přístup je ke svým akcím
         
 # hodnoty pamatované v cookies
-var the_source: text            // forma seznamu akcí google|sey                           -- cookie
+var the_source: text            // forma seznamu akcí google|sey|dum                       -- cookie
 var the_duakce: number          // pracovní akce: id_akce (id_dukace)
 var the_akce_ys: number         // poslední pracovní akce Setkání                          -- cookie
 var the_akce_fa: number         // poslední pracovní akce Familia                          -- cookie
@@ -120,6 +120,7 @@ proc reaccess() { #==> . reaccess (jen pro YS+FA)
 func curr() { var _curr:object
   _curr= {lst:{akce:the_duakce},ucast:ucast.curr()};
   _curr.evi= evi.curr();
+  _curr.dum= {order:the_source=='dum' ? the_order : 0};
   return _curr;
 //  return {lst:{akce:the_duakce},ucast:ucast.curr(),evi:evi.curr()};
 } 
