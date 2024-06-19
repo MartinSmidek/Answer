@@ -66,7 +66,7 @@ use page:   form [ 10, 10,,] {
 //  label ucet  [252,0,100,20] { tag:'_' title:'<b>Kontrola platby</b>', par:{on:'ucet',off:'objed|ucast'}
 //    func onclick() { cvak(&this) } }
   # ------------------------- pozadí pro elementy musí být před obsahem záložek
-  label frame [0,16,1000,620] { css:'ae_work'}
+  label frame [0,17,1000,620] { css:'ae_work'}
   // text faktury
   label faktura [17,650,640,100]
 }

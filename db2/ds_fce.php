@@ -69,12 +69,11 @@ $dum_faktura_fld= [
       Za pobyt v Domě setkání ve dnech {obdobi} Vám fakturujeme:"],
   'tabulka' => [',,,13,140,184,150,,2',"
       {tabulka}"],
-  'QR' => ['QR,,,13,220,40,40',     // viz https://qr-platba.cz/pro-vyvojare/specifikace-formatu/
+  'QR' => ['QR,,,13,230,40,40',     // viz https://qr-platba.cz/pro-vyvojare/specifikace-formatu/
       "SPD*1.0*ACC:{QR-IBAN}*RN:{QR-ds}*AM:{QR-castka}*CC:CZK*MSG:{QR-pozn}*X-VS:{QR-vs}*X-SS:{QR-ss}"],
     
-  'vyrizuje' => [',,,13,270,100,10',"
-      <b>Vyřizuje</b>
-      <br>{vyrizuje}"],
+  'vyrizuje' => [',,,13,275,100,10',"
+      <b>Vyřizuje</b> {vyrizuje}"],
   'pata' => [',C,,13,285,184,6,T,2',"
       Těšíme se na Váš další pobyt v Domě setkání"],
 ];
@@ -765,14 +764,14 @@ function dum_rooms_help($version=1) {
 # ----------------------------------------------------------------------------------- dum ... vzorec
 # $spolu je buďto klíč id_spolu
 # nebo objekt {vek,pokoj,state,board,noci,dotace}
-function dum_osoba_vzorec($s,$rok) { // debug($s,"> dum_osoba_vzorec(,$rok)");
+function dum_osoba_vzorec($s,$rok) { // debug($s,"> dum osoba_vzorec(,$rok)");
   $ds2_cena= dum_cenik($rok);
 //  debug($ds2_cena);
   $luzko_pokoje= dum_cat_typ();
   $ds_strava= map_cis('ds_strava','zkratka');
   $rozpis= [];
   // ubytování osob podle věku
-  $noc= 'noc_'.$luzko_pokoje[$s->pokoj];
+  $noc= 'noc_'.($s->ds_pristylka ? 'P' : $luzko_pokoje[$s->pokoj]);
   // poplatky podle věku
   $poplatky= ['ubyt_P','ubyt_C','ubyt_S','noc_B',$noc];
   if ($s->state==3) { // akce YMCA má poplatek za program
@@ -799,7 +798,7 @@ function dum_osoba_vzorec($s,$rok) { // debug($s,"> dum_osoba_vzorec(,$rok)");
   // postýlka a zvíře
   if ($s->ds_zvire) $rozpis['noc_Z']= [$s->noci,0];
   if ($s->ds_postylka) $rozpis['pobyt_P']= [1,0];
-//  debug($rozpis,"dum_osoba_vzorec(,$rok) >");                                             /*DEBUG*/
+//  debug($rozpis,"dum osoba_vzorec(,$rok) >");                                             /*DEBUG*/
   $vzorec= dum_rozpis2vzorec($rozpis);
   return $vzorec;
 }
@@ -1064,8 +1063,8 @@ function dum_browse_order($x) {
         GROUP_CONCAT(CONCAT(id_spolu,'~',prijmeni,'~',jmeno,'~',narozeni,
             '~',0,'~',IF(ds_od='0000-00-00',datum_od,ds_od),'~',IF(ds_do='0000-00-00',datum_do,ds_do),
             '~',TRIM(IF(s.ds_pokoj,s.ds_pokoj,p.pokoj)),
-            '~',s.ds_vzorec,'~',s.ds_zdarma,'~',s.ds_dotace,'~',s.ds_postylka,'~',s.ds_zvire,
-            '~',0,'~',0,'~',0,'~',0,'~',0,'~',0) 
+            '~',s.ds_vzorec,'~',s.ds_zdarma,'~',s.ds_dotace,'~',s.ds_pristylka,'~',s.ds_postylka,
+            '~',s.ds_zvire,'~',0,'~',0,'~',0,'~',0,'~',0,'~',0) 
           ORDER BY IF(narozeni='0000-00-00','9999-99-99',narozeni) 
           SEPARATOR '~' ) AS cleni,d.state,d.board,IFNULL(x.zaplaceno,''),IFNULL(x.nx,''),IFNULL(x.platby,'')
       FROM osoba AS o 
@@ -1084,8 +1083,8 @@ function dum_browse_order($x) {
       ORDER BY prijmeni
     ");
     $i_prijmeni= 1; $i_vek= 3; $i_noci= 4; $i_od= 5; $i_do= 6; $i_pokoj= 7; $i_vzorec= 8; 
-    $i_zdarma= 9; $i_dotace= 10; $i_postylka= 11; $i_zvire= 12; $i_celkem= 13; $i_fix= 18; 
-    $i_delta= 19;
+    $i_zdarma= 9; $i_dotace= 10; $i_pristylka= 11; $i_postylka= 12; $i_zvire= 13; $i_celkem= 14; 
+    $i_fix= 19; $i_delta= 20;
     while ($rp && (list(
         $idp,$nebyl,$prijmeni,/*$od,$do,$noci,*/$rok,$cleni,$state,$board,$zaplaceno,$nx,$platby)
         = pdo_fetch_array($rp))) {
@@ -1133,7 +1132,7 @@ function dum_browse_order($x) {
           $vzorec= $c[$i+$i_vzorec]= $vzorec ?: dum_osoba_vzorec((object)
             ['vek'=>$vek,'pokoj'=>$pokoj,'state'=>$state,'board'=>$board,'noci'=>$noci,
               'ds_zdarma'=>$zdarma,'ds_dotace'=>$dotace,'ds_postylka'=>$c[$i+$i_postylka],
-              'ds_zvire'=>$c[$i+$i_zvire]],
+              'ds_pristylka'=>$c[$i+$i_pristylka],'ds_zvire'=>$c[$i+$i_zvire]],
             $rok);
           $cena= dum_vzorec_cena($vzorec,$rok_ceniku);
           $celkem+= $c[$i+$i_celkem]= $cena['celkem'];
@@ -1238,7 +1237,7 @@ function dum_browse_pobyt($x) {
         IF(ds_do='0000-00-00',datum_do,ds_do),
         YEAR(datum_od) AS rok,d.state,d.board,prijmeni,jmeno,narozeni,
         TRIM(IF(s.ds_pokoj,s.ds_pokoj,p.pokoj)) AS pokoj,s.ds_vzorec,ds_zdarma,ds_dotace,
-        ds_postylka,ds_zvire,ulice,psc,obec
+        ds_pristylka,ds_postylka,ds_zvire,ulice,psc,obec
       FROM osoba AS o 
         JOIN spolu AS s USING (id_osoba) 
         JOIN pobyt AS p USING (id_pobyt) 
@@ -1250,8 +1249,9 @@ function dum_browse_pobyt($x) {
       ORDER BY narozeni
     ");
     while ($rp && (list(
-        $idp,$ids,$idd,$nebyl,$od,$do,$rok,$state,$board,$prijmeni,$jmeno,$narozeni,$pokoj,
-        $vzorec,$zdarma,$dotace,$postylka,$zvire,$ulice,$psc,$obec)= pdo_fetch_array($rp))) {
+          $idp,$ids,$idd,$nebyl,$od,$do,$rok,$state,$board,$prijmeni,$jmeno,$narozeni,$pokoj,
+          $vzorec,$zdarma,$dotace,$pristylka,$postylka,$zvire,$ulice,$psc,$obec
+        )= pdo_fetch_array($rp))) {
       $rok_ceniku= $rok;
       // od nejstaršího vezmeme adresu a další údaje
       if (!$suma->adresa) {
@@ -1287,7 +1287,8 @@ function dum_browse_pobyt($x) {
         
         $vzorec= $vzorec ?: dum_osoba_vzorec((object)
           ['vek'=>$vek,'pokoj'=>$pokoj,'state'=>$state,'board'=>$board,'noci'=>$noci,
-           'ds_zdarma'=>$zdarma,'ds_dotace'=>$dotace,'ds_postylka'=>$postylka,'ds_zvire'=>$zvire],
+           'ds_zdarma'=>$zdarma,'ds_dotace'=>$dotace,'ds_postylka'=>$postylka,
+           'ds_pristylka'=>$pristylka,'ds_zvire'=>$zvire],
           $rok);
         $vzorec_pobyt.= ",$vzorec";
 //        display("$jmeno: $vzorec");
@@ -1320,6 +1321,7 @@ function dum_browse_pobyt($x) {
         $z[$ids]['zamek_spolu']= $fix;
         $z[$ids]['ds_zdarma']= $zdarma;
         $z[$ids]['ds_dotace']= $dotace;
+        $z[$ids]['ds_pristylka']= $pristylka;
         $z[$ids]['ds_postylka']= $postylka;
         $z[$ids]['ds_zvire']= $zvire;
       }
