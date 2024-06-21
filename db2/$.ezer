@@ -5,10 +5,10 @@ menu db2 { type:'main', title:'db2', active:*, _sys:'*'
   // vrací aktuální stavy modulů, bude volána pomocí js.call_root_func z library modulů
   func akce2_curr() { var the_curr:object, x: object
     the_curr= akce2.curr();
-    if (ds2) {
-      x= ds2.curr();
-      the_curr.dum= x.dum;
-    }
+//    if (ds2) {
+//      x= ds2.curr();
+//      the_curr.dum= x.dum;
+//    }
     return the_curr;
   } 
   func syst_tab_rec_show(tab,idt) { syst.dat.tab_id_show(tab,idt); }
@@ -334,13 +334,14 @@ menu db2 { type:'main', title:'db2', active:*, _sys:'*'
       paper.full= _parm.html;
       panel.modal(40,10);    
     }
-    use paper: form [0,0,100,100] { 
+    use paper: form { 
       var parm:object, callback:object
-      label full [0,0,662,936]
+      label full [0,0,*,*] { style:"overflow-x:hidden;overflow-y:auto" } // 0,0,662,936
       button akce [20,10,,] {tag:'back', style:'z-index:2' 
         func onclick() { var block:ezer
           block= callback.block;
           block.call(callback.func,parm);
+          panel.hide(0); 
       }}
       button [571,10,,] { title:'[fa-undo] Zpět', style:'z-index:2'  
         func onclick() { panel.hide(0); }

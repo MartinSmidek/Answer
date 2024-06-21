@@ -991,7 +991,7 @@ end:
 # ----------------------------------------------------------------------------- akce2 delete_confirm
 # dotazy před zrušením akce
 function akce2_delete_confirm($id_akce) {  trace();
-  $ret= (object)array('zrusit'=>0,'ucastnici'=>'','platby'=>'');
+  $ret= (object)array('zrusit'=>0,'ucastnici'=>'');
   // fakt zrušit?
   list($nazev,$misto,$datum)=
     select("nazev,misto,DATE_FORMAT(datum_od,'%e.%m.%Y')",'akce',"id_duakce=$id_akce");
@@ -1002,20 +1002,20 @@ function akce2_delete_confirm($id_akce) {  trace();
   $pecouni= select('COUNT(*)','pobyt LEFT JOIN spolu USING (id_pobyt)',"id_akce=$id_akce AND funkce=99");
   $p= $pecouni ? " a $pecouni pečounů" : '';
   $ret->ucastnici= $ucastnici
-    ? "Tato akce má již zapsáno $ucastnici účastníků$p. Má se jejich účast zrušit a potom smazat akci?"
+    ? "Tato akce má již zapsáno $ucastnici účastníků$p. Mám akci označit jako zrušenou?"
     : '';
-//  // jsou evidovány úhrady
-//  $uhrady= select('COUNT(*)','uhrada JOIN pobyt USING (id_pobyt)',"id_akce=$id_akce");
-//  $ret->uhrady= $uhrady
-//    ? "S touto akcí jsou již svázány $uhrady úhrady. Akci nelze smazat."
-//    : '';
 end:
   return $ret;
 }
 # ------------------------------------------------------------------------------------- akce2 delete
 # zrušení akce
-function akce2_delete($id_akce,$ret) {  trace();
+function akce2_delete($id_akce,$ret,$jen_zrušit=0) {  trace();
   $nazev= select("nazev",'akce',"id_duakce=$id_akce");
+  if ($jen_zrušit) {
+    query("UPDATE akce SET zruseno=1 WHERE id_duakce=$id_akce");
+    $msg= "Akce '$nazev' byla zrušena.";
+    goto end;
+  }
   if ( $ret->ucastnici ) {
     // napřed zrušit účasti na akci
     $rs= query("DELETE FROM spolu USING spolu JOIN pobyt USING(id_pobyt) WHERE id_akce=$id_akce");

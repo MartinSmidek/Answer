@@ -167,6 +167,33 @@ panel fakt {type:'right', title:"Faktury"
     field jine   [891,341,60,] { tag:'vyj', title:'^jiné služby', format:'r' 
       func onchange() { soucet(); }}
     
+    button [800,135,,] { title:'[fa-credit-card] Vystavit daňový doklad' 
+      func onclick() { var nadpis:text, zal:object, adresa:text
+        if (fak.typ!='Z' || !fak.zaplacena ) {
+          alert(`Daňový doklad je možné vystavit jen k zaplacené zálohové faktuře`); 
+          return;
+        }
+        if (php.select('id_faktura','faktura',`typ=2 AND nazev=${fak.nazev} AND deleted='' `)) {
+          alert(`Daňový doklad k zaplacené zálohové faktuře ${fak.nazev} již byl vystaven`);
+          return;
+        }
+        zal= php.select_object('vzorec,rok,num,zaloha,vyrizuje','faktura',`id_faktura=${fak.idf}`);
+        adresa= replace(form.adresa,chr(10),'<br>');
+        nadpis= `Daňový doklad k přijaté platbě za zálohovou fakturu ${fak.nazev}`;
+        faktura= php.dum_faktura({typ:2,strucna:1,show:1,save:1,vystavena:fak.zaplacena,
+            adresa:adresa,ds_vzorec:zal.vzorec,nadpis:nadpis,
+            ic:ic,dic:dic,rok:zal.rok,id_order:fak.id_order,
+            num:zal.num,zaloha:zal.zaloha,vs:fak.vs,ss:fak.ss,vyrizuje:zal.vyrizuje});
+        call_func(`$.${sys('root')}.A4.preview`,{html:faktura.html,ref:faktura.ref},
+            {block:&this,func:'ulozeno',title:'[fa-save] Vystavit daňový doklad'});
+      }
+      func ulozeno() { var msg:text
+        msg= php.dum_faktura_save(faktura);
+        alert(`${msg}<br>K vytištění nebo poslání emailem je ${faktura.ref}
+              <br>Je třeba ji poslat i našemu ekonomovi.`);
+        Reload();
+      }
+    }
     button [524,378,,] { title:'[fa-camera-retro] Zobrazit fakturu' 
       func onclick() { var html:text
         html= php.select('html','faktura',`id_faktura=${fak.idf}`);
