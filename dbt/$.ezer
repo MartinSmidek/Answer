@@ -357,6 +357,7 @@ menu dbt { type:'main', title:'db2', active:*, _sys:'*'
         func onclick() { var block:ezer
           block= callback.block;
           block.call(callback.func,parm);
+          panel.hide(0); 
       }}
       button [571,10,,] { title:'[fa-undo] Zpět', style:'z-index:2'  
         func onclick() { panel.hide(0); }

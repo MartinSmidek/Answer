@@ -218,7 +218,7 @@ function dum_faktura($par) { // debug($par,'dum_faktura');
   elseif ($typ==1) { // záloha
     $par->nazev= substr($rok,2,2).'08'.str_pad($num,4,'0',STR_PAD_LEFT);
     $vals['{faktura}']= "Zálohová faktura $par->nazev";
-    $dum_faktura_fld['za_co'][1]= "Za pobyt v Domě setkání ve dnech {obdobi} Vám fakturujeme:";
+    $dum_faktura_fld['za_co'][1]= "Fakturujeme Vám zálohu na pobyt v Domě setkání ve dnech {obdobi}:";
     $vals['{DUZP-text}']= '';
     $vals['{DUZP-datum}']= '';
     $vals['{splatnost-text}']= '<b>Datum splatnosti</b>';
@@ -227,7 +227,7 @@ function dum_faktura($par) { // debug($par,'dum_faktura');
   else { // $typ==2 daňový doklad 
     $par->nazev= substr($rok,2,2).'08'.str_pad($num,4,'0',STR_PAD_LEFT);
     $vals['{faktura}']= "Daňový doklad $par->nazev";
-    $dum_faktura_fld['za_co'][1]= "Fakturujeme Vám zálohu na pobyt v Domě setkání ve dnech {obdobi}:";
+    $dum_faktura_fld['za_co'][1]= $nadpis;
     $vals['{DUZP-text}']= '<br>Datum zdanitelného plnění';
     $vals['{DUZP-datum}']= "<br>$vystavena";
     $vals['{splatnost-text}']= '';
@@ -305,9 +305,10 @@ function dum_faktura($par) { // debug($par,'dum_faktura');
         $rozpis_dph[$sazba]+= $kc / ((100 + $sazba) / 100);
       }
     }
-    elseif ($strucna==1) { // jen přehled ubytování - strava - poplatky
+    elseif ($strucna==1) { // jen přehled ubytování - strava - poplatky - jiné
       foreach ($cena['druh2'] as $cc) {
         $kc= $cc['cena'];
+        $kc_dph= $typ==2 ? $kc*$koef : $kc;
         $sazba= $cc['sazba'];
         $polozky[]= [
           $cc['druh'],
@@ -316,7 +317,7 @@ function dum_faktura($par) { // debug($par,'dum_faktura');
           dum_kc($kc),
           $kc 
         ];
-        $rozpis_dph[$sazba]+= $kc / ((100 + $sazba) / 100);
+        $rozpis_dph[$sazba]+= $kc_dph / ((100 + $sazba) / 100);
       }
     }
   }
@@ -1808,6 +1809,29 @@ function dum_kniha_hostu_tab2html($tab,$excel) {
   return $res;
 }
 # ===========================================================================================> RUZNE
+# --------------------------------------------------------------------------------- dum spolu_adresa
+# vrátí osobní resp. rodinnou adresu
+function dum_spolu_adresa($ids) {
+  $p= pdo_fetch_object(pdo_qry("
+     SELECT prijmeni, jmeno, 
+       IF(adresa,o.ulice,r.ulice) AS ulice,
+       IF(adresa,o.psc,r.psc) AS psc, IF(adresa,o.obec,r.obec) AS obec
+     FROM spolu AS s
+     JOIN osoba AS o USING (id_osoba)
+     LEFT JOIN tvori AS t USING (id_osoba)
+     LEFT JOIN rodina AS r USING (id_rodina)
+     WHERE id_spolu='$ids'
+     ORDER BY role"));
+  $adresa= "$p->jmeno $p->prijmeni<br>$p->ulice<br>$p->psc $p->obec";
+  return $adresa;
+}
+# -------------------------------------------------------------------------------- dum refresh_pokoj
+# obnoví pokoj v pobyt podle ds_pokoj ve spolu
+function dum_refresh_pokoj($idp) {
+  $pokoje= select('GROUP_CONCAT(DISTINCT ds_pokoj ORDER BY ds_pokoj)','spolu',"id_pobyt=$idp");
+  if ($pokoje!=select('pokoj','pobyt',"id_pobyt=$idp"))
+    query_track("UPDATE pobyt SET pokoj='$pokoje' WHERE id_pobyt=$idp");  
+}
 # ------------------------------------------------------------------------------ ds2 ukaz_objednavku
 # zobrazí odkaz na osobu v evidenci
 function ds2_ukaz_objednavku($idx,$barva='',$title='') {

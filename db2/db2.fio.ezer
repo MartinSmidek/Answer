@@ -244,6 +244,7 @@ form _ucty [,,640,*] {
       xx_dum= t.dum_text;
   }}
   // účastníci akce
+  label [40,356,1000,3] { tag:'F', title:'<hr>' }
   label x_akce [40,367,348,18] { tag:'F', style:'font-size:10pt;color:black',
       title:'... nastav pobyt na kartě ÚČASTNÍCI a stiskni ?'}
   button [397,365,,] {tag:'F', title:'přepiš pobyt a osobu'
@@ -252,30 +253,27 @@ form _ucty [,,640,*] {
       php.ds2_corr_platba(id_platba,'akce',1,c);
       refresh();
   }}
-//  button [431,362,,] {tag:'F', title:'... dar', func onclick() { 
-//    php.ds2_corr_platba(id_platba,'dar',1);
-//    refresh();
-//  }}
   label xx_akce [531,368,550,18] {tag:'F', style:'font-size:10pt;color:black'}
   // evidence
+  label [40,381,1000,3] { tag:'F', title:'<hr>' }
   label x_evid [40,392,348,18] {tag:'F', style:'font-size:10pt;color:black' 
       title:'... nastav osobu na kartě EVIDENCE a stiskni ?'}
-  button [397,389,,] {tag:'F', title:'přepiš osobu'
+  button [397,390,,] {tag:'F', title:'přepiš osobu'
     func onclick() { js.call_root_func('akce2_curr',&this,'onclick_')}
     func onclick_(c:object) { 
       php.ds2_corr_platba(id_platba,'evi',1,c);
       refresh();
   }}
-  button [480,389,,] {tag:'F', title:'a dar', func onclick() { 
+  button [480,390,,] {tag:'F', title:'a dar', func onclick() { 
     php.ds2_corr_platba(id_platba,'dar',1);
     refresh();
   }}
   label xx_evid [531,392,550,18] {tag:'F', style:'font-size:10pt;color:black'}
   // objednávky DS
+  label [40,406,1000,3] { tag:'F', title:'<hr>' }
   label x_dum [40,417,347,18] {tag:'F', style:'font-size:10pt;color:black' ,
       title:'... nastav objednávku na kartě AKCE a stiskni ?'}
-//      title:'... nastav objednávku na kartě Dům setkání a stiskni ?'}
-  button [397,415,,] {tag:'F', title:'přepiš objednávku'
+  button [397,416,,] {tag:'F', title:'přepiš objednávku'
     func onclick() { 
       if (php.select('id_faktura','join_platba',`id_platba=${fio.id_platba}`))
         alert('tato platba je spárována s fakturou, nelze takto měnit')
@@ -291,6 +289,7 @@ form _ucty [,,640,*] {
 //    refresh();
 //  }}
   label xx_dum [531,417,550,18] {tag:'F', style:'font-size:10pt;color:black' }
+  label [40,431,1000,3] { tag:'F', title:'<hr>' }
 }
 
 table platba {
