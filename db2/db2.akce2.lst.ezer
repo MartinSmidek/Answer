@@ -630,17 +630,19 @@ form _page [,,275,360] {
       info.sey.blur(1)
   } }
   button [91,499,,] {tag:'cor', title:'Smazat akci', format:'c', skill:'faan|faan;caan|caan;yaan|yaan'
-    proc onclick() {
-      var ret:object
-      var msg:text
-      ret.set(ask('akce2_delete_confirm',form.key));
-      ret.zrusit; confirm(ret.zrusit);                  // fakt zrušit + název
-      { not(ret.ucastnici) | confirm(ret.ucastnici) };  // ale akce má účastníky
-      { ret.platby; alert(ret.platby)                   // nelze smazat, jsou-li platby
-      | msg.set(ask('akce2_delete',form.key,ret));
-        alert(msg);
-        lst_refresh;
-  } } }
+    func onclick() { var ret:object, msg:text
+      ret= php.akce2_delete_confirm(form.key());
+      if (ret.zrusit && confirm(ret.zrusit)) {         // fakt zrušit + název
+        if (ret.ucastnici && confirm(ret.ucastnici) ) { // pokud akce má účastníky 
+          msg= php.akce2_delete(form.key(),ret,1);      // tak jen zrušíme
+        }
+        else {
+          msg= php.akce2_delete(form.key(),ret);        // jinak zcela smažeme
+          alert(msg);
+        }
+        lst_refresh();
+      }
+  } }
   // jen pro YF - zápis roku iniciace účastníkům akce - musí být akce.mrop=1 
   label  [310,493,118,31] { tag:'corm,corf', css:'ae_parm', format:'n', style:'z-index:1',         skill:'faan' }
   button [316,499,,] {tag:'corm', title:'Potvrzení iniciace', format:'nc', style:'z-index:1', skill:'faan|faa:m'
