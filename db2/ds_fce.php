@@ -175,7 +175,7 @@ function dum_faktura($par) { // debug($par,'dum_faktura');
   $order= $par->id_order;
   $pobyt= $par->id_pobyt; 
   $vyrizuje= $par->vyrizuje;
-  $nadpis= $par->nadpis;
+  $nadpis= $par->nadpis; // ignoruje se pro daňový doklad
   $vystavena= $par->vystavena;
   $date= new DateTime($vystavena); 
   $vystavena= $date->format('j. n. Y');
@@ -198,7 +198,7 @@ function dum_faktura($par) { // debug($par,'dum_faktura');
   // podle typu faktury
   if ($typ==3) { // vyúčtování
     $par->nazev= ($rok-2000).'74A'.str_pad($num,4,'0',STR_PAD_LEFT);
-    $vals['{faktura}']= "Faktura $par->nazev";
+    $vals['{faktura}']= "Faktura - daňový doklad $par->nazev";
     $dum_faktura_fld['za_co'][1]= $nadpis; //"Za pobyt v Domě setkání ve dnech {obdobi} Vám fakturujeme:";
     $vals['{DUZP-text}']= '<br>Datum zdanitelného plnění';
     $vals['{DUZP-datum}']= "<br>$vystavena";
@@ -208,7 +208,7 @@ function dum_faktura($par) { // debug($par,'dum_faktura');
   elseif ($typ==4) { // výjimečné vyúčtování zadáním konečných částek
     $vyjimecna= 1;
     $par->nazev= ($rok-2000).'74A'.str_pad($num,4,'0',STR_PAD_LEFT);
-    $vals['{faktura}']= "Faktura $par->nazev";
+    $vals['{faktura}']= "Faktura - daňový doklad $par->nazev";
     $dum_faktura_fld['za_co'][1]= $nadpis; //"Za pobyt v Domě setkání ve dnech {obdobi} Vám fakturujeme:";
     $vals['{DUZP-text}']= '<br>Datum zdanitelného plnění';
     $vals['{DUZP-datum}']= "<br>$vystavena";
@@ -221,13 +221,15 @@ function dum_faktura($par) { // debug($par,'dum_faktura');
     $dum_faktura_fld['za_co'][1]= "Fakturujeme Vám zálohu na pobyt v Domě setkání ve dnech {obdobi}:";
     $vals['{DUZP-text}']= '';
     $vals['{DUZP-datum}']= '';
-    $vals['{splatnost-text}']= '<b>Datum splatnosti</b>';
+    $vals['{splatnost-text}']= '<br><b>Datum splatnosti</b>';
     $vals['{splatnost-datum}']= '<br>'.$splatnost->format('j. n. Y');
   }
   else { // $typ==2 daňový doklad 
     $par->nazev= substr($rok,2,2).'08'.str_pad($num,4,'0',STR_PAD_LEFT);
     $vals['{faktura}']= "Daňový doklad $par->nazev";
-    $dum_faktura_fld['za_co'][1]= $nadpis;
+    $par->nadpis= "Daňový doklad k přijaté platbě <b>$zaloha Kč</b> "
+        . "za zálohovou fakturu {$par->nazev}.";
+    $dum_faktura_fld['za_co'][1]= $par->nadpis;
     $vals['{DUZP-text}']= '<br>Datum zdanitelného plnění';
     $vals['{DUZP-datum}']= "<br>$vystavena";
     $vals['{splatnost-text}']= '';
@@ -239,33 +241,34 @@ function dum_faktura($par) { // debug($par,'dum_faktura');
   if ($vyjimecna) { // podrobně - položky ceníku
     $strucna= 1;
     // ds_vzorec má výjimečný formát: ubyt|stra|popl|řádek popisu
-//    list($ubyt,$stra,$popl)= explode('|',$par->ds_vzorec);
     $ubyt= $par->ubyt;
     $stra= $par->stra;
     $popl= $par->popl;
     $prog= $par->prog;
     $jine= $par->jine;
     $celkem= $ubyt + $stra + $popl + $prog + $jine;
+    $koef= $zaloha ? ($celkem-$zaloha)/$celkem : 1;
+//    display("$celkem $zaloha $koef");
     $ds2_cena= dum_cenik($rok);
     // ubytování
     $sazba_ubyt= $ds2_cena['noc_L']->dph;
-    $dph_ubyt= $ubyt / ((100 + $sazba_ubyt) / 100);
+    $dph_ubyt= ($ubyt * $koef) / ((100 + $sazba_ubyt) / 100);
     $rozpis_dph[$sazba_ubyt]+= $dph_ubyt;
     // strava
     $sazba_strav= $ds2_cena['strava_CC']->dph;
-    $dph_strav= $stra / ((100 + $sazba_strav) / 100);
+    $dph_strav= ($stra * $koef) / ((100 + $sazba_strav) / 100);
     $rozpis_dph[$sazba_strav]+= $dph_strav;
     // poplatky
     $sazba_popl= $ds2_cena['ubyt_C']->dph;
-    $dph_popl= $popl / ((100 + $sazba_popl) / 100);
+    $dph_popl= ($popl * $koef) / ((100 + $sazba_popl) / 100);
     $rozpis_dph[$sazba_popl]+= $dph_popl;
     // program
     $sazba_prog= $ds2_cena['prog_C']->dph;
-    $dph_prog= $popl / ((100 + $sazba_prog) / 100);
+    $dph_prog= ($prog * $koef) / ((100 + $sazba_prog) / 100);
     $rozpis_dph[$sazba_prog]+= $dph_prog;
     // jiné služby
     $sazba_jine= $ds2_cena['noc_Z']->dph;
-    $dph_jine= $jine / ((100 + $sazba_jine) / 100);
+    $dph_jine= ($jine * $koef) / ((100 + $sazba_jine) / 100);
     $rozpis_dph[$sazba_jine]+= $dph_jine;
     $polozky= [
       ['ubytování',$sazba_ubyt.'%',dum_kc($dph_ubyt),dum_kc($ubyt),$ubyt],
@@ -302,7 +305,7 @@ function dum_faktura($par) { // debug($par,'dum_faktura');
           dum_kc($kc),
           $kc // 7: celková cena vč. DPH
         ];
-        $rozpis_dph[$sazba]+= $kc / ((100 + $sazba) / 100);
+        $rozpis_dph[$sazba]+= ($kc - $zaloha) / ((100 + $sazba) / 100);
       }
     }
     elseif ($strucna==1) { // jen přehled ubytování - strava - poplatky - jiné
@@ -326,67 +329,78 @@ function dum_faktura($par) { // debug($par,'dum_faktura');
 //  debug($rozpis_dph,'rozpis DPH');                                                        /*DEBUG*/
   
   // nadpisy položek a šířka polí
-  $popisy= explode(',', $strucna==0
-    ? "Položka:79,Počet:12,Cena položky vč. DPH:26,Sazba DPH:14,DPH:25,Cena vč. DPH:28"
-    : "Položka:107,Sazba DPH:24,DPH:25,Cena vč. DPH:28")  ;
+  $cs= $strucna==0 ? [6,4,6,3,3] :  [4,2,4,1,1];
   $lrtb= "border:0.1mm dotted black";
   $tab= '<table style="border-collapse:collapse" cellpadding="1mm">';
-  $tab.= "<tr>";
-  foreach ($popisy as $i=>$ts) {
-    list($t,$s)= explode(':',$ts);
-    $align= $i ? 'right' : 'left';
-    $tab.= "<td align=\"$align\" style=\"$lrtb;width:{$s}mm\"><b>$t</b></td>";
-  }
-  $tab.= "</tr>";
-  $tab.= "\n<tr>";
-  for ($i= 0; $i<=($strucna==0?5:3); $i++) {
-//    if ($i==3) continue;
-    $align= $i ? 'right' : 'left';
-    $nowrap= $i ? '' : ';text-wrap:nowrap';
-    $tab.= "<td style=\"$lrtb$nowrap;text-align:$align\">";
-    $del= '';
-    foreach ($polozky as $polozka) {
-      if ($polozka===null) continue;
-      $tab.= "$del{$polozka[$i]}";
-      $del= '<br>';
+  if ($typ!=2) {
+    $popisy= explode(',', $strucna==0
+      ? "Položka:79,Počet:12,Cena položky vč. DPH:26,Sazba DPH:14,DPH:25,Cena vč. DPH:28"
+      : "Položka:107,Sazba DPH:24,DPH:25,Cena vč. DPH:28")  ;
+    $tab.= "<tr>";
+    foreach ($popisy as $i=>$ts) {
+      list($t,$s)= explode(':',$ts);
+      $align= $i ? 'right' : 'left';
+      $tab.= "<td align=\"$align\" style=\"$lrtb;width:{$s}mm\"><b>$t</b></td>";
     }
-    $tab.= "</td>";
-  }
-  $tab.= '</tr>';
-  // součty
-  $cs= $strucna==0 ? [6,4,6,3,3] :  [4,2,4,1,1];
-  $colspan= "colspan=\"$cs[0]\"";
-  $tab.= "<tr><td $colspan><br><br></td></tr>";
-  if ($typ==1) { // záloha
-    $soucty= ['Celková cena s DPH'=>$celkem, 'Zaplaťte zálohu'=>$zaloha];
-    $bold= 0;
-    $koef= $zaloha/$celkem;
-    $platit= $celkem*$koef;
-  }
-  else { // konečná
-    $platit= $celkem - $zaloha;
-    if ($zaloha) {
-      $soucty= ['Celková cena s DPH '=>$celkem, 
-          'Zaplaceno zálohou '=>$zaloha?:0, 'Zbývá k zaplacení '=>$platit];
+    $tab.= "</tr>";
+    $tab.= "\n<tr>";
+    for ($i= 0; $i<=($strucna==0?5:3); $i++) {
+  //    if ($i==3) continue;
+      $align= $i ? 'right' : 'left';
+      $nowrap= $i ? '' : ';text-wrap:nowrap';
+      $tab.= "<td style=\"$lrtb$nowrap;text-align:$align\">";
+      $del= '';
+      foreach ($polozky as $polozka) {
+        if ($polozka===null) continue;
+        $tab.= "$del{$polozka[$i]}";
+        $del= '<br>';
+      }
+      $tab.= "</td>";
+    }
+    $tab.= '</tr>';
+    // součty
+    $colspan= "colspan=\"$cs[0]\"";
+    $tab.= "<tr><td $colspan><br><br></td></tr>";
+    if ($typ==1) { // záloha
+      $soucty= ['Celková cena s DPH'=>$celkem, 'Zaplaťte zálohu'=>$zaloha];
       $bold= 0;
-      $koef= 1;
+      $koef= $zaloha/$celkem;
+      $platit= $celkem*$koef;
     }
-    else {
-      $soucty= ['Celková cena s DPH '=>$celkem];
-      $bold= 1;
-      $koef= 1;
+    else { // konečná
+      $platit= $celkem - $zaloha;
+      if ($zaloha) {
+        $soucty= ['Celková cena s DPH '=>$celkem, 
+            'Zaplaceno zálohou '=>$zaloha?:0, 'Zbývá k zaplacení '=>$platit];
+        $bold= 0;
+        $koef= 1;
+      }
+      else {
+        $soucty= ['Celková cena s DPH '=>$celkem];
+        $bold= 1;
+        $koef= 1;
+      }
+    }
+    foreach ($soucty as $popis=>$castka) {
+      $castka= dum_kc($castka);
+      if ($bold) {
+        $popis= "<b>$popis</b>";
+        $castka= "<b>$castka</b>";
+      }
+      $colspan= "colspan=\"$cs[1]\"";
+      $tab.= "<tr><td $colspan style=\"text-align:right\">$popis</td>"
+        . "<td colspan=\"2\" align=\"right\" style=\"$lrtb\">$castka</td></tr>";
+      $bold++;
     }
   }
-  foreach ($soucty as $popis=>$castka) {
-    $castka= dum_kc($castka);
-    if ($bold) {
-      $popis= "<b>$popis</b>";
-      $castka= "<b>$castka</b>";
-    }
-    $colspan= "colspan=\"$cs[1]\"";
-    $tab.= "<tr><td $colspan style=\"text-align:right\">$popis</td>"
-      . "<td colspan=\"2\" align=\"right\" style=\"$lrtb\">$castka</td></tr>";
-    $bold++;
+  else { // daňový doklad k zaplacené záloze
+    $css= 107;
+    $tab.= "<tr><td colspan=\"1\" style=\"width:{$css}mm\"></td>"
+      . "<td style=\"width:24mm\"></td>"
+      . "<td style=\"width:25mm\"></td>"
+      . "<td style=\"width:28mm\"></td>"
+      . "</tr>";    
+    $koef= 1;
   }
   // rozpisová tabulka DPH
   $tab_dph= [-1=>['<b>Sazba</b>','<b>Daň</b>','<b>Základ</b>']];
@@ -407,7 +421,7 @@ function dum_faktura($par) { // debug($par,'dum_faktura');
       . "</tr>";
   }
   $tab.= '</table>';
-//  display($tab);
+//  display(htmlentities($tab));
   // počet zúčtovaných položek ceníku kvůli řádkování tabulky
   $polozek= 0;
   foreach($polozky as $p) {
@@ -469,7 +483,7 @@ function dum_faktura($par) { // debug($par,'dum_faktura');
 //        display(htmlentities($elem));
         $html.= $elem;
       }
-      elseif ($type=='QR') {
+      elseif ($type=='QR' && $typ!=2) {
         $castka= dum_kc($vals['{QR-castka}']);
         $qr= "<br>QR platba<br><br><b>$castka</b><br><br>bude zobrazena<br>v PDF";
 //        require_once('tcpdf/examples/barcodes/tcpdf_barcodes_2d_include.php');

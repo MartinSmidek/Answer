@@ -145,6 +145,8 @@ panel fakt {type:'right', title:"Faktury"
         ic= faktura.parm.ic;
         dic= faktura.parm.dic;
         form.enable(faktura.parm.typ==4,'vyj');
+        form.enable(faktura.parm.typ!=2,'nedan');
+        form.enable(faktura.parm.typ==1,'dan');
       }
     }
     var faktura:object
@@ -152,7 +154,7 @@ panel fakt {type:'right', title:"Faktury"
     field ic  [523,135,70,] { title:'^IČ', format:':e' }
     field dic [623,135,70,] { title:'^DIČ', format:':e' }
     edit adresa [523,181,428,60] { title:'^adresa odběratele' }
-    edit nadpis [523,271,428,40] { title:'^řádek nad tabulkou s položkami' }
+    edit nadpis [523,271,428,40] {tag:'nedan', title:'^řádek nad tabulkou s položkami' }
     // výjimečná fakturace
     func soucet() { platit= ubyt + stra + popl + prog + jine; }
     field platit [523,341,60,] { title:'^platit =', format:'rd' }
@@ -167,7 +169,7 @@ panel fakt {type:'right', title:"Faktury"
     field jine   [891,341,60,] { tag:'vyj', title:'^jiné služby', format:'r' 
       func onchange() { soucet(); }}
     
-    button [800,135,,] { title:'[fa-credit-card] Vystavit daňový doklad' 
+    button [800,135,,] {tag:'dan', title:'[fa-credit-card] Vystavit daňový doklad' 
       func onclick() { var nadpis:text, zal:object, adresa:text
         if (fak.typ!='Z' || !fak.zaplacena ) {
           alert(`Daňový doklad je možné vystavit jen k zaplacené zálohové faktuře`); 
