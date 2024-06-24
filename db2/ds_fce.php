@@ -1839,6 +1839,24 @@ function dum_spolu_adresa($ids) {
   $adresa= "$p->jmeno $p->prijmeni<br>$p->ulice<br>$p->psc $p->obec";
   return $adresa;
 }
+# -------------------------------------------------------------------------------- db2 osoba_kontakt
+# vrátí osobní údaje případně evidované jako rodinné jako objekt 
+# {jmeno,prijmeni,ulice,psc,obec,stat,telefon,email,adresa}
+function db2_osoba_kontakt($ido) {
+  $p= pdo_fetch_object(pdo_qry("
+     SELECT prijmeni, jmeno, 
+       IF(adresa,o.stat,r.stat) AS stat, IF(adresa,o.ulice,r.ulice) AS ulice,
+       IF(adresa,o.psc,r.psc) AS psc, IF(adresa,o.obec,r.obec) AS obec,
+       IF(kontakt,o.telefon,r.telefony) AS telefon,
+       IF(kontakt,o.email,r.emaily) AS email
+     FROM osoba AS o 
+     LEFT JOIN tvori AS t USING (id_osoba)
+     LEFT JOIN rodina AS r USING (id_rodina)
+     WHERE id_osoba='$ido'
+     ORDER BY role LIMIT 1"));
+  $p->adresa= "$p->jmeno $p->prijmeni<br>$p->ulice<br>$p->psc $p->obec";
+  return $p;
+}
 # -------------------------------------------------------------------------------- dum refresh_pokoj
 # obnoví pokoj v pobyt podle ds_pokoj ve spolu
 function dum_refresh_pokoj($idp) {

@@ -12516,10 +12516,12 @@ function sta2_sestava($org,$title,$par,$export=false) { trace();
     }
     else if ( $par->podtyp=='kulatiny' ) {
       $tits= array("jméno:20","poprvé:10","kolikrát:10","naposledy:10",
-                 $org==1?"VPS I:10":"1.školení:10","narození:10:d","svatba:10:d","roků:7","(ID)");
-      $flds= array('jm','od','n','do','vps_i','nar','svatba','roku','^id_osoba');
+                 $org==1?"VPS I:10":"1.školení:10","narození:10:d","svatba:10:d","roků:7",
+                    "telefon:20","email:30","(ID)");
+      $flds= array('jm','od','n','do','vps_i','nar','svatba','roku','telefon','email','^id_osoba');
       $letos= date('Y');
       $kulate= substr($letos,3,1);
+      $pulkulate= ($kulate+5) % 10;
       $order= 'MONTH(o.narozeni),DAY(o.narozeni)';
     }
     else { // osoby
@@ -12604,13 +12606,16 @@ function sta2_sestava($org,$title,$par,$export=false) { trace();
         );
       }
       elseif ( $par->podtyp=='kulatiny' ) {
+        // zjistíme telefon
+        $muz= db2_osoba_kontakt($x->id_m);
+        $zena= db2_osoba_kontakt($x->id_z);
         if (substr($x->narozeni_m,3,1)==$kulate && !$x->umrti_m) {
           $roku= $letos - substr($x->narozeni_m,0,4);
           $kdy= sql_date1($x->narozeni_m);
           $order= substr($x->narozeni_m,5,2).substr($x->narozeni_m,8,2);
           $clmn[]= array('order'=>$order,
             'jm'=>"{$x->prijmeni_m} {$x->jmeno_m}",'od'=>$x->OD,'n'=>$x->Nx,'do'=>$x->DO,
-            'nar'=>$kdy, 'roku'=>$roku,
+            'nar'=>$kdy, 'roku'=>$roku, 'telefon'=>$muz->telefon, 'email'=>$muz->email, 
             '^id_osoba'=>$x->id_m
           );
         }
@@ -12620,17 +12625,21 @@ function sta2_sestava($org,$title,$par,$export=false) { trace();
           $order= substr($x->narozeni_z,5,2).substr($x->narozeni_z,8,2);
           $clmn[]= array('order'=>$order,
             'jm'=>"{$x->prijmeni_z} {$x->jmeno_z}",'od'=>$x->OD,'n'=>$x->Nx,'do'=>$x->DO,
-            'nar'=>$kdy, 'roku'=>$roku,
+            'nar'=>$kdy, 'roku'=>$roku, 'telefon'=>$zena->telefon, 'email'=>$zena->email, 
             '^id_osoba'=>$x->id_z
           );
         }
-        if (substr($x->datsvatba,3,1)==$kulate && !$x->rozvod && !$x->umrti_m && !$x->umrti_z ) {
+        if (substr($x->datsvatba,3,1)==$pulkulate && !$x->rozvod && !$x->umrti_m && !$x->umrti_z ) {
+          $tel= $muz->telefon==$zena->telefon ? $muz->telefon
+              : "{$muz->telefon}, {$zena->telefon}";
+          $mai= $muz->email==$zena->email ? $muz->email
+              : "{$muz->email}, {$zena->email}";
           $roku= $letos - substr($x->datsvatba,0,4);
           $kdy= sql_date1($x->datsvatba);
           $order= substr($x->datsvatba,5,2).substr($x->datsvatba,8,2);
           $clmn[]= array('order'=>$order,
             'jm'=>"{$x->jmeno_m} a {$x->jmeno_z} {$x->nazev}",'od'=>$x->OD,'n'=>$x->Nx,'do'=>$x->DO,
-            'svatba'=>$kdy, 'roku'=>$roku,
+            'svatba'=>$kdy, 'roku'=>$roku, 'telefon'=>$tel, 'email'=>$mai,
             '^id_osoba'=>$x->id_z
           );
         }
