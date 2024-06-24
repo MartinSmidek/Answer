@@ -495,7 +495,7 @@ function dum_faktura($par) { // debug($par,'dum_faktura');
         $html.= $elem;
       }
     }
-    if ($save) {
+    if ($save && ($type!='QR' || $typ!=2)) {
       tc_page_cell($text,$type,$align,$fsize*2.4,$l,$t,$w,$h,$border,$lheight);
     }
   }
