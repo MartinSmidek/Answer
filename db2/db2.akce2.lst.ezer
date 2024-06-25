@@ -1155,19 +1155,34 @@ form _info [,,*,50] {
     func Load(idd) {
       this.browse_load(`YEAR(FROM_UNIXTIME(fromday))='${the_rok}' AND d.deleted=0`,
           '','','','','1',the_duakce);
-      this.Show(idd);
+      if (idd) this.Show(idd);
+      else pracovni();
     }
     func Show(idd) {
       if (!this.browse_count()) return;
-      echo(`---------------- Show ${idd} ${this.browse_count()} the_order=${the_order}`);
+      echo(`----- Show(${idd}) ${this.browse_count()} the_order=${the_order} id_akce=${id_akce}`);
 //      the_order= idd;
 //      set_cookie(`${sys('root')}_order`,the_order);
       this.browse_focus(idd);
       a_title= nazev; 
       page.show_akce(id_akce); 
     }
-    func onsubmit() { this.focus(id_order); pracovni() }
-    func onrowclick() { this.Show(id_order); }
+//    func onsubmit() { this.focus(id_order); pracovni() }
+//    func onrowclick() { this.Show(id_order); }
+    func onrowclick() { var ans:number
+      if (!id_akce) { 
+        page.init_page();
+        switch (choose(`Objednávka ${objednal}|${nazev} ještě není svázána s reálnou akcí - co s ní?`,
+            'nevím - kliknu jinam:1,chci vytvořit akci:2,chci smazat objednávku:3')) {
+          case 1: Show(the_order); break; // nevím
+          case 2: dum_objednavka('add',id_order); break; // přidat
+          case 3: dum_objednavka('del',id_order); break; // smazat
+        }
+      } 
+      else {
+        pracovni(); 
+      }
+    }
     func pracovni() { 
       if (!id_akce) { alert(`Vlož objednávku jako akci`); return }      
       the_order= id_order;
@@ -1177,9 +1192,9 @@ form _info [,,*,50] {
       page.show_akce(id_akce); 
 //      this.Show(the_order);
     }
-    menu { type:'context'
-      item { title:'Vybrat akci jako pracovní', proc onclick() { pracovni }}
-    }
+//    menu { type:'context'
+//      item { title:'Vybrat akci jako pracovní', proc onclick() { pracovni }}
+//    }
   }
   # -----------------------------------------------------------------------------==> . seznam GOOGLE
   # kopie číselníku z intranetu -  pro ys
@@ -1336,7 +1351,10 @@ form _info [,,*,50] {
     }
   }
   # --------------------------------------------------------------------------------------==> . akce
-  select rok [4,5,52,] { tag:'r', format:'t', func onchanged() { the_rok= this; akce_roku(the_rok) }}
+  select rok [4,5,52,] { tag:'r', format:'t', 
+    func onchanged() { 
+      the_rok= this; akce_roku(the_rok) 
+  }}
   # je voláno s kontextem správného the_source
   proc nazev_akce(id_akce) {
     var nazev: text
