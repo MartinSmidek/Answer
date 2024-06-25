@@ -507,9 +507,10 @@ function dum_faktura($par) { // debug($par,'dum_faktura');
   $ref= '';
   if ($save) {
     global $abs_root;
-    $dnes= date('Ymd');
+//    $dnes= date('Ymd');
     $zkratka= substr(strtr(utf2ascii($adresa),['<br>'=>'',' '=>'','_'=>'']),0,10); 
-    $fname= "Dum-setkani_{$order}_{$dnes}_$zkratka.pdf";
+    $xtyp= $typ==1 ? 'Z' : ($typ==2 ? 'D' : ($typ==3 ? 'F' : 'V'));
+    $fname= "DS_{$xtyp}_{$par->nazev}_{$zkratka}_{$order}.pdf";
     $par->soubor= $fname;
     $dir= "$abs_root/docs/dum_setkani/faktury";
     if (!is_dir($dir)) recursive_mkdir($dir,'/');
