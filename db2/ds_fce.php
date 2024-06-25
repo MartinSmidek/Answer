@@ -156,7 +156,7 @@ end:
 }
 # -------------------------------------------------------------------------------------- dum faktura
 # par.typ: 1=záloha | 2=daňový doklad k záloze | 3=vyúčtování | 4=výjimečná faktura 
-function dum_faktura($par) { // debug($par,'dum_faktura');
+function dum_faktura($par) {  debug($par,'dum_faktura');
   global $dum_faktura_dfl, $dum_faktura_fld; 
   // získání parametrů
   $strucna= $par->strucna ?? 0;
@@ -173,6 +173,7 @@ function dum_faktura($par) { // debug($par,'dum_faktura');
   $vs= $par->vs;
   $ss= $par->ss;
   $order= $par->id_order;
+  $duzp= new DateTime(select('do','objednavka',"id_order=$order"));
   $pobyt= $par->id_pobyt; 
   $vyrizuje= $par->vyrizuje;
   $nadpis= $par->nadpis; // ignoruje se pro daňový doklad
@@ -201,7 +202,7 @@ function dum_faktura($par) { // debug($par,'dum_faktura');
     $vals['{faktura}']= "Faktura - daňový doklad $par->nazev";
     $dum_faktura_fld['za_co'][1]= $nadpis; //"Za pobyt v Domě setkání ve dnech {obdobi} Vám fakturujeme:";
     $vals['{DUZP-text}']= '<br>Datum zdanitelného plnění';
-    $vals['{DUZP-datum}']= "<br>$vystavena";
+    $vals['{DUZP-datum}']= "<br>".$duzp->format('j. n. Y');
     $vals['{splatnost-text}']= '<br><b>Datum splatnosti</b>';
     $vals['{splatnost-datum}']= '<br>'.$splatnost->format('j. n. Y');
   }
@@ -211,7 +212,7 @@ function dum_faktura($par) { // debug($par,'dum_faktura');
     $vals['{faktura}']= "Faktura - daňový doklad $par->nazev";
     $dum_faktura_fld['za_co'][1]= $nadpis; //"Za pobyt v Domě setkání ve dnech {obdobi} Vám fakturujeme:";
     $vals['{DUZP-text}']= '<br>Datum zdanitelného plnění';
-    $vals['{DUZP-datum}']= "<br>$vystavena";
+    $vals['{DUZP-datum}']= "<br>".$duzp->format('j. n. Y');
     $vals['{splatnost-text}']= '<br><b>Datum splatnosti</b>';
     $vals['{splatnost-datum}']= '<br>'.$splatnost->format('j. n. Y');
   }
