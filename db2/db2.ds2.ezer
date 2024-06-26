@@ -118,9 +118,10 @@ panel fakt {type:'right', title:"Faktury"
       show deleted { expr:'IF(f.deleted,1,0)' }
       show nadpis { data:f.nadpis }
       show nazev [,,65,] { title:'faktura', data:f.nazev }
-//      show rok [,,35,] { title:'rok', data:f.rok, format:'r' }
-//      show num [,,25,] { title:'č.', data:f.num, format:'rs-' }
-      show typ [,,25,] { title:'typ', expr:"IF(f.typ=1,'Z',IF(f.typ=2,'D',IF(f.typ=3,'F','V')))", format:'c' }
+      show rok { data:f.rok }
+      show num { data:f.num }
+      show typ [,,25,] { title:'typ', expr:"IF(f.typ=1,'Z',IF(f.typ=2,'D',IF(f.typ=3,'F','V')))", 
+          format:'c' }
       show strucna [,,25,] { title:'stručná', expr:"IF(f.strucna=1,'S','')", format:'c' }
       show vs [,,50,] { title:'VS', data:f.vs, format:'r' }
       show ss [,,50,] { title:'SS', data:f.ss, format:'r' }
@@ -131,7 +132,7 @@ panel fakt {type:'right', title:"Faktury"
       show popl { data:f.popl }
       show prog { data:f.prog }
       show jine { data:f.jine }
-      show vystavena [,,70,] { title:'vystavená', data:f.vystavena, format:'r' }
+      show vystavena [,,70,] { title:'vystavená', data:f.vystavena, format:'rs-' }
       show zaplacena [,,70,] { title:'zaplacená', data:p.datum, format:'r' }
       // funkce
       func onrowclick() { var x:object, a:array
@@ -145,8 +146,8 @@ panel fakt {type:'right', title:"Faktury"
         ic= faktura.parm.ic;
         dic= faktura.parm.dic;
         form.enable(faktura.parm.typ==4,'vyj');
-        form.enable(faktura.parm.typ!=2,'nedan');
         form.enable(faktura.parm.typ==1,'dan');
+        form.enable(faktura.parm.typ!=2,'nedan');
       }
     }
     var faktura:object
@@ -238,13 +239,30 @@ panel fakt {type:'right', title:"Faktury"
       }
     }
     button [842,408,,] { title:'[fa-times fa-red] Zneplatnit fakturu' 
-      func onclick() { var duvod:text
-        if (confirm(`Mám zneplatnit fakturu ${fak.nazev}? <br>Bude zařazena mezi smazané.`)) {
-          duvod= prompt2('Napiš stručný důvod zneplatnění, bude zapsáno','');
-          if (!duvod) { alert('Bez toho nebude zneplatnění provedeno'); return; }
-          php.dum_faktura_delete(duvod,fak.idf); // delete  existující faktury
-          alert(`O zneplatnění faktury je třeba informovat ekonoma.`);
-          info.Reload();
+      func onclick() { var duvod:text,cond_typ:text
+        // pokud je poslední lze ji jednoduše smazat a recyklovat její číslo
+        cond_typ= eq(fak.typ,'Z','D') ? "typ IN (1,2)" : "typ IN (3,4)";
+        if (php.select('COUNT(*)','faktura',
+              `${cond_typ} AND num>${fak.num} AND rok=${fak.rok} AND deleted='' `)) {
+          // NENÍ poslední lze ji jednoduše smazat a recyklovat její číslo
+          if (confirm(`Mám zneplatnit fakturu ${fak.nazev}? 
+                <br>Byly vydány již novější, to bude složitější.`)) {
+            duvod= prompt2('Napiš stručný důvod zneplatnění, bude zapsáno','');
+            if (!duvod) { alert('Bez toho nebude zneplatnění provedeno'); return; }
+            php.dum_faktura_delete(duvod,fak.idf); // delete  existující faktury
+            alert(`O zneplatnění vydané faktury je třeba informovat ekonoma.`);
+            info.Reload();
+          }
+        }
+        else {
+          // JE poslední
+          if (confirm(`Mám smazat fakturu ${fak.nazev}? <br>Její číslo bude znovu použito.`)) {
+            duvod= prompt2('Napiš stručný důvod smazání, bude zapsáno','');
+            if (!duvod) { alert('Bez toho nebude smazání provedeno'); return; }
+            php.dum_faktura_delete(duvod,fak.idf); // delete  existující faktury
+            alert(`Rozhodni, zda je třeba informovat ekonoma.`);
+            info.Reload();
+          }
         }
       }
     }
