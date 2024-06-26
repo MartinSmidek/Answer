@@ -321,8 +321,8 @@ function akce2_info($id_akce,$text=1,$pobyty=1,$id_order=0) { trace();
   $pro_pary= 0;
   if ( $id_akce ) {
     $ucasti= $rodiny= $dosp= $muzi= $mrop= $zeny= $chuvy_d= $chuvy_p= $deti= $pecounu= $pp= $po= $pg= $web= 0;
-    $vic_ucasti= '';
-    $err= $err2= $err3= $err4= $err_h= 0;
+    $vic_ucasti= $divna_rodina= '';
+    $err= $err2= $err3= $err4= $err_h= $err_r= 0;
     $odhlaseni= $neprijati= $neprijeli= $nahradnici= $nahradnici_osoby= 0;
     $akce= $chybi_nar= $chybi_sex= '';
     // web_changes= 1/2 pro INSERT/UPDATE pobyt a spolu | 4/8 pro INSERT/UPDATE osoba
@@ -385,6 +385,8 @@ function akce2_info($id_akce,$text=1,$pobyty=1,$id_order=0) { trace();
              COUNT(id_spolu) AS _clenu,IF(c.ikona=2,1,0) AS _pro_pary,a.hnizda,p.hnizdo,
          --  SUM(IF(ROUND(IF(MONTH(o.narozeni),DATEDIFF(a.datum_od,o.narozeni)/365.2425,YEAR(a.datum_od)-YEAR(o.narozeni)),1)<18,1,0)) AS _deti,
              SUM(IF(t.role='d',1,0)) AS _deti,
+             SUM(IF(t.role='b',1,0)) AS _manzelky, SUM(IF(t.role='a',1,0)) AS _manzele,
+             r.nazev AS _nazev_rodiny,
              SUM(IF(CEIL(IF(MONTH(o.narozeni),DATEDIFF(a.datum_od,o.narozeni)/365.2425,YEAR(a.datum_od)-YEAR(o.narozeni)))<=3,1,0)) AS _kocar,
              SUM(IF(ROUND(IF(MONTH(o.narozeni),DATEDIFF(a.datum_od,o.narozeni)/365.2425,YEAR(a.datum_od)-YEAR(o.narozeni)),1)>=18 AND sex=1,1,0)) AS _muzu,
              SUM(IF(iniciace>0,1,0)) AS _mrop,
@@ -443,6 +445,11 @@ function akce2_info($id_akce,$text=1,$pobyty=1,$id_order=0) { trace();
       $web_anotace= $p->web_anotace;
       $web_obsazeno= $p->web_obsazeno;
       $web_url= $p->web_url;
+      // kontrola rolí
+      if ($p->_manzelky>1 || $p->_manzele>1) {
+        $divna_rodina.= ", $p->_nazev_rodiny";
+        $err_r++;
+      }
       // počty v hnízdech
       $hn= $a_bez_hnizd ? 1 : $p->hnizdo;
       if (!isset($hnizdo[$hn]))
@@ -589,6 +596,8 @@ function akce2_info($id_akce,$text=1,$pobyty=1,$id_order=0) { trace();
     if ( $chybi_nar ) $chybi_nar= substr($chybi_nar,2);
     if ( $chybi_sex ) $chybi_sex= substr($chybi_sex,2);
     if ( $vic_ucasti ) $vic_ucasti= substr($vic_ucasti,2);
+    if ( $divna_rodina ) $divna_rodina= substr($divna_rodina,2);
+    display("dicná rodina: $divna_rodina");
     $dosp+= $muzi + $zeny;
                               display("$dosp+= $muzi + $zeny");
     $skupin= $ucasti;
@@ -712,11 +721,12 @@ function akce2_info($id_akce,$text=1,$pobyty=1,$id_order=0) { trace();
         if ( $nahradnici ) $msg[]= "náhradníci: $_pobyt_n, celkem $_pobyt_no";
         $html.= implode('<br>',$msg);
       }
-      if ( $err + $err2 + $err3 + $err4 + $err_h> 0 ) {
+      if ( $err + $err2 + $err3 + $err4 + $err_h + $err_r > 0 ) {
         $html.= "<br><hr><b style='color:red'>POZOR:</b> ";
         $html.= $err_h>0 ? "<br>nesouhlasí počet hnízd v definici akce a v pobytech" : '';
         $html.= $err>0  ? "<br>u $_err chybí datum narození: <i>$chybi_nar</i>" : '';
         $html.= $err2>0 ? "<br>u $_err2 chybí údaj muž/žena: <i>$chybi_sex</i>" : '';
+        $html.= $err_r>0 ? "<br>rodiny $divna_rodina jsou divné" : '';
         $html.= $err3>0 ? "<br>$bad $_err3 na akci vícekrát: <i>$vic_ucasti</i>" : '';
         $html.= $err4>0 ? "<br>{$prehled->pozor} (po nastavení akce jako pracovní kliknutí na odkaz ukáže rodinu)" : '';
         $html.= "<br><br>(kvůli nesprávným údajům budou počty, výpisy a statistiky také nesprávné)";
