@@ -242,7 +242,8 @@ panel fakt {type:'right', title:"Faktury"
       func onclick() { var duvod:text,cond_typ:text
         // pokud je poslední lze ji jednoduše smazat a recyklovat její číslo
         cond_typ= eq(fak.typ,'Z','D') ? "typ IN (1,2)" : "typ IN (3,4)";
-        if (php.select('COUNT(*)','faktura',`${cond_typ} AND num>${fak.num} AND rok=${fak.rok}`)) {
+        if (php.select('COUNT(*)','faktura',
+              `${cond_typ} AND num>${fak.num} AND rok=${fak.rok} AND deleted='' `)) {
           // NENÍ poslední lze ji jednoduše smazat a recyklovat její číslo
           if (confirm(`Mám zneplatnit fakturu ${fak.nazev}? 
                 <br>Byly vydány již novější, to bude složitější.`)) {
