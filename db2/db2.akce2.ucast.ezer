@@ -621,8 +621,7 @@ form _cmd [,,623,30] {
       # ---------------------==> ... oprava
       if (!rod.same()) {
         rod.r.key(rod.key_rodina); rod.r.save(); php.table_lock('off','rodina',rod.r.key());
-        if (rod.cleni.browse_count()) {
-          rod.t_role.changed();
+        if (rod.cleni.browse_count() && rod.t_role.changed()) {
           php.akce2_save_role(rod.cleni.key_tvori,rod.t_role)
         }
       }
