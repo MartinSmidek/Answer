@@ -62,6 +62,7 @@
   // definice zápisů do _track
   $tracking= '_track';
   $tracked= ',akce,pobyt,spolu,osoba,tvori,rodina,_user,';
+  $tracked.= 'objednavka,faktura,join_platba,platba,cenik,pdenik,';
   
   // moduly interpreta zahrnuté do aplikace - budou zpracovány i reference.i_doc pro tabulky kompilátoru
   $ezer_comp_root= "db2/ds_fce3";

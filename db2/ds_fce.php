@@ -67,7 +67,7 @@ $dum_faktura_fld= [
       <br>bankovní převod"],
   'za_co' => [',,,13,132,184,10',"
       Za pobyt v Domě setkání ve dnech {obdobi} Vám fakturujeme:"],
-  'tabulka' => [',,,13,140,184,150,,2',"
+  'tabulka' => [',,,13,145,184,150,,2',"
       {tabulka}"],
   'QR' => ['QR,,,13,230,40,40',     // viz https://qr-platba.cz/pro-vyvojare/specifikace-formatu/
       "SPD*1.0*ACC:{QR-IBAN}*RN:{QR-ds}*AM:{QR-castka}*CC:CZK*MSG:{QR-pozn}*X-VS:{QR-vs}*X-SS:{QR-ss}"],
@@ -173,12 +173,15 @@ function dum_faktura($par) {  debug($par,'dum_faktura');
   $vs= $par->vs;
   $ss= $par->ss;
   $order= $par->id_order;
-  $duzp= new DateTime(select('do','objednavka',"id_order=$order"));
   $pobyt= $par->id_pobyt; 
   $vyrizuje= $par->vyrizuje;
   $nadpis= $par->nadpis; // ignoruje se pro daňový doklad
   $vystavena= $par->vystavena;
+  // DUZP = datum vystavení faktury nebo datum poskytnutí služby, podle toho, co nastane dříve
   $date= new DateTime($vystavena); 
+  $duzp= new DateTime(select('do','objednavka',"id_order=$order"));
+  if ($duzp>$date) $duzp= $date;
+  $duzp= $duzp->format('j. n. Y');
   $vystavena= $date->format('j. n. Y');
   $par->vystavena= $date->format('Y-m-d');
   $splatnost= $date->modify('+14 days');
@@ -202,7 +205,7 @@ function dum_faktura($par) {  debug($par,'dum_faktura');
     $vals['{faktura}']= "Faktura - daňový doklad $par->nazev";
     $dum_faktura_fld['za_co'][1]= $nadpis; //"Za pobyt v Domě setkání ve dnech {obdobi} Vám fakturujeme:";
     $vals['{DUZP-text}']= '<br>Datum zdanitelného plnění';
-    $vals['{DUZP-datum}']= "<br>".$duzp->format('j. n. Y');
+    $vals['{DUZP-datum}']= "<br>$duzp";
     $vals['{splatnost-text}']= '<br><b>Datum splatnosti</b>';
     $vals['{splatnost-datum}']= '<br>'.$splatnost->format('j. n. Y');
   }
@@ -212,7 +215,7 @@ function dum_faktura($par) {  debug($par,'dum_faktura');
     $vals['{faktura}']= "Faktura - daňový doklad $par->nazev";
     $dum_faktura_fld['za_co'][1]= $nadpis; //"Za pobyt v Domě setkání ve dnech {obdobi} Vám fakturujeme:";
     $vals['{DUZP-text}']= '<br>Datum zdanitelného plnění';
-    $vals['{DUZP-datum}']= "<br>".$duzp->format('j. n. Y');
+    $vals['{DUZP-datum}']= "<br>$duzp";
     $vals['{splatnost-text}']= '<br><b>Datum splatnosti</b>';
     $vals['{splatnost-datum}']= '<br>'.$splatnost->format('j. n. Y');
   }
@@ -2044,8 +2047,15 @@ function ucast_presun($idp,$idp_goal,$make=0) {
     foreach ($konflikt as $tab) {
       query("UPDATE $tab SET id_pobyt=$idp_goal WHERE id_pobyt=$idp");
     }
-    $ok= query("UPDATE spolu SET id_pobyt=$idp_goal WHERE id_pobyt=$idp");
-    if ($ok) query("DELETE FROM pobyt WHERE id_pobyt=$idp");
+    $rs= pdo_query("SELECT id_spolu FROM spolu WHERE id_pobyt=$idp");
+    while ($rs && (list($ids)= pdo_fetch_array($rs))) {
+      query_track("UPDATE spolu SET id_pobyt=$idp_goal WHERE id_spolu=$ids");
+    }
+    global $USER;
+    query("INSERT INTO _track (kdy,kdo,kde,klic,op,fld,old) "
+        . "VALUE (NOW(),'$USER->abbr','pobyt',$idp,'x','id_akce',$ida)");
+    query("DELETE FROM pobyt WHERE id_pobyt=$idp");
+
   }
   return $ret;
 }
@@ -2419,52 +2429,6 @@ function check_access($tab,$id,$access_akce) {
   display("check_access($tab,$id,$access_akce)");
 }
 // ========================================================================================> LIBRARY
-# -------------------------------------------------------------------------------------- query track
-# provede některá SQL včetně zápisu do _track
-#   INSERT INTO tab (f1,f2,...) VALUES (v1,v2,...) 
-#   UPDATE tab SET f1=v1, f2=v2, ... WHERE id_tab=v0
-# kde vi jsou jednoduché hodnoty: číslo nebo string uzavřený v apostorfech 
-function query_track($qry) {
-  // rozklad výrazu: 1:table, 2:field list, 3:values list
-  $res= 0;
-  $m= null;
-  $ok= preg_match('/(INSERT)\s+INTO\s+([\w\.]+)\s+\(([,\s\w]+)\)\s+VALUE(?:S|)\s+\(((?:.|\s)+)\)$/',$qry,$m)
-    || preg_match('/(UPDATE)\s+([\w\.]+)\s+SET\s+(.*)\s+WHERE\s+([\w]+)\s*=\s*(.*)\s*/m',$qry,$m);
-//  debug($m);
-  if ($ok && $m[1]=='INSERT') {
-    $tab= $m[2];
-    $fld= explode_csv($m[3]); 
-    $val= explode_csv($m[4]); 
-    $chng= [];
-    for ($i= 0; $i<count($fld); $i++) {
-      $v= trim($val[$i],"'");
-      $chng[]= (object)['fld'=>$fld[$i],'op'=>'i','val'=>$v];
-    }
-    $res= ezer_qry("INSERT",$tab,0,$chng);
-  }
-  elseif ($ok && $m[1]=='UPDATE') {
-//    debug($m);
-    $tab= $m[2];
-    $sets= explode_csv($m[3]); 
-    $key_id= $m[4];
-    $key_val= $m[5];
-    // kontrola podmínky
-    $ok= ($tab=='akce' && $key_id=='id_duakce') || $key_id=="id_$tab";
-    if ($ok) {
-      $chng= [];
-      foreach ($sets as $set) {
-        list($fld,$val)= explode('=',$set,2);
-        $v= trim($val,"'");
-        $chng[]= (object)['fld'=>$fld,'op'=>'u','val'=>$v];
-      }
-      $res= ezer_qry("UPDATE",$tab,$key_val,$chng,$key_id);
-    }
-  }
-  if (!$ok) {
-    fce_error("funkce query-track nemá předepsaný tvar argumentu, má $qry");
-  }
-  return $res;
-}
 # ---------------------------------------------------------------------------------------- clone row
 function clone_row($tab,$id,$idname='') {
   $idname= $idname ?: "id_$tab";  

@@ -193,8 +193,13 @@ form _vyuctovani [,,623,400] {
   // rodinná faktura
   var faktura: object, fakt_num=0, fakt_zal= 0, fakt_vs='', fakt_ss='', fakt_kdo=''
   button [300,310,,] {tag:'h', title:'[fa-credit-card] Faktura za rodinu' 
-    func onclick() { var udaje:object, uf:object, adresa:text, vyrizuje:text, nadpis:text
+    func onclick() { var udaje:object, uf:object, adresa:text, vyrizuje:text, nadpis:text, je:text
       clear();
+      je= php.select('nazev','faktura',`id_pobyt=${id_pobyt} AND deleted='' `);
+      if (je) {
+        alert(`pro tento pobyt již byla vystavena faktura ${je} - opravit ji lze v záložce Faktury`);
+        return;
+      }
       vyrizuje= sys('user','options','vyrizuje');
       nadpis= `Za pobyt v Domě setkání ve dnech ${udaje_pobyt.oddo} Vám fakturujeme:`;
       udaje= php.dum_objednavka(udaje_pobyt.order); uf= udaje.fld;

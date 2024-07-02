@@ -10674,7 +10674,7 @@ function evid2_cleni($id_osoba,$id_rodina,$filtr) { //trace();
         JOIN tvori AS ot ON ot.id_osoba=rto.id_osoba
         JOIN rodina AS otr ON otr.id_rodina=ot.id_rodina -- AND otr.access & $access
       WHERE r.id_rodina=$id_rodina AND $filtr 
-        AND (rto.access & $access OR rto.access=0)
+        -- AND (rto.access & $access OR rto.access=0) // MSM povolil 240628
       GROUP BY id_osoba
       ORDER BY rt.role,rto.narozeni
     ");
