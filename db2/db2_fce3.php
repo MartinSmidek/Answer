@@ -16358,15 +16358,15 @@ function db2_stav_kdo($db,$desc,$tit) {
 function db2_copy_test_db($db) {  trace();
   $msg= '';
   query("SET sql_mode = 'NO_AUTO_VALUE_ON_ZERO'");
-  // tabulka¨, která se má jen vytvořit, má před jménem hvězdičku
+  // tabulka, ze které se kopíruje jen posledních $max záznamů, má před jménem hvězdičku
+  $max= 5000;
   $tabs= explode(',',
 //     "_user,_skill,"
-    "*_touch,*_todo,"
-  . "_help,_cis,"
-  . "_track,ezer_doc2,"
+    "*_touch,*_todo,*_track,*mail,"
+  . "_help,_cis,ezer_doc2,"
   . "akce,cenik,pobyt,spolu,osoba,tvori,rodina,g_akce,join_akce,prihlaska,"
   . "dar,uhrada,"
-  . "dopis,mail,mailist,"
+  . "dopis,mailist,"
   . "pdenik,person,pokladna,"
   . "faktura,platba,join_platba"
   );
@@ -16376,13 +16376,14 @@ function db2_copy_test_db($db) {  trace();
     if ( $tab[0]=='*' ) $tab= substr($tab,1);
     query("DROP TABLE IF EXISTS ezer_{$db}_test.$tab");
     query("CREATE TABLE ezer_{$db}_test.$tab LIKE ezer_{$db}.$tab");
-    if ( $xtab[0]!='*' ) {
-      $n= query("INSERT INTO ezer_{$db}_test.$tab SELECT * FROM ezer_{$db}.$tab");
-      $msg.= "<br>COPY ezer_{$db}_test.$tab ... $n záznamů";
+    $LIMIT= '';
+    if ( $xtab[0]=='*' ) {
+      $count= select('COUNT(*)',$tab);
+      if ($count>$max) $LIMIT= "LIMIT ".($count-$max).", $max";
     }
-    else {
-      $msg.= "<br>INIT ezer_{$db}_test.$tab";
-    }
+    $MAX= $xtab[0]=='*' ? "WHERE YEAR(kdy)=YEAR(NOW())" : '';
+    $n= query("INSERT INTO ezer_{$db}_test.$tab SELECT * FROM ezer_{$db}.$tab $LIMIT");
+    $msg.= "<br>COPY ezer_{$db}_test.$tab ... $n záznamů $LIMIT";
   }
   // kopie pro Dům setkání
   if ($db=='db2') {
