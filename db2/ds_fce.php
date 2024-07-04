@@ -84,16 +84,20 @@ function dum_kc($c) {
 # ---------------------------------------------------------------------------------- dum pobyt_nazev
 # vrátí tisknutelný název pobytu
 # pro format=kniha ve tvaru ids:jméno nejstaršího člena pobytu
+# pro format=rodina upřednostnit název rodiny
 function dum_pobyt_nazev($idp,$format='') {
-  list($idp,$ids,$jmeno,$prijmeni)= pdo_fetch_array(pdo_qry("
-    SELECT id_pobyt,id_spolu,jmeno,prijmeni
+  list($idp,$ids,$jmeno,$prijmeni,$rodina)= pdo_fetch_array(pdo_qry("
+    SELECT id_pobyt,id_spolu,jmeno,prijmeni,r.nazev
     FROM spolu 
       LEFT JOIN osoba USING (id_osoba)
+      LEFT JOIN pobyt USING (id_pobyt)
+      LEFT JOIN rodina AS r ON id_rodina=i0_rodina
     WHERE id_pobyt=$idp
     ORDER BY narozeni
     LIMIT 1"));
-  return !$idp ? ''
-    : ($format=='kniha' ? "$ids:$prijmeni $jmeno" : "$idp - $prijmeni");
+  return !$idp ? '' 
+    : ($format=='kniha' ? "$ids:$prijmeni $jmeno" : 
+      ($format=='rodina' && $rodina ? "$rodina ($idp)" : "$idp - $prijmeni"));
 }
 # --------------------------------------------------------------------------------- dum faktura_info
 # par.typ = konečná | záloha
@@ -2006,7 +2010,7 @@ function ds2_vek($narozeni,$fromday) {
   }
   return $vek;
 }
-# ------------------------------------------------------------------------------------------ ds2 vek
+# ------------------------------------------------------------------------------------- ucast presun
 # přesune účastníky jednoho pobytu do vybraného ... 
 #  make=0 žádost o souhlas do msg, chybovou hlášku do err
 #  make=1 provede přesun
@@ -2059,6 +2063,42 @@ function ucast_presun($idp,$idp_goal,$make=0) {
   }
   return $ret;
 }
+# ------------------------------------------------------------------------------- ucast presun_cleny
+# vysune označené členy z daného pobytu a vytvoří pro ně nový pobyt
+#  kam='' vrátí varianty do kam, případně chybovou hlášku do err
+#  kam='jiny' provede přesun do pobytu idps
+#  kam='novy' vytvoří nový pobyt a přesune
+function ucast_presun_cleny($idp,$idos,$idps,$kam='0') { 
+  $ret= (object)['ask'=>'','buts'=>'','idp'=>0,'err'=>''];
+  display("ucast_presun_cleny($idp,'$idos','$idps',$kam)");
+  switch ($kam) {
+    case '0': // formulace počátečního dotazu
+      $jiny= $idps && $idps!=$idp && strstr($idps,',')===false; // označen právě jeden jiný pobyt
+      if (!$idos) { $ret->err= 'pomocí Insert označ přesunované členy pobytu'; goto end; }
+      $cleni= select('GROUP_CONCAT(jmeno)',
+          "osoba AS o LEFT JOIN spolu AS s ON s.id_osoba=o.id_osoba AND s.id_pobyt=$idp",
+          "o.id_osoba IN ($idos) AND NOT(ISNULL(s.id_osoba))");
+      $ret->ask= "Do kterého pobytu mám přesunout označené členy: $cleni?";
+      $ret->buts= "do nově vytvořeného:novy";
+      $pobyt= dum_pobyt_nazev($idps,'rodina');
+      if ($jiny) $ret->buts.= ",přidat k $pobyt:jiny";
+      $ret->buts.= ",nic nepřesouvat:nikam";
+      break;
+    case 'novy': // požadavek - přesunout $idos/$idp do nově vytvořeného pobytu 
+      $ida= select('id_akce','pobyt',"id_pobyt=$idp");
+      $idps= query_track("INSERT INTO pobyt (id_akce) VALUE ($ida)");
+    case 'jiny': // požadavek - přesunout $idos/$idp do označeného pobytu $idps
+      $rs= pdo_qry("SELECT id_spolu FROM spolu WHERE id_pobyt=$idp AND id_osoba IN ($idos)");
+      while ($rs && (list($ids)= pdo_fetch_array($rs))) {
+        query_track("UPDATE spolu SET id_pobyt=$idps WHERE id_spolu=$ids");
+      }
+      $ret->idp= $idps;
+      break;
+  }
+end:
+  return $ret;
+}
+# -------------------------------------------------------------------------------------- ucast popis
 # vrátí popis účastníků pobytu 
 function ucast_popis($idp) {
   $txt= select1("GROUP_CONCAT(CONCAT(prijmeni,' ',jmeno) SEPARATOR ' + ')",

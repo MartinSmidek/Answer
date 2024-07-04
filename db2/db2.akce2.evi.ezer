@@ -1656,7 +1656,9 @@ form _cmd [,,706,32] { css:'ae_frame'
         return
       }
       switch (choose("Má se vytvořit nový člen zobrazené rodiny nebo samostatná osoba",
-            "nový člen:clen,samostatná osoba:osoba")) {
+            "nový člen:clen,samostatná osoba:osoba,nic z toho:zpet")) {
+      case 'zpet':
+        break;
       case 'osoba':
         set_state('newx');
         page.oso.access= my_access;

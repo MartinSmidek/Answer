@@ -1902,18 +1902,16 @@ form _rodina2 [,,360,229]  { css:'ae_frame',
       y.set(ask('ucast2_clipboard',the_pobyt.get));
       clipboard(y.clip); alert(y.msg);
     }}
-    item { title:'-konfigurace formuláře', proc onclick () { rodina_config.tune(ucast) } }
-    item { title:'ukázat změny', proc onclick () {
-      key_rodina.get; track.back_show('rodina',key_rodina.get) } }
-    item { title:'historie skupinek MS', proc onclick () {
-      Skupinky.historie(key_rodina.get)
-    }}
-    item { title:'=zazurovění účastníků', skill:'daea', proc onclick () { var idp:number
-      idp.set(the_pobyt.get); ask('ucast2_pobyt_access',key_pobyt.get,3); refresh_ucast(idp) } }
-    item { title:'zazurovění dětí a rodiny', skill:'daea', proc onclick () { var idp:number
-      idp.set(the_pobyt.get); ask('evid2_deti_access',key_rodina.get,3); refresh_ucast(idp) } }
+    item { title:'-konfigurace formuláře', func onclick () { rodina_config.tune(ucast) } }
+    item { title:'ukázat změny', func onclick () {
+      if (key_rodina) track.back_show('rodina',key_rodina) } }
+    item { title:'historie skupinek MS', func onclick () { Skupinky.historie(key_rodina) }}
+    item { title:'=zazurovění účastníků', skill:'daea', func onclick () { var idp:number
+      idp= the_pobyt; php.ucast2_pobyt_access(key_pobyt,3); refresh_ucast(idp) } }
+    item { title:'zazurovění dětí a rodiny', skill:'daea', func onclick () { var idp:number
+      idp= the_pobyt; php.evid2_deti_access(key_rodina,3); refresh_ucast(idp) } }
     item { title:'-ukázat data', skill:'m', 
-      func onclick() { js.call_root_func_par('syst_tab_rec_show',array('rodina',key_rodina),&this,'onclick_')}
+      func onclick() { js.call_root_func_par('syst_tab_rec_show',['rodina',key_rodina],&this,'onclick_')}
       func onclick_() {}
     }
   }
@@ -2113,6 +2111,23 @@ form _rodina2 [,,360,229]  { css:'ae_frame',
           php.akce2_zmeny_web(the_pobyt));
       }
     }
+    # ------------------------==> . kontextové_menu
+    menu detail { type:'context'
+      item { title:'přesunout označené členy'
+        func onclick () { var ret:object, sel_pobyt:text, sel_cleni:text, kam:text
+          clear();
+          sel_cleni= cleni.selected('get');
+          sel_pobyt= u.b.selected('get');
+          ret= php.ucast_presun_cleny(the_pobyt,sel_cleni,sel_pobyt,0); // připraví dotaz na variantu přesunu
+          if (ret.err) { alert(ret.err); return }
+          kam= choose(ret.ask,ret.buts);
+          if (kam!='nikam') {
+            ret= php.ucast_presun_cleny(the_pobyt,sel_cleni,sel_pobyt,kam); // provede přesun
+            if (ret.err) { alert(ret.err); return }
+            the_pobyt= ret.idp;
+            reload(the_pobyt);
+          }
+    }}}
   }
 
   label [7,0,1,170] {tag:'x', title:" " } // výplň pro případ ne-rodiny
